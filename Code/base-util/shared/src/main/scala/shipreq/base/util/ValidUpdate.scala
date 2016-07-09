@@ -103,18 +103,18 @@ object ValidUpdate {
       case scalaz.Failure(e) => Failure(e)
     }
 
-  def option[A](o: Option[A]): ValidUpdate[Nothing, A] =
+  def option[A](o: Option[A]): NonFailure[A] =
     o match {
       case Some(a) => Success(a)
       case None    => Unchanged
     }
 
-  def setDiff[A](d: SetDiff[A]): ValidUpdate[Nothing, SetDiff[A]] =
+  def setDiff[A](d: SetDiff[A]): NonFailure[SetDiff[A]] =
     if (d.isEmpty)
       Unchanged
     else
       Success(d)
 
-  def nonEmpty[A, B](a: A)(implicit p: NonEmpty.Proof[A, B]): ValidUpdate[Nothing, B] =
+  def nonEmpty[A, B](a: A)(implicit p: NonEmpty.Proof[A, B]): NonFailure[B] =
     option(p tryProve a)
 }

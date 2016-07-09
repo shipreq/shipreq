@@ -10,6 +10,7 @@ import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.data.{Dead, Live, StaticField}
 import shipreq.webapp.client.base.data._
 import shipreq.webapp.client.base.ui.BaseStyles.pageMargin
+import shipreq.webapp.client.base.ui.semantic.{Colour, Label}
 import shipreq.webapp.client.project.widgets._
 
 object Style extends StyleSheet.Inline {
@@ -572,6 +573,8 @@ object Style extends StyleSheet.Inline {
     val textEditorInTransitValue = style(
       flexGrow(1),
       opacity(0.5))
+
+    val errorPointingUp = Label.Style(Label.Type.PointingUp, Colour.Red).div
 
     val richTextPreview = style(
       addClassNames("ui", "segments", "raised"))

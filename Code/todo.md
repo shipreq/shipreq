@@ -10,7 +10,7 @@ Integrate async into ContentEditorFeature rendering
     New use is: E renderOr V
     Remove: commitK, commitAbortK
     Remove or revise: renderStatic, renderDynamic
-    Don't forget UseCaseStepEditor!
+  * Replace all manual focus stuff with autofocus
 
 * Determine UI for:
   * ReqDetail load failure

@@ -12,7 +12,7 @@ import shipreq.webapp.client.project.app.Style.{reqtable => *}
 case class EditValidationFeature[+E, +A](value        : ValidUpdate[E, A],
                                          renderFailure: Option[ReactElement])
 
-/** TODO Is this really a "feature"?
+/** TODO Is this really a "feature"? Overlap with EditorStatus?
   */
 object EditValidationFeature {
   type Result[+A] = EditValidationFeature[VFailure, A]

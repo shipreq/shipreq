@@ -51,8 +51,6 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
   private val editorRef = Ref.to(AutosizeTextarea.Component, "i")
 
-  private val errorPointingUp = Label.Style(Label.Type.PointingUp, Colour.Red).div
-
   val liveCorrect: EndoFn[String] =
     RichTextEditor.liveCorrect(text)
 
@@ -65,11 +63,6 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
       Px.apply3(pxProject, pxPlainText, pxTextSearch)(AutoComplete.forRichText(text))
 
     val textareaConst: TagMod = {
-      val minRows = text.lineCardinality match {
-        case SingleLine => 1
-        case MultiLine  => 3
-      }
-
       val keys =
         KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +
         KeyboardTheme.commitCO($.props.map(_.status.getCommit), text.lineCardinality)
@@ -80,10 +73,10 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
       TagMod(
         ^.autoFocus := true,
-        ^.rows      := minRows,
         ^.onChange ==> updateState,
         ^.onBlur   --> $.props.flatMap(_.preview.onBlur),
         ^.onFocus  --> $.props.flatMap(_.preview.onFocus),
+        RichTextEditor.minRows(text.lineCardinality),
         keys)
     }
 
@@ -100,43 +93,12 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
       def instructions =
         KeyboardTheme.instructionsForCommitAbort(p.status.getCommit, p.abort, text.lineCardinality)(
-          ^.textAlign.right
-        )
+          ^.textAlign.right)
 
       def richText =
         p.projectWidgets.format(hardcodedLive, p.richText)
 
-      def preview =
-        p.preview.reactCollapse(p.showPreview)(
-          <.div(*.richTextPreview, ^.ref := "p",
-            <.div(*.richTextPreviewHeader, "Preview"),
-            <.div(*.richTextPreviewBody, richText)))
-
-      p.status match {
-        case EditorStatus.Ignore | EditorStatus.Valid(_) =>
-          <.div(
-            editor(Valid),
-            instructions,
-            preview)
-
-        case EditorStatus.Invalid(err) =>
-          <.div(
-            editor(Invalid), // TODO add error background
-            errorPointingUp(err),
-            preview)
-
-        case EditorStatus.AsyncError(err, _, _) =>
-          <.div(
-            editor(Valid),
-            errorPointingUp(err),
-            preview)
-
-        case EditorStatus.InTransit =>
-          <.div(*.textEditor(Style.EditorState.InTransit),
-            <.div(Icon.CircleNotched.loading.tag),
-            <.div(*.textEditorInTransitValue, richText))
-      }
-
+      RichTextEditor.genericRender(p.status, editor, instructions, p.preview, p.showPreview, richText)
     }
   }
 
@@ -165,6 +127,49 @@ object RichTextEditor {
       case SingleLine => RichTextEditor.correctSingleLineText
       case MultiLine  => identity
     }
+
+  val minRows = LineCardinality.memo[TagMod] {
+    case SingleLine => ^.rows := 1
+    case MultiLine  => ^.rows := 3
+  }
+
+  def genericRender(status        : EditorStatus,
+                    editor        : Validity => ReactElement,
+                    instructions  : => ReactTag,
+                    previewFeature: PreviewFeature.ForChild,
+                    showPreview   : Boolean,
+                    richText      : => ReactTag) = {
+    def preview =
+      previewFeature.reactCollapse(showPreview)(
+        <.div(*.richTextPreview, ^.ref := "p",
+          <.div(*.richTextPreviewHeader, "Preview"),
+          <.div(*.richTextPreviewBody, richText)))
+
+    status match {
+      case EditorStatus.Ignore | EditorStatus.Valid(_) =>
+        <.div(
+          editor(Valid),
+          instructions,
+          preview)
+
+      case EditorStatus.Invalid(err) =>
+        <.div(
+          editor(Invalid), // TODO add error background
+          *.errorPointingUp(err),
+          preview)
+
+      case EditorStatus.AsyncError(err, _, _) =>
+        <.div(
+          editor(Valid),
+          *.errorPointingUp(err),
+          preview)
+
+      case EditorStatus.InTransit =>
+        <.div(*.textEditor(Style.EditorState.InTransit),
+          <.div(Icon.CircleNotched.loading.tag),
+          <.div(*.textEditorInTransitValue, richText))
+    }
+  }
 
   // This is an editor - you can't edit Dead stuff. Assume all content is Live.
   @inline def hardcodedLive = Live
