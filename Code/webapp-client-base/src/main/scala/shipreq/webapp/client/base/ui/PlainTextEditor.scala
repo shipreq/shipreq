@@ -55,7 +55,7 @@ object PlainTextEditor {
       def render(p: Props): ReactElement = {
 
         def input        = base(p.inputMod, ^.value := p.text)
-        def instructions = KeyboardTheme.instructionsForCommitAbort(p.status.getCommit, p.abort, SingleLine)
+        def instructions = KeyboardTheme.instructionsForCommitAbort(SingleLine, p.status.getCommit, p.abort, None)
 
         def renderWithError(err: TagMod) =
           <.div(

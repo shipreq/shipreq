@@ -7,6 +7,7 @@ import scalacss.ScalaCssReact._
 import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
 import shipreq.webapp.client.base.lib.KeyHandler._
 import shipreq.webapp.client.base.ui.BaseStyles.{editorInstructions => *}
+import shipreq.webapp.client.base.ui.semantic.Icon
 
 /**
   * Keyboard functionality consistent throughout the entire app.
@@ -41,26 +42,38 @@ object KeyboardTheme {
   private val link   = <.a(*.link)
   private val clause = <.span(*.clause)
 
-  def instructionsForCommitAbort(commit: Option[Callback],
+  private val helpIcon = Icon.HelpCircle.tag(*.helpIcon)
+
+  def instructionsForCommitAbort(lc    : LineCardinality,
+                                 commit: Option[Callback],
                                  abort : Callback,
-                                 lc    : LineCardinality): ReactTag = {
+                                 help  : Option[Callback]): ReactTag = {
     var tag = <.div(*.container)
 
     def add(m: TagMod*): Unit =
       tag = tag(clause(m: _*))
 
+    // New line
     lc match {
       case SingleLine => ()
       case MultiLine  => add("enter for new line,")
     }
 
+    // Commit
     var save: ReactNode = "save"
     for (c <- commit)
       save = link(^.onClick --> c, save)
     add("ctrl-enter to ", save, ",")
 
+    // Abort
     val cancel = link(^.onClick --> abort, "cancel")
     add("esc to ", cancel, ".")
+
+    // Help
+    for (h <- help) {
+      val eh = (e: ReactEvent) => e.stopPropagationCB >> e.preventDefaultCB >> h
+      add(helpIcon(^.onClick ==> eh))
+    }
 
     tag
   }

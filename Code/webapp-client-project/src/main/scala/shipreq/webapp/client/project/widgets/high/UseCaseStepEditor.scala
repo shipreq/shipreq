@@ -143,8 +143,11 @@ object UseCaseStepEditor {
           textareaConst)
 
       def instructions =
-        KeyboardTheme.instructionsForCommitAbort(p.status.getCommit, p.abort, lineCardinality)(
-          ^.textAlign.right)
+        KeyboardTheme.instructionsForCommitAbort(
+          lineCardinality,
+          p.status.getCommit,
+          p.abort,
+          Some(RichTextEditorHelp.modal.show))
 
       def richText =
         p.projectWidgets.useCaseStepE(hardcodedLive, p.parsed)

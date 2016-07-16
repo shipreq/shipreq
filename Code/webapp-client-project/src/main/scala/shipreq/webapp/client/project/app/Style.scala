@@ -10,7 +10,7 @@ import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.data.{Dead, Live, StaticField}
 import shipreq.webapp.client.base.data._
 import shipreq.webapp.client.base.ui.BaseStyles.pageMargin
-import shipreq.webapp.client.base.ui.semantic.{Colour, Label}
+import shipreq.webapp.client.base.ui.semantic.{Colour, Label, UsesSemanticUiManually}
 import shipreq.webapp.client.project.widgets._
 
 object Style extends StyleSheet.Inline {
@@ -664,8 +664,39 @@ object Style extends StyleSheet.Inline {
 
   // ===================================================================================================================
 
+  object help {
+
+    private val descCls = "_d"
+    private val sampleCls = "_s"
+
+    @UsesSemanticUiManually
+    val examplesTable = style(
+      addClassNames("ui", "celled", "table"),
+      marginBottom(1 em),
+      unsafeChild("tr:nth-child(odd)  td." + sampleCls)(backgroundColor(c"#fffde8")),
+      unsafeChild("tr:nth-child(even) td." + sampleCls)(backgroundColor(c"#def2fc")),
+      unsafeChild("tr:nth-child(odd)  td." + descCls)(backgroundColor(c"#fcf8e3")),
+      unsafeChild("tr:nth-child(even) td." + descCls)(backgroundColor(c"#d9edf7")))
+
+    val exampleDesc = style(
+      addClassNames(descCls))
+
+    val exampleDescCode = style(
+      fontFamily :=! "monospace", // TODO :=! ???
+      backgroundColor(c"#fff"))
+
+    val exampleSample = style(
+      addClassNames(sampleCls),
+      fontFamily :=! "monospace",
+      whiteSpace.nowrap,
+      color(c"#f39"))
+  }
+
+  // ===================================================================================================================
+
   initInnerObjects(
     home.cardHeader,
+    help.examplesTable,
     impgraphPage.graph,
     cfg.deadMnemonic,
     reqtable.sortEditor.dragArea,

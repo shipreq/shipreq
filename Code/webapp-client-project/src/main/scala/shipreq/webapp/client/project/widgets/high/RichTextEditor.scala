@@ -92,8 +92,11 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
           textareaConst)
 
       def instructions =
-        KeyboardTheme.instructionsForCommitAbort(p.status.getCommit, p.abort, text.lineCardinality)(
-          ^.textAlign.right)
+        KeyboardTheme.instructionsForCommitAbort(
+          text.lineCardinality,
+          p.status.getCommit,
+          p.abort,
+          Some(RichTextEditorHelp.modal.show))
 
       def richText =
         p.projectWidgets.format(hardcodedLive, p.richText)

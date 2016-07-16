@@ -46,7 +46,8 @@ object BaseStyles extends StyleSheet.Inline {
       color(c"#d00").important)
 
     val itemHeaderEditCont = style(
-      width(100 %%))
+      width(100 %%),
+      marginBottom(0.2 rem))
 
     // .ui.items>.item .meta
     val itemMeta = style(
@@ -75,15 +76,22 @@ object BaseStyles extends StyleSheet.Inline {
       &.not(_.lastChild)(
         marginRight(1.1 ex)))
 
+    private def hoverColour = c"#2185D0"
+
     val link = style(
       cursor.pointer,
       &.not(_.hover)(
         textColour.important, // important because of unsafeChild used in item's &.not(_.hover)(unsafeChild("a"))
         borderBottom(solid, 1 px, c"#e0e2e4")),
       &.hover(
-        color(c"#2185D0"),
+        color(hoverColour),
         // color(c"#525456"),
         textDecoration := "underline"))
+
+    val helpIcon = style(
+      marginRight(`0`).important,
+      cursor.pointer,
+      &.hover(color(hoverColour)))
   }
 
   def pageMargin = 1 rem
