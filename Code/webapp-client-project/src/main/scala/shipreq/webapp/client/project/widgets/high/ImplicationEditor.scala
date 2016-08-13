@@ -2,19 +2,24 @@ package shipreq.webapp.client.project.widgets.high
 
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react._, vdom.prefix_<^._
-import org.scalajs.dom
-import scalaz.{\/, \/-, -\/}
+import scalacss.ScalaCssReact._
+import scalaz.{-\/, \/, \/-}
 import scalaz.syntax.either._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{Ref => _, _}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{Grammar, PlainText, TextSearch}
+import shipreq.webapp.base.text.{Grammar, PlainText, SingleLine, TextSearch}
 import shipreq.webapp.base.validation._
 import shipreq.webapp.client.base.data.Plain
+import shipreq.webapp.client.base.feature.EditorStatus
+import shipreq.webapp.client.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
+import shipreq.webapp.client.base.ui.AutosizeTextarea
+import shipreq.webapp.client.base.ui.semantic.Icon
+import shipreq.webapp.client.project.app.Style, Style.{widgets => *}
 import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.feature.{EditValidationFeature, AutoCompleteFeature}
+import shipreq.webapp.client.project.feature.{AutoCompleteFeature, EditValidationFeature}
 import AutoComplete.ReqItem
 import DataImplicits._
 
@@ -65,17 +70,22 @@ object ImplicationEditor {
     (reqs.map(_.id).toSet, text)
   }
 
-  /** Extra properties to apply to the tag. */
-  type Extra = ValidUpdateVR[SetDiff.NE[ReqId]] ~=> TagMod
+  type Output      = SetDiff.NE[ReqId]
+  type CommitFn    = Output ~=> Callback
+  type AbortCommit = Option[AbortCommit2[Callback, CommitFn]]
 
-  case class Props(edit        : ReusableVar[String],
-                   lookup      : Lookup,
-                   validationFn: ValidationFn,
-                   textSearch  : TextSearch,
-                   extra       : Extra) {
+  case class Props(edit          : ReusableVar[String],
+                   lookup        : Lookup,
+                   validationFn  : ValidationFn,
+                   asyncStatus   : Option[EditorStatus.Async],
+                   abortCommit   : AbortCommit,
+                   textSearch    : TextSearch) {
 
-    val parseResult =
-      validationFn.correctAndValidate(lookup, edit.value)
+    val parseResult = validationFn.correctAndValidate(lookup, edit.value)
+    val validated   = EditValidationFeature.setDiff(parseResult)
+    def abort       = abortCommit.fold(Callback.empty)(_.abort)
+    def commit      = (r: Output) => abortCommit.fold(Callback.empty)(_ commit r)
+    val status      = asyncStatus getOrElse EditorStatus.validUpdateV(validated)(commit, abort)
 
     def render = Component(this)
   }
@@ -117,11 +127,13 @@ object ImplicationEditor {
       .map(_.toSet)
       .addValidation(validator2(p, subject, initialValues, dir).liftS)
 
-  private val editorRef = Ref[dom.html.Input]("i")
+  private val editorRef = Ref.to(AutosizeTextarea.Component, "i")
 
   final class Backend($: BackendScope[Props, Unit]) {
     private val pxLookup = Px.bs($).propsA(_.lookup)
     private val pxTextSearch = Px.bs($).propsA(_.textSearch)
+
+    @inline private def lineCardinality = SingleLine
 
     val pxAutoComplete =
       for {
@@ -130,16 +142,71 @@ object ImplicationEditor {
       } yield
         AutoComplete.req(s, l.legal, Plain)
 
-    def render(p: Props) = {
-      val validated = EditValidationFeature.setDiff(p.parseResult)
+    val textareaConst: TagMod = {
+      val keys =
+        KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +
+        KeyboardTheme.commitCO($.props.map(_.status.getCommit), lineCardinality)
 
-      <.div(
-        <.input.text(
-          p.extra(validated.value),
-          ^.onChange  ==> ((e: ReactEventI) => p.edit.set(e.target.value)),
-          ^.ref        := editorRef,
-          ^.value      := p.edit.value),
-        validated.renderFailure)
+      val updateState: ReactEventTA => Callback =
+        e => $.props >>= (p =>
+          p.status.wrapEdit(p.edit.set(e.target.value.replace("\n", ""))))
+
+      TagMod(
+        ^.autoFocus := true,
+        ^.spellCheck := false,
+        ^.onChange ==> updateState,
+        RichTextEditor.minRows(lineCardinality),
+        keys)
+    }
+
+    def getTextarea() =
+      editorRef($).get.getDOMNode()
+
+    def render(p: Props) = {
+
+      def editor(validity: Validity): ReactElement =
+        AutosizeTextarea.withRef(editorRef)(
+          *.textEditor(p.validated.validity),
+          ^.value := p.edit.value,
+          textareaConst)
+
+      def instructions =
+        KeyboardTheme.instructionsForCommitAbort(
+          lineCardinality,
+          p.status.getCommit,
+          p.abort,
+          None)
+
+      genericRender(p.status, editor, instructions, p.edit.value)
+    }
+  }
+
+  // TODO Copied from RichTextEditor
+  def genericRender(status        : EditorStatus,
+                    editor        : Validity => ReactElement,
+                    instructions  : => ReactTag,
+                    renderReadOnly: => ReactNode) = {
+
+    status match {
+      case EditorStatus.Ignore | EditorStatus.Valid(_) =>
+        <.div(
+          editor(Valid),
+          instructions)
+
+      case EditorStatus.Invalid(err) =>
+        <.div(
+          editor(Invalid), // TODO add error background
+          *.errorPointingUp(err))
+
+      case EditorStatus.AsyncError(err, _, _) =>
+        <.div(
+          editor(Valid),
+          *.errorPointingUp(err))
+
+      case EditorStatus.InTransit =>
+        <.div(*.textEditor(Style.EditorState.InTransit),
+          <.div(Icon.CircleNotched.loading.tag),
+          <.div(*.textEditorInTransitValue, renderReadOnly))
     }
   }
 
@@ -149,12 +216,16 @@ object ImplicationEditor {
     Reusability.byRef[Lookup] || Reusability.byUnivEq
 
   implicit val reusabilityProps: Reusability[Props] =
-    Reusability.caseClass
+    Reusability.never // TODO Reusability.caseClass
 
   val Component =
     ReactComponentB[Props]("ImpEditor")
       .renderBackend[Backend]
-      .configure(Reusability.shouldComponentUpdate)
-      .configure(AutoCompleteFeature.installBP(editorRef, _.pxAutoComplete.value(), _.edit.set))
+      .configure(
+        Reusability.shouldComponentUpdate,
+        AutoCompleteFeature.install(
+          _.backend.getTextarea(),
+          (p, b) => b.pxAutoComplete.value(),
+          (p, b) => p.edit.set))
       .build
 }

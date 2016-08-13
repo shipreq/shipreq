@@ -13,7 +13,7 @@ import shipreq.webapp.base.text._
 import shipreq.webapp.client.base.feature.EditorStatus
 import shipreq.webapp.client.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
 import shipreq.webapp.client.base.ui.AutosizeTextarea
-import shipreq.webapp.client.base.ui.semantic.{Colour, Icon, Label}
+import shipreq.webapp.client.base.ui.semantic.Icon
 import shipreq.webapp.client.project.app.Style, Style.{widgets => *}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.AutoComplete
@@ -141,12 +141,12 @@ object RichTextEditor {
                     instructions  : => ReactTag,
                     previewFeature: PreviewFeature.ForChild,
                     showPreview   : Boolean,
-                    richText      : => ReactTag) = {
+                    renderReadOnly: => ReactNode) = {
     def preview =
       previewFeature.reactCollapse(showPreview)(
         <.div(*.richTextPreview, ^.ref := "p",
           <.div(*.richTextPreviewHeader, "Preview"),
-          <.div(*.richTextPreviewBody, richText)))
+          <.div(*.richTextPreviewBody, renderReadOnly)))
 
     status match {
       case EditorStatus.Ignore | EditorStatus.Valid(_) =>
@@ -170,7 +170,7 @@ object RichTextEditor {
       case EditorStatus.InTransit =>
         <.div(*.textEditor(Style.EditorState.InTransit),
           <.div(Icon.CircleNotched.loading.tag),
-          <.div(*.textEditorInTransitValue, richText))
+          <.div(*.textEditorInTransitValue, renderReadOnly))
     }
   }
 

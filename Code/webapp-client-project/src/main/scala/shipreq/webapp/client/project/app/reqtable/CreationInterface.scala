@@ -254,8 +254,9 @@ class CreationInterface($               : CompState.Access[State],
         ReusableVar(state.imp)(setImp),
         pxImpLookup,
         pxImpValidationFn,
-        pxTextSearch,
-        _noExtra)
+        None,
+        None,
+        pxTextSearch)
   }
 
   // ===================================================================================================================

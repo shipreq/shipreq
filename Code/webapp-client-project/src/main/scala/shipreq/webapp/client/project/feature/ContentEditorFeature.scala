@@ -408,19 +408,28 @@ object ContentEditorFeature {
           val cmd: SetDiff.NE[ReqId] => UpdateContentCmd =
             UpdateContentCmd.PatchImplications(subjectId, dir, _)
 
-          val extra: ImplicationEditor.Extra =
-            ReusableFn(
-              commitAbortK(SingleLine, _)(cmd))
+          val abortCommit: ImplicationEditor.AbortCommit =
+            Some(AbortCommit(abort, ReusableFn(v => commit(cmd(v)))))
 
-          rvarStrToStartEditFn(new State(_, pxLookup, pxValFn, extra), initialText)
+          rvarStrToStartEditFn(new State(_, pxLookup, pxValFn, abortCommit), initialText)
         }
 
-        private class State(rvar  : ReusableVar[String],
-                            lookup: Px[Lookup],
-                            valFn : Px[ValidationFn],
-                            extra : ImplicationEditor.Extra) extends EditorInstanceImpl {
-          def props = ImplicationEditor.Props(rvar, lookup.value(), valFn.value(), pxTextSearch.value(), extra)
-          override val renderImpl = renderDynamic(props.render)
+        private class State(rvar       : ReusableVar[String],
+                            lookup     : Px[Lookup],
+                            valFn      : Px[ValidationFn],
+                            abortCommit: ImplicationEditor.AbortCommit) extends EditorInstanceImpl {
+          override val renderImpl: RenderImpl =
+            as => CallbackTo {
+              import Px.AutoValue._
+              val props = ImplicationEditor.Props(
+                rvar,
+                lookup,
+                valFn,
+                EditorStatus.async(as, async),
+                abortCommit,
+                pxTextSearch)
+              Some(props.render: ReactElement)
+            }
         }
       }
 
