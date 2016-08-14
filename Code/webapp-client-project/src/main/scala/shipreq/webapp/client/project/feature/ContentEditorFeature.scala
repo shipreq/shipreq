@@ -405,7 +405,7 @@ object ContentEditorFeature {
             pxProject.map(p =>
               ImplicationEditor.validationFn(p, subjectId.some, initialValues, dir))
 
-          val cmd: SetDiff.NE[ReqId] => UpdateContentCmd =
+          val cmd: ImplicationEditor.Output => UpdateContentCmd =
             UpdateContentCmd.PatchImplications(subjectId, dir, _)
 
           val abortCommit: ImplicationEditor.AbortCommit =
@@ -449,19 +449,30 @@ object ContentEditorFeature {
             TagEditor.initialValues(p.reqTags(id), p.config, pxLookup.value())
           }
 
-          val extra: TagEditor.Extra =
-            ReusableFn(
-              commitAbortK(SingleLine, _)(UpdateContentCmd.PatchReqTags(id, _)))
+          val cmd: TagEditor.Output => UpdateContentCmd =
+            UpdateContentCmd.PatchReqTags(id, _)
 
-          rvarStrToStartEditFn(new State(Some(initialValues), _, pxLookup, extra), initialText)
+          val abortCommit: TagEditor.AbortCommit =
+            Some(AbortCommit(abort, ReusableFn(v => commit(cmd(v)))))
+
+          rvarStrToStartEditFn(new State(Some(initialValues), _, pxLookup, abortCommit), initialText)
         }
 
         private class State(initialValues: Some[Set[ApplicableTagId]],
                             rvar         : ReusableVar[String],
                             lookup       : Px[Lookup],
-                            extra        : TagEditor.Extra) extends EditorInstanceImpl {
-          def props = TagEditor.Props(initialValues, rvar, lookup.value(), extra)
-          override val renderImpl = renderDynamic(props.render)
+                            abortCommit  : TagEditor.AbortCommit) extends EditorInstanceImpl {
+          override val renderImpl: RenderImpl =
+            as => CallbackTo {
+              import Px.AutoValue._
+              val props = TagEditor.Props(
+                initialValues,
+                rvar,
+                lookup,
+                EditorStatus.async(as, async),
+                abortCommit)
+              Some(props.render: ReactElement)
+            }
         }
       }
 

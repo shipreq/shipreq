@@ -133,14 +133,14 @@ object ImplicationEditor {
     private val pxLookup = Px.bs($).propsA(_.lookup)
     private val pxTextSearch = Px.bs($).propsA(_.textSearch)
 
-    @inline private def lineCardinality = SingleLine
-
     val pxAutoComplete =
       for {
         l <- pxLookup
         s <- pxTextSearch
       } yield
         AutoComplete.req(s, l.legal, Plain)
+
+    @inline private def lineCardinality = SingleLine
 
     val textareaConst: TagMod = {
       val keys =

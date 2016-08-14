@@ -247,7 +247,8 @@ class CreationInterface($               : CompState.Access[State],
         None,
         ReusableVar(state.tags)(setTags),
         pxTagLookup,
-        _noExtra)
+        None,
+        None)
 
     def getPropsImps(state: CreateReqState) =
       ImplicationEditor.Props(

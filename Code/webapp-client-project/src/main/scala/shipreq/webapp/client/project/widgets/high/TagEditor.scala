@@ -3,13 +3,18 @@ package shipreq.webapp.client.project.widgets.high
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import org.scalajs.dom
-import shipreq.base.util.{IMap, NonEmpty, SetDiff}
+import scalacss.ScalaCssReact._
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.{Ref => _, _}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.SingleLine
 import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
 import shipreq.webapp.base.validation._
 import shipreq.webapp.client.base.data.Plain
+import shipreq.webapp.client.base.feature.EditorStatus
+import shipreq.webapp.client.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
+import shipreq.webapp.client.base.ui.AutosizeTextarea
+import shipreq.webapp.client.project.app.Style, Style.{widgets => *}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -50,19 +55,27 @@ object TagEditor {
     (ids, text)
   }
 
-  /** Extra properties to apply to the tag. Input is parsed tags, if valid. */
-  type Extra = ValidUpdateVR[SetDiff.NE[ApplicableTagId]] ~=> TagMod
+  type Output      = SetDiff.NE[ApplicableTagId]
+  type CommitFn    = Output ~=> Callback
+  type AbortCommit = Option[AbortCommit2[Callback, CommitFn]]
 
   case class Props(preEditValue: Option[Set[ApplicableTagId]],
                    edit        : ReusableVar[String],
                    lookup      : Lookup,
-                   extra       : Extra) {
+                   asyncStatus : Option[EditorStatus.Async],
+                   abortCommit : AbortCommit) {
 
+    // TODO Really? Stream?
     val parseResult: ValidationResult[Stream[ApplicableTag]] =
       validator.correctAndValidate(lookup, edit.value)
 
     val parseResultSet: ValidationResult[Set[ApplicableTagId]] =
       parseResult.map(_.map(_.id)(collection.breakOut))
+
+    val validated = EditValidationFeature.compareSetOption(parseResultSet)(preEditValue)
+    def abort     = abortCommit.fold(Callback.empty)(_.abort)
+    def commit    = (r: Output) => abortCommit.fold(Callback.empty)(_ commit r)
+    val status    = asyncStatus getOrElse EditorStatus.validUpdateV(validated)(commit, abort)
 
     def render = Component(this)
   }
@@ -71,9 +84,9 @@ object TagEditor {
     Reusability.byRef[Lookup] || Reusability.byUnivEq(_.underlyingMap)
 
   implicit val reusabilityProps: Reusability[Props] =
-    Reusability.caseClass
+    Reusability.never // TODO Reusability.caseClass
 
-  private val editorRef = Ref[dom.html.Input]("i")
+  private val editorRef = Ref.to(AutosizeTextarea.Component, "i")
 
   val validator =
     Validator.seqText(G.seqFormat)((l: Lookup) =>
@@ -85,23 +98,57 @@ object TagEditor {
     val pxAutoComplete = pxLookup.map(l =>
       AutoComplete.tag(l.values.toStream, HideDead)(Plain))
 
-    def render(p: Props) = {
-      val validated = EditValidationFeature.compareSetOption(p.parseResultSet)(p.preEditValue)
+    @inline private def lineCardinality = SingleLine
 
-      <.div(
-        <.input.text(
-          p.extra(validated.value),
-          ^.onChange  ==> ((e: ReactEventI) => p.edit.set(e.target.value)),
-          ^.ref        := editorRef,
-          ^.value      := p.edit.value),
-        validated.renderFailure)
+    // TODO So much copy & paste (with ImplicationEditor)
+    val textareaConst: TagMod = {
+      val keys =
+        KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +
+        KeyboardTheme.commitCO($.props.map(_.status.getCommit), lineCardinality)
+
+      val updateState: ReactEventTA => Callback =
+        e => $.props >>= (p =>
+          p.status.wrapEdit(p.edit.set(e.target.value.replace("\n", ""))))
+
+      TagMod(
+        ^.autoFocus := true,
+        ^.spellCheck := false,
+        ^.onChange ==> updateState,
+        RichTextEditor.minRows(lineCardinality),
+        keys)
+    }
+
+    def getTextarea() =
+      editorRef($).get.getDOMNode()
+
+    def render(p: Props) = {
+
+      def editor(validity: Validity): ReactElement =
+        AutosizeTextarea.withRef(editorRef)(
+          *.textEditor(p.validated.validity),
+          ^.value := p.edit.value,
+          textareaConst)
+
+      def instructions =
+        KeyboardTheme.instructionsForCommitAbort(
+          lineCardinality,
+          p.status.getCommit,
+          p.abort,
+          None)
+
+      ImplicationEditor. // TODO
+        genericRender(p.status, editor, instructions, p.edit.value)
     }
   }
 
   val Component =
     ReactComponentB[Props]("TagEditor")
       .renderBackend[Backend]
-      .configure(Reusability.shouldComponentUpdate)
-      .configure(AutoCompleteFeature.installBP(editorRef, _.pxAutoComplete.value(), _.edit.set))
+      .configure(
+        Reusability.shouldComponentUpdate,
+        AutoCompleteFeature.install(
+          _.backend.getTextarea(),
+          (p, b) => b.pxAutoComplete.value(),
+          (p, b) => p.edit.set))
       .build
 }
