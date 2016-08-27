@@ -56,7 +56,7 @@ object AsyncActionFeature {
     Reusability.byRef
 
   def renderLocked =
-    <.div(^.cls := "locked", "LOCKED") // TODO Temp
+    <.div(^.cls := "locked", "LOCKED") // TODO Remove all render stuff from AsyncActionFeature
 
   type AsyncCall[+F] = (TCB.Success, F => TCB.Failure) => Callback
 

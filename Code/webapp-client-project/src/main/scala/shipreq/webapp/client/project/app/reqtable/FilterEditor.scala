@@ -40,8 +40,8 @@ object FilterEditor {
     ReactComponentB[Props]("Filter")
       .renderBackend[Backend]
       .configure(
-        AutoCompleteFeature.installB(textEditorRef, _.autoComplete.value(), _.updateFilterText),
-        shouldComponentUpdate)
+        shouldComponentUpdate,
+        AutoCompleteFeature.installB(textEditorRef(_).get, _.autoComplete.value(), _.updateFilterText))
       .build
 
   private val acCommand: TC.Strategy =

@@ -3,49 +3,52 @@ package shipreq.webapp.client.project.widgets.high
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import org.scalajs.dom
 import scalacss.ScalaCssReact._
+import shipreq.base.util.Validity
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.validation.ValidUpdateVR
-import shipreq.webapp.client.project.app.Style.{reqtable => *} // TODO Not anymore
+import shipreq.webapp.client.base.feature.EditorStatus
+import shipreq.webapp.client.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
+import shipreq.webapp.client.base.ui.{AutosizeTextarea, EditTheme}
+import shipreq.webapp.client.project.app.Style.{widgets => *}
+import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.feature._
 import RichTextEditor.hardcodedLive
-import Text.Equality._
 
 sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, final val text: TextType) {
 
-  /** Extra properties to apply to the tag. */
-  type Extra = ValidUpdateVR[text.OptionalText] ~=> TagMod
-
-  val noExtra: Extra =
-    ReusableFn(_ => EmptyTag)
+  type CommitFn    = text.OptionalText ~=> Callback
+  type AbortCommit = Option[AbortCommit2[Callback, CommitFn]]
 
   case class Props(project       : Project,
                    plainText     : PlainText.ForProject,
                    textSearch    : TextSearch,
                    projectWidgets: ProjectWidgets,
                    edit          : ReusableVar[String],
+                   asyncStatus   : Option[EditorStatus.Async],
+                   abortCommit   : AbortCommit,
                    preview       : PreviewFeature.ForChild,
-                   preEditValue  : Option[text.OptionalText],
-                   extra         : Extra) {
+                   preEditValue  : Option[text.OptionalText]) {
 
     val richText    = text.parse(project)(edit.value)
     val parseResult = Validators.genericRichText(plainText, richText)
     val validated   = EditValidationFeature.compareOption(parseResult)(preEditValue)
+    def abort       = abortCommit.fold(Callback.empty)(_.abort)
+    def commit      = (t: text.OptionalText) => abortCommit.fold(Callback.empty)(_ commit t)
+    val status      = asyncStatus getOrElse EditorStatus.validUpdateV(validated)(commit, abort)
     def showPreview = validated.value.isChanged
 
     def render = Component(this)
   }
 
   implicit val reusabilityProps: Reusability[Props] =
-    Reusability.caseClass
+    Reusability.never // TODO Reusability.caseClass
 
-  private val editorRef = Ref[dom.html.TextArea]("i")
+  private val editorRef = Ref.to(AutosizeTextarea.Component, "i")
 
   val liveCorrect: EndoFn[String] =
     RichTextEditor.liveCorrect(text)
@@ -58,40 +61,55 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     val pxAutoComplete =
       Px.apply3(pxProject, pxPlainText, pxTextSearch)(AutoComplete.forRichText(text))
 
-    val updateState: ReactEventTA => Callback =
-      e => $.props >>= (p =>
-        p.edit.set(liveCorrect(e.target.value)) >> p.preview.onEdit)
+    val textareaConst: TagMod = {
+      val keys =
+        KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +
+        KeyboardTheme.commitCO($.props.map(_.status.getCommit), text.lineCardinality)
+
+      val updateState: ReactEventTA => Callback =
+        e => $.props >>= (p =>
+          p.status.wrapEdit(p.edit.set(liveCorrect(e.target.value)) >> p.preview.onEdit))
+
+      TagMod(
+        ^.autoFocus := true,
+        ^.onChange ==> updateState,
+        ^.onBlur   --> $.props.flatMap(_.preview.onBlur),
+        ^.onFocus  --> $.props.flatMap(_.preview.onFocus),
+        RichTextEditor.minRows(text.lineCardinality),
+        keys)
+    }
+
+    def getTextarea() =
+      editorRef($).get.getDOMNode()
 
     def render(p: Props) = {
-      def editor =
-        <.textarea(
-          *.cellEditor(p.validated.validity),
-          p.extra(p.validated.value),
-          ^.ref       := editorRef,
-          ^.value     := p.edit.value,
-          ^.onBlur   --> p.preview.onBlur,
-          ^.onFocus  --> p.preview.onFocus,
-          ^.onChange ==> updateState)
+
+      def editor(validity: Validity): ReactElement =
+        EditTheme.autosizeTextarea(editorRef, validity, p.edit.value, textareaConst)
+
+      def instructions =
+        KeyboardTheme.instructionsForCommitAbort(
+          text.lineCardinality,
+          p.status.getCommit,
+          p.abort,
+          Some(RichTextEditorHelp.modal.show))
+
+      def richText =
+        p.projectWidgets.format(hardcodedLive, p.richText)
 
       def preview =
-        p.preview.reactCollapse(p.showPreview)(
-          <.div(
-            ^.ref := "p",
-            "Preview",
-            <.div(*.textEditPreview, p.projectWidgets.format(hardcodedLive, p.richText))))
+        RichTextEditor.renderPreview(p.preview, p.showPreview, richText)
 
-      <.div(
-        editor,
-        p.validated.renderFailure,
-        preview)
+      EditTheme.renderEditor(p.status, editor, richText, instructions, preview)
     }
   }
 
   val Component =
     ReactComponentB[Props]("RichTextEditor:" + name)
       .renderBackend[Backend]
-      .configure(Reusability.shouldComponentUpdate)
-      .configure(AutoCompleteFeature.installBP(editorRef, _.pxAutoComplete.value(), _.edit.set))
+      .configure(
+        Reusability.shouldComponentUpdate,
+        AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.set))
       .build
 }
 
@@ -108,6 +126,17 @@ object RichTextEditor {
       case SingleLine => RichTextEditor.correctSingleLineText
       case MultiLine  => identity
     }
+
+  val minRows = LineCardinality.memo[TagMod] {
+    case SingleLine => ^.rows := 1
+    case MultiLine  => ^.rows := 3
+  }
+
+  def renderPreview(pf: PreviewFeature.ForChild, show: => Boolean, view: => ReactNode): ReactNode =
+    pf.reactCollapse(show)(
+      <.div(*.richTextPreview, ^.ref := "p",
+        <.div(*.richTextPreviewHeader, "Preview"),
+        <.div(*.richTextPreviewBody, view)))
 
   // This is an editor - you can't edit Dead stuff. Assume all content is Live.
   @inline def hardcodedLive = Live

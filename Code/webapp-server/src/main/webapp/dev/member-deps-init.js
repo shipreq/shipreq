@@ -218,7 +218,7 @@ return loadjs;
 void 0!==c?e&&"set"in e&&void 0!==(d=e.set(a,c,b))?d:a[b]=c:e&&"get"in e&&null!==(d=e.get(a,b))?d:a[b]},propHooks:{tabIndex:{get:function(a){var b=n.find.attr(a,"tabindex");return b?parseInt(b,10):cb.test(a.nodeName)||db.test(a.nodeName)&&a.href?0:-1}}},propFix:{"for":"htmlFor","class":"className"}}),l.optSelected||(n.propHooks.selected={get:function(a){var b=a.parentNode;return b&&b.parentNode&&b.parentNode.selectedIndex,null},set:function(a){var b=a.parentNode;b&&(b.selectedIndex,b.parentNode&&b.parentNode.selectedIndex)}}),n.each(["tabIndex","readOnly","maxLength","cellSpacing","cellPadding","rowSpan","colSpan","useMap","frameBorder","contentEditable"],function(){n.propFix[this.toLowerCase()]=this});var eb=/[\t\r\n\f]/g;function fb(a){return a.getAttribute&&a.getAttribute("class")||""}n.fn.extend({addClass:function(a){var b,c,d,e,f,g,h,i=0;if(n.isFunction(a))return this.each(function(b){n(this).addClass(a.call(this,b,fb(this)))});if("string"==typeof a&&a){b=a.match(G)||[];while(c=this[i++])if(e=fb(c),d=1===c.nodeType&&(" "+e+" ").replace(eb," ")){g=0;while(f=b[g++])d.indexOf(" "+f+" ")<0&&(d+=f+" ");h=n.trim(d),e!==h&&c.setAttribute("class",h)}}return this},removeClass:function(a){var b,c,d,e,f,g,h,i=0;if(n.isFunction(a))return this.each(function(b){n(this).removeClass(a.call(this,b,fb(this)))});if(!arguments.length)return this.attr("class","");if("string"==typeof a&&a){b=a.match(G)||[];while(c=this[i++])if(e=fb(c),d=1===c.nodeType&&(" "+e+" ").replace(eb," ")){g=0;while(f=b[g++])while(d.indexOf(" "+f+" ")>-1)d=d.replace(" "+f+" "," ");h=n.trim(d),e!==h&&c.setAttribute("class",h)}}return this},toggleClass:function(a,b){var c=typeof a;return"boolean"==typeof b&&"string"===c?b?this.addClass(a):this.removeClass(a):n.isFunction(a)?this.each(function(c){n(this).toggleClass(a.call(this,c,fb(this),b),b)}):this.each(function(){var b,d,e,f;if("string"===c){d=0,e=n(this),f=a.match(G)||[];while(b=f[d++])e.hasClass(b)?e.removeClass(b):e.addClass(b)}else void 0!==a&&"boolean"!==c||(b=fb(this),b&&N.set(this,"__className__",b),this.setAttribute&&this.setAttribute("class",b||a===!1?"":N.get(this,"__className__")||""))})},hasClass:function(a){var b,c,d=0;b=" "+a+" ";while(c=this[d++])if(1===c.nodeType&&(" "+fb(c)+" ").replace(eb," ").indexOf(b)>-1)return!0;return!1}});var gb=/\r/g,hb=/[\x20\t\r\n\f]+/g;n.fn.extend({val:function(a){var b,c,d,e=this[0];{if(arguments.length)return d=n.isFunction(a),this.each(function(c){var e;1===this.nodeType&&(e=d?a.call(this,c,n(this).val()):a,null==e?e="":"number"==typeof e?e+="":n.isArray(e)&&(e=n.map(e,function(a){return null==a?"":a+""})),b=n.valHooks[this.type]||n.valHooks[this.nodeName.toLowerCase()],b&&"set"in b&&void 0!==b.set(this,e,"value")||(this.value=e))});if(e)return b=n.valHooks[e.type]||n.valHooks[e.nodeName.toLowerCase()],b&&"get"in b&&void 0!==(c=b.get(e,"value"))?c:(c=e.value,"string"==typeof c?c.replace(gb,""):null==c?"":c)}}}),n.extend({valHooks:{option:{get:function(a){var b=n.find.attr(a,"value");return null!=b?b:n.trim(n.text(a)).replace(hb," ")}},select:{get:function(a){for(var b,c,d=a.options,e=a.selectedIndex,f="select-one"===a.type||0>e,g=f?null:[],h=f?e+1:d.length,i=0>e?h:f?e:0;h>i;i++)if(c=d[i],(c.selected||i===e)&&(l.optDisabled?!c.disabled:null===c.getAttribute("disabled"))&&(!c.parentNode.disabled||!n.nodeName(c.parentNode,"optgroup"))){if(b=n(c).val(),f)return b;g.push(b)}return g},set:function(a,b){var c,d,e=a.options,f=n.makeArray(b),g=e.length;while(g--)d=e[g],(d.selected=n.inArray(n.valHooks.option.get(d),f)>-1)&&(c=!0);return c||(a.selectedIndex=-1),f}}}}),n.each(["radio","checkbox"],function(){n.valHooks[this]={set:function(a,b){return n.isArray(b)?a.checked=n.inArray(n(a).val(),b)>-1:void 0}},l.checkOn||(n.valHooks[this].get=function(a){return null===a.getAttribute("value")?"on":a.value})});var ib=/^(?:focusinfocus|focusoutblur)$/;n.extend(n.event,{trigger:function(b,c,e,f){var g,h,i,j,l,m,o,p=[e||d],q=k.call(b,"type")?b.type:b,r=k.call(b,"namespace")?b.namespace.split("."):[];if(h=i=e=e||d,3!==e.nodeType&&8!==e.nodeType&&!ib.test(q+n.event.triggered)&&(q.indexOf(".")>-1&&(r=q.split("."),q=r.shift(),r.sort()),l=q.indexOf(":")<0&&"on"+q,b=b[n.expando]?b:new n.Event(q,"object"==typeof b&&b),b.isTrigger=f?2:3,b.namespace=r.join("."),b.rnamespace=b.namespace?new RegExp("(^|\\.)"+r.join("\\.(?:.*\\.|)")+"(\\.|$)"):null,b.result=void 0,b.target||(b.target=e),c=null==c?[b]:n.makeArray(c,[b]),o=n.event.special[q]||{},f||!o.trigger||o.trigger.apply(e,c)!==!1)){if(!f&&!o.noBubble&&!n.isWindow(e)){for(j=o.delegateType||q,ib.test(j+q)||(h=h.parentNode);h;h=h.parentNode)p.push(h),i=h;i===(e.ownerDocument||d)&&p.push(i.defaultView||i.parentWindow||a)}g=0;while((h=p[g++])&&!b.isPropagationStopped())b.type=g>1?j:o.bindType||q,m=(N.get(h,"events")||{})[b.type]&&N.get(h,"handle"),m&&m.apply(h,c),m=l&&h[l],m&&m.apply&&L(h)&&(b.result=m.apply(h,c),b.result===!1&&b.preventDefault());return b.type=q,f||b.isDefaultPrevented()||o._default&&o._default.apply(p.pop(),c)!==!1||!L(e)||l&&n.isFunction(e[q])&&!n.isWindow(e)&&(i=e[l],i&&(e[l]=null),n.event.triggered=q,e[q](),n.event.triggered=void 0,i&&(e[l]=i)),b.result}},simulate:function(a,b,c){var d=n.extend(new n.Event,c,{type:a,isSimulated:!0});n.event.trigger(d,null,b)}}),n.fn.extend({trigger:function(a,b){return this.each(function(){n.event.trigger(a,b,this)})},triggerHandler:function(a,b){var c=this[0];return c?n.event.trigger(a,b,c,!0):void 0}}),n.each("blur focus focusin focusout load resize scroll unload click dblclick mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave change select submit keydown keypress keyup error contextmenu".split(" "),function(a,b){n.fn[b]=function(a,c){return arguments.length>0?this.on(b,null,a,c):this.trigger(b)}}),n.fn.extend({hover:function(a,b){return this.mouseenter(a).mouseleave(b||a)}}),l.focusin="onfocusin"in a,l.focusin||n.each({focus:"focusin",blur:"focusout"},function(a,b){var c=function(a){n.event.simulate(b,a.target,n.event.fix(a))};n.event.special[b]={setup:function(){var d=this.ownerDocument||this,e=N.access(d,b);e||d.addEventListener(a,c,!0),N.access(d,b,(e||0)+1)},teardown:function(){var d=this.ownerDocument||this,e=N.access(d,b)-1;e?N.access(d,b,e):(d.removeEventListener(a,c,!0),N.remove(d,b))}}});var jb=a.location,kb=n.now(),lb=/\?/;n.parseJSON=function(a){return JSON.parse(a+"")},n.parseXML=function(b){var c;if(!b||"string"!=typeof b)return null;try{c=(new a.DOMParser).parseFromString(b,"text/xml")}catch(d){c=void 0}return c&&!c.getElementsByTagName("parsererror").length||n.error("Invalid XML: "+b),c};var mb=/#.*$/,nb=/([?&])_=[^&]*/,ob=/^(.*?):[ \t]*([^\r\n]*)$/gm,pb=/^(?:about|app|app-storage|.+-extension|file|res|widget):$/,qb=/^(?:GET|HEAD)$/,rb=/^\/\//,sb={},tb={},ub="*/".concat("*"),vb=d.createElement("a");vb.href=jb.href;function wb(a){return function(b,c){"string"!=typeof b&&(c=b,b="*");var d,e=0,f=b.toLowerCase().match(G)||[];if(n.isFunction(c))while(d=f[e++])"+"===d[0]?(d=d.slice(1)||"*",(a[d]=a[d]||[]).unshift(c)):(a[d]=a[d]||[]).push(c)}}function xb(a,b,c,d){var e={},f=a===tb;function g(h){var i;return e[h]=!0,n.each(a[h]||[],function(a,h){var j=h(b,c,d);return"string"!=typeof j||f||e[j]?f?!(i=j):void 0:(b.dataTypes.unshift(j),g(j),!1)}),i}return g(b.dataTypes[0])||!e["*"]&&g("*")}function yb(a,b){var c,d,e=n.ajaxSettings.flatOptions||{};for(c in b)void 0!==b[c]&&((e[c]?a:d||(d={}))[c]=b[c]);return d&&n.extend(!0,a,d),a}function zb(a,b,c){var d,e,f,g,h=a.contents,i=a.dataTypes;while("*"===i[0])i.shift(),void 0===d&&(d=a.mimeType||b.getResponseHeader("Content-Type"));if(d)for(e in h)if(h[e]&&h[e].test(d)){i.unshift(e);break}if(i[0]in c)f=i[0];else{for(e in c){if(!i[0]||a.converters[e+" "+i[0]]){f=e;break}g||(g=e)}f=f||g}return f?(f!==i[0]&&i.unshift(f),c[f]):void 0}function Ab(a,b,c,d){var e,f,g,h,i,j={},k=a.dataTypes.slice();if(k[1])for(g in a.converters)j[g.toLowerCase()]=a.converters[g];f=k.shift();while(f)if(a.responseFields[f]&&(c[a.responseFields[f]]=b),!i&&d&&a.dataFilter&&(b=a.dataFilter(b,a.dataType)),i=f,f=k.shift())if("*"===f)f=i;else if("*"!==i&&i!==f){if(g=j[i+" "+f]||j["* "+f],!g)for(e in j)if(h=e.split(" "),h[1]===f&&(g=j[i+" "+h[0]]||j["* "+h[0]])){g===!0?g=j[e]:j[e]!==!0&&(f=h[0],k.unshift(h[1]));break}if(g!==!0)if(g&&a["throws"])b=g(b);else try{b=g(b)}catch(l){return{state:"parsererror",error:g?l:"No conversion from "+i+" to "+f}}}return{state:"success",data:b}}n.extend({active:0,lastModified:{},etag:{},ajaxSettings:{url:jb.href,type:"GET",isLocal:pb.test(jb.protocol),global:!0,processData:!0,async:!0,contentType:"application/x-www-form-urlencoded; charset=UTF-8",accepts:{"*":ub,text:"text/plain",html:"text/html",xml:"application/xml, text/xml",json:"application/json, text/javascript"},contents:{xml:/\bxml\b/,html:/\bhtml/,json:/\bjson\b/},responseFields:{xml:"responseXML",text:"responseText",json:"responseJSON"},converters:{"* text":String,"text html":!0,"text json":n.parseJSON,"text xml":n.parseXML},flatOptions:{url:!0,context:!0}},ajaxSetup:function(a,b){return b?yb(yb(a,n.ajaxSettings),b):yb(n.ajaxSettings,a)},ajaxPrefilter:wb(sb),ajaxTransport:wb(tb),ajax:function(b,c){"object"==typeof b&&(c=b,b=void 0),c=c||{};var e,f,g,h,i,j,k,l,m=n.ajaxSetup({},c),o=m.context||m,p=m.context&&(o.nodeType||o.jquery)?n(o):n.event,q=n.Deferred(),r=n.Callbacks("once memory"),s=m.statusCode||{},t={},u={},v=0,w="canceled",x={readyState:0,getResponseHeader:function(a){var b;if(2===v){if(!h){h={};while(b=ob.exec(g))h[b[1].toLowerCase()]=b[2]}b=h[a.toLowerCase()]}return null==b?null:b},getAllResponseHeaders:function(){return 2===v?g:null},setRequestHeader:function(a,b){var c=a.toLowerCase();return v||(a=u[c]=u[c]||a,t[a]=b),this},overrideMimeType:function(a){return v||(m.mimeType=a),this},statusCode:function(a){var b;if(a)if(2>v)for(b in a)s[b]=[s[b],a[b]];else x.always(a[x.status]);return this},abort:function(a){var b=a||w;return e&&e.abort(b),z(0,b),this}};if(q.promise(x).complete=r.add,x.success=x.done,x.error=x.fail,m.url=((b||m.url||jb.href)+"").replace(mb,"").replace(rb,jb.protocol+"//"),m.type=c.method||c.type||m.method||m.type,m.dataTypes=n.trim(m.dataType||"*").toLowerCase().match(G)||[""],null==m.crossDomain){j=d.createElement("a");try{j.href=m.url,j.href=j.href,m.crossDomain=vb.protocol+"//"+vb.host!=j.protocol+"//"+j.host}catch(y){m.crossDomain=!0}}if(m.data&&m.processData&&"string"!=typeof m.data&&(m.data=n.param(m.data,m.traditional)),xb(sb,m,c,x),2===v)return x;k=n.event&&m.global,k&&0===n.active++&&n.event.trigger("ajaxStart"),m.type=m.type.toUpperCase(),m.hasContent=!qb.test(m.type),f=m.url,m.hasContent||(m.data&&(f=m.url+=(lb.test(f)?"&":"?")+m.data,delete m.data),m.cache===!1&&(m.url=nb.test(f)?f.replace(nb,"$1_="+kb++):f+(lb.test(f)?"&":"?")+"_="+kb++)),m.ifModified&&(n.lastModified[f]&&x.setRequestHeader("If-Modified-Since",n.lastModified[f]),n.etag[f]&&x.setRequestHeader("If-None-Match",n.etag[f])),(m.data&&m.hasContent&&m.contentType!==!1||c.contentType)&&x.setRequestHeader("Content-Type",m.contentType),x.setRequestHeader("Accept",m.dataTypes[0]&&m.accepts[m.dataTypes[0]]?m.accepts[m.dataTypes[0]]+("*"!==m.dataTypes[0]?", "+ub+"; q=0.01":""):m.accepts["*"]);for(l in m.headers)x.setRequestHeader(l,m.headers[l]);if(m.beforeSend&&(m.beforeSend.call(o,x,m)===!1||2===v))return x.abort();w="abort";for(l in{success:1,error:1,complete:1})x[l](m[l]);if(e=xb(tb,m,c,x)){if(x.readyState=1,k&&p.trigger("ajaxSend",[x,m]),2===v)return x;m.async&&m.timeout>0&&(i=a.setTimeout(function(){x.abort("timeout")},m.timeout));try{v=1,e.send(t,z)}catch(y){if(!(2>v))throw y;z(-1,y)}}else z(-1,"No Transport");function z(b,c,d,h){var j,l,t,u,w,y=c;2!==v&&(v=2,i&&a.clearTimeout(i),e=void 0,g=h||"",x.readyState=b>0?4:0,j=b>=200&&300>b||304===b,d&&(u=zb(m,x,d)),u=Ab(m,u,x,j),j?(m.ifModified&&(w=x.getResponseHeader("Last-Modified"),w&&(n.lastModified[f]=w),w=x.getResponseHeader("etag"),w&&(n.etag[f]=w)),204===b||"HEAD"===m.type?y="nocontent":304===b?y="notmodified":(y=u.state,l=u.data,t=u.error,j=!t)):(t=y,!b&&y||(y="error",0>b&&(b=0))),x.status=b,x.statusText=(c||y)+"",j?q.resolveWith(o,[l,y,x]):q.rejectWith(o,[x,y,t]),x.statusCode(s),s=void 0,k&&p.trigger(j?"ajaxSuccess":"ajaxError",[x,m,j?l:t]),r.fireWith(o,[x,y]),k&&(p.trigger("ajaxComplete",[x,m]),--n.active||n.event.trigger("ajaxStop")))}return x},getJSON:function(a,b,c){return n.get(a,b,c,"json")},getScript:function(a,b){return n.get(a,void 0,b,"script")}}),n.each(["get","post"],function(a,b){n[b]=function(a,c,d,e){return n.isFunction(c)&&(e=e||d,d=c,c=void 0),n.ajax(n.extend({url:a,type:b,dataType:e,data:c,success:d},n.isPlainObject(a)&&a))}}),n._evalUrl=function(a){return n.ajax({url:a,type:"GET",dataType:"script",async:!1,global:!1,"throws":!0})},n.fn.extend({wrapAll:function(a){var b;return n.isFunction(a)?this.each(function(b){n(this).wrapAll(a.call(this,b))}):(this[0]&&(b=n(a,this[0].ownerDocument).eq(0).clone(!0),this[0].parentNode&&b.insertBefore(this[0]),b.map(function(){var a=this;while(a.firstElementChild)a=a.firstElementChild;return a}).append(this)),this)},wrapInner:function(a){return n.isFunction(a)?this.each(function(b){n(this).wrapInner(a.call(this,b))}):this.each(function(){var b=n(this),c=b.contents();c.length?c.wrapAll(a):b.append(a)})},wrap:function(a){var b=n.isFunction(a);return this.each(function(c){n(this).wrapAll(b?a.call(this,c):a)})},unwrap:function(){return this.parent().each(function(){n.nodeName(this,"body")||n(this).replaceWith(this.childNodes)}).end()}}),n.expr.filters.hidden=function(a){return!n.expr.filters.visible(a)},n.expr.filters.visible=function(a){return a.offsetWidth>0||a.offsetHeight>0||a.getClientRects().length>0};var Bb=/%20/g,Cb=/\[\]$/,Db=/\r?\n/g,Eb=/^(?:submit|button|image|reset|file)$/i,Fb=/^(?:input|select|textarea|keygen)/i;function Gb(a,b,c,d){var e;if(n.isArray(b))n.each(b,function(b,e){c||Cb.test(a)?d(a,e):Gb(a+"["+("object"==typeof e&&null!=e?b:"")+"]",e,c,d)});else if(c||"object"!==n.type(b))d(a,b);else for(e in b)Gb(a+"["+e+"]",b[e],c,d)}n.param=function(a,b){var c,d=[],e=function(a,b){b=n.isFunction(b)?b():null==b?"":b,d[d.length]=encodeURIComponent(a)+"="+encodeURIComponent(b)};if(void 0===b&&(b=n.ajaxSettings&&n.ajaxSettings.traditional),n.isArray(a)||a.jquery&&!n.isPlainObject(a))n.each(a,function(){e(this.name,this.value)});else for(c in a)Gb(c,a[c],b,e);return d.join("&").replace(Bb,"+")},n.fn.extend({serialize:function(){return n.param(this.serializeArray())},serializeArray:function(){return this.map(function(){var a=n.prop(this,"elements");return a?n.makeArray(a):this}).filter(function(){var a=this.type;return this.name&&!n(this).is(":disabled")&&Fb.test(this.nodeName)&&!Eb.test(a)&&(this.checked||!X.test(a))}).map(function(a,b){var c=n(this).val();return null==c?null:n.isArray(c)?n.map(c,function(a){return{name:b.name,value:a.replace(Db,"\r\n")}}):{name:b.name,value:c.replace(Db,"\r\n")}}).get()}}),n.ajaxSettings.xhr=function(){try{return new a.XMLHttpRequest}catch(b){}};var Hb={0:200,1223:204},Ib=n.ajaxSettings.xhr();l.cors=!!Ib&&"withCredentials"in Ib,l.ajax=Ib=!!Ib,n.ajaxTransport(function(b){var c,d;return l.cors||Ib&&!b.crossDomain?{send:function(e,f){var g,h=b.xhr();if(h.open(b.type,b.url,b.async,b.username,b.password),b.xhrFields)for(g in b.xhrFields)h[g]=b.xhrFields[g];b.mimeType&&h.overrideMimeType&&h.overrideMimeType(b.mimeType),b.crossDomain||e["X-Requested-With"]||(e["X-Requested-With"]="XMLHttpRequest");for(g in e)h.setRequestHeader(g,e[g]);c=function(a){return function(){c&&(c=d=h.onload=h.onerror=h.onabort=h.onreadystatechange=null,"abort"===a?h.abort():"error"===a?"number"!=typeof h.status?f(0,"error"):f(h.status,h.statusText):f(Hb[h.status]||h.status,h.statusText,"text"!==(h.responseType||"text")||"string"!=typeof h.responseText?{binary:h.response}:{text:h.responseText},h.getAllResponseHeaders()))}},h.onload=c(),d=h.onerror=c("error"),void 0!==h.onabort?h.onabort=d:h.onreadystatechange=function(){4===h.readyState&&a.setTimeout(function(){c&&d()})},c=c("abort");try{h.send(b.hasContent&&b.data||null)}catch(i){if(c)throw i}},abort:function(){c&&c()}}:void 0}),n.ajaxSetup({accepts:{script:"text/javascript, application/javascript, application/ecmascript, application/x-ecmascript"},contents:{script:/\b(?:java|ecma)script\b/},converters:{"text script":function(a){return n.globalEval(a),a}}}),n.ajaxPrefilter("script",function(a){void 0===a.cache&&(a.cache=!1),a.crossDomain&&(a.type="GET")}),n.ajaxTransport("script",function(a){if(a.crossDomain){var b,c;return{send:function(e,f){b=n("<script>").prop({charset:a.scriptCharset,src:a.url}).on("load error",c=function(a){b.remove(),c=null,a&&f("error"===a.type?404:200,a.type)}),d.head.appendChild(b[0])},abort:function(){c&&c()}}}});var Jb=[],Kb=/(=)\?(?=&|$)|\?\?/;n.ajaxSetup({jsonp:"callback",jsonpCallback:function(){var a=Jb.pop()||n.expando+"_"+kb++;return this[a]=!0,a}}),n.ajaxPrefilter("json jsonp",function(b,c,d){var e,f,g,h=b.jsonp!==!1&&(Kb.test(b.url)?"url":"string"==typeof b.data&&0===(b.contentType||"").indexOf("application/x-www-form-urlencoded")&&Kb.test(b.data)&&"data");return h||"jsonp"===b.dataTypes[0]?(e=b.jsonpCallback=n.isFunction(b.jsonpCallback)?b.jsonpCallback():b.jsonpCallback,h?b[h]=b[h].replace(Kb,"$1"+e):b.jsonp!==!1&&(b.url+=(lb.test(b.url)?"&":"?")+b.jsonp+"="+e),b.converters["script json"]=function(){return g||n.error(e+" was not called"),g[0]},b.dataTypes[0]="json",f=a[e],a[e]=function(){g=arguments},d.always(function(){void 0===f?n(a).removeProp(e):a[e]=f,b[e]&&(b.jsonpCallback=c.jsonpCallback,Jb.push(e)),g&&n.isFunction(f)&&f(g[0]),g=f=void 0}),"script"):void 0}),n.parseHTML=function(a,b,c){if(!a||"string"!=typeof a)return null;"boolean"==typeof b&&(c=b,b=!1),b=b||d;var e=x.exec(a),f=!c&&[];return e?[b.createElement(e[1])]:(e=ca([a],b,f),f&&f.length&&n(f).remove(),n.merge([],e.childNodes))};var Lb=n.fn.load;n.fn.load=function(a,b,c){if("string"!=typeof a&&Lb)return Lb.apply(this,arguments);var d,e,f,g=this,h=a.indexOf(" ");return h>-1&&(d=n.trim(a.slice(h)),a=a.slice(0,h)),n.isFunction(b)?(c=b,b=void 0):b&&"object"==typeof b&&(e="POST"),g.length>0&&n.ajax({url:a,type:e||"GET",dataType:"html",data:b}).done(function(a){f=arguments,g.html(d?n("<div>").append(n.parseHTML(a)).find(d):a)}).always(c&&function(a,b){g.each(function(){c.apply(this,f||[a.responseText,b,a])})}),this},n.each(["ajaxStart","ajaxStop","ajaxComplete","ajaxError","ajaxSuccess","ajaxSend"],function(a,b){n.fn[b]=function(a){return this.on(b,a)}}),n.expr.filters.animated=function(a){return n.grep(n.timers,function(b){return a===b.elem}).length};function Mb(a){return n.isWindow(a)?a:9===a.nodeType&&a.defaultView}n.offset={setOffset:function(a,b,c){var d,e,f,g,h,i,j,k=n.css(a,"position"),l=n(a),m={};"static"===k&&(a.style.position="relative"),h=l.offset(),f=n.css(a,"top"),i=n.css(a,"left"),j=("absolute"===k||"fixed"===k)&&(f+i).indexOf("auto")>-1,j?(d=l.position(),g=d.top,e=d.left):(g=parseFloat(f)||0,e=parseFloat(i)||0),n.isFunction(b)&&(b=b.call(a,c,n.extend({},h))),null!=b.top&&(m.top=b.top-h.top+g),null!=b.left&&(m.left=b.left-h.left+e),"using"in b?b.using.call(a,m):l.css(m)}},n.fn.extend({offset:function(a){if(arguments.length)return void 0===a?this:this.each(function(b){n.offset.setOffset(this,a,b)});var b,c,d=this[0],e={top:0,left:0},f=d&&d.ownerDocument;if(f)return b=f.documentElement,n.contains(b,d)?(e=d.getBoundingClientRect(),c=Mb(f),{top:e.top+c.pageYOffset-b.clientTop,left:e.left+c.pageXOffset-b.clientLeft}):e},position:function(){if(this[0]){var a,b,c=this[0],d={top:0,left:0};return"fixed"===n.css(c,"position")?b=c.getBoundingClientRect():(a=this.offsetParent(),b=this.offset(),n.nodeName(a[0],"html")||(d=a.offset()),d.top+=n.css(a[0],"borderTopWidth",!0),d.left+=n.css(a[0],"borderLeftWidth",!0)),{top:b.top-d.top-n.css(c,"marginTop",!0),left:b.left-d.left-n.css(c,"marginLeft",!0)}}},offsetParent:function(){return this.map(function(){var a=this.offsetParent;while(a&&"static"===n.css(a,"position"))a=a.offsetParent;return a||Ea})}}),n.each({scrollLeft:"pageXOffset",scrollTop:"pageYOffset"},function(a,b){var c="pageYOffset"===b;n.fn[a]=function(d){return K(this,function(a,d,e){var f=Mb(a);return void 0===e?f?f[b]:a[d]:void(f?f.scrollTo(c?f.pageXOffset:e,c?e:f.pageYOffset):a[d]=e)},a,d,arguments.length)}}),n.each(["top","left"],function(a,b){n.cssHooks[b]=Ga(l.pixelPosition,function(a,c){return c?(c=Fa(a,b),Ba.test(c)?n(a).position()[b]+"px":c):void 0})}),n.each({Height:"height",Width:"width"},function(a,b){n.each({padding:"inner"+a,content:b,"":"outer"+a},function(c,d){n.fn[d]=function(d,e){var f=arguments.length&&(c||"boolean"!=typeof d),g=c||(d===!0||e===!0?"margin":"border");return K(this,function(b,c,d){var e;return n.isWindow(b)?b.document.documentElement["client"+a]:9===b.nodeType?(e=b.documentElement,Math.max(b.body["scroll"+a],e["scroll"+a],b.body["offset"+a],e["offset"+a],e["client"+a])):void 0===d?n.css(b,c,g):n.style(b,c,d,g)},b,f?d:void 0,f,null)}})}),n.fn.extend({bind:function(a,b,c){return this.on(a,null,b,c)},unbind:function(a,b){return this.off(a,null,b)},delegate:function(a,b,c,d){return this.on(b,a,c,d)},undelegate:function(a,b,c){return 1===arguments.length?this.off(a,"**"):this.off(b,a||"**",c)},size:function(){return this.length}}),n.fn.andSelf=n.fn.addBack,"function"==typeof define&&define.amd&&define("jquery",[],function(){return n});var Nb=a.jQuery,Ob=a.$;return n.noConflict=function(b){return a.$===n&&(a.$=Ob),b&&a.jQuery===n&&(a.jQuery=Nb),n},b||(a.jQuery=a.$=n),n});
 
  /*
- * # Semantic UI - 2.2.0
+ * # Semantic UI - 2.2.2
  * https://github.com/Semantic-Org/Semantic-UI
  * http://www.semantic-ui.com/
  *
@@ -228,7 +228,7 @@ void 0!==c?e&&"set"in e&&void 0!==(d=e.set(a,c,b))?d:a[b]=c:e&&"get"in e&&null!=
  *
  */
 /*!
- * # Semantic UI 2.2.0 - Site
+ * # Semantic UI 2.2.2 - Site
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -716,7 +716,618 @@ $.extend($.expr[ ":" ], {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.2.0 - Dimmer
+ * # Semantic UI 2.2.2 - Accordion
+ * http://github.com/semantic-org/semantic-ui/
+ *
+ *
+ * Released under the MIT license
+ * http://opensource.org/licenses/MIT
+ *
+ */
+
+;(function ($, window, document, undefined) {
+
+"use strict";
+
+window = (typeof window != 'undefined' && window.Math == Math)
+  ? window
+  : (typeof self != 'undefined' && self.Math == Math)
+    ? self
+    : Function('return this')()
+;
+
+$.fn.accordion = function(parameters) {
+  var
+    $allModules     = $(this),
+
+    time            = new Date().getTime(),
+    performance     = [],
+
+    query           = arguments[0],
+    methodInvoked   = (typeof query == 'string'),
+    queryArguments  = [].slice.call(arguments, 1),
+
+    requestAnimationFrame = window.requestAnimationFrame
+      || window.mozRequestAnimationFrame
+      || window.webkitRequestAnimationFrame
+      || window.msRequestAnimationFrame
+      || function(callback) { setTimeout(callback, 0); },
+
+    returnedValue
+  ;
+  $allModules
+    .each(function() {
+      var
+        settings        = ( $.isPlainObject(parameters) )
+          ? $.extend(true, {}, $.fn.accordion.settings, parameters)
+          : $.extend({}, $.fn.accordion.settings),
+
+        className       = settings.className,
+        namespace       = settings.namespace,
+        selector        = settings.selector,
+        error           = settings.error,
+
+        eventNamespace  = '.' + namespace,
+        moduleNamespace = 'module-' + namespace,
+        moduleSelector  = $allModules.selector || '',
+
+        $module  = $(this),
+        $title   = $module.find(selector.title),
+        $content = $module.find(selector.content),
+
+        element  = this,
+        instance = $module.data(moduleNamespace),
+        observer,
+        module
+      ;
+
+      module = {
+
+        initialize: function() {
+          module.debug('Initializing', $module);
+          module.bind.events();
+          if(settings.observeChanges) {
+            module.observeChanges();
+          }
+          module.instantiate();
+        },
+
+        instantiate: function() {
+          instance = module;
+          $module
+            .data(moduleNamespace, module)
+          ;
+        },
+
+        destroy: function() {
+          module.debug('Destroying previous instance', $module);
+          $module
+            .off(eventNamespace)
+            .removeData(moduleNamespace)
+          ;
+        },
+
+        refresh: function() {
+          $title   = $module.find(selector.title);
+          $content = $module.find(selector.content);
+        },
+
+        observeChanges: function() {
+          if('MutationObserver' in window) {
+            observer = new MutationObserver(function(mutations) {
+              module.debug('DOM tree modified, updating selector cache');
+              module.refresh();
+            });
+            observer.observe(element, {
+              childList : true,
+              subtree   : true
+            });
+            module.debug('Setting up mutation observer', observer);
+          }
+        },
+
+        bind: {
+          events: function() {
+            module.debug('Binding delegated events');
+            $module
+              .on(settings.on + eventNamespace, selector.trigger, module.event.click)
+            ;
+          }
+        },
+
+        event: {
+          click: function() {
+            module.toggle.call(this);
+          }
+        },
+
+        toggle: function(query) {
+          var
+            $activeTitle = (query !== undefined)
+              ? (typeof query === 'number')
+                ? $title.eq(query)
+                : $(query).closest(selector.title)
+              : $(this).closest(selector.title),
+            $activeContent = $activeTitle.next($content),
+            isAnimating = $activeContent.hasClass(className.animating),
+            isActive    = $activeContent.hasClass(className.active),
+            isOpen      = (isActive && !isAnimating),
+            isOpening   = (!isActive && isAnimating)
+          ;
+          module.debug('Toggling visibility of content', $activeTitle);
+          if(isOpen || isOpening) {
+            if(settings.collapsible) {
+              module.close.call($activeTitle);
+            }
+            else {
+              module.debug('Cannot close accordion content collapsing is disabled');
+            }
+          }
+          else {
+            module.open.call($activeTitle);
+          }
+        },
+
+        open: function(query) {
+          var
+            $activeTitle = (query !== undefined)
+              ? (typeof query === 'number')
+                ? $title.eq(query)
+                : $(query).closest(selector.title)
+              : $(this).closest(selector.title),
+            $activeContent = $activeTitle.next($content),
+            isAnimating = $activeContent.hasClass(className.animating),
+            isActive    = $activeContent.hasClass(className.active),
+            isOpen      = (isActive || isAnimating)
+          ;
+          if(isOpen) {
+            module.debug('Accordion already open, skipping', $activeContent);
+            return;
+          }
+          module.debug('Opening accordion content', $activeTitle);
+          settings.onOpening.call($activeContent);
+          if(settings.exclusive) {
+            module.closeOthers.call($activeTitle);
+          }
+          $activeTitle
+            .addClass(className.active)
+          ;
+          $activeContent
+            .stop(true, true)
+            .addClass(className.animating)
+          ;
+          if(settings.animateChildren) {
+            if($.fn.transition !== undefined && $module.transition('is supported')) {
+              $activeContent
+                .children()
+                  .transition({
+                    animation   : 'fade in',
+                    queue       : false,
+                    useFailSafe : true,
+                    debug       : settings.debug,
+                    verbose     : settings.verbose,
+                    duration    : settings.duration
+                  })
+              ;
+            }
+            else {
+              $activeContent
+                .children()
+                  .stop(true, true)
+                  .animate({
+                    opacity: 1
+                  }, settings.duration, module.resetOpacity)
+              ;
+            }
+          }
+          $activeContent
+            .slideDown(settings.duration, settings.easing, function() {
+              $activeContent
+                .removeClass(className.animating)
+                .addClass(className.active)
+              ;
+              module.reset.display.call(this);
+              settings.onOpen.call(this);
+              settings.onChange.call(this);
+            })
+          ;
+        },
+
+        close: function(query) {
+          var
+            $activeTitle = (query !== undefined)
+              ? (typeof query === 'number')
+                ? $title.eq(query)
+                : $(query).closest(selector.title)
+              : $(this).closest(selector.title),
+            $activeContent = $activeTitle.next($content),
+            isAnimating    = $activeContent.hasClass(className.animating),
+            isActive       = $activeContent.hasClass(className.active),
+            isOpening      = (!isActive && isAnimating),
+            isClosing      = (isActive && isAnimating)
+          ;
+          if((isActive || isOpening) && !isClosing) {
+            module.debug('Closing accordion content', $activeContent);
+            settings.onClosing.call($activeContent);
+            $activeTitle
+              .removeClass(className.active)
+            ;
+            $activeContent
+              .stop(true, true)
+              .addClass(className.animating)
+            ;
+            if(settings.animateChildren) {
+              if($.fn.transition !== undefined && $module.transition('is supported')) {
+                $activeContent
+                  .children()
+                    .transition({
+                      animation   : 'fade out',
+                      queue       : false,
+                      useFailSafe : true,
+                      debug       : settings.debug,
+                      verbose     : settings.verbose,
+                      duration    : settings.duration
+                    })
+                ;
+              }
+              else {
+                $activeContent
+                  .children()
+                    .stop(true, true)
+                    .animate({
+                      opacity: 0
+                    }, settings.duration, module.resetOpacity)
+                ;
+              }
+            }
+            $activeContent
+              .slideUp(settings.duration, settings.easing, function() {
+                $activeContent
+                  .removeClass(className.animating)
+                  .removeClass(className.active)
+                ;
+                module.reset.display.call(this);
+                settings.onClose.call(this);
+                settings.onChange.call(this);
+              })
+            ;
+          }
+        },
+
+        closeOthers: function(index) {
+          var
+            $activeTitle = (index !== undefined)
+              ? $title.eq(index)
+              : $(this).closest(selector.title),
+            $parentTitles    = $activeTitle.parents(selector.content).prev(selector.title),
+            $activeAccordion = $activeTitle.closest(selector.accordion),
+            activeSelector   = selector.title + '.' + className.active + ':visible',
+            activeContent    = selector.content + '.' + className.active + ':visible',
+            $openTitles,
+            $nestedTitles,
+            $openContents
+          ;
+          if(settings.closeNested) {
+            $openTitles   = $activeAccordion.find(activeSelector).not($parentTitles);
+            $openContents = $openTitles.next($content);
+          }
+          else {
+            $openTitles   = $activeAccordion.find(activeSelector).not($parentTitles);
+            $nestedTitles = $activeAccordion.find(activeContent).find(activeSelector).not($parentTitles);
+            $openTitles   = $openTitles.not($nestedTitles);
+            $openContents = $openTitles.next($content);
+          }
+          if( ($openTitles.length > 0) ) {
+            module.debug('Exclusive enabled, closing other content', $openTitles);
+            $openTitles
+              .removeClass(className.active)
+            ;
+            $openContents
+              .removeClass(className.animating)
+              .stop(true, true)
+            ;
+            if(settings.animateChildren) {
+              if($.fn.transition !== undefined && $module.transition('is supported')) {
+                $openContents
+                  .children()
+                    .transition({
+                      animation   : 'fade out',
+                      useFailSafe : true,
+                      debug       : settings.debug,
+                      verbose     : settings.verbose,
+                      duration    : settings.duration
+                    })
+                ;
+              }
+              else {
+                $openContents
+                  .children()
+                    .stop(true, true)
+                    .animate({
+                      opacity: 0
+                    }, settings.duration, module.resetOpacity)
+                ;
+              }
+            }
+            $openContents
+              .slideUp(settings.duration , settings.easing, function() {
+                $(this).removeClass(className.active);
+                module.reset.display.call(this);
+              })
+            ;
+          }
+        },
+
+        reset: {
+
+          display: function() {
+            module.verbose('Removing inline display from element', this);
+            $(this).css('display', '');
+            if( $(this).attr('style') === '') {
+              $(this)
+                .attr('style', '')
+                .removeAttr('style')
+              ;
+            }
+          },
+
+          opacity: function() {
+            module.verbose('Removing inline opacity from element', this);
+            $(this).css('opacity', '');
+            if( $(this).attr('style') === '') {
+              $(this)
+                .attr('style', '')
+                .removeAttr('style')
+              ;
+            }
+          },
+
+        },
+
+        setting: function(name, value) {
+          module.debug('Changing setting', name, value);
+          if( $.isPlainObject(name) ) {
+            $.extend(true, settings, name);
+          }
+          else if(value !== undefined) {
+            if($.isPlainObject(settings[name])) {
+              $.extend(true, settings[name], value);
+            }
+            else {
+              settings[name] = value;
+            }
+          }
+          else {
+            return settings[name];
+          }
+        },
+        internal: function(name, value) {
+          module.debug('Changing internal', name, value);
+          if(value !== undefined) {
+            if( $.isPlainObject(name) ) {
+              $.extend(true, module, name);
+            }
+            else {
+              module[name] = value;
+            }
+          }
+          else {
+            return module[name];
+          }
+        },
+        debug: function() {
+          if(!settings.silent && settings.debug) {
+            if(settings.performance) {
+              module.performance.log(arguments);
+            }
+            else {
+              module.debug = Function.prototype.bind.call(console.info, console, settings.name + ':');
+              module.debug.apply(console, arguments);
+            }
+          }
+        },
+        verbose: function() {
+          if(!settings.silent && settings.verbose && settings.debug) {
+            if(settings.performance) {
+              module.performance.log(arguments);
+            }
+            else {
+              module.verbose = Function.prototype.bind.call(console.info, console, settings.name + ':');
+              module.verbose.apply(console, arguments);
+            }
+          }
+        },
+        error: function() {
+          if(!settings.silent) {
+            module.error = Function.prototype.bind.call(console.error, console, settings.name + ':');
+            module.error.apply(console, arguments);
+          }
+        },
+        performance: {
+          log: function(message) {
+            var
+              currentTime,
+              executionTime,
+              previousTime
+            ;
+            if(settings.performance) {
+              currentTime   = new Date().getTime();
+              previousTime  = time || currentTime;
+              executionTime = currentTime - previousTime;
+              time          = currentTime;
+              performance.push({
+                'Name'           : message[0],
+                'Arguments'      : [].slice.call(message, 1) || '',
+                'Element'        : element,
+                'Execution Time' : executionTime
+              });
+            }
+            clearTimeout(module.performance.timer);
+            module.performance.timer = setTimeout(module.performance.display, 500);
+          },
+          display: function() {
+            var
+              title = settings.name + ':',
+              totalTime = 0
+            ;
+            time = false;
+            clearTimeout(module.performance.timer);
+            $.each(performance, function(index, data) {
+              totalTime += data['Execution Time'];
+            });
+            title += ' ' + totalTime + 'ms';
+            if(moduleSelector) {
+              title += ' \'' + moduleSelector + '\'';
+            }
+            if( (console.group !== undefined || console.table !== undefined) && performance.length > 0) {
+              console.groupCollapsed(title);
+              if(console.table) {
+                console.table(performance);
+              }
+              else {
+                $.each(performance, function(index, data) {
+                  console.log(data['Name'] + ': ' + data['Execution Time']+'ms');
+                });
+              }
+              console.groupEnd();
+            }
+            performance = [];
+          }
+        },
+        invoke: function(query, passedArguments, context) {
+          var
+            object = instance,
+            maxDepth,
+            found,
+            response
+          ;
+          passedArguments = passedArguments || queryArguments;
+          context         = element         || context;
+          if(typeof query == 'string' && object !== undefined) {
+            query    = query.split(/[\. ]/);
+            maxDepth = query.length - 1;
+            $.each(query, function(depth, value) {
+              var camelCaseValue = (depth != maxDepth)
+                ? value + query[depth + 1].charAt(0).toUpperCase() + query[depth + 1].slice(1)
+                : query
+              ;
+              if( $.isPlainObject( object[camelCaseValue] ) && (depth != maxDepth) ) {
+                object = object[camelCaseValue];
+              }
+              else if( object[camelCaseValue] !== undefined ) {
+                found = object[camelCaseValue];
+                return false;
+              }
+              else if( $.isPlainObject( object[value] ) && (depth != maxDepth) ) {
+                object = object[value];
+              }
+              else if( object[value] !== undefined ) {
+                found = object[value];
+                return false;
+              }
+              else {
+                module.error(error.method, query);
+                return false;
+              }
+            });
+          }
+          if ( $.isFunction( found ) ) {
+            response = found.apply(context, passedArguments);
+          }
+          else if(found !== undefined) {
+            response = found;
+          }
+          if($.isArray(returnedValue)) {
+            returnedValue.push(response);
+          }
+          else if(returnedValue !== undefined) {
+            returnedValue = [returnedValue, response];
+          }
+          else if(response !== undefined) {
+            returnedValue = response;
+          }
+          return found;
+        }
+      };
+      if(methodInvoked) {
+        if(instance === undefined) {
+          module.initialize();
+        }
+        module.invoke(query);
+      }
+      else {
+        if(instance !== undefined) {
+          instance.invoke('destroy');
+        }
+        module.initialize();
+      }
+    })
+  ;
+  return (returnedValue !== undefined)
+    ? returnedValue
+    : this
+  ;
+};
+
+$.fn.accordion.settings = {
+
+  name            : 'Accordion',
+  namespace       : 'accordion',
+
+  silent          : false,
+  debug           : false,
+  verbose         : false,
+  performance     : true,
+
+  on              : 'click', // event on title that opens accordion
+
+  observeChanges  : true,  // whether accordion should automatically refresh on DOM insertion
+
+  exclusive       : true,  // whether a single accordion content panel should be open at once
+  collapsible     : true,  // whether accordion content can be closed
+  closeNested     : false, // whether nested content should be closed when a panel is closed
+  animateChildren : true,  // whether children opacity should be animated
+
+  duration        : 350, // duration of animation
+  easing          : 'easeOutQuad', // easing equation for animation
+
+
+  onOpening       : function(){}, // callback before open animation
+  onOpen          : function(){}, // callback after open animation
+  onClosing       : function(){}, // callback before closing animation
+  onClose         : function(){}, // callback after closing animation
+  onChange        : function(){}, // callback after closing or opening animation
+
+  error: {
+    method : 'The method you called is not defined'
+  },
+
+  className   : {
+    active    : 'active',
+    animating : 'animating'
+  },
+
+  selector    : {
+    accordion : '.accordion',
+    title     : '.title',
+    trigger   : '.title',
+    content   : '.content'
+  }
+
+};
+
+// Adds easing
+$.extend( $.easing, {
+  easeOutQuad: function (x, t, b, c, d) {
+    return -c *(t/=d)*(t-2) + b;
+  }
+});
+
+})( jQuery, window, document );
+
+
+/*!
+ * # Semantic UI 2.2.2 - Dimmer
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -800,6 +1411,7 @@ $.fn.dimmer = function(parameters) {
             else {
               $dimmer = module.create();
             }
+            module.set.variation();
           }
         },
 
@@ -890,10 +1502,6 @@ $.fn.dimmer = function(parameters) {
           var
             $element = $( settings.template.dimmer() )
           ;
-          if(settings.variation) {
-            module.debug('Creating dimmer with variation', settings.variation);
-            $element.addClass(settings.variation);
-          }
           if(settings.dimmerName) {
             module.debug('Creating named dimmer', settings.dimmerName);
             $element.addClass(settings.dimmerName);
@@ -1428,7 +2036,7 @@ $.fn.dimmer.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.2.0 - Dropdown
+ * # Semantic UI 2.2.2 - Dropdown
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -2725,15 +3333,13 @@ $.fn.dropdown = function(parameters) {
                 hasSelectedItem       = ($selectedItem.length > 0),
                 selectedIsSelectable  = ($selectedItem.not(selector.unselectable).length > 0),
                 delimiterPressed      = (pressedKey == keys.delimiter && settings.allowAdditions && module.is.multiple()),
-                isAdditionWithoutMenu = (settings.allowAdditions && settings.hideAdditions && (pressedKey == keys.enter || delimiterPressed)),
+                isAdditionWithoutMenu = (settings.allowAdditions && settings.hideAdditions && (pressedKey == keys.enter || delimiterPressed) && selectedIsSelectable),
                 $nextItem,
                 isSubMenuItem,
                 newIndex
               ;
-
               // allow selection with menu closed
               if(isAdditionWithoutMenu) {
-                $selectedItem = $menu.children(selector.addition);
                 module.verbose('Selecting item from keyboard shortcut', $selectedItem);
                 module.event.item.click.call($selectedItem, event);
                 if(module.is.searchSelection()) {
@@ -4000,7 +4606,6 @@ $.fn.dropdown = function(parameters) {
               return;
             }
             if(value === '' || alreadyHasValue) {
-              console.log('removing addition');
               $addition.remove();
               return;
             }
@@ -4025,7 +4630,6 @@ $.fn.dropdown = function(parameters) {
               $addition
                 .prependTo($menu)
               ;
-              $item.add($addition);
               module.verbose('Adding item choice to menu corresponding with user choice addition', $addition);
             }
             if(!settings.hideAdditions || module.is.allFiltered()) {
@@ -4035,6 +4639,7 @@ $.fn.dropdown = function(parameters) {
                 .removeClass(className.selected)
               ;
             }
+            module.refreshItems();
           },
           variables: function(message, term) {
             var
@@ -5149,7 +5754,915 @@ $.fn.dropdown.settings.templates = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.2.0 - Popup
+ * # Semantic UI 2.2.2 - Modal
+ * http://github.com/semantic-org/semantic-ui/
+ *
+ *
+ * Released under the MIT license
+ * http://opensource.org/licenses/MIT
+ *
+ */
+
+;(function ($, window, document, undefined) {
+
+"use strict";
+
+window = (typeof window != 'undefined' && window.Math == Math)
+  ? window
+  : (typeof self != 'undefined' && self.Math == Math)
+    ? self
+    : Function('return this')()
+;
+
+$.fn.modal = function(parameters) {
+  var
+    $allModules    = $(this),
+    $window        = $(window),
+    $document      = $(document),
+    $body          = $('body'),
+
+    moduleSelector = $allModules.selector || '',
+
+    time           = new Date().getTime(),
+    performance    = [],
+
+    query          = arguments[0],
+    methodInvoked  = (typeof query == 'string'),
+    queryArguments = [].slice.call(arguments, 1),
+
+    requestAnimationFrame = window.requestAnimationFrame
+      || window.mozRequestAnimationFrame
+      || window.webkitRequestAnimationFrame
+      || window.msRequestAnimationFrame
+      || function(callback) { setTimeout(callback, 0); },
+
+    returnedValue
+  ;
+
+  $allModules
+    .each(function() {
+      var
+        settings    = ( $.isPlainObject(parameters) )
+          ? $.extend(true, {}, $.fn.modal.settings, parameters)
+          : $.extend({}, $.fn.modal.settings),
+
+        selector        = settings.selector,
+        className       = settings.className,
+        namespace       = settings.namespace,
+        error           = settings.error,
+
+        eventNamespace  = '.' + namespace,
+        moduleNamespace = 'module-' + namespace,
+
+        $module         = $(this),
+        $context        = $(settings.context),
+        $close          = $module.find(selector.close),
+
+        $allModals,
+        $otherModals,
+        $focusedElement,
+        $dimmable,
+        $dimmer,
+
+        element         = this,
+        instance        = $module.data(moduleNamespace),
+
+        elementEventNamespace,
+        id,
+        observer,
+        module
+      ;
+      module  = {
+
+        initialize: function() {
+          module.verbose('Initializing dimmer', $context);
+
+          module.create.id();
+          module.create.dimmer();
+          module.refreshModals();
+
+          module.bind.events();
+          if(settings.observeChanges) {
+            module.observeChanges();
+          }
+          module.instantiate();
+        },
+
+        instantiate: function() {
+          module.verbose('Storing instance of modal');
+          instance = module;
+          $module
+            .data(moduleNamespace, instance)
+          ;
+        },
+
+        create: {
+          dimmer: function() {
+            var
+              defaultSettings = {
+                debug      : settings.debug,
+                dimmerName : 'modals',
+                duration   : {
+                  show     : settings.duration,
+                  hide     : settings.duration
+                }
+              },
+              dimmerSettings = $.extend(true, defaultSettings, settings.dimmerSettings)
+            ;
+            if(settings.inverted) {
+              dimmerSettings.variation = (dimmerSettings.variation !== undefined)
+                ? dimmerSettings.variation + ' inverted'
+                : 'inverted'
+              ;
+            }
+            if($.fn.dimmer === undefined) {
+              module.error(error.dimmer);
+              return;
+            }
+            module.debug('Creating dimmer with settings', dimmerSettings);
+            $dimmable = $context.dimmer(dimmerSettings);
+            if(settings.detachable) {
+              module.verbose('Modal is detachable, moving content into dimmer');
+              $dimmable.dimmer('add content', $module);
+            }
+            else {
+              module.set.undetached();
+            }
+            if(settings.blurring) {
+              $dimmable.addClass(className.blurring);
+            }
+            $dimmer = $dimmable.dimmer('get dimmer');
+          },
+          id: function() {
+            id = (Math.random().toString(16) + '000000000').substr(2,8);
+            elementEventNamespace = '.' + id;
+            module.verbose('Creating unique id for element', id);
+          }
+        },
+
+        destroy: function() {
+          module.verbose('Destroying previous modal');
+          $module
+            .removeData(moduleNamespace)
+            .off(eventNamespace)
+          ;
+          $window.off(elementEventNamespace);
+          $dimmer.off(elementEventNamespace);
+          $close.off(eventNamespace);
+          $context.dimmer('destroy');
+        },
+
+        observeChanges: function() {
+          if('MutationObserver' in window) {
+            observer = new MutationObserver(function(mutations) {
+              module.debug('DOM tree modified, refreshing');
+              module.refresh();
+            });
+            observer.observe(element, {
+              childList : true,
+              subtree   : true
+            });
+            module.debug('Setting up mutation observer', observer);
+          }
+        },
+
+        refresh: function() {
+          module.remove.scrolling();
+          module.cacheSizes();
+          module.set.screenHeight();
+          module.set.type();
+          module.set.position();
+        },
+
+        refreshModals: function() {
+          $otherModals = $module.siblings(selector.modal);
+          $allModals   = $otherModals.add($module);
+        },
+
+        attachEvents: function(selector, event) {
+          var
+            $toggle = $(selector)
+          ;
+          event = $.isFunction(module[event])
+            ? module[event]
+            : module.toggle
+          ;
+          if($toggle.length > 0) {
+            module.debug('Attaching modal events to element', selector, event);
+            $toggle
+              .off(eventNamespace)
+              .on('click' + eventNamespace, event)
+            ;
+          }
+          else {
+            module.error(error.notFound, selector);
+          }
+        },
+
+        bind: {
+          events: function() {
+            module.verbose('Attaching events');
+            $module
+              .on('click' + eventNamespace, selector.close, module.event.close)
+              .on('click' + eventNamespace, selector.approve, module.event.approve)
+              .on('click' + eventNamespace, selector.deny, module.event.deny)
+            ;
+            $window
+              .on('resize' + elementEventNamespace, module.event.resize)
+            ;
+          }
+        },
+
+        get: {
+          id: function() {
+            return (Math.random().toString(16) + '000000000').substr(2,8);
+          }
+        },
+
+        event: {
+          approve: function() {
+            if(settings.onApprove.call(element, $(this)) === false) {
+              module.verbose('Approve callback returned false cancelling hide');
+              return;
+            }
+            module.hide();
+          },
+          deny: function() {
+            if(settings.onDeny.call(element, $(this)) === false) {
+              module.verbose('Deny callback returned false cancelling hide');
+              return;
+            }
+            module.hide();
+          },
+          close: function() {
+            module.hide();
+          },
+          click: function(event) {
+            var
+              $target   = $(event.target),
+              isInModal = ($target.closest(selector.modal).length > 0),
+              isInDOM   = $.contains(document.documentElement, event.target)
+            ;
+            if(!isInModal && isInDOM) {
+              module.debug('Dimmer clicked, hiding all modals');
+              if( module.is.active() ) {
+                module.remove.clickaway();
+                if(settings.allowMultiple) {
+                  module.hide();
+                }
+                else {
+                  module.hideAll();
+                }
+              }
+            }
+          },
+          debounce: function(method, delay) {
+            clearTimeout(module.timer);
+            module.timer = setTimeout(method, delay);
+          },
+          keyboard: function(event) {
+            var
+              keyCode   = event.which,
+              escapeKey = 27
+            ;
+            if(keyCode == escapeKey) {
+              if(settings.closable) {
+                module.debug('Escape key pressed hiding modal');
+                module.hide();
+              }
+              else {
+                module.debug('Escape key pressed, but closable is set to false');
+              }
+              event.preventDefault();
+            }
+          },
+          resize: function() {
+            if( $dimmable.dimmer('is active') ) {
+              requestAnimationFrame(module.refresh);
+            }
+          }
+        },
+
+        toggle: function() {
+          if( module.is.active() || module.is.animating() ) {
+            module.hide();
+          }
+          else {
+            module.show();
+          }
+        },
+
+        show: function(callback) {
+          callback = $.isFunction(callback)
+            ? callback
+            : function(){}
+          ;
+          module.refreshModals();
+          module.showModal(callback);
+        },
+
+        hide: function(callback) {
+          callback = $.isFunction(callback)
+            ? callback
+            : function(){}
+          ;
+          module.refreshModals();
+          module.hideModal(callback);
+        },
+
+        showModal: function(callback) {
+          callback = $.isFunction(callback)
+            ? callback
+            : function(){}
+          ;
+          if( module.is.animating() || !module.is.active() ) {
+
+            module.showDimmer();
+            module.cacheSizes();
+            module.set.position();
+            module.set.screenHeight();
+            module.set.type();
+            module.set.clickaway();
+
+            if( !settings.allowMultiple && module.others.active() ) {
+              module.hideOthers(module.showModal);
+            }
+            else {
+              settings.onShow.call(element);
+              if(settings.transition && $.fn.transition !== undefined && $module.transition('is supported')) {
+                module.debug('Showing modal with css animations');
+                $module
+                  .transition({
+                    debug       : settings.debug,
+                    animation   : settings.transition + ' in',
+                    queue       : settings.queue,
+                    duration    : settings.duration,
+                    useFailSafe : true,
+                    onComplete : function() {
+                      settings.onVisible.apply(element);
+                      module.add.keyboardShortcuts();
+                      module.save.focus();
+                      module.set.active();
+                      if(settings.autofocus) {
+                        module.set.autofocus();
+                      }
+                      callback();
+                    }
+                  })
+                ;
+              }
+              else {
+                module.error(error.noTransition);
+              }
+            }
+          }
+          else {
+            module.debug('Modal is already visible');
+          }
+        },
+
+        hideModal: function(callback, keepDimmed) {
+          callback = $.isFunction(callback)
+            ? callback
+            : function(){}
+          ;
+          module.debug('Hiding modal');
+          if(settings.onHide.call(element, $(this)) === false) {
+            module.verbose('Hide callback returned false cancelling hide');
+            return;
+          }
+
+          if( module.is.animating() || module.is.active() ) {
+            if(settings.transition && $.fn.transition !== undefined && $module.transition('is supported')) {
+              module.remove.active();
+              $module
+                .transition({
+                  debug       : settings.debug,
+                  animation   : settings.transition + ' out',
+                  queue       : settings.queue,
+                  duration    : settings.duration,
+                  useFailSafe : true,
+                  onStart     : function() {
+                    if(!module.others.active() && !keepDimmed) {
+                      module.hideDimmer();
+                    }
+                    module.remove.keyboardShortcuts();
+                  },
+                  onComplete : function() {
+                    settings.onHidden.call(element);
+                    module.restore.focus();
+                    callback();
+                  }
+                })
+              ;
+            }
+            else {
+              module.error(error.noTransition);
+            }
+          }
+        },
+
+        showDimmer: function() {
+          if($dimmable.dimmer('is animating') || !$dimmable.dimmer('is active') ) {
+            module.debug('Showing dimmer');
+            $dimmable.dimmer('show');
+          }
+          else {
+            module.debug('Dimmer already visible');
+          }
+        },
+
+        hideDimmer: function() {
+          if( $dimmable.dimmer('is animating') || ($dimmable.dimmer('is active')) ) {
+            $dimmable.dimmer('hide', function() {
+              module.remove.clickaway();
+              module.remove.screenHeight();
+            });
+          }
+          else {
+            module.debug('Dimmer is not visible cannot hide');
+            return;
+          }
+        },
+
+        hideAll: function(callback) {
+          var
+            $visibleModals = $allModals.filter('.' + className.active + ', .' + className.animating)
+          ;
+          callback = $.isFunction(callback)
+            ? callback
+            : function(){}
+          ;
+          if( $visibleModals.length > 0 ) {
+            module.debug('Hiding all visible modals');
+            module.hideDimmer();
+            $visibleModals
+              .modal('hide modal', callback)
+            ;
+          }
+        },
+
+        hideOthers: function(callback) {
+          var
+            $visibleModals = $otherModals.filter('.' + className.active + ', .' + className.animating)
+          ;
+          callback = $.isFunction(callback)
+            ? callback
+            : function(){}
+          ;
+          if( $visibleModals.length > 0 ) {
+            module.debug('Hiding other modals', $otherModals);
+            $visibleModals
+              .modal('hide modal', callback, true)
+            ;
+          }
+        },
+
+        others: {
+          active: function() {
+            return ($otherModals.filter('.' + className.active).length > 0);
+          },
+          animating: function() {
+            return ($otherModals.filter('.' + className.animating).length > 0);
+          }
+        },
+
+
+        add: {
+          keyboardShortcuts: function() {
+            module.verbose('Adding keyboard shortcuts');
+            $document
+              .on('keyup' + eventNamespace, module.event.keyboard)
+            ;
+          }
+        },
+
+        save: {
+          focus: function() {
+            $focusedElement = $(document.activeElement).blur();
+          }
+        },
+
+        restore: {
+          focus: function() {
+            if($focusedElement && $focusedElement.length > 0) {
+              $focusedElement.focus();
+            }
+          }
+        },
+
+        remove: {
+          active: function() {
+            $module.removeClass(className.active);
+          },
+          clickaway: function() {
+            if(settings.closable) {
+              $dimmer
+                .off('click' + elementEventNamespace)
+              ;
+            }
+          },
+          bodyStyle: function() {
+            if($body.attr('style') === '') {
+              module.verbose('Removing style attribute');
+              $body.removeAttr('style');
+            }
+          },
+          screenHeight: function() {
+            module.debug('Removing page height');
+            $body
+              .css('height', '')
+            ;
+          },
+          keyboardShortcuts: function() {
+            module.verbose('Removing keyboard shortcuts');
+            $document
+              .off('keyup' + eventNamespace)
+            ;
+          },
+          scrolling: function() {
+            $dimmable.removeClass(className.scrolling);
+            $module.removeClass(className.scrolling);
+          }
+        },
+
+        cacheSizes: function() {
+          var
+            modalHeight = $module.outerHeight()
+          ;
+          if(module.cache === undefined || modalHeight !== 0) {
+            module.cache = {
+              pageHeight    : $(document).outerHeight(),
+              height        : modalHeight + settings.offset,
+              contextHeight : (settings.context == 'body')
+                ? $(window).height()
+                : $dimmable.height()
+            };
+          }
+          module.debug('Caching modal and container sizes', module.cache);
+        },
+
+        can: {
+          fit: function() {
+            return ( ( module.cache.height + (settings.padding * 2) ) < module.cache.contextHeight);
+          }
+        },
+
+        is: {
+          active: function() {
+            return $module.hasClass(className.active);
+          },
+          animating: function() {
+            return $module.transition('is supported')
+              ? $module.transition('is animating')
+              : $module.is(':visible')
+            ;
+          },
+          scrolling: function() {
+            return $dimmable.hasClass(className.scrolling);
+          },
+          modernBrowser: function() {
+            // appName for IE11 reports 'Netscape' can no longer use
+            return !(window.ActiveXObject || "ActiveXObject" in window);
+          }
+        },
+
+        set: {
+          autofocus: function() {
+            var
+              $inputs    = $module.find(':input').filter(':visible'),
+              $autofocus = $inputs.filter('[autofocus]'),
+              $input     = ($autofocus.length > 0)
+                ? $autofocus.first()
+                : $inputs.first()
+            ;
+            if($input.length > 0) {
+              $input.focus();
+            }
+          },
+          clickaway: function() {
+            if(settings.closable) {
+              $dimmer
+                .on('click' + elementEventNamespace, module.event.click)
+              ;
+            }
+          },
+          screenHeight: function() {
+            if( module.can.fit() ) {
+              $body.css('height', '');
+            }
+            else {
+              module.debug('Modal is taller than page content, resizing page height');
+              $body
+                .css('height', module.cache.height + (settings.padding * 2) )
+              ;
+            }
+          },
+          active: function() {
+            $module.addClass(className.active);
+          },
+          scrolling: function() {
+            $dimmable.addClass(className.scrolling);
+            $module.addClass(className.scrolling);
+          },
+          type: function() {
+            if(module.can.fit()) {
+              module.verbose('Modal fits on screen');
+              if(!module.others.active() && !module.others.animating()) {
+                module.remove.scrolling();
+              }
+            }
+            else {
+              module.verbose('Modal cannot fit on screen setting to scrolling');
+              module.set.scrolling();
+            }
+          },
+          position: function() {
+            module.verbose('Centering modal on page', module.cache);
+            if(module.can.fit()) {
+              $module
+                .css({
+                  top: '',
+                  marginTop: -(module.cache.height / 2)
+                })
+              ;
+            }
+            else {
+              $module
+                .css({
+                  marginTop : '',
+                  top       : $document.scrollTop()
+                })
+              ;
+            }
+          },
+          undetached: function() {
+            $dimmable.addClass(className.undetached);
+          }
+        },
+
+        setting: function(name, value) {
+          module.debug('Changing setting', name, value);
+          if( $.isPlainObject(name) ) {
+            $.extend(true, settings, name);
+          }
+          else if(value !== undefined) {
+            if($.isPlainObject(settings[name])) {
+              $.extend(true, settings[name], value);
+            }
+            else {
+              settings[name] = value;
+            }
+          }
+          else {
+            return settings[name];
+          }
+        },
+        internal: function(name, value) {
+          if( $.isPlainObject(name) ) {
+            $.extend(true, module, name);
+          }
+          else if(value !== undefined) {
+            module[name] = value;
+          }
+          else {
+            return module[name];
+          }
+        },
+        debug: function() {
+          if(!settings.silent && settings.debug) {
+            if(settings.performance) {
+              module.performance.log(arguments);
+            }
+            else {
+              module.debug = Function.prototype.bind.call(console.info, console, settings.name + ':');
+              module.debug.apply(console, arguments);
+            }
+          }
+        },
+        verbose: function() {
+          if(!settings.silent && settings.verbose && settings.debug) {
+            if(settings.performance) {
+              module.performance.log(arguments);
+            }
+            else {
+              module.verbose = Function.prototype.bind.call(console.info, console, settings.name + ':');
+              module.verbose.apply(console, arguments);
+            }
+          }
+        },
+        error: function() {
+          if(!settings.silent) {
+            module.error = Function.prototype.bind.call(console.error, console, settings.name + ':');
+            module.error.apply(console, arguments);
+          }
+        },
+        performance: {
+          log: function(message) {
+            var
+              currentTime,
+              executionTime,
+              previousTime
+            ;
+            if(settings.performance) {
+              currentTime   = new Date().getTime();
+              previousTime  = time || currentTime;
+              executionTime = currentTime - previousTime;
+              time          = currentTime;
+              performance.push({
+                'Name'           : message[0],
+                'Arguments'      : [].slice.call(message, 1) || '',
+                'Element'        : element,
+                'Execution Time' : executionTime
+              });
+            }
+            clearTimeout(module.performance.timer);
+            module.performance.timer = setTimeout(module.performance.display, 500);
+          },
+          display: function() {
+            var
+              title = settings.name + ':',
+              totalTime = 0
+            ;
+            time = false;
+            clearTimeout(module.performance.timer);
+            $.each(performance, function(index, data) {
+              totalTime += data['Execution Time'];
+            });
+            title += ' ' + totalTime + 'ms';
+            if(moduleSelector) {
+              title += ' \'' + moduleSelector + '\'';
+            }
+            if( (console.group !== undefined || console.table !== undefined) && performance.length > 0) {
+              console.groupCollapsed(title);
+              if(console.table) {
+                console.table(performance);
+              }
+              else {
+                $.each(performance, function(index, data) {
+                  console.log(data['Name'] + ': ' + data['Execution Time']+'ms');
+                });
+              }
+              console.groupEnd();
+            }
+            performance = [];
+          }
+        },
+        invoke: function(query, passedArguments, context) {
+          var
+            object = instance,
+            maxDepth,
+            found,
+            response
+          ;
+          passedArguments = passedArguments || queryArguments;
+          context         = element         || context;
+          if(typeof query == 'string' && object !== undefined) {
+            query    = query.split(/[\. ]/);
+            maxDepth = query.length - 1;
+            $.each(query, function(depth, value) {
+              var camelCaseValue = (depth != maxDepth)
+                ? value + query[depth + 1].charAt(0).toUpperCase() + query[depth + 1].slice(1)
+                : query
+              ;
+              if( $.isPlainObject( object[camelCaseValue] ) && (depth != maxDepth) ) {
+                object = object[camelCaseValue];
+              }
+              else if( object[camelCaseValue] !== undefined ) {
+                found = object[camelCaseValue];
+                return false;
+              }
+              else if( $.isPlainObject( object[value] ) && (depth != maxDepth) ) {
+                object = object[value];
+              }
+              else if( object[value] !== undefined ) {
+                found = object[value];
+                return false;
+              }
+              else {
+                return false;
+              }
+            });
+          }
+          if ( $.isFunction( found ) ) {
+            response = found.apply(context, passedArguments);
+          }
+          else if(found !== undefined) {
+            response = found;
+          }
+          if($.isArray(returnedValue)) {
+            returnedValue.push(response);
+          }
+          else if(returnedValue !== undefined) {
+            returnedValue = [returnedValue, response];
+          }
+          else if(response !== undefined) {
+            returnedValue = response;
+          }
+          return found;
+        }
+      };
+
+      if(methodInvoked) {
+        if(instance === undefined) {
+          module.initialize();
+        }
+        module.invoke(query);
+      }
+      else {
+        if(instance !== undefined) {
+          instance.invoke('destroy');
+        }
+        module.initialize();
+      }
+    })
+  ;
+
+  return (returnedValue !== undefined)
+    ? returnedValue
+    : this
+  ;
+};
+
+$.fn.modal.settings = {
+
+  name           : 'Modal',
+  namespace      : 'modal',
+
+  silent         : false,
+  debug          : false,
+  verbose        : false,
+  performance    : true,
+
+  observeChanges : false,
+
+  allowMultiple  : false,
+  detachable     : true,
+  closable       : true,
+  autofocus      : true,
+
+  inverted       : false,
+  blurring       : false,
+
+  dimmerSettings : {
+    closable : false,
+    useCSS   : true
+  },
+
+
+  context    : 'body',
+
+  queue      : false,
+  duration   : 500,
+  offset     : 0,
+  transition : 'scale',
+
+  // padding with edge of page
+  padding    : 50,
+
+  // called before show animation
+  onShow     : function(){},
+
+  // called after show animation
+  onVisible  : function(){},
+
+  // called before hide animation
+  onHide     : function(){ return true; },
+
+  // called after hide animation
+  onHidden   : function(){},
+
+  // called after approve selector match
+  onApprove  : function(){ return true; },
+
+  // called after deny selector match
+  onDeny     : function(){ return true; },
+
+  selector    : {
+    close    : '> .close',
+    approve  : '.actions .positive, .actions .approve, .actions .ok',
+    deny     : '.actions .negative, .actions .deny, .actions .cancel',
+    modal    : '.ui.modal'
+  },
+  error : {
+    dimmer    : 'UI Dimmer, a required component is not included in this page',
+    method    : 'The method you called is not defined.',
+    notFound  : 'The element you specified could not be found'
+  },
+  className : {
+    active     : 'active',
+    animating  : 'animating',
+    blurring   : 'blurring',
+    scrolling  : 'scrolling',
+    undetached : 'undetached'
+  }
+};
+
+
+})( jQuery, window, document );
+
+/*!
+ * # Semantic UI 2.2.2 - Popup
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -6623,7 +8136,7 @@ $.fn.popup.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.2.0 - Search
+ * # Semantic UI 2.2.2 - Search
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -8022,7 +9535,7 @@ $.fn.search.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.2.0 - Transition
+ * # Semantic UI 2.2.2 - Transition
  * http://github.com/semantic-org/semantic-ui/
  *
  *

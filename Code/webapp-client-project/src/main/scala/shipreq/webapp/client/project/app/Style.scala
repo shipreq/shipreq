@@ -1,14 +1,16 @@
 package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react.vdom.prefix_<^.{^ => ^^, _}
+import japgolly.univeq._
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
-import scalacss.{PseudoElement, Pseudo, StyleS}
+import scalacss.{Pseudo, PseudoElement, StyleS}
 import shipreq.base.util._
 import shipreq.webapp.base.text.Grammar
-import shipreq.webapp.base.data.{StaticField, Live, Dead}
+import shipreq.webapp.base.data.{Dead, Live, StaticField}
 import shipreq.webapp.client.base.data._
-import shipreq.webapp.client.base.ui.BaseStyles.pageMargin
+import shipreq.webapp.client.base.ui.BaseStyles
+import shipreq.webapp.client.base.ui.semantic.{Colour, Label, UsesSemanticUiManually}
 import shipreq.webapp.client.project.widgets._
 
 object Style extends StyleSheet.Inline {
@@ -316,20 +318,6 @@ object Style extends StyleSheet.Inline {
       )
     }
 
-    val cellEditor = styleF(D.validity)(v => styleS(
-//      borderRadius(4 px),
-      width(100 %%),
-//      boxShadow := "inset 0 1px 1px rgba(0,0,0,.075)",
-//      transition := "border-color ease-in-out .15s, box-shadow ease-in-out .15s",
-      //border(1 px, solid, if (hasError) Color(c"#a94442") else Color(c"#666")),
-//      outlineColor(if (hasError) Color(c"#a94442") else Color(c"#666")),
-      mixinIf(v :: Invalid)(hasErrorBackground, &.focus(outlineColor(c"#f88"))),
-      padding.horizontal(0.8 ex)
-    ))
-
-    val cellEditorErrMsg = style(
-      color(c"#a00"))
-
     val autoCompleteItemTitle = style(
       fontWeight.bold)
 
@@ -342,12 +330,6 @@ object Style extends StyleSheet.Inline {
       fontStyle.italic,
       overflow.hidden,
       maxWidth(36 ex))
-
-    val textEditPreview = style(
-      padding(h = 0.8.ex, v = 0.2.em),
-      border(solid, 1 px, c"#222"),
-      minHeight(2 em),
-      backgroundColor(c"#efe"))
 
     object deleteRestore {
 
@@ -402,7 +384,7 @@ object Style extends StyleSheet.Inline {
         opacity(0.4))))
 
     val headerFilterDeadButton = style(
-      paddingLeft(pageMargin))
+      paddingLeft(BaseStyles.pageMargin))
 
     private def innerCellBorderColour =
       rgba(34, 36, 38, 0.1)
@@ -444,37 +426,35 @@ object Style extends StyleSheet.Inline {
       mixinIf(live :: Dead)(backgroundColor(rgba(0, 0, 0, .04)))))
 
     val generalImpsCont = style(
-      display.flex,
-      alignItems.center,
       width(100 %%))
 
     val generalImpsSide = style(
-      border(^.dashed, 1 px),
-      minHeight(1.59 em),
-      flexBasis := "0",
-      flexGrow(1))
+      width(50 %%),
+      textAlign.center)
 
     val generalImpsMiddle = style(
-      margin.horizontal(1 ex))
+      fontWeight.bold,
+      padding(`0`, 1 ex),
+      whiteSpace.nowrap)
 
     object useCaseStep {
 
       val container = style(
         display.flex,
         justifyContent.flexEnd, // So that controls in tail-step rows appear on the right.
-        width(100 %%))
+        width(100 %%),
+        &.not(_.firstChild)(marginTop(0.2 rem)))
 
       val header = styleF(D.ucStepIndent)(lvl =>
         styleS(
-          paddingTop(4 px),
-          paddingRight(0.8 ex),
+          boxSizing.contentBox,
           color(c"#444"),
           lvl match {
-            case 0 => styleS(fontWeight.bold,    width(5 ex)) // 123.0
-            case 1 => styleS(paddingLeft( 4 ex), width(3 ex)) // 99.
-            case 2 => styleS(paddingLeft( 7 ex), width(3 ex)) // cv.
-            case 3 => styleS(paddingLeft(10 ex), width(4 ex)) // xviii.
-            case 4 => styleS(paddingLeft(14 ex), width(3 ex)) // 99.
+            case 0 => styleS(fontWeight.bold,    width(6 ex)) // 123.0
+            case 1 => styleS(paddingLeft( 4 ex), width(4 ex)) // 99.
+            case 2 => styleS(paddingLeft( 8 ex), width(4 ex)) // cv.
+            case 3 => styleS(paddingLeft(12 ex), width(4 ex)) // xviii.
+            case 4 => styleS(paddingLeft(16 ex), width(4 ex)) // 99.
           }
         )
       )
@@ -484,10 +464,12 @@ object Style extends StyleSheet.Inline {
         textDecoration := ^.lineThrough)
 
       val body = style(
-        flexGrow(1))
+        flexGrow(1),
+        paddingLeft(0.6 ex))
 
       val ctrls = style(
-        width(116 px))
+        width(8.9 rem),
+        textAlign.right)
 
       val ctrl = style(
         addClassNames("btn", "btn-default", "btn-sm"),
@@ -500,6 +482,19 @@ object Style extends StyleSheet.Inline {
 
   // ===================================================================================================================
   object widgets {
+
+    val richTextPreview = style(
+      addClassNames("ui", "segments", "raised"))
+
+    val richTextPreviewHeader = style(
+      addClassNames("ui", "segment", "inverted", "green"),
+      paddingTop(0.3 em).important,
+      paddingBottom(0.3 em).important)
+
+    val richTextPreviewBody = style(
+      addClassNames("ui", "segment"),
+      (backgroundImage := "repeating-linear-gradient(-225deg,rgba(0,0,0,0),rgba(0,0,0,0)5ex,rgba(33,186,67,.07)5ex,rgba(33,186,67,.07)10ex)")
+        .important)
 
     private val refColour = color(c"#2363A1")
 
@@ -566,16 +561,62 @@ object Style extends StyleSheet.Inline {
 
     val reqCodeTreeIndent = style(reqCodeTreePre, color(c"#dadada"))
     val reqCodeTreeCode = style(reqCodeTreePre)
-    val reqCodeFlat = style(reqCodePre, display.block)
+    val reqCodeFlat = style(reqCodePre, display.block, overflowY.hidden)
 
     val useCaseStepLayoutCell = style(
       border.none.important)
+
+    object reqTypeSelector {
+      val dropdown = style(
+        backgroundColor(BaseStyles.editorBackgroundColor).important,
+        borderColor(BaseStyles.editorBorderColor).important,
+        marginRight(1 ex).important)
+
+      val buttons = style()
+
+      val commit = style(
+        &.hover(color(c"#21BA45").important))
+
+      val abort = style(
+        &.hover(color(c"#DB2828").important))
+    }
+  }
+
+  // ===================================================================================================================
+
+  object help {
+
+    private val descCls = "_d"
+    private val sampleCls = "_s"
+
+    @UsesSemanticUiManually
+    val examplesTable = style(
+      addClassNames("ui", "celled", "table"),
+      marginBottom(1 em),
+      unsafeChild("tr:nth-child(odd)  td." + sampleCls)(backgroundColor(c"#fffde8")),
+      unsafeChild("tr:nth-child(even) td." + sampleCls)(backgroundColor(c"#def2fc")),
+      unsafeChild("tr:nth-child(odd)  td." + descCls)(backgroundColor(c"#fcf8e3")),
+      unsafeChild("tr:nth-child(even) td." + descCls)(backgroundColor(c"#d9edf7")))
+
+    val exampleDesc = style(
+      addClassNames(descCls))
+
+    val exampleDescCode = style(
+      fontFamily :=! "monospace", // TODO :=! ???
+      backgroundColor(c"#fff"))
+
+    val exampleSample = style(
+      addClassNames(sampleCls),
+      fontFamily :=! "monospace",
+      whiteSpace.nowrap,
+      color(c"#f39"))
   }
 
   // ===================================================================================================================
 
   initInnerObjects(
     home.cardHeader,
+    help.examplesTable,
     impgraphPage.graph,
     cfg.deadMnemonic,
     reqtable.sortEditor.dragArea,
@@ -585,7 +626,8 @@ object Style extends StyleSheet.Inline {
     reqtable.deleteRestore.impliedByItem(Live),
     reqdetail.detailTable,
     reqdetail.useCaseStep.container,
-    widgets.issue)
+    widgets.issue,
+    widgets.reqTypeSelector.dropdown)
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()
 //  ConsoleIO(_.info(s"Styles: ${Style.register.styles.length}")).unsafePerformIO()
 }

@@ -31,13 +31,16 @@
         "breadcrumb",
         "menu",
         "message",
+        "table",
         "card",
         "statistic",
+        "accordion",
         "dimmer",
         "dropdown",
+        "modal",
         "popup",
         "search",
         "transition"
     ],
-    "version": "2.2.0"
+    "version": "2.2.2"
 }

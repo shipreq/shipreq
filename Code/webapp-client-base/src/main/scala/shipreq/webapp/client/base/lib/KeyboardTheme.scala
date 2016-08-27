@@ -4,9 +4,10 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import org.scalajs.dom.ext.KeyCode
 import scalacss.ScalaCssReact._
-import shipreq.webapp.base.text.LineCardinality
+import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
 import shipreq.webapp.client.base.lib.KeyHandler._
-import shipreq.webapp.client.base.ui.BaseStyles
+import shipreq.webapp.client.base.ui.BaseStyles.{editorInstructions => *}
+import shipreq.webapp.client.base.ui.semantic.Icon
 
 /**
   * Keyboard functionality consistent throughout the entire app.
@@ -38,15 +39,42 @@ object KeyboardTheme {
   def commitCO(commit: CallbackTo[Option[Callback]], lc: LineCardinality): KeyHandler =
     commitCriterion.handle(commit >>= (Callback sequenceO _))
 
-  def instructionsForCommitAbort(commit: Option[Callback],  abort: Callback): ReactTag = {
+  private val link   = <.a(*.link)
+  private val clause = <.span(*.clause)
+
+  private val helpIcon = Icon.HelpCircle.tag(*.helpIcon)
+
+  def instructionsForCommitAbort(lc    : LineCardinality,
+                                 commit: Option[Callback],
+                                 abort : Callback,
+                                 help  : Option[Callback]): ReactTag = {
+    var tag = <.div(*.container)
+
+    def add(m: TagMod*): Unit =
+      tag = tag(clause(m: _*))
+
+    // New line
+    lc match {
+      case SingleLine => ()
+      case MultiLine  => add("enter for new line,")
+    }
+
+    // Commit
     var save: ReactNode = "save"
     for (c <- commit)
-      save = <.a(^.onClick --> c, save)
+      save = link(^.onClick --> c, save)
+    add("ctrl-enter to ", save, ",")
 
-    val cancel = <.a(^.onClick --> abort, "cancel")
+    // Abort
+    val cancel = link(^.onClick --> abort, "cancel")
+    add("esc to ", cancel, ".")
 
-    <.div(BaseStyles.editorInstructions,
-      "ctrl-enter to ", save,
-      ", esc to ", cancel, ".")
+    // Help
+    for (h <- help) {
+      val eh = (e: ReactEvent) => e.stopPropagationCB >> e.preventDefaultCB >> h
+      add(helpIcon(^.onClick ==> eh))
+    }
+
+    tag
   }
 }

@@ -42,19 +42,19 @@
     //"grid",
     "menu",        // Used at top of all logged-in pages
     "message",     // Used when project fails to load (/project/ABC).
-    //"table",
+    "table",       // Used for rich-text editor help, and filter help.
     //"ad",
     "card",        // Used in (loaded) project menu (/project/ABC).
     //"comment",
     //"feed",
     //"item",
     "statistic",   // Used in projects index (/), and each project's home (/project/ABC)
-    //"accordion",
+    "accordion",   // Used for rich-text editor help, and filter help.
     //"checkbox",
     "dimmer",      // Used in [Req Lookup] card in project menu (/project/ABC).
     "dropdown",    // Used in top-right of all logged-in pages
     //"embed",
-    //"modal",
+    "modal",       // Used for rich-text editor help, and filter help.
     //"nag",
     "popup",       // Used in FilterDead buttons
     //"progress",
@@ -70,5 +70,5 @@
     //"state",
     //"visibility",
   ],
-  "version": "2.2.0"
+  "version": "2.2.2"
 }

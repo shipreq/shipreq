@@ -110,16 +110,19 @@ object ProjectItem {
           p.item.name
         ) + ProjectItem.renderMeta(p.item)
 
-      def renderEditor(p: Props, s: EditState): TagMod =
-        PlainTextEditor.TempBasic.Props.asyncAware(
-          text           = s.edit,
-          updateText     = updateEditText,
-          asyncState     = s.async,
-          asyncFeature   = p.asyncFeature,
-          nonAsyncStatus = EditorStatus.validate(Validators.projectName)(s.edit, p.renameProjectIO),
-          abort          = abortFn,
-          inputContMod   = inputContMod)
+      def renderEditor(p: Props, s: EditState): TagMod = {
+        val status =
+          EditorStatus.async(s.async, p.asyncFeature) getOrElse
+            EditorStatus.validate(Validators.projectName)(s.edit, p.renameProjectIO)
+
+        PlainTextEditor.TempBasic.Props(
+          text         = s.edit,
+          updateText   = updateEditText,
+          status       = status,
+          abort        = abortFn,
+          inputContMod = inputContMod)
           .render
+      }
 
       def render(p: Props): ReactElement =
         ProjectItem.renderLeftContent(p.item)(

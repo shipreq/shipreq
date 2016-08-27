@@ -11,6 +11,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.base.feature.AsyncActionFeature
 import shipreq.webapp.client.base.lib.{DataReusability => _, _}
+import shipreq.webapp.client.base.ui.EditTheme
 import shipreq.webapp.client.project.app.Style.{reqtable => *}
 import shipreq.webapp.client.project.feature.ContentEditorFeature
 import shipreq.webapp.client.project.lib._
@@ -39,13 +40,7 @@ object Table {
       .configure(shouldComponentUpdate)
       .build
 
-  /** Input is a callback to run after editing starts. */
-  type StartEdit = Callback ~=> Callback
-
   final class Backend($: BackendScope[Props, Unit]) {
-
-    val startCellEdit = ReusableFn[Row, Column, Callback, Callback]((r, c, focus) =>
-      $.props >>= (_.cellEditors(r)(c).startEdit(focus) getOrElse Callback.empty))
 
     val reorderColumns = ReusableFn((cols: NonEmptyVector[Column]) =>
       $.props >>= (_.modViewSettings(_ setColumns cols)))
@@ -64,9 +59,9 @@ object Table {
       val renderRows =
         rows.indices.toReactNodeArray { i =>
           val row = rows(i)
-          val rs2 = p.editState(row.sourceId)
+          val es  = p.editState(row.sourceId)
           val as  = p.asyncState(row.sourceId)
-          val rp  = RowProps(row, crs, rs2, as, p.selection, startCellEdit(row))
+          val rp  = RowProps(row, crs, p.cellEditors, es, as, p.selection)
           RowComponent.withKey(row.id.key)(rp)
         }
 
@@ -149,15 +144,12 @@ object Table {
   // ===================================================================================================================
   // Rows
 
-  val noEdit: StartEdit =
-    ReusableFn(_ => Callback.empty)
-
   case class RowProps(row        : Row,
                       crs        : NonEmptyVector[ColumnRenderer],
+                      cellEditors: ContentEditorFeature.D2.Feature[Row, Column],
                       editState  : ContentEditorFeature.D1.State.ReadOnly[Column],
                       asyncState : AsyncActionFeature.D1.State.ReadOnly[Column, String],
-                      selection  : RowSelectionVisible,
-                      startEdit  : Column ~=> StartEdit)
+                      selection  : RowSelectionVisible)
 
   implicit val rowPropReuse = Reusability.caseClass[RowProps]
 
@@ -190,7 +182,7 @@ object Table {
       def colCells =
         p.crs.iterator.map { cr =>
           val col = cr.column
-          val cp = CellProps(row, cr, p editState col, p asyncState col, p startEdit col)
+          val cp = CellProps(row, cr, p.cellEditors, p editState col, p asyncState col)
           CellComponent.withKey(col.key)(cp)
         }.toReactNodeArray
 
@@ -201,7 +193,7 @@ object Table {
       def colCells =
         p.crs.iterator.map { cr =>
           val col = cr.column
-          val cp = CellProps(row, cr, None, None, noEdit)
+          val cp = CellProps(row, cr, ContentEditorFeature.D2.Feature.Nop, None, None)
           CellComponent.withKey(col.key)(cp)
         }.toReactNodeArray
 
@@ -233,11 +225,14 @@ object Table {
     val domain = Domain.ofValues[CellStatus](Normal, DeadRow, `N/A`)
   }
 
-  case class CellProps(row       : Row,
-                       cr        : ColumnRenderer,
-                       cellEditor: ContentEditorFeature.D0.State,
-                       asyncState: AsyncActionFeature.D0.State[String],
-                       startEdit : StartEdit)
+  case class CellProps(row        : Row,
+                       cr         : ColumnRenderer,
+                       cellEditors: ContentEditorFeature.D2.Feature[Row, Column],
+                       editState  : ContentEditorFeature.D0.State,
+                       asyncState : AsyncActionFeature.D0.State[String]) {
+    def column = cr.column
+    def startEdit: Option[Callback] = cellEditors(row)(column).startEdit
+  }
 
   implicit val cellPropReuse = Reusability.caseClass[CellProps]
 
@@ -253,6 +248,21 @@ object Table {
     type N = dom.html.TableDataCell
 
     def domNode = CallbackTo($.getDOMNode().asInstanceOf[N])
+
+    val startEdit: Callback =
+      $.props.flatMap(_.startEdit getOrElse Callback.empty)
+
+    val editableInline =
+      EditTheme.editableInline(startEdit)
+
+    def renderAsyncEditorOrValue(p: CellProps, view: => TagMod): TagMod = {
+      def view2: TagMod =
+        p.startEdit match {
+          case Some(_) => view + editableInline
+          case None    => view
+        }
+      p.editState.renderOr(p.asyncState)(view2)
+    }
 
     /**
      * When a Button in the cell is clicked, we still get the event here in which case, the focus is set after the
@@ -273,15 +283,6 @@ object Table {
         }
       )
 
-    def focus: Callback =
-      domNode.map { n =>
-        val target = focusableChildren(n).nextOption() getOrElse n
-        target.focus()
-      }
-
-    def startEdit: Callback =
-      $.props >>= (_ startEdit focus)
-
     def render(p: CellProps) = {
       val view = p.cr.view(p.row)
 
@@ -296,9 +297,8 @@ object Table {
 
       cellBase(
         *.cell(status),
-        ^.onDblClick --> startEdit,
         ^.onKeyDown ==> onKeyDown,
-        p.asyncState renderOr (p.cellEditor renderOr view.render))
+        renderAsyncEditorOrValue(p, view.render))
     }
   }
 

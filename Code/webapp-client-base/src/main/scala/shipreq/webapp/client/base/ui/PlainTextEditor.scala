@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.text.SingleLine
-import shipreq.webapp.client.base.feature.{AsyncActionFeature, EditorStatus}
+import shipreq.webapp.client.base.feature.EditorStatus
 import shipreq.webapp.client.base.lib.KeyboardTheme
 import shipreq.webapp.client.base.ui.semantic._
 
@@ -32,22 +32,6 @@ object PlainTextEditor {
       @inline def render = Component(this)
     }
 
-    object Props {
-      def asyncAware[A](text          : String,
-                        updateText    : String => Callback,
-                        asyncState    : AsyncActionFeature.D0.State[A],
-                        asyncFeature  : AsyncActionFeature.D0.Feature[A],
-                        nonAsyncStatus: => EditorStatus.Sync,
-                        abort         : Callback,
-                        inputContMod  : TagMod = EmptyTag,
-                        inputMod      : TagMod = EmptyTag
-                       )(implicit f: A => TagMod): Props = {
-
-        val (updText, status) = EditorStatus.async(asyncState, asyncFeature)(updateText, nonAsyncStatus)
-        Props(text, updText, status, abort, inputContMod, inputMod)
-      }
-    }
-
     //  implicit val reusabilityProps: Reusability[Props] =
     //    Reusability.caseClass
 
@@ -58,7 +42,9 @@ object PlainTextEditor {
           KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +
           KeyboardTheme.commitCO($.props.map(_.status.getCommit), SingleLine)
 
-        val onChange = (_: ReactEventI).extract(_.target.value)(t => $.props.flatMap(_ updateText t))
+        val onChange = (_: ReactEventI).extract(_.target.value)(t =>
+          $.props.flatMap(p =>
+            p.status.wrapEdit(p.updateText(t))))
 
         <.input.text(
           keys,
@@ -68,21 +54,21 @@ object PlainTextEditor {
 
       def render(p: Props): ReactElement = {
 
-        def input = base(p.inputMod, ^.value := p.text)
+        def input        = base(p.inputMod, ^.value := p.text)
+        def instructions = KeyboardTheme.instructionsForCommitAbort(SingleLine, p.status.getCommit, p.abort, None)
+
+        def renderWithError(err: TagMod) =
+          <.div(
+            <.div(
+              Input.Error(p.inputContMod, input)),
+            errorPointingUp(err))
 
         p.status match {
-
-          case EditorStatus.Ignore =>
+          case EditorStatus.Ignore | EditorStatus.Valid(_) =>
             <.div(
               <.div(
                 Input.Base(p.inputContMod, input),
-                KeyboardTheme.instructionsForCommitAbort(None, p.abort)))
-
-          case EditorStatus.Valid(commit) =>
-            <.div(
-              <.div(
-                Input.Base(p.inputContMod, input),
-                KeyboardTheme.instructionsForCommitAbort(Some(commit), p.abort)))
+                instructions))
 
           case EditorStatus.InTransit =>
             <.div(
@@ -90,16 +76,10 @@ object PlainTextEditor {
                 Input.loadingDisabled(p.text)(p.inputContMod)))
 
           case EditorStatus.Invalid(err) =>
-            <.div(
-              <.div(
-                Input.Error(p.inputContMod, input)),
-              errorPointingUp(err))
+            renderWithError(err)
 
-          case EditorStatus.AsyncError(err, _) =>
-            <.div(
-              <.div(
-                Input.Error(p.inputContMod, input)),
-              errorPointingUp(err))
+          case EditorStatus.AsyncError(err, _, _) =>
+            renderWithError(err)
         }
       }
     }
@@ -127,21 +107,6 @@ object PlainTextEditor {
       @inline def render = Component(this)
     }
 
-    object Props {
-      def asyncAware[A](text          : String,
-                        updateText    : String => Callback,
-                        asyncState    : AsyncActionFeature.D0.State[A],
-                        asyncFeature  : AsyncActionFeature.D0.Feature[A],
-                        nonAsyncStatus: => EditorStatus.Sync,
-                        buttonLabel   : String,
-                        inputMod      : TagMod
-                       )(implicit f: A => TagMod): Props = {
-
-        val (updText, status) = EditorStatus.async(asyncState, asyncFeature)(updateText, nonAsyncStatus)
-        Props(text, updText, status, buttonLabel, inputMod)
-      }
-    }
-
     //  implicit val reusabilityProps: Reusability[Props] =
     //    Reusability.caseClass
 
@@ -153,7 +118,7 @@ object PlainTextEditor {
     final class Backend($: BackendScope[Props, Unit]) {
 
       def render(p: Props): ReactElement = {
-        val onChange = (_: ReactEventI).extract(_.target.value)(p.updateText)
+        val onChange = (_: ReactEventI).extract(_.target.value)(t => p.status.wrapEdit(p updateText t))
 
         val input =
           <.input.text(
@@ -193,13 +158,13 @@ object PlainTextEditor {
                   buttonError.tag(p.buttonLabel))),
               errorPointingUp(err))
 
-          case EditorStatus.AsyncError(err, retry) =>
+          case a: EditorStatus.AsyncError =>
             <.div(
               <.div(
                 Input.Action(
                   input,
-                  buttonOk.tag(^.onClick --> retry, UiText.buttonRetry))),
-              errorPointingUp(err))
+                  buttonOk.tag(^.onClick --> a.retry, UiText.buttonRetry))),
+              errorPointingUp(a.err))
         }
       }
     }

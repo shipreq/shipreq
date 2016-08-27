@@ -253,8 +253,6 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
           }
         })
 
-    def focus: Callback = Callback.empty // TODO
-
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     private val headerStyle: Live => Header.Style =
@@ -270,9 +268,11 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       val runCmd      = this.runCmd(req.id)
 
       def renderAsyncEditorOrValue(cell: Cell, view: => TagMod): TagMod = {
-        def startEdit    = editFeature(cell).startEdit(focus)
+        def startEdit    = editFeature(cell).startEdit
         def editableView = view + EditTheme.editableInline(startEdit)
-        state.async(cell) renderOr (state.edit(cell) renderOr editableView)
+        val async        = state.async(cell)
+        val editor       = state.edit(cell)
+        editor.renderOr(async)(editableView)
       }
 
       def renderHeader: ReactElement = {
@@ -359,19 +359,16 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
               pw.tagList(data.customTags(f.id)))
 
           case Row.Implications =>
-            def one(cell: Cell) =
-              renderImpCell(cell, data.generalImps(cell.implicationDirection))
-            <.div(
-              *.generalImpsCont,
-              <.div(
-                *.generalImpsSide,
-                one(Cell.ImplicationSrc)),
-              <.div(
-                *.generalImpsMiddle,
-                s"→ $pubidText →"),
-              <.div(
-                *.generalImpsSide,
-                one(Cell.ImplicationTgt)))
+            def one(cell: Cell) = renderImpCell(cell, data.generalImps(cell.implicationDirection))
+            <.table(*.generalImpsCont,
+              <.tbody(
+                <.tr(
+                  <.td(*.generalImpsSide,
+                    one(Cell.ImplicationSrc)),
+                  <.td(*.generalImpsMiddle,
+                    s"→ $pubidText →"),
+                  <.td(*.generalImpsSide,
+                    one(Cell.ImplicationTgt)))))
 
           case Row.ImplicationGraph =>
             ImplicationGraph.Props(

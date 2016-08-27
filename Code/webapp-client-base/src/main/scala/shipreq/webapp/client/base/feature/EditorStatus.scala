@@ -2,7 +2,8 @@ package shipreq.webapp.client.base.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import shipreq.webapp.base.validation.ValidatorU
+import shipreq.base.util.ValidUpdate
+import shipreq.webapp.base.validation.{VFailure, ValidationResult, ValidatorU}
 import EditorStatus._
 
 /** Editors in ShipReq can be in a variety of states:
@@ -18,78 +19,89 @@ import EditorStatus._
   * - [[InTransit]]. An action has been sent to the server, now awaiting response.
   *
   * - [[AsyncError]]. An error occurred attempting to commit.
+  *
+  *
+  * Usage
+  * =====
+  *
+  * - Inject [[getCommit]] into keyboard and/or button events.
+  * - Wrap the editor onChange callback in [[wrapEdit]].
+  * - Pattern match and render as needed.
   */
 sealed abstract class EditorStatus {
 
-  final def isAsync: Boolean =
+  final def wrapEdit(edit: Callback): Callback =
     this match {
-      case _: Async => true
-      case _: Sync  => false
+      case Ignore
+         | Valid(_)
+         | Invalid(_)    => edit
+      case a: AsyncError => edit >> a.clearAsync
+      case InTransit     => Callback.empty
     }
 
   final def getCommit: Option[Callback] =
     this match {
-      case Valid(commit)        => Some(commit)
-      case AsyncError(_, retry) => Some(retry)
+      case Valid(commit) => Some(commit)
+      case a: AsyncError => Some(a.retry)
       case Invalid(_)
          | Ignore
-         | InTransit            => None
+         | InTransit     => None
     }
 
   final def getError: Option[TagMod] =
     this match {
       case Valid(_)
          | Ignore
-         | InTransit        => None
-      case Invalid(e)       => Some(e)
-      case AsyncError(e, _) => Some(e)
+         | InTransit           => None
+      case Invalid(e)          => Some(e)
+      case AsyncError(e, _, _) => Some(e)
     }
 }
 
 object EditorStatus {
   sealed abstract class Sync  extends EditorStatus
-  sealed abstract class Async extends EditorStatus
+  case object Ignore extends Sync
+  case class Valid(commit: Callback) extends Sync
+  case class Invalid(err: TagMod) extends Sync
 
-  case object Ignore                                   extends Sync
-  case class  Valid(commit: Callback)                  extends Sync
-  case class  Invalid(err: TagMod)                     extends Sync
-  case object InTransit                                extends Async
-  case class  AsyncError(err: TagMod, retry: Callback) extends Async
+  sealed abstract class Async extends EditorStatus
+  case object InTransit extends Async
+  case class AsyncError(err: TagMod, retry: Callback, clearAsync: Callback) extends Async
+
+  // ===================================================================================================================
 
   def ignoreOrValidate[I, C, V](v: ValidatorU[I, C, V])(i: I, ignore: C => Boolean, commit: V => Callback): Sync = {
     val corrected = v.correctedU(i)
     if (ignore(corrected.value))
       Ignore
     else
-      v.validateU(corrected) match {
-        case scalaz.Success(ok)  => EditorStatus.Valid(commit(ok))
-        case scalaz.Failure(err) => EditorStatus.Invalid(err.toText)
-      }
+      validationResult(v.validateU(corrected))(commit)
   }
 
   def validate[I, C, V](v: ValidatorU[I, C, V])(i: I, commit: V => Callback): Sync =
     ignoreOrValidate(v)(i, _ => false, commit)
 
-  private def maybeAsync[A](a: AsyncActionFeature.D0.State[A])(implicit f: A => TagMod): Option[Async] =
-    a.map {
-      case AsyncActionFeature.Locked       => InTransit
-      case x: AsyncActionFeature.Failed[A] => AsyncError(f(x.failure), x.retry)
+  def validationResult[V](vr: ValidationResult[V])(commit: V => Callback): Sync =
+    vr match {
+      case scalaz.Success(v)   => Valid(commit(v))
+      case scalaz.Failure(err) => Invalid(err.toText)
     }
 
-  def async[A, I](asyncState  : AsyncActionFeature.D0.State[A],
-                  asyncFeature: AsyncActionFeature.D0.Feature[A])
-                 (updateValue : I => Callback,
-                  syncState   : => Sync)
-                 (implicit f: A => TagMod): (I => Callback, EditorStatus) = {
+  def validUpdate[E, A](vu: ValidUpdate[E, A])(commit: A => Callback, unchanged: Callback)(implicit fmtErr: E => TagMod): Sync =
+    vu match {
+      case ValidUpdate.Success(a) => Valid(commit(a))
+      case ValidUpdate.Unchanged  => Valid(unchanged)
+      case ValidUpdate.Failure(e) => Invalid(fmtErr(e))
+    }
 
-    val status = maybeAsync(asyncState) getOrElse syncState
+  def validUpdateV[A](vu: ValidUpdate[VFailure, A])(commit: A => Callback, unchanged: Callback): Sync =
+    validUpdate(vu)(commit, unchanged)(_.toText)
 
-    val updateValue2 = if (status.isAsync)
-      updateValue.andThen(_ >> asyncFeature.clearError(asyncState))
-    else
-      updateValue
-
-    (updateValue2, status)
-  }
-
+  def async[A, I](as: AsyncActionFeature.D0.State[A],
+                  af: AsyncActionFeature.D0.Feature[A])
+                 (implicit f: A => TagMod): Option[Async] =
+    as map {
+      case AsyncActionFeature.Locked       => InTransit
+      case x: AsyncActionFeature.Failed[A] => AsyncError(f(x.failure), retry = x.retry, clearAsync = af.clearError(as))
+    }
 }

@@ -57,7 +57,7 @@ object ContentEditorFeatureTest extends TestSuite {
   def editorInstance: EditorInstance =
     new EditorInstance {
       override def toString = ##.toString
-      override def render() = ???
+      override def render(as: AsyncState) = ???
     }
 
   type S2 = D2.State.Simple[KeysN, KeysN]

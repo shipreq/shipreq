@@ -81,11 +81,13 @@ sealed abstract class ValidUpdate[+E, +A] {
 
 object ValidUpdate {
 
-  case class Success[+A](update: A) extends ValidUpdate[Nothing, A]
+  sealed abstract class NonFailure[+A] extends ValidUpdate[Nothing, A]
+
+  case class Success[+A](update: A) extends NonFailure[A]
+
+  case object Unchanged extends NonFailure[Nothing]
 
   case class Failure[+E](failure: E) extends ValidUpdate[E, Nothing]
-
-  case object Unchanged extends ValidUpdate[Nothing, Nothing]
 
   import scalaz.{\/, \/-, -\/, Validation}
 
@@ -101,18 +103,18 @@ object ValidUpdate {
       case scalaz.Failure(e) => Failure(e)
     }
 
-  def option[A](o: Option[A]): ValidUpdate[Nothing, A] =
+  def option[A](o: Option[A]): NonFailure[A] =
     o match {
       case Some(a) => Success(a)
       case None    => Unchanged
     }
 
-  def setDiff[A](d: SetDiff[A]): ValidUpdate[Nothing, SetDiff[A]] =
+  def setDiff[A](d: SetDiff[A]): NonFailure[SetDiff[A]] =
     if (d.isEmpty)
       Unchanged
     else
       Success(d)
 
-  def nonEmpty[A, B](a: A)(implicit p: NonEmpty.Proof[A, B]): ValidUpdate[Nothing, B] =
+  def nonEmpty[A, B](a: A)(implicit p: NonEmpty.Proof[A, B]): NonFailure[B] =
     option(p tryProve a)
 }

@@ -6,6 +6,7 @@ import shipreq.webapp.base.data.{ProjectCatalogue, Username}
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.base.ui._
 import shipreq.webapp.client.base.ui.semantic.Breadcrumb
+import shipreq.webapp.client.project.widgets.high.RichTextEditorHelp
 import Routes.{Page, RouterCtl}
 
 object Layout {
@@ -44,6 +45,7 @@ object Layout {
 
   def render(p: Props): ReactElement =
     <.div(
+      RichTextEditorHelp.modal.render,
       MemberNavBar.Props(p.username, breadcrumb(p.page, p.project, p.rc), Nil).render,
       p.content)
 

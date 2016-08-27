@@ -4,6 +4,8 @@ semver(1) -- The semantic versioner for npm
 ## Usage
 
     $ npm install semver
+    $ node
+    var semver = require('semver')
 
     semver.valid('1.2.3') // '1.2.3'
     semver.valid('a.b.c') // null
@@ -289,6 +291,8 @@ strings that they parse.
     same as `prepatch`. It increments the patch version, then makes a
     prerelease. If the input version is already a prerelease it simply
     increments it.
+* `prerelease(v)`: Returns an array of prerelease components, or null
+  if none exist. Example: `prerelease('1.2.3-alpha.1') -> ['alpha', 1]`
 * `major(v)`: Return the major version number.
 * `minor(v)`: Return the minor version number.
 * `patch(v)`: Return the patch version number.
@@ -322,6 +326,8 @@ strings that they parse.
 * `satisfies(version, range)`: Return true if the version satisfies the
   range.
 * `maxSatisfying(versions, range)`: Return the highest version in the list
+  that satisfies the range, or `null` if none of them do.
+* `minSatisfying(versions, range)`: Return the lowest version in the list
   that satisfies the range, or `null` if none of them do.
 * `gtr(version, range)`: Return `true` if version is greater than all the
   versions possible in the range.

@@ -152,7 +152,8 @@ class CreationInterface($               : CompState.Access[State],
           ReusableVar(state.reqCode)(setReqCode),
           None,
           pxProject.reqCodes.trie,
-          _noExtra)
+          None,
+          None)
 
       val propsTitle =
         RichTextEditor.ReqCodeGroupTitle.Props(
@@ -161,9 +162,10 @@ class CreationInterface($               : CompState.Access[State],
           pxTextSearch,
           pxProjectWidgets,
           ReusableVar(state.title)(setTitle),
-          previewFeature.forChild(titleFocus, p.previewState),
           None,
-          _noExtra)
+          None,
+          previewFeature.forChild(titleFocus, p.previewState),
+          None)
 
       val create: Option[Callback] =
         for {
@@ -239,22 +241,25 @@ class CreationInterface($               : CompState.Access[State],
         ReusableVar(state.reqCodes)(setReqCodes),
         None,
         pxProject.reqCodes.trie,
-        _noExtra)
+        None,
+        None)
 
     def getPropsTags(state: CreateReqState) =
       TagEditor.Props(
         None,
         ReusableVar(state.tags)(setTags),
         pxTagLookup,
-        _noExtra)
+        None,
+        None)
 
     def getPropsImps(state: CreateReqState) =
       ImplicationEditor.Props(
         ReusableVar(state.imp)(setImp),
         pxImpLookup,
         pxImpValidationFn,
-        pxTextSearch,
-        _noExtra)
+        None,
+        None,
+        pxTextSearch)
   }
 
   // ===================================================================================================================
@@ -283,9 +288,10 @@ class CreationInterface($               : CompState.Access[State],
           pxTextSearch,
           pxProjectWidgets,
           ReusableVar(state.title)(setTitle),
-          previewFeature.forChild(titleFocus, p.previewState),
           None,
-          _noExtra)
+          None,
+          previewFeature.forChild(titleFocus, p.previewState),
+          None)
 
       val create: Option[Callback] =
         for {
@@ -335,9 +341,10 @@ class CreationInterface($               : CompState.Access[State],
           pxTextSearch,
           pxProjectWidgets,
           ReusableVar(state.title)(setTitle),
-          previewFeature.forChild(titleFocus, p.previewState),
           None,
-          _noExtra)
+          None,
+          previewFeature.forChild(titleFocus, p.previewState),
+          None)
 
       val create: Option[Callback] =
         for {

@@ -1,54 +1,88 @@
 package shipreq.webapp.client.project.widgets.high
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra.{ExternalVar, Px}
+import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import org.scalajs.dom.raw.HTMLSelectElement
-import shipreq.base.util.NonEmptySet
+import scalacss.ScalaCssReact._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.UiText
+import shipreq.base.util.{MutableArray, NonEmptySet}
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.base.data.{Enabled, TCB}
-import shipreq.webapp.client.project.widgets.SelectOne
-import SelectOne.Choice
+import shipreq.webapp.client.base.feature.EditorStatus
+import shipreq.webapp.client.base.ui.EditTheme
+import shipreq.webapp.client.base.ui.semantic._
+import shipreq.webapp.client.project.app.Style.widgets.{reqTypeSelector => *}
 
 object ReqTypeSelector {
 
-  type A = CustomReqType
+  type RT = CustomReqType
+  type AbortCommit = shipreq.webapp.client.base.lib.AbortCommit[Callback, RT ~=> Callback]
 
-  val selectComp = SelectOne.Component[A]
+  final case class Props(initialValue: RT,
+                         edit        : ExternalVar[RT],
+                         choices     : NonEmptySet[RT],
+                         asyncStatus : Option[EditorStatus.Async],
+                         abortCommit : AbortCommit) {
 
-  private val selectRef = Ref[HTMLSelectElement]("i")
+    val changed = edit.value !=* initialValue
+    def abort = abortCommit.abort
+    def commit = if (changed) abortCommit.commit(edit.value) else Callback.empty
+    val status = asyncStatus.getOrElse(if (changed) EditorStatus.Valid(commit) else EditorStatus.Ignore)
 
-  case class Props(edit   : ExternalVar[A],
-                   abort  : Option[TCB.Abort],
-                   commit : Option[TCB.Commit],
-                   choices: NonEmptySet[A])
+    @inline def render = Component(this)
+  }
+
+  // implicit val reusabilityProps: Reusability[Props] =
+  //   Reusability.caseClass
+
+  private def key(rt: RT): Select.OptionKey =
+    rt.id.value.toString
+
+  final class Backend($: BackendScope[Props, Unit]) {
+
+    def render(p: Props): ReactElement =
+      EditTheme.renderEditor(
+        status       = p.status,
+        editor       = _ => editor(p),
+        readOnlyView = p.edit.value.fullName,
+        instructions = EmptyTag)
+
+    def editor(p: Props): ReactElement = {
+      val options =
+        MutableArray(p.choices.whole)
+          .map(rt => Select.Option(key(rt), rt.fullName, rt))
+          .sort
+          .to[List]
+
+      val select = Select(options, key(p.edit.value))(p.edit set _.value)(*.dropdown)
+
+      val commitButton = Button(
+        tipe = Button.Type.IconOnly(Icon.Checkmark),
+        state = Button.State.enabledWhen(p.changed)
+      ).tag(
+        *.commit,
+        ^.onClick --> p.commit)
+
+      val abortButton = Button(tipe = Button.Type.IconOnly(Icon.Remove)).tag(
+        *.abort,
+        ^.onClick --> p.abort)
+
+      val buttons = Button.group(commitButton, abortButton)(*.buttons)
+
+      <.div(select, buttons)
+    }
+  }
 
   val Component = ReactComponentB[Props]("ReqTypeSelector")
-    .render_P(render)
-    //.componentDidMount(selectRef(_).tryFocus)
+    .renderBackend[Backend]
+    // .configure(Reusability.shouldComponentUpdate)
     .build
-
-  def render(p: Props): ReactElement = {
-    def choice(a: A) = Choice[A](a, a.fullName, Enabled)
-
-    val choices = p.choices.mapV(choice).sortBy(_.label)
-
-    val selector = selectComp.set(ref = selectRef)(SelectOne.Props(p.edit.value, choices, Some(p.edit.set)))
-
-    <.div(
-      selector,
-      p.abort .map(f => <.button(UiText.buttonAbortChange, ^.onClick --> f)),
-      p.commit.map(f => <.button(UiText.buttonCommitChange, ^.onClick --> f)))
-  }
 
   // ===================================================================================================================
 
-  def pxCustomReqTypes(p: Px[Project]): Px[Set[A]] =
+  def pxCustomReqTypes(p: Px[Project]): Px[Set[RT]] =
     p.map(_.config.reqTypes.custom.values.toSet)
 
-  def pxChoices(initial: A, pxCustomReqTypes: Px[Set[A]]): Px[NonEmptySet[A]] =
+  def pxChoices(initial: RT, pxCustomReqTypes: Px[Set[RT]]): Px[NonEmptySet[RT]] =
     pxCustomReqTypes
       .map(_.filter(_.live :: Live))
       .map(NonEmptySet(initial, _))
