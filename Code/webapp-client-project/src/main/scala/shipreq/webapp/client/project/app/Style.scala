@@ -9,7 +9,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.data.{Dead, Live, StaticField}
 import shipreq.webapp.client.base.data._
-import shipreq.webapp.client.base.ui.BaseStyles.pageMargin
+import shipreq.webapp.client.base.ui.BaseStyles
 import shipreq.webapp.client.base.ui.semantic.{Colour, Label, UsesSemanticUiManually}
 import shipreq.webapp.client.project.widgets._
 
@@ -406,7 +406,7 @@ object Style extends StyleSheet.Inline {
         opacity(0.4))))
 
     val headerFilterDeadButton = style(
-      paddingLeft(pageMargin))
+      paddingLeft(BaseStyles.pageMargin))
 
     private def innerCellBorderColour =
       rgba(34, 36, 38, 0.1)
@@ -587,6 +587,21 @@ object Style extends StyleSheet.Inline {
 
     val useCaseStepLayoutCell = style(
       border.none.important)
+
+    object reqTypeSelector {
+      val dropdown = style(
+        backgroundColor(BaseStyles.editorBackgroundColor).important,
+        borderColor(BaseStyles.editorBorderColor).important,
+        marginRight(1 ex).important)
+
+      val buttons = style()
+
+      val commit = style(
+        &.hover(color(c"#21BA45").important))
+
+      val abort = style(
+        &.hover(color(c"#DB2828").important))
+    }
   }
 
   // ===================================================================================================================
@@ -633,7 +648,8 @@ object Style extends StyleSheet.Inline {
     reqtable.deleteRestore.impliedByItem(Live),
     reqdetail.detailTable,
     reqdetail.useCaseStep.container,
-    widgets.issue)
+    widgets.issue,
+    widgets.reqTypeSelector.dropdown)
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()
 //  ConsoleIO(_.info(s"Styles: ${Style.register.styles.length}")).unsafePerformIO()
 }

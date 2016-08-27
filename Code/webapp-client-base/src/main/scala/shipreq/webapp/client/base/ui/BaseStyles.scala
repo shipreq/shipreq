@@ -29,11 +29,15 @@ object BaseStyles extends StyleSheet.Inline {
       Domain.ofValues(Valid, Invalid, InTransit)
   }
 
+  val editorBackgroundColor = c"#fff4e3"
+  val editorBorderColor = rgba(255, 166, 34, .5)
+  val editorBorderColorFocus = rgb(255, 166, 34)
+
   val inlineEdit = style(
     &.hover(
       cursor.pointer,
       outline(dotted, 2 px, c"#FFA622"),
-      backgroundColor(c"#fff4e3").important))
+      backgroundColor(editorBackgroundColor).important))
 
   val projectItems = new ProjectItems
   final class ProjectItems {
@@ -98,7 +102,7 @@ object BaseStyles extends StyleSheet.Inline {
         case EditorState.Invalid   => c"#9F3A38"
       }),
       backgroundColor(state match {
-        case EditorState.Valid     => c"#fff4e3"
+        case EditorState.Valid     => editorBackgroundColor
         case EditorState.Invalid   => c"#FFF6F6"
         case EditorState.InTransit => rgba(255,244,227,0.7)
       }),
@@ -111,13 +115,13 @@ object BaseStyles extends StyleSheet.Inline {
       borderRadius(.28571429 rem),
       borderColor(state match {
         case EditorState.Valid
-           | EditorState.InTransit => rgba(255, 166, 34, .5)
+           | EditorState.InTransit => editorBorderColor
         case EditorState.Invalid   => c"#E0B4B4"
       }),
       mixinIf(state ==* EditorState.InTransit)(display.flex),
       &.focus(
         (state match {
-          case EditorState.Valid     => styleS(borderColor(rgb(255, 166, 34)), boxShadow := "0 0 1ex rgba(255,166,34,0.5)")
+          case EditorState.Valid     => styleS(borderColor(editorBorderColorFocus), boxShadow := s"0 0 1ex ${editorBorderColor.value}")
           case EditorState.Invalid   => styleS(boxShadow := "0 0 1ex rgba(224,180,180,.5)")
           case EditorState.InTransit => styleS()
         }): StyleS

@@ -2,6 +2,7 @@ package shipreq.webapp.client.base.ui.semantic
 
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.univeq.UnivEq
+import org.scalajs.dom.html
 import Button._
 
 /** http://semantic-ui.com/elements/button.html */
@@ -32,7 +33,12 @@ object Button {
     case object Disabled extends State(NoClass, true)
     case object Loading  extends State("loading", true)
     implicit def univEq: UnivEq[State] = UnivEq.derive
+    def enabledWhen(e: Boolean): State = if (e) Default else Disabled
+    @inline def disabledWhen(d: Boolean): State = enabledWhen(!d)
   }
+
+  def group(bs: ReactTagOf[html.Button]*) =
+    divCls("ui buttons")(bs: _*)
 }
 
 case class Button(attr  : Multiple[Attr] = Multiple.empty,
@@ -45,7 +51,7 @@ case class Button(attr  : Multiple[Attr] = Multiple.empty,
     var t = <.button(^.cls := "ui button" <+ attr <+ tipe <+ state <+ colour <+ size)
 
     if (state.disable)
-      t = t(^.disabled := "disabled")
+      t = t(^.disabled := true)
 
     t = tipe match {
       case Type.BasicIconAndText(i, x) => t(i.tag, x)

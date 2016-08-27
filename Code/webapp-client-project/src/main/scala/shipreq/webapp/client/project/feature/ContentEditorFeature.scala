@@ -351,36 +351,39 @@ object ContentEditorFeature {
 
       object EditReqType {
         import shipreq.webapp.client.project.widgets.high.ReqTypeSelector
-        import ReqTypeSelector.A
+        import ReqTypeSelector.RT
 
         val pxCustomReqTypes = ReqTypeSelector.pxCustomReqTypes(pxProject)
-
-        // TODO Only ReqTypeSelector needs ignoreEqual. Delete and make ReqTypeSelector work like everything else.
-        private def ignoreEqual[A: UnivEq](initial: A): A => Option[A] =
-          value => if (value ==* initial) None else value.some
 
         def apply(req: GenericReq): StartEditFn = {
           val id        = req.id
           val initial   = pxProject.value().config.reqTypes.custom.need(req.reqTypeId)
           val pxChoices = ReqTypeSelector.pxChoices(initial, pxCustomReqTypes)
 
-          val is = new State(ignoreEqual(initial), initial, pxChoices, t => UpdateContentCmd.SetGenericReqType(id, t.id))
+          val abortCommit: ReqTypeSelector.AbortCommit =
+            makeAbortCommit[RT](t => UpdateContentCmd.SetGenericReqType(id, t.id)).x
+
+          val is = new State(initial, initial, pxChoices, abortCommit)
           startEditFn(is)
         }
 
-        private case class State(ignoreInitial: A => Option[A],
-                                 edit         : A,
-                                 pxChoices    : Px[NonEmptySet[A]],
-                                 cmd          : A => UpdateContentCmd.SetGenericReqType) extends EditorInstanceImpl {
+        private case class State(initialValue: RT,
+                                 editValue   : RT,
+                                 pxChoices   : Px[NonEmptySet[RT]],
+                                 abortCommit : ReqTypeSelector.AbortCommit) extends EditorInstanceImpl {
 
-          def evar = ExternalVar(edit)(e => $.modState(lens set copy(edit = e).some))
+          def evar = ExternalVar(editValue)(e => $.modState(lens set copy(editValue = e).some))
 
-          def commitCB: Option[TCB.Commit] =
-            ignoreInitial(edit).map(a => TCB.Commit(commit(cmd(a))))
-
-          def props = ReqTypeSelector.Props(evar, Some(TCB Abort abort), commitCB, pxChoices.value())
-
-          override val renderImpl = renderDynamic(ReqTypeSelector.Component(props))
+          override val renderImpl: RenderImpl =
+            as => CallbackTo {
+              val props = ReqTypeSelector.Props(
+                initialValue,
+                evar,
+                pxChoices.value(),
+                EditorStatus.async(as, async),
+                abortCommit)
+              Some(props.render: ReactElement)
+            }
         }
       }
 

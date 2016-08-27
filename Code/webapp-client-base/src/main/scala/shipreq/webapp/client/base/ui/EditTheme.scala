@@ -32,7 +32,7 @@ object EditTheme {
   def renderEditor(status      : EditorStatus,
                    editor      : Validity => ReactElement,
                    readOnlyView: => ReactNode,
-                   instructions: => ReactTag,
+                   instructions: => TagMod,
                    preview     : => TagMod = EmptyTag): ReactTag = {
 
     status match {
