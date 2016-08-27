@@ -1,32 +1,18 @@
 package shipreq.webapp.client.project.feature
 
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.univeq.UnivEq
-import scalacss.ScalaCssReact._
 import scalaz.Equal
 import shipreq.base.util._
 import shipreq.webapp.base.validation._
-import shipreq.webapp.client.project.app.Style.{reqtable => *}
 
-case class EditValidationFeature[+E, +A](value        : ValidUpdate[E, A],
-                                         renderFailure: Option[ReactElement])
+// TODO Is this really a "feature"? Overlap with EditorStatus?
+case class EditValidationFeature[+E, +A](value: ValidUpdate[E, A])
 
-/** TODO Is this really a "feature"? Overlap with EditorStatus?
-  */
 object EditValidationFeature {
   type Result[+A] = EditValidationFeature[VFailure, A]
 
   @inline implicit def delegateValidUpdate[E, A](f: EditValidationFeature[E, A]): ValidUpdate[E, A] =
     f.value
-
-  private def errorTag: ReactTag =
-    <.div(*.cellEditorErrMsg)
-
-  def apply[A](u: ValidUpdateVR[A]): Result[A] = {
-    val f = u.getFailure.map[ReactElement](e => errorTag(e.toText)) // TODO Do better
-    EditValidationFeature(u, f)
-  }
 
   def compare[A](vr: ValidationResult[A])(previous: A)(implicit e: Equal[A]): Result[A] =
     apply(

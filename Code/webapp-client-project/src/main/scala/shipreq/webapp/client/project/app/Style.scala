@@ -318,21 +318,6 @@ object Style extends StyleSheet.Inline {
       )
     }
 
-    // TODO This has  been replaced by textEditor right?
-    val cellEditor = styleF(D.validity)(v => styleS(
-//      borderRadius(4 px),
-      width(100 %%),
-//      boxShadow := "inset 0 1px 1px rgba(0,0,0,.075)",
-//      transition := "border-color ease-in-out .15s, box-shadow ease-in-out .15s",
-      //border(1 px, solid, if (hasError) Color(c"#a94442") else Color(c"#666")),
-//      outlineColor(if (hasError) Color(c"#a94442") else Color(c"#666")),
-      mixinIf(v :: Invalid)(hasErrorBackground, &.focus(outlineColor(c"#f88"))),
-      padding.horizontal(0.8 ex)
-    ))
-
-    val cellEditorErrMsg = style(
-      color(c"#a00"))
-
     val autoCompleteItemTitle = style(
       fontWeight.bold)
 
@@ -345,13 +330,6 @@ object Style extends StyleSheet.Inline {
       fontStyle.italic,
       overflow.hidden,
       maxWidth(36 ex))
-
-    // TODO deprecate
-    val textEditPreview = style(
-      padding(h = 0.8.ex, v = 0.2.em),
-      border(solid, 1 px, c"#222"),
-      minHeight(2 em),
-      backgroundColor(c"#efe"))
 
     object deleteRestore {
 

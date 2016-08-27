@@ -67,9 +67,7 @@ object ReqTableTestDsl {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   val editorInvalidSel: String =
-    "." + Style.reqtable.cellEditor(Invalid).className.value +
-    ",." + Style.reqtable.cellEditorErrMsg.className.value +
-    ",.pointing.red.label"
+    ".pointing.red.label"
 
   sealed abstract class CellState
   case object Normal  extends CellState

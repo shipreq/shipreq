@@ -8,44 +8,6 @@ import shipreq.base.util.univeq._
 
 object Select {
 
-  /*
-  TODO Delete
-  type Value = String
-
-  case class Option(value: Value, title: String)
-
-  implicit def optionUnivEq: UnivEq[Option] = UnivEq.derive
-
-  implicit val optionOrdering: Ordering[Option] = Ordering.by(_.title)
-
-  final case class Props(options: Seq[Option], selected: js.UndefOr[Value] = js.undefined) {
-    @inline def render = Component(this)
-  }
-
- implicit val reusabilityProps: Reusability[Props] =
-   Reusability.fn((x, y) =>
-     (x.selected == y.selected) && x.options.corresponds(x.options)(_ ==* _))
-
-  final class Backend($: BackendScope[Props, Unit]) {
-
-    def render(p: Props): ReactElement = {
-      val optionArray = new js.Array[ReactTag]
-      for (o <- p.options)
-        optionArray push <.option(
-          ^.key := o.value,
-          ^.value := o.value,
-          ^.selected := p.selected.exists(_ == o.value),
-          o.title)
-      <.select(^.cls := "ui dropdown", optionArray)
-    }
-  }
-
-  val Component = ReactComponentB[Props]("Select")
-    .renderBackend[Backend]
-    .configure(Reusability.shouldComponentUpdate)
-    .build
-  */
-
   type OptionKey = String
 
   case class Option[+A](key: OptionKey, title: String, value: A)

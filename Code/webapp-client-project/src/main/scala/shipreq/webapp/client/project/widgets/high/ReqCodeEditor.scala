@@ -5,16 +5,16 @@ import japgolly.scalajs.react._, vdom.prefix_<^._
 import shipreq.base.util.{Ref => _, _}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
 import shipreq.webapp.base.text.GrammarSpec.SeqFormat
 import shipreq.webapp.base.validation.{ValidationResult, Validator}
+import shipreq.webapp.client.base.feature.EditorStatus
 import shipreq.webapp.client.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
+import shipreq.webapp.client.base.ui.{AutosizeTextarea, EditTheme}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.{AutoComplete, TextEditor}
 import Validators.{reqCode => V}
-import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
-import shipreq.webapp.client.base.feature.EditorStatus
-import shipreq.webapp.client.base.ui.{AutosizeTextarea, EditTheme}
 
 sealed abstract class ReqCodeEditor[In: Reusability, Out] {
   final type Output = Out
@@ -63,7 +63,6 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
     def getTextarea() =
       editorRef($).get.getDOMNode()
 
-    // TODO Much copy-paste with textareaConst and Props' abort|commit|status
     val textareaConst: TagMod = {
       val keys =
         KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +

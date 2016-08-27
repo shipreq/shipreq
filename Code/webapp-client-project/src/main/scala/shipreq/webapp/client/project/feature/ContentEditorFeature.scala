@@ -272,13 +272,11 @@ object ContentEditorFeature {
 
         protected val renderImpl: RenderImpl
 
-        protected def renderStatic[A](a: A)(implicit e: A => ReactElement): RenderImpl = {
-          val r = CallbackTo.pure(Some(e(a)))
-          _.renderOr(r)(t => CallbackTo.pure(Some(t)))
-        }
+        protected def makeRenderImplWithState(f: (AsyncState, S) => ReactElement): RenderImpl =
+          as => $.state.map(s => Some(f(as, s)))
 
-        protected def renderDynamic[A](a: => A)(implicit e: A => ReactElement): RenderImpl =
-          as => CallbackTo(Some(as renderOr e(a)))
+        protected def makeRenderImpl(f: AsyncState => ReactElement): RenderImpl =
+          as => CallbackTo(Some(f(as)))
 
         final override def render(as: AsyncState) =
           // Looks like this could block async but not so. Can't go from edit → async → notAllowed.
@@ -309,16 +307,14 @@ object ContentEditorFeature {
         private class StateMultiple(rvar       : ReusableVar[String],
                                     initial    : Some[Set[ReqCode.Value]],
                                     abortCommit: ReqCodeEditor.Multiple.AbortCommit) extends EditorInstanceImpl {
-          override val renderImpl: RenderImpl =
-            as => CallbackTo {
-              val props = ReqCodeEditor.Multiple.Props(
-                rvar,
-                initial,
-                trie(),
-                EditorStatus.async(as, async),
-                abortCommit)
-              Some(props.render: ReactElement)
-            }
+          override val renderImpl = makeRenderImpl(as =>
+            ReqCodeEditor.Multiple.Props(
+              rvar,
+              initial,
+              trie(),
+              EditorStatus.async(as, async),
+              abortCommit)
+              .render)
         }
 
         def group(rcg: ReqCodeGroup, initialValue: ReqCode.Value): StartEditFn = {
@@ -334,16 +330,14 @@ object ContentEditorFeature {
         private class StateSingle(rvar       : ReusableVar[String],
                                   initial    : Some[ReqCode.Value],
                                   abortCommit: ReqCodeEditor.Single.AbortCommit) extends EditorInstanceImpl {
-          override val renderImpl: RenderImpl =
-            as => CallbackTo {
-              val props = ReqCodeEditor.Single.Props(
-                rvar,
-                initial,
-                trie(),
-                EditorStatus.async(as, async),
-                abortCommit)
-              Some(props.render: ReactElement)
-            }
+          override val renderImpl = makeRenderImpl(as =>
+            ReqCodeEditor.Single.Props(
+              rvar,
+              initial,
+              trie(),
+              EditorStatus.async(as, async),
+              abortCommit)
+              .render)
         }
       }
 
@@ -374,16 +368,14 @@ object ContentEditorFeature {
 
           def evar = ExternalVar(editValue)(e => $.modState(lens set copy(editValue = e).some))
 
-          override val renderImpl: RenderImpl =
-            as => CallbackTo {
-              val props = ReqTypeSelector.Props(
-                initialValue,
-                evar,
-                pxChoices.value(),
-                EditorStatus.async(as, async),
-                abortCommit)
-              Some(props.render: ReactElement)
-            }
+          override val renderImpl = makeRenderImpl(as =>
+            ReqTypeSelector.Props(
+              initialValue,
+              evar,
+              pxChoices.value(),
+              EditorStatus.async(as, async),
+              abortCommit)
+              .render)
         }
       }
 
@@ -425,18 +417,15 @@ object ContentEditorFeature {
                             lookup     : Px[Lookup],
                             valFn      : Px[ValidationFn],
                             abortCommit: ImplicationEditor.AbortCommit) extends EditorInstanceImpl {
-          override val renderImpl: RenderImpl =
-            as => CallbackTo {
-              import Px.AutoValue._
-              val props = ImplicationEditor.Props(
-                rvar,
-                lookup,
-                valFn,
-                EditorStatus.async(as, async),
-                abortCommit,
-                pxTextSearch)
-              Some(props.render: ReactElement)
-            }
+          override val renderImpl = makeRenderImpl(as =>
+            ImplicationEditor.Props(
+              rvar,
+              lookup.value(),
+              valFn.value(),
+              EditorStatus.async(as, async),
+              abortCommit,
+              pxTextSearch.value())
+              .render)
         }
       }
 
@@ -466,17 +455,14 @@ object ContentEditorFeature {
                             rvar         : ReusableVar[String],
                             lookup       : Px[Lookup],
                             abortCommit  : TagEditor.AbortCommit) extends EditorInstanceImpl {
-          override val renderImpl: RenderImpl =
-            as => CallbackTo {
-              import Px.AutoValue._
-              val props = TagEditor.Props(
-                initialValues,
-                rvar,
-                lookup,
-                EditorStatus.async(as, async),
-                abortCommit)
-              Some(props.render: ReactElement)
-            }
+          override val renderImpl = makeRenderImpl(as =>
+            TagEditor.Props(
+              initialValues,
+              rvar,
+              lookup.value(),
+              EditorStatus.async(as, async),
+              abortCommit)
+              .render)
         }
       }
 
@@ -507,16 +493,15 @@ object ContentEditorFeature {
                               focusId    : P,
                               abortCommit: editor.AbortCommit) extends EditorInstanceImpl {
 
-            override val renderImpl: RenderImpl =
-              as => $.state.map { s =>
-                import Px.AutoValue._
-                val props = editor.Props(
-                  pxProject, pxPlainText, pxTextSearch, pxProjectWidgets,
-                  rvar,
-                  EditorStatus.async(as, async), abortCommit,
-                  previewFeature.forChild(focusId, s), initial)
-                Some(props.render: ReactElement)
-              }
+            override val renderImpl = makeRenderImplWithState((as, s) => {
+              import Px.AutoValue._
+              editor.Props(
+                pxProject, pxPlainText, pxTextSearch, pxProjectWidgets,
+                rvar,
+                EditorStatus.async(as, async), abortCommit,
+                previewFeature.forChild(focusId, s), initial)
+                .render
+            })
           }
         }
 
@@ -581,17 +566,16 @@ object ContentEditorFeature {
                             focusId: P,
                             commit : UseCaseStepEditor.CommitFn) extends EditorInstanceImpl {
 
-          override val renderImpl: RenderImpl =
-            as => $.state.map { s =>
-              import Px.AutoValue._
-              val props = UseCaseStepEditor.Props(
-                pxProject, pxPlainText, pxTextSearch, pxProjectWidgets,
-                rvar,
-                EditorStatus.async(as, async),
-                abort, commit,
-                previewFeature.forChild(focusId, s), initial)
-              Some(props.render: ReactElement)
-            }
+          override val renderImpl = makeRenderImplWithState((as, s) => {
+            import Px.AutoValue._
+            UseCaseStepEditor.Props(
+              pxProject, pxPlainText, pxTextSearch, pxProjectWidgets,
+              rvar,
+              EditorStatus.async(as, async),
+              abort, commit,
+              previewFeature.forChild(focusId, s), initial)
+              .render
+          })
         }
       }
 

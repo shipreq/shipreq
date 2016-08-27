@@ -15,18 +15,18 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.validation.{VFailure, ValidUpdateVR, ValidationResult}
-import shipreq.webapp.client.project.lib.AutoComplete
-import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.feature._
-import Text.Equality._
-import EditValidationFeature.{Result => EV}
-import RichTextEditor.hardcodedLive
-import Text.UseCaseStep.{OptionalText, lineCardinality}
-import UseCaseStepFlowText.TextAndFlow
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.client.base.feature.EditorStatus
 import shipreq.webapp.client.base.lib.KeyboardTheme
 import shipreq.webapp.client.base.ui.{AutosizeTextarea, EditTheme}
+import shipreq.webapp.client.project.lib.AutoComplete
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.feature._
+import EditValidationFeature.{Result => EV}
+import RichTextEditor.hardcodedLive
+import Text.Equality._
+import Text.UseCaseStep.{OptionalText, lineCardinality}
+import UseCaseStepFlowText.TextAndFlow
 
 object UseCaseStepEditor {
 

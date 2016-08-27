@@ -99,7 +99,6 @@ object TagEditor {
 
     @inline private def lineCardinality = SingleLine
 
-    // TODO So much copy & paste (with ImplicationEditor)
     val textareaConst: TagMod = {
       val keys =
         KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +

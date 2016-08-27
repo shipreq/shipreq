@@ -1,9 +1,7 @@
 package shipreq.webapp.client.project.widgets.high
 
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react._
-import vdom.prefix_<^._
-import scalacss.ScalaCssReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._
 import scalaz.{-\/, \/, \/-}
 import scalaz.syntax.either._
 import shipreq.base.util.ScalaExt._
@@ -16,9 +14,6 @@ import shipreq.webapp.client.base.data.Plain
 import shipreq.webapp.client.base.feature.EditorStatus
 import shipreq.webapp.client.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
 import shipreq.webapp.client.base.ui.{AutosizeTextarea, EditTheme}
-import shipreq.webapp.client.base.ui.semantic.Icon
-import shipreq.webapp.client.project.app.Style
-import Style.{widgets => *}
 import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.feature.{AutoCompleteFeature, EditValidationFeature}
