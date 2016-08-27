@@ -19,7 +19,7 @@ object Dependencies {
   }
 
   object Scalaz {
-    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.2")
+    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.5")
     val core       = mm("scalaz-core")
     val effect     = mm("scalaz-effect") ++ core
     val concurrent = mm("scalaz-concurrent") ++ effect
@@ -28,7 +28,7 @@ object Dependencies {
   }
 
   object Monocle {
-    private val mm = MultiModule.jvmAndJs("com.github.julien-truffaut", "1.2.1")
+    private val mm = MultiModule.jvmAndJs("com.github.julien-truffaut", "1.2.2")
     val core   = mm("monocle-core")
     val macros = mm("monocle-macro") ++ core
   }
@@ -53,7 +53,7 @@ object Dependencies {
   }
 
   object UnivEq {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.0.0")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.0.1")
     val univeq = mm("univeq")
     val scalaz = mm("univeq-scalaz") ++ univeq ++ Scalaz.core
   }
@@ -92,7 +92,7 @@ object Dependencies {
   }
 
   object Shiro {
-    private val mm = MultiModule.java("org.apache.shiro", "1.2.4")
+    private val mm = MultiModule.java("org.apache.shiro", "1.2.6")
     val core = mm("shiro-core") ++ SLF4J.jcl // slf4j required in place of commons-logging
     val web  = mm("shiro-web")
     val all  = core ++ web
@@ -125,7 +125,7 @@ object Dependencies {
 
   val boopickle = jvmAndJs("me.chrons",                        "boopickle", "1.1.0")
   val parboiled = jvmAndJs("org.parboiled",                    "parboiled", "2.1.3")
-  val shapeless = jvmAndJs("com.chuusai",                      "shapeless", "2.3.0")
+  val shapeless = jvmAndJs("com.chuusai",                      "shapeless", "2.3.2")
   val μPickle   = jvmAndJs("com.github.japgolly.fork.upickle", "upickle",   "custom-5")
   val μTest     = jvmAndJs("com.lihaoyi",                      "utest",     "0.3.1")
 
@@ -134,16 +134,16 @@ object Dependencies {
   val javaMail    = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.5.4")
   val jodaTime    = jvmOnly("joda-time"                   % "joda-time"             % "2.3") ++
                     jvmOnly("org.joda"                    % "joda-convert"          % "1.2")
-  val postgresql  = jvmOnly("org.postgresql"              % "postgresql"            % "9.4.1208")
+  val postgresql  = jvmOnly("org.postgresql"              % "postgresql"            % "9.4.1209")
   val slick       = jvmOnly("com.typesafe.slick"         %% "slick"                 % "2.1.0")
-  val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "2.4.6")
+  val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "2.4.7")
   val flyway      = jvmOnly("com.googlecode.flyway"       % "flyway-core"           % "2.3.1")
   val logback     = jvmOnly("ch.qos.logback"              % "logback-classic"       % "1.1.7")
   val scalate     = jvmOnly("org.scalatra.scalate"       %% "scalate-core"          % "1.7.1") ++
                     jvmOnly("org.scalatra.scalate"       %% "scalamd"               % "1.6.1") // why again?
   val commonsLang = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.4")
   val commonsIo   = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
-  val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.30.0")
+  val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.36.0")
   val mockito     = jvmOnly("org.mockito"                 % "mockito-core"          % "1.10.19")
   val scalaTest   = jvmOnly("org.scalatest"              %% "scalatest"             % "2.2.5")
   val scalaCheck  = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.11.3")
