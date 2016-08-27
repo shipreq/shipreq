@@ -60,6 +60,9 @@ object ReqDetailTestDsl {
   val editorCount =
     *.focus("Editor count").value(_.obs.editables.length)
 
+  val tailStepAC = *.focus("AC tail step").value(_.obs.uc.tailStepRowAC)
+  val tailStepEC = *.focus("EC tail step").value(_.obs.uc.tailStepRowEC)
+
   val invariantsWhenBad: *.Invariants =
     *.emptyInvariant
 
@@ -107,10 +110,12 @@ object ReqDetailTestDsl {
   }
 
   def addTailStepAC: *.Actions =
-    *.action("Add AC tail step")(i => clickEnabled(i.obs.uc.tailStepRowAC.add))
+    tailStepAC.test("exists")(_.isDefined) +>
+    *.action("Add AC tail step")(i => clickEnabled(i.obs.uc.tailStepRowAC.get.add))
 
   def addTailStepEC: *.Actions =
-    *.action("Add EC tail step")(i => clickEnabled(i.obs.uc.tailStepRowEC.add))
+    tailStepEC.test("exists")(_.isDefined) +>
+    *.action("Add EC tail step")(i => clickEnabled(i.obs.uc.tailStepRowEC.get.add))
 
   def addStep(label: String): *.Actions =
     *.action("Add " + label)(i => clickEnabled(i.obs.uc.row(label).add))

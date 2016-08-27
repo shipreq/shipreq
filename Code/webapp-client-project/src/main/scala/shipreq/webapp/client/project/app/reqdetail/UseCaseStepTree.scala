@@ -41,7 +41,7 @@ object UseCaseStepTree {
     .build
 
   private val stepBodyBase = <.div(*.body, ReactAttr.devOnly("data-step-text") := 1)
-  private val tailStepBase = <.div(*.container, ^.key := "TS")
+  private val tailStepBase = <.div(*.container, ^.key := "TS", ReactAttr.devOnly("data-tail-step-row") := 1)
 
   private val stepFilterM: FilterDead => VectorTree.PartialLocation => Boolean =
     FilterDead.memo(_.filterFnBy(Live whenValid _.validity))
@@ -91,7 +91,7 @@ object UseCaseStepTree {
       }
     }).drain()
 
-    if (row.tailStep) {
+    if (row.tailStep && uc.liveUC :: Live) {
       def cmd   = UpdateContentCmd.AddUseCaseStep(uc.id, field, VectorTree.ParentLocation.Empty)
       val cell  = Cell.AddUseCaseTailStep(row)
       val cb    = runCmd(cell)(cmd)

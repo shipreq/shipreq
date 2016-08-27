@@ -82,6 +82,13 @@ object ReqDetailTest extends TestSuite {
           +> stepText("1.0.2").assert("Put in mouth←1.1.1→1.1")
           +> stepText("1.1.1").assert("Steal food←1.1→1.0.2")
       ))
+
+      'dead - test("UC-1")(Plan.action(
+        changeLife.updateState(stateMode set Mode.Delete) >> deleteDelete
+          +> life.assert(Dead)
+          +> tailStepAC.test("doesn't exist")(_.isEmpty)
+          +> tailStepEC.test("doesn't exist")(_.isEmpty)
+      ))
     }
 
     'deadExplicitly - test("MF-19")(Plan invariants testLifeRowInnerText(deadCanRestore))

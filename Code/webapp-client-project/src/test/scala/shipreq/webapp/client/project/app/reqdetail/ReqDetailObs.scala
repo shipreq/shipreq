@@ -82,7 +82,7 @@ final class ReqDetailObs($: HtmlDomZipper) {
     val treeCells = ReqDetailObs.TreeNames.map(fields)
 
     val stepRows: NAE[Vector[StepRow]] =
-      treeCells.map(_.collect1n(">div>div").mapZippers(StepRow))
+      treeCells.map(_.collect0n(">div>div").mapZippers(StepRow))
 
     case class StepRow($: HtmlDomZipper) {
       private def ctrl(icon: Icon, icon2: Icon = null): html.Button = {
@@ -116,8 +116,20 @@ final class ReqDetailObs($: HtmlDomZipper) {
     val stepLabels: Vector[String] =
       treeStepLabels.reduce(_ ++ _)
 
-    def tailStepRowAC = stepRows.alt.last
-    def tailStepRowEC = stepRows.exception.last
+    private def getTailStepRow(rows: Vector[StepRow]): Option[StepRow] = {
+      val tailStepRows = rows.toIterator.zipWithIndex.filter(_._1.$.dom.hasAttribute("data-tail-step-row")).toList
+      tailStepRows match {
+        case Nil => None
+        case (row, i) :: Nil =>
+          assert(i == rows.indices.last, "Tail step row isn't in last position!")
+          Some(row)
+        case _ =>
+          sys error "Multiple tail step rows found!"
+      }
+    }
+
+    def tailStepRowAC = getTailStepRow(stepRows.alt)
+    def tailStepRowEC = getTailStepRow(stepRows.exception)
   }
 
   val editables =
