@@ -3,14 +3,9 @@
 * Remove unused styles
 
 Integrate async into ContentEditorFeature rendering
+  * Remove EditValidationFeature
   * Redo ReqTable rowlocking async
   * Remove rendering from AAF
-  * Each editor in ContentEditorFeature will need to handle async rendering now.
-    It used to expect usage: A renderOr E renderOr V
-    New use is: E renderOr V
-    Remove: commitK, commitAbortK
-    Remove or revise: renderStatic, renderDynamic
-  * Replace all manual focus stuff with autofocus
 
 * Determine UI for:
   * ReqDetail load failure
