@@ -508,17 +508,18 @@ object Style extends StyleSheet.Inline {
     val ul = style(paddingLeft(2.4 ex))
 
     private def tagBase(live: Live) = mixin(
-      display.inlineBlock,
+      padding(4 px, 6 px).important,
       mixinIf(live :: Dead)(&.not(_.hover)(textDecoration := ^.lineThrough)),
       hoverShowsInfo)
 
-    private def tagLabelSuffix(live: Live) = live match {
-      case Live => "primary"
-      case Dead => "default"
+    private def tagLabelColour(live: Live) = live match {
+      case Live => "blue"
+      case Dead => "grey"
     }
+
     val tag = styleF(D.live)(live => styleS(
       tagBase(live),
-      addClassName(s"label label-${tagLabelSuffix(live)}")))
+      addClassName(s"ui label ${tagLabelColour(live)}")))
 
     val tagInText = styleF(D.`live * validity`){ case (l, v) => styleS(
       tagBase(l),

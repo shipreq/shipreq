@@ -16,7 +16,6 @@ Integrate async into ContentEditorFeature rendering
   * Cfg Tags
 
 * Implement UI for:
-  * ReqDetail
   * Deletion screen
   * Cfg Fields
   * Cfg Issues
