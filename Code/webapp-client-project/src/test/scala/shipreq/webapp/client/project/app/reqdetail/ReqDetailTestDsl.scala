@@ -22,6 +22,19 @@ object ReqDetailTestDsl {
     implicit def equal : Equal [Mode] = Equal.by_==
   }
 
+//  sealed abstract class ButtonState
+//  object ButtonState {
+//    case object Missing extends ButtonState
+//    case object Enabled extends ButtonState
+//    case object Disabled extends ButtonState
+//    def apply(o: Option[html.Button]): ButtonState =
+//      o.map(_.disabled.get) match {
+//        case Some(true)  => Disabled
+//        case Some(false) => Enabled
+//        case None        => Missing
+//      }
+//  }
+
   def unspecifiedState: State =
     State(ExternalPubid(ReqType.Mnemonic("UNSPECIFIED TEST STATE"), ReqTypePos(1)), Mode.Error)
 
@@ -47,6 +60,9 @@ object ReqDetailTestDsl {
 
   val allSteps =
     *.focus("All steps").collection(_.obs.uc.stepLabels)
+
+  val allStepRows =
+    *.focus("All step rows").collection(_.obs.uc.allRows)
 
   val filterDead =
     *.focus("FilterDead").value(_.obs.generic.filterDead)
@@ -86,9 +102,23 @@ object ReqDetailTestDsl {
   }
 
   val invariantsUC: *.Invariants = {
+    val whenDead: *.Invariants =
+      allStepRows.map(_.buttons).rename("UC step buttons")
+        .assert.not.exists("exist", _.nonEmpty)
+
+    val whenLive: *.Invariants = {
+
+      *.emptyInvariant
+    }
+
+    val liveOrDead = *.chooseInvariant("UC dead/alive invariants")(_.obs.generic.live match {
+      case Live => whenLive
+      case Dead => whenDead
+    })
+
     val stepsAreUnique = allSteps.assert.distinct
 
-    invariantsGR & stepsAreUnique
+    invariantsGR & stepsAreUnique & liveOrDead
   }
 
   val invariants: *.Invariants =
@@ -111,26 +141,26 @@ object ReqDetailTestDsl {
 
   def addTailStepAC: *.Actions =
     tailStepAC.test("exists")(_.isDefined) +>
-    *.action("Add AC tail step")(i => clickEnabled(i.obs.uc.tailStepRowAC.get.add))
+    *.action("Add AC tail step")(i => clickEnabled(i.obs.uc.tailStepRowAC.get.add.get))
 
   def addTailStepEC: *.Actions =
     tailStepEC.test("exists")(_.isDefined) +>
-    *.action("Add EC tail step")(i => clickEnabled(i.obs.uc.tailStepRowEC.get.add))
+    *.action("Add EC tail step")(i => clickEnabled(i.obs.uc.tailStepRowEC.get.add.get))
 
   def addStep(label: String): *.Actions =
-    *.action("Add " + label)(i => clickEnabled(i.obs.uc.row(label).add))
+    *.action("Add " + label)(i => clickEnabled(i.obs.uc.row(label).add.get))
 
   def delStep(label: String): *.Actions =
-    *.action("Delete " + label)(i => clickEnabled(i.obs.uc.row(label).del))
+    *.action("Delete " + label)(i => clickEnabled(i.obs.uc.row(label).del.get))
 
   def restoreStep(label: String): *.Actions =
-    *.action("Restore " + label)(i => clickEnabled(i.obs.uc.row(label).rest))
+    *.action("Restore " + label)(i => clickEnabled(i.obs.uc.row(label).rest.get))
 
   def shiftStepLeft(label: String): *.Actions =
-    *.action("ShiftLeft " + label)(i => clickEnabled(i.obs.uc.row(label).left))
+    *.action("ShiftLeft " + label)(i => clickEnabled(i.obs.uc.row(label).left.get))
 
   def shiftStepRight(label: String): *.Actions =
-    *.action("ShiftRight " + label)(i => clickEnabled(i.obs.uc.row(label).right))
+    *.action("ShiftRight " + label)(i => clickEnabled(i.obs.uc.row(label).right.get))
 
   def stepText(label: String) =
     *.focus(label + " text").value(_.obs.uc.row(label).text)

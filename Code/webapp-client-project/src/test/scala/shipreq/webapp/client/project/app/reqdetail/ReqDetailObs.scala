@@ -85,11 +85,14 @@ final class ReqDetailObs($: HtmlDomZipper) {
       treeCells.map(_.collect0n(">div>div").mapZippers(StepRow))
 
     case class StepRow($: HtmlDomZipper) {
-      private def ctrl(icon: Icon, icon2: Icon = null): html.Button = {
+      private def ctrl(icon: Icon, icon2: Icon = null): Option[html.Button] = {
         val is  = (icon :: Option(icon2).toList).map(_.clsName.replace(' ', '.'))
         val sel = is.map(i => s"button:has(i.icon.$i)") mkString ","
-        $(sel).domAs[html.Button]
+        $.collect01(sel).as[html.Button].doms
       }
+
+      val isTailStepRow: Boolean =
+        $.dom.hasAttribute("data-tail-step-row")
 
       val label: Option[String] =
         $.collect01("*[data-step-label]").asHtml.mapDoms(_.title)
@@ -100,11 +103,13 @@ final class ReqDetailObs($: HtmlDomZipper) {
 
       lazy val textEditor = textContainer("textarea").domAs[html.TextArea]
 
-      lazy val del   = ctrl(UseCaseStepControls.IconDelete)
-      lazy val rest  = ctrl(UseCaseStepControls.IconRestore)
-      lazy val left  = ctrl(UseCaseStepControls.IconShiftLeft)
-      lazy val right = ctrl(UseCaseStepControls.IconShiftRight)
-      lazy val add   = ctrl(UseCaseStepControls.IconAdd)
+      val del   = ctrl(UseCaseStepControls.IconDelete)
+      val rest  = ctrl(UseCaseStepControls.IconRestore)
+      val left  = ctrl(UseCaseStepControls.IconShiftLeft)
+      val right = ctrl(UseCaseStepControls.IconShiftRight)
+      val add   = ctrl(UseCaseStepControls.IconAdd)
+
+      val buttons = List(del, rest, left, right, add).flatMap(_.toList)
     }
 
     def row(label: String): StepRow =
@@ -116,8 +121,11 @@ final class ReqDetailObs($: HtmlDomZipper) {
     val stepLabels: Vector[String] =
       treeStepLabels.reduce(_ ++ _)
 
+    val allRows: Vector[StepRow] =
+      stepRows.reduce(_ ++ _)
+
     private def getTailStepRow(rows: Vector[StepRow]): Option[StepRow] = {
-      val tailStepRows = rows.toIterator.zipWithIndex.filter(_._1.$.dom.hasAttribute("data-tail-step-row")).toList
+      val tailStepRows = rows.toIterator.zipWithIndex.filter(_._1.isTailStepRow).toList
       tailStepRows match {
         case Nil => None
         case (row, i) :: Nil =>

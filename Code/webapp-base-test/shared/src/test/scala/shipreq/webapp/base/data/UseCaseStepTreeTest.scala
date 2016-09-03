@@ -63,7 +63,7 @@ object UseCaseStepTreeTest extends TestSuite {
       ( compare(f.canDelete(l),             UseCaseStepDelete(id))
       & compare(f.canShiftLeft(l),          UseCaseStepShiftLeft(id))
       & compare(f.canShiftRight(l, v, mdt), UseCaseStepShiftRight(id))
-      & compare(f.canAdd(l),                UseCaseStepCreate(nextStepId, uc.id, f, l.asParentLoc))
+      & compare(f.canInsertAfter(l),        UseCaseStepCreate(nextStepId, uc.id, f, l.asParentLoc))
       ).rename(s"${f.name} / $id / ${l.whole mkString "."}")
 
     def tree(f: UCF) = {
