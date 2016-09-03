@@ -317,6 +317,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
           case Row.UseCaseStepsE    => UiText.FieldNames.useCaseStepTreeE
           case Row.DeletionReason   => UiText.FieldNames.deletionReason
           case Row.StepGraph        => UiText.FieldNames.useCaseStepFlowGraph
+          case Row.PastPubids       => UiText.FieldNames.pastPubids
           case Row.Life             => UiText.Life.field
         }
 
@@ -402,6 +403,11 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
                 LifeButton.Restore.withStatusOnLeft(
                   req.allowLiveChange(project.config.reqTypes) option restore(req.id))
             }
+
+          case Row.PastPubids =>
+            val idS = req.pastPubids(project.reqs.pubids)
+            val idV = MutableArray(idS).sortBySchwartzian(DataLogic.pubidSortKeyFn(project.config)).to[Vector]
+            pw pastPubids idV
         }
 
         content + *.detailTableValue(liveStyle)

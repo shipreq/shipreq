@@ -57,6 +57,7 @@ object UiText {
     def useCaseStepTreeE     = StaticField.ExceptionStepTree.name
     def useCaseStepFlowGraph = StaticFieldType.StepGraph.name
     def deletionReason       = "Deletion Reason"
+    def pastPubids           = "Past IDs"
   }
 
   object Cfg {

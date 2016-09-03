@@ -51,6 +51,9 @@ sealed abstract class ReqT[+RT <: ReqTypeId] {
 
   @inline final def reqTypeId: RT =
     pubid.reqTypeId
+
+  final def pastPubids(pr: PubidRegister): Set[Pubid] =
+    pr.all(id) - pubid
 }
 
 object ReqT extends ReqTEquality {

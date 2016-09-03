@@ -125,6 +125,17 @@ case class PubidRegister(value: Multimap[ReqTypeId, Vector, ReqId]) {
       case _: IndexOutOfBoundsException => None
     }
   }
+
+  def all(id: ReqId): Set[Pubid] = {
+    value.iterator.flatMap {
+      case (rt, ids) =>
+        val i = ids.indexWhere(_ ==* id)
+        if (i >= 0)
+          PubidT(rt, ReqTypePos(i + 1)) :: Nil
+        else
+          Nil
+    }.toSet
+  }
 }
 
 object PubidRegister {

@@ -163,6 +163,9 @@ final class ProjectWidgets private(project    : Project,
   def implicationList(ids: Vector[Pubid]): ReactElement =
     PubidFormat.validWhenDead.pubids(ids)
 
+  def pastPubids(ids: Vector[Pubid]): ReactElement =
+    renderVector(ids, sepComma)(id => <.span(*.pastPubid, PlainText.pubid(id, project)))
+
   /** Contextualised */
   val codeRef = memo[ReqCodeId] { id =>
     import ProjectText.ReqCodeResolution._

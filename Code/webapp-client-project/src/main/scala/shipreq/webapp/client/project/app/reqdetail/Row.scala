@@ -40,6 +40,7 @@ object Row {
   }
 
   case object Life              extends Row(autoKey)
+  case object PastPubids        extends Row(autoKey)
   case object DeletionReason    extends Row(autoKey)
   case object ReqType           extends Row(autoKey)
   case object Code              extends Row(autoKey)
@@ -65,16 +66,20 @@ object Row {
     if (fd :: ShowDead) headDead else headLive
 
   private def headLive: Vector[Row] =
-    headDead.filterNot(_ ==* DeletionReason)
+    headDead.filter {
+      case PastPubids | DeletionReason => false
+      case _ => true
+    }
 
   private def headDead: Vector[Row] =
     Vector(
-      ReqType       ,
-      Life          ,
+      ReqType,
+      Life,
+      PastPubids,
       DeletionReason,
-      Code          ,
-      Tags          ,
-      Implications  )
+      Code,
+      Tags,
+      Implications)
 
   val fromField: Field => List[Row] = {
     case f: CF                => CustomField(f) :: Nil

@@ -537,6 +537,8 @@ object Style extends StyleSheet.Inline {
     val issueDesc = style(
       padding.horizontal(0.7 ex))
 
+    val pastPubid = style(deadMaybeValid(Valid))
+
     val reqRef = styleF(D.`live * validity`){ case (l, v) => styleS(
       // hoverShowsInfo, // It's a link to ReqDetail now
       mixinIf(l :: Live)(refColour),
