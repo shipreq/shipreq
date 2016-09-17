@@ -8,6 +8,7 @@ import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
 import shipreq.base.util.NonEmptyVector
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.base.feature.AsyncActionFeature
 import shipreq.webapp.client.base.lib.{DataReusability => _, _}
@@ -217,11 +218,12 @@ object Table {
   // ===================================================================================================================
   // Cells
 
-  sealed trait CellStatus
+  sealed abstract class CellStatus
   object CellStatus {
     case object Normal  extends CellStatus
     case object DeadRow extends CellStatus
     case object `N/A`   extends CellStatus
+    implicit def univEq: UnivEq[CellStatus] = UnivEq.derive
     val domain = Domain.ofValues[CellStatus](Normal, DeadRow, `N/A`)
   }
 

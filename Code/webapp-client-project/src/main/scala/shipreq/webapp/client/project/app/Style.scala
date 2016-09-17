@@ -4,7 +4,6 @@ import japgolly.scalajs.react.vdom.prefix_<^.{^ => ^^, _}
 import japgolly.univeq._
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
-import scalacss.{Pseudo, PseudoElement, StyleS}
 import shipreq.base.util._
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.data.{Dead, Live, StaticField}
@@ -54,7 +53,7 @@ object Style extends StyleSheet.Inline {
   private def deadColumnLabel(live: Live) =
     mixinIf(live :: Dead)(textDecoration := ^.lineThrough)
 
-  private val hasTitle = Pseudo.Custom("[title]", PseudoElement)
+  private val hasTitle = Pseudo.Custom("[title]", PseudoType.Element)
 
   private val hoverShowsInfo = hasTitle(cursor.help)
 
@@ -158,7 +157,7 @@ object Style extends StyleSheet.Inline {
         marginBottom(0.7 ex),
         paddingRight(1 ex)))
 
-      def dragHnd = Style.dragHnd
+      def dragHnd = Style.this.dragHnd
 
       val inconclusiveSortMethod = style(
         width(28 ex))

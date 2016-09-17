@@ -3,7 +3,6 @@ package shipreq.webapp.client.base.ui
 import japgolly.scalajs.react.vdom.prefix_<^.{^ => ^^, _}
 import japgolly.univeq._
 import scalacss.Defaults._
-import scalacss.{Pseudo, PseudoElement, StyleS}
 import shipreq.base.util.Validity
 import shipreq.webapp.client.base.ui.semantic.{Colour, Label}
 

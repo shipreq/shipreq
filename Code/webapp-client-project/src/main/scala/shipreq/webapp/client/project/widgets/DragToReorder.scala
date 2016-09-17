@@ -17,6 +17,8 @@ object DragToReorder {
   /** Item is being dragged. You'd normally draw it with a dashed border, or `visibility: hidden`. */
   case object DragSource extends Status
 
+  implicit def univEqStatus: UnivEq[Status] = UnivEq.derive
+
   /**
    * Item has been dragged out to indicate deletion.
    *
