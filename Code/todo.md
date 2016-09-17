@@ -7,15 +7,20 @@ Integrate async into ContentEditorFeature rendering
   * Redo ReqTable rowlocking async
   * Remove rendering from AAF
 
+* ReqTable
+  * No content.
+  * All dead.
+  * All filtered out.
+  * New button & form.
+  * Sort form.
+  * Filter form (∅,ok,ko) & help.
+  * Summary math.
+  * Column selection.
+  * Delete/restore buttons.
+  * Restore reusability on ReqTable and editors
+
 * Determine UI for:
   * ReqDetail load failure
-  * Deletion screen
-  * Cfg Fields
-  * Cfg Issues
-  * Cfg ReqTypes
-  * Cfg Tags
-
-* Implement UI for:
   * Deletion screen
   * Cfg Fields
   * Cfg Issues
