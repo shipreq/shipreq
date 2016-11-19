@@ -99,7 +99,7 @@ object Dependencies {
   }
 
   object Akka {
-    private val mm = MultiModule.scala("com.typesafe.akka", "2.3.12")
+    private val mm = MultiModule.scala("com.typesafe.akka", "2.4.13")
     val actor   = mm("akka-actor") ++ mm("akka-slf4j")
     val testkit = mm("akka-testkit")
   }

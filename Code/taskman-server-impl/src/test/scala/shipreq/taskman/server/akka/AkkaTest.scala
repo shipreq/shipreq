@@ -4,7 +4,7 @@ import java.util.concurrent.{TimeUnit, CountDownLatch, Executors}
 import org.specs2.mutable.Specification
 import org.specs2.time.NoTimeConversions
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent._
 import scala.slick.jdbc.GetResult
 import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.base.util.log.HasLogger
@@ -41,7 +41,7 @@ class AkkaTest extends Specification with DatabaseTest with NoTimeConversions wi
         Server.run(ctx, false)(s => {
           shutdownLatch.await(10, TimeUnit.SECONDS)
           s.shutdown()
-          s.system.awaitTermination(10.seconds)
+          Await.result(s.system.whenTerminated, 10.seconds)
         })
       catch {
         case e: Throwable => log.error(e, "Akka crashed")
