@@ -92,7 +92,7 @@ object Dependencies {
   }
 
   object Shiro {
-    private val mm = MultiModule.java("org.apache.shiro", "1.2.6")
+    private val mm = MultiModule.java("org.apache.shiro", "1.3.2")
     val core = mm("shiro-core") ++ SLF4J.jcl // slf4j required in place of commons-logging
     val web  = mm("shiro-web")
     val all  = core ++ web
