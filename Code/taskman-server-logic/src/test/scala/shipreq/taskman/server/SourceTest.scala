@@ -1,6 +1,6 @@
 package shipreq.taskman.server
 
-import org.joda.time.Period
+import java.time.Duration
 import org.specs2.ScalaCheck
 import org.specs2.mutable._
 import scalaz.effect.IO
@@ -13,8 +13,8 @@ class SourceTest extends Specification with ScalaCheck {
   val mockMsgs = Seq(mh_1, mh_2)
   implicit val mockSop = MockOpTransformer1[Sop, IO, GetMsgsAssignNode, Seq[MsgHeader]](SopTypeTags, mockMsgs)
   implicit val clock = IO(timeNow)
-  implicit val tp = AssignmentTrustPeriod(Period days 3)
-  val source = new Source(Period seconds 1, 20)
+  implicit val tp = AssignmentTrustPeriod(Duration ofDays 3)
+  val source = new Source(Duration ofSeconds 1, 20)
 
   "poll when allowed" >> {
     val (s, ms) = source.poll(None).run(timeNow minusDays 1).unsafePerformIO()
@@ -23,7 +23,7 @@ class SourceTest extends Specification with ScalaCheck {
   }
 
   "poll before pollGap expires" >> {
-    val lastPolled = timeNow minusMillis 1
+    val lastPolled = timeNow minusNanos 1
     val (s, ms) = source.poll(None).run(lastPolled).unsafePerformIO()
     "Time should not be updated"       in { s ==== lastPolled }
     "Doesn't retrieve message headers" in { ms ==== Nil }

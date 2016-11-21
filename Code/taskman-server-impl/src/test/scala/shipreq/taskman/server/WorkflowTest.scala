@@ -4,7 +4,7 @@ import org.specs2.matcher.ThrownExpectations
 import org.specs2.mutable.Specification
 import org.specs2.time.NoTimeConversions
 import shipreq.base.test.specs2.db.DatabaseTest
-import shipreq.base.util.jodatime.JodaTimeHelpers._
+import shipreq.base.util.JavaTimeHelpers._
 import shipreq.taskman.api.{EmailAddr, MsgStatus, MsgId}
 import shipreq.taskman.api.Msg.ReRegistrationAttempted
 import shipreq.taskman.api.ApiOp.{QueryMsgStatus, SubmitMsg}
@@ -19,7 +19,7 @@ class WorkflowTest extends Specification with DatabaseTest with NoTimeConversion
   val w = WorkerId(666)
   val defaultMsg = ReRegistrationAttempted(EmailAddr("haha cool"))
 
-  val assignNode = GetMsgsAssignNode(n, 10, 1 minutes, None)
+  val assignNode = GetMsgsAssignNode(n, 10, 1 minute, None)
 
   def findAndStartWork = {
     // assign node -> cant(assign node)
@@ -53,7 +53,7 @@ class WorkflowTest extends Specification with DatabaseTest with NoTimeConversion
     m1.failureCount must_== 0
 
     // fail:retry -> cant(assign worker)
-    run(UpdateMsgRetry(n, w, m1, 0 sec))
+    run(UpdateMsgRetry(n, w, m1, 0 seconds))
     run(assignWorker1) must beNone
     run(QueryMsgStatus(id)) must beSome(MsgStatus.Unassigned)
 
@@ -80,7 +80,7 @@ class WorkflowTest extends Specification with DatabaseTest with NoTimeConversion
     m1.failureCount must_== 0
 
     // fail:retry -> cant(assign worker) while delay
-    run(UpdateMsgRetry(n, w, m1, 1 sec))
+    run(UpdateMsgRetry(n, w, m1, 1 seconds))
     run(assignWorker1) must beNone
     run(assignNode) must beEmpty
     Thread.sleep(1050)

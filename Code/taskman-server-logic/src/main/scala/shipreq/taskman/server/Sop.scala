@@ -1,6 +1,6 @@
 package shipreq.taskman.server
 
-import org.joda.time.{DateTime, Period}
+import java.time.{Duration, OffsetDateTime}
 import shipreq.base.util.Error
 import shipreq.taskman.api.Priority
 
@@ -29,7 +29,7 @@ object Sop {
    * @param assignmentTrustPeriod Period of time for which another node's assignment is respected.
    * @param qs Queue status: The highest priority msg in, and size of the in-memory queue.
    */
-  case class GetMsgsAssignNode(n: NodeId, batchSize: Int, assignmentTrustPeriod: Period, qs: Option[(Priority, Int)])
+  case class GetMsgsAssignNode(n: NodeId, batchSize: Int, assignmentTrustPeriod: Duration, qs: Option[(Priority, Int)])
     extends Sop[Seq[MsgHeader]]
 
   case class GetMsgAssignWorker(n: NodeId, w: WorkerId, m: MsgHeader) extends Sop[Option[MsgDetail]]
@@ -37,11 +37,11 @@ object Sop {
   case class ReAssignWorker(n: NodeId, w: WorkerId, m: MsgDetail) extends Sop[Boolean]
 
   case class UpdateMsgSuccess(n: NodeId, w: WorkerId, m: MsgDetail) extends Sop[Unit]
-  case class UpdateMsgRetry(n: NodeId, w: WorkerId, m: MsgDetail, delay: Period) extends FailedJobReaction
+  case class UpdateMsgRetry(n: NodeId, w: WorkerId, m: MsgDetail, delay: Duration) extends FailedJobReaction
   case class UpdateMsgAbort(n: NodeId, w: WorkerId, m: MsgDetail) extends FailedJobReaction
 
-  case class NotifySupportWorkerFailed(t: DateTime, m: MsgDetail, e: Error) extends Sop[Unit]
-  case class NotifySupportTaskmanError(t: DateTime, e: Error, m: Option[MsgDetail]) extends Sop[Unit]
+  case class NotifySupportWorkerFailed(t: OffsetDateTime, m: MsgDetail, e: Error) extends Sop[Unit]
+  case class NotifySupportTaskmanError(t: OffsetDateTime, e: Error, m: Option[MsgDetail]) extends Sop[Unit]
 
   case object Nop extends Sop[Unit]
 }

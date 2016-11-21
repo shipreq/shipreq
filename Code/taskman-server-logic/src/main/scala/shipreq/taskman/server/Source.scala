@@ -1,6 +1,6 @@
 package shipreq.taskman.server
 
-import org.joda.time.{Period, DateTime}
+import java.time.{Duration, OffsetDateTime}
 import shipreq.taskman.api.Priority
 import shipreq.taskman.server.Sop.GetMsgsAssignNode
 import scalaz.{StateT, State}
@@ -8,21 +8,20 @@ import scalaz.effect.IO
 import Source._
 
 object Source {
-
-  type S = DateTime
+  type S = OffsetDateTime
   type ST[A] = State[S, A]
   type STIO[A] = StateT[IO, S, A]
   type QueueStatus = Option[(Priority, Int)]
-
 }
 
-final class Source(pollGap: Period, batchSize: Int)(
+final class Source(pollGap: Duration, batchSize: Int)(
   implicit node: NodeId,
-           clock: IO[DateTime],
+           clock: IO[OffsetDateTime],
            trustPeriod: AssignmentTrustPeriod,
            sopReifier: SopReifier) {
 
-  def empty: IO[S] = clock.map(_ minus pollGap)
+  def empty: IO[S] =
+    clock.map(_ minus pollGap)
 
   val outsidePollGap: STIO[Boolean] =
     StateT(s => clock.map(now => (s, now.isAfter(s plus pollGap))))

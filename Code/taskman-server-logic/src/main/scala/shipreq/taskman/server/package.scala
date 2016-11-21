@@ -1,6 +1,6 @@
 package shipreq.taskman
 
-import org.joda.time.{Period, DateTime}
+import java.time.{Duration, OffsetDateTime}
 import scalaz.{\/-, ~>}
 import scalaz.effect.{MonadIO, IO}
 import shipreq.base.util.ErrorTag
@@ -13,7 +13,7 @@ package object server {
 
   case class WorkerId(value: Short) extends AnyVal
 
-  case class MsgHeader(id: MsgId, priority: Priority, created: DateTime) {
+  case class MsgHeader(id: MsgId, priority: Priority, created: OffsetDateTime) {
     // override def toString = s"MsgHeader($id,$p,new DateTime(${created.getMillis}))\n"
     override def equals(other: Any): Boolean = other match {
       case MsgHeader(id2, _, _) if id.value == id2.value => true
@@ -29,7 +29,7 @@ package object server {
       s"MsgDetail($hdr, ${msg.toString.replace("\n", "\\n")}, $failureCount)"
   }
 
-  final case class AssignmentTrustPeriod(value: Period) extends AnyVal
+  final case class AssignmentTrustPeriod(value: Duration) extends AnyVal
 
   /**
    * Indication that an error is deterministic and will always occur.

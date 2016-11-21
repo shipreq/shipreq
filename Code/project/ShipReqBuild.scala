@@ -50,7 +50,7 @@ object ShipReqBuild {
         testScope(μTest ++ Nyaya.test))
       .depsForJvm(
         SLF4J.api ++
-        providedScope(logback ++ jodaTime) ++
+        providedScope(logback) ++
         testScope(Specs2.combo ++ Scalaz.scalacheck))
 
   lazy val baseDb =
@@ -59,9 +59,7 @@ object ShipReqBuild {
         Common.settings,
         Common.jvmSettings,
         Common.macroModuleSettings)
-      .deps(
-        postgresql ++ slick ++ hikariCP ++ flyway ++ logback ++
-        providedScope(jodaTime))
+      .deps(postgresql ++ slick ++ hikariCP ++ flyway ++ logback)
       .dependsOn(baseUtilJvm)
 
   lazy val baseTestJvm = baseTest.jvm
@@ -121,8 +119,7 @@ object ShipReqBuild {
   lazy val taskmanServerLogic =
     project("taskman-server-logic")
       .configure(Common.settings, Common.jvmSettings)
-      .deps(
-        jodaTime ++ logback ++ testScope(Specs2.combo))
+      .deps(logback ++ testScope(Specs2.combo))
       .dependsOn(taskmanApiLogic)
       .dependsOn(baseTestJvm % "test")
       .configure(dontInline) // crashes scalac 2.11.2

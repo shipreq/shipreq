@@ -1,6 +1,6 @@
 package shipreq.taskman.server
 
-import org.joda.time.DateTime
+import java.time.OffsetDateTime
 import scalaz.{-\/, \/, \/-, ~>}
 import scalaz.effect.IO
 import scalaz.std.list.listInstance
@@ -39,7 +39,7 @@ object Worker extends HasLogger {
 
   type FailurePolicy = FailureCtx => FailureResponse
 
-  case class FailureCtx(n: NodeId, w: WorkerId, m: MsgDetail, err: Error, now: DateTime)
+  case class FailureCtx(n: NodeId, w: WorkerId, m: MsgDetail, err: Error, now: OffsetDateTime)
 
   /**
    * What to do when a job fails.
@@ -132,7 +132,7 @@ final class Worker[F[_]](msgProcessor: MsgProcessor[F])(
              worker: WorkerId,
              sopToIo: SopReifier,
              trustPeriod: AssignmentTrustPeriod,
-             clock: IO[DateTime],
+             clock: IO[OffsetDateTime],
              failurePolicy: FailurePolicy
     ) extends HasLogger {
 
@@ -161,13 +161,13 @@ final class Worker[F[_]](msgProcessor: MsgProcessor[F])(
   private[this] def logWorkStart(md: MsgDetail): IO[Unit] =
     IO(log.debug.z(s"Starting work: $md"))
 
-  private[this] def performWork(m: MsgDetail)(assignedSince: DateTime): IO[WorkResult[F]] = {
+  private[this] def performWork(m: MsgDetail)(assignedSince: OffsetDateTime): IO[WorkResult[F]] = {
     val io: MsgProcessorOut[F] =
       try catchExecErrorsIOE(msgProcessor(m)) catch {case t: Throwable => IOE error t}
     io flatMap taskEnd(m, assignedSince)
   }
 
-  private[this] def taskEnd(m: MsgDetail, assignedSince: DateTime): ErrorOr[ProcessorResult[F]] => IO[WorkResult[F]] = {
+  private[this] def taskEnd(m: MsgDetail, assignedSince: OffsetDateTime): ErrorOr[ProcessorResult[F]] => IO[WorkResult[F]] = {
     case \/-(ProcessorResult.Complete) =>
       UpdateMsgSuccess(node, worker, m).toIO >> IO(Completed(m))
 
@@ -181,7 +181,7 @@ final class Worker[F[_]](msgProcessor: MsgProcessor[F])(
   private[this] def handleTaskFailure(m: MsgDetail)(e: Error): IO[WorkResult[F]] =
     clock >>= handleTaskFailure2(m, e)
 
-  private[this] def handleTaskFailure2(m: MsgDetail, e: Error)(now: DateTime): IO[WorkResult[F]] = {
+  private[this] def handleTaskFailure2(m: MsgDetail, e: Error)(now: OffsetDateTime): IO[WorkResult[F]] = {
     val f = failurePolicy(FailureCtx(node, worker, m, e, now))
     val addOps: IO[Unit] = f.additionalOps.traverse_(sopToIo)
     f.reaction.toIO >> addOps >> IO(WorkerFailed(m, e, f.reaction))
@@ -209,7 +209,7 @@ final class Worker[F[_]](msgProcessor: MsgProcessor[F])(
         log.error(e, "Taskman error occurred! (no msg)")
     })
 
-  private[this] def wrapAsync(m: MsgDetail, assignedSince: DateTime): IOE[ProcessorResult[F]] => IO[WorkResult[F]] =
+  private[this] def wrapAsync(m: MsgDetail, assignedSince: OffsetDateTime): IOE[ProcessorResult[F]] => IO[WorkResult[F]] =
     work =>
       IoUtils.time_(
         catchTaskmanErrors(Some(m))(
@@ -222,7 +222,7 @@ final class Worker[F[_]](msgProcessor: MsgProcessor[F])(
 
   private[this] val reassignmentOk: IO[Option[WorkResult[F]]] = IO(None)
 
-  private[this] def reassignIfNeeded(m: MsgDetail, assignedSince: DateTime): IO[Option[WorkResult[F]]] =
+  private[this] def reassignIfNeeded(m: MsgDetail, assignedSince: OffsetDateTime): IO[Option[WorkResult[F]]] =
     clock.flatMap(now =>
       if (now.isBefore(assignedSince plus trustPeriod.value))
         reassignmentOk

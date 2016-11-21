@@ -15,7 +15,7 @@ object Dependencies {
     val all      = compiler ++ library ++ reflect ++ p
     val macroDef = reflect ++ library ++ (compiler % "provided")
 
-    val java8compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0"
+    val java8compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0"
   }
 
   object Scalaz {
@@ -132,8 +132,6 @@ object Dependencies {
   val okHttp      = jvmOnly("com.squareup.okhttp"         % "okhttp"                % "1.5.4")
   val httpCore    = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.5")
   val javaMail    = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.5.6")
-  val jodaTime    = jvmOnly("joda-time"                   % "joda-time"             % "2.3") ++
-                    jvmOnly("org.joda"                    % "joda-convert"          % "1.2")
   val postgresql  = jvmOnly("org.postgresql"              % "postgresql"            % "9.4.1212")
   val slick       = jvmOnly("com.typesafe.slick"         %% "slick"                 % "2.1.0")
   val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "2.5.1")

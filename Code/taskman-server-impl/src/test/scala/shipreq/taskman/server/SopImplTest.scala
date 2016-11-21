@@ -1,16 +1,15 @@
-
 package shipreq.taskman.server
 
-import org.joda.time.{DateTime, Period}
+import java.time.{Duration, OffsetDateTime}
 import org.specs2.matcher.Matcher
 import org.specs2.mutable.Specification
 import org.specs2.time.NoTimeConversions
 import scala.slick.jdbc.StaticQuery.query
 import scala.util.Random
-import shipreq.base.db.JodaTimeSqlHelpers._
+import shipreq.base.db.JavaTimeSqlHelpers._
 import shipreq.base.db.SqlHelpers._
 import shipreq.base.test.specs2.db.DatabaseTest
-import shipreq.base.util.jodatime.JodaTimeHelpers._
+import shipreq.base.util.JavaTimeHelpers._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.taskman.api.impl.Serialisation
@@ -28,11 +27,11 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
 
   "reassignWorker" should {
 
-    val insertQ = query[(Option[NodeId], Option[WorkerId], Period, Period, Period), MsgId](
+    val insertQ = query[(Option[NodeId], Option[WorkerId], Duration, Duration, Duration), MsgId](
       "INSERT INTO msgq(type, data, node, worker, updated_at, created_at, effective_from, priority, priority_base)" +
         s"VALUES(0, NULL, ?, ?, now()-?, now()-?, now()-?, 5,5) RETURNING id")
 
-    val getUpdatedAt = query[MsgId, DateTime]("select updated_at from msgq where id=?")
+    val getUpdatedAt = query[MsgId, OffsetDateTime]("select updated_at from msgq where id=?")
 
     def timestampBeforeAfter(id: MsgId) = {
       val b = getUpdatedAt(id).first
@@ -68,16 +67,16 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
 
   "getMsgsAssignNode" should {
 
-    val insertQ = query[(Short, Priority, Priority, Option[Int], Option[Short], Period, Period, Period), MsgId](
+    val insertQ = query[(Short, Priority, Priority, Option[Int], Option[Short], Duration, Duration, Duration), MsgId](
       "INSERT INTO msgq(type, priority, priority_base, node, worker, created_at, updated_at, effective_from)" +
         "VALUES(?, ?, ?, ?, ?, now()+?, now()+?, now()+?) RETURNING id")
 
     def insert(node: Boolean = false,
                worker: Boolean = false,
                pri: Priority = Priority(50),
-               created: Period = -1 second,
-               updated: Period = null,
-               effective: Period = null
+               created: Duration = -1 second,
+               updated: Duration = null,
+               effective: Duration = null
                 ): MsgId =
       insertQ(
         rng.nextInt().toShort,
@@ -146,7 +145,7 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
 
     def test(limit: Int, queuedAlready: Int)(pris: Int*)(expectedIndexes: Int*) = {
       val under = List(4,5,6,7,8,9).sorted.reverse
-      val allIds = insertP((under ++ pris): _*)
+      val allIds = insertP(under ++ pris: _*)
       val (idsU, idsP) = allIds.splitAt(under.size)
       val exps = expectedIndexes.map(i => {
         val (id, p) = if (i<0) {
@@ -190,19 +189,19 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
 
   "getMsgAssignWorker" should {
 
-    val insertQ = query[(Short, JsonStr[Msg], Option[NodeId], Option[WorkerId], Period, Period, Period), MsgId](
+    val insertQ = query[(Short, JsonStr[Msg], Option[NodeId], Option[WorkerId], Duration, Duration, Duration), MsgId](
       "INSERT INTO msgq(type, data, node, worker, created_at, updated_at, effective_from, priority, priority_base)" +
         "VALUES(?, ?, ?, ?, now()-?, now()-?, now()-?, 5,5) RETURNING id")
 
     def insert(node: Option[NodeId] = None, worker: Option[WorkerId] = None, msg: Msg = defaultMsg): MsgId = {
-      val p: Period = 2.days
-      insertQ(MsgType.lookup(msg).id, Serialisation.serialise(msg), node, worker, p, p, p).first
+      val d: Duration = 2.days
+      insertQ(MsgType.lookup(msg).id, Serialisation.serialise(msg), node, worker, d, d, d).first
     }
 
     def insertAssignedToOwnNode() = insert(node = Some(n))
 
     def test(id: MsgId) =
-      () => dao.getMsgAssignWorker(n, w, MsgHeader(id, Priority(5), new DateTime))
+      () => dao.getMsgAssignWorker(n, w, MsgHeader(id, Priority(5), OffsetDateTime.now()))
 
     "not assign if msg has been picked up by another node" in {
       test(insert(node = Some(NodeId(6789))))() must beNone
@@ -213,11 +212,11 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
     }
 
     "deserialise the msg" in {
-      test(insertAssignedToOwnNode)() must beLike{ case Some(MsgDetail(_, msg, _)) if msg == defaultMsg => ok }
+      test(insertAssignedToOwnNode())() must beLike{ case Some(MsgDetail(_, msg, _)) if msg == defaultMsg => ok }
     }
 
     "assign when unassigned" in {
-      val t = test(insertAssignedToOwnNode)
+      val t = test(insertAssignedToOwnNode())
       (t().isDefined, t().isDefined) ==== (true, false)
     }
   }

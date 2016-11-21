@@ -1,17 +1,17 @@
 package shipreq.taskman.server
 
-import org.joda.time.{Period, DateTime}
-import org.scalacheck.Arbitrary
+import java.time.{Duration, Instant, OffsetDateTime, ZoneId}
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Arbitrary._
 import scalaz.Lens.lensg
-import scalaz.{NonEmptyList, Heap, Order, Endo}
+import scalaz.{Endo, Heap, NonEmptyList, Order}
 import scalaz.effect.IO
-import shipreq.base.util.{ErrorOr, Error}
+import shipreq.base.util.{Error, ErrorOr}
 import shipreq.base.util.effect.IOE
-import shipreq.base.test.{OpTypeProvider, MockOpTransformerA, MockOpTransformer}
-import shipreq.taskman.api.{EmailAddr, UserId, MsgId, Priority}
+import shipreq.base.test.{MockOpTransformer, MockOpTransformerA, OpTypeProvider}
+import shipreq.taskman.api.{EmailAddr, MsgId, Priority, UserId}
 import shipreq.taskman.api.Msg.{LandingPageHit, ReRegistrationAttempted}
-import shipreq.taskman.server.business.{MailingList, ShipReqUser, Emails, Bop, Email, Support}
+import shipreq.taskman.server.business.{Bop, Email, Emails, MailingList, ShipReqUser, Support}
 import shipreq.taskman.server.business.Email.Addr
 import Bop._
 import Sop._
@@ -33,7 +33,7 @@ object TestHelpers {
 
   final def endoMod[A](f: A => Unit) = Endo[A](a => {f(a); a})
 
-  val timeNow = DateTime.now()
+  val timeNow = OffsetDateTime.now()
   val timePast = timeNow minusMinutes 10
 
   val sampleEmailAddr = EmailAddr("test@hehe.com")
@@ -61,7 +61,7 @@ object TestHelpers {
     }
     object msgHeader {
       val priorityL = lensg[MsgHeader, Priority](m => p => m.copy(priority = p), _.priority)
-      val createdL = lensg[MsgHeader, DateTime](m => c => m.copy(created = c), _.created)
+      val createdL = lensg[MsgHeader, OffsetDateTime](m => c => m.copy(created = c), _.created)
     }
     object failureCtx {
       val msgL = lensg[FailureCtx, MsgDetail](c => md => c.copy(m = md), _.m)
@@ -83,7 +83,7 @@ object TestHelpers {
   val crashOnSendEmail     = endoMod[MockBops](_.sendEmail << ErrorOr.error("CRASH!"))
   val crashOnReportFailure = endoMod[MockBops](_.supReportFailure << ErrorOr.error("CRASH!"))
 
-  val clockReal = IO(DateTime.now)
+  val clockReal = IO(OffsetDateTime.now)
 
   val fpRetry: FailurePolicy =
     f => FailureResponse(UpdateMsgAbort(f.n, f.w, f.m), Nil)
@@ -92,7 +92,7 @@ object TestHelpers {
     f => FailureResponse(UpdateMsgAbort(f.n, f.w, f.m), NotifySupportWorkerFailed(timeNow, f.m, f.err) :: Nil)
 
   val fpAbort: FailurePolicy =
-    f => FailureResponse(UpdateMsgRetry(f.n, f.w, f.m, Period days 1), Nil)
+    f => FailureResponse(UpdateMsgRetry(f.n, f.w, f.m, Duration ofDays 1), Nil)
 
   def mpNop[F[_]]: MsgProcessor[F] = _ => IOE(ProcessorResult.Complete)
   def mpCrash[F[_]]: MsgProcessor[F] = _ => ???
@@ -102,13 +102,16 @@ object TestHelpers {
 
   implicit def arbitraryMsgId = arbMap[MsgId, Long](new MsgId(_))
   implicit def arbitraryPriority = arbMap[Priority, Short](new Priority(_))
-  implicit def arbitraryDateTime = arbMap[DateTime, Long](new DateTime(_))
+
+  implicit def arbitraryOffsetDateTime = Arbitrary[OffsetDateTime](
+    Gen.chooseNum(0L, 3000000000000L).map(l =>
+      OffsetDateTime.ofInstant(Instant.ofEpochSecond(l), ZoneId.systemDefault())))
 
   implicit def arbitraryMsgHeader: Arbitrary[MsgHeader] =
     Arbitrary(for {
       i <- arbitrary[MsgId]
       p <- arbitrary[Priority]
-      c <- arbitrary[DateTime]
+      c <- arbitrary[OffsetDateTime]
     } yield
       MsgHeader(i,p,c))
 

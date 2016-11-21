@@ -1,7 +1,7 @@
 package shipreq.taskman.server.business
 
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 import scalaz.old.NonEmptyList
 import shipreq.base.util.{Util, ErrorOr, Error}
 import shipreq.base.util.ScalaExt.StringBuilderExt
@@ -60,7 +60,7 @@ object Email {
 
   final case class Content(subject: String, body: String)
 
-  val timeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
+  val timeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 }
 
 // =====================================================================================================================
@@ -90,14 +90,14 @@ final class Emails(ep: EnvelopeProps, tv: TokenValues) {
   def archive(c: => Content): Option[SendOp] =
     archiveEnv.map(Bop.SendEmail(_, c))
 
-  def workerFailureEmail(t: DateTime, m: MsgDetail, e: Error) = Content(
+  def workerFailureEmail(t: OffsetDateTime, m: MsgDetail, e: Error) = Content(
     s"Taskman worker failed on msg (${m.id.value}) ${m.msg.msgTypeStr}",
-    s"TIME: ${t toString timeFormat}\n\nMSG: $m\n\nERROR: ${e.stackTraceStr}"
+    s"TIME: ${t format timeFormat}\n\nMSG: $m\n\nERROR: ${e.stackTraceStr}"
   )
 
-  def taskmanErrorEmail(t: DateTime, e: Error, m: Option[MsgDetail]) = Content(
+  def taskmanErrorEmail(t: OffsetDateTime, e: Error, m: Option[MsgDetail]) = Content(
     "Taskman infrastructure failed",
-    s"TIME: ${t toString timeFormat}\n\nERROR: ${e.stackTraceStr}\n\nMSG: $m"
+    s"TIME: ${t format timeFormat}\n\nERROR: ${e.stackTraceStr}\n\nMSG: $m"
   )
 
   // ---------------------------------------------------------------------------

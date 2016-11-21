@@ -1,7 +1,7 @@
 package shipreq.taskman.server
 
-import org.joda.time.Period
-import shipreq.base.util.jodatime.JodaTimeHelpers._
+import java.time.Duration
+import shipreq.base.util.JavaTimeHelpers._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Msg.DummyMsg
 import shipreq.taskman.api.Priority
@@ -42,12 +42,12 @@ object Failure extends HasLogger {
 
   type Attempt[A] = FailureCtx => Option[A]
   type Rule = Attempt[FailureResponse]
-  type RetryRule = Attempt[Period]
+  type RetryRule = Attempt[Duration]
 
   def chooseByFailureCount[A](values: A*): Attempt[A] =
     chooseByIndex(_.m.failureCount, values.toIndexedSeq)
 
-  def retryEveryUntil(every: Period, cutoff: Period): RetryRule = {
+  def retryEveryUntil(every: Duration, cutoff: Duration): RetryRule = {
     val everyS = Some(every)
     ctx => {
       val retryExpiry = ctx.m.created plus cutoff
@@ -61,7 +61,7 @@ object Failure extends HasLogger {
   def addOpF(op: FailureCtx => Sop[Unit]) =
     composeF(addOp, op)
 
-  def retryResponse(ctx: FailureCtx)(delay: Period): FailureResponse =
+  def retryResponse(ctx: FailureCtx)(delay: Duration): FailureResponse =
     FailureResponse(UpdateMsgRetry(ctx.n, ctx.w, ctx.m, delay), Nil)
 
   def notifySupport(ctx: FailureCtx): Sop[Unit] =
@@ -85,7 +85,7 @@ object Failure extends HasLogger {
         if (ctx.err is Deterministic)
           Some(abortAndDontNotify(ctx))
         else
-          Some(retryResponse(ctx)(m.retryDelaySec sec))
+          Some(retryResponse(ctx)(m.retryDelaySec seconds))
       case _ => None
     }
 

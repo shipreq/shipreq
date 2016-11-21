@@ -1,6 +1,6 @@
 package shipreq.taskman.server
 
-import org.joda.time.{DateTime, Period}
+import java.time.{Duration, OffsetDateTime}
 import org.specs2.mutable.Specification
 import scala.reflect.ClassTag
 import scalaz.{\/-, \/, -\/, Need, Endo}
@@ -23,12 +23,12 @@ class WorkerTest extends Specification {
 
   val nid = NodeId(4.toShort)
   val wid = WorkerId(7)
-  val tp = AssignmentTrustPeriod(Period minutes 3)
+  val tp = AssignmentTrustPeriod(Duration ofMinutes 3)
 
-  def everIncClock(p: Period, start: DateTime = new DateTime): IO[DateTime] = {
-    var prev: Option[DateTime] = None
+  def everIncClock(d: Duration, start: OffsetDateTime = OffsetDateTime.now()): IO[OffsetDateTime] = {
+    var prev: Option[OffsetDateTime] = None
     IO {
-      val r = prev map (_ plus p) getOrElse start
+      val r = prev map (_ plus d) getOrElse start
       prev = Some(r)
       r
     }
@@ -97,7 +97,7 @@ class WorkerTest extends Specification {
   "Worker processing msgs asynchronously" >> {
 
     def blah(io: IOE[Unit]
-             , clock: IO[DateTime] = clockReal
+             , clock: IO[OffsetDateTime] = clockReal
              , sopEndo: Endo[MockSops] = assignWorkerAllow
               ) = {
       val need = new AsyncScheduler[Need] { def apply[A](io: IO[A]) = IOE(Need(io.unsafePerformIO())) }

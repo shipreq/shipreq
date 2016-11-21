@@ -3,7 +3,7 @@ package shipreq.taskman.server.akka
 import akka.actor.{Props, Actor, ActorRef}
 import java.util.concurrent.atomic.AtomicInteger
 import scala.concurrent.duration._
-import shipreq.base.util.jodatime.JodaTimeHelpers.PeriodConv
+import shipreq.base.util.JavaTimeHelpers.DurationExt
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Priority
 import shipreq.taskman.server.{TaskmanLogging, TaskmanCtx, MsgHeader}
@@ -96,7 +96,7 @@ class WorkerActor(ctx: TaskmanCtx, manager: ActorRef) extends Actor with HasLogg
   import ManagerActor.{RequestForWork, WorkAvailable}
   import ctx._
 
-  implicit val id = WorkerActor.nextId
+  implicit val id = WorkerActor.nextId()
   val mdc = TaskmanLogging.mdc(s"worker-${id.value}")
   val worker = new Worker(ctx.msgProcessor)
 

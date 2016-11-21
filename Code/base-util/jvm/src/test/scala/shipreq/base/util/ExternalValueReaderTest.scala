@@ -1,10 +1,10 @@
+
 package shipreq.base.util
 
 import org.specs2.mutable.Specification
 import ExternalValueReader._
 import scalaz.{\/-, -\/}
 import org.specs2.matcher.{DataTables, Matcher}
-import shipreq.base.util.jodatime.{JodaTimeHelpers, JodaTimeValueRetrievers}
 import org.specs2.time.NoTimeConversions
 
 class ExternalValueReaderTest extends Specification with DataTables with NoTimeConversions {
@@ -107,8 +107,8 @@ class ExternalValueReaderTest extends Specification with DataTables with NoTimeC
       r(a).run("X") must e
     }
 
-    def testJoda[T](r: JodaTimeValueRetrievers => Retriever[T])(s: String, exp: Option[ErrorOr[T]]) =
-      test(a => r(JodaTimeValueRetrievers(a.retrieverS)))(s, exp)
+    def testTime[T](r: JavaTimeValueRetrievers => Retriever[T])(s: String, exp: Option[ErrorOr[T]]) =
+      test(a => r(JavaTimeValueRetrievers(a.retrieverS)))(s, exp)
 
     "Removes whitespace-trim and comments" ^ {
       "In"                 || "Exp"       |
@@ -154,28 +154,28 @@ class ExternalValueReaderTest extends Specification with DataTables with NoTimeC
       "???"   !! fail        |> test(_.retrieverB)
     }
 
-    "JodaTime Period parsing" ^ {
-      import JodaTimeHelpers._
+    "java.time.Duration parsing" ^ {
+      import JavaTimeHelpers._
       "In"        || "Exp"           |
-      "1 second"  !! pass(1 sec)     |
+      "1 second"  !! pass(1 second)  |
       "1 minute"  !! pass(1 minutes) |
       "1 hour"    !! pass(1 hour)    |
       "1 day"     !! pass(1 days)    |
-      "1 month"   !! pass(1 months)  |
-      "1 week"    !! pass(1 weeks)   |
-      "1 year"    !! pass(1 years)   |
+//      "1 month"   !! pass(1 months)  |
+//      "1 week"    !! pass(1 weeks)   |
+//      "1 year"    !! pass(1 years)   |
       "3 ms"      !! pass(3 millis)  |
       "3 millis"  !! pass(3 millis)  |
-      "3 sec"     !! pass(3 sec)     |
-      "3 seconds" !! pass(3 sec)     |
+      "3 sec"     !! pass(3 second)  |
+      "3 seconds" !! pass(3 second)  |
       "3 min"     !! pass(3 minutes) |
       "3 minutes" !! pass(3 minutes) |
       "3 hr"      !! pass(3 hour)    |
       "3 hours"   !! pass(3 hour)    |
       "3 days"    !! pass(3 days)    |
-      "3 months"  !! pass(3 months)  |
-      "3 weeks"   !! pass(3 weeks)   |
-      "3 years"   !! pass(3 years)   |
+//      "3 months"  !! pass(3 months)  |
+//      "3 weeks"   !! pass(3 weeks)   |
+//      "3 years"   !! pass(3 years)   |
       "2min"      !! pass(2 minutes) |
       "2   MIN"   !! pass(2 minutes) |
       "2"         !! fail            |
@@ -183,7 +183,7 @@ class ExternalValueReaderTest extends Specification with DataTables with NoTimeC
       "2 min sec" !! fail            |
       "2 2"       !! fail            |
       "x sec"     !! fail            |
-      "???"       !! fail            |> testJoda(_.retrieverPeriod)
+      "???"       !! fail            |> testTime(_.retrieverDuration)
     }
 
   }

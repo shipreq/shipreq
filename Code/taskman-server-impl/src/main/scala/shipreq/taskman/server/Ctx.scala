@@ -1,9 +1,9 @@
 package shipreq.taskman.server
 
 import com.squareup.okhttp.OkHttpClient
+import java.time.{Clock, Duration, OffsetDateTime}
 import java.util.concurrent.{ExecutorService, TimeUnit}
 import java.util.Properties
-import org.joda.time.{DateTime, Period}
 import scala.slick.jdbc.JdbcBackend.Database
 import scalaz.-\/
 import scalaz.effect.IO
@@ -12,10 +12,9 @@ import shipreq.base.util.ExternalValueReader._
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt.Tuple2Ext
 import shipreq.base.util.effect.IOE
-import shipreq.base.util.jodatime.JodaTimeHelpers._
-import shipreq.base.util.jodatime.JodaTimeValueRetrievers
-import shipreq.base.util.log.{LogLevel, HasLogger}
-import shipreq.taskman.api.{UserId, CfgKeys}
+import shipreq.base.util.JavaTimeHelpers._
+import shipreq.base.util.log.{HasLogger, LogLevel}
+import shipreq.taskman.api.{CfgKeys, UserId}
 import shipreq.taskman.api.impl.TaskmanApi
 import shipreq.taskman.server.business._
 import shipreq.taskman.server.business.MailingList.API.GetListId
@@ -33,12 +32,12 @@ class Db(props: StringBasedValueReader) extends DbTemplate {
 
 final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
   import evr._
-  private val jtr = JodaTimeValueRetrievers(retrieverS)
-  import jtr.retrieverPeriod
+  private val jtr = JavaTimeValueRetrievers(retrieverS)
+  import jtr.retrieverDuration
   private implicit def llr = LogLevel.evr
 
-  private def atLeast(min: Period) =
-    valTest[Period](p => !p.toStandardDuration.isShorterThan(min.toStandardDuration), s"Must be at least $min.")
+  private def atLeast(min: Duration) =
+    valTest[Duration](d => !d.isShorterThan(min), s"Must be at least $min.")
 
   private def atLeast(min: Int) =
     valTest[Int](_ >= min, s"Must be at least $min.")
@@ -112,11 +111,11 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
       "queueSize" -> queueSize, "trustPeriod" -> trustPeriod.value, "poll.every" -> pollEvery, "poll.gap" -> pollGap)
 
     val queueSize   = validate("queueSize", need[Int])(atLeast(1))
-    val trustPeriod = AssignmentTrustPeriod(validate("trustPeriod", need[Period])(atLeast(10 seconds)))
-    val pollEvery   = validate("poll.every", need[Period])(atLeast(50 ms))
-    val pollGap     = validate("poll.gap", n => getO[Period](n) getOrElse pollEvery)(atLeast(50 ms))
+    val trustPeriod = AssignmentTrustPeriod(validate("trustPeriod", need[Duration])(atLeast(10 seconds)))
+    val pollEvery   = validate("poll.every", need[Duration])(atLeast(50 millis))
+    val pollGap     = validate("poll.gap", n => getO[Duration](n) getOrElse pollEvery)(atLeast(50 millis))
 
-    if (pollGap.toStandardDuration isLongerThan pollEvery.toStandardDuration)
+    if (pollGap isLongerThan pollEvery)
       log.warn.z(s"The minimum poll gap ($pollGap) is larger than the poll time ($pollEvery). Wasteful.")
   }
 }
@@ -158,13 +157,15 @@ class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueR
   val freshdesk     = runPrerequisite_!(freshdesk0.upgrade)
   val mailingListId = runPrerequisite_!(getMailChimpListId(props.mailchimp.masterList))
 
+  private val clockClock = Clock.systemUTC()
+
   implicit def trustPeriod   = props.taskman.trustPeriod
   implicit val aopReifier    = new TaskmanApi(TaskmanApi.Context(None), db)
   implicit val bopReifier    = new BopImpl(db, email, mailchimp, freshdesk, props.shipreq.schema)
   implicit val sopReifier    = new SopImpl(db, new Worker.FailureHandler(emails, bopReifier))
   implicit val msgProcessor  = new BusinessLogic(bopReifier, emails, async.email, mailingListId)
   implicit val failurePolicy = Failure.failurePolicy
-  implicit val clock         = IO(new DateTime)
+  implicit val clock         = IO(OffsetDateTime.now(clockClock))
   implicit val nodeId        = sopReifier.getNextNodeId.unsafePerformIO()
 
   def logContent(): Unit = {
@@ -183,14 +184,14 @@ class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueR
     ErrorOr require_! io.unsafePerformIO()
   }
 
-  def shutdown(asyncWait: Option[Period] = Some(Period seconds 20)): Unit = {
+  def shutdown(asyncWait: Option[Duration] = Some(Duration ofSeconds 20)): Unit = {
     for (p <- asyncWait) {
-      val until = DateTime.now.plus(p).getMillis
+      val until = OffsetDateTime.now().plus(p).getNano
       async.each(_.shutdown())
       async.each(e => {
-        val rem = until - DateTime.now.getMillis
+        val rem = until - OffsetDateTime.now().getNano
         if (rem > 0)
-          e.awaitTermination(rem, TimeUnit.MILLISECONDS)
+          e.awaitTermination(rem, TimeUnit.NANOSECONDS)
       })
     }
     async.each(_.shutdownNow())

@@ -3,7 +3,7 @@ package shipreq.webapp.server.db
 import java.time.Instant
 import scala.slick.jdbc.StaticQuery
 import shipreq.base.db.SqlHelpers._
-import shipreq.base.db.JodaTimeSqlHelpers._
+import shipreq.base.db.JavaTimeSqlHelpers._
 import shipreq.taskman.api.{EmailAddr, UserId}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ActiveEvent, Event}

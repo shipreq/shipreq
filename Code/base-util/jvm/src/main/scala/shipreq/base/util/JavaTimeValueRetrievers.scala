@@ -5,6 +5,7 @@ import java.util.regex.Pattern
 import shipreq.base.util.ExternalValueReader.Retriever
 
 object JavaTimeValueRetrievers {
+
   val durationRegex = """^(\d+)\s*([a-zA-Z]+)$""".r.pattern
 
   sealed abstract class TimeUnit(readRegexS: String) {
@@ -28,21 +29,21 @@ object JavaTimeValueRetrievers {
       override def duration(n: Int) = Duration ofDays n
     }
     case object Week extends TimeUnit("w|weeks?") {
-      override def duration(n: Int) = Duration ofDays (n * 7)
+      override def duration(n: Int) = Duration.ofDays(n * 7)
     }
-//    case object Month extends TimeUnit("months?") {
-//      override def duration(n: Int) = Duration months n
-//    }
-//    case object Year extends TimeUnit("yr|years?") {
-//      override def duration(n: Int) = Duration years n
-//    }
-    val values: List[TimeUnit] = List(Ms, Sec, Min, Hour, Day, Week)
+    case object Month extends TimeUnit("months?") {
+      override def duration(n: Int) = Duration.ofDays((n * 365.25 / 12).toInt)
+    }
+    case object Year extends TimeUnit("yr|years?") {
+      override def duration(n: Int) = Duration.ofDays((n * 365.25).toInt)
+    }
+    val values: List[TimeUnit] = List(Ms, Sec, Min, Hour, Day, Week, Month, Year)
   }
 }
 
-case class JavaTimeValueRetrievers(rs: Retriever[String]) extends StringParsingBase(rs) {
+final case class JavaTimeValueRetrievers(rs: Retriever[String]) extends StringParsingBase(rs) {
+  import ExternalValueReader._
   import JavaTimeValueRetrievers._
-  import shipreq.base.util.ExternalValueReader._
 
   def parseTimeUnit(s: String) =
     ErrorOr.fromOptionS(

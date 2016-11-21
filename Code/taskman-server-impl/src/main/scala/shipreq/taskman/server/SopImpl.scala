@@ -1,6 +1,6 @@
 package shipreq.taskman.server
 
-import org.joda.time.Period
+import java.time.Duration
 import scala.slick.jdbc.JdbcBackend.{Database, Session}
 import scalaz.effect.IO
 import scalaz.std.option.optionInstance
@@ -37,7 +37,7 @@ object SopImpl {
     import scala.slick.jdbc.{GetResult, SetParameter, PositionedParameters}
     import scala.slick.jdbc.StaticQuery.{query, queryNA}
     import shipreq.base.db.SqlHelpers._
-    import shipreq.base.db.JodaTimeSqlHelpers._
+    import shipreq.base.db.JavaTimeSqlHelpers._
 
     implicit val dbCodecWorkerId = DbCodec.WithOption.caseClass[WorkerId].writeOnly
     implicit val dbCodecNodeId   = DbCodec.WithOption.caseClass[NodeId]
@@ -84,13 +84,13 @@ object SopImpl {
        returning id, priority, created_at
     """.sql
 
-    val getMsgsAssignNodeZ = query[(NodeId, Period, Int), MsgHeader](
+    val getMsgsAssignNodeZ = query[(NodeId, Duration, Int), MsgHeader](
       getMsgsAssignNode_upd(getMsgsAssignNode_q(None, None)))
 
-    val getMsgsAssignNodeF = query[(NodeId, Period, Priority, Int), MsgHeader](
+    val getMsgsAssignNodeF = query[(NodeId, Duration, Priority, Int), MsgHeader](
       getMsgsAssignNode_upd(getMsgsAssignNode_q(None, Some("priority > ?"))))
 
-    val getMsgsAssignNodeP = query[(Period, Int, Int, Priority, NodeId), MsgHeader](s"""
+    val getMsgsAssignNodeP = query[(Duration, Int, Int, Priority, NodeId), MsgHeader](s"""
       with a as (${getMsgsAssignNode_q(Some("priority p"), None)})
       , b as (
           select ctid from a
@@ -114,7 +114,7 @@ object SopImpl {
       returning true
     """.sql)
 
-    val failAndRetryQ = query[(Period, NodeId, WorkerId, MsgId), Boolean](s"""
+    val failAndRetryQ = query[(Duration, NodeId, WorkerId, MsgId), Boolean](s"""
       update msgq
       set
         node = null,
@@ -142,7 +142,7 @@ object SopImpl {
     import Sql._
     private[this] implicit def _s = session
 
-    def getMsgsAssignNode(node: NodeId, limit: Int, assignmentTrustPeriod: Period, queued: Option[(Priority, Int)]): List[MsgHeader] =
+    def getMsgsAssignNode(node: NodeId, limit: Int, assignmentTrustPeriod: Duration, queued: Option[(Priority, Int)]): List[MsgHeader] =
       queued match {
         case None =>
           // Empty mem-queue
@@ -169,7 +169,7 @@ object SopImpl {
     def reassignWorker(n: NodeId, w: WorkerId, m: MsgId): Boolean =
       reassignWorkerQ(n, w, m).firstOption getOrElse false
 
-    def failAndRetry(n: NodeId, w: WorkerId, m: MsgId, delay: Period): Unit =
+    def failAndRetry(n: NodeId, w: WorkerId, m: MsgId, delay: Duration): Unit =
       failAndRetryQ(delay, n, w, m).first
 
     def archiveMsg(n: NodeId, w: WorkerId, m: MsgId, status: ArchiveIntent): Unit =
