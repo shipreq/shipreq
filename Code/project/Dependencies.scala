@@ -135,7 +135,7 @@ object Dependencies {
   val parboiled = jvmAndJs("org.parboiled",                    "parboiled", "2.1.3")
   val shapeless = jvmAndJs("com.chuusai",                      "shapeless", "2.3.2")
   val μPickle   = jvmAndJs("com.github.japgolly.fork.upickle", "upickle",   "custom-5")
-  val μTest     = jvmAndJs("com.lihaoyi",                      "utest",     "0.3.1")
+  val μTest     = jvmAndJs("com.lihaoyi",                      "utest",     "0.4.4")
 
   val okHttp      = jvmOnly("com.squareup.okhttp"         % "okhttp"                % "1.5.4")
   val httpCore    = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.5")

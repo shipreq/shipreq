@@ -454,7 +454,7 @@ object ContentEventTest extends TestSuite {
         def _test(conflicted: String, inUse: Set[String], expect: String): Unit = {
           val active = ReqCode.ActiveReq(0, 0, None, ReqCode.emptyReqInactive)
           val t = (inUse + conflicted).foldLeft(ReqCode.Trie.empty)(_.put(_, active))
-          val actual = apply.ReqCodeLogic.renameReqCodeToAvoidConflict(conflicted, t)
+          val actual = ApplyEventTestFns.apply.ReqCodeLogic.renameReqCodeToAvoidConflict(conflicted, t)
           assertEq[ReqCode.Value](actual, expect)
         }
         def suf(pre: String, to: Int, from: Int = 2): Set[String] =

@@ -3,7 +3,7 @@ package shipreq.webapp.server.test
 import java.time._
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
-import utest.assert
+import utest.asserts._
 import shipreq.webapp.base.test.{WebappTestEquality, WebappTestUtil}
 import shipreq.webapp.server.data.UserDescriptor
 import shipreq.webapp.server.security.Oshiro

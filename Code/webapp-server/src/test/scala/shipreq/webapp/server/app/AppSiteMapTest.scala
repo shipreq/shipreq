@@ -13,9 +13,9 @@ object AppSiteMapTest extends TestSuite {
   val loginAbs = "http://localhost:8090/login"
 
   override def tests = TestSuite {
-    s"Home relativeUrl is $homeRel" - assertEq(Home.relativeUrl, homeRel)
-    s"Home absoluteUrl is $homeAbs" - assertEq(Home.absoluteUrl, homeAbs)
-    s"Login relativeUrl is $loginRel" - assertEq(Login.relativeUrl, loginRel)
-    s"Login absoluteUrl is $loginAbs" - assertEq(Login.absoluteUrl, loginAbs)
+    "Home relativeUrl" - assertEq(Home.relativeUrl, homeRel)
+    "Home absoluteUrl" - assertEq(Home.absoluteUrl, homeAbs)
+    "Login relativeUrl" - assertEq(Login.relativeUrl, loginRel)
+    "Login absoluteUrl" - assertEq(Login.absoluteUrl, loginAbs)
   }
 }
