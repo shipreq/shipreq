@@ -4,7 +4,6 @@
 * Upgrade Lift
 * Upgrade Scala
 
-* Use sbt-git & sbt-buildinfo (?)
 * Dockerise
 * Add healthchecks
 * Fix logging

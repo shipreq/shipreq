@@ -2,6 +2,7 @@ import sbt._
 import Keys._
 import java.nio.file.{Files, Path}
 import scala.concurrent.duration._
+import com.typesafe.sbt.GitPlugin.autoImport._
 import org.scalajs.core.tools.sem._
 import org.scalajs.sbtplugin.cross.CrossProject
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
@@ -23,7 +24,7 @@ object Common {
       val outFile = outDir / filename
       val props = Map[String, String](
         "version" -> version.value,
-        "revision" -> gitRevision,
+        "revision" -> git.gitHeadCommit.value.getOrElse("?"),
         "time" -> fmtTimeNow("yyyy-MM-dd HH:mm:ss")
       )
       val contents = props.toList.map {case (k, v) => s"${prefix}$k=$v" }.mkString("\n")
@@ -99,11 +100,10 @@ object Common {
   /** Minimal settings used by benchmark modules too */
   lazy val settingsMin = (p: Project) => p
     .enablePlugins(net.virtualvoid.sbt.graph.DependencyGraphPlugin)
+    .enablePlugins(com.typesafe.sbt.GitVersioning)
     .settings(
       organization                := "com.beardedlogic.shipreq",
       organizationName            := "Bearded Logic",
-      version                     := s"${fmtTimeNow("yyyyMMdd")}-${gitRevisionShort}${snapshotSuffix}",
-      isSnapshot                  := snapshotSuffix.nonEmpty,
       shellPrompt in ThisBuild    := { (s: State) => Project.extract(s).currentRef.project + "> " },
       incOptions                  := incOptions.value.withNameHashing(true),
       incOptions                  := incOptions.value.withLogRecompileOnMacro(false),
@@ -242,13 +242,7 @@ object Common {
 
     def devMode: Boolean = !releaseMode
 
-    lazy val snapshotSuffix: String =
-      if (releaseMode) "" else "-SNAPSHOT"
-
     lazy val timeNow = new java.util.Date
-
-    lazy val gitRevision = Process("git rev-parse HEAD").lines.head.trim
-    lazy val gitRevisionShort = gitRevision.substring(0, 8)
   }
 
   // ===================================================================================================================
@@ -265,7 +259,8 @@ object Common {
         scalacOptions in Test ~= removeValues(flags: _*)
       )
 
-    def removeValues[T](values: T*): Seq[T] => Seq[T] = (_ filterNot (values contains _))
+    def removeValues[T](values: T*): Seq[T] => Seq[T] =
+      _ filterNot values.contains
 
     def dontInline: Project => Project =
       _.settings(scalacOptions in Compile ~= removeValues("-optimise", "-Yinline"))
