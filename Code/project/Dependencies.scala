@@ -149,7 +149,6 @@ object Dependencies {
   val commonsLang = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.5")
   val commonsIo   = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.38.0")
-  val mockito     = jvmOnly("org.mockito"                 % "mockito-core"          % "1.10.19")
   val scalaTest   = jvmOnly("org.scalatest"              %% "scalatest"             % "2.2.5")
   val scalaCheck  = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.11.3")
 
