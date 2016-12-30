@@ -1,7 +1,7 @@
 package shipreq.taskman.api.impl
 
+import doobie.imports._
 import org.specs2.mutable.Specification
-import scala.slick.jdbc.StaticQuery.queryNA
 import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.taskman.api.{EmailAddr, MsgStatus, MsgId, Msg}
 import shipreq.taskman.api.ApiOp.{QueryMsgStatus, SubmitMsg}
@@ -11,7 +11,7 @@ class ApiOpTest extends Specification with DatabaseTest with ApiImplTestHelpers 
   "Task submission" >> {
     "Submits a task" in {
       run_(SubmitMsg(Msg.RegistrationRequested(EmailAddr("a@b.com"), "http://x")))
-      queryNA[Int]("select count(1) from msgq").first ==== 1
+      Query0[Int]("select count(1) from msgq").unique.runNow() ==== 1
     }
   }
 

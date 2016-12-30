@@ -1,67 +1,33 @@
 package shipreq.webapp.server.test
 
-import shipreq.webapp.server.app.{DI, Defaults}
-import shipreq.webapp.server.db.{DB, DaoProvider, DaoT, Shim}
-import scala.slick.jdbc.JdbcBackend.{Database, Session}
-import shipreq.base.util.ThreadLocalRes
-import shipreq.webapp.server.test.{DbUtil => DBUtil}
+import scalaz.effect.IO
+import shipreq.base.test.db.SingleConnectionXA
+import shipreq.webapp.server.app.DI
 
-object TestDb {
-  @volatile private[this] var initialised = false
-  private[this] val lock = new AnyRef
+object TestDb extends shipreq.base.test.db.TestDb {
 
-  def init(): Unit =
-    if (!initialised)
-      lock.synchronized(
-        if (!initialised) {
-          initialised = true
-          PrepareEnv()
-          DB.wipe_!()
-          Defaults.uninit()
-          (new bootstrap.liftweb.Boot).initDatabase()
-        }
-      )
-
-  def reinitOnNextUse(): Unit =
-    initialised = false
-
-  val Slick = Database.forDataSource(DB.DataSource)
-
-  val Session: ThreadLocalRes[Session] =
-    ThreadLocalRes {
-      init()
-      Slick.createSession()
-    }
-      .wrapUse(TestDb.UseInDI) // TODO This will slow down DB prop tests...
-
-  object UseInDI extends ThreadLocalRes.Around[Session] {
-    override def apply[A](s: Session)(a: => A): A =
-      DI.DaoProvider.doWith(new TestDaoProvider()(s))(a)
+  override protected def unsafeInit(): Unit = {
+    super.unsafeInit()
+    dbAccess.io.trans(DbTable.validate(dbAccess.absoluteSchema)).unsafePerformIO()
+    useInLift()
   }
 
-  val Transaction: ThreadLocalRes[Session] =
-    Session
-      .onLend(_.conn.setAutoCommit(false))
-      .onReturn(_.conn.rollback())
+  def useInLift(): Unit =
+    DI.dbAccess = TestDb.dbAccess
 
-  val DbUtil: ThreadLocalRes[DBUtil] =
-    Transaction.xmap(DBUtil(_))(_.session)
+  lazy val truncate: IO[Unit] =
+    dbAccess.io trans DbTable.truncateAll
 
-  val Dao: ThreadLocalRes[DaoT] =
-    Transaction.xmap(Shim.newDaoT)(_.session)
-}
-
-class TestDaoProvider()(implicit session: Session) extends DaoProvider {
-  override def withRawSession[T](f: Session => T): T =
-    f(session)
-
-  override protected def rawSession(): Session =
-    session
-
-  override protected def inTransaction[T](s: Session)(f: Session => T): T = {
-    if (s.conn.getAutoCommit)
-      super.inTransaction(s)(f)
-    else
-      f(s)
+  override protected def unsafeClean(): Unit = {
+    super.unsafeClean()
+    truncate.unsafePerformIO()
   }
+
+  override def wrapTransaction[A](xa: SingleConnectionXA, io: IO[A]): IO[A] =
+    for {
+      orig <- IO(DI.dbAccess)
+      _ <- IO(DI.dbAccess = xa.dbAccess(dbAccess))
+      a <- io ensuring IO(DI.dbAccess = orig)
+    } yield a
+
 }

@@ -30,7 +30,7 @@ object Sop {
    * @param qs Queue status: The highest priority msg in, and size of the in-memory queue.
    */
   case class GetMsgsAssignNode(n: NodeId, batchSize: Int, assignmentTrustPeriod: Duration, qs: Option[(Priority, Int)])
-    extends Sop[Seq[MsgHeader]]
+    extends Sop[List[MsgHeader]]
 
   case class GetMsgAssignWorker(n: NodeId, w: WorkerId, m: MsgHeader) extends Sop[Option[MsgDetail]]
 

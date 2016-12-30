@@ -1,23 +1,23 @@
 package shipreq.taskman.server.business
 
+import doobie.imports._
 import scalaz.{-\/, \/-}
 import scalaz.effect.IO
-import scala.slick.jdbc.JdbcBackend.Database
 import shipreq.base.util.ErrorOr
-import shipreq.base.util.effect.{IoUtils, IOE}
+import shipreq.base.util.effect.{IOE, IoUtils}
 import shipreq.base.util.log.HasLogger
 import Bop._
 
-final class BopImpl(db: Database,
+final class BopImpl(db: Transactor[IO],
                     emailer: EmailImpl,
                     mailchimp: MailChimp,
                     freshDesk: FreshDesk,
                     shipreqSchema: Option[String]) extends BopReifier with HasLogger {
 
-  private[this] val shipreqSql = new ShipReqInterface.Sql(shipreqSchema)
+  private[this] val sri = new ShipReqInterface(shipreqSchema)
 
-  private[this] def shipreqDao[A](f: ShipReqInterface.Dao => A): IOE[A] =
-    IOE(db.withSession(s => f(new ShipReqInterface.Dao(shipreqSql)(s))))
+  private[this] def dbio[A](q: ConnectionIO[A]): IOE[A] =
+    db.trans(q).map(\/-(_))
 
   override def apply[A](op: Bop[A]): IOE[A] = applyTimed(op)
 
@@ -39,10 +39,10 @@ final class BopImpl(db: Database,
       case s: SendEmail              => emailer.send(s)
       case MailingListOp(op)         => mailchimp.run(op)
       case SupportOp(op)             => freshDesk.run(op)
-      case FindShipReqUser(-\/(id))  => shipreqDao(_ findUser id)
-      case FindShipReqUser(\/-(ea))  => shipreqDao(_ findUser ea)
-      case FindShipReqUsers(None)    => shipreqDao(_.findAllUsers())
-      case FindShipReqUsers(Some(c)) => shipreqDao(_ findAllUsers c)
+      case FindShipReqUser(-\/(id))  => dbio(sri.findUserById(id))
+      case FindShipReqUser(\/-(ea))  => dbio(sri.findUserByEmail(ea))
+      case FindShipReqUsers(None)    => dbio(sri.findAllUsers)
+      case FindShipReqUsers(Some(c)) => dbio(sri.findAllUsersW(c))
     })
 }
 

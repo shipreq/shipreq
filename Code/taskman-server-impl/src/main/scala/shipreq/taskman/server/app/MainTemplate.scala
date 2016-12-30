@@ -1,10 +1,12 @@
 package shipreq.taskman.server.app
 
 import java.util.Properties
+import scalaz.effect.IO
+import shipreq.base.db.{DbAccess, DbConfig}
 import shipreq.base.util.ExternalValueReader._
+import shipreq.base.util.log.{HasLogger, LogCfg}
 import shipreq.base.util.{ErrorOr, JPropertiesValueReader, Props, RunMode}
-import shipreq.taskman.server.{TaskmanCtx, Db}
-import shipreq.base.util.log.{LogCfg, HasLogger}
+import shipreq.taskman.server.TaskmanCtx
 
 private[app] trait MainTemplate extends HasLogger {
 
@@ -21,21 +23,24 @@ private[app] trait MainTemplate extends HasLogger {
   lazy val props = Props.loadUsingStandardStrategy(runMode)(new Properties)
   lazy val propsR = JPropertiesValueReader(props)
 
-  def withDatabase[A](f: Db => A): A = {
-    val db = new Db(propsR)
-    db.init()
-    try
-      f(db)
-    finally
-      ErrorOr.safe(db.shutdown()).leftMap(e => log.error(e, "Error closing database connections."))
-  }
+//  def withDatabase[M[_] : Catchable : Capture : Monad, A](f: DbAccess[M] => M[A]): M[A] =
+//    for {
+//      cfg <- Monad[M] point ErrorOr.require_!(DbConfig.read(propsR))
+//      _ <- DbAccess.run(cfg)(f)
+//    } yield ()
 
-  def withTaskmanCtx[A](f: TaskmanCtx => A): A =
-    withDatabase { db =>
-      val ctx = new TaskmanCtx(db.slick, props, propsR)
-      try
-        f(ctx)
-      finally
-        ErrorOr.safe(ctx.shutdown()).leftMap(e => log.error(e, "Error shutting down ctx."))
-    }
+  def withDatabase[A](f: DbAccess => IO[A]): IO[A] =
+    for {
+      cfg <- IO(ErrorOr.require_!(DbConfig.read(propsR)))
+      dbAccess = DbAccess.fromCfg(cfg)
+      a <- dbAccess.setupRunShutdown(f(dbAccess))
+    } yield a
+
+  def withTaskmanCtx[A](f: TaskmanCtx => IO[A]): IO[A] =
+    withDatabase[A](db =>
+      for {
+        ctx <- IO(new TaskmanCtx(db.io, props, propsR))
+        a <- f(ctx) ensuring ctx.shutdown()
+      } yield a
+    )
 }

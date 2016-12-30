@@ -1,5 +1,6 @@
 package shipreq.taskman.server
 
+import doobie.imports._
 import org.specs2.matcher.ThrownExpectations
 import org.specs2.mutable.Specification
 import org.specs2.time.NoTimeConversions
@@ -41,7 +42,8 @@ class WorkflowTest extends Specification with DatabaseTest with NoTimeConversion
   }
 
   def queryHistory(id: MsgId) =
-    sql"select result,failure_count from msg_history where id=${id.value}".as[(String,Int)].firstOption
+    sql"select result,failure_count from msg_history where id=${id.value}".query[(String, Int)]
+      .option.runNow()
 
   "Workflow: fail then pass" in {
     // new

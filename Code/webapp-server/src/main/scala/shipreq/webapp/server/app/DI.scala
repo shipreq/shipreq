@@ -1,42 +1,38 @@
-package shipreq.webapp.server
-package app
+package shipreq.webapp.server.app
 
-import net.liftweb.util.SimpleInjector
-import scala.slick.jdbc.JdbcBackend.Session
-import security.{SecurityProvider, Oshiro}
-import db.{AsyncDbImpl, AsyncDb, DB, DaoProvider}
-import lib.{TaskmanImpl, TaskmanInterface, StatLoggerImpl, StatLogger}
+import net.liftweb.common.Full
+import net.liftweb.util.{SimpleInjector, Vendor}
+import shipreq.base.db.DbAccess
+import shipreq.webapp.server.lib.{StatLogger, StatLoggerImpl, TaskmanInterface}
+import shipreq.webapp.server.security.{Oshiro, SecurityProvider}
 
-/**
- * Houses and provides access to global resources. Not exactly "dependency injection" but serves a similar enough
- * purpose.
- *
- * The big bonus with that using the `doWith` methods, resources defined here can be manipulated by tests.
- */
 object DI extends SimpleInjector {
 
-  final val DaoProvider = new Inject[DaoProvider](DB.DaoProvider) {}
+  def inject[A: Manifest](a: A): Inject[A] =
+    new Inject(new Vendor[A] {
+      override implicit def vend = a
+      override implicit val make = Full(a)
+    }) {}
 
-  final val SecurityProvider = new Inject[SecurityProvider](Oshiro) {}
+  val SecurityProvider: Inject[SecurityProvider] =
+    inject(Oshiro)
 
-  final val StatLogger = new Inject[StatLogger](StatLoggerImpl) {}
+  val StatLogger: Inject[StatLogger] =
+    inject(StatLoggerImpl)
 
-  final val Taskman = new Inject[TaskmanInterface](TaskmanImpl) {}
+  var dbAccess: DbAccess =
+    null
 
-  final val AsyncDb = new Inject[AsyncDb](AsyncDbImpl) {}
+  var taskman: TaskmanInterface =
+    null
 }
 
 /**
  * Mixes in accessors to DI resources.
  */
 trait DI {
-  final def daoProvider = DI.DaoProvider.vend
-  final def securityProvider = DI.SecurityProvider.vend
-  final def statLogger = DI.StatLogger.vend
-  final def taskman = DI.Taskman.vend
-  final def asyncDb = DI.AsyncDb.vend
-
-  /** One-shot taskman job. Uses a new DB connection. */
-  final def taskman1[A](f: TaskmanInterface => Session => A): A =
-    daoProvider.withRawSession(f(taskman))
+  @inline final def db()               = DI.dbAccess
+  @inline final def securityProvider() = DI.SecurityProvider.vend
+  @inline final def statLogger()       = DI.StatLogger.vend
+  @inline final def taskman()          = DI.taskman
 }

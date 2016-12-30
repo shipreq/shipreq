@@ -8,8 +8,8 @@ import utest._
 import shipreq.base.util.ScalaExt._
 import shipreq.taskman.api.Msg.RegistrationRequested
 import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.feature.validation.Validators
-import shipreq.webapp.server.security.Oshiro
 import shipreq.webapp.server.snippet.Register._
 import shipreq.webapp.server.test.SnippetTestUtil._
 import shipreq.webapp.server.test.WebappServerTestUtil._
@@ -33,17 +33,17 @@ object RegisterSnippetTest extends TestSuite {
     def password2_=(v: String) : Unit = snippet.vars = snippet.vars map3 (_ put2 v)
     def tos_=      (v: Boolean): Unit = snippet.vars = snippet.vars put5 v
 
-    def onSubmit() = withTestTaskman(snippet.onSubmit())
+    def onSubmit() = TestTaskman.use(snippet.onSubmit())
 
     def onSubmitF() = {
       val (js, tt) = onSubmit()
-      NoTasksSubmitted test tt
+      TestTaskman.NoTasksSubmitted test tt
       js
     }
   }
 
   override def tests = TestSuite {
-    PrepareEnv()
+    PrepareEnv.lift()
 
     'isTokenExpired {
       'oneDay  - assertEq(isTokenExpired(1.day.ago), false)
@@ -54,7 +54,7 @@ object RegisterSnippetTest extends TestSuite {
 
       'render - {
         def test(config: Boolean, allowed: Boolean): Unit =
-          inMockSession {
+          inLiftSession {
             val orig = ServerConfig.AllowRegister
             try {
               ServerConfig.AllowRegister = () => config
@@ -62,34 +62,33 @@ object RegisterSnippetTest extends TestSuite {
               val h = x.toString
               assertEq(h contains "register1Form", allowed)
               assertEq(h contains "registrationDisabled", !allowed)
-            } finally {
+            } finally
               ServerConfig.AllowRegister = orig
-            }
           }
 
         "allow registration to anonymous user when config on" - {
-          test(true, true)
+          withOshiro(test(true, true))
         }
         "deny registration to anonymous user when config off" - {
-          test(false, false)
+          withOshiro(test(false, false))
         }
         "deny registration to non-admin user when config off" - {
-          UserFixture.Session(_.user2.withLoggedIn(test(false, false)))
+          withOshiro(UserFixture.Transaction.runNow(_.user2.withLoggedIn(test(false, false))))
         }
         "allow registration to admin even when config off" - {
-          UserFixture.Session(_.user1.withLoggedIn(test(false, true)))
+          withOshiro(UserFixture.Transaction.runNow(_.user1.withLoggedIn(test(false, true))))
         }
       } // render
 
       'onSubmit {
         def test(dbu: DbUtil, email: String, usrTableDiff: Int) =
-          withTestTaskman(
+          TestTaskman.use(
             dbu.assertRowCountChanges(DbTable.Usr -> usrTableDiff)(
               Register1.perform(Validators.email.correctAndValidateU(email))))
 
         def testSuccess(emailFn: UserFixture => String, usrTableDiff: Int, tokenChange: Boolean): Unit =
-          UserFixture.Transaction { uf =>
-            val dbu = uf.toDbUtil
+          UserFixture.Transaction.runNow { uf =>
+            val dbu = DbUtil(uf.xa)
             val email = emailFn(uf)
             val tokenBefore = dbu.lookupConfirmationToken(email)
             val (r, tt) = test(dbu, email, usrTableDiff)
@@ -97,13 +96,13 @@ object RegisterSnippetTest extends TestSuite {
             val token = dbu.lookupConfirmationToken(email)
             assert(token.isDefined)
             assert((token !=* tokenBefore) ==* tokenChange)
-            SubmittedOneTask{ case RegistrationRequested(_,url) => () => assertContains(url, token.get) } test tt
+            TestTaskman.SubmittedOneTask{ case RegistrationRequested(_,url) => () => assertContains(url, token.get) } test tt
           }
 
         "when email is invalid -- should reject request" - {
-          val (r, tt) = TestDb.DbUtil(test(_, "not_an_email", 0))
+          val (r, tt) = DbUtil.use().runNow(test(_, "not_an_email", 0))
           r.assertJsAlert(Some("Email"))
-          NoTasksSubmitted.test(tt)
+          TestTaskman.NoTasksSubmitted.test(tt)
         }
 
         "when a pending, valid token exists -- should resend email" - {
@@ -119,9 +118,9 @@ object RegisterSnippetTest extends TestSuite {
         }
 
         "when a email belongs to registered account -- should email with link to reset password" - {
-          val (r, tt) = UserFixture.Transaction(uf => test(uf.toDbUtil, uf.user1.email.value, 0))
+          val (r, tt) = UserFixture.Transaction.runNow(uf => test(DbUtil(uf.xa), uf.user1.email.value, 0))
           r.assertJsAlert(None)
-          SubmittedOneTask(ReRegistrationAttemptedT) test tt
+          TestTaskman.SubmittedOneTask(TestTaskman.ReRegistrationAttempted) test tt
         }
       } // onSubmit
 
@@ -131,7 +130,7 @@ object RegisterSnippetTest extends TestSuite {
 
       'validateToken {
         def inEnv[A](f: UserFixture => A): A =
-          inMockSession(UserFixture.Transaction(f))
+          inLiftSession(UserFixture.Transaction.runNow(f))
 
         "redirect to Register1 with error when token is invalid" - {
           inEnv { _ =>
@@ -157,7 +156,7 @@ object RegisterSnippetTest extends TestSuite {
 
       'POST {
         def inEnv[A](f: UserFixture => A): A =
-          withOshiro(UserFixture.Transaction(f))
+          UserFixture.Transaction.runNow(withOshiro(f))
 
         def tester(uf: UserFixture) = {
           val t = new Reg2Tester(uf.userWithCurrentToken.token)
@@ -171,7 +170,7 @@ object RegisterSnippetTest extends TestSuite {
 
         'failure {
           def assertUnconfirmed(uf: UserFixture) {
-            val reg = uf.toDbUtil.dao.findUserRegistrationInfo(uf.userWithCurrentToken.email).get
+            val reg = (uf.xa !! DbLogic.user.findRegistrationInfo(uf.userWithCurrentToken.email)).get
             assertEq(reg.confirmationSentAt, Some(uf.userWithCurrentToken.tokenCreatedAt))
             assertEq(reg.confirmationToken, Some(uf.userWithCurrentToken.token))
             assertEq(reg.confirmedAt, None)
@@ -206,7 +205,7 @@ object RegisterSnippetTest extends TestSuite {
               val t = tester(uf)
               t username_= uf.user2.username.value
               t.onSubmitF()
-              try {assertUnconfirmed(uf)}
+              try assertUnconfirmed(uf)
               catch {case e: PSQLException if e.getMessage.contains("transaction is aborted") => }
             }
           }
@@ -220,13 +219,14 @@ object RegisterSnippetTest extends TestSuite {
           "create user" - {
             inEnv { uf =>
               tester(uf).onSubmit()
-              val reg = uf.toDbUtil.dao.findUserRegistrationInfo(uf.userWithCurrentToken.email).get
+              (uf.xa ! DbLogic.user.findRegistrationInfo(uf.userWithCurrentToken.email)).get
+              val reg = (uf.xa ! DbLogic.user.findRegistrationInfo(uf.userWithCurrentToken.email)).get
               assertEq(reg.confirmationSentAt, Some(uf.userWithCurrentToken.tokenCreatedAt))
               assertEq(reg.confirmationToken, None)
               assertEq(reg.confirmedAt.get.isAfter(1.minute.ago), true)
               assert(reg.confirmedAt.isDefined)
 
-              val (user, pwd) = uf.toDbUtil.dao.findUserDescAndCredentials(uf.userWithCurrentToken.email.value).get
+              val (user, pwd) = (uf.xa ! DbLogic.user.findDescAndCredentials(uf.userWithCurrentToken.email.value)).get
               assertEq(user.username.value, "crazy50")
               assert(pwd.hashedPassword.value !=* "abcd5678")
             }
@@ -262,7 +262,7 @@ object RegisterSnippetTest extends TestSuite {
           "submit a msg to taskman" - {
             inEnv { uf =>
               val (_, tt) = tester(uf).onSubmit()
-              SubmittedOneTask(RegistrationCompletedT) test tt
+              TestTaskman.SubmittedOneTask(TestTaskman.RegistrationCompleted) test tt
             }
           }
         }

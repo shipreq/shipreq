@@ -1,21 +1,79 @@
 package shipreq.webapp.server.test
 
-import japgolly.univeq.UnivEq
-import shipreq.base.util.{NonEmptyVector, UtilMacros}
+import doobie.imports._
+import japgolly.univeq._
+import scalaz.std.list._
+import scalaz.syntax.traverse._
+import shipreq.base.util.NonEmptySet
+import shipreq.base.util.ScalaExt._
 
 sealed abstract class DbTable(val name: String) {
   override def toString = name
+  def count: ConnectionIO[Int] = Query0[Int]("select count(*) from " + name).unique
 }
 
 object DbTable {
+  case object Event       extends DbTable("event")
+  case object EventHash   extends DbTable("event_hash")
   case object Project     extends DbTable("project")
   case object Usr         extends DbTable("usr")
   case object UsrLoginLog extends DbTable("usr_login_log")
   case object Usrd        extends DbTable("usrd")
   case object UsrhName    extends DbTable("usrh_name")
 
-  //val All = UtilMacros.adtValues[DbTable]
-  val All = NonEmptyVector[DbTable](Project, Usr, UsrLoginLog, Usrd, UsrhName)
-
   implicit def univEq: UnivEq[DbTable] = UnivEq.derive
+
+  //val All = UtilMacros.adtValues[DbTable]
+  val All = NonEmptySet[DbTable](Event, EventHash, Project, Usr, UsrLoginLog, Usrd, UsrhName)
+
+  def find(name: String): Option[DbTable] =
+    All.whole.find(_.name ==* name)
+
+  def need(name: String): DbTable =
+    find(name).getOrElse(sys error s"Unknown table name: $name")
+
+  def validate(schema: String): ConnectionIO[Unit] =
+    Query0[String](s"select tablename from pg_tables where schemaname = '$schema'")
+      .list.map { actualList =>
+      val actual = actualList.toSet - "schema_version"
+      val got = All.whole.map(_.name)
+      if (got ==* actual)
+        ()
+      else Some {
+        val missing = actual -- got
+        val deleted = got -- actual
+        sys error s"Actual tables (${actual.size}) ≠ DbTable.All (${All.size}): missing: $missing, deleted: $deleted"
+      }
+    }
+
+  final case class Counts(table: Map[DbTable, Int]) {
+    def isEmpty: Boolean =
+      table.values.forall(_ ==* 0)
+
+    def nonEmpty: Boolean =
+      !isEmpty
+
+    def +(other: Counts): Counts =
+      Counts(table.map {case (t, n) => (t, n - other.table(t))})
+
+    def -(before: Counts): Counts =
+      Counts(table.map {case (t, n) => (t, n - before.table(t))})
+  }
+
+  lazy val countAll: ConnectionIO[Counts] =
+    Query0[(String, Int)](
+      DbTable.All
+        .iterator
+        .map(t => s"select '${t.name}',count(1) from ${t.name}")
+        .mkString(" union ")
+    ).list
+      .map(_.iterator.map(_.map1(DbTable.need)).toMap)
+      .map(Counts)
+
+  lazy val truncateAll: ConnectionIO[Unit] =
+    DbTable.All
+      .whole
+      .toList
+      .map(t => Update0(s"truncate table ${t.name} cascade", None).run)
+      .sequence_
 }

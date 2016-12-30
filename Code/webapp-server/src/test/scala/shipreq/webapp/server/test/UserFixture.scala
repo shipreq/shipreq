@@ -1,40 +1,36 @@
 package shipreq.webapp.server.test
 
+import doobie.imports._
 import java.time.Instant
-import scala.slick.jdbc.JdbcBackend.Session
-import scala.slick.jdbc.{StaticQuery => Q}
-import shipreq.base.db.SqlHelpers._
-import shipreq.base.util.ThreadLocalRes
+import scalaz.effect.IO
+import scalaz.syntax.bind.ToBindOps
+import scalaz.syntax.traverse._
+import shipreq.base.db.DoobieHelpers._
+import shipreq.base.test.db.{SingleConnectionXA, Usable}
 import shipreq.taskman.api.{EmailAddr, UserId}
 import shipreq.webapp.base.data._
 import shipreq.webapp.server.data._
-import shipreq.webapp.server.db.Shim
+import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.security.{PasswordAndSalt, Roles}
 import shipreq.webapp.server.test.UserFixture._
-import WebappServerTestUtil._
+import shipreq.webapp.server.test.WebappServerTestUtil._
 
 object UserFixture {
 
-  val Transaction: ThreadLocalRes[UserFixture] =
-    TestDb.Transaction
-      .xmap(apply(_))(_.session)
-      .onLend(_.setup())
+  val Session: Usable[UserFixture] =
+    TestDb(inTransaction = false)
+      .map(xa => IO(apply(xa)))
+      .before(_.setup)
+      .after(_.teardown)
 
-  /** This writes to the DB for real without using and rolling back a transaction.
-    * This is required because security manager (Shiro) has it's own DB connection.
-    */
-  val Session: ThreadLocalRes[UserFixture] =
-    TestDb.Session
-      .xmap(apply(_))(_.session)
-      .onLend(_.setup())
-      .onReturn(_.teardown())
+  val Transaction: Usable[UserFixture] =
+    TestDb(inTransaction = true)
+      .map(xa => IO(apply(xa)))
+      .before(_.setup)
 
-  def apply(implicit session: Session) =
-    new UserFixture
-
-  case class TestUser(username: Username, email: EmailAddr, password: String, roles: Set[String], name: String, newsletter: Boolean) {
+  final case class TestUser(username: Username, email: EmailAddr, password: String, roles: Set[String], name: String, newsletter: Boolean) {
     var _id: Option[UserId] = None
-    def id: UserId = _id.getOrElse(???)
+    def id: UserId = _id.getOrElse(sys error s"UserId unavailable for $this")
     val pws = PasswordAndSalt.createWithRandomSalt(password)
     def hashedPassword = pws.hashedPassword
     def salt = pws.salt
@@ -44,13 +40,10 @@ object UserFixture {
       WebappServerTestUtil.withLoggedIn(username.value, password)(a)
   }
 
-  case class PendingTestUser(email: EmailAddr, token: String, tokenCreatedAt: Instant)
+  final case class PendingTestUser(email: EmailAddr, token: String, tokenCreatedAt: Instant)
 }
 
-class UserFixture()(implicit val session: Session) {
-
-  def toDbUtil =
-    DbUtil(session)
+final case class UserFixture(xa: SingleConnectionXA) {
 
   private implicit def autoUsername(a: String) = Username(a)
   private implicit def autoEmailAddr(a: String) = EmailAddr(a)
@@ -63,44 +56,52 @@ class UserFixture()(implicit val session: Session) {
   val userWithExpiredToken = PendingTestUser("b@p.com", "poi098poi098", 4.weeks.ago)
   val pendingUsers = List(userWithCurrentToken, userWithExpiredToken)
 
-  def setup(): Unit = {
+  def setup: IO[Unit] = {
     // Insert mock users (registered)
-    val i1 = Q.query[(String, String, String, String, Option[String]), Long]("INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at, roles) VALUES(?,?,?,?,NOW(),NOW(),NOW(),?) RETURNING id")
-    for (u <- users) {
-      val id = UserId(i1(u.username.value, u.email.value, u.hashedPassword.value, u.salt, UserDescriptor.roleStr(u.roles)).first)
-      u._id = Some(id)
-      Shim.InsertUsrd(id, u.name, u.newsletter).execute
-    }
+    val i1 = Query[(String, String, String, String, Option[String]), Long]("INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at, roles) VALUES(?,?,?,?,NOW(),NOW(),NOW(),?) RETURNING id")
+    val inserts1: List[IO[Unit]] =
+      for (u <- users) yield {
+        i1.toQuery0(u.username.value, u.email.value, u.hashedPassword.value, u.salt, UserDescriptor.roleStr(u.roles))
+          .unique
+          .map { rawId =>
+            val id = UserId(rawId)
+            u._id = Some(id)
+            id
+          }
+          .flatMap(id => DbLogic.user.sqlInsertUsrd.toUpdate0((id, u.name, u.newsletter)).execute)
+          .transact(xa)
+      }
 
     // Insert mock users (pending confirmation)
-    pendingUsers.foreach(insert)
+    val inserts2 = pendingUsers.map(insertPendingTestUser)
+
+    (inserts1 ::: inserts2).sequence_
   }
 
-  def teardown(): Unit = {
-    users foreach deleteUser
-    pendingUsers foreach deleteUser
-  }
+  def teardown: IO[Unit] =
+    (users.map(deleteTestUser) ::: pendingUsers.map(deletePendingTestUser))
+      .sequence_
 
-  def insert(user: PendingTestUser): Unit =
-    Q.update[(String, String, Instant)]("INSERT INTO usr(email, confirmation_token, confirmation_sent_at) VALUES(?,?,?)").
-      apply(user.email.value, user.token, user.tokenCreatedAt).execute
+  def insertPendingTestUser(user: PendingTestUser): IO[Unit] =
+    sql"INSERT INTO usr(email, confirmation_token, confirmation_sent_at) VALUES(${user.email.value}, ${user.token}, ${user.tokenCreatedAt})"
+      .update.execute.transact(xa)
 
-  def deleteUser(u: TestUser): Unit = {
-    deleteUser(u.id.value)
-    u._id = None
-  }
+  def deleteTestUser(u: TestUser): IO[Unit] =
+    IO(u._id) flatMap {
+      case None => IO.ioUnit
+      case Some(id) => deleteUser(id.value).map(_ => u._id = None)
+    }
 
-  def deleteUser(u: PendingTestUser): Unit =
+  def deletePendingTestUser(u: PendingTestUser): IO[Unit] =
     deleteUserByEmail(u.email.value)
 
-  def deleteUser(id: Long): Unit = {
-    Q.update[Long]("DELETE FROM usrh_name WHERE usr_id = ?").apply(id).execute
-    Q.update[Long]("DELETE FROM usrd WHERE usr_id = ?").apply(id).execute
-    Q.update[Long]("DELETE FROM usr WHERE id = ?").apply(id).execute
-  }
+  def deleteUser(id: Long): IO[Unit] =
+    sql"DELETE FROM usrh_name WHERE usr_id = $id".update.run.transact(xa) >>
+    sql"DELETE FROM usrd WHERE usr_id = $id".update.run.transact(xa) >>
+    sql"DELETE FROM usr WHERE id = $id".update.execute.transact(xa)
 
-  def deleteUserByEmail(email: String): Unit = {
-    val id = Q.query[String, Long]("SELECT id FROM usr WHERE email = ?").apply(email).firstOption
-    id foreach deleteUser
+  def deleteUserByEmail(email: String): IO[Unit] = {
+    val q: IO[Option[Long]] = sql"SELECT id FROM usr WHERE email = $email".query[Long].option.transact(xa)
+    q.flatMap(_.fold(IO.ioUnit)(deleteUser))
   }
 }

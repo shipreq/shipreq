@@ -91,6 +91,14 @@ object Dependencies {
     val testkit = mm("lift-testkit")
   }
 
+  object Doobie {
+    private val mm = MultiModule.scala("org.tpolecat", "0.3.1-M3")
+    val core     = mm("doobie-core")
+    val postgres = mm("doobie-postgres")
+    val hikari   = mm("doobie-hikari")
+    val main     = core ++ postgres ++ hikari
+  }
+
   object Shiro {
     private val mm = MultiModule.java("org.apache.shiro", "1.3.2")
     val core = mm("shiro-core") ++ SLF4J.jcl // slf4j required in place of commons-logging
@@ -133,7 +141,6 @@ object Dependencies {
   val httpCore    = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.5")
   val javaMail    = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.5.6")
   val postgresql  = jvmOnly("org.postgresql"              % "postgresql"            % "9.4.1212")
-  val slick       = jvmOnly("com.typesafe.slick"         %% "slick"                 % "2.1.0")
   val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "2.5.1")
   val flyway      = jvmOnly("com.googlecode.flyway"       % "flyway-core"           % "2.3.1")
   val logback     = jvmOnly("ch.qos.logback"              % "logback-classic"       % "1.1.7")

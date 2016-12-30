@@ -7,7 +7,6 @@ import net.liftweb.http.js.{JsCmd, JsCmds, JsExp}
 import net.liftweb.json.{NoTypeHints, Serialization, Serializer}
 import net.liftweb.sitemap.Menu
 import net.liftweb.util.Props
-import scala.slick.jdbc.JdbcBackend.Session
 import scala.xml.{Elem, NodeSeq, Text, UnprefixedAttribute}
 import scalaz.Monoid
 import scalaz.syntax.semigroup._
@@ -19,7 +18,6 @@ import shipreq.webapp.base.validation.{VFailure, ValidationResult}
 import shipreq.webapp.server.app.AppSiteMap.Implicits._
 import shipreq.webapp.server.app.{AppSiteMap, DI}
 import shipreq.webapp.server.data.UserDescriptor
-import shipreq.webapp.server.db.DaoS
 import shipreq.webapp.server.feature.validation.VFailureHtmlRenderer
 import shipreq.webapp.server.snippet.{AlertTypeError, AlertTypeSuccess, Notices}
 import shipreq.webapp.server.util.ErrorMessages
@@ -78,7 +76,7 @@ trait StaticSnippetHelpers extends HasLogger {
   @inline def staticHtml(link: NodeSeq): EndoFn[NodeSeq] =
     _ => link
 
-  def redirectHome                                      : Nothing = S.redirectTo(AppSiteMap.Home.relativeUrl)
+  def redirectHome()                                    : Nothing = S.redirectTo(AppSiteMap.Home.relativeUrl)
   def redirectTo(page: Menu)                            : Nothing = S.redirectTo(page.relativeUrl)
   def redirectTo(page: Menu.Menuable)                   : Nothing = S.redirectTo(page.relativeUrl)
   def redirectTo[T](page: Menu.ParamMenuable[T])(arg: T): Nothing = S.redirectTo(page.relativeUrl(arg))
@@ -100,12 +98,12 @@ trait StaticSnippetHelpers extends HasLogger {
     }
   }
 
-  def requireResultO_![T](o: Option[T], fallbackErrorReaction: => Nothing = redirectHome): T = o match {
+  def requireResultO_![T](o: Option[T], fallbackErrorReaction: => Nothing = redirectHome()): T = o match {
     case Some(t) => t
     case None    => fallbackErrorReaction
   }
 
-  def requireResult_![T](box: Box[T], fallbackErrorReaction: => Nothing = redirectHome): T = box match {
+  def requireResult_![T](box: Box[T], fallbackErrorReaction: => Nothing = redirectHome()): T = box match {
     case Full(t)                                 => t
     case Empty                                   => fallbackErrorReaction
     case ParamFailure(_, _, _, r: LiftResponse)  => respondImmediately(r)
@@ -187,15 +185,12 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with HasLogg
 
   def toJson[T <: AnyRef](data: T): JsonStr[T] = JsonStr[T](Serialization write data)
 
-  @inline final def currentUser: Option[UserDescriptor] = securityProvider.loggedInUser
+  @inline final def currentUser(): Option[UserDescriptor] = securityProvider().loggedInUser
   @inline final def currentUserId_!() : UserId = currentUser_!().id
   final def currentUser_!(): UserDescriptor = currentUser match {
     case Some(user) => user
     case None => respondImmediately(RedirectResponse(AppSiteMap.Login.relativeUrl))
   }
-
-  def taskmanD[A](dao: DaoS, f: TaskmanInterface => Session => A): A =
-    f(taskman)(dao.session)
 }
 
 /**

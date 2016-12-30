@@ -61,6 +61,7 @@ object WebappBuild {
         μPickle ++ boopickle ++ Monocle.core ++
         providedScope(Scala.library) ++
         testScope(μTest))
+      .configureJvm(_.dependsOn(baseDb))
       .depsForJvm(postgresql)
 
   lazy val webappBaseJvm = webappBase.jvm

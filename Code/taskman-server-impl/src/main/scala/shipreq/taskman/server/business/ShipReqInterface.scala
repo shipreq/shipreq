@@ -1,46 +1,33 @@
 package shipreq.taskman.server.business
 
-import scala.slick.jdbc.JdbcBackend.Session
+import doobie.imports._
+import shipreq.base.db.SqlHelpers._
 import shipreq.taskman.api.{EmailAddr, UserId}
 
-object ShipReqInterface {
+final case class ShipReqInterface(schema: Option[String]) {
 
-  class Sql(schema: Option[String]) {
-    import scala.slick.jdbc.GetResult
-    import scala.slick.jdbc.StaticQuery.{query, queryNA}
-    import shipreq.base.db.SqlHelpers._
+  private val prefix = schema.fold("")(_ + ".")
 
-    implicit val dbCodecUserId    = DbCodec.WithOption.caseClass[UserId]
-    implicit val dbCodecEmailAddr = DbCodec.WithOption.caseClass[EmailAddr]
+  private implicit val doobieMetaUserId    = doobieMetaCaseClass[UserId]
+  private implicit val doobieMetaEmailAddr = doobieMetaCaseClass[EmailAddr]
 
-    implicit val GR_ShipReqUser: GetResult[ShipReqUser] =
-      GetResult(r => ShipReqUser(r.<<, r.<<, r.<<, r.<<, r.<<))
+  private implicit val compositeShipReqUser: Composite[ShipReqUser] = Composite.generic
 
-    // ---------------------------------------------------------------------------------------------
+  private val find = s"select id, username, email, name, newsletter from ${prefix}taskman_users_v01"
 
-    val prefix = schema.fold("")(_ + ".")
-
-    val findUsersSql = s"select id, username, email, name, newsletter from ${prefix}taskman_users_v01"
-
-    val findUserById = query[UserId, ShipReqUser](findUsersSql + " where id=?")
-
-    val findUserByEmail = query[EmailAddr, ShipReqUser](findUsersSql + " where email=?")
-
-    val findAllUsers = queryNA[ShipReqUser](findUsersSql)
-
-    def findAllUsersW(whereClause: String) = queryNA[ShipReqUser](s"$findUsersSql where ($whereClause)")
+  val findUserById: UserId => ConnectionIO[Option[ShipReqUser]] = {
+    val q = Query[UserId, ShipReqUser](s"$find where email=?")
+    q.toQuery0(_).option
   }
 
-  // ===================================================================================================================
-
-  class Dao(sql: Sql)(implicit session: Session) {
-
-    def findUser(id: UserId): Option[ShipReqUser] = sql.findUserById(id).firstOption
-
-    def findUser(e: EmailAddr): Option[ShipReqUser] = sql.findUserByEmail(e).firstOption
-
-    def findAllUsers(): List[ShipReqUser] = sql.findAllUsers.list
-
-    def findAllUsers(cond: String): List[ShipReqUser] = sql.findAllUsersW(cond).list
+  val findUserByEmail: EmailAddr => ConnectionIO[Option[ShipReqUser]] = {
+    val q = Query[EmailAddr, ShipReqUser](s"$find where email=?")
+    q.toQuery0(_).option
   }
+
+  val findAllUsers: ConnectionIO[List[ShipReqUser]] =
+    Query0[ShipReqUser](find).list
+
+  def findAllUsersW(whereClause: String): ConnectionIO[List[ShipReqUser]] =
+    Query0[ShipReqUser](s"$find where ($whereClause)").list
 }

@@ -155,7 +155,7 @@ class MockSops extends MockOpTransformerA[Sop, IO] {
   override def opTypeProvider = SopTypeTags
 
   val cfgGetR                    = MockResponse(Option[String](null))
-  val assignNodeR                = MockResponse(Seq.empty[MsgHeader])
+  val assignNodeR                = MockResponse(List.empty[MsgHeader])
   val assignWorkerR              = MockResponse(Option[MsgDetail](null))
   val updateMsgSuccessR          = MockResponse(())
   val updateMsgAbortR            = MockResponse(())

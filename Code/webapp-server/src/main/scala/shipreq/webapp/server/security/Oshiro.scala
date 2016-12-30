@@ -6,22 +6,19 @@ import org.apache.shiro.crypto.SecureRandomNumberGenerator
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.data.UserDescriptor
 
-/**
- * Apache城との橋になる「お城」。
- */
 object Oshiro extends SecurityProvider {
-  private val factory = new IniSecurityManagerFactory("classpath:shiro.ini")
-  private val ini = factory.getIni
+  private val iniFactory = new IniSecurityManagerFactory("classpath:shiro.ini")
+  private val ini = iniFactory.getIni
 
   final val HashingAlgorithm = ini.getSection("main").get("cm.hashAlgorithmName")
   final val HashingIterations = ini.getSection("main").get("cm.hashIterations").toInt
 
   final val RNG = new SecureRandomNumberGenerator()
 
-  def init() {
+  def init(): Unit = {
 
     // Init Shiro proper
-    val securityManager = factory.getInstance
+    val securityManager = iniFactory.getInstance()
     SecurityUtils.setSecurityManager(securityManager)
 
     // Init snippets

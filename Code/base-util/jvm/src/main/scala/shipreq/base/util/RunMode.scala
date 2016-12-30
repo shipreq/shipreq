@@ -67,7 +67,7 @@ object RunMode {
       if (cs.isEmpty) Nil else combineComponents(cs) :: Nil
     }
     val runModeNames = rm.names.map(_.toLowerCase(Locale.ENGLISH))
-    val userNames = List(System.getProperty("user.name"), "")
+    val userNames = List(System.getProperty("user.name"), "default", "")
     (runModeNames |@| userNames)((a,b) => mkFilename(a,b)).flatten.distinct
   }
 }

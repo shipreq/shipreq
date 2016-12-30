@@ -29,7 +29,7 @@ object LandingPage extends SnippetHelpers {
         case Failure(f) =>
           JsCmds.Alert(f.toText)
         case Success(msg) =>
-          taskman1(_ submitMsg msg)
+          taskman().submitMsg(msg).unsafePerformIO()
           val firstName = firstNameExtractor.replaceFirstIn(msg.name, "")
           jsDisableForm & JsCmds.Alert(s"Thank you, $firstName.\n\nWe'll be in touch!")
       }

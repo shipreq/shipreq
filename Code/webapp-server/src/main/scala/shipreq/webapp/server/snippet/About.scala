@@ -134,11 +134,6 @@ class About {
         Some(Text("Copyright (C) 1999-2012, QOS.ch. All rights reserved.")),
         Set(EPLv1, LGPLv21))
       ,
-      Attribution("Slick",
-        "http://slick.typesafe.com/",
-        Some(<xml:group>Copyright © 2011-2012 <a href="http://typesafe.com">Typesafe, Inc.</a></xml:group>),
-        Set(BSD_2))
-      ,
       Attribution("FlyWay",
         "http://flywaydb.org/",
         Some(<xml:group>© 2010-2014 <a href="http://axelfontaine.com">Axel Fontaine</a> and the <a href="http://flywaydb.org/contribute/hallOfFame.html">many contributors</a>.</xml:group>),

@@ -10,11 +10,13 @@ import net.liftweb.sitemap._
 import net.liftweb.util.Helpers.nextFuncName
 import net.liftweb.util.Props
 import scalaz.{-\/, \/-}
+import shipreq.base.db.DoobieHelpers._
 import shipreq.base.util.ErrorOr
 import shipreq.taskman.api.ApiOp.QueryMsgStatus
 import shipreq.taskman.api.Msg.SendDiagEmail
 import shipreq.taskman.api.{EmailAddr, MsgId}
 import shipreq.webapp.server.app.DI
+import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.lib.Misc._
 import shipreq.webapp.server.lib.SnippetHelpers
 
@@ -31,11 +33,11 @@ object DiagnosticEndpoints extends DI {
   private def endpoint(name: String) =
     Menu.i(s"diag.$name") / "diag" / name >> Hidden >> Stateless
 
-  def calcTime[T](f: => T): (Long, T) = {
+  def calcTime[T](f: => T): (Duration, T) = {
     val start  = Instant.now()
     val result = f
     val end    = Instant.now()
-    (Duration.between(start, end).toMillis, result)
+    (Duration.between(start, end), result)
   }
 
   def parseJLong(s: String): Box[JLong] =
@@ -78,34 +80,31 @@ object DiagnosticEndpoints extends DI {
     Full(textResponse(csv, "text/csv"))
   })
 
-  case class DbTestResult(timeAB: Long, timeA: Long, timeB: Long, dbClock: String) {
-    def toCsv: String = "%4d,%4d,%4d, %s\n".format(timeAB, timeA, timeB, dbClock)
+  case class DbTestResult(timeAB: Duration, timeA: Duration, timeB: Duration, dbClock: String) {
+    def toCsv: String =
+      "%4d,%4d,%4d, %s\n".format(timeAB.toMillis, timeA.toMillis, timeB.toMillis, dbClock)
   }
 
   def dbTest(): DbTestResult = {
     val (ab, (b, dbClock)) =
       calcTime {
-        daoProvider.withAdminDao(dao =>
-          calcTime {
-            dao.diagSelectNow()
-          }
-        )
+        db().io.trans(DbLogic.admin.diagSelectNow.measureDuration).unsafePerformIO()
       }
-    DbTestResult(ab, ab - b, b, dbClock.toStringIso8601)
+    DbTestResult(ab, ab minus b, b, dbClock.toStringIso8601)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
   // Email
 
-  case class EmailSendResult(id: Long, time: Long, token: String)
+  case class EmailSendResult(id: Long, time: Duration, token: String)
 
   val Email = endpoint("mail") >> denyNonHttps >> EarlyResponse(() =>
     S.param("to") match {
       case Full(emailAddress) => {
         val token = nextFuncName
         val msg = SendDiagEmail(EmailAddr(emailAddress), token, s"Token: $token\nIssued: ${Instant.now().toStringIso8601}")
-        val (time, msgId) = calcTime(taskman1(_ submitMsg msg))
-        Full(jsonResponse(EmailSendResult(msgId.value, time, token)))
+        val (dur, msgId) = calcTime(taskman().submitMsg(msg).unsafePerformIO())
+        Full(jsonResponse(EmailSendResult(msgId.value, dur, token)))
       }
       case _ => Full(BadResponse())
     })
@@ -121,7 +120,7 @@ object DiagnosticEndpoints extends DI {
         MsgStatus.currentValue match {
           case Full(l) =>
             val id = MsgId(l)
-            taskman1(_ run QueryMsgStatus(id)) match {
+            taskman().run(QueryMsgStatus(id)).unsafePerformIO() match {
               case Some(status) => Full(jsonResponse(MsgStatusResult(id.value, status.toString, status.isArchived)))
               case None         => Full(NotFoundResponse("Msg not found."))
             }

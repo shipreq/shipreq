@@ -1,7 +1,10 @@
 package shipreq.webapp.server.snippet
 
+import doobie.imports._
 import net.liftweb.http.S
 import net.liftweb.util.Helpers._
+import scalaz.effect.IO
+import scalaz.syntax.catchable._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -10,8 +13,7 @@ import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.server._
 import shipreq.webapp.gen.transform.ProjectSpaLoader
 import shipreq.webapp.server.data.ProjectId
-import shipreq.webapp.server.db.DaoT
-import shipreq.webapp.server.db.EventDao.EventSeq
+import shipreq.webapp.server.db.{DbLogic, EventSeq}
 import shipreq.webapp.server.lib.{SingleOpStatefulSnippet, Taskman}
 import shipreq.webapp.server.protocol._
 import shipreq.webapp.server.util.{KeyedMutexes, LockUsage}
@@ -24,7 +26,10 @@ object ProjectSpa {
 
   val Mutexes = KeyedMutexes[ProjectId](LockUsage.Default)
 
-  val NoChangeResponse = \/-(Vector.empty[VerifiedEvent])
+  val NoChangeResponse: IO[GenericFailure \/ VerifiedEvents] = {
+    val r = \/-(Vector.empty[VerifiedEvent])
+    IO(r)
+  }
 
   def loadErrorToString(p: ProjectId, e: LoadErrors): String = {
     val (err, seqs) = e
@@ -32,22 +37,21 @@ object ProjectSpa {
     s"Error building project #${p.value} from DB events: $err\n\nSeqs: $seqStr"
   }
 
-  def loadProjectEvents(dao: DaoT, projectId: ProjectId): LoadErrors \/ State = {
-    val es = dao.findAllEvents(projectId)
+  def buildProject(es: Vector[(EventSeq, VerifiedEvent)]): LoadErrors \/ State =
     ApplyEvent.trusted.applyVerified(es.map(_._2))(Project.empty) match {
-
       case \/-(p) =>
         val seq = es.lastOption.fold(EventSeq(0))(_._1) // If empty, next will be 1. Nice to reserve 0 for ApplyTemplate.
         \/-(State(p, seq))
-
       case -\/(e) =>
         val seqs = es.map(_._1)
         -\/((e, seqs))
     }
-  }
 
-  def loadProjectEvents_!(dao: DaoT, projectId: ProjectId): State =
-    loadProjectEvents(dao, projectId) match {
+  def loadProjectEvents(projectId: ProjectId): ConnectionIO[LoadErrors \/ State] =
+    DbLogic.event.findAll(projectId).map(buildProject)
+
+  def loadProjectEvents_!(projectId: ProjectId): ConnectionIO[State] =
+    loadProjectEvents(projectId) map {
       case \/-(s) => s
       case -\/(e) => sys error loadErrorToString(projectId, e)
     }
@@ -72,57 +76,64 @@ class ProjectSpa(projectId: ProjectId) extends SingleOpStatefulSnippet {
   val mutex = Mutexes(projectId)
 
   val state: LazyVar[State] =
-    LazyVar(
-      mutex(
-        daoProvider.withTransaction(
-          loadProjectEvents_!(_, projectId))))
+    LazyVar.io(
+      mutex.io(
+        db().io.trans(loadProjectEvents_!(projectId))
+      )
+    )
 
-  private def updateProject(f: Project => MakeEvent.Result): GenericFailure \/ VerifiedEvents =
-    mutex {
-      // Thread.sleep(2000)
-      // sys error "NO!"
-      val curState = state.get()
-      val event = f(curState.project)
-      ApplyNewEvent(event, curState.project) match {
+  private def updateProject(f: Project => MakeEvent.Result): IO[GenericFailure \/ VerifiedEvents] =
+    mutex.io {
+      state.get.flatMap { curState =>
+        // Thread.sleep(2000)
+        // sys error "NO!"
+        val event = f(curState.project)
 
-        case ValidUpdate.Success(u) =>
-          saveAndApplyNewEvent(curState, u).map { s2 =>
-            state.set(s2)
-            Vector1(u.ve)
-          }
+        ApplyNewEvent(event, curState.project) match {
 
-        case ValidUpdate.Unchanged  =>
-          NoChangeResponse
+          case ValidUpdate.Success(u) =>
+            saveAndApplyNewEvent(curState, u) flatMap {
+              case \/-(s2) => state.set(s2).map(_ => \/-(Vector1(u.ve)))
+              case e@ -\/(_) => IO(e)
+            }
 
-        case ValidUpdate.Failure(e) =>
-          System.err.println(s"Error: $event failed with $e.")
-          -\/(GenericFailure(e))
+          case ValidUpdate.Unchanged =>
+            NoChangeResponse
+
+          case ValidUpdate.Failure(e) =>
+            IO {
+              System.err.println(s"Error: $event failed with $e.")
+              -\/(GenericFailure(e))
+            }
+        }
       }
     }
 
-  private def saveAndApplyNewEvent(s1: State, u: ApplyNewEvent.Updated): GenericFailure \/ State = {
+  private def saveAndApplyNewEvent(s1: State, u: ApplyNewEvent.Updated): IO[GenericFailure \/ State] = {
     val seq = s1.seq.succ
-    try {
-      daoProvider.withTransaction(_.createEvent(projectId, seq, u.ae, u.ve.hashRecs))
-      \/-(State(u.project, seq))
-    } catch {
-      case t: Throwable =>
-        val msg =
-          s"""
-             |Error saving new event ${u.ae} to project ${projectId.value} with seq $seq.
-             |Previous state in memory has seq ${s1.seq}.
+    db().io.trans(DbLogic.event.create(projectId, seq, u.ae, u.ve.hashRecs))
+      .attempt
+      .flatMap {
+        case \/-(_) => IO(\/-(State(u.project, seq)))
+        case -\/(t) =>
+          val msg =
+            s"""
+               |Error saving new event ${u.ae} to project ${projectId.value} with seq $seq.
+               |Previous state in memory has seq ${s1.seq}.
            """.stripMargin
-        log.error(t, msg)
-        taskman ! Taskman.errorMsg(t, S.request.toOption.map(_.uri), msg)
-        -\/(GenericFailure("Error occurred writing change to database."))
-    }
+          taskman().submitMsgAsync(Taskman.errorMsg(t, S.request.toOption.map(_.uri), msg))
+            .map { _ =>
+              log.error(t, msg)
+              -\/(GenericFailure("Error occurred writing change to database."))
+            }
+      }
   }
 
   def initData(username: Username, project: ProjectCatalogue.Item) = {
     import ServerProtocol.remoteFn
 
     val projectInit = remoteFn(ProjectInit)(
-      _ => \/-(state.get().project))
+      _ => state.get.map(s => \/-(s.project)))
 
     val customReqTypeCrud = remoteFn(CustomReqTypeCrud)(
       i => updateProject(MakeEvent.customReqTypeCrud(i, _)))
@@ -168,14 +179,15 @@ class ProjectSpa(projectId: ProjectId) extends SingleOpStatefulSnippet {
 
   override def render = {
     val user = currentUser_!()
-    daoProvider.withSession(_.findProjectCatalogueItem(user.id, projectId)) match {
+    val project = db().io.trans(DbLogic.project.findCatalogueItem(user.id, projectId)).unsafePerformIO()
+    project match {
       case Some(p) =>
         "*" #> (
           ProjectSpaLoader.xml(user.username, p) :+
             ClientFn.ProjectSpa.htmlToLoadJsAndRun(Assets.ProjectSpa)(initData(user.username, p)))
 
       case None =>
-        redirectHome
+        redirectHome()
     }
   }
 }

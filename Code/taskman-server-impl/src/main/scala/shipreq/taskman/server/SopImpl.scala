@@ -1,7 +1,7 @@
 package shipreq.taskman.server
 
+import doobie.imports._
 import java.time.Duration
-import scala.slick.jdbc.JdbcBackend.{Database, Session}
 import scalaz.effect.IO
 import scalaz.std.option.optionInstance
 import scalaz.syntax.traverse._
@@ -34,32 +34,25 @@ object SopImpl {
   // -------------------------------------------------------------------------------------------------------------------
 
   object Sql {
-    import scala.slick.jdbc.{GetResult, SetParameter, PositionedParameters}
-    import scala.slick.jdbc.StaticQuery.{query, queryNA}
     import shipreq.base.db.SqlHelpers._
-    import shipreq.base.db.JavaTimeSqlHelpers._
 
-    implicit val dbCodecWorkerId = DbCodec.WithOption.caseClass[WorkerId].writeOnly
-    implicit val dbCodecNodeId   = DbCodec.WithOption.caseClass[NodeId]
-    implicit val dbCodecMsg      = DbCodec.WithOption.json[Msg]
-    implicit val dbCodecMsgId    = DbCodec.caseClass[MsgId]
-    implicit val dbCodecPriority = DbCodec.caseClass[Priority]
+    implicit val doobieMetaWorkerId = doobieMetaCaseClass[WorkerId]
+    implicit val doobieMetaNodeId   = doobieMetaCaseClass[NodeId]
+    implicit val doobieMetaMsgId    = doobieMetaCaseClass[MsgId]
+    implicit val doobieMetaPriority = doobieMetaCaseClass[Priority]
+    implicit val doobieMetaMsg      = jsonStr[Msg]
 
-    implicit object SP_ArchiveIntent extends SetParameter[ArchiveIntent] {
-      def apply(v: ArchiveIntent, pp: PositionedParameters): Unit = {
-        pp setString v.resultFlagS
-        pp setInt v.failureCountInc
-      }
-    }
 
-    implicit val GR_MsgHeader: GetResult[MsgHeader] =
-      GetResult(r => MsgHeader(r.<<, r.<<, r.<<))
+    implicit val doobieCompositeMsgHeader: Composite[MsgHeader] = Composite.generic
+
+    implicit val doobieCompositeArchiveIntent: Composite[ArchiveIntent] =
+      Composite[(String, Int)].writeOnly(x => (x.resultFlagS, x.failureCountInc))
 
     // -----------------------------------------------------------------------------------------------------------------
 
-    val getNextNodeIdQ = queryNA[NodeId]("select NEXTVAL('node_seq')")
+    val getNextNodeIdQ = Query0[NodeId]("select NEXTVAL('node_seq')")
 
-    val cfgGetQ = query[String, String]("select v from cfg where k=?")
+    val cfgGetQ = Query[String, String]("select v from cfg where k=?")
 
     private[this] def getMsgsAssignNode_q(extraSel: Option[String], extraCond: Option[String]) = s"""
          select ctid ${extraSel.fold("")(s => s",$s")}
@@ -84,13 +77,13 @@ object SopImpl {
        returning id, priority, created_at
     """.sql
 
-    val getMsgsAssignNodeZ = query[(NodeId, Duration, Int), MsgHeader](
+    val getMsgsAssignNodeZ = Query[(NodeId, Duration, Int), MsgHeader](
       getMsgsAssignNode_upd(getMsgsAssignNode_q(None, None)))
 
-    val getMsgsAssignNodeF = query[(NodeId, Duration, Priority, Int), MsgHeader](
+    val getMsgsAssignNodeF = Query[(NodeId, Duration, Priority, Int), MsgHeader](
       getMsgsAssignNode_upd(getMsgsAssignNode_q(None, Some("priority > ?"))))
 
-    val getMsgsAssignNodeP = query[(Duration, Int, Int, Priority, NodeId), MsgHeader](s"""
+    val getMsgsAssignNodeP = Query[(Duration, Int, Int, Priority, NodeId), MsgHeader](s"""
       with a as (${getMsgsAssignNode_q(Some("priority p"), None)})
       , b as (
           select ctid from a
@@ -100,21 +93,21 @@ object SopImpl {
       ${getMsgsAssignNode_upd("select ctid from b")}
     """.sql)
 
-    val getMsgAssignWorkerQ = query[(WorkerId, MsgId, NodeId), (Short, JsonStr[Msg], Short)]("""
+    val getMsgAssignWorkerQ = Query[(WorkerId, MsgId, NodeId), (Short, JsonStr[Msg], Short)]("""
       update msgq
       set worker = ?, updated_at = clock_timestamp()
       where id = ? and node = ? and worker is null
       returning type, data, failure_count
     """.sql)
 
-    val reassignWorkerQ = query[(NodeId, WorkerId, MsgId), Boolean](s"""
+    val reassignWorkerQ = Query[(NodeId, WorkerId, MsgId), Boolean](s"""
       update msgq
       set updated_at = clock_timestamp()
       where $nwi
       returning true
     """.sql)
 
-    val failAndRetryQ = query[(Duration, NodeId, WorkerId, MsgId), Boolean](s"""
+    val failAndRetryQ = Query[(Duration, NodeId, WorkerId, MsgId), Boolean](s"""
       update msgq
       set
         node = null,
@@ -126,7 +119,7 @@ object SopImpl {
       returning true
     """.sql)
 
-    val archiveMsgQ = query[(NodeId, WorkerId, MsgId, ArchiveIntent), Boolean](s"""
+    val archiveMsgQ = Query[(NodeId, WorkerId, MsgId, ArchiveIntent), Boolean](s"""
       with tmp as (
         delete from msgq where $nwi
         returning id, type, data, ?, failure_count+?, created_at, clock_timestamp()
@@ -138,89 +131,86 @@ object SopImpl {
 
   // ===================================================================================================================
 
-  class Dao(session: Session) {
+  object Dao {
     import Sql._
-    private[this] implicit def _s = session
 
-    def getMsgsAssignNode(node: NodeId, limit: Int, assignmentTrustPeriod: Duration, queued: Option[(Priority, Int)]): List[MsgHeader] =
+    def getMsgsAssignNode(node: NodeId, limit: Int, assignmentTrustPeriod: Duration, queued: Option[(Priority, Int)]): ConnectionIO[List[MsgHeader]] =
       queued match {
         case None =>
           // Empty mem-queue
-          getMsgsAssignNodeZ(node, assignmentTrustPeriod, limit).list
+          getMsgsAssignNodeZ.toQuery0(node, assignmentTrustPeriod, limit).list
 
         case Some((memPri, memSize)) =>
           val freeSlots = limit - memSize
           if (freeSlots > 0)
             // Partial mem-queue
-            getMsgsAssignNodeP(assignmentTrustPeriod, limit, freeSlots, memPri, node).list
+            getMsgsAssignNodeP.toQuery0(assignmentTrustPeriod, limit, freeSlots, memPri, node).list
           else
             // Full mem-queue
-            getMsgsAssignNodeF(node, assignmentTrustPeriod, memPri, limit).list
+            getMsgsAssignNodeF.toQuery0(node, assignmentTrustPeriod, memPri, limit).list
       }
 
-    def getMsgAssignWorker(node: NodeId, worker: WorkerId, hdr: MsgHeader): Option[MsgDetail] =
-      getMsgAssignWorkerQ(worker, hdr.id, node).firstOption map {
+    def getMsgAssignWorker(node: NodeId, worker: WorkerId, hdr: MsgHeader): ConnectionIO[Option[MsgDetail]] =
+      getMsgAssignWorkerQ.toQuery0(worker, hdr.id, node).option.map(_ map {
         case (msgType, msgData, failureCount) =>
           ErrorOr.require_!(
             Serialisation.deserialise(msgType, msgData).map(msg =>
               MsgDetail(hdr, msg, failureCount)))
-      }
+      })
 
-    def reassignWorker(n: NodeId, w: WorkerId, m: MsgId): Boolean =
-      reassignWorkerQ(n, w, m).firstOption getOrElse false
+    def reassignWorker(n: NodeId, w: WorkerId, m: MsgId): ConnectionIO[Boolean] =
+      reassignWorkerQ.toQuery0(n, w, m).option.map(_ getOrElse false)
 
-    def failAndRetry(n: NodeId, w: WorkerId, m: MsgId, delay: Duration): Unit =
-      failAndRetryQ(delay, n, w, m).first
+    def failAndRetry(n: NodeId, w: WorkerId, m: MsgId, delay: Duration): ConnectionIO[Unit] =
+      failAndRetryQ.toQuery0(delay, n, w, m).unique.map(_ => ())
 
-    def archiveMsg(n: NodeId, w: WorkerId, m: MsgId, status: ArchiveIntent): Unit =
-      archiveMsgQ(n, w, m, status).first
+    def archiveMsg(n: NodeId, w: WorkerId, m: MsgId, status: ArchiveIntent): ConnectionIO[Unit] =
+      archiveMsgQ.toQuery0(n, w, m, status).unique.map(_ => ())
 
-    def getNextNodeId: NodeId =
-      getNextNodeIdQ.first
+    def getNextNodeId: ConnectionIO[NodeId] =
+      getNextNodeIdQ.unique
 
-    def cfgGet(k: String): Option[String] =
-      cfgGetQ(k).firstOption
+    def cfgGet(k: String): ConnectionIO[Option[String]] =
+      cfgGetQ.toQuery0(k).option
   }
 
-  def cfgValueReader(db: Database) =
+  def cfgValueReader(db: Transactor[IO]) =
     new StringBasedValueReader(
       new Retriever[String](k =>
-        ErrorOr.safe(db.withSession((s: Session) => new Dao(s).cfgGet(k)))
+        ErrorOr.safe(db.trans(Dao.cfgGet(k)).unsafePerformIO)
           .sequence))
 }
 
 // =====================================================================================================================
 
-class SopImpl[EA](db: Database, fh: Worker.FailureHandler) extends SopReifier {
+final class SopImpl[EA](db: Transactor[IO], fh: Worker.FailureHandler) extends SopReifier {
   import Sop._
   import SopImpl._
 
-  private[this] def ioD[A](f: Dao => A): IO[A] = IO(db.withSession(s => f(new Dao(s))))
-
-  def getNextNodeId = ioD(_.getNextNodeId)
+  def getNextNodeId = db trans Dao.getNextNodeId
 
   override def apply[A](op: Sop[A]): IO[A] = op match {
 
     case GetMsgsAssignNode(node, limit, trustPeriod, queued) =>
-      ioD(_.getMsgsAssignNode(node, limit, trustPeriod, queued))
+      db trans Dao.getMsgsAssignNode(node, limit, trustPeriod, queued)
 
     case GetMsgAssignWorker(node, worker, hdr) =>
-      ioD(_.getMsgAssignWorker(node, worker, hdr))
+      db trans Dao.getMsgAssignWorker(node, worker, hdr)
 
     case ReAssignWorker(n, w, m) =>
-      ioD(_.reassignWorker(n, w, m))
+      db trans Dao.reassignWorker(n, w, m)
 
     case UpdateMsgSuccess(n, w, m) =>
-      ioD(_.archiveMsg(n, w, m, Succeeded))
+      db trans Dao.archiveMsg(n, w, m, Succeeded)
 
     case UpdateMsgRetry(n, w, m, delay) =>
-      ioD(_.failAndRetry(n, w, m, delay))
+      db trans Dao.failAndRetry(n, w, m, delay)
 
     case UpdateMsgAbort(n, w, m) =>
-      ioD(_.archiveMsg(n, w, m, FailAndAbort))
+      db trans Dao.archiveMsg(n, w, m, FailAndAbort)
 
     case CfgGet(k) =>
-      ioD(_ cfgGet k)
+      db trans Dao.cfgGet(k)
 
     case op: NotifySupportWorkerFailed =>
       fh handleFailedWorker op

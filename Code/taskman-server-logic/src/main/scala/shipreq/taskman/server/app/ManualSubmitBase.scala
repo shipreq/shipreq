@@ -1,5 +1,6 @@
 package shipreq.taskman.server.app
 
+import scalaz.effect.IO
 import scalaz.{-\/, \/-}
 import shipreq.base.util.ErrorOr
 import shipreq.base.util.ScalaExt.Tuple2Ext
@@ -14,13 +15,13 @@ abstract class ManualSubmitBase extends HasLogger {
 
   def serialise  : Msg => JsonStr[Msg]
   def deserialise: (T, JsonStr[Msg]) => ErrorOr[Msg]
-  def runner     : (ApiOpReifier => Unit) => Unit
+  def runner     : (ApiOpReifier => IO[Unit]) => IO[Unit]
 
   def main(args: Array[String]): Unit =
     parseA(args) match {
       case Ok(Nil) | Help => println(helpText)
       case ParseError(e)  => println(s"ERROR: $e"); System exit 1
-      case Ok(msgs)       => runner(submitAll(msgs))
+      case Ok(msgs)       => runner(submitAll(msgs)).unsafePerformIO()
     }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -63,7 +64,7 @@ abstract class ManualSubmitBase extends HasLogger {
   // -------------------------------------------------------------------------------------------------------------------
   // Help
 
-  def helpText(): String =
+  def helpText: String =
     s"""
       |Usage: this [<msg>... | -h | --help]
       |
@@ -101,8 +102,8 @@ abstract class ManualSubmitBase extends HasLogger {
   // -------------------------------------------------------------------------------------------------------------------
   // Submission
 
-  def submitAll(msgs: List[Msg]): ApiOpReifier => Unit =
-    aopReifier => {
+  def submitAll(msgs: List[Msg]): ApiOpReifier => IO[Unit] =
+    aopReifier => IO {
       val msgCount = msgs.size
       log info ""
 

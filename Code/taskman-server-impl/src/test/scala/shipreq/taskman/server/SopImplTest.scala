@@ -1,12 +1,11 @@
 package shipreq.taskman.server
 
+import doobie.imports._
 import java.time.{Duration, Instant}
 import org.specs2.matcher.Matcher
 import org.specs2.mutable.Specification
 import org.specs2.time.NoTimeConversions
-import scala.slick.jdbc.StaticQuery.query
 import scala.util.Random
-import shipreq.base.db.JavaTimeSqlHelpers._
 import shipreq.base.db.SqlHelpers._
 import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.base.util.JavaTimeHelpers._
@@ -19,7 +18,7 @@ import SopImpl.Sql._
 
 class SopImplTest extends Specification with DatabaseTest with NoTimeConversions {
 
-  def dao = new SopImpl.Dao(session)
+  def dao = SopImpl.Dao
   val n = NodeId(123)
   val w = WorkerId(666)
   val rng = new Random()
@@ -27,24 +26,25 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
 
   "reassignWorker" should {
 
-    val insertQ = query[(Option[NodeId], Option[WorkerId], Duration, Duration, Duration), MsgId](
+    val insertQ = Query[(Option[NodeId], Option[WorkerId], Duration, Duration, Duration), MsgId](
       "INSERT INTO msgq(type, data, node, worker, updated_at, created_at, effective_from, priority, priority_base)" +
         s"VALUES(0, NULL, ?, ?, now()-?, now()-?, now()-?, 5,5) RETURNING id")
 
-    val getUpdatedAt = query[MsgId, Instant]("select updated_at from msgq where id=?")
+    def getUpdatedAt(id: MsgId): Instant =
+      sql"select updated_at from msgq where id=$id".query[Instant].unique.runNow()
 
     def timestampBeforeAfter(id: MsgId) = {
-      val b = getUpdatedAt(id).first
-      dao.reassignWorker(n ,w, id)
-      val a = getUpdatedAt(id).first
+      val b = getUpdatedAt(id)
+      dao.reassignWorker(n, w, id).runNow()
+      val a = getUpdatedAt(id)
       (a, b)
     }
 
     "when still assigned to self" in {
-      def insert = insertQ(Some(n), Some(w), 10.minutes, 3.days, 3.days).first
+      def insert = insertQ.toQuery0((Some(n), Some(w), 10.minutes, 3.days, 3.days)).unique.runNow()
 
       "return true" in {
-        dao.reassignWorker(n ,w, insert) must beTrue
+        dao.reassignWorker(n, w, insert).runNow() must beTrue
       }
       "update timestamp" in {
         val (a, b) = timestampBeforeAfter(insert)
@@ -53,10 +53,10 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
     }
 
     "when still assigned to self" >> {
-      def insert = insertQ(Some(n), None, 10.minutes, 3.days, 3.days).first
+      def insert = insertQ.toQuery0((Some(n), None, 10.minutes, 3.days, 3.days)).unique.runNow()
 
       "return false" in {
-        dao.reassignWorker(n, w, insert) must beFalse
+        dao.reassignWorker(n, w, insert).runNow() must beFalse
       }
       "not update timestamp" in {
         val (a, b) = timestampBeforeAfter(insert)
@@ -67,7 +67,7 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
 
   "getMsgsAssignNode" should {
 
-    val insertQ = query[(Short, Priority, Priority, Option[Int], Option[Short], Duration, Duration, Duration), MsgId](
+    val insertQ = Query[(Short, Priority, Priority, Option[Int], Option[Short], Duration, Duration, Duration), MsgId](
       "INSERT INTO msgq(type, priority, priority_base, node, worker, created_at, updated_at, effective_from)" +
         "VALUES(?, ?, ?, ?, ?, now()+?, now()+?, now()+?) RETURNING id")
 
@@ -78,7 +78,7 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
                updated: Duration = null,
                effective: Duration = null
                 ): MsgId =
-      insertQ(
+      insertQ.toQuery0((
         rng.nextInt().toShort,
         pri,
         Priority(rng.nextInt().toShort),
@@ -87,7 +87,7 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
         created,
         Option(updated) getOrElse created,
         Option(effective) getOrElse created
-      ).first
+      )).unique.runNow()
 
     def insertP(pris: Int*): Vector[MsgId] =
       rng.shuffle(
@@ -112,34 +112,34 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
         if (allowResults) returnOnly(ids: _*) else be_==(Nil)
 
       "return nothing when nothing is available" in {
-        dao.getMsgsAssignNode(n, 2, 2 days, queue) must be empty
+        dao.getMsgsAssignNode(n, 2, 2 days, queue).runNow() must be empty
       }
 
       "return unassigned msgs" in {
         val id = insert()
-        dao.getMsgsAssignNode(n, 2, 2 days, queue) must ifAllowedReturnOnly(id)
+        dao.getMsgsAssignNode(n, 2, 2 days, queue).runNow() must ifAllowedReturnOnly(id)
       }
 
       "not return recently assigned msgs" in {
         insert(created = -16 hours, updated = -15 hours, node = true)
         insert(created = -16 hours, updated = -15 hours, node = true, worker = true)
-        dao.getMsgsAssignNode(n, 2, 24 hours, queue) must be empty
+        dao.getMsgsAssignNode(n, 2, 24 hours, queue).runNow() must be empty
       }
 
       "ignore old assignment" in {
         val a = insert(created = -16 hours, updated = -15 hours, node = true)
         val b = insert(created = -16 hours, updated = -15 hours, node = true, worker = true)
-        dao.getMsgsAssignNode(n, 2, 8 hours, queue) must ifAllowedReturnOnly(a, b)
+        dao.getMsgsAssignNode(n, 2, 8 hours, queue).runNow() must ifAllowedReturnOnly(a, b)
       }
 
       "limit results to top n highest priority" in {
         val ids = insertP(0, 1, 2, 3, 4, 5, 6)
-        dao.getMsgsAssignNode(n, 3, 8 hours, queue) must ifAllowedReturnOnly(ids takeRight 3: _*)
+        dao.getMsgsAssignNode(n, 3, 8 hours, queue).runNow() must ifAllowedReturnOnly(ids takeRight 3: _*)
       }
 
       "filter by effective_from" in {
         insert(effective = 1 minute)
-        dao.getMsgsAssignNode(n, 2, 2.days, queue) must be empty
+        dao.getMsgsAssignNode(n, 2, 2.days, queue).runNow() must be empty
       }
     }
 
@@ -155,7 +155,7 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
                         (idsP(i), pris(i))
         (id, Priority(p.toShort))
       })
-      dao.getMsgsAssignNode(n, limit, 8 hours, Some((Priority(9), queuedAlready))) must returnOnlyP(exps)
+      dao.getMsgsAssignNode(n, limit, 8 hours, Some((Priority(9), queuedAlready))).runNow() must returnOnlyP(exps)
     }
 
     "when in-memory queue is empty" >> {
@@ -189,19 +189,19 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
 
   "getMsgAssignWorker" should {
 
-    val insertQ = query[(Short, JsonStr[Msg], Option[NodeId], Option[WorkerId], Duration, Duration, Duration), MsgId](
+    val insertQ = Query[(Short, JsonStr[Msg], Option[NodeId], Option[WorkerId], Duration, Duration, Duration), MsgId](
       "INSERT INTO msgq(type, data, node, worker, created_at, updated_at, effective_from, priority, priority_base)" +
         "VALUES(?, ?, ?, ?, now()-?, now()-?, now()-?, 5,5) RETURNING id")
 
     def insert(node: Option[NodeId] = None, worker: Option[WorkerId] = None, msg: Msg = defaultMsg): MsgId = {
       val d: Duration = 2.days
-      insertQ(MsgType.lookup(msg).id, Serialisation.serialise(msg), node, worker, d, d, d).first
+      insertQ.toQuery0((MsgType.lookup(msg).id, Serialisation.serialise(msg), node, worker, d, d, d)).unique.runNow()
     }
 
     def insertAssignedToOwnNode() = insert(node = Some(n))
 
     def test(id: MsgId) =
-      () => dao.getMsgAssignWorker(n, w, MsgHeader(id, Priority(5), Instant.now()))
+      () => dao.getMsgAssignWorker(n, w, MsgHeader(id, Priority(5), Instant.now())).runNow()
 
     "not assign if msg has been picked up by another node" in {
       test(insert(node = Some(NodeId(6789))))() must beNone

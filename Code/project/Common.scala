@@ -69,15 +69,15 @@ object Common {
 
   def getMethod(loader: ClassLoader, className: String, methodName: String): Option[java.lang.reflect.Method] =
     try {
-      Option(loader.loadClass(className).getMethod(methodName))
+      Option(loader.loadClass(className).getDeclaredMethod(methodName))
     } catch {
       case  _: Throwable => None
     }
 
   def shutdownTestDb(loader: ClassLoader): Unit = {
-    getMethod(loader, "shipreq.base.test.specs2.db.TestDb",   "shutdown").foreach(_ invoke null)
+    getMethod(loader, "shipreq.base.test.db.TestDb",          "shutdown").foreach(_ invoke null)
+    getMethod(loader, "shipreq.webapp.server.test.TestDb",    "shutdown").foreach(_ invoke null)
     getMethod(loader, "shipreq.webapp.server.test.TestJetty", "shutdown").foreach(_ invoke null)
-    getMethod(loader, "shipreq.webapp.server.db.DB",          "shutdown").foreach(_ invoke null)
   }
 
   val redirectTargetDir: File => File =

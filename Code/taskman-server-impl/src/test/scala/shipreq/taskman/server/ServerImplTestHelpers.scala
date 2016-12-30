@@ -1,20 +1,20 @@
 package shipreq.taskman.server
 
+import doobie.imports._
 import java.util.Properties
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import scalaz.effect.IO
-import scala.slick.jdbc.JdbcBackend.Database
-import shipreq.base.util.{JPropertiesValueReader, RunMode, Props}
+import shipreq.base.util.{JPropertiesValueReader, Props, RunMode}
 import shipreq.taskman.api.ApiOp
 import ServerImplTestHelpers._
 
 trait ServerImplTestHelpers {
-  def db: Database
+  def xa: Transactor[IO]
 
   final def dbMutexR = ServerImplTestHelpers.dbMutexR
   final def dbMutexW = ServerImplTestHelpers.dbMutexW
 
-  lazy val ctx: TaskmanCtx = new TaskmanCtx(db, props, propsR) {
+  lazy val ctx: TaskmanCtx = new TaskmanCtx(xa, props, propsR) {
     override def cfgFromApiReader = propsR
   }
   import ctx._
@@ -35,8 +35,8 @@ object ServerImplTestHelpers {
   val dbMutexR = Some(dbLockRW.readLock)
   val dbMutexW = Some(dbLockRW.writeLock)
 
-  def apply(_db: Database): ServerImplTestHelpers =
+  def apply(_xa: Transactor[IO]): ServerImplTestHelpers =
     new ServerImplTestHelpers {
-      override def db = _db
+      override def xa = _xa
     }
 }

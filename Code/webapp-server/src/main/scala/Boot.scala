@@ -2,15 +2,16 @@ package bootstrap.liftweb
 
 import net.liftweb.common.Logger
 import net.liftweb.http.{LiftRules, LiftSession, S}
-import net.liftweb.http.provider.HTTPParam
 import net.liftweb.util.Props
 import net.liftweb.util.Props.RunModes.Test
+import scalaz.effect.IO
+import shipreq.base.db.{DbAccess, DbConfig}
+import shipreq.base.util.ErrorOr
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.server.ServerConfig
-import shipreq.webapp.server.app.{AppSiteMap, DI, Defaults, ExceptionHandler}
-import shipreq.webapp.server.db.DB
+import shipreq.webapp.server.app.{AppSiteMap, DI, ExceptionHandler}
 import shipreq.webapp.server.feature.SessionStats
-import shipreq.webapp.server.lib.Taskman
+import shipreq.webapp.server.lib.{Taskman, TaskmanImpl}
 import shipreq.webapp.server.security.Oshiro
 
 /**
@@ -25,6 +26,7 @@ class Boot extends DI {
   lazy val logger = Logger(s"$packageRoot.Boot")
 
   def boot(): Unit = {
+    initOshiro()
     configureLift()
     preloadTemplates()
     initDatabase()
@@ -33,8 +35,6 @@ class Boot extends DI {
   }
 
   def configureLift(): Unit = {
-
-    Oshiro.init()
 
     // Collect session stats
     LiftSession.afterSessionCreate ::= SessionStats.onSessionCreation _
@@ -71,16 +71,28 @@ class Boot extends DI {
     ScamlJade.init(List("scaml", "html"))
   }
 
+  def initOshiro(): Unit =
+    Oshiro.init()
+
   def initDatabase(): Unit = {
-    DB.init()
-    Defaults.init()
+    val access: DbAccess = {
+      import shipreq.webapp.server.util.PropsRetrievers._
+      val cfg = ErrorOr.require_!(DbConfig.read2)
+      DbAccess.fromCfg(cfg)
+    }
+    logger.info(s"Connecting to DB: ${access.desc}")
+    access.verifyConnectivity()
+    access.migrator.migrate[IO].unsafePerformIO()
+    DI.dbAccess = access
   }
 
-  def initTaskman(): Unit =
+  def initTaskman(): Unit = {
+    DI.taskman = new TaskmanImpl(DI.dbAccess.io)
     Props.mode match {
       case Test =>
-      case _    => taskman1(_ runS Taskman.updateCfg)
+      case _    => taskman().runAll(Taskman.updateCfg).unsafePerformIO()
     }
+  }
 
   def preloadTemplates(): Unit = {
     import shipreq.webapp.server.snippet._

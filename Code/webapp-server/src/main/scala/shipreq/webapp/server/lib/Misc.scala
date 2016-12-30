@@ -43,15 +43,15 @@ trait Misc extends HasLogger {
   def randomConfirmationToken(): String =
     randomString(ServerConfig.ConfirmationTokenLength)
 
-  @tailrec
-  final def retry[T](n: Int, firstError: Option[Throwable] = None)(fn: => T): T = {
-    import scala.util.{Failure, Success, Try}
-    Try { fn } match {
-      case Success(result)      => result
-      case Failure(e) if n > 0  => retry(n - 1, firstError orElse Some(e))(fn)
-      case Failure(e) if n <= 0 =>
-        firstError.foreach(log.debug("First retry failure.", _))
-        throw e
-    }
-  }
+//  @tailrec
+//  final def retry[T](n: Int, firstError: Option[Throwable] = None)(fn: => T): T = {
+//    import scala.util.{Failure, Success, Try}
+//    Try { fn } match {
+//      case Success(result)      => result
+//      case Failure(e) if n > 0  => retry(n - 1, firstError orElse Some(e))(fn)
+//      case Failure(e) if n <= 0 =>
+//        firstError.foreach(log.debug("First retry failure.", _))
+//        throw e
+//    }
+//  }
 }

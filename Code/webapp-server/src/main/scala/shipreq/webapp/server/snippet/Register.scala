@@ -1,11 +1,14 @@
 package shipreq.webapp.server.snippet
 
+import doobie.imports.ConnectionIO
 import java.time.Instant
 import net.liftweb.http.S
 import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
+import scalaz.Free
+import shipreq.base.db.DoobieHelpers._
 import shipreq.base.util.ScalaExt._
 import shipreq.taskman.api.Msg.{ReRegistrationAttempted, RegistrationRequested}
 import shipreq.taskman.api.{EmailAddr, Msg, UserId}
@@ -14,7 +17,7 @@ import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.app.AppSiteMap
 import shipreq.webapp.server.app.AppSiteMap.Implicits._
 import shipreq.webapp.server.data.UserRegistrationInfo
-import shipreq.webapp.server.db.{DaoT, UserRegistrationResult}
+import shipreq.webapp.server.db.{DbLogic, UserRegistrationResult}
 import shipreq.webapp.server.feature.validation.Validators
 import shipreq.webapp.server.lib.{FormVar, Misc, SingleOpStatefulSnippet, SnippetHelpers}
 import shipreq.webapp.server.security.{PasswordAndSalt, Permissions}
@@ -42,7 +45,7 @@ object Register1 extends SnippetHelpers {
     var vars: form.Var = ""
 
     def onSubmit(): JsCmd = {
-      securityProvider.enforceHumanSpeed()
+      securityProvider().enforceHumanSpeed()
       perform(form validate vars)
     }
 
@@ -56,38 +59,35 @@ object Register1 extends SnippetHelpers {
 
   def perform(v: ValidationResult[EmailAddr]): JsCmd =
     ifValid(v)(emailAddr => {
-      daoProvider.withTransaction(dao => {
-        val msg = dao.findUserRegistrationInfo(emailAddr) match {
-          case None    => onNewUser(emailAddr, dao)
-          case Some(u) => preRegistrationMsg(emailAddr, u, dao)
-        }
-        taskmanD(dao, _ submitMsg msg)
-      })
+      val dbPlan = DbLogic.user.findRegistrationInfo(emailAddr).flatMap {
+        case None    => onNewUser(emailAddr)
+        case Some(u) => preRegistrationMsg(emailAddr, u)
+      }.inTransaction
+      val plan = db().io.trans(dbPlan).flatMap(taskman().submitMsg)
+      plan.unsafePerformIO()
       JqExpr("#emailSent,#register1Form") ~> JqToggle
     })
 
-  def preRegistrationMsg(email: EmailAddr, u: UserRegistrationInfo, dao: DaoT): Msg =
+  def preRegistrationMsg(email: EmailAddr, u: UserRegistrationInfo): ConnectionIO[Msg] =
     u match {
       case UserRegistrationInfo(_, _, _, Some(_)) =>
-        onAlreadyRegistered(email)
+        Free pure onAlreadyRegistered(email)
       case UserRegistrationInfo(_, Some(token), Some(issued), None) if !isTokenExpired(issued) =>
-        onTokenReusable(email, token)
+        Free pure onTokenReusable(email, token)
       case UserRegistrationInfo(id, _, _, None) =>
-        onTokenExpired(email, id, dao)
+        onTokenExpired(email, id)
     }
 
-  private def onNewUser(email: EmailAddr, dao: DaoT): Msg = {
-    val token = dao.createUserPlaceholder(email, () => randomConfirmationToken)
-    registrationRequestedTask(email, token)
-  }
+  private def onNewUser(email: EmailAddr): ConnectionIO[Msg] =
+    DbLogic.user.createPlaceholder(email, () => randomConfirmationToken())
+      .map(registrationRequestedTask(email, _))
 
   private def onTokenReusable(email: EmailAddr, token: String): Msg =
     registrationRequestedTask(email, token)
 
-  private def onTokenExpired(email: EmailAddr, id: UserId, dao: DaoT): Msg = {
-    val token = dao.updateUserConfirmationToken(id, () => randomConfirmationToken)
-    registrationRequestedTask(email, token)
-  }
+  private def onTokenExpired(email: EmailAddr, id: UserId): ConnectionIO[Msg] =
+    DbLogic.user.updateConfirmationToken(id, () => randomConfirmationToken())
+      .map(registrationRequestedTask(email, _))
 
   private def onAlreadyRegistered(email: EmailAddr): Msg =
     ReRegistrationAttempted(email)
@@ -120,13 +120,13 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
   var vars: form.Var = ("", "", FormVar.emptyPasswordPair, true, false)
 
   def render = {
-    securityProvider.enforceHumanSpeed()
+    securityProvider().enforceHumanSpeed()
     validateToken_!()
     form.csssel(vars, vars = _) & ":submit" #> ajaxSubmitOnClick(onSubmit)
   }
 
   def validateToken_!(): Unit =
-    daoProvider.withSession(_.findUserConfirmationTokenIssuedDate(token)) match {
+    db().io.trans(DbLogic.user.findConfirmationTokenIssuedDate(token)).unsafePerformIO() match {
       case None =>
         S.error("Invalid registration token. Please re-register your email address.")
         redirectTo(AppSiteMap.Register1)
@@ -135,34 +135,35 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
         S.error("Your registration token has expired. Please re-register your email address to get a new token.")
         redirectTo(AppSiteMap.Register1)
 
-      case _ => // valid
+      case _ => () // valid
     }
 
-  def onSubmit(): JsCmd = try {
-    import UserRegistrationResult._
+  def onSubmit(): JsCmd =
+    try {
+      import UserRegistrationResult._
 
-    ifValid(form validate vars)(r => {
-      val (name, username, password, newsletter, _) = r
-      val ps = PasswordAndSalt.createWithRandomSalt(password)
+      ifValid(form validate vars)(r => {
+        val (name, username, password, newsletter, _) = r
+        val ps = PasswordAndSalt.createWithRandomSalt(password)
 
-      daoProvider.withTransaction(
-        _.performUserRegistration(token)(username, ps, clientIp.getOrElse("?"))(name, newsletter)
-      ) match {
+        val dbPlan = DbLogic.user.performRegistration(token)(username, ps, clientIp().getOrElse("?"))(name, newsletter)
+        db().io.trans(dbPlan).unsafePerformIO() match {
 
-        case UsernameTaken => jsShowError("Username is already taken.")
+          case UsernameTaken =>
+            jsShowError("Username is already taken.")
 
-        case NoMatchingConfToken =>
-          S.error("Your registration token disappeared.")
-          redirectTo(AppSiteMap.Login)
+          case NoMatchingConfToken =>
+            S.error("Your registration token disappeared.")
+            redirectTo(AppSiteMap.Login)
 
-        // Registration complete
-        case DbSuccess(id) =>
-          log.info(s"Registered new user: $username")
-          taskman1(_ submitMsg Msg.RegistrationCompleted(id))
-          SecurityUtils.getSubject.login(new UsernamePasswordToken(username.value, password))
-          JqExpr("#regComplete,#register2") ~> JqToggle
-      }
-    })
-  } finally
-    vars = vars put3 FormVar.emptyPasswordPair // Let's not keep the plaintext passwords around
+          // Registration complete
+          case DbSuccess(id) =>
+            log.info(s"Registered new user: $username")
+            taskman().submitMsg(Msg.RegistrationCompleted(id)).unsafePerformIO()
+            SecurityUtils.getSubject.login(new UsernamePasswordToken(username.value, password))
+            JqExpr("#regComplete,#register2") ~> JqToggle
+        }
+      })
+    } finally
+      vars = vars put3 FormVar.emptyPasswordPair // Let's not keep the plaintext passwords around
 }

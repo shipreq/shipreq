@@ -1,10 +1,9 @@
-package shipreq.webapp.server
-package test
+package shipreq.webapp.server.test
 
-import org.apache.commons.httpclient.{HttpMethodBase, HttpClient}
-import org.scalatest.{Matchers, Suite, BeforeAndAfterAll}
 import net.liftweb.http.testing._
 import net.liftweb.json._
+import org.apache.commons.httpclient.{HttpClient, HttpMethodBase}
+import org.scalatest.{BeforeAndAfterAll, Matchers, Suite}
 
 /**
  * A test case that requires connectivity to a running Jetty instance.
@@ -21,19 +20,22 @@ trait LiveTest extends TestKit with LiveTestHelpers with BeforeAndAfterAll with 
   }
 
   override def beforeAll(): Unit = {
+    PrepareEnv.oshiro()
+    PrepareEnv.lift()
     TestDb.init()
     jetty.start()
   }
 
   override def afterAll(): Unit = {
-    TestDb.reinitOnNextUse()
+    jetty.shutdown()
+    TestDb.shutdown()
   }
 }
 
 trait LiveTestHelpers {
   self: TestKit with Matchers =>
 
-  def newSession() = TestDb.Slick.createSession()
+  def newConnection() = TestDb.newConnection()
 
   implicit val JsonFormats = DefaultFormats.lossless
 

@@ -11,7 +11,7 @@ object ExceptionHandler extends HasLogger with DI {
     val uri = r.uri.toString
     val m = Taskman.errorMsg(e, Some(uri), s"Request: $r")
     log.error(e, s"500 Error serving $uri to user ${m.usr}")
-    taskman ! m
+    taskman().submitMsgAsync(m).unsafePerformIO()
 
     Oshiro.enforceHumanSpeed()
 

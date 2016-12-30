@@ -8,7 +8,7 @@ import Oshiro.loggedInUser
 
 object ShiroSnippets {
 
-  def init() {
+  def init(): Unit = {
     LiftRules.snippetDispatch.append {
       case "Authenticated" => Authenticated
       case "AuthenticatedOrRemembered" => AuthenticatedOrRemembered

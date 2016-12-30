@@ -2,21 +2,26 @@ package shipreq.webapp.server.app
 
 import org.apache.commons.httpclient.{HttpClient, HttpMethodBase}
 import org.scalatest.FunSpec
+import shipreq.webapp.server.app.AppSiteMap.Implicits._
+import shipreq.webapp.server.app.AppSiteMap._
 import shipreq.webapp.server.snippet.Assets
-import shipreq.webapp.server.test.LiveTest
-import shipreq.webapp.server.test.UserFixture
-import AppSiteMap._
-import Implicits._
-import UserFixture.TestUser
+import shipreq.webapp.server.test.UserFixture.TestUser
+import shipreq.webapp.server.test.{DbUtil, LiveTest, UserFixture}
 
-class PermissionTest extends FunSpec with LiveTest {
+class LivePermissionTest extends FunSpec with LiveTest {
 
-  lazy val uf = UserFixture(newSession())
+  lazy val dbu = DbUtil(newConnection())
+  lazy val uf = UserFixture(dbu.xa)
   import uf.{user1, user2}
 
   override def beforeAll() {
     super.beforeAll()
-    uf.setup()
+    uf.setup.unsafePerformIO()
+  }
+
+  override def afterAll(): Unit = {
+    dbu.xa.close.unsafePerformIO()
+    super.afterAll()
   }
 
   implicit override def responseCapture(fullUrl: String, httpClient: HttpClient, getter: HttpMethodBase) = {
@@ -32,7 +37,7 @@ class PermissionTest extends FunSpec with LiveTest {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  lazy val pid = uf.toDbUtil.newProjectId(user1.id)
+  lazy val pid = dbu.newProjectId(user1.id)
 
   describe("/") {
     val member = Assets.MemberDeps.next.assets.head.path

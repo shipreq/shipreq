@@ -47,8 +47,8 @@ class Login extends SingleOpStatefulSnippet {
   }
 
   def onSuccessfulLogin(): Nothing = {
-    statLogger.updateSessionStatsOnLogin(S.session, currentUser_!)
-    statLogger ! LogUserLogin(currentUserId_!)
-    redirectHome
+    statLogger.updateSessionStatsOnLogin(S.session, currentUser_!())
+    statLogger ! LogUserLogin(currentUserId_!())
+    redirectHome()
   }
 }

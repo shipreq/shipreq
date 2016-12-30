@@ -4,8 +4,9 @@ import com.googlecode.flyway.core.Flyway
 import com.googlecode.flyway.core.util.logging.{Log, LogCreator, LogFactory}
 import org.slf4j.LoggerFactory
 import javax.sql.DataSource
+import scalaz.Monad
 
-class DbMigrator(c: DatabaseConnection, cfg: Flyway => Flyway = identity) {
+object SchemaMigrator {
 
   final class FlyWayLogger(clazz: Class[_]) extends Log {
     private[this] val log = LoggerFactory.getLogger(clazz)
@@ -16,23 +17,25 @@ class DbMigrator(c: DatabaseConnection, cfg: Flyway => Flyway = identity) {
     override def error(message: String, e: Exception) = log.error(message,e)
   }
 
-  private[this] val flyway = {
+  def apply(ds: DataSource, schema: Option[String]): SchemaMigrator = {
     LogFactory.setLogCreator(new LogCreator {
       override def createLogger(clazz: Class[_]): Log = new FlyWayLogger(clazz)
     })
-    val flyway = {
-      val flyway = new Flyway
-      flyway.setLocations("db_migrations")
-      flyway.setSqlMigrationPrefix("v")
-      c.schema.foreach(flyway.setSchemas(_))
-      cfg(flyway)
-    }
-    flyway.setDataSource(c.ds)
-    flyway
+    val flyway = new Flyway
+    flyway.setLocations("db_migrations")
+    flyway.setSqlMigrationPrefix("v")
+    schema.foreach(flyway.setSchemas(_))
+    flyway.setDataSource(ds)
+    new SchemaMigrator(flyway)
   }
+}
 
-  def performPendingMigrations() = flyway.migrate()
+final class SchemaMigrator(private val flyway: Flyway) extends AnyVal {
+
+  def migrate[M[_]](implicit M: Monad[M]): M[Unit] =
+    M point flyway.migrate()
 
   /** Drops all objects (tables, views, procedures, triggers, ...) in the configured schemas. */
-  def wipe_!() = flyway.clean()
+  def drop[M[_]](implicit M: Monad[M]): M[Unit] =
+    M point flyway.clean()
 }

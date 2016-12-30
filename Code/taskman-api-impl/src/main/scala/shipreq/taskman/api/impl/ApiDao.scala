@@ -1,53 +1,42 @@
 package shipreq.taskman.api.impl
 
-import scala.slick.jdbc.JdbcBackend.Session
+import doobie.imports._
+import shipreq.base.db.SqlHelpers._
 import shipreq.taskman.api._
 import Serialisation.Ser
 
-private[api] class ApiSql(prefix: String) {
-  import shipreq.base.db.SqlHelpers._
-  import scala.slick.jdbc.{GetResult, SetParameter}
-  import scala.slick.jdbc.StaticQuery.{query, update}
+private[api] class ApiDao(prefix: String) {
 
-  implicit val dbCodecMsg   = DbCodec.WithOption.json[Msg]
-  implicit val dbCodecMsgId = DbCodec.caseClass[MsgId]
+  private implicit val doobieMetaMsg   = jsonStr[Msg]
+  private implicit val doobieMetaMsgId = doobieMetaCaseClass[MsgId]
 
-  // Matches on db enum: msg_status_v01
-  implicit val GR_MsgStatus: GetResult[Option[MsgStatus]] = implicitly[GetResult[String]] andThen {
-    case "unassigned"    => Some(MsgStatus.Unassigned)
-    case "node_assigned" => Some(MsgStatus.NodeAssigned)
-    case "working"       => Some(MsgStatus.Working)
-    case "complete"      => Some(MsgStatus.Complete)
-    case "aborted"       => Some(MsgStatus.Aborted)
-    case s if null eq s  => None
-  }
+  private implicit val doobieMetaMsgStatus: Meta[MsgStatus] =
+    Meta[String].readOnly {
+      case "unassigned"    => MsgStatus.Unassigned
+      case "node_assigned" => MsgStatus.NodeAssigned
+      case "working"       => MsgStatus.Working
+      case "complete"      => MsgStatus.Complete
+      case "aborted"       => MsgStatus.Aborted
+    }
 
-  val CreateMsg = query[(Short, Option[Ser], Short), MsgId](
+  private[impl] val CreateMsg = Query[(Short, Option[Ser], Short), MsgId](
     s"select ${prefix}create_msg_v01(?::int2, ?::json, ?::int2)")
 
-  val CfgPut = update[(String, String)](
-    s"select ${prefix}cfg_update(?::VARCHAR, ?::TEXT)")
-
-  val QueryMsgStatus = query[MsgId, Option[MsgStatus]](
-    s"select ${prefix}query_msg_status_v01(?)")
-}
-
-// =====================================================================================================================
-
-private[api] class ApiDao(ctx: TaskmanApi.Context, session: Session) {
-  import ctx.sql._
-
-  implicit def _session = session
-
-  def createMsg(m: Msg): MsgId =
+  def createMsg(m: Msg): ConnectionIO[MsgId] =
     createMsg(MsgType lookup m, Serialisation serialise m, Priority of m)
 
-  def createMsg(m: MsgType, taskData: Ser, p: Priority): MsgId =
-    CreateMsg(m.id.toShort, Some(taskData), p.value).first
+  def createMsg(m: MsgType, taskData: Ser, p: Priority): ConnectionIO[MsgId] =
+    CreateMsg.toQuery0(m.id.toShort, Some(taskData), p.value).unique
 
-  def cfgPut(k: String, v: String): Unit =
-    CfgPut(k, v).execute
+  private[impl] val CfgPut = Query[(String, String), Unit](
+    s"select ${prefix}cfg_update(?::VARCHAR, ?::TEXT)")
 
-  def queryMsgStatus(id: MsgId): Option[MsgStatus] =
-    QueryMsgStatus(id).first
+  def cfgPut(k: String, v: String): ConnectionIO[Unit] =
+    CfgPut.toQuery0((k, v)).unique
+
+  private[impl] val QueryMsgStatus = Query[MsgId, Option[MsgStatus]](
+    s"select ${prefix}query_msg_status_v01(?)")
+
+  def queryMsgStatus(id: MsgId): ConnectionIO[Option[MsgStatus]] =
+    QueryMsgStatus.toQuery0(id).unique
 }

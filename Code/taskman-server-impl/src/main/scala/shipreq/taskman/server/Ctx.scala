@@ -1,13 +1,13 @@
 package shipreq.taskman.server
 
 import com.squareup.okhttp.OkHttpClient
+import doobie.imports._
 import java.time.{Clock, Duration, Instant}
 import java.util.concurrent.{ExecutorService, TimeUnit}
 import java.util.Properties
-import scala.slick.jdbc.JdbcBackend.Database
 import scalaz.-\/
 import scalaz.effect.IO
-import shipreq.base.db.{DatabaseConnection, DbTemplate}
+//import shipreq.base.db.{DatabaseConnection, DbTemplate}
 import shipreq.base.util.ExternalValueReader._
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt.Tuple2Ext
@@ -19,14 +19,6 @@ import shipreq.taskman.api.impl.TaskmanApi
 import shipreq.taskman.server.business._
 import shipreq.taskman.server.business.MailingList.API.GetListId
 import ErrorOr.Implicits._
-
-//==========================================================================================
-
-class Db(props: StringBasedValueReader) extends DbTemplate {
-  import props._
-  override protected def newConnection = DatabaseConnection.establish_!()
-  def slick = _slick
-}
 
 //==========================================================================================
 
@@ -131,7 +123,7 @@ object TaskmanCtx {
   }
 }
 
-class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueReader) extends HasLogger {
+class TaskmanCtx(val db: Transactor[IO], mailProps: Properties, evr: StringBasedValueReader) extends HasLogger {
   import TaskmanCtx._
 
   val props = new TaskmanProps(evr)
@@ -184,16 +176,20 @@ class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueR
     ErrorOr require_! io.unsafePerformIO()
   }
 
-  def shutdown(asyncWait: Option[Duration] = Some(Duration ofSeconds 20)): Unit = {
-    for (p <- asyncWait) {
-      val until = Instant.now().plus(p).getNano
-      async.each(_.shutdown())
-      async.each(e => {
-        val rem = until - Instant.now().getNano
-        if (rem > 0)
-          e.awaitTermination(rem, TimeUnit.NANOSECONDS)
-      })
+  def shutdown(asyncWait: Option[Duration] = Some(Duration ofSeconds 20)): IO[Unit] =
+    IO {
+      ErrorOr.safe {
+        for (p <- asyncWait) {
+          val until = Instant.now().plus(p).getNano
+          async.each(_.shutdown())
+          async.each(e => {
+            val rem = until - Instant.now().getNano
+            if (rem > 0)
+              e.awaitTermination(rem, TimeUnit.NANOSECONDS)
+          })
+        }
+        async.each(_.shutdownNow())
+      }.leftMap(e => log.error(e, "Error shutting down ctx."))
+      ()
     }
-    async.each(_.shutdownNow())
-  }
 }

@@ -11,8 +11,8 @@ import Sop._
 
 class SourceTest extends Specification with ScalaCheck {
   implicit val node = NodeId(8)
-  val mockMsgs = Seq(mh_1, mh_2)
-  implicit val mockSop = MockOpTransformer1[Sop, IO, GetMsgsAssignNode, Seq[MsgHeader]](SopTypeTags, mockMsgs)
+  val mockMsgs = List(mh_1, mh_2)
+  implicit val mockSop = MockOpTransformer1[Sop, IO, GetMsgsAssignNode, List[MsgHeader]](SopTypeTags, mockMsgs)
   implicit val clock = IO(timeNow)
   implicit val tp = AssignmentTrustPeriod(Duration ofDays 3)
   val source = new Source(Duration ofSeconds 1, 20)

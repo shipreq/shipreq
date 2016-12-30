@@ -1,26 +1,27 @@
 package shipreq.webapp.server.test
 
-import net.liftweb.common.Empty
 import net.liftweb.http.js.JsCmd
 import net.liftweb.http.{LiftSession, RedirectResponse, ResponseShortcutException, S}
 import net.liftweb.util.Helpers.stringToSuper
-import net.liftweb.util.StringHelpers
-import org.mockito.Mockito.{never, times, verify, verifyNoMoreInteractions}
-import org.scalatest.Matchers._
+import org.scalatest.Matchers.{fail => _, _}
 import scala.annotation.tailrec
 import scala.xml.NodeSeq
-import scalaz.{-\/, \/, \/-}
-import shipreq.taskman.api.Msg
-import shipreq.taskman.api.Msg._
-import shipreq.webapp.server.app.DI
-import shipreq.webapp.server.db.DaoT
+import scalaz.{-\/, Equal, \/, \/-}
+import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.server.util.NonEmptyTemplate
 
 object SnippetTestUtil {
 
   def requireTemplate(name: String) = {
-    PrepareEnv()
+    PrepareEnv.lift()
     NonEmptyTemplate.load(name).get
+  }
+
+  def inLiftSession[U](block: => U): U = {
+    import net.liftweb.common.Empty
+    import net.liftweb.util.StringHelpers
+    val session: LiftSession = new LiftSession("", StringHelpers.randomString(20), Empty)
+    S.initIfUninitted(session)(block)
   }
 
   def countOccurrences(str1: String, str2: String): Int = {
@@ -48,17 +49,6 @@ object SnippetTestUtil {
       jsReaction.toLowerCase should not include "alert-danger"
     }
   }
-
-  def any[T](implicit m: Manifest[T]) =
-    org.mockito.Matchers.any(m.runtimeClass.asInstanceOf[Class[T]])
-
-  def inMockSession[U](block: => U): U = {
-    val session: LiftSession = new LiftSession("", StringHelpers.randomString(20), Empty)
-    S.initIfUninitted(session) {block}
-  }
-
-  def withTestTaskman[R](f: => R): (R, TestTaskman) =
-    TestTaskman.install(f)
 
   // ===================================================================================================================
   // Expectations: JS
@@ -94,50 +84,12 @@ object SnippetTestUtil {
     }
   }
 
-  // ===================================================================================================================
-  // Expectations: Taskman
-
-  trait TestTaskmanExp {
-    def test: TestTaskman => Unit
-  }
-
-  object NoTasksSubmitted extends TestTaskmanExp {
-    override def test = _.msgsSubmitted shouldBe empty
-  }
-
-  type TaskTestPF = PartialFunction[Msg, Function0[Unit]]
-
-  case class SubmittedOneTask(m: TaskTestPF) extends TestTaskmanExp {
-    override def test = tt => tt.msgsSubmitted match {
-      case t :: Nil => if (m isDefinedAt t) m(t)() else fail(s"Task didn't meet criteria: $t")
-      case other    => other should have size 1
-    }
-  }
-
-  private def absUrl(frag: String): String => Function0[Unit] =
-    url => new Function0[Unit] {def apply = url should (startWith("http") and include(frag))}
-
-  def RegistrationRequestedT(token: String): TaskTestPF =
-    { case RegistrationRequested(_, url) => absUrl(token)(url) }
-
-  val ReRegistrationAttemptedT: TaskTestPF =
-    { case ReRegistrationAttempted(_) => () => () }
-
-  val RegistrationCompletedT: TaskTestPF =
-    { case RegistrationCompleted(_) => () => () }
-
-  val PasswordResetRequestedT: TaskTestPF =
-    { case PasswordResetRequested(_, url) => absUrl("/resetpw/")(url) }
-
-  /**
-   * Extensions for: JsCmd
-   */
-  implicit class MyRichJsCmd(private val j: JsCmd) extends AnyVal {
+  implicit class JsCmdTestExt(private val j: JsCmd) extends AnyVal {
     def assertJsAlert(errorMsg: Option[String]) = SnippetTestUtil.this.assertJsAlert(j.toJsCmd, errorMsg)
     def assertJsErrorNotice(errorMsg: Option[String]) = SnippetTestUtil.this.assertJsErrorNotice(j.toJsCmd, errorMsg)
   }
 
-  // ===================================================================================================================
+ // ===================================================================================================================
   // Expectations: HTML
 
   trait HtmlExp {
@@ -197,32 +149,16 @@ object SnippetTestUtil {
     def test(): Unit
   }
   object NoNotices extends SNoticeExp {
-    override def test() = S.getAllNotices shouldBe List.empty
+    override def test() = assertEq("notices", actual = S.getAllNotices, expect = Nil)(Equal.equalA)
   }
   case class HasErrorNoticeContaining(frag: String, frags: String*) extends SNoticeExp {
     val allFrags = frag :: frags.toList
-    override def test() = S.errors.exists(e => check(e._1.toString)) shouldBe true
     def check(i: String): Boolean = !allFrags.exists(f => !i.contains(f))
+    override def test() = {
+      val errors = S.errors.map(_._1.toString)
+      if (!errors.exists(check)) fail("Expected error not found. Errors that occurred are2: " + errors)
+    }
   }
 
-  // ===================================================================================================================
-  // Setup
 
-  trait DbSetup {
-    def setup(d: DaoT): Unit
-  }
-
-  // ===================================================================================================================
-  // Expectations: DB
-
-  trait DbExp {
-    final def test(): Unit = DI.DaoProvider.vend.withTransaction(dao => test(dao))
-    def test(d: DaoT): Unit
-
-    protected def verifyO[T](mock: T, on: Boolean) = verify(mock, if (on) times(1) else never)
-  }
-
-  object NoDbInteraction extends DbExp {
-    override def test(d: DaoT) = verifyNoMoreInteractions(d)
-  }
 }

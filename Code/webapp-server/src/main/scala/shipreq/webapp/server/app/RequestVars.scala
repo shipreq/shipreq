@@ -1,12 +1,13 @@
 package shipreq.webapp.server.app
 
-import scalaz.{Name, Need}
+import doobie.imports.ConnectionIO
 import net.liftweb.common.Logger
 import net.liftweb.http.RequestVar
+import scalaz.{Name, Need}
 import shipreq.taskman.api.UserId
 import shipreq.webapp.server.data
-import shipreq.webapp.server.db.DaoS
-import shipreq.webapp.server.lib.SnippetHelpers._
+import shipreq.webapp.server.db.DbLogic
+import shipreq.webapp.server.lib.SnippetHelpers.redirectHome
 
 object RequestVars extends Logger with DI {
 
@@ -17,7 +18,7 @@ object RequestVars extends Logger with DI {
 
   object ProjectOwner extends RequestVar[Name[UserId]](fail("ProjectOwner")) {
     def loadFromProjectId(): Unit =
-      set(requireDbData("ProjectOwner")(_.findProjectOwner(ProjectId.get.value)))
+      set(requireDbData("ProjectOwner")(DbLogic.project.findOwner(ProjectId.get.value)))
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -36,6 +37,6 @@ object RequestVars extends Logger with DI {
     redirectHome
   }
 
-  private def requireDbData[T](name: String)(f: => DaoS => Option[T]): Need[T] =
-    Need(daoProvider.withSession(f) getOrElse notFound(name))
+  private def requireDbData[T](name: String)(query: => ConnectionIO[Option[T]]): Need[T] =
+    Need(db().io.trans(query).unsafePerformIO() getOrElse notFound(name))
 }

@@ -59,7 +59,8 @@ object ShipReqBuild {
         Common.settings,
         Common.jvmSettings,
         Common.macroModuleSettings)
-      .deps(postgresql ++ slick ++ hikariCP ++ flyway ++ logback)
+      .deps(postgresql ++ Doobie.main ++ hikariCP ++ flyway ++ logback)
+
       .dependsOn(baseUtilJvm)
 
   lazy val baseTestJvm = baseTest.jvm
@@ -152,6 +153,7 @@ object ShipReqBuild {
       .settings(assemblySettings: _*)
       .settings(
         initialCommands += consoleCmds,
+        parallelExecution in Test := false,
         test in assembly := {}) // Disable tests during assembly
       .configure(dontInline) // because Akka docs + crashes scalac 2.11.2
   }

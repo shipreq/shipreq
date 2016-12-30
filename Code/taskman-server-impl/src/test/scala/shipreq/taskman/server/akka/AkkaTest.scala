@@ -1,11 +1,11 @@
 package shipreq.taskman.server.akka
 
+import doobie.imports._
 import java.util.concurrent.{TimeUnit, CountDownLatch, Executors}
 import org.specs2.mutable.Specification
 import org.specs2.time.NoTimeConversions
 import scala.concurrent.duration._
 import scala.concurrent._
-import scala.slick.jdbc.GetResult
 import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.ApiOp.SubmitMsg
@@ -20,16 +20,16 @@ class AkkaTest extends Specification with DatabaseTest with NoTimeConversions wi
   override def mutex = dbMutexW
   override def wrapTestsInTransaction = false
 
-  implicit val GR_ArchiveIntent: GetResult[ArchiveIntent] =
-    implicitly[GetResult[String]] andThen (_.head match {
+  def lookupHistory(id: MsgId): Option[ArchiveIntent] =
+    sql"select result from msg_history where id=${id.value}".query[String].option.runNow().map(_.head).map {
       case c if c == Succeeded.resultFlag    => Succeeded
       case c if c == FailAndAbort.resultFlag => FailAndAbort
-    })
-
-  def lookupHistory(id: MsgId): Option[ArchiveIntent] =
-    sql"select result from msg_history where id=${id.value}".as[ArchiveIntent].firstOption
+      case c                                 => sys error s"WTF is '$c'?"
+    }
 
   "Akka integration test" in {
+    println("Akka integration test starting...")
+
     val es = Executors.newCachedThreadPool()
     implicit val ec = ExecutionContext.fromExecutorService(es)
     val shutdownLatch = new CountDownLatch(1)

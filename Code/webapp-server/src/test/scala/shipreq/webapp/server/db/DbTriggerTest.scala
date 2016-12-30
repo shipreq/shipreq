@@ -1,50 +1,48 @@
 package shipreq.webapp.server.db
 
-import scala.slick.jdbc.JdbcBackend.Session
-import scala.slick.jdbc.StaticQuery.{queryNA, query => queryQ, update => updateQ}
+import doobie.imports._
 import utest._
 import shipreq.base.test.BaseTestUtil._
+import shipreq.base.test.db.SingleConnectionXA
 import shipreq.taskman.api.UserId
-import shipreq.webapp.server.test.TestDb.DbUtil
+import shipreq.webapp.server.test._
 
 object DbTriggerTest extends TestSuite {
 
   override def tests = TestSuite {
 
     'usr_login_log {
-      def loginCount(userId: UserId)(implicit s: Session): Long =
-        queryNA[Long](s"SELECT login_count FROM usr WHERE id = ${userId.value}").first
+      def loginCount(userId: UserId)(implicit xa: SingleConnectionXA): Long =
+        xa ! Query0[Long](s"SELECT login_count FROM usr WHERE id = ${userId.value}").unique
 
-      "should update agg view stats by trigger" - DbUtil { dbu =>
-        import dbu._
-        val a, b = newUserId()
+      "should update agg view stats by trigger" - TestDb().runNow { implicit xa =>
+        val a, b = DbUtil(xa).newUserId()
         def viewCounts = (loginCount(a), loginCount(b))
         def assertViewCounts(x: Long, y: Long) = assertEq(viewCounts, (x, y))
         assertViewCounts(0, 0)
-        dao.logUserLogin(a, None); assertViewCounts(1, 0)
-        dao.logUserLogin(a, None); assertViewCounts(2, 0)
-        dao.logUserLogin(b, None); assertViewCounts(2, 1)
+        xa ! DbLogic.user.logLogin(a, None); assertViewCounts(1, 0)
+        xa ! DbLogic.user.logLogin(a, None); assertViewCounts(2, 0)
+        xa ! DbLogic.user.logLogin(b, None); assertViewCounts(2, 1)
       }
     }
 
     'usrd {
-      def nameHistory(userId: Long)(implicit s: Session) =
-        queryNA[String](s"select name from usrh_name where usr_id=$userId order by updated_at").list
+      def nameHistory(userId: Long)(implicit xa: SingleConnectionXA) =
+        xa ! Query0[String](s"select name from usrh_name where usr_id=$userId order by updated_at").list
 
-      def insert(userId: Long, name: String, newsletter: Boolean)(implicit s: Session) =
-        updateQ[(Long, String, Boolean)]("insert into usrd values(?,?,?)")
-          .apply(userId, name, newsletter).execute
+      def insert(userId: Long, name: String, newsletter: Boolean)(implicit xa: SingleConnectionXA) =
+        xa ! Update[(Long, String, Boolean)]("insert into usrd values(?,?,?)")
+          .toUpdate0(userId, name, newsletter).run
 
-      def update(userId: Long, name: String, newsletter: Boolean)(implicit s: Session) =
-        updateQ[(String, Boolean, Long)]("update usrd set name=?, newsletter=? where usr_id=?")
-          .apply(name, newsletter, userId).execute
+      def update(userId: Long, name: String, newsletter: Boolean)(implicit xa: SingleConnectionXA) =
+        xa ! Update[(String, Boolean, Long)]("update usrd set name=?, newsletter=? where usr_id=?")
+          .toUpdate0(name, newsletter, userId).run
 
-      def read(userId: Long)(implicit s: Session) =
-        queryNA[(String,Boolean)](s"select name, newsletter from usrd where usr_id=$userId").first
+      def read(userId: Long)(implicit xa: SingleConnectionXA) =
+        xa ! Query0[(String,Boolean)](s"select name, newsletter from usrd where usr_id=$userId").unique
 
-      "should record name changes" - DbUtil { dbu =>
-        import dbu._
-        val u = newUserId()
+      "should record name changes" - TestDb().runNow { implicit xa =>
+        val u = DbUtil(xa).newUserId()
         val (a,b,c) = ("Alice","Bob","Yay")
         insert(u.value, a, true)
         assertEq(nameHistory(u.value), Nil)
@@ -52,9 +50,8 @@ object DbTriggerTest extends TestSuite {
         assertEq(nameHistory(u.value), List(a, b))
       }
 
-      "should updates without altercation by triggers" - DbUtil { dbu =>
-        import dbu._
-        val u = newUserId()
+      "should updates without altercation by triggers" - TestDb().runNow { implicit xa =>
+        val u = DbUtil(xa).newUserId()
         insert(u.value, "A", true)
         update(u.value, "B", false)
         assertEq(read(u.value), ("B", false))

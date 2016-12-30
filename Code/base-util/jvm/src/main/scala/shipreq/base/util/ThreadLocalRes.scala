@@ -2,6 +2,7 @@ package shipreq.base.util
 
 import ThreadLocalRes.Around
 
+// TODO Delete this
 abstract class ThreadLocalRes[A] {
   def apply[B](f: A => B): B
 

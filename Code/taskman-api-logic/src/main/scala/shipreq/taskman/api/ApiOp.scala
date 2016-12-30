@@ -17,7 +17,7 @@ object ApiOp {
   /**
    * Submits 0-n Msgs to the Taskman server for processing.
    */
-  case class SubmitMsgs(ms: Seq[Msg]) extends ApiOp[List[(Msg, MsgId)]]
+  case class SubmitMsgs(ms: List[Msg]) extends ApiOp[List[(Msg, MsgId)]]
 
   /**
    * Stores/updates a configuration value that will be read by the Taskman server.

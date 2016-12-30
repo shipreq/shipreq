@@ -1,5 +1,4 @@
-package shipreq.webapp.server
-package security
+package shipreq.webapp.server.security
 
 import org.apache.shiro.authc._
 import utest._
@@ -8,38 +7,38 @@ import shipreq.webapp.server.test.WebappServerTestUtil._
 
 object OshiroTest extends TestSuite {
 
-  def inEnv[A](f: UserFixture => A): A =
-    withOshiro(UserFixture.Session(f))
+  def runTest[A](test: UserFixture => A): A =
+    UserFixture.Transaction.runNow(withOshiro(test))
 
   override def tests = TestSuite {
 
     'Authentication {
-      'allowUsername - inEnv { uf =>
+      'allowUsername - runTest { uf =>
         login(uf.user1.username.value, uf.user1.password)
       }
 
-      'allowEmail - inEnv { uf =>
+      'allowEmail - runTest { uf =>
         login(uf.user1.email.value, uf.user1.password)
       }
 
-      'notFound - inEnv { uf =>
+      'notFound - runTest { uf =>
         intercept[UnknownAccountException](login("blah", uf.user1.password))
       }
 
-      'badPassword - inEnv { uf =>
+      'badPassword - runTest { uf =>
         intercept[IncorrectCredentialsException](login(uf.user1.username.value, uf.user2.password))
       }
 
-      'unregistered - inEnv { uf =>
+      'unregistered - runTest { uf =>
         intercept[UnknownAccountException](login(uf.userWithCurrentToken.email.value, ""))
       }
     }
 
     'loggedInUser {
-      'anon - inEnv(_ =>
+      'anon - runTest(_ =>
         assertNotLoggedIn())
 
-      'loggedIn - inEnv { uf =>
+      'loggedIn - runTest { uf =>
         login(uf.user1.username.value, uf.user1.password)
         assertUserLoggedIn(uf.user1.toUserDescriptor)
       }

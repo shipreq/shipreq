@@ -1,7 +1,7 @@
 package shipreq.webapp.server.db
 
-import org.postgresql.util.PGobject
 import scala.reflect.macros.blackbox.Context
+import shipreq.base.db.SqlHelpers.PGChar
 import shipreq.base.macros.MacroUtils
 import shipreq.webapp.base.protocol.MPickleMacroUtils
 import shipreq.base.util.TaggedTypes.TaggedInt
@@ -14,17 +14,17 @@ import shipreq.base.util.TaggedTypes.TaggedInt
  *
  * @tparam E An event.
  */
-class DbCodec[E](val read : (Byte, Integer, String) => E,
-                 val write: E => (PGobject, Integer, String))
+class DbCodec[E](val read : (Byte, Option[Int], String) => E,
+                 val write: E => (PGChar, Option[Int], String))
 
 object DbCodec {
-  final class MonoId[A](final val byte: Byte, val integer: A => Integer, val make: Integer => A) {
-    val bytePG = EventDbMacroImpls makeTypeIdPG byte
+  final class MonoId[A](val byte: Byte, val int: A => Int, val make: Int => A) {
+    val bytePG = PGChar(byte.toChar)
   }
   def monoId[A <: TaggedInt](byte: Byte, make: Int => A): MonoId[A] =
-    new MonoId(byte, _.value, i => make(i.intValue))
+    new MonoId(byte, _.value, make)
 
-  final case class PolyId[A](bytePG: A => PGobject, integer: A => Integer, make: Byte => Integer => A)
+  final case class PolyId[A](bytePG: A => PGChar, int: A => Int, make: Byte => Int => A)
   def  polyId[A]: DbCodec.PolyId[A] = macro EventDbMacroImpls.quietPolyId[A]
   def _polyId[A]: DbCodec.PolyId[A] = macro EventDbMacroImpls.debugPolyId[A]
 
@@ -35,7 +35,7 @@ object DbCodec {
 
 object EventDbMacros {
   final val noDataIdType: Byte = ' '
-  val noDataIdTypePG = EventDbMacroImpls.makeTypeIdPG(noDataIdType)
+  val noDataIdTypePG = PGChar(noDataIdType.toChar)
 
   /** Codec for event with 1 field, which will go in the `data_id` column. */
   def dbCodecIdOnly [E]: DbCodec[E] = macro EventDbMacroImpls.quietDbCodecIdOnly[E]
@@ -63,13 +63,6 @@ object EventDbMacros {
 object EventDbMacroImpls {
   import upickle._
 
-  def makeTypeIdPG(b: Byte): PGobject = {
-    val o = new PGobject()
-    o.setType("char")
-    o.setValue(b.toChar.toString)
-    o
-  }
-
   def readPickledObject(d: String): Js.Obj =
     json.read(d) match {
       case o: Js.Obj => o
@@ -89,9 +82,9 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
   type IdFns = (Tree, Tree, Tree)
   private def implicitIdFns(t: Type): IdFns = {
     def tryMono: Option[IdFns] =
-      implicitMono(t).map(f => (q"$f.bytePG", q"$f integer a", q"$f make i"))
+      implicitMono(t).map(f => (q"$f.bytePG", q"$f int a", q"$f make i"))
     def tryPoly: Option[IdFns] =
-      implicitPoly(t).map(f => (q"$f bytePG a", q"$f integer a", q"$f.make(b)(i)"))
+      implicitPoly(t).map(f => (q"$f bytePG a", q"$f int a", q"$f.make(b)(i)"))
     tryMono orElse tryPoly getOrElse fail(s"No implicit MonoId or PolyId instance found for: $t")
   }
 
@@ -115,7 +108,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
       val b       = init.valDef(q"$mono.byte")
       init += q"tmp += $b"
       byteCases :+= cq"_: $t2 => $mono.bytePG"
-      intCases  :+= cq"i: $t2 => $mono integer i"
+      intCases  :+= cq"i: $t2 => $mono int i"
       makeCases :+= cq"`$b` => $mono.make"
     }
 
@@ -136,7 +129,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
   }
 
   private def writeDataOnly(T: Type)(data: Tree) =
-    q""" (e: $T) => (noDataIdTypePG, null, $data) """
+    q""" (e: $T) => (noDataIdTypePG, None, $data) """
 
   private def writeIdAnd(T: Type)(idField: TermName, idByte: Tree, idInteger: Tree)(data: Tree) =
     q"""
@@ -153,11 +146,12 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val apply    = tcApplyFn(T)
     val f        = primaryConstructorParams_require1(T)
     val (fn, ft) = nameAndType(T, f)
+    val init     = Init()
 
     val (idByte, idInteger, idMake) = implicitIdFns(ft)
-    val writeFn = writeIdAnd(T)(fn, idByte, idInteger)(Literal(Constant(null)))
+    val writeFn = writeIdAnd(T)(fn, idByte, q"Some($idInteger)")(Literal(Constant(null)))
 
-    val impl = q"new DbCodec[$T]((b, i, _) => $apply($idMake), $writeFn)"
+    val impl = q"..$init; new DbCodec[$T]((b, ii, _) => {$getDataId; $apply($idMake)}, $writeFn)"
 
     if (debug) println("\n" + showCode(impl) + "\n")
     c.Expr[DbCodec[T]](impl)
@@ -199,12 +193,12 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val (f2r, f2w) = summonRW(init, f2t)
 
     val (idByte, idInteger, idMake) = implicitIdFns(f1t)
-    val writeFn = writeIdAnd(T)(f1n, idByte, idInteger)(writeToJsonStr(f2w, q"e.$f2n"))
+    val writeFn = writeIdAnd(T)(f1n, idByte, q"Some($idInteger)")(writeToJsonStr(f2w, q"e.$f2n"))
     val readData = readFromJsonStr(f2r, q"d")
 
     val impl = q"""
       ..$init
-      new DbCodec[$T]((b, i, d) => $apply($idMake, $readData), $writeFn)
+      new DbCodec[$T]((b, ii, d) => {$getDataId; $apply($idMake, $readData)}, $writeFn)
     """
 
     if (debug) println("\n" + showCode(impl) + "\n")
@@ -318,7 +312,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
         val f1 = params.head
         val (f1n, f1t) = nameAndType(T, f1)
         val (idByte, idInteger, idMake) = implicitIdFns(f1t)
-        val writeFn = writeIdAnd(T)(f1n, idByte, idInteger)(writeToObj)
+        val writeFn = writeIdAnd(T)(f1n, idByte, q"Some($idInteger)")(writeToObj)
         (q"$apply($idMake, ..$dataR)", writeFn)
       } else
         (q"$apply(..$dataR)", writeDataOnly(T)(writeToObj))
@@ -327,9 +321,10 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
       q"""
         ..$init
         new DbCodec[$T](
-          (b, i, d) => {
+          (b, ii, d) => {
             val o = EventDbMacroImpls readPickledObject d
             val m = o.value.toMap
+            $getDataId
             $readFn
           },
           $writeFn)
@@ -403,4 +398,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     if (debug) println("\n" + showCode(impl) + "\n")
     c.Expr[DbCodec.Registry[R, W]](impl)
   }
+
+  /** unpacks a `ii: Option[Int]` (which is the data_id field) into `i: Int` */
+  private def getDataId = q"""def i: Int = ii getOrElse sys.error("data_id is unexpectedly NULL")"""
 }

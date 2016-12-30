@@ -6,9 +6,8 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash._
-import shipreq.webapp.server.data.ProjectId
 import ApplyEvent.LogicVer
-import EventDao.EventSeq
+import TaggedTypes.JsonStr
 
 object EventDbCodecs {
   import nyaya.util.{Multimap, MultiValues}
@@ -559,7 +558,7 @@ object EventDbCodecs {
         case _: StaticField   => idTypeStaticField.bytePG
       }, {
         case i: CustomFieldId => i.value
-        case f: StaticField   => idTypeStaticField integer f
+        case f: StaticField   => idTypeStaticField int f
       }, {
         case 's' => idTypeStaticField.make
         case b   => idTypeCustomFieldId make b
@@ -701,21 +700,15 @@ object EventDbCodecs {
 // =====================================================================================================================
 
 object EventSqlHelpers {
-  import scala.slick.jdbc.{GetResult, SetParameter, PositionedResult, PositionedParameters}
+  import doobie.imports._
   import shipreq.base.db.SqlHelpers._
   import EventDbCodecs.eventCodecRegistry
 
-  implicit val GR_EventSeq = GetResult(r => EventSeq(r.nextInt()))
-  implicit object SP_EventSeq extends SetParameter[EventSeq] {
-    def apply(v: EventSeq, pp: PositionedParameters): Unit =
-      pp setInt v.value
-  }
+  implicit val doobieMetaEventSeq: Meta[EventSeq] =
+    doobieMetaCaseClass[EventSeq]
 
-  implicit val GR_HashScheme = GetResult(r => HashScheme unsafeGet HashSchemeId(r.nextPgChar()))
-  implicit object SP_HashScheme extends SetParameter[HashScheme] {
-    def apply(v: HashScheme, pp: PositionedParameters): Unit =
-      pp setPgChar v.id.value
-  }
+  implicit val doobieMetaHashScheme: Meta[HashScheme] =
+    doobieMetaChar.xmap(HashScheme unsafeGet HashSchemeId(_), _.id.value)
 
   private val (hashScopeToChar, charToHashScope, _, _) =
     UtilMacros.adtIso[HashScope, Char] {
@@ -737,88 +730,33 @@ object EventSqlHelpers {
       case HashScope.DeletionReasons => 'd'
       case HashScope.Other           => '0'
     }
-  implicit val GR_HashScope = GetResult(r => charToHashScope(r.nextPgChar()))
-  implicit object SP_HashScope extends SetParameter[HashScope] {
-    def apply(v: HashScope, pp: PositionedParameters): Unit =
-      pp setPgChar hashScopeToChar(v)
-  }
+  implicit val doobieMetaHashScope: Meta[HashScope] =
+    doobieMetaChar.xmap(charToHashScope, hashScopeToChar)
 
-  implicit val GR_LogicVer = GetResult(r => LogicVer(r.nextPgChar()))
-  implicit object SP_LogicVer extends SetParameter[LogicVer] {
-    def apply(v: LogicVer, pp: PositionedParameters): Unit =
-      pp setPgChar v.value
-  }
+  implicit val doobieMetaLogicVer: Meta[LogicVer] =
+    doobieMetaChar.xmap(LogicVer.apply, _.value)
 
-  implicit val GR_HashRec = GetResult(r => HashRec(r.<<, r.<<, r.<<)(r.<<))
-  implicit object SP_HashRec extends SetParameter[HashRec] {
-    def apply(v: HashRec, pp: PositionedParameters): Unit = {
-      pp >> v.scope
-      pp >> v.logicVer
-      pp >> v.scheme
-      pp >> v.hash
+  final val eventHR = "scope,logic_ver,hash_scheme,hash"
+  final val eventHR_? = "?,?,?,?"
+  implicit val doobieCompositeHashRec: Composite[HashRec] =
+    Composite[(HashScope, LogicVer, HashScheme, Option[Int])].xmap[HashRec](
+      x => HashRec(x._1, x._2, x._3)(x._4),
+      hr => (hr.scope, hr.logicVer, hr.scheme, hr.hash))
+
+  private type MsgJson = JsonStr[Any]
+  private implicit val doobieMetaMsgJson: Meta[MsgJson] = jsonStr
+
+  final val eventE = "type_id,data_id_type,data_id,data"
+  final val eventE_? = "?,?,?,?"
+  implicit val doobieCompositeEvent: Composite[Event] =
+    Composite[(Short, PGChar, Option[Int], Option[MsgJson])].readOnly { case (typeId, dataIdType, dataId, data) =>
+      val codec = eventCodecRegistry.reader(typeId)
+      codec.read(dataIdType.toByte, dataId, data getOrElse[MsgJson] JsonStr(null))
     }
-  }
-
-  implicit object GR_Event extends GetResult[Event] {
-    def apply(r: PositionedResult) = {
-      val typeId     = r.nextShort()
-      val dataIdType = r.nextPgChar().toByte
-      val dataId     = r.nextObject().asInstanceOf[Integer]
-      val data       = r.nextString()
-      val codec      = eventCodecRegistry.reader(typeId)
-      codec.read(dataIdType, dataId, data)
+  implicit val doobieCompositeActiveEvent: Composite[ActiveEvent] =
+    Composite[(Short, PGChar, Option[Int], Option[MsgJson])].writeOnly { e =>
+      val (typeId, codec) = eventCodecRegistry.writer(e)
+      val (dataIdType, dataId, data) = codec.write(e)
+      (typeId, dataIdType, dataId, if (data == null) None else Some(JsonStr(data)))
     }
-  }
-
-  implicit object SP_ActiveEvent extends SetParameter[ActiveEvent] {
-    def apply(e: ActiveEvent, pp: PositionedParameters): Unit = {
-      val c = eventCodecRegistry.writer(e)
-      val d = c._2.write(e)
-      pp setShort c._1
-      pp.setObject(d._1, java.sql.Types.OTHER)
-      pp.setObject(d._2, java.sql.Types.INTEGER)
-      pp.setObject(pgObject("json", d._3), java.sql.Types.OTHER)
-    }
-  }
-}
-
-// =====================================================================================================================
-
-object EventDao {
-  case class EventSeq(value: Int) extends AnyVal {
-    def succ = EventSeq(value + 1)
-  }
-}
-
-trait EventDao {
-  this: DaoT =>
-  import Sql._
-
-  def createEvent(p: ProjectId, seq: EventSeq, e: ActiveEvent, hrs: HashRec.Collection): Unit = {
-    InsertEvent(p, seq, e).execute
-    for (hr <- hrs)
-      InsertEventHashRecs(p, seq, hr).execute // TODO Send in bulk
-  }
-
-  /**
-   * @return Events in order from lowest to highest seq.
-   */
-  def findAllEvents(p: ProjectId): Vector[(EventSeq, VerifiedEvent)] = {
-    // TODO EventDao.findAllEvents has shithouse impl
-
-    class Tmp(val e: Event) {
-      var hrs = HashRec.emptyCollection
-    }
-
-    val map = collection.mutable.HashMap.empty[EventSeq, Tmp]
-    for (t <- SelectAllEvents(p))
-      map.put(t._1, new Tmp(t._2))
-    for (t <- SelectAllEventHashes(p))
-      map(t._1).hrs += t._2
-
-    val result = Vector.newBuilder[(EventSeq, VerifiedEvent)]
-    for ((seq, tmp) <- map)
-      result += ((seq, VerifiedEvent(tmp.e, tmp.hrs)))
-    result.result().sortBy(_._1.value)
-  }
 }

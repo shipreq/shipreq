@@ -10,7 +10,6 @@
 	</appender>
 
     <logger name="org.apache.commons" level="WARN" />
-    <logger name="scala.slick.compiler" level="WARN" />
 	<root level="INFO">
         <appender-ref ref="STDOUT" />
 	</root>

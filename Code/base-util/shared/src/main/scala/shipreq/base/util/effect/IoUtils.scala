@@ -6,9 +6,11 @@ import shipreq.base.util.ErrorOr
 
 object IoUtils {
 
-  val nop: IO[Unit] = IO(())
+  val nop: IO[Unit] =
+    IO.ioUnit
 
-  val clockMs = IO{ System.currentTimeMillis }
+  val clockMs: IO[Long] =
+    IO(System.currentTimeMillis())
 
   implicit class IoExt[A](val io: IO[A]) extends AnyVal {
     @inline def tap(f: A => IO[_]): IO[A] = io.flatMap(a => f(a) >> IO(a))

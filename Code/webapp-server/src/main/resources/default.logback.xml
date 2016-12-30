@@ -35,8 +35,6 @@
     </appender>
 
     <logger name="org.apache.commons" level="WARN" />
-    <logger name="scala.slick.compiler" level="WARN" />
-    <logger name="scala.slick.jdbc" level="DEBUG" />
     <logger name="shipreq.webapp" level="DEBUG" />
     <!--logger name="com.googlecode.flyway" level="INFO" /-->
 	<root level="DEBUG">

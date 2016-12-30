@@ -26,6 +26,7 @@ trait WebappServerTestUtil extends WebappTestUtil {
   }
 
   def withOshiro[A](a: => A): A = {
+    PrepareEnv.oshiro()
     Oshiro.logout()
     try a
     finally Oshiro.logout()

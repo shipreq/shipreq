@@ -2,11 +2,11 @@ package shipreq.webapp.server.db
 
 import java.time.{Duration, Instant, LocalDateTime, ZoneOffset}
 import org.scalatest.FunSpec
-import slick.jdbc.StaticQuery.{queryNA, update, updateNA}
+import doobie.imports._
 import shipreq.base.db.SqlHelpers._
+import shipreq.base.db.DoobieHelpers._
 import shipreq.taskman.api.UserId
 import shipreq.webapp.server.data._
-import shipreq.webapp.server.db.EventDao.EventSeq
 import shipreq.webapp.server.security.PasswordAndSalt
 import shipreq.webapp.server.snippet.ResetPassword
 import java.util.concurrent.atomic.AtomicInteger
@@ -23,11 +23,11 @@ import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.server.test.{DbUtil, TestDb}
 import shipreq.webapp.server.test.WebappServerTestUtil._
-import EventDao.EventSeq
 
-object DaoTest extends TestSuite {
+object DbTest extends TestSuite {
 
   private val q3 = "\"\"\""
+
   def demo[E <: ActiveEvent](gen: Gen[E]) = {
     import EventDbCodecs.eventCodecRegistry
     val es = gen.samples(GenSize(3)).take(10)
@@ -39,22 +39,22 @@ object DaoTest extends TestSuite {
       println(
         s"""
            |testRW(${e.toString.replaceAll(",(?! )", ", ")},
-           |  ${c._1}, ${d._2}, '${d._1.getValue}', $json)
+           |  ${c._1}, ${d._2}, '${d._1.value}', $json)
          """.stripMargin)
     }
     println()
   }
 
-  def testRW(e: ActiveEvent, typeId: Short, dataId: Integer, dataTypeId: Char, data: String): Unit = {
+  def testRW(e: ActiveEvent, typeId: Short, dataId: Option[Int], dataTypeId: Char, data: String): Unit = {
     import EventDbCodecs.eventCodecRegistry
 
     val c = eventCodecRegistry.writer(e)
     val (aDataTypeId, aDataId, aData) = c._2.write(e)
     assertEq(s"TypeId for $e", c._1, typeId)
-    assertEq(s"DataId for $e", (aDataId, aDataTypeId.getValue), (dataId, dataTypeId.toString))
+    assertEq(s"DataId for $e", (aDataId, aDataTypeId.value), (dataId, dataTypeId))
     assertEq(s"Data for $e", aData, data)
 
-    val aEvent = c._2.read(aDataTypeId.getValue.head.toByte, aDataId, aData)
+    val aEvent = c._2.read(aDataTypeId.toByte, aDataId, aData)
     assertEq(aEvent, e)
   }
 
@@ -65,9 +65,9 @@ object DaoTest extends TestSuite {
 
     'to_iso8601_str {
       def test(in: String, out: String): Unit =
-        TestDb.Transaction { implicit s =>
-          val q = queryNA[String](s"select to_iso8601_str(timestamptz '$in')")
-          val r: String = q.first
+        TestDb().runNow { xa =>
+          val q = Query0[String](s"select to_iso8601_str(timestamptz '$in')")
+          val r: String = xa ! q.unique
           assertEq(r, out)
         }
 
@@ -80,9 +80,9 @@ object DaoTest extends TestSuite {
       'lesserPrecision -
         test("2012-09-10 09:56:23.2157+11", "2012-09-09T22:56:23Z")
 
-      'null - TestDb.Transaction { implicit s =>
-        val q = queryNA[String](s"select to_iso8601_str(NULL)")
-        assertEq(q.first, null)
+      'null - TestDb().runNow { xa =>
+        val q = Query0[Option[String]](s"select to_iso8601_str(NULL)")
+        assertEq(xa ! q.unique, None)
       }
     }
 
@@ -90,72 +90,71 @@ object DaoTest extends TestSuite {
       def assertApproxEqual(a: Instant, e: Instant): Unit =
         assertEq(Duration.between(a, e).abs.minusSeconds(2).isNegative, true)
 
-      'read - TestDb.Transaction { implicit s =>
-        val (dbNow, i) = queryNA[(Instant, Int)](s"select now(), 2").first
+      'read - TestDb().runNow { xa =>
+        val (dbNow, i) = xa ! Query0[(Instant, Int)](s"select now(), 2").unique
         assertEq(i, 2)
         assertApproxEqual(dbNow, Instant.now())
       }
 
-      'readSome - TestDb.Transaction { implicit s =>
-        val (dbNow, i) = queryNA[(Option[Instant], Int)](s"select now(), 3").first
+      'readSome - TestDb().runNow { xa =>
+        val (dbNow, i) = xa ! Query0[(Option[Instant], Int)](s"select now(), 3").unique
         assertEq(i, 3)
         assertEq(dbNow.isDefined, true)
         assertApproxEqual(dbNow.get, Instant.now())
       }
 
-      'readNone - TestDb.Transaction { implicit s =>
-        val (dbNow, i) = queryNA[(Option[Instant], Int)](s"select null :: timestamptz, 5").first
+      'readNone - TestDb().runNow { xa =>
+        val (dbNow, i) = xa ! Query0[(Option[Instant], Int)](s"select null :: timestamptz, 5").unique
         assertEq(i, 5)
         assertEq(dbNow.isDefined, false)
       }
 
-      'write - TestDb.Transaction { implicit s =>
-        val u = DbUtil(s).newUserId()
+      'write - TestDb().runNow { xa =>
+        val u = DbUtil(xa).newUserId()
         val l = LocalDateTime.of(1984, 5, 2, 18, 30, 8)
         val i = l.toInstant(ZoneOffset.of("+11:00"))
         val r = "yay"
-        update[(Instant, String, Long)]("UPDATE usr SET confirmed_at=?, roles=? WHERE id=?").apply((i, r, u.value)).execute
-        val s1 = queryNA[String](s"select to_iso8601_str(confirmed_at) from usr where id=${u.value: Long}").first
+        xa ! Update[(Instant, String, Long)]("UPDATE usr SET confirmed_at=?, roles=? WHERE id=?").toUpdate0(i, r, u.value).run
+        val s1 = xa ! Query0[String](s"select to_iso8601_str(confirmed_at) from usr where id=${u.value: Long}").unique
         assertEq(s1, "1984-05-02T07:30:08Z")
-        val (ar, ai) = queryNA[(String, Instant)](s"select roles, confirmed_at from usr where id=${u.value: Long}").first
+        val (ar, ai) = xa ! Query0[(String, Instant)](s"select roles, confirmed_at from usr where id=${u.value: Long}").unique
         assertEq(ai, i)
         assertEq(ar, r)
       }
 
-      'writeOption - TestDb.Transaction { implicit s =>
-        val u = DbUtil(s).newUserId()
+      'writeOption - TestDb().runNow { xa =>
+        val u = DbUtil(xa).newUserId()
         val l = LocalDateTime.of(1990, 9, 7, 20, 20, 4)
         val i = l.toInstant(ZoneOffset.of("+15:00"))
-        update[(Option[Instant], Option[Instant], Long)]("UPDATE usr SET reset_password_sent_at=?, confirmed_at=? WHERE id=?")
-          .apply((None, Some(i), u.value)).execute
-        val s1 = queryNA[Option[String]](s"select to_iso8601_str(confirmed_at) from usr where id=${u.value: Long}").first
+        xa ! Update[(Option[Instant], Option[Instant], Long)]("UPDATE usr SET reset_password_sent_at=?, confirmed_at=? WHERE id=?")
+          .toUpdate0(None, Some(i), u.value).run
+        val s1 = xa ! Query0[Option[String]](s"select to_iso8601_str(confirmed_at) from usr where id=${u.value: Long}").unique
         assertEq(s1, Some("1990-09-07T05:20:04Z"))
-        val s2 = queryNA[Option[String]](s"select to_iso8601_str(reset_password_sent_at) from usr where id=${u.value: Long}").first
+        val s2 = xa ! Query0[Option[String]](s"select to_iso8601_str(reset_password_sent_at) from usr where id=${u.value: Long}").unique
         assertEq(s2, None)
       }
     }
 
     'user {
-      'resetPasswordFns - TestDb.Transaction { implicit s =>
-        val dbu = DbUtil(s)
-        val dao = dbu.dao
+      'resetPasswordFns - TestDb().runNow { xa =>
+        val dbu = DbUtil(xa)
         val u = dbu.newUserId()
-        val username = queryNA[String](s"select username from usr where id=${u.value: Long}").first
-        val token = dao.performInstallNewResetPasswordToken(u, () => s"token.$u")
+        val username = xa ! Query0[String](s"select username from usr where id=${u.value: Long}").unique
+        val token = xa ! DbLogic.user.performInstallNewResetPasswordToken(u, () => s"token.$u")
 
-        val date = dao.findResetPasswordTokenIssuedDate(token).get
-        assert(!ResetPassword.isTokenExpired(date))
+        val date = xa ! DbLogic.user.findResetPasswordTokenIssuedDate(token)
+        assert(!ResetPassword.isTokenExpired(date.get))
 
-        dao.performReuseResetPasswordToken(u)
-        val date2 = dao.findResetPasswordTokenIssuedDate(token).get
-        assert(!ResetPassword.isTokenExpired(date2))
+        xa ! DbLogic.user.performReuseResetPasswordToken(u)
+        val date2 = xa ! DbLogic.user.findResetPasswordTokenIssuedDate(token)
+        assert(!ResetPassword.isTokenExpired(date2.get))
 
         val p = "hehegreat100"
         val ps = PasswordAndSalt.createWithRandomSalt(p)
-        dao.performPasswordReset(ps, token)
+        xa ! DbLogic.user.performPasswordReset(ps, token)
 
-        assertEq(dao.findResetPasswordTokenIssuedDate(token), None)
-        val ps2 = dao.findUserDescAndCredentials(username).get._2
+        assertEq(xa ! DbLogic.user.findResetPasswordTokenIssuedDate(token), None)
+        val ps2 = (xa ! DbLogic.user.findDescAndCredentials(username)).get._2
         assertEq(ps2.matches(p), true)
       }
     }
@@ -229,28 +228,28 @@ object DaoTest extends TestSuite {
         // implicit val settings = DefaultSettings.propSettings.setSampleSize(20000).setGenSize(4).setDebug
         implicit val settings = DefaultSettings.propSettings.setSampleSize(320).setGenSize(16)
 
-        TestDb.DbUtil.scope(_.map(_.newProjectId())) { dbAndProjectId =>
-          val seqCounter = new AtomicInteger()
+        val seqCounter = new AtomicInteger()
 
-          val prop = Prop.equal[(ActiveEvent, HashRec.Collection)]("load . save = id")(
-            i => dbAndProjectId { case (dbh, projectId) =>
-              val seq = EventSeq(seqCounter.incrementAndGet())
-              dbh.dao.createEvent(projectId, seq, i._1, i._2)
-              val loaded =
-                dbh.debugSelectOnError(s"select * from event e, event_hash eh where e.project_id=eh.project_id and e.seq=eh.seq and e.seq = ${seq.value}") {
-                  dbh.dao.findAllEvents(projectId).filter(_._1 == seq).map(r => r._2.event match {
-                    case ae: ActiveEvent => (ae, r._2.hashRecs)
-                    case e               => sys error s"Not an ActiveEvent: $e"
-                  })
-                }
-              loaded
-            },
-            Vector1(_))
+        val prop = Prop.equal[(ActiveEvent, HashRec.Collection)]("load . save = id")(
+          i => TestDb().runNow { xa =>
+            val dbu = DbUtil(xa)
+            val projectId = dbu.newProjectId()
+            val seq = EventSeq(seqCounter.incrementAndGet())
+            xa ! DbLogic.event.create(projectId, seq, i._1, i._2)
+            val loaded =
+              dbu.debugSelectOnError(s"select * from event e, event_hash eh where e.project_id=eh.project_id and e.seq=eh.seq and e.seq = ${seq.value}") {
+                (xa ! DbLogic.event.findAll(projectId)).filter(_._1 == seq).map(r => r._2.event match {
+                  case ae: ActiveEvent => (ae, r._2.hashRecs)
+                  case e => sys error s"Not an ActiveEvent: $e"
+                })
+              }
+            loaded
+          },
+          Vector1(_))
 
-          val rnd = RandomData.events.activeEvent *** RandomData.events.hashRecs
+        val rnd = RandomData.events.activeEvent *** RandomData.events.hashRecs
 
-          prop.mustBeSatisfiedBy(rnd)
-        }
+        prop.mustBeSatisfiedBy(rnd)
       }
 
       // These tests serve two purposes:
@@ -265,7 +264,7 @@ object DaoTest extends TestSuite {
         }
 
         'ProjectTemplateApply {
-          testRW(ProjectTemplateApply(ProjectTemplate.Default), 1000, null, ' ', """1""")
+          testRW(ProjectTemplateApply(ProjectTemplate.Default), 1000, None, ' ', """1""")
         }
 
         //'createApplicableTag    - demo(RandomData.events.createApplicableTag   )
@@ -402,5 +401,6 @@ object DaoTest extends TestSuite {
 
       }
     }
+
   }
 }

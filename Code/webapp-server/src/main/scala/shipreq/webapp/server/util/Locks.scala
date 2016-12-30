@@ -3,6 +3,7 @@ package shipreq.webapp.server.util
 import java.util.concurrent.locks.{Lock, ReentrantLock}
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit, TimeoutException}
 import java.util.function.{Function => J8Fn}
+import scalaz.effect.IO
 
 trait LockUsage {
   def apply[A](lock: Lock, a: => A): A
@@ -23,6 +24,9 @@ object LockUsage {
 
 trait Mutex {
   def apply[A](a: => A): A
+
+  def io[A](ioA: => IO[A]): IO[A] =
+    IO(apply(ioA.unsafePerformIO()))
 }
 
 /** Won't scale long-term.

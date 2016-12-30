@@ -1,39 +1,26 @@
 package shipreq.base.db
 
 import ch.qos.logback.classic.Level
-import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
+import com.zaxxer.hikari.HikariConfig
 import org.postgresql.ds.PGSimpleDataSource
-import shipreq.base.util.ErrorOr
+import shipreq.base.util.{ErrorOr, StringBasedValueReader}
 import shipreq.base.util.ExternalValueReader.{get => getEV, Retriever => R, _}
-import shipreq.base.util.log.HasLogger
 
-case class DatabaseConnection(host: String, name: String, schema: Option[String], ds: HikariDataSource) {
-  def desc = s"$host/$name" + schema.map(":" + _).getOrElse("")
-}
+case class DbConfig(hikariCfg: HikariConfig, pgDataSource: PGSimpleDataSource, schema: Option[String])
 
-object DatabaseConnection extends HasLogger {
-
-  type PoolCfg = HikariConfig => Unit
-  val noPoolCfg: PoolCfg = _ => ()
+object DbConfig {
 
   def PropertyScope = "db"
 
-  def establish_!(poolCfgDefaults: PoolCfg = noPoolCfg)(implicit _s: R[String], _i: R[Int], _l: R[Long], _b: R[Boolean]): DatabaseConnection = {
-    val c = ErrorOr.require_!(get(poolCfgDefaults))
-    verify_!(c)
-    c
+  def read(s: StringBasedValueReader): ErrorOr[DbConfig] = {
+    import s._
+    read2
   }
 
-  def get(poolCfgDefaults: PoolCfg = noPoolCfg)(implicit _s: R[String], _i: R[Int], _l: R[Long], _b: R[Boolean]): ErrorOr[DatabaseConnection] =
-    ErrorOr.catchException {
-      dataSource(poolCfgDefaults).map {
-        case (schema, pgds, hds) =>
-          DatabaseConnection(pgds.getServerName, pgds.getDatabaseName, schema, hds)
-    }
-  }
+  def read2(implicit _s: R[String], _i: R[Int], _l: R[Long], _b: R[Boolean]): ErrorOr[DbConfig] =
+    ErrorOr catchException dataSource
 
-  protected def dataSource(poolCfgDefaults: PoolCfg = noPoolCfg)(implicit _s: R[String], _i: R[Int], _l: R[Long], _b: R[Boolean]):
-      ErrorOr[(Option[String], PGSimpleDataSource, HikariDataSource)] = {
+  protected def dataSource(implicit _s: R[String], _i: R[Int], _l: R[Long], _b: R[Boolean]): ErrorOr[DbConfig] = {
 
     implicit val scope = scopeByNS(PropertyScope)
     for {
@@ -44,7 +31,7 @@ object DatabaseConnection extends HasLogger {
       val pgds = new PGSimpleDataSource
       pgds.setDatabaseName(database)
       pgds.setUser(username)
-      // ds.setPassword(password)
+      pgds.setPassword(password)
       pgds.setDisableColumnSanitiser(true)
       tryUse("appname"                )(pgds.setApplicationName)
       tryUse("binary_transfer"        )(pgds.setBinaryTransfer)
@@ -69,23 +56,27 @@ object DatabaseConnection extends HasLogger {
       val schema     = getO[String]("schema")
       val searchPath = getO[String]("search_path")
 
+      // If schema only, set here in Postgres
+      (schema, searchPath) match {
+        case (Some(s), None) => pgds.setCurrentSchema(s)
+        case _               => ()
+      }
+
       {
         implicit val scope = scopeByNS(PropertyScope, "pool")
 
         val hcfg = new HikariConfig
         hcfg.setTransactionIsolation("TRANSACTION_READ_COMMITTED") // Shouldn't be doing repeated-reads anyway
         hcfg.setAutoCommit(true)
-
-        poolCfgDefaults(hcfg)
-
         hcfg.setDataSource(pgds)
         hcfg.setUsername(username)
         hcfg.setPassword(password)
 
+        // If search path, set here in Hikari
         (schema, searchPath) match {
-          case (_,          Some(path)) => setSearchPath(path)(hcfg)
-          case (Some(path), None)       => setSearchPath(path)(hcfg)
-          case (None      , None)       => ()
+          case (None,    Some(s)) => setSearchPath(s)(hcfg)
+          case (Some(_), Some(_)) => sys error "You can't set both the DB schema and search_path."
+          case (_,       None)    => ()
         }
 
         tryUse("allowPoolSuspension"     )(hcfg.setAllowPoolSuspension)
@@ -125,24 +116,17 @@ object DatabaseConnection extends HasLogger {
         tryUse("username"                )(hcfg.setUsername)
         */
 
-        val hds = new HikariDataSource(hcfg)
-        (schema, pgds, hds)
+        DbConfig(hcfg, pgds, schema)
       }
     }
   }
 
-  def verify_!(c: DatabaseConnection): Unit = {
-    log.info.z(s"Connecting to database: ${c.desc}")
-    //log.debug.z(s"Database pool config: ${c.ds.get}")
-    c.ds.getConnection().close() // test the data source validity
-  }
-
-  def setSearchPath(path: String): PoolCfg = {
+  private def setSearchPath(path: String): HikariConfig => Unit = {
     if (path.contains("-"))
       throw new IllegalArgumentException("PostgreSQL doesn't allow dashes in schema names.")
     runOnConnectionAcquire(s"SET search_path TO $path")
   }
 
-  def runOnConnectionAcquire(sql: String): PoolCfg =
+  private def runOnConnectionAcquire(sql: String): HikariConfig => Unit =
     _.setConnectionInitSql(sql)
 }

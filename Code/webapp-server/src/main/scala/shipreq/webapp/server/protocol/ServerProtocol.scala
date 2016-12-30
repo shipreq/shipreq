@@ -2,15 +2,16 @@ package shipreq.webapp.server.protocol
 
 import boopickle._
 import java.nio.ByteBuffer
-import net.liftweb.common.{Empty, Failure => BoxFailure, Full}
+import net.liftweb.common.{Empty, Full, Failure => BoxFailure}
 import net.liftweb.http.{BadResponse, InternalServerErrorResponse, LiftResponse, S}
+import scalaz.effect.IO
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.base.protocol.RemoteFn
 
 object ServerProtocol extends HasLogger {
 
-  def remoteFn(fn: RemoteFn)(localFn: fn.Input => fn.Response): fn.Instance = {
+  def remoteFn(fn: RemoteFn)(localFn: fn.Input => IO[fn.Response]): fn.Instance = {
     import fn._
 
     val proc = S.NFuncHolder { () =>
@@ -38,7 +39,7 @@ object ServerProtocol extends HasLogger {
 
       def process(i: Input): T[Response] =
         try {
-          localFn(i)
+          localFn(i).unsafePerformIO()
         } catch {
           case e: Throwable =>
             log.error(s"Error processing $fn request $i: $e")

@@ -1,17 +1,21 @@
 package shipreq.webapp.server.snippet
 
+import doobie.imports.ConnectionIO
 import java.sql.Connection
 import java.time.Instant
 import net.liftweb.http.S
 import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
+import scalaz.Free
+import scalaz.effect.IO
+import shipreq.base.db.DoobieHelpers._
 import shipreq.taskman.api.{EmailAddr, Msg, UserId}
 import shipreq.webapp.base.validation.ValidationResult
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.app.AppSiteMap
 import shipreq.webapp.server.app.AppSiteMap.Implicits._
 import shipreq.webapp.server.data.{ResetPasswordInfo, UserRegistrationInfo}
-import shipreq.webapp.server.db.DaoT
+import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.feature.validation.Validators
 import shipreq.webapp.server.lib.{FormVar, Misc, SingleOpStatefulSnippet, SnippetHelpers}
 import shipreq.webapp.server.security.PasswordAndSalt
@@ -34,7 +38,7 @@ object ResetPassword1 extends SnippetHelpers {
     var vars: form.Var = ""
 
     def onSubmit(): JsCmd = {
-      securityProvider.enforceHumanSpeed()
+      securityProvider().enforceHumanSpeed()
       perform(form validate vars)
     }
 
@@ -42,32 +46,38 @@ object ResetPassword1 extends SnippetHelpers {
   }
 
   def perform(v: ValidationResult[EmailAddr]): JsCmd =
-    ifValid(v)(email =>
-      daoProvider.withTransactionLevel(Connection.TRANSACTION_SERIALIZABLE)(dao => {
-        dao.findUserRegAndResetPwInfo(email) match {
+    ifValid(v) { email =>
 
-          // No associated account
-          case None =>
-
-          // Account not activated yet
-          case Some((u@UserRegistrationInfo(_, _, _, None), _)) =>
-            taskmanD(dao, _ submitMsg Register1.preRegistrationMsg(email, u, dao))
-
-          // Valid token available
-          case Some((UserRegistrationInfo(id, _, _, Some(_)), ResetPasswordInfo(Some(token), Some(issued)))) if !isTokenExpired(issued) =>
-            reuseToken(id, token, dao)
-            taskmanD(dao, _ submitMsg passwordResetMsg(email, token))
-
-          // No token or token expired
-          case Some((UserRegistrationInfo(id, _, _, Some(_)), _)) =>
-            val token = issueNewToken(id, dao)
-            taskmanD(dao, _ submitMsg passwordResetMsg(email, token))
-        }
+      val dbPlan = resetLogic(email).withTransactionLevel(Connection.TRANSACTION_SERIALIZABLE)
+      val plan = db().io.trans(dbPlan).flatMap {
+        case Some(msg) => taskman().submitMsg(msg).map(_ => ())
+        case None => IO.ioUnit
+      }
+      plan.unsafePerformIO()
 
       // Respond the same in all cases (for security purposes)
       jsEmailSent
-    })
-  )
+    }
+
+  def resetLogic(email: EmailAddr): ConnectionIO[Option[Msg]] =
+    DbLogic.user.findRegAndResetPwInfo(email) flatMap {
+
+      // No associated account
+      case None =>
+        Free pure None
+
+      // Account not activated yet
+      case Some((u@UserRegistrationInfo(_, _, _, None), _)) =>
+        Register1.preRegistrationMsg(email, u).map(Some(_))
+
+      // Valid token available
+      case Some((UserRegistrationInfo(id, _, _, Some(_)), ResetPasswordInfo(Some(token), Some(issued)))) if !isTokenExpired(issued) =>
+        reuseToken(id).map(_ => Some(passwordResetMsg(email, token)))
+
+      // No token or token expired
+      case Some((UserRegistrationInfo(id, _, _, Some(_)), _)) =>
+        issueNewToken(id).map(token => Some(passwordResetMsg(email, token)))
+    }
 
   def passwordResetMsg(email: EmailAddr, token: String): Msg =
     Msg.PasswordResetRequested(email, AppSiteMap.ResetPassword2.absoluteUrl(token))
@@ -75,11 +85,11 @@ object ResetPassword1 extends SnippetHelpers {
   val jsEmailSent: JsCmd =
     JqExpr("#resetpw1Form,#resetpwTokenSent") ~> JqToggle
 
-  private def issueNewToken(id: UserId, dao: DaoT): String =
-    dao.performInstallNewResetPasswordToken(id, () => randomConfirmationToken)
+  private def issueNewToken(id: UserId): ConnectionIO[String] =
+    DbLogic.user.performInstallNewResetPasswordToken(id, () => randomConfirmationToken())
 
-  private def reuseToken(id: UserId, token: String, dao: DaoT): Unit =
-    dao.performReuseResetPasswordToken(id)
+  private def reuseToken(id: UserId): ConnectionIO[Unit] =
+    DbLogic.user.performReuseResetPasswordToken(id)
 }
 
 // =====================================================================================================================
@@ -94,7 +104,7 @@ class ResetPassword2(token: String) extends SingleOpStatefulSnippet {
   var vars: form.Var = FormVar.emptyPasswordPair
 
   def validateToken_!(): Unit =
-    daoProvider.withSession(_ findResetPasswordTokenIssuedDate token) match {
+    db().io.trans(DbLogic.user.findResetPasswordTokenIssuedDate(token)).unsafePerformIO() match {
       case None =>
         S.error("The token associated with that URL is invalid.")
         redirectTo(AppSiteMap.Login)
@@ -119,7 +129,7 @@ class ResetPassword2(token: String) extends SingleOpStatefulSnippet {
 
   def resetPassword(password: String): JsCmd = {
     val ps = PasswordAndSalt.createWithRandomSalt(password)
-    daoProvider.withSession(_.performPasswordReset(ps, token))
+    db().io.trans(DbLogic.user.performPasswordReset(ps, token)).unsafePerformIO()
     jsClearError & JqExpr("#resetpw2Form,#resetpwComplete") ~> JqToggle
   }
 }
