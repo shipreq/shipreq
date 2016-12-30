@@ -94,6 +94,8 @@ object Common {
         }
     }
 
+  def regexFilter(r: String) = new PatternFilter(r.r.pattern)
+
   /** Minimal settings used by benchmark modules too */
   lazy val settingsMin = (p: Project) => p
     .enablePlugins(net.virtualvoid.sbt.graph.DependencyGraphPlugin)
@@ -110,7 +112,8 @@ object Common {
       scalaVersion                := Dependencies.Scala.version,
       javacOptions               ++= javacFlags,
       scalacOptions              ++= scalacFlags,
-      dependencyUpdatesExclusions := moduleFilter(name = new PatternFilter("^jetty-(?:server|websocket)$".r.pattern)),
+      dependencyUpdatesExclusions := moduleFilter(name = regexFilter("^(jetty-(server|websocket)|ammonite)$")) |
+                                     moduleFilter(organization = regexFilter("^org.scala-lang$")),
       testFrameworks              += new TestFramework("utest.runner.Framework"),
       minForcegcInterval          := 3.minutes,
       triggeredMessage            := Watched.clearWhenTriggered,
