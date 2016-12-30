@@ -19,7 +19,7 @@ object Dependencies {
   }
 
   object Scalaz {
-    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.7")
+    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.8")
     val core       = mm("scalaz-core")
     val effect     = mm("scalaz-effect") ++ core
     val concurrent = mm("scalaz-concurrent") ++ effect
@@ -80,7 +80,7 @@ object Dependencies {
   }
 
   object SLF4J {
-    private val mm = MultiModule.java("org.slf4j", "1.7.21")
+    private val mm = MultiModule.java("org.slf4j", "1.7.22")
     val api = mm("slf4j-api")
     val jcl = mm("jcl-over-slf4j")
   }
@@ -107,7 +107,7 @@ object Dependencies {
   }
 
   object Akka {
-    private val mm = MultiModule.scala("com.typesafe.akka", "2.4.13")
+    private val mm = MultiModule.scala("com.typesafe.akka", "2.4.16")
     val actor   = mm("akka-actor") ++ mm("akka-slf4j")
     val testkit = mm("akka-testkit")
   }
@@ -143,12 +143,12 @@ object Dependencies {
   val postgresql  = jvmOnly("org.postgresql"              % "postgresql"            % "9.4.1212")
   val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "2.5.1")
   val flyway      = jvmOnly("com.googlecode.flyway"       % "flyway-core"           % "2.3.1")
-  val logback     = jvmOnly("ch.qos.logback"              % "logback-classic"       % "1.1.7")
+  val logback     = jvmOnly("ch.qos.logback"              % "logback-classic"       % "1.1.8")
   val scalate     = jvmOnly("org.scalatra.scalate"       %% "scalate-core"          % "1.7.1") ++
                     jvmOnly("org.scalatra.scalate"       %% "scalamd"               % "1.6.1") // why again?
   val commonsLang = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.5")
   val commonsIo   = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
-  val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.38.0")
+  val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.40.0")
   val scalaTest   = jvmOnly("org.scalatest"              %% "scalatest"             % "2.2.5")
   val scalaCheck  = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.11.3")
 
