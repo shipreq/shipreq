@@ -1,5 +1,6 @@
 package shipreq.webapp.base.server
 
+import japgolly.microlibs.nonempty._
 import nyaya.util.Multimap
 import scalaz.\/
 import scalaz.syntax.equal._

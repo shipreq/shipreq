@@ -1,12 +1,13 @@
 package shipreq.webapp.client.project.app.reqtable
 
+import japgolly.microlibs.nonempty._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Optional
 import scala.annotation.tailrec
 import scalaz.Equal
 import utest._
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.NonEmptyVector
 import shipreq.webapp.base.{event => E}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.FilterAst

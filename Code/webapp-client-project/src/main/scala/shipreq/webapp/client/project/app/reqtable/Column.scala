@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.app.reqtable
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util._

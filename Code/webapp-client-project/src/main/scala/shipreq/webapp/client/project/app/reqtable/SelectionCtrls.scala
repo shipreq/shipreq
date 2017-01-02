@@ -1,9 +1,10 @@
 package shipreq.webapp.client.project.app.reqtable
 
+import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import org.scalajs.dom.window
-import shipreq.base.util.{Allow, NonEmptyVector, NonEmptySet}
+import shipreq.base.util.Allow
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd

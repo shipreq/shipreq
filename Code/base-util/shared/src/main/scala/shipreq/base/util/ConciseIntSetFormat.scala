@@ -1,5 +1,7 @@
 package shipreq.base.util
 
+import japgolly.microlibs.nonempty.NonEmptySet
+
 /**
  * Format a set of ints into a concise textual description.
  *

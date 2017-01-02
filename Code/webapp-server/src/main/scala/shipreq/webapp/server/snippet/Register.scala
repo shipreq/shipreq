@@ -1,6 +1,7 @@
 package shipreq.webapp.server.snippet
 
 import doobie.imports.ConnectionIO
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Instant
 import net.liftweb.http.S
 import net.liftweb.http.js.JsCmd
@@ -9,7 +10,6 @@ import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
 import scalaz.Free
 import shipreq.base.db.DoobieHelpers._
-import shipreq.base.util.ScalaExt._
 import shipreq.taskman.api.Msg.{ReRegistrationAttempted, RegistrationRequested}
 import shipreq.taskman.api.{EmailAddr, Msg, UserId}
 import shipreq.webapp.base.validation.ValidationResult

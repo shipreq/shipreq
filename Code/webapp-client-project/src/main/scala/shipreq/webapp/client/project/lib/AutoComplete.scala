@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.lib
 
+import japgolly.microlibs.nonempty._
 import scala.annotation.tailrec
 import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._, vdom.prefix_<^._

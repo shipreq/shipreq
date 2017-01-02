@@ -1,8 +1,9 @@
 package shipreq.base.util
 
+import japgolly.microlibs.nonempty._
 import japgolly.univeq.UnivEq
 import scala.collection.GenTraversableOnce
-import scalaz.{\/-, -\/, \/, Semigroup}
+import scalaz.{-\/, Semigroup, \/, \/-}
 import Min2Set.Maybe
 
 /**
@@ -71,8 +72,6 @@ final class Min2Set[A] private[util] (val head: A, val tail: NonEmptySet[A]) {
 
   def reduce[B >: A](f: (B, B) => B): B =
     reduceMapLeft1[B](a => a)(f)
-
-  def toStream = whole.toStream
 
   def toNES: NonEmptySet[A] =
     tail + head

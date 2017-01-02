@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.app.reqtable
 
+import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test.ReactTestUtils.Simulate
 import japgolly.scalajs.react.test._

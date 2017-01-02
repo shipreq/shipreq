@@ -1,7 +1,8 @@
 package shipreq.webapp.client.project.widgets
 
+import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
-import shipreq.base.util.{NonEmptySet, IMap, ISubset}
+import shipreq.base.util.{IMap, ISubset}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.client.base.lib.ClientUtil

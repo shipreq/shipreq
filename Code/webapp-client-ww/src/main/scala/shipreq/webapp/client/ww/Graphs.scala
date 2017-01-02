@@ -1,9 +1,9 @@
 package shipreq.webapp.client.ww
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.annotation.tailrec
 import scala.collection.mutable
 import shipreq.base.util.univeq._
-import shipreq.base.util.ScalaExt._
 import shipreq.base.util.VectorTree.PartialLocation
 import shipreq.base.util._
 import shipreq.webapp.base.data._

@@ -1,6 +1,6 @@
 package shipreq.webapp.base.util
 
-import shipreq.base.macros.MacroUtils
+import japgolly.microlibs.macro_utils.MacroUtils
 import scala.reflect.macros.blackbox
 
 object EnvMacros {

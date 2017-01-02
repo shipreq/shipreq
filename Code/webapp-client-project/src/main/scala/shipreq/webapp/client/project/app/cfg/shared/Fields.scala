@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.cfg.shared
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.{Iso, Lens}
-import shipreq.base.util.ScalaExt._
 
 trait FieldSet[_P, _I] {
 

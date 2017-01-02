@@ -1,7 +1,7 @@
 package shipreq.webapp.client.base.lib
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
-import shipreq.base.util.NonEmptyVector
+import japgolly.microlibs.nonempty.NonEmptyVector
 
 object ClientUtil {
 

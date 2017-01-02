@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.widgets.high
 
+import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses

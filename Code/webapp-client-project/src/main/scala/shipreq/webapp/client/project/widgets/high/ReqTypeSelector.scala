@@ -1,11 +1,12 @@
 package shipreq.webapp.client.project.widgets.high
 
+import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import scalacss.ScalaCssReact._
 import shipreq.base.util.univeq._
-import shipreq.base.util.{MutableArray, NonEmptySet}
+import shipreq.base.util.MutableArray
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.base.feature.EditorStatus
 import shipreq.webapp.client.base.ui.EditTheme

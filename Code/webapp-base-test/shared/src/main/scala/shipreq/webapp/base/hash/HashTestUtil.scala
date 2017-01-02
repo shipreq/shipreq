@@ -1,5 +1,6 @@
 package shipreq.webapp.base.hash
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util._
 
 object HashTestUtil {

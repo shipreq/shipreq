@@ -1,9 +1,10 @@
 package shipreq.webapp.base.protocol
 
 import boopickle._
+import japgolly.microlibs.nonempty._
 import monocle.Iso
-import nyaya.util.{Multimap, MultiValues}
-import scalaz.{\/, -\/, \/-, \&/}
+import nyaya.util.{MultiValues, Multimap}
+import scalaz.{-\/, \&/, \/, \/-}
 import scalaz.Isomorphism.<=>
 import shipreq.base.util._
 import shipreq.base.util.univeq._

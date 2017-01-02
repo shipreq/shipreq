@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.microlibs.nonempty._
 import japgolly.univeq.UnivEq
 import scala.collection.GenTraversableOnce
 import scala.math.Ordering
@@ -99,8 +100,6 @@ final class Min2Vector[+A](val head: A, val tail: NonEmptyVector[A]) {
 //
 //  def filterNot(f: A => Boolean): Option[Min2Vector[A]] =
 //    filter(!f(_))
-
-  def toStream = whole.toStream
 
   def toNES[B >: A : UnivEq]: NonEmptySet[B] =
     tail.toNES[B] + head

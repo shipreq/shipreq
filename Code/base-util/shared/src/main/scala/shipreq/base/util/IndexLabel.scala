@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.microlibs.stdlib_ext._
 import scala.annotation.tailrec
 
 /**

@@ -1,7 +1,7 @@
 package shipreq.webapp.base.data
 
 import shipreq.base.util.Memo
-import shipreq.base.util.ScalaExt._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.webapp.base.data.DataImplicits._
 
 /**
@@ -38,13 +38,13 @@ object TagFieldDistribution {
     private[this] implicit val tagTree = p.tags
 
     override lazy val all =
-      tagTree.valuesIterator.map(_.tag.id).filterT[ApplicableTagId].toSet
+      tagTree.valuesIterator.map(_.tag.id).filterSubType[ApplicableTagId].toSet
 
     override val inField =
       Memo { (fid: CustomField.Tag.Id) =>
         val field = p.customField(fid)
         val tag = tagTree.need(field.tagId)
-        tag.transitiveChildren.filterT[ApplicableTagId].toSet
+        tag.transitiveChildren.toIterator.filterSubType[ApplicableTagId].toSet
       }
 
     override lazy val usedInFields = {

@@ -1,5 +1,6 @@
 package shipreq.webapp.base.test
 
+import japgolly.microlibs.nonempty._
 import java.time._
 import nyaya.util.Multimap
 import scala.collection.generic.CanBuildFrom

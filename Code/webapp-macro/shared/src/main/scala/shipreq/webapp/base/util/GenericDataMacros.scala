@@ -1,9 +1,9 @@
 package shipreq.webapp.base.util
 
+import japgolly.microlibs.macro_utils._
 import scalaz.Equal
 import scala.annotation.StaticAnnotation
 import scala.annotation.compileTimeOnly
-import shipreq.base.macros._
 import shipreq.webapp.base.protocol.MPickleMacroUtils
 import boopickle._
 import upickle._
@@ -88,8 +88,9 @@ class GenericDataMacroImplsW(val c: scala.reflect.macros.whitebox.Context) exten
 
         q"""
           object $objName extends $parent {
+            import japgolly.microlibs.nonempty.NonEmptySet
             import scalaz.{Equal, Order}
-            import shipreq.base.util.{NonEmptySet, Util}
+            import shipreq.base.util.Util
             import shipreq.base.util.univeq._
 
             sealed abstract class Attr extends AttrBase
@@ -175,7 +176,7 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
 
     val values = parts.foldLeft(q"$d.emptyValues": Tree)((a,b) => q"$a + $b")
 
-    val impl = q"shipreq.base.util.NonEmpty.force($values)"
+    val impl = q"japgolly.microlibs.nonempty.NonEmpty.force($values)"
 
     if (debug) println("\n" + showCode(impl) + "\n" + sep)
 
@@ -280,7 +281,7 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
             kvs
           })
       val rwValue = rwValues.xmap(_.values.head)(empty + _)
-      val rwNev   = rwValues.xmap[$DFQN.NonEmptyValues](NonEmpty require_! _)(_.value)
+      val rwNev   = rwValues.xmap[$DFQN.NonEmptyValues](japgolly.microlibs.nonempty.NonEmpty require_! _)(_.value)
       $DFQN.ValueTypeClasses[ReadWriter](rwValue, rwValues, rwNev)
     } """
 
@@ -315,7 +316,7 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
       ..${flattenBlocks(init.toList)}
       implicit val value : Pickler[Value]          = pickleADT
       implicit val values: Pickler[Values]         = pickleIMap(emptyValues)
-      implicit val nev   : Pickler[NonEmptyValues] = pickleNonEmptyA(values, implicitly)
+      implicit val nev   : Pickler[NonEmptyValues] = pickleNonEmptyA[Values](values, implicitly)
       ValueTypeClasses(value, values, nev)
     } """
 

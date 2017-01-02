@@ -1,7 +1,8 @@
 package shipreq.webapp.base.event
 
+import japgolly.microlibs.nonempty._
 import scalaz.{-\/, \/-}
-import shipreq.base.util.{NonEmptyVector, NonEmptySet, ISubset}
+import shipreq.base.util.ISubset
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.hash.HashRec

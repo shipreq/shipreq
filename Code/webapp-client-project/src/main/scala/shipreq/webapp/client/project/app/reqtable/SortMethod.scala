@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.app.reqtable
 
-import shipreq.base.util.{Util, NonEmptyVector}
+import japgolly.microlibs.nonempty.NonEmptyVector
+import shipreq.base.util.Util
 import shipreq.base.util.univeq._
 
 sealed trait SortMethod {

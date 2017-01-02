@@ -1,12 +1,12 @@
 package shipreq.taskman.server
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Clock, Duration, Instant}
 import org.specs2.mutable.Specification
 import scala.reflect.ClassTag
 import scalaz.{-\/, Endo, Need, \/, \/-}
 import scalaz.effect.IO
 import shipreq.base.util.effect.IOE
-import shipreq.base.util.ScalaExt.Tuple2Ext
 import shipreq.base.test.specs2.BaseMatchers._
 import shipreq.taskman.server.business.Bop
 import shipreq.taskman.server.business.Bop.{SendEmail, SupportOp}

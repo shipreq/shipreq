@@ -1,10 +1,10 @@
 package shipreq.webapp.server.lib
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import net.liftweb.http.SHtml
 import net.liftweb.http.js.{JsExp, JsCmd, JsCmds}
 import net.liftweb.util.CssSel
 import net.liftweb.util.Helpers._
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.validation._
 import shipreq.webapp.server.feature.validation.Validators
 import shipreq.webapp.server.security.PasswordAndSalt

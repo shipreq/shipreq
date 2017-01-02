@@ -1,10 +1,12 @@
 package shipreq.webapp.base.text
 
+import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import org.parboiled2.{CharPredicate => CP, _}
 import scala.annotation.{switch, tailrec}
-import scalaz.{\/, -\/, \/-}
+import scalaz.{-\/, \/, \/-}
 import shapeless._
-import shipreq.base.util.{NonEmptyVector, Validity, Valid, Invalid}
+import shipreq.base.util.{Invalid, Valid, Validity}
 import shipreq.base.util.VectorTree.PartialLocation
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._

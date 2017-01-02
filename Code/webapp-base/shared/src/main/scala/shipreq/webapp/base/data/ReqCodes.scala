@@ -1,5 +1,7 @@
 package shipreq.webapp.base.data
 
+import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.scalaz_ext.ScalazMacros
 import nyaya.util.Multimap
 import monocle.macros.Lenses
 import scalaz.{Equal, Order}
@@ -304,6 +306,6 @@ final case class ReqCodes(trie: ReqCode.Trie) {
 }
 
 object ReqCodes {
-  implicit lazy val equality: Equal[ReqCodes] = UtilMacros.deriveEqual
+  implicit lazy val equality: Equal[ReqCodes] = ScalazMacros.deriveEqual
   def empty: ReqCodes = ReqCodes(Map.empty)
 }

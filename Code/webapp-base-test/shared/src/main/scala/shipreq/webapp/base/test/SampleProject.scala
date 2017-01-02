@@ -1,7 +1,9 @@
 package shipreq.webapp.base.test
 
-import shipreq.base.util.{NonEmptyVector, ISubset}
-import shipreq.webapp.base.data._, DataImplicits._
+import japgolly.microlibs.nonempty.NonEmptyVector
+import shipreq.base.util.ISubset
+import shipreq.webapp.base.data._
+import DataImplicits._
 import UnsafeTypes._
 
 /**

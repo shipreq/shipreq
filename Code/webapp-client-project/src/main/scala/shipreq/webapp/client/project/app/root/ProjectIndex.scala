@@ -1,11 +1,12 @@
 package shipreq.webapp.client.project.app.root
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.univeq._
 import scala.scalajs.js
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{Intersection, NonEmptyVector}
+import shipreq.base.util.Intersection
 import shipreq.webapp.client.base.ui.semantic.{Colour, Dropdown, Header, Icon, JQuery, UsesSemanticUiManually}
 import shipreq.webapp.client.project.app.Style.{home => *}
 import Routes.{Page, RouterCtl}
@@ -66,7 +67,7 @@ object ProjectIndex {
 
     implicit def univEq: UnivEq[Category] = UnivEq.derive
 
-    //val All = UtilMacros.adtValuesManual[Category](
+    //val All = AdtMacros.adtValuesManual[Category](
     val All = NonEmptyVector[Category](
       Content, Configuration)
   }

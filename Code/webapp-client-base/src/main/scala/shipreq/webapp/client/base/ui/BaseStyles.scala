@@ -24,7 +24,7 @@ object BaseStyles extends StyleSheet.Inline {
       }
 
     val domain =
-      // Domain.ofValues(UtilMacros.adtValues[EditorState].whole: _*)
+      // Domain.ofValues(AdtMacros.adtValues[EditorState].whole: _*)
       Domain.ofValues(Valid, Invalid, InTransit)
   }
 

@@ -1,5 +1,6 @@
 package shipreq.webapp.base.event
 
+import japgolly.microlibs.nonempty._
 import shipreq.webapp.base.WebappConfig
 import utest._
 import shipreq.base.util._

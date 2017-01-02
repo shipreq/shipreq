@@ -1,7 +1,7 @@
 package shipreq.webapp.client.ww
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.annotation.tailrec
-import shipreq.base.util.ScalaExt._
 
 /**
   * Provides colours that all we maximally *perceive* to be distinct from one another.

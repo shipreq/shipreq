@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.feature
 
+import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._

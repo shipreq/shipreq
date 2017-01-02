@@ -1,13 +1,13 @@
 package shipreq.webapp.server.test
 
 import doobie.imports._
+import japgolly.microlibs.stdlib_ext.AsciiTable
 import org.postgresql.util.PSQLException
 import scala.util.Random
 import scalaz.effect.IO
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.db.SingleConnectionXA
-import shipreq.base.util.AsciiTable
 import shipreq.taskman.api.UserId
 import shipreq.webapp.server.data._
 import shipreq.webapp.server.db.SqlHelpers._

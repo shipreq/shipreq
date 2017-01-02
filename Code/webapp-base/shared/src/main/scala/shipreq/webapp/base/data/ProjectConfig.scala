@@ -1,16 +1,17 @@
 package shipreq.webapp.base.data
 
+import japgolly.microlibs.scalaz_ext.ScalazMacros
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.macros.Lenses
 import scalaz.{\/, -\/, \/-, Equal}
 import scalaz.std.option.toRight
-import shipreq.base.util.ScalaExt._
-import shipreq.base.util.UtilMacros
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.util.Must._
 import DataImplicits._
 
 object ProjectConfig {
-  implicit lazy val equality: Equal[ProjectConfig] = UtilMacros.deriveEqual
+  implicit lazy val equality: Equal[ProjectConfig] =
+    ScalazMacros.deriveEqual
 
   val empty: ProjectConfig = {
     val cit = emptyDataMap(CustomIssueType)
@@ -43,7 +44,7 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
     }
 
   def atagIterator: Iterator[ApplicableTag] =
-    tags.valuesIterator.map(_.tag).filterT[ApplicableTag]
+    tags.valuesIterator.map(_.tag).filterSubType[ApplicableTag]
 
   lazy val deadATagIds: Set[ApplicableTagId] =
     atagIterator.filter(_.live :: Dead).map(_.id).toSet
@@ -65,13 +66,13 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
     customIssueTypes.need(id)
 
   lazy val customImpFields: List[CustomField.Implication] =
-    fields.customFields.values.filterT[CustomField.Implication].toList
+    fields.customFields.valuesIterator.filterSubType[CustomField.Implication].toList
 
   lazy val customTagFields: List[CustomField.Tag] =
-    fields.customFields.values.filterT[CustomField.Tag].toList
+    fields.customFields.valuesIterator.filterSubType[CustomField.Tag].toList
 
   lazy val customTextFields: List[CustomField.Text] =
-    fields.customFields.values.filterT[CustomField.Text].toList
+    fields.customFields.valuesIterator.filterSubType[CustomField.Text].toList
 
   lazy val liveCustomTextFields =
     customTextFields.filter(_.live(this) :: Live)

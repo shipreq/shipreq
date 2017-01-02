@@ -1,6 +1,7 @@
 package shipreq.webapp.server.snippet
 
 import doobie.imports._
+import japgolly.microlibs.nonempty._
 import net.liftweb.http.S
 import net.liftweb.util.Helpers._
 import scalaz.effect.IO

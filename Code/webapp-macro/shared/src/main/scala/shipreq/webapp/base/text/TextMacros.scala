@@ -1,7 +1,7 @@
 package shipreq.webapp.base.text
 
+import japgolly.microlibs.macro_utils.WhiteboxMacroUtils
 import scala.reflect.macros.whitebox.Context
-import shipreq.base.macros.WhiteboxMacroUtils
 
 object TextMacros {
 
@@ -78,7 +78,7 @@ class TextMacroImpls(val c: Context) extends WhiteboxMacroUtils {
     val valMods = if (lazyValDefs.isEmpty) Modifiers() else Modifiers(Flag.LAZY)
 
     val li = if (!needLI) EmptyTree else
-      q"lazy val li: TC[NonEmptyVector[t.ListItem]] = a.lazily(a.nev(a vec vec)(vec))"
+      q"lazy val li: TC[japgolly.microlibs.nonempty.NonEmptyVector[t.ListItem]] = a.lazily(a.nev(a vec vec)(vec))"
 
     val impl = q""" {
       val t = $tTerm

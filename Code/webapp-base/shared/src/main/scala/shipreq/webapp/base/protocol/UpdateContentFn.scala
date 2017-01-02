@@ -1,5 +1,6 @@
 package shipreq.webapp.base.protocol
 
+import japgolly.microlibs.nonempty._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._

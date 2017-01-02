@@ -1,8 +1,10 @@
 package shipreq.webapp.client.project.widgets.high
 
 import utest._
+import japgolly.microlibs.nonempty._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{NonEmptySet, IMap, Util}
+import shipreq.base.util.{IMap, Util}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
 import WebappTestUtil._

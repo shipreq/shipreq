@@ -1,11 +1,11 @@
 package shipreq.webapp.server.test
 
 import doobie.imports._
+import japgolly.microlibs.nonempty._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import scalaz.std.list._
 import scalaz.syntax.traverse._
-import shipreq.base.util.NonEmptySet
-import shipreq.base.util.ScalaExt._
 
 sealed abstract class DbTable(val name: String) {
   override def toString = name
@@ -23,7 +23,7 @@ object DbTable {
 
   implicit def univEq: UnivEq[DbTable] = UnivEq.derive
 
-  //val All = UtilMacros.adtValues[DbTable]
+  //val All = AdtMacros.adtValues[DbTable]
   val All = NonEmptySet[DbTable](Event, EventHash, Project, Usr, UsrLoginLog, Usrd, UsrhName)
 
   def find(name: String): Option[DbTable] =

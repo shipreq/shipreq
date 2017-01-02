@@ -1,5 +1,8 @@
 package shipreq.webapp.base
 
+import japgolly.microlibs.adt_macros.AdtMacros._
+import japgolly.microlibs.nonempty._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Instant
 import nyaya.gen._
 import nyaya.util._
@@ -30,7 +33,6 @@ import shipreq.webapp.base.event.ApplyEvent.LogicVer
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Text, Grammar, GrammarSpec}
 import shipreq.webapp.base.util.GenericData
-import shipreq.base.util.UtilMacros._
 import DataImplicits._
 import Optics.Implicits._
 import TestOptics.{customReqTypesLive => _, _}
@@ -1145,9 +1147,9 @@ object RandomData {
     val cissueIdG      = Gen tryGenChoose cissueIds.toSeq
     val activeCodeIds  = reqCodes1.trie.allValues.flatMap(_.activeId.toStream)
     val activeCodeIdG  = Gen tryGenChoose activeCodeIds
-    val atagIds        = cfg.tags.valuesIterator.map(_.tag).filterT[ApplicableTag].map(_.id).toSet
+    val atagIds        = cfg.tags.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
     val atagIdG        = Gen.tryGenChoose(atagIds.toSeq)
-    val textColIds     = cfg.fields.customFields.values.filterT[CustomField.Text].map(_.id).toSet
+    val textColIds     = cfg.fields.customFields.valuesIterator.filterSubType[CustomField.Text].map(_.id).toSet
     val reqIdSet       = reqsWithoutText.idIterator.toSet
     val reqIdG         = Gen tryGenChoose reqIdSet.toIndexedSeq
     def ucStepIds      = reqsWithoutText.useCases.stepIterator.map(_.id)
@@ -1177,7 +1179,7 @@ object RandomData {
   lazy val project: Gen[Project] =
     for {
       cfg             ← projectConfig
-      atagIds         = cfg.tags.valuesIterator.map(_.tag).filterT[ApplicableTag].map(_.id).toSet
+      atagIds         = cfg.tags.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
       reqCount        ← Gen.chooseSize
       ucCount         ← Gen.chooseSize map (_ >> 1)
       reqsWithoutText ← reqsWithoutText(cfg, reqCount, ucCount)

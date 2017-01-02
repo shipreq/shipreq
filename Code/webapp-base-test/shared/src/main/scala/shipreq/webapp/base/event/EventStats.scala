@@ -1,10 +1,10 @@
 package shipreq.webapp.base.event
 
-import shipreq.base.util._
+import japgolly.microlibs.adt_macros.AdtMacros._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
+import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import ApplicableEventGen.ObserveFn
-import ScalaExt._
-import UtilMacros._
 
 object EventStats {
 

@@ -1,5 +1,6 @@
 package shipreq.base.test
 
+import japgolly.microlibs.nonempty._
 import nyaya.gen._
 import nyaya.prop.CycleDetector
 import nyaya.util.Multimap

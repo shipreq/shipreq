@@ -1,6 +1,7 @@
 package shipreq.webapp.base.protocol
 
 import boopickle._
+import japgolly.microlibs.nonempty.NonEmptyVector
 import java.time.Instant
 import shipreq.base.util._
 import shipreq.webapp.base.data._

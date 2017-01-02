@@ -4,8 +4,8 @@ import nyaya.gen._
 import nyaya.test._
 import scalaz.std.vector._
 import shipreq.base.test.BaseUtilGen.NevToNonEmptySeq
-import shipreq.base.util.NonEmptyVector
-import shipreq.base.util.ScalaExt._
+import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.FilterAst
@@ -52,7 +52,7 @@ object RandomReqTableData {
     Gen.apply2(SortCriterion.Conclusive)(columnC, sortMethodI)
 
   val builtInColumnIs: NonEmptyVector[Column.SortInconclusive] =
-    NonEmptyVector force (Column.builtInValues.whole: Vector[Column]).filterT[Column.SortInconclusive].toVector
+    NonEmptyVector force (Column.builtInValues.whole: Vector[Column]).iterator.filterSubType[Column.SortInconclusive].toVector
 
   val builtInColumnIsG: Gen[Column.SortInconclusive] =
     Gen.chooseNE(builtInColumnIs)
@@ -91,7 +91,7 @@ object RandomReqTableData {
   def viewSettings(p: Project, allowFilter: Boolean): Gen[ViewSettings] =
     for {
       cs     ← visibleColumns(p)
-      icols  = cs.toStream.filterT[Column.SortInconclusive].toVector
+      icols  = cs.iterator.filterSubType[Column.SortInconclusive].toVector
       scis   ← Gen.subset(icols).shuffle flatMap sortCriIs
       order  ← sortCriteria(scis)
       filter ← if (allowFilter) RandomData.filter.ast.forProject(p).option else noFilter

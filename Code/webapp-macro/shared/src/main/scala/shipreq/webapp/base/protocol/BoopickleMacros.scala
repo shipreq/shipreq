@@ -1,8 +1,8 @@
 package shipreq.webapp.base.protocol
 
+import japgolly.microlibs.macro_utils.MacroUtils
 import japgolly.univeq.UnivEq
 import scala.reflect.macros.blackbox.Context
-import shipreq.base.macros.MacroUtils
 import boopickle._
 
 object BoopickleMacros {

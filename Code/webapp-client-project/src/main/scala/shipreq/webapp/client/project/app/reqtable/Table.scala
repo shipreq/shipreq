@@ -6,7 +6,7 @@ import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
-import shipreq.base.util.NonEmptyVector
+import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._

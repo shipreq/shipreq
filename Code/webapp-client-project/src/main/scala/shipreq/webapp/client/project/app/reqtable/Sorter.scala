@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.app.reqtable
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Optional
 import monocle.function.Index.index
 import monocle.std.map.mapIndex
@@ -353,7 +354,8 @@ object Sorter {
   def sortUnspecified(vs: ViewSettings): RowModFn = {
     val fns =
       vs.columns.whole
-        .filterT[C.SortInconclusive]
+        .iterator
+        .filterSubType[C.SortInconclusive]
         .filterNot(vs.isOrdered)
         .map({
           case c: C.HasBlanks => inconclusiveCB(c)(SM.BlanksThenAsc)

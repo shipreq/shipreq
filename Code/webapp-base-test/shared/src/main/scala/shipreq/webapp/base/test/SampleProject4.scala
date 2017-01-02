@@ -1,6 +1,6 @@
 package shipreq.webapp.base.test
 
-import shipreq.base.util.ScalaExt._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.base.util.VectorTree
 import shipreq.base.util.VectorTree.{Location => Loc}
 import shipreq.webapp.base.data._, DataImplicits._

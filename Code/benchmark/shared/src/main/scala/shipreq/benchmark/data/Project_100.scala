@@ -26,8 +26,8 @@ package shipreq.benchmark.data
 */
 
 import shipreq.base.util.ISubset
-import shipreq.base.util.NonEmptySet
-import shipreq.base.util.NonEmptyVector
+import japgolly.microlibs.nonempty.NonEmptySet
+import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.DataImplicits._

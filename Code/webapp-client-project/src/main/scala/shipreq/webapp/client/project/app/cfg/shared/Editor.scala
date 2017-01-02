@@ -1,10 +1,10 @@
 package shipreq.webapp.client.project.app.cfg.shared
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.ScalazReact.ReactST
 import scalaz._
 import scalaz.Isomorphism.<=>
 import scalaz.Leibniz.===
-import shipreq.base.util.ScalaExt._
 
 sealed abstract class CallbackEvent[+I] {
   final def map[X](f: I => X): CallbackEvent[X] = this match {

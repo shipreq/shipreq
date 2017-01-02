@@ -1,11 +1,11 @@
 package shipreq.webapp.base.data
 
+import japgolly.microlibs.scalaz_ext.ScalazMacros
 import monocle.{Iso, Traversal}
 import monocle.macros.Lenses
 import nyaya.util.Multimap
-import scalaz.{Equal, \/, -\/, \/-}
+import scalaz.{Equal, -\/, \/, \/-}
 import shipreq.base.util._
-import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.text.Text, Text.Equality._
@@ -354,7 +354,7 @@ object UseCases {
   type StepFlow = StepFlow.BiDir
 
   implicit lazy val equality: Equal[UseCases] =
-    UtilMacros.deriveEqual
+    ScalazMacros.deriveEqual
 
   def empty: UseCases =
     UseCases(emptyDataMap(UseCase), emptyStepIndex, StepFlow.emptyBiDir)
@@ -382,7 +382,7 @@ sealed trait ReqTEquality {
 
 object Requirements {
   implicit lazy val equality: Equal[Requirements] =
-    UtilMacros.deriveEqual
+    ScalazMacros.deriveEqual
 
   def empty: Requirements =
     Requirements(emptyDataMap(GenericReq), UseCases.empty, PubidRegister.empty)

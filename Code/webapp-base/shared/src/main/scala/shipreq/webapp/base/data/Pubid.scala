@@ -1,11 +1,11 @@
 package shipreq.webapp.base.data
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.macros.GenIso
 import monocle.{Iso, Prism}
 import nyaya.util.Multimap
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.univeq._
-import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes._
 import shipreq.webapp.base.text.Grammar
 

@@ -3,7 +3,7 @@ package shipreq.taskman.server.app
 import scalaz.effect.IO
 import scalaz.{-\/, \/-}
 import shipreq.base.util.ErrorOr
-import shipreq.base.util.ScalaExt.Tuple2Ext
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.{MsgType => T, _}

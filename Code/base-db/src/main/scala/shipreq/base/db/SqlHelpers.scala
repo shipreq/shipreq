@@ -3,14 +3,13 @@ package shipreq.base.db
 import doobie.imports._
 import doobie.enum.{jdbctype => JT}
 import doobie.free.{preparedstatement => PS, resultset => RS}
+import japgolly.microlibs.macro_utils.MacroUtils
 import java.time.Duration
 import org.postgresql.util.{PGInterval, PGobject}
 import scala.reflect.macros.blackbox.Context
 import scala.reflect.runtime.universe.TypeTag
 import scalaz.NonEmptyList
-import shipreq.base.macros.MacroUtils
 import shipreq.base.util.TaggedTypes.JsonStr
-import shipreq.base.util.ScalaExt._
 
 object SqlHelpers {
 

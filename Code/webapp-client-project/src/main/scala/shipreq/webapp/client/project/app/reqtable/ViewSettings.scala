@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.app.reqtable
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import monocle.macros.Lenses
-import shipreq.base.util.NonEmptyVector
+import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.FilterAst

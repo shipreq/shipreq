@@ -1,9 +1,10 @@
 package shipreq.webapp.client.project.app.reqtable
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
-import shipreq.base.util.{MutableArray, NonEmptyVector}
+import shipreq.base.util.MutableArray
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._

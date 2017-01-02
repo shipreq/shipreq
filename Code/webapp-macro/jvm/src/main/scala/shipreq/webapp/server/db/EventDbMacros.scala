@@ -1,8 +1,8 @@
 package shipreq.webapp.server.db
 
+import japgolly.microlibs.macro_utils.MacroUtils
 import scala.reflect.macros.blackbox.Context
 import shipreq.base.db.SqlHelpers.PGChar
-import shipreq.base.macros.MacroUtils
 import shipreq.webapp.base.protocol.MPickleMacroUtils
 import shipreq.base.util.TaggedTypes.TaggedInt
 

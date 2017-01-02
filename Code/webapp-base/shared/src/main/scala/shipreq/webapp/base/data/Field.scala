@@ -1,5 +1,9 @@
 package shipreq.webapp.base.data
 
+import japgolly.microlibs.adt_macros.AdtMacros
+import japgolly.microlibs.nonempty._
+import japgolly.microlibs.scalaz_ext.ScalazMacros
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle._
 import monocle.macros.{GenLens, Lenses}
 import scala.collection.immutable.ListSet
@@ -24,7 +28,7 @@ object StaticFieldType {
   case object ImplicationGraph extends StaticFieldType("Implication Graph")
 
   val values: NonEmptyVector[StaticFieldType] =
-    UtilMacros.adtValues[StaticFieldType]
+    AdtMacros.adtValues[StaticFieldType]
 
   implicit def equality: UnivEq[StaticFieldType] = UnivEq.derive
 }
@@ -35,7 +39,7 @@ object CustomFieldType {
   case object Text        extends CustomFieldType("Text")
 
   val values: NonEmptyVector[CustomFieldType] =
-    UtilMacros.adtValues[CustomFieldType]
+    AdtMacros.adtValues[CustomFieldType]
 
   implicit def equality: UnivEq[CustomFieldType] = UnivEq.derive
 }
@@ -266,14 +270,14 @@ object StaticField {
   // Non lazy causes utest to crash
   // ORDER MATTERS as this is the default order of fields use in new projects
   lazy val values: NonEmptyVector[StaticField] =
-    UtilMacros.adtValuesManual[StaticField](
+    AdtMacros.adtValuesManual[StaticField](
       ImplicationGraph,
       NormalAltStepTree,
       ExceptionStepTree,
       StepGraph)
 
   lazy val useCaseStepTrees: NonEmptyVector[UseCaseStepTree] =
-    UtilMacros.adtValuesManual[UseCaseStepTree](NormalAltStepTree, ExceptionStepTree)
+    AdtMacros.adtValuesManual[UseCaseStepTree](NormalAltStepTree, ExceptionStepTree)
 
   lazy val (deletable, notDeletable) =
     values.whole.partition(_.deletable :: Deletable)
@@ -456,7 +460,7 @@ case class FieldSet(customFields: FieldSet.CustomFields,
     }
 
   def staticFieldIterator: Iterator[StaticField] =
-    order.filterT[StaticField]
+    order.toIterator.filterSubType[StaticField]
 
   def staticFieldSet: ListSet[StaticField] =
     staticFieldIterator.to
@@ -468,5 +472,5 @@ object FieldSet {
   type CustomFields = IMap[CustomFieldId, CustomField]
   def emptyCustomFields: CustomFields = IMap.empty(_.id)
 
-  implicit val equality: Equal[FieldSet] = UtilMacros.deriveEqual
+  implicit val equality: Equal[FieldSet] = ScalazMacros.deriveEqual
 }

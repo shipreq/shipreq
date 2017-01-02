@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app.cfg.shared
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.univeq.UnivEq
-import shipreq.base.util.NonEmptyVector
+import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.webapp.base.data.{Dead, Live}
 import Deletion._
 import shipreq.webapp.base.protocol.CrudAction

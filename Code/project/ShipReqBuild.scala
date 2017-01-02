@@ -26,16 +26,7 @@ object ShipReqBuild {
   lazy val base =
     project("base")
       .configure(Common.settings)
-      .aggregate(baseMacroJvm, baseMacroJs, baseUtilJvm, baseUtilJs, baseDb, baseTestJvm, baseTestJs)
-
-  lazy val baseMacroJvm = baseMacro.jvm
-  lazy val baseMacroJs  = baseMacro.js
-  lazy val baseMacro =
-    crossProject("base-macro")
-      .configureBoth(Common.macroModuleSettings)
-      .configureJvm(Common.jvmSettings)
-      .configureJs(Common.jsSettings(NoTests))
-      .depsForBoth(UnivEq.scalaz ++ Scalaz.core ++ Nyaya.util)
+      .aggregate(baseUtilJvm, baseUtilJs, baseDb, baseTestJvm, baseTestJs)
 
   lazy val baseUtilJvm = baseUtil.jvm
   lazy val baseUtilJs  = baseUtil.js
@@ -44,9 +35,9 @@ object ShipReqBuild {
       .configureBoth(Common.settings)
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoDom))
-      .dependsOn(baseMacro)
       .depsForBoth(
         UnivEq.scalaz ++ Scalaz.effect ++ Nyaya.prop ++ Monocle.core ++
+        Microlibs.adtMacros ++ Microlibs.nonempty ++ Microlibs.scalazExt ++ Microlibs.stdlibExt ++
         testScope(μTest ++ Nyaya.test))
       .depsForJvm(
         SLF4J.api ++
@@ -59,8 +50,7 @@ object ShipReqBuild {
         Common.settings,
         Common.jvmSettings,
         Common.macroModuleSettings)
-      .deps(postgresql ++ Doobie.main ++ hikariCP ++ flyway ++ logback)
-
+      .deps(postgresql ++ Doobie.main ++ hikariCP ++ flyway ++ logback ++ Microlibs.macroUtils)
       .dependsOn(baseUtilJvm)
 
   lazy val baseTestJvm = baseTest.jvm
@@ -72,6 +62,7 @@ object ShipReqBuild {
       .configureJs(Common.jsSettings(NoDom))
       .dependsOn(baseUtil)
       .depsForBoth(
+        Microlibs.testUtil ++
         providedScope(Nyaya.gen) ++
         testScope(μTest ++ Nyaya.test))
       .configureBoth(_

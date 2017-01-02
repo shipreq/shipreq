@@ -1,5 +1,6 @@
 package shipreq.webapp.base.data
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.annotation.tailrec
 import shipreq.base.util.{Memo, MutableArray, Util}
 import shipreq.base.util.Digraph.BiDir
@@ -73,7 +74,7 @@ object DataLogic {
 
   def tagOrderByName(tags: TagTree): TagOrder =
     Util.mapToOrder(
-      MutableArray(tags.valuesIterator.map(_.tag).filterT[ApplicableTag])
+      MutableArray(tags.valuesIterator.map(_.tag).filterSubType[ApplicableTag])
         .sortBySchwartzian(_.key.value |> normaliseStringForSorting)
         .map(_.id)
         .iterator)
@@ -83,7 +84,7 @@ object DataLogic {
       FlatTag.flatten(tags)(_ => true, FlatTag.FilterPolicy.OmitNothing)
         .iterator
         .map(_.id)
-        .filterT[ApplicableTagId])
+        .filterSubType[ApplicableTagId])
 
   // ===================================================================================================================
   // Implications

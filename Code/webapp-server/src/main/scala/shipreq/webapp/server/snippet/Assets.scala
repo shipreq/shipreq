@@ -2,7 +2,7 @@ package shipreq.webapp.server.snippet
 
 import net.liftweb.http.DispatchSnippet
 import scala.xml.NodeSeq
-import shipreq.base.util.NonEmptyVector
+import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.webapp.base.WebappConfig.assetPath_/
 import Asset._
 

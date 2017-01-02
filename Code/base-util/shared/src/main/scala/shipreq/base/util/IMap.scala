@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.microlibs.nonempty.NonEmpty
 import japgolly.univeq.UnivEq
 import monocle._
 import scalaz.{Applicative, Equal, Order, \/}
@@ -11,6 +12,9 @@ object IMap {
 
   implicit def univEq[K, V](implicit u: UnivEq[Map[K, V]]): UnivEq[IMap[K, V]] =
     IMapBaseV.univEq[K, V, V, IMap[K, V]](u)
+
+  implicit def nonEmptyProof[K, V]: NonEmpty.ProofA[IMap[K, V]] =
+    NonEmpty.Proof.testEmptiness(_.isEmpty)
 
   def empty[K: UnivEq, V](k: V => K): IMap[K, V] =
     new IMap(k, Map.empty)

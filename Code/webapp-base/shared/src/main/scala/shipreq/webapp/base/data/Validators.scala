@@ -1,5 +1,6 @@
 package shipreq.webapp.base.data
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import scalaz.{Equal, Traverse}
 import scalaz.old.NonEmptyList
 import scalaz.std.string.stringInstance
@@ -7,10 +8,10 @@ import scalaz.std.stream._
 import scalaz.syntax.traverse._
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{Util, NonEmptyVector}
+import shipreq.base.util.Util
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.ReqType.Mnemonic
-import shipreq.webapp.base.text.{Text, PlainText, Grammar}
+import shipreq.webapp.base.text.{Grammar, PlainText, Text}
 import shipreq.webapp.base.validation._
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.util.TextMod._

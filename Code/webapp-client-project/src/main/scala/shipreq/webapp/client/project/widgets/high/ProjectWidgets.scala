@@ -1,16 +1,16 @@
 package shipreq.webapp.client.project.widgets.high
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
 import scalacss.StyleA
-import scalajs.js.{undefined, UndefOr}
+import scalajs.js.{UndefOr, undefined}
 import scalaz.\/
 import shipreq.base.util._
 import shipreq.base.util.SafeStringOps._
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G, _}

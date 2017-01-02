@@ -1,8 +1,9 @@
 package shipreq.webapp.base.data
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import nyaya.prop.CycleDetector
 import monocle.Lens
-import monocle.macros.{Lenses, GenLens}
+import monocle.macros.{GenLens, Lenses}
 import scala.annotation.tailrec
 import shipreq.base.util._
 import shipreq.base.util.univeq._

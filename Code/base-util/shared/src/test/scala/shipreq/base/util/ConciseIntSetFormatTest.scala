@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.microlibs.nonempty.NonEmptySet
 import utest._
 
 object ConciseIntSetFormatTest extends TestSuite {

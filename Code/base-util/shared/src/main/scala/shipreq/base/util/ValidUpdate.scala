@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.microlibs.nonempty.NonEmpty
 import ValidUpdate._
 
 sealed abstract class ValidUpdate[+E, +A] {

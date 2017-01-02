@@ -1,5 +1,6 @@
 package shipreq.webapp.server.db
 
+import japgolly.microlibs.nonempty._
 import java.time.{Duration, Instant, LocalDateTime, ZoneOffset}
 import org.scalatest.FunSpec
 import doobie.imports._

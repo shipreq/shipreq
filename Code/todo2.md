@@ -1,4 +1,3 @@
-* Fix microlib versioning -> use microlibs
 * Use μtest only
 * Upgrade libs
 * Upgrade Lift

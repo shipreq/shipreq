@@ -5,7 +5,7 @@ import japgolly.scalajs.react.extra.router.{RouterCtl => RouterCtl_, _}
 import monocle._
 import monocle.macros._
 import scala.annotation.elidable
-import shipreq.base.util.NonEmptyVector
+import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{ExternalPubid, ReqType, ReqTypePos}
 import shipreq.webapp.base.text.PlainText

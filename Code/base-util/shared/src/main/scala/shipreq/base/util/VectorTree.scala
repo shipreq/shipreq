@@ -1,5 +1,7 @@
 package shipreq.base.util
 
+import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import monocle._
 import nyaya.prop.Prop
@@ -7,7 +9,6 @@ import scala.annotation.tailrec
 import scala.collection.AbstractIterator
 import scalaz.{Applicative, Equal}
 import scalaz.syntax.equal._
-import ScalaExt._
 import VectorTree._
 
 /**
@@ -142,7 +143,7 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
           Some(c.updated(i, h2))
         } else
           // Add at the same level
-          c.insert(i + 1, n)
+          c.insertBefore(i + 1, n)
       } else
         None
     }

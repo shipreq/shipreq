@@ -3,7 +3,7 @@ package shipreq.webapp.client.base.ui.semantic
 import japgolly.univeq._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import shipreq.base.util.NonEmptyVector
+import japgolly.microlibs.nonempty.NonEmptyVector
 
 object Accordion {
 

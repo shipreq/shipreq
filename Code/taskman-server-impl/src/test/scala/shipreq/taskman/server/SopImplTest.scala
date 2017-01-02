@@ -1,6 +1,7 @@
 package shipreq.taskman.server
 
 import doobie.imports._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import org.specs2.matcher.Matcher
 import org.specs2.mutable.Specification
@@ -9,7 +10,6 @@ import scala.util.Random
 import shipreq.base.db.SqlHelpers._
 import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.base.util.JavaTimeHelpers._
-import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.taskman.api.impl.Serialisation
 import shipreq.taskman.api._

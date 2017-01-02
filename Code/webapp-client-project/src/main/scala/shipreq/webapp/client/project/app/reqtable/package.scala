@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import shipreq.base.util.NonEmptyVector
+import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.univeq._
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._

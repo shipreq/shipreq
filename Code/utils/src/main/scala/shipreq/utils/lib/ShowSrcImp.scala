@@ -1,5 +1,6 @@
 package shipreq.utils.lib
 
+import japgolly.microlibs.nonempty._
 import nyaya.util.Multimap
 import org.apache.commons.lang3.StringEscapeUtils.escapeJava
 import scala.collection.GenTraversable
@@ -11,8 +12,8 @@ object ShowSrcGenericImp {
   import shipreq.base.util.TaggedTypes.TaggedType
 
   private val importISubset    = "import shipreq.base.util.ISubset"
-  private val importNEV        = "import shipreq.base.util.NonEmptyVector"
-  private val importNES        = "import shipreq.base.util.NonEmptySet"
+  private val importNEV        = "import japgolly.microlibs.nonempty.NonEmptyVector"
+  private val importNES        = "import japgolly.microlibs.nonempty.NonEmptySet"
   private val importScalaExt   = "import shipreq.base.util.ScalaExt._"
   private val importScalazDisj = """import scalaz.{\/-, -\/}"""
 

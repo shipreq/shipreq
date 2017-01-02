@@ -1,12 +1,13 @@
 
 package shipreq.webapp.base.data
 
+import japgolly.microlibs.adt_macros.AdtMacros
+import japgolly.microlibs.nonempty.NonEmptyVector
 import monocle.macros.Lenses
 import scalaz.Order
 import scalaz.std.anyVal.intInstance
 import scalaz.syntax.order._
 import shipreq.base.util._
-import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.util.Must._
@@ -60,7 +61,7 @@ object StaticReqType {
   }
 
   val values: NonEmptyVector[StaticReqType] =
-    UtilMacros.adtValues[StaticReqType]
+    AdtMacros.adtValues[StaticReqType]
 
   implicit val order = Util.univEqAndArbitraryOrder(values.whole)
 
@@ -128,7 +129,7 @@ final case class ReqTypes(custom: IMap[CustomReqTypeId, CustomReqType]) {
     new Ordering[Pubid] {
       val rto = order
       override def compare(x: Pubid, y: Pubid): Int =
-        (rto(x.reqTypeId) - rto(y.reqTypeId)) match {
+        rto(x.reqTypeId) - rto(y.reqTypeId) match {
           case 0 => x.pos.value - y.pos.value
           case n => n
         }

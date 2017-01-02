@@ -1,5 +1,7 @@
 package shipreq.webapp.base.data
 
+import japgolly.microlibs.nonempty._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop._
 import scala.annotation.tailrec
 import scala.collection.GenTraversableOnce

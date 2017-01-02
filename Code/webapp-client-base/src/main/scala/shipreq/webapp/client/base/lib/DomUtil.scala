@@ -1,11 +1,11 @@
 package shipreq.webapp.client.base.lib
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import scala.annotation.tailrec
 import scalajs.js
 import org.scalajs.dom._
 import shipreq.base.util.Util
-import shipreq.base.util.ScalaExt._
 
 object DomUtil {
 
@@ -68,7 +68,7 @@ object DomUtil {
     focusable(e.children.deepIteratorDepthFirst)
 
   def focusable(es: Iterator[Element]): Iterator[html.Element] =
-    es.filterT[html.Element]
+    es.filterSubType[html.Element]
       .filter(_.tabIndex >= 0)
       .filter(_.disabled.forall(!_)) // ignore disabled
 

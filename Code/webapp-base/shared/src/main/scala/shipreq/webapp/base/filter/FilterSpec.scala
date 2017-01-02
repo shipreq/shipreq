@@ -1,6 +1,7 @@
 package shipreq.webapp.base.filter
 
-import shipreq.base.util._
+import japgolly.microlibs.nonempty._
+import shipreq.base.util.ConciseIntSetFormat
 import shipreq.webapp.base.data.HashRefKey
 import shipreq.webapp.base.data.ReqType.Mnemonic
 import shipreq.webapp.base.text.Grammar

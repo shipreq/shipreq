@@ -1,5 +1,7 @@
 package shipreq.webapp.server.db
 
+import japgolly.microlibs.adt_macros.AdtMacros
+import japgolly.microlibs.nonempty._
 import scala.annotation.tailrec
 import scalaz.Isomorphism.<=>
 import shipreq.base.util._
@@ -711,7 +713,7 @@ object EventSqlHelpers {
     doobieMetaChar.xmap(HashScheme unsafeGet HashSchemeId(_), _.id.value)
 
   private val (hashScopeToChar, charToHashScope, _, _) =
-    UtilMacros.adtIso[HashScope, Char] {
+    AdtMacros.adtIso[HashScope, Char] {
       case HashScope.WholeProject    => '*'
       case HashScope.Config          => '?'
       case HashScope.CfgIssueTypes   => 'I'

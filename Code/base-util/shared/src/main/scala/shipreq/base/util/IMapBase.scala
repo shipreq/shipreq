@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq.UnivEq
 import scala.annotation.elidable
 import scala.collection.GenTraversableOnce
@@ -8,7 +9,6 @@ import scalaz.{Order, Equal, Foldable}
 import scalaz.std.iterable._
 import scalaz.std.map._
 import scalaz.syntax.foldable._
-import ScalaExt._
 
 object IMapBaseV {
   def equality[K: Order, V: Equal, M <: IMapBaseV[K, _, V, M]]: Equal[M] =

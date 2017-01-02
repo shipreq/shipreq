@@ -1,11 +1,11 @@
 package shipreq.webapp.server.snippet
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import net.liftweb.http.{ResponseShortcutException, S}
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
 import org.postgresql.util.PSQLException
 import utest._
-import shipreq.base.util.ScalaExt._
 import shipreq.taskman.api.Msg.RegistrationRequested
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.db.DbLogic

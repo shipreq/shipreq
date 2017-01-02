@@ -1,5 +1,6 @@
 package shipreq.webapp.base.filter
 
+import japgolly.microlibs.nonempty._
 import nyaya.prop._
 import nyaya.test._
 import nyaya.test.PropTestOps._

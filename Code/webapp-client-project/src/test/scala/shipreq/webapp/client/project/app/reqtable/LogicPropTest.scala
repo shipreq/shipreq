@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.app.reqtable
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen.Gen
 import nyaya.prop._
 import nyaya.test._
@@ -7,8 +8,8 @@ import nyaya.util.Multimap
 import scalaz.{\/, \/-, -\/, Equal}
 import scalaz.std.AllInstances._
 import utest._
-import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
+import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Atom, PlainText, Text, TextSearch, ProjectText}
@@ -36,10 +37,10 @@ object LogicPropTest extends TestSuite {
     val plainText   = PlainText(p, ProjectText.Context.None)
     val textSearch  = TextSearch(p, plainText)
     val gathered    = Logic.gather(vs, p, plainText, textSearch)
-    val gatheredG   = gathered.filterT[ReqRow].toList
+    val gatheredG   = gathered.iterator.filterSubType[ReqRow].toList
     val rowReqCodes = gathered.flatMap(codesInRow)
     val rowGReqIds  = gatheredG.map(_.req.id).toSet
-    val srcGReqIds  = p.reqs.idIterator.filterT[GenericReqId].filter(expectVisible).toSet
+    val srcGReqIds  = p.reqs.idIterator.filterSubType[GenericReqId].filter(expectVisible).toSet
     val finalRows   = Logic.rowsForTable(vs, p, plainText, textSearch)
     val tableStats  = Logic.stats(vs, p, finalRows)
 

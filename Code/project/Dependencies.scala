@@ -33,6 +33,18 @@ object Dependencies {
     val macros = mm("monocle-macro") ++ core
   }
 
+  object Microlibs {
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "1.2")
+    val adtMacros  = mm("adt-macros")
+    // val config     = mm("config")
+    val macroUtils = mm("macro-utils")
+    val nonempty   = mm("nonempty")
+    // val recursion  = mm("recursion")
+    val scalazExt  = mm("scalaz-ext")
+    val stdlibExt  = mm("stdlib-ext")
+    val testUtil   = mm("test-util")
+  }
+
   object Nyaya {
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.nyaya", "0.8.1")
     val util = mm("nyaya-util") ++ Scalaz.core

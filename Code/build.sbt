@@ -4,8 +4,6 @@ startYear := Some(2013)
 val root                 = ShipReqBuild.root
 
 val base                 = ShipReqBuild.base
-val baseMacroJvm         = ShipReqBuild.baseMacroJvm
-val baseMacroJs          = ShipReqBuild.baseMacroJs
 val baseUtilJvm          = ShipReqBuild.baseUtilJvm
 val baseUtilJs           = ShipReqBuild.baseUtilJs
 val baseDb               = ShipReqBuild.baseDb

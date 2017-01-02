@@ -2,6 +2,7 @@ package shipreq.webapp.base.protocol
 
 import boopickle._
 import boopickle.Default.unitPickler
+import japgolly.microlibs.scalaz_ext.ScalazMacros
 import scalaz.Equal
 import scalaz.Leibniz.===
 import scalaz.syntax.equal._
@@ -10,7 +11,6 @@ import nyaya.prop._
 import nyaya.gen.Gen
 import nyaya.test.Settings
 import nyaya.test.PropTest._
-import shipreq.base.util.UtilMacros
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.VerifiedEvents
@@ -20,7 +20,7 @@ import $.TextGenExt
 object ProtocolTest extends TestSuite {
 
   implicit val equalProjectSpa: Equal[InitDataForProjectSpa] =
-    UtilMacros.deriveEqual
+    ScalazMacros.deriveEqual
 
   // -------------------------------------------------------------------------------------------------------------------
 

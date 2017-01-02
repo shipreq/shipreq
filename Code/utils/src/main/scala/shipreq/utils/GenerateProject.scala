@@ -1,9 +1,9 @@
 package shipreq.utils
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen._
 import nyaya.test._
 import scala.annotation.tailrec
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.ShowSize
 import shipreq.webapp.base.{RandomData => $}
@@ -70,7 +70,7 @@ object GenerateProject {
     val reqTypeIdSet    = reqTypeIds.whole.toSet
     val fields          = sample($.fieldSet2(reqTypeIdSet, tags.keySet, reqtypes.keySet), Size.CfgFields)
     val cfg             = ProjectConfig(issues, ReqTypes(reqtypes), fields, tags)
-    val atagIds         = cfg.tags.valuesIterator.map(_.tag).filterT[ApplicableTag].map(_.id).toSet
+    val atagIds         = cfg.tags.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
     val reqsWithoutText = firstSample($.reqsWithoutText(cfg, genericReqCount, useCaseCount), 20)
     val reqIdSet        = reqsWithoutText.idIterator.toSet
     val reqIdG          = Gen tryGenChoose reqIdSet.toIndexedSeq

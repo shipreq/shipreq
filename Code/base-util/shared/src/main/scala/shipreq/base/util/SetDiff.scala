@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.microlibs.nonempty.NonEmpty
 import japgolly.univeq.UnivEq
 import nyaya.util.Multimap
 
@@ -48,7 +49,11 @@ final class SetDiff[A](val removed: Set[A], val added: Set[A]) {
 object SetDiff {
   type NE[A] = NonEmpty[SetDiff[A]]
 
-  implicit def equality[A: UnivEq]: UnivEq[SetDiff[A]] = UnivEq.force
+  implicit def equality[A: UnivEq]: UnivEq[SetDiff[A]] =
+    UnivEq.force
+
+  implicit def nonEmptiness[A]: NonEmpty.ProofA[SetDiff[A]] =
+    NonEmpty.Proof.testEmptiness(_.isEmpty)
 
   def empty[A: UnivEq]: SetDiff[A] = {
     val e = UnivEq.emptySet[A]

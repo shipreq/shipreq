@@ -1,10 +1,10 @@
 package shipreq.webapp.base.util
 
+import japgolly.microlibs.nonempty._
 import org.parboiled2._
 import shapeless._
-import shipreq.base.util.{NonEmptySet, NonEmptyVector}
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data.{ReqTypePos, ReqType}
+import shipreq.webapp.base.data.{ReqType, ReqTypePos}
 import shipreq.webapp.base.text.{Grammar => G}
 import shipreq.webapp.base.text.GrammarSpec._
 

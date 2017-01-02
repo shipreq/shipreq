@@ -1,7 +1,8 @@
 package shipreq.webapp.base.hash
 
+import japgolly.microlibs.adt_macros.AdtMacros
+import japgolly.microlibs.nonempty._
 import japgolly.univeq.UnivEq
-import shipreq.base.util._
 import shipreq.webapp.base.data.Project
 
 sealed abstract class HashScope
@@ -28,7 +29,7 @@ object HashScope {
   implicit def equality: UnivEq[HashScope] = UnivEq.derive
 
   val all: NonEmptyVector[HashScope] =
-    UtilMacros.adtValues[HashScope]
+    AdtMacros.adtValues[HashScope]
 
   val defaultSet = NonEmptySet[HashScope](
     CfgIssueTypes  ,

@@ -1,5 +1,6 @@
 package shipreq.webapp.client.base.lib
 
+import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra._
 import java.time.Instant

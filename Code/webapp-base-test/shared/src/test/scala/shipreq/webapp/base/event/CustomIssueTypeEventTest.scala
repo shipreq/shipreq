@@ -1,7 +1,7 @@
 package shipreq.webapp.base.event
 
 import utest._
-import shipreq.base.util.NonEmpty
+import japgolly.microlibs.nonempty.NonEmpty
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._

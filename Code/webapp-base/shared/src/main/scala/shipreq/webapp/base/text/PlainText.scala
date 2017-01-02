@@ -1,5 +1,6 @@
 package shipreq.webapp.base.text
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import scala.annotation.tailrec
 import shipreq.base.util._
 import shipreq.base.util.SafeStringOps._

@@ -7,7 +7,8 @@ import nyaya.util._
 import nyaya.test._
 import nyaya.test.PropTest._
 import org.parboiled2._
-import shipreq.base.util.NonEmptyVector
+import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.util.{Try, Failure, Success}
 import scalaz.Equal
 import utest._
@@ -54,7 +55,7 @@ object ParsersTest extends TestSuite {
 
     val genericReqTitles =
       p.reqs.reqIterator
-        .filterT[GenericReq]
+        .filterSubType[GenericReq]
         //.filter(_.live(p.config.reqTypes) :: Live)
         .map(_.title)
         .toList

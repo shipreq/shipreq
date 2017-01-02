@@ -1,7 +1,7 @@
 package shipreq.webapp.server.feature.validation
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scalaz.{Failure, Success}
-import shipreq.base.util.ScalaExt._
 import shipreq.taskman.api.EmailAddr
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.data.Username

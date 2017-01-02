@@ -1,6 +1,6 @@
 package shipreq.base.util
 
-import ScalaExt._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 
 object FilterFn {
 

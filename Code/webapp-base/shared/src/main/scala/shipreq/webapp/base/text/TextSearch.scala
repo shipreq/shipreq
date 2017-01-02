@@ -2,7 +2,7 @@ package shipreq.webapp.base.text
 
 import scala.collection.immutable.IntMap
 import scalaz.Need
-import shipreq.base.util.{FilterFn, FilterFn2, IMap, NonEmptyVector}
+import shipreq.base.util.{FilterFn, FilterFn2, IMap}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import TextSearch.{apply => _, _}

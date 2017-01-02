@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import scalacss.ScalaCssReact._
-import shipreq.base.util.NonEmptySet
+import japgolly.microlibs.nonempty.NonEmptySet
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.ProjectConfig
 import shipreq.webapp.client.project.app.Style.{reqtable => *}

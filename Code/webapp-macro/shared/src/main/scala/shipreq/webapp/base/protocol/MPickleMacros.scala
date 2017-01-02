@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol
 
+import japgolly.microlibs.macro_utils.MacroUtils
 import scala.reflect.macros.blackbox.Context
-import shipreq.base.macros.MacroUtils
 import upickle._
 
 object MPickleMacros {

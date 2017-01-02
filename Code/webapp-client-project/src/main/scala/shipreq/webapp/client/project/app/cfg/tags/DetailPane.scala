@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.cfg.tags
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
-import shipreq.base.util.NonEmptyVector
+import japgolly.microlibs.nonempty.NonEmptyVector
 import scalaz.Equal
 import scalaz.std.option.optionEqual
 import shipreq.webapp.base.data.{TagId => Id, _}

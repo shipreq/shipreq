@@ -1,6 +1,6 @@
 package shipreq.taskman.api
 
-import shipreq.base.util.ScalaExt._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.base.util.Util
 
 /**

@@ -1,8 +1,8 @@
 package shipreq.webapp.client.base.ui
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.{URLs, WebappConfig}
 import shipreq.webapp.client.base.ClientConfig

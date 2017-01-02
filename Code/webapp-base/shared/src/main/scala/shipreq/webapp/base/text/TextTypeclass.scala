@@ -1,6 +1,6 @@
 package shipreq.webapp.base.text
 
-import shipreq.base.util.NonEmptyVector
+import japgolly.microlibs.nonempty.NonEmptyVector
 
 /**
  * Provides a specific typeclass (`TC[_]`) for any text type.

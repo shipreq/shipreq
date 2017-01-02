@@ -1,9 +1,12 @@
 package shipreq.webapp.base.event
 
+import japgolly.microlibs.adt_macros.AdtMacros._
+import japgolly.microlibs.nonempty._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen._
 import nyaya.prop.LogicPropExt
 import nyaya.util.Multimap
-import scalaz.{-\/, \/-, BindRec}
+import scalaz.{-\/, BindRec, \/-}
 import scalaz.std.vector.vectorInstance
 import scalaz.syntax.traverse._
 import shipreq.base.test.BaseUtilGen._
@@ -18,9 +21,8 @@ import shipreq.webapp.base.test.WebappBaseGen._
 import shipreq.webapp.base.text.Text
 import ApplicableEventGen.ObserveFn
 import RandomData.{fieldRefKey, hashRefKey, implicationRequired, mandatory, mutexChildren}
-import RandomData.{reqCode, reqTypeMnemonic, TextGen, TextGenExt, unicodeString1}
+import RandomData.{TextGen, TextGenExt, reqCode, reqTypeMnemonic, unicodeString1}
 import ScalaExt._
-import UtilMacros._
 
 /**
   * Generates a random event stream that can be successfully applied.
@@ -174,13 +176,13 @@ class ApplicableEventGen(p: Project) {
     tryGenChooseLiveDead(l => p.config.tags.valuesIterator.map(_.tag).filter(_.live :: l).map(_.id))
 
   val tagGroupId: Live => Option[Gen[TagGroupId]] =
-    tryGenChooseLiveDead(l => p.config.tags.valuesIterator.map(_.tag).filterT[TagGroup].filter(_.live :: l).map(_.id))
+    tryGenChooseLiveDead(l => p.config.tags.valuesIterator.map(_.tag).filterSubType[TagGroup].filter(_.live :: l).map(_.id))
 
   val applicableTagId: Live => Option[Gen[ApplicableTagId]] =
-    tryGenChooseLiveDead(l => p.config.tags.valuesIterator.map(_.tag).filterT[ApplicableTag].filter(_.live :: l).map(_.id))
+    tryGenChooseLiveDead(l => p.config.tags.valuesIterator.map(_.tag).filterSubType[ApplicableTag].filter(_.live :: l).map(_.id))
 
   lazy val existingApplicableTagId: Option[Gen[ApplicableTagId]] =
-    Gen.tryGenChoose(p.config.tags.keysIterator.filterT[ApplicableTagId])
+    Gen.tryGenChoose(p.config.tags.keysIterator.filterSubType[ApplicableTagId])
 
   def tagChildren: Gen[TagInTree.Children] =
     tagId(Live) match {

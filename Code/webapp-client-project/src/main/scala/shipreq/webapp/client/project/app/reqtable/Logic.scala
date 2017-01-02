@@ -1,5 +1,7 @@
 package shipreq.webapp.client.project.app.reqtable
 
+import japgolly.microlibs.nonempty._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.annotation.tailrec
 import scala.collection.Traversable
 import scala.collection.generic.CanBuildFrom
@@ -14,7 +16,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.FilterAst
 import shipreq.webapp.base.text.Atom.AnyIssue
-import shipreq.webapp.base.text.{TextSearch, PlainText}
+import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.base.util.ReqCodeTreeItem
 import DataImplicits._
 import DataLogic.{ReqTags, TagLookup}

@@ -2,15 +2,14 @@ package shipreq.taskman.server
 
 import com.squareup.okhttp.OkHttpClient
 import doobie.imports._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Clock, Duration, Instant}
 import java.util.concurrent.{ExecutorService, TimeUnit}
 import java.util.Properties
 import scalaz.-\/
 import scalaz.effect.IO
-//import shipreq.base.db.{DatabaseConnection, DbTemplate}
 import shipreq.base.util.ExternalValueReader._
 import shipreq.base.util._
-import shipreq.base.util.ScalaExt.Tuple2Ext
 import shipreq.base.util.effect.IOE
 import shipreq.base.util.JavaTimeHelpers._
 import shipreq.base.util.log.{HasLogger, LogLevel}

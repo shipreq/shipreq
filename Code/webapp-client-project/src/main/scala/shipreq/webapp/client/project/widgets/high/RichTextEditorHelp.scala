@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
-import shipreq.base.util.NonEmptyVector
+import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.webapp.client.base.ui.semantic.{Accordion, Modal}
 import shipreq.webapp.client.project.app.Style.{help => *}
 

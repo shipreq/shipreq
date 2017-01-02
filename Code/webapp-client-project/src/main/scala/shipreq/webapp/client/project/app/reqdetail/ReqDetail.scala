@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.app.reqdetail
 
+import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.experimental.StaticPropComponent
 import japgolly.scalajs.react.extra._

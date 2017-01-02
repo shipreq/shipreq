@@ -2,9 +2,10 @@ package shipreq.webapp.client.project.app.reqtable
 
 import monocle.Optional
 import scalacss.ScalaCssReact._
+import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra.Reusability
-import shipreq.base.util.{Memo, NonEmptyVector}
+import shipreq.base.util.Memo
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.ProjectText

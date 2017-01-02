@@ -1,8 +1,11 @@
 package shipreq.webapp.base.filter
 
+import japgolly.microlibs.adt_macros.AdtMacros
+import japgolly.microlibs.nonempty.NonEmptyVector
 import java.util.regex.Pattern
-import scalaz.{-\/, \/-, \/}
-import shipreq.base.util._
+import scalaz.{-\/, \/, \/-}
+import scalaz.syntax.traverse1._
+import shipreq.base.util.Min2Set
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data
 import shipreq.webapp.base.filter.{FilterSpec => S}
@@ -24,7 +27,7 @@ object FilterAst {
     implicit def univEq: UnivEq[Attr] = UnivEq.derive
 
     val values: NonEmptyVector[Attr] =
-      UtilMacros.adtValues[Attr]
+      AdtMacros.adtValues[Attr]
 
     def availableText: String =
       values.whole.map(_.name).mkString(", ")
@@ -103,11 +106,11 @@ object FilterAst {
     }
 
     def byReqs(f: Reqs => FilterAst, reqs: S.Reqs): R =
-      reqs.traverseD(lookupReqs).map(sets =>
+      reqs.traverseU(lookupReqs).map(sets =>
         f(sets.reduce(_ ++ _)))
 
     def composite(f: Min2Set[FilterAst] => FilterAst, specs: NonEmptyVector[FilterSpec]): R =
-      specs.traverseD(translate).map( v =>
+      specs.traverseU(translate).map( v =>
         Min2Set.maybe1(v.toNES)(identity)(f))
 
     def translate(spec: FilterSpec): R =
