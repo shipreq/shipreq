@@ -163,7 +163,7 @@ class WorkerTest extends Specification {
   "Worker.FailureHandler" >> {
     "handleFailedWorker" should {
       def test(bop: MockBops, archive: Boolean) = {
-        new FailureHandler(MockEmails(archive), bop).handleFailedWorker(sampleNotifySupportWorkerFailed).unsafePerformIO()
+        new FailureHandler(mockEmails(archive), bop).handleFailedWorker(sampleNotifySupportWorkerFailed).unsafePerformIO()
         bop
       }
 
@@ -185,7 +185,7 @@ class WorkerTest extends Specification {
 
     "handleFailedTaskman" should {
       def test(bop: MockBops, archive: Boolean) = {
-        new FailureHandler(MockEmails(archive), bop).handleFailedTaskman(sampleNotifySupportTaskmanError).unsafePerformIO()
+        new FailureHandler(mockEmails(archive), bop).handleFailedTaskman(sampleNotifySupportTaskmanError).unsafePerformIO()
         bop
       }
 

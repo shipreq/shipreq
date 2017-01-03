@@ -1,12 +1,10 @@
 package shipreq.base.util
 
 import japgolly.microlibs.config._
-import java.util.{Properties, Locale}
-import scalaz.\/-
+import java.util.Locale
 import scalaz.std.list.listInstance
 import scalaz.syntax.applicative._
 import scalaz.Scalaz.Id
-import shipreq.base.util.ExternalValueReader.Retriever
 
 sealed abstract class RunMode(val id: Int, val name: String, _altNames: String*) {
   override def toString = name
@@ -27,26 +25,19 @@ object RunMode {
   case object Pilot       extends RunMode(5, "Pilot")
   case object Profile     extends RunMode(6, "Profile")
 
-  val values = List(Development, Test, Staging, Production, Pilot, Profile)
+  val values: List[RunMode] =
+    List(Development, Test, Staging, Production, Pilot, Profile)
 
   private[this] val normaliseName: String => String =
     _ toLowerCase Locale.ENGLISH
 
   private[this] val nameToMode: Map[String, RunMode] =
-      values.toList
+      values
         .flatMap(m => m.names.map(n => normaliseName(n) -> m))
         .toMap
 
   def forName(n: String): Option[RunMode] =
     nameToMode.get(normaliseName(n))
-
-  def retriever(implicit r: Retriever[String]): Retriever[RunMode] =
-    new StringBasedValueReader(r).tryParseE[RunMode](s =>
-      forName(s) match {
-        case Some(m) => \/-(m)
-        case None    => ErrorOr.error(s"Unable to parse run mode: $s")
-      }
-    )
 
   implicit val configParser: ConfigParser[RunMode] =
     ConfigParser.Implicits.Defaults.parseString.mapOption(forName)

@@ -1,12 +1,10 @@
 package shipreq.base.test.specs2.db
 
-import doobie.free.connection.{ConnectionIO => _}
 import doobie.imports._
 import java.util.concurrent.locks.Lock
 import org.specs2.execute.{AsResult, Result}
 import org.specs2.mutable.Specification
 import org.specs2.specification.AroundExample
-import scalaz.effect.IO
 import shipreq.base.test.db._
 
 trait DatabaseTest extends AroundExample {
@@ -15,7 +13,7 @@ trait DatabaseTest extends AroundExample {
   isolated
 
   private[this] var _xa: Option[SingleConnectionXA] = None
-  final def xa: Transactor[IO] = _xa getOrElse sys.error("DB connection not established.")
+  final def xa: SingleConnectionXA = _xa getOrElse sys.error("DB connection not established.")
 
   def dbExec[A](c: ConnectionIO[A]): A =
     xa.trans(c).unsafePerformIO()

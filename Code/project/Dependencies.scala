@@ -167,6 +167,9 @@ object Dependencies {
   val macroParadise = compilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   val useMacroParadise = (_: Project).settings(addCompilerPlugin(macroParadise))
 
+  val kindProjector = compilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3")
+  val useKindProjector = (_: Project).settings(addCompilerPlugin(kindProjector))
+
   import sbt.Keys._
   def useLocalJar(filename: String) =
     (_: Project).settings(unmanagedJars in Compile += file("lib").getAbsoluteFile / filename)

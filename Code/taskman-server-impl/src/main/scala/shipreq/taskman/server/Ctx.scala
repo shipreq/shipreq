@@ -1,6 +1,7 @@
 package shipreq.taskman.server
 
 import com.squareup.okhttp.OkHttpClient
+import japgolly.microlibs.config.{Sources => ConfigSources}
 import java.time.{Clock, Duration, Instant}
 import java.util.concurrent.{ExecutorService, TimeUnit}
 import scalaz.-\/
@@ -16,7 +17,16 @@ import shipreq.taskman.server.business._
 import ErrorOr.Implicits._
 
 // TODO config quite separate: db > taskman > emailTokens
-final case class TaskmanCtx(dbAccess: DbAccess, config: TaskmanConfig) extends HasLogger {
+object TaskmanCtx {
+
+  def apply(dbAccess: DbAccess, config: TaskmanConfig): TaskmanCtx =
+    apply(dbAccess, config, SopImpl.configSource(dbAccess))
+
+  def apply(dbAccess: DbAccess, config: TaskmanConfig, emailTokenSource: ConfigSources[IO]): TaskmanCtx =
+    new TaskmanCtx(dbAccess, config, emailTokenSource)
+}
+
+final class TaskmanCtx(val dbAccess: DbAccess, val config: TaskmanConfig, emailTokenSource: ConfigSources[IO]) extends HasLogger {
 
   private object async {
     val (emailS, email) = Async.newPool("email", config.mail.concurrencyMax)
@@ -29,7 +39,7 @@ final case class TaskmanCtx(dbAccess: DbAccess, config: TaskmanConfig) extends H
   private lazy val (emailTokens, emailTokensReport) =
     TaskmanConfig.mailTokens
       .withReport
-      .run(SopImpl.configSource(dbAccess))
+      .run(emailTokenSource)
       .unsafePerformIO()
       .getOrDie()
 

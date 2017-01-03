@@ -11,7 +11,7 @@ import MailingList.API._
 class BusinessLogicTest extends Specification {
 
   def testM(bop: MockBops, msg: Msg) = {
-    val bl = new BusinessLogic(bop, MockEmails(false), null, null)
+    val bl = new BusinessLogic(bop, mockEmails(false), null, null)
     val io = bl(MsgDetail(mh_1, msg, 0))
     (bop, io.unsafePerformIO())
   }

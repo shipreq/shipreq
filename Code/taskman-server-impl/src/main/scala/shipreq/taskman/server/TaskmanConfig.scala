@@ -96,8 +96,8 @@ object TaskmanConfig extends HasLogger {
   def taskman: Config[Taskman] =
     (Config.need[Int]("queueSize").ensure(_ >= 1, "Must be ≥ 1.")
       |@| Config.need[Duration]("trustPeriod").ensure(!_.isShorterThan(10 seconds), "Must be at least 10 seconds.")
-      |@| Config.need[Duration]("pollEvery").ensure(!_.isShorterThan(50 millis), "Must be at least 50 ms.")
-      |@| Config.get[Duration]("pollGap").ensure(_.fold(true)(!_.isShorterThan(50 millis)), "Must be at least 50 ms.")
+      |@| Config.need[Duration]("poll.every").ensure(!_.isShorterThan(50 millis), "Must be at least 50 ms.")
+      |@| Config.get[Duration]("poll.gap").ensure(_.fold(true)(!_.isShorterThan(50 millis)), "Must be at least 50 ms.")
       ) { (qs, tp, pollEvery, pollGapO) =>
       val pollGap = pollGapO getOrElse pollEvery
       if (pollGap isLongerThan pollEvery)
