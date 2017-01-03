@@ -1,6 +1,5 @@
 package shipreq.base.test.db
 
-import java.util.Properties
 import java.util.concurrent.locks.Lock
 import scalaz.effect.IO
 import scalaz.syntax.apply._
@@ -10,8 +9,8 @@ import shipreq.base.util._
 object TestDb extends TestDb
 
 trait TestDb extends DbTemplate with TestDbUsageDefaults[Usable[SingleConnectionXA]] {
-  lazy val props = JPropertiesValueReader(Props.loadUsingStandardStrategy(RunMode.Test)(new Properties))
-  lazy val dbCfg = ErrorOr require_! DbConfig.read(props)
+  lazy val (dbCfg, dbCfgReport) = DbConfig.config.withReport.run(RunMode.Test.configSources).getOrDie()
+  // println(dbCfgReport.reportUsed)
   lazy val dbAccess = DbAccess.fromCfgWithoutPool(dbCfg)
 
   @volatile var cleanRequired = false

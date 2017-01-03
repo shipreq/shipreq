@@ -37,7 +37,7 @@ object ShipReqBuild {
       .configureJs(Common.jsSettings(NoDom))
       .depsForBoth(
         UnivEq.scalaz ++ Scalaz.effect ++ Nyaya.prop ++ Monocle.core ++
-        Microlibs.adtMacros ++ Microlibs.nonempty ++ Microlibs.scalazExt ++ Microlibs.stdlibExt ++
+        Microlibs.adtMacros ++ Microlibs.config ++ Microlibs.nonempty ++ Microlibs.scalazExt ++ Microlibs.stdlibExt ++
         testScope(μTest ++ Nyaya.test))
       .depsForJvm(
         SLF4J.api ++
@@ -50,7 +50,7 @@ object ShipReqBuild {
         Common.settings,
         Common.jvmSettings,
         Common.macroModuleSettings)
-      .deps(postgresql ++ Doobie.main ++ hikariCP ++ flyway ++ logback ++ Microlibs.config ++ Microlibs.macroUtils)
+      .deps(postgresql ++ Doobie.main ++ hikariCP ++ flyway ++ logback ++ Microlibs.macroUtils)
       .dependsOn(baseUtilJvm)
 
   lazy val baseTestJvm = baseTest.jvm

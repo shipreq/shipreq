@@ -1,14 +1,22 @@
 package shipreq.base.util
 
+import japgolly.microlibs.config._
 import java.util.{Properties, Locale}
 import scalaz.\/-
 import scalaz.std.list.listInstance
 import scalaz.syntax.applicative._
+import scalaz.Scalaz.Id
 import shipreq.base.util.ExternalValueReader.Retriever
 
 sealed abstract class RunMode(val id: Int, val name: String, _altNames: String*) {
   override def toString = name
   val names: List[String] = (name :: _altNames.toList).distinct
+
+  def configSources: Sources[Id] = {
+    val files = RunMode.filenames(this)(_.mkString("", ".", ".props")) ::: "default.props" :: Nil
+    val sources = files.map(Source.propFileOnClasspath[Id](_, optional = true))
+    Source.environment[Id] > Sources.highToLowPri(sources: _*) > Source.system[Id]
+  }
 }
 
 object RunMode {
@@ -26,7 +34,7 @@ object RunMode {
 
   private[this] val nameToMode: Map[String, RunMode] =
       values.toList
-        .flatMap(m => m.names.map(n => (normaliseName(n) -> m)))
+        .flatMap(m => m.names.map(n => normaliseName(n) -> m))
         .toMap
 
   def forName(n: String): Option[RunMode] =
@@ -40,8 +48,13 @@ object RunMode {
       }
     )
 
-  val retrieverFromSysProps: Retriever[RunMode] =
-    retriever(JPropertiesValueReader(Props.systemProps(new Properties)).retrieverS)
+  implicit val configParser: ConfigParser[RunMode] =
+    ConfigParser.Implicits.Defaults.parseString.mapOption(forName)
+
+  lazy val Current: RunMode =
+    Config.getOrUse("run.mode", detectFromStackTrace())
+      .run(Source.environment[Id] > Source.system[Id])
+      .getOrDie()
 
   def detectFromStackTrace(st: Array[StackTraceElement] = Thread.currentThread.getStackTrace): RunMode =
     if (doesStackTraceContainKnownTestRunner(st))

@@ -9,8 +9,8 @@ import scalaz.syntax.apply._
 import scalaz.{-\/, \/, \/-}
 
 final case class DbConfig(
-  hikariConfig: HikariConfig,
   pgDataSource: PGSimpleDataSource,
+  hikariConfig: HikariConfig,
   schema      : Option[String])
 
 object DbConfig {
@@ -78,38 +78,39 @@ object DbConfig {
       }
 
     val hikariCfg: Config[HikariConfig] =
-      (
-        pgdsCfg |@|
-        Config.consumerFn[HikariConfig](
-          _ => hikariSearchPath,
-          _.get("allowPoolSuspension"   , _.setAllowPoolSuspension),
-          _.get("catalog"               , _.setCatalog),
-          _.get("connectionInitSql"     , _.setConnectionInitSql),
-          _.get("connectionTestQuery"   , _.setConnectionTestQuery),
-          _.get("connectionTimeout"     , _.setConnectionTimeout),
-          _.get("idleTimeout"           , _.setIdleTimeout),
-          _.get("initializationFailFast", _.setInitializationFailFast),
-          _.get("isolateInternalQueries", _.setIsolateInternalQueries),
-          _.get("leakDetectionThreshold", _.setLeakDetectionThreshold),
-          _.get("maxLifetime"           , _.setMaxLifetime),
-          _.get("maximumPoolSize"       , _.setMaximumPoolSize),
-          _.get("minimumIdle"           , _.setMinimumIdle),
-          _.get("poolName"              , _.setPoolName),
-          _.get("registerMbeans"        , _.setRegisterMbeans),
-          _.get("transactionIsolation"  , _.setTransactionIsolation),
-          _.get("validationTimeout"     , _.setValidationTimeout))
-        ) { (pgds, fn) =>
-        val hcfg = new HikariConfig
-        hcfg.setTransactionIsolation("TRANSACTION_READ_COMMITTED") // Shouldn't be doing repeated-reads anyway
-        hcfg.setAutoCommit(true)
-        hcfg.setDataSource(pgds)
-        hcfg.setUsername(pgds.getUser)
-        hcfg.setPassword(pgds.getPassword)
-        fn(hcfg)
-        hcfg
-      }.withPrefix("pool.")
+      Config.consumerFn[HikariConfig](
+        _ => hikariSearchPath,
+        _.get("allowPoolSuspension"   , _.setAllowPoolSuspension),
+        _.get("catalog"               , _.setCatalog),
+        _.get("connectionInitSql"     , _.setConnectionInitSql),
+        _.get("connectionTestQuery"   , _.setConnectionTestQuery),
+        _.get("connectionTimeout"     , _.setConnectionTimeout),
+        _.get("idleTimeout"           , _.setIdleTimeout),
+        _.get("initializationFailFast", _.setInitializationFailFast),
+        _.get("isolateInternalQueries", _.setIsolateInternalQueries),
+        _.get("leakDetectionThreshold", _.setLeakDetectionThreshold),
+        _.get("maxLifetime"           , _.setMaxLifetime),
+        _.get("maximumPoolSize"       , _.setMaximumPoolSize),
+        _.get("minimumIdle"           , _.setMinimumIdle),
+        _.get("poolName"              , _.setPoolName),
+        _.get("registerMbeans"        , _.setRegisterMbeans),
+        _.get("transactionIsolation"  , _.setTransactionIsolation),
+        _.get("validationTimeout"     , _.setValidationTimeout))
+        .withPrefix("pool.")
+        .map { fn =>
+          val hcfg = new HikariConfig
+          hcfg.setTransactionIsolation("TRANSACTION_READ_COMMITTED") // Shouldn't be doing repeated-reads anyway
+          hcfg.setAutoCommit(true)
+          fn(hcfg)
+          hcfg
+        }
 
-    (hikariCfg |@| pgdsCfg |@| schemaCfg)(DbConfig.apply).withPrefix("db.")
+    (pgdsCfg |@| hikariCfg |@| schemaCfg) ((pgds, hcfg, schema) => {
+      hcfg.setDataSource(pgds)
+      hcfg.setUsername(pgds.getUser)
+      hcfg.setPassword(pgds.getPassword)
+      DbConfig(pgds, hcfg, schema)
+    }).withPrefix("db.")
   }
 
   // _.get("autoCommit"              , _.setAutoCommit),

@@ -6,13 +6,14 @@ import net.liftweb.util.Props
 import net.liftweb.util.Props.RunModes.Test
 import scalaz.effect.IO
 import shipreq.base.db.{DbAccess, DbConfig}
-import shipreq.base.util.ErrorOr
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.app.{AppSiteMap, DI, ExceptionHandler}
 import shipreq.webapp.server.feature.SessionStats
 import shipreq.webapp.server.lib.{Taskman, TaskmanImpl}
 import shipreq.webapp.server.security.Oshiro
+
+final case class AppConfig(dbConfig: DbConfig)
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -26,12 +27,20 @@ class Boot extends DI {
   lazy val logger = Logger(s"$packageRoot.Boot")
 
   def boot(): Unit = {
+    val cfg = readConfig()
     initOshiro()
     configureLift()
     preloadTemplates()
-    initDatabase()
+    initDatabase(cfg.dbConfig)
     initTaskman()
     logImportantSettings()
+  }
+
+  def readConfig(): AppConfig = {
+    val runMode = shipreq.base.util.RunMode.forName(Props.modeName) getOrElse sys.error(s"Unrecognised run mode: '${Props.modeName}'")
+    val (cfg, report) = DbConfig.config.map(AppConfig).withReport.run(runMode.configSources).getOrDie()
+    println(report.report)
+    cfg
   }
 
   def configureLift(): Unit = {
@@ -74,12 +83,8 @@ class Boot extends DI {
   def initOshiro(): Unit =
     Oshiro.init()
 
-  def initDatabase(): Unit = {
-    val access: DbAccess = {
-      import shipreq.webapp.server.util.PropsRetrievers._
-      val cfg = ErrorOr.require_!(DbConfig.read2)
-      DbAccess.fromCfg(cfg)
-    }
+  def initDatabase(dbConfig: DbConfig): Unit = {
+    val access = DbAccess.fromCfg(dbConfig)
     logger.info(s"Connecting to DB: ${access.desc}")
     access.verifyConnectivity()
     access.migrator.migrate[IO].unsafePerformIO()
@@ -100,6 +105,7 @@ class Boot extends DI {
     Quotes
   }
 
+  @deprecated("Use microlib config", "")
   def logImportantSettings(): Unit = {
     import ServerConfig._
     logger.info(s"Signup allowed: ${AllowRegister()}")
