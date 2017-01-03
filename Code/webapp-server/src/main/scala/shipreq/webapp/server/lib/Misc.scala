@@ -6,7 +6,7 @@ import net.liftweb.http.S
 import scala.annotation.tailrec
 import scala.util.Random
 import shipreq.base.util.log.HasLogger
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.app.DI
 
 object Misc extends Misc {
 
@@ -41,7 +41,7 @@ trait Misc extends HasLogger {
     RNG.alphanumeric.take(length).mkString
 
   def randomConfirmationToken(): String =
-    randomString(ServerConfig.ConfirmationTokenLength)
+    randomString(DI.serverConfig.confirmationTokenLength)
 
 //  @tailrec
 //  final def retry[T](n: Int, firstError: Option[Throwable] = None)(fn: => T): T = {

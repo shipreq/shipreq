@@ -3,9 +3,11 @@ package shipreq.webapp.server.app
 import net.liftweb.common.Full
 import net.liftweb.util.{SimpleInjector, Vendor}
 import shipreq.base.db.DbAccess
+import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.lib.{StatLogger, StatLoggerImpl, TaskmanInterface}
 import shipreq.webapp.server.security.{Oshiro, SecurityProvider}
 
+// TODO Change DI to Globals
 object DI extends SimpleInjector {
 
   def inject[A: Manifest](a: A): Inject[A] =
@@ -24,6 +26,9 @@ object DI extends SimpleInjector {
     null
 
   var taskman: TaskmanInterface =
+    null
+
+  var serverConfig: ServerConfig =
     null
 }
 

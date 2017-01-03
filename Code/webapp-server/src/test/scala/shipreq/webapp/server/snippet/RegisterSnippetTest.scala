@@ -8,6 +8,7 @@ import org.postgresql.util.PSQLException
 import utest._
 import shipreq.taskman.api.Msg.RegistrationRequested
 import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.app.DI
 import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.feature.validation.Validators
 import shipreq.webapp.server.snippet.Register._
@@ -55,15 +56,15 @@ object RegisterSnippetTest extends TestSuite {
       'render - {
         def test(config: Boolean, allowed: Boolean): Unit =
           inLiftSession {
-            val orig = ServerConfig.AllowRegister
+            val orig = DI.serverConfig
             try {
-              ServerConfig.AllowRegister = () => config
+              DI.serverConfig = orig.copy(allowRegister = config)
               val x = Register1.render(reg1html)
               val h = x.toString
               assertEq(h contains "register1Form", allowed)
               assertEq(h contains "registrationDisabled", !allowed)
             } finally
-              ServerConfig.AllowRegister = orig
+              DI.serverConfig = orig
           }
 
         "allow registration to anonymous user when config on" - {

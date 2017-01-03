@@ -1,10 +1,12 @@
 package bootstrap.liftweb
 
+import japgolly.microlibs.config.{Config, ConfigReport}
 import net.liftweb.common.Logger
 import net.liftweb.http.{LiftRules, LiftSession, S}
 import net.liftweb.util.Props
 import net.liftweb.util.Props.RunModes.Test
 import scalaz.effect.IO
+import scalaz.syntax.applicative._
 import shipreq.base.db.{DbAccess, DbConfig}
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.server.ServerConfig
@@ -13,7 +15,7 @@ import shipreq.webapp.server.feature.SessionStats
 import shipreq.webapp.server.lib.{Taskman, TaskmanImpl}
 import shipreq.webapp.server.security.Oshiro
 
-final case class AppConfig(dbConfig: DbConfig)
+final case class AppConfig(db: DbConfig, server: ServerConfig, report: ConfigReport)
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -28,18 +30,19 @@ class Boot extends DI {
 
   def boot(): Unit = {
     val cfg = readConfig()
+    logger.info(cfg.report.report)
+    initServerConfig(cfg.server)
     initOshiro()
     configureLift()
     preloadTemplates()
-    initDatabase(cfg.dbConfig)
+    initDatabase(cfg.db)
     initTaskman()
-    logImportantSettings()
   }
 
   def readConfig(): AppConfig = {
     val runMode = shipreq.base.util.RunMode.forName(Props.modeName) getOrElse sys.error(s"Unrecognised run mode: '${Props.modeName}'")
-    val (cfg, report) = DbConfig.config.map(AppConfig).withReport.run(runMode.configSources).getOrDie()
-    println(report.report)
+    val plan = (DbConfig.config |@| ServerConfig.config |@| Config.report)(AppConfig)
+    val cfg = plan.run(runMode.configSources).getOrDie()
     cfg
   }
 
@@ -91,6 +94,10 @@ class Boot extends DI {
     DI.dbAccess = access
   }
 
+  def initServerConfig(s: ServerConfig): Unit = {
+    DI.serverConfig = s
+  }
+
   def initTaskman(): Unit = {
     DI.taskman = new TaskmanImpl(DI.dbAccess.io)
     Props.mode match {
@@ -103,11 +110,5 @@ class Boot extends DI {
     import shipreq.webapp.server.snippet._
     DynModal
     Quotes
-  }
-
-  @deprecated("Use microlib config", "")
-  def logImportantSettings(): Unit = {
-    import ServerConfig._
-    logger.info(s"Signup allowed: ${AllowRegister()}")
   }
 }

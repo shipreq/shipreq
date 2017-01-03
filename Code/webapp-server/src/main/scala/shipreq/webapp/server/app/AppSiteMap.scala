@@ -10,7 +10,6 @@ import scala.xml.{NodeSeq, Text}
 import scalaz.{Name, Need}
 import shipreq.base.util.Memo
 import shipreq.webapp.base.WebappConfig
-import shipreq.webapp.server.ServerConfig.BaseUrl
 import shipreq.webapp.server.data._
 import shipreq.webapp.server.feature.{DiagnosticEndpoints, SessionStats}
 import shipreq.webapp.server.security.Permission.RequestVarPermExt
@@ -133,6 +132,7 @@ object AppSiteMap {
   // -------------------------------------------------------------------------------------------------------------------
 
   object Implicits {
+    private def BaseUrl = DI.serverConfig.baseUrl
 
     private def newUrlMemo(f: Loc[_] => String): Loc[_] => String =
       Memo.byRef(f)

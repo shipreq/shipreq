@@ -13,8 +13,7 @@ import shipreq.base.db.DoobieHelpers._
 import shipreq.taskman.api.Msg.{ReRegistrationAttempted, RegistrationRequested}
 import shipreq.taskman.api.{EmailAddr, Msg, UserId}
 import shipreq.webapp.base.validation.ValidationResult
-import shipreq.webapp.server.ServerConfig
-import shipreq.webapp.server.app.AppSiteMap
+import shipreq.webapp.server.app.{AppSiteMap, DI}
 import shipreq.webapp.server.app.AppSiteMap.Implicits._
 import shipreq.webapp.server.data.UserRegistrationInfo
 import shipreq.webapp.server.db.{DbLogic, UserRegistrationResult}
@@ -27,7 +26,7 @@ import shipreq.webapp.server.util.JsExt._
 
 object Register {
   def isTokenExpired(dateIssued: Instant): Boolean =
-    Misc.isExpired_?(dateIssued, ServerConfig.TokenLifespan)
+    Misc.isExpired_?(dateIssued, DI.serverConfig.tokenLifespan)
 }
 
 // =====================================================================================================================

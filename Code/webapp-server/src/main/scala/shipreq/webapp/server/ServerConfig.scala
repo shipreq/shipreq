@@ -1,47 +1,61 @@
 package shipreq.webapp.server
 
+import japgolly.microlibs.config._
 import java.time.Duration
-import shipreq.base.util.ExternalValueReader._
-import shipreq.base.util.JavaTimeValueRetrievers
-import shipreq.webapp.server.util.ExpireAfter
-import shipreq.webapp.server.util.PropsRetrievers._
+import scalaz.syntax.applicative._
+import shipreq.webapp.server.util.{CachePolicy, ExpireAfter}
+import ConfigParser.Implicits.Defaults._
+import JavaTimeConfigParsers._
 
-object ServerConfig {
-  implicit def PropScope = scopeByNS("shipreq")
-  private val jtr = JavaTimeValueRetrievers(retrieverS)
-  import jtr.retrieverDuration
+final case class ServerConfig(
 
-  val SupportEmailAddress = need[String]("support.email")
+  supportEmailAddress: String,
 
-  val BaseUrl = need[String]("url")
+  baseUrl: String,
 
   /** A short amount of time, unnoticeable to humans, to sleep in order to frustrate automated security attacks. */
-  val AttackFrustrationDelayMs: Long =
-    need[Duration]("attack_frustration_delay").toMillis
+  attackFrustrationDelay: Duration,
 
   /** Number of characters in tokens used for email & reset-password verification. */
-  val ConfirmationTokenLength = need[Int]("token.length")
+  confirmationTokenLength: Int,
 
   /** The DB schema in which the Taskman interfaces reside. */
-  val TaskmanSchema = need[String]("taskman.schema")
+  taskmanSchema: String,
 
   /** How long confirmation tokens are valid for after issuing. */
-  val TokenLifespan = need[Duration]("token.lifespan.email_conf")
+  tokenLifespan: Duration,
 
   /** How long password-reset tokens are valid for after issuing. */
-  val PasswordResetTokenLifespan = need[Duration]("token.lifespan.resetpw")
-
-  /** Maximum time a flash variable will be retained. (default) */
-  val FlashVarTTL = Duration ofMinutes 12
-
-  val QuoteCachePolicy = ExpireAfter(Duration ofMinutes 30)
+  passwordResetTokenLifespan: Duration,
 
   /**
-   * Whether or not new registrations are allowed.
-   * (Registration tokens already issued will still be accepted.)
-   */
-  var AllowRegister: () => Boolean = { // non-volatile var allowed because modification will only occur in test-mode.
-    val v = tryNeed("allow.register", true)
-    () => v
-  }
+    * Whether or not new registrations are allowed.
+    * (Registration tokens already issued will still be accepted.)
+    */
+  allowRegister: Boolean,
+
+  /** Maximum time a flash variable will be retained. (default) */
+  flashVarTTL: Duration,
+
+  quoteCachePolicy: CachePolicy[Any]) {
+
+  val attackFrustrationDelayMs: Long =
+    attackFrustrationDelay.toMillis
+}
+
+object ServerConfig {
+
+  def config: Config[ServerConfig] =
+    ( Config.need[String]("support.email") |@|
+      Config.need[String]("url") |@|
+      Config.need[Duration]("attack_frustration_delay") |@|
+      Config.need[Int]("token.length") |@|
+      Config.need[String]("taskman.schema") |@|
+      Config.need[Duration]("token.lifespan.email_conf") |@|
+      Config.need[Duration]("token.lifespan.resetpw") |@|
+      Config.getOrUse[Boolean]("allow.register", true) |@|
+      Duration.ofMinutes(12).pure[Config] |@|
+      ExpireAfter(Duration ofMinutes 30).pure[Config]
+    ) (apply).withPrefix("shipreq.")
+
 }

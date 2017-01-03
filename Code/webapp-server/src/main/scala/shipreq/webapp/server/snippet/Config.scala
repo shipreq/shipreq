@@ -5,7 +5,7 @@ import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
 import shipreq.base.util.Memo
 import shipreq.webapp.base.WebappConfig
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.app.DI
 
 object Config extends DispatchSnippet {
   override def dispatch = { case s => renderMemo(s) }
@@ -16,6 +16,6 @@ object Config extends DispatchSnippet {
       "*" #> WebappConfig.appName
 
     case "supportEmailLink" =>
-      "a [href]" #> ("mailto:" + ServerConfig.SupportEmailAddress)
+      "a [href]" #> ("mailto:" + DI.serverConfig.supportEmailAddress)
   }
 }

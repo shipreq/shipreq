@@ -1,11 +1,11 @@
 package shipreq.webapp.server.snippet
 
-import shipreq.webapp.server.util.{CacheFn, NonEmptyTemplate}
 import net.liftweb.common.Logger
 import net.liftweb.util.Helpers._
 import scala.util.Random
 import scala.xml.{Elem, Node, NodeSeq}
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.app.DI
+import shipreq.webapp.server.util.{CacheFn, NonEmptyTemplate}
 
 object Quotes extends Logger {
 
@@ -35,7 +35,7 @@ object Quotes extends Logger {
     "*" #> q
   }
 
-  val rcache = CacheFn(renderFn)(ServerConfig.QuoteCachePolicy)
+  val rcache = CacheFn(renderFn)(DI.serverConfig.quoteCachePolicy)
 
   // def render = rcache.value
   val render = "*" #> "" // Quotes disabled

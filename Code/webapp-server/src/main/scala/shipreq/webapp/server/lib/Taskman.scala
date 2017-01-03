@@ -11,7 +11,7 @@ import shipreq.taskman.api.Msg.WebappErrorOccurred
 import shipreq.taskman.api.impl.TaskmanApi
 import shipreq.taskman.api.{ApiOp, Msg, MsgId}
 import shipreq.webapp.base.WebappConfig
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.app.DI
 import shipreq.webapp.server.security.Oshiro
 
 object Taskman {
@@ -31,7 +31,7 @@ object Taskman {
       url,
       s"${Error stackTraceStr e}\n\nSUPP: $suppInfo")
 
-  val ctx = TaskmanApi.Context(Some(ServerConfig.TaskmanSchema))
+  val ctx = TaskmanApi.Context(Some(DI.serverConfig.taskmanSchema))
 }
 
 final class TaskmanImpl(db: Transactor[IO]) extends TaskmanInterface with HasLogger {

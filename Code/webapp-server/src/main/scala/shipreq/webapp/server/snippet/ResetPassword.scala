@@ -11,8 +11,7 @@ import scalaz.effect.IO
 import shipreq.base.db.DoobieHelpers._
 import shipreq.taskman.api.{EmailAddr, Msg, UserId}
 import shipreq.webapp.base.validation.ValidationResult
-import shipreq.webapp.server.ServerConfig
-import shipreq.webapp.server.app.AppSiteMap
+import shipreq.webapp.server.app.{AppSiteMap, DI}
 import shipreq.webapp.server.app.AppSiteMap.Implicits._
 import shipreq.webapp.server.data.{ResetPasswordInfo, UserRegistrationInfo}
 import shipreq.webapp.server.db.DbLogic
@@ -25,7 +24,7 @@ import shipreq.webapp.server.util.JsExt._
 
 object ResetPassword {
   def isTokenExpired(dateIssued: Instant): Boolean =
-    Misc.isExpired_?(dateIssued, ServerConfig.PasswordResetTokenLifespan)
+    Misc.isExpired_?(dateIssued, DI.serverConfig.passwordResetTokenLifespan)
 }
 
 // =====================================================================================================================
