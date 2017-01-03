@@ -26,15 +26,9 @@ object Email {
       }
   }
 
-  trait EnvelopeProps {
-    val publicFrom: Addr
-    val archiveAddrs: List[Addr]
-  }
+  final case class EnvelopeProps(publicFrom: Addr, archiveAddrs: List[Addr])
 
-  trait TokenValues {
-    val shipreqName: String
-    val loginUrl: String
-  }
+  final case class TokenValues(shipreqName: String, loginUrl: String)
 
   case class EnvelopeFront(to: NonEmptyList[Addr], cc: List[Addr] = Nil, bcc: List[Addr] = Nil) {
     override def toString =

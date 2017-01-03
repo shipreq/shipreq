@@ -1,41 +1,22 @@
 package shipreq.taskman.server.business
 
-import java.util.Properties
+import japgolly.microlibs.config.{Config, ConfigParser}
 import javax.mail._
-import javax.mail.internet.{MimeMessage, InternetAddress}
-import scalaz.Traverse
+import javax.mail.internet.{InternetAddress, MimeMessage}
+import scalaz.{-\/, Traverse, \/-}
 import scalaz.effect.IO
 import scalaz.old.NonEmptyList
 import scalaz.std.list._
 import scalaz.syntax.bind._
-import scalaz.syntax.traverse._
-import shipreq.base.util.{JPropertiesValueReader, ErrorOr}
+import shipreq.base.util.ErrorOr
 import shipreq.base.util.effect.IOE
 import shipreq.base.util.log.HasLogger
-import shipreq.base.util.ExternalValueReader._
 import shipreq.taskman.api.EmailAddr
 import shipreq.taskman.server.Deterministic
 import Bop.SendEmail
 import Email._
 
 object EmailImpl extends HasLogger {
-
-  def loadSession(props: Properties): Session = {
-    val pr = JPropertiesValueReader(props)
-    import pr._
-
-    val mailAuth: Option[Authenticator] = {
-      implicit def scope = scopeByNS("mail")
-      getO[String]("user").map(user => {
-        log.info.z(s"SMTP account: $user")
-        new Authenticator {
-          override def getPasswordAuthentication =
-            new PasswordAuthentication(user, need[String]("password"))
-        }
-      })
-    }
-    Session.getInstance(props, mailAuth getOrElse null)
-  }
 
   val getParsed: PartialFunction[AnyRef, Address] = {
     case a: Address => a
@@ -53,47 +34,35 @@ object EmailImpl extends HasLogger {
   def parseN(s: String): ErrorOr[List[Address]] =
     ErrorOr.safeT(Deterministic)(InternetAddress.parse(s).toList)
 
-  final class Retrievers(implicit rs: Retriever[String]) {
+  object ConfigParsers {
 
-    implicit val addr1: Retriever[Addr] =
-      rs.emap(s => {
+    implicit def parseAddr1(implicit p: ConfigParser[String]): ConfigParser[Addr] =
+      p.mapAttempt { s =>
         val ea = EmailAddr(s)
-        parse1(ea).map(p => Addr(ea, Some(p)))
-      })
-
-    implicit val addrN: Retriever[List[Addr]] =
-      rs.emap(parseN).map(as =>
-          as.map(a => Addr(EmailAddr(a.toString), Some(a))))
-
-    implicit val addrNEL: Retriever[NonEmptyList[Addr]] =
-      addrN.emap {
-        case Nil    => ErrorOr error "At least one address required."
-        case h :: t => ErrorOr(NonEmptyList.nel(h, t))
+        parse1(ea).bimap(_.msg, p => Addr(ea, Some(p)))
       }
 
-    implicit val envelopeFront: Retriever[EnvelopeFront] =
-      Retriever[EnvelopeFront](k => {
-        implicit val s = PropScope(n => s"$k.$n")
-        for (
-          toE <- getOE[NonEmptyList[Addr]]("to")
-        ) yield for {
-            to  <- toE
-            cc  <- get[List[Addr]]("cc", Nil)
-            bcc <- get[List[Addr]]("bcc", Nil)
-          } yield
-            EnvelopeFront(to, cc, bcc)
-      })
+    implicit def parseAddrN(implicit p: ConfigParser[String]): ConfigParser[List[Addr]] =
+      p.mapAttempt(parseN(_).bimap(_.msg, _.map(a => Addr(EmailAddr(a.toString), Some(a)))))
 
-    implicit val envelope: Retriever[Envelope] =
-      Retriever[Envelope](k => {
-        implicit val s = PropScope(n => s"$k.$n")
-        (getOE[Addr]("from"), envelopeFront.run(k)) match {
-          case (None, None)       => None
-          case (Some(_), None)    => Some(ErrorOr error "'from' specified without 'to'.")
-          case (None, Some(_))    => Some(ErrorOr error "'to' specified without 'from'.")
-          case (Some(a), Some(b)) => Some(for {f <- a; env <- b} yield env.from(f))
-        }
-      })
+    implicit def parseAddrNEL(implicit p: ConfigParser[String]): ConfigParser[NonEmptyList[Addr]] =
+      parseAddrN.mapAttempt {
+        case Nil    => -\/("At least one address required.")
+        case h :: t => \/-(NonEmptyList.nel(h, t))
+      }
+
+    // TODO What's the difference between a ConfigParser and a Config ?
+    // Config has a key; ap only
+    // Parser has no key; monad
+    def configEnvelopeFront(implicit p: ConfigParser[String]): Config[EnvelopeFront] =
+      (
+        Config.need[NonEmptyList[Addr]]("to") |@|
+        Config.getOrUse[List[Addr]]("cc", Nil) |@|
+        Config.getOrUse[List[Addr]]("bcc", Nil)
+      )(EnvelopeFront)
+
+    def configEnvelope(implicit p: ConfigParser[String]): Config[Envelope] =
+      (configEnvelopeFront |@| Config.need[Addr]("from"))(_ from _)
   }
 
   implicit class EAExt(val ea: Addr) extends AnyVal {
@@ -121,9 +90,9 @@ final class EmailImpl(val mailSession: Session) extends HasLogger {
       m.setSentDate(new java.util.Date)
       ErrorOr.safeT(Deterministic) {
         m.setFrom(from)
-        m.setRecipients(Message.RecipientType.TO, Array(to.toList: _*))
-        m.setRecipients(Message.RecipientType.CC, Array(cc.toList: _*))
-        m.setRecipients(Message.RecipientType.BCC, Array(bcc.toList: _*))
+        m.setRecipients(Message.RecipientType.TO, to.list.toArray)
+        m.setRecipients(Message.RecipientType.CC, cc.toArray)
+        m.setRecipients(Message.RecipientType.BCC, bcc.toArray)
         m.setSubject(c.subject, charset)
         m.setText(c.body, charset)
         m

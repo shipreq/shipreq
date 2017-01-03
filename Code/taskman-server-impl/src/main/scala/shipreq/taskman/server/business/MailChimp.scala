@@ -20,12 +20,11 @@ import MailingList.API._
 
 object MailChimp {
 
-  trait Props {
-    val dc: String
-    val key: String
-    val masterList: String
-    val logLevel: LogLevel
-  }
+  final case class Props(
+    dc: String,
+    key: String,
+    masterList: String,
+    logLevel: LogLevel)
 
   // ---------------------------------------------------------------------------
   // Request

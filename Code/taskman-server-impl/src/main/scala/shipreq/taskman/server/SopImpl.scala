@@ -1,14 +1,17 @@
 package shipreq.taskman.server
 
 import doobie.imports._
+import japgolly.microlibs.config
 import java.time.Duration
+import scalaz.\/-
 import scalaz.effect.IO
 import scalaz.std.option.optionInstance
+import scalaz.syntax.catchable._
 import scalaz.syntax.traverse._
-import shipreq.base.util.{ErrorOr, StringBasedValueReader}
-import shipreq.base.util.ExternalValueReader.Retriever
+import shipreq.base.db.DbAccess
+import shipreq.base.util.ErrorOr
 import shipreq.base.util.effect.IoUtils
-import shipreq.taskman.api.{MsgId, Msg, Priority}
+import shipreq.taskman.api.{Msg, MsgId, Priority}
 import shipreq.taskman.api.impl.Serialisation
 import shipreq.base.util.TaggedTypes.JsonStr
 
@@ -53,6 +56,8 @@ object SopImpl {
     val getNextNodeIdQ = Query0[NodeId]("select NEXTVAL('node_seq')")
 
     val cfgGetQ = Query[String, String]("select v from cfg where k=?")
+
+    val cfgGetAllQ = Query0[(String, String)]("select k,v from cfg")
 
     private[this] def getMsgsAssignNode_q(extraSel: Option[String], extraCond: Option[String]) = s"""
          select ctid ${extraSel.fold("")(s => s",$s")}
@@ -172,13 +177,17 @@ object SopImpl {
 
     def cfgGet(k: String): ConnectionIO[Option[String]] =
       cfgGetQ.toQuery0(k).option
+
+    def cfgGetAll: ConnectionIO[List[(String, String)]] =
+      cfgGetAllQ.list
   }
 
-  def cfgValueReader(db: Transactor[IO]) =
-    new StringBasedValueReader(
-      new Retriever[String](k =>
-        ErrorOr.safe(db.trans(Dao.cfgGet(k)).unsafePerformIO)
-          .sequence))
+  def configSource(dbAccess: DbAccess): config.Source[IO] =
+    config.Source[IO](
+      config.SourceName(dbAccess.desc),
+      dbAccess.io.trans(Dao.cfgGetAll)
+        .attempt
+        .map(_.bimap(_.toString, kvs => config.ConfigStore.stringMap(kvs.toMap))))
 }
 
 // =====================================================================================================================

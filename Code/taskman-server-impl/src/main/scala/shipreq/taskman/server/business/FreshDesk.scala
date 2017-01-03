@@ -2,6 +2,7 @@ package shipreq.taskman.server.business
 
 import com.squareup.okhttp.OkHttpClient
 import com.squareup.okhttp.OkAuthenticator.Credential
+import japgolly.microlibs.config.ConfigParser
 import java.net.URL
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -10,8 +11,8 @@ import scalaz.syntax.traverse._
 import scalaz.syntax.bind._
 import shipreq.base.util.effect.IOE
 import shipreq.base.util.effect.IoUtils.IoExt
-import shipreq.base.util.{ExternalValueReader, ErrorOr}
-import shipreq.base.util.log.{LogLevel, HasLogger}
+import shipreq.base.util.ErrorOr
+import shipreq.base.util.log.{HasLogger, LogLevel}
 import ErrorOr.Implicits._
 import Http._
 import Support._
@@ -19,28 +20,28 @@ import Support.API._
 
 object FreshDesk {
 
-  trait Props {
-    val domain: String
-    val key: String
-    val taskmanEmail: String
-    val landingPage: TicketOrg
-    val failure: TicketOrg
-    val logLevel: LogLevel
-  }
+  final case class Props(
+    domain: String,
+    key: String,
+    taskmanEmail: String,
+    landingPage: TicketOrg,
+    failure: TicketOrg,
+    logLevel: LogLevel)
 
-  case class PropsI(landingPage: TicketOrgI, failure: TicketOrgI)
+  final case class PropsI(landingPage: TicketOrgI, failure: TicketOrgI)
 
-  case class TicketOrg(groupName: String, ticketType: String)
+  final case class TicketOrg(groupName: String, ticketType: String)
 
-  case class TicketOrgI(group: Group, ticketType: String) {
+  final case class TicketOrgI(group: Group, ticketType: String) {
     val json = ("group_id"-> group.id) ~ ("ticket_type"-> ticketType)
   }
 
-  def ticketOrgRetriever(implicit rs: ExternalValueReader.Retriever[String]) =
-    rs.emap(s => ErrorOr.fromOptionS(
-      """^\s*(\S[^/]*?)\s*/\s*(\S[^/]*?)\s*$""".r.findFirstMatchIn(s).map(m => TicketOrg(m group 1, m group 2)),
-      s"Unable to parse [$s]. Expected TicketOrg format: <groupName> / <ticketType>"
-    ))
+  object ConfigParsers {
+    implicit def parseTicketOrg(implicit s: ConfigParser[String]): ConfigParser[TicketOrg] =
+      s.mapOption(
+        """^\s*(\S[^/]*?)\s*/\s*(\S[^/]*?)\s*$""".r.findFirstMatchIn(_).map(m => TicketOrg(m group 1, m group 2)),
+        "Expected TicketOrg format: <groupName> / <ticketType>")
+  }
 
   case class Group(id: Long, name: String)
 
