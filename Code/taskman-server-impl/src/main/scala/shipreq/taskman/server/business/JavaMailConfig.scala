@@ -86,8 +86,8 @@ object JavaMailConfig {
 
   def props: Config[Properties] =
     Config.mergeConsumerFns(
-      smtp(Prefix("mail.smtp")),
-      // smtp(Prefix("mail.smtps")),
+      smtp(Prefix("mail.smtp.")),
+      // smtp(Prefix("mail.smtps.")),
       main
     ).map { fn =>
       val p = new Properties()
