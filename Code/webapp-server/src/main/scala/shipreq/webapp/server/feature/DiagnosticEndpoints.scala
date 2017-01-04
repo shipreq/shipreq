@@ -106,7 +106,7 @@ object DiagnosticEndpoints extends DI {
         val (dur, msgId) = calcTime(taskman().submitMsg(msg).unsafePerformIO())
         Full(jsonResponse(EmailSendResult(msgId.value, dur, token)))
       }
-      case _ => Full(BadResponse())
+      case _ => Full(BadRequestResponse())
     })
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -124,7 +124,7 @@ object DiagnosticEndpoints extends DI {
               case Some(status) => Full(jsonResponse(MsgStatusResult(id.value, status.toString, status.isArchived)))
               case None         => Full(NotFoundResponse("Msg not found."))
             }
-          case _ => Full(BadResponse())
+          case _ => Full(BadRequestResponse())
         }
       )
 }

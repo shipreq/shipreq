@@ -27,7 +27,7 @@ object ClientProtocol {
     import scala.scalajs.js.typedarray._
     import shipreq.webapp.base.WebappConfig
 
-    val ajaxPath = "/" + WebappConfig.ajaxPath + "/"
+    val ajaxPath = "/" + WebappConfig.liftPath + "/ajax"
     val timeoutMs = 120 * 1000
 
     def base64ToBinary(base64: String): ByteBuffer = {
@@ -68,7 +68,7 @@ object ClientProtocol {
                                             success: i.fn.Output => TCB.Success,
                                             failure: RemoteFailure[i.fn.Failure] => TCB.Failure): Callback = Callback {
       import i.fn._
-      val url = LiftAjax.addPageNameAndVersion(ajaxPath, js.undefined) + "?" + i.key
+      val url = LiftAjax.calcAjaxUrl(ajaxPath, null) + "?" + i.key
       val bin = PickleImpl.intoBytes(input)
       val res = postBinary(url, bin).map(UnpickleImpl(pickleResponse) fromBytes _)
       res.onSuccess { case \/-(o) => success(o)                        .runNow() }

@@ -27,11 +27,16 @@ object PageLink extends DispatchSnippet with SnippetHelpers {
   private def generatePageLink(loc: Loc[_]): R = {
     val linkText = loc.linkText openOr Text(loc.name)
     val a = new UnprefixedAttribute("href", loc.relativeUrl, Null)
-    n => n match {
-      case Elem(prefix, label, attrs, ns, ch@_*) =>
-        val inner: Seq[Node] = if (ch.nonEmpty) ch else linkText.theSeq
-        val newAttr = attrs.remove("data-lift").append(a)
-        Elem(prefix, label, newAttr, ns, false, inner: _*)
+
+    n => n.iterator.take(2).toList match {
+      case (e: Elem) :: Nil =>
+        e.copy(
+          attributes = e.attributes.remove("data-lift").append(a),
+          child = if (e.child.nonEmpty) e.child else linkText.theSeq)
+      case x :: Nil =>
+        sys error s"Don't know how to turn ${x.getClass} $x into a PageLink."
+      case _ =>
+        sys error s"PageLink can only be applied to a single node. Input ${n.theSeq} is not applicable."
     }
   }
 

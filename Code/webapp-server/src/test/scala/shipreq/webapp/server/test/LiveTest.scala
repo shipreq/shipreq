@@ -72,6 +72,6 @@ trait LiveTestHelpers {
   }
 
   def jsonPut(url: String, value: JValue)(implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType): self.ResponseType =
-    put(url, compact(render(value)), "application/json")
+    put(url, compactRender(value), "application/json")
 }
 

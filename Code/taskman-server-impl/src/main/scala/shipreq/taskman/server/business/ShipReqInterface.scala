@@ -16,7 +16,7 @@ final case class ShipReqInterface(schema: Option[String]) {
   private val find = s"select id, username, email, name, newsletter from ${prefix}taskman_users_v01"
 
   val findUserById: UserId => ConnectionIO[Option[ShipReqUser]] = {
-    val q = Query[UserId, ShipReqUser](s"$find where email=?")
+    val q = Query[UserId, ShipReqUser](s"$find where id=?")
     q.toQuery0(_).option
   }
 

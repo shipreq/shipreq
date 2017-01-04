@@ -7,7 +7,7 @@ object WebappConfig {
   val appName = "ShipReq"
 
   /** The URL path under which AJAX requests are serviced. */
-  val ajaxPath = "A"
+  val liftPath = "L"
 
   val assetPath   = EnvMacros.devOrRel("/dev", "/a")
   val assetPath_/ = assetPath + "/"

@@ -14,14 +14,16 @@ import net.liftweb.common.Box
 import net.liftweb.common.Empty
 import net.liftweb.common.Full
 import net.liftweb.common.Loggable
-import net.liftweb.http.LiftRules
+import net.liftweb.http.{ContentParser, LiftRules, S}
 import net.liftweb.http.provider.servlet.HTTPServletContext
 import org.fusesource.scalate.layout.DefaultLayoutStrategy
 import org.fusesource.scalate.scaml.ScamlOptions
-import org.fusesource.scalate.util.{ResourceNotFoundException, FileResourceLoader, ClassPathBuilder}
-import org.fusesource.scalate.{DefaultRenderContext, Binding, TemplateEngine}
+import org.fusesource.scalate.util.{ClassPathBuilder, FileResourceLoader, ResourceNotFoundException}
+import org.fusesource.scalate.{Binding, DefaultRenderContext, TemplateEngine}
 import scala.tools.nsc.Global
 import net.liftweb.util.Props
+import org.apache.commons.io.IOUtils
+import scala.xml.NodeSeq
 
 /**
  * ScamlJade template support.
@@ -54,63 +56,32 @@ object ScamlJade extends Loggable {
    *
    * The list of suffixes should be in the order or most commonly used first, as
    * Lift scans all of them in order until it finds one.
-   *
-   * @param suffixesToSupport The list of ALL suffixes your webapp will use for templates (e.g. html, scaml, jade).
    */
-  def init(suffixesToSupport : List[String]) = {
-    // Add support for the suffixes
-    LiftRules.templateSuffixes = suffixesToSupport
-
-    // Plug into the resource read pipeline
-    val defaultGetResource = LiftRules.getResource
-    def preprocessor(name: String): Box[URL] = {
-      if (!name.contains("/_resources") && (/*name.endsWith(".jade") ||*/ name.endsWith(".scaml"))) preprocess(name)
-      else defaultGetResource(name)
-    }
-    LiftRules.getResource = preprocessor
+  def init(): Unit = {
+    LiftRules.contentParsers ::=
+      ContentParser("scaml", hamlToXml, identity[NodeSeq](_))
   }
 
-  val newTempFile: () => File =
-    Option(System.getProperty("work.dir")) match {
-      case None =>
-        () => {
-          val f = File.createTempFile("lift_scaml_", ".tmp.html")
-          f.deleteOnExit()
-          f
-        }
-      case Some(d) => {
-        val path = """\$\{\s*(.+?)\s*\}""".r.replaceAllIn(d, m => System.getProperty(m.group(1)))
-        val dir = new File(path)
-        () => File.createTempFile("lift_scaml_", ".tmp.html", dir)
-      }
-    }
+  val hamlToXml: String => Box[NodeSeq] =
+    hamlToHtml(_)
+      .map(IOUtils.toInputStream(_, "UTF-8"))
+      .flatMap(S.htmlProperties.htmlParser)
 
-  def preprocess(name: String): Box[URL] =
-    tryLoad(name).map(rawTemplate => {
-      val file = newTempFile()
-      val fos = new FileOutputStream(file)
-      try {
-        val writer = new PrintWriter(new OutputStreamWriter(fos))
-        writer.print(rawTemplate)
-        writer.close()
-        file.toURI.toURL
-      } finally
-        fos.close
-    })
-
-  def tryLoad(name: String): Box[String] =
+  def hamlToHtml(haml: String): Box[String] =
     try {
-      if (renderer.canLoad(name))
-        Full(renderer.layout(name))
-      else
-        Empty
-    } catch {case e: Throwable => throw scala.xml.dtd.ValidationException(e.getMessage)}
+      val template = renderer.compileScaml(haml)
+      Full(renderer.layout("", template))
+    } catch {case e: Throwable =>
+      throw scala.xml.dtd.ValidationException(e.getMessage)
+    }
 }
 
 /**
  * A TemplateEngine using the Lift web abstractions.
  */
 class ScamlJadeRenderer extends TemplateEngine with Loggable {
+  // TODO Is all of this needed anymore?
+
   bindings = List(Binding("context", classOf[DefaultRenderContext].getName, true, isImplicit = true))
 
 //  if (useWebInfWorkingDirectory) {
@@ -120,7 +91,7 @@ class ScamlJadeRenderer extends TemplateEngine with Loggable {
 //      workingDirectory.mkdirs
 //    }
 //  }
-  classpath = buildClassPath
+  classpath = buildClassPath()
   resourceLoader = new LiftResourceLoader(this)
   layoutStrategy = new DefaultLayoutStrategy(this, "/WEB-INF/scalate/layouts/default.scaml", "/WEB-INF/scalate/layouts/default.ssp")
 

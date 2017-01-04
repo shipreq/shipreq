@@ -1,6 +1,5 @@
 * Use μtest only
 * Upgrade libs
-* Upgrade Lift
 * Upgrade Scala
 
 * Dockerise

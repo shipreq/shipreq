@@ -17,16 +17,16 @@ final class LazyVar[A](thunk: () => A) {
 
   def get: IO[A] =
     IO {
-    if (!initialised)
-      set(thunkRef())
-    value
-  }
+      if (!initialised)
+        set(thunkRef()).unsafePerformIO()
+      value
+    }
 
   def set(a: A): IO[Unit] =
     IO {
-    thunkRef = null
-    value = a
-  }
+      thunkRef = null
+      value = a
+    }
 
   def mod(f: A => A): IO[Unit] =
     for {

@@ -40,7 +40,8 @@ class Boot extends DI {
   }
 
   def readConfig(): AppConfig = {
-    val runMode = shipreq.base.util.RunMode.forName(Props.modeName) getOrElse sys.error(s"Unrecognised run mode: '${Props.modeName}'")
+    val runModeName = Props.mode.toString
+    val runMode = shipreq.base.util.RunMode.forName(runModeName) getOrElse sys.error(s"Unrecognised run mode: '$runModeName'")
     val plan = (DbConfig.config |@| ServerConfig.config |@| Config.report)(AppConfig)
     val cfg = plan.run(runMode.configSources).getOrDie()
     cfg
@@ -59,10 +60,7 @@ class Boot extends DI {
     LiftRules.funcNameGenerator = S.generateFuncName _
 
     // Customise URL paths for built-in resources & AJAX requests
-    LiftRules.ajaxPath = WebappConfig.ajaxPath
-    LiftRules.ajaxScriptName = () => "A.js"
-    LiftRules.cometPath = "C"
-    LiftRules.cometScriptName = () => "C.js"
+    LiftRules.liftContextRelativePath = WebappConfig.liftPath
 
     // Register route whitelist
     LiftRules.setSiteMap(AppSiteMap.sitemap)
@@ -80,7 +78,7 @@ class Boot extends DI {
     }
 
     // Add support for HAML/Jade template (must be after other LiftRules)
-    ScamlJade.init(List("scaml", "html"))
+    ScamlJade.init()
   }
 
   def initOshiro(): Unit =

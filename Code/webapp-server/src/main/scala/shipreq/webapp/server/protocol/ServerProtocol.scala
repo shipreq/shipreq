@@ -3,7 +3,7 @@ package shipreq.webapp.server.protocol
 import boopickle._
 import java.nio.ByteBuffer
 import net.liftweb.common.{Empty, Full, Failure => BoxFailure}
-import net.liftweb.http.{BadResponse, InternalServerErrorResponse, LiftResponse, S}
+import net.liftweb.http.{BadRequestResponse, InternalServerErrorResponse, LiftResponse, S}
 import scalaz.effect.IO
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.log.HasLogger
@@ -24,17 +24,17 @@ object ServerProtocol extends HasLogger {
       def readReqBody: T[Array[Byte]] =
         S.request.flatMap(_.body) match {
           case Full(body)    => body
-          case Empty         => BadResponse()
+          case Empty         => BadRequestResponse()
           case e: BoxFailure =>
             log.error(s"Error reading $fn request: $e")
-            BadResponse()
+            BadRequestResponse()
         }
 
       def unpickle(b: Array[Byte]): T[Input] =
         try {
           UnpickleImpl(pickleInput).fromBytes(ByteBuffer wrap b)
         } catch {
-          case e: Throwable => BadResponse()
+          case e: Throwable => BadRequestResponse()
         }
 
       def process(i: Input): T[Response] =
@@ -42,7 +42,7 @@ object ServerProtocol extends HasLogger {
           localFn(i).unsafePerformIO()
         } catch {
           case e: Throwable =>
-            log.error(s"Error processing $fn request $i: $e")
+            log.error(e, s"Error processing $fn request $i")
             InternalServerErrorResponse()
         }
 
@@ -52,7 +52,7 @@ object ServerProtocol extends HasLogger {
           BinaryResponse(binary)
         } catch {
           case e: Throwable =>
-            log.error(s"Error responding to $fn with $r: $e")
+            log.error(e, s"Error responding to $fn with $r")
             InternalServerErrorResponse()
         }
 

@@ -1,9 +1,10 @@
 package shipreq.webapp.server.util
 
-import net.liftweb.http.S
+import net.liftweb.http.js.JE.Str
 import net.liftweb.http.js.JsCmd
-import net.liftweb.util.Helpers.strToCssBindPromoter
-import net.liftweb.util.{Helpers, CssSel}
+import net.liftweb.http.{S, SHtml}
+import net.liftweb.util.Helpers._
+import net.liftweb.util.{CssSel, Helpers}
 import scala.xml.NodeSeq
 import JsExt._
 
@@ -61,7 +62,7 @@ object HtmlTransformExt {
   def ajaxSubmitOnClick(func: () => JsCmd): CssSel = {
     val funcName = "z" + Helpers.nextFuncName
     S.addFunctionMap(funcName, (func))
-    "* [onclick]" #> s"liftAjax.lift_uriSuffix='$funcName=_';return true"
+    "* [onclick]" #> ("lift.setUriSuffix('"+funcName+"=_');return true;")
   }
 
   /**
@@ -71,9 +72,8 @@ object HtmlTransformExt {
    */
   def ajaxOnClick(func: () => JsCmd): CssSel = {
     val funcName = Helpers.nextFuncName
-    S.addFunctionMap(funcName, (func))
-    // val js = SHtml.makeAjaxCall(JE.Str(funcName + "=true")).toJsCmd + ";return false"
-    val js = s"""liftAjax.lift_ajaxHandler("$funcName=true", null, null, null);return false"""
+    S.addFunctionMap(funcName, func)
+    val js = SHtml.makeAjaxCall(Str(funcName + "=true")).toJsCmd + ";return false;"
     "* [onclick]" #> js
   }
 }
