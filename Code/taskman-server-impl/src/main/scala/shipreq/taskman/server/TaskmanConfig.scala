@@ -83,21 +83,32 @@ object TaskmanConfig extends HasLogger {
 
   // ===================================================================================================================
 
-  case class Taskman(queueSize  : Int,
-                     trustPeriod: AssignmentTrustPeriod,
-                     pollEvery  : Duration,
-                     pollGap    : Duration)
+  case class Taskman(remoteCfgRetryDelay: Duration,
+                     remoteCfgRetryLimit: Option[Int],
+                     queueSize          : Int,
+                     trustPeriod        : AssignmentTrustPeriod,
+                     pollEvery          : Duration,
+                     pollGap            : Duration) {
+
+    def remoteCfgRetry(retriesSoFar: Int): Option[Duration] =
+      if (remoteCfgRetryLimit.forall(retriesSoFar < _))
+        Some(remoteCfgRetryDelay)
+      else
+        None
+  }
 
   def taskman: Config[Taskman] =
-    (Config.need[Int]("queueSize").ensure(_ >= 1, "Must be ≥ 1.")
+    (Config.need[Duration]("remoteCfg.retry.delay")
+      |@| Config.get[Int]("remoteCfg.retry.limit")
+      |@| Config.need[Int]("queueSize").ensure(_ >= 1, "Must be ≥ 1.")
       |@| Config.need[Duration]("trustPeriod").ensure(!_.isShorterThan(10 seconds), "Must be at least 10 seconds.")
       |@| Config.need[Duration]("poll.every").ensure(!_.isShorterThan(50 millis), "Must be at least 50 ms.")
       |@| Config.get[Duration]("poll.gap").ensure(_.fold(true)(!_.isShorterThan(50 millis)), "Must be at least 50 ms.")
-      ) { (qs, tp, pollEvery, pollGapO) =>
+      ) { (remoteCfgRetryDelay, remoteCfgRetryLimit, qs, tp, pollEvery, pollGapO) =>
       val pollGap = pollGapO getOrElse pollEvery
       if (pollGap isLongerThan pollEvery)
         log.warn.z(s"The minimum poll gap ($pollGap) is larger than the poll time ($pollEvery). Wasteful.")
-      Taskman(qs, AssignmentTrustPeriod(tp), pollEvery, pollGap)
+      Taskman(remoteCfgRetryDelay, remoteCfgRetryLimit, qs, AssignmentTrustPeriod(tp), pollEvery, pollGap)
     }
       .withPrefix("taskman.")
 }

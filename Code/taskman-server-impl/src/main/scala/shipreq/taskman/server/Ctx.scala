@@ -9,6 +9,7 @@ import scalaz.effect.IO
 import shipreq.base.db.DbAccess
 import shipreq.base.util._
 import shipreq.base.util.effect.IOE
+import shipreq.base.util.effect.IoUtils._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.UserId
 import shipreq.taskman.api.impl.TaskmanApi
@@ -39,8 +40,12 @@ final class TaskmanCtx(val dbAccess: DbAccess, val config: TaskmanConfig, emailT
     TaskmanConfig.mailTokens
       .withReport
       .run(emailTokenSource)
+      .map(_.getOrDie())
+      .retryOnException((n, t) => config.taskman.remoteCfgRetry(n).map(d => IO {
+        log.warn(s"Remote config error occurred. Retrying...\n${t.getMessage}")
+        Thread sleep d.toMillis
+      }))
       .unsafePerformIO()
-      .getOrDie()
 
   log.info(emailTokensReport.report)
 

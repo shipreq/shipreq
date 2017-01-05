@@ -26,7 +26,9 @@ shipreq.schema                     = public
 shipreq.webapp.appName             = TestShipReq
 shipreq.webapp.url.login           = http://test.shipreq.com/login
 
-taskman.queueSize                  = 10
-taskman.trustPeriod                = 1 min
 taskman.poll.every                 = 200 ms
-#taskman.poll.gap                   =
+# taskman.poll.gap                   =
+taskman.queueSize                  = 10
+taskman.remoteCfg.retry.delay      = 10 ms
+taskman.remoteCfg.retry.limit      = 0
+taskman.trustPeriod                = 1 min

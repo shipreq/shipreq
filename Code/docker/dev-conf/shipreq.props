@@ -30,7 +30,8 @@ mailchimp.logLevel                 = trace
 
 shipreq.schema                     = public
 
-taskman.queueSize                  = 10
-taskman.trustPeriod                = 1 min
 taskman.poll.every                 = 5 sec
 taskman.poll.gap                   = 1 sec
+taskman.queueSize                  = 10
+taskman.remoteCfg.retry.delay      = 3 sec
+taskman.trustPeriod                = 1 min
