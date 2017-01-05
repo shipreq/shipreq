@@ -18,17 +18,12 @@ final case class TaskmanConfig(mail     : TaskmanConfig.Mail,
                                mailchimp: MailChimp.Props,
                                freshdesk: FreshDesk.Props,
                                shipreq  : TaskmanConfig.ShipReq,
-                               taskman  : TaskmanConfig.Taskman,
-                               report   : ConfigReport)
+                               taskman  : TaskmanConfig.Taskman)
 
 object TaskmanConfig extends HasLogger {
 
   def config: Config[TaskmanConfig] =
-  // TODO Does Config.report work like this? It should probably be forced last via .withReport
-    // (mail |@| mailchimp |@| freshdesk |@| shipreq |@| taskman |@| Config.report) (apply)
-    (mail |@| mailchimp |@| freshdesk |@| shipreq |@| taskman).tupled
-      .withReport
-      .map { case ((a, b, c, d, e), z) => apply(a, b, c, d, e, z) }
+    (mail |@| mailchimp |@| freshdesk |@| shipreq |@| taskman) (apply)
 
   // TODO Put props and parsers in Business classes
 

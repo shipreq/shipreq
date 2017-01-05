@@ -42,7 +42,7 @@ class Boot extends DI {
   def readConfig(): AppConfig = {
     val runModeName = Props.mode.toString
     val runMode = shipreq.base.util.RunMode.forName(runModeName) getOrElse sys.error(s"Unrecognised run mode: '$runModeName'")
-    val plan = (DbConfig.config |@| ServerConfig.config |@| Config.report)(AppConfig)
+    val plan = (DbConfig.config |@| ServerConfig.config).tupled.withReport.map { case ((a, b), z) => AppConfig(a, b, z) }
     val cfg = plan.run(runMode.configSources).getOrDie()
     cfg
   }

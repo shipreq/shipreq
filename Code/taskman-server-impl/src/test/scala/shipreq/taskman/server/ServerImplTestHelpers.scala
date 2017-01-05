@@ -15,7 +15,12 @@ trait ServerImplTestHelpers {
   final def dbMutexR = ServerImplTestHelpers.dbMutexR
   final def dbMutexW = ServerImplTestHelpers.dbMutexW
 
-  lazy val ctx = TaskmanCtx(xa dbAccess TestDb.dbAccess, taskmanConfig, cfgSrc.trans(λ[Id ~> IO](IO(_))))
+  lazy val ctx = TaskmanCtx(
+    xa dbAccess TestDb.dbAccess,
+    taskmanConfig,
+    taskmanConfigReport,
+    cfgSrc.trans(λ[Id ~> IO](IO(_))))
+
   import ctx._
 
   def reify[A](op: ApiOp[A]): IO[A] = aopReifier(op)
@@ -33,8 +38,8 @@ object ServerImplTestHelpers {
 
   private[server] def cfgSrc = RunMode.Test.configSources
 
-  lazy val taskmanConfig =
-    TaskmanConfig.config.run(cfgSrc).getOrDie()
+  lazy val (taskmanConfig, taskmanConfigReport) =
+    TaskmanConfig.config.withReport.run(cfgSrc).getOrDie()
 
   def apply(_xa: SingleConnectionXA): ServerImplTestHelpers =
     new ServerImplTestHelpers {

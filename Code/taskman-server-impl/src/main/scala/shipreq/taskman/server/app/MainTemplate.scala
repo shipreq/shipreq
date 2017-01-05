@@ -18,8 +18,8 @@ private[app] trait MainTemplate extends HasLogger {
 
   def withDatabase[A](f: DbAccess => IO[A]): IO[A] =
     for {
-      x <- IO(DbConfig.config.withReport.run(runMode.configSources).getOrDie())
-      (cfg, report) = x
+      tmp <- IO(DbConfig.config.withReport.run(runMode.configSources).getOrDie())
+      (cfg, report) = tmp
       _ <- IO.putStrLn(report.report)
       dbAccess = DbAccess.fromCfg(cfg)
       a <- dbAccess.setupRunShutdown(f(dbAccess))
@@ -27,12 +27,12 @@ private[app] trait MainTemplate extends HasLogger {
 
   def withTaskmanCtx[A](f: TaskmanCtx => IO[A]): IO[A] =
     for {
-      cfgV <- IO((DbConfig.config tuple TaskmanConfig.config).run(runMode.configSources).getOrDie())
-      (dbCfg, taskmanCfg) = cfgV
+      tmp <- IO((DbConfig.config tuple TaskmanConfig.config).withReport.run(runMode.configSources).getOrDie())
+      ((dbCfg, taskmanCfg), report) = tmp
       dbAccess = DbAccess.fromCfg(dbCfg)
       a <- dbAccess.setupRunShutdown(
         for {
-          ctx <- IO(TaskmanCtx(dbAccess, taskmanCfg))
+          ctx <- IO(TaskmanCtx(dbAccess, taskmanCfg, report))
           a <- f(ctx) ensuring ctx.shutdown
         } yield a
       )
