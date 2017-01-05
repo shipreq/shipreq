@@ -10,14 +10,14 @@ val baseDb               = ShipReqBuild.baseDb
 val baseTestJvm          = ShipReqBuild.baseTestJvm
 val baseTestJs           = ShipReqBuild.baseTestJs
 
-val taskman              = ShipReqBuild.taskman
-val taskmanApiLogic      = ShipReqBuild.taskmanApiLogic
-val taskmanApiImpl       = ShipReqBuild.taskmanApiImpl
-val taskmanApi           = ShipReqBuild.taskmanApi
-val taskmanServerLogic   = ShipReqBuild.taskmanServerLogic
-val taskmanServerSchema  = ShipReqBuild.taskmanServerSchema
-val taskmanServerImpl    = ShipReqBuild.taskmanServerImpl
-val taskmanServer        = ShipReqBuild.taskmanServer
+val taskman              = TaskmanBuild.taskman
+val taskmanApiLogic      = TaskmanBuild.taskmanApiLogic
+val taskmanApiImpl       = TaskmanBuild.taskmanApiImpl
+val taskmanApi           = TaskmanBuild.taskmanApi
+val taskmanServerLogic   = TaskmanBuild.taskmanServerLogic
+val taskmanServerSchema  = TaskmanBuild.taskmanServerSchema
+val taskmanServerImpl    = TaskmanBuild.taskmanServerImpl
+val taskmanServer        = TaskmanBuild.taskmanServer
 
 val webapp               = WebappBuild.webapp
 val webappMacroJvm       = WebappBuild.webappMacroJvm
@@ -39,8 +39,7 @@ val webappGenJvm         = WebappBuild.webappGenJvm
 val webappGenJs          = WebappBuild.webappGenJs
 val webappServer         = WebappBuild.webappServer
 
-val utils                = ShipReqBuild.utils
-
 val benchmarkJvm         = ShipReqBuild.benchmarkJvm
 val benchmarkJs          = ShipReqBuild.benchmarkJs
+val utils                = ShipReqBuild.utils
 

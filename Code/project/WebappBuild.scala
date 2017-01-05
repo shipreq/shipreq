@@ -9,6 +9,7 @@ import DependencyLib.JVM
 import ScalaJSPlugin.autoImport.{crossProject => _, _}
 import ScalaJSPluginInternal.stageKeys
 import ShipReqBuild._
+import TaskmanBuild._
 
 /** The user-facing app.
   */
