@@ -23,7 +23,7 @@ Strategies
 ==========
 * Config
   * [-] Use a single props file name. No more mode.host.blah.props.
-  * [ ] Non-test: remove from src/main/resources
+  * [-] Non-test: remove from src/main/resources
   * [-] Test: put in src/test/resources
   * [-] Test: should reference docker-compose-test
 * Logging
