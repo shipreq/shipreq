@@ -1,23 +1,14 @@
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.14")
+addSbtPlugin("com.earldouglas"    % "xsbt-web-plugin"      % "2.0.4")
+addSbtPlugin("com.eed3si9n"       % "sbt-assembly"         % "0.11.2")
+addSbtPlugin("com.timushev.sbt"   % "sbt-updates"          % "0.3.0")
+addSbtPlugin("com.typesafe.sbt"   % "sbt-git"              % "0.8.5")
+addSbtPlugin("net.virtual-void"   % "sbt-dependency-graph" % "0.8.2")
+addSbtPlugin("org.scala-js"       % "sbt-scalajs"          % "0.6.14")
+addSbtPlugin("org.scoverage"      % "sbt-scoverage"        % "1.5.0")
+addSbtPlugin("pl.project13.scala" % "sbt-jmh"              % "0.2.20")
+
+// Facilitates running Scala.JS tests in real browsers
 libraryDependencies += "org.scala-js" %% "scalajs-env-selenium" % "0.1.3"
-
-// Web app support plugin for XSbt using Jetty Web Server
-addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "2.0.4")
-
-// Builds Taskman dist
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.11.2")
-
-// Git-based version
-addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.8.5")
-
-// Code coverage (JVM projects only)
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.0")
-
-// Benchmarking
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.2.20")
-
-addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.3.0")
-addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.8.2")
 
 // https://github.com/JetBrains/sbt-ide-settings
 resolvers += Resolver.url("jetbrains-bintray", url("http://dl.bintray.com/jetbrains/sbt-plugins/"))(Resolver.ivyStylePatterns)
