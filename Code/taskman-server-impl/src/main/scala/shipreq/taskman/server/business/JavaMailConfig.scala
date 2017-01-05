@@ -18,7 +18,7 @@ object JavaMailConfig {
 
   // https://javamail.java.net/nonav/docs/api/com/sun/mail/smtp/package-summary.html
   private def main: Config[Properties => Unit] = {
-    implicit val prefix = Prefix("main.")
+    implicit val prefix = Prefix("mail.")
     Config.mergeConsumerFns(
       get[Boolean]("debug"),
       get[String]("from"),
