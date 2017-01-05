@@ -1,6 +1,0 @@
-#!/bin/bash
-
-f="$( "$(dirname "$0")"/latest-file )"
-lines=2000
-[ -n "$1" ] && lines=$1
-exec tail -n$lines -f "$f"

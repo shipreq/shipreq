@@ -1,3 +1,0 @@
-#!/bin/bash
-
-egrep --line-buffered '(DEBUG|TRACE|INFO |WARN |FATAL|ERROR) \[' "$@"

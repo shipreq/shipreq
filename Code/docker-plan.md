@@ -22,20 +22,16 @@ Concerns
 Strategies
 ==========
 * Config
-  * Use a single props file name. No more mode.host.blah.props.
-  * Non-test: remove from src/main/resources
-  * Test: put in src/test/resources
-  * Test: should reference docker-compose-test
+  * [-] Use a single props file name. No more mode.host.blah.props.
+  * [ ] Non-test: remove from src/main/resources
+  * [-] Test: put in src/test/resources
+  * [-] Test: should reference docker-compose-test
 * Logging
-  * Non-test: to stdout
-  * Test: to file in /tmp
+  * [ ] Non-test: to stdout
+  * [-] Test: to file in /tmp
 
 Tasks
 =====
-* Test env
-  * Create docker compose setup for external resources
-  * Update tests to use test-env
-
 * Taskman ⇒ Docker
   * Ensure enough build info in jar (and dockerfile)
   * Config

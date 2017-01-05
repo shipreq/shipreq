@@ -1,7 +1,5 @@
 <configuration>
 
-	<timestamp key="bySecond" datePattern="yyyyMMddHHmmss"/>
-
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
 			<pattern>%-5level [%-34logger{34}] %msg%n</pattern>
@@ -12,7 +10,7 @@
 	</appender>
 
 	<appender name="FILE.LOG" class="ch.qos.logback.core.FileAppender">
-		<file>../logs/webapp-test-${bySecond}.log</file>
+		<file>/tmp/shipreq-test-webapp-server.log</file>
 		<encoder>
 			<pattern>%d{HH:mm:ss.SSS} %-5level [%-50logger{50}] {%thread} %msg%n</pattern>
 		</encoder>
@@ -21,9 +19,10 @@
     <logger name="net.liftmodules.scamljade" level="INFO" />
     <logger name="org.fusesource.scalate" level="INFO" />
     <logger name="org.apache.commons" level="WARN" />
-	<logger name="shipreq.webapp" level="DEBUG" />
+	<logger name="shipreq" level="DEBUG" />
+
 	<root level="DEBUG">
-		<appender-ref ref="STDOUT" />
+		<!--<appender-ref ref="STDOUT" />-->
 		<appender-ref ref="FILE.LOG" />
 	</root>
 </configuration>

@@ -1,4 +1,0 @@
-#!/bin/bash
-
-fgrep --line-buffered scala.slick.session.BaseSession \
-  | sed -u 's/ \[scala.slick.session.BaseSession *\]//; s/Preparing statement: / /'

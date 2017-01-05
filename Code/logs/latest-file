@@ -1,8 +1,0 @@
-#!/bin/bash
-
-logdir="$(dirname "$0")"
-#logdir="$(cd "$(dirname "$0")" && pwd)"
-
-f="$(ls -1rt "$logdir"/*.log | tail -1)"
-[ -z "$f" ] && echo "No log files found." && exit 1
-echo "$f"

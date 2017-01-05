@@ -1,7 +1,5 @@
 <configuration>
 
-	<timestamp key="bySecond" datePattern="yyyyMMddHHmmss"/>
-
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
 			<pattern>%-5level [%-34logger{34}] %msg%n</pattern>
@@ -12,13 +10,14 @@
 	</appender>
 
 	<appender name="FILE.LOG" class="ch.qos.logback.core.FileAppender">
-		<file>logs/taskman-api-impl-test-${bySecond}.log</file>
+		<file>/tmp/shipreq-test-taskman-api-impl.log</file>
 		<encoder>
 			<pattern>%d{HH:mm:ss.SSS} %-5level [%-50logger{50}] {%thread} %msg%n</pattern>
 		</encoder>
 	</appender>
 
 	<logger name="shipreq" level="DEBUG" />
+
 	<root level="DEBUG">
 		<!--<appender-ref ref="STDOUT" />-->
 		<appender-ref ref="FILE.LOG" />

@@ -1,7 +1,5 @@
 <configuration>
 
-	<timestamp key="bySecond" datePattern="yyyyMMddHHmmss"/>
-
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
 			<pattern>%-5level [%-35logger{35}] {%-33thread:%-10X{who}} %msg%n</pattern>
@@ -12,7 +10,7 @@
 	</appender>
 
 	<appender name="FILE.LOG" class="ch.qos.logback.core.FileAppender">
-		<file>logs/taskman-server-impl-test-${bySecond}.log</file>
+		<file>/tmp/shipreq-test-taskman-server-impl.log</file>
 		<encoder>
 			<pattern>%d{HH:mm:ss.SSS} %-5level [%-50logger{50}] {%-40thread:%-10X{who}} %msg%n</pattern>
 		</encoder>
@@ -20,11 +18,9 @@
 
 	<logger name="com.googlecode.flyway" level="INFO" />
     <logger name="com.jolbox.bonecp" level="INFO" />
-
     <logger name="akka" level="DEBUG" />
     <logger name="akka.event.slf4j" level="WARN" />
     <logger name="akka.event.EventStream" level="WARN" />
-
     <logger name="shipreq" level="DEBUG" />
 
 	<root level="DEBUG">

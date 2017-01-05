@@ -1,3 +1,0 @@
-#!/bin/bash
-
-sed '1,/Defaults initialised successfully/D' "$@"
