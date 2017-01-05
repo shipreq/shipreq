@@ -1,9 +1,5 @@
 db.appname                         = TASKMAN
 db.schema                          = taskman
-db.database                        = shipreq_dev
-db.username                        = shipreq_dev
-db.password                        = sqd
-
 db.pool.maximumPoolSize            = 8
 
 freshdesk.domain                   = yoarmum

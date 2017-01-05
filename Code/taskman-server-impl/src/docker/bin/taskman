@@ -1,2 +1,2 @@
 #!/bin/bash
-exec /taskman/bin/run shipreq.taskman.server.app.Server "$@"
+exec /taskman/bin/run {{mainClass}} "$@"

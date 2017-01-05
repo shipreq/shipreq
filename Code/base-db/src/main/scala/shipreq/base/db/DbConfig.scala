@@ -48,6 +48,7 @@ object DbConfig {
         Config.need[String]("password") |@|
         Config.consumerFn[PGSimpleDataSource](
           _ => pgCurrentSchema,
+          _.getOrUse("host", _.setServerName)("localhost"),
           _.get("appname"               , _.setApplicationName),
           _.get("binaryTransfer"        , _.setBinaryTransfer),
           _.get("binaryTransferDisable" , _.setBinaryTransferDisable),
@@ -61,7 +62,6 @@ object DbConfig {
           _.get("protocolVersion"       , _.setProtocolVersion),
           _.get("receiveBufferSize"     , _.setReceiveBufferSize),
           _.get("sendBufferSize"        , _.setSendBufferSize),
-          _.get("serverName"            , _.setServerName),
           _.get("socketTimeout"         , _.setSocketTimeout),
           _.get("ssl"                   , _.setSsl),
           _.get("sslfactory"            , _.setSslfactory),

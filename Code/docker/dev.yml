@@ -1,0 +1,25 @@
+version: '2'
+services:
+
+  postgres:
+    image: postgres:9.6.1
+    ports:
+      - "23032:5432"
+    environment:
+      - POSTGRES_DB=shipreq_dev
+      - POSTGRES_USER=dev
+      - POSTGRES_PASSWORD=sqd
+    logging:
+      driver: none
+
+  taskman:
+    image: shipreq/taskman
+    links:
+      - postgres
+    volumes:
+      - ./dev-conf:/taskman/conf:ro
+    environment:
+      - db.host=postgres
+      - db.database=shipreq_dev
+      - db.username=dev
+      - db.password=sqd

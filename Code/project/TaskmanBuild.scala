@@ -72,6 +72,8 @@ object TaskmanBuild {
       }
     }
 
+    val serverClass = "shipreq.taskman.server.app.Server"
+
     project("taskman-server-impl")
       .enablePlugins(JavaAppPackaging, DockerPlugin)
       .configure(Common.settings, Common.jvmSettings)
@@ -82,7 +84,7 @@ object TaskmanBuild {
       .dependsOn(baseTestJvm % "test")
       .settings(
         initialCommands += consoleCmds,
-        mainClass := Some("shipreq.taskman.server.app.Server"),
+        mainClass := Some(serverClass),
         buildOptions in docker := BuildOptions(pullBaseImage = BuildOptions.Pull.Always),
 
         imageNames in docker := {
@@ -115,11 +117,15 @@ object TaskmanBuild {
           val classpath = PackagerKeys.scriptClasspath.value.map(lib + _).mkString(":")
 
           new Dockerfile {
+            def runInBash(cmds: String*) = run("/bin/bash", "-c", cmds.mkString(";"))
+
             from("anapsix/alpine-java:8_server-jre_unlimited")
             workDir(root)
             jarTiers.foreach(copy(_, lib))
             copy(sourceDirectory.value / "docker", s"$root/")
-            run("sed", "-i", s"s|{{cp}}|$classpath|", s"$root/bin/run")
+            runInBash(
+              s"sed -i 's|{{cp}}|$classpath|' $root/bin/run",
+              s"sed -i 's|{{mainClass}}|$serverClass|' $root/bin/taskman")
             env(
               "VERSION" -> version.value,
               "BUILD_MODE" -> (if (releaseMode) "release" else "dev"))

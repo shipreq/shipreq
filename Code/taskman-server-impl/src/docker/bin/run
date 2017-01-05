@@ -5,7 +5,7 @@ cd /taskman || exit 1
 [ $# -lt 1 ] && echo "Usage: $0 <main-class>" && exit 1
 
 main="$1"; shift
-cp={{cp}}
+cp=conf/:{{cp}}
 
 java_opt=(-cp "$cp")
 if [ -z "$client" ]; then
