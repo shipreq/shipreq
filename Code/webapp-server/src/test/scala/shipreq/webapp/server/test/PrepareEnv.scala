@@ -39,6 +39,8 @@ object PrepareEnv {
     boot.preloadTemplates()
   }
 
-  def db(): Unit =
+  def db(): Unit = {
+    TestDb.init()
     TestDb.useInLift()
+  }
 }
