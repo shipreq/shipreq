@@ -320,9 +320,11 @@ object WebappBuild {
           // val tmp = target.value / "docker"
           val tmp = baseDirectory.value / "target/docker" // Docker requires this be under baseDirectory
 
+          def runRun(cmd: String): Unit =
+            sys.process.Process(List("bash", "-c", cmd)).!!
+
           def prepareClean(f: String): Unit =
-            sys.process.Process(List("bash", "-c",
-              s"""rm -rf "$f" && mkdir -p "$f"""")).!!
+            runRun(s"""rm -rf "$f" && mkdir -p "$f"""")
 
           // Prepare jetty-dist
           val depFiles = Classpaths.managedJars(DockerDeps, (classpathTypes in DockerDeps).value, update.value).map(_.data)
@@ -331,13 +333,12 @@ object WebappBuild {
           val tmpJetty = tmp / "jetty"
           val tmpJettyDir = tmpJetty.getAbsolutePath
           prepareClean(tmpJettyDir)
-          val scriptContent =
+          runRun(
             s"""
                |cd "$tmpJettyDir"
                |  && tar xzf "$jettyDistTarGz" --strip-components=1
                |  && rm -rv */*{jaas,jsp}[.-]* lib/apache-jsp demo-base
-             """.stripMargin.trim.replaceAll("\n\\s+", " ")
-          sys.process.Process(List("bash", "-c", scriptContent)).!!
+             """.stripMargin.trim.replaceAll("\n\\s+", " "))
 
           var assetPathGoodAndBad = Vector("dev", "a")
           assetPathGoodAndBad = assetPathGoodAndBad.map(_ + "/")
@@ -355,40 +356,57 @@ object WebappBuild {
               .groupBy(_._2 match {
                 case n if n.startsWith(assetPath) =>
                   n.drop(assetPath.length) match {
-                    case n if n startsWith "viz.js"        => 10
-                    case _ if n contains   "/fonts/"       => 11
-                    case n if n startsWith "katex"         => 11
-                    case n if n startsWith "public"        => 60
-                    case n if n startsWith "member"        => 60
-                    case n if n matches    webappJs        => 98
-                    case _                                 => 80
+                    case n if n startsWith "viz.js"        => (10, false)
+                    case _ if n contains   "/fonts/"       => (11, false)
+                    case n if n startsWith "katex"         => (11, false)
+                    case n if n startsWith "public"        => (60, false)
+                    case n if n startsWith "member"        => (60, false)
+                    case n if n matches    webappJs        => (98, false)
+                    case _                                 => (80, false)
                   }
                 case n if n.startsWith("WEB-INF/lib/") =>
                   n.drop("WEB-INF/lib/".length) match {
-                    case f if f startsWith "webapp-server" => 99
-                    case f if f startsWith "webapp-"       => 95
-                    case f if f startsWith "taskman"       => 83
-                    case f if f startsWith "base-"         => 82
-                    case f if f matches    japgolly        => 58
-                    case f if f startsWith "lift"          => 50
-                    case f if f matches    "^scalap?-.*"   => 0
-                    case _                                 => 55
+                    case f if f startsWith "webapp-server" => (99, true)
+                    case f if f startsWith "webapp-"       => (95, true)
+                    case f if f startsWith "taskman"       => (83, true)
+                    case f if f startsWith "base-"         => (82, true)
+                    case f if f matches    japgolly        => (58, false)
+                    case f if f startsWith "lift"          => (50, false)
+                    case f if f matches    "^scalap?-.*"   => ( 0, false)
+                    case _                                 => (55, false)
                   }
-                case _                                     => 80
+                case _                                     => (80, false)
               })
             .toList
-            .sortBy(_._1)
-            .map(_._2.sortBy(_._2))
+            .sortBy(_._1._1)
+            .map { case ((_, fixJars), fs) => (fixJars, fs.sortBy(_._2)) }
           // printFileBatches(warTiers.map(_.map(_._1)))
+
+          val comp = if (releaseMode) "pigz -k -11" else "pigz -k -9"
+
           val warStages =
-            warTiers.zipWithIndex.map { case (batch, i) =>
-              val stage = tmpWar / s"lib-${i + 1}"
+            warTiers.zipWithIndex.map { case ((fixJars, batch), i) =>
+              val stage = tmpWar / s"war-${i + 1}"
+              val stageDir = stage.getAbsolutePath
               assert(stage.mkdir(), s"Failed to create $stage")
               IO.copy(batch.map { case (f, n) => f -> stage / n }, preserveLastModified = true)
+
+              // Make jars deterministic
+              if (fixJars)
+                runRun(s"""cd "$stageDir" && """ +
+                  "for f in  $(find -name '*.jar'); do unzip -l $f| cut -b31- | grep '/$' | xargs zip -dq $f META-INF/MANIFEST.MF; done")
+
+              // Compress assets
+              val stagedAssets = stage / assetPath
+              if (stagedAssets.exists())
+                runRun(s"cd ${stagedAssets.getAbsolutePath} && find -type f | egrep -v '\\.(gz|zip|eot|woff2?)$$' | parallel --no-notice $comp")
+
               stage
             }
 
           // println(sys.process.Process(List("tree", tmp.getAbsolutePath)).!!)
+
+          val warExplode = s"$base/webapps/ROOT"
 
           new Dockerfile {
             def runInBash(cmds: String*) = run("/bin/bash", "-c", cmds.mkString(";"))
@@ -400,7 +418,7 @@ object WebappBuild {
             // On a micro EC2 instance this isn't enough time, so this increases the wait time.
             runInBash("""sed -i 's/\(for T in \)\(1 2 3 .* 15\)\(\s+\d+\)*/\1\2 \2 \2 \2 \2/' """ + s"$jettyHome/bin/jetty.sh")
 
-            warStages.foreach(copy(_, s"$base/webapps/ROOT/"))
+            warStages.foreach(copy(_, s"$warExplode/"))
             copy(sourceDirectory.value / "docker/shipreq", s"$base/")
 
             env(
