@@ -18,7 +18,11 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>static</servlet-name>
-        <url-pattern>/assets/*</url-pattern>
+        <url-pattern>/a/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>static</servlet-name>
+        <url-pattern>/dev/*</url-pattern>
     </servlet-mapping>
 
     <!-- =========================================================================================================== -->
@@ -32,6 +36,10 @@
     <mime-mapping>
       <extension>woff</extension>
       <mime-type>application/font-woff</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+      <extension>woff2</extension>
+      <mime-type>font/woff2</mime-type>
     </mime-mapping>
     <mime-mapping>
       <extension>ttf</extension>

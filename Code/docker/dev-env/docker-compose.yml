@@ -17,7 +17,21 @@ services:
     links:
       - postgres
     volumes:
-      - ./dev-conf:/taskman/conf:ro
+      - ./taskman:/taskman/conf:ro
+    environment:
+      - db.host=postgres
+      - db.database=shipreq_dev
+      - db.username=dev
+      - db.password=sqd
+
+  webapp:
+    image: shipreq/webapp
+    links:
+      - postgres
+    ports:
+      - "23000:8080"
+    volumes:
+      - ./webapp:/shipreq/resources:ro
     environment:
       - db.host=postgres
       - db.database=shipreq_dev

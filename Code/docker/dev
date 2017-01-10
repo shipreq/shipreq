@@ -4,6 +4,6 @@ cd "$(dirname "$(readlink -e "$0")")" || exit 1
 # In project name (-p) dashes and underscores and removed automatically
 
 exec docker-compose \
-  -f dev.yml \
+  -f dev-env/docker-compose.yml \
   -p shipreqdev \
   "$@"

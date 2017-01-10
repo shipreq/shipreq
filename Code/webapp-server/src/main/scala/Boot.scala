@@ -11,6 +11,7 @@ import scalaz.effect.IO
 import scalaz.syntax.applicative._
 import shipreq.base.db.{DbAccess, DbConfig}
 import shipreq.base.util.{Props => ShipReqProps}
+import shipreq.base.util.effect.IoUtils._
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.app.{AppSiteMap, DI, ExceptionHandler}
@@ -40,7 +41,7 @@ class Boot extends DI {
     configureLift()
     preloadTemplates()
     initDatabase(appConfig.db)
-    initTaskman()
+    initTaskman(appConfig.server)
   }
 
   def readConfig(): (AppConfig, RunModes.Value) = {
@@ -111,12 +112,15 @@ class Boot extends DI {
     DI.serverConfig = s
   }
 
-  def initTaskman(): Unit = {
+  def initTaskman(s: ServerConfig): Unit = {
     DI.taskman = new TaskmanImpl(DI.dbAccess.io)
-    Props.mode match {
-      case RunModes.Test =>
-      case _             => taskman().runAll(Taskman.updateCfg).unsafePerformIO()
-    }
+    if (s.initTaskmanOnBoot)
+      taskman().runAll(Taskman.updateCfg)
+        .retryOnException((n, t) => s.initTaskmanRetry(n).map(d => IO {
+          logger.warn(s"Taskman initialisation error occurred. Retrying...\n${t.getMessage}")
+          Thread sleep d.toMillis
+        }))
+        .unsafePerformIO()
   }
 
   def preloadTemplates(): Unit = {

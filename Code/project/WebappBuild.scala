@@ -279,26 +279,6 @@ object WebappBuild {
 
     def consoleCmds = "def initLift() = {val b = new bootstrap.liftweb.Boot; b.configureLift; b}"
 
-    def warSettings = {
-      var dirHitList = Set("_scalate")
-      if (releaseMode)
-        dirHitList += "dev"
-      (_: Project).settings(
-        // Remove dirs from the WAR
-        webappPostProcess := { webappDir =>
-          def go(f: File): Unit = {
-            if (f.isDirectory) {
-              if (dirHitList contains f.getName) {
-                streams.value.log.info(s"Deleting ${f.getAbsolutePath}")
-                IO.delete(f)
-              } else
-                f.listFiles foreach go
-            }
-          }
-          go(webappDir)
-        })
-    }
-
     // TODO DRY
     def dockerSettings = (_: Project)
       .enablePlugins(DockerPlugin)
@@ -402,6 +382,12 @@ object WebappBuild {
               if (stagedAssets.exists())
                 runRun(s"cd ${stagedAssets.getAbsolutePath} && find -type f | egrep -v '\\.(gz|zip|eot|woff2?)$$' | parallel --no-notice $comp")
 
+              // Jetty's WebAppClassLoader doesn't seem to access resources in lib jars which prevents FlyWay from
+              // finding the db migrations
+              if (batch.exists(_._2 matches ".*/webapp-server_.+jar$"))
+                // runRun(s"cd $stageDir && unzip -l WEB-INF/lib/webapp-server_* | sed 1,3d | head -n -2 | tr -s ' ' | cut -d' ' -f5- | grep -v '\\.class$$' | xargs unzip WEB-INF/lib/webapp-server_*")
+                runRun(s"cd $stageDir/WEB-INF && mkdir classes && cd classes && unzip -l ../lib/webapp-server_* | sed 1,3d | head -n -2 | tr -s ' ' | cut -d' ' -f5- | grep -v '\\.class$$' | xargs unzip ../lib/webapp-server_*")
+
               stage
             }
 
@@ -434,7 +420,7 @@ object WebappBuild {
             // Download required libs
             runRaw(
               """
-                |bin/jetty --approve-all-licenses --add-to-start=http,http2,webapp,gzip,resources,logging-logback 2>&1 &&
+                |bin/jetty --approve-all-licenses --add-to-start=http,http2,webapp,gzip,resources,logging-logback,deploy,client 2>&1 &&
                 |bin/jetty --add-to-start=server,websocket 2>&1
               """.stripMargin.trim.replaceAll("\n\\s*", " "))
 
@@ -456,7 +442,6 @@ object WebappBuild {
         webappSettings,
         Common.jvmSettings,
         clientJsSettings,
-        warSettings,
         testSettings,
         dockerSettings,
         dontInline) // crashes scalac 2.11.7

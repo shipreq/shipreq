@@ -1,0 +1,12 @@
+db.pool.maximumPoolSize            = 4
+
+shipreq.allow.register            = true
+shipreq.attack_frustration_delay  = 120 ms
+shipreq.lift.runMode              = development
+shipreq.support.email             = contact@shipreq.com
+shipreq.taskman.schema            = taskman
+shipreq.taskman.init.retry.delay  = 3 sec
+shipreq.token.length              = 49
+shipreq.token.lifespan.email_conf = 3 days
+shipreq.token.lifespan.resetpw    = 24 hours
+shipreq.url                       = http://localhost:23000

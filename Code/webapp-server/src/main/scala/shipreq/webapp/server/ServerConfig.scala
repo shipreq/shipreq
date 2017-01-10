@@ -3,6 +3,7 @@ package shipreq.webapp.server
 import japgolly.microlibs.config._
 import java.time.Duration
 import scalaz.syntax.applicative._
+import shipreq.base.util.RetryCriteria
 import shipreq.webapp.server.util.{CachePolicy, ExpireAfter}
 import ConfigParser.Implicits.Defaults._
 import JavaTimeConfigParsers._
@@ -34,6 +35,9 @@ final case class ServerConfig(
     */
   allowRegister: Boolean,
 
+  initTaskmanOnBoot: Boolean,
+  initTaskmanRetry: RetryCriteria,
+
   /** Maximum time a flash variable will be retained. (default) */
   flashVarTTL: Duration,
 
@@ -54,6 +58,8 @@ object ServerConfig {
       Config.need[Duration]("token.lifespan.email_conf") |@|
       Config.need[Duration]("token.lifespan.resetpw") |@|
       Config.getOrUse[Boolean]("allow.register", true) |@|
+      Config.getOrUse[Boolean]("taskman.init", true) |@|
+      RetryCriteria.config.withPrefix("taskman.init.retry.") |@|
       Duration.ofMinutes(12).pure[Config] |@|
       ExpireAfter(Duration ofMinutes 30).pure[Config]
     ) (apply).withPrefix("shipreq.")
