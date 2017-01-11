@@ -8,9 +8,10 @@ import javax.sql.DataSource
 import scalaz.Scalaz._
 import scalaz._
 import scalaz.effect.IO
+import shipreq.base.db.DbAccess.AbstractTransactor
 import shipreq.base.util.ErrorOr
+import shipreq.base.util.effect.IoUtils._
 import shipreq.base.util.log.HasLogger
-import DbAccess.AbstractTransactor
 
 final case class DbAccess(cfg               : DbConfig,
                           ds                : DataSource,
@@ -57,7 +58,7 @@ final case class DbAccess(cfg               : DbConfig,
     } yield a
 }
 
-object DbAccess {
+object DbAccess extends HasLogger {
 
   trait AbstractTransactor {
     final def apply[M[_]: Catchable : Capture : Monad]: Transactor[M] =
@@ -76,8 +77,17 @@ object DbAccess {
       }
   }
 
+  /** When using docker-compose, sometimes the DB image needs more time to initialise. This adds a small retry. */
+  def fromCfg(cfg: DbConfig): IO[DbAccess] = {
+    val delay = IO {
+      log.info("DbAccess initialisation failed. Retrying...")
+      Thread.sleep(2000)
+    }
+    fromCfgWithoutRetry(cfg).retryOnException((n, _) => if (n < 4) Some(delay) else None)
+  }
+
   // This is in IO because HikariDataSource connects to the DB (and throws when unable) on construction.
-  def fromCfg(cfg: DbConfig): IO[DbAccess] =
+  def fromCfgWithoutRetry(cfg: DbConfig): IO[DbAccess] =
     IO {
       val ds = new HikariDataSource(cfg.hikariConfig)
       val xa = AbstractTransactor.hikari(ds)

@@ -23,9 +23,11 @@ object IoUtils {
     @inline def castError[B](implicit ev: A =:= ErrorOr[Nothing]): IO[ErrorOr[B]] =
       self.asInstanceOf[IO[ErrorOr[B]]]
 
+    /** First continue arg = number of retries before now */
     def retryOnException(continue: (Int, Throwable) => Option[IO[Unit]]): IO[A] =
       self.catchLeft.retry(identity)(continue).map(_.fold(throw _, identity))
 
+    /** First continue arg = number of retries before now */
     def retry[E, B](inspect: A => E \/ B)(continue: (Int, E) => Option[IO[Unit]]): IO[E \/ B] =
       IO.tailrecM((n: Int) =>
         self.flatMap[Int \/ (E \/ B)](a =>
