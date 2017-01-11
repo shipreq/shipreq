@@ -1,0 +1,16 @@
+#!/bin/bash
+
+cd "$(dirname "$(readlink -e "$0")")/docker" || exit 1
+
+[ $# -lt 1 ] && echo "Usage: ${0##*/} <env> [docker-compose-args...]" && exit 1
+env="$1"
+shift
+
+dc="$env/docker-compose.yml"
+[ ! -e "$dc" ] && echo "File not found: $(pwd)/$dc" && exit 2
+
+# In project name (-p) dashes and underscores and removed automatically
+exec docker-compose \
+  -f "$dc" \
+  -p shipreq$env \
+  "$@"
