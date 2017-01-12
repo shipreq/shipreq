@@ -73,16 +73,10 @@ object TaskmanBuild {
         testScope(Akka.testkit ++ Specs2.combo))
       .dependsOn(taskmanServerLogic, taskmanServerSchema, taskmanApi)
       .dependsOn(baseTestJvm % "test")
+      .configure(Common.dockerBaseSettings("taskman"))
       .settings(
         initialCommands += consoleCmds,
         mainClass := Some(serverClass),
-        buildOptions in docker := BuildOptions(pullBaseImage = BuildOptions.Pull.Always),
-
-        imageNames in docker := {
-          var versions = Seq(version.value, "latest")
-          // if (!isSnapshot.value) versions :+= "latest"
-          versions.map(ver => ImageName(s"shipreq/taskman:$ver"))
-        },
 
         dockerfile in docker := {
           val root = "/taskman"
@@ -110,16 +104,14 @@ object TaskmanBuild {
           new Dockerfile {
             def runInBash(cmds: String*) = run("/bin/bash", "-c", cmds.mkString(";"))
 
-            from("anapsix/alpine-java:8_server-jre_unlimited")
+            from(Common.dockerBaseImage)
             workDir(root)
             jarTiers.foreach(copy(_, lib))
             copy(sourceDirectory.value / "docker", s"$root/")
             runInBash(
               s"sed -i 's|{{cp}}|$classpath|' $root/bin/run",
               s"sed -i 's|{{mainClass}}|$serverClass|' $root/bin/taskman")
-            env(
-              "VERSION" -> version.value,
-              "BUILD_MODE" -> (if (releaseMode) "release" else "dev"))
+            env(Common.dockerBaseEnv.value: _*)
             cmd("bin/taskman")
           }
         },

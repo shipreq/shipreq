@@ -7,6 +7,7 @@ import org.scalajs.core.tools.sem._
 import org.scalajs.sbtplugin.cross.CrossProject
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import com.timushev.sbt.updates.UpdatesKeys._
+import sbtdocker.DockerPlugin, DockerPlugin.autoImport._
 import DependencyLib.{Dep, HasJs, HasJvm, HasBoth, JVM, JS, ModDepScope}
 
 sealed trait JsTestType
@@ -224,6 +225,23 @@ object Common {
           jsEnv                       in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
     }
 
+  def dockerBaseSettings(name: String): Project => Project =
+    _.settings(
+      buildOptions in docker := BuildOptions(pullBaseImage = BuildOptions.Pull.Always),
+      imageNames in docker := {
+        var versions = Seq(version.value, "latest")
+        if (!isSnapshot.value) versions :+= "latest-prod"
+        versions.map(ver => ImageName(s"shipreq/$name:$ver"))
+      }
+    )
+
+  def dockerBaseImage = "anapsix/alpine-java:8_server-jre_unlimited"
+
+  def dockerBaseEnv = Def.task(
+    List[(String, String)](
+      "VERSION" -> version.value,
+      "BUILD_MODE" -> (if (releaseMode) "release" else "dev")))
+
   // ===================================================================================================================
   object Values {
 
@@ -276,6 +294,9 @@ object Common {
       Files.deleteIfExists(tgt)
       Files.createLink(tgt, src)
     }
+
+    def execInBash(cmd: String): Unit =
+      sys.process.Process(List("bash", "-c", cmd)).!!
 
     def fileSync(from: File, to: File, mandatory: Boolean)(implicit log: Logger): Unit =
       if (from.exists()) {

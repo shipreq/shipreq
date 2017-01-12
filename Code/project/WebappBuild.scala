@@ -279,32 +279,22 @@ object WebappBuild {
 
     def consoleCmds = "def initLift() = {val b = new bootstrap.liftweb.Boot; b.configureLift; b}"
 
-    // TODO DRY
     def dockerSettings = (_: Project)
       .enablePlugins(DockerPlugin)
       .configs(DockerDeps)
+      .configure(Common.dockerBaseSettings("webapp"))
       .deps(LibJetty.dist % DockerDeps)
       .settings(
         cleanFiles += baseDirectory.value / "target",
         classpathTypes in DockerDeps += "tar.gz",
         webappWebInfClasses := false,
-        buildOptions in docker := BuildOptions(pullBaseImage = BuildOptions.Pull.Always),
-        imageNames in docker := {
-          var versions = Seq(version.value, "latest")
-          // if (!isSnapshot.value) versions :+= "latest"
-          versions.map(ver => ImageName(s"shipreq/webapp:$ver"))
-        },
         dockerfile in docker := {
           val jettyHome = "/jetty"
           val base = "/shipreq"
-          // val tmp = target.value / "docker"
           val tmp = baseDirectory.value / "target/docker" // Docker requires this be under baseDirectory
 
-          def runRun(cmd: String): Unit =
-            sys.process.Process(List("bash", "-c", cmd)).!!
-
           def prepareClean(f: String): Unit =
-            runRun(s"""rm -rf "$f" && mkdir -p "$f"""")
+            execInBash(s"""rm -rf "$f" && mkdir -p "$f"""")
 
           // Prepare jetty-dist
           val depFiles = Classpaths.managedJars(DockerDeps, (classpathTypes in DockerDeps).value, update.value).map(_.data)
@@ -313,7 +303,7 @@ object WebappBuild {
           val tmpJetty = tmp / "jetty"
           val tmpJettyDir = tmpJetty.getAbsolutePath
           prepareClean(tmpJettyDir)
-          runRun(
+          execInBash(
             s"""
                |cd "$tmpJettyDir"
                |  && tar xzf "$jettyDistTarGz" --strip-components=1
@@ -374,19 +364,18 @@ object WebappBuild {
 
               // Make jars deterministic
               if (fixJars)
-                runRun(s"""cd "$stageDir" && """ +
+                execInBash(s"""cd "$stageDir" && """ +
                   "for f in  $(find -name '*.jar'); do unzip -l $f| cut -b31- | grep '/$' | xargs zip -dq $f META-INF/MANIFEST.MF; done")
 
               // Compress assets
               val stagedAssets = stage / assetPath
               if (stagedAssets.exists())
-                runRun(s"cd ${stagedAssets.getAbsolutePath} && find -type f | egrep -v '\\.(gz|zip|eot|woff2?)$$' | parallel --no-notice $comp")
+                execInBash(s"cd ${stagedAssets.getAbsolutePath} && find -type f | egrep -v '\\.(gz|zip|eot|woff2?)$$' | parallel --no-notice $comp")
 
               // Jetty's WebAppClassLoader doesn't seem to access resources in lib jars which prevents FlyWay from
               // finding the db migrations
               if (batch.exists(_._2 matches ".*/webapp-server_.+jar$"))
-                // runRun(s"cd $stageDir && unzip -l WEB-INF/lib/webapp-server_* | sed 1,3d | head -n -2 | tr -s ' ' | cut -d' ' -f5- | grep -v '\\.class$$' | xargs unzip WEB-INF/lib/webapp-server_*")
-                runRun(s"cd $stageDir/WEB-INF && mkdir classes && cd classes && unzip -l ../lib/webapp-server_* | sed 1,3d | head -n -2 | tr -s ' ' | cut -d' ' -f5- | grep -v '\\.class$$' | xargs unzip ../lib/webapp-server_*")
+                execInBash(s"cd $stageDir/WEB-INF && mkdir classes && cd classes && unzip -l ../lib/webapp-server_* | sed 1,3d | head -n -2 | tr -s ' ' | cut -d' ' -f5- | grep -v '\\.class$$' | xargs unzip ../lib/webapp-server_*")
 
               stage
             }
@@ -398,7 +387,7 @@ object WebappBuild {
           new Dockerfile {
             def runInBash(cmds: String*) = run("/bin/bash", "-c", cmds.mkString(";"))
 
-            from("anapsix/alpine-java:8_server-jre_unlimited")
+            from(Common.dockerBaseImage)
 
             copy(tmpJetty, s"$jettyHome/")
 
@@ -411,11 +400,9 @@ object WebappBuild {
             copy(sourceDirectory.value / "docker/shipreq", s"$base/")
 
             workDir(base)
-            env(
+            env(Common.dockerBaseEnv.value ++ List(
               "JETTY_HOME" -> jettyHome,
-              "JETTY_BASE" -> base,
-              "VERSION" -> version.value,
-              "BUILD_MODE" -> (if (releaseMode) "release" else "dev"))
+              "JETTY_BASE" -> base): _*)
 
             // Download required libs
             runRaw(
