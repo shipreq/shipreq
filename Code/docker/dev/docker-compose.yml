@@ -4,7 +4,7 @@ services:
   postgres:
     image: postgres:9.6.1
     ports:
-      - "23032:5432"
+      - "14032:5432"
     environment:
       - POSTGRES_DB=shipreq_dev
       - POSTGRES_USER=dev
@@ -29,7 +29,7 @@ services:
     links:
       - postgres
     ports:
-      - "23000:8080"
+      - "14000:8080"
     volumes:
       - ./webapp:/shipreq/resources:ro
     environment:
@@ -38,3 +38,4 @@ services:
       - db.username=dev
       - db.password=sqd
       - run.mode=staging
+      - shipreq.url=http://localhost:14000
