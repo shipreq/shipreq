@@ -1,7 +1,0 @@
-#!/bin/bash
-cd $(dirname "$0") || exit 1
-
-# Jetty's start script only waits 60sec for the server to start before giving up.
-# On a micro EC2 instance this isn't enough time, so this increases the wait time.
-
-perl -pi -e 's/(for T in )(1 2 3 .*? 15)(\s+\d+)*/\1\2 \2 \2 \2 \2/' jetty/bin/jetty.sh

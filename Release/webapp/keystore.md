@@ -1,70 +1,3 @@
-First-Time Procedure
-====================
-
-###  Local setup
-
-* Install required packages:
-    sudo pacman -Syu --needed parallel pigz authbind
-
-* Decrypt passwords and sensitive settings.
-    ./secrets-decrypt
-
-* Install ShipReq WAR.
-    Build locally first.
-    ./install-war
-
-* Determine IP for commands below
-    export ip=$(../util/ip-shipreq)
-
-### Deployment
-
-    ./deploy-jetty $ip
-    ./deploy-package $ip
-    ./deploy-war $ip
-    ssh $(<deployment-user)@$ip webapp/bin/restart
-
-
-Upgrade Procedure
-=================
-
-### Upgrading ShipReq
-
-    ./install-war
-    ./deploy-package $ip   # If needed
-    ./deploy-war $ip
-    ssh $(<deployment-user)@$ip webapp/bin/restart
-
-
-### Upgrading Jetty
-
-[Download](http://download.eclipse.org/jetty/stable-9/dist/)
-
-1. Install
-    ./install-jetty <jetty.tar.gz>
-    git commit as directed
-
-2. Customisation
-    ./jetty-post_install
-    git add -A .
-
-3. Test Locally
-    webapp/bin/start
-    ../../../QA/smoke_test-frontend local-https
-
-4. Update Code
-    pushd ../../Code
-    vim project/Dependencies.scala
-    sbt 'project webapp-server' clean test
-    popd
-
-5. Commit
-
-6. Deploy
-    ./deploy-jetty $ip
-    ./deploy-package $ip   # If needed
-    ssh $(<deployment-user)@$ip webapp/bin/restart
-
-
 Keystore & SSL
 ==============
 
@@ -130,10 +63,4 @@ Usually done when the certificate expires. Gandi provides a new .crt file.
     ssh $(<deployment-user)@$ip webapp/bin/restart
 8. Encrypt for Git: `./secrets-encrypt`
 9. Commit.
-
-
-Running, Usage, etc.
-====================
-
-See [webapp/README.md](webapp/README.md) for instructions.
 
