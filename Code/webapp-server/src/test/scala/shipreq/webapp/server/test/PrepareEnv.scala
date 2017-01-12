@@ -10,7 +10,7 @@ object PrepareEnv {
 
   private lazy val cfg = {
     val (appConfig, runMode) = boot.readConfig()
-    boot.setRunMode(runMode)
+    runMode foreach boot.setRunMode
     println("webapp-server test config:\n" + appConfig.report.reportUsed)
     appConfig
   }
