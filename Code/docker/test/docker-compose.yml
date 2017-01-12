@@ -3,6 +3,7 @@ services:
 
   postgres:
     image: postgres:9.6.1
+    container_name: shipreq_test
     ports:
       - "13032:5432"
     environment:

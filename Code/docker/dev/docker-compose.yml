@@ -3,6 +3,7 @@ services:
 
   postgres:
     image: postgres:9.6.1
+    container_name: shipreq_dev_postgres
     ports:
       - "14032:5432"
     environment:
@@ -14,6 +15,7 @@ services:
 
   taskman:
     image: shipreq/taskman
+    container_name: shipreq_dev_taskman
     links:
       - postgres
     volumes:
@@ -26,6 +28,7 @@ services:
 
   webapp:
     image: shipreq/webapp
+    container_name: shipreq_dev_webapp
     links:
       - postgres
     ports:
