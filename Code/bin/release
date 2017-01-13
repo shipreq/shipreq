@@ -16,13 +16,12 @@ for m in $defargs "$@"; do
     taskman)
       taskman=1
       sbt_test+=(taskman/test)
-      sbt_pkg+=(taskman-server-impl/assembly)
+      sbt_pkg+=(taskman-server-impl/docker)
       ;;
     webapp)
       webapp=1
-      pre_release+=( "cd webapp-server && grunt" )
       sbt_test+=(webapp/test)
-      sbt_pkg+=(webapp-server/package)
+      sbt_pkg+=(webapp-server/docker)
       ;;
     notest) notest=1 ;;
     noclean) noclean=1 ;;
@@ -56,14 +55,6 @@ done
 git st .
 sep
 
-#[ -e /opt/java7 ] && {
-#  JAVA_HOME=/opt/java7
-#  PATH="$JAVA_HOME/bin:$PATH"
-#}
-java -version
-echo
-
 echo "> ${sbt[@]} ${sbt_test[@]} ${sbt_pkg[@]}"
 echo
 time "${sbt[@]}" "${sbt_test[@]}" "${sbt_pkg[@]}"
-

@@ -1,7 +1,0 @@
-#!/bin/bash
-
-source "$(dirname "$0")"/lib.sh
-lookup1 "$@"
-
-echo "Connecting to $db..."
-$connect

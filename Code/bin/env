@@ -1,8 +1,17 @@
 #!/bin/bash
 
-cd "$(dirname "$(readlink -e "$0")")/docker" || exit 1
+cd "$(dirname "$(readlink -e "$0")")/../docker" || exit 1
 
-[ $# -lt 1 ] && echo "Usage: ${0##*/} <env> [docker-compose-args...]" && exit 1
+if [ $# -eq 0 ]; then
+  self="$0"
+  echo "Usage:"
+  echo "  $self <env> [docker-compose-args...]"
+  echo "Examples:"
+  echo "  $self test up -d"
+  echo "  $self dev up"
+  exit 1
+fi
+
 env="$1"
 shift
 

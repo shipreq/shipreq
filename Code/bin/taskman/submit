@@ -1,6 +1,0 @@
-#!/bin/bash
-cd "$(dirname "$0")"/../.. || exit 1
-jar=$(ls -1rt taskman-server-impl/target/scala*/*assembly* | tail -1)
-[ -z "$jar" -o ! -e "$jar" ] && echo "Assembly jar not found. sbt taskman-server-impl/assembly" && exit 1
-exec java -cp "$jar" shipreq.taskman.server.app.ManualSubmit "$@"
-
