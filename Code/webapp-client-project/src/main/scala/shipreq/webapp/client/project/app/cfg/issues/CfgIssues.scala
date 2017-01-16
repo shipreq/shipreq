@@ -10,13 +10,13 @@ import shipreq.webapp.client.project.app.state.ClientData
 
 object CfgIssues {
 
-  case class Props(cp        : ClientProtocol,
-                   a         : CustomIssueTypeCrud.Instance,
-                   b         : ReqTypeImplicationMod.Instance,
-                   c         : FieldMandatorinessMod.Instance,
-                   cd        : ClientData,
-                   filterDead: ReusableVar[FilterDead],
-                   usageShow : Usage.Show) {
+  final case class Props(cp        : ClientProtocol,
+                         a         : CustomIssueTypeCrud.Instance,
+                         b         : ReqTypeImplicationMod.Instance,
+                         c         : FieldMandatorinessMod.Instance,
+                         cd        : ClientData,
+                         filterDead: ReusableVar[FilterDead],
+                         usageShow : Usage.Show) {
     @inline def component = Component(this)
   }
 

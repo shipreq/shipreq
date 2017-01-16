@@ -9,10 +9,10 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.FilterAst
 
 @Lenses
-case class ViewSettings(columns    : NonEmptyVector[Column],
-                        order      : SortCriteria,
-                        filter     : Option[FilterAst],
-                        filterDead : FilterDead) {
+final case class ViewSettings(columns    : NonEmptyVector[Column],
+                              order      : SortCriteria,
+                              filter     : Option[FilterAst],
+                              filterDead : FilterDead) {
 
   def isVisible(c: Column): Boolean =
     isVisible(_ ==* c)
@@ -56,12 +56,12 @@ case class ViewSettings(columns    : NonEmptyVector[Column],
    *  - replace common prefixes with indentation.
    *  - use a monospace font.
    */
-  final val viewReqCodesAsTree: Boolean =
+  val viewReqCodesAsTree: Boolean =
     order.init.headOption.exists(s =>
       s.column ==* Column.Code)
 
   // Doesn't make sense showing ReqCodeGroups below everything they represent.
-  final val viewReqCodeGroups: Boolean =
+  val viewReqCodeGroups: Boolean =
     order.init.headOption.exists(s =>
       (s.column ==* Column.Code) && s.method.ascending)
 }

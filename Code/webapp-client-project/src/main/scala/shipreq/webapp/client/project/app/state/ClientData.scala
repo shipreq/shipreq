@@ -21,7 +21,7 @@ abstract class ClientData extends Broadcaster[Changes] {
   def project(): Project =
     pxProject.value()
 
-  @inline def projectCB: CallbackTo[Project] =
+  @inline final def projectCB: CallbackTo[Project] =
     CallbackTo(project())
 
   def applyEventsS(ves: VerifiedEvents): TCB.Success =

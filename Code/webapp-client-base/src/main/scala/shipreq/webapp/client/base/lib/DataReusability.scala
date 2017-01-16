@@ -41,7 +41,7 @@ abstract class DataReusability {
   implicit def reusabilityMomentJs: Reusability[MomentJs] =
     Reusability.by(_.toEpochMilli)
 
-  @inline implicit def toReusabilityObjExt(r: Reusability.type): ReusabilityObjExt =
+  implicit def toReusabilityObjExt(r: Reusability.type): ReusabilityObjExt =
     new ReusabilityObjExt(r)
 
   implicit def reusabilityProject: Reusability[Project] =

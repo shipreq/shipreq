@@ -16,9 +16,9 @@ import shipreq.webapp.client.base.ui.semantic.{Breadcrumb, Dropdown, Icon, Menu,
   */
 object MemberNavBar {
 
-  case class Props(username: Username,
-                   left    : Breadcrumb.Items,
-                   right   : Dropdown.Items) {
+  final case class Props(username: Username,
+                         left    : Breadcrumb.Items,
+                         right   : Dropdown.Items) {
     val leftWithDividers = left.iterator.intersperse(Divider).toList
     @inline def render = Component(this)
   }

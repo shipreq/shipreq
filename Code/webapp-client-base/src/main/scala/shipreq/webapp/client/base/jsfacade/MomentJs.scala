@@ -25,7 +25,7 @@ object Moment extends js.Any {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-case class MomentJs(js: Moment) {
+final case class MomentJs(js: Moment) {
   @inline def formatIso8601 : String  = js.format()
   @inline def formatHuman   : String  = js.format("llll")
   @inline def fromNow()     : String  = js.fromNow()

@@ -27,10 +27,10 @@ import shipreq.webapp.client.project.widgets._
 import Field.ApplicableReqTypes
 
 object CfgFields {
-  case class Props(cp        : ClientProtocol,
-                   remote    : FieldCrud.Fn.Instance,
-                   clientData: ClientData,
-                   filterDead: ReusableVar[FilterDead]) {
+  final case class Props(cp        : ClientProtocol,
+                         remote    : FieldCrud.Fn.Instance,
+                         clientData: ClientData,
+                         filterDead: ReusableVar[FilterDead]) {
 
     def component: ReactComponentU_ = MainTable.Component(this)
   }

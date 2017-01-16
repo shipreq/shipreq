@@ -147,7 +147,7 @@ object Column {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  case class NameResolver(customFieldNames: Map[data.CustomFieldId, String]) {
+  final case class NameResolver(customFieldNames: Map[data.CustomFieldId, String]) {
 
     @inline def apply(column: Column): String =
       fn(column)

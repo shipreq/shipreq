@@ -13,7 +13,7 @@ import shipreq.webapp.client.project.lib.DataReusability._
 
 private[issues] object MandatoryFields {
 
-  case class Props(cp: ClientProtocol, remote: FieldMandatorinessMod.Instance, clientData: ClientData) {
+  final case class Props(cp: ClientProtocol, remote: FieldMandatorinessMod.Instance, clientData: ClientData) {
     @inline def component = Component(this)
   }
 

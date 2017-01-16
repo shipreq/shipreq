@@ -15,14 +15,14 @@ import shipreq.webapp.client.base.ui.{BaseStyles, MemberNavBar, PlainTextEditor,
 import shipreq.webapp.client.base.ui.semantic.Breadcrumb
 
 object Home {
-  case class Props(data: InitDataForHomeSpa, cp: ClientProtocol) {
+  final case class Props(data: InitDataForHomeSpa, cp: ClientProtocol) {
     @inline def render = Component(this)
   }
 
   @Lenses
-  case class State(createProjectText: String,
-                   createProjectAAS : AsyncActionFeature.D0.State[String],
-                   projects         : ProjectCatalogue)
+  final case class State(createProjectText: String,
+                         createProjectAAS : AsyncActionFeature.D0.State[String],
+                         projects         : ProjectCatalogue)
 
   final class Backend($: BackendScope[Props, State]) {
 

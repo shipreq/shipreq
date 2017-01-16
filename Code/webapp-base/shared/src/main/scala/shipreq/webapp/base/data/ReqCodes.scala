@@ -22,7 +22,7 @@ final case class ReqCodeId(value: Int) extends TaggedInt
  */
 object ReqCode {
 
-  case class IdAndValue(id: ReqCodeId, value: Value) {
+  final case class IdAndValue(id: ReqCodeId, value: Value) {
     @inline def toTupleIV: (ReqCodeId, Value) =
       (id, value)
     @inline def toTupleVI: (Value, ReqCodeId) =
@@ -142,7 +142,7 @@ object ReqCode {
   }
 
   @Lenses
-  case class Inactive(deadGroup: DeadGroup, reqInactive: ReqInactive) extends Data {
+  final case class Inactive(deadGroup: DeadGroup, reqInactive: ReqInactive) extends Data {
     override def nonEmpty = deadGroup.nonEmpty || reqInactive.nonEmpty
     override def isActive = false
     override def activeId = None
@@ -152,7 +152,7 @@ object ReqCode {
   }
 
   @Lenses
-  case class ActiveReq(id: ReqCodeId, reqId: ReqId, deadGroup: DeadGroup, reqInactive: ReqInactive) extends Data {
+  final case class ActiveReq(id: ReqCodeId, reqId: ReqId, deadGroup: DeadGroup, reqInactive: ReqInactive) extends Data {
     override def nonEmpty = true
     override def isActive = true
     override def activeId = Some(id)
@@ -162,7 +162,7 @@ object ReqCode {
   }
 
   @Lenses
-  case class ActiveGroup(group: LiveReqCodeGroup, reqInactive: ReqInactive) extends Data {
+  final case class ActiveGroup(group: LiveReqCodeGroup, reqInactive: ReqInactive) extends Data {
     @inline  def id        = group.id
     override def nonEmpty  = true
     override def isActive  = true
@@ -279,17 +279,17 @@ final case class ReqCodes(trie: ReqCode.Trie) {
   }
 
   /** All groups, dead and live. */
-  @inline def groups: List[ReqCodeGroup] =
+  def groups: List[ReqCodeGroup] =
     scan.groups
 
-  @inline def reqCodesById: Map[ReqCodeId, Value] =
+  def reqCodesById: Map[ReqCodeId, Value] =
     scan.reqCodesById
 
-  @inline def activeReqCodesByReqId: Multimap[ReqId, Set, Value] =
+  def activeReqCodesByReqId: Multimap[ReqId, Set, Value] =
     scan.activeReqCodesByReqId
 
   /** Unlike the active case, the same code can have multiple inactive IDs. */
-  @inline def inactiveIdsByReqId: Multimap[ReqId, Set, ReqCodeId] =
+  def inactiveIdsByReqId: Multimap[ReqId, Set, ReqCodeId] =
     scan.inactiveIdsByReqId
 
   /**
@@ -297,11 +297,11 @@ final case class ReqCodes(trie: ReqCode.Trie) {
    *
    * This is needed in addition to [[idSet]] so that [[DataProp]] can detect duplicate IDs.
    */
-  @inline def idList: List[ReqCodeId] =
+  def idList: List[ReqCodeId] =
     scan.idList
 
   /** Active and inactive [[ReqCodeId]]s alike. */
-  @inline def idSet: Set[ReqCodeId] =
+  def idSet: Set[ReqCodeId] =
     scan.idSet
 }
 

@@ -22,22 +22,22 @@ import MTrie.Ops
 
 object DeletionForm {
 
-  case class Props(project        : Project,
-                   widgets        : ProjectWidgets,
-                   projectText    : PlainText.ForProject,
-                   textSearch     : TextSearch,
-                   perform        : DeleteReqs => Callback,
-                   cancel         : Callback,
-                   deletableReqs  : DeletableReqs,
-                   deletableGroups: DeletableGroups,
-                   initialState   : State)
+  final case class Props(project        : Project,
+                         widgets        : ProjectWidgets,
+                         projectText    : PlainText.ForProject,
+                         textSearch     : TextSearch,
+                         perform        : DeleteReqs => Callback,
+                         cancel         : Callback,
+                         deletableReqs  : DeletableReqs,
+                         deletableGroups: DeletableGroups,
+                         initialState   : State)
 
-  case class ReqRow(req: Req, indent: Int, impliedBy: Vector[Req])
+  final case class ReqRow(req: Req, indent: Int, impliedBy: Vector[Req])
 
-  case class GroupRow(group    : LiveReqCodeGroup,
-                      codeStr  : String,
-                      subReqs  : Set[(ReqId, String)],
-                      subGroups: Set[(ReqCodeId, String)]) {
+  final case class GroupRow(group    : LiveReqCodeGroup,
+                            codeStr  : String,
+                            subReqs  : Set[(ReqId, String)],
+                            subGroups: Set[(ReqCodeId, String)]) {
     @inline def id = group.id
 
     def liveSubs(r: ReqId => Live, g: ReqCodeId => Live): Iterator[String] =
@@ -48,10 +48,10 @@ object DeletionForm {
   type DeletableReqs   = Vector[ReqRow]
   type DeletableGroups = Vector[GroupRow]
 
-  case class Props1(project        : Project,
-                    deletableReqs  : DeletableReqs,
-                    deletableGroups: DeletableGroups,
-                    initialState   : State)
+  final case class Props1(project        : Project,
+                          deletableReqs  : DeletableReqs,
+                          deletableGroups: DeletableGroups,
+                          initialState   : State)
 
   def initProps1(p              : Project,
                  directSelReqs  : NonEmptySet[ReqId],

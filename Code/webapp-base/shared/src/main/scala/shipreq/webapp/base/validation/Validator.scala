@@ -209,7 +209,7 @@ class Validator[S, I, C, V](val cp: CorrectionPart[S, I, C], val vp: ValidationP
   def andThen[A](that: Validator[S, V, _, A]): Validator[S, I, C, A] =
     Validator(cp, vp andThen that.vi)
 
-  @inline def ***[I2, C2, V2](that: Validator[S, I2, C2, V2]): Validator[S, (I,I2), (C,C2), (V,V2)] =
+  @inline final def ***[I2, C2, V2](that: Validator[S, I2, C2, V2]): Validator[S, (I,I2), (C,C2), (V,V2)] =
     this ⊗ that
 
   def ⊗[I2, C2, V2, II, CC, VV](that: Validator[S, I2, C2, V2])(implicit I: GenTuple[I,I2,II], C: GenTuple[C,C2,CC], V: GenTuple[V,V2,VV]): Validator[S, II, CC, VV] =

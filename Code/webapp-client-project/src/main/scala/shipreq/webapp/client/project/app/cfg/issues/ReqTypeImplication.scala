@@ -12,7 +12,7 @@ import ReqType.Mnemonic
 
 private[issues] object ReqTypeImplication {
 
-  case class Props(cp: ClientProtocol, remote: ReqTypeImplicationMod.Instance, clientData: ClientData) {
+  final case class Props(cp: ClientProtocol, remote: ReqTypeImplicationMod.Instance, clientData: ClientData) {
     @inline def component = Component(this)
   }
 

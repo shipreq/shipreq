@@ -21,11 +21,11 @@ import DataImplicits._
 
 private[issues] object CustomIssueTypes {
 
-  case class Props(cp        : ClientProtocol,
-                   remote    : CustomIssueTypeCrud.Instance,
-                   clientData: ClientData,
-                   filterDead: ReusableVar[FilterDead],
-                   usageShow : Usage.Show) {
+  final case class Props(cp        : ClientProtocol,
+                         remote    : CustomIssueTypeCrud.Instance,
+                         clientData: ClientData,
+                         filterDead: ReusableVar[FilterDead],
+                         usageShow : Usage.Show) {
     @inline def component = Component(this)
   }
   implicit val reusability = Reusability.caseClass[Props]
