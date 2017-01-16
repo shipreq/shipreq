@@ -54,7 +54,6 @@ class Jetty(val port: Int) extends Logger {
     // Could use sbt or a real WAR but then we can't easily/quickly run single tests from IDE
     val tmpWarDir = createTempDir("shipreq-server-test-war")
     FileUtils.copyDirectory(file("src/main/webapp"), tmpWarDir)
-    FileUtils.copyDirectory(file(s"/tmp/shipreq.sbt/webapp-server/target/scala-$scalaVersion/resource_managed/main"), tmpWarDir)
 
     val svr = new Server
     val http = new ServerConnector(svr, new HttpConnectionFactory(new HttpConfiguration))
