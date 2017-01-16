@@ -22,7 +22,7 @@ object TaskmanBuild {
       .configure(Common.settings, Common.jvmSettings)
       .deps(
         Scalaz.core ++ Scalaz.effect ++
-        testScope(Specs2.combo ++ scalaCheck ++ Scala.reflect))
+        testScope(μTest ++ scalaCheck ++ Scala.reflect ++ Microlibs.testUtil))
       .dependsOn(baseUtilJvm)
 
   lazy val taskmanApiImpl =
