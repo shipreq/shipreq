@@ -388,7 +388,7 @@ object WebappBuild {
           new Dockerfile {
             def runInBash(cmds: String*) = run("/bin/bash", "-c", cmds.mkString(";"))
 
-            from(Common.dockerBaseImage)
+            from(Dependencies.Docker.baseImage)
 
             env("JETTY_HOME" -> jettyHome, "JETTY_BASE" -> base)
 

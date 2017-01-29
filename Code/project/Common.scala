@@ -241,15 +241,13 @@ object Common {
 
   def dockerBaseSettings(name: String): Project => Project =
     _.settings(
-      buildOptions in docker := BuildOptions(pullBaseImage = BuildOptions.Pull.Always),
+      buildOptions in docker := BuildOptions(pullBaseImage = BuildOptions.Pull.IfMissing),
       imageNames in docker := {
         var versions = Seq(version.value, "latest")
         if (!isSnapshot.value && releaseMode) versions :+= "latest-prod"
         versions.map(ver => ImageName(s"shipreq/$name:$ver"))
       }
     )
-
-  def dockerBaseImage = "anapsix/alpine-java:8_server-jre_unlimited"
 
   def dockerBaseEnv = Def.task(
     List[(String, String)](

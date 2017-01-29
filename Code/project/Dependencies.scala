@@ -5,6 +5,16 @@ import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.toScalaJSGroupID
 
 object Dependencies {
 
+  object Java {
+    val major = 8
+    val minor = 121
+    val build = 13
+  }
+
+  object Docker {
+    val baseImage = s"anapsix/alpine-java:${Java.major}u${Java.minor}b${Java.build}_server-jre_unlimited"
+  }
+
   object Scala {
     private val mm = scalaItself(version)
     def version  = "2.12.1"

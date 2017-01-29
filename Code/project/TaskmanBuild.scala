@@ -118,7 +118,7 @@ object TaskmanBuild {
           new Dockerfile {
             def runInBash(cmds: String*) = run("/bin/bash", "-c", cmds.mkString(";"))
 
-            from(Common.dockerBaseImage)
+            from(Dependencies.Docker.baseImage)
             workDir(root)
             jarTiers.foreach(copy(_, lib))
             copy(sourceDirectory.value / "docker", s"$root/")
