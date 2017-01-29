@@ -267,14 +267,10 @@ object Common {
     }
 
     def devMode: Boolean = !releaseMode
-
-    lazy val timeNow = new java.util.Date
   }
 
   // ===================================================================================================================
   object Functions {
-
-    def fmtTimeNow(fmt: String): String = new java.text.SimpleDateFormat(fmt).format(timeNow)
 
     def debugOrRelease(debug: Project => Project, release: Project => Project): Project => Project =
       p => (if (releaseMode) release else debug)(p)
