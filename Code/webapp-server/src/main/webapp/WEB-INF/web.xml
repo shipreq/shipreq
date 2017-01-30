@@ -25,6 +25,12 @@
         <url-pattern>/dev/*</url-pattern>
     </servlet-mapping>
 
+    <!-- Avoid TLD Scans. https://www.eclipse.org/jetty/documentation/current/quickstart-webapp.html -->
+    <context-param>
+        <param-name>org.eclipse.jetty.jsp.precompiled</param-name>
+        <param-value>true</param-value>
+    </context-param>
+
     <!-- =========================================================================================================== -->
 
     <mime-mapping>
