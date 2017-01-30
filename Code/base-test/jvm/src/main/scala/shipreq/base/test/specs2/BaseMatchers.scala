@@ -3,9 +3,10 @@ package shipreq.base.test.specs2
 import org.specs2.matcher.StandardMatchResults._
 import org.specs2.matcher.Matcher
 import org.specs2.matcher.Matchers._
-import shipreq.base.util.ErrorOr
-import scalaz.{\/-, -\/}
+import scala.reflect.ClassTag
+import scalaz.{-\/, \/-}
 import shipreq.base.test.MockOpTransformerResults
+import shipreq.base.util.ErrorOr
 
 object BaseMatchers {
 
@@ -28,42 +29,42 @@ object BaseMatchers {
 
   class HaveRunOps[Op[_]] {
     import MockOpTransformerResults.isSubtype
-    @inline private def M[A](implicit m: Manifest[A]) = m
-    type T = Manifest[_ <: Op[_]]
-    type LM = List[Manifest[_ <: Op[_]]]
+    @inline private def M[A](implicit m: ClassTag[A]) = m
+    type T = ClassTag[_ <: Op[_]]
+    type LM = List[ClassTag[_ <: Op[_]]]
     type MR = MockOpTransformerResults[Op]
 
-    def ops(expOps: Manifest[_ <: Op[_]]*): Matcher[MockOpTransformerResults[Op]] = {
+    def ops(expOps: ClassTag[_ <: Op[_]]*): Matcher[MockOpTransformerResults[Op]] = {
       def cmp(a: LM, b: LM) = a.length == b.length && a.zip(b).filterNot{case (x,y) => isSubtype(x, y)}.isEmpty
       beTypedEqualTo[LM](expOps.toList, cmp) ^^ {(x: MR) => x.allOpTypes.toList}
     }
 
     def none = ops()
 
-    def op[A <: Op[_]: Manifest] =
+    def op[A <: Op[_]: ClassTag] =
       ops(M[A])
 
-    def ops2[A <: Op[_]: Manifest, B <: Op[_]: Manifest] =
+    def ops2[A <: Op[_]: ClassTag, B <: Op[_]: ClassTag] =
       ops(M[A], M[B])
 
-    def ops3[A <: Op[_]: Manifest, B <: Op[_]: Manifest, C <: Op[_]: Manifest] =
+    def ops3[A <: Op[_]: ClassTag, B <: Op[_]: ClassTag, C <: Op[_]: ClassTag] =
       ops(M[A], M[B], M[C])
 
-    def ops4[A <: Op[_]: Manifest, B <: Op[_]: Manifest, C <: Op[_]: Manifest, D <: Op[_]: Manifest] =
+    def ops4[A <: Op[_]: ClassTag, B <: Op[_]: ClassTag, C <: Op[_]: ClassTag, D <: Op[_]: ClassTag] =
       ops(M[A], M[B], M[C], M[D])
 
-    def ops5[A <: Op[_]: Manifest, B <: Op[_]: Manifest, C <: Op[_]: Manifest, D <: Op[_]: Manifest, E <: Op[_]: Manifest] =
+    def ops5[A <: Op[_]: ClassTag, B <: Op[_]: ClassTag, C <: Op[_]: ClassTag, D <: Op[_]: ClassTag, E <: Op[_]: ClassTag] =
       ops(M[A], M[B], M[C], M[D], M[E])
 
-    def ops6[A <: Op[_]: Manifest, B <: Op[_]: Manifest, C <: Op[_]: Manifest, D <: Op[_]: Manifest, E <: Op[_]: Manifest, F <: Op[_]: Manifest] =
+    def ops6[A <: Op[_]: ClassTag, B <: Op[_]: ClassTag, C <: Op[_]: ClassTag, D <: Op[_]: ClassTag, E <: Op[_]: ClassTag, F <: Op[_]: ClassTag] =
       ops(M[A], M[B], M[C], M[D], M[E], M[F])
 
-    def anyBut(notExp: Manifest[_ <: Op[_]]*): Matcher[MockOpTransformerResults[Op]] = {
+    def anyBut(notExp: ClassTag[_ <: Op[_]]*): Matcher[MockOpTransformerResults[Op]] = {
       def matchingElem: Matcher[T] = ((x: T) => notExp.exists(y => isSubtype(x, y)))
       not(contain(matchingElem)) ^^ {(x: MR) => x.allOpTypes.toList}
     }
 
-    def anyBut1[A <: Op[_]: Manifest] =
+    def anyBut1[A <: Op[_]: ClassTag] =
       anyBut(M[A])
   }
 

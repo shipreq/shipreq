@@ -66,10 +66,6 @@ object ShipReqBuild {
         Microlibs.testUtil ++
         providedScope(Nyaya.gen) ++
         testScope(μTest ++ Nyaya.test))
-      .configureBoth(_
-        // TODO Delete after upgrade to 2.11 and switch from Manifest to TypeTag
-        .settings(scalacOptions in Compile -= "-deprecation")
-        .settings(scalacOptions in Compile += "-nowarn"))
       .configureJvm(_
         .deps(providedScope(Specs2.combo))
         .dependsOn(baseDb % "provided"))

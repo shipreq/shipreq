@@ -3,6 +3,7 @@ package shipreq.taskman.server
 import java.time.{Duration, Instant, ZoneId}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Arbitrary._
+import scala.reflect.ClassTag
 import scalaz.Lens.lensg
 import scalaz.{Endo, Heap, NonEmptyList, Order}
 import scalaz.effect.IO
@@ -127,7 +128,7 @@ object TestHelpers {
   def mockEmails(archive: Boolean) =
     new Emails(mockEmailEnvelopeProps(archive), mockEmailTokenValues)
 
-  def manifest[T](implicit m: Manifest[T]) = m
+  def manifest[T](implicit m: ClassTag[T]) = m
 }
 
 import TestHelpers.manifest

@@ -4,10 +4,10 @@ import doobie.imports._
 import java.util.concurrent.locks.Lock
 import org.specs2.execute.{AsResult, Result}
 import org.specs2.mutable.Specification
-import org.specs2.specification.AroundExample
+import org.specs2.specification.AroundEach
 import shipreq.base.test.db._
 
-trait DatabaseTest extends AroundExample {
+trait DatabaseTest extends AroundEach {
   this: Specification =>
 
   isolated

@@ -1,13 +1,15 @@
 package shipreq.base.test
 
-import scalaz.{Applicative, ~>, Name}
+import scala.reflect.ClassTag
+import scalaz.{Applicative, Name, ~>}
 
 trait OpTypeProvider[Op[_]] {
-  def apply[A]: Op[A] => Manifest[_]
+  def apply[A]: Op[A] => ClassTag[_]
 }
 
 object MockOpTransformerResults {
-  def isSubtype(opType: Manifest[_], superType: Manifest[_]): Boolean = opType <:< superType
+  def isSubtype(opType: ClassTag[_], superType: ClassTag[_]): Boolean =
+    superType.runtimeClass.isAssignableFrom(opType.runtimeClass)
 }
 
 import MockOpTransformerResults.isSubtype
@@ -15,24 +17,24 @@ import MockOpTransformerResults.isSubtype
 trait MockOpTransformerResults[Op[_]] {
   def allOps: Vector[Op[_]]
 
-  def allOpTypes = allOps.map(o => opManifest(o))
+  def allOpTypes = allOps.map(o => opClassTag(o))
 
-  def ops[T <: Op[_]](implicit T: Manifest[T]): List[T] =
-    allOps.filter(o => isSubtype(opManifest(o), T)).toList.map(_.asInstanceOf[T])
+  def ops[T <: Op[_]](implicit T: ClassTag[T]): List[T] =
+    allOps.filter(o => isSubtype(opClassTag(o), T)).toList.map(_.asInstanceOf[T])
 
-  def sole[T <: Op[_]](implicit T: Manifest[T]): T = {
+  def sole[T <: Op[_]](implicit T: ClassTag[T]): T = {
     val o = ops[T]
     if (o.size != 1) throw new AssertionError(s"Expected a single op, got: $o")
     o.head
   }
 
   def opTypeProvider: OpTypeProvider[Op]
-  def opManifest[A](o: Op[A]) = opTypeProvider.apply(o).asInstanceOf[Manifest[Op[A]]]
+  def opClassTag[A](o: Op[A]) = opTypeProvider.apply(o).asInstanceOf[ClassTag[Op[A]]]
 }
 
 abstract class MockOpTransformer[Op[_], I[_]] extends (Op ~> I) with MockOpTransformerResults[Op] {
 
-  val x = Manifest
+  val x = ClassTag
 
   private var allOps_ = Vector.empty[Op[_]]
 
@@ -71,17 +73,17 @@ abstract class MockOpTransformerA[Op[_], I[_]: Applicative] extends MockOpTransf
 
 // https://issues.scala-lang.org/browse/SI-8602
 /*
-case class MockOpTransformer1[Op[_], I[_]: Applicative, S <: Op[A]: Manifest, A](ttp: OpTypeProvider[Op], default: A)
+case class MockOpTransformer1[Op[_], I[_]: Applicative, S <: Op[A]: ClassTag, A](ttp: OpTypeProvider[Op], default: A)
     extends MockOpTransformerA[Op, I] {
 
-  final def S = implicitly[Manifest[S]]
+  final def S = implicitly[ClassTag[S]]
 
   def soleOp = sole[S]
  */
 // WORKAROUND START
-case class MockOpTransformer1[Op[_], I[_], S, A](ttp: OpTypeProvider[Op], default: A)(implicit I: Applicative[I], S: Manifest[S], ev: S <:< Op[A])
+case class MockOpTransformer1[Op[_], I[_], S, A](ttp: OpTypeProvider[Op], default: A)(implicit I: Applicative[I], S: ClassTag[S], ev: S <:< Op[A])
   extends MockOpTransformerA[Op, I] {
-  def soleOp = sole[Op[A]](S.asInstanceOf[Manifest[Op[A]]]).asInstanceOf[S]
+  def soleOp = sole[Op[A]](S.asInstanceOf[ClassTag[Op[A]]]).asInstanceOf[S]
 // WORKAROUND END
 
   override def opTypeProvider: OpTypeProvider[Op] = ttp
@@ -89,7 +91,7 @@ case class MockOpTransformer1[Op[_], I[_], S, A](ttp: OpTypeProvider[Op], defaul
   val responses = MockResponse[A](default)
 
   override def cotrans[X] = op =>
-    if (isSubtype(opManifest(op), S))
+    if (isSubtype(opClassTag(op), S))
       responses.pop().asInstanceOf[X]
     else
       throw new AssertionError(s"Unexpected operation: $op")
