@@ -10,6 +10,7 @@ import shipreq.webapp.client.base.ui.semantic.Icon
 import shipreq.webapp.client.project.widgets.high.DeletionFormObs
 import ReqDetailTestDsl.Mode
 import ReqDetailObs.NAE
+import shipreq.webapp.client.project.app.TestMarker
 
 object ReqDetailObs {
 
@@ -92,12 +93,12 @@ final class ReqDetailObs($: HtmlDomZipper) {
       }
 
       val isTailStepRow: Boolean =
-        $.dom.hasAttribute("data-tail-step-row")
+        $.dom.hasAttribute(TestMarker.useCaseTailStep.name)
 
       val label: Option[String] =
-        $.collect01("*[data-step-label]").asHtml.mapDoms(_.title)
+        $.collect01(s"*[${TestMarker.useCaseStepLabel.name}]").asHtml.mapDoms(_.title)
 
-      lazy val textContainer = $("*[data-step-text]").asHtml
+      lazy val textContainer = $(s"*[${TestMarker.useCaseStepText.name}]").asHtml
 
       lazy val text = textContainer.innerText
 

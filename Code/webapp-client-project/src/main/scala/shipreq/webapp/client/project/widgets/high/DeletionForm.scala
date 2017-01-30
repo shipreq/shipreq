@@ -12,9 +12,10 @@ import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd.DeleteReqs
-import shipreq.webapp.base.text.{TextSearch, PlainText}
+import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.client.base.data.Plain
 import shipreq.webapp.client.project.app.Style.reqtable.{deleteRestore => *}
+import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.feature.{PreviewFeature, Selection}
 import shipreq.webapp.client.project.widgets.Widgets
 import MTrie.Ops
@@ -303,8 +304,6 @@ object DeletionForm {
     val setRcgSel = ReusableFn($ _setStateL State.selectedGroups)
     val setReason = ReusableFn($ _setStateL State.reason)
 
-    val devOnlyId = TagMod.devOnly("data-deletion-form".reactAttr := 1)
-
     def reasonEditorProps(p: Props, s: State): RichTextEditor.DeletionReason.Props =
       RichTextEditor.DeletionReason.Props(
         project        = p.project,
@@ -451,7 +450,7 @@ object DeletionForm {
           "Delete")
 
       <.div(
-        devOnlyId,
+        TestMarker.deletionForm.tagMod,
         reqSection,
         groupSection,
         reasonSection,

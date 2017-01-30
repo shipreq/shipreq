@@ -11,8 +11,9 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.client.base.feature.AsyncActionFeature
 import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
+import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.lib.DataReusability._
-import VectorTree.{PartialLocation, LocationOps}
+import VectorTree.{LocationOps, PartialLocation}
 
 object UseCaseStepRow {
 
@@ -27,7 +28,7 @@ object UseCaseStepRow {
       Reusability.caseClass
 
     private val baseTag =
-      <.div(ReactAttr.devOnly("data-step-label") := 1)
+      <.div(TestMarker.useCaseStepLabel.tagMod)
 
     private def render(p: Props) =
       p.partialLoc.validity match {

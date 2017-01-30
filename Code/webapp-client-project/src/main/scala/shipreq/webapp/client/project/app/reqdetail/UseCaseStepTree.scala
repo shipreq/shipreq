@@ -13,6 +13,7 @@ import shipreq.webapp.base.text._
 import shipreq.webapp.client.base.data._
 import shipreq.webapp.client.base.feature.AsyncActionFeature
 import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
+import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import UseCaseStepFlowText.TextAndFlow
@@ -40,8 +41,8 @@ object UseCaseStepTree {
     .render_P(render)
     .build
 
-  private val stepBodyBase = <.div(*.body, ReactAttr.devOnly("data-step-text") := 1)
-  private val tailStepBase = <.div(*.container, ^.key := "TS", ReactAttr.devOnly("data-tail-step-row") := 1)
+  private val stepBodyBase = <.div(*.body, TestMarker.useCaseStepText.tagMod)
+  private val tailStepBase = <.div(*.container, ^.key := "TS", TestMarker.useCaseTailStep.tagMod)
 
   private val stepFilterM: FilterDead => VectorTree.PartialLocation => Boolean =
     FilterDead.memo(_.filterFnBy(Live whenValid _.validity))
