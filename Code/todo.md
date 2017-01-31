@@ -34,10 +34,6 @@ Integrate async into ContentEditorFeature rendering
   * test
 
 * Devops & Deployment
-  * Webapp docker
-    * integrate `war-force_https`
-    * HTTPS: Use real keystore
-    * use quickstart
   * New amazon accounts
   * Automate deployment
   * Add healthchecks

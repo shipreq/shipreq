@@ -23,7 +23,7 @@ Keystore & SSL
     openssl pkcs12 -inkey www.shipreq.com.key -in www.shipreq.com.crt -export -out www.shipreq.com.pkcs12
 
 * Create a keystore with both the certificate and the pkcs12.
-    k=etc/keystore
+    k=keystore
     keytool -keystore $k -import -alias shipreq_cert -file www.shipreq.com.crt
     keytool -importkeystore -srckeystore www.shipreq.com.pkcs12 -srcstoretype PKCS12 -destkeystore $k
     keytool -changealias -alias 1 -destalias shipreq_key -keystore $k
@@ -42,7 +42,7 @@ Keystore & SSL
       KeyManagerPassword - PKCS12 password.
 
   These are already configured to be provided via properties.
-  The properties are in `start.d/ssl-passwords.ini` and look like this:
+  The properties are in `ssl-passwords.ini` and look like this:
       jetty.sslContext.keyStorePassword=OBF:blah1
       jetty.sslContext.trustStorePassword=OBF:blah1
       jetty.sslContext.keyManagerPassword=OBF:blah2
@@ -55,12 +55,6 @@ Usually done when the certificate expires. Gandi provides a new .crt file.
 1. `cd ~/BeardedLogic/cert` and replace the old crt with the new one.
 2. Generate a `pkcs12` as shown above. Use a new password and put in KeePass.
 3. Generate a keystore as shown above. Use a new password and put in KeePass.
-4. Move keystore into `Release/webapp/webapp/etc`.
-5. Follow `Jetty Integration` instructions.
-6. Put shipreq.com in `/etc/hosts`, start locally, test.
-7. Deploy and restart.
-    ./deploy-package $ip
-    ssh $(<deployment-user)@$ip webapp/bin/restart
-8. Encrypt for Git: `./secrets-encrypt`
-9. Commit.
+4. Replace keystore in `Code/webapp-server/src/docker/ssl`.
+5. Put shipreq.com in `/etc/hosts`, start locally, test.
 

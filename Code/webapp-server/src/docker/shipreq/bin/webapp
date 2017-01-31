@@ -1,0 +1,17 @@
+#!/bin/bash
+
+declare -a args=()
+
+i="$(printenv run.mode)"
+[ -n "$i" ] && args+=("-Drun.mode=$i")
+
+sslPort="$(printenv external.port.ssl)"
+[ -z "$sslPort" ] \
+  && echo "Environment variable not specified: external.port.ssl" \
+  && echo "This must be the SSL port as seen from outside Docker." \
+  && exit 3
+args+=("-Djetty.httpConfig.securePort=$sslPort")
+
+args+=("$@")
+
+exec "$JETTY_BASE/bin/jetty" "${args[@]}"

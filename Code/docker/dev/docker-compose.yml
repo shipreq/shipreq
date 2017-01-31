@@ -43,3 +43,5 @@ services:
       - db.password=sqd
       - run.mode=staging
       - shipreq.url=https://localhost:14443
+      - external.port.ssl=14443
+

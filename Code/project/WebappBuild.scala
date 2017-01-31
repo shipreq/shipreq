@@ -282,34 +282,45 @@ object WebappBuild {
         dockerfile in docker := {
           val jettyHome = "/jetty"
           val base = "/shipreq"
+          val srcDocker = sourceDirectory.value / "docker"
           val tmp = baseDirectory.value / "target/docker" // Docker requires this be under baseDirectory
           val wsjar = "webapp-server.jar"
+          val webXml = "WEB-INF/web.xml"
 
           def prepareClean(f: String): Unit =
             execInBash(s"""rm -rf "$f" && mkdir -p "$f"""")
+          def prepareTmpDir(name: String): File = {
+            val dir = tmp / name
+            prepareClean(dir.getAbsolutePath)
+            dir
+          }
 
           // Prepare jetty-dist
           val depFiles = Classpaths.managedJars(DockerDeps, (classpathTypes in DockerDeps).value, update.value).map(_.data)
           assert(depFiles.size == 1)
           val jettyDistTarGz = depFiles.head
-          val tmpJetty = tmp / "jetty"
-          val tmpJettyDir = tmpJetty.getAbsolutePath
-          prepareClean(tmpJettyDir)
+          val tmpJetty = prepareTmpDir("jetty")
           execInBash(
             s"""
-               |cd "$tmpJettyDir"
+               |cd "${tmpJetty.getAbsolutePath}"
                |  && tar xzf "$jettyDistTarGz" --strip-components=1
                |  && sed -i 's|"0/>|"0"/>|' etc/jetty-gzip.xml
                |  && rm -rv */*{jaas,jsp}[.-]* lib/apache-jsp demo-base
              """.stripMargin.trim.replaceAll("\n\\s+", " "))
 
+          // Prepare SSL
+          // TODO What's the point of encrypting ssl-passwords.ini if it just goes into every Docker image?
+          val tmpSsl = prepareTmpDir("ssl")
+          val srcSsl = srcDocker / "ssl"
+          IO.copyFile(srcSsl / "keystore", tmpSsl / "etc/keystore", true)
+          IO.copyFile(srcSsl / "ssl-passwords.ini", tmpSsl / "start.d/ssl-passwords.ini", true)
+
+          // Prepare exploded WAR
           var assetPathGoodAndBad = Vector("dev", "a")
           assetPathGoodAndBad = assetPathGoodAndBad.map(_ + "/")
           if (releaseMode) assetPathGoodAndBad = assetPathGoodAndBad.reverse
           val assetPath = assetPathGoodAndBad.head
-          val tmpWar = tmp / "war"
-          val tmpWarDir = tmpWar.getAbsolutePath
-          prepareClean(tmpWarDir)
+          val tmpWar = prepareTmpDir("war")
           val japgolly = ".*(adt-macros|config_|macro-utils|nonempty|nyaya|scalaz-ext|stdlib-ext|univeq).*"
           val webappJs = "^(webapp-.*|(ww|client-home|client-project)\\.js$)"
           val warTiers =
@@ -342,14 +353,14 @@ object WebappBuild {
               })
             .toList
             .sortBy(_._1._1)
-            .map { case ((_, fixJars), fs) => (fixJars, fs.sortBy(_._2)) }
+            .map { case ((bucket, fixJars), fs) => (bucket, fixJars, fs.sortBy(_._2)) }
           // printFileBatches(warTiers.map(_.map(_._1)))
 
           val comp = if (releaseMode) "pigz -k -11" else "pigz -k -9"
 
           val warStages =
-            warTiers.zipWithIndex.map { case ((fixJars, batch), i) =>
-              val stage = tmpWar / s"war-${i + 1}"
+            warTiers.map { case (i, fixJars, batch) =>
+              val stage = tmpWar / s"bucket-$i"
               val stageDir = stage.getAbsolutePath
               assert(stage.mkdir(), s"Failed to create $stage")
               IO.copy(batch.map { case (f, n) => f -> stage / n }, preserveLastModified = true)
@@ -363,6 +374,11 @@ object WebappBuild {
               val stagedAssets = stage / assetPath
               if (stagedAssets.exists())
                 execInBash(s"cd ${stagedAssets.getAbsolutePath} && find -type f | egrep -v '\\.(gz|zip|eot|woff2?)$$' | parallel --no-notice $comp")
+
+              // Redirect HTTP to HTTPS
+              val stagedWebXml = stage / webXml
+              if (stagedWebXml.exists())
+                execInBash("""perl -pi -e 's!(?<=<transport-guarantee>)\s*NONE\s*(?=<)!CONFIDENTIAL!' """ + stagedWebXml.getAbsolutePath)
 
               // Jetty's WebAppClassLoader doesn't seem to access resources in lib jars which prevents FlyWay from
               // finding the db migrations
@@ -392,7 +408,10 @@ object WebappBuild {
 
             warStages.foreach(copy(_, s"$warExplode/"))
 
-            copy(sourceDirectory.value / "docker/shipreq", s"$base/")
+            copy(tmpSsl, s"$base/")
+
+            // This has to come before the 'Download required libs' step
+            copy(srcDocker / "shipreq", s"$base/")
 
             // Download required libs
             workDir(base)
@@ -404,7 +423,7 @@ object WebappBuild {
 
             expose(8080, 8443)
             env(Common.dockerBaseEnv.value: _*)
-            cmd("bin/jetty")
+            cmd("bin/webapp")
           }
         }
       )
