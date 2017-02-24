@@ -2,8 +2,7 @@ package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Optional
-import monocle.function.Index.index
-import monocle.std.map.mapIndex
+import monocle.function.Index._
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scalaz.std.option.optionInstance

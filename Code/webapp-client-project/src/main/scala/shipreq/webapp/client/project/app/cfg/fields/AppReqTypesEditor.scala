@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.app.cfg.fields
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.univeq.UnivEq
 import monocle.Lens
-import monocle.std.map.atMap
+import monocle.function.At.atMap
 import scalacss.ScalaCssReact._
 import shipreq.base.util.IMap
 import shipreq.webapp.base.data._
@@ -22,7 +22,7 @@ private[fields] object AppReqTypesEditor {
 
   def initialState(fs: FieldSet): S = UnivEq.emptyMap
 
-  @inline final def stateFor(k: K): Lens[S, Option[EditState[A]]] = atMap.at(k)
+  final def stateFor(k: K): Lens[S, Option[EditState[A]]] = atMap.at(k)
 }
 
 // =====================================================================================================================

@@ -3,6 +3,7 @@ package shipreq.base.test.specs2
 import org.specs2.matcher.StandardMatchResults._
 import org.specs2.matcher.Matcher
 import org.specs2.matcher.Matchers._
+import org.specs2.matcher.describe.{Diffable, PrimitiveDifference, PrimitiveIdentical}
 import scala.reflect.ClassTag
 import scalaz.{-\/, \/-}
 import shipreq.base.test.MockOpTransformerResults
@@ -35,8 +36,12 @@ object BaseMatchers {
     type MR = MockOpTransformerResults[Op]
 
     def ops(expOps: ClassTag[_ <: Op[_]]*): Matcher[MockOpTransformerResults[Op]] = {
-      def cmp(a: LM, b: LM) = a.length == b.length && a.zip(b).filterNot{case (x,y) => isSubtype(x, y)}.isEmpty
-      beTypedEqualTo[LM](expOps.toList, cmp) ^^ {(x: MR) => x.allOpTypes.toList}
+      val cmp = new Diffable[LM] {
+        override def diff(a: LM, expected: LM) =
+          if (a.length == expected.length && a.zip(expected).forall { case (x, y) => isSubtype(x, y) })
+            PrimitiveIdentical(a) else PrimitiveDifference(a, expected)
+      }
+      beTypedEqualTo[LM](expOps.toList)(cmp) ^^ {(x: MR) => x.allOpTypes.toList}
     }
 
     def none = ops()

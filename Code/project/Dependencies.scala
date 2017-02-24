@@ -27,7 +27,7 @@ object Dependencies {
   }
 
   object Scalaz {
-    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.8")
+    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.9")
     val core       = mm("scalaz-core")
     val effect     = mm("scalaz-effect") ++ core
     val concurrent = mm("scalaz-concurrent") ++ effect
@@ -36,7 +36,7 @@ object Dependencies {
   }
 
   object Monocle {
-    private val mm = MultiModule.jvmAndJs("com.github.julien-truffaut", "1.3.2")
+    private val mm = MultiModule.jvmAndJs("com.github.julien-truffaut", "1.4.0")
     val core   = mm("monocle-core")
     val macros = mm("monocle-macro") ++ core
   }
@@ -100,7 +100,7 @@ object Dependencies {
   }
 
   object SLF4J {
-    private val mm = MultiModule.java("org.slf4j", "1.7.22")
+    private val mm = MultiModule.java("org.slf4j", "1.7.23")
     val api = mm("slf4j-api")
     val jcl = mm("jcl-over-slf4j")
   }
@@ -127,18 +127,18 @@ object Dependencies {
   }
 
   object Akka {
-    private val mm = MultiModule.scala("com.typesafe.akka", "2.4.16")
+    private val mm = MultiModule.scala("com.typesafe.akka", "2.4.17")
     val actor   = mm("akka-actor") ++ mm("akka-slf4j")
     val testkit = mm("akka-testkit")
   }
 
   object Specs2 {
-    private val mm = MultiModule.scala("org.specs2", "3.8.7")
+    private val mm = MultiModule.scala("org.specs2", "3.8.8")
     val combo = mm("specs2-core") ++ mm("specs2-scalacheck")
   }
 
   object LibJetty {
-    private val mm = MultiModule.java("org.eclipse.jetty", "9.4.1.v20170120")
+    private val mm = MultiModule.java("org.eclipse.jetty", "9.4.2.v20170220")
     val webapp = mm("jetty-webapp")
     val runner = mm("jetty-runner")
     val dist   = mm("jetty-distribution").modAll(_.artifacts(Artifact("jetty-distribution", "tar.gz", "tar.gz")).intransitive())
@@ -165,12 +165,12 @@ object Dependencies {
   val postgresql  = jvmOnly("org.postgresql"              % "postgresql"            % "9.4.1212")
   val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "2.6.0")
   val flyway      = jvmOnly("com.googlecode.flyway"       % "flyway-core"           % "2.3.1")
-  val logback     = jvmOnly("ch.qos.logback"              % "logback-classic"       % "1.1.9")
+  val logback     = jvmOnly("ch.qos.logback"              % "logback-classic"       % "1.2.1")
   val scalate     = jvmOnly("org.scalatra.scalate"       %% "scalate-core"          % "1.8.0") ++
                     jvmOnly("org.scalatra.scalate"       %% "scalamd"               % "1.7.0") // why again?
   val commonsLang = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.5")
   val commonsIo   = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
-  val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.40.0")
+  val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.41.0")
   val scalaTest   = jvmOnly("org.scalatest"              %% "scalatest"             % "3.0.1")
   val scalaCheck  = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.13.4")
 
