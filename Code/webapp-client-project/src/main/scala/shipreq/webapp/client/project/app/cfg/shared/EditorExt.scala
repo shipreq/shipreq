@@ -1,13 +1,13 @@
 package shipreq.webapp.client.project.app.cfg.shared
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import scalaz.{Monad, ~>}
 import shipreq.webapp.base.validation._
 
 abstract class EditorExt {
-  @inline implicit final def ___EditorExt_1    [A,B,M[_],S,C,D,V](e: Editor[A,B,M,S,C,D,V           ]): EditorExt.EditorExt_1    [A,B,M,S,C,D,V] = new EditorExt.EditorExt_1(e)
-  @inline implicit final def ___EditorExt_Tag  [A,B,M[_],S,C,D  ](e: Editor[A,B,M,S,C,D,ReactElement]): EditorExt.EditorExt_Tag  [A,B,M,S,C,D  ] = new EditorExt.EditorExt_Tag(e)
-  @inline implicit final def ___EditorExt_IITag[I  ,M[_],S,C,D  ](e: Editor[I,I,M,S,C,D,ReactElement]): EditorExt.EditorExt_IITag[I,  M,S,C,D  ] = new EditorExt.EditorExt_IITag(e)
+  @inline implicit final def ___EditorExt_1    [A,B,M[_],S,C,D,V](e: Editor[A,B,M,S,C,D,V          ]): EditorExt.EditorExt_1    [A,B,M,S,C,D,V] = new EditorExt.EditorExt_1(e)
+  @inline implicit final def ___EditorExt_Tag  [A,B,M[_],S,C,D  ](e: Editor[A,B,M,S,C,D,VdomElement]): EditorExt.EditorExt_Tag  [A,B,M,S,C,D  ] = new EditorExt.EditorExt_Tag(e)
+  @inline implicit final def ___EditorExt_IITag[I  ,M[_],S,C,D  ](e: Editor[I,I,M,S,C,D,VdomElement]): EditorExt.EditorExt_IITag[I,  M,S,C,D  ] = new EditorExt.EditorExt_IITag(e)
 }
 
 object EditorExt extends EditorExt {
@@ -66,7 +66,7 @@ object EditorExt extends EditorExt {
         }
       )
 
-    def editableByRowStatus(c: CompState.Access[S])(implicit ev: Callback =:= D, M: M ~> CallbackTo, N: Monad[M]): RowStatus => Option[e.Editable] = {
+    def editableByRowStatus(c: StateAccessPure[S])(implicit ev: Callback =:= D, M: M ~> CallbackTo, N: Monad[M]): RowStatus => Option[e.Editable] = {
       val canedit = e.editable(c runState _.st)
       rs => rs match {
         case RowStatus.Sync | RowStatus.Failed(_) => canedit
@@ -76,35 +76,35 @@ object EditorExt extends EditorExt {
 
   }
 
-  final class EditorExt_Tag[A,B,M[_],S,C,D](val e: Editor[A,B,M,S,C,D,ReactElement]) extends AnyVal {
+  final class EditorExt_Tag[A,B,M[_],S,C,D](val e: Editor[A,B,M,S,C,D,VdomElement]) extends AnyVal {
 
-    def renderOptionalError(f: A => Option[String]): Editor[A,B,M,S,C,D,ReactElement] =
+    def renderOptionalError(f: A => Option[String]): Editor[A,B,M,S,C,D,VdomElement] =
       Editor(i => Editors.renderWithError(e, f(i.data)) render i)
 
-    def wrapInLabel(f: (A, ReactNode) => TagMod): Editor[A,B,M,S,C,D,ReactElement] =
+    def wrapInLabel(f: (A, VdomNode) => TagMod): Editor[A,B,M,S,C,D,VdomElement] =
       Editor(i => <.label(f(i.data, e render i)))
 
-    def labelSuffix(f: A => ReactNode): Editor[A,B,M,S,C,D,ReactElement] =
-      wrapInLabel((a, i) => Seq(i, f(a)))
+    def labelSuffix(f: A => VdomNode): Editor[A,B,M,S,C,D,VdomElement] =
+      wrapInLabel((a, i) => TagMod(i, f(a)))
 
-    def applyInputValidationU(v: ValidatorU[A, _, _]): Editor[A,B,M,S,C,D,ReactElement] =
+    def applyInputValidationU(v: ValidatorU[A, _, _]): Editor[A,B,M,S,C,D,VdomElement] =
       renderOptionalError(i => v.correctAndValidateU(i).swap.toOption.map(_.toText))
 
-    def applyInputValidation[T, I](v: Validator[T, I, _, _])(s: A => T, i: A => I): Editor[A,B,M,S,C,D,ReactElement] =
+    def applyInputValidation[T, I](v: Validator[T, I, _, _])(s: A => T, i: A => I): Editor[A,B,M,S,C,D,VdomElement] =
       renderOptionalError(a => v.correctAndValidate(s(a), i(a)).swap.toOption.map(_.toText))
 
     def applyInputValidationL[T, I](v: Validator[T, A, _, _]) =
       e.strengthL[T].applyInputValidation(v)(_._1, _._2)
   }
 
-  final class EditorExt_IITag[I,M[_],S,C,D](val e: Editor[I,I,M,S,C,D,ReactElement]) extends AnyVal {
+  final class EditorExt_IITag[I,M[_],S,C,D](val e: Editor[I,I,M,S,C,D,VdomElement]) extends AnyVal {
 
-    def applyValidatorU(v: ValidatorU[I, _, _]): Editor[I,I,M,S,C,D,ReactElement] =
+    def applyValidatorU(v: ValidatorU[I, _, _]): Editor[I,I,M,S,C,D,VdomElement] =
       e.applyInputValidationU(v)
         .applyLiveCorrection(v)
         .applyPostCorrectionU(v.cp)
 
-    def applyValidator[T](v: Validator[T, I, _, _]): Editor[(T, I), I, M, S, C, D, ReactElement] =
+    def applyValidator[T](v: Validator[T, I, _, _]): Editor[(T, I), I, M, S, C, D, VdomElement] =
       e.applyInputValidationL(v)
         .applyLiveCorrection(v)
         .applyPostCorrection(v.cp)(_._1)

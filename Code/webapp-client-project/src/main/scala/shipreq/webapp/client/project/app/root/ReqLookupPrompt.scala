@@ -1,8 +1,8 @@
 package shipreq.webapp.client.project.app.root
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra.ExternalVar
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.extra.StateSnapshot
+import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.ext.KeyCode
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Allow, Permission}
@@ -20,7 +20,7 @@ object ReqLookupPrompt {
     case object Invalid                  extends Resolution
   }
 
-  final case class Props(edit  : ExternalVar[String],
+  final case class Props(edit  : StateSnapshot[String],
                          filter: ExternalPubid => Permission,
                          commit: ExternalPubid => Callback) {
 
@@ -38,8 +38,8 @@ object ReqLookupPrompt {
 
   final class Backend($: BackendScope[Props, Unit]) {
 
-    def updateText: ReactEventI => Callback =
-      _.extract(_.target.value)(t => $.props.flatMap(_.edit set ExternalPubid.preprocessor(t)))
+    def updateText: ReactEventFromInput => Callback =
+      _.extract(_.target.value)(t => $.props.flatMap(_.edit setState ExternalPubid.preprocessor(t)))
 
     def commitOnEnter(commit: Callback): ReactKeyboardEvent => Callback =
       CallbackOption.keyCodeSwitch(_) {
@@ -51,10 +51,10 @@ object ReqLookupPrompt {
       ^.size      := 12,
       ^.onChange ==> updateText)
 
-    def render(p: Props): ReactElement = {
+    def render(p: Props): VdomElement = {
       val state: TagMod =
         p.resolution match {
-        case Resolution.Blank     => EmptyTag
+        case Resolution.Blank     => EmptyVdom
         case Resolution.Valid(ep) => ^.onKeyDown ==> commitOnEnter(p commit ep)
         case Resolution.Invalid   => Style.home.reqLookupPromptHasError
       }
@@ -63,7 +63,7 @@ object ReqLookupPrompt {
     }
   }
 
-  val Component = ReactComponentB[Props]("ReqLookupPrompt")
+  val Component = ScalaComponent.build[Props]("ReqLookupPrompt")
     .renderBackend[Backend]
     .build
 }

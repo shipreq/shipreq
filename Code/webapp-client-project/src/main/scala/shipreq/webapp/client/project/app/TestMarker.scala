@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app
 
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Additional attributes are sometimes added to DOM so that unit tests can find it (the DOM) and test it without
@@ -24,5 +24,5 @@ object TestMarker {
 
 final class TestMarker private[TestMarker] (id: String) {
   val name = "data-tm-" + id
-  val tagMod = ReactAttr(name) := 1
+  val tagMod = VdomAttr(name) := 1
 }

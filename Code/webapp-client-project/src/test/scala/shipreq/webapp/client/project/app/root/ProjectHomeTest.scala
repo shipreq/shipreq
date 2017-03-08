@@ -9,7 +9,6 @@ import shipreq.webapp.client.base.test.TestState._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.root.Routes.Page
 import shipreq.webapp.client.project.test._
-import ReactTestUtils.Simulate
 
 class ProjectHomeObs($: HtmlDomZipper) {
   private val projectArea = $(">*", 1 of 2)
@@ -83,7 +82,7 @@ object ProjectHomeTestDsl {
 
   def setEditValue(text: String) =
     editorOpen.assert(true) +>
-    *.action("Edit project name: " + text.display)(ChangeEventData(text) simulate _.obs.projectNameEditInput.get) +>
+    *.action("Edit project name: " + text.display)(SimEvent.Change(text) simulate _.obs.projectNameEditInput.get) +>
     editValue.assert(text)
 
   val serverDontAutoRespond =

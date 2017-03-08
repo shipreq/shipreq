@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.root
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.data.{ProjectCatalogue, Username}
 import shipreq.webapp.client.base.ui.semantic.{Breadcrumb, UsesSemanticUiManually}
 import shipreq.webapp.client.base.ui.{BaseStyles, MemberNavBar}
@@ -13,7 +13,7 @@ object LoadingPage {
     @inline def render = Component(this)
   }
 
-  def layout(p: Props)(content: ReactElement): ReactElement =
+  def layout(p: Props)(content: VdomElement): VdomElement =
     <.div(
 
       MemberNavBar.Props(
@@ -30,7 +30,7 @@ object LoadingPage {
         content))
 
   @UsesSemanticUiManually
-  def render(p: Props): ReactElement =
+  def render(p: Props): VdomElement =
     layout(p)(
       <.div(
         ^.cls := "ui segment basic",
@@ -39,5 +39,5 @@ object LoadingPage {
           ^.cls := "ui text loader large active",
           "Loading...")))
 
-  val Component = FunctionalComponent[Props](render)
+  val Component = ScalaFnComponent[Props](render)
 }

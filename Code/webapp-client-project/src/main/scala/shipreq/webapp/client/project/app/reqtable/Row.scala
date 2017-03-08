@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.app.reqtable
 
+import japgolly.scalajs.react.Key
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import monocle.{Lens, Optional}
@@ -140,7 +141,7 @@ object Row {
    */
   sealed trait Id {
     /** A stable, unique value so that React can correctly identify each row. */
-    def key: js.Any
+    def key: Key
   }
 
   /**

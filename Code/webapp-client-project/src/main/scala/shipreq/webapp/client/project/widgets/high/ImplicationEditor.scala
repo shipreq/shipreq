@@ -1,11 +1,12 @@
 package shipreq.webapp.client.project.widgets.high
 
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.scalajs.react._, vdom.html_<^._
+import org.scalajs.dom.html
 import scalaz.{-\/, \/, \/-}
 import scalaz.syntax.either._
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{Ref => _, _}
+import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, PlainText, SingleLine, TextSearch}
@@ -71,7 +72,7 @@ object ImplicationEditor {
   type CommitFn    = Output ~=> Callback
   type AbortCommit = Option[AbortCommit2[Callback, CommitFn]]
 
-  case class Props(edit          : ReusableVar[String],
+  case class Props(edit          : StateSnapshot[String],
                    lookup        : Lookup,
                    validationFn  : ValidationFn,
                    asyncStatus   : Option[EditorStatus.Async],
@@ -124,11 +125,9 @@ object ImplicationEditor {
       .map(_.toSet)
       .addValidation(validator2(p, subject, initialValues, dir).liftS)
 
-  private val editorRef = Ref.to(AutosizeTextarea.Component, "i")
-
   final class Backend($: BackendScope[Props, Unit]) {
-    private val pxLookup = Px.bs($).propsA(_.lookup)
-    private val pxTextSearch = Px.bs($).propsA(_.textSearch)
+    private val pxLookup = Px.props($).map(_.lookup).withReuse.autoRefresh
+    private val pxTextSearch = Px.props($).map(_.textSearch).withReuse.autoRefresh
 
     val pxAutoComplete =
       for {
@@ -144,9 +143,9 @@ object ImplicationEditor {
         KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +
         KeyboardTheme.commitCO($.props.map(_.status.getCommit), lineCardinality)
 
-      val updateState: ReactEventTA => Callback =
+      val updateState: ReactEventFromTextArea => Callback =
         e => $.props >>= (p =>
-          p.status.wrapEdit(p.edit.set(e.target.value.replace("\n", ""))))
+          p.status.wrapEdit(p.edit.setState(e.target.value.replace("\n", ""))))
 
       TagMod(
         ^.autoFocus := true,
@@ -156,12 +155,14 @@ object ImplicationEditor {
         keys)
     }
 
-    def getTextarea() =
-      editorRef($).get.getDOMNode()
+    private val editorRef = ScalaComponent.mutableRefTo(AutosizeTextarea.Component)
+
+    def getTextarea(): html.TextArea =
+      editorRef.value.getDOMNode.domCast
 
     def render(p: Props) = {
-      def editor(validity: Validity): ReactElement =
-        EditTheme.autosizeTextarea(editorRef, validity, p.edit.value, textareaConst)
+      def editor(validity: Validity): VdomElement =
+        editorRef.component(EditTheme.autosizeTextareaProps(validity, p.edit.value, textareaConst))
 
       def instructions =
         KeyboardTheme.instructionsForCommitAbort(
@@ -183,10 +184,10 @@ object ImplicationEditor {
     Reusability.never // TODO Reusability.caseClass
 
   val Component =
-    ReactComponentB[Props]("ImpEditor")
+    ScalaComponent.build[Props]("ImpEditor")
       .renderBackend[Backend]
       .configure(
         Reusability.shouldComponentUpdate,
-        AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.set))
+        AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.setState))
       .build
 }

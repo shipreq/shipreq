@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data.FilterDead
 import shipreq.webapp.client.base.lib.DataReusability._
@@ -21,10 +21,10 @@ object ImplicationGraphPage {
     <.div(BaseStyles.containerFull,
 
       <.div(*.filterDeadButton,
-        FilterDeadButton.Component(ReusableVar(p.graph.filterDead)(p.setFilterDead))),
+        FilterDeadButton.Component(StateSnapshot.withReuse(p.graph.filterDead)(p.setFilterDead))),
 
       <.div(*.graph,
         p.graph.render))
 
-  val Component = FunctionalComponent(render)
+  val Component = ScalaFnComponent(render)
 }

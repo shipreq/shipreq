@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app.reqdetail
 
 import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.StyleA
 import shipreq.webapp.client.base.feature.AsyncActionFeature
 import shipreq.webapp.client.base.ui.semantic.{Button, Icon}
@@ -52,7 +52,7 @@ object UseCaseStepControls {
   def renderStep(curStepButtons: CurStepButtons,
                  curStepAsync  : AsyncState,
                  insertButton  : Option[ButtonDesc],
-                 insertAsync   : AsyncState): ReactElement = {
+                 insertAsync   : AsyncState): VdomElement = {
 
     val buttons = curStepButtons match {
 
@@ -74,12 +74,12 @@ object UseCaseStepControls {
     <.div(*.ctrls, Button.group(buttons: _*))
   }
 
-  val renderStepWhenUseCaseDead: ReactElement =
+  val renderStepWhenUseCaseDead: VdomElement =
     <.div(*.ctrls)
 
   // ===================================================================================================================
 
-  def renderTailStep(button: ButtonDesc, async: AsyncState): ReactElement = {
+  def renderTailStep(button: ButtonDesc, async: AsyncState): VdomElement = {
     val b = mkButton(async, *.ctrlButtonInsert, IconAdd, Some(button))
     <.div(*.ctrls, b)
   }

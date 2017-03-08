@@ -1,5 +1,6 @@
 package shipreq.webapp.gen
 
+import japgolly.scalajs.react.vdom.Implicits._
 import shipreq.webapp.client.project.app.root.LoadingPage
 
 object Manifest {

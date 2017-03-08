@@ -28,7 +28,13 @@ object ProjectSpaTestDsl {
       case Failure(f) => Left("Try failed: " + f.toString)
     }
 
-  case class Ref(cd: TestClientData, svr: MockServer, tester: ComponentTester[Props, State, _, TopNode]) {
+  class ComponentTester[P, S, B](val c: ScalaComponent[P, S, B, CtorType.Props])(init: ScalaComponent.MountedImpure[P, S, B]) {
+    var component = init
+    def modProps(f: P => P): Unit =
+      component = ReactTestUtils.modifyProps(c, component)(f)
+  }
+
+  case class Ref(cd: TestClientData, svr: MockServer, tester: ComponentTester[Props, State, _]) {
     def observe(): Obs = {
       val $ = tester.component.htmlDomZipper
       def inner = $(">*", 2 of 2) // navBar & body
@@ -67,7 +73,7 @@ object ProjectSpaTestDsl {
 
   implicit val transformRT =
     RT.*.transformer
-      .mapR[Ref](r => RT.Ref(r.tester.component zoomL State.reqTable, r.svr))
+      .mapR[Ref](r => RT.Ref(r.tester.component zoomStateL State.reqTable, r.svr))
       .pmapO[Obs](_.reqTable)
       .mapS(TestState.project.get)((a, b) => TestState.project.set(b)(a)) // TODO Add Monocle support
 
@@ -133,11 +139,12 @@ object ProjectSpaTestDsl {
     val rc   = MockRouterCtl[Page]()
     val init = TestState(page, cd.project(), rd)
 
-    ComponentTester(spa.Component)(Props(init.page, rc)) { tester =>
+    ReactTestUtils.withRenderedIntoDocument(spa.Component(Props(init.page, rc))) { m =>
+      val tester = new ComponentTester(spa.Component)(m)
       val tt  = Plan(action, invariants).test(Observer(_.observe()))
       val r   = tt.run(init, Ref(cd, svr, tester))
       if (r.failed)
-        println(s"${"="*120}\n${htmlScrub run tester.component.getDOMNode().outerHTML}\n")
+        println(s"${"="*120}\n${htmlScrub run tester.component.getDOMNode.outerHTML}\n")
       r.assert()
     }
   }

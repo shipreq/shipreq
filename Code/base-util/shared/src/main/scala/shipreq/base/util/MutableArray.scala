@@ -16,6 +16,15 @@ final class MutableArray[A](val underlying: Array[Any]) {
   @inline def iterator = array.iterator
   @inline def toIterable = array.toIterable
 
+  @inline def mkString(start: String, sep: String, end: String): String =
+    array.mkString(start, sep, end)
+
+  @inline def mkString(sep: String): String =
+    array.mkString(sep)
+
+  @inline def mkString: String =
+    array.mkString
+
   def array: Array[A] =
     underlying.asInstanceOf[Array[A]]
 
@@ -40,7 +49,7 @@ final class MutableArray[A](val underlying: Array[Any]) {
     b.result()
   }
 
-  @inline def sort(implicit o: Ordering[A]): MutableArray[A] = {
+  def sort(implicit o: Ordering[A]): MutableArray[A] = {
     scala.util.Sorting.quickSort(array)(o)
     this
   }

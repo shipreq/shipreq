@@ -27,7 +27,7 @@ object CfgFieldsTest extends TestSuite {
     lazy val filterDead = ReactTestVar[FilterDead](HideDead)
     lazy val clientData = TestClientData(S.project)
     lazy val cp         = new TestClientProtocol(true)
-    lazy val props      = new CfgFields.Props(cp, remote, clientData, filterDead.reusableVar())
+    lazy val props      = new CfgFields.Props(cp, remote, clientData, filterDead.stateSnapshotWithReuse())
     lazy val re         = MainTable.Component(props)
     lazy val c          = ReactTestUtils.renderIntoDocument(re)
 
@@ -51,7 +51,7 @@ object CfgFieldsTest extends TestSuite {
     import t._
 
     selectNewText()
-    def html = c.getDOMNode().outerHTML
+    def html = c.getDOMNode.outerHTML
     val initialView = html
 
     // Create new text row

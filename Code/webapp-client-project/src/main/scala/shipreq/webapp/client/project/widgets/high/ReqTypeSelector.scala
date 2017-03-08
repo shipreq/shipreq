@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.widgets.high
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.base.util.univeq._
 import shipreq.base.util.MutableArray
@@ -19,7 +19,7 @@ object ReqTypeSelector {
   type AbortCommit = shipreq.webapp.client.base.lib.AbortCommit[Callback, RT ~=> Callback]
 
   final case class Props(initialValue: RT,
-                         edit        : ExternalVar[RT],
+                         edit        : StateSnapshot[RT],
                          choices     : NonEmptySet[RT],
                          asyncStatus : Option[EditorStatus.Async],
                          abortCommit : AbortCommit) {
@@ -40,21 +40,21 @@ object ReqTypeSelector {
 
   final class Backend($: BackendScope[Props, Unit]) {
 
-    def render(p: Props): ReactElement =
+    def render(p: Props): VdomElement =
       EditTheme.renderEditor(
         status       = p.status,
         editor       = _ => editor(p),
         readOnlyView = p.edit.value.fullName,
-        instructions = EmptyTag)
+        instructions = EmptyVdom)
 
-    def editor(p: Props): ReactElement = {
+    def editor(p: Props): VdomElement = {
       val options =
         MutableArray(p.choices.whole)
           .map(rt => Select.Option(key(rt), rt.fullName, rt))
           .sort
           .to[List]
 
-      val select = Select(options, key(p.edit.value))(p.edit set _.value)(*.dropdown)
+      val select = Select(options, key(p.edit.value))(p.edit setState _.value)(*.dropdown)
 
       val commitButton = Button(
         tipe = Button.Type.IconOnly(Icon.Checkmark),
@@ -73,7 +73,7 @@ object ReqTypeSelector {
     }
   }
 
-  val Component = ReactComponentB[Props]("ReqTypeSelector")
+  val Component = ScalaComponent.build[Props]("ReqTypeSelector")
     .renderBackend[Backend]
     // .configure(Reusability.shouldComponentUpdate)
     .build

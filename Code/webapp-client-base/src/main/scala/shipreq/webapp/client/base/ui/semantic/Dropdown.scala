@@ -1,6 +1,6 @@
 package shipreq.webapp.client.base.ui.semantic
 
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.html
 
@@ -22,7 +22,7 @@ object Dropdown {
   }
 
   sealed abstract class Item {
-    val tag: ReactTag
+    val tag: VdomTag
   }
 
   object Item {
@@ -38,7 +38,7 @@ object Dropdown {
       override val tag = divItem(content) <+ state
     }
 
-    case class Link(a: ReactTagOf[html.Anchor], state: ItemState = ItemState.Default) extends Item {
+    case class Link(a: VdomTagOf[html.Anchor], state: ItemState = ItemState.Default) extends Item {
       override val tag = a.addClass(item) <+ state
     }
   }

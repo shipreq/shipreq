@@ -2,14 +2,15 @@ package shipreq.webapp.client.project.widgets.high
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import scalaz.\/
 import scalaz.syntax.traverse._
 import scalaz.std.option.optionInstance
 import scalaz.std.string.stringInstance
 import scalaz.std.vector._
-import shipreq.base.util.{Ref => _, _}
+import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
@@ -42,7 +43,7 @@ object UseCaseStepEditor {
                    plainText     : PlainText.ForProject,
                    textSearch    : TextSearch,
                    projectWidgets: ProjectWidgets,
-                   edit          : ReusableVar[String],
+                   edit          : StateSnapshot[String],
                    asyncStatus   : Option[EditorStatus.Async],
                    abort         : Callback,
                    commit        : CommitFn,
@@ -102,15 +103,13 @@ object UseCaseStepEditor {
   implicit val reusabilityProps: Reusability[Props] =
     Reusability.never // TODO Reusability.caseClass
 
-  private val editorRef = Ref.to(AutosizeTextarea.Component, "i")
-
   val liveCorrect: EndoFn[String] =
     RichTextEditor.liveCorrect(Text.UseCaseStep)
 
   final class Backend($: BackendScope[Props, Unit]) {
-    private val pxProject    = Px.bs($).propsA(_.project)
-    private val pxPlainText  = Px.bs($).propsA(_.plainText)
-    private val pxTextSearch = Px.bs($).propsA(_.textSearch)
+    private val pxProject    = Px.props($).map(_.project).withReuse.autoRefresh
+    private val pxPlainText  = Px.props($).map(_.plainText).withReuse.autoRefresh
+    private val pxTextSearch = Px.props($).map(_.textSearch).withReuse.autoRefresh
 
     val pxAutoComplete =
       Px.apply3(pxProject, pxPlainText, pxTextSearch)(AutoComplete.forRichText(Text.UseCaseStep))
@@ -120,9 +119,9 @@ object UseCaseStepEditor {
         KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +
           KeyboardTheme.commitCO($.props.map(_.status.getCommit), lineCardinality)
 
-      val updateState: ReactEventTA => Callback =
+      val updateState: ReactEventFromTextArea => Callback =
         e => $.props >>= (p =>
-          p.status.wrapEdit(p.edit.set(liveCorrect(e.target.value)) >> p.preview.onEdit))
+          p.status.wrapEdit(p.edit.setState(liveCorrect(e.target.value)) >> p.preview.onEdit))
 
       TagMod(
         ^.autoFocus := true,
@@ -133,9 +132,11 @@ object UseCaseStepEditor {
         keys)
     }
 
+    private val editorRef = ScalaComponent.mutableRefTo(AutosizeTextarea.Component)
+
     def render(p: Props) = {
-      def editor(validity: Validity): ReactElement =
-        EditTheme.autosizeTextarea(editorRef, validity, p.edit.value, textareaConst)
+      def editor(validity: Validity): VdomElement =
+        editorRef.component(EditTheme.autosizeTextareaProps(validity, p.edit.value, textareaConst))
 
       def instructions =
         KeyboardTheme.instructionsForCommitAbort(
@@ -153,15 +154,15 @@ object UseCaseStepEditor {
       EditTheme.renderEditor(p.status, editor, richText, instructions, preview)
     }
 
-    def getTextarea() =
-      editorRef($).get.getDOMNode()
+    def getTextarea(): html.TextArea =
+      editorRef.value.getDOMNode.domCast
   }
 
   val Component =
-    ReactComponentB[Props]("UseCaseStepEditor")
+    ScalaComponent.build[Props]("UseCaseStepEditor")
       .renderBackend[Backend]
       .configure(
         Reusability.shouldComponentUpdate,
-        AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.set))
+        AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.setState))
       .build
 }

@@ -46,7 +46,7 @@ object ClientData {
   @inline implicit def reusability = Reusability.byRef[ClientData]
 
   private[state] final class Impl(init: Project, initSummary: ProjectCatalogue.Item) extends ClientData {
-    override val pxProject = Px(init)
+    override val pxProject = Px(init).withReuse.manualUpdate
     override protected var _projectSummary = initSummary
 
     override def applyEvents(ves: VerifiedEvents): Callback =

@@ -1,6 +1,5 @@
 package shipreq.webapp.client.home
 
-import japgolly.scalajs.react.ReactDOM
 import org.scalajs.dom
 import scala.scalajs.js.annotation.JSExport
 import scalacss.Defaults._
@@ -18,9 +17,8 @@ object Main extends ClientFnImpl(ClientFnDecl.HomeSpa) {
     BaseStyles.addToDocument()
     Styles.addToDocument()
 
-    ReactDOM.render(
-      Home.Props(i, ClientProtocol.Default).render,
-      dom.document.getElementById("tgt"))
+    Home.Props(i, ClientProtocol.Default).render
+      .renderIntoDOM(dom.document.getElementById("tgt"))
   }
 }
 

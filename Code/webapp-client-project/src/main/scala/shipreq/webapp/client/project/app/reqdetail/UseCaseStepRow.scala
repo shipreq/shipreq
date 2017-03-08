@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app.reqdetail
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
@@ -62,7 +62,7 @@ object UseCaseStepRow {
               label))
       }
 
-    val Component = ReactComponentB[Props]("UseCaseStep.Label")
+    val Component = ScalaComponent.build[Props]("UseCaseStep.Label")
       .render_P(render)
       .configure(Reusability.shouldComponentUpdate)
       .build
@@ -115,7 +115,7 @@ object UseCaseStepRow {
       UseCaseStepControls.renderStep(curStepButtons, ctrlsAsyncState, addButton, addAsyncState)
     }
 
-    val Component = ReactComponentB[Props]("UseCaseStep.LiveCtrls")
+    val Component = ScalaComponent.build[Props]("UseCaseStep.LiveCtrls")
       .render_P(render)
       .configure(Reusability.shouldComponentUpdate)
       .build

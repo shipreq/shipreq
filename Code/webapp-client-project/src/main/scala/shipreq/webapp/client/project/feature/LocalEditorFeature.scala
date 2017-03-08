@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.feature
 
 /*
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra.ExternalVar
+import japgolly.scalajs.react.extra.StateSnapshot
 import monocle.Lens
 import monocle.function.At.at
 import monocle.std.map.atMap
@@ -48,8 +48,8 @@ object LocalEditorFeature {
         override def value: V =
           getValue(s)
 
-        override val edit: ExternalVar[Option[E]] =
-          ExternalVar.at(editLens)(s, $)
+        override val edit: StateSnapshot[Option[E]] =
+          StateSnapshot.at(editLens)(s, $)
 
         def startOrFocusEditor: Callback =
           Single.this.startOrFocusEditor
@@ -61,7 +61,7 @@ object LocalEditorFeature {
 
   trait ForChild[V, E] {
     def value: V
-    val edit: ExternalVar[Option[E]]
+    val edit: StateSnapshot[Option[E]]
     def startOrFocusEditor: Callback
 
     def abort: Callback =

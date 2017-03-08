@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.cfg.tags
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
+import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import monocle.std.option.some
@@ -36,8 +36,8 @@ object CfgTags {
   case class Props(cp        : ClientProtocol,
                    remote    : TagCrud.Fn.Instance,
                    clientData: ClientData,
-                   filterDead: ReusableVar[FilterDead]) {
-    def component: ReactComponentU_ = MainTable.Component(this)
+                   filterDead: StateSnapshot[FilterDead]) {
+    def component = MainTable.Component(this)
   }
   implicit val reusability = Reusability.caseClass[Props]
 }
@@ -156,7 +156,7 @@ private[tags] object MainTable {
     s => if (State.detailRow.get(s) exists closeCondition) State.detailRow.set(None)(s) else s
 
   val Component =
-    ReactComponentB[Props]("Cfg: Tags")
+    ScalaComponent.build[Props]("Cfg: Tags")
       .initialState_P(initialState)
       .renderBackend[Backend]
       .configure(changeListener.install(_.clientData))
@@ -189,7 +189,7 @@ private[tags] object MainTable {
 
   // ===================================================================================================================
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
-    val crudIO = Px.bs($).propsA.map(p =>
+    val crudIO = Px.props($).withReuse.autoRefresh.map(p =>
       CrudActionIO(Tag, TagCrud.Fn)(p.cp, p.remote, p.clientData))
 
     def validatorState(k: Option[Id]): S => V.S =
@@ -198,7 +198,7 @@ private[tags] object MainTable {
     def newTagControlProps(state: State) = NewTagControl.props(
       state.newSel,
       onNewInvoke,
-      $ _setStateL State.newSel,
+      $ setStateFnL State.newSel,
       Disabled <~ newRowActive(state))
 
     val onNewInvoke =
@@ -222,7 +222,7 @@ private[tags] object MainTable {
         }
       }
 
-    def renderDeadDesc(d: Option[String]): ReactNode =
+    def renderDeadDesc(d: Option[String]): VdomNode =
       d getOrElse[String] ""
 
     val indentation = {
@@ -235,23 +235,22 @@ private[tags] object MainTable {
     def rows(fd: FilterDead, s: State): TagMod = {
       val renderers = (tg_renderer.all(s) #::: at_renderer.all(s)).foldLeft(UnivEq.emptyMap[Id, F])(_ + _)
       val flatTree  = FlatTag.flatten(s.tagTree)(fd.filterFnBy[Tag](_.live), FilterPolicy.OmitAnythingWithBadParent)
-      val results   = JsArray.apply[ReactNode]()
-      @inline def append(r: ReactNode): Unit = results push r
+      val results   = VdomArray.empty()
 
       // New row
-      tg_renderer.newRow(s) foreach append
-      at_renderer.newRow(s) foreach append
+      tg_renderer.newRow(s) foreach results.+=
+      at_renderer.newRow(s) foreach results.+=
 
       // Saved rows
       flatTree.foreach(row =>
-        append(renderers(row.id)(row.key, indentation(row.depth))))
+        results += renderers(row.id)(row.key, indentation(row.depth)))
 
       results
     }
 
-    val filterDeadCheckbox = Checkbox.filterDead(v => $.props.flatMap(_.filterDead set v))
+    val filterDeadCheckbox = Checkbox.filterDead(v => $.props.flatMap(_.filterDead setState v))
 
-    def render(p: Props, s: State): ReactElement = {
+    def render(p: Props, s: State): VdomElement = {
       val fd = p.filterDead.value
       <.div(
         NewTagControl.Component(newTagControlProps(s)),
@@ -262,18 +261,18 @@ private[tags] object MainTable {
         ),
         DetailPaneFns.render(
           s, crudIO.value().updateIO,
-          parentSel = $ _setStateL State.detailRowSelParent,
-          childSel  = $ _setStateL State.detailRowSelChild))
+          parentSel = $ setStateFnL State.detailRowSelParent,
+          childSel  = $ setStateFnL State.detailRowSelChild))
     }
 
     // -----------------------------------------------------------------------------------------------------------------
     // Subtype
 
-    type Indenter = ReactNode => ReactNode
-    type F = (String, Indenter) => ReactTag
+    type Indenter = VdomNode => VdomNode
+    type F = (String, Indenter) => VdomTag
     @inline def F(f: F): F = f
 
-    val unusedField: ReactNode = "-"
+    val unusedField: VdomNode = "-"
 
     abstract class SubtypeRenderer[T <: Tag, I, B, D, V](
         final val editor: Editor[(V.S, I), B, CallbackTo, S, D, Callback, V],
@@ -294,15 +293,15 @@ private[tags] object MainTable {
         EditorI(a, "", editable(r.status))
       }
 
-      def renderNew (s: S, r: stores.n.Row): ReactElement
-      def renderLive(s: S, indent: Indenter, key: String)(r: stores.s.Row): ReactTag
-      def renderDead(s: S, indent: Indenter, key: String)(rs: RowStatus, t: T): ReactTag
+      def renderNew (s: S, r: stores.n.Row): VdomElement
+      def renderLive(s: S, indent: Indenter, key: String)(r: stores.s.Row): VdomTag
+      def renderDead(s: S, indent: Indenter, key: String)(rs: RowStatus, t: T): VdomTag
 
       def rowTemplate(s: S, oid: UndefOr[Id], rs: RowStatus, key: String)
-                     (name: ReactNode, refkey: ReactNode, mutexChildren: ReactNode, desc: ReactNode)
-                     (ctrls: => TagMod): ReactTag = {
+                     (name: VdomNode, refkey: VdomNode, mutexChildren: VdomNode, desc: VdomNode)
+                     (ctrls: => TagMod): VdomTag = {
         val focus = oid.map(id =>
-          RowDetailButton.Props.forRow(id)(s.detailRow.map(_.id), $ _modState setDetail))
+          RowDetailButton.Props.forRow(id)(s.detailRow.map(_.id), $ modStateFn setDetail))
         <.tr(
           ^.key := key,
           ^.classSet1(rowStatusRowClass(rs), "focusrow" -> focus.exists(_.isActive)),
@@ -311,11 +310,11 @@ private[tags] object MainTable {
           <.td(mutexChildren),
           <.td(^.cls := "desc", desc),
           <.td(
-            focus.map(_.component),
+            focus.whenDefined(_.component),
             rowStatusCtrls(rs, ctrls)))
       }
 
-      def newRowTemplate(s: S, rs: RowStatus)(name: ReactNode, refkey: ReactNode, mutexChildren: ReactNode, desc: ReactNode): ReactTag =
+      def newRowTemplate(s: S, rs: RowStatus)(name: VdomNode, refkey: VdomNode, mutexChildren: VdomNode, desc: VdomNode): VdomTag =
         rowTemplate(s, undefined, rs, "new")(name, refkey, mutexChildren, desc)(abortButton)
 
       def renderRow(s: S, row: stores.s.Row): F = F { (keyp, indent) =>
@@ -330,7 +329,7 @@ private[tags] object MainTable {
       def all(s: S): Stream[(Id, F)] =
         stores.s.getAll(s).map(row => row.p.id -> renderRow(s, row))
 
-      def newRow(s: S): Option[ReactElement] =
+      def newRow(s: S): Option[VdomElement] =
         stores.n.get(s).map(renderNew(s, _))
     }
 
@@ -355,17 +354,17 @@ private[tags] object MainTable {
     }
 
     val tg_renderer = new SubtypeRenderer(tg_editor, tg_storesS) {
-      override def renderNew(s: S, row: stores.n.Row): ReactElement = {
+      override def renderNew(s: S, row: stores.n.Row): VdomElement = {
         val (name, mutexChildren, desc) = editor render ei(s, row)
         newRowTemplate(s, row.status)(name, unusedField, mutexChildren, desc)
       }
-      override def renderLive(s: S, indent: Indenter, key: String)(row: stores.s.Row): ReactTag = {
+      override def renderLive(s: S, indent: Indenter, key: String)(row: stores.s.Row): VdomTag = {
         val (name, mutexChildren, desc) = editor render ei(s, row)
         val t = row.p
         val del = deletion.value().button(t.id, Delete)
         rowTemplate(s, t.id, row.status, key)(indent(name), unusedField, mutexChildren, desc)(del)
       }
-      override def renderDead (s: S, indent: Indenter, key: String)(rs: RowStatus, t: TagGroup): ReactTag = {
+      override def renderDead (s: S, indent: Indenter, key: String)(rs: RowStatus, t: TagGroup): VdomTag = {
         val restore = deletion.value().button(t.id, Restore)
         rowTemplate(s, t.id, rs, key)(indent(<.span(t.name)), unusedField, "TODO", renderDeadDesc(t.desc))(restore)
       }
@@ -390,17 +389,17 @@ private[tags] object MainTable {
     }
 
     val at_renderer = new SubtypeRenderer(at_editor, at_storesS) {
-      override def renderNew(s: S, row: stores.n.Row): ReactElement = {
+      override def renderNew(s: S, row: stores.n.Row): VdomElement = {
         val (name, refkey, desc) = editor render ei(s, row)
         newRowTemplate(s, row.status)(name, refkey, unusedField, desc)
       }
-      override def renderLive(s: S, indent: Indenter, key: String)(row: stores.s.Row): ReactTag = {
+      override def renderLive(s: S, indent: Indenter, key: String)(row: stores.s.Row): VdomTag = {
         val (name, refkey, desc) = editor render ei(s, row)
         val t = row.p
         val del = deletion.value().button(t.id, Delete)
         rowTemplate(s, t.id, row.status, key)(indent(name), refkey, unusedField, desc)(del)
       }
-      override def renderDead(s: S, indent: Indenter, key: String)(rs: RowStatus, t: ApplicableTag): ReactTag = {
+      override def renderDead(s: S, indent: Indenter, key: String)(rs: RowStatus, t: ApplicableTag): VdomTag = {
         val restore = deletion.value().button(t.id, Restore)
         rowTemplate(s, t.id, rs, key)(indent(<.span(t.name)), t.key.value, unusedField, renderDeadDesc(t.desc))(restore)
       }
@@ -485,7 +484,7 @@ private[tags] object MainTable {
       s.detailRow match {
         case Some(ds) => //if getRowStatus(id)(s).contains(RowStatus.Sync) =>
           DetailPane.Component(props(s, ds, updateIO, parentSel, childSel))
-        case _ => EmptyTag
+        case _ => EmptyVdom
       }
 
     def props(s: S, ds: DetailPaneState, updateIO: UpdateIO, parentSel: SelUpdate, childSel: SelUpdate): DetailPane.Props = {

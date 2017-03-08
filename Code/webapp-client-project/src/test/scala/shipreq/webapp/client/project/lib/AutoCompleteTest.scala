@@ -2,6 +2,7 @@ package shipreq.webapp.client.project.lib
 package edit
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.internal.JsUtil
 import org.scalajs.dom.ext.KeyCode
 import scala.scalajs.js, js.Dynamic
 import org.scalajs.dom.document
@@ -28,19 +29,19 @@ object AutoCompleteTest extends TestSuite {
   class Editor(n: N) {
     def state: String                   = n.value
     def setState(s: String): Callback   = Callback(n.value = s)
-    def getDOMNode(): N                 = n
+    def getDOMNode: N                 = n
   }
 
   def editor(ac: AutoCompleteFeature.Strategies) = {
-    //    ReactComponentB[String]("AutoComplete test")
+    //    ScalaComponent.build[String]("AutoComplete test")
     //      .initialState_P(s => s)
     //      .render { $ =>
-    //        def change = (e: ReactEventI) => $.setState(e.target.value)
+    //        def change = (e: ReactEventFromInput) => $.setState(e.target.value)
     //        <.textarea(^.value := $.state, ^.onChange ~~> change)
     //      }
     //      .domType[N]
     //      .componentDidMount { $ =>
-    //        def n = $.getDOMNode()
+    //        def n = $.getDOMNode
     //        UI.textComplete(n, ac, $.setState(_))
     //        document.body.appendChild(n)
     //      }
@@ -50,12 +51,12 @@ object AutoCompleteTest extends TestSuite {
     val n = document.createElement("textarea").asInstanceOf[HTMLTextAreaElement]
     document.body.appendChild(n) // https://github.com/ariya/phantomjs/issues/12493
     val e = new Editor(n)
-    AutoCompleteFeature.lowLevelInstall(n, ac.toJsArray, e.setState).runNow()
+    AutoCompleteFeature.lowLevelInstall(n, JsUtil jsArrayFromTraversable ac, e.setState).runNow()
     e
   }
 
   case class TestCtx(editor: Editor, acDomSel: String = "") {
-    def $ = Dynamic.global.$(editor.getDOMNode())
+    def $ = Dynamic.global.$(editor.getDOMNode)
   }
 
   def allTextCompleteULs =
@@ -68,7 +69,7 @@ object AutoCompleteTest extends TestSuite {
       uls.dropRight(1).foreach(_.style.display = "none")
 
     ctx.editor.setState(text.replace("|", "")).runNow()
-    val n = ctx.editor.getDOMNode()
+    val n = ctx.editor.getDOMNode
     var p = text.indexOf('|')
     if (p < 0) p = text.length
     n.setSelectionRange(p, p)
@@ -117,7 +118,7 @@ object AutoCompleteTest extends TestSuite {
   }
 
   def testCursorPos(pos: Int)(implicit ctx: TestCtx): Unit = {
-    val n = ctx.editor.getDOMNode()
+    val n = ctx.editor.getDOMNode
     assertEq((pos, pos), (n.selectionStart, n.selectionEnd))
   }
 

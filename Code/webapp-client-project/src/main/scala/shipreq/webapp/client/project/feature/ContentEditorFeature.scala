@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.feature
 import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import scala.annotation.elidable
 import shipreq.base.util._
@@ -59,7 +59,7 @@ object ContentEditorFeature {
    * @tparam S The top-most state.
    * @tparam P Preview key.
    */
-  case class Static[S, P]($               : CompState.Access[S],
+  case class Static[S, P]($               : StateAccessPure[S],
                           previewFeature  : PreviewFeature[S, P],
                           pxProject       : Px[Project],
                           pxPlainText     : Px[PlainText.ForProject],
@@ -124,7 +124,7 @@ object ContentEditorFeature {
     * This is effectively mutable because of the underlying usage of Pxs and reading of PreviewFeature state.
     */
   trait EditorInstance {
-    def render(as: AsyncState): Option[ReactElement]
+    def render(as: AsyncState): Option[VdomElement]
   }
 
   object EditorInstance {
@@ -133,7 +133,7 @@ object ContentEditorFeature {
   }
 
   @inline implicit class CEFState0Ops(private val s: D0.State) extends AnyVal {
-    def renderOr[A](as: AsyncState)(a: => A)(implicit ev: ReactElement => A): A =
+    def renderOr[A](as: AsyncState)(a: => A)(implicit ev: VdomElement => A): A =
       s.flatMap(_.render(as)).fold(a)(ev)
   }
 
@@ -246,13 +246,13 @@ object ContentEditorFeature {
       def startEditFn(instance: => EditorInstance): StartEditFn =
         lens modify (_ orElse instance.some)
 
-      private def rvarToCellEditor[A: Reusability, B <: EditorInstance](f: ReusableVar[A] => B): A => B = {
+      private def rvarToCellEditor[A: Reusability, B <: EditorInstance](f: StateSnapshot[A] => B): A => B = {
         lazy val update: A ~=> Callback =
-          ReusableFn(a => $.modState(lens set f(ReusableVar(a)(update)).some))
-        a => f(ReusableVar(a)(update))
+          Reusable.fn(a => $.modState(lens set f(StateSnapshot.withReuse(a)(update)).some))
+        a => f(StateSnapshot.withReuse(a)(update))
       }
 
-      private def rvarStrToStartEditFn[B <: EditorInstance](f: ReusableVar[String] => B, initial: String): StartEditFn =
+      private def rvarStrToStartEditFn[B <: EditorInstance](f: StateSnapshot[String] => B, initial: String): StartEditFn =
         startEditFn(rvarToCellEditor(f) apply initial)
 
       private def abort: Callback =
@@ -262,21 +262,21 @@ object ContentEditorFeature {
         async.wrapAsync((s, f) => saveIO(cmd, s >> abort, f))
 
       private def makeAbortCommit[A](cmd: A => UpdateContentCmd): Some[AbortCommit[Callback, A ~=> Callback]] =
-        Some(AbortCommit(abort, ReusableFn(v => commit(cmd(v)))))
+        Some(AbortCommit(abort, Reusable.fn(v => commit(cmd(v)))))
 
       /**
        * Instance of [[EditorInstance]] that ensures editing is allowed before rendering.
        */
       private trait EditorInstanceImpl extends EditorInstance {
 
-        final type RenderImpl = AsyncState => CallbackTo[Some[ReactElement]]
+        final type RenderImpl = AsyncState => CallbackTo[Some[VdomElement]]
 
         protected val renderImpl: RenderImpl
 
-        protected def makeRenderImplWithState(f: (AsyncState, S) => ReactElement): RenderImpl =
+        protected def makeRenderImplWithState(f: (AsyncState, S) => VdomElement): RenderImpl =
           as => $.state.map(s => Some(f(as, s)))
 
-        protected def makeRenderImpl(f: AsyncState => ReactElement): RenderImpl =
+        protected def makeRenderImpl(f: AsyncState => VdomElement): RenderImpl =
           as => CallbackTo(Some(f(as)))
 
         final override def render(as: AsyncState) =
@@ -305,7 +305,7 @@ object ContentEditorFeature {
           rvarStrToStartEditFn(new StateMultiple(_, Some(initialValues), abortCommit), initialText)
         }
 
-        private class StateMultiple(rvar       : ReusableVar[String],
+        private class StateMultiple(rvar       : StateSnapshot[String],
                                     initial    : Some[Set[ReqCode.Value]],
                                     abortCommit: ReqCodeEditor.Multiple.AbortCommit) extends EditorInstanceImpl {
           override val renderImpl = makeRenderImpl(as =>
@@ -328,7 +328,7 @@ object ContentEditorFeature {
           rvarStrToStartEditFn(new StateSingle(_, Some(initialValue), abortCommit), initialText)
         }
 
-        private class StateSingle(rvar       : ReusableVar[String],
+        private class StateSingle(rvar       : StateSnapshot[String],
                                   initial    : Some[ReqCode.Value],
                                   abortCommit: ReqCodeEditor.Single.AbortCommit) extends EditorInstanceImpl {
           override val renderImpl = makeRenderImpl(as =>
@@ -367,7 +367,7 @@ object ContentEditorFeature {
                                  pxChoices   : Px[NonEmptySet[RT]],
                                  abortCommit : ReqTypeSelector.AbortCommit) extends EditorInstanceImpl {
 
-          def evar = ExternalVar(editValue)(e => $.modState(lens set copy(editValue = e).some))
+          def evar = StateSnapshot(editValue)(e => $.modState(lens set copy(editValue = e).some))
 
           override val renderImpl = makeRenderImpl(as =>
             ReqTypeSelector.Props(
@@ -414,7 +414,7 @@ object ContentEditorFeature {
           rvarStrToStartEditFn(new State(_, pxLookup, pxValFn, abortCommit), initialText)
         }
 
-        private class State(rvar       : ReusableVar[String],
+        private class State(rvar       : StateSnapshot[String],
                             lookup     : Px[Lookup],
                             valFn      : Px[ValidationFn],
                             abortCommit: ImplicationEditor.AbortCommit) extends EditorInstanceImpl {
@@ -453,7 +453,7 @@ object ContentEditorFeature {
         }
 
         private class State(initialValues: Some[Set[ApplicableTagId]],
-                            rvar         : ReusableVar[String],
+                            rvar         : StateSnapshot[String],
                             lookup       : Px[Lookup],
                             abortCommit  : TagEditor.AbortCommit) extends EditorInstanceImpl {
           override val renderImpl = makeRenderImpl(as =>
@@ -489,7 +489,7 @@ object ContentEditorFeature {
             rvarStrToStartEditFn(new State(_, Some(initialValue), focusId, abortCommit), initialText)
           }
 
-          private class State(rvar       : ReusableVar[String],
+          private class State(rvar       : StateSnapshot[String],
                               initial    : Some[T.OptionalText],
                               focusId    : P,
                               abortCommit: editor.AbortCommit) extends EditorInstanceImpl {
@@ -549,7 +549,7 @@ object ContentEditorFeature {
         def apply(id: UseCaseStepId, focusId: P): StartEditFn = {
 
           val commitFn: UseCaseStepEditor.CommitFn =
-            ReusableFn(v => commit(UpdateContentCmd.UpdateUseCaseStep(id, v)))
+            Reusable.fn(v => commit(UpdateContentCmd.UpdateUseCaseStep(id, v)))
 
           val sf = pxProject.value().reqs.useCases.focusStep(id)
 
@@ -562,7 +562,7 @@ object ContentEditorFeature {
           rvarStrToStartEditFn(new State(_, Some(initialValue), focusId, commitFn), initialText)
         }
 
-        private class State(rvar   : ReusableVar[String],
+        private class State(rvar   : StateSnapshot[String],
                             initial: Some[UseCaseStepEditor.InitialValue],
                             focusId: P,
                             commit : UseCaseStepEditor.CommitFn) extends EditorInstanceImpl {
@@ -621,7 +621,7 @@ object ContentEditorFeature {
 
       implicit def reusabilityState1[K]: Reusability[ReadOnly[K]] =
         // Contents are effectively mutable
-        Reusability.whenTrue(_.isEmpty)
+        Reusability.when(_.isEmpty)
 
       private[ContentEditorFeature] def empty[A, B](p: Intersection[A, B]): State[A, B] =
         new State(Map.empty, p)
@@ -663,7 +663,7 @@ object ContentEditorFeature {
       */
     abstract class InitChild[K, P] {
       type Parent
-      val parent    : CompState.Access[Parent]
+      val parent    : StateAccessPure[Parent]
       val editorLens: K => Option[Lens[Parent, D0.State]]
       val preview   : PreviewFeature[Parent, P]
 
@@ -719,7 +719,7 @@ object ContentEditorFeature {
 
       implicit def reusabilityState2[K2, K1]: Reusability[ReadOnly[K2, K1]] =
         // Contents are effectively mutable
-        Reusability.whenTrue(_.isEmpty)
+        Reusability.when(_.isEmpty)
 
       def at[A2, B2, A1, B1](k: B2): Lens[State[A2, B2, A1, B1], D1.State[A1, B1]] =
         Lens((_: State[A2, B2, A1, B1])(k))(o => _.set(k, o))
@@ -749,7 +749,7 @@ object ContentEditorFeature {
      */
     abstract class InitChild[K2, K1, P] {
       type Parent
-      val parent    : CompState.Access[Parent]
+      val parent    : StateAccessPure[Parent]
       val editorLens: (K2, K1) => Option[Lens[Parent, D0.State]]
       val preview   : PreviewFeature[Parent, P]
 

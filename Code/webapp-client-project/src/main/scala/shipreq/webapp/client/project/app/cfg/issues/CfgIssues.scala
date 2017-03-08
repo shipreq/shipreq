@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.cfg.issues
 
-import japgolly.scalajs.react._, vdom.prefix_<^._
-import japgolly.scalajs.react.extra.ReusableVar
+import japgolly.scalajs.react._, vdom.html_<^._
+import japgolly.scalajs.react.extra.StateSnapshot
 import shipreq.webapp.base.data.FilterDead
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.client.base.protocol.ClientProtocol
@@ -15,13 +15,13 @@ object CfgIssues {
                          b         : ReqTypeImplicationMod.Instance,
                          c         : FieldMandatorinessMod.Instance,
                          cd        : ClientData,
-                         filterDead: ReusableVar[FilterDead],
+                         filterDead: StateSnapshot[FilterDead],
                          usageShow : Usage.Show) {
     @inline def component = Component(this)
   }
 
   val Component =
-    ReactComponentB[Props]("Cfg: Issues")
+    ScalaComponent.build[Props]("Cfg: Issues")
       .render_P { p =>
         import p._
         <.section(

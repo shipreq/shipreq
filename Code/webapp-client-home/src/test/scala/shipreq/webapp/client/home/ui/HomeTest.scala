@@ -1,6 +1,5 @@
 package shipreq.webapp.client.home.ui
 
-import japgolly.scalajs.react.test.ReactTestUtils.Simulate
 import japgolly.scalajs.react.test._
 import java.time.Instant
 import java.time.temporal.ChronoUnit._
@@ -75,7 +74,7 @@ object HomeTestDsl {
   )
 
   def setCPText(text: String): *.Actions =
-    *.action(s"Set CreateProject text to [$text]")(ChangeEventData(text) simulate _.obs.createProject.input)
+    *.action(s"Set CreateProject text to [$text]")(SimEvent.Change(text) simulate _.obs.createProject.input)
       .updateState(_.copy(cpText = text))
 
   def setCPText(text: String, newState: CPState): *.Actions =

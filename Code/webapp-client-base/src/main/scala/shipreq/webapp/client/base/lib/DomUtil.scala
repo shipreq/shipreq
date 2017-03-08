@@ -1,7 +1,7 @@
 package shipreq.webapp.client.base.lib
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.scalajs.react._
+import japgolly.scalajs.react.{raw => _, _}
 import scala.annotation.tailrec
 import scalajs.js
 import org.scalajs.dom._

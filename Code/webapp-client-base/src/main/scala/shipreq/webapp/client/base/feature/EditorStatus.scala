@@ -1,7 +1,7 @@
 package shipreq.webapp.client.base.feature
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.base.util.ValidUpdate
 import shipreq.webapp.base.validation.{VFailure, ValidationResult, ValidatorU}
 import EditorStatus._

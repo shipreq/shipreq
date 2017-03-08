@@ -1,7 +1,7 @@
 package shipreq.webapp.client.base.lib
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.ext.KeyCode
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
@@ -47,7 +47,7 @@ object KeyboardTheme {
   def instructionsForCommitAbort(lc    : LineCardinality,
                                  commit: Option[Callback],
                                  abort : Callback,
-                                 help  : Option[Callback]): ReactTag = {
+                                 help  : Option[Callback]): VdomTag = {
     var tag = <.div(*.container)
 
     def add(m: TagMod*): Unit =
@@ -60,7 +60,7 @@ object KeyboardTheme {
     }
 
     // Commit
-    var save: ReactNode = "save"
+    var save: VdomNode = "save"
     for (c <- commit)
       save = link(^.onClick --> c, save)
     add("ctrl-enter to ", save, ",")

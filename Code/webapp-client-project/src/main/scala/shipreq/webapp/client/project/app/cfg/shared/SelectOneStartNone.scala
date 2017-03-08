@@ -3,6 +3,7 @@ package shipreq.webapp.client.project.app.cfg.shared
 import scalaz.Equal
 import scalaz.std.option._
 import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.scalajs.react.vdom.Implicits._
 import shipreq.webapp.client.base.data.Enabled
 import shipreq.webapp.client.project.widgets.SelectOne
 import SelectOne.{Props, Choice}
@@ -30,7 +31,7 @@ class SelectOneStartNone[A: Equal] private[SelectOneStartNone](options: Vector[C
       // Once a tag is selected, the blank option (None: Option[TagId]) is removed
 
       (selected, optionsN) match {
-        case (Some(s), Some(o)) => ComponentA(Props(s,    o,        onSelect.map(f => s => f(Some(s)))))
+        case (Some(s), Some(o)) => ComponentA(Props(s, o, onSelect.map(f => s => f(Some(s)))))
         case _                  => ComponentO(Props(None, optionsO, onSelect))
       }
     }
@@ -41,10 +42,10 @@ object SelectOneStartNone {
   import shipreq.webapp.base.data._
 
   def reqType(rs: TraversableOnce[ReqType]): SelectOneStartNone[ReqTypeId] = {
-    val opts = rs.toStream
+    val opts = rs.toIterator
                 .map(r => Choice(r.reqTypeId, r.name, Enabled))
-                .sortBy(_.label)
                 .toVector
+                .sortBy(_.label)
     new SelectOneStartNone(opts)
   }
 

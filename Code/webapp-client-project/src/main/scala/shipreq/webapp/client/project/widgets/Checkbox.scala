@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.widgets
 
-import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import shipreq.base.util.IsoBool
 import shipreq.webapp.base.data.{FilterDead, ShowDead}
@@ -9,11 +9,11 @@ import shipreq.webapp.client.base.data.On
 
 object Checkbox {
 
-  def apply[A <: IsoBool[A]](bool: IsoBool[A])(set: A => Callback, decor: A => ReactTag => ReactElement) = {
+  def apply[A <: IsoBool[A]](bool: IsoBool[A])(set: A => Callback, decor: A => VdomTag => VdomElement) = {
     implicit val reusability = Reusability.by(bool.from)
     val on = On when bool
 
-    ReactComponentB[A]("Checkbox")
+    ScalaComponent.build[A]("Checkbox")
       .render_P { a =>
         val t = Widgets.checkbox(on(a))(^.onChange --> set(!a))
         decor(a)(t)
@@ -28,7 +28,7 @@ object Checkbox {
   def filterDead(set: FilterDead => Callback) =
     Checkbox(filterDeadChecked)(set, _ => chk => <.label(chk, UiText.Life.showDead))
 
-  def filterDead_$($: CompState.Access[FilterDead]): () => ReactElement = {
+  def filterDead_$($: StateAccessPure[FilterDead]): () => VdomElement = {
     val component = filterDead($ setState _)
     () => component($.state.runNow())
   }

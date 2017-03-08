@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.cfg.issues
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import japgolly.scalajs.react.extra.{Px, OnUnmount}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
@@ -25,7 +25,7 @@ private[issues] object MandatoryFields {
 
   val changeListener = ChangeListener.store(rowStore)(_.customFieldTypes, _.config.fields.customFields.get)
 
-  val Component = ReactComponentB[Props]("MandatoryFields")
+  val Component = ScalaComponent.build[Props]("MandatoryFields")
     .initialState_P(initialState)
     .renderBackend[Backend]
     .configure(
@@ -39,7 +39,7 @@ private[issues] object MandatoryFields {
 
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
 
-    val pxProject = Px.bs($).propsA(_.clientData.project())
+    val pxProject = Px.props($).map(_.clientData.project()).withReuse.autoRefresh
     val labelFn   = pxProject map Field.nameP
 
     def save(id: CustomFieldId): CallbackTo[ST] =
@@ -71,16 +71,16 @@ private[issues] object MandatoryFields {
         ^.key := f.id.value,
         <.td(
           editor render editorI(r),
-          rowStatusCtrls(r.status, EmptyTag)))
+          rowStatusCtrls(r.status, EmptyVdom)))
     }
 
-    def renderRows(p: Project, s: S): ReactNode = {
+    def renderRows(p: Project, s: S): VdomNode = {
       val fs = p.config.fields.fields
-      HideDead(fs)(_ live p.config).toReactNodeArray(
+      HideDead(fs)(_ live p.config).toVdomArray(
         _.fold(renderStaticField, renderCustomField(_, s)))
     }
 
-    def render(p: Props, s: S): ReactElement =
+    def render(p: Props, s: S): VdomElement =
       <.table(
         <.thead(<.tr(<.th("Mandatory Fields"))),
         <.tbody(renderRows(p.clientData.project(), s)))

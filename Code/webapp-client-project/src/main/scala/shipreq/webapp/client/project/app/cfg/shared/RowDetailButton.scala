@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.cfg.shared
 
-import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.scalajs.react._, vdom.html_<^._
 import scalaz.Equal
 import scalaz.syntax.equal._
 
@@ -20,11 +20,11 @@ object RowDetailButton {
     }
   }
 
-  val Component = ReactComponentB[Props]("RowFocus")
+  val Component = ScalaComponent.build[Props]("RowFocus")
     .render_P(render)
     .build
 
-  def render(p: Props): ReactElement =
+  def render(p: Props): VdomElement =
     <.button(
       ^.cls := "detail",
       ^.onClick --> p.onChange,

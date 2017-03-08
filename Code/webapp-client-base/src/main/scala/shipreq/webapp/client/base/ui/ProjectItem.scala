@@ -1,8 +1,8 @@
 package shipreq.webapp.client.base.ui
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra.ExternalVar
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.extra.StateSnapshot
+import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
@@ -28,12 +28,12 @@ object ProjectItem {
   private def stat(i: Icon, n: Int, s: String) =
     Statistic.simple(TagMod(i.tag, " ", n), s.pluralise(n))
 
-  private def renderLeftContent(p: ProjectCatalogue.Item)(leftContent: TagMod): ReactTag =
+  private def renderLeftContent(p: ProjectCatalogue.Item)(leftContent: TagMod): VdomTag =
     <.div(*.item,
       <.div(*.itemLeft, leftContent),
       <.div(renderStats(p)))
 
-  private def renderMeta(p: ProjectCatalogue.Item): ReactTag =
+  private def renderMeta(p: ProjectCatalogue.Item): VdomTag =
     <.div(*.itemMeta,
       "Updated ",
       TimeAgo.Component(MomentJs fromInstant p.lastUpdatedOrCreatedAt),
@@ -51,17 +51,17 @@ object ProjectItem {
   object AsLink {
     type Props = ProjectCatalogue.Item
 
-    private def render(p: Props): ReactElement =
+    private def render(p: Props): VdomElement =
       renderLeftContent(p) {
 
         val header =
           <.h1(*.itemHeaderRO,
             <.a(^.href := URLs.PageProject(p.id), p.name))
 
-        header + renderMeta(p)
+        TagMod(header, renderMeta(p))
       }
 
-    val Component = FunctionalComponent(render)
+    val Component = ScalaFnComponent(render)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -69,7 +69,7 @@ object ProjectItem {
   object WithEditableName {
 
     final case class Props(item           : ProjectCatalogue.Item,
-                           state          : ExternalVar[State],
+                           state          : StateSnapshot[State],
                            asyncFeature   : AsyncActionFeature.D0.Feature[String],
                            renameProjectIO: String => Callback) {
       @inline def render = Component(this)
@@ -99,16 +99,17 @@ object ProjectItem {
         *.itemHeaderEditCont
 
       val abortFn: Callback =
-        $.props.flatMap(_.state set None)
+        $.props.flatMap(_.state setState None)
 
       val updateEditText: String => Callback =
-        s => $.props.flatMap(_.state.mod(State setEdit s))
+        s => $.props.flatMap(_.state.modState(State setEdit s))
 
       def renderView(p: Props): TagMod =
-        <.h1(*.itemHeaderRW,
-          EditTheme.editableInline(p.state set Some(EditState(p.item.name, None))),
-          p.item.name
-        ) + ProjectItem.renderMeta(p.item)
+        TagMod(
+          <.h1(*.itemHeaderRW,
+            EditTheme.editableInline(p.state setState Some(EditState(p.item.name, None))),
+            p.item.name),
+          ProjectItem.renderMeta(p.item))
 
       def renderEditor(p: Props, s: EditState): TagMod = {
         val status =
@@ -124,12 +125,12 @@ object ProjectItem {
           .render
       }
 
-      def render(p: Props): ReactElement =
+      def render(p: Props): VdomElement =
         ProjectItem.renderLeftContent(p.item)(
           p.state.value.fold(renderView(p))(renderEditor(p, _)))
     }
 
-    val Component = ReactComponentB[Props]("ProjectItem")
+    val Component = ScalaComponent.build[Props]("ProjectItem")
       .renderBackend[Backend]
       // .configure(Reusability.shouldComponentUpdate)
       .build

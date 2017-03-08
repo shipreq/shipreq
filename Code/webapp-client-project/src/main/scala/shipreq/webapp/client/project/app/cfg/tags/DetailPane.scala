@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.cfg.tags
 
-import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.microlibs.nonempty.NonEmptyVector
 import scalaz.Equal
 import scalaz.std.option.optionEqual
@@ -30,10 +30,10 @@ private[tags] object DetailPane {
     <.div(outerAttr,
       renderRel(rel, Some(hnd))))
 
-  def renderRel(r: Rel, dragHandle: Option[ReactTag]): ReactTag =
+  def renderRel(r: Rel, dragHandle: Option[VdomTag]): VdomTag =
     <.li(
       ^.key := r.id.value,
-      dragHandle,
+      dragHandle.whenDefined,
       r.name,
       <.button(
         ^.marginLeft := "2ex",
@@ -45,13 +45,13 @@ private[tags] object DetailPane {
 
   final class Backend($: BackendScope[Props, State]) {
 
-    def render(p: Props): ReactElement = {
-      def parentsPane: ReactElement =
+    def render(p: Props): VdomElement = {
+      def parentsPane: VdomElement =
         pane(
           existingRels(p.parents.sortBy(_.name), <.ul, "This has no parents.", renderRel(_, None)),
           addableRels(p.parentAdds, "Add Parent"))
 
-      def childrenPane: ReactElement =
+      def childrenPane: VdomElement =
         pane(
           existingRels(p.children, <.ol, "This has no children.",
             r => DraggableRel(DND.Parent.cProps2($, r, (from, to) => p.childMoveIO(from.id, to.id)))),
@@ -68,18 +68,18 @@ private[tags] object DetailPane {
             <.td(childrenPane)))))
     }
 
-    def pane(existing: ReactElement, addable: TagMod): ReactElement =
+    def pane(existing: VdomElement, addable: TagMod): VdomElement =
       <.div(existing, addable)
 
-    def existingRels(rels: Rels, container: ReactTag, noneMsg: String, li: Rel => ReactElement): ReactElement =
+    def existingRels(rels: Rels, container: VdomTag, noneMsg: String, li: Rel => VdomElement): VdomElement =
       if (rels.isEmpty)
         <.div(noneMsg)
       else
-        container(rels map li)
+        container(rels.toTagMod(li))
 
     def addableRels(ar: AddRels, buttonLabel: String): TagMod =
       if (ar.rels.isEmpty)
-        EmptyTag
+        EmptyVdom
       else {
 
         val choices = NonEmptyVector(
@@ -104,7 +104,7 @@ private[tags] object DetailPane {
       }
   }
 
-  val Component = ReactComponentB[Props]("Cfg: Tag Detail")
+  val Component = ScalaComponent.build[Props]("Cfg: Tag Detail")
     .initialState[State](DND.Parent.initialState)
     .renderBackend[Backend]
     .build

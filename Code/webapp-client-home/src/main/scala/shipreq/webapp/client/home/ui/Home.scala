@@ -3,7 +3,7 @@ package shipreq.webapp.client.home.ui
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data.{ProjectCatalogue, Username, Validators}
@@ -27,10 +27,10 @@ object Home {
   final class Backend($: BackendScope[Props, State]) {
 
     val setCreateProjectText: String ~=> Callback =
-      ReusableFn($ zoomL State.createProjectText).setState
+      Reusable.fn.state($ zoomStateL State.createProjectText).set
 
     val createProjectAAF =
-      AsyncActionFeature.D0.Feature[String]($ zoomL State.createProjectAAS)
+      AsyncActionFeature.D0.Feature[String]($ zoomStateL State.createProjectAAS)
 
     def addProject(i: ProjectCatalogue.Item): Callback =
       $.modState(State.projects.modify(p => ProjectCatalogue(p.items :+ i)))
@@ -44,18 +44,18 @@ object Home {
               i => onSuccess >> setCreateProjectText("") >> addProject(i),
               _ consumeAnd onFailure)))
 
-    def render(p: Props, s: State): ReactElement =
+    def render(p: Props, s: State): VdomElement =
       HomeContent.Props(
         p.data.username,
         s.projects,
-        ReusableVar(s.createProjectText)(setCreateProjectText),
+        StateSnapshot.withReuse(s.createProjectText)(setCreateProjectText),
         createProjectAAF,
         s.createProjectAAS,
         createProjectIO)
         .render
   }
 
-  val Component = ReactComponentB[Props]("Home")
+  val Component = ScalaComponent.build[Props]("Home")
     .initialState_P(p => State("", AsyncActionFeature.D0.initState, p.data.projects))
     .renderBackend[Backend]
     .build
@@ -67,7 +67,7 @@ object HomeContent {
 
   final case class Props(username         : Username,
                          projects         : ProjectCatalogue,
-                         createProjectText: ReusableVar[String],
+                         createProjectText: StateSnapshot[String],
                          createProjectAF  : AsyncActionFeature.D0.Feature[String],
                          createProjectAS  : AsyncActionFeature.D0.State[String],
                          createProjectIO  : String => Callback) {
@@ -82,7 +82,7 @@ object HomeContent {
     val inputMod: TagMod =
       ^.placeholder := "New project name..."
 
-    def render(p: Props): ReactElement = {
+    def render(p: Props): VdomElement = {
 
       val menu = MemberNavBar.Props(p.username, navBarLeft, Nil).render
 
@@ -94,7 +94,7 @@ object HomeContent {
 
         PlainTextEditor.WithButton.Props(
           p.createProjectText.value,
-          p.createProjectText.set,
+          p.createProjectText.setState,
           status,
           buttonLabel = "Create",
           inputMod = inputMod)
@@ -107,11 +107,11 @@ object HomeContent {
         menu,
         <.main(BaseStyles.containerLarge,
           <.div(Styles.createProjectContainer, projectCreate),
-          projectList))
+          projectList.toTagMod))
     }
   }
 
-  val Component = ReactComponentB[Props]("Home")
+  val Component = ScalaComponent.build[Props]("Home")
     .renderBackend[Backend]
     .build
 

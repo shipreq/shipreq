@@ -45,11 +45,11 @@ trait TypicalSupp[P, I, K, U] {
 object TypicalSupp {
   @inline def apply[P, I, K, U](_sas: TypicalStoresAndState[P, I, K])
                                (_crudIO: => CrudActionIO[P, K, U, _],
-                                _c: CompState.Access[_sas.S])
+                                _c: StateAccessPure[_sas.S])
   : TypicalSupp[P, I, K, U] {val sas: _sas.type} =
     new TypicalSupp[P, I, K, U] {
       override val sas: _sas.type = _sas
       override protected val realise: Realise[sas.S] = _c.runState(_)
-      override protected val crudIO = Px.thunkA(_crudIO: AnyRef)(Reusability.byRef).asInstanceOf[Px[CrudActionIO[P, K, U, _]]]
+      override protected val crudIO = Px(_crudIO: AnyRef).withReuse(Reusability.byRef).autoRefresh.asInstanceOf[Px[CrudActionIO[P, K, U, _]]]
     }
 }

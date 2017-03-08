@@ -20,14 +20,14 @@ object TestState
   // TODO Add to DomZipper exports
   implicit def univEqDomElement[D <: Element] = UnivEq.force[D]
 
-  val DownKey   = KeyboardEventData(key = KeyValue.ArrowDown , keyCode = KeyCode.Down  )
-  val UpKey     = KeyboardEventData(key = KeyValue.ArrowUp   , keyCode = KeyCode.Up    )
-  val LeftKey   = KeyboardEventData(key = KeyValue.ArrowLeft , keyCode = KeyCode.Left  )
-  val RightKey  = KeyboardEventData(key = KeyValue.ArrowRight, keyCode = KeyCode.Right )
-  val Home      = KeyboardEventData(key = KeyValue.Home      , keyCode = KeyCode.Home  )
-  val End       = KeyboardEventData(key = KeyValue.End       , keyCode = KeyCode.End   )
-  val Escape    = KeyboardEventData(key = KeyValue.Escape    , keyCode = KeyCode.Escape)
-  val Enter     = KeyboardEventData(key = KeyValue.Enter     , keyCode = KeyCode.Enter )
-  val CtrlEnter = KeyboardEventData(key = KeyValue.Enter     , keyCode = KeyCode.Enter , ctrlKey = true)
-  val F2        = KeyboardEventData(key = KeyValue.F2        , keyCode = KeyCode.F2    )
+  val DownKey   = SimEvent.Keyboard(key = KeyValue.ArrowDown , keyCode = KeyCode.Down  )
+  val UpKey     = SimEvent.Keyboard(key = KeyValue.ArrowUp   , keyCode = KeyCode.Up    )
+  val LeftKey   = SimEvent.Keyboard(key = KeyValue.ArrowLeft , keyCode = KeyCode.Left  )
+  val RightKey  = SimEvent.Keyboard(key = KeyValue.ArrowRight, keyCode = KeyCode.Right )
+  val Home      = SimEvent.Keyboard(key = KeyValue.Home      , keyCode = KeyCode.Home  )
+  val End       = SimEvent.Keyboard(key = KeyValue.End       , keyCode = KeyCode.End   )
+  val Escape    = SimEvent.Keyboard(key = KeyValue.Escape    , keyCode = KeyCode.Escape)
+  val Enter     = SimEvent.Keyboard(key = KeyValue.Enter     , keyCode = KeyCode.Enter )
+  val CtrlEnter = SimEvent.Keyboard(key = KeyValue.Enter     , keyCode = KeyCode.Enter , ctrlKey = true)
+  val F2        = SimEvent.Keyboard(key = KeyValue.F2        , keyCode = KeyCode.F2    )
 }

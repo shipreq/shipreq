@@ -1,7 +1,7 @@
 package shipreq.webapp.client.base.ui.semantic
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 
 /** http://semantic-ui.com/views/statistic.html */
@@ -28,7 +28,7 @@ object Statistic {
     Props(NoStyle, Value(value), label)
 
   sealed abstract class Value {
-    val cont: ReactTag
+    val cont: VdomTag
   }
 
   object Value {
@@ -55,7 +55,7 @@ object Statistic {
         divLabel(label))
   }
 
-  val Component = FunctionalComponent[Props](_.render2(true))
+  val Component = ScalaFnComponent[Props](_.render2(true))
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -77,6 +77,6 @@ object StatisticGroup {
     p.style.cont(
       p.statistics.map(_.render2(false)): _*)
 
-  val Component = FunctionalComponent(render)
+  val Component = ScalaFnComponent(render)
 }
 

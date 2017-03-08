@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.test
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import monocle.macros.Lenses
 import scalaz.Equal
 import scalaz.std.AllInstances._
@@ -112,8 +112,8 @@ object SampleDataPerson {
       def renderRow(a: e.InputA) =
         e.render(EditorI(a, "", e.editable($ runState _.st)))
 
-      def render(s: NewAndSavedRowState): ReactElement = {
-        val newRow = newRowStoreS.getI(s).fold(EmptyTag)(i => {
+      def render(s: NewAndSavedRowState): VdomElement = {
+        val newRow = newRowStoreS.getI(s).fold(EmptyVdom)(i => {
           val v = renderRow((i, None))
           <.div(^.cls := "new", v._1, v._2)
         })
@@ -122,11 +122,11 @@ object SampleDataPerson {
           val v = renderRow((row.i, id.some))
           <.div(^.key := id, ^.cls := s"id-$id", v._1, v._2)
         })
-        <.section(newRow, saved.toReactNodeArray)
+        <.section(newRow, saved.toVdomArray)
       }
     }
 
-    val Component = ReactComponentB[Props]("NewAndSavedRowState")
+    val Component = ScalaComponent.build[Props]("NewAndSavedRowState")
       .initialState(NewAndSavedRowState.initialState)
       .renderBackend[Backend]
       .build

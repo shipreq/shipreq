@@ -10,7 +10,7 @@ import shipreq.webapp.client.project.app.state.{Changes, ClientData}
 import shipreq.webapp.client.project.lib.DataReusability.reusabilityProject
 
 final class TestClientData(init: Project, pi: Option[ProjectCatalogue.Item]) extends ClientData {
-  override val pxProject = Px(init)
+  override val pxProject = Px(init).withReuse.manualUpdate
 
   override var _projectSummary = pi getOrElse summariseProject(init)
 

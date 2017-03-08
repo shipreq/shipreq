@@ -2,7 +2,7 @@ package shipreq.webapp.client.base.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.Reusability
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.MonocleReact._
 import monocle.Lens
 import scala.annotation.elidable
@@ -40,7 +40,7 @@ object AsyncActionFeature {
   }
 
   @inline implicit class AAFStringStatusOps(private val s: Status[String]) extends AnyVal {
-    def render: ReactElement =
+    def render: VdomElement =
       s match {
         case Locked            => renderLocked
         case f: Failed[String] => <.div(f.failure, f.retryButton, f.resumeEditButton)
@@ -48,7 +48,7 @@ object AsyncActionFeature {
   }
 
   @inline implicit class AAFState0Ops(private val s: D0.State[String]) extends AnyVal {
-    def renderOr[A](a: => A)(implicit ev: ReactElement => A): A =
+    def renderOr[A](a: => A)(implicit ev: VdomElement => A): A =
       s.fold(a)(x => ev(x.render))
   }
 
@@ -99,8 +99,8 @@ object AsyncActionFeature {
     }
 
     object Feature {
-      def apply[F]($: CompState.WriteAccess[State[F]]): Feature[F] =
-        fn($ setState _)
+      def apply[F]($: StateAccessPure[State[F]]): Feature[F] =
+        fn($.setState(_))
 
       def fn[F](set: Option[Status[F]] => Callback): Feature[F] =
         new Feature[F] {
@@ -158,7 +158,7 @@ object AsyncActionFeature {
       }
 
       implicit def reusabilityState1[K, F]: Reusability[ReadOnly[K, F]] =
-        Reusability.byRef || Reusability.whenTrue(_.isEmpty)
+        Reusability.byRef || Reusability.when(_.isEmpty)
 
       private[AsyncActionFeature] def empty[A, B](p: Intersection[A, B]): State[A, B, Nothing] =
         new State(None, Map.empty, p)
@@ -183,22 +183,22 @@ object AsyncActionFeature {
     }
 
     object Feature {
-      private final class Impl[S, A, B, -F]($: CompState.WriteAccess[State[S, A, F]],
+      private final class Impl[S, A, B, -F]($: StateAccessPure[State[S, A, F]],
                                             i: Intersection[A, B]) extends Feature[B, F] {
         override def apply(b: B) =
-          i.reverse.fold(b, a => D0.Feature($ zoomL State.at(a)))(D0.Feature.Nop)
+          i.reverse.fold(b, a => D0.Feature($ zoomStateL State.at(a)))(D0.Feature.Nop)
 
         override def mapK[C](j: Intersection[B, C]) =
           new Impl($, i composeIntersection j)
 
         override def wrapAsyncD1(call: AsyncCall[F]) =
-          genericWrapAsync[F]($.zoomL(State.atD1) setState _, call)
+          genericWrapAsync[F]($.zoomStateL(State.atD1) setState _, call)
       }
 
-      @inline def apply[S, A, F]($: CompState.WriteAccess[State[S, A, F]]): Feature[A, F] =
+      @inline def apply[S, A, F]($: StateAccessPure[State[S, A, F]]): Feature[A, F] =
         apply($, Intersection.id[A])
 
-      def apply[S, A, B, F]($: CompState.WriteAccess[State[S, A, F]], i: Intersection[A, B]): Feature[B, F] =
+      def apply[S, A, B, F]($: StateAccessPure[State[S, A, F]], i: Intersection[A, B]): Feature[B, F] =
         new Impl($, i)
 
       def nop[K]: Feature[K, Any] =
@@ -264,7 +264,7 @@ object AsyncActionFeature {
       }
 
       implicit def reusabilityState2[K2, K1, F]: Reusability[ReadOnly[K2, K1, F]] =
-        Reusability.byRef || Reusability.whenTrue(_.isEmpty)
+        Reusability.byRef || Reusability.when(_.isEmpty)
 
       def at[A2, B2, A1, B1, F](k: B2): Lens[State[A2, B2, A1, B1, F], D1.State[A1, B1, F]] =
         Lens((_: State[A2, B2, A1, B1, F])(k))(o => _.set(k, o))
@@ -281,11 +281,11 @@ object AsyncActionFeature {
     }
 
     object Feature {
-      private final class Impl[S2, A2, B2, S1, A1, B1, -F]($: CompState.WriteAccess[State[S2, A2, S1, A1, F]],
+      private final class Impl[S2, A2, B2, S1, A1, B1, -F]($: StateAccessPure[State[S2, A2, S1, A1, F]],
                                                            i2: Intersection[A2, B2],
                                                            i1: Intersection[A1, B1]) extends Feature[B2, B1, F] {
         override def apply(b: B2) =
-          i2.reverse.fold(b, a => D1.Feature($ zoomL State.at(a), i1))(D1.Feature.nop)
+          i2.reverse.fold(b, a => D1.Feature($ zoomStateL State.at(a), i1))(D1.Feature.nop)
 
         override def mapK1[C](j: Intersection[B1, C]) =
           new Impl($, i2, i1 composeIntersection j)
@@ -305,7 +305,7 @@ object AsyncActionFeature {
           )
       }
 
-      def apply[S2, A2, S1, A1, F]($: CompState.WriteAccess[State[S2, A2, S1, A1, F]]): Feature[A2, A1, F] =
+      def apply[S2, A2, S1, A1, F]($: StateAccessPure[State[S2, A2, S1, A1, F]]): Feature[A2, A1, F] =
         new Impl($, Intersection.id[A2], Intersection.id[A1])
 
       implicit def reusabilityFeature[A, B, C]: Reusability[Feature[A, B, C]] =

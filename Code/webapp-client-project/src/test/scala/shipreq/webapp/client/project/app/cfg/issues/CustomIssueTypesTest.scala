@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.cfg.issues
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import shipreq.webapp.base.data.{FilterDead, HideDead}
@@ -21,7 +21,7 @@ object CustomIssueTypesTest extends TestSuite {
     val remote     = RemoteFn.Instance("x", CustomIssueTypeCrud)
     val clientData = TestClientData(SampleProject.project)
     val cp         = new TestClientProtocol(true)
-    val props      = new CustomIssueTypes.Props(cp, remote, clientData, filterDead.reusableVar(), Usage.Show((_, _) => <.a))
+    val props      = new CustomIssueTypes.Props(cp, remote, clientData, filterDead.stateSnapshotWithReuse(), Usage.Show((_, _) => <.a))
     val re         = props.component
     val c          = ReactTestUtils.renderIntoDocument(re)
 

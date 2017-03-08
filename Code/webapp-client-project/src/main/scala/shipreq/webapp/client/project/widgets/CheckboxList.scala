@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.client.base.data.{Disabled, Enabled, On}
 import shipreq.webapp.client.project.lib.DataReusability._
 
@@ -14,7 +14,7 @@ object CheckboxList {
   implicit def reusabilityProps[A: Reusability] = Reusability.caseClass[Props[A]]
 }
 
-class CheckboxList[A: Reusability](renderFn: Vector[ReactTag] => ReactElement) {
+class CheckboxList[A: Reusability](renderFn: Vector[VdomTag] => VdomElement) {
   import CheckboxList._
 
   def render(p: Props[A]) =
@@ -28,7 +28,7 @@ class CheckboxList[A: Reusability](renderFn: Vector[ReactTag] => ReactElement) {
         <.label(box, i.label)
       })
 
-  val Component = ReactComponentB[Props[A]]("Columns")
+  val Component = ScalaComponent.build[Props[A]]("Columns")
     .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build

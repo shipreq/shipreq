@@ -1,7 +1,7 @@
 package shipreq.webapp.client.base.ui.semantic
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.html
 import scala.scalajs.js
@@ -47,7 +47,7 @@ object Menu {
   }
 
   sealed abstract class Item {
-    val cont: ReactTag
+    val cont: VdomTag
   }
 
   object Item {
@@ -60,7 +60,7 @@ object Menu {
       override val cont = divItem(content) <+ state
     }
 
-    case class Link(a: ReactTagOf[html.Anchor], state: ItemState = ItemState.Default) extends Item {
+    case class Link(a: VdomTagOf[html.Anchor], state: ItemState = ItemState.Default) extends Item {
       override val cont = a.addClass(item) <+ state
     }
 
@@ -85,24 +85,24 @@ object Menu {
   final class Backend($: BackendScope[Props, Unit]) {
 
     val enableDropdowns: Callback =
-      Callback {
+      $.getDOMNode.map { node =>
         val opt = js.Dynamic.literal(action = "hide")
-        JQuery($.getDOMNode()).find(".ui.dropdown").dropdown(opt)
+        JQuery(node).find(".ui.dropdown").dropdown(opt)
       }
 
     def render(p: Props) =
       p.style.cont(
         TagMod(p.leftItems.map(_.cont): _*),
         if (p.rightItems.isEmpty)
-          EmptyTag
+          EmptyVdom
         else
           divRightMenu(p.rightItems.map(_.cont): _*))
   }
 
-  val Component = ReactComponentB[Props]("Name")
+  val Component = ScalaComponent.build[Props]("Name")
     .renderBackend[Backend]
     .componentDidMount(_.backend.enableDropdowns)
-    .componentDidUpdate(_.$.backend.enableDropdowns)
+    .componentDidUpdate(_.backend.enableDropdowns)
     // .configure(Reusability.shouldComponentUpdate) TODO
     .build
 

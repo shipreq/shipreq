@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.cfg.shared
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import org.scalajs.dom.ext.KeyValue
 import shipreq.webapp.client.base.data.On
 import shipreq.webapp.client.base.lib.ClientUtil.textChangeRecv
@@ -9,7 +9,7 @@ import SimpleEditor._
 
 object Editors {
 
-  def textEditor(node: ReactTag): SimpleEditor[String] =
+  def textEditor(node: VdomTag): SimpleEditor[String] =
     Editor(ei => {
       val base = node(^.cls := ei.cssClass, ^.value := ei.data)
       ei.editable match {
@@ -24,7 +24,7 @@ object Editors {
       }
     })
 
-  def cancelOnEscape(f: ST => Callback): ReactKeyboardEventH => Callback =
+  def cancelOnEscape(f: ST => Callback): ReactKeyboardEventFromHtml => Callback =
     e => e.key match {
       case KeyValue.Escape =>
         val t = e.target
@@ -47,7 +47,7 @@ object Editors {
           base(^.readOnly := true, ^.disabled := true)
         case Some(cb) =>
           @inline def cbh(event: CallbackEvent[On], st: ST = nopST) = cb(callbackH(event, st))
-          def handleChange: ReactEventI => Callback = e => {
+          def handleChange: ReactEventFromInput => Callback = e => {
             val b = On <~ e.target.checked
             cbh(OnChange(b)) >> cbh(OnEditFinished(b))
           }
@@ -55,14 +55,14 @@ object Editors {
       }
     })
 
-  val staticCheckbox: On => ReactElement =
+  val staticCheckbox: On => VdomElement =
     On.memo(on =>
       checkboxEditor render EditorI(on, "", None))
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def renderWithError[A,B,M[_],S,C,D](editor: Editor[A,B,M,S,C,D,ReactElement], err: Option[String]): Editor[A,B,M,S,C,D,ReactElement] =
+  def renderWithError[A,B,M[_],S,C,D](editor: Editor[A,B,M,S,C,D,VdomElement], err: Option[String]): Editor[A,B,M,S,C,D,VdomElement] =
     Editor(i => <.div(
       editor render i,
-      err.map(e => <.div(^.cls := "errorMsg", e))))
+      err.whenDefined(e => <.div(^.cls := "errorMsg", e))))
 }

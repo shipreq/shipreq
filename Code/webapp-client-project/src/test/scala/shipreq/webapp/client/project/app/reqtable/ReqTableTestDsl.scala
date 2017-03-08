@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.test.ReactTestUtils.Simulate
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import shipreq.base.util._
@@ -18,7 +17,7 @@ import TestState._
 
 object ReqTableTestDsl {
 
-  case class Ref($: CompState.AccessD[ReqTable.State], svr: MockServer)
+  case class Ref($: StateAccessImpure[ReqTable.State], svr: MockServer)
 
   val * = Dsl[Ref, ReqTableObs, Project]
 
@@ -124,7 +123,7 @@ object ReqTableTestDsl {
         +> assertNotEditing)
 
     def enterValue(text: String, desc: String = "Enter value") =
-      *.action(s"$desc: ${text.display}")(ChangeEventData(text) simulate editor.run(_)) +>
+      *.action(s"$desc: ${text.display}")(SimEvent.Change(text) simulate editor.run(_)) +>
         editorValue.assert(text)
 
     def modifyValue(mod: String => String, desc: String = "Modify value") =
@@ -267,7 +266,7 @@ object ReqTableTestDsl {
     sortBy(UiText.ColumnNames.pubid)
 
   def enterFilter(f: String) = {
-    val e = ChangeEventData(f)
+    val e = SimEvent.Change(f)
     *.action(s"enterFilter('$f')")(e simulate _.obs.viewSettings.filter.input)
       .addCheck(*.focus("Filter").value(_.obs.viewSettings.filter.input.value).assert(f).after)
   }
@@ -298,6 +297,6 @@ object ReqTableTestDsl {
     *.action("Set focus")(i => f(i.obs).focus()) +>
       activeElement.assert.equalBy(i => f(i.obs))
 
-  def press(k: KeyboardEventData): *.Actions =
+  def press(k: SimEvent.Keyboard): *.Actions =
     *.action(s"Press ${k.desc}.")(k simulateKeyDownPressUp _.obs.activeElement)
 }

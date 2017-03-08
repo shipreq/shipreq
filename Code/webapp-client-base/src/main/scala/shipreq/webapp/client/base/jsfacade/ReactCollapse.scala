@@ -1,9 +1,8 @@
 package shipreq.webapp.client.base.jsfacade
 
 import japgolly.scalajs.react._
-import scalajs.js.{undefined, Dictionary, Dynamic, Object, UndefOr}
+import scalajs.js
 import shipreq.base.util.Memo
-import ReactCollapse._
 
 /**
  * Component-wrapper for collapse animation with react-motion for elements with variable (and dynamic) height.
@@ -11,34 +10,21 @@ import ReactCollapse._
  * https://github.com/nkbt/react-collapse
  */
 object ReactCollapse {
-  type P = Object
-  type S = Nothing
 
-  val Factory: JsComponentC[P, S, TopNode] = {
-    val ReactCollapse = Dynamic.global.ReactCollapse.asInstanceOf[JsComponentType[P, S, TopNode]]
-    React.createFactory[P, S, TopNode](ReactCollapse)
+  @js.native
+  trait Props extends js.Object {
+    var isOpened: Boolean = js.native
   }
 
-  @inline def apply(isOpened: Boolean): ReactCollapse =
+  val component = JsComponent[Props, Children.Varargs, Null]("ReactCollapse")
+
+  @inline def apply(isOpened: Boolean) =
     applyFn(isOpened)
 
-  val applyFn: Boolean => ReactCollapse =
-    Memo.bool(b =>
-      new ReactCollapse(isOpened = b))
-}
-
-class ReactCollapse(isOpened    : Boolean,
-                    fixedHeight : UndefOr[Double]        = undefined,
-                    springConfig: UndefOr[Array[Double]] = undefined) {
-
-  val toJs: P = {
-    val o = Dictionary.empty[Any]
-    o("isOpened") = isOpened
-    fixedHeight  foreach (o("fixedHeight")  = _)
-    springConfig foreach (o("springConfig") = _)
-    o.asInstanceOf[P]
-  }
-
-  def apply(children: ReactNode*): ReactComponentU_ =
-    Factory(toJs, children: _*)
+  val applyFn =
+    Memo.bool { b =>
+      val p = (new js.Object).asInstanceOf[Props]
+      p.isOpened = b
+      component.mapCtorType(_ withProps p)
+    }
 }

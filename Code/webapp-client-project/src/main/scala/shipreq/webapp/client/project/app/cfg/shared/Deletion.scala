@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.cfg.shared
 
-import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.univeq.UnivEq
 import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.webapp.base.data.{Dead, Live}
@@ -45,6 +45,6 @@ object Deletion {
 
 class Deletion[K](delIO: (K, DeletionAction) => Callback) {
 
-  def button(k: K, a: DeletionAction): ReactTag =
+  def button(k: K, a: DeletionAction): VdomTag =
     <.button(buttonLabel(a), ^.onClick --> delIO(k, a))
 }

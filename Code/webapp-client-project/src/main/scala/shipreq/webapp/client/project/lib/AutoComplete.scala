@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.lib
 import japgolly.microlibs.nonempty._
 import scala.annotation.tailrec
 import scalacss.ScalaCssReact._
-import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.univeq._
 import scalajs.js.{UndefOr, undefined}
 import scalaz.{\/-, -\/, \/}
@@ -135,7 +135,7 @@ object AutoComplete {
       legal.filter(i => i.pubidStrNorm.contains(np) || titles.contains(i.reqId))
     }
 
-    def li(i: ReqItem): ReactElement =
+    def li(i: ReqItem): VdomElement =
       <.div(
         <.div(*.autoCompleteItemTitle, i.pubidStr),
         <.div(*.autoCompleteItemDesc, i.title))
@@ -286,7 +286,7 @@ object AutoComplete {
         activePaths.filter(x => p.matcher(x._1).matches)
       }
 
-      def li(a: A): ReactElement = {
+      def li(a: A): VdomElement = {
         val code = a._1
         a._2 match {
           case \/-(a) =>

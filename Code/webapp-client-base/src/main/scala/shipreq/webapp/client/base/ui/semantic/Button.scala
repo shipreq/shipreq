@@ -1,6 +1,6 @@
 package shipreq.webapp.client.base.ui.semantic
 
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.html
 import Button._
@@ -37,7 +37,7 @@ object Button {
     @inline def disabledWhen(d: Boolean): State = enabledWhen(!d)
   }
 
-  def group(bs: ReactTagOf[html.Button]*) =
+  def group(bs: VdomTagOf[html.Button]*) =
     divCls("ui buttons")(bs: _*)
 }
 

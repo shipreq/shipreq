@@ -2,20 +2,19 @@ package shipreq.webapp.client.base.ui.semantic
 
 import japgolly.univeq._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.microlibs.nonempty.NonEmptyVector
 
 object Accordion {
 
   type Props = NonEmptyVector[Item]
 
-  final case class Item(title: ReactNode, content: ReactNode)
+  final case class Item(title: VdomNode, content: VdomNode)
 
   final class Backend($: BackendScope[Props, Unit]) {
 
-    def open = Callback {
-      JQuery($.getDOMNode()).accordion("open")
-    }
+    def open: Callback =
+      $.getDOMNode.map(JQuery(_).accordion("open"))
 
     def renderItem(i: Item, active: Boolean): TagMod = {
       val x = if (active) " active" else ""
@@ -24,7 +23,7 @@ object Accordion {
         divCls("content" + x)(i.content))
     }
 
-    def render(p: Props): ReactElement = {
+    def render(p: Props): VdomElement = {
       val activeIndex = 0
       val items = p.whole
       divCls("ui styled accordion fluid")(
@@ -32,7 +31,7 @@ object Accordion {
     }
   }
 
-  val Component = ReactComponentB[Props]("Accordion")
+  val Component = ScalaComponent.build[Props]("Accordion")
     .renderBackend[Backend]
     .componentDidMount(_.backend.open)
     .build

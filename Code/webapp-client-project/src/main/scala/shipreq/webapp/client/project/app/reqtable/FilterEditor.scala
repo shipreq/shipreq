@@ -1,9 +1,9 @@
 package shipreq.webapp.client.project.app.reqtable
 
-import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import org.parboiled2.{ErrorFormatter, ParseError}
-import org.scalajs.dom.raw.HTMLTextAreaElement
+import org.scalajs.dom.html
 import scala.util.{Failure, Success}
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-}
@@ -34,14 +34,12 @@ object FilterEditor {
 
   def initialState = State("", None)
 
-  private val textEditorRef = Ref[HTMLTextAreaElement]("i")
-
   val Component =
-    ReactComponentB[Props]("Filter")
+    ScalaComponent.build[Props]("Filter")
       .renderBackend[Backend]
       .configure(
         shouldComponentUpdate,
-        AutoCompleteFeature.installB(textEditorRef(_).get, _.autoComplete.value(), _.updateFilterText))
+        AutoCompleteFeature.installB(_.backend.textarea, _.autoComplete.value(), _.updateFilterText))
       .build
 
   private val acCommand: TC.Strategy =
@@ -55,7 +53,10 @@ object FilterEditor {
       .replace("$1" + _ + " ")
 
   class Backend($: BackendScope[Props, Unit]) {
-    val project = Px.bs($).propsM(_.project)
+    var textarea: html.TextArea = _
+
+    val project = Px.props($).map(_.project).withReuse.manualRefresh
+
 
     val autoComplete: Px[AutoCompleteFeature.Strategies] =
       project.map { p =>
@@ -72,7 +73,7 @@ object FilterEditor {
 
     val inputCorrect = """\s*[\n\r]\s*""".r
 
-    val onChange: ReactEventTA => Callback =
+    val onChange: ReactEventFromTextArea => Callback =
       e => updateFilterText(inputCorrect.replaceAllIn(e.target.value, " "))
 
     def updateFilterText(text: String): Callback = {
@@ -101,16 +102,16 @@ object FilterEditor {
     }
 
     val filterBase =
-      <.textarea(^.ref := textEditorRef, ^.onChange ==> onChange)
+      <.textarea.ref(textarea = _)(^.onChange ==> onChange)
 
-    def render(p: Props): ReactElement = {
+    def render(p: Props): VdomElement = {
       Px.refresh(project)
       val s = p.state
       <.div(
         filterBase(
           *.editor(Valid <~ s.error.isEmpty),
           ^.value := s.text),
-        s.error.map(err =>
+        s.error.whenDefined(err =>
           <.div(*.errorMsg, err)))
     }
   }

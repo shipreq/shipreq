@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.widgets.high
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import japgolly.microlibs.nonempty.NonEmptyVector
@@ -12,16 +12,16 @@ object RichTextEditorHelp {
 
   val modal = Modal("Rich Text Editor Help", content)
 
-  private def content: ReactElement = {
+  private def content: VdomElement = {
 
     type Group = Accordion.Item
 
-    def group(title: ReactNode)(e1: Example, en: Example*): Group = {
+    def group(title: VdomNode)(e1: Example, en: Example*): Group = {
       val content = <.table(*.examplesTable, <.tbody(e1 +: en: _*))
       Accordion.Item(title, content)
     }
 
-    type Example = ReactTagOf[html.TableRow]
+    type Example = VdomTagOf[html.TableRow]
 
     def example(desc: TagMod, samplePlainText: String): Example =
       <.tr(

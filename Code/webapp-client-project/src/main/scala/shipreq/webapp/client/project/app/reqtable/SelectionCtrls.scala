@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty._
-import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import org.scalajs.dom.window
 import shipreq.base.util.Allow
@@ -220,7 +220,7 @@ object SelectionCtrls {
 
   }
 
-  val Component = ReactComponentB[Props]("SelCtrls")
+  val Component = ScalaComponent.build[Props]("SelCtrls")
     .renderBackend[Backend]
     .configure(shouldComponentUpdate)
     .build

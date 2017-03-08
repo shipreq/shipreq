@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.cfg.tags
 
-import japgolly.scalajs.react.{Callback, TopNode, ReactComponentM_}
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.Element
 import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
@@ -29,8 +29,8 @@ object CfgTagsTest extends TestSuite {
       case _                                               => nameCellToText(d.firstElementChild, prefix)
     }
 
-  def nameAsTextTree(c: ReactComponentM_[TopNode]) =
-    Sizzle("td.name", c.getDOMNode()).toVector.map(nameCellToText(_, ""))
+  def nameAsTextTree(c: GenericComponent.MountedRaw) =
+    Sizzle("td.name", ReactDOM.raw findDOMNode c.raw).toVector.map(nameCellToText(_, ""))
 
   class FakeUpdateIO {
     var reqs = Vector.empty[(Tag, TagCrud.Fn.V)]
@@ -42,7 +42,7 @@ object CfgTagsTest extends TestSuite {
     lazy val filterDead = ReactTestVar[FilterDead](HideDead)
     lazy val clientData = TestClientData(S.project)
     lazy val cp         = new TestClientProtocol(true)
-    lazy val props      = new CfgTags.Props(cp, remote, clientData, filterDead.reusableVar())
+    lazy val props      = new CfgTags.Props(cp, remote, clientData, filterDead.stateSnapshotWithReuse())
     lazy val re         = MainTable.Component(props)
     lazy val c          = ReactTestUtils.renderIntoDocument(re)
   }

@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.feature
 
-import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.components.TriStateCheckbox
 import japgolly.univeq.UnivEq
@@ -19,7 +19,7 @@ final class Selection[A] private[Selection](val selected: Set[A]) extends Select
     new WithUpdateFn(selected, f)
 
   def updateByNoReuse(f: Selection[A] => Callback): WithUpdateFn[A] =
-    updateBy(ReusableFn(f))
+    updateBy(Reusable.fn(f))
 }
 
 
@@ -103,7 +103,7 @@ object Selection {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  final class OneUI[A](a: A, selected: Set[A], override val updateFn: UpdateFn[A]) extends UI[A, On, ReactTag] {
+  final class OneUI[A](a: A, selected: Set[A], override val updateFn: UpdateFn[A]) extends UI[A, On, VdomTag] {
     override val get =
       On <~ selected.contains(a)
 
@@ -126,7 +126,7 @@ object Selection {
   // -------------------------------------------------------------------------------------------------------------------
 
   final class TotalUI[A](legal: Set[A], legalSelection: Set[A], hiddenSelection: Set[A],
-                         override val updateFn: UpdateFn[A]) extends UI[A, Option[On], ReactElement] {
+                         override val updateFn: UpdateFn[A]) extends UI[A, Option[On], VdomElement] {
     override val get =
       if (legal.isEmpty)
         None
@@ -152,7 +152,7 @@ object Selection {
     override def toggle: Selection[A] =
       set(nextState)
 
-    override def checkbox: ReactElement =
+    override def checkbox: VdomElement =
       TriStateCheckbox.Props(get3, updateFn(toggle)).render
 
     override def checkboxAndOnClick: TagMod =

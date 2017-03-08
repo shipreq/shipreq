@@ -1,9 +1,10 @@
 package shipreq.webapp.client.project.app.cfg.shared
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import japgolly.scalajs.react.extra._
+import shipreq.base.util.MutableArray
 import shipreq.base.util.TaggedTypes.TaggedInt
-import shipreq.webapp.base.data.{Live, Dead, DataIdAux, FilterDead}
+import shipreq.webapp.base.data.{DataIdAux, Dead, FilterDead, Live}
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.client.project.widgets.Checkbox
 
@@ -24,7 +25,7 @@ object CfgTable {
                                    del         : () => Deletion[K],
                                    live        : P => Live,
                                    filterDeadCB: CallbackTo[FilterDead],
-                                   c           : CompState.Access[S])
+                                   c           : StateAccessPure[S])
                                   (implicit O  : Ordering[RowKey]): CfgTable[S, K, P, I, A, B, C, V, RowKey, N] =
         new CfgTable(editor, savedStore, newStore, rowkey, rr, newRowA, savedRowA, del, live, filterDeadCB, c)
     }
@@ -36,7 +37,7 @@ object CfgTable {
                            rr: RowRenderer[P, V, N],
                            del: () => Deletion[K],
                            live: P => Live,
-                           c: CompState.Access[sas.S])
+                           c: StateAccessPure[sas.S])
                           (implicit I: DataIdAux[P, K], O: Ordering[RowKey])
       : CfgTable[sas.S, K, P, I, A, B, C, V, RowKey, N] = {
           def rowA(k: Option[K], i: I): editor.InputA = (sas.validatorInput(k)(c.state.runNow()), i)
@@ -47,8 +48,8 @@ object CfgTable {
       }
     }
 
-  def header(headers: List[String]): ReactElement =
-    <.thead(<.tr(headers.map(<.th(_)), <.th("Ctrls")))
+  def header(headers: List[String]): VdomElement =
+    <.thead(<.tr(headers.toTagMod(<.th(_)), <.th("Ctrls")))
 
   /**
    * @tparam P Persisted data. Data known to be saved.
@@ -73,11 +74,11 @@ final class CfgTable[S, K <: TaggedInt, P, I, A, B, C, V, RowKey, R](editor     
                                                                      deletion    : () => Deletion[K],
                                                                      live        : P => Live,
                                                                      filterDeadCB: CallbackTo[FilterDead],
-                                                                     c           : CompState.Access[S])
+                                                                     c           : StateAccessPure[S])
                                                                     (implicit I: DataIdAux[P, K], O: Ordering[RowKey]) {
   /** Row content prior to being rendered into DOM. */
   type RowContent = R
-  type RowStream = Stream[(RowKey, ReactElement)]
+  type RowStream = Stream[(RowKey, VdomElement)]
 
   private[this] val ST = ReactS.FixCB[S]
   private[this] def run(s: ST.T[Unit]): Callback = c.runState(s)
@@ -91,34 +92,34 @@ final class CfgTable[S, K <: TaggedInt, P, I, A, B, C, V, RowKey, R](editor     
   private[this] def renderRow(a: A, rs: RowStatus): V =
     editor render EditorI(a, "", editable(rs))
 
-  def newButton: ReactElement =
+  def newButton: VdomElement =
     <.button(
       ^.onClick --> run(newStore.enableEdit),
       ^.disabled := newStore.editing(c.state.runNow()),
       "New")
 
-  def newCancelButton: ReactElement =
+  def newCancelButton: VdomElement =
     <.button(
       ^.onClick --> run(newStore.remove),
       "Cancel")
 
-  def row(classArg: String, rs: RowStatus, content: RowContent, ctrls: => TagMod): ReactTag = {
+  def row(classArg: String, rs: RowStatus, content: RowContent, ctrls: => TagMod): VdomTag = {
     val cls2 = rowStatusRowClass(rs)
     val c = rowStatusCtrls(rs, ctrls)
     <.tr(
       ^.cls := s"$classArg $cls2",
-      rr.render(content).map(<.td(_)),
+      rr.render(content).toTagMod(<.td(_)),
       <.td(c))
   }
 
-  def newRowO: Option[ReactTag] =
+  def newRowO: Option[VdomTag] =
     newStore.get(c.state.runNow()).map(r => {
       val v = renderRow(newRowA(r.i), r.status)
       row("new", r.status, rr.newRow(v), newCancelButton)(^.key := "new")
     })
 
   def newRow: TagMod =
-    newRowO.getOrElse(EmptyTag)
+    newRowO.getOrElse(EmptyVdom)
 
   def savedRows: RowStream = {
     val state = c.state.runNow()
@@ -135,29 +136,33 @@ final class CfgTable[S, K <: TaggedInt, P, I, A, B, C, V, RowKey, R](editor     
     })
   }
 
-  private def savedLiveRow(rs: RowStatus, p: P, d: Deletion[K]): ReactElement = {
+  private def savedLiveRow(rs: RowStatus, p: P, d: Deletion[K]): VdomElement = {
     def del = d.button(p.id, Delete)
     val v = renderRow(savedRowA(p.id), rs)
     row("live", rs, rr.savedRow(v, p), del)(^.key := p.id.value)
   }
 
-  private def savedDeadRow(rs: RowStatus, p: P, d: Deletion[K]): ReactElement = {
+  private def savedDeadRow(rs: RowStatus, p: P, d: Deletion[K]): VdomElement = {
     def restore = d.button(p.id, Restore)
     row("dead", rs, rr.deletedRow(p), restore)(^.key := p.id.value)
   }
 
   def allSortableRows(static: RowStream) =
-    (static #::: savedRows).sortBy(_._1).map(_._2).toReactNodeArray
+    MutableArray(static #::: savedRows)
+      .sortBy(_._1)
+      .map(_._2)
+      .array
+      .toVdomArray
 
-  def table(header: ReactElement, static: RowStream): ReactElement =
+  def table(header: VdomElement, static: RowStream): VdomElement =
     <.div(
       newButton,
       <.table(
         header,
         <.tbody(newRow, allSortableRows(static))))
 
-  def wrapWithFilterDeadCheckbox(set: FilterDead => Callback): ReactElement => ReactElement = {
-    val checkbox = Checkbox.filterDead(ReusableFn(set))
+  def wrapWithFilterDeadCheckbox(set: FilterDead => Callback): VdomElement => VdomElement = {
+    val checkbox = Checkbox.filterDead(Reusable.fn(set))
     inner => <.div(checkbox(filterDeadCB.runNow()), inner)
   }
 }

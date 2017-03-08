@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.cfg.shared
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.scalajs.react.ScalazReact.ReactST
+import japgolly.scalajs.react.ScalazReact._
 import scalaz._
 import scalaz.Isomorphism.<=>
 import scalaz.Leibniz.===

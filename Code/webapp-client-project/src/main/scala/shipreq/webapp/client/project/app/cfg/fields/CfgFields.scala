@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app.cfg.fields
 
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
+import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import scala.language.reflectiveCalls
@@ -30,9 +30,9 @@ object CfgFields {
   final case class Props(cp        : ClientProtocol,
                          remote    : FieldCrud.Fn.Instance,
                          clientData: ClientData,
-                         filterDead: ReusableVar[FilterDead]) {
+                         filterDead: StateSnapshot[FilterDead]) {
 
-    def component: ReactComponentU_ = MainTable.Component(this)
+    def component = MainTable.Component(this)
   }
 
   implicit val reusability = Reusability.caseClass[Props]
@@ -136,7 +136,7 @@ private[fields] object MainTable {
     State._appReqTypeState(id).set(None)
 
   val Component =
-    ReactComponentB[Props]("Cfg: Fields")
+    ScalaComponent.build[Props]("Cfg: Fields")
       .initialState_P(initialState)
       .renderBackend[Backend]
       .configure(
@@ -165,21 +165,21 @@ private[fields] object MainTable {
   // ===================================================================================================================
   final class Backend(val $: BackendScope[Props, S]) extends OnUnmount {
 
-    val projectPx = Px.bs($).propsA(_.clientData.project())
+    val projectPx = Px.props($).map(_.clientData.project()).withReuse.autoRefresh
     val projectBackend = projectPx.map(new ProjectBackend(this, _))
-    val protocol = Px.bs($).propsA.map(p => ProtocolBackend(p.cp, p.remote, p.clientData))
+    val protocol = Px.props($).withReuse.autoRefresh.map(p => ProtocolBackend(p.cp, p.remote, p.clientData))
 
     val nameE      = Editors.textInputEditor.applyValidator(V.nameS)
     val refkeyE    = Editors.textInputEditor.applyValidator(V.keyS)
     val mandatoryE = Editors.checkboxEditor.imap(onWhenMandatory).strengthL[V.S]
 
-    def render(p: Props, s: S): ReactElement =
+    def render(p: Props, s: S): VdomElement =
       projectBackend.value().render(p.filterDead.value, s)
 
     def validatorState(k: Option[CustomFieldId]): S => V.S =
       validatorStateS(_, k)
 
-    val dndState = $.zoomL(State.dnd)
+    val dndState = $.zoomStateL(State.dnd)
 
     val headerRow = CfgTable.header(List(
       FieldNames.dndDragHandleHeader,
@@ -230,7 +230,7 @@ private[fields] object MainTable {
     val tagSelector       = SelectOneStartNone.tag(project.config.tags)
     val reqTypeSelector   = SelectOneStartNone.reqType(project.config.reqTypes.all.whole)
 
-    val reqtypesE = appReqTypesEditor.editor($ zoomL State.appReqTypeStates)
+    val reqtypesE = appReqTypesEditor.editor($ zoomStateL State.appReqTypeStates)
                       .cmapA[(V.S, ApplicableReqTypes)](_.map1(_._2))
 
     object newFieldControl {
@@ -286,7 +286,7 @@ private[fields] object MainTable {
             SelectOne.Props(
               s.newFieldTypeSel,
               choices.sortBy(_.label),
-              Some($ _setStateL State.newFieldTypeSel)
+              Some($ setStateFnL State.newFieldTypeSel)
             ),
             onInvoke, UiText.Cfg.startNewButton,
             Disabled <~ customFieldStores.exists(_.n.editing(s))))
@@ -299,7 +299,7 @@ private[fields] object MainTable {
         abortNewButton($ modState abortNew)
     }
 
-    val filterDeadCheckbox = Checkbox.filterDead(v => $.props.flatMap(_.filterDead set v))
+    val filterDeadCheckbox = Checkbox.filterDead(v => $.props.flatMap(_.filterDead setState v))
 
     def render(fd: FilterDead, s: S) =
       <.div(
@@ -307,16 +307,16 @@ private[fields] object MainTable {
         filterDeadCheckbox(fd),
         <.table(
           headerRow,
-          <.tbody(renderNewField(s), renderFields(fd, s))))
+          <.tbody(renderNewField(s).whenDefined, renderFields(fd, s))))
 
-    def renderNewField(s: S): Option[ReactElement] =
+    def renderNewField(s: S): Option[VdomElement] =
       customFieldRenderers.map(_ renderNewO s).flatMap(_.toStream).headOption
 
     def renderFields(fd: FilterDead, s: S): TagMod = {
       var content = fieldOrder.toStream
         .flatMap(_.foldId[Stream[Field]](s => Stream(s), s.customFields.get(_).toStream))
       content = fd(content)(_ live project.config)
-      content.toReactNodeArray(renderField)
+      content.toVdomArray(renderField)
     }
 
     // TODO orderIO doesn't handle failure (or lock row)
@@ -327,36 +327,36 @@ private[fields] object MainTable {
       protocol.value().updateOrderIO(id, pos)(TCB.Success.nop, TCB.Failure.nop)
     }
 
-    val renderField: Field => ReactElement = {
+    val renderField: Field => VdomElement = {
       implicit val fieldEquivalence = Equal.equalBy((_: Field).fieldId)
-      f => DraggableFieldRow.set(key = f.fold[JsAny](_.name, _.id.value))(DND.Parent.cProps2(dndState, f, orderIO))
+      f => DraggableFieldRow.withKey(f.fold[Key](_.name, _.id.value))(DND.Parent.cProps2(dndState, f, orderIO))
     }
 
     val DraggableFieldRow = DND.Child.dndItemComponent[Field]((outerAttr, dragHandle, f) =>
       renderField2(f, dragHandle)(outerAttr))
 
-    def renderField2(gf: Field, dragHandle: ReactTag): ReactTag = gf match {
+    def renderField2(gf: Field, dragHandle: VdomTag): VdomTag = gf match {
       case f: CustomField => rendererForType(f.fieldType).render($.state.runNow(), dragHandle, f.id)
       case s: StaticField => renderStaticField(s, dragHandle)
     }
 
-    def renderStaticField(f: StaticField, dragHandle: ReactTag): ReactTag =
+    def renderStaticField(f: StaticField, dragHandle: VdomTag): VdomTag =
       renderRow(RowStatus.Sync)(
         dragHandle = dragHandle,
         name       = f.name,
         refkey     = renderKeyO(f.keyO),
         mandatory  = staticMandatoryCheckbox(f.mandatory),
         reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),
-        ctrls      = (f.deletable :: Deletable) ?= protocol.value().staticDeletion.button(f, Delete)
+        ctrls      = protocol.value().staticDeletion.button(f, Delete).when(f.deletable :: Deletable)
       )(f.fieldType)
 
     def renderKeyO(k: Option[FieldRefKey]): TagMod =
       k.fold("-")(_.value)
 
-    def renderRow(rs: RowStatus)(dragHandle: UndefOr[ReactTag], name: TagMod, refkey: TagMod, mandatory: TagMod,
-                                 reqtypes: TagMod, ctrls: => TagMod)(implicit ftype: FieldType): ReactTag =
+    def renderRow(rs: RowStatus)(dragHandle: UndefOr[VdomTag], name: TagMod, refkey: TagMod, mandatory: TagMod,
+                                 reqtypes: TagMod, ctrls: => TagMod)(implicit ftype: FieldType): VdomTag =
       <.tr(^.cls := rowStatusRowClass(rs),
-        <.td(^.cls := "dndh", dragHandle),
+        <.td(^.cls := "dndh", dragHandle.whenDefined),
         <.td(^.cls := "name", name),
         <.td(ftype.name),
         <.td(^.cls := "key", refkey),
@@ -367,7 +367,7 @@ private[fields] object MainTable {
     // -----------------------------------------------------------------------------------------------------------------
     // Subtype
 
-    val unusedField: ReactNode = "-"
+    val unusedField: VdomNode = "-"
 
     abstract class SubtypeRenderer[T <: CustomField, I, B, D, V](
       final val editor: Editor[(V.S, I), B, CallbackTo, S, D, Callback, V],
@@ -391,16 +391,16 @@ private[fields] object MainTable {
         EditorI(a, "", editable(r.status))
       }
 
-      def renderNew (s: S, r: stores.n.Row): ReactElement
-      def renderLive(s: S, dragHandle: ReactTag, r: stores.s.Row, deleteButton: TagMod): ReactTag
-      def renderDead(s: S, dragHandle: ReactTag, rs: RowStatus, t: T, restoreButton: TagMod): ReactTag
+      def renderNew (s: S, r: stores.n.Row): VdomElement
+      def renderLive(s: S, dragHandle: VdomTag, r: stores.s.Row, deleteButton: TagMod): VdomTag
+      def renderDead(s: S, dragHandle: VdomTag, rs: RowStatus, t: T, restoreButton: TagMod): VdomTag
 
-      def renderNewRow(rs: RowStatus)(name: TagMod, refkey: TagMod, mandatory: TagMod, reqtypes: TagMod): ReactElement = {
+      def renderNewRow(rs: RowStatus)(name: TagMod, refkey: TagMod, mandatory: TagMod, reqtypes: TagMod): VdomElement = {
         val r = renderRow(rs)(undefined, name, refkey, mandatory, reqtypes, newFieldControl.abortButton)
         r(^.cls := "new")
       }
 
-      def render(s: S, dragHandle: ReactTag, id: CustomFieldId): ReactTag = {
+      def render(s: S, dragHandle: VdomTag, id: CustomFieldId): VdomTag = {
         val row = stores.s.get(id)(s)
         val cf = row.p
         val cfg = project.config
@@ -412,12 +412,12 @@ private[fields] object MainTable {
               if (cf recoverable cfg)
                 deletion.button(cf.id, Restore)
               else
-                EmptyTag
+                EmptyVdom
             renderDead(s, dragHandle, row.status, cf, restoreButton)(^.cls := "dead")
         }
       }
 
-      def renderNewO(s: S): Option[ReactElement] =
+      def renderNewO(s: S): Option[VdomElement] =
         stores.n.get(s).map(renderNew(s, _))
 
     } // SubtypeRenderer
@@ -444,7 +444,7 @@ private[fields] object MainTable {
     val text_renderer = new SubtypeRenderer(text_editor, text_storesS) {
       override def fieldType = CustomFieldType.Text
 
-      override def renderNew(s: S, row: stores.n.Row): ReactElement = {
+      override def renderNew(s: S, row: stores.n.Row): VdomElement = {
         val (name, refkey, mandatory, reqtypes) = editor render ei(s, row)
         renderNewRow(row.status)(
           name      = name,
@@ -453,7 +453,7 @@ private[fields] object MainTable {
           reqtypes  = reqtypes)
       }
 
-      override def renderLive(s: S, dragHandle: ReactTag, row: stores.s.Row, deleteButton: TagMod): ReactTag = {
+      override def renderLive(s: S, dragHandle: VdomTag, row: stores.s.Row, deleteButton: TagMod): VdomTag = {
         val (name, refkey, mandatory, reqtypes) = editor render ei(s, row)
         val f = row.p
         renderRow(row.status)(
@@ -465,7 +465,7 @@ private[fields] object MainTable {
           ctrls      = deleteButton)
       }
 
-      override def renderDead(s: S, dragHandle: ReactTag, rs: RowStatus, f: CustomField.Text, restoreButton: TagMod): ReactTag =
+      override def renderDead(s: S, dragHandle: VdomTag, rs: RowStatus, f: CustomField.Text, restoreButton: TagMod): VdomTag =
         renderRow(rs)(
           dragHandle = dragHandle,
           name       = f.name,
@@ -498,7 +498,7 @@ private[fields] object MainTable {
     val tag_renderer = new SubtypeRenderer(tag_editor, tag_storesS) {
       override def fieldType = CustomFieldType.Tag
 
-      override def renderNew(s: S, row: stores.n.Row): ReactElement = {
+      override def renderNew(s: S, row: stores.n.Row): VdomElement = {
         val (name, mandatory, reqtypes) = editor render ei(s, row)
         renderNewRow(row.status)(
           name      = name,
@@ -507,7 +507,7 @@ private[fields] object MainTable {
           reqtypes  = reqtypes)
       }
 
-      override def renderLive(s: S, dragHandle: ReactTag, row: stores.s.Row, deleteButton: TagMod): ReactTag = {
+      override def renderLive(s: S, dragHandle: VdomTag, row: stores.s.Row, deleteButton: TagMod): VdomTag = {
         val (name, mandatory, reqtypes) = editor render ei(s, row)
         val f = row.p
         renderRow(row.status)(
@@ -519,7 +519,7 @@ private[fields] object MainTable {
           ctrls      = deleteButton)
       }
 
-      override def renderDead(s: S, dragHandle: ReactTag, rs: RowStatus, f: CustomField.Tag, restoreButton: TagMod): ReactTag =
+      override def renderDead(s: S, dragHandle: VdomTag, rs: RowStatus, f: CustomField.Tag, restoreButton: TagMod): VdomTag =
         renderRow(rs)(
           dragHandle = dragHandle,
           name       = f.name(project.config.tags),
@@ -552,7 +552,7 @@ private[fields] object MainTable {
     val impl_renderer = new SubtypeRenderer(impl_editor, impl_storesS) {
       override def fieldType = CustomFieldType.Implication
 
-      override def renderNew(s: S, row: stores.n.Row): ReactElement = {
+      override def renderNew(s: S, row: stores.n.Row): VdomElement = {
         val (name, mandatory, reqtypes) = editor render ei(s, row)
         renderNewRow(row.status)(
           name      = name,
@@ -561,7 +561,7 @@ private[fields] object MainTable {
           reqtypes  = reqtypes)
       }
 
-      override def renderLive(s: S, dragHandle: ReactTag, row: stores.s.Row, deleteButton: TagMod): ReactTag = {
+      override def renderLive(s: S, dragHandle: VdomTag, row: stores.s.Row, deleteButton: TagMod): VdomTag = {
         val (name, mandatory, reqtypes) = editor render ei(s, row)
         val f = row.p
         renderRow(row.status)(
@@ -573,7 +573,7 @@ private[fields] object MainTable {
           ctrls      = deleteButton)
       }
 
-      override def renderDead(s: S, dragHandle: ReactTag, rs: RowStatus, f: CustomField.Implication, restoreButton: TagMod): ReactTag =
+      override def renderDead(s: S, dragHandle: VdomTag, rs: RowStatus, f: CustomField.Implication, restoreButton: TagMod): VdomTag =
         renderRow(rs)(
           dragHandle = dragHandle,
           name       = f.name(project.config.reqTypes),

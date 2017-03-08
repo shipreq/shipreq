@@ -1,7 +1,7 @@
 package shipreq.webapp.client.base.ui
 
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.scalajs.react.vdom.prefix_<^.{^ => ^^, _}
+import japgolly.scalajs.react.vdom.html_<^.{^ => ^^, _}
 import japgolly.univeq._
 import scalacss.Defaults._
 import shipreq.base.util.Validity
@@ -195,17 +195,17 @@ object BaseStyles extends StyleSheet.Inline {
   val navBarContainer =
     ^^.marginBottom := "5rem"
 
-  val breadcrumbDivider =
-    (^^.color       := "#ddd") +
-    (^^.marginLeft  := "0.8em") +
-    (^^.marginRight := "0.8em")
+  val breadcrumbDivider = TagMod(
+    ^^.color       := "#ddd",
+    ^^.marginLeft  := "0.8em",
+    ^^.marginRight := "0.8em")
 
-  val containerLarge =
-    (^^.marginLeft   := "auto") +
-    (^^.marginRight  := "auto") +
-    (^^.marginBottom := pageMarginStr) +
-    (^^.paddingLeft  := "1em") +
-    (^^.paddingRight := "1em") +
-    (^^.maxWidth     := "calc(723px + 2em)") +
-    (^^.width        := "100%")
+  val containerLarge = TagMod(
+    ^^.marginLeft   := "auto",
+    ^^.marginRight  := "auto",
+    ^^.marginBottom := pageMarginStr,
+    ^^.paddingLeft  := "1em",
+    ^^.paddingRight := "1em",
+    ^^.maxWidth     := "calc(723px + 2em)",
+    ^^.width        := "100%")
 }

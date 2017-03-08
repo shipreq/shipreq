@@ -2,7 +2,7 @@ package shipreq.webapp.client.base.ui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.client.base.jsfacade.MomentJs
 import shipreq.webapp.client.base.lib.DataReusability._
 
@@ -32,7 +32,7 @@ object TimeAgo {
       Callback.unless(currentProps ~=~ nextProps)(
         unmount >> $.setState(nextProps.ago()))
 
-    def render(p: Props, state: String): ReactElement =
+    def render(p: Props, state: String): VdomElement =
       <.time(
         ^.cursor.help,
         ^.dateTime := p.formatIso8601,
@@ -40,12 +40,12 @@ object TimeAgo {
         state)
   }
 
-  val Component = ReactComponentB[Props]("TimeAgo")
+  val Component = ScalaComponent.build[Props]("TimeAgo")
     .initialState_P(_.ago())
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .configure(TimerSupport.install)
     .componentDidMount(_.backend.scheduleUpdates)
-    .componentWillReceiveProps(i => i.$.backend.onPropUpdate(i.currentProps, i.nextProps))
+    .componentWillReceiveProps(i => i.backend.onPropUpdate(i.currentProps, i.nextProps))
     .build
 }

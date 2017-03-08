@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.cfg.issues
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import japgolly.scalajs.react.extra.OnUnmount
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.protocol.ReqTypeImplicationMod
@@ -23,7 +23,7 @@ private[issues] object ReqTypeImplication {
 
   val changeListener = ChangeListener.store(rowStore)(_.customReqTypes, _.config.reqTypes.custom.get)
 
-  val Component = ReactComponentB[Props]("ReqTypeImplication")
+  val Component = ScalaComponent.build[Props]("ReqTypeImplication")
     .initialState_P(initialState)
     .renderBackend[Backend]
     .configure(changeListener.install(_.clientData))
@@ -55,30 +55,30 @@ private[issues] object ReqTypeImplication {
     def editorI(r: rowStore.Row): editor.Input =
       EditorI((r.i, r.p), "", editable(r.status))
 
-    type Rows = Stream[(Mnemonic, ReactElement)]
+    type Rows = Stream[(Mnemonic, VdomElement)]
 
     def customRows(s: S): Rows =
       rowStore.getAll(s).filter(_.p.live :: Live).map(r => {
-        val re: ReactElement =
+        val re: VdomElement =
           <.tr(^.key := r.p.id.value,
             <.td(
               editor render editorI(r),
-              rowStatusCtrls(r.status, EmptyTag)))
+              rowStatusCtrls(r.status, EmptyVdom)))
         (r.p.mnemonic, re)
       })
 
     val staticRows: Rows =
       StaticReqType.values.toStream.map(s => {
-        val re: ReactElement =
+        val re: VdomElement =
           <.tr(^.key := s.mnemonic.value,
             <.td(genEditor render EditorI((s.imp, s), "", None)))
         (s.mnemonic, re)
       })
 
     def renderRows(s: S) =
-      (staticRows #::: customRows(s)).sortBy(_._1).map(_._2).toReactNodeArray
+      (staticRows #::: customRows(s)).sortBy(_._1).map(_._2).toVdomArray
 
-    def render(s: S): ReactElement =
+    def render(s: S): VdomElement =
       <.table(
         <.thead(<.tr(<.th("Req-Types Requiring Implication"))),
         <.tbody(renderRows(s)))

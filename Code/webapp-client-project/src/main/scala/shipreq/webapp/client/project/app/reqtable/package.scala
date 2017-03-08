@@ -24,9 +24,9 @@ package object reqtable {
   implicit val reusabilityCs: Reusability[NonEmptyVector[Column]] =
     Reusability.byRef || reusabilityNonEmptyVector
 
-  @inline def shouldComponentUpdate[P: Reusability, S: Reusability, B, N <: TopNode] =
-    shipreq.webapp.client.project.app.shouldComponentUpdate[P, S, B, N]
-    // Reusability.shouldComponentUpdateWithOverlay[P, S, B, N]
+  @inline def shouldComponentUpdate[P: Reusability, C <: Children, S: Reusability, B]: ScalaComponentConfig[P, C, S, B] =
+    shipreq.webapp.client.project.app.shouldComponentUpdate[P, C, S, B]
+    // Reusability.shouldComponentUpdateWithOverlay[P, C, S, B]
 
   // -----------------------------------------------------------------------------------------------
 

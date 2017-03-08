@@ -1,16 +1,14 @@
 package shipreq.webapp.client.project.widgets
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
-import org.scalajs.dom.raw.HTMLDivElement
+import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import scalaz.Equal
 import shipreq.webapp.client.base.data.{Disabled, Enabled}
 
 object SelectInvoke {
 
   def Component[A: Equal](name: String) =
-    ReactComponentB[Props[A]](name)
+    ScalaComponent.build[Props[A]](name)
       .render_P(render(_))
-      .domType[HTMLDivElement]
       .build
 
   final case class Props[A](selection  : SelectOne.Props[A],
@@ -18,7 +16,7 @@ object SelectInvoke {
                             buttonLabel: String,
                             enabled    : Enabled)
 
-  def render[A: Equal](p: Props[A]): ReactTag = {
+  def render[A: Equal](p: Props[A]): VdomTag = {
     val disabled = p.enabled :: Disabled
 
     val select = {

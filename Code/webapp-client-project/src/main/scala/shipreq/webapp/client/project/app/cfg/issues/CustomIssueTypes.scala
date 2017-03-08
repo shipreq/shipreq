@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.cfg.issues
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import japgolly.scalajs.react.extra._
 import scala.language.reflectiveCalls
 import shipreq.base.util.ScalaExt._
@@ -24,7 +24,7 @@ private[issues] object CustomIssueTypes {
   final case class Props(cp        : ClientProtocol,
                          remote    : CustomIssueTypeCrud.Instance,
                          clientData: ClientData,
-                         filterDead: ReusableVar[FilterDead],
+                         filterDead: StateSnapshot[FilterDead],
                          usageShow : Usage.Show) {
     @inline def component = Component(this)
   }
@@ -36,7 +36,7 @@ private[issues] object CustomIssueTypes {
   val changeListener = ChangeListener.store(savedRowStoreS)(_.customIssueTypes, _.config.customIssueTypes.get)
 
   val Component =
-    ReactComponentB[Props]("Cfg: User-Defined Issue Types")
+    ScalaComponent.build[Props]("Cfg: User-Defined Issue Types")
       .initialState_P(initialState)
       .renderBackend[Backend]
       .configure(changeListener.install(_.clientData))
@@ -49,7 +49,7 @@ private[issues] object CustomIssueTypes {
 
   private def validatorState(k: Option[CustomIssueTypeId], cd: CallbackTo[ClientData]): S => V.S = {
     val tags: Px[HashRefKeyVS.Data[TagId]] =
-      Px.cbA(cd.map(_.project().config.tags))
+      Px.callback(cd.map(_.project().config.tags)).withReuse.autoRefresh
         .map(_.valuesIterator.map(t => t.tag.keyO.map(k => (t.tag.id.some, k))).filterDefined.toStream)
         .map((None, _))
     s => {
@@ -60,12 +60,12 @@ private[issues] object CustomIssueTypes {
   }
 
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
-    val project    = Px.bs($).propsM(_.clientData.project())
-    val filterDead = Px.bs($).propsM(_.filterDead.value)
-    val usageShow  = Px.bs($).propsM(_.usageShow)
+    val project    = Px.props($).map(_.clientData.project()).withReuse.manualRefresh
+    val filterDead = Px.props($).map(_.filterDead.value).withReuse.manualRefresh
+    val usageShow  = Px.props($).map(_.usageShow).withReuse.manualRefresh
 
     val crudIO =
-      Px.bs($).propsA.map(p =>
+      Px.props($).withReuse.autoRefresh.map(p =>
         CrudActionIO(CustomIssueType, CustomIssueTypeCrud)(p.cp, p.remote, p.clientData))
 
     val supp = TypicalSupp(storesAndState)(crudIO.value(), $)
@@ -110,7 +110,7 @@ private[issues] object CustomIssueTypes {
 
           override def render = {
             case (key, desc, usage) =>
-              Seq(key, desc, usage)
+              Seq(key, desc, usage.whenDefined)
         }
       }
 
@@ -132,9 +132,9 @@ private[issues] object CustomIssueTypes {
     }
 
     val outer =
-      cfgTable.wrapWithFilterDeadCheckbox(fd => $.props.flatMap(_.filterDead set fd))
+      cfgTable.wrapWithFilterDeadCheckbox(fd => $.props.flatMap(_.filterDead setState fd))
 
-    def render: ReactElement = {
+    def render: VdomElement = {
       Px.refresh(project, filterDead, usageShow)
       outer(table())
     }

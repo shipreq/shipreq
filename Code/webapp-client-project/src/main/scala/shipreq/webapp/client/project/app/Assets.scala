@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app
 
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.URLs._
 
 object Assets {

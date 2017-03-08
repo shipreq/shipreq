@@ -2,9 +2,9 @@ package shipreq.webapp.client.project.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.internal.JsUtil
 import org.scalajs.dom.html
 import scala.scalajs.js
-import shipreq.base.util.ScalaExt.EndoFn
 import shipreq.base.util.Vector1
 import shipreq.webapp.client.base.jsfacade.TextComplete
 import shipreq.webapp.client.project.lib.TextEditor
@@ -18,7 +18,7 @@ import shipreq.webapp.client.project.lib.TextEditor
 object AutoCompleteFeature {
 
   implicit val reusabilityStrategies: Reusability[Strategies] =
-    Reusability.fn((a, b) =>
+    Reusability((a, b) =>
       (a eq b) ||
       a.corresponds(b)(_ eq _))
 
@@ -50,51 +50,54 @@ object AutoCompleteFeature {
       TextComplete.destroy($n)
     }
 
-  def install[P, S, B, N <: TopNode, E <: html.Element](
-          getNode   : CompScope.DuringCallbackM[P, S, B, N] => E,
+  def install[P, C <: Children, S, B, E <: html.Element](
+          getNode   : ScalaComponent.MountedImpure[P, S, B] => E,
           strategies: (P, B) => ForChild,
           onUpdate  : (P, B) => String => Callback)
-         (implicit te: TextEditor.OfType[E]): EndoFn[ReactComponentB[P, S, B, N]] =
+         (implicit te: TextEditor.OfType[E]): ScalaComponentConfig[P, C, S, B] =
     _.componentDidMount($ => Callback {
-      val n = getNode($)
+      val n = getNode($.mountedImpure)
       te.focus(n)
       te.select(n)
-      lowLevelInstall(n, strategies($.props, $.backend).toJsArray, onUpdate($.props, $.backend)).runNow()
+      lowLevelInstall(n,
+        JsUtil jsArrayFromTraversable strategies($.props, $.backend),
+        onUpdate($.props, $.backend))
+        .runNow()
     })
     .componentDidUpdate(i => Callback {
-      val $  = i.$
+      val $ = i.mountedImpure
       val p1 = i.prevProps
-      val p2 = $.props
-      val b  = $.backend
+      val p2 = i.currentProps
+      val b  = i.backend
       val s1 = strategies(p1, b)
       val s2 = strategies(p2, b)
       if (s1 ~/~ s2) {
         val n = getNode($)
         lowLevelDestroy(n).runNow()
-        lowLevelInstall(n, s2.toJsArray, onUpdate($.props, b)).runNow()
+        lowLevelInstall(n, JsUtil.jsArrayFromTraversable(s2), onUpdate($.props, b)).runNow()
       }
     })
     .componentWillUnmount($ =>
-      lowLevelDestroy(getNode($)))
+      lowLevelDestroy(getNode($.mountedImpure)))
 
-  def installP[P, S, B, N <: TopNode, E <: html.Element](
-          getNode   : CompScope.DuringCallbackM[P, S, B, N] => E,
+  def installP[P, C <: Children, S, B, E <: html.Element](
+          getNode   : ScalaComponent.MountedImpure[P, S, B] => E,
           strategies: P => ForChild,
           onUpdate  : P => String => Callback)
-        (implicit te: TextEditor.OfType[E]): EndoFn[ReactComponentB[P, S, B, N]] =
+        (implicit te: TextEditor.OfType[E]): ScalaComponentConfig[P, C, S, B] =
     install(getNode, (p, _) => strategies(p), (p, _) => onUpdate(p))
 
-  def installB[P, S, B, N <: TopNode, E <: html.Element](
-          getNode   : CompScope.DuringCallbackM[P, S, B, N] => E,
+  def installB[P, C <: Children, S, B, E <: html.Element](
+          getNode   : ScalaComponent.MountedImpure[P, S, B] => E,
           strategies: B => ForChild,
           onUpdate  : B => String => Callback)
-        (implicit te: TextEditor.OfType[E]): EndoFn[ReactComponentB[P, S, B, N]] =
+        (implicit te: TextEditor.OfType[E]): ScalaComponentConfig[P, C, S, B] =
     install(getNode, (_, b) => strategies(b), (_, b) => onUpdate(b))
 
-  def installBP[P, S, B, N <: TopNode, E <: html.Element](
-          getNode   : CompScope.DuringCallbackM[P, S, B, N] => E,
+  def installBP[P, C <: Children, S, B, E <: html.Element](
+          getNode   : ScalaComponent.MountedImpure[P, S, B] => E,
           strategies: B => ForChild,
           onUpdate  : P => String => Callback)
-        (implicit te: TextEditor.OfType[E]): EndoFn[ReactComponentB[P, S, B, N]] =
+        (implicit te: TextEditor.OfType[E]): ScalaComponentConfig[P, C, S, B] =
     install(getNode, (_, b) => strategies(b), (p, _) => onUpdate(p))
 }

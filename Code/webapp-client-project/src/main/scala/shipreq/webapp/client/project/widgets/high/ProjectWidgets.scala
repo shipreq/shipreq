@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.widgets.high
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
 import scalacss.StyleA
@@ -35,7 +35,7 @@ object ProjectWidgets {
 
   val invalidWhenDead = deadValidity(Invalid)
 
-  val stepFlowArrow = Direction.memo[ReactTag] {
+  val stepFlowArrow = Direction.memo[VdomTag] {
     case Forwards  => <.span("→")
     case Backwards => <.span("←")
   }
@@ -44,7 +44,7 @@ object ProjectWidgets {
 final class ProjectWidgets private(project    : Project,
                                    plainText  : PlainText.ForProject,
                                    reqDetailRC: RouterCtl[ExternalPubid])
-    extends ProjectText[ReactTag](project, plainText.ctx) {
+    extends ProjectText[VdomTag](project, plainText.ctx) {
 
   override def withCtx(newCtx: ProjectText.Context): ProjectWidgets =
     withPlainText(plainText withCtx newCtx)
@@ -54,9 +54,9 @@ final class ProjectWidgets private(project    : Project,
 
   private implicit def surroundDisplay(s: GrammarSpec.Surrounds) = s.display
 
-  @inline private def memo[A: UnivEq](f: A => ReactElement) = Memo(f)
+  @inline private def memo[A: UnivEq](f: A => VdomElement) = Memo(f)
 
-  def issueO(liveText: Live, id: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText): ReactElement =
+  def issueO(liveText: Live, id: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText): VdomElement =
     NonEmptyVector.maybe(desc, issue(id))(issue1(liveText, id, _))
 
   val issue = memo[CustomIssueTypeId] { id =>
@@ -68,7 +68,7 @@ final class ProjectWidgets private(project    : Project,
 
   private val issueDescSurroundPrefix = G.issueDescSurround.prefix.trim
   private val issueDescSurroundSuffix = G.issueDescSurround.suffix.trim
-  def issue1(liveText: Live, id: CustomIssueTypeId, desc: Text.InlineIssueDesc.NonEmptyText): ReactElement = {
+  def issue1(liveText: Live, id: CustomIssueTypeId, desc: Text.InlineIssueDesc.NonEmptyText): VdomElement = {
     val i = project.config.customIssueType(id)
     <.span(
       *.issue,
@@ -92,7 +92,7 @@ final class ProjectWidgets private(project    : Project,
 
     private val styleMemo = Live.memo(styleFn)
 
-    type Out = ReactElement
+    type Out = VdomElement
 
     private val memo: ReqId => Out =
       Memo { reqId =>
@@ -103,7 +103,7 @@ final class ProjectWidgets private(project    : Project,
 
         reqDetailRC.link(ep)(
           styleMemo(live),
-          ^.title := titleFn(req),
+          ^.title :=? titleFn(req),
           txt)
       }
 
@@ -122,10 +122,10 @@ final class ProjectWidgets private(project    : Project,
         case Plain         => sepComma
       }
 
-    def pubids(v: Vector[Pubid]): ReactTag =
+    def pubids(v: Vector[Pubid]): VdomTag =
       renderVector(v, sep)(apply)
 
-    def reqs(v: Vector[Req]): ReactTag =
+    def reqs(v: Vector[Req]): VdomTag =
       renderVector(v, sep)(apply)
   }
 
@@ -160,10 +160,10 @@ final class ProjectWidgets private(project    : Project,
   @inline def reqRefInValidText =
     PubidFormat.invalidWhenDeadWithCtx
 
-  def implicationList(ids: Vector[Pubid]): ReactElement =
+  def implicationList(ids: Vector[Pubid]): VdomElement =
     PubidFormat.validWhenDead.pubids(ids)
 
-  def pastPubids(ids: Vector[Pubid]): ReactElement =
+  def pastPubids(ids: Vector[Pubid]): VdomElement =
     renderVector(ids, sepComma)(id => <.span(*.pastPubid, PlainText.pubid(id, project)))
 
   /** Contextualised */
@@ -171,18 +171,18 @@ final class ProjectWidgets private(project    : Project,
     import ProjectText.ReqCodeResolution._
     implicit def liveWithValidity(a: Live) = invalidWhenDead(a)
 
-    def toRef(c: ReqCode.Value, r: ReqId): ReactElement = {
+    def toRef(c: ReqCode.Value, r: ReqId): VdomElement = {
       val req = project.reqs.need(r)
       ref(c, *.reqRef(req live project.config.reqTypes), plainText reqTitle req)
     }
 
-    def toGroup(c: ReqCode.Value, g: ReqCodeGroup): ReactElement =
+    def toGroup(c: ReqCode.Value, g: ReqCodeGroup): VdomElement =
       ref(c, *.reqCodeGroupRef(g.live), plainText.reqCodeGroupTitle(g))
 
-    def ref(c: ReqCode.Value, style: StyleA, title: UndefOr[String]): ReactElement =
+    def ref(c: ReqCode.Value, style: StyleA, title: UndefOr[String]): VdomElement =
       <.span(
         style,
-        ^.title := title,
+        ^.title :=? title,
         G.reflinkSurround(PlainText reqCode c))
 
     ProjectText.resolveReqCode(id, project.reqCodes) match {
@@ -194,13 +194,13 @@ final class ProjectWidgets private(project    : Project,
     }
   }
 
-  val reqTypeFull: ReqTypeId => ReactElement =
+  val reqTypeFull: ReqTypeId => VdomElement =
     id => {
       val rt = project.config.reqTypes.need(id)
       <.span(s"${rt.mnemonic.value}: ${rt.name}")
     }
 
-  val reqTypeShort: ReqTypeId => ReactElement =
+  val reqTypeShort: ReqTypeId => VdomElement =
     memo { id =>
       val rt = project.config.reqTypes.need(id)
       <.span(
@@ -209,14 +209,14 @@ final class ProjectWidgets private(project    : Project,
         rt.mnemonic.value)
     }
 
-  def useCaseStepRef(id: UseCaseStepId): ReactTag =
+  def useCaseStepRef(id: UseCaseStepId): VdomTag =
     useCaseStepLabelMemo(project.reqs.useCases.focusStep(id))
 
   /** eg. "1.p" instead of "1.0" */
-  def erroneousUseCaseStepRef(s: String): ReactTag =
+  def erroneousUseCaseStepRef(s: String): VdomTag =
   <.span(*.erroneousUseCaseStepRef, s)
 
-  private def tagWithoutStyle(c: Contextualise, t: ApplicableTag): ReactTag = {
+  private def tagWithoutStyle(c: Contextualise, t: ApplicableTag): VdomTag = {
     var desc = if (t.name.compareToIgnoreCase(t.key.value) == 0) "" else t.name
     for (d <- t.desc) {
       if (desc.nonEmpty)
@@ -229,7 +229,7 @@ final class ProjectWidgets private(project    : Project,
       case Plain         => keyTxt
     }
     <.span(
-      desc.nonEmpty ?= (^.title := desc),
+      (^.title := desc).when(desc.nonEmpty),
       displayTxt)
   }
 
@@ -238,10 +238,10 @@ final class ProjectWidgets private(project    : Project,
     tagWithoutStyle(Plain, tag)(*.tag(tag.live))
   }
 
-  def tagList(ids: Vector[ApplicableTagId]): ReactElement =
+  def tagList(ids: Vector[ApplicableTagId]): VdomElement =
     renderVector(ids, sepSpace)(tagPlain)
 
-  val tagInText: Live => ApplicableTagId => ReactElement =
+  val tagInText: Live => ApplicableTagId => VdomElement =
     Live.memo { liveText =>
       memo[ApplicableTagId] { id =>
         val tag = project.config.atag(id)
@@ -253,12 +253,12 @@ final class ProjectWidgets private(project    : Project,
 
   def katex(m: Atom.PlainTextMarkup#MathTeX) =
     try
-      <.span(*.math, ^.dangerouslySetInnerHtml(KaTeX renderToStringUnsafe m.value))
+      <.span(*.math, ^.dangerouslySetInnerHtml := KaTeX.renderToStringUnsafe(m.value))
     catch {
       case _: Throwable => <.span(*.mathFail, UiText.mathFailed)
     }
 
-  override val format: ProjectText.FormatAtomFn[ReactTag] = (live, input) => {
+  override val format: ProjectText.FormatAtomFn[VdomTag] = (live, input) => {
     import Atom._
 
     lazy val atom: AnyAtom => TagMod = {
@@ -268,7 +268,7 @@ final class ProjectWidgets private(project    : Project,
       case a: PlainTextMarkup # WebAddress     => <.a(^.href := a.value, a.value)
       case a: PlainTextMarkup # EmailAddress   => <.a(^.href := "mailto:" ~ a.value, a.value)
       case a: PlainTextMarkup # MathTeX        => katex(a)
-      case a: ListMarkup      # UnorderedList  => <.ul(*.ul, a.items.whole.map(row => <.li(row map atom: _*)))
+      case a: ListMarkup      # UnorderedList  => <.ul(*.ul, a.items.whole.toTagMod(row => <.li(row toTagMod atom)))
       case a: ReqRef          # ReqRef         => reqRefInValidText(a.value)
       case a: ReqRef          # CodeRef        => codeRef(a.value)
       case a: UseCaseStepRef  # UseCaseStepRef => useCaseStepRef(a.value)
@@ -282,26 +282,26 @@ final class ProjectWidgets private(project    : Project,
     memo[NonEmptyVector[ReqCodeTreeItem.Indent]](is =>
       <.pre(*.reqCodeTreeIndent, PlainText reqCodeIndentation is))
 
-  def reqCodeTreeItem(item: ReqCodeTreeItem): ReactElement = {
+  def reqCodeTreeItem(item: ReqCodeTreeItem): VdomElement = {
     val indentation = NonEmptyVector.option(item.indent)
     var code = PlainText.reqCode(item.suffix)
     if (indentation.isDefined)
       code = G.reqCode.nodeSeparator ~ code
     <.div(
-      indentation map reqCodeTreeIdentation,
+      indentation.whenDefined(reqCodeTreeIdentation),
       <.pre(*.reqCodeTreeCode, code))
   }
 
   def reqCodeTree(items: Vector[ReqCodeTreeItem]): TagMod =
-    items map reqCodeTreeItem
+    items toTagMod reqCodeTreeItem
 
-  def flatReqCode(c: ReqCode.Value): ReactElement =
+  def flatReqCode(c: ReqCode.Value): VdomElement =
     <.pre(*.reqCodeFlat, PlainText reqCode c)
 
   def flatReqCodes(reqCodes: TraversableOnce[ReqCode.Value]): TagMod =
-    reqCodes map flatReqCode
+    reqCodes toTagMod flatReqCode
 
-  def reqCodes(tree: Vector[ReqCodeTreeItem], flat: Vector[ReqCode.Value]): ReactElement =
+  def reqCodes(tree: Vector[ReqCodeTreeItem], flat: Vector[ReqCode.Value]): VdomElement =
     <.div(
       if (tree.nonEmpty)
         reqCodeTree(tree)
@@ -309,24 +309,24 @@ final class ProjectWidgets private(project    : Project,
         flatReqCodes(flat)
     )
 
-  override def useCaseStep(l: Live, s: UseCaseStep[Set[UseCaseStepId]]): ReactTag =
+  override def useCaseStep(l: Live, s: UseCaseStep[Set[UseCaseStepId]]): VdomTag =
     useCaseStepA(l, s)(useCaseFlowStepsOrdered)
 
-  def useCaseStepE[C[x] <: Traversable[x]](l: Live, s: UseCaseStep[C[String \/ UseCaseStepId]]): ReactTag =
+  def useCaseStepE[C[x] <: Traversable[x]](l: Live, s: UseCaseStep[C[String \/ UseCaseStepId]]): VdomTag =
     useCaseStepA(l, s)(
       _.map(_.fold(erroneousUseCaseStepRef, useCaseFlowStepId))(collection.breakOut))
 
   private def useCaseStepA[C[x] <: TraversableOnce[x], A](l: Live, s: UseCaseStep[C[A]])
-                                                         (f: C[A] => Seq[ReactTag]): ReactTag = {
+                                                         (f: C[A] => Seq[VdomTag]): VdomTag = {
 
     val text = format(l, s.text)
 
-    def stepFlow(dir: Direction): Option[ReactElement] = {
+    def stepFlow(dir: Direction): Option[VdomElement] = {
       val ca = s flow dir
       if (ca.isEmpty)
         None
       else
-        Some(stepFlowArrow(dir)(f(ca)))
+        Some(stepFlowArrow(dir)(f(ca): _*))
     }
 
     val List(f1, f2) = UseCaseStepFlowText.DefaultArrowOrder.map(stepFlow)
@@ -338,10 +338,10 @@ final class ProjectWidgets private(project    : Project,
         <.tbody(
           <.tr(
             <.td(*.useCaseStepLayoutCell, text),
-            <.td(*.useCaseStepLayoutCell, f1, f2))))
+            <.td(*.useCaseStepLayoutCell, f1.whenDefined, f2.whenDefined))))
   }
 
-  private val useCaseStepLabelMemo: UseCaseStep.Focus => ReactTag =
+  private val useCaseStepLabelMemo: UseCaseStep.Focus => VdomTag =
     Memo.by((_: UseCaseStep.Focus).id) { f =>
       val label = plainText.useCaseStepLabel(f)
       val title = plainText.format(f.live, f.titleA)
@@ -352,7 +352,7 @@ final class ProjectWidgets private(project    : Project,
         label)
     }
 
-  override protected def useCaseFlowStep(f: UseCaseStep.Focus): ReactTag =
+  override protected def useCaseFlowStep(f: UseCaseStep.Focus): VdomTag =
     useCaseStepLabelMemo(f)
 
 }

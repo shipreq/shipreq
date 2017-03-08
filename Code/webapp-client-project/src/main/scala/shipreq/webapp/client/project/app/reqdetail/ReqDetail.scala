@@ -2,10 +2,9 @@ package shipreq.webapp.client.project.app.reqdetail
 
 import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.experimental.StaticPropComponent
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
@@ -29,9 +28,13 @@ import shipreq.webapp.client.project.widgets.{FilterDeadButton, LifeButton}
 import shipreq.webapp.client.project.widgets.high.{DeletionForm, ImplicationGraph, ProjectWidgets, UseCaseStepFlowGraph}
 import ExternalPubid.LookupFailure
 
-object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
-  override protected def configureBackend = new Backend(_, _)
-  override protected def configureRender  = _.renderBackend
+object ReqDetail {
+
+  def apply(staticProps: StaticProps) =
+    ScalaComponent.build[DynamicProps]("ReqDetail")
+      .backend(new Backend(staticProps, _))
+      .renderBackend
+      .build
 
   type InitEditor = ContentEditorFeature.D1.InitChild[Cell, Cell]
 
@@ -45,9 +48,9 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
                          pxProjectWidgetsNoCtx: Px[ProjectWidgets])
 
   case class DynamicProps(extPubid  : ExternalPubid,
-                          filterDead: ReusableVar[FilterDead],
+                          filterDead: StateSnapshot[FilterDead],
                           reqProps  : ReqId => ReqProps,
-                          state     : ReusableVar[State])
+                          state     : StateSnapshot[State])
 
   case class ReqProps(initEditor  : InitEditor,
                       asyncFeature: AsyncActionFeature  .D1.Feature[Cell, String],
@@ -161,13 +164,13 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
   // TODO Better performance if cells are (components + shouldComponentRender) or cached
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  final class Backend(SP: StaticProps, $: BackendScope) {
+  final class Backend(SP: StaticProps, $: BackendScope[DynamicProps, Unit]) {
     import SP._
     import cd.pxProject
 
     val pxFieldNameFn = pxProject.map(Field.nameP)
-    val pxExtPubid    = Px.bsMP($).propsM(_.extPubid)
-    val pxUpstreamFD  = Px.bsMP($).propsM(_.filterDead.value)
+    val pxExtPubid    = Px.props($).map(_.extPubid).withReuse.manualRefresh
+    val pxUpstreamFD  = Px.props($).map(_.filterDead.value).withReuse.manualRefresh
 
     val pxData: Px[LookupFailure \/ Data] =
       for {
@@ -178,19 +181,19 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         e.lookup(p).map(new Data(SP, p, _, f))
 
     val setFilterDead: FilterDead ~=> Callback =
-      ReusableFn(v => $.props.flatMap(_.filterDead set v))
+      Reusable.fn(v => $.props.flatMap(_.filterDead setState v))
 
     val updateIO: ServerCall[UpdateContentCmd] =
       ServerCall.to(updateContentFn, cp, cd)
 
-    val runCmd = ReusableFn[ReqId, Cell, UpdateContentCmd, Callback](
+    val runCmd = Reusable.fn[ReqId, Cell, UpdateContentCmd, Callback](
       (reqId, cell, cmd) =>
         $.props >>= (p =>
           p.reqProps(reqId).asyncFeature(cell).wrapAsync((s, f) =>
             updateIO(cmd, s, f))))
 
     def setModal(modal: Modal.State): Callback =
-      $.props >>= (_.state set modal)
+      $.props >>= (_.state setState modal)
 
     def clearModal: Callback =
       setModal(Modal.none)
@@ -235,14 +238,14 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         D0.Feature(static, asyncFeature(cell))(el, edit(cell)))
     }
 
-    def renderNotFound(failureReason: String): ReactElement =
+    def renderNotFound(failureReason: String): VdomElement =
       <.div(
         <.h2("ERROR"),
         <.h5(failureReason))
 
-    val emptyRow: ReactElement = <.span
+    val emptyRow: VdomElement = <.span
 
-    def render(p: DynamicProps): ReactElement =
+    def render(p: DynamicProps): VdomElement =
       <.main(
         BaseStyles.containerFull,
         p.state.value renderOrElse {
@@ -259,7 +262,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
     private val headerStyle: Live => Header.Style =
       Live.memo(l => Header.Style(Header.Type.H1, other = *.headerText(l)))
 
-    def renderDetail(props: DynamicProps, data: Data): ReactElement = {
+    def renderDetail(props: DynamicProps, data: Data): VdomElement = {
       import data.{project, req, pubidText}
 
       val pw          = data.pxProjectWidgets.value()
@@ -270,13 +273,13 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
       def renderAsyncEditorOrValue(cell: Cell, view: => TagMod): TagMod = {
         def startEdit    = editFeature(cell).startEdit
-        def editableView = view + EditTheme.editableInline(startEdit)
+        def editableView = TagMod(EditTheme.editableInline(startEdit), view)
         val async        = state.async(cell)
         val editor       = state.edit(cell)
         editor.renderOr(async)(editableView)
       }
 
-      def renderHeader: ReactElement = {
+      def renderHeader: VdomElement = {
         val hstyle = headerStyle(data.live)
 
         <.div(*.headerRow,
@@ -289,7 +292,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
               Header(hstyle, pw.reqTitle(req)))),
 
           <.div(*.headerFilterDeadButton,
-            FilterDeadButton.whenLive(data.live)(ReusableVar(props.filterDead.value)(setFilterDead))))
+            FilterDeadButton.whenLive(data.live)(StateSnapshot.withReuse(props.filterDead.value)(setFilterDead))))
       }
 
       val keyCell = <.th(*.detailTableKey(data.live))
@@ -297,15 +300,15 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       def renderRows =
         <.table(*.detailTable,
           <.tbody(
-            data.rows.iterator.map(renderRow)))
+            data.rows.toVdomArray(renderRow)))
 
-      def renderRow(row: Row): ReactElement =
+      def renderRow(row: Row): VdomElement =
         <.tr(
           ^.key := row.key,
           keyCell(renderRowTitle(row)),
           <.td(renderRowData(row)))
 
-      def renderRowTitle(row: Row): ReactNode =
+      def renderRowTitle(row: Row): VdomNode =
         row match {
           case Row.CustomField(f)   => fieldName(f)
           case Row.Code             => UiText.FieldNames.reqCodes
@@ -411,7 +414,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
             pw pastPubids idV
         }
 
-        content + *.detailTableValue(liveStyle)
+        content(*.detailTableValue(liveStyle))
       }
 
       def renderStepTree(ucData: UseCaseData, stepData: UseCaseStepTree.StepData) = {

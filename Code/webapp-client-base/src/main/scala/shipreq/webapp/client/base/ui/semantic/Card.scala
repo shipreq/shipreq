@@ -1,17 +1,17 @@
 package shipreq.webapp.client.base.ui.semantic
 
 /*
-import japgolly.scalajs.react.FunctionalComponent
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.ScalaFnComponent
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 
 /** http://semantic-ui.com/views/card.html */
-case class Card(tag: ReactTag)
+case class Card(tag: VdomTag)
 
 object Card {
 
   case class Style(colour: Colour = Colour.Default,
-                   other : TagMod = EmptyTag) {
+                   other : TagMod = EmptyVdom) {
     val tag = divCls("ui card" <+ colour)(other)
   }
 
@@ -55,6 +55,6 @@ object Cards {
   private def render(p: Props) =
     p.style.tag(p.cards.map(_.tag): _*)
 
-  val Component = FunctionalComponent(render)
+  val Component = ScalaFnComponent(render)
 }
 */

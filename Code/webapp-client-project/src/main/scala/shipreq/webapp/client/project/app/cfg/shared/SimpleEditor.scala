@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.app.cfg.shared
 
-import japgolly.scalajs.react.{Callback, CallbackTo, ReactElement}
+import japgolly.scalajs.react.{Callback, CallbackTo}
+import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.ScalazReact._
 
 object SimpleEditor {
@@ -8,7 +9,7 @@ object SimpleEditor {
   type ST    = ST.T[Unit]
   val  nopST = ST.nop
 
-  def const[I](v: ReactElement): SimpleEditor[I] =
+  def const[I](v: VdomElement): SimpleEditor[I] =
     Editor(_ => v)
 
   @inline final def callbackH[I](event: CallbackEvent[I], st: ST = nopST): CallbackH[I, CallbackTo, Unit, Unit] =

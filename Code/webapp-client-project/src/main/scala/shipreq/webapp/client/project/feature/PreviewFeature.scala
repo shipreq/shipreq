@@ -36,7 +36,7 @@ import PreviewFeature._
  * Request a `PreviewFeature.State[K]` in the component's props.
  * Call `ForChildren.forChild` for each child.
  */
-final class PreviewFeature[S, K]($: CompState.Access[S], lens: Lens[S, State[K]])(implicit EK: Equal[K])
+final class PreviewFeature[S, K]($: StateAccessPure[S], lens: Lens[S, State[K]])(implicit EK: Equal[K])
   extends ForChildren[K] {
 
   def mapK[A](p: Intersection[K, A]): PreviewFeature[S, A] = {
@@ -129,7 +129,7 @@ object PreviewFeature {
     final def showOption[A](isDirty: => Boolean)(a: => A): Option[A] =
       if (show_?(isDirty)) Some(a) else None
 
-    final def reactCollapse[A](isDirty: => Boolean): ReactCollapse =
+    final def reactCollapse[A](isDirty: => Boolean) =
       ReactCollapse(show_?(isDirty))
   }
 

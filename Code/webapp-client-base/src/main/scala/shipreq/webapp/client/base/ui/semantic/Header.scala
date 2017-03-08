@@ -1,6 +1,6 @@
 package shipreq.webapp.client.base.ui.semantic
 
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.html
 
@@ -15,7 +15,7 @@ object Header {
     implicit def univEq: UnivEq[Attr] = UnivEq.derive
   }
 
-  sealed abstract class Type(val tag: ReactTagOf[html.Heading])
+  sealed abstract class Type(val tag: VdomTagOf[html.Heading])
   object Type {
     case object H1 extends Type(<.h1)
     case object H2 extends Type(<.h2)
@@ -38,20 +38,20 @@ object Header {
                    state : State          = State.Default,
                    colour: Colour         = Colour.Default,
                    size  : Size           = Size.Default,
-                   other : TagMod         = EmptyTag) {
+                   other : TagMod         = EmptyVdom) {
 
     val tag = tipe.tag(^.cls := "ui header" <+ attr <+ state <+ colour <+ size)(other)
   }
 
-  def apply(style: Style, content: TagMod): ReactTagOf[html.Heading] =
+  def apply(style: Style, content: TagMod): VdomTagOf[html.Heading] =
     style.tag(content)
 
-  def apply(style: Style, icon: Icon, content: TagMod): ReactTagOf[html.Heading] =
+  def apply(style: Style, icon: Icon, content: TagMod): VdomTagOf[html.Heading] =
     style.tag(
       icon.tag,
       <.div(^.cls := "content", content))
 
-  def apply(style: Style, icon: Icon, content: TagMod, subHeader: TagMod): ReactTagOf[html.Heading] =
+  def apply(style: Style, icon: Icon, content: TagMod, subHeader: TagMod): VdomTagOf[html.Heading] =
     style.tag(
       icon.tag,
       <.div(^.cls := "content", content,

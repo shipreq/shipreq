@@ -1,6 +1,6 @@
 package shipreq.webapp.client.base.ui.semantic
 
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 
 /** http://semantic-ui.com/collections/message.html */
@@ -42,7 +42,7 @@ object Message {
     val tag = divCls("ui message" <+ tipe <+ attr <+ colour <+ size)
   }
 
-  def apply(style: Style, icon: Icon, header: TagMod, content: TagMod): ReactTag =
+  def apply(style: Style, icon: Icon, header: TagMod, content: TagMod): VdomTag =
     style.tag(^.cls := "icon",
       icon.tag,
       <.div(^.cls := "content",

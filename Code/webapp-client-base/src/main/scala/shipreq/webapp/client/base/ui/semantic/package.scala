@@ -1,6 +1,6 @@
 package shipreq.webapp.client.base.ui
 
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 import scala.collection.immutable.ListSet
 
@@ -61,7 +61,7 @@ package object semantic {
       Multiple.empty[B] + self + b
   }
 
-  @inline implicit class SemExtReactTag(private val self: ReactTag) extends AnyVal {
+  @inline implicit class SemExtReactTag(private val self: VdomTag) extends AnyVal {
     def addClass(c: ClassName) =
       if (c.isEmpty) self else self(^.cls := c)
 

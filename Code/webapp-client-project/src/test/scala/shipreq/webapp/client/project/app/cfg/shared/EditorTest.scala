@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.cfg.shared
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.raw.HTMLInputElement
 import scalaz.Equal
@@ -64,11 +64,11 @@ object EditorTest extends TestSuite {
     testSimpleEditor(e)(OnEditFinished(b), OnEditFinished(onEditFinished))
   }
 
-  def testUpdateRevert[P,B,N<:TopNode](c: ReactComponentM[P, NewAndSavedRowState, B, N]): Unit = {
+  def testUpdateRevert[P, B](c: ScalaComponent.MountedImpure[P, NewAndSavedRowState, B]): Unit = {
 //    val c = ReactTestUtils.renderIntoDocument(Component(props))
 
     def test(tgtCss: String, revertable: Boolean, teste: String => Unit, testn: => Unit): Unit = {
-      val tgt = Sizzle(tgtCss, c.getDOMNode()).soleDom[HTMLInputElement]()
+      val tgt = Sizzle(tgtCss, c.getDOMNode).soleDom[HTMLInputElement]()
       val expect4 = savedRowStoreS.getI(4)(c.state)
 
       def test1(expect: String): Unit = {
@@ -80,16 +80,16 @@ object EditorTest extends TestSuite {
         testn
       }
 
-      (Simulation.focus >> ChangeEventData("yo").simulation) run tgt
+      (Simulation.focus >> SimEvent.Change("yo").simulation) run tgt
       test1("yo")
 
-      ChangeEventData("yoy") simulate tgt
+      SimEvent.Change("yoy") simulate tgt
       test1("yoy")
 
       Simulation.blur run tgt
       test1("yoy")
 
-      (Simulation.focus >> KeyboardEventData(key = "Escape").simulationKeyDown) run tgt
+      (Simulation.focus >> SimEvent.Keyboard(key = "Escape").simulationKeyDown) run tgt
       test1(if (revertable) "mike" else "yoy")
     }
 
@@ -145,7 +145,7 @@ object EditorTest extends TestSuite {
     'applyInputValidation {
       val e = textInputEditor.applyInputValidationU(usernameVU)
       def test(i: String, expect: Option[String]): Unit = {
-        val re: ReactElement = e.render(EditorI(i, "", None))
+        val re: VdomElement = e.render(EditorI(i, "", None))
         val tgt = ReactTestUtils.renderIntoDocument(re)
         val actual = Sizzle(".errorMsg", tgt).headOption.map(_.innerHTML)
         assertEq(actual, expect)
@@ -168,9 +168,9 @@ object EditorTest extends TestSuite {
         assertEq(s"$prefix.input", tgt.value, expect)
         assertEq(s"$prefix.state", savedRowStoreS.getI(7)(c.state)._1, expect)
       }
-      (Simulation.focus >> ChangeEventData("abc").simulation) run tgt
+      (Simulation.focus >> SimEvent.Change("abc").simulation) run tgt
       test("pre", "abc")
-      KeyboardEventData(key = "F1").simulationKeyDown run tgt
+      SimEvent.Keyboard(key = "F1").simulationKeyDown run tgt
       test("post", "abc")
     }
 
@@ -185,7 +185,7 @@ object EditorTest extends TestSuite {
         val c = ReactTestUtils.renderIntoDocument(Component(props))
         testUpdateRevert(c)
         val u4 = Sizzle(".id-4 .username", c).soleDom[HTMLInputElement]()
-        (Simulation.focus >> ChangeEventData("  HeHe").simulation) run u4
+        (Simulation.focus >> SimEvent.Change("  HeHe").simulation) run u4
         assertEq("Live correction", u4.value, "  hehe")
         Simulation.blur run u4
         assertEq("Post correction", u4.value, "hehe")

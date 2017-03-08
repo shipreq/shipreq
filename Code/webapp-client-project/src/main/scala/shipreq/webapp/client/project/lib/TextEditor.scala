@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.lib
 
-import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.scalajs.react._, vdom.html_<^._
 import org.scalajs.dom.html
 import shipreq.webapp.base.text._
 
@@ -8,7 +8,7 @@ sealed abstract class TextEditor {
   type Dom <: html.Element
   @inline final def asImplicit: TextEditor.OfType[Dom] = this
 
-  def tag: ReactTagOf[Dom]
+  def tag: VdomTagOf[Dom]
   def lineCardinality: LineCardinality
   def value(d: Dom): String
   def focus(d: Dom): Unit

@@ -2,7 +2,7 @@ package shipreq.webapp.client.base.ui
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.{URLs, WebappConfig}
 import shipreq.webapp.client.base.ClientConfig
@@ -44,7 +44,7 @@ object MemberNavBar {
 
   final class Backend($: BackendScope[Props, Unit]) {
 
-    def render(p: Props): ReactElement = {
+    def render(p: Props): VdomElement = {
       val leftBreadcrumb =
         Menu.Item.Div(
           Breadcrumb.Props(breadcrumbStyle, p.leftWithDividers).render)
@@ -65,7 +65,7 @@ object MemberNavBar {
     }
   }
 
-  val Component = ReactComponentB[Props]("NavBar")
+  val Component = ScalaComponent.build[Props]("NavBar")
     .renderBackend[Backend]
     // .configure(Reusability.shouldComponentUpdate) TODO
     .build

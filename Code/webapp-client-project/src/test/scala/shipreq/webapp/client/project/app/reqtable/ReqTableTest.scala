@@ -55,10 +55,19 @@ object ReqTableTest extends TestSuite {
     val pxTextSearch     = Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
     val pxProjectWidgets = Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
 
-    val outer = WithExternalCompStateAccess.init { ($: CompState.Access[State], s: State) =>
+    def initialState = State(
+      ContentEditorFeature.D2.State.init,
+      AsyncActionFeature.D2.State.init,
+      PreviewFeature.initState,
+      ReqTable.State.init(cd, HideDead, None))
+
+    val stateVar = ReactTestVar(initialState)
+
+    val reqTableComponent = {
+      val $ = stateVar.stateAccess
 
       val asyncFeature: AsyncActionFeature.D2.Feature[Row.SourceId, EditFieldKey, String] =
-        AsyncActionFeature.D2.Feature($ zoomL State.asyncStates)
+        AsyncActionFeature.D2.Feature($ zoomStateL State.asyncStates)
 
       val previewFeature = new PreviewFeature($, State.previewState)
 
@@ -66,7 +75,7 @@ object ReqTableTest extends TestSuite {
         import ContentEditorFeature._
         new D2.InitChild[Row, Column, FocusId] {
           override type Parent    = State
-          override val parent     = $: CompState.Access[Parent]
+          override val parent     = $
           override val preview    = previewFeature
           override val editorLens =
             (r: Row, c: Column) =>
@@ -81,25 +90,23 @@ object ReqTableTest extends TestSuite {
         initReqTableEditor,
         asyncFeature.mapK1(Column.EditFieldKeyIntersection.reverse),
         reqDetailRC,
-        $ zoomL State.reqTable))
+        $ zoomStateL State.reqTable))
+    }
 
-    }((reqTable, $, s) =>
-      reqTable(ReqTable.DynamicProps(
+    def dynamicProps() = {
+      val s = stateVar.value()
+      ReqTable.DynamicProps(
         s.editStates.mapK1(Column.EditFieldKeyIntersection.reverse),
         s.asyncStates.mapK1(Column.EditFieldKeyIntersection.reverse),
         s.previewState,
-        s.reqTable))
-    )
+        s.reqTable)
+    }
 
-    def initialState = State(
-      ContentEditorFeature.D2.State.init,
-      AsyncActionFeature.D2.State.init,
-      PreviewFeature.initState,
-      ReqTable.State.init(cd, HideDead, None))
-
-    ReactTestUtils.withRendered(outer(initialState), testsFocus) { c =>
-      def observe() = new ReqTableObs(cp, c.htmlDomZipper)
-      val ref       = Ref(c zoomL State.reqTable, cp)
+    ReactTestUtils.withRendered(reqTableComponent(dynamicProps()), testsFocus) { m0 =>
+      var m = m0
+      stateVar.onUpdate(m = ReactTestUtils.replaceProps(reqTableComponent, m)(dynamicProps()))
+      def observe() = new ReqTableObs(cp, m.htmlDomZipper)
+      val ref       = Ref(stateVar.stateAccess.withEffectsImpure zoomStateL State.reqTable, cp)
       val test      = plan.addInvariants(invariants).test(Observer watch observe())
       val result    = test.run(ref)
       result.assert()

@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.widgets.high
 
 import japgolly.microlibs.nonempty._
-import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
+import japgolly.scalajs.react._, vdom.html_<^._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import scala.annotation.tailrec
@@ -300,9 +300,9 @@ object DeletionForm {
 
     val visibleRCGs: Set[ReqCodeId] = $.props.runNow().deletableGroups.map(_.id)(collection.breakOut)
 
-    val setReqSel = ReusableFn($ _setStateL State.selectedReqs)
-    val setRcgSel = ReusableFn($ _setStateL State.selectedGroups)
-    val setReason = ReusableFn($ _setStateL State.reason)
+    val setReqSel = Reusable.fn($ setStateFnL State.selectedReqs)
+    val setRcgSel = Reusable.fn($ setStateFnL State.selectedGroups)
+    val setReason = Reusable.fn($ setStateFnL State.reason)
 
     def reasonEditorProps(p: Props, s: State): RichTextEditor.DeletionReason.Props =
       RichTextEditor.DeletionReason.Props(
@@ -310,13 +310,13 @@ object DeletionForm {
         plainText      = p.projectText,
         textSearch     = p.textSearch,
         projectWidgets = p.widgets,
-        edit           = ReusableVar(s.reason)(setReason),
+        edit           = StateSnapshot.withReuse(s.reason)(setReason),
         asyncStatus    = None,
         abortCommit    = None,
         preview        = PreviewFeature.AlwaysShow,
         preEditValue   = None)
 
-    val cancelButton: ReactElement =
+    val cancelButton: VdomElement =
       <.button(^.onClick --> $.props.flatMap(_.cancel), UiText.buttonAbortChange)
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -336,7 +336,7 @@ object DeletionForm {
 
         val sel = if (indent == 0) None else Some(selAll(req.id))
 
-        val td = <.td(*.row(live), sel.map(_.onClick))
+        val td = <.td(*.row(live), sel.whenDefined(_.onClick))
 
         val reqTitle =
           <.span(
@@ -346,7 +346,7 @@ object DeletionForm {
 
         val impBy =
           if (impliedBy.isEmpty)
-            EmptyTag
+            EmptyVdom
           else
             <.span(
               <.span(*.impliedByPrefix, "⇐"),
@@ -397,7 +397,7 @@ object DeletionForm {
 
       def selAllBox: TagMod =
         if (p.deletableGroups.length < 2)
-          EmptyTag
+          EmptyVdom
         else
           selAll.total.checkboxAndOnClick
 
@@ -413,7 +413,7 @@ object DeletionForm {
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    def render(p: Props, s: State): ReactElement = {
+    def render(p: Props, s: State): VdomElement = {
 
       def reqSection =
         <.section(
@@ -422,7 +422,7 @@ object DeletionForm {
 
       def groupSection: TagMod =
         if (p.deletableGroups.isEmpty)
-          EmptyTag
+          EmptyVdom
         else
           <.section(
             <.div(*.section, UiText.reqCodeGroups + " to delete"),
@@ -459,7 +459,7 @@ object DeletionForm {
     }
   }
 
-  val Component = ReactComponentB[Props]("Deletion")
+  val Component = ScalaComponent.build[Props]("Deletion")
     .initialState_P(_.initialState)
     .renderBackend[Backend]
     .build

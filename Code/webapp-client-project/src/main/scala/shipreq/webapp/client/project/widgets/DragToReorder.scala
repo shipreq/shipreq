@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.widgets
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import japgolly.scalajs.react.vdom.TagMod
 import org.scalajs.dom.raw.DragEffect
 import shipreq.base.util.Memo
@@ -46,7 +46,7 @@ object DragToReorder {
 
 // =====================================================================================================================
 final class DragToReorder[A](updateItems: Vector[A] => Callback,
-                             renderFn   : DragToReorder.Content[A] => CallbackTo[ReactElement]) {
+                             renderFn   : DragToReorder.Content[A] => CallbackTo[VdomElement]) {
   import DragToReorder._
 
   type Item    = DragToReorder.Item [A]
@@ -196,7 +196,7 @@ final class DragToReorder[A](updateItems: Vector[A] => Callback,
           ^.onDrop      ==> drop)
       }
 
-    def render(p: Props, s: State): ReactElement = {
+    def render(p: Props, s: State): VdomElement = {
       def mkItems(order: Iterable[Int], as: Vector[A], status: Int => Status): Vector[Item] = {
         val v = Vector.newBuilder[Item]
         for (i <- order)
@@ -221,7 +221,7 @@ final class DragToReorder[A](updateItems: Vector[A] => Callback,
     }
   }
 
-  val Component = ReactComponentB[Props]("DND")
+  val Component = ScalaComponent.build[Props]("DND")
     .initialState[State](None)
     .renderBackend[Backend]
     .build

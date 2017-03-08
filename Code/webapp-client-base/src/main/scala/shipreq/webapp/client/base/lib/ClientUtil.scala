@@ -1,6 +1,6 @@
 package shipreq.webapp.client.base.lib
 
-import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.microlibs.nonempty.NonEmptyVector
 
 object ClientUtil {
@@ -16,10 +16,10 @@ object ClientUtil {
   val uniqueStr: CallbackTo[String] =
     uniqueInt.map(i => s"___uqs$i")
 
-  def textChangeRecv[R](f: String => R): ReactEventI => R =
+  def textChangeRecv[R](f: String => R): ReactEventFromInput => R =
     e => f(e.target.value)
 
-//  def checkboxOfSetPresence[A](as: Set[A])(a: A, update: Set[A] => Callback): ReactTag = {
+//  def checkboxOfSetPresence[A](as: Set[A])(a: A, update: Set[A] => Callback): VdomTag = {
 //    val currentState = On <~ as.contains(a)
 //    def toggled = currentState match {
 //      case On  => as - a
@@ -31,9 +31,10 @@ object ClientUtil {
   val sepComma: TagMod = ", "
   val sepSpace: TagMod = " "
 
-  def renderVector[A, B](as: Vector[A], separator: TagMod)(renderEach: A => B)(implicit g: B => TagMod): ReactTag =
+  def renderVector[A, B](as: Vector[A], separator: TagMod)(renderEach: A => B)(implicit g: B => TagMod): VdomTag =
     <.span(
-      NonEmptyVector.option(as)
-        .map(_.intercalateF(separator)(g compose renderEach).whole))
+      NonEmptyVector.option(as).whenDefined(as =>
+        TagMod.fromTraversableOnce(
+          as.intercalateF(separator)(g compose renderEach).whole)))
 
 }

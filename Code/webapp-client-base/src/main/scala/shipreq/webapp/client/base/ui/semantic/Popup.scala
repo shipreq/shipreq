@@ -1,6 +1,6 @@
 package shipreq.webapp.client.base.ui.semantic
 
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /** http://semantic-ui.com/modules/popup.html */
 object Popup {
@@ -12,7 +12,7 @@ object Popup {
       def toReact = Position.position := value
     }
     object Position {
-      private val position = "data-position".reactAttr
+      private val position = VdomAttr("data-position")
 
       case object BottomCenter extends Position("bottom center")
       case object BottomLeft   extends Position("bottom left")
@@ -24,12 +24,12 @@ object Popup {
       case object TopRight     extends Position("top right")
     }
 
-    private val tooltip = "data-tooltip".reactAttr
+    private val tooltip = VdomAttr("data-tooltip")
 
     def apply(text: String): TagMod =
       tooltip := text
 
     def apply(text: String, position: Position): TagMod =
-      (tooltip := text) + position.toReact
+      TagMod(tooltip := text, position.toReact)
   }
 }

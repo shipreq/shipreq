@@ -1,7 +1,7 @@
 package shipreq.webapp.client.base.lib
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import scala.collection.immutable.ListSet
 import shipreq.webapp.client.base.lib.KeyHandler._
@@ -28,7 +28,7 @@ object KeyHandler {
 //  @inline implicit def autoPluralise(k: KeyHandler): KeyHandlers =
 //    k.toKeyHandlers
 
-  sealed abstract class EventType(val domKey: ReactAttr)
+  sealed abstract class EventType(val domKey: VdomAttr.Event[ReactKeyboardEventFrom])
   object EventType {
     case object KeyPress extends EventType(^.onKeyPress)
     case object KeyDown  extends EventType(^.onKeyDown)
@@ -119,12 +119,12 @@ case class KeyHandlers(handlers: List[KeyHandler]) extends AnyVal {
     }
 
     // Combine each event type
-    map.foldLeft(EmptyTag) {
-      case (q, (et, responses)) =>
+    TagMod.fromTraversableOnce(
+      map.iterator.map { case (et, responses) =>
         val combinedResponse: ReactKeyboardEvent => Callback =
-          e => Callback.sequence(responses.map(_(e)))
-        q + (et.domKey ==> combinedResponse)
-    }
+          e => Callback.sequence(responses.map(_ (e)))
+        et.domKey ==> combinedResponse
+      })
   }
 }
 

@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.app.reqtable
 import monocle.Optional
 import scalacss.ScalaCssReact._
 import japgolly.microlibs.nonempty._
-import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util.Memo
 import shipreq.webapp.base.UiText
@@ -26,25 +26,25 @@ object ColumnRenderer {
     Reusability.byRef || reusabilityNonEmptyVector
 
   sealed abstract class View {
-    def render: ReactElement
+    def render: VdomElement
   }
 
   // This could be lazy but 99% of the time, the view is displayed. May as well reduce the overhead of the 99% and have
   // this be strict.
-  case class Render(render: ReactElement) extends View
+  case class Render(render: VdomElement) extends View
 
   case object `N/A` extends View {
-    val tag: ReactTag =
+    val tag: VdomTag =
       <.span(*.`N/A`, "–")
 
-    override val render: ReactElement =
+    override val render: VdomElement =
       tag
   }
 
-  val emptyTag: ReactTag     = <.span
-  val empty   : ReactElement = emptyTag
+  val emptyTag: VdomTag     = <.span
+  val empty   : VdomElement = emptyTag
 
-  object RenderDeletionReason extends ProjectText.DeletionReasonFormatter[ReactTag] {
+  object RenderDeletionReason extends ProjectText.DeletionReasonFormatter[VdomTag] {
     override type PT = ProjectWidgets
 
     override protected def `n/a` =
@@ -105,7 +105,7 @@ class ColumnRenderers(project: Project, pw: ProjectWidgets) {
       new ColumnRenderer(c, render2)
     }
 
-  private def maybeEmpty[A](lens: Optional[Row, Vector[A]], r: Row)(f: Vector[A] => ReactElement): View =
+  private def maybeEmpty[A](lens: Optional[Row, Vector[A]], r: Row)(f: Vector[A] => VdomElement): View =
     Render(lens.getOption(r).filter(_.nonEmpty).fold(empty)(f))
 
 //  @deprecated("placeholder is for dev purposes only.", "")

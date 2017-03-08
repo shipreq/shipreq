@@ -38,14 +38,14 @@ object Main extends ClientFnImpl(ClientFnDecl.ProjectSpa) {
         val root    = new LoadedRoot(i, cp, cd)
         val baseUrl = determineBaseUrl(dom.window.location.href)
         val router  = Router(baseUrl, Routes.routerConfig(root))
-        ReactDOM.render(router(), domTarget())
+        router().renderIntoDOM(domTarget())
       }
 
     def onFailure(error: String): Callback =
       Callback {
         val lp = LoadingPage.Props(i.username, i.project)
         val lf = LoadFailedPage.Props(lp, error)
-        ReactDOM.render(LoadFailedPage.Component(lf), domTarget())
+        LoadFailedPage.Component(lf).renderIntoDOM(domTarget())
       }
   }
 }

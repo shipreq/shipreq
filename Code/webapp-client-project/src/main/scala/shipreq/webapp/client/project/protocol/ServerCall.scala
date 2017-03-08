@@ -27,5 +27,5 @@ object ServerCall {
         _ consumeAnd onFailure))
 
   implicit def reusabilityServerCall[I]: Reusability[ServerCall[I]] =
-    Reusability.fn((a, b) => a.fn eq b.fn)
+    Reusability((a, b) => a.fn eq b.fn)
 }

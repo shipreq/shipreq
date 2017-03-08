@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.test
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import org.scalajs.dom, dom.{EventTarget, KeyboardEvent}
 import scala.scalajs.js, js.{undefined, UndefOr}
 import scalaz.Equal
@@ -56,7 +56,7 @@ object TestUtil extends WebappTestUtil with WebappTestEquality {
       sole().asInstanceOf[N]
   }
 
-  implicit def autodomnode(c: CompScope.Mounted[TopNode]) = c.getDOMNode()
+  implicit def autodomnode(c: GenericComponent.MountedRaw) = ReactDOM.raw findDOMNode c.raw
 
   val nopJsFn: js.Function0[js.Any] = () => ((): js.Any)
 

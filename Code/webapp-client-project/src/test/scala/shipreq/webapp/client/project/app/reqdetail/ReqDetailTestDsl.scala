@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.app.reqdetail
 
 import japgolly.scalajs.react.test._
-import japgolly.scalajs.react.test.ReactTestUtils.Simulate
 import monocle.macros.Lenses
 import org.scalajs.dom.html
 import shipreq.base.test.BaseTestUtil.quoteStringForDisplay
@@ -178,7 +177,7 @@ object ReqDetailTestDsl {
 
   def setStepTextEditValue(label: String, newValue: String): *.Actions =
     *.action(s"Set $label text to ${quoteStringForDisplay(newValue)}")(
-      ChangeEventData(newValue) simulate _.obs.uc.row(label).textEditor)
+      SimEvent.Change(newValue) simulate _.obs.uc.row(label).textEditor)
 
   def commitStepTextEdit(label: String): *.Actions =
     *.action("Commit $label text edit")(Enter.ctrl simulateKeyDown _.obs.uc.row(label).textEditor)

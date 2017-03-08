@@ -1,7 +1,7 @@
 package shipreq.webapp.client.base.ui
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.text.SingleLine
 import shipreq.webapp.client.base.feature.EditorStatus
@@ -27,8 +27,8 @@ object PlainTextEditor {
                            updateText  : String => Callback,
                            status      : EditorStatus,
                            abort       : Callback,
-                           inputContMod: TagMod = EmptyTag,
-                           inputMod    : TagMod = EmptyTag) {
+                           inputContMod: TagMod = EmptyVdom,
+                           inputMod    : TagMod = EmptyVdom) {
       @inline def render = Component(this)
     }
 
@@ -42,7 +42,7 @@ object PlainTextEditor {
           KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +
           KeyboardTheme.commitCO($.props.map(_.status.getCommit), SingleLine)
 
-        val onChange = (_: ReactEventI).extract(_.target.value)(t =>
+        val onChange = (_: ReactEventFromInput).extract(_.target.value)(t =>
           $.props.flatMap(p =>
             p.status.wrapEdit(p.updateText(t))))
 
@@ -52,7 +52,7 @@ object PlainTextEditor {
           ^.onChange ==> onChange)
       }
 
-      def render(p: Props): ReactElement = {
+      def render(p: Props): VdomElement = {
 
         def input        = base(p.inputMod, ^.value := p.text)
         def instructions = KeyboardTheme.instructionsForCommitAbort(SingleLine, p.status.getCommit, p.abort, None)
@@ -84,7 +84,7 @@ object PlainTextEditor {
       }
     }
 
-    val Component = ReactComponentB[Props]("PlainTextEditor.TempBasic")
+    val Component = ScalaComponent.build[Props]("PlainTextEditor.TempBasic")
       .renderBackend[Backend]
       //    .configure(Reusability.shouldComponentUpdate)
       .build
@@ -117,8 +117,8 @@ object PlainTextEditor {
 
     final class Backend($: BackendScope[Props, Unit]) {
 
-      def render(p: Props): ReactElement = {
-        val onChange = (_: ReactEventI).extract(_.target.value)(t => p.status.wrapEdit(p updateText t))
+      def render(p: Props): VdomElement = {
+        val onChange = (_: ReactEventFromInput).extract(_.target.value)(t => p.status.wrapEdit(p updateText t))
 
         val input =
           <.input.text(
@@ -147,7 +147,7 @@ object PlainTextEditor {
             <.div(
               <.div(
                 Input.Action(
-                  input(^.disabled := "disabled"),
+                  input(^.disabled := true),
                   buttonLoading.tag(p.buttonLabel))))
 
           case EditorStatus.Invalid(err) =>
@@ -169,7 +169,7 @@ object PlainTextEditor {
       }
     }
 
-    val Component = ReactComponentB[Props]("PlainTextEditor.WithButton")
+    val Component = ScalaComponent.build[Props]("PlainTextEditor.WithButton")
       .renderBackend[Backend]
       //    .configure(Reusability.shouldComponentUpdate)
       .build
