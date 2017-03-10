@@ -4,8 +4,7 @@ import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
 import com.typesafe.sbt.packager.{Keys => PackagerKeys}
 import com.typesafe.sbt.packager.universal.UniversalPlugin.autoImport.Universal
 import sbtdocker.DockerPlugin, DockerPlugin.autoImport._
-import Common.Functions._
-import Common.Values.{devMode, releaseMode}
+import Common._
 import Dependencies._
 import ShipReqBuild._
 

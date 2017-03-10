@@ -1,14 +1,11 @@
-import sbt.{project => _, _}
-import Keys._
+import sbt.{project => _, _}, Keys._
 import org.scalajs.core.tools.io.{IO => _, _}
-import org.scalajs.sbtplugin.{ScalaJSPlugin, ScalaJSPluginInternal, Stage}
+import org.scalajs.sbtplugin.{ScalaJSPlugin, Stage}, ScalaJSPlugin.autoImport.{crossProject => _, _}
+import org.scalajs.sbtplugin.ScalaJSPluginInternal.stageKeys
 import sbtdocker.DockerPlugin, DockerPlugin.autoImport._
-import Common.Functions._
-import Common.Values.{devMode, releaseMode}
+import Common._
 import Dependencies._
 import LibDependency.JVM
-import ScalaJSPlugin.autoImport.{crossProject => _, _}
-import ScalaJSPluginInternal.stageKeys
 import ShipReqBuild._
 import TaskmanBuild._
 

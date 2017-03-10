@@ -16,8 +16,6 @@ case object NoDom   extends JsTestType
 case object NeedDom extends JsTestType
 
 object Common {
-  import Functions._
-  import Values._
 
   def targetJdk = "1." + Dependencies.Java.major
 
@@ -255,130 +253,122 @@ object Common {
       "VERSION" -> version.value,
       "BUILD_MODE" -> (if (releaseMode) "release" else "dev")))
 
-  // ===================================================================================================================
-  object Values {
-
-    lazy val releaseMode: Boolean = {
-      val mode = System.getProperty("MODE", "").trim
-      val r = mode.compareToIgnoreCase("release") == 0
-      if (r) println("[mode] \033[1;31mRelease Mode.\033[0m")
-      r
-    }
-
-    def devMode: Boolean = !releaseMode
+  lazy val releaseMode: Boolean = {
+    val mode = System.getProperty("MODE", "").trim
+    val r = mode.compareToIgnoreCase("release") == 0
+    if (r) println("[mode] \033[1;31mRelease Mode.\033[0m")
+    r
   }
 
-  // ===================================================================================================================
-  object Functions {
+  def devMode: Boolean = !releaseMode
 
-    def debugOrRelease(debug: Project => Project, release: Project => Project): Project => Project =
-      p => (if (releaseMode) release else debug)(p)
+  def debugOrRelease(debug: Project => Project, release: Project => Project): Project => Project =
+    p => (if (releaseMode) release else debug)(p)
 
-    def nonTestCompilerFlags(flags: String*): Project => Project =
-      _.settings(
-        scalacOptions in Compile ++= flags,
-        scalacOptions in Test --= flags)
+  def nonTestCompilerFlags(flags: String*): Project => Project =
+    _.settings(
+      scalacOptions in Compile ++= flags,
+      scalacOptions in Test --= flags)
 
-    def dontOptimise: Project => Project =
-      _.settings(scalacOptions in Compile -= "-opt:l:classpath")
+  def dontOptimise: Project => Project =
+    _.settings(scalacOptions in Compile -= "-opt:l:classpath")
 
-    def dontInline: Project => Project =
-      debugOrRelease(identity, _
-        .configure(dontOptimise, nonTestCompilerFlags("-opt:l:method")))
+  def dontInline: Project => Project =
+    debugOrRelease(identity, _
+      .configure(dontOptimise, nonTestCompilerFlags("-opt:l:method")))
 
-    def ln_s(src: File, tgt: File)(implicit log: Logger): Unit = ln_s(src.toPath, tgt.toPath)(log)
-    def ln_s(src: Path, tgt: Path)(implicit log: Logger): Unit = {
-      if (Files.isSymbolicLink(tgt) && Files.readSymbolicLink(tgt).equals(src))
-        log.debug(s"Symlink up-to-date: $tgt")
-      else {
-        log.info(s"Creating symlink $tgt -> $src")
-        Files.deleteIfExists(tgt)
-        Files.createSymbolicLink(tgt, src)
-      }
-    }
-
-    def ln(src: File, tgt: File)(implicit log: Logger): Unit = ln(src.toPath, tgt.toPath)(log)
-    def ln(src: Path, tgt: Path)(implicit log: Logger): Unit = {
-      log.info(s"Creating hard link $tgt -> $src")
+  def ln_s(src: File, tgt: File)(implicit log: Logger): Unit = ln_s(src.toPath, tgt.toPath)(log)
+  def ln_s(src: Path, tgt: Path)(implicit log: Logger): Unit = {
+    if (Files.isSymbolicLink(tgt) && Files.readSymbolicLink(tgt).equals(src))
+      log.debug(s"Symlink up-to-date: $tgt")
+    else {
+      log.info(s"Creating symlink $tgt -> $src")
       Files.deleteIfExists(tgt)
-      Files.createLink(tgt, src)
+      Files.createSymbolicLink(tgt, src)
     }
-
-    def execInBash(cmd: String): Unit =
-      sys.process.Process(List("bash", "-c", cmd)).!!
-
-    def fileSync(from: File, to: File, mandatory: Boolean)(implicit log: Logger): Unit =
-      if (from.exists()) {
-        log.info(s"Copying $from → $to")
-        IO.copyFile(from, to, preserveLastModified = true)
-      } else if (mandatory)
-        sys.error("File not found: " + from.absolutePath)
-      else if (to.exists()) {
-        log.info(s"Deleting $to")
-        IO.delete(to)
-      }
-
-    def printFileBatches(batchesT: Traversable[Traversable[File]]): Unit = {
-      val sep = "=" * 100
-      println(sep)
-      val batches = batchesT.toVector
-      val sizes = batches.map(_.map(_.length()).foldLeft(0L)(_ + _)).toVector
-      (batches zip sizes).foreach { case (files, size) =>
-        files.foreach(println)
-        printf("= %,d bytes\n", size)
-        println(sep)
-      }
-      println("Sizes:")
-      sizes.foreach { size =>
-        printf("  %,12d bytes\n", size)
-      }
-      printf("Σ %,12d bytes\n", sizes.sum)
-      println(sep)
-    }
-
-    def addCommandAliases(m: (String, String)*) = {
-      val s = m.map(p => addCommandAlias(p._1, p._2)).reduce(_ ++ _)
-      (_: Project).settings(s: _*)
-    }
-
-    implicit class CrossProjectExt(val p: CrossProject) extends AnyVal {
-
-      def configureBoth(fs: (Project => Project)*): CrossProject =
-        fs.foldLeft(p)((q,f) => q.jvmConfigure(f).jsConfigure(f))
-
-      def configureJvm(fs: (Project => Project)*): CrossProject =
-        fs.foldLeft(p)((q,f) => q.jvmConfigure(f))
-
-      def configureJs(fs: (Project => Project)*): CrossProject =
-        fs.foldLeft(p)((q,f) => q.jsConfigure(f))
-
-      def depsForBoth(deps: Dep[HasBoth]): CrossProject =
-        depsForJvm(deps.widen).depsForJs(deps.widen)
-
-      def depsForJvm(deps: Dep[HasJvm]): CrossProject =
-        p.jvmSettings(libraryDependencies ++= deps(JVM))
-
-      def depsForJs(deps: Dep[HasJs]): CrossProject =
-        p.jsSettings(libraryDependencies ++= deps(JS))
-
-      def aggregateJvm(refs: sbt.ProjectReference*):  CrossProject =
-        p.jvmConfigure(_.aggregate(refs: _*))
-
-      def aggregateJs(refs: sbt.ProjectReference*):  CrossProject =
-        p.jsConfigure(_.aggregate(refs: _*))
-    }
-
-    implicit class ProjectExt(val p: Project) extends AnyVal {
-      def deps(deps: Dep[HasJvm]): Project =
-        p.settings(libraryDependencies ++= deps(JVM))
-
-      def depsForJs(deps: Dep[HasJs]): Project =
-        p.settings(libraryDependencies ++= deps(JS))
-    }
-
-    def depScope(s: String): ModDepScope = ModDepScope(s)
-    def depScope(c: Configuration): ModDepScope = depScope(c.name)
-    def testScope = depScope("test")
-    def providedScope = depScope("provided")
   }
+
+  def ln(src: File, tgt: File)(implicit log: Logger): Unit = ln(src.toPath, tgt.toPath)(log)
+  def ln(src: Path, tgt: Path)(implicit log: Logger): Unit = {
+    log.info(s"Creating hard link $tgt -> $src")
+    Files.deleteIfExists(tgt)
+    Files.createLink(tgt, src)
+  }
+
+  def execInBash(cmd: String): Unit =
+    sys.process.Process(List("bash", "-c", cmd)).!!
+
+  def fileSync(from: File, to: File, mandatory: Boolean)(implicit log: Logger): Unit =
+    if (from.exists()) {
+      log.info(s"Copying $from → $to")
+      IO.copyFile(from, to, preserveLastModified = true)
+    } else if (mandatory)
+      sys.error("File not found: " + from.absolutePath)
+    else if (to.exists()) {
+      log.info(s"Deleting $to")
+      IO.delete(to)
+    }
+
+  def printFileBatches(batchesT: Traversable[Traversable[File]]): Unit = {
+    val sep = "=" * 100
+    println(sep)
+    val batches = batchesT.toVector
+    val sizes = batches.map(_.map(_.length()).foldLeft(0L)(_ + _)).toVector
+    (batches zip sizes).foreach { case (files, size) =>
+      files.foreach(println)
+      printf("= %,d bytes\n", size)
+      println(sep)
+    }
+    println("Sizes:")
+    sizes.foreach { size =>
+      printf("  %,12d bytes\n", size)
+    }
+    printf("Σ %,12d bytes\n", sizes.sum)
+    println(sep)
+  }
+
+  def addCommandAliases(m: (String, String)*) = {
+    val s = m.map(p => addCommandAlias(p._1, p._2)).reduce(_ ++ _)
+    (_: Project).settings(s: _*)
+  }
+
+  implicit class CrossProjectExt(val p: CrossProject) extends AnyVal {
+
+    def configureBoth(fs: (Project => Project)*): CrossProject =
+      fs.foldLeft(p)((q,f) => q.jvmConfigure(f).jsConfigure(f))
+
+    def configureJvm(fs: (Project => Project)*): CrossProject =
+      fs.foldLeft(p)((q,f) => q.jvmConfigure(f))
+
+    def configureJs(fs: (Project => Project)*): CrossProject =
+      fs.foldLeft(p)((q,f) => q.jsConfigure(f))
+
+    def depsForBoth(deps: Dep[HasBoth]): CrossProject =
+      depsForJvm(deps.widen).depsForJs(deps.widen)
+
+    def depsForJvm(deps: Dep[HasJvm]): CrossProject =
+      p.jvmSettings(libraryDependencies ++= deps(JVM))
+
+    def depsForJs(deps: Dep[HasJs]): CrossProject =
+      p.jsSettings(libraryDependencies ++= deps(JS))
+
+    def aggregateJvm(refs: sbt.ProjectReference*):  CrossProject =
+      p.jvmConfigure(_.aggregate(refs: _*))
+
+    def aggregateJs(refs: sbt.ProjectReference*):  CrossProject =
+      p.jsConfigure(_.aggregate(refs: _*))
+  }
+
+  implicit class ProjectExt(val p: Project) extends AnyVal {
+    def deps(deps: Dep[HasJvm]): Project =
+      p.settings(libraryDependencies ++= deps(JVM))
+
+    def depsForJs(deps: Dep[HasJs]): Project =
+      p.settings(libraryDependencies ++= deps(JS))
+  }
+
+  def depScope(s: String): ModDepScope = ModDepScope(s)
+  def depScope(c: Configuration): ModDepScope = depScope(c.name)
+  def testScope = depScope("test")
+  def providedScope = depScope("provided")
 }

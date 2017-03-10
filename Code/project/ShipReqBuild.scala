@@ -1,10 +1,9 @@
-import sbt._
-import Keys._
-import Common.Functions._
-import Dependencies._
+import sbt._, Keys._
 import org.scalajs.sbtplugin.ScalaJSPlugin
 import org.scalajs.sbtplugin.cross.{CrossProject, CrossType}
 import ScalaJSPlugin.autoImport.{crossProject => _, _}
+import Common._
+import Dependencies._
 import TaskmanBuild._
 import WebappBuild._
 
