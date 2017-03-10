@@ -1,6 +1,6 @@
 import sbt._
 import scala.languageFeature._
-import DependencyLib._
+import LibDependency._
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.toScalaJSGroupID
 
 object Dependencies {

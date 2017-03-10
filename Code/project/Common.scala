@@ -8,7 +8,7 @@ import org.scalajs.sbtplugin.cross.CrossProject
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import com.timushev.sbt.updates.UpdatesKeys._
 import sbtdocker.DockerPlugin, DockerPlugin.autoImport._
-import DependencyLib.{Dep, HasJs, HasJvm, HasBoth, JVM, JS, ModDepScope}
+import LibDependency.{Dep, HasJs, HasJvm, HasBoth, JVM, JS, ModDepScope}
 
 sealed trait JsTestType
 case object NoTests extends JsTestType

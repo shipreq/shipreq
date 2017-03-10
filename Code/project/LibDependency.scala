@@ -3,7 +3,7 @@ import scala.languageFeature._
 import org.scalajs.sbtplugin.ScalaJSPlugin
 import ScalaJSPlugin.autoImport._
 
-object DependencyLib {
+object LibDependency {
 
   sealed trait HasDialect
   sealed trait HasJvm extends HasDialect

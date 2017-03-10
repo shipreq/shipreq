@@ -6,7 +6,7 @@ import sbtdocker.DockerPlugin, DockerPlugin.autoImport._
 import Common.Functions._
 import Common.Values.{devMode, releaseMode}
 import Dependencies._
-import DependencyLib.JVM
+import LibDependency.JVM
 import ScalaJSPlugin.autoImport.{crossProject => _, _}
 import ScalaJSPluginInternal.stageKeys
 import ShipReqBuild._
