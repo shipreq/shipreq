@@ -2,7 +2,7 @@ package shipreq.webapp.base.text
 
 import scala.collection.immutable.IntMap
 import scalaz.Need
-import shipreq.base.util.{FilterFn, FilterFn2, IMap}
+import shipreq.base.util.{FilterFn, IMap}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import TextSearch.{apply => _, _}
@@ -158,17 +158,18 @@ object TextSearch {
 
   @inline private implicit def autoNeedValue[A](n: Need[A]): A = n.value
 
-  type IndexEntryFilter = FilterFn2[IndexEntryR, IndexEntryG]
-  @inline private def IEF(a: IndexEntryR => Boolean, b: IndexEntryG => Boolean): IndexEntryFilter = FilterFn2(a, b)
-  import FilterFn.`n/a`
+  type IndexEntryFilter = FilterFn.Pair[IndexEntryR, IndexEntryG]
+  @inline private def IEF(r: IndexEntryR => Boolean,
+                          g: IndexEntryG => Boolean): IndexEntryFilter =
+    FilterFn.Pair(r, g)
 
   private type SearchFn = BoyerMooreHorspool => IndexEntryFilter
 
   private val searchAll: SearchFn =
-    a => FilterFn2(e => a.search(e.title) || a.search(e.textFields), _.title |> a.search)
+    a => FilterFn.Pair(e => a.search(e.title) || a.search(e.textFields), _.title |> a.search)
 
   private val searchTitles: SearchFn =
-    a => FilterFn2(_.title |> a.search, _.title |> a.search)
+    a => FilterFn.Pair(_.title |> a.search, _.title |> a.search)
 
   // Indexes
 
@@ -180,6 +181,7 @@ object TextSearch {
                                         indexG  : IMap[ReqCodeId, IndexEntryG],
                                         filter  : Option[IndexEntryFilter],
                                         searchFn: SearchFn) {
+    import FilterFn.`n/a`
 
     private def newFilter(f: IndexEntryFilter): IndexEntryFilter =
       filter.fold(f)(_ && f)
@@ -205,16 +207,16 @@ object TextSearch {
         s(f)
       }
 
-    def searchFilter(substr: String): FilterFn2[ReqId, ReqCodeId] =
-      search(substr, FilterFn2[ReqId, ReqCodeId](`n/a`, `n/a`))(f =>
-        FilterFn2[ReqId, ReqCodeId](
-          indexR.get(_) exists f.a,
-          indexG.get(_) exists f.b))
+    def searchFilter(substr: String): FilterFn.Pair[ReqId, ReqCodeId] =
+      search(substr, FilterFn.Pair[ReqId, ReqCodeId](`n/a`, `n/a`))(f =>
+        FilterFn.Pair[ReqId, ReqCodeId](
+          indexR.get(_) exists f.fa,
+          indexG.get(_) exists f.fb))
 
     def searchAll(substr: String): Stream[Req] = {
       // whitespace.split(substr).filter(_.nonEmpty)
       def all = indexR.values.toStream
-      search(substr, all)(all filter _.a).map(_.req)
+      search(substr, all)(all filter _.fa).map(_.req)
     }
   }
 

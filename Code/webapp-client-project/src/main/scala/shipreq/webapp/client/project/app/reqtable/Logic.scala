@@ -204,7 +204,7 @@ private[reqtable] object Logic {
 
     val filterDeadReq = vs.filterDead.filterFnBy[Req](_ live p.config.reqTypes)
     val filterDeadRCG = vs.filterDead.filterFnBy[ReqCodeGroup](_.live)
-    val filterDead    = Filter(filterDeadReq, filterDeadRCG)
+    val filterDead    = Filters(filterDeadReq, filterDeadRCG)
     val tagFieldDist  = DataLogic.tagFieldDist(p.config, vs.filterDead, vs isVisible Column.CustomField(_, Dead))
     val tagLookup     = DataLogic.tagLookup(p, vs.filterDead)
     val issueLookup   = this.issueLookup(p, vs.filterDead)
@@ -230,7 +230,7 @@ private[reqtable] object Logic {
 
     def pubid(reqId: ReqId): Option[Pubid] = {
       val req = p.reqs.need(reqId)
-      if (filterDead a req)
+      if (filterDead fa req)
         Some(req.pubid)
       else
         None
@@ -247,7 +247,7 @@ private[reqtable] object Logic {
      *
      * A result of `None` here means the filter has ruled out everything.
      */
-    val fullFilter: Option[Filter] =
+    val fullFilter: Option[Filters] =
       opOpFilter match {
         case None               => Some(filterDead)
         case Some(Some(filter)) => Some(filterDead && filter)
@@ -269,7 +269,7 @@ private[reqtable] object Logic {
 
       // Add requirements
       for (r <- p.reqs.reqIterator)
-        if (filter a r) {
+        if (filter fa r) {
           val id = r.id
           val live = r live p.config.reqTypes
 
@@ -294,7 +294,7 @@ private[reqtable] object Logic {
         for (g <- p.reqCodes.groups) {
           val code = p.reqCodes reqCode g.id
           val row = ReqCodeGroupRow(g, code, None)
-          if (filter b g) {
+          if (filter fb g) {
             codesSeen.add(row.reqCode)
             output :+= row
           } else
@@ -317,8 +317,11 @@ private[reqtable] object Logic {
   // ===================================================================================================================
   //  Filtering
 
-  type Filter = FilterFn2[Req, ReqCodeGroup]
-  @inline def Filter(a: Req => Boolean, b: ReqCodeGroup => Boolean): Filter = FilterFn2(a, b)
+  type Filters = FilterFn.Pair[Req, ReqCodeGroup]
+
+  @inline def Filters(req         : Req          => Boolean = FilterFn.`n/a`,
+                      reqCodeGroup: ReqCodeGroup => Boolean = FilterFn.`n/a`): Filters =
+    FilterFn.Pair(req, reqCodeGroup)
 
   /**
    * @return None means filter everything out. Function const false. Fail-early to an empty set. No results.
@@ -328,15 +331,14 @@ private[reqtable] object Logic {
              pt         : PlainText.ForProject,
              ts         : TextSearch,
              issueLookup: IssueLookup,
-             tagLookup  : TagLookup): Option[Filter] = {
+             tagLookup  : TagLookup): Option[Filters] = {
 
     import ValidFilter._, Attr.{AnyIssue, AnyTag}
-    type F  = Filter
-    type R  = Option[Filter]
+    type F  = Filters
+    type R  = Option[Filters]
     type FR = Req => Boolean
     type FG = ReqCodeGroup => Boolean
-    import FilterFn.`n/a`
-    @inline implicit def autoSomeFilter(f: Filter): R = Some(f)
+    @inline implicit def autoSomeFilter(f: Filters): R = Some(f)
 
     // Possible optimisations:
     // - overlap between has Tag & Presence/Lack(AnyTag)
@@ -356,10 +358,10 @@ private[reqtable] object Logic {
         .map(_ reduce f)
 
     def byTag(f: Set[ApplicableTagId] => Boolean) =
-      Filter(r => tagLookup(r.id) exists f, `n/a`)
+      Filters(req = r => tagLookup(r.id) exists f)
 
     def byIssueType(f: Vector[AnyIssue] => Boolean) =
-      Filter(
+      Filters(
         r => f(issueLookup.forReq(r.id)),
         g => f(issueLookup.forReqCode(g.id)))
 
@@ -368,12 +370,12 @@ private[reqtable] object Logic {
       if (whitelist.isEmpty)
         None
       else
-        Filter(whitelist contains _.id, `n/a`)
+        Filters(req = whitelist contains _.id)
     }
 
     def interpret(subj: ValidFilter): R =
       subj match {
-        case ReqType(rt)          => Filter(_.reqTypeId ==* rt, `n/a`)
+        case ReqType(rt)          => Filters(req = _.reqTypeId ==* rt)
         case Tag(tag)             => byTag(_ contains tag)
         case Presence(AnyTag)     => byTag(_.nonEmpty)
         case Presence(AnyIssue)   => byIssueType(_.nonEmpty)
@@ -392,7 +394,7 @@ private[reqtable] object Logic {
 
         case TextPattern(pat) =>
           val m: String => Boolean = pat.matcher(_).matches
-          Filter(
+          Filters(
             r => {
               def title  = m(pt reqTitle r)
               def custom = p.config.liveCustomTextFields.exists(f => pt.customTextField(f.id)(r) exists m)
