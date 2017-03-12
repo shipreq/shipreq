@@ -69,7 +69,7 @@ object FilterParserTest extends TestSuite {
       import PropTest.defaultPropSettings
 //      implicit def settings = DefaultSettings.propSettings.setSampleSize(10000)
       'fromString - prismFromString.mustBeSatisfiedBy($.unicodeString)
-      'fromSpec   - prismFromPF    .mustBeSatisfiedBy($.filter.potential.filterSpec)
+      'fromSpec   - prismFromPF    .mustBeSatisfiedBy($.filter.potential.gen)
     }
 
     'empty {

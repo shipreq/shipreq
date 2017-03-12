@@ -1372,8 +1372,11 @@ object RandomData {
       val presence   = attr map Presence
       val lack       = attr map Lack
 
-      val flat: Gen[PotentialFilter] =
-        Gen.chooseGen(quotedText, simpleText, regex, reqType, hashRef, implies, impliedBy, presence, lack)
+      val flatGens: NonEmptyVector[Gen[PotentialFilter]] =
+        NonEmptyVector(quotedText, simpleText, regex, reqType, hashRef, implies, impliedBy, presence, lack)
+
+      val flatGen: Gen[PotentialFilter] =
+        Gen.chooseGenNE(flatGens)
 
       val fixRoot: EndoFn[PotentialFilter] = {
         case AllOf(n) if n.tail.isEmpty => n.head
@@ -1382,7 +1385,7 @@ object RandomData {
 
       private def expr(depth: Int): Gen[PotentialFilter] =
         if (depth <= 1)
-          flat
+          flatGen
         else {
           val next   = expr(depth - 1)
           val clause = next.nev(0 to (8 `JVM|JS` 3))
@@ -1399,11 +1402,10 @@ object RandomData {
               case e      => Not(e)
             }
 
-          Gen.chooseGen(flat, allOf, anyOf, not)
+          Gen.chooseGenNE(flatGens :+ allOf :+ anyOf :+ not)
         }
 
-      val filterSpec  = expr(4 `JVM|JS` 3)
-      val filterSpecO = filterSpec.option
+      val gen = expr(4 `JVM|JS` 3)
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -1434,26 +1436,24 @@ object RandomData {
       def implies    (gr: Gen[Reqs])             : Gen[ImpliesAnyOf]   = gr map ImpliesAnyOf
       def impliedBy  (gr: Gen[Reqs])             : Gen[ImpliedByAnyOf] = gr map ImpliedByAnyOf
 
-      def flat(gr: Option[Gen[ReqId]],
-               gy: Option[Gen[ReqTypeId]],
-               gt: Option[Gen[ApplicableTagId]],
-               gi: Option[Gen[CustomIssueTypeId]]): Gen[ValidFilter] = {
+      def flatGens(gr: Option[Gen[ReqId]],
+                   gy: Option[Gen[ReqTypeId]],
+                   gt: Option[Gen[ApplicableTagId]],
+                   gi: Option[Gen[CustomIssueTypeId]]): NonEmptyVector[Gen[ValidFilter]] = {
         val ogr = gr.map(reqs)
-        val gens = (
-          NonEmptyVector[Gen[ValidFilter]](text, textPatternish, presence, lack)
-            ++ gy.map(reqType)
-            ++ gt.map(tag)
-            ++ gi.map(customIssue)
-            ++ ogr.map(implies)
-            ++ ogr.map(impliedBy))
-        Gen.chooseGenNE(gens)
+        NonEmptyVector[Gen[ValidFilter]](text, textPatternish, presence, lack) ++
+          gy.map(reqType) ++
+          gt.map(tag) ++
+          gi.map(customIssue) ++
+          ogr.map(implies) ++
+          ogr.map(impliedBy)
       }
 
-      private def expr(gen: Gen[ValidFilter], depth: Int): Gen[ValidFilter] =
+      private def expr(gens: NonEmptyVector[Gen[ValidFilter]], depth: Int): Gen[ValidFilter] =
         if (depth <= 1)
-          gen
+          Gen.chooseGenNE(gens)
         else {
-          val next   = expr(gen, depth - 1)
+          val next   = expr(gens, depth - 1)
           val clause = next.nes(0 to (8 `JVM|JS` 3), implicitly)
 
           val allOf: Gen[ValidFilter] =
@@ -1468,18 +1468,18 @@ object RandomData {
               case e      => Not(e)
             }
 
-          Gen.chooseGen(gen, allOf, anyOf, not)
+          Gen.chooseGenNE(gens :+ allOf :+ anyOf :+ not)
         }
 
-      def filterAst(genFlat: Gen[ValidFilter]) =
-        expr(genFlat, 4 `JVM|JS` 3)
+      def gen(flatGens: NonEmptyVector[Gen[ValidFilter]]): Gen[ValidFilter] =
+        expr(flatGens, 4 `JVM|JS` 3)
 
       def forProject(p: Project): Gen[ValidFilter] = {
         val gr: Option[Gen[ReqId]]             = Gen tryGenChoose p.reqs.idIterator.toVector
         val gy: Option[Gen[ReqTypeId]]         = Gen tryGenChoose p.config.reqTypes.all.whole.map(_.reqTypeId)
         val gt: Option[Gen[ApplicableTagId]]   = Gen tryGenChoose p.config.atagIterator.map(_.id)
         val gi: Option[Gen[CustomIssueTypeId]] = Gen tryGenChoose p.config.customIssueTypes.keys.toVector
-        filterAst(flat(gr, gy, gt, gi))
+        gen(flatGens(gr, gy, gt, gi))
       }
     }
   }
