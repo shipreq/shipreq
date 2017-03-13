@@ -1,6 +1,14 @@
-* Group req types in filter from ALL to ANY.
-* Say "no implications" in imp graph
-* Remove unused styles
+Webpack
+  * Switch to scalajs-bundler with webpack
+  * Choose dev/prod webpack in docker instead of asset filtering
+  * See if dev/prod webpack would all same/dynamic URLs from within app
+    (Which would solve ProjectSpaLoader problem, and CDN use)
+
+Misc
+  * Group req types in filter from ALL to ANY.
+  * Say "no implications" in imp graph
+  * ProjectSpaLoader has wrong path in dev
+  * Support running webapp from SBT with dev DB from Docker
 
 Integrate async into ContentEditorFeature rendering
   * Remove EditValidationFeature
@@ -28,7 +36,7 @@ Integrate async into ContentEditorFeature rendering
   * Cfg Tags
 
 * Redo front pages
-  * split name into first/last
+  * name as one field is fine, call it "full name" like credit cards
   * plan UI
   * impl UI
   * test
@@ -49,4 +57,5 @@ Integrate async into ContentEditorFeature rendering
   * Remove ScalaCheck. Use Nyaya.
   * Use fast boopickle codecs for webworkers: https://github.com/ochrons/boopickle#codecs
   * Test env: Use different DBs for each module
+  * Remove unused styles
 
