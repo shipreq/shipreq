@@ -23,7 +23,7 @@ import Atom.AnyAtom
 object ParsersTest extends TestSuite {
 
   def preprocessStr(s: String, lc: LineCardinality): String =
-    String valueOf Parsers.preprocess(s, lc)
+    Parsers.preProcessor(lc)(s).asString
 
   val counts = Atom.Type.values.toStream.map((_, new AtomicInteger)).toMap
   def count(as: Iterable[AnyAtom]): Unit =
@@ -208,7 +208,7 @@ object ParsersTest extends TestSuite {
       def post(s: String) = ">" + s.replace('\n', '_') + "<"
       val g = Gen.chooseGen(Gen.alphaNumeric, Gen pure '\n').string(0 to 20)
       val p = Prop.equal[String]("trim")(
-        s => post(String.valueOf(Parsers.preprocess(s, MultiLine))),
+        s => post(Parsers.preProcessor(MultiLine)(s).asString),
         s => post(s.trim))
       p mustBeSatisfiedBy g
     }

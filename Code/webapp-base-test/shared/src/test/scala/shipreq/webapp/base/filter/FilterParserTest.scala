@@ -1,11 +1,11 @@
 package shipreq.webapp.base.filter
 
 import japgolly.microlibs.nonempty._
+import nyaya.gen.Gen
 import nyaya.prop._
 import nyaya.test._
 import nyaya.test.PropTestOps._
-import org.parboiled2.{ErrorFormatter, ParseError}
-import scala.util.{Failure, Success}
+import org.parboiled2.ErrorFormatter
 import utest._
 import shipreq.base.util.Debug._
 import shipreq.base.util._
@@ -28,48 +28,73 @@ object FilterParserTest extends TestSuite {
   def allOf(a: PotentialFilter, b: PotentialFilter*) = AllOf(NonEmptyVector(a, b: _*))
   def anyOf(a: PotentialFilter, b: PotentialFilter*) = AnyOf(NonEmptyVector(a, b: _*))
 
-  val prism = monocle.Prism[String, Option[PotentialFilter]](
-    new FilterParser(_).main.run().toOption)(_.fold("")(toText))
-
-  val prismFromString =
-    Prop.eval[String] { str =>
-      val e = EvalOver(str)
-      def norm(s: String) = s.filterNot(_.isWhitespace)
-      prism.getOrModify(str).toOption match {
-        case Some(os) => e.equal("toText . parse = id", norm(prism reverseGet os), norm(str))
-        case None     => e.pass
-      }
+  def postProcess(pf: PotentialFilter): PotentialFilter =
+    pf match {
+      case PotentialFilter.AllOf(as) if as.length == 1 => postProcess(as.head)
+      case PotentialFilter.AnyOf(as) if as.length == 1 => postProcess(as.head)
+      case _ => pf
     }
 
-  val prismFromPF =
-    Prop.test[PotentialFilter]("prismFromSpec", pf => {
-      val s = Some(pf)
-      test(prism reverseGet s, s)
-      true
-    })
+  def propFromString = Prop.eval[String] { s1 =>
+    val e = EvalOver(s1)
+    FilterParser.parse(s1) match {
+      case FilterParser.Result.BlankFilter
+         | _: FilterParser.Result.ParseException
+         | _: FilterParser.Result.GeneralException => e.pass
+      case FilterParser.Result.Filter(pf0) =>
+        val pf1 = postProcess(pf0)
 
-  def test(str: String, exp: Option[PotentialFilter]): Unit = {
-    val p = new FilterParser(str)
-    p.main.run() match {
-      case Success(a)             => assertEq(s"[$str]", a, exp)
-      case Failure(e: ParseError) => println(p.formatError(e, new ErrorFormatter(showTraces = true))); fail("Parser failed.")
-      case Failure(e: Throwable)  => fail("Parser failed: " + Option(e.getMessage).getOrElse(e.toString))
+        // fix before comparison
+//        def normaliseFilterText(s: String): String =
+//          FilterParser.preProcessor(s).asString
+//            .filterNot(java.lang.Character.isWhitespace)
+//            .map(c => if (java.lang.Character.isWhitespace(c)) ' ' else c)
+//            .replaceAll(" {2,}", " ")
+            // .map(c => "%04x".format(c.toInt)).mkString(",")
+
+        val s2 = PotentialFilter.toText(pf1)
+        val pf2 = toOption(FilterParser.parse(s2)).map(postProcess)
+        e.equal("parse = parse.toText.parse", pf2, Option(pf1))
     }
   }
 
+  def propFromPF = Prop.eval[PotentialFilter] { pf0 =>
+    val pf1 = postProcess(pf0)
+    val s = PotentialFilter.toText(pf1)
+    val e = EvalOver(s)
+    val pf2 = toOption(FilterParser.parse(s)).map(postProcess)
+    e.equal("parse . toText = id", pf2, Option(pf1))
+  }
+
+  val toOption: FilterParser.Result => Option[PotentialFilter] = {
+    case FilterParser.Result.Filter(f)           => Some(f)
+    case FilterParser.Result.BlankFilter         => None
+    case FilterParser.Result.GeneralException(e) => fail("Parser failed: " + Option(e.getMessage).getOrElse(e.toString))
+    case e: FilterParser.Result.ParseException   => println(e.format(new ErrorFormatter(showTraces = true))); fail("Parser failed.")
+  }
+
+  def test(str: String, exp: Option[PotentialFilter]): Unit =
+    assertEq(s"[$str]", toOption(FilterParser.parse(str)), exp)
+
   def testFail(str: String): Unit =
-    new FilterParser(str).main.run() match {
-      case Success(a) => fail(s"[$str] succeeded with $a")
-      case Failure(_) => ()
+    FilterParser.parse(str) match {
+      case _: FilterParser.Result.ParseException
+         | _: FilterParser.Result.GeneralException => ()
+      case FilterParser.Result.Filter(f)           => fail(s"[$str] succeeded with $f")
+      case FilterParser.Result.BlankFilter         => fail(s"[$str] succeeded with <blank>")
     }
 
   override def tests = TestSuite {
 
     'prop {
       import PropTest.defaultPropSettings
-//      implicit def settings = DefaultSettings.propSettings.setSampleSize(10000)
-      'fromString - prismFromString.mustBeSatisfiedBy($.unicodeString)
-      'fromSpec   - prismFromPF    .mustBeSatisfiedBy($.filter.potential.gen)
+//      implicit def settings = DefaultSettings.propSettings.setSampleSize(100000).setDebug
+      'fromStringA - propFromString.mustBeSatisfiedBy(Gen.ascii.string1)
+      'fromStringU - propFromString.mustBeSatisfiedBy(Gen.unicode.string1)
+      'fromPF      - propFromPF    .mustBeSatisfiedBy($.filter.potential.gen)
+//      Gen.ascii.string1.bugHunt(74)(propFromString)
+//      Gen.unicode.string1.bugHunt()(propParseUnparse)
+//      $.filter.potential.gen.bugHunt(samplesPerSeed = 7)(propUnparseParse)
     }
 
     'empty {

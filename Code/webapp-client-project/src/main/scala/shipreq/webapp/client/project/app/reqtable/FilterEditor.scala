@@ -2,9 +2,8 @@ package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.scalajs.react.extra._
-import org.parboiled2.{ErrorFormatter, ParseError}
+import org.parboiled2.ErrorFormatter
 import org.scalajs.dom.html
-import scala.util.{Failure, Success}
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-}
 import shipreq.base.util.Valid
@@ -77,27 +76,22 @@ object FilterEditor {
       e => updateFilterText(inputCorrect.replaceAllIn(e.target.value, " "))
 
     def updateFilterText(text: String): Callback = {
+
       def fail(error: String): Callback =
         $.props >>= (_ onFailure State(text, Some(error)))
 
       def succeed(filter: Option[ValidFilter]): Callback =
         $.props >>= (_.onSuccess(State(text, None), filter))
 
-      if (text.trim.isEmpty)
-        succeed(None)
-      else {
-        // Parse
-        val parser = new FilterParser(text)
-        parser.main.run() match {
-          case Failure(e: ParseError) => fail(parser.formatError(e, parseErrorFormatter))
-          case Failure(e: Throwable)  => fail(e.getMessage)
-          case Success(None)          => succeed(None)
-          case Success(Some(pf))      =>
-            PotentialFilter.validator(project.value())(pf) match {
-              case \/-(f) => succeed(Some(f))
-              case -\/(e) => fail(e)
-            }
-        }
+      FilterParser.parse(text) match {
+        case e: FilterParser.Result.ParseException   => fail(e.format(parseErrorFormatter))
+        case FilterParser.Result.GeneralException(e) => fail(e.getMessage)
+        case FilterParser.Result.BlankFilter         => succeed(None)
+        case FilterParser.Result.Filter(pf)          =>
+          PotentialFilter.validator(project.value())(pf) match {
+            case \/-(f) => succeed(Some(f))
+            case -\/(e) => fail(e)
+          }
       }
     }
 

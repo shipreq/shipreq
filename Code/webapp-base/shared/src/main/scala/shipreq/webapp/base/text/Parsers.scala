@@ -13,69 +13,30 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G}
-import shipreq.webapp.base.util.ParsingUtil
+import shipreq.webapp.base.util.{ParsingUtil, PreProcessed, PreProcessor}
 
 object Parsers {
-  def preprocess(s: String, lineCardinality: LineCardinality): Array[Char] = {
-    val multiLine = lineCardinality :: MultiLine
-    val a = s.toCharArray
 
-    // ----------------------------------------------------------------
-    // Replace bad chars
-
-    var i = a.length
-
-    @inline def fixSingleLineChar(c: Char): Unit =
-      if (c < 32) a(i) = ' '
-
-    val fixChar: () => Unit =
-      if (multiLine)
-        () => (a(i): @switch) match {
-          case '\n' | '\r' => ()
-          case c => fixSingleLineChar(c)
-        }
-      else
-        () => fixSingleLineChar(a(i))
-
-    while (i > 0) {
-      i -= 1
-      fixChar()
+  // Because there are special cases, not all whitespace is trimmed.
+  // Not all whitespace need be trimmed because the parser already contains space handing - for example, literals are
+  // trimmed as they're parsed, as confirmed by tests.
+  //
+  // Special cases:
+  // 1) "* " is a valid multiline bullet with no content. "*" is not.
+  private val multiLineCanTrim: PreProcessor.CanTrim =
+    (a, i) => a(i) match {
+      case ' ' =>
+        // Space need only be preserved after an asterisk
+        !(i != 0 && a(i - 1) == '*')
+      case c =>
+        PreProcessor.canTrimWhitespaceFn(c)
     }
 
-    // ----------------------------------------------------------------
-    // Trim
-
-    // Because there are special cases, not all whitespace is trimmed.
-    // Not all whitespace need be trimmed because the parser already contains space handing - for example, literals are
-    // trimmed as they're parsed, as confirmed by tests.
-    //
-    // Special cases:
-    // 1) "* " is a valid multiline bullet with no content. "*" is not.
-    def canTrim(i: Int): Boolean =
-      (a(i): @switch) match {
-
-        case '\n' | '\r' => true
-
-        case ' ' =>
-          // Space need only be preserved after an asterisk
-          !(multiLine && i != 0 && a(i - 1) == '*')
-
-        case _ => false
-      }
-
-    val last = a.length - 1
-    var x = 0
-    var y = last
-
-    while (y >= 0 && canTrim(y)) y -= 1
-    while (x < y  && canTrim(x)) x += 1
-    if (y < 0)
-      Array.empty[Char]
-    else if (x == 0 && y == last)
-      a
-    else
-      java.util.Arrays.copyOfRange(a, x, y + 1)
-  }
+  val preProcessor: LineCardinality => String => PreProcessed =
+    LineCardinality.memo {
+      case MultiLine  => PreProcessor(PreProcessor.fixCharMultiLine, multiLineCanTrim)
+      case SingleLine => PreProcessor.singleLine
+    }
 
   // questionable: :;=?\/
   val emailCharArray = """!$%*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz~""".toCharArray

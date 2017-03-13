@@ -3,26 +3,21 @@ package shipreq.webapp.base
 import japgolly.microlibs.adt_macros.AdtMacros._
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.univeq._
 import java.time.Instant
 import nyaya.gen._
 import nyaya.util._
 import monocle._
 import monocle.function.Field1.first
 import monocle.function.Field2.second
-import monocle.function.Field3.third
-import monocle.std.option.{some => atSome}
-import monocle.std.tuple2._
-import monocle.std.tuple3._
 import scala.annotation.tailrec
-import scala.collection.{AbstractIterator, GenTraversable}
 import scala.collection.immutable.ListSet
-import scalaz.{State, StateT, Need}
+import scalaz.Need
 import scalaz.std.list._
 import scalaz.std.option.{none => _, _}
 import scalaz.std.set._
 import scalaz.std.stream._
 import scalaz.std.vector._
-
 import shipreq.base.test.BaseUtilGen._
 import shipreq.base.util._, MTrie.Ops
 import shipreq.base.util.ScalaExt._
@@ -31,8 +26,8 @@ import shipreq.base.util.Debug._
 import shipreq.webapp.base.data._, ReqType.Mnemonic, Field.ApplicableReqTypes
 import shipreq.webapp.base.event.ApplyEvent.LogicVer
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.text.{Text, Grammar, GrammarSpec}
-import shipreq.webapp.base.util.GenericData
+import shipreq.webapp.base.text.{Grammar, GrammarSpec, Text}
+import shipreq.webapp.base.util.{GenericData, PreProcessor}
 import DataImplicits._
 import Optics.Implicits._
 import TestOptics.{customReqTypesLive => _, _}
@@ -64,11 +59,20 @@ object RandomData {
     else
       v
 
-  // JS + Parboiled2 no like \u001e
-  val fixGenChar: Gen[Char] => Gen[Char] =
-    ((g: Gen[Char]) => g) `JVM|JS` ((_: Gen[Char]).map(c => if (c == '\u001e') ' ' else c))
+  val unicodeChar: Gen[Char] = {
+    val a = new Array[Char](1)
+    val chars = (0 to 65535)
+      .iterator
+      .map(_.toChar)
+      .filter { c =>
+        a(0) = c
+        PreProcessor.fixCharMultiLine(a, 0)
+        a(0) ==* c
+      }
+      .toVector
+    Gen.choose_!(chars)
+  }
 
-  val unicodeChar   : Gen[Char]   = fixGenChar(Gen.unicode)
   val unicodeString : Gen[String] = unicodeChar.string
   val unicodeString1: Gen[String] = unicodeChar.string1
 
@@ -1319,25 +1323,38 @@ object RandomData {
       for {
         q <- Gen.choose('\'', '"', '`')
         s <- unicodeString1
-      } yield PotentialFilter.QuotedText(s.replace(q, '_'), q)
+      } yield {
+        val s2 = s.map {
+          case `q` => '_'
+          case '\n' | '\r' => ' '
+          case x => x
+        }
+        PotentialFilter.QuotedText(s2, q)
+      }
 
     private val illegalSimpleTextStart = "/-#(){}'`\"".toCharArray.toSet
-    private def fixSimpleText(s: String): String =
-      if (s.headOption exists illegalSimpleTextStart.contains)
+    private def fixSimpleText(s0: String): String = {
+      val s = FilterParser.preProcessor(s0).asString.replace(' ', '_')
+      if (s.isEmpty)
+        "_"
+      else if (s.headOption exists illegalSimpleTextStart.contains)
         "!" + s
       else if (Validators.reqType.mnemonicU isValidU s)
         s + "?"
       else
         s
+    }
 
     /** An odd number of backslashes cannot precede a slash */
     private val fixSlashEscaping = """(^|[^\\])(?:\\(?:\\\\)*)/""".r
 
-    private def fixRegex(s: String): String =
+    private def fixRegex(s0: String): String = {
+      val s = FilterParser.preProcessor(s0).asString
       if (s endsWith "\\")
         s + "d"
       else
         fixSlashEscaping.replaceAllIn(s, "$1/")
+    }
 
     val simpleText =
       charPred(FilterParser.simpleTextChar).string1

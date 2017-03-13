@@ -26,8 +26,11 @@ object Text {
     val lineCardinality: LineCardinality
 
     type Parser <: P.TopBase[this.type]
-    def parserI(p: Project)(i: ParserInput): Parser
-    def parser (p: Project)(text: String)  : Parser = parserI(p)(P.preprocess(text, lineCardinality))
+
+    protected[text] def parserI(p: Project)(i: ParserInput): Parser
+
+    final def parser(p: Project)(text: String): Parser =
+      parserI(p)(P.preProcessor(lineCardinality)(text).value)
 
     final def parse(p: Project)(text: String): OptionalText =
       parser(p)(text).optionalText.run().get
@@ -60,7 +63,7 @@ object Text {
       override protected def issueInnerDesc = rule(runSubParser(InlineIssueDesc.parserI(project)(_).inline))
     }
 
-    override def parserI(p: Project)(i: ParserInput) = new Parser(p, i)
+    override protected[text] def parserI(p: Project)(i: ParserInput) = new Parser(p, i)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -89,7 +92,7 @@ object Text {
       def inline: Rule1[NonEmptyText] = rule(G.prefix ~ OWS ~ textUntil(token, inlineEnd) ~ popNEV)
     }
 
-    override def parserI(p: Project)(i: ParserInput) = new Parser(p, i)
+    override protected[text] def parserI(p: Project)(i: ParserInput) = new Parser(p, i)
 
     /** Issue descs that demonstrate all types of inner atoms. */
     def demo(reqId: ReqId, reqCodeId: ReqCodeId, useCaseStepId: UseCaseStepId): NonEmptyVector[NonEmptyText] =
@@ -121,7 +124,7 @@ object Text {
       override protected def issueInnerDesc = rule(runSubParser(InlineIssueDesc.parserI(project)(_).inline))
     }
 
-    override def parserI(p: Project)(i: ParserInput) = new Parser(p, i)
+    override protected[text] def parserI(p: Project)(i: ParserInput) = new Parser(p, i)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -145,7 +148,7 @@ object Text {
       override protected def issueInnerDesc =         rule(runSubParser(InlineIssueDesc.parserI(project)(_).inline))
     }
 
-    override def parserI(p: Project)(i: ParserInput) = new Parser(p, i)
+    override protected[text] def parserI(p: Project)(i: ParserInput) = new Parser(p, i)
 
     /** A text value that demonstrates all types of atoms. */
     def demo(reqId: ReqId, reqCodeId: ReqCodeId, useCaseStepId: UseCaseStepId, tagId: ApplicableTagId, issue: CustomIssueTypeId): NonEmptyText = {
@@ -190,7 +193,7 @@ object Text {
       override protected val additionalTokens = () => rule(hashToken | useCaseStepRef | reqRef)
     }
 
-    override def parserI(p: Project)(i: ParserInput) = new Parser(p, i)
+    override protected[text] def parserI(p: Project)(i: ParserInput) = new Parser(p, i)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -218,6 +221,6 @@ object Text {
       override protected def issueInnerDesc = rule(runSubParser(InlineIssueDesc.parserI(project)(_).inline))
     }
 
-    override def parserI(p: Project)(i: ParserInput) = new Parser(p, i)
+    override protected[text] def parserI(p: Project)(i: ParserInput) = new Parser(p, i)
   }
 }

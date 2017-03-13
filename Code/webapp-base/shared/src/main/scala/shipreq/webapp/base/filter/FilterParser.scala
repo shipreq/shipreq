@@ -2,13 +2,42 @@ package shipreq.webapp.base.filter
 
 import japgolly.microlibs.nonempty._
 import org.parboiled2.{Parser => _, _}
+import scala.util.{Failure, Success}
 import shipreq.webapp.base.data.HashRefKey
 import shipreq.webapp.base.data.ReqType.Mnemonic
-import shipreq.webapp.base.util.ParsingUtil
+import shipreq.webapp.base.util.{ParsingUtil, PreProcessed, PreProcessor}
 import ParsingUtil._
 import PotentialFilter._
 
 object FilterParser {
+
+  val preProcessor = PreProcessor.singleLine
+
+  def parse(input: String): Result =
+    parsePP(preProcessor(input))
+
+  def parsePP(input: PreProcessed): Result = {
+    val parser = new FilterParser(input.value)
+    parser.main.run() match {
+      case Failure(e: ParseError) => Result.ParseException(e, parser.formatError(e, _))
+      case Failure(e: Throwable)  => Result.GeneralException(e)
+      case Success(None)          => Result.BlankFilter
+      case Success(Some(pf))      => Result.Filter(pf)
+    }
+  }
+
+  sealed abstract class Result
+  object Result {
+    case object BlankFilter extends Result
+    case class Filter(pf: PotentialFilter) extends Result
+    case class GeneralException(t: Throwable) extends Result
+    case class ParseException(error: ParseError, formatter: ErrorFormatter => String) extends Result {
+      def format: String =
+        format(new ErrorFormatter())
+      def format(ef: ErrorFormatter): String =
+        formatter(ef)
+    }
+  }
 
   // Allows ' / -
   val simpleTextChar =
@@ -26,7 +55,7 @@ object FilterParser {
   private val mkIntSet: (Int, Option[Int]) => NonEmptySet[Int] =
     (a, o) =>
       o.fold(NonEmptySet one a) { b =>
-        val s = (if (a < b) (a to b) else (b to a)).toSet
+        val s = (if (a < b) a to b else b to a).toSet
         NonEmptySet force s
       }
 
@@ -55,7 +84,7 @@ object FilterParser {
         AllOf(nev))
 }
 
-class FilterParser(val input: ParserInput) extends ParsingUtil {
+private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
   import FilterParser._
 
   private def OWS = rule(zeroOrMore(Whitespace))
