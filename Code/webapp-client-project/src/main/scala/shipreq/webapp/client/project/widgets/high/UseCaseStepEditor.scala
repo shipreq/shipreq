@@ -159,7 +159,7 @@ object UseCaseStepEditor {
   }
 
   val Component =
-    ScalaComponent.build[Props]("UseCaseStepEditor")
+    ScalaComponent.builder[Props]("UseCaseStepEditor")
       .renderBackend[Backend]
       .configure(
         Reusability.shouldComponentUpdate,

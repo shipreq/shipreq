@@ -136,7 +136,7 @@ private[fields] object MainTable {
     State._appReqTypeState(id).set(None)
 
   val Component =
-    ScalaComponent.build[Props]("Cfg: Fields")
+    ScalaComponent.builder[Props]("Cfg: Fields")
       .initialState_P(initialState)
       .renderBackend[Backend]
       .configure(

@@ -20,7 +20,7 @@ object RowDetailButton {
     }
   }
 
-  val Component = ScalaComponent.build[Props]("RowFocus")
+  val Component = ScalaComponent.builder[Props]("RowFocus")
     .render_P(render)
     .build
 

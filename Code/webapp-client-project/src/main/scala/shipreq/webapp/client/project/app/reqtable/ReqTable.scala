@@ -23,7 +23,7 @@ import shipreq.webapp.client.project.widgets.high.ProjectWidgets
 object ReqTable {
 
   def apply(staticProps: StaticProps) =
-    ScalaComponent.build[DynamicProps]("ReqTable")
+    ScalaComponent.builder[DynamicProps]("ReqTable")
       .backend(new Backend(staticProps, _))
       .renderBackend
       .build
@@ -257,7 +257,7 @@ object ReqTable {
 
   // ===================================================================================================================
 
-  val StatsSummary = ScalaComponent.build[TableStats]("Stats")
+  val StatsSummary = ScalaComponent.builder[TableStats]("Stats")
     .render_P(stats =>
       <.div(
         *.statsSummary,

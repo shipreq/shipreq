@@ -37,7 +37,7 @@ object UseCaseStepTree {
     @inline def render = Component(this)
   }
 
-  val Component = ScalaComponent.build[Props]("UseCaseStepTree")
+  val Component = ScalaComponent.builder[Props]("UseCaseStepTree")
     .render_P(render)
     .build
 

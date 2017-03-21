@@ -213,7 +213,7 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
       $.modState(State.reqTable.modify(_ updateProject c.p2))
   }
 
-  val Component = ScalaComponent.build[Props]("LoadedRoot")
+  val Component = ScalaComponent.builder[Props]("LoadedRoot")
     .initialState(State.init(cd))
     .renderBackend[Backend]
     .configure(Listenable.listen(_ => cd, _.backend.onProjectChange))

@@ -2,6 +2,7 @@ package shipreq.webapp.client.base.jsfacade
 
 import japgolly.scalajs.react._
 import scalajs.js
+import scalajs.js.annotation.JSName
 import shipreq.base.util.Memo
 
 /**
@@ -11,12 +12,16 @@ import shipreq.base.util.Memo
  */
 object ReactCollapse {
 
+  @JSName("ReactCollapse")
+  @js.native
+  object RawComp extends js.Object
+
   @js.native
   trait Props extends js.Object {
     var isOpened: Boolean = js.native
   }
 
-  val component = JsComponent[Props, Children.Varargs, Null]("ReactCollapse")
+  val component = JsComponent[Props, Children.Varargs, Null](RawComp)
 
   @inline def apply(isOpened: Boolean) =
     applyFn(isOpened)

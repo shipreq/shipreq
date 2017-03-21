@@ -98,7 +98,7 @@ object SortEditor {
       dnd.Component(p.value.all.whole)
   }
 
-  val Component = ScalaComponent.build[Props]("SortEditor")
+  val Component = ScalaComponent.builder[Props]("SortEditor")
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

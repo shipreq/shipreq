@@ -9,7 +9,7 @@ object AutosizeTextarea {
   def apply(tagMods: TagMod*) =
     Component(TagMod(tagMods: _*))
 
-  val Component = ScalaComponent.build[TagMod]("AutosizeTextarea")
+  val Component = ScalaComponent.builder[TagMod]("AutosizeTextarea")
     .render_P(<.textarea(_))
     .componentDidMount   (i => Callback(Autosize.init   (i.getDOMNode)))
     .componentDidUpdate  (i => Callback(Autosize.update (i.getDOMNode)))

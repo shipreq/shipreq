@@ -32,7 +32,7 @@ import ExternalPubid.LookupFailure
 object ReqDetail {
 
   def apply(staticProps: StaticProps) =
-    ScalaComponent.build[DynamicProps]("ReqDetail")
+    ScalaComponent.builder[DynamicProps]("ReqDetail")
       .backend(new Backend(staticProps, _))
       .renderBackend
       .build

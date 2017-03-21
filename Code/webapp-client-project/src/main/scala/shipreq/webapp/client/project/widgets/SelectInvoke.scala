@@ -7,7 +7,7 @@ import shipreq.webapp.client.base.data.{Disabled, Enabled}
 object SelectInvoke {
 
   def Component[A: Equal](name: String) =
-    ScalaComponent.build[Props[A]](name)
+    ScalaComponent.builder[Props[A]](name)
       .render_P(render(_))
       .build
 

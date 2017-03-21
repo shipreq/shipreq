@@ -38,7 +38,7 @@ object CfgReqTypes {
   val changeListener = ChangeListener.store(savedRowStoreS)(_.customReqTypes, _.config.reqTypes.custom.get)
 
   val Component =
-    ScalaComponent.build[Props]("Cfg: Req Types")
+    ScalaComponent.builder[Props]("Cfg: Req Types")
       .initialState_P(initialState)
       .renderBackend[Backend]
       .configure(changeListener.install(_.clientData))

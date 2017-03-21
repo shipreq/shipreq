@@ -78,7 +78,7 @@ class CreationInterface($               : StateAccessPure[State],
       NonEmptyVector(blank) ++ grs.array :+ uc :+ rcg
     }
 
-  val Component = ScalaComponent.build[Props]("Creation")
+  val Component = ScalaComponent.builder[Props]("Creation")
     .render($ => render($.props))
     //    .configure(shouldComponentUpdate) TODO
     .build
@@ -189,7 +189,7 @@ class CreationInterface($               : StateAccessPure[State],
             <.td(ctrls(create, state.status, setStatus)))))
     }
 
-    val Component = ScalaComponent.build[Props]("CreateRCG").render_P(render).build
+    val Component = ScalaComponent.builder[Props]("CreateRCG").render_P(render).build
   }
 
   // ===================================================================================================================
@@ -314,7 +314,7 @@ class CreationInterface($               : StateAccessPure[State],
         ctrls(create, state.status, setStatus))
     }
 
-    val Component = ScalaComponent.build[Props]("CreateGR").render_P(render).build
+    val Component = ScalaComponent.builder[Props]("CreateGR").render_P(render).build
   }
 
   // ===================================================================================================================
@@ -367,6 +367,6 @@ class CreationInterface($               : StateAccessPure[State],
         ctrls(create, state.status, setStatus))
     }
 
-    val Component = ScalaComponent.build[Props]("CreateUC").render_P(render).build
+    val Component = ScalaComponent.builder[Props]("CreateUC").render_P(render).build
   }
 }

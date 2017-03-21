@@ -106,7 +106,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
   }
 
   val Component =
-    ScalaComponent.build[Props]("RichTextEditor:" + name)
+    ScalaComponent.builder[Props]("RichTextEditor:" + name)
       .renderBackend[Backend]
       .configure(
         Reusability.shouldComponentUpdate,

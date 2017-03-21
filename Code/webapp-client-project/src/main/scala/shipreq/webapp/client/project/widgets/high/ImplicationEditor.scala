@@ -185,7 +185,7 @@ object ImplicationEditor {
     Reusability.never // TODO Reusability.caseClass
 
   val Component =
-    ScalaComponent.build[Props]("ImpEditor")
+    ScalaComponent.builder[Props]("ImpEditor")
       .renderBackend[Backend]
       .configure(
         Reusability.shouldComponentUpdate,

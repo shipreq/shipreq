@@ -25,7 +25,7 @@ object SelectOne {
                       style   : TagMod = EmptyVdom)
 
   def Component[A: Equal] =
-    ScalaComponent.build[Props[A]]("SelectOne")
+    ScalaComponent.builder[Props[A]]("SelectOne")
       .render_P(render(_))
       .build
 

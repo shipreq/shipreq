@@ -73,7 +73,7 @@ object ReqTypeSelector {
     }
   }
 
-  val Component = ScalaComponent.build[Props]("ReqTypeSelector")
+  val Component = ScalaComponent.builder[Props]("ReqTypeSelector")
     .renderBackend[Backend]
     // .configure(Reusability.shouldComponentUpdate)
     .build

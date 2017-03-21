@@ -63,7 +63,7 @@ object ReqLookupPrompt {
     }
   }
 
-  val Component = ScalaComponent.build[Props]("ReqLookupPrompt")
+  val Component = ScalaComponent.builder[Props]("ReqLookupPrompt")
     .renderBackend[Backend]
     .build
 }

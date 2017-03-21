@@ -185,7 +185,7 @@ object DND { // TODO Remove? DragToReorder makes this redundant?
         ^.onDrop      ==> drop(p))
 
     def dndItemComponent[A](f: (TagMod, VdomTag, A) => VdomElement) =
-      ScalaComponent.build[(A, DND.Child.CProps[A])]("DndItem")
+      ScalaComponent.builder[(A, DND.Child.CProps[A])]("DndItem")
         .initialState(DND.Child.initialState)
         .renderPS { ($, props, s) =>
           val (a, p) = props
@@ -193,7 +193,7 @@ object DND { // TODO Remove? DragToReorder makes this redundant?
         }.build
 
     def dndItemComponentB[A, B](f: (TagMod, VdomTag, A, B) => VdomElement) =
-      ScalaComponent.build[(A, DND.Child.CProps[A], B)]("DndItem")
+      ScalaComponent.builder[(A, DND.Child.CProps[A], B)]("DndItem")
         .initialState(DND.Child.initialState)
         .renderPS { ($, props, s) =>
           val (a, p, b) = props

@@ -99,7 +99,7 @@ object Menu {
           divRightMenu(p.rightItems.map(_.cont): _*))
   }
 
-  val Component = ScalaComponent.build[Props]("Name")
+  val Component = ScalaComponent.builder[Props]("Name")
     .renderBackend[Backend]
     .componentDidMount(_.backend.enableDropdowns)
     .componentDidUpdate(_.backend.enableDropdowns)

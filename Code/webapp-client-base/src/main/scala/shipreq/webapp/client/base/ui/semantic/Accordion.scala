@@ -31,7 +31,7 @@ object Accordion {
     }
   }
 
-  val Component = ScalaComponent.build[Props]("Accordion")
+  val Component = ScalaComponent.builder[Props]("Accordion")
     .renderBackend[Backend]
     .componentDidMount(_.backend.open)
     .build

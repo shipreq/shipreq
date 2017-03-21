@@ -10,7 +10,7 @@ import shipreq.webapp.client.base.lib.ClientUtil
 object ISubsetEditor {
 
   def Component[A: UnivEq](staticProps: StaticProps[A]) =
-    ScalaComponent.build[Mode[A]]("ISubsetEditor")
+    ScalaComponent.builder[Mode[A]]("ISubsetEditor")
       .backend(new Backend(_, staticProps))
       .renderBackend
       .build

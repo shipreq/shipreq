@@ -68,7 +68,7 @@ object ImplicationGraph {
       }
   }
 
-  val Component = ScalaComponent.build[Props]("ImplicationGraph")
+  val Component = ScalaComponent.builder[Props]("ImplicationGraph")
     .initialState(initialState)
     .renderBackend[Backend]
     .configure(graphConfig)

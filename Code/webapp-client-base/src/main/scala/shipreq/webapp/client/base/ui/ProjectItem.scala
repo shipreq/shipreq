@@ -130,7 +130,7 @@ object ProjectItem {
           p.state.value.fold(renderView(p))(renderEditor(p, _)))
     }
 
-    val Component = ScalaComponent.build[Props]("ProjectItem")
+    val Component = ScalaComponent.builder[Props]("ProjectItem")
       .renderBackend[Backend]
       // .configure(Reusability.shouldComponentUpdate)
       .build

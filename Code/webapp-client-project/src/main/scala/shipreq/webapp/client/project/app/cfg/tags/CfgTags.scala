@@ -156,7 +156,7 @@ private[tags] object MainTable {
     s => if (State.detailRow.get(s) exists closeCondition) State.detailRow.set(None)(s) else s
 
   val Component =
-    ScalaComponent.build[Props]("Cfg: Tags")
+    ScalaComponent.builder[Props]("Cfg: Tags")
       .initialState_P(initialState)
       .renderBackend[Backend]
       .configure(changeListener.install(_.clientData))

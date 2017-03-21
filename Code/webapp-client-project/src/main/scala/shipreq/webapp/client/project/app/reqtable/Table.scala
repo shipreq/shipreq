@@ -36,7 +36,7 @@ object Table {
                    modViewSettings: EndoFn[ViewSettings] ~=> Callback)
 
   val Component =
-    ScalaComponent.build[Props]("Table")
+    ScalaComponent.builder[Props]("Table")
       .renderBackend[Backend]
       .configure(shouldComponentUpdate)
       .build
@@ -84,7 +84,7 @@ object Table {
 
   implicit val headerPropReuse = Reusability.caseClass[HeaderProps]
 
-  val HeaderComponent = ScalaComponent.build[HeaderProps]("Header")
+  val HeaderComponent = ScalaComponent.builder[HeaderProps]("Header")
     .renderBackend[HeaderBackend]
     .configure(shouldComponentUpdate)
     .build
@@ -154,7 +154,7 @@ object Table {
   implicit val rowPropReuse = Reusability.caseClass[RowProps]
 
   val RowComponent =
-    ScalaComponent.build[RowProps]("Row")
+    ScalaComponent.builder[RowProps]("Row")
       .render_P(renderRow)
       .configure(shouldComponentUpdate)
       .build
@@ -238,7 +238,7 @@ object Table {
   implicit val cellPropReuse = Reusability.caseClass[CellProps]
 
   val CellComponent =
-    ScalaComponent.build[CellProps]("Cell")
+    ScalaComponent.builder[CellProps]("Cell")
       .renderBackend[CellBackend]
       .configure(shouldComponentUpdate)
       .build

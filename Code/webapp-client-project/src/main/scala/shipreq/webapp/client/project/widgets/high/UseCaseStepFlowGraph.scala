@@ -26,7 +26,7 @@ object UseCaseStepFlowGraph {
       Cmd.GraphUseCaseStepFlow(p.id, p.useCases)
   }
 
-  val Component = ScalaComponent.build[Props]("UseCaseStepFlowGraph")
+  val Component = ScalaComponent.builder[Props]("UseCaseStepFlowGraph")
     .initialState(initialState)
     .renderBackend[Backend]
     .configure(graphConfig)

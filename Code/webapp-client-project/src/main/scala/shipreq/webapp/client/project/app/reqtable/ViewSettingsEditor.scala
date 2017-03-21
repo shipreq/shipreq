@@ -20,7 +20,7 @@ object ViewSettingsEditor {
   implicit val propsReuse = Reusability.caseClass[Props]
 
   val Component =
-    ScalaComponent.build[Props]("ViewSettingsEditor")
+    ScalaComponent.builder[Props]("ViewSettingsEditor")
       .renderBackend[Backend]
       .configure(shouldComponentUpdate)
       .build

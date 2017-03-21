@@ -55,7 +55,7 @@ object Home {
         .render
   }
 
-  val Component = ScalaComponent.build[Props]("Home")
+  val Component = ScalaComponent.builder[Props]("Home")
     .initialState_P(p => State("", AsyncActionFeature.D0.initState, p.data.projects))
     .renderBackend[Backend]
     .build
@@ -111,7 +111,7 @@ object HomeContent {
     }
   }
 
-  val Component = ScalaComponent.build[Props]("Home")
+  val Component = ScalaComponent.builder[Props]("Home")
     .renderBackend[Backend]
     .build
 

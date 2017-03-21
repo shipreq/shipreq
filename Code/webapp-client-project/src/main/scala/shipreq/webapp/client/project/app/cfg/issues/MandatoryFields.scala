@@ -25,7 +25,7 @@ private[issues] object MandatoryFields {
 
   val changeListener = ChangeListener.store(rowStore)(_.customFieldTypes, _.config.fields.customFields.get)
 
-  val Component = ScalaComponent.build[Props]("MandatoryFields")
+  val Component = ScalaComponent.builder[Props]("MandatoryFields")
     .initialState_P(initialState)
     .renderBackend[Backend]
     .configure(

@@ -137,7 +137,7 @@ object TagEditor {
   }
 
   val Component =
-    ScalaComponent.build[Props]("TagEditor")
+    ScalaComponent.builder[Props]("TagEditor")
       .renderBackend[Backend]
       .configure(
         Reusability.shouldComponentUpdate,

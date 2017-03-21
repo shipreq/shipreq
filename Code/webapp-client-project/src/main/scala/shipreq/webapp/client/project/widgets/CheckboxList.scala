@@ -28,7 +28,7 @@ class CheckboxList[A: Reusability](renderFn: Vector[VdomTag] => VdomElement) {
         <.label(box, i.label)
       })
 
-  val Component = ScalaComponent.build[Props[A]]("Columns")
+  val Component = ScalaComponent.builder[Props[A]]("Columns")
     .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build

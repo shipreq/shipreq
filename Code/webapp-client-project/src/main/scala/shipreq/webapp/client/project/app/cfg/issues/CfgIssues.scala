@@ -21,7 +21,7 @@ object CfgIssues {
   }
 
   val Component =
-    ScalaComponent.build[Props]("Cfg: Issues")
+    ScalaComponent.builder[Props]("Cfg: Issues")
       .render_P { p =>
         import p._
         <.section(

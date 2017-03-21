@@ -34,7 +34,7 @@ object FilterEditor {
   def initialState = State("", None)
 
   val Component =
-    ScalaComponent.build[Props]("Filter")
+    ScalaComponent.builder[Props]("Filter")
       .renderBackend[Backend]
       .configure(
         shouldComponentUpdate,

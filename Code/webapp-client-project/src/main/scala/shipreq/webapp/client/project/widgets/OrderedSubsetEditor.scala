@@ -61,7 +61,7 @@ final class OrderedSubsetEditor[A: Equal] {
                    styles   : (A, On) => Styles = _noStyle)
 
   val Component =
-    ScalaComponent.build[Props]("OrderedSubsetEditor")
+    ScalaComponent.builder[Props]("OrderedSubsetEditor")
       .initialState(DND.Parent.initialState[A])
       .renderBackend[Backend]
       .build

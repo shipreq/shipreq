@@ -104,7 +104,7 @@ private[tags] object DetailPane {
       }
   }
 
-  val Component = ScalaComponent.build[Props]("Cfg: Tag Detail")
+  val Component = ScalaComponent.builder[Props]("Cfg: Tag Detail")
     .initialState[State](DND.Parent.initialState)
     .renderBackend[Backend]
     .build

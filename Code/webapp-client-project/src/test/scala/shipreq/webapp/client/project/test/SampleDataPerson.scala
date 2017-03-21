@@ -126,7 +126,7 @@ object SampleDataPerson {
       }
     }
 
-    val Component = ScalaComponent.build[Props]("NewAndSavedRowState")
+    val Component = ScalaComponent.builder[Props]("NewAndSavedRowState")
       .initialState(NewAndSavedRowState.initialState)
       .renderBackend[Backend]
       .build

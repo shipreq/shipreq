@@ -35,7 +35,7 @@ object ColumnsEditor {
     checkboxList.Component(p2)
   }
 
-  val Component = ScalaComponent.build[Props]("ColumnsEditor")
+  val Component = ScalaComponent.builder[Props]("ColumnsEditor")
     .render_P(render)
     .configure(shouldComponentUpdate)
     .build

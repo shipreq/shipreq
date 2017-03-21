@@ -221,7 +221,7 @@ final class DragToReorder[A](updateItems: Vector[A] => Callback,
     }
   }
 
-  val Component = ScalaComponent.build[Props]("DND")
+  val Component = ScalaComponent.builder[Props]("DND")
     .initialState[State](None)
     .renderBackend[Backend]
     .build
