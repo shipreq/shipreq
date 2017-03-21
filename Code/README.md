@@ -64,5 +64,33 @@ Development
 Releasing
 =========
 
-`bin/release`
-Deployment TODO.
+TODO
+
+Modules
+=======
+
+base-db   - Reusable utility code for DB access.
+base-test - Reusable utility code for testing.
+base-util - Reusable utility code, general purpose.
+
+taskman-api-impl      - Taskman API (real: side-effects)
+taskman-api-logic     - Taskman API (pure: types and logic)
+taskman-server-impl   - Taskman server (real: side-effects). Exported via Docker.
+taskman-server-logic  - Taskman server (pure: types and logic)
+taskman-server-schema - Taskman DB schema
+
+webapp-base             - Shared code between front- and back-end.
+webapp-base-server      - Shared code backend and frontend tests. Exposure to non-test frontend would be a security flaw.
+webapp-base-test        - Shared code for webapp testing. Tests for webapp-base.
+webapp-client-base      - Shared code for frontend projects.
+webapp-client-base-test - Shared code for testing frontend projects.
+webapp-client-home      - SPA for when a user logs in. Project CRUDL, view/edit account, etc.
+webapp-client-project   - SPA for working with a Project.
+webapp-client-ww        - WebWorkers for big background tasks like graphviz→SVG generation.
+webapp-client-ww-api    - API to above.
+webapp-gen              - Provides a hardcoded loading screen for webapp-client-home to serve until the read JS loads and replaces it.
+webapp-macro            - Macros used in webapp-base.
+webapp-server           - Webapp server. Exported via Docker.
+
+benchmark - Various benchmarks.
+utils     - Utilities for devs to run manually. Not really used anymore.
