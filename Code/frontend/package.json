@@ -1,0 +1,21 @@
+{
+  "name": "shipreq",
+  "version": "2.0.0",
+  "private": true,
+  "dependencies": {
+    "autosize": "3.0.15",
+    "jquery": "2.2.4",
+    "jquery-textcomplete": "1.4.0",
+    "katex": "0.6.0",
+    "moment": "2.13.0",
+    "react": "15.4.2",
+    "react-collapse": "2.3.1",
+    "react-dom": "15.4.2",
+    "react-height": "2.1.1",
+    "react-motion": "0.4.4",
+    "semantic-ui": "2.2.2"
+  },
+  "devDependencies": {
+    "json5": "^0.5.1"
+  }
+}
