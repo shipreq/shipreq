@@ -94,9 +94,6 @@ class Boot extends DI {
     LiftRules.exceptionHandler.prepend {
       case (_, r, e) => ExceptionHandler.handleServerError(r, e)
     }
-
-    // Add support for HAML/Jade template (must be after other LiftRules)
-    ScamlJade.init()
   }
 
   def initOshiro(): Unit =

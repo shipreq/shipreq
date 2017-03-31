@@ -166,8 +166,6 @@ object Dependencies {
   val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "2.6.1")
   val flyway      = jvmOnly("com.googlecode.flyway"       % "flyway-core"           % "2.3.1")
   val logback     = jvmOnly("ch.qos.logback"              % "logback-classic"       % "1.2.1")
-  val scalate     = jvmOnly("org.scalatra.scalate"       %% "scalate-core"          % "1.8.0") ++
-                    jvmOnly("org.scalatra.scalate"       %% "scalamd"               % "1.7.0") // why again?
   val commonsLang = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.5")
   val commonsIo   = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.42.0")

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link data-lift="Assets.favicon" />
+  <title data-lift="Menu.title"></title>
+</head>
+
+<body id="ly-default">
+  <div id="ly-hdrbody">
+    <div class="ly-content">
+      <header>
+        <div class="loginInfo">
+          <div data-lift="Authenticated">Logged in as <b>@<span data-lift="LoggedInUser.username"></span></b>.
+            <a data-lift="PageLink.logout"></a>
+          </div>
+          <div data-lift="Authenticated.not">
+            <a data-lift="PageLink.home"></a>|
+            <a data-lift="PageLink.login"></a>|
+            <a data-lift="PageLink.register1"></a>
+          </div>
+        </div>
+        <section data-lift="Notices" id="notices"></section>
+      </header>
+      <div id="content">CONTENT GOES HERE</div>
+    </div>
+    <div id="ly-footer-push"></div>
+  </div>
+  <footer id="ly-footer">
+    <div class="ly-content">&copy; 2013-2014 Bearded Logic|
+      <a data-lift="PageLink.about"></a>|
+      <a data-lift="PageLink.tos"></a>|
+      <a data-lift="PageLink.privacy"></a>
+    </div>
+  </footer>
+</body>
+
+</html>
