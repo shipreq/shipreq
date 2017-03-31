@@ -1,0 +1,41 @@
+#!/bin/bash
+cd "$(dirname "$(readlink -e "$0")")" || exit 1
+
+args="$@"
+[ $# -eq 0 ] && args=(dev prod)
+
+webpack="node_modules/.bin/webpack --progress --config"
+webtamp="node_modules/.bin/webtamp --config"
+# webtamp="/home/golly/projects/webtamp/src/cli.js --config"
+
+clear
+
+for mode in "${args[@]}"; do
+  echo "--------------------------------------------------------------------------------"
+  echo "[$mode]"
+  case "$mode" in
+
+    dev|prod)
+
+      # Clean
+      target1=/tmp/shipreq.webpack.$mode
+      target2=dist/$mode
+      rm -rf $target1 $target2
+
+      # Webpack
+      $webpack webpack/$mode.js || exit $?
+      rm -f $target1/{public,sir}.js # These are empty. Their entrypoints in webpack exist for CSS only.
+      echo
+
+      # Webtamp
+      $webtamp webtamp/$mode.js || exit $?
+
+      # Done
+      echo
+      du -sch $target2/*
+      ;;
+
+    *) echo What?
+  esac
+  echo
+done

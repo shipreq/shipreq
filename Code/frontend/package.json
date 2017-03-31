@@ -7,6 +7,7 @@
     "jquery": "2.2.4",
     "jquery-textcomplete": "1.4.0",
     "katex": "0.6.0",
+    "loadjs": "2.1.0",
     "moment": "2.13.0",
     "react": "15.4.2",
     "react-collapse": "2.3.1",
@@ -16,6 +17,16 @@
     "semantic-ui": "2.2.2"
   },
   "devDependencies": {
-    "json5": "^0.5.1"
+    "camelcase": "^4.1.0",
+    "css-loader": "^0.28.0",
+    "expose-loader": "^0.7.3",
+    "extract-text-webpack-plugin": "^2.1.0",
+    "file-loader": "^0.10.1",
+    "json5": "^0.5.1",
+    "less-loader": "^4.0.3",
+    "style-loader": "^0.16.1",
+    "webpack": "^2.3.2",
+    "webpack-merge": "^4.1.0",
+    "webtamp": "^0.1.1"
   }
 }
