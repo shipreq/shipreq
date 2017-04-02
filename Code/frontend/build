@@ -32,7 +32,7 @@ for mode in "${args[@]}"; do
 
       # Done
       echo
-      du -sch $target2/*
+      du -sh $target2/serve
       ;;
 
     *) echo What?

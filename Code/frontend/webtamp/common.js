@@ -17,7 +17,7 @@ const makeConfig = ({ mode, name, htmlMinifyOptions }) => {
     src: Path.resolve(__dirname, ".."),
 
     output: {
-      dir: `dist/${mode}`,
+      dir: `dist/${mode}/serve`,
       name: name,
       manifest: false,
     },
@@ -86,7 +86,7 @@ const makeConfig = ({ mode, name, htmlMinifyOptions }) => {
       Webtamp.plugins.Inline.data(i => /\.(svg|png)$/.test(i.dest) && i.size() < 4096),
       Webtamp.plugins.Html.replace(),
       htmlMinifyOptions && Webtamp.plugins.Html.minify({options: htmlMinifyOptions}),
-      Webtamp.plugins.ScalaManifest({ object: "shipreq.webapp.base.AssetManifest", outputPath: 'scala' }),
+      Webtamp.plugins.ScalaManifest({ object: "shipreq.webapp.base.AssetManifest", outputPath: '../scala' }),
     ],
   }
 };
