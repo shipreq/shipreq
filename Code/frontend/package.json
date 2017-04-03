@@ -24,6 +24,7 @@
     "file-loader": "^0.10.1",
     "json5": "^0.5.1",
     "less-loader": "^4.0.3",
+    "react-addons-test-utils": "^15.4.2",
     "style-loader": "^0.16.1",
     "webpack": "^2.3.2",
     "webpack-merge": "^4.1.0",

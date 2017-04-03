@@ -147,7 +147,7 @@ object WebappBuild {
         useMacroParadise)
         // Common.jsFastDevSettings,
       .settings(
-        jsDependencies in Test += ProvidedJS / "shipreq-client-test.js")
+        jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
 
   lazy val webappClientWwApi =
     project("webapp-client-ww-api")
@@ -189,7 +189,7 @@ object WebappBuild {
         useMacroParadise)
         // Common.jsFastDevSettings,
       .settings(
-        jsDependencies in Test += ProvidedJS / "shipreq-client-test.js")
+        jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
 
   lazy val webappGenJvm = webappGen.jvm
   lazy val webappGenJs  = webappGen.js
