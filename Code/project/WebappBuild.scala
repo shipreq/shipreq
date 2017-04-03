@@ -63,7 +63,11 @@ object WebappBuild {
       .configureJvm(_.dependsOn(baseDb))
       .depsForJvm(postgresql)
 
-  val frontendDistDir = s"../frontend/dist/${if (releaseMode) "prod" else "dev"}"
+  object Frontend {
+    val dist = s"../frontend/dist/${if (releaseMode) "prod" else "dev"}"
+    val scala = s"$dist/scala"
+    val serve = s"$dist/serve"
+  }
 
   lazy val webappBaseJvm = webappBase.jvm
   lazy val webappBaseJs  = webappBase.js
@@ -78,7 +82,7 @@ object WebappBuild {
       .dependsOn(baseUtil, webappMacro)
       .configureBoth(useMacroParadise)
       .settings(
-        unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / frontendDistDir / "scala")
+        unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / Frontend.scala)
 
   lazy val webappBaseServerJvm = webappBaseServer.jvm
   lazy val webappBaseServerJs  = webappBaseServer.js
@@ -266,7 +270,8 @@ object WebappBuild {
       .settings(inConfig(Test)(Seq(
         fork                         := true,
         javaOptions                  += "-Drun.mode=test",
-        unmanagedResourceDirectories += baseDirectory.value / "src/main/webapp", // So templates load
+        unmanagedResourceDirectories += baseDirectory.value / Frontend.serve, // So templates load
+        unmanagedResourceDirectories += baseDirectory.value / "src/main/webapp", // Just in-case
         parallelExecution            := false) // Due to UserFixture+Oshiro and LiveTest
       ): _*)
 
