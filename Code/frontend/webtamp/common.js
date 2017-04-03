@@ -1,11 +1,14 @@
 const
   CamelCase = require('camelcase'),
   Path = require('path'),
-  Webtamp = require('webtamp');
-  // Webtamp = require('/home/golly/projects/webtamp/src/main');
+  Webtamp = require(process.env.WEBTAMP ? `${process.env.WEBTAMP}/src/main` : 'webtamp');
 
 
 const moduleVer = n => require(`../node_modules/${n}/package.json`).version;
+
+const fixLinksInLiftTemplates = i =>
+  /<head[ >]/.test(i.content()) ? t => t :
+  tag => tag.replace(/^(<link )/, '$1data-lift="head" ');
 
 const makeConfig = ({ mode, name, htmlMinifyOptions }) => {
 
@@ -26,7 +29,9 @@ const makeConfig = ({ mode, name, htmlMinifyOptions }) => {
 
       html: { type: 'local', src: 'shipreq/html', files: '**/*.html', outputName: '[path]/[basename]' },
 
-      images: { type: 'local', src: 'shipreq/assets', files: '*.{svg,ico,png}', manifest: CamelCase },
+      favicon: { type: 'local', src: 'shipreq/assets', files: 'favicon.ico', manifest: true },
+
+      images: { type: 'local', src: 'shipreq/assets', files: '*.{svg,png}', manifest: CamelCase },
 
       public: [
         fromWebpack({ files: 'public.css' }),
@@ -84,8 +89,8 @@ const makeConfig = ({ mode, name, htmlMinifyOptions }) => {
 
     plugins: [
       Webtamp.plugins.Inline.data(i => /\.(svg|png)$/.test(i.dest) && i.size() < 4096),
-      Webtamp.plugins.Html.replace(),
-      htmlMinifyOptions && Webtamp.plugins.Html.minify({options: htmlMinifyOptions}),
+      Webtamp.plugins.Html.replace({ modTag: fixLinksInLiftTemplates }),
+      htmlMinifyOptions && Webtamp.plugins.Html.minify({ options: htmlMinifyOptions }),
       Webtamp.plugins.ScalaManifest({ object: "shipreq.webapp.base.AssetManifest", outputPath: '../scala' }),
     ],
   }

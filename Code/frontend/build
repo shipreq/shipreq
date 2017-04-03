@@ -5,8 +5,9 @@ args="$@"
 [ $# -eq 0 ] && args=(dev prod)
 
 webpack="node_modules/.bin/webpack --progress --config"
-webtamp="node_modules/.bin/webtamp --config"
-# webtamp="/home/golly/projects/webtamp/src/cli.js --config"
+webtamp="node_modules/.bin/webtamp"
+[ -n "$WEBTAMP" ] && webtamp="$WEBTAMP/src/cli.js"
+webtamp="$webtamp --config"
 
 clear
 

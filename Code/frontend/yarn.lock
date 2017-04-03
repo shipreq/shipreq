@@ -4664,9 +4664,9 @@ webpack@^2.3.2:
     webpack-sources "^0.2.3"
     yargs "^6.0.0"
 
-webtamp@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/webtamp/-/webtamp-0.2.0.tgz#e253534ab42f97132f800be745ae4ea3d6ff283d"
+webtamp@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/webtamp/-/webtamp-0.3.0.tgz#f09bbbc93aed99f993c69e1304abb8055a93bab0"
   dependencies:
     camelcase "^4.0.0"
     commander "^2.9.0"
