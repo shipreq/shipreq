@@ -1,13 +1,9 @@
 package shipreq.webapp.base
 
 import shipreq.webapp.base.data.Project
-import WebappConfig.assetPath_/
 
+@deprecated("This should be synced with Lift", "")
 object URLs {
-  lazy val SvgSortAsc           = assetPath_/ + "sort-asc.svg"
-  lazy val SvgSortBlank         = assetPath_/ + "sort-blank.svg"
-  lazy val SvgSpinner           = assetPath_/ + "loading-spin.svg"
-  lazy val SvgShipreqCircleDark = assetPath_/ + "shipreq-circle-dark.svg"
 
   def PageLogout = "/logout"
 

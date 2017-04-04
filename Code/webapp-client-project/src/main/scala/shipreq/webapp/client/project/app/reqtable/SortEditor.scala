@@ -4,7 +4,7 @@ import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import shipreq.base.util.Memo
-import shipreq.webapp.client.project.app.Assets
+import shipreq.webapp.client.base.ClientResources
 import shipreq.webapp.client.project.app.Style.reqtable.{sortEditor => *}
 import shipreq.webapp.client.project.widgets.DragToReorder
 
@@ -27,15 +27,15 @@ object SortEditor {
   implicit val reusability = Reusability.caseClass[Props]
 
   val renderSortMethod = Memo[SortMethod, VdomElement] { m =>
-    import Assets._
+    import ClientResources._
     def pair(a: VdomTag, b: VdomTag) = <.div(a(*.sortMethodHalfTop), b(*.sortMethodHalfBottom))
     val tag = m match {
-      case SortMethod.Asc            => sortSvgAsc(*.sortMethodFull)
-      case SortMethod.Desc           => sortSvgDesc(*.sortMethodFull)
-      case SortMethod.AscThenBlanks  => pair(sortSvgAsc, sortSvgBlank)
-      case SortMethod.DescThenBlanks => pair(sortSvgDesc, sortSvgBlank)
-      case SortMethod.BlanksThenAsc  => pair(sortSvgBlank, sortSvgAsc)
-      case SortMethod.BlanksThenDesc => pair(sortSvgBlank, sortSvgDesc)
+      case SortMethod.Asc            => sortAscImg(*.sortMethodFull)
+      case SortMethod.Desc           => sortDescImg(*.sortMethodFull)
+      case SortMethod.AscThenBlanks  => pair(sortAscImg, sortBlankImg)
+      case SortMethod.DescThenBlanks => pair(sortDescImg, sortBlankImg)
+      case SortMethod.BlanksThenAsc  => pair(sortBlankImg, sortAscImg)
+      case SortMethod.BlanksThenDesc => pair(sortBlankImg, sortDescImg)
     }
     tag(^.title :=  m.description)
   }

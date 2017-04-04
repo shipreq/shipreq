@@ -1,0 +1,68 @@
+// This generates stuff needed locally (as opposed to assets that will be served.)
+
+const
+  Path = require('path'),
+  Webpack = require('webpack'),
+  NodeModules = Path.resolve(__dirname, '../node_modules');
+
+const config = {
+
+  entry: {
+    'webapp-gen-deps': [
+      'expose-loader?React!react',
+      'expose-loader?ReactDOM!react-dom',
+      'expose-loader?ReactDOMServer!react-dom/server',
+    ],
+    'webapp-client-test': [
+      'expose-loader?React!react',
+      'expose-loader?ReactDOM!react-dom',
+      'expose-loader?ReactDOMServer!react-dom/server',
+      'expose-loader?React.addons.TestUtils!react-addons-test-utils',
+      'expose-loader?ReactCollapse!react-collapse',
+      'expose-loader?moment!moment',
+      'expose-loader?autosize!autosize',
+      'expose-loader?jQuery!jquery',
+      'expose-loader?$!jquery',
+      'jquery-textcomplete',
+      './semantic-ui/semantic/dist/semantic.min',
+    ],
+  },
+
+  output: {
+    path: Path.resolve(__dirname, '../dist/local'),
+    filename: '[name].js',
+    chunkFilename: 'chunk-[name]-[id].[ext]',
+  },
+
+  context: Path.resolve(__dirname, '..'),
+
+  resolve: { modules: [NodeModules] },
+  resolveLoader: { modules: [NodeModules] },
+
+  plugins: [
+    new Webpack.NoEmitOnErrorsPlugin(),
+
+    new Webpack.LoaderOptionsPlugin({
+      minimize: true,
+    }),
+
+    new Webpack.DefinePlugin({
+      'process.env.NODE_ENV': JSON.stringify('production')
+    }),
+
+    new Webpack.optimize.UglifyJsPlugin({
+      compress: {
+        screw_ie8: true,
+        warnings: false,
+      },
+      output: {
+        comments: false,
+      },
+      sourceMap: false,
+    }),
+  ],
+
+  bail: true,
+};
+
+module.exports = config;

@@ -1,0 +1,26 @@
+<div data-lift="surround?with=blank;at=content">
+  <require asset="public" />
+  <main id="lp">
+    <a data-lift="PageLink.login" class="btn btn-success" id="login">Login »</a>
+    <img src="webtamp://manifest/shipreqHugePng" alt="ShipReq" id="logo">
+    <div id="logo-sub">Better <strong>requirements</strong> ship better products.</div>
+    <table id="mid">
+      <tr>
+        <td id="midleft">
+          <p id="p1">
+            <x data-lift="Config.appName"></x> is a modern, online tool<br>for requirements development and management,<br>currently in private beta phase.</p>
+          <p id="p2">Would you like to know more, or participate in the beta?<br>Get in touch!<span class="arrow-r"></span></p>
+        </td>
+        <td data-lift="LandingPage.form" id="form">
+          <form role="form" data-lift="form.ajax">
+            <div class="form-group"><input placeholder="Your name" class="form-control n"></div>
+            <div class="form-group"><input type="email" placeholder="Your email address" class="form-control e"></div>
+            <div class="form-group"><textarea placeholder="What would you like to say?" rows="11" class="form-control m"></textarea></div>
+            <div class="form-group newsletter"><label><input type="checkbox" value="1">Subscribe to newsletter</label></div>
+            <div class="form-group submit"><button type="submit" class="btn btn-primary">Express Interest</button></div>
+          </form>
+        </td>
+      </tr>
+    </table>
+  </main>
+</div>

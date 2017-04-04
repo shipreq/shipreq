@@ -235,6 +235,7 @@ object Common {
           requiresDOM                         := true,
           emitSourceMaps in fastOptJS in Test := false, // PhantomJS doesn't use
           jsEnv                       in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
+//          emitSourceMaps in fastOptJS in Test := true)
     }
 
   def dockerBaseSettings(name: String): Project => Project =

@@ -2,9 +2,9 @@ package shipreq.webapp.server.app
 
 import org.apache.commons.httpclient.{HttpClient, HttpMethodBase}
 import org.scalatest.FunSpec
+import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.server.app.AppSiteMap.Implicits._
 import shipreq.webapp.server.app.AppSiteMap._
-import shipreq.webapp.server.snippet.Assets
 import shipreq.webapp.server.test.UserFixture.TestUser
 import shipreq.webapp.server.test.{DbUtil, LiveTest, UserFixture}
 
@@ -40,7 +40,7 @@ class LivePermissionTest extends FunSpec with LiveTest {
   lazy val pid = dbu.newProjectId(user1.id)
 
   describe("/") {
-    val member = Assets.MemberDeps.next.assets.head.path
+    val member = AssetManifest.webappClientHomeJs
     val anon   = "/login"
 
     it("anon") {

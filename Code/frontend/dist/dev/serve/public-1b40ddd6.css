@@ -1,0 +1,310 @@
+@charset "UTF-8";
+.alert {
+  margin: 20px auto 20px auto;
+  max-width: 480px;
+}
+.alert p:last-child {
+  margin-bottom: 0;
+}
+.hidden2 {
+  display: none;
+}
+textarea {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  margin-bottom: 0;
+  resize: none;
+  overflow: hidden;
+  outline: none;
+}
+abbr.timeago[title] {
+  border-bottom: none !important;
+}
+.centred_form {
+  margin: 1cm auto 1cm auto;
+}
+.centred_form h2 {
+  margin-bottom: 0.8em;
+}
+.centred_form p {
+  margin-bottom: 1.6em;
+}
+.centred_form.login,
+.centred_form#register1Form {
+  width: 44ex;
+}
+.centred_form#resetpw1Form {
+  width: 54ex;
+}
+.centred_form#resetpw2Form {
+  width: 90ex;
+}
+.dropdown-menu > li {
+  text-align: left;
+  padding-right: 0;
+}
+html,
+body {
+  height: 100%;
+}
+#ly-default #ly-hdrbody {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  min-height: 100%;
+  height: auto !important;
+  height: 100%;
+  padding-top: 4px;
+  margin-bottom: -26px;
+}
+#ly-default #ly-footer,
+#ly-default #ly-footer-push {
+  height: 26px;
+}
+#ly-default #ly-footer {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  background-color: #f5f5f5;
+  border-top: solid 1px #ececec;
+}
+#ly-default #ly-footer .ly-content {
+  margin-top: 3px;
+  font-size: 12px;
+  font-family: monospace;
+  color: #808080;
+  text-align: center;
+}
+#ly-default .ly-content {
+  width: auto;
+  margin-left: 30px;
+  margin-right: 30px;
+}
+#ly-default #content {
+  margin-top: 2.3em;
+}
+.ly-blank-body {
+  margin: 1.4em 0.6cm 0 0.6cm;
+  padding-bottom: 0.6cm;
+}
+#err500 {
+  max-width: 80ex;
+  margin: 3em auto 0 auto;
+  font-size: 125%;
+}
+#err500 section.h h1 {
+  color: #b00;
+  margin-bottom: 0.6em;
+}
+#err500 section.h p {
+  margin: 0.4em 0 0 0;
+}
+#err500 section.b {
+  margin-top: 4em;
+}
+#err500 section.b h3 {
+  color: #007;
+  margin-bottom: 0.35em;
+}
+#err500 section.b p {
+  margin: 0.25em 0 0 0;
+}
+.loginInfo {
+  text-align: center;
+}
+#register2 {
+  width: 590px;
+  margin: 1cm auto 1cm auto;
+}
+#register2 h1 {
+  margin-bottom: 1em;
+  text-align: center;
+}
+#register2 .alert h3 {
+  margin-top: 0.3em;
+}
+#register2 .alert a {
+  text-decoration: underline;
+}
+#register2 .tos label {
+  font-weight: normal;
+}
+#dynmodal.password-change .modal-dialog {
+  width: 410px;
+}
+#dynmodal.password-change .modal-dialog .submit {
+  text-align: right;
+}
+#dynmodal.confirm-danger .type-to-confirm .ctls {
+  text-align: center;
+}
+#dynmodal.confirm-danger .modal-footer {
+  text-align: right;
+}
+#dynmodal.project-del .modal-dialog {
+  width: 500px;
+}
+#dynmodal.project-del .a {
+  color: #d80000;
+}
+#dynmodal.project-del .b {
+  margin-top: 2em;
+}
+blockquote.rndquote {
+  max-width: 94ex;
+  margin-left: auto;
+  margin-right: auto;
+}
+blockquote.rndquote * {
+  color: #555;
+}
+blockquote.rndquote footer {
+  text-align: right;
+  font-size: 85%;
+}
+blockquote.rndquote footer:before {
+  content: "\2014   ";
+}
+blockquote.rndquote footer cite + cite:before {
+  content: ", ";
+}
+blockquote.rndquote footer cite.title {
+  font-style: italic;
+}
+blockquote.rndquote .errcost {
+  margin-top: -0.5em;
+}
+blockquote.rndquote .errcost tr > *:first-child {
+  padding-right: 2em;
+}
+blockquote.rndquote .errcost tr:nth-child(2) td {
+  padding-top: 0.3em;
+}
+blockquote.rndquote .errcost th {
+  border-bottom: solid 1px #222;
+  font-size: 1.3em;
+  font-weight: normal;
+  padding-bottom: 0.3em;
+  padding-top: 0;
+}
+blockquote.rndquote .errcost th + th,
+blockquote.rndquote .errcost td + td {
+  text-align: center;
+}
+.browser-warning {
+  margin: 1ex;
+  border: solid 1px #cdcd75;
+}
+.browser-warning .t {
+  padding: 4px;
+  width: 100%;
+  background: #ff9;
+  font-size: 1.25em;
+}
+.browser-warning a {
+  color: #d00;
+}
+.legaldoc section {
+  margin-top: 2em;
+}
+.legaldoc section .h {
+  color: #111;
+  font-weight: bold;
+}
+.legaldoc section li {
+  margin-bottom: 0.4em;
+}
+.legaldoc footer {
+  margin-top: 2em;
+}
+.legaldoc footer .lastupdated {
+  color: #444;
+}
+.legaldoc footer .lastupdated time {
+  text-decoration: underline;
+}
+.legaldoc footer .generatedby {
+  margin-top: 1ex;
+  font-size: 10px;
+  color: #bbb;
+}
+#lp {
+  width: 1024px;
+  margin: 12px auto 0 auto;
+}
+#lp #login {
+  float: right;
+  font-weight: bold;
+}
+#lp #logo {
+  float: left;
+  width: 682.66666667px;
+}
+#lp #logo-sub {
+  clear: both;
+  font-size: 30px;
+  color: #252a2f;
+}
+#lp #mid {
+  width: 100%;
+}
+#lp #mid td {
+  vertical-align: top;
+}
+#lp #midleft {
+  padding-left: 11ex;
+  padding-top: 7em;
+}
+#lp #midleft #p1 {
+  font-size: 20px;
+  line-height: 1.2em;
+  color: #2d2d2d;
+}
+#lp #midleft #p2 {
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1.7em;
+  margin-top: 2.2em;
+  color: #111;
+}
+#lp #midleft #p2 .arrow-r {
+  -webkit-transform: rotate(360deg);
+  border-style: dashed;
+  border-color: transparent;
+  border-width: 0.53em;
+  display: -moz-inline-box;
+  display: inline-block;
+  height: 0;
+  line-height: 0;
+  position: relative;
+  vertical-align: middle;
+  width: 0;
+  top: -0.13em;
+  border-left: solid 1em #9fc4e8;
+  left: 0.25em;
+}
+#lp #form form {
+  margin-top: 4em;
+  float: right;
+  border: solid 1px #c0d6e9;
+  padding: 1.5ex;
+  background: #e5edf3;
+  width: 40ex;
+}
+#lp #form form .form-control {
+  border-color: #d3e3f0;
+}
+#lp #form form .form-group.submit {
+  text-align: center;
+  margin-bottom: 0;
+}
+#lp #form form .form-group.submit button {
+  font-weight: bold;
+}
+#lp #form form .newsletter {
+  text-align: center;
+}
+#lp #form form .newsletter label {
+  font-weight: normal;
+}

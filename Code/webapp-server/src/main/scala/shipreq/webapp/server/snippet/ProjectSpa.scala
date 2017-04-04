@@ -185,7 +185,8 @@ class ProjectSpa(projectId: ProjectId) extends SingleOpStatefulSnippet {
       case Some(p) =>
         "*" #> (
           ProjectSpaLoader.xml(user.username, p) :+
-            ClientFn.ProjectSpa.htmlToLoadJsAndRun(Assets.ProjectSpa)(initData(user.username, p)))
+            ClientFn.ProjectSpa.htmlToRunOnLoad(initData(user.username, p)))
+//            ClientFn.ProjectSpa.htmlToLoadJsAndRun(Assets.ProjectSpa)(initData(user.username, p)))
 
       case None =>
         redirectHome()

@@ -1,0 +1,19 @@
+<div data-lift="surround?with=public;at=content">
+  <require asset="public" />
+  <div data-lift="Quotes"></div>
+  <div data-lift="Register1">
+    <div class="alert alert-info" id="registrationDisabled">
+      <h2>Registration is temporarily disabled.</h2></div>
+    <div class="centred_form" id="register1Form">
+      <h2>Create Account</h2>
+      <form data-lift="form.ajax">
+        <div class="form-group"><input type="email" placeholder="Email Address" class="form-control" id="email"></div>
+        <div class="form-group"><button type="submit" class="btn btn-primary">Register</button></div>
+      </form>
+    </div>
+    <div class="hidden2 alert alert-success" id="emailSent">
+      <p>An email has been sent to you to for verification.</p>
+      <p>Please check your email and follow the instruction therein.</p>
+    </div>
+  </div>
+</div>

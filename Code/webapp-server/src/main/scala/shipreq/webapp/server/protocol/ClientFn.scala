@@ -5,7 +5,6 @@ import java.nio.ByteBuffer
 import java.util.Base64
 import shipreq.base.util.Util.quickSB
 import shipreq.webapp.base.protocol.ClientFnDecl
-import shipreq.webapp.server.snippet.Asset
 import ClientFn.binaryToBase64
 
 final class ClientFn[I](decl: ClientFnDecl[I]) {
@@ -27,19 +26,19 @@ final class ClientFn[I](decl: ClientFnDecl[I]) {
       sb append ");"
     }
 
-  private def loadAsyncThenWhenReady(assets: Asset.InitAndNext[_], name: String = "x")
-                                    (onReady: StringBuilder => Unit): StringBuilder => Unit =
-    sb => {
-      sb append "loadjs("
-      sb append assets.nextPathsArray
-      sb append ",'"
-      sb append name
-      sb append "');loadjs.ready('"
-      sb append name
-      sb append "',{success:function(){"
-      onReady(sb)
-      sb append "}});"
-    }
+//  private def loadAsyncThenWhenReady(assets: Asset.InitAndNext[_], name: String = "x")
+//                                    (onReady: StringBuilder => Unit): StringBuilder => Unit =
+//    sb => {
+//      sb append "loadjs("
+//      sb append assets.nextPathsArray
+//      sb append ",'"
+//      sb append name
+//      sb append "');loadjs.ready('"
+//      sb append name
+//      sb append "',{success:function(){"
+//      onReady(sb)
+//      sb append "}});"
+//    }
 
   private val runCmdHead =
     s"${decl.objectName}().${decl.methodName}('"
@@ -55,17 +54,17 @@ final class ClientFn[I](decl: ClientFnDecl[I]) {
       runOnWindowLoad(
         run(i)))
 
-  def loadJsAndRun(assets: Asset.InitAndNext[_], name: String = "x")(i: I): String =
-    quickSB(
-      runOnWindowLoad(
-        loadAsyncThenWhenReady(assets, name)(
-          run(i))))
+//  def loadJsAndRun(assets: Asset.InitAndNext[_], name: String = "x")(i: I): String =
+//    quickSB(
+//      runOnWindowLoad(
+//        loadAsyncThenWhenReady(assets, name)(
+//          run(i))))
 
   def htmlToRunOnLoad(i: I) =
     <script type="text/javascript">{runOnLoad(i)}</script>
 
-  def htmlToLoadJsAndRun(assets: Asset.InitAndNext[_], name: String = "x")(i: I) =
-    <script type="text/javascript">{loadJsAndRun(assets, name)(i)}</script>
+//  def htmlToLoadJsAndRun(assets: Asset.InitAndNext[_], name: String = "x")(i: I) =
+//    <script type="text/javascript">{loadJsAndRun(assets, name)(i)}</script>
 }
 
 object ClientFn {

@@ -4,7 +4,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.data.Username
-import shipreq.webapp.base.{URLs, WebappConfig}
+import shipreq.webapp.base.{AssetManifest, URLs, WebappConfig}
 import shipreq.webapp.client.base.ClientConfig
 import shipreq.webapp.client.base.ui.semantic.{Breadcrumb, Dropdown, Icon, Menu, SemExtAny}
 
@@ -29,7 +29,7 @@ object MemberNavBar {
   private val itemLogo =
     Menu.Item.Div(
       <.img(
-        ^.src := URLs.SvgShipreqCircleDark,
+        ^.src := AssetManifest.shipreqCircleDarkSvg,
         ^.alt := WebappConfig.appName))
 
   private val breadcrumbStyle =

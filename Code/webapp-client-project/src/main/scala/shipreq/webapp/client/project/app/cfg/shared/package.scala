@@ -1,10 +1,10 @@
 package shipreq.webapp.client.project.app.cfg
 
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{CallbackTo, Callback}
+import japgolly.scalajs.react.{Callback, CallbackTo}
 import japgolly.scalajs.react.vdom.VdomElement
 import shipreq.webapp.base.UiText
-import shipreq.webapp.client.project.app.Assets
+import shipreq.webapp.client.base.ClientResources
 
 package object shared extends EditorExt {
 
@@ -23,7 +23,7 @@ package object shared extends EditorExt {
 
   def rowStatusCtrlsFold(rs: RowStatus, sync: => TagMod, locked: VdomTag => TagMod, failed: VdomTag => TagMod): TagMod = rs match {
     case RowStatus.Sync      => sync
-    case RowStatus.Locked    => locked(Assets.spinner)
+    case RowStatus.Locked    => locked(ClientResources.spinnerImg)
     case RowStatus.Failed(r) => failed(<.button(^.onClick --> r, UiText.Cfg.retryFailedButton))
   }
 

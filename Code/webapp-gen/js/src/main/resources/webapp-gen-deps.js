@@ -1,0 +1,1 @@
+../../../../../frontend/dist/local/webapp-gen-deps.js

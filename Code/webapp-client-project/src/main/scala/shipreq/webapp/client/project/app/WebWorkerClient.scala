@@ -5,9 +5,9 @@ import japgolly.scalajs.react.extra.Reusability
 import org.scalajs.dom.webworkers.Worker
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.AssetManifest
+import shipreq.webapp.client.ww.api.Client.codec.Reader
 import shipreq.webapp.client.ww.api._
-import Client.codec.Reader
 
 trait WebWorkerClient extends Client[Cmd, Reader] {
   def postCB[R: Reader](cmd: Cmd[R])(use: R => Callback): Callback =
@@ -17,7 +17,7 @@ trait WebWorkerClient extends Client[Cmd, Reader] {
 object WebWorkerClient {
 
   val Instance: WebWorkerClient = {
-    lazy val worker = new Worker(WebappConfig.assetPath_/ + "ww.js")
+    lazy val worker = new Worker(AssetManifest.webappClientWwJs)
     lazy val client = Client[Cmd](worker)
     new WebWorkerClient {
       override def post[A](cmd: Cmd[A])(implicit readResult: Reader[A]): Future[A] =
