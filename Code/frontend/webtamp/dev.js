@@ -2,6 +2,6 @@ const makeConfig = require('./common');
 
 module.exports = makeConfig({
   mode: 'dev',
-  name: '[name]-[hash:8].[ext]',
+  name: '[name].[ext]',
   sjsPath: n => `/shipreq-${n}.js`,
 });
