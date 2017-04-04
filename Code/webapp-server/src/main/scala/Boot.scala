@@ -4,7 +4,7 @@ import japgolly.microlibs.config.{Config, ConfigParser, ConfigReport}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import net.liftweb.common.Logger
-import net.liftweb.http.{LiftRules, LiftSession, S}
+import net.liftweb.http._
 import net.liftweb.util.Props
 import net.liftweb.util.Props.RunModes
 import scalaz.effect.IO
@@ -86,9 +86,39 @@ class Boot extends DI {
     // Force requests to be UTF-8
     LiftRules.early.append(_ setCharacterEncoding "UTF-8")
 
-    // Common headers: Remove X-Lift-Version, add X-Frame-Options
-    val suppHeaderList: List[(String, String)] = List("X-Frame-Options" -> "DENY")
-    LiftRules.supplementalHeaders.default.set(() => suppHeaderList)
+    // Security policies
+    LiftRules.securityRules = () => {
+      import ContentSourceRestriction._
+      val base = List(
+        Host("https:"), // allow any https content
+        Scheme("data"), // webtamp inlines small assets
+        Self)
+      val js =
+        UnsafeEval ::   // Lift itself needs this
+        UnsafeInline :: // old-school form snippets (like Login) use this
+        base
+      val css =
+        UnsafeInline :: // For React styles
+        base
+      val csp = ContentSecurityPolicy(
+        scriptSources  = js,
+        styleSources  = css,
+        imageSources   = Nil,
+        defaultSources = base)
+      SecurityRules(
+        https               = Some(HttpsRules.secure).filterNot(_ => Props.devMode || Props.testMode),
+        content             = Some(csp),
+        frameRestrictions   = Some(FrameRestrictions.Deny),
+        enforceInDevMode    = true,
+        enforceInOtherModes = true,
+        logInDevMode        = true,
+        logInOtherModes     = true)
+    }
+
+    // Remove X-Lift-Version
+    // (This must occur *after* securityRules)
+    val supplementalHeaders = LiftRules.supplementalHeaders.default.get().filterNot(_._1 == "X-Lift-Version")
+    LiftRules.supplementalHeaders.default.set(() => supplementalHeaders)
 
     // Custom error handling
     LiftRules.exceptionHandler.prepend {
