@@ -1,9 +1,3 @@
-Webpack
-  * Switch to scalajs-bundler with webpack
-  * Choose dev/prod webpack in docker instead of asset filtering
-  * See if dev/prod webpack would all same/dynamic URLs from within app
-    (Which would solve ProjectSpaLoader problem, and CDN use)
-
 Misc
   * Group req types in filter from ALL to ANY.
   * Say "no implications" in imp graph
