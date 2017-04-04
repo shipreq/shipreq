@@ -16,7 +16,7 @@
 ### Processing
 
 * `semantic-ui/update` - Rebuild Semantic UI.
-* `build` - Builds everything else.
+* `build` / `build-parallel` - Builds everything else.
   * `webpack` - Bundle config.
   * `webtamp` - Asset config.
 

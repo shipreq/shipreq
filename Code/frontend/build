@@ -9,9 +9,7 @@ webtamp="node_modules/.bin/webtamp"
 [ -n "$WEBTAMP" ] && webtamp="$WEBTAMP/src/cli.js"
 webtamp="$webtamp --config"
 
-clear
-
-for mode in "${args[@]}"; do
+for mode in ${args[@]}; do
   echo "--------------------------------------------------------------------------------"
   echo "[$mode]"
   case "$mode" in
