@@ -1,3 +1,10 @@
+Frontend
+  * Upgrade deps
+  * Switch to semantic-react
+  * Find alternative for jquery-textcomplete
+  * Remove jQuery
+  * Improve load times, maybe defer stuff like KaTeX? Or maybe on-demand loading?
+
 Misc
   * Group req types in filter from ALL to ANY.
   * Say "no implications" in imp graph
