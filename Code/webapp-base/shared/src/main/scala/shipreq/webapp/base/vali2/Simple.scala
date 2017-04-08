@@ -90,41 +90,7 @@ object Simple {
     def forField(name: String): Composite.Validator[I, C, V] =
       self.mapError(Composite.Invalidity.forField(name, _))
 
-    def named(fieldName: String): Named[I, C, V] =
-      Named(self, fieldName)
-  }
-
-  // ===================================================================================================================
-
-  import Composite.Stateful
-
-  /** When creating a simple validator, one often wants to give it (and all of its errors) a name so that they can be
-    * identified in a composite context (eg. a name validator's errors remain attributed to "name" when composed into a
-    * person validator). However there may be cases where one wants to use the validator in an isolated context without
-    * composition.
-    *
-    * This is retains the validator name and provides anonymous access via [[unnamed]] and named access in [[named]].
-    */
-  final class Named[I, C, V](val unnamed: Simple.Validator[I, C, V], val name: String) {
-
-    def named: Composite.Validator[I, C, V] =
-      unnamed.forField(name)
-
-    def map[II, CC, VV](f: Simple.Validator[I, C, V] => Simple.Validator[II, CC, VV]): Named[II, CC, VV] =
-      new Named(f(unnamed), name)
-
-    def appendInvalidator(i: Invalidator[V]): Named[I, C, V] =
-      map(_.appendInvalidator(i))
-
-    def lift[S]: Stateful[S, I, C, V] =
-      new Stateful(unnamed, _ => unnamed, name)
-
-    def stateful[S](addStatefulValidation: (Simple.Validator[I, C, V], S) => Simple.Validator[I, C, V]): Stateful[S, I, C, V] =
-      new Stateful(unnamed, addStatefulValidation(unnamed, _), name)
-  }
-
-  object Named {
-    def apply[I, C, V](simple: Simple.Validator[I, C, V], fieldName: String): Named[I, C, V] =
-      new Named(simple, fieldName)
+    def named(fieldName: String): Composite.Stateless[I, C, V] =
+      Composite.Stateless(self, fieldName)
   }
 }

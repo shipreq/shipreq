@@ -22,10 +22,10 @@ import Uniqueness.Util._
 
 object Validators2 {
 
-  private val genericName: Named[String, String, String] =
+  private val genericName: Composite.Stateless[String, String, String] =
     V.mandatoryShortText.toValidator.named(FieldNames.name)
 
-  private val genericDesc: Named[String, Option[String], Option[String]] =
+  private val genericDesc: Composite.Stateless[String, Option[String], Option[String]] =
     V.optionalLargeText.named(FieldNames.desc)
 
   //  def genericRichText(pt: PlainText.ForProject, txt: Text.AnyOptional): ValidationResult[txt.type] =
@@ -102,12 +102,13 @@ object Validators2 {
       (String, String, ImplicationRequired),
       (String, String, ImplicationRequired),
       (Mnemonic, String, ImplicationRequired)] =
-      s => mnemonic.composite(s) tuple name.composite(s) tuple Validator.id[ImplicationRequired]
+      s => mnemonic(s).named tuple name(s).named tuple Validator.id[ImplicationRequired]
   }
 
   // ===================================================================================================================
   object customIssueType {
     type Ctx = hashRefKey.Ctx
+    val Ctx = hashRefKey.Ctx
 
     def key = hashRefKey.hashRefKey
 
@@ -117,7 +118,7 @@ object Validators2 {
       (String, String),
       (String, Option[String]),
       (HashRefKey, Option[String])] =
-      s => key.composite(s) tuple desc.composite(s)
+      s => key(s).named tuple desc(s).named
   }
 
   // ===================================================================================================================
@@ -178,7 +179,7 @@ object Validators2 {
       (String, String, Mandatory, ApplicableReqTypes),
       (String, String, Mandatory, ApplicableReqTypes),
       (String, FieldRefKey, Mandatory, ApplicableReqTypes)] =
-      s => name.composite(s) tuple key.composite(s) tuple mandatory tuple reqTypes
+      s => name(s).named tuple key(s).named tuple mandatory tuple reqTypes
 
     object tagField {
       val tagId: Composite.Stateful[Ctx, Option[TagId], Option[TagId], TagId] =
@@ -191,7 +192,7 @@ object Validators2 {
         (Option[TagId], Mandatory, ApplicableReqTypes),
         (Option[TagId], Mandatory, ApplicableReqTypes),
         (TagId, Mandatory, ApplicableReqTypes)] =
-        (s: Ctx) => tagId.composite(s) tuple mandatory tuple reqTypes
+        (s: Ctx) => tagId(s).named tuple mandatory tuple reqTypes
     }
 
     object implField {
@@ -205,7 +206,7 @@ object Validators2 {
         (Option[ReqTypeId], Mandatory, ApplicableReqTypes),
         (Option[ReqTypeId], Mandatory, ApplicableReqTypes),
         (ReqTypeId, Mandatory, ApplicableReqTypes)] =
-        (s: Ctx) => reqTypeId.composite(s) tuple mandatory tuple reqTypes
+        (s: Ctx) => reqTypeId(s).named tuple mandatory tuple reqTypes
     }
   }
 
@@ -239,13 +240,13 @@ object Validators2 {
       (String, MutexChildren, String),
       (String, MutexChildren, Option[String]),
       (String, MutexChildren, Option[String])] =
-      s => name.composite(s) tuple Validator.id[MutexChildren] tuple desc.composite(s)
+      s => name(s).named tuple Validator.id[MutexChildren] tuple desc(s).named
 
     val applicableTag: Ctx => Composite.Validator[
       (String, String, String),
       (String, String, Option[String]),
       (String, HashRefKey, Option[String])] =
-      s => name.composite(s) tuple key.composite(s) tuple desc.composite(s)
+      s => name(s).named tuple key(s).named tuple desc(s).named
   }
 
   // ===================================================================================================================
@@ -253,7 +254,7 @@ object Validators2 {
     import Grammar.{reqCode => G}
     import ReqCode._
 
-    val node: Named[String, String, Node] =
+    val node: Composite.Stateless[String, String, Node] =
       G.tailChars.validator
         .append(G.nodeLength.validator)
         .prependCorrector(TextMod.squashUnderscores.correctLive)
