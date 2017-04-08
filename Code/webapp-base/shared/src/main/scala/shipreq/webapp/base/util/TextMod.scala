@@ -29,12 +29,20 @@ object TextMod {
   val whitespaceRegex: Regex =
     (CharSubset.Whitespace.regexChar + "+").r
 
+  // TODO do properly with unicode
+  val onlyAllowSpacesAsWhitespace =
+    regexReplace("[\t\r\n]+".r, " ")
+
+  // TODO do properly with unicode
+  val onlyAllowSpacesAndNewlinesAsWhitespace =
+    literal('\t', ' ')
+
   val singleLineWhitespace =
     regexReplace(whitespaceRegex, " ") andThen trim
 
   val multiLineWhitespace =
     regexReplace("\r\n?".r, "\n") andThen
-    literal('\t', ' ') andThen
+    onlyAllowSpacesAndNewlinesAsWhitespace andThen
     trim
 
   val noWhitespace =

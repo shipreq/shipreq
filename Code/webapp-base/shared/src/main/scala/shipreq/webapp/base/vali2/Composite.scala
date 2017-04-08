@@ -52,5 +52,18 @@ object Composite {
     */
   final class Stateful[S, I, C, V](val stateless: Simple.Validator[I, C, V],
                                    val simple   : S => Simple.Validator[I, C, V],
-                                   val composite: S => Composite.Validator[I, C, V])
+                                   val name     : String) {
+
+    import Simple.SimpleExt_Validator
+
+    val composite: S => Composite.Validator[I, C, V] =
+      s => simple(s).forField(name)
+
+    def contramap[SS](f: SS => S): Stateful[SS, I, C, V] =
+      new Stateful(stateless, simple compose f, name)
+
+    def map[II, CC, VV](f: Simple.Validator[I, C, V] => Simple.Validator[II, CC, VV]): Stateful[S, II, CC, VV] =
+      new Stateful(f(stateless), f compose simple, name)
+
+  }
 }

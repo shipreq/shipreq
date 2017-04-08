@@ -94,7 +94,7 @@ object WebappBuild {
         μPickle ++ Monocle.macros ++ shapeless ++ Nyaya.prop ++ parboiled ++ boopickle ++
         testScope(μTest)) // TODO Move tests into this
       .dependsOn(baseUtil, webappMacro)
-      .configureBoth(useMacroParadise)
+      .configureBoth(useMacroParadise, useKindProjector)
       .settings(
         unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / Frontend.scala)
 

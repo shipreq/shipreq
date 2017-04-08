@@ -1,7 +1,7 @@
 package shipreq.webapp.base.vali2
 
 import scalaz.Isomorphism.<=>
-import scalaz.{-\/, Semigroup, \/, \/-}
+import scalaz.{-\/, Applicative, Semigroup, Traverse, \/, \/-}
 import shipreq.base.util.{GenTuple, Identity}
 
 object Generic {
@@ -156,6 +156,18 @@ object Generic {
   object Invalidator {
     def id[A]: Invalidator[Nothing, A] =
       Invalidator(_ => None)
+
+    implicit def VarianceBypass[E, A](a: Invalidator[E, A]): VarianceBypass[E, A] = new VarianceBypass(a.invalidate)
+    final class VarianceBypass[E, A](private val invalidate: A => Option[E]) extends AnyVal {
+
+      def liftTraverse[T[_]](implicit T: Traverse[T], E: Semigroup[E]): Invalidator[E, T[A]] =
+        Invalidator(ta => {
+          val ok: E \/ Unit = \/-(())
+          val result: E \/ Unit = T.traverse_(ta)(invalidate(_).fold(ok)(-\/(_)))(AccumuateErrors.applicativeInstance)
+          val G = AccumuateErrors.applicativeInstance[E]
+          result.fold(Some(_), _ => None)
+        })
+    }
   }
 
   // ===================================================================================================================
@@ -166,6 +178,9 @@ object Generic {
 
     def contramap[A](f: A => C): Auditor[E, A, V] =
       Auditor(audit compose f)
+
+    def andThen[EE >: E, A](next: Auditor[EE, V, A]): Auditor[EE, C, A] =
+      Auditor(audit(_).flatMap(next.audit))
 
     def mapError[F](f: E => F): Auditor[F, C, V] =
       Auditor(audit(_) leftMap f)
@@ -184,7 +199,7 @@ object Generic {
         val (c1, c2) = C.init(cc)
         def v1 = audit(c1)
         def v2 = b.audit(c2)
-        errorApply(v1, v2)(V.append)(E)
+        AccumuateErrors(v1, v2)(V.append)(E)
       })
 
     def liftOption: Auditor[E, Option[C], Option[V]] =
@@ -192,20 +207,48 @@ object Generic {
         case None    => \/-(None)
         case Some(c) => audit(c).map(Some(_))
       })
+
+    def toInvalidator: Invalidator[E, C] =
+      Invalidator(audit(_).swap.toOption)
+
+    def toValidator: Validator[E, C, C, V] =
+      Validator(Corrector.id, this)
   }
 
   object Auditor {
     def id[A]: Auditor[Nothing, A, A] =
       Auditor(\/-(_))
+
+    def sequence[E, F[_], A](implicit T: Traverse[F], E: Semigroup[E]): Auditor[E, F[E \/ A], F[A]] =
+      Auditor(i => T.sequence(i)(AccumuateErrors.applicativeInstance(E)))
+
+    def traverse[E, F[_], A, B](f: A => E \/ B)(implicit T: Traverse[F], E: Semigroup[E]): Auditor[E, F[A], F[B]] =
+      Auditor(fa => T.traverse(fa)(f)(AccumuateErrors.applicativeInstance(E)))
+
+    implicit def VarianceBypass[E, C, V](a: Auditor[E, C, V]): VarianceBypass[E, C, V] = new VarianceBypass(a.audit)
+    final class VarianceBypass[E, C, V](private val audit: C => E \/ V) extends AnyVal {
+
+      def liftTraverse[T[_]](implicit T: Traverse[T], E: Semigroup[E]): Auditor[E, T[C], T[V]] =
+        Auditor.traverse(audit)
+    }
   }
 
-  def errorApply[E, A, B, C](x: E \/ A, y: E \/ B)(f: (A, B) => C)(implicit E: Semigroup[E]): E \/ C =
-    (x, y) match {
-      case (\/-(a), \/-(b)) => \/-(f(a, b))
-      case (\/-(_), e@ -\/(_)) => e
-      case (e@ -\/(_), \/-(_)) => e
-      case (-\/(e1), -\/(e2)) => -\/(E.append(e1, e2))
-    }
+  object AccumuateErrors {
+
+    def apply[E, A, B, C](x: E \/ A, y: E \/ B)(f: (A, B) => C)(implicit E: Semigroup[E]): E \/ C =
+      (x, y) match {
+        case (\/-(a), \/-(b)) => \/-(f(a, b))
+        case (\/-(_), e@ -\/(_)) => e
+        case (e@ -\/(_), \/-(_)) => e
+        case (-\/(e1), -\/(e2)) => -\/(E.append(e1, e2))
+      }
+
+    def applicativeInstance[E](implicit E: Semigroup[E]): Applicative[E \/ ?] =
+      new Applicative[E \/ ?] {
+        override def point[A](a: => A) = \/-(a)
+        override def ap[A, B](fa: => E \/ A)(fab: => E \/ (A => B)) = AccumuateErrors(fa, fab)((a, f) => f(a))(E)
+      }
+  }
 
   // ===================================================================================================================
   // Correction + Validation
@@ -256,6 +299,12 @@ object Generic {
 
     def appendInvalidator[EE >: E](i: Invalidator[EE, V]) =
       mapAuditor(_.appendInvalidator(i))
+
+    def andThen[EE >: E, C2, V2](next: Validator[EE, V, C2, V2])(implicit E: Semigroup[EE]): Validator[EE, I, C, V2] =
+      mapAuditor(_.andThen(next.toAuditor[EE]))
+
+    def toAuditor[EE >: E]: Auditor[EE, I, V] =
+      Auditor(apply)
 
     def tuple[EE >: E, I2, C2, V2, II, CC, VV](that: Validator[EE, I2, C2, V2])(implicit E: Semigroup[EE], I: GenTuple[I, I2, II], C: GenTuple[C, C2, CC], V: GenTuple[V, V2, VV]): Validator[EE, II, CC, VV] =
       Validator(

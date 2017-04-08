@@ -7,6 +7,8 @@ import scala.runtime.AbstractFunction1
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.Util
 import shipreq.webapp.base.validation.{Constraints, Rules}
+import shipreq.webapp.base.vali2.CommonValidation
+import shipreq.webapp.base.vali2.Simple.{EndoValidator, Invalidity, Invalidator}
 
 /**
   * Various aids to facilitate building a grammar specification that can be used to enforcement code.
@@ -32,6 +34,8 @@ object GrammarSpec {
 
   class CharWhitelist(chn: String, ch1: Char, rs: NumericRange[Char]*)(ruleErrMsg: String) extends Chars(chn, ch1, rs: _*) {
     final val rule = Rules.whitelistCharsR(regex, ruleErrMsg)
+    final val validator: EndoValidator[String] =
+      CommonValidation.endoValidator.whitelistCharRangeRegex(regex, Invalidity(ruleErrMsg))
   }
 
   object CharWhitelist {
@@ -40,6 +44,9 @@ object GrammarSpec {
 
   class FirstChar(chn: String, ch1: Char, rs: NumericRange[Char]*)(ruleErrMsg: String) extends Chars(chn, ch1, rs: _*) {
     final val constraint = Constraints.startsWithR(one)(ruleErrMsg)
+
+    final val invalidator: Invalidator[String] =
+      CommonValidation.invalidator.startsWithRegex(one)(Invalidity(ruleErrMsg))
   }
 
   object FirstChar {
@@ -52,6 +59,9 @@ object GrammarSpec {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   case class Length(total: Range.Inclusive) {
+    final val validator: EndoValidator[String] =
+      CommonValidation.endoValidator.lengthInRange(total)
+
     val rule     = Rules lengthInRange total
     val minus1   = (total.min - 1) to (total.max - 1)
     def regexMod = s"{${total.min},${total.max}}"

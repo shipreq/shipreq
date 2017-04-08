@@ -1,7 +1,7 @@
 package shipreq.webapp.base.vali2
 
 import japgolly.microlibs.nonempty.NonEmptySet
-import scalaz.{-\/, Endo, \/-}
+import scalaz.{-\/, Applicative, Endo, \/, \/-}
 
 object Simple {
 
@@ -13,6 +13,9 @@ object Simple {
 
     def toText(i: Invalidity): String =
       i.whole.mkString("\n")
+
+    val applicative: Applicative[Invalidity \/ ?] =
+      Generic.AccumuateErrors.applicativeInstance[Invalidity]
   }
 
   type EndoCorrector[A] = Generic.EndoCorrector[A]
@@ -79,7 +82,8 @@ object Simple {
       Validator(self.corrector.toCorrector, self.invalidator.toAuditor)
   }
 
-//  final implicit class SimpleExt_Auditor[C, V](private val self: Auditor[C, V]) extends AnyVal {
+//  implicit def SimpleExt_Auditor[C, V](a: Auditor[C, V]): SimpleExt_Auditor[C, V] = new SimpleExt_Auditor(a.audit)
+//  final class SimpleExt_Auditor[C, V](private val audit: C => Invalidity \/ V) extends AnyVal {
 //  }
 
   final implicit class SimpleExt_Validator[I, C, V](private val self: Validator[I, C, V]) extends AnyVal {
@@ -99,27 +103,24 @@ object Simple {
     * person validator). However there may be cases where one wants to use the validator in an isolated context without
     * composition.
     *
-    * This is retains the validator name and provides anonymous access via [[simple]] and named access in [[composite]].
+    * This is retains the validator name and provides anonymous access via [[unnamed]] and named access in [[named]].
     */
-  final class Named[I, C, V](val simple: Simple.Validator[I, C, V], val name: String) {
+  final class Named[I, C, V](val unnamed: Simple.Validator[I, C, V], val name: String) {
+
+    def named: Composite.Validator[I, C, V] =
+      unnamed.forField(name)
 
     def map[II, CC, VV](f: Simple.Validator[I, C, V] => Simple.Validator[II, CC, VV]): Named[II, CC, VV] =
-      new Named(f(simple), name)
+      new Named(f(unnamed), name)
 
     def appendInvalidator(i: Invalidator[V]): Named[I, C, V] =
       map(_.appendInvalidator(i))
 
-    def composite: Composite.Validator[I, C, V] =
-      simple.forField(name)
-
     def lift[S]: Stateful[S, I, C, V] =
-      stateful((s, _) => s)
+      new Stateful(unnamed, _ => unnamed, name)
 
     def stateful[S](addStatefulValidation: (Simple.Validator[I, C, V], S) => Simple.Validator[I, C, V]): Stateful[S, I, C, V] =
-      new Stateful[S, I, C, V](
-        simple,
-        addStatefulValidation(simple, _),
-        addStatefulValidation(simple, _).forField(name))
+      new Stateful(unnamed, addStatefulValidation(unnamed, _), name)
   }
 
   object Named {
