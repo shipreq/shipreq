@@ -3,7 +3,6 @@ package shipreq.webapp.client.project.app.cfg.shared
 import japgolly.scalajs.react._, ScalazReact._
 import japgolly.scalajs.react.extra.{Reusability, Px}
 import scalaz.Equal
-import shipreq.webapp.base.validation.Validator
 import Persistence.Realise
 
 /**
@@ -11,8 +10,8 @@ import Persistence.Realise
  */
 trait TypicalSupp[P, I, K, U] {
   val sas: TypicalStoresAndState[P, I, K]
-  protected val realise: Realise[sas.S]
-  protected val crudIO: Px[CrudActionIO[P, K, U, _]]
+  val realise: Realise[sas.S]
+  val crudIO: Px[CrudActionIO[P, K, U, _]]
 
   import sas._
 
@@ -23,19 +22,7 @@ trait TypicalSupp[P, I, K, U] {
   def saveNeed[B: Equal](extract: P => B) =
     SaveNeed.cmpToExtract[P, B](extract)
 
-  def addEditorFeatures[A, V](e: Editor[A, FS#FieldValue, CallbackTo, S, FS#Field, Callback, V])
-                             (vali: Validator[(Stream[P], Option[K]), I, _, U],
-                              ak: A => Option[K],
-                              extract: P => U)
-                             (implicit E: scalaz.Equal[U]) = {
-
-    val save = crudIO.map(c => Persistence.asyncSaveT(vali, sas)(saveNeed(extract), c, realise)).extract
-
-    e.applyRowUpdateAndRevert(savedRowStoreS, newRowStoreS)(ak)
-      .applyOnEditFinishedK(save)(ak)
-  }
-
-  def addEditorFeatures2[A, V](e: Editor[A, FS#FieldValue, CallbackTo, S, FS#Field, Callback, V])
+  def addEditorFeatures2[A, V](e: Editor[A, FS#FieldValue, CallbackTo, S, FS#Field, Callback, V]) // TODO remove
                               (saveFn: Option[K] => sas.ST,
                                ak: A => Option[K]) =
     e.applyRowUpdateAndRevert(savedRowStoreS, newRowStoreS)(ak)
@@ -49,7 +36,7 @@ object TypicalSupp {
   : TypicalSupp[P, I, K, U] {val sas: _sas.type} =
     new TypicalSupp[P, I, K, U] {
       override val sas: _sas.type = _sas
-      override protected val realise: Realise[sas.S] = _c.runState(_)
-      override protected val crudIO = Px(_crudIO: AnyRef).withReuse(Reusability.byRef).autoRefresh.asInstanceOf[Px[CrudActionIO[P, K, U, _]]]
+      override val realise: Realise[sas.S] = _c.runState(_)
+      override val crudIO = Px(_crudIO: AnyRef).withReuse(Reusability.byRef).autoRefresh.asInstanceOf[Px[CrudActionIO[P, K, U, _]]]
     }
 }

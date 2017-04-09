@@ -6,15 +6,14 @@ import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import scala.language.reflectiveCalls
-import scalajs.js.{undefined, UndefOr, Any => JsAny}
+import scalajs.js.{undefined, UndefOr}
 import scalaz.{Equal, -\/, \/-, \/}
-import scalaz.syntax.bind.ToBindOps
 
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.Validators.{field => V}
+import shipreq.webapp.base.data.Validators2.{field => V}
 import shipreq.webapp.base.protocol.FieldCrud
 import shipreq.webapp.base.UiText, UiText.FieldNames
 import shipreq.webapp.client.base.data._
@@ -150,12 +149,12 @@ private[fields] object MainTable {
       )
       .build
 
-  def validatorStateS(s: S, k: Option[CustomFieldId]): V.S = {
-    val customFieldStream = customFieldStores.flatMap(_.s.getAllP(s))
-    (customFieldStream, k)
+  def validatorStateS(s: S, k: Option[CustomFieldId]): V.State = {
+    lazy val data = customFieldStores.flatMap(_.s.getAllP(s))
+    V.State(k, () => data)
   }
 
-  val rowIdFromEditorInput: ((V.S, Any)) => Option[CustomFieldId] = _._1._2
+  val rowIdFromEditorInput: ((V.State, Any)) => Option[CustomFieldId] = _._1.subject
 
   val onWhenMandatory = On <=> Mandatory
 
@@ -169,14 +168,14 @@ private[fields] object MainTable {
     val projectBackend = projectPx.map(new ProjectBackend(this, _))
     val protocol = Px.props($).withReuse.autoRefresh.map(p => ProtocolBackend(p.cp, p.remote, p.clientData))
 
-    val nameE      = Editors.textInputEditor.applyValidator(V.nameS)
-    val refkeyE    = Editors.textInputEditor.applyValidator(V.keyS)
-    val mandatoryE = Editors.checkboxEditor.imap(onWhenMandatory).strengthL[V.S]
+    val nameE      = Editors.textInputEditor.applyStatefulValidator(V.name.unnamedFn)
+    val refkeyE    = Editors.textInputEditor.applyStatefulValidator(V.key.unnamedFn)
+    val mandatoryE = Editors.checkboxEditor.imap(onWhenMandatory).strengthL[V.State]
 
     def render(p: Props, s: S): VdomElement =
       projectBackend.value().render(p.filterDead.value, s)
 
-    def validatorState(k: Option[CustomFieldId]): S => V.S =
+    def validatorState(k: Option[CustomFieldId]): S => V.State =
       validatorStateS(_, k)
 
     val dndState = $.zoomStateL(State.dnd)
@@ -231,7 +230,7 @@ private[fields] object MainTable {
     val reqTypeSelector   = SelectOneStartNone.reqType(project.config.reqTypes.all.whole)
 
     val reqtypesE = appReqTypesEditor.editor($ zoomStateL State.appReqTypeStates)
-                      .cmapA[(V.S, ApplicableReqTypes)](_.map1(_._2))
+                      .cmapA[(V.State, ApplicableReqTypes)](_.map1(_.subject))
 
     object newFieldControl {
       import SelectOne.Choice
@@ -370,7 +369,7 @@ private[fields] object MainTable {
     val unusedField: VdomNode = "-"
 
     abstract class SubtypeRenderer[T <: CustomField, I, B, D, V](
-      final val editor: Editor[(V.S, I), B, CallbackTo, S, D, Callback, V],
+      final val editor: Editor[(V.State, I), B, CallbackTo, S, D, Callback, V],
       final val stores: NewAndSavedStores[S, CustomFieldId, T, I]) {
 
       val editable = editor.editableByRowStatus($)
@@ -429,7 +428,7 @@ private[fields] object MainTable {
       @inline def stores = text_storesS
       val toValues  = FieldCrud.TextFieldValues.apply _
       val toValuesT = toValues.tupled
-      val validator = V.textField map toValuesT
+      val validator = V.textField.andThen(_ mapValid toValuesT)
       val saveFn    =
         protocol.map(p =>
           Persistence.asyncSaveNS2(validator, stores, p.createIO)(p.updateValuesIO,
@@ -480,10 +479,10 @@ private[fields] object MainTable {
 
     val tag_editor = {
       @inline def stores = tag_storesS
-      val tagSelE   = tagSelector.editor.applyValidator(V.tagField.tagIdS)
+      val tagSelE   = tagSelector.editor.applyStatefulValidator(V.tagField.tagId.unnamedFn)
       val toValues  = FieldCrud.TagFieldValues.apply _
       val toValuesT = toValues.tupled
-      val validator = V.tagField.all map toValuesT
+      val validator = V.tagField.all.andThen(_ mapValid toValuesT)
       val saveFn    =
         protocol.map(p =>
           Persistence.asyncSaveNS2(validator, stores, p.createIO)(p.updateValuesIO,
@@ -534,10 +533,10 @@ private[fields] object MainTable {
 
     val impl_editor = {
       @inline def stores = impl_storesS
-      val reqTypeSelE = reqTypeSelector.editor.applyValidator(V.implField.reqTypeIdS)
+      val reqTypeSelE = reqTypeSelector.editor.applyStatefulValidator(V.implField.reqTypeId.unnamedFn)
       val toValues    = FieldCrud.ImplicationFieldValues.apply _
       val toValuesT   = toValues.tupled
-      val validator   = V.implField.all map toValuesT
+      val validator   = V.implField.all.andThen(_ mapValid toValuesT)
       val saveFn      =
         protocol.map(p =>
           Persistence.asyncSaveNS2(validator, stores, p.createIO)(p.updateValuesIO,
@@ -591,6 +590,7 @@ private[fields] object MainTable {
         case CustomFieldType.Tag         => tag_renderer
         case CustomFieldType.Implication => impl_renderer
       }
+
     val customFieldRenderers = CustomFieldType.values.toStream map rendererForType
   }
 }

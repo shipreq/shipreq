@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app.cfg.shared
 
 import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import scalaz.{Monad, ~>}
-import shipreq.webapp.base.validation._
+import shipreq.webapp.base.vali2._
 
 abstract class EditorExt {
   @inline implicit final def ___EditorExt_1    [A,B,M[_],S,C,D,V](e: Editor[A,B,M,S,C,D,V          ]): EditorExt.EditorExt_1    [A,B,M,S,C,D,V] = new EditorExt.EditorExt_1(e)
@@ -14,15 +14,14 @@ object EditorExt extends EditorExt {
 
   final class EditorExt_1[A,B,M[_],S,C,D,V](val e: Editor[A,B,M,S,C,D,V]) extends AnyVal {
 
-    def applyLiveCorrection(v: Validator[_, B, _, _]): Editor[A,B,M,S,C,D,V] =
-      e.pmodB { case OnChange(b) => v.liveCorrect(b) }
-
-    def applyPostCorrectionU[U](v: CorrectionPartU[B, U]): Editor[A,B,M,S,C,D,V] =
-      e.pmodB { case OnEditFinished(b) => v.ci(v.correctU(b).value) }
-
-    def applyPostCorrection[T, U](v: CorrectionPart[T, B, U])(f: A => T): Editor[A,B,M,S,C,D,V] =
-      e.modCallbacksA(a =>
-        _.pmodB{ case OnEditFinished(b) => v.ci(v.correct(f(a), b).value) })
+    def applyCorrection(correctorFn: A => Generic.Corrector[B, _]): Editor[A, B, M, S, C, D, V] =
+      e.modCallbacksA { a =>
+        val corrector = correctorFn(a)
+        _.pmodB {
+          case OnChange      (b) => corrector.live(b)
+          case OnEditFinished(b) => corrector.fullAndBack(b)
+        }
+      }
 
     def applyOnEditFinishedK[K](f: K => ReactST[M, S, Unit])(g: A => K)(implicit M: Monad[M]): Editor[A,B,M,S,C,D,V] =
       e.paddSTA(a => {
@@ -87,26 +86,20 @@ object EditorExt extends EditorExt {
     def labelSuffix(f: A => VdomNode): Editor[A,B,M,S,C,D,VdomElement] =
       wrapInLabel((a, i) => TagMod(i, f(a)))
 
-    def applyInputValidationU(v: ValidatorU[A, _, _]): Editor[A,B,M,S,C,D,VdomElement] =
-      renderOptionalError(i => v.correctAndValidateU(i).swap.toOption.map(_.toText))
-
-    def applyInputValidation[T, I](v: Validator[T, I, _, _])(s: A => T, i: A => I): Editor[A,B,M,S,C,D,VdomElement] =
-      renderOptionalError(a => v.correctAndValidate(s(a), i(a)).swap.toOption.map(_.toText))
-
-    def applyInputValidationL[T, I](v: Validator[T, A, _, _]) =
-      e.strengthL[T].applyInputValidation(v)(_._1, _._2)
+    def applyInputValidation[T, I](invalidate: Simple.Invalidator[A]): Editor[A, B, M, S, C, D, VdomElement] =
+      renderOptionalError(invalidate(_).map(Simple.Invalidity.toText))
   }
 
   final class EditorExt_IITag[I,M[_],S,C,D](val e: Editor[I,I,M,S,C,D,VdomElement]) extends AnyVal {
 
-    def applyValidatorU(v: ValidatorU[I, _, _]): Editor[I,I,M,S,C,D,VdomElement] =
-      e.applyInputValidationU(v)
-        .applyLiveCorrection(v)
-        .applyPostCorrectionU(v.cp)
+    def applyValidator(v: Simple.Validator[I, _, _]): Editor[I, I, M, S, C, D, VdomElement] =
+      e.applyInputValidation(v.toInvalidator)
+        .applyCorrection(_ => v.corrector)
 
-    def applyValidator[T](v: Validator[T, I, _, _]): Editor[(T, I), I, M, S, C, D, VdomElement] =
-      e.applyInputValidationL(v)
-        .applyLiveCorrection(v)
-        .applyPostCorrection(v.cp)(_._1)
+    def applyStatefulValidator[ValidatorState](v: ValidatorState => Simple.Validator[I, _, _]): Editor[(ValidatorState, I), I, M, S, C, D, VdomElement] =
+      e.strengthL[ValidatorState]
+        .applyInputValidation(Simple.Invalidator(x => v(x._1).toInvalidator(x._2)))
+        .applyCorrection(x => v(x._1).corrector)
   }
+
 }

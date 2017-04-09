@@ -306,6 +306,9 @@ object Generic {
     def toAuditor[EE >: E]: Auditor[EE, I, V] =
       Auditor(apply)
 
+    def toInvalidator[EE >: E]: Invalidator[EE, I] =
+      toAuditor.toInvalidator
+
     def tuple[EE >: E, I2, C2, V2, II, CC, VV](that: Validator[EE, I2, C2, V2])(implicit E: Semigroup[EE], I: GenTuple[I, I2, II], C: GenTuple[C, C2, CC], V: GenTuple[V, V2, VV]): Validator[EE, II, CC, VV] =
       Validator(
         corrector tuple that.corrector,

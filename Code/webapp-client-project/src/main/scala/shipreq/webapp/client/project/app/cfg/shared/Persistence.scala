@@ -5,7 +5,7 @@ import japgolly.scalajs.react.ScalazReact._
 import scalaz.{Need, Name}
 import shipreq.webapp.base.event.VerifiedEvents
 import shipreq.webapp.base.protocol.RemoteFn
-import shipreq.webapp.base.validation._
+import shipreq.webapp.base.vali2._
 import shipreq.webapp.client.base.data.TCB
 import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.state.ClientData
@@ -31,7 +31,7 @@ object Persistence {
   // ===================================================================================================================
   // Update
 
-  def asyncUpdate[S, T, P, U, I](validator: Validator[T, I, _, U],
+  def asyncUpdate[S, T, P, U, I](validator: T => Composite.Validator[I, _, U],
                                  st: S => T,
                                  si: S => I,
                                  sp: S => P,
@@ -57,13 +57,13 @@ object Persistence {
         Fix.ret(updateIO(p, u, s, f))
       }
       Fix.liftR(s =>
-        validator.correctAndValidate(st(s), si(s))
+        validator(st(s))(si(s))
           .fold(_ => abortSave, valid))
     })
   }
 
 
-  def asyncUpdateS[S, T, K, P, U, I](validator: Validator[T, I, _, U], store: SavedRowStore[S, K, P, I])
+  def asyncUpdateS[S, T, K, P, U, I](validator: T => Composite.Validator[I, _, U], store: SavedRowStore[S, K, P, I])
                                     (st: K => S => T,
                                      needSave: (P, U) => SaveNeed,
                                      updateIO: (P, U, TCB.Success, TCB.Failure) => Callback,
@@ -96,7 +96,7 @@ object Persistence {
   // ===================================================================================================================
   // Create
 
-  def asyncCreate[S, T, U, I](validator: Validator[T, I, _, U],
+  def asyncCreate[S, T, U, I](validator: T => Composite.Validator[I, _, U],
                               st: S => T,
                               si: S => Option[I],
                               removeNew: ReactS[S, Unit],
@@ -118,13 +118,13 @@ object Persistence {
       }
       Fix.liftR(s =>
         si(s).fold(Fix.nop)(i =>
-          validator.correctAndValidate(st(s), i)
+          validator(st(s))(i)
             .fold(_ => abortSave, valid)))
     })
   }
 
 
-  def asyncCreateS[S, T, U, I](validator: Validator[T, I, _, U], store: NewRowStore[S, I])
+  def asyncCreateS[S, T, U, I](validator: T => Composite.Validator[I, _, U], store: NewRowStore[S, I])
                               (st: S => T,
                                createIO: (U, TCB.Success, TCB.Failure) => Callback,
                                realise: Realise[S]): ST[S] =
@@ -139,7 +139,7 @@ object Persistence {
   // ===================================================================================================================
   // Save = Create | Update
 
-  def asyncSaveS[S, T, K, P, U, I](v: Validator[T, I, _, U], savedStore: SavedRowStore[S, K, P, I])
+  def asyncSaveS[S, T, K, P, U, I](v: T => Composite.Validator[I, _, U], savedStore: SavedRowStore[S, K, P, I])
                                   (newStore: NewRowStore[S, I],
                                    createT: S => T,
                                    updateT: K => S => T,
@@ -152,18 +152,7 @@ object Persistence {
     _.fold(create)(update)
   }
 
-
-  def asyncSaveT[K, P, U, I](v: Validator[(Stream[P], Option[K]), I, _, U], sas: TypicalStoresAndState[P, I, K])
-                            (needSave: (P, U) => SaveNeed,
-                             crudIO: CrudActionIO[P, _, U, _],
-                             realise: sas.ST => Callback): Option[K] => sas.ST =
-    asyncSaveS(
-      v, sas.savedRowStoreS)(sas.newRowStoreS,
-        sas.validatorInput(None), k => sas.validatorInput(Some(k)), needSave,
-        crudIO.createIO, crudIO.updateIO, realise)
-
-
-  def asyncSaveNS[S, T, K, P, U, I](v: Validator[T, I, _, U],
+  def asyncSaveNS[S, T, K, P, U, I](v: T => Composite.Validator[I, _, U],
                                     stores: NewAndSavedStores[S, K, P, I],
                                     createIO: (U, TCB.Success, TCB.Failure) => Callback)
                                    (updateIO: (P, U, TCB.Success, TCB.Failure) => Callback,
@@ -173,7 +162,7 @@ object Persistence {
     asyncSaveS(v, stores.s)(stores.n, t(None), k => t(Some(k)), needSave, createIO, updateIO, realise)
 
 
-  def asyncSaveNS2[S, T, K, P, U, I](v: Validator[T, I, _, U],
+  def asyncSaveNS2[S, T, K, P, U, I](v: T => Composite.Validator[I, _, U],
                                      stores: NewAndSavedStores[S, K, P, I],
                                      createIO: U => (TCB.Success, TCB.Failure) => Callback)
                                     (updateIO: (K, U) => (TCB.Success, TCB.Failure) => Callback,

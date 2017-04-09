@@ -8,18 +8,14 @@ import nyaya.prop.CycleDetector
 import nyaya.util.Multimap
 import scala.annotation.tailrec
 import scala.language.reflectiveCalls
-import scalajs.js.{undefined, UndefOr, UndefOrOps, Array => JsArray}
-import scalajs.js.JSConverters._
+import scalajs.js.{undefined, UndefOr}
 import scalaz.\&/
-import scalaz.syntax.bind.ToBindOps
-import scalaz.syntax.equal._
 
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{MMTree, Memo}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{TagId => Id, _}, DataImplicits._
-import shipreq.webapp.base.data.Validators.{tag => V}
-import shipreq.webapp.base.data.Validators.shared.HashRefKeyVS
+import shipreq.webapp.base.data.Validators2.{tag => V, hashRefKey => VH}
 import shipreq.webapp.base.protocol.TagCrud
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.base.data.{TCB, Disabled, On}
@@ -45,10 +41,10 @@ object CfgTags {
 import CfgTags.Props
 
 private[tags] object MainTable {
-  val nameE          = Editors.textInputEditor.applyValidator(V.nameS)
-  val keyE           = Editors.textInputEditor.applyValidator(V.keyS)
-  val descE          = Editors.textareaEditor.applyValidator(V.descS)
-  val mutexChildrenE = Editors.checkboxEditor.imap(On <=> MutexChildren).strengthL[V.S]
+  val nameE          = Editors.textInputEditor.applyStatefulValidator(V.name.unnamedFn)
+  val keyE           = Editors.textInputEditor.applyStatefulValidator(V.key.unnamedFn)
+  val descE          = Editors.textareaEditor.applyStatefulValidator(V.desc.unnamedFn)
+  val mutexChildrenE = Editors.checkboxEditor.imap(On <=> MutexChildren).strengthL[V.State]
 
   val tg_fields = FieldSet3[TagGroup](_.name, _.mutexChildren, _.desc getOrElse "")(("", MutexChildren.Not, ""))
   val at_fields = FieldSet3[ApplicableTag](_.name, _.key.value, _.desc getOrElse "")(("", "", ""))
@@ -162,7 +158,7 @@ private[tags] object MainTable {
       .configure(changeListener.install(_.clientData))
       .build
 
-  val rowIdFromEditorInput: ((V.S, Any)) => Option[Id] = _._1._2.tagData._1
+  val rowIdFromEditorInput: ((V.State, Any)) => Option[Id] = _._1.subject
 
   def newRowActive(s: State): Boolean =
     eachTypesStores.foldLeft(false)(_ || _.n.editing(s))
@@ -176,15 +172,15 @@ private[tags] object MainTable {
   def getTag(id: Id): S => Option[Tag] =
     s => eachTypesStores.foldLeft(none[Tag])(_ orElse _.s.getO(id)(s).map(_.p))
 
-  def validatorState(s: S, cd: ClientData, k: Option[Id]): V.S = {
-    val ts: HashRefKeyVS.Data[Id] =
-      (k, s.tagStream.map(t => t.keyO.map(k => (t.id.some, k))).filter(_.isDefined).map(_.get))
+  def validatorState(s: S, cd: CallbackTo[ClientData], k: Option[Id]): V.State = {
+    val customIssueTypeData: Px[List[(Option[CustomIssueTypeId], HashRefKey)]] =
+      Px.callback(cd.map(_.project().config.customIssueTypes)).withReuse(Reusability.byRef).autoRefresh
+        .map(_.valuesIterator.map(i => (i.id.some, i.key)).toList)
 
-    val is: HashRefKeyVS.Data[CustomIssueTypeId] = // TODO cacheable
-      (None, cd.project().config.customIssueTypes.values.toStream
-        .map(i => (i.id.some, i.key)))
+    val customIssueTypes: VH.SubState[CustomIssueTypeId] =
+      VH.SubState(None, () => customIssueTypeData.value())
 
-    (s.tagStream, HashRefKeyVS(ts, is))
+    V.State(k, () => s.tagStream, customIssueTypes)
   }
 
   // ===================================================================================================================
@@ -192,8 +188,8 @@ private[tags] object MainTable {
     val crudIO = Px.props($).withReuse.autoRefresh.map(p =>
       CrudActionIO(Tag, TagCrud.Fn)(p.cp, p.remote, p.clientData))
 
-    def validatorState(k: Option[Id]): S => V.S =
-      s => $.props.map(p => MainTable.validatorState(s, p.clientData, k)).runNow() // TODO runNow = safe?
+    def validatorState(k: Option[Id]): S => V.State =
+      s => MainTable.validatorState(s, $.props.map(_.clientData), k)
 
     def newTagControlProps(state: State) = NewTagControl.props(
       state.newSel,
@@ -275,7 +271,7 @@ private[tags] object MainTable {
     val unusedField: VdomNode = "-"
 
     abstract class SubtypeRenderer[T <: Tag, I, B, D, V](
-        final val editor: Editor[(V.S, I), B, CallbackTo, S, D, Callback, V],
+        final val editor: Editor[(V.State, I), B, CallbackTo, S, D, Callback, V],
         final val stores: NewAndSavedStores[S, Id, T, I]) {
 
       val editable = editor.editableByRowStatus($)
@@ -342,7 +338,7 @@ private[tags] object MainTable {
       val toValuesT = (toValues andThenA \&/.This.apply).tupled
       val saveFn    =
         crudIO.map(c =>
-          Persistence.asyncSaveNS(V.tagGroup map toValuesT, stores, c.createIO)(
+          Persistence.asyncSaveNS(V.tagGroup.andThen(_ mapValid toValuesT), stores, c.createIO)(
             c.updateIO,
             (t,u) => SaveNeed.equal(u.onlyThis.get, toValues(t.name, t.mutexChildren, t.desc)),
             validatorState,
@@ -379,7 +375,7 @@ private[tags] object MainTable {
       val toValuesT = (toValues andThenA \&/.This.apply).tupled
       val saveFn    =
         crudIO.map(c =>
-          Persistence.asyncSaveNS(V.applTag map toValuesT, stores, c.createIO)(c.updateIO,
+          Persistence.asyncSaveNS(V.applicableTag.andThen(_ mapValid toValuesT), stores, c.createIO)(c.updateIO,
           (t,u) => SaveNeed.equal(u.onlyThis.get, toValues(t.name, t.key, t.desc)),
           validatorState, $ runState _)
         ).extract
