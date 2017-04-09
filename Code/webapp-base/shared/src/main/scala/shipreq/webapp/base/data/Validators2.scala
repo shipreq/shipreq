@@ -47,18 +47,18 @@ object Validators2 {
     /** Validation state (external data) required to validate HashRefKey uniqueness. */
     // DD-19: Hashtag-like refkeys (groupings, incmp) must be unique.
     //        e.g. can't have both a grouping and an incompletion with refkey #X.
-    final case class Ctx(tags: SubCtx[TagId], customIssues: SubCtx[CustomIssueTypeId]) {
+    final case class State(tags: SubState[TagId], customIssues: SubState[CustomIssueTypeId]) {
       val invalidator: Invalidator[HashRefKey] =
         tags.invalidator merge customIssues.invalidator
     }
 
-    final case class SubCtx[Id: Equal](subject: Option[Id], data: () => TraversableOnce[(Option[Id], HashRefKey)]) {
+    final case class SubState[Id: Equal](subject: Option[Id], data: () => TraversableOnce[(Option[Id], HashRefKey)]) {
       def invalidator: Invalidator[HashRefKey] =
         Uniqueness.optionalKeyWithValue(data)(subject)
     }
 
     // DD-18: Hashtag-like refkeys (groupings, incmp) must match this format: /[A-Za-z0-9][A-Za-z0-9_-=.]*/
-    val hashRefKey: Composite.Stateful[Ctx, String, String, HashRefKey] =
+    val hashRefKey: Composite.Stateful[State, String, String, HashRefKey] =
       G.tailChars.validator
         .append(G.length.validator)
         .prependCorrector(TextMod.noWhitespace.correctFull)
@@ -73,7 +73,7 @@ object Validators2 {
   object reqType {
     import Grammar.{reqTypeMnemonic => G}
 
-    final class Ctx(subject: Option[CustomReqTypeId], allData: () => TraversableOnce[CustomReqType]) {
+    final case class State(subject: Option[CustomReqTypeId], allData: () => TraversableOnce[CustomReqType]) {
       def otherData: Iterator[CustomReqType] =
         excludeOptionalKey(subject, allData())(_.id)
 
@@ -84,7 +84,7 @@ object Validators2 {
         Uniqueness.within(otherData.map(_.name))
     }
 
-    val mnemonic: Composite.Stateful[Ctx, String, String, Mnemonic] =
+    val mnemonic: Composite.Stateful[State, String, String, Mnemonic] =
       G.chars.validator
         .append(G.length.validator)
         .prependCorrector(TextMod.upperCase.correctLive)
@@ -95,10 +95,10 @@ object Validators2 {
         .named(FieldNames.mnemonic)
         .stateful(_ appendInvalidator _.mnemonicUniqueness)
 
-    def name: Composite.Stateful[Ctx, String, String, String] =
+    def name: Composite.Stateful[State, String, String, String] =
       genericName.stateful(_ appendInvalidator _.nameUniqueness)
 
-    val all: Ctx => Composite.Validator[
+    val all: State => Composite.Validator[
       (String, String, ImplicationRequired),
       (String, String, ImplicationRequired),
       (Mnemonic, String, ImplicationRequired)] =
@@ -107,14 +107,14 @@ object Validators2 {
 
   // ===================================================================================================================
   object customIssueType {
-    type Ctx = hashRefKey.Ctx
-    val Ctx = hashRefKey.Ctx
+    type State = hashRefKey.State
+    val State = hashRefKey.State
 
     def key = hashRefKey.hashRefKey
 
-    def desc = genericDesc.lift[Ctx]
+    def desc = genericDesc.lift[State]
 
-    val all: Ctx => Composite.Validator[
+    val all: State => Composite.Validator[
       (String, String),
       (String, Option[String]),
       (HashRefKey, Option[String])] =
@@ -125,7 +125,7 @@ object Validators2 {
   object field {
     import Grammar.{fieldRefKey => G}
 
-    final class Ctx(subject: Option[CustomFieldId], allData: () => TraversableOnce[CustomField]) {
+    final case class State(subject: Option[CustomFieldId], allData: () => TraversableOnce[CustomField]) {
       def otherData: Iterator[CustomField] =
         excludeOptionalKey(subject, allData())(_.id)
 
@@ -155,13 +155,13 @@ object Validators2 {
     private def nameNotReserved: Invalidator[String] =
       Invalidator.test(!StaticField.names.contains(_), Invalidity("Already in use by built-in features."))
 
-    val name: Composite.Stateful[Ctx, String, String, String] =
+    val name: Composite.Stateful[State, String, String, String] =
       genericName
         .appendInvalidator(nameNotReserved)
         .stateful(_ appendInvalidator _.nameUniqueness)
 
     // DD-20: Field refkeys must match this format: /[a-z][a-z0-9_]*/
-    val key: Composite.Stateful[Ctx, String, String, FieldRefKey] =
+    val key: Composite.Stateful[State, String, String, FieldRefKey] =
       G.tailChars.validator
         .append(G.length.validator)
         .prependCorrector(TextMod.lowerCase.correctLive)
@@ -175,74 +175,74 @@ object Validators2 {
     def mandatory = Validator.id[Mandatory]
     def reqTypes  = Validator.id[Field.ApplicableReqTypes]
 
-    val textField: Ctx => Composite.Validator[
+    val textField: State => Composite.Validator[
       (String, String, Mandatory, ApplicableReqTypes),
       (String, String, Mandatory, ApplicableReqTypes),
       (String, FieldRefKey, Mandatory, ApplicableReqTypes)] =
       s => name(s).named tuple key(s).named tuple mandatory tuple reqTypes
 
     object tagField {
-      val tagId: Composite.Stateful[Ctx, Option[TagId], Option[TagId], TagId] =
+      val tagId: Composite.Stateful[State, Option[TagId], Option[TagId], TagId] =
         V.auditor.optionDefined[TagId]
         .toValidator
         .named("Tag")
         .stateful(_ appendInvalidator _.tagIdUniqueness)
 
-      val all: Ctx => Composite.Validator[
+      val all: State => Composite.Validator[
         (Option[TagId], Mandatory, ApplicableReqTypes),
         (Option[TagId], Mandatory, ApplicableReqTypes),
         (TagId, Mandatory, ApplicableReqTypes)] =
-        (s: Ctx) => tagId(s).named tuple mandatory tuple reqTypes
+        (s: State) => tagId(s).named tuple mandatory tuple reqTypes
     }
 
     object implField {
-      val reqTypeId: Composite.Stateful[Ctx, Option[ReqTypeId], Option[ReqTypeId], ReqTypeId] =
+      val reqTypeId: Composite.Stateful[State, Option[ReqTypeId], Option[ReqTypeId], ReqTypeId] =
         V.auditor.optionDefined[ReqTypeId]
         .toValidator
         .named("ReqType")
         .stateful(_ appendInvalidator _.reqTypeIdUniqueness)
 
-      val all: Ctx => Composite.Validator[
+      val all: State => Composite.Validator[
         (Option[ReqTypeId], Mandatory, ApplicableReqTypes),
         (Option[ReqTypeId], Mandatory, ApplicableReqTypes),
         (ReqTypeId, Mandatory, ApplicableReqTypes)] =
-        (s: Ctx) => reqTypeId(s).named tuple mandatory tuple reqTypes
+        (s: State) => reqTypeId(s).named tuple mandatory tuple reqTypes
     }
   }
 
   // ===================================================================================================================
   object tag {
-    import hashRefKey.SubCtx
+    import hashRefKey.SubState
 
-    final class Ctx(subject: Option[TagId], allData: () => TraversableOnce[Tag], customIssues: SubCtx[CustomIssueTypeId]) {
-      def hashRefKeyCtx: hashRefKey.Ctx =
-        hashRefKey.Ctx(
-          SubCtx(subject, () => allData().toIterator.filter(_.keyO.isDefined).map(t => (t.id.some, t.keyO.get))),
+    final case class State(subject: Option[TagId], allTagData: () => TraversableOnce[Tag], customIssues: SubState[CustomIssueTypeId]) {
+      def hashRefKeyState: hashRefKey.State =
+        hashRefKey.State(
+          SubState(subject, () => allTagData().toIterator.filter(_.keyO.isDefined).map(t => (t.id.some, t.keyO.get))),
           customIssues)
 
-      def otherData: Iterator[Tag] =
-        excludeOptionalKey(subject, allData())(_.id)
+      def otherTagData: Iterator[Tag] =
+        excludeOptionalKey(subject, allTagData())(_.id)
 
       def nameUniqueness: Invalidator[String] =
-        Uniqueness.within(otherData.map(_.name))
+        Uniqueness.within(otherTagData.map(_.name))
     }
 
-    def name: Composite.Stateful[Ctx, String, String, String] =
+    def name: Composite.Stateful[State, String, String, String] =
       genericName.stateful(_ appendInvalidator _.nameUniqueness)
 
-    def key: Composite.Stateful[Ctx, String, String, HashRefKey] =
-      hashRefKey.hashRefKey.contramap(_.hashRefKeyCtx)
+    def key: Composite.Stateful[State, String, String, HashRefKey] =
+      hashRefKey.hashRefKey.contramap(_.hashRefKeyState)
 
-    def desc: Composite.Stateful[Ctx, String, Option[String], Option[String]] =
-      genericDesc.lift[Ctx]
+    def desc: Composite.Stateful[State, String, Option[String], Option[String]] =
+      genericDesc.lift[State]
 
-    val tagGroup: Ctx => Composite.Validator[
+    val tagGroup: State => Composite.Validator[
       (String, MutexChildren, String),
       (String, MutexChildren, Option[String]),
       (String, MutexChildren, Option[String])] =
       s => name(s).named tuple Validator.id[MutexChildren] tuple desc(s).named
 
-    val applicableTag: Ctx => Composite.Validator[
+    val applicableTag: State => Composite.Validator[
       (String, String, String),
       (String, String, Option[String]),
       (String, HashRefKey, Option[String])] =
@@ -266,7 +266,7 @@ object Validators2 {
         .named(FieldNames.reqCodeNode)
 
     UnivEq[Value] // Prove Set[Value] is ok
-    final case class Ctx(trie: Trie, currentValues: Set[Value]) {
+    final case class State(trie: Trie, currentValues: Set[Value]) {
 
       def valueUniqueness: Invalidator[Value] =
         Invalidator.test(
@@ -279,7 +279,7 @@ object Validators2 {
         _.length <= G.maxNodes,
         Invalidity(s"Cannot have more than ${G.maxNodes} nodes.")) // english
 
-    private val value: Composite.Stateful[Ctx, Value, Value, Value] =
+    private val value: Composite.Stateful[State, Value, Value, Value] =
       maxNodesInValue.toAuditor.toValidator
         .named(FieldNames.reqCode)
         .stateful(_ appendInvalidator _.valueUniqueness)
@@ -313,7 +313,7 @@ object Validators2 {
     private def stringsToValue: Auditor[Stream[String], Value] =
       stringsToNodes.andThen(nodesToValue)
 
-    val code: Composite.Stateful[Ctx, String, Stream[String], Value] =
+    val code: Composite.Stateful[State, String, Stream[String], Value] =
       value.map((valueCorrector / stringsToValue) andThen _)
 
     /** Validate a set of ReqCodes. Each code should already be validated. */
