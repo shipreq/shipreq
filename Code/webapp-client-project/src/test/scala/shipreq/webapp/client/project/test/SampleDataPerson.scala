@@ -7,12 +7,12 @@ import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
 
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.util.TextMod._
-import shipreq.webapp.base.validation.Constraints._
-import shipreq.webapp.base.validation._
+import shipreq.webapp.base.util.TextMod
+import shipreq.webapp.base.vali2._, Simple._
 import shipreq.webapp.client.base.data.TCB
 import shipreq.webapp.client.project.app.cfg.shared._
 import Editors._
+import Uniqueness.Util._
 
 object SampleDataPerson {
 
@@ -29,25 +29,20 @@ object SampleDataPerson {
 
   val usernameF = "Username"
 
-  val usernameVU = Validator(
-    CorrectionPartU
-      .endo(noWhitespace andThen lowerCase)
-      .addLiveCorrect(_.toLowerCase),
-    ValidationPartU.forConstraint(usernameF,
-      lengthInRange(2 to 16)
-        + whitelistCharsR("a-z0-9_")("can only contain letters, numbers and underscores.")
-        + startsWithR("[a-z]")("must start with a letter.")
-        + endsWithR("[a-z0-9]")("must end with a letter or a number.")
-    )) map Username.apply
+  val usernameV: Composite.Stateful[VS, String, String, Username] =
+  CommonValidation.endoValidator.lengthInRange(2 to 16)
+    .addInvalidator(CommonValidation.invalidator.whitelistCharRangeRegex("a-z0-9_")(Invalidity("can only contain letters, numbers and underscores.")))
+    .addInvalidator(CommonValidation.invalidator.startsWithRegex("[a-z]")(Invalidity("must start with a letter.")))
+    .addInvalidator(CommonValidation.invalidator.endsWithRegex("[a-z0-9]")(Invalidity("must end with a letter or a number.")))
+    .prependCorrector(TextMod.noWhitespace.andThen(TextMod.lowerCase).correctFull.appendLive(_.toLowerCase))
+    .toValidator
+    .mapValid(Username.apply)
+    .named(usernameF)
+    .stateful((v, vs) => v.appendInvalidator(Uniqueness.within(excludeOptionalKey(vs._2, vs._1)(_.id).map(_.username))))
 
-  val uniqueUsername = Uniqueness.entity[Person].optk(_.id.some).v(_.username).fieldName(usernameF)
+  val descV = CommonValidation.optionalLargeText.named("Desc").lift[VS]
 
-  val usernameV = usernameVU.liftS[VS].addValidation(uniqueUsername)
-
-  val descVU = GenericValidators.optionalLargeText("Desc")
-  val descV = descVU.liftS[VS]
-
-  val personV = usernameV ⊗ descV
+  val personV = (s: VS) => usernameV(s).named tuple descV(s).named
 
   val fields = FieldSet2[Person](_.username.value, _.desc getOrElse "")(("", "TO"+"DO"))
 
@@ -84,8 +79,8 @@ object SampleDataPerson {
         var e1 = textInputEditor.addCssClass("username")
         var e2 = textareaEditor.addCssClass("desc")
         if ($.props.fieldValidation) {
-          e1 = e1.applyValidatorU(usernameVU)
-          e2 = e2.applyValidatorU(descVU)
+          e1 = e1.applyValidator(usernameV.stateless)
+          e2 = e2.applyValidator(descV.stateless)
         }
 
         var en = Editor.merge2(fields, e1, e2).tupleI.strengthR[Option[Long]].zoomU[NewAndSavedRowState]

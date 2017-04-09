@@ -53,7 +53,7 @@ object Generic {
     def toEndoValidator[E]: EndoValidator[E, A] =
       EndoValidator(this, Invalidator.id)
 
-    def /[E](i: Invalidator[E, A]): EndoValidator[E, A] =
+    def withInvalidator[E](i: Invalidator[E, A]): EndoValidator[E, A] =
       EndoValidator(this, i)
   }
 
@@ -101,13 +101,7 @@ object Generic {
         ii => I.map(ii, full, b.full, C.append),
         cc => C.map(cc, uncorrect, b.uncorrect, I.append))
 
-//    def >=>[C2](that: Corrector[I, C2]): Corrector[I, C2] =
-//      Corrector(
-//        live andThen that.live,
-//        full andThen uncorrect andThen that.full,
-//        that.uncorrect)
-
-    def /[E, V](v: Auditor[E, C, V]): Validator[E, I, C, V] =
+    def withAuditor[E, V](v: Auditor[E, C, V]): Validator[E, I, C, V] =
       Validator(this, v)
   }
 
@@ -275,6 +269,9 @@ object Generic {
 
     def mapInvalidator[F](f: Invalidator[E, A] => Invalidator[F, A]): EndoValidator[F, A] =
       EndoValidator(corrector, f(invalidator))
+
+    def addInvalidator[EE >: E](that: Invalidator[EE, A])(implicit E: Semigroup[EE]): EndoValidator[EE, A] =
+      mapInvalidator(_ merge that)
   }
 
   object EndoValidator {

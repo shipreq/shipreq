@@ -99,10 +99,10 @@ object CommonValidation {
   object endoValidator {
 
     def lengthInRange(range: Range.Inclusive): EndoValidator[String] =
-      TextMod.truncateToLength(range).correctLive / invalidator.lengthInRange(range)
+      TextMod.truncateToLength(range).correctLive withInvalidator invalidator.lengthInRange(range)
 
     def whitelistCharRangeRegex(regexRange: String, errMsg: Invalidity): EndoValidator[String] =
-      TextMod.regexReplace(s"[^$regexRange]".r, "").correctLive /
+      TextMod.regexReplace(s"[^$regexRange]".r, "").correctLive withInvalidator
         invalidator.whitelistCharRangeRegex(regexRange)(errMsg)
   }
 
@@ -123,16 +123,16 @@ object CommonValidation {
   import invalidator._
 
   /** Empty string not allowed. Carriage returns removed. */
-  val mandatoryShortText: EndoValidator[String] =
-    singleLineWhitespace / nonEmpty.whenValid(shortTextLimit)
+  lazy val mandatoryShortText: EndoValidator[String] =
+    singleLineWhitespace withInvalidator nonEmpty.whenValid(shortTextLimit)
 
   /** See also [[optionalLargeText]] */
-  val largeText: EndoValidator[String] =
-    endoCorrector.largeText / largeTextLimit
+  lazy val largeText: EndoValidator[String] =
+    endoCorrector.largeText withInvalidator largeTextLimit
 
   /** See also [[largeText]] */
-  val optionalLargeText: Validator[String, Option[String], Option[String]] =
-    endoCorrector.largeText.toCorrector.imapCorrected(TextMod.nonBlank) /
-      largeTextLimit.liftOption.toAuditor
+  lazy val optionalLargeText: Validator[String, Option[String], Option[String]] =
+    endoCorrector.largeText.toCorrector.imapCorrected(TextMod.nonBlank)
+    .withAuditor(largeTextLimit.liftOption.toAuditor)
 
 }

@@ -314,7 +314,7 @@ object Validators2 {
       stringsToNodes.andThen(nodesToValue)
 
     val code: Composite.Stateful[State, String, Stream[String], Value] =
-      value.map((valueCorrector / stringsToValue) andThen _)
+      value.map(valueCorrector.withAuditor(stringsToValue) andThen _)
 
     /** Validate a set of ReqCodes. Each code should already be validated. */
     val codeSet: Invalidator[Set[Value]] =

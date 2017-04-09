@@ -43,7 +43,7 @@ object Simple {
 
   type InvalidatorLogic[A] = Invalidity => Invalidator[A]
 
-  implicit class SimpleExt_InvalidatorObj(private val ε: Invalidator.type) extends AnyVal {
+  implicit class SimpleExt_InvalidatorObj(private val ε: Generic.Invalidator.type) extends AnyVal {
 
     def logic[A](f: A => Boolean): InvalidatorLogic[A] =
       err => {
