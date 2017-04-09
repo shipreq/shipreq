@@ -35,7 +35,7 @@ object Validators2 {
   //      txt, VFailure.looseMsg("Text too large.")) // english
 
   // TODO Make vals lazy
-  //lazy val projectName = V.mandatoryShortText("Project name")
+  lazy val projectName = V.mandatoryShortText.toValidator.named("Project name")
 
   // ===================================================================================================================
   object hashRefKey {
@@ -293,7 +293,7 @@ object Validators2 {
         .contramap(_.whole)
 
     val valueAndNodes: Validator[Value, Value, Value] =
-      value.stateless.mapAuditor(_.appendInvalidator(validateNodes))
+      value.stateless.unnamed.mapAuditor(_.appendInvalidator(validateNodes))
 
     private def valueCorrector: Corrector[String, Stream[String]] =
       Corrector(

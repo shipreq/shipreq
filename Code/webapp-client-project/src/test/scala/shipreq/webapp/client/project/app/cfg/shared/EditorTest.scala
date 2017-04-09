@@ -143,7 +143,7 @@ object EditorTest extends TestSuite {
 //    }
 
     'applyInputValidation {
-      val e = textInputEditor.applyInputValidation(usernameV.stateless.toInvalidator)
+      val e = textInputEditor.applyInputValidation(usernameV.stateless.unnamed.toInvalidator)
       def test(i: String, expect: Option[String]): Unit = {
         val re: VdomElement = e.render(EditorI(i, "", None))
         val tgt = ReactTestUtils.renderIntoDocument(re)

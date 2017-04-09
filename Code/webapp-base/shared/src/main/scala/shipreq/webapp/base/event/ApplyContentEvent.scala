@@ -8,8 +8,9 @@ import scalaz.std.option.optionInstance
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText.FieldNames
-import shipreq.webapp.base.data.{Validators => V, _}
+import shipreq.webapp.base.data.{Validators2 => V, _}
 import shipreq.webapp.base.text.{Grammar, Text}
+import shipreq.webapp.base.vali2.Simple.Implicits._
 import ApplyEventLib._
 import DataImplicits._
 import MTrie.Ops
@@ -452,7 +453,7 @@ trait ApplyContentEvent {
 
     val updateIdCeiling = updateIdCeilingFn(IdCeilings.reqCode)
 
-    val validateCode = validateA(V.reqCode.valueAndNodesU, FieldNames.reqCode)
+    val validateCode = validateA(V.reqCode.valueAndNodes named FieldNames.reqCode)
 
     val getTrie = SE get Project.reqCodeTrie.get
 

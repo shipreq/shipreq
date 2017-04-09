@@ -79,8 +79,8 @@ object SampleDataPerson {
         var e1 = textInputEditor.addCssClass("username")
         var e2 = textareaEditor.addCssClass("desc")
         if ($.props.fieldValidation) {
-          e1 = e1.applyValidator(usernameV.stateless)
-          e2 = e2.applyValidator(descV.stateless)
+          e1 = e1.applyValidator(usernameV.stateless.unnamed)
+          e2 = e2.applyValidator(descV.stateless.unnamed)
         }
 
         var en = Editor.merge2(fields, e1, e2).tupleI.strengthR[Option[Long]].zoomU[NewAndSavedRowState]

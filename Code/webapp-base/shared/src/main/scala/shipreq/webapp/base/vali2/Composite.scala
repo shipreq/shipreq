@@ -17,6 +17,18 @@ object Composite {
     def toMap(invalidity: Invalidity): Map[Option[String], Simple.Invalidity] =
       invalidity.foldLeft(Map.empty[Option[String], Simple.Invalidity])((m, fi) =>
         m.setOrModifyValue(fi.field, fi.reasons, _ ++ fi.reasons))
+
+    def toLines(invalidity: Invalidity): NonEmptyVector[String] =
+      invalidity.flatMap { i =>
+        val rs = i.reasons.toNEV
+        i.field.fold(rs) { k =>
+          val prefix = k + ": "
+          rs.map(prefix + _)
+        }
+      }
+
+    def toText(invalidity: Invalidity): String =
+      toLines(invalidity).whole.sorted.mkString("\n")
   }
 
   type EndoCorrector[A] = Generic.EndoCorrector[A]
@@ -51,6 +63,10 @@ object Composite {
     def named: Composite.Validator[I, C, V] =
       unnamed.forField(name)
 
+    /** named/unnamed makes no difference for correction */
+    def corrector: Corrector[I, C] =
+      unnamed.corrector
+
     def map[II, CC, VV](f: Simple.Validator[I, C, V] => Simple.Validator[II, CC, VV]): Stateless[II, CC, VV] =
       new Stateless(f(unnamed), name)
 
@@ -58,10 +74,10 @@ object Composite {
       map(_.appendInvalidator(i))
 
     def lift[S]: Stateful[S, I, C, V] =
-      new Stateful(unnamed, _ => unnamed, name)
+      new Stateful(this, _ => unnamed)
 
     def stateful[S](addStatefulValidation: (Simple.Validator[I, C, V], S) => Simple.Validator[I, C, V]): Stateful[S, I, C, V] =
-      new Stateful(unnamed, addStatefulValidation(unnamed, _), name)
+      new Stateful(this, addStatefulValidation(unnamed, _))
   }
 
   object Stateless {
@@ -81,18 +97,20 @@ object Composite {
     * [[unnamed]]   - In addition to above, validates that the username isn't already is use.
     * [[named]]     - As above except errors are keyed by Some("Username").
     */
-  final class Stateful[S, I, C, V](val stateless: Simple.Validator[I, C, V],
-                                   val unnamedFn: S => Simple.Validator[I, C, V],
-                                   val name     : String) {
+  final class Stateful[S, I, C, V](val stateless: Stateless[I, C, V],
+                                   val unnamedFn: S => Simple.Validator[I, C, V]) {
+
+    def name: String =
+      stateless.name
 
     def apply(s: S): Stateless[I, C, V] =
       new Stateless(unnamedFn(s), name)
 
     def contramap[SS](f: SS => S): Stateful[SS, I, C, V] =
-      new Stateful(stateless, unnamedFn compose f, name)
+      new Stateful(stateless, unnamedFn compose f)
 
     def map[II, CC, VV](f: Simple.Validator[I, C, V] => Simple.Validator[II, CC, VV]): Stateful[S, II, CC, VV] =
-      new Stateful(f(stateless), f compose unnamedFn, name)
+      new Stateful(stateless map f, f compose unnamedFn)
 
   }
 }
