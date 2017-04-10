@@ -2,6 +2,7 @@ package shipreq.webapp.base.vali2
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.nonempty.NonEmptyVector
+import shipreq.base.util.Validity
 import Simple.Implicits._
 
 object Composite {
@@ -64,8 +65,12 @@ object Composite {
       unnamed.forField(name)
 
     /** named/unnamed makes no difference for correction */
-    def corrector: Corrector[I, C] =
+    @inline def corrector: Corrector[I, C] =
       unnamed.corrector
+
+    /** named/unnamed makes no difference for boolean validity */
+    @inline def validity(i: I): Validity =
+      unnamed.validity(i)
 
     def map[II, CC, VV](f: Simple.Validator[I, C, V] => Simple.Validator[II, CC, VV]): Stateless[II, CC, VV] =
       new Stateless(f(unnamed), name)

@@ -61,7 +61,7 @@ private[event] object ApplyEventLib {
     whenUntrusted(o => _validate(v)(f(o)))
 
   private def _validate[I, C, O](v: Composite.Stateless[I, C, O])(i: I)(implicit trust: Trust, eq: Equal[I]): SE[O] = {
-    val c = v.corrector.full(i)
+    val c = v.corrector(i)
     if (eq.equal(i, v.corrector.uncorrect(c)))
       v.named.auditor(c)
     else

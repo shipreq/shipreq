@@ -72,7 +72,7 @@ object EditorStatus {
   // ===================================================================================================================
 
   def ignoreOrValidate[I, C, V](v: Validator[I, C, V])(i: I, ignore: C => Boolean, commit: V => Callback): Sync = {
-    val corrected = v.corrector.full(i)
+    val corrected = v.corrector(i)
     if (ignore(corrected))
       Ignore
     else

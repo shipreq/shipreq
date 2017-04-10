@@ -2,8 +2,7 @@ package shipreq.webapp.base.vali2
 
 import scalaz.Isomorphism.<=>
 import scalaz.{-\/, Applicative, Semigroup, Traverse, \/, \/-}
-import shipreq.base.util.{GenTuple, Identity}
-import shipreq.webapp.base.vali2.Simple.Invalidity
+import shipreq.base.util.{GenTuple, Identity, Validity, Valid}
 
 object Generic {
 
@@ -12,6 +11,9 @@ object Generic {
   // ===================================================================================================================
 
   final case class EndoCorrector[A](live: A => A, full: A => A) {
+
+    def apply(a: A): A =
+      full(live(a))
 
     def appendLive(f: A => A): EndoCorrector[A] =
       EndoCorrector(live andThen f, full)
@@ -75,8 +77,11 @@ object Generic {
                                    full     : I => C,
                                    uncorrect: C => I) {
 
-    def fullAndBack(i: I): I =
-      uncorrect(full(i))
+    def apply(i: I): C =
+      full(live(i))
+
+    def applyAndUncorrect(i: I): I =
+      uncorrect(apply(i))
 
     def xmapInput[A](g: I => A)(f: A => I): Corrector[A, C] =
       Corrector(
@@ -150,8 +155,14 @@ object Generic {
     def whenValid[EE >: E](next: Invalidator[EE, A]): Invalidator[EE, A] =
       Invalidator(a => invalidate(a) orElse next.invalidate(a))
 
-    def toEndoValidator[EE >: E]: EndoValidator[EE, A] =
-      EndoValidator(EndoCorrector.id, this)
+    def toEndoValidator: EndoValidator[E, A] =
+      EndoValidator(EndoCorrector.id, Invalidator(invalidate))
+
+    def toAuditor: Auditor[E, A, A] =
+      Auditor(a => invalidate(a) match {
+        case None => \/-(a)
+        case Some(e) => -\/(e)
+      })
   }
 
   object Invalidator {
@@ -265,7 +276,7 @@ object Generic {
   // ===================================================================================================================
 
   final case class EndoValidator[+E, A](corrector: EndoCorrector[A],
-                                       invalidator: Invalidator[E, A]) {
+                                        invalidator: Invalidator[E, A]) {
 
     def append[EE >: E](that: EndoValidator[EE, A])(implicit E: Semigroup[EE]): EndoValidator[EE, A] =
       EndoValidator(
@@ -288,6 +299,9 @@ object Generic {
 
     def addInvalidator[EE >: E](that: Invalidator[EE, A])(implicit E: Semigroup[EE]): EndoValidator[EE, A] =
       mapInvalidator(_ merge that)
+
+    def toValidator: Validator[E, A, A, A] =
+      Validator(corrector.toCorrector, invalidator.toAuditor)
   }
 
   object EndoValidator {
@@ -299,7 +313,10 @@ object Generic {
 
   final case class Validator[+E, I, C, V](corrector: Corrector[I, C], auditor: Auditor[E, C, V]) {
     def apply(i: I): E \/ V =
-      auditor(corrector.full(i))
+      auditor(corrector(i))
+
+    def validity(i: I): Validity =
+      Valid <~ apply(i).isRight
 
     def mapAuditor[EE, VV](f: Auditor[E, C, V] => Auditor[EE, C, VV]): Validator[EE, I, C, VV] =
       Validator(corrector, f(auditor))

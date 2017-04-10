@@ -1,12 +1,11 @@
 package shipreq.webapp.base.data
 
 import utest._
+import shipreq.base.util._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 
 object DataTest extends TestSuite {
-
-  import Validators.shared._
 
   @inline def tr(a: Option[TagId], b: HashRefKey) = (a,b)
   @inline def ir(a: Option[CustomIssueTypeId], b: HashRefKey) = (a,b)
@@ -17,32 +16,33 @@ object DataTest extends TestSuite {
   override def tests = TestSuite {
     'validation {
       'hashRefKeyUniqueness {
+        import Validators2.hashRefKey._
 
-        def test(input: String, expectValid: Boolean, subjT: Option[TagId] = None, subjI: Option[CustomIssueTypeId] = None): Unit = {
-          val vs = HashRefKeyVS((subjT, tagData), (subjI, issueData))
-          assertEq(s"[$input] | $subjT, $subjI", hashRefKeyS.isValid(vs, input), expectValid)
+        def test(input: String, expectedValidity: Validity, subjT: Option[TagId] = None, subjI: Option[CustomIssueTypeId] = None): Unit = {
+          val state = State(SubState(subjT, () => tagData), SubState(subjI, () => issueData))
+          assertEq(s"[$input] | $subjT, $subjI", hashRefKey(state).validity(input), expectedValidity)
         }
 
         'preventDups {
-          test("hehe", true)
-          test("abc", false)
-          test("todo", false)
-          test("   todo   ", false)
+          test("hehe", Valid)
+          test("abc", Invalid)
+          test("todo", Invalid)
+          test("   todo   ", Invalid)
         }
 
         'subjCanChangeItself {
-          test("abc", true, subjT = 1.AT)
-          test("abc", false, subjT = 2.AT)
-          test("todo", true, subjI = 3)
-          test("todo", false, subjI = 1)
+          test("abc", Valid, subjT = 1.AT)
+          test("abc", Invalid, subjT = 2.AT)
+          test("todo", Valid, subjI = 3)
+          test("todo", Invalid, subjI = 1)
         }
 
         'caseInsensitive {
-          test("ABC", false)
-          test("ABCD", true)
-          test("ABC", true, subjT = 1.AT)
-          test("ABC", false, subjT = 2.AT)
-          test("ABC", false, subjT = 3.AT)
+          test("ABC", Invalid)
+          test("ABCD", Valid)
+          test("ABC", Valid, subjT = 1.AT)
+          test("ABC", Invalid, subjT = 2.AT)
+          test("ABC", Invalid, subjT = 3.AT)
         }
       }
     }

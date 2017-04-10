@@ -1339,7 +1339,7 @@ object RandomData {
         "_"
       else if (s.headOption exists illegalSimpleTextStart.contains)
         "!" + s
-      else if (Validators.reqType.mnemonicU isValidU s)
+      else if (Validators2.reqType.mnemonic.stateless.validity(s) :: Valid)
         s + "?"
       else
         s

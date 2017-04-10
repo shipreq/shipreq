@@ -4,7 +4,6 @@ import org.scalatest.FunSuite
 import org.scalatest.Matchers
 import org.scalatest.prop._
 import scalaz.{Failure, Success}
-import shipreq.webapp.base.data.{Validators => V2}
 import shipreq.webapp.base.WebappConfig._
 import shipreq.webapp.base.validation._
 import shipreq.webapp.server.security.PasswordAndSalt
@@ -116,42 +115,6 @@ class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
       , (Some(" long."), "ab")
       , (Some(" long."), "a" * 33)
     ))
-  }
-
-  test("MandatoryShortText") {
-    testCV(V2.projectName, Table(("IN", "CORRECTED", "FAILURE")
-      , ("", None, Some("blank"))
-      , ("  ", Some(""), Some("blank"))
-      , ("hello", None, None)
-      , (" hello ", Some("hello"), None)
-      , ("\n\nhello\n\n", Some("hello"), None)
-      , ("\n\nhello\n\nhello\n\n", Some("hello hello"), None)
-      , ("hello\n\rgreat", Some("hello great"), None)
-      , ("x" * shortTextMaxLength, None, None)
-      , ("x" * (shortTextMaxLength + 1), None, Some("too large"))
-    ))
-  }
-
-  test("LargeText") {
-    testCV(GenericValidators.largeText("blah"), Table(("IN", "CORRECTED", "FAILURE")
-      , ("", None, None)
-      , ("  ", Some(""), None)
-      , ("hello", None, None)
-      , (" hello ", Some("hello"), None)
-      , ("\n\nhello\n\n", Some("hello"), None)
-      , ("\n\nhello\n\nhello\n\n", Some("hello\n\nhello"), None)
-      , ("x" * largeTextMaxLength, None, None)
-      , ("x" * (largeTextMaxLength + 1), None, Some("too large"))
-    ))
-  }
-
-  test("LargeTextO") {
-    val v = GenericValidators.optionalLargeText("blah")
-    v.correctU("\n\n  ") shouldBe None
-    v.correctAndValidateU("") shouldBe Success(None)
-    v.correctAndValidateU("\n\nyo\n\nhehe\n\n") shouldBe Success(Some("yo\n\nhehe"))
-    v.correctAndValidateU("x" * largeTextMaxLength).isSuccess shouldBe true
-    v.correctAndValidateU("x" * (largeTextMaxLength + 1)).isSuccess shouldBe false
   }
 
   test("Landing page name") {

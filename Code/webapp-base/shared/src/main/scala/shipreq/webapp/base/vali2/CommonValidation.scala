@@ -55,7 +55,7 @@ object CommonValidation {
 
     /** Validates that a string contains at least one letter, and at least one number. */
     def containsAlphaAndNumber: Invalidator[String] =
-      matchesRegex(".*?[A-Za-z].*?[0-9].*|.*?[0-9].*?[A-Za-z].*".r)(
+      containsRegex("[A-Za-z].*[0-9]|[0-9].*[A-Za-z]")(
         Invalidity("Must contain at least one letter, and at least one number."))
 
     /**
@@ -127,7 +127,7 @@ object CommonValidation {
   lazy val mandatoryShortText: EndoValidator[String] =
     singleLineWhitespace withInvalidator nonEmpty.whenValid(shortTextLimit)
 
-  /** See also [[optionalLargeText]] */
+  /** Empty string allowed. See also [[optionalLargeText]] */
   lazy val largeText: EndoValidator[String] =
     endoCorrector.largeText withInvalidator largeTextLimit
 

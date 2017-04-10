@@ -71,19 +71,12 @@ object Simple {
   //  }
 
 
-    implicit def SimpleExt_Invalidator[A](a: Invalidator[A]): SimpleExt_Invalidator[A] = new SimpleExt_Invalidator(a.invalidate)
-    final class SimpleExt_Invalidator[A](private val invalidate: A => Option[Invalidity]) extends AnyVal {
-      def toAuditor: Auditor[A, A] =
-        Auditor(a => invalidate(a) match {
-          case None    => \/-(a)
-          case Some(e) => -\/(e)
-        })
-    }
+  //  implicit def SimpleExt_Invalidator[A](a: Invalidator[A]): SimpleExt_Invalidator[A] = new SimpleExt_Invalidator(a.invalidate)
+  //  final class SimpleExt_Invalidator[A](private val invalidate: A => Option[Invalidity]) extends AnyVal {
+  //  }
 
-    final implicit class SimpleExt_EndoValidator[A](private val self: EndoValidator[A]) extends AnyVal {
-      def toValidator: Validator[A, A, A] =
-        Validator(self.corrector.toCorrector, self.invalidator.toAuditor)
-    }
+  //  final implicit class SimpleExt_EndoValidator[A](private val self: EndoValidator[A]) extends AnyVal {
+  //  }
 
   //  implicit def SimpleExt_Auditor[C, V](a: Auditor[C, V]): SimpleExt_Auditor[C, V] = new SimpleExt_Auditor(a.audit)
   //  final class SimpleExt_Auditor[C, V](private val audit: C => Invalidity \/ V) extends AnyVal {

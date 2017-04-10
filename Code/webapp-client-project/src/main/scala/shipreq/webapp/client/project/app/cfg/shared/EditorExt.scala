@@ -19,7 +19,7 @@ object EditorExt extends EditorExt {
         val corrector = correctorFn(a)
         _.pmodB {
           case OnChange      (b) => corrector.live(b)
-          case OnEditFinished(b) => corrector.fullAndBack(b)
+          case OnEditFinished(b) => corrector.applyAndUncorrect(b)
         }
       }
 
