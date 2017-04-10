@@ -11,7 +11,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.SingleLine
 import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
-import shipreq.webapp.base.vali2.Simple._
+import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.client.base.data.Plain
 import shipreq.webapp.client.base.feature.EditorStatus
 import shipreq.webapp.client.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}

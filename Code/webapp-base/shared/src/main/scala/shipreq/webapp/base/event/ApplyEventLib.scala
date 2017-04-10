@@ -8,7 +8,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.GenericData
-import shipreq.webapp.base.vali2.{Composite, Simple}
+import shipreq.webapp.base.validation.{Composite, Simple}
 
 private[event] object ApplyEventLib {
   type Error = String

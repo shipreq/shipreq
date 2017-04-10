@@ -5,7 +5,7 @@ import net.liftweb.util.CssSel
 import net.liftweb.util.Helpers._
 import scalaz.{-\/, \/-}
 import shipreq.taskman.api.Msg.LandingPageHit
-import shipreq.webapp.base.vali2.Composite.Invalidity
+import shipreq.webapp.base.validation.Composite.Invalidity
 import shipreq.webapp.server.feature.validation.ServerSideValidators
 import shipreq.webapp.server.lib.{FormVar, SnippetHelpers}
 import shipreq.webapp.server.util.HtmlTransformExt.ajaxSubmitOnClick

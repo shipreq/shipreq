@@ -8,7 +8,7 @@ import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.URLs
 import shipreq.webapp.base.UiText.EnglishStringExt
-import shipreq.webapp.base.data.{ProjectCatalogue, Validators2}
+import shipreq.webapp.base.data.{ProjectCatalogue, DataValidators}
 import shipreq.webapp.client.base.feature.{AsyncActionFeature, EditorStatus}
 import shipreq.webapp.client.base.jsfacade.MomentJs
 import shipreq.webapp.client.base.ui.semantic.{Icon, Size, Statistic, StatisticGroup}
@@ -114,7 +114,7 @@ object ProjectItem {
       def renderEditor(p: Props, s: EditState): TagMod = {
         val status =
           EditorStatus.async(s.async, p.asyncFeature) getOrElse
-            EditorStatus.validate(Validators2.projectName.unnamed)(s.edit, p.renameProjectIO)
+            EditorStatus.validate(DataValidators.projectName.unnamed)(s.edit, p.renameProjectIO)
 
         PlainTextEditor.TempBasic.Props(
           text         = s.edit,

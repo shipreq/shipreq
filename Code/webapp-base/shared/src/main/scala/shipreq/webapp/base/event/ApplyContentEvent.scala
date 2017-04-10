@@ -8,9 +8,9 @@ import scalaz.std.option.optionInstance
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText.FieldNames
-import shipreq.webapp.base.data.{Validators2 => V, _}
+import shipreq.webapp.base.data.{DataValidators => V, _}
 import shipreq.webapp.base.text.{Grammar, Text}
-import shipreq.webapp.base.vali2.Simple.Implicits._
+import shipreq.webapp.base.validation.Simple.Implicits._
 import ApplyEventLib._
 import DataImplicits._
 import MTrie.Ops

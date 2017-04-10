@@ -14,7 +14,7 @@ import shipreq.base.util.ScalaExt.EndoFn
 import shipreq.base.util.TaggedTypes.{JsonStr, TaggedString}
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.UserId
-import shipreq.webapp.base.vali2._
+import shipreq.webapp.base.validation._
 import shipreq.webapp.server.app.AppSiteMap.Implicits._
 import shipreq.webapp.server.app.{AppSiteMap, DI}
 import shipreq.webapp.server.data.UserDescriptor

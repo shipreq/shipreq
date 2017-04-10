@@ -6,7 +6,7 @@ import utest._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import ReqCode._
-import Validators2.{reqCode => V}
+import DataValidators.{reqCode => V}
 import shipreq.base.util.Invalid
 
 object ReqCodeTest extends TestSuite {

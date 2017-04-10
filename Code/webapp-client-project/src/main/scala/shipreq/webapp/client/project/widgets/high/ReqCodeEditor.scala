@@ -9,14 +9,14 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
 import shipreq.webapp.base.text.GrammarSpec.SeqFormat
-import shipreq.webapp.base.vali2.Simple._
+import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.client.base.feature.EditorStatus
 import shipreq.webapp.client.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
 import shipreq.webapp.client.base.ui.{AutosizeTextarea, EditTheme}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.{AutoComplete, TextEditor}
-import Validators2.{reqCode => V}
+import DataValidators.{reqCode => V}
 
 sealed abstract class ReqCodeEditor[In: Reusability, Out] {
   final type Output = Out

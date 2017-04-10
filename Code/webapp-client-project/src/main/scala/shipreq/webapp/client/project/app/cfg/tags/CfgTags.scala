@@ -15,7 +15,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{MMTree, Memo}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{TagId => Id, _}, DataImplicits._
-import shipreq.webapp.base.data.Validators2.{tag => V, hashRefKey => VH}
+import shipreq.webapp.base.data.DataValidators.{tag => V, hashRefKey => VH}
 import shipreq.webapp.base.protocol.TagCrud
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.base.data.{TCB, Disabled, On}

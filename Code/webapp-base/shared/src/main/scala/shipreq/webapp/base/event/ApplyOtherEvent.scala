@@ -1,7 +1,7 @@
 package shipreq.webapp.base.event
 
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data.{Validators2 => V, _}
+import shipreq.webapp.base.data.{DataValidators => V, _}
 import ApplyEventLib._, SE.SE
 import DataImplicits._
 

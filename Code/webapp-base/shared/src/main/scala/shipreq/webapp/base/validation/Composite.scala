@@ -1,4 +1,4 @@
-package shipreq.webapp.base.vali2
+package shipreq.webapp.base.validation
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.nonempty.NonEmptyVector

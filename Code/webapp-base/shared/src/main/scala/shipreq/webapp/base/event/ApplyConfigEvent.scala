@@ -3,7 +3,7 @@ package shipreq.webapp.base.event
 import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data.{Validators2 => V, _}
+import shipreq.webapp.base.data.{DataValidators => V, _}
 import shipreq.webapp.base.util.GenericData
 import ApplyEventLib._, SE.SE
 import DataImplicits._

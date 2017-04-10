@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.feature
 import japgolly.univeq.UnivEq
 import scalaz.{Equal, \/}
 import shipreq.base.util._
-import shipreq.webapp.base.vali2.Simple._
+import shipreq.webapp.base.validation.Simple._
 
 // TODO Is this really a "feature"? Overlap with EditorStatus?
 case class EditValidationFeature[+E, +A](value: ValidUpdate[E, A])

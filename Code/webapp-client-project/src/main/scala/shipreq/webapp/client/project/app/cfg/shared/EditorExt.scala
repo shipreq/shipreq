@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app.cfg.shared
 
 import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import scalaz.{Monad, ~>}
-import shipreq.webapp.base.vali2._
+import shipreq.webapp.base.validation._
 
 abstract class EditorExt {
   @inline implicit final def ___EditorExt_1    [A,B,M[_],S,C,D,V](e: Editor[A,B,M,S,C,D,V          ]): EditorExt.EditorExt_1    [A,B,M,S,C,D,V] = new EditorExt.EditorExt_1(e)

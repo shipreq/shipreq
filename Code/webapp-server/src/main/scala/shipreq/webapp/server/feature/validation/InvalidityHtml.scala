@@ -3,7 +3,7 @@ package shipreq.webapp.server.feature.validation
 import japgolly.microlibs.nonempty.NonEmptyVector
 import scala.xml.{NodeSeq, Text}
 
-import shipreq.webapp.base.vali2._
+import shipreq.webapp.base.validation._
 
 object InvalidityHtml {
 

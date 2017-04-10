@@ -16,7 +16,7 @@ object DataTest extends TestSuite {
   override def tests = TestSuite {
     'validation {
       'hashRefKeyUniqueness {
-        import Validators2.hashRefKey._
+        import DataValidators.hashRefKey._
 
         def test(input: String, expectedValidity: Validity, subjT: Option[TagId] = None, subjI: Option[CustomIssueTypeId] = None): Unit = {
           val state = State(SubState(subjT, () => tagData), SubState(subjI, () => issueData))

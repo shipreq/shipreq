@@ -8,7 +8,7 @@ import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.util.TextMod
 import shipreq.webapp.server.security.PasswordAndSalt
-import shipreq.webapp.base.vali2.{CommonValidation => CV, _}
+import shipreq.webapp.base.validation.{CommonValidation => CV, _}
 import Simple._
 import Simple.Implicits._
 

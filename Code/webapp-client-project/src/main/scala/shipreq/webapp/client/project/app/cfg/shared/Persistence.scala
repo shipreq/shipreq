@@ -5,7 +5,7 @@ import japgolly.scalajs.react.ScalazReact._
 import scalaz.{Need, Name}
 import shipreq.webapp.base.event.VerifiedEvents
 import shipreq.webapp.base.protocol.RemoteFn
-import shipreq.webapp.base.vali2._
+import shipreq.webapp.base.validation._
 import shipreq.webapp.client.base.data.TCB
 import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.state.ClientData

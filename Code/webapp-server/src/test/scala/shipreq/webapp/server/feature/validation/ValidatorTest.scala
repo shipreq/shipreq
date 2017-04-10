@@ -5,7 +5,7 @@ import utest._
 import scalaz.{-\/, Equal, \/, \/-}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.{Invalid, Valid}
-import shipreq.webapp.base.vali2._
+import shipreq.webapp.base.validation._
 import shipreq.webapp.server.security.PasswordAndSalt
 import Simple._
 

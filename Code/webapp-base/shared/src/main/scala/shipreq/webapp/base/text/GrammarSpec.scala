@@ -7,8 +7,8 @@ import scala.runtime.AbstractFunction1
 import scalaz.std.stream.streamInstance
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.Util
-import shipreq.webapp.base.vali2.CommonValidation
-import shipreq.webapp.base.vali2.Simple._
+import shipreq.webapp.base.validation.CommonValidation
+import shipreq.webapp.base.validation.Simple._
 
 /**
   * Various aids to facilitate building a grammar specification that can be used to enforcement code.

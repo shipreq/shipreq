@@ -6,8 +6,8 @@ import net.liftweb.http.js.{JsExp, JsCmd, JsCmds}
 import net.liftweb.util.CssSel
 import net.liftweb.util.Helpers._
 import scalaz.{\/, \/-}
-import shipreq.webapp.base.vali2.Simple.Implicits._
-import shipreq.webapp.base.vali2.Composite._
+import shipreq.webapp.base.validation.Simple.Implicits._
+import shipreq.webapp.base.validation.Composite._
 import shipreq.webapp.server.feature.validation.ServerSideValidators
 import shipreq.webapp.server.security.PasswordAndSalt
 import shipreq.webapp.server.util.JsExt.{JqSetValue, JqId}

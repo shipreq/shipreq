@@ -15,7 +15,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.vali2.Simple._
+import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.client.base.feature.EditorStatus
 import shipreq.webapp.client.base.lib.KeyboardTheme
@@ -65,7 +65,7 @@ object UseCaseStepEditor {
 
     val valResult: TextAndFlow[Invalidity \/ OptionalText, Invalidity \/ Set[UseCaseStepId]] =
       parsed.bimap(
-        Validators2.genericRichText(plainText).audit(_),
+        DataValidators.genericRichText(plainText).audit(_),
         _.map(_.leftMap(txt => Invalidity("Invalid step: " + txt)))
           .sequence[Invalidity \/ ?, UseCaseStepId](implicitly, Invalidity.applicative)
           .map(_.toSet))

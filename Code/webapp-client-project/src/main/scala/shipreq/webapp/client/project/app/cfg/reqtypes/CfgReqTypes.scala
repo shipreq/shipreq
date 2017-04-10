@@ -10,7 +10,7 @@ import scalaz.std.tuple._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data._, DataImplicits._
-import shipreq.webapp.base.data.Validators2.{reqType => V}
+import shipreq.webapp.base.data.DataValidators.{reqType => V}
 import shipreq.webapp.base.filter.PotentialFilter
 import shipreq.webapp.base.protocol.CustomReqTypeCrud
 import shipreq.webapp.client.base.data.On

@@ -10,7 +10,7 @@ import scalaz.{Free, \/}
 import scalaz.effect.IO
 import shipreq.base.db.DoobieHelpers._
 import shipreq.taskman.api.{EmailAddr, Msg, UserId}
-import shipreq.webapp.base.vali2.Composite.Invalidity
+import shipreq.webapp.base.validation.Composite.Invalidity
 import shipreq.webapp.server.app.{AppSiteMap, DI}
 import shipreq.webapp.server.app.AppSiteMap.Implicits._
 import shipreq.webapp.server.data.{ResetPasswordInfo, UserRegistrationInfo}
