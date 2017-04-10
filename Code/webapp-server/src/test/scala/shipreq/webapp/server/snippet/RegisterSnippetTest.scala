@@ -10,7 +10,7 @@ import shipreq.taskman.api.Msg.RegistrationRequested
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.app.DI
 import shipreq.webapp.server.db.DbLogic
-import shipreq.webapp.server.feature.validation.Validators
+import shipreq.webapp.server.feature.validation.ServerSideValidators
 import shipreq.webapp.server.snippet.Register._
 import shipreq.webapp.server.test.SnippetTestUtil._
 import shipreq.webapp.server.test.WebappServerTestUtil._
@@ -85,7 +85,7 @@ object RegisterSnippetTest extends TestSuite {
         def test(dbu: DbUtil, email: String, usrTableDiff: Int) =
           TestTaskman.use(
             dbu.assertRowCountChanges(DbTable.Usr -> usrTableDiff)(
-              Register1.perform(Validators.email.correctAndValidateU(email))))
+              Register1.perform(ServerSideValidators.email.named(email))))
 
         def testSuccess(emailFn: UserFixture => String, usrTableDiff: Int, tokenChange: Boolean): Unit =
           UserFixture.Transaction.runNow { uf =>

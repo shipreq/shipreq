@@ -8,17 +8,17 @@ import net.liftweb.json.{NoTypeHints, Serialization, Serializer}
 import net.liftweb.sitemap.Menu
 import net.liftweb.util.Props
 import scala.xml.{Elem, NodeSeq, Text, UnprefixedAttribute}
-import scalaz.Monoid
+import scalaz.{-\/, Monoid, \/, \/-}
 import scalaz.syntax.semigroup._
 import shipreq.base.util.ScalaExt.EndoFn
 import shipreq.base.util.TaggedTypes.{JsonStr, TaggedString}
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.UserId
-import shipreq.webapp.base.validation.{VFailure, ValidationResult}
+import shipreq.webapp.base.vali2._
 import shipreq.webapp.server.app.AppSiteMap.Implicits._
 import shipreq.webapp.server.app.{AppSiteMap, DI}
 import shipreq.webapp.server.data.UserDescriptor
-import shipreq.webapp.server.feature.validation.VFailureHtmlRenderer
+import shipreq.webapp.server.feature.validation.InvalidityHtml
 import shipreq.webapp.server.snippet.{AlertTypeError, AlertTypeSuccess, Notices}
 import shipreq.webapp.server.util.ErrorMessages
 import shipreq.webapp.server.util.HttpResponses.ShouldNeverHappenResponse
@@ -156,13 +156,22 @@ trait StaticSnippetHelpers extends HasLogger {
       case FailBox(err, _, _) => jsShowError(err)                   |+| failureJs
     }
 
-  def jsShowFailure(vf: VFailure)(implicit id: ErrorAlertId, nc: NoticeContainerExp): JsCmd =
-    jsShowError(VFailureHtmlRenderer render vf)
+  def jsShowSimpleInvalidity(f: Simple.Invalidity)(implicit id: ErrorAlertId, nc: NoticeContainerExp): JsCmd =
+    jsShowError(InvalidityHtml.simple(f))(id, nc)
 
-  def ifValid[T](v: ValidationResult[T])(f: T => JsCmd)(implicit id: ErrorAlertId, nc: NoticeContainerExp): JsCmd =
+  def handleSimpleInvalidity[T](v: Simple.Invalidity \/ T)(f: T => JsCmd)(implicit id: ErrorAlertId, nc: NoticeContainerExp): JsCmd =
     v match {
-      case scalaz.Failure(f) => jsShowFailure(f)
-      case scalaz.Success(s) => jsClearError & f(s)
+      case \/-(s) => jsClearError & f(s)
+      case -\/(e) => jsShowSimpleInvalidity(e)
+    }
+
+  def jsShowCompositeInvalidity(f: Composite.Invalidity)(implicit id: ErrorAlertId, nc: NoticeContainerExp): JsCmd =
+    jsShowError(InvalidityHtml.composite(f))(id, nc)
+
+  def handleCompositeInvalidity[T](v: Composite.Invalidity \/ T)(f: T => JsCmd)(implicit id: ErrorAlertId, nc: NoticeContainerExp): JsCmd =
+    v match {
+      case \/-(s) => jsClearError & f(s)
+      case -\/(e) => jsShowCompositeInvalidity(e)
     }
 
   def jsShowNotice(content: NodeSeq, id: String = null)(implicit nc: NoticeContainerExp): JsCmd =
@@ -187,7 +196,7 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with HasLogg
 
   @inline final def currentUser(): Option[UserDescriptor] = securityProvider().loggedInUser
   @inline final def currentUserId_!() : UserId = currentUser_!().id
-  final def currentUser_!(): UserDescriptor = currentUser match {
+  final def currentUser_!(): UserDescriptor = currentUser() match {
     case Some(user) => user
     case None => respondImmediately(RedirectResponse(AppSiteMap.Login.relativeUrl))
   }

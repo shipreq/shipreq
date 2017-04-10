@@ -6,16 +6,16 @@ import java.time.Instant
 import net.liftweb.http.S
 import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
-import scalaz.Free
+import scalaz.{Free, \/}
 import scalaz.effect.IO
 import shipreq.base.db.DoobieHelpers._
 import shipreq.taskman.api.{EmailAddr, Msg, UserId}
-import shipreq.webapp.base.validation.ValidationResult
+import shipreq.webapp.base.vali2.Composite.Invalidity
 import shipreq.webapp.server.app.{AppSiteMap, DI}
 import shipreq.webapp.server.app.AppSiteMap.Implicits._
 import shipreq.webapp.server.data.{ResetPasswordInfo, UserRegistrationInfo}
 import shipreq.webapp.server.db.DbLogic
-import shipreq.webapp.server.feature.validation.Validators
+import shipreq.webapp.server.feature.validation.ServerSideValidators
 import shipreq.webapp.server.lib.{FormVar, Misc, SingleOpStatefulSnippet, SnippetHelpers}
 import shipreq.webapp.server.security.PasswordAndSalt
 import shipreq.webapp.server.snippet.ResetPassword._
@@ -31,7 +31,7 @@ object ResetPassword {
 
 object ResetPassword1 extends SnippetHelpers {
 
-  val form = FormVar.strOnSubmit(Validators.email, "#email")
+  val form = FormVar.strOnSubmit(ServerSideValidators.email.named, "#email")
 
   def render = {
     var vars: form.Var = ""
@@ -44,8 +44,8 @@ object ResetPassword1 extends SnippetHelpers {
     form.csssel(vars, vars = _) & ":submit" #> ajaxSubmitOnClick(() => onSubmit())
   }
 
-  def perform(v: ValidationResult[EmailAddr]): JsCmd =
-    ifValid(v) { email =>
+  def perform(v: Invalidity \/ EmailAddr): JsCmd =
+    handleCompositeInvalidity(v) { email =>
 
       val dbPlan = resetLogic(email).withTransactionLevel(Connection.TRANSACTION_SERIALIZABLE)
       val plan = db().io.trans(dbPlan).flatMap {
@@ -122,7 +122,7 @@ class ResetPassword2(token: String) extends SingleOpStatefulSnippet {
 
   def onSubmit(): JsCmd =
     try
-      ifValid(form validate vars)(resetPassword)
+      handleCompositeInvalidity(form validate vars)(resetPassword)
     finally
       vars = FormVar.emptyPasswordPair // Let's not keep the plaintext passwords around
 

@@ -55,7 +55,7 @@ object TextMod {
     truncateToLength(range.end)
 
   def truncateToLength(maxLen: Int): Endo[String] =
-    Endo(s => if (s.length <= maxLen) s else s.substring(0, maxLen))
+    Endo(s => if (s.length <= maxLen) s else s.take(maxLen))
 
   object nonBlank extends (String <=> Option[String]) {
     override def to = s => if (s.isEmpty) None else Some(s)

@@ -48,7 +48,7 @@ object DynModal extends StaticSnippetHelpers {
     var vars: form.Var = FormVar.emptyPasswordChange
 
     def onSubmit(): JsCmd =
-      ifValid(form validate vars)(newPassword =>
+      handleCompositeInvalidity(form validate vars)(newPassword =>
         JsModalHide & successFn(newPassword))
 
     run(ChangePasswordTemplate)(

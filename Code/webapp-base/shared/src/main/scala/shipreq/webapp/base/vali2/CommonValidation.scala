@@ -44,11 +44,17 @@ object CommonValidation {
     def whitelistCharRangeRegex(rangeRegex: String): InvalidatorLogic[String] =
       matchesRegex(s"^[$rangeRegex]*$$".r)
 
-    //  def whitelistCharsS(charList: String) = whitelistCharsR(quote(charList))
-    //
-    //  def blacklistCharsR(charRegex: String) = matchesR(s"^[^$charRegex]*$$".r)
-    //
-    //  def blacklistCharsS(charList: String) = blacklistCharsR(quote(charList))
+    /** @param rangeRegex Like "a-zA-Z". No brackets. */
+    def blacklistCharRangeRegex(rangeRegex: String): InvalidatorLogic[String] =
+      matchesRegex(s"^[^$rangeRegex]*$$".r)
+
+    /** @param chars Like "0123456789" */
+    def whitelistChars(chars: String): InvalidatorLogic[String] =
+      whitelistCharRangeRegex(Pattern.quote(chars))
+
+    /** @param chars Like "0123456789" */
+    def blacklistChars(chars: String): InvalidatorLogic[String] =
+      blacklistCharRangeRegex(Pattern.quote(chars))
 
     def containsRegex(regex: String): InvalidatorLogic[String] =
       matchesRegex(s".*(?:$regex).*".r)

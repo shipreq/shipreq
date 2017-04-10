@@ -2,6 +2,7 @@ package shipreq.webapp.base.vali2
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.nonempty.NonEmptyVector
+import scalaz.{Applicative, \/}
 import shipreq.base.util.Validity
 import Simple.Implicits._
 
@@ -12,6 +13,12 @@ object Composite {
   type Invalidity = NonEmptyVector[FieldInvalidity]
 
   object Invalidity {
+    def loose(reason: String): Invalidity =
+      loose(Simple.Invalidity(reason))
+
+    def loose(reasons: Simple.Invalidity): Invalidity =
+      NonEmptyVector.one(FieldInvalidity(None, reasons))
+
     def forField(name: String, reasons: Simple.Invalidity): Invalidity =
       NonEmptyVector.one(FieldInvalidity(Some(name), reasons))
 
@@ -26,10 +33,13 @@ object Composite {
           val prefix = k + ": "
           rs.map(prefix + _)
         }
-      }
+      }.sorted
 
     def toText(invalidity: Invalidity): String =
-      toLines(invalidity).whole.sorted.mkString("\n")
+      toLines(invalidity).whole.mkString("\n")
+
+    lazy val applicative: Applicative[Invalidity \/ ?] =
+      Generic.AccumuateErrors.applicativeInstance[Invalidity]
   }
 
   type EndoCorrector[A] = Generic.EndoCorrector[A]

@@ -30,7 +30,7 @@ object ValidationTest extends TestSuite {
       val result = v(uncorrected)
       expectResult(correct) match {
         case r@ \/-(_) =>
-          assertEq("Result", result, r)
+          assertEq(s"Result of '$uncorrected'", result, r)
         case -\/(expect) =>
           result match {
             case -\/(NonEmptySet.Sole(e)) => assertContainsCI(e, expect)
@@ -96,8 +96,26 @@ object ValidationTest extends TestSuite {
 
       'whitelistCharRangeRegex {
         val test = Tester(CommonValidation.invalidator.whitelistCharRangeRegex("0-9")(Invalidity("no")).toAuditor.toValidator)
-        'pass - test.each("3", "2342")(pass)
-        'fail - test.each("", "x3", "3x", "x")(fail("no"))
+        'pass - test.each("", "3", "2342")(pass)
+        'fail - test.each("x3", "3x", "x")(fail("no"))
+      }
+
+      'blacklistCharRangeRegex {
+        val test = Tester(CommonValidation.invalidator.blacklistCharRangeRegex("0-9")(Invalidity("no")).toAuditor.toValidator)
+        'pass - test.each("", "x", "xx sda fjhgkas")(pass)
+        'fail - test.each("3", "x3", "3x", "3x3")(fail("no"))
+      }
+
+      'whitelistChars {
+        val test = Tester(CommonValidation.invalidator.whitelistChars("[0")(Invalidity("no")).toAuditor.toValidator)
+        'pass - test.each("", "0", "[", "[0[[0[")(pass)
+        'fail - test.each("0x", "x[", "3", "!", "[0]")(fail("no"))
+      }
+
+      'blacklistChars {
+        val test = Tester(CommonValidation.invalidator.blacklistChars("[0")(Invalidity("no")).toAuditor.toValidator)
+        'pass - test.each("", "x", "3!")(pass)
+        'fail - test.each("0", "x0", "0x", "[x]")(fail("no"))
       }
 
       'containsAlphaAndNumber {

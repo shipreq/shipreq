@@ -6,7 +6,7 @@ import utest._
 import shipreq.taskman.api.UserId
 import shipreq.webapp.server.data.{ResetPasswordInfo, UserRegistrationInfo}
 import shipreq.webapp.server.db.DbLogic
-import shipreq.webapp.server.feature.validation.Validators
+import shipreq.webapp.server.feature.validation.ServerSideValidators
 import shipreq.webapp.server.test.SnippetTestUtil._
 import shipreq.webapp.server.test.WebappServerTestUtil._
 import shipreq.webapp.server.test._
@@ -20,6 +20,7 @@ object ResetPasswordTest extends TestSuite {
   lazy val template2 = requireTemplate("public/resetpw2")
 
   override def tests = TestSuite {
+    PrepareEnv.oshiro()
 
     "ResetPassword1.perform" - {
 
@@ -87,7 +88,7 @@ object ResetPasswordTest extends TestSuite {
 
           val dbBefore = dbInspect()
           val (jsCmd, tt) = TestTaskman.use(
-            ResetPassword1.perform(Validators.email.correctAndValidateU(emailInput))
+            ResetPassword1.perform(ServerSideValidators.email.named(emailInput))
           )
           val dbAfter = dbInspect()
 

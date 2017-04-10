@@ -1,7 +1,7 @@
 package shipreq.webapp.base.vali2
 
-import japgolly.microlibs.nonempty.NonEmptySet
-import scalaz.{-\/, Applicative, Endo, \/, \/-}
+import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
+import scalaz.{Applicative, Endo, \/}
 
 object Simple {
 
@@ -11,8 +11,11 @@ object Simple {
     def apply(s: String): Invalidity =
       NonEmptySet.one(s)
 
-    def toText(i: Invalidity): String =
-      i.whole.mkString("\n")
+    def toLines(invalidity: Invalidity): NonEmptyVector[String] =
+      invalidity.toNEV.sorted
+
+    def toText(invalidity: Invalidity): String =
+      toLines(invalidity).whole.mkString("\n")
 
     val applicative: Applicative[Invalidity \/ ?] =
       Generic.AccumuateErrors.applicativeInstance[Invalidity]
@@ -41,7 +44,21 @@ object Simple {
   // ===================================================================================================================
 
   object Implicits {
-    implicit class ScalazEndoExt[A](private val self: Endo[A]) extends AnyVal {
+
+    private lazy val blankInvalidity = Invalidity("")
+    implicit class SimpleExt_InvalidatorLogic[A](private val self: InvalidatorLogic[A]) extends AnyVal {
+      def negate: InvalidatorLogic[A] =
+         i => {
+           val ii = Some(i)
+           val positive = self(blankInvalidity)
+           Invalidator(positive(_) match {
+             case None => ii
+             case Some(_) => None
+           })
+         }
+    }
+
+    implicit class SimpleExt_ScalazEndo[A](private val self: Endo[A]) extends AnyVal {
       def correctLive: EndoCorrector[A] = EndoCorrector.live(self.run)
       def correctFull: EndoCorrector[A] = EndoCorrector.full(self.run)
     }
@@ -85,6 +102,9 @@ object Simple {
     final implicit class SimpleExt_Validator[I, C, V](private val self: Validator[I, C, V]) extends AnyVal {
       def forField(name: String): Composite.Validator[I, C, V] =
         self.mapError(Composite.Invalidity.forField(name, _))
+
+      def loose: Composite.Validator[I, C, V] =
+        self.mapError(Composite.Invalidity.loose)
 
       def named(fieldName: String): Composite.Stateless[I, C, V] =
         Composite.Stateless(self, fieldName)

@@ -22,7 +22,7 @@ for (a <- (2 to 9)) {
     type Vars = ${mt(T)}
     def init = ${mt(v(_)+".init")}
     def cssSel(get: => Vars, set: Vars => Unit): CssSel = ${m(j => s"${v(j)}.csssel(get._$j)(x=>set(get put$j x))") mkString " & "}
-    def validate[X](v: Vars, fx: ${mt(TO)} => X): ValidationResult[X] = Validator.Ap.apply$a${mt(j => s"${v(j)} validate v._$j")}(fx)
+    def validate[X](v: Vars, fx: ${mt(TO)} => X): ValidationResult[X] = Invalidity.applicative.apply$a${mt(j => s"${v(j)} validate v._$j")}(fx)
   }
   @inline final def apply[${mc(TTO)}]${mt(vVD)}: V$a[${mc(TTO)}] = V$a${mt(v)}
     """)
@@ -31,7 +31,7 @@ for (a <- (2 to 9)) {
   final def merge[${mc(TTO)}, X](${mc(vVD)}, fx: ${mt(TO)} => X): FormVar[${mt(T)}, X] = FormVar[${mt(T)}, X](
       ${mt(v(_)+".init")}
       ,G => S => ${m(j => s"${v(j)}.csssel(G._$j)(x=>S(G put$j x))") mkString " & "}
-      ,v => Validator.Ap.apply$a${mt(j => s"${v(j)} validate v._$j")}(fx)
+      ,v => Invalidity.applicative.apply$a${mt(j => s"${v(j)} validate v._$j")}(fx)
     )
     """)
 
@@ -40,7 +40,7 @@ for (a <- (2 to 9)) {
   final def merge[${mc(TTO)}]${mt(vVD)}: Merge$a[${mt(T)}, ${mc(TO)}] = new Merge$a[${mt(T)}, ${mc(TO)}] {
     override def apply[X](fx: ${mt(TO)} => X): FormVar[${mt(T)}, X] = FormVar[${mt(T)}, X](
       (G,S) => ${m(j => s"${v(j)}.csssel(G._$j,x=>S(G put$j x))") mkString " & "}
-      ,v => Validator.Ap.apply$a${mt(j => s"${v(j)} validate v._$j")}(fx)
+      ,v => Invalidity.applicative.apply$a${mt(j => s"${v(j)} validate v._$j")}(fx)
     )}
     """)
 }

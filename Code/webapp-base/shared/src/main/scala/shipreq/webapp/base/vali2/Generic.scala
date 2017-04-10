@@ -45,6 +45,9 @@ object Generic {
     def imap[B](iso: B <=> A): EndoCorrector[B] =
       xmap(iso.from)(iso.to)
 
+    def pair[AA](implicit A: GenTuple[A, A, AA]): EndoCorrector[AA] =
+      this tuple this
+
     def tuple[A2, AA](b: EndoCorrector[A2])(implicit A: GenTuple[A, A2, AA]): EndoCorrector[AA] =
       EndoCorrector[AA](
         aa => A.map(aa, live, b.live, A.append),
@@ -69,6 +72,11 @@ object Generic {
 
     def full[A](f: A => A): EndoCorrector[A] =
       EndoCorrector(Identity[A], f)
+
+    def choose[A](f: A => EndoCorrector[A]): EndoCorrector[A] =
+      EndoCorrector(
+        a => f(a).live(a),
+        a => f(a).full(a))
   }
 
   // ===================================================================================================================
@@ -101,6 +109,9 @@ object Generic {
     def imapCorrected[A](iso: C <=> A): Corrector[I, A] =
       xmapCorrected(iso.to)(iso.from)
 
+    def pair[II, CC](implicit I: GenTuple[I, I, II], C: GenTuple[C, C, CC]): Corrector[II, CC] =
+      this tuple this
+
     def tuple[I2, C2, II, CC](b: Corrector[I2, C2])(implicit I: GenTuple[I, I2, II], C: GenTuple[C, C2, CC]): Corrector[II, CC] =
       Corrector[II, CC](
         ii => I.map(ii, live, b.live, I.append),
@@ -117,6 +128,15 @@ object Generic {
 
     def full[I, C](full: I => C, uncorrect: C => I): Corrector[I, C] =
       Corrector(Identity[I], full, uncorrect)
+
+    def choose[I, C](f: I => Corrector[I, C], uncorrect: C => I): Corrector[I, C] =
+      Corrector[I, C](
+        i => f(i).live(i),
+        i => f(i).full(i),
+        uncorrect)
+
+    def choose[A](f: A => Corrector[A, A]): Corrector[A, A] =
+      choose(f, Identity[A])
   }
 
   // ===================================================================================================================
@@ -158,6 +178,9 @@ object Generic {
     def toEndoValidator: EndoValidator[E, A] =
       EndoValidator(EndoCorrector.id, Invalidator(invalidate))
 
+    def toValidator: Validator[E, A, A, A] =
+      toEndoValidator.toValidator
+
     def toAuditor: Auditor[E, A, A] =
       Auditor(a => invalidate(a) match {
         case None => \/-(a)
@@ -169,12 +192,15 @@ object Generic {
     def id[A]: Invalidator[Nothing, A] =
       Invalidator(_ => None)
 
+    def choose[E, A](f: A => Invalidator[E, A]): Invalidator[E, A] =
+      Invalidator(e => f(e).invalidate(e))
+
     implicit def VarianceBypass[E, A](a: Invalidator[E, A]): VarianceBypass[E, A] = new VarianceBypass(a.invalidate)
     final class VarianceBypass[E, A](private val invalidate: A => Option[E]) extends AnyVal {
 
       def liftTraverse[T[_]](implicit T: Traverse[T], E: Semigroup[E]): Invalidator[E, T[A]] =
         Invalidator(ta => {
-          val ok: E \/ Unit = \/-(())
+          val ok: E \/ Unit = Auditor.unitResult
           val result: E \/ Unit = T.traverse_(ta)(invalidate(_).fold(ok)(-\/(_)))(AccumuateErrors.applicativeInstance)
           val G = AccumuateErrors.applicativeInstance[E]
           result.fold(Some(_), _ => None)
@@ -187,6 +213,9 @@ object Generic {
   final case class Auditor[+E, C, V](audit: C => E \/ V) extends AnyVal {
     @inline def apply(c: C): E \/ V =
       audit(c)
+
+    def validity(c: C): Validity =
+      Valid <~ apply(c).isRight
 
     def contramap[A](f: A => C): Auditor[E, A, V] =
       Auditor(audit compose f)
@@ -205,6 +234,9 @@ object Generic {
         case None => \/-(v)
         case Some(e) => -\/(e)
       }))
+
+    def pair[EE >: E, CC, VV](implicit E: Semigroup[EE], C: GenTuple[C, C, CC], V: GenTuple[V, V, VV]): Auditor[EE, CC, VV] =
+      this tuple (this: Auditor[EE, C, V])
 
     def tuple[EE >: E, C2, V2, CC, VV](b: Auditor[EE, C2, V2])(implicit E: Semigroup[EE], C: GenTuple[C, C2, CC], V: GenTuple[V, V2, VV]): Auditor[EE, CC, VV] =
       Auditor[EE, CC, VV](cc => {
@@ -228,8 +260,13 @@ object Generic {
   }
 
   object Auditor {
+    val unitResult = \/-(())
+
     def id[A]: Auditor[Nothing, A, A] =
       Auditor(\/-(_))
+
+    def choose[E, C, V](f: C => Auditor[E, C, V]): Auditor[E, C, V] =
+      Auditor(c => f(c).audit(c))
 
     def optionFn[E, A, B](f: A => Option[B])(invalidity: A => E): Auditor[E, A, B] =
       apply(a => f(a) match {
@@ -278,6 +315,12 @@ object Generic {
   final case class EndoValidator[+E, A](corrector: EndoCorrector[A],
                                         invalidator: Invalidator[E, A]) {
 
+    def xmapInput[B](g: A => B)(f: B => A): EndoValidator[E, B] =
+      EndoValidator(corrector.xmap(g)(f), invalidator.contramap(f))
+
+    def imapInput[B](iso: B <=> A): EndoValidator[E, B] =
+      xmapInput(iso.from)(iso.to)
+
     def append[EE >: E](that: EndoValidator[EE, A])(implicit E: Semigroup[EE]): EndoValidator[EE, A] =
       EndoValidator(
         corrector append that.corrector,
@@ -307,6 +350,9 @@ object Generic {
   object EndoValidator {
     def id[A]: EndoValidator[Nothing, A] =
       EndoValidator(EndoCorrector.id, Invalidator.id)
+
+    def choose[E, A](f: A => EndoValidator[E, A]): EndoValidator[E, A] =
+      EndoValidator(EndoCorrector.choose(f.andThen(_.corrector)), Invalidator.choose(f.andThen(_.invalidator)))
   }
 
   // ===================================================================================================================
@@ -318,6 +364,9 @@ object Generic {
     def validity(i: I): Validity =
       Valid <~ apply(i).isRight
 
+    def mapCorrector[A](f: Corrector[I, C] => Corrector[A, C]): Validator[E, A, C, V] =
+      Validator(f(corrector), auditor)
+
     def mapAuditor[EE, VV](f: Auditor[E, C, V] => Auditor[EE, C, VV]): Validator[EE, I, C, VV] =
       Validator(corrector, f(auditor))
 
@@ -326,6 +375,12 @@ object Generic {
 
     def mapValid[A](f: V => A): Validator[E, I, C, A] =
       mapAuditor(_.mapValid(f))
+
+    def xmapInput[B](g: I => B)(f: B => I): Validator[E, B, C, V] =
+      mapCorrector(_.xmapInput(g)(f))
+
+    def imapInput[B](iso: B <=> I): Validator[E, B, C, V] =
+      xmapInput(iso.from)(iso.to)
 
     def appendInvalidator[EE >: E](i: Invalidator[EE, V]): Validator[EE, I, C, V] =
       mapAuditor(_.appendInvalidator(i))
@@ -342,14 +397,26 @@ object Generic {
     def toInvalidator[EE >: E]: Invalidator[EE, I] =
       toAuditor.toInvalidator
 
+    def pair[EE >: E, II, CC, VV](implicit E: Semigroup[EE], I: GenTuple[I, I, II], C: GenTuple[C, C, CC], V: GenTuple[V, V, VV]): Validator[EE, II, CC, VV] =
+      this tuple (this: Validator[EE, I, C, V])
+
     def tuple[EE >: E, I2, C2, V2, II, CC, VV](that: Validator[EE, I2, C2, V2])(implicit E: Semigroup[EE], I: GenTuple[I, I2, II], C: GenTuple[C, C2, CC], V: GenTuple[V, V2, VV]): Validator[EE, II, CC, VV] =
       Validator(
         corrector tuple that.corrector,
         auditor tuple that.auditor)
+
+//    def product[EE >: E, I2, C2, V2](that: Validator[EE, I2, C2, V2])(implicit E: Semigroup[EE]): Validator[EE, (I, I2), (C, C2), (V, V2)] =
+//      this tuple that
   }
 
   object Validator {
     def id[A]: Validator[Nothing, A, A, A] =
       Validator(Corrector.id, Auditor.id)
+
+    def choose[E, I, V](f: I => Validator[E, I, I, V]): Validator[E, I, I, V] =
+      Validator(Corrector.choose(f.andThen(_.corrector)), Auditor.choose(f.andThen(_.auditor)))
+
+    def choose[E, I, C, V](f: I => Validator[E, I, C, V], uncorrect: C => I): Validator[E, I, C, V] =
+      Validator(Corrector.choose(f.andThen(_.corrector), uncorrect), Auditor.choose(c => f(uncorrect(c)).auditor))
   }
 }
