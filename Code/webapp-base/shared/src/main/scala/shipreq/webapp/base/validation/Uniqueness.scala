@@ -1,63 +1,67 @@
 package shipreq.webapp.base.validation
 
+import japgolly.univeq.UnivEq
 import scalaz.Equal
-import scalaz.old.NonEmptyList
 import scalaz.syntax.equal._
+import shipreq.base.util.OptionalConflict
+import Simple._
+import Simple.Implicits._
 
 object Uniqueness {
 
-  def main[S, I, K, VS, V](key: S => K,
-                           data: S => Stream[I],
-                           ik: I => K,
-                           vs: I => VS,
-                           ignore: K => K => Boolean,
-                           member: V => VS => Boolean): BF[S, V] = {
-    val test = (s: S, v: InputCorrected[V]) => {
-      val containsv = vs andThen member(v.value)
-      val ignorable = ik andThen ignore(key(s))
-      data(s).forall(i => !containsv(i) || ignorable(i))
-    }
-    new BF[S, V](ValidationPart.test(test, _))
+  /** Utilities that are useful in preparing data for uniqueness checking */
+  object Util {
+    def excludeKey[A, K: Equal](keyToExclude: K, data: TraversableOnce[A])(getKey: A => K): Iterator[A] =
+      data.toIterator.filter(getKey(_) ≠ keyToExclude)
+
+    def excludeOptionalKey[A, K: Equal](keyToExclude: Option[K], data: TraversableOnce[A])(getKey: A => K): Iterator[A] =
+      keyToExclude match {
+        case None    => data.toIterator
+        case Some(k) => excludeKey(k, data)(getKey)
+      }
   }
 
-  /** Some(k₁) = Some(k₂), otherwise false */
-  def ignoreO[K: Equal]: Option[K] => Option[K] => Boolean =
-    _.fold[Option[K] => Boolean](_ => false)(k => _.fold(false)(k ≟ _))
+  // ===================================================================================================================
 
-  // -------------------------------------------------------------------------------------------------------------------
+  def notUnique = Invalidity("Already in use.")
 
-  def againstSetByKeyO[S, K: Equal, V](key: S => Option[K],
-                                       data: S => Stream[(Option[K], Set[V])]): BF[S, V] =
-    againstSetByKey[S, Option[K], V](key, data, ignoreO[K])
+  def apply[A] = new Builder[A]
 
-  def againstSetByKey[S, K, V](key: S => K,
-                               data: S => Stream[(K, Set[V])],
-                               ignore: K => K => Boolean): BF[S, V] =
-    main[S, (K, Set[V]), K, Set[V], V](key, data, _._1, _._2, ignore, v => _ contains v)
+  final class Builder[A] private[Uniqueness]() {
+    // final class Builder[A] private[Uniqueness](private val unit: Unit) extends AnyVal { -- https://issues.scala-lang.org/browse/SI-9646
 
-  // -------------------------------------------------------------------------------------------------------------------
+    /** Ensure A is unique amongst a collection of Bs */
+    def apply[B](data: () => TraversableOnce[B])
+                (conflict: (B, A) => Boolean, ignore: B => Boolean): Invalidator[A] =
+      Invalidator.test[A](
+        v => data().forall(i => !conflict(i, v) || ignore(i)),
+        notUnique)
 
-  @inline def entity[E] = new BE[E]
-
-  final class BE[E] {
-    @inline def k   [K: Equal](ek: E => K)         = new BE2[E, K        ](ek, k => k ≟ _)
-    @inline def optk[K: Equal](ek: E => Option[K]) = new BE2[E, Option[K]](ek, ignoreO[K])
+    /** Convenience for common pattern of data being key/value tuples */
+    def tuple[K, V](data: () => TraversableOnce[(K, V)])
+                   (conflict: (V, A) => Boolean, ignore: K => Boolean): Invalidator[A] =
+      apply(data)((x, a) => conflict(x._2, a), x => ignore(x._1))
   }
 
-  final class BE2[E, K](ek: E => K, ignore: K => K => Boolean) {
-    @inline def v   [V: Equal](ev: E => V)         = member[V](v => v ≟ ev(_))
-    @inline def optv[V: Equal](ev: E => Option[V]) = member[V](v => ev(_).fold(false)(v ≟ _))
+  /** Ensure A doesn't exist in a collection of As */
+  def within[A: Equal](data: => TraversableOnce[A]): Invalidator[A] =
+    Invalidator.test[A](a => data.forall(a ≠ _), notUnique)
 
-    @inline def member[V](m: V => E => Boolean): BF[(Stream[E], K), V] =
-      main[(Stream[E], K), E, K, E, V](_._2, _._1, ek, identity, ignore, m)
-  }
+  /** Ensure A doesn't exist in a set of As */
+  def set[A: UnivEq](data: => Set[A]): Invalidator[A] =
+    Invalidator.test[A](!data.contains(_), notUnique)
 
-  // -------------------------------------------------------------------------------------------------------------------
+  // ===================================================================================================================
 
-  def vfailure(fieldName: String): VFailure =
-    VFailure.forField(fieldName, NonEmptyList("must be unique.")) // or maybe "is already in use"?
+  def keyWithValue[K: Equal, V: Equal](data: () => TraversableOnce[(K, V)])(key: K): Invalidator[V] =
+    apply[V].tuple(data)(Equal[V].equal, _ ≟ key)
 
-  final class BF[S, V](f: VFailure => ValidationPart[S, V, V]) {
-    def fieldName(fieldName: String) = f(vfailure(fieldName))
-  }
+  def optionalKeyWithValue[K: Equal, V: Equal](data: () => TraversableOnce[(Option[K], V)])(key: Option[K]): Invalidator[V] =
+    keyWithValue(data)(key)(OptionalConflict.equalOption, implicitly)
+
+  def keyWithValueSet[K: Equal, V: UnivEq](data: () => TraversableOnce[(K, Set[V])])(key: K): Invalidator[V] =
+    apply[V].tuple(data)(_ contains _, _ ≟ key)
+
+  def optionalKeyWithValueSet[K: Equal, V: UnivEq](data: () => TraversableOnce[(Option[K], Set[V])])(key: Option[K]): Invalidator[V] =
+    keyWithValueSet(data)(key)(OptionalConflict.equalOption, implicitly)
 }

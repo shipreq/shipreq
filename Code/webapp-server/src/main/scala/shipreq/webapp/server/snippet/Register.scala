@@ -8,16 +8,16 @@ import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
-import scalaz.Free
+import scalaz.{Free, \/}
 import shipreq.base.db.DoobieHelpers._
 import shipreq.taskman.api.Msg.{ReRegistrationAttempted, RegistrationRequested}
 import shipreq.taskman.api.{EmailAddr, Msg, UserId}
-import shipreq.webapp.base.validation.ValidationResult
+import shipreq.webapp.base.validation.Composite.Invalidity
 import shipreq.webapp.server.app.{AppSiteMap, DI}
 import shipreq.webapp.server.app.AppSiteMap.Implicits._
 import shipreq.webapp.server.data.UserRegistrationInfo
 import shipreq.webapp.server.db.{DbLogic, UserRegistrationResult}
-import shipreq.webapp.server.feature.validation.Validators
+import shipreq.webapp.server.feature.validation.ServerSideValidators
 import shipreq.webapp.server.lib.{FormVar, Misc, SingleOpStatefulSnippet, SnippetHelpers}
 import shipreq.webapp.server.security.{PasswordAndSalt, Permissions}
 import shipreq.webapp.server.snippet.Register._
@@ -38,7 +38,7 @@ object Register {
  */
 object Register1 extends SnippetHelpers {
 
-  val form = FormVar.strOnSubmit(Validators.email, "#email")
+  val form = FormVar.strOnSubmit(ServerSideValidators.email.named, "#email")
 
   def render = {
     var vars: form.Var = ""
@@ -56,8 +56,8 @@ object Register1 extends SnippetHelpers {
       "#register1Form" #> ""
   }
 
-  def perform(v: ValidationResult[EmailAddr]): JsCmd =
-    ifValid(v)(emailAddr => {
+  def perform(v: Invalidity \/ EmailAddr): JsCmd =
+    handleCompositeInvalidity(v)(emailAddr => {
       val dbPlan = DbLogic.user.findRegistrationInfo(emailAddr).flatMap {
         case None    => onNewUser(emailAddr)
         case Some(u) => preRegistrationMsg(emailAddr, u)
@@ -99,11 +99,11 @@ object Register1 extends SnippetHelpers {
 
 object Register2 {
   val form = FormVar.merge(
-    FormVar.strOnSubmit (Validators.user.name, "#name"),
-    FormVar.ajaxStr     (Validators.user.username, JqId("username")),
+    FormVar.strOnSubmit (ServerSideValidators.user.name.named, "#name"),
+    FormVar.ajaxStr     (ServerSideValidators.user.username.named, JqId("username")),
     FormVar.passwordPair("#password1", "#password2"),
     FormVar.boolOnSubmit("#newsletter"),
-    FormVar.boolOnSubmit(Validators.tosAgreement, "#tos")
+    FormVar.boolOnSubmit(ServerSideValidators.tosAgreement, "#tos")
   )(Tuple5.apply)
 }
 
@@ -141,7 +141,7 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
     try {
       import UserRegistrationResult._
 
-      ifValid(form validate vars)(r => {
+      handleCompositeInvalidity(form validate vars)(r => {
         val (name, username, password, newsletter, _) = r
         val ps = PasswordAndSalt.createWithRandomSalt(password)
 

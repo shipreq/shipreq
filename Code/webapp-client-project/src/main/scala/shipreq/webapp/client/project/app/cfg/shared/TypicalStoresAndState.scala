@@ -29,9 +29,12 @@ abstract class TypicalStoresAndState[P, I, K: UnivEq](fields: FieldSet[P, I]) {
   @Lenses
   case class State(newRow: newRowStore.State, savedRows: savedRowStore.State)
 
-  type S  = State
-  type ST = ReactST[CallbackTo, S, Unit]
-  val ST = ReactS.FixCB[S]
+  final type Persisted = P
+  final type Input = I
+  final type Key = K
+  final type S  = State
+  final type ST = ReactST[CallbackTo, S, Unit]
+  final val ST = ReactS.FixCB[S]
 
   val savedRowStoreS = savedRowStore.contramap(State.savedRows)
   val newRowStoreS   = newRowStore  .contramap(State.newRow)
@@ -39,6 +42,6 @@ abstract class TypicalStoresAndState[P, I, K: UnivEq](fields: FieldSet[P, I]) {
   /**
    * Validators requiring external data (eg. for uniqueness checking) typically need input in this shape.
    */
-  def validatorInput(k: Option[K]): S => (Stream[P], Option[K]) =
+  def validatorInput(k: Option[K]): S => (Stream[P], Option[K]) = // TODO Delete this kind of shit
     s => (savedRowStoreS.getAllP(s), k)
 }

@@ -10,7 +10,7 @@ import scalaz.std.tuple._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data._, DataImplicits._
-import shipreq.webapp.base.data.Validators.{reqType => V}
+import shipreq.webapp.base.data.DataValidators.{reqType => V}
 import shipreq.webapp.base.filter.PotentialFilter
 import shipreq.webapp.base.protocol.CustomReqTypeCrud
 import shipreq.webapp.client.base.data.On
@@ -60,12 +60,32 @@ object CfgReqTypes {
 
     val onWhenImplicationRequired = On <=> ImplicationRequired
 
+    def validatorState(k: Option[CustomReqTypeId]): V.State =
+      validatorState(k, $.state.runNow())
+
+    def validatorState(k: Option[CustomReqTypeId], s: => S): V.State =
+      V.State(k, () => savedRowStoreS.getAllP(s))
+
     val rowE = {
-      val mnemonicE = Editors.textInputEditor.applyValidator(V.mnemonicS)
-      val nameE     = Editors.textInputEditor.applyValidator(V.nameS)
-      val impE      = Editors.checkboxEditor.imap(onWhenImplicationRequired).strengthL[V.S]
+      val mnemonicE = Editors.textInputEditor.applyStatefulValidator(V.mnemonic.unnamedFn)
+      val nameE     = Editors.textInputEditor.applyStatefulValidator(V.name.unnamedFn)
+      val impE      = Editors.checkboxEditor.imap(onWhenImplicationRequired).strengthL[V.State]
       val e = Editor.merge3S(fields, mnemonicE, nameE, impE).tupleI.zoomU[S]
-      supp.addEditorFeatures(e)(V.all, _._1._2, p => (p.mnemonic, p.name, p.imp))
+      import supp.sas
+      val saveFn = supp.crudIO.map(c =>
+        Persistence.asyncSaveS(
+          V.all,
+          sas.savedRowStoreS)(
+          sas.newRowStoreS,
+          validatorState(None, _),
+          k => validatorState(Some(k), _),
+          supp.saveNeed(p => (p.mnemonic, p.name, p.imp)),
+          c.createIO,
+          c.updateIO,
+          supp.realise)
+      ).extract
+
+      supp.addEditorFeatures2(e)(saveFn, _._1.subject)
     }
 
     def checkbox(i: ImplicationRequired) =
@@ -77,7 +97,7 @@ object CfgReqTypes {
       project, filterDead, usageShow)
 
     val cfgTable = {
-      def rowRenderer =
+      val rowRenderer =
         new CfgTable.RowRenderer[CustomReqType, rowE.View, (TagMod, Set[ReqType.Mnemonic], TagMod, TagMod, Option[Usage.View])] {
           override def newRow = {
             case (mnemonic, name, impReq) => (mnemonic, UnivEq.emptySet, name, impReq, None)
@@ -99,7 +119,23 @@ object CfgReqTypes {
           }
         }
 
-      CfgTable.typical(storesAndState, $.props.map(_.filterDead.value))(rowE)(_.mnemonic, rowRenderer, () => supp.deletion.value(), _.live, $)
+      type I = storesAndState.Input
+      def rowA(k: Option[CustomReqTypeId], i: I): rowE.InputA = (validatorState(k), i)
+      def newRowA(i: I) = rowA(None, i)
+      def savedRowA(id: CustomReqTypeId) = rowA(Some(id), storesAndState.savedRowStoreS.getI(id)($.state.runNow()))
+
+      new CfgTable[storesAndState.S, CustomReqTypeId, storesAndState.Persisted, I, rowE._A, rowE._B, rowE._C, rowE._V, ReqType.Mnemonic, rowRenderer._R](
+        rowE,
+        storesAndState.savedRowStoreS,
+        storesAndState.newRowStoreS,
+        _.mnemonic,
+        rowRenderer,
+        newRowA,
+        savedRowA,
+        () => supp.deletion.value(),
+        _.live,
+        $.props.map(_.filterDead.value),
+        $)
     }
 
     val table = {

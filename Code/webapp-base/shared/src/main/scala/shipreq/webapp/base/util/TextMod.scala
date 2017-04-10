@@ -29,12 +29,20 @@ object TextMod {
   val whitespaceRegex: Regex =
     (CharSubset.Whitespace.regexChar + "+").r
 
+  // TODO do properly with unicode
+  val onlyAllowSpacesAsWhitespace =
+    regexReplace("[\t\r\n]+".r, " ")
+
+  // TODO do properly with unicode
+  val onlyAllowSpacesAndNewlinesAsWhitespace =
+    literal('\t', ' ')
+
   val singleLineWhitespace =
     regexReplace(whitespaceRegex, " ") andThen trim
 
   val multiLineWhitespace =
     regexReplace("\r\n?".r, "\n") andThen
-    literal('\t', ' ') andThen
+    onlyAllowSpacesAndNewlinesAsWhitespace andThen
     trim
 
   val noWhitespace =
@@ -47,7 +55,7 @@ object TextMod {
     truncateToLength(range.end)
 
   def truncateToLength(maxLen: Int): Endo[String] =
-    Endo(s => if (s.length <= maxLen) s else s.substring(0, maxLen))
+    Endo(s => if (s.length <= maxLen) s else s.take(maxLen))
 
   object nonBlank extends (String <=> Option[String]) {
     override def to = s => if (s.isEmpty) None else Some(s)

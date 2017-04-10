@@ -4,13 +4,14 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
+import scalaz.{-\/, \/, \/-}
 import scalacss.ScalaCssReact._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.SingleLine
 import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
-import shipreq.webapp.base.validation._
+import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.client.base.data.Plain
 import shipreq.webapp.client.base.feature.EditorStatus
 import shipreq.webapp.client.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
@@ -59,6 +60,9 @@ object TagEditor {
   type CommitFn    = Output ~=> Callback
   type AbortCommit = Option[AbortCommit2[Callback, CommitFn]]
 
+  val validator: Lookup => Validator[String, Stream[String], Stream[ApplicableTag]] =
+    l => G.seqFormat.validator(Auditor.optionFn(l.get)(i => Invalidity(s"Invalid tag: $i")))
+
   case class Props(preEditValue: Option[Set[ApplicableTagId]],
                    edit        : StateSnapshot[String],
                    lookup      : Lookup,
@@ -66,10 +70,10 @@ object TagEditor {
                    abortCommit : AbortCommit) {
 
     // TODO Really? Stream?
-    val parseResult: ValidationResult[Stream[ApplicableTag]] =
-      validator.correctAndValidate(lookup, edit.value)
+    val parseResult: Invalidity \/ Stream[ApplicableTag] =
+      validator(lookup)(edit.value)
 
-    val parseResultSet: ValidationResult[Set[ApplicableTagId]] =
+    val parseResultSet: Invalidity \/ Set[ApplicableTagId] =
       parseResult.map(_.map(_.id)(collection.breakOut))
 
     val validated = EditValidationFeature.compareSetOption(parseResultSet)(preEditValue)
@@ -85,10 +89,6 @@ object TagEditor {
 
   implicit val reusabilityProps: Reusability[Props] =
     Reusability.never // TODO Reusability.caseClass
-
-  val validator =
-    Validator.seqText(G.seqFormat)((l: Lookup) =>
-      i => ValidationResult.option(l get i, VFailure looseMsg s"Invalid tag: $i"))
 
   final class Backend($: BackendScope[Props, Unit]) {
     private val pxLookup = Px.props($).map(_.lookup).withReuse.autoRefresh

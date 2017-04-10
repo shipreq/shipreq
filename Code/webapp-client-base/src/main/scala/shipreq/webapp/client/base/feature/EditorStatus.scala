@@ -2,8 +2,9 @@ package shipreq.webapp.client.base.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.ValidUpdate
-import shipreq.webapp.base.validation.{VFailure, ValidationResult, ValidatorU}
+import shipreq.webapp.base.validation.Simple._
 import EditorStatus._
 
 /** Editors in ShipReq can be in a variety of states:
@@ -70,21 +71,21 @@ object EditorStatus {
 
   // ===================================================================================================================
 
-  def ignoreOrValidate[I, C, V](v: ValidatorU[I, C, V])(i: I, ignore: C => Boolean, commit: V => Callback): Sync = {
-    val corrected = v.correctedU(i)
-    if (ignore(corrected.value))
+  def ignoreOrValidate[I, C, V](v: Validator[I, C, V])(i: I, ignore: C => Boolean, commit: V => Callback): Sync = {
+    val corrected = v.corrector(i)
+    if (ignore(corrected))
       Ignore
     else
-      validationResult(v.validateU(corrected))(commit)
+      validationResult(v.auditor(corrected))(commit)
   }
 
-  def validate[I, C, V](v: ValidatorU[I, C, V])(i: I, commit: V => Callback): Sync =
+  def validate[I, C, V](v: Validator[I, C, V])(i: I, commit: V => Callback): Sync =
     ignoreOrValidate(v)(i, _ => false, commit)
 
-  def validationResult[V](vr: ValidationResult[V])(commit: V => Callback): Sync =
+  def validationResult[V](vr: Invalidity \/ V)(commit: V => Callback): Sync =
     vr match {
-      case scalaz.Success(v)   => Valid(commit(v))
-      case scalaz.Failure(err) => Invalid(err.toText)
+      case \/-(v) => Valid(commit(v))
+      case -\/(e) => Invalid(Invalidity.toText(e))
     }
 
   def validUpdate[E, A](vu: ValidUpdate[E, A])(commit: A => Callback, unchanged: Callback)(implicit fmtErr: E => TagMod): Sync =
@@ -94,8 +95,8 @@ object EditorStatus {
       case ValidUpdate.Failure(e) => Invalid(fmtErr(e))
     }
 
-  def validUpdateV[A](vu: ValidUpdate[VFailure, A])(commit: A => Callback, unchanged: Callback): Sync =
-    validUpdate(vu)(commit, unchanged)(_.toText)
+  def validUpdateV[A](vu: ValidUpdate[Invalidity, A])(commit: A => Callback, unchanged: Callback): Sync =
+    validUpdate(vu)(commit, unchanged)(Invalidity.toText)
 
   def async[A, I](as: AsyncActionFeature.D0.State[A],
                   af: AsyncActionFeature.D0.Feature[A])

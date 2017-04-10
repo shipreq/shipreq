@@ -3,32 +3,33 @@ package shipreq.webapp.client.project.widgets.high
 import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import org.scalajs.dom.html
+import scalaz.\/
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
 import shipreq.webapp.base.text.GrammarSpec.SeqFormat
-import shipreq.webapp.base.validation.{ValidationResult, Validator}
+import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.client.base.feature.EditorStatus
 import shipreq.webapp.client.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
 import shipreq.webapp.client.base.ui.{AutosizeTextarea, EditTheme}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.{AutoComplete, TextEditor}
-import Validators.{reqCode => V}
+import DataValidators.{reqCode => V}
 
 sealed abstract class ReqCodeEditor[In: Reusability, Out] {
   final type Output = Out
 
   val textEditor: TextEditor
 
-  val validator: Validator[V.VS, String, _, In]
+  val validator: V.State => Validator[String, _, In]
 
   def liveCorrect(t: String): String
 
   def dataToSet(d: Option[In]): Set[ReqCode.Value]
 
-  val validate: ValidationResult[In] => Option[In] => EditValidationFeature.Result[Out]
+  val validate: Invalidity \/ In => Option[In] => EditValidationFeature.Result[Out]
 
   val lineCardinality: LineCardinality
 
@@ -41,7 +42,7 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
                    asyncStatus : Option[EditorStatus.Async],
                    abortCommit : AbortCommit) {
 
-    val parseResult = validator.correctAndValidate(V.VS(trie, dataToSet(initialValue)), edit.value)
+    val parseResult = validator(V.State(trie, dataToSet(initialValue)))(edit.value)
     val validated   = validate(parseResult)(initialValue)
     def abort       = abortCommit.fold(Callback.empty)(_.abort)
     def commit      = (r: Out) => abortCommit.fold(Callback.empty)(_ commit r)
@@ -116,8 +117,8 @@ object ReqCodeEditor {
     */
   object Single extends ReqCodeEditor[ReqCode.Value, ReqCode.Value] {
     override val textEditor                          = TextEditor.Input
-    override val validator                           = V.code
-    override def liveCorrect(txt: String)            = V.code.liveCorrect(txt)
+    override val validator                           = V.code.unnamedFn
+    override def liveCorrect(txt: String)            = V.code.stateless.corrector.live(txt)
     override def dataToSet(d: Option[ReqCode.Value]) = d.toSet
     override val validate                            = EditValidationFeature.compareOption[ReqCode.Value] _
     override val lineCardinality                     = SingleLine
@@ -135,15 +136,13 @@ object ReqCodeEditor {
     val seqFmt = SeqFormat(_.trim, "\\s*[\n\r]\\s*".r.pattern, identity, _.isEmpty, _ mkString "\n")
 
     override val validator =
-      Validator.seqText(seqFmt)(V.code.correctAndValidate _ curried)
-        .map(_.toSet)
-        .andThen(V.codeSet.liftS)
+      s => seqFmt.validator(V.code.unnamedFn(s).toAuditor).mapValid(_.toSet).appendInvalidator(V.codeSet)
 
     override def liveCorrect(txt: String): String =
       if (txt.trim.isEmpty)
         ""
       else {
-        val r = txt.split("[\n\r]").map(V.code.liveCorrect).mkString("\n")
+        val r = txt.split("[\n\r]").map(V.code.stateless.corrector.live).mkString("\n")
         Util.fixBeforeAfter(txt, r)(_ endsWith "\n", _ + "\n")
       }
 

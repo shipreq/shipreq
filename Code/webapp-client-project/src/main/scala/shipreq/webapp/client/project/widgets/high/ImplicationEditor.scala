@@ -2,9 +2,10 @@ package shipreq.webapp.client.project.widgets.high
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react._, vdom.html_<^._
+import japgolly.scalajs.react._
+import vdom.html_<^._
 import org.scalajs.dom.html
-import scalaz.{-\/, \/, \/-}
+import scalaz.{-\/, \/-}
 import scalaz.syntax.either._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
@@ -12,6 +13,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, PlainText, SingleLine, TextSearch}
 import shipreq.webapp.base.validation._
+import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.client.base.data.Plain
 import shipreq.webapp.client.base.feature.EditorStatus
 import shipreq.webapp.client.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
@@ -24,10 +26,10 @@ import DataImplicits._
 
 object ImplicationEditor {
 
-  case class Lookup(legal: Stream[ReqItem], illegal: Map[String, String]) {
+  case class Lookup(legal: Stream[ReqItem], illegal: Map[String, Invalidity]) {
     lazy val legalm = legal.map(_.mapStrengthL(_.pubidStrNorm)).toMap
 
-    def outlaw(isBad: ReqItem => Boolean, rej: ReqItem => String): Lookup = {
+    def outlaw(isBad: ReqItem => Boolean, rej: ReqItem => Invalidity): Lookup = {
       val (ko, ok) = legal.partition(isBad)
       val illegal2 = ko.foldLeft(illegal)((m, i) => m.updated(i.pubidStrNorm, rej(i)))
       Lookup(ok, illegal2)
@@ -40,7 +42,7 @@ object ImplicationEditor {
 
     def forCustomColumn(p: Project, l: Lookup, fid: CustomField.Implication.Id): Lookup = {
       val f = p.config.customField(fid)
-      l.outlaw(_.reqType.reqTypeId !=* f.reqTypeId, _.pubidStr + " is not applicable in this column")
+      l.outlaw(_.reqType.reqTypeId !=* f.reqTypeId, i => Invalidity(i.pubidStr + " is not applicable in this column"))
     }
   }
 
@@ -80,7 +82,7 @@ object ImplicationEditor {
                    abortCommit   : AbortCommit,
                    textSearch    : TextSearch) {
 
-    val parseResult = validationFn.correctAndValidate(lookup, edit.value)
+    val parseResult = validationFn(lookup)(edit.value)
     val validated   = EditValidationFeature.setDiff(parseResult)
     def abort       = abortCommit.fold(Callback.empty)(_.abort)
     def commit      = (r: Output) => abortCommit.fold(Callback.empty)(_ commit r)
@@ -89,21 +91,19 @@ object ImplicationEditor {
     def render = Component(this)
   }
 
-  type ValidationFn = Validator[Lookup, String, _, SetDiff[ReqId]]
+  type ValidationFn = Lookup => Simple.Validator[String, _, SetDiff[ReqId]]
 
-  private val validator1 = {
-    def checkEach(l: Lookup, s: String): String \/ ReqId =
-      l.legalm.get(s).map(_.reqId.right) orElse
-        l.illegal.get(s).map(-\/.apply) getOrElse
-        -\/("Invalid: " + s)
-
-    Validator.seqText(Grammar.pubid.seqFormat)(
-      (l: Lookup) => s =>
-        checkEach(l, s).leftMap(VFailure.looseMsg).validation)
+  private def validator1(l: Lookup): Validator[String, Stream[String], Stream[ReqId]] = {
+    val parse: Auditor[String, ReqId] =
+      Auditor(s =>
+        l.legalm.get(s).map(_.reqId.right) orElse
+          l.illegal.get(s).map(-\/.apply) getOrElse
+          -\/(Invalidity("Invalid: " + s)))
+    Grammar.pubid.seqFormat.validator(parse)
   }
 
-  private def validator2(p: Project, subject: Option[ReqId], initialValues: Set[ReqId], dir: Direction) = {
-    val validate: Set[ReqId] => ValidationResult[SetDiff[ReqId]] = in => {
+  private def validator2(p: Project, subject: Option[ReqId], initialValues: Set[ReqId], dir: Direction): Auditor[Set[ReqId], SetDiff[ReqId]] =
+    Auditor { in =>
       val newValues = subject.foldLeft(in)(_ - _) // Tolerate reflexivity
       val diff = SetDiff.compare(initialValues, newValues)
 
@@ -111,20 +111,17 @@ object ImplicationEditor {
       var is = pi(dir)
       for (i <- subject)
         is = is.mod(i, diff.apply)
-      val r =
-        if (Implications.cycleDetector.hasCycle(is.m))
-          -\/(VFailure looseMsg "That would cause a cycle in your implication graph.")
-        else
-          \/-(diff)
-      r.validation
+
+      if (Implications.cycleDetector.hasCycle(is.m))
+        -\/(Invalidity("That would cause a cycle in your implication graph."))
+      else
+        \/-(diff)
     }
-    ValidationPartU.lift(validate)
-  }
 
   def validationFn(p: Project, subject: Option[ReqId], initialValues: Set[ReqId], dir: Direction): ValidationFn =
-    validator1
-      .map(_.toSet)
-      .addValidation(validator2(p, subject, initialValues, dir).liftS)
+    l => validator1(l)
+      .mapValid(_.toSet)
+      .andThenAuditor(validator2(p, subject, initialValues, dir))
 
   final class Backend($: BackendScope[Props, Unit]) {
     private val pxLookup = Px.props($).map(_.lookup).withReuse.autoRefresh

@@ -127,6 +127,7 @@ object Common {
     .configure(
       packageBinaryOnly,
       dockerLayerReuse,
+      Dependencies.useKindProjector,
       addCommandAliases(
         "B"   -> "project base",
         "BU"  -> "project base-util-jvm",

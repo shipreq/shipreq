@@ -7,8 +7,7 @@ import scala.language.reflectiveCalls
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.Validators.{customIssueType => V}
-import shipreq.webapp.base.data.Validators.shared.HashRefKeyVS
+import shipreq.webapp.base.data.DataValidators.{customIssueType => V, hashRefKey => VH}
 import shipreq.webapp.base.filter.PotentialFilter
 import shipreq.webapp.base.protocol.CustomIssueTypeCrud
 import shipreq.webapp.base.util.TextMod
@@ -47,15 +46,19 @@ private[issues] object CustomIssueTypes {
       newRowStore.initState,
       savedRowStore.initStateIM(p.clientData.project().config.customIssueTypes))
 
-  private def validatorState(k: Option[CustomIssueTypeId], cd: CallbackTo[ClientData]): S => V.S = {
-    val tags: Px[HashRefKeyVS.Data[TagId]] =
+  private def validatorState(k: Option[CustomIssueTypeId], cd: CallbackTo[ClientData]): S => V.State = {
+    val tagData: Px[List[(Option[TagId], HashRefKey)]] =
       Px.callback(cd.map(_.project().config.tags)).withReuse.autoRefresh
-        .map(_.valuesIterator.map(t => t.tag.keyO.map(k => (t.tag.id.some, k))).filterDefined.toStream)
-        .map((None, _))
+        .map(_.valuesIterator.map(t => t.tag.keyO.map(k => (t.tag.id.some, k))).filterDefined.toList)
+
+    val tags: VH.SubState[TagId] =
+      VH.SubState(None, () => tagData.value())
+
     s => {
-      val is: HashRefKeyVS.Data[CustomIssueTypeId] =
-        (k, savedRowStoreS.getAllP(s).map(i => (i.id.some, i.key)))
-      HashRefKeyVS(tags.value(), is)
+      def customIssues = VH.SubState[CustomIssueTypeId](
+        k, () => savedRowStoreS.getAllP(s).map(i => (i.id.some, i.key)))
+
+      V.State(tags, customIssues)
     }
   }
 
@@ -73,8 +76,8 @@ private[issues] object CustomIssueTypes {
     def valState(k: Option[CustomIssueTypeId]) = validatorState(k, $.props.map(_.clientData))
 
     val rowE = {
-      val keyE  = Editors.textInputEditor.applyValidator(V.keyS)
-      val descE = Editors.textareaEditor.applyValidator(V.descS)
+      val keyE  = Editors.textInputEditor.applyStatefulValidator(V.key.unnamedFn)
+      val descE = Editors.textareaEditor.applyStatefulValidator(V.desc.unnamedFn)
       val e = Editor.merge2S(fields, keyE, descE).tupleI.zoomU[S]
 
       // TODO simplify
@@ -88,7 +91,7 @@ private[issues] object CustomIssueTypes {
           $ runState _)
         ).extract
 
-      supp.addEditorFeatures2(e)(saveFn, _._1.customIssueData._1)
+      supp.addEditorFeatures2(e)(saveFn, _._1.customIssues.subject)
     }
 
     val usageFn = Usage((_: CustomIssueType).id)(

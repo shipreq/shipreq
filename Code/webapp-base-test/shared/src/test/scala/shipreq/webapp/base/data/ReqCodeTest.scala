@@ -1,12 +1,13 @@
 package shipreq.webapp.base.data
 
-import nyaya.util.Multimap
+import scalaz.\/-
 import shipreq.webapp.base.text.Grammar
 import utest._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import ReqCode._
-import Validators.reqCode._
+import DataValidators.{reqCode => V}
+import shipreq.base.util.Invalid
 
 object ReqCodeTest extends TestSuite {
 
@@ -16,25 +17,24 @@ object ReqCodeTest extends TestSuite {
       .put("aa.b.d", ActiveGroup(LiveReqCodeGroup(3, ∅), emptyReqInactive))
       .put("aa.b.e", Inactive(Some(DeadReqCodeGroup(1, "ah")), emptyReqInactive))
 
-  val vs0 = VS(sampleCodeTrie, Set.empty)
-  val vs2 = VS(sampleCodeTrie, Set("aa.b.c"))
+  val vs0 = V.State(sampleCodeTrie, Set.empty)
+  val vs2 = V.State(sampleCodeTrie, Set("aa.b.c"))
 
   override def tests = TestSuite {
 
     'codeValidation {
 
-      def testFail(vs: VS, i: String): Unit = {
-        val r = code.correctAndValidate(vs, i)
-        assert(r.isFailure)
+      def testFail(vs: V.State, i: String): Unit = {
+        val r = V.code(vs).validity(i)
+        assert(r :: Invalid)
       }
 
-      def testPass(vs: VS, i: String): Unit =
+      def testPass(vs: V.State, i: String): Unit =
         testPass2(vs, i, i)
 
-      def testPass2(vs: VS, i: String, exp: Value): Unit = {
-        val r = code.correctAndValidate(vs, i)
-        assert(r.isSuccess)
-        assertEq(r.toOption.get, exp)
+      def testPass2(vs: V.State, i: String, exp: Value): Unit = {
+        val r = V.code(vs).unnamed(i)
+        assertEq(r, \/-(exp))
       }
 
       'simple {

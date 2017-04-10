@@ -30,24 +30,6 @@ object CfgTable {
         new CfgTable(editor, savedStore, newStore, rowkey, rr, newRowA, savedRowA, del, live, filterDeadCB, c)
     }
 
-  def typical[P, I, K <: TaggedInt](sas: TypicalStoresAndState[P, I, K], filterDeadCB: CallbackTo[FilterDead]) = new {
-    type A = ((Stream[P], Option[K]), I)
-    def apply[B, C, V](editor: Editor[A, B, CallbackTo, sas.S, C, Callback, V]) = new {
-      def apply[RowKey, N](rowkey: P => RowKey,
-                           rr: RowRenderer[P, V, N],
-                           del: () => Deletion[K],
-                           live: P => Live,
-                           c: StateAccessPure[sas.S])
-                          (implicit I: DataIdAux[P, K], O: Ordering[RowKey])
-      : CfgTable[sas.S, K, P, I, A, B, C, V, RowKey, N] = {
-          def rowA(k: Option[K], i: I): editor.InputA = (sas.validatorInput(k)(c.state.runNow()), i)
-          def newRowA  (i: I)  = rowA(None, i)
-          def savedRowA(id: K) = rowA(Some(id), sas.savedRowStoreS.getI(id)(c.state.runNow()))
-          new CfgTable(editor, sas.savedRowStoreS, sas.newRowStoreS, rowkey, rr, newRowA, savedRowA, del, live, filterDeadCB, c)
-        }
-      }
-    }
-
   def header(headers: List[String]): VdomElement =
     <.thead(<.tr(headers.toTagMod(<.th(_)), <.th("Ctrls")))
 
@@ -57,6 +39,9 @@ object CfgTable {
    * @tparam R Row content prior to being rendered into DOM.
    */
   trait RowRenderer[P, I, R] {
+    final type _P = P
+    final type _I = I
+    final type _R = R
     def newRow    : I => R
     def savedRow  : (I, P) => R
     def deletedRow: P => R

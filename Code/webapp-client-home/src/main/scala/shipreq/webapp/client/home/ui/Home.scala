@@ -6,7 +6,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
-import shipreq.webapp.base.data.{ProjectCatalogue, Username, Validators}
+import shipreq.webapp.base.data.{ProjectCatalogue, Username, DataValidators}
 import shipreq.webapp.base.protocol.InitDataForHomeSpa
 import shipreq.webapp.client.base.ClientConfig
 import shipreq.webapp.client.base.feature.{AsyncActionFeature, EditorStatus}
@@ -89,7 +89,7 @@ object HomeContent {
       val projectCreate = {
         val status =
           EditorStatus.async(p.createProjectAS, p.createProjectAF) getOrElse
-            EditorStatus.ignoreOrValidate(Validators.projectName)(
+            EditorStatus.ignoreOrValidate(DataValidators.projectName.unnamed)(
               p.createProjectText.value, _.isEmpty, p.createProjectIO)
 
         PlainTextEditor.WithButton.Props(

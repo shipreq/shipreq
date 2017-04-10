@@ -1,168 +1,130 @@
 package shipreq.webapp.server.feature.validation
 
-import org.scalatest.FunSuite
-import org.scalatest.Matchers
-import org.scalatest.prop._
-import scalaz.{Failure, Success}
-import shipreq.webapp.base.data.{Validators => V2}
-import shipreq.webapp.base.WebappConfig._
+import japgolly.microlibs.nonempty.NonEmptySet
+import utest._
+import scalaz.{-\/, Equal, \/, \/-}
+import shipreq.base.test.BaseTestUtil._
+import shipreq.base.util.{Invalid, Valid}
 import shipreq.webapp.base.validation._
 import shipreq.webapp.server.security.PasswordAndSalt
+import Simple._
 
-// TODO Move ValidatorTest into webapp-shared
+object ValidatorTest extends TestSuite {
 
-class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
-  def V = Validators
+  case class Tester[I, C: Equal, V: Equal](v: Validator[I, C, V]) {
 
-  type VT3 = ValidatorU[String, String, String]
+    def each(correct1: C, correctN: C*)(expectResult: C => String \/ V): Unit =
+      for (c <- correct1 +: correctN)
+        apply(c)(expectResult)
 
-  def testV(v: VT3, examples: TableFor2[Option[String], String]): Unit =
-    forAll(examples) ((expectedFailure, input) => testV(v, input, expectedFailure))
+    def apply(correct: C, inputs: I*)(expectResult: C => String \/ V): Unit = {
 
-  def testV(v: VT3, input: String, expectedFailure: Option[String]): Unit =
-    v.validateU(InputCorrected(input)) match {
-      case Failure(f) => f.toText should include(expectedFailure.getOrElse("Validation failed but was expected to pass."))
-      case Success(_) => expectedFailure shouldBe None
+      // Test inputs
+      for (i <- inputs)
+        assertEq(s"full $$ $i", v.corrector(i), correct)
+
+      // Test uncorrect
+      val uncorrected = v.corrector.uncorrect(correct)
+      assertEq("full.uncorrect.full = full", v.corrector(uncorrected), correct)
+
+      // Test validation
+      val result = v(uncorrected)
+      expectResult(correct) match {
+        case r@ \/-(_) =>
+          assertEq(s"Result of '$uncorrected'", result, r)
+        case -\/(expect) =>
+          result match {
+            case -\/(NonEmptySet.Sole(e)) => assertContainsCI(e, expect)
+            case _ => fail(s"One error expected; got: $result")
+          }
+      }
+    }
+  }
+
+  def pass[A](a: A) = \/-(a)
+  def fail(e: String) = (_: Any) => -\/(e)
+  implicit def someString(e: String) = Option(e)
+
+  override def tests = TestSuite {
+
+    'email {
+      val test = Tester(ServerSideValidators.email.unnamed.mapValid(_.value))
+
+      'correction {
+        assertEq(test.v.corrector(" he   he  "), "hehe") // removes ALL whitespace
+      }
+      'plain - test("hehe@asd.com")(pass)
+      'plus - test("ffs+yay@gmail.com")(pass)
+      'invalid - test.each(
+          "heheasd.com",
+          "hehe@asdcom",
+          "hehe@.com",
+          "hehe@asd.",
+          "h&ehe@asd.com",
+          "<hehe@asd.com",
+          ">hehe@asd.com",
+          "hehe@as&d.com",
+          "hehe@as<d.com",
+          "hehe@as>d.com")(fail("invalid"))
     }
 
-  def testCV(v: VT3, examples: TableFor3[String, Option[String], Option[String]]): Unit =
-    forAll(examples)((i, cc, expectedFailure) => {
-      val c = cc.getOrElse(i)
-      v.correctU(i) shouldBe c
-      testV(v, c, expectedFailure)
-    })
+    'password {
+      val test = Tester(ServerSideValidators.password.unnamed)
+      * - test("abc12345")(pass)
+      * - test("abc12345" * 10)(pass)
+      * - test("12345678a")(pass)
+      * - test("a23456789")(pass)
+      * - test("1234a6789")(pass)
+      * - test("1bcdefghi")(pass)
+      * - test("abcd1fghi")(pass)
+      * - test("abcdefgh1")(pass)
+      * - test("___a__9__")(pass)
+      * - test("___9__a__")(pass)
+      * - test("a_______9")(pass)
+      * - test("9_______a")(pass)
+      * - test("@#$%::P1_")(pass) // deepti contributes
+      * - test("")(fail(" long."))
+      * - test("abc456")(fail(" long."))
+      * - test("abc4567")(fail(" long."))
+      * - test("123456789")(fail("at least")) // no alpha
+      * - test("abcdefghi")(fail("at least")) // no numbers
+      * - test("a________")(fail("at least")) // no numbers
+      * - test("9________")(fail("at least")) // no alpha
+      * - assertEq(test.v.auditor.validity("a" + "1" * 128), Invalid) // too long
+    }
 
-  test("Email correction") {
-    V.email.correctU("hehe") shouldBe "hehe"
-    V.email.correctU(" he  he ") shouldBe "hehe" // removes ALL whitespace
-  }
+    'passwordTwice {
+      'diff - assertEq(ServerSideValidators.passwordTwice.validity(("qweqwe123", "qweqwe123h")), Invalid)
+      'same - assertEq(ServerSideValidators.passwordTwice.validity(("qweqwe123", "qweqwe123")), Valid)
+    }
 
-  test("Email validation") {
-    testV(V.email_, Table(("Failure Frag", "Input")
-      , (None, "hehe@asd.com")
-      , (None, "ffs+yay@gmail.com")
-      , (Some("invalid"), "heheasd.com")
-      , (Some("invalid"), "hehe@asdcom")
-      , (Some("invalid"), "hehe@.com")
-      , (Some("invalid"), "hehe@asd.")
-      , (Some("invalid"), "h&ehe@asd.com")
-      , (Some("invalid"), "<hehe@asd.com")
-      , (Some("invalid"), ">hehe@asd.com")
-      , (Some("invalid"), "hehe@as&d.com")
-      , (Some("invalid"), "hehe@as<d.com")
-      , (Some("invalid"), "hehe@as>d.com")
-    ))
-  }
+    'passwordChange {
+      val ps = PasswordAndSalt.createWithRandomSalt("blahblah8")
+      val v = ServerSideValidators.passwordChange(ps)
+      * - assertEq(v.validity(("blahblah", ("qweqwe123", "qweqwe123"))), Invalid)
+      * - assertEq(v.validity(("blahblah8", ("qweqwe12", "qweqwe123"))), Invalid)
+      * - assertEq(v.validity(("blahblah8", ("qweqwe123", ""))), Invalid)
+      * - assertEq(v(("blahblah8", ("qweqwe123", "qweqwe123"))), \/-("qweqwe123"))(Equal.equalA)
+    }
 
-  test("Password validation") {
-    testV(V.password, Table(("Failure Frag", "Input")
-      , (None, "abc12345")
-      , (None, "abc12345" * 10)
-      , (None, "12345678a")
-      , (None, "a23456789")
-      , (None, "1234a6789")
-      , (None, "1bcdefghi")
-      , (None, "abcd1fghi")
-      , (None, "abcdefgh1")
-      , (None, "___a__9__")
-      , (None, "___9__a__")
-      , (None, "a_______9")
-      , (None, "9_______a")
-      , (None, "@#$%::P1_") // deepti "contributes"
-      , (Some(" long."), "")
-      , (Some(" long."), "abc456")
-      , (Some(" long."), "abc4567")
-      , (Some(" long."), "a" + "1" * 128)
-      , (Some("at least"), "123456789") // no alpha
-      , (Some("at least"), "abcdefghi") // no numbers
-      , (Some("at least"), "a________") // no numbers
-      , (Some("at least"), "9________") // no alpha
-    ))
-  }
+    'username {
+      val test = Tester(ServerSideValidators.user.username.unnamed.mapValid(_.value))
+      * - test("hehe", "HEHE", "  Hehe  ")(pass)
+      * - test("a" * 3)(pass)
+      * - test("@#$%::p1_")(fail("can only contain"))
+      * - test("")(fail(" long."))
+      * - test("ab")(fail(" long.")) // too short
+      * - assertEq(test.v.auditor.validity("a" * 33), Invalid) // too long
+    }
 
-  test("Password pair validation") {
-    Validators.passwords.correctAndValidateU("qweqwe123", "qweqwe123h").isFailure shouldBe true
-    Validators.passwords.correctAndValidateU("qweqwe123", "qweqwe123").isFailure shouldBe false
-  }
+    'landingPageName {
+      val test = Tester(ServerSideValidators.landingPage.name.unnamed)
+      * - test("", " ")(fail("blank"))
+      * - test("Blah")(fail("surname"))
+      * - test("Blah Yay5")(fail("numbers"))
+      * - test.each("Blah Yay", "Blah Yay Go", "Blah Yay-Go")(pass)
+      * - test("Blah Yay", "Blah   Yay ")(pass)
+    }
 
-  test("Password change") {
-    val ps = PasswordAndSalt.createWithRandomSalt("blahblah8")
-    val v = Validators.passwordChange(ps)
-    v.correctAndValidateU("blahblah", ("qweqwe123", "qweqwe123")).isFailure shouldBe true
-    v.correctAndValidateU("blahblah8", ("qweqwe12", "qweqwe123")).isFailure shouldBe true
-    v.correctAndValidateU("blahblah8", ("qweqwe123", "")).isFailure shouldBe true
-    v.correctAndValidateU("blahblah8", ("qweqwe123", "qweqwe123")) shouldBe Success("qweqwe123")
-  }
-
-  test("Password set") {
-    val v = Validators.passwordSet
-    v.correctAndValidateU("", ("qweqwe12", "qweqwe123")).isFailure shouldBe true
-    v.correctAndValidateU("", ("qweqwe123", "")).isFailure shouldBe true
-    v.correctAndValidateU("", ("qweqwe123", "qweqwe123")) shouldBe Success("qweqwe123")
-  }
-
-  test("Username correction") {
-    V.user.username.correctU("HEHE")     shouldBe "hehe"
-    V.user.username.correctU("  ahah  ") shouldBe "ahah"
-    V.user.username.correctU("  Heh  ")  shouldBe "heh"
-  }
-
-  test("Username validation") {
-    testV(V.user.username_, Table(("Failure Frag", "Input")
-      , (None, "abc")
-      , (None, "a" * 32)
-      , (Some("can only contain"), "@#$%::P1_")
-      , (Some(" long."), "")
-      , (Some(" long."), "ab")
-      , (Some(" long."), "a" * 33)
-    ))
-  }
-
-  test("MandatoryShortText") {
-    testCV(V2.projectName, Table(("IN", "CORRECTED", "FAILURE")
-      , ("", None, Some("blank"))
-      , ("  ", Some(""), Some("blank"))
-      , ("hello", None, None)
-      , (" hello ", Some("hello"), None)
-      , ("\n\nhello\n\n", Some("hello"), None)
-      , ("\n\nhello\n\nhello\n\n", Some("hello hello"), None)
-      , ("hello\n\rgreat", Some("hello great"), None)
-      , ("x" * shortTextMaxLength, None, None)
-      , ("x" * (shortTextMaxLength + 1), None, Some("too large"))
-    ))
-  }
-
-  test("LargeText") {
-    testCV(GenericValidators.largeText("blah"), Table(("IN", "CORRECTED", "FAILURE")
-      , ("", None, None)
-      , ("  ", Some(""), None)
-      , ("hello", None, None)
-      , (" hello ", Some("hello"), None)
-      , ("\n\nhello\n\n", Some("hello"), None)
-      , ("\n\nhello\n\nhello\n\n", Some("hello\n\nhello"), None)
-      , ("x" * largeTextMaxLength, None, None)
-      , ("x" * (largeTextMaxLength + 1), None, Some("too large"))
-    ))
-  }
-
-  test("LargeTextO") {
-    val v = GenericValidators.optionalLargeText("blah")
-    v.correctU("\n\n  ") shouldBe None
-    v.correctAndValidateU("") shouldBe Success(None)
-    v.correctAndValidateU("\n\nyo\n\nhehe\n\n") shouldBe Success(Some("yo\n\nhehe"))
-    v.correctAndValidateU("x" * largeTextMaxLength).isSuccess shouldBe true
-    v.correctAndValidateU("x" * (largeTextMaxLength + 1)).isSuccess shouldBe false
-  }
-
-  test("Landing page name") {
-    testCV(V.landingPage.name, Table(("IN", "CORRECTED", "FAILURE")
-      , (" ", Some(""), Some("blank"))
-      , ("Blah", None, Some("surname"))
-      , ("Blah Yay5", None, Some("numbers"))
-      , ("Blah Yay", None, None)
-      , ("Blah Yay Go", None, None)
-      , ("Blah Yay-Go", None, None)
-      , ("Blah   Yay", Some("Blah Yay"), None)
-    ))
   }
 }

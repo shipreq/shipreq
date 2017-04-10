@@ -15,7 +15,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.validation.{VFailure, ValidUpdateVR, ValidationResult}
+import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.client.base.feature.EditorStatus
 import shipreq.webapp.client.base.lib.KeyboardTheme
@@ -33,9 +33,11 @@ object UseCaseStepEditor {
 
   type InitialValue = TextAndFlow[OptionalText, Set[UseCaseStepId]]
 
-  type Validated = TextAndFlow[ValidUpdateVR[OptionalText], ValidUpdateVR[SetDiff.NE[UseCaseStepId]]]
+  type Validated = TextAndFlow[
+    ValidUpdate[Invalidity, OptionalText],
+    ValidUpdate[Invalidity, SetDiff.NE[UseCaseStepId]]]
 
-  type ValidatedChanges = ValidUpdateVR[UseCaseStepGD.NonEmptyValues]
+  type ValidatedChanges = ValidUpdate[Invalidity, UseCaseStepGD.NonEmptyValues]
 
   type CommitFn = UseCaseStepGD.NonEmptyValues ~=> Callback
 
@@ -61,11 +63,11 @@ object UseCaseStepEditor {
         Text.UseCaseStep.parse(project),
         _.map(UseCaseStepFlowText.parseStep(project.reqs)))
 
-    val valResult: TextAndFlow[ValidationResult[OptionalText], ValidationResult[Set[UseCaseStepId]]] =
+    val valResult: TextAndFlow[Invalidity \/ OptionalText, Invalidity \/ Set[UseCaseStepId]] =
       parsed.bimap(
-        Validators.genericRichText(plainText, _),
-        _.map(ValidationResult.from_\/(_)(txt => VFailure.looseMsg("Invalid step: " + txt)))
-          .sequenceU
+        DataValidators.genericRichText(plainText).audit(_),
+        _.map(_.leftMap(txt => Invalidity("Invalid step: " + txt)))
+          .sequence[Invalidity \/ ?, UseCaseStepId](implicitly, Invalidity.applicative)
           .map(_.toSet))
 
     val editValResult: TextAndFlow[EV[OptionalText], EV[SetDiff.NE[UseCaseStepId]]] =

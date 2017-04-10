@@ -4,9 +4,11 @@ import java.util.regex.Pattern
 import org.parboiled2.CharPredicate
 import scala.collection.immutable.NumericRange
 import scala.runtime.AbstractFunction1
+import scalaz.std.stream.streamInstance
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.Util
-import shipreq.webapp.base.validation.{Constraints, Rules}
+import shipreq.webapp.base.validation.CommonValidation
+import shipreq.webapp.base.validation.Simple._
 
 /**
   * Various aids to facilitate building a grammar specification that can be used to enforcement code.
@@ -31,7 +33,8 @@ object GrammarSpec {
   }
 
   class CharWhitelist(chn: String, ch1: Char, rs: NumericRange[Char]*)(ruleErrMsg: String) extends Chars(chn, ch1, rs: _*) {
-    final val rule = Rules.whitelistCharsR(regex, ruleErrMsg)
+    final val validator: EndoValidator[String] =
+      CommonValidation.endoValidator.whitelistCharRangeRegex(regex, Invalidity(ruleErrMsg))
   }
 
   object CharWhitelist {
@@ -39,7 +42,8 @@ object GrammarSpec {
   }
 
   class FirstChar(chn: String, ch1: Char, rs: NumericRange[Char]*)(ruleErrMsg: String) extends Chars(chn, ch1, rs: _*) {
-    final val constraint = Constraints.startsWithR(one)(ruleErrMsg)
+    final val invalidator: Invalidator[String] =
+      CommonValidation.invalidator.startsWithRegex(one)(Invalidity(ruleErrMsg))
   }
 
   object FirstChar {
@@ -52,7 +56,9 @@ object GrammarSpec {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   case class Length(total: Range.Inclusive) {
-    val rule     = Rules lengthInRange total
+    final val validator: EndoValidator[String] =
+      CommonValidation.endoValidator.lengthInRange(total)
+
     val minus1   = (total.min - 1) to (total.max - 1)
     def regexMod = s"{${total.min},${total.max}}"
   }
@@ -97,5 +103,11 @@ object GrammarSpec {
 
     def stream(input: String): Stream[String] =
       split(input).toStream
+
+    def corrector: Corrector[String, Stream[String]] =
+      Corrector.full(stream, merge)
+
+    def validator[V](elementAuditor: Auditor[String, V]): Validator[String, Stream[String], Stream[V]] =
+      corrector withAuditor elementAuditor.liftTraverse[Stream]
   }
 }

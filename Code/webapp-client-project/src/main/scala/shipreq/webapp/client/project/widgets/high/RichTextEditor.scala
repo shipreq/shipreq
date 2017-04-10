@@ -36,7 +36,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                    preEditValue  : Option[text.OptionalText]) {
 
     val richText    = text.parse(project)(edit.value)
-    val parseResult = Validators.genericRichText(plainText, richText)
+    val parseResult = DataValidators.genericRichText(plainText).audit(richText)
     val validated   = EditValidationFeature.compareOption(parseResult)(preEditValue)
     def abort       = abortCommit.fold(Callback.empty)(_.abort)
     def commit      = (t: text.OptionalText) => abortCommit.fold(Callback.empty)(_ commit t)

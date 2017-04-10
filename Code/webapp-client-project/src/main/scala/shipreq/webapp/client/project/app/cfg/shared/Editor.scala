@@ -87,6 +87,12 @@ final case class EditorI[A, B, M[_], S, C, D](data: A, cssClass: String,
  * @tparam V The final, rendered editor type.
  */
 final case class Editor[A, B, M[_], S, C, D, V](render: EditorI[A, B, M, S, C, D] => V) {
+  type _A = A
+  type _B = B
+  type _S = S
+  type _C = C
+  type _D = D
+  type _V = V
   type Input     = EditorI[A, B, M, S, C, D]
   type InputA    = A
   type View      = V

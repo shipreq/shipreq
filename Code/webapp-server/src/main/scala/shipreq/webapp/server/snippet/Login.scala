@@ -6,9 +6,9 @@ import net.liftweb.util.Helpers._
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc._
 import scala.xml.Text
-import scalaz.{Failure, Success}
+import scalaz.{-\/, \/-}
 import shipreq.webapp.server.lib.{FormVar, LogUserLogin, SingleOpStatefulSnippet}
-import shipreq.webapp.server.feature.validation.Validators
+import shipreq.webapp.server.feature.validation.ServerSideValidators
 import shipreq.webapp.server.util.HtmlTransformExt.ajaxSubmitOnClick
 import Login._
 
@@ -16,8 +16,8 @@ object Login {
   val invalidLogin = Text("Invalid login details.")
 
   val form = FormVar.merge(
-    FormVar.strOnSubmit(Validators.user.usernameOrEmail, "#who"),
-    FormVar.strOnSubmit(Validators.password, "#password")
+    FormVar.strOnSubmit(ServerSideValidators.user.usernameOrEmail, "#who"),
+    FormVar.strOnSubmit(ServerSideValidators.password.named, "#password")
   )(new UsernamePasswordToken(_, _))
 }
 
@@ -33,7 +33,7 @@ class Login extends SingleOpStatefulSnippet {
   def onLoginAttempt(): JsCmd = {
     securityProvider().enforceHumanSpeed()
     form.validate(vars) match {
-      case Success(loginToken) =>
+      case \/-(loginToken) =>
         loginToken.setRememberMe(false)
         try {
           SecurityUtils.getSubject.login(loginToken)
@@ -41,7 +41,7 @@ class Login extends SingleOpStatefulSnippet {
         } catch {
           case _: AuthenticationException => jsShowError(invalidLogin)
         }
-      case Failure(f) =>
+      case -\/(f) =>
         jsShowError(invalidLogin)
     }
   }

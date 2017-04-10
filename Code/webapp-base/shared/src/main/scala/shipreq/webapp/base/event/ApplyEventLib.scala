@@ -2,13 +2,13 @@ package shipreq.webapp.base.event
 
 import monocle._
 import scala.reflect.ClassTag
-import scalaz.Equal
+import scalaz.{-\/, Equal, \/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.GenericData
-import shipreq.webapp.base.validation.{InputCorrected, ValidatorU, ValidationResult}
+import shipreq.webapp.base.validation.{Composite, Simple}
 
 private[event] object ApplyEventLib {
   type Error = String
@@ -45,27 +45,27 @@ private[event] object ApplyEventLib {
   @inline def whenUntrusted[A](a: => A)(implicit trust: Trust, alt: TrustedAlt[A]): A =
     if (trust :: Trusted) alt.trusted else a
 
-  implicit def resultFromValidation[A](r: ValidationResult[A]): SE[A] =
+  implicit def resultFromValidationResult[A](r: Composite.Invalidity \/ A): SE[A] =
     r match {
-      case scalaz.Success(s) => ret(s)
-      case scalaz.Failure(f) => fail(f.toText)
+      case \/-(s) => ret(s)
+      case -\/(f) => fail(Composite.Invalidity.toText(f))
     }
 
-  def validateA[A](v: ValidatorU[A, A, A], fieldName: => String)(implicit trust: Trust, eq: Equal[A]): A => SE[A] =
-    whenUntrusted(_validate(v, fieldName))
+  def validateA[A](v: Composite.Stateless[A, A, A])(implicit trust: Trust, eq: Equal[A]): A => SE[A] =
+    whenUntrusted(_validate(v))
 
-  def validateO[I, O](v: ValidatorU[I, O, O], fieldName: => String)(implicit trust: Trust, eq: Equal[I]): O => SE[O] =
-    whenUntrusted(o => _validate(v, fieldName)(v ci o))
+  def validateO[I, O](v: Composite.Stateless[I, O, O])(implicit trust: Trust, eq: Equal[I]): O => SE[O] =
+    whenUntrusted(o => _validate(v)(v.corrector.uncorrect(o)))
 
-  def validateI[I, O](v: ValidatorU[I, I, O], fieldName: => String)(f: O => I)(implicit trust: Trust, eq: Equal[I]): O => SE[O] =
-    whenUntrusted(o => _validate(v, fieldName)(f(o)))
+  def validateI[I, O](v: Composite.Stateless[I, I, O])(f: O => I)(implicit trust: Trust, eq: Equal[I]): O => SE[O] =
+    whenUntrusted(o => _validate(v)(f(o)))
 
-  private def _validate[I, C, O](v: ValidatorU[I, C, O], fieldName: => String)(i: I)(implicit trust: Trust, eq: Equal[I]): SE[O] = {
-    val c = v.correctedU(i)
-    if (eq.equal(i, v ci c.value))
-      v validateU c
+  private def _validate[I, C, O](v: Composite.Stateless[I, C, O])(i: I)(implicit trust: Trust, eq: Equal[I]): SE[O] = {
+    val c = v.corrector(i)
+    if (eq.equal(i, v.corrector.uncorrect(c)))
+      v.named.auditor(c)
     else
-      fail(s"Preprocessing not applied to $fieldName:\na: [$i]\ne: [${c.value}]")
+      fail(s"Preprocessing not applied to ${v.name}:\na: [$i]\ne: [$c]")
   }
 
   def ensureNone[A](oa: Option[A])(err: A => String)(implicit trust: Trust): SE[Unit] =
