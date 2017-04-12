@@ -86,7 +86,7 @@ object ImplicationEditor {
     val validated   = EditValidationFeature.setDiff(parseResult)
     def abort       = abortCommit.fold(Callback.empty)(_.abort)
     def commit      = (r: Output) => abortCommit.fold(Callback.empty)(_ commit r)
-    val status      = asyncStatus getOrElse EditorStatus.validUpdateV(validated)(commit, abort)
+    val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
 
     def render = Component(this)
   }

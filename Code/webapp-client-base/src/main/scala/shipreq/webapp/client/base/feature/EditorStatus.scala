@@ -76,13 +76,13 @@ object EditorStatus {
     if (ignore(corrected))
       Ignore
     else
-      validationResult(v.auditor(corrected))(commit)
+      fromValidation(v.auditor(corrected))(commit)
   }
 
   def validate[I, C, V](v: Validator[I, C, V])(i: I, commit: V => Callback): Sync =
     ignoreOrValidate(v)(i, _ => false, commit)
 
-  def validationResult[V](vr: Invalidity \/ V)(commit: V => Callback): Sync =
+  def fromValidation[V](vr: Invalidity \/ V)(commit: V => Callback): Sync =
     vr match {
       case \/-(v) => Valid(commit(v))
       case -\/(e) => Invalid(Invalidity.toText(e))
@@ -95,7 +95,7 @@ object EditorStatus {
       case PotentialChange.Failure(e) => Invalid(fmtErr(e))
     }
 
-  def validUpdateV[A](vu: PotentialChange[Invalidity, A])(commit: A => Callback, unchanged: Callback): Sync =
+  def fromValidatedChange[A](vu: PotentialChange[Invalidity, A])(commit: A => Callback, unchanged: Callback): Sync =
     potentialChange(vu)(commit, unchanged)(Invalidity.toText)
 
   def async[A, I](as: AsyncActionFeature.D0.State[A],

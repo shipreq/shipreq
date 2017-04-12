@@ -97,7 +97,7 @@ object UseCaseStepEditor {
       validated.fold(_.isChanged)(_ || _.isChanged)
 
     val status: EditorStatus =
-      asyncStatus getOrElse EditorStatus.validUpdateV(validatedChanges)(commit, abort)
+      asyncStatus getOrElse EditorStatus.fromValidatedChange(validatedChanges)(commit, abort)
 
     def render = Component(this)
   }

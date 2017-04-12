@@ -40,7 +40,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     val validated   = EditValidationFeature.compareOption(parseResult)(preEditValue)
     def abort       = abortCommit.fold(Callback.empty)(_.abort)
     def commit      = (t: text.OptionalText) => abortCommit.fold(Callback.empty)(_ commit t)
-    val status      = asyncStatus getOrElse EditorStatus.validUpdateV(validated)(commit, abort)
+    val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
     def showPreview = validated.value.isChanged
 
     def render = Component(this)
