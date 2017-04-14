@@ -3,7 +3,7 @@
   %head
     -# %meta(http-equiv="refresh" content="1")
     %title CardBoard Req Table | ShipReq
-    %script{src: "node_modules/jquery/dist/jquery.min.js"}
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
     %link{href:  "semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
     %script{src: "semantic/dist/semantic.js"}
     :css
@@ -108,15 +108,15 @@
       .mid-edit {padding:1ex !important}
       .mid-edit textarea:focus {border-width:2px !important; border-color:rgba(255, 166, 34, 1) !important}
       .preview-cont {margin:0 !important}
-      .preview-header {padding-top: 0.3em !important; padding-bottom: 0.3em !important}
+      .preview-header {padding-top: 0.3em !important; padding-bottom: 0.3em !important; background:#89d6e5!important; color:#0d1516!important}
       .preview-body {
         background-clip: border-box !important;
         background-color: rgba(0, 0, 0, 0)  !important;
         background-image: repeating-linear-gradient(-225deg,
           rgba(0, 0, 0, 0),
-          rgba(0, 0, 0, 0)         5ex,
-          rgba(33, 186, 67, 0.07)  5ex,
-          rgba(33, 186, 67, 0.07) 10ex) !important;
+          rgba(0, 0, 0, 0)        5ex,
+          rgba(137,214,229, 0.1)  5ex,
+          rgba(137,214,229, 0.1) 10ex) !important;
         background-origin: padding-box  !important;
       }
 
@@ -492,14 +492,6 @@
                 .item MF: Major Feature
                 .item UC: Use Case
                 .item Code group
-        %div
-          %button.ui.button
-            %i.icon.trash
-            Delete (5)
-        %div
-          %button.ui.button
-            %i.icon.undo
-            Restore (2)
         %div.status{style: "text-align: right; flex-grow: 1"}
           -# Showing 21 rows: 19 reqs (17 live + 3 dead - 1 filtered) + 2 dups.
           = "Showing 21 rows: 18"
@@ -511,9 +503,6 @@
           = ") + 3"
           %i.icon.open.folder.outline{title: "code groups"}
           .
-          %br/
-          %i.icon.checkmark.box{title: "selected"}
-          = "5."
 
       -# =============================================================================================
       %section#view-ctrls{style: "display:flex; align-content: center; margin-top: 2em"}
@@ -621,7 +610,7 @@
                 &nbsp;
                 %i.icon.help.circle.blueHover(style="cursor:pointer" onclick="$('#richTextEditor-help').modal('show')")
               .ui.segments.preview-cont.raised
-                .ui.segment.preview-header.inverted.green
+                .ui.segment.preview-header.inverted
                   Preview
                 .ui.segment.preview-body
                   = "This, "

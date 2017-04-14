@@ -3,13 +3,14 @@
   %head
     -# %meta(http-equiv="refresh" content="1")
     %title CardBoard Req Table | ShipReq
-    %script{src: "node_modules/jquery/dist/jquery.min.js"}
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
     %link{href:  "semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
     %script{src: "semantic/dist/semantic.js"}
     :css
       body {padding:1rem}
       .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
       .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
 
       h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
 
@@ -67,13 +68,20 @@
         xoutline:solid 2px #6435c9;
       }
 
+      /*
       #Xnew-form > table {box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08) }
-      #new-form > table {box-shadow: 0 2px 4px 0 rgba(20,60,20,.16),0 2px 10px 0 rgba(20,60,20,.12) }
-      #new-form th {background:#efe}
       #Xnew-form tr:not(:last-child) td {background:#e0f2d1}
+      #new-form th {background:#efe}
       #new-form tr:last-child td {background:#efd}
-      #new-form tr:last-child td button {background:#fff!important; color:#080!important; font-weight:bold!important; border-color:#080}
+      */
 
+      #new-form > table {box-shadow: 0 2px 4px 0 rgba(20,60,20,.16),0 2px 10px 0 rgba(20,60,20,.12) }
+      #new-form > table {box-shadow: 0 2px 4px 0 rgba(20,60,20,.16),0 2px 10px 0 rgba(20,60,20,.12) }
+      #new-form th {border-left:none!important; border-right:none!important; padding-top:0.4em; padding-bottom:0.4em}
+      #new-form td {border:none!important}
+      #new-form-cancel {background:#fff!important; border-color:#27292a!important}
+      #new-form-create {background:#fff!important; color:#080!important; font-weight:bold!important; border-color:#080; margin-right:0!important}
+      #new-edit-row td {vertical-align:top}
 
       #reqtableX >tbody >tr:hover > td {background: rgba(0,15,30,.03)}
 
@@ -114,15 +122,15 @@
       .mid-edit {padding:1ex !important}
       .mid-edit textarea:focus {border-width:2px !important; border-color:rgba(255, 166, 34, 1) !important}
       .preview-cont {margin:0 !important}
-      .preview-header {padding-top: 0.3em !important; padding-bottom: 0.3em !important}
+      .preview-header {padding-top: 0.3em !important; padding-bottom: 0.3em !important; background:#89d6e5!important; color:#0d1516!important}
       .preview-body {
         background-clip: border-box !important;
         background-color: rgba(0, 0, 0, 0)  !important;
         background-image: repeating-linear-gradient(-225deg,
           rgba(0, 0, 0, 0),
-          rgba(0, 0, 0, 0)         5ex,
-          rgba(33, 186, 67, 0.07)  5ex,
-          rgba(33, 186, 67, 0.07) 10ex) !important;
+          rgba(0, 0, 0, 0)        5ex,
+          rgba(137,214,229, 0.1)  5ex,
+          rgba(137,214,229, 0.1) 10ex) !important;
         background-origin: padding-box  !important;
       }
 
@@ -206,7 +214,7 @@
       -# =============================================================================================
       %section#action-ctrls{style: "display:flex; align-content: center; margin: 2em 0"}
         %div
-          .ui.labeled.button
+          .ui.labeled.button.disabled
             %button.ui.button.green
               %i.icon.plus
               New
@@ -241,30 +249,25 @@
           = ") + 3"
           %i.icon.folder.outline{title: "code groups"}
           .
-          %br/
-          %i.icon.checkmark.box{title: "selected"}
-          = "5."
 
       %section#new-form
         %table.ui.table.celled.compact.unstackable
           %thead
             %tr
-              %th Type
               %th Title
               %th Priority
               %th Major Feature
               %th Tags
           %tbody
-            %tr
-              %td UC
+            %tr#new-edit-row
               %td.mid-edit
                 %textarea.texteditor{autofocus: "1"}
                   This, [fr3], is an item being edited.
-                .edit-notes
+                -# .edit-notes
                   -# enter for new line, ctrl-enter to save, escape to cancel.
                   ctrl-enter to save, escape to cancel.
                 .ui.segments.preview-cont.raised
-                  .ui.segment.preview-header.inverted.green
+                  .ui.segment.preview-header.inverted
                     Preview
                   .ui.segment.preview-body
                     = "This, "
@@ -278,9 +281,12 @@
                 %textarea.texteditor bug
             %tr
               %td(colspan=5 style="text-align:right")
-                %button.ui.button.basic.green
+                %button.ui.button.basic.black#new-form-cancel(style="margin-right:2ex")
+                  %i.icon.remove
+                  Cancel
+                %button.ui.button.basic.green#new-form-create
                   %i.icon.plus
-                  Create
+                  Create UC
 
 
       -# =============================================================================================

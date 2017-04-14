@@ -3,13 +3,14 @@
   %head
     -# %meta(http-equiv="refresh" content="1")
     %title CardBoard Req Table | ShipReq
-    %script{src: "node_modules/jquery/dist/jquery.min.js"}
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
     %link{href:  "semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
     %script{src: "semantic/dist/semantic.js"}
     :css
       body {padding:1rem}
       .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
       .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
 
       h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
 
@@ -20,6 +21,7 @@
       .active-hack {font-weight:700!important; box-shadow: none!important;}
       .active-hack.red {border-color: #DB2828!important; color: #DB2828!important;}
       .active-hack.orange {border-color: #F2711C!important; color: #F2711C!important;}
+      .active-hack.black {border-color: #222!important; color: #222!important;}
 
       #view-ctrls > div:not(:first-child) {margin-left: 1em}
       .sort > button {margin-left: 1ex !important}
@@ -150,10 +152,11 @@
     %main{style: "margin-top:4rem"}
 
       .ui.secondary.pointing.menu
-        %a.item.ui.dropdown.onhover{onclick: "alert('This would now set view to Default')"}
+        -# .item.orange.ui.dropdown.onhover.active-hack
+        %a.item.ui.dropdown.onhover.active-hack.black
           %i.icon.star.yellow
-          Default
-          .menu
+          Default view
+          /.menu
             .item
               %i.icon.write
               Rename...
@@ -166,22 +169,27 @@
             .item
               %i.icon.trash
               Delete
-        %a.item(href="project-reqtable.haml.html") High-level
-        %a.item Low-level
-        .item.orange.ui.dropdown.onhover.active-hack
-          Unsaved view
-          -# %button.ui.button.icon{style: "margin-left: 1ex"}
-            %i.icon.save
-          -# %i.icon.dropdown
-          .menu
-            .item Save as...
+        -# %a.item(href="project-reqtable.haml.html") High-level
+        -# %a.item Low-level
+        -# .item.orange.ui.dropdown.onhover.active-hack
+        -#   Unsaved view
+        -#   -# %button.ui.button.icon{style: "margin-left: 1ex"}
+        -#     %i.icon.save
+        -#   -# %i.icon.dropdown
+        -#   .menu
+        -#     .item Save as...
 
         .right.menu
-          #omfg2.item{style: "padding-right:0 !important", onclick: '$("#omfg2 > *").toggle()'}
-            %button.ui.button.icon.has-popup{data-content: "Click to show deleted content."}
+          #omfg2.item{style: "padding-right:0 !important"}
+            %button.ui.button.icon.has-popup{data-content: "Click to show deleted content.", disabled: 1}
               %i.icon.trash.outline.large.grey
-            %button.ui.button.icon.red.has-popup{data-content: "Showing deleted content.", style: "display:none"}
-              %i.icon.trash.outline.large.white
+            -# %button.ui.button.icon.red.has-popup{data-content: "Showing deleted content.", style: "display:none"}
+            -#   %i.icon.trash.outline.large.white
+          -# #omfg2.item{style: "padding-right:0 !important", onclick: '$("#omfg2 > *").toggle()'}
+          -#   %button.ui.button.icon.has-popup{data-content: "Click to show deleted content."}
+          -#     %i.icon.trash.outline.large.grey
+          -#   %button.ui.button.icon.red.has-popup{data-content: "Showing deleted content.", style: "display:none"}
+          -#     %i.icon.trash.outline.large.white
 
       -# =============================================================================================
       -# %section#view-ctrls{style: "display:flex; align-content: center; margin-top: 2em"}
@@ -309,7 +317,7 @@
                 .item BL: Business Rule
                 .item BR: Business Requirement
                 .item MF: Major Feature
-                .item UC: Use Case
+                .item.disabled UC: Use Case
                 .item Code group
         -# %div
           -# .ui.action.input

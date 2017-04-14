@@ -3,13 +3,14 @@
   %head
     -# %meta(http-equiv="refresh" content="1")
     %title CardBoard Req Table | ShipReq
-    %script{src: "node_modules/jquery/dist/jquery.min.js"}
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
     %link{href:  "semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
     %script{src: "semantic/dist/semantic.js"}
     :css
       body {padding:1rem}
       .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
       .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
 
       h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
 
@@ -49,6 +50,8 @@
       #filter-help .d {}
       #filter-help .d code {background:#fff; font-family: monospace}
       #filter-help .e {font-family: monospace; white-space:nowrap; color:#f39}
+
+      .selrow {background: #ffc}
 
       .inline-edit:hover {
         cursor:pointer;
@@ -221,12 +224,24 @@
                 .item MF: Major Feature
                 .item UC: Use Case
                 .item Code group
+        %div
+          %button.ui.button
+            %i.icon.trash
+            Delete (2)
+        %div
+          %button.ui.button
+            %i.icon.undo
+            Restore (1)
         %div.status{style: "text-align: right; flex-grow: 1"}
           = "Showing 20 rows: 20 "
           %i.icon.cubes{title: "requirements"}
           = " (17 + 3"
           %i.icon.trash.outline{title: "deleted"}
           = ")."
+          %br/
+          = "3"
+          %i.icon.checkmark.box{title: "selected"}
+          = "."
 
       -# =============================================================================================
       %section#view-ctrls{style: "display:flex; align-content: center; margin-top: 2em"}
@@ -305,9 +320,9 @@
               .ui.label.blue.is-tag bug
               .ui.label.blue.is-tag focus
 
-          %tr
+          %tr.selrow
             %td.selcol.can-focus
-              %input{type: "checkbox"}
+              %input{type: "checkbox", checked: 1}
             %td.can-focus
               %a{href:"#"} FR-2
             %td.inline-edit
@@ -330,9 +345,34 @@
             %td.inline-edit
               = "This, "
               %a.deadThing(href="#") %span FR-3
-              , is an item being edited.
+              , is an item that has been deleted.
             %td.inline-edit
               .ui.label.blue.is-tag must
+            %td.inline-edit
+            %td.inline-edit
+              .ui.label.grey.is-tag.dead backend
+              .ui.label.blue.is-tag bug
+
+          %tr.selrow
+            %td.selcol.can-focus
+              %input{type: "checkbox", checked: 1}
+            %td.can-focus
+              %a{href:"#"} FR-4
+            %td.inline-edit
+              Ummm....?
+            %td.inline-edit
+            %td.inline-edit
+            %td.inline-edit
+
+          %tr.deadRow.selrow
+            %td.selcol.can-focus
+              %input{type: "checkbox", checked: 1}
+            %td.can-focus
+              %a.deadThing(href="#") %span FR-5
+            %td.inline-edit
+              = "This is dead too."
+            %td.inline-edit
+              .ui.label.blue.is-tag could
             %td.inline-edit
             %td.inline-edit
               .ui.label.grey.is-tag.dead backend
@@ -342,10 +382,11 @@
             %td.selcol.can-focus
               %input{type: "checkbox"}
             %td.can-focus
-              %a{href:"#"} FR-4
+              %a{href:"#"} FR-6
             %td.inline-edit
-              Ummm....?
+              Hi there
             %td.inline-edit
+              .ui.label.blue.is-tag should
             %td.inline-edit
             %td.inline-edit
 
