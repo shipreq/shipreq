@@ -17,8 +17,13 @@ abstract class Intersection[A, B] {
   def getOptionMap[C](a: A, f: B => C): Option[C] =
     getOption(a).map(f)
 
-  def composeIntersection[C](that: Intersection[B, C]): Intersection[A, C] =
-    Intersection[A, C](getOption(_) flatMap that.getOption)(that.reverse.getOption(_) flatMap reverse.getOption)
+  def <=>[C](that: Intersection[B, C]): Intersection[A, C] = {
+    val f1 = getOption
+    val g1 = reverse.getOption
+    val f2 = that.getOption
+    val g2 = that.reverse.getOption
+    Intersection[A, C](f1(_) flatMap f2)(g2(_) flatMap g1)
+  }
 
   final def toIso: Iso[Option[A], Option[B]] =
     Iso((_: Option[A]) flatMap getOption)(_ flatMap reverse.getOption)
@@ -30,12 +35,12 @@ abstract class Intersection[A, B] {
 object Intersection {
 
   private final class Id[A] extends Intersection[A, A] {
-    override val getOption                                              = Some(_: A)
-    override val reverse                                                = this
-    override def get                (a: A, default: => A)               = a
-    override def fold               [C](a: A, f: A => C)(default: => C) = f(a)
-    override def getOptionMap       [C](a: A, f: A => C)                = Some(f(a))
-    override def composeIntersection[C](that: Intersection[A, C])       = that
+    override val getOption                                       = Some(_: A)
+    override val reverse                                         = this
+    override def get         (a: A, default: => A)               = a
+    override def fold        [C](a: A, f: A => C)(default: => C) = f(a)
+    override def getOptionMap[C](a: A, f: A => C)                = Some(f(a))
+    override def <=>         [C](that: Intersection[A, C])       = that
   }
 
   private[this] val idInstance = new Id[Any]
@@ -44,8 +49,8 @@ object Intersection {
     idInstance.asInstanceOf[Id[A]]
 
   def apply[A, B](f: A => Option[B])(g: B => Option[A]): Intersection[A, B] = {
-    lazy val ab: Intersection[A, B] =
-      new Intersection[A, B] {
+    var ab: Intersection[A, B] = null
+    ab = new Intersection[A, B] {
         override val getOption = f
         override val reverse =
           new Intersection[B, A] {
@@ -61,4 +66,7 @@ object Intersection {
 
   def fromIso[A, B](i: Iso[A, B]): Intersection[A, B] =
     apply[A, B](a => Some(i get a))(b => Some(i reverseGet b))
+
+  def toOption[A]: Intersection[A, Option[A]] =
+    apply[A, Option[A]](a => Some(Some(a)))(Identity.apply)
 }

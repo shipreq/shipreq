@@ -277,7 +277,7 @@ case class UseCaseSteps(tree: UseCaseSteps.Tree) {
     stepLocs.iso_! ^<-> partialLocs.iso_!
 
   lazy val partialLocSteps: Intersection[PartialLocation, UseCaseStepId] =
-    (stepLocs.intersection composeIntersection partialLocs.intersection).reverse
+    (stepLocs.intersection <=> partialLocs.intersection).reverse
 }
 
 object UseCaseSteps {

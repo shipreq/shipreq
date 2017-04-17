@@ -108,7 +108,7 @@ object AsyncActionFeature {
         new State(o, values, i)
 
       override def mapKey[C](j: Intersection[B, C]): State[A, C, F] =
-        new State(statusD1, values, i composeIntersection j)
+        new State(statusD1, values, i <=> j)
 
       def mergeInto[FF >: F](parent: State[A, A, FF]): State[A, A, FF] = {
         val m = Dimensions.merge(i.getOption)(parent.values, values)
@@ -158,7 +158,7 @@ object AsyncActionFeature {
           i.reverse.fold(b, a => D0.Feature($ zoomStateL State.at(a)))(D0.Feature.Nop)
 
         override def mapKey[C](j: Intersection[B, C]) =
-          new Impl($, i composeIntersection j)
+          new Impl($, i <=> j)
 
         override def applyD1(call: AsyncCall[F]) =
           genericWrapAsync[F]($.zoomStateL(State.atD1) setState _, call)
@@ -208,10 +208,10 @@ object AsyncActionFeature {
         set(k, f(apply(k)))
 
       override def mapKey2[C2](j: Intersection[B2, C2]): State[A2, C2, A1, B1, F] =
-        new State(statusD2, values, i2 composeIntersection j, i1)
+        new State(statusD2, values, i2 <=> j, i1)
 
       override def mapKey1[C1](j: Intersection[B1, C1]): State[A2, B2, A1, C1, F] =
-        new State(statusD2, values, i2, i1 composeIntersection j)
+        new State(statusD2, values, i2, i1 <=> j)
 
       override def iterator: Iterator[(B2, D1.State[A1, B1, F])] =
         Dimensions.iterator(i2.getOption, values)(_ mapKey i1)
@@ -257,10 +257,10 @@ object AsyncActionFeature {
           i2.reverse.fold(b, a => D1.Feature($ zoomStateL State.at(a), i1))(D1.Feature.nop)
 
         override def mapKey1[C](j: Intersection[B1, C]) =
-          new Impl($, i2, i1 composeIntersection j)
+          new Impl($, i2, i1 <=> j)
 
         override def mapKey2[C](j: Intersection[B2, C]) =
-          new Impl($, i2 composeIntersection j, i1)
+          new Impl($, i2 <=> j, i1)
 
         override def setD1s(ks: Iterable[B2], value: => D0.State[F]): Callback =
           Callback.unless(ks.isEmpty)(

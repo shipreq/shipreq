@@ -610,7 +610,7 @@ object ContentEditorFeature {
       }
 
       override def mapKey[C](j: Intersection[B, C]): State[A, C] =
-        new State(values, i composeIntersection j)
+        new State(values, i <=> j)
 
       def mergeInto(parent: State[A, A]): State[A, A] = {
         val m = Dimensions.merge(i.getOption)(parent.values, values)
@@ -706,10 +706,10 @@ object ContentEditorFeature {
       }
 
       override def mapKey2[C2](j: Intersection[B2, C2]): State[A2, C2, A1, B1] =
-        new State(values, i2 composeIntersection j, i1)
+        new State(values, i2 <=> j, i1)
 
       override def mapKey1[C1](j: Intersection[B1, C1]): State[A2, B2, A1, C1] =
-        new State(values, i2, i1 composeIntersection j)
+        new State(values, i2, i1 <=> j)
     }
 
     object State {
