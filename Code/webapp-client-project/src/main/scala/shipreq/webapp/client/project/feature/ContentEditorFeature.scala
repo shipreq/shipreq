@@ -258,14 +258,14 @@ object ContentEditorFeature {
       def startEditFn(instance: => EditorInstance): StartEditFn =
         lens modify (_ orElse instance.some)
 
-      private def rvarToCellEditor[A: Reusability, B <: EditorInstance](f: StateSnapshot[A] => B): A => B = {
+      private def startEditFnWithStateSnapshot[A: Reusability, B <: EditorInstance](f: StateSnapshot[A] => B): A => StartEditFn = {
         lazy val update: A ~=> Callback =
           Reusable.fn(a => $.modState(lens set f(StateSnapshot.withReuse(a)(update)).some))
-        a => f(StateSnapshot.withReuse(a)(update))
+        a => startEditFn(f(StateSnapshot.withReuse(a)(update)))
       }
 
-      private def rvarStrToStartEditFn[B <: EditorInstance](f: StateSnapshot[String] => B, initial: String): StartEditFn =
-        startEditFn(rvarToCellEditor(f) apply initial)
+      private def startEditFnWithStringSnapshot[B <: EditorInstance](initial: String, f: StateSnapshot[String] => B): StartEditFn =
+        startEditFnWithStateSnapshot(f) apply initial
 
       private def abort: Callback =
         $.modState(lens set None)
@@ -281,14 +281,15 @@ object ContentEditorFeature {
        */
       private trait EditorInstanceImpl extends EditorInstance {
 
-        final type RenderImpl = AsyncState => CallbackTo[Some[VdomElement]]
+        final type RenderInput = AsyncState
+        final type RenderImpl = RenderInput => CallbackTo[Some[VdomElement]]
 
         protected val renderImpl: RenderImpl
 
-        protected def makeRenderImplWithState(f: (AsyncState, S) => VdomElement): RenderImpl =
+        protected def makeRenderImplWithState(f: (RenderInput, S) => VdomElement): RenderImpl =
           as => $.state.map(s => Some(f(as, s)))
 
-        protected def makeRenderImpl(f: AsyncState => VdomElement): RenderImpl =
+        protected def makeRenderImpl(f: RenderInput => VdomElement): RenderImpl =
           as => CallbackTo(Some(f(as)))
 
         final override def render(as: AsyncState) =
@@ -314,7 +315,7 @@ object ContentEditorFeature {
           val abortCommit: ReqCodeEditor.Multiple.AbortCommit =
             makeAbortCommit(UpdateContentCmd.PatchReqCodes(id, _))
 
-          rvarStrToStartEditFn(new StateMultiple(_, Some(initialValues), abortCommit), initialText)
+          startEditFnWithStringSnapshot(initialText, new StateMultiple(_, Some(initialValues), abortCommit))
         }
 
         private class StateMultiple(rvar       : StateSnapshot[String],
@@ -337,7 +338,7 @@ object ContentEditorFeature {
           val abortCommit: ReqCodeEditor.Single.AbortCommit =
             makeAbortCommit(UpdateContentCmd.SetReqCodeGroupCode(id, _))
 
-          rvarStrToStartEditFn(new StateSingle(_, Some(initialValue), abortCommit), initialText)
+          startEditFnWithStringSnapshot(initialText, new StateSingle(_, Some(initialValue), abortCommit))
         }
 
         private class StateSingle(rvar       : StateSnapshot[String],
@@ -423,7 +424,7 @@ object ContentEditorFeature {
           val abortCommit: ImplicationEditor.AbortCommit =
             makeAbortCommit(UpdateContentCmd.PatchImplications(subjectId, dir, _))
 
-          rvarStrToStartEditFn(new State(_, pxLookup, pxValFn, abortCommit), initialText)
+          startEditFnWithStringSnapshot(initialText, new State(_, pxLookup, pxValFn, abortCommit))
         }
 
         private class State(rvar       : StateSnapshot[String],
@@ -461,7 +462,7 @@ object ContentEditorFeature {
           val abortCommit: TagEditor.AbortCommit =
             makeAbortCommit(UpdateContentCmd.PatchReqTags(id, _))
 
-          rvarStrToStartEditFn(new State(Some(initialValues), _, pxLookup, abortCommit), initialText)
+          startEditFnWithStringSnapshot(initialText, new State(Some(initialValues), _, pxLookup, abortCommit))
         }
 
         private class State(initialValues: Some[Set[ApplicableTagId]],
@@ -498,7 +499,7 @@ object ContentEditorFeature {
             val initialText: String =
               pxPlainText.value().format(RichTextEditor.hardcodedLive, initialValue)
 
-            rvarStrToStartEditFn(new State(_, Some(initialValue), focusId, abortCommit), initialText)
+            startEditFnWithStringSnapshot(initialText, new State(_, Some(initialValue), focusId, abortCommit))
           }
 
           private class State(rvar       : StateSnapshot[String],
@@ -574,7 +575,7 @@ object ContentEditorFeature {
           val initialText: String =
             pxPlainText.value().useCaseStep(hardcodedLive, initialValue)
 
-          rvarStrToStartEditFn(new State(_, Some(initialValue), focusId, commitFn), initialText)
+          startEditFnWithStringSnapshot(initialText, new State(_, Some(initialValue), focusId, commitFn))
         }
 
         private class State(rvar   : StateSnapshot[String],
