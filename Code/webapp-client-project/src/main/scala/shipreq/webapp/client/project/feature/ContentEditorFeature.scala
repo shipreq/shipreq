@@ -172,65 +172,67 @@ object ContentEditorFeature {
       }
     }
 
+    private def makePxAllowEdit(pxProject: Px[Project], editor: Editor[Any]): Px[Permission] = {
+      def liveReq(id: ReqId, ofid: Option[FieldId]): Px[Permission] =
+        pxProject.map { p =>
+          val r = p.reqs.need(id)
+
+          def isLive = r.live(p.config.reqTypes) :: Live
+
+          def isFieldApplicable =
+            (ofid match {
+              case None =>
+                Applicable // No field specified
+              case Some(fid) =>
+                p.config.fields.get(fid) match {
+
+                  // Check field
+                  case Some(f) =>
+                    f.applicable(r.reqTypeId) & (Applicable <~ f.live(p.config) :: Live)
+
+                  // Field has been removed
+                  case None =>
+                    NotApplicable
+                }
+            }) :: Applicable
+
+          Allow <~ (isLive && isFieldApplicable)
+        }
+
+      def liveRCG(id: ReqCodeId): Px[Permission] =
+        pxProject.map(p =>
+          p.reqCodes.getById(id) match {
+            case Some(_: ReqCode.ActiveGroup) => Allow
+            case Some(_: ReqCode.ActiveReq)
+               | Some(_: ReqCode.Inactive)
+               | None                         => Deny
+          }
+        )
+
+      def liveUseCaseStep(id: UseCaseStepId): Px[Permission] =
+        pxProject.map(Allow <~ _.reqs.useCases.focusStep(id).live :: Live)
+
+      editor match {
+        case Editor.ReqCodesForReq         (req)         => liveReq(req.id, None)
+        case Editor.ReqType                (req)         => liveReq(req.id, None)
+        case Editor.ImplicationsAll        (req, _, _)   => liveReq(req.id, None)
+        case Editor.ReqTitle               (req, _)      => liveReq(req.id, None)
+        case Editor.Tags                   (req, fid)    => liveReq(req.id, fid)
+        case Editor.ImplicationsCustomField(req, fid)    => liveReq(req.id, fid.some)
+        case Editor.CustomTextField        (req, fid, _) => liveReq(req.id, fid.some)
+        case Editor.ReqCodeForReqCodeGroup (rcg, _)      => liveRCG(rcg.id)
+        case Editor.ReqCodeGroupTitle      (rcg, _)      => liveRCG(rcg.id)
+        case Editor.UseCaseStep            (id, _)       => liveUseCaseStep(id)
+      }
+    }
+
     final private class MainFeatureImpl[S, P](static: Static[S, P],
                                               async : AsyncActionFeature.D0.Feature[AsyncError],
                                               lens  : Lens[S, State],
                                               editor: Editor[P]) extends Feature {
       import static._
 
-      val pxAllowEdit: Px[Permission] = {
-        def liveReq(id: ReqId, ofid: Option[FieldId]): Px[Permission] =
-          pxProject.map { p =>
-            val r = p.reqs.need(id)
-
-            def isLive = r.live(p.config.reqTypes) :: Live
-
-            def isFieldApplicable =
-              (ofid match {
-                case None =>
-                  Applicable // No field specified
-                case Some(fid) =>
-                  p.config.fields.get(fid) match {
-
-                    // Check field
-                    case Some(f) =>
-                      f.applicable(r.reqTypeId) & (Applicable <~ f.live(p.config) :: Live)
-
-                    // Field has been removed
-                    case None =>
-                      NotApplicable
-                  }
-              }) :: Applicable
-
-            Allow <~ (isLive && isFieldApplicable)
-          }
-
-        def liveRCG(id: ReqCodeId): Px[Permission] =
-          pxProject.map(p =>
-            p.reqCodes.getById(id) match {
-              case Some(_: ReqCode.ActiveGroup) => Allow
-              case Some(_: ReqCode.ActiveReq)
-                 | Some(_: ReqCode.Inactive)
-                 | None                         => Deny
-            }
-          )
-
-        def liveUseCaseStep(id: UseCaseStepId): Px[Permission] =
-          pxProject.map(Allow <~ _.reqs.useCases.focusStep(id).live :: Live)
-
-        editor match {
-          case Editor.ReqCodesForReq         (req)         => liveReq(req.id, None)
-          case Editor.ReqType                (req)         => liveReq(req.id, None)
-          case Editor.ImplicationsAll        (req, _, _)   => liveReq(req.id, None)
-          case Editor.ReqTitle               (req, _)      => liveReq(req.id, None)
-          case Editor.Tags                   (req, fid)    => liveReq(req.id, fid)
-          case Editor.ImplicationsCustomField(req, fid)    => liveReq(req.id, fid.some)
-          case Editor.CustomTextField        (req, fid, _) => liveReq(req.id, fid.some)
-          case Editor.ReqCodeForReqCodeGroup (rcg, _)      => liveRCG(rcg.id)
-          case Editor.ReqCodeGroupTitle      (rcg, _)      => liveRCG(rcg.id)
-          case Editor.UseCaseStep            (id, _)       => liveUseCaseStep(id)
-        }
-      }
+      val pxAllowEdit = makePxAllowEdit(pxProject, editor)
 
       override def startEditAnd(cb: => Callback): Option[Callback] =
         pxAllowEdit.value().option(
@@ -504,15 +506,18 @@ object ContentEditorFeature {
                               focusId    : P,
                               abortCommit: editor.AbortCommit) extends EditorInstanceImpl {
 
-            override val renderImpl = makeRenderImplWithState((as, s) => {
-              import Px.AutoValue._
+            override val renderImpl = makeRenderImplWithState((as, s) =>
               editor.Props(
-                pxProject, pxPlainText, pxTextSearch, pxProjectWidgets,
+                pxProject.value(),
+                pxPlainText.value(),
+                pxTextSearch.value(),
+                pxProjectWidgets.value(),
                 rvar,
-                EditorStatus.async(as), abortCommit,
-                previewFeature.forChild(focusId, s), initial)
-                .render
-            })
+                EditorStatus.async(as),
+                abortCommit,
+                previewFeature.forChild(focusId, s),
+                initial)
+                .render)
           }
         }
 
@@ -577,16 +582,19 @@ object ContentEditorFeature {
                             focusId: P,
                             commit : UseCaseStepEditor.CommitFn) extends EditorInstanceImpl {
 
-          override val renderImpl = makeRenderImplWithState((as, s) => {
-            import Px.AutoValue._
+          override val renderImpl = makeRenderImplWithState((as, s) =>
             UseCaseStepEditor.Props(
-              pxProject, pxPlainText, pxTextSearch, pxProjectWidgets,
+              pxProject.value(),
+              pxPlainText.value(),
+              pxTextSearch.value(),
+              pxProjectWidgets.value(),
               rvar,
               EditorStatus.async(as),
-              abort, commit,
-              previewFeature.forChild(focusId, s), initial)
-              .render
-          })
+              abort,
+              commit,
+              previewFeature.forChild(focusId, s),
+              initial)
+              .render)
         }
       }
 
@@ -665,8 +673,9 @@ object ContentEditorFeature {
         override def apply(k: Any) = D0.Feature.Nop
       }
 
-      implicit def reusability[K]: Reusability[Feature[K]] =
-        Reusability.byRef
+//      D0.Feature not reusable due to all the Px's in it
+//      implicit def reusability[K]: Reusability[Feature[K]] =
+//        Reusability.byRef
     }
 
     /**
@@ -751,8 +760,9 @@ object ContentEditorFeature {
         override def apply(k2: Any) = D1.Feature.Nop
       }
 
-      implicit def reusability[A, B]: Reusability[Feature[A, B]] =
-        Reusability.byRef
+//      D0.Feature not reusable due to all the Px's in it
+//      implicit def reusability[A, B]: Reusability[Feature[A, B]] =
+//        Reusability.byRef
     }
 
     /**

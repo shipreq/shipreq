@@ -25,7 +25,7 @@ object Table {
   def renderLocked = <.div(^.cls := "locked", "LOCKED")
 
 
-  implicit val reusabilityProps = Reusability.caseClass[Props]
+  implicit val reusabilityProps = Reusability.never[Props] // TODO .caseClass[Props]
 
   case class Props(project        : Project,
                    rows           : Rows,
@@ -84,7 +84,7 @@ object Table {
                          reorder  : NonEmptyVector[Column] ~=> Callback,
                          clickSort: Column ~=> Callback)
 
-  implicit val headerPropReuse = Reusability.caseClass[HeaderProps]
+  implicit val headerPropReuse = Reusability.never[HeaderProps] // TODO caseClass[HeaderProps]
 
   val HeaderComponent = ScalaComponent.builder[HeaderProps]("Header")
     .renderBackend[HeaderBackend]
@@ -153,7 +153,7 @@ object Table {
                       asyncState : AsyncActionFeature.D1.State.ReadOnly[Option[Column], String],
                       selection  : RowSelectionVisible)
 
-  implicit val rowPropReuse = Reusability.caseClass[RowProps]
+  implicit val rowPropReuse = Reusability.never[RowProps] // TODO .caseClass[RowProps]
 
   val RowComponent =
     ScalaComponent.builder[RowProps]("Row")
@@ -240,7 +240,7 @@ object Table {
     def startEdit: Option[Callback] = cellEditors(row)(column).startEdit
   }
 
-  implicit val cellPropReuse = Reusability.caseClass[CellProps]
+  implicit val cellPropReuse = Reusability.never[CellProps] // TODO caseClass[CellProps]
 
   val CellComponent =
     ScalaComponent.builder[CellProps]("Cell")
