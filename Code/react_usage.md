@@ -118,31 +118,34 @@ It sounds stupid and tedious but:
 
 * State
   * A stateful component (preferably the top-most) must add it to its state
+  * May contain impurity so long as it doesn't also have Reusability
 
 * Props
   * Data passed from stateful component to components that use the feature
-  * Is solely, or contains an instance of the state
-  * May contain addition data to be sourced from other external state
+  * Contains an instance of the state
+  * When a feature exists, this will likely contain a feature instance too
+  * Never asks for state or a feature
+  * Never needs to be passed around alongside state or a feature
+  * May contain addition data to be sourced from some other external state
   * May contain derivative calculations
-
-* Feature and/or Props
-  * Stateless - *asks* for Props to be provided by the caller when required
   * Logic / DSL
-  * Sometimes has (pure) access to feature state.
-    * eg. R/W access with `StateAccessPure[S]`
-    * eg. R access with `CallbackTo[S]`
-    * eg. W access with `S => Callback`
 
-Why not have Feature instead of just putting all the logic into Props?
-* there might not be a 1:1 correspondence between Feature and Props
-* Props might have Reusability where as Feature might not (really?)
+* Feature
+  * Does *not* contain state; asks for state when needed
+  * Logic
+  * Probably has (pure) access to feature state.
+    * i.e. R/W access with `StateAccessPure[S]`
+    * i.e. R access with `CallbackTo[S]`
+    * i.e. W access with `S => Callback`
+
 
 
 ### Reusability
 
-To have reusability throughout the feature,
-only the Props need have Reusability (although in practice that nearly always implies that State have Reusability too).
-That's all there is too it.
+To have reusability throughout the feature, the Props need to have Reusability,
+which means that if it has state and/or feature instances in it, they need to have Reusability too.
 
-When there are large blobs of typically non reusable stuff,
-TODO static, Reusable{#,.}ap
+Features are usually created once at the top and so can get reusability for most things (like `StateAccessPure`)
+by reference. For cases where the feature splits into smaller subcomponents given some input,
+make use of `Reusable.ap` and `Reusable#ap`, (usually combined with a reusable index/key value),
+to maintain reusability down the tree.
