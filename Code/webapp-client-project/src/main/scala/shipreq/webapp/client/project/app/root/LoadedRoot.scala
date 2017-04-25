@@ -49,7 +49,7 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
     val asyncFeature: AsyncActionFeature.D2.Feature[reqtable.Row.SourceId, AsyncKey, String] =
       AsyncActionFeature.D2.Feature($ zoomStateL State.asyncStates)
 
-    val previewFeature = new PreviewFeature($, State.previewState)
+    val previewFeature = new PreviewFeature($ zoomStateL State.previewState)
 
     def initReqTableEditor: ReqTable.InitEditor = {
       import ContentEditorFeature._

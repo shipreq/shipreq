@@ -70,7 +70,7 @@ object ReqTableTest extends TestSuite {
       val asyncFeature: AsyncActionFeature.D2.Feature[Row.SourceId, EditFieldKey, String] =
         AsyncActionFeature.D2.Feature($ zoomStateL State.asyncStates)
 
-      val previewFeature = new PreviewFeature($, State.previewState)
+      val previewFeature = new PreviewFeature($ zoomStateL State.previewState)
 
       def initReqTableEditor: ReqTable.InitEditor = {
         import ContentEditorFeature._

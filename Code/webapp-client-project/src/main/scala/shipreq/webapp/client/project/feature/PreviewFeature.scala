@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.feature
 
-import japgolly.scalajs.react._, ScalazReact._
+import japgolly.scalajs.react._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra.Reusability
 import monocle.Lens
 import scalaz.Equal
@@ -36,15 +36,12 @@ import PreviewFeature._
  * Request a `PreviewFeature.State[K]` in the component's props.
  * Call `ForChildren.forChild` for each child.
  */
-final class PreviewFeature[S, K]($: StateAccessPure[S], lens: Lens[S, State[K]])(implicit EK: Equal[K])
-  extends ForChildren[K] {
+final class PreviewFeature[K]($: StateAccessPure[State[K]])(implicit EK: Equal[K]) extends ForChildren[K] {
 
-  def mapKey[A](p: Intersection[K, A]): PreviewFeature[S, A] = {
-    val l = (Lens[S, State[A]]
-      (s => lens.get(s).mapKey(p))
-      (sa => lens.set(sa.mapKey(p.reverse))))
+  def mapKey[A](p: Intersection[K, A]): PreviewFeature[A] = {
+    val l = Lens[State[K], State[A]](_.mapKey(p))(oa => _ => oa.mapKey(p.reverse))
     val e: Equal[A] = optionEqual[K].contramap(p.reverse.getOption)
-    new PreviewFeature($, l)(e)
+    new PreviewFeature($.zoomStateL(l))(e)
   }
 
   private val hasKey: K => FocusData[K] => Boolean =
@@ -55,31 +52,28 @@ final class PreviewFeature[S, K]($: StateAccessPure[S], lens: Lens[S, State[K]])
 
   def onFocus(k: K): Callback =
     $.modState(s =>
-      if (lens.get(s) exists hasKey(k))
+      if (s exists hasKey(k))
         s
       else
-        lens.set(Some(FocusData(k, false)))(s))
+        Some(FocusData(k, false)))
 
   def onBlur(k: K): Callback =
     $.state.flatMap(s =>
-      Callback.when(lens.get(s) exists hasKey(k))(
-        $.setState(lens.set(None)(s))))
+      Callback.when(s exists hasKey(k))(
+        $.setState(None)))
 
   def onEdit(k: K): Callback =
     $.modState(s =>
-      if (!lens.get(s).exists(i => i.changedSinceFocus && hasKey(k)(i)))
-        lens.set(Some(FocusData(k, true)))(s)
+      if (!s.exists(i => i.changedSinceFocus && hasKey(k)(i)))
+        Some(FocusData(k, true))
       else
         s)
 
   def show_?(state: State[K], isDirty: => Boolean): Boolean =
     state.exists(_.changedSinceFocus || isDirty)
 
-  def state(s: S): State[K] =
-    lens.get(s)
-
-  def forChild(k: K, s: S): ForChild =
-    forChild(k, state(s))
+  def stateCB: CallbackTo[State[K]] =
+    $.state
 
   override def forChild(k: K, s: State[K]): ForChild = {
     val self = this
@@ -118,7 +112,7 @@ object PreviewFeature {
   }
 
   trait ForChild {
-    def underlyingFeature: Option[PreviewFeature[_, _]]
+    def underlyingFeature: Option[PreviewFeature[_]]
     val focusData: Option[FocusData[Any]]
 
     def show_?(isDirty: => Boolean): Boolean
@@ -133,7 +127,7 @@ object PreviewFeature {
       ReactCollapse(show_?(isDirty))
   }
 
-  private val equalUnderlyingFeature: Equal[Option[PreviewFeature[_, _]]] =
+  private val equalUnderlyingFeature: Equal[Option[PreviewFeature[_]]] =
     optionEqual(Equal.equalRef)
 
   private val equalFocusData: Equal[Option[FocusData[Any]]] =
@@ -167,7 +161,7 @@ object PreviewFeature {
 
   @inline def FixKey[K] = new FixKey[K]
   final class FixKey[K] {
-    type Feature[S]  = PreviewFeature[S, K]
+    type Feature     = PreviewFeature[K]
     type ForChildren = PreviewFeature.ForChildren[K]
     type State       = PreviewFeature.State[K]
   }
