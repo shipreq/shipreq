@@ -59,7 +59,7 @@ object ContentEditorFeature {
    * @tparam P Preview key.
    */
   case class Static[S, P]($               : StateAccessPure[S],
-                          previewFeature  : PreviewFeature[P],
+                          previewFeature  : PreviewFeature.Feature.Composite[P],
                           pxProject       : Px[Project],
                           pxPlainText     : Px[PlainText.ForProject],
                           pxProjectWidgets: Px[ProjectWidgets],
@@ -570,7 +570,7 @@ object ContentEditorFeature {
                 ss,
                 EditorStatus.async(as),
                 abortCommit,
-                previewFeature.forChild(focusId, previewState),
+                previewFeature(focusId, previewState),
                 initial)
                 .render)
           }
@@ -661,7 +661,7 @@ object ContentEditorFeature {
               EditorStatus.async(as),
               abort,
               commit,
-              previewFeature.forChild(focusId, previewState),
+              previewFeature(focusId, previewState),
               initial)
               .render)
         }
@@ -752,7 +752,7 @@ object ContentEditorFeature {
       type Parent
       val parent    : StateAccessPure[Parent]
       val editorLens: K => Option[Lens[Parent, D0.State]]
-      val preview   : PreviewFeature[P]
+      val preview   : PreviewFeature.Feature.Composite[P]
 
       def feature(f: (K, Lens[Parent, D0.State]) => D0.Feature): Feature[K] =
         D1.Feature.optional[K](k =>
@@ -837,7 +837,7 @@ object ContentEditorFeature {
       type Parent
       val parent    : StateAccessPure[Parent]
       val editorLens: (K2, K1) => Option[Lens[Parent, D0.State]]
-      val preview   : PreviewFeature[P]
+      val preview   : PreviewFeature.Feature.Composite[P]
 
       def feature(f: (K2, K1, Lens[Parent, D0.State]) => D0.Feature): Feature[K2, K1] =
         D2.Feature[K2, K1](k2 =>

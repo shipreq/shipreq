@@ -1,168 +1,189 @@
 package shipreq.webapp.client.project.feature
 
-import japgolly.scalajs.react._, ScalazReact._, MonocleReact._
-import japgolly.scalajs.react.extra.Reusability
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.extra._
 import monocle.Lens
 import scalaz.Equal
 import scalaz.std.option.optionEqual
+import scalaz.syntax.equal.ToEqualOps
 import shipreq.base.util.Intersection
 import shipreq.webapp.client.base.jsfacade.ReactCollapse
-import PreviewFeature._
 
-/**
- * Supplies logic to determine whether or not to show a preview for some rich-text editor.
- *
- * Preview available:
- * - when editing and focused and (dirty or has been edited since receiving focus)
- *
- * Usage: Parent
- * =============
- *
- * Create an "key" ADT to uniquely identify all types of children that will use this feature.
- * Embed a single instance of `PreviewFeature.State` in the top-most component's state.
- * Initialise it with `PreviewFeature.initState`.
- *
- * Usage: Child (direct)
- * =====================
- *
- * Request a `PreviewFeature.ForChild` in the component's props.
- * Use `show_?` to see whether a preview should be rendered or not.
- * Wire up all the `onXxxx` callbacks.
- *
- * Usage: Child (composite) / Sandwich-Meat
- * ========================================
- *
- * Request a `PreviewFeature.ForChildren[K]` in the component's props.
- * Request a `PreviewFeature.State[K]` in the component's props.
- * Call `ForChildren.forChild` for each child.
- */
-final class PreviewFeature[K]($: StateAccessPure[State[K]])(implicit EK: Equal[K]) extends ForChildren[K] {
-
-  def mapKey[A](p: Intersection[K, A]): PreviewFeature[A] = {
-    val l = Lens[State[K], State[A]](_.mapKey(p))(oa => _ => oa.mapKey(p.reverse))
-    val e: Equal[A] = optionEqual[K].contramap(p.reverse.getOption)
-    new PreviewFeature($.zoomStateL(l))(e)
-  }
-
-  private val hasKey: K => FocusData[K] => Boolean =
-    if (EK.equalIsNatural)
-      k => _.key == k
-    else
-      k => fi => EK.equal(fi.key, k)
-
-  def onFocus(k: K): Callback =
-    $.modState(s =>
-      if (s exists hasKey(k))
-        s
-      else
-        Some(FocusData(k, false)))
-
-  def onBlur(k: K): Callback =
-    $.state.flatMap(s =>
-      Callback.when(s exists hasKey(k))(
-        $.setState(None)))
-
-  def onEdit(k: K): Callback =
-    $.modState(s =>
-      if (!s.exists(i => i.changedSinceFocus && hasKey(k)(i)))
-        Some(FocusData(k, true))
-      else
-        s)
-
-  def show_?(state: State[K], isDirty: => Boolean): Boolean =
-    state.exists(_.changedSinceFocus || isDirty)
-
-  def stateCB: CallbackTo[State[K]] =
-    $.state
-
-  override def forChild(k: K, s: State[K]): ForChild = {
-    val self = this
-    new ForChild {
-      override val underlyingFeature           = Some(self)
-      override val focusData                   = s.filter(hasKey(k))
-      override def show_?(isDirty: => Boolean) = self.show_?(focusData, isDirty)
-      override def onFocus                     = self onFocus k
-      override def onBlur                      = self onBlur k
-      override def onEdit                      = self onEdit k
-      override def toString                    = focusData.toString
-    }
-  }
-}
-
+/** Supplies logic to determine whether or not to show a preview for some rich-text editor.
+  *
+  * Preview will be available when:
+  * - editing
+  * - and focused
+  * - and either dirty, or when editor has been edited since receiving focus
+  *
+  * Usage: Top-Most Component
+  * =========================
+  *
+  * Create a type to use as an identifier of all possible editors that will use this feature.
+  * Add `PreviewFeature.State[Id]` to the top-most component's state.
+  * Initialise it with `PreviewFeature.State.init`.
+  * In the component backend, add `val previewFeature = PreviewFeature.Feature.Composite.init(…)`.
+  * In the render method, call `previewFeature.toProps` with the latest state and pass the props to children.
+  *
+  * Usage: Component with Multiple Editors
+  * ======================================
+  *
+  * Add `PreviewFeature.Props.Composite[Id]` to the component's props.
+  * Call `PreviewFeature.Props.Composite#apply(Id)` to get an instance of `PreviewFeature.Props.Single` to pass down to
+  * children.
+  *
+  * Usage: Editor
+  * =============
+  *
+  * Add `PreviewFeature.Props.Single` to the component's props.
+  * Wire up all the `onXxxx` callbacks.
+  * Use `show_?` or similar to render a preview or not.
+  */
 object PreviewFeature {
 
-  type State[+K] = Option[FocusData[K]]
+  type State[+Id] = Option[State.FocusData[Id]]
 
-  @inline implicit class PFStateOps[K](private val s: State[K]) extends AnyVal {
-    def mapKey[A](i: Intersection[K, A]): State[A] =
+  object State {
+    def init: State[Nothing] =
+      None
+
+    final case class FocusData[+K](key: K, changedSinceFocus: Boolean) {
+      def omap[A](f: K => Option[A]): Option[FocusData[A]] =
+        f(key).map(FocusData(_, changedSinceFocus))
+    }
+
+    implicit def reusabilityFocusData[Id: Reusability]: Reusability[FocusData[Id]] =
+      Reusability.caseClass
+  }
+
+  @inline implicit class StateOps[Id](private val s: State[Id]) extends AnyVal {
+    def mapId[A](i: Intersection[Id, A]): State[A] =
       s.flatMap(_ omap i.getOption)
   }
 
-  def initState: State[Nothing] =
-    None
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  case class FocusData[+K](key: K, changedSinceFocus: Boolean) {
-    def omap[A](f: K => Option[A]): Option[FocusData[A]] =
-      f(key).map(FocusData(_, changedSinceFocus))
+  object Feature {
+
+    trait Single {
+      def onFocus: Callback
+      def onBlur: Callback
+      def onEdit: Callback
+
+      def show_?(isDirty: => Boolean): Boolean
+
+      final def showOption[A](isDirty: => Boolean)(a: => A): Option[A] =
+        if (show_?(isDirty)) Some(a) else None
+
+      final def reactCollapse[A](isDirty: => Boolean) =
+        ReactCollapse(show_?(isDirty))
+    }
+
+    object Single {
+      def const(show: Boolean): Single =
+        new Single {
+          override def onFocus                     = Callback.empty
+          override def onBlur                      = Callback.empty
+          override def onEdit                      = Callback.empty
+          override def show_?(isDirty: => Boolean) = show
+        }
+    }
+
+    // =================================================================================================================
+
+    final case class Composite[Id]($: Reusable[StateAccessPure[State[Id]]])(implicit ei: Equal[Id], ri: Reusability[Id]) {
+
+      // I don't like the thought of 2 new instances per field, per req on every render on every screen in the SPA
+      private val cachedReusability =
+        Props.Single.reusabilityForKey[Id]
+
+      def apply(id: Id, state: State[Id]): Props.Single =
+        Reusable.explicitly(Props.Single.ForKey(id, state, $))(cachedReusability)
+
+      def mapId[A](i: Intersection[Id, A]): Composite[A] = {
+        val lens = Lens[State[Id], State[A]](_.mapId(i))(oa => _ => oa.mapId(i.reverse))
+
+        val ea: Equal[A] = optionEqual[Id].contramap(i.reverse.getOption)
+        val ka: Reusability[A] = Reusability.option[Id].contramap(i.reverse.getOption)
+
+        // Not affecting $ reusability here because we can trust Intersection to be coherent
+        Composite($.map(_ zoomStateL lens))(ea, ka)
+      }
+
+      def toProps(state: State[Id]): Props.Composite[Id] =
+        Props.Composite(this, state)
+
+      def stateCB: CallbackTo[State[Id]] =
+        $.state
+    }
+
+    object Composite {
+      def init[Id: Equal: Reusability]($: StateAccessPure[State[Id]]): Composite[Id] =
+        apply(Reusable.byRef($))
+
+      implicit def reusability[Id: Reusability]: Reusability[Composite[Id]] =
+        Reusability.caseClass
+    }
   }
 
-  trait ForChildren[K] {
-    def mapKey[A](p: Intersection[K, A]): ForChildren[A]
-    def forChild(k: K, s: State[K]): ForChild
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+
+  object Props {
+
+    type Single = Reusable[Feature.Single]
+
+    object Single {
+      lazy val AlwaysShow: Single =
+        Reusable.byRef(Feature.Single.const(show = true))
+
+      lazy val NeverShow: Single =
+        Reusable.byRef(Feature.Single.const(show = false))
+
+      final case class ForKey[Id: Equal](id: Id, state: State[Id], $: Reusable[StateAccessPure[State[Id]]]) extends Feature.Single {
+        import State.FocusData
+
+        private val hasThisId: FocusData[Id] => Boolean =
+          _.key === id
+
+        def onFocus: Callback =
+          $.modState(s =>
+            if (s exists hasThisId)
+              s
+            else
+              Some(FocusData(id, changedSinceFocus = false)))
+
+        def onBlur: Callback =
+          $.state.flatMap(s =>
+            $.setState(None).when_(s exists hasThisId))
+
+        def onEdit: Callback =
+          $.setState(Some(FocusData(id, changedSinceFocus = true)))
+
+        def show_?(isDirty: => Boolean): Boolean =
+          state
+            .filter(hasThisId)
+            .exists(_.changedSinceFocus || isDirty)
+      }
+
+      implicit def reusabilityForKey[Id: Reusability]: Reusability[ForKey[Id]] =
+        Reusability.caseClass
+    }
+
+    // =================================================================================================================
+
+    final case class Composite[Id](feature: Feature.Composite[Id], state: State[Id]) {
+      def apply(id: Id): Props.Single =
+        feature(id, state)
+
+      def mapId[A](i: Intersection[Id, A]): Composite[A] =
+        Composite(feature mapId i, state mapId i)
+    }
+
+    object Composite {
+      implicit def reusability[Id: Reusability]: Reusability[Composite[Id]] =
+        Reusability.caseClass
+    }
   }
 
-  trait ForChild {
-    def underlyingFeature: Option[PreviewFeature[_]]
-    val focusData: Option[FocusData[Any]]
-
-    def show_?(isDirty: => Boolean): Boolean
-    def onFocus: Callback
-    def onBlur: Callback
-    def onEdit: Callback
-
-    final def showOption[A](isDirty: => Boolean)(a: => A): Option[A] =
-      if (show_?(isDirty)) Some(a) else None
-
-    final def reactCollapse[A](isDirty: => Boolean) =
-      ReactCollapse(show_?(isDirty))
-  }
-
-  private val equalUnderlyingFeature: Equal[Option[PreviewFeature[_]]] =
-    optionEqual(Equal.equalRef)
-
-  private val equalFocusData: Equal[Option[FocusData[Any]]] =
-    optionEqual(Equal.equal((a, b) => (a eq b) || (a == b)))
-
-  implicit val equalForChild: Equal[ForChild] =
-    Equal.equal((a, b) =>
-      equalUnderlyingFeature.equal(a.underlyingFeature, b.underlyingFeature) &&
-        equalFocusData.equal(a.focusData, b.focusData))
-
-  implicit val reusabilityForChild: Reusability[ForChild] =
-    Reusability.byRefOrEqual
-
-  object AlwaysShow extends ForChild {
-    override def underlyingFeature           = None
-    override val focusData                   = Some(FocusData((), true))
-    override def show_?(isDirty: => Boolean) = true
-    override def onFocus                     = Callback.empty
-    override def onBlur                      = Callback.empty
-    override def onEdit                      = Callback.empty
-  }
-
-  object NeverShow extends ForChild {
-    override def underlyingFeature           = None
-    override val focusData                   = None
-    override def show_?(isDirty: => Boolean) = false
-    override def onFocus                     = Callback.empty
-    override def onBlur                      = Callback.empty
-    override def onEdit                      = Callback.empty
-  }
-
-  @inline def FixKey[K] = new FixKey[K]
-  final class FixKey[K] {
-    type Feature     = PreviewFeature[K]
-    type ForChildren = PreviewFeature.ForChildren[K]
-    type State       = PreviewFeature.State[K]
-  }
 }

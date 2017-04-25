@@ -12,6 +12,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.CreateContentCmd
 import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.client.base.data.{Enabled, TCB}
+import shipreq.webapp.client.project.feature.PreviewFeature
 import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets._
 import shipreq.webapp.client.project.widgets.high._
@@ -29,9 +30,9 @@ object CreationInterface {
   type SelType = Option[Type]
   val selectComponent = SelectOne.Component[SelType]
 
-  case class Props(createIO    : ServerCall[CreateContentCmd],
-                   state       : State,
-                   previewState: Preview.State)
+  case class Props(createIO: ServerCall[CreateContentCmd],
+                   state   : State,
+                   preview : PreviewFeature.Props.Composite[FocusId])
 
   @Lenses
   case class State(selectedType: SelType,
@@ -62,7 +63,6 @@ object CreationInterface {
 import CreationInterface._
 
 class CreationInterface($               : StateAccessPure[State],
-                        previewFeature  : Preview.ForChildren,
                         pxProject       : Px[Project],
                         pxProjectText   : Px[PlainText.ForProject],
                         pxProjectWidgets: Px[ProjectWidgets],
@@ -166,7 +166,7 @@ class CreationInterface($               : StateAccessPure[State],
           StateSnapshot.withReuse(state.title)(setTitle),
           None,
           None,
-          previewFeature.forChild(titleFocus, p.previewState),
+          p.preview(titleFocus),
           None)
 
       val create: Option[Callback] =
@@ -291,7 +291,7 @@ class CreationInterface($               : StateAccessPure[State],
           StateSnapshot.withReuse(state.title)(setTitle),
           None,
           None,
-          previewFeature.forChild(titleFocus, p.previewState),
+          p.preview(titleFocus),
           None)
 
       val create: Option[Callback] =
@@ -344,7 +344,7 @@ class CreationInterface($               : StateAccessPure[State],
           StateSnapshot.withReuse(state.title)(setTitle),
           None,
           None,
-          previewFeature.forChild(titleFocus, p.previewState),
+          p.preview(titleFocus),
           None)
 
       val create: Option[Callback] =

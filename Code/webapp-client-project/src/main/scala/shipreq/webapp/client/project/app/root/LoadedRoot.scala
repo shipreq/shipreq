@@ -49,14 +49,15 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
     val asyncFeature: AsyncActionFeature.D2.Feature[reqtable.Row.SourceId, AsyncKey, String] =
       AsyncActionFeature.D2.Feature($ zoomStateL State.asyncStates)
 
-    val previewFeature = new PreviewFeature($ zoomStateL State.previewState)
+    val previewFeature: PreviewFeature.Feature.Composite[FocusId] =
+      PreviewFeature.Feature.Composite.init($ zoomStateL State.previewState)
 
     def initReqTableEditor: ReqTable.InitEditor = {
       import ContentEditorFeature._
       new D2.InitChild[reqtable.Row, reqtable.Column, reqtable.FocusId] {
         override type Parent    = State
         override val parent     = $
-        override val preview    = previewFeature.mapKey(FocusId.ToReqTable)
+        override val preview    = previewFeature.mapId(FocusId.ToReqTable)
         override val editorLens =
           (r: reqtable.Row, c: reqtable.Column) =>
             reqtable.Column.EditFieldKeyIntersection.getOption(c).map(efk =>
@@ -93,7 +94,7 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
           new D1.InitChild[reqdetail.Cell, reqdetail.Cell] {
             override type Parent    = State
             override val parent     = $
-            override val preview    = previewFeature.mapKey(focusIdToCell)
+            override val preview    = previewFeature.mapId(focusIdToCell)
             override val editorLens =
               (c: reqdetail.Cell) =>
                 reqdetail.Cell.EditFieldKeyIntersection.getOption(c).map(efk =>
@@ -184,7 +185,7 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
           reqTable(ReqTable.DynamicProps(
             s.editStates.mapKey1(reqtable.Column.EditFieldKeyIntersection.reverse),
             s.asyncStates.mapKey1(AsyncKey.ToReqTable2),
-            s.previewState.mapKey(FocusId.ToReqTable),
+            previewFeature.toProps(s.previewState).mapId(FocusId.ToReqTable),
             s.reqTable))
 
         case Page.ReqDetail(pubid) =>

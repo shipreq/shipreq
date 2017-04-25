@@ -46,7 +46,7 @@ object ReqTable {
 
   case class DynamicProps(editStates  : ContentEditorFeature.D2.State.ReadOnly[Row.SourceId, Column],
                           asyncStates : AsyncActionFeature.D2.State.ReadOnly[Row.SourceId, Option[Column], String],
-                          previewState: Preview.State,
+                          preview     : PreviewFeature.Props.Composite[FocusId],
                           state       : State)
 
   @Lenses
@@ -219,7 +219,7 @@ object ReqTable {
     }
 
     val creationInterface =
-      new CreationInterface(setCreation, initEditor.preview, pxProject, pxPlainText, pxProjectWidgets, pxTextSearch)
+      new CreationInterface(setCreation, pxProject, pxPlainText, pxProjectWidgets, pxTextSearch)
 
     // -----------------------------------------------------------------------------------------------------------------
     def render(p: DynamicProps): VdomElement = {
@@ -231,7 +231,7 @@ object ReqTable {
 
       def vsProps = ViewSettingsEditor.Props(pxColName, cfg, pxVsVar, pxFilterEditor)
 
-      def creationProps = CreationInterface.Props(createIO, s.creation, p.previewState)
+      def creationProps = CreationInterface.Props(createIO, s.creation, p.preview)
 
       def tableProps = Table.Props(
         pxProject, pxRows, pxColName, pxColRnds, contentEditorFeature, p.editStates, p.asyncStates, pxVisibleSelection,

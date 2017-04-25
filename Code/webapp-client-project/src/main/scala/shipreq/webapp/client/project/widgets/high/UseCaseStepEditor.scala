@@ -48,7 +48,7 @@ object UseCaseStepEditor {
                    asyncStatus   : Option[EditorStatus.Async],
                    abort         : Callback,
                    commit        : CommitFn,
-                   preview       : PreviewFeature.ForChild,
+                   preview       : PreviewFeature.Props.Single,
                    preEditValue  : Option[InitialValue]) {
 
     private val rawElems: Seq[UseCaseStepFlowText.Elem[String, String]] =

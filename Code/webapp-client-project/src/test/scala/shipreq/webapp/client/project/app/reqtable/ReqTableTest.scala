@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra.Px
+import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.test._
 import monocle.macros.Lenses
 import nyaya.test.PropTest._
@@ -59,18 +59,20 @@ object ReqTableTest extends TestSuite {
     def initialState = State(
       ContentEditorFeature.D2.State.init,
       AsyncActionFeature.D2.State.init,
-      PreviewFeature.initState,
+      PreviewFeature.State.init,
       ReqTable.State.init(cd, HideDead, None))
 
     val stateVar = ReactTestVar(initialState)
 
+    val $ = stateVar.stateAccess
+
+    val previewFeature =
+      PreviewFeature.Feature.Composite.init($ zoomStateL State.previewState)
+
     val reqTableComponent = {
-      val $ = stateVar.stateAccess
 
       val asyncFeature: AsyncActionFeature.D2.Feature[Row.SourceId, EditFieldKey, String] =
         AsyncActionFeature.D2.Feature($ zoomStateL State.asyncStates)
-
-      val previewFeature = new PreviewFeature($ zoomStateL State.previewState)
 
       def initReqTableEditor: ReqTable.InitEditor = {
         import ContentEditorFeature._
@@ -100,7 +102,7 @@ object ReqTableTest extends TestSuite {
       ReqTable.DynamicProps(
         s.editStates.mapKey1(Column.EditFieldKeyIntersection.reverse),
         s.asyncStates.mapKey1(Column.EditFieldKeyIntersection.reverse <=> Intersection.toOption),
-        s.previewState,
+        previewFeature toProps s.previewState,
         s.reqTable)
     }
 

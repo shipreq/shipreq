@@ -22,6 +22,7 @@ object FocusId {
   case class ReqTableCI(value: reqtable.FocusId.InCI) extends FocusId
 
   implicit def equality: UnivEq[FocusId] = UnivEq.derive
+  implicit val reusability: Reusability[FocusId] = Reusability.byUnivEq
 
   val ToReqTable = Intersection[FocusId, reqtable.FocusId] {
     case Content(r, f) => reqtable.Column.EditFieldKeyIntersection.reverse.getOptionMap(f, reqtable.FocusId.AtCell(r, _))
@@ -136,7 +137,7 @@ object State {
       "",
       ContentEditorFeature.D2.State.init,
       AsyncActionFeature.D2.State.init,
-      PreviewFeature.initState,
+      PreviewFeature.State.init,
       HideDead,
       ReqTable.State.init(cd, HideDead, None),
       ReqDetail.initState)

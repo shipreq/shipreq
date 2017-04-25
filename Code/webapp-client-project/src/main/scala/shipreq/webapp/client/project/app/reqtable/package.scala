@@ -36,7 +36,6 @@ package object reqtable {
     case class InCI(typ: CreationInterface.Type, col: Column) extends FocusId
     implicit def equalityCI: UnivEq[InCI] = UnivEq.derive
     implicit def equality: UnivEq[FocusId] = UnivEq.derive
+    implicit def reusability: Reusability[FocusId] = Reusability.byUnivEq
   }
-
-  val Preview = PreviewFeature.FixKey[FocusId]
 }

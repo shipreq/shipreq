@@ -32,7 +32,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                    edit          : StateSnapshot[String],
                    asyncStatus   : Option[EditorStatus.Async],
                    abortCommit   : AbortCommit,
-                   preview       : PreviewFeature.ForChild,
+                   preview       : PreviewFeature.Props.Single,
                    preEditValue  : Option[text.OptionalText]) {
 
     val richText    = text.parse(project)(edit.value)
@@ -133,8 +133,9 @@ object RichTextEditor {
     case MultiLine  => ^.rows := 3
   }
 
-  def renderPreview(pf: PreviewFeature.ForChild, show: => Boolean, view: => VdomNode): VdomNode =
-    pf.reactCollapse(show)(
+  // TODO Move to EditTheme or similar
+  def renderPreview(p: PreviewFeature.Props.Single, show: => Boolean, view: => VdomNode): VdomNode =
+    p.reactCollapse(show)(
       <.div(*.richTextPreview,
         <.div(*.richTextPreviewHeader, "Preview"),
         <.div(*.richTextPreviewBody, view)))
