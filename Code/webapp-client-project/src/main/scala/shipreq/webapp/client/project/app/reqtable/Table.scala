@@ -206,7 +206,7 @@ object Table {
     import AsyncFeature.Status
     p.asyncState(None) match {
       case None                           => renderRowNormal
-      case Some(Status.Locked)            => renderRowLocked
+      case Some(Status.InProgress)        => renderRowLocked
       case Some(s: Status.Failed[String]) =>
         // Currently, whole-row state is only used when a row is being deleted/restored.
         // To save dev-time, if the RPC fails an alert popups asking to retry/cancel, thus this part of the code

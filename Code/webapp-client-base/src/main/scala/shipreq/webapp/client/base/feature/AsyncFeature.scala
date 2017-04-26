@@ -48,7 +48,7 @@ object AsyncFeature {
   object Status {
 
     /** An async action is in progress, result pending */
-    case object Locked extends Status[Nothing]
+    case object InProgress extends Status[Nothing]
 
     /** @param failure An explanation of why some async action failed.
       * @param cancel Return to the state prior to initiating the async action.
@@ -167,7 +167,9 @@ object AsyncFeature {
             mapped(state, i2, i1 <=> j)
 
           def iterator: Iterator[(K2, D1[K1, F])] =
-            Dimensions.iterator(i2.getOption, state)(D1.mapped(_, i1))
+            state.iterator
+              .map(x => i2.fold(x._1, (_, D1.mapped(x._2, i1)))(null))
+              .filter(_ ne null)
       }
 
       implicit def reusability[K2, K1, F]: Reusability[D2[K2, K1, F]] =
@@ -198,7 +200,7 @@ object AsyncFeature {
           lazy val doIt: Callback =
             // Switching this around breaks tests' MockServer's order of events.
             // i.e. it will call onSuccess which clears the status, and then set it to locked.
-            setState(Some(Status.Locked)) >> call(onSuccess, onFailure)
+            setState(Some(Status.InProgress)) >> call(onSuccess, onFailure)
 
           doIt
         })

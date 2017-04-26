@@ -15,7 +15,7 @@ import shipreq.webapp.client.project.feature.Modal
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets.high.{DeletionForm, ProjectWidgets}
-import AsyncFeature.Status.Locked
+import AsyncFeature.Status.InProgress
 
 /**
   * Renders a bar that provides the user with information and action-buttons pertaining to the rows selected the
@@ -191,7 +191,7 @@ object SelectionCtrls {
       val async = $.props.map(_.async).runNow()
 
       def lockRows: Callback =
-        async.setBulk(rows, None, Some(Locked))
+        async.setBulk(rows, None, Some(InProgress))
 
       def unlockRows: Callback =
         async.setBulk(rows, None, None)
