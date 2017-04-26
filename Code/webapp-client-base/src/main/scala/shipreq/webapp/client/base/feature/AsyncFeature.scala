@@ -38,7 +38,7 @@ import shipreq.webapp.client.base.data.TCB
   * - state is inspected when rendering to show the async status to the user
   * - state is inspected to prevent multiple async calls being in flight
   */
-object AsyncActionFeature {
+object AsyncFeature {
 
   /**
     * @tparam F An explanation of why some async action failed.
@@ -74,16 +74,16 @@ object AsyncActionFeature {
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   object Implicits {
-    implicit class AafStateD1[K, F](private val self: State.D1[K, F]) extends AnyVal {
+    implicit class AF_StateD1[K, F](private val self: State.D1[K, F]) extends AnyVal {
       def toReadOnly: ReadOnly.D1[K, F] = ReadOnly.D1(self)
     }
-    implicit class AafStateD2[K2, K1, F](private val self: State.D2[K2, K1, F]) extends AnyVal {
+    implicit class AF_StateD2[K2, K1, F](private val self: State.D2[K2, K1, F]) extends AnyVal {
       def toReadOnly: ReadOnly.D2[K2, K1, F] = ReadOnly.D2(self)
     }
-    implicit class AafFeatureD1[K, F](private val self: Feature.D1[K, F]) extends AnyVal {
+    implicit class AF_FeatureD1[K, F](private val self: Feature.D1[K, F]) extends AnyVal {
       def toProps(r: ReadOnly.D1[K, F]): Props.D1[K, F] = Props.D1(self, r)
     }
-    implicit class AafFeatureD2[K2, K1, F](private val self: Feature.D2[K2, K1, F]) extends AnyVal {
+    implicit class AF_FeatureD2[K2, K1, F](private val self: Feature.D2[K2, K1, F]) extends AnyVal {
       def toProps(r: ReadOnly.D2[K2, K1, F]): Props.D2[K2, K1, F] = Props.D2(self, r)
     }
   }

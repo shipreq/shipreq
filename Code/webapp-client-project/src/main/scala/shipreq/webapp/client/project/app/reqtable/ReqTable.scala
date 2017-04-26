@@ -13,7 +13,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.{PotentialFilter, ValidFilter}
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.text.{PlainText, TextSearch}
-import shipreq.webapp.client.base.feature.AsyncActionFeature
+import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.state.{Changes, ClientData}
 import shipreq.webapp.client.project.app.Style.{reqtable => *}
@@ -39,13 +39,13 @@ object ReqTable {
                          pxTextSearch    : Px[TextSearch],
                          pxProjectWidgets: Px[ProjectWidgets],
                          initEditor      : InitEditor,
-                         asyncFeature    : AsyncActionFeature.Feature.D2[Row.SourceId, Column, String],
-                         asyncFeature2   : AsyncActionFeature.Feature.D2[Row.SourceId, Option[Column], String],
+                         asyncFeature    : AsyncFeature.Feature.D2[Row.SourceId, Column, String],
+                         asyncFeature2   : AsyncFeature.Feature.D2[Row.SourceId, Option[Column], String],
                          reqDetailRC     : RouterCtl[ExternalPubid],
                          state_$         : StateAccessPure[State])
 
   case class DynamicProps(editStates  : ContentEditorFeature.D2.State.ReadOnly[Row.SourceId, Column],
-                          asyncStates : AsyncActionFeature.ReadOnly.D2[Row.SourceId, Option[Column], String],
+                          asyncStates : AsyncFeature.ReadOnly.D2[Row.SourceId, Option[Column], String],
                           preview     : PreviewFeature.Props.Composite[FocusId],
                           state       : State)
 

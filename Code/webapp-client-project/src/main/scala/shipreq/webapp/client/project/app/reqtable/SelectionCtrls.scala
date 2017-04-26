@@ -10,12 +10,12 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.base.data.TCB
-import shipreq.webapp.client.base.feature.AsyncActionFeature
+import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.project.feature.Modal
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets.high.{DeletionForm, ProjectWidgets}
-import AsyncActionFeature.Status.Locked
+import AsyncFeature.Status.Locked
 
 /**
   * Renders a bar that provides the user with information and action-buttons pertaining to the rows selected the
@@ -36,7 +36,7 @@ object SelectionCtrls {
                    projectText  : PlainText.ForProject,
                    textSearch   : TextSearch,
                    saveIO       : ServerCall[UpdateContentCmd],
-                   async        : AsyncActionFeature.Feature.D2[Row.SourceId, Option[Column], String])
+                   async        : AsyncFeature.Feature.D2[Row.SourceId, Option[Column], String])
 
   // These two are only used in callbacks so are always reusable
   private implicit def reusabilityPlainText : Reusability[PlainText.ForProject]  = Reusability.always

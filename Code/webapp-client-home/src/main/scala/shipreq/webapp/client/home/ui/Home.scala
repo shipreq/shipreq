@@ -9,7 +9,7 @@ import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data.{ProjectCatalogue, Username, DataValidators}
 import shipreq.webapp.base.protocol.InitDataForHomeSpa
 import shipreq.webapp.client.base.ClientConfig
-import shipreq.webapp.client.base.feature.{AsyncActionFeature, EditorStatus}
+import shipreq.webapp.client.base.feature.{AsyncFeature, EditorStatus}
 import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.base.ui.{BaseStyles, MemberNavBar, PlainTextEditor, ProjectItem}
 import shipreq.webapp.client.base.ui.semantic.Breadcrumb
@@ -21,7 +21,7 @@ object Home {
 
   @Lenses
   final case class State(createProjectText: String,
-                         createProjectAAS : AsyncActionFeature.ReadOnly.D0[String],
+                         createProjectAAS : AsyncFeature.ReadOnly.D0[String],
                          projects         : ProjectCatalogue)
 
   final class Backend($: BackendScope[Props, State]) {
@@ -29,8 +29,8 @@ object Home {
     val setCreateProjectText: String ~=> Callback =
       Reusable.fn.state($ zoomStateL State.createProjectText).set
 
-    val createProjectAAF: AsyncActionFeature.Feature.D0[String] =
-      AsyncActionFeature.Feature.D0.init($ zoomStateL State.createProjectAAS)
+    val createProjectAF: AsyncFeature.Feature.D0[String] =
+      AsyncFeature.Feature.D0.init($ zoomStateL State.createProjectAAS)
 
     def addProject(i: ProjectCatalogue.Item): Callback =
       $.modState(State.projects.modify(p => ProjectCatalogue(p.items :+ i)))
@@ -38,7 +38,7 @@ object Home {
     val createProjectIO: String => Callback =
       name =>
         $.props >>= (p =>
-          createProjectAAF((onSuccess, onFailure) =>
+          createProjectAF((onSuccess, onFailure) =>
             p.cp.call(p.data.createProject)(
               name,
               i => onSuccess >> setCreateProjectText("") >> addProject(i),
@@ -55,7 +55,7 @@ object Home {
   }
 
   val Component = ScalaComponent.builder[Props]("Home")
-    .initialStateFromProps(p => State("", AsyncActionFeature.State.initD0, p.data.projects))
+    .initialStateFromProps(p => State("", AsyncFeature.State.initD0, p.data.projects))
     .renderBackend[Backend]
     .build
 }
@@ -67,7 +67,7 @@ object HomeContent {
   final case class Props(username         : Username,
                          projects         : ProjectCatalogue,
                          createProjectText: StateSnapshot[String],
-                         createProjectAS  : AsyncActionFeature.ReadOnly.D0[String],
+                         createProjectAS  : AsyncFeature.ReadOnly.D0[String],
                          createProjectIO  : String => Callback) {
     @inline def render = Component(this)
   }

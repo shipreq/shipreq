@@ -10,7 +10,7 @@ import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.base.feature.AsyncActionFeature
+import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.base.lib.{DataReusability => _, _}
 import shipreq.webapp.client.base.ui.EditTheme
 import shipreq.webapp.client.project.app.Style.{reqtable => *}
@@ -33,7 +33,7 @@ object Table {
                    colRenderers   : NonEmptyVector[ColumnRenderer],
                    cellEditors    : ContentEditorFeature.D2.Feature[Row, Column],
                    editState      : ContentEditorFeature.D2.State.ReadOnly[Row.SourceId, Column],
-                   asyncState     : AsyncActionFeature.ReadOnly.D2[Row.SourceId, Option[Column], String],
+                   asyncState     : AsyncFeature.ReadOnly.D2[Row.SourceId, Option[Column], String],
                    selection      : RowSelectionVisible,
                    modViewSettings: EndoFn[ViewSettings] ~=> Callback)
 
@@ -151,7 +151,7 @@ object Table {
                       crs        : NonEmptyVector[ColumnRenderer],
                       cellEditors: ContentEditorFeature.D2.Feature[Row, Column],
                       editState  : ContentEditorFeature.D1.State.ReadOnly[Column],
-                      asyncState : AsyncActionFeature.ReadOnly.D1[Option[Column], String],
+                      asyncState : AsyncFeature.ReadOnly.D1[Option[Column], String],
                       selection  : RowSelectionVisible)
 
   implicit val rowPropReuse = Reusability.never[RowProps] // TODO .caseClass[RowProps]
@@ -203,7 +203,7 @@ object Table {
       <.tr(td(renderLocked), colCells)
     }
 
-    import AsyncActionFeature.Status
+    import AsyncFeature.Status
     p.asyncState(None) match {
       case None                           => renderRowNormal
       case Some(Status.Locked)            => renderRowLocked
@@ -238,7 +238,7 @@ object Table {
                        cr         : ColumnRenderer,
                        cellEditors: ContentEditorFeature.D2.Feature[Row, Column],
                        editState  : ContentEditorFeature.D0.State,
-                       asyncState : AsyncActionFeature.ReadOnly.D0[String]) {
+                       asyncState : AsyncFeature.ReadOnly.D0[String]) {
     def column = cr.column
     def startEdit: Option[Callback] = cellEditors(row)(column).startEdit(project)
   }

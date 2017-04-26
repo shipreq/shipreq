@@ -14,14 +14,14 @@ import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.client.base.data._
-import shipreq.webapp.client.base.feature.AsyncActionFeature
+import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.base.test._
 import shipreq.webapp.client.project.feature.ContentEditorFeature.EditFieldKey
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.test._
 import shipreq.webapp.client.project.widgets.high.ProjectWidgets
 import utest._
-import AsyncActionFeature.Implicits._
+import AsyncFeature.Implicits._
 import TestState.{scalazEqualFromTestState => _, _}
 import SampleProject.Values._
 
@@ -34,7 +34,7 @@ object ReqTableTest extends TestSuite {
 
   @Lenses
   case class State(editStates  : ContentEditorFeature.D2.State.Simple[Row.SourceId, EditFieldKey],
-                   asyncStates : AsyncActionFeature.State.D2[Row.SourceId, EditFieldKey, String],
+                   asyncStates : AsyncFeature.State.D2[Row.SourceId, EditFieldKey, String],
                    previewState: PreviewFeature.State[FocusId],
                    reqTable    : ReqTable.State)
 
@@ -59,7 +59,7 @@ object ReqTableTest extends TestSuite {
 
     def initialState = State(
       ContentEditorFeature.D2.State.init,
-      AsyncActionFeature.State.initD2,
+      AsyncFeature.State.initD2,
       PreviewFeature.State.init,
       ReqTable.State.init(cd, HideDead, None))
 
@@ -72,8 +72,8 @@ object ReqTableTest extends TestSuite {
 
     val reqTableComponent = {
 
-      val asyncFeature: AsyncActionFeature.Feature.D2[Row.SourceId, EditFieldKey, String] =
-        AsyncActionFeature.Feature.D2.init($ zoomStateL State.asyncStates)
+      val asyncFeature: AsyncFeature.Feature.D2[Row.SourceId, EditFieldKey, String] =
+        AsyncFeature.Feature.D2.init($ zoomStateL State.asyncStates)
 
       def initReqTableEditor: ReqTable.InitEditor = {
         import ContentEditorFeature._

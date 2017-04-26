@@ -11,7 +11,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text._
 import shipreq.webapp.client.base.data._
-import shipreq.webapp.client.base.feature.AsyncActionFeature
+import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.feature._
@@ -32,7 +32,7 @@ object UseCaseStepTree {
                          filterDead: FilterDead,
                          flow      : UseCases.StepFlow,
                          renderBody: RenderBodyFn, // TODO <------------------ prevents Reuse. Underlying fn uses state.
-                         asyncState: AsyncActionFeature.ReadOnly.D1[Cell, Any],
+                         asyncState: AsyncFeature.ReadOnly.D1[Cell, Any],
                          runCmd    : Cell ~=> (UpdateContentCmd ~=> Callback)) {
     @inline def render = Component(this)
   }

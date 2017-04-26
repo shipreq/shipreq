@@ -14,7 +14,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{UpdateContentCmd, UpdateContentFn}
 import shipreq.webapp.base.text._
 import shipreq.webapp.client.base.data._
-import shipreq.webapp.client.base.feature.AsyncActionFeature
+import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.base.ui.{BaseStyles, EditTheme}
 import shipreq.webapp.client.base.ui.semantic.Header
@@ -55,7 +55,7 @@ object ReqDetail {
 
   case class ReqProps(initEditor  : InitEditor,
                       edit        : ContentEditorFeature.D1.State.ReadOnly[Cell],
-                      async       : AsyncActionFeature.Props.D1[Cell, String])
+                      async       : AsyncFeature.Props.D1[Cell, String])
 
   type State = Modal.State
 
@@ -201,7 +201,7 @@ object ReqDetail {
     type EditFeature = ContentEditorFeature.D1.Feature[Cell]
 
     def createEditFeature(initEditor  : InitEditor,
-                          asyncFeature: AsyncActionFeature.Feature.D1[Cell, String],
+                          asyncFeature: AsyncFeature.Feature.D1[Cell, String],
                           data        : Data): EditFeature = {
       import ContentEditorFeature._
       import data.req

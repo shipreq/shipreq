@@ -98,9 +98,9 @@ object EditorStatus {
   def fromValidatedChange[A](vu: PotentialChange[Invalidity, A])(commit: A => Callback, unchanged: Callback): Sync =
     potentialChange(vu)(commit, unchanged)(Invalidity.toText)
 
-  def async[F, I](a: AsyncActionFeature.ReadOnly.D0[F])(implicit f: F => TagMod): Option[Async] =
+  def async[F, I](a: AsyncFeature.ReadOnly.D0[F])(implicit f: F => TagMod): Option[Async] =
     a map {
-      case AsyncActionFeature.Status.Locked       => InTransit
-      case x: AsyncActionFeature.Status.Failed[F] => AsyncError(f(x.failure), retry = x.retry, clearAsync = x.cancel)
+      case AsyncFeature.Status.Locked       => InTransit
+      case x: AsyncFeature.Status.Failed[F] => AsyncError(f(x.failure), retry = x.retry, clearAsync = x.cancel)
     }
 }

@@ -21,7 +21,7 @@ import shipreq.webapp.client.project.app.cfg.shared.Usage
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.high.{ImplicationGraph, ProjectWidgets}
-import AsyncActionFeature.Implicits._
+import AsyncFeature.Implicits._
 import Routes.{Page, RouterCtl}
 import LoadedRoot._
 
@@ -47,8 +47,8 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
     val pxTextSearch     = Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
     val pxProjectWidgets = Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
 
-    val asyncFeature: AsyncActionFeature.Feature.D2[reqtable.Row.SourceId, AsyncKey, String] =
-      AsyncActionFeature.Feature.D2.init($ zoomStateL State.asyncStates)
+    val asyncFeature: AsyncFeature.Feature.D2[reqtable.Row.SourceId, AsyncKey, String] =
+      AsyncFeature.Feature.D2.init($ zoomStateL State.asyncStates)
 
     val previewFeature: PreviewFeature.Feature.Composite[FocusId] =
       PreviewFeature.Feature.Composite.init($ zoomStateL State.previewState)
@@ -131,17 +131,17 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
           .onSet($.modState(State.reqTable.modify(_.setFilterDead(fd).setFilterSpec(fs()))) >> _)
           .link(Page.ReqTable))
 
-    lazy val projectNameAAF =
-      AsyncActionFeature.Feature.D0[String](
+    lazy val projectNameAF =
+      AsyncFeature.Feature.D0[String](
         Reusable.fn(
-          $.modStateFn[AsyncActionFeature.State.D0[String]](s =>
+          $.modStateFn[AsyncFeature.State.D0[String]](s =>
             State.projectName.modify(ProjectItem.WithEditableName.State setAsync s))))
 
 
     val setProjectNameIO: String => Callback =
       newName => {
         def close = $.modState(State.projectName set None)
-        def save = projectNameAAF((onSuccess, onFailure) =>
+        def save = projectNameAF((onSuccess, onFailure) =>
           cp.call(initData.projectNameSet)(
             newName,
             cd.applyEventsS(_) >> onSuccess >> close,

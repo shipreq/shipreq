@@ -9,7 +9,7 @@ import scalacss.ScalaCssReact._
 import shipreq.webapp.base.URLs
 import shipreq.webapp.base.UiText.EnglishStringExt
 import shipreq.webapp.base.data.{ProjectCatalogue, DataValidators}
-import shipreq.webapp.client.base.feature.{AsyncActionFeature, EditorStatus}
+import shipreq.webapp.client.base.feature.{AsyncFeature, EditorStatus}
 import shipreq.webapp.client.base.jsfacade.MomentJs
 import shipreq.webapp.client.base.ui.semantic.{Icon, Size, Statistic, StatisticGroup}
 import BaseStyles.{projectItems => *}
@@ -78,7 +78,7 @@ object ProjectItem {
     //   Reusability.caseClass
 
     @Lenses
-    case class EditState(edit: String, async: AsyncActionFeature.State.D0[String])
+    case class EditState(edit: String, async: AsyncFeature.State.D0[String])
 
     type State = Option[EditState]
     object State {

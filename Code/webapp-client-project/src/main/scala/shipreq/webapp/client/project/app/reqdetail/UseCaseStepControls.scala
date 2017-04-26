@@ -4,7 +4,7 @@ import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.StyleA
-import shipreq.webapp.client.base.feature.AsyncActionFeature
+import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.base.ui.semantic.{Button, Icon}
 import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
 
@@ -15,7 +15,7 @@ import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
   */
 object UseCaseStepControls {
 
-  type AsyncState = AsyncActionFeature.ReadOnly.D0[Any]
+  type AsyncState = AsyncFeature.ReadOnly.D0[Any]
 
   type HoverText = String
 
