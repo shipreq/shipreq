@@ -2,7 +2,7 @@ package shipreq.webapp.client.home
 
 import org.scalajs.dom
 import scala.scalajs.js.annotation.JSExportTopLevel
-import scalacss.Defaults._
+import shipreq.webapp.client.base.CssSettings._
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.protocol.{ClientFnDecl, InitDataForHomeSpa}
 import shipreq.webapp.client.base.protocol.{ClientFnImpl, ClientProtocol}

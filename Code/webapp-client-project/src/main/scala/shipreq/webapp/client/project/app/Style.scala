@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react.vdom.html_<^.{^ => ^^, _}
 import japgolly.univeq._
-import scalacss.Defaults._
+import shipreq.webapp.client.base.CssSettings._
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
 import shipreq.webapp.base.text.Grammar
