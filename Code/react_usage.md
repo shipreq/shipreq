@@ -139,6 +139,14 @@ It sounds stupid and tedious but:
     * i.e. W access with `S => Callback`
 
 
+Sometimes you have:
+* State -- only used in top-most component initialisation and definition
+* Props -- provides functionality, passed to components through their props
+  * Read-Only -- changes every time State changes
+  * Write-Only -- never changes; everything's a `Callback` (although this may involve CallbackTo[State]....)
+  * Read/Write -- combines above
+
+
 
 ### Reusability
 
