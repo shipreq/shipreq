@@ -2,11 +2,13 @@ package shipreq.webapp.client.project.app.reqtable
 
 import scalacss.Domain
 import scalacss.ScalaCssReact._
-import japgolly.scalajs.react._, vdom.html_<^._
+import japgolly.scalajs.react._
+import vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
 import japgolly.microlibs.nonempty.NonEmptyVector
+import scalaz.{-\/, \/-}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
@@ -14,7 +16,7 @@ import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.base.lib.{DataReusability => _, _}
 import shipreq.webapp.client.base.ui.EditTheme
 import shipreq.webapp.client.project.app.Style.{reqtable => *}
-import shipreq.webapp.client.project.feature.ContentEditorFeature
+import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.lib._
 import shipreq.webapp.client.project.widgets.DragToReorder
 import DataReusability._
@@ -27,12 +29,10 @@ object Table {
 
   implicit val reusabilityProps = Reusability.never[Props] // TODO .caseClass[Props]
 
-  case class Props(project        : Project,
-                   rows           : Rows,
+  case class Props(rows           : Rows,
                    colName        : Column.NameResolver,
                    colRenderers   : NonEmptyVector[ColumnRenderer],
-                   cellEditors    : ContentEditorFeature.D2.Feature[Row, Column],
-                   editState      : ContentEditorFeature.D2.State.ReadOnly[Row.SourceId, Column],
+                   editor         : EditorFeature.Props.ForProject,
                    asyncState     : AsyncFeature.ReadOnly.D2[Row.SourceId, Option[Column], String],
                    selection      : RowSelectionVisible,
                    modViewSettings: EndoFn[ViewSettings] ~=> Callback)
@@ -61,11 +61,16 @@ object Table {
 
       val renderRows =
         rows.indices.toVdomArray { i =>
-          val row = rows(i)
-          val es  = p.editState(row.sourceId)
-          val as  = p.asyncState(row.sourceId)
-          val rp  = RowProps(p.project, row, crs, p.cellEditors, es, as, p.selection)
-          RowComponent.withKey(row.id.key)(rp)
+          rows(i) match {
+            case row: ReqRow =>
+              import ForRowReq._
+              val rp = RowProps(row, crs, p.editor.forReq(row.req.id), p.asyncState(row.sourceId), p.selection)
+              RowComponent.withKey(row.id.key)(rp)
+            case row: ReqCodeGroupRow =>
+              import ForRowReqCodeGroup._
+              val rp = RowProps(row, crs, p.editor.forReqCodeGroup(row.reqCodeId), p.selection)
+              RowComponent.withKey(row.id.key)(rp)
+          }
         }
 
       // Render
@@ -146,78 +151,122 @@ object Table {
   // ===================================================================================================================
   // Rows
 
-  case class RowProps(project    : Project,
-                      row        : Row,
-                      crs        : NonEmptyVector[ColumnRenderer],
-                      cellEditors: ContentEditorFeature.D2.Feature[Row, Column],
-                      editState  : ContentEditorFeature.D1.State.ReadOnly[Column],
-                      asyncState : AsyncFeature.ReadOnly.D1[Option[Column], String],
-                      selection  : RowSelectionVisible)
+  object ForRowReq {
+    case class RowProps(row        : ReqRow,
+                        crs        : NonEmptyVector[ColumnRenderer],
+                        editor     : EditorFeature.Props.ForReq,
+                        asyncState : AsyncFeature.ReadOnly.D1[Option[Column], String],
+                        selection  : RowSelectionVisible)
 
-  implicit val rowPropReuse = Reusability.never[RowProps] // TODO .caseClass[RowProps]
+    val RowComponent =
+      ScalaComponent.builder[RowProps]("Row")
+        .render_P(renderRow)
+        .build
 
-  val RowComponent =
-    ScalaComponent.builder[RowProps]("Row")
-      .render_P(renderRow)
-      .configure(shouldComponentUpdate)
-      .build
+    def renderRow(p: RowProps): VdomTagOf[dom.html.TableRow] = {
+      val row = p.row
 
-  def renderRow(p: RowProps): VdomTagOf[dom.html.TableRow] = {
-    val row = p.row
+      val rowStatus: CellStatus =
+        if (row.live is Dead) CellStatus.DeadRow else CellStatus.Normal
 
-    val rowStatus: CellStatus =
-      if (row.live is Dead) CellStatus.DeadRow else CellStatus.Normal
+      def selCellKeyDown(e: ReactKeyboardEventFromHtml): Callback =
+        focusKeyHandlers(e)
 
-    def selCellKeyDown(e: ReactKeyboardEventFromHtml): Callback =
-      focusKeyHandlers(e)
+      val td = <.td(*.cell(rowStatus))
 
-    val td = <.td(*.cell(rowStatus))
+      def renderRowNormal = {
+        val sel = p.selection(row.sourceId)
 
-    def renderRowNormal = {
-      val sel = p.selection(row.sourceId)
+        def selCell =
+          td(
+            ^.onKeyDown ==> selCellKeyDown,
+            sel.onClick,
+            sel.checkbox(^.tabIndex := -1))
 
-      def selCell =
-        td(
-          ^.onKeyDown ==> selCellKeyDown,
-          sel.onClick,
-          sel.checkbox(^.tabIndex := -1))
+        def colCells =
+          p.crs.iterator.map { cr =>
+            val col = cr.column
+            val cell = EditorFeature.CellKey.filterForReq(Column.editorCellIntersection.getOption(col))
+            val cp = CellProps(row, cr, p.editor(cell))
+            CellComponent.withKey(col.key)(cp)
+          }.toVdomArray
 
-      def colCells =
-        p.crs.iterator.map { cr =>
-          val col = cr.column
-          val cp = CellProps(p.project, row, cr, p.cellEditors, p editState col, p asyncState Some(col))
-          CellComponent.withKey(col.key)(cp)
-        }.toVdomArray
+        <.tr(selCell, colCells)
+      }
 
-      <.tr(selCell, colCells)
+      def renderRowLocked = {
+        def colCells =
+          p.crs.iterator.map { cr =>
+            val col = cr.column
+            val cp = CellProps(row, cr, EditorFeature.Props.ForCell.doNothing)
+            CellComponent.withKey(col.key)(cp)
+          }.toVdomArray
+
+        <.tr(td(renderLocked), colCells)
+      }
+
+      import AsyncFeature.Status
+      p.asyncState(None) match {
+        case None                           => renderRowNormal
+        case Some(Status.InProgress)        => renderRowLocked
+        case Some(s: Status.Failed[String]) =>
+          // Currently, whole-row state is only used when a row is being deleted/restored.
+          // To save dev-time, if the RPC fails an alert popups asking to retry/cancel, thus this part of the code
+          // should only execute when the row is locked. Whole-row editing + failure won't occur.
+          dom.console.warn(s.failure)
+          <.tr(
+            td(^.colSpan := (p.crs.length + 1),
+              <.div(
+                s.failure,
+                <.button("Retry", ^.onClick --> s.retry),
+                <.button("Abort", ^.onClick --> s.cancel))))
+      }
     }
+  }
+  // TODO Copy-paste
+  object ForRowReqCodeGroup {
+    case class RowProps(row        : ReqCodeGroupRow,
+                        crs        : NonEmptyVector[ColumnRenderer],
+                        editor     : EditorFeature.Props.ForReqCodeGroup,
+                        selection  : RowSelectionVisible)
 
-    def renderRowLocked = {
-      def colCells =
-        p.crs.iterator.map { cr =>
-          val col = cr.column
-          val cp = CellProps(p.project, row, cr, ContentEditorFeature.D2.Feature.Nop, None, None)
-          CellComponent.withKey(col.key)(cp)
-        }.toVdomArray
+    val RowComponent =
+      ScalaComponent.builder[RowProps]("Row")
+        .render_P(renderRow)
+        .build
 
-      <.tr(td(renderLocked), colCells)
-    }
+    def renderRow(p: RowProps): VdomTagOf[dom.html.TableRow] = {
+      val row = p.row
 
-    import AsyncFeature.Status
-    p.asyncState(None) match {
-      case None                           => renderRowNormal
-      case Some(Status.InProgress)        => renderRowLocked
-      case Some(s: Status.Failed[String]) =>
-        // Currently, whole-row state is only used when a row is being deleted/restored.
-        // To save dev-time, if the RPC fails an alert popups asking to retry/cancel, thus this part of the code
-        // should only execute when the row is locked. Whole-row editing + failure won't occur.
-        dom.console.warn(s.failure)
-        <.tr(
-          td(^.colSpan := (p.crs.length + 1),
-            <.div(
-              s.failure,
-              <.button("Retry", ^.onClick --> s.retry),
-              <.button("Abort", ^.onClick --> s.cancel))))
+      val rowStatus: CellStatus =
+        if (row.live is Dead) CellStatus.DeadRow else CellStatus.Normal
+
+      def selCellKeyDown(e: ReactKeyboardEventFromHtml): Callback =
+        focusKeyHandlers(e)
+
+      val td = <.td(*.cell(rowStatus))
+
+      def renderRowNormal = {
+        val sel = p.selection(row.sourceId)
+
+        def selCell =
+          td(
+            ^.onKeyDown ==> selCellKeyDown,
+            sel.onClick,
+            sel.checkbox(^.tabIndex := -1))
+
+        def colCells =
+          p.crs.iterator.map { cr =>
+            val col = cr.column
+            val cell = EditorFeature.CellKey.filterForReqCodeGroup(Column.editorCellIntersection.getOption(col))
+            val cp = CellProps(row, cr, p.editor(cell))
+            CellComponent.withKey(col.key)(cp)
+          }.toVdomArray
+
+        <.tr(selCell, colCells)
+      }
+
+      renderRowNormal
     }
   }
 
@@ -233,14 +282,13 @@ object Table {
     val domain = Domain.ofValues[CellStatus](Normal, DeadRow, `N/A`)
   }
 
-  case class CellProps(project    : Project,
-                       row        : Row,
-                       cr         : ColumnRenderer,
-                       cellEditors: ContentEditorFeature.D2.Feature[Row, Column],
-                       editState  : ContentEditorFeature.D0.State,
-                       asyncState : AsyncFeature.ReadOnly.D0[String]) {
+  case class CellProps(row   : Row,
+                       cr    : ColumnRenderer,
+                       editor: EditorFeature.Props.ForCell) {
     def column = cr.column
-    def startEdit: Option[Callback] = cellEditors(row)(column).startEdit
+
+    def renderEditor(view: => TagMod): TagMod =
+      editor.renderOr(TagMod(EditTheme.editableInline(editor.startEdit), view))
   }
 
   implicit val cellPropReuse = Reusability.never[CellProps] // TODO caseClass[CellProps]
@@ -258,21 +306,6 @@ object Table {
 
     def domNode = CallbackTo($.getDOMNode.asInstanceOf[N])
 
-    val startEdit: Callback =
-      $.props.flatMap(_.startEdit getOrElse Callback.empty)
-
-    val editableInline =
-      EditTheme.editableInline(startEdit)
-
-    def renderAsyncEditorOrValue(p: CellProps, view: => TagMod): TagMod = {
-      def view2: TagMod =
-        p.startEdit match {
-          case Some(_) => TagMod(editableInline, view)
-          case None    => view
-        }
-      p.editState.renderOr(p.asyncState)(view2)
-    }
-
     /**
      * When a Button in the cell is clicked, we still get the event here in which case, the focus is set after the
      * button callback runs, meaning that (because separate modState()s don't compose) we trample the state change made by
@@ -288,7 +321,7 @@ object Table {
     def onKeyDown(e: ReactKeyboardEventFromHtml): Callback =
       CallbackOption.require(doesEventTargetCell(e)) >> (
         focusKeyHandlers(e) | keyCodeSwitch(e) {
-          case KeyCode.F2 => startEdit
+          case KeyCode.F2 => $.props.flatMap(_.editor.startEdit getOrElse Callback.empty)
         }
       )
 
@@ -307,7 +340,7 @@ object Table {
       cellBase(
         *.cell(status),
         ^.onKeyDown ==> onKeyDown,
-        renderAsyncEditorOrValue(p, view.render))
+        p.renderEditor(view.render))
     }
   }
 

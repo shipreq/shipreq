@@ -6,7 +6,6 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.test._
 import monocle.macros.Lenses
 import nyaya.test.PropTest._
-import shipreq.base.test.JsEnv
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
@@ -16,8 +15,8 @@ import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.client.base.data._
 import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.base.test._
-import shipreq.webapp.client.project.feature.ContentEditorFeature.EditFieldKey
 import shipreq.webapp.client.project.feature._
+import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.test._
 import shipreq.webapp.client.project.widgets.high.ProjectWidgets
 import utest._
@@ -33,10 +32,15 @@ object ReqTableTest extends TestSuite {
   val remotes = MockRemotes.projectSpa(null: ProjectCatalogue.Item)
 
   @Lenses
-  case class State(editStates  : ContentEditorFeature.D2.State.Simple[Row.SourceId, EditFieldKey],
-                   asyncStates : AsyncFeature.State.D2[Row.SourceId, EditFieldKey, String],
-                   previewState: PreviewFeature.State[FocusId],
-                   reqTable    : ReqTable.State)
+  case class State(editors : EditorFeature.State.ForProject,
+                   async   : AsyncFeature.State.D2[Row.SourceId, Option[Column], String],
+                   preview : PreviewFeature.State[FocusId],
+                   reqTable: ReqTable.State)
+
+  val FocusIdToEditor = Intersection[FocusId, EditorFeature.PreviewId] {
+    case FocusId.InEditor(e) => Some(e)
+    case FocusId.InCI(_, _) => None
+  }(e => Some(FocusId.InEditor(e)))
 
   def runTest(plan: *.Plan): Unit =
     runTest(plan, false)
@@ -51,14 +55,16 @@ object ReqTableTest extends TestSuite {
     val reqDetailRC = MockRouterCtl[ExternalPubid]()
     val cd = TestClientData(plan.initialState)
     val cp = MockServer(cd)
+    val initSpa = MockRemotes.projectSpa(cd.pxProject.value())
     import cd.pxProject
 
     val pxPlainText      = pxProject.map(PlainText(_, ProjectText.Context.None))
     val pxTextSearch     = Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
     val pxProjectWidgets = Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
+    val pxEditability    = pxProject.map(EditorFeature.Editability.apply)
 
     def initialState = State(
-      ContentEditorFeature.D2.State.init,
+      EditorFeature.State.initForProject,
       AsyncFeature.State.initD2,
       PreviewFeature.State.init,
       ReqTable.State.init(cd, HideDead, None))
@@ -68,42 +74,45 @@ object ReqTableTest extends TestSuite {
     val $ = stateVar.stateAccess
 
     val previewFeature =
-      PreviewFeature.Feature.Composite.init($ zoomStateL State.previewState)
+      PreviewFeature.Feature.Composite.init($ zoomStateL State.preview)
 
-    val reqTableComponent = {
+    val asyncFeature: AsyncFeature.Feature.D2[Row.SourceId, Option[Column], String] =
+      AsyncFeature.Feature.D2.init($ zoomStateL State.async)
 
-      val asyncFeature: AsyncFeature.Feature.D2[Row.SourceId, EditFieldKey, String] =
-        AsyncFeature.Feature.D2.init($ zoomStateL State.asyncStates)
+    val optionColumnToEditorCell = Intersection.toOption[Column].reverse <=> Column.editorCellIntersection
 
-      def initReqTableEditor: ReqTable.InitEditor = {
-        import ContentEditorFeature._
-        new D2.InitChild[Row, Column, FocusId] {
-          override type Parent    = State
-          override val parent     = $
-          override val preview    = previewFeature
-          override val editorLens =
-            (r: Row, c: Column) =>
-              Column.EditFieldKeyIntersection.getOption(c).map(efk =>
-                State.editStates ^|-> D2.State.at(r.sourceId) ^|-> D1.State.at(efk))
-        }
-      }
+    val editorFeature: EditorFeature.Write.ForProject =
+      EditorFeature.Write.ForProject(
+        EditorFeature.Static(
+          previewFeature.mapId(FocusIdToEditor),
+          pxProject,
+          pxPlainText,
+          pxProjectWidgets,
+          pxTextSearch,
+          ServerCall.to(initSpa.updateContent, cp, cd)),
+        $ zoomStateL State.editors,
+        asyncFeature.mapKey2(Row.SourceIdToEditorRow).mapKey1(optionColumnToEditorCell))
 
+    val reqTableComponent =
       ReqTable(ReqTable.StaticProps(
         cd, cp, remotes.createContent, remotes.updateContent,
         pxPlainText, pxTextSearch, pxProjectWidgets,
-        initReqTableEditor,
-        asyncFeature.mapKey1(Column.EditFieldKeyIntersection.reverse),
-        asyncFeature.mapKey1(Column.EditFieldKeyIntersection.reverse <=> Intersection.toOption),
+        asyncFeature,
         reqDetailRC,
         $ zoomStateL State.reqTable))
-    }
 
     def dynamicProps() = {
       val s = stateVar.value()
+      val asyncState = s.async.toReadOnly
+      val asyncState2 = asyncState.mapKey2(Row.SourceIdToEditorRow).mapKey1(optionColumnToEditorCell)
+      def editorState = EditorFeature.Read.ForProject(s.editors, pxEditability.value(), asyncState2)
+      def editorProps = editorFeature.toProps(editorState)
+      def previewProps = previewFeature.toProps(s.preview)
+
       ReqTable.DynamicProps(
-        s.editStates.mapKey1(Column.EditFieldKeyIntersection.reverse),
-        s.asyncStates.toReadOnly.mapKey1(Column.EditFieldKeyIntersection.reverse <=> Intersection.toOption),
-        previewFeature toProps s.previewState,
+        editorProps,
+        asyncState,
+        previewProps,
         s.reqTable)
     }
 

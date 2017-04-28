@@ -24,6 +24,7 @@ import shipreq.webapp.client.project.widgets.high.{ImplicationGraph, ProjectWidg
 import AsyncFeature.Implicits._
 import Routes.{Page, RouterCtl}
 import LoadedRoot._
+import shipreq.webapp.client.project.protocol.ServerCall
 
 object LoadedRoot {
   case class Props(page: Page, routerCtl: RouterCtl)
@@ -46,70 +47,53 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
     val pxPlainText      = pxProject.map(PlainText(_, ProjectText.Context.None))
     val pxTextSearch     = Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
     val pxProjectWidgets = Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
+    val pxEditability    = pxProject.map(EditorFeature.Editability.apply)
 
-    val asyncFeature: AsyncFeature.Feature.D2[reqtable.Row.SourceId, AsyncKey, String] =
-      AsyncFeature.Feature.D2.init($ zoomStateL State.asyncStates)
+    val asyncFeature: AsyncFeature.Feature.D2[EditorFeature.RowKey, AsyncKey, String] =
+      AsyncFeature.Feature.D2.init($ zoomStateL State.async)
 
     val previewFeature: PreviewFeature.Feature.Composite[FocusId] =
-      PreviewFeature.Feature.Composite.init($ zoomStateL State.previewState)
+      PreviewFeature.Feature.Composite.init($ zoomStateL State.preview)
 
-    def initReqTableEditor: ReqTable.InitEditor = {
-      import ContentEditorFeature._
-      new D2.InitChild[reqtable.Row, reqtable.Column, reqtable.FocusId] {
-        override type Parent    = State
-        override val parent     = $
-        override val preview    = previewFeature.mapId(FocusId.ToReqTable)
-        override val editorLens =
-          (r: reqtable.Row, c: reqtable.Column) =>
-            reqtable.Column.EditFieldKeyIntersection.getOption(c).map(efk =>
-              State.editStates ^|-> D2.State.at(r.sourceId) ^|-> D1.State.at(efk))
-      }
-    }
+    val editorFeature: EditorFeature.Write.ForProject =
+      EditorFeature.Write.ForProject(
+        EditorFeature.Static(
+          previewFeature.mapId(FocusId.ToEditor),
+          pxProject,
+          pxPlainText,
+          pxProjectWidgets,
+          pxTextSearch,
+          ServerCall.to(initData.updateContent, cp, cd)),
+        $ zoomStateL State.editors,
+        asyncFeature.mapKey1(AsyncKey.ToEditor))
 
     val reqTable = ReqTable(ReqTable.StaticProps(
       cd, cp, initData.createContent, initData.updateContent,
       pxPlainText, pxTextSearch, pxProjectWidgets,
-      initReqTableEditor,
-      asyncFeature.mapKey1(AsyncKey.ToReqTable),
-      asyncFeature.mapKey1(AsyncKey.ToReqTable2),
+      asyncFeature.mapKey2(reqtable.Row.SourceIdToEditorRow.reverse).mapKey1(AsyncKey.ToReqTable2),
       reqDetailRC,
       $ zoomStateL State.reqTable))
 
     val pxReqDetailId = Px[Option[ReqId]](None).withReuse.manualUpdate
 
     val pxReqDetailReqProps: Px[Option[State => ReqDetail.ReqProps]] =
-      pxReqDetailId.map(_.map { id =>
-        val r = reqtable.Row.ReqRowSourceId(id)
+      for {
+        editability <- pxEditability
+        reqDetailId <- pxReqDetailId
+      } yield reqDetailId.map { id =>
+        val ew = editorFeature.forReq(id)
+        val row = EditorFeature.RowKey.Req(id)
+        val af = asyncFeature(row).mapKey(AsyncKey.ToReqDetail)
 
-        val focusIdToCell = Intersection[FocusId, reqdetail.Cell] {
-          case FocusId.Content(rs, f) =>
-            if (r ==* rs)
-              reqdetail.Cell.EditFieldKeyIntersection.reverse.getOption(f)
-            else
-              None
-          case FocusId.ReqTableCI(_) => None
-        }(c => reqdetail.Cell.EditFieldKeyIntersection.getOptionMap(c, FocusId.Content(r, _)))
-
-        import ContentEditorFeature._
-        val initEditor =
-          new D1.InitChild[reqdetail.Cell, reqdetail.Cell] {
-            override type Parent    = State
-            override val parent     = $
-            override val preview    = previewFeature.mapId(focusIdToCell)
-            override val editorLens =
-              (c: reqdetail.Cell) =>
-                reqdetail.Cell.EditFieldKeyIntersection.getOption(c).map(efk =>
-                  State.editStates ^|-> D2.State.at(r) ^|-> D1.State.at(efk))
-          }
-
-         val asyncF1 = asyncFeature(r).mapKey(AsyncKey.ToReqDetail)
-
-        (s: State) =>
-          ReqDetail.ReqProps(
-            initEditor,
-            s.editStates(r).mapKey(reqdetail.Cell.EditFieldKeyIntersection.reverse),
-            asyncF1.toProps(s.asyncStates.toReadOnly(r).mapKey(AsyncKey.ToReqDetail)))
-      })
+        (s: State) => {
+          val es = EditorFeature.Read.ForProject(s.editors, editability, s.async.toReadOnly.mapKey1(AsyncKey.ToEditor))
+          val er = es.forReq(id)
+          val ep = EditorFeature.Props.ForRow(er, ew)
+          val as = s.async.toReadOnly(row).mapKey(AsyncKey.ToReqDetail)
+          val ap = af.toProps(as)
+          ReqDetail.ReqProps(ep, ap)
+        }
+      }
 
     def reqDetailReqPropsFn(s: State) = (id: ReqId) => {
       pxReqDetailId.set(Some(id))
@@ -152,6 +136,11 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
     def render(p: Props, s: State): VdomElement = {
       def fd = StateSnapshot.withReuse(s.filterDead)(setFilterDead)
 
+      lazy val asyncState = s.async.toReadOnly
+      def editorState = EditorFeature.Read.ForProject(s.editors, pxEditability.value(), asyncState.mapKey1(AsyncKey.ToEditor))
+      def editorProps = editorFeature.toProps(editorState)
+      def previewProps = previewFeature.toProps(s.preview)
+
       val content: VdomElement = p.page match {
 
         case Page.Index =>
@@ -184,17 +173,19 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
           cfg.tags.CfgTags.Props(cp, initData.tagCrud, cd, fd).component
 
         case Page.ReqTable =>
-          reqTable(ReqTable.DynamicProps(
-            s.editStates.mapKey1(reqtable.Column.EditFieldKeyIntersection.reverse),
-            s.asyncStates.toReadOnly.mapKey1(AsyncKey.ToReqTable2),
-            previewFeature.toProps(s.previewState).mapId(FocusId.ToReqTable),
-            s.reqTable))
+          reqTable(
+            ReqTable.DynamicProps(
+              editorProps,
+              asyncState.mapKey2(reqtable.Row.SourceIdToEditorRow.reverse).mapKey1(AsyncKey.ToReqTable2),
+              previewProps.mapId(FocusId.ToReqTable),
+              s.reqTable))
 
         case Page.ReqDetail(pubid) =>
           val props = ReqDetail.DynamicProps(
             pubid,
             fd,
             reqDetailReqPropsFn(s),
+            editorProps.forUseCaseSteps,
             StateSnapshot.withReuse(s.reqDetail)(reqDetailSetState))
           reqDetail(props)
 

@@ -30,42 +30,45 @@ object NewEditorCmd {
   case class Tags           (id: ReqId, field: Option[CustomField.Tag.Id])              extends NewEditorCmd
   case class Title          (id: ReqCodeId \/ ReqId, pid: PreviewId)                    extends NewEditorCmd
   case class UseCaseStep    (id: UseCaseStepId, pid: PreviewId)                         extends NewEditorCmd
-}
 
-// █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-
-/** For a specific type of Row and associated Cell, provides a function that
-  * requests a value specific to the Row/Cell combination,
-  * and (if legal), returns a command to create a new editor.
-  */
-sealed trait MakeNewEditorCmd[R <: RowKey, C <: R#CellKeyConstraint] {
-  def apply(row: R, cell: C): Option[NewEditorCmd]
-}
-
-object MakeNewEditorCmd {
-  private def apply[R <: RowKey, C <: R#CellKeyConstraint](f: (R, C) => Option[NewEditorCmd]): MakeNewEditorCmd[R, C] =
-    new MakeNewEditorCmd[R, C] {
-      override def apply(row: R, cell: C) = f(row, cell)
-    }
 
   @inline private implicit def autoSome(a: NewEditorCmd): Option[NewEditorCmd] = Some(a)
 
-  implicit val reqCodes = apply[RowKey.Req, CellKey.Code.type      ]((r, _) => NewEditorCmd.ReqCodes(r.id))
-  implicit val reqTitle = apply[RowKey.Req, CellKey.Title.type     ]((r, c) => NewEditorCmd.Title(\/-(r.id), PreviewId(r, c)))
-  implicit val reqText  = apply[RowKey.Req, CellKey.CustomTextField]((r, c) => NewEditorCmd.CustomTextField(r.id, c.field, PreviewId(r, c)))
-  implicit val reqImp   = apply[RowKey.Req, CellKey.Implications   ]((r, c) => NewEditorCmd.Implications(r.id, c.scope))
-  implicit val reqTags  = apply[RowKey.Req, CellKey.Tags           ]((r, c) => NewEditorCmd.Tags(r.id, c.field))
-  implicit val reqType  = apply[RowKey.Req, CellKey.ReqType.type   ]((r, _) =>
-    r.id match {
-      case i: GenericReqId => Some(NewEditorCmd.ReqType(i))
-      case _: UseCaseId    => None
-    })
+  /** For a specific type of Row and associated Cell, provides a function that
+    * requests a value specific to the Row/Cell combination,
+    * and (if legal), returns a command to create a new editor.
+    */
+  val make: RowKey => CellKey => Option[NewEditorCmd] = {
 
-  implicit val rcgCode  = apply[RowKey.ReqCodeGroup, CellKey.Code.type ]((r, _) => NewEditorCmd.ReqCode(r.id))
-  implicit val rcgTitle = apply[RowKey.ReqCodeGroup, CellKey.Title.type]((r, c) => NewEditorCmd.Title(-\/(r.id), PreviewId(r, c)))
+    case r: RowKey.Req => {
+      case cc: CellKey.ForReq => cc match {
+        case c@ CellKey.Code            => NewEditorCmd.ReqCodes(r.id)
+        case c@ CellKey.Title           => NewEditorCmd.Title(\/-(r.id), PreviewId(r, c))
+        case c: CellKey.CustomTextField => NewEditorCmd.CustomTextField(r.id, c.field, PreviewId(r, c))
+        case c: CellKey.Implications    => NewEditorCmd.Implications(r.id, c.scope)
+        case c: CellKey.Tags            => NewEditorCmd.Tags(r.id, c.field)
+        case c@ CellKey.ReqType         => r.id match {
+          case i: GenericReqId => Some(NewEditorCmd.ReqType(i))
+          case _: UseCaseId    => None
+        }
+      }
+      case _ => None
+    }
 
-  implicit val useCaseSteps = apply[RowKey.UseCaseSteps.type, CellKey.UseCaseStep](
-    (r, c) => NewEditorCmd.UseCaseStep(c.id, PreviewId(r, c)))
+    case r: RowKey.ReqCodeGroup => {
+      case cc: CellKey.ForReqCodeGroup => cc match {
+        case c@ CellKey.Code  => NewEditorCmd.ReqCode(r.id)
+        case c@ CellKey.Title => NewEditorCmd.Title(-\/(r.id), PreviewId(r, c))
+      }
+      case _ => None
+    }
+
+    case r@ RowKey.UseCaseSteps => {
+      case c: CellKey.UseCaseStep => NewEditorCmd.UseCaseStep(c.id, PreviewId(r, c))
+      case _ => None
+    }
+  }
+
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████

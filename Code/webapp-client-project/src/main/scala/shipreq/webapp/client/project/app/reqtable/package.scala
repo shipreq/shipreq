@@ -32,7 +32,7 @@ package object reqtable {
 
   sealed trait FocusId
   object FocusId {
-    case class AtCell(row: Row.SourceId, col: Column) extends FocusId
+    case class InEditor(id: EditorFeature.PreviewId) extends FocusId
     case class InCI(typ: CreationInterface.Type, col: Column) extends FocusId
     implicit def equalityCI: UnivEq[InCI] = UnivEq.derive
     implicit def equality: UnivEq[FocusId] = UnivEq.derive

@@ -44,13 +44,13 @@ object CellKey {
   sealed trait ForReq          extends CellKey
   sealed trait ForReqCodeGroup extends CellKey
 
-  case object ReqType                                                          extends ForReq
-  case object Code                                                             extends ForReq with ForReqCodeGroup
-  case object Title                                                            extends ForReq with ForReqCodeGroup
-  case class  CustomTextField(field: CustomField.Text.Id)                      extends ForReq
-  case class  Tags            (field: Option[CustomField.Tag.Id])              extends ForReq
-  case class  Implications    (scope: CustomField.Implication.Id \/ Direction) extends ForReq
-  case class  UseCaseStep     (id: UseCaseStepId)                              extends CellKey
+  case object ReqType                                                         extends ForReq
+  case object Code                                                            extends ForReq with ForReqCodeGroup
+  case object Title                                                           extends ForReq with ForReqCodeGroup
+  case class  CustomTextField(field: CustomField.Text.Id)                     extends ForReq
+  case class  Tags           (field: Option[CustomField.Tag.Id])              extends ForReq
+  case class  Implications   (scope: CustomField.Implication.Id \/ Direction) extends ForReq
+  case class  UseCaseStep    (id: UseCaseStepId)                              extends CellKey
 
   // DeletionReason is a bit odd in that it is append-only, not directly editable.
   // case object DeletionReason extends CellKey
@@ -60,4 +60,16 @@ object CellKey {
 
   implicit val reusability: Reusability[CellKey] =
     Reusability.byUnivEq
+
+  val filterForReq: Option[CellKey] => Option[ForReq] =
+    _.filter {
+      case _: ForReq => true
+      case _         => false
+    }.asInstanceOf[Option[ForReq]]
+
+  val filterForReqCodeGroup: Option[CellKey] => Option[ForReqCodeGroup] =
+    _.filter {
+      case _: ForReqCodeGroup => true
+      case _                  => false
+    }.asInstanceOf[Option[ForReqCodeGroup]]
 }

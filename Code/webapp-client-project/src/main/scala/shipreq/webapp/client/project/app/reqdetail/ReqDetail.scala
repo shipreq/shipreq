@@ -37,8 +37,6 @@ object ReqDetail {
       .renderBackend
       .build
 
-  type InitEditor = ContentEditorFeature.D1.InitChild[Cell, Cell]
-
   case class StaticProps(cd                   : ClientData,
                          cp                   : ClientProtocol,
                          reqDetailRC          : RouterCtl[ExternalPubid],
@@ -51,11 +49,11 @@ object ReqDetail {
   case class DynamicProps(extPubid  : ExternalPubid,
                           filterDead: StateSnapshot[FilterDead],
                           reqProps  : ReqId => ReqProps,
+                          editorUCS : EditorFeature.Props.ForUseCaseSteps,
                           state     : StateSnapshot[State])
 
-  case class ReqProps(initEditor  : InitEditor,
-                      edit        : ContentEditorFeature.D1.State.ReadOnly[Cell],
-                      async       : AsyncFeature.Props.D1[Cell, String])
+  case class ReqProps(editor: EditorFeature.Props.ForReq,
+                      async : AsyncFeature.Props.D1[Cell, String])
 
   type State = Modal.State
 
@@ -71,10 +69,6 @@ object ReqDetail {
          val project   : Project,
          val req       : Req,
              upstreamFD: FilterDead) {
-
-    private val editability = ContentEditorFeature.Editability.forProject(project)
-    val editabilityForReq = editability.forReqs(req.id)
-    val editabilityForUseCaseSteps = editability.forUseCaseSteps
 
     val (pxPlainText, pxProjectWidgets) = {
       val textCtx: Option[ProjectText.Context] = req match {
@@ -202,45 +196,6 @@ object ReqDetail {
     def clearModal: Callback =
       setModal(Modal.none)
 
-    type EditFeature = ContentEditorFeature.D1.Feature[Cell]
-
-    def createEditFeature(initEditor  : InitEditor,
-                          asyncFeature: AsyncFeature.Feature.D1[Cell, String],
-                          data        : Data): EditFeature = {
-      import ContentEditorFeature._
-      import data.req
-
-      val static = Static(
-        initEditor.parent, initEditor.preview,
-        pxProject, data.pxPlainText, data.pxProjectWidgets, pxTextSearch,
-        updateIO)
-
-      initEditor.feature { (cell, lens) =>
-        implicit def autoForReq(e: NewEditor.ForReq[Cell]): D0.Feature =
-          D0.Feature(static)(e)(asyncFeature(cell), lens, data.editabilityForReq)
-
-        implicit def autoForUCS(e: NewEditor.UseCaseStep[Cell]): D0.Feature =
-          D0.Feature(static)(e)(asyncFeature(cell), lens, data.editabilityForUseCaseSteps)
-
-        val feature: D0.Feature = cell match {
-          case Cell.Title                                        => NewEditor.ReqTitle(req, cell)
-          case Cell.Code                                         => NewEditor.ReqCodesForReq(req)
-          case Cell.Implications(dir)                            => NewEditor.ImplicationsAll(req, dir, data.generalImps(dir))
-          case Cell.ReqType                                      => NewEditor.reqType(req).fold[D0.Feature](D0.Feature.Nop)(autoForReq(_))
-          case Cell.Tags                                         => NewEditor.Tags(req, None)
-          case Cell.CustomField(fid: CustomField.Tag        .Id) => NewEditor.Tags(req, Some(fid))
-          case Cell.CustomField(fid: CustomField.Text       .Id) => NewEditor.CustomTextField(req, fid, cell)
-          case Cell.CustomField(fid: CustomField.Implication.Id) => NewEditor.ImplicationsCustomField(req, fid)
-          case Cell.UseCaseStep(id)                              => NewEditor.UseCaseStep(id, cell)
-          case Cell.UseCaseStepCtrls(_)
-             | Cell.AddUseCaseStep(_)
-             | Cell.AddUseCaseTailStep(_)                        => D0.Feature.Nop
-        }
-
-        feature
-      }
-    }
-
     def renderNotFound(failureReason: String): VdomElement =
       <.div(
         <.h2("ERROR"),
@@ -268,19 +223,14 @@ object ReqDetail {
     def renderDetail(props: DynamicProps, data: Data): VdomElement = {
       import data.{project, req, pubidText}
 
-      val pw          = data.pxProjectWidgets.value()
-      val reqProps    = props.reqProps(req.id)
-      val fieldName   = pxFieldNameFn.value()
-      val editFeature = createEditFeature(reqProps.initEditor, reqProps.async.feature, data)
-      val runCmd      = this.runCmd(req.id)
+      val pw        = data.pxProjectWidgets.value()
+      val reqProps  = props.reqProps(req.id)
+      val reqEditor = reqProps.editor
+      val fieldName = pxFieldNameFn.value()
+      val runCmd    = this.runCmd(req.id)
 
-      def renderAsyncEditorOrValue(cell: Cell, view: => TagMod): TagMod = {
-        def startEdit    = editFeature(cell).startEdit
-        def editableView = TagMod(EditTheme.editableInline(startEdit), view)
-        val async        = reqProps.async(cell)
-        val editor       = reqProps.edit(cell)
-        editor.renderOr(async.state)(editableView)
-      }
+      def renderEditor(editor: EditorFeature.Props.ForCell, view: => TagMod): TagMod =
+        editor.renderOr(TagMod(EditTheme.editableInline(editor.startEdit), view))
 
       def renderHeader: VdomElement = {
         val hstyle = headerStyle(data.live)
@@ -291,7 +241,8 @@ object ReqDetail {
             Header(hstyle, pubidText + ":")),
 
           <.div(*.headerTitle,
-            renderAsyncEditorOrValue(Cell.Title,
+            renderEditor(
+              reqEditor(EditorFeature.CellKey.Title),
               Header(hstyle, pw.reqTitle(req)))),
 
           <.div(*.headerFilterDeadButton,
@@ -328,46 +279,45 @@ object ReqDetail {
           case Row.Life             => UiText.Life.field
         }
 
-      def renderImpCell(cell: Cell, pubids: => Vector[Pubid]) =
-        renderAsyncEditorOrValue(
-          cell,
+      def renderImpCell(scope: CustomField.Implication.Id \/ Direction, pubids: => Vector[Pubid]) =
+        renderEditor(
+          reqEditor(EditorFeature.CellKey.Implications(scope)),
           pw.implicationList(pubids))
 
       // TODO Much much overlap with Table.CellProps
       // TODO Test that this applies applicability
-      // TODO Test can't edit dead req
       def renderRowData(row: Row): TagMod = {
         var liveStyle = data.live
 
         val content: TagMod = row match {
 
           case Row.CustomField(f: CustomField.Text) =>
-            renderAsyncEditorOrValue(
-              Cell.CustomField(f.id),
+            renderEditor(
+              reqEditor(EditorFeature.CellKey.CustomTextField(f.id)),
               pw.customTextField(f.id)(req).fold(emptyRow)(w => w))
 
           case Row.Code =>
-            renderAsyncEditorOrValue(
-              Cell.Code,
+            renderEditor(
+              reqEditor(EditorFeature.CellKey.Code),
               pw.flatReqCodes(data.codes))
 
           case Row.ReqType =>
-            renderAsyncEditorOrValue(
-              Cell.ReqType,
+            renderEditor(
+              reqEditor(EditorFeature.CellKey.ReqType),
               pw.reqTypeFull(req.reqTypeId)) // ---- Note for refactoring: reqTypeFull differs from how ReqTable does it
 
           case Row.Tags =>
-            renderAsyncEditorOrValue(
-              Cell.Tags,
+            renderEditor(
+              reqEditor(EditorFeature.CellKey.Tags(None)),
               pw.tagList(data.generalTags))
 
           case Row.CustomField(f: CustomField.Tag) =>
-            renderAsyncEditorOrValue(
-              Cell.CustomField(f.id),
+            renderEditor(
+              reqEditor(EditorFeature.CellKey.Tags(Some(f.id))),
               pw.tagList(data.customTags(f.id)))
 
           case Row.Implications =>
-            def one(dir: Direction) = renderImpCell(Cell.Implications(dir), data.generalImps(dir))
+            def one(dir: Direction) = renderImpCell(\/-(dir), data.generalImps(dir))
             <.table(*.generalImpsCont,
               <.tbody(
                 <.tr(
@@ -388,7 +338,7 @@ object ReqDetail {
             ).render
 
           case Row.CustomField(f: CustomField.Implication) =>
-            renderImpCell(Cell.CustomField(f.id), data.customImps(f))
+            renderImpCell(-\/(f.id), data.customImps(f))
 
           case Row.UseCaseStepsN => val d = data.useCaseData.get; renderStepTree(d, d.stepsN)
           case Row.UseCaseStepsA => val d = data.useCaseData.get; renderStepTree(d, d.stepsA)
@@ -422,8 +372,8 @@ object ReqDetail {
 
       def renderStepTree(ucData: UseCaseData, stepData: UseCaseStepTree.StepData) = {
         val renderBody: UseCaseStepTree.RenderBodyFn = (id, live, textAndFlow) =>
-          renderAsyncEditorOrValue(
-            Cell.UseCaseStep(id),
+          renderEditor(
+            props.editorUCS(EditorFeature.CellKey.UseCaseStep(id)),
             pw.useCaseStep(live, textAndFlow))
 
         UseCaseStepTree.Props(

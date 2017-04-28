@@ -4,6 +4,7 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
+import scalaz.{-\/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
@@ -11,7 +12,7 @@ import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data
 import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.client.base.lib.KeyGen
-import shipreq.webapp.client.project.feature.ContentEditorFeature.EditFieldKey
+import shipreq.webapp.client.project.feature.EditorFeature
 
 sealed trait Column {
   // Ensure correct attribute traits are mixed in
@@ -103,24 +104,27 @@ object Column {
   val filterDead: FilterDead => Column => Boolean =
     FilterDead.memo(_.filterFnBy[Column](_.live))
 
-  val EditFieldKeyIntersection = Intersection[Column, EditFieldKey] {
-    case Column.ReqType               => Some(EditFieldKey.ReqType)
-    case Column.Code                  => Some(EditFieldKey.Code)
-    case Column.Title                 => Some(EditFieldKey.Title)
-    case Column.Tags                  => Some(EditFieldKey.Tags)
-    case Column.Implications(dir)     => Some(EditFieldKey.Implications(dir))
-    case Column.CustomField(id, Live) => Some(EditFieldKey.CustomField(id))
+  val editorCellIntersection = Intersection[Column, EditorFeature.CellKey] {
+    case Column.ReqType                                             => Some(EditorFeature.CellKey.ReqType)
+    case Column.Code                                                => Some(EditorFeature.CellKey.Code)
+    case Column.Title                                               => Some(EditorFeature.CellKey.Title)
+    case Column.Tags                                                => Some(EditorFeature.CellKey.Tags(None))
+    case Column.Implications(dir)                                   => Some(EditorFeature.CellKey.Implications(\/-(dir)))
+    case Column.CustomField(id: data.CustomField.Implication.Id, _) => Some(EditorFeature.CellKey.Implications(-\/(id)))
+    case Column.CustomField(id: data.CustomField.Tag        .Id, _) => Some(EditorFeature.CellKey.Tags(Some(id)))
+    case Column.CustomField(id: data.CustomField.Text       .Id, _) => Some(EditorFeature.CellKey.CustomTextField(id))
     case Column.Pubid
-       | Column.DeletionReason
-       | Column.CustomField(_, Dead)  => None
+       | Column.DeletionReason                                      => None
   } {
-    case EditFieldKey.ReqType           => Some(Column.ReqType)
-    case EditFieldKey.Code              => Some(Column.Code)
-    case EditFieldKey.Title             => Some(Column.Title)
-    case EditFieldKey.Tags              => Some(Column.Tags)
-    case EditFieldKey.Implications(dir) => Some(Column.Implications(dir))
-    case EditFieldKey.CustomField(id)   => Some(Column.CustomField(id, Live))
-    case EditFieldKey.UseCaseStep(_)    => None
+    case EditorFeature.CellKey.ReqType                => Some(Column.ReqType)
+    case EditorFeature.CellKey.Code                   => Some(Column.Code)
+    case EditorFeature.CellKey.Title                  => Some(Column.Title)
+    case EditorFeature.CellKey.Tags(None)             => Some(Column.Tags)
+    case EditorFeature.CellKey.Implications(\/-(dir)) => Some(Column.Implications(dir))
+    case EditorFeature.CellKey.Implications(-\/(id))  => Some(Column.CustomField(id, Live)) // TODO Column shouldn't store Live
+    case EditorFeature.CellKey.Tags(Some(id))         => Some(Column.CustomField(id, Live))
+    case EditorFeature.CellKey.CustomTextField(id)    => Some(Column.CustomField(id, Live))
+    case EditorFeature.CellKey.UseCaseStep(_)         => None
   }
 
   def field(c: Column, p: ProjectConfig): Option[Field] =

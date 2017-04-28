@@ -8,11 +8,12 @@ import monocle.macros.Lenses
 import scalaz.{Equal, Monoid, Semigroup}
 import scalaz.std.map._
 import scalaz.syntax.semigroup._
-import shipreq.base.util.{Backwards, Direction, Forwards, Vector1}
+import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.ReqCodeTreeItem
 import shipreq.webapp.client.base.lib.DataReusability._
+import shipreq.webapp.client.project.feature.EditorFeature.RowKey
 
 /**
  * Replacement values for a requirement at a specific row.
@@ -178,6 +179,15 @@ object Row {
   implicit def sourceIdEqualityG  : UnivEq[ReqCodeGroupRowSourceId] = UnivEq.derive
   implicit def sourceIdEquality   : UnivEq[SourceId]                = UnivEq.derive
   implicit val sourceIdReusability: Reusability[SourceId]           = Reusability.byUnivEq
+
+  val SourceIdToEditorRow = Intersection[SourceId, RowKey] {
+    case ReqRowSourceId         (id) => Some(RowKey.Req         (id))
+    case ReqCodeGroupRowSourceId(id) => Some(RowKey.ReqCodeGroup(id))
+  } {
+    case RowKey.Req         (id) => Some(ReqRowSourceId         (id))
+    case RowKey.ReqCodeGroup(id) => Some(ReqCodeGroupRowSourceId(id))
+    case RowKey.UseCaseSteps     => None
+  }
 
   // ===================================================================================================================
 

@@ -4,11 +4,9 @@ import japgolly.scalajs.react._, vdom.html_<^._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.univeq._
-import monocle.Lens
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-}
-import shipreq.base.util.Direction
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.{PotentialFilter, ValidFilter}
 import shipreq.webapp.base.protocol._
@@ -29,8 +27,6 @@ object ReqTable {
       .renderBackend
       .build
 
-  type InitEditor = ContentEditorFeature.D2.InitChild[Row, Column, FocusId]
-
   case class StaticProps(cd              : ClientData,
                          cp              : ClientProtocol,
                          createContentFn : CreateContentFn.Instance,
@@ -38,13 +34,11 @@ object ReqTable {
                          pxPlainText     : Px[PlainText.ForProject],
                          pxTextSearch    : Px[TextSearch],
                          pxProjectWidgets: Px[ProjectWidgets],
-                         initEditor      : InitEditor,
-                         asyncFeature    : AsyncFeature.Feature.D2[Row.SourceId, Column, String],
                          asyncFeature2   : AsyncFeature.Feature.D2[Row.SourceId, Option[Column], String],
                          reqDetailRC     : RouterCtl[ExternalPubid],
                          state_$         : StateAccessPure[State])
 
-  case class DynamicProps(editStates  : ContentEditorFeature.D2.State.ReadOnly[Row.SourceId, Column],
+  case class DynamicProps(editor      : EditorFeature.Props.ForProject,
                           asyncStates : AsyncFeature.ReadOnly.D2[Row.SourceId, Option[Column], String],
                           preview     : PreviewFeature.Props.Composite[FocusId],
                           state       : State)
@@ -172,54 +166,6 @@ object ReqTable {
         Reusable.implicitly(p).map(FilterEditor.Component(_))
       }
 
-    val contentEditorFeature = {
-      import ContentEditorFeature._
-
-      val static = Static(
-        initEditor.parent, initEditor.preview,
-        pxProject, pxPlainText, pxProjectWidgets, pxTextSearch, updateIO)
-
-      val newEditor: Row => Column => Option[NewEditor[FocusId]] = row => col => {
-        @inline implicit def autoSome[P](e: NewEditor[P]): Option[NewEditor[P]] = Some(e)
-        @inline def focusId = FocusId.AtCell(row.sourceId, col)
-
-        def imps(row: ReqRow, dir: Direction) =
-          Row.implications(dir).getOption(row).map(pubids =>
-            NewEditor.ImplicationsAll(row.req, dir, pubids))
-
-        row match {
-          case r: ReqRow => col match {
-            case Column.Code                                              => NewEditor.ReqCodesForReq(r.req)
-            case Column.Title                                             => NewEditor.ReqTitle(r.req, focusId)
-            case Column.Tags                                              => NewEditor.Tags(r.req, None)
-            case Column.Implications(dir)                                 => imps(r, dir)
-            case Column.CustomField(id: CustomField.Text       .Id, Live) => NewEditor.CustomTextField(r.req, id, focusId)
-            case Column.CustomField(id: CustomField.Tag        .Id, Live) => NewEditor.Tags(r.req, Some(id))
-            case Column.CustomField(id: CustomField.Implication.Id, Live) => NewEditor.ImplicationsCustomField(r.req, id)
-            case Column.ReqType                                           => NewEditor.reqType(r.req)
-            case Column.Pubid
-               | Column.DeletionReason
-               | Column.CustomField(_, Dead) => None
-          }
-
-          case r: ReqCodeGroupRow => col match {
-            case Column.Code              => NewEditor.ReqCodeForReqCodeGroup(r.group)
-            case Column.Title             => NewEditor.ReqCodeGroupTitle(r.group, focusId)
-            case Column.Pubid
-               | Column.ReqType
-               | Column.Tags
-               | Column.Implications(_)
-               | Column.DeletionReason
-               | Column.CustomField(_, _) => None
-          }
-        }
-      }
-
-//      initEditor.feature((row, col, lens) =>
-//        D0.Feature(static)(newEditor(row)(col))(asyncFeature(row.sourceId)(col), lens, editability))
-      ???
-    }
-
     val creationInterface =
       new CreationInterface(setCreation, pxProject, pxPlainText, pxProjectWidgets, pxTextSearch)
 
@@ -236,7 +182,7 @@ object ReqTable {
       def creationProps = CreationInterface.Props(createIO, s.creation, p.preview)
 
       def tableProps = Table.Props(
-        pxProject, pxRows, pxColName, pxColRnds, contentEditorFeature, p.editStates, p.asyncStates, pxVisibleSelection,
+        pxRows, pxColName, pxColRnds, p.editor, p.asyncStates, pxVisibleSelection,
         modViewSettings)
 
       def selCtrlProps = SelectionCtrls.Props(
