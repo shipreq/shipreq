@@ -9,9 +9,6 @@ Misc
   * Group req types in filter from ALL to ANY.
   * Say "no implications" in imp graph
 
-Integrate async into ContentEditorFeature rendering
-  * Redo ReqTable rowlocking async
-
 * Tags
   * (?) Add new column type: all tags (as opposed to non-field tags)
   * We have implications fields and implication columns.
