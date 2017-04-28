@@ -82,6 +82,19 @@ abstract class Intersection[A, B] {
     }
     Intersection(lift(getOption))(lift(reverse.getOption))
   }
+
+  def flattenL[L](implicit ev: Intersection[A, B] =:= Intersection[Option[L], B]): Intersection[L, B] = {
+    val self = ev(this)
+    val f = self.getOption
+    val g = self.reverse.getOption
+    Intersection[L, B](l => f(Some(l)))(g(_).flatten)
+  }
+
+  def flattenR[R](implicit ev: Intersection[A, B] =:= Intersection[A, Option[R]]): Intersection[A, R] =
+    ev(this).reverse.flattenL[R].reverse
+
+  def flatten[L, R](implicit ev: Intersection[A, B] =:= Intersection[Option[L], Option[R]]): Intersection[L, R] =
+    ev(this).flattenL[L].flattenR[R]
 }
 
 object Intersection {
