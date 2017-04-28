@@ -46,7 +46,7 @@ object ContentEditorFeatureTest extends TestSuite {
   implicit def uniqEvN = forceUnivEqOrderByToString[KeysN]
   implicit def uniqEv1 = forceUnivEqOrderByToString[Keys1]
   implicit def uniqEv2 = forceUnivEqOrderByToString[Keys2]
-  implicit def equalEI = Equal.equalRef[EditorInstance]
+  implicit def equalEI = Equal.equalRef[Editor]
   implicit def equalS1[A: Order, B: Equal] = Equal.equalBy((_: D1.State[A, B]).values)
 
   case class PK[A](p: Prism[KeysN, A], k1: A)(implicit val order: Order[A], val equal: Equal[A]) {
@@ -54,8 +54,8 @@ object ContentEditorFeatureTest extends TestSuite {
     val kn = p reverseGet k1
   }
 
-  def editorInstance: EditorInstance =
-    new EditorInstance {
+  def editorInstance: Editor =
+    new Editor {
       override def toString = ##.toString
       override def render(as: AsyncState) = ???
     }

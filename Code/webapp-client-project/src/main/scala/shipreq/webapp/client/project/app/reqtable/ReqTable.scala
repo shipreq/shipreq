@@ -176,34 +176,35 @@ object ReqTable {
       import ContentEditorFeature._
 
       val static = Static(
-        initEditor.parent, initEditor.preview, pxProject, pxPlainText, pxProjectWidgets, pxTextSearch, updateIO)
+        initEditor.parent, initEditor.preview,
+        pxProject, pxPlainText, pxProjectWidgets, pxTextSearch, updateIO)
 
-      val edit: Row => Column => Option[Editor[FocusId]] = row => col => {
-        @inline implicit def autoSome[P](e: Editor[P]): Option[Editor[P]] = Some(e)
+      val newEditor: Row => Column => Option[NewEditor[FocusId]] = row => col => {
+        @inline implicit def autoSome[P](e: NewEditor[P]): Option[NewEditor[P]] = Some(e)
         @inline def focusId = FocusId.AtCell(row.sourceId, col)
 
         def imps(row: ReqRow, dir: Direction) =
           Row.implications(dir).getOption(row).map(pubids =>
-            Editor.ImplicationsAll(row.req, dir, pubids))
+            NewEditor.ImplicationsAll(row.req, dir, pubids))
 
         row match {
           case r: ReqRow => col match {
-            case Column.Code                                              => Editor.ReqCodesForReq(r.req)
-            case Column.Title                                             => Editor.ReqTitle(r.req, focusId)
-            case Column.Tags                                              => Editor.Tags(r.req, None)
+            case Column.Code                                              => NewEditor.ReqCodesForReq(r.req)
+            case Column.Title                                             => NewEditor.ReqTitle(r.req, focusId)
+            case Column.Tags                                              => NewEditor.Tags(r.req, None)
             case Column.Implications(dir)                                 => imps(r, dir)
-            case Column.CustomField(id: CustomField.Text       .Id, Live) => Editor.CustomTextField(r.req, id, focusId)
-            case Column.CustomField(id: CustomField.Tag        .Id, Live) => Editor.Tags(r.req, Some(id))
-            case Column.CustomField(id: CustomField.Implication.Id, Live) => Editor.ImplicationsCustomField(r.req, id)
-            case Column.ReqType                                           => Editor.reqType(r.req)
+            case Column.CustomField(id: CustomField.Text       .Id, Live) => NewEditor.CustomTextField(r.req, id, focusId)
+            case Column.CustomField(id: CustomField.Tag        .Id, Live) => NewEditor.Tags(r.req, Some(id))
+            case Column.CustomField(id: CustomField.Implication.Id, Live) => NewEditor.ImplicationsCustomField(r.req, id)
+            case Column.ReqType                                           => NewEditor.reqType(r.req)
             case Column.Pubid
                | Column.DeletionReason
                | Column.CustomField(_, Dead) => None
           }
 
           case r: ReqCodeGroupRow => col match {
-            case Column.Code              => Editor.ReqCodeForReqCodeGroup(r.group, r.reqCode)
-            case Column.Title             => Editor.ReqCodeGroupTitle(r.group, focusId)
+            case Column.Code              => NewEditor.ReqCodeForReqCodeGroup(r.group)
+            case Column.Title             => NewEditor.ReqCodeGroupTitle(r.group, focusId)
             case Column.Pubid
                | Column.ReqType
                | Column.Tags
@@ -214,8 +215,9 @@ object ReqTable {
         }
       }
 
-      initEditor.feature((row, col, el) =>
-        D0.Feature(static, asyncFeature(row.sourceId)(col))(el, edit(row)(col)))
+//      initEditor.feature((row, col, lens) =>
+//        D0.Feature(static)(newEditor(row)(col))(asyncFeature(row.sourceId)(col), lens, editability))
+      ???
     }
 
     val creationInterface =

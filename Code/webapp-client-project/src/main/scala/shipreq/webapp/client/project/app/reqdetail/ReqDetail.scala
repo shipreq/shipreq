@@ -72,6 +72,10 @@ object ReqDetail {
          val req       : Req,
              upstreamFD: FilterDead) {
 
+    private val editability = ContentEditorFeature.Editability.forProject(project)
+    val editabilityForReq = editability.forReqs(req.id)
+    val editabilityForUseCaseSteps = editability.forUseCaseSteps
+
     val (pxPlainText, pxProjectWidgets) = {
       val textCtx: Option[ProjectText.Context] = req match {
         case uc: UseCase    => Some(ProjectText.Context.UseCase(uc.id))
@@ -211,25 +215,30 @@ object ReqDetail {
         pxProject, data.pxPlainText, data.pxProjectWidgets, pxTextSearch,
         updateIO)
 
-      @inline implicit def autoSome[P](e: Editor[P]): Option[Editor[P]] = Some(e)
-      def edit(cell: Cell): Option[Editor[Cell]] =
-        cell match {
-          case Cell.Title                                        => Editor.ReqTitle(req, cell)
-          case Cell.Code                                         => Editor.ReqCodesForReq(req)
-          case Cell.Implications(dir)                            => Editor.ImplicationsAll(req, dir, data.generalImps(dir))
-          case Cell.ReqType                                      => Editor.reqType(req)
-          case Cell.Tags                                         => Editor.Tags(req, None)
-          case Cell.CustomField(fid: CustomField.Tag        .Id) => Editor.Tags(req, Some(fid))
-          case Cell.CustomField(fid: CustomField.Text       .Id) => Editor.CustomTextField(req, fid, cell)
-          case Cell.CustomField(fid: CustomField.Implication.Id) => Editor.ImplicationsCustomField(req, fid)
-          case Cell.UseCaseStep(id)                              => Editor.UseCaseStep(id, cell)
+      initEditor.feature { (cell, lens) =>
+        implicit def autoForReq(e: NewEditor.ForReq[Cell]): D0.Feature =
+          D0.Feature(static)(e)(asyncFeature(cell), lens, data.editabilityForReq)
+
+        implicit def autoForUCS(e: NewEditor.UseCaseStep[Cell]): D0.Feature =
+          D0.Feature(static)(e)(asyncFeature(cell), lens, data.editabilityForUseCaseSteps)
+
+        val feature: D0.Feature = cell match {
+          case Cell.Title                                        => NewEditor.ReqTitle(req, cell)
+          case Cell.Code                                         => NewEditor.ReqCodesForReq(req)
+          case Cell.Implications(dir)                            => NewEditor.ImplicationsAll(req, dir, data.generalImps(dir))
+          case Cell.ReqType                                      => NewEditor.reqType(req).fold[D0.Feature](D0.Feature.Nop)(autoForReq(_))
+          case Cell.Tags                                         => NewEditor.Tags(req, None)
+          case Cell.CustomField(fid: CustomField.Tag        .Id) => NewEditor.Tags(req, Some(fid))
+          case Cell.CustomField(fid: CustomField.Text       .Id) => NewEditor.CustomTextField(req, fid, cell)
+          case Cell.CustomField(fid: CustomField.Implication.Id) => NewEditor.ImplicationsCustomField(req, fid)
+          case Cell.UseCaseStep(id)                              => NewEditor.UseCaseStep(id, cell)
           case Cell.UseCaseStepCtrls(_)
              | Cell.AddUseCaseStep(_)
-             | Cell.AddUseCaseTailStep(_)                        => None
+             | Cell.AddUseCaseTailStep(_)                        => D0.Feature.Nop
         }
 
-      initEditor.feature((cell, el) =>
-        D0.Feature(static, asyncFeature(cell))(el, edit(cell)))
+        feature
+      }
     }
 
     def renderNotFound(failureReason: String): VdomElement =
@@ -266,7 +275,7 @@ object ReqDetail {
       val runCmd      = this.runCmd(req.id)
 
       def renderAsyncEditorOrValue(cell: Cell, view: => TagMod): TagMod = {
-        def startEdit    = editFeature(cell).startEdit(project)
+        def startEdit    = editFeature(cell).startEdit
         def editableView = TagMod(EditTheme.editableInline(startEdit), view)
         val async        = reqProps.async(cell)
         val editor       = reqProps.edit(cell)

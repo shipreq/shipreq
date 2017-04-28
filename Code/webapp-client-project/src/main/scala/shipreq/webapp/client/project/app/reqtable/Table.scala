@@ -240,7 +240,7 @@ object Table {
                        editState  : ContentEditorFeature.D0.State,
                        asyncState : AsyncFeature.ReadOnly.D0[String]) {
     def column = cr.column
-    def startEdit: Option[Callback] = cellEditors(row)(column).startEdit(project)
+    def startEdit: Option[Callback] = cellEditors(row)(column).startEdit
   }
 
   implicit val cellPropReuse = Reusability.never[CellProps] // TODO caseClass[CellProps]
