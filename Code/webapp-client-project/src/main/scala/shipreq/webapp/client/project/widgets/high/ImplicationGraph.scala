@@ -28,8 +28,6 @@ object ImplicationGraph {
 
   implicit val reusabilityProps: Reusability[Props] = {
     implicit def a: Reusability[Implications.BiDir] = Reusability.byRef
-    implicit def b: Reusability[Requirements      ] = Reusability.byRef
-    implicit def c: Reusability[ReqTypes          ] = Reusability.byRefOrUnivEq
     Reusability.caseClass
   }
 

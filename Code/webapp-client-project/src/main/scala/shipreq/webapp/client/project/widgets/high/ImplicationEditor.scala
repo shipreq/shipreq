@@ -49,13 +49,13 @@ object ImplicationEditor {
   implicit def univEqLookup: UnivEq[Lookup] =
     UnivEq.derive
 
-  def initialValueForCustomColumn(p: Project, fid: CustomField.Implication.Id, id: ReqId): List[Pubid] =
-    MutableArray(p.implications.backwards(id))
+  def initialValue(p: Project, dir: Direction, id: ReqId): Vector[Pubid] =
+    MutableArray(p.implications(dir)(id))
       .map(p.reqs.need(_).pubid)
       .sortBySchwartzian(DataLogic.pubidSortKeyFn(p.config))
-      .to[List]
+      .to[Vector]
 
-  def initialValueAndText(initial: Option[(ReqId, Seq[Pubid])], p: Project, l: Lookup): (Set[ReqId], String) = {
+  def initialValueAndText(initial: Option[(ReqId, Traversable[Pubid])], p: Project, l: Lookup): (Set[ReqId], String) = {
     val reqs = {
       val legal = initial.foldLeft(l.legal.map(_.reqId).toSet)(_ - _._1)
       initial.fold(Stream.empty[Pubid])(_._2.toStream)

@@ -28,6 +28,9 @@ object DataReusability extends DataReusability {
 
     def byRefOrUnivEq[A <: AnyRef, B: UnivEq](f: A => B): Reusability[A] =
       Reusability.byRef[A] || byUnivEq(f)
+
+    def mapSameOrEmpty[K, V]: Reusability[Map[K, V]] =
+      Reusability.byRef || Reusability.when(_.isEmpty)
   }
 
 }
@@ -50,10 +53,25 @@ abstract class DataReusability {
   implicit def reusabilityProjectConfig: Reusability[ProjectConfig] =
     Reusability.byRef
 
+  implicit def reusabilityRequirements: Reusability[Requirements] =
+    Reusability.byRef
+
+  implicit def reusabilityUseCases: Reusability[UseCases] =
+    Reusability.byRef
+
   implicit def reusabilityReqCodeTrie: Reusability[ReqCode.Trie] =
     Reusability.byRef
 
+  implicit def reusabilityReqCodes: Reusability[ReqCodes] =
+    Reusability.caseClass
+
   implicit def reusabilityReqCodeValue: Reusability[ReqCode.Value] =
+    Reusability.byRefOrUnivEq
+
+  implicit def reusabilityReqTypeId: Reusability[ReqTypeId] =
+    Reusability.byUnivEq
+
+  implicit def reusabilityReqTypes: Reusability[ReqTypes] =
     Reusability.byRefOrUnivEq
 
   implicit def reusabilityPlainText: Reusability[PlainText.ForProject] =

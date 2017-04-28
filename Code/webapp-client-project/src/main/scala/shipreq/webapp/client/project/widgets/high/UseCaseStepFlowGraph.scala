@@ -16,10 +16,8 @@ object UseCaseStepFlowGraph {
     @inline def render = Component(this)
   }
 
-  implicit val reusabilityProps: Reusability[Props] = {
-    implicit def useCases: Reusability[UseCases] = Reusability.byRef
+  implicit val reusabilityProps: Reusability[Props] =
     Reusability.caseClass
-  }
 
   final class Backend($: BackendScope[Props, State]) extends GraphBackend($) {
     override def cmd(p: Props) =
