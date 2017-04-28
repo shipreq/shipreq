@@ -77,4 +77,7 @@ object Optics {
 
   def innerMap[A, B, C](a: A): Lens[Map[A, Map[B, C]], Map[B, C]] =
     mapValueEmpty[A, Map[B, C]](a, Map.empty)(_.isEmpty)
+
+  def innerMapValue[A, B, C](a: A, b: B): Lens[Map[A, Map[B, C]], Option[C]] =
+    innerMap[A, B, C](a) ^|-> mapValue(b)
 }
