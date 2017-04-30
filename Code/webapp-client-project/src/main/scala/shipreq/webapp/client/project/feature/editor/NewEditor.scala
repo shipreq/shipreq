@@ -73,7 +73,7 @@ object NewEditorCmd {
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-final case class Static(previewFeature  : PreviewFeature.Feature.Composite[PreviewId],
+final case class Static(previewFeature  : PreviewFeature.Write.Composite[PreviewId],
                         pxProject       : Px[Project],
                         pxPlainText     : Px[PlainText.ForProject],
                         pxProjectWidgets: Px[ProjectWidgets],
@@ -88,7 +88,7 @@ final case class Static(previewFeature  : PreviewFeature.Feature.Composite[Previ
   */
 private[editor] final class StartNewEditor(static      : Static,
                                            $           : StateAccessPure[State.ForCell],
-                                           asyncFeature: AsyncFeature.Feature.D0[AsyncError],
+                                           asyncFeature: AsyncFeature.Write.D0[AsyncError],
                                            newEditorCmd: NewEditorCmd) {
   import static._
 

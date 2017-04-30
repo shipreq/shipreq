@@ -74,10 +74,10 @@ object ReqTableTest extends TestSuite {
     val $ = stateVar.stateAccess
 
     val previewFeature =
-      PreviewFeature.Feature.Composite.init($ zoomStateL State.preview)
+      PreviewFeature.Write.Composite.init($ zoomStateL State.preview)
 
-    val asyncFeature: AsyncFeature.Feature.D2[Row.SourceId, Option[Column], String] =
-      AsyncFeature.Feature.D2.init($ zoomStateL State.async)
+    val asyncFeature: AsyncFeature.Write.D2[Row.SourceId, Option[Column], String] =
+      AsyncFeature.Write.D2.init($ zoomStateL State.async)
 
     val optionColumnToEditorCell = Intersection.toOption[Column].reverse <=> Column.editorCellIntersection
 
@@ -103,11 +103,11 @@ object ReqTableTest extends TestSuite {
 
     def dynamicProps() = {
       val s = stateVar.value()
-      val asyncState = s.async.toReadOnly
+      val asyncState = s.async.toRead
       val asyncState2 = asyncState.mapKey2(Row.SourceIdToEditorRow).mapKey1(optionColumnToEditorCell)
       def editorState = EditorFeature.Read.ForProject(s.editors, pxEditability.value(), asyncState2)
-      def editorProps = editorFeature.toProps(editorState)
-      def previewProps = previewFeature.toProps(s.preview)
+      def editorProps = editorFeature.toReadWrite(editorState)
+      def previewProps = previewFeature.toReadWrite(s.preview)
 
       ReqTable.DynamicProps(
         editorProps,

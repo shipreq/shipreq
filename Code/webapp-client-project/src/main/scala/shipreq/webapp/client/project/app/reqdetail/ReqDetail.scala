@@ -49,11 +49,11 @@ object ReqDetail {
   case class DynamicProps(extPubid  : ExternalPubid,
                           filterDead: StateSnapshot[FilterDead],
                           reqProps  : ReqId => ReqProps,
-                          editorUCS : EditorFeature.Props.ForUseCaseSteps,
+                          editorUCS : EditorFeature.ReadWrite.ForUseCaseSteps,
                           state     : StateSnapshot[State])
 
-  case class ReqProps(editor: EditorFeature.Props.ForReq,
-                      async : AsyncFeature.Props.D1[Cell, String])
+  case class ReqProps(editor: EditorFeature.ReadWrite.ForReq,
+                      async : AsyncFeature.ReadWrite.D1[Cell, String])
 
   type State = Modal.State
 
@@ -187,7 +187,7 @@ object ReqDetail {
     val runCmd = Reusable.fn[ReqId, Cell, UpdateContentCmd, Callback](
       (reqId, cell, cmd) =>
         $.props >>= (p =>
-          p.reqProps(reqId).async.feature(cell)((s, f) =>
+          p.reqProps(reqId).async.write(cell)((s, f) =>
             updateIO(cmd, s, f))))
 
     def setModal(modal: Modal.State): Callback =
@@ -229,7 +229,7 @@ object ReqDetail {
       val fieldName = pxFieldNameFn.value()
       val runCmd    = this.runCmd(req.id)
 
-      def renderEditor(editor: EditorFeature.Props.ForCell, view: => TagMod): TagMod =
+      def renderEditor(editor: EditorFeature.ReadWrite.ForCell, view: => TagMod): TagMod =
         editor.renderOr(TagMod(EditTheme.editableInline(editor.startEdit), view))
 
       def renderHeader: VdomElement = {
@@ -382,7 +382,7 @@ object ReqDetail {
           data.filterDead,
           project.reqs.useCases.stepFlow,
           renderBody,
-          reqProps.async.state,
+          reqProps.async.read,
           runCmd)
           .render
       }

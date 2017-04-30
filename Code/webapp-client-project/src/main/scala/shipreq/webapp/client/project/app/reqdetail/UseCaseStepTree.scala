@@ -32,7 +32,7 @@ object UseCaseStepTree {
                          filterDead: FilterDead,
                          flow      : UseCases.StepFlow,
                          renderBody: RenderBodyFn, // TODO <------------------ prevents Reuse. Underlying fn uses state.
-                         asyncState: AsyncFeature.ReadOnly.D1[Cell, Any],
+                         asyncState: AsyncFeature.Read.D1[Cell, Any],
                          runCmd    : Cell ~=> (UpdateContentCmd ~=> Callback)) {
     @inline def render = Component(this)
   }

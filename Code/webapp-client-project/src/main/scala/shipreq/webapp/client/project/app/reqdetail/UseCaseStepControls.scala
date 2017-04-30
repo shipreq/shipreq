@@ -15,7 +15,7 @@ import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
   */
 object UseCaseStepControls {
 
-  type AsyncState = AsyncFeature.ReadOnly.D0[Any]
+  type AsyncState = AsyncFeature.Read.D0[Any]
 
   type HoverText = String
 

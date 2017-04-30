@@ -10,7 +10,7 @@ package shipreq.webapp.client.project.feature
   * The feature is also sliced into various usage/lifecycle scopes:
   * - [[EditorFeature.Read]] - Read-only access to state. Can render existing editors.
   * - [[EditorFeature.Write]] - Write-only access. Requires that state be supplied to use. Can start new editors.
-  * - [[EditorFeature.Props]] - Read/write access. The main DSL.
+  * - [[EditorFeature.ReadWrite]] - Read/write access. The main DSL.
   *
   * Usage: Top-Most Component
   * =========================
@@ -22,7 +22,7 @@ package shipreq.webapp.client.project.feature
   * In the component backend, add `val editorFeature = EditorFeature.Write.ForProject(…)`.
   * It's important that you only create one of these as it affects Reusability.
   *
-  * In the render method, combine `editorFeature` and state to create a [[EditorFeature.Props.ForProject]] and pass it
+  * In the render method, combine `editorFeature` and state to create a [[EditorFeature.ReadWrite.ForProject]] and pass it
   * to children.
   *
   * Usage: Components
@@ -30,7 +30,7 @@ package shipreq.webapp.client.project.feature
   *
   * Request an instance of `EditorFeature.Props.ForXxx` in component props.
   *
-  * Supply row and cell keys until arriving at [[EditorFeature.Props.ForCell]]. Then:
+  * Supply row and cell keys until arriving at [[EditorFeature.ReadWrite.ForCell]]. Then:
   * - use `.renderOr()` to render the editor or a read-only view if the editor is closed.
   * - wire up `.startEdit()` to whatever event handler can start editing.
   */
@@ -56,8 +56,8 @@ object EditorFeature {
 
   val Editability = editor.Editability
 
-  val State = editor.Feature.State
-  val Read  = editor.Feature.Read
-  val Write = editor.Feature.Write
-  val Props = editor.Feature.Props
+  val State     = editor.Feature.State
+  val Read      = editor.Feature.Read
+  val Write     = editor.Feature.Write
+  val ReadWrite = editor.Feature.ReadWrite
 }

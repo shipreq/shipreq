@@ -313,7 +313,7 @@ object DeletionForm {
         edit           = StateSnapshot.withReuse(s.reason)(setReason),
         asyncStatus    = None,
         abortCommit    = None,
-        preview        = PreviewFeature.Props.Single.AlwaysShow,
+        preview        = PreviewFeature.ReadWrite.Single.AlwaysShow,
         preEditValue   = None)
 
     val cancelButton: VdomElement =

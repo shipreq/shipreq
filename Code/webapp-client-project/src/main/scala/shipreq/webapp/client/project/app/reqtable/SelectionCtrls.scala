@@ -36,7 +36,7 @@ object SelectionCtrls {
                    projectText  : PlainText.ForProject,
                    textSearch   : TextSearch,
                    saveIO       : ServerCall[UpdateContentCmd],
-                   async        : AsyncFeature.Feature.D2[Row.SourceId, Option[Column], String])
+                   async        : AsyncFeature.Write.D2[Row.SourceId, Option[Column], String])
 
   // These two are only used in callbacks so are always reusable
   private implicit def reusabilityPlainText : Reusability[PlainText.ForProject]  = Reusability.always

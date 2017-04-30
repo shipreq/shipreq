@@ -23,20 +23,20 @@ import shipreq.webapp.client.base.lib.DataReusability._
   * =========================
   *
   * import `Implicits._`
-  * Add `State.Dn` to the top-most component's state.
-  * Initialise it with `State.initDn`.
-  * In the component backend, add `val asyncFeature = Feature.Dn.init(…)`.
+  * Add `State.Dₙ` to the top-most component's state.
+  * Initialise it with `State.initDₙ`.
+  * In the component backend, add `val asyncFeature = Write.Dₙ.init(…)`.
   * In the render method, pass `asyncFeature` and/or `asyncFeature.toProps(state)` to children.
   *
   * Usage: Components
   * =================
   *
-  * To just inspect the current async state, add `ReadOnly.Dn` to the components props.
-  * For write-access to async state, add `Feature.Dn` to the components props.
-  * For both of the above, add `Props.Dn` to the components props instead.
+  * To just inspect the current async state, add `Read.Dₙ` to the components props.
+  * For write-access to async state, add `Write.Dₙ` to the components props.
+  * For both of the above, add `ReadWrite.Dn` to the components props instead.
   *
   * Intended usage is that
-  * - async tasks are run through `Feature.D0` so that state is managed
+  * - async tasks are run through `Write.D0` so that state is managed
   * - state is inspected when rendering to show the async status to the user
   * - state is inspected to prevent multiple async calls being in flight
   */
@@ -77,16 +77,16 @@ object AsyncFeature {
 
   object Implicits {
     implicit class AF_StateD1[K, F](private val self: State.D1[K, F]) extends AnyVal {
-      def toReadOnly: ReadOnly.D1[K, F] = ReadOnly.D1(self)
+      def toRead: Read.D1[K, F] = Read.D1(self)
     }
     implicit class AF_StateD2[K2, K1, F](private val self: State.D2[K2, K1, F]) extends AnyVal {
-      def toReadOnly: ReadOnly.D2[K2, K1, F] = ReadOnly.D2(self)
+      def toRead: Read.D2[K2, K1, F] = Read.D2(self)
     }
-    implicit class AF_FeatureD1[K, F](private val self: Feature.D1[K, F]) extends AnyVal {
-      def toProps(r: ReadOnly.D1[K, F]): Props.D1[K, F] = Props.D1(self, r)
+    implicit class AF_FeatureD1[K, F](private val self: Write.D1[K, F]) extends AnyVal {
+      def toReadWrite(r: Read.D1[K, F]): ReadWrite.D1[K, F] = ReadWrite.D1(self, r)
     }
-    implicit class AF_FeatureD2[K2, K1, F](private val self: Feature.D2[K2, K1, F]) extends AnyVal {
-      def toProps(r: ReadOnly.D2[K2, K1, F]): Props.D2[K2, K1, F] = Props.D2(self, r)
+    implicit class AF_FeatureD2[K2, K1, F](private val self: Write.D2[K2, K1, F]) extends AnyVal {
+      def toReadWrite(r: Read.D2[K2, K1, F]): ReadWrite.D2[K2, K1, F] = ReadWrite.D2(self, r)
     }
   }
 
@@ -106,7 +106,7 @@ object AsyncFeature {
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   /** State in a form meant to be passed to components */
-  object ReadOnly {
+  object Read {
 
     type D0[+F] = State.D0[F]
 
@@ -181,7 +181,7 @@ object AsyncFeature {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  object Feature {
+  object Write {
 
     type D0[-F] = AsyncCall[F] ~=> Callback
 
@@ -303,27 +303,27 @@ object AsyncFeature {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  object Props {
+  object ReadWrite {
 
-    final case class D0[F](feature: Feature.D0[F], state: ReadOnly.D0[F])
+    final case class D0[F](write: Write.D0[F], read: Read.D0[F])
 
-    final case class D1[K, F](feature: Feature.D1[K, F], state: ReadOnly.D1[K, F]) {
+    final case class D1[K, F](write: Write.D1[K, F], read: Read.D1[K, F]) {
       def apply(k: K): D0[F] =
-        D0(feature(k), state(k))
+        D0(write(k), read(k))
 
       def mapKey[J](i: Intersection[K, J]): D1[J, F] =
-        D1(feature.mapKey(i), state.mapKey(i))
+        D1(write.mapKey(i), read.mapKey(i))
     }
 
-    final case class D2[K2, K1, F](feature: Feature.D2[K2, K1, F], state: ReadOnly.D2[K2, K1, F]) {
+    final case class D2[K2, K1, F](write: Write.D2[K2, K1, F], read: Read.D2[K2, K1, F]) {
       def apply(k: K2): D1[K1, F] =
-        D1(feature(k), state(k))
+        D1(write(k), read(k))
 
       def mapKey2[J](i: Intersection[K2, J]): D2[J, K1, F] =
-        D2(feature.mapKey2(i), state.mapKey2(i))
+        D2(write.mapKey2(i), read.mapKey2(i))
 
       def mapKey1[J](i: Intersection[K1, J]): D2[K2, J, F] =
-        D2(feature.mapKey1(i), state.mapKey1(i))
+        D2(write.mapKey1(i), read.mapKey1(i))
     }
 
     implicit def reusabilityD0[F]        : Reusability[D0[F]]         = Reusability.caseClass

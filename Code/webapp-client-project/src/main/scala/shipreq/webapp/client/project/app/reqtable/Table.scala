@@ -32,8 +32,8 @@ object Table {
   case class Props(rows           : Rows,
                    colName        : Column.NameResolver,
                    colRenderers   : NonEmptyVector[ColumnRenderer],
-                   editor         : EditorFeature.Props.ForProject,
-                   asyncState     : AsyncFeature.ReadOnly.D2[Row.SourceId, Option[Column], String],
+                   editor         : EditorFeature.ReadWrite.ForProject,
+                   asyncState     : AsyncFeature.Read.D2[Row.SourceId, Option[Column], String],
                    selection      : RowSelectionVisible,
                    modViewSettings: EndoFn[ViewSettings] ~=> Callback)
 
@@ -154,8 +154,8 @@ object Table {
   object ForRowReq {
     case class RowProps(row        : ReqRow,
                         crs        : NonEmptyVector[ColumnRenderer],
-                        editor     : EditorFeature.Props.ForReq,
-                        asyncState : AsyncFeature.ReadOnly.D1[Option[Column], String],
+                        editor     : EditorFeature.ReadWrite.ForReq,
+                        asyncState : AsyncFeature.Read.D1[Option[Column], String],
                         selection  : RowSelectionVisible)
 
     val RowComponent =
@@ -198,7 +198,7 @@ object Table {
         def colCells =
           p.crs.iterator.map { cr =>
             val col = cr.column
-            val cp = CellProps(row, cr, EditorFeature.Props.ForCell.doNothing)
+            val cp = CellProps(row, cr, EditorFeature.ReadWrite.ForCell.doNothing)
             CellComponent.withKey(col.key)(cp)
           }.toVdomArray
 
@@ -227,7 +227,7 @@ object Table {
   object ForRowReqCodeGroup {
     case class RowProps(row        : ReqCodeGroupRow,
                         crs        : NonEmptyVector[ColumnRenderer],
-                        editor     : EditorFeature.Props.ForReqCodeGroup,
+                        editor     : EditorFeature.ReadWrite.ForReqCodeGroup,
                         selection  : RowSelectionVisible)
 
     val RowComponent =
@@ -284,7 +284,7 @@ object Table {
 
   case class CellProps(row   : Row,
                        cr    : ColumnRenderer,
-                       editor: EditorFeature.Props.ForCell) {
+                       editor: EditorFeature.ReadWrite.ForCell) {
     def column = cr.column
 
     def renderEditor(view: => TagMod): TagMod =

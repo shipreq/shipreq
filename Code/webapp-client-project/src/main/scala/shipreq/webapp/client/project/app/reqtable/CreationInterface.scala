@@ -32,7 +32,7 @@ object CreationInterface {
 
   case class Props(createIO: ServerCall[CreateContentCmd],
                    state   : State,
-                   preview : PreviewFeature.Props.Composite[PreviewId])
+                   preview : PreviewFeature.ReadWrite.Composite[PreviewId])
 
   @Lenses
   case class State(selectedType: SelType,

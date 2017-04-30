@@ -23,20 +23,20 @@ import shipreq.webapp.client.base.jsfacade.ReactCollapse
   * Create a type to use as an identifier of all possible editors that will use this feature.
   * Add `PreviewFeature.State[Id]` to the top-most component's state.
   * Initialise it with `PreviewFeature.State.init`.
-  * In the component backend, add `val previewFeature = PreviewFeature.Feature.Composite.init(…)`.
-  * In the render method, call `previewFeature.toProps` with the latest state and pass the props to children.
+  * In the component backend, add `val previewFeature = PreviewFeature.Write.Composite.init(…)`.
+  * In the render method, call `previewFeature.toReadWrite` with the latest state and pass the props to children.
   *
   * Usage: Component with Multiple Editors
   * ======================================
   *
-  * Add `PreviewFeature.Props.Composite[Id]` to the component's props.
-  * Call `PreviewFeature.Props.Composite#apply(Id)` to get an instance of `PreviewFeature.Props.Single` to pass down to
+  * Add `PreviewFeature.ReadWrite.Composite[Id]` to the component's props.
+  * Call `PreviewFeature.ReadWrite.Composite#apply(Id)` to get an instance of `PreviewFeature.Props.Single` to pass down to
   * children.
   *
   * Usage: Editor
   * =============
   *
-  * Add `PreviewFeature.Props.Single` to the component's props.
+  * Add `PreviewFeature.ReadWrite.Single` to the component's props.
   * Wire up all the `onXxxx` callbacks.
   * Use `show_?` or similar to render a preview or not.
   */
@@ -64,7 +64,7 @@ object PreviewFeature {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  object Feature {
+  object Write {
 
     trait Single {
       def onFocus: Callback
@@ -96,10 +96,10 @@ object PreviewFeature {
 
       // I don't like the thought of 2 new instances per field, per req on every render on every screen in the SPA
       private val cachedReusability =
-        Props.Single.reusabilityForKey[Id]
+        ReadWrite.Single.reusabilityForKey[Id]
 
-      def apply(id: Id, state: State[Id]): Props.Single =
-        Reusable.explicitly(Props.Single.ForKey(id, state, $))(cachedReusability)
+      def apply(id: Id, state: State[Id]): ReadWrite.Single =
+        Reusable.explicitly(ReadWrite.Single.ForKey(id, state, $))(cachedReusability)
 
       def mapId[A](i: Intersection[Id, A]): Composite[A] = {
         val lens = Lens[State[Id], State[A]](_.mapId(i))(oa => _ => oa.mapId(i.reverse))
@@ -111,8 +111,8 @@ object PreviewFeature {
         Composite($.map(_ zoomStateL lens))(ea, ka)
       }
 
-      def toProps(state: State[Id]): Props.Composite[Id] =
-        Props.Composite(this, state)
+      def toReadWrite(state: State[Id]): ReadWrite.Composite[Id] =
+        ReadWrite.Composite(this, state)
 
       def stateCB: CallbackTo[State[Id]] =
         $.state
@@ -129,18 +129,18 @@ object PreviewFeature {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  object Props {
+  object ReadWrite {
 
-    type Single = Reusable[Feature.Single]
+    type Single = Reusable[Write.Single]
 
     object Single {
       lazy val AlwaysShow: Single =
-        Reusable.byRef(Feature.Single.const(show = true))
+        Reusable.byRef(Write.Single.const(show = true))
 
       lazy val NeverShow: Single =
-        Reusable.byRef(Feature.Single.const(show = false))
+        Reusable.byRef(Write.Single.const(show = false))
 
-      final case class ForKey[Id: Equal](id: Id, state: State[Id], $: Reusable[StateAccessPure[State[Id]]]) extends Feature.Single {
+      final case class ForKey[Id: Equal](id: Id, state: State[Id], $: Reusable[StateAccessPure[State[Id]]]) extends Write.Single {
         import State.FocusData
 
         private val hasThisId: FocusData[Id] => Boolean =
@@ -172,12 +172,12 @@ object PreviewFeature {
 
     // =================================================================================================================
 
-    final case class Composite[Id](feature: Feature.Composite[Id], state: State[Id]) {
-      def apply(id: Id): Props.Single =
-        feature(id, state)
+    final case class Composite[Id](write: Write.Composite[Id], read: State[Id]) {
+      def apply(id: Id): ReadWrite.Single =
+        write(id, read)
 
       def mapId[A](i: Intersection[Id, A]): Composite[A] =
-        Composite(feature mapId i, state mapId i)
+        Composite(write mapId i, read mapId i)
     }
 
     object Composite {

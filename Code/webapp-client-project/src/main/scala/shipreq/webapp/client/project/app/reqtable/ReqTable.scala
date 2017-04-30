@@ -34,13 +34,13 @@ object ReqTable {
                          pxPlainText     : Px[PlainText.ForProject],
                          pxTextSearch    : Px[TextSearch],
                          pxProjectWidgets: Px[ProjectWidgets],
-                         asyncFeature2   : AsyncFeature.Feature.D2[Row.SourceId, Option[Column], String],
+                         asyncFeature2   : AsyncFeature.Write.D2[Row.SourceId, Option[Column], String],
                          reqDetailRC     : RouterCtl[ExternalPubid],
                          state_$         : StateAccessPure[State])
 
-  case class DynamicProps(editor      : EditorFeature.Props.ForProject,
-                          asyncStates : AsyncFeature.ReadOnly.D2[Row.SourceId, Option[Column], String],
-                          preview     : PreviewFeature.Props.Composite[PreviewId],
+  case class DynamicProps(editor      : EditorFeature.ReadWrite.ForProject,
+                          asyncStates : AsyncFeature.Read.D2[Row.SourceId, Option[Column], String],
+                          preview     : PreviewFeature.ReadWrite.Composite[PreviewId],
                           state       : State)
 
   @Lenses

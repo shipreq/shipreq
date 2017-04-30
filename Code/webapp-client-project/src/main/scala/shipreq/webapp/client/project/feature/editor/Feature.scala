@@ -13,7 +13,7 @@ import shipreq.webapp.client.project.lib.DataReusability._
 object Feature {
 
   type AsyncError = String
-  type AsyncState = AsyncFeature.ReadOnly.D0[AsyncError]
+  type AsyncState = AsyncFeature.Read.D0[AsyncError]
 
   /** This is not safe for reusability because the implementation calls `CallbackTo#runNow()`. */
   trait Editor {
@@ -65,7 +65,7 @@ object Feature {
 
     final case class ForRow[R <: RowKey, E <: Editability.ForRow[R]](editor     : State.ForRow,
                                                                      editability: E,
-                                                                     async      : AsyncFeature.ReadOnly.D1[CellKey, AsyncError]) {
+                                                                     async      : AsyncFeature.Read.D1[CellKey, AsyncError]) {
       def apply(c: R#CellKeyConstraint): ForCell =
         ForCell(editor.get(c), editability(c), async(c))
     }
@@ -76,7 +76,7 @@ object Feature {
 
     final case class ForProject(state: State.ForProject,
                                 editability: Editability.ForProject,
-                                async: AsyncFeature.ReadOnly.D2[RowKey, CellKey, AsyncError]) {
+                                async: AsyncFeature.Read.D2[RowKey, CellKey, AsyncError]) {
 
        private def forRow[R <: RowKey, E <: Editability.ForRow[R]](r: R, e: E): ForRow[R, E] =
          ForRow(state.getOrElse(r, UnivEq.emptyMap), e, async(r))
@@ -103,7 +103,7 @@ object Feature {
   object Write {
 
     final case class ForCell(justStartEdit: Reusable[Callback => Option[Callback]],
-                             async        : AsyncFeature.Feature.D0[AsyncError]) {
+                             async        : AsyncFeature.Write.D0[AsyncError]) {
 
       def startEdit(state: Read.ForCell, cb: Callback): Option[Callback] =
         if (state.editability.is(Deny) || state.editor.isDefined)
@@ -114,13 +114,13 @@ object Feature {
 
     object ForCell {
       val doNothing: ForCell =
-        ForCell(Reusable.fn(_ => None), AsyncFeature.Feature.D0.doNothing)
+        ForCell(Reusable.fn(_ => None), AsyncFeature.Write.D0.doNothing)
     }
 
     type ForRow[R <: RowKey] = Reusable[ForRowInterface[R]]
 
     sealed trait ForRowInterface[R <: RowKey] {
-      val async: AsyncFeature.Feature.D1[CellKey, AsyncError]
+      val async: AsyncFeature.Write.D1[CellKey, AsyncError]
       def apply(cell: R#CellKeyConstraint): ForCell
     }
 
@@ -131,7 +131,7 @@ object Feature {
     /** Create only one instance; reusability is byRef */
     final case class ForProject(static      : Static,
                                 stateAccess : StateAccessPure[State.ForProject],
-                                async       : AsyncFeature.Feature.D2[RowKey, CellKey, AsyncError]) {
+                                async       : AsyncFeature.Write.D2[RowKey, CellKey, AsyncError]) {
 
       private val reusabilityThisRow: Reusability[(ForProject, RowKey)] = implicitly
       private val reusabilityThisRowCell: Reusability[(ForProject, RowKey, CellKey)] = implicitly
@@ -178,8 +178,8 @@ object Feature {
        lazy val forUseCaseSteps: ForUseCaseSteps =
          forRow(RowKey.UseCaseSteps)
 
-      @inline def toProps(r: Read.ForProject): Props.ForProject =
-        Props.ForProject(r, this)
+      @inline def toReadWrite(r: Read.ForProject): ReadWrite.ForProject =
+        ReadWrite.ForProject(r, this)
     }
 
     implicit val reusabilityForCell   : Reusability[ForCell   ] = Reusability.caseClass
@@ -188,7 +188,7 @@ object Feature {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  object Props {
+  object ReadWrite {
 
     final case class ForCell(read: Read.ForCell, write: Write.ForCell) {
       @inline def render(): Option[VdomElement] =
