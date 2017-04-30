@@ -27,7 +27,7 @@ object Dependencies {
   }
 
   object Scalaz {
-    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.11")
+    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.12")
     val core       = mm("scalaz-core")
     val effect     = mm("scalaz-effect") ++ core
     val concurrent = mm("scalaz-concurrent") ++ effect
@@ -138,7 +138,7 @@ object Dependencies {
   }
 
   object LibJetty {
-    private val mm = MultiModule.java("org.eclipse.jetty", "9.4.3.v20170317")
+    private val mm = MultiModule.java("org.eclipse.jetty", "9.4.4.v20170414")
     val webapp = mm("jetty-webapp")
     val runner = mm("jetty-runner")
     val dist   = mm("jetty-distribution").modAll(_.artifacts(Artifact("jetty-distribution", "tar.gz", "tar.gz")).intransitive())
@@ -151,7 +151,7 @@ object Dependencies {
   val scalajsDom       = jsOnly("org.scala-js"                          %%%! "scalajs-dom"       % "0.9.1")
 //val scalajsJavaTime  = jsOnly("org.scala-js"                          %%%! "scalajs-java-time" % "0.1.0")
   val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %%%! "benchmark"         % "0.2.4")
-  val scalajsJavaTime  = jsOnly("org.scala-js"                          %%%! "scalajs-java-time" % "0.2.0")
+  val scalajsJavaTime  = jsOnly("org.scala-js"                          %%%! "scalajs-java-time" % "0.2.1")
 
   val boopickle = jvmAndJs("me.chrons",                        "boopickle", "1.2.5")
   val parboiled = jvmAndJs("org.parboiled",                    "parboiled", "2.1.4")
@@ -168,8 +168,8 @@ object Dependencies {
   val logback     = jvmOnly("ch.qos.logback"              % "logback-classic"       % "1.2.3")
   val commonsLang = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.5")
   val commonsIo   = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
-  val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.42.0")
-  val scalaTest   = jvmOnly("org.scalatest"              %% "scalatest"             % "3.0.1")
+  val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.43.0")
+  val scalaTest   = jvmOnly("org.scalatest"              %% "scalatest"             % "3.0.3")
   val scalaCheck  = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.13.4")
 
   val macroParadise = compilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
