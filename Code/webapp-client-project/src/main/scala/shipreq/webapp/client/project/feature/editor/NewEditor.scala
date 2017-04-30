@@ -17,7 +17,7 @@ import shipreq.webapp.client.project.feature.PreviewFeature
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets.high.ProjectWidgets
-import EditorFeature.{AsyncError, AsyncState, Editor, State, PreviewId}
+import Feature.{AsyncError, AsyncState, Editor, State, PreviewId}
 
 /** A command to start a new editor. */
 sealed abstract class NewEditorCmd
