@@ -8,7 +8,7 @@ import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util.Memo
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.ProjectText
+import shipreq.webapp.base.text.{PlainText, ProjectText}
 import shipreq.webapp.client.base.data.Plain
 import shipreq.webapp.client.project.app.Style.{reqtable => *}
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -44,29 +44,9 @@ object ColumnRenderer {
   val emptyTag: VdomTag     = <.span
   val empty   : VdomElement = emptyTag
 
-  object RenderDeletionReason extends ProjectText.DeletionReasonFormatter[VdomTag] {
-    override type PT = ProjectWidgets
+  def SortableDeletionReason = PlainText.DeletionReason
+  def RenderDeletionReason = ProjectWidgets.DeletionReason
 
-    override protected def `n/a` =
-      `N/A`.tag
-
-    override protected def noReasonGiven =
-      emptyTag
-
-    override protected def reqTypeIsDead(rt: ReqType)(pt: PT) =
-      <.span(
-        UiText.ColumnNames.reqType + " ",
-        pt.reqTypeShort(rt.reqTypeId),
-        " is deleted.")
-  }
-
-  object SortableDeletionReason extends ProjectText.DeletionReasonFormatter[String] {
-    override type PT = ProjectText[String]
-    override protected def `n/a` = ""
-    override protected def noReasonGiven = ""
-    override protected def reqTypeIsDead(rt: ReqType)(pt: PT) =
-      UiText.ColumnNames.reqType + " " + rt.mnemonic.value + " is deleted."
-  }
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -154,7 +134,7 @@ class ColumnRenderers(project: Project, pw: ProjectWidgets) {
   }
 
   private def deletionReason = make {
-    case r: ReqRow          => Render(RenderDeletionReason.forReq(r.req)(project.config.reqTypes, pw))
-    case _: ReqCodeGroupRow => Render(RenderDeletionReason.forReqCodeGroup)
+    case r: ReqRow          => RenderDeletionReason.forReq(r.req)(project.config.reqTypes, pw).fold[View](`N/A`)(Render(_))
+    case _: ReqCodeGroupRow => RenderDeletionReason.forReqCodeGroup.fold[View](`N/A`)(Render(_))
   }
 }

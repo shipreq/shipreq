@@ -87,16 +87,16 @@ object ProjectText {
   abstract class DeletionReasonFormatter[Out] {
     type PT <: ProjectText[Out]
 
-    protected def `n/a`: Out
+    /** None means N/A */
+    final type Output = Option[Out]
+
     protected def noReasonGiven: Out
     protected def reqTypeIsDead(rt: ReqType)(pt: PT): Out
-
-    final def forReqCodeGroup = `n/a`
 
     private def latestReason(id: ReqId)(pt: PT): Out =
       pt.latestDeletionReason(id) getOrElse noReasonGiven
 
-    final def forReq(req: Req)(reqTypes: ReqTypes, pt: PT): Out =
+    final def forReq(req: Req)(reqTypes: ReqTypes, pt: PT): Output =
       req match {
 
         case r: GenericReq =>
@@ -104,18 +104,21 @@ object ProjectText {
           r.liveExplicitly match { // explicit must be checked before implicit
             case Live =>
               r.implicitLiveStatus(reqTypes) match {
-                case NoImpact      => `n/a` // req is live
-                case ReqTypeIsDead => reqTypeIsDead(reqTypes.need(r.pubid.reqTypeId))(pt)
+                case NoImpact      => None // req is live
+                case ReqTypeIsDead => Some(reqTypeIsDead(reqTypes.need(r.pubid.reqTypeId))(pt))
               }
-            case Dead => latestReason(r.id)(pt)
+            case Dead => Some(latestReason(r.id)(pt))
           }
 
         case uc: UseCase =>
           uc.liveUC match {
-            case Live => `n/a`
-            case Dead => latestReason(uc.id)(pt)
+            case Live => None
+            case Dead => Some(latestReason(uc.id)(pt))
           }
       }
+
+    final def forReqCodeGroup: Output =
+      None
   }
 }
 

@@ -18,7 +18,6 @@ import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.base.ui.{BaseStyles, EditTheme}
 import shipreq.webapp.client.base.ui.semantic.Header
-import shipreq.webapp.client.project.app.reqtable.ColumnRenderer.RenderDeletionReason
 import shipreq.webapp.client.project.app.state.ClientData
 import shipreq.webapp.client.project.app.Style.{reqdetail => *}
 import shipreq.webapp.client.project.app.WebWorkerClient
@@ -349,7 +348,7 @@ object ReqDetail {
             UseCaseStepFlowGraph.Props(ucId, project.reqs.useCases, webWorker).render
 
           case Row.DeletionReason =>
-            RenderDeletionReason.forReq(req)(project.config.reqTypes, pw)
+            ProjectWidgets.DeletionReason.forReq(req)(project.config.reqTypes, pw) getOrElse emptyRow
 
           case Row.Life =>
             liveStyle = Live // When req is dead, user can still Restore it, thus this cell shouldn't appear dead

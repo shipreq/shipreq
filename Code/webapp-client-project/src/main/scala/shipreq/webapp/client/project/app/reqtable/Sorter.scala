@@ -309,8 +309,8 @@ object Sorter {
 
   def deletionReasonSorter: SorterForSMCB =
     textSorterS(C.DeletionReason, s => pt => {
-      case r: ReqRow          => SortableDeletionReason.forReq(r.req)(s.p.config.reqTypes, pt)
-      case _: ReqCodeGroupRow => SortableDeletionReason.forReqCodeGroup
+      case r: ReqRow          => SortableDeletionReason.forReq(r.req)(s.p.config.reqTypes, pt) getOrElse ""
+      case _: ReqCodeGroupRow => SortableDeletionReason.forReqCodeGroup getOrElse ""
     })
 
   // ===================================================================================================================

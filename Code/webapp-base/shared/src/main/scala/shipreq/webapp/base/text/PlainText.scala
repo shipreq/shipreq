@@ -9,6 +9,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G}
 import shipreq.webapp.base.text.GrammarSpec.Surrounds
 import shipreq.webapp.base.util.ReqCodeTreeItem
+import shipreq.webapp.base.UiText
 import Atom.AnyAtom
 
 /**
@@ -77,8 +78,6 @@ object PlainText {
     mnemonic.value ~ "-" ~ pos.value
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-
-  private final val bullet = "* "
 
   @inline def apply(p: Project, ctx: ProjectText.Context): ForProject =
     new ForProject(p, ctx)
@@ -189,6 +188,17 @@ object PlainText {
 
     override protected def useCaseFlowStep(f: UseCaseStep.Focus): String =
       useCaseStepLabel(f)
+  }
 
+  private final val bullet = "* "
+
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+
+  // Keep in sync with ProjectWidgets.DeletionReason because they're used together for sorting/rendering in ReqTable
+  object DeletionReason extends ProjectText.DeletionReasonFormatter[String] {
+    override type PT = ProjectText[String]
+    override protected def noReasonGiven = ""
+    override protected def reqTypeIsDead(rt: ReqType)(pt: PT) =
+      UiText.ColumnNames.reqType + " " + rt.mnemonic.value + " is deleted."
   }
 }

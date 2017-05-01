@@ -41,6 +41,23 @@ object ProjectWidgets {
       case Forwards  => <.span("→")
       case Backwards => <.span("←")
     }
+
+  val emptySpan: VdomTag =
+    <.span
+
+  // Keep in sync with PlainText.DeletionReason because they're used together for sorting/rendering in ReqTable
+  object DeletionReason extends ProjectText.DeletionReasonFormatter[VdomTag] {
+    override type PT = ProjectWidgets
+
+    override protected def noReasonGiven =
+      emptySpan
+
+    override protected def reqTypeIsDead(rt: ReqType)(pt: PT) =
+      <.span(
+        UiText.ColumnNames.reqType + " ",
+        pt.reqTypeShort(rt.reqTypeId),
+        " is deleted.")
+  }
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
