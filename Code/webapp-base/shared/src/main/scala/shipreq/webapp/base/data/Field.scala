@@ -116,8 +116,13 @@ object Field {
     fn
   }
 
-  def nameP(p: Project): Field => String =
+  def nameFromProject(p: Project): Field => String =
     name(p.config.reqTypes, p.config.tags)
+
+  def nameByIdFromProject(p: Project): FieldId => String = {
+    val fieldToName = nameFromProject(p)
+    _.foldId(fieldToName, id => fieldToName(p.config.fields.customFields.need(id)))
+  }
 }
 
 import Field.ApplicableReqTypes

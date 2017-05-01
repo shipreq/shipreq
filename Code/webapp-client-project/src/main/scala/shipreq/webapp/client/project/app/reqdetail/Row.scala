@@ -2,8 +2,7 @@ package shipreq.webapp.client.project.app.reqdetail
 
 import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data.{CustomField => CF, StaticField => SF}
-import shipreq.webapp.base.data.{Field, UseCaseSteps, FilterDead, ShowDead}
+import shipreq.webapp.base.data._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.base.lib.KeyGen
 
@@ -16,39 +15,39 @@ object Row {
   private def autoKey = KeyGen.global.next()
 
   sealed abstract class UseCaseSteps(_key: String) extends Row(_key) {
-    def field     : SF.UseCaseStepTree
+    def field     : StaticField.UseCaseStepTree
     def treeFilter: UseCaseSteps.Tree => Range
     def tailStep  : Boolean
   }
 
   case object UseCaseStepsN extends UseCaseSteps("n") {
-    override def field      = SF.NormalAltStepTree
-    override def treeFilter = SF.NormalAltStepTree.treeFilterN
+    override def field      = StaticField.NormalAltStepTree
+    override def treeFilter = StaticField.NormalAltStepTree.treeFilterN
     override def tailStep   = false
   }
 
   case object UseCaseStepsA extends UseCaseSteps("a") {
-    override def field      = SF.NormalAltStepTree
-    override def treeFilter = SF.NormalAltStepTree.treeFilterA
+    override def field      = StaticField.NormalAltStepTree
+    override def treeFilter = StaticField.NormalAltStepTree.treeFilterA
     override def tailStep   = true
   }
 
   case object UseCaseStepsE extends UseCaseSteps("e") {
-    override def field      = SF.ExceptionStepTree
-    override def treeFilter = SF.ExceptionStepTree.treeFilter
+    override def field      = StaticField.ExceptionStepTree
+    override def treeFilter = StaticField.ExceptionStepTree.treeFilter
     override def tailStep   = true
   }
 
-  case object Life              extends Row(autoKey)
-  case object PastPubids        extends Row(autoKey)
-  case object DeletionReason    extends Row(autoKey)
-  case object ReqType           extends Row(autoKey)
-  case object Code              extends Row(autoKey)
-  case object Tags              extends Row(autoKey)
-  case object Implications      extends Row(autoKey)
-  case object ImplicationGraph  extends Row(autoKey)
-  case object StepGraph         extends Row("f")
-  case class CustomField(f: CF) extends Row("f" + f.id.value)
+  case object Life                          extends Row(autoKey)
+  case object PastPubids                    extends Row(autoKey)
+  case object DeletionReason                extends Row(autoKey)
+  case object ReqType                       extends Row(autoKey)
+  case object Code                          extends Row(autoKey)
+  case object Tags                          extends Row(autoKey)
+  case object Implications                  extends Row(autoKey)
+  case object ImplicationGraph              extends Row(autoKey)
+  case object StepGraph                     extends Row("f")
+  case class CustomField(id: CustomFieldId) extends Row("f" + id.value)
 
   @inline implicit def univEqUseCaseSteps: UnivEq[UseCaseSteps] =
     UnivEq.derive
@@ -81,11 +80,11 @@ object Row {
       Tags,
       Implications)
 
-  val fromField: Field => List[Row] = {
-    case f: CF                => CustomField(f) :: Nil
-    case SF.NormalAltStepTree => UseCaseStepsN :: UseCaseStepsA :: Nil
-    case SF.ExceptionStepTree => UseCaseStepsE :: Nil
-    case SF.StepGraph         => StepGraph :: Nil
-    case SF.ImplicationGraph  => ImplicationGraph :: Nil
+  val fromField: FieldId => List[Row] = {
+    case f: CustomFieldId              => CustomField(f) :: Nil
+    case StaticField.NormalAltStepTree => UseCaseStepsN :: UseCaseStepsA :: Nil
+    case StaticField.ExceptionStepTree => UseCaseStepsE :: Nil
+    case StaticField.StepGraph         => StepGraph :: Nil
+    case StaticField.ImplicationGraph  => ImplicationGraph :: Nil
   }
 }

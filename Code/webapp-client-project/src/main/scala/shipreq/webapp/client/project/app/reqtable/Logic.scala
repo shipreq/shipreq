@@ -100,8 +100,7 @@ private[reqtable] object Logic {
 
   private def impColValueFn(p: Project, fd: FilterDead): CustomField.Implication.Id => ReqId => Set[Pubid] = {
     val filter = DataLogic.impValueFilter(p.config, fd)
-    val lookup = DataLogic.customFieldImps(p, filter)
-    fid => lookup(p.config.customField(fid))
+    DataLogic.customFieldImps(p, filter)
   }
 
   private def impColValueExpander(vs: ViewSettings,

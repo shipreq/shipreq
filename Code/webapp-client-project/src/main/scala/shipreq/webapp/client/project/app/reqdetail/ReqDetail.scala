@@ -90,11 +90,11 @@ object ReqDetail {
       case Dead => ShowDead
     }
 
-    val rows = {
+    val rows: Vector[Row] = {
       val liveFilter = filterDead.filterFnBy((_: Field) live project.config)
       val fields = project.config.fields.fields.filter(f =>
         f.applicable(req.reqTypeId) is Applicable && liveFilter(f))
-      fields.foldLeft(Row head filterDead)(_ ++ Row.fromField(_))
+      fields.foldLeft(Row head filterDead)((q, f) => q ++ Row.fromField(f.fieldId))
     }
 
     val pubidText = PlainText.pubid(req.pubid, project)
@@ -133,9 +133,9 @@ object ReqDetail {
             .filter(impFilter)
             .map(_.pubid)))
 
-    val customImps: CustomField.Implication => Vector[Pubid] =
-      Memo(f =>
-        sortPubids(customImpLookup(f)(req.id)))
+    val customImps: CustomField.Implication.Id => Vector[Pubid] =
+      Memo(fid =>
+        sortPubids(customImpLookup(fid)(req.id)))
 
     val useCaseData: Option[UseCaseData] =
       req match {
@@ -165,7 +165,7 @@ object ReqDetail {
     import SP._
     import cd.pxProject
 
-    val pxFieldNameFn = pxProject.map(Field.nameP)
+    val pxFieldNameFn = pxProject.map(Field.nameByIdFromProject)
     val pxExtPubid    = Px.props($).map(_.extPubid).withReuse.manualRefresh
     val pxUpstreamFD  = Px.props($).map(_.filterDead.value).withReuse.manualRefresh
 
@@ -263,7 +263,7 @@ object ReqDetail {
 
       def renderRowTitle(row: Row): VdomNode =
         row match {
-          case Row.CustomField(f)   => fieldName(f)
+          case Row.CustomField(id)  => fieldName(id)
           case Row.Code             => UiText.FieldNames.reqCodes
           case Row.ReqType          => UiText.FieldNames.reqType
           case Row.Tags             => UiText.FieldNames.tags
@@ -290,10 +290,10 @@ object ReqDetail {
 
         val content: TagMod = row match {
 
-          case Row.CustomField(f: CustomField.Text) =>
+          case Row.CustomField(id: CustomField.Text.Id) =>
             renderEditor(
-              reqEditor(EditorFeature.CellKey.CustomTextField(f.id)),
-              pw.customTextField(f.id)(req).fold(emptyRow)(w => w))
+              reqEditor(EditorFeature.CellKey.CustomTextField(id)),
+              pw.customTextField(id)(req).fold(emptyRow)(w => w))
 
           case Row.Code =>
             renderEditor(
@@ -310,10 +310,10 @@ object ReqDetail {
               reqEditor(EditorFeature.CellKey.Tags(None)),
               pw.tagList(data.generalTags))
 
-          case Row.CustomField(f: CustomField.Tag) =>
+          case Row.CustomField(id: CustomField.Tag.Id) =>
             renderEditor(
-              reqEditor(EditorFeature.CellKey.Tags(Some(f.id))),
-              pw.tagList(data.customTags(f.id)))
+              reqEditor(EditorFeature.CellKey.Tags(Some(id))),
+              pw.tagList(data.customTags(id)))
 
           case Row.Implications =>
             def one(dir: Direction) = renderImpCell(\/-(dir), data.generalImps(dir))
@@ -336,8 +336,8 @@ object ReqDetail {
               webWorker
             ).render
 
-          case Row.CustomField(f: CustomField.Implication) =>
-            renderImpCell(-\/(f.id), data.customImps(f))
+          case Row.CustomField(id: CustomField.Implication.Id) =>
+            renderImpCell(-\/(id), data.customImps(id))
 
           case Row.UseCaseStepsN => val d = data.useCaseData.get; renderStepTree(d, d.stepsN)
           case Row.UseCaseStepsA => val d = data.useCaseData.get; renderStepTree(d, d.stepsA)

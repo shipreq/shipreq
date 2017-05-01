@@ -93,9 +93,10 @@ object DataLogic {
   def impValueFilter(pc: ProjectConfig, fd: FilterDead): Req => Boolean =
     fd.filterFnBy((_: Req).live(pc.reqTypes))
 
-  def customFieldImps(p: Project, filter: Req => Boolean): CustomField.Implication => ReqId => Set[Pubid] =
-    f => {
+  def customFieldImps(p: Project, filter: Req => Boolean): CustomField.Implication.Id => ReqId => Set[Pubid] =
+    Memo { fid =>
       // (source of implication for this column) → (all it transitively implies)
+      val f = p.config.customField(fid)
       val srcs: List[(Pubid, Set[ReqId])] =
         p.reqs.reqsByType(f.reqTypeId).iterator
           .filter(filter)
