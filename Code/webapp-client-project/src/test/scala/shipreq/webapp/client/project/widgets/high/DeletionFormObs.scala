@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.widgets.high
+package shipreq.webapp.client.project.widgets
 
 import org.scalajs.dom.html
 import shipreq.webapp.client.base.test.TestState._

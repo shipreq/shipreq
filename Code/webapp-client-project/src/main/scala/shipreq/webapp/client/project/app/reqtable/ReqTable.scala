@@ -17,7 +17,7 @@ import shipreq.webapp.client.project.app.state.{Changes, ClientData}
 import shipreq.webapp.client.project.app.Style.{reqtable => *}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.protocol.ServerCall
-import shipreq.webapp.client.project.widgets.high.ProjectWidgets
+import shipreq.webapp.client.project.widgets.ProjectWidgets
 
 object ReqTable {
 

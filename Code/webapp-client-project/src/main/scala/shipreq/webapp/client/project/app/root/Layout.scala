@@ -6,7 +6,7 @@ import shipreq.webapp.base.data.{ProjectCatalogue, Username}
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.base.ui._
 import shipreq.webapp.client.base.ui.semantic.Breadcrumb
-import shipreq.webapp.client.project.widgets.high.RichTextEditorHelp
+import shipreq.webapp.client.project.widgets.RichTextEditorHelp
 import Routes.{Page, RouterCtl}
 
 object Layout {

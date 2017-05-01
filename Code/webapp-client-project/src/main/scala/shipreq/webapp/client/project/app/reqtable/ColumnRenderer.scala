@@ -12,7 +12,7 @@ import shipreq.webapp.base.text.ProjectText
 import shipreq.webapp.client.base.data.Plain
 import shipreq.webapp.client.project.app.Style.{reqtable => *}
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.widgets.high.ProjectWidgets
+import shipreq.webapp.client.project.widgets.ProjectWidgets
 import ColumnRenderer._
 
 final class ColumnRenderer(val column: Column,

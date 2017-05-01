@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.widgets.high
+package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._

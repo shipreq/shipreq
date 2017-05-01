@@ -26,7 +26,7 @@ import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets.{FilterDeadButton, LifeButton}
-import shipreq.webapp.client.project.widgets.high.{DeletionForm, ImplicationGraph, ProjectWidgets, UseCaseStepFlowGraph}
+import shipreq.webapp.client.project.widgets.{DeletionForm, ImplicationGraph, ProjectWidgets, UseCaseStepFlowGraph}
 import ExternalPubid.LookupFailure
 
 object ReqDetail {

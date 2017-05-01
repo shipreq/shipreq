@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.widgets.high
+package shipreq.webapp.client.project.widgets
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._

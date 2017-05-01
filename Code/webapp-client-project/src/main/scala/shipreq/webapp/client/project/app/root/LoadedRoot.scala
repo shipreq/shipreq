@@ -20,7 +20,7 @@ import shipreq.webapp.client.project.app.reqtable.ReqTable
 import shipreq.webapp.client.project.app.cfg.shared.Usage
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.widgets.high.{ImplicationGraph, ProjectWidgets}
+import shipreq.webapp.client.project.widgets.{ImplicationGraph, ProjectWidgets}
 import AsyncFeature.Implicits._
 import Routes.{Page, RouterCtl}
 import LoadedRoot._

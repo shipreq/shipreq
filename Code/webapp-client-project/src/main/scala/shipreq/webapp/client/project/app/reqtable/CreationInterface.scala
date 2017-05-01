@@ -15,7 +15,6 @@ import shipreq.webapp.client.base.data.{Enabled, TCB}
 import shipreq.webapp.client.project.feature.PreviewFeature
 import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets._
-import shipreq.webapp.client.project.widgets.high._
 import SelectOne.{Choice, Choices}
 import UnivEq.univEqOption
 

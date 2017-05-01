@@ -8,7 +8,7 @@ import shipreq.webapp.base.data.FilterDead
 import shipreq.webapp.client.base.lib.DataReusability._
 import shipreq.webapp.client.base.ui.BaseStyles
 import shipreq.webapp.client.project.widgets.FilterDeadButton
-import shipreq.webapp.client.project.widgets.high.ImplicationGraph
+import shipreq.webapp.client.project.widgets.ImplicationGraph
 import Style.{impgraphPage => *}
 
 object ImplicationGraphPage {

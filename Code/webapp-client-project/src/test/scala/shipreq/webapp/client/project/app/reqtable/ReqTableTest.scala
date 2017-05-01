@@ -18,7 +18,7 @@ import shipreq.webapp.client.base.test._
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.test._
-import shipreq.webapp.client.project.widgets.high.ProjectWidgets
+import shipreq.webapp.client.project.widgets.ProjectWidgets
 import utest._
 import AsyncFeature.Implicits._
 import TestState.{scalazEqualFromTestState => _, _}

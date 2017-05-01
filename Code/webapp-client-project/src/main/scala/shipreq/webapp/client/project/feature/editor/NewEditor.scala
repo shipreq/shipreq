@@ -16,7 +16,7 @@ import shipreq.webapp.client.base.lib.AbortCommit
 import shipreq.webapp.client.project.feature.PreviewFeature
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.protocol.ServerCall
-import shipreq.webapp.client.project.widgets.high.ProjectWidgets
+import shipreq.webapp.client.project.widgets.ProjectWidgets
 import Feature.{AsyncError, AsyncState, Editor, State, PreviewId}
 
 /** A command to start a new editor. */
@@ -167,7 +167,7 @@ private[editor] final class StartNewEditor(static      : Static,
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object EditReqCodes {
-    import shipreq.webapp.client.project.widgets.high.ReqCodeEditor
+    import shipreq.webapp.client.project.widgets.ReqCodeEditor
 
     private def trieCB: CallbackTo[ReqCode.Trie] =
       pxProject.toCallback.map(_.reqCodes.trie)
@@ -229,7 +229,7 @@ private[editor] final class StartNewEditor(static      : Static,
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object EditReqType {
-    import shipreq.webapp.client.project.widgets.high.ReqTypeSelector
+    import shipreq.webapp.client.project.widgets.ReqTypeSelector
     import ReqTypeSelector.RT
 
     val pxCustomReqTypes = ReqTypeSelector.pxCustomReqTypes(pxProject)
@@ -273,7 +273,7 @@ private[editor] final class StartNewEditor(static      : Static,
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object EditImplications {
-    import shipreq.webapp.client.project.widgets.high.ImplicationEditor
+    import shipreq.webapp.client.project.widgets.ImplicationEditor
     import ImplicationEditor.{Lookup, ValidationFn}
 
     val pxLookupAll = Px.apply2(pxProject, pxPlainText)(ImplicationEditor.Lookup.all)
@@ -332,7 +332,7 @@ private[editor] final class StartNewEditor(static      : Static,
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object EditTags {
-    import shipreq.webapp.client.project.widgets.high.TagEditor
+    import shipreq.webapp.client.project.widgets.TagEditor
     import TagEditor.Lookup
 
     def apply(id: ReqId, fid: Option[CustomField.Tag.Id]): StartFn = {
@@ -372,7 +372,7 @@ private[editor] final class StartNewEditor(static      : Static,
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object EditRichText {
     import shipreq.webapp.base.text._
-    import shipreq.webapp.client.project.widgets.high.RichTextEditor
+    import shipreq.webapp.client.project.widgets.RichTextEditor
 
     abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) {
       val T: editor.text.type = editor.text
@@ -458,8 +458,8 @@ private[editor] final class StartNewEditor(static      : Static,
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object EditUseCaseStep {
-    import shipreq.webapp.client.project.widgets.high.RichTextEditor.hardcodedLive
-    import shipreq.webapp.client.project.widgets.high.UseCaseStepEditor
+    import shipreq.webapp.client.project.widgets.RichTextEditor.hardcodedLive
+    import shipreq.webapp.client.project.widgets.UseCaseStepEditor
     import UseCaseStepFlowText.TextAndFlow
 
     def apply(id: UseCaseStepId, pid: PreviewId): StartFn = {

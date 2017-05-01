@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.widgets.high
+package shipreq.webapp.client.project.widgets
 
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.MutableArray

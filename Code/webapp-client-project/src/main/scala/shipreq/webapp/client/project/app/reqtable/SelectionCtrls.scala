@@ -14,7 +14,7 @@ import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.project.feature.Modal
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.protocol.ServerCall
-import shipreq.webapp.client.project.widgets.high.{DeletionForm, ProjectWidgets}
+import shipreq.webapp.client.project.widgets.{DeletionForm, ProjectWidgets}
 import AsyncFeature.Status.InProgress
 
 /**

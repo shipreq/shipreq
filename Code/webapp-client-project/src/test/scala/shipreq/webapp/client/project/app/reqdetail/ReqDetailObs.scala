@@ -7,7 +7,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{Dead, FilterDead, Live, ShowDead}
 import shipreq.webapp.client.base.test.TestState._
 import shipreq.webapp.client.base.ui.semantic.Icon
-import shipreq.webapp.client.project.widgets.high.DeletionFormObs
+import shipreq.webapp.client.project.widgets.DeletionFormObs
 import ReqDetailTestDsl.Mode
 import ReqDetailObs.NAE
 import shipreq.webapp.client.project.app.TestMarker
