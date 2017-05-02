@@ -13,15 +13,10 @@ import ViewReq._
 /**
   * Easy means to view/render a requirement.
   */
-final case class ViewReq(data: Data, pw: ProjectWidgets) {
+final case class ViewReq(data: Data, pw: ProjectWidgets, fmtReqTypeShort: Boolean = true) {
 
-  /** eg. "UC" */
-  def reqTypeShort: VdomElement =
-    pw.reqTypeShort(data.req.reqTypeId)
-
-  /** eg. "UC: Use Case" */
-  def reqTypeFull: VdomElement =
-    pw.reqTypeFull(data.req.reqTypeId)
+  def reqType: VdomElement =
+    (if (fmtReqTypeShort) pw.reqTypeShort else pw.reqTypeFull)(data.req.reqTypeId)
 
   def codes: VdomElement =
     <.div(pw.reqCodes(data.codes))
@@ -62,7 +57,7 @@ final case class ViewReq(data: Data, pw: ProjectWidgets) {
     case EditorFeature.CellKey.Implications   (scope) => imps(scope)
     case EditorFeature.CellKey.Code                   => codes
     case EditorFeature.CellKey.Title                  => title
-    case EditorFeature.CellKey.ReqType                => reqTypeShort // might not always be the case
+    case EditorFeature.CellKey.ReqType                => reqType
   }
 }
 

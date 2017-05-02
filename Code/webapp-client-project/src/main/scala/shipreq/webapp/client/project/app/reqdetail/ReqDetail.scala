@@ -190,7 +190,7 @@ object ReqDetail {
       val reqEditor = reqProps.editor
       val fieldName = pxFieldNameFn.value()
       val runCmd    = this.runCmd(req.id)
-      val view      = data.viewData(pw)
+      val view      = data.viewData(pw).copy(fmtReqTypeShort = false)
 
       def renderEditable(key: EditorFeature.CellKey.ForReq): TagMod =
         renderEditor(reqEditor(key), view.editable(key))
@@ -256,12 +256,10 @@ object ReqDetail {
           case Row.CustomField(id: CustomField.Tag.Id)         => renderEditable(CellKey.Tags(Some(id)))
           case Row.CustomField(id: CustomField.Implication.Id) => renderEditable(CellKey.Implications(-\/(id)))
           case Row.Code                                        => renderEditable(CellKey.Code)
+          case Row.ReqType                                     => renderEditable(CellKey.ReqType)
           case Row.Tags                                        => renderEditable(CellKey.Tags(None))
           case Row.DeletionReason                              => view.deletionReason
           case Row.PastPubids                                  => view.pastPubids
-
-          case Row.ReqType =>
-            renderEditor(reqEditor(CellKey.ReqType), view.reqTypeFull) // default in view.editable is short
 
           case Row.Implications =>
             def one(dir: Direction) = renderEditable(CellKey.Implications(\/-(dir)))
