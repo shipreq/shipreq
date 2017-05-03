@@ -5,14 +5,12 @@ import japgolly.scalajs.react.extra.Reusability
 import monocle.macros.Lenses
 import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.ValidFilter
 
 @Lenses
-final case class ViewSettings(columns    : NonEmptyVector[Column],
-                              order      : SortCriteria,
-                              filter     : Option[ValidFilter],
-                              filterDead : FilterDead) {
+final case class TableSettings(columns: NonEmptyVector[Column],
+                               order  : SortCriteria,
+                               filter : Option[ValidFilter]) {
 
   def isVisible(c: Column): Boolean =
     isVisible(_ ==* c)
@@ -25,17 +23,17 @@ final case class ViewSettings(columns    : NonEmptyVector[Column],
   @inline def isOrderedI(c: Column.SortInconclusive)            = order.isOrderedI(c)
   @inline def isOrderedI(f: Column.SortInconclusive => Boolean) = order.isOrderedI(f)
 
-  def tryFilterColumns(f: Column => Boolean): Option[ViewSettings] =
+  def tryFilterColumns(f: Column => Boolean): Option[TableSettings] =
     columns.filter(f).map(cols =>
-      ViewSettings(cols, order filterColumns f, filter, filterDead))
+      TableSettings(cols, order filterColumns f, filter))
 
-  def filterColumns(f: Column => Boolean): ViewSettings =
-    tryFilterColumns(f) getOrElse ViewSettings.default(filterDead)
+  def filterColumns(f: Column => Boolean): TableSettings =
+    tryFilterColumns(f) getOrElse TableSettings.default
 
-//  def setFilterDead(fd: FilterDead): ViewSettings =
+//  def setFilterDead(fd: FilterDead): TableSettings =
 //    copy(filterDead = fd).filterColumns(Column filterDead fd)
 
-  def setColumns(newCols0: NonEmptyVector[Column]): ViewSettings = {
+  def setColumns(newCols0: NonEmptyVector[Column]): TableSettings = {
     // Ensure mandatory columns are present
     val set = newCols0.toNES
     val newCols = newCols0 ++ Column.mandatory.filterNot(set.contains)
@@ -47,7 +45,7 @@ final case class ViewSettings(columns    : NonEmptyVector[Column],
     })
     val newOrder = order.whitelistColumns(icols)
 
-    ViewSettings(newCols, newOrder, filter, filterDead)
+    TableSettings(newCols, newOrder, filter)
   }
 
   /**
@@ -67,13 +65,13 @@ final case class ViewSettings(columns    : NonEmptyVector[Column],
 }
 
 
-object ViewSettings {
-  implicit def equality   : UnivEq[ViewSettings]      = UnivEq.derive
-  implicit val reusability: Reusability[ViewSettings] = Reusability.byEqual
+object TableSettings {
+  implicit def equality   : UnivEq[TableSettings]      = UnivEq.derive
+  implicit val reusability: Reusability[TableSettings] = Reusability.byEqual
 
-  def default(fd: FilterDead = HideDead): ViewSettings = {
+  def default: TableSettings = {
     import Column._
     val cols = NonEmptyVector[Column](Code, Pubid, Title, Tags)
-    ViewSettings(cols, SortCriteria.default, None, fd)
+    TableSettings(cols, SortCriteria.default, None)
   }
 }

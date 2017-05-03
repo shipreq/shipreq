@@ -348,12 +348,12 @@ object Sorter {
   /**
    * Sort visible data in [[Expansion]]/[[MultiValues]] that won't be sorted by [[SortCriteria]].
    */
-  def sortUnspecified(vs: ViewSettings): RowModFn = {
+  def sortUnspecified(ts: TableSettings): RowModFn = {
     val fns =
-      vs.columns.whole
+      ts.columns.whole
         .iterator
         .filterSubType[C.SortInconclusive]
-        .filterNot(vs.isOrdered)
+        .filterNot(ts.isOrdered)
         .map({
           case c: C.HasBlanks => inconclusiveCB(c)(SM.BlanksThenAsc)
           case c: C.NoBlanks  => inconclusiveIB(c)(SM.Asc)
