@@ -3,6 +3,7 @@ package shipreq.base.util
 import monocle._
 import scala.annotation.elidable
 import scalaz.{-\/, \/, \/-}
+import scalaz.Leibniz.===
 
 /**
   * +--------+     +--------+     +--------+
@@ -32,6 +33,8 @@ import scalaz.{-\/, \/, \/-}
 abstract class Intersection[A, B] {
 
   def reverse: Intersection[B, A]
+
+  def id: Option[B === A]
 
   val getOption: A => Option[B]
 
@@ -108,13 +111,17 @@ abstract class Intersection[A, B] {
 
   def flatten[L, R](implicit ev: Intersection[A, B] =:= Intersection[Option[L], Option[R]]): Intersection[L, R] =
     ev(this).flattenL[L].flattenR[R]
+
+  final def getThenFlatMap[C](f: B => Option[C]): A => Option[C] =
+    id.fold[A => Option[C]](getOption(_).flatMap(f))(_.subst[? => Option[C]](f))
 }
 
 object Intersection {
 
   private final class Id[A] extends Intersection[A, A] {
+    override lazy val id                                         = Some(implicitly[A === A])
     override val getOption                                       = Some(_: A)
-    override val reverse                                         = this
+    override def reverse                                         = this
     override def get         (a: A, default: => A)               = a
     override def fold        [C](a: A, f: A => C)(default: => C) = f(a)
     override def getOptionMap[C](a: A, f: A => C)                = Some(f(a))
@@ -130,10 +137,12 @@ object Intersection {
     var ab: Intersection[A, B] = null
     ab = new Intersection[A, B] {
         override val getOption = f
+        override def id = None
         override val reverse =
           new Intersection[B, A] {
             override val getOption = g
             override def reverse = ab
+            override def id = None
           }
       }
     ab
