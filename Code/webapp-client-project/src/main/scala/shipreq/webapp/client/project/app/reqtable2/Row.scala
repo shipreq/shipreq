@@ -25,10 +25,8 @@ import shipreq.webapp.client.project.feature.EditorFeature.RowKey
  * Example: if a row is implied by two sources and the table is sorted by implication-source, then the row will
  * appear twice - once for each implicatee.
  */
-// TODO Make imp naming consistent
 @Lenses
-case class Expansion(implicationSrc: Vector[Pubid],
-                     implicationTgt: Vector[Pubid],
+case class Expansion(implications  : Direction.Values[Vector[Pubid]],
                      reqCodes      : Vector[ReqCode.Value],
                      reqCodeTree   : Vector[ReqCodeTreeItem],
                      cfImps        : Map[CustomField.Implication.Id, Vector[Pubid]],
@@ -46,32 +44,32 @@ case class Expansion(implicationSrc: Vector[Pubid],
 }
 
 object Expansion {
-  val none = Expansion(Vector.empty, Vector.empty, Vector.empty, Vector.empty, UnivEq.emptyMap, UnivEq.emptyMap)
+  val empty: Expansion =
+    apply(Direction.Values both Vector.empty, Vector.empty, Vector.empty, UnivEq.emptyMap, UnivEq.emptyMap)
 
   implicit def equality: UnivEq[Expansion] = UnivEq.derive
 
   implicit val reqCodeTreeM: Monoid[Vector[ReqCodeTreeItem]] =
     scalaz.std.vector.vectorMonoid
 
-  implicit def vectorUniqSemigroup[A: Equal]: Semigroup[Vector[A]] =
+  implicit def vectorUniqSemigroup[A](implicit e: Equal[A]): Semigroup[Vector[A]] =
     new Semigroup[Vector[A]] {
       override def append(x: Vector[A], y: => Vector[A]) =
         y.foldLeft(x)((q, a) =>
-          if (x.exists(Equal[A].equal(_, a))) q else q :+ a)
+          if (x.exists(e.equal(_, a))) q else q :+ a)
     }
 
   implicit val monoid: Monoid[Expansion] =
     new Monoid[Expansion] {
-      override def zero = none
+      override def zero = empty
       override def append(a: Expansion, _b: => Expansion) = {
         val b = _b
         Expansion(
-          a.implicationSrc |+| b.implicationSrc,
-          a.implicationTgt |+| b.implicationTgt,
-          a.reqCodes       |+| b.reqCodes,
-          a.reqCodeTree    |+| b.reqCodeTree,
-          a.cfImps         |+| b.cfImps,
-          a.cfTags         |+| b.cfTags)
+          a.implications |+| b.implications,
+          a.reqCodes     |+| b.reqCodes,
+          a.reqCodeTree  |+| b.reqCodeTree,
+          a.cfImps       |+| b.cfImps,
+          a.cfTags       |+| b.cfTags)
       }
     }
 }
@@ -237,18 +235,10 @@ object Row {
   type OV[A]     = Optional[Row, Vector[A]]
   type OMV[K, V] = Optional[Row, Map[K, Vector[V]]]
 
-  val implications: Direction => OV[Pubid] = Direction.memo {
-    case Backwards => Row.expansion ^|-> Expansion.implicationSrc
-    case Forwards  => Row.expansion ^|-> Expansion.implicationTgt
-  }
+  val implications: Direction => OV[Pubid] =
+    Direction.memo(Row.expansion ^|-> Expansion.implications ^|-> Direction.Values.lens(_))
 
-  val cfImps        : OMV[CustomField.Implication.Id, Pubid]   = Row.expansion   ^|-> Expansion.cfImps
-  val cfTags        : OMV[CustomField.Tag.Id, ApplicableTagId] = Row.expansion   ^|-> Expansion.cfTags
-  val tags          : OV[ApplicableTagId]                      = Row.multiValues ^|-> MultiValues.tags
-
-  private def mmLens[K, V](k: K): Lens[Map[K, Vector[V]], Vector[V]] =
-    Lens[Map[K, Vector[V]], Vector[V]](_.getOrElse(k, Vector.empty))(vs => _.updated(k, vs))
-
-  def cfImp(id: CustomField.Implication.Id): OV[Pubid]           = cfImps ^|-> mmLens(id)
-  def cfTag(id: CustomField.Tag        .Id): OV[ApplicableTagId] = cfTags ^|-> mmLens(id)
+  val cfImps: OMV[CustomField.Implication.Id, Pubid]   = Row.expansion   ^|-> Expansion.cfImps
+  val cfTags: OMV[CustomField.Tag.Id, ApplicableTagId] = Row.expansion   ^|-> Expansion.cfTags
+  val tags  : OV[ApplicableTagId]                      = Row.multiValues ^|-> MultiValues.tags
 }

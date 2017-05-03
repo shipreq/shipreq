@@ -56,7 +56,7 @@ private[reqtable2] object Logic {
   private type Expander[A] = (() => Set[A]) => Expanded[A]
 
   private final val emptyExpansions: NonEmptyVector[Expansion] =
-    NonEmptyVector.one(Expansion.none)
+    NonEmptyVector.one(Expansion.empty)
 
   @inline private def emptyExpanded[A]: Expanded[A] =
     NonEmptyVector.one(Vector.empty)
@@ -152,7 +152,7 @@ private[reqtable2] object Logic {
     go(src.keys.toVector, Map.empty, Vector.empty)
   }
 
-  private def expansions(imps   : Direction => Expanded[Pubid],
+  private def expansions(imps   : Direction.Values[Expanded[Pubid]],
                          codes  : Expanded[ReqCode.Value],
                          cfImps : Map[CustomField.Implication.Id, Expanded[Pubid]],
                          cfTags : Map[CustomField.Tag.Id,         Expanded[ApplicableTagId]]): NonEmptyVector[Expansion] =
@@ -169,7 +169,13 @@ private[reqtable2] object Logic {
         c <- codes
         d <- expandMapValues(cfImps)
         e <- expandMapValues(cfTags)
-      } yield Expansion(a, b, c, Vector.empty[ReqCodeTreeItem], d, e)
+      } yield {
+        val imps2 = Direction.Values {
+          case Backwards => a
+          case Forwards  => b
+        }
+        Expansion(imps2, c, Vector.empty[ReqCodeTreeItem], d, e)
+      }
 
   // ===================================================================================================================
   // MultiValues
@@ -271,7 +277,7 @@ private[reqtable2] object Logic {
           val live = r live p.config.reqTypes
 
           // Expansion
-          val imps    = Direction.memo(dir => expandImps(dir)(() => pImplications(dir)(id) |> pubids))
+          val imps    = Direction.Values(dir => expandImps(dir)(() => pImplications(dir)(id) |> pubids))
           val codes   = expandCodes  (() => reqCodesByReq(live)(id))
           val cfImps  = expandImpCols(r)
           val cfTags  = expandTagCols(r)
