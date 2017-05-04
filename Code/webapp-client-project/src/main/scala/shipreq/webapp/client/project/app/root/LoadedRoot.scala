@@ -173,7 +173,7 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
         case Page.ReqTable =>
           val rowAsync = asyncW
             .toReadWrite(asyncState)
-            .mapKey2(reqtable2.Row.SourceIdToEditorRow.reverse)
+            .mapKey2(reqtable2.Row.SourceId.ToEditorRow.reverse)
             .withKey1(AsyncKey.WholeReq)
           reqTable(
             ReqTablePage.Props(

@@ -271,7 +271,7 @@ private[reqtable2] object Logic {
     // Create rows
     fullFilter.fold(Vector.empty[Row]) { filter =>
       var output           = Vector.empty[Row]
-      val restorableRCGs   = DataLog.list[ReqCodeGroupRow].disableUnless(restoreFilteredRCGs)
+      val restorableRCGs   = DataLog.list[Row.ForReqCodeGroup].disableUnless(restoreFilteredRCGs)
       val codesSeen        = DataLog.mtrie[ReqCode.Node].disableUnless(restoreFilteredRCGs)
       val seeExpandedCodes = codesSeen.addFn[Expanded[ReqCode.Value]](add => _.foreach(_ foreach add))
 
@@ -291,7 +291,7 @@ private[reqtable2] object Logic {
           // Build
           val mv = multiValuesFn(id)
           exps.foreachWithIndex((exp, i) =>
-            output :+= ReqRow(r, live, exp, mv, i))
+            output :+= Row.ForReq(r, live, exp, mv, i))
 
           seeExpandedCodes(codes)
         }
@@ -300,7 +300,7 @@ private[reqtable2] object Logic {
       if (s.viewReqCodeGroups)
         for (g <- p.reqCodes.groups) {
           val code = p.reqCodes reqCode g.id
-          val row = ReqCodeGroupRow(g, code, None)
+          val row = Row.ForReqCodeGroup(g, code, None)
           if (filter fb g) {
             codesSeen.add(row.reqCode)
             output :+= row
@@ -459,14 +459,14 @@ private[reqtable2] object Logic {
   def consolidateAdjacentDups(rows: Stream[Row]): Stream[Row] =
     mergeAdjacent(rows)((x, y) =>
       (x, y) match {
-        case (a: ReqRow, b: ReqRow) =>
+        case (a: Row.ForReq, b: Row.ForReq) =>
           if (a.req.id ==* b.req.id)
-            Some(ReqRow(a.req, a.live, a.exp |+| b.exp, a.mv |+| b.mv, a.instanceId)) // TODO resort
+            Some(Row.ForReq(a.req, a.live, a.exp |+| b.exp, a.mv |+| b.mv, a.instanceId)) // TODO resort
           else
             None
-        case (_: ReqRow,          _: ReqCodeGroupRow)
-           | (_: ReqCodeGroupRow, _: ReqRow)
-           | (_: ReqCodeGroupRow, _: ReqCodeGroupRow) => None
+        case (_: Row.ForReq,          _: Row.ForReqCodeGroup)
+           | (_: Row.ForReqCodeGroup, _: Row.ForReq)
+           | (_: Row.ForReqCodeGroup, _: Row.ForReqCodeGroup) => None
       }
     )
 
@@ -548,9 +548,7 @@ private[reqtable2] object Logic {
     var _liveVisibleReqs = 0
     var _deadVisibleReqs = 0
     rows foreach {
-      case _: ReqCodeGroupRow =>
-        _codeGroups += 1
-      case r: ReqRow =>
+      case r: Row.ForReq =>
         val id = r.req.id
         val c = _counts.getOrElse(id, 0)
         if (c == 0)
@@ -559,6 +557,8 @@ private[reqtable2] object Logic {
             case Dead => _deadVisibleReqs += 1
           }
         _counts = _counts.updated(id, c + 1)
+      case _: Row.ForReqCodeGroup =>
+        _codeGroups += 1
     }
 
     // Find expansions

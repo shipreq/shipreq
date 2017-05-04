@@ -236,8 +236,8 @@ object Sorter {
         val n = pubidNormaliser(setup)
         val `n/a` = (-1, -1)
         ;{
-          case r: ReqRow          => n(r.req.pubid)
-          case r: ReqCodeGroupRow => `n/a`
+          case r: Row.ForReq          => n(r.req.pubid)
+          case r: Row.ForReqCodeGroup => `n/a`
         }
       },
     sort = SortFn.intPair
@@ -257,8 +257,8 @@ object Sorter {
 
   val reqTypeSorter = Sorter[Int](
     prep = setup => {
-      case r: ReqRow          => setup.reqTypesToMnemonicOrder(r.req.pubid.reqTypeId)
-      case r: ReqCodeGroupRow => -1
+      case r: Row.ForReq          => setup.reqTypesToMnemonicOrder(r.req.pubid.reqTypeId)
+      case r: Row.ForReqCodeGroup => -1
     },
     sort = SortFn.int
   )
@@ -296,20 +296,20 @@ object Sorter {
 
   def customTextFieldSorter(id: CustomField.Text.Id, c: Column): SorterForSMCB =
     textSorter(c, p => {
-      case r: ReqRow          => p.customTextField(id)(r.req) getOrElse ""
-      case r: ReqCodeGroupRow => ""
+      case r: Row.ForReq          => p.customTextField(id)(r.req) getOrElse ""
+      case r: Row.ForReqCodeGroup => ""
     })
 
   val titleSorter: SorterForSMCB =
     textSorter(C.Title, p => {
-      case r: ReqRow          => p.reqTitle(r.req)
-      case r: ReqCodeGroupRow => p.reqCodeGroupTitle(r.group)
+      case r: Row.ForReq          => p.reqTitle(r.req)
+      case r: Row.ForReqCodeGroup => p.reqCodeGroupTitle(r.group)
     })
 
   def deletionReasonSorter: SorterForSMCB =
     textSorterS(C.DeletionReason, s => pt => {
-      case r: ReqRow          => PlainText.DeletionReason.forReq(r.req)(s.p.config.reqTypes, pt) getOrElse ""
-      case _: ReqCodeGroupRow => PlainText.DeletionReason.forReqCodeGroup getOrElse ""
+      case r: Row.ForReq          => PlainText.DeletionReason.forReq(r.req)(s.p.config.reqTypes, pt) getOrElse ""
+      case _: Row.ForReqCodeGroup => PlainText.DeletionReason.forReqCodeGroup getOrElse ""
     })
 
   // ===================================================================================================================
