@@ -30,8 +30,9 @@ final case class ViewReq(data: Data, pw: ProjectWidgets, fmtReqTypeShort: Boolea
   def imps(scope: CustomField.Implication.Id \/ Direction): VdomElement =
     scope.fold(imps(_), imps(_))
 
-  def deletionReason: VdomElement =
-    ProjectWidgets.DeletionReason.forReq(data.req)(data.reqTypes, pw) getOrElse[VdomTag] emptySpan
+  /** None means N/A */
+  def deletionReason: Option[VdomTag] =
+    ProjectWidgets.DeletionReason.forReq(data.req)(data.reqTypes, pw)
 
   def pastPubids: VdomElement =
     pw pastPubids data.pastPubids
@@ -50,6 +51,12 @@ final case class ViewReq(data: Data, pw: ProjectWidgets, fmtReqTypeShort: Boolea
 
   def title: VdomElement =
     pw.reqTitle(data.req)
+
+  val customField: CustomFieldId => VdomElement = {
+    case id: CustomField.Implication.Id => imps(id)
+    case id: CustomField.Tag        .Id => tags(id)
+    case id: CustomField.Text       .Id => text(id)
+  }
 
   val editable: EditorFeature.FieldKey.ForReq => VdomElement = {
     case EditorFeature.FieldKey.CustomTextField(field) => text(field)
@@ -122,7 +129,7 @@ object ViewReq {
 
       val pastPubids: Vector[Pubid] =
         MutableArray(req.pastPubids(project.reqs.pubids))
-          .sortBySchwartzian(DataLogic.pubidSortKeyFn(project.config))
+          .sortBySchwartzian(pubidSortKeyFn)
           .to[Vector]
 
       Data(

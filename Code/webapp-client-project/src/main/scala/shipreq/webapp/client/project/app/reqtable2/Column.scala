@@ -10,7 +10,6 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data
-import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.client.base.lib.KeyGen
 import shipreq.webapp.client.project.feature.EditorFeature
 
@@ -21,6 +20,9 @@ sealed trait Column {
 
   /** A value that can be passed to React to quickly identify columns. */
   val key: String
+
+  def editorField: Option[EditorFeature.FieldKey] =
+    Column.editorFieldIntersection.getOption(this)
 }
 object Column {
 

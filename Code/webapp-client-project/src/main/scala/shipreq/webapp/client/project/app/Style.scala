@@ -137,6 +137,8 @@ object Style extends StyleSheet.Inline {
   // ===================================================================================================================
   object reqtable2 {
 
+    // nearly everything here is !important because of stupid Semantic UI
+
     object table {
 
       private val headerBase = style(
@@ -149,21 +151,31 @@ object Style extends StyleSheet.Inline {
       val header = styleF(D.live *** D.dragStatus) { case (live, status) => styleS(
         headerBase,
         deadColumnLabel(live),
-        cursor.pointer, // Because click affects sorting
+        cursor.pointer.important, // Because click affects sorting
         (status match {
           case DragToReorder.Normal => mixin()
           case DragToReorder.DragSource | DragToReorder.Tombstone => mixin(
-            opacity(.4),
-            border(2 px, dashed, c"#779"))
+            opacity(.4).important,
+            border(2 px, dashed, c"#779").important)
         }): StyleS
       )}
 
       private val selectionColumnCell = styleS(
         width(24.px).important,
-        textAlign.center)
+        textAlign.center.important)
 
       val selectionColumnHeader = style(selectionColumnCell, headerBase)
       val selectionColumnBody   = style(selectionColumnCell, bodyBase)
+
+      val pubidColumnValue = styleF(D.live)(a => styleS(
+        display.inline,
+        whiteSpace.nowrap,
+        mixinIf(a is Dead)(deadAndNotError)))
+
+      val `N/A` = style(
+        color(c"#666"),
+        margin.horizontal(auto))
+
     }
 
   }

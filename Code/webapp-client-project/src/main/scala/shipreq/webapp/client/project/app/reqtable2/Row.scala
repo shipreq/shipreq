@@ -14,6 +14,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.ReqCodeTreeItem
 import shipreq.webapp.client.base.lib.DataReusability._
 import shipreq.webapp.client.project.feature.EditorFeature.RowKey
+import shipreq.webapp.client.project.widgets.ViewReq
 
 /**
  * Replacement values for a requirement at a specific row.
@@ -111,23 +112,25 @@ object Row {
    * @param instanceId An arbitrary number that, coupled with `req.id` serves to uniquely identify a row.
    *                   Reason is that the same GenericReq can appear in multiple rows.
    */
-  case class ForReq(req: Req, live: Live, exp: Expansion, mv: MultiValues, instanceId: Int) extends Row {
+  final case class ForReq(req: Req, live: Live, exp: Expansion, mv: MultiValues, instanceId: Int) extends Row {
     override val id       = Row.Id.ForReq(req.id, instanceId)
     override def sourceId = Row.SourceId.ForReq(req.id)
     override def toString = s"\n$req\n$exp\n$mv\n"
   }
 
-  case class ForReqCodeGroup(group: ReqCodeGroup, reqCode: ReqCode.Value, reqCodeTreeItem: Option[ReqCodeTreeItem]) extends Row {
+  final case class ForReqCodeGroup(group: ReqCodeGroup, reqCode: ReqCode.Value, reqCodeTreeItem: Option[ReqCodeTreeItem]) extends Row {
     override val id       = Row.Id.ForReqCodeGroup(reqCodeId)
     override def sourceId = Row.SourceId.ForReqCodeGroup(reqCodeId)
     override def live     = group.live
     def reqCodeId         = group.id
   }
 
-  implicit def equalityR  : UnivEq[ForReq]            = UnivEq.derive
-  implicit def equalityG  : UnivEq[ForReqCodeGroup]   = UnivEq.derive
-  implicit def equality   : UnivEq[Row]               = UnivEq.derive
-  implicit val reusability: Reusability[Row]          = Reusability.byRefOrUnivEq
+  implicit def equalityR   : UnivEq[ForReq]               = UnivEq.derive
+  implicit def equalityG   : UnivEq[ForReqCodeGroup]      = UnivEq.derive
+  implicit def equality    : UnivEq[Row]                  = UnivEq.derive
+  implicit val reusabilityR: Reusability[ForReq]          = Reusability.byRefOrUnivEq
+  implicit val reusabilityG: Reusability[ForReqCodeGroup] = Reusability.byRefOrUnivEq
+  implicit val reusability : Reusability[Row]             = Reusability.byRefOrUnivEq
 
   // ===================================================================================================================
 

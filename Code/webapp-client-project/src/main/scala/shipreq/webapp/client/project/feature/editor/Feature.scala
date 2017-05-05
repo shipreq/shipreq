@@ -8,6 +8,7 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.base.feature._
+import shipreq.webapp.client.base.ui.EditTheme
 import shipreq.webapp.client.project.lib.DataReusability._
 
 object Feature {
@@ -196,6 +197,9 @@ object Feature {
 
       @inline def renderOr[A](a: => A)(implicit ev: VdomElement => A): A =
         read.renderOr(a)(ev)
+
+      def themedRenderOr(view: => TagMod): TagMod =
+        renderOr(TagMod(EditTheme.editableInline(startEdit), view))
 
       /** Enable an editor so that the user can edit a portion of data.
         *

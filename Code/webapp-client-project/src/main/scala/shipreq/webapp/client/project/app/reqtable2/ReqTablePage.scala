@@ -123,8 +123,11 @@ object ReqTablePage {
         pxColumnsPlus.value(),
         pxRowSelectionVisible.value(),
         p.editor,
-        modSettings)
-        .render
+        p.rowAsync.read,
+        pxProject.value().config.reqTypes,
+        pxProjectWidgets.value(),
+        modSettings,
+      ).render
 
       <.main(BaseStyles.containerFull,
         table)

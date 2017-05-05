@@ -103,7 +103,9 @@ object Selection {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  final class OneUI[A](a: A, selected: Set[A], override val updateFn: UpdateFn[A]) extends UI[A, On, VdomTag] {
+  final class OneUI[A](private[Selection] val a: A,
+                       private[Selection] val selected: Set[A],
+                       override val updateFn: UpdateFn[A]) extends UI[A, On, VdomTag] {
     override val get =
       On when selected.contains(a)
 
@@ -177,6 +179,12 @@ object Selection {
 
   // ===================================================================================================================
 
-  implicit def reuseSel[A]: Reusability[Selection[A]]         = Reusability.byRef || Reusability.by(_.selected)
-  implicit def reuseVis[A]: Reusability[LegalWithUpdateFn[A]] = Reusability.byRef || Reusability.by(v => (v.selected, v.legal, v.updateFn))
+  implicit def reuseSel[A]: Reusability[Selection[A]] =
+    Reusability.byRef || Reusability.by(_.selected)
+
+  implicit def reuseVis[A]: Reusability[LegalWithUpdateFn[A]] =
+    Reusability.byRef || Reusability.by(v => (v.selected, v.updateFn, v.legal))
+
+  implicit def reuseOUI[A: Reusability]: Reusability[OneUI[A]] =
+    Reusability.byRef || Reusability.by(v => (v.selected, v.updateFn, v.a))
 }
