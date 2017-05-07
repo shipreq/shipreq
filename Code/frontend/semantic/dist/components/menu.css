@@ -795,6 +795,7 @@ Floated Menu / Item
 /* Item */
 .ui.secondary.menu .item {
   -ms-flex-item-align: center;
+      -ms-grid-row-align: center;
       align-self: center;
   box-shadow: none;
   border: none;
@@ -1038,6 +1039,7 @@ Floated Menu / Item
   border-radius: 0px;
   box-shadow: none;
   -ms-flex-item-align: center;
+      -ms-grid-row-align: center;
       align-self: center;
   margin: 0em 0em;
   padding: 0.35714286em 0.5em;

@@ -24,7 +24,7 @@ const config = {
       'expose-loader?jQuery!jquery',
       'expose-loader?$!jquery',
       'jquery-textcomplete',
-      './semantic-ui/semantic/dist/semantic.min',
+      './semantic/dist/semantic.min',
     ],
   },
 

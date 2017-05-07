@@ -13884,6 +13884,7 @@ Floated Menu / Item
 
 .ui.secondary.menu .item {
   -ms-flex-item-align: center;
+  -ms-grid-row-align: center;
   align-self: center;
   box-shadow: none;
   border: none;
@@ -14163,6 +14164,7 @@ Floated Menu / Item
   border-radius: 0px;
   box-shadow: none;
   -ms-flex-item-align: center;
+  -ms-grid-row-align: center;
   align-self: center;
   margin: 0em 0em;
   padding: 0.35714286em 0.5em;
@@ -18443,7 +18445,6 @@ a.ui.card:hover,
   flex-direction: row;
   -webkit-box-align: center;
   -ms-flex-align: center;
-  -ms-grid-row-align: center;
   align-items: center;
 }
 
@@ -18463,7 +18464,6 @@ a.ui.card:hover,
   flex-direction: row;
   -webkit-box-align: center;
   -ms-flex-align: center;
-  -ms-grid-row-align: center;
   align-items: center;
   max-width: none;
   margin: 1em 0em;
@@ -19170,8 +19170,10 @@ body.dimmable > .dimmer {
 .blurring.dimmable > :not(.dimmer) {
   -webkit-filter: blur(0px) grayscale(0);
   filter: blur(0px) grayscale(0);
-  -webkit-transition: 800ms filter ease;
+  -webkit-transition: 800ms -webkit-filter ease;
+  transition: 800ms -webkit-filter ease;
   transition: 800ms filter ease;
+  transition: 800ms filter ease, 800ms -webkit-filter ease;
 }
 
 .blurring.dimmed.dimmable > :not(.dimmer) {
@@ -20924,21 +20926,25 @@ select.ui.dropdown {
   flex: 0 1 auto;
   width: '';
   -ms-flex-item-align: top;
+  -ms-grid-row-align: top;
   align-self: top;
 }
 
 .ui.modal > [class*="top aligned"] {
   -ms-flex-item-align: top;
+  -ms-grid-row-align: top;
   align-self: top;
 }
 
 .ui.modal > [class*="middle aligned"] {
   -ms-flex-item-align: middle;
+  -ms-grid-row-align: middle;
   align-self: middle;
 }
 
 .ui.modal > [class*="stretched"] {
   -ms-flex-item-align: stretch;
+  -ms-grid-row-align: stretch;
   align-self: stretch;
 }
 
@@ -20951,6 +20957,7 @@ select.ui.dropdown {
   flex: 1 0 auto;
   min-width: 0px;
   -ms-flex-item-align: top;
+  -ms-grid-row-align: top;
   align-self: top;
 }
 

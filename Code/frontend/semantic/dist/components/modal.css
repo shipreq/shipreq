@@ -119,18 +119,22 @@
           flex: 0 1 auto;
   width: '';
   -ms-flex-item-align: top;
+      -ms-grid-row-align: top;
       align-self: top;
 }
 .ui.modal > [class*="top aligned"] {
   -ms-flex-item-align: top;
+      -ms-grid-row-align: top;
       align-self: top;
 }
 .ui.modal > [class*="middle aligned"] {
   -ms-flex-item-align: middle;
+      -ms-grid-row-align: middle;
       align-self: middle;
 }
 .ui.modal > [class*="stretched"] {
   -ms-flex-item-align: stretch;
+      -ms-grid-row-align: stretch;
       align-self: stretch;
 }
 
@@ -142,6 +146,7 @@
           flex: 1 0 auto;
   min-width: 0px;
   -ms-flex-item-align: top;
+      -ms-grid-row-align: top;
       align-self: top;
 }
 .ui.modal > .content > .icon + .description,
