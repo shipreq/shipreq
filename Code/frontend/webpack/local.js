@@ -17,7 +17,7 @@ const config = {
       'expose-loader?React!react',
       'expose-loader?ReactDOM!react-dom',
       'expose-loader?ReactDOMServer!react-dom/server',
-      'expose-loader?React.addons.TestUtils!react-addons-test-utils',
+      'expose-loader?React.addons.TestUtils!react-dom/test-utils',
       'expose-loader?ReactCollapse!react-collapse',
       'expose-loader?moment!moment',
       'expose-loader?autosize!autosize',
