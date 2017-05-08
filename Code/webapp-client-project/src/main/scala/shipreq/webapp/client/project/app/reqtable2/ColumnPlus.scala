@@ -7,6 +7,12 @@ import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.base.lib.DataReusability._
 
+/**
+  * @param live Is the column itself live/dead.
+  *             Straightforward in all cases except [[Column.DeletionReason]] which technically
+  *             isn't a dead column, but is [[Dead]] here because it's only applicable to dead rows and only makes
+  *             sense being rendered when [[FilterDead]] is [[ShowDead]].
+  */
 final case class ColumnPlus(column: Column, live: Live, name: String)
 
 object ColumnPlus {
