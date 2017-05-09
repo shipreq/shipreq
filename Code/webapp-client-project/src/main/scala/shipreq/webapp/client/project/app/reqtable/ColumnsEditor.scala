@@ -1,3 +1,4 @@
+/*
 package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react._
@@ -39,3 +40,4 @@ object ColumnsEditor {
     .configure(shouldComponentUpdate)
     .build
 }
+*/

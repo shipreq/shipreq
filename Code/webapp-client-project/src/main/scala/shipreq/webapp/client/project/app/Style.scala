@@ -181,6 +181,7 @@ object Style extends StyleSheet.Inline {
   }
 
   // ===================================================================================================================
+  /*
   object reqtable {
     import shipreq.webapp.client.project.app.reqtable.Column
     import shipreq.webapp.client.project.app.reqtable.Table.CellStatus
@@ -363,51 +364,40 @@ object Style extends StyleSheet.Inline {
       )
     }
 
-    val autoCompleteItemTitle = style(
+  } // reqtable
+  */
+
+  // ===================================================================================================================
+  object deletionForm {
+
+    val section = style(
+      marginTop(2.3 em),
+      marginBottom(1 em),
       fontWeight.bold)
 
-    val autoCompleteItemTitle2 = style(
-      paddingLeft(1 ex),
-      color(c"#333"))
+    val row = styleF(D.live)(live => styleS(
+      mixinIf(live is Dead)(backgroundColor(c"#fee"), color(c"#a00"))
+    ))
 
-    val autoCompleteItemDesc = style(
-      color(c"#444"),
-      fontStyle.italic,
-      overflow.hidden,
-      maxWidth(36 ex))
+    val indent: Int => TagMod =
+      Memo(n => TagMod(^^.display.`inline-block`, ^^.width := s"${n * 3}ex"))
 
-    object deleteRestore {
+    val reqDesc =
+      style(marginLeft(0.5 ex))
 
-      val section = style(
-        marginTop(2.3 em),
-        marginBottom(1 em),
-        fontWeight.bold)
+    val impliedByPrefix =
+      style(marginRight(0.5 ex))
 
-      val row = styleF(D.live)(live => styleS(
-        mixinIf(live is Dead)(backgroundColor(c"#fee"), color(c"#a00"))
-      ))
+    val impliedByItem = styleF(D.live)(l => styleS(
+      // hoverShowsInfo, // It's a link to ReqDetail now
+      mixinIf(l is Live)(color(c"#111")),
+      mixinIf(l is Dead)(
+        //textDecoration := ^.lineThrough,
+        color(c"#daa"))
+    ))
 
-      val indent: Int => TagMod =
-        Memo(n => TagMod(^^.display.`inline-block`, ^^.width := s"${n * 3}ex"))
-
-      val reqDesc =
-        style(marginLeft(0.5 ex))
-
-      val impliedByPrefix =
-        style(marginRight(0.5 ex))
-
-      val impliedByItem = styleF(D.live)(l => styleS(
-        // hoverShowsInfo, // It's a link to ReqDetail now
-        mixinIf(l is Live)(color(c"#111")),
-        mixinIf(l is Dead)(
-          //textDecoration := ^.lineThrough,
-          color(c"#daa"))
-      ))
-
-      def subCodeCount = impliedByItem
-    }
-
-  } // reqtable
+    def subCodeCount = impliedByItem
+  }
 
   // ===================================================================================================================
   object reqdetail {
@@ -633,6 +623,21 @@ object Style extends StyleSheet.Inline {
       val abort = style(
         &.hover(color(c"#DB2828").important))
     }
+
+    object autoComplete {
+      val itemTitle = style(
+        fontWeight.bold)
+
+      val itemTitle2 = style(
+        paddingLeft(1 ex),
+        color(c"#333"))
+
+      val itemDesc = style(
+        color(c"#444"),
+        fontStyle.italic,
+        overflow.hidden,
+        maxWidth(36 ex))
+    }
   }
 
   // ===================================================================================================================
@@ -672,15 +677,16 @@ object Style extends StyleSheet.Inline {
     help.examplesTable,
     impgraphPage.graph,
     cfg.deadMnemonic,
-    reqtable.sortEditor.dragArea,
-    reqtable.sortCriteriaEditor.conclusiveColumnName,
-    reqtable.filterEditor.errorMsg,
-    reqtable.table,
-    reqtable.deleteRestore.impliedByItem(Live),
+//    reqtable.sortEditor.dragArea,
+//    reqtable.sortCriteriaEditor.conclusiveColumnName,
+//    reqtable.filterEditor.errorMsg,
+//    reqtable.table,
+    deletionForm.impliedByItem(Live),
     reqtable2.table.selectionColumnHeader,
     reqdetail.detailTable,
     reqdetail.useCaseStep.container,
     widgets.issue,
+    widgets.autoComplete.itemTitle,
     widgets.reqTypeSelector.dropdown)
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()
 //  ConsoleIO(_.info(s"Styles: ${Style.register.styles.length}")).unsafePerformIO()

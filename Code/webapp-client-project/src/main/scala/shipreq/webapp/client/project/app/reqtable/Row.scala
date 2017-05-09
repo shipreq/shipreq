@@ -1,3 +1,4 @@
+/*
 package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react.Key
@@ -252,3 +253,4 @@ object Row {
   def cfImp(id: CustomField.Implication.Id): OV[Pubid]           = cfImps ^|-> mmLens(id)
   def cfTag(id: CustomField.Tag        .Id): OV[ApplicableTagId] = cfTags ^|-> mmLens(id)
 }
+*/

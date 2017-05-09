@@ -1,3 +1,4 @@
+/*
 package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react.ScalazReact._
@@ -77,3 +78,4 @@ object ViewSettings {
     ViewSettings(cols, SortCriteria.default, None, fd)
   }
 }
+*/

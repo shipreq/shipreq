@@ -15,7 +15,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, GrammarSpec, PlainText, Text, TextSearch}
 import shipreq.webapp.client.base.data.{Contextualise, Plain}
 import shipreq.webapp.client.base.jsfacade.{TextComplete => TC}
-import shipreq.webapp.client.project.app.Style.{reqtable => *}
+import shipreq.webapp.client.project.app.Style.widgets.{autoComplete => *}
 import shipreq.webapp.client.project.feature.AutoCompleteFeature
 import AutoCompleteFeature.{Strategies, autoLiftSingleStrategy}
 import TC.{Query, Strategy}
@@ -137,8 +137,8 @@ object AutoComplete {
 
     def li(i: ReqItem): VdomElement =
       <.div(
-        <.div(*.autoCompleteItemTitle, i.pubidStr),
-        <.div(*.autoCompleteItemDesc, i.title))
+        <.div(*.itemTitle, i.pubidStr),
+        <.div(*.itemDesc, i.title))
 
     reflinkContext.strategy(s"(\\S+?)", searchFn)(_.pubidStr, " ")(Contextualise)
       .template((i, _) => ReactDOMServer.renderToStaticMarkup(li(i)))
@@ -292,13 +292,13 @@ object AutoComplete {
           case \/-(a) =>
             <.div(
               <.div(
-                <.span(*.autoCompleteItemTitle, code),
-                <.span(*.autoCompleteItemTitle2, s"(${PlainText.pubidByReqId(a.reqId, project)})"),
-              <.div(*.autoCompleteItemDesc, pt.reqTitleById(a.reqId))))
+                <.span(*.itemTitle, code),
+                <.span(*.itemTitle2, s"(${PlainText.pubidByReqId(a.reqId, project)})"),
+              <.div(*.itemDesc, pt.reqTitleById(a.reqId))))
           case -\/(a) =>
             <.div(
-              <.div(*.autoCompleteItemTitle, code),
-              <.div(*.autoCompleteItemDesc, pt.reqCodeGroupTitle(a.group)))
+              <.div(*.itemTitle, code),
+              <.div(*.itemDesc, pt.reqCodeGroupTitle(a.group)))
         }
       }
 

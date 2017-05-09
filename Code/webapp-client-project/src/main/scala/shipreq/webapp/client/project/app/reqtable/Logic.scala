@@ -1,3 +1,4 @@
+/*
 package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty._
@@ -581,3 +582,4 @@ private[reqtable] object Logic {
       maybe(vs.viewReqCodesAsTree, addReqCodeTreeToRows)
   }
 }
+*/

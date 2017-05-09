@@ -1,3 +1,4 @@
+/*
 package shipreq.webapp.client.project.app.reqtable
 
 import monocle.Optional
@@ -139,3 +140,4 @@ class ColumnRenderers(project: Project, pw: ProjectWidgets) {
     case _: ReqCodeGroupRow => RenderDeletionReason.forReqCodeGroup.fold[View](`N/A`)(Render(_))
   }
 }
+*/

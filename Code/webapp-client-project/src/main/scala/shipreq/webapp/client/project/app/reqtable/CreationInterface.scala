@@ -1,3 +1,4 @@
+/*
 package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty.NonEmptyVector
@@ -369,3 +370,4 @@ class CreationInterface($               : StateAccessPure[State],
     val Component = ScalaComponent.builder[Props]("CreateUC").render_P(render).build
   }
 }
+*/

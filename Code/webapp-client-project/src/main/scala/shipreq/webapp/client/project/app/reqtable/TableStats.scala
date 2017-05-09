@@ -1,3 +1,4 @@
+/*
 package shipreq.webapp.client.project.app.reqtable
 
 import nyaya.prop._
@@ -96,3 +97,4 @@ case class TableStats(filterDead      : FilterDead,
     s ~ '.'
   }
 }
+*/

@@ -1,3 +1,4 @@
+/*
 package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react.ScalazReact._
@@ -209,3 +210,4 @@ object SortCriteria {
     go(0)
   }
 }
+*/

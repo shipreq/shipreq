@@ -1,3 +1,4 @@
+/*
 package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react._
@@ -39,3 +40,4 @@ package object reqtable {
     implicit def reusability: Reusability[PreviewId] = Reusability.byUnivEq
   }
 }
+*/

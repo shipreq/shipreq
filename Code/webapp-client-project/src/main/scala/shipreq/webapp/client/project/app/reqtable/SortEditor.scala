@@ -1,3 +1,4 @@
+/*
 package shipreq.webapp.client.project.app.reqtable
 
 import scalacss.ScalaCssReact._
@@ -103,3 +104,4 @@ object SortEditor {
     .configure(Reusability.shouldComponentUpdate)
     .build
 }
+*/

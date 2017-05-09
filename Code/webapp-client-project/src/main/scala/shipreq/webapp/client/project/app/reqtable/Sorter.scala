@@ -1,3 +1,4 @@
+/*
 package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.stdlib_ext.MutableArray
@@ -429,3 +430,4 @@ object Sorter {
       Some((setup, dir) => row => fns.foldLeft(row)((r, f) => f(setup, dir)(r)))
   }
 }
+*/

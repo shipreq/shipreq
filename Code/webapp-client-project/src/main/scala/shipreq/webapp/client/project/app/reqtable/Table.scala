@@ -1,3 +1,4 @@
+/*
 package shipreq.webapp.client.project.app.reqtable
 
 import scalacss.Domain
@@ -377,3 +378,4 @@ object Table {
       case KeyCode.End      => moveFocus(e.currentTarget, Movement.Last, Movement.Last)
     }
 }
+*/

@@ -1,3 +1,4 @@
+/*
 package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react._, vdom.html_<^._, MonocleReact._
@@ -212,3 +213,4 @@ object ReqTable {
     .configure(shouldComponentUpdate)
     .build
 }
+*/

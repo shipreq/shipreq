@@ -1,3 +1,4 @@
+/*
 package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty._
@@ -225,3 +226,4 @@ object SelectionCtrls {
     .configure(shouldComponentUpdate)
     .build
 }
+*/
