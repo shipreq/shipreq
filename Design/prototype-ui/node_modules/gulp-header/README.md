@@ -56,23 +56,29 @@ gulp.src('./foo/*.js')
   .pipe(gulp.dest('./dist/'))
 ```
 
+## Issues and Alerts
+
+My handle on twitter is [@tracker1](https://twitter.com/tracker1) - If there is an urgent issue, I get twitter notifications sent to my phone.
+
 ## API
 
 ### header(text, data)
 
 #### text
 
-Type: `String`  
-Default: `''`  
+Type: `String`
+Default: `''`
 
 The template text.
 
 
 #### data
 
-Type: `Object`  
-Default: `{}`  
+Type: `Object`
+Default: `{}`
 
 The data object used to populate the text.
 
-*NOTE: using `false` will disable template processing of the header* 
+In addition to the passed in data, `file` will be the stream object for the file being templated against and `filepath` will be the path relative from the stream's basepath.
+
+*NOTE: using `false` will disable template processing of the header*

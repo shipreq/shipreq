@@ -9,13 +9,16 @@ function inspect (obj) {
   return util.inspect(obj, false, 5, true)
 }
 
-test('removes shebang from the code before parsing it', function (t) {
+test('preserves shebang', function (t) {
   var code = [
         '#!/usr/bin/env node'
       , 'var util = require("util");'
       ].join('\n')
     , opts = { Keyword: { 'var': '%:^' } }
-    , expected = '\n%var^ util = require("util");'
+    , expected = [
+        '#!/usr/bin/env node'
+      , '%var^ util = require("util");'
+      ].join('\n')
     , res = redeyed(code, opts).code
 
   t.equals(res, expected, inspect(code) + ' opts: ' + inspect(opts) + ' => ' + inspect(expected))

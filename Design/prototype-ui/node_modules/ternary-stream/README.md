@@ -23,7 +23,6 @@ var condition = function (data) {
 process.stdin
   .pipe(ternaryStream(condition, process.stdout))
   .pipe(fs.createWriteStream('./out.txt'));
-});
 ```
 
 Data will conditionally go to stdout, and always go to the file
@@ -48,7 +47,6 @@ var condition = function (data) {
 process.stdin
   .pipe(ternaryStream(condition, fs.createWriteStream('./truthy.txt'), fs.createWriteStream('./falsey.txt')))
   .pipe(process.stdout);
-});
 ```
 
 Data will either go to truthy.txt (if condition is true) or falsey.txt (if condition is false) and will always go to stdout

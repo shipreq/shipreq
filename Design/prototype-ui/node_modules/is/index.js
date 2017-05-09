@@ -1,4 +1,7 @@
 /* globals window, HTMLElement */
+
+'use strict';
+
 /**!
  * is
  * the definitive JavaScript type testing library
@@ -31,7 +34,7 @@ var hexRegex = /^[A-Fa-f0-9]+$/;
  * Expose `is`
  */
 
-var is = module.exports = {};
+var is = {};
 
 /**
  * Test general.
@@ -83,7 +86,9 @@ is.empty = function (value) {
 
   if (type === '[object Object]') {
     for (key in value) {
-      if (owns.call(value, key)) { return false; }
+      if (owns.call(value, key)) {
+        return false;
+      }
     }
     return true;
   }
@@ -131,7 +136,7 @@ is.equal = function equal(value, other) {
     if (key !== other.length) {
       return false;
     }
-    while (--key) {
+    while (key--) {
       if (!is.equal(value[key], other[key])) {
         return false;
       }
@@ -342,6 +347,17 @@ is.date = function (value) {
 };
 
 /**
+ * is.date.valid
+ * Test if `value` is a valid date.
+ *
+ * @param {Mixed} value value to test
+ * @returns {Boolean} true if `value` is a valid date, false otherwise
+ */
+is.date.valid = function (value) {
+  return is.date(value) && !isNaN(Number(value));
+};
+
+/**
  * Test element.
  */
 
@@ -393,7 +409,11 @@ is.error = function (value) {
 
 is.fn = is['function'] = function (value) {
   var isAlert = typeof window !== 'undefined' && value === window.alert;
-  return isAlert || toStr.call(value) === '[object Function]';
+  if (isAlert) {
+    return true;
+  }
+  var str = toStr.call(value);
+  return str === '[object Function]' || str === '[object GeneratorFunction]' || str === '[object AsyncFunction]';
 };
 
 /**
@@ -661,9 +681,26 @@ is.within = function (value, start, finish) {
  * @return {Boolean} true if `value` is an object, false otherwise
  * @api public
  */
-
 is.object = function (value) {
   return toStr.call(value) === '[object Object]';
+};
+
+/**
+ * is.primitive
+ * Test if `value` is a primitive.
+ *
+ * @param {Mixed} value value to test
+ * @return {Boolean} true if `value` is a primitive, false otherwise
+ * @api public
+ */
+is.primitive = function isPrimitive(value) {
+  if (!value) {
+    return true;
+  }
+  if (typeof value === 'object' || is.object(value) || is.fn(value) || is.array(value)) {
+    return false;
+  }
+  return true;
 };
 
 /**
@@ -759,3 +796,5 @@ is.hex = function (value) {
 is.symbol = function (value) {
   return typeof Symbol === 'function' && toStr.call(value) === '[object Symbol]' && typeof symbolValueOf.call(value) === 'symbol';
 };
+
+module.exports = is;
