@@ -71,8 +71,8 @@ final case class Project(name           : Project.Name,
   lazy val deadReqCount: Int =
     deadReqIds.size
 
-  lazy val reqTypeCount: LDStats[ReqTypeId, Int] = {
-    val b = new LDStats.Builder[ReqTypeId, Int]
+  lazy val reqTypeCount: LiveDeadStatMap[ReqTypeId, Int] = {
+    val b = new LiveDeadStatMap.Builder[ReqTypeId, Int]
     for (r <- reqs.reqIterator) {
       val live = r.live(config.reqTypes)
       b(r.reqTypeId).mod(live)(_ + 1)

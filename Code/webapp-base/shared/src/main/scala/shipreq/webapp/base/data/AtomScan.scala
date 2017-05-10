@@ -10,13 +10,13 @@ import AtomScan.IssueLoc
  *
  * @param codeRefs ReqCodes referenced in anything anywhere (including text in dead custom-text fields).
  */
-class AtomScan(val tagRefs        : LDStats[ReqId, Set[ApplicableTagId]],
-               val issues         : LDStats[IssueLoc, Vector[AnyIssue]],
+class AtomScan(val tagRefs        : LiveDeadStatMap[ReqId, Set[ApplicableTagId]],
+               val issues         : LiveDeadStatMap[IssueLoc, Vector[AnyIssue]],
                val reqRefs        : Set[ReqId],
                val codeRefs       : Set[ReqCodeId],
                val useCaseStepRefs: Set[UseCaseStepId]) {
 
-  lazy val issueCounts: LDStats[CustomIssueTypeId, Int] =
+  lazy val issueCounts: LiveDeadStatMap[CustomIssueTypeId, Int] =
     issues.countByValues(_.toStream.map(_.typ))
 }
 
@@ -31,8 +31,8 @@ object AtomScan {
   private implicit val tagSetMonoid = monoidSet[ApplicableTagId]
 
   def apply(p: Project): AtomScan = {
-    val tagRefs         = new LDStats.Builder[ReqId, Set[ApplicableTagId]]
-    val issues          = new LDStats.Builder[IssueLoc, Vector[AnyIssue]]
+    val tagRefs         = new LiveDeadStatMap.Builder[ReqId, Set[ApplicableTagId]]
+    val issues          = new LiveDeadStatMap.Builder[IssueLoc, Vector[AnyIssue]]
     val reqRefs         = UnivEq.setBuilder[ReqId]
     val codeRefs        = UnivEq.setBuilder[ReqCodeId]
     val useCaseStepRefs = UnivEq.setBuilder[UseCaseStepId]
