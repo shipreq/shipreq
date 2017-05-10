@@ -7,15 +7,14 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.univeq._
+import monocle.Lens
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-}
-import shipreq.base.util.ScalaExt.EndoFn
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.filter.{PotentialFilter, ValidFilter}
+import shipreq.webapp.base.filter.ValidFilter
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.text.{PlainText, TextSearch}
-import shipreq.webapp.client.base.data.On
 import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.base.lib.DataReusability._
 import shipreq.webapp.client.base.protocol.ClientProtocol
@@ -56,6 +55,7 @@ object ReqTablePage {
 
   @Lenses
   final case class State(tableSettings: TableSettings,
+                         filter       : FilterEditor.State,
                          selection    : RowSelection,
                          modal        : Modal.State)
 
@@ -66,6 +66,7 @@ object ReqTablePage {
     def init: State =
       State(
         TableSettings.default,
+        FilterEditor.State.init,
         Selection.empty,
         Modal.none)
   }
@@ -130,8 +131,25 @@ object ReqTablePage {
       } yield
         ColumnSelector.Props(sel, all, modSettings.map(m => u => m(_.setColumns(u)))).render
 
+    val stateValidFilter: Lens[State, Option[ValidFilter]] =
+      State.tableSettings ^|-> TableSettings.filter
+
+    val onFilterChange: FilterEditor.UpdateFn =
+      (newState, newFilter) => stateAccess.modState { oldState =>
+        var f = State.filter.set(newState)
+        if (newFilter !=* oldState.tableSettings.filter)
+          f = f compose stateValidFilter.set(newFilter)
+        f(oldState)
+      }
+
     def render(p: Props): VdomElement = {
       Px.refresh(manualRefresh: _*)
+
+      val filterEditor = FilterEditor.Props(
+        p.state.filter,
+        pxProject.value(),
+        onFilterChange,
+      ).render
 
       val table = Table.Whole.Props(
         pxRows.value(),
@@ -145,6 +163,7 @@ object ReqTablePage {
       ).render
 
       <.main(BaseStyles.containerFull,
+        filterEditor,
         pxColumnSelector.value(),
         table)
     }

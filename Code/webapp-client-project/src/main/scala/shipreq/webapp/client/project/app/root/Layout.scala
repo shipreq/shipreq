@@ -6,7 +6,7 @@ import shipreq.webapp.base.data.{ProjectCatalogue, Username}
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.base.ui._
 import shipreq.webapp.client.base.ui.semantic.Breadcrumb
-import shipreq.webapp.client.project.widgets.RichTextEditorHelp
+import shipreq.webapp.client.project.widgets.{FilterHelp, RichTextEditorHelp}
 import Routes.{Page, RouterCtl}
 
 object Layout {
@@ -45,6 +45,7 @@ object Layout {
 
   def render(p: Props): VdomElement =
     <.div(
+      FilterHelp.modal.render,
       RichTextEditorHelp.modal.render,
       MemberNavBar.Props(p.username, breadcrumb(p.page, p.project, p.rc), Nil).render,
       p.content)

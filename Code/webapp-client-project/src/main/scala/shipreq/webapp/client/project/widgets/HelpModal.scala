@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.widgets
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
@@ -23,10 +24,10 @@ object HelpModal {
     Accordion.Item(title, content)
   }
 
-  def Example(desc: TagMod*)(samplePlainText: String): Example =
+  def Example(desc: TagMod*)(sample1: String, sampleN: String*): Example =
     <.tr(
       exampleDesc(desc: _*),
-      exampleSample(samplePlainText))
+      exampleSample((sample1 +: sampleN).iterator.map(s => s: TagMod).intersperse(<.br).toTagMod))
 
   private val exampleDesc = <.td(*.exampleDesc)
   private val exampleSample = <.td(*.exampleSample)

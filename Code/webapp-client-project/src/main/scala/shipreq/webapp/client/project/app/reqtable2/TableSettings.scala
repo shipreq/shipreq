@@ -1,11 +1,11 @@
 package shipreq.webapp.client.project.app.reqtable2
 
-import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import monocle.macros.Lenses
 import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.filter.ValidFilter
+import shipreq.webapp.client.base.lib.DataReusability._
 
 @Lenses
 final case class TableSettings(columns: NonEmptyVector[Column],
@@ -67,7 +67,7 @@ final case class TableSettings(columns: NonEmptyVector[Column],
 
 object TableSettings {
   implicit def equality   : UnivEq[TableSettings]      = UnivEq.derive
-  implicit val reusability: Reusability[TableSettings] = Reusability.byEqual
+  implicit val reusability: Reusability[TableSettings] = Reusability.byRefOrUnivEq
 
   def default: TableSettings = {
     import Column._

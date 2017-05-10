@@ -80,7 +80,9 @@ object PotentialFilter {
     }
   }
 
-  def validator(p: Project): PotentialFilter => String \/ ValidFilter = {
+  final case class Validator(run: PotentialFilter => String \/ ValidFilter)
+
+  def validator(p: Project): Validator = Validator {
     type R = String \/ ValidFilter
     @inline implicit def autoR(a: ValidFilter): R = \/-(a)
     @inline def error(msg: String) = -\/(msg)

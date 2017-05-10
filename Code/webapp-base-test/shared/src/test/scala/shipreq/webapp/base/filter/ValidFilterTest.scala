@@ -11,10 +11,10 @@ import ValidFilter._
 object ValidFilterTest extends TestSuite {
 
   def assertTranslation(s: PF, p: Project = SampleProject6.project)(expect: ValidFilter): Unit =
-    assertEq(PF.validator(p)(s), \/-(expect))
+    assertEq(PF.validator(p).run(s), \/-(expect))
 
   def assertTranslationFails(s: PF, p: Project = SampleProject6.project)(errFrag: String): Unit =
-    PF.validator(p)(s) match {
+    PF.validator(p).run(s) match {
       case -\/(e) => assertContainsCI(e, errFrag)
       case \/-(v) => fail(s"Expected an error containing '$errFrag'. Got: $v")
     }

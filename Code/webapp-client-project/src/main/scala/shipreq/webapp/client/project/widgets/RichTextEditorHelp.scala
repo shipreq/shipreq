@@ -19,13 +19,13 @@ object RichTextEditorHelp {
     Group("Multiline")(
       Example(
         "A list of bullet points can be created by starting new lines with an asterisk (", code("*"), ") followed by a space.")(
-        "* item 1\n* item 2")),
+        "* item 1", "* item 2")),
 
     Group("Other")(
       Example("URLs are detected automatically, and presented as links.")("https://google.com"),
       Example("Emails are detected automatically, and presented as links.")("bob.loblaw@ad-law-firm.com"),
       Example(
-          "Mathematical expressions can be entered in TeX format, by surrounding in ", code("<math>...</math>"), ".",
+          "Mathematical expressions can be entered in TeX format, by surrounding in ", <.br, code("<math>…</math>"), ".",
           <.br, <.br,
           "For more detail, see ",
           <.a(^.target := "_blank", ^.href := "https://khan.github.io/KaTeX/", "KaTeX"), " or ",

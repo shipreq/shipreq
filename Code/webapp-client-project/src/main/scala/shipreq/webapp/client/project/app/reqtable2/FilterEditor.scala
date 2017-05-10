@@ -1,0 +1,142 @@
+package shipreq.webapp.client.project.app.reqtable2
+
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.extra._
+import org.scalajs.dom.html
+import scalacss.ScalaCssReact._
+import scalaz.{-\/, \/-}
+import shipreq.base.util.{Invalid, Valid, Validity}
+import shipreq.webapp.base.data.{Project, ShowDead}
+import shipreq.webapp.base.filter._
+import shipreq.webapp.client.base.data.Contextualise
+import shipreq.webapp.client.base.jsfacade.{TextComplete => TC}
+import shipreq.webapp.client.base.lib.DataReusability._
+import shipreq.webapp.client.base.ui.semantic.{Button, Icon, Input}
+import shipreq.webapp.client.project.app.Style.reqtable2.{filterEditor => *}
+import shipreq.webapp.client.project.lib.AutoComplete
+import shipreq.webapp.client.project.feature.AutoCompleteFeature
+import shipreq.webapp.client.project.widgets.FilterHelp
+
+/** Widget that allows users to edit the current filter.
+  *
+  * [ Filter...              ] [?]
+  */
+object FilterEditor {
+
+  type UpdateFn = (State, Option[ValidFilter]) => Callback
+
+  final case class Props(state  : State,
+                         project: Project,
+                         update : UpdateFn) {
+    @inline def render = Component(this)
+  }
+
+  implicit val reusabilityProps: Reusability[Props] =
+    Reusability.caseClassExcept('update) // used via $.props.flatMap in event handler which is reuse-safe
+
+  final case class State(text: String, validity: Validity)
+
+  object State {
+    def init: State =
+      State("", Valid)
+
+    implicit val reusability: Reusability[State] =
+      Reusability.caseClass
+  }
+
+  private val autoCompleteKeywords: TC.Strategy =
+    TC.Strategy.pattern("""(^|[^\w:])([a-z]+)$""", index = 2)
+      .search(TC caseInsensitiveStartsWith Stream("has", "no", "implies", "impliedBy"))
+      .replace("$1" + _ + ":")
+
+  private val autoCompletePresenceLackAttr: TC.Strategy =
+    TC.Strategy.pattern("""\b((?:has|no):)([a-z]*)$""", index = 2)
+      .search(TC caseInsensitiveStartsWith ValidFilter.Attr.values.toStream.map(_.name))
+      .replace("$1" + _ + " ")
+
+  private val correctInput: String => String = {
+    val newlines = """\s*[\n\r]\s*""".r
+    s => newlines.replaceAllIn(s, " ").trim
+  }
+
+  def parse(input: String, validator: PotentialFilter.Validator): (Validity, Option[ValidFilter]) =
+    FilterParser.parse(correctInput(input)) match {
+      case FilterParser.Result.Filter(pf) =>
+        validator.run(pf) match {
+          case \/-(f) => (Valid, Some(f))
+          case -\/(_) => (Invalid, None)
+        }
+      case FilterParser.Result.GeneralException(_)
+         | FilterParser.Result.ParseException(_, _) => (Invalid, None)
+      case FilterParser.Result.BlankFilter          => (Valid, None)
+    }
+
+  final class Backend($: BackendScope[Props, Unit]) {
+    var inputNode: html.Input = _
+
+    private val pxProject: Px[Project] =
+      Px.props($).map(_.project).withReuse.autoRefresh
+
+    private val pxFilterValidator: Px[PotentialFilter.Validator] =
+      pxProject.map(PotentialFilter.validator)
+
+    val autoCompleteStrategies: Px[AutoCompleteFeature.Strategies] =
+      pxProject.map { p =>
+        val hashtags = AutoComplete.hashtag(p, ShowDead, issues = true, tags = true)(Contextualise)
+        hashtags :+ autoCompletePresenceLackAttr :+ autoCompleteKeywords
+      }
+
+    private val helpButton: VdomTag =
+      Button(tipe = Button.Type.IconOnly(Icon.HelpCircle))
+        .tag(^.onClick --> FilterHelp.modal.show)
+
+    private val clearButton: VdomTag =
+      Button(tipe = Button.Type.IconOnly(Icon.Close))
+        .tag(^.onClick --> $.props.flatMap(_.update(State.init, None)))
+
+    private val onChange: ReactEventFromTextArea => Callback =
+      e => updateFilterText(e.target.value)
+
+    def updateFilterText(input: String): Callback =
+      for {
+        v ← pxFilterValidator.toCallback
+        r = parse(input, v)
+        p ← $.props
+        _ ← p.update(State(input, r._1), r._2)
+      } yield ()
+
+    def render(p: Props): VdomElement = {
+
+      var filterIcon =
+        Icon.Filter.tag
+
+      var input =
+        <.input.text(
+          ^.placeholder := "Filter...",
+          ^.value := p.state.text,
+          ^.onChange ==> onChange)
+
+      var onRight: TagMod =
+        helpButton
+
+      if (correctInput(p.state.text).nonEmpty) {
+        filterIcon = filterIcon(*.filterIcon(p.state.validity))
+        input      = input(*.input(p.state.validity))
+        onRight    = TagMod(clearButton, onRight)
+      }
+
+      Input.IconTextRight(
+        filterIcon,
+        input.ref(inputNode = _),
+        onRight,
+        p.state.validity)
+    }
+  }
+
+  val Component = ScalaComponent.builder[Props]("FilterEditor")
+    .renderBackend[Backend]
+    .configure(shouldComponentUpdate)
+    .configure(AutoCompleteFeature.installB(_.backend.inputNode, _.autoCompleteStrategies.value(), _.updateFilterText))
+    .build
+}

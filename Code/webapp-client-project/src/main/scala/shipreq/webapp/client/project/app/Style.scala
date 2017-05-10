@@ -175,7 +175,23 @@ object Style extends StyleSheet.Inline {
       val `N/A` = style(
         color(c"#666"),
         margin.horizontal(auto))
+    }
 
+    object filterEditor {
+      private def colourValid = color(c"#2C662D").important
+
+      val input = styleF(D.validity) {
+        case Valid => styleS(
+          backgroundColor(c"#FCFFF5").important,
+          colourValid,
+          (boxShadow := "0px 0px 0px 1px #A3C293 inset, 0px 0px 0px 0px rgba(0, 0, 0, 0)").important)
+        case Invalid => styleS()
+      }
+
+      val filterIcon = styleF(D.validity) {
+        case Valid   => styleS(opacity(1).important, colourValid)
+        case Invalid => styleS(opacity(1).important, color(c"#9f3a38").important)
+      }
     }
 
   }
@@ -682,6 +698,7 @@ object Style extends StyleSheet.Inline {
 //    reqtable.filterEditor.errorMsg,
 //    reqtable.table,
     deletionForm.impliedByItem(Live),
+    reqtable2.filterEditor.input(Valid),
     reqtable2.table.selectionColumnHeader,
     reqdetail.detailTable,
     reqdetail.useCaseStep.container,
