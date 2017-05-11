@@ -65,6 +65,8 @@ Misc
     ClientData.applyEvents
 
 * Tech
+  * Stop using scalaz.std.anything which brings in too much other stuff;
+    use custom instances that have the minimum typeclasses needed.
   * Remove specs2. Use scalatest/μtest.
   * Remove ScalaCheck. Use Nyaya.
   * Use fast boopickle codecs for webworkers: https://github.com/ochrons/boopickle#codecs

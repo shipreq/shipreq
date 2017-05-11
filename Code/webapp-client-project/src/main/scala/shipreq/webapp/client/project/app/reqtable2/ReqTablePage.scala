@@ -142,6 +142,18 @@ object ReqTablePage {
         f(oldState)
       }
 
+    val pxTableContentStats: Px[TableContentStats] =
+      for {
+        p    <- pxProject
+        rows <- pxRows
+      } yield Logic.stats(p, rows)
+
+    val pxPageSummary: Px[VdomElement] =
+      for {
+        stats <- pxTableContentStats
+        sel   <- pxRowSelectionVisible
+      } yield PageSummary.Props(stats, sel.legalSelection.size).render
+
     def render(p: Props): VdomElement = {
       Px.refresh(manualRefresh: _*)
 
@@ -163,6 +175,7 @@ object ReqTablePage {
       ).render
 
       <.main(BaseStyles.containerFull,
+        pxPageSummary.value(),
         filterEditor,
         pxColumnSelector.value(),
         table)

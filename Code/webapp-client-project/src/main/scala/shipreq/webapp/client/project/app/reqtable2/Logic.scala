@@ -7,6 +7,7 @@ import scala.annotation.tailrec
 import scala.collection.Traversable
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
+import scalaz.std.anyVal.intInstance
 import scalaz.std.option.optionInstance
 import scalaz.syntax.equal._
 import scalaz.syntax.semigroup._
@@ -537,46 +538,44 @@ private[reqtable2] object Logic {
       (row, items) => Row.reqCodeTree.set(items)(row))
 
 
-  def stats(p: Project, fd: FilterDead, rows: Iterable[Row]): TableStats = {
+  def stats(p: Project, rows: TraversableOnce[Row]): TableContentStats = {
 
     // Scan rows
-    var _codeGroups      = 0
-    var _counts          = UnivEq.emptyMap[ReqId, Int]
-    var _liveVisibleReqs = 0
-    var _deadVisibleReqs = 0
+    var codeGroups        = 0
+    var rowsByReq         = UnivEq.emptyMap[ReqId, Int]
+    val uniqueReqsInTable = LiveDeadStat.newBuilder[Int]
     rows foreach {
       case r: Row.ForReq =>
         val id = r.req.id
-        val c = _counts.getOrElse(id, 0)
+        val c = rowsByReq.getOrElse(id, 0)
+        rowsByReq = rowsByReq.updated(id, c + 1)
         if (c == 0)
-          r.live match {
-            case Live => _liveVisibleReqs += 1
-            case Dead => _deadVisibleReqs += 1
-          }
-        _counts = _counts.updated(id, c + 1)
+          uniqueReqsInTable.add(r.live, 1)
       case _: Row.ForReqCodeGroup =>
-        _codeGroups += 1
+        codeGroups += 1
     }
 
     // Find expansions
-    var _expandedReqs  = 0
-    var _expansionRows = 0
-    for (c <- _counts.values if c > 1) {
-      _expandedReqs  += 1
-      _expansionRows += c
+    var expandedReqs  = 0
+    var expansionRows = 0
+    rowsByReq.valuesIterator.filter(_ > 1).foreach { c =>
+      expandedReqs  += 1
+      expansionRows += c
     }
 
-    val totalDead = p.deadReqCount
-    val totalLive = p.reqs.size - totalDead
+    val deadReqsInProject = p.deadReqCount
+    val liveReqsInProject = p.reqs.size - deadReqsInProject
 
-    TableStats(fd,
-      liveVisibleReqs  = _liveVisibleReqs,
-      deadVisibleReqs  = _deadVisibleReqs,
-      liveFilteredReqs = totalLive - _liveVisibleReqs,
-      deadFilteredReqs = totalDead - _deadVisibleReqs,
-      expandedReqs     = _expandedReqs,
-      expansionRows    = _expansionRows,
-      codeGroups       = _codeGroups)
+    val reqsFilteredOut = LiveDeadStat(
+      live = liveReqsInProject - uniqueReqsInTable.live,
+      dead = deadReqsInProject - uniqueReqsInTable.dead)
+
+    TableContentStats(
+      uniqueReqsInTable = uniqueReqsInTable.result(),
+      reqsFilteredOut   = reqsFilteredOut,
+      expandedReqs      = expandedReqs,
+      expansionRows     = expansionRows,
+      codeGroups        = codeGroups)
   }
 
   // ===================================================================================================================

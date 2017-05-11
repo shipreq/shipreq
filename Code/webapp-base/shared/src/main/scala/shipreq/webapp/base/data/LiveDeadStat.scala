@@ -9,9 +9,7 @@ import shipreq.base.util.univeq._
 /**
  * Stats partitioned into Live & Dead.
  */
-final class LiveDeadStat[A](val live: A,
-                            val dead: A,
-                            val all : A) {
+final case class LiveDeadStat[A] private[LiveDeadStat](live: A, dead: A, all: A) {
 
   def +(c: LiveDeadStat[A])(implicit a: Semigroup[A]): LiveDeadStat[A] =
     LiveDeadStat(live |+| c.live, dead |+| c.dead)
@@ -24,12 +22,21 @@ object LiveDeadStat {
   def empty[A](implicit m: Monoid[A]): LiveDeadStat[A] =
     LiveDeadStat(m.zero, m.zero)
 
+  implicit def equality[A: UnivEq]: UnivEq[LiveDeadStat[A]] =
+    UnivEq.derive
+
+  def newBuilder[A: Monoid]: Builder[A] =
+    new Builder
+
   /**
    * Mutable [[LiveDeadStat]] builder.
    */
   final class Builder[A](implicit m: Monoid[A]) {
     var live = m.zero
     var dead = m.zero
+
+    def add(l: Live, a: A): Unit =
+      mod(l)(_ |+| a)
 
     def mod(l: Live)(f: A => A): Unit =
       l match {
@@ -90,6 +97,9 @@ final class LiveDeadStatMap[Key: UnivEq, A: Monoid] private[LiveDeadStatMap](val
 object LiveDeadStatMap {
   def apply[Key: UnivEq, A: Monoid](byKey: Map[Key, LiveDeadStat[A]]): LiveDeadStatMap[Key, A] =
     new LiveDeadStatMap(byKey)
+
+  def newBuilder[Key: UnivEq, A: Monoid]: Builder[Key, A] =
+    new Builder
 
   /**
    * Mutable [[LiveDeadStatMap]] builder.
