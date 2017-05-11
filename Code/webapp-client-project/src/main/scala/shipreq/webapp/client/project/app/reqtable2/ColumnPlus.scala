@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.reqtable2
 
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
-import japgolly.scalajs.react.extra.Reusability
+import japgolly.scalajs.react.extra._
 import japgolly.univeq.UnivEq
 import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.base.data._
@@ -19,7 +19,6 @@ final case class ColumnPlus(column: Column, live: Live, name: String) {
 }
 
 object ColumnPlus {
-
   implicit def univEq: UnivEq[ColumnPlus] =
     UnivEq.derive
 
@@ -50,12 +49,28 @@ object ColumnPlus {
   def forceNES(f: Column => Option[ColumnPlus])(cs: NonEmptySet[Column]): NonEmptySet[ColumnPlus] =
     NonEmptySet force cs.whole.flatMap(f(_).toList)
 
-  def all(p: Project): NonEmptySet[ColumnPlus] =
-    forceNES(byProject(p))(Column.all(p.config))
-
-  def all(p: Project, fd: FilterDead): NonEmptySet[ColumnPlus] =
-    NonEmptySet.force(all(p).whole filter filterDead(fd))
-
   val filterDead: FilterDead => ColumnPlus => Boolean =
     FilterDead.memo(_.filterFnBy[ColumnPlus](_.live))
+
+  final case class All(columns: NonEmptySet[ColumnPlus]) {
+    private val map: Map[Column, ColumnPlus] =
+      columns.iterator.map(c => (c.column, c)).toMap
+
+    def apply(c: Column): ColumnPlus =
+      map(c)
+  }
+
+  object All {
+    implicit def univEq: UnivEq[All] =
+      UnivEq.derive
+
+    implicit val reusability: Reusability[All] =
+      Reusability.byRefOrUnivEq
+
+    def apply(p: Project): All =
+      new All(forceNES(byProject(p))(Column.all(p.config)))
+
+    def apply(p: Project, fd: FilterDead): All =
+      new All(NonEmptySet.force(apply(p).columns.whole filter filterDead(fd)))
+  }
 }

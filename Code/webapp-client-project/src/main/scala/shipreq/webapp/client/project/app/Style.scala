@@ -194,6 +194,65 @@ object Style extends StyleSheet.Inline {
       }
     }
 
+    object sortEditor {
+
+      val header = style(
+        display.inlineBlock,
+        verticalAlign.top,
+        marginTop(1.3.ex))
+
+      val dragArea = style(
+        display.inlineBlock,
+        paddingRight(10.ex)) // ← Gives a bit more room to drag to tail, rather than outside
+
+      val draggableCriterion = styleF(D.dragStatus)(status =>
+        styleS(
+          marginLeft(2 ex),
+          borderRadius(4.px),
+          cursor.pointer, // Because click changes sort direction
+          (status match {
+            case DragToReorder.Normal     => mixin(display.inlineBlock)
+            case DragToReorder.DragSource => mixin(display.inlineBlock, opacity(.4), border(2 px, dashed, c"#000"))
+            case DragToReorder.Tombstone  => mixin(display.none)
+          }): StyleS
+        ))
+
+      val criterionBorder = style(
+        borderRadius(4.px),
+        boxShadow := "0 0 0 1px rgba(34,36,38,.15) inset")
+
+      val name = styleF(Domain.boolean)(conclusive =>
+        styleS(
+          border.none,
+          padding(v = 0.75.em, h = 1.5.em),
+          verticalAlign.middle,
+          color(rgba(0,0,0,.6)),
+          fontSize(0.85714286.rem),
+          mixinIf(conclusive)(fontWeight.bold)))
+
+      val sortMethod = style(
+        border.none,
+        backgroundColor(rgba(0,0,0,.05)),
+        verticalAlign.middle,
+        textAlign.center,
+        padding(`0`),
+        width(2.57142857.em),
+        borderTopRightRadius.inherit,
+        borderBottomRightRadius.inherit)
+
+      private val sortMethodBase = mixin(
+        display.block,
+        width(100.%%),
+        opacity(0.5))
+
+      private val sortMethodHalf = mixin(
+        sortMethodBase,
+        height(0.56.em))
+
+      val sortMethodFull       = style(sortMethodBase, height(0.6.em))
+      val sortMethodHalfTop    = style(sortMethodHalf, marginBottom(0.26.em))
+      val sortMethodHalfBottom = style(sortMethodHalf)
+    }
   }
 
   // ===================================================================================================================
@@ -699,6 +758,7 @@ object Style extends StyleSheet.Inline {
 //    reqtable.table,
     deletionForm.impliedByItem(Live),
     reqtable2.filterEditor.input(Valid),
+    reqtable2.sortEditor.dragArea,
     reqtable2.table.selectionColumnHeader,
     reqdetail.detailTable,
     reqdetail.useCaseStep.container,

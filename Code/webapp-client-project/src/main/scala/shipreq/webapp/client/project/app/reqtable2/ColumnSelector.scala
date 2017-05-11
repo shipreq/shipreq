@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.app.reqtable2
 
-import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
-import japgolly.microlibs.stdlib_ext.MutableArray
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -9,7 +8,6 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.client.base.data._
 import shipreq.webapp.client.base.lib.DataReusability._
 import shipreq.webapp.client.base.ui.semantic.{Button, Icon, Popup}
-import shipreq.webapp.client.project.app.reqtable2.ColumnSelector.ColumnCheckboxes
 import shipreq.webapp.client.project.widgets.CheckboxList
 
 /**
@@ -28,7 +26,7 @@ import shipreq.webapp.client.project.widgets.CheckboxList
 object ColumnSelector {
 
   final case class Props(active   : NonEmptyVector[Column],
-                         available: NonEmptySet[ColumnPlus],
+                         available: ColumnPlus.All,
                          update   : NonEmptyVector[Column] ~=> Callback) {
     @inline def render = Component(this)
   }
@@ -59,21 +57,19 @@ object ColumnSelector {
       .render)
 
   private def render(p: Props): VdomElement = {
-    val columnPlusLookup: Map[Column, ColumnPlus] =
-      p.available.iterator.map(c => (c.column, c)).toMap
 
     val activeColumns: Set[Column] =
       p.active.whole.toSet
 
     val unselectedColumns: Array[ColumnPlus] =
-      p.available
+      p.available.columns
         .iterator
         .filter(c => !activeColumns.contains(c.column))
         .toArray
         .sortBy(_.name)
 
     val columns: NonEmptyVector[(ColumnPlus, On)] =
-      p.active.map(c => (columnPlusLookup(c), On)) ++ unselectedColumns.map((_, Off))
+      p.active.map(c => (p.available(c), On)) ++ unselectedColumns.map((_, Off))
 
     val items: NonEmptyVector[ColumnCheckboxes.Item] =
       columns.map { case (c, on) =>

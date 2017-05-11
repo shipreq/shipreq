@@ -69,14 +69,21 @@ object ReqTablePage {
         FilterEditor.State.init,
         Selection.empty,
         Modal.none)
+
+    val validFilter: Lens[State, Option[ValidFilter]] =
+      tableSettings ^|-> TableSettings.filter
+
+    val sortCriteria: Lens[State, SortCriteria] =
+      tableSettings ^|-> TableSettings.order
   }
 
   final class Backend(sp: StaticProps, $: BackendScope[Props, Unit]) {
     import sp._
     import cd.pxProject
 
-    val modSettings : ModFn[TableSettings] = Reusable.fn.state(stateAccess zoomStateL State.tableSettings).mod
-    val setSelection: SetFn[RowSelection ] = Reusable.fn.state(stateAccess zoomStateL State.selection).set
+    val modSettings    : ModFn[TableSettings] = Reusable.fn.state(stateAccess zoomStateL State.tableSettings).mod
+    val setSelection   : SetFn[RowSelection ] = Reusable.fn.state(stateAccess zoomStateL State.selection).set
+    val setSortCriteria: SetFn[SortCriteria ] = Reusable.fn.state(stateAccess zoomStateL State.sortCriteria).set
 
     private var manualRefresh = List.empty[Px.ThunkM[_]]
     private def pxProps[A: Reusability](f: Props => A): Px.ThunkM[A] = {
@@ -117,28 +124,25 @@ object ReqTablePage {
       } yield ColumnPlus.forceNEV(ColumnPlus.byProject(p))(cs))
         .withReuse
 
-    val pxAvailableColumnsPlus: Px[NonEmptySet[ColumnPlus]] =
+    val pxColumnPlusAll: Px[ColumnPlus.All] =
       (for {
         p  <- pxProject
         fd <- pxFilterDead
-      } yield ColumnPlus.all(p, fd))
+      } yield ColumnPlus.All(p, fd))
         .withReuse
 
     val pxColumnSelector: Px[VdomElement] =
       for {
         sel <- pxActiveColumns
-        all <- pxAvailableColumnsPlus
+        all <- pxColumnPlusAll
       } yield
         ColumnSelector.Props(sel, all, modSettings.map(m => u => m(_.setColumns(u)))).render
-
-    val stateValidFilter: Lens[State, Option[ValidFilter]] =
-      State.tableSettings ^|-> TableSettings.filter
 
     val onFilterChange: FilterEditor.UpdateFn =
       (newState, newFilter) => stateAccess.modState { oldState =>
         var f = State.filter.set(newState)
         if (newFilter !=* oldState.tableSettings.filter)
-          f = f compose stateValidFilter.set(newFilter)
+          f = f compose State.validFilter.set(newFilter)
         f(oldState)
       }
 
@@ -153,6 +157,12 @@ object ReqTablePage {
         stats <- pxTableContentStats
         sel   <- pxRowSelectionVisible
       } yield PageSummary.Props(stats, sel.legalSelection.size).render
+
+    val pxSortCriteriaEditor: Px[VdomElement] =
+      for {
+        s <- pxTableSettings
+        c <- pxColumnPlusAll
+      } yield SortCriteriaEditor.Props(s.order, setSortCriteria, c).render
 
     def render(p: Props): VdomElement = {
       Px.refresh(manualRefresh: _*)
@@ -176,6 +186,7 @@ object ReqTablePage {
 
       <.main(BaseStyles.containerFull,
         pxPageSummary.value(),
+        pxSortCriteriaEditor.value(),
         filterEditor,
         pxColumnSelector.value(),
         table)
