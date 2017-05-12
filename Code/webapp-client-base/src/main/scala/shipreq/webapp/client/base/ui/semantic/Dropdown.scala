@@ -3,6 +3,8 @@ package shipreq.webapp.client.base.ui.semantic
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.html
+import scala.scalajs.js
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /** http://semantic-ui.com/modules/dropdown.html
   */
@@ -44,4 +46,43 @@ object Dropdown {
   }
 
   type Items = Seq[Item]
+
+  val itemValue = VdomAttr[String]("data-value")
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  @ScalaJSDefined
+  trait JsOptions extends js.Object {
+    import JsOptions._
+    val action  : js.UndefOr[Action  ] = js.undefined
+    val `match` : js.UndefOr[Match   ] = js.undefined
+    val delay   : js.UndefOr[Delay   ] = js.undefined
+    val onChange: js.UndefOr[OnChange] = js.undefined
+  }
+
+  object JsOptions {
+
+    @ScalaJSDefined
+    sealed trait Action extends js.Any
+    object Action {
+      @inline def Hide = "hide".asInstanceOf[Action]
+    }
+
+    @ScalaJSDefined
+    sealed trait Match extends js.Any
+    object Match {
+      @inline def Both  = "both".asInstanceOf[Match]
+      @inline def Text  = "text".asInstanceOf[Match]
+      @inline def Value = "value".asInstanceOf[Match]
+    }
+
+    @ScalaJSDefined
+    trait Delay extends js.Object {
+      val show: js.UndefOr[Int] = js.undefined
+      val hide: js.UndefOr[Int] = js.undefined
+    }
+
+    // Arg = itemValue
+    type OnChange = js.Function1[String, Unit]
+  }
 }

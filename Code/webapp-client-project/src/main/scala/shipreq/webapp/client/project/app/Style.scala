@@ -150,6 +150,13 @@ object Style extends StyleSheet.Inline {
       val flexGap = style(flexGrow(1))
     }
 
+    object creation {
+
+      val buttonDropdown = style(
+        color(c"#eee").important,
+        backgroundColor(c"#00a632").important)
+    }
+
     object table {
 
       private val headerBase = style(
@@ -770,6 +777,7 @@ object Style extends StyleSheet.Inline {
 //    reqtable.filterEditor.errorMsg,
 //    reqtable.table,
     deletionForm.impliedByItem(Live),
+    reqtable2.creation.buttonDropdown,
     reqtable2.filterEditor.input(Valid),
     reqtable2.sortEditor.dragArea,
     reqtable2.page.viewCtrls,

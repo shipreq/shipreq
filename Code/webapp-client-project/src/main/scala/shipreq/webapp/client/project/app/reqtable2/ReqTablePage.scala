@@ -10,6 +10,7 @@ import japgolly.univeq._
 import monocle.Lens
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
+import shipreq.base.util.Allow
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.ValidFilter
 import shipreq.webapp.base.protocol._
@@ -58,6 +59,7 @@ object ReqTablePage {
   final case class State(tableSettings: TableSettings,
                          filter       : FilterEditor.State,
                          selection    : RowSelection,
+                         newButton    : NewButton.State,
                          modal        : Modal.State)
 
   object State {
@@ -69,6 +71,7 @@ object ReqTablePage {
         TableSettings.default,
         FilterEditor.State.init,
         Selection.empty,
+        NewButton.initState,
         Modal.none)
 
     val validFilter: Lens[State, Option[ValidFilter]] =
@@ -165,8 +168,21 @@ object ReqTablePage {
         c <- pxColumnPlusAll
       } yield SortCriteriaEditor.Props(s.order, setSortCriteria, c).render
 
+    val newButtonUpdate: Reusable[NewButton.Update] =
+      Reusable.byRef(
+        NewButton.Update(
+          stateAccess.zoomStateL(State.newButton).setState(_),
+          c => Callback.alert("Create: " + c)))
+
     def render(p: Props): VdomElement = {
       Px.refresh(manualRefresh: _*)
+
+      val newButton = NewButton.Props(
+        p.state.newButton,
+        pxProject.value().config.reqTypes,
+        Allow,
+        Some(newButtonUpdate),
+      ).render
 
       val filterEditor = FilterEditor.Props(
         p.state.filter,
@@ -187,6 +203,7 @@ object ReqTablePage {
 
       <.main(BaseStyles.containerFull,
         ViewsMenu.Component(p.filterDead),
+        newButton,
         pxPageSummary.value(),
         <.div(*.viewCtrls,
           pxSortCriteriaEditor.value(),
