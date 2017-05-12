@@ -7,13 +7,16 @@ const
 const extractCss = new ExtractTextPlugin({ filename: '[name].css' });
 const extractLess = new ExtractTextPlugin({ filename: '[name].css' });
 
+const entryPoints = es => es.filter(e => !!e);
+
 const config = ({ mode }) => ({
 
   entry: {
     public: './shipreq/styles/public.less',
     sir: './shipreq/styles/sir.less',
     semantic: './shipreq/semantic-ui',
-    member: [
+    member: entryPoints([
+      mode == 'dev' && 'expose-loader?Perf!react-addons-perf',
       'expose-loader?React!react',
       'expose-loader?ReactDOM!react-dom',
       'expose-loader?ReactDOMServer!react-dom/server',
@@ -22,7 +25,7 @@ const config = ({ mode }) => ({
       'expose-loader?loadjs!loadjs',
       'expose-loader?moment!moment',
       'expose-loader?autosize!autosize',
-    ],
+    ]),
   },
 
   externals: {

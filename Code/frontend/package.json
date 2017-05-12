@@ -10,6 +10,7 @@
     "loadjs": "^3.5.0",
     "moment": "^2.18.1",
     "react": "^15.5.4",
+    "react-addons-perf": "^15.5.0-rc.2",
     "react-collapse": "^4.0.2",
     "react-dom": "^15.5.4",
     "react-height": "^3.0.0",
