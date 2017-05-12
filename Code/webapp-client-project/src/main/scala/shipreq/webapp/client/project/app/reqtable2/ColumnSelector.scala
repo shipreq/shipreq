@@ -47,8 +47,7 @@ object ColumnSelector {
     }
 
   private val button = Button(
-    tipe = Button.Type.IconOnly(Icon.Columns),
-    state = Button.State.Active)
+    tipe = Button.Type.IconOnly(Icon.Columns))
 
   private val ColumnCheckboxes = CheckboxList[Column] (rs =>
     Popup.Js.Props(
