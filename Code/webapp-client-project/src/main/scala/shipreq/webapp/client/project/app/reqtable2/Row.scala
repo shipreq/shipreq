@@ -114,7 +114,7 @@ object Row {
   final case class ForReq(req: Req, live: Live, exp: Expansion, mv: MultiValues, instanceId: Int) extends Row {
     override val id       = Row.Id.ForReq(req.id, instanceId)
     override def sourceId = Row.SourceId.ForReq(req.id)
-    override def toString = s"\n$req\n$exp\n$mv\n"
+    override def toString = s"$id\n$req\n$exp\n$mv\n"
   }
 
   final case class ForCodeGroup(group: CodeGroup, reqCode: ReqCode.Value, reqCodeTreeItem: Option[ReqCodeTreeItem]) extends Row {

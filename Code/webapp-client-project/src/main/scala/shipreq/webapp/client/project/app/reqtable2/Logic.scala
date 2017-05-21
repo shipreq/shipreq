@@ -458,7 +458,7 @@ private[reqtable2] object Logic {
     mergeAdjacent(rows)((x, y) =>
       (x, y) match {
         case (a: Row.ForReq, b: Row.ForReq) if a.req.id ==* b.req.id =>
-          Some(Row.ForReq(a.req, a.live, a.exp |+| b.exp, a.mv |+| b.mv, a.instanceId)) // TODO resort
+          Some(Row.ForReq(a.req, a.live, a.exp |+| b.exp, a.mv |+| b.mv, a.instanceId min b.instanceId)) // TODO resort
         case _ =>
           None
       }
