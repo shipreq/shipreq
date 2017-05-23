@@ -25,58 +25,71 @@ object Editability {
     val forUseCaseSteps = ForUseCaseSteps(reqs.useCases)
   }
 
-  implicit val reusabilityForProject: Reusability[ForProject] =
-    Reusability.caseClass
+  final case class ForReqs(cfg: ProjectConfig, reqs: Requirements) {
+
+    def apply(id: GenericReqId): ForGenericReq = {
+      val req: GenericReq = reqs.genericReqs.need(id)
+      req.live(cfg.reqTypes) match {
+        case Live => ForGenericReq(Some((cfg, req.reqTypeId)))
+        case Dead => ForGenericReq(None)
+      }
+    }
+
+    def apply(id: UseCaseId): ForUseCase = {
+      val req: UseCase = reqs.useCases.imap.need(id)
+      req.live(cfg.reqTypes) match {
+        case Live => ForUseCase(Some(cfg))
+        case Dead => ForUseCase(None)
+      }
+    }
+  }
 
   sealed abstract class ForRow[R <: RowKey] {
     def apply(field: R#FieldKey): Permission
   }
 
-  final case class ForReqs(cfg: ProjectConfig, reqs: Requirements) {
-    def apply(id: ReqId): ForReq = {
-      val req: Req = reqs.need(id)
-      req.live(cfg.reqTypes) match {
-        case Live => ForReq(Some((req.reqTypeId, cfg)))
-        case Dead => ForReq(None)
-      }
-    }
-  }
-
-  implicit val reusabilityForReqs: Reusability[ForReqs] =
-    Reusability.caseClass
-
-  final case class ForReq(whenReqIsLive: Option[(ReqTypeId, ProjectConfig)]) extends ForRow[RowKey.Req] {
-
-    def apply(k: FieldKey.ForReq): Permission =
+  final case class ForGenericReq(whenReqIsLive: Option[(ProjectConfig, CustomReqTypeId)]) extends ForRow[RowKey.GenericReq] {
+    override def apply(k: FieldKey.ForGenericReq): Permission =
       whenReqIsLive match {
-        case Some((reqTypeId, cfg)) =>
-
-          def forCustomField(fid: CustomFieldId): Permission =
-            cfg.fields.get(fid) match {
-              case Some(f) => Allow when cfg.applicability(reqTypeId, fid).is(Applicable) && f.live(cfg).is(Live)
-              case None    => Deny // Field has been removed
-            }
-
+        case Some((cfg, reqTypeId)) =>
           k match {
-            case FieldKey.Code
-               | FieldKey.Title
+            case FieldKey.Codes
+               | FieldKey.GenericReqTitle
+               | FieldKey.ReqType
                | FieldKey.Tags(None)
                | FieldKey.Implications   (\/-(_))    => Allow
-            case FieldKey.Implications   (-\/(fid))  => forCustomField(fid)
-            case FieldKey.CustomTextField(fid)       => forCustomField(fid)
-            case FieldKey.Tags           (Some(fid)) => forCustomField(fid)
-            case FieldKey.ReqType =>
-              reqTypeId match {
-                case _: CustomReqTypeId    => Allow
-                case StaticReqType.UseCase => Deny
-              }
+            case FieldKey.Implications   (-\/(fid))  => customField(cfg, reqTypeId, fid)
+            case FieldKey.CustomTextField(fid)       => customField(cfg, reqTypeId, fid)
+            case FieldKey.Tags           (Some(fid)) => customField(cfg, reqTypeId, fid)
           }
         case None => Deny
       }
   }
 
-  implicit val reusabilityForReq: Reusability[ForReq] =
-    Reusability.caseClass
+  final case class ForUseCase(whenReqIsLive: Option[ProjectConfig]) extends ForRow[RowKey.UseCase] {
+    private def reqTypeId = StaticReqType.UseCase
+
+    override def apply(k: FieldKey.ForUseCase): Permission =
+      whenReqIsLive match {
+        case Some(cfg) =>
+          k match {
+            case FieldKey.Codes
+               | FieldKey.UseCaseTitle
+               | FieldKey.Tags(None)
+               | FieldKey.Implications   (\/-(_))    => Allow
+            case FieldKey.Implications   (-\/(fid))  => customField(cfg, reqTypeId, fid)
+            case FieldKey.CustomTextField(fid)       => customField(cfg, reqTypeId, fid)
+            case FieldKey.Tags           (Some(fid)) => customField(cfg, reqTypeId, fid)
+          }
+        case None => Deny
+      }
+  }
+
+  private def customField(cfg: ProjectConfig, reqTypeId: ReqTypeId, fid: CustomFieldId): Permission =
+    cfg.fields.get(fid) match {
+      case Some(f) => Allow when cfg.applicability(reqTypeId, fid).is(Applicable) && f.live(cfg).is(Live)
+      case None    => Deny // Field has been removed
+    }
 
   final case class ForCodeGroups(reqCodes: ReqCodes) extends AnyVal {
     def apply(id: ReqCodeId): ForCodeGroup =
@@ -90,25 +103,24 @@ object Editability {
       )
   }
 
-  implicit val reusabilityForCodeGroups: Reusability[ForCodeGroups] =
-    Reusability.caseClass
-
   final case class ForCodeGroup(permission: Permission) extends ForRow[RowKey.CodeGroup] {
     def apply(k: FieldKey.ForCodeGroup): Permission =
       k match {
         case FieldKey.Code
-           | FieldKey.Title => permission
+           | FieldKey.CodeGroupTitle => permission
       }
   }
-
-  implicit val reusabilityForCodeGroup: Reusability[ForCodeGroup] =
-    Reusability.caseClass
 
   final case class ForUseCaseSteps(useCases: UseCases) extends ForRow[RowKey.UseCaseSteps.type] {
     def apply(k: FieldKey.UseCaseStep): Permission =
       Allow when useCases.focusStep(k.id).live.is(Live)
   }
 
-  implicit val reusabilityForUseCaseSteps: Reusability[ForUseCaseSteps] =
-    Reusability.caseClass
+  implicit val reusabilityForProject     : Reusability[ForProject     ] = Reusability.caseClass
+  implicit val reusabilityForReqs        : Reusability[ForReqs        ] = Reusability.caseClass
+  implicit val reusabilityForGenericReq  : Reusability[ForGenericReq  ] = Reusability.caseClass
+  implicit val reusabilityForUseCase     : Reusability[ForUseCase     ] = Reusability.caseClass
+  implicit val reusabilityForCodeGroups  : Reusability[ForCodeGroups  ] = Reusability.caseClass
+  implicit val reusabilityForCodeGroup   : Reusability[ForCodeGroup   ] = Reusability.caseClass
+  implicit val reusabilityForUseCaseSteps: Reusability[ForUseCaseSteps] = Reusability.caseClass
 }

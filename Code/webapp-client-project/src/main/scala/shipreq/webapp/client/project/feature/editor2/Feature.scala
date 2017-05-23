@@ -48,7 +48,7 @@ object Feature {
   implicit val reusabilityStateForProject: Reusability[State.ForProject] = Reusability.mapSameOrEmpty
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-
+/*
   object Read {
 
     final case class ForCell(editor: Option[Editor], editability: Permission, async: AsyncState) {
@@ -98,7 +98,7 @@ object Feature {
     implicit val reusabilityForUseCaseSteps: Reusability[ForUseCaseSteps] = Reusability.caseClass
     implicit val reusabilityForProject     : Reusability[ForProject     ] = Reusability.caseClass
   }
-
+*/
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 /*
   object Write {

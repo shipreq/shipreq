@@ -4,19 +4,21 @@ import japgolly.scalajs.react.extra.Reusability
 import scalaz.\/
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data._
+import shipreq.webapp.base.data
 import shipreq.webapp.client.project.lib.DataReusability._
 
 sealed abstract class RowKey {
   type FieldKey <: shipreq.webapp.client.project.feature.editor2.FieldKey
 }
 object RowKey {
-  type Aux[C] = RowKey { type FieldKey = C }
+  type Aux[F <: FieldKey] = RowKey { type FieldKey = F }
 
-  import shipreq.webapp.base.data
+  final case class GenericReq(id: data.GenericReqId) extends RowKey {
+    override type FieldKey = FieldKey.ForGenericReq
+  }
 
-  final case class Req(id: data.ReqId) extends RowKey {
-    override type FieldKey = FieldKey.ForReq
+  final case class UseCase(id: data.UseCaseId) extends RowKey {
+    override type FieldKey = FieldKey.ForUseCase
   }
 
   final case class CodeGroup(id: data.ReqCodeId) extends RowKey {
@@ -34,6 +36,7 @@ object RowKey {
     Reusability.byUnivEq
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 /**
  * ADT representing all types of fields supported by the editor.
@@ -41,16 +44,25 @@ object RowKey {
  */
 sealed trait FieldKey
 object FieldKey {
-  sealed trait ForReq       extends FieldKey
-  sealed trait ForCodeGroup extends FieldKey
 
-  case object ReqType                                                         extends ForReq
-  case object Code                                                            extends ForReq with ForCodeGroup
-  case object Title                                                           extends ForReq with ForCodeGroup
-  case class  CustomTextField(field: CustomField.Text.Id)                     extends ForReq
-  case class  Tags           (field: Option[CustomField.Tag.Id])              extends ForReq
-  case class  Implications   (scope: CustomField.Implication.Id \/ Direction) extends ForReq
-  case class  UseCaseStep    (id: UseCaseStepId)                              extends FieldKey
+  sealed trait ForGenericReq  extends FieldKey
+  case object ReqType         extends ForGenericReq
+  case object GenericReqTitle extends ForGenericReq
+
+  sealed trait ForUseCase  extends FieldKey
+  case object UseCaseTitle extends ForUseCase
+
+  sealed trait ForReq extends ForGenericReq with ForUseCase
+  case object Codes                                                                extends ForReq
+  case class  CustomTextField(field: data.CustomField.Text.Id)                     extends ForReq
+  case class  Implications   (scope: data.CustomField.Implication.Id \/ Direction) extends ForReq
+  case class  Tags           (field: Option[data.CustomField.Tag.Id])              extends ForReq
+
+  sealed trait ForCodeGroup  extends FieldKey
+  case object Code           extends ForCodeGroup
+  case object CodeGroupTitle extends ForCodeGroup
+
+  case class UseCaseStep(id: data.UseCaseStepId) extends FieldKey
 
   // DeletionReason is a bit odd in that it is append-only, not directly editable.
   // case object DeletionReason extends CellKey
@@ -60,16 +72,4 @@ object FieldKey {
 
   implicit val reusability: Reusability[FieldKey] =
     Reusability.byUnivEq
-
-  val filterForReq: Option[FieldKey] => Option[ForReq] =
-    _.filter {
-      case _: ForReq => true
-      case _         => false
-    }.asInstanceOf[Option[ForReq]]
-
-  val filterForCodeGroup: Option[FieldKey] => Option[ForCodeGroup] =
-    _.filter {
-      case _: ForCodeGroup => true
-      case _               => false
-    }.asInstanceOf[Option[ForCodeGroup]]
 }
