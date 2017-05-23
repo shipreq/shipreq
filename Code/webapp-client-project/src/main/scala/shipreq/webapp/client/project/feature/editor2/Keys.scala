@@ -9,24 +9,53 @@ import shipreq.webapp.client.project.lib.DataReusability._
 
 sealed abstract class RowKey {
   type FieldKey <: shipreq.webapp.client.project.feature.editor2.FieldKey
+
+  import RowKey._
+
+  /** This shit is required to workaround Scala failing to be check exhaustivity when pattern-matching on RowKey.Aux */
+  def fold[F[_]](codeGroup   : CodeGroup  => F[FieldKey.ForCodeGroup],
+                 genericReq  : GenericReq => F[FieldKey.ForGenericReq],
+                 useCase     : UseCase    => F[FieldKey.ForUseCase],
+                 useCaseSteps:            => F[FieldKey.UseCaseStep]): F[FieldKey]
 }
+
 object RowKey {
   type Aux[F <: FieldKey] = RowKey { type FieldKey = F }
 
+  final case class CodeGroup(id: data.ReqCodeId) extends RowKey {
+    override type FieldKey = FieldKey.ForCodeGroup
+    override def fold[F[_]](codeGroup   : CodeGroup  => F[FieldKey.ForCodeGroup],
+                            genericReq  : GenericReq => F[FieldKey.ForGenericReq],
+                            useCase     : UseCase    => F[FieldKey.ForUseCase],
+                            useCaseSteps:            => F[FieldKey.UseCaseStep]): F[FieldKey] =
+      codeGroup(this)
+  }
+
   final case class GenericReq(id: data.GenericReqId) extends RowKey {
     override type FieldKey = FieldKey.ForGenericReq
+    override def fold[F[_]](codeGroup   : CodeGroup  => F[FieldKey.ForCodeGroup],
+                            genericReq  : GenericReq => F[FieldKey.ForGenericReq],
+                            useCase     : UseCase    => F[FieldKey.ForUseCase],
+                            useCaseSteps:            => F[FieldKey.UseCaseStep]): F[FieldKey] =
+      genericReq(this)
   }
 
   final case class UseCase(id: data.UseCaseId) extends RowKey {
     override type FieldKey = FieldKey.ForUseCase
-  }
-
-  final case class CodeGroup(id: data.ReqCodeId) extends RowKey {
-    override type FieldKey = FieldKey.ForCodeGroup
+    override def fold[F[_]](codeGroup   : CodeGroup  => F[FieldKey.ForCodeGroup],
+                            genericReq  : GenericReq => F[FieldKey.ForGenericReq],
+                            useCase     : UseCase    => F[FieldKey.ForUseCase],
+                            useCaseSteps:            => F[FieldKey.UseCaseStep]): F[FieldKey] =
+      useCase(this)
   }
 
   case object UseCaseSteps extends RowKey {
     override type FieldKey = FieldKey.UseCaseStep
+    override def fold[F[_]](codeGroup   : CodeGroup  => F[FieldKey.ForCodeGroup],
+                            genericReq  : GenericReq => F[FieldKey.ForGenericReq],
+                            useCase     : UseCase    => F[FieldKey.ForUseCase],
+                            useCaseSteps:            => F[FieldKey.UseCaseStep]): F[FieldKey] =
+      useCaseSteps
   }
 
   @inline implicit def equality: UnivEq[RowKey] =
@@ -42,30 +71,56 @@ object RowKey {
  * ADT representing all types of fields supported by the editor.
  * Meant to be used as a key for some given content (e.g. for requirement FR-1).
  */
-sealed trait FieldKey
+sealed trait FieldKey {
+  type Change
+}
 object FieldKey {
-
-  sealed trait ForGenericReq  extends FieldKey
-  case object ReqType         extends ForGenericReq
-  case object GenericReqTitle extends ForGenericReq
-
-  sealed trait ForUseCase  extends FieldKey
-  case object UseCaseTitle extends ForUseCase
-
-  sealed trait ForReq extends ForGenericReq with ForUseCase
-  case object Codes                                                                extends ForReq
-  case class  CustomTextField(field: data.CustomField.Text.Id)                     extends ForReq
-  case class  Implications   (scope: data.CustomField.Implication.Id \/ Direction) extends ForReq
-  case class  Tags           (field: Option[data.CustomField.Tag.Id])              extends ForReq
+  type Aux[C] = FieldKey { type Change = C }
 
   sealed trait ForCodeGroup  extends FieldKey
-  case object Code           extends ForCodeGroup
-  case object CodeGroupTitle extends ForCodeGroup
+  sealed trait ForGenericReq extends FieldKey
+  sealed trait ForUseCase    extends FieldKey
+  sealed trait ForReq        extends ForGenericReq with ForUseCase
 
-  case class UseCaseStep(id: data.UseCaseStepId) extends FieldKey
+  case object Code extends ForCodeGroup {
+    override type Change = Unit
+  }
 
-  // DeletionReason is a bit odd in that it is append-only, not directly editable.
-  // case object DeletionReason extends CellKey
+  case object CodeGroupTitle extends ForCodeGroup {
+    override type Change = Unit
+  }
+
+  case object Codes extends ForReq {
+    override type Change = Unit
+  }
+
+  final case class CustomTextField(field: data.CustomField.Text.Id) extends ForReq {
+    override type Change = Unit
+  }
+
+  case object GenericReqTitle extends ForGenericReq {
+    override type Change = Unit
+  }
+
+  final case class Implications(scope: data.ImplicationScope) extends ForReq {
+    override type Change = Unit
+  }
+
+  case object ReqType extends ForGenericReq {
+    override type Change = Unit
+  }
+
+  final case class Tags(field: Option[data.CustomField.Tag.Id]) extends ForReq {
+    override type Change = Unit
+  }
+
+  final case class UseCaseStep(id: data.UseCaseStepId) extends FieldKey {
+    override type Change = Unit
+  }
+
+  case object UseCaseTitle extends ForUseCase {
+    override type Change = Unit
+  }
 
   @inline implicit def equality: UnivEq[FieldKey] =
     UnivEq.derive

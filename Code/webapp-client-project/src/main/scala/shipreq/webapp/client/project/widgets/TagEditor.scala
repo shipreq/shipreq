@@ -81,7 +81,7 @@ object TagEditor {
     def commit    = (r: Output) => abortCommit.fold(Callback.empty)(_ commit r)
     val status    = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
 
-    def render = Component(this)
+    def render: VdomElement = Component(this)
   }
 
   implicit val reusabilityLookup: Reusability[Lookup] =

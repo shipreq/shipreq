@@ -27,7 +27,7 @@ final case class ViewReq(data: Data, pw: ProjectWidgets, fmtReqTypeShort: Boolea
   def imps(id: CustomField.Implication.Id): VdomElement =
     pw.implicationList(data.customImps(id))
 
-  def imps(scope: CustomField.Implication.Id \/ Direction): VdomElement =
+  def imps(scope: ImplicationScope): VdomElement =
     scope.fold(imps(_), imps(_))
 
   /** None means N/A */

@@ -43,7 +43,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
     def showPreview = validated.isChanged
 
-    def render = Component(this)
+    def render: VdomElement = Component(this)
   }
 
   implicit val reusabilityProps: Reusability[Props] =

@@ -1,7 +1,7 @@
 package shipreq.webapp.base
 
 import scalaz.\/
-import shipreq.base.util.{Digraph, MMTree, IMap}
+import shipreq.base.util.{Digraph, Direction, IMap, MMTree}
 import shipreq.base.util.univeq._
 
 package object data {
@@ -61,6 +61,7 @@ package object data {
 
   val Implications = new Digraph.FixAcyclic[ReqId, Int]("implications", _.value)
   type Implications = Implications.BiDir
+  type ImplicationScope = CustomField.Implication.Id \/ Direction
 
   type HashRefTarget       = ApplicableTag \/ CustomIssueType
   type CustomIssueTypeIMap = IMap[CustomIssueTypeId, CustomIssueType]

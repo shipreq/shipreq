@@ -18,10 +18,13 @@ object Feature {
 
   /** This is not safe for reusability because the implementation calls `CallbackTo#runNow()`. */
   trait Editor {
+    type Change
     def render(p: Permission, a: AsyncState): Option[VdomElement]
   }
 
   object Editor {
+    type Over[C] = Editor { type Change = C }
+
     implicit val reusability: Reusability[Editor] =
       Reusability.never // ∵ Editor is not safe for reusability
   }

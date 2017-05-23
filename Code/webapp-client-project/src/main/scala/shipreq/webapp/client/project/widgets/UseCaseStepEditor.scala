@@ -95,7 +95,7 @@ object UseCaseStepEditor {
     val status: EditorStatus =
       asyncStatus getOrElse EditorStatus.fromValidatedChange(validatedChanges)(commit, abort)
 
-    def render = Component(this)
+    def render: VdomElement = Component(this)
   }
 
   implicit val reusabilityProps: Reusability[Props] =

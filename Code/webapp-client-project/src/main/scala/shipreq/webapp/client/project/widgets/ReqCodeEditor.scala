@@ -48,7 +48,7 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
     def commit      = (r: Out) => abortCommit.fold(Callback.empty)(_ commit r)
     val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
 
-    def render = Component(this)
+    def render: VdomElement = Component(this)
   }
 
   implicit lazy val reusabilityProps: Reusability[Props] =

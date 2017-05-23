@@ -29,7 +29,7 @@ object ReqTypeSelector {
     def commit = if (changed) abortCommit.commit(edit.value) else Callback.empty
     val status = asyncStatus.getOrElse(if (changed) EditorStatus.Valid(commit) else EditorStatus.Ignore)
 
-    @inline def render = Component(this)
+    @inline def render: VdomElement = Component(this)
   }
 
   // implicit val reusabilityProps: Reusability[Props] =

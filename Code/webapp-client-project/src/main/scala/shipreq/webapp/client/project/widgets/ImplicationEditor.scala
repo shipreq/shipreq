@@ -88,7 +88,7 @@ object ImplicationEditor {
     def commit      = (r: Output) => abortCommit.fold(Callback.empty)(_ commit r)
     val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
 
-    def render = Component(this)
+    @inline def render: VdomElement = Component(this)
   }
 
   type ValidationFn = Lookup => Simple.Validator[String, _, SetDiff[ReqId]]
