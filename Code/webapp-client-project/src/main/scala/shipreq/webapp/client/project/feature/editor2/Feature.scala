@@ -7,6 +7,7 @@ import japgolly.scalajs.react.MonocleReact._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.validation.Simple.Invalidity
 import shipreq.webapp.client.base.feature._
 import shipreq.webapp.client.base.ui.EditTheme
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -20,6 +21,7 @@ object Feature {
   trait Editor {
     type Change
     def render(p: Permission, a: AsyncState): Option[VdomElement]
+    def change(): PotentialChange[Invalidity, Change]
   }
 
   object Editor {

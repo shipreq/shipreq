@@ -14,8 +14,16 @@ import shipreq.webapp.client.base.lib.AbortCommit
 import shipreq.webapp.client.project.feature.PreviewFeature
 import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets.ProjectWidgets
-import Feature.{AsyncError, AsyncState, Editor, State, PreviewId}
+import Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
+import shipreq.webapp.base.event.UseCaseStepGD
+import shipreq.webapp.base.validation.Simple.Invalidity
 
+/** Interface to start a new editor.
+  *
+  * Doesn't perform ANY applicability checks.
+  *
+  * The input to [[create]] is a Callback to invoke after the editor opens.
+  */
 final case class NewEditor(create: Callback => Callback) extends AnyVal
 
 object NewEditor {
@@ -76,19 +84,22 @@ object NewEditor {
   private val prepareForUseCaseSteps: FieldKey.UseCaseStep => InternalStartFn =
     f => _.EditUseCaseStep(f.id, PreviewId(RowKey.UseCaseSteps, f))
 
-  private type RenderInput = AsyncState
-  private type RenderImpl = RenderInput => CallbackTo[VdomElement]
-
   private trait EditorImpl extends Editor {
-    protected val renderImpl: RenderImpl
+    protected type Props
+    protected val props: AsyncState => CallbackTo[Props]
+    protected def renderImpl: Props => VdomElement
+    protected def changeImpl: Props => PotentialChange[Invalidity, Change]
 
-    final override def render(p: Permission, a: AsyncState) =
+    final override def render(p: Permission, a: AsyncState): Option[VdomElement] =
       // Looks like this could block async but not so. Can't go from edit → async → notAllowed.
       // Unsafety is allowed here because EditorInstance is never Reusable
       p match {
-        case Allow => Some(renderImpl(a).runNow())
+        case Allow => Some(renderImpl(props(a).runNow()))
         case Deny  => None
       }
+
+    final override def change() =
+      changeImpl(props(None).runNow())
   }
 
   private class Internal(ctx: Ctx) {
@@ -164,7 +175,12 @@ object NewEditor {
       private class StateMultiple(ss         : StateSnapshot[String],
                                   initial    : Some[Set[ReqCode.Value]],
                                   abortCommit: ReqCodeEditor.Multiple.AbortCommit) extends EditorImpl {
-        override val renderImpl = as =>
+
+        override type Change = ReqCodeEditor.Multiple.Output
+        override type Props = ReqCodeEditor.Multiple.Props
+        override def renderImpl = _.render
+        override def changeImpl = _.validated
+        override val props = as =>
           for {
             trie <- trieCB
           } yield ReqCodeEditor.Multiple.Props(
@@ -173,7 +189,6 @@ object NewEditor {
             trie,
             EditorStatus.async(as),
             abortCommit)
-            .render
       }
 
       def group(id: ReqCodeId): StartFn = {
@@ -190,7 +205,12 @@ object NewEditor {
       private class StateSingle(ss         : StateSnapshot[String],
                                 initial    : Some[ReqCode.Value],
                                 abortCommit: ReqCodeEditor.Single.AbortCommit) extends EditorImpl {
-        override val renderImpl = as =>
+
+        override type Change = ReqCodeEditor.Single.Output
+        override type Props = ReqCodeEditor.Single.Props
+        override def renderImpl = _.render
+        override def changeImpl = _.validated
+        override val props = as =>
           for {
             trie <- trieCB
           } yield ReqCodeEditor.Single.Props(
@@ -199,7 +219,6 @@ object NewEditor {
             trie,
             EditorStatus.async(as),
             abortCommit)
-            .render
       }
     }
 
@@ -234,7 +253,11 @@ object NewEditor {
 
         def ss = StateSnapshot(editValue)(e => stateAccess.setState(copy(editValue = e).some))
 
-        override val renderImpl = as =>
+        override type Change = CustomReqType
+        override type Props = ReqTypeSelector.Props
+        override def renderImpl = _.render
+        override def changeImpl = _.change
+        override val props = as =>
           for {
             choices <- pxChoices.toCallback
           } yield ReqTypeSelector.Props(
@@ -243,7 +266,6 @@ object NewEditor {
             choices,
             EditorStatus.async(as),
             abortCommit)
-            .render
       }
     }
 
@@ -293,7 +315,12 @@ object NewEditor {
                           pxLookup   : Px[Lookup],
                           pxValFn    : Px[ValidationFn],
                           abortCommit: ImplicationEditor.AbortCommit) extends EditorImpl {
-        override val renderImpl = as =>
+
+        override type Change = ImplicationEditor.Output
+        override type Props = ImplicationEditor.Props
+        override def renderImpl = _.render
+        override def changeImpl = _.validated
+        override val props = as =>
           for {
             lookup     <- pxLookup.toCallback
             valFn      <- pxValFn.toCallback
@@ -305,7 +332,6 @@ object NewEditor {
             EditorStatus.async(as),
             abortCommit,
             textSearch)
-            .render
       }
     }
 
@@ -335,7 +361,12 @@ object NewEditor {
                           initialValues: Some[Set[ApplicableTagId]],
                           pxLookup     : Px[Lookup],
                           abortCommit  : TagEditor.AbortCommit) extends EditorImpl {
-        override val renderImpl = as =>
+
+        override type Change = TagEditor.Output
+        override type Props = TagEditor.Props
+        override def renderImpl = _.render
+        override def changeImpl = _.validated
+        override val props = as =>
           for {
             lookup <- pxLookup.toCallback
           } yield TagEditor.Props(
@@ -344,7 +375,6 @@ object NewEditor {
             lookup,
             EditorStatus.async(as),
             abortCommit)
-            .render
       }
     }
 
@@ -381,7 +411,11 @@ object NewEditor {
                             pid        : PreviewId,
                             abortCommit: editor.AbortCommit) extends EditorImpl {
 
-          override val renderImpl = as =>
+          override type Change = T.OptionalText
+          override type Props = editor.Props
+          override def renderImpl = _.render
+          override def changeImpl = _.validated
+          override val props = as =>
             for {
               previewState   <- previewFeature.stateCB
               project        <- pxProject.toCallback
@@ -398,7 +432,6 @@ object NewEditor {
               abortCommit,
               previewFeature(pid, previewState),
               initial)
-              .render
         }
       }
 
@@ -468,7 +501,11 @@ object NewEditor {
                           pid    : PreviewId,
                           commit : UseCaseStepEditor.CommitFn) extends EditorImpl {
 
-        override val renderImpl = as =>
+        override type Change = UseCaseStepGD.NonEmptyValues
+        override type Props = UseCaseStepEditor.Props
+        override def renderImpl = _.render
+        override def changeImpl = _.validatedChanges
+        override val props = as =>
           for {
             previewState   <- previewFeature.stateCB
             project        <- pxProject.toCallback
@@ -486,7 +523,6 @@ object NewEditor {
             commit,
             previewFeature(pid, previewState),
             initial)
-            .render
       }
     }
 

@@ -4,7 +4,9 @@ import japgolly.scalajs.react.extra.Reusability
 import scalaz.\/
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.UseCaseStepGD
+import shipreq.webapp.base.text.Text
 import shipreq.webapp.client.project.lib.DataReusability._
 
 sealed abstract class RowKey {
@@ -22,7 +24,7 @@ sealed abstract class RowKey {
 object RowKey {
   type Aux[F <: FieldKey] = RowKey { type FieldKey = F }
 
-  final case class CodeGroup(id: data.ReqCodeId) extends RowKey {
+  final case class CodeGroup(id: ReqCodeId) extends RowKey {
     override type FieldKey = FieldKey.ForCodeGroup
     override def fold[F[_]](codeGroup   : CodeGroup  => F[FieldKey.ForCodeGroup],
                             genericReq  : GenericReq => F[FieldKey.ForGenericReq],
@@ -31,7 +33,7 @@ object RowKey {
       codeGroup(this)
   }
 
-  final case class GenericReq(id: data.GenericReqId) extends RowKey {
+  final case class GenericReq(id: GenericReqId) extends RowKey {
     override type FieldKey = FieldKey.ForGenericReq
     override def fold[F[_]](codeGroup   : CodeGroup  => F[FieldKey.ForCodeGroup],
                             genericReq  : GenericReq => F[FieldKey.ForGenericReq],
@@ -40,7 +42,7 @@ object RowKey {
       genericReq(this)
   }
 
-  final case class UseCase(id: data.UseCaseId) extends RowKey {
+  final case class UseCase(id: UseCaseId) extends RowKey {
     override type FieldKey = FieldKey.ForUseCase
     override def fold[F[_]](codeGroup   : CodeGroup  => F[FieldKey.ForCodeGroup],
                             genericReq  : GenericReq => F[FieldKey.ForGenericReq],
@@ -83,43 +85,43 @@ object FieldKey {
   sealed trait ForReq        extends ForGenericReq with ForUseCase
 
   case object Code extends ForCodeGroup {
-    override type Change = Unit
+    override type Change = ReqCode.Value
   }
 
   case object CodeGroupTitle extends ForCodeGroup {
-    override type Change = Unit
+    override type Change = Text.CodeGroupTitle.OptionalText
   }
 
   case object Codes extends ForReq {
-    override type Change = Unit
+    override type Change = SetDiff.NE[ReqCode.Value]
   }
 
-  final case class CustomTextField(field: data.CustomField.Text.Id) extends ForReq {
-    override type Change = Unit
+  final case class CustomTextField(field: CustomField.Text.Id) extends ForReq {
+    override type Change = Text.CustomTextField.OptionalText
   }
 
   case object GenericReqTitle extends ForGenericReq {
-    override type Change = Unit
+    override type Change = Text.GenericReqTitle.OptionalText
   }
 
-  final case class Implications(scope: data.ImplicationScope) extends ForReq {
-    override type Change = Unit
+  final case class Implications(scope: ImplicationScope) extends ForReq {
+    override type Change = SetDiff.NE[ReqId]
   }
 
   case object ReqType extends ForGenericReq {
-    override type Change = Unit
+    override type Change = CustomReqType
   }
 
-  final case class Tags(field: Option[data.CustomField.Tag.Id]) extends ForReq {
-    override type Change = Unit
+  final case class Tags(field: Option[CustomField.Tag.Id]) extends ForReq {
+    override type Change = SetDiff.NE[ApplicableTagId]
   }
 
-  final case class UseCaseStep(id: data.UseCaseStepId) extends FieldKey {
-    override type Change = Unit
+  final case class UseCaseStep(id: UseCaseStepId) extends FieldKey {
+    override type Change = UseCaseStepGD.NonEmptyValues
   }
 
   case object UseCaseTitle extends ForUseCase {
-    override type Change = Unit
+    override type Change = Text.UseCaseTitle.OptionalText
   }
 
   @inline implicit def equality: UnivEq[FieldKey] =

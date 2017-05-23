@@ -6,6 +6,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+import shipreq.base.util.PotentialChange
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.base.feature.EditorStatus
@@ -24,10 +25,10 @@ object ReqTypeSelector {
                          asyncStatus : Option[EditorStatus.Async],
                          abortCommit : AbortCommit) {
 
-    val changed = edit.value !=* initialValue
-    def abort = abortCommit.abort
-    def commit = if (changed) abortCommit.commit(edit.value) else Callback.empty
-    val status = asyncStatus.getOrElse(if (changed) EditorStatus.Valid(commit) else EditorStatus.Ignore)
+    val change = PotentialChange.compare(before = initialValue, after = edit.value)
+    def abort  = abortCommit.abort
+    val commit = change.toOption.map(abortCommit.commit)
+    val status = asyncStatus orElse commit.map(EditorStatus.Valid) getOrElse EditorStatus.Ignore
 
     @inline def render: VdomElement = Component(this)
   }
@@ -58,10 +59,10 @@ object ReqTypeSelector {
 
       val commitButton = Button(
         tipe = Button.Type.IconOnly(Icon.Checkmark),
-        state = Button.State.enabledWhen(p.changed)
+        state = Button.State.enabledWhen(p.commit.isDefined)
       ).tag(
         *.commit,
-        ^.onClick --> p.commit)
+        ^.onClick -->? p.commit)
 
       val abortButton = Button(tipe = Button.Type.IconOnly(Icon.Remove)).tag(
         *.abort,

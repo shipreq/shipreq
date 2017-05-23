@@ -99,13 +99,25 @@ sealed abstract class PotentialChange[+E, +A] {
 
 object PotentialChange {
 
-  sealed abstract class NonFailure[+A] extends PotentialChange[Nothing, A]
+  sealed abstract class NonFailure[+A] extends PotentialChange[Nothing, A] {
+    final def foldNonFailure[B](changed: A => B, unchanged: => B): B =
+      this match {
+        case Success(a) => changed(a)
+        case Unchanged  => unchanged
+      }
+  }
 
   case class Success[+A](update: A) extends NonFailure[A]
 
   case object Unchanged extends NonFailure[Nothing]
 
   case class Failure[+E](failure: E) extends PotentialChange[E, Nothing]
+
+  def compare[A](before: A, after: A)(implicit e: Equal[A]): NonFailure[A] =
+    if (e.equal(before, after))
+      Unchanged
+    else
+      Success(after)
 
   import scalaz.{\/, \/-, -\/}
 
