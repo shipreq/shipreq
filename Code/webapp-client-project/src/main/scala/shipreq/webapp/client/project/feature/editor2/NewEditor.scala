@@ -49,6 +49,9 @@ object NewEditor {
   def forRow(static: Static, rowKey: RowKey): PerRow[rowKey.FieldKey] =
     static.internal.perRow(rowKey)
 
+  def doNothing: NewEditor =
+    NewEditor(_ => Callback.empty)
+
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   private object Internal {

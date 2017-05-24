@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.feature.editor2
 
 import japgolly.scalajs.react.extra.Reusability
+import scala.reflect.ClassTag
 import scalaz.~>
 import shipreq.base.util._
 import shipreq.base.util.univeq._
@@ -19,10 +20,16 @@ sealed trait FieldKey {
 }
 
 object FieldKey {
-  sealed trait ForCodeGroup  extends FieldKey { def foldCG[F[_]](f: FoldForCodeGroup [F]): F[Change] }
-  sealed trait ForGenericReq extends FieldKey { def foldGR[F[_]](f: FoldForGenericReq[F]): F[Change] }
-  sealed trait ForUseCase    extends FieldKey { def foldUC[F[_]](f: FoldForUseCase   [F]): F[Change] }
-  sealed trait ForReq        extends ForGenericReq with ForUseCase
+
+  sealed trait ForCodeGroup  extends FieldKey   { def foldCG[F[_]](f: FoldForCodeGroup [F]): F[Change] }
+  sealed trait ForGenericReq extends ForSomeReq { def foldGR[F[_]](f: FoldForGenericReq[F]): F[Change] }
+  sealed trait ForUseCase    extends ForSomeReq { def foldUC[F[_]](f: FoldForUseCase   [F]): F[Change] }
+
+  /** Fields apply to one or more type of reqs */
+  sealed trait ForSomeReq extends FieldKey
+
+  /** Fields apply to all types of reqs */
+  sealed trait ForAllReqs extends ForGenericReq with ForUseCase
 
   case object Code extends ForCodeGroup {
     override type Change = ReqCode.Value
@@ -34,13 +41,13 @@ object FieldKey {
     override def foldCG[F[_]](f: FoldForCodeGroup[F]): F[Change] = f.title(this)
   }
 
-  case object Codes extends ForReq {
+  case object Codes extends ForAllReqs {
     override type Change = SetDiff.NE[ReqCode.Value]
     override def foldGR[F[_]](f: FoldForGenericReq[F]): F[Change] = f.codes(this)
     override def foldUC[F[_]](f: FoldForUseCase[F]): F[Change] = f.codes(this)
   }
 
-  final case class CustomTextField(field: CustomField.Text.Id) extends ForReq {
+  final case class CustomTextField(field: CustomField.Text.Id) extends ForAllReqs {
     override type Change = Text.CustomTextField.OptionalText
     override def foldGR[F[_]](f: FoldForGenericReq[F]): F[Change] = f.customTextField(this)
     override def foldUC[F[_]](f: FoldForUseCase[F]): F[Change] = f.customTextField(this)
@@ -51,7 +58,7 @@ object FieldKey {
     override def foldGR[F[_]](f: FoldForGenericReq[F]): F[Change] = f.title(this)
   }
 
-  final case class Implications(scope: ImplicationScope) extends ForReq {
+  final case class Implications(scope: ImplicationScope) extends ForAllReqs {
     override type Change = SetDiff.NE[ReqId]
     override def foldGR[F[_]](f: FoldForGenericReq[F]): F[Change] = f.implications(this)
     override def foldUC[F[_]](f: FoldForUseCase[F]): F[Change] = f.implications(this)
@@ -62,7 +69,7 @@ object FieldKey {
     override def foldGR[F[_]](f: FoldForGenericReq[F]): F[Change] = f.reqType(this)
   }
 
-  final case class Tags(field: Option[CustomField.Tag.Id]) extends ForReq {
+  final case class Tags(field: Option[CustomField.Tag.Id]) extends ForAllReqs {
     override type Change = SetDiff.NE[ApplicableTagId]
     override def foldGR[F[_]](f: FoldForGenericReq[F]): F[Change] = f.tags(this)
     override def foldUC[F[_]](f: FoldForUseCase[F]): F[Change] = f.tags(this)
@@ -142,4 +149,14 @@ object FieldKey {
       FoldForUseCaseSteps(f => t(step(f)))
 
   }
+
+  final class Type[F <: FieldKey](implicit ct: ClassTag[F]) {
+    def widenFn[G >: F <: FieldKey, A](orig: F => A)(fallback: A): G => A =
+      g => if (ct.runtimeClass.isInstance(g))
+        orig(g.asInstanceOf[F])
+      else
+        fallback
+  }
+  implicit val typeGR: Type[ForGenericReq] = new Type
+  implicit val typeUC: Type[ForUseCase]    = new Type
 }

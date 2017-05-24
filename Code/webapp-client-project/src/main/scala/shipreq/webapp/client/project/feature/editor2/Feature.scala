@@ -4,6 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.MonocleReact._
+import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
@@ -44,7 +45,7 @@ object Feature {
     def initForProject: ForProject =
       UnivEq.emptyMap
 
-    final case class ForSpecificRow[FK <: FieldKey](state: ForFields) extends AnyVal {
+    final case class ForSpecificRow[-FK <: FieldKey](state: ForFields) extends AnyVal {
       @inline def get(f: FK): ForEditor[f.Change] =
         f.cast2(state.get(f))
     }
@@ -67,9 +68,14 @@ object Feature {
         render().fold(a)(ev)
     }
 
-    final case class ForFields[FK <: FieldKey](_editor    : State.ForFields,
-                                               editability: Reusable[Editability.ForFields[FK]],
-                                               async      : AsyncFeature.Read.D1[FieldKey, AsyncError]) {
+    object ForEditor {
+      val doNothing: ForEditor[Nothing] =
+        apply(None, Deny, None)
+    }
+
+    final case class ForFields[-FK <: FieldKey](_editor    : State.ForFields,
+                                                editability: Reusable[Editability.ForFields[FK]],
+                                                async      : AsyncFeature.Read.D1[FieldKey, AsyncError]) {
 
       def editor: State.ForSpecificRow[FK] =
         State.ForSpecificRow(_editor)
@@ -78,10 +84,16 @@ object Feature {
         ForEditor(editor.get(f), editability(f), async(f))
     }
 
-    type ForCodeGroup    = ForFields[RowKey.CodeGroup   #FieldKey]
-    type ForGenericReq   = ForFields[RowKey.GenericReq  #FieldKey]
-    type ForUseCase      = ForFields[RowKey.UseCase     #FieldKey]
-    type ForUseCaseSteps = ForFields[RowKey.UseCaseSteps.FieldKey]
+    implicit class ForFieldsInvariantExt[FK <: FieldKey](private val self: ForFields[FK]) extends AnyVal {
+      def widen[W >: FK <: FieldKey](implicit t: FieldKey.Type[FK]): ForFields[W] =
+        self.copy(editability = self.editability.map(_.widen(t)))
+    }
+
+    type ForCodeGroup    = ForFields[FieldKey.ForCodeGroup ]
+    type ForGenericReq   = ForFields[FieldKey.ForGenericReq]
+    type ForReq          = ForFields[FieldKey.ForSomeReq   ]
+    type ForUseCase      = ForFields[FieldKey.ForUseCase   ]
+    type ForUseCaseSteps = ForFields[FieldKey.UseCaseStep  ]
 
     final case class ForProject(state      : State.ForProject,
                                 editability: Editability.ForProject,
@@ -96,17 +108,21 @@ object Feature {
       def forGenericReq(id: GenericReqId): ForGenericReq =
          forRow(RowKey.GenericReq(id))(Reusable implicitly editability.forReqs(id))
 
+      def forReq(id: ReqId): ForReq =
+        id.foldReqId(forGenericReq(_).widen, forUseCase(_).widen)
+
       def forUseCase(id: UseCaseId): ForUseCase =
         forRow(RowKey.UseCase(id))(Reusable implicitly editability.forReqs(id))
 
-       lazy val forUseCaseSteps: ForUseCaseSteps =
-         forRow(RowKey.UseCaseSteps)(Reusable implicitly editability.forUseCaseSteps)
+      lazy val forUseCaseSteps: ForUseCaseSteps =
+        forRow(RowKey.UseCaseSteps)(Reusable implicitly editability.forUseCaseSteps)
     }
 
              val reusabilityForEditorAny   : Reusability[ForEditor[Any] ] = Reusability.caseClass
     implicit def reusabilityForEditor[A]   : Reusability[ForEditor[A]   ] = reusabilityForEditorAny.narrow
     implicit val reusabilityForCodeGroup   : Reusability[ForCodeGroup   ] = Reusability.caseClass
     implicit val reusabilityForGenericReq  : Reusability[ForGenericReq  ] = Reusability.caseClass
+    implicit val reusabilityForReq         : Reusability[ForReq         ] = Reusability.caseClass
     implicit val reusabilityForUseCase     : Reusability[ForUseCase     ] = Reusability.caseClass
     implicit val reusabilityForUseCaseSteps: Reusability[ForUseCaseSteps] = Reusability.caseClass
     implicit val reusabilityForProject     : Reusability[ForProject     ] = Reusability.caseClass
@@ -124,17 +140,34 @@ object Feature {
           Some(newEditor.create(cb))
     }
 
-    sealed trait ForFieldsInterface[FK <: FieldKey] {
+    object ForEditor {
+      val doNothing: ForEditor = {
+        val ne = Reusable.byRef(NewEditor.doNothing.create).map(NewEditor.apply)
+        apply(ne, AsyncFeature.Write.D0.doNothing)
+      }
+    }
+
+    sealed trait ForFieldsInterface[-FK <: FieldKey] {
       val async: AsyncFeature.Write.D1[FieldKey, AsyncError]
       def apply(field: FK): ForEditor
     }
 
-    type ForFields[FK <: FieldKey] = Reusable[ForFieldsInterface[FK]]
+    type ForFields[-FK <: FieldKey] = Reusable[ForFieldsInterface[FK]]
 
-    type ForCodeGroup    = ForFields[RowKey.CodeGroup   #FieldKey]
-    type ForGenericReq   = ForFields[RowKey.GenericReq  #FieldKey]
-    type ForUseCase      = ForFields[RowKey.UseCase     #FieldKey]
-    type ForUseCaseSteps = ForFields[RowKey.UseCaseSteps.FieldKey]
+    implicit class ForFieldsInvariantExt[FK <: FieldKey](private val self: ForFields[FK]) extends AnyVal {
+      def widen[W >: FK <: FieldKey](implicit t: FieldKey.Type[FK]): ForFields[W] =
+        self.map(orig => new ForFieldsInterface[W] {
+          val newFn = t.widenFn[W, ForEditor](orig.apply)(ForEditor.doNothing)
+          override def apply(field: W) = newFn(field)
+          override val async = orig.async
+        })
+    }
+
+    type ForCodeGroup    = ForFields[FieldKey.ForCodeGroup ]
+    type ForGenericReq   = ForFields[FieldKey.ForGenericReq]
+    type ForReq          = ForFields[FieldKey.ForSomeReq   ]
+    type ForUseCase      = ForFields[FieldKey.ForUseCase   ]
+    type ForUseCaseSteps = ForFields[FieldKey.UseCaseStep  ]
 
     /** Create only one instance; reusability is byRef */
     final case class ForProject(static      : NewEditor.Static,
@@ -176,6 +209,9 @@ object Feature {
 
       def forGenericReq(id: GenericReqId): ForGenericReq =
         forRow(RowKey.GenericReq(id))
+
+      def forReq(id: ReqId): ForReq =
+        id.foldReqId(forGenericReq(_).widen, forUseCase(_).widen)
 
       def forUseCase(id: UseCaseId): ForUseCase =
         forRow(RowKey.UseCase(id))
@@ -221,7 +257,12 @@ object Feature {
       def asyncState = read.async
     }
 
-    final case class ForFields[FK <: FieldKey](read: Read.ForFields[FK], write: Write.ForFields[FK]) {
+    object ForEditor {
+      val doNothing: ForEditor[Nothing] =
+        apply(Read.ForEditor.doNothing, Write.ForEditor.doNothing)
+    }
+
+    final case class ForFields[-FK <: FieldKey](read: Read.ForFields[FK], write: Write.ForFields[FK]) {
       def asyncFeature = write.async
       def asyncState = read.async
 
@@ -229,10 +270,16 @@ object Feature {
         ForEditor(read(field), write.apply(field))
     }
 
-    type ForCodeGroup    = ForFields[RowKey.CodeGroup   #FieldKey]
-    type ForGenericReq   = ForFields[RowKey.GenericReq  #FieldKey]
-    type ForUseCase      = ForFields[RowKey.UseCase     #FieldKey]
-    type ForUseCaseSteps = ForFields[RowKey.UseCaseSteps.FieldKey]
+    implicit class ForFieldsInvariantExt[FK <: FieldKey](private val self: ForFields[FK]) extends AnyVal {
+      def widen[W >: FK <: FieldKey](implicit t: FieldKey.Type[FK]): ForFields[W] =
+        ForFields(self.read.widen(t), self.write.widen(t))
+    }
+
+    type ForCodeGroup    = ForFields[FieldKey.ForCodeGroup ]
+    type ForGenericReq   = ForFields[FieldKey.ForGenericReq]
+    type ForReq          = ForFields[FieldKey.ForSomeReq   ]
+    type ForUseCase      = ForFields[FieldKey.ForUseCase   ]
+    type ForUseCaseSteps = ForFields[FieldKey.UseCaseStep  ]
 
     final case class ForProject(read: Read.ForProject, write: Write.ForProject) {
 
@@ -241,6 +288,9 @@ object Feature {
 
       def forGenericReq(id: GenericReqId): ForGenericReq =
         ForFields(read.forGenericReq(id), write.forGenericReq(id))
+
+      def forReq(id: ReqId): ForReq =
+        id.foldReqId(forGenericReq(_).widen, forUseCase(_).widen)
 
       def forUseCase(id: UseCaseId): ForUseCase =
         ForFields(read.forUseCase(id), write.forUseCase(id))
@@ -256,6 +306,7 @@ object Feature {
     implicit def reusabilityForEditor[A]   : Reusability[ForEditor[A]   ] = reusabilityForEditorAny.narrow
     implicit val reusabilityForCodeGroup   : Reusability[ForCodeGroup   ] = Reusability.caseClass
     implicit val reusabilityForGenericReq  : Reusability[ForGenericReq  ] = Reusability.caseClass
+    implicit val reusabilityForReq         : Reusability[ForReq         ] = Reusability.caseClass
     implicit val reusabilityForUseCase     : Reusability[ForUseCase     ] = Reusability.caseClass
     implicit val reusabilityForUseCaseSteps: Reusability[ForUseCaseSteps] = Reusability.caseClass
     implicit val reusabilityForProject     : Reusability[ForProject     ] = Reusability.caseClass

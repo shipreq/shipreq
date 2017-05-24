@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.feature.editor2
 
 import japgolly.scalajs.react.extra.Reusability
+import scala.reflect.ClassTag
 import scalaz.{-\/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -46,6 +47,14 @@ object Editability {
 
   sealed abstract class ForFields[-FK <: FieldKey] {
     def apply(field: FK): Permission
+  }
+
+  implicit class ForFieldsInvariantExt[FK <: FieldKey](private val self: ForFields[FK]) extends AnyVal {
+    def widen[W >: FK <: FieldKey](implicit t: FieldKey.Type[FK]): ForFields[W] =
+      new ForFields[W] {
+        val newFn = t.widenFn[W, Permission](self.apply)(Deny)
+        override def apply(field: W) = newFn(field)
+      }
   }
 
   final case class ForGenericReq(whenReqIsLive: Option[(ProjectConfig, CustomReqTypeId)]) extends ForFields[FieldKey.ForGenericReq] {
