@@ -1,12 +1,14 @@
-package shipreq.webapp.client.project.feature.editor
+package shipreq.webapp.client.project.feature.editor2
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.MonocleReact._
+import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.validation.Simple.Invalidity
 import shipreq.webapp.client.base.feature._
 import shipreq.webapp.client.base.ui.EditTheme
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -17,12 +19,13 @@ object Feature {
   type AsyncState = AsyncFeature.Read.D0[AsyncError]
 
   /** This is not safe for reusability because the implementation calls `CallbackTo#runNow()`. */
-  trait Editor {
+  trait Editor[+Change] {
     def render(p: Permission, a: AsyncState): Option[VdomElement]
+    def change(): PotentialChange[Invalidity, Change]
   }
 
   object Editor {
-    implicit val reusability: Reusability[Editor] =
+    implicit def reusability[C]: Reusability[Editor[C]] =
       Reusability.never // ∵ Editor is not safe for reusability
   }
 
@@ -35,23 +38,29 @@ object Feature {
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   object State {
-    type ForCell    = Option[Editor]
-    type ForRow     = Map[FieldKey, Editor]
-    type ForProject = Map[RowKey, ForRow]
+    type ForEditor[+C] = Option[Editor[C]]
+    type ForFields     = Map[FieldKey, Editor[Any]]
+    type ForProject    = Map[RowKey, ForFields]
 
     def initForProject: ForProject =
       UnivEq.emptyMap
+
+    final case class ForSpecificRow[-FK <: FieldKey](state: ForFields) extends AnyVal {
+      @inline def get(f: FK): ForEditor[f.Change] =
+        f.cast2(state.get(f))
+    }
   }
 
-  implicit val reusabilityStateForCell   : Reusability[State.ForCell   ] = Reusability.option
-  implicit val reusabilityStateForRow    : Reusability[State.ForRow    ] = Reusability.mapSameOrEmpty
-  implicit val reusabilityStateForProject: Reusability[State.ForProject] = Reusability.mapSameOrEmpty
+           val reusabilityStateForEditorAny: Reusability[State.ForEditor[Any]] = Reusability.option
+  implicit def reusabilityStateForEditor[A]: Reusability[State.ForEditor[A]  ] = reusabilityStateForEditorAny.narrow
+  implicit val reusabilityStateForFields   : Reusability[State.ForFields     ] = Reusability.mapSameOrEmpty
+  implicit val reusabilityStateForProject  : Reusability[State.ForProject    ] = Reusability.mapSameOrEmpty
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   object Read {
 
-    final case class ForCell(editor: Option[Editor], editability: Permission, async: AsyncState) {
+    final case class ForEditor[+C](editor: Option[Editor[C]], editability: Permission, async: AsyncState) {
       def render(): Option[VdomElement] =
         editor.flatMap(_.render(editability, async))
 
@@ -59,42 +68,62 @@ object Feature {
         render().fold(a)(ev)
     }
 
-    object ForCell {
-      def doNothing: ForCell =
+    object ForEditor {
+      val doNothing: ForEditor[Nothing] =
         apply(None, Deny, None)
     }
 
-    final case class ForRow[R <: RowKey, E <: Editability.ForRow[R]](editor     : State.ForRow,
-                                                                     editability: E,
-                                                                     async      : AsyncFeature.Read.D1[FieldKey, AsyncError]) {
-      def apply(f: R#FieldKey): ForCell =
-        ForCell(editor.get(f), editability(f), async(f))
+    final case class ForFields[-FK <: FieldKey](_editor    : State.ForFields,
+                                                editability: Reusable[Editability.ForFields[FK]],
+                                                async      : AsyncFeature.Read.D1[FieldKey, AsyncError]) {
+
+      def editor: State.ForSpecificRow[FK] =
+        State.ForSpecificRow(_editor)
+
+      def apply(f: FK): ForEditor[f.Change] =
+        ForEditor(editor.get(f), editability(f), async(f))
     }
 
-    type ForReq          = ForRow[RowKey.Req              , Editability.ForReq]
-    type ForCodeGroup    = ForRow[RowKey.CodeGroup        , Editability.ForCodeGroup]
-    type ForUseCaseSteps = ForRow[RowKey.UseCaseSteps.type, Editability.ForUseCaseSteps]
+    implicit class ForFieldsInvariantExt[FK <: FieldKey](private val self: ForFields[FK]) extends AnyVal {
+      def widen[W >: FK <: FieldKey](implicit t: FieldKey.Type[FK]): ForFields[W] =
+        self.copy(editability = self.editability.map(_.widen(t)))
+    }
+
+    type ForCodeGroup    = ForFields[FieldKey.ForCodeGroup ]
+    type ForGenericReq   = ForFields[FieldKey.ForGenericReq]
+    type ForReq          = ForFields[FieldKey.ForSomeReq   ]
+    type ForUseCase      = ForFields[FieldKey.ForUseCase   ]
+    type ForUseCaseSteps = ForFields[FieldKey.UseCaseStep  ]
 
     final case class ForProject(state      : State.ForProject,
                                 editability: Editability.ForProject,
                                 async      : AsyncFeature.Read.D2[RowKey, FieldKey, AsyncError]) {
 
-       private def forRow[R <: RowKey, E <: Editability.ForRow[R]](r: R, e: E): ForRow[R, E] =
-         ForRow(state.getOrElse(r, UnivEq.emptyMap), e, async(r))
+       private def forRow(r: RowKey)(e: Reusable[Editability.ForFields[r.FieldKey]]): ForFields[r.FieldKey] =
+         ForFields(state.getOrElse(r, UnivEq.emptyMap), e, async(r))
 
-       def forReq(id: ReqId): ForReq =
-         forRow(RowKey.Req(id), editability.forReqs(id))
+      def forCodeGroup(id: ReqCodeId): ForCodeGroup =
+        forRow(RowKey.CodeGroup(id))(Reusable implicitly editability.forCodeGroups(id))
 
-       def forCodeGroup(id: ReqCodeId): ForCodeGroup =
-         forRow(RowKey.CodeGroup(id), editability.forCodeGroups(id))
+      def forGenericReq(id: GenericReqId): ForGenericReq =
+         forRow(RowKey.GenericReq(id))(Reusable implicitly editability.forReqs(id))
 
-       lazy val forUseCaseSteps: ForUseCaseSteps =
-         forRow(RowKey.UseCaseSteps, editability.forUseCaseSteps)
+      def forReq(id: ReqId): ForReq =
+        id.foldReqId(forGenericReq(_).widen, forUseCase(_).widen)
+
+      def forUseCase(id: UseCaseId): ForUseCase =
+        forRow(RowKey.UseCase(id))(Reusable implicitly editability.forReqs(id))
+
+      lazy val forUseCaseSteps: ForUseCaseSteps =
+        forRow(RowKey.UseCaseSteps)(Reusable implicitly editability.forUseCaseSteps)
     }
 
-    implicit val reusabilityForCell        : Reusability[ForCell        ] = Reusability.caseClass
-    implicit val reusabilityForReq         : Reusability[ForReq         ] = Reusability.caseClass
+             val reusabilityForEditorAny   : Reusability[ForEditor[Any] ] = Reusability.caseClass
+    implicit def reusabilityForEditor[A]   : Reusability[ForEditor[A]   ] = reusabilityForEditorAny.narrow
     implicit val reusabilityForCodeGroup   : Reusability[ForCodeGroup   ] = Reusability.caseClass
+    implicit val reusabilityForGenericReq  : Reusability[ForGenericReq  ] = Reusability.caseClass
+    implicit val reusabilityForReq         : Reusability[ForReq         ] = Reusability.caseClass
+    implicit val reusabilityForUseCase     : Reusability[ForUseCase     ] = Reusability.caseClass
     implicit val reusabilityForUseCaseSteps: Reusability[ForUseCaseSteps] = Reusability.caseClass
     implicit val reusabilityForProject     : Reusability[ForProject     ] = Reusability.caseClass
   }
@@ -103,87 +132,98 @@ object Feature {
 
   object Write {
 
-    final case class ForCell(justStartEdit: Reusable[Callback => Option[Callback]],
-                             async        : AsyncFeature.Write.D0[AsyncError]) {
-
-      def startEdit(state: Read.ForCell, cb: Callback): Option[Callback] =
+    final case class ForEditor(newEditor: Reusable[NewEditor], async: AsyncFeature.Write.D0[AsyncError]) {
+      def startEdit(state: Read.ForEditor[Any], cb: Callback): Option[Callback] =
         if (state.editability.is(Deny) || state.editor.isDefined)
           None
         else
-          justStartEdit(cb)
+          Some(newEditor.create(cb))
     }
 
-    object ForCell {
-      val doNothing: ForCell =
-        ForCell(Reusable.fn(_ => None), AsyncFeature.Write.D0.doNothing)
+    object ForEditor {
+      val doNothing: ForEditor = {
+        val ne = Reusable.byRef(NewEditor.doNothing.create).map(NewEditor.apply)
+        apply(ne, AsyncFeature.Write.D0.doNothing)
+      }
     }
 
-    type ForRow[R <: RowKey] = Reusable[ForRowInterface[R]]
-
-    sealed trait ForRowInterface[R <: RowKey] {
+    sealed trait ForFieldsInterface[-FK <: FieldKey] {
       val async: AsyncFeature.Write.D1[FieldKey, AsyncError]
-      def apply(field: R#FieldKey): ForCell
+      def apply(field: FK): ForEditor
     }
 
-    type ForReq          = ForRow[RowKey.Req]
-    type ForCodeGroup    = ForRow[RowKey.CodeGroup]
-    type ForUseCaseSteps = ForRow[RowKey.UseCaseSteps.type]
+    type ForFields[-FK <: FieldKey] = Reusable[ForFieldsInterface[FK]]
+
+    implicit class ForFieldsInvariantExt[FK <: FieldKey](private val self: ForFields[FK]) extends AnyVal {
+      def widen[W >: FK <: FieldKey](implicit t: FieldKey.Type[FK]): ForFields[W] =
+        self.map(orig => new ForFieldsInterface[W] {
+          val newFn = t.widenFn[W, ForEditor](orig.apply)(ForEditor.doNothing)
+          override def apply(field: W) = newFn(field)
+          override val async = orig.async
+        })
+    }
+
+    type ForCodeGroup    = ForFields[FieldKey.ForCodeGroup ]
+    type ForGenericReq   = ForFields[FieldKey.ForGenericReq]
+    type ForReq          = ForFields[FieldKey.ForSomeReq   ]
+    type ForUseCase      = ForFields[FieldKey.ForUseCase   ]
+    type ForUseCaseSteps = ForFields[FieldKey.UseCaseStep  ]
 
     /** Create only one instance; reusability is byRef */
-    final case class ForProject(static      : Static,
+    final case class ForProject(static      : NewEditor.Static,
                                 stateAccess : StateAccessPure[State.ForProject],
                                 async       : AsyncFeature.Write.D2[RowKey, FieldKey, AsyncError]) {
 
-      private val reusabilityThisRow: Reusability[(ForProject, RowKey)] = implicitly
-      private val reusabilityThisRowCell: Reusability[(ForProject, RowKey, FieldKey)] = implicitly
+      private val reuseFromRow  : Reusability[(ForProject, RowKey)          ] = implicitly
+      private val reuseFromField: Reusability[(ForProject, RowKey, FieldKey)] = implicitly
 
-      private def forRow[R <: RowKey](row: R): ForRow[R] = {
-        val rowAccess = stateAccess zoomStateL Optics.innerMap(row)
-        val rowCmds = NewEditorCmd.make(row)
+      private def instanceForRow(row: RowKey): ForFieldsInterface[row.FieldKey] =
+        new ForFieldsInterface[row.FieldKey] {
+          val rowAccess = stateAccess zoomStateL Optics.innerMap(row)
+          val rowEditors = NewEditor.forRow(static, row)
 
-        val forRow = new ForRowInterface[R] {
           override val async =
             ForProject.this.async(row)
 
-          override def apply(field: R#FieldKey): ForCell =
-            rowCmds(field) match {
+          override def apply(field: row.FieldKey): ForEditor = {
+            val asyncCell = async(field)
 
-              case Some(newEditorCmd) =>
-                val asyncCell = async(field)
-                def fn: Callback => Option[Callback] =
-                  cb => Some(new StartNewEditor(
-                    static,
-                    rowAccess zoomStateL Optics.mapValue(field),
-                    asyncCell,
-                    newEditorCmd)
-                    .create(cb))
-                val reuseKey = Reusable.explicitly((ForProject.this, row: RowKey, field: FieldKey))(reusabilityThisRowCell)
-                ForCell(reuseKey.map(_ => fn), asyncCell)
-
-              case None =>
-                ForCell.doNothing
+            def newEditor: NewEditor = {
+              val stateAccess: StateAccessPure[State.ForEditor[Any]] = rowAccess zoomStateL Optics.mapValue(field)
+              val ctx = NewEditor.Ctx[field.Change](field.cast2(stateAccess), asyncCell)
+              rowEditors(field)(ctx)
             }
 
+            val reuseKey = Reusable.explicitly((ForProject.this, row: RowKey, field: FieldKey))(reuseFromField)
+            ForEditor(reuseKey.map(_ => newEditor), asyncCell)
+          }
         }
 
-        val reuseKey = Reusable.explicitly((this, row: RowKey))(reusabilityThisRow)
-        reuseKey.map(_ => forRow)
-      } // def forRow
+      private def forRow(row: RowKey): ForFields[row.FieldKey] = {
+        val reuseKey = Reusable.explicitly((this, row: RowKey))(reuseFromRow)
+        reuseKey.map(_ => instanceForRow(row))
+      }
 
-       def forReq(id: ReqId): ForReq =
-         forRow(RowKey.Req(id))
+      def forCodeGroup(id: ReqCodeId): ForCodeGroup =
+        forRow(RowKey.CodeGroup(id))
 
-       def forCodeGroup(id: ReqCodeId): ForCodeGroup =
-         forRow(RowKey.CodeGroup(id))
+      def forGenericReq(id: GenericReqId): ForGenericReq =
+        forRow(RowKey.GenericReq(id))
 
-       lazy val forUseCaseSteps: ForUseCaseSteps =
-         forRow(RowKey.UseCaseSteps)
+      def forReq(id: ReqId): ForReq =
+        id.foldReqId(forGenericReq(_).widen, forUseCase(_).widen)
+
+      def forUseCase(id: UseCaseId): ForUseCase =
+        forRow(RowKey.UseCase(id))
+
+      lazy val forUseCaseSteps: ForUseCaseSteps =
+        forRow(RowKey.UseCaseSteps)
 
       @inline def toReadWrite(r: Read.ForProject): ReadWrite.ForProject =
         ReadWrite.ForProject(r, this)
     }
 
-    implicit val reusabilityForCell   : Reusability[ForCell   ] = Reusability.caseClass
+    implicit val reusabilityForEditor : Reusability[ForEditor ] = Reusability.caseClass
     implicit val reusabilityForProject: Reusability[ForProject] = Reusability.byRef
   }
 
@@ -191,7 +231,7 @@ object Feature {
 
   object ReadWrite {
 
-    final case class ForCell(read: Read.ForCell, write: Write.ForCell) {
+    final case class ForEditor[+C](read: Read.ForEditor[C], write: Write.ForEditor) {
       @inline def render(): Option[VdomElement] =
         read.render()
 
@@ -217,44 +257,60 @@ object Feature {
       def asyncState = read.async
     }
 
-    object ForCell {
-      def doNothing: ForCell =
-        apply(Read.ForCell.doNothing, Write.ForCell.doNothing)
+    object ForEditor {
+      val doNothing: ForEditor[Nothing] =
+        apply(Read.ForEditor.doNothing, Write.ForEditor.doNothing)
     }
 
-    final case class ForRow[R <: RowKey, ReadForRow <: Read.ForRow[R, _]](read: ReadForRow, write: Write.ForRow[R]) {
+    final case class ForFields[-FK <: FieldKey](read: Read.ForFields[FK], write: Write.ForFields[FK]) {
       def asyncFeature = write.async
       def asyncState = read.async
 
-      def apply(field: R#FieldKey): ForCell =
-        ForCell(read(field), write.apply(field))
+      def apply(field: FK): ForEditor[field.Change] =
+        ForEditor(read(field), write.apply(field))
 
-      def apply(field: Option[R#FieldKey]): ForCell =
-        field.fold(ForCell.doNothing)(apply(_))
+      def optional(field: Option[FK]): ForEditor[Any] =
+        field.fold[ForEditor[Any]](ForEditor.doNothing)(apply(_))
     }
 
-    type ForReq          = ForRow[RowKey.Req              , Read.ForReq]
-    type ForCodeGroup    = ForRow[RowKey.CodeGroup        , Read.ForCodeGroup]
-    type ForUseCaseSteps = ForRow[RowKey.UseCaseSteps.type, Read.ForUseCaseSteps]
+    implicit class ForFieldsInvariantExt[FK <: FieldKey](private val self: ForFields[FK]) extends AnyVal {
+      def widen[W >: FK <: FieldKey](implicit t: FieldKey.Type[FK]): ForFields[W] =
+        ForFields(self.read.widen(t), self.write.widen(t))
+    }
+
+    type ForCodeGroup    = ForFields[FieldKey.ForCodeGroup ]
+    type ForGenericReq   = ForFields[FieldKey.ForGenericReq]
+    type ForReq          = ForFields[FieldKey.ForSomeReq   ]
+    type ForUseCase      = ForFields[FieldKey.ForUseCase   ]
+    type ForUseCaseSteps = ForFields[FieldKey.UseCaseStep  ]
 
     final case class ForProject(read: Read.ForProject, write: Write.ForProject) {
 
-      def forReq(id: ReqId): ForReq =
-        ForRow(read.forReq(id), write.forReq(id))
-
       def forCodeGroup(id: ReqCodeId): ForCodeGroup =
-        ForRow(read.forCodeGroup(id), write.forCodeGroup(id))
+        ForFields(read.forCodeGroup(id), write.forCodeGroup(id))
+
+      def forGenericReq(id: GenericReqId): ForGenericReq =
+        ForFields(read.forGenericReq(id), write.forGenericReq(id))
+
+      def forReq(id: ReqId): ForReq =
+        id.foldReqId(forGenericReq(_).widen, forUseCase(_).widen)
+
+      def forUseCase(id: UseCaseId): ForUseCase =
+        ForFields(read.forUseCase(id), write.forUseCase(id))
 
       lazy val forUseCaseSteps: ForUseCaseSteps =
-        ForRow(read.forUseCaseSteps, write.forUseCaseSteps)
+        ForFields(read.forUseCaseSteps, write.forUseCaseSteps)
 
       def asyncFeature = write.async
       def asyncState = read.async
     }
 
-    implicit val reusabilityForCell        : Reusability[ForCell        ] = Reusability.caseClass
-    implicit val reusabilityForReq         : Reusability[ForReq         ] = Reusability.caseClass
+             val reusabilityForEditorAny   : Reusability[ForEditor[Any] ] = Reusability.caseClass
+    implicit def reusabilityForEditor[A]   : Reusability[ForEditor[A]   ] = reusabilityForEditorAny.narrow
     implicit val reusabilityForCodeGroup   : Reusability[ForCodeGroup   ] = Reusability.caseClass
+    implicit val reusabilityForGenericReq  : Reusability[ForGenericReq  ] = Reusability.caseClass
+    implicit val reusabilityForReq         : Reusability[ForReq         ] = Reusability.caseClass
+    implicit val reusabilityForUseCase     : Reusability[ForUseCase     ] = Reusability.caseClass
     implicit val reusabilityForUseCaseSteps: Reusability[ForUseCaseSteps] = Reusability.caseClass
     implicit val reusabilityForProject     : Reusability[ForProject     ] = Reusability.caseClass
   }
