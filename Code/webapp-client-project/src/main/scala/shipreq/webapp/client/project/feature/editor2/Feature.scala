@@ -268,6 +268,9 @@ object Feature {
 
       def apply(field: FK): ForEditor[field.Change] =
         ForEditor(read(field), write.apply(field))
+
+      def optional(field: Option[FK]): ForEditor[Any] =
+        field.fold[ForEditor[Any]](ForEditor.doNothing)(apply(_))
     }
 
     implicit class ForFieldsInvariantExt[FK <: FieldKey](private val self: ForFields[FK]) extends AnyVal {

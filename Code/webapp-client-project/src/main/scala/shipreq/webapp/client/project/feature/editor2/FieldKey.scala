@@ -91,6 +91,12 @@ object FieldKey {
   implicit val reusability: Reusability[FieldKey] =
     Reusability.byUnivEq
 
+  def reqTitle(id: ReqId): ForSomeReq =
+    id match {
+      case _: GenericReqId => GenericReqTitle
+      case _: UseCaseId    => UseCaseTitle
+    }
+
   type Aux[C] = FieldKey { type Change = C }
 
   /** This shit is required to workaround Scala failing to be check exhaustivity when pattern-matching on Aux */
