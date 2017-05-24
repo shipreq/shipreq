@@ -17,6 +17,7 @@ import shipreq.webapp.client.project.app.Style.reqtable2.{table => *}
 import shipreq.webapp.client.project.feature.{EditorFeature, Selection}
 import shipreq.webapp.client.project.widgets.{DragToReorder, ProjectWidgets, ViewReq}
 import shipreq.webapp.client.project.lib.DataReusability._
+import EditorFeature.FieldKey
 
 object Table {
 
@@ -177,14 +178,12 @@ object Table {
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   private sealed abstract class RowTemplate[
-        _RowData <: Row: Reusability,
-        _ViewInput     : Reusability,
+        _RowData   <: Row     : Reusability,
+        FK         <: FieldKey,
+        _ViewInput            : Reusability,
       ](displayName: String) {
 
-    type RowEditField <: EditorFeature.RowKey
-    type RowEditRead <: EditorFeature.Read.ForRow[RowEditField, _]
-
-    protected val editFieldFilter: Option[EditorFeature.FieldKey] => Option[RowEditField#FieldKey]
+    protected val rowToColumnToEditorField: RowData => Column => Option[FK]
 
     protected def reusabilityRowEditor: Reusability[RowEditor]
 
@@ -196,7 +195,7 @@ object Table {
 
     final type RowData   = _RowData
     final type ViewInput = _ViewInput
-    final type RowEditor = EditorFeature.ReadWrite.ForRow[RowEditField, RowEditRead]
+    final type RowEditor = EditorFeature.ReadWrite.ForFields[FK]
 
     case class Props(row          : RowData,
                      viewInput    : ViewInput,
@@ -208,12 +207,12 @@ object Table {
       @inline def render = Component.withKey(row.id.key)(this)
     }
 
-    implicit val reusabilityProps: Reusability[Props] = {
+    implicit final val reusabilityProps: Reusability[Props] = {
       implicit val a = reusabilityRowEditor
       Reusability.caseClass
     }
 
-    protected val reusabilityView: Reusability[(RowData, ViewInput, Column)] =
+    protected final val reusabilityView: Reusability[(RowData, ViewInput, Column)] =
       implicitly
 
     final def render(p: Props): VdomElement = {
@@ -245,11 +244,13 @@ object Table {
             sel.onClick,
             sel.checkbox(^.tabIndex := -1))
 
+        val columnToEditorField = rowToColumnToEditorField(p.row)
+
         def colCells =
           p.cols.whole.toVdomArray { colPlus =>
-            val col = colPlus.column
-            def editor = p.editor.apply(editFieldFilter(col.editorField))
-            val cp = mkProps(col, Cell.Props(editor, _))
+            val col    = colPlus.column
+            def editor = p.editor.optional(columnToEditorField(col))
+            val cp     = mkProps(col, Cell.Props(editor, _))
             Cell.Component.withKey(col.key)(cp)
           }
 
@@ -259,9 +260,9 @@ object Table {
       def renderLocked = {
         def colCells =
           p.cols.whole.toVdomArray { colPlus =>
-            val col = colPlus.column
-            def editor = EditorFeature.ReadWrite.ForCell.doNothing
-            val cp = mkProps(col, Cell.Props(editor, _))
+            val col    = colPlus.column
+            def editor = EditorFeature.ReadWrite.ForEditor.doNothing
+            val cp     = mkProps(col, Cell.Props(editor, _))
             Cell.Component.withKey(col.key)(cp)
           }
 
@@ -295,11 +296,17 @@ object Table {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  private object ReqRow extends RowTemplate[Row.ForReq, (ReqTypes, ProjectWidgets, ProjectWidgets#PubidFormat)]("ReqRow") {
-    override type RowEditField = EditorFeature.RowKey.Req
-    override type RowEditRead  = EditorFeature.Read.ForReq
+  private object ReqRow extends RowTemplate[
+      Row.ForReq,
+      FieldKey.ForSomeReq,
+      (ReqTypes, ProjectWidgets, ProjectWidgets#PubidFormat),
+    ]("ReqRow") {
 
-    override protected val editFieldFilter = EditorFeature.FieldKey.filterForReq
+    override protected val rowToColumnToEditorField =
+      _.req.id match {
+        case _: GenericReqId => Column.editorFieldGR.getOption
+        case _: UseCaseId    => Column.editorFieldUC.getOption
+      }
 
     override protected def reusabilityRowEditor = implicitly
 
@@ -339,11 +346,14 @@ object Table {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  private object CodeGroupRow extends RowTemplate[Row.ForCodeGroup, ProjectWidgets]("CodeGroupRow") {
-    override type RowEditField = EditorFeature.RowKey.CodeGroup
-    override type RowEditRead  = EditorFeature.Read.ForCodeGroup
+  private object CodeGroupRow extends RowTemplate[
+      Row.ForCodeGroup,
+      FieldKey.ForCodeGroup,
+      ProjectWidgets,
+    ]("CodeGroupRow") {
 
-    override protected val editFieldFilter = EditorFeature.FieldKey.filterForCodeGroup
+    override protected val rowToColumnToEditorField =
+      _ => Column.editorFieldCG.getOption
 
     override protected def reusabilityRowEditor = implicitly
 
@@ -365,9 +375,9 @@ object Table {
            | Column.ReqType
            | Column.Tags
            | Column.Pubid
-           | Column.DeletionReason    => reusableNA
-        case c@ Column.Title          => ret(c, pw.codeGroupTitle(row.group))
-        case c@ Column.Code           => ret(c, renderCodes)
+           | Column.DeletionReason  => reusableNA
+        case c@ Column.Title        => ret(c, pw.codeGroupTitle(row.group))
+        case c@ Column.Code         => ret(c, renderCodes)
       }
     }
   }
@@ -376,13 +386,13 @@ object Table {
 
   private object Cell {
 
-    final case class Props(editor: EditorFeature.ReadWrite.ForCell, view: Reusable[TagMod])
+    final case class Props(editor: EditorFeature.ReadWrite.ForEditor[Any], view: Reusable[TagMod])
 
     object Props {
       implicit val reusability: Reusability[Props] =
         Reusability.caseClass
 
-      val NA = Props(EditorFeature.ReadWrite.ForCell.doNothing, reusableNA)
+      val NA = Props(EditorFeature.ReadWrite.ForEditor.doNothing, reusableNA)
     }
 
     val cellBase = <.td(^.tabIndex := -1)
@@ -404,7 +414,7 @@ object Table {
       e.target == e.currentTarget ||
         (try e.target.tabIndex < 0 catch { case _: Throwable => false }) // .tabIndex is undefined from tests
 
-    def onKeyDown(editor: EditorFeature.ReadWrite.ForCell): ReactKeyboardEventFromHtml => Callback =
+    def onKeyDown(editor: EditorFeature.ReadWrite.ForEditor[Any]): ReactKeyboardEventFromHtml => Callback =
       e => CallbackOption.require(doesEventTargetCell(e)) >> (
         focusKeyHandlers(e) | keyCodeSwitch(e) {
           case KeyCode.F2 => editor.startEdit getOrElse Callback.empty

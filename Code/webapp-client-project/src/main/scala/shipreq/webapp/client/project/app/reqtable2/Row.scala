@@ -183,12 +183,13 @@ object Row {
     implicit val reusability: Reusability[SourceId] = Reusability.byUnivEq
 
     val ToEditorRow = Intersection[SourceId, RowKey] {
-      case ForReq      (id) => Some(RowKey.Req         (id))
+      case ForReq      (id) => Some(id.foldReqId(RowKey.GenericReq, RowKey.UseCase))
       case ForCodeGroup(id) => Some(RowKey.CodeGroup(id))
     } {
-      case RowKey.Req      (id) => Some(ForReq      (id))
-      case RowKey.CodeGroup(id) => Some(ForCodeGroup(id))
-      case RowKey.UseCaseSteps  => None
+      case RowKey.GenericReq  (id) => Some(ForReq      (id))
+      case RowKey.UseCase     (id) => Some(ForReq      (id))
+      case RowKey.CodeGroup   (id) => Some(ForCodeGroup(id))
+      case RowKey.UseCaseSteps     => None
     }
   }
 

@@ -193,7 +193,7 @@ object ReqDetail {
       val runCmd    = this.runCmd(req.id)
       val view      = data.viewData(pw).copy(fmtReqTypeShort = false)
 
-      def renderEditable(key: EditorFeature.FieldKey.ForReq): TagMod =
+      def renderEditable(key: EditorFeature.FieldKey.ForSomeReq): TagMod =
         reqEditor(key).themedRenderOr(view.editable(key))
 
       def renderHeader: VdomElement = {
@@ -205,7 +205,7 @@ object ReqDetail {
             Header(hstyle, pubidText + ":")),
 
           <.div(*.headerTitle,
-            reqEditor(EditorFeature.FieldKey.Title).themedRenderOr(
+            reqEditor(EditorFeature.FieldKey.reqTitle(req.id)).themedRenderOr(
               Header(hstyle, view.title))),
 
           <.div(*.headerFilterDeadButton,
@@ -228,7 +228,7 @@ object ReqDetail {
       def renderRowTitle(row: Row): VdomNode =
         row match {
           case Row.CustomField(id)  => fieldName(id)
-          case Row.Code             => UiText.FieldNames.reqCodes
+          case Row.Codes            => UiText.FieldNames.reqCodes
           case Row.ReqType          => UiText.FieldNames.reqType
           case Row.Tags             => UiText.FieldNames.tags
           case Row.Implications     => UiText.FieldNames.implications
@@ -252,7 +252,7 @@ object ReqDetail {
           case Row.CustomField(id: CustomField.Text.Id)        => renderEditable(FieldKey.CustomTextField(id))
           case Row.CustomField(id: CustomField.Tag.Id)         => renderEditable(FieldKey.Tags(Some(id)))
           case Row.CustomField(id: CustomField.Implication.Id) => renderEditable(FieldKey.Implications(-\/(id)))
-          case Row.Code                                        => renderEditable(FieldKey.Code)
+          case Row.Codes                                       => renderEditable(FieldKey.Codes)
           case Row.ReqType                                     => renderEditable(FieldKey.ReqType)
           case Row.Tags                                        => renderEditable(FieldKey.Tags(None))
           case Row.DeletionReason                              => view.deletionReason getOrElse emptySpan

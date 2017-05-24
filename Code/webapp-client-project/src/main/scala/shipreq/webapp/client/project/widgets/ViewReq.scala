@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react.vdom.html_<^._
-import scalaz.\/
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
@@ -58,12 +57,13 @@ final case class ViewReq(data: Data, pw: ProjectWidgets, fmtReqTypeShort: Boolea
     case id: CustomField.Text       .Id => text(id)
   }
 
-  val editable: EditorFeature.FieldKey.ForReq => VdomElement = {
+  val editable: EditorFeature.FieldKey.ForSomeReq => VdomElement = {
     case EditorFeature.FieldKey.CustomTextField(field) => text(field)
     case EditorFeature.FieldKey.Tags           (field) => tags(field)
     case EditorFeature.FieldKey.Implications   (scope) => imps(scope)
-    case EditorFeature.FieldKey.Code                   => codes
-    case EditorFeature.FieldKey.Title                  => title
+    case EditorFeature.FieldKey.Codes                  => codes
+    case EditorFeature.FieldKey.GenericReqTitle
+       | EditorFeature.FieldKey.UseCaseTitle           => title
     case EditorFeature.FieldKey.ReqType                => reqType
   }
 }

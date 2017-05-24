@@ -79,7 +79,7 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
         editability <- pxEditability
         reqDetailId <- pxReqDetailId
       } yield reqDetailId.map { id =>
-        val row = EditorFeature.RowKey.Req(id)
+        val row = EditorFeature.RowKey.req(id)
         val aw = asyncW(row).mapKey(AsyncKey.ToReqDetail)
         val ew = editorW.forReq(id)
 
@@ -88,7 +88,7 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
           val ar = as(row).mapKey(AsyncKey.ToReqDetail)
           val af = aw.toReadWrite(ar)
           val er = EditorFeature.Read.ForProject(s.editors, editability, as.mapKey1(AsyncKey.ToEditor)).forReq(id)
-          val ef = EditorFeature.ReadWrite.ForRow(er, ew)
+          val ef = EditorFeature.ReadWrite.ForFields(er, ew)
           ReqDetail.ReqProps(ef, af)
         }
       }

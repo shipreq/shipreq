@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.feature.editor2
+package shipreq.webapp.client.project.feature.editor
 
 import japgolly.scalajs.react.extra.Reusability
 import scala.reflect.ClassTag
@@ -84,6 +84,9 @@ object FieldKey {
     override type Change = Text.UseCaseTitle.OptionalText
     override def foldUC[F[_]](f: FoldForUseCase[F]): F[Change] = f.title(this)
   }
+
+  @inline implicit def equalityForSomeReq: UnivEq[ForSomeReq] =
+    UnivEq.derive
 
   @inline implicit def equality: UnivEq[FieldKey] =
     UnivEq.derive

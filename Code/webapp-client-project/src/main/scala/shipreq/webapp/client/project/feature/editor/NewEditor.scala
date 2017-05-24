@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.feature.editor2
+package shipreq.webapp.client.project.feature.editor
 
 import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._

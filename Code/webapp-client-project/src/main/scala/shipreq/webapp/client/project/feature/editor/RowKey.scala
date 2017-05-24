@@ -1,10 +1,10 @@
-package shipreq.webapp.client.project.feature.editor2
+package shipreq.webapp.client.project.feature.editor
 
 import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.feature.editor2.{FieldKey => AnyFieldKey}
+import shipreq.webapp.client.project.feature.editor.{FieldKey => AnyFieldKey}
 
 sealed abstract class RowKey {
   type FieldKey <: AnyFieldKey
@@ -38,6 +38,9 @@ object RowKey {
 
   implicit val reusability: Reusability[RowKey] =
     Reusability.byUnivEq
+
+  def req(id: ReqId): RowKey =
+    id.foldReqId(GenericReq, UseCase)
 
   type Aux[F <: FieldKey] = RowKey { type FieldKey = F }
 
