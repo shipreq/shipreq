@@ -17,7 +17,6 @@ import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 import Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
 import shipreq.webapp.base.event.UseCaseStepGD
-import shipreq.webapp.base.validation.Simple.Invalidity
 
 /** Interface to start a new editor.
   *
@@ -62,7 +61,7 @@ object NewEditor {
       protected type Props
       protected val props: AsyncState => CallbackTo[Props]
       protected def renderImpl: Props => VdomElement
-      protected def changeImpl: Props => PotentialChange[Invalidity, Change]
+      protected def changeImpl: Props => Editor.Change[Change]
 
       final override def render(p: Permission, a: AsyncState): Option[VdomElement] =
         // Looks like this could block async but not so. Can't go from edit → async → notAllowed.

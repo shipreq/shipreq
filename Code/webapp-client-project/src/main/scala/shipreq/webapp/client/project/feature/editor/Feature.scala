@@ -4,11 +4,9 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.MonocleReact._
-import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.validation.Simple.Invalidity
 import shipreq.webapp.client.base.feature._
 import shipreq.webapp.client.base.ui.EditTheme
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -21,10 +19,13 @@ object Feature {
   /** This is not safe for reusability because the implementation calls `CallbackTo#runNow()`. */
   trait Editor[+Change] {
     def render(p: Permission, a: AsyncState): Option[VdomElement]
-    def change(): PotentialChange[Invalidity, Change]
+    def change(): Editor.Change[Change]
   }
 
   object Editor {
+    type Invalidity = shipreq.webapp.base.validation.Simple.Invalidity
+    type Change[+A] = PotentialChange[Invalidity, A]
+
     implicit def reusability[C]: Reusability[Editor[C]] =
       Reusability.never // ∵ Editor is not safe for reusability
   }
