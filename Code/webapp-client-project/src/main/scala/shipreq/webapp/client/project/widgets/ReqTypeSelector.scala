@@ -17,18 +17,25 @@ import shipreq.webapp.client.project.app.Style.widgets.{reqTypeSelector => *}
 object ReqTypeSelector {
 
   type RT = CustomReqType
-  type AbortCommit = shipreq.webapp.client.base.lib.AbortCommit[Callback, RT ~=> Callback]
+  type AbortCommit = Option[shipreq.webapp.client.base.lib.AbortCommit[Callback, RT ~=> Callback]]
 
-  final case class Props(initialValue: RT,
+  final case class Props(initialValue: Option[RT],
                          edit        : StateSnapshot[RT],
                          choices     : NonEmptySet[RT],
                          asyncStatus : Option[EditorStatus.Async],
                          abortCommit : AbortCommit) {
 
-    val change = PotentialChange.compare(before = initialValue, after = edit.value)
-    def abort  = abortCommit.abort
-    val commit = change.toOption.map(abortCommit.commit)
-    val status = asyncStatus orElse commit.map(EditorStatus.Valid) getOrElse EditorStatus.Ignore
+    val change: PotentialChange[Nothing, RT] =
+      PotentialChange.Success(edit.value).ignoreOption(initialValue)
+
+    val abort: Option[Callback] =
+      abortCommit.map(_.abort)
+
+    val commit: Option[Callback] =
+      change.toOption.flatMap(v => abortCommit.map(_.commit(v)))
+
+    val status: EditorStatus =
+      asyncStatus orElse commit.map(EditorStatus.Valid) getOrElse EditorStatus.Ignore
 
     @inline def render: VdomElement = Component(this)
   }
@@ -60,13 +67,12 @@ object ReqTypeSelector {
       val commitButton = Button(
         tipe = Button.Type.IconOnly(Icon.Checkmark),
         state = Button.State.enabledWhen(p.commit.isDefined)
-      ).tag(
-        *.commit,
-        ^.onClick -->? p.commit)
+      ).tag(*.commit, ^.onClick -->? p.commit)
 
-      val abortButton = Button(tipe = Button.Type.IconOnly(Icon.Remove)).tag(
-        *.abort,
-        ^.onClick --> p.abort)
+      val abortButton = Button(
+        tipe = Button.Type.IconOnly(Icon.Remove),
+        state = Button.State.enabledWhen(p.abort.isDefined)
+      ).tag(*.abort, ^.onClick -->? p.abort)
 
       val buttons = Button.group(commitButton, abortButton)(*.buttons)
 

@@ -113,12 +113,6 @@ object PotentialChange {
 
   case class Failure[+E](failure: E) extends PotentialChange[E, Nothing]
 
-  def compare[A](before: A, after: A)(implicit e: Equal[A]): NonFailure[A] =
-    if (e.equal(before, after))
-      Unchanged
-    else
-      Success(after)
-
   import scalaz.{\/, \/-, -\/}
 
   def fromDisjunction[E, A](d: E \/ A): PotentialChange[E, A] =

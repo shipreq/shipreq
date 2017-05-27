@@ -194,7 +194,7 @@ object NewEditor {
       def apply(id: GenericReqId): ICtxToStartFn = ictx => {
         import ictx._, ctx._
 
-        case class State(initialValue: RT,
+        case class State(initialValue: Some[RT],
                          editValue   : RT,
                          pxChoices   : Px[NonEmptySet[RT]],
                          abortCommit : ReqTypeSelector.AbortCommit) extends EditorImpl {
@@ -216,14 +216,14 @@ object NewEditor {
         }
 
         val abortCommit: ReqTypeSelector.AbortCommit =
-          makeAbortCommit[RT](t => UpdateContentCmd.SetGenericReqType(id, t.id)).value
+          Some(makeAbortCommit[RT](t => UpdateContentCmd.SetGenericReqType(id, t.id)).value)
 
         for {
           req     <- getGenericReq(id)
           initial <- getCustomReqTypeCB(req.reqTypeId)
         } yield {
           val pxChoices = ReqTypeSelector.pxChoices(initial, pxCustomReqTypes)
-          State(initial, initial, pxChoices, abortCommit)
+          State(Some(initial), initial, pxChoices, abortCommit)
         }
       }
     }
