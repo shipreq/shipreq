@@ -67,6 +67,12 @@ abstract class Intersection[A, B] {
     Intersection[A, C](f1(_) flatMap f2)(g2(_) flatMap g1)
   }
 
+  final def <=>[C](that: Iso[B, C]): Intersection[A, C] =
+    Intersection[A, C](getOption(_).map(that.get))(reverse.getOption compose that.reverseGet)
+
+  final def <=>[C](that: Prism[B, C]): Intersection[A, C] =
+    Intersection[A, C](getOption(_).flatMap(that.getOption))(reverse.getOption compose that.reverseGet)
+
   final def toIso: Iso[Option[A], Option[B]] =
     Iso((_: Option[A]) flatMap getOption)(_ flatMap reverse.getOption)
 

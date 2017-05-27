@@ -46,7 +46,7 @@ object IntersectionTest extends TestSuite {
       val d: Domain[Laws[Int, Option[Char]]] = {
         val i = Domain.ofValues(0, 10)
         val c = Domain.ofValues(Some('0'), Some('a'), None)
-        val ico = ic <=> Intersection.toOption
+        val ico = ic <=> Intersection.toOption[Char]
         (i *** c).map(x => new Laws(x._1, x._2, ico))
       }
       d mustProve Prop.eval(_.eval)
