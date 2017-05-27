@@ -69,8 +69,7 @@ object Column {
   @inline implicit def reusability: Reusability[Column]                     = Reusability.byEqual
 
   val builtInValues: NonEmptyVector[BuiltIn] =
-    // TODO Add adtValuesExcept
-    NonEmptyVector(
+    AdtMacros.adtValuesManually[BuiltIn](
       Pubid,
       Code,
       Title,

@@ -1,9 +1,9 @@
 package shipreq.webapp.client.project.app.reqtable2
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.UiText.EnglishIntExt
 import shipreq.webapp.client.base.ui.semantic.Icon

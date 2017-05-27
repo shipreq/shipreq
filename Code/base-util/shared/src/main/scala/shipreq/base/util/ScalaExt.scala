@@ -30,14 +30,6 @@ object ScalaExt extends Platform.ScalaExt {
     @inline def some: Option[A] = Some(a)
   }
 
-  // TODO Move into microlibs
-  implicit class BaseUtilExtOptionObj(private val self: Option.type) extends AnyVal {
-    def when[A](cond: Boolean)(a: => A): Option[A] =
-       if (cond) Some(a) else None
-    @inline def unless[A](cond: Boolean)(a: => A): Option[A] =
-       when(!cond)(a)
-  }
-
   implicit class GenTravExt[T[x] <: GenTraversable[x], A](private val t: T[A]) extends AnyVal {
     def ifNonEmpty[B](f: T[A] => B): Option[B] =
       if (t.isEmpty) None else Some(f(t))

@@ -29,7 +29,7 @@ object MakeEvent {
       v.fold(Failure(_), f)
   }
 
-  private def eventIfNonEmpty[A](a: A)(f: NonEmpty[A] => Result)(implicit proof: NonEmpty.ProofA[A]): Result =
+  private def eventIfNonEmpty[A](a: A)(f: NonEmpty[A] => Result)(implicit proof: NonEmpty.ProofMono[A]): Result =
     NonEmpty(a) match {
       case Some(b) => f(b)
       case None    => Unchanged

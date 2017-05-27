@@ -68,7 +68,7 @@ object ProjectIndex {
 
     implicit def univEq: UnivEq[Category] = UnivEq.derive
 
-    val All = AdtMacros.adtValuesManual[Category](
+    val All = AdtMacros.adtValuesManually[Category](
       Content, Configuration)
   }
 

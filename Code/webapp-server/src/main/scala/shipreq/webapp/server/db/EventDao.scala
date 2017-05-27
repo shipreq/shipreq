@@ -128,7 +128,7 @@ object EventDbCodecs {
   def pickleNonEmpty[N, E](f: N => E)(implicit rw: ReadWriter[E], proof: NonEmpty.Proof[E, N]): ReadWriter[N] =
     ReadWriter.xmapf(f)(NonEmpty require_! _)
 
-  def pickleNonEmptyA[A](implicit rw: ReadWriter[A], proof: NonEmpty.ProofA[A]): ReadWriter[NonEmpty[A]] =
+  def pickleNonEmptyA[A](implicit rw: ReadWriter[A], proof: NonEmpty.ProofMono[A]): ReadWriter[NonEmpty[A]] =
     pickleNonEmpty(_.value)
 
   def pickleNEV[A](implicit rw: ReadWriter[Vector[A]]): ReadWriter[NonEmptyVector[A]] =
