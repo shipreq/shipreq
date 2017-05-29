@@ -16,7 +16,7 @@ object Feature {
   type AsyncError = String
   type AsyncState = AsyncFeature.Read.D0[AsyncError]
 
-  /** This is not safe for reusability because the implementation calls `CallbackTo#runNow()`. */
+  /** This is not safe for reusability because implementation calls `CallbackTo#runNow()`. */
   trait Editor[+Change] {
     def render(p: Permission, a: AsyncState): Option[VdomElement]
     def change(): Editor.Change[Change]
@@ -25,9 +25,6 @@ object Feature {
   object Editor {
     type Invalidity = shipreq.webapp.base.validation.Simple.Invalidity
     type Change[+A] = PotentialChange[Invalidity, A]
-
-    implicit def reusability[C]: Reusability[Editor[C]] =
-      Reusability.never // ∵ Editor is not safe for reusability
   }
 
   /** Id used for [[shipreq.webapp.client.project.feature.PreviewFeature]] */
@@ -52,10 +49,13 @@ object Feature {
     }
   }
 
-           val reusabilityStateForEditorAny: Reusability[State.ForEditor[Any]] = Reusability.option
-  implicit def reusabilityStateForEditor[A]: Reusability[State.ForEditor[A]  ] = reusabilityStateForEditorAny.narrow
-  implicit val reusabilityStateForFields   : Reusability[State.ForFields     ] = Reusability.mapSameOrEmpty
-  implicit val reusabilityStateForProject  : Reusability[State.ForProject    ] = Reusability.mapSameOrEmpty
+  val reusabilityStateForEditorAny: Reusability[State.ForEditor[Any]] = {
+    implicit def e = Reusability.never[Editor[Any]] // ∵ Editor is not safe for reusability
+    Reusability.option
+  }
+  implicit def reusabilityStateForEditor[A]: Reusability[State.ForEditor[A]] = reusabilityStateForEditorAny.narrow
+  implicit val reusabilityStateForFields   : Reusability[State.ForFields   ] = Reusability.when(_.isEmpty)
+  implicit val reusabilityStateForProject  : Reusability[State.ForProject  ] = Reusability.when(_.isEmpty)
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 

@@ -5,12 +5,14 @@ package shipreq.webapp.client.project.feature
   * Everything here is available for various data scopes:
   * - for the whole project
   * - for rows (eg. a single Req, see [[EditorFeature.RowKey]])
-  * - for cells (eg. the title of UC-3)
+  * - for fields (eg. the title of UC-3, see [[EditorFeature.FieldKey]])
   *
   * The feature is also sliced into various usage/lifecycle scopes:
   * - [[EditorFeature.Read]] - Read-only access to state. Can render existing editors.
   * - [[EditorFeature.Write]] - Write-only access. Requires that state be supplied to use. Can start new editors.
   * - [[EditorFeature.ReadWrite]] - Read/write access. The main DSL.
+  *
+  * Editor IO and asynchronicity granularity is per-row per-field.
   *
   * Usage: Top-Most Component
   * =========================
@@ -30,7 +32,7 @@ package shipreq.webapp.client.project.feature
   *
   * Request an instance of `EditorFeature.Props.ForXxx` in component props.
   *
-  * Supply row and cell keys until arriving at [[EditorFeature.ReadWrite.ForEditor]]. Then:
+  * Supply row and field keys until arriving at [[EditorFeature.ReadWrite.ForEditor]]. Then:
   * - use `.renderOr()` to render the editor or a read-only view if the editor is closed.
   * - wire up `.startEdit()` to whatever event handler can start editing.
   */

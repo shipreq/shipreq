@@ -18,11 +18,12 @@ import shipreq.webapp.client.project.widgets.ProjectWidgets
 import Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
 import shipreq.webapp.base.event.UseCaseStepGD
 
-/** Interface to start a new editor.
-  *
-  * Doesn't perform ANY applicability checks.
+/** Interface to start a new editor (if possible).
+  * If not all required data is available then the execution of this Callback could result in a no-op.
   *
   * The input to [[create]] is a Callback to invoke after the editor opens.
+  *
+  * Doesn't perform ANY applicability checks. That's performed by the higher-level Feature API.
   */
 final case class NewEditor(create: Callback => Callback) extends AnyVal
 
@@ -41,11 +42,11 @@ object NewEditor {
   final case class Ctx[Change](stateAccess : StateAccessPure[State.ForEditor[Change]],
                                asyncFeature: AsyncFeature.Write.D0[AsyncError])
 
-  type PerRow[FK <: FieldKey] = FieldKey.Fold[FK, PerField]
+  type ForFields[FK <: FieldKey] = FieldKey.Fold[FK, ForEditor]
 
-  type PerField[Change] = Ctx[Change] ⇒ NewEditor
+  type ForEditor[Change] = Ctx[Change] ⇒ NewEditor
 
-  def forRow(static: Static, rowKey: RowKey): PerRow[rowKey.FieldKey] =
+  def forRow(static: Static, rowKey: RowKey): ForFields[rowKey.FieldKey] =
     static.internal.perRow(rowKey)
 
   def doNothing: NewEditor =
@@ -55,7 +56,16 @@ object NewEditor {
 
   private object Internal {
 
-    type StartFn[C] = CallbackOption[Editor[C]]
+    /** Initialises an editor.
+      *
+      * `Callback` because the initial value may depend on project context (accessed via `Px`).
+      *
+      * `CallbackOption` because the initial data query might fail. In practice this would probably never happen but
+      *   1. I can't prove it won't (id lookup is partial)
+      *   2. This might become likely when collaborative features are edited.
+      *      (eg. Alice renders start-edit button, Bob deletes req, Alice attempts to start editor)
+      */
+    type Init[Change] = CallbackOption[Editor[Change]]
 
     trait EditorImpl[Change] extends Editor[Change] {
       protected type Props
@@ -76,17 +86,18 @@ object NewEditor {
     }
   }
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   private final class Internal(static: Static) {
     import static._
 
-    val perRow: RowKey.Fold[PerRow] = {
+    val perRow: RowKey.Fold[ForFields] = {
+      type LogicPerField[Change] = InternalCtx[Change] => Internal.Init[Change]
 
-      type LogicPerField[Change] = InternalCtx[Change] => Internal.StartFn[Change]
-
-      val logicToPerField: LogicPerField ~> PerField =
-        λ[LogicPerField ~> PerField] { startFn => ctx =>
+      val logicToPerField: LogicPerField ~> ForEditor =
+        λ[LogicPerField ~> ForEditor] { init =>ctx =>
           val ictx = new InternalCtx(ctx)
-          ictx.newEditor(startFn(ictx))
+          ictx.newEditor(init(ictx))
         }
 
       def prepareCG(r: RowKey.CodeGroup) = FieldKey.FoldForCodeGroup[LogicPerField](
@@ -108,17 +119,15 @@ object NewEditor {
         f => EditTags(r.id, f.field),
         f => EditRichText.UseCaseTitle(r.id, PreviewId(r, f)))
 
-      lazy val forUseCaseSteps = FieldKey.FoldForUseCaseSteps[PerField](
+      lazy val forUseCaseSteps = FieldKey.FoldForUseCaseSteps[ForEditor](
         f => logicToPerField(EditUseCaseStep(f.id, PreviewId(RowKey.UseCaseSteps, f))))
 
-      RowKey.Fold[PerRow](
+      RowKey.Fold[ForFields](
         codeGroup    = prepareCG(_).map(logicToPerField),
         genericReq   = prepareGR(_).map(logicToPerField),
         useCase      = prepareUC(_).map(logicToPerField),
         useCaseSteps = () => forUseCaseSteps)
     }
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     final class InternalCtx[C](val ctx: Ctx[C]) {
       import ctx._
@@ -153,11 +162,9 @@ object NewEditor {
           CallbackOption.liftOption(newEditor(initialValue(s)))
         }
 
-      def newEditor(startFn: => Internal.StartFn[C]): NewEditor =
-        NewEditor(cb => startFn.get.flatMap(stateAccess.setState(_, cb)))
+      def newEditor(init: => Internal.Init[C]): NewEditor =
+        NewEditor(cb => init.get.flatMap(stateAccess.setState(_, cb)))
     }
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     def getGenericReq(id: GenericReqId): CallbackOption[GenericReq] =
       pxProject.toCallback.map(_.reqs.genericReqs.get(id)).asCBO
@@ -177,9 +184,9 @@ object NewEditor {
 
     trait ForChangeType {
       type Change
-      final type StartFn       = Internal.StartFn[Change]
-      final type EditorImpl    = Internal.EditorImpl[Change]
-      final type ICtxToStartFn = InternalCtx[Change] => StartFn
+      final type EditorImpl = Internal.EditorImpl[Change]
+      final type Init       = Internal.Init[Change]
+      final type InitFn     = InternalCtx[Change] => Init
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -191,7 +198,7 @@ object NewEditor {
 
       val pxCustomReqTypes = ReqTypeSelector.pxCustomReqTypes(pxProject)
 
-      def apply(id: GenericReqId): ICtxToStartFn = ictx => {
+      def apply(id: GenericReqId): InitFn = ictx => {
         import ictx._, ctx._
 
         case class State(initialValue: Some[RT],
@@ -240,7 +247,7 @@ object NewEditor {
 
         override type Change = RCE.Output
 
-        def apply(id: ReqId): ICtxToStartFn = ictx => {
+        def apply(id: ReqId): InitFn = ictx => {
           import ictx._
 
           val initialValuesCB: CallbackTo[Set[ReqCode.Value]] =
@@ -279,7 +286,7 @@ object NewEditor {
 
         override type Change = RCE.Output
 
-        def apply(id: ReqCodeId): ICtxToStartFn = ictx => {
+        def apply(id: ReqCodeId): InitFn = ictx => {
           import ictx._
 
           val initialValueCB: CallbackOption[ReqCode.Value] =
@@ -321,19 +328,19 @@ object NewEditor {
 
       override type Change = ImplicationEditor.Output
 
-      def apply(id: ReqId, scope: ImplicationScope): ICtxToStartFn =
+      def apply(id: ReqId, scope: ImplicationScope): InitFn =
         scope.fold(customField(id, _), all(id, _))
 
-      def all(id: ReqId, dir: Direction): ICtxToStartFn =
+      def all(id: ReqId, dir: Direction): InitFn =
         start(id, dir, pxLookupAll)
 
-      def customField(id: ReqId, fid: CustomField.Implication.Id): ICtxToStartFn = {
+      def customField(id: ReqId, fid: CustomField.Implication.Id): InitFn = {
         val dir = CustomField.Implication.dir
         val lookup = Px.apply2(pxProject, pxLookupAll)(ImplicationEditor.Lookup.forCustomColumn(_, _, fid))
         start(id, dir, lookup)
       }
 
-      private def start(id: ReqId, dir: Direction, pxLookup: Px[Lookup]): ICtxToStartFn = ictx => {
+      private def start(id: ReqId, dir: Direction, pxLookup: Px[Lookup]): InitFn = ictx => {
         import ictx._
 
         val pxPubids = pxProject.map(p => ImplicationEditor.initialValue(p, dir, id))
@@ -341,14 +348,14 @@ object NewEditor {
         val pxInit: Px[(Set[ReqId], String)] =
           for {
             project <- pxProject
-            lookup <- pxLookup
-            pubids <- pxPubids
+            lookup  <- pxLookup
+            pubids  <- pxPubids
           } yield ImplicationEditor.initialValueAndText((id, pubids).some, project, lookup)
 
         val pxValFn: Px[ValidationFn] =
           for {
             project <- pxProject
-            init <- pxInit
+            init    <- pxInit
           } yield ImplicationEditor.validationFn(project, id.some, init._1, dir)
 
         val abortCommit: ImplicationEditor.AbortCommit =
@@ -388,7 +395,7 @@ object NewEditor {
 
       override type Change = TagEditor.Output
 
-      def apply(id: ReqId, fid: Option[CustomField.Tag.Id]): ICtxToStartFn = ictx => {
+      def apply(id: ReqId, fid: Option[CustomField.Tag.Id]): InitFn = ictx => {
         import ictx._
 
         val lookupFn = fid.fold[Project => Lookup](Lookup.notUsedInTagFields)(Lookup.forTagField)
@@ -439,7 +446,7 @@ object NewEditor {
 
         protected def start(cmd           : T.OptionalText => UpdateContentCmd,
                             initialValueCB: CallbackOption[T.OptionalText],
-                            pid           : PreviewId): ICtxToStartFn = ictx => {
+                            pid           : PreviewId): InitFn = ictx => {
           import ictx._
 
           val abortCommit: editor.AbortCommit =
@@ -486,31 +493,31 @@ object NewEditor {
         }
       }
 
-      object GenericReqTitle extends Base(RichTextEditor.GenericReqTitle) {
-        def apply(id: GenericReqId, pid: PreviewId): ICtxToStartFn = start(
-          UpdateContentCmd.SetGenericReqTitle(id, _),
-          getGenericReq(id).map(_.title),
-          pid)
-      }
-
-      object UseCaseTitle extends Base(RichTextEditor.UseCaseTitle) {
-        def apply(id: UseCaseId, pid: PreviewId): ICtxToStartFn = start(
-          UpdateContentCmd.SetUseCaseTitle(id, _),
-          getUseCase(id).map(_.title),
-          pid)
-      }
-
       object CodeGroupTitle extends Base(RichTextEditor.CodeGroupTitle) {
-        def apply(id: ReqCodeId, pid: PreviewId): ICtxToStartFn = start(
+        def apply(id: ReqCodeId, pid: PreviewId): InitFn = start(
           UpdateContentCmd.SetCodeGroupTitle(id, _),
           getCodeGroup(id).map(_.title).widen,
           pid)
       }
 
       object CustomTextField extends Base(RichTextEditor.CustomTextField) {
-        def apply(id: ReqId, fid: CustomField.Text.Id, pid: PreviewId): ICtxToStartFn = start(
+        def apply(id: ReqId, fid: CustomField.Text.Id, pid: PreviewId): InitFn = start(
           UpdateContentCmd.SetCustomTextField(id, fid, _),
           pxProject.toCallback.map(p => ReqData.textAt(fid, id).get(p.reqText)).toCBO,
+          pid)
+      }
+
+      object GenericReqTitle extends Base(RichTextEditor.GenericReqTitle) {
+        def apply(id: GenericReqId, pid: PreviewId): InitFn = start(
+          UpdateContentCmd.SetGenericReqTitle(id, _),
+          getGenericReq(id).map(_.title),
+          pid)
+      }
+
+      object UseCaseTitle extends Base(RichTextEditor.UseCaseTitle) {
+        def apply(id: UseCaseId, pid: PreviewId): InitFn = start(
+          UpdateContentCmd.SetUseCaseTitle(id, _),
+          getUseCase(id).map(_.title),
           pid)
       }
     }
@@ -523,7 +530,7 @@ object NewEditor {
 
       override type Change = UseCaseStepGD.NonEmptyValues
 
-      def apply(id: UseCaseStepId, pid: PreviewId): ICtxToStartFn = ictx => {
+      def apply(id: UseCaseStepId, pid: PreviewId): InitFn = ictx => {
         import ictx._
 
         val commitFn: UseCaseStepEditor.CommitFn =

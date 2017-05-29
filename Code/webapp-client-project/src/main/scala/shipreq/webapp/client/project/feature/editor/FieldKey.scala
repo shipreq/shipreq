@@ -156,7 +156,6 @@ object FieldKey {
     override def apply(f: UseCaseStep): F[f.Change] = f.foldUCS(this)
     override def map[G[_]](t: F ~> G): FoldForUseCaseSteps[G] =
       FoldForUseCaseSteps(f => t(step(f)))
-
   }
 
   final class Type[F <: FieldKey](implicit ct: ClassTag[F]) {

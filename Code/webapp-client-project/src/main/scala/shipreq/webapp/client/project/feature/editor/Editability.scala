@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.feature.editor
 
 import japgolly.scalajs.react.extra.Reusability
-import scala.reflect.ClassTag
 import scalaz.{-\/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -10,7 +9,7 @@ import shipreq.webapp.client.project.lib.DataReusability._
 /** Determinations of whether or not a field is allowed to be edited.
   *
   * Each class herein just provides reusable compositions that eventually just reduce to
-  * `CellKey => Permission`.
+  * `FieldKey => Permission`.
   *
   * This is especially important on dense screens like ReqTable where having a reusable instance for all editable
   * fields per-row / per-req can prevent a lot of needless vdom re-calculation and processing.
@@ -45,7 +44,7 @@ object Editability {
     }
   }
 
-  sealed abstract class ForFields[-FK <: FieldKey] {
+  trait ForFields[-FK <: FieldKey] {
     def apply(field: FK): Permission
   }
 
