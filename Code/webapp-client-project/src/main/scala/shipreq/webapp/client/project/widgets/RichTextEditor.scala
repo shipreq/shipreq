@@ -19,27 +19,29 @@ import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.lib.DataReusability._
 import RichTextEditor.hardcodedLive
+import shipreq.webapp.client.base.REACT_TMP._
 
 sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, final val text: TextType) {
 
   type CommitFn    = text.OptionalText ~=> Callback
   type AbortCommit = Option[AbortCommit2[Callback, CommitFn]]
 
-  case class Props(project       : Project,
-                   plainText     : PlainText.ForProject,
-                   textSearch    : TextSearch,
-                   projectWidgets: ProjectWidgets,
-                   edit          : StateSnapshot[String],
-                   asyncStatus   : Option[EditorStatus.Async],
-                   abortCommit   : AbortCommit,
-                   preview       : PreviewFeature.ReadWrite.Single,
-                   preEditValue  : Option[text.OptionalText]) {
+  case class Props(project         : Project,
+                   plainText       : PlainText.ForProject,
+                   textSearch      : TextSearch,
+                   projectWidgets  : ProjectWidgets,
+                   edit            : StateSnapshot[String],
+                   asyncStatus     : Option[EditorStatus.Async],
+                   abortCommit     : AbortCommit,
+                   preview         : PreviewFeature.ReadWrite.Single,
+                   preEditValue    : Option[text.OptionalText],
+                   showInstructions: Boolean) {
 
     val richText    = text.parse(project)(edit.value)
     val parseResult = DataValidators.genericRichText(plainText).audit(richText)
     val validated   = PotentialChange.fromDisjunction(parseResult).ignoreOption(preEditValue)
-    def abort       = abortCommit.fold(Callback.empty)(_.abort)
-    def commit      = (t: text.OptionalText) => abortCommit.fold(Callback.empty)(_ commit t)
+    def abort       = abortCommit.map(_.abort)
+    def commit      = (t: text.OptionalText) => abortCommit.map(_ commit t)
     val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
     def showPreview = validated.isChanged
 
@@ -62,7 +64,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
     val textareaConst: TagMod = {
       val keys =
-        KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +
+        KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort)) +
         KeyboardTheme.commitCO($.props.map(_.status.getCommit), text.lineCardinality)
 
       val updateState: ReactEventFromTextArea => Callback =
@@ -88,12 +90,13 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
       def editor(validity: Validity): VdomElement =
         editorRef.component(EditTheme.autosizeTextareaProps(validity, p.edit.value, textareaConst))
 
-      def instructions =
-        KeyboardTheme.instructionsForCommitAbort(
-          text.lineCardinality,
-          p.status.getCommit,
-          p.abort,
-          Some(RichTextEditorHelp.modal.show))
+      def instructions: TagMod =
+        TagMod.when(p.showInstructions)(
+          KeyboardTheme.instructionsForCommitAbort(
+            text.lineCardinality,
+            p.status.getCommit,
+            p.abort,
+            Some(RichTextEditorHelp.modal.show)))
 
       def richText =
         p.projectWidgets.format(hardcodedLive, p.richText)

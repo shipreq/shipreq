@@ -17,6 +17,7 @@ import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.{AutoComplete, TextEditor}
 import DataValidators.{reqCode => V}
+import shipreq.webapp.client.base.REACT_TMP._
 
 sealed abstract class ReqCodeEditor[In: Reusability, Out] {
   final type Output = Out
@@ -36,16 +37,17 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
   type CommitFn    = Out ~=> Callback
   type AbortCommit = Option[AbortCommit2[Callback, CommitFn]]
 
-  case class Props(edit        : StateSnapshot[String],
-                   initialValue: Option[In],
-                   trie        : ReqCode.Trie,
-                   asyncStatus : Option[EditorStatus.Async],
-                   abortCommit : AbortCommit) {
+  case class Props(edit            : StateSnapshot[String],
+                   initialValue    : Option[In],
+                   trie            : ReqCode.Trie,
+                   asyncStatus     : Option[EditorStatus.Async],
+                   abortCommit     : AbortCommit,
+                   showInstructions: Boolean) {
 
     val parseResult = validator(V.State(trie, dataToSet(initialValue)))(edit.value)
     val validated   = validate(parseResult, initialValue)
-    def abort       = abortCommit.fold(Callback.empty)(_.abort)
-    def commit      = (r: Out) => abortCommit.fold(Callback.empty)(_ commit r)
+    def abort       = abortCommit.map(_.abort)
+    def commit      = (r: Out) => abortCommit.map(_ commit r)
     val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
 
     def render: VdomElement = Component(this)
@@ -67,7 +69,7 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
 
     val textareaConst: TagMod = {
       val keys =
-        KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +
+        KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort)) +
         KeyboardTheme.commitCO($.props.map(_.status.getCommit), lineCardinality)
 
       val updateState: ReactEventFromTextArea => Callback =
@@ -85,12 +87,13 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
       def editor(validity: Validity): VdomElement =
         editorRef.component(EditTheme.autosizeTextareaProps(validity, p.edit.value, textareaConst))
 
-      def instructions =
-        KeyboardTheme.instructionsForCommitAbort(
-          lineCardinality,
-          p.status.getCommit,
-          p.abort,
-          None)
+      def instructions: TagMod =
+        TagMod.when(p.showInstructions)(
+          KeyboardTheme.instructionsForCommitAbort(
+            lineCardinality,
+            p.status.getCommit,
+            p.abort,
+            None))
 
       EditTheme.renderEditor(p.status, editor, p.edit.value, instructions)
     }

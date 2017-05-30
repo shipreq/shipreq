@@ -20,6 +20,7 @@ import shipreq.webapp.client.project.app.Style.{deletionForm => *}
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.feature.{PreviewFeature, Selection}
 import MTrie.Ops
+import shipreq.webapp.client.base.REACT_TMP._
 
 object DeletionForm {
 
@@ -307,15 +308,16 @@ object DeletionForm {
 
     def reasonEditorProps(p: Props, s: State): RichTextEditor.DeletionReason.Props =
       RichTextEditor.DeletionReason.Props(
-        project        = p.project,
-        plainText      = p.projectText,
-        textSearch     = p.textSearch,
-        projectWidgets = p.widgets,
-        edit           = StateSnapshot.withReuse(s.reason)(setReason),
-        asyncStatus    = None,
-        abortCommit    = None,
-        preview        = PreviewFeature.ReadWrite.Single.AlwaysShow,
-        preEditValue   = None)
+        project          = p.project,
+        plainText        = p.projectText,
+        textSearch       = p.textSearch,
+        projectWidgets   = p.widgets,
+        edit             = StateSnapshot.withReuse(s.reason)(setReason),
+        asyncStatus      = None,
+        abortCommit      = None,
+        preview          = PreviewFeature.ReadWrite.Single.AlwaysShow,
+        preEditValue     = None,
+        showInstructions = true)
 
     val cancelButton: VdomElement =
       <.button(^.onClick --> $.props.flatMap(_.cancel), UiText.buttonAbortChange)
@@ -346,12 +348,10 @@ object DeletionForm {
             widgets reqTitle req)
 
         val impBy =
-          if (impliedBy.isEmpty)
-            EmptyVdom
-          else
+          TagMod.when(impliedBy.nonEmpty)(
             <.span(
               <.span(*.impliedByPrefix, "⇐"),
-              renderImpliedByItem.reqs(impliedBy))
+              renderImpliedByItem.reqs(impliedBy)))
 
         <.tr(
           td(<.span(*.indent(indent)), sel.fold(Widgets.checkboxReadOnly(On))(_.checkbox), reqTitle),

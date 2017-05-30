@@ -34,8 +34,9 @@ object ReqTypeSelector {
     val commit: Option[Callback] =
       change.toOption.flatMap(v => abortCommit.map(_.commit(v)))
 
+
     val status: EditorStatus =
-      asyncStatus orElse commit.map(EditorStatus.Valid) getOrElse EditorStatus.Ignore
+      asyncStatus getOrElse EditorStatus.fromValidatedChange(change)(_ => commit, abort)
 
     @inline def render: VdomElement = Component(this)
   }

@@ -277,7 +277,8 @@ object NewEditor {
               initial,
               trie,
               EditorStatus.async(as),
-              abortCommit)
+              abortCommit,
+              showInstructions = true)
         }
       }
 
@@ -314,7 +315,8 @@ object NewEditor {
               initial,
               trie,
               EditorStatus.async(as),
-              abortCommit)
+              abortCommit,
+              showInstructions = true)
         }
       }
     }
@@ -384,7 +386,8 @@ object NewEditor {
             valFn,
             EditorStatus.async(as),
             abortCommit,
-            textSearch)
+            textSearch,
+            showInstructions = true)
       }
     }
 
@@ -430,7 +433,8 @@ object NewEditor {
             ss,
             lookup,
             EditorStatus.async(as),
-            abortCommit)
+            abortCommit,
+            showInstructions = true)
       }
     }
 
@@ -489,7 +493,8 @@ object NewEditor {
               EditorStatus.async(as),
               abortCommit,
               previewFeature(pid, previewState),
-              initial)
+              initial,
+              showInstructions = true)
         }
       }
 

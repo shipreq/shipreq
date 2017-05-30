@@ -93,7 +93,8 @@ object UseCaseStepEditor {
       validated.fold(_.isChanged)(_ || _.isChanged)
 
     val status: EditorStatus =
-      asyncStatus getOrElse EditorStatus.fromValidatedChange(validatedChanges)(commit, abort)
+      asyncStatus.getOrElse(
+        EditorStatus.fromValidatedChange(validatedChanges)(v => Some(commit(v)), Some(abort)))
 
     def render: VdomElement = Component(this)
   }
@@ -140,7 +141,7 @@ object UseCaseStepEditor {
         KeyboardTheme.instructionsForCommitAbort(
           lineCardinality,
           p.status.getCommit,
-          p.abort,
+          Some(p.abort),
           Some(RichTextEditorHelp.modal.show))
 
       def richText =

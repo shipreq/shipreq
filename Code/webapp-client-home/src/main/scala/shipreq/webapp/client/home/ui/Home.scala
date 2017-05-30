@@ -85,10 +85,10 @@ object HomeContent {
       val menu = MemberNavBar.Props(p.username, navBarLeft).render
 
       val projectCreate = {
-        val status =
+        val status: EditorStatus =
           EditorStatus.async(p.createProjectAS) getOrElse
             EditorStatus.ignoreOrValidate(DataValidators.projectName.unnamed)(
-              p.createProjectText.value, _.isEmpty, p.createProjectIO)
+              p.createProjectText.value, _.isEmpty, s => Some(p.createProjectIO(s)))
 
         PlainTextEditor.WithButton.Props(
           p.createProjectText.value,

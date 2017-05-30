@@ -5,6 +5,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import scala.collection.immutable.ListSet
 import shipreq.webapp.client.base.lib.KeyHandler._
+import shipreq.webapp.client.base.REACT_TMP._
 
 case class KeyHandler(criteria: Criteria, response: Response) {
   def asEventDefault: KeyHandler =
@@ -75,6 +76,12 @@ object KeyHandler {
 
     def handle(cb: Callback): KeyHandler =
       handle(_ => cb)
+
+    def handleWhenDefined(cb: Option[Callback]): KeyHandler =
+      handle(cb.getOrEmpty)
+
+    def handleWhenDefined(cb: CallbackTo[Option[Callback]]): KeyHandler =
+      handle(cb.flatten(_.getOrEmpty))
   }
 
   object Criterion {

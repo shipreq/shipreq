@@ -26,7 +26,7 @@ object PlainTextEditor {
     final case class Props(text        : String,
                            updateText  : String => Callback,
                            status      : EditorStatus,
-                           abort       : Callback,
+                           abort       : Option[Callback],
                            inputContMod: TagMod = EmptyVdom,
                            inputMod    : TagMod = EmptyVdom) {
       @inline def render = Component(this)
@@ -39,7 +39,7 @@ object PlainTextEditor {
 
       val base = {
         val keys =
-          KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +
+          KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort)) +
           KeyboardTheme.commitCO($.props.map(_.status.getCommit), SingleLine)
 
         val onChange = (_: ReactEventFromInput).extract(_.target.value)(t =>
@@ -128,14 +128,14 @@ object PlainTextEditor {
 
         p.status match {
 
-          case EditorStatus.Ignore =>
+          case EditorStatus.Ignore | EditorStatus.Valid(None) =>
             <.div(
               <.div(
                 Input.Action(
                   input,
                   buttonDisabled.tag(p.buttonLabel))))
 
-          case EditorStatus.Valid(commit) =>
+          case EditorStatus.Valid(Some(commit)) =>
             val keys = KeyboardTheme.commitCriterion.handle(commit).toReact
             <.div(
               <.div(

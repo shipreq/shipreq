@@ -4,6 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.ext.KeyCode
 import scalacss.ScalaCssReact._
+import scala.scalajs.js
 import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
 import shipreq.webapp.client.base.lib.KeyHandler._
 import shipreq.webapp.client.base.ui.BaseStyles.{editorInstructions => *}
@@ -39,42 +40,60 @@ object KeyboardTheme {
   def commitCO(commit: CallbackTo[Option[Callback]], lc: LineCardinality): KeyHandler =
     commitCriterion.handle(commit >>= (Callback sequenceOption _))
 
-  private val link   = <.a(*.link)
-  private val clause = <.span(*.clause)
+  private val container: VdomTag = <.div(*.container)
+  private val link     : VdomTag = <.a(*.link)
+  private val clause   : VdomTag = <.span(*.clause)
+  private val comma    : TagMod  = ","
+  private val fullStop : TagMod  = "."
 
   private val helpIcon = Icon.HelpCircle.tag(*.helpIcon)
 
   def instructionsForCommitAbort(lc    : LineCardinality,
                                  commit: Option[Callback],
-                                 abort : Callback,
+                                 abort : Option[Callback],
                                  help  : Option[Callback]): VdomTag = {
-    var tag = <.div(*.container)
 
-    def add(m: TagMod*): Unit =
-      tag = tag(clause(m: _*))
+    val main: js.UndefOr[TagMod.Composite] = {
+      var clauses = Vector.empty[TagMod]
 
-    // New line
-    lc match {
-      case SingleLine => ()
-      case MultiLine  => add("enter for new line,")
+      def add(m: TagMod*): Unit =
+        clauses :+= TagMod.Composite(m.toVector)
+
+      lc match {
+        case SingleLine => ()
+        case MultiLine  => add("enter for new line")
+      }
+
+      for (c <- commit) {
+        add("ctrl-enter to ", link(^.onClick --> c, "save"))
+      }
+
+      for (a <- abort) {
+        add("esc to ", link(^.onClick --> a, "cancel"))
+      }
+
+      if (clauses.isEmpty)
+        js.undefined
+      else {
+        val last = clauses.length - 1
+        var i = 0
+        while (i <= last) {
+          val a = clauses(i)
+          val b = if (i == last) fullStop else comma
+          clauses = clauses.updated(i, clause(a, b))
+          i += 1
+        }
+        TagMod.Composite(clauses)
+      }
     }
 
-    // Commit
-    var save: VdomNode = "save"
-    for (c <- commit)
-      save = link(^.onClick --> c, save)
-    add("ctrl-enter to ", save, ",")
-
-    // Abort
-    val cancel = link(^.onClick --> abort, "cancel")
-    add("esc to ", cancel, ".")
-
-    // Help
-    for (h <- help) {
-      val eh = (e: ReactEvent) => e.stopPropagationCB >> e.preventDefaultCB >> h
-      add(helpIcon(^.onClick ==> eh))
+    help match {
+      case Some(h) =>
+        val eh = (e: ReactEvent) => e.stopPropagationCB >> e.preventDefaultCB >> h
+        container(main.whenDefined, helpIcon(^.onClick ==> eh))
+      case None =>
+        // main.fold(EmptyVdom)(container(_))
+        container(main.whenDefined)
     }
-
-    tag
   }
 }

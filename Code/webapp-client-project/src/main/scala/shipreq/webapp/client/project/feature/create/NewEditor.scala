@@ -55,11 +55,14 @@ object NewEditor {
       final override def value() =
         valueImpl(props(None).runNow())
     }
+
+    final val ShowInstructions = true
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   private final class Internal(static: Static) {
+    import Internal.ShowInstructions
     import static._
 
     val perRow: RowKey.Fold[ForFields] = {
@@ -141,7 +144,8 @@ object NewEditor {
               None,
               trie,
               EditorStatus.async(as),
-              None)
+              None,
+              showInstructions = ShowInstructions)
         }
       }
 
@@ -165,7 +169,8 @@ object NewEditor {
               None,
               trie,
               EditorStatus.async(as),
-              None)
+              None,
+              showInstructions = ShowInstructions)
         }
       }
     }
@@ -212,7 +217,8 @@ object NewEditor {
             valFn,
             EditorStatus.async(as),
             None,
-            textSearch)
+            textSearch,
+            showInstructions = ShowInstructions)
       }
     }
 
@@ -242,7 +248,8 @@ object NewEditor {
             ss,
             lookup,
             EditorStatus.async(as),
-            None)
+            None,
+            showInstructions = ShowInstructions)
       }
     }
 
@@ -279,7 +286,8 @@ object NewEditor {
               EditorStatus.async(as),
               None,
               previewFeature(pid, previewState),
-              None)
+              None,
+              showInstructions = ShowInstructions)
         }
       }
 
