@@ -223,7 +223,7 @@ object Style extends StyleSheet.Inline {
         padding(4.px).important,
         verticalAlign.top.important)
 
-      val header = styleF(D.live *** D.dragStatus) { case (live, status) => styleS(
+      val columnHeader = styleF(D.live *** D.dragStatus) { case (live, status) => styleS(
         headerBase,
         deadColumnLabel(live),
         cursor.pointer.important, // Because click affects sorting
@@ -250,6 +250,16 @@ object Style extends StyleSheet.Inline {
       val `N/A` = style(
         color(c"#666"),
         margin.horizontal(auto))
+
+      // On = selected
+      val dataRow = styleF(D.`live * on`) {
+        case (Live, Off) => mixin()
+        case (Dead, Off) => mixin(backgroundColor(c"#f5f5f5"))
+        case (Live, On ) => mixin(backgroundColor(c"#ffc"))
+        case (Dead, On ) => mixin(backgroundColor(c"#f5f5c4"))
+      }
+
+      def dataCell = bodyBase
     }
 
     object filterEditor {

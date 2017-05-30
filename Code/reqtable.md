@@ -5,8 +5,7 @@ Table modes:
   4. Main
 
 Styles:
-  * Table row height
-  * Row columns @ dead * selected
+  * Dead columns should be highlighted dead
   * DeletionForm styles
   * Hide dead from stats when HideDead
   * Spinner for locked rows

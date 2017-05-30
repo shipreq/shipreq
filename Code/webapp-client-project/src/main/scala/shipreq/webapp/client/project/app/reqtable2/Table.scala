@@ -147,7 +147,7 @@ object Table {
               case _                     => c.live
             }
             <.th(
-              *.header(live, i.status),
+              *.columnHeader(live, i.status),
               i.mod,
               ^.tabIndex   := -1,
               ^.onKeyDown ==> dataColKeyDown(c),
@@ -215,16 +215,16 @@ object Table {
     protected final val reusabilityView: Reusability[(RowData, ViewInput, Column)] =
       implicitly
 
+    private val selBase = <.td(*.selectionColumnBody)
+
     final def render(p: Props): VdomElement = {
       val row = p.row
+      val sel = p.selection
 
-//      val rowStatus: CellStatus =
-//        if (row.live is Dead) CellStatus.DeadRow else CellStatus.Normal
+      val rowBase = <.tr(*.dataRow(row.live, sel.get))
 
       def selCellKeyDown(e: ReactKeyboardEventFromHtml): Callback =
         focusKeyHandlers(e)
-
-      val td = <.td //(*.cell(rowStatus))
 
       val mkViewWhenApplicable: Column => Reusable[TagMod] =
         viewMaker(row, p.viewInput)
@@ -236,10 +236,8 @@ object Table {
         }
 
       def renderNormal = {
-        val sel = p.selection
-
         def selCell =
-          td(
+          selBase(
             ^.onKeyDown ==> selCellKeyDown,
             sel.onClick,
             sel.checkbox(^.tabIndex := -1))
@@ -254,7 +252,7 @@ object Table {
             Cell.Component.withKey(col.key)(cp)
           }
 
-        <.tr(selCell, colCells)
+        rowBase(selCell, colCells)
       }
 
       def renderLocked = {
@@ -268,7 +266,7 @@ object Table {
 
         def lockedSel = <.div(^.cls := "locked", "LOCKED")
 
-        <.tr(td(lockedSel), colCells)
+        rowBase(selBase(lockedSel), colCells)
       }
 
       p.rowAsync match {
@@ -279,8 +277,8 @@ object Table {
           // To save dev-time, if the RPC fails an alert popups asking to retry/cancel, thus this part of the code
           // should only execute when the row is locked. Whole-row editing + failure won't occur.
           dom.console.warn(s.failure)
-          <.tr(
-            td(^.colSpan := (p.cols.length + 1),
+          rowBase(
+            <.td(^.colSpan := (p.cols.length + 1),
               <.div(
                 s.failure,
                 <.button("Retry", ^.onClick --> s.retry),
@@ -395,7 +393,7 @@ object Table {
       val NA = Props(EditorFeature.ReadWrite.ForEditor.doNothing, reusableNA)
     }
 
-    val cellBase = <.td(^.tabIndex := -1)
+    val cellBase = <.td(*.dataCell, ^.tabIndex := -1)
 
     type $ = ScalaComponent.Lifecycle.RenderScope[Props, Unit, Unit]
     type N = dom.html.TableDataCell
@@ -423,7 +421,6 @@ object Table {
 
     def render($: $, p: Props): VdomElement =
       cellBase(
-//        *.cell(status),
         ^.onKeyDown ==> onKeyDown($.props.editor),
         p.editor.themedRenderOr(p.view))
 
