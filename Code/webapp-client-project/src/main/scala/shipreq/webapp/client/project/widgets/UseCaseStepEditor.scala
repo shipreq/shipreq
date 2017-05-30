@@ -98,8 +98,8 @@ object UseCaseStepEditor {
     def render: VdomElement = Component(this)
   }
 
-  implicit val reusabilityProps: Reusability[Props] =
-    Reusability.never // TODO Reusability.caseClass
+//  implicit val reusabilityProps: Reusability[Props] =
+//    Reusability.never // TODO Reusability.caseClass
 
   val liveCorrect: EndoFn[String] =
     RichTextEditor.liveCorrect(Text.UseCaseStep)
@@ -160,7 +160,7 @@ object UseCaseStepEditor {
     ScalaComponent.builder[Props]("UseCaseStepEditor")
       .renderBackend[Backend]
       .configure(
-        Reusability.shouldComponentUpdate,
+//        Reusability.shouldComponentUpdate,
         AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.setState))
       .build
 }

@@ -46,8 +46,8 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     def render: VdomElement = Component(this)
   }
 
-  implicit val reusabilityProps: Reusability[Props] =
-    Reusability.never // TODO Reusability.caseClass
+//  implicit val reusabilityProps: Reusability[Props] =
+//    Reusability.never // TODO Reusability.caseClass
 
   val liveCorrect: EndoFn[String] =
     RichTextEditor.liveCorrect(text)
@@ -109,7 +109,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     ScalaComponent.builder[Props]("RichTextEditor:" + name)
       .renderBackend[Backend]
       .configure(
-        Reusability.shouldComponentUpdate,
+//        Reusability.shouldComponentUpdate,
         AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.setState))
       .build
 }

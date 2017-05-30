@@ -87,8 +87,8 @@ object TagEditor {
   implicit val reusabilityLookup: Reusability[Lookup] =
     Reusability.byRef[Lookup] || Reusability.byUnivEq(_.underlyingMap)
 
-  implicit val reusabilityProps: Reusability[Props] =
-    Reusability.never // TODO Reusability.caseClass
+//  implicit val reusabilityProps: Reusability[Props] =
+//    Reusability.never // TODO Reusability.caseClass
 
   final class Backend($: BackendScope[Props, Unit]) {
     private val pxLookup = Px.props($).map(_.lookup).withReuse.autoRefresh
@@ -140,7 +140,7 @@ object TagEditor {
     ScalaComponent.builder[Props]("TagEditor")
       .renderBackend[Backend]
       .configure(
-        Reusability.shouldComponentUpdate,
+//        Reusability.shouldComponentUpdate,
         AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.setState))
       .build
 }

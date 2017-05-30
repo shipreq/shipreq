@@ -178,14 +178,14 @@ object ImplicationEditor {
   implicit val reusabilityLookup: Reusability[Lookup] =
     Reusability.byRef[Lookup] || Reusability.byUnivEq
 
-  implicit val reusabilityProps: Reusability[Props] =
-    Reusability.never // TODO Reusability.caseClass
+//  implicit val reusabilityProps: Reusability[Props] =
+//    Reusability.never // TODO Reusability.caseClass
 
   val Component =
     ScalaComponent.builder[Props]("ImpEditor")
       .renderBackend[Backend]
       .configure(
-        Reusability.shouldComponentUpdate,
+//        Reusability.shouldComponentUpdate,
         AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.setState))
       .build
 }

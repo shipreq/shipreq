@@ -51,8 +51,8 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
     def render: VdomElement = Component(this)
   }
 
-  implicit lazy val reusabilityProps: Reusability[Props] =
-    Reusability.never // TODO Reusability.caseClass
+//  implicit lazy val reusabilityProps: Reusability[Props] =
+//    Reusability.never // TODO Reusability.caseClass
 
   final class Backend($: BackendScope[Props, Unit]) {
     private val pxTrie = Px.props($).map(_.trie).withReuse.autoRefresh
@@ -103,7 +103,7 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
     ScalaComponent.builder[Props]("ReqCodeEditor")
       .renderBackend[Backend]
       .configure(
-        Reusability.shouldComponentUpdate,
+//        Reusability.shouldComponentUpdate,
         AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.setState))
       .build
 }
