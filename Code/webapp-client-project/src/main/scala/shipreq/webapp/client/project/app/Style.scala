@@ -671,14 +671,17 @@ object Style extends StyleSheet.Inline {
       addClassNames("ui", "segments", "raised"))
 
     val richTextPreviewHeader = style(
-      addClassNames("ui", "segment", "inverted", "green"),
+      addClassNames("ui", "segment", "inverted"),
+      paddingLeft(1 ex).important,
       paddingTop(0.3 em).important,
-      paddingBottom(0.3 em).important)
+      paddingBottom(0.3 em).important,
+      (background := c"#89d6e5").important,
+      color(c"#0d1516").important)
 
     val richTextPreviewBody = style(
+      padding(1 ex).important,
       addClassNames("ui", "segment"),
-      (backgroundImage := "repeating-linear-gradient(-225deg,rgba(0,0,0,0),rgba(0,0,0,0)5ex,rgba(33,186,67,.07)5ex,rgba(33,186,67,.07)10ex)")
-        .important)
+      (backgroundImage := "repeating-linear-gradient(-225deg,rgba(0,0,0,0),rgba(0,0,0,0)5ex,rgba(137,214,229,.1)5ex,rgba(137,214,229,.1)10ex)").important)
 
     private val refColour = color(c"#2363A1")
 
