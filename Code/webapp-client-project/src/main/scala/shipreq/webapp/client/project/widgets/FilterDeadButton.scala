@@ -35,6 +35,9 @@ object FilterDeadButton {
     .configure(Reusability.shouldComponentUpdate)
     .build
 
+  val ForceHideDead: VdomElement =
+    renderButton(HideDead)(^.disabled := true)
+
   val ForceShowDead: VdomElement =
     renderButton(ShowDead)(^.disabled := true)
 

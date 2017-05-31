@@ -260,6 +260,9 @@ object Style extends StyleSheet.Inline {
           case (Dead, On ) => mixin(backgroundColor(c"#f5f5c4"))
         }
       ))
+
+      val noContent = style(
+        padding(2 em).important)
     }
 
     object filterEditor {

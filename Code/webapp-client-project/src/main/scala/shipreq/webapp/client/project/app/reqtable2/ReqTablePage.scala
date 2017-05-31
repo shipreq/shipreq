@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.app.reqtable2
 
 import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -19,11 +20,12 @@ import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.base.lib.DataReusability._
 import shipreq.webapp.client.base.ui.BaseStyles
+import shipreq.webapp.client.base.ui.semantic.{Icon, Message}
 import shipreq.webapp.client.project.app.state.ClientData
 import shipreq.webapp.client.project.app.Style.reqtable2.{page => *}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.protocol.ServerCall
-import shipreq.webapp.client.project.widgets.ProjectWidgets
+import shipreq.webapp.client.project.widgets.{FilterDeadButton, ProjectWidgets}
 
 object ReqTablePage {
 
@@ -75,6 +77,15 @@ object ReqTablePage {
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  sealed abstract class Mode
+  object Mode {
+    case object EmptyProject         extends Mode
+    case object NoContentCosHideDead extends Mode
+    case object NoContentCosFilter   extends Mode
+    case object HasContent           extends Mode
+    implicit def univEq: UnivEq[Mode] = UnivEq.derive
+  }
 
   final class Backend(sp: StaticProps, $: BackendScope[Props, Unit]) {
     import sp._
@@ -192,52 +203,90 @@ object ReqTablePage {
       p.state.modal renderOrElse renderMain(p)
     }
 
+    private val mainBase = <.main(BaseStyles.containerFull)
+
+    def renderEmptyProject: VdomTag =
+      Message(
+        Message.Style(Message.Type.Info),
+        Icon.InfoCircle,
+        "Welcome to your new project!",
+        "Create new content using the button above.")
+
+    def renderAllContentDead: VdomTag =
+      Message(
+        Message.Style(Message.Type.Warning),
+        Icon.TrashOutline,
+        "No live content.",
+        TagMod(
+          "Create new content (above) or enable display of dead content (via the ",
+          Icon.TrashOutline.tag,
+          "button in the top-right)."))
+
     def renderMain(p: Props): VdomElement = {
+      val project           = pxProject.value()
       val activeColumnsPlus = pxActiveColumnsPlus.value()
+      val rows              = pxRows.value()
+      val filterDead        = pxFilterDead.value()
+      val stats             = pxTableContentStats.value()
+
+      val mode: Mode =
+        if (rows.nonEmpty)
+          Mode.HasContent
+        else if (stats.reqsInProject.all ==* 0)
+          Mode.EmptyProject
+        else if (filterDead.is(HideDead) && stats.reqsInProject.live ==* 0)
+          Mode.NoContentCosHideDead
+        else
+          Mode.NoContentCosFilter
 
       val newStuff = new NewStuff(
         p.state.newStuff,
         setNewStuff,
-        pxProject.value().config.reqTypes,
+        project.config.reqTypes,
         Allow when p.state.tableSettings.viewCodeGroups,
         p.create,
         activeColumnsPlus)
 
       val filterEditor = FilterEditor.Props(
         p.state.filter,
-        pxProject.value(),
+        project,
         onFilterChange,
       ).render
 
-      val table = Table.Whole.Props(
-        pxRows.value(),
+      def table(mode: Table.Mode) = Table.Whole.Props(
+        mode,
         activeColumnsPlus,
         pxRowSelectionVisible.value(),
         p.editor,
         p.rowAsync,
-        pxProject.value().config,
+        project.config,
         pxProjectWidgets.value(),
         modSettings,
       ).render
 
-      <.main(BaseStyles.containerFull,
+      val body: VdomElement =
+        mode match {
+          case Mode.HasContent           => table(Table.Mode.Normal(rows))
+          case Mode.NoContentCosFilter   => table(Table.Mode.FilteredOut)
+          case Mode.NoContentCosHideDead => renderAllContentDead
+          case Mode.EmptyProject         => renderEmptyProject
+        }
 
-        ViewsMenu.Component(p.filterDead),
-
+      mainBase(
+        ViewsMenu.Component(Option.unless(mode ==* Mode.EmptyProject)(p.filterDead)),
         <.div(*.actionCtrls,
           newStuff.buttonProps.render,
           pxSelectionCtrls.value().render,
-          <.div(*.summary, pxPageSummary.value())),
-
+          <.div(*.summary, pxPageSummary.value()).unless(mode ==* Mode.EmptyProject || mode ==* Mode.NoContentCosHideDead)
+        ),
         <.div(*.viewCtrls,
           pxSortCriteriaEditor.value(),
           <.div(*.flexGap),
           filterEditor,
-          pxColumnSelector.value()),
-
+          pxColumnSelector.value()
+        ).unless(mode ==* Mode.EmptyProject || mode ==* Mode.NoContentCosHideDead),
         newStuff.form.whenDefined,
-
-        table)
+        body)
     }
 
     def onPropsChange(prev: Props, next: Props): Callback =

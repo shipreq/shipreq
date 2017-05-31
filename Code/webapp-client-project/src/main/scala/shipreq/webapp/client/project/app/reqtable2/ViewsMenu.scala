@@ -12,12 +12,7 @@ import shipreq.webapp.client.project.widgets.FilterDeadButton
   */
 object ViewsMenu {
 
-  type Props = FilterDeadButton.Props
-
-  final class Backend($: BackendScope[Props, Unit]) {
-    def render(p: Props): VdomElement =
-      <.div
-  }
+  type Props = Option[FilterDeadButton.Props]
 
   private val style =
     Menu.Style(Menu.Attr.Secondary + Menu.Attr.Pointing)
@@ -31,7 +26,12 @@ object ViewsMenu {
 
   private def render(p: Props): VdomElement = {
     val filterDeadButton = Menu.Item.Div(
-      TagMod(*.filterDeadButtonContainer, FilterDeadButton.Component(p)))
+      TagMod(
+        *.filterDeadButtonContainer,
+        p match {
+          case Some(pp) => FilterDeadButton.Component(pp)
+          case None     => FilterDeadButton.ForceHideDead
+        }))
 
     Menu.Props(
       style,

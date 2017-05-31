@@ -13,6 +13,7 @@ import shipreq.webapp.client.base.data.{Off, On, Plain}
 import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.base.lib.DomUtil._
 import shipreq.webapp.client.base.ui.{EditTheme, semantic}
+import shipreq.webapp.client.base.ui.semantic.{Icon, Message}
 import shipreq.webapp.client.project.app.Style.reqtable2.{table => *}
 import shipreq.webapp.client.project.feature.{EditorFeature, Selection}
 import shipreq.webapp.client.project.widgets.{DragToReorder, ProjectWidgets, ViewReq}
@@ -22,9 +23,40 @@ import EditorFeature.FieldKey
 object Table {
   import Shared._
 
+  sealed abstract class Mode
+  object Mode {
+
+    final case class Normal(rows: Vector[Row]) extends Mode
+
+    case object FilteredOut extends Mode {
+      def render: VdomTag =
+        Message(
+          Message.Style(Message.Type.Info),
+          Icon.Filter,
+          "No filter results.",
+          "None of the project content matches the specified filter criteria.")
+    }
+
+    private val reusabilityNormal: Reusability[Normal] =
+      Reusability.caseClass
+
+    implicit val reusability: Reusability[Mode] =
+      Reusability((a, b) => // TODO Replace with Reusability.derive
+        a match {
+          case x: Normal => b match {
+            case y: Normal => reusabilityNormal.test(x, y)
+            case _ => false
+          }
+          case FilteredOut => a == b
+        }
+      )
+  }
+
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+
   object Whole {
 
-    final case class Props(rows       : Vector[Row],
+    final case class Props(mode       : Mode,
                            cols       : NonEmptyVector[ColumnPlus],
                            selection  : RowSelectionVisible,
                            editor     : EditorFeature.ReadWrite.ForProject,
@@ -61,14 +93,16 @@ object Table {
               p.modSettings.map(f => cs => f(_ setColumns cs.map(_.column))),
               p.modSettings.map(f => c => f(TableSettings.order.modify(_ want c.column)))))
 
-        val reqViewInputs: ReqRow.ViewInput =
-          (p.config.reqTypes, p.pw, pxPubidFmt.value())
+        def renderMsg(msg: VdomTag): VdomTag =
+          <.td(*.noContent, ^.colSpan := p.cols.length + 1, msg)
 
-        val renderRows: VdomArray =
-          p.rows.toVdomArray { genericRow =>
+        def renderRows(rows: Vector[Row]): VdomArray = {
+          val applicability = pxApplicability.value()
+          val reqViewInputs: ReqRow.ViewInput = (p.config.reqTypes, p.pw, pxPubidFmt.value())
+
+          rows.toVdomArray { genericRow =>
             val rowAsync = p.rowAsync(genericRow.sourceId)
             val selection = p.selection(genericRow.sourceId)
-            val applicability = pxApplicability.value()
 
             genericRow match {
               case row: Row.ForReq =>
@@ -94,11 +128,18 @@ object Table {
                 ).render
             }
           }
+        }
+
+        val body: TagMod =
+          p.mode match {
+            case Mode.Normal(rows) => renderRows(rows)
+            case m@Mode.FilteredOut => renderMsg(m.render)
+          }
 
         semantic.Table.celledCompactUnstackable(
           *.table,
           header,
-          <.tbody(renderRows))
+          <.tbody(body))
       }
     }
 
