@@ -190,9 +190,9 @@ object SelectionCtrls {
 
       def addButton(name: String, icon: Icon, a: ActionInfo): Unit = {
         val label: String =
-//          if (a.affects ==* derived.totalSelected)
-//            name
-//          else
+          if (a.affects ==* derived.totalSelected)
+            name
+          else
             s"$name (${a.affects}/${derived.totalSelected})"
 
         val button: VdomTag =
