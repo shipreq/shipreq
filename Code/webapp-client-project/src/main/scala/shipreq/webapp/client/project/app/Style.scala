@@ -258,8 +258,9 @@ object Style extends StyleSheet.Inline {
           case (Dead, Off) => mixin(backgroundColor(c"#f5f5f5"))
           case (Live, On ) => mixin(backgroundColor(c"#ffc"))
           case (Dead, On ) => mixin(backgroundColor(c"#f5f5c4"))
-        }
-      ))
+        },
+        &.focus(
+          outline(solid, 2 px, c"#a333c8"))))
 
       val noContent = style(
         padding(2 em).important)

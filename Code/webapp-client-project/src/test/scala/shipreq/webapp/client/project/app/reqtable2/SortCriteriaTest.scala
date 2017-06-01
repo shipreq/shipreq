@@ -1,5 +1,5 @@
 package shipreq.webapp.client.project.app.reqtable2
-/*
+
 import nyaya.prop._
 import nyaya.test._
 import nyaya.test.PropTest._
@@ -79,4 +79,3 @@ object SortCriteriaTest extends TestSuite {
     }
   }
 }
-*/

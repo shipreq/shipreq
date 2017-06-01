@@ -94,7 +94,7 @@ object Table {
               p.modSettings.map(f => c => f(TableSettings.order.modify(_ want c.column)))))
 
         def renderMsg(msg: VdomTag): VdomTag =
-          <.td(*.noContent, ^.colSpan := p.cols.length + 1, msg)
+          <.tr(<.td(*.noContent, ^.colSpan := p.cols.length + 1, msg))
 
         def renderRows(rows: Vector[Row]): VdomArray = {
           val applicability = pxApplicability.value()
@@ -479,7 +479,7 @@ object Table {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  private object Shared {
+  object Shared {
 
     type CellState = (Live, On)
 

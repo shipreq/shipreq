@@ -1,6 +1,4 @@
 Branch TODOs
-  * Keyboard nav
-  * Restore tests
   * Test new stuff
   * LoadedRoot: Sync ReqTable state on Project change
   * LoadedRoot: Sync ReqTable state on FilterDead change

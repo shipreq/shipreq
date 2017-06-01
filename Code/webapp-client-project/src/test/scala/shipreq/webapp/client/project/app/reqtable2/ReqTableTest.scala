@@ -1,134 +1,36 @@
 package shipreq.webapp.client.project.app.reqtable2
-/*
-import japgolly.scalajs.react.MonocleReact._
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.test._
-import monocle.macros.Lenses
+
 import nyaya.test.PropTest._
-import shipreq.base.util._
-import shipreq.base.util.univeq._
-import shipreq.webapp.base.data._
-import shipreq.webapp.base.test._
-import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
-import shipreq.webapp.base.UiText.ColumnNames
-import shipreq.webapp.client.base.data._
-import shipreq.webapp.client.base.feature.AsyncFeature
-import shipreq.webapp.client.base.test._
-import shipreq.webapp.client.project.feature._
-import shipreq.webapp.client.project.protocol.ServerCall
-import shipreq.webapp.client.project.test._
-import shipreq.webapp.client.project.widgets.ProjectWidgets
 import utest._
-import AsyncFeature.Implicits._
-import TestState.{scalazEqualFromTestState => _, _}
-import SampleProject.Values._
+import shipreq.base.util._
+import shipreq.webapp.base.UiText.ColumnNames
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.test.SampleProject.Values._
+import shipreq.webapp.base.test._
+import shipreq.webapp.client.base.test.TestState._
+import shipreq.webapp.client.project.app.ProjectSpaTestDsl
+import shipreq.webapp.client.project.app.root.Routes.Page
+import shipreq.webapp.client.project.test._
 
 object ReqTableTest extends TestSuite {
   import ReqTableTestDsl._
 
   PrepareEnv()
 
-  val remotes = MockRemotes.projectSpa(null: ProjectCatalogue.Item)
+  def runTest(plan: *.Plan)(implicit path: utest.framework.TestPath): Unit =
+    runTest(plan withInitialState SampleProject3.project)
 
-  @Lenses
-  case class State(editors : EditorFeature.State.ForProject,
-                   async   : AsyncFeature.State.D2[Row.SourceId, Option[Column], String],
-                   preview : PreviewFeature.State[PreviewId],
-                   reqTable: ReqTable.State)
-
-  val PreviewIdToEditor = Intersection[PreviewId, EditorFeature.PreviewId] {
-    case PreviewId.InEditor(e) => Some(e)
-    case PreviewId.InCI(_, _) => None
-  }(e => Some(PreviewId.InEditor(e)))
-
-  def runTest(plan: *.Plan): Unit =
-    runTest(plan, false)
-
-  def runTest(plan: *.PlanWithInitialState): Unit =
-    runTest(plan, false)
-
-  def runTest(plan: *.Plan, testsFocus: Boolean): Unit =
-    runTest(plan withInitialState SampleProject3.project, testsFocus)
-
-  def runTest(plan: *.PlanWithInitialState, testsFocus: Boolean) = {
-    val reqDetailRC = MockRouterCtl[ExternalPubid]()
-    val cd = TestClientData(plan.initialState)
-    val cp = MockServer(cd)
-    val initSpa = MockRemotes.projectSpa(cd.pxProject.value())
-    import cd.pxProject
-
-    val pxPlainText      = pxProject.map(PlainText(_, ProjectText.Context.None))
-    val pxTextSearch     = Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
-    val pxProjectWidgets = Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
-    val pxEditability    = pxProject.map(EditorFeature.Editability.apply)
-
-    def initialState = State(
-      EditorFeature.State.initForProject,
-      AsyncFeature.State.initD2,
-      PreviewFeature.State.init,
-      ReqTable.State.init(cd, HideDead, None))
-
-    val stateVar = ReactTestVar(initialState)
-
-    val $ = stateVar.stateAccess
-
-    val previewFeature =
-      PreviewFeature.Write.Composite.init($ zoomStateL State.preview)
-
-    val asyncFeature: AsyncFeature.Write.D2[Row.SourceId, Option[Column], String] =
-      AsyncFeature.Write.D2.init($ zoomStateL State.async)
-
-    val optionColumnToEditorCell = Intersection.toOption[Column].reverse <=> Column.editorFieldIntersection
-
-    val editorFeature: EditorFeature.Write.ForProject =
-      EditorFeature.Write.ForProject(
-        EditorFeature.Static(
-          previewFeature.mapId(PreviewIdToEditor),
-          pxProject,
-          pxPlainText,
-          pxProjectWidgets,
-          pxTextSearch,
-          ServerCall.to(initSpa.updateContent, cp, cd)),
-        $ zoomStateL State.editors,
-        asyncFeature.mapKey2(Row.SourceIdToEditorRow).mapKey1(optionColumnToEditorCell))
-
-    val reqTableComponent =
-      ReqTable(ReqTable.StaticProps(
-        cd, cp, remotes.createContent, remotes.updateContent,
-        pxPlainText, pxTextSearch, pxProjectWidgets,
-        asyncFeature,
-        reqDetailRC,
-        $ zoomStateL State.reqTable))
-
-    def dynamicProps() = {
-      val s = stateVar.value()
-      val asyncState = s.async.toRead
-      val asyncState2 = asyncState.mapKey2(Row.SourceIdToEditorRow).mapKey1(optionColumnToEditorCell)
-      def editorState = EditorFeature.Read.ForProject(s.editors, pxEditability.value(), asyncState2)
-      def editorProps = editorFeature.toReadWrite(editorState)
-      def previewProps = previewFeature.toReadWrite(s.preview)
-
-      ReqTable.DynamicProps(
-        editorProps,
-        asyncState,
-        previewProps,
-        s.reqTable)
-    }
-
-    ReactTestUtils.withRendered(reqTableComponent(dynamicProps()), testsFocus) { m0 =>
-      var m = m0
-      stateVar.onUpdate(m = ReactTestUtils.replaceProps(reqTableComponent, m)(dynamicProps()))
-      def observe() = new ReqTableObs(cp, m.htmlDomZipper)
-      val ref       = Ref(stateVar.stateAccess.withEffectsImpure zoomStateL State.reqTable, cp)
-      val test      = plan.addInvariants(invariants).test(Observer watch observe())
-      val result    = test.run(ref)
-      result.assert()
-    }
+  def runTest(p: *.PlanWithInitialState)(implicit path: utest.framework.TestPath): Unit = {
+    import ProjectSpaTestDsl._
+    ProjectSpaTestDsl.runTest(
+      liftReqTableTests(p.plan).asAction(path.value.mkString("ReqTableTest.", ".", "")),
+      page = Page.ReqTable,
+      project = p.initialState)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  import ProjectDsl._, UnsafeTypes._
+  import ProjectDsl._
+  import UnsafeTypes._
 
   def testFilter = (
     sortByPubid
@@ -151,18 +53,20 @@ object ReqTableTest extends TestSuite {
 
   def testDeadToggleInvariants =
     *.genActionsBy("testDeadToggleInvariants")(i =>
-      RandomReqTableData.viewSettings(i.state, allowFilter = true)
-        .map(applyViewSettings(_) >> filterDeadShowHide))
+        for {
+          ts <- RandomReqTableData.tableSettings(i.state, allowFilter = true)
+          fd <- RandomReqTableData.filterDead
+        } yield setViewSettings("Apply random view settings", fd, (_, _) => ts) >> filterDeadShowHide)
 
   def testDeadNotEditable =
     Plan.action(
       showAllColumns(ShowDead) >> *.chooseAction("Edit all dead columns.") { i =>
-        val cn = Column.NameResolver.byProject(i.state)
-        Column.all(i.state.config, ShowDead)
+        ColumnPlus.All(i.state, ShowDead)
+          .columns
           .iterator
           .filter(_.live is Dead)
           .map { c =>
-            val n = cn(c)
+            val n = c.name
             val ce = cellEditor("MF-1", n)
             import ce._
             (tryStartEdit +> assertState(Normal)).group(s"Try to edit $n.")
@@ -414,7 +318,6 @@ object ReqTableTest extends TestSuite {
       }
     }
 
-    'kbNav - runTest(testKeyboardNavigation, true)
+    'kbNav - runTest(testKeyboardNavigation)
   }
 }
-*/

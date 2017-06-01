@@ -1,5 +1,5 @@
 package shipreq.webapp.client.project.app.root
-/*
+
 import japgolly.scalajs.react.test._
 import japgolly.univeq._
 import org.scalajs.dom.html
@@ -122,4 +122,3 @@ object ProjectHomeTest extends TestSuite {
     'projectNameEditing - run(projectNameEditing)
   }
 }
-*/

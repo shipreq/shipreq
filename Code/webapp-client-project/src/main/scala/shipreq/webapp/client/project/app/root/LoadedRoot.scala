@@ -231,8 +231,7 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
     }
 
     def onProjectChange(c: Changes): Callback = // TODO I don't like this
-      Callback.empty
-//      $.modState(State.reqTable.modify(_ updateProject c.p2))
+      $.forceUpdate
   }
 
   val Component = ScalaComponent.builder[Props]("LoadedRoot")

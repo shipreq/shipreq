@@ -1,17 +1,19 @@
 package shipreq.webapp.client.project.app
-/*
+
+import japgolly.microlibs.testutil.TestUtil
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import monocle.macros.Lenses
 import scala.util.{Failure, Success, Try}
+import teststate.run.Report.AssertionSettings
 import shipreq.base.util.Debug._
 import shipreq.webapp.base.data.{ExternalPubid, Project}
 import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.test.{MockRemotes, SampleProject5}
 import shipreq.webapp.client.base.test._
 import shipreq.webapp.client.project.app.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
-import shipreq.webapp.client.project.app.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
+import shipreq.webapp.client.project.app.reqtable2.{ReqTableObs, ReqTableTestDsl => RT}
 import shipreq.webapp.client.project.app.root.{ProjectHomeTestDsl => PH, _}
 import shipreq.webapp.client.project.test._
 import LoadedRoot.Props
@@ -65,27 +67,27 @@ object ProjectSpaTestDsl {
 
   val * = Dsl[Ref, Obs, TestState]
 
-  implicit val transformPH =
+  implicit lazy val transformPH =
     PH.*.transformer
       .mapR[Ref](_.svr)
       .pmapO[Obs](_.home)
       .mapS(TestState.project.get)((a, b) => TestState.project.set(b)(a)) // TODO Add Monocle support
 
-  implicit val transformRT =
+  implicit lazy val transformRT =
     RT.*.transformer
       .mapR[Ref](r => RT.Ref(r.tester.component zoomStateL State.reqTable, r.svr))
       .pmapO[Obs](_.reqTable)
       .mapS(TestState.project.get)((a, b) => TestState.project.set(b)(a)) // TODO Add Monocle support
 
-  implicit val transformRD =
+  implicit lazy val transformRD =
     RD.*.transformer
       .mapR[Ref](_ => ())
       .pmapO[Obs](_.reqDetail)
       .mapS[TestState](s => RD.TestState(s.project, s.detailState))((s, d) => TestState(s.page, d.project, d.state))
 
-  private val invariantsPH = PH.invariants.lift
-  private val invariantsRT = RT.invariants.lift
-  private val invariantsRD = RD.invariants.lift
+  private lazy val invariantsPH = PH.invariants.lift
+  private lazy val invariantsRT = RT.invariants.lift
+  private lazy val invariantsRD = RD.invariants.lift
 
   private val pageInvariants: *.Invariants =
     *.chooseInvariant("Page invariants")(_.state.page match {
@@ -129,24 +131,22 @@ object ProjectSpaTestDsl {
     liftReqDetailTests(Plan.action(action)).asAction("Test ReqDetail")
 
   def runTest(action : *.Actions,
+              page   : Page,
               project: Project  = SampleProject5.project,
-              page   : Page     = Page.ReqTable,
-              rd     : RD.State = RD.unspecifiedState)
-            : Unit = {
+              rd     : RD.State = RD.unspecifiedState): Unit = {
     val cd   = TestClientData(project)
     val svr  = MockServer(cd)
     val spa  = new LoadedRoot(MockRemotes.projectSpa(project), svr, cd)
     val rc   = MockRouterCtl[Page]()
     val init = TestState(page, cd.project(), rd)
 
-    ReactTestUtils.withRenderedIntoDocument(spa.Component(Props(init.page, rc))) { m =>
+    ReactTestUtils.withRenderedIntoBody(spa.Component(Props(init.page, rc))) { m =>
       val tester = new ComponentTester(spa.Component)(m)
       val tt  = Plan(action, invariants).test(Observer(_.observe()))
       val r   = tt.run(init, Ref(cd, svr, tester))
-      if (r.failed)
-        println(s"${"="*120}\n${htmlScrub run tester.component.getDOMNode.outerHTML}\n")
-      r.assert()
+      assertTestState(r)
+//      assertTestState(r, println(s"${"=" * 120}\n${htmlScrub run tester.component.getDOMNode.outerHTML}\n"))
     }
   }
 
-}*/
+}

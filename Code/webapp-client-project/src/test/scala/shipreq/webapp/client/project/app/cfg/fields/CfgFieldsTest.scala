@@ -6,6 +6,7 @@ import scala.scalajs.js.JSConverters._
 import org.scalajs.dom.Element
 import org.scalajs.dom.html.Input
 import scalaz.{Equal, \/-}
+import teststate.domzipper.sizzle.Sizzle
 import utest._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._

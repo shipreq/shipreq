@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.app.reqtable2
-/*
+
 import japgolly.microlibs.nonempty._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
@@ -10,14 +11,13 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.base.data._
 import shipreq.webapp.client.base.test._
-import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.test._
 import teststate.domzipper.DomZipper.EditableSel
 import TestState._
 
 object ReqTableTestDsl {
 
-  case class Ref($: StateAccessImpure[ReqTable.State], svr: MockServer)
+  case class Ref($: StateAccessImpure[ReqTablePage.State], svr: MockServer)
 
   val * = Dsl[Ref, ReqTableObs, Project]
 
@@ -33,25 +33,29 @@ object ReqTableTestDsl {
 //  def propTry[A](name: => String, f: A => Any): Prop[A] =
 //    propTrySuccess(name).contramap(a => Try(f(a)))
 
-  def selectVisibleColumns(isOn: Column => Boolean, p: ProjectConfig, fd: FilterDead): NonEmptyVector[Column] = {
+  def selectVisibleColumns(isOn: Column => Boolean, p: Project, fd: FilterDead): NonEmptyVector[Column] = {
     // I want Pubid as the first column so that obs.table.entireContent is readable
-    val set: Set[Column] = Column.mandatory ++ Column.all(p, fd).whole.filter(isOn) - Column.Pubid
+    val set: Set[Column] =
+      Column.mandatory ++ ColumnPlus.All(p, fd).columns.whole.map(_.column).filter(isOn) - Column.Pubid
     NonEmptyVector(Column.Pubid, set.toVector)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Focuses
 
-  val mandatoryColumns = FilterDead.memo(fd =>
-    Column.mandatory.iterator
-      .filter(fd.filterFnBy(_.live))
-      .map(Column.NameResolver.builtIn)
-      .toSet)
+  val mandatoryColumns: FilterDead => Set[String] =
+    FilterDead.memo(fd =>
+      ColumnPlus.All(Project.empty)
+        .columns
+        .iterator
+        .filter(cp => Column.isMandatory(cp.column) && ColumnPlus.filterDead(fd)(cp))
+        .map(_.name)
+        .toSet)
 
   def visibleColumns(obs: ReqTableObs): Set[String] =
-    mandatoryColumns(obs.filterDead) ++ obs.viewSettings.columns.onColumns
+    mandatoryColumns(obs.filterDead) ++ obs.columnSelector.onColumns
 
-  val selectableColumns = *.focus("Selectable columns").collection(_.obs.selectableCols)
+  val selectableColumns = *.focus("Selectable columns").collection(_.obs.columnSelector.allColumns)
 
   val filterDead = *.focus("FilterDead").value(_.obs.filterDead)
 
@@ -191,7 +195,7 @@ object ReqTableTestDsl {
           _.obs.table.allRows.length,
           i => i.obs.table.liveRows.length + i.obs.table.deadRows.length)
         .assert.equal
-        .rename("Rows are either dead or live.")
+        .rename("Rows are either dead or live, but not both.")
 
 //      val oneFocusMax = propTry[S]("Maximum one focus", _.table.focus)
 //
@@ -202,22 +206,26 @@ object ReqTableTestDsl {
     def stats = {
       val rowCount =
         *.focus("")
-        .compare(_.obs.table.allRows.length, _.obs.stats.reportedRows)
+        .compare(_.obs.table.allRows.length, _.obs.stats.content.rows)
         .assert.equal
         .rename("Reported row count matches rows in table.")
 
-      val reqFormula =
-        *.point("Req formula.")(os => {
-          os.obs.stats.reportedReqFormulaValue.flatMap(fv =>
-            if (fv == os.obs.stats.reportedReqs)
-              None
-            else
-              Some(s"${os.obs.stats.reportedReqs} ≠ $fv (${os.obs.stats.reportedReqFormulaText})")
-          )
+      val reqBreakdown =
+        *.point("Req breakdown.")(os => {
+          os.obs.stats.content.reqBreakdownResult.flatMap { result =>
+            val expect = os.obs.stats.content.reqs
+            Option.when(result !=* expect)(s"$result ≠ $expect [${os.obs.stats.contentLine}]")
+          }
         })
 
-//      "Stats" rename_: (rowCount & reqFormula)
-      rowCount & reqFormula
+      val rowBreakdown =
+        *.point("Row breakdown.")(os => {
+          val result = os.obs.stats.content.rowBreakdownResult
+          val expect = os.obs.stats.content.rows
+          Option.when(result !=* expect)(s"$result ≠ $expect [${os.obs.stats.contentLine}]")
+        })
+
+      (rowCount & rowBreakdown & reqBreakdown).renameContextFree("Stats")
     }
 
     selectableColumns & sortColumns & tableColumns & tableContents & stats
@@ -228,35 +236,44 @@ object ReqTableTestDsl {
 
   implicit def autoGetDomFromZipper(d: DomZipper): ReactOrDomNode = d.dom.domAsHtml
 
-  def applyViewSettings(vs: ViewSettings): *.Actions =
-    applyViewSettings("ApplyViewSettings: " + vs, _ => vs)
+  def modState(name: => String, mod: (Project, ReqTablePage.State) => ReqTablePage.State): *.Actions =
+    *.action(name)(i => i.ref.$.modState(s => mod(i.state, s)))
 
-  def applyViewSettings(name: => String, f: ReqTable.State => ViewSettings): *.Actions =
-    *.action(name)(_.ref.$.modState(s => s.copy(viewSettings = f(s))))
+  def setViewSettings(name: => String, fd: FilterDead, mod: (Project, TableSettings) => TableSettings): *.Actions =
+    (setFilterDead(fd) >> *.action("setTableSettings")(i =>
+      i.ref.$.modState(s => s.copy(tableSettings = mod(i.state, s.tableSettings))))
+      ).renameContextFree(name)
 
-  def setProject(p: Project): *.Actions =
-    *.action("Set project.")(_.ref.$.modState(_.updateProject(p))).updateState(_ => p)
+//  def applyTableSettings(ts: TableSettings): *.Actions =
+//    applyTableSettings("ApplyTableSettings: " + ts, _ => ts)
+
+//  def applyTableSettings(name: => String, f: (Project, ReqTablePage.State) => TableSettings): *.Actions =
+//    modState(name)
+//      i.ref.$.modState(s => s.copy(tableSettings =
+//        f(i.ref.project(), s))))
+
+//  def setProject(p: Project): *.Actions =
+//    *.action("Set project.")(_.ref.$.modState(_.updateProject(p))).updateState(_ => p)
 
   def showAllColumns: *.Actions =
     showAllColumns(ShowDead)
 
   def showAllColumns(fd: FilterDead): *.Actions =
-    applyViewSettings("Show all columns.", s => {
-      val vs = s.viewSettings
-      val cs = selectVisibleColumns(_ => true, s.project.config, fd)
-      val o  = vs.order.copy(init = Vector.empty) // remove CodeGroups
-      vs.copy(columns = cs, order = o, filterDead = fd)
+    setViewSettings(s"Show all columns @ $fd", fd, (p, ts) => {
+      val cs = selectVisibleColumns(_ => true, p, fd)
+      val sc = ts.order.copy(init = Vector.empty) // remove CodeGroups
+      ts.copy(columns = cs, order = sc)
     })
 
-  val showBuiltInColumnsSortedByPubid = applyViewSettings("Show built-in columns sorted by pubid.", s => {
-    val fd = ShowDead
-    val cs = selectVisibleColumns(Column.builtInValues.whole.contains, s.project.config, fd)
-    ViewSettings(cs, SortCriteria.byPubidOnly, None, fd)
-  })
+  val showBuiltInColumnsSortedByPubid: *.Actions =
+    setViewSettings("Show built-in columns sorted by pubid.", ShowDead, (p, s) => {
+      val cs = selectVisibleColumns(Column.builtInValues.whole.contains, p, ShowDead)
+      TableSettings(cs, SortCriteria.byPubidOnly, None)
+    })
 
   def showHideColumn(columnName: String): *.Actions =
     *.action("Show/hide " + columnName)(
-      Simulation.change run _.obs.viewSettings.columns.column(columnName).checkbox)
+      Simulation.change run _.obs.columnSelector.column(columnName).checkbox)
 
   def sortBy(columnName: String): *.Actions =
     *.action("Sort by " + columnName)(
@@ -267,12 +284,12 @@ object ReqTableTestDsl {
 
   def enterFilter(f: String) = {
     val e = SimEvent.Change(f)
-    *.action(s"enterFilter('$f')")(e simulate _.obs.viewSettings.filter.input)
-      .addCheck(*.focus("Filter").value(_.obs.viewSettings.filter.input.value).assert(f).after)
+    *.action(s"enterFilter('$f')")(e simulate _.obs.filterInput)
+      .addCheck(*.focus("Filter").value(_.obs.filterInput.value).assert(f).after)
   }
 
-  val filterDeadToggle =
-    *.action("filterDeadToggle")(Simulate change _.obs.viewSettings.filterDead.checkbox)
+  lazy val filterDeadToggle =
+    *.action("filterDeadToggle")(Simulate click _.obs.filterDeadButton)
       .addCheck(filterDead.assert.change)
 
   def setFilterDead(fd: FilterDead) =
@@ -281,7 +298,7 @@ object ReqTableTestDsl {
   val filterDeadShowHide =
     setFilterDead(HideDead) >>
     filterDeadToggle.times(2).addCheck(
-      *.focus("On-columns").value(_.obs.viewSettings.columns.onColumns).assert.noChange)
+      *.focus("On-columns").value(_.obs.columnSelector.onColumns).assert.noChange)
 
   val logTable = *.print(_.obs.table.entireContent)
 
@@ -300,4 +317,3 @@ object ReqTableTestDsl {
   def press(k: SimEvent.Keyboard): *.Actions =
     *.action(s"Press ${k.desc}.")(k simulateKeyDownPressUp _.obs.activeElement)
 }
-*/

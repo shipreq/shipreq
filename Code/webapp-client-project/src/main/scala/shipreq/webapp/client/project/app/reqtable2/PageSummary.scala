@@ -48,47 +48,45 @@ object PageSummary {
 
   private val fakeLine = <.span("_", ^.visibility.hidden)
 
+  private class Breakdown {
+    private var parts = Vector.empty[TagMod]
+
+    def add(as: TagMod*): Unit =
+      parts ++= as
+
+    def addUnlessZero(n: Int, icon: VdomTag): Unit =
+      if (n != 0) {
+        val txt: String =
+//          if (parts.isEmpty)
+//            n.toString
+//          else
+            if (n < 0) s" - ${-n}" else s" + $n"
+        add(txt, icon)
+      }
+
+    def result: TagMod =
+      TagMod.Composite(parts)
+
+    def resultNonEmpty: Option[TagMod] =
+      Option.when(parts.nonEmpty)(result)
+  }
+
   def summariseContent(table: TableContentStats): TagMod = {
     import table._
 
     val reqBreakdown: Option[TagMod] = {
-      var parts = List.empty[TagMod]
-
-      def add(n: Int, icon: VdomTag): Unit =
-        if (n != 0) parts ::= TagMod(if (n < 0) s" - ${-n}" else s" + $n", icon)
-
-      // Right-to-left
-      add(reappearances, iconReapp)
-      add(-reqsFilteredOut.all, iconFilter)
-      add(reqsInProject.dead, iconDelete)
-
-      Option.when(parts.nonEmpty)(
-        TagMod(" (" + reqsInProject.live, parts.toTagMod, ")"))
+      val b = new Breakdown
+      b.addUnlessZero(reqsInProject.dead, iconDelete)
+      b.addUnlessZero(-reqsFilteredOut.all, iconFilter)
+      b.resultNonEmpty.map(m => TagMod(" (", reqsInProject.live, m, ")"))
     }
 
-    val rcgs: Option[TagMod] =
-      Option.when(codeGroups > 0)(
-        TagMod(s" + $codeGroups", iconRCGs))
+    val rowBreakdown = new Breakdown
+    rowBreakdown.add(uniqueReqsInTable.all, iconReqs, reqBreakdown.whenDefined)
+    rowBreakdown.addUnlessZero(reappearances, iconReapp)
+    rowBreakdown.addUnlessZero(codeGroups, iconRCGs)
 
-    /*
-    val tableBreakdown: Option[TagMod] =
-      Option.unless(reqBreakdown.isEmpty && rcgs.isEmpty)(
-        TagMod(
-          s": ${uniqueReqsInTable.all}", iconReqs,
-          reqBreakdown.whenDefined,
-          rcgs.whenDefined))
-
-    TagMod(
-      s"Showing ${totalRowsInTable.unitsOf("row")}",
-      tableBreakdown.whenDefined,
-      ".")
-      */
-
-    TagMod(
-      s"Showing ${totalRowsInTable.unitsOf("row")}",
-      s": ${uniqueReqsInTable.all}", iconReqs,
-      reqBreakdown.whenDefined,
-      rcgs.whenDefined)
+    TagMod(s"Showing ${totalRowsInTable.unitsOf("row")}: ", rowBreakdown.result)
   }
 
   def summariseSelected(n: Int): Option[TagMod] =

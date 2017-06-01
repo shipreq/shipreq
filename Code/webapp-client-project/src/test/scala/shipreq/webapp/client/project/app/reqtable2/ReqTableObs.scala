@@ -1,24 +1,49 @@
 package shipreq.webapp.client.project.app.reqtable2
-/*
+
+import org.parboiled2.ParseError
 import org.parboiled2.Parser.DeliveryScheme.Throw
 import org.scalajs.dom.{document, html}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.base.data._
+import shipreq.webapp.client.base.lib.DomUtil._
 import shipreq.webapp.client.base.test._
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.test._
-import shipreq.webapp.client.project.widgets.Checkbox
 import TestState._
 
 object ReqTableObs {
   case class CellLoc(row: Int, col: Int)
 
-  val reportedRowCount = "^(\\d+) row.*".r
-  val reportedReqCount = ".*\\D(\\d+) reqs?.*".r
-  val reportedReqFormula = ".*\\d reqs? +\\((.+?)\\).*".r.pattern
+  lazy val selNA = Style.reqtable2.table.`N/A`.selector
 
-  val nonFormula = "[^0-9+-]+".r
+  lazy val hasNA: org.scalajs.dom.Node => Boolean =
+    Sizzle(selNA, _).nonEmpty
+
+  lazy val rowFilter: Live => html.TableRow => Boolean = {
+    Live.memo[html.TableRow => Boolean] { l =>
+      val List(on, off) = List(On, Off).map(o => Style.reqtable2.table.dataCell((l, o)).className.value)
+      _.children.iterator
+        .filterNot(hasNA)
+        .exists(td => td.classList.contains(on) || td.classList.contains(off))
+    }
+  }
+
+  val parseContentSummary = "^Showing(\\d+)rows?:(\\d+)(\\(.+\\))?(\\+.+)?$".r
+
+  def calc(s: String): Int = {
+    val s2 = if (s.head == '+') s.tail else s
+    try
+      new Calculator(s2).InputLine.run()
+    catch {
+      case p: ParseError => fail(s"Failed to parse [$s2] -- ${p.getMessage}")
+    }
+  }
+
+  case class ContentSummary(rows: Int, reqs: Int, reqBreakdown: Option[String], other: Option[String]) {
+    val reqBreakdownResult: Option[Int] = reqBreakdown.map(calc)
+    val rowBreakdownResult: Int         = reqs + other.fold(0)(calc)
+  }
 }
 
 /**
@@ -39,42 +64,40 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
       case x => sys error s"Expected to find one result for '$a' but found: $x. Available are: ${bs.iterator.map(f).mkString(", ")}."
     }
 
-  object viewSettings {
-    val $ = ReqTableObs.this.$("ViewSettings", ">table", 1 of 2)
-    def vsCol(i: Int) = $("column #" + i, "tbody tr")(">td", i of 3)
+  object columnSelector {
+    val root = $(".ui.popup:has(.ui.checkbox)")
 
-    object columns {
-
-      case class ColumnDom(outer: HtmlDomZipperAt[html.Label]) {
-        val checkbox = outer("input").domAs[html.Input]
-        val on       = On when checkbox.checked
-        val name     = outer.innerText
-      }
-
-      val entirety: Vector[ColumnDom] =
-        vsCol(1).collect1n("label").as[html.Label].mapZippers(ColumnDom)
-
-      def column(name: String): ColumnDom =
-        findOne(name, entirety)(_.name)
-
-      val allColumns: Vector[String] =
-        entirety.map(_.name)
-
-      val onColumns: Vector[String] =
-        entirety.filter(_.on is On).map(_.name)
+    case class ColumnDom(outer: HtmlDomZipper) {
+      val checkbox: html.Input = outer("input").domAs[html.Input]
+      val on      : On         = On when checkbox.checked
+      val name    : String     = outer("label").innerText
     }
 
-    object filter {
-      val $ = vsCol(3)
-      val input = $("textarea").domAs[html.TextArea]
-      val value = input.value
-    }
+    val entirety: Vector[ColumnDom] =
+      root.collect1n("div.ui.checkbox").asHtml.mapZippers(ColumnDom)
 
-    object filterDead {
-      val checkbox = filter.$("input[type=checkbox]").domAs[html.Input]
-      val value: FilterDead = Checkbox.filterDeadChecked when checkbox.checked
-    }
+    def column(name: String): ColumnDom =
+      findOne(name, entirety)(_.name)
+
+    val allColumns: Vector[String] =
+      entirety.map(_.name)
+
+    val onColumns: Vector[String] =
+      entirety.filter(_.on is On).map(_.name)
   }
+  columnSelector // force
+
+  val filterInput: html.Input =
+    $("input[placeholder='Filter...']").domAs[html.Input]
+
+  val filterValue: String =
+    filterInput.value
+
+  val filterDeadButton: html.Button =
+    $(s"${Style.reqtable2.page.filterDeadButtonContainer.selector} button").domAs[html.Button]
+
+  val filterDead: FilterDead =
+    ShowDead when filterDeadButton.classList.contains("red")
 
   object sorting {
 //    private val all = (SortMethod.ignoreBlanks ++ SortMethod.considerBlanks).whole
@@ -86,19 +109,16 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
 //    private val readSortMethodIB: String => SortMethod.IgnoreBlanks =
 //      s => SortMethod.ignoreBlanks.whole.find(_.optionLabel == s).getOrElse(sys error s"Unknown sort method: $s")
 
-    val $: HtmlDomZipper = ReqTableObs.this.$("Sort row", ">div:contains('Sort')")
-
-    //    val criteriaDom = $.collect1("tr", tr => (
-    //      tr("td", 2 of 2).innerText,
-    //      tr("td", 1 of 2)("*[title]").domAs[html.Element].title))
+    val $: HtmlDomZipper =
+      ReqTableObs.this.$("Sort row", Style.reqtable2.sortEditor.dragArea.selector)
 
     case class CriteriaDom(nameDom: html.Element, orderDom: html.Element) {
       val name = nameDom.textContent
     }
 
     val criteriaDom = $.collect1n("tr").mapZippers(tr => CriteriaDom(
-      tr("td", 2 of 2).dom,
-      tr("td", 1 of 2)("*[title]").dom))
+      tr("td", 1 of 2).dom,
+      tr("td", 2 of 2)("*[title]").dom))
 
     val names: Vector[String] =
       criteriaDom.map(_.name)
@@ -121,7 +141,7 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
   }
 
   object table {
-    val $ = ReqTableObs.this.$("ReqTable", ">table", 2 of 2)
+    val $ = ReqTableObs.this.$("ReqTable", Style.reqtable2.table.table.selector)
     val thead = $("ReqTable", ">thead")
     val tbody = $("ReqTable", ">tbody")
 
@@ -134,7 +154,7 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
       thead.collect1n("th").as[html.TableCell].mapZippers(ColumnDom)
 
     val columns: Vector[String] =
-      columnDoms map (_.name)
+      columnDoms.map(_.name)
 
     val fieldColumns: Vector[String] =
       columns.drop(1)
@@ -142,10 +162,10 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
     def column(name: String): ColumnDom =
       findOne(name, columnDoms)(_.name)
 
-    import Table.CellStatus
+    import Table.Shared.CellState
 
-    private def cell(s: CellStatus): String =
-      "td." + Style.reqtable2.cell(s).className.value
+    private def cell(s: CellState): String =
+      s"td.${Style.reqtable2.table.dataCell(s).className.value}"
 
 //    private def cell(s: Status, focus: Boolean): String =  {
 //      var r = "td." + Style.reqtable2.cell(s).className.value
@@ -156,18 +176,25 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
 //      r
 //    }
 
-    private def row(inner: String): String =
-      s">tr:has($inner)"
+    val allRows : Vector[html.TableRow] =
+      tbody.collect0n(">tr").as[html.TableRow].doms
 
-//    private def byFocus(focus: Boolean, wrap: String => String): String =
-//      ColumnRenderer.statusDomain.toStream.map(s => wrap(cell(s, focus))).mkString(",")
+    // Existence of a Live cell means the row is Live
+    // Existence of a Dead cell does NOT mean the row is Dead
+    val (liveRows, deadRows) = allRows.partition(rowFilter(Live))
 
-    private def byStatus(s: CellStatus, wrap: String => String): String =
-      wrap(cell(s))
+    /*
+    // This isn't an accurate way to do this because live rows *can* have dead cells when a column is dead
+    val deadRows: Vector[html.TableRow] = allRows.filter(rowFilter(Dead))
+    val liveRows: Vector[html.TableRow] = allRows.filter(rowFilter(Live))
 
-    val allRows  = tbody collect0n ">tr" doms
-    val deadRows = tbody collect0n byStatus(CellStatus.DeadRow, row) doms
-    val liveRows = tbody collect0n byStatus(CellStatus.Normal, row) doms
+    for (r <- liveRows.filter(r => deadRows.exists(_ eq r))) {
+      println(">" * 200)
+      r.children.iterator.filterNot(hasNA).foreach(c => println(c.outerHTML))
+      println("<" * 200)
+    }
+    */
+
 //    val focusRow = tbody downO byFocus(true, row)
 //    val focus    = tbody downO byFocus(true, identity)
 //
@@ -227,39 +254,26 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
   // ===================================================================================================================
 
   object stats {
-    val text = $("Stats", ">div", 2 of 4).innerText
+    val text = $("Stats", Style.reqtable2.page.summary.selector).innerText
 
-    val reportedRows: Int =
-      text match {
-        case reportedRowCount(n) => n.toInt
-        case u => fail(s"Unable to extract row count from [$u].")
-      }
+    val lines: Vector[String] =
+      text.split("[\r\n]+").iterator
+        .map(_.filterNot(c => c.isWhitespace || c == '_'))
+        .filter(_.nonEmpty)
+        .toVector
 
-    val reportedReqs: Int =
-      text match {
-        case reportedReqCount(n) => n.toInt
-        case u => fail(s"Unable to extract req count from [$u].")
-      }
+    val contentLine: String =
+      lines(0)
 
-    val reportedReqFormulaText: Option[String] = {
-      val m = reportedReqFormula.matcher(text)
-      if (m.matches) {
-        val f = m group 1
-        if (f == "0 deleted") None else Some(f)
-      } else
-        None
-    }
-
-    val reportedReqFormulaValue: Option[Int] =
-      reportedReqFormulaText.map{ t =>
-        val f = nonFormula.replaceAllIn(t, "")
-        val i = new Calculator(f).InputLine.run()
-        //println(s"$t  ==>  $f  ==  $i")
-        i
+    val content: ContentSummary =
+      contentLine match {
+        case parseContentSummary(rows, reqs, reqBreakdown, other) =>
+          ContentSummary(
+            rows.toInt,
+            reqs.toInt,
+            Option(reqBreakdown).filter(_.nonEmpty),
+            Option(other).filter(_.nonEmpty))
+        case u => fail(s"Unable to parse content summary [$u]")
       }
   }
-
-  def selectableCols = viewSettings.columns.allColumns
-  def filterDead = viewSettings.filterDead.value
 }
-*/

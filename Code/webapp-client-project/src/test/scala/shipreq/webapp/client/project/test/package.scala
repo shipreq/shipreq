@@ -12,7 +12,4 @@ package object test {
     def console = scalajs.js.Dynamic.global.console
     console.error = console.info
   }
-
-  type Sizzle = teststate.domzipper.sizzle.Sizzle.type
-  val Sizzle = teststate.domzipper.sizzle.Sizzle
 }
