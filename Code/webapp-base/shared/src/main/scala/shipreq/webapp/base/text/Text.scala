@@ -4,7 +4,7 @@ import org.parboiled2._
 import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{Atom => A, Parsers => P, MultiLine => ML}
+import shipreq.webapp.base.text.{Atom => A, MultiLine => ML, Parsers => P}
 
 object Text {
 
@@ -17,6 +17,13 @@ object Text {
   type Generic = Base with A.Literal
   type AnyOptional = A.Base#OptionalText
   type AnyNonEmpty = A.Base#NonEmptyText
+
+  /** Plain text, or rich text? */
+  def isPlain(t: AnyOptional): Boolean =
+    t.forall(_.isPlain)
+
+  @inline def isRich(t: AnyOptional): Boolean =
+    !isPlain(t)
 
   // ===================================================================================================================
 

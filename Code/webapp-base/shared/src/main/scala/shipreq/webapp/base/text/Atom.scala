@@ -47,7 +47,11 @@ object Atom {
   // Basics - reduces down to either SingleLine or MultiLine
 
   sealed trait Base {
-    sealed trait Atom
+    sealed trait Atom {
+      /** Plain text atom, or rich text atom? */
+      def isPlain: Boolean
+      @inline final def isRich: Boolean = !isPlain
+    }
     final type OptionalText = Vector[Atom]
     final type NonEmptyText = NonEmptyVector[Atom]
 
@@ -66,19 +70,23 @@ object Atom {
   /** Literal text, like "hello there" */
   trait Literal extends Base {
     case class Literal(value: String) extends Atom {
+      override final def isPlain = true
       // For tests
       def map(f: String => String): this.type = Literal(f(value)).asInstanceOf[this.type]
     }
   }
 
   trait NewLine extends Base {
-    case class BlankLine() extends Atom
+    case class BlankLine() extends Atom {
+      override final def isPlain = true
+    }
     final val blankLine = BlankLine()
   }
 
   trait ListMarkup extends Base {
     final type ListItem = Vector[Atom]
     case class UnorderedList(items: NonEmptyVector[ListItem]) extends Atom {
+      override final def isPlain = false
       // For tests
       def filterAtoms(f: Atom => Boolean): this.type = UnorderedList(items.map(_ filter f)).asInstanceOf[this.type]
       def map(f: ListItem => ListItem): this.type = UnorderedList(items map f).asInstanceOf[this.type]
@@ -87,13 +95,19 @@ object Atom {
 
   trait PlainTextMarkup extends Base {
     /** Web address, like "https://www.google.com" */
-    case class WebAddress(value: String) extends Atom
+    case class WebAddress(value: String) extends Atom {
+      override final def isPlain = false
+    }
 
     /** Email address, like "bob@hotmail.com" */
-    case class EmailAddress(value: String) extends Atom
+    case class EmailAddress(value: String) extends Atom {
+      override final def isPlain = false
+    }
 
     /** Math in TeX format, like "\frac{22}{7}-\pi" */
-    case class MathTeX(value: String) extends Atom
+    case class MathTeX(value: String) extends Atom {
+      override final def isPlain = false
+    }
   }
 
   trait SingleLine extends Literal with PlainTextMarkup {
@@ -109,25 +123,35 @@ object Atom {
 
   /** An inline issue, like "#TBD" */
   trait Issue extends Base {
-    case class Issue(typ: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText) extends Atom
+    case class Issue(typ: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText) extends Atom {
+      override final def isPlain = false
+    }
   }
 
   trait ReqRef extends Base {
     /** Reference to a requirement, like "UC-4". */
-    case class ReqRef(value: ReqId) extends Atom
+    case class ReqRef(value: ReqId) extends Atom {
+      override final def isPlain = false
+    }
 
     /** Reference to a requirement via its [[ReqCode]]. */
-    case class CodeRef(value: ReqCodeId) extends Atom
+    case class CodeRef(value: ReqCodeId) extends Atom {
+      override final def isPlain = false
+    }
   }
 
   /** Reference to a UC step, like "UC-4.0.1.a". */
   trait UseCaseStepRef extends Base {
-    case class UseCaseStepRef(value: UseCaseStepId) extends Atom
+    case class UseCaseStepRef(value: UseCaseStepId) extends Atom {
+      override final def isPlain = false
+    }
   }
 
   /** An inline tag, like "#pri=high" */
   trait TagRef extends Base {
-    case class TagRef(value: ApplicableTagId) extends Atom
+    case class TagRef(value: ApplicableTagId) extends Atom {
+      override final def isPlain = false
+    }
   }
 
   // ===================================================================================================================
