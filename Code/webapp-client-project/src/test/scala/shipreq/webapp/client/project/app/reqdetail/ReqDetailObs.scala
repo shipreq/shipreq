@@ -52,7 +52,7 @@ final class ReqDetailObs($: HtmlDomZipper) {
 
     val filterDead = ShowDead when filterDeadButton.className.contains("red")
 
-    val filterDeadLocked = filterDeadButton.disabled getOrElse false
+    val filterDeadLocked = filterDeadButton.disabled
 
     val table = root(">table")
 

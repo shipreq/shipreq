@@ -26,7 +26,7 @@ class ProjectHomeObs($: HtmlDomZipper) {
     projectNameEditInput.map(_.value)
 
   val projectNameEditDisabled: Option[Boolean] =
-    projectNameEditInput.map(_.disabled.get)
+    projectNameEditInput.map(_.disabled)
 
   val projectNameErrMsg: Option[String] =
     projectArea.collect01(".ui.label").innerTexts

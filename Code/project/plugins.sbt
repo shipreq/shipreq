@@ -5,7 +5,7 @@ addSbtPlugin("com.typesafe.sbt"   % "sbt-native-packager"  % "1.1.5")
 addSbtPlugin("net.virtual-void"   % "sbt-dependency-graph" % "0.8.2")
 addSbtPlugin("org.scala-js"       % "sbt-scalajs"          % "0.6.16")
 addSbtPlugin("org.scoverage"      % "sbt-scoverage"        % "1.5.0")
-addSbtPlugin("pl.project13.scala" % "sbt-jmh"              % "0.2.24")
+addSbtPlugin("pl.project13.scala" % "sbt-jmh"              % "0.2.25")
 addSbtPlugin("se.marcuslonnberg"  % "sbt-docker"           % "1.4.1")
 
 // Facilitates running Scala.JS tests in real browsers

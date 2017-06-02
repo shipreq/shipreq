@@ -14,8 +14,10 @@ object DomUtil {
 //  @inline implicit class PatchNode(private val n: Node) extends AnyVal {
 //  }
 
-//  @inline implicit class PatchHtmlElement(private val e: html.Element) extends AnyVal {
-//  }
+  @inline implicit class PatchHtmlElement(private val e: html.Element) extends AnyVal {
+    def _disabled: js.UndefOr[Boolean] =
+      e.asInstanceOf[js.Dynamic].disabled.asInstanceOf[js.UndefOr[Boolean]]
+  }
 
   @inline implicit class NodeListExt(private val n: NodeList) extends AnyVal {
     def iterator: Iterator[Node] =
@@ -70,7 +72,7 @@ object DomUtil {
   def focusable(es: Iterator[Element]): Iterator[html.Element] =
     es.filterSubType[html.Element]
       .filter(_.tabIndex >= 0)
-      .filter(_.disabled.forall(!_)) // ignore disabled
+      .filter(_._disabled.forall(!_)) // ignore disabled
 
   def isDragWithinNode(e: ReactDragEvent, node: Node): Boolean = {
     @inline def between(value: Double, from: Double, to: Double) =

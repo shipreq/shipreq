@@ -133,8 +133,7 @@ object ReqDetailTestDsl {
     })
 
   private def clickEnabled(b: html.Button): Unit = {
-    val disabled = b.disabled.getOrElse(false)
-    assert(!disabled, "Button is disabled.")
+    assert(!b.disabled, "Button is disabled.")
     Simulate click b
   }
 

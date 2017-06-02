@@ -27,7 +27,7 @@ object Dependencies {
   }
 
   object Scalaz {
-    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.12")
+    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.13")
     val core       = mm("scalaz-core")
     val effect     = mm("scalaz-effect") ++ core
     val concurrent = mm("scalaz-concurrent") ++ effect
@@ -95,7 +95,7 @@ object Dependencies {
   }
 
   object Json4s {
-    private val mm = MultiModule.scala("org.json4s", "3.5.1")
+    private val mm = MultiModule.scala("org.json4s", "3.5.2")
     val jackson = mm("json4s-jackson") ++ Scala.all
   }
 
@@ -127,7 +127,7 @@ object Dependencies {
   }
 
   object Akka {
-    private val mm = MultiModule.scala("com.typesafe.akka", "2.5.0")
+    private val mm = MultiModule.scala("com.typesafe.akka", "2.5.2")
     val actor   = mm("akka-actor") ++ mm("akka-slf4j")
     val testkit = mm("akka-testkit")
   }
@@ -138,7 +138,7 @@ object Dependencies {
   }
 
   object LibJetty {
-    private val mm = MultiModule.java("org.eclipse.jetty", "9.4.4.v20170414")
+    private val mm = MultiModule.java("org.eclipse.jetty", "9.4.5.v20170502")
     val webapp = mm("jetty-webapp")
     val runner = mm("jetty-runner")
     val dist   = mm("jetty-distribution").modAll(_.artifacts(Artifact("jetty-distribution", "tar.gz", "tar.gz")).intransitive())
@@ -148,7 +148,7 @@ object Dependencies {
     val servletApi = jvmOnly("javax.servlet" % "javax.servlet-api" % "3.1.0")
   }
 
-  val scalajsDom       = jsOnly("org.scala-js"                          %%%! "scalajs-dom"       % "0.9.1")
+  val scalajsDom       = jsOnly("org.scala-js"                          %%%! "scalajs-dom"       % "0.9.2")
 //val scalajsJavaTime  = jsOnly("org.scala-js"                          %%%! "scalajs-java-time" % "0.1.0")
   val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %%%! "benchmark"         % "0.2.4")
   val scalajsJavaTime  = jsOnly("org.scala-js"                          %%%! "scalajs-java-time" % "0.2.1")
@@ -157,25 +157,25 @@ object Dependencies {
   val parboiled = jvmAndJs("org.parboiled",                    "parboiled", "2.1.4")
   val shapeless = jvmAndJs("com.chuusai",                      "shapeless", "2.3.2")
   val μPickle   = jvmAndJs("com.github.japgolly.fork.upickle", "upickle",   "custom-7")
-  val μTest     = jvmAndJs("com.lihaoyi",                      "utest",     "0.4.5")
+  val μTest     = jvmAndJs("com.lihaoyi",                      "utest",     "0.4.7")
 
   val okHttp      = jvmOnly("com.squareup.okhttp"         % "okhttp"                % "1.5.4")
   val httpCore    = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.6")
   val javaMail    = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.5.6")
-  val postgresql  = jvmOnly("org.postgresql"              % "postgresql"            % "42.0.0")
-  val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "2.6.1")
+  val postgresql  = jvmOnly("org.postgresql"              % "postgresql"            % "42.1.1")
+  val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "2.6.2")
   val flyway      = jvmOnly("com.googlecode.flyway"       % "flyway-core"           % "2.3.1")
   val logback     = jvmOnly("ch.qos.logback"              % "logback-classic"       % "1.2.3")
   val commonsLang = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.5")
   val commonsIo   = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.43.0")
   val scalaTest   = jvmOnly("org.scalatest"              %% "scalatest"             % "3.0.3")
-  val scalaCheck  = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.13.4")
+  val scalaCheck  = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.13.5")
 
   val macroParadise = compilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   val useMacroParadise = (_: Project).settings(addCompilerPlugin(macroParadise))
 
-  val kindProjector = compilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3")
+  val kindProjector = compilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4")
   val useKindProjector = (_: Project).settings(addCompilerPlugin(kindProjector))
 
 //  import sbt.Keys._

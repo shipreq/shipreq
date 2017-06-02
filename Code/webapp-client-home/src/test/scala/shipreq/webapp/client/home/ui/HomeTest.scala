@@ -31,8 +31,8 @@ final class HomeObs(cp: TestClientProtocol, $: HtmlDomZipper) {
     val error  = cont.collect01(".ui.pointing.label").doms.map(_.textContent)
 
     val inputText      = input.value
-    val inputDisabled  = input.disabled.get
-    val buttonDisabled = button.disabled.get
+    val inputDisabled  = input.disabled
+    val buttonDisabled = button.disabled
   }
 }
 
