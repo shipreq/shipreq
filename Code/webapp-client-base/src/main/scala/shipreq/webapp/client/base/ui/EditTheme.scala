@@ -29,6 +29,9 @@ object EditTheme {
       ^.value := value,
       tagMod)
 
+  val spinner: VdomTag =
+    Icon.CircleNotched.loading.tag(^.marginRight := "0")
+
   def renderEditor(status      : EditorStatus,
                    editor      : Validity => VdomElement,
                    readOnlyView: => VdomNode,
@@ -56,7 +59,7 @@ object EditTheme {
 
       case EditorStatus.InTransit =>
         <.div(*.textEditor(*.EditorState.InTransit),
-          <.div(Icon.CircleNotched.loading.tag),
+          <.div(spinner),
           <.div(*.textEditorInTransitValue, readOnlyView))
     }
   }

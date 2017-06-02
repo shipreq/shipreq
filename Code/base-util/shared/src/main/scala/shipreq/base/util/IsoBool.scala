@@ -1,7 +1,9 @@
 package shipreq.base.util
 
 import japgolly.univeq.UnivEq
+import monocle.Lens
 import scalaz.Isomorphism.<=>
+import scalaz.{Monoid, Semigroup}
 import IsoBool._
 
 /**
@@ -76,6 +78,16 @@ object IsoBool {
 
     final def exists(f: B => Boolean): Boolean =
       f(positive) || f(negative)
+
+    final type Values[+A] = IsoBool.Values[B, A]
+    final object Values {
+      def apply[A](f: B => A): Values[A] =
+        IsoBool.Values(pos = f(positive), neg = f(negative))
+      def both[A](a: A): Values[A] =
+        IsoBool.Values(a, a)
+      def lens[A](b: B): Lens[Values[A], A] =
+        IsoBool.Values.lens(b)
+    }
   }
 
   /**
@@ -103,5 +115,44 @@ object IsoBool {
       val pos = companion.positive
       pos when ((this is pos) || that)
     }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  final case class Values[B <: IsoBool[B], +A](pos: A, neg: A) {
+    def apply(b: B): A =
+      if (b is b.companion.positive) pos else neg
+    def set[AA >: A](b: B, a: AA): Values[B, AA] =
+      if (b is b.companion.positive) copy(pos = a) else copy(neg = a)
+    def mod[AA >: A](b: B, f: A => AA): Values[B, AA] =
+      if (b is b.companion.positive) copy(pos = f(pos)) else copy(neg = f(neg))
+    def map[C](f: A => C): Values[B, C] =
+      Values(pos = f(pos), neg = f(neg))
+    def ap[C, D](other: Values[B, C])(f: (A, C) => D): Values[B, D] =
+      Values(pos = f(pos, other.pos), neg = f(neg, other.neg))
+  }
+
+  trait ValuesLowPri {
+    implicit def monoid[B <: IsoBool[B], A](implicit A: Monoid[A]): Monoid[Values[B, A]] =
+      new Monoid[Values[B, A]] {
+        override def zero = Values(A.zero, A.zero)
+        override def append(x: Values[B, A], y: => Values[B, A]) = x.ap(y)(A.append(_, _))
+      }
+  }
+
+  object Values extends ValuesLowPri {
+    implicit def semigroup[B <: IsoBool[B], A](implicit A: Semigroup[A]): Semigroup[Values[B, A]] =
+      new Semigroup[Values[B, A]] {
+        override def append(x: Values[B, A], y: => Values[B, A]) = x.ap(y)(A.append(_, _))
+      }
+
+    implicit def univEq[B <: IsoBool[B], A: UnivEq]: UnivEq[Values[B, A]] =
+      UnivEq.derive
+
+    def lens[B <: IsoBool[B], A](b: B): Lens[Values[B, A], A] =
+      if (b is b.companion.positive)
+        Lens[Values[B, A], A](_.pos)(a => _.copy(pos = a))
+      else
+        Lens[Values[B, A], A](_.neg)(a => _.copy(neg = a))
   }
 }

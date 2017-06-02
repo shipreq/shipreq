@@ -5,12 +5,12 @@ import japgolly.scalajs.react.test._
 import org.scalajs.dom.raw.HTMLInputElement
 import scalaz.Equal
 import scalaz.Scalaz.Id
+import teststate.domzipper.sizzle.Sizzle
 import utest._
 import shipreq.base.util.ScalaExt._
-import Editors._
-import shipreq.webapp.client.project.test.Sizzle
 import shipreq.webapp.client.project.test.TestUtil._
 import shipreq.webapp.client.project.test.SampleDataPerson._
+import Editors._
 import NewAndSavedRowState._
 
 object EditorTest extends TestSuite {

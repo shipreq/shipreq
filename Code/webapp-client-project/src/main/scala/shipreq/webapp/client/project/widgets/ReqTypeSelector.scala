@@ -6,6 +6,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+import shipreq.base.util.PotentialChange
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.base.feature.EditorStatus
@@ -16,20 +17,28 @@ import shipreq.webapp.client.project.app.Style.widgets.{reqTypeSelector => *}
 object ReqTypeSelector {
 
   type RT = CustomReqType
-  type AbortCommit = shipreq.webapp.client.base.lib.AbortCommit[Callback, RT ~=> Callback]
+  type AbortCommit = Option[shipreq.webapp.client.base.lib.AbortCommit[Callback, RT ~=> Callback]]
 
-  final case class Props(initialValue: RT,
+  final case class Props(initialValue: Option[RT],
                          edit        : StateSnapshot[RT],
                          choices     : NonEmptySet[RT],
                          asyncStatus : Option[EditorStatus.Async],
                          abortCommit : AbortCommit) {
 
-    val changed = edit.value !=* initialValue
-    def abort = abortCommit.abort
-    def commit = if (changed) abortCommit.commit(edit.value) else Callback.empty
-    val status = asyncStatus.getOrElse(if (changed) EditorStatus.Valid(commit) else EditorStatus.Ignore)
+    val change: PotentialChange[Nothing, RT] =
+      PotentialChange.Success(edit.value).ignoreOption(initialValue)
 
-    @inline def render = Component(this)
+    val abort: Option[Callback] =
+      abortCommit.map(_.abort)
+
+    val commit: Option[Callback] =
+      change.toOption.flatMap(v => abortCommit.map(_.commit(v)))
+
+
+    val status: EditorStatus =
+      asyncStatus getOrElse EditorStatus.fromValidatedChange(change)(_ => commit, abort)
+
+    @inline def render: VdomElement = Component(this)
   }
 
   // implicit val reusabilityProps: Reusability[Props] =
@@ -58,14 +67,13 @@ object ReqTypeSelector {
 
       val commitButton = Button(
         tipe = Button.Type.IconOnly(Icon.Checkmark),
-        state = Button.State.enabledWhen(p.changed)
-      ).tag(
-        *.commit,
-        ^.onClick --> p.commit)
+        state = Button.State.enabledWhen(p.commit.isDefined)
+      ).tag(*.commit, ^.onClick -->? p.commit)
 
-      val abortButton = Button(tipe = Button.Type.IconOnly(Icon.Remove)).tag(
-        *.abort,
-        ^.onClick --> p.abort)
+      val abortButton = Button(
+        tipe = Button.Type.IconOnly(Icon.Remove),
+        state = Button.State.enabledWhen(p.abort.isDefined)
+      ).tag(*.abort, ^.onClick -->? p.abort)
 
       val buttons = Button.group(commitButton, abortButton)(*.buttons)
 

@@ -1,310 +1,450 @@
 package shipreq.webapp.client.project.app.reqtable
 
-import scalacss.Domain
-import scalacss.ScalaCssReact._
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
-import vdom.html_<^._
 import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
-import japgolly.microlibs.nonempty.NonEmptyVector
-import scalaz.{-\/, \/-}
-import shipreq.base.util.ScalaExt._
-import shipreq.base.util.univeq._
+import scalacss.ScalaCssReact._
+import shipreq.base.util.{Applicable, NotApplicable}
 import shipreq.webapp.base.data._
+import shipreq.webapp.client.base.data.{Off, On, Plain}
 import shipreq.webapp.client.base.feature.AsyncFeature
-import shipreq.webapp.client.base.lib.{DataReusability => _, _}
-import shipreq.webapp.client.base.ui.EditTheme
-import shipreq.webapp.client.project.app.Style.{reqtable => *}
-import shipreq.webapp.client.project.feature.EditorFeature
-import shipreq.webapp.client.project.lib._
-import shipreq.webapp.client.project.widgets.DragToReorder
-import DataReusability._
-import DomUtil._
+import shipreq.webapp.client.base.lib.DomUtil._
+import shipreq.webapp.client.base.ui.{EditTheme, semantic}
+import shipreq.webapp.client.base.ui.semantic.{Icon, Message}
+import shipreq.webapp.client.project.app.Style.reqtable.{table => *}
+import shipreq.webapp.client.project.feature.{EditorFeature, Selection}
+import shipreq.webapp.client.project.widgets.{DragToReorder, ProjectWidgets, ViewReq}
+import shipreq.webapp.client.project.lib.DataReusability._
+import EditorFeature.FieldKey
 
 object Table {
+  import Shared._
 
-  def renderLocked = <.div(^.cls := "locked", "LOCKED")
+  sealed abstract class Mode
+  object Mode {
 
+    final case class Normal(rows: Vector[Row]) extends Mode
 
-  implicit val reusabilityProps = Reusability.never[Props] // TODO .caseClass[Props]
+    case object FilteredOut extends Mode {
+      def render: VdomTag =
+        Message(
+          Message.Style(Message.Type.Info),
+          Icon.Filter,
+          "No filter results.",
+          "None of the project content matches the specified filter criteria.")
+    }
 
-  case class Props(rows           : Rows,
-                   colName        : Column.NameResolver,
-                   colRenderers   : NonEmptyVector[ColumnRenderer],
-                   editor         : EditorFeature.ReadWrite.ForProject,
-                   asyncState     : AsyncFeature.Read.D2[Row.SourceId, Option[Column], String],
-                   selection      : RowSelectionVisible,
-                   modViewSettings: EndoFn[ViewSettings] ~=> Callback)
+    private val reusabilityNormal: Reusability[Normal] =
+      Reusability.caseClass
 
-  val Component =
-    ScalaComponent.builder[Props]("Table")
-      .renderBackend[Backend]
-      .configure(shouldComponentUpdate)
-      .build
+    implicit val reusability: Reusability[Mode] =
+      Reusability((a, b) => // TODO Replace with Reusability.derive
+        a match {
+          case x: Normal => b match {
+            case y: Normal => reusabilityNormal.test(x, y)
+            case _ => false
+          }
+          case FilteredOut => a == b
+        }
+      )
+  }
 
-  final class Backend($: BackendScope[Props, Unit]) {
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-    val reorderColumns = Reusable.fn((cols: NonEmptyVector[Column]) =>
-      $.props >>= (_.modViewSettings(_ setColumns cols)))
+  object Whole {
 
-    val clickHeaderToSort = Reusable.fn((col: Column) =>
-      $.props >>= (_.modViewSettings(
-        ViewSettings.order.modify(_ want col))))
+    final case class Props(mode       : Mode,
+                           cols       : NonEmptyVector[ColumnPlus],
+                           selection  : RowSelectionVisible,
+                           editor     : EditorFeature.ReadWrite.ForProject,
+                           rowAsync   : AsyncFeature.Read.D1[Row.SourceId, String],
+                           config     : ProjectConfig,
+                           pw         : ProjectWidgets,
+                           modSettings: ModFn[TableSettings]) {
+      @inline def render = Component(this)
+    }
 
-    def render(p: Props): VdomElement = {
-      val crs  = p.colRenderers
-      val rows = p.rows
+    implicit val reusabilityProps: Reusability[Props] =
+      Reusability.caseClass
 
-      val headerProps = HeaderProps(
-        crs.map(_.column), p.colName, p.selection, reorderColumns, clickHeaderToSort)
+    final class Backend($: BackendScope[Props, Unit]) {
 
-      val renderRows =
-        rows.indices.toVdomArray { i =>
-          rows(i) match {
-            case row: ReqRow =>
-              import ForRowReq._
-              val rp = RowProps(row, crs, p.editor.forReq(row.req.id), p.asyncState(row.sourceId), p.selection)
-              RowComponent.withKey(row.id.key)(rp)
-            case row: CodeGroupRow =>
-              import ForRowCodeGroup._
-              val rp = RowProps(row, crs, p.editor.forCodeGroup(row.reqCodeId), p.selection)
-              RowComponent.withKey(row.id.key)(rp)
+      val pxProjectWidgets = Px.props($).map(_.pw).withReuse.manualRefresh
+      val pxProjectConfig  = Px.props($).map(_.config).withReuse.manualRefresh
+
+      val pxPubidFmt: Px[ProjectWidgets#PubidFormat] =
+        pxProjectWidgets.map(_.PubidFormat(Plain, *.pubidColumnValue(_), titleFn = _ => None))
+
+      val pxApplicability: Px[Applicability[Column, Row]] =
+        pxProjectConfig.map(cfg => Row.applicability(cfg.applicability))
+
+      def render(p: Props): VdomElement = {
+        pxProjectWidgets.refresh()
+        pxProjectConfig.refresh()
+
+        val header =
+          Header.Component(
+            Header.Props(
+              p.cols,
+              p.selection,
+              p.modSettings.map(f => cs => f(_ setColumns cs.map(_.column))),
+              p.modSettings.map(f => c => f(TableSettings.order.modify(_ want c.column)))))
+
+        def renderMsg(msg: VdomTag): VdomTag =
+          <.tr(<.td(*.noContent, ^.colSpan := p.cols.length + 1, msg))
+
+        def renderRows(rows: Vector[Row]): VdomArray = {
+          val applicability = pxApplicability.value()
+          val reqViewInputs: ReqRow.ViewInput = (p.config.reqTypes, p.pw, pxPubidFmt.value())
+
+          rows.toVdomArray { genericRow =>
+            val rowAsync = p.rowAsync(genericRow.sourceId)
+            val selection = p.selection(genericRow.sourceId)
+
+            genericRow match {
+              case row: Row.ForReq =>
+                ReqRow.Props(
+                  row,
+                  reqViewInputs,
+                  p.editor.forReq(row.req.id),
+                  p.cols,
+                  applicability,
+                  rowAsync,
+                  selection,
+                ).render
+
+              case row: Row.ForCodeGroup =>
+                CodeGroupRow.Props(
+                  row,
+                  p.pw,
+                  p.editor.forCodeGroup(row.reqCodeId),
+                  p.cols,
+                  applicability,
+                  rowAsync,
+                  selection,
+                ).render
+            }
           }
         }
 
-      // Render
-      <.table(*.table,
-        HeaderComponent(headerProps),
-        <.tbody(renderRows))
+        val body: TagMod =
+          p.mode match {
+            case Mode.Normal(rows) => renderRows(rows)
+            case m@Mode.FilteredOut => renderMsg(m.render)
+          }
+
+        semantic.Table.celledCompactUnstackable(
+          *.table,
+          header,
+          <.tbody(body))
+      }
     }
+
+    val Component = ScalaComponent.builder[Props]("ReqTable")
+      .renderBackend[Backend]
+      .configure(shouldComponentUpdate)
+      .build
   }
 
-  // ===================================================================================================================
-  // Header row
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  case class HeaderProps(cols     : NonEmptyVector[Column],
-                         colName  : Column.NameResolver,
-                         selection: RowSelectionVisible,
-                         reorder  : NonEmptyVector[Column] ~=> Callback,
-                         clickSort: Column ~=> Callback)
+  private object Header {
 
-  implicit val headerPropReuse = Reusability.never[HeaderProps] // TODO caseClass[HeaderProps]
+    case class Props(cols     : NonEmptyVector[ColumnPlus],
+                     selection: RowSelectionVisible,
+                     reorder  : NonEmptyVector[ColumnPlus] ~=> Callback,
+                     clickSort: ColumnPlus ~=> Callback)
 
-  val HeaderComponent = ScalaComponent.builder[HeaderProps]("Header")
-    .renderBackend[HeaderBackend]
-    .configure(shouldComponentUpdate)
-    .build
+    implicit val reusabilityProps = Reusability.caseClass[Props]
 
-  class HeaderBackend($: BackendScope[HeaderProps, Unit]) {
+    final class Backend($: BackendScope[Props, Unit]) {
 
-    def selColKeyDown(e: ReactKeyboardEventFromHtml): Callback =
-      focusKeyHandlers(e)
+      private def setNewOrder(newOrder: Vector[ColumnPlus]): Callback =
+        NonEmptyVector.maybe(newOrder, Callback.empty)(newCols =>
+          $.props.flatMap(_ reorder newCols))
 
-    def dataColKeyDown(col: Column)(e: ReactKeyboardEventFromHtml): Callback =
-      focusKeyHandlers(e) | keyCodeSwitch(e) {
-        case KeyCode.Space => $.props.flatMap(_ clickSort col)
+      private def selColKeyDown(e: ReactKeyboardEventFromHtml): Callback =
+        focusKeyHandlers(e)
+
+      private def dataColKeyDown(col: ColumnPlus)(e: ReactKeyboardEventFromHtml): Callback =
+        focusKeyHandlers(e) | keyCodeSwitch(e) {
+          case KeyCode.Space => $.props.flatMap(_ clickSort col)
+        }
+
+      private def renderFn(p: Props, content: DragToReorder.Content[ColumnPlus]): VdomElement = {
+        val selectionCell =
+          <.th(
+            *.selectionColumnHeader,
+            ^.onKeyDown ==> selColKeyDown,
+            p.selection.total.checkboxAndOnClick)
+
+        val cols =
+          content.items.toVdomArray { i =>
+            val c = i.data
+            val live = c.column match {
+              case Column.DeletionReason => Live // Don't render this title with strike-through
+              case _                     => c.live
+            }
+            <.th(
+              *.columnHeader(live, i.status),
+              i.mod,
+              ^.tabIndex   := -1,
+              ^.onKeyDown ==> dataColKeyDown(c),
+              ^.onClick   --> p.clickSort(c),
+              c.name)
+          }
+
+        <.thead(
+          content.rootMod,
+          <.tr(
+            selectionCell,
+            cols))
       }
 
-    val columnDND = new DragToReorder[Column](
-      newOrder =>
-        NonEmptyVector.maybe(newOrder, Callback.empty)(no =>
-          $.props.flatMap(_ reorder no)),
+      private val columnDND: DragToReorder[ColumnPlus] =
+        new DragToReorder(setNewOrder, c => $.props.map(renderFn(_, c)))
 
-      content =>
-        $.props map[VdomElement] { p =>
-          val name = p.colName
+      def render(p: Props): VdomElement =
+        columnDND.Component(p.cols.whole)
+    }
 
-          val selectionCell =
-            <.th(
-              *.selectionRowHeader,
-              ^.onKeyDown ==> selColKeyDown,
-              p.selection.total.checkboxAndOnClick)
-
-          val cols =
-            content.items.toVdomArray { i =>
-              val c = i.data
-              val live = c match {
-                case Column.DeletionReason => Live // Don't render this title with strike-through
-                case _                     => c.live
-              }
-              <.th(
-                *.columnHeader(live, i.status),
-                i.mod,
-                ^.tabIndex   := -1,
-                ^.onKeyDown ==> dataColKeyDown(c),
-                ^.onClick   --> p.clickSort(c),
-                name(c))
-            }
-
-          <.thead(
-            content.rootMod,
-            <.tr(
-              selectionCell,
-              cols))
-      })
-
-    def render(p: HeaderProps) =
-      columnDND.Component(p.cols.whole)
+    val Component = ScalaComponent.builder[Props]("Header")
+      .renderBackend[Backend]
+      .configure(shouldComponentUpdate)
+      .build
   }
 
-  // ===================================================================================================================
-  // Rows
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  object ForRowReq {
-    case class RowProps(row        : ReqRow,
-                        crs        : NonEmptyVector[ColumnRenderer],
-                        editor     : EditorFeature.ReadWrite.ForReq,
-                        asyncState : AsyncFeature.Read.D1[Option[Column], String],
-                        selection  : RowSelectionVisible)
+  private sealed abstract class RowTemplate[
+        _RowData   <: Row     : Reusability,
+        FK         <: FieldKey,
+        _ViewInput            : Reusability,
+      ](displayName: String) {
 
-    val RowComponent =
-      ScalaComponent.builder[RowProps]("Row")
-        .render_P(renderRow)
-        .build
+    protected val rowToColumnToEditorField: RowData => Column => Option[FK]
 
-    def renderRow(p: RowProps): VdomTagOf[dom.html.TableRow] = {
-      val row = p.row
+    protected def reusabilityRowEditor: Reusability[RowEditor]
 
-      val rowStatus: CellStatus =
-        if (row.live is Dead) CellStatus.DeadRow else CellStatus.Normal
+    protected def viewMaker(row: RowData, vi: ViewInput): Column => Reusable[TagMod]
+
+    // ↑ abstract
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ↓ concrete
+
+    final type RowData   = _RowData
+    final type ViewInput = _ViewInput
+    final type RowEditor = EditorFeature.ReadWrite.ForFields[FK]
+
+    case class Props(row          : RowData,
+                     viewInput    : ViewInput,
+                     editor       : RowEditor,
+                     cols         : NonEmptyVector[ColumnPlus],
+                     applicability: Applicability[Column, Row],
+                     rowAsync     : AsyncFeature.Read.D0[String],
+                     selection    : Selection.OneUI[Row.SourceId]) {
+      @inline def render = Component.withKey(row.id.key)(this)
+    }
+
+    implicit final val reusabilityProps: Reusability[Props] = {
+      implicit val a = reusabilityRowEditor
+      Reusability.caseClass
+    }
+
+    protected final val reusabilityView: Reusability[(RowData, ViewInput, Column)] =
+      implicitly
+
+    private val rowBase = <.tr
+    private val selBase = <.td(*.selectionColumnBody)
+
+    final def render(p: Props): VdomElement = {
+      val row         = p.row
+      val sel         = p.selection
+      val rowSelected = sel.get
+      val cellStateFn = CellState(rowSelected)
 
       def selCellKeyDown(e: ReactKeyboardEventFromHtml): Callback =
         focusKeyHandlers(e)
 
-      val td = <.td(*.cell(rowStatus))
+      val mkViewWhenApplicable: Column => Reusable[TagMod] =
+        viewMaker(row, p.viewInput)
 
-      def renderRowNormal = {
-        val sel = p.selection(row.sourceId)
+      def mkProps(c: Column, ok: Reusable[TagMod] => Cell.Props): Cell.Props =
+        p.applicability(row, c) match {
+          case Applicable    => ok(mkViewWhenApplicable(c))
+          case NotApplicable => Cell.Props.`n/a`(rowSelected)
+        }
 
-        def selCell =
-          td(
+      def mkColumnCells(columnEditor: Column => EditorFeature.ReadWrite.ForEditor[Any]): VdomArray =
+        p.cols.whole.toVdomArray { colPlus =>
+          val col    = colPlus.column
+          def editor = columnEditor(col)
+          val cs     = cellStateFn(row.live & colPlus.live)
+          val cp     = mkProps(col, Cell.Props(cs, editor, _))
+          Cell.Component.withKey(col.key)(cp)
+        }
+
+      def renderNormal = {
+        val selCell =
+          selBase(
             ^.onKeyDown ==> selCellKeyDown,
             sel.onClick,
             sel.checkbox(^.tabIndex := -1))
 
-        def colCells =
-          p.crs.iterator.map { cr =>
-            val col = cr.column
-            val cell = EditorFeature.FieldKey.filterForReq(Column.editorFieldIntersection.getOption(col))
-            val cp = CellProps(row, cr, p.editor(cell))
-            CellComponent.withKey(col.key)(cp)
-          }.toVdomArray
+        val columnToEditorField = rowToColumnToEditorField(p.row)
 
-        <.tr(selCell, colCells)
+        val colCells = mkColumnCells(col => p.editor.optional(columnToEditorField(col)))
+
+        rowBase(selCell, colCells)
       }
 
-      def renderRowLocked = {
-        def colCells =
-          p.crs.iterator.map { cr =>
-            val col = cr.column
-            val cp = CellProps(row, cr, EditorFeature.ReadWrite.ForCell.doNothing)
-            CellComponent.withKey(col.key)(cp)
-          }.toVdomArray
-
-        <.tr(td(renderLocked), colCells)
+      def renderLocked = {
+        val colCells = mkColumnCells(_ => EditorFeature.ReadWrite.ForEditor.doNothing)
+        rowBase(selBase(EditTheme.spinner), colCells)
       }
 
-      import AsyncFeature.Status
-      p.asyncState(None) match {
-        case None                           => renderRowNormal
-        case Some(Status.InProgress)        => renderRowLocked
-        case Some(s: Status.Failed[String]) =>
+      p.rowAsync match {
+        case None                                        => renderNormal
+        case Some(AsyncFeature.Status.InProgress)        => renderLocked
+        case Some(s: AsyncFeature.Status.Failed[String]) =>
           // Currently, whole-row state is only used when a row is being deleted/restored.
           // To save dev-time, if the RPC fails an alert popups asking to retry/cancel, thus this part of the code
           // should only execute when the row is locked. Whole-row editing + failure won't occur.
           dom.console.warn(s.failure)
-          <.tr(
-            td(^.colSpan := (p.crs.length + 1),
+          rowBase(
+            <.td(^.colSpan := (p.cols.length + 1),
               <.div(
                 s.failure,
                 <.button("Retry", ^.onClick --> s.retry),
                 <.button("Abort", ^.onClick --> s.cancel))))
       }
     }
+
+    final val Component = ScalaComponent.builder[Props](displayName)
+      .render_P(render)
+      .configure(shouldComponentUpdate)
+      .build
   }
-  // TODO Copy-paste
-  object ForRowCodeGroup {
-    case class RowProps(row        : CodeGroupRow,
-                        crs        : NonEmptyVector[ColumnRenderer],
-                        editor     : EditorFeature.ReadWrite.ForCodeGroup,
-                        selection  : RowSelectionVisible)
 
-    val RowComponent =
-      ScalaComponent.builder[RowProps]("Row")
-        .render_P(renderRow)
-        .build
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    def renderRow(p: RowProps): VdomTagOf[dom.html.TableRow] = {
-      val row = p.row
+  private object ReqRow extends RowTemplate[
+      Row.ForReq,
+      FieldKey.ForSomeReq,
+      (ReqTypes, ProjectWidgets, ProjectWidgets#PubidFormat),
+    ]("ReqRow") {
 
-      val rowStatus: CellStatus =
-        if (row.live is Dead) CellStatus.DeadRow else CellStatus.Normal
-
-      def selCellKeyDown(e: ReactKeyboardEventFromHtml): Callback =
-        focusKeyHandlers(e)
-
-      val td = <.td(*.cell(rowStatus))
-
-      def renderRowNormal = {
-        val sel = p.selection(row.sourceId)
-
-        def selCell =
-          td(
-            ^.onKeyDown ==> selCellKeyDown,
-            sel.onClick,
-            sel.checkbox(^.tabIndex := -1))
-
-        def colCells =
-          p.crs.iterator.map { cr =>
-            val col = cr.column
-            val cell = EditorFeature.FieldKey.filterForCodeGroup(Column.editorFieldIntersection.getOption(col))
-            val cp = CellProps(row, cr, p.editor(cell))
-            CellComponent.withKey(col.key)(cp)
-          }.toVdomArray
-
-        <.tr(selCell, colCells)
+    override protected val rowToColumnToEditorField =
+      _.req.id match {
+        case _: GenericReqId => Column.editorFieldGR.getOption
+        case _: UseCaseId    => Column.editorFieldUC.getOption
       }
 
-      renderRowNormal
+    override protected def reusabilityRowEditor = implicitly
+
+    override protected def viewMaker(row: RowData, vi: ViewInput): Column => Reusable[TagMod] = {
+      val (reqTypes, pw, pubidFmt) = vi
+
+      val viewReq = ViewReq.Data(
+        row.req,
+        row.exp.reqCodes,
+        row.mv.tags,
+        row.exp.cfTags.getOrElse(_, Vector.empty),
+        row.exp.implications.apply,
+        row.exp.cfImps.getOrElse(_, Vector.empty),
+        Vector.empty, // pastPubids unused
+        reqTypes)
+        .apply(pw)
+
+      def renderCodes: VdomElement =
+        if (row.exp.reqCodeTree.nonEmpty)
+          pw.reqCodeTree(row.exp.reqCodeTree)
+        else
+          viewReq.codes
+
+      val view: Column => TagMod = {
+        case Column.CustomField(id)   => viewReq.customField(id)
+        case Column.Title             => viewReq.title
+        case Column.ReqType           => viewReq.reqType
+        case Column.Tags              => viewReq.tags
+        case Column.Implications(dir) => viewReq.imps(dir)
+        case Column.Code              => renderCodes
+        case Column.Pubid             => pubidFmt(row.req)
+        case Column.DeletionReason    => viewReq.deletionReason getOrElse `n/a`
+      }
+      c => Reusable.explicitly((row, vi, c))(reusabilityView).map(_ => view(c))
     }
   }
 
-  // ===================================================================================================================
-  // Cells
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  sealed abstract class CellStatus
-  object CellStatus {
-    case object Normal  extends CellStatus
-    case object DeadRow extends CellStatus
-    case object `N/A`   extends CellStatus
-    implicit def univEq: UnivEq[CellStatus] = UnivEq.derive
-    val domain = Domain.ofValues[CellStatus](Normal, DeadRow, `N/A`)
+  private object CodeGroupRow extends RowTemplate[
+      Row.ForCodeGroup,
+      FieldKey.ForCodeGroup,
+      ProjectWidgets,
+    ]("CodeGroupRow") {
+
+    override protected val rowToColumnToEditorField =
+      _ => Column.editorFieldCG.getOption
+
+    override protected def reusabilityRowEditor = implicitly
+
+    override protected def viewMaker(row: RowData, vi: ViewInput): Column => Reusable[TagMod] = {
+      val pw = vi
+
+      def ret(c: Column, view: => TagMod): Reusable[TagMod] =
+        Reusable.explicitly((row, vi, c))(reusabilityView).map(_ => view)
+
+      def renderCodes: TagMod =
+        row match {
+          case Row.ForCodeGroup(_, _, Some(t)) => pw.reqCodeTreeItem(t)
+          case Row.ForCodeGroup(_, c, None)    => pw.reqCode(c)
+        }
+
+      {
+        case _: Column.CustomField
+           | _: Column.Implications
+           | Column.ReqType
+           | Column.Tags
+           | Column.Pubid
+           | Column.DeletionReason  => reusableNA
+        case c@ Column.Title        => ret(c, pw.codeGroupTitle(row.group))
+        case c@ Column.Code         => ret(c, renderCodes)
+      }
+    }
   }
 
-  case class CellProps(row   : Row,
-                       cr    : ColumnRenderer,
-                       editor: EditorFeature.ReadWrite.ForCell) {
-    def column = cr.column
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-    def renderEditor(view: => TagMod): TagMod =
-      editor.renderOr(TagMod(EditTheme.editableInline(editor.startEdit), view))
-  }
+  private object Cell {
 
-  implicit val cellPropReuse = Reusability.never[CellProps] // TODO caseClass[CellProps]
+    final case class Props(cellState: CellState,
+                           editor   : EditorFeature.ReadWrite.ForEditor[Any],
+                           view     : Reusable[TagMod])
 
-  val CellComponent =
-    ScalaComponent.builder[CellProps]("Cell")
-      .renderBackend[CellBackend]
-      .configure(shouldComponentUpdate)
-      .build
+    object Props {
+      implicit val reusability: Reusability[Props] = {
+        implicit val cs: Reusability[CellState] = Reusability.byRef
+        Reusability.caseClass
+      }
 
-  private val cellBase = <.td(^.tabIndex := -1)
+      val `n/a`: On => Props =
+        On.memo(on =>
+          Props(
+            CellState(on)(Dead),
+            EditorFeature.ReadWrite.ForEditor.doNothing,
+            reusableNA))
+    }
 
-  final class CellBackend($: BackendScope[CellProps, Unit]) {
+    val cellBase = <.td(^.tabIndex := -1)
+
+    type $ = ScalaComponent.Lifecycle.RenderScope[Props, Unit, Unit]
     type N = dom.html.TableDataCell
 
-    def domNode = CallbackTo($.getDOMNode.asInstanceOf[N])
+    // def domNode = CallbackTo($.getDOMNode.asInstanceOf[N])
 
     /**
      * When a Button in the cell is clicked, we still get the event here in which case, the focus is set after the
@@ -318,62 +458,71 @@ object Table {
       e.target == e.currentTarget ||
         (try e.target.tabIndex < 0 catch { case _: Throwable => false }) // .tabIndex is undefined from tests
 
-    def onKeyDown(e: ReactKeyboardEventFromHtml): Callback =
-      CallbackOption.require(doesEventTargetCell(e)) >> (
+    def onKeyDown(editor: EditorFeature.ReadWrite.ForEditor[Any]): ReactKeyboardEventFromHtml => Callback =
+      e => CallbackOption.require(doesEventTargetCell(e)) >> (
         focusKeyHandlers(e) | keyCodeSwitch(e) {
-          case KeyCode.F2 => $.props.flatMap(_.editor.startEdit getOrElse Callback.empty)
+          case KeyCode.F2 => editor.startEdit getOrElse Callback.empty
         }
       )
 
-    def render(p: CellProps) = {
-      val view = p.cr.view(p.row)
-
-      val status: CellStatus =
-        view match {
-          case ColumnRenderer.`N/A` => CellStatus.`N/A`
-          case _: ColumnRenderer.Render => p.row.live match {
-            case Live => CellStatus.Normal
-            case Dead => CellStatus.DeadRow
-          }
-        }
-
+    def render($: $, p: Props): VdomElement =
       cellBase(
-        *.cell(status),
-        ^.onKeyDown ==> onKeyDown,
-        p.renderEditor(view.render))
-    }
+        *.dataCell(p.cellState),
+        ^.onKeyDown ==> onKeyDown($.props.editor),
+        p.editor.themedRenderOr(p.view))
+
+    val Component = ScalaComponent.builder[Props]("Cell")
+      .renderP(render)
+      .configure(shouldComponentUpdate)
+      .build
   }
 
-  // ===================================================================================================================
-  // Shared fns
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  def moveFocus(cur: dom.html.Element, ↔ : Movement = Movement.None, ↕ : Movement = Movement.None): Callback =
-    Callback {
-      val cell: dom.html.Element =
-        if ("INPUT" == cur.tagName) // Selection checkbox
-          cur.parentElement
-        else
-          cur
-      val z = TableCellZipper(cell) move_- ↔ move_| ↕
-      val f: dom.html.Element =
-        if (z.colIndex == 0)
-          z.focus.children(0).domAsHtml // Selection checkbox
-        else
-          z.focus
-      f.focus()
-    }
+  object Shared {
 
-  def focusKeyHandlers(e: ReactKeyboardEventFromHtml): CallbackOption[Unit] =
-    keyCodeSwitch(e) {
-      case KeyCode.Up       => moveFocus(e.currentTarget, ↕ = Movement.Prev)
-      case KeyCode.Down     => moveFocus(e.currentTarget, ↕ = Movement.Next)
-      case KeyCode.Left     => moveFocus(e.currentTarget, ↔ = Movement.Prev)
-      case KeyCode.Right    => moveFocus(e.currentTarget, ↔ = Movement.Next)
-      case KeyCode.Home     => moveFocus(e.currentTarget, ↔ = Movement.Head)
-      case KeyCode.End      => moveFocus(e.currentTarget, ↔ = Movement.Last)
-      case KeyCode.Escape   => Callback(e.target.blur())
-    } | keyCodeSwitch(e, ctrlKey = true) {
-      case KeyCode.Home     => moveFocus(e.currentTarget, Movement.Head, Movement.Head)
-      case KeyCode.End      => moveFocus(e.currentTarget, Movement.Last, Movement.Last)
-    }
+    type CellState = (Live, On)
+
+    val CellState: On => Live => CellState =
+      On.memo(on => Live.memo((_, on)))
+
+    implicit val reusabilityApplicability: Reusability[Applicability[Column, Row]] =
+      Reusability.byRef
+
+    val `n/a`: VdomTag =
+      <.span(*.`N/A`, "–")
+
+    val reusableNA: Reusable[TagMod] =
+      Reusable.byRef(`n/a`)
+
+    def moveFocus(cur: dom.html.Element, ↔ : Movement = Movement.None, ↕ : Movement = Movement.None): Callback =
+      Callback {
+        val cell: dom.html.Element =
+          if ("INPUT" == cur.tagName) // Selection checkbox
+            cur.parentElement
+          else
+            cur
+        val z = TableCellZipper(cell) move_- ↔ move_| ↕
+        val f: dom.html.Element =
+          if (z.colIndex == 0)
+            z.focus.children(0).domAsHtml // Selection checkbox
+          else
+            z.focus
+        f.focus()
+      }
+
+    def focusKeyHandlers(e: ReactKeyboardEventFromHtml): CallbackOption[Unit] =
+      keyCodeSwitch(e) {
+        case KeyCode.Up     => moveFocus(e.currentTarget, ↕ = Movement.Prev)
+        case KeyCode.Down   => moveFocus(e.currentTarget, ↕ = Movement.Next)
+        case KeyCode.Left   => moveFocus(e.currentTarget, ↔ = Movement.Prev)
+        case KeyCode.Right  => moveFocus(e.currentTarget, ↔ = Movement.Next)
+        case KeyCode.Home   => moveFocus(e.currentTarget, ↔ = Movement.Head)
+        case KeyCode.End    => moveFocus(e.currentTarget, ↔ = Movement.Last)
+        case KeyCode.Escape => Callback(e.target.blur())
+      } | keyCodeSwitch(e, ctrlKey = true) {
+        case KeyCode.Home   => moveFocus(e.currentTarget, Movement.Head, Movement.Head)
+        case KeyCode.End    => moveFocus(e.currentTarget, Movement.Last, Movement.Last)
+      }
+  }
 }

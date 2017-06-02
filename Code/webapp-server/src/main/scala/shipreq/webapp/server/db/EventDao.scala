@@ -18,7 +18,7 @@ object EventDbCodecs {
   import upickle.BaseCodecs.StringRW
   import shipreq.webapp.base.data._
   import shipreq.webapp.base.protocol.MPickleMacros._
-  import shipreq.webapp.base.text.AtomTC
+  import shipreq.webapp.base.text.{AtomTC, Text}
   import shipreq.webapp.base.util.GenericDataMacros._
   import EventDbMacros._
 
@@ -128,7 +128,7 @@ object EventDbCodecs {
   def pickleNonEmpty[N, E](f: N => E)(implicit rw: ReadWriter[E], proof: NonEmpty.Proof[E, N]): ReadWriter[N] =
     ReadWriter.xmapf(f)(NonEmpty require_! _)
 
-  def pickleNonEmptyA[A](implicit rw: ReadWriter[A], proof: NonEmpty.ProofA[A]): ReadWriter[NonEmpty[A]] =
+  def pickleNonEmptyMono[A](implicit rw: ReadWriter[A], proof: NonEmpty.ProofMono[A]): ReadWriter[NonEmpty[A]] =
     pickleNonEmpty(_.value)
 
   def pickleNEV[A](implicit rw: ReadWriter[Vector[A]]): ReadWriter[NonEmptyVector[A]] =
@@ -139,8 +139,11 @@ object EventDbCodecs {
 
   def pickleNESD[A: UnivEq](implicit rw: ReadWriter[A]): ReadWriter[SetDiff.NE[A]] = {
     implicit val sd = setDiff[A]
-    pickleNonEmptyA
+    pickleNonEmptyMono
   }
+
+  def pickleMap[K: ReadWriter: UnivEq, V: ReadWriter]: ReadWriter[Map[K, V]] =
+    ReadWriter.merge(StdlibCodecs.All.MapR, StdlibCodecs.All.MapW)
 
   implicit val pickleLive          = boolCase(Live)
   implicit val pickleImplRequired  = boolCase(ImplicationRequired)
@@ -384,6 +387,12 @@ object EventDbCodecs {
   implicit val pickleApplicableTagIdNES: ReadWriter[NonEmptySet[ApplicableTagId]] =
     pickleApplicableTagId.nesNice
 
+  implicit val pickleNonEmptyCustomTextMap: ReadWriter[Event.NonEmptyCustomTextMap] = {
+    type M = Map[CustomField.Text.Id, Text.CustomTextField.NonEmptyText]
+    implicit val m: ReadWriter[M] = pickleMap
+    pickleNonEmptyMono[M]
+  }
+
   /**
    * Serialises into an object of {"codeₙ":idₙ}.
    *
@@ -457,11 +466,12 @@ object EventDbCodecs {
     implicit val x = pickleReqCodeIdAndValueNES
     // Using "T" for reqtype
     gdMPickler(GenericReqGD, false) {
-      case GenericReqGD.Title    => "t"
-      case GenericReqGD.ReqCodes => "c"
-      case GenericReqGD.Tags     => "#"
-      case GenericReqGD.ImpSrcs  => ">"
-      case GenericReqGD.ImpTgts  => "<"
+      case GenericReqGD.Codes      => "c"
+      case GenericReqGD.CustomText => "x"
+      case GenericReqGD.ImpSrcs    => ">"
+      case GenericReqGD.ImpTgts    => "<"
+      case GenericReqGD.Tags       => "#"
+      case GenericReqGD.Title      => "t"
     }
   } values
 
@@ -469,11 +479,12 @@ object EventDbCodecs {
     implicit val x = pickleReqCodeIdAndValueNES
     // Using "s" for stepId
     gdMPickler(UseCaseGD, false) {
-      case UseCaseGD.Title    => "t"
-      case UseCaseGD.ReqCodes => "c"
-      case UseCaseGD.Tags     => "#"
-      case UseCaseGD.ImpSrcs  => ">"
-      case UseCaseGD.ImpTgts  => "<"
+      case UseCaseGD.Codes      => "c"
+      case UseCaseGD.CustomText => "x"
+      case UseCaseGD.ImpSrcs    => ">"
+      case UseCaseGD.ImpTgts    => "<"
+      case UseCaseGD.Tags       => "#"
+      case UseCaseGD.Title      => "t"
     }
   } values
 

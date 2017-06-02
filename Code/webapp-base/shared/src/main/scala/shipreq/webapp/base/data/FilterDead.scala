@@ -19,9 +19,9 @@ sealed abstract class FilterDead(val filterFn: Option[Live => Boolean]) extends 
   final def filterFnBy[A](f: A => Live): A => Boolean =
     filterFn.fold((_: A) => true)(_ compose f)
 
-  def ldStatAccessor[A]: LDStat[A] => A
+  def ldStatAccessor[A]: LiveDeadStat[A] => A
 
-  final def ldStatsAccessor[K, A](stats: LDStats[K, A]): K => A = {
+  final def ldStatsAccessor[K, A](stats: LiveDeadStatMap[K, A]): K => A = {
     val get = ldStatAccessor[A]
     k => get(stats(k))
   }

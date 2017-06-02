@@ -3,8 +3,9 @@ package shipreq.webapp.base.data
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.macros.Lenses
-import scalaz.{\/, -\/, \/-, Equal}
+import scalaz.{-\/, Equal, \/, \/-}
 import scalaz.std.option.toRight
+import shipreq.base.util.Applicable
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.util.Must._
 import DataImplicits._
@@ -27,6 +28,12 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
                                reqTypes        : ReqTypes,
                                fields          : FieldSet,
                                tags            : TagTree) {
+
+  val applicability: Applicability.Default =
+    Applicability(fields.get(_) match {
+      case Some(f) => f.applicable
+      case None    => Applicable.never
+    })
 
   def atagValidate(id: ApplicableTagId): Option[String] =
     tags.get(id) match {

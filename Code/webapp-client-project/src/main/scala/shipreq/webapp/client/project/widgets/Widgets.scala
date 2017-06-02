@@ -1,16 +1,17 @@
 package shipreq.webapp.client.project.widgets
 
-import japgolly.scalajs.react._, vdom.html_<^._
+import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom.html
 import shipreq.webapp.client.base.data.On
 
 object Widgets {
 
-  val checkbox: On => VdomTag =
+  val checkbox: On => VdomTagOf[html.Input] =
     On.memo(on =>
       <.input.checkbox(
         ^.checked := (on is On)))
 
-  val checkboxAlwaysOn =
-    checkbox(On)(^.readOnly := true, ^.disabled := true)
+  val checkboxReadOnly: On => VdomTagOf[html.Input] =
+    On.memo(checkbox(_)(^.readOnly := true, ^.disabled := true))
 
 }

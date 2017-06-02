@@ -19,7 +19,7 @@ object RandomReqTableData {
     for {
       long ← Gen.long
       all  = Column all p.config
-      cols ← Gen shuffle all.whole
+      cols ← Gen shuffle all.whole.toVector
     } yield {
       var i = long
       val vs = cols.filter(c =>
@@ -74,7 +74,7 @@ object RandomReqTableData {
   }
 
   def customFieldColumn: Gen[Column.CustomField] =
-    Gen.apply2(Column.CustomField)(RandomData.customFieldId, RandomData.live)
+    RandomData.customFieldId.map(Column.CustomField)
 
   def sortCriI(colI: Column.SortInconclusive): Gen[SortCriterion.Inconclusive] =
     Gen.chooseNE(SortCriterion possibilitiesI colI)
@@ -88,14 +88,13 @@ object RandomReqTableData {
   val noFilter: Gen[Option[ValidFilter]] =
     Gen pure None
 
-  def viewSettings(p: Project, allowFilter: Boolean): Gen[ViewSettings] =
+  def tableSettings(p: Project, allowFilter: Boolean): Gen[TableSettings] =
     for {
       cs     ← visibleColumns(p)
       icols  = cs.iterator.filterSubType[Column.SortInconclusive].toVector
       scis   ← Gen.subset(icols).shuffle flatMap sortCriIs
       order  ← sortCriteria(scis)
       filter ← if (allowFilter) RandomData.filter.valid.forProject(p).option else noFilter
-      fd     ← filterDead
-    } yield ViewSettings(cs, order, filter, fd)
+    } yield TableSettings(cs, order, filter)
 
 }

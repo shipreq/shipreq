@@ -7,6 +7,7 @@ import scala.annotation.tailrec
 import scala.collection.Traversable
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
+import scalaz.std.anyVal.intInstance
 import scalaz.std.option.optionInstance
 import scalaz.syntax.equal._
 import scalaz.syntax.semigroup._
@@ -56,7 +57,7 @@ private[reqtable] object Logic {
   private type Expander[A] = (() => Set[A]) => Expanded[A]
 
   private final val emptyExpansions: NonEmptyVector[Expansion] =
-    NonEmptyVector.one(Expansion.none)
+    NonEmptyVector.one(Expansion.empty)
 
   @inline private def emptyExpanded[A]: Expanded[A] =
     NonEmptyVector.one(Vector.empty)
@@ -95,40 +96,40 @@ private[reqtable] object Logic {
       _ => emptyExpanded
   }
 
-  private def expanderC[A](vs: ViewSettings, c: Column.SortInconclusive): Expander[A] =
-    expander(vs isVisible c, vs isOrderedI c)
+  private def expanderC[A](ts: TableSettings, c: Column.SortInconclusive): Expander[A] =
+    expander(ts isVisible c, ts isOrderedI c)
 
   private def impColValueFn(p: Project, fd: FilterDead): CustomField.Implication.Id => ReqId => Set[Pubid] = {
     val filter = DataLogic.impValueFilter(p.config, fd)
     DataLogic.customFieldImps(p, filter)
   }
 
-  private def impColValueExpander(vs: ViewSettings,
+  private def impColValueExpander(ts: TableSettings,
+                                  fd: FilterDead,
                                   p : Project,
-                                  ap: Column => Applicability): Req => Map[CustomField.Implication.Id, Expanded[Pubid]] =
-    customFieldExpander(vs, ap, impColValueFn(p, vs.filterDead))
+                                  ap: Applicability[Column, ReqTypeId]): Req => Map[CustomField.Implication.Id, Expanded[Pubid]] =
+    customFieldExpander(ts, ap, impColValueFn(p, fd))
 
-  private def tagFieldValueExpander(vs          : ViewSettings,
-                                    ap          : Column => Applicability,
+  private def tagFieldValueExpander(ts          : TableSettings,
+                                    ap          : Applicability[Column, ReqTypeId],
                                     tagFieldDist: TagFieldDistribution.TagIds,
                                     tagLookup   : TagLookup): Req => Map[CustomField.Tag.Id, Expanded[ApplicableTagId]] =
-    customFieldExpander(vs, ap, fid => DataLogic.customFieldTags(tagFieldDist, tagLookup, fid))
+    customFieldExpander(ts, ap, fid => DataLogic.customFieldTags(tagFieldDist, tagLookup, fid))
 
   private def customFieldExpander[K <: CustomFieldId : ClassTag, V: UnivEq]
-      (vs: ViewSettings,
-       ap: Column => Applicability,
+      (vs: TableSettings,
+       ap: Applicability[Column, ReqTypeId],
        f : K => ReqId => Set[V]): Req => Map[K, Expanded[V]] = {
 
-    val cols = vs.columns.whole.collect { case c@ Column.CustomField(id: K, _) => (id, c) }
+    val cols = vs.columns.whole.collect { case c@ Column.CustomField(id: K) => (id, c) }
 
     val expandersPerCol = cols.map { ct =>
         val colId    = ct._1
         val col      = ct._2
-        val applic   = ap(col)
         val expander = expanderC[V](vs, col)
         val dataFn   = f(colId)
         val fn       = (r: Req) => expander(() =>
-          applic(r) match {
+          ap(r.reqTypeId, col) match {
             case Applicable    => dataFn(r.id)
             case NotApplicable => UnivEq.emptySet[V]
           })
@@ -152,7 +153,7 @@ private[reqtable] object Logic {
     go(src.keys.toVector, Map.empty, Vector.empty)
   }
 
-  private def expansions(imps   : Direction => Expanded[Pubid],
+  private def expansions(imps   : Direction.Values[Expanded[Pubid]],
                          codes  : Expanded[ReqCode.Value],
                          cfImps : Map[CustomField.Implication.Id, Expanded[Pubid]],
                          cfTags : Map[CustomField.Tag.Id,         Expanded[ApplicableTagId]]): NonEmptyVector[Expansion] =
@@ -169,7 +170,13 @@ private[reqtable] object Logic {
         c <- codes
         d <- expandMapValues(cfImps)
         e <- expandMapValues(cfTags)
-      } yield Expansion(a, b, c, Vector.empty[ReqCodeTreeItem], d, e)
+      } yield {
+        val imps2 = Direction.Values {
+          case Backwards => a
+          case Forwards  => b
+        }
+        Expansion(imps2, c, Vector.empty[ReqCodeTreeItem], d, e)
+      }
 
   // ===================================================================================================================
   // MultiValues
@@ -187,11 +194,16 @@ private[reqtable] object Logic {
   // Gathering
 
   /**
-   * Gathers [[Row]]s for display in [[ReqTable]].
+   * Gathers [[Row]]s for display in [[Table]].
    * Performs expansion.
    * Does not perform any sorting.
    */
-  def gather(vs: ViewSettings, p: Project, pt: PlainText.ForProject, ts: TextSearch): Vector[Row] = {
+  def gather[C[_]](p : Project,
+                   s : TableSettings,
+                   fd: FilterDead,
+                   pt: PlainText.ForProject,
+                   ts: TextSearch)
+                  (implicit cbf: CanBuildFrom[Nothing, Row, C[Row]]): C[Row] = {
 
     // NOTES:
     //
@@ -200,17 +212,17 @@ private[reqtable] object Logic {
     //
     // * The Tags column is not expanded. Only custom tag columns are.
 
-    val filterDeadReq = vs.filterDead.filterFnBy[Req](_ live p.config.reqTypes)
-    val filterDeadRCG = vs.filterDead.filterFnBy[CodeGroup](_.live)
+    val filterDeadReq = fd.filterFnBy[Req](_ live p.config.reqTypes)
+    val filterDeadRCG = fd.filterFnBy[CodeGroup](_.live)
     val filterDead    = Filters(filterDeadReq, filterDeadRCG)
-    val tagFieldDist  = DataLogic.tagFieldDist(p.config, vs.filterDead, vs isVisible Column.CustomField(_, Dead))
-    val tagLookup     = DataLogic.tagLookup(p, vs.filterDead)
-    val issueLookup   = this.issueLookup(p, vs.filterDead)
-    val applicability = Column.applicability(p.config)
-    val expandImps    = Direction.memo(dir => expanderC[Pubid](vs, Column.Implications(dir)))
-    val expandCodes   = expanderC[ReqCode.Value](vs, Column.Code)
-    val expandImpCols = impColValueExpander(vs, p, applicability)
-    val expandTagCols = tagFieldValueExpander(vs, applicability, tagFieldDist, tagLookup)
+    val tagFieldDist  = DataLogic.tagFieldDist(p.config, fd, s isVisible Column.CustomField(_))
+    val tagLookup     = DataLogic.tagLookup(p, fd)
+    val issueLookup   = this.issueLookup(p, fd)
+    val applicability = Column.applicabilityForReq(p.config.applicability)
+    val expandImps    = Direction.memo(dir => expanderC[Pubid](s, Column.Implications(dir)))
+    val expandCodes   = expanderC[ReqCode.Value](s, Column.Code)
+    val expandImpCols = impColValueExpander(s, fd, p, applicability)
+    val expandTagCols = tagFieldValueExpander(s, applicability, tagFieldDist, tagLookup)
 
     // The segregation of live/dead is because live reqs can have inactive reqcodes (leftovers of CodeRefs).
     // It would be erroneous to display inactive reqs for a live req.
@@ -237,7 +249,7 @@ private[reqtable] object Logic {
       s.foldLeft(UnivEq.emptySet[Pubid])((q, id) =>
         pubid(id).fold(q)(q + _))
 
-    val opOpFilter = vs.filter.map(filter(_, p, pt, ts, issueLookup, tagLookup))
+    val opOpFilter = s.filter.map(filter(_, p, pt, ts, issueLookup, tagLookup))
 
     /**
      * Full = the cumulative result off all factors that would contribute to potentially filter content.
@@ -255,12 +267,12 @@ private[reqtable] object Logic {
     def filterExprUsed = opOpFilter.exists(_.isDefined)
 
     /** When a filter expression is present, we still want to show relevant CodeGroups of visible rows. */
-    val restoreFilteredRCGs = vs.viewCodeGroups && filterExprUsed
+    val restoreFilteredRCGs = s.viewCodeGroups && filterExprUsed
 
     // Create rows
-    fullFilter.fold(Vector.empty[Row]) { filter =>
-      var output           = Vector.empty[Row]
-      val restorableRCGs   = DataLog.list[CodeGroupRow].disableUnless(restoreFilteredRCGs)
+    val output = cbf()
+    fullFilter.foreach { filter =>
+      val restorableRCGs   = DataLog.list[Row.ForCodeGroup].disableUnless(restoreFilteredRCGs)
       val codesSeen        = DataLog.mtrie[ReqCode.Node].disableUnless(restoreFilteredRCGs)
       val seeExpandedCodes = codesSeen.addFn[Expanded[ReqCode.Value]](add => _.foreach(_ foreach add))
 
@@ -271,7 +283,7 @@ private[reqtable] object Logic {
           val live = r live p.config.reqTypes
 
           // Expansion
-          val imps    = Direction.memo(dir => expandImps(dir)(() => pImplications(dir)(id) |> pubids))
+          val imps    = Direction.Values(dir => expandImps(dir)(() => pImplications(dir)(id) |> pubids))
           val codes   = expandCodes  (() => reqCodesByReq(live)(id))
           val cfImps  = expandImpCols(r)
           val cfTags  = expandTagCols(r)
@@ -280,19 +292,19 @@ private[reqtable] object Logic {
           // Build
           val mv = multiValuesFn(id)
           exps.foreachWithIndex((exp, i) =>
-            output :+= ReqRow(r, live, exp, mv, i))
+            output += Row.ForReq(r, live, exp, mv, i))
 
           seeExpandedCodes(codes)
         }
 
       // Add CodeGroups
-      if (vs.viewCodeGroups)
+      if (s.viewCodeGroups)
         for (g <- p.reqCodes.groups) {
           val code = p.reqCodes reqCode g.id
-          val row = CodeGroupRow(g, code, None)
+          val row = Row.ForCodeGroup(g, code, None)
           if (filter fb g) {
             codesSeen.add(row.reqCode)
-            output :+= row
+            output += row
           } else
             if (filterDeadRCG(g))
               restorableRCGs.add(row)
@@ -303,11 +315,10 @@ private[reqtable] object Logic {
         val visTrie = codesSeen.get()
         for (row <- restorableRCGs.get())
           if (visTrie.dropPath(row.reqCode).nonEmpty)
-            output :+= row
+            output += row
       }
-
-      output
     }
+    output.result()
   }
 
   // ===================================================================================================================
@@ -315,7 +326,7 @@ private[reqtable] object Logic {
 
   type Filters = FilterFn.Pair[Req, CodeGroup]
 
-  @inline def Filters(req         : Req          => Boolean = FilterFn.`n/a`,
+  @inline def Filters(req      : Req       => Boolean = FilterFn.`n/a`,
                       codeGroup: CodeGroup => Boolean = FilterFn.`n/a`): Filters =
     FilterFn.Pair(req, codeGroup)
 
@@ -405,57 +416,51 @@ private[reqtable] object Logic {
   // ===================================================================================================================
   // Sorting
 
-  def sort(vs: ViewSettings, p: Project, pt: PlainText.ForProject)(rows: Vector[Row]): Stream[Row] = {
+  def sort(p: Project, ts: TableSettings, pt: PlainText.ForProject)(rows: Iterable[Row]): MutableArray[Row] = {
     import Sorter._
 
-    val sorter  = new FusedSorters(vs.order.init map inconclusive, vs.order.last |> conclusive)
+    val sorter  = new FusedSorters(ts.order.init map inconclusive, ts.order.last |> conclusive)
     val setup   = new Setup(p, pt)
     val prepare = sorter.prepFn(setup)
-    val rowMod  = Sorter.consolidateRowModFns(Sorter.sortUnspecified(vs) :: sorter.rowModFn :: Nil)
+    val rowMod  = Sorter.consolidateRowModFns(Sorter.sortUnspecified(ts) :: sorter.rowModFn :: Nil)
     val rowEndo = rowMod.map(_(setup, KeepDir)) getOrElse ((r: Row) => r)
 
     MutableArray.map(rows)(r => prepare(rowEndo(r)))
       .sort(sorter.sortFn.toOrdering)
       .map(sorter.row)
-      .to[Stream]
   }
 
   // ===================================================================================================================
   // Post-processing
 
-  def mergeAdjacent[A](input: Stream[A])(m: (A, A) => Option[A]): Stream[A] = {
-    @tailrec def go(seen: Stream[A], last: A, queue: Stream[A]): Stream[A] = {
-      @inline def res = seen append (last #:: Stream.empty)
-      if (queue.isEmpty)
-        res
-      else {
-        val h = queue.head
-        val t = queue.tail
-        m(last, h) match {
-          case None    => go(res, h, t)
-          case Some(a) => go(seen, a, t)
+  def mergeAdjacent[A, C[_]](input: Iterator[A])(merge: (A, A) => Option[A])
+                            (implicit cbf: CanBuildFrom[Nothing, A, C[A]]): C[A] = {
+
+    val results = cbf()
+    if (input.hasNext) {
+      @tailrec def go(prev: A): Unit = {
+        if (input.isEmpty)
+          results += prev
+        else {
+          val next = input.next()
+          merge(prev, next) match {
+            case None         => results += prev; go(next)
+            case Some(merged) => go(merged)
+          }
         }
       }
+      go(input.next())
     }
-
-    if (input.isEmpty)
-      input
-    else {
-      go(Stream.empty, input.head, input.tail)
-    }
+    results.result()
   }
 
-  def consolidateAdjacentDups(rows: Stream[Row]): Stream[Row] =
+  def consolidateAdjacentDups[C[_]](rows: Iterator[Row])(implicit cbf: CanBuildFrom[Nothing, Row, C[Row]]): C[Row] =
     mergeAdjacent(rows)((x, y) =>
       (x, y) match {
-        case (a: ReqRow, b: ReqRow) =>
-          if (a.req.id ==* b.req.id)
-            Some(ReqRow(a.req, a.live, a.exp |+| b.exp, a.mv |+| b.mv, a.instanceId)) // TODO resort
-          else
-            None
-        case (_: ReqRow,          _: CodeGroupRow)
-           | (_: CodeGroupRow, _: ReqRow)
-           | (_: CodeGroupRow, _: CodeGroupRow) => None
+        case (a: Row.ForReq, b: Row.ForReq) if a.req.id ==* b.req.id =>
+          Some(Row.ForReq(a.req, a.live, a.exp |+| b.exp, a.mv |+| b.mv, a.instanceId min b.instanceId)) // TODO resort
+        case _ =>
+          None
       }
     )
 
@@ -522,62 +527,59 @@ private[reqtable] object Logic {
     go(Vector.empty, cur)(prevI.indent, prevV)
   }
 
-  val addReqCodeTreeToRows: EndoFn[Stream[Row]] = rows =>
-    mkReqCodeTree[Row, Vector, Stream, Row](
+  val addReqCodeTreeToRows: EndoFn[Vector[Row]] = rows =>
+    mkReqCodeTree[Row, Vector, Vector, Row](
       rows,
       Row.reqCodes.get,
       (row, items) => Row.reqCodeTree.set(items)(row))
 
 
-  def stats(vs: ViewSettings, p: Project, rows: Iterable[Row]): TableStats = {
+  def stats(p: Project, rows: TraversableOnce[Row]): TableContentStats = {
 
     // Scan rows
-    var _codeGroups      = 0
-    var _counts          = UnivEq.emptyMap[ReqId, Int]
-    var _liveVisibleReqs = 0
-    var _deadVisibleReqs = 0
+    var codeGroups        = 0
+    var rowsByReq         = UnivEq.emptyMap[ReqId, Int]
+    val uniqueReqsInTable = LiveDeadStat.newBuilder[Int]
     rows foreach {
-      case _: CodeGroupRow =>
-        _codeGroups += 1
-      case r: ReqRow =>
+      case r: Row.ForReq =>
         val id = r.req.id
-        val c = _counts.getOrElse(id, 0)
+        val c = rowsByReq.getOrElse(id, 0)
+        rowsByReq = rowsByReq.updated(id, c + 1)
         if (c == 0)
-          r.live match {
-            case Live => _liveVisibleReqs += 1
-            case Dead => _deadVisibleReqs += 1
-          }
-        _counts = _counts.updated(id, c + 1)
+          uniqueReqsInTable.add(r.live, 1)
+      case _: Row.ForCodeGroup =>
+        codeGroups += 1
     }
 
     // Find expansions
-    var _expandedReqs  = 0
-    var _expansionRows = 0
-    for (c <- _counts.values if c > 1) {
-      _expandedReqs  += 1
-      _expansionRows += c
+    var expandedReqs  = 0
+    var expansionRows = 0
+    rowsByReq.valuesIterator.filter(_ > 1).foreach { c =>
+      expandedReqs  += 1
+      expansionRows += c
     }
 
-    val totalDead = p.deadReqCount
-    val totalLive = p.reqs.size - totalDead
+    val deadReqsInProject = p.deadReqCount
+    val liveReqsInProject = p.reqs.size - deadReqsInProject
 
-    TableStats(vs.filterDead,
-      liveVisibleReqs  = _liveVisibleReqs,
-      deadVisibleReqs  = _deadVisibleReqs,
-      liveFilteredReqs = totalLive - _liveVisibleReqs,
-      deadFilteredReqs = totalDead - _deadVisibleReqs,
-      expandedReqs     = _expandedReqs,
-      expansionRows    = _expansionRows,
-      codeGroups       = _codeGroups)
+    val reqsFilteredOut = LiveDeadStat(
+      live = liveReqsInProject - uniqueReqsInTable.live,
+      dead = deadReqsInProject - uniqueReqsInTable.dead)
+
+    TableContentStats(
+      uniqueReqsInTable = uniqueReqsInTable.result(),
+      reqsFilteredOut   = reqsFilteredOut,
+      expandedReqs      = expandedReqs,
+      expansionRows     = expansionRows,
+      codeGroups        = codeGroups)
   }
 
   // ===================================================================================================================
-  def rowsForTable(vs: ViewSettings, p: Project, pt: PlainText.ForProject, ts: TextSearch): Stream[Row] = {
-    def maybe(cond: Boolean, f: EndoFn[Stream[Row]]): EndoFn[Stream[Row]] = if (cond) f else identity
-
-    gather(vs, p, pt, ts) |>
-      sort(vs, p, pt) |>
-      consolidateAdjacentDups |>
-      maybe(vs.viewReqCodesAsTree, addReqCodeTreeToRows)
+  def rowsForTable(p: Project, s: TableSettings, fd: FilterDead, pt: PlainText.ForProject, ts: TextSearch): Vector[Row] = {
+    def r1: Array       [Row] = gather(p, s, fd, pt, ts)
+    def r2: MutableArray[Row] = sort(p, s, pt)(r1)
+    val r3: Vector      [Row] = consolidateAdjacentDups(r2.iterator)
+    val r4: Vector      [Row] = if (s.viewReqCodesAsTree) addReqCodeTreeToRows(r3) else r3
+    r4
   }
 }

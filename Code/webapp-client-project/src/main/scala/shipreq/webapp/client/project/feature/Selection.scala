@@ -1,10 +1,12 @@
 package shipreq.webapp.client.project.feature
 
-import japgolly.scalajs.react._, vdom.html_<^._
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.components.TriStateCheckbox
 import japgolly.univeq.UnivEq
 import monocle.Iso
+import org.scalajs.dom.html
 import shipreq.webapp.client.base.data.{Off, On}
 import shipreq.webapp.client.project.widgets.Widgets
 import Selection._
@@ -50,8 +52,11 @@ object Selection {
   sealed trait HasLegalSubset[A] extends Base[A] {
     val legal: Set[A]
 
-    val (legalSelection, hiddenSelection) =
+    final val (legalSelection, hiddenSelection) =
       selected partition legal.contains
+
+    final lazy val legalSelectionSize: Int =
+      legalSelection.size
   }
 
   // These are specialised and so don't extend Base
@@ -103,7 +108,9 @@ object Selection {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  final class OneUI[A](a: A, selected: Set[A], override val updateFn: UpdateFn[A]) extends UI[A, On, VdomTag] {
+  final class OneUI[A](private[Selection] val a: A,
+                       private[Selection] val selected: Set[A],
+                       override val updateFn: UpdateFn[A]) extends UI[A, On, VdomTag] {
     override val get =
       On when selected.contains(a)
 
@@ -116,7 +123,7 @@ object Selection {
     override def toggle =
       set(!get)
 
-    override def checkbox =
+    override def checkbox: VdomTagOf[html.Input] =
       Widgets.checkbox(get)(^.onChange --> toggleFn)
 
     override def checkboxAndOnClick: TagMod =
@@ -177,6 +184,12 @@ object Selection {
 
   // ===================================================================================================================
 
-  implicit def reuseSel[A]: Reusability[Selection[A]]         = Reusability.byRef || Reusability.by(_.selected)
-  implicit def reuseVis[A]: Reusability[LegalWithUpdateFn[A]] = Reusability.byRef || Reusability.by(v => (v.selected, v.legal, v.updateFn))
+  implicit def reuseSel[A]: Reusability[Selection[A]] =
+    Reusability.byRef || Reusability.by(_.selected)
+
+  implicit def reuseVis[A]: Reusability[LegalWithUpdateFn[A]] =
+    Reusability.byRef || Reusability.by(v => (v.selected, v.updateFn, v.legal))
+
+  implicit def reuseOUI[A: Reusability]: Reusability[OneUI[A]] =
+    Reusability.byRef || Reusability.by(v => (v.selected, v.updateFn, v.a))
 }

@@ -129,6 +129,7 @@ object BaseStyles extends StyleSheet.Inline {
   }
 
   val textEditorInTransitValue = style(
+    marginLeft(0.8 ex),
     whiteSpace.pre,
     flexGrow(1),
     opacity(0.5))

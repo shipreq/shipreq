@@ -19,6 +19,7 @@ import shipreq.webapp.client.base.ui.{AutosizeTextarea, EditTheme}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.base.REACT_TMP._
 
 object TagEditor {
 
@@ -63,11 +64,12 @@ object TagEditor {
   val validator: Lookup => Validator[String, Stream[String], Stream[ApplicableTag]] =
     l => G.seqFormat.validator(Auditor.optionFn(l.get)(i => Invalidity(s"Invalid tag: $i")))
 
-  case class Props(preEditValue: Option[Set[ApplicableTagId]],
-                   edit        : StateSnapshot[String],
-                   lookup      : Lookup,
-                   asyncStatus : Option[EditorStatus.Async],
-                   abortCommit : AbortCommit) {
+  case class Props(preEditValue    : Option[Set[ApplicableTagId]],
+                   edit            : StateSnapshot[String],
+                   lookup          : Lookup,
+                   asyncStatus     : Option[EditorStatus.Async],
+                   abortCommit     : AbortCommit,
+                   showInstructions: Boolean) {
 
     // TODO Really? Stream?
     val parseResult: Invalidity \/ Stream[ApplicableTag] =
@@ -77,18 +79,18 @@ object TagEditor {
       parseResult.map(_.map(_.id)(collection.breakOut))
 
     val validated = PotentialChange.fromDisjunction(parseResultSet).setDiffOption(preEditValue)
-    def abort     = abortCommit.fold(Callback.empty)(_.abort)
-    def commit    = (r: Output) => abortCommit.fold(Callback.empty)(_ commit r)
+    def abort     = abortCommit.map(_.abort)
+    def commit    = (r: Output) => abortCommit.map(_ commit r)
     val status    = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
 
-    def render = Component(this)
+    def render: VdomElement = Component(this)
   }
 
   implicit val reusabilityLookup: Reusability[Lookup] =
     Reusability.byRef[Lookup] || Reusability.byUnivEq(_.underlyingMap)
 
-  implicit val reusabilityProps: Reusability[Props] =
-    Reusability.never // TODO Reusability.caseClass
+//  implicit val reusabilityProps: Reusability[Props] =
+//    Reusability.never // TODO Reusability.caseClass
 
   final class Backend($: BackendScope[Props, Unit]) {
     private val pxLookup = Px.props($).map(_.lookup).withReuse.autoRefresh
@@ -100,7 +102,7 @@ object TagEditor {
 
     val textareaConst: TagMod = {
       val keys =
-        KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +
+        KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort)) +
         KeyboardTheme.commitCO($.props.map(_.status.getCommit), lineCardinality)
 
       val updateState: ReactEventFromTextArea => Callback =
@@ -125,12 +127,13 @@ object TagEditor {
       def editor(validity: Validity): VdomElement =
         editorRef.component(EditTheme.autosizeTextareaProps(validity, p.edit.value, textareaConst))
 
-      def instructions =
-        KeyboardTheme.instructionsForCommitAbort(
-          lineCardinality,
-          p.status.getCommit,
-          p.abort,
-          None)
+      def instructions: TagMod =
+        TagMod.when(p.showInstructions)(
+          KeyboardTheme.instructionsForCommitAbort(
+            lineCardinality,
+            p.status.getCommit,
+            p.abort,
+            None))
 
       EditTheme.renderEditor(p.status, editor, p.edit.value, instructions)
     }
@@ -140,7 +143,7 @@ object TagEditor {
     ScalaComponent.builder[Props]("TagEditor")
       .renderBackend[Backend]
       .configure(
-        Reusability.shouldComponentUpdate,
+//        Reusability.shouldComponentUpdate,
         AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.setState))
       .build
 }

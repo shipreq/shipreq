@@ -113,13 +113,13 @@ object ProjectItem {
       def renderEditor(p: Props, s: EditState): TagMod = {
         val status =
           EditorStatus.async(s.async) getOrElse
-            EditorStatus.validate(DataValidators.projectName.unnamed)(s.edit, p.renameProjectIO)
+            EditorStatus.validate(DataValidators.projectName.unnamed)(s.edit, s => Some(p.renameProjectIO(s)))
 
         PlainTextEditor.TempBasic.Props(
           text         = s.edit,
           updateText   = updateEditText,
           status       = status,
-          abort        = abortFn,
+          abort        = Some(abortFn),
           inputContMod = inputContMod)
           .render
       }

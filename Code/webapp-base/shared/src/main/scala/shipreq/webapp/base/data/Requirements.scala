@@ -32,7 +32,9 @@ sealed trait SubReqId extends ReqOrSubReqId
  *
  * The `T` suffix means typed with `ReqId` being `ReqIdT[_]`.
  */
-sealed trait ReqIdT[+RT <: ReqTypeId] extends ReqOrSubReqId
+sealed trait ReqIdT[+RT <: ReqTypeId] extends ReqOrSubReqId {
+  def foldReqId[A](gr: GenericReqId => A, uc: UseCaseId => A): A
+}
 
 /**
  * An abstract requirement.
@@ -66,7 +68,9 @@ object ReqT extends ReqTEquality {
 // =====================================================================================================================
 // Generic Req
 
-final case class GenericReqId(value: Int) extends ReqIdT[CustomReqTypeId]
+final case class GenericReqId(value: Int) extends ReqIdT[CustomReqTypeId] {
+  override def foldReqId[A](gr: GenericReqId => A, uc: UseCaseId => A): A = gr(this)
+}
 
 /**
  * A generic/low-level requirement comprised, primarily, of a custom req type and a title.
@@ -122,7 +126,9 @@ object GenericReq {
 // =====================================================================================================================
 // Use Case
 
-final case class UseCaseId(value: Int) extends ReqIdT[StaticReqType.UseCase]
+final case class UseCaseId(value: Int) extends ReqIdT[StaticReqType.UseCase] {
+  override def foldReqId[A](gr: GenericReqId => A, uc: UseCaseId => A): A = uc(this)
+}
 
 @Lenses
 final case class UseCase(id            : UseCaseId,

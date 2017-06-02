@@ -10,9 +10,9 @@ import scalaz.std.option.optionInstance
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.client.project.app.reqtable.{SortMethod => SM, SortCriterion => SC, Column => C}
-import ColumnRenderer.SortableDeletionReason
+import shipreq.webapp.client.project.app.reqtable.{Column => C, SortCriterion => SC, SortMethod => SM}
 import SortMethod.{Asc, AscThenBlanks, BlanksThenAsc}
+import shipreq.base.util.{Applicable, NotApplicable}
 
 trait Sorter {
   type T
@@ -210,7 +210,8 @@ object Sorter {
     def normalisedText(f: PlainText.ForProject => String) =
       stringNormalise(f(plainText))
 
-    val applicability = Column.applicability(p.config)
+    val applicability: Applicability[Column, Row] =
+      Row.applicability(p.config.applicability)
 
     @inline def reqTypesToMnemonicOrder =
       p.config.reqTypes.order
@@ -237,8 +238,8 @@ object Sorter {
         val n = pubidNormaliser(setup)
         val `n/a` = (-1, -1)
         ;{
-          case r: ReqRow          => n(r.req.pubid)
-          case r: CodeGroupRow => `n/a`
+          case r: Row.ForReq       => n(r.req.pubid)
+          case r: Row.ForCodeGroup => `n/a`
         }
       },
     sort = SortFn.intPair
@@ -258,8 +259,8 @@ object Sorter {
 
   val reqTypeSorter = Sorter[Int](
     prep = setup => {
-      case r: ReqRow          => setup.reqTypesToMnemonicOrder(r.req.pubid.reqTypeId)
-      case r: CodeGroupRow => -1
+      case r: Row.ForReq       => setup.reqTypesToMnemonicOrder(r.req.pubid.reqTypeId)
+      case r: Row.ForCodeGroup => -1
     },
     sort = SortFn.int
   )
@@ -287,7 +288,11 @@ object Sorter {
       Sorter[String](
         prep = setup => {
           val g = f(setup)
-          setup.applicability(c).fn((row: Row) => setup.normalisedText(g(_)(row)))("")
+          val rowApplicability = setup.applicability.byField(c)
+          (row: Row) => rowApplicability(row) match {
+            case Applicable    => setup.normalisedText(g(_)(row))
+            case NotApplicable => ""
+          }
         },
         sort = SortFn.string(bp)
       ))
@@ -297,20 +302,20 @@ object Sorter {
 
   def customTextFieldSorter(id: CustomField.Text.Id, c: Column): SorterForSMCB =
     textSorter(c, p => {
-      case r: ReqRow          => p.customTextField(id)(r.req) getOrElse ""
-      case r: CodeGroupRow => ""
+      case r: Row.ForReq       => p.customTextField(id)(r.req) getOrElse ""
+      case r: Row.ForCodeGroup => ""
     })
 
   val titleSorter: SorterForSMCB =
     textSorter(C.Title, p => {
-      case r: ReqRow          => p.reqTitle(r.req)
-      case r: CodeGroupRow => p.codeGroupTitle(r.group)
+      case r: Row.ForReq       => p.reqTitle(r.req)
+      case r: Row.ForCodeGroup => p.codeGroupTitle(r.group)
     })
 
   def deletionReasonSorter: SorterForSMCB =
     textSorterS(C.DeletionReason, s => pt => {
-      case r: ReqRow          => SortableDeletionReason.forReq(r.req)(s.p.config.reqTypes, pt) getOrElse ""
-      case _: CodeGroupRow => SortableDeletionReason.forCodeGroup getOrElse ""
+      case r: Row.ForReq       => PlainText.DeletionReason.forReq(r.req)(s.p.config.reqTypes, pt) getOrElse ""
+      case _: Row.ForCodeGroup => PlainText.DeletionReason.forCodeGroup getOrElse ""
     })
 
   // ===================================================================================================================
@@ -349,12 +354,12 @@ object Sorter {
   /**
    * Sort visible data in [[Expansion]]/[[MultiValues]] that won't be sorted by [[SortCriteria]].
    */
-  def sortUnspecified(vs: ViewSettings): RowModFn = {
+  def sortUnspecified(ts: TableSettings): RowModFn = {
     val fns =
-      vs.columns.whole
+      ts.columns.whole
         .iterator
         .filterSubType[C.SortInconclusive]
-        .filterNot(vs.isOrdered)
+        .filterNot(ts.isOrdered)
         .map({
           case c: C.HasBlanks => inconclusiveCB(c)(SM.BlanksThenAsc)
           case c: C.NoBlanks  => inconclusiveIB(c)(SM.Asc)

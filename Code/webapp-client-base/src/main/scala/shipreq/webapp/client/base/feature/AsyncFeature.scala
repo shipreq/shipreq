@@ -116,6 +116,8 @@ object AsyncFeature {
       def isEmpty: Boolean
       def apply(key: K): D0[F]
       def mapKey[J](j: Intersection[K, J]): D1[J, F]
+      def iterator: Iterator[(K, Status[F])]
+      def keySet: Set[K]
     }
 
     object D1 {
@@ -132,6 +134,19 @@ object AsyncFeature {
 
           override def mapKey[J](j: Intersection[K, J]): D1[J, F] =
             mapped(state, i <=> j)
+
+          override def iterator: Iterator[(K, Status[F])] =
+            i.reverse.id.fold(
+              state.iterator.map(x => i.getOption(x._1) match {
+                case Some(k) => (k, x._2)
+                case None    => null
+              }).filter(_ ne null)
+            )(_.subst[λ[X => Iterator[(X, Status[F])]]](state.iterator))
+
+          override def keySet: Set[K] =
+            i.reverse.id.fold(
+              state.keysIterator.map(i.getOption).filterDefined.toSet
+            )(_.subst(state.keySet))
       }
 
       implicit def reusability[K, F]: Reusability[D1[K, F]] =
@@ -146,6 +161,7 @@ object AsyncFeature {
       def mapKey2[J](j: Intersection[K2, J]): D2[J, K1, F]
       def mapKey1[J](j: Intersection[K1, J]): D2[K2, J, F]
       def iterator: Iterator[(K2, D1[K1, F])]
+      def withKey1(key: K1): D1[K2, F]
     }
 
     object D2 {
@@ -156,23 +172,38 @@ object AsyncFeature {
                                       i2: Intersection[SK2, K2],
                                       i1: Intersection[SK1, K1]): D2[K2, K1, F] =
         new D2[K2, K1, F] {
-          def isEmpty: Boolean =
+          override def isEmpty: Boolean =
             state.isEmpty
 
-          def apply(key: K2): D1[K1, F] =
+          override def apply(key: K2): D1[K1, F] =
             D1.mapped(i2.reverse.fold(key, state.get)(None).orEmptyMap, i1)
 
-          def mapKey2[J](j: Intersection[K2, J]): D2[J, K1, F] =
+          override def mapKey2[J](j: Intersection[K2, J]): D2[J, K1, F] =
             mapped(state, i2 <=> j, i1)
 
-          def mapKey1[J](j: Intersection[K1, J]): D2[K2, J, F] =
+          override def mapKey1[J](j: Intersection[K1, J]): D2[K2, J, F] =
             mapped(state, i2, i1 <=> j)
 
-          def iterator: Iterator[(K2, D1[K1, F])] =
-            state.iterator
-              .map(x => i2.fold(x._1, (_, D1.mapped(x._2, i1)))(null))
-              .filter(_ ne null)
-      }
+          override def iterator: Iterator[(K2, D1[K1, F])] =
+            i2.reverse.id.fold(
+              state.iterator
+                .map(x => i2.fold(x._1, (_, D1.mapped(x._2, i1)))(null))
+                .filter(_ ne null)
+            )(_.subst[λ[X => Iterator[(X, State.D1[SK1, F])]]](state.iterator)
+              .map(_.map2(D1.mapped(_, i1))))
+
+          override def withKey1(k1: K1): D1[K2, F] = {
+            // There's rarely going to be more than 1 async value in practice so this is most efficient
+            var m: State.D1[K2, F] = Map.empty
+            for {
+              sk1       <- i1.reverse.getOption(k1)
+              (sk2, s1) <- state
+              s0        <- s1.get(sk1)
+              k2        <- i2.getOption(sk2)
+            } m = m.updated(k2, s0)
+            D1(m)
+          }
+        }
 
       implicit def reusability[K2, K1, F]: Reusability[D2[K2, K1, F]] =
         Reusability.byRef || Reusability.when(_.isEmpty)
@@ -219,6 +250,7 @@ object AsyncFeature {
       trait Interface[K, -F] {
         def apply(k: K): D0[F]
         def mapKey[J](j: Intersection[K, J]): D1[J, F]
+        def setBulk(ks: Iterable[K], value: => State.D0[F]): Callback
       }
 
       def apply[SK: UnivEq : ClassTag, K, F]($: Reusable[StateAccessPure[State.D1[SK, F]]],
@@ -227,20 +259,34 @@ object AsyncFeature {
         $.map(_ => new Interface[K, F] {
           implicit val reusabilityK = Reusability.byUnivEq[SK]
 
+          def lensAt(sk: SK) = Optics.mapValue[SK, Status[F]](sk)
+
           override def apply(k: K): D0[F] =
             i.reverse.fold[D0[F]](k,
               sk => D0(Reusable.ap($, Reusable.implicitly(sk))(($, sk) =>
-                $.zoomStateL(Optics.mapValue(sk)).setState(_)))
+                $.zoomStateL(lensAt(sk)).setState(_)))
             )(D0.doNothing)
 
           override def mapKey[J](j: Intersection[K, J]) =
             D1($, i <=> j)
+
+          override def setBulk(ks: Iterable[K], _value: => State.D0[F]): Callback =
+            Callback.unless(ks.isEmpty)(
+              $.modState { initialState =>
+                val value = _value
+                ks.foldLeft(initialState)((s, k) =>
+                  i.reverse.foldWarnFlip(k, s)(sk =>
+                    lensAt(sk).set(value)(s))) })
         })
+
+      def init[K: UnivEq : ClassTag, F]($: StateAccessPure[State.D1[K, F]]): D1[K, F] =
+        apply(Reusable.byRef($), Intersection.id)
 
       def doNothing[K]: D1[K, Any] =
         withDoNothingReusability(new Interface[K, Any] {
-          override def apply(k: K)                      = D0.doNothing
-          override def mapKey[J](j: Intersection[K, J]) = doNothing
+          override def apply(k: K)                                   = D0.doNothing
+          override def mapKey[J](j: Intersection[K, J])              = doNothing
+          override def setBulk(ks: Iterable[K], v: => State.D0[Any]) = Callback(ks foreach Intersection.warnDiscard)
         })
     }
 
@@ -254,6 +300,7 @@ object AsyncFeature {
         def mapKey1[C](j: Intersection[K1, C]): D2[K2, C, F]
         def mapKey2[C](j: Intersection[K2, C]): D2[C, K1, F]
         def setBulk(k2s: Iterable[K2], k1: K1, value: => State.D0[F]): Callback
+        def withKey1(key: K1): D1[K2, F]
       }
 
       def apply[SK2: UnivEq : ClassTag, SK1: UnivEq : ClassTag, K2, K1, F]($: Reusable[StateAccessPure[State.D2[SK2, SK1, F]]],
@@ -262,6 +309,7 @@ object AsyncFeature {
         // Doesn't factor Intersections into reusability because they're coherent
         $.map(_ => new Interface[K2, K1, F] {
           implicit val reusabilityK2 = Reusability.byUnivEq[SK2]
+          implicit val reusabilityK1 = Reusability.byUnivEq[SK1]
 
           def lensAt(sk2: SK2) = Optics.innerMap[SK2, SK1, Status[F]](sk2)
 
@@ -285,6 +333,19 @@ object AsyncFeature {
                     i2.reverse.foldWarnFlip(k2, s)(sk2 =>
                       lensAt(sk2).modify(setValue(_, sk1))(s) ))}))
 
+          override def withKey1(k1: K1): D1[K2, F] =
+            i1.reverse.getOption(k1) match {
+              case Some(sk1) =>
+                val self = this
+                Reusable.ap($, Reusable.implicitly(sk1))((_, _) =>
+                  new D1.Interface[K2, F] {
+                    override def apply(k2: K2)                                = self(k2)(k1)
+                    override def mapKey[J](j: Intersection[K2, J])            = self.mapKey2(j).withKey1(k1)
+                    override def setBulk(ks: Iterable[K2], v: => State.D0[F]) = self.setBulk(ks, k1, v)
+                  }
+                )
+              case None => D1.doNothing
+            }
         })
 
       def init[K2: UnivEq : ClassTag, K1: UnivEq : ClassTag, F]($: StateAccessPure[State.D2[K2, K1, F]]): D2[K2, K1, F] =
@@ -316,6 +377,9 @@ object AsyncFeature {
 
       def mapKey1[J](i: Intersection[K1, J]): D2[K2, J, F] =
         D2(write.mapKey1(i), read.mapKey1(i))
+
+      def withKey1(k: K1): D1[K2, F] =
+        D1(write.withKey1(k), read.withKey1(k))
     }
 
     implicit def reusabilityD0[F]        : Reusability[D0[F]]         = Reusability.caseClass

@@ -316,7 +316,7 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
       ..${flattenBlocks(init.toList)}
       implicit val value : Pickler[Value]          = pickleADT
       implicit val values: Pickler[Values]         = pickleIMap(emptyValues)
-      implicit val nev   : Pickler[NonEmptyValues] = pickleNonEmptyA[Values](values, implicitly)
+      implicit val nev   : Pickler[NonEmptyValues] = pickleNonEmptyMono[Values](values, implicitly)
       ValueTypeClasses(value, values, nev)
     } """
 

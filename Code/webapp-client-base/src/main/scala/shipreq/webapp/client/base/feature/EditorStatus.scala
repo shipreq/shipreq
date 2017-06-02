@@ -42,7 +42,7 @@ sealed abstract class EditorStatus {
 
   final def getCommit: Option[Callback] =
     this match {
-      case Valid(commit) => Some(commit)
+      case Valid(commit) => commit
       case a: AsyncError => Some(a.retry)
       case Invalid(_)
          | Ignore
@@ -60,18 +60,19 @@ sealed abstract class EditorStatus {
 }
 
 object EditorStatus {
+
   sealed abstract class Sync  extends EditorStatus
-  case object Ignore extends Sync
-  case class Valid(commit: Callback) extends Sync
-  case class Invalid(err: TagMod) extends Sync
+  case object Ignore                          extends Sync
+  case class  Valid(commit: Option[Callback]) extends Sync
+  case class  Invalid(err: TagMod)            extends Sync
 
   sealed abstract class Async extends EditorStatus
-  case object InTransit extends Async
-  case class AsyncError(err: TagMod, retry: Callback, clearAsync: Callback) extends Async
+  case object InTransit                                                      extends Async
+  case class  AsyncError(err: TagMod, retry: Callback, clearAsync: Callback) extends Async
 
   // ===================================================================================================================
 
-  def ignoreOrValidate[I, C, V](v: Validator[I, C, V])(i: I, ignore: C => Boolean, commit: V => Callback): Sync = {
+  def ignoreOrValidate[I, C, V](v: Validator[I, C, V])(i: I, ignore: C => Boolean, commit: V => Option[Callback]): Sync = {
     val corrected = v.corrector(i)
     if (ignore(corrected))
       Ignore
@@ -79,23 +80,26 @@ object EditorStatus {
       fromValidation(v.auditor(corrected))(commit)
   }
 
-  def validate[I, C, V](v: Validator[I, C, V])(i: I, commit: V => Callback): Sync =
+  def validate[I, C, V](v: Validator[I, C, V])(i: I, commit: V => Option[Callback]): Sync =
     ignoreOrValidate(v)(i, _ => false, commit)
 
-  def fromValidation[V](vr: Invalidity \/ V)(commit: V => Callback): Sync =
+  def fromValidation[V](vr: Invalidity \/ V)(commit: V => Option[Callback]): Sync =
     vr match {
       case \/-(v) => Valid(commit(v))
       case -\/(e) => Invalid(Invalidity.toText(e))
     }
 
-  def potentialChange[E, A](vu: PotentialChange[E, A])(commit: A => Callback, unchanged: Callback)(implicit fmtErr: E => TagMod): Sync =
+  def potentialChange[E, A](vu: PotentialChange[E, A])
+                           (commit: A => Option[Callback], unchanged: Option[Callback])
+                           (implicit fmtErr: E => TagMod): Sync =
     vu match {
       case PotentialChange.Success(a) => Valid(commit(a))
       case PotentialChange.Unchanged  => Valid(unchanged)
       case PotentialChange.Failure(e) => Invalid(fmtErr(e))
     }
 
-  def fromValidatedChange[A](vu: PotentialChange[Invalidity, A])(commit: A => Callback, unchanged: Callback): Sync =
+  def fromValidatedChange[A](vu: PotentialChange[Invalidity, A])
+                            (commit: A => Option[Callback], unchanged: Option[Callback]): Sync =
     potentialChange(vu)(commit, unchanged)(Invalidity.toText)
 
   def async[F, I](a: AsyncFeature.Read.D0[F])(implicit f: F => TagMod): Option[Async] =

@@ -291,7 +291,7 @@ object DbTest extends TestSuite {
           testRW(GenericReqCreate(123, 1469773577, ImpSrcs(NonEmptySet(GenericReqId(2074289209)))),
             100, 123, 'g', """{"T":1469773577,">":2074289209}""")
 
-          testRW(GenericReqCreate(123, 1469773577, ReqCodes(ReqCode.IdAndValue(7, "yay"))),
+          testRW(GenericReqCreate(123, 1469773577, Codes(ReqCode.IdAndValue(7, "yay"))),
             100, 123, 'g', """{"T":1469773577,"c":{"yay":7}}""")
         }
 

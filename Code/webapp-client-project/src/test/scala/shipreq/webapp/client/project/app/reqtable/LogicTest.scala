@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty._
+import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Optional
 import scala.annotation.tailrec
@@ -11,25 +12,26 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.{event => E}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.ValidFilter
-import shipreq.webapp.base.text.{TextSearch, PlainText, Text, ProjectText}
-import shipreq.webapp.base.test._, WebappTestUtil._
+import shipreq.webapp.base.text.{PlainText, ProjectText, Text, TextSearch}
+import shipreq.webapp.base.test._
+import WebappTestUtil._
 import shipreq.webapp.base.util.ReqCodeTreeItem
-import shipreq.webapp.client.project.app.reqtable.{SortCriterion => SC, Column => C}
+import shipreq.webapp.client.project.app.reqtable.{Column => C, SortCriterion => SC}
 import SortMethod._
 
 object LogicTestUtil {
   def codesInRow(r: Row): Vector[ReqCode.Value] =
   // Don't use optics here
     r match {
-      case r: ReqRow          => r.exp.reqCodes
-      case r: CodeGroupRow => Vector1(r.reqCode)
+      case r: Row.ForReq       => r.exp.reqCodes
+      case r: Row.ForCodeGroup => Vector1(r.reqCode)
     }
 
   def tagsInRow(r: Row): Vector[ApplicableTagId] =
   // Don't use optics here
     r match {
-      case r: ReqRow          => r.mv.tags
-      case r: CodeGroupRow => Vector.empty
+      case r: Row.ForReq       => r.mv.tags
+      case r: Row.ForCodeGroup => Vector.empty
     }
 
   def pubidExtract(p: Project)(pid: Pubid): (String, Int) =
@@ -76,7 +78,7 @@ object LogicTest extends TestSuite {
   private      val sep = "  "
   private      val z   = "∅"
   private      val _z  = (_: Any) => z
-  private type Rows    = Stream[Row]
+  private type Rows    = Vector[Row]
   private type Filter  = Option[ValidFilter]
 
   private case class PCache(p: Project, pt: PlainText.ForProject, ts: TextSearch)
@@ -97,26 +99,33 @@ object LogicTest extends TestSuite {
     testUnsorted(p, C.Pubid, f, ShowDead, fmt)(d)
   }
 
+  private def gatherSortConsolidate(p: Project, s: TableSettings, fd: FilterDead, pt: PlainText.ForProject, ts: TextSearch): Vector[Row] = {
+    def r1: Array       [Row] = Logic.gather(p, s, fd, pt, ts)
+    def r2: MutableArray[Row] = Logic.sort(p, s, pt)(r1)
+    val r3: Vector      [Row] = Logic.consolidateAdjacentDups(r2.iterator)
+    r3
+  }
+
   private def testUnsorted[A: Equal](p: Project, c: C, f: Filter, fd: FilterDead, extract: Rows => A)(expect: A): Unit =
     testUnsorted2(p, NonEmptyVector one c, f, fd, extract)(expect)
 
   private def testUnsorted2[A: Equal](p: Project, cs: NonEmptyVector[C], f: Filter, fd: FilterDead, extract: Rows => A)(expect: A): Unit = {
-    val vs = ViewSettings(columnState(p, cs), SortCriteria.default.copy(init = Vector.empty), f, fd)
+    val vs = TableSettings(columnState(p, cs), SortCriteria.default.copy(init = Vector.empty), f)
     val pc = pcache(p)
     import pc.{pt, ts}
-    val r = Logic.gather(vs, p, pt, ts) |> Logic.sort(vs, p, pt) |> Logic.consolidateAdjacentDups
+    val r = gatherSortConsolidate(p, vs, fd, pt, ts)
     assertEq(extract(r), expect)
   }
 
-  private def vsSortedByCB(p: Project, c: C.SortInconclusive with C.HasBlanks, sm: ConsiderBlanks, f: Filter, fd: FilterDead): ViewSettings =
-    ViewSettings(columnState(p, c), SortCriteria.default.copy(init = Vector(SC.InconclusiveCB(c, sm))), f, fd)
+  private def vsSortedByCB(p: Project, c: C.SortInconclusive with C.HasBlanks, sm: ConsiderBlanks, f: Filter): TableSettings =
+    TableSettings(columnState(p, c), SortCriteria.default.copy(init = Vector(SC.InconclusiveCB(c, sm))), f)
 
   private def testCB[A: Equal](p: Project, c: C.SortInconclusive with C.HasBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(ConsiderBlanks, A)]) = {
     val pc = pcache(p)
     import pc.{pt, ts}
     for ((sm, expect) <- tests) {
-      val vs = vsSortedByCB(p, c, sm, f, fd)
-      val r = Logic.gather(vs, p, pt, ts) |> Logic.sort(vs, p, pt) |> Logic.consolidateAdjacentDups
+      val vs = vsSortedByCB(p, c, sm, f)
+      val r = gatherSortConsolidate(p, vs, fd, pt, ts)
       assertEq(sm.toString, extract(r), expect)
     }
   }
@@ -133,15 +142,15 @@ object LogicTest extends TestSuite {
   private def allSortsCB(zcount: Int, asc: String, desc: String): Seq[(ConsiderBlanks, String)] =
     allSortsCBA(z, zcount)(_ + sep + _, asc, desc)
 
-  private def vsSortedByIB(p: Project, c: C.SortInconclusive with C.NoBlanks, sm: IgnoreBlanks, f: Filter, fd: FilterDead): ViewSettings =
-    ViewSettings(columnState(p, c), SortCriteria.default.copy(init = Vector(SC.InconclusiveIB(c, sm))), f, fd)
+  private def vsSortedByIB(p: Project, c: C.SortInconclusive with C.NoBlanks, sm: IgnoreBlanks, f: Filter): TableSettings =
+    TableSettings(columnState(p, c), SortCriteria.default.copy(init = Vector(SC.InconclusiveIB(c, sm))), f)
 
   private def testIB[A: Equal](p: Project, c: C.SortInconclusive with C.NoBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(IgnoreBlanks, A)]) = {
     val pc = pcache(p)
     import pc.{pt, ts}
     for ((sm, expect) <- tests) {
-      val vs = vsSortedByIB(p, c, sm, f, fd)
-      val r = Logic.gather(vs, p, pt, ts) |> Logic.sort(vs, p, pt) |> Logic.consolidateAdjacentDups
+      val vs = vsSortedByIB(p, c, sm, f)
+      val r = gatherSortConsolidate(p, vs, fd, pt, ts)
       assertEq(sm.toString, extract(r), expect)
     }
   }
@@ -149,23 +158,23 @@ object LogicTest extends TestSuite {
   private def allSortsIB[A](asc: A, desc: A): Seq[(IgnoreBlanks, A)] =
     (Asc  -> asc) :: (Desc -> desc) :: Nil
 
-  private def rowToStr(f: ReqRow => String, g: CodeGroupRow => String): Row => String =
+  private def rowToStr(f: Row.ForReq => String, g: Row.ForCodeGroup => String): Row => String =
     rowToStr(f, g, identity)
 
-  private def rowToStr(f: ReqRow => String, g: CodeGroupRow => String, h: String => String): Row => String = {
-    case r: ReqRow          => h(f(r))
-    case r: CodeGroupRow => h(g(r))
+  private def rowToStr(f: Row.ForReq => String, g: Row.ForCodeGroup => String, h: String => String): Row => String = {
+    case r: Row.ForReq          => h(f(r))
+    case r: Row.ForCodeGroup => h(g(r))
   }
 
-  private def rowToAsToStr[A](f: ReqRow => Vector[A])(h: A => String): Row => String =
+  private def rowToAsToStr[A](f: Row.ForReq => Vector[A])(h: A => String): Row => String =
     rowToAsToStr(f, _ => Vector.empty)(h)
 
-  private def rowToAsToStr[A](f: ReqRow => Vector[A], g: CodeGroupRow => Vector[A])(h: A => String): Row => String = {
+  private def rowToAsToStr[A](f: Row.ForReq => Vector[A], g: Row.ForCodeGroup => Vector[A])(h: A => String): Row => String = {
     val i = (_: Vector[A]).ifelse(_.isEmpty, _z, _ map h mkString ",")
     rowToStr(i compose f, i compose g)
   }
 
-  private def rowToAsToStr2[A](f: ReqRow => Vector[A])(g: ReqRow => A => String) =
+  private def rowToAsToStr2[A](f: Row.ForReq => Vector[A])(g: Row.ForReq => A => String) =
     rowToStr(r => f(r).ifelse(_.isEmpty, _z, _ map g(r) mkString ","), _z)
 
   private def rowToCustomText(pt: PlainText.ForProject, id: CustomField.Text.Id): Row => String = {
@@ -239,7 +248,7 @@ object LogicTest extends TestSuite {
     _ map f mkString sep
 
   implicit private def customFieldToColumn(id: CustomFieldId) =
-    C.CustomField(id, if (id == relField) Dead else Live)
+    C.CustomField(id)
 
   // -----------------------------------------------------------------------------------------------------------------
 
@@ -438,9 +447,12 @@ object LogicTest extends TestSuite {
       GReq(reqType = co).cftextS(descField, "CO.desc.NO!").cftextS(notesField, "CO.note.ok") +
       GReq(reqType = br).cftextS(descField, "BR.desc.NO!").cftextS(notesField, "BR.note.NO!") !! PA
     val pt = pcache(p).pt
-    val ap = Column.applicability(p.config)
-    def fmt(c: CustomField.Text.Id) =
-      ap(c).fn(rowToCustomText(pt, c))(z)
+    val ap = Row.applicability(p.config.applicability)
+    def fmt(c: CustomField.Text.Id)(r: Row): String =
+      ap(r, c) match {
+        case Applicable    => rowToCustomText(pt, c)(r)
+        case NotApplicable => z
+      }
     def expect(zcount: Int, suffix: String)(prefixes: String*) = {
       val es = prefixes.map(_ + suffix).sorted
       allSortsCB(zcount, es mkString sep, es.reverse mkString sep)

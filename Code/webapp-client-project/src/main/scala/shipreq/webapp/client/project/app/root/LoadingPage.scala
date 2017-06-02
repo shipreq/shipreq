@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.app.root
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra.Reusable
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.data.{ProjectCatalogue, Username}
 import shipreq.webapp.client.base.ui.semantic.{Breadcrumb, UsesSemanticUiManually}
@@ -18,8 +19,7 @@ object LoadingPage {
 
       MemberNavBar.Props(
         p.username,
-        MemberNavBar.MemberHome :: Breadcrumb.Item.Div(p.project.name) :: Nil,
-        Nil)
+        Reusable.never(MemberNavBar.MemberHome :: Breadcrumb.Item.Div(p.project.name) :: Nil))
         .render,
 
       <.div(BaseStyles.containerLarge,

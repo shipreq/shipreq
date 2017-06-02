@@ -3,6 +3,15 @@ package shipreq.webapp.client.base.ui.semantic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
+/** Usage:
+  *
+  * 1. Add `.render` to the root view.
+  *    It will be hidden.
+  *    It has reusability so as to only evaluate once.
+  *
+  * 2. Call `.show` to make the modal visible.
+  *    This is nearly always going to be in the event-handler of a user action.
+  */
 final class Modal(val render: VdomElement, val show: Callback)
 
 object Modal {

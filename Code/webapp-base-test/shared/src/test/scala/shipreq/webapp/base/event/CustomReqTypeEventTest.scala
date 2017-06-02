@@ -91,7 +91,7 @@ object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
             assertEq(s"$name - RC.active?", t.p.reqCodes(rc.value).isActive, grLiveImp is Live)
           }
         t.justApply(c1)
-        test(Live)(GenericReqCreate(reqId, c1.id, GenericReqGD.ReqCodes(rc)))
+        test(Live)(GenericReqCreate(reqId, c1.id, GenericReqGD.Codes(rc)))
         test(Dead)(sd1)
         test(Live)(r1)
       }

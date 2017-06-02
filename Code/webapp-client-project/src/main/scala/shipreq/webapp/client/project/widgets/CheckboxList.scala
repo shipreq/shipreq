@@ -1,34 +1,64 @@
 package shipreq.webapp.client.project.widgets
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.webapp.client.base.data.{Disabled, Enabled, On}
-import shipreq.webapp.client.project.lib.DataReusability._
+import org.scalajs.dom.html
+import scalaz.Equal
+import shipreq.webapp.client.base.data._
+import shipreq.webapp.client.base.lib.DataReusability._
+import CheckboxList._
 
 object CheckboxList {
-  case class Item[A](value: A, label: String, on: On, enabled: Enabled)
-  case class Props[A](items: Vector[Item[A]], toggle: A ~=> Callback)
-
-  implicit def reusabilityItem[A: Reusability] = Reusability.caseClass[Item[A]]
-  implicit def reusabilityProps[A: Reusability] = Reusability.caseClass[Props[A]]
+  final case class RenderItem(checkbox: VdomTagOf[html.Input], label: String)
+  type RenderFn = Iterator[RenderItem] => VdomElement
 }
 
-class CheckboxList[A: Reusability](renderFn: Vector[VdomTag] => VdomElement) {
-  import CheckboxList._
+final case class CheckboxList[A: Reusability](renderFn: RenderFn) {
 
-  def render(p: Props[A]) =
-    renderFn(
-      p.items.map { i =>
-        val mod = i.enabled match {
-          case Enabled  => ^.onChange --> p.toggle(i.value)
-          case Disabled => ^.disabled := true
+  case class Item(value: A, label: String, on: On, enabled: Enabled)
+
+  case class Props(items: NonEmptyVector[Item], update: Update ~=> Callback) {
+    @inline def render: VdomElement = Component(this)
+  }
+
+  case class Update(clickedItem: Item, items: NonEmptyVector[Item]) {
+    def newValue: On =
+      !clickedItem.on
+
+    def newSelection(implicit eq: Equal[A]): Vector[A] = {
+      val f: Item => Boolean =
+        newValue match {
+          case On  => i => i.on.is(On) || eq.equal(i.value, clickedItem.value)
+          case Off => i => i.on.is(On) && !eq.equal(i.value, clickedItem.value)
         }
-        val box = Widgets.checkbox(i.on)(mod)
-        <.label(box, i.label)
-      })
+      items.iterator.filter(f).map(_.value).toVector
+    }
 
-  val Component = ScalaComponent.builder[Props[A]]("Columns")
+    def update(as: Vector[A])(implicit eq: Equal[A]): Vector[A] =
+      newValue match {
+        case On  => as :+ clickedItem.value
+        case Off => as.filter(!eq.equal(_, clickedItem.value))
+      }
+  }
+
+  implicit def reusabilityItem: Reusability[Item] = Reusability.caseClass
+  implicit def reusabilityProps: Reusability[Props] = Reusability.caseClass
+
+  private def render(p: Props): VdomElement =
+    renderFn(
+      p.items.iterator.map { i =>
+        val checkbox: VdomTagOf[html.Input] =
+          i.enabled match {
+            case Enabled  => Widgets.checkbox(i.on)(^.onChange --> p.update(Update(i, p.items)))
+            case Disabled => Widgets.checkboxReadOnly(i.on)
+          }
+        RenderItem(checkbox, i.label)
+      }
+    )
+
+  val Component = ScalaComponent.builder[Props]("CheckboxList")
     .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build

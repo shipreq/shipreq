@@ -1,13 +1,15 @@
 package shipreq.webapp.client.project.app.root
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react.MonocleReact._
-import japgolly.scalajs.react.vdom.Implicits._
+import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.extra.router.{RouterCtl => RouterCtl_, _}
+import japgolly.scalajs.react.vdom.Implicits._
 import monocle._
 import monocle.macros._
 import scala.annotation.elidable
-import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.univeq._
+import shipreq.webapp.client.base.lib.DataReusability._
 import shipreq.webapp.base.data.{ExternalPubid, ReqType, ReqTypePos}
 import shipreq.webapp.base.text.PlainText
 
@@ -34,6 +36,9 @@ object Routes {
         ExternalPubid.StringPrism ^<-> GenIso.fields[ReqDetail].reverse
     }
 
+    implicit def equality: UnivEq[Page] = UnivEq.derive
+    implicit def reusability: Reusability[Page] = Reusability.byUnivEq
+
     def sampleValues = NonEmptyVector[Page](
       CfgFields,
       CfgIssues,
@@ -44,8 +49,6 @@ object Routes {
       ReqDetail(ExternalPubid(ReqType.Mnemonic("A"), ReqTypePos(1))),
       ReqTable)
   }
-
-  implicit def pageEq: UnivEq[Page] = UnivEq.derive
 
   def routerConfig(rootInstance: LoadedRoot) =
     RouterConfigDsl[Page].buildConfig { dsl =>

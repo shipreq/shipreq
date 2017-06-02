@@ -136,232 +136,247 @@ object Style extends StyleSheet.Inline {
 
   // ===================================================================================================================
   object reqtable {
-    import shipreq.webapp.client.project.app.reqtable.Column
-    import shipreq.webapp.client.project.app.reqtable.Table.CellStatus
 
-    val pubidColumnValue = styleF(D.live)(a => styleS(
-      display.inline,
-      whiteSpace.nowrap,
-      mixinIf(a is Dead)(deadAndNotError)))
+    // nearly everything here is !important because of stupid Semantic UI
 
-    val viewSettingsHeader = style(
-      backgroundColor(c"#ffe"))
+    private def pageVGap = 1.25 em
 
-    // -----------------------------------------------------------------------------------------------------------------
-    object sortCriteriaEditor {
+    object page {
 
-      /** 1. Ξ [▲ Ascending] Code */
-      val inconclusiveCriterionRow = styleF(D.on)(o => styleS(
-//        mixinIf(!on)(
-//          backgroundColor(c"#e2e2e2")),
-        marginBottom(0.7 ex),
-        paddingRight(1 ex)))
+      val ctrlHGap = 1.2 ex
 
-      def dragHnd = Style.this.dragHnd
+      val viewCtrls = style(
+        display.flex,
+        alignContent.center,
+        margin(v = pageVGap, h = `0`),
+        unsafeChild("> *:not(:first-child)")(marginLeft(ctrlHGap)))
 
-      val inconclusiveSortMethod = style(
-        width(28 ex))
+      def actionCtrls = viewCtrls
 
-      val inconclusiveColumnName = styleF(D.`live * on`) { case (live, on) => styleS(
-        marginLeft(1 ex),
-        mixinIf(on is Off)(color(c"#999")),
-        deadColumnLabel(live)
+      val actionCtrlButton = style(
+        marginRight(ctrlHGap).important)
+
+      val summary = style(
+        flexGrow(1),
+        textAlign.right)
+
+      val flexGap = style(flexGrow(1))
+
+      val filterDeadButtonContainer = style(
+        paddingRight(`0`).important)
+    }
+
+    object creation {
+
+      val buttonOuter = style(
+        marginRight(`0`).important)
+
+      val buttonDropdown = style(
+        color(c"#eee").important,
+        backgroundColor(c"#00a632").important)
+
+      val formOuter = style(
+        margin(v = pageVGap, h = `0`))
+
+      val formTable = style(
+        margin(`0`),
+        (boxShadow := "0 2px 4px 0 rgba(20,60,20,.16),0 2px 10px 0 rgba(20,60,20,.12)").important,
+        unsafeChild(">tbody>tr>td")(
+          borderTop.none.important,
+          borderLeft.none.important,
+          borderRight.none.important))
+
+      val formHeaderCell = style(
+        borderLeft.none.important,
+        borderRight.none.important,
+        paddingTop(0.4 em).important,
+        paddingBottom(0.4 em).important)
+
+      val formMiddleRow = style(
+        verticalAlign.top)
+
+      val formBottomRow = style(
+        textAlign.right.important)
+
+      val formCancelButton = style(
+        (background := "#fff").important,
+        borderColor(c"#27292a").important,
+        marginRight(2 ex))
+
+      val formCreateButton = style(
+        (background := "#fff").important,
+        color(c"#080").important,
+        borderColor(c"#080").important,
+        marginRight(`0`).important,
+        fontWeight.bold.important)
+    }
+
+    object table {
+
+      val table = style(
+        margin(`0`).important)
+
+      private val headerBase = style(
+        padding(4.px).important)
+
+      private val bodyBase = style(
+        padding(4.px).important,
+        verticalAlign.top.important)
+
+      val columnHeader = styleF(D.live *** D.dragStatus) { case (live, status) => styleS(
+        headerBase,
+        deadColumnLabel(live),
+        cursor.pointer.important, // Because click affects sorting
+        (status match {
+          case DragToReorder.Normal => mixin()
+          case DragToReorder.DragSource | DragToReorder.Tombstone => mixin(
+            opacity(.4).important,
+            border(2 px, dashed, c"#779").important)
+        }): StyleS
       )}
 
-      val conclusiveSortMethod = style(
-        marginLeft(4 ex))
+      private val selectionColumnCell = styleS(
+        width(24.px).important,
+        textAlign.center.important)
 
-      val conclusiveColumnName = style(
-        marginLeft(1 ex))
+      val selectionColumnHeader = style(selectionColumnCell, headerBase)
+      val selectionColumnBody   = style(selectionColumnCell, bodyBase)
+
+      val pubidColumnValue = styleF(D.live)(a => styleS(
+        display.inline,
+        whiteSpace.nowrap,
+        mixinIf(a is Dead)(deadAndNotError)))
+
+      val `N/A` = style(
+        color(c"#666"),
+        margin.horizontal(auto))
+
+      val dataCell = styleF(D.`live * on`)(i => styleS(
+        bodyBase,
+        i match {
+          case (Live, Off) => mixin()
+          case (Dead, Off) => mixin(backgroundColor(c"#f5f5f5"))
+          case (Live, On ) => mixin(backgroundColor(c"#ffc"))
+          case (Dead, On ) => mixin(backgroundColor(c"#f5f5c4"))
+        },
+        &.focus(
+          outline(solid, 2 px, c"#a333c8"))))
+
+      val noContent = style(
+        padding(2 em).important)
     }
 
-    // -----------------------------------------------------------------------------------------------------------------
-    val columnsEditor =
-      Live.memo(live =>
-        On.memo(on => OrderedSubsetEditor.Styles(
-          dragHnd = sortCriteriaEditor.dragHnd,
-          label   = sortCriteriaEditor.inconclusiveColumnName(live, on))))
-
-    // -----------------------------------------------------------------------------------------------------------------
     object filterEditor {
+      private def colourValid = color(c"#2C662D").important
 
-      val editor = styleF(D.validity)(v => styleS(
-        marginTop(1.6 em),
-        width(100 %%),
-        height(3 em),
-        mixinIf(v is Invalid)(hasErrorBackground)
-      ))
+      val input = styleF(D.validity) {
+        case Valid => styleS(
+          backgroundColor(c"#FCFFF5").important,
+          colourValid,
+          (boxShadow := "0px 0px 0px 1px #A3C293 inset, 0px 0px 0px 0px rgba(0, 0, 0, 0)").important)
+        case Invalid => styleS()
+      }
 
-      def errorMsg = hasErrorColor
+      val filterIcon = styleF(D.validity) {
+        case Valid   => styleS(opacity(1).important, colourValid)
+        case Invalid => styleS(opacity(1).important, color(c"#9f3a38").important)
+      }
     }
 
-    // -----------------------------------------------------------------------------------------------------------------
     object sortEditor {
 
-      val outer = style()
+      val header = style(
+        display.inlineBlock,
+        verticalAlign.top,
+        marginTop(1.3.ex))
 
       val dragArea = style(
         display.inlineBlock,
-        paddingRight(12.ex), // ← Gives a bit more room to drag to tail, rather than outside
-        paddingLeft(1 ex))
+        paddingRight(10.ex)) // ← Gives a bit more room to drag to tail, rather than outside
 
-      val itemOuter = styleF(D.dragStatus)(status =>
+      val draggableCriterion = styleF(D.dragStatus)(status =>
         styleS(
-          marginRight(2 ex),
+          marginLeft(2 ex),
+          borderRadius(4.px),
           cursor.pointer, // Because click changes sort direction
+          // inlineFlex required below to keep the entire row at the right height
+          // inlineBlock adds extra height and causes height differences between filter section & column button
           (status match {
-            case DragToReorder.Normal => mixin(
-              display.inlineBlock,
-              border(1 px, solid, c"#bbb"))
-            case DragToReorder.DragSource => mixin(
-              display.inlineBlock,
-              opacity(.4),
-              border(2 px, dashed, c"#000"))
-            case DragToReorder.Tombstone => mixin(
-              display.none)
+            case DragToReorder.Normal     => mixin(display.inlineFlex)
+            case DragToReorder.DragSource => mixin(display.inlineFlex, opacity(.4), border(2 px, dashed, c"#000"))
+            case DragToReorder.Tombstone  => mixin(display.none)
           }): StyleS
         ))
 
-      val itemSortMethod = style(
-        border.none,
-        backgroundColor(c"#ddd"),
-        verticalAlign.middle,
-        textAlign.center,
-        padding(v = 0.2.ex, h = 0.5.ex))
+      val criterionBorder = style(
+        borderRadius(4.px),
+        boxShadow := "0 0 0 1px rgba(34,36,38,.15) inset")
 
-      val sortMethodFull = style(
-        width(0.6.em),
-        height(0.6.em))
-
-      private val sortMethodHalf = mixin(
-        display.block,
-        width(0.55.em),
-        height(0.55.em))
-
-      val sortMethodHalfTop = style(
-        sortMethodHalf,
-        marginBottom(0.2.em))
-
-      val sortMethodHalfBottom = style(
-        sortMethodHalf)
-
-      val itemName = styleF(Domain.boolean)(conclusive =>
+      val name = styleF(Domain.boolean)(conclusive =>
         styleS(
           border.none,
-          backgroundColor(c"#eee"),
-          padding(v = 0.4.ex, h = 1.ex),
+          padding(v = 0.75.em, h = 1.5.em),
           verticalAlign.middle,
+          color(rgba(0,0,0,.6)),
+          fontSize(0.85714286.rem),
           mixinIf(conclusive)(fontWeight.bold)))
+
+      val sortMethod = style(
+        border.none,
+        backgroundColor(rgba(0,0,0,.05)),
+        verticalAlign.middle,
+        textAlign.center,
+        padding(`0`),
+        width(2.57142857.em),
+        borderTopRightRadius.inherit,
+        borderBottomRightRadius.inherit)
+
+      private val sortMethodBase = mixin(
+        display.block,
+        width(100.%%),
+        opacity(0.5))
+
+      private val sortMethodHalf = mixin(
+        sortMethodBase,
+        height(0.56.em))
+
+      val sortMethodFull       = style(sortMethodBase, height(0.6.em))
+      val sortMethodHalfTop    = style(sortMethodHalf, marginBottom(0.26.em))
+      val sortMethodHalfBottom = style(sortMethodHalf)
     }
+  }
 
-    // -----------------------------------------------------------------------------------------------------------------
+  // ===================================================================================================================
+  object deletionForm {
 
-    val statsSummary = style(
-      margin(1 em, `0`),
-      padding(0.2 ex, 1 ex),
-      color(c"#444"),
-      backgroundColor(c"#ded"),
-      width(100 %%))
-
-    // http://stackoverflow.com/questions/446624/table-cell-widths-fixing-width-wrapping-truncating-long-words
-    val table = style(
-      marginTop(1.6 ex),
-      width(100 %%))
-
-    private val mnemonicLen =
-      Grammar.reqTypeMnemonic.length.total.max
-
-    val columnPubid   = style(maxWidth((mnemonicLen + 5).ex))
-    val columnReqType = style(maxWidth(mnemonicLen.ex))
-
-    val `N/A` = style(
-      color(c"#666"),
-      margin.horizontal(auto)
-    )
-
-    private val columnHeaderBase = mixin(
-      backgroundColor(c"#e0e8f8"))
-
-    val columnHeader = styleF(D.live *** D.dragStatus) { case (live, status) => styleS(
-      columnHeaderBase,
-      deadColumnLabel(live),
-      cursor.pointer, // Because click affects sorting
-      (status match {
-        case DragToReorder.Normal => mixin(
-          border(1 px, solid, c"#777"))
-        case DragToReorder.DragSource | DragToReorder.Tombstone => mixin(
-          opacity(.4),
-          border(2 px, dashed, c"#779"))
-      }): StyleS
-    )}
-
-    val selectionRowHeader = style(
-      columnHeaderBase)
-
-    val cell = styleF(CellStatus.domain){ status =>
-      styleS(
-        border(1 px, solid, c"#ccc"),
-        &.focus(
-          backgroundColor(c"#e9e9ff")),
-        (status match {
-          case CellStatus.Normal => mixin(
-            padding(v = 2.px, h = 4.px))
-          case CellStatus.DeadRow => mixin(
-            padding(v = 2.px, h = 4.px), backgroundColor(c"#eee"))
-          case CellStatus.`N/A` => mixin(
-            padding.`0`,
-            backgroundColor(c"#eee"),
-            textAlign.center,
-            verticalAlign.middle)
-        }): StyleS
-      )
-    }
-
-    val autoCompleteItemTitle = style(
+    val section = style(
+      marginTop(2.3 em),
+      marginBottom(1 em),
       fontWeight.bold)
 
-    val autoCompleteItemTitle2 = style(
-      paddingLeft(1 ex),
-      color(c"#333"))
+    val row = styleF(D.live)(live => styleS(
+      mixinIf(live is Dead)(backgroundColor(c"#fee"), color(c"#a00"))
+    ))
 
-    val autoCompleteItemDesc = style(
-      color(c"#444"),
-      fontStyle.italic,
-      overflow.hidden,
-      maxWidth(36 ex))
+    val indent: Int => TagMod =
+      Memo(n => TagMod(^^.display.`inline-block`, ^^.width := s"${n * 3}ex"))
 
-    object deleteRestore {
+    val reqDesc =
+      style(marginLeft(0.5 ex))
 
-      val section = style(
-        marginTop(2.3 em),
-        marginBottom(1 em),
-        fontWeight.bold)
+    val impliedByPrefix =
+      style(marginRight(0.5 ex))
 
-      val row = styleF(D.live)(live => styleS(
-        mixinIf(live is Dead)(backgroundColor(c"#fee"), color(c"#a00"))
-      ))
+    val impliedByItem = styleF(D.live)(l => styleS(
+      // hoverShowsInfo, // It's a link to ReqDetail now
+      mixinIf(l is Live)(color(c"#111")),
+      mixinIf(l is Dead)(
+        //textDecoration := ^.lineThrough,
+        color(c"#daa"))
+    ))
 
-      val indent: Int => TagMod =
-        Memo(n => TagMod(^^.display.`inline-block`, ^^.width := s"${n * 3}ex"))
-
-      val reqDesc =
-        style(marginLeft(0.5 ex))
-
-      val impliedByPrefix =
-        style(marginRight(0.5 ex))
-
-      val impliedByItem = styleF(D.live)(l => styleS(
-        // hoverShowsInfo, // It's a link to ReqDetail now
-        mixinIf(l is Live)(color(c"#111")),
-        mixinIf(l is Dead)(
-          //textDecoration := ^.lineThrough,
-          color(c"#daa"))
-      ))
-
-      def subCodeCount = impliedByItem
-    }
-
-  } // reqtable
+    def subCodeCount = impliedByItem
+  }
 
   // ===================================================================================================================
   object reqdetail {
@@ -491,14 +506,17 @@ object Style extends StyleSheet.Inline {
       addClassNames("ui", "segments", "raised"))
 
     val richTextPreviewHeader = style(
-      addClassNames("ui", "segment", "inverted", "green"),
+      addClassNames("ui", "segment", "inverted"),
+      paddingLeft(1 ex).important,
       paddingTop(0.3 em).important,
-      paddingBottom(0.3 em).important)
+      paddingBottom(0.3 em).important,
+      (background := c"#89d6e5").important,
+      color(c"#0d1516").important)
 
     val richTextPreviewBody = style(
+      padding(1 ex).important,
       addClassNames("ui", "segment"),
-      (backgroundImage := "repeating-linear-gradient(-225deg,rgba(0,0,0,0),rgba(0,0,0,0)5ex,rgba(33,186,67,.07)5ex,rgba(33,186,67,.07)10ex)")
-        .important)
+      (backgroundImage := "repeating-linear-gradient(-225deg,rgba(0,0,0,0),rgba(0,0,0,0)5ex,rgba(137,214,229,.1)5ex,rgba(137,214,229,.1)10ex)").important)
 
     private val refColour = color(c"#2363A1")
 
@@ -587,6 +605,21 @@ object Style extends StyleSheet.Inline {
       val abort = style(
         &.hover(color(c"#DB2828").important))
     }
+
+    object autoComplete {
+      val itemTitle = style(
+        fontWeight.bold)
+
+      val itemTitle2 = style(
+        paddingLeft(1 ex),
+        color(c"#333"))
+
+      val itemDesc = style(
+        color(c"#444"),
+        fontStyle.italic,
+        overflow.hidden,
+        maxWidth(36 ex))
+    }
   }
 
   // ===================================================================================================================
@@ -626,14 +659,16 @@ object Style extends StyleSheet.Inline {
     help.examplesTable,
     impgraphPage.graph,
     cfg.deadMnemonic,
+    deletionForm.impliedByItem(Live),
+    reqtable.creation.buttonDropdown,
+    reqtable.filterEditor.input(Valid),
     reqtable.sortEditor.dragArea,
-    reqtable.sortCriteriaEditor.conclusiveColumnName,
-    reqtable.filterEditor.errorMsg,
-    reqtable.table,
-    reqtable.deleteRestore.impliedByItem(Live),
+    reqtable.page.viewCtrls,
+    reqtable.table.selectionColumnHeader,
     reqdetail.detailTable,
     reqdetail.useCaseStep.container,
     widgets.issue,
+    widgets.autoComplete.itemTitle,
     widgets.reqTypeSelector.dropdown)
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()
 //  ConsoleIO(_.info(s"Styles: ${Style.register.styles.length}")).unsafePerformIO()

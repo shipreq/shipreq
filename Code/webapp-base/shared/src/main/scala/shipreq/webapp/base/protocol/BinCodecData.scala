@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol
 
 import boopickle._
-import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.nonempty.{NonEmpty, NonEmptyVector}
 import java.time.Instant
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -56,6 +56,8 @@ object BinCodecData {
   implicit lazy val pickleReqOrSubReqId: Pickler[ReqOrSubReqId] = pickleADT
 
   implicit lazy val pickleImplications: Pickler[Implications] = pickleCaseClass
+
+  implicit lazy val pickleReqIdsByDirection: Pickler[Direction.Values[Set[ReqId]]] = pickleIsoBoolValues
 
   object AtomPicklers extends AtomTC[Pickler] {
     import shipreq.webapp.base.text._

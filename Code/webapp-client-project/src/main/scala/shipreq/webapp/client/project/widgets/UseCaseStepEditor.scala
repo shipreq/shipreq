@@ -93,13 +93,14 @@ object UseCaseStepEditor {
       validated.fold(_.isChanged)(_ || _.isChanged)
 
     val status: EditorStatus =
-      asyncStatus getOrElse EditorStatus.fromValidatedChange(validatedChanges)(commit, abort)
+      asyncStatus.getOrElse(
+        EditorStatus.fromValidatedChange(validatedChanges)(v => Some(commit(v)), Some(abort)))
 
-    def render = Component(this)
+    def render: VdomElement = Component(this)
   }
 
-  implicit val reusabilityProps: Reusability[Props] =
-    Reusability.never // TODO Reusability.caseClass
+//  implicit val reusabilityProps: Reusability[Props] =
+//    Reusability.never // TODO Reusability.caseClass
 
   val liveCorrect: EndoFn[String] =
     RichTextEditor.liveCorrect(Text.UseCaseStep)
@@ -140,7 +141,7 @@ object UseCaseStepEditor {
         KeyboardTheme.instructionsForCommitAbort(
           lineCardinality,
           p.status.getCommit,
-          p.abort,
+          Some(p.abort),
           Some(RichTextEditorHelp.modal.show))
 
       def richText =
@@ -160,7 +161,7 @@ object UseCaseStepEditor {
     ScalaComponent.builder[Props]("UseCaseStepEditor")
       .renderBackend[Backend]
       .configure(
-        Reusability.shouldComponentUpdate,
+//        Reusability.shouldComponentUpdate,
         AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.setState))
       .build
 }

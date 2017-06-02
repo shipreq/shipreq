@@ -49,6 +49,9 @@ object BinCodecGeneric extends BasicImplicitPicklers with TuplePicklers {
   def pickleBool[T](iso: Boolean <=> T): Pickler[T] =
     xmap(iso.to)(iso.from)
 
+  def pickleIsoBoolValues[B <: IsoBool[B], A: Pickler]: Pickler[IsoBool.Values[B, A]] =
+    xmap[IsoBool.Values[B, A], (A, A)](x => IsoBool.Values(pos = x._1, neg = x._2))(x => (x.pos, x.neg))
+
   implicit def pickleMap[K: Pickler, V: Pickler]: Pickler[Map[K, V]] =
     mapPickler[K, V, Map]
 
@@ -61,7 +64,7 @@ object BinCodecGeneric extends BasicImplicitPicklers with TuplePicklers {
   def pickleNonEmpty[N, E](f: N => E)(implicit p: Pickler[E], proof: NonEmpty.Proof[E, N]): Pickler[N] =
     p.xmap(NonEmpty require_! _)(f)
 
-  implicit def pickleNonEmptyA[A](implicit p: Pickler[A], proof: NonEmpty.ProofA[A]): Pickler[NonEmpty[A]] =
+  implicit def pickleNonEmptyMono[A](implicit p: Pickler[A], proof: NonEmpty.ProofMono[A]): Pickler[NonEmpty[A]] =
     pickleNonEmpty(_.value)
 
   implicit def pickleNEV[A](implicit p: Pickler[Vector[A]]): Pickler[NonEmptyVector[A]] =

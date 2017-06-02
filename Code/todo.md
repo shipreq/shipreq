@@ -6,29 +6,17 @@ Frontend
     * Katex.js can be loaded on demand. Only the CSS is required for rendering.
 
 Misc
+  * Keyboard nav for ReqDetail
+  * Show past IDs in ReqDetail
+  * Show past IDs in ReqTable?
   * Group req types in filter from ALL to ANY.
   * Say "no implications" in imp graph
-
-Integrate async into ContentEditorFeature rendering
-  * Redo ReqTable rowlocking async
 
 * Tags
   * (?) Add new column type: all tags (as opposed to non-field tags)
   * We have implications fields and implication columns.
     We don't seem to need all-imps vs non-field-imps...should tags not work the same way?
     Or is there similar deficiency in imps cols too?
-
-* ReqTable
-  * No content.
-  * All dead.
-  * All filtered out.
-  * New button & form.
-  * Sort form.
-  * Filter form (∅,ok,ko) & help.
-  * Summary math.
-  * Column selection.
-  * Delete/restore buttons.
-  * Restore reusability on ReqTable and editors
 
 * Determine UI for:
   * ReqDetail load failure
@@ -68,6 +56,8 @@ Integrate async into ContentEditorFeature rendering
     ClientData.applyEvents
 
 * Tech
+  * Stop using scalaz.std.anything which brings in too much other stuff;
+    use custom instances that have the minimum typeclasses needed.
   * Remove specs2. Use scalatest/μtest.
   * Remove ScalaCheck. Use Nyaya.
   * Use fast boopickle codecs for webworkers: https://github.com/ochrons/boopickle#codecs

@@ -125,9 +125,7 @@ trait ApplyContentEvent {
         )
 
     def applyReqFieldCustomTextSet(e: ReqFieldCustomTextSet): SE[Unit] =
-      ensureLiveReqId(e.id) >>
-      ensureLiveTextFieldId(e.fid) >>
-      (Project.reqText ^|-> ReqData.textAt(e.fid, e.id)).set(e.value)
+      ensureLiveReqId(e.id) >> setCustomTextValue(e.id, e.fid, e.value)
 
     def applyRestoreContent(e: ContentRestore): SE[Unit] =
       for {
@@ -137,6 +135,17 @@ trait ApplyContentEvent {
         t3 <- ReqCodeLogic.restoreGroupsByIdT(t2, e.codeGroups)
         _  <- Project.reqCodeTrie set t3
       } yield ()
+
+    def setCustomTextValue(id   : ReqId,
+                           fid  : CustomField.Text.Id,
+                           value: Text.CustomTextField.OptionalText): SE[Unit] =
+      ensureLiveTextFieldId(fid) >> (Project.reqText ^|-> ReqData.textAt(fid, id)).set(value)
+
+    def setCustomTextValueMap(id: ReqId,
+                              values: NonEmpty[Map[CustomField.Text.Id, Text.CustomTextField.NonEmptyText]]): SE[Unit] =
+      values.iterator
+        .map { case (fid, value) => setCustomTextValue(id, fid, value.whole) }
+        .reduce(_ >> _)
 
     def setReqCodes(id: ReqId, v: NonEmptySet[ReqCode.IdAndValue]): SE[Unit] =
       ReqCodeLogic.addAllToReq(v.whole, id, addToActive = true)
@@ -173,12 +182,13 @@ trait ApplyContentEvent {
 
       def foreachValue(id: GenericReqId, vs: ^.Values): SE[Unit] =
         SE.foldMapRun(vs.values) {
-          case ^.ValueForTitle   (v) => SE.nop // Handled below
-          case ^.ValueForTags    (v) => setReqTags   (id, v)
-          case ^.ValueForImpTgts (v) => setReqImpTgts(id, v)
-          case ^.ValueForImpSrcs (v) => setReqImpSrcs(id, v)
-          case ^.ValueForReqCodes(v) => setReqCodes  (id, v)
-      }
+          case ^.ValueForCodes     (v) => setReqCodes          (id, v)
+          case ^.ValueForCustomText(v) => setCustomTextValueMap(id, v)
+          case ^.ValueForImpSrcs   (v) => setReqImpSrcs        (id, v)
+          case ^.ValueForImpTgts   (v) => setReqImpTgts        (id, v)
+          case ^.ValueForTags      (v) => setReqTags           (id, v)
+          case ^.ValueForTitle     (v) => SE.nop // Handled below
+        }
 
       @inline def emptyTitle: Text.GenericReqTitle.OptionalText =
         Vector.empty
@@ -279,12 +289,13 @@ trait ApplyContentEvent {
 
       def foreachValue(id: UseCaseId, vs: ^.Values): SE[Unit] =
         SE.foldMapRun(vs.values) {
-          case ^.ValueForTitle   (v) => SE.nop // Handled below
-          case ^.ValueForTags    (v) => setReqTags   (id, v)
-          case ^.ValueForImpTgts (v) => setReqImpTgts(id, v)
-          case ^.ValueForImpSrcs (v) => setReqImpSrcs(id, v)
-          case ^.ValueForReqCodes(v) => setReqCodes  (id, v)
-      }
+          case ^.ValueForCodes     (v) => setReqCodes          (id, v)
+          case ^.ValueForCustomText(v) => setCustomTextValueMap(id, v)
+          case ^.ValueForImpSrcs   (v) => setReqImpSrcs        (id, v)
+          case ^.ValueForImpTgts   (v) => setReqImpTgts        (id, v)
+          case ^.ValueForTags      (v) => setReqTags           (id, v)
+          case ^.ValueForTitle     (v) => SE.nop // Handled below
+        }
 
       def postAdd(pr: PubidRegister, ucId: UseCaseId, stepId: UseCaseStepId): SE[Unit] =
         postAddStep(ucId, stepId, NCAC,

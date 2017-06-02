@@ -19,17 +19,20 @@ import scalaz.std.set._
 import scalaz.std.stream._
 import scalaz.std.vector._
 import shipreq.base.test.BaseUtilGen._
-import shipreq.base.util._, MTrie.Ops
+import shipreq.base.util._
+import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
-import shipreq.base.util.Debug._
-import shipreq.webapp.base.data._, ReqType.Mnemonic, Field.ApplicableReqTypes
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.ApplyEvent.LogicVer
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Grammar, GrammarSpec, Text}
 import shipreq.webapp.base.util.{GenericData, PreProcessor}
 import DataImplicits._
+import Field.ApplicableReqTypes
+import MTrie.Ops
 import Optics.Implicits._
+import ReqType.Mnemonic
 import TestOptics.{customReqTypesLive => _, _}
 import WebappBaseGen._
 
@@ -1512,10 +1515,10 @@ object RandomData {
     val tagParents: Gen[TagInTree.Parents] =
       tagId.option mapBy tagId
 
-    val anyApplicableReqTypes =
+    val anyApplicableReqTypes: Gen[ApplicableReqTypes] =
       customReqTypeId.set flatMap applicableReqTypes
 
-    val reqCodeIdAndValue =
+    val reqCodeIdAndValue: Gen[ReqCode.IdAndValue] =
       Gen.apply2(ReqCode.IdAndValue)(reqCode.id, reqCode.value)
 
     val fieldId: Gen[FieldId] =
@@ -1530,7 +1533,9 @@ object RandomData {
     private[this] val i = Some(customIssueTypeId)
     private[this] val a = Some(applicableTagId)
 
-    val customTextField     = TextGen.customTextFieldAtom(r, u, c, i, a).text
+    val customTextFieldAtom = TextGen.customTextFieldAtom(r, u, c, i, a)
+    val customTextField     = customTextFieldAtom.text
+    val customTextField1    = customTextFieldAtom.text1(Text.CustomTextField)
     val codeGroupTitle      = TextGen.codeGroupTitleAtom(r, u, c, i).text
     val genericReqTitleAtom = TextGen.genericReqTitleAtom(r, u, c, i, a)
     val genericReqTitle     = genericReqTitleAtom.text
@@ -1544,8 +1549,11 @@ object RandomData {
     val stepFlowSetDiff =
       genNonEmptySetDiff(useCaseStepId)
 
-    val deletionReason =
+    val deletionReason: Gen[Text.DeletionReason.OptionalText] =
       TextGen.deletionReasonAtom(r, u, c, a).text
+
+    val nonEmptyCustomTextMap: Gen[Event.NonEmptyCustomTextMap] =
+      customTextField1.mapBy(customFieldTextId)(1 to 3).map(NonEmpty.force)
 
     object customIssueTypeGD extends GenericDataGen(CustomIssueTypeGD) {
       import gd._
@@ -1595,22 +1603,24 @@ object RandomData {
     object genericReqGD extends GenericDataGen(GenericReqGD) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case Title    => genericReqTitle1      map Title   .apply
-        case ReqCodes => reqCodeIdAndValue.nes map ReqCodes.apply
-        case Tags     => applicableTagId.nes   map Tags    .apply
-        case ImpSrcs  => reqId.nes             map ImpSrcs .apply
-        case ImpTgts  => reqId.nes             map ImpTgts .apply
+        case Codes      => reqCodeIdAndValue.nes map Codes     .apply
+        case CustomText => nonEmptyCustomTextMap map CustomText.apply
+        case ImpSrcs    => reqId.nes             map ImpSrcs   .apply
+        case ImpTgts    => reqId.nes             map ImpTgts   .apply
+        case Tags       => applicableTagId.nes   map Tags      .apply
+        case Title      => genericReqTitle1      map Title     .apply
       }
     }
 
     object useCaseGD extends GenericDataGen(UseCaseGD) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case Title    => useCaseTitle1         map Title   .apply
-        case ReqCodes => reqCodeIdAndValue.nes map ReqCodes.apply
-        case Tags     => applicableTagId.nes   map Tags    .apply
-        case ImpSrcs  => reqId.nes             map ImpSrcs .apply
-        case ImpTgts  => reqId.nes             map ImpTgts .apply
+        case Codes      => reqCodeIdAndValue.nes map Codes     .apply
+        case CustomText => nonEmptyCustomTextMap map CustomText.apply
+        case ImpSrcs    => reqId.nes             map ImpSrcs   .apply
+        case ImpTgts    => reqId.nes             map ImpTgts   .apply
+        case Tags       => applicableTagId.nes   map Tags      .apply
+        case Title      => useCaseTitle1         map Title     .apply
       }
     }
 

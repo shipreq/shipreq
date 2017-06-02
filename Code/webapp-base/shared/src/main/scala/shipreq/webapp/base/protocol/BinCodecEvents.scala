@@ -19,7 +19,7 @@ object BinCodecEvents {
   implicit val pickleCustomTagFieldGD  = binpickler(CustomTagFieldGD ).nev
   implicit val pickleCustomTextFieldGD = binpickler(CustomTextFieldGD).nev
   implicit val pickleGenericReqGD      = binpickler(GenericReqGD     ).values
-  implicit val pickleCodeGroupGD    = binpickler(CodeGroupGD   ).nev
+  implicit val pickleCodeGroupGD       = binpickler(CodeGroupGD      ).nev
   implicit val pickleTagGroupGD        = binpickler(TagGroupGD       ).nev
   implicit val pickleUseCaseGD         = binpickler(UseCaseGD        ).values
   implicit val pickleUseCaseStepGD     = binpickler(UseCaseStepGD    ).nev
@@ -53,9 +53,9 @@ object BinCodecEvents {
   implicit val pickleGenericReqTypeSet     : Pickler[GenericReqTypeSet     ] = pickleCaseClass
   implicit val pickleProjectNameSet        : Pickler[ProjectNameSet        ] = pickleCaseClass
   implicit val pickleProjectTemplateApply  : Pickler[ProjectTemplateApply  ] = pickleCaseClass
-  implicit val pickleCodeGroupCreate    : Pickler[CodeGroupCreate    ] = pickleCaseClass
-  implicit val pickleCodeGroupsDelete   : Pickler[CodeGroupsDelete   ] = pickleCaseClass
-  implicit val pickleCodeGroupUpdate    : Pickler[CodeGroupUpdate    ] = pickleCaseClass
+  implicit val pickleCodeGroupCreate       : Pickler[CodeGroupCreate       ] = pickleCaseClass
+  implicit val pickleCodeGroupsDelete      : Pickler[CodeGroupsDelete      ] = pickleCaseClass
+  implicit val pickleCodeGroupUpdate       : Pickler[CodeGroupUpdate       ] = pickleCaseClass
   implicit val pickleReqCodesPatch         : Pickler[ReqCodesPatch         ] = pickleCaseClass
   implicit val pickleReqFieldCustomTextSet : Pickler[ReqFieldCustomTextSet ] = pickleCaseClass
   implicit val pickleReqImplicationsPatch  : Pickler[ReqImplicationsPatch  ] = pickleCaseClass

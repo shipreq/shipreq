@@ -1,9 +1,13 @@
 package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty._
-import japgolly.scalajs.react._, vdom.html_<^._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
+import japgolly.univeq._
 import org.scalajs.dom.window
+import scalacss.ScalaCssReact._
 import shipreq.base.util.Allow
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
@@ -11,216 +15,200 @@ import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.base.data.TCB
 import shipreq.webapp.client.base.feature.AsyncFeature
+import shipreq.webapp.client.base.ui.semantic.{Button, Icon}
+import shipreq.webapp.client.project.app.Style.reqtable.{page => *}
 import shipreq.webapp.client.project.feature.Modal
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets.{DeletionForm, ProjectWidgets}
-import AsyncFeature.Status.InProgress
 
 /**
-  * Renders a bar that provides the user with information and action-buttons pertaining to the rows selected the
-  * ReqTable.
+  * Provides users with means to apply actions in bulk, across selected requirements.
   *
   * Example:
   *
-  *   15 items selected.  [Delete (14/15) →]  [Restore (1/15)]
+  *   [Delete (14/15)]  [Restore (1/15)]
   */
 object SelectionCtrls {
 
-  case class Props(sel          : RowSelectionVisible,
-                   cfg          : ProjectConfig,
-                   rows         : Rows,
-                   setModal     : Modal.SetFn,
-                   project      : Project,
-                   widgets      : ProjectWidgets,
-                   projectText  : PlainText.ForProject,
-                   textSearch   : TextSearch,
-                   saveIO       : ServerCall[UpdateContentCmd],
-                   async        : AsyncFeature.Write.D2[Row.SourceId, Option[Column], String])
-
-  // These two are only used in callbacks so are always reusable
-  private implicit def reusabilityPlainText : Reusability[PlainText.ForProject]  = Reusability.always
-  private implicit def reusabilityTextSearch: Reusability[TextSearch]            = Reusability.always
-
-  implicit def reuseProps: Reusability[Props] = Reusability.caseClass
-
-  private case class SelSubset(reqs: Vector[Req], groups: Vector[CodeGroup]) {
-    def total = reqs.length + groups.length
+  final case class Props(sel        : RowSelectionVisible,
+                         rows       : Vector[Row],
+                         setModal   : Modal.SetFn,
+                         project    : Project,
+                         widgets    : ProjectWidgets,
+                         projectText: PlainText.ForProject,
+                         textSearch : TextSearch,
+                         updateIO   : ServerCall[UpdateContentCmd],
+                         async      : AsyncFeature.Write.D1[Row.SourceId, Nothing]) {
+    @inline def render: VdomElement = Component(this)
   }
 
-  private case class SelSubsets(deletable: SelSubset, restorable: SelSubset)
-  private val emptySelSubsets = {
-    val e = SelSubset(Vector.empty, Vector.empty)
-    SelSubsets(e, e)
-  }
+  final case class Derived(totalSelected: Int,
+                           delete       : Option[ActionInfo],
+                           restore      : Option[ActionInfo])
 
-  private def selSubsets(p: Props): SelSubsets = {
-    var remaining = p.sel.legalSelection // because the same sourceId can appear more than once
+  final case class ActionInfo(affects: Int, perform: Callback)
 
-    if (remaining.isEmpty)
-      emptySelSubsets
+  implicit def reusabilityProps: Reusability[Props] =
+    Reusability.byRef || Reusability.caseClass
 
-    else {
-      var delReqs   = Vector.newBuilder[Req]
-      var delGroups = Vector.newBuilder[CodeGroup]
-      var resReqs   = Vector.newBuilder[Req]
-      var resGroups = Vector.newBuilder[CodeGroup]
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      p.rows foreach { row =>
+  final class Backend($: BackendScope[Props, Unit]) {
+
+    def derive(p: Props): Derived = {
+      var remaining = p.sel.legalSelection // because the same sourceId can appear more than once in Rows
+      var delRq     = Vector.empty[Req]
+      var delCG     = Vector.empty[CodeGroup]
+      var resRq     = Vector.empty[Req]
+      var resCG     = Vector.empty[CodeGroup]
+      val reqTypes  = p.project.config.reqTypes
+
+      // Here we have to traverse Rows because
+      // 1. we don't have a (r: Row.SourceId => r.Row) lookup. Switch to this approach later if needed elsewhere
+      // 2. it's not easy to lookup an ActiveCodeGroup by ReqCodeId which is all you can do with a Project
+      for (row <- p.rows) {
         val id = row.sourceId
         if (remaining contains id) {
           remaining -= id
           row match {
-
-            case ReqRow(r, Live, _, _, _) =>
-              delReqs += r
-
-            case ReqRow(r, Dead, _, _, _) =>
-              if (r.allowLiveChange(p.cfg.reqTypes) is Allow)
-                resReqs += r
-
-            case r: CodeGroupRow =>
+            case Row.ForReq(r, Live, _, _, _) =>
+              delRq :+= r
+            case Row.ForReq(r, Dead, _, _, _) =>
+              if (r.allowLiveChange(reqTypes) is Allow)
+                resRq :+= r
+            case r: Row.ForCodeGroup =>
               r.live match {
-                case Live => delGroups += r.group
-                case Dead => resGroups += r.group
+                case Live => delCG :+= r.group
+                case Dead => resCG :+= r.group
               }
           }
         }
       }
+      assert(remaining.isEmpty)
 
-      val d = SelSubset(delReqs.result(), delGroups.result())
-      val r = SelSubset(resReqs.result(), resGroups.result())
-      SelSubsets(d, r)
+      Derived(
+        totalSelected = p.sel.legalSelectionSize,
+        delete        = deleteReqsAndCodeGroupsAction(p, delRq, delCG) orElse deleteCodeGroupsAction(delCG),
+        restore       = restoreAction(resRq, resCG))
     }
-  }
 
-  def locsOfReqs(ids: Iterator[ReqId]): Iterator[Row.SourceId] =
-    ids.map(Row.ReqRowSourceId)
+    private val clearModal: Callback =
+      $.props.flatMap(_.setModal(None))
 
-  def locsOfGroups(ids: Iterator[ReqCodeId]): Iterator[Row.SourceId] =
-    ids.map(Row.CodeGroupRowSourceId)
-
-  class Backend($: BackendScope[Props, Unit]) {
-
-    def render(p: Props) = {
-
-      val totalSelected = p.sel.legalSelection.size
-      val ss = selSubsets(p)
-
-      def infoText =
-        totalSelected match {
-          case 0 => "0 items selected."
-          case 1 => "1 item selected."
-          case n => n.toString + " items selected."
-        }
-
-      def addCount(label: String, count: Int, suffix: String = ""): String = {
-        var s = label
-        if (count != totalSelected)
-          s = s"$s ($count/$totalSelected)"
-        s + suffix
+    private def deleteReqsAndCodeGroupsAction(p: Props, reqs: Vector[Req], codeGroups: Vector[CodeGroup]): Option[ActionInfo] =
+      NonEmptyVector.option(reqs).map { rs =>
+        val affects = rs.length + codeGroups.length
+        def modal = deleteReqsModal(p, rs.mapToNES(_.id), codeGroups.map(_.id)(collection.breakOut))
+        val action = Callback.lazily(p.setModal(modal))
+        ActionInfo(affects, action)
       }
 
-      val deleteButton = {
-        val d = ss.deletable
-
-        def delReqsAndGroups =
-          NonEmptyVector.option(d.reqs).map { rs =>
-            def modal = deleteReqsModal(p, rs.mapToNES(_.id), d.groups.map(_.id)(collection.breakOut))
-            val count = rs.length + d.groups.length
-            <.button(
-              ^.onClick --> p.setModal(modal),
-              addCount(UiText.Life.delete, count, " →"))
-          }
-
-        def delGroupsOnly =
-          NonEmptyVector.option(d.groups).map { gs =>
-            <.button(
-              ^.onClick --> deleteGroupsIO(gs.mapToNES(_.id)),
-              addCount(UiText.Life.delete + " Groups", gs.length))
-          }
-
-        def cantDelete =
-          <.button(^.disabled := true, UiText.Life.delete)
-
-        delReqsAndGroups orElse delGroupsOnly getOrElse cantDelete
-      }
-
-      val restoreButton = {
-        val r = ss.restorable
-        if (r.total == 0)
-          <.button(^.disabled := true, UiText.Life.restore)
-        else {
-          def cmd = UpdateContentCmd.RestoreContent(
-            r.reqs.map(_.id)(collection.breakOut),
-            r.groups.map(_.id)(collection.breakOut))
-          <.button(
-            ^.onClick --> restoreIO(cmd),
-            addCount(UiText.Life.restore, r.total))
-        }
-      }
-
-      <.div(infoText, deleteButton, restoreButton)
-    }
-
-    val cancel = $.props.flatMap(_ setModal Modal.none)
-
-    def deleteGroupsIO(groups: NonEmptySet[ReqCodeId]): Callback = {
-      val cmd = UpdateContentCmd.DeleteCodeGroups(groups)
-      val locs = locsOfGroups(cmd.ids.iterator).toList
-      callRemoteAndUpdateRows(cmd, locs)
-    }
-
-    def deleteReqsIO(cmd: UpdateContentCmd.DeleteReqs): Callback = {
-      val locs = locsOfReqs(cmd.reqs.iterator) ++ locsOfGroups(cmd.codeGroups.iterator)
-      callRemoteAndUpdateRows(cmd, locs.toList)
-    }
-
-    def deleteReqsModal(p: Props, reqs: NonEmptySet[ReqId], groups: Set[ReqCodeId]): Modal = {
+    private def deleteReqsModal(p: Props, reqs: NonEmptySet[ReqId], groups: Set[ReqCodeId]): Modal = {
       val props1 = DeletionForm.initProps1(p.project, reqs, groups)
-      val props = DeletionForm.makeProps(props1, p.widgets, p.projectText, p.textSearch, deleteReqsIO, cancel)
+      val props = DeletionForm.makeProps(props1, p.widgets, p.projectText, p.textSearch, deleteReqsIO, clearModal)
       Modal(DeletionForm.Component(props))
     }
 
-    def restoreIO(cmd: UpdateContentCmd.RestoreContent): Callback = {
-      val locs = locsOfReqs(cmd.reqs.iterator) ++ locsOfGroups(cmd.codeGroups.iterator)
-      callRemoteAndUpdateRows(cmd, locs.toList)
+    private def deleteReqsIO(cmd: UpdateContentCmd.DeleteReqs): Callback = {
+      val sourceIds: List[Row.SourceId] =
+        cmd.reqs.iterator.map(Row.SourceId.ForReq)
+          .++(cmd.codeGroups.iterator.map(Row.SourceId.ForCodeGroup))
+          .toList
+      runCmd(cmd, sourceIds)
     }
 
-    private def callRemoteAndUpdateRows(cmd: UpdateContentCmd, rows: List[Row.SourceId]): Callback = {
-      val async = $.props.map(_.async).runNow()
+    private def deleteCodeGroupsAction(codeGroups: Vector[CodeGroup]): Option[ActionInfo] =
+      NonEmptyVector.option(codeGroups).map { gs =>
+        val affects = gs.length
+        val action = Callback.lazily(deleteGroupsIO(gs.mapToNES(_.id)))
+        ActionInfo(affects, action)
+      }
+
+    private def deleteGroupsIO(codeGroups: NonEmptySet[ReqCodeId]): Callback = {
+      val cmd = UpdateContentCmd.DeleteCodeGroups(codeGroups)
+      val sourceIds: List[Row.SourceId] = cmd.ids.whole.map(Row.SourceId.ForCodeGroup)(collection.breakOut)
+      runCmd(cmd, sourceIds)
+    }
+
+    private def restoreAction(reqs: Vector[Req], codeGroups: Vector[CodeGroup]): Option[ActionInfo] = {
+      val affects = reqs.length + codeGroups.length
+      Option.unless(affects ==* 0) {
+        val cmd = UpdateContentCmd.RestoreContent(
+          reqs.map(_.id)(collection.breakOut),
+          codeGroups.map(_.id)(collection.breakOut))
+        ActionInfo(affects, restoreIO(cmd))
+      }
+    }
+
+    private def restoreIO(cmd: UpdateContentCmd.RestoreContent): Callback = {
+      val sourceIds: List[Row.SourceId] =
+        cmd.reqs.iterator.map(Row.SourceId.ForReq)
+          .++(cmd.codeGroups.iterator.map(Row.SourceId.ForCodeGroup))
+          .toList
+      runCmd(cmd, sourceIds)
+    }
+
+    private def runCmd(cmd: UpdateContentCmd, rows: Iterable[Row.SourceId]): Callback = {
+      def setRowStatuses(s: AsyncFeature.State.D0[Nothing]): Callback =
+        $.props.flatMap(_.async.setBulk(rows, s))
 
       def lockRows: Callback =
-        async.setBulk(rows, None, Some(InProgress))
+        setRowStatuses(Some(AsyncFeature.Status.InProgress))
 
       def unlockRows: Callback =
-        async.setBulk(rows, None, None)
+        setRowStatuses(None)
 
       def uncheckRows: Callback =
-        $.props >>= { p =>
+        $.props.flatMap { p =>
           val newSel = p.sel clearAll rows
           p.sel updateFn newSel
         }
 
-      $.props >>= { p =>
-        def callServer: Callback = {
-          val s = TCB.Success(unlockRows >> uncheckRows)
-          val f = (err: String) => TCB.Failure.lazily(
-            if (window.confirm(s"Deletion failed. $err\n\nRetry?"))
-              callServer
-            else
-              unlockRows
-          )
-          p.saveIO(cmd, s, f)
-        }
-
-        lockRows >> p.setModal(None) >> callServer
+      def callServer: Callback = {
+        val s = TCB.Success(unlockRows >> uncheckRows)
+        val f = (err: String) => TCB.Failure.lazily(
+          if (window.confirm(s"Deletion failed. $err\n\nRetry?"))
+            callServer
+          else
+            unlockRows
+        )
+        $.props.flatMap(_.updateIO(cmd, s, f))
       }
+
+      lockRows >> clearModal >> callServer
     }
 
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    def render(p: Props) = {
+      val derived = derive(p)
+
+      var result: VdomTag = <.div
+
+      def addButton(name: String, icon: Icon, a: ActionInfo): Unit = {
+        val label: String =
+          if (a.affects ==* derived.totalSelected)
+            name
+          else
+            s"$name (${a.affects}/${derived.totalSelected})"
+
+        val button: VdomTag =
+          Button(tipe = Button.Type.IconAndText(icon, label)).tag(
+            *.actionCtrlButton,
+            ^.onClick --> a.perform)
+
+        result = result(button)
+      }
+
+      derived.delete.foreach(addButton(UiText.Life.delete, Icon.Trash, _))
+      derived.restore.foreach(addButton(UiText.Life.restore, Icon.Undo, _))
+
+      result
+    }
   }
 
-  val Component = ScalaComponent.builder[Props]("SelCtrls")
+  val Component = ScalaComponent.builder[Props]("SelectionCtrls")
     .renderBackend[Backend]
     .configure(shouldComponentUpdate)
     .build

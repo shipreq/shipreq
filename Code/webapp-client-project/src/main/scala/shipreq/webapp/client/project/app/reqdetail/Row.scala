@@ -42,7 +42,7 @@ object Row {
   case object PastPubids                    extends Row(autoKey)
   case object DeletionReason                extends Row(autoKey)
   case object ReqType                       extends Row(autoKey)
-  case object Code                          extends Row(autoKey)
+  case object Codes                         extends Row(autoKey)
   case object Tags                          extends Row(autoKey)
   case object Implications                  extends Row(autoKey)
   case object ImplicationGraph              extends Row(autoKey)
@@ -76,7 +76,7 @@ object Row {
       Life,
       PastPubids,
       DeletionReason,
-      Code,
+      Codes,
       Tags,
       Implications)
 

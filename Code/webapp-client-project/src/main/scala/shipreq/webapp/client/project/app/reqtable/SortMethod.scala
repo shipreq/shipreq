@@ -4,6 +4,10 @@ import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.Util
 import shipreq.base.util.univeq._
 
+/** The method by which data should be sorted.
+  *
+  * Basically just an enum of {Ascending,Descending} that also takes blanks into consideration.
+  */
 sealed trait SortMethod {
   def symbol: String
   def description: String

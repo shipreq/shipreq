@@ -99,7 +99,13 @@ sealed abstract class PotentialChange[+E, +A] {
 
 object PotentialChange {
 
-  sealed abstract class NonFailure[+A] extends PotentialChange[Nothing, A]
+  sealed abstract class NonFailure[+A] extends PotentialChange[Nothing, A] {
+    final def foldNonFailure[B](changed: A => B, unchanged: => B): B =
+      this match {
+        case Success(a) => changed(a)
+        case Unchanged  => unchanged
+      }
+  }
 
   case class Success[+A](update: A) extends NonFailure[A]
 

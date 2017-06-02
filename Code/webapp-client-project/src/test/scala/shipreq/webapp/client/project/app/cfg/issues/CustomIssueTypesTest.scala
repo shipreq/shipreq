@@ -12,6 +12,7 @@ import shipreq.webapp.client.project.app.cfg.shared.Usage
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.test.TestUtil._
 import shipreq.webapp.client.project.test._
+import teststate.domzipper.sizzle.Sizzle
 import utest._
 
 object CustomIssueTypesTest extends TestSuite {

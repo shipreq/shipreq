@@ -74,21 +74,21 @@ object HomeContent {
 
   final class Backend($: BackendScope[Props, Unit]) {
 
-    val navBarLeft =
-      Breadcrumb.Item.Div(ClientConfig.BreadcrumbNameMemberHome) :: Nil
+    val navBarLeft: MemberNavBar.LeftProps =
+      Reusable.byRef(Breadcrumb.Item.Div(ClientConfig.BreadcrumbNameMemberHome) :: Nil)
 
     val inputMod: TagMod =
       ^.placeholder := "New project name..."
 
     def render(p: Props): VdomElement = {
 
-      val menu = MemberNavBar.Props(p.username, navBarLeft, Nil).render
+      val menu = MemberNavBar.Props(p.username, navBarLeft).render
 
       val projectCreate = {
-        val status =
+        val status: EditorStatus =
           EditorStatus.async(p.createProjectAS) getOrElse
             EditorStatus.ignoreOrValidate(DataValidators.projectName.unnamed)(
-              p.createProjectText.value, _.isEmpty, p.createProjectIO)
+              p.createProjectText.value, _.isEmpty, s => Some(p.createProjectIO(s)))
 
         PlainTextEditor.WithButton.Props(
           p.createProjectText.value,

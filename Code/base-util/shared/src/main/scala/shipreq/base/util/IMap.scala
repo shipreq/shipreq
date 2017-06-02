@@ -13,7 +13,7 @@ object IMap {
   implicit def univEq[K, V](implicit u: UnivEq[Map[K, V]]): UnivEq[IMap[K, V]] =
     IMapBaseV.univEq[K, V, V, IMap[K, V]](u)
 
-  implicit def nonEmptyProof[K, V]: NonEmpty.ProofA[IMap[K, V]] =
+  implicit def nonEmptyProof[K, V]: NonEmpty.ProofMono[IMap[K, V]] =
     NonEmpty.Proof.testEmptiness(_.isEmpty)
 
   def empty[K: UnivEq, V](k: V => K): IMap[K, V] =

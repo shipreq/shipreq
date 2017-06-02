@@ -1,7 +1,7 @@
 package shipreq.webapp.base
 
-import scalaz.\/
-import shipreq.base.util.{Digraph, MMTree, IMap}
+import scalaz.{-\/, \/, \/-}
+import shipreq.base.util._
 import shipreq.base.util.univeq._
 
 package object data {
@@ -61,6 +61,15 @@ package object data {
 
   val Implications = new Digraph.FixAcyclic[ReqId, Int]("implications", _.value)
   type Implications = Implications.BiDir
+
+  type ImplicationScope = CustomField.Implication.Id \/ Direction
+  object ImplicationScope {
+    def dir(s: ImplicationScope): Direction =
+      s match {
+        case \/-(d) => d
+        case -\/(_) => CustomField.Implication.dir
+      }
+  }
 
   type HashRefTarget       = ApplicableTag \/ CustomIssueType
   type CustomIssueTypeIMap = IMap[CustomIssueTypeId, CustomIssueType]

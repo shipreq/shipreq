@@ -23,6 +23,7 @@ import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.feature.AutoCompleteFeature
 import AutoComplete.ReqItem
 import DataImplicits._
+import shipreq.webapp.client.base.REACT_TMP._
 
 object ImplicationEditor {
 
@@ -75,20 +76,21 @@ object ImplicationEditor {
   type CommitFn    = Output ~=> Callback
   type AbortCommit = Option[AbortCommit2[Callback, CommitFn]]
 
-  case class Props(edit          : StateSnapshot[String],
-                   lookup        : Lookup,
-                   validationFn  : ValidationFn,
-                   asyncStatus   : Option[EditorStatus.Async],
-                   abortCommit   : AbortCommit,
-                   textSearch    : TextSearch) {
+  case class Props(edit            : StateSnapshot[String],
+                   lookup          : Lookup,
+                   validationFn    : ValidationFn,
+                   asyncStatus     : Option[EditorStatus.Async],
+                   abortCommit     : AbortCommit,
+                   textSearch      : TextSearch,
+                   showInstructions: Boolean) {
 
     val parseResult = validationFn(lookup)(edit.value)
     val validated   = PotentialChange.fromDisjunction(parseResult).ignoreEmpty
-    def abort       = abortCommit.fold(Callback.empty)(_.abort)
-    def commit      = (r: Output) => abortCommit.fold(Callback.empty)(_ commit r)
+    def abort       = abortCommit.map(_.abort)
+    def commit      = (r: Output) => abortCommit.map(_ commit r)
     val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
 
-    def render = Component(this)
+    @inline def render: VdomElement = Component(this)
   }
 
   type ValidationFn = Lookup => Simple.Validator[String, _, SetDiff[ReqId]]
@@ -138,7 +140,7 @@ object ImplicationEditor {
 
     val textareaConst: TagMod = {
       val keys =
-        KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +
+        KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort)) +
         KeyboardTheme.commitCO($.props.map(_.status.getCommit), lineCardinality)
 
       val updateState: ReactEventFromTextArea => Callback =
@@ -162,12 +164,13 @@ object ImplicationEditor {
       def editor(validity: Validity): VdomElement =
         editorRef.component(EditTheme.autosizeTextareaProps(validity, p.edit.value, textareaConst))
 
-      def instructions =
-        KeyboardTheme.instructionsForCommitAbort(
-          lineCardinality,
-          p.status.getCommit,
-          p.abort,
-          None)
+      def instructions: TagMod =
+        TagMod.when(p.showInstructions)(
+          KeyboardTheme.instructionsForCommitAbort(
+            lineCardinality,
+            p.status.getCommit,
+            p.abort,
+            None))
 
       EditTheme.renderEditor(p.status, editor, p.edit.value, instructions)
     }
@@ -178,14 +181,14 @@ object ImplicationEditor {
   implicit val reusabilityLookup: Reusability[Lookup] =
     Reusability.byRef[Lookup] || Reusability.byUnivEq
 
-  implicit val reusabilityProps: Reusability[Props] =
-    Reusability.never // TODO Reusability.caseClass
+//  implicit val reusabilityProps: Reusability[Props] =
+//    Reusability.never // TODO Reusability.caseClass
 
   val Component =
     ScalaComponent.builder[Props]("ImpEditor")
       .renderBackend[Backend]
       .configure(
-        Reusability.shouldComponentUpdate,
+//        Reusability.shouldComponentUpdate,
         AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.setState))
       .build
 }

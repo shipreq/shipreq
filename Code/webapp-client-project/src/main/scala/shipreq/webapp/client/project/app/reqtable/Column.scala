@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import scalaz.{-\/, \/-}
@@ -10,20 +10,18 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data
-import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.client.base.lib.KeyGen
-import shipreq.webapp.client.project.feature.EditorFeature
+import shipreq.webapp.client.project.feature.{CreateFeature, EditorFeature}
 
 sealed trait Column {
   // Ensure correct attribute traits are mixed in
   protected def __sortConcl: Nothing
   protected def __blankable: Nothing
 
-  def live: Live
-
   /** A value that can be passed to React to quickly identify columns. */
   val key: String
 }
+
 object Column {
 
   sealed trait HasBlanks        extends Column   { final protected def __blankable = ??? }
@@ -35,28 +33,22 @@ object Column {
   sealed trait BuiltIn extends Column {
     override final val key = KeyGen.global.next()
   }
-  sealed trait BuiltInLive extends BuiltIn {
-    override final def live = Live
-  }
-  sealed trait BuiltInDead extends BuiltIn {
-    override final def live = Dead
-  }
 
   // -------------------------------------------------------------------------------------------------------------------
 
   // NOTE: Keep .builtInValues in sync
-  case object Pubid                       extends BuiltInLive with SortConclusive
-  case object Code                        extends BuiltInLive with SortInconclusive with HasBlanks
-  case object Title                       extends BuiltInLive with SortInconclusive with HasBlanks
-  case object ReqType                     extends BuiltInLive with SortInconclusive with NoBlanks
-  case object Tags                        extends BuiltInLive with SortInconclusive with HasBlanks
-  case class Implications(dir: Direction) extends BuiltInLive with SortInconclusive with HasBlanks
-  case object DeletionReason              extends BuiltInDead with SortInconclusive with HasBlanks
+  case object Pubid                       extends BuiltIn with SortConclusive
+  case object Code                        extends BuiltIn with SortInconclusive with HasBlanks
+  case object Title                       extends BuiltIn with SortInconclusive with HasBlanks
+  case object ReqType                     extends BuiltIn with SortInconclusive with NoBlanks
+  case object Tags                        extends BuiltIn with SortInconclusive with HasBlanks
+  case class Implications(dir: Direction) extends BuiltIn with SortInconclusive with HasBlanks
+  case object DeletionReason              extends BuiltIn with SortInconclusive with HasBlanks
 
   // Field columns
   // - No applicable StaticFields, else they'd be added manually here.
   // - Currently allows any type of CustomField; this may change in future.
-  case class CustomField(id: data.CustomFieldId, live: Live) extends SortInconclusive with HasBlanks {
+  case class CustomField(id: data.CustomFieldId) extends SortInconclusive with HasBlanks {
     override val key = "f" + id.value
   }
 
@@ -77,8 +69,7 @@ object Column {
   @inline implicit def reusability: Reusability[Column]                     = Reusability.byEqual
 
   val builtInValues: NonEmptyVector[BuiltIn] =
-    // TODO Add adtValuesExcept
-    NonEmptyVector(
+    AdtMacros.adtValuesManually[BuiltIn](
       Pubid,
       Code,
       Title,
@@ -95,90 +86,96 @@ object Column {
     case _: CustomField => false
   }
 
-  def all(c: ProjectConfig): NonEmptyVector[Column] =
-    c.fields.customFields.values.toVector.map(f => CustomField(f.id, f live c)) ++: builtInValues
-
-  def all(c: ProjectConfig, fd: FilterDead): NonEmptyVector[Column] =
-    NonEmptyVector.force(all(c).whole filter filterDead(fd))
-
-  val filterDead: FilterDead => Column => Boolean =
-    FilterDead.memo(_.filterFnBy[Column](_.live))
-
-  val editorFieldIntersection = Intersection[Column, EditorFeature.FieldKey] {
-    case Column.ReqType                                             => Some(EditorFeature.FieldKey.ReqType)
-    case Column.Code                                                => Some(EditorFeature.FieldKey.Code)
-    case Column.Title                                               => Some(EditorFeature.FieldKey.Title)
-    case Column.Tags                                                => Some(EditorFeature.FieldKey.Tags(None))
-    case Column.Implications(dir)                                   => Some(EditorFeature.FieldKey.Implications(\/-(dir)))
-    case Column.CustomField(id: data.CustomField.Implication.Id, _) => Some(EditorFeature.FieldKey.Implications(-\/(id)))
-    case Column.CustomField(id: data.CustomField.Tag        .Id, _) => Some(EditorFeature.FieldKey.Tags(Some(id)))
-    case Column.CustomField(id: data.CustomField.Text       .Id, _) => Some(EditorFeature.FieldKey.CustomTextField(id))
-    case Column.Pubid
-       | Column.DeletionReason                                      => None
+  val editorFieldCG = Intersection[Column, EditorFeature.FieldKey.ForCodeGroup] {
+    case Column.Code            => Some(EditorFeature.FieldKey.Code)
+    case Column.Title           => Some(EditorFeature.FieldKey.CodeGroupTitle)
+    case Column.ReqType
+       | Column.Tags
+       | Column.DeletionReason
+       | Column.Pubid
+       | _: Column.CustomField
+       | _: Column.Implications => None
   } {
-    case EditorFeature.FieldKey.ReqType                => Some(Column.ReqType)
-    case EditorFeature.FieldKey.Code                   => Some(Column.Code)
-    case EditorFeature.FieldKey.Title                  => Some(Column.Title)
-    case EditorFeature.FieldKey.Tags(None)             => Some(Column.Tags)
-    case EditorFeature.FieldKey.Implications(\/-(dir)) => Some(Column.Implications(dir))
-    case EditorFeature.FieldKey.Implications(-\/(id))  => Some(Column.CustomField(id, Live)) // TODO Column shouldn't store Live
-    case EditorFeature.FieldKey.Tags(Some(id))         => Some(Column.CustomField(id, Live))
-    case EditorFeature.FieldKey.CustomTextField(id)    => Some(Column.CustomField(id, Live))
-    case EditorFeature.FieldKey.UseCaseStep(_)         => None
+    case EditorFeature.FieldKey.Code           => Some(Column.Code)
+    case EditorFeature.FieldKey.CodeGroupTitle => Some(Column.Title)
   }
 
-  def field(c: Column, p: ProjectConfig): Option[Field] =
-    c match {
+  val editorFieldGR = Intersection[Column, EditorFeature.FieldKey.ForGenericReq] {
+    case Column.ReqType                                          => Some(EditorFeature.FieldKey.ReqType)
+    case Column.Code                                             => Some(EditorFeature.FieldKey.Codes)
+    case Column.Title                                            => Some(EditorFeature.FieldKey.GenericReqTitle)
+    case Column.Tags                                             => Some(EditorFeature.FieldKey.Tags(None))
+    case Column.Implications(dir)                                => Some(EditorFeature.FieldKey.Implications(\/-(dir)))
+    case Column.CustomField(id: data.CustomField.Implication.Id) => Some(EditorFeature.FieldKey.Implications(-\/(id)))
+    case Column.CustomField(id: data.CustomField.Tag        .Id) => Some(EditorFeature.FieldKey.Tags(Some(id)))
+    case Column.CustomField(id: data.CustomField.Text       .Id) => Some(EditorFeature.FieldKey.CustomTextField(id))
+    case Column.Pubid
+       | Column.DeletionReason                                   => None
+  } {
+    case EditorFeature.FieldKey.ReqType                => Some(Column.ReqType)
+    case EditorFeature.FieldKey.Codes                  => Some(Column.Code)
+    case EditorFeature.FieldKey.GenericReqTitle        => Some(Column.Title)
+    case EditorFeature.FieldKey.Tags(None)             => Some(Column.Tags)
+    case EditorFeature.FieldKey.Implications(\/-(dir)) => Some(Column.Implications(dir))
+    case EditorFeature.FieldKey.Implications(-\/(id))  => Some(Column.CustomField(id))
+    case EditorFeature.FieldKey.Tags(Some(id))         => Some(Column.CustomField(id))
+    case EditorFeature.FieldKey.CustomTextField(id)    => Some(Column.CustomField(id))
+  }
+
+  val editorFieldUC = Intersection[Column, EditorFeature.FieldKey.ForUseCase] {
+    case Column.Code                                             => Some(EditorFeature.FieldKey.Codes)
+    case Column.Title                                            => Some(EditorFeature.FieldKey.UseCaseTitle)
+    case Column.Tags                                             => Some(EditorFeature.FieldKey.Tags(None))
+    case Column.Implications(dir)                                => Some(EditorFeature.FieldKey.Implications(\/-(dir)))
+    case Column.CustomField(id: data.CustomField.Implication.Id) => Some(EditorFeature.FieldKey.Implications(-\/(id)))
+    case Column.CustomField(id: data.CustomField.Tag        .Id) => Some(EditorFeature.FieldKey.Tags(Some(id)))
+    case Column.CustomField(id: data.CustomField.Text       .Id) => Some(EditorFeature.FieldKey.CustomTextField(id))
+    case Column.Pubid
+       | Column.DeletionReason
+       | Column.ReqType                                          => None
+  } {
+    case EditorFeature.FieldKey.Codes                  => Some(Column.Code)
+    case EditorFeature.FieldKey.UseCaseTitle           => Some(Column.Title)
+    case EditorFeature.FieldKey.Tags(None)             => Some(Column.Tags)
+    case EditorFeature.FieldKey.Implications(\/-(dir)) => Some(Column.Implications(dir))
+    case EditorFeature.FieldKey.Implications(-\/(id))  => Some(Column.CustomField(id))
+    case EditorFeature.FieldKey.Tags(Some(id))         => Some(Column.CustomField(id))
+    case EditorFeature.FieldKey.CustomTextField(id)    => Some(Column.CustomField(id))
+  }
+
+  val creationFieldCG: Intersection[Column, CreateFeature.FieldKey.ForCodeGroup] =
+    editorFieldCG <=> CreateFeature.FieldKey.editorFieldCG
+
+  val creationFieldGR: Intersection[Column, CreateFeature.FieldKey.ForGenericReq] =
+    editorFieldGR <=> CreateFeature.FieldKey.editorFieldGR
+
+  val creationFieldUC: Intersection[Column, CreateFeature.FieldKey.ForUseCase] =
+    editorFieldUC <=> CreateFeature.FieldKey.editorFieldUC
+
+  def applicabilityForReq[Data](a: Applicability[FieldId, Data]): Applicability[Column, Data] =
+    Applicability {
       case ReqType
          | Pubid
          | Code
          | Title
          | Tags
-         | Implications(_)
-         | DeletionReason     => None
-      case CustomField(id, _) => Some(p.customField(id))
+         | DeletionReason
+         | _: Implications => Applicable.always
+      case CustomField(id) => a.byField(id)
     }
 
-  def applicability(p: ProjectConfig): Column => Applicability =
-    Memo(
-      Applicability.fn(
-        field(_, p).map(_.applicable), Applicable))
-
-  // -------------------------------------------------------------------------------------------------------------------
-
-  final case class NameResolver(customFieldNames: Map[data.CustomFieldId, String]) {
-
-    @inline def apply(column: Column): String =
-      fn(column)
-
-    val fn: Column => String = {
-      case b: BuiltIn         => NameResolver.builtIn(b)
-      case CustomField(id, _) => customFieldNames(id)
-    }
-  }
-
-  object NameResolver {
-    def byProject(p: Project): NameResolver =
-      byFields(p.config.fields.customFields, data.CustomField nameP p)
-
-    def byFields(customFields: data.FieldSet.CustomFields, customFieldName: data.CustomField => String) =
-      NameResolver(
-        customFields.mapValues(cf =>
-          customFieldName(cf)))
-
-    val builtIn: BuiltIn => String = {
-      case ReqType           => ColumnNames.reqType
-      case Pubid             => ColumnNames.pubid
-      case Code              => ColumnNames.code
-      case Title             => ColumnNames.title
-      case Tags              => ColumnNames.tags
-      case Implications(dir) => ColumnNames.implications(dir)
-      case DeletionReason    => ColumnNames.deletionReason
+  val applicabilityForCodeGroup: Applicability[Column, Any] =
+    Applicability {
+      case Code
+         | Title           => Applicable.always
+      case ReqType
+         | Pubid
+         | Tags
+         | DeletionReason
+         | _: CustomField
+         | _: Implications => Applicable.never
     }
 
-    implicit val reusability: Reusability[NameResolver] = {
-      implicit val m: Reusability[Map[data.CustomFieldId, String]] = Reusability.byRefOrEqual
-      Reusability.caseClass
-    }
-  }
+  def all(c: ProjectConfig): NonEmptySet[Column] =
+    builtInValues.toNES[Column] ++ c.fields.customFields.valuesIterator.map(f => CustomField(f.id))
 }

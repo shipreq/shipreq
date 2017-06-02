@@ -5,6 +5,7 @@ import japgolly.scalajs.react.test._
 import org.scalajs.dom.Element
 import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
 import scala.annotation.tailrec
+import teststate.domzipper.sizzle.Sizzle
 import utest._
 import shipreq.base.util.MMTree
 import shipreq.base.util.ScalaExt._

@@ -1,9 +1,12 @@
 package shipreq.webapp.client.base.test
 
+import japgolly.microlibs.testutil.TestUtil
 import japgolly.scalajs.react.test._
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.Element
 import org.scalajs.dom.ext.{KeyCode, KeyValue}
+import scalacss.internal.StyleA
+import teststate.run.Report.AssertionSettings
 import shipreq.base.util.DebugImplicits
 
 object TestState
@@ -13,6 +16,12 @@ object TestState
     with teststate.ExtScalaJsReact
     with teststate.ExtScalaz
     with DebugImplicits {
+
+  implicit class StyleAExt(private val self: StyleA) extends AnyVal {
+    def selector: String =
+      "." + self.className.value
+  }
+
 
   implicit val displayTestReq: Display[TestClientProtocol.Req] =
     Display(i => s"${i.r.fn}: ${i.input}")
@@ -30,4 +39,16 @@ object TestState
   val Enter     = SimEvent.Keyboard(key = KeyValue.Enter     , keyCode = KeyCode.Enter )
   val CtrlEnter = SimEvent.Keyboard(key = KeyValue.Enter     , keyCode = KeyCode.Enter , ctrlKey = true)
   val F2        = SimEvent.Keyboard(key = KeyValue.F2        , keyCode = KeyCode.F2    )
+
+  // TODO Patch TestState to support using custom fail instead of throwing
+  def assertTestState(r: Report[String], onFailure: => Unit = ())(implicit as: AssertionSettings, se: DisplayError[String]): Unit =
+    r.failureReason match {
+      case None =>
+        as.onPass.print(r)
+      case Some(f) =>
+        onFailure
+        as.onFail.print(r)
+        f.cause.foreach(_.printStackTrace())
+        TestUtil.fail(f.failure)
+    }
 }

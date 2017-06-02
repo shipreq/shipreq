@@ -275,14 +275,14 @@ object StaticField {
   // Non lazy causes utest to crash
   // ORDER MATTERS as this is the default order of fields use in new projects
   lazy val values: NonEmptyVector[StaticField] =
-    AdtMacros.adtValuesManual[StaticField](
+    AdtMacros.adtValuesManually[StaticField](
       ImplicationGraph,
       NormalAltStepTree,
       ExceptionStepTree,
       StepGraph)
 
   lazy val useCaseStepTrees: NonEmptyVector[UseCaseStepTree] =
-    AdtMacros.adtValuesManual[UseCaseStepTree](NormalAltStepTree, ExceptionStepTree)
+    AdtMacros.adtValuesManually[UseCaseStepTree](NormalAltStepTree, ExceptionStepTree)
 
   lazy val (deletable, notDeletable) =
     values.whole.partition(_.deletable is Deletable)

@@ -52,7 +52,7 @@ object SetDiff {
   implicit def equality[A: UnivEq]: UnivEq[SetDiff[A]] =
     UnivEq.force
 
-  implicit def nonEmptiness[A]: NonEmpty.ProofA[SetDiff[A]] =
+  implicit def nonEmptiness[A]: NonEmpty.ProofMono[SetDiff[A]] =
     NonEmpty.Proof.testEmptiness(_.isEmpty)
 
   def empty[A: UnivEq]: SetDiff[A] = {

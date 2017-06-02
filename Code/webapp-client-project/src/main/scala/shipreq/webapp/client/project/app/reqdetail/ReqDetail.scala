@@ -15,7 +15,7 @@ import shipreq.webapp.base.text._
 import shipreq.webapp.client.base.data._
 import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.base.protocol.ClientProtocol
-import shipreq.webapp.client.base.ui.{BaseStyles, EditTheme}
+import shipreq.webapp.client.base.ui.BaseStyles
 import shipreq.webapp.client.base.ui.semantic.Header
 import shipreq.webapp.client.project.app.state.ClientData
 import shipreq.webapp.client.project.app.Style.{reqdetail => *}
@@ -25,6 +25,7 @@ import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets._
 import ExternalPubid.LookupFailure
+import ProjectWidgets.emptySpan
 
 object ReqDetail {
 
@@ -91,7 +92,7 @@ object ReqDetail {
     val rows: Vector[Row] = {
       val liveFilter = filterDead.filterFnBy((_: Field) live project.config)
       val fields = project.config.fields.fields.filter(f =>
-        f.applicable(req.reqTypeId) is Applicable && liveFilter(f))
+        project.config.applicability(req.reqTypeId, f.fieldId) is Applicable && liveFilter(f))
       fields.foldLeft(Row head filterDead)((q, f) => q ++ Row.fromField(f.fieldId))
     }
 
@@ -192,11 +193,8 @@ object ReqDetail {
       val runCmd    = this.runCmd(req.id)
       val view      = data.viewData(pw).copy(fmtReqTypeShort = false)
 
-      def renderEditable(key: EditorFeature.FieldKey.ForReq): TagMod =
-        renderEditor(reqEditor(key), view.editable(key))
-
-      def renderEditor(editor: EditorFeature.ReadWrite.ForCell, view: => TagMod): TagMod =
-        editor.renderOr(TagMod(EditTheme.editableInline(editor.startEdit), view))
+      def renderEditable(key: EditorFeature.FieldKey.ForSomeReq): TagMod =
+        reqEditor(key).themedRenderOr(view.editable(key))
 
       def renderHeader: VdomElement = {
         val hstyle = headerStyle(data.live)
@@ -207,8 +205,7 @@ object ReqDetail {
             Header(hstyle, pubidText + ":")),
 
           <.div(*.headerTitle,
-            renderEditor(
-              reqEditor(EditorFeature.FieldKey.Title),
+            reqEditor(EditorFeature.FieldKey.reqTitle(req.id)).themedRenderOr(
               Header(hstyle, view.title))),
 
           <.div(*.headerFilterDeadButton,
@@ -231,7 +228,7 @@ object ReqDetail {
       def renderRowTitle(row: Row): VdomNode =
         row match {
           case Row.CustomField(id)  => fieldName(id)
-          case Row.Code             => UiText.FieldNames.reqCodes
+          case Row.Codes            => UiText.FieldNames.reqCodes
           case Row.ReqType          => UiText.FieldNames.reqType
           case Row.Tags             => UiText.FieldNames.tags
           case Row.Implications     => UiText.FieldNames.implications
@@ -255,10 +252,10 @@ object ReqDetail {
           case Row.CustomField(id: CustomField.Text.Id)        => renderEditable(FieldKey.CustomTextField(id))
           case Row.CustomField(id: CustomField.Tag.Id)         => renderEditable(FieldKey.Tags(Some(id)))
           case Row.CustomField(id: CustomField.Implication.Id) => renderEditable(FieldKey.Implications(-\/(id)))
-          case Row.Code                                        => renderEditable(FieldKey.Code)
+          case Row.Codes                                       => renderEditable(FieldKey.Codes)
           case Row.ReqType                                     => renderEditable(FieldKey.ReqType)
           case Row.Tags                                        => renderEditable(FieldKey.Tags(None))
-          case Row.DeletionReason                              => view.deletionReason
+          case Row.DeletionReason                              => view.deletionReason getOrElse emptySpan
           case Row.PastPubids                                  => view.pastPubids
 
           case Row.Implications =>
@@ -304,8 +301,7 @@ object ReqDetail {
 
       def renderStepTree(ucData: UseCaseData, stepData: UseCaseStepTree.StepData) = {
         val renderBody: UseCaseStepTree.RenderBodyFn = (id, live, textAndFlow) =>
-          renderEditor(
-            props.editorUCS(EditorFeature.FieldKey.UseCaseStep(id)),
+          props.editorUCS(EditorFeature.FieldKey.UseCaseStep(id)).themedRenderOr(
             pw.useCaseStep(live, textAndFlow))
 
         UseCaseStepTree.Props(

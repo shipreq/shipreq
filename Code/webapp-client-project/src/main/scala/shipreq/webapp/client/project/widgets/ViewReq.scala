@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react.vdom.html_<^._
-import scalaz.\/
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
@@ -27,11 +26,12 @@ final case class ViewReq(data: Data, pw: ProjectWidgets, fmtReqTypeShort: Boolea
   def imps(id: CustomField.Implication.Id): VdomElement =
     pw.implicationList(data.customImps(id))
 
-  def imps(scope: CustomField.Implication.Id \/ Direction): VdomElement =
+  def imps(scope: ImplicationScope): VdomElement =
     scope.fold(imps(_), imps(_))
 
-  def deletionReason: VdomElement =
-    ProjectWidgets.DeletionReason.forReq(data.req)(data.reqTypes, pw) getOrElse[VdomTag] emptySpan
+  /** None means N/A */
+  def deletionReason: Option[VdomTag] =
+    ProjectWidgets.DeletionReason.forReq(data.req)(data.reqTypes, pw)
 
   def pastPubids: VdomElement =
     pw pastPubids data.pastPubids
@@ -51,12 +51,19 @@ final case class ViewReq(data: Data, pw: ProjectWidgets, fmtReqTypeShort: Boolea
   def title: VdomElement =
     pw.reqTitle(data.req)
 
-  val editable: EditorFeature.FieldKey.ForReq => VdomElement = {
+  val customField: CustomFieldId => VdomElement = {
+    case id: CustomField.Implication.Id => imps(id)
+    case id: CustomField.Tag        .Id => tags(id)
+    case id: CustomField.Text       .Id => text(id)
+  }
+
+  val editable: EditorFeature.FieldKey.ForSomeReq => VdomElement = {
     case EditorFeature.FieldKey.CustomTextField(field) => text(field)
     case EditorFeature.FieldKey.Tags           (field) => tags(field)
     case EditorFeature.FieldKey.Implications   (scope) => imps(scope)
-    case EditorFeature.FieldKey.Code                   => codes
-    case EditorFeature.FieldKey.Title                  => title
+    case EditorFeature.FieldKey.Codes                  => codes
+    case EditorFeature.FieldKey.GenericReqTitle
+       | EditorFeature.FieldKey.UseCaseTitle           => title
     case EditorFeature.FieldKey.ReqType                => reqType
   }
 }
@@ -122,7 +129,7 @@ object ViewReq {
 
       val pastPubids: Vector[Pubid] =
         MutableArray(req.pastPubids(project.reqs.pubids))
-          .sortBySchwartzian(DataLogic.pubidSortKeyFn(project.config))
+          .sortBySchwartzian(pubidSortKeyFn)
           .to[Vector]
 
       Data(

@@ -2,6 +2,7 @@ package shipreq.base.test.db
 
 import doobie.free.connection.{ConnectionOp, rollback, setAutoCommit, setSavepoint}
 import doobie.imports._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.io.{PrintWriter, StringWriter}
 import java.sql.Connection
 import scalaz.effect.IO
@@ -73,16 +74,9 @@ final case class SingleConnectionXA(realConn: Connection) extends Transactor[IO]
     c.transact(this).attempt.unsafePerformIO() match {
       case \/-(a) => a
       case -\/(t) =>
-        // TODO Move into microlibs
-        val errors = new StringWriter()
-        t.printStackTrace(new PrintWriter(errors))
-        val stackTrace = errors.toString
-          .split('\n')
-          .map {
-            case s if s contains "shipreq" => Console.BOLD + Console.MAGENTA + s + Console.RESET
-            case s => s
-          }
-          .mkString("\n")
+        val stackTrace = t.stackTraceAsStringWithLineMod {
+          case s if s contains "shipreq" => Console.BOLD + Console.MAGENTA + s + Console.RESET
+        }
         System.err.println(stackTrace)
         throw t
     }

@@ -102,8 +102,8 @@ object ContentEventTest extends TestSuite {
   val delA              = delGR(reqA)
   val delB              = delGR(reqB)
   val restoreA          = restoreGR(reqA)
-  val restoreCode3From1 = patchReqCodes(1, restore = Set(3))
-  val removeCode3From1  = patchReqCodes(1, remove = Set(3))
+  val restoreCode3From1 = patchCodes(1, restore = Set(3))
+  val removeCode3From1  = patchCodes(1, remove = Set(3))
 
   override def tests = TestSuite {
 
@@ -154,17 +154,17 @@ object ContentEventTest extends TestSuite {
       // TODO Need a test here similar to createCodeGroup.replaceLast?
     }
 
-    'patchReqCodes {
+    'patchCodes {
       // positive tests are in the script tests below
 
       'reqIdNotFound     - assertFail("")(patchA(add = Set(1 -> "mm")))
-      'reqDead           - assertFail("live")(emptyGR1, delGR1, patchReqCodes(1, add = Set(5 -> "yay")))
-      'addcodeSym        - assertFail("")(emptyGR1, patchReqCodes(1, add = Set(7 -> "!!")))
-      'addcodeCaps       - assertFail("")(emptyGR1, patchReqCodes(1, add = Set(7 -> "NO")))
-      'addIdInUseByGR    - assertFail("")(emptyGR1, createGR(2, codes = Set(3 -> "x")), patchReqCodes(1, add = Set(3 -> "y")))
-      'addIdInUseByRCG   - assertFail("")(emptyGR1, createRCG(3, "x"),                  patchReqCodes(1, add = Set(3 -> "y")))
-      'addCodeInUseByGR  - assertFail("")(emptyGR1, createGR(2, codes = Set(3 -> "x")), patchReqCodes(1, add = Set(9 -> "x")))
-      'addCodeInUseByRCG - assertFail("")(emptyGR1, createRCG(3, "x"),                  patchReqCodes(1, add = Set(9 -> "x")))
+      'reqDead           - assertFail("live")(emptyGR1, delGR1, patchCodes(1, add = Set(5 -> "yay")))
+      'addcodeSym        - assertFail("")(emptyGR1, patchCodes(1, add = Set(7 -> "!!")))
+      'addcodeCaps       - assertFail("")(emptyGR1, patchCodes(1, add = Set(7 -> "NO")))
+      'addIdInUseByGR    - assertFail("")(emptyGR1, createGR(2, codes = Set(3 -> "x")), patchCodes(1, add = Set(3 -> "y")))
+      'addIdInUseByRCG   - assertFail("")(emptyGR1, createRCG(3, "x"),                  patchCodes(1, add = Set(3 -> "y")))
+      'addCodeInUseByGR  - assertFail("")(emptyGR1, createGR(2, codes = Set(3 -> "x")), patchCodes(1, add = Set(9 -> "x")))
+      'addCodeInUseByRCG - assertFail("")(emptyGR1, createRCG(3, "x"),                  patchCodes(1, add = Set(9 -> "x")))
       'removeNotFound    - assertFail("")(emptyGR1,                                     removeCode3From1)
       'removeOtherReqs   - assertFail("")(emptyGR1, createGR(2, codes = Set(3 -> "x")), removeCode3From1)
       'removeGrps        - assertFail("")(emptyGR1, createRCG(3, "x"),                  removeCode3From1)
@@ -176,7 +176,7 @@ object ContentEventTest extends TestSuite {
       'restoreLiveGrps      - assertFail("")(emptyGR1, createRCG(3, "x"),                  restoreCode3From1)
 
       'restoreDeadOtherReqs -
-        assertFail("")(emptyGR1, createGR(2, codes = Set(3 -> "x")), createRefToCode3, patchReqCodes(2, remove = Set(3)), restoreCode3From1)
+        assertFail("")(emptyGR1, createGR(2, codes = Set(3 -> "x")), createRefToCode3, patchCodes(2, remove = Set(3)), restoreCode3From1)
 
       'restoreDeadGrps -
         assertFail("")(emptyGR1, createRCG3, createRefToCode3, delRCG3, restoreCode3From1)
@@ -210,7 +210,7 @@ object ContentEventTest extends TestSuite {
         test(delRCG(3))("a.x: RG[#3]")
 
         // 1.7: Create RCᵣ
-        val createA = GenericReqCreate(reqA, mf, nev(ReqCodes(4 -> "a.x")))
+        val createA = GenericReqCreate(reqA, mf, nev(Codes(4 -> "a.x")))
         test(createA)("a.x: AD[#4Req(#a)]", "a.x: RG[#3]")
 
         // 1.8: Rename RCᵣ
@@ -227,7 +227,7 @@ object ContentEventTest extends TestSuite {
         // 2.1: Create RCᵣ ref
         val createA = GenericReqCreate(reqA, mf, nev(
           Title(NonEmptyVector(GRT.Literal("Ref to self: "), GRT.CodeRef(1))),
-          ReqCodes(1 -> "a.b.c")))
+          Codes(1 -> "a.b.c")))
         test(createA)("a.b.c: AD[#1Req(#a)]")
 
         // 2.2: Rename 1→1'
@@ -299,7 +299,7 @@ object ContentEventTest extends TestSuite {
         test(updateRCGCode(9, "ggg"))(delA_state + "ggg: AD[#9Grp]")
 
         // 2.21: Create RCᵣ #b
-        test(GenericReqCreate(98, mf, nev(ReqCodes(10 -> "aaa"))))(
+        test(GenericReqCreate(98, mf, nev(Codes(10 -> "aaa"))))(
           delA_state, "ggg: AD[#9Grp]", "aaa: AD[#10Req(#b)]")
 
         // 2.22: Rename RCᵣ #b

@@ -44,8 +44,17 @@ abstract class DataReusability {
   implicit def reusabilityMomentJs: Reusability[MomentJs] =
     Reusability.by(_.toEpochMilli)
 
+  implicit def reusabilityExternalId[A]: Reusability[ExternalId[A]] =
+    Reusability.caseClass
+
+  implicit def reusabilityUsername: Reusability[Username] =
+    Reusability.caseClass
+
   implicit def toReusabilityObjExt(r: Reusability.type): ReusabilityObjExt =
     new ReusabilityObjExt(r)
+
+  implicit lazy val reusabilityProjectCatalogueItem: Reusability[ProjectCatalogue.Item] =
+    Reusability.byRef || Reusability.caseClass
 
   implicit def reusabilityProject: Reusability[Project] =
     Reusability.byRef
@@ -99,11 +108,11 @@ abstract class DataReusability {
   implicit def reusabilityOptionalText[A <: Atom.AnyAtom]: Reusability[Vector[A]] =
     Reusability.byRefOrUnivEq
 
-  def reusabilityNonEmptyVector[A: Reusability]: Reusability[NonEmptyVector[A]] =
-    Reusability.by(_.whole)
+  implicit def reusabilityNonEmptyVector[A: Reusability]: Reusability[NonEmptyVector[A]] =
+    Reusability.byRef || Reusability.by(_.whole)
 
-  def reusabilityNonEmptySet[A: Reusability]: Reusability[NonEmptySet[A]] =
-    Reusability.by(_.whole)
+  implicit def reusabilityNonEmptySet[A: Reusability]: Reusability[NonEmptySet[A]] =
+    Reusability.byRef || Reusability.by(_.whole)
 
   implicit def reusabilityRemote[Fn <: RemoteFn.Instance] =
     Reusability.by((_: Fn).key)

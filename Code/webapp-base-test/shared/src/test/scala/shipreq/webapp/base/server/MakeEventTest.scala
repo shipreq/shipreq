@@ -91,7 +91,7 @@ object MakeEventTest extends TestSuite {
         assertApplies(assertMakeEvent(_.createContent(cmd, _), {case e: GenericReqCreate => e}))
 
       // OK
-      val cmd1 = Cmd(mf, ∅, Set("hello"), Set.empty, Set.empty)
+      val cmd1 = Cmd.empty(mf).copy(codes = Set("hello"))
       val e1 = apply(cmd1)
       assertEq(e1.id, GenericReqId(1))
 
@@ -99,7 +99,7 @@ object MakeEventTest extends TestSuite {
       assertFails(_.createContent(cmd1, _))
 
       // OK
-      val cmd2 = Cmd(mf, ∅, Set("hello.2"), Set.empty, Set.empty)
+      val cmd2 = Cmd.empty(mf).copy(codes = Set("hello.2"))
       val e2 = apply(cmd2)
       assertEq(e2.id, GenericReqId(2))
     }

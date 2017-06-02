@@ -250,38 +250,47 @@ class ApplicableEventGen(p: Project) {
   val customFieldTextId: Live => Option[Gen[CustomField.Text.Id]] =
     tryGenChooseLiveDead(l => cfg.customTextFields.filter(_.live(cfg) is l).map(_.id))
 
-  def customTextFieldText =
-    TextGen.customTextFieldAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingCustomIssueTypeId, existingApplicableTagId).text
+  lazy val customTextFieldTextAtom: Gen[Text.CustomTextField.Atom] =
+    TextGen.customTextFieldAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingCustomIssueTypeId, existingApplicableTagId)
 
-  lazy val newReqCodeIdAndValue =
+  def customTextFieldText: Gen[Text.CustomTextField.OptionalText] =
+    customTextFieldTextAtom.text
+
+  def customTextFieldText1: Gen[Text.CustomTextField.NonEmptyText] =
+    customTextFieldTextAtom.text1(Text.CustomTextField)
+
+  lazy val newReqCodeIdAndValue: Gen[ReqCode.IdAndValue] =
     Gen.apply2(ReqCode.IdAndValue)(nextReqCodeId, reqCode.value)
 
-  def codeGroupTitle =
+  def codeGroupTitle: Gen[Text.CodeGroupTitle.OptionalText] =
     TextGen.codeGroupTitleAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingCustomIssueTypeId).text
 
-  private lazy val genericReqTitleAtom =
+  private lazy val genericReqTitleAtom: Gen[Text.GenericReqTitle.Atom] =
     TextGen.genericReqTitleAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingCustomIssueTypeId, existingApplicableTagId)
 
-  def genericReqTitle =
+  def genericReqTitle: Gen[Text.GenericReqTitle.OptionalText] =
     genericReqTitleAtom.text
 
-  def genericReqTitle1 =
+  def genericReqTitle1: Gen[Text.GenericReqTitle.NonEmptyText] =
     genericReqTitleAtom.text1(Text.GenericReqTitle)
 
-  def deletionReason =
+  def deletionReason: Gen[Text.DeletionReason.OptionalText] =
     TextGen.deletionReasonAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingApplicableTagId).text
 
-  lazy val useCaseTitleAtom =
+  lazy val useCaseTitleAtom: Gen[Text.UseCaseTitle.Atom] =
     TextGen.useCaseTitleAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingCustomIssueTypeId, existingApplicableTagId)
 
-  def useCaseTitle =
+  def useCaseTitle: Gen[Text.UseCaseTitle.OptionalText] =
     useCaseTitleAtom.text
 
-  def useCaseTitle1 =
+  def useCaseTitle1: Gen[Text.UseCaseTitle.NonEmptyText] =
     useCaseTitleAtom.text1(Text.UseCaseTitle)
 
-  def useCaseStepTitle =
+  def useCaseStepTitle: Gen[Text.UseCaseStep.OptionalText] =
     TextGen.useCaseStepAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingCustomIssueTypeId, existingApplicableTagId).text
+
+  lazy val nonEmptyCustomTextMap: Option[Gen[Event.NonEmptyCustomTextMap]] =
+    customFieldTextId(Live).map(_.mapTo(customTextFieldText1)(1 to 3).map(NonEmpty.force))
 
   object customIssueTypeGD extends GenericDataGen(CustomIssueTypeGD) {
     import gd._
@@ -342,11 +351,12 @@ class ApplicableEventGen(p: Project) {
   object createGenericReqGD extends GenericDataOptionGen(GenericReqGD) {
     import gd._
     override def valueFor(a: Attr) = a match {
-      case Title    => genericReqTitle1                 map Title   .apply
-      case ReqCodes => newReqCodeIdAndValue        .nes map ReqCodes.apply
-      case Tags     => applicableTagId(Live) map (_.nes map Tags    .apply)
-      case ImpSrcs  => liveReqId             map (_.nes map ImpSrcs .apply)
-      case ImpTgts  => liveReqId             map (_.nes map ImpTgts .apply)
+      case Codes      => newReqCodeIdAndValue        .nes map Codes     .apply
+      case CustomText => nonEmptyCustomTextMap map (_     map CustomText.apply)
+      case ImpSrcs    => liveReqId             map (_.nes map ImpSrcs   .apply)
+      case ImpTgts    => liveReqId             map (_.nes map ImpTgts   .apply)
+      case Tags       => applicableTagId(Live) map (_.nes map Tags      .apply)
+      case Title      => genericReqTitle1                 map Title     .apply
     }
   }
 
@@ -383,11 +393,12 @@ class ApplicableEventGen(p: Project) {
   object createUseCaseGD extends GenericDataOptionGen(UseCaseGD) {
     import gd._
     override def valueFor(a: Attr) = a match {
-      case Title    => useCaseTitle1                    map Title   .apply
-      case ReqCodes => newReqCodeIdAndValue        .nes map ReqCodes.apply
-      case Tags     => applicableTagId(Live) map (_.nes map Tags    .apply)
-      case ImpSrcs  => liveReqId             map (_.nes map ImpSrcs .apply)
-      case ImpTgts  => liveReqId             map (_.nes map ImpTgts .apply)
+      case Codes      => newReqCodeIdAndValue        .nes map Codes     .apply
+      case CustomText => nonEmptyCustomTextMap map (_     map CustomText.apply)
+      case ImpSrcs    => liveReqId             map (_.nes map ImpSrcs   .apply)
+      case ImpTgts    => liveReqId             map (_.nes map ImpTgts   .apply)
+      case Tags       => applicableTagId(Live) map (_.nes map Tags      .apply)
+      case Title      => useCaseTitle1                    map Title     .apply
     }
   }
 

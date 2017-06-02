@@ -8,6 +8,10 @@ import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 
+/** A combination of [[Column]] and [[SortMethod]], which is a single criterion in [[SortCriteria]].
+  *
+  * Example: "Sort titles A-to-Z with blanks last".
+  */
 sealed trait SortCriterion {
   def column: Column
   def method: SortMethod
@@ -75,17 +79,20 @@ object SortCriterion {
   }
 }
 
+// █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+
 import SortCriterion._
 
 @Lenses
 case class SortCriteria(init: Vector[Inconclusive], last: Conclusive) {
-//  def removeColumnI(c: Column.SortInconclusive): SortCriteria =
-//    copy(init = init.filterNot(_.column ==* c))
-//
-//  def removeColumn: Column => SortCriteria = {
-//    case c: Column.SortInconclusive => removeColumnI(c)
-//    case _: Column.SortConclusive   => this
-//  }
+
+  //  def removeColumnI(c: Column.SortInconclusive): SortCriteria =
+  //    copy(init = init.filterNot(_.column ==* c))
+  //
+  //  def removeColumn: Column => SortCriteria = {
+  //    case c: Column.SortInconclusive => removeColumnI(c)
+  //    case _: Column.SortConclusive   => this
+  //  }
 
   def all: NonEmptyVector[SortCriterion] =
     init ++: NonEmptyVector.one[SortCriterion](last)

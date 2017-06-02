@@ -8,27 +8,31 @@ import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
 import ApplyEventTestFns._
 import shipreq.webapp.base.text.{Text => T}
+import ContentEventTestHelp.CustomTextMap
 
-case class DetachedGenericReq(req      : GenericReq,
-                              tags     : Set[ApplicableTagId],
-                              impliedBy: Set[ReqId],
-                              implies  : Set[ReqId],
-                              reqCodes : Set[ReqCode.Value])
+case class DetachedGenericReq(req       : GenericReq,
+                              customText: CustomTextMap,
+                              tags      : Set[ApplicableTagId],
+                              impliedBy : Set[ReqId],
+                              implies   : Set[ReqId],
+                              reqCodes  : Set[ReqCode.Value])
 
 object DetachedGenericReq {
   implicit def equality: UnivEq[DetachedGenericReq] = UnivEq.derive
 
   def extract(p: Project, id: GenericReqId): Option[DetachedGenericReq] =
     p.reqs.genericReqs.get(id).map { r =>
-      val tags      = p.reqTags(id)
-      val impliedBy = p.implications.backwards(id)
-      val implies   = p.implications.forwards(id)
-      val reqCodes  = p.reqCodes.activeReqCodesByReqId(id)
-      DetachedGenericReq(r, tags, impliedBy, implies, reqCodes)
+      val codes      = p.reqCodes.activeReqCodesByReqId(id)
+      val customText = ReqData.allTextForReq(id, p.reqText)
+      val impliedBy  = p.implications.backwards(id)
+      val implies    = p.implications.forwards(id)
+      val tags       = p.reqTags(id)
+      DetachedGenericReq(r, customText, tags, impliedBy, implies, codes)
     }
 }
 
 case class DetachedUseCase(req      : UseCase,
+                           customText: CustomTextMap,
                            tags     : Set[ApplicableTagId],
                            impliedBy: Set[ReqId],
                            implies  : Set[ReqId],
@@ -39,17 +43,20 @@ object DetachedUseCase {
 
   def extract(p: Project, id: UseCaseId): Option[DetachedUseCase] =
     p.reqs.useCases.imap.get(id).map { r =>
-      val tags      = p.reqTags(id)
-      val impliedBy = p.implications.backwards(id)
-      val implies   = p.implications.forwards(id)
-      val reqCodes  = p.reqCodes.activeReqCodesByReqId(id)
-      DetachedUseCase(r, tags, impliedBy, implies, reqCodes)
+      val codes      = p.reqCodes.activeReqCodesByReqId(id)
+      val customText = ReqData.allTextForReq(id, p.reqText)
+      val impliedBy  = p.implications.backwards(id)
+      val implies    = p.implications.forwards(id)
+      val tags       = p.reqTags(id)
+      DetachedUseCase(r, customText, tags, impliedBy, implies, codes)
     }
 }
 
 // =====================================================================================================================
 
 object ContentEventTestHelp {
+
+  type CustomTextMap = Map[CustomField.Text.Id, T.CustomTextField.NonEmptyText]
 
   implicit class ProjectEventTestExt(private val p: Project) extends AnyVal {
     def needUC(id: UseCaseId): UseCase =
@@ -80,10 +87,10 @@ object ContentEventTestHelp {
                impTgts: Set[ReqId]                     = ∅) = {
     import GenericReqGD._
     var vs = emptyValues
-    NonEmptySet   .maybe(codes,   ())(vs += ReqCodes(_))
-    NonEmptyVector.maybe(title,   ())(vs += Title   (_))
+    NonEmptySet   .maybe(codes,   ())(vs += Codes   (_))
     NonEmptySet   .maybe(impSrcs, ())(vs += ImpSrcs (_))
     NonEmptySet   .maybe(impTgts, ())(vs += ImpTgts (_))
+    NonEmptyVector.maybe(title,   ())(vs += Title   (_))
     GenericReqCreate(id, rt, vs)
   }
 
@@ -95,10 +102,10 @@ object ContentEventTestHelp {
                impTgts: Set[ReqId]                  = ∅) = {
     import UseCaseGD._
     var vs = emptyValues
-    NonEmptySet   .maybe(codes,   ())(vs += ReqCodes(_))
-    NonEmptyVector.maybe(title,   ())(vs += Title   (_))
+    NonEmptySet   .maybe(codes,   ())(vs += Codes   (_))
     NonEmptySet   .maybe(impSrcs, ())(vs += ImpSrcs (_))
     NonEmptySet   .maybe(impTgts, ())(vs += ImpTgts (_))
+    NonEmptyVector.maybe(title,   ())(vs += Title   (_))
     UseCaseCreate(id, stepId, vs)
   }
 
@@ -116,10 +123,10 @@ object ContentEventTestHelp {
 
   val patchRcAdd0 = Multimap.empty[ReqCode.Value, Set, ReqCodeId]
 
-  def patchReqCodes(id     : ReqId,
-                    remove : Set[ReqCodeId]                          = Set.empty,
-                    restore: Set[ReqCodeId]                          = Set.empty,
-                    add    : Multimap[ReqCode.Value, Set, ReqCodeId] = patchRcAdd0) =
+  def patchCodes(id     : ReqId,
+                 remove : Set[ReqCodeId]                          = Set.empty,
+                 restore: Set[ReqCodeId]                          = Set.empty,
+                 add    : Multimap[ReqCode.Value, Set, ReqCodeId] = patchRcAdd0) =
     ReqCodesPatch(id, remove = remove, restore = restore, add)
 
   case class PatchReqCodeB(id: ReqId) extends AnyVal {
@@ -138,24 +145,26 @@ object ContentEventTestHelp {
     v.head._2
   }
 
-  def assertGR(p: Project, id: GenericReqId)(req      : GenericReq,
-                                             tags     : Set[ApplicableTagId] = UnivEq.emptySet,
-                                             impliedBy: Set[ReqId]           = UnivEq.emptySet,
-                                             implies  : Set[ReqId]           = UnivEq.emptySet,
-                                             reqCodes : Set[ReqCode.Value]   = UnivEq.emptySet): Unit =
+  def assertGR(p: Project, id: GenericReqId)(req       : GenericReq,
+                                             customText: CustomTextMap        = UnivEq.emptyMap,
+                                             tags      : Set[ApplicableTagId] = UnivEq.emptySet,
+                                             impliedBy : Set[ReqId]           = UnivEq.emptySet,
+                                             implies   : Set[ReqId]           = UnivEq.emptySet,
+                                             reqCodes  : Set[ReqCode.Value]   = UnivEq.emptySet): Unit =
     assertEq(
       s"assertGR(${id.value})",
       DetachedGenericReq.extract(p, id),
-      Some(DetachedGenericReq(req, tags, impliedBy, implies, reqCodes)))
+      Some(DetachedGenericReq(req, customText, tags, impliedBy, implies, reqCodes)))
 
   def assertUC(p: Project, id: UseCaseId)(uc         : UseCase,
+                                          customText : CustomTextMap        = UnivEq.emptyMap,
                                           tags       : Set[ApplicableTagId] = UnivEq.emptySet,
                                           impliedBy  : Set[ReqId]           = UnivEq.emptySet,
                                           implies    : Set[ReqId]           = UnivEq.emptySet,
                                           reqCodes   : Set[ReqCode.Value]   = UnivEq.emptySet,
                                           ignoreSteps: Boolean              = false): Unit = {
     var d = DetachedUseCase.extract(p, id)
-    var e = DetachedUseCase(uc, tags, impliedBy, implies, reqCodes)
+    var e = DetachedUseCase(uc, customText, tags, impliedBy, implies, reqCodes)
 
     if (ignoreSteps) {
       def f(x: DetachedUseCase): DetachedUseCase =
@@ -230,7 +239,22 @@ object ContentEventTestHelp {
   }
   val cf1 = createCTF1.id
 
-  val testHelpInit = InitialEvents(createIssueType1, createMF, createFR, createAT1, createAT2, createTG1, createCTF1)
+  val createCTF2 = {
+    import CustomTextFieldGD._
+    FieldCustomTextCreate(81, nev(Name("blurp!"), Key("blurp"), Mandatory(false), ReqTypes(allReqTypes)))
+  }
+  val cf2 = createCTF2.id
+
+  val testHelpInit = InitialEvents(
+    createIssueType1,
+    createMF,
+    createFR,
+    createAT1,
+    createAT2,
+    createTG1,
+    createCTF1,
+    createCTF2,
+  )
 
   val emptyGR1   = createGR(1)
   val impliedGR2 = createGR(2, impSrcs = Set(emptyGR1.id))

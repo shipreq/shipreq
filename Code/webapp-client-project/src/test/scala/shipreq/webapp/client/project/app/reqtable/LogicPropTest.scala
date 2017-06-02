@@ -23,33 +23,31 @@ import LogicTestUtil._
 object LogicPropTest extends TestSuite {
   val nop = Eval.pass()
 
-  case class LogicTests(vs: ViewSettings, p: Project) {
+  case class LogicTests(ts: TableSettings, fd: FilterDead, p: Project) {
     val E = EvalOver(this)
 
-    type S[A] = Stream[A]
-
     val expectVisible: ReqId => Boolean =
-      if (vs.filterDead == HideDead)
+      if (fd ==* HideDead)
         id => p.reqs.need(id).live(p.config.reqTypes) is Live
       else
         _ => true
 
     val plainText   = PlainText(p, ProjectText.Context.None)
     val textSearch  = TextSearch(p, plainText)
-    val gathered    = Logic.gather(vs, p, plainText, textSearch)
-    val gatheredG   = gathered.iterator.filterSubType[ReqRow].toList
+    val gathered    = Logic.gather[Vector](p, ts, fd, plainText, textSearch)
+    val gatheredG   = gathered.iterator.filterSubType[Row.ForReq].toList
     val rowReqCodes = gathered.flatMap(codesInRow)
     val rowGReqIds  = gatheredG.map(_.req.id).toSet
     val srcGReqIds  = p.reqs.idIterator.filterSubType[GenericReqId].filter(expectVisible).toSet
-    val finalRows   = Logic.rowsForTable(vs, p, plainText, textSearch)
-    val tableStats  = Logic.stats(vs, p, finalRows)
+    val finalRows   = Logic.rowsForTable(p, ts, fd, plainText, textSearch)
+    val tableStats  = Logic.stats(p, finalRows)
 
     val expectedVisibleReqCodes = {
       val b = Set.newBuilder[ReqCode.Value]
       p.reqCodes.activeReqCodesByReqId.values.foreach(b ++= _)
-      if (vs.viewCodeGroups)
+      if (ts.viewCodeGroups)
         p.reqCodes.groups.foreach(g =>
-          if ((g.live is Live) || (vs.filterDead is ShowDead))
+          if ((g.live is Live) || (fd is ShowDead))
             b += p.reqCodes.reqCode(g.id))
       b.result()
     }
@@ -73,7 +71,7 @@ object LogicPropTest extends TestSuite {
 
     // NOTE: ReqCodes *can* be duplicated. Imagine sorting by MF > Code.
     def reqCodeProps =
-      E.test("", vs.isVisible(C.Code)) ==> (
+      E.test("", ts.isVisible(C.Code)) ==> (
         E.allPresent("all req codes are displayed", expectedVisibleReqCodes, rowReqCodes)
         ∧ noEmptyAndNonEmptyReqCodesMixed)
 
@@ -90,17 +88,16 @@ object LogicPropTest extends TestSuite {
       implicitly[Ordering[String]].on[T#OptionalText](t => plainText.format(Live, t).toLowerCase)
 
     def universalSort = {
-      val revOrder  = vs.order.reverse
-      val revCri    = vs.copy(order = revOrder)
-      val sorted    = Logic.sort(vs, p, plainText)(gathered)
-      val sortedV   = sorted.toVector
-      def criRev    = E.equal("cri.rev.rev = cri", revOrder.reverse, vs.order)
-      def sortTwice = E.equal("sort.sort = sort", Logic.sort(vs, p, plainText)(sortedV).toVector, sortedV)
+      val revOrder  = ts.order.reverse
+      val revCri    = ts.copy(order = revOrder)
+      val sorted    = Logic.sort(p, ts, plainText)(gathered).to[Vector]
+      def criRev    = E.equal("cri.rev.rev = cri", revOrder.reverse, ts.order)
+      def sortTwice = E.equal("sort.sort = sort", Logic.sort(p, ts, plainText)(sorted).to[Vector], sorted)
       def sortRev   = reverseSortOnReverseCri(sorted, revCri)
       (criRev ∧ sortRev ∧ sortTwice) rename "Universal sort props"
     }
 
-    def reverseSortOnReverseCri(origSorted: S[Row], revCri: ViewSettings): EvalL = {
+    def reverseSortOnReverseCri(origSorted: Vector[Row], revCri: TableSettings): EvalL = {
       /*
       def rev[A](c: Column, l: Vector[A]): Vector[A] =
         if (revCri isOrdered c) l.reverse else l
@@ -125,7 +122,7 @@ object LogicPropTest extends TestSuite {
 
       def reverseRows(rs: Vector[Row]): Vector[Row] =
         rs.reverse.map {
-          case GenericReqRow(r, e, mv) => GenericReqRow(r, reverseExpansion(e), reverseMultiValues(mv))
+          case GenericRow.ForReq(r, e, mv) => GenericRow.ForReq(r, reverseExpansion(e), reverseMultiValues(mv))
         }
 
       val reversed = Logic.sort(revCri.order, p)(gathered)
@@ -135,24 +132,24 @@ object LogicPropTest extends TestSuite {
     }
 
     def sortCri(c: SC.Inconclusive): SortCriteria =
-      this.vs.order.copy(init = Vector(c))
+      this.ts.order.copy(init = Vector(c))
 
     def gatherOn(c: C.SortInconclusive, sc: SortCriteria): Vector[Row] =
-      if (vs isVisible c)
+      if (ts isVisible c)
         gathered
       else
-        Logic.gather(ViewSettings(columnState(p, c), sc, vs.filter, vs.filterDead), p, plainText, textSearch)
+        Logic.gather(p, TableSettings(columnState(p, c), sc, ts.filter), fd, plainText, textSearch)
 
     def sortCriAndGather(c: SC.Inconclusive) =
       sortCri(c).mapStrengthR(gatherOn(c.column, _))
 
-    def sortBy(c: SC.Inconclusive) = {
+    def sortBy(c: SC.Inconclusive): Vector[Row] = {
       val (sc, input) = sortCriAndGather(c)
-      Logic.sort(newViewSettingsForSort(sc), p, plainText)(input)
+      Logic.sort(p, newTableSettingsForSort(sc), plainText)(input).to[Vector]
     }
 
-    def newViewSettingsForSort(sc: SortCriteria): ViewSettings =
-      vs.copy(order = sc)
+    def newTableSettingsForSort(sc: SortCriteria): TableSettings =
+      ts.copy(order = sc)
 
     /** @return error \/ (blank, non-blank) */
     def separateBlanks[A](expectBlanksFirst: Boolean, asi: Iterable[A])(isBlank: A => Boolean): String \/ (List[A], List[A]) = asi.toList match {
@@ -196,11 +193,11 @@ object LogicPropTest extends TestSuite {
 
     def sortByPubid: IndivSortIB = (sm, dir) => {
       val sc     = SortCriteria(Vector.empty, SC.Conclusive(C.Pubid, sm))
-      val sorted = Logic.sort(newViewSettingsForSort(sc), p, plainText)(gathered)
+      val sorted = Logic.sort(p, newTableSettingsForSort(sc), plainText)(gathered).to[Vector]
       val na     = ("", -1)
       val pubids = sorted.map {
-        case r: ReqRow          => pubidExtract(p)(r.req.pubid)
-        case r: CodeGroupRow => na
+        case r: Row.ForReq          => pubidExtract(p)(r.req.pubid)
+        case r: Row.ForCodeGroup => na
       }
       E_sorted("Pubids", pubids, dir)
     }
@@ -219,8 +216,8 @@ object LogicPropTest extends TestSuite {
       val name       = s"Title ($sm)"
       val sorted     = sortBy(SC.InconclusiveCB(C.Title, sm))
       val data       = sorted.map {
-        case r: ReqRow          => r.req.title
-        case r: CodeGroupRow => r.group.title
+        case r: Row.ForReq          => r.req.title
+        case r: Row.ForCodeGroup => r.group.title
       }
       E_bnbBlocks(name, bp, data)(_.isEmpty, (_, nb) => E_sorted(name, nb, dir))
     }
@@ -243,7 +240,7 @@ object LogicPropTest extends TestSuite {
       case C.Tags            => nop
       case C.Implications(_) => nop
       case C.DeletionReason  => nop
-      case C.CustomField(id, _) =>
+      case C.CustomField(id) =>
         id match {
           case i: CustomField.Implication.Id => nop
           case i: CustomField.Tag        .Id => nop
@@ -252,15 +249,15 @@ object LogicPropTest extends TestSuite {
     }
 
     def individualSorts: EvalL =
-      C.all(ProjectConfig.empty).map(individualSort).reduce(_ ∧ _)
+      C.all(ProjectConfig.empty).toNEV.map(individualSort).reduce(_ ∧ _)
 
     def sorting =
       (individualSorts ∧ universalSort) rename "Logic.sort"
 
     // -----------------------------------------------------------------------------------------------------------------
     def stats =
-      E.equal("stats.visibleRows", tableStats.visibleRows, finalRows.size) ∧
-      E.equal("stats.visibleReqs", tableStats.visibleReqs, rowGReqIds.size)
+      E.equal("stats.visibleRows", tableStats.totalRowsInTable, finalRows.size) ∧
+      E.equal("stats.visibleReqs", tableStats.uniqueReqsInTable.all, rowGReqIds.size)
 
     def uniqueKeys =
       E.distinct("Row keys must be unique", finalRows.map(_.id.key))
@@ -271,9 +268,10 @@ object LogicPropTest extends TestSuite {
   def gen: Gen[LogicTests] =
     for {
       p  <- RandomData.project
-      vs <- RandomReqTableData.viewSettings(p, allowFilter = false)
+      fd <- RandomReqTableData.filterDead
+      ts <- RandomReqTableData.tableSettings(p, allowFilter = false)
     } yield
-      LogicTests(vs, p)
+      LogicTests(ts, fd, p)
 
   override def tests = TestSuite {
     gen.mustSatisfyE(_.all)//(implicitly[Settings].setSeed(0).setDebug.setSampleSize(20))

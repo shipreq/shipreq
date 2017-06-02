@@ -230,6 +230,9 @@ final case class ReqCodes(trie: ReqCode.Trie) {
   def apply(code: Value): Data =
     get(code) mustExistElse s"No node at reqcode ${code.whole mkString "."}."
 
+  def isEmpty: Boolean =
+    trie.isEmpty
+
   def get(code: Value): Option[Data] =
     trie.lookup(code)
 

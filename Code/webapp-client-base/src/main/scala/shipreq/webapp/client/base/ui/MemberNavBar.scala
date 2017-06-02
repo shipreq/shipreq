@@ -2,10 +2,12 @@ package shipreq.webapp.client.base.ui
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.{AssetManifest, URLs, WebappConfig}
 import shipreq.webapp.client.base.ClientConfig
+import shipreq.webapp.client.base.lib.DataReusability._
 import shipreq.webapp.client.base.ui.semantic.{Breadcrumb, Dropdown, Icon, Menu, SemExtAny}
 
 /** At top of member (logged-in) screens:
@@ -16,12 +18,21 @@ import shipreq.webapp.client.base.ui.semantic.{Breadcrumb, Dropdown, Icon, Menu,
   */
 object MemberNavBar {
 
+  type LeftProps = Reusable[Breadcrumb.Items]
+  type RightProps = Reusable[Dropdown.Items]
+
   final case class Props(username: Username,
-                         left    : Breadcrumb.Items,
-                         right   : Dropdown.Items) {
-    val leftWithDividers = left.iterator.intersperse(Divider).toList
-    @inline def render = Component(this)
+                         left    : LeftProps,
+                         right   : RightProps = onlyUsernameOnTheRight) {
+    lazy val leftWithDividers = left.iterator.intersperse(Divider).toList
+    @inline def render: VdomElement = Component(this)
   }
+
+  implicit val reusabilityProps: Reusability[Props] =
+    Reusability.caseClass
+
+  val onlyUsernameOnTheRight: RightProps =
+    Reusable.byRef(Nil)
 
   private val menuStyle =
     Menu.Style(Menu.Attr.Borderless + Menu.Attr.Fixed + Menu.Attr.Inverted)
@@ -38,9 +49,6 @@ object MemberNavBar {
   private val dropdownLogout =
     Dropdown.Item.Link(
       <.a(^.href := URLs.logout, "Logout"))
-
-  // implicit val reusabilityProps: Reusability[Props] =
-  //   Reusability.caseClass
 
   final class Backend($: BackendScope[Props, Unit]) {
 
@@ -67,9 +75,8 @@ object MemberNavBar {
 
   val Component = ScalaComponent.builder[Props]("NavBar")
     .renderBackend[Backend]
-    // .configure(Reusability.shouldComponentUpdate) TODO
+    .configure(Reusability.shouldComponentUpdate)
     .build
-
 
   // ===================================================================================================================
   //  Common items
