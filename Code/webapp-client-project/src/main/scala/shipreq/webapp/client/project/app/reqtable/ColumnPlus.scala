@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable2
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.scalajs.react.extra._

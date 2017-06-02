@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable2
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
@@ -12,7 +12,7 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.{CustomReqType, ReqType, StaticReqType}
 import shipreq.webapp.base.protocol.CreateContentCmd
 import shipreq.webapp.client.base.ui.semantic.{Button, Colour, Icon, Table => SemTable}
-import shipreq.webapp.client.project.app.Style.reqtable2.{creation => *}
+import shipreq.webapp.client.project.app.Style.reqtable.{creation => *}
 import shipreq.webapp.client.project.feature.CreateFeature
 import shipreq.webapp.client.project.feature.CreateFeature.FieldKey
 import shipreq.webapp.client.project.lib.DataReusability._

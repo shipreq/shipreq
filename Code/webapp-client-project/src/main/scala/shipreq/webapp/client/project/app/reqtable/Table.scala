@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable2
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
@@ -14,7 +14,7 @@ import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.base.lib.DomUtil._
 import shipreq.webapp.client.base.ui.{EditTheme, semantic}
 import shipreq.webapp.client.base.ui.semantic.{Icon, Message}
-import shipreq.webapp.client.project.app.Style.reqtable2.{table => *}
+import shipreq.webapp.client.project.app.Style.reqtable.{table => *}
 import shipreq.webapp.client.project.feature.{EditorFeature, Selection}
 import shipreq.webapp.client.project.widgets.{DragToReorder, ProjectWidgets, ViewReq}
 import shipreq.webapp.client.project.lib.DataReusability._

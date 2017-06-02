@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable2
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
@@ -10,7 +10,7 @@ import scalaz.std.option.optionInstance
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.client.project.app.reqtable2.{Column => C, SortCriterion => SC, SortMethod => SM}
+import shipreq.webapp.client.project.app.reqtable.{Column => C, SortCriterion => SC, SortMethod => SM}
 import SortMethod.{Asc, AscThenBlanks, BlanksThenAsc}
 import shipreq.base.util.{Applicable, NotApplicable}
 

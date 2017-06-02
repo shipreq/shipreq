@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable2
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.MutableArray
@@ -28,7 +28,7 @@ import Debug._
 /*
  * Deletion complicates everything. See `Requirements/analysis-deletion.ods` for details.
  */
-private[reqtable2] object Logic {
+private[reqtable] object Logic {
 
   private final class IssueLookup(p: Project, fd: FilterDead) {
     import AtomScan._

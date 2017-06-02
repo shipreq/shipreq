@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable2
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react.Key
 import japgolly.scalajs.react.ScalazReact._

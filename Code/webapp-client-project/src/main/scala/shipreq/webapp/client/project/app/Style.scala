@@ -135,7 +135,7 @@ object Style extends StyleSheet.Inline {
   }
 
   // ===================================================================================================================
-  object reqtable2 {
+  object reqtable {
 
     // nearly everything here is !important because of stupid Semantic UI
 
@@ -660,11 +660,11 @@ object Style extends StyleSheet.Inline {
     impgraphPage.graph,
     cfg.deadMnemonic,
     deletionForm.impliedByItem(Live),
-    reqtable2.creation.buttonDropdown,
-    reqtable2.filterEditor.input(Valid),
-    reqtable2.sortEditor.dragArea,
-    reqtable2.page.viewCtrls,
-    reqtable2.table.selectionColumnHeader,
+    reqtable.creation.buttonDropdown,
+    reqtable.filterEditor.input(Valid),
+    reqtable.sortEditor.dragArea,
+    reqtable.page.viewCtrls,
+    reqtable.table.selectionColumnHeader,
     reqdetail.detailTable,
     reqdetail.useCaseStep.container,
     widgets.issue,

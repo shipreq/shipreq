@@ -17,7 +17,7 @@ import shipreq.webapp.client.base.ui.ProjectItem
 import shipreq.webapp.client.project.app.state._
 import shipreq.webapp.client.project.app._
 import shipreq.webapp.client.project.app.reqdetail.ReqDetail
-import shipreq.webapp.client.project.app.reqtable2.ReqTablePage
+import shipreq.webapp.client.project.app.reqtable.ReqTablePage
 import shipreq.webapp.client.project.app.cfg.shared.Usage
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -95,7 +95,7 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
         pxPlainText, pxTextSearch, pxProjectWidgets,
         reqDetailRC,
         updateIO,
-        rowAsyncW.mapKey(reqtable2.Row.SourceId.ToEditorRow.reverse)))
+        rowAsyncW.mapKey(reqtable.Row.SourceId.ToEditorRow.reverse)))
 
     val pxReqDetailId = Px[Option[ReqId]](None).withReuse.manualUpdate
 
@@ -204,7 +204,7 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
 
         case Page.ReqTable =>
           val rowAsync = editAsyncState
-            .mapKey2(reqtable2.Row.SourceId.ToEditorRow.reverse)
+            .mapKey2(reqtable.Row.SourceId.ToEditorRow.reverse)
             .withKey1(AsyncKey.WholeReq)
           reqTable(
             ReqTablePage.Props(

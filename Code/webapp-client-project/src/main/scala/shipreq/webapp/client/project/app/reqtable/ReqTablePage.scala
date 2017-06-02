@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable2
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
@@ -22,7 +22,7 @@ import shipreq.webapp.client.base.lib.DataReusability._
 import shipreq.webapp.client.base.ui.BaseStyles
 import shipreq.webapp.client.base.ui.semantic.{Icon, Message}
 import shipreq.webapp.client.project.app.state.ClientData
-import shipreq.webapp.client.project.app.Style.reqtable2.{page => *}
+import shipreq.webapp.client.project.app.Style.reqtable.{page => *}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets.ProjectWidgets

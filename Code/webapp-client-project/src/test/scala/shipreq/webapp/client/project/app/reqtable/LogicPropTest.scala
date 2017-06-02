@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable2
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen.Gen
@@ -13,7 +13,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Atom, PlainText, Text, TextSearch, ProjectText}
-import shipreq.webapp.client.project.app.reqtable2.{SortCriterion => SC, Column => C}
+import shipreq.webapp.client.project.app.reqtable.{SortCriterion => SC, Column => C}
 import shipreq.webapp.client.project.test.ClientTestSettings._
 import SortMethod._
 import Sorter._

@@ -8,7 +8,7 @@ import shipreq.webapp.base.data.{FilterDead, HideDead}
 import shipreq.webapp.client.base.feature._
 import shipreq.webapp.client.base.ui.ProjectItem
 import shipreq.webapp.client.project.app.state.ClientData
-import shipreq.webapp.client.project.app.{reqdetail, reqtable2}
+import shipreq.webapp.client.project.app.{reqdetail, reqtable}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import reqdetail.ReqDetail
@@ -92,7 +92,7 @@ case class State(projectName : ProjectItem.WithEditableName.State,
                  editAsync   : AsyncFeature.State.D2[EditorFeature.RowKey, AsyncKey, EditorFeature.AsyncError],
                  preview     : PreviewFeature.State[PreviewId],
                  filterDead  : FilterDead,
-                 reqTable    : reqtable2.ReqTablePage.State,
+                 reqTable    : reqtable.ReqTablePage.State,
                  reqDetail   : ReqDetail.State)
 
 object State {
@@ -106,8 +106,8 @@ object State {
       AsyncFeature.State.initD2,
       PreviewFeature.State.init,
       HideDead,
-      reqtable2.ReqTablePage.State.init,
+      reqtable.ReqTablePage.State.init,
       ReqDetail.initState)
 
-  val reqTableSettings = State.reqTable ^|-> reqtable2.ReqTablePage.State.tableSettings
+  val reqTableSettings = State.reqTable ^|-> reqtable.ReqTablePage.State.tableSettings
 }

@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import shipreq.webapp.client.project.feature.Selection
 
-package object reqtable2 {
+package object reqtable {
 
   type SetFn[A] = A ~=> Callback
   type ModFn[A] = (A => A) ~=> Callback

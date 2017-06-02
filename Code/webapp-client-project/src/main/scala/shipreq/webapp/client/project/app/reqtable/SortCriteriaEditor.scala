@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable2
+package shipreq.webapp.client.project.app.reqtable
 
 import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._
@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import shipreq.base.util.Memo
 import shipreq.webapp.client.base.ClientResources
-import shipreq.webapp.client.project.app.Style.reqtable2.{sortEditor => *}
+import shipreq.webapp.client.project.app.Style.reqtable.{sortEditor => *}
 import shipreq.webapp.client.project.widgets.DragToReorder
 
 /**

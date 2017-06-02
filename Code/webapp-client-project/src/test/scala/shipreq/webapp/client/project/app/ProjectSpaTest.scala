@@ -5,7 +5,7 @@ import shipreq.webapp.base.event.FieldCustomDelete
 import shipreq.webapp.base.test._
 import shipreq.webapp.client.base.test.TestState._
 import shipreq.webapp.client.project.app.cfg.reqtypes.{CfgReqTypesDsl => CRT}
-import shipreq.webapp.client.project.app.reqtable2.{ReqTableTestDsl => RT}
+import shipreq.webapp.client.project.app.reqtable.{ReqTableTestDsl => RT}
 import shipreq.webapp.client.project.app.reqdetail.{ReqDetailTestDsl => RD}
 import shipreq.webapp.client.project.app.root.Routes.Page
 import shipreq.webapp.client.project.test._

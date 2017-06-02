@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable2
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -13,7 +13,7 @@ import shipreq.webapp.client.base.data.Contextualise
 import shipreq.webapp.client.base.jsfacade.{TextComplete => TC}
 import shipreq.webapp.client.base.lib.DataReusability._
 import shipreq.webapp.client.base.ui.semantic.{Button, Icon, Input}
-import shipreq.webapp.client.project.app.Style.reqtable2.{filterEditor => *}
+import shipreq.webapp.client.project.app.Style.reqtable.{filterEditor => *}
 import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.feature.AutoCompleteFeature
 import shipreq.webapp.client.project.widgets.FilterHelp

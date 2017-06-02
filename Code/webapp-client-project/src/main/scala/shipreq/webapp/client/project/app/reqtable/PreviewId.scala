@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable2
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util.univeq.UnivEq

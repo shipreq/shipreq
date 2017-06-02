@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable2
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
@@ -16,7 +16,7 @@ import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.base.data.TCB
 import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.base.ui.semantic.{Button, Icon}
-import shipreq.webapp.client.project.app.Style.reqtable2.{page => *}
+import shipreq.webapp.client.project.app.Style.reqtable.{page => *}
 import shipreq.webapp.client.project.feature.Modal
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.protocol.ServerCall

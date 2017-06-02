@@ -14,7 +14,7 @@ import shipreq.webapp.base.test.{MockRemotes, SampleProject5}
 import shipreq.webapp.client.base.test._
 import shipreq.webapp.client.project.app.cfg.reqtypes.{CfgReqTypesObs, CfgReqTypesDsl => CRT}
 import shipreq.webapp.client.project.app.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
-import shipreq.webapp.client.project.app.reqtable2.{ReqTableObs, ReqTableTestDsl => RT}
+import shipreq.webapp.client.project.app.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
 import shipreq.webapp.client.project.app.root.{ProjectHomeTestDsl => PH, _}
 import shipreq.webapp.client.project.test._
 import LoadedRoot.Props

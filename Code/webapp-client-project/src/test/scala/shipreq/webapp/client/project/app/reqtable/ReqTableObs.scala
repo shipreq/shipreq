@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable2
+package shipreq.webapp.client.project.app.reqtable
 
 import org.parboiled2.ParseError
 import org.parboiled2.Parser.DeliveryScheme.Throw
@@ -15,14 +15,14 @@ import TestState._
 object ReqTableObs {
   case class CellLoc(row: Int, col: Int)
 
-  lazy val selNA = Style.reqtable2.table.`N/A`.selector
+  lazy val selNA = Style.reqtable.table.`N/A`.selector
 
   lazy val hasNA: org.scalajs.dom.Node => Boolean =
     Sizzle(selNA, _).nonEmpty
 
   lazy val rowFilter: Live => html.TableRow => Boolean = {
     Live.memo[html.TableRow => Boolean] { l =>
-      val List(on, off) = List(On, Off).map(o => Style.reqtable2.table.dataCell((l, o)).className.value)
+      val List(on, off) = List(On, Off).map(o => Style.reqtable.table.dataCell((l, o)).className.value)
       _.children.iterator
         .filterNot(hasNA)
         .exists(td => td.classList.contains(on) || td.classList.contains(off))
@@ -94,7 +94,7 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
     filterInput.value
 
   val filterDeadButton: html.Button =
-    $(s"${Style.reqtable2.page.filterDeadButtonContainer.selector} button").domAs[html.Button]
+    $(s"${Style.reqtable.page.filterDeadButtonContainer.selector} button").domAs[html.Button]
 
   val filterDead: FilterDead =
     ShowDead when filterDeadButton.classList.contains("red")
@@ -110,7 +110,7 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
 //      s => SortMethod.ignoreBlanks.whole.find(_.optionLabel == s).getOrElse(sys error s"Unknown sort method: $s")
 
     val $: HtmlDomZipper =
-      ReqTableObs.this.$("Sort row", Style.reqtable2.sortEditor.dragArea.selector)
+      ReqTableObs.this.$("Sort row", Style.reqtable.sortEditor.dragArea.selector)
 
     case class CriteriaDom(nameDom: html.Element, orderDom: html.Element) {
       val name = nameDom.textContent
@@ -141,7 +141,7 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
   }
 
   object table {
-    val $ = ReqTableObs.this.$("ReqTable", Style.reqtable2.table.table.selector)
+    val $ = ReqTableObs.this.$("ReqTable", Style.reqtable.table.table.selector)
     val thead = $("ReqTable", ">thead")
     val tbody = $("ReqTable", ">tbody")
 
@@ -165,10 +165,10 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
     import Table.Shared.CellState
 
     private def cell(s: CellState): String =
-      s"td.${Style.reqtable2.table.dataCell(s).className.value}"
+      s"td.${Style.reqtable.table.dataCell(s).className.value}"
 
 //    private def cell(s: Status, focus: Boolean): String =  {
-//      var r = "td." + Style.reqtable2.cell(s).className.value
+//      var r = "td." + Style.reqtable.cell(s).className.value
 //      if (focus)
 //        r += ":focus"
 //      else
@@ -254,7 +254,7 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
   // ===================================================================================================================
 
   object stats {
-    val text = $("Stats", Style.reqtable2.page.summary.selector).innerText
+    val text = $("Stats", Style.reqtable.page.summary.selector).innerText
 
     val lines: Vector[String] =
       text.split("[\r\n]+").iterator

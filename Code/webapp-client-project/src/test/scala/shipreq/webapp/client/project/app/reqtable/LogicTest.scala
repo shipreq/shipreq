@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable2
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.MutableArray
@@ -16,7 +16,7 @@ import shipreq.webapp.base.text.{PlainText, ProjectText, Text, TextSearch}
 import shipreq.webapp.base.test._
 import WebappTestUtil._
 import shipreq.webapp.base.util.ReqCodeTreeItem
-import shipreq.webapp.client.project.app.reqtable2.{Column => C, SortCriterion => SC}
+import shipreq.webapp.client.project.app.reqtable.{Column => C, SortCriterion => SC}
 import SortMethod._
 
 object LogicTestUtil {
