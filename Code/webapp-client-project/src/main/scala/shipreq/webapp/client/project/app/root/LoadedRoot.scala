@@ -53,7 +53,7 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
       ServerCall.to(initData.updateContent, cp, cd)
 
     val previewW: PreviewFeature.Write.Composite[PreviewId] =
-      PreviewFeature.Write.Composite.init($ zoomStateL State.preview)
+      PreviewFeature.Write.Composite($ zoomStateL State.preview)
 
     val createAsyncW: AsyncFeature.Write.D1[CreateFeature.RowKey, String] =
       AsyncFeature.Write.D1.init($ zoomStateL State.createAsync)

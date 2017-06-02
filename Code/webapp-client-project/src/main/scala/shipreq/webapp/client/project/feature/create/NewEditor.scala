@@ -14,7 +14,7 @@ import Feature.{AsyncState, Editor, PreviewId, State}
 
 object NewEditor {
 
-  final case class Static(previewFeature  : PreviewFeature.Write.Composite[PreviewId],
+  final case class Static(previewW        : PreviewFeature.Write.Composite[PreviewId],
                           pxProject       : Px[Project],
                           pxPlainText     : Px[PlainText.ForProject],
                           pxProjectWidgets: Px[ProjectWidgets],
@@ -272,7 +272,7 @@ object NewEditor {
           override def valueImpl = _.parseResult
           override val props = as =>
             for {
-              previewState   <- previewFeature.stateCB
+              previewRW      <- previewW.toReadWriteCB
               project        <- pxProject.toCallback
               plainText      <- pxPlainText.toCallback
               textSearch     <- pxTextSearch.toCallback
@@ -285,7 +285,7 @@ object NewEditor {
               ss,
               EditorStatus.async(as),
               None,
-              previewFeature(pid, previewState),
+              previewRW(pid),
               None,
               showInstructions = ShowInstructions)
         }

@@ -315,7 +315,7 @@ object DeletionForm {
         edit             = StateSnapshot.withReuse(s.reason)(setReason),
         asyncStatus      = None,
         abortCommit      = None,
-        preview          = PreviewFeature.ReadWrite.Single.AlwaysShow,
+        preview          = PreviewFeature.ReadWrite.Single.alwaysShow,
         preEditValue     = None,
         showInstructions = true)
 

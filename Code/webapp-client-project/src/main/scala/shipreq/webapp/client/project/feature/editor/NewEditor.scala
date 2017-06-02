@@ -29,7 +29,7 @@ final case class NewEditor(create: Callback => Callback) extends AnyVal
 
 object NewEditor {
 
-  final case class Static(previewFeature  : PreviewFeature.Write.Composite[PreviewId],
+  final case class Static(previewW        : PreviewFeature.Write.Composite[PreviewId],
                           pxProject       : Px[Project],
                           pxPlainText     : Px[PlainText.ForProject],
                           pxProjectWidgets: Px[ProjectWidgets],
@@ -479,7 +479,7 @@ object NewEditor {
           override def changeImpl = _.validated
           override val props = as =>
             for {
-              previewState   <- previewFeature.stateCB
+              previewRW      <- previewW.toReadWriteCB
               project        <- pxProject.toCallback
               plainText      <- pxPlainText.toCallback
               textSearch     <- pxTextSearch.toCallback
@@ -492,7 +492,7 @@ object NewEditor {
               ss,
               EditorStatus.async(as),
               abortCommit,
-              previewFeature(pid, previewState),
+              previewRW(pid),
               initial,
               showInstructions = true)
         }
@@ -569,7 +569,7 @@ object NewEditor {
         override def changeImpl = _.validatedChanges
         override val props = as =>
           for {
-            previewState   <- previewFeature.stateCB
+            previewRW      <- previewW.toReadWriteCB
             project        <- pxProject.toCallback
             plainText      <- pxPlainText.toCallback
             textSearch     <- pxTextSearch.toCallback
@@ -583,7 +583,7 @@ object NewEditor {
             EditorStatus.async(as),
             abort,
             commit,
-            previewFeature(pid, previewState),
+            previewRW(pid),
             initial)
       }
     }

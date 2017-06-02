@@ -43,7 +43,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     def abort       = abortCommit.map(_.abort)
     def commit      = (t: text.OptionalText) => abortCommit.map(_ commit t)
     val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
-    def showPreview = validated.isChanged
+    val wantPreview = Text isRich richText
 
     def render: VdomElement = Component(this)
   }
@@ -69,13 +69,14 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
       val updateState: ReactEventFromTextArea => Callback =
         e => $.props >>= (p =>
-          p.status.wrapEdit(p.edit.setState(liveCorrect(e.target.value)) >> p.preview.onEdit))
+          p.status.wrapEdit(p.edit.setState(liveCorrect(e.target.value)) >>
+            p.preview.onEdit(p.wantPreview)))
 
       TagMod(
         ^.autoFocus := true,
         ^.onChange ==> updateState,
         ^.onBlur   --> $.props.flatMap(_.preview.onBlur),
-        ^.onFocus  --> $.props.flatMap(_.preview.onFocus),
+        ^.onFocus  --> $.props.flatMap(p => p.preview.onFocus(p.wantPreview)),
         RichTextEditor.minRows(text.lineCardinality),
         keys)
     }
@@ -98,11 +99,11 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
             p.abort,
             Some(RichTextEditorHelp.modal.show)))
 
-      def richText =
+      def richText: VdomTag =
         p.projectWidgets.format(hardcodedLive, p.richText)
 
-      def preview =
-        RichTextEditor.renderPreview(p.preview, p.showPreview, richText)
+      def preview: VdomNode =
+        RichTextEditor.renderPreview(p.preview, p.wantPreview, richText)
 
       EditTheme.renderEditor(p.status, editor, richText, instructions, preview)
     }
@@ -137,8 +138,8 @@ object RichTextEditor {
   }
 
   // TODO Move to EditTheme or similar
-  def renderPreview(p: PreviewFeature.ReadWrite.Single, show: => Boolean, view: => VdomNode): VdomNode =
-    p.reactCollapse(show)(
+  def renderPreview(p: PreviewFeature.ReadWrite.Single, wantOpen: => Boolean, view: => VdomNode): VdomNode =
+    p.reactCollapse(wantOpen)(
       <.div(*.richTextPreview,
         <.div(*.richTextPreviewHeader, "Preview"),
         <.div(*.richTextPreviewBody, view)))

@@ -89,8 +89,8 @@ object UseCaseStepEditor {
     val validity: Validity =
       validated.fold(_.validity)(_ & _.validity)
 
-    val showPreview: Boolean =
-      validated.fold(_.isChanged)(_ || _.isChanged)
+    val wantPreview: Boolean =
+      Text isRich parsed.text
 
     val status: EditorStatus =
       asyncStatus.getOrElse(
@@ -120,13 +120,14 @@ object UseCaseStepEditor {
 
       val updateState: ReactEventFromTextArea => Callback =
         e => $.props >>= (p =>
-          p.status.wrapEdit(p.edit.setState(liveCorrect(e.target.value)) >> p.preview.onEdit))
+          p.status.wrapEdit(p.edit.setState(liveCorrect(e.target.value)) >>
+            p.preview.onEdit(p.wantPreview)))
 
       TagMod(
         ^.autoFocus := true,
         ^.onChange ==> updateState,
         ^.onBlur   --> $.props.flatMap(_.preview.onBlur),
-        ^.onFocus  --> $.props.flatMap(_.preview.onFocus),
+        ^.onFocus  --> $.props.flatMap(p => p.preview.onFocus(p.wantPreview)),
         RichTextEditor.minRows(lineCardinality),
         keys)
     }
@@ -148,7 +149,7 @@ object UseCaseStepEditor {
         p.projectWidgets.useCaseStepE(hardcodedLive, p.parsed)
 
       def preview =
-        RichTextEditor.renderPreview(p.preview, p.showPreview, richText)
+        RichTextEditor.renderPreview(p.preview, p.wantPreview, richText)
 
       EditTheme.renderEditor(p.status, editor, richText, instructions, preview)
     }
