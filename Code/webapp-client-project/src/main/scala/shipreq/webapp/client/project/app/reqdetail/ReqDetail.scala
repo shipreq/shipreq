@@ -5,6 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
@@ -183,6 +184,12 @@ object ReqDetail {
     private val headerStyle: Live => Header.Style =
       Live.memo(l => Header.Style(Header.Type.H1, other = *.headerText(l)))
 
+    private val rowHeader: Live => VdomTag =
+      Live.memo(l => <.th(*.detailTableKey(l)))
+
+    private val rowData: Live => VdomTag =
+      Live.memo(l => <.td(*.detailTableValue(l)))
+
     def renderDetail(props: DynamicProps, data: Data): VdomElement = {
       import data.{project, req, pubidText}
 
@@ -212,18 +219,37 @@ object ReqDetail {
             FilterDeadButton.whenLive(data.live)(StateSnapshot.withReuse(props.filterDead.value)(setFilterDead))))
       }
 
-      val keyCell = <.th(*.detailTableKey(data.live))
-
       def renderRows =
         <.table(*.detailTable,
           <.tbody(
             data.rows.toVdomArray(renderRow)))
 
-      def renderRow(row: Row): VdomElement =
+      def renderRow(row: Row): VdomElement = {
+
+        val headerDataLive: (Live, Live) =
+          row match {
+            case Row.Codes
+               | Row.ReqType
+               | Row.Tags
+               | Row.Implications
+               | Row.ImplicationGraph
+               | Row.UseCaseStepsN
+               | Row.UseCaseStepsA
+               | Row.UseCaseStepsE
+               | Row.StepGraph        => (Live, data.live)
+            case Row.DeletionReason
+               | Row.PastPubids       => (Live, Dead)
+            case Row.Life             => (Live, Live) // When req is dead, [Restore] should be highlighted is active
+            case Row.CustomField(id)  =>
+              val l = project.config.fields.customFields.need(id).live(project.config)
+              (l, data.live & l)
+          }
+
         <.tr(
           ^.key := row.key,
-          keyCell(renderRowTitle(row)),
-          <.td(renderRowData(row)))
+          rowHeader(headerDataLive._1)(renderRowTitle(row)),
+          rowData(headerDataLive._2)(renderRowData(row)))
+      }
 
       def renderRowTitle(row: Row): VdomNode =
         row match {
@@ -244,13 +270,10 @@ object ReqDetail {
 
       // TODO Test that this applies applicability
       def renderRowData(row: Row): TagMod = {
-        var liveStyle = data.live
-
         import EditorFeature.FieldKey
-        val content: TagMod = row match {
-
-          case Row.CustomField(id: CustomField.Text.Id)        => renderEditable(FieldKey.CustomTextField(id))
-          case Row.CustomField(id: CustomField.Tag.Id)         => renderEditable(FieldKey.Tags(Some(id)))
+        row match {
+          case Row.CustomField(id: CustomField.Text       .Id) => renderEditable(FieldKey.CustomTextField(id))
+          case Row.CustomField(id: CustomField.Tag        .Id) => renderEditable(FieldKey.Tags(Some(id)))
           case Row.CustomField(id: CustomField.Implication.Id) => renderEditable(FieldKey.Implications(-\/(id)))
           case Row.Codes                                       => renderEditable(FieldKey.Codes)
           case Row.ReqType                                     => renderEditable(FieldKey.ReqType)
@@ -285,7 +308,6 @@ object ReqDetail {
             UseCaseStepFlowGraph.Props(ucId, project.reqs.useCases, webWorker).render
 
           case Row.Life =>
-            liveStyle = Live // When req is dead, user can still Restore it, thus this cell shouldn't appear dead
             data.live match {
               case Live =>
                 LifeButton.Delete withStatusOnLeft delete(req.id)
@@ -295,8 +317,6 @@ object ReqDetail {
             }
 
         }
-
-        content(*.detailTableValue(liveStyle))
       }
 
       def renderStepTree(ucData: UseCaseData, stepData: UseCaseStepTree.StepData) = {

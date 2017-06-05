@@ -427,12 +427,8 @@ object Style extends StyleSheet.Inline {
       textAlign.left,
       wordWrap.breakWord,
       // whiteSpace.nowrap,
-      backgroundColor(
-        live match {
-          case Live => rgba(0, 0, 0, .04)
-          case Dead => rgba(0, 0, 0, .09)
-        }
-      )))
+      backgroundColor(rgba(0, 0, 0, .04)),
+      mixinIf(live is Dead)(textDecoration := "line-through")))
 
     val detailTableValue = styleF(D.live)(live => styleS(
       detailTableCell,
