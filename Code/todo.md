@@ -1,71 +1,78 @@
-Style
-  * Autocomplete far away
-  * Autosize not working
-  * ReqTable: Refocus cell on editor close
+Phase 2
+=======
 
-Frontend
-  * Switch to semantic-react
-  * Replace yuku-t/jquery-textcomplete with yuku-t/textcomplete
-  * Remove jQuery
-  * Improve load times, maybe defer stuff? Or maybe on-demand loading?
-    * Katex.js can be loaded on demand. Only the CSS is required for rendering.
+### UX
+* Autocomplete far away
+* Autosize not working
+* ReqTable: Refocus cell on editor close
+* Set title on route change
+* Replace yuku-t/jquery-textcomplete with yuku-t/textcomplete
+* Improve load times, maybe defer stuff? Or maybe on-demand loading?
+  * Katex.js can be loaded on demand. Only the CSS is required for rendering.
 
-Misc
-  * Set title on route change
-  * Keyboard nav for ReqDetail
-  * Show past IDs in ReqDetail
-  * Show past IDs in ReqTable?
-  * Group req types in filter from ALL to ANY.
-  * Say "no implications" in imp graph
+### Mechanics
+* Add new column type: all tags (as opposed to non-field tags)
+* We have implications fields and implication columns.
+  We don't seem to need all-imps vs non-field-imps...should tags not work the same way?
+  Or is there similar deficiency in imps cols too?
 
-* Tags
-  * (?) Add new column type: all tags (as opposed to non-field tags)
-  * We have implications fields and implication columns.
-    We don't seem to need all-imps vs non-field-imps...should tags not work the same way?
-    Or is there similar deficiency in imps cols too?
+### Nice UI
+* ReqDetail load failure
+* Deletion screen
+* Front pages
 
-* Determine UI for:
-  * ReqDetail load failure
-  * Deletion screen
-  * Cfg Fields
-  * Cfg Issues
-  * Cfg ReqTypes
-  * Cfg Tags
+### Front pages
+* Rewrite with scalajs-react?
+* name as one field is fine, call it "full name" like credit cards
 
-* Redo front pages
-  * name as one field is fine, call it "full name" like credit cards
-  * plan UI
-  * impl UI
-  * test
+### Devops & Deployment
+* New amazon accounts
+* Automate deployment
+* Add healthchecks
+* Send logs to service
+* Add proper metrics
 
-* Data design
-  * Extract string table so that project structure can be cached separately from project textual content?
-  * Store text changes as patches instead full replacements?
-    * Lose the ability to quickly grep from DB.
-    * Less storage/transport cost.
-    * More CPU required to build a project from events.
-  * Will [saved views] be stored in projects' event streams?
-    * Consider impact on existing event stuff.
-    * What about user-space views (as opposed to project-wide/shared views)?
-      * Should they even be supported?
-      * Where/how should they be stored?
+### Tech
+* Do more with errors, eg. ClientData.{init,applyEvents}
+* Remove unused styles
 
-* Devops & Deployment
-  * New amazon accounts
-  * Automate deployment
-  * Add healthchecks
-  * Send logs to service
-  * Add proper metrics
 
-* Do more with errors.
-    ClientData.init
-    ClientData.applyEvents
+------------------------------------------------------------------------------------------------------------------------
+Backlog
+=======
 
-* Tech
-  * Stop using scalaz.std.anything which brings in too much other stuff;
-    use custom instances that have the minimum typeclasses needed.
-  * Remove specs2. Use scalatest/μtest.
-  * Remove ScalaCheck. Use Nyaya.
-  * Use fast boopickle codecs for webworkers: https://github.com/ochrons/boopickle#codecs
-  * Test env: Use different DBs for each module
-  * Remove unused styles
+### UX
+* Keyboard nav for ReqTable
+* Keyboard nav for ReqDetail
+* Show past IDs in ReqTable
+* Group req types in filter from ALL to ANY.
+* Say "no implications" in imp graph
+
+### Nice UI
+* Cfg Fields
+* Cfg Issues
+* Cfg ReqTypes
+* Cfg Tags
+
+### Data design
+* Extract string table so that project structure can be cached separately from project textual content?
+* Store text changes as patches instead full replacements?
+  * Lose the ability to quickly grep from DB.
+  * Less storage/transport cost.
+  * More CPU required to build a project from events.
+* Will [saved views] be stored in projects' event streams?
+  * Consider impact on existing event stuff.
+  * What about user-space views (as opposed to project-wide/shared views)?
+    * Should they even be supported?
+    * Where/how should they be stored?
+
+### Tech
+* Stop using scalaz.std.anything which brings in too much other stuff;
+  use custom instances that have the minimum typeclasses needed.
+* Remove specs2. Use scalatest/μtest.
+* Remove ScalaCheck. Use Nyaya.
+* Use fast boopickle codecs for webworkers: https://github.com/ochrons/boopickle#codecs
+* Test env: Use different DBs for each module
+* Switch to semantic-react
+* Remove jQuery
+
