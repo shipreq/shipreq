@@ -16,8 +16,7 @@ object Autosize extends js.Object {
   type Target  = dom.Element
   type Targets = Target | dom.NodeList
 
-  @JSName("apply")
-  def init(targets: Targets): Unit = js.native
+  def apply(targets: Targets): Unit = js.native
 
   def update(targets: Targets): Unit = js.native
 

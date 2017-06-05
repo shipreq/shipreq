@@ -3,7 +3,6 @@ Phase 2
 
 ### UX
 * Autocomplete far away
-* Autosize not working
 * ReqTable: Refocus cell on editor close
 * Set title on route change
 * Replace yuku-t/jquery-textcomplete with yuku-t/textcomplete

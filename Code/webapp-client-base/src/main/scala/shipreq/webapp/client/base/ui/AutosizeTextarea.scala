@@ -11,7 +11,7 @@ object AutosizeTextarea {
 
   val Component = ScalaComponent.builder[TagMod]("AutosizeTextarea")
     .render_P(<.textarea(_))
-    .componentDidMount   (i => Callback(Autosize.init   (i.getDOMNode)))
+    .componentDidMount   (i => Callback(Autosize        (i.getDOMNode)))
     .componentDidUpdate  (i => Callback(Autosize.update (i.getDOMNode)))
     .componentWillUnmount(i => Callback(Autosize.destroy(i.getDOMNode)))
     .build
