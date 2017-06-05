@@ -1,3 +1,8 @@
+Style
+  * Autocomplete far away
+  * Autosize not working
+  * ReqTable: Refocus cell on editor close
+
 Frontend
   * Switch to semantic-react
   * Replace yuku-t/jquery-textcomplete with yuku-t/textcomplete
@@ -6,6 +11,7 @@ Frontend
     * Katex.js can be loaded on demand. Only the CSS is required for rendering.
 
 Misc
+  * Set title on route change
   * Keyboard nav for ReqDetail
   * Show past IDs in ReqDetail
   * Show past IDs in ReqTable?
