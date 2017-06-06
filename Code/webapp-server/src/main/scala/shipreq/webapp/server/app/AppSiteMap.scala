@@ -77,7 +77,7 @@ object AppSiteMap {
 
   val Project: PM[ProjectId] =
     (MenuWithIdParam(ProjectId.Extern)("project") / URLs.ForLift.project / * / **
-      >> StaticTitle(mkTitle("Project"))
+      >> StaticTitle(defaultTitle)
       >> AuthenticationRequired >> ProjectPermissionRequired
       >> UseTemplate("members/project")
       >> PerformEffects {

@@ -9,6 +9,7 @@ import monocle._
 import monocle.macros._
 import scala.annotation.elidable
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.client.base.lib.DataReusability._
 import shipreq.webapp.base.data.{ExternalPubid, ReqType, ReqTypePos}
 import shipreq.webapp.base.text.PlainText
@@ -39,6 +40,17 @@ object Routes {
     implicit def equality: UnivEq[Page] = UnivEq.derive
     implicit def reusability: Reusability[Page] = Reusability.byUnivEq
 
+    val title: Page => List[String] = {
+      case Index        => Nil
+      case ReqTable     => "ReqTable" :: Nil
+      case ReqDetail(p) => PlainText.pubid(p) :: Nil
+      case ImpGraph     => ProjectIndex.Item.ImpGraph.title :: Nil
+      case CfgFields    => "Config " + ProjectIndex.Item.CfgFields  .title :: Nil
+      case CfgIssues    => "Config " + ProjectIndex.Item.CfgIssues  .title :: Nil
+      case CfgReqTypes  => "Config " + ProjectIndex.Item.CfgReqTypes.title :: Nil
+      case CfgTags      => "Config " + ProjectIndex.Item.CfgTags    .title :: Nil
+    }
+
     def sampleValues = NonEmptyVector[Page](
       CfgFields,
       CfgIssues,
@@ -67,6 +79,12 @@ object Routes {
       def reqDetailRoute =
         dynamicRouteCT(reqTablePath / remainingPath.pmapL(Page.ReqDetail.stringPrism)) ~> dynPage autoCorrect
 
+      def title(p: Page): String = {
+        val bits: List[String] =
+          Page.title(p) ::: rootInstance.cd.project().name :: WebappConfig.appName :: Nil
+        bits.mkString(" | ")
+      }
+
       ( staticPage(dsl.root       , Page.Index      )
       | staticPage(reqTablePath   , Page.ReqTable   )
       | staticPage("#impgraph"    , Page.ImpGraph   )
@@ -77,6 +95,7 @@ object Routes {
       | reqDetailRoute
       | trimSlashes
       ).notFound(redirectToPage(Page.Index)(Redirect.Replace))
+        .setTitle(title)
         .verify(Page.sampleValues.head, Page.sampleValues.tail: _*)
     }
 }

@@ -31,7 +31,7 @@ object LoadedRoot {
   case class Props(page: Page, routerCtl: RouterCtl)
 }
 
-final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: ClientData) {
+final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, val cd: ClientData) {
 
   final class Backend($: BackendScope[Props, State]) extends OnUnmount {
     import cd.pxProject

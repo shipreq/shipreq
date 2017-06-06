@@ -4,7 +4,6 @@ Phase 2
 ### UX
 * Autocomplete far away
 * ReqTable: Refocus cell on editor close
-* Set title on route change
 * Replace yuku-t/jquery-textcomplete with yuku-t/textcomplete
 * Improve load times, maybe defer stuff? Or maybe on-demand loading?
   * Katex.js can be loaded on demand. Only the CSS is required for rendering.
