@@ -2,9 +2,7 @@ Phase 2
 =======
 
 ### UX
-* Autocomplete far away
 * ReqTable: Refocus cell on editor close
-* Replace yuku-t/jquery-textcomplete with yuku-t/textcomplete
 * Improve load times, maybe defer stuff? Or maybe on-demand loading?
   * Katex.js can be loaded on demand. Only the CSS is required for rendering.
 
@@ -45,6 +43,10 @@ Backlog
 * Show past IDs in ReqTable
 * Group req types in filter from ALL to ANY.
 * Say "no implications" in imp graph
+* Autocomplete problems
+  * The popup is far away from the textarea
+  * Ideally replace jquery-textcomplete with textcomplete (problems encountered)
+  * Maybe write my own based on React
 
 ### Nice UI
 * Cfg Fields
