@@ -39,6 +39,7 @@ object TestState
   val Enter     = SimEvent.Keyboard(key = KeyValue.Enter     , keyCode = KeyCode.Enter )
   val CtrlEnter = SimEvent.Keyboard(key = KeyValue.Enter     , keyCode = KeyCode.Enter , ctrlKey = true)
   val F2        = SimEvent.Keyboard(key = KeyValue.F2        , keyCode = KeyCode.F2    )
+  val Tab       = SimEvent.Keyboard(key = KeyValue.Tab       , keyCode = KeyCode.Tab   )
 
   // TODO Patch TestState to support using custom fail instead of throwing
   def assertTestState(r: Report[String], onFailure: => Unit = ())(implicit as: AssertionSettings, se: DisplayError[String]): Unit =

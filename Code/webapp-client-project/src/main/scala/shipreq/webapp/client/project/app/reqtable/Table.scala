@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -469,12 +470,28 @@ object Table {
       e.target == e.currentTarget ||
         (try e.target.tabIndex < 0 catch { case _: Throwable => false }) // .tabIndex is undefined from tests
 
-    def onKeyDown(editor: EditorFeature.ReadWrite.ForEditor[Any]): ReactKeyboardEventFromHtml => Callback =
-      e => CallbackOption.require(doesEventTargetCell(e)) >> (
+    def onKeyDown(editor: EditorFeature.ReadWrite.ForEditor[Any]): ReactKeyboardEventFromHtml => Callback = e => {
+      def focusChild: CallbackOption[Unit] =
+        CallbackOption
+          .liftOption(focusableChildren(e.currentTarget.domAsHtml).nextOption())
+          .map(_.focus())
+
+      def focusOrStartEditor: CallbackOption[Unit] =
+        if (editor.read.editor.isDefined) focusChild else editor.startEdit.getOrEmpty
+
+      val cellEvents: CallbackOption[Unit] =
+        CallbackOption.require(doesEventTargetCell(e)) >> (
         focusKeyHandlers(e) | keyCodeSwitch(e) {
-          case KeyCode.F2 => editor.startEdit.getOrEmpty
+          case KeyCode.F2 => focusOrStartEditor
+        })
+
+      val childEvents: CallbackOption[Unit] =
+        CallbackOption.require(e.target != e.currentTarget) >> keyCodeSwitch(e) {
+          case KeyCode.Tab => Callback(e.currentTarget.focus())
         }
-      )
+
+      CallbackOption.asEventDefault(e, cellEvents | childEvents)
+    }
 
     val cellBase = <.td(^.tabIndex := -1)
 

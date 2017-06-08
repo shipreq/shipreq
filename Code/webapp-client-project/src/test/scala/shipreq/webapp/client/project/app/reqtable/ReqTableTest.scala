@@ -280,7 +280,8 @@ object ReqTableTest extends TestSuite {
       >> press(RightKey)  +> activeElement.assert.equalBy(_.obs.table.cell(-1, 2).dom)
       >> press(RightKey)  +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3).dom) // The Title column
       >> press(F2)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3)("textarea").dom)
-      // TODO Test jumping from textarea ↔ table
+      >> press(Tab)       +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3).dom) // tab out to cell
+      >> press(F2)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3)("textarea").dom)
   ) named "Keyboard navigation"
 
 //  def newUseCaseWithMinimalColumns: *.Actions = Plan.action(
