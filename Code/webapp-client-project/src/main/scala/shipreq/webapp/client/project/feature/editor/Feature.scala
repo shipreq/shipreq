@@ -134,11 +134,11 @@ object Feature {
   object Write {
 
     final case class ForEditor(newEditor: Reusable[NewEditor], async: AsyncFeature.Write.D0[AsyncError]) {
-      def startEdit(state: Read.ForEditor[Any], cb: Callback): Option[Callback] =
+      def startEdit(state: Read.ForEditor[Any], h: NewEditor.Hooks = NewEditor.Hooks.empty): Option[Callback] =
         if (state.editability.is(Deny) || state.editor.isDefined)
           None
         else
-          Some(newEditor.create(cb))
+          Some(newEditor.create(h))
     }
 
     object ForEditor {
@@ -232,7 +232,7 @@ object Feature {
 
   object ReadWrite {
 
-    final case class ForEditor[+C](read: Read.ForEditor[C], write: Write.ForEditor) {
+    final case class ForEditor[+C](read: Read.ForEditor[C], write: Write.ForEditor, hooks: NewEditor.Hooks) {
       @inline def render(): Option[VdomElement] =
         read.render()
 
@@ -249,10 +249,13 @@ object Feature {
         *         `Some[Callback]` otherwise that, when invoked, will add an editor to state and UI.
         */
       def startEdit: Option[Callback] =
-        startEdit(Callback.empty)
+        write.startEdit(read, hooks)
 
-      def startEdit(cb: Callback): Option[Callback] =
-        write.startEdit(read, cb)
+      def onStart(cb: Callback): ForEditor[C] =
+        copy(hooks = NewEditor.Hooks.onStart.modify(_ >> cb)(hooks))
+
+      def onClose(cb: Callback): ForEditor[C] =
+        copy(hooks = NewEditor.Hooks.onClose.modify(_ >> cb)(hooks))
 
       def asyncFeature = write.async
       def asyncState = read.async
@@ -260,7 +263,7 @@ object Feature {
 
     object ForEditor {
       val doNothing: ForEditor[Nothing] =
-        apply(Read.ForEditor.doNothing, Write.ForEditor.doNothing)
+        apply(Read.ForEditor.doNothing, Write.ForEditor.doNothing, NewEditor.Hooks.empty)
     }
 
     final case class ForFields[-FK <: FieldKey](read: Read.ForFields[FK], write: Write.ForFields[FK]) {
@@ -268,7 +271,7 @@ object Feature {
       def asyncState = read.async
 
       def apply(field: FK): ForEditor[field.Change] =
-        ForEditor(read(field), write.apply(field))
+        ForEditor(read(field), write.apply(field), NewEditor.Hooks.empty)
 
       def optional(field: Option[FK]): ForEditor[Any] =
         field.fold[ForEditor[Any]](ForEditor.doNothing)(apply(_))

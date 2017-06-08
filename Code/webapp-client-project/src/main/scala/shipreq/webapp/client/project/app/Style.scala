@@ -217,11 +217,8 @@ object Style extends StyleSheet.Inline {
         margin(`0`).important)
 
       private val headerBase = style(
-        padding(4.px).important)
-
-      private val bodyBase = style(
         padding(4.px).important,
-        verticalAlign.top.important)
+        &.focus(outlineColor(BaseStyles.focus.colour(1))))
 
       val columnHeader = styleF(D.live *** D.dragStatus) { case (live, status) => styleS(
         headerBase,
@@ -235,12 +232,27 @@ object Style extends StyleSheet.Inline {
         }): StyleS
       )}
 
-      private val selectionColumnCell = styleS(
+      private val cellBase = styleF(D.`live * on`)(i => styleS(
+        padding(4.px).important,
+        verticalAlign.top.important,
+        i match {
+          case (Live, Off) => mixin()
+          case (Dead, Off) => mixin(backgroundColor(c"#f5f5f5"))
+          case (Live, On ) => mixin(backgroundColor(hsla(228, 90 %%, 75 %%, .12)))
+          case (Dead, On ) => mixin(backgroundColor(hsla(228, 74 %%, 33 %%, .11)))
+        }))
+
+      val dataCell = styleF(D.`live * on`)(i => styleS(
+        cellBase(i),
+        &.focus(BaseStyles.focus.glowOutline)))
+
+      private val selectionCellBase = styleS(
         width(24.px).important,
         textAlign.center.important)
 
-      val selectionColumnHeader = style(selectionColumnCell, headerBase)
-      val selectionColumnBody   = style(selectionColumnCell, bodyBase)
+      val selectionColumnHeader = style(selectionCellBase, headerBase)
+      val selectionDataCell     = styleF(D.`live * on`)(i => styleS(selectionCellBase, dataCell(i)))
+      val selectionCheckbox     = style(&.focus(outlineColor(BaseStyles.focus.colour(1))))
 
       val pubidColumnValue = styleF(D.live)(a => styleS(
         display.inline,
@@ -250,17 +262,6 @@ object Style extends StyleSheet.Inline {
       val `N/A` = style(
         color(c"#666"),
         margin.horizontal(auto))
-
-      val dataCell = styleF(D.`live * on`)(i => styleS(
-        bodyBase,
-        i match {
-          case (Live, Off) => mixin()
-          case (Dead, Off) => mixin(backgroundColor(c"#f5f5f5"))
-          case (Live, On ) => mixin(backgroundColor(c"#ffc"))
-          case (Dead, On ) => mixin(backgroundColor(c"#f5f5c4"))
-        },
-        &.focus(
-          outline(solid, 2 px, c"#a333c8"))))
 
       val noContent = style(
         padding(2 em).important)
@@ -573,8 +574,8 @@ object Style extends StyleSheet.Inline {
 
     object reqTypeSelector {
       val dropdown = style(
-        backgroundColor(BaseStyles.editorBackgroundColor).important,
-        borderColor(BaseStyles.editorBorderColor).important,
+        backgroundColor(BaseStyles.editor.backgroundColor).important,
+        borderColor(BaseStyles.editor.borderColor).important,
         marginRight(1 ex).important)
 
       val buttons = style()

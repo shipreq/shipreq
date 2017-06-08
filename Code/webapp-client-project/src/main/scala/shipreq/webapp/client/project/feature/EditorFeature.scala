@@ -56,6 +56,9 @@ object EditorFeature {
   type Static = editor.NewEditor.Static
   val  Static = editor.NewEditor.Static
 
+  type EditorHooks = editor.NewEditor.Hooks
+  val  EditorHooks = editor.NewEditor.Hooks
+
   val Editability = editor.Editability
 
   val State     = editor.Feature.State

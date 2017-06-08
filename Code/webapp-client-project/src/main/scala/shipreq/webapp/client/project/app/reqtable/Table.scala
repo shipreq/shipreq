@@ -19,6 +19,7 @@ import shipreq.webapp.client.project.feature.{EditorFeature, Selection}
 import shipreq.webapp.client.project.widgets.{DragToReorder, ProjectWidgets, ViewReq}
 import shipreq.webapp.client.project.lib.DataReusability._
 import EditorFeature.FieldKey
+import shipreq.webapp.client.base.REACT_TMP._
 
 object Table {
   import Shared._
@@ -179,7 +180,7 @@ object Table {
           <.th(
             *.selectionColumnHeader,
             ^.onKeyDown ==> selColKeyDown,
-            p.selection.total.checkboxAndOnClick)
+            p.selection.total.checkboxAndOnClick) // TODO *.selectionCheckbox
 
         val cols =
           content.items.toVdomArray { i =>
@@ -258,13 +259,13 @@ object Table {
       implicitly
 
     private val rowBase = <.tr
-    private val selBase = <.td(*.selectionColumnBody)
 
     final def render(p: Props): VdomElement = {
       val row         = p.row
       val sel         = p.selection
       val rowSelected = sel.get
       val cellStateFn = CellState(rowSelected)
+      val selBase     = <.td(*.selectionDataCell(cellStateFn(row.live)))
 
       def selCellKeyDown(e: ReactKeyboardEventFromHtml): Callback =
         focusKeyHandlers(e)
@@ -292,7 +293,7 @@ object Table {
           selBase(
             ^.onKeyDown ==> selCellKeyDown,
             sel.onClick,
-            sel.checkbox(^.tabIndex := -1))
+            sel.checkbox(*.selectionCheckbox, ^.tabIndex := -1))
 
         val columnToEditorField = rowToColumnToEditorField(p.row)
 
@@ -439,12 +440,22 @@ object Table {
             reusableNA))
     }
 
-    val cellBase = <.td(^.tabIndex := -1)
+    type RenderScope = ScalaComponent.Lifecycle.RenderScope[Props, Unit, Unit]
+    type Mounted = ScalaComponent.MountedPure[Props, Unit, Unit]
+    type Dom = dom.html.TableDataCell
 
-    type $ = ScalaComponent.Lifecycle.RenderScope[Props, Unit, Unit]
-    type N = dom.html.TableDataCell
+    def domCB($: Mounted): CallbackTo[Dom] =
+      $.getDOMNode.map(_.domCast[Dom])
 
-    // def domNode = CallbackTo($.getDOMNode.asInstanceOf[N])
+    def focus($: Mounted): Callback =
+      for {
+        focused <- focusedHtmlElement
+        cell <- domCB($)
+      } yield
+        // If this cell's child is focused, or there is no focus at all, then focus this cell.
+        // Otherwise, don't steal another element's focus
+        if (focused.forall(cell.contains))
+          cell.focus()
 
     /**
      * When a Button in the cell is clicked, we still get the event here in which case, the focus is set after the
@@ -461,15 +472,19 @@ object Table {
     def onKeyDown(editor: EditorFeature.ReadWrite.ForEditor[Any]): ReactKeyboardEventFromHtml => Callback =
       e => CallbackOption.require(doesEventTargetCell(e)) >> (
         focusKeyHandlers(e) | keyCodeSwitch(e) {
-          case KeyCode.F2 => editor.startEdit getOrElse Callback.empty
+          case KeyCode.F2 => editor.startEdit.getOrEmpty
         }
       )
 
-    def render($: $, p: Props): VdomElement =
+    val cellBase = <.td(^.tabIndex := -1)
+
+    def render($: RenderScope, p: Props): VdomElement = {
+      val editor = p.editor.onClose(focus($.mountedPure))
       cellBase(
         *.dataCell(p.cellState),
-        ^.onKeyDown ==> onKeyDown($.props.editor),
-        p.editor.themedRenderOr(p.view))
+        ^.onKeyDown ==> onKeyDown(editor),
+        editor.themedRenderOr(p.view))
+    }
 
     val Component = ScalaComponent.builder[Props]("Cell")
       .renderP(render)

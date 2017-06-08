@@ -11,6 +11,9 @@ object DomUtil {
 
   val SvgNS = "http://www.w3.org/2000/svg"
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Extensions
+
 //  @inline implicit class PatchNode(private val n: Node) extends AnyVal {
 //  }
 
@@ -65,6 +68,15 @@ object DomUtil {
     def deepIteratorBreadthFirst: Iterator[Element] =
       iterator ++ iterator.flatMap(_.children.deepIteratorBreadthFirst)
   }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Functions
+
+  def focusedHtmlElement: CallbackTo[Option[html.Element]] =
+    CallbackTo(
+      document.activeElement
+        .domToHtml
+        .filterNot(_ eq document.body))
 
   def focusableChildren(e: Element): Iterator[html.Element] =
     focusable(e.children.deepIteratorDepthFirst)
@@ -129,6 +141,9 @@ object DomUtil {
   def siblingAtOffset(e: html.Element, offset: Int) =
     siblingAt(e, _ + offset)
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Structures
+
   sealed abstract class Movement(val adjustIndex: Int => Int)
   object Movement {
     case object None extends Movement(identity)
@@ -148,7 +163,7 @@ object DomUtil {
    *
    * @param focus Either table>thead>tr>th or table>tbody>tr>td
    */
-  case class TableCellZipper(focus: html.Element) {
+  final case class TableCellZipper(focus: html.Element) {
     @inline implicit private def autoCastHtml(e: Element) = e.domAsHtml
 
     def focusRow    : html.Element = focus.parentElement    // TH | TD

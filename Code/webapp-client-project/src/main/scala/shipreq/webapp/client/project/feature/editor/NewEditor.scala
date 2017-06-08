@@ -4,6 +4,7 @@ import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
+import monocle.macros.Lenses
 import scalaz.~>
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
@@ -24,9 +25,21 @@ import shipreq.webapp.base.event.UseCaseStepGD
   *
   * Doesn't perform ANY applicability checks. That's performed by the higher-level Feature API.
   */
-final case class NewEditor(create: Callback => Callback) extends AnyVal
+final case class NewEditor(create: NewEditor.Hooks => Callback) extends AnyVal
 
 object NewEditor {
+
+  @Lenses
+  final case class Hooks(onStart: Callback, onClose: Callback)
+
+  object Hooks {
+    val empty: Hooks = Hooks(Callback.empty, Callback.empty)
+
+    implicit val reusability: Reusability[Hooks] = {
+      implicit val x: Reusability[Callback] = Reusability.by((_: Callback).toScalaFn)(Reusability.byRef)
+      Reusability.byRef || Reusability.caseClass
+    }
+  }
 
   final case class Static(previewW        : PreviewFeature.Write.Composite[PreviewId],
                           pxProject       : Px[Project],
@@ -64,7 +77,7 @@ object NewEditor {
       *   2. This might become likely when collaborative features are edited.
       *      (eg. Alice renders start-edit button, Bob deletes req, Alice attempts to start editor)
       */
-    type Init[Change] = CallbackOption[Editor[Change]]
+    type Init[Change] = Hooks => CallbackOption[Editor[Change]]
 
     trait EditorImpl[Change] extends Editor[Change] {
       protected type Props
@@ -94,7 +107,7 @@ object NewEditor {
       type LogicPerField[Change] = InternalCtx[Change] => Internal.Init[Change]
 
       val logicToPerField: LogicPerField ~> ForEditor =
-        λ[LogicPerField ~> ForEditor] { init =>ctx =>
+        λ[LogicPerField ~> ForEditor] { init => ctx =>
           val ictx = new InternalCtx(ctx)
           ictx.newEditor(init(ictx))
         }
@@ -131,14 +144,14 @@ object NewEditor {
     final class InternalCtx[C](val ctx: Ctx[C]) {
       import ctx._
 
-      def abort: Callback =
-        stateAccess.setState(None)
+      def abort(hooks: Hooks): Callback =
+        stateAccess.setState(None, hooks.onClose)
 
-      def commit(cmd: UpdateContentCmd): Callback =
-        asyncFeature((s, f) => saveIO(cmd, s >> abort, f))
+      def commit(cmd: UpdateContentCmd, hooks: Hooks): Callback =
+        asyncFeature((s, f) => saveIO(cmd, s >> abort(hooks), f))
 
-      def makeAbortCommit[A](cmd: A => UpdateContentCmd): Some[AbortCommit[Callback, A ~=> Callback]] =
-        Some(AbortCommit(abort, Reusable.fn(v => commit(cmd(v)))))
+      def makeAbortCommit[A](cmd: A => UpdateContentCmd, hooks: Hooks): Some[AbortCommit[Callback, A ~=> Callback]] =
+        Some(AbortCommit(abort(hooks), Reusable.fn(v => commit(cmd(v), hooks))))
 
       /** Creates a Callback that when invoked, will initialise and start an editor.
         *
@@ -162,7 +175,7 @@ object NewEditor {
         }
 
       def newEditor(init: => Internal.Init[C]): NewEditor =
-        NewEditor(cb => init.get.flatMap(stateAccess.setState(_, cb)))
+        NewEditor(hooks => init(hooks).get.flatMap(stateAccess.setState(_, hooks.onStart)))
     }
 
     def getGenericReq(id: GenericReqId): CallbackOption[GenericReq] =
@@ -197,7 +210,7 @@ object NewEditor {
 
       val pxCustomReqTypes = ReqTypeSelector.pxCustomReqTypes(pxProject)
 
-      def apply(id: GenericReqId): InitFn = ictx => {
+      def apply(id: GenericReqId): InitFn = ictx => hooks => {
         import ictx._, ctx._
 
         case class State(initialValue: Some[RT],
@@ -222,7 +235,7 @@ object NewEditor {
         }
 
         val abortCommit: ReqTypeSelector.AbortCommit =
-          Some(makeAbortCommit[RT](t => UpdateContentCmd.SetGenericReqType(id, t.id)).value)
+          Some(makeAbortCommit[RT](t => UpdateContentCmd.SetGenericReqType(id, t.id), hooks).value)
 
         for {
           req     <- getGenericReq(id)
@@ -246,14 +259,14 @@ object NewEditor {
 
         override type Change = RCE.Output
 
-        def apply(id: ReqId): InitFn = ictx => {
+        def apply(id: ReqId): InitFn = ictx => hooks => {
           import ictx._
 
           val initialValuesCB: CallbackTo[Set[ReqCode.Value]] =
             pxProject.toCallback.map(_.reqCodes.activeReqCodesByReqId(id))
 
           val abortCommit: ReqCodeEditor.Multiple.AbortCommit =
-            makeAbortCommit(UpdateContentCmd.PatchReqCodes(id, _))
+            makeAbortCommit(UpdateContentCmd.PatchReqCodes(id, _), hooks)
 
           startWithStateSnapshot(
             initialValuesCB.toCBO)(
@@ -286,14 +299,14 @@ object NewEditor {
 
         override type Change = RCE.Output
 
-        def apply(id: ReqCodeId): InitFn = ictx => {
+        def apply(id: ReqCodeId): InitFn = ictx => hooks => {
           import ictx._
 
           val initialValueCB: CallbackOption[ReqCode.Value] =
             pxProject.toCallback.map(_.reqCodes.reqCode(id)).toCBO
 
           val abortCommit: ReqCodeEditor.Single.AbortCommit =
-            makeAbortCommit(UpdateContentCmd.SetCodeGroupCode(id, _))
+            makeAbortCommit(UpdateContentCmd.SetCodeGroupCode(id, _), hooks)
 
           startWithStateSnapshot(initialValueCB)(PlainText.reqCode)(
             i => new State(_, Some(i), abortCommit))
@@ -341,7 +354,7 @@ object NewEditor {
         start(id, dir, lookup)
       }
 
-      private def start(id: ReqId, dir: Direction, pxLookup: Px[Lookup]): InitFn = ictx => {
+      private def start(id: ReqId, dir: Direction, pxLookup: Px[Lookup]): InitFn = ictx => hooks => {
         import ictx._
 
         val pxPubids = pxProject.map(p => ImplicationEditor.initialValue(p, dir, id))
@@ -360,7 +373,7 @@ object NewEditor {
           } yield ImplicationEditor.validationFn(project, id.some, init._1, dir)
 
         val abortCommit: ImplicationEditor.AbortCommit =
-          makeAbortCommit(UpdateContentCmd.PatchImplications(id, dir, _))
+          makeAbortCommit(UpdateContentCmd.PatchImplications(id, dir, _), hooks)
 
         startWithStateSnapshot(pxInit.toCallback.toCBO)(_._2)(
           _ => new State(_, pxLookup, pxValFn, abortCommit))
@@ -397,7 +410,7 @@ object NewEditor {
 
       override type Change = TagEditor.Output
 
-      def apply(id: ReqId, fid: Option[CustomField.Tag.Id]): InitFn = ictx => {
+      def apply(id: ReqId, fid: Option[CustomField.Tag.Id]): InitFn = ictx => hooks => {
         import ictx._
 
         val lookupFn = fid.fold[Project => Lookup](Lookup.notUsedInTagFields)(Lookup.forTagField)
@@ -410,7 +423,7 @@ object NewEditor {
           } yield TagEditor.initialValues(project.reqTags(id), project.config, lookup)
 
         val abortCommit: TagEditor.AbortCommit =
-          makeAbortCommit(UpdateContentCmd.PatchReqTags(id, _))
+          makeAbortCommit(UpdateContentCmd.PatchReqTags(id, _), hooks)
 
         startWithStateSnapshot(pxInit.toCallback.toCBO)(_._2)(
           init => new State(_, Some(init._1), pxLookup, abortCommit))
@@ -449,11 +462,11 @@ object NewEditor {
 
         protected def start(cmd           : T.OptionalText => UpdateContentCmd,
                             initialValueCB: CallbackOption[T.OptionalText],
-                            pid           : PreviewId): InitFn = ictx => {
+                            pid           : PreviewId): InitFn = ictx => hooks => {
           import ictx._
 
           val abortCommit: editor.AbortCommit =
-            makeAbortCommit(cmd)
+            makeAbortCommit(cmd, hooks)
 
           val initCB =
             for {
@@ -534,11 +547,11 @@ object NewEditor {
 
       override type Change = UseCaseStepGD.NonEmptyValues
 
-      def apply(id: UseCaseStepId, pid: PreviewId): InitFn = ictx => {
+      def apply(id: UseCaseStepId, pid: PreviewId): InitFn = ictx => hooks => {
         import ictx._
 
         val commitFn: UseCaseStepEditor.CommitFn =
-          Reusable.fn(v => commit(UpdateContentCmd.UpdateUseCaseStep(id, v)))
+          Reusable.fn(v => commit(UpdateContentCmd.UpdateUseCaseStep(id, v), hooks))
 
         val pxStepFocus: Px[UseCaseStep.Focus] =
           pxProject.map(_.reqs.useCases.focusStep(id))
@@ -554,7 +567,7 @@ object NewEditor {
           }
 
         startWithStateSnapshot(pxInit.toCallback.toCBO)(_._2)(
-          i => new State(_, Some(i._1), pid, abort, commitFn))
+          i => new State(_, Some(i._1), pid, abort(hooks), commitFn))
       }
 
       private class State(ss     : StateSnapshot[String],

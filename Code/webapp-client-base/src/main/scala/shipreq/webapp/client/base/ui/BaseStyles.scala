@@ -28,15 +28,24 @@ object BaseStyles extends StyleSheet.Inline {
       Domain.ofValues(AdtMacros.adtValues[EditorState].whole: _*)
   }
 
-  val editorBackgroundColor = c"#fff4e3"
-  val editorBorderColor = rgba(255, 166, 34, .5)
-  val editorBorderColorFocus = rgb(255, 166, 34)
+  object focus {
+    def colour(a: Double) = rgba(163, 51, 200, a)
+    def BoxShadow = styleS(boxShadow := s"0 0 1ex ${colour(.45).value}")
+    def BorderColour = colour(.75)
+
+    def glowOutline = styleS(BoxShadow, outline(solid, 1 px, BorderColour))
+    def glowBorder = styleS(BoxShadow, border(solid, 1 px, BorderColour))
+  }
+
+  object editor {
+    val backgroundColor = c"#fffad7" // = rgba(255, 227, 58, .2)
+    val borderColor = rgba(239, 207, 9, .6)
+  }
 
   val inlineEdit = style(
     &.hover(
       cursor.pointer,
-      outline(dotted, 2 px, c"#FFA622"),
-      backgroundColor(editorBackgroundColor).important))
+      backgroundColor(editor.backgroundColor).important))
 
   val projectItems = new ProjectItems
   final class ProjectItems {
@@ -101,7 +110,7 @@ object BaseStyles extends StyleSheet.Inline {
         case EditorState.Invalid   => c"#9F3A38"
       }),
       backgroundColor(state match {
-        case EditorState.Valid     => editorBackgroundColor
+        case EditorState.Valid     => editor.backgroundColor
         case EditorState.Invalid   => c"#FFF6F6"
         case EditorState.InTransit => rgba(255,244,227,0.7)
       }),
@@ -114,13 +123,13 @@ object BaseStyles extends StyleSheet.Inline {
       borderRadius(.28571429 rem),
       borderColor(state match {
         case EditorState.Valid
-           | EditorState.InTransit => editorBorderColor
+           | EditorState.InTransit => editor.borderColor
         case EditorState.Invalid   => c"#E0B4B4"
       }),
       mixinIf(state ==* EditorState.InTransit)(display.flex),
       &.focus(
         (state match {
-          case EditorState.Valid     => styleS(borderColor(editorBorderColorFocus), boxShadow := s"0 0 1ex ${editorBorderColor.value}")
+          case EditorState.Valid     => focus.glowBorder
           case EditorState.Invalid   => styleS(boxShadow := "0 0 1ex rgba(224,180,180,.5)")
           case EditorState.InTransit => styleS()
         }): StyleS
