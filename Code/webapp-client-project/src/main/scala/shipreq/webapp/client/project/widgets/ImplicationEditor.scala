@@ -23,7 +23,6 @@ import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.feature.AutoCompleteFeature
 import AutoComplete.ReqItem
 import DataImplicits._
-import shipreq.webapp.client.base.REACT_TMP._
 
 object ImplicationEditor {
 

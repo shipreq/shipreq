@@ -73,12 +73,12 @@ object ProjectHomeTestDsl {
     editorDisabled.assert(false)
 
   val abortEdit =
-    *.action("Hit Escape")(Escape simulateKeyDownUp _.obs.projectNameEditInput.get) +>
+    *.action("Hit Escape")(KB.Escape simulateKeyDownUp _.obs.projectNameEditInput.get) +>
     editorOpen.assert.beforeAndAfter(true, false) +>
     editHasError.assert(false)
 
   val commitEdit =
-    *.action("Hit Ctrl-Enter")(CtrlEnter simulateKeyDownUp _.obs.projectNameEditInput.get)
+    *.action("Hit Ctrl-Enter")(KB.Enter.ctrl simulateKeyDownUp _.obs.projectNameEditInput.get)
 
   def setEditValue(text: String) =
     editorOpen.assert(true) +>

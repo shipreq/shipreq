@@ -21,7 +21,6 @@ import shipreq.webapp.client.project.app.Style.{deletionForm => *}
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.feature.Selection
 import MTrie.Ops
-import shipreq.webapp.client.base.REACT_TMP._
 
 object DeletionForm {
 

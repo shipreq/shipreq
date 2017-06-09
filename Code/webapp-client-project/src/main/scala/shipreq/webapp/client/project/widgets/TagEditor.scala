@@ -19,7 +19,6 @@ import shipreq.webapp.client.base.ui.{AutosizeTextarea, EditTheme}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.base.REACT_TMP._
 
 object TagEditor {
 

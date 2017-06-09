@@ -195,13 +195,13 @@ object Feature {
               rowEditors(field)(ctx)
             }
 
-            val reuseKey = Reusable.explicitly((ForProject.this, row: RowKey, field: FieldKey))(reuseFromField)
+            val reuseKey = reuseFromField.reusable((ForProject.this, row, field))
             ForEditor(reuseKey.map(_ => newEditor), asyncCell)
           }
         }
 
       private def forRow(row: RowKey): ForFields[row.FieldKey] = {
-        val reuseKey = Reusable.explicitly((this, row: RowKey))(reuseFromRow)
+        val reuseKey = reuseFromRow.reusable((this, row: RowKey))
         reuseKey.map(_ => instanceForRow(row))
       }
 

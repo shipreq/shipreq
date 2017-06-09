@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.app.reqtable
 
+import japgolly.scalajs.react.test.SimEvent.{Keyboard => KB}
 import nyaya.test.PropTest._
 import utest._
 import shipreq.base.util._
@@ -260,28 +261,28 @@ object ReqTableTest extends TestSuite {
 
   def testKeyboardNavigation = Plan.action(
     setFocus(_.table.cell(1, 1).dom)
-      >> press(DownKey)   +> activeElement.assert.equalBy(_.obs.table.cell(2, 1).dom)
-      >> press(RightKey)  +> activeElement.assert.equalBy(_.obs.table.cell(2, 2).dom)
-      >> press(UpKey)     +> activeElement.assert.equalBy(_.obs.table.cell(1, 2).dom)
-      >> press(LeftKey)   +> activeElement.assert.equalBy(_.obs.table.cell(1, 1).dom)
-      >> press(End)       +> activeElement.assert.equalBy(_.obs.table.cell(1, -1).dom)
-      >> press(Home)      +> activeElement.assert.equalBy(_.obs.table.rowSelectionInput(1))
-      >> press(LeftKey)   +> activeElement.assert.equalBy(_.obs.table.cell(1, -1).dom)
-      >> press(RightKey)  +> activeElement.assert.equalBy(_.obs.table.rowSelectionInput(1))
-      >> press(DownKey)   +> activeElement.assert.equalBy(_.obs.table.rowSelectionInput(2))
-      >> press(End.ctrl)  +> activeElement.assert.equalBy(_.obs.table.cell(-1, -1).dom)
-      >> press(Home.ctrl) +> activeElement.assert.equalBy(_.obs.table.allRowSelectionInput)
-      >> press(LeftKey)   +> activeElement.assert.equalBy(_.obs.table.columnDoms.last.headerCell)
-      >> press(RightKey)  +> activeElement.assert.equalBy(_.obs.table.allRowSelectionInput)
-      >> press(RightKey)  +> activeElement.assert.equalBy(_.obs.table.columnDoms(1).headerCell)
-      >> press(DownKey)   +> activeElement.assert.equalBy(_.obs.table.cell(0, 1).dom)
-      >> press(UpKey)     +> activeElement.assert.equalBy(_.obs.table.columnDoms(1).headerCell)
-      >> press(UpKey)     +> activeElement.assert.equalBy(_.obs.table.cell(-1, 1).dom)
-      >> press(RightKey)  +> activeElement.assert.equalBy(_.obs.table.cell(-1, 2).dom)
-      >> press(RightKey)  +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3).dom) // The Title column
-      >> press(F2)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3)("textarea").dom)
-      >> press(Tab)       +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3).dom) // tab out to cell
-      >> press(F2)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3)("textarea").dom)
+      >> press(KB.Down)      +> activeElement.assert.equalBy(_.obs.table.cell(2, 1).dom)
+      >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.cell(2, 2).dom)
+      >> press(KB.Up)        +> activeElement.assert.equalBy(_.obs.table.cell(1, 2).dom)
+      >> press(KB.Left)      +> activeElement.assert.equalBy(_.obs.table.cell(1, 1).dom)
+      >> press(KB.End)       +> activeElement.assert.equalBy(_.obs.table.cell(1, -1).dom)
+      >> press(KB.Home)      +> activeElement.assert.equalBy(_.obs.table.rowSelectionInput(1))
+      >> press(KB.Left)      +> activeElement.assert.equalBy(_.obs.table.cell(1, -1).dom)
+      >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.rowSelectionInput(1))
+      >> press(KB.Down)      +> activeElement.assert.equalBy(_.obs.table.rowSelectionInput(2))
+      >> press(KB.End.ctrl)  +> activeElement.assert.equalBy(_.obs.table.cell(-1, -1).dom)
+      >> press(KB.Home.ctrl) +> activeElement.assert.equalBy(_.obs.table.allRowSelectionInput)
+      >> press(KB.Left)      +> activeElement.assert.equalBy(_.obs.table.columnDoms.last.headerCell)
+      >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.allRowSelectionInput)
+      >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.columnDoms(1).headerCell)
+      >> press(KB.Down)      +> activeElement.assert.equalBy(_.obs.table.cell(0, 1).dom)
+      >> press(KB.Up)        +> activeElement.assert.equalBy(_.obs.table.columnDoms(1).headerCell)
+      >> press(KB.Up)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 1).dom)
+      >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.cell(-1, 2).dom)
+      >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3).dom) // The Title column
+      >> press(KB.F2)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3)("textarea").dom)
+      >> press(KB.Tab)       +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3).dom) // tab out to cell
+      >> press(KB.F2)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3)("textarea").dom)
   ) named "Keyboard navigation"
 
 //  def newUseCaseWithMinimalColumns: *.Actions = Plan.action(

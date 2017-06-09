@@ -143,10 +143,10 @@ object ReqTableTestDsl {
     def testInvalid(text: String) = enterValue(text, "Enter invalid value") +> editorValidity.assert(Invalid)
 
     val commit =
-      *.action("Press Ctrl-Enter.")(Enter.ctrl simulateKeyDown editor.run(_)) +> assertNotEditing
+      *.action("Press Ctrl-Enter.")(KB.Enter.ctrl simulateKeyDown editor.run(_)) +> assertNotEditing
 
     val abortEdit =
-      *.action("Press Escape.")(Escape simulateKeyDown editor.run(_)) +> assertState(Normal)
+      *.action("Press Escape.")(KB.Escape simulateKeyDown editor.run(_)) +> assertState(Normal)
 
     // These used to be buttons
     def clickRetry = commit

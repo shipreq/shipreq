@@ -105,12 +105,12 @@ object NewButton {
     }
 
     def selectChoice(value: String): Callback =
-      (for {
+      for {
         p <- $.props.toCBO
         u <- CallbackOption.liftOption(p.update)
         i <- CallbackOption.liftOption(p.dropdownItems.find(_.key ==* value))
         _ <- u.setState(Some(i.value)).toCBO
-      } yield ()).get.void
+      } yield ()
 
     private val dropdownOptions: Dropdown.JsOptions =
       new Dropdown.JsOptions {

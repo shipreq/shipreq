@@ -17,7 +17,6 @@ import shipreq.webapp.client.project.feature.AutoCompleteFeature
 import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.lib.DataReusability._
 import RichTextEditor.hardcodedLive
-import shipreq.webapp.client.base.REACT_TMP._
 
 sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, final val text: TextType) {
 

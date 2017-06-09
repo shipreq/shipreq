@@ -5,7 +5,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import scala.collection.immutable.ListSet
 import shipreq.webapp.client.base.lib.KeyHandler._
-import shipreq.webapp.client.base.REACT_TMP._
 
 case class KeyHandler(criteria: Criteria, response: Response) {
   def asEventDefault: KeyHandler =

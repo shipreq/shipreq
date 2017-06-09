@@ -175,7 +175,7 @@ object NewEditor {
         }
 
       def newEditor(init: => Internal.Init[C]): NewEditor =
-        NewEditor(hooks => init(hooks).get.flatMap(stateAccess.setState(_, hooks.onStart)))
+        NewEditor(hooks => init(hooks).asCallback.flatMap(stateAccess.setState(_, hooks.onStart)))
     }
 
     def getGenericReq(id: GenericReqId): CallbackOption[GenericReq] =

@@ -20,7 +20,6 @@ import shipreq.webapp.client.project.feature.{EditorFeature, Selection}
 import shipreq.webapp.client.project.widgets.{DragToReorder, ProjectWidgets, ViewReq}
 import shipreq.webapp.client.project.lib.DataReusability._
 import EditorFeature.FieldKey
-import shipreq.webapp.client.base.REACT_TMP._
 
 object Table {
   import Shared._
@@ -377,7 +376,7 @@ object Table {
         case Column.Pubid             => pubidFmt(row.req)
         case Column.DeletionReason    => viewReq.deletionReason getOrElse `n/a`
       }
-      c => Reusable.explicitly((row, vi, c))(reusabilityView).map(_ => view(c))
+      c => reusabilityView.reusable((row, vi, c)).map(_ => view(c))
     }
   }
 
@@ -398,7 +397,7 @@ object Table {
       val pw = vi
 
       def ret(c: Column, view: => TagMod): Reusable[TagMod] =
-        Reusable.explicitly((row, vi, c))(reusabilityView).map(_ => view)
+        reusabilityView.reusable((row, vi, c)).map(_ => view)
 
       def renderCodes: TagMod =
         row match {

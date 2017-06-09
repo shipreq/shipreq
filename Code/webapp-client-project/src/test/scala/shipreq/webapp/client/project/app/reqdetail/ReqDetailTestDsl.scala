@@ -179,7 +179,7 @@ object ReqDetailTestDsl {
       SimEvent.Change(newValue) simulate _.obs.uc.row(label).textEditor)
 
   def commitStepTextEdit(label: String): *.Actions =
-    *.action("Commit $label text edit")(Enter.ctrl simulateKeyDown _.obs.uc.row(label).textEditor)
+    *.action(s"Commit $label text edit")(KB.Enter.ctrl simulateKeyDown _.obs.uc.row(label).textEditor)
 
   val filterDeadToggle =
     *.action("Toggle FilterDead")(Simulate click _.obs.generic.filterDeadButton)
