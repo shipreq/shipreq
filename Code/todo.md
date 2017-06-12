@@ -47,13 +47,23 @@ Backlog
 
 
 ------------------------------------------------------------------------------------------------------------------------
-Phase 2
-=======
+Phase 2 (dev-complete)
+======================
 
-### Deletion
-* Apply new UI
-* Exclude the group selection logic
-* Have a different button for Code Group deletion
+### Social
+* Presentation
+
+### Devops & Deployment
+* New AWS/GCP accounts
+* Automate deployment
+* Add healthchecks
+* Send logs to service
+* Add proper metrics
+* Do more with errors, eg. ClientData.{init,applyEvents}
+
+------------------------------------------------------------------------------------------------------------------------
+Phase 2 (dev)
+=============
 
 ### Mechanics
 * Add new column type: all tags (as opposed to non-field tags)
@@ -61,6 +71,10 @@ Phase 2
   We don't seem to need all-imps vs non-field-imps...should tags not work the same way?
   Or is there similar deficiency in imps cols too?
 * Re-evaluate config: some data is useless (i.e. key of custom text fields)
+* Deletion
+  * Apply new UI
+  * Exclude the group selection logic
+  * Have a different button for Code Group deletion
 
 ### UI/UX
 * Front pages
@@ -70,11 +84,3 @@ Phase 2
 * User profile page
 * Issues
 * Saved views
-
-### Devops & Deployment
-* New AWS/GCP accounts
-* Automate deployment
-* Add healthchecks
-* Send logs to service
-* Add proper metrics
-* Do more with errors, eg. ClientData.{init,applyEvents}
