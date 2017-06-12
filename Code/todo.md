@@ -50,6 +50,11 @@ Backlog
 Phase 2
 =======
 
+### Deletion
+* Apply new UI
+* Exclude the group selection logic
+* Have a different button for Code Group deletion
+
 ### Mechanics
 * Add new column type: all tags (as opposed to non-field tags)
 * We have implications fields and implication columns.
@@ -59,7 +64,6 @@ Phase 2
 
 ### UI/UX
 * ReqDetail load failure
-* Deletion screen
 * Front pages
 * User name: name as one field is fine, call it "full name" like credit cards
 * Add create-and-close button to NewForm

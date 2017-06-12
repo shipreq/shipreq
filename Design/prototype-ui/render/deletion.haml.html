@@ -119,6 +119,26 @@ body {padding:1rem}
 #table3 tr.dead .col-id .id,
 #table3 tr.dead .col-title {color:hsl(0, 71%, 50%)}
 
+#table-cg-1 {margin-top:1ex}
+#table-cg-1 >thead>tr>th:last-child {text-align:center}
+#table-cg-1 >thead>tr:nth-child(2)>th {text-align:center; padding-top:0!important}
+#table-cg-1 >thead i.icon {margin:0!important}
+#table-cg-1 >thead>tr>th,
+#table-cg-1 >tbody>tr>td {padding:.44em!important}
+#table-cg-1 >tbody>tr>td {line-height: 1em}
+#table-cg-1 .col-sel {width:24px; text-align:center}
+#table-cg-1 .pointer {cursor:pointer}
+#table-cg-1 td.col-code {white-space:nowrap; font-family:monospace; font-size:85%}
+#table-cg-1 .subs span {white-space:nowrap}
+#table-cg-1 .subs span:not(:first-child) {margin-left:1ex}
+#table-cg-1 .subs span:not(:last-child)::after {content:","}
+#table-cg-1 tr.live:hover {background-color:rgba(0,192,0,.08)}
+#table-cg-1 tr.dead {background-color:hsla(0, 71%, 50%, .06)}
+#table-cg-1 tr.dead:hover {background-color:hsla(0, 71%, 50%, .15)}
+#table-cg-1 .col-sub.dead span,
+#table-cg-1 tr.dead .col-id .id,
+#table-cg-1 tr.dead .col-title {color:hsl(0, 71%, 50%)}
+
 </style></head><body><nav style="margin-bottom:5rem"><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="projects.haml.html" class="section">Projects</a><i class="divider icon right angle"></i><div class="ui dropdown inline">CardBoard&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div></div></div><div class="item ui right dropdown simple">@japgolly<div class="menu"><a href="account.haml.html" class="item">Account</a><div class="item">Logout</div></div></div></div></nav><div class="ui container" id="main"><h2>You are about to delete the following requirements:</h2><div style="margin-top:2em" class="reqHelp">In addition to those you selected, implied requirements are also presented with exclusively-implied requirements auto-selected for deletion.</div><table class="ui table celled compact unstackable" id="table3"><thead><tr><th rowspan="2" class="col-sel"><input type="checkbox" class="indeterminate" /></th><th rowspan="2" class="col-id">ID</th><th rowspan="2" class="col-title">Title</th><th colspan="2" style="border-bottom:none">Implied By</th></tr><tr><th style="border-left: 1px solid rgba(34,36,38,.1);" class="col-imp dead"><i class="icon trash outline red"></i></th><th style="border-left:none" class="col-imp live"><i class="icon unhide"></i></th></tr></thead><tbody><tr class="dead"><td class="col-sel"><input type="checkbox" disabled="1" checked="1" /></td><td class="col-id"><div class="id">UC-4</div></td><td class="col-title">Pellentesque et iaculis ex, id pellentesque libero</td><td class="col-imp dead"></td><td class="col-imp live"></td></tr><tr class="live"><td class="col-sel pointer"><input type="checkbox" /></td><td class="col-id"><div class="indent-1"></div><div class="prefix"></div><div class="id">FR-2</div></td><td class="col-title">Phasellus vitae venenatis quam, a pretium ligula</td><td class="col-imp dead"><div class="imps"><span>UC-4</span></div></td><td class="col-imp live"><div class="imps"><span>UC-1</span></div></td></tr><tr class="live"><td class="col-sel pointer"><input type="checkbox" /></td><td class="col-id"><div class="indent-2"></div><div class="prefix"></div><div class="id">FR-8</div></td><td class="col-title">Duis varius, magna eget varius vehicula, tellus erat aliquam urna, in tristique nisi tortor sed ex.</td><td class="col-imp dead"></td><td class="col-imp live"><div class="imps"><span>FR-2</span></div></td></tr><tr class="dead"><td class="col-sel pointer"><input type="checkbox" checked="1" /></td><td class="col-id"><div class="indent-1"></div><div class="prefix"></div><div class="id">CO-1</div></td><td class="col-title">Fusce vel lobortis sapien</td><td class="col-imp dead"><div class="imps"><span>UC-4</span></div></td><td class="col-imp live"></td></tr><tr class="dead"><td class="col-sel pointer"><input type="checkbox" checked="1" /></td><td class="col-id"><div class="indent-2"></div><div class="prefix"></div><div class="id">FR-13</div></td><td class="col-title">Nulla bibendum finibus dui in cursus</td><td class="col-imp dead"><div class="imps"><span>CO-1</span></div></td><td class="col-imp live"></td></tr></tbody></table><section style="display:flex"><div style="flex-grow:1; align-self: flex-end"><section><h4 style="margin-bottom:0.4em">Deletion Reason:</h4><textarea class="texteditor">This has been replaced by [uc19]</textarea><div class="instructions"><span>enter for new line.</span><i class="icon help circle"></i></div><div class="ui segments preview-cont raised"><div class="ui segment preview-header inverted">Preview</div><div class="ui segment preview-body">This has been replaced by <a href="#">UC-19</a></div></div></section></div><div style="padding-left:6em; align-self: flex-end" class="buttons"><button style="margin-bottom:1.2em" class="ui button basic black"><i class="icon remove"></i>Cancel</button><br /><button class="ui button basic red"><i class="icon trash"></i>Delete</button></div></section></div></body>
 <script type="text/javascript">
 //<![CDATA[

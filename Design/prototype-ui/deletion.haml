@@ -126,6 +126,26 @@
       #table3 tr.dead .col-id .id,
       #table3 tr.dead .col-title {color:hsl(0, 71%, 50%)}
 
+      #table-cg-1 {margin-top:1ex}
+      #table-cg-1 >thead>tr>th:last-child {text-align:center}
+      #table-cg-1 >thead>tr:nth-child(2)>th {text-align:center; padding-top:0!important}
+      #table-cg-1 >thead i.icon {margin:0!important}
+      #table-cg-1 >thead>tr>th,
+      #table-cg-1 >tbody>tr>td {padding:.44em!important}
+      #table-cg-1 >tbody>tr>td {line-height: 1em}
+      #table-cg-1 .col-sel {width:24px; text-align:center}
+      #table-cg-1 .pointer {cursor:pointer}
+      #table-cg-1 td.col-code {white-space:nowrap; font-family:monospace; font-size:85%}
+      #table-cg-1 .subs span {white-space:nowrap}
+      #table-cg-1 .subs span:not(:first-child) {margin-left:1ex}
+      #table-cg-1 .subs span:not(:last-child)::after {content:","}
+      #table-cg-1 tr.live:hover {background-color:rgba(0,192,0,.08)}
+      #table-cg-1 tr.dead {background-color:hsla(0, 71%, 50%, .06)}
+      #table-cg-1 tr.dead:hover {background-color:hsla(0, 71%, 50%, .15)}
+      #table-cg-1 .col-sub.dead span,
+      #table-cg-1 tr.dead .col-id .id,
+      #table-cg-1 tr.dead .col-title {color:hsl(0, 71%, 50%)}
+
   %body
 
     %nav(style="margin-bottom:5rem")
@@ -158,6 +178,8 @@
 
       .reqHelp(style="margin-top:2em")
         In addition to those you selected, implied requirements are also presented with exclusively-implied requirements auto-selected for deletion.
+
+      -# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
       -# %table.ui.table.celled.compact.unstackable#table1
         %thead
@@ -360,7 +382,68 @@
             %td.col-imp.live
 
 
-      -# .div code groups
+      -# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      -# %table.ui.table.celled.compact.unstackable#table-cg-1
+        %thead
+          %tr
+            %th.col-sel(rowspan=2)
+              %input.indeterminate(type="checkbox")
+            %th.col-code(rowspan=2) Code
+            %th.col-title(rowspan=2) Title
+            %th(colspan=2 style="border-bottom:none") Sub-groups
+          %tr
+            %th.col-sub.dead(style="border-left: 1px solcode rgba(34,36,38,.1);")
+              %i.icon.trash.outline.red
+            %th.col-sub.live(style="border-left:none")
+              %i.icon.unhcodee
+        %tbody
+          %tr.dead
+            %td.col-sel
+              %input(type="checkbox" disabled=1 checked=1)
+            %td.col-code
+              finibus
+            %td.col-title
+              Vivamus eget malesuada
+            %td.col-sub.dead
+            %td.col-sub.live
+          %tr.live
+            %td.col-sel.pointer
+              %input(type="checkbox")
+            %td.col-code
+              finibus.aenean_tristique
+            %td.col-title
+              Aenean tristique
+            %td.col-sub.dead
+              .subs
+                %span UC-4
+            %td.col-sub.live
+              .subs
+                %span UC-1
+          %tr.dead
+            %td.col-sel.pointer
+              %input(type="checkbox" checked=1)
+            %td.col-code
+              finibus.duis.fermentum
+            %td.col-title
+              Curabitur fermentum
+            %td.col-sub.dead
+              .subs
+                %span UC-4
+            %td.col-sub.live
+          %tr.dead
+            %td.col-sel.pointer
+              %input(type="checkbox" checked=1)
+            %td.col-code
+              finibus.duis.ipsum
+            %td.col-title
+              Phasellus pulvinar ipsum (Nunc tincidunt mattis euismod)
+            %td.col-sub.dead
+              .subs
+                %span CO-1
+            %td.col-sub.live
+
+      -# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
       -# %section
         %textarea.texteditor This has been replaced by [uc19]
