@@ -17,7 +17,7 @@ import shipreq.webapp.client.base.data._
 import shipreq.webapp.client.base.feature.AsyncFeature
 import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.base.ui.BaseStyles
-import shipreq.webapp.client.base.ui.semantic.Header
+import shipreq.webapp.client.base.ui.semantic.{Header, Icon, Message}
 import shipreq.webapp.client.project.app.state.ClientData
 import shipreq.webapp.client.project.app.Style.{reqdetail => *}
 import shipreq.webapp.client.project.app.WebWorkerClient
@@ -160,10 +160,20 @@ object ReqDetail {
     def clearModal: Callback =
       setModal(Modal.none)
 
-    def renderNotFound(failureReason: String): VdomElement =
-      <.div(
-        <.h2("ERROR"),
-        <.h5(failureReason))
+    def renderNotFound(ep: ExternalPubid): VdomElement = {
+      val projectName: String = pxProject.value().name
+      val id         : String = PlainText pubid ep
+      Message(
+        Message.Style(Message.Type.Error),
+        Icon.WarningSign,
+        s"$id doesn't exist.",
+        TagMod(
+          *.errorDesc,
+          s"$id is not, and has never been, a requirement in $projectName.",
+          <.br(*.errorBr),
+          "Had it been deleted or assigned a new ID, you'd still be able to see it here.")
+      )(*.errorCont)
+    }
 
     val emptyRow: VdomElement = <.span
 
@@ -173,9 +183,8 @@ object ReqDetail {
         p.state.value renderOrElse {
           Px.refresh(pxExtPubid, pxUpstreamFD)
           pxData.value() match {
-            case \/-(data)                              => renderDetail(p, data)
-            case -\/(LookupFailure.InvalidReqType)      => renderNotFound(s"${UiText.FieldNames.reqType} ${p.extPubid.mnemonic.value} not found.")
-            case -\/(LookupFailure.InvalidPos(rt, len)) => renderNotFound(s"${PlainText pubid p.extPubid} not found.")
+            case \/-(data)             => renderDetail(p, data)
+            case -\/(_: LookupFailure) => renderNotFound(p.extPubid)
           }
         })
 

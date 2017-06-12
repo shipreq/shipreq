@@ -63,7 +63,6 @@ Phase 2
 * Re-evaluate config: some data is useless (i.e. key of custom text fields)
 
 ### UI/UX
-* ReqDetail load failure
 * Front pages
 * User name: name as one field is fine, call it "full name" like credit cards
 * Add create-and-close button to NewForm

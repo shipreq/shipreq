@@ -382,6 +382,10 @@ object Style extends StyleSheet.Inline {
   // ===================================================================================================================
   object reqdetail {
 
+    val errorCont = style(maxWidth(100 ex), margin(11 em, auto).important)
+    val errorDesc = style(marginTop(1 em).important)
+    val errorBr   = style(lineHeight(1.5 em))
+
     val headerRow = style(
       display.flex)
 

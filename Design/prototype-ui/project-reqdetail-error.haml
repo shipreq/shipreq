@@ -1,0 +1,77 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title FR-1 | CardBoard | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+      h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
+
+      .content.pic {text-align:center; padding-top:2.2em !important}
+      .content.pic > i {font-size:3rem}
+
+      /** workaround for https://github.com/Semantic-Org/Semantic-UI/issues/2978 */
+      .active-hack {font-weight:700!important; box-shadow: none!important;}
+      .active-hack.red {border-color: #DB2828!important; color: #DB2828!important;}
+      .active-hack.orange {border-color: #F2711C!important; color: #F2711C!important;}
+
+
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+
+      .item
+        .ui.breadcrumb
+          %a.section{href: "projects.haml.html"} Projects
+          %i.divider.icon.right.angle
+          %a.section{href: "project-index.haml.html"} CardBoard
+          .ui.dropdown.inline
+            &nbsp;
+            %i.icon.dropdown
+            .menu
+              .item.active CardBoard
+              .item ShipReq
+          %i.divider.icon.right.angle
+          .section // .active
+            %a.section{href: "project-reqtable.haml.html"} Req Table
+            .ui.dropdown.inline
+              &nbsp;
+              %i.icon.dropdown
+              .menu
+                .header Content
+                .item Implication Graph
+                .item ReqTable
+                .header Configuration
+                .item Fields
+                .item Issues
+                .item Req Types
+                .item Tags
+          %i.divider.icon.right.angle
+          .section.active FR-1
+
+      .item.ui.right.dropdown.simple
+        @japgolly
+        -# %i.dropdown.icon
+        .menu
+          %a.item{href: "account.haml.html"} Account
+          .item Logout
+
+    -# =============================================================================================
+    %main{style: "margin-top:4rem"}
+      .ui.icon.message.error(style="max-width:100ex; margin:12em auto")
+        %i.icon.warning.sign
+        .content
+          .header FR-1 doesn't exist.
+          %p(style="margin-top:1em")
+            FR-1 is not, and has never been, a requirement in Cardboard.
+            %br(style="line-height:1.7em")
+            Even if it had been deleted or assigned a new ID, you'd still be able to see it here.

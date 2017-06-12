@@ -45,8 +45,8 @@ object ReqDetailTest extends TestSuite {
 
   override def tests = TestSuite {
 
-    'badReqType - testError("QL-1", "Type QL not found.")
-    'badReq     - testError("FR-9", "FR-9 not found.")
+    'badReqType - testError("QL-1", "QL-1 doesn't exist")
+    'badReq     - testError("FR-9", "FR-9 doesn't exist")
 
     'gr - test("FR-1")(Plan invariants testLifeRowInnerText(liveCanDelete))
 

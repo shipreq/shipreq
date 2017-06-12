@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.app.reqdetail
 
 import org.scalajs.dom.html
-import scala.util.Try
 import shipreq.webapp.base.UiText
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{Dead, FilterDead, Live, ShowDead}
@@ -31,7 +30,7 @@ object ReqDetailObs {
 
 final class ReqDetailObs($: HtmlDomZipper) {
 
-  private val errorRoot = $.failToOption("h5")
+  private val errorRoot = $.failToOption(".ui.error.message")
 
   object error {
     val reason = errorRoot.get.innerText

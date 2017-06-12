@@ -55,7 +55,7 @@ object ReqDetailTestDsl {
   val * = Dsl[Unit, ReqDetailObs, TestState]
 
   def checkErrorReason(e: String) =
-    *.focus("Error reason").value(_.obs.error.reason).assert(e)
+    *.focus("Error reason").value(_.obs.error.reason).test(s"contains '$e'")(_ contains e)
 
   val allSteps =
     *.focus("All steps").collection(_.obs.uc.stepLabels)
