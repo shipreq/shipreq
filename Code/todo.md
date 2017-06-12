@@ -65,7 +65,6 @@ Phase 2
 ### UI/UX
 * Front pages
 * User name: name as one field is fine, call it "full name" like credit cards
-* Add create-and-close button to NewForm
 
 ### Features
 * User profile page

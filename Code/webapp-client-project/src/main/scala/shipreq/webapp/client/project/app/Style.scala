@@ -196,18 +196,19 @@ object Style extends StyleSheet.Inline {
         verticalAlign.top)
 
       val formBottomRow = style(
-        textAlign.right.important)
+        textAlign.right.important,
+        unsafeChild(">*")(
+          &.not(_.lastChild)(marginRight(2 ex).important),
+          &.lastChild(marginRight(`0`).important)))
 
       val formCancelButton = style(
         (background := "#fff").important,
-        borderColor(c"#27292a").important,
-        marginRight(2 ex))
+        borderColor(c"#27292a").important)
 
       val formCreateButton = style(
         (background := "#fff").important,
         color(c"#080").important,
         borderColor(c"#080").important,
-        marginRight(`0`).important,
         fontWeight.bold.important)
     }
 

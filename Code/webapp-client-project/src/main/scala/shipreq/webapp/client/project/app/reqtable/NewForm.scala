@@ -103,6 +103,9 @@ sealed trait NewForm {
 
   final type Editor = FK#AndValue[CreateFeature.ReadWrite.ForEditor]
 
+  protected def createAndCloseButtonLabel(i: Input): String =
+    createButtonLabel(i) + " and close"
+
   sealed case class Props(input        : Input,
                           activeColumns: NonEmptyVector[ColumnPlus],
                           createFeature: CreateFeature.ReadWrite.ForRow[FK],
@@ -147,7 +150,7 @@ sealed trait NewForm {
 
     private val cancelButton: VdomElement =
       Button(
-        tipe = Button.Type.BasicIconAndText(Icon.Remove, "Close"),
+        tipe = Button.Type.BasicIconAndText(Icon.Remove, "Cancel"),
         colour = Colour.Black)
         .tag(*.formCancelButton,
           ^.onClick --> $.props.flatMap(_.cancel))
@@ -169,6 +172,14 @@ sealed trait NewForm {
           .tag(*.formCreateButton,
             ^.onClick -->? p.create)
 
+      val createAndCloseButton: VdomElement =
+        Button(
+          tipe = Button.Type.BasicIconAndText(Icon.Plus, createAndCloseButtonLabel(p.input)),
+          colour = Colour.Green,
+          state = Button.State.enabledWhen(p.create.isDefined))
+          .tag(*.formCreateButton,
+            ^.onClick -->? p.create.map(_ >> p.cancel))
+
       <.section(*.formOuter,
         SemTable.celledCompactUnstackable(
           *.formTable,
@@ -180,7 +191,8 @@ sealed trait NewForm {
               <.td(*.formBottomRow,
                 ^.colSpan := p.editableCols.length,
                 cancelButton,
-                createButton)))))
+                createButton,
+                createAndCloseButton)))))
     }
   }
 
