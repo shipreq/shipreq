@@ -43,9 +43,10 @@ object SelectionCtrls {
     @inline def render: VdomElement = Component(this)
   }
 
-  final case class Derived(totalSelected: Int,
-                           delete       : Option[ActionInfo],
-                           restore      : Option[ActionInfo])
+  final case class Derived(totalSelected   : Int,
+                           deleteReqs      : Option[ActionInfo],
+                           deleteCodeGroups: Option[ActionInfo],
+                           restore         : Option[ActionInfo])
 
   final case class ActionInfo(affects: Int, perform: Callback)
 
@@ -88,65 +89,72 @@ object SelectionCtrls {
       assert(remaining.isEmpty)
 
       Derived(
-        totalSelected = p.sel.legalSelectionSize,
-        delete        = deleteReqsAndCodeGroupsAction(p, delRq, delCG) orElse deleteCodeGroupsAction(delCG),
-        restore       = restoreAction(resRq, resCG))
+        totalSelected    = p.sel.legalSelectionSize,
+        deleteReqs       = deleteReqs.action(p, delRq),
+        deleteCodeGroups = deleteCodeGroups.action(delCG),
+        restore          = restore.action(resRq, resCG))
     }
 
     private val clearModal: Callback =
       $.props.flatMap(_.setModal(None))
 
-    private def deleteReqsAndCodeGroupsAction(p: Props, reqs: Vector[Req], codeGroups: Vector[CodeGroup]): Option[ActionInfo] =
-      NonEmptyVector.option(reqs).map { rs =>
-        val affects = rs.length + codeGroups.length
-        def modal = deleteReqsModal(p, rs.mapToNES(_.id), codeGroups.map(_.id)(collection.breakOut))
-        val action = Callback.lazily(p.setModal(modal))
-        ActionInfo(affects, action)
+    private object deleteReqs {
+      def action(p: Props, reqs: Vector[Req]): Option[ActionInfo] =
+        NonEmptyVector.option(reqs).map { rs =>
+          val affects = rs.length
+          def modalValue = modal(p, rs.mapToNES(_.id))
+          val action = Callback.lazily(p.setModal(modalValue))
+          ActionInfo(affects, action)
+        }
+
+      private def modal(p: Props, reqs: NonEmptySet[ReqId]): Modal = {
+        val data = DeletionForm.Data.forReqs(p.project, reqs)
+        val props = DeletionForm.Props(data, p.widgets, p.projectText, p.textSearch, io, clearModal)
+        Modal(DeletionForm.Component(props))
       }
 
-    private def deleteReqsModal(p: Props, reqs: NonEmptySet[ReqId], groups: Set[ReqCodeId]): Modal = {
-      val props1 = DeletionForm.initProps1(p.project, reqs, groups)
-      val props = DeletionForm.makeProps(props1, p.widgets, p.projectText, p.textSearch, deleteReqsIO, clearModal)
-      Modal(DeletionForm.Component(props))
-    }
-
-    private def deleteReqsIO(cmd: UpdateContentCmd.DeleteReqs): Callback = {
-      val sourceIds: List[Row.SourceId] =
-        cmd.reqs.iterator.map(Row.SourceId.ForReq)
-          .++(cmd.codeGroups.iterator.map(Row.SourceId.ForCodeGroup))
-          .toList
-      runCmd(cmd, sourceIds)
-    }
-
-    private def deleteCodeGroupsAction(codeGroups: Vector[CodeGroup]): Option[ActionInfo] =
-      NonEmptyVector.option(codeGroups).map { gs =>
-        val affects = gs.length
-        val action = Callback.lazily(deleteGroupsIO(gs.mapToNES(_.id)))
-        ActionInfo(affects, action)
-      }
-
-    private def deleteGroupsIO(codeGroups: NonEmptySet[ReqCodeId]): Callback = {
-      val cmd = UpdateContentCmd.DeleteCodeGroups(codeGroups)
-      val sourceIds: List[Row.SourceId] = cmd.ids.whole.map(Row.SourceId.ForCodeGroup)(collection.breakOut)
-      runCmd(cmd, sourceIds)
-    }
-
-    private def restoreAction(reqs: Vector[Req], codeGroups: Vector[CodeGroup]): Option[ActionInfo] = {
-      val affects = reqs.length + codeGroups.length
-      Option.unless(affects ==* 0) {
-        val cmd = UpdateContentCmd.RestoreContent(
-          reqs.map(_.id)(collection.breakOut),
-          codeGroups.map(_.id)(collection.breakOut))
-        ActionInfo(affects, restoreIO(cmd))
+      private def io(cmd: UpdateContentCmd.DeleteReqs): Callback = {
+        val sourceIds: List[Row.SourceId] =
+          cmd.reqs.iterator.map(Row.SourceId.ForReq)
+            .++(cmd.codeGroups.iterator.map(Row.SourceId.ForCodeGroup))
+            .toList
+        runCmd(cmd, sourceIds)
       }
     }
 
-    private def restoreIO(cmd: UpdateContentCmd.RestoreContent): Callback = {
-      val sourceIds: List[Row.SourceId] =
-        cmd.reqs.iterator.map(Row.SourceId.ForReq)
-          .++(cmd.codeGroups.iterator.map(Row.SourceId.ForCodeGroup))
-          .toList
-      runCmd(cmd, sourceIds)
+    private object deleteCodeGroups {
+      def action(codeGroups: Vector[CodeGroup]): Option[ActionInfo] =
+        NonEmptyVector.option(codeGroups).map { gs =>
+          val affects = gs.length
+          val action = Callback.lazily(io(gs.mapToNES(_.id)))
+          ActionInfo(affects, action)
+        }
+
+      private def io(codeGroups: NonEmptySet[ReqCodeId]): Callback = {
+        val cmd = UpdateContentCmd.DeleteCodeGroups(codeGroups)
+        val sourceIds: List[Row.SourceId] = cmd.ids.whole.map(Row.SourceId.ForCodeGroup)(collection.breakOut)
+        runCmd(cmd, sourceIds)
+      }
+    }
+
+    private object restore {
+      def action(reqs: Vector[Req], codeGroups: Vector[CodeGroup]): Option[ActionInfo] = {
+        val affects = reqs.length + codeGroups.length
+        Option.unless(affects ==* 0) {
+          val cmd = UpdateContentCmd.RestoreContent(
+            reqs.map(_.id)(collection.breakOut),
+            codeGroups.map(_.id)(collection.breakOut))
+          ActionInfo(affects, io(cmd))
+        }
+      }
+
+      private def io(cmd: UpdateContentCmd.RestoreContent): Callback = {
+        val sourceIds: List[Row.SourceId] =
+          cmd.reqs.iterator.map(Row.SourceId.ForReq)
+            .++(cmd.codeGroups.iterator.map(Row.SourceId.ForCodeGroup))
+            .toList
+        runCmd(cmd, sourceIds)
+      }
     }
 
     private def runCmd(cmd: UpdateContentCmd, rows: Iterable[Row.SourceId]): Callback = {
@@ -186,7 +194,7 @@ object SelectionCtrls {
 
       var result: VdomTag = <.div
 
-      def addButton(name: String, icon: Icon, a: ActionInfo): Unit = {
+      def addButton(name: String, icon: Icon)(a: ActionInfo): Unit = {
         val label: String =
           if (a.affects ==* derived.totalSelected)
             name
@@ -201,8 +209,9 @@ object SelectionCtrls {
         result = result(button)
       }
 
-      derived.delete.foreach(addButton(UiText.Life.delete, Icon.Trash, _))
-      derived.restore.foreach(addButton(UiText.Life.restore, Icon.Undo, _))
+      derived.deleteReqs      .foreach(addButton(UiText.Life.deleteReqs + "…", Icon.Trash))
+      derived.deleteCodeGroups.foreach(addButton(UiText.Life.deleteCodeGroups, Icon.Trash))
+      derived.restore         .foreach(addButton(UiText.Life.restore         , Icon.Undo ))
 
       result
     }

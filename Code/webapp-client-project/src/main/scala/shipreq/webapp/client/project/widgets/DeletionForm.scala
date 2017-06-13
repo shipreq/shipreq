@@ -24,15 +24,25 @@ import MTrie.Ops
 
 object DeletionForm {
 
-  final case class Props(project        : Project,
+  type DeletableReqs   = Vector[ReqRow]
+  type DeletableGroups = Vector[GroupRow]
+
+  final case class Data(project        : Project,
+                        deletableReqs  : DeletableReqs,
+                        deletableGroups: DeletableGroups,
+                        initialState   : State)
+
+  final case class Props(data           : Data,
                          widgets        : ProjectWidgets,
                          projectText    : PlainText.ForProject,
                          textSearch     : TextSearch,
                          perform        : DeleteReqs => Callback,
-                         cancel         : Callback,
-                         deletableReqs  : DeletableReqs,
-                         deletableGroups: DeletableGroups,
-                         initialState   : State)
+                         cancel         : Callback) {
+    @inline def project         = data.project
+    @inline def deletableReqs   = data.deletableReqs
+    @inline def deletableGroups = data.deletableGroups
+    @inline def initialState    = data.initialState
+  }
 
   final case class ReqRow(req: Req, indent: Int, impliedBy: Vector[Req])
 
@@ -47,247 +57,242 @@ object DeletionForm {
       subGroups.iterator.filter(t => g(t._1) is Live).map(_._2)
   }
 
-  type DeletableReqs   = Vector[ReqRow]
-  type DeletableGroups = Vector[GroupRow]
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+  // Data Logic
 
-  final case class Props1(project        : Project,
-                          deletableReqs  : DeletableReqs,
-                          deletableGroups: DeletableGroups,
-                          initialState   : State)
+  object Data {
 
-  def initProps1(p              : Project,
-                 directSelReqs  : NonEmptySet[ReqId],
-                 directSelGroups: Set[ReqCodeId]): Props1 = {
-
-    val directSelRcgCodes: Set[ReqCode.Value] =
-      directSelGroups.map(p.reqCodes.reqCode)
-
-    val deletableReqs   = calcDeletableReqs(p, directSelReqs)
-    val deletableGroups = calcDeletableGroups(p, directSelRcgCodes, deletableReqs)
-
-    val initSelReqs   = calcInitiallySelectedReqs(p, deletableReqs, directSelReqs).whole
-    val initSelGroups = calcInitiallySelectedGroups(p, directSelGroups, deletableGroups, initSelReqs)
-
-    val state = State(Selection(initSelReqs), Selection(initSelGroups), "")
-    Props1(p, deletableReqs, deletableGroups, state)
-  }
-
-  def makeProps(props1     : Props1,
-                widgets    : ProjectWidgets,
-                projectText: PlainText.ForProject,
-                textSearch : TextSearch,
-                perform    : DeleteReqs => Callback,
-                cancel     : Callback): Props = {
-    import props1._
-    Props(project, widgets, projectText, textSearch, perform, cancel, deletableReqs, deletableGroups, initialState)
-  }
-
-  // ===================================================================================================================
-  // Requirement logic
-  // ===================================================================================================================
-
-  private def calcDeletableReqs(p: Project, directSel: NonEmptySet[ReqId]): DeletableReqs = {
-    val imps_> = p.implications.forwards
-    val imps_< = p.implications.backwards
-
-    val reqOrder = Ordering.by((_: Req).pubid)(p.config.reqTypes.pubidOrdering)
-
-    def sortReqs(a: Array[Req]): Unit =
-      java.util.Arrays.sort(a, reqOrder)
-
-    val reqFilter: Req => Boolean =
-      _.live(p.config.reqTypes) is Live
-
-    def lookupAll(reqIds: TraversableOnce[ReqId]): Array[Req] = {
-      val a = reqIds.toIterator.map(p.reqs.need).filter(reqFilter).toArray
-      sortReqs(a)
-      a
+    /** Completely ignores code groups.
+      * Clearer UX to separate Req deletion (with implication intelligence) from Code Group deletion.
+      */
+    def forReqs(project: Project, directlySelectedReqs: NonEmptySet[ReqId]): Data = {
+      val deletableReqs = calcDeletableReqs(project, directlySelectedReqs)
+      val initSelReqs   = calcInitiallySelectedReqs(project, deletableReqs, directlySelectedReqs).whole
+      val state         = State(Selection(initSelReqs), Selection(Set.empty), "")
+      Data(project, deletableReqs, Vector.empty, state)
     }
 
-    var reqRows = Vector.newBuilder[ReqRow]
+    private[widgets] def forReqsAndCodeGroups__TEST_ONLY(project               : Project,
+                                                         directlySelectedReqs  : NonEmptySet[ReqId],
+                                                         directlySelectedGroups: Set[ReqCodeId]): Data = {
+      val directlySelectedCodeGroups: Set[ReqCode.Value] =
+        directlySelectedGroups.map(project.reqCodes.reqCode)
 
-    def go(reqIds: TraversableOnce[ReqId], level: Int): Unit =
-      for (r <- lookupAll(reqIds)) {
+      val deletableReqs   = calcDeletableReqs(project, directlySelectedReqs)
+      val deletableGroups = calcDeletableGroups(project, directlySelectedCodeGroups, deletableReqs)
 
-        // Add row
-        val impBy = lookupAll(imps_<(r.id)).toVector
-        reqRows += ReqRow(r, level, impBy)
+      val initSelReqs   = calcInitiallySelectedReqs(project, deletableReqs, directlySelectedReqs).whole
+      val initSelGroups = calcInitiallySelectedGroups(project, directlySelectedGroups, deletableGroups, initSelReqs)
 
-        // Add implied reqs
-        val kids = imps_>(r.id).iterator.filterNot(directSel.contains)
-        go(kids, level + 1)
+      val state = State(Selection(initSelReqs), Selection(initSelGroups), "")
+      Data(project, deletableReqs, deletableGroups, state)
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Requirement logic
+
+    private def calcDeletableReqs(p: Project, directSel: NonEmptySet[ReqId]): DeletableReqs = {
+      val imps_> = p.implications.forwards
+      val imps_< = p.implications.backwards
+
+      val reqOrder = Ordering.by((_: Req).pubid)(p.config.reqTypes.pubidOrdering)
+
+      def sortReqs(a: Array[Req]): Unit =
+        java.util.Arrays.sort(a, reqOrder)
+
+      val reqFilter: Req => Boolean =
+        _.live(p.config.reqTypes) is Live
+
+      def lookupAll(reqIds: TraversableOnce[ReqId]): Array[Req] = {
+        val a = reqIds.toIterator.map(p.reqs.need).filter(reqFilter).toArray
+        sortReqs(a)
+        a
       }
 
-    go(directSel.whole, 0)
+      var reqRows = Vector.newBuilder[ReqRow]
 
-    reqRows.result()
-  }
+      def go(reqIds: TraversableOnce[ReqId], level: Int): Unit =
+        for (r <- lookupAll(reqIds)) {
 
-  private def calcInitiallySelectedReqs(p: Project, deletableReqs: DeletableReqs, directSel: NonEmptySet[ReqId]): NonEmptySet[ReqId] = {
+          // Add row
+          val impBy = lookupAll(imps_<(r.id)).toVector
+          reqRows += ReqRow(r, level, impBy)
 
-    // Means we don't know yet whether the deletion should be cascaded by default to this item
-    class CascadePending(val req: Req, val imp: Vector[Req], var pending: Boolean)
-    var cascadePending =
-      deletableReqs.iterator
-        .filter(_.indent != 0)
-        .map(r => new CascadePending(r.req, r.impliedBy, true))
-        .toList
+          // Add implied reqs
+          val kids = imps_>(r.id).iterator.filterNot(directSel.contains)
+          go(kids, level + 1)
+        }
 
-    var select = directSel
+      go(directSel.whole, 0)
 
-    // Copy-paste with Backend#render
-    def liveGivenState(r: Req): Live =
-      (Dead when select.contains(r.id)) & r.live(p.config.reqTypes)
+      reqRows.result()
+    }
 
-    // Decide which implied reqs to recommend cascading deletion
-    // (I'm sure there's a smarter way but this will do)
-    var changed = true
-    while (changed) {
-      changed = false
-      for (t <- cascadePending if t.pending) {
-        t.pending = false
-        if (t.imp.forall(liveGivenState(_) is Dead)) {
-          changed = true
-          select += t.req.id
+    private def calcInitiallySelectedReqs(p: Project, deletableReqs: DeletableReqs, directSel: NonEmptySet[ReqId]): NonEmptySet[ReqId] = {
+
+      // Means we don't know yet whether the deletion should be cascaded by default to this item
+      class CascadePending(val req: Req, val imp: Vector[Req], var pending: Boolean)
+      var cascadePending =
+        deletableReqs.iterator
+          .filter(_.indent != 0)
+          .map(r => new CascadePending(r.req, r.impliedBy, true))
+          .toList
+
+      var select = directSel
+
+      // Copy-paste with Backend#render
+      def liveGivenState(r: Req): Live =
+        (Dead when select.contains(r.id)) & r.live(p.config.reqTypes)
+
+      // Decide which implied reqs to recommend cascading deletion
+      // (I'm sure there's a smarter way but this will do)
+      var changed = true
+      while (changed) {
+        changed = false
+        for (t <- cascadePending if t.pending) {
+          t.pending = false
+          if (t.imp.forall(liveGivenState(_) is Dead)) {
+            changed = true
+            select += t.req.id
+          }
         }
       }
+
+      select
     }
 
-    select
-  }
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ReqCode Group logic
 
-  // ===================================================================================================================
-  // ReqCode Group logic
-  // ===================================================================================================================
-  import ReqCode.{Value => Code, ActiveGroup, ActiveReq, Inactive, Trie}
+    import ReqCode.{Value => Code, ActiveGroup, ActiveReq, Inactive, Trie}
 
-  /**
-   * Is a code useless, considering itself and its children.
-   *
-   * A useless group is a group with no live children or useless children groups.
-   */
-  private def isUselessLookingDown(t: Trie, c: Code): Boolean = {
-    def isTrieUseless(s: Trie): Boolean =
-      s.valuesIterator.forall(isNodeUseless)
+    /**
+     * Is a code useless, considering itself and its children.
+     *
+     * A useless group is a group with no live children or useless children groups.
+     */
+    private def isUselessLookingDown(t: Trie, c: Code): Boolean = {
+      def isTrieUseless(s: Trie): Boolean =
+        s.valuesIterator.forall(isNodeUseless)
 
-    def isNodeUseless(node: Trie.Node): Boolean =
-      node.fold(
-        b => b.value.forall(n => isDataUseless(n.value)) && isTrieUseless(b.next),
-        v => isDataUseless(v.value))
+      def isNodeUseless(node: Trie.Node): Boolean =
+        node.fold(
+          b => b.value.forall(n => isDataUseless(n.value)) && isTrieUseless(b.next),
+          v => isDataUseless(v.value))
 
-    def isDataUseless(d: ReqCode.Data): Boolean =
-      d match {
-        case _: ActiveReq => false
-        case _: ActiveGroup | _: Inactive => true
-      }
+      def isDataUseless(d: ReqCode.Data): Boolean =
+        d match {
+          case _: ActiveReq => false
+          case _: ActiveGroup | _: Inactive => true
+        }
 
-    t.getNode(c).forall(isNodeUseless)
-  }
-
-  private def codesOfActiveChildGroups(t: Trie, c: Code): Set[Code] =
-    t.dropPath(c).flatStream
-      .collect { case (code, _: ActiveGroup) => c ++ code }
-      .toSet
-
-  @tailrec
-  private def codesOfUselessChildGroups(trie: Trie, queue: List[Code], acc: Set[Code]): Set[Code] =
-    queue match {
-      case code :: queueTail =>
-        val acc2 =
-          if (isUselessLookingDown(trie, code))
-            acc | codesOfActiveChildGroups(trie, code) + code
-          else
-            acc
-        codesOfUselessChildGroups(trie, queueTail, acc2)
-      case Nil => acc
+      t.getNode(c).forall(isNodeUseless)
     }
 
-  @tailrec
-  private def codesOfUselessParentGroups(trie: Trie, queue: List[Code], acc: Set[Code]): Set[Code] =
-    queue match {
-      case h :: t =>
-        if (isUselessLookingDown(trie, h)) {
-          val next = NonEmptyVector.maybe(h.init, t)(_ :: t)
-          codesOfUselessParentGroups(trie, next, acc + h)
-        } else
-          codesOfUselessParentGroups(trie, t, acc)
-      case Nil => acc
-    }
-
-  private def calcDeletableGroups(p: Project, directSelRcgCodes: TraversableOnce[Code], deletableReqs: DeletableReqs): DeletableGroups = {
-
-    // By "externally" I mean external to this fn/logic. All deletable if this fn did nothing.
-    val externallyDeletable: List[Code] = {
-      var b = Set.newBuilder[Code]
-      b ++= deletableReqs.iterator.flatMap(r => p.reqCodes.activeReqCodesByReqId(r.req.id).iterator)
-      b ++= directSelRcgCodes
-      b.result().toList
-    }
-
-    // Step 1. After all deletions have occurred, under everything selected(able?), what's useless?
-
-    val trie1: Trie =
-      p.reqCodes.trie @-- externallyDeletable
-
-    val step1: Set[Code] =
-      codesOfUselessChildGroups(trie1, externallyDeletable, Set.empty)
-
-    // Step 2. After all deletions have occurred, for everything selected(able?), which parents are now useless?
-
-    val trie2: Trie =
-      trie1 @-- step1
-
-    val step2: Set[Code] =
-      codesOfUselessParentGroups(trie2, externallyDeletable, step1)
-
-    // Done. Build results.
-
-    def makeRcgRow(c: Code, g: LiveCodeGroup): GroupRow = {
-      var subReqs = Set.newBuilder[(ReqId, String)]
-      var subGrps = Set.newBuilder[(ReqCodeId, String)]
-      def subCodeStr(c2: Code) = "." + PlainText.reqCode(c2)
-
-      p.reqCodes.trie.dropPath(c).foreachPathAndValue {
-        case (k, a: ActiveReq)   => subReqs += ((a.reqId, subCodeStr(k)))
-        case (k, a: ActiveGroup) => subGrps += ((a.id, subCodeStr(k)))
-        case (_, _: Inactive)    => ()
-      }
-      GroupRow(g, PlainText.reqCode(c), subReqs.result(), subGrps.result())
-    }
-
-    step2.iterator
-      .map(c => (c, p.reqCodes.get(c)))
-      .collect { case (c, Some(a: ActiveGroup)) => makeRcgRow(c, a.group) }
-      .toVector
-      .sortBy(_.codeStr)
-  }
-
-  private def calcInitiallySelectedGroups(p              : Project,
-                                          directSelGroups: Set[ReqCodeId],
-                                          deletableGroups: DeletableGroups,
-                                          selectedReqs   : Iterable[ReqId]): Set[ReqCodeId] = {
-
-    val indirectGroupIds: Set[ReqCodeId] =
-      deletableGroups.iterator
-        .map(_.id)
-        .filterNot(directSelGroups.contains)
+    private def codesOfActiveChildGroups(t: Trie, c: Code): Set[Code] =
+      t.dropPath(c).flatStream
+        .collect { case (code, _: ActiveGroup) => c ++ code }
         .toSet
 
-    def codesOfSelectedReqs: Iterator[Code] =
-      selectedReqs.iterator.flatMap(id => p.reqCodes.activeReqCodesByReqId(id).iterator)
+    @tailrec
+    private def codesOfUselessChildGroups(trie: Trie, queue: List[Code], acc: Set[Code]): Set[Code] =
+      queue match {
+        case code :: queueTail =>
+          val acc2 =
+            if (isUselessLookingDown(trie, code))
+              acc | codesOfActiveChildGroups(trie, code) + code
+            else
+              acc
+          codesOfUselessChildGroups(trie, queueTail, acc2)
+        case Nil => acc
+      }
 
-    val postDeletionTrie: Trie =
-      p.reqCodes.trie @-- codesOfSelectedReqs
+    @tailrec
+    private def codesOfUselessParentGroups(trie: Trie, queue: List[Code], acc: Set[Code]): Set[Code] =
+      queue match {
+        case h :: t =>
+          if (isUselessLookingDown(trie, h)) {
+            val next = NonEmptyVector.maybe(h.init, t)(_ :: t)
+            codesOfUselessParentGroups(trie, next, acc + h)
+          } else
+            codesOfUselessParentGroups(trie, t, acc)
+        case Nil => acc
+      }
 
-    val select: Set[ReqCodeId] =
-      indirectGroupIds.filter(id => isUselessLookingDown(postDeletionTrie, p.reqCodes.reqCode(id)))
+    private def calcDeletableGroups(p: Project, directSelRcgCodes: TraversableOnce[Code], deletableReqs: DeletableReqs): DeletableGroups = {
 
-    directSelGroups | select
+      // By "externally" I mean external to this fn/logic. All deletable if this fn did nothing.
+      val externallyDeletable: List[Code] = {
+        var b = Set.newBuilder[Code]
+        b ++= deletableReqs.iterator.flatMap(r => p.reqCodes.activeReqCodesByReqId(r.req.id).iterator)
+        b ++= directSelRcgCodes
+        b.result().toList
+      }
+
+      // Step 1. After all deletions have occurred, under everything selected(able?), what's useless?
+
+      val trie1: Trie =
+        p.reqCodes.trie @-- externallyDeletable
+
+      val step1: Set[Code] =
+        codesOfUselessChildGroups(trie1, externallyDeletable, Set.empty)
+
+      // Step 2. After all deletions have occurred, for everything selected(able?), which parents are now useless?
+
+      val trie2: Trie =
+        trie1 @-- step1
+
+      val step2: Set[Code] =
+        codesOfUselessParentGroups(trie2, externallyDeletable, step1)
+
+      // Done. Build results.
+
+      def makeRcgRow(c: Code, g: LiveCodeGroup): GroupRow = {
+        var subReqs = Set.newBuilder[(ReqId, String)]
+        var subGrps = Set.newBuilder[(ReqCodeId, String)]
+        def subCodeStr(c2: Code) = "." + PlainText.reqCode(c2)
+
+        p.reqCodes.trie.dropPath(c).foreachPathAndValue {
+          case (k, a: ActiveReq)   => subReqs += ((a.reqId, subCodeStr(k)))
+          case (k, a: ActiveGroup) => subGrps += ((a.id, subCodeStr(k)))
+          case (_, _: Inactive)    => ()
+        }
+        GroupRow(g, PlainText.reqCode(c), subReqs.result(), subGrps.result())
+      }
+
+      step2.iterator
+        .map(c => (c, p.reqCodes.get(c)))
+        .collect { case (c, Some(a: ActiveGroup)) => makeRcgRow(c, a.group) }
+        .toVector
+        .sortBy(_.codeStr)
+    }
+
+    private def calcInitiallySelectedGroups(p              : Project,
+                                            directSelGroups: Set[ReqCodeId],
+                                            deletableGroups: DeletableGroups,
+                                            selectedReqs   : Iterable[ReqId]): Set[ReqCodeId] = {
+
+      val indirectGroupIds: Set[ReqCodeId] =
+        deletableGroups.iterator
+          .map(_.id)
+          .filterNot(directSelGroups.contains)
+          .toSet
+
+      def codesOfSelectedReqs: Iterator[Code] =
+        selectedReqs.iterator.flatMap(id => p.reqCodes.activeReqCodesByReqId(id).iterator)
+
+      val postDeletionTrie: Trie =
+        p.reqCodes.trie @-- codesOfSelectedReqs
+
+      val select: Set[ReqCodeId] =
+        indirectGroupIds.filter(id => isUselessLookingDown(postDeletionTrie, p.reqCodes.reqCode(id)))
+
+      directSelGroups | select
+    }
+
   }
 
-  // ===================================================================================================================
-  // Logic End
-  // ===================================================================================================================
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   @Lenses
   case class State(selectedReqs: Selection[ReqId], selectedGroups: Selection[ReqCodeId], reason: String)
@@ -415,19 +420,12 @@ object DeletionForm {
 
     // -----------------------------------------------------------------------------------------------------------------
     def render(p: Props, s: State): VdomElement = {
+      assert(p.deletableGroups.isEmpty, "Since proper UI/UX implementation, DeletionForm no longer accepts deletable code-groups")
 
       def reqSection =
         <.section(
           <.div(*.section, "Requirements to delete"),
           renderReqs(p, s))
-
-      def groupSection: TagMod =
-        if (p.deletableGroups.isEmpty)
-          EmptyVdom
-        else
-          <.section(
-            <.div(*.section, UiText.codeGroups + " to delete"),
-            renderGroups(p, s))
 
       val reasonTextProps = reasonEditorProps(p, s)
 
@@ -453,7 +451,6 @@ object DeletionForm {
       <.div(
         TestMarker.deletionForm.tagMod,
         reqSection,
-        groupSection,
         reasonSection,
         deleteButton,
         cancelButton)

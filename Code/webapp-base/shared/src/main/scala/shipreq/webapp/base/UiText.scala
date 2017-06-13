@@ -77,12 +77,14 @@ object UiText {
         case Dead => dead
       }
 
-    def field    = "Live Status"
-    def live     = "Live"
-    def dead     = "Deleted"
-    def delete   = "Delete"
-    def restore  = "Restore"
-    def showDead = "Show deleted content."
+    def field            = "Live Status"
+    def live             = "Live"
+    def dead             = "Deleted"
+    def delete           = "Delete"
+    def deleteCodeGroups = delete + " " + codeGroups
+    def deleteReqs       = delete + " Reqs"
+    def restore          = "Restore"
+    def showDead         = "Show deleted content."
   }
 
   def codeGroup = "Code Group"

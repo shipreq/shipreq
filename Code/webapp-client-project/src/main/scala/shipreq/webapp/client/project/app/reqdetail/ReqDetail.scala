@@ -354,12 +354,10 @@ object ReqDetail {
 
     def delete(id: ReqId): Callback =
       CallbackTo {
-        def run(cmd: UpdateContentCmd): Callback =
-          runActionNoAsync(cmd) >> clearModal
-
+        def run(cmd: UpdateContentCmd): Callback = runActionNoAsync(cmd) >> clearModal
         import Px.AutoValue._
-        val props1 = DeletionForm.initProps1(pxProject, NonEmptySet one id, Set.empty)
-        val props = DeletionForm.makeProps(props1, pxProjectWidgetsNoCtx, pxPlainTextNoCtx, pxTextSearch, run, clearModal)
+        val data = DeletionForm.Data.forReqs(pxProject, NonEmptySet one id)
+        val props = DeletionForm.Props(data, pxProjectWidgetsNoCtx, pxPlainTextNoCtx, pxTextSearch, run, clearModal)
         Some(Modal(DeletionForm.Component(props)))
       } >>= setModal
 

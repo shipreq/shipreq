@@ -8,7 +8,7 @@ import shipreq.base.util.{IMap, Util}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
 import WebappTestUtil._
-import DeletionForm.{Props1, GroupRow}
+import DeletionForm.{Data, GroupRow}
 import UnsafeTypes._
 
 object DeletionFormTestData {
@@ -199,13 +199,13 @@ object DeletionFormTestData {
     |. 512 <- 510 511
   """.stripMargin.trim
 
-  lazy val result               = DeletionForm.initProps1(p, NonEmptySet force _selectedReqIds, _selectedRCGs)
+  lazy val result               = DeletionForm.Data.forReqsAndCodeGroups__TEST_ONLY(p, NonEmptySet force _selectedReqIds, _selectedRCGs)
   lazy val expectInitialReqs    = _expectInitialReqs
   lazy val expectInitialRCGs    = _expectInitialRCGs
   lazy val expectUnselectedReqs = _expectUnselectedReqs
   lazy val expectDeletableRCGs  = _expectDeletableRCGs.values.toVector.sortBy(_.codeStr)
 
-  def fmtReqRows(p: Props1): String =
+  def fmtReqRows(p: Data): String =
     Util.quickSB { sb =>
       p.deletableReqs.foreach { r =>
         if (sb.nonEmpty)

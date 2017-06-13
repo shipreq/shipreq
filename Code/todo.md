@@ -73,8 +73,6 @@ Phase 2 (dev)
 * Re-evaluate config: some data is useless (i.e. key of custom text fields)
 * Deletion
   * Apply new UI
-  * Exclude the group selection logic
-  * Have a different button for Code Group deletion
 * Bug: Create-and-close closes on ajax error
 
 ### UI/UX
