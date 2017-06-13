@@ -75,6 +75,7 @@ Phase 2 (dev)
   * Apply new UI
   * Exclude the group selection logic
   * Have a different button for Code Group deletion
+* Bug: Create-and-close closes on ajax error
 
 ### UI/UX
 * Front pages
