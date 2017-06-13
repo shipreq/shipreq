@@ -17,8 +17,8 @@ class DeletionFormObs($: DomZipper) {
     $("textarea").domAs[html.TextArea]
 
   val deleteButton: html.Button =
-    $("button", 1 of 2).domAs[html.Button]
+    $("button:contains(Delete)").domAs[html.Button]
 
   val cancelButton: html.Button =
-    $("button", 2 of 2).domAs[html.Button]
+    $("button:contains(Cancel)").domAs[html.Button]
 }

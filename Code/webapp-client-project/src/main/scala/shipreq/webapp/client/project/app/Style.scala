@@ -79,6 +79,10 @@ object Style extends StyleSheet.Inline {
     unsafeChild("svg")(
       maxWidth(100 %%)))
 
+  private val selectionCellBase = style(
+    width(24.px).important,
+    textAlign.center.important)
+
   // ===================================================================================================================
   object home {
 
@@ -247,10 +251,6 @@ object Style extends StyleSheet.Inline {
         cellBase(i),
         &.focus(BaseStyles.focus.glowOutline)))
 
-      private val selectionCellBase = styleS(
-        width(24.px).important,
-        textAlign.center.important)
-
       val selectionColumnHeader = style(selectionCellBase, headerBase)
       val selectionDataCell     = styleF(D.`live * on`)(i => styleS(selectionCellBase, dataCell(i)))
       val selectionCheckbox     = style(&.focus(outlineColor(BaseStyles.focus.colour(1))))
@@ -351,33 +351,63 @@ object Style extends StyleSheet.Inline {
   // ===================================================================================================================
   object deletionForm {
 
-    val section = style(
-      marginTop(2.3 em),
-      marginBottom(1 em),
-      fontWeight.bold)
+    val main = style(
+      margin.horizontal(auto),
+      maxWidth(144 ex),
+      paddingTop(1 em),
+      padding.horizontal(2 em))
 
-    val row = styleF(D.live)(live => styleS(
-      mixinIf(live is Dead)(backgroundColor(c"#fee"), color(c"#a00"))
-    ))
+    val reqHelp = style(marginTop(2 em))
 
-    val indent: Int => TagMod =
-      Memo(n => TagMod(^^.display.`inline-block`, ^^.width := s"${n * 3}ex"))
+    def deadTextColour = hsl(0, 71 %%, 50 %%)
+    def deadTextColour(a: Double) = hsla(0, 71 %%, 50 %%, a)
 
-    val reqDesc =
-      style(marginLeft(0.5 ex))
+    val reqTable = style(
+      marginTop(0.6 em).important,
+      unsafeChild(">thead>tr>th:last-child")(textAlign.center),
+      unsafeChild(">thead>tr:nth-child(2)>th")(textAlign.center, paddingTop(`0`).important),
+      unsafeChild(">thead>tr>th")(padding(0.44 em).important),
+      unsafeChild(">tbody>tr>td")(padding(0.44 em).important, lineHeight(1.2 em).important, verticalAlign.top))
 
-    val impliedByPrefix =
-      style(marginRight(0.5 ex))
+    val reqTableImpsCell              = style(width(8 ex))
+    val reqTableHeaderImpsTop         = style(borderBottom.none.important)
+    val reqTableHeaderImpsBottomLeft  = style(reqTableImpsCell, borderLeft(1 px, solid, rgba(34, 36, 38, .1)).important)
+    val reqTableHeaderImpsBottomRight = style(reqTableImpsCell, borderLeft.none.important)
+    val reqTableHeaderImpsIcon        = style(margin(`0`).important)
 
-    val impliedByItem = styleF(D.live)(l => styleS(
-      // hoverShowsInfo, // It's a link to ReqDetail now
-      mixinIf(l is Live)(color(c"#111")),
-      mixinIf(l is Dead)(
-        //textDecoration := ^.lineThrough,
-        color(c"#daa"))
-    ))
+    /** @param i > 1 */
+    def indentWidth(i: Int): String =
+      s"${(i - 1) * 2}ex"
 
-    def subCodeCount = impliedByItem
+    def reqTableSelCol = selectionCellBase
+
+
+    val reqTablePubidCell = style(display.flex, whiteSpace.nowrap)
+    val reqTableTreeIndicator = style(color(c"#a8a8a8"))
+
+    val pubid = styleF(D.live)(l => styleS(
+      flexGrow(1),
+      mixinIf(l is Dead)(color(deadTextColour)),
+      &.not(_.firstChild)(paddingLeft(0.5 ex))))
+
+    val reqTableTitle = styleF(D.live)(l => styleS(mixinIf(l is Dead)(color(deadTextColour))))
+    val reqTableImps = styleF(D.live)(l => styleS(reqTableTitle(l), whiteSpace.nowrap))
+
+    val reqTableRow = styleF(D.live) {
+      case Live => styleS(
+        &.hover(backgroundColor(rgba(0, 192, 0, .08))))
+      case Dead => styleS(
+        backgroundColor(deadTextColour(.06)),
+        &.hover(backgroundColor(deadTextColour(.15))))
+    }
+
+    val deletionReasonHeader = style(marginBottom(0.4 em))
+
+    val cancelButton = style(marginBottom(1.2 em).important)
+
+    val bottomSections = style(display.flex, marginTop(4 em))
+    val bottomSectionL = style(flexGrow(1), alignSelf.flexEnd)
+    val bottomSectionR = style(paddingLeft(6 em), alignSelf.flexEnd)
   }
 
   // ===================================================================================================================
@@ -645,7 +675,7 @@ object Style extends StyleSheet.Inline {
     help.examplesTable,
     impgraphPage.graph,
     cfg.deadMnemonic,
-    deletionForm.impliedByItem(Live),
+    deletionForm.reqHelp,
     reqtable.creation.buttonDropdown,
     reqtable.filterEditor.input(Valid),
     reqtable.sortEditor.dragArea,

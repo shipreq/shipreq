@@ -2,6 +2,7 @@ package shipreq.base.util
 
 import japgolly.univeq.UnivEq
 import monocle.Lens
+import scala.collection.generic.CanBuildFrom
 import scalaz.Isomorphism.<=>
 import scalaz.{Monoid, Semigroup}
 import IsoBool._
@@ -87,6 +88,11 @@ object IsoBool {
         IsoBool.Values(a, a)
       def lens[A](b: B): Lens[Values[A], A] =
         IsoBool.Values.lens(b)
+      def partition[C[_], A](as: TraversableOnce[A])(f: A => B)(implicit cbf: CanBuildFrom[Nothing, A, C[A]]): Values[C[A]] = {
+        val b = Values(_ => cbf())
+        for (a <- as) b(f(a)) += a
+        b.map(_.result())
+      }
     }
   }
 

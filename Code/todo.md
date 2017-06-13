@@ -71,8 +71,6 @@ Phase 2 (dev)
   We don't seem to need all-imps vs non-field-imps...should tags not work the same way?
   Or is there similar deficiency in imps cols too?
 * Re-evaluate config: some data is useless (i.e. key of custom text fields)
-* Deletion
-  * Apply new UI
 * Bug: Create-and-close closes on ajax error
 
 ### UI/UX
