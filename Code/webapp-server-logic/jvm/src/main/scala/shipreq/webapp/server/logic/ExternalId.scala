@@ -1,6 +1,7 @@
-package shipreq.webapp.server.util
+package shipreq.webapp.server.logic
 
-import net.liftweb.common.{Box, Empty, Full}
+import japgolly.microlibs.stdlib_ext.StdlibExt._
+import shipreq.base.util.BaseX
 import shipreq.webapp.base.data.{ExternalId => XId}
 
 /**
@@ -42,9 +43,8 @@ object ExternalId {
     def isValidExternalId(str: String): Boolean =
       ExternalIdRegex.matcher(str).matches
 
-    def parseO(ext: String)     : Option[Id] = if (isValidExternalId(ext)) Some(parse(ext)) else None
-    def parseB(ext: String)     : Box[Id]    = if (isValidExternalId(ext)) Full(parse(ext)) else Empty
-    def parseB(str: Box[String]): Box[Id]    = str.flatMap(parseB)
+    def parseOption(ext: String): Option[Id] =
+      Option.when(isValidExternalId(ext))(parse(ext))
   }
 
   private object Internal {

@@ -1,7 +1,7 @@
-package shipreq.webapp.server.util
+package shipreq.base.util
 
-import BaseX._
 import java.math.BigInteger
+import BaseX._
 
 object BaseX {
   /** Full range of signed long values + 1 */
@@ -11,7 +11,7 @@ object BaseX {
 /**
  * Originally from http://java.dzone.com/articles/base-x-encoding
  */
-class BaseX(val dictionaryStr: String, minStrLen: Int = 1) {
+final class BaseX(val dictionaryStr: String, minStrLen: Int = 1) {
 
   private val dictionary = dictionaryStr.toCharArray
   private val charMap = dictionaryStr.toList.zipWithIndex.map(t => (t._1, BigInteger.valueOf(t._2))).toMap

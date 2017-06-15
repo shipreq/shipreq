@@ -5,6 +5,7 @@ import net.liftweb.common.Logger
 import net.liftweb.http.RequestVar
 import shipreq.webapp.server.data._
 import shipreq.webapp.server.app.DI
+import shipreq.webapp.server.logic.ProjectId
 import Permission._
 
 object Permission {

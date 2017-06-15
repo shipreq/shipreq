@@ -12,9 +12,9 @@ import shipreq.base.util.Memo
 import shipreq.webapp.base.{URLs, WebappConfig}
 import shipreq.webapp.server.data._
 import shipreq.webapp.server.feature.{DiagnosticEndpoints, SessionStats}
+import shipreq.webapp.server.logic._
 import shipreq.webapp.server.security.Permission.RequestVarPermExt
 import shipreq.webapp.server.security.{Oshiro, Permission, Permissions}
-import shipreq.webapp.server.util.ExternalId
 
 object AppSiteMap {
   type PM[T] = Menu.ParamMenuable[T]
@@ -211,8 +211,10 @@ object AppSiteMap {
 //  private def TitleFromProjectName[T] =
 //    DynamicTitle[T](mkTitle(RequestVars.Project.get.value.name))
 
-  private def MenuWithIdParam[Id <: AnyRef](scheme: ExternalId.Scheme[_, Id])(name: String) =
-    Menu.param[Id](name, "", scheme.parseB, scheme.toExternal(_).value)
+  private def MenuWithIdParam[Id <: AnyRef](scheme: ExternalId.Scheme[_, Id])(name: String) = {
+    val parseB: String => Box[Id] = s => Box(scheme.parseOption(s))
+    Menu.param[Id](name, "", parseB, scheme.toExternal(_).value)
+  }
 
   private def splitPath(path: String): List[String] =
     path.split("/").toList

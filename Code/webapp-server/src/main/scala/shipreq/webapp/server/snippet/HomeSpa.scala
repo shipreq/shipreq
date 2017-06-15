@@ -9,7 +9,6 @@ import shipreq.base.db.DoobieHelpers._
 import shipreq.webapp.base.data.{Project, ProjectCatalogue}
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.{CreateProjectFn, InitDataForHomeSpa}
-import shipreq.webapp.server.data.ProjectId
 import shipreq.webapp.server.db.{DbLogic, EventSeq}
 import shipreq.webapp.server.lib.SnippetHelpers
 import shipreq.webapp.server.logic._

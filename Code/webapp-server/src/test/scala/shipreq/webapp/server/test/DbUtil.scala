@@ -12,6 +12,7 @@ import shipreq.taskman.api.UserId
 import shipreq.webapp.server.data._
 import shipreq.webapp.server.db.SqlHelpers._
 import shipreq.webapp.server.db._
+import shipreq.webapp.server.logic.ProjectId
 
 object DbUtil {
 

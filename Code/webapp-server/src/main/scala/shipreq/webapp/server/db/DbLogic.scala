@@ -12,6 +12,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ActiveEvent, Event, VerifiedEvent}
 import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.server.data._
+import shipreq.webapp.server.logic.ProjectId
 import shipreq.webapp.server.security.PasswordAndSalt
 import SqlHelpers._
 

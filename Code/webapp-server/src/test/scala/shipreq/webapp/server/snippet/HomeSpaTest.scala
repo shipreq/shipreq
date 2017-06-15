@@ -4,8 +4,8 @@ import java.time.Instant
 import utest._
 import shipreq.webapp.base.data.{Project, ProjectCatalogue, StaticField}
 import shipreq.webapp.base.event.FieldStaticRemove
-import shipreq.webapp.server.data.ProjectId
 import shipreq.webapp.server.db.DbLogic
+import shipreq.webapp.server.logic.ProjectId
 import shipreq.webapp.server.test.WebappServerTestUtil._
 import shipreq.webapp.server.test._
 
@@ -25,7 +25,7 @@ object HomeSpaTest extends TestSuite {
           // Create
           val pi = xa ! HomeSpa.createProject(uid, name, Instant.now())
 
-          val pid = ProjectId.Extern.parseO(pi.id.value).get
+          val pid = ProjectId.Extern.parseOption(pi.id.value).get
           def events() = xa ! DbLogic.event.findAll(pid)
           def loadProject() = applyVerifiedEventSuccessfully(Project.empty, events().map(_._2): _*)
 

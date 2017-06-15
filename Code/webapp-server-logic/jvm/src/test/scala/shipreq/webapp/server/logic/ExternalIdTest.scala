@@ -1,4 +1,4 @@
-package shipreq.webapp.server.util
+package shipreq.webapp.server.logic
 
 import nyaya.gen._
 import nyaya.prop._
@@ -19,7 +19,7 @@ object ExternalIdTest extends TestSuite {
     val ext = scheme(id).value
 
     val result =
-      E.equal("encode.decode = id", scheme.parseO(ext), Some(id)) &
+      E.equal("encode.decode = id", scheme.parseOption(ext), Some(id)) &
       E.test("Format", extFmt.matcher(ext).matches) &
       E.test("Non-sequential", {
         val e1b = lastCh.replaceSomeIn(ext, m => Some((m.group(1)(0) + 1).toChar.toString))
