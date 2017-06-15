@@ -8,6 +8,7 @@ import scalaz.syntax.monad._
 import scalaz.{-\/, Monad, \/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
+import shipreq.taskman.api.UserId
 import shipreq.webapp.base.data.{Project, ProjectCatalogue, Username}
 import shipreq.webapp.base.event.{ApplyEvent, VerifiedEvent, VerifiedEvents}
 import shipreq.webapp.base.protocol.InitDataForProjectSpa

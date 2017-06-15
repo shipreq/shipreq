@@ -86,7 +86,7 @@ taskmanServer -> taskmanServerImpl
 
 webappMacro -> baseUtil
 webappBase -> webappMacro
-webappServerLogic -> webappBase
+webappServerLogic -> webappBase,taskmanApi
 webappServerLogic -> webappBaseTest [color="#111111" style=dashed label="test"]
 webappBaseTest -> baseTest,webappBase [color="#111111"]
 webappClientBase -> webappBase
@@ -103,7 +103,7 @@ webappGen -> webappBase
 webappGen -> webappClientProject [color="#111111" style=dashed label="run"]
 webappGen -> webappBaseTest [color="#111111" style=dashed label="test"]
 webappServer -> taskmanApi,webappServerLogic,webappGen
-webappServer:e -> baseDb
+webappServer -> baseDb
 webappServer -> webappClientHome,webappClientProject,webappClientWw [style=dashed]
 
 benchmarkJvm,benchmarkJs -> benchmarkShared

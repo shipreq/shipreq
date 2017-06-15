@@ -1,6 +1,7 @@
 package shipreq.webapp.server.logic
 
 import scala.collection.immutable.SortedMap
+import shipreq.taskman.api.UserId
 import shipreq.webapp.base.data.ProjectCatalogue
 import shipreq.webapp.base.event.{ActiveEvent, VerifiedEvent}
 import shipreq.webapp.base.hash.HashRec

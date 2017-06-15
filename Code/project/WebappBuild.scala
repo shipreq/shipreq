@@ -181,9 +181,10 @@ object WebappBuild {
   lazy val webappServerLogicJs  = webappServerLogic.js
   lazy val webappServerLogic =
     crossProject("webapp-server-logic")
-      .configureJvm(Common.jvmSettings)
+      .configureJvm(Common.jvmSettings, _.dependsOn(taskmanApi))
       .configureJs(Common.jsSettings(NoDom))
-      .dependsOn(webappBase, baseTest % "test", webappBaseTest % "test")
+      .dependsOn(webappBase)
+      .dependsOn(baseTest % "test", webappBaseTest % "test")
       .depsForBoth(testScope(μTest ++ Nyaya.test))
 
   lazy val webappServer =
