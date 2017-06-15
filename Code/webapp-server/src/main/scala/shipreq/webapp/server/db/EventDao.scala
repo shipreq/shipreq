@@ -8,6 +8,7 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash._
+import shipreq.webapp.server.logic.EventSeq
 import ApplyEvent.LogicVer
 import TaggedTypes.JsonStr
 

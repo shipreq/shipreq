@@ -1,27 +1,27 @@
 package shipreq.webapp.server.db
 
+import doobie.imports._
 import japgolly.microlibs.nonempty._
 import java.time.{Duration, Instant, LocalDateTime, ZoneOffset}
-import org.scalatest.FunSpec
-import doobie.imports._
-import shipreq.base.db.SqlHelpers._
-import shipreq.base.db.DoobieHelpers._
-import shipreq.taskman.api.UserId
-import shipreq.webapp.server.data._
-import shipreq.webapp.server.security.PasswordAndSalt
-import shipreq.webapp.server.snippet.ResetPassword
 import java.util.concurrent.atomic.AtomicInteger
 import nyaya.gen._
 import nyaya.prop._
 import nyaya.test._
 import nyaya.test.PropTestOps._
 import utest._
+import shipreq.base.db.SqlHelpers._
+import shipreq.base.db.DoobieHelpers._
 import shipreq.base.util._
+import shipreq.taskman.api.UserId
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.base.text.Text
+import shipreq.webapp.server.data._
+import shipreq.webapp.server.logic.EventSeq
+import shipreq.webapp.server.security.PasswordAndSalt
+import shipreq.webapp.server.snippet.ResetPassword
 import shipreq.webapp.server.test.{DbUtil, TestDb}
 import shipreq.webapp.server.test.WebappServerTestUtil._
 

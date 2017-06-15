@@ -3,7 +3,8 @@ package shipreq.webapp.server.db
 import utest._
 import shipreq.webapp.base.data.{Project, ProjectCatalogueProps}
 import shipreq.webapp.base.event.{ActiveEvent, RandomEventStream, VerifiedEvent}
-import shipreq.webapp.server.test.{DbUtil, TestDb}
+import shipreq.webapp.server.logic.EventSeq
+import shipreq.webapp.server.test.DbUtil
 import shipreq.webapp.server.test.WebappServerTestUtil._
 
 /** Ensures that ProjectCatalogue.Item content always matches project content.
