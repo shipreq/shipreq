@@ -181,7 +181,7 @@ object WebappBuild {
   lazy val webappServerLogicJs  = webappServerLogic.js
   lazy val webappServerLogic =
     crossProject("webapp-server-logic")
-      .configureJvm(Common.jvmSettings, _.dependsOn(taskmanApi))
+      .configureJvm(Common.jvmSettings, _.dependsOn(taskmanApiLogic))
       .configureJs(Common.jsSettings(NoDom))
       .dependsOn(webappBase)
       .dependsOn(baseTest % "test", webappBaseTest % "test")
@@ -428,7 +428,7 @@ object WebappBuild {
 
     def definition: Project => Project = _
       .enablePlugins(JettyPlugin, WarPlugin, DockerPlugin)
-      .dependsOn(baseDb, taskmanApi, webappServerLogicJvm, webappGenJvm)
+      .dependsOn(baseDb, taskmanApiImpl, webappServerLogicJvm, webappGenJvm)
       .deps(
         Scalaz.core ++ Lift.webkit ++ Shiro.all ++ commonsLang ++
         testScope(μTest ++ scalaTest ++ scalaCheck ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
