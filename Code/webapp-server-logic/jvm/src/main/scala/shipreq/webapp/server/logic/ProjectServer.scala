@@ -53,6 +53,17 @@ object ProjectServer {
 
   type StoreAlgebra[F[_]] = Store.Register.Algebra[F, ProjectId, State, Recv[F]]
 
+  sealed abstract class BroadcastTo
+  object BroadcastTo {
+    case object None extends BroadcastTo
+    case object AllExceptSelf extends BroadcastTo {
+      def filter(self: Long): Long => Boolean = _ != self
+    }
+    case object All extends BroadcastTo {
+      val filter: Long => Boolean = _ => true
+    }
+  }
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   def buildProject(load: DB.ProjectLoad): BuildError \/ (Project, EventSeq) =
@@ -89,11 +100,15 @@ final class ProjectServer[F[_]](implicit db   : DB.Algebra[F],
 
   type RegId = Store.Register.RegId[ProjectId]
 
+  def debug(pid: ProjectId): F[Unit] =
+    F.point(()) // store.storeGet(pid).map(x => println(" >>>>>>>>>>>>>>>> " + x))
+
   def register(pid: ProjectId, userId: UserId, recv: Recv[F]): F[RegistrationError \/ RegId] = {
     def initState: F[RegistrationError \/ State] =
       db.inDbTransaction(
         db.loadProjectSummary(pid).flatMap {
-          case Some((uid, summary)) =>
+          case Some((summary, uid)) =>
+            println(s"($summary, $uid) @ $pid | $userId")
             if (userId ==* uid)
               db.loadProject(pid).map(buildProject(_).map(b => State(uid, summary, b._1, b._2)))
             else
@@ -103,21 +118,24 @@ final class ProjectServer[F[_]](implicit db   : DB.Algebra[F],
         }
       )
 
-    register.registerAttempt(pid, recv, initState)
+    debug(pid) >> register.registerAttempt(pid, recv, initState)
   }
 
   def unregister(r: RegId): F[Unit] =
-    register.unregister(r)
+    debug(r.key) >> register.unregister(r)
+
+  def initialData(r: RegId, broadcastTo: BroadcastTo, username: Username): F[InitDataForProjectSpa] =
+    debug(r.key) >> readState(r).flatMap(initDataForProjectSpa(r, broadcastTo, username, _))
 
   // TODO Handle null ↓ Should never happen but in the world of concurrency stranger things have happened
   private def readState(r: RegId): F[State] =
     register.get(r.key).map(_.getOrNull)
 
-  private def initDataForProjectSpa(r: RegId, username: Username, s: State): F[InitDataForProjectSpa] = {
+  private def initDataForProjectSpa(r: RegId, broadcastTo: BroadcastTo, username: Username, s: State): F[InitDataForProjectSpa] = {
     import shipreq.webapp.base.protocol._
 
     def updProj(mkEvent: Project => MakeEvent.Result): F[GenericFailure \/ VerifiedEvents] =
-      addEvent(r, mkEvent, SaveRetries).map {
+      addEvent(r, broadcastTo, mkEvent, SaveRetries).map {
         case PotentialChange.Success(ve) => \/-(Vector1(ve))
         case PotentialChange.Unchanged   => \/-(Vector.empty)
         case PotentialChange.Failure(e)  =>
@@ -155,10 +173,7 @@ final class ProjectServer[F[_]](implicit db   : DB.Algebra[F],
       projectNameSet)
   }
 
-  def initialData(r: RegId, username: Username): F[InitDataForProjectSpa] =
-    readState(r).flatMap(initDataForProjectSpa(r, username, _))
-
-  private def addEvent(r: RegId, mkEvent: Project => MakeEvent.Result, retries: Retries): F[PotentialChange[AddEventError, VerifiedEvent]] =
+  private def addEvent(r: RegId, broadcastTo: BroadcastTo, mkEvent: Project => MakeEvent.Result, retries: Retries): F[PotentialChange[AddEventError, VerifiedEvent]] =
     // Non-atomicity guarded by DB constraint on eventSeq
     readState(r).flatMap(s1 =>
       ApplyNewEvent(mkEvent(s1.project), s1.project) match {
@@ -170,7 +185,7 @@ final class ProjectServer[F[_]](implicit db   : DB.Algebra[F],
               for {
                 now <- svr.now
                 s2 <- store.storeValueMod(r.key)(_.modValue(_.update(updated.project, eventSeq, now)))
-                _ <- s2.fold(fUnit, broadcastEvents(r, NonEmptyVector one updated.ve))
+                _ <- s2.fold(fUnit, broadcastEvents(r, broadcastTo, NonEmptyVector one updated.ve))
               } yield PotentialChange.Success(updated.ve)
 
             case Some(error) =>
@@ -179,7 +194,7 @@ final class ProjectServer[F[_]](implicit db   : DB.Algebra[F],
                   val opsInfo = s"Error saving new event ${updated.ae} to project ${r.key.value} with seq #${eventSeq.value}."
                   F pure PotentialChange.Failure(SaveError(opsInfo, error))
                 case delay :: nextRetries =>
-                  val retry = addEvent(r, mkEvent, nextRetries)
+                  val retry = addEvent(r, broadcastTo, mkEvent, nextRetries)
                   svr.delay(retry, delay)
               }
           }
@@ -192,32 +207,40 @@ final class ProjectServer[F[_]](implicit db   : DB.Algebra[F],
       }
     )
 
-  private def broadcastEvents(exclude: RegId, verifiedEvents: NonEmptyVector[VerifiedEvent])
-                             (s: Store.Register.Node[State, Recv[F]]): F[Unit] = {
+  private def broadcastEvents(self: RegId,
+                              broadcastTo: BroadcastTo,
+                              verifiedEvents: NonEmptyVector[VerifiedEvent])
+                             (state: Store.Register.Node[State, Recv[F]]): F[Unit] = {
 
-    //s.registrants.iterator
-    //  .filter(_._1 !=* exclude.id)
-    //  .map(_._2(verifiedEvents))
-    //  .foldLeft(fUnit)((q, n) => F.bind(q)(_ => n))
+    def go(allow: Long => Boolean): F[Unit] = {
+      //s.registrants.iterator
+      //  .filter(x => allow(x._1))
+      //  .map(_._2(verifiedEvents))
+      //  .foldLeft(fUnit)((q, n) => F.bind(q)(_ => n))
 
-    // A little boilerplate for a little server capacity increase
-    var r = fUnit
-    var first = true
-    var i = s.registrants
-    val excludeId = exclude.id
-    while (i.nonEmpty) {
-      // Long explicitness ↓ to protect against != unsafeness. (Not sure if UnivEq boxes or not)
-      if ((i.head._1: Long) != (excludeId: Long)) {
-        val broadcast = i.head._2(verifiedEvents)
-        if (first) {
-          r = broadcast
-          first = false
-        } else
-          r = F.bind(r)(_ => broadcast)
+      // A little boilerplate for a little server capacity increase
+      var r = fUnit
+      var first = true
+      var i = state.registrants
+      while (i.nonEmpty) {
+        if (allow(i.head._1)) {
+          val broadcast = i.head._2(verifiedEvents)
+          if (first) {
+            r = broadcast
+            first = false
+          } else
+            r = F.bind(r)(_ => broadcast)
+        }
+        i = i.tail
       }
-      i = i.tail
+      r
     }
-    r
+
+    broadcastTo match {
+      case BroadcastTo.All           => go(BroadcastTo.All.filter)
+      case BroadcastTo.AllExceptSelf => go(BroadcastTo.AllExceptSelf.filter(self.id))
+      case BroadcastTo.None          => fUnit
+    }
   }
 
 }

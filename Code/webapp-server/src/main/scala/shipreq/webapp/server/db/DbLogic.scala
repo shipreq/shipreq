@@ -3,6 +3,7 @@ package shipreq.webapp.server.db
 import doobie.imports._
 import java.time.Instant
 import org.postgresql.util.PSQLException
+import scala.collection.immutable.SortedMap
 import scalaz.syntax.applicative._
 import scalaz.{-\/, Free, \/-}
 import shipreq.base.db.DoobieHelpers._
@@ -187,7 +188,7 @@ object DbLogic {
     def findOwner(id: ProjectId): ConnectionIO[Option[UserId]] =
       sqlSelectOwner.toQuery0(id).option
 
-    private def projectCatalogueSql(projectCond: String) = {
+    private def projectCatalogueSql(projectCond: String, extraCols: String = "") = {
       import shipreq.webapp.base.event._
 
       def eventTypeId(e: ActiveEvent): Short =
@@ -199,10 +200,14 @@ object DbLogic {
       val projectNameSetId: Short =
         eventTypeId(ProjectNameSet(null))
 
+      val extraColSuffix: String =
+        Option(extraCols).filter(_.nonEmpty).fold("")("," + _)
+
       s"""
         WITH
           ps AS (
             SELECT id, created_at
+            $extraColSuffix
             FROM project
             $projectCond
           ),
@@ -231,6 +236,7 @@ object DbLogic {
           COALESCE(es.reqs,0),
           ps.created_at,
           es.last_updated_at
+          $extraColSuffix
         FROM ps
         LEFT JOIN es ON id=es.project_id
         LEFT JOIN ns ON id=ns.project_id
@@ -248,6 +254,12 @@ object DbLogic {
 
     def findCatalogueItem(uid: UserId, pid: ProjectId): ConnectionIO[Option[ProjectCatalogue.Item]] =
       sqlSelectCatalogueItem.toQuery0(uid, pid).option
+
+    private[db] val sqlSelectCatalogueItemAndUserId = Query[ProjectId, (ProjectCatalogue.Item, UserId)](
+      projectCatalogueSql("WHERE id=?", "usr_id"))
+
+    def findCatalogueItemAndUserId(pid: ProjectId): ConnectionIO[Option[(ProjectCatalogue.Item, UserId)]] =
+      sqlSelectCatalogueItemAndUserId.toQuery0(pid).option
   }
 
   // ===================================================================================================================
@@ -274,7 +286,7 @@ object DbLogic {
       s"SELECT seq,$eventHR FROM event_hash WHERE project_id=?")
 
     /** @return Events in order from lowest to highest seq. */
-    def findAll(p: ProjectId): ConnectionIO[Vector[(EventSeq, VerifiedEvent)]] = {
+    def findAll(p: ProjectId): ConnectionIO[Vector[(EventSeq, VerifiedEvent)]] = { // TODO
       // TODO DbLogic.event.findAllEvents has shithouse impl
       class Tmp(val e: Event) {
         var hrs = HashRec.emptyCollection
@@ -292,6 +304,28 @@ object DbLogic {
         for ((seq, tmp) <- map)
           result += ((seq, VerifiedEvent(tmp.e, tmp.hrs)))
         result.result().sortBy(_._1.value)
+      }).inTransaction
+    }
+
+    /** @return Events in order from lowest to highest seq. */
+    def findAll2(p: ProjectId): ConnectionIO[SortedMap[EventSeq, VerifiedEvent]] = {
+      // TODO DbLogic.event.findAllEvents has shithouse impl
+      class Tmp(val e: Event) {
+        var hrs = HashRec.emptyCollection
+      }
+      (for {
+        events <- sqlSelectAll.toQuery0(p).list
+        hashes <- sqlSelectAllHashes.toQuery0(p).list
+      } yield {
+        val map = collection.mutable.HashMap.empty[EventSeq, Tmp]
+        for (t <- events)
+          map.put(t._1, new Tmp(t._2))
+        for (t <- hashes)
+          map(t._1).hrs += t._2
+        val result = SortedMap.newBuilder[EventSeq, VerifiedEvent]
+        for ((seq, tmp) <- map)
+          result += ((seq, VerifiedEvent(tmp.e, tmp.hrs)))
+        result.result()
       }).inTransaction
     }
   }

@@ -11,7 +11,7 @@ object DB {
 
   trait Algebra[F[_]] {
 
-    def loadProjectSummary(id: ProjectId): F[Option[(UserId, ProjectCatalogue.Item)]]
+    def loadProjectSummary(id: ProjectId): F[Option[(ProjectCatalogue.Item, UserId)]]
 
     def loadProject(id: ProjectId): F[ProjectLoad]
 

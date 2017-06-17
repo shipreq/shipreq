@@ -1,194 +1,235 @@
 package shipreq.webapp.server.snippet
 
-import doobie.imports._
-import japgolly.microlibs.nonempty._
-import net.liftweb.http.S
-import net.liftweb.util.Helpers._
-import scalaz.effect.IO
-import scalaz.syntax.catchable._
-import scalaz.{-\/, \/, \/-}
-import shipreq.base.util._
-import shipreq.webapp.base.data._
-import shipreq.webapp.base.event._
-import shipreq.webapp.base.protocol._
+import doobie.free.connection.{delay => Effect}
+import doobie.imports.ConnectionIO
 import shipreq.webapp.gen.transform.ProjectSpaLoader
+import shipreq.base.db.DoobieHelpers._
+import japgolly.microlibs.nonempty.NonEmptyVector
+import java.time.{Duration, Instant}
+import net.liftweb.actor.LAPinger
+import net.liftweb.common.{Box, Empty, Full}
+import net.liftweb.http._
+import scala.xml.NodeSeq
+import scalaz.{-\/, \/-}
+import scalaz.effect.IO
+import scalaz.syntax.all._
+import shipreq.webapp.server.lib.SingleOpStatefulSnippet
+//import scalaz.syntax.catchable._
+import shipreq.base.util.FreeOption
+import shipreq.taskman.api.UserId
+import shipreq.webapp.base.data.ProjectCatalogue
+import shipreq.webapp.base.event.{ActiveEvent, VerifiedEvent}
+import shipreq.webapp.base.hash.HashRec.Collection
+import shipreq.webapp.base.protocol.RemoteFn
+import shipreq.webapp.server.app.DI
 import shipreq.webapp.server.db.DbLogic
-import shipreq.webapp.server.lib.{SingleOpStatefulSnippet, Taskman}
+import shipreq.webapp.server.lib.SnippetHelpers
+import shipreq.webapp.server.logic.DB.ProjectLoad
 import shipreq.webapp.server.logic._
-import shipreq.webapp.server.protocol._
-import shipreq.webapp.server.util.{KeyedMutexes, LockUsage}
+import shipreq.webapp.server.protocol.{ClientFn, ServerProtocol}
+import net.liftweb.util.Helpers._
 
 object ProjectSpa {
 
-  case class State(project: Project, seq: EventSeq)
+  // TODO Currently running everything through ConnectionIO
 
-  type LoadErrors = (String, Vector[EventSeq])
-
-  val Mutexes = KeyedMutexes[ProjectId](LockUsage.Default)
-
-  val NoChangeResponse: IO[GenericFailure \/ VerifiedEvents] = {
-    val r = \/-(Vector.empty[VerifiedEvent])
-    IO(r)
+  @inline implicit class SnippetExt_ConnectionIO[A](private val self: ConnectionIO[A]) extends AnyVal {
+    def asIO             : IO[A] = DI.dbAccess.io.trans(self)
+    def unsafePerformIO(): A     = asIO.unsafePerformIO()
   }
 
-  def loadErrorToString(p: ProjectId, e: LoadErrors): String = {
-    val (err, seqs) = e
-    val seqStr = NonEmptySet.maybe(seqs.toStream.map(_.value).toSet, "∅")(ConciseIntSetFormat.spaced)
-    s"Error building project #${p.value} from DB events: $err\n\nSeqs: $seqStr"
+  implicit val mutableProjectStore: ProjectServer.StoreAlgebra[ConnectionIO] =
+    Store.Algebra.concurrentHashMap()
+
+  implicit val dbAlgebra: DB.Algebra[ConnectionIO] =
+    new DB.Algebra[ConnectionIO] {
+
+      override def loadProjectSummary(id: ProjectId): ConnectionIO[Option[(ProjectCatalogue.Item, UserId)]] =
+        DbLogic.project.findCatalogueItemAndUserId(id)
+
+      override def loadProject(id: ProjectId): ConnectionIO[ProjectLoad] =
+        DbLogic.event.findAll2(id)
+
+      override def saveProjectEvent(id: ProjectId, seq: EventSeq, e: ActiveEvent, hrs: Collection): ConnectionIO[Option[Throwable]] =
+        DbLogic.event.create(id, seq, e, hrs).attempt.map(_.fold[Option[Throwable]](Some(_), _ => None))
+
+      override def inDbTransaction[A](f: ConnectionIO[A]): ConnectionIO[A] =
+        f.inTransaction
+    }
+
+  implicit val serverAlgebra: Server.Algebra[ConnectionIO] =
+    new Server.Algebra[ConnectionIO] {
+
+      override def remoteFn(fn: RemoteFn)(localFn: fn.Input => ConnectionIO[fn.Response]): ConnectionIO[fn.Instance] =
+        Effect(ServerProtocol.remoteFn(fn)(localFn(_).asIO))
+
+      override val now: ConnectionIO[Instant] =
+        Effect(Instant.now())
+
+      override def delay[A](f: ConnectionIO[A], d: Duration): ConnectionIO[A] =
+        Effect(Thread.sleep(d.toMillis)).flatMap(_ => f)
+    }
+
+  // ProjectServer interpreter should be provided via DI
+  val logic: ProjectServer[ConnectionIO] = new ProjectServer
+}
+// █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+
+object ProjectSpaComet {
+  case class TestMsg(msg: String)
+  case class AddRegistrant(id: ProjectSpa.logic.RegId)
+}
+class ProjectSpaComet extends MessageCometActor {
+  import net.liftweb.http.js.JsCmds
+  import ProjectSpa._
+  import ProjectSpaComet._
+
+  def log(msg: String): Unit = {
+    import Console._
+    println(s"$BOLD$YELLOW[ProjectSpaComet  .${"%08X" format ProjectSpaComet.this.##}]$RESET$YELLOW $msg$RESET")
   }
 
-  def buildProject(es: Vector[(EventSeq, VerifiedEvent)]): LoadErrors \/ State =
-    ApplyEvent.trusted.applyVerified(es.map(_._2))(Project.empty) match {
-      case \/-(p) =>
-        val seq = es.lastOption.fold(EventSeq(0))(_._1) // If empty, next will be 1. Nice to reserve 0 for ApplyTemplate.
-        \/-(State(p, seq))
-      case -\/(e) =>
-        val seqs = es.map(_._1)
-        -\/((e, seqs))
-    }
+  log("new()")
 
-  def loadProjectEvents(projectId: ProjectId): ConnectionIO[LoadErrors \/ State] =
-    DbLogic.event.findAll(projectId).map(buildProject)
+  override def lifespan: Box[TimeSpan] = Full(90.seconds)
 
-  def loadProjectEvents_!(projectId: ProjectId): ConnectionIO[State] =
-    loadProjectEvents(projectId) map {
-      case \/-(s) => s
-      case -\/(e) => sys error loadErrorToString(projectId, e)
-    }
+  private var regId = FreeOption.empty[logic.RegId]
+
+  def gimmeRegId: FreeOption[logic.RegId] = regId
+
+  override protected def localShutdown(): Unit = {
+    log("localShutdown()")
+    try regId.forEach(logic.unregister(_).unsafePerformIO())
+    finally regId = FreeOption.empty
+    super.localShutdown()
+  }
+
+  override def mediumPriority: PartialFunction[Any, Unit] = {
+    case AddRegistrant(id) =>
+      if (running && regId.isEmpty) {
+        log(s"AddRegistrant : reqId = $id")
+        regId = FreeOption(id)
+      } else {
+        log(s"AddRegistrant : unregister $id")
+        logic.unregister(id).unsafePerformIO()
+      }
+
+    case TestMsg(m) =>
+      import org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript
+      val cmd = s"console.log('${escapeEcmaScript(m)}');"
+      log(s"Sending: $cmd")
+      pushMessage(JsCmds.Run(cmd))
+//      LAPinger.schedule(this, TestMsg("PING"), 3000)
+  }
 }
 
-/**
-  * This works for now but doesn't handle parallelism at all.
-  * Don't be fooled by the use of a keyed global mutex! That's just to prevent data corruption.
-  *
-  * If the same project is opened by multiple clients, each client gets a separate instance of this class and it's own
-  * view on the latest current state. Not only is that a waste of memory but when client A updates the project, client
-  * B isn't informed and so the next update performed by client B fails at the DB (because the event.seq is already
-  * allocated). Terrible!
-  *
-  * Ignoring efficiency for now, in order to achieve correctness, clients would need to be aware of each others'
-  * changes, or even share the server-side state. Additionally, when a client makes a change, the update should be
-  * pushed to all clients. In such a case, the client should also handle conflict in the UI.
-  */
-class ProjectSpa(projectId: ProjectId) extends SingleOpStatefulSnippet {
+// █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+
+
+final class ProjectSpa(projectId: ProjectId) extends DispatchSnippet with SnippetHelpers {
   import ProjectSpa._
 
-  val mutex = Mutexes(projectId)
-
-  val state: LazyVar[State] =
-    LazyVar.io(
-      mutex.io(
-        db().io.trans(loadProjectEvents_!(projectId))
-      )
-    )
-
-  private def updateProject(f: Project => MakeEvent.Result): IO[GenericFailure \/ VerifiedEvents] =
-    mutex.io {
-      state.get.flatMap { curState =>
-        // Thread.sleep(2000)
-        // sys error "NO!"
-        val event = f(curState.project)
-
-        ApplyNewEvent(event, curState.project) match {
-
-          case PotentialChange.Success(u) =>
-            saveAndApplyNewEvent(curState, u) flatMap {
-              case \/-(s2) => state.set(s2).map(_ => \/-(Vector1(u.ve)))
-              case e@ -\/(_) => IO(e)
-            }
-
-          case PotentialChange.Unchanged =>
-            NoChangeResponse
-
-          case PotentialChange.Failure(e) =>
-            IO {
-              System.err.println(s"Error: $event failed with $e.")
-              -\/(GenericFailure(e))
-            }
-        }
-      }
-    }
-
-  private def saveAndApplyNewEvent(s1: State, u: ApplyNewEvent.Updated): IO[GenericFailure \/ State] = {
-    val seq = s1.seq.succ
-    db().io.trans(DbLogic.event.create(projectId, seq, u.ae, u.ve.hashRecs))
-      .attempt
-      .flatMap {
-        case \/-(_) => IO(\/-(State(u.project, seq)))
-        case -\/(t) =>
-          val msg =
-            s"""
-               |Error saving new event ${u.ae} to project ${projectId.value} with seq $seq.
-               |Previous state in memory has seq ${s1.seq}.
-           """.stripMargin
-          taskman().submitMsgAsync(Taskman.errorMsg(t, S.request.toOption.map(_.uri), msg))
-            .map { _ =>
-              log.error(t, msg)
-              -\/(GenericFailure("Error occurred writing change to database."))
-            }
-      }
+  def log(msg: String): Unit = {
+    import Console._
+    println(s"$BOLD$CYAN[ProjectSpaSnippet.${"%08X" format ProjectSpa.this.##}]$BLUE $msg$RESET")
   }
 
-  def initData(username: Username, project: ProjectCatalogue.Item) = {
-    import ServerProtocol.remoteFn
+  log("new()")
 
-    val projectInit = remoteFn(ProjectInit)(
-      _ => state.get.map(s => \/-(s.project)))
+//  final def render2(xhtml: NodeSeq): NodeSeq = {
+//    val cometClass = ""
+//    val name = ""
+//    for (sess <- S.session) {
+//      sess.sendCometActorMessage(cometClass, Full(name), CometName(name))
+//
+//      sess.findComet(cometClass, Full(name)) match {
+//        case Full(c) => c.!!(123).asInstanceOf[Any]
+//        case Empty => sess.setupComet(cometClass, Full(name), CometName(name))
+//      }
+//    }
+//
+//
+//    <lift:comet type={cometClass} name={name}>{xhtml}</lift:comet>
+//  }
 
-    val customReqTypeCrud = remoteFn(CustomReqTypeCrud)(
-      i => updateProject(MakeEvent.customReqTypeCrud(i, _)))
+  override def dispatch = { case _ => render }
 
-    val reqTypeImplicationMod = remoteFn(ReqTypeImplicationMod)(
-      i => updateProject(_ => MakeEvent.reqTypeImplicationMod(i)))
+//  var regId = FreeOption.empty[logic.RegId]
+//
+//  private def broadcast(ves: NonEmptyVector[VerifiedEvent]): ConnectionIO[Unit] =
+//    Effect(println(s"TODO - ${ves.whole.mkString("[", ", ", "]")}"))
+//
+//  override protected def localSetup() = {
+//    println("HELLO 1!")
+//    super.localSetup()
+//    println("HELLO 2!")
+//    val x = try {
+//    logic.register(projectId, currentUserId_!(), broadcast).unsafePerformIO()
+//    }catch {
+//      case t: Throwable =>
+//        t.printStackTrace()
+//        println("ERRORRRR : " + t.getMessage)
+//        throw t
+//    }
+//    println("HELLO 3!")
+//    println(s"LOCAL SETUP ${currentUserId_!()} = $x")
+//    x match {
+//      case \/-(ok)                            => regId = FreeOption(ok)
+//      case -\/(ProjectServer.AccessDenied)    => respondImmediately(ForbiddenResponse())
+//      case -\/(ProjectServer.ProjectNotFound) => respondImmediately(NotFoundResponse())
+//      case -\/(b: ProjectServer.BuildError)   => respondImmediately(InternalServerErrorResponse()) // TODO do more!
+//    }
+//  }
+//
+//  override protected def localShutdown() = {
+//    super.localShutdown()
+//    try regId.forEach(logic.unregister(_).unsafePerformIO())
+//    finally regId = FreeOption.empty
+//  }
 
-    val customIssueTypeCrud = remoteFn(CustomIssueTypeCrud)(
-      i => updateProject(MakeEvent.customIssueTypeCrud(i, _)))
+  def render: NodeSeq => NodeSeq = {
 
-    val tagCrud = remoteFn(TagCrud.Fn)(
-      i => updateProject(MakeEvent.tagCrud(i, _)))
-
-    val fieldCrud = remoteFn(FieldCrud.Fn)(
-      i => updateProject(MakeEvent.fieldCrud(i, _)))
-
-    val fieldMandatorinessMod = remoteFn(FieldMandatorinessMod)(
-      i => updateProject(_ => MakeEvent.fieldMandatorinessMod(i)))
-
-    val createContent = remoteFn(CreateContentFn)(
-      i => updateProject(MakeEvent.createContent(i, _)))
-
-    val updateContent = remoteFn(UpdateContentFn)(
-      i => updateProject(MakeEvent.updateContent(i, _)))
-
-    val projectNameSet = remoteFn(ProjectNameSetFn)(
-      i => updateProject(_ => MakeEvent.projectNameSetFn(i)))
-
-    InitDataForProjectSpa(
-      username,
-      project,
-      projectInit,
-      customIssueTypeCrud,
-      customReqTypeCrud,
-      reqTypeImplicationMod,
-      fieldMandatorinessMod,
-      fieldCrud,
-      tagCrud,
-      createContent,
-      updateContent,
-      projectNameSet)
-  }
-
-  override def render = {
     val user = currentUser_!()
-    val project = db().io.trans(DbLogic.project.findCatalogueItem(user.id, projectId)).unsafePerformIO()
-    project match {
-      case Some(p) =>
-        "*" #> (
-          ProjectSpaLoader.xml(user.username, p) :+
-            ClientFn.ProjectSpa.htmlToRunOnLoad(initData(user.username, p)))
-//            ClientFn.ProjectSpa.htmlToLoadJsAndRun(Assets.ProjectSpa)(initData(user.username, p)))
 
-      case None =>
-        redirectHome()
-    }
+    val cometBox = S.findOrCreateComet[ProjectSpaComet](
+      cometName = Full(s"project-${projectId.value}"), //: Box[String],
+      cometHtml = NodeSeq.Empty, //: NodeSeq,
+      cometAttributes = Map.empty, //: Map[String, String],
+      receiveUpdatesOnPage = true) //: Boolean
+    log("Box[Comet] = " + cometBox)
+    val comet = cometBox.openOrThrowException("FUCK WHAT?")
+
+    val regId: logic.RegId =
+      comet.gimmeRegId.getOrElse {
+
+        val x = try {
+          logic.register(projectId, user.id, ve => Effect(comet ! ProjectSpaComet.TestMsg(ve.toString()))).unsafePerformIO()
+        } catch {
+          case t: Throwable =>
+            t.printStackTrace()
+            log(s"logic.register error: ${t.getMessage}")
+            throw t
+        }
+        log(s"logic.register = $x")
+        val newRegId: logic.RegId =
+        x match {
+          case \/-(id)                            => id
+          case -\/(ProjectServer.AccessDenied)    => respondImmediately(ForbiddenResponse())
+          case -\/(ProjectServer.ProjectNotFound) => respondImmediately(NotFoundResponse())
+          case -\/(b: ProjectServer.BuildError)   => respondImmediately(InternalServerErrorResponse()) // TODO do more!
+        }
+        comet ! ProjectSpaComet.AddRegistrant(newRegId)
+
+        newRegId
+      }
+
+    log("regId = " + regId)
+
+    val init = logic.initialData(regId, ProjectServer.BroadcastTo.All, user.username).unsafePerformIO()
+
+    "*" #> (
+      ProjectSpaLoader.xml(user.username, init.project) :+
+        ClientFn.ProjectSpa.htmlToRunOnLoad(init))
+    //          ClientFn.ProjectSpa.htmlToLoadJsAndRun(Assets.ProjectSpa)(initData(user.username, p)))
   }
 }

@@ -17,6 +17,11 @@ object ProjectId {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-final case class EventSeq(value: Int) extends AnyVal {
+final case class EventSeq(value: Int) { // not AnyVal, it gets boxed
   def succ = EventSeq(value + 1)
+}
+
+object EventSeq {
+  implicit val ordering: Ordering[EventSeq] =
+    Ordering.by(_.value)
 }

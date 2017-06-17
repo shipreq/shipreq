@@ -28,6 +28,9 @@ final case class FreeOption[+A >: Null](getOrNull: A) extends AnyVal {
 
   def filter(f: A => Boolean): FreeOption[A] =
     if (exists(f)) this else FreeOption.empty
+
+  def foreach(f: A => Unit): Unit =
+    if (nonEmpty) f(getOrNull)
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
