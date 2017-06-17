@@ -16,7 +16,7 @@ import ScalaExt._
 import PotentialChange._
 
 /**
- * Translates [[RemoteFn]] inputs into [[ActiveEvent]]s.
+ * Translates [[ServerSideProc]] inputs into [[ActiveEvent]]s.
  */
 object MakeEvent {
 
@@ -38,6 +38,8 @@ object MakeEvent {
   @inline private implicit def autoSuccess(e: ActiveEvent) = Success(e)
 
   // ===================================================================================================================
+
+  import ProjectSpaProtocols.{ProjectNameSet => ProjectNameSetFn, _} // TODO do this properly
 
   def projectNameSetFn(name: ProjectNameSetFn.Input): Result =
     ProjectNameSet(name)
@@ -104,7 +106,7 @@ object MakeEvent {
         CustomReqTypeRestore(id)
     }
 
-  def fieldCrud(a: FieldCrud.Fn.Input, project: Project): Result = {
+  def fieldCrud(a: FieldCrud.Protocol.Input, project: Project): Result = {
     import FieldCrud._
     def nextId = project.idCeilings.customField + 1
     a match {
@@ -166,7 +168,7 @@ object MakeEvent {
   }
 
   // TODO tagCrud protocol is crap. Redo it.
-  def tagCrud(a: TagCrud.Fn.Action, project: Project): Result = {
+  def tagCrud(a: TagCrud.Protocol.Action, project: Project): Result = {
     import TagCrud.{TagGroupValues, ApplicableTagValues}
     def nextId = project.idCeilings.tag + 1
     a match {

@@ -12,7 +12,7 @@ import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.data.DataValidators.{reqType => V}
 import shipreq.webapp.base.filter.PotentialFilter
-import shipreq.webapp.base.protocol.CustomReqTypeCrud
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.CustomReqTypeCrud
 import shipreq.webapp.client.base.data.On
 import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.Style

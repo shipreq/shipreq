@@ -11,9 +11,9 @@ import shipreq.webapp.client.project.app.state.ClientData
 object CfgIssues {
 
   final case class Props(cp        : ClientProtocol,
-                         a         : CustomIssueTypeCrud.Instance,
-                         b         : ReqTypeImplicationMod.Instance,
-                         c         : FieldMandatorinessMod.Instance,
+                         a         : ProjectSpaProtocols.CustomIssueTypeCrud.Instance,
+                         b         : ProjectSpaProtocols.ReqTypeImplicationMod.Instance,
+                         c         : ProjectSpaProtocols.FieldMandatorinessMod.Instance,
                          cd        : ClientData,
                          filterDead: StateSnapshot[FilterDead],
                          usageShow : Usage.Show) {

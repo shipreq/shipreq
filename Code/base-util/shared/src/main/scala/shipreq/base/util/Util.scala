@@ -11,19 +11,31 @@ import ScalaExt.StringBuilderExt
 
 object Util {
 
-  @inline def quickSB(f: StringBuilder => Unit): String = {
+  def quickJSB(f: java.lang.StringBuilder => Unit): String = {
+    val sb = new java.lang.StringBuilder
+    f(sb)
+    sb.toString
+  }
+
+  def quickJSB(start: String, f: java.lang.StringBuilder => Unit): String = {
+    val sb = new java.lang.StringBuilder(start)
+    f(sb)
+    sb.toString
+  }
+
+  def quickSB(f: StringBuilder => Unit): String = {
     val sb = new StringBuilder
     f(sb)
     sb.toString
   }
 
-  @inline def quickSB(start: String, f: StringBuilder => Unit): String = {
+  def quickSB(start: String, f: StringBuilder => Unit): String = {
     val sb = new StringBuilder(start)
     f(sb)
     sb.toString
   }
 
-  @inline def quickToString(clz: Class[_])(fs: (StringBuilder => Any)*): String =
+  def quickToString(clz: Class[_])(fs: (StringBuilder => Any)*): String =
     quickSB(clz.getSimpleName, _.mkStringF("(", ", ", ")")(fs: _*))
 
   private[this] val simpleClassNameRegex = "^.+[\\.\\$]".r

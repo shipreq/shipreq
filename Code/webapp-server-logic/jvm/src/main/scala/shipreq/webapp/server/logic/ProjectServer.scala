@@ -11,14 +11,14 @@ import shipreq.base.util.ScalaExt._
 import shipreq.taskman.api.UserId
 import shipreq.webapp.base.data.{Project, ProjectCatalogue, Username}
 import shipreq.webapp.base.event.{ApplyEvent, VerifiedEvent, VerifiedEvents}
-import shipreq.webapp.base.protocol.InitDataForProjectSpa
+import shipreq.webapp.base.protocol.ProjectSpaProtocols
 import ProjectServer._
 import Server.Retries
 
 trait ProjectServer[F[_]] {
   def register(pid: ProjectId, userId: UserId, recv: Recv[F]): F[RegistrationError \/ RegId]
   def unregister(r: RegId): F[Unit]
-  def initialData(r: RegId, username: Username): F[InitDataForProjectSpa]
+  def initialClient(r: RegId, username: Username): F[ProjectSpaProtocols.InitClient]
 }
 
 object ProjectServer {
@@ -126,17 +126,18 @@ object ProjectServer {
       def unregister(r: RegId): F[Unit] =
         register.unregister(r)
 
-      def initialData(r: RegId, username: Username): F[InitDataForProjectSpa] =
+      def initialClient(r: RegId, username: Username): F[ProjectSpaProtocols.InitClient] =
         readState(r).flatMap(initDataForProjectSpa(r, username, _))
 
       // TODO Handle null ↓ Should never happen but in the world of concurrency stranger things have happened
       private def readState(r: RegId): F[State] =
         register.get(r.key).map(_.getOrNull)
 
-      private def initDataForProjectSpa(r: RegId, username: Username, s: State): F[InitDataForProjectSpa] = {
+      private def initDataForProjectSpa(r: RegId, username: Username, s: State): F[ProjectSpaProtocols.InitClient] = {
         import shipreq.webapp.base.protocol._
+        import ProjectSpaProtocols._
 
-        def updProj(mkEvent: Project => MakeEvent.Result): F[GenericFailure \/ VerifiedEvents] =
+        def updProj(mkEvent: Project => MakeEvent.Result): F[ErrorMsg \/ VerifiedEvents] =
           addEvent(r, mkEvent, SaveRetries).map {
             case PotentialChange.Success(ve) => \/-(Vector1(ve))
             case PotentialChange.Unchanged   => \/-(Vector.empty)
@@ -145,22 +146,22 @@ object ProjectServer {
                 case EventRejected(reason) => reason
                 case _: SaveError          => "Something went wrong on our end trying to update the project."
               }
-              -\/(GenericFailure(msg))
+              -\/(ErrorMsg(msg))
           }
 
-        import svr.{remoteFn => f}
+        import svr.{createServerSideProc => f}
         for {
           projectInit           ← f(ProjectInit          )(_ => readState(r).map(s => \/-(s.project)))
           customReqTypeCrud     ← f(CustomReqTypeCrud    )(i => updProj(p ⇒ MakeEvent.customReqTypeCrud(i, p)))
           reqTypeImplicationMod ← f(ReqTypeImplicationMod)(i => updProj(_ ⇒ MakeEvent.reqTypeImplicationMod(i)))
           customIssueTypeCrud   ← f(CustomIssueTypeCrud  )(i => updProj(p ⇒ MakeEvent.customIssueTypeCrud(i, p)))
-          tagCrud               ← f(TagCrud.Fn           )(i => updProj(p ⇒ MakeEvent.tagCrud(i, p)))
-          fieldCrud             ← f(FieldCrud.Fn         )(i => updProj(p ⇒ MakeEvent.fieldCrud(i, p)))
+          tagCrud               ← f(TagCrud.Protocol     )(i => updProj(p ⇒ MakeEvent.tagCrud(i, p)))
+          fieldCrud             ← f(FieldCrud.Protocol   )(i => updProj(p ⇒ MakeEvent.fieldCrud(i, p)))
           fieldMandatorinessMod ← f(FieldMandatorinessMod)(i => updProj(_ ⇒ MakeEvent.fieldMandatorinessMod(i)))
-          createContent         ← f(CreateContentFn      )(i => updProj(p ⇒ MakeEvent.createContent(i, p)))
-          updateContent         ← f(UpdateContentFn      )(i => updProj(p ⇒ MakeEvent.updateContent(i, p)))
-          projectNameSet        ← f(ProjectNameSetFn     )(i => updProj(_ ⇒ MakeEvent.projectNameSetFn(i)))
-        } yield InitDataForProjectSpa(
+          createContent         ← f(CreateContent        )(i => updProj(p ⇒ MakeEvent.createContent(i, p)))
+          updateContent         ← f(UpdateContent        )(i => updProj(p ⇒ MakeEvent.updateContent(i, p)))
+          projectNameSet        ← f(ProjectNameSet       )(i => updProj(_ ⇒ MakeEvent.projectNameSetFn(i)))
+        } yield InitClient(
           username,
           s.summary,
           projectInit,

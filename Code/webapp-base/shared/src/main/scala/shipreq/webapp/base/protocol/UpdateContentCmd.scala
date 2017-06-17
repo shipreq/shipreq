@@ -1,13 +1,17 @@
 package shipreq.webapp.base.protocol
 
+import boopickle._
 import japgolly.microlibs.nonempty._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.text.Text
-import boopickle._, BoopickleMacros._, BinCodecGeneric._, BinCodecData._, AtomPicklers.instances._
+import BoopickleMacros._
+import BinCodecGeneric._
+import BinCodecData._
 import BinCodecEvents.pickleUseCaseStepGD
+import AtomPicklers.instances._
 import Text.Equality._
 
 /**
@@ -64,5 +68,3 @@ object UpdateContentCmd {
   implicit val pickleUpdateUseCaseStep    : Pickler[UpdateUseCaseStep    ] = pickleCaseClass
   implicit val pickleCmd                  : Pickler[UpdateContentCmd     ] = pickleADT
 }
-
-object UpdateContentFn extends RemoteFn.ToVE[UpdateContentCmd]

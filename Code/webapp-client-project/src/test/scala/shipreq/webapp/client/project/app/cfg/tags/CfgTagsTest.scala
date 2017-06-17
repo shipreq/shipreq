@@ -11,7 +11,7 @@ import shipreq.base.util.MMTree
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.protocol.{TagCrud, RemoteFn}, TagCrud._
+import shipreq.webapp.base.protocol.{TagCrud, ServerSideProc}, TagCrud._
 import shipreq.webapp.base.test.{SampleProject => S}, S.Values._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.client.base.test.TestClientProtocol
@@ -34,11 +34,11 @@ object CfgTagsTest extends TestSuite {
     Sizzle("td.name", ReactDOM.raw findDOMNode c.raw).toVector.map(nameCellToText(_, ""))
 
   class FakeUpdateIO {
-    var reqs = Vector.empty[(Tag, TagCrud.Fn.V)]
+    var reqs = Vector.empty[(Tag, TagCrud.Protocol.Value)]
     val u: MainTable.DetailPaneFns.UpdateIO = (t, v, _, _) => Callback { reqs :+= ((t, v)) }
   }
 
-  val remote = RemoteFn.Instance("x", TagCrud.Fn)
+  val remote = ServerSideProc("x", TagCrud.Protocol)
   class Tester {
     lazy val filterDead = ReactTestVar[FilterDead](HideDead)
     lazy val clientData = TestClientData(S.project)

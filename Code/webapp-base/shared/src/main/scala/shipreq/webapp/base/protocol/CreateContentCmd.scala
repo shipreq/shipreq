@@ -5,12 +5,10 @@ import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.Direction
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event._
 import shipreq.webapp.base.text.Text
 import BoopickleMacros._
 import BinCodecGeneric._
 import BinCodecData._
-import BinCodecEvents._
 import AtomPicklers.instances._
 
 /**
@@ -82,5 +80,3 @@ object CreateContentCmd {
   implicit val pickleCreateCodeGroup : Pickler[CreateCodeGroup ] = pickleCaseClass
   implicit val pickleCmd             : Pickler[CreateContentCmd] = pickleADT
 }
-
-object CreateContentFn extends RemoteFn.ToVE[CreateContentCmd]

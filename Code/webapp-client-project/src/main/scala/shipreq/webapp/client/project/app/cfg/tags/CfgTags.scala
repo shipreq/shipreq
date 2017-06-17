@@ -30,7 +30,7 @@ import TagInTree.Relations
 
 object CfgTags {
   case class Props(cp        : ClientProtocol,
-                   remote    : TagCrud.Fn.Instance,
+                   remote    : TagCrud.Protocol.Instance,
                    clientData: ClientData,
                    filterDead: StateSnapshot[FilterDead]) {
     def component = MainTable.Component(this)
@@ -186,7 +186,7 @@ private[tags] object MainTable {
   // ===================================================================================================================
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
     val crudIO = Px.props($).withReuse.autoRefresh.map(p =>
-      CrudActionIO(Tag, TagCrud.Fn)(p.cp, p.remote, p.clientData))
+      CrudActionIO(Tag, TagCrud.Protocol)(p.cp, p.remote, p.clientData))
 
     def validatorState(k: Option[Id]): S => V.State =
       s => MainTable.validatorState(s, $.props.map(_.clientData), k)
@@ -410,7 +410,7 @@ private[tags] object MainTable {
 
     import DetailPane.{Rel, Rels, AddRel, AddRels, AddSelected}
 
-    type UpdateIO = (Tag, TagCrud.Fn.V, TCB.Success, TCB.Failure) => Callback
+    type UpdateIO = (Tag, TagCrud.Protocol.Value, TCB.Success, TCB.Failure) => Callback
     type SelUpdate = Option[Id] => Callback
 
     def removeChild(child: Id): Relations => Relations =

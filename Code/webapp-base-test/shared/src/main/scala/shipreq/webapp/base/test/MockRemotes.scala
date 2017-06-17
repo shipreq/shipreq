@@ -7,14 +7,14 @@ import shipreq.webapp.base.protocol._
 
 object MockRemotes {
 
-  lazy val createProjectFn = RemoteFn.Instance("CreateProject", CreateProjectFn)
+  lazy val createProjectFn = ServerSideProc("CreateProject", HomeSpaProtocols.CreateProject)
 
   def mockUsername = Username("testuser")
 
-  def projectSpa(p: Project): InitDataForProjectSpa =
+  def projectSpa(p: Project): ProjectSpaProtocols.InitClient =
     projectSpa(p, mockUsername)
 
-  def projectSpa(p: Project, username: Username): InitDataForProjectSpa = {
+  def projectSpa(p: Project, username: Username): ProjectSpaProtocols.InitClient = {
     val now = Instant.now()
     val pi = ProjectCatalogue.Item(
       ExternalId("test"),
@@ -26,21 +26,23 @@ object MockRemotes {
     projectSpa(pi, username)
   }
 
-  def projectSpa(p: ProjectCatalogue.Item): InitDataForProjectSpa =
+  def projectSpa(p: ProjectCatalogue.Item): ProjectSpaProtocols.InitClient =
     projectSpa(p, mockUsername)
 
-  def projectSpa(p: ProjectCatalogue.Item, username: Username): InitDataForProjectSpa =
-    InitDataForProjectSpa(
+  def projectSpa(p: ProjectCatalogue.Item, username: Username): ProjectSpaProtocols.InitClient = {
+    import ProjectSpaProtocols._
+    ProjectSpaProtocols.InitClient(
       username,
       p,
-      RemoteFn.Instance("projectInit"   , ProjectInit          ),
-      RemoteFn.Instance("issueTypeCrud" , CustomIssueTypeCrud  ),
-      RemoteFn.Instance("reqTypeCrud"   , CustomReqTypeCrud    ),
-      RemoteFn.Instance("reqTypeImpMod" , ReqTypeImplicationMod),
-      RemoteFn.Instance("fieldMandMod"  , FieldMandatorinessMod),
-      RemoteFn.Instance("fieldCrud"     , FieldCrud.Fn         ),
-      RemoteFn.Instance("tagCrud"       , TagCrud.Fn           ),
-      RemoteFn.Instance("createContent" , CreateContentFn      ),
-      RemoteFn.Instance("updateContent" , UpdateContentFn      ),
-      RemoteFn.Instance("projectNameSet", ProjectNameSetFn     ))
+      ServerSideProc("projectInit"   , ProjectInit          ),
+      ServerSideProc("issueTypeCrud" , CustomIssueTypeCrud  ),
+      ServerSideProc("reqTypeCrud"   , CustomReqTypeCrud    ),
+      ServerSideProc("reqTypeImpMod" , ReqTypeImplicationMod),
+      ServerSideProc("fieldMandMod"  , FieldMandatorinessMod),
+      ServerSideProc("fieldCrud"     , FieldCrud.Protocol   ),
+      ServerSideProc("tagCrud"       , TagCrud.Protocol     ),
+      ServerSideProc("createContent" , CreateContent        ),
+      ServerSideProc("updateContent" , UpdateContent        ),
+      ServerSideProc("projectNameSet", ProjectNameSet       ))
+  }
 }

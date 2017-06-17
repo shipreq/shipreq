@@ -11,7 +11,7 @@ import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.{UpdateContentCmd, UpdateContentFn}
+import shipreq.webapp.base.protocol.{UpdateContentCmd, ProjectSpaProtocols}
 import shipreq.webapp.base.text._
 import shipreq.webapp.client.base.data._
 import shipreq.webapp.client.base.feature.AsyncFeature
@@ -40,7 +40,7 @@ object ReqDetail {
                          cp                   : ClientProtocol,
                          reqDetailRC          : RouterCtl[ExternalPubid],
                          webWorker            : WebWorkerClient,
-                         updateContentFn      : UpdateContentFn.Instance,
+                         updateContentFn      : ProjectSpaProtocols.UpdateContent.Instance,
                          pxPlainTextNoCtx     : Px[PlainText.ForProject],
                          pxTextSearch         : Px[TextSearch],
                          pxProjectWidgetsNoCtx: Px[ProjectWidgets])

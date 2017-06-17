@@ -8,14 +8,15 @@ import shipreq.taskman.api.UserId
 import shipreq.base.db.DoobieHelpers._
 import shipreq.webapp.base.data.{Project, ProjectCatalogue}
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.protocol.{CreateProjectFn, InitDataForHomeSpa}
+import shipreq.webapp.base.protocol.HomeSpaProtocols
 import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.lib.SnippetHelpers
 import shipreq.webapp.server.logic._
-import shipreq.webapp.server.protocol.{ClientFn, ServerProtocol}
+import shipreq.webapp.server.protocol._
 
 object HomeSpa extends SnippetHelpers {
 
+  val EntryPoint       = ClientSideProcCodeGen(HomeSpaProtocols.EntryPoint)
   val InitProjectEvent = ProjectTemplateApply(ProjectTemplate.Default)
   val InitProject      = ApplyNewEvent.mustApply(InitProjectEvent, Project.empty)
 
@@ -33,12 +34,12 @@ object HomeSpa extends SnippetHelpers {
 
     val projects = db().io.trans(DbLogic.project.getCatalogue(user.id)).unsafePerformIO()
 
-    val createProjectFn = ServerProtocol.remoteFn(CreateProjectFn)(name =>
+    val createProjectFn = ServerProtocol.createServerSideProc(HomeSpaProtocols.CreateProject)(name =>
       db().io.trans(createProject(user.id, name, Instant.now())).map(\/-(_)))
 
-    val data = InitDataForHomeSpa(
+    val init = HomeSpaProtocols.InitClient(
       user.username, projects, createProjectFn)
 
-    "*" #> ClientFn.HomeSpa.htmlToRunOnLoad(data)
+    "*" #> EntryPoint.invokeOnLoadHtml(init)
   }
 }

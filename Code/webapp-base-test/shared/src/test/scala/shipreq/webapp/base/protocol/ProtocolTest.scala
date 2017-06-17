@@ -19,17 +19,17 @@ import $.TextGenExt
 
 object ProtocolTest extends TestSuite {
 
-  implicit val equalProjectSpa: Equal[InitDataForProjectSpa] =
+  implicit val equalProjectSpa: Equal[ProjectSpaProtocols.InitClient] =
     ScalazMacros.deriveEqual
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def kitR(r: RemoteFn) = {
+  def kitR(r: ServerSideProc.Protocol) = {
     import r._
     new KitIO[Input, Output]("Routines." + r.getClass.getSimpleName.replace("$",""))
   }
 
-  def kitCF[I](c: ClientFnDecl[I], name: String) = {
+  def kitCF[I](c: ClientSideProc[I], name: String) = {
     import c.pickler
     new KitIO[I, Unit]("ClientFnDecl." + name)
   }
@@ -75,27 +75,27 @@ object ProtocolTest extends TestSuite {
 
   override def tests = TestSuite {
 
-    'RemoteFns {
-      type CrudFn[I] = RemoteFn.AuxG[I, VerifiedEvents]
+    'ServerSideProcs {
+      type CrudFn[I] = ServerSideProc.Protocol.Aux[ErrorMsg, I, VerifiedEvents]
 
       def testCrud[I](r: CrudFn[I])(g: Gen[r.Input])(implicit e: Equal[r.Input]): Unit =
         kitR(r).propI mustBeSatisfiedBy g
 
-      def testUnitI[O](r: Unit =>|=> O)(g: Gen[O])(implicit e: Equal[O]): Unit =
+      def testUnitI[O](r: ServerSideProc.Protocol.Aux[ErrorMsg, Unit, O])(g: Gen[O])(implicit e: Equal[O]): Unit =
         kitR(r).propO mustBeSatisfiedBy g
 
-      'ProjectInit         - testUnitI(ProjectInit       )($.project)
-      'CustomIssueTypeCrud - testCrud(CustomIssueTypeCrud)($.routines.customIssueTypeCrud.any)
-      'CustomReqTypeCrud   - testCrud(CustomReqTypeCrud  )($.routines.customReqTypeCrud.any)
-      'TagCrud             - testCrud(TagCrud.Fn         )($.routines.tagCrud.any)
-      'FieldCrud           - testCrud(FieldCrud.Fn       )($.protocol.fieldCfgAction.any)
+      'ProjectInit         - testUnitI(ProjectSpaProtocols.ProjectInit       )($.project)
+      'CustomIssueTypeCrud - testCrud(ProjectSpaProtocols.CustomIssueTypeCrud)($.routines.customIssueTypeCrud.any)
+      'CustomReqTypeCrud   - testCrud(ProjectSpaProtocols.CustomReqTypeCrud  )($.routines.customReqTypeCrud.any)
+      'TagCrud             - testCrud(TagCrud.Protocol                       )($.routines.tagCrud.any)
+      'FieldCrud           - testCrud(FieldCrud.Protocol                     )($.protocol.fieldCfgAction.any)
     }
 
-    'ClientFnDecls {
-      def test[I: Equal](ep: ClientFnDecl[I], name: String)(g: Gen[I]): Unit =
+    'ClientSideProcs {
+      def test[I: Equal](ep: ClientSideProc[I], name: String)(g: Gen[I]): Unit =
         kitCF(ep, name).propI mustBeSatisfiedBy g
 
-      'ProjectSpa - test(ClientFnDecl.ProjectSpa, "ProjectSpa")($.routines.projectSpa)
+      'ProjectSpa - test(ProjectSpaProtocols.EntryPoint, "ProjectSpa")($.routines.projectSpa)
     }
 
     'Codecs {

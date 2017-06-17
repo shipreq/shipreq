@@ -1,11 +1,11 @@
 package shipreq.webapp.client.base.protocol
 
 import scalaz.{-\/, \/, \/-}
-import shipreq.webapp.base.protocol.GenericFailure
+import shipreq.webapp.base.protocol.ErrorMsg
 import shipreq.webapp.client.base.data.TCB
 import shipreq.webapp.client.base.lib.Logger
 
-case class RemoteFailure[A](value: Throwable \/ A) extends AnyVal {
+final case class RemoteFailure[A](value: Throwable \/ A) extends AnyVal {
 
   /**
    * Generic means of handling and consuming generic (protocol/ajax) failure.
@@ -33,10 +33,10 @@ object RemoteFailure {
   def lift[A](a: A): RemoteFailure[A] =
     RemoteFailure(\/-(a))
 
-  case class Format[A](format: (Throwable \/ A) => String) extends AnyVal
+  final case class Format[A](format: (Throwable \/ A) => String) extends AnyVal
 
-  implicit val formatGenericFailureStr =
-    Format[GenericFailure] {
+  implicit val formatErrorMsg =
+    Format[ErrorMsg] {
       case -\/(t) => Option(t.getMessage) match {
         case Some(m) => "AJAX error occurred: " + m
         case None    => "AJAX error occurred."

@@ -2,17 +2,17 @@ package shipreq.webapp.client.base.protocol
 
 import boopickle.UnpickleImpl
 import scala.scalajs.js.annotation.JSExport
-import shipreq.webapp.base.protocol.ClientFnDecl
+import shipreq.webapp.base.protocol.ClientSideProc
 
-abstract class ClientFnImpl[I](decl: ClientFnDecl[I]) {
+abstract class ClientSideProcImpl[Input](proc: ClientSideProc[Input]) {
 
-  @JSExport(ClientFnDecl.DefaultMethodName)
+  @JSExport(ClientSideProc.MainMethodName)
   final def main(encodedInput: String): Unit =
     run(decodeInput(encodedInput))
 
-  final def decodeInput(s: String): I =
-    UnpickleImpl(decl.pickler) fromBytes ClientProtocol.Default.base64ToBinary(s)
+  final def decodeInput(s: String): Input =
+    UnpickleImpl(proc.pickler) fromBytes ClientProtocol.Default.base64ToBinary(s)
 
-  def run(i: I): Unit
+  def run(i: Input): Unit
 }
 

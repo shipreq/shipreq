@@ -4,13 +4,13 @@ import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.Reusability
 import scala.util.{Failure, Success}
 import scalaz.{-\/, \/-}
-import shipreq.webapp.base.protocol.RemoteFn
+import shipreq.webapp.base.protocol.ServerSideProc
 import shipreq.webapp.client.base.data.TCB
 
 trait ClientProtocol {
-  def call(i: RemoteFn.Instance)(input  : i.fn.Input,
-                                 success: i.fn.Output => TCB.Success,
-                                 failure: RemoteFailure[i.fn.Failure] => TCB.Failure): Callback
+  def call(p: ServerSideProc)(input  : p.protocol.Input,
+                              success: p.protocol.Output => TCB.Success,
+                              failure: RemoteFailure[p.protocol.Failure] => TCB.Failure): Callback
 }
 
 object ClientProtocol {
@@ -64,11 +64,11 @@ object ClientProtocol {
       promise.future.map(r => TypedArrayBuffer.wrap(r.response.asInstanceOf[ArrayBuffer]))
     }
 
-    override def call(i: RemoteFn.Instance)(input  : i.fn.Input,
-                                            success: i.fn.Output => TCB.Success,
-                                            failure: RemoteFailure[i.fn.Failure] => TCB.Failure): Callback = Callback {
-      import i.fn._
-      val url = LiftAjax.calcAjaxUrl(ajaxPath, null) + "?" + i.key
+    override def call(p: ServerSideProc)(input  : p.protocol.Input,
+                                         success: p.protocol.Output => TCB.Success,
+                                         failure: RemoteFailure[p.protocol.Failure] => TCB.Failure): Callback = Callback {
+      import p.protocol._
+      val url = LiftAjax.calcAjaxUrl(ajaxPath, null) + "?" + p.key
       val bin = PickleImpl.intoBytes(input)
       val res = postBinary(url, bin).map(UnpickleImpl(pickleResponse) fromBytes _)
       res.onComplete {

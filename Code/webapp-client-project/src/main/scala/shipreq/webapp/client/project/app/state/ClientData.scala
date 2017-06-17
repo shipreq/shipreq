@@ -6,7 +6,7 @@ import java.time.Instant
 import scalaz.{-\/, \/-}
 import shipreq.webapp.base.data.{Project, ProjectCatalogue}
 import shipreq.webapp.base.event.{ApplyEvent, Event, VerifiedEvents}
-import shipreq.webapp.base.protocol.ProjectInit
+import shipreq.webapp.base.protocol.ProjectSpaProtocols
 import shipreq.webapp.client.base.data.TCB
 import shipreq.webapp.client.base.lib.Logger
 import shipreq.webapp.client.base.protocol.ClientProtocol
@@ -67,7 +67,7 @@ object ClientData {
 
   def init(initSummary: ProjectCatalogue.Item,
            cp         : ClientProtocol,
-           remoteInit : ProjectInit.Instance)(
+           remoteInit : ProjectSpaProtocols.ProjectInit.Instance)(
            onSuccess  : ClientData => Callback,
            onFailure  : String => Callback): Callback =
 

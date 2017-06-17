@@ -8,7 +8,7 @@ import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.RemoteFn
+import shipreq.webapp.base.protocol.ServerSideProc
 import shipreq.webapp.base.text.{Atom, PlainText, TextSearch}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text.UseCaseStepFlowText.TextAndFlow
@@ -114,8 +114,8 @@ abstract class DataReusability {
   implicit def reusabilityNonEmptySet[A: Reusability]: Reusability[NonEmptySet[A]] =
     Reusability.byRef || Reusability.by(_.whole)
 
-  implicit def reusabilityRemote[Fn <: RemoteFn.Instance] =
-    Reusability.by((_: Fn).key)
+  implicit def reusabilityServerSideProc[P <: ServerSideProc] =
+    Reusability.by((_: P).key)
 
   //implicit def reusabilityValidation[S, I, C, V]: Reusability[Validator[S, I, C, V]] =
   //  Reusability.byRef

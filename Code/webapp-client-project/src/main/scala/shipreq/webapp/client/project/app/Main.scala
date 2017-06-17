@@ -6,14 +6,14 @@ import org.scalajs.dom
 import scala.scalajs.js.annotation.JSExportTopLevel
 import shipreq.webapp.client.base.CssSettings._
 import scalacss.ScalaCssReact._
-import shipreq.webapp.base.protocol.{ClientFnDecl, InitDataForProjectSpa}
-import shipreq.webapp.client.base.protocol.{ClientFnImpl, ClientProtocol}
+import shipreq.webapp.base.protocol.ProjectSpaProtocols
+import shipreq.webapp.client.base.protocol.{ClientSideProcImpl, ClientProtocol}
 import shipreq.webapp.client.base.ui.BaseStyles
 import shipreq.webapp.client.project.app.root.{LoadFailedPage, LoadedRoot, LoadingPage, Routes}
 import shipreq.webapp.client.project.app.state.ClientData
 
-@JSExportTopLevel(ClientFnDecl.ProjectSpaName)
-object Main extends ClientFnImpl(ClientFnDecl.ProjectSpa) {
+@JSExportTopLevel(ProjectSpaProtocols.EntryPointName)
+object Main extends ClientSideProcImpl(ProjectSpaProtocols.EntryPoint) {
 
   def determineBaseUrl(url: String) = {
     val pat = "^([^/#?]+//[^/#?]+/[^/#?]+/[^/#?]+)(?:[/#?].*|$)".r.pattern
@@ -21,7 +21,7 @@ object Main extends ClientFnImpl(ClientFnDecl.ProjectSpa) {
     if (m.matches) BaseUrl(m group 1) else BaseUrl(url).endWith_/
   }
 
-  override def run(i: InitDataForProjectSpa): Unit = {
+  override def run(i: ProjectSpaProtocols.InitClient): Unit = {
 
     val cp = ClientProtocol.Default
     BaseStyles.addToDocument()

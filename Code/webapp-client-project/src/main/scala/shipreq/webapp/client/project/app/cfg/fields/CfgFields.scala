@@ -27,7 +27,7 @@ import Field.ApplicableReqTypes
 
 object CfgFields {
   final case class Props(cp        : ClientProtocol,
-                         remote    : FieldCrud.Fn.Instance,
+                         remote    : FieldCrud.Protocol.Instance,
                          clientData: ClientData,
                          filterDead: StateSnapshot[FilterDead]) {
 
@@ -190,7 +190,7 @@ private[fields] object MainTable {
   }
 
   // ===================================================================================================================
-  case class ProtocolBackend(cp: ClientProtocol, remote: FieldCrud.Fn.Instance, cd: ClientData) {
+  case class ProtocolBackend(cp: ClientProtocol, remote: FieldCrud.Protocol.Instance, cd: ClientData) {
     import FieldCrud._
 
     private def call(a: CfgAction): (TCB.Success, TCB.Failure) => Callback =

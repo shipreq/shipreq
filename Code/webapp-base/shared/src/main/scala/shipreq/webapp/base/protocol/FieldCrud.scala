@@ -7,7 +7,6 @@ import shipreq.webapp.base.data._
 import BoopickleMacros._
 import BinCodecGeneric._
 import BinCodecData._
-import BinCodecEvents._
 import Field.ApplicableReqTypes
 
 object FieldCrud {
@@ -39,7 +38,7 @@ object FieldCrud {
     pickleADT
   }
 
-  // ===================================================================================================================
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   type Position = Pos[FieldId]
 
@@ -63,7 +62,7 @@ object FieldCrud {
     }
   }
 
-  // ===================================================================================================================
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  object Fn extends RemoteFn.ToVE[CfgAction]
+  val Protocol = ServerSideProc.Protocol.toEvents[CfgAction]
 }

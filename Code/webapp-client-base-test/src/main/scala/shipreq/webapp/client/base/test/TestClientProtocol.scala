@@ -3,23 +3,23 @@ package shipreq.webapp.client.base.test
 import japgolly.scalajs.react.Callback
 import scalaz.{-\/, Equal}
 import shipreq.base.test.BaseTestUtil._
-import shipreq.webapp.base.protocol.RemoteFn
+import shipreq.webapp.base.protocol._
 import shipreq.webapp.client.base.data.TCB
-import shipreq.webapp.client.base.protocol.{ClientProtocol, RemoteFailure}
+import shipreq.webapp.client.base.protocol._
 import TestClientProtocol.Req
 
 object TestClientProtocol {
   trait Req {
-    val r      : RemoteFn.Instance
-    val input  : r.fn.Input
-    val success: r.fn.Output => TCB.Success
-    val failure: RemoteFailure[r.fn.Failure] => TCB.Failure
+    val proc   : ServerSideProc
+    val input  : proc.protocol.Input
+    val success: proc.protocol.Output => TCB.Success
+    val failure: RemoteFailure[proc.protocol.Failure] => TCB.Failure
 
     override def toString =
       s"Req($input)@${Integer.toHexString(##)}"
 
-    def force(r2: RemoteFn.Instance) =
-      this.asInstanceOf[Req {val r: r2.type}]
+    def force(p2: ServerSideProc) =
+      this.asInstanceOf[Req {val proc: p2.type}]
 
     var _pendingResponse = true
     def responsePending = _pendingResponse
@@ -45,13 +45,13 @@ class TestClientProtocol(autoRespondArg: Boolean) extends ClientProtocol {
   def autoResponse(r: Req): Callback =
     Callback.empty
 
-  def call(i: RemoteFn.Instance)(_input  : i.fn.Input,
-                                 _success: i.fn.Output => TCB.Success,
-                                 _failure: RemoteFailure[i.fn.Failure] => TCB.Failure): Callback = {
+  def call(p: ServerSideProc)(_input  : p.protocol.Input,
+                              _success: p.protocol.Output => TCB.Success,
+                              _failure: RemoteFailure[p.protocol.Failure] => TCB.Failure): Callback = {
     //println(s"RPC: ${_r.d}(${_r.n}) ← ${_i}")
     Callback {
       val r = new Req {
-        override val r: i.type = i
+        override val proc: p.type = p
         override val input   = _input
         override val success = _success
         override val failure = _failure
@@ -67,8 +67,8 @@ class TestClientProtocol(autoRespondArg: Boolean) extends ClientProtocol {
 
   def last = reqs.last
 
-  def respondToLast(r: RemoteFn.Instance)(o: r.fn.Output): Unit =
-    last.force(r).success(o).runNow()
+  def respondToLast(p: ServerSideProc)(o: p.protocol.Output): Unit =
+    last.force(p).success(o).runNow()
 
   def autoRespondToLast(): Unit = {
     val r = last
@@ -82,13 +82,13 @@ class TestClientProtocol(autoRespondArg: Boolean) extends ClientProtocol {
     r.failure(RemoteFailure.exception(new Throwable("Dummy error from TestClientProtocol.failLast()"))).runNow()
   }
 
-  def lastTwo(r: RemoteFn.Instance) = {
+  def lastTwo(r: ServerSideProc) = {
     val Vector(a, b) = reqs.takeRight(2).map(_.force(r))
     (a, b)
   }
 
-  def assertLastTwoRequestsEqual(r: RemoteFn.Instance)(implicit e: Equal[r.fn.Input]): Unit = {
-    val (a, b) = lastTwo(r)
+  def assertLastTwoRequestsEqual(p: ServerSideProc)(implicit e: Equal[p.protocol.Input]): Unit = {
+    val (a, b) = lastTwo(p)
     assertEq("Last two requests", a.input, b.input)
   }
 }

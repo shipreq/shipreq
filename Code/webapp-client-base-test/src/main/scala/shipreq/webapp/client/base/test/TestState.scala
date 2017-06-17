@@ -21,7 +21,7 @@ object TestState
   }
 
   implicit val displayTestReq: Display[TestClientProtocol.Req] =
-    Display(i => s"${i.r.fn}: ${i.input}")
+    Display(i => s"${i.proc.protocol}: ${i.input}")
 
   // TODO Add to DomZipper exports
   implicit def univEqDomElement[D <: Element] = UnivEq.force[D]

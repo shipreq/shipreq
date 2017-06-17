@@ -10,7 +10,7 @@ import teststate.domzipper.sizzle.Sizzle
 import utest._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.protocol.{FieldCrud, RemoteFn}
+import shipreq.webapp.base.protocol.{FieldCrud, ServerSideProc}
 import shipreq.webapp.base.test.{SampleProject => S}
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.client.base.test.TestClientProtocol
@@ -23,7 +23,7 @@ import MainTable.State
 object CfgFieldsTest extends TestSuite {
   PrepareEnv()
 
-  val remote = RemoteFn.Instance("x", FieldCrud.Fn)
+  val remote = ServerSideProc("x", FieldCrud.Protocol)
   class Tester {
     lazy val filterDead = ReactTestVar[FilterDead](HideDead)
     lazy val clientData = TestClientData(S.project)

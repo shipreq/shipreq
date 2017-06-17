@@ -2,9 +2,9 @@ package shipreq.webapp.client.project.app.cfg.shared
 
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import japgolly.scalajs.react.ScalazReact._
-import scalaz.{Need, Name}
+import scalaz.{Name, Need}
 import shipreq.webapp.base.event.VerifiedEvents
-import shipreq.webapp.base.protocol.RemoteFn
+import shipreq.webapp.base.protocol.{ErrorMsg, ServerSideProc}
 import shipreq.webapp.base.validation._
 import shipreq.webapp.client.base.data.TCB
 import shipreq.webapp.client.base.protocol.ClientProtocol
@@ -76,12 +76,13 @@ object Persistence {
       needSave, updateIO, realise)
 
 
-  def simpleAsyncUpdate[S, K, P, I, R <: RemoteFn.AuxG[(K, I), VerifiedEvents]](store   : SavedRowStore[S, K, P, I])
-                                                                               (remoteFn: RemoteFn.InstanceFor[R],
-                                                                                cd      : ClientData,
-                                                                                cp      : ClientProtocol,
-                                                                                realise : Persistence.Realise[S],
-                                                                                id      : K): ST[S] =
+  def simpleAsyncUpdate[S, K, P, I, R <: ServerSideProc.Protocol.Aux[ErrorMsg, (K, I), VerifiedEvents]]
+      (store   : SavedRowStore[S, K, P, I])
+      (remoteFn: ServerSideProc.For[R],
+       cd      : ClientData,
+       cp      : ClientProtocol,
+       realise : Persistence.Realise[S],
+       id      : K): ST[S] =
     ReactS.liftR[CallbackTo, S, Unit](state => {
       val setStatus = store.setStatusST[CallbackTo](id)
       val saveio = retryably[ReactST[CallbackTo, S, Unit]](retry => {

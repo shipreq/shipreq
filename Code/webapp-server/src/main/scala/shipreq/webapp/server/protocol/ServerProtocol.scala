@@ -7,12 +7,12 @@ import net.liftweb.http.{BadRequestResponse, InternalServerErrorResponse, LiftRe
 import scalaz.effect.IO
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.log.HasLogger
-import shipreq.webapp.base.protocol.RemoteFn
+import shipreq.webapp.base.protocol.ServerSideProc
 
 object ServerProtocol extends HasLogger {
 
-  def remoteFn(fn: RemoteFn)(localFn: fn.Input => IO[fn.Response]): fn.Instance = {
-    import fn._
+  def createServerSideProc(p: ServerSideProc.Protocol)(localFn: p.Input => IO[p.Response]): p.Instance = {
+    import p._
 
     val proc = S.NFuncHolder { () =>
       type T[A] = LiftResponse \/ A
@@ -26,7 +26,7 @@ object ServerProtocol extends HasLogger {
           case Full(body)    => body
           case Empty         => BadRequestResponse()
           case e: BoxFailure =>
-            log.error(s"Error reading $fn request: $e")
+            log.error(s"Error reading $p request: $e")
             BadRequestResponse()
         }
 
@@ -42,7 +42,7 @@ object ServerProtocol extends HasLogger {
           localFn(i).unsafePerformIO()
         } catch {
           case e: Throwable =>
-            log.error(e, s"Error processing $fn request $i")
+            log.error(e, s"Error processing $p request $i")
             InternalServerErrorResponse()
         }
 
@@ -52,7 +52,7 @@ object ServerProtocol extends HasLogger {
           BinaryResponse(binary)
         } catch {
           case e: Throwable =>
-            log.error(e, s"Error responding to $fn with $r")
+            log.error(e, s"Error responding to $p with $r")
             InternalServerErrorResponse()
         }
 
@@ -64,6 +64,6 @@ object ServerProtocol extends HasLogger {
     val fnName = S.formFuncName
     S.addFunctionMap(fnName, proc)
 
-    RemoteFn.Instance(fnName, fn)
+    ServerSideProc(fnName, p)
   }
 }

@@ -7,7 +7,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data.{ProjectCatalogue, Username, DataValidators}
-import shipreq.webapp.base.protocol.InitDataForHomeSpa
+import shipreq.webapp.base.protocol.HomeSpaProtocols
 import shipreq.webapp.client.base.ClientConfig
 import shipreq.webapp.client.base.feature.{AsyncFeature, EditorStatus}
 import shipreq.webapp.client.base.protocol.ClientProtocol
@@ -15,7 +15,7 @@ import shipreq.webapp.client.base.ui.{BaseStyles, MemberNavBar, PlainTextEditor,
 import shipreq.webapp.client.base.ui.semantic.Breadcrumb
 
 object Home {
-  final case class Props(data: InitDataForHomeSpa, cp: ClientProtocol) {
+  final case class Props(data: HomeSpaProtocols.InitClient, cp: ClientProtocol) {
     @inline def render = Component(this)
   }
 

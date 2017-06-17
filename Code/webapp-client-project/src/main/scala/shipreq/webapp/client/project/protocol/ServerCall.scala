@@ -17,9 +17,9 @@ object ServerCall {
   @inline def apply[I](fn: (I, TCB.Success, String => TCB.Failure) => Callback): ServerCall[I] =
     new ServerCall(fn)
 
-  def to[I, F <: (I =>|=> VerifiedEvents)](remoteFn: RemoteFn.InstanceFor[F],
-                                           cp: ClientProtocol,
-                                           cd: ClientData): ServerCall[I] =
+  def to[I, F <: ServerSideProc.Protocol.Aux[ErrorMsg, I, VerifiedEvents]](remoteFn: ServerSideProc.For[F],
+                                                                           cp: ClientProtocol,
+                                                                           cd: ClientData): ServerCall[I] =
     ServerCall((input, onSuccess, onFailure) =>
       cp.call(remoteFn)(
         input,

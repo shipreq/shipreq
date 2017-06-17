@@ -87,7 +87,7 @@ class BoopickleMacroImpls(val c: Context) extends MacroUtils {
     if (!t.isModule)
       fail(s"$t is not an object.")
 
-    val impl = q"ConstPickler($t)"
+    val impl = q"_root_.boopickle.ConstPickler($t)"
 
     if (debug) println("\n" + showCode(impl) + "\n")
     c.Expr[Pickler[T]](impl)
@@ -111,11 +111,11 @@ class BoopickleMacroImpls(val c: Context) extends MacroUtils {
     val impl =
       params match {
         case Nil =>
-          q"ConstPickler[$T]($apply())"
+          q"_root_.boopickle.ConstPickler[$T]($apply())"
 
         case param :: Nil =>
           val (n, t) = nameAndType(T, param)
-          q"xmap[$T,$t]($apply)(_.$n)"
+          q"_root_.shipreq.webapp.base.protocol.BoopickleMacros.xmap[$T,$t]($apply)(_.$n)"
 
         case _ =>
           var fieldPicklers  = Vector.empty[ValDef]
@@ -136,6 +136,7 @@ class BoopickleMacroImpls(val c: Context) extends MacroUtils {
           def unpickleImpl = q"$apply(..$unpickleFields)"
 
           q""" {
+            import _root_.boopickle.{Pickler, PickleState, UnpickleState}
             ..$fieldPicklers
             ${newPickler(T, pickleImpl, unpickleImpl)}
           } """
@@ -204,10 +205,11 @@ class BoopickleMacroImpls(val c: Context) extends MacroUtils {
         q"${picklers.head}; $p"
       } else {
         q"""
+          import _root_.boopickle.Pickler
           ..$picklers
           val all = Array[Pickler[$T]](..$picklerNames)
           def index(t: $T): Int = t match {case ..$cases}
-          new Selector[$T](all, index)
+          new _root_.shipreq.webapp.base.protocol.BoopickleMacros.Selector[$T](all, index)
         """
       }
 

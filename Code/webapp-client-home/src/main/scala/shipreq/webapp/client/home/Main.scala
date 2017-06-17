@@ -4,15 +4,15 @@ import org.scalajs.dom
 import scala.scalajs.js.annotation.JSExportTopLevel
 import shipreq.webapp.client.base.CssSettings._
 import scalacss.ScalaCssReact._
-import shipreq.webapp.base.protocol.{ClientFnDecl, InitDataForHomeSpa}
-import shipreq.webapp.client.base.protocol.{ClientFnImpl, ClientProtocol}
+import shipreq.webapp.base.protocol.HomeSpaProtocols
+import shipreq.webapp.client.base.protocol.{ClientSideProcImpl, ClientProtocol}
 import shipreq.webapp.client.base.ui.BaseStyles
 import shipreq.webapp.client.home.ui.{Home, Styles}
 
-@JSExportTopLevel(ClientFnDecl.HomeSpaName)
-object Main extends ClientFnImpl(ClientFnDecl.HomeSpa) {
+@JSExportTopLevel(HomeSpaProtocols.EntryPointName)
+object Main extends ClientSideProcImpl(HomeSpaProtocols.EntryPoint) {
 
-  override def run(i: InitDataForHomeSpa): Unit = {
+  override def run(i: HomeSpaProtocols.InitClient): Unit = {
 
     BaseStyles.addToDocument()
     Styles.addToDocument()

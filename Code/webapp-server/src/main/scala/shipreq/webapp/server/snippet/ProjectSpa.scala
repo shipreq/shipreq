@@ -11,12 +11,17 @@ import scalaz.syntax.all._
 import scalaz.{-\/, \/-}
 import shipreq.base.util.FreeOption
 import shipreq.webapp.base.event.VerifiedEvent
-import shipreq.webapp.base.protocol.InitDataForProjectSpa
+import shipreq.webapp.base.protocol.ProjectSpaProtocols
 import shipreq.webapp.gen.transform.ProjectSpaLoader
 import shipreq.webapp.server.app.DI
 import shipreq.webapp.server.lib.SingleOpStatelessSnippet
 import shipreq.webapp.server.logic._
-import shipreq.webapp.server.protocol.ClientFn
+import shipreq.webapp.server.protocol._
+import ProjectSpa._
+
+object ProjectSpa {
+  val EntryPoint = ClientSideProcCodeGen(ProjectSpaProtocols.EntryPoint)
+}
 
 final class ProjectSpa(projectId: ProjectId) extends SingleOpStatelessSnippet {
 
@@ -48,12 +53,12 @@ final class ProjectSpa(projectId: ProjectId) extends SingleOpStatelessSnippet {
     val regId: ProjectServer.RegId =
       comet.getRegId getOrElse newRegId()
 
-    val init: InitDataForProjectSpa =
-      logic.initialData(regId, user.username).unsafePerformIO()
+    val init: ProjectSpaProtocols.InitClient =
+      logic.initialClient(regId, user.username).unsafePerformIO()
 
     "*" #> (
       ProjectSpaLoader.xml(user.username, init.project) :+
-        ClientFn.ProjectSpa.htmlToRunOnLoad(init))
+        EntryPoint.invokeOnLoadHtml(init))
     // ClientFn.ProjectSpa.htmlToLoadJsAndRun(Assets.ProjectSpa)(initData(user.username, p)))
   }
 }

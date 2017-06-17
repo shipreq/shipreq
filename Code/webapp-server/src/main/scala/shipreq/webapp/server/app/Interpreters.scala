@@ -10,7 +10,7 @@ import shipreq.taskman.api.UserId
 import shipreq.webapp.base.data.ProjectCatalogue
 import shipreq.webapp.base.event.ActiveEvent
 import shipreq.webapp.base.hash.HashRec.Collection
-import shipreq.webapp.base.protocol.RemoteFn
+import shipreq.webapp.base.protocol.ServerSideProc
 import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.logic._
 import shipreq.webapp.server.protocol.ServerProtocol
@@ -42,8 +42,8 @@ object Interpreters {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   implicit val serverAlgebra: Server.Algebra[IO] =
     new Server.Algebra[IO] {
-      override def remoteFn(fn: RemoteFn)(localFn: fn.Input => IO[fn.Response]): IO[fn.Instance] =
-        IO(ServerProtocol.remoteFn(fn)(localFn(_)))
+      override def createServerSideProc(p: ServerSideProc.Protocol)(localFn: p.Input => IO[p.Response]): IO[p.Instance] =
+        IO(ServerProtocol.createServerSideProc(p)(localFn(_)))
 
       override val now: IO[Instant] =
         IO(Instant.now())
