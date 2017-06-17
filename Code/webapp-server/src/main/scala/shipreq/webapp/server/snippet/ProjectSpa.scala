@@ -21,6 +21,7 @@ import ProjectSpa._
 
 object ProjectSpa {
   val EntryPoint = ClientSideProcCodeGen(ProjectSpaProtocols.EntryPoint)
+  val CometListener = ClientSideProcCodeGen(ProjectSpaProtocols.CometListener)
 }
 
 final class ProjectSpa(projectId: ProjectId) extends SingleOpStatelessSnippet {
@@ -100,19 +101,13 @@ final class ProjectSpaComet extends MessageCometActor with DI {
 
   override def mediumPriority: PartialFunction[Any, Unit] = {
     case u: UpdateProject =>
-      pushMessage(updateProjectJs(u))
+      pushMessage(CometListener.invokeJsCmd(u.es))
 
     case AddRegistrant(id) =>
       if (regId.isEmpty && running)
         regId = FreeOption(id)
       else
         projectServer().unregister(id).attempt.unsafePerformIO()
-  }
-
-  private def updateProjectJs(u: UpdateProject): JsCmd = {
-    import org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript
-    val cmd = s"console.log('${escapeEcmaScript(u.es.toString())}');"
-    JsCmds.Run(cmd)
   }
 
   def sendMsgIO(msg: Msg): IO[Unit] =

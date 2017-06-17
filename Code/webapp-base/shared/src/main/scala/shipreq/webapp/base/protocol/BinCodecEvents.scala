@@ -1,6 +1,7 @@
 package shipreq.webapp.base.protocol
 
 import boopickle._
+import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash._
 import shipreq.webapp.base.util.GenericDataMacros._
@@ -100,4 +101,6 @@ object BinCodecEvents {
 
   implicit val pickleVerifiedEvent : Pickler[VerifiedEvent ] = pickleCaseClass
   implicit val pickleVerifiedEvents: Pickler[VerifiedEvents] = iterablePickler
+
+  implicit lazy val pickleVerifiedEventNEV: Pickler[NonEmptyVector[VerifiedEvent]] = pickleNEV
 }

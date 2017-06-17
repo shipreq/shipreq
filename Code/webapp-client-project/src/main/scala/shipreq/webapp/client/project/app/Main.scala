@@ -22,19 +22,17 @@ object Main extends ClientSideProcImpl(ProjectSpaProtocols.EntryPoint) {
   }
 
   override def run(i: ProjectSpaProtocols.InitClient): Unit = {
-
     val cp = ClientProtocol.Default
     BaseStyles.addToDocument()
     Style.addToDocument()
-
-    ClientData.init(i.project, cp, i.projectInit)(onSuccess, onFailure)
-      .runNow()
+    ClientData.init(i.project, cp, i.projectInit)(onSuccess, onFailure).runNow()
 
     def domTarget() =
       dom.document.getElementById("tgt")
 
     def onSuccess(cd: ClientData): Callback =
       Callback {
+        CometListener.init(cd)
         val root    = new LoadedRoot(i, cp, cd)
         val baseUrl = determineBaseUrl(dom.window.location.href)
         val router  = Router(baseUrl, Routes.routerConfig(root))

@@ -1,9 +1,12 @@
 package shipreq.webapp.base.protocol
 
+import japgolly.microlibs.nonempty.NonEmptyVector
+import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.data._
 import BoopickleMacros._
 import BinCodecGeneric._
 import BinCodecData._
+import BinCodecEvents._
 
 /**
   * Protocols for the Project SPA / webapp-client-project module.
@@ -47,4 +50,7 @@ object ProjectSpaProtocols {
 
   final val EntryPointName = "P"
   val EntryPoint = ClientSideProc[InitClient](EntryPointName)
+
+  final val CometListenerName = "C"
+  val CometListener = ClientSideProc[NonEmptyVector[VerifiedEvent]](CometListenerName)
 }

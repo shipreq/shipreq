@@ -4,6 +4,7 @@ import boopickle._
 import java.lang.StringBuilder
 import java.nio.ByteBuffer
 import java.util.Base64
+import net.liftweb.http.js.{JsCmd, JsCmds}
 import shipreq.base.util.Util.quickJSB
 import shipreq.webapp.base.protocol._
 
@@ -52,6 +53,12 @@ final case class ClientSideProcCodeGen[I](proc: ClientSideProc[I]) {
     byteBufferToBase64SB(PickleImpl.intoBytes(i))(sb)
     sb append "');"
   }
+
+  def invokeJs(i: I): String =
+    quickJSB(invokeSB(i))
+
+  def invokeJsCmd(i: I): JsCmd =
+    JsCmds.Run(invokeJs(i))
 
   def invokeOnLoadJs(i: I): String =
     quickJSB(onWindowLoadSB(invokeSB(i)))
