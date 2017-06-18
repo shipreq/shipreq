@@ -20,8 +20,8 @@ import shipreq.webapp.server.protocol._
 import ProjectSpa._
 
 object ProjectSpa {
-  val EntryPoint = ClientSideProcCodeGen(ProjectSpaProtocols.EntryPoint)
-  val CometListener = ClientSideProcCodeGen(ProjectSpaProtocols.CometListener)
+  val EntryPoint = ClientSideProcInvoker(ProjectSpaProtocols.EntryPoint)
+  val CometListener = ClientSideProcInvoker(ProjectSpaProtocols.CometListener)
 }
 
 final class ProjectSpa(projectId: ProjectId) extends SingleOpStatelessSnippet {

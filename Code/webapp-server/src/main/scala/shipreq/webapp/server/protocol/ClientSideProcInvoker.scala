@@ -11,8 +11,8 @@ import shipreq.webapp.base.protocol._
 /**
   * Generates code to invoke client-side procedures.
   */
-final case class ClientSideProcCodeGen[I](proc: ClientSideProc[I]) {
-  import ClientSideProcCodeGen._
+final case class ClientSideProcInvoker[I](proc: ClientSideProc[I]) {
+  import ClientSideProcInvoker._
   import proc.pickler
 
   private def onWindowLoadSB(f: StringBuilder => Unit): StringBuilder => Unit =
@@ -76,7 +76,7 @@ final case class ClientSideProcCodeGen[I](proc: ClientSideProc[I]) {
 //    <script type="text/javascript">{loadJsAndRun(assets, name)(i)}</script>
 }
 
-object ClientSideProcCodeGen {
+object ClientSideProcInvoker {
 
   def byteBufferToBinary(bb: ByteBuffer): Array[Byte] = {
     val size = bb.limit()

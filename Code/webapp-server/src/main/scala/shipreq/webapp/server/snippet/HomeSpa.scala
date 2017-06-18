@@ -16,7 +16,7 @@ import shipreq.webapp.server.protocol._
 
 object HomeSpa extends SnippetHelpers {
 
-  val EntryPoint       = ClientSideProcCodeGen(HomeSpaProtocols.EntryPoint)
+  val EntryPoint       = ClientSideProcInvoker(HomeSpaProtocols.EntryPoint)
   val InitProjectEvent = ProjectTemplateApply(ProjectTemplate.Default)
   val InitProject      = ApplyNewEvent.mustApply(InitProjectEvent, Project.empty)
 
