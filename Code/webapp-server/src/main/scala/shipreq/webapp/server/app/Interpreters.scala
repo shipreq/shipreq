@@ -26,7 +26,7 @@ object Interpreters {
       override def loadProject(id: ProjectId): ConnectionIO[DB.ProjectLoad] =
         DbLogic.event.findAll2(id)
 
-      override def saveProjectEvent(id: ProjectId, seq: EventSeq, e: ActiveEvent, hrs: Collection): ConnectionIO[Option[Throwable]] =
+      override def saveProjectEvent(id: ProjectId, seq: EventOrd, e: ActiveEvent, hrs: Collection): ConnectionIO[Option[Throwable]] =
         DbLogic.event.create(id, seq, e, hrs).attempt.map(_.fold[Option[Throwable]](Some(_), _ => None))
 
       override def inDbTransaction[A](f: ConnectionIO[A]): ConnectionIO[A] =

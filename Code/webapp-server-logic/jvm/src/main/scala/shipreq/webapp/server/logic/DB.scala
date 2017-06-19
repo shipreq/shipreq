@@ -7,7 +7,7 @@ import shipreq.webapp.base.event.{ActiveEvent, VerifiedEvent}
 import shipreq.webapp.base.hash.HashRec
 
 object DB {
-  type ProjectLoad = SortedMap[EventSeq, VerifiedEvent]
+  type ProjectLoad = SortedMap[EventOrd, VerifiedEvent]
 
   trait Algebra[F[_]] {
 
@@ -15,7 +15,7 @@ object DB {
 
     def loadProject(id: ProjectId): F[ProjectLoad]
 
-    def saveProjectEvent(id: ProjectId, seq: EventSeq, e: ActiveEvent, hrs: HashRec.Collection): F[Option[Throwable]]
+    def saveProjectEvent(id: ProjectId, seq: EventOrd, e: ActiveEvent, hrs: HashRec.Collection): F[Option[Throwable]]
 
     def inDbTransaction[A](f: F[A]): F[A]
   }

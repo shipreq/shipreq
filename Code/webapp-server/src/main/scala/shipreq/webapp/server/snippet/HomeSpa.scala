@@ -24,8 +24,8 @@ object HomeSpa extends SnippetHelpers {
     (for {
       projectId <- DbLogic.project.create(u)
       e1 = ApplyNewEvent.mustApply(ProjectNameSet(name), InitProject.project)
-      _ <- DbLogic.event.create(projectId, EventSeq(0), InitProject.ae, InitProject.ve.hashRecs)
-      _ <- DbLogic.event.create(projectId, EventSeq(1), e1.ae, e1.ve.hashRecs)
+      _ <- DbLogic.event.create(projectId, EventOrd(0), InitProject.ae, InitProject.ve.hashRecs)
+      _ <- DbLogic.event.create(projectId, EventOrd(1), e1.ae, e1.ve.hashRecs)
     } yield ProjectMetaData(ProjectId Extern projectId, name, 0, 0, now, None)
     ).inTransaction
 

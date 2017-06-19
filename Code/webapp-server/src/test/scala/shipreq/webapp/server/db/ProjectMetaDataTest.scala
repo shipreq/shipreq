@@ -3,7 +3,7 @@ package shipreq.webapp.server.db
 import utest._
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.{ActiveEvent, RandomEventStream, VerifiedEvent}
-import shipreq.webapp.server.logic.EventSeq
+import shipreq.webapp.server.logic.EventOrd
 import shipreq.webapp.server.test.DbUtil
 import shipreq.webapp.server.test.WebappServerTestUtil._
 
@@ -25,7 +25,7 @@ object ProjectMetaDataTest extends TestSuite {
         def writeEvent(ve: VerifiedEvent, idx: Int): Unit =
           ve.event match {
             case ae: ActiveEvent =>
-              xa ! DbLogic.event.create(pid, EventSeq(idx), ae, ve.hashRecs)
+              xa ! DbLogic.event.create(pid, EventOrd(idx), ae, ve.hashRecs)
             case x =>
               fail("Can't create non-active event: " + x)
           }

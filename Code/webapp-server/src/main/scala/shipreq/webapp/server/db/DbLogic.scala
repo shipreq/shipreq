@@ -13,7 +13,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ActiveEvent, Event, VerifiedEvent}
 import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.server.data._
-import shipreq.webapp.server.logic.{EventSeq, ProjectId}
+import shipreq.webapp.server.logic.{EventOrd, ProjectId}
 import shipreq.webapp.server.security.PasswordAndSalt
 import SqlHelpers._
 
@@ -218,7 +218,7 @@ object DbLogic {
               count(*) FILTER (WHERE type_id IN (${reqCreationTypeIds mkString ","})) reqs,
               max(event.created_at) last_updated_at
             FROM event
-            WHERE project_id IN (select id FROM ps) AND seq > 1
+            WHERE project_id IN (select id FROM ps) AND ord > 1
             GROUP BY project_id
           ),
           ns AS (
@@ -227,7 +227,7 @@ object DbLogic {
               (e.data#>>'{}')::varchar "name"
             FROM event e
             WHERE project_id IN (select id FROM ps) AND type_id=$projectNameSetId
-            ORDER BY project_id, seq DESC
+            ORDER BY project_id, ord DESC
           )
         SELECT
           ps.id,
@@ -260,27 +260,27 @@ object DbLogic {
   object event {
     import EventSqlHelpers._
 
-    // select coalesce(max(seq)+1,1) from event where project_id=?
-    val sqlInsert = Update[(ProjectId, EventSeq, ActiveEvent)](
-      s"INSERT INTO event(project_id,seq,$eventE) VALUES(?,?,${eventE_?})")
+    // select coalesce(max(ord)+1,1) from event where project_id=?
+    val sqlInsert = Update[(ProjectId, EventOrd, ActiveEvent)](
+      s"INSERT INTO event(project_id,ord,$eventE) VALUES(?,?,${eventE_?})")
 
-    val sqlInsertHashRecs = Update[(ProjectId, EventSeq, HashRec)](
-      s"INSERT INTO event_hash(project_id,seq,$eventHR) VALUES(?,?,${eventHR_?})")
+    val sqlInsertHashRecs = Update[(ProjectId, EventOrd, HashRec)](
+      s"INSERT INTO event_hash(project_id,ord,$eventHR) VALUES(?,?,${eventHR_?})")
 
-    def create(p: ProjectId, seq: EventSeq, e: ActiveEvent, hrs: HashRec.Collection): ConnectionIO[Unit] = {
-      val addEvent = sqlInsert.toUpdate0(p, seq, e).run
+    def create(p: ProjectId, ord: EventOrd, e: ActiveEvent, hrs: HashRec.Collection): ConnectionIO[Unit] = {
+      val addEvent = sqlInsert.toUpdate0(p, ord, e).run
       // TODO Send in bulk instead of foldLeft
-      hrs.foldLeft(addEvent)(_ *> sqlInsertHashRecs.toUpdate0(p, seq, _).run).void.inTransaction
+      hrs.foldLeft(addEvent)(_ *> sqlInsertHashRecs.toUpdate0(p, ord, _).run).void.inTransaction
     }
 
-    val sqlSelectAll = Query[ProjectId, (EventSeq, Event)](
-      s"SELECT seq,$eventE FROM event WHERE project_id=? ORDER BY seq")
+    val sqlSelectAll = Query[ProjectId, (EventOrd, Event)](
+      s"SELECT ord,$eventE FROM event WHERE project_id=? ORDER BY ord")
 
-    val sqlSelectAllHashes = Query[ProjectId, (EventSeq, HashRec)](
-      s"SELECT seq,$eventHR FROM event_hash WHERE project_id=?")
+    val sqlSelectAllHashes = Query[ProjectId, (EventOrd, HashRec)](
+      s"SELECT ord,$eventHR FROM event_hash WHERE project_id=?")
 
-    /** @return Events in order from lowest to highest seq. */
-    def findAll(p: ProjectId): ConnectionIO[Vector[(EventSeq, VerifiedEvent)]] = { // TODO
+    /** @return Events in order from lowest to highest ord. */
+    def findAll(p: ProjectId): ConnectionIO[Vector[(EventOrd, VerifiedEvent)]] = { // TODO
       // TODO DbLogic.event.findAllEvents has shithouse impl
       class Tmp(val e: Event) {
         var hrs = HashRec.emptyCollection
@@ -289,20 +289,20 @@ object DbLogic {
         events <- sqlSelectAll.toQuery0(p).list
         hashes <- sqlSelectAllHashes.toQuery0(p).list
       } yield {
-        val map = collection.mutable.HashMap.empty[EventSeq, Tmp]
+        val map = collection.mutable.HashMap.empty[EventOrd, Tmp]
         for (t <- events)
           map.put(t._1, new Tmp(t._2))
         for (t <- hashes)
           map(t._1).hrs += t._2
-        val result = Vector.newBuilder[(EventSeq, VerifiedEvent)]
-        for ((seq, tmp) <- map)
-          result += ((seq, VerifiedEvent(tmp.e, tmp.hrs)))
+        val result = Vector.newBuilder[(EventOrd, VerifiedEvent)]
+        for ((ord, tmp) <- map)
+          result += ((ord, VerifiedEvent(tmp.e, tmp.hrs)))
         result.result().sortBy(_._1.value)
       }).inTransaction
     }
 
-    /** @return Events in order from lowest to highest seq. */
-    def findAll2(p: ProjectId): ConnectionIO[SortedMap[EventSeq, VerifiedEvent]] = {
+    /** @return Events in order from lowest to highest ord. */
+    def findAll2(p: ProjectId): ConnectionIO[SortedMap[EventOrd, VerifiedEvent]] = {
       // TODO DbLogic.event.findAllEvents has shithouse impl
       class Tmp(val e: Event) {
         var hrs = HashRec.emptyCollection
@@ -311,14 +311,14 @@ object DbLogic {
         events <- sqlSelectAll.toQuery0(p).list
         hashes <- sqlSelectAllHashes.toQuery0(p).list
       } yield {
-        val map = collection.mutable.HashMap.empty[EventSeq, Tmp]
+        val map = collection.mutable.HashMap.empty[EventOrd, Tmp]
         for (t <- events)
           map.put(t._1, new Tmp(t._2))
         for (t <- hashes)
           map(t._1).hrs += t._2
-        val result = SortedMap.newBuilder[EventSeq, VerifiedEvent]
-        for ((seq, tmp) <- map)
-          result += ((seq, VerifiedEvent(tmp.e, tmp.hrs)))
+        val result = SortedMap.newBuilder[EventOrd, VerifiedEvent]
+        for ((ord, tmp) <- map)
+          result += ((ord, VerifiedEvent(tmp.e, tmp.hrs)))
         result.result()
       }).inTransaction
     }

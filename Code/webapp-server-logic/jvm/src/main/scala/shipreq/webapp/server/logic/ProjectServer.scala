@@ -30,7 +30,7 @@ object ProjectServer {
   sealed trait RegistrationError
   case object ProjectNotFound extends RegistrationError
   case object AccessDenied extends RegistrationError
-  final case class BuildError(error: String, events: SortedSet[EventSeq]) extends RegistrationError {
+  final case class BuildError(error: String, events: SortedSet[EventOrd]) extends RegistrationError {
     def eventRange: String =
       NonEmptySet.maybe(events.map(_.value), "∅")(ConciseIntSetFormat.spaced)
   }
@@ -44,11 +44,11 @@ object ProjectServer {
   final case class State(userId         : UserId,
                          projectMetaData: ProjectMetaData,
                          project        : Project,
-                         nextSeq        : EventSeq) {
+                         nextOrd        : EventOrd) {
 
-    def update(project: Project, ve: VerifiedEvent, latestSeq: EventSeq, when: Instant): State = {
+    def update(project: Project, ve: VerifiedEvent, latestOrd: EventOrd, when: Instant): State = {
       val md = projectMetaData.applyEvent(ve, when)
-      State(userId, md, project, latestSeq.succ)
+      State(userId, md, project, latestOrd.succ)
     }
   }
 
@@ -61,11 +61,11 @@ object ProjectServer {
       .takeWhile(_.toMillis <= 3.seconds.toMillis)
       .toList
 
-  def buildProject(load: DB.ProjectLoad): BuildError \/ (Project, EventSeq) =
+  def buildProject(load: DB.ProjectLoad): BuildError \/ (Project, EventOrd) =
     ApplyEvent.trusted.applyVerified(load.values)(Project.empty) match {
       case \/-(p) =>
         val seq = if (load.isEmpty)
-          EventSeq(1) // Nice to reserve 0 for ApplyTemplate.
+          EventOrd(1) // Nice to reserve 0 for ApplyTemplate.
         else
           load.lastKey.succ
         \/-((p, seq))
@@ -172,24 +172,24 @@ object ProjectServer {
       }
 
       private def addEvent(r: RegId, mkEvent: Project => MakeEvent.Result, retries: Retries): F[PotentialChange[AddEventError, VerifiedEvent]] =
-        // Non-atomicity guarded by DB constraint on eventSeq
+        // Non-atomicity guarded by DB constraint on eventOrd
         readState(r).flatMap(s1 =>
           ApplyNewEvent(mkEvent(s1.project), s1.project) match {
             case PotentialChange.Success(updated) =>
-              val eventSeq = s1.nextSeq
-              runDB(db.saveProjectEvent(r.key, eventSeq, updated.ae, updated.ve.hashRecs)).flatMap {
+              val eventOrd = s1.nextOrd
+              runDB(db.saveProjectEvent(r.key, eventOrd, updated.ae, updated.ve.hashRecs)).flatMap {
 
                 case None =>
                   for {
                     now <- svr.now
-                    s2 <- store.storeValueMod(r.key)(_.modValue(_.update(updated.project, updated.ve, eventSeq, now)))
+                    s2 <- store.storeValueMod(r.key)(_.modValue(_.update(updated.project, updated.ve, eventOrd, now)))
                     _ <- s2.fold(fUnit, broadcastEvents(r, NonEmptyVector one updated.ve, _))
                   } yield PotentialChange.Success(updated.ve)
 
                 case Some(error) =>
                   retries match {
                     case Nil =>
-                      val opsInfo = s"Error saving new event ${updated.ae} to project ${r.key.value} with seq #${eventSeq.value}."
+                      val opsInfo = s"Error saving new event ${updated.ae} to project ${r.key.value} with seq #${eventOrd.value}."
                       F pure PotentialChange.Failure(SaveError(opsInfo, error))
                     case delay :: nextRetries =>
                       val retry = addEvent(r, mkEvent, nextRetries)

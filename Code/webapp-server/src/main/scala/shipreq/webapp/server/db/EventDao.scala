@@ -8,7 +8,7 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash._
-import shipreq.webapp.server.logic.EventSeq
+import shipreq.webapp.server.logic.EventOrd
 import ApplyEvent.LogicVer
 import TaggedTypes.JsonStr
 
@@ -718,8 +718,8 @@ object EventSqlHelpers {
   import shipreq.base.db.SqlHelpers._
   import EventDbCodecs.eventCodecRegistry
 
-  implicit val doobieMetaEventSeq: Meta[EventSeq] =
-    doobieMetaCaseClass[EventSeq]
+  implicit val doobieMetaEventOrd: Meta[EventOrd] =
+    doobieMetaCaseClass[EventOrd]
 
   implicit val doobieMetaHashScheme: Meta[HashScheme] =
     doobieMetaChar.xmap(HashScheme unsafeGet HashSchemeId(_), _.id.value)

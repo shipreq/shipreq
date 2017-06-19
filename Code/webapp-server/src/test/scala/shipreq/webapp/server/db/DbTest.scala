@@ -19,7 +19,7 @@ import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.server.data._
-import shipreq.webapp.server.logic.EventSeq
+import shipreq.webapp.server.logic.EventOrd
 import shipreq.webapp.server.security.PasswordAndSalt
 import shipreq.webapp.server.snippet.ResetPassword
 import shipreq.webapp.server.test.{DbUtil, TestDb}
@@ -235,7 +235,7 @@ object DbTest extends TestSuite {
           i => TestDb().runNow { xa =>
             val dbu = DbUtil(xa)
             val projectId = dbu.newProjectId()
-            val seq = EventSeq(seqCounter.incrementAndGet())
+            val seq = EventOrd(seqCounter.incrementAndGet())
             xa ! DbLogic.event.create(projectId, seq, i._1, i._2)
             val loaded =
               dbu.debugSelectOnError(s"select * from event e, event_hash eh where e.project_id=eh.project_id and e.seq=eh.seq and e.seq = ${seq.value}") {

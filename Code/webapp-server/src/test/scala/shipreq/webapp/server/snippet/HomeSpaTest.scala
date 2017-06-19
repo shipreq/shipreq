@@ -46,11 +46,11 @@ object HomeSpaTest extends TestSuite {
           assertEq("Event count", events().length, 2)
 
           // Next event
-          val nextSeq = events().maxBy(_._1.value)._1.succ
+          val nextOrd = events().maxBy(_._1.value)._1.succ
           val p = loadProject()
           val e = FieldStaticRemove(StaticField.StepGraph)
           val ve = verifyEvent(p, e)
-          xa ! DbLogic.event.create(pid, nextSeq, e, ve.hashRecs)
+          xa ! DbLogic.event.create(pid, nextOrd, e, ve.hashRecs)
           val a2 = (xa ! DbLogic.project.findAllProjectMetaDataForUser(uid)).head
           assertEq("Next eventCount", a2.eventCount, a.eventCount + 1)
           loadProject()

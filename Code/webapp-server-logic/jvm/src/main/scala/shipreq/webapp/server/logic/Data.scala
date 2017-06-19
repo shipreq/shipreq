@@ -17,11 +17,16 @@ object ProjectId {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-final case class EventSeq(value: Int) { // not AnyVal, it gets boxed
-  def succ = EventSeq(value + 1)
+/**
+  * Event ordinal.
+  *
+  * The order of an event in an event stream.
+  */
+final case class EventOrd(value: Int) { // not AnyVal, it gets boxed
+  def succ = EventOrd(value + 1)
 }
 
-object EventSeq {
-  implicit val ordering: Ordering[EventSeq] =
+object EventOrd {
+  implicit val ordering: Ordering[EventOrd] =
     Ordering.by(_.value)
 }
