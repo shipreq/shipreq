@@ -2,7 +2,7 @@ package shipreq.webapp.server.snippet
 
 import java.time.Instant
 import utest._
-import shipreq.webapp.base.data.{Project, ProjectMetaData, StaticField}
+import shipreq.webapp.base.data.{Project, StaticField}
 import shipreq.webapp.base.event.FieldStaticRemove
 import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.logic.ProjectId
@@ -46,7 +46,7 @@ object HomeSpaTest extends TestSuite {
           assertEq("Event count", events().length, 2)
 
           // Next event
-          val nextOrd = events().maxBy(_._1.value)._1.succ
+          val nextOrd = events().maxBy(_._1.value)._1 + 1
           val p = loadProject()
           val e = FieldStaticRemove(StaticField.StepGraph)
           val ve = verifyEvent(p, e)

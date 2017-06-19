@@ -8,7 +8,7 @@ import japgolly.scalajs.react.vdom.VdomElement
 import shipreq.base.util.{Allow, Intersection}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{FilterDead, ReqId}
-import shipreq.webapp.base.event.VerifiedEvents
+import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.filter.PotentialFilter
 import shipreq.webapp.base.protocol.{ProjectSpaProtocols, UpdateContentCmd}
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
@@ -31,7 +31,7 @@ object LoadedRoot {
   case class Props(page: Page, routerCtl: RouterCtl)
 }
 
-final class LoadedRoot(initData: ProjectSpaProtocols.InitClient, cp: ClientProtocol, val cd: ClientData) {
+final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtocol, val cd: ClientData) {
 
   final class Backend($: BackendScope[Props, State]) extends OnUnmount {
     import cd.pxProject
@@ -49,7 +49,7 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitClient, cp: ClientProto
     val pxCreateEditability = pxProject.map(p => CreateFeature.Editability(p.config))
     val pxEditEditability   = pxProject.map(EditorFeature.Editability.apply)
 
-    val updateIO: ServerSideProcInvoker[UpdateContentCmd, VerifiedEvents] =
+    val updateIO: ServerSideProcInvoker[UpdateContentCmd, VerifiedEvent.Seq] =
       cd.serverSideProcToEvents(initData.updateContent, cp)
 
     val previewW: PreviewFeature.Write.Composite[PreviewId] =

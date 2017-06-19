@@ -7,14 +7,14 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import UnivEq.emptySet
 
-case class Changes(ves: VerifiedEvents, p1: Project, p2: Project) {
+case class Changes(ves: VerifiedEvent.NonEmptySeq, p1: Project, p2: Project) {
   private var _customReqTypes  : Set[CustomReqTypeId  ] = emptySet
   private var _customIssueTypes: Set[CustomIssueTypeId] = emptySet
   private var _customFieldTypes: Set[CustomFieldId    ] = emptySet
   private var _tagsChanged  = false
   private var _staticFields = false
 
-  for (ve <- ves)
+  for (ve <- ves.events.whole)
     ve.event match {
       case e: CustomIssueTypeCreate  => _customIssueTypes += e.id
       case e: CustomIssueTypeDelete  => _customIssueTypes += e.id

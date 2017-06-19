@@ -21,11 +21,11 @@ object Main extends ClientSideProcImpl(ProjectSpaProtocols.EntryPoint) {
     if (m.matches) BaseUrl(m group 1) else BaseUrl(url).endWith_/
   }
 
-  override def run(i: ProjectSpaProtocols.InitClient): Unit = {
+  override def run(i: ProjectSpaProtocols.InitData): Unit = {
     val cp = ClientProtocol.Default
     BaseStyles.addToDocument()
     Style.addToDocument()
-    ClientData.init(i.projectMetaData, cp, i.projectInit)(onSuccess, onFailure).runNow()
+    ClientData.initAsync(i.projectMetaData, cp, i.initAsync)(onSuccess, onFailure).runNow()
 
     def domTarget() =
       dom.document.getElementById("tgt")

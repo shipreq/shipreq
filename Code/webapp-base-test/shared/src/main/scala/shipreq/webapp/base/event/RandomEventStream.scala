@@ -54,7 +54,7 @@ object RandomEventStream {
 
   val InitialEventCount = 2
 
-  lazy val initialEvents: Gen[(Project, VerifiedEvents)] =
+  lazy val initialEvents: Gen[(Project, Vector[VerifiedEvent])] =
     Vector(
       liftGE(RandomData.events.genProjectTemplateApply),
       liftPGE(ApplicableEventGen(_).genProjectNameSet)
@@ -65,12 +65,12 @@ object RandomEventStream {
   val verifiedEvent: ProjectDepGen[VerifiedEvent] =
     StateGen(ApplicableEventGen(_).verifiedEvent)
 
-  def verifiedEvents(implicit ss: SizeSpec): ProjectDepGen[VerifiedEvents] =
+  def verifiedEvents(implicit ss: SizeSpec): ProjectDepGen[Vector[VerifiedEvent]] =
     StateGen(p =>
       ss.gen.flatMap(size =>
         Vector.fill(size)(verifiedEvent).sequenceU.run(p)))
 
-  def entireEventStream(implicit ss: SizeSpec): Gen[(Project, VerifiedEvents, VerifiedEvents)] =
+  def entireEventStream(implicit ss: SizeSpec): Gen[(Project, Vector[VerifiedEvent], Vector[VerifiedEvent])] =
     for {
       (p1, e1) <- initialEvents
       (p2, e2) <- verifiedEvents(ss).run(p1)

@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.app.cfg.shared
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import japgolly.scalajs.react.ScalazReact._
 import scalaz.{Name, Need}
-import shipreq.webapp.base.event.VerifiedEvents
+import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.protocol.{ErrorMsg, ServerSideProc}
 import shipreq.webapp.base.validation._
 import shipreq.webapp.client.base.data.TCB
@@ -76,7 +76,7 @@ object Persistence {
       needSave, updateIO, realise)
 
 
-  def simpleAsyncUpdate[S, K, P, I, R <: ServerSideProc.Protocol.Aux[ErrorMsg, (K, I), VerifiedEvents]]
+  def simpleAsyncUpdate[S, K, P, I, R <: ServerSideProc.Protocol.Aux[ErrorMsg, (K, I), VerifiedEvent.Seq]]
       (store   : SavedRowStore[S, K, P, I])
       (remoteFn: ServerSideProc.For[R],
        cd      : ClientData,
@@ -88,7 +88,7 @@ object Persistence {
       val saveio = retryably[ReactST[CallbackTo, S, Unit]](retry => {
         val v = store.getI(id)(state)
         val f = Persistence.failureIO(retry)(realise, setStatus)
-        val io = cp.call(remoteFn)((id, v), cd.applyEventsS, _.consume >> f)
+        val io = cp.call(remoteFn)((id, v), cd.applyEventSeqSCB, _.consume >> f)
         ReactS retM io
       })
       saveio >> setStatus(RowStatus.Locked)

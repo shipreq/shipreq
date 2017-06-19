@@ -195,7 +195,7 @@ private[fields] object MainTable {
 
     private def call(a: CfgAction): (TCB.Success, TCB.Failure) => Callback =
       (s, f) => cp.call(remote)(a,
-        s << cd.applyEvents(_),
+        cd.applyEventSeqSCB(_) >> s,
         _.consume >> f)
 
     def createIO(v: Values) =

@@ -36,7 +36,7 @@ final case class ProjectMetaData(id           : Project.XId,
       lastUpdatedAt = Some(when))
   }
 
-  def applyEvents(ve: VerifiedEvents, when: Instant): ProjectMetaData =
+  def applyEvents(ve: TraversableOnce[VerifiedEvent], when: Instant): ProjectMetaData =
     ve.foldLeft(this)(_.applyEvent(_, when))
 }
 

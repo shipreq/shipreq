@@ -58,8 +58,7 @@ object CfgTagsTest extends TestSuite {
                 Name("Blah"),
                 Parents(Map(1.TG -> priMed.some)),
                 Children(Vector(10.TG))))
-      val ves = verifyEvents(clientData.project())(e)
-      clientData.applyEvents(ves).runNow()
+      clientData.applyTestEventsCB(e).runNow()
 
       assertEq(nameAsTextTree(c).mkString("\n"),
         """

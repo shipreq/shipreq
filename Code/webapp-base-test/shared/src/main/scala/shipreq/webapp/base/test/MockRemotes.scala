@@ -11,10 +11,10 @@ object MockRemotes {
 
   def mockUsername = Username("testuser")
 
-  def projectSpa(p: Project): ProjectSpaProtocols.InitClient =
+  def projectSpa(p: Project): ProjectSpaProtocols.InitData =
     projectSpa(p, mockUsername)
 
-  def projectSpa(p: Project, username: Username): ProjectSpaProtocols.InitClient = {
+  def projectSpa(p: Project, username: Username): ProjectSpaProtocols.InitData = {
     val now = Instant.now()
     val pi = ProjectMetaData(
       ExternalId("test"),
@@ -26,15 +26,15 @@ object MockRemotes {
     projectSpa(pi, username)
   }
 
-  def projectSpa(p: ProjectMetaData): ProjectSpaProtocols.InitClient =
+  def projectSpa(p: ProjectMetaData): ProjectSpaProtocols.InitData =
     projectSpa(p, mockUsername)
 
-  def projectSpa(p: ProjectMetaData, username: Username): ProjectSpaProtocols.InitClient = {
+  def projectSpa(p: ProjectMetaData, username: Username): ProjectSpaProtocols.InitData = {
     import ProjectSpaProtocols._
-    ProjectSpaProtocols.InitClient(
+    ProjectSpaProtocols.InitData(
       username,
       p,
-      ServerSideProc("projectInit"   , ProjectInit          ),
+      ServerSideProc("initAsync"     , InitAsync            ),
       ServerSideProc("issueTypeCrud" , CustomIssueTypeCrud  ),
       ServerSideProc("reqTypeCrud"   , CustomReqTypeCrud    ),
       ServerSideProc("reqTypeImpMod" , ReqTypeImplicationMod),

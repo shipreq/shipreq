@@ -7,7 +7,7 @@ import monocle.macros.Lenses
 import org.scalajs.dom.html
 import utest._
 import shipreq.webapp.base.data.{ProjectMetaData, Username}
-import shipreq.webapp.base.protocol.HomeSpaProtocols.InitClient
+import shipreq.webapp.base.protocol.HomeSpaProtocols.InitData
 import shipreq.webapp.base.test.MockRemotes
 import shipreq.webapp.client.base.test.TestClientProtocol
 import shipreq.webapp.client.base.test.TestState._
@@ -103,7 +103,7 @@ object HomeTest extends TestSuite {
 
   def run(ps: List[ProjectMetaData])(plan: *.Plan): Report[String] = {
     val cp = new TestClientProtocol(false)
-    val init = InitClient(Username("thatguy"), ps, MockRemotes.createProjectFn)
+    val init = InitData(Username("thatguy"), ps, MockRemotes.createProjectFn)
     val props = Home.Props(init, cp)
     ReactTestUtils.withRenderedIntoDocument(props.render)(c =>
       plan

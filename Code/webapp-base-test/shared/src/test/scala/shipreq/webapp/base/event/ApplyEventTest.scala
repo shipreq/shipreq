@@ -48,7 +48,7 @@ object ApplyEventTest extends TestSuite {
     var totalStats = EventStats.empty
     val totalStatsLock = new AnyRef
 
-    val gen: Gen[VerifiedEvents] =
+    val gen: Gen[Vector[VerifiedEvent]] =
       Gen { ctx =>
         var lvs   = genLogicVerSeq run ctx
         var hss   = genHashSchemeSeq run ctx
@@ -110,7 +110,7 @@ object ApplyEventTest extends TestSuite {
         ves
       }
 
-    def mkProp(AE: ApplyEvent) = Prop.atom[VerifiedEvents](AE.trust.toString,
+    def mkProp(AE: ApplyEvent) = Prop.atom[Vector[VerifiedEvent]](AE.trust.toString,
       ves => {
         def getP2 = AE(ves.map(_.event))(Project.empty).toOption
 
@@ -148,7 +148,7 @@ object ApplyEventTest extends TestSuite {
                   }
                 }
                 def pv(v: VerifiedEvent) = v.hashRecs.map(inspect(_, p2)).mkString(", ")
-                def pvs(vs: VerifiedEvents) = (s"${vs.length} events." +: vs.map(v => s"  - ${EventStats name v.event} - ${pv(v)}")).mkString("\n")
+                def pvs(vs: Vector[VerifiedEvent]) = (s"${vs.length} events." +: vs.map(v => s"  - ${EventStats name v.event} - ${pv(v)}")).mkString("\n")
                 "Generated: " + pvs(ves) + "\n"
               }
             Some(failure)

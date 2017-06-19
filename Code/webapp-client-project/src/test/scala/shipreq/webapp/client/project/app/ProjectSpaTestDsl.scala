@@ -158,8 +158,8 @@ object ProjectSpaTestDsl {
   def applyEvents(e: Event*): *.Actions =
     applyEvents(e.mkString("Apply events: ", ", ", "."), e: _*)
 
-  def applyEvents(name: => String, e: Event*): *.Actions =
-    *.action(name)(_.ref.cd.applyTestEvents(e: _*))
+  def applyEvents(name: => String, es: Event*): *.Actions =
+    *.action(name)(_.ref.cd.applyTestEventsCB(es: _*).runNow())
       .updateStateBy(i => i.state.copy(project = i.obs.project))
 
   def liftProjectHomeTests(p: PH.*.Plan): *.Plan = p.lift

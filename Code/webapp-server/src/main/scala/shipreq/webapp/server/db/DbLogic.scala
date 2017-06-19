@@ -10,10 +10,10 @@ import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.SqlHelpers._
 import shipreq.taskman.api.{EmailAddr, UserId}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.{ActiveEvent, Event, VerifiedEvent}
+import shipreq.webapp.base.event.{ActiveEvent, Event, EventOrd, VerifiedEvent}
 import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.server.data._
-import shipreq.webapp.server.logic.{EventOrd, ProjectId}
+import shipreq.webapp.server.logic.ProjectId
 import shipreq.webapp.server.security.PasswordAndSalt
 import SqlHelpers._
 

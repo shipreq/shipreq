@@ -39,7 +39,7 @@ trait WebappTestUtil extends BaseTestUtil {
     (p2, VerifiedEvent(e, hrs))
   }
 
-  def verifyEvents(p0: Project)(es: Event*): VerifiedEvents = {
+  def verifyEvents(p0: Project)(es: Event*): Vector[VerifiedEvent] = {
     var p = p0
     es.toVector.map { e =>
       val (p2, ve) = _verifyEvent(p, e)

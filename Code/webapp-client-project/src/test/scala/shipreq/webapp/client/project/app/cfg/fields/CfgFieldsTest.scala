@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.app.cfg.fields
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import scala.scalajs.js.JSConverters._
@@ -25,12 +26,12 @@ object CfgFieldsTest extends TestSuite {
 
   val remote = ServerSideProc("x", FieldCrud.Protocol)
   class Tester {
-    lazy val filterDead = ReactTestVar[FilterDead](HideDead)
-    lazy val clientData = TestClientData(S.project)
-    lazy val cp         = new TestClientProtocol(true)
-    lazy val props      = new CfgFields.Props(cp, remote, clientData, filterDead.stateSnapshotWithReuse())
-    lazy val re         = MainTable.Component(props)
-    lazy val c          = ReactTestUtils.renderIntoDocument(re)
+    lazy val fd    = ReactTestVar[FilterDead](HideDead)
+    lazy val cd    = TestClientData(S.project)
+    lazy val cp    = new TestClientProtocol(true)
+    lazy val props = new CfgFields.Props(cp, remote, cd, fd.stateSnapshotWithReuse())
+    lazy val re    = MainTable.Component(props)
+    lazy val c     = ReactTestUtils.renderIntoDocument(re)
 
     def selectNewText() =
       c.modState(State.newFieldTypeSel set \/-(CustomFieldType.Text))
@@ -51,6 +52,9 @@ object CfgFieldsTest extends TestSuite {
     val t = new Tester
     import t._
 
+    implicit def hack(ves: Vector[VerifiedEvent]): VerifiedEvent.Seq =
+      cd.verifiedEventSeq(ves).runNow()
+
     selectNewText()
     def html = c.getDOMNode.outerHTML
     val initialView = html
@@ -67,10 +71,10 @@ object CfgFieldsTest extends TestSuite {
 
     // Server communication
     cp.assertReqsSent(1)
-    cp.respondToLast(remote){
+    cp.respondToLast(remote) {
       import CustomTextFieldGD._
       val e = FieldCustomTextCreate(666, nev(Name("blahh"), Key("blahh"), Mandatory(true), ReqTypes(allReqTypes)))
-      verifyEvents(clientData.project())(e)
+      cd.verifyEventsCB(e).runNow()
     }
     assert(getNewRow.isEmpty)
 
@@ -84,7 +88,7 @@ object CfgFieldsTest extends TestSuite {
         .toJSArray)
     cp.assertReqsSent(2)
     cp.respondToLast(remote)(
-      verifyEvents(clientData.project())(FieldCustomDelete(666.CFText)))
+      cd.verifyEventsCB(FieldCustomDelete(666.CFText)).runNow())
 
     assertEq(htmlScrub run html, htmlScrub run initialView)
   }

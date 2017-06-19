@@ -13,13 +13,16 @@ import nyaya.test.Settings
 import nyaya.test.PropTest._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.VerifiedEvents
+import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.{RandomData => $}
 import $.TextGenExt
 
 object ProtocolTest extends TestSuite {
 
-  implicit val equalProjectSpa: Equal[ProjectSpaProtocols.InitClient] =
+  implicit val equalProjectSpaInitData: Equal[ProjectSpaProtocols.InitData] =
+    ScalazMacros.deriveEqual
+
+  implicit val equalProjectSpaInitAsyncData: Equal[ProjectSpaProtocols.InitAsyncData] =
     ScalazMacros.deriveEqual
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -72,13 +75,12 @@ object ProtocolTest extends TestSuite {
     def propO(implicit e: Equal[O]) = propA[O](logFmtO, s"$subject⁺: read(write(a)) = a")
   }
 
-
   override def tests = TestSuite {
 
     // TODO Add more procs
 
     'ServerSideProcs {
-      type CrudFn[I] = ServerSideProc.Protocol.Aux[ErrorMsg, I, VerifiedEvents]
+      type CrudFn[I] = ServerSideProc.Protocol.Aux[ErrorMsg, I, VerifiedEvent.Seq]
 
       def testCrud[I](r: CrudFn[I])(g: Gen[r.Input])(implicit e: Equal[r.Input]): Unit =
         kitR(r).propI mustBeSatisfiedBy g
@@ -86,7 +88,7 @@ object ProtocolTest extends TestSuite {
       def testUnitI[O](r: ServerSideProc.Protocol.Aux[ErrorMsg, Unit, O])(g: Gen[O])(implicit e: Equal[O]): Unit =
         kitR(r).propO mustBeSatisfiedBy g
 
-      'ProjectInit         - testUnitI(ProjectSpaProtocols.ProjectInit       )($.project)
+      'InitAsync           - testUnitI(ProjectSpaProtocols.InitAsync         )($.routines.projectSpaInitAsyncData)
       'CustomIssueTypeCrud - testCrud(ProjectSpaProtocols.CustomIssueTypeCrud)($.routines.customIssueTypeCrud.any)
       'CustomReqTypeCrud   - testCrud(ProjectSpaProtocols.CustomReqTypeCrud  )($.routines.customReqTypeCrud.any)
       'TagCrud             - testCrud(TagCrud.Protocol                       )($.routines.tagCrud.any)

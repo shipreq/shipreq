@@ -1,19 +1,19 @@
 package shipreq.webapp.client.project.test
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import shipreq.base.util.PotentialChange._
 import shipreq.webapp.base.data.Project
-import shipreq.webapp.base.event.VerifiedEvents
+import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.client.base.data.TCB
 import shipreq.webapp.client.base.protocol.RemoteFailure
 import shipreq.webapp.client.base.test._
-import shipreq.webapp.client.project.app.state.ClientData
 import shipreq.webapp.server.logic._
 import ProjectSpaProtocols._
 import TestClientProtocol.Req
 
-class MockServer(project: CallbackTo[Project], update: VerifiedEvents => Callback) extends TestClientProtocol(true) {
+final case class MockServer(cd: TestClientData) extends TestClientProtocol(true) {
 
   type Attempt = PartialFunction[(ServerSideProc.Protocol, Any, Project), MakeEvent.Result]
 
@@ -37,26 +37,22 @@ class MockServer(project: CallbackTo[Project], update: VerifiedEvents => Callbac
     attemptI(ProjectNameSet       )(MakeEvent.projectNameSetFn)
 
   override def autoResponse(r: Req): Callback =
-    project >>= { p1 =>
+    cd.projectCB >>= { p1 =>
       // ah the hacks
-      def successVE = r.success.asInstanceOf[VerifiedEvents => TCB.Success]
+      def successVE = r.success.asInstanceOf[VerifiedEvent.Seq => TCB.Success]
 
       val h = handler((r.proc.protocol, r.input, p1))
       ApplyNewEvent(h, p1) match {
 
         case Success(ApplyNewEvent.Updated(p2, ae, ve)) =>
-          update(Vector.empty :+ ve) >> successVE(Vector.empty :+ ve).cb
+          cd.verifiedEventNES(NonEmptyVector one ve).flatMap(ves =>
+            cd.applyEventSeqCB(ves) >> successVE(ves).cb)
 
         case Unchanged =>
-          Callback.empty >> successVE(Vector.empty).cb
+          successVE(VerifiedEvent.EmptySeq).cb
 
         case Failure(e) =>
           r.failure(RemoteFailure lift e.asInstanceOf[r.proc.protocol.Failure]).cb
       }
     }
-}
-
-object MockServer {
-  def apply(cd: ClientData): MockServer =
-    new MockServer(cd.projectCB, cd.applyEvents)
 }

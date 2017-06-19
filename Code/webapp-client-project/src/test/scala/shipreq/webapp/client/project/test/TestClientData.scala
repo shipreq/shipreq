@@ -1,44 +1,45 @@
 package shipreq.webapp.client.project.test
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra.Px
-import scalaz.{-\/, \/, \/-}
-import shipreq.webapp.base.data.{Project, ProjectMetaData}
+import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.client.project.app.state.{Changes, ClientData}
-import shipreq.webapp.client.project.lib.DataReusability.reusabilityProject
+import shipreq.webapp.client.project.app.state.{ClientData, ProjectState}
 
-final class TestClientData(init: Project, pi: Option[ProjectMetaData]) extends ClientData {
-  override val pxProject = Px(init).withReuse.manualUpdate
+final class TestClientData(initState: ProjectState) extends ClientData(initState) {
 
-  override var _projectMetaData = pi getOrElse looseProjectMetaData(init)
-
-  override def applyEvents(ves: VerifiedEvents): Callback =
-    CallbackTo(tryApplyVerifiedEvents(ves)) >>= {
-      case \/-(c)   => applyChanges(c)
-      case -\/(err) => Callback.empty
+  val nextEventOrd: CallbackTo[EventOrd] =
+    CallbackTo {
+      val s = mutableState.state()
+      assert(s.futureEvents.isEmpty)
+      s.latestEventOrd + 1
     }
 
-  def applyChanges(c: Changes): Callback =
-    Callback(pxProject.set(c.p2)) >> updateProjectMetaData(c.ves) >> broadcast(c)
+  def verifiedEventSeq(ves: Traversable[VerifiedEvent]): CallbackTo[VerifiedEvent.Seq] =
+    NonEmptyVector.option(ves.toVector)
+      .map(verifiedEventNES)
+      .getOrElse(CallbackTo(VerifiedEvent.EmptySeq))
 
-  def tryApplyVerifiedEvents(ves: VerifiedEvents): String \/ Changes = {
-    val p1 = project()
-    ApplyEvent.trusted.applyVerified(ves)(p1)
-      .map(p2 => Changes(ves, p1, p2))
+  def verifiedEventNES(ves: NonEmptyVector[VerifiedEvent]): CallbackTo[VerifiedEvent.NonEmptySeq] =
+    nextEventOrd.map(VerifiedEvent.NonEmptySeq(_, ves))
+
+  def applyEventsCB(ves: Traversable[VerifiedEvent]): Callback =
+    NonEmptyVector.maybe(ves.toVector, Callback.empty)(
+      verifiedEventNES(_).flatMap(applyEventSeqCB))
+
+  def verifyEventsCB(es: Event*): CallbackTo[Vector[VerifiedEvent]] = {
+    val v = es.toList // avoid Scala bug
+    projectCB.map(verifyEvents(_)(v: _*))
   }
 
-  def applyTestEvents(e: Event*): Unit = {
-    val ves = verifyEvents(project())(e: _*)
-    tryApplyVerifiedEvents(ves) match {
-      case \/-(c)   => applyChanges(c).runNow()
-      case -\/(err) => fail("Failed to apply event(s): " + err)
-    }
-  }
+  def applyTestEventsCB(es: Event*): Callback =
+    verifyEventsCB(es: _*).flatMap(applyEventsCB)
 }
 
 object TestClientData {
-  def apply(p: Project, pi: ProjectMetaData = null) =
-    new TestClientData(p, Option(pi))
+
+  def apply(p: Project): TestClientData =
+    new TestClientData(ProjectState.init(
+      p, looseProjectMetaData(p, eventCount = 201), EventOrd(200)))
 }

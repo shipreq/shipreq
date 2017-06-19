@@ -27,7 +27,7 @@ final class CrudActionIO[D, I, U, RD <: CrudProtocol.Aux[I, U]](cp        : Clie
 
   private def crudIO(s: TCB.Success, f: TCB.Failure, a: CrudAction[I, U]): Callback = {
     cp.call(remote)(a,
-      s << clientData.applyEvents(_),
+      clientData.applyEventSeqSCB(_) >> s,
       _.consume >> f)
   }
 

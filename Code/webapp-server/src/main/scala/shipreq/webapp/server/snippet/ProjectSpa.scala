@@ -54,7 +54,7 @@ final class ProjectSpa(projectId: ProjectId) extends SingleOpStatelessSnippet {
     val regId: ProjectServer.RegId =
       comet.getRegId getOrElse newRegId()
 
-    val init: ProjectSpaProtocols.InitClient =
+    val init: ProjectSpaProtocols.InitData =
       logic.initialClient(regId, user.username).unsafePerformIO()
 
     "*" #> (
@@ -78,7 +78,7 @@ object ProjectSpaComet {
 
   sealed trait Msg
   final case class AddRegistrant(id: ProjectServer.RegId) extends Msg
-  final case class UpdateProject(es: NonEmptyVector[VerifiedEvent]) extends Msg
+  final case class UpdateProject(es: VerifiedEvent.NonEmptySeq) extends Msg
 }
 
 /** One of these is created per session = 1/user/browser.

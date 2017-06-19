@@ -14,12 +14,12 @@ object HomeSpaProtocols {
 
   import CreateProject.{pickleInstance => _i1}
 
-  final case class InitClient(username     : Username,
-                              projects     : List[ProjectMetaData],
-                              createProject: CreateProject.Instance)
+  final case class InitData(username     : Username,
+                            projects     : List[ProjectMetaData],
+                            createProject: CreateProject.Instance)
 
-  implicit val picklerInitClient = pickleCaseClass[InitClient]
+  implicit val picklerInitData = pickleCaseClass[InitData]
 
   final val EntryPointName = "H"
-  val EntryPoint = ClientSideProc[InitClient](EntryPointName)
+  val EntryPoint = ClientSideProc[InitData](EntryPointName)
 }

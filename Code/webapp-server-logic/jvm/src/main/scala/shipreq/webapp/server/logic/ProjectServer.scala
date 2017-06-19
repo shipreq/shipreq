@@ -1,6 +1,6 @@
 package shipreq.webapp.server.logic
 
-import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
+import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.univeq._
 import java.time.Instant
 import scala.collection.immutable.SortedSet
@@ -10,7 +10,7 @@ import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.taskman.api.UserId
 import shipreq.webapp.base.data.{Project, ProjectMetaData, Username}
-import shipreq.webapp.base.event.{ApplyEvent, VerifiedEvent, VerifiedEvents}
+import shipreq.webapp.base.event.{ApplyEvent, EventOrd, VerifiedEvent}
 import shipreq.webapp.base.protocol.ProjectSpaProtocols
 import ProjectServer._
 import Server.Retries
@@ -18,14 +18,14 @@ import Server.Retries
 trait ProjectServer[F[_]] {
   def register(pid: ProjectId, userId: UserId, recv: Recv[F]): F[RegistrationError \/ RegId]
   def unregister(r: RegId): F[Unit]
-  def initialClient(r: RegId, username: Username): F[ProjectSpaProtocols.InitClient]
+  def initialClient(r: RegId, username: Username): F[ProjectSpaProtocols.InitData]
 }
 
 object ProjectServer {
 
   type RegId = Store.Register.RegId[ProjectId]
 
-  type Recv[F[_]] = NonEmptyVector[VerifiedEvent] => F[Unit]
+  type Recv[F[_]] = VerifiedEvent.NonEmptySeq => F[Unit]
 
   sealed trait RegistrationError
   case object ProjectNotFound extends RegistrationError
@@ -48,7 +48,7 @@ object ProjectServer {
 
     def update(project: Project, ve: VerifiedEvent, latestOrd: EventOrd, when: Instant): State = {
       val md = projectMetaData.applyEvent(ve, when)
-      State(userId, md, project, latestOrd.succ)
+      State(userId, md, project, latestOrd + 1)
     }
   }
 
@@ -67,7 +67,7 @@ object ProjectServer {
         val seq = if (load.isEmpty)
           EventOrd(1) // Nice to reserve 0 for ApplyTemplate.
         else
-          load.lastKey.succ
+          load.lastKey + 1
         \/-((p, seq))
       case -\/(e) =>
         -\/(BuildError(e, load.keySet))
@@ -121,21 +121,25 @@ object ProjectServer {
       def unregister(r: RegId): F[Unit] =
         register.unregister(r)
 
-      def initialClient(r: RegId, username: Username): F[ProjectSpaProtocols.InitClient] =
-        readState(r).flatMap(initDataForProjectSpa(r, username, _))
-
       // TODO Handle null ↓ Should never happen but in the world of concurrency stranger things have happened
       private def readState(r: RegId): F[State] =
         register.get(r.key).map(_.getOrNull)
 
-      private def initDataForProjectSpa(r: RegId, username: Username, s: State): F[ProjectSpaProtocols.InitClient] = {
+      def initialClient(r: RegId, username: Username): F[ProjectSpaProtocols.InitData] =
+        readState(r).flatMap(initDataForProjectSpa(r, username, _))
+
+      def initAsyncData(r: RegId): F[ProjectSpaProtocols.InitAsyncData] =
+        readState(r).map(s => ProjectSpaProtocols.InitAsyncData(
+          s.project, s.nextOrd - 1))
+
+      private def initDataForProjectSpa(r: RegId, username: Username, s: State): F[ProjectSpaProtocols.InitData] = {
         import shipreq.webapp.base.protocol._
         import ProjectSpaProtocols._
 
-        def updProj(mkEvent: Project => MakeEvent.Result): F[ErrorMsg \/ VerifiedEvents] =
+        def updProj(mkEvent: Project => MakeEvent.Result): F[ErrorMsg \/ VerifiedEvent.Seq] =
           addEvent(r, mkEvent, SaveRetries).map {
-            case PotentialChange.Success(ve) => \/-(Vector1(ve))
-            case PotentialChange.Unchanged   => \/-(Vector.empty)
+            case PotentialChange.Success(es) => \/-(es)
+            case PotentialChange.Unchanged   => \/-(VerifiedEvent.EmptySeq)
             case PotentialChange.Failure(e)  =>
               val msg: String = e match {
                 case EventRejected(reason) => reason
@@ -146,7 +150,7 @@ object ProjectServer {
 
         import svr.{createServerSideProc => f}
         for {
-          projectInit           ← f(ProjectInit          )(_ => readState(r).map(s => \/-(s.project)))
+          projectInit           ← f(InitAsync            )(_ => initAsyncData(r).map(\/-(_)))
           customReqTypeCrud     ← f(CustomReqTypeCrud    )(i => updProj(p ⇒ MakeEvent.customReqTypeCrud(i, p)))
           reqTypeImplicationMod ← f(ReqTypeImplicationMod)(i => updProj(_ ⇒ MakeEvent.reqTypeImplicationMod(i)))
           customIssueTypeCrud   ← f(CustomIssueTypeCrud  )(i => updProj(p ⇒ MakeEvent.customIssueTypeCrud(i, p)))
@@ -156,7 +160,7 @@ object ProjectServer {
           createContent         ← f(CreateContent        )(i => updProj(p ⇒ MakeEvent.createContent(i, p)))
           updateContent         ← f(UpdateContent        )(i => updProj(p ⇒ MakeEvent.updateContent(i, p)))
           projectNameSet        ← f(ProjectNameSet       )(i => updProj(_ ⇒ MakeEvent.projectNameSetFn(i)))
-        } yield InitClient(
+        } yield InitData(
           username,
           s.projectMetaData,
           projectInit,
@@ -171,25 +175,26 @@ object ProjectServer {
           projectNameSet)
       }
 
-      private def addEvent(r: RegId, mkEvent: Project => MakeEvent.Result, retries: Retries): F[PotentialChange[AddEventError, VerifiedEvent]] =
+      private def addEvent(r: RegId, mkEvent: Project => MakeEvent.Result, retries: Retries): F[PotentialChange[AddEventError, VerifiedEvent.NonEmptySeq]] =
         // Non-atomicity guarded by DB constraint on eventOrd
         readState(r).flatMap(s1 =>
           ApplyNewEvent(mkEvent(s1.project), s1.project) match {
             case PotentialChange.Success(updated) =>
-              val eventOrd = s1.nextOrd
-              runDB(db.saveProjectEvent(r.key, eventOrd, updated.ae, updated.ve.hashRecs)).flatMap {
+              val ord = s1.nextOrd
+              runDB(db.saveProjectEvent(r.key, ord, updated.ae, updated.ve.hashRecs)).flatMap {
 
                 case None =>
+                  val ves = VerifiedEvent.NonEmptySeq.one(ord, updated.ve)
                   for {
                     now <- svr.now
-                    s2 <- store.storeValueMod(r.key)(_.modValue(_.update(updated.project, updated.ve, eventOrd, now)))
-                    _ <- s2.fold(fUnit, broadcastEvents(r, NonEmptyVector one updated.ve, _))
-                  } yield PotentialChange.Success(updated.ve)
+                    s2 <- store.storeValueMod(r.key)(_.modValue(_.update(updated.project, updated.ve, ord, now)))
+                    _ <- s2.fold(fUnit, broadcastEvents(r, ves, _))
+                  } yield PotentialChange.Success(ves)
 
                 case Some(error) =>
                   retries match {
                     case Nil =>
-                      val opsInfo = s"Error saving new event ${updated.ae} to project ${r.key.value} with seq #${eventOrd.value}."
+                      val opsInfo = s"Error saving new event ${updated.ae} to project ${r.key.value} with ordinal #${ord.value}."
                       F pure PotentialChange.Failure(SaveError(opsInfo, error))
                     case delay :: nextRetries =>
                       val retry = addEvent(r, mkEvent, nextRetries)
@@ -205,8 +210,8 @@ object ProjectServer {
           }
         )
 
-      val broadcastEvents: (RegId, NonEmptyVector[VerifiedEvent], Node) => F[Unit] = {
-        def go(allow: Long => Boolean, verifiedEvents: NonEmptyVector[VerifiedEvent], state: Node): F[Unit] = {
+      val broadcastEvents: (RegId, VerifiedEvent.NonEmptySeq, Node) => F[Unit] = {
+        def go(allow: Long => Boolean, verifiedEvents: VerifiedEvent.NonEmptySeq, state: Node): F[Unit] = {
           //s.registrants.iterator
           //  .filter(x => allow(x._1))
           //  .map(_._2(verifiedEvents))

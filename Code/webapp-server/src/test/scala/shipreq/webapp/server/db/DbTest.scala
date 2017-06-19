@@ -19,7 +19,6 @@ import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.server.data._
-import shipreq.webapp.server.logic.EventOrd
 import shipreq.webapp.server.security.PasswordAndSalt
 import shipreq.webapp.server.snippet.ResetPassword
 import shipreq.webapp.server.test.{DbUtil, TestDb}

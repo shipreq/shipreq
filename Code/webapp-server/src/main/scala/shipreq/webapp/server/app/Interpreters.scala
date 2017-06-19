@@ -8,7 +8,7 @@ import scalaz.~>
 import shipreq.base.db.DoobieHelpers._
 import shipreq.taskman.api.UserId
 import shipreq.webapp.base.data.ProjectMetaData
-import shipreq.webapp.base.event.ActiveEvent
+import shipreq.webapp.base.event.{ActiveEvent, EventOrd}
 import shipreq.webapp.base.hash.HashRec.Collection
 import shipreq.webapp.base.protocol.ServerSideProc
 import shipreq.webapp.server.db.DbLogic

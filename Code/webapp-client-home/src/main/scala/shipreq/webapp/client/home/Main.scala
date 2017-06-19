@@ -12,7 +12,7 @@ import shipreq.webapp.client.home.ui.{Home, Styles}
 @JSExportTopLevel(HomeSpaProtocols.EntryPointName)
 object Main extends ClientSideProcImpl(HomeSpaProtocols.EntryPoint) {
 
-  override def run(i: HomeSpaProtocols.InitClient): Unit = {
+  override def run(i: HomeSpaProtocols.InitData): Unit = {
 
     BaseStyles.addToDocument()
     Styles.addToDocument()

@@ -2,7 +2,7 @@ package shipreq.webapp.base.protocol
 
 import boopickle._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.event.VerifiedEvents
+import shipreq.webapp.base.event.VerifiedEvent
 import BoopickleMacros._
 import BinCodecEvents._
 
@@ -33,11 +33,11 @@ sealed abstract class CrudProtocol extends ServerSideProc.Protocol {
 
   final override type Failure = ErrorMsg
   final override type Input   = CrudAction[Id, Value]
-  final override type Output  = VerifiedEvents
+  final override type Output  = VerifiedEvent.Seq
 
-  final override implicit val pickleOutput  : Pickler[Output]   = pickleVerifiedEvents
+  final override implicit val pickleOutput  : Pickler[Output]   = pickleVerifiedEventSeq
   final override implicit val pickleFailure : Pickler[Failure]  = ErrorMsg.pickleErrorMsg
-  final override implicit val pickleResponse: Pickler[Response] = ServerSideProc.Protocol.pickleErrorMsgOrVerifiedEvents
+  final override implicit val pickleResponse: Pickler[Response] = ServerSideProc.Protocol.pickleErrorMsgOrVerifiedEventSeq
 
   final type Action = CrudAction[Id, Value]
   final def create (v: Value)        : Action = CrudAction.Create [Id, Value](v)

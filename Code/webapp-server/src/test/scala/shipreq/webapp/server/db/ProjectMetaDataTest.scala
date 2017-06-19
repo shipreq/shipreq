@@ -2,8 +2,7 @@ package shipreq.webapp.server.db
 
 import utest._
 import shipreq.webapp.base.data.Project
-import shipreq.webapp.base.event.{ActiveEvent, RandomEventStream, VerifiedEvent}
-import shipreq.webapp.server.logic.EventOrd
+import shipreq.webapp.base.event.{ActiveEvent, EventOrd, RandomEventStream, VerifiedEvent}
 import shipreq.webapp.server.test.DbUtil
 import shipreq.webapp.server.test.WebappServerTestUtil._
 

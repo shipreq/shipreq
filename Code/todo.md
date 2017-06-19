@@ -72,7 +72,6 @@ Phase 2 (dev)
   Or is there similar deficiency in imps cols too?
 * Re-evaluate config: some data is useless (i.e. key of custom text fields)
 * Bug: Create-and-close closes on ajax error
-* Include EventSeq in Comet/Ajax responses so that ClientData doesn't apply dups
 
 ### UI/UX
 * Front pages

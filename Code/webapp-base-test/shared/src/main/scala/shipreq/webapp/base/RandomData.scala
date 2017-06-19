@@ -1282,11 +1282,17 @@ object RandomData {
     def remoteFn(f: ServerSideProc.Protocol) =
       remoteFnKey.map(ServerSideProc(_, f))
 
-    val projectSpa: Gen[ProjectSpaProtocols.InitClient] =
+    def projectSpaInitAsyncData: Gen[ProjectSpaProtocols.InitAsyncData] =
+      for {
+        p <- project
+        o <- events.eventOrd
+      } yield ProjectSpaProtocols.InitAsyncData(p, o)
+
+    val projectSpa: Gen[ProjectSpaProtocols.InitData] =
       for {
         u <- username
         a <- projectMetaData
-        b <- remoteFn(ProjectSpaProtocols.ProjectInit)
+        b <- remoteFn(ProjectSpaProtocols.InitAsync)
         c <- remoteFn(ProjectSpaProtocols.CustomIssueTypeCrud)
         d <- remoteFn(ProjectSpaProtocols.CustomReqTypeCrud)
         e <- remoteFn(ProjectSpaProtocols.ReqTypeImplicationMod)
@@ -1296,7 +1302,7 @@ object RandomData {
         i <- remoteFn(ProjectSpaProtocols.CreateContent)
         j <- remoteFn(ProjectSpaProtocols.UpdateContent)
         k <- remoteFn(ProjectSpaProtocols.ProjectNameSet)
-      } yield ProjectSpaProtocols.InitClient(u, a, b, c, d, e, f, g, h, i, j, k)
+      } yield ProjectSpaProtocols.InitData(u, a, b, c, d, e, f, g, h, i, j, k)
 
     class CrudActionGens[I, V](c: CrudProtocol.Aux[I, V])(idG: Gen[I], vG: Gen[V]) {
       lazy val create  = vG.map(CrudAction.Create[I, V])
@@ -1875,6 +1881,9 @@ object RandomData {
       }
       Gen.chooseGenNE(gens flatMap identity)
     }
+
+    val eventOrd: Gen[EventOrd] =
+      Gen.chooseInt(100000).map(EventOrd(_))
 
     val hashScheme: Gen[HashScheme] =
       Gen.chooseNE(HashScheme.all)

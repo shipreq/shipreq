@@ -14,19 +14,3 @@ object ProjectId {
 
   final case class AndOwner(id: ProjectId, owner: UserId)
 }
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-/**
-  * Event ordinal.
-  *
-  * The order of an event in an event stream.
-  */
-final case class EventOrd(value: Int) { // not AnyVal, it gets boxed
-  def succ = EventOrd(value + 1)
-}
-
-object EventOrd {
-  implicit val ordering: Ordering[EventOrd] =
-    Ordering.by(_.value)
-}

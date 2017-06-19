@@ -38,7 +38,7 @@ object HomeSpa extends SnippetHelpers {
     val createProjectFn = ServerProtocol.createServerSideProc(HomeSpaProtocols.CreateProject)(name =>
       db().io.trans(createProject(user.id, name, Instant.now())).map(\/-(_)))
 
-    val init = HomeSpaProtocols.InitClient(
+    val init = HomeSpaProtocols.InitData(
       user.username, projects, createProjectFn)
 
     "*" #> EntryPoint.invokeOnLoadHtml(init)

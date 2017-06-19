@@ -4,10 +4,10 @@ import boopickle.Pickler
 import japgolly.univeq._
 import scalaz.\/
 import shipreq.base.util.EqualsByRef
-import shipreq.webapp.base.event.VerifiedEvents
+import shipreq.webapp.base.event.VerifiedEvent
 import BoopickleMacros.xmap
 import BinCodecGeneric.{pickleXor, stringPickler}
-import BinCodecEvents.pickleVerifiedEvents
+import BinCodecEvents._
 
 /** An instance of a server-side procedure, (available for invocation). */
 sealed trait ServerSideProc {
@@ -86,11 +86,11 @@ object ServerSideProc {
         override implicit val pickleResponse = r
       }
 
-    implicit val pickleErrorMsgOrVerifiedEvents: Pickler[ErrorMsg \/ VerifiedEvents] =
-      pickleXor(ErrorMsg.pickleErrorMsg, pickleVerifiedEvents)
+    implicit val pickleErrorMsgOrVerifiedEventSeq: Pickler[ErrorMsg \/ VerifiedEvent.Seq] =
+      pickleXor(ErrorMsg.pickleErrorMsg, pickleVerifiedEventSeq)
 
-    def toEvents[I: Pickler]: Aux[ErrorMsg, I, VerifiedEvents] =
-      _apply[ErrorMsg, I, VerifiedEvents]
+    def toEvents[I: Pickler]: Aux[ErrorMsg, I, VerifiedEvent.Seq] =
+      _apply[ErrorMsg, I, VerifiedEvent.Seq]
   }
 
 }

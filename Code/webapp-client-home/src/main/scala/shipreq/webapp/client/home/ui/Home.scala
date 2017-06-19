@@ -15,7 +15,7 @@ import shipreq.webapp.client.base.ui.{BaseStyles, MemberNavBar, PlainTextEditor,
 import shipreq.webapp.client.base.ui.semantic.Breadcrumb
 
 object Home {
-  final case class Props(data: HomeSpaProtocols.InitClient, cp: ClientProtocol) {
+  final case class Props(data: HomeSpaProtocols.InitData, cp: ClientProtocol) {
     @inline def render = Component(this)
   }
 

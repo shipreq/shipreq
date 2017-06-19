@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportTopLevel
 import shipreq.webapp.base.event.VerifiedEvent
@@ -17,7 +16,7 @@ object CometListener extends ClientSideProcImpl(ProjectSpaProtocols.CometListene
     this.cd = cd
   }
 
-  override def run(i: NonEmptyVector[VerifiedEvent]): Unit = {
-    cd.foreach(_.applyEventsS(i.whole).runNow())
+  override def run(ves: VerifiedEvent.NonEmptySeq): Unit = {
+    cd.foreach(_.applyEventSeqCB(ves).runNow())
   }
 }
