@@ -32,12 +32,7 @@ abstract class ClientData extends Broadcaster[Changes] {
 
   def updateProjectMetaData(ves: VerifiedEvents): Callback =
     Callback {
-      val o = _projectMetaData
-      _projectMetaData = o.copy(
-        name          = project().name,
-        eventCount    = o.eventCount + ves.length,
-        reqCount      = o.reqCount + ves.count(Event reqCreationEventFilter _.event),
-        lastUpdatedAt = Some(Instant.now()))
+      _projectMetaData = _projectMetaData.applyEvents(ves, Instant.now())
     }
 
   def serverSideProcToEvents[I](proc: ServerSideProc.Aux[ErrorMsg, I, VerifiedEvents], cp: ClientProtocol): ServerSideProcInvoker[I, VerifiedEvents] =

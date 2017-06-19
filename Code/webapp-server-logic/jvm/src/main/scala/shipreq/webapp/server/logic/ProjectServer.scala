@@ -45,15 +45,10 @@ object ProjectServer {
                          projectMetaData: ProjectMetaData,
                          project        : Project,
                          nextSeq        : EventSeq) {
-    def update(project: Project, latestSeq: EventSeq, updatedAt: Instant): State = {
-      val newSummary = ProjectMetaData(
-        id            = projectMetaData.id,
-        name          = projectMetaData.name,
-        createdAt     = projectMetaData.createdAt,
-        eventCount    = projectMetaData.eventCount + 1,
-        reqCount      = project.reqs.size,
-        lastUpdatedAt = Some(updatedAt))
-      State(userId, newSummary, project, latestSeq.succ)
+
+    def update(project: Project, ve: VerifiedEvent, latestSeq: EventSeq, when: Instant): State = {
+      val md = projectMetaData.applyEvent(ve, when)
+      State(userId, md, project, latestSeq.succ)
     }
   }
 
@@ -187,7 +182,7 @@ object ProjectServer {
                 case None =>
                   for {
                     now <- svr.now
-                    s2 <- store.storeValueMod(r.key)(_.modValue(_.update(updated.project, eventSeq, now)))
+                    s2 <- store.storeValueMod(r.key)(_.modValue(_.update(updated.project, updated.ve, eventSeq, now)))
                     _ <- s2.fold(fUnit, broadcastEvents(r, NonEmptyVector one updated.ve, _))
                   } yield PotentialChange.Success(updated.ve)
 

@@ -1,7 +1,7 @@
 package shipreq.webapp.server.db
 
 import utest._
-import shipreq.webapp.base.data.{Project, ProjectMetaDataProps}
+import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.{ActiveEvent, RandomEventStream, VerifiedEvent}
 import shipreq.webapp.server.logic.EventSeq
 import shipreq.webapp.server.test.DbUtil
@@ -42,13 +42,12 @@ object ProjectMetaDataTest extends TestSuite {
           writeEvent(ve, seq)
           p = applyEventSuccessfully(p, ve.event)
 
-          val (i, uid2) = xa ! DbLogic.project.findProjectMetaDataAndUser(pid) getOrElse
+          val (md, uid2) = xa ! DbLogic.project.findProjectMetaDataAndUser(pid) getOrElse
             fail(s"ProjectMetaData not found for $pid.")
 
-          assert(uid2 == uid)
-
           val e = (seq + 1 - RandomEventStream.InitialEventCount) max 0
-          ProjectMetaDataProps(i, p, e).assert()
+          assert(uid2 ==* uid, md.eventCount ==* e)
+          md.assertInSyncWith(p)
         }
       }
     }

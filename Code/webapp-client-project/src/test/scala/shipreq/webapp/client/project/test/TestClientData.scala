@@ -12,7 +12,7 @@ import shipreq.webapp.client.project.lib.DataReusability.reusabilityProject
 final class TestClientData(init: Project, pi: Option[ProjectMetaData]) extends ClientData {
   override val pxProject = Px(init).withReuse.manualUpdate
 
-  override var _projectMetaData = pi getOrElse summariseProject(init)
+  override var _projectMetaData = pi getOrElse looseProjectMetaData(init)
 
   override def applyEvents(ves: VerifiedEvents): Callback =
     CallbackTo(tryApplyVerifiedEvents(ves)) >>= {
