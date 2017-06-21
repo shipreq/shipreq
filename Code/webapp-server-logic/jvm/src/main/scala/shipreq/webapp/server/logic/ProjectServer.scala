@@ -15,7 +15,6 @@ import shipreq.webapp.base.data.{Project, ProjectMetaData, Username}
 import shipreq.webapp.base.event.{ApplyEvent, EventOrd, VerifiedEvent}
 import shipreq.webapp.base.protocol.{ErrorMsg, ProjectSpaProtocols}
 import ProjectServer._
-import Server.Retries
 
 trait ProjectServer[F[_]] {
   def register(pid: ProjectId, userId: UserId, onChange: OnChange[F]): F[RegistrationError \/ RegId]
@@ -68,10 +67,9 @@ object ProjectServer {
   }
   type NotRegistered = NotRegistered.type
 
+  // PT7.665S = PT0.015S + PT0.03S + PT0.06S + PT0.12S + PT0.24S + PT0.48S + PT0.96S + PT1.92S + PT3.84S
   val SaveRetries: Retries =
-    Server.retriesFrom(15.millis)
-      .takeWhile(_.toMillis <= 3.seconds.toMillis)
-      .toList
+    Retries.exponentiallyFrom(15.millis)(_.toMillis <= 4.seconds.toMillis)
 
   def buildProject(load: DB.ProjectLoad): BuildError \/ (Project, EventOrd) =
     ApplyEvent.trusted.applyVerified(load.values)(Project.empty) match {
@@ -205,13 +203,13 @@ object ProjectServer {
                     } yield PotentialChange.Success(ves)
 
                   case Some(error) =>
-                    retries match {
-                      case Nil =>
-                        val opsInfo = s"Error saving new event ${updated.ae} to project ${r.key.value} with ordinal #${ord.value}."
-                        F pure PotentialChange.Failure(SaveError(opsInfo, error))
-                      case delay :: nextRetries =>
+                    retries.pop match {
+                      case Some((delay, nextRetries)) =>
                         val retry = addEvent(r, mkEvent, nextRetries)
                         svr.delay(retry, delay)
+                      case None =>
+                        val opsInfo = s"Error saving new event ${updated.ae} to project ${r.key.value} with ordinal #${ord.value}."
+                        F pure PotentialChange.Failure(SaveError(opsInfo, error))
                     }
                 }
 

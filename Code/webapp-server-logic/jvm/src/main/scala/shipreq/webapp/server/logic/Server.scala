@@ -2,7 +2,6 @@ package shipreq.webapp.server.logic
 
 import java.time.{Duration, Instant}
 import shipreq.webapp.base.protocol.ServerSideProc
-import shipreq.base.util.ScalaExt._
 
 object Server {
 
@@ -12,8 +11,4 @@ object Server {
     def delay[A](f: F[A], d: Duration): F[A]
   }
 
-  type Retries = List[Duration]
-
-  def retriesFrom(d: Duration, factor: Double = 2): Stream[Duration] =
-    d #:: retriesFrom((d.toMillis * factor).millis, factor)
 }
