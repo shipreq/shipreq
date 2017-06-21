@@ -200,7 +200,7 @@ object ProjectServer {
                     val ves = VerifiedEvent.NonEmptySeq.one(ord, updated.ve)
                     for {
                       now <- svr.now
-                      s2  <- store.storeValueMod(r.key)(_.modValue(_.update(updated.project, updated.ve, ord, now)))
+                      s2  <- store.storeModIfPresent(r.key)(_.modValue(_.update(updated.project, updated.ve, ord, now)))
                       _   <- s2.fold(fUnit)(broadcastEvents(r, ves, _))
                     } yield PotentialChange.Success(ves)
 

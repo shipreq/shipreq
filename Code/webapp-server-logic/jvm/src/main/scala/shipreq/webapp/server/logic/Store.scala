@@ -15,14 +15,14 @@ object Store {
   /** All ops are atomic */
   trait Algebra[F[_], K, V >: Null] {
     def storeGet(key: K): F[Option[V]]
-    def storeEntryMod(key: K)(f: FreeOption[V] => FreeOption[V]): F[Option[V]]
-    def storeEntrySet(key: K)(f: FreeOption[V] => V): F[V]
+    def storeMod(key: K)(f: FreeOption[V] => FreeOption[V]): F[Option[V]]
+    def storeModSet(key: K)(f: FreeOption[V] => V): F[V]
 
-    final def storeValueMod(key: K)(f: V => V): F[Option[V]] =
-      storeEntryMod(key)(_.map(f))
+    def storeModIfPresent(key: K)(f: V => V): F[Option[V]] =
+      storeMod(key)(_.map(f))
 
-    final def storeEntryMod2[OptionV <: Option[V]](key: K)(f: FreeOption[V] => OptionV): F[OptionV] = {
-      val x: F[Option[V]] = storeEntryMod(key)(FreeOption fromOption f(_))
+    final def storeModT[OptionV <: Option[V]](key: K)(f: FreeOption[V] => OptionV): F[OptionV] = {
+      val x: F[Option[V]] = storeMod(key)(FreeOption fromOption f(_))
       x.asInstanceOf[F[OptionV]]
     }
 
@@ -31,12 +31,12 @@ object Store {
                                                             quickWorked: Option[V] => F[E \/ A] \/ OK)
                                                            (applyLong  : (Option[V], A) => OK)
                                                            (implicit F : Monad[F]): F[E \/ OK] =
-      storeEntryMod(key)(tryQuick)
+      storeMod(key)(tryQuick)
         .flatMap(quickWorked(_) match {
           case ok: \/-[OK] => F pure ok
           case -\/(fea) => fea flatMap {
             case \/-(a) =>
-              storeEntryMod2(key)(fo => {
+              storeModT(key)(fo => {
                 val o = fo.toOption
                 quickWorked(o).getOrElse(applyLong(o, a))
               }).map(\/-(_))
@@ -69,11 +69,14 @@ object Store {
         override def storeGet(key: K): F[Option[V]] =
           F point Option(map.get(key))
 
-        override def storeEntryMod(key: K)(f: FreeOption[V] => FreeOption[V]): F[Option[V]] =
+        override def storeMod(key: K)(f: FreeOption[V] => FreeOption[V]): F[Option[V]] =
           F point Option(map.compute(key, (_, v) => f(FreeOption(v)).getOrNull))
 
-        override def storeEntrySet(key: K)(f: FreeOption[V] => V): F[V] =
+        override def storeModSet(key: K)(f: FreeOption[V] => V): F[V] =
           F point map.compute(key, (_, v) => f(FreeOption(v)))
+
+        override def storeModIfPresent(key: K)(f: V => V): F[Option[V]] =
+          F point Option(map.computeIfPresent(key, (_, v) => f(v)))
       }
   }
 
@@ -134,14 +137,14 @@ object Store {
         alg.storeGet(key).map(_.map(_.value))
 
       def valueMod(key: K)(f: V => V): F[Option[V]] =
-        alg.storeValueMod(key)(_.modValue(f)).map(_.map(_.value))
+        alg.storeModIfPresent(key)(_.modValue(f)).map(_.map(_.value))
 
       def registerAttempt[E](key: K, registrantData: A, init: => F[E \/ V], verify: V => Option[E]): F[E \/ RegId[K]] =
         alg.storeModOrTryInit(key, _.register(registrantData), init.map(_.map(v => Node.init(v, registrantData))))
           .map(_.flatMap(n => verify(n.value) <\/ RegId(key, n.maxRegId)))
 
       def unregister(r: RegId[K]): F[Unit] =
-        alg.storeEntryMod(r.key)(_.map(_.unregister(r.id)).filter(_.registrants.nonEmpty)).void
+        alg.storeMod(r.key)(_.map(_.unregister(r.id)).filter(_.registrants.nonEmpty)).void
     }
   }
 
