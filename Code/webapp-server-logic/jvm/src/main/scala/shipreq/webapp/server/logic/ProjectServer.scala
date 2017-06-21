@@ -6,6 +6,7 @@ import japgolly.univeq._
 import java.time.Instant
 import scala.collection.immutable.SortedSet
 import scalaz.syntax.monad._
+import scalaz.syntax.std.option._
 import scalaz.{-\/, Monad, \/, \/-, ~>}
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
@@ -136,7 +137,7 @@ object ProjectServer {
         register.unregister(r)
 
       private def readState(r: RegId): F[NotRegistered \/ State] =
-        register.get(r.key).map(_.fold(-\/(NotRegistered), \/-(_)))
+        register.get(r.key).map(_ \/> NotRegistered)
 
       override def initialClient(r: RegId, username: Username): F[NotRegistered \/ ProjectSpaProtocols.InitData] =
         readState(r).flatMap {
@@ -200,7 +201,7 @@ object ProjectServer {
                     for {
                       now <- svr.now
                       s2  <- store.storeValueMod(r.key)(_.modValue(_.update(updated.project, updated.ve, ord, now)))
-                      _   <- s2.fold(fUnit, broadcastEvents(r, ves, _))
+                      _   <- s2.fold(fUnit)(broadcastEvents(r, ves, _))
                     } yield PotentialChange.Success(ves)
 
                   case Some(error) =>
