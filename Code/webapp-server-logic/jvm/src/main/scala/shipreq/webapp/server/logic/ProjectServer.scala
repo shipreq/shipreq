@@ -1,6 +1,7 @@
 package shipreq.webapp.server.logic
 
 import japgolly.microlibs.nonempty.NonEmptySet
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import java.time.Instant
 import scala.collection.immutable.SortedSet
@@ -16,7 +17,7 @@ import ProjectServer._
 import Server.Retries
 
 trait ProjectServer[F[_]] {
-  def register(pid: ProjectId, userId: UserId, recv: Recv[F]): F[RegistrationError \/ RegId]
+  def register(pid: ProjectId, userId: UserId, onChange: OnChange[F]): F[RegistrationError \/ RegId]
   def unregister(r: RegId): F[Unit]
   def initialClient(r: RegId, username: Username): F[ProjectSpaProtocols.InitData]
 }
@@ -25,7 +26,7 @@ object ProjectServer {
 
   type RegId = Store.Register.RegId[ProjectId]
 
-  type Recv[F[_]] = VerifiedEvent.NonEmptySeq => F[Unit]
+  type OnChange[F[_]] = VerifiedEvent.NonEmptySeq => F[Unit]
 
   sealed trait RegistrationError
   case object ProjectNotFound extends RegistrationError
@@ -34,6 +35,8 @@ object ProjectServer {
     def eventRange: String =
       NonEmptySet.maybe(events.map(_.value), "∅")(ConciseIntSetFormat.spaced)
   }
+  implicit def univEqSortedSet[A: UnivEq]: UnivEq[SortedSet[A]] = UnivEq.force // TODO Move to UnivEq
+  implicit def univEqRegistrationError: UnivEq[RegistrationError] = UnivEq.derive
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -73,7 +76,8 @@ object ProjectServer {
         -\/(BuildError(e, load.keySet))
     }
 
-  type StoreAlgebra[F[_]] = Store.Register.Algebra[F, ProjectId, State, Recv[F]]
+  type StoreAlgebra[F[_]] = Store.Register.Algebra[F, ProjectId, State, OnChange[F]]
+  type StoreMap[F[_], M[_, _]] = M[ProjectId, Store.Register.Node[State, OnChange[F]]]
 
   sealed abstract class BroadcastTo
   object BroadcastTo {
@@ -95,13 +99,13 @@ object ProjectServer {
                         D: Monad[D]): ProjectServer[F] =
     new ProjectServer[F] {
 
-      type Node = Store.Register.Node[State, Recv[F]]
+      type Node = Store.Register.Node[State, OnChange[F]]
 
       val fUnit: F[Unit] = F.pure(())
 
-      val register = new Store.Register.Dsl[F, ProjectId, State, Recv[F]]
+      val register = new Store.Register.Dsl[F, ProjectId, State, OnChange[F]]
 
-      def register(pid: ProjectId, userId: UserId, recv: Recv[F]): F[RegistrationError \/ RegId] = {
+      def register(pid: ProjectId, userId: UserId, onChange: OnChange[F]): F[RegistrationError \/ RegId] = {
         def initState: D[RegistrationError \/ State] =
           db.inDbTransaction(
             db.loadProjectMetaDataAndUser(pid).flatMap {
@@ -115,7 +119,7 @@ object ProjectServer {
             }
           )
 
-        register.registerAttempt(pid, recv, runDB(initState))
+        register.registerAttempt(pid, onChange, runDB(initState), v => Option.when(v.userId !=* userId)(AccessDenied))
       }
 
       def unregister(r: RegId): F[Unit] =

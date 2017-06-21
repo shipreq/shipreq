@@ -1,7 +1,8 @@
 package shipreq.base.test
 
 import scalaz.std.string.stringInstance
-import scalaz.{Equal, Order}
+import scalaz.{Equal, Order, \/}
+import shipreq.base.util.Identity
 import shipreq.base.util.univeq._
 
 object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
@@ -12,6 +13,11 @@ object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
 
     def assertEqN(name: => String, expect: A)(implicit e: Equal[A]): Unit =
       BaseTestUtil.assertEq(name, a, expect)
+  }
+
+  final class BaseTestUtilOpsDisj[A, B](private val d: A \/ B) extends AnyVal {
+    def needRight: B =
+      d.fold(sys error _.toString, Identity.apply)
   }
 
   final class FieldAssert[A](actual: A, expect: A) {
@@ -34,6 +40,9 @@ trait BaseTestUtil
   implicit def BaseTestUtilOpsAny[A](a: A) =
     new BaseTestUtil.BaseTestUtilOpsAny(a)
 
+  implicit def BaseTestUtilOpsDisj[A, B](d: A \/ B) =
+    new BaseTestUtil.BaseTestUtilOpsDisj(d)
+
   def forceUnivEqOrderByToString[A]: Order[A] with UnivEq[A] = {
     val o = Order.orderBy((_: A).toString)
     new Order[A] with UnivEq[A] {
@@ -44,4 +53,8 @@ trait BaseTestUtil
 
   def assertFields[A](actual: A, expect: A) =
     new BaseTestUtil.FieldAssert(actual, expect)
+
+//  def assertMatch[A](a: A)(pf: PartialFunction[A, Unit]): Unit =
+//    if (!pf.isDefinedAt(a))
+//      fail(s"Wrong shape: $a")
 }

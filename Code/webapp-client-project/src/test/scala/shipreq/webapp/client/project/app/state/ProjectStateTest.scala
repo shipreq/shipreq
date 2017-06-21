@@ -31,7 +31,7 @@ object ProjectStateTest extends TestSuite {
   }
 
   def mkEventSeq(v: Vector[(VerifiedEvent, Int)], ordOffset: EventOrd): VerifiedEvent.Seq =
-    NonEmptyVector.maybe(v, VerifiedEvent.emptySeq)(x =>
+    NonEmptyVector.maybe(v, VerifiedEvent.Seq.empty)(x =>
       VerifiedEvent.NonEmptySeq(ordOffset + x.head._2, x.map(_._1)))
 
   override def tests = TestSuite {

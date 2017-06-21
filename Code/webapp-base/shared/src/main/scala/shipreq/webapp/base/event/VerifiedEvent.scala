@@ -17,13 +17,19 @@ object VerifiedEvent {
     def iterator: Iterator[(EventOrd, VerifiedEvent)]
   }
 
+  object Seq {
+    // For type inference
+    @inline def empty: Seq = EmptySeq
+
+    // For tests
+    def apply(firstOrd: EventOrd, events: TraversableOnce[VerifiedEvent]): Seq =
+      NonEmptyVector.maybe(events.toVector, empty)(NonEmptySeq(firstOrd, _))
+  }
+
   case object EmptySeq extends Seq {
     override def eventVector = Vector.empty[VerifiedEvent]
     override def iterator = Iterator.empty
   }
-
-  // For type inference
-  @inline def emptySeq: Seq = EmptySeq
 
   /** 1 or more consecutive verified events */
   final case class NonEmptySeq(firstOrd: EventOrd, events: NonEmptyVector[VerifiedEvent]) extends Seq {

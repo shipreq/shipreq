@@ -3,6 +3,7 @@ package shipreq.webapp.server.logic
 import japgolly.univeq._
 import java.util.concurrent.ConcurrentHashMap
 import scalaz.syntax.monad._
+import scalaz.syntax.std.option._
 import scalaz.{-\/, Applicative, Monad, \/, \/-}
 import shipreq.base.util._
 
@@ -45,6 +46,7 @@ object Store {
     type Algebra[F[_], K, V, A] = Store.Algebra[F, K, Node[V, A]]
 
     final case class RegId[K](key: K, id: Long)
+    implicit def univEqRegId[K: UnivEq]: UnivEq[RegId[K]] = UnivEq.derive
 
     final case class Node[V, A](value: V, registrants: List[(Long, A)], maxRegId: Long) {
       def modValue(f: V => V): Node[V, A] =
@@ -87,6 +89,8 @@ object Store {
       }
     }
 
+    // TODO F[FreeOption gets boxed right?
+
     final class Dsl[F[_], K, V >: Null, A](implicit alg: Algebra[F, K, V, A], F: Monad[F]) {
 
       def get(key: K): F[FreeOption[V]] =
@@ -95,9 +99,9 @@ object Store {
       def valueMod(key: K)(f: V => V): F[FreeOption[V]] =
         alg.storeValueMod(key)(_.modValue(f)).map(_.map(_.value))
 
-      def registerAttempt[E](key: K, registrantData: A, init: => F[E \/ V]): F[E \/ RegId[K]] = {
+      def registerAttempt[E](key: K, registrantData: A, init: => F[E \/ V], verify: V => Option[E]): F[E \/ RegId[K]] = {
         def success(node: Node[V, A]): E \/ RegId[K] =
-          \/-(RegId(key, node.maxRegId))
+          verify(node.value) <\/ RegId(key, node.maxRegId)
 
         def tryGet: F[FreeOption[Node[V, A]]] =
           alg.storeValueMod(key)(_.register(registrantData))
