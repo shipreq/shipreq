@@ -2,6 +2,7 @@ package shipreq.webapp.server.logic
 
 import java.time.{Duration, Instant}
 import scala.collection.immutable.SortedMap
+import scalaz.Name
 import scalaz.Scalaz.Id
 import shipreq.base.util.IMap
 import shipreq.taskman.api.UserId
@@ -59,7 +60,9 @@ final class MockDb extends DB.Algebra[Id] {
   }
 
   def assertLoadCounts(expectMD: Int, expectEv: Int): Unit =
-    assertEq("Load counts", (loadProjectMetaDataAndUserLog.length, loadProjectLog.length), (expectMD, expectEv))
+    assertEq("Load counts",
+      (loadProjectMetaDataAndUserLog.length, loadProjectLog.length),
+      (expectMD, expectEv))
 
   override def saveProjectEvent(id: ProjectId, ord: EventOrd, e: ActiveEvent, hrs: Collection): Option[Throwable] = {
     val entry = projects.need(id)
@@ -108,3 +111,23 @@ final class MockSvr extends Server.Algebra[Id] {
   override def delay[A](f: A, d: Duration): A =
     f
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+final class MockServerTime extends Server.Time[Name] {
+  var clock = Instant.now()
+  var onDelay = List.empty[() => Unit]
+  override val now = Name(clock)
+  override def delay[A](f: Name[A], d: Duration): Name[A] =
+    Name {
+      clock = clock plus d
+      onDelay match {
+        case Nil => ()
+        case h :: t =>
+          onDelay = t
+          h()
+      }
+      f.value
+    }
+}
+

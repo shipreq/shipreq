@@ -2,10 +2,12 @@ package shipreq.webapp.server.logic
 
 import japgolly.univeq._
 import java.util.concurrent.ConcurrentHashMap
+import monocle.macros.Lenses
 import scalaz.syntax.monad._
 import scalaz.syntax.std.option._
 import scalaz.{-\/, Applicative, Monad, \/, \/-}
 import shipreq.base.util._
+import FreeOption.Implicits._
 
 /**
   * Stores data in memory, indexed by key, with atomic operations.
@@ -21,8 +23,11 @@ object Store {
     def storeModIfPresent(key: K)(f: V => V): F[Option[V]] =
       storeMod(key)(_.map(f))
 
+    final def storeModO(key: K)(f: Option[V] => Option[V]): F[Option[V]] =
+      storeMod(key)(o => f(o.toOption).free)
+
     final def storeModT[OptionV <: Option[V]](key: K)(f: FreeOption[V] => OptionV): F[OptionV] = {
-      val x: F[Option[V]] = storeMod(key)(FreeOption fromOption f(_))
+      val x: F[Option[V]] = storeMod(key)(f(_).free)
       x.asInstanceOf[F[OptionV]]
     }
 
@@ -90,6 +95,7 @@ object Store {
     final case class RegId[K](key: K, id: Long)
     implicit def univEqRegId[K: UnivEq]: UnivEq[RegId[K]] = UnivEq.derive
 
+    @Lenses
     final case class Node[V, A](value: V, registrants: List[(Long, A)], maxRegId: Long) {
       def modValue(f: V => V): Node[V, A] =
         copy(value = f(value))

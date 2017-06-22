@@ -53,4 +53,12 @@ object FreeOption {
 
   @inline def unless[A >: Null](cond: Boolean, a: => A): FreeOption[A] =
     when(!cond, a)
+
+  object Implicits {
+    @inline implicit class FreeOption_OptionExt[A >: Null](private val self: Option[A]) extends AnyVal {
+      @inline def free: FreeOption[A] =
+        FreeOption.fromOption(self)
+    }
+
+  }
 }
