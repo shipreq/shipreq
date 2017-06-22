@@ -3,7 +3,6 @@ package shipreq.webapp.server.logic
 import java.time.{Duration, Instant}
 import scala.collection.immutable.SortedMap
 import scalaz.Name
-import scalaz.Scalaz.Id
 import shipreq.base.util.IMap
 import shipreq.taskman.api.UserId
 import shipreq.webapp.base.data._
@@ -36,7 +35,7 @@ object MockDb {
 
 }
 
-final class MockDb extends DB.Algebra[Id] {
+final class MockDb extends DB.Algebra[Name] {
   private var projects: IMap[ProjectId, MockDb.Entry] =
     IMap.empty(_.projectId)
 
@@ -48,13 +47,13 @@ final class MockDb extends DB.Algebra[Id] {
   }
 
   var loadProjectMetaDataAndUserLog = Vector.empty[ProjectId]
-  override def loadProjectMetaDataAndUser(id: ProjectId): Option[(ProjectMetaData, UserId)] = {
+  override def loadProjectMetaDataAndUser(id: ProjectId) = Name[Option[(ProjectMetaData, UserId)]] {
     loadProjectMetaDataAndUserLog :+= id
     projects.get(id).map(e => (e.projectMetaData, e.userId))
   }
 
   var loadProjectLog = Vector.empty[ProjectId]
-  override def loadProject(id: ProjectId): DB.ProjectLoad = {
+  override def loadProject(id: ProjectId) = Name[DB.ProjectLoad] {
     loadProjectLog :+= id
     projects.need(id).projectLoad
   }
@@ -64,7 +63,7 @@ final class MockDb extends DB.Algebra[Id] {
       (loadProjectMetaDataAndUserLog.length, loadProjectLog.length),
       (expectMD, expectEv))
 
-  override def saveProjectEvent(id: ProjectId, ord: EventOrd, e: ActiveEvent, hrs: Collection): Option[Throwable] = {
+  override def saveProjectEvent(id: ProjectId, ord: EventOrd, e: ActiveEvent, hrs: Collection) = Name[Option[Throwable]] {
     val entry = projects.need(id)
     def update(events: VerifiedEvent.Seq): Unit =
       projects = projects + entry.copy(events = events, lastUpdatedAt = Some(Instant.now()))
@@ -82,18 +81,18 @@ final class MockDb extends DB.Algebra[Id] {
     }
   }
 
-  override def inDbTransaction[A](f: A): A =
+  override def inDbTransaction[A](f: Name[A]) =
     f
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-final class MockSvr extends Server.Algebra[Id] {
+final class MockServer extends Server.Algebra[Name] {
   private var prevFn = 0
   private var fns: Map[String, Any] =
     UnivEq.emptyMap
 
-  override def createServerSideProc(p: ServerSideProc.Protocol)(localFn: p.Input => p.Response): p.Instance = {
+  override def createServerSideProc(p: ServerSideProc.Protocol)(localFn: p.Input => Name[p.Response]) = Name[p.Instance] {
     prevFn += 1
     val key = prevFn.toString
     fns = fns.updated(key, localFn)
@@ -101,33 +100,20 @@ final class MockSvr extends Server.Algebra[Id] {
   }
 
   def run(p: ServerSideProc)(i: p.protocol.Input): p.protocol.Response = {
-    val f = fns(p.key).asInstanceOf[p.protocol.Input => p.protocol.Response]
-    f(i)
+    val f = fns(p.key).asInstanceOf[p.protocol.Input => Name[p.protocol.Response]]
+    f(i).value
   }
 
-  override def now: Instant =
-    Instant.now()
-
-  override def delay[A](f: A, d: Duration): A =
-    f
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-final class MockServerTime extends Server.Time[Name] {
   var clock = Instant.now()
-  var onDelay = List.empty[() => Unit]
   override val now = Name(clock)
-  override def delay[A](f: Name[A], d: Duration): Name[A] =
-    Name {
-      clock = clock plus d
-      onDelay match {
-        case Nil => ()
-        case h :: t =>
-          onDelay = t
-          h()
-      }
-      f.value
-    }
-}
 
+  var onDelay = List.empty[() => Unit]
+  override def delay[A](f: Name[A], d: Duration) = Name[A] {
+    clock = clock plus d
+    onDelay match {
+      case Nil    => ()
+      case h :: t => onDelay = t; h()
+    }
+    f.value
+  }
+}

@@ -34,7 +34,7 @@ object PromiseTest extends TestSuite {
     Optics(monocle.std.option.some[Node].asOptional, Node.promise)
 
   class Tester {
-    implicit val time = new MockServerTime
+    implicit val time = new MockServer
     implicit val store = Store.Algebra.concurrentHashMap[F, K, V]()
 
     def set(p: Option[Promise[E, A]]): Unit =
