@@ -5,7 +5,7 @@ import com.typesafe.sbt.GitPlugin.autoImport._
 import org.scalajs.core.tools.sem._
 import org.scalajs.sbtplugin.cross.CrossProject
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
-import com.timushev.sbt.updates.UpdatesKeys._
+import com.timushev.sbt.updates.UpdatesPlugin.autoImport._
 import sbtdocker.DockerPlugin, DockerPlugin.autoImport._
 import LibDependency.{Dep, HasJs, HasJvm, HasBoth, JVM, JS, ModDepScope}
 
@@ -109,8 +109,8 @@ object Common {
       scalaVersion                := Dependencies.Scala.version,
       javacOptions               ++= javacFlags,
       scalacOptions              ++= scalacFlags,
-      dependencyUpdatesExclusions := moduleFilter(name = regexFilter("^(jetty-(server|websocket)|ammonite)$")) |
-                                     moduleFilter(organization = regexFilter("^org.scala-lang$")),
+      dependencyUpdatesFilter     -= moduleFilter(name = regexFilter("^(jetty-(server|websocket)|ammonite)$")),
+      dependencyUpdatesFilter     -= moduleFilter(organization = regexFilter("^org.scala-lang$")),
       testFrameworks              += new TestFramework("utest.runner.Framework"),
       minForcegcInterval          := 3.minutes,
       triggeredMessage            := Watched.clearWhenTriggered,

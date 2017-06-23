@@ -127,13 +127,13 @@ object Dependencies {
   }
 
   object Akka {
-    private val mm = MultiModule.scala("com.typesafe.akka", "2.5.2")
+    private val mm = MultiModule.scala("com.typesafe.akka", "2.5.3")
     val actor   = mm("akka-actor") ++ mm("akka-slf4j")
     val testkit = mm("akka-testkit")
   }
 
   object Specs2 {
-    private val mm = MultiModule.scala("org.specs2", "3.8.9")
+    private val mm = MultiModule.scala("org.specs2", "3.9.1")
     val combo = mm("specs2-core") ++ mm("specs2-scalacheck")
   }
 
@@ -163,16 +163,16 @@ object Dependencies {
   val httpCore    = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.6")
   val javaMail    = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.5.6")
   val postgresql  = jvmOnly("org.postgresql"              % "postgresql"            % "42.1.1")
-  val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "2.6.2")
+  val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "2.6.3")
   val flyway      = jvmOnly("com.googlecode.flyway"       % "flyway-core"           % "2.3.1")
   val logback     = jvmOnly("ch.qos.logback"              % "logback-classic"       % "1.2.3")
-  val commonsLang = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.5")
+  val commonsLang = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.6")
   val commonsIo   = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.43.0")
   val scalaTest   = jvmOnly("org.scalatest"              %% "scalatest"             % "3.0.3")
   val scalaCheck  = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.13.5")
 
-  val macroParadise = compilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+  val macroParadise = compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
   val useMacroParadise = (_: Project).settings(addCompilerPlugin(macroParadise))
 
   val kindProjector = compilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4")
