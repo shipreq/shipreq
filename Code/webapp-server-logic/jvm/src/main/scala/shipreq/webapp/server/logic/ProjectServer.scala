@@ -54,17 +54,13 @@ object ProjectServer {
     }
   }
 
-  /**
-    * @param userId The only user with access to the project.
-    *               This will change in Phase 3 when collaborative features are added.
-    */
   @Lenses
-  final case class State(userId         : UserId,
-                         projectMetaData: ProjectMetaData,
-                         loadedState    : Promise[LoadError, LoadedState]) {
+  final case class State(header: ProjectHeader, body: Promise[LoadError, LoadedState]) {
+    def name: Project.Name =
+      body.toOption.fold(header.name)(_.project.name)
 
     def set(s: LoadedState): State =
-      copy(projectMetaData = s.projectMetaData, loadedState = Promise.Available(s))
+      copy(body = Promise.Available(s))
   }
 
   sealed trait AddEventError {
@@ -145,16 +141,16 @@ object ProjectServer {
       val nodeToState: monocle.Optional[Option[Node], State] =
         monocle.std.option.some[Node] ^|-> Store.Register.Node.value
 
-      val promiseOptics = Promise.Optics(nodeToState, State.loadedState)
+      val promiseOptics = Promise.Optics(nodeToState, State.body)
 
       val register = new Store.Register.Dsl[F, ProjectId, State, OnChange[F]]
 
       override def register(pid: ProjectId, userId: UserId, onChange: OnChange[F]): F[RegistrationError \/ RegId] = {
         def loadState: D[RegistrationError \/ State] =
-          db.loadProjectMetaDataAndUser(pid).map {
-            case Some((md, uid)) =>
-              if (userId ==* uid)
-                \/-(State(uid, md, Promise.Failure(LoadNotStarted)))
+          db.loadProjectHeader(pid).map {
+            case Some(h) =>
+              if (userId ==* h.userId)
+                \/-(State(h, Promise.Failure(LoadNotStarted)))
               else
                 -\/(AccessDenied)
             case None =>
@@ -164,8 +160,11 @@ object ProjectServer {
         def init: F[RegistrationError \/ State] =
           runDB(loadState)
 
+        def authorise: State => Option[RegistrationError] =
+          s => Option.when(s.header.userId !=* userId)(AccessDenied)
+
         for {
-          x <- register.registerAttempt(pid, onChange, init, v => Option.when(v.userId !=* userId)(AccessDenied))
+          x <- register.registerAttempt(pid, onChange, init, authorise)
           _ <- x.fold(_fUnit, loadStateInBackground)
         } yield x
       }
@@ -181,9 +180,9 @@ object ProjectServer {
 
         def init: F[LoadError \/ LoadedState] =
           runDB(db.inDbTransaction(for {
-            l <- db.loadProject(pid)
-            md <- db.loadProjectMetaDataAndUser(pid)
-          } yield buildProject(l).map(b => LoadedState(b._1, md.get._1, b._2))))
+            pl <- db.loadProject(pid)
+            md <- db.loadProjectMetaData(pid) // only really need createdAt and lastUpdatedAt
+          } yield buildProject(pl).map(b => LoadedState(b._1, md.get, b._2))))
 
         Promise.getOrSet(store, promiseOptics)(regId.key, LoadRetries, _ => Some(init))
       }
@@ -199,8 +198,12 @@ object ProjectServer {
 
       private def initAsyncData(r: RegId): F[ProjectSpaProtocols.InitAsync.Response] =
         getOrSetLoadedState(r) map {
-          case Promise.GetOrSet.Success((_, s))       => \/-(ProjectSpaProtocols.InitAsyncData(s.project, s.nextOrd - 1))
-          case e: Promise.GetOrSet.Failure[LoadError] => -\/(errorMsgForPromise(e)(_.errorMsg))
+
+          case Promise.GetOrSet.Success((_, s)) =>
+            \/-(ProjectSpaProtocols.InitAsyncData(s.project, s.projectMetaData, s.nextOrd - 1))
+
+          case e: Promise.GetOrSet.Failure[LoadError] =>
+            -\/(errorMsgForPromise(e)(_.errorMsg))
         }
 
       private def initDataForProjectSpa(r: RegId, username: Username, s: State): F[ProjectSpaProtocols.InitData] = {
@@ -228,7 +231,7 @@ object ProjectServer {
           projectNameSet        ← f(ProjectNameSet       )(i => updProj(_ ⇒ MakeEvent.projectNameSetFn(i)))
         } yield InitData(
           username,
-          s.projectMetaData,
+          s.name,
           projectInit,
           customIssueTypeCrud,
           customReqTypeCrud,

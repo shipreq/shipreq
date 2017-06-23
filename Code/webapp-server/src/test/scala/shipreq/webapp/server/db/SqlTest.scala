@@ -29,6 +29,8 @@ object SqlTest extends TestSuite {
       import DbLogic.project._
       'sqlCreate - test(sqlCreate)
       'sqlSelectOwner - test(sqlSelectOwner)
+      'sqlSelectProjectHeader - test(sqlSelectProjectHeader)
+//      'sqlSelectProjectMetaData - test(sqlSelectProjectMetaData)
 //      'sqlSelectCatalogue - test(sqlSelectCatalogue)
 //      'sqlSelectCatalogueItem - test(sqlSelectCatalogueItem)
     }

@@ -9,13 +9,14 @@ import shipreq.base.util.Retries
 
 sealed trait Promise[+E, +A] {
   def map[B](f: A => B): Promise[E, B]
+  def toOption: Option[A] = None
 }
 
 object Promise {
 
   final case class Available[+A](value: A) extends Promise[Nothing, A] {
-    override def map[B](f: A => B): Promise[Nothing, B] =
-      Available(f(value))
+    override def map[B](f: A => B) = Available(f(value))
+    override def toOption          = Some(value)
   }
 
   final case class Failure[+E](error: E) extends Promise[E, Nothing] {

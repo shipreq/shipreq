@@ -1284,14 +1284,15 @@ object RandomData {
 
     def projectSpaInitAsyncData: Gen[ProjectSpaProtocols.InitAsyncData] =
       for {
-        p <- project
-        o <- events.eventOrd
-      } yield ProjectSpaProtocols.InitAsyncData(p, o)
+        a <- project
+        b <- projectMetaData
+        c <- events.eventOrd
+      } yield ProjectSpaProtocols.InitAsyncData(a, b, c)
 
     val projectSpa: Gen[ProjectSpaProtocols.InitData] =
       for {
         u <- username
-        a <- projectMetaData
+        a <- projectName
         b <- remoteFn(ProjectSpaProtocols.InitAsync)
         c <- remoteFn(ProjectSpaProtocols.CustomIssueTypeCrud)
         d <- remoteFn(ProjectSpaProtocols.CustomReqTypeCrud)

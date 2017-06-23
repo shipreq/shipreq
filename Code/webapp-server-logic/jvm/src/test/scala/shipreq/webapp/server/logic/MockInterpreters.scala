@@ -46,10 +46,16 @@ final class MockDb extends DB.Algebra[Name] {
     projects = projects.add(mde)
   }
 
-  var loadProjectMetaDataAndUserLog = Vector.empty[ProjectId]
-  override def loadProjectMetaDataAndUser(id: ProjectId) = Name[Option[(ProjectMetaData, UserId)]] {
-    loadProjectMetaDataAndUserLog :+= id
-    projects.get(id).map(e => (e.projectMetaData, e.userId))
+  var loadProjectHeaderLog = Vector.empty[ProjectId]
+  override def loadProjectHeader(id: ProjectId) = Name[Option[ProjectHeader]] {
+    loadProjectHeaderLog :+= id
+    projects.get(id).map(e => ProjectHeader(e.userId, e.project.name))
+  }
+
+  var loadProjectMetaDataLog = Vector.empty[ProjectId]
+  override def loadProjectMetaData(id: ProjectId) = Name[Option[ProjectMetaData]] {
+    loadProjectMetaDataLog :+= id
+    projects.get(id).map(_.projectMetaData)
   }
 
   var loadProjectLog = Vector.empty[ProjectId]
@@ -57,11 +63,6 @@ final class MockDb extends DB.Algebra[Name] {
     loadProjectLog :+= id
     projects.need(id).projectLoad
   }
-
-  def assertLoadCounts(expectMD: Int, expectEv: Int): Unit =
-    assertEq("Load counts",
-      (loadProjectMetaDataAndUserLog.length, loadProjectLog.length),
-      (expectMD, expectEv))
 
   override def saveProjectEvent(id: ProjectId, ord: EventOrd, e: ActiveEvent, hrs: Collection) = Name[Option[Throwable]] {
     val entry = projects.need(id)

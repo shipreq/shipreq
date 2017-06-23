@@ -35,22 +35,22 @@ object ProjectServerTest extends TestSuite {
     'registrationAndLoading {
       val t = new Tester; import t._
       db.addProject(pid, uid)()
-      def test(id: String, storeSize: Int, dbLoadMD: Int, dbLoadEv: Int): Unit =
+      def test(id: String, storeSize: Int, dbLoadHead: Int, dbLoadBody: Int): Unit =
         assertEq(id,
-          (storeMap.size, db.loadProjectMetaDataAndUserLog.length, db.loadProjectLog.length),
-          (storeSize, dbLoadMD, dbLoadEv))
+          (storeMap.size, db.loadProjectHeaderLog.length, db.loadProjectMetaDataLog.length, db.loadProjectLog.length),
+          (storeSize, dbLoadHead, dbLoadBody, dbLoadBody))
 
       test("[A]", 0, 0, 0); val regId1 = logic.register(pid, uid, nop).value.needRight
       test("[B]", 1, 1, 0);              svr.runForked()
-      test("[C]", 1, 2, 1); val regId2 = logic.register(pid, uid, nop).value.needRight; svr.runForked()
-      test("[D]", 1, 2, 1);              logic.unregister(regId1).value
-      test("[E]", 1, 2, 1); val regId3 = logic.register(pid, uid, nop).value.needRight; svr.runForked()
-      test("[F]", 1, 2, 1);              logic.unregister(regId3).value
-      test("[G]", 1, 2, 1);              logic.unregister(regId3).value // ignored
-      test("[H]", 1, 2, 1);              logic.unregister(regId2).value
-      test("[I]", 0, 2, 1); val regId4 = logic.register(pid, uid, nop).value.needRight
-      test("[J]", 1, 3, 1);              svr.runForked()
-      test("[K]", 1, 4, 2)
+      test("[C]", 1, 1, 1); val regId2 = logic.register(pid, uid, nop).value.needRight; svr.runForked()
+      test("[D]", 1, 1, 1);              logic.unregister(regId1).value
+      test("[E]", 1, 1, 1); val regId3 = logic.register(pid, uid, nop).value.needRight; svr.runForked()
+      test("[F]", 1, 1, 1);              logic.unregister(regId3).value
+      test("[G]", 1, 1, 1);              logic.unregister(regId3).value // ignored
+      test("[H]", 1, 1, 1);              logic.unregister(regId2).value
+      test("[I]", 0, 1, 1); val regId4 = logic.register(pid, uid, nop).value.needRight
+      test("[J]", 1, 2, 1);              svr.runForked()
+      test("[K]", 1, 2, 2)
     }
 
     'registerNoProject {

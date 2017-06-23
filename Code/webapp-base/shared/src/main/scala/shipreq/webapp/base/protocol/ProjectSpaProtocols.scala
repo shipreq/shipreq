@@ -12,7 +12,7 @@ import BinCodecEvents._
   */
 object ProjectSpaProtocols {
 
-  final case class InitAsyncData(project: Project, latestEventOrd: EventOrd)
+  final case class InitAsyncData(project: Project, projectMetaData: ProjectMetaData, latestEventOrd: EventOrd)
   implicit val picklerInitAsyncData = pickleCaseClass[InitAsyncData]
 
   val InitAsync             = ServerSideProc.Protocol[Unit, InitAsyncData]
@@ -36,7 +36,7 @@ object ProjectSpaProtocols {
   import FieldCrud.Protocol   .{pickleInstance => _i10}
 
   final case class InitData(username       : Username,
-                            projectMetaData: ProjectMetaData,
+                            projectName    : Project.Name,
                             initAsync      : InitAsync            .Instance,
                             issueTypeCrud  : CustomIssueTypeCrud  .Instance,
                             reqTypeCrud    : CustomReqTypeCrud    .Instance,

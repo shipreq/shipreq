@@ -14,3 +14,11 @@ object ProjectId {
 
   final case class AndOwner(id: ProjectId, owner: UserId)
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/**
+  * @param userId The only user with access to the project.
+  *               This will change in Phase 3 when collaborative features are added.
+  */
+final case class ProjectHeader(userId: UserId, name: Project.Name)

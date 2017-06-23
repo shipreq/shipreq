@@ -60,7 +60,7 @@ final class ProjectSpa(projectId: ProjectId) extends SingleOpStatelessSnippet {
       }
 
     "*" #> (
-      ProjectSpaLoader.xml(user.username, init.projectMetaData) :+
+      ProjectSpaLoader.xml(user.username, init.projectName) :+
         EntryPoint.invokeOnLoadHtml(init))
     // ClientFn.ProjectSpa.htmlToLoadJsAndRun(Assets.ProjectSpa)(initData(user.username, p)))
   }

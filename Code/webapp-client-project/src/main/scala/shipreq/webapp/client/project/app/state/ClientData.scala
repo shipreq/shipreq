@@ -39,14 +39,13 @@ object ClientData {
 
   @inline implicit def reusability = Reusability.byRef[ClientData]
 
-  def initAsync(initMetaData: ProjectMetaData,
-                cp          : ClientProtocol,
+  def initAsync(cp          : ClientProtocol,
                 remoteInit  : ProjectSpaProtocols.InitAsync.Instance)
                (onSuccess   : ClientData => Callback,
                 onFailure   : String => Callback): Callback =
     cp.call(remoteInit)((),
       i => {
-        val s = ProjectState.init(i.project, initMetaData, i.latestEventOrd)
+        val s = ProjectState.init(i.project, i.projectMetaData, i.latestEventOrd)
         def cd = new ClientData(s)
         TCB.Success(onSuccess(cd))
       },

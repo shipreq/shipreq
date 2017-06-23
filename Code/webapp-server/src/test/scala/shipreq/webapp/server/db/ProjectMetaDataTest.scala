@@ -41,11 +41,11 @@ object ProjectMetaDataTest extends TestSuite {
           writeEvent(ve, seq)
           p = applyEventSuccessfully(p, ve.event)
 
-          val (md, uid2) = xa ! DbLogic.project.findProjectMetaDataAndUser(pid) getOrElse
+          val md = xa ! DbLogic.project.findProjectMetaData(pid) getOrElse
             fail(s"ProjectMetaData not found for $pid.")
 
           val e = (seq + 1 - RandomEventStream.InitialEventCount) max 0
-          assert(uid2 ==* uid, md.eventCount ==* e)
+          assert(md.eventCount ==* e)
           md.assertInSyncWith(p)
         }
       }

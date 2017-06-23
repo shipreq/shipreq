@@ -13,7 +13,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ActiveEvent, Event, EventOrd, VerifiedEvent}
 import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.server.data._
-import shipreq.webapp.server.logic.ProjectId
+import shipreq.webapp.server.logic.{ProjectHeader, ProjectId}
 import shipreq.webapp.server.security.PasswordAndSalt
 import SqlHelpers._
 
@@ -188,17 +188,18 @@ object DbLogic {
     def findOwner(id: ProjectId): ConnectionIO[Option[UserId]] =
       sqlSelectOwner.toQuery0(id).option
 
-    private def sqlProjectMetaData(projectCond: String, extraCols: String = ""): String = {
-      import shipreq.webapp.base.event._
+    import shipreq.webapp.base.event._
 
-      def eventTypeId(e: ActiveEvent): Short =
-        EventDbCodecs.eventCodecRegistry.writer(e)._1
+    private def eventTypeId(e: ActiveEvent): Short =
+      EventDbCodecs.eventCodecRegistry.writer(e)._1
+
+    private val projectNameSetId: Short =
+      eventTypeId(ProjectNameSet(null))
+
+    private def sqlProjectMetaData(projectCond: String, extraCols: String = ""): String = {
 
       val reqCreationTypeIds: List[Short] =
         Event.reqCreationEventSamples.map(eventTypeId)
-
-      val projectNameSetId: Short =
-        eventTypeId(ProjectNameSet(null))
 
       val extraColSuffix: String =
         Option(extraCols).filter(_.nonEmpty).fold("")("," + _)
@@ -249,11 +250,38 @@ object DbLogic {
     def findAllProjectMetaDataForUser(uid: UserId): ConnectionIO[List[ProjectMetaData]] =
       sqlSelectAllProjectMetaDataForUser.toQuery0(uid).list
 
-    private[db] val sqlSelectProjectMetaDataAndUser = Query[ProjectId, (ProjectMetaData, UserId)](
-      sqlProjectMetaData("WHERE id=?", "usr_id"))
+//    private[db] val sqlSelectProjectMetaDataAndUser = Query[ProjectId, (ProjectMetaData, UserId)](
+//      sqlProjectMetaData("WHERE id=?", "usr_id"))
+//
+//    def findProjectMetaDataAndUser(pid: ProjectId): ConnectionIO[Option[(ProjectMetaData, UserId)]] =
+//      sqlSelectProjectMetaDataAndUser.toQuery0(pid).option
 
-    def findProjectMetaDataAndUser(pid: ProjectId): ConnectionIO[Option[(ProjectMetaData, UserId)]] =
-      sqlSelectProjectMetaDataAndUser.toQuery0(pid).option
+    private[db] val sqlSelectProjectMetaData = Query[ProjectId, ProjectMetaData](
+      sqlProjectMetaData("WHERE id=?"))
+
+    def findProjectMetaData(pid: ProjectId): ConnectionIO[Option[ProjectMetaData]] =
+      sqlSelectProjectMetaData.toQuery0(pid).option
+
+    private[db] val sqlSelectProjectHeader: Query[(ProjectId, ProjectId), ProjectHeader] = {
+      val sql =
+        s"""
+          |SELECT
+          |  usr_id,
+          |  COALESCE(
+          |    (SELECT (e.data#>>'{}')::varchar
+          |      FROM event e
+          |      WHERE project_id=? AND type_id=$projectNameSetId
+          |      ORDER BY ord DESC
+          |      LIMIT 1),
+          |    '') "name"
+          |FROM project
+          |WHERE id=?
+        """.stripMargin.sql
+      Query(sql)
+    }
+
+    def findProjectHeader(pid: ProjectId): ConnectionIO[Option[ProjectHeader]] =
+      sqlSelectProjectHeader.toQuery0((pid, pid)).option
   }
 
   // ===================================================================================================================

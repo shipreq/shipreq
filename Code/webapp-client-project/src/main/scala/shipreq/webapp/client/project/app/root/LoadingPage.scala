@@ -3,13 +3,13 @@ package shipreq.webapp.client.project.app.root
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.Reusable
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.webapp.base.data.{ProjectMetaData, Username}
+import shipreq.webapp.base.data.{Project, Username}
 import shipreq.webapp.client.base.ui.semantic.{Breadcrumb, UsesSemanticUiManually}
 import shipreq.webapp.client.base.ui.{BaseStyles, MemberNavBar}
 
 object LoadingPage {
 
-  final case class Props(username: Username, project: ProjectMetaData) {
+  final case class Props(username: Username, projectName: Project.Name) {
     @inline def render: VdomElement = Component(this)
   }
 
@@ -18,7 +18,7 @@ object LoadingPage {
 
       MemberNavBar.Props(
         p.username,
-        Reusable.never(MemberNavBar.MemberHome :: Breadcrumb.Item.Div(p.project.name) :: Nil))
+        Reusable.never(MemberNavBar.MemberHome :: Breadcrumb.Item.Div(p.projectName) :: Nil))
         .render,
 
       <.div(BaseStyles.containerLarge,

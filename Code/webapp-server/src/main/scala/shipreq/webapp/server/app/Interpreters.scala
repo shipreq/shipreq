@@ -7,7 +7,6 @@ import scalaz.effect.IO
 import scalaz.syntax.all._
 import scalaz.~>
 import shipreq.base.db.DoobieHelpers._
-import shipreq.taskman.api.UserId
 import shipreq.webapp.base.data.ProjectMetaData
 import shipreq.webapp.base.event.{ActiveEvent, EventOrd}
 import shipreq.webapp.base.hash.HashRec.Collection
@@ -21,8 +20,12 @@ object Interpreters {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   implicit val dbAlgebra: DB.Algebra[ConnectionIO] =
     new DB.Algebra[ConnectionIO] {
-      override def loadProjectMetaDataAndUser(id: ProjectId): ConnectionIO[Option[(ProjectMetaData, UserId)]] =
-        DbLogic.project.findProjectMetaDataAndUser(id)
+
+      override def loadProjectHeader(id: ProjectId): ConnectionIO[Option[ProjectHeader]] =
+        DbLogic.project.findProjectHeader(id)
+
+      override def loadProjectMetaData(id: ProjectId): ConnectionIO[Option[ProjectMetaData]] =
+        DbLogic.project.findProjectMetaData(id)
 
       override def loadProject(id: ProjectId): ConnectionIO[DB.ProjectLoad] =
         DbLogic.event.findAll2(id)
