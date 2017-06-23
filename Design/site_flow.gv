@@ -1,0 +1,53 @@
+digraph G {
+
+edge[arrowhead=vee arrowtail=vee]
+
+Start [shape=circle style=filled color=black fontsize=1 height=.3]
+
+# PUBLIC PAGES
+
+node[style=filled fillcolor="#99ddff"]
+LandingPage
+
+subgraph cluster_publicTemplate {
+  Login
+  Register
+  Register2
+  ResetPassword
+  ResetPassword2
+  EmailA [label="✉" style=bold fontsize=28 margin=0 color=red]
+  EmailB [label="✉" style=bold fontsize=28 margin=0 color=red]
+  About
+  Privacy
+  ToS
+  Header [label="<header>" color="#3388ff" style=dashed]
+  Footer [label="<footer>" color="#3388ff" style=dashed]
+  edge[style=dashed color="#88ccff"]
+  Header -> Login,Register
+  Footer -> About,Privacy,ToS
+  {Register2,ResetPassword2} -> Footer [style=invis]
+}
+
+# MEMBER PAGES
+
+node[style=filled fillcolor="#ffcc88"]
+subgraph cluster_memberTemplate {
+  Home
+  Project
+  HeaderM [label="<header>" color="#ff8833" style=dashed]
+  Logout  [label="<logout>" color="#ff8833" style=dashed]
+  edge[style=dashed color="#ffbb55"]
+  HeaderM -> Home,Logout
+}
+
+# LINKS
+
+node[style=filled fillcolor=black]
+Header -> LandingPage [style=dashed color="#88ccff"]
+Start -> LandingPage -> Login
+Register -> EmailA -> Register2 -> Home
+Login -> ResetPassword -> EmailB -> ResetPassword2 # -> Login
+Login -> Home -> Project
+Logout -> LandingPage
+
+}
