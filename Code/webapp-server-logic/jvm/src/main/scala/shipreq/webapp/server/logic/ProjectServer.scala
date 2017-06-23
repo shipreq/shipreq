@@ -29,9 +29,44 @@ object ProjectServer {
 
   type OnChange[F[_]] = VerifiedEvent.NonEmptySeq => F[Unit]
 
+  type StoreAlgebra[F[_]]          = Store.Register.Algebra[F, ProjectId, State, OnChange[F]]
+  type StoreNode   [F[_]]          = Store.Register.Node[State, OnChange[F]]
+  type StoreMap    [F[_], M[_, _]] = M[ProjectId, StoreNode[F]]
+
+  @Lenses
+  final case class State(header: ProjectHeader, body: Promise[LoadError, LoadedState]) {
+    def name: Project.Name =
+      body.toOption.fold(header.name)(_.project.name)
+
+    def set(s: LoadedState): State =
+      copy(body = Promise.Available(s))
+  }
+
+  final case class LoadedState(project: Project, projectMetaData: ProjectMetaData, nextOrd: EventOrd) {
+    def update(project: Project, ve: VerifiedEvent, latestOrd: EventOrd, when: Instant): LoadedState = {
+      val md = projectMetaData.applyEvent(ve, when)
+      LoadedState(project, md, latestOrd + 1)
+    }
+  }
+
+  sealed abstract class BroadcastTo
+  object BroadcastTo {
+    case object None extends BroadcastTo
+    case object AllExceptSelf extends BroadcastTo {
+      def filter(self: Long): Long => Boolean = _ != self
+    }
+    case object All extends BroadcastTo {
+      val filter: Long => Boolean = _ => true
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Errors
+
   sealed trait RegistrationError
   case object ProjectNotFound extends RegistrationError
   case object AccessDenied extends RegistrationError
+  implicit def univEqRegistrationError: UnivEq[RegistrationError] = UnivEq.derive
 
   sealed trait LoadError {
     def errorMsg: ErrorMsg
@@ -43,24 +78,6 @@ object ProjectServer {
     def errorMsg = Server.ErrorMsgs.ShouldNeverHappen
     def eventRange: String =
       NonEmptySet.maybe(events.map(_.value), "∅")(ConciseIntSetFormat.spaced)
-  }
-  implicit def univEqSortedSet[A: UnivEq]: UnivEq[SortedSet[A]] = UnivEq.force // TODO Move to UnivEq
-  implicit def univEqRegistrationError: UnivEq[RegistrationError] = UnivEq.derive
-
-  final case class LoadedState(project: Project, projectMetaData: ProjectMetaData, nextOrd: EventOrd) {
-    def update(project: Project, ve: VerifiedEvent, latestOrd: EventOrd, when: Instant): LoadedState = {
-      val md = projectMetaData.applyEvent(ve, when)
-      LoadedState(project, md, latestOrd + 1)
-    }
-  }
-
-  @Lenses
-  final case class State(header: ProjectHeader, body: Promise[LoadError, LoadedState]) {
-    def name: Project.Name =
-      body.toOption.fold(header.name)(_.project.name)
-
-    def set(s: LoadedState): State =
-      copy(body = Promise.Available(s))
   }
 
   sealed trait AddEventError {
@@ -87,6 +104,9 @@ object ProjectServer {
       case Promise.GetOrSet.Timeout          => Server.ErrorMsgs.Timeout
     }
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Internal
+
   // 21.138s = 0.015s + 0.027s + 0.0486s + 0.0864s + 0.1548s + 0.2772s + 0.4986s + 0.8964s + 1.6128s + 2.9016s + 5.2218s + 9.3978s
   val LoadRetries: Retries =
     Retries.exponentiallyFrom(15.millis, factor = 1.8)(_.toMillis <= 10.seconds.toMillis)
@@ -107,23 +127,7 @@ object ProjectServer {
         -\/(BuildError(e, load.keySet))
     }
 
-  type StoreAlgebra[F[_]] = Store.Register.Algebra[F, ProjectId, State, OnChange[F]]
-  type StoreNode[F[_]] = Store.Register.Node[State, OnChange[F]]
-  type StoreMap[F[_], M[_, _]] = M[ProjectId, StoreNode[F]]
-
-  sealed abstract class BroadcastTo
-  object BroadcastTo {
-    case object None extends BroadcastTo
-    case object AllExceptSelf extends BroadcastTo {
-      def filter(self: Long): Long => Boolean = _ != self
-    }
-    case object All extends BroadcastTo {
-      val filter: Long => Boolean = _ => true
-    }
-  }
-
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
   def apply[D[_], F[_]](broadcastTo: BroadcastTo)
                        (implicit db: DB.Algebra[D],
                         store: StoreAlgebra[F],
