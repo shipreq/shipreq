@@ -1,0 +1,78 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.js"}
+    :css
+
+      body {background:#fdfeff}
+
+      #header2 {
+        display:flex;
+        width:100%;
+        align-items:top;
+      }
+      #header2 > .left,
+      #header2 > .right {width:4em; bxackground:red; padding:0.5em}
+      #header2 > .left img {width:3em; height:3em; display:block}
+      #header2 > .mid { flex:1; text-align:center; padding-top:0.2em}
+      #header2 > .mid .sep { padding:0 1em; color:#aaa }
+
+      #main1 {width:62ex; margin:8em auto 0 auto}
+
+      #footer1 {
+        font-size:0.85rem;
+        padding-top:0.1em;
+        padding-bottom:0.1em;
+        background:#edeeef;
+        border-top: 1px solid rgba(34,36,38,.15);
+        text-align:center;
+      }
+      #footer1 .txt {color:#888}
+      #footer1 .sep { padding:0 1em; color:#aaa }
+
+      #layout {display:flex; flex-direction: column; align-items:stretch; min-height:100%}
+      #layout > header {}
+      #layout > main {flex:1; padding-bottom:2em}
+      #layout > footer {}
+
+  %body
+    #layout
+
+      %header#header2
+        .left
+          %img(src="logo-only-dark.svg" title="Link to /" style="cursor:pointer")
+        .mid
+          %nav
+            %a(href="x") Login
+            %span.sep |
+            %a(href="x") Register
+        .right
+
+      %main
+        #main1
+
+          .ui.message.icon.info
+            %i.icon.mail.outline
+            .content
+              .header
+                Check your email
+              %p
+                If your email address was valid, you'll soon receive an email with a link to reset your password.
+              -# %p(style="margin-top:.8em")
+                If your email address was valid, you'll soon receive an email with a link to reset your password.
+              -# %p
+                If you don't receive an email, verify that you entered your email address correctly and try again.
+
+
+      %footer#footer1
+        %span.txt © 2013-2017 Bearded Logic
+        %span.sep |
+        %a(href="x") About
+        %span.sep |
+        %a(href="x") Terms
+        %span.sep |
+        %a(href="x") Privacy

@@ -78,7 +78,7 @@ Phase 2 (dev)
 * Front pages
   * [ ] LandingPage
   * [x] Login/ResetPassword
-  * [ ] ResetPassword2
+  * [x] ResetPassword2
   * [ ] Register
   * [ ] Register2
   * [ ] Privacy/ToS
