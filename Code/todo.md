@@ -76,7 +76,18 @@ Phase 2 (dev)
 
 ### UI/UX
 * Front pages
+  * [ ] LandingPage
+  * [x] Login/ResetPassword
+  * [ ] ResetPassword2
+  * [ ] Register
+  * [ ] Register2
+  * [ ] Privacy/ToS
+  * [ ] About
 * User name: name as one field is fine, call it "full name" like credit cards
+* Forms: autofocus input, disable buttons when KO, no red/error for empty
+* LandingPage form: perma-disable button after successful submission
+* Reorder Ship/Req text. "Ship better products with better requirements"?
+* Login failed: `Invalid <username|email> or ...`
 
 ### Features
 * User profile page

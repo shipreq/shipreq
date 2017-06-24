@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html><head><title>ShipReq</title><script src="../node_modules/jquery/dist/jquery.min.js"></script><link href="../semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="../semantic/dist/semantic.js"></script><style type="text/css">
+
+body {background:#fdfeff}
+
+#header1 {
+  display:flex;
+  height:3em;
+  background:#edeeef;
+  border: 1px solid rgba(34,36,38,.15);
+  box-shadow: 0 1px 2px 0 rgba(34,36,38,.15);
+  align-items:center;
+}
+#header1 > .left,
+#header1 > .right {width:4em; bxackground:red; padding-left:1em}
+#header1 > .left img {width:2.3em; height:2.3em; display:block}
+#header1 > .mid { flex:1; text-align:center; }
+#header1 > .mid .sep { padding:0 1em; color:#aaa }
+
+#header2 {
+  display:flex;
+  width:100%;
+  align-items:top;
+}
+#header2 > .left,
+#header2 > .right {width:4em; bxackground:red; padding:0.5em}
+#header2 > .left img {width:3em; height:3em; display:block}
+#header2 > .mid { flex:1; text-align:center; padding-top:0.2em}
+#header2 > .mid .sep { padding:0 1em; color:#aaa }
+
+#header3 {
+  text-align:center;
+  width:100%;
+  padding:0.2em;
+}
+#header3 > .sep { padding:0 1em; color:#aaa }
+
+#main1 {width:52ex; margin:8em auto 0 auto}
+
+#footer1 {
+  font-size:0.85rem;
+  padding-top:0.1em;
+  padding-bottom:0.1em;
+  background:#edeeef;
+  border-top: 1px solid rgba(34,36,38,.15);
+  text-align:center;
+}
+#footer1 .txt {color:#888}
+#footer1 .sep { padding:0 1em; color:#aaa }
+
+#layout {display:flex; flex-direction: column; align-items:stretch; min-height:100%}
+#layout > header {}
+#layout > main {flex:1; padding-bottom:2em}
+#layout > footer {}
+
+</style></head><body><div id="layout"><header id="header2"><div class="left"><img src="logo-only-dark.svg" title="Link to /" style="cursor:pointer" /></div><div class="mid"><nav><span class="active">Login</span><span class="sep">|</span><a href="x">Register</a></nav></div><div class="right"></div></header><main><div id="main1"><div style="margin-bottom:4em" class="ui message icon error"><i class="icon ban"></i><div class="content"><div class="header">Login failed</div><p>Invalid username or password.</p></div><i class="close icon"></i></div><div class="ui form"><div class="field"><label>Username or email</label><div class="ui left icon input"><input type="text" value="japgolly" /><i class="user icon"></i></div></div><div class="field"><label><div style="display:flex; justify-content:space-between"><div>Password</div><a href="x" style="font-weight:normal">Forgot password?</a></div></label><div class="ui left icon input"><input type="password" autofocus="1" /><i class="lock icon"></i></div></div><div style="display:flex; width:100%; align-items: baseline;" class="div"><div style="flex:1" class="div"><div class="ui checkbox"><input type="checkbox" tabindex="0" class="hidden" checked="1" /><label>Remember me</label></div></div><div style="text-align:right" class="div"><div style="margin-right:0!important" class="ui blue submit button large">Login</div></div></div></div></div></main><footer id="footer1"><span class="txt">© 2013-2017 Bearded Logic</span><span class="sep">|</span><a href="x">About</a><span class="sep">|</span><a href="x">Terms</a><span class="sep">|</span><a href="x">Privacy</a></footer></div></body></html>
