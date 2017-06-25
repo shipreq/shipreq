@@ -80,7 +80,7 @@ Phase 2 (dev)
   * [x] Login/ResetPassword
   * [x] ResetPassword2
   * [x] Register
-  * [ ] Register2
+  * [x] Register2
   * [ ] Privacy/ToS
   * [ ] About
 * User name: name as one field is fine, call it "full name" like credit cards

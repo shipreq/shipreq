@@ -1,0 +1,160 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.js"}
+    :css
+
+      body {background:#fdfeff}
+
+      #header2 {
+        display:flex;
+        width:100%;
+        align-items:top;
+      }
+      #header2 > .left,
+      #header2 > .right {width:4em; bxackground:red; padding:0.5em}
+      #header2 > .left img {width:3em; height:3em; display:block}
+      #header2 > .mid { flex:1; text-align:center; padding-top:0.2em}
+      #header2 > .mid .sep { padding:0 1em; color:#aaa }
+
+      #part1 {width:48ex; margin:8em auto 0 auto}
+      #part1v2 {width:72ex; margin:8em auto 0 auto}
+      #part2 {width:64ex; margin:8em auto 0 auto}
+
+      #footer1 {
+        font-size:0.85rem;
+        padding-top:0.1em;
+        padding-bottom:0.1em;
+        background:#edeeef;
+        border-top: 1px solid rgba(34,36,38,.15);
+        text-align:center;
+      }
+      #footer1 .txt {color:#888}
+      #footer1 .sep { padding:0 1em; color:#aaa }
+
+      #layout {display:flex; flex-direction: column; align-items:stretch; min-height:100%}
+      #layout > header {}
+      #layout > main {flex:1; padding-bottom:2em}
+      #layout > footer {}
+
+  %body
+    #layout
+
+      %header#header2
+        .left
+          %img(src="logo-only-dark.svg" onclick="location.href='public-home.haml.html'" style="cursor:pointer")
+        .mid
+          %nav
+            %a(href="public-login.haml.html") Login
+            %span.sep |
+            %span.active Register
+        .right
+
+      %main
+
+        -# #part1
+          .ui.form
+            .field
+              %label Full Name
+              .ui.left.icon.input
+                %input(type="text" autofocus=1)
+                %i.icon.user
+            .field
+              %label Username
+              .ui.left.icon.input
+                %input(type="text")
+                %i.icon.user
+            .field
+              %label Password
+              .ui.left.icon.input
+                %input(type="password")
+                %i.icon.lock
+            .field
+              %label Confirm password
+              .ui.left.icon.input
+                %input(type="password")
+                %i.icon.lock
+            .field
+              .ui.checkbox
+                %input(type="checkbox" tabindex="0" class="hidden" checked=1)
+                %label Subscribe to newsletter
+            .field
+              .ui.checkbox
+                %input(type="checkbox" tabindex="0" class="hidden")
+                %label I agree to the <a href="public-tos.haml.html">terms of service</a>
+            .div(style="text-align:right")
+              .ui.blue.submit.button.large(style="margin-right:0!important")
+                Create Account
+
+        #part1v2
+          .ui.form
+            .field
+              %label Full Name
+              .ui.left.icon.input
+                %input(type="text" autofocus=1) # placeholder="e.g. John Smith"
+                %i.icon.user
+            .field
+              %label Username
+              .ui.left.icon.input
+                %input(type="text")
+                %i.icon.user
+            .two.fields
+              .field
+                %label Password
+                .ui.left.icon.input
+                  %input(type="password")
+                  %i.icon.lock
+              .field
+                %label Confirm password
+                .ui.left.icon.input
+                  %input(type="password")
+                  %i.icon.lock
+            -# .field
+              %label Password
+              .two.fields
+                .field
+                  .ui.left.icon.input
+                    %input(type="password" placeholder="Password" autofocus=1)
+                    %i.icon.lock
+                .field
+                  .ui.left.icon.input
+                    %input(type="password" placeholder="Confirm password")
+                    %i.icon.lock
+            .field
+              .ui.checkbox
+                %input(type="checkbox" tabindex="0" class="hidden" checked=1)
+                %label Subscribe to newsletter
+            .field
+              .ui.checkbox
+                %input(type="checkbox" tabindex="0" class="hidden")
+                %label I agree to the <a href="public-tos.haml.html">terms of service</a>
+            .div(style="text-align:right")
+              .ui.blue.submit.button.large(style="margin-right:0!important")
+                Create Account
+
+        #part2
+          .ui.message.icon.success
+            -# %i.icon.add.user
+            -# %i.icon.user
+            -# %i.icon.smile
+            %i.icon.heart
+            .content
+              .header
+                Welcome to ShipReq!
+              %p
+                Your account is now active.<br/>
+                May ShipReq provide you much benefit and happiness!<br/>
+                %a(href="x" style="font-weight:bold") Begin…
+
+      %footer#footer1
+        %span.txt © 2013-2017 Bearded Logic
+        %span.sep |
+        %a(href="public-about.haml.html") About
+        %span.sep |
+        %a(href="public-tos.haml.html") Terms
+        %span.sep |
+        %a(href="public-privacy.haml.html") Privacy
