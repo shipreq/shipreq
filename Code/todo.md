@@ -75,6 +75,7 @@ Phase 2 (dev)
 * Bug: Create-and-close closes on ajax error
 
 ### UI/UX
+* Add info/help to MemberHome when no projects exist
 * Front pages
   * [ ] LandingPage
   * [x] Login/ResetPassword
@@ -93,3 +94,4 @@ Phase 2 (dev)
 * User profile page
 * Issues
 * Saved views
+* Anonymous shares
