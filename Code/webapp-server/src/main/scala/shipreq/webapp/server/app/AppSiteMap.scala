@@ -34,7 +34,7 @@ object AppSiteMap { // TODO Cleanup
 
   val Home =
     pageWithStaticUrl("home", defaultTitle, "Home")(_ / URLs.ForLift.memberHome
-      >> UseEitherTemplate(Oshiro.isAuthenticated(), "members/home")(publicTemplate))
+      >> UseEitherTemplate(Oshiro.isAuthenticated(), "members-home")(publicTemplate))
 
 //  val LandingPageViaBusinessCard =
 //    pageWithStaticUrl("land-bc", "")(_ / "bc" >> UseTemplate(publicTemplate))
@@ -60,14 +60,17 @@ object AppSiteMap { // TODO Cleanup
     (MenuWithIdParam(ProjectId.Extern)("project") / URLs.ForLift.project / * / **
       >> StaticTitle(defaultTitle)
       >> AuthenticationRequired >> ProjectPermissionRequired
-      >> UseTemplate("members/project")
+      >> UseTemplate("members-project")
       >> PerformEffects {
            RequestVars.ProjectId.setByParam(Project, "Project --> ProjectId")
            RequestVars.ProjectOwner.loadFromProjectId()
          })
 
   val AdminStats =
-    pageWithStaticUrl("admin.stats", mkTitle("Stats"), "")(_ / "sir" / "stats" >> AdminOnly >> Hidden)
+    pageWithStaticUrl("admin.stats", mkTitle("Stats"), "")(_ / "sir" / "stats"
+      >> UseTemplate("admin-stats")
+      >> AdminOnly
+      >> Hidden)
 
   // -------------------------------------------------------------------------------------------------------------------
 

@@ -23,7 +23,7 @@ for mode in ${args[@]}; do
 
       # Webpack
       $webpack webpack/$mode.js || exit $?
-      rm -f $target1/{public,sir}.js # These are empty. Their entrypoints in webpack exist for CSS only.
+      rm -f $target1/{admin}.js # These are empty. Their entrypoints in webpack exist for CSS only.
       echo
 
       # Webtamp

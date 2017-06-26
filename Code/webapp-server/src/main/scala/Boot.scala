@@ -160,6 +160,7 @@ class Boot extends DI {
 
   def preloadTemplates(): Unit = {
     import shipreq.webapp.server.snippet._
+    AdminStats
     HomeSpa
     ProjectSpa
   }

@@ -1,4 +1,4 @@
-package shipreq.webapp.server.snippet.sir
+package shipreq.webapp.server.snippet
 
 import java.time._
 import java.time.format.DateTimeFormatter
@@ -15,7 +15,7 @@ import shipreq.webapp.server.feature.SessionStats
 import shipreq.webapp.server.lib.SnippetHelpers
 import shipreq.webapp.server.util.{CacheFn, ExpireAfter}
 
-object Stats extends SnippetHelpers {
+object AdminStats extends SnippetHelpers {
 
   // TODO Use env vars provided by docker
   object Build {

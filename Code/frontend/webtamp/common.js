@@ -38,7 +38,7 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
         'jquery',
       ],
 
-      sir: fromWebpack({ files: 'sir.css' }),
+      admin: fromWebpack({ files: 'admin.css' }),
 
       webappClientWw: [
         { type: 'external', path: sjsPath('ww'), manifest: 'webappClientWwJs' },

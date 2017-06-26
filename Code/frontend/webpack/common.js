@@ -13,7 +13,7 @@ const config = ({ mode }) => ({
 
   entry: {
     public: './shipreq/styles/public.less',
-    sir: './shipreq/styles/sir.less',
+    admin: './shipreq/styles/admin.less',
     semantic: './shipreq/semantic-ui',
     member: entryPoints([
       mode == 'dev' && 'expose-loader?Perf!react-addons-perf',
