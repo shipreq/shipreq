@@ -10,7 +10,7 @@ import shipreq.base.db.DoobieHelpers._
 import shipreq.taskman.api
 import shipreq.webapp.base.data.ProjectMetaData
 import shipreq.webapp.base.event.{ActiveEvent, EventOrd}
-import shipreq.webapp.base.hash.HashRec.Collection
+import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.base.protocol.ServerSideProc
 import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.logic._
@@ -22,23 +22,23 @@ object Interpreters {
   implicit val dbAlgebra: DB.Algebra[ConnectionIO] =
     new DB.Algebra[ConnectionIO] {
 
-      override def createProject(id: api.UserId): ConnectionIO[ProjectId] =
+      override def createEmptyProject(id: api.UserId): ConnectionIO[ProjectId] =
         DbLogic.project.create(id)
 
-      override def loadProjectHeader(id: ProjectId): ConnectionIO[Option[ProjectHeader]] =
+      override def getProjectHeader(id: ProjectId): ConnectionIO[Option[ProjectHeader]] =
         DbLogic.project.findProjectHeader(id)
 
-      override def loadProjectMetaData(id: ProjectId): ConnectionIO[Option[ProjectMetaData]] =
+      override def getProjectMetaData(id: ProjectId): ConnectionIO[Option[ProjectMetaData]] =
         DbLogic.project.findProjectMetaData(id)
 
-      override def loadProject(id: ProjectId): ConnectionIO[DB.ProjectLoad] =
+      override def getAllProjectEvents(id: ProjectId): ConnectionIO[DB.ProjectEvents] =
         DbLogic.event.findAll2(id)
 
-      override def findAllProjectMetaDataForUser(id: api.UserId): ConnectionIO[List[ProjectMetaData]] =
+      override def getAllProjectMetaDataForUser(id: api.UserId): ConnectionIO[List[ProjectMetaData]] =
         DbLogic.project.findAllProjectMetaDataForUser(id)
 
-      override def saveProjectEvent(id: ProjectId, seq: EventOrd, e: ActiveEvent, hrs: Collection): ConnectionIO[Option[Throwable]] =
-        DbLogic.event.create(id, seq, e, hrs).attempt.map(_.fold[Option[Throwable]](Some(_), _ => None))
+      override def saveProjectEvent(id: ProjectId)(o: EventOrd, e: ActiveEvent, h: HashRec.Collection): ConnectionIO[Option[Throwable]] =
+        DbLogic.event.create(id, o, e, h).attempt.map(_.fold[Option[Throwable]](Some(_), _ => None))
 
       override def inDbTransaction[A](f: ConnectionIO[A]): ConnectionIO[A] =
         f.inTransaction

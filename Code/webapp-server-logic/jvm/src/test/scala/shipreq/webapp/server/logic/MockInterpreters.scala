@@ -29,8 +29,8 @@ object MockDb {
                       createdAt     = createdAt,
                       lastUpdatedAt = lastUpdatedAt)
 
-    lazy val projectLoad: DB.ProjectLoad =
-      (SortedMap.empty: DB.ProjectLoad) ++ events.iterator
+    lazy val projectLoad: DB.ProjectEvents =
+      (SortedMap.empty: DB.ProjectEvents) ++ events.iterator
   }
 
 }
@@ -46,13 +46,13 @@ final class MockDb extends DB.Algebra[Name] {
     projects = projects.add(mde)
   }
 
-  override def createProject(id: UserId) = Name[ProjectId] {
+  override def createEmptyProject(id: UserId) = Name[ProjectId] {
     val pid = ProjectId(1 + projects.underlyingMap.keysIterator.map(_.value).foldLeft(0L)(_ max _))
     addProject(pid, id)()
     pid
   }
 
-  override def findAllProjectMetaDataForUser(id: UserId) = Name[List[ProjectMetaData]] {
+  override def getAllProjectMetaDataForUser(id: UserId) = Name[List[ProjectMetaData]] {
     projects.valuesIterator
       .filter(_.userId ==* id)
       .map(_.projectMetaData)
@@ -60,24 +60,24 @@ final class MockDb extends DB.Algebra[Name] {
   }
 
   var loadProjectHeaderLog = Vector.empty[ProjectId]
-  override def loadProjectHeader(id: ProjectId) = Name[Option[ProjectHeader]] {
+  override def getProjectHeader(id: ProjectId) = Name[Option[ProjectHeader]] {
     loadProjectHeaderLog :+= id
     projects.get(id).map(e => ProjectHeader(e.userId, e.project.name))
   }
 
   var loadProjectMetaDataLog = Vector.empty[ProjectId]
-  override def loadProjectMetaData(id: ProjectId) = Name[Option[ProjectMetaData]] {
+  override def getProjectMetaData(id: ProjectId) = Name[Option[ProjectMetaData]] {
     loadProjectMetaDataLog :+= id
     projects.get(id).map(_.projectMetaData)
   }
 
   var loadProjectLog = Vector.empty[ProjectId]
-  override def loadProject(id: ProjectId) = Name[DB.ProjectLoad] {
+  override def getAllProjectEvents(id: ProjectId) = Name[DB.ProjectEvents] {
     loadProjectLog :+= id
     projects.need(id).projectLoad
   }
 
-  override def saveProjectEvent(id: ProjectId, ord: EventOrd, e: ActiveEvent, hrs: Collection) = Name[Option[Throwable]] {
+  override def saveProjectEvent(id: ProjectId)(ord: EventOrd, e: ActiveEvent, hrs: Collection) = Name[Option[Throwable]] {
     val entry = projects.need(id)
     def update(events: VerifiedEvent.Seq): Unit =
       projects = projects + entry.copy(events = events, lastUpdatedAt = Some(Instant.now()))

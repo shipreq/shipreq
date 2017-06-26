@@ -115,7 +115,7 @@ object ProjectServer {
   val SaveRetries: Retries =
     Retries.exponentiallyFrom(15.millis)(_.toMillis <= 4.seconds.toMillis)
 
-  def buildProject(load: DB.ProjectLoad): BuildError \/ (Project, EventOrd) =
+  def buildProject(load: DB.ProjectEvents): BuildError \/ (Project, EventOrd) =
     ApplyEvent.trusted.applyVerified(load.values)(Project.empty) match {
       case \/-(p) =>
         val seq = if (load.isEmpty)
@@ -151,7 +151,7 @@ object ProjectServer {
 
       override def register(pid: ProjectId, userId: UserId, onChange: OnChange[F]): F[RegistrationError \/ RegId] = {
         def loadState: D[RegistrationError \/ State] =
-          db.loadProjectHeader(pid).map {
+          db.getProjectHeader(pid).map {
             case Some(h) =>
               if (userId ==* h.userId)
                 \/-(State(h, Promise.Failure(LoadNotStarted)))
@@ -184,8 +184,8 @@ object ProjectServer {
 
         def init: F[LoadError \/ LoadedState] =
           runDB(db.inDbTransaction(for {
-            pl <- db.loadProject(pid)
-            md <- db.loadProjectMetaData(pid) // only really need createdAt and lastUpdatedAt
+            pl <- db.getAllProjectEvents(pid)
+            md <- db.getProjectMetaData(pid) // only really need createdAt and lastUpdatedAt
           } yield buildProject(pl).map(b => LoadedState(b._1, md.get, b._2))))
 
         Promise.getOrSet(store, promiseOptics)(regId.key, LoadRetries, _ => Some(init))
@@ -255,7 +255,7 @@ object ProjectServer {
             ApplyNewEvent(mkEvent(s1.project), s1.project) match {
               case PotentialChange.Success(updated) =>
                 val ord = s1.nextOrd
-                runDB(db.saveProjectEvent(r.key, ord, updated.ae, updated.ve.hashRecs)).flatMap {
+                runDB(db.saveProjectEvent(r.key)(ord, updated.ae, updated.ve.hashRecs)).flatMap {
 
                   case None =>
                     val ves = VerifiedEvent.NonEmptySeq.one(ord, updated.ve)

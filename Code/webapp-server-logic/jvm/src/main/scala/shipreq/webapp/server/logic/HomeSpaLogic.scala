@@ -22,10 +22,10 @@ object HomeSpaLogic {
                          (implicit db: DB.ForHomeSpa[D], D: Monad[D]): D[ProjectMetaData] =
     db.inDbTransaction(
       for {
-        pid ← db.createProject(userId)
+        pid ← db.createEmptyProject(userId)
         e1  = ApplyNewEvent.mustApply(ProjectNameSet(name), InitProject.project)
-        _   ← db.saveProjectEvent(pid, EventOrd(0), InitProject.ae, InitProject.ve.hashRecs)
-        _   ← db.saveProjectEvent(pid, EventOrd(1), e1.ae, e1.ve.hashRecs)
+        _   ← db.saveProjectEvent(pid)(EventOrd(0), InitProject.ae, InitProject.ve.hashRecs)
+        _   ← db.saveProjectEvent(pid)(EventOrd(1), e1.ae, e1.ve.hashRecs)
       } yield ProjectMetaData(ProjectId Extern pid, name, 0, 0, now, None))
 
   def apply[D[_], F[_]](implicit db: DB.ForHomeSpa[D],
@@ -42,7 +42,7 @@ object HomeSpaLogic {
             svr.now.flatMap(now => runDB(createProject(user.id, name, now).map(\/-(_)))))
 
         for {
-          p <- runDB(db.findAllProjectMetaDataForUser(user.id))
+          p <- runDB(db.getAllProjectMetaDataForUser(user.id))
           f <- createProjectFn
         } yield HomeSpaProtocols.InitData(user.username, p, f)
       }
