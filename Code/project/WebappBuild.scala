@@ -39,19 +39,14 @@ object WebappBuild {
       .aggregate(
         webappMacroJvm, webappBaseJvm, webappServerLogicJvm, webappBaseTestJvm, webappGenJvm,
         webappMacroJs , webappBaseJs , webappServerLogicJs , webappBaseTestJs , webappGenJs ,
-        webappClient, webappServer)
+        webappClientBase, webappClientBaseTest,
+        webappClientHome,
+        webappClientWwApi, webappClientWw, webappClientProject,
+        webappServer)
       .settings(
         jsSizesFast := jsSizesTask(Stage.FastOpt).value,
         jsSizesFull := jsSizesTask(Stage.FullOpt).value,
         addCommandAlias("jsSizes", ";jsSizesFast;jsSizesFull"))
-
-  lazy val webappClient =
-    project("webapp-client")
-      .configure(Common.jvmSettings)
-      .aggregate(
-        webappClientBase, webappClientBaseTest,
-        webappClientHome,
-        webappClientWwApi, webappClientWw, webappClientProject)
 
   lazy val webappMacroJvm = webappMacro.jvm
   lazy val webappMacroJs  = webappMacro.js
