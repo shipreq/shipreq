@@ -74,6 +74,7 @@ Phase 2 (dev)
 * Re-evaluate config: some data is useless (i.e. key of custom text fields)
 * Bug: Create-and-close closes on ajax error
 * Add info/help to MemberHome when no projects exist
+* Rename webappClientHome now that its ambiguous in regards to the public pages
 
 ### Front pages
 * Implement new front pages
