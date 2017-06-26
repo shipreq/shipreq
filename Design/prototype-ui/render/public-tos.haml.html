@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html><head><title>ShipReq</title><script src="../node_modules/jquery/dist/jquery.min.js"></script><link href="../semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="../semantic/dist/semantic.js"></script><style type="text/css">
+
+body {background:#fdfeff}
+
+#header2 {
+  display:flex;
+  width:100%;
+  align-items:top;
+}
+#header2 > .left,
+#header2 > .right {width:4em; bxackground:red; padding:0.5em}
+#header2 > .left img {width:3em; height:3em; display:block}
+#header2 > .mid { flex:1; text-align:center; padding-top:0.2em}
+#header2 > .mid .sep { padding:0 1em; color:#aaa }
+
+#footer1 {
+  font-size:0.85rem;
+  padding-top:0.1em;
+  padding-bottom:0.1em;
+  background:#edeeef;
+  border-top: 1px solid rgba(34,36,38,.15);
+  text-align:center;
+}
+#footer1 .txt {color:#888}
+#footer1 .sep { padding:0 1em; color:#aaa }
+#footer1 span.active {font-weight:bold;color:#000}
+
+#layout {display:flex; flex-direction: column; align-items:stretch; min-height:100%}
+#layout > header {}
+#layout > main {flex:1; padding-bottom:2em}
+#layout > footer {}
+
+#main {
+  max-width:144ex;
+  margin: 1em auto 0 auto;
+  padding:0 4vw;
+}
+
+#main {color: #444; }
+#main section {margin-top: 2em}
+#main section .h { color: #000; font-weight:bold; }
+#main section .p { margin-top:0.7ex; }
+#main section ul { margin-top:1ex; }
+#main section li { margin-top:0.7ex; }
+#main section .a {}
+#main section .b {}
+#main footer {margin-top: 2em}
+#main footer .generatedby { font-size: 0.72em; color: #bbb; }
+
+
+</style></head><body><div id="layout"><header id="header2"><div class="left"><img src="logo-only-dark.svg" onclick="location.href='public-home.haml.html'" style="cursor:pointer" /></div><div class="mid"><nav><a href="public-login.haml.html">Login</a><span class="sep">|</span><a href="public-register.haml.html">Register</a></nav></div><div class="right"></div></header><main><div id="main"><header>  Your access to and use of this website and service (collectively the "Service") is conditioned on your acceptance ofand compliance with these terms. These terms apply to all visitors, users and others who access or use the Service.</header><section>  <div class="h">Beta</div>  <div class="p">This Service is currently in the beta-stage of its development.Consequentially, no warranties, guarantees, or support is provided.</div></section><section>  <div class="h">Warranty and Liability</div>  <div class="p">YOUR USE OF THIS SERVICE IS AT YOUR SOLE RISK.THIS SERVICE IS PROVIDED "AS IS," "WITH ALL FAULTS" AND "AS AVAILABLE" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY    AND FITNESS FOR A PARTICULAR PURPOSE.</div></section><section>  <div class="h">Ownership of Intellectual Property</div>  <div class="p">We claim no intellectual property rights over the information and content you provide as part of the Service.Any and all requirements data you upload to the service remain 100% your property.</div>  <div class="p">Any information or input provided by you regarding the Service(including but not limited to user feedback, suggestions, feedback, surveys, questionnaires)will become the property of Bearded Logic and you hereby assign all rights in such information    or feedback to Bearded Logic.We may use said information or input for our business or other purposes, including without limitation improvements to the Service.</div></section><section>  <div class="h">Changes to these terms</div>  <div class="p">Bearded Logic has the discretion to update these terms at any time.When we do, we will revise the updated date at the bottom of this page.You acknowledge and agree that it is your responsibility to review these terms periodically and become aware    of modifications.</div></section><section>  <div class="h">Your acceptance of these terms</div>  <div class="p">By using this Service, you signify your acceptance of these terms and the <a data-lift="PageLink.privacy">privacy policy</a>.</div></section><section>  <div class="h">Contacting us</div>  <div class="p">If you have any questions about these terms, the practices of this site, or your dealings with this Service, pleasecontact us at <a data-lift="Config.supportEmailLink">Bearded Logic</a>.</div></section><footer>  <div class="lastupdated">This document was last updated on <time datetime="2014-01-15">15 January, 2014</time>.</div></footer></div></main><footer id="footer1"><span class="txt">© 2013-2017 Bearded Logic</span><span class="sep">|</span><a href="public-about.haml.html">About</a><span class="sep">|</span><span class="active">Terms</span><span class="sep">|</span><a href="public-privacy.haml.html">Privacy</a></footer></div></body></html>

@@ -82,7 +82,7 @@ Phase 2 (dev)
   * [x] ResetPassword2
   * [x] Register
   * [x] Register2
-  * [ ] Privacy/ToS
+  * [x] Privacy/ToS
   * [ ] About
 * User name: name as one field is fine, call it "full name" like credit cards
 * Forms: autofocus input, disable buttons when KO, no red/error for empty
