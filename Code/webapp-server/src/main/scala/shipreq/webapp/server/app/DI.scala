@@ -6,7 +6,7 @@ import scalaz.effect.IO
 import shipreq.base.db.DbAccess
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.lib.{StatLogger, StatLoggerImpl, TaskmanInterface}
-import shipreq.webapp.server.logic.ProjectServer
+import shipreq.webapp.server.logic._
 import shipreq.webapp.server.security.{Oshiro, SecurityProvider}
 
 // TODO Change DI to Globals
@@ -24,17 +24,11 @@ object DI extends SimpleInjector {
   val StatLogger: Inject[StatLogger] =
     inject(StatLoggerImpl)
 
-  var dbAccess: DbAccess =
-    null
-
-  var taskman: TaskmanInterface =
-    null
-
-  var projectServer: ProjectServer[IO] =
-    null
-
-  var serverConfig: ServerConfig =
-    null
+  var dbAccess     : DbAccess          = null
+  var taskman      : TaskmanInterface  = null
+  var homeSpaLogic : HomeSpaLogic[IO]  = null
+  var projectServer: ProjectServer[IO] = null
+  var serverConfig : ServerConfig      = null
 }
 
 /**
@@ -42,6 +36,7 @@ object DI extends SimpleInjector {
  */
 trait DI {
   @inline final def db()               = DI.dbAccess
+  @inline final def homeSpaLogic()     = DI.homeSpaLogic
   @inline final def projectServer()    = DI.projectServer
   @inline final def securityProvider() = DI.SecurityProvider.vend
   @inline final def statLogger()       = DI.StatLogger.vend

@@ -3,11 +3,11 @@ package shipreq.webapp.server.db
 import doobie.imports._
 import java.time.Instant
 import shipreq.base.db.SqlHelpers._
-import shipreq.taskman.api.{EmailAddr, UserId}
+import shipreq.taskman.api._
 import shipreq.webapp.base.data._
 import shipreq.webapp.server.data._
-import shipreq.webapp.server.logic.ProjectId
-import shipreq.webapp.server.security.{HashedStr, PasswordAndSalt}
+import shipreq.webapp.server.logic._
+import shipreq.webapp.server.security._
 
 object SqlHelpers {
 
@@ -28,9 +28,9 @@ object SqlHelpers {
   implicit val doobieCompositeUserRegistrationInfo: Composite[UserRegistrationInfo] =
     Composite.generic
 
-  implicit val doobieCompositeUserDescriptor: Composite[UserDescriptor] =
+  implicit val doobieCompositeUserDescriptor: Composite[User] =
     Composite[(UserId, Username, EmailAddr, Option[String])]
-      .readOnly(r => UserDescriptor(r._1, r._2, r._3, userRoles(r._4)))
+      .readOnly(r => User(r._1, r._2, r._3, userRoles(r._4)))
 
   implicit val doobieCompositeProjectMetaData: Composite[ProjectMetaData] =
     Composite[(ProjectId, String, Int, Int, Instant, Option[Instant])].readOnly {
@@ -50,13 +50,13 @@ object SqlHelpers {
                                            rolesStr      : Option[String],
                                            hashedPassword: Option[HashedStr],
                                            saltBytes     : Option[String]) {
-    def resolve: Option[(UserDescriptor, PasswordAndSalt)] =
+    def resolve: Option[(User, PasswordAndSalt)] =
       for {
         u <- username
         a <- hashedPassword
         b <- saltBytes
         roles = rolesStr.fold(Set.empty[String])(_.split(',').toSet)
-      } yield (UserDescriptor(id, u, email, roles), PasswordAndSalt.restore(a, b))
+      } yield (User(id, u, email, roles), PasswordAndSalt.restore(a, b))
   }
 
   implicit val doobieCompositeUserDescAndPasswordInDb: Composite[UserDescAndPasswordInDb] =

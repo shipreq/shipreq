@@ -6,16 +6,16 @@ import net.liftweb.common.Box
 import net.liftweb.http.LiftSession
 import shipreq.taskman.api.UserId
 import shipreq.webapp.server.app.DI
-import shipreq.webapp.server.data.UserDescriptor
 import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.feature.SessionStats
+import shipreq.webapp.server.logic.User
 
 sealed trait StatLoggerCmd
 case class LogUserLogin(id: UserId, ip: Option[String] = Misc.clientIp()) extends StatLoggerCmd
 
 trait StatLogger {
   def !(msg: StatLoggerCmd): Unit
-  def updateSessionStatsOnLogin(bs: Box[LiftSession], user: UserDescriptor): Unit
+  def updateSessionStatsOnLogin(bs: Box[LiftSession], user: User): Unit
 }
 
 object StatLoggerImpl extends StatLogger with SpecializedLiftActor[StatLoggerCmd] with DI {
@@ -27,6 +27,6 @@ object StatLoggerImpl extends StatLogger with SpecializedLiftActor[StatLoggerCmd
     case LogUserLogin(id, ip) => dbRun(DbLogic.user.logLogin(id, ip))
   }
 
-  override def updateSessionStatsOnLogin(bs: Box[LiftSession], user: UserDescriptor) =
+  override def updateSessionStatsOnLogin(bs: Box[LiftSession], user: User) =
     SessionStats.onLogin(bs, user)
 }

@@ -3,7 +3,7 @@ package shipreq.webapp.server.security
 import net.liftweb.http.{DispatchSnippet, LiftRules}
 import org.apache.shiro.SecurityUtils.{getSubject => subject}
 import scala.xml.{NodeSeq, Text}
-import shipreq.webapp.server.data.UserDescriptor
+import shipreq.webapp.server.logic.User
 import Oshiro.loggedInUser
 
 object ShiroSnippets {
@@ -46,8 +46,8 @@ object ShiroSnippets {
       case "username" => userAttribute(_.username.value)
       case "email" => userAttribute(_.email.value)
     }
-    def userAttribute(fn: UserDescriptor => String) =
-      (_: NodeSeq) => Text(loggedInUser.fold("?")(fn))
+    def userAttribute(fn: User => String) =
+      (_: NodeSeq) => Text(loggedInUser().fold("?")(fn))
     // "* *" #> Text(loggedInUser.map(fn) getOrElse "?")
   }
 

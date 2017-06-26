@@ -7,6 +7,7 @@ import scalaz.effect.IO
 import scalaz.syntax.all._
 import scalaz.~>
 import shipreq.base.db.DoobieHelpers._
+import shipreq.taskman.api
 import shipreq.webapp.base.data.ProjectMetaData
 import shipreq.webapp.base.event.{ActiveEvent, EventOrd}
 import shipreq.webapp.base.hash.HashRec.Collection
@@ -21,6 +22,9 @@ object Interpreters {
   implicit val dbAlgebra: DB.Algebra[ConnectionIO] =
     new DB.Algebra[ConnectionIO] {
 
+      override def createProject(id: api.UserId): ConnectionIO[ProjectId] =
+        DbLogic.project.create(id)
+
       override def loadProjectHeader(id: ProjectId): ConnectionIO[Option[ProjectHeader]] =
         DbLogic.project.findProjectHeader(id)
 
@@ -29,6 +33,9 @@ object Interpreters {
 
       override def loadProject(id: ProjectId): ConnectionIO[DB.ProjectLoad] =
         DbLogic.event.findAll2(id)
+
+      override def findAllProjectMetaDataForUser(id: api.UserId): ConnectionIO[List[ProjectMetaData]] =
+        DbLogic.project.findAllProjectMetaDataForUser(id)
 
       override def saveProjectEvent(id: ProjectId, seq: EventOrd, e: ActiveEvent, hrs: Collection): ConnectionIO[Option[Throwable]] =
         DbLogic.event.create(id, seq, e, hrs).attempt.map(_.fold[Option[Throwable]](Some(_), _ => None))
@@ -64,6 +71,6 @@ object Interpreters {
     Store.Algebra.concurrentHashMap()
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  val projectServer: ProjectServer[IO] =
-    ProjectServer[ConnectionIO, IO](ProjectServer.BroadcastTo.All)
+  val homeSpaLogic : HomeSpaLogic [IO] = HomeSpaLogic [ConnectionIO, IO]
+  val projectServer: ProjectServer[IO] = ProjectServer[ConnectionIO, IO](ProjectServer.BroadcastTo.All)
 }

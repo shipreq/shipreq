@@ -5,7 +5,7 @@ import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
 import utest.asserts._
 import shipreq.webapp.base.test.{WebappTestEquality, WebappTestUtil}
-import shipreq.webapp.server.data.UserDescriptor
+import shipreq.webapp.server.logic.User
 import shipreq.webapp.server.security.Oshiro
 
 trait WebappServerTestEquality extends WebappTestEquality {
@@ -32,10 +32,10 @@ trait WebappServerTestUtil extends WebappTestUtil {
     finally Oshiro.logout()
   }
 
-  def assertUserLoggedIn(u: UserDescriptor): Unit =
+  def assertUserLoggedIn(u: User): Unit =
     assertEq(Oshiro.loggedInUser(), Some(u))
 
-  def assertLoggedIn(): UserDescriptor = {
+  def assertLoggedIn(): User = {
     val user = Oshiro.loggedInUser()
     assert(user.isDefined)
     user.get

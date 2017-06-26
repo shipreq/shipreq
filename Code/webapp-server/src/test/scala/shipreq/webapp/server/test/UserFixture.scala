@@ -9,8 +9,8 @@ import shipreq.base.db.DoobieHelpers._
 import shipreq.base.test.db.{SingleConnectionXA, Usable}
 import shipreq.taskman.api.{EmailAddr, UserId}
 import shipreq.webapp.base.data._
-import shipreq.webapp.server.data._
 import shipreq.webapp.server.db.DbLogic
+import shipreq.webapp.server.logic._
 import shipreq.webapp.server.security.{PasswordAndSalt, Roles}
 import shipreq.webapp.server.test.UserFixture._
 import shipreq.webapp.server.test.WebappServerTestUtil._
@@ -34,7 +34,7 @@ object UserFixture {
     val pws = PasswordAndSalt.createWithRandomSalt(password)
     def hashedPassword = pws.hashedPassword
     def salt = pws.salt
-    def toUserDescriptor = UserDescriptor(id, username, email, roles)
+    def toUserDescriptor = User(id, username, email, roles)
 
     def withLoggedIn[A](a: => A): A =
       WebappServerTestUtil.withLoggedIn(username.value, password)(a)
@@ -61,7 +61,7 @@ final case class UserFixture(xa: SingleConnectionXA) {
     val i1 = Query[(String, String, String, String, Option[String]), Long]("INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at, roles) VALUES(?,?,?,?,NOW(),NOW(),NOW(),?) RETURNING id")
     val inserts1: List[IO[Unit]] =
       for (u <- users) yield {
-        i1.toQuery0(u.username.value, u.email.value, u.hashedPassword.value, u.salt, UserDescriptor.roleStr(u.roles))
+        i1.toQuery0(u.username.value, u.email.value, u.hashedPassword.value, u.salt, User.roleStr(u.roles))
           .unique
           .map { rawId =>
             val id = UserId(rawId)

@@ -13,7 +13,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ActiveEvent, Event, EventOrd, VerifiedEvent}
 import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.server.data._
-import shipreq.webapp.server.logic.{ProjectHeader, ProjectId}
+import shipreq.webapp.server.logic._
 import shipreq.webapp.server.security.PasswordAndSalt
 import SqlHelpers._
 
@@ -65,7 +65,7 @@ object DbLogic {
     def updateConfirmationToken(id: UserId, tokenFn: () => String): ConnectionIO[String] =
       tokenAttempt(tokenFn)(token => sqlUpdateConfirmationToken.toUpdate0(token, id).execute)
 
-    def findDescAndCredentials(usernameOrEmail: String): ConnectionIO[Option[(UserDescriptor, PasswordAndSalt)]] =
+    def findDescAndCredentials(usernameOrEmail: String): ConnectionIO[Option[(User, PasswordAndSalt)]] =
       if (usernameOrEmail.indexOf('@') == -1)
         findDescAndCredentialsByUsername(Username(usernameOrEmail))
       else
@@ -77,13 +77,13 @@ object DbLogic {
     private[db] val sqlSelectDescCredByUsername = Query[Username, UserDescAndPasswordInDb](
       s"SELECT $sqlColsDesc,$sqlColsPwdAndSalt FROM usr WHERE username=?")
 
-    def findDescAndCredentialsByUsername(username: Username): ConnectionIO[Option[(UserDescriptor, PasswordAndSalt)]] =
+    def findDescAndCredentialsByUsername(username: Username): ConnectionIO[Option[(User, PasswordAndSalt)]] =
       sqlSelectDescCredByUsername.toQuery0(username).option.map(_.flatMap(_.resolve))
 
     private[db] val sqlSelectDescCredByEmail = Query[EmailAddr, UserDescAndPasswordInDb](
       s"SELECT $sqlColsDesc,$sqlColsPwdAndSalt FROM usr WHERE email=? AND password IS NOT NULL")
 
-    def findDescAndCredentialsByEmail(email: EmailAddr): ConnectionIO[Option[(UserDescriptor, PasswordAndSalt)]] =
+    def findDescAndCredentialsByEmail(email: EmailAddr): ConnectionIO[Option[(User, PasswordAndSalt)]] =
       sqlSelectDescCredByEmail.toQuery0(email).option.map(_.flatMap(_.resolve))
 
     private val sqlColsRegistrationInfo = "id,confirmation_token,confirmation_sent_at,confirmed_at"

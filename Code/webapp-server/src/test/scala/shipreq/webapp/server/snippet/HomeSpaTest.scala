@@ -4,12 +4,14 @@ import java.time.Instant
 import utest._
 import shipreq.webapp.base.data.{Project, StaticField}
 import shipreq.webapp.base.event.FieldStaticRemove
+import shipreq.webapp.server.app.Interpreters
 import shipreq.webapp.server.db.DbLogic
-import shipreq.webapp.server.logic.ProjectId
+import shipreq.webapp.server.logic.{HomeSpaLogic, ProjectId}
 import shipreq.webapp.server.test.WebappServerTestUtil._
 import shipreq.webapp.server.test._
 
 object HomeSpaTest extends TestSuite {
+  import Interpreters.dbAlgebra
 
   override def tests = TestSuite {
 
@@ -23,7 +25,7 @@ object HomeSpaTest extends TestSuite {
           assertEq(xa ! DbLogic.project.findAllProjectMetaDataForUser(uid), Nil)
 
           // Create
-          val pi = xa ! HomeSpa.createProject(uid, name, Instant.now())
+          val pi = xa ! HomeSpaLogic.createProject(uid, name, Instant.now())
 
           val pid = ProjectId.Extern.parseOption(pi.id.value).get
           def events() = xa ! DbLogic.event.findAll(pid)

@@ -1,8 +1,7 @@
 package shipreq.webapp.server.test
 
-import net.liftweb.http.LiftRules
 import shipreq.webapp.server.app.DI
-import shipreq.webapp.server.data.UserDescriptor
+import shipreq.webapp.server.logic.User
 import shipreq.webapp.server.security.SecurityProvider
 
 object PrepareEnv {
@@ -27,7 +26,7 @@ object PrepareEnv {
     // Disable SecurityProvider.enforceHumanSpeed()
     val defaultSecProv = DI.SecurityProvider.default.get.vend
     DI.SecurityProvider.default.set(new SecurityProvider {
-      def loggedInUser: Option[UserDescriptor] = defaultSecProv.loggedInUser
+      def loggedInUser: Option[User] = defaultSecProv.loggedInUser
       override def enforceHumanSpeed() = ()
     })
   }

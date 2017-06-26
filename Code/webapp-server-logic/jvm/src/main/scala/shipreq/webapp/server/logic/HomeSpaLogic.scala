@@ -1,0 +1,51 @@
+package shipreq.webapp.server.logic
+
+import java.time.Instant
+import scalaz.syntax.monad._
+import scalaz.{Monad, \/-, ~>}
+import shipreq.taskman.api.UserId
+import shipreq.webapp.base.data.{Project, ProjectMetaData}
+import shipreq.webapp.base.event._
+import shipreq.webapp.base.protocol.HomeSpaProtocols
+
+trait HomeSpaLogic[F[_]] {
+  def initData(user: User): F[HomeSpaProtocols.InitData]
+}
+
+object HomeSpaLogic {
+  val InitProjectEvent = ProjectTemplateApply(ProjectTemplate.Default)
+  val InitProject      = ApplyNewEvent.mustApply(InitProjectEvent, Project.empty)
+
+  def createProject[D[_]](userId: UserId,
+                          name: Project.Name,
+                          now: Instant)
+                         (implicit db: DB.ForHomeSpa[D], D: Monad[D]): D[ProjectMetaData] =
+    db.inDbTransaction(
+      for {
+        pid ← db.createProject(userId)
+        e1  = ApplyNewEvent.mustApply(ProjectNameSet(name), InitProject.project)
+        _   ← db.saveProjectEvent(pid, EventOrd(0), InitProject.ae, InitProject.ve.hashRecs)
+        _   ← db.saveProjectEvent(pid, EventOrd(1), e1.ae, e1.ve.hashRecs)
+      } yield ProjectMetaData(ProjectId Extern pid, name, 0, 0, now, None))
+
+  def apply[D[_], F[_]](implicit db: DB.ForHomeSpa[D],
+                        runDB: D ~> F,
+                        svr: Server.Algebra[F],
+                        D: Monad[D],
+                        F: Monad[F]): HomeSpaLogic[F] =
+    new HomeSpaLogic[F] {
+
+      def initData(user: User): F[HomeSpaProtocols.InitData] = {
+
+        val createProjectFn: F[HomeSpaProtocols.CreateProject.Instance] =
+          svr.createServerSideProc(HomeSpaProtocols.CreateProject)(name =>
+            svr.now.flatMap(now => runDB(createProject(user.id, name, now).map(\/-(_)))))
+
+        for {
+          p <- runDB(db.findAllProjectMetaDataForUser(user.id))
+          f <- createProjectFn
+        } yield HomeSpaProtocols.InitData(user.username, p, f)
+      }
+
+    }
+}

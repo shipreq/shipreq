@@ -17,8 +17,8 @@ import shipreq.taskman.api.UserId
 import shipreq.webapp.base.validation._
 import shipreq.webapp.server.app.AppSiteMap.Implicits._
 import shipreq.webapp.server.app.{AppSiteMap, DI}
-import shipreq.webapp.server.data.UserDescriptor
 import shipreq.webapp.server.feature.validation.InvalidityHtml
+import shipreq.webapp.server.logic.User
 import shipreq.webapp.server.snippet.{AlertTypeError, AlertTypeSuccess, Notices}
 import shipreq.webapp.server.util.ErrorMessages
 import shipreq.webapp.server.util.HttpResponses.ShouldNeverHappenResponse
@@ -194,9 +194,9 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with HasLogg
 
   def toJson[T <: AnyRef](data: T): JsonStr[T] = JsonStr[T](Serialization write data)
 
-  @inline final def currentUser(): Option[UserDescriptor] = securityProvider().loggedInUser
+  @inline final def currentUser(): Option[User] = securityProvider().loggedInUser
   @inline final def currentUserId_!() : UserId = currentUser_!().id
-  final def currentUser_!(): UserDescriptor = currentUser() match {
+  final def currentUser_!(): User = currentUser() match {
     case Some(user) => user
     case None => respondImmediately(RedirectResponse(AppSiteMap.Login.relativeUrl))
   }

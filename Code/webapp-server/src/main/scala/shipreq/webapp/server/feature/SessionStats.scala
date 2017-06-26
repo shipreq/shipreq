@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import net.liftweb.common.{Box, Full, Logger}
 import net.liftweb.http.{LiftSession, Req}
-import shipreq.webapp.server.data.UserDescriptor
+import shipreq.webapp.server.logic.User
 
 /**
  * Collects stats about sessions and logins.
@@ -12,15 +12,15 @@ import shipreq.webapp.server.data.UserDescriptor
 object SessionStats extends Logger {
 
   val activeSessionCount = new AtomicLong(0)
-  val loggedInUsers = new ConcurrentHashMap[String, UserDescriptor]
+  val loggedInUsers = new ConcurrentHashMap[String, User]
 
   def onSessionCreation(s: LiftSession, r: Req): Unit = {
     val c = activeSessionCount.incrementAndGet()
     logSessionCount(c)
   }
 
-  def onLogin(bs: Box[LiftSession], user: UserDescriptor): Unit = openSession(bs)(onLogin(_, user))
-  def onLogin(s: LiftSession, user: UserDescriptor): Unit =
+  def onLogin(bs: Box[LiftSession], user: User): Unit = openSession(bs)(onLogin(_, user))
+  def onLogin(s: LiftSession, user: User): Unit =
     loggedInUsers.put(s.uniqueId, user)
 
   def onLogout(bs: Box[LiftSession]): Unit = openSession(bs)(onLogout)

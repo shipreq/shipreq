@@ -1,46 +1,17 @@
 package shipreq.webapp.server.snippet
 
-import doobie.imports._
-import java.time.Instant
 import net.liftweb.util.Helpers._
-import scalaz.\/-
-import shipreq.taskman.api.UserId
-import shipreq.base.db.DoobieHelpers._
-import shipreq.webapp.base.data.{Project, ProjectMetaData}
-import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.HomeSpaProtocols
-import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.lib.SnippetHelpers
-import shipreq.webapp.server.logic._
 import shipreq.webapp.server.protocol._
 
 object HomeSpa extends SnippetHelpers {
 
-  val EntryPoint       = ClientSideProcInvoker(HomeSpaProtocols.EntryPoint)
-  val InitProjectEvent = ProjectTemplateApply(ProjectTemplate.Default)
-  val InitProject      = ApplyNewEvent.mustApply(InitProjectEvent, Project.empty)
-
-  def createProject(u: UserId, name: String, now: Instant): ConnectionIO[ProjectMetaData] =
-    (for {
-      projectId <- DbLogic.project.create(u)
-      e1 = ApplyNewEvent.mustApply(ProjectNameSet(name), InitProject.project)
-      _ <- DbLogic.event.create(projectId, EventOrd(0), InitProject.ae, InitProject.ve.hashRecs)
-      _ <- DbLogic.event.create(projectId, EventOrd(1), e1.ae, e1.ve.hashRecs)
-    } yield ProjectMetaData(ProjectId Extern projectId, name, 0, 0, now, None)
-    ).inTransaction
+  val EntryPoint = ClientSideProcInvoker(HomeSpaProtocols.EntryPoint)
 
   def render = {
     val user = currentUser_!()
-
-    val projects =
-      db().io.trans(DbLogic.project.findAllProjectMetaDataForUser(user.id)).unsafePerformIO()
-
-    val createProjectFn = ServerProtocol.createServerSideProc(HomeSpaProtocols.CreateProject)(name =>
-      db().io.trans(createProject(user.id, name, Instant.now())).map(\/-(_)))
-
-    val init = HomeSpaProtocols.InitData(
-      user.username, projects, createProjectFn)
-
-    "*" #> EntryPoint.invokeOnLoadHtml(init)
+    val initData = homeSpaLogic().initData(user).unsafePerformIO()
+    "*" #> EntryPoint.invokeOnLoadHtml(initData)
   }
 }

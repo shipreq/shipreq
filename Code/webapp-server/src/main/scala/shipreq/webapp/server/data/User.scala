@@ -1,29 +1,7 @@
 package shipreq.webapp.server.data
 
-import japgolly.univeq.UnivEq
 import java.time.Instant
-import shipreq.taskman.api.{EmailAddr, UserId}
-import shipreq.webapp.base.data.Username
-
-case class UserDescriptor(id      : UserId,
-                          username: Username,
-                          email   : EmailAddr,
-                          roles   : Set[String]) {
-
-  final def hasRole(role: String): Boolean =
-    roles.contains(role)
-}
-
-object UserDescriptor {
-
-  implicit def univEq: UnivEq[UserDescriptor] = UnivEq.derive
-
-  def roleStr(roles: Set[String]): Option[String] =
-    if (roles.isEmpty)
-      None
-    else
-      Some(roles.mkString(","))
-}
+import shipreq.taskman.api.UserId
 
 //case class UserDetail(name: String, newsletter: Boolean)
 

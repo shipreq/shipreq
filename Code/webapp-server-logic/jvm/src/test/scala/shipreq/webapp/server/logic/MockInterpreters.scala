@@ -46,6 +46,19 @@ final class MockDb extends DB.Algebra[Name] {
     projects = projects.add(mde)
   }
 
+  override def createProject(id: UserId) = Name[ProjectId] {
+    val pid = ProjectId(1 + projects.underlyingMap.keysIterator.map(_.value).foldLeft(0L)(_ max _))
+    addProject(pid, id)()
+    pid
+  }
+
+  override def findAllProjectMetaDataForUser(id: UserId) = Name[List[ProjectMetaData]] {
+    projects.valuesIterator
+      .filter(_.userId ==* id)
+      .map(_.projectMetaData)
+      .toList
+  }
+
   var loadProjectHeaderLog = Vector.empty[ProjectId]
   override def loadProjectHeader(id: ProjectId) = Name[Option[ProjectHeader]] {
     loadProjectHeaderLog :+= id

@@ -4,7 +4,7 @@ import org.apache.shiro.SecurityUtils
 import org.apache.shiro.config.IniSecurityManagerFactory
 import org.apache.shiro.crypto.SecureRandomNumberGenerator
 import shipreq.webapp.server.app.DI
-import shipreq.webapp.server.data.UserDescriptor
+import shipreq.webapp.server.logic.User
 
 object Oshiro extends SecurityProvider {
   private val iniFactory = new IniSecurityManagerFactory("classpath:shiro.ini")
@@ -28,10 +28,10 @@ object Oshiro extends SecurityProvider {
   private def subject() =
     SecurityUtils.getSubject
 
-  override def loggedInUser(): Option[UserDescriptor] = {
+  override def loggedInUser(): Option[User] = {
     val x = subject().getPrincipal
     if (x eq null) None
-    else x.asInstanceOf[Some[UserDescriptor]]
+    else x.asInstanceOf[Some[User]]
   }
 
   def logout(): Unit =

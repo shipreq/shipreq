@@ -5,6 +5,9 @@ import nyaya.prop.Prop
 import scala.annotation.elidable
 import shipreq.base.util.univeq._
 
+/**
+  * @param eventCount where ord > 1. When a project is created it appears to have 0 events.
+  */
 final case class ProjectMetaData(id           : Project.XId,
                                  name         : Project.Name,
                                  eventCount   : Int,

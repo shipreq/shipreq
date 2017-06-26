@@ -3,9 +3,8 @@ package shipreq.webapp.server.security
 import scalaz.{Name, Semigroup}
 import net.liftweb.common.Logger
 import net.liftweb.http.RequestVar
-import shipreq.webapp.server.data._
 import shipreq.webapp.server.app.DI
-import shipreq.webapp.server.logic.ProjectId
+import shipreq.webapp.server.logic.{ProjectId, User}
 import Permission._
 
 object Permission {
@@ -17,7 +16,7 @@ object Permission {
     override def append(a: Permission, b: => Permission) = a & b
   }
 
-  final case class Ctx(user   : Option[UserDescriptor],
+  final case class Ctx(user   : Option[User],
                        project: Option[ProjectId.AndOwner])
 
   sealed trait Pass
@@ -50,7 +49,7 @@ trait Permission {
   def &(that: Permission): Permission =
     if (this eq that) this else new AndPermission(this, that)
 
-  final def using(user   : Option[UserDescriptor]     = DI.SecurityProvider.vend.loggedInUser,
+  final def using(user   : Option[User]     = DI.SecurityProvider.vend.loggedInUser,
                   project: Option[ProjectId.AndOwner] = None) =
     new Checker(Ctx(user, project), this)
 

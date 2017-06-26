@@ -129,7 +129,7 @@ object ProjectServer {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   def apply[D[_], F[_]](broadcastTo: BroadcastTo)
-                       (implicit db: DB.Algebra[D],
+                       (implicit db: DB.ForProjectSpa[D],
                         store: StoreAlgebra[F],
                         svr: Server.Algebra[F],
                         runDB: D ~> F,
