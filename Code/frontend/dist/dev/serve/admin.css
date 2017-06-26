@@ -1,53 +1,53 @@
 #content {
   margin: 1cm 1.2cm 1cm 1.2cm;
 }
-#sir-stats .h {
+#admin-stats .h {
   color: #00c;
 }
-#sir-stats .evaltime {
+#admin-stats .evaltime {
   color: #888;
 }
-#sir-stats td,
-#sir-stats th {
+#admin-stats td,
+#admin-stats th {
   text-align: left;
 }
-#sir-stats pre {
+#admin-stats pre {
   padding: 0;
   margin: 0;
   background: none;
   border: none;
 }
-#sir-stats pre,
-#sir-stats td {
+#admin-stats pre,
+#admin-stats td {
   font-size: 12px;
   font-family: monospace;
   line-height: 1.2em;
 }
-#sir-stats section > table {
+#admin-stats section > table {
   margin-bottom: 1cm;
 }
-#sir-stats section > table th {
+#admin-stats section > table th {
   padding-right: 4ex;
   line-height: 1.6em;
 }
-#sir-stats section > table td {
+#admin-stats section > table td {
   padding-top: 5px;
 }
-#sir-stats section > table th,
-#sir-stats section > table td {
+#admin-stats section > table th,
+#admin-stats section > table td {
   vertical-align: top;
   border-bottom: solid 1px #ccc;
 }
-#sir-stats table table {
+#admin-stats table table {
   margin-bottom: 4px;
 }
-#sir-stats table table th {
+#admin-stats table table th {
   font-weight: normal;
 }
-#sir-stats table table th,
-#sir-stats table table td {
+#admin-stats table table th,
+#admin-stats table table td {
   border-bottom: none;
 }
-#sir-stats .unknown {
+#admin-stats .unknown {
   color: #c44;
 }

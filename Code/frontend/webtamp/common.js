@@ -33,20 +33,9 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
 
       images: { type: 'local', src: 'shipreq/assets', files: '*.{svg,png}', manifest: CamelCase },
 
-      public: [
-        fromWebpack({ files: 'public.css' }),
-        'jquery',
-      ],
-
-      admin: fromWebpack({ files: 'admin.css' }),
-
-      webappClientWw: [
-        { type: 'external', path: sjsPath('ww'), manifest: 'webappClientWwJs' },
-        'vizJs',
-      ],
-
       webappClientPublic: [
         { type: 'external', path: sjsPath('public'), manifest: 'webappClientPublicJs' },
+        'public',
       ],
 
       webappClientHome: [
@@ -58,12 +47,29 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
         { type: 'external', path: sjsPath('project'), manifest: 'webappClientProjectJs' },
         'member',
       ],
+
+      webappClientWw: [
+        { type: 'external', path: sjsPath('ww'), manifest: 'webappClientWwJs' },
+        'vizJs',
+      ],
+
+      admin: fromWebpack({ files: 'admin.css' }),
     },
 
     optional: {
       semantic: [
         fromWebpack({ files: 'semantic.*' }),
         fromWebpack({ files: 'icons.*', transitive: true }),
+      ],
+
+      publicBundle: [
+        fromWebpack({ files: 'public.js' }),
+        'jquery',
+      ],
+
+      public: [
+        'publicBundle',
+        'semantic',
       ],
 
       memberBundle: [

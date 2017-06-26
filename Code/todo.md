@@ -61,6 +61,8 @@ Phase 2 (dev-complete)
 * Add proper metrics
 * Britoli support
 * Do more with errors, eg. ClientData.{init,applyEvents}
+* Proper 404/500 pages
+* Duplication between public.js and member.js
 
 ------------------------------------------------------------------------------------------------------------------------
 Phase 2 (dev)

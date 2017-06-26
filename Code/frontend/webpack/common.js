@@ -12,9 +12,16 @@ const entryPoints = es => es.filter(e => !!e);
 const config = ({ mode }) => ({
 
   entry: {
-    public: './shipreq/styles/public.less',
-    admin: './shipreq/styles/admin.less',
+
     semantic: './shipreq/semantic-ui',
+
+    public: entryPoints([
+      mode == 'dev' && 'expose-loader?Perf!react-addons-perf',
+      'expose-loader?React!react',
+      'expose-loader?ReactDOM!react-dom',
+      'expose-loader?loadjs!loadjs',
+    ]),
+
     member: entryPoints([
       mode == 'dev' && 'expose-loader?Perf!react-addons-perf',
       'expose-loader?React!react',
@@ -26,6 +33,8 @@ const config = ({ mode }) => ({
       'expose-loader?moment!moment',
       'expose-loader?autosize!autosize',
     ]),
+
+    admin: './shipreq/styles/admin.less',
   },
 
   externals: {
