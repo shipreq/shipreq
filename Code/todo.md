@@ -63,7 +63,6 @@ Phase 2 (dev-complete)
 * Do more with errors, eg. ClientData.{init,applyEvents}
 * Proper 404/500 pages
 * Duplication between public.js and member.js
-* Add (and use) webtamp svgo plugin
 
 ------------------------------------------------------------------------------------------------------------------------
 Phase 2 (dev)
