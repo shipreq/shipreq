@@ -4,10 +4,8 @@ import boopickle.Pickler
 import japgolly.univeq._
 import scalaz.\/
 import shipreq.base.util.EqualsByRef
-import shipreq.webapp.base.event.VerifiedEvent
 import BoopickleMacros.xmap
-import BinCodecGeneric.{pickleXor, stringPickler}
-import BinCodecEvents._
+import BinCodecGeneric.stringPickler
 
 /** An instance of a server-side procedure, (available for invocation). */
 sealed trait ServerSideProc {
@@ -72,10 +70,10 @@ object ServerSideProc {
     // Everything just uses ErrorMsg at the moment
     private[protocol] def apply[I: Pickler, O: Pickler]: Typical[I, O] = {
       implicit val r = BinCodecGeneric.pickleXor[ErrorMsg, O]
-      _apply[ErrorMsg, I, O]
+      lowLevel[ErrorMsg, I, O]
     }
 
-    private def _apply[F, I, O](implicit f: Pickler[F], i: Pickler[I], o: Pickler[O], r: Pickler[F \/ O]): Aux[F, I, O] =
+    def lowLevel[F, I, O](implicit f: Pickler[F], i: Pickler[I], o: Pickler[O], r: Pickler[F \/ O]): Aux[F, I, O] =
       new Protocol {
         override type Input   = I
         override type Output  = O
@@ -85,12 +83,6 @@ object ServerSideProc {
         override implicit val pickleFailure  = f
         override implicit val pickleResponse = r
       }
-
-    implicit val pickleErrorMsgOrVerifiedEventSeq: Pickler[ErrorMsg \/ VerifiedEvent.Seq] =
-      pickleXor(ErrorMsg.pickleErrorMsg, pickleVerifiedEventSeq)
-
-    def toEvents[I: Pickler]: Aux[ErrorMsg, I, VerifiedEvent.Seq] =
-      _apply[ErrorMsg, I, VerifiedEvent.Seq]
   }
 
 }

@@ -37,7 +37,7 @@ sealed abstract class CrudProtocol extends ServerSideProc.Protocol {
 
   final override implicit val pickleOutput  : Pickler[Output]   = pickleVerifiedEventSeq
   final override implicit val pickleFailure : Pickler[Failure]  = ErrorMsg.pickleErrorMsg
-  final override implicit val pickleResponse: Pickler[Response] = ServerSideProc.Protocol.pickleErrorMsgOrVerifiedEventSeq
+  final override implicit val pickleResponse: Pickler[Response] = pickleErrorMsgOrVerifiedEventSeq
 
   final type Action = CrudAction[Id, Value]
   final def create (v: Value)        : Action = CrudAction.Create [Id, Value](v)

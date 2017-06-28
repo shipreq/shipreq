@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import japgolly.univeq._
 import shipreq.webapp.base.{AssetManifest, WebappConfig}
-import shipreq.webapp.base.lib.DataReusability._
+import shipreq.webapp.base.lib.BaseReusability._
 import shipreq.webapp.client.public.Styles.{layout => *}
 
 object Layout {

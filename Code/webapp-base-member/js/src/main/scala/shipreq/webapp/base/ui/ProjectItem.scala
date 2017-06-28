@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
-import shipreq.webapp.base.URLs
+import shipreq.webapp.base.MemberUrls
 import shipreq.webapp.base.UiText.EnglishStringExt
 import shipreq.webapp.base.data.{ProjectMetaData, DataValidators}
 import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus}
@@ -56,7 +56,7 @@ object ProjectItem {
 
         val header =
           <.h1(*.itemHeaderRO,
-            <.a(^.href := URLs.project(p.id), p.name))
+            <.a(^.href := MemberUrls.project(p.id), p.name))
 
         TagMod(header, renderMeta(p))
       }

@@ -1,45 +1,18 @@
 package shipreq.webapp.base.lib
 
-import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra._
-import java.time.Instant
-import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.ServerSideProc
 import shipreq.webapp.base.text.{Atom, PlainText, TextSearch}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text.UseCaseStepFlowText.TextAndFlow
 import shipreq.webapp.base.jsfacade.MomentJs
 
-object DataReusability extends DataReusability {
+object DataReusability extends DataReusability
 
-  final class ReusabilityObjExt(private val r: Reusability.type) extends AnyVal {
-    def byUnivEq[A: UnivEq]: Reusability[A] =
-      Reusability.by_==[A]
-
-    def byUnivEq[A, B: UnivEq](f: A => B): Reusability[A] =
-      byUnivEq[B] contramap f
-
-    def byRefOrUnivEq[A <: AnyRef : UnivEq]: Reusability[A] =
-      Reusability.byRef[A] || byUnivEq[A]
-
-    def byRefOrUnivEq[A <: AnyRef, B: UnivEq](f: A => B): Reusability[A] =
-      Reusability.byRef[A] || byUnivEq(f)
-
-    def mapSameOrEmpty[K, V]: Reusability[Map[K, V]] =
-      Reusability.byRef || Reusability.when(_.isEmpty)
-  }
-
-}
-
-abstract class DataReusability {
-  import DataReusability._
-
-  implicit def reusabilityInstant: Reusability[Instant] =
-    Reusability.by(_.toEpochMilli)
+abstract class DataReusability extends BaseReusability {
 
   implicit def reusabilityMomentJs: Reusability[MomentJs] =
     Reusability.by(_.toEpochMilli)
@@ -49,9 +22,6 @@ abstract class DataReusability {
 
   implicit def reusabilityUsername: Reusability[Username] =
     Reusability.caseClass
-
-  implicit def toReusabilityObjExt(r: Reusability.type): ReusabilityObjExt =
-    new ReusabilityObjExt(r)
 
   implicit lazy val reusabilityProjectMetaData: Reusability[ProjectMetaData] =
     Reusability.byRef || Reusability.caseClass
@@ -98,27 +68,8 @@ abstract class DataReusability {
   implicit def reusabilityExternalPubid: Reusability[ExternalPubid] =
     Reusability.byRefOrUnivEq
 
-  private[this] def taggedIntReuse = Reusability.byUnivEq[TaggedInt]
-  implicit def reusabilityTaggedInt[T <: TaggedInt]: Reusability[T] =
-    taggedIntReuse.narrow
-
-  implicit def reusabilityIsoBool[B <: IsoBool[B]: UnivEq]: Reusability[B] =
-    Reusability.byUnivEq
-
   implicit def reusabilityOptionalText[A <: Atom.AnyAtom]: Reusability[Vector[A]] =
     Reusability.byRefOrUnivEq
-
-  implicit def reusabilityNonEmptyVector[A: Reusability]: Reusability[NonEmptyVector[A]] =
-    Reusability.byRef || Reusability.by(_.whole)
-
-  implicit def reusabilityNonEmptySet[A: Reusability]: Reusability[NonEmptySet[A]] =
-    Reusability.byRef || Reusability.by(_.whole)
-
-  implicit def reusabilityServerSideProc[P <: ServerSideProc] =
-    Reusability.by((_: P).key)
-
-  //implicit def reusabilityValidation[S, I, C, V]: Reusability[Validator[S, I, C, V]] =
-  //  Reusability.byRef
 
   implicit def reusabilityVectorTreeLoc: Reusability[VectorTree.Location] =
     Reusability.byRefOrUnivEq

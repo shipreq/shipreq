@@ -1,6 +1,5 @@
 package shipreq.webapp.base.util
 
-import org.parboiled2.CharPredicate
 import shipreq.base.util.Util
 import CharSubset.EscapeChars
 
@@ -10,11 +9,11 @@ import CharSubset.EscapeChars
   */
 final class CharSubset(_direct: List[Int], _ranges: List[Range]) {
 
-  private[this] var direct = _direct
-  private[this] var ranges = _ranges
+  private[util] var direct = _direct
+  private[util] var ranges = _ranges
 
   private[this] var initRemaining = 2 // Number of dependent lazy vals
-  private[this] def consume[A](a: A): A = {
+  private[util] def consume[A](a: A): A = {
     initRemaining -= 1
     if (initRemaining == 0) {
       direct = null
@@ -22,27 +21,6 @@ final class CharSubset(_direct: List[Int], _ranges: List[Range]) {
     }
     a
   }
-
-  lazy val charPredicate: CharPredicate =
-    consume {
-      // Stack overflow. Yay.
-      // var i = ranges.iterator.map(r => CharPredicate(r.start.toChar to r.end.toChar))
-      // if (direct.nonEmpty) {
-      //   val c = CharPredicate(direct.toIterator.map(_.toChar).toArray)
-      //   i = Iterator.single(c) ++ i
-      // }
-      // i.reduce(_ ++ _)
-
-      val set = collection.mutable.Set.empty[Char]
-
-      val addChar: Int => Unit =
-        set += _.toChar
-
-      direct foreach addChar
-      ranges foreach (_ foreach addChar)
-
-      CharPredicate(set.contains _)
-    }
 
   /** Example: `"a-zA-Z"` */
   lazy val regexCharRange: String =

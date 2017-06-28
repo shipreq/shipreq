@@ -38,8 +38,8 @@ object WebappBuild {
     project("webapp")
       .configure(Common.jvmSettings)
       .aggregate(
-        webappMacroJvm, webappBaseJvm, webappServerLogicJvm, webappBaseTestJvm, webappGenJvm,
-        webappMacroJs , webappBaseJs , webappServerLogicJs , webappBaseTestJs , webappGenJs ,
+        webappMacroJvm, webappBaseJvm, webappBaseMemberJvm, webappServerLogicJvm, webappBaseTestJvm, webappGenJvm,
+        webappMacroJs , webappBaseJs , webappBaseMemberJs , webappServerLogicJs , webappBaseTestJs , webappGenJs ,
         webappClientPublic,
         webappClientHome,
         webappClientWwApi, webappClientWw, webappClientProject,
@@ -74,9 +74,20 @@ object WebappBuild {
       .configureJs(Common.jsSettings(NoTests))
       .dependsOn(baseUtil, webappMacro)
       .configureBoth(useMacroParadise)
-      .depsForBoth(Monocle.macros ++ shapeless ++ Nyaya.prop ++ parboiled ++ boopickle)
-      .depsForJs(React.most ++ scalajsDom ++ providedScope(ScalaCSS.react))
+      .depsForBoth(Monocle.macros ++ Nyaya.prop ++ boopickle)
+      .depsForJs(React.most ++ scalajsDom)
       .settings(unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / Frontend.scala)
+
+  lazy val webappBaseMemberJvm = webappBaseMember.jvm
+  lazy val webappBaseMemberJs  = webappBaseMember.js
+  lazy val webappBaseMember =
+    crossProject("webapp-base-member")
+      .configureJvm(Common.jvmSettings)
+      .configureJs(Common.jsSettings(NoTests))
+      .dependsOn(webappBase)
+      .configureBoth(useMacroParadise)
+      .depsForBoth(shapeless ++ parboiled)
+      .depsForJs(ScalaCSS.react)
 
   lazy val webappBaseTestJvm = webappBaseTest.jvm
   lazy val webappBaseTestJs  = webappBaseTest.js
@@ -85,7 +96,7 @@ object WebappBuild {
       .configureBoth(Common.testModuleSettings)
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NeedDom))
-      .dependsOn(baseTest, webappBase)
+      .dependsOn(baseTest, webappBaseMember)
       .depsForBoth(μTest ++ Nyaya.test)
       .depsForJs(
         React.test ++ ScalaCSS.react ++
@@ -108,13 +119,14 @@ object WebappBuild {
   lazy val webappClientHome =
     project("webapp-client-home")
       .configure(clientSpa)
+      .dependsOn(webappBaseMemberJs)
       .depsForJs(ScalaCSS.react)
 
   lazy val webappClientWwApi =
     project("webapp-client-ww-api")
       .enablePlugins(ScalaJSPlugin)
       .configure(Common.jsSettings(NeedDom))
-      .dependsOn(webappBaseJs)
+      .dependsOn(webappBaseMemberJs)
       .depsForJs(
         boopickle ++ scalajsDom ++
         testScope(μTest))
@@ -141,7 +153,7 @@ object WebappBuild {
   lazy val webappGenJs  = webappGen.js
   lazy val webappGen =
     crossProject("webapp-gen")
-      .configureJvm(Common.jvmSettings, _.dependsOn(webappBaseJvm)).depsForJvm(Lift.webkit)
+      .configureJvm(Common.jvmSettings, _.dependsOn(webappBaseMemberJvm)).depsForJvm(Lift.webkit)
       .configureJs(
         Common.jsSettings(NeedDom),
         _.dependsOn(webappClientProject)
@@ -156,7 +168,7 @@ object WebappBuild {
     crossProject("webapp-server-logic")
       .configureJvm(Common.jvmSettings, _.dependsOn(taskmanApiLogic), useMacroParadise)
       .configureJs(Common.jsSettings(NeedDom)) // TODO NeedDom isn't true but required cos webappBaseTest loads in Sizzle
-      .dependsOn(webappBase)
+      .dependsOn(webappBaseMember)
       .dependsOn(baseTest % "test", webappBaseTest % "test")
       .depsForBoth(testScope(μTest ++ Nyaya.test))
 

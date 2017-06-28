@@ -10,11 +10,32 @@ import shipreq.webapp.base.text.GrammarSpec._
 
 object ParsingUtil {
 
+  def toCharPredicate(c: CharSubset): CharPredicate =
+    c.consume {
+      // Stack overflow. Yay.
+      // var i = ranges.iterator.map(r => CharPredicate(r.start.toChar to r.end.toChar))
+      // if (direct.nonEmpty) {
+      //   val c = CharPredicate(direct.toIterator.map(_.toChar).toArray)
+      //   i = Iterator.single(c) ++ i
+      // }
+      // i.reduce(_ ++ _)
+
+      val set = collection.mutable.Set.empty[Char]
+
+      val addChar: Int => Unit =
+        set += _.toChar
+
+      c.direct foreach addChar
+      c.ranges foreach (_ foreach addChar)
+
+      CharPredicate(set.contains _)
+    }
+
   val PunctuationOrSymbol: CharPredicate =
-    CharSubset.PunctuationOrSymbol.charPredicate
+    toCharPredicate(CharSubset.PunctuationOrSymbol)
 
   val Whitespace: CharPredicate =
-    CharSubset.Whitespace.charPredicate
+    toCharPredicate(CharSubset.Whitespace)
 
   val NonWhitespace: CharPredicate =
     Whitespace.negated -- EOI

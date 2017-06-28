@@ -8,7 +8,7 @@ import japgolly.univeq.UnivEq
 import scala.reflect.ClassTag
 import shipreq.base.util.{Intersection, Optics}
 import shipreq.webapp.base.data.TCB
-import shipreq.webapp.base.lib.DataReusability._
+import shipreq.webapp.base.lib.BaseReusability._
 
 /** Provides the following functionality around async actions:
   *

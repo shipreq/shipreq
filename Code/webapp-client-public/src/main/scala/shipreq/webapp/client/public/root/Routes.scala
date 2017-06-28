@@ -6,7 +6,7 @@ import japgolly.scalajs.react.extra.router.{RouterCtl => _, _}
 import japgolly.scalajs.react.vdom.Implicits._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.WebappConfig
-import shipreq.webapp.base.lib.DataReusability._
+import shipreq.webapp.base.lib.BaseReusability._
 
 sealed trait Page {
   def pageTitle: List[String]

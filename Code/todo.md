@@ -44,6 +44,8 @@ Backlog
 * Rewrite front pages with scalajs-react (?)
 * Remove unused styles
 * Change ScalaCSS to generate Scala.JS without the runtime/JS-size overhead
+* webapp-base-member shares packages with webapp-base, plus most of that stuff should be under .project as well
+* Extract webapp-base-member-test
 
 ------------------------------------------------------------------------------------------------------------------------
 Phase 2 (dev-complete)

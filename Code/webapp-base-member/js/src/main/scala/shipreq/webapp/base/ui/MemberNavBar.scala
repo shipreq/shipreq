@@ -5,7 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.data.Username
-import shipreq.webapp.base.{AssetManifest, URLs, WebappConfig}
+import shipreq.webapp.base.{AssetManifest, MemberUrls, WebappConfig}
 import shipreq.webapp.base.ClientConfig
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui.semantic.{Breadcrumb, Dropdown, Icon, Menu, SemExtAny}
@@ -48,7 +48,7 @@ object MemberNavBar {
 
   private val dropdownLogout =
     Dropdown.Item.Link(
-      <.a(^.href := URLs.logout, "Logout"))
+      <.a(^.href := MemberUrls.logout, "Logout"))
 
   final class Backend($: BackendScope[Props, Unit]) {
 
@@ -84,7 +84,7 @@ object MemberNavBar {
   val MemberHome =
     Breadcrumb.Item.Link(
       <.a(
-        ^.href := URLs.memberHome,
+        ^.href := MemberUrls.home,
         ClientConfig.BreadcrumbNameMemberHome))
 
   val Divider =

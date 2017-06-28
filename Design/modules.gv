@@ -35,6 +35,7 @@ subgraph cluster_t {
     webapp [label="[aggregate]\nwebapp" fillcolor="#ffff80"]
     webappMacro [label="webapp-macro\n(Scala & JS)"]
     webappBase [label="webapp-base\n(Scala & JS)"]
+    webappBaseMember [label="webapp-base-member\n(Scala & JS)"]
     webappServerLogic [label="webapp-server-logic\n(Scala & JS)"]
     webappClientPublic [label="webapp-client-public\n(JS)"]
     webappClientHome [label="webapp-client-home\n(JS)"]
@@ -83,17 +84,18 @@ webappMacro -> baseUtil
 webappBase -> webappMacro
 webappServerLogic -> webappBase,taskmanApiLogic
 webappServerLogic -> webappBaseTest [color="#111111" style=dashed label="test"]
-webappBaseTest -> baseTest,webappBase [color="#111111"]
-webappClientHome -> webappBase
+webappBaseMember -> webappBase
+webappBaseTest -> baseTest,webappBaseMember [color="#111111"]
+webappClientHome -> webappBaseMember
 webappClientHome -> webappBaseTest [color="#111111" style=dashed label="test"]
 webappClientPublic -> webappBase
 webappClientPublic -> webappBaseTest [color="#111111" style=dashed label="test"]
-webappClientWwApi -> webappBase
+webappClientWwApi -> webappBaseMember
 webappClientWw -> webappClientWwApi
 webappClientWw -> webappBaseTest [color="#111111" style=dashed label="test"]
-webappClientProject -> webappBase,webappClientWwApi
+webappClientProject -> webappClientWwApi
 webappClientProject -> webappBaseTest [color="#111111" style=dashed label="test"]
-webappGen -> webappBase
+webappGen -> webappBaseMember
 webappGen -> webappClientProject [color="#111111" style=dashed label="run"]
 webappGen -> webappBaseTest [color="#111111" style=dashed label="test"]
 webappServer -> taskmanApiImpl,webappServerLogic,webappGen

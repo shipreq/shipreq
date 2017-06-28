@@ -2,6 +2,7 @@ package shipreq.webapp.base.protocol
 
 import boopickle._
 import japgolly.microlibs.nonempty.{NonEmpty, NonEmptyVector}
+import japgolly.univeq.UnivEq
 import java.time.Instant
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -11,6 +12,9 @@ import BinCodecGeneric._
 import BoopickleMacros._
 
 object BinCodecData {
+
+  def pickleIMapD[K: UnivEq : Pickler, V: Pickler](implicit d: DataIdAux[V, K]): Pickler[IMap[K, V]] =
+    pickleIMap(d.emptyIMap)
 
   implicit lazy val pickleInstant: Pickler[Instant] =
     xmap(Instant.ofEpochMilli)(_.toEpochMilli)

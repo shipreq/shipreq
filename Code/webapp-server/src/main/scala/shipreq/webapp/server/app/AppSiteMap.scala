@@ -9,7 +9,7 @@ import net.liftweb.util.Props.RunModes.{Development, Test => TestMode}
 import scala.xml.{NodeSeq, Text}
 import scalaz.{Name, Need}
 import shipreq.base.util.Memo
-import shipreq.webapp.base.{URLs, WebappConfig}
+import shipreq.webapp.base._
 import shipreq.webapp.server.data._
 import shipreq.webapp.server.feature.{DiagnosticEndpoints, SessionStats}
 import shipreq.webapp.server.logic._
@@ -33,14 +33,14 @@ object AppSiteMap { // TODO Cleanup
   // Menu.param[PARAM_TYPE(S)](NAME, TITLE, URL_TO_PARAM, PARAM_TO_URL) / PATH_FOR_URL_AND_TEMPLATE
 
   val Home =
-    pageWithStaticUrl("home", defaultTitle, "Home")(_ / URLs.ForLift.memberHome
+    pageWithStaticUrl("home", defaultTitle, "Home")(_ / MemberUrls.ForLift.home
       >> UseEitherTemplate(Oshiro.isAuthenticated(), "members-home")(publicTemplate))
 
 //  val LandingPageViaBusinessCard =
 //    pageWithStaticUrl("land-bc", "")(_ / "bc" >> UseTemplate(publicTemplate))
 
   val Logout =
-    pageWithStaticUrl("logout", defaultTitle, "Logout")(_ / URLs.ForLift.logout >> EarlyResponse(() => logout()))
+    pageWithStaticUrl("logout", defaultTitle, "Logout")(_ / MemberUrls.ForLift.logout >> EarlyResponse(() => logout()))
 
 //  val Register2 =
 //    (Menu.param[String]("register2", "", i => Full(i), o => o) / "register" / *
@@ -57,7 +57,7 @@ object AppSiteMap { // TODO Cleanup
 //      >> Hidden)
 
   val Project: PM[ProjectId] =
-    (MenuWithIdParam(ProjectId.Extern)("project") / URLs.ForLift.project / * / **
+    (MenuWithIdParam(ProjectId.Extern)("project") / MemberUrls.ForLift.project / * / **
       >> StaticTitle(defaultTitle)
       >> AuthenticationRequired >> ProjectPermissionRequired
       >> UseTemplate("members-project")
@@ -165,7 +165,7 @@ object AppSiteMap { // TODO Cleanup
 
   lazy val redirectHome = RedirectResponse(Home.relativeUrl)
 
-  val LoginRelativeUrl = URLs.login
+  val LoginRelativeUrl = PublicUrls.login
   def LoginAbsoluteUrl = Global.config.baseUrl + LoginRelativeUrl
   val redirectToLogin = RedirectResponse(LoginRelativeUrl)
 
