@@ -22,12 +22,10 @@ subgraph cluster_t {
     taskmanDb [label="taskman-server-schema"]
     taskmanServerImpl [label="taskman-server-impl"]
     taskmanServerLogic [label="taskman-server-logic"]
-    taskmanServer [label="[aggregate]\ntaskman-server" fillcolor="#cccccc"]
   }
 
   subgraph cluster_ta {
     fillcolor=white node[fillcolor="#cceeff"]
-    taskmanApi [label="[aggregate]\ntaskman-api" fillcolor="#cccccc"]
     taskmanApiImpl [label="taskman-api-impl"]
     taskmanApiLogic [label="taskman-api-logic"]
   }
@@ -78,14 +76,12 @@ taskmanApiImpl -> taskmanApiLogic,baseDb //[minlen=2]
 taskmanApiImpl -> taskmanApiLogic [color="#111111" style=dashed label="test-lib"]
 taskmanApiImpl -> taskmanDb       [color="#111111" style=dashed label="test"]
 taskmanApiImpl -> baseTest        [color="#111111" style=dashed label="test"]
-taskmanApi -> taskmanApiImpl
 taskmanServerLogic -> taskmanApiLogic
-taskmanServerImpl -> taskmanServerLogic,taskmanApi,taskmanDb
-taskmanServer -> taskmanServerImpl
+taskmanServerImpl -> taskmanServerLogic,taskmanApiImpl,taskmanDb
 
 webappMacro -> baseUtil
 webappBase -> webappMacro
-webappServerLogic -> webappBase,taskmanApi
+webappServerLogic -> webappBase,taskmanApiLogic
 webappServerLogic -> webappBaseTest [color="#111111" style=dashed label="test"]
 webappBaseTest -> baseTest,webappBase [color="#111111"]
 webappClientHome -> webappBase
@@ -100,7 +96,7 @@ webappClientProject -> webappBaseTest [color="#111111" style=dashed label="test"
 webappGen -> webappBase
 webappGen -> webappClientProject [color="#111111" style=dashed label="run"]
 webappGen -> webappBaseTest [color="#111111" style=dashed label="test"]
-webappServer -> taskmanApi,webappServerLogic,webappGen
+webappServer -> taskmanApiImpl,webappServerLogic,webappGen
 webappServer -> baseDb
 webappServer -> webappClientPublic,webappClientHome,webappClientProject,webappClientWw [style=dashed]
 
@@ -112,9 +108,7 @@ utils -> webappBase
 
 // Aggregation
 edge[dir=forward style=dashed arrowhead=vee color="#aaaaaa"]
-taskmanApi -> taskmanApiLogic,taskmanApiImpl
-taskmanServer -> taskmanServerLogic,taskmanServerImpl,taskmanDb
-taskman -> taskmanApi,taskmanServer
+taskman -> taskmanApiImpl,taskmanServerImpl
 webapp -> webappClientProject,webappClientHome,webappServer,webappClientWw
 base -> baseUtil,baseDb,baseTest,baseMacro
 benchmark -> benchmarkJvm,benchmarkJs

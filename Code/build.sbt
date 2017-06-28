@@ -13,11 +13,9 @@ val baseTestJs           = ShipReqBuild.baseTestJs
 val taskman              = TaskmanBuild.taskman
 val taskmanApiLogic      = TaskmanBuild.taskmanApiLogic
 val taskmanApiImpl       = TaskmanBuild.taskmanApiImpl
-val taskmanApi           = TaskmanBuild.taskmanApi
 val taskmanServerLogic   = TaskmanBuild.taskmanServerLogic
 val taskmanServerSchema  = TaskmanBuild.taskmanServerSchema
 val taskmanServerImpl    = TaskmanBuild.taskmanServerImpl
-val taskmanServer        = TaskmanBuild.taskmanServer
 
 val webapp               = WebappBuild.webapp
 val webappMacroJvm       = WebappBuild.webappMacroJvm

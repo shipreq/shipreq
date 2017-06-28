@@ -13,8 +13,8 @@ object TaskmanBuild {
   lazy val taskman =
     project("taskman")
       .configure(Common.jvmSettings)
-      .aggregate(taskmanApi, taskmanServer)
-      .dependsOn(taskmanApi, taskmanServer)
+      .aggregate(taskmanApiLogic, taskmanApiImpl, taskmanServerLogic, taskmanServerImpl, taskmanServerSchema)
+      .dependsOn(taskmanApiLogic, taskmanApiImpl, taskmanServerLogic, taskmanServerImpl, taskmanServerSchema)
 
   lazy val taskmanApiLogic =
     project("taskman-api-logic")
@@ -34,12 +34,6 @@ object TaskmanBuild {
       .dependsOn(taskmanServerSchema % "test")
       .dependsOn(baseTestJvm % "test")
     .settings(fork in Test := true) // else modules using specs2 v3+ seem to interfere with each other
-
-  lazy val taskmanApi =
-    project("taskman-api")
-      .configure(Common.jvmSettings)
-      .aggregate(taskmanApiLogic, taskmanApiImpl)
-      .dependsOn(taskmanApiLogic, taskmanApiImpl)
 
   lazy val taskmanServerLogic =
     project("taskman-server-logic")
@@ -75,7 +69,7 @@ object TaskmanBuild {
       .deps(
         Akka.actor ++ javaMail ++ okHttp ++ httpCore ++
         testScope(Akka.testkit ++ Specs2.combo))
-      .dependsOn(taskmanServerLogic, taskmanServerSchema, taskmanApi)
+      .dependsOn(taskmanServerLogic, taskmanServerSchema, taskmanApiImpl)
       .dependsOn(baseTestJvm % "test")
       .configure(Common.dockerBaseSettings("taskman"))
       .settings(
@@ -132,11 +126,5 @@ object TaskmanBuild {
         parallelExecution in Test := false)
       .configure(dontInline) // because Akka docs
   }
-
-  lazy val taskmanServer =
-    project("taskman-server")
-      .configure(Common.jvmSettings)
-      .aggregate(taskmanServerLogic, taskmanServerImpl, taskmanServerSchema)
-      .dependsOn(taskmanServerLogic, taskmanServerImpl, taskmanServerSchema)
 
 }
