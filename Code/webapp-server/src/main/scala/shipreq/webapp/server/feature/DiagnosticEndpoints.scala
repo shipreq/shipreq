@@ -12,7 +12,6 @@ import net.liftweb.util.Props
 import scalaz.{-\/, \/-}
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.util.ErrorOr
-import shipreq.taskman.api.ApiOp.QueryMsgStatus
 import shipreq.taskman.api.Msg.SendDiagEmail
 import shipreq.taskman.api.{EmailAddr, MsgId}
 import shipreq.webapp.server.app.Global
@@ -119,7 +118,7 @@ object DiagnosticEndpoints {
         MsgStatus.currentValue match {
           case Full(l) =>
             val id = MsgId(l)
-            Global.taskman.run(QueryMsgStatus(id)).unsafePerformIO() match {
+            Global.taskman.queryMsgStatus(id).unsafePerformIO() match {
               case Some(status) => Full(jsonResponse(MsgStatusResult(id.value, status.toString, status.isArchived)))
               case None         => Full(NotFoundResponse("Msg not found."))
             }

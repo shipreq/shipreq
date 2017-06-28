@@ -146,7 +146,7 @@ class Boot {
 
   def initTaskman(g: Global): Unit =
     if (g.config.initTaskmanOnBoot)
-      g.taskman.runAll(Taskman.updateCfg)
+      Taskman.updateCfg(g.taskman)
         .retryOnException((n, t) => g.config.initTaskmanRetry(n).map(d => IO {
           logger.warn(s"Taskman initialisation error occurred. Retrying...\n${t.getMessage}")
           Thread sleep d.toMillis

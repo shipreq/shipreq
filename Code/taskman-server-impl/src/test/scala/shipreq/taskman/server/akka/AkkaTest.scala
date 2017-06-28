@@ -7,7 +7,6 @@ import scala.concurrent.duration._
 import scala.concurrent._
 import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.base.util.log.HasLogger
-import shipreq.taskman.api.ApiOp.SubmitMsg
 import shipreq.taskman.api.Msg.DummyMsg
 import shipreq.taskman.api.MsgId
 import shipreq.taskman.server.ServerImplTestHelpers
@@ -47,9 +46,9 @@ class AkkaTest extends Specification with DatabaseTest with HasLogger with Serve
       })
 
       // submit jobs
-      val dummy1 = run(SubmitMsg(DummyMsg("#1: Pass immediately")))
-      val dummy2 = run(SubmitMsg(DummyMsg("#2: Fail immediately", retryCount = 1, failureMsg = Some("Deliberate fail."))))
-      val dummy3 = run(SubmitMsg(DummyMsg("#3: Async pass", async = true)))
+      val dummy1 = runApi(_.submitMsg(DummyMsg("#1: Pass immediately")))
+      val dummy2 = runApi(_.submitMsg(DummyMsg("#2: Fail immediately", retryCount = 1, failureMsg = Some("Deliberate fail."))))
+      val dummy3 = runApi(_.submitMsg(DummyMsg("#3: Async pass", async = true)))
       log.debug.z(s"Dummy job ids: ${dummy1.value}, ${dummy2.value}, ${dummy3.value}")
 
       // wait for results

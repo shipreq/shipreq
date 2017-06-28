@@ -3,8 +3,10 @@ package shipreq.webapp.server.app
 import doobie.imports.ConnectionIO
 import scalaz.effect.IO
 import shipreq.base.db.DbAccess
+import shipreq.taskman.api.TaskmanApi
+import shipreq.taskman.api.impl.TaskmanApiImpl
 import shipreq.webapp.server.ServerConfig
-import shipreq.webapp.server.lib.{StatLogger, StatLoggerImpl, TaskmanImpl, TaskmanInterface}
+import shipreq.webapp.server.lib.{StatLogger, StatLoggerImpl}
 import shipreq.webapp.server.logic.{ProjectServer, ServerLogic}
 import shipreq.webapp.server.security.{Oshiro, SecurityProvider}
 
@@ -13,7 +15,7 @@ final case class Global(config    : ServerConfig,
                         logic     : ServerLogic[IO],
                         security  : SecurityProvider,
                         statLogger: StatLogger,
-                        taskman   : TaskmanInterface)
+                        taskman   : TaskmanApi[IO])
 
 object Global {
   var Instance: Global = _
@@ -30,6 +32,7 @@ object Global {
 
   def default(implicit db: DbAccess, config: ServerConfig): Global = {
     assert(db ne null, "DbAccess is null, sir.")
+    val taskmanCtx = TaskmanApiImpl.Context(Some(config.taskmanSchema))
     import Interpreters._
     Global(
       config     = config,
@@ -37,6 +40,6 @@ object Global {
       logic      = ServerLogic.create[ConnectionIO, IO](ProjectServer.BroadcastTo.All),
       security   = defaultSecurity,
       statLogger = defaultStatLogger,
-      taskman    = new TaskmanImpl(db.io, config))
+      taskman    = TaskmanApiImpl(taskmanCtx, db.io.trans))
     }
 }

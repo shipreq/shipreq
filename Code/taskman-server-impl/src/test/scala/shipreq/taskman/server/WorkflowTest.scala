@@ -7,7 +7,6 @@ import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.base.util.JavaTimeHelpers._
 import shipreq.taskman.api.{EmailAddr, MsgStatus, MsgId}
 import shipreq.taskman.api.Msg.ReRegistrationAttempted
-import shipreq.taskman.api.ApiOp.{QueryMsgStatus, SubmitMsg}
 import shipreq.taskman.server.Sop._
 
 class WorkflowTest extends Specification with DatabaseTest with ThrownExpectations
@@ -25,7 +24,7 @@ class WorkflowTest extends Specification with DatabaseTest with ThrownExpectatio
     // assign node -> cant(assign node)
     val q = run(assignNode)
     q must have size 1
-    run(QueryMsgStatus(q.head.id)) must beSome(MsgStatus.NodeAssigned)
+    runApi(_.queryMsgStatus(q.head.id)) must beSome(MsgStatus.NodeAssigned)
     run(assignNode) must beEmpty
 
     // assign worker -> cant(assign node, assign worker)
@@ -35,7 +34,7 @@ class WorkflowTest extends Specification with DatabaseTest with ThrownExpectatio
     val m = mo.get
     run(assignNode) must beEmpty
     run(assignWorker) must beNone
-    run(QueryMsgStatus(m.hdr.id)) must beSome(MsgStatus.Working)
+    runApi(_.queryMsgStatus(m.hdr.id)) must beSome(MsgStatus.Working)
 
     (m, assignWorker)
   }
@@ -46,8 +45,8 @@ class WorkflowTest extends Specification with DatabaseTest with ThrownExpectatio
 
   "Workflow: fail then pass" in {
     // new
-    val id = run(SubmitMsg(defaultMsg))
-    run(QueryMsgStatus(id)) must beSome(MsgStatus.Unassigned)
+    val id = runApi(_.submitMsg(defaultMsg))
+    runApi(_.queryMsgStatus(id)) must beSome(MsgStatus.Unassigned)
 
     // assign node -> assign worker
     val (m1, assignWorker1) = findAndStartWork
@@ -56,7 +55,7 @@ class WorkflowTest extends Specification with DatabaseTest with ThrownExpectatio
     // fail:retry -> cant(assign worker)
     run(UpdateMsgRetry(n, w, m1, 0 seconds))
     run(assignWorker1) must beNone
-    run(QueryMsgStatus(id)) must beSome(MsgStatus.Unassigned)
+    runApi(_.queryMsgStatus(id)) must beSome(MsgStatus.Unassigned)
 
     // assign node -> assign worker
     val (m2, assignWorker2) = findAndStartWork
@@ -66,15 +65,15 @@ class WorkflowTest extends Specification with DatabaseTest with ThrownExpectatio
     run(UpdateMsgSuccess(n, w, m2))
     run(assignNode) must beEmpty
     run(assignWorker2) must beNone
-    run(QueryMsgStatus(id)) must beSome(MsgStatus.Complete)
+    runApi(_.queryMsgStatus(id)) must beSome(MsgStatus.Complete)
 
     queryHistory(id) must_== Some(("s", 1))
   }
 
   "Workflow: fail+delay then abort" in {
     // new
-    val id = run(SubmitMsg(defaultMsg))
-    run(QueryMsgStatus(id)) must beSome(MsgStatus.Unassigned)
+    val id = runApi(_.submitMsg(defaultMsg))
+    runApi(_.queryMsgStatus(id)) must beSome(MsgStatus.Unassigned)
 
     // assign node -> assign worker
     val (m1, assignWorker1) = findAndStartWork
@@ -94,7 +93,7 @@ class WorkflowTest extends Specification with DatabaseTest with ThrownExpectatio
     run(UpdateMsgAbort(n, w, m2))
     run(assignNode) must beEmpty
     run(assignWorker2) must beNone
-    run(QueryMsgStatus(id)) must beSome(MsgStatus.Aborted)
+    runApi(_.queryMsgStatus(id)) must beSome(MsgStatus.Aborted)
 
     queryHistory(id) must_== Some(("f", 2))
   }

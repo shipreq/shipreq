@@ -9,9 +9,9 @@ object ExceptionHandler extends HasLogger {
 
   def handleServerError(r: Req, e: Throwable): LiftResponse = {
     val uri = r.uri.toString
-    val m = Taskman.errorMsg(e, Some(uri), s"Request: $r")
+    val m = Taskman.webappErrorOccurred(e, Some(uri), s"Request: $r")
     log.error(e, s"500 Error serving $uri to user ${m.usr}")
-    Global.taskman.submitMsgAsync(m).unsafePerformIO()
+    Taskman.submitAsync(m).unsafePerformIO()
 
     Oshiro.enforceHumanSpeed()
 

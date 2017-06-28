@@ -12,7 +12,7 @@ import shipreq.base.util.effect.IOE
 import shipreq.base.util.effect.IoUtils._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.UserId
-import shipreq.taskman.api.impl.TaskmanApi
+import shipreq.taskman.api.impl.TaskmanApiImpl
 import shipreq.taskman.server.business.MailingList.API.GetListId
 import shipreq.taskman.server.business._
 import ErrorOr.Implicits._
@@ -64,7 +64,7 @@ final class TaskmanCtx(val dbAccess: DbAccess, val config: TaskmanConfig, emailT
   private val clockClock = Clock.systemUTC()
 
   implicit def trustPeriod   = config.taskman.trustPeriod
-  implicit val aopReifier    = new TaskmanApi(TaskmanApi.Context(None), dbAccess.io)
+  implicit val taskmanApi    = TaskmanApiImpl(TaskmanApiImpl.Context(None), dbAccess.io.trans)
   implicit val bopReifier    = new BopImpl(dbAccess.io, email, mailchimp, freshdesk, config.shipreq.schema)
   implicit val sopReifier    = new SopImpl(dbAccess.io, new Worker.FailureHandler(emails, bopReifier))
   implicit val msgProcessor  = new BusinessLogic(bopReifier, emails, async.email, mailingListId)
