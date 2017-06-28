@@ -3,7 +3,7 @@ package security
 
 import org.apache.shiro.realm.AuthenticatingRealm
 import org.apache.shiro.authc._
-import app.DI
+import app.Global
 import shipreq.webapp.server.db.DbLogic
 
 /**
@@ -11,7 +11,7 @@ import shipreq.webapp.server.db.DbLogic
  *
  * @since 25/06/2013
  */
-class AppSecurityRealm extends AuthenticatingRealm with DI {
+class AppSecurityRealm extends AuthenticatingRealm {
 
   override protected def doGetAuthenticationInfo(token: AuthenticationToken) = {
     // Parse input
@@ -19,7 +19,7 @@ class AppSecurityRealm extends AuthenticatingRealm with DI {
     val usernameOrEmail = userPassToken.getUsername
 
     // Query database
-    val result = db().io.trans(DbLogic.user.findDescAndCredentials(usernameOrEmail)).unsafePerformIO()
+    val result = Global.db.io.trans(DbLogic.user.findDescAndCredentials(usernameOrEmail)).unsafePerformIO()
     if (result.isEmpty) throw new UnknownAccountException("No account found for [" + usernameOrEmail + "]")
     val (user, cred) = result.get
 

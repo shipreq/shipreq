@@ -1,6 +1,6 @@
 package shipreq.webapp.server.test
 
-import shipreq.webapp.server.app.DI
+import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.logic.User
 import shipreq.webapp.server.security.SecurityProvider
 
@@ -19,19 +19,28 @@ object PrepareEnv {
     () => o
   }
 
-  val oshiro = once {
-    boot.initServerConfig(cfg.server)
+  Global.Instance = Global(
+    config     = cfg.server,
+    db         = null,
+    logic      = null,
+    security   = Global.defaultSecurity,
+    statLogger = Global.defaultStatLogger,
+    taskman    = null)
+
+
+  val oshiro: () => Unit = once {
     boot.initOshiro()
 
     // Disable SecurityProvider.enforceHumanSpeed()
-    val defaultSecProv = DI.SecurityProvider.default.get.vend
-    DI.SecurityProvider.default.set(new SecurityProvider {
-      def loggedInUser: Option[User] = defaultSecProv.loggedInUser
+    val oldSecurity = Global.security
+    val newSecurity = new SecurityProvider {
+      override def loggedInUser() = oldSecurity.loggedInUser()
       override def enforceHumanSpeed() = ()
-    })
+    }
+    Global.modify(_.copy(security = newSecurity))
   }
 
-  val lift = once {
+  val lift: () => Unit = once {
     // if (!LiftRules.doneBoot) {
     oshiro()
     boot.configureLift()

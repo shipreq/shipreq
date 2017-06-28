@@ -6,14 +6,14 @@ import net.liftweb.http.{SessionVar, TransientRequestVar}
 import scalaz.Semigroup
 import scalaz.old.NonEmptyList
 import scalaz.syntax.semigroup._
-import shipreq.webapp.server.app.DI
+import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.lib.Misc
 import FlashVar._
 
 object FlashVar {
   val globalFlashVarCount = new AtomicInteger(0)
 
-  def ttlConfig = DI.serverConfig.flashVarTTL
+  def ttlConfig = Global.config.flashVarTTL
 }
 
 /**

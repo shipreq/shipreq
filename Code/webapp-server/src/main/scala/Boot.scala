@@ -16,7 +16,7 @@ import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.app._
 import shipreq.webapp.server.feature.SessionStats
-import shipreq.webapp.server.lib.{Taskman, TaskmanImpl}
+import shipreq.webapp.server.lib.Taskman
 import shipreq.webapp.server.security.Oshiro
 
 final case class AppConfig(db: DbConfig, server: ServerConfig, report: ConfigReport)
@@ -25,7 +25,7 @@ final case class AppConfig(db: DbConfig, server: ServerConfig, report: ConfigRep
  * A class that's instantiated early and run.  It allows the application
  * to modify lift's environment
  */
-class Boot extends DI {
+class Boot {
 
   LiftRules.configureLogging()
 
@@ -33,16 +33,22 @@ class Boot extends DI {
   lazy val logger = Logger(s"$packageRoot.Boot")
 
   def boot(): Unit = {
+
+    // Read config
     val (appConfig, runMode) = readConfig()
     logger.info(appConfig.report.report)
     runMode foreach setRunMode
-    initServerConfig(appConfig.server)
+
+    // Create services
+    implicit val serverConfig = appConfig.server
+    implicit val dbAccess = initDatabase(appConfig.db)
     initOshiro()
-    initServerLogic()
     configureLift()
+    Global.Instance = Global.default
+
+    // Prepare services
     preloadTemplates()
-    initDatabase(appConfig.db)
-    initTaskman(appConfig.server)
+    initTaskman(Global.Instance)
   }
 
   def readConfig(): (AppConfig, Option[RunModes.Value]) = {
@@ -130,34 +136,22 @@ class Boot extends DI {
   def initOshiro(): Unit =
     Oshiro.init()
 
-  def initDatabase(dbConfig: DbConfig): Unit = {
+  def initDatabase(dbConfig: DbConfig): DbAccess = {
     val access = DbAccess.fromCfg(dbConfig).unsafePerformIO()
     logger.info(s"Connecting to DB: ${access.desc}")
     access.verifyConnectivity()
     access.migrator.migrate[IO].unsafePerformIO()
-    DI.dbAccess = access
+    access
   }
 
-  def initServerConfig(s: ServerConfig): Unit = {
-    DI.serverConfig = s
-  }
-
-  def initServerLogic(): Unit = {
-    DI.publicSpaLogic = Interpreters.publicSpaLogic
-    DI.homeSpaLogic   = Interpreters.homeSpaLogic
-    DI.projectServer  = Interpreters.projectServer
-  }
-
-  def initTaskman(s: ServerConfig): Unit = {
-    DI.taskman = new TaskmanImpl(DI.dbAccess.io)
-    if (s.initTaskmanOnBoot)
-      taskman().runAll(Taskman.updateCfg)
-        .retryOnException((n, t) => s.initTaskmanRetry(n).map(d => IO {
+  def initTaskman(g: Global): Unit =
+    if (g.config.initTaskmanOnBoot)
+      g.taskman.runAll(Taskman.updateCfg)
+        .retryOnException((n, t) => g.config.initTaskmanRetry(n).map(d => IO {
           logger.warn(s"Taskman initialisation error occurred. Retrying...\n${t.getMessage}")
           Thread sleep d.toMillis
         }))
         .unsafePerformIO()
-  }
 
   def preloadTemplates(): Unit = {
     import shipreq.webapp.server.snippet._

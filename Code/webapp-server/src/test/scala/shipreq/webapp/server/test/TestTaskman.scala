@@ -5,7 +5,7 @@ import scalaz.~>
 import shipreq.base.test.BaseTestUtil._
 import shipreq.taskman.api.ApiOp._
 import shipreq.taskman.api.{ApiOp, Msg, MsgId}
-import shipreq.webapp.server.app.DI
+import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.lib.TaskmanInterface
 
 final class TestTaskman extends TaskmanInterface {
@@ -36,14 +36,14 @@ final class TestTaskman extends TaskmanInterface {
 
 object TestTaskman {
   def use[R](run: => R): (R, TestTaskman) = {
-    val old = DI.taskman
+    val old = Global.taskman
     try {
       val tt = new TestTaskman
-      DI.taskman = tt
+      Global.modify(_.copy(taskman = tt))
       val r = run
       (r, tt)
     } finally
-      DI.taskman = old
+      Global.modify(_.copy(taskman = old))
   }
 
   // ===================================================================================================================

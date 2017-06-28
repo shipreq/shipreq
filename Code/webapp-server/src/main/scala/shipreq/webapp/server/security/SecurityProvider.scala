@@ -7,7 +7,7 @@ import shipreq.webapp.server.logic.User
  */
 trait SecurityProvider {
 
-  def loggedInUser: Option[User]
+  def loggedInUser(): Option[User]
 
   /**
    * Sleep for a short amount of time, unnoticeable to humans, in order to frustrate automated security attacks.

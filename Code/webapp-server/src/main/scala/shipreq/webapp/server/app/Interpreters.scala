@@ -6,6 +6,7 @@ import net.liftweb.actor.LAScheduler
 import scalaz.effect.IO
 import scalaz.syntax.all._
 import scalaz.~>
+import shipreq.base.db.DbAccess
 import shipreq.base.db.DoobieHelpers._
 import shipreq.taskman.api
 import shipreq.webapp.base.data.ProjectMetaData
@@ -45,9 +46,9 @@ object Interpreters {
     }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  implicit val dbTrans: ConnectionIO ~> IO =
+  implicit def runDB(implicit dbAccess: DbAccess): ConnectionIO ~> IO =
     new (ConnectionIO ~> IO) {
-      override def apply[A](fa: ConnectionIO[A]) = DI.dbAccess.io.trans(fa)
+      override def apply[A](fa: ConnectionIO[A]) = dbAccess.io.trans(fa)
     }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -69,9 +70,4 @@ object Interpreters {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   implicit val projectStore: ProjectServer.StoreAlgebra[IO] =
     Store.Algebra.concurrentHashMap()
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  val publicSpaLogic: PublicSpaLogic[IO] = PublicSpaLogic[ConnectionIO, IO]
-  val homeSpaLogic  : HomeSpaLogic  [IO] = HomeSpaLogic  [ConnectionIO, IO]
-  val projectServer : ProjectServer [IO] = ProjectServer [ConnectionIO, IO](ProjectServer.BroadcastTo.All)
 }

@@ -9,7 +9,7 @@ import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.logic.{ProjectId => DataProjectId}
 import shipreq.webapp.server.lib.SnippetHelpers.redirectHome
 
-object RequestVars extends Logger with DI {
+object RequestVars extends Logger {
 
   // -------------------------------------------------------------------------------------------------------------------
   // Manually set
@@ -38,5 +38,5 @@ object RequestVars extends Logger with DI {
   }
 
   private def requireDbData[T](name: String)(query: => ConnectionIO[Option[T]]): Need[T] =
-    Need(db().io.trans(query).unsafePerformIO() getOrElse notFound(name))
+    Need(Global.db.io.trans(query).unsafePerformIO() getOrElse notFound(name))
 }

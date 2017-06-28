@@ -7,7 +7,7 @@ import scala.xml.NodeSeq
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.UserId
 import shipreq.webapp.server.app.AppSiteMap.Implicits._
-import shipreq.webapp.server.app.{AppSiteMap, DI}
+import shipreq.webapp.server.app.{AppSiteMap, Global}
 import shipreq.webapp.server.logic.User
 import shipreq.webapp.server.util.HttpResponses.ShouldNeverHappenResponse
 import shipreq.webapp.server.util.JsExt._
@@ -36,7 +36,7 @@ object SnippetHelpers extends StaticSnippetHelpers {
 }
 
 /**
- * Snippet helpers without Misc, DI and implicit vals/defs.
+ * Snippet helpers without Misc, Global and implicit vals/defs.
  */
 trait StaticSnippetHelpers extends HasLogger {
 
@@ -60,10 +60,10 @@ trait StaticSnippetHelpers extends HasLogger {
  *
  * @since 11/06/2013
  */
-trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with HasLogger {
+trait SnippetHelpers extends StaticSnippetHelpers with Misc with HasLogger {
 
   @inline final def currentUser(): Option[User] =
-    securityProvider().loggedInUser
+    Global.security.loggedInUser()
 
   @inline final def currentUserId_!() : UserId =
     currentUser_!().id

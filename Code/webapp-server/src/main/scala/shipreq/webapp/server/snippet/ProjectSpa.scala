@@ -13,7 +13,7 @@ import shipreq.base.util.FreeOption
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.protocol.ProjectSpaProtocols
 import shipreq.webapp.gen.transform.ProjectSpaLoader
-import shipreq.webapp.server.app.DI
+import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.lib.SingleOpStatelessSnippet
 import shipreq.webapp.server.logic._
 import shipreq.webapp.server.protocol._
@@ -33,7 +33,7 @@ final class ProjectSpa(projectId: ProjectId) extends SingleOpStatelessSnippet {
     val comet: ProjectSpaComet =
       ProjectSpaComet(projectId) openOr shouldNeverHappen_!
 
-    val logic = projectServer()
+    val logic = Global.logic.projectServer
 
     def newRegId(): ProjectServer.RegId = {
       val register = logic.register(projectId, user.id, ve => comet.sendMsgIO(ProjectSpaComet.UpdateProject(ve)))
@@ -86,7 +86,7 @@ object ProjectSpaComet {
 /** One of these is created per session = 1/user/browser.
   * Multiple tabs in the same browser reuse this.
   */
-final class ProjectSpaComet extends MessageCometActor with DI {
+final class ProjectSpaComet extends MessageCometActor {
   import ProjectSpaComet._
 
   private var regId = FreeOption.empty[ProjectServer.RegId]
@@ -94,9 +94,11 @@ final class ProjectSpaComet extends MessageCometActor with DI {
   def getRegId: FreeOption[ProjectServer.RegId] =
     regId
 
+  @inline private def logic = Global.logic.projectServer
+
   override protected def localShutdown(): Unit = {
     for (id <- regId)
-      try projectServer().unregister(id).unsafePerformIO()
+      try logic.unregister(id).unsafePerformIO()
       finally regId = FreeOption.empty
     super.localShutdown()
   }
@@ -109,7 +111,7 @@ final class ProjectSpaComet extends MessageCometActor with DI {
       if (regId.isEmpty && running)
         regId = FreeOption(id)
       else
-        projectServer().unregister(id).attempt.unsafePerformIO()
+        logic.unregister(id).attempt.unsafePerformIO()
   }
 
   def sendMsgIO(msg: Msg): IO[Unit] =

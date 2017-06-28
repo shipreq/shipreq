@@ -10,6 +10,7 @@ import scala.collection.JavaConverters._
 import scala.sys.process._
 import scala.util.Properties
 import scala.xml.{NodeSeq, Text}
+import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.feature.SessionStats
 import shipreq.webapp.server.lib.SnippetHelpers
@@ -69,12 +70,12 @@ object AdminStats extends SnippetHelpers {
   }
 
   def allStats(): List[(String, List[(String, StatValue)])] =
-    db().io.trans(
+    Global.db.io.trans(
     for {
       userCount <- DbLogic.admin.statsCountUsers
       tableSizes <- DbLogic.admin.statsTableSizes
       indexSizes <- DbLogic.admin.statsIndexSizes
-      databaseSize <- DbLogic.admin.statsDatabaseSize(db().databaseName)
+      databaseSize <- DbLogic.admin.statsDatabaseSize(Global.db.databaseName)
     } yield
       List(
         "System & Environment" -> List(

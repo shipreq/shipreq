@@ -116,7 +116,7 @@ object AppSiteMap { // TODO Cleanup
   // -------------------------------------------------------------------------------------------------------------------
 
   object Implicits {
-    private def BaseUrl = DI.serverConfig.baseUrl
+    private def BaseUrl = Global.config.baseUrl
 
     private def newUrlMemo(f: Loc[_] => String): Loc[_] => String =
       Memo.byRef(f)
@@ -166,7 +166,7 @@ object AppSiteMap { // TODO Cleanup
   lazy val redirectHome = RedirectResponse(Home.relativeUrl)
 
   val LoginRelativeUrl = URLs.login
-  def LoginAbsoluteUrl = DI.serverConfig.baseUrl + LoginRelativeUrl
+  def LoginAbsoluteUrl = Global.config.baseUrl + LoginRelativeUrl
   val redirectToLogin = RedirectResponse(LoginRelativeUrl)
 
   def logout(): Box[LiftResponse] = {

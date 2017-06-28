@@ -5,13 +5,13 @@ import shipreq.webapp.server.security.Oshiro
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.server.lib.Taskman
 
-object ExceptionHandler extends HasLogger with DI {
+object ExceptionHandler extends HasLogger {
 
   def handleServerError(r: Req, e: Throwable): LiftResponse = {
     val uri = r.uri.toString
     val m = Taskman.errorMsg(e, Some(uri), s"Request: $r")
     log.error(e, s"500 Error serving $uri to user ${m.usr}")
-    taskman().submitMsgAsync(m).unsafePerformIO()
+    Global.taskman.submitMsgAsync(m).unsafePerformIO()
 
     Oshiro.enforceHumanSpeed()
 
