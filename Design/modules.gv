@@ -5,51 +5,54 @@ edge[color="#cc0000"]
 
 subgraph cluster_base {
   style=filled fillcolor="#f4fff4" node[fillcolor="#bbffbb"]
-  base [label="[aggregate]\nbase" fillcolor="#cccccc"]
   baseMacro [label="base-macro\n(JVM & JS)"]
   baseUtil [label="base-util\n(JVM & JS)"]
   baseDb [label="base-db\n(JVM)"]
 
   node[fillcolor=white color=darkgreen]
   baseTest [label="base-test\n(JVM & JS)"]
+
+  base [label="[aggregate]\nbase" fillcolor="#ffffdd"]
 }
 
-subgraph cluster_t {
+{
   fillcolor="#eeeeff" style=filled
+  node[fillcolor="#000000"]
 
-  subgraph cluster_ts {
-    fillcolor=white node[fillcolor="#aaaaff"]
+  subgraph cluster_taskman {
+    node[fillcolor="#ffffff"]
     taskmanDb [label="taskman-server-schema"]
-    taskmanServerImpl [label="taskman-server-impl"]
     taskmanServerLogic [label="taskman-server-logic"]
-  }
-
-  subgraph cluster_ta {
-    fillcolor=white node[fillcolor="#cceeff"]
     taskmanApiImpl [label="taskman-api-impl"]
     taskmanApiLogic [label="taskman-api-logic"]
+
+    node[fillcolor="#00ccff"]
+    taskmanServerImpl [label="taskman-server-impl"]
+
+    taskman [label="[aggregate]\ntaskman" fillcolor="#ffff80"]
   }
 
-  subgraph cluster_w {
-    fillcolor=white node[fillcolor="#99ccee"]
-    webapp [label="[aggregate]\nwebapp" fillcolor="#ffff80"]
+  subgraph cluster_webapp {
+    node[fillcolor="#ffffff"]
     webappMacro [label="webapp-macro\n(JVM & JS)"]
     webappBase [label="webapp-base\n(JVM & JS)"]
     webappBaseMember [label="webapp-base-member\n(JVM & JS)"]
     webappServerLogic [label="webapp-server-logic\n(JVM & JS)"]
+    webappClientWwApi [label="webapp-client-ww-api\n(JS)"]
+    webappGen [label="webapp-gen\n(JVM & JS)"]
+
+    node[fillcolor="#00ccff"]
     webappClientPublic [label="webapp-client-public\n(JVM & JS)"]
     webappClientHome [label="webapp-client-home\n(JS)"]
-    webappClientWwApi [label="webapp-client-ww-api\n(JS)"]
     webappClientWw [label="webapp-client-ww\n(JS)"]
     webappClientProject [label="webapp-client-project\n(JS)"]
-    webappGen [label="webapp-gen\n(JVM & JS)"]
     webappServer [label="webapp-server"]
 
     node[fillcolor=white color=blue]
     webappBaseTest [label="webapp-base-test\n(JVM & JS)"]
-  }
 
-  taskman [label="[aggregate]\ntaskman" fillcolor="#ffff80"]
+    webapp [label="[aggregate]\nwebapp" fillcolor="#ffff80"]
+  }
 }
 
 subgraph cluster_supp {
@@ -99,7 +102,7 @@ webappGen -> webappBaseMember
 webappGen -> webappClientProject [color="#111111" style=dashed label="run"]
 webappGen -> webappBaseTest [color="#111111" style=dashed label="test"]
 webappServer -> taskmanApiImpl,webappServerLogic,webappGen
-webappServer -> baseDb
+// webappServer -> baseDb // transitive through taskman-api-impl
 webappServer -> webappClientPublic,webappClientHome,webappClientProject,webappClientWw [style=dashed]
 
 benchmarkJvm,benchmarkJs -> benchmarkShared
