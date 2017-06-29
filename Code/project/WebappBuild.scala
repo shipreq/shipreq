@@ -40,7 +40,7 @@ object WebappBuild {
       .aggregate(
         webappMacroJvm, webappBaseJvm, webappBaseMemberJvm, webappServerLogicJvm, webappBaseTestJvm, webappGenJvm,
         webappMacroJs , webappBaseJs , webappBaseMemberJs , webappServerLogicJs , webappBaseTestJs , webappGenJs ,
-        webappClientPublic,
+        webappClientPublicJvm, webappClientPublicJs,
         webappClientHome,
         webappClientWwApi, webappClientWw, webappClientProject,
         webappServer)
@@ -112,9 +112,15 @@ object WebappBuild {
       .dependsOn(webappBaseJs, webappBaseTestJs % "test", webappServerLogicJs % "test")
       .settings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
 
+  lazy val webappClientPublicJvm = webappClientPublic.jvm
+  lazy val webappClientPublicJs  = webappClientPublic.js
   lazy val webappClientPublic =
-    project("webapp-client-public")
-      .configure(clientSpa)
+    crossProject("webapp-client-public")
+      .configureJvm(Common.jvmSettings)
+      .configureJs(Common.jsSettings(NeedDom))
+      .dependsOn(webappBase, webappBaseTest % "test")
+      .configureBoth(useMacroParadise)
+      .jsSettings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
 
   lazy val webappClientHome =
     project("webapp-client-home")
@@ -166,11 +172,16 @@ object WebappBuild {
   lazy val webappServerLogicJs  = webappServerLogic.js
   lazy val webappServerLogic =
     crossProject("webapp-server-logic")
-      .configureJvm(Common.jvmSettings, _.dependsOn(taskmanApiLogic), useMacroParadise)
+      .configureJvm(
+        Common.jvmSettings,
+        _.dependsOn(taskmanApiLogic, webappClientPublicJvm),
+        useMacroParadise)
       .configureJs(Common.jsSettings(NeedDom)) // TODO NeedDom isn't true but required cos webappBaseTest loads in Sizzle
       .dependsOn(webappBaseMember)
       .dependsOn(baseTest % "test", webappBaseTest % "test")
       .depsForBoth(testScope(μTest ++ Nyaya.test))
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   lazy val webappServer =
     project("webapp-server").configure(Server.definition)
@@ -199,10 +210,10 @@ object WebappBuild {
               case other =>
                 sys.error("Unsupported virtual file type: " + other)
             }
-          copyScalaJs((scalaJSLinkedFile in Compile in webappClientPublic ).value, Frontend.scalaJsPathPublic .value)
-          copyScalaJs((scalaJSLinkedFile in Compile in webappClientHome   ).value, Frontend.scalaJsPathHome   .value)
-          copyScalaJs((scalaJSLinkedFile in Compile in webappClientProject).value, Frontend.scalaJsPathProject.value)
-          copyScalaJs((scalaJSLinkedFile in Compile in webappClientWw     ).value, Frontend.scalaJsPathWw     .value)
+          copyScalaJs((scalaJSLinkedFile in Compile in webappClientPublicJs).value, Frontend.scalaJsPathPublic .value)
+          copyScalaJs((scalaJSLinkedFile in Compile in webappClientHome    ).value, Frontend.scalaJsPathHome   .value)
+          copyScalaJs((scalaJSLinkedFile in Compile in webappClientProject ).value, Frontend.scalaJsPathProject.value)
+          copyScalaJs((scalaJSLinkedFile in Compile in webappClientWw      ).value, Frontend.scalaJsPathWw     .value)
 
           // Copy frontend assets
           val assetSrc = baseDirectory.value / Frontend.serve
@@ -438,7 +449,7 @@ object WebappBuild {
         fullClasspath in console in Compile += file("src/main/webapp")) // So templates can be loaded from console
   }
 
-  // ===================================================================================================================
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   val jsSizesFast = TaskKey[Unit]("jsSizesFast", "Print JS sizes (using fastOptJS).")
   val jsSizesFull = TaskKey[Unit]("jsSizesFull", "Print JS sizes (using fullOptJS).")
@@ -465,10 +476,10 @@ object WebappBuild {
     println()
     println(header)
     println("=" * header.length)
-    report((moduleName in webappClientPublic ).value, (stageKeys(stage) in Compile in webappClientPublic ).value)
-    report((moduleName in webappClientHome   ).value, (stageKeys(stage) in Compile in webappClientHome   ).value)
-    report((moduleName in webappClientProject).value, (stageKeys(stage) in Compile in webappClientProject).value)
-    report((moduleName in webappClientWw     ).value, (stageKeys(stage) in Compile in webappClientWw     ).value)
+    report((moduleName in webappClientPublicJs).value, (stageKeys(stage) in Compile in webappClientPublicJs).value)
+    report((moduleName in webappClientHome    ).value, (stageKeys(stage) in Compile in webappClientHome    ).value)
+    report((moduleName in webappClientProject ).value, (stageKeys(stage) in Compile in webappClientProject ).value)
+    report((moduleName in webappClientWw      ).value, (stageKeys(stage) in Compile in webappClientWw      ).value)
     println()
   }
 

@@ -6,12 +6,12 @@ edge[color="#cc0000"]
 subgraph cluster_base {
   style=filled fillcolor="#f4fff4" node[fillcolor="#bbffbb"]
   base [label="[aggregate]\nbase" fillcolor="#cccccc"]
-  baseMacro [label="base-macro\n(Scala & JS)"]
-  baseUtil [label="base-util\n(Scala & JS)"]
+  baseMacro [label="base-macro\n(JVM & JS)"]
+  baseUtil [label="base-util\n(JVM & JS)"]
   baseDb [label="base-db\n(JVM)"]
 
   node[fillcolor=white color=darkgreen]
-  baseTest [label="base-test\n(Scala & JS)"]
+  baseTest [label="base-test\n(JVM & JS)"]
 }
 
 subgraph cluster_t {
@@ -33,20 +33,20 @@ subgraph cluster_t {
   subgraph cluster_w {
     fillcolor=white node[fillcolor="#99ccee"]
     webapp [label="[aggregate]\nwebapp" fillcolor="#ffff80"]
-    webappMacro [label="webapp-macro\n(Scala & JS)"]
-    webappBase [label="webapp-base\n(Scala & JS)"]
-    webappBaseMember [label="webapp-base-member\n(Scala & JS)"]
-    webappServerLogic [label="webapp-server-logic\n(Scala & JS)"]
-    webappClientPublic [label="webapp-client-public\n(JS)"]
+    webappMacro [label="webapp-macro\n(JVM & JS)"]
+    webappBase [label="webapp-base\n(JVM & JS)"]
+    webappBaseMember [label="webapp-base-member\n(JVM & JS)"]
+    webappServerLogic [label="webapp-server-logic\n(JVM & JS)"]
+    webappClientPublic [label="webapp-client-public\n(JVM & JS)"]
     webappClientHome [label="webapp-client-home\n(JS)"]
     webappClientWwApi [label="webapp-client-ww-api\n(JS)"]
     webappClientWw [label="webapp-client-ww\n(JS)"]
     webappClientProject [label="webapp-client-project\n(JS)"]
-    webappGen [label="webapp-gen\n(Scala & JS)"]
+    webappGen [label="webapp-gen\n(JVM & JS)"]
     webappServer [label="webapp-server"]
 
     node[fillcolor=white color=blue]
-    webappBaseTest [label="webapp-base-test\n(Scala & JS)"]
+    webappBaseTest [label="webapp-base-test\n(JVM & JS)"]
   }
 
   taskman [label="[aggregate]\ntaskman" fillcolor="#ffff80"]
@@ -82,7 +82,7 @@ taskmanServerImpl -> taskmanServerLogic,taskmanApiImpl,taskmanDb
 
 webappMacro -> baseUtil
 webappBase -> webappMacro
-webappServerLogic -> webappBase,taskmanApiLogic
+webappServerLogic -> webappBase,taskmanApiLogic,webappClientPublic
 webappServerLogic -> webappBaseTest [color="#111111" style=dashed label="test"]
 webappBaseMember -> webappBase
 webappBaseTest -> baseTest,webappBaseMember [color="#111111"]
