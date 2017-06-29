@@ -4,10 +4,10 @@ import doobie.imports.ConnectionIO
 import net.liftweb.common.Logger
 import net.liftweb.http.RequestVar
 import scalaz.{Name, Need}
-import shipreq.taskman.api.UserId
 import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.logic.{ProjectId => DataProjectId}
 import shipreq.webapp.server.lib.SnippetHelpers.redirectHome
+import shipreq.webapp.base.user._
 
 object RequestVars extends Logger {
 

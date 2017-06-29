@@ -12,12 +12,12 @@ import utest._
 import shipreq.base.db.SqlHelpers._
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.util._
-import shipreq.taskman.api.UserId
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.base.text.Text
+import shipreq.webapp.base.user._
 import shipreq.webapp.server.data._
 import shipreq.webapp.server.security.PasswordAndSalt
 import shipreq.webapp.server.test.{DbUtil, TestDb}

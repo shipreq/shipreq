@@ -3,8 +3,8 @@ package shipreq.webapp.server.security
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.config.IniSecurityManagerFactory
 import org.apache.shiro.crypto.SecureRandomNumberGenerator
+import shipreq.webapp.base.user._
 import shipreq.webapp.server.app.Global
-import shipreq.webapp.server.logic.User
 
 object Oshiro extends SecurityProvider {
   private val iniFactory = new IniSecurityManagerFactory("classpath:shiro.ini")

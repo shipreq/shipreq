@@ -5,10 +5,9 @@ import net.liftweb.json.{NoTypeHints, Serialization, Serializer}
 import net.liftweb.sitemap.Menu
 import scala.xml.NodeSeq
 import shipreq.base.util.log.HasLogger
-import shipreq.taskman.api.UserId
+import shipreq.webapp.base.user._
 import shipreq.webapp.server.app.AppSiteMap.Implicits._
 import shipreq.webapp.server.app.{AppSiteMap, Global}
-import shipreq.webapp.server.logic.User
 import shipreq.webapp.server.util.HttpResponses.ShouldNeverHappenResponse
 import shipreq.webapp.server.util.JsExt._
 

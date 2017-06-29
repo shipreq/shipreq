@@ -8,11 +8,11 @@ import scalaz.syntax.all._
 import scalaz.~>
 import shipreq.base.db.DbAccess
 import shipreq.base.db.DoobieHelpers._
-import shipreq.taskman.api
 import shipreq.webapp.base.data.ProjectMetaData
 import shipreq.webapp.base.event.{ActiveEvent, EventOrd}
 import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.base.protocol.ServerSideProc
+import shipreq.webapp.base.user._
 import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.logic._
 import shipreq.webapp.server.protocol.ServerProtocol
@@ -23,7 +23,7 @@ object Interpreters {
   implicit val dbAlgebra: DB.Algebra[ConnectionIO] =
     new DB.Algebra[ConnectionIO] {
 
-      override def createEmptyProject(id: api.UserId): ConnectionIO[ProjectId] =
+      override def createEmptyProject(id: UserId): ConnectionIO[ProjectId] =
         DbLogic.project.create(id)
 
       override def getProjectHeader(id: ProjectId): ConnectionIO[Option[ProjectHeader]] =
@@ -35,7 +35,7 @@ object Interpreters {
       override def getAllProjectEvents(id: ProjectId): ConnectionIO[DB.ProjectEvents] =
         DbLogic.event.findAll2(id)
 
-      override def getAllProjectMetaDataForUser(id: api.UserId): ConnectionIO[List[ProjectMetaData]] =
+      override def getAllProjectMetaDataForUser(id: UserId): ConnectionIO[List[ProjectMetaData]] =
         DbLogic.project.findAllProjectMetaDataForUser(id)
 
       override def saveProjectEvent(id: ProjectId)(o: EventOrd, e: ActiveEvent, h: HashRec.Collection): ConnectionIO[Option[Throwable]] =

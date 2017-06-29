@@ -3,8 +3,8 @@ package shipreq.webapp.server.db
 import doobie.imports._
 import java.time.Instant
 import shipreq.base.db.SqlHelpers._
-import shipreq.taskman.api._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.user._
 import shipreq.webapp.server.data._
 import shipreq.webapp.server.logic._
 import shipreq.webapp.server.security._

@@ -5,7 +5,7 @@ import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
 import utest.asserts._
 import shipreq.webapp.base.test.{WebappTestEquality, WebappTestUtil}
-import shipreq.webapp.server.logic.User
+import shipreq.webapp.base.user.User
 import shipreq.webapp.server.security.Oshiro
 
 trait WebappServerTestEquality extends WebappTestEquality {

@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import net.liftweb.common.{Box, Full, Logger}
 import net.liftweb.http.{LiftSession, Req}
-import shipreq.webapp.server.logic.User
+import shipreq.webapp.base.user._
 
 /**
  * Collects stats about sessions and logins.

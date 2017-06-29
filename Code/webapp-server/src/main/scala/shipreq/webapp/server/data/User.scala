@@ -1,7 +1,7 @@
 package shipreq.webapp.server.data
 
 import java.time.Instant
-import shipreq.taskman.api.UserId
+import shipreq.webapp.base.user._
 
 //case class UserDetail(name: String, newsletter: Boolean)
 

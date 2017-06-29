@@ -1,7 +1,6 @@
 package shipreq.webapp.server.test
 
 import shipreq.webapp.server.app.Global
-import shipreq.webapp.server.logic.User
 import shipreq.webapp.server.security.SecurityProvider
 
 object PrepareEnv {

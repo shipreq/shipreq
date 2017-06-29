@@ -1,6 +1,6 @@
 package shipreq.webapp.server.security
 
-import shipreq.webapp.server.logic.User
+import shipreq.webapp.base.user.User
 
 /**
  * Interface that provides the app with security features.

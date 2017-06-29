@@ -6,7 +6,8 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
-import shipreq.webapp.base.data.{ProjectMetaData, Username, DataValidators}
+import shipreq.webapp.base.data.{DataValidators, ProjectMetaData}
+import shipreq.webapp.base.user.Username
 import shipreq.webapp.base.protocol.HomeSpaProtocols
 import shipreq.webapp.base.ClientConfig
 import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus}

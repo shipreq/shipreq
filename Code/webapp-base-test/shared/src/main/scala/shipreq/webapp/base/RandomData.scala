@@ -24,6 +24,7 @@ import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.user._
 import shipreq.webapp.base.event.ApplyEvent.LogicVer
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Grammar, GrammarSpec, Text}

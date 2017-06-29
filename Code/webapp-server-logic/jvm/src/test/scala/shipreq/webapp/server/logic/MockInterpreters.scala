@@ -4,9 +4,9 @@ import java.time.{Duration, Instant}
 import scala.collection.immutable.SortedMap
 import scalaz.Name
 import shipreq.base.util.IMap
-import shipreq.taskman.api.UserId
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
+import shipreq.webapp.base.user._
 import shipreq.webapp.base.hash.HashRec.Collection
 import shipreq.webapp.base.protocol.ServerSideProc
 import shipreq.webapp.base.test.WebappTestUtil._

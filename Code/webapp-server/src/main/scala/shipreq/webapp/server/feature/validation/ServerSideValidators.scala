@@ -1,5 +1,6 @@
 package shipreq.webapp.server.feature.validation
 
+/*
 import scalaz.{-\/, \/-}
 import shipreq.base.util.Identity
 import shipreq.base.util.univeq._
@@ -12,7 +13,7 @@ import shipreq.webapp.base.validation.{CommonValidation => CV, _}
 import Simple._
 import Simple.Implicits._
 
-object ServerSideValidators {
+object ServerSideValidators { // TODO
 
   private def emailPattern =
     "^_+@_+?\\._+$".replace("_", "[^&<>]").r.pattern // loose validation
@@ -112,3 +113,4 @@ object ServerSideValidators {
   }
 
 }
+*/

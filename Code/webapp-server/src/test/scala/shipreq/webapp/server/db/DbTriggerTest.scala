@@ -4,7 +4,7 @@ import doobie.imports._
 import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.db.SingleConnectionXA
-import shipreq.taskman.api.UserId
+import shipreq.webapp.base.user._
 import shipreq.webapp.server.test._
 
 object DbTriggerTest extends TestSuite {

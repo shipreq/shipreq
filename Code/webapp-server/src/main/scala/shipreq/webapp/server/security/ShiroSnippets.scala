@@ -3,7 +3,7 @@ package shipreq.webapp.server.security
 import net.liftweb.http.{DispatchSnippet, LiftRules}
 import org.apache.shiro.SecurityUtils.{getSubject => subject}
 import scala.xml.{NodeSeq, Text}
-import shipreq.webapp.server.logic.User
+import shipreq.webapp.base.user.User
 import Oshiro.loggedInUser
 
 object ShiroSnippets {

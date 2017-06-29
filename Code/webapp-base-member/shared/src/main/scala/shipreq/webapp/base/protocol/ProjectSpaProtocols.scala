@@ -2,6 +2,7 @@ package shipreq.webapp.base.protocol
 
 import shipreq.webapp.base.event.{EventOrd, VerifiedEvent}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.user._
 import BoopickleMacros._
 import BinCodecGeneric._
 import BinCodecData._

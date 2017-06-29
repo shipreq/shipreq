@@ -4,11 +4,10 @@ import doobie.imports.ConnectionIO
 import net.liftweb.actor.SpecializedLiftActor
 import net.liftweb.common.Box
 import net.liftweb.http.LiftSession
-import shipreq.taskman.api.UserId
+import shipreq.webapp.base.user._
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.feature.SessionStats
-import shipreq.webapp.server.logic.User
 
 sealed trait StatLoggerCmd
 case class LogUserLogin(id: UserId, ip: Option[String] = Misc.clientIp()) extends StatLoggerCmd

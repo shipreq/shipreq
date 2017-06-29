@@ -3,7 +3,8 @@ package shipreq.webapp.client.project.app.root
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.webapp.base.data.{ProjectMetaData, Username}
+import shipreq.webapp.base.data.ProjectMetaData
+import shipreq.webapp.base.user.Username
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui._

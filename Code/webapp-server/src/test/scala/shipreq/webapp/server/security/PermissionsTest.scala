@@ -2,9 +2,9 @@ package shipreq.webapp.server.security
 
 import utest._
 import shipreq.base.test.BaseTestUtil._
-import shipreq.taskman.api.{EmailAddr, UserId}
 import shipreq.webapp.base.data._
 import shipreq.webapp.server.logic._
+import shipreq.webapp.base.user._
 
 object PermissionsTest extends TestSuite {
   implicit def autoUsername(a: String) = Username(a)

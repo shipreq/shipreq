@@ -6,6 +6,7 @@ import japgolly.univeq.UnivEq
 import java.time.Instant
 import shipreq.base.util._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.user._
 import shipreq.webapp.base.text.AtomTC
 import DataImplicits._
 import BinCodecGeneric._

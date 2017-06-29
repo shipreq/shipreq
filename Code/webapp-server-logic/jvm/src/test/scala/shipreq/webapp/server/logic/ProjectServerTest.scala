@@ -4,11 +4,10 @@ import java.util.concurrent.ConcurrentHashMap
 import scalaz.{-\/, Name, NaturalTransformation, ~>}
 import utest._
 import shipreq.base.util.Direction
-import shipreq.taskman.api.UserId
-import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.protocol.CreateContentCmd
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.user._
 
 object ProjectServerTest extends TestSuite {
 

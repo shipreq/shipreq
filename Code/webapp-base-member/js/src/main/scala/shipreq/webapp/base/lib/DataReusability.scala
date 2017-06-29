@@ -5,6 +5,7 @@ import japgolly.scalajs.react.extra._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.user._
 import shipreq.webapp.base.text.{Atom, PlainText, TextSearch}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text.UseCaseStepFlowText.TextAndFlow

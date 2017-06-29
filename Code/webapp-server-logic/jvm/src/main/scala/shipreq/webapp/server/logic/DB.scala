@@ -1,10 +1,10 @@
 package shipreq.webapp.server.logic
 
 import scala.collection.immutable.SortedMap
-import shipreq.taskman.api.UserId
 import shipreq.webapp.base.data.ProjectMetaData
 import shipreq.webapp.base.event.{ActiveEvent, EventOrd, VerifiedEvent}
 import shipreq.webapp.base.hash.HashRec
+import shipreq.webapp.base.user._
 
 /**
   * Naming conventions:

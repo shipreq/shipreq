@@ -1,5 +1,5 @@
 package shipreq.webapp.server.feature.validation
-
+/*
 import japgolly.microlibs.nonempty.NonEmptySet
 import utest._
 import scalaz.{-\/, Equal, \/, \/-}
@@ -128,3 +128,4 @@ object ValidatorTest extends TestSuite {
 
   }
 }
+*/

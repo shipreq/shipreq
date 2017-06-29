@@ -3,9 +3,10 @@ package shipreq.webapp.client.project.app.root
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.Reusable
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.webapp.base.data.{Project, Username}
+import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.ui.semantic.{Breadcrumb, UsesSemanticUiManually}
 import shipreq.webapp.base.ui.{BaseStyles, MemberNavBar}
+import shipreq.webapp.base.user.Username
 
 object LoadingPage {
 

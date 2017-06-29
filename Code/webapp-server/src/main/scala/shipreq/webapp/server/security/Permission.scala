@@ -4,7 +4,8 @@ import scalaz.{Name, Semigroup}
 import net.liftweb.common.Logger
 import net.liftweb.http.RequestVar
 import shipreq.webapp.server.app.Global
-import shipreq.webapp.server.logic.{ProjectId, User}
+import shipreq.webapp.server.logic.ProjectId
+import shipreq.webapp.base.user._
 import Permission._
 
 object Permission {

@@ -8,7 +8,7 @@ import scalaz.effect.IO
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.db.SingleConnectionXA
-import shipreq.taskman.api.UserId
+import shipreq.webapp.base.user.UserId
 import shipreq.webapp.server.data._
 import shipreq.webapp.server.db.SqlHelpers._
 import shipreq.webapp.server.db._

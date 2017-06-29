@@ -7,6 +7,7 @@ import shipreq.taskman.api.Msg.WebappErrorOccurred
 import shipreq.taskman.api.TaskmanApi
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.server.app.Global
+import shipreq.webapp.server.logic.WebappTaskmanConverters._
 
 object Taskman {
   import shipreq.taskman.api.CfgKeys.{Webapp => K}
@@ -21,7 +22,7 @@ object Taskman {
 
   def webappErrorOccurred(e: Throwable, url: Option[String], suppInfo: String): WebappErrorOccurred =
     WebappErrorOccurred(
-      Global.security.loggedInUser().map(_.id),
+      Global.security.loggedInUser().map(_.id.toTaskman),
       url,
       s"${Error stackTraceStr e}\n\nSUPP: $suppInfo")
 

@@ -3,10 +3,10 @@ package shipreq.webapp.server.logic
 import java.time.Instant
 import scalaz.syntax.monad._
 import scalaz.{Monad, \/-, ~>}
-import shipreq.taskman.api.UserId
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.HomeSpaProtocols
+import shipreq.webapp.base.user._
 
 trait HomeSpaLogic[F[_]] {
   def initData(user: User): F[HomeSpaProtocols.InitData]

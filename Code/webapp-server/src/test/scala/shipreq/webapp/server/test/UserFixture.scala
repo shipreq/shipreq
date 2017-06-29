@@ -7,8 +7,8 @@ import scalaz.syntax.bind.ToBindOps
 import scalaz.syntax.traverse._
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.test.db.{SingleConnectionXA, Usable}
-import shipreq.taskman.api.{EmailAddr, UserId}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.user._
 import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.logic._
 import shipreq.webapp.server.security.{PasswordAndSalt, Roles}
@@ -41,6 +41,12 @@ object UserFixture {
   }
 
   final case class PendingTestUser(email: EmailAddr, token: String, tokenCreatedAt: Instant)
+
+  def roleStr(roles: Set[String]): Option[String] =
+    if (roles.isEmpty)
+      None
+    else
+      Some(roles.mkString(","))
 }
 
 final case class UserFixture(xa: SingleConnectionXA) {
@@ -61,7 +67,7 @@ final case class UserFixture(xa: SingleConnectionXA) {
     val i1 = Query[(String, String, String, String, Option[String]), Long]("INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at, roles) VALUES(?,?,?,?,NOW(),NOW(),NOW(),?) RETURNING id")
     val inserts1: List[IO[Unit]] =
       for (u <- users) yield {
-        i1.toQuery0(u.username.value, u.email.value, u.hashedPassword.value, u.salt, User.roleStr(u.roles))
+        i1.toQuery0(u.username.value, u.email.value, u.hashedPassword.value, u.salt, UserFixture.roleStr(u.roles))
           .unique
           .map { rawId =>
             val id = UserId(rawId)
