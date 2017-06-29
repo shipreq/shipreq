@@ -1,17 +1,16 @@
-package shipreq.webapp.server.feature.validation
-/*
+package shipreq.webapp.base.user
+
 import japgolly.microlibs.nonempty.NonEmptySet
 import utest._
 import scalaz.{-\/, Equal, \/, \/-}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.{Invalid, Valid}
 import shipreq.webapp.base.validation._
-import shipreq.webapp.server.security.PasswordAndSalt
 import Simple._
 
-object ValidatorTest extends TestSuite {
+object UserValidatorTest extends TestSuite {
 
-  case class Tester[I, C: Equal, V: Equal](v: Validator[I, C, V]) {
+  private case class Tester[I, C: Equal, V: Equal](v: Validator[I, C, V]) {
 
     def each(correct1: C, correctN: C*)(expectResult: C => String \/ V): Unit =
       for (c <- correct1 +: correctN)
@@ -48,7 +47,7 @@ object ValidatorTest extends TestSuite {
   override def tests = TestSuite {
 
     'email {
-      val test = Tester(ServerSideValidators.email.unnamed.mapValid(_.value))
+      val test = Tester(UserValidators.email.unnamed.mapValid(_.value))
 
       'correction {
         assertEq(test.v.corrector(" he   he  "), "hehe") // removes ALL whitespace
@@ -69,7 +68,7 @@ object ValidatorTest extends TestSuite {
     }
 
     'password {
-      val test = Tester(ServerSideValidators.password.unnamed)
+      val test = Tester(UserValidators.password.unnamed)
       * - test("abc12345")(pass)
       * - test("abc12345" * 10)(pass)
       * - test("12345678a")(pass)
@@ -94,13 +93,12 @@ object ValidatorTest extends TestSuite {
     }
 
     'passwordTwice {
-      'diff - assertEq(ServerSideValidators.passwordTwice.validity(("qweqwe123", "qweqwe123h")), Invalid)
-      'same - assertEq(ServerSideValidators.passwordTwice.validity(("qweqwe123", "qweqwe123")), Valid)
+      'diff - assertEq(UserValidators.passwordTwice.validity(("qweqwe123", "qweqwe123h")), Invalid)
+      'same - assertEq(UserValidators.passwordTwice.validity(("qweqwe123", "qweqwe123")), Valid)
     }
 
     'passwordChange {
-      val ps = PasswordAndSalt.createWithRandomSalt("blahblah8")
-      val v = ServerSideValidators.passwordChange(ps)
+      val v = UserValidators.passwordChange(_ ==* "blahblah8")
       * - assertEq(v.validity(("blahblah", ("qweqwe123", "qweqwe123"))), Invalid)
       * - assertEq(v.validity(("blahblah8", ("qweqwe12", "qweqwe123"))), Invalid)
       * - assertEq(v.validity(("blahblah8", ("qweqwe123", ""))), Invalid)
@@ -108,7 +106,7 @@ object ValidatorTest extends TestSuite {
     }
 
     'username {
-      val test = Tester(ServerSideValidators.user.username.unnamed.mapValid(_.value))
+      val test = Tester(UserValidators.username.unnamed.mapValid(_.value))
       * - test("hehe", "HEHE", "  Hehe  ")(pass)
       * - test("a" * 3)(pass)
       * - test("@#$%::p1_")(fail("can only contain"))
@@ -117,15 +115,5 @@ object ValidatorTest extends TestSuite {
       * - assertEq(test.v.auditor.validity("a" * 33), Invalid) // too long
     }
 
-    'landingPageName {
-      val test = Tester(ServerSideValidators.landingPage.name.unnamed)
-      * - test("", " ")(fail("blank"))
-      * - test("Blah")(fail("surname"))
-      * - test("Blah Yay5")(fail("numbers"))
-      * - test.each("Blah Yay", "Blah Yay Go", "Blah Yay-Go")(pass)
-      * - test("Blah Yay", "Blah   Yay ")(pass)
-    }
-
   }
 }
-*/
