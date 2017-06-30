@@ -82,6 +82,7 @@ taskman-server-schema - Taskman DB schema
 webapp-base             - Shared code between client and/or server modules for public pages.
 webapp-base-member      - Shared code between client and/or server modules for member (i.e. logged-in users) pages.
 webapp-base-test        - Shared code for testing client and/or server modules. Tests for webapp-base.
+webapp-client-public    - SPA for the public pages before a user logs in.
 webapp-client-home      - SPA for when a user logs in. Project CRUDL, view/edit account, etc.
 webapp-client-project   - SPA for working with a Project.
 webapp-client-ww        - WebWorkers for big background tasks like graphviz→SVG generation.

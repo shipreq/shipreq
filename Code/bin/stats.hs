@@ -107,49 +107,58 @@ gatherAllStats = do dirs <- dirsIn "."
 ------------------------------------------------------------------------------------------------------------------------
 -- Top-level module stats
 
-deps = M.fromList [
-         ("webapp-gen",              []) , -- I'm lazy
-         ("webapp-server-logic",     ["webapp-base", "taskman-api-logic"]) ,
-         ("webapp-server",           ["webapp-gen", "webapp-server-logic", "webapp-base-test", "base-db", "taskman-api-impl"]) ,
-         ("webapp-client-public",    ["webapp-base-test"]) ,
-         ("webapp-client-home",      ["webapp-base-test"]) ,
-         ("webapp-client-ww-api",    ["webapp-base-member"]) ,
-         ("webapp-client-ww",        ["webapp-base-test", "webapp-client-ww-api"]) ,
-         ("webapp-client-project",   ["webapp-base-test", "webapp-client-ww-api"]) ,
-         ("webapp-base-test",        ["webapp-base-member"]) ,
+-- Only considers Compile scope, not Test
+-- Also doesn't distinguish between JVM/JS
+
+type TopLevelDeps = M.Map String [String]
+
+depsJvm = M.fromList [
+         ("webapp-gen",              ["webapp-base-member"]),
+         ("webapp-server-logic",     ["webapp-base-member", "taskman-api-logic", "webapp-client-public"]) ,
+         ("webapp-server",           ["base-db", "taskman-api-impl", "webapp-server-logic", "webapp-gen"]) ,
+         ("webapp-client-public",    ["webapp-base"]) ,
          ("webapp-base-member",      ["webapp-base"]) ,
          ("webapp-base",             ["webapp-macro", "base-util"]) ,
-         ("webapp-macro",            ["base-util"]) ,
-         ("taskman",                 ["taskman-api", "taskman-server"]) ,
-         ("taskman-api",             ["taskman-api-impl", "taskman-api-logic"]) ,
-         ("taskman-api-impl",        ["taskman-api-logic"]) ,
+         ("webapp-macro",            ["base-util", "base-db"]) ,
+         ("taskman",                 ["taskman-server-impl"]) ,
+         ("taskman-api-impl",        ["taskman-api-logic", "base-db"]) ,
          ("taskman-api-logic",       ["base-util"]) ,
-         ("taskman-server",          ["taskman-server-logic", "taskman-server-schema", "taskman-server-impl"]) ,
-         ("taskman-server-impl",     ["taskman-server-logic", "taskman-server-schema", "taskman-api"]) ,
+         ("taskman-server-impl",     ["taskman-server-logic", "taskman-server-schema", "taskman-api-impl"]) ,
          ("taskman-server-schema",   ["base-db"]) ,
          ("taskman-server-logic",    ["taskman-api-logic"]) ,
          ("base-db",                 ["base-util"]) ,
-         ("base-util",               ["base-macro"]) ]
+         ("base-util",               []) ]
+depsJs = M.fromList [
+         ("webapp-gen",              ["webapp-client-project"]),
+         ("webapp-server-logic",     ["webapp-base-member"]) ,
+         ("webapp-client-public",    ["webapp-base"]) ,
+         ("webapp-client-home",      ["webapp-base-member"]) ,
+         ("webapp-client-ww-api",    ["webapp-base-member"]) ,
+         ("webapp-client-ww",        ["webapp-client-ww-api"]) ,
+         ("webapp-client-project",   ["webapp-client-ww-api"]) ,
+         ("webapp-base-member",      ["webapp-base"]) ,
+         ("webapp-base",             ["webapp-macro", "base-util"]) ,
+         ("webapp-macro",            ["base-util"]) ,
+         ("base-util",               []) ]
 
-topLevelModules = [
-  "taskman",
+topLevelJvmModules = ["taskman", "webapp-server"]
+topLevelJsModules = [
   "webapp-client-public",
   "webapp-client-home",
   "webapp-client-ww",
-  "webapp-client-project",
-  "webapp-server"]
+  "webapp-client-project"]
 
-tdeps :: String -> [String]
-tdeps d = sort $ tdeps' [] [d]
+tdeps :: TopLevelDeps -> String -> [String]
+tdeps deps d = sort $ tdeps' deps [] [d]
 
-tdeps' :: [String] -> [String] -> [String]
-tdeps' done [] = done
-tdeps' done (q:qs) = let
-    (d',q') = tdeps'' done q
-  in tdeps' d' (nub $ q' ++ qs)
+tdeps' :: TopLevelDeps -> [String] -> [String] -> [String]
+tdeps' deps done [] = done
+tdeps' deps done (q:qs) = let
+    (d',q') = tdeps'' deps done q
+  in tdeps' deps d' (nub $ q' ++ qs)
 
-tdeps'' :: [String] -> String -> ([String],[String])
-tdeps'' done dep = let
+tdeps'' :: TopLevelDeps -> [String] -> String -> ([String],[String])
+tdeps'' deps done dep = let
     t     = M.findWithDefault [] dep deps
     done' = done ++ [dep]
     new   = filter (`notElem` done') t
@@ -158,10 +167,11 @@ tdeps'' done dep = let
 extractModuleStats :: [GroupD] -> String -> Stats
 extractModuleStats gs name = mconcat $ map snd $ filter ((name ==) . fst) $ concatMap modstats gs
 
-extractModuleStatsT :: [GroupD] -> String -> Stats
-extractModuleStatsT gs name = mconcat $ map (extractModuleStats gs) $ tdeps name
+extractModuleStatsT :: TopLevelDeps -> [GroupD] -> String -> Stats
+extractModuleStatsT deps gs name = mconcat $ map (extractModuleStats gs) $ tdeps deps name
 
-topLevelModuleStats gs = map (ap (,) (fst . extractModuleStatsT gs)) topLevelModules
+topLevelModuleStats :: [GroupD] -> TopLevelDeps -> [String] -> [(String, Stat)]
+topLevelModuleStats gs deps = map (ap (,) (fst . extractModuleStatsT deps gs))
 
 ------------------------------------------------------------------------------------------------------------------------
 -- Printing stats
@@ -231,7 +241,10 @@ topLevelModuleStatReportS = "-------------------------------------\n"
 topLevelModuleStatReportH = "Module                 Files      LoC\n"++topLevelModuleStatReportS
 fmtTopLevelModuleStat (m,s) = printf "%-21s  %5d  %7d\n" m (files s) (loc s)
 topLevelModuleStatReport gs =
-  topLevelModuleStatReportH ++ concatMap fmtTopLevelModuleStat (topLevelModuleStats gs) ++ topLevelModuleStatReportS
+  topLevelModuleStatReportH ++
+  concatMap fmtTopLevelModuleStat (topLevelModuleStats gs depsJvm topLevelJvmModules) ++
+  concatMap fmtTopLevelModuleStat (topLevelModuleStats gs depsJs topLevelJsModules) ++
+  topLevelModuleStatReportS
 
 ------------------------------------------------------------------------------------------------------------------------
 
