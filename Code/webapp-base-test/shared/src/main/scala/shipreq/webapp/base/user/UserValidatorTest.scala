@@ -47,7 +47,7 @@ object UserValidatorTest extends TestSuite {
   override def tests = TestSuite {
 
     'email {
-      val test = Tester(UserValidators.email.unnamed.mapValid(_.value))
+      val test = Tester(UserValidators.emailAddr.unnamed.mapValid(_.value))
 
       'correction {
         assertEq(test.v.corrector(" he   he  "), "hehe") // removes ALL whitespace

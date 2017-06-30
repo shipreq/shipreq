@@ -2,7 +2,7 @@ package shipreq.webapp.base.user
 
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.{CommmonUiText, WebappConfig}
 import shipreq.webapp.base.util.TextMod
 import shipreq.webapp.base.validation.{CommonValidation => CV, _}
 import shipreq.webapp.base.validation.Simple._
@@ -13,19 +13,19 @@ object UserValidators {
   private def emailPattern =
     "^_+@_+?\\._+$".replace("_", "[^&<>]").r.pattern // loose validation
 
-  val email: Composite.Stateless[String, String, EmailAddr] =
+  val emailAddr: Composite.Stateless[String, String, EmailAddr] =
     TextMod.noWhitespace.correctFull
       .withInvalidator(CV.invalidator.maximumLength(WebappConfig.emailMaxLength))
-      .addInvalidator(CV.invalidator.matchesRegex(emailPattern)(Invalidity("Invalid address.")))
+      .addInvalidator(CV.invalidator.matchesRegex(emailPattern)(Invalidity("Invalid.")))
       .toValidator
       .mapValid(EmailAddr.apply)
-      .named("Email address")
+      .named(CommmonUiText.emailAddr)
 
   val password: Composite.Stateless[String, String, String] =
     CV.endoValidator.lengthInRange(WebappConfig.passwordLength)
       .addInvalidator(CV.invalidator.containsAlphaAndNumber)
       .toValidator
-      .named("Password")
+      .named(CommmonUiText.password)
 
   /** i.e. [password] and [confirm password] */
   type PasswordTwice = (String, String)
@@ -49,7 +49,7 @@ object UserValidators {
         if (matchesCurrent(input))
           Auditor.unitResult
         else
-          -\/(Invalidity("Current password is incorrect."))
+          -\/(Invalidity(CommmonUiText.currentPassword + " is incorrect."))
       ))
       .loose
 
@@ -68,12 +68,12 @@ object UserValidators {
       .addInvalidator(CV.invalidator.endsWithRegex("[a-z0-9]")(Invalidity("Must end with a letter or a number.")))
       .toValidator
       .mapValid(Username.apply)
-      .named("Username")
+      .named(CommmonUiText.username)
 
   val usernameOrEmail: Composite.Validator[String, String, Username \/ EmailAddr] = {
     type R = Username \/ EmailAddr
     val vu = username.named.mapValid(-\/(_): R)
-    val ve = email.named.mapValid(\/-(_): R)
+    val ve = emailAddr.named.mapValid(\/-(_): R)
     Validator.choose(s => if (s.indexOf('@') == -1) vu else ve)
   }
 
