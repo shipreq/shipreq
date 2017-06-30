@@ -10,7 +10,7 @@ import utest._
 
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.RandomData
-import shipreq.webapp.base.protocol.BinCodecData._
+import shipreq.webapp.base.protocol.BinCodecMemberData._
 import Hash.HashableValueOps
 
 object HashTest extends TestSuite {

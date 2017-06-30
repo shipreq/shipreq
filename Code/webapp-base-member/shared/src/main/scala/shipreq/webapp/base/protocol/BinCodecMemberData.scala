@@ -1,32 +1,22 @@
 package shipreq.webapp.base.protocol
 
 import boopickle._
-import japgolly.microlibs.nonempty.{NonEmpty, NonEmptyVector}
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.univeq.UnivEq
-import java.time.Instant
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.user._
 import shipreq.webapp.base.text.AtomTC
 import DataImplicits._
 import BinCodecGeneric._
+import BinCodecBaseData._
 import BoopickleMacros._
 
-object BinCodecData {
+object BinCodecMemberData {
 
   def pickleIMapD[K: UnivEq : Pickler, V: Pickler](implicit d: DataIdAux[V, K]): Pickler[IMap[K, V]] =
     pickleIMap(d.emptyIMap)
 
-  implicit lazy val pickleInstant: Pickler[Instant] =
-    xmap(Instant.ofEpochMilli)(_.toEpochMilli)
-
-  implicit lazy val pickleVectorTreeLoc: Pickler[VectorTree.Location] = pickleNEV
-
-  implicit lazy val pickleVectorTreeParentLoc: Pickler[VectorTree.ParentLocation] =
-    implicitly[Pickler[Vector[Int]]].imap(VectorTree.ParentLocation.isoVector)
-
   implicit lazy val pickleLive         : Pickler[Live               ] = pickleBool(Live)
-  implicit lazy val pickleDirection    : Pickler[Direction          ] = pickleBool(Forwards)
   implicit lazy val pickleImplRequired : Pickler[ImplicationRequired] = pickleBool(ImplicationRequired)
   implicit lazy val pickleMandatory    : Pickler[Mandatory          ] = pickleBool(Mandatory)
   implicit lazy val pickleDeletable    : Pickler[Deletable          ] = pickleBool(Deletable)
@@ -48,8 +38,6 @@ object BinCodecData {
   implicit lazy val pickleHashRefKey               = pickleTaggedS(HashRefKey                )
   implicit lazy val pickleFieldRefKey              = pickleTaggedS(FieldRefKey               )
   implicit lazy val pickleReqTypeMnemonic          = pickleTaggedS(ReqType.Mnemonic          )
-
-  implicit lazy val pickleUsername: Pickler[Username] = pickleCaseClass
 
   implicit def pickleExternalId[T]: Pickler[ExternalId[T]] = pickleCaseClass
 

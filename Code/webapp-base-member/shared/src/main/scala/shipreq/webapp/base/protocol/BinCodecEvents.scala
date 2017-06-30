@@ -7,7 +7,8 @@ import shipreq.webapp.base.hash._
 import shipreq.webapp.base.util.GenericDataMacros._
 import BoopickleMacros._
 import BinCodecGeneric._
-import BinCodecData._
+import BinCodecBaseData._
+import BinCodecMemberData._
 import AtomPicklers.instances._
 import ApplyEvent.LogicVer
 

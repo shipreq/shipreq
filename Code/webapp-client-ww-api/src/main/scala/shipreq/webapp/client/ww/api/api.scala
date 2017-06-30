@@ -4,7 +4,7 @@ import shipreq.webapp.base.data._
 import boopickle._
 import shipreq.webapp.base.protocol.BoopickleMacros._
 import shipreq.webapp.base.protocol.BinCodecGeneric._
-import shipreq.webapp.base.protocol.BinCodecData._
+import shipreq.webapp.base.protocol.BinCodecMemberData._
 
 // Another idea could be to maintain a separate ClientData instance in the WW thread and feed it all the same updates
 // that the main thread processes.

@@ -8,7 +8,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text
 import BoopickleMacros._
 import BinCodecGeneric._
-import BinCodecData._
+import BinCodecMemberData._
 import AtomPicklers.instances._
 
 /**

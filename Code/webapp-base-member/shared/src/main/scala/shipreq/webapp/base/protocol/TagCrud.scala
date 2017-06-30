@@ -6,7 +6,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import BoopickleMacros._
 import BinCodecGeneric._
-import BinCodecData._
+import BinCodecMemberData._
 
 object TagCrud {
 

@@ -9,7 +9,8 @@ import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.text.Text
 import BoopickleMacros._
 import BinCodecGeneric._
-import BinCodecData._
+import BinCodecBaseData._
+import BinCodecMemberData._
 import BinCodecEvents.pickleUseCaseStepGD
 import AtomPicklers.instances._
 import Text.Equality._

@@ -4,7 +4,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.user._
 import BoopickleMacros._
 import BinCodecGeneric._
-import BinCodecData._
+import BinCodecMemberData._
+import BinCodecUser._
 
 /**
   * Protocols for the Home SPA / webapp-client-home module.
