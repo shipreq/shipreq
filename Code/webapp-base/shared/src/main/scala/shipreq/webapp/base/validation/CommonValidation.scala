@@ -139,7 +139,7 @@ object CommonValidation {
 
   /** See also [[largeText]] */
   lazy val optionalLargeText: Validator[String, Option[String], Option[String]] =
-    endoCorrector.largeText.toCorrector.imapCorrected(TextMod.nonBlank)
+    endoCorrector.largeText.toCorrector.imapCorrectedZ(TextMod.nonBlank)
     .withAuditor(largeTextLimit.liftOption.toAuditor)
 
 }
