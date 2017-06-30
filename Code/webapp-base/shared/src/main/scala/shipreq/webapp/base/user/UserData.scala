@@ -3,6 +3,12 @@ package shipreq.webapp.base.user
 import japgolly.univeq.UnivEq
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+final case class PlainTextPassword(value: String)
+object PlainTextPassword {
+  implicit def univEq: UnivEq[PlainTextPassword] = UnivEq.derive
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 final case class EmailAddr(value: String)
 object EmailAddr {
   implicit def univEq: UnivEq[EmailAddr] = UnivEq.derive

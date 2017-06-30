@@ -148,7 +148,7 @@ object DbTest extends TestSuite {
         val date2 = xa ! DbLogic.user.findResetPasswordTokenIssuedDate(token)
 //        assert(!ResetPassword.isTokenExpired(date2.get)) TODO
 
-        val p = "hehegreat100"
+        val p = PlainTextPassword("hehegreat100")
         val ps = PasswordAndSalt.createWithRandomSalt(p)
         xa ! DbLogic.user.performPasswordReset(ps, token)
 

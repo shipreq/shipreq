@@ -2,6 +2,7 @@ package shipreq.webapp.server.security
 
 import org.apache.shiro.authc._
 import utest._
+import shipreq.webapp.base.user.PlainTextPassword
 import shipreq.webapp.server.test.UserFixture
 import shipreq.webapp.server.test.WebappServerTestUtil._
 
@@ -30,7 +31,7 @@ object OshiroTest extends TestSuite {
       }
 
       'unregistered - runTest { uf =>
-        intercept[UnknownAccountException](login(uf.userWithCurrentToken.email.value, ""))
+        intercept[UnknownAccountException](login(uf.userWithCurrentToken.email.value, PlainTextPassword("")))
       }
     }
 

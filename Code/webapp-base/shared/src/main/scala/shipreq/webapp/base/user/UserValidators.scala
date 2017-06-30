@@ -21,20 +21,21 @@ object UserValidators {
       .mapValid(EmailAddr.apply)
       .named(CommmonUiText.emailAddr)
 
-  val password: Composite.Stateless[String, String, String] =
+  val password: Composite.Stateless[String, String, PlainTextPassword] =
     CV.endoValidator.lengthInRange(WebappConfig.passwordLength)
       .addInvalidator(CV.invalidator.containsAlphaAndNumber)
       .toValidator
+      .mapValid(PlainTextPassword.apply)
       .named(CommmonUiText.password)
 
   /** i.e. [password] and [confirm password] */
   type PasswordTwice = (String, String)
 
-  val passwordTwice: Composite.Validator[PasswordTwice, PasswordTwice, String] =
+  val passwordTwice: Composite.Validator[PasswordTwice, PasswordTwice, PlainTextPassword] =
     password.corrector.pair
       .withAuditor(Auditor(inputs =>
         password.named.auditor(inputs._1).flatMap(s =>
-          if (s ==* inputs._2)
+          if (s.value ==* inputs._2)
             \/-(s)
           else
             -\/(Composite.Invalidity.loose("Passwords don't match."))
@@ -57,7 +58,7 @@ object UserValidators {
   type PasswordChange = (String, PasswordTwice)
 
   /** Successful output = new password */
-  def passwordChange(matchesCurrent: CurrentPasswordTest): Composite.Validator[PasswordChange, PasswordChange, String] =
+  def passwordChange(matchesCurrent: CurrentPasswordTest): Composite.Validator[PasswordChange, PasswordChange, PlainTextPassword] =
     (currentPassword(matchesCurrent) tuple passwordTwice).mapValid(_._2)
 
   val username: Composite.Stateless[String, String, Username] =

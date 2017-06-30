@@ -28,7 +28,12 @@ object UserFixture {
       .map(xa => IO(apply(xa)))
       .before(_.setup)
 
-  final case class TestUser(username: Username, email: EmailAddr, password: String, roles: Set[String], name: String, newsletter: Boolean) {
+  final case class TestUser(username  : Username,
+                            email     : EmailAddr,
+                            password  : PlainTextPassword,
+                            roles     : Set[String],
+                            name      : String,
+                            newsletter: Boolean) {
     var _id: Option[UserId] = None
     def id: UserId = _id.getOrElse(sys error s"UserId unavailable for $this")
     val pws = PasswordAndSalt.createWithRandomSalt(password)
@@ -37,7 +42,7 @@ object UserFixture {
     def toUserDescriptor = User(id, username, email, roles)
 
     def withLoggedIn[A](a: => A): A =
-      WebappServerTestUtil.withLoggedIn(username.value, password)(a)
+      WebappServerTestUtil.withLoggedIn(username, password)(a)
   }
 
   final case class PendingTestUser(email: EmailAddr, token: String, tokenCreatedAt: Instant)
@@ -51,15 +56,12 @@ object UserFixture {
 
 final case class UserFixture(xa: SingleConnectionXA) {
 
-  private implicit def autoUsername(a: String) = Username(a)
-  private implicit def autoEmailAddr(a: String) = EmailAddr(a)
-
-  val user1 = TestUser("golly", "g@g.com", "hello1234", Set(Roles.Admin.name), "User One", true)
-  val user2 = TestUser("deepti", "d@d.com", "harvest321", Set.empty, "User Two", false)
+  val user1 = TestUser(Username("golly"), EmailAddr("g@g.com"), PlainTextPassword("hello1234"), Set(Roles.Admin.name), "User One", true)
+  val user2 = TestUser(Username("deepti"), EmailAddr("d@d.com"), PlainTextPassword("harvest321"), Set.empty, "User Two", false)
   val users = List(user1, user2)
 
-  val userWithCurrentToken = PendingTestUser("a@p.com", "abc123abc123", 5.minutes.ago)
-  val userWithExpiredToken = PendingTestUser("b@p.com", "poi098poi098", 4.weeks.ago)
+  val userWithCurrentToken = PendingTestUser(EmailAddr("a@p.com"), "abc123abc123", 5.minutes.ago)
+  val userWithExpiredToken = PendingTestUser(EmailAddr("b@p.com"), "poi098poi098", 4.weeks.ago)
   val pendingUsers = List(userWithCurrentToken, userWithExpiredToken)
 
   def setup: IO[Unit] = {

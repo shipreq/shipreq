@@ -12,13 +12,13 @@ import shipreq.webapp.server.security._
 object SqlHelpers {
 
   implicit val doobieMetaEmailAddr     = doobieMetaCaseClass[EmailAddr]
-  implicit val doobieMetaHashedStr     = doobieMetaCaseClass[HashedStr]
+  implicit val doobieMetaHashedStr     = doobieMetaCaseClass[PasswordHash]
   implicit val doobieMetaProjectId     = doobieMetaCaseClass[ProjectId]
   implicit val doobieMetaUserId        = doobieMetaCaseClass[UserId]
   implicit val doobieMetaUsername      = doobieMetaCaseClass[Username]
 
   implicit val doobieCompositePasswordAndSalt =
-    Composite[(HashedStr, String)].xmap[PasswordAndSalt](
+    Composite[(PasswordHash, String)].xmap[PasswordAndSalt](
       p => PasswordAndSalt(p._1, Salt.fromBase64(p._2)),
       v => (v.hashedPassword, v.salt.toBase64))
 
@@ -48,7 +48,7 @@ object SqlHelpers {
                                            username      : Option[Username],
                                            email         : EmailAddr,
                                            rolesStr      : Option[String],
-                                           hashedPassword: Option[HashedStr],
+                                           hashedPassword: Option[PasswordHash],
                                            saltBase64    : Option[String]) {
     def resolve: Option[(User, PasswordAndSalt)] =
       for {

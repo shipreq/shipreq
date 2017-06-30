@@ -68,7 +68,7 @@ object UserValidatorTest extends TestSuite {
     }
 
     'password {
-      val test = Tester(UserValidators.password.unnamed)
+      val test = Tester(UserValidators.password.unnamed.mapValid(_.value))
       * - test("abc12345")(pass)
       * - test("abc12345" * 10)(pass)
       * - test("12345678a")(pass)

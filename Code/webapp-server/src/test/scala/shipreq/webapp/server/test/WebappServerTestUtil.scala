@@ -5,7 +5,7 @@ import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
 import utest.asserts._
 import shipreq.webapp.base.test.{WebappTestEquality, WebappTestUtil}
-import shipreq.webapp.base.user.User
+import shipreq.webapp.base.user.{PlainTextPassword, User, Username}
 import shipreq.webapp.server.security.Oshiro
 
 trait WebappServerTestEquality extends WebappTestEquality {
@@ -14,14 +14,14 @@ trait WebappServerTestEquality extends WebappTestEquality {
 trait WebappServerTestUtil extends WebappTestUtil {
   import WebappServerTestUtil._
 
-  def login(username: String, password: String): Unit =
-    SecurityUtils.getSubject.login(new UsernamePasswordToken(username, password))
+  def login(usernameOrEmail: String, password: PlainTextPassword): Unit =
+    SecurityUtils.getSubject.login(new UsernamePasswordToken(usernameOrEmail, password.value))
 
   def logout(): Unit =
     SecurityUtils.getSubject.logout()
 
-  def withLoggedIn[A](username: String, password: String)(a: => A): A = {
-    login(username, password)
+  def withLoggedIn[A](username: Username, password: PlainTextPassword)(a: => A): A = {
+    login(username.value, password)
     try a finally logout()
   }
 
