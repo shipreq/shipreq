@@ -1,4 +1,4 @@
-package shipreq.webapp.client.public
+package shipreq.webapp.base.data
 
 /**
   * Corresponds to either `confirmation_token` or `reset_password_token` in the DB.

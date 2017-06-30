@@ -4,6 +4,7 @@ import boopickle.Pickler
 import scalaz.\/
 import shipreq.base.util._
 import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.data.SecurityToken
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.validation._
 import shipreq.webapp.base.validation.Implicits._
@@ -16,8 +17,6 @@ import BinCodecUser._
   * Protocols for the Public SPA / webapp-client-public module.
   */
 object PublicSpaProtocols {
-  private implicit val picklerSecurityToken: Pickler[SecurityToken] =
-    pickleCaseClass[SecurityToken]
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object LandingPage {

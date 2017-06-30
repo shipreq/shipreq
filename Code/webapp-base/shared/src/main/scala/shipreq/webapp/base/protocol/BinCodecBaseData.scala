@@ -3,6 +3,7 @@ package shipreq.webapp.base.protocol
 import boopickle._
 import java.time.Instant
 import shipreq.base.util._
+import shipreq.webapp.base.data._
 import BinCodecGeneric._
 import BoopickleMacros._
 
@@ -25,5 +26,8 @@ object BinCodecBaseData {
 
   implicit lazy val pickleValidity: Pickler[Validity] =
     pickleBool(Valid)
+
+  implicit lazy val picklerSecurityToken: Pickler[SecurityToken] =
+    pickleCaseClass[SecurityToken]
 
 }
