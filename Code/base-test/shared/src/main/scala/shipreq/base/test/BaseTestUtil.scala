@@ -75,6 +75,15 @@ trait BaseTestUtil
     result
   }
 
+  def assertNoChange[B : Equal, A](query: => B)(block: => A): A =
+    assertNoChangeO(None, query)(block)
+
+  def assertNoChange[B : Equal, A](desc: => String, query: => B)(block: => A): A =
+    assertNoChangeO(Some(desc), query)(block)
+
+  def assertNoChangeO[B : Equal, A](desc: => Option[String], query: => B)(block: => A): A =
+    assertChangeO(desc, query, block)((b, _) => b)((b, _) => b)
+
   def assertDifference[N: Numeric : Equal, A](query: => N)(expect: N)(block: => A): A =
     assertDifferenceO(None, query)(expect)(block)
 

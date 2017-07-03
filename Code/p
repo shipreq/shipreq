@@ -46,6 +46,30 @@ Register2
 //        }
 //      } // validateToken
 
+ResetPassword2
+//-  def validateToken_!(): Unit =
+//-    db().io.trans(DbLogic.user.findResetPasswordTokenIssuedDate(token)).unsafePerformIO() match {
+//-      case None =>
+//-        S.error("The token associated with that URL is invalid.")
+//-        redirectTo(AppSiteMap.Login)
+//-
+//-      case Some(issued) if isTokenExpired(issued) =>
+//-        S.error("Your password-reset token has expired. Please re-enter your email address to get a new token.")
+//-        redirectTo(AppSiteMap.ResetPassword1)
+//-
+//-      case _ => // valid
+//-    }
+----
+-      "redirect when token not found" -
+-        test(None)(HasErrorNoticeContaining("invalid"), Redirects)
+-
+-      "redirect when token expired" -
+-        test(Some(expiredTime.ago))(HasErrorNoticeContaining("expired"), Redirects)
+-
+-      "provide form when token valid" -
+-        test(Some(nonExpiredTime.ago))(NoNotices, HtmlContains("<form "))
+
+
 
 
 SecurityUtils.getSubject.login(new UsernamePasswordToken(username.value, password))

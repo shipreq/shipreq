@@ -117,23 +117,35 @@ object PublicSpaProtocols {
   object ResetPassword {
     val Fn1 = ServerSideProc.Protocol[Username \/ EmailAddr, Unit]
 
-    // Failure responses? Expired etc
+    val Fn2A = ServerSideProc.Protocol[SecurityToken, SecurityToken.Status]
+
     final case class Request(token: SecurityToken, newPassword: PlainTextPassword)
     implicit val pickler: Pickler[Request] = pickleCaseClass[Request]
 
-    val Fn2 = ServerSideProc.Protocol[Request, Unit]
+    sealed trait Response
+    object Response {
+      case object Success       extends Response
+      case object TokenInvalid  extends Response
+      case object TokenExpired  extends Response
+
+      implicit val pickler: Pickler[Response] = derivePickler[Response]
+      implicit def univEq: UnivEq[Response] = UnivEq.derive
+    }
+
+    val Fn2B = ServerSideProc.Protocol[Request, Response]
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final case class InitData(landingPage   : LandingPage.Fn.Instance,
-                            allowRegister : Permission,
-                            register1     : Register.Fn1.Instance,
-                            register2A    : Register.Fn2A.Instance,
-                            register2B    : Register.Fn2B.Instance,
-                            login         : Login.Fn.Instance,
-                            resetPassword1: ResetPassword.Fn1.Instance,
-                            resetPassword2: ResetPassword.Fn2.Instance)
+  final case class InitData(landingPage    : LandingPage.Fn.Instance,
+                            allowRegister  : Permission,
+                            register1      : Register.Fn1.Instance,
+                            register2A     : Register.Fn2A.Instance,
+                            register2B     : Register.Fn2B.Instance,
+                            login          : Login.Fn.Instance,
+                            resetPassword1 : ResetPassword.Fn1.Instance,
+                            resetPassword2A: ResetPassword.Fn2A.Instance,
+                            resetPassword2B: ResetPassword.Fn2B.Instance)
 
   import LandingPage  .Fn  .{pickleInstance => _i1}
   import Register     .Fn1 .{pickleInstance => _i2}
@@ -141,7 +153,8 @@ object PublicSpaProtocols {
   import Register     .Fn2B.{pickleInstance => _i4}
   import Login        .Fn  .{pickleInstance => _i5}
   import ResetPassword.Fn1 .{pickleInstance => _i6}
-  import ResetPassword.Fn2 .{pickleInstance => _i7}
+  import ResetPassword.Fn2A.{pickleInstance => _i7}
+  import ResetPassword.Fn2B.{pickleInstance => _i8}
   implicit val picklerInitData = pickleCaseClass[InitData]
 
   final val EntryPointName = "A"

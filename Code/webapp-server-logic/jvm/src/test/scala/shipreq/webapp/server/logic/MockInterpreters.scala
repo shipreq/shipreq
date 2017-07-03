@@ -17,11 +17,15 @@ import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.server.ServerConfig
 
 object MockDb {
-  final case class UserEntry(userId   : UserId,
-                             username : Username,
-                             emailAddr: EmailAddr,
-                             ps       : PasswordAndSalt,
-                             createdAt: Instant)
+  final case class UserEntry(userId       : UserId,
+                             username     : Username,
+                             emailAddr    : EmailAddr,
+                             ps           : PasswordAndSalt,
+                             createdAt    : Instant,
+                             resetPassword: Option[(SecurityToken, Instant)] = None) {
+    def pubids: List[Username \/ EmailAddr] =
+      -\/(username) :: \/-(emailAddr) :: Nil
+  }
 
   final case class ProjectEntry(projectId    : ProjectId,
                                 userId       : UserId,
@@ -61,6 +65,9 @@ final class MockDb(now: Name[Instant]) extends DB.Algebra[Name] {
   def assertTokensIssued(expect: Int): Unit =
     assertEq("assertTokensIssued", prevTokenId, expect)
 
+  def assertIssuesTokens[A](expect: Int)(a: => A): A =
+    assertDifference("assertIssuesTokens", prevTokenId)(expect)(a)
+
   var userPlaceholders = Map.empty[EmailAddr, DB.UserRegistration.Pending]
   override def createUserPlaceholder(e: EmailAddr) =
     now.map { n =>
@@ -92,11 +99,26 @@ final class MockDb(now: Name[Instant]) extends DB.Algebra[Name] {
     getPendingUserRegistration(t).map(_._2.tokenSentAt)
   }
 
-
   var users = List.empty[MockDb.UserEntry]
 
   def getUser(u: Username \/ EmailAddr): Option[MockDb.UserEntry] =
     users.find(e => u.fold(_ ==* e.username, _ ==* e.emailAddr))
+
+  def getUserOrPlaceholder(u: Username \/ EmailAddr): Option[(EmailAddr, DB.UserRegistration.Pending) \/ MockDb.UserEntry] =
+    getUser(u).map(\/-(_)) orElse u.fold(_ => None, e => userPlaceholders.get(e).map(r => -\/((e, r))))
+
+  def updateUser(w: MockDb.UserEntry => Boolean, f: MockDb.UserEntry => MockDb.UserEntry): Unit =
+    users = users.map(u => if (w(u)) f(u) else u)
+
+  def updateUser(id: UserId, f: MockDb.UserEntry => MockDb.UserEntry): Option[MockDb.UserEntry] = {
+    var r = Option.empty[MockDb.UserEntry]
+    updateUser(_.userId ==* id, u => {
+      val u2 = f(u)
+      r = Some(u2)
+      u2
+    })
+    r
+  }
 
   override def completeUserRegistration(token: SecurityToken,
                                         name: PersonName,
@@ -114,6 +136,43 @@ final class MockDb(now: Name[Instant]) extends DB.Algebra[Name] {
           DB.UserRegistrationResult.Success(reg.id)
       }
     }
+
+  override def getPasswordResetState(u: Username \/ EmailAddr) = Name[Option[(EmailAddr, DB.PasswordResetState)]] {
+    getUserOrPlaceholder(u) map {
+      case \/-(e) =>
+        val u = DB.UserRegistration.Complete(e.userId, e.createdAt)
+        val s = e.resetPassword match {
+          case Some((t, i)) => DB.PasswordResetState.TokenExists(u, t, i)
+          case None         => DB.PasswordResetState.NoToken(u)
+        }
+        (e.emailAddr, s)
+      case -\/((e, p)) =>
+        (e, DB.PasswordResetState.UserRegistrationPending(p))
+    }
+  }
+
+  override def getResetPasswordTokenIssueDate(t: SecurityToken) = Name[Option[Instant]] {
+    users.collectFirst {
+      case MockDb.UserEntry(_, _, _, _, _, Some((t2, i))) if t ==* t2 => i
+    }
+  }
+
+  override def createResetPasswordToken(id: UserId) =
+    now.map { n =>
+      val t = nextToken()
+      updateUser(id, _.copy(resetPassword = Some((t, n))))
+      t
+    }
+
+  override def updateResetPasswordTokenOnReissue(id: UserId) =
+    now.map { n =>
+      updateUser(id, u => u.copy(resetPassword = u.resetPassword.map(x => (x._1, n))))
+      ()
+    }
+
+  override def updateUserPassword(token: SecurityToken, ps: PasswordAndSalt) = Name[Unit] {
+    updateUser(_.resetPassword.exists(_._1 ==* token), _.copy(ps = ps, resetPassword = None))
+  }
 
   private var projects: IMap[ProjectId, MockDb.ProjectEntry] =
     IMap.empty(_.projectId)
@@ -174,8 +233,14 @@ final class MockDb(now: Name[Instant]) extends DB.Algebra[Name] {
     }
   }
 
-  override def inDbTransaction[A](f: Name[A]) =
-    f
+  override def inDbTransaction[A](f: Name[A]) = f
+  override def inDbTransaction[A](l: Int, f: Name[A]) = f
+
+  def assertNoDbChange[A](a: => A): A =
+    assertNoChange("assertNoChange:userPlaceholders", userPlaceholders.iterator.map(_.toString).mkString("\n"))(
+      assertNoChange("assertNoChange:users", users.mkString("\n"))(
+        assertNoChange("assertNoChange:projects", projects.values.mkString("\n"))(
+          a)))
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -255,6 +320,9 @@ final class MockTaskman extends TaskmanApi[Name] {
   def assertSubmitted(expect: Int): Unit =
     if (msgs.length !=* expect)
       fail(s"Expected $expect Taskman tasks submitted, got ${msgs.length}: ${msgs.mkString(", ")}")
+
+  def assertSubmits[A](expect: Int)(a: => A): A =
+    assertDifference("taskman.assertSubmits", msgs.length)(expect)(a)
 
   def assertLastSubmitted[A](pf: PartialFunction[Msg, A]): A =
     if (msgs.isEmpty)

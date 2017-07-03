@@ -47,6 +47,7 @@ Backlog
 * webapp-base-member shares packages with webapp-base, plus most of that stuff should be under .project as well
 * Extract webapp-base-member-test
 * Only create a single Lift function per SPA instead of one per ServerSideProc
+* Add DB indicies
 
 ------------------------------------------------------------------------------------------------------------------------
 Phase 2 (dev-complete)

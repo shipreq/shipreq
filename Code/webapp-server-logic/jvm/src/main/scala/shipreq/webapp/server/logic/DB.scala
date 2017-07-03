@@ -2,6 +2,7 @@ package shipreq.webapp.server.logic
 
 import java.time.Instant
 import scala.collection.immutable.SortedMap
+import scalaz.\/
 import shipreq.webapp.base.data.{ProjectMetaData, SecurityToken}
 import shipreq.webapp.base.event.{ActiveEvent, EventOrd, VerifiedEvent}
 import shipreq.webapp.base.hash.HashRec
@@ -53,12 +54,20 @@ object DB {
     case object UsernameTaken extends UserRegistrationResult
   }
 
-
+  sealed trait PasswordResetState
+  object PasswordResetState {
+    final case class UserRegistrationPending(reg: UserRegistration.Pending) extends PasswordResetState
+    final case class NoToken(reg: UserRegistration.Complete) extends PasswordResetState
+    final case class TokenExists(reg: UserRegistration.Complete, token: SecurityToken, tokenSentAt: Instant) extends PasswordResetState
+  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   trait Base[F[_]] {
     def inDbTransaction[A](f: F[A]): F[A]
+
+    /** @param level See java.sql.Connection */
+    def inDbTransaction[A](level: Int, f: F[A]): F[A]
   }
 
   trait SaveProjectEvent[F[_]] {
@@ -68,7 +77,7 @@ object DB {
                          hashes: HashRec.Collection): F[Option[Throwable]]
   }
 
-  trait ForPublicSpa[F[_]] extends Base[F] {
+  trait ForUserRegistration[F[_]] extends Base[F] {
     def getUserRegistration(e: EmailAddr): F[Option[UserRegistration]]
 
     /** Creates an unconfirmed user account. No username, no password until email confirmed. */
@@ -85,6 +94,22 @@ object DB {
                                  newsletter: Boolean,
                                  ip        : Option[IP]): F[UserRegistrationResult]
   }
+
+  trait ForPasswordReset[F[_]] extends Base[F] {
+    def getPasswordResetState(u: Username \/ EmailAddr): F[Option[(EmailAddr, PasswordResetState)]]
+
+    def getResetPasswordTokenIssueDate(t: SecurityToken): F[Option[Instant]]
+
+    def createResetPasswordToken(id: UserId): F[SecurityToken]
+
+    /** Updates the sent-count and sent-at attributes of an existing reset-password token. */
+    def updateResetPasswordTokenOnReissue(id: UserId): F[Unit]
+
+    /** This also clears the token */
+    def updateUserPassword(token: SecurityToken, ps: PasswordAndSalt): F[Unit]
+  }
+
+  trait ForPublicSpa[F[_]] extends ForUserRegistration[F] with ForPasswordReset[F]
 
   trait ForHomeSpa[F[_]] extends Base[F] with SaveProjectEvent[F] {
     def createEmptyProject          (id: UserId): F[ProjectId]
