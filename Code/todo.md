@@ -46,8 +46,6 @@ Backlog
 * Change ScalaCSS to generate Scala.JS without the runtime/JS-size overhead
 * webapp-base-member shares packages with webapp-base, plus most of that stuff should be under .project as well
 * Extract webapp-base-member-test
-* Only create a single Lift function per SPA instead of one per ServerSideProc
-* Add DB indicies
 
 ------------------------------------------------------------------------------------------------------------------------
 Phase 2 (dev-complete)
@@ -80,6 +78,10 @@ Phase 2 (dev)
 * Bug: Create-and-close closes on ajax error
 * Add info/help to MemberHome when no projects exist
 * Rename webappClientHome now that its ambiguous in regards to the public pages
+* Only create a single Lift function per SPA instead of one per ServerSideProc
+* Add DB indicies
+* Add server logic benchmarks (using MockInterpreters?)
+* Switch from scalaz.effect.IO to Monix tasks
 
 ### Front pages
 * Implement new front pages
