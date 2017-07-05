@@ -30,7 +30,6 @@ CREATE TABLE usr (
       AND password_salt            IS NULL
       AND password_changed_at      IS NULL
       AND confirmation_token       IS NOT NULL
-      AND confirmation_sent_at     IS NOT NULL
       AND reset_password_req_count = 0
       AND login_count              = 0
     ELSE

@@ -15,54 +15,9 @@ import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.server.logic._
 import SqlHelpers._
 
-/**
-  * TODO Revise
-  *
-  * Database interface.
-  *
-  * Methods follow this pattern:
-  *
-  * - `find`: Searches for a single row. Returns Option[T].
-  * - `findAll`: Searches for a multiple rows. Returns List[T], possibly empty.
-  * - `findOrCreate`: Searches for an item and creates it if not found. Returns T.
-  * - `summarise`: Retrieves a list of objects that summarise one or more data. Returns List[T].
-  *
-  * - `create`: Creates a new row. Returns T.
-  * - `link`: Creates a link/mapping between existing DB records. Returns unit.
-  * - `log`: Records a loggable event. Returns unit.
-  * - `sync`: Ensures the DB state of a record matches a provided model, changing the DB if necessary.
-  * - `update`: Modifies an existing DB record. Return specialised result.
-  * - `delete`: Delete data and usually its dependents. Returns unit.
-  *
-  * - `perform`: Perform specialised business-logic (as opposed to CRUD-like operations).
-  * - `diag`: Diagnostic functions.
-  */
 object DbLogic {
 
-  // ===================================================================================================================
   object user {
-
-    private def tokenAttempt(tokenFn: () => SecurityToken)(execute: SecurityToken => ConnectionIO[_]): ConnectionIO[SecurityToken] =
-      ConnectionIoUnit
-        .map(_ => tokenFn())
-        .inSafeTransaction
-        .retry(16)
-        .map(_ getOrElse sys.error("Failed to acquire token."))
-        .flatMap(t => execute(t).map(_ => t))
-
-    private[db] val sqlInsertPlaceholder = Update[(EmailAddr, SecurityToken)](
-      "INSERT INTO usr(email, confirmation_token, confirmation_sent_at) VALUES(?,?,NOW())")
-
-    /** Creates an unconfirmed user account. No username, no password until email confirmed. */
-    def createPlaceholder(email: EmailAddr, tokenFn: () => SecurityToken): ConnectionIO[SecurityToken] =
-      tokenAttempt(tokenFn)(token => sqlInsertPlaceholder.toUpdate0(email, token).execute)
-
-    private[db] val sqlUpdateConfirmationToken = Update[(SecurityToken, UserId)](
-      "UPDATE usr SET confirmation_token = ?, confirmation_sent_at = NOW() WHERE id=?")
-
-    def updateConfirmationToken(id: UserId, tokenFn: () => SecurityToken): ConnectionIO[SecurityToken] =
-      tokenAttempt(tokenFn)(token => sqlUpdateConfirmationToken.toUpdate0(token, id).execute)
-
     def findDescAndCredentials(usernameOrEmail: String): ConnectionIO[Option[(User, PasswordAndSalt)]] =
       if (EmailAddr.isEmailAddr(usernameOrEmail))
         findDescAndCredentialsByEmail(EmailAddr(usernameOrEmail))
@@ -72,7 +27,7 @@ object DbLogic {
     private val sqlColsDesc = "id,username,email,roles"
     private val sqlColsPwdAndSalt = "password,password_salt"
 
-    private[db] case class UserDescAndPasswordInDb(id            : UserId,
+    private case class UserDescAndPasswordInDb(id            : UserId,
                                                    username      : Option[Username],
                                                    email         : EmailAddr,
                                                    rolesStr      : Option[String],
@@ -90,322 +45,28 @@ object DbLogic {
     private implicit val doobieCompositeUserDescAndPasswordInDb: Composite[UserDescAndPasswordInDb] =
       Composite.generic
 
-    private[db] val sqlSelectDescCredByUsername = Query[Username, UserDescAndPasswordInDb](
+    private val sqlSelectDescCredByUsername = Query[Username, UserDescAndPasswordInDb](
       s"SELECT $sqlColsDesc,$sqlColsPwdAndSalt FROM usr WHERE username=?")
 
-    def findDescAndCredentialsByUsername(username: Username): ConnectionIO[Option[(User, PasswordAndSalt)]] =
+    private def findDescAndCredentialsByUsername(username: Username): ConnectionIO[Option[(User, PasswordAndSalt)]] =
       sqlSelectDescCredByUsername.toQuery0(username).option.map(_.flatMap(_.resolve))
 
-    private[db] val sqlSelectDescCredByEmail = Query[EmailAddr, UserDescAndPasswordInDb](
+    private val sqlSelectDescCredByEmail = Query[EmailAddr, UserDescAndPasswordInDb](
       s"SELECT $sqlColsDesc,$sqlColsPwdAndSalt FROM usr WHERE email=? AND password IS NOT NULL")
 
-    def findDescAndCredentialsByEmail(email: EmailAddr): ConnectionIO[Option[(User, PasswordAndSalt)]] =
+    private def findDescAndCredentialsByEmail(email: EmailAddr): ConnectionIO[Option[(User, PasswordAndSalt)]] =
       sqlSelectDescCredByEmail.toQuery0(email).option.map(_.flatMap(_.resolve))
-
-    private val sqlColsRegistrationInfo = "id,confirmation_token,confirmation_sent_at,confirmed_at"
-    private type UserRegistrationInfo = (UserId, Option[SecurityToken], Option[Instant], Option[Instant])
-
-    private val mkUserRegistration: UserRegistrationInfo => DB.UserRegistration = {
-      case (id, Some(t), Some(i), _)       => DB.UserRegistration.Pending(id, t, i)
-      case (id, _      , _      , Some(i)) => DB.UserRegistration.Complete(id, i)
-      case _ => ??? // Table CONSTRAINT protects against this
-    }
-
-    private[db] val sqlSelectRegInfo = Query[EmailAddr, UserRegistrationInfo](
-      s"SELECT $sqlColsRegistrationInfo FROM usr WHERE email=?")
-
-    def findRegistrationInfo(email: EmailAddr): ConnectionIO[Option[DB.UserRegistration]] =
-      sqlSelectRegInfo.toQuery0(email).map(mkUserRegistration).option
-
-    private val sqlColsResetPasswordInfo = "reset_password_token,reset_password_sent_at"
-    private type ResetPasswordInfo = (Option[SecurityToken], Option[Instant])
-    val mkPasswordResetState: (DB.UserRegistration, ResetPasswordInfo) => DB.PasswordResetState = {
-      case (r: DB.UserRegistration.Complete, (None, None))       => DB.PasswordResetState.NoToken(r)
-      case (r: DB.UserRegistration.Complete, (Some(t), Some(i))) => DB.PasswordResetState.TokenExists(r, t, i)
-      case (r: DB.UserRegistration.Pending, _)                   => DB.PasswordResetState.UserRegistrationPending(r)
-      case _ => ??? // Table CONSTRAINT protects against this
-    }
-    val mkPasswordResetState2: (UserRegistrationInfo, ResetPasswordInfo) => DB.PasswordResetState =
-      (a, b) => mkPasswordResetState(mkUserRegistration(a), b)
-
-    private[db] val sqlSelectPasswordResetStateByEmail = Query[EmailAddr, (UserRegistrationInfo, ResetPasswordInfo)](
-      s"SELECT $sqlColsRegistrationInfo,$sqlColsResetPasswordInfo FROM usr WHERE email=?")
-
-    def getPasswordResetStateByEmail(email: EmailAddr): ConnectionIO[Option[DB.PasswordResetState]] =
-      sqlSelectPasswordResetStateByEmail.toQuery0(email).map(mkPasswordResetState2.tupled).option
-
-    private[db] val sqlSelectPasswordResetStateByUsername = Query[Username, (EmailAddr, UserRegistrationInfo, ResetPasswordInfo)](
-      s"SELECT email,$sqlColsRegistrationInfo,$sqlColsResetPasswordInfo FROM usr WHERE username=?")
-
-    def getPasswordResetStateByUsername(u: Username): ConnectionIO[Option[(EmailAddr, DB.PasswordResetState)]] =
-      sqlSelectPasswordResetStateByUsername.toQuery0(u).map {
-        case (e, a, b) => (e, mkPasswordResetState2(a, b))
-      }.option
-
-    private[db] val sqlSelectConfirmationTokenIssuedDate = Query[SecurityToken, Option[Instant]](
-      "SELECT confirmation_sent_at FROM usr WHERE confirmation_token=?")
-
-    def findConfirmationTokenIssuedDate(token: SecurityToken): ConnectionIO[Option[Instant]] =
-      sqlSelectConfirmationTokenIssuedDate.toQuery0(token).option.map(_.flatten)
-
-    private[db] val sqlRegisterUser = Query[(Username, PasswordAndSalt, Option[IP], SecurityToken), UserId](
-      """
-        UPDATE usr SET username = ?
-          ,password = ?, password_salt = ?, password_changed_at = NOW()
-          ,confirmation_token = NULL, confirmed_at = NOW()
-          ,login_count = 1, last_login_at = NOW(), last_login_ip = ?
-        WHERE confirmation_token = ?
-        RETURNING id""".sql)
-
-    val sqlInsertUsrd = Update[(UserId, PersonName, Boolean)](
-      "INSERT INTO usrd VALUES(?,?,?)")
-
-    def performRegistration(token     : SecurityToken,
-                            name      : PersonName,
-                            username  : Username,
-                            ps        : PasswordAndSalt,
-                            newsletter: Boolean,
-                            ip        : Option[IP]): ConnectionIO[DB.UserRegistrationResult] = {
-
-      import DB.UserRegistrationResult._
-      val plan: ConnectionIO[DB.UserRegistrationResult] =
-        sqlRegisterUser.toQuery0(username, ps, ip, token).option.attemptSql flatMap {
-          case \/-(Some(id)) =>
-            sqlInsertUsrd.toUpdate0(id, name, newsletter).run.map(_ => Success(id))
-
-          case \/-(None) =>
-            Free pure TokenNotFound
-
-          case -\/(e: PSQLException) if e.getMessage.contains("usr_username_key") =>
-            Free pure UsernameTaken
-
-          case -\/(e) =>
-            throw e
-        }
-      plan.inTransaction
-    }
-
-//    private[db] val sqlInsertLogin = Update[(UserId, Option[IP])](
-//      "INSERT INTO usr_login_log(usr_id,ip) VALUES(?,?)")
-//
-//    def logLogin(id: UserId, ip: Option[IP]): ConnectionIO[Unit] =
-//      sqlInsertLogin.toUpdate0(id, ip).execute
-
-//    // This should be the same as reset-password except the WHERE clause
-//    private[db] val sqlUpdatePassword = Update[(PasswordAndSalt, UserId)](
-//      "UPDATE usr SET password = ?, password_salt = ?, password_changed_at = NOW() WHERE id=?")
-//
-//    def updatePassword(id: UserId, ps: PasswordAndSalt): ConnectionIO[Unit] =
-//      sqlUpdatePassword.toUpdate0(ps, id).execute
-
-    private val InstallNewResetPasswordToken = Update[(SecurityToken, UserId)](
-      "UPDATE usr SET reset_password_token = ?, reset_password_sent_at = NOW(), reset_password_req_count = reset_password_req_count + 1 WHERE id=?")
-
-    def performInstallNewResetPasswordToken(u: UserId, tokenFn: () => SecurityToken): ConnectionIO[SecurityToken] =
-      tokenAttempt(tokenFn)(token => InstallNewResetPasswordToken.toUpdate0(token, u).execute)
-
-    private[db] val sqlReuseResetPasswordToken = Update[UserId](
-      "UPDATE usr SET reset_password_sent_at = NOW(), reset_password_req_count = reset_password_req_count + 1 WHERE id=?")
-
-    def performReuseResetPasswordToken(u: UserId): ConnectionIO[Unit] =
-      sqlReuseResetPasswordToken.toUpdate0(u).execute
-
-    private[db] val sqlSelectResetPasswordTokenIssuedDate = Query[SecurityToken, Option[Instant]](
-      "SELECT reset_password_sent_at FROM usr WHERE reset_password_token=?")
-
-    def findResetPasswordTokenIssuedDate(token: SecurityToken): ConnectionIO[Option[Instant]] =
-      sqlSelectResetPasswordTokenIssuedDate.toQuery0(token).option.map(_.flatten)
-
-    private[db] val sqlResetPassword = Update[(PasswordAndSalt, SecurityToken)]( """
-      UPDATE usr SET
-        password = ?, password_salt = ?, password_changed_at = NOW(),
-        reset_password_token = NULL
-      WHERE reset_password_token = ? """.sql)
-
-    def performPasswordReset(token: SecurityToken, ps: PasswordAndSalt): ConnectionIO[Unit] =
-      sqlResetPassword.toUpdate0(ps, token).execute
   }
 
-  // ===================================================================================================================
   object project {
-
-    private[db] val sqlCreate = Query[UserId, ProjectId](
-      "INSERT INTO project(usr_id) VALUES(?) RETURNING id")
-
-    def create(usrId: UserId): ConnectionIO[ProjectId] =
-      sqlCreate.toQuery0(usrId).unique
-
-    private[db] val sqlSelectOwner = Query[ProjectId, UserId](
+    private val sqlSelectOwner = Query[ProjectId, UserId](
       "SELECT usr_id FROM project WHERE id=?")
 
     def findOwner(id: ProjectId): ConnectionIO[Option[UserId]] =
       sqlSelectOwner.toQuery0(id).option
-
-    import shipreq.webapp.base.event._
-
-    private def eventTypeId(e: ActiveEvent): Short =
-      EventDbCodecs.eventCodecRegistry.writer(e)._1
-
-    private val projectNameSetId: Short =
-      eventTypeId(ProjectNameSet(null))
-
-    private def sqlProjectMetaData(projectCond: String, extraCols: String = ""): String = {
-
-      val reqCreationTypeIds: List[Short] =
-        Event.reqCreationEventSamples.map(eventTypeId)
-
-      val extraColSuffix: String =
-        Option(extraCols).filter(_.nonEmpty).fold("")("," + _)
-
-      s"""
-        WITH
-          ps AS (
-            SELECT id, created_at
-            $extraColSuffix
-            FROM project
-            $projectCond
-          ),
-          es AS (
-            SELECT
-              project_id,
-              count(*) events,
-              count(*) FILTER (WHERE type_id IN (${reqCreationTypeIds mkString ","})) reqs,
-              max(event.created_at) last_updated_at
-            FROM event
-            WHERE project_id IN (select id FROM ps) AND ord > 1
-            GROUP BY project_id
-          ),
-          ns AS (
-            SELECT DISTINCT ON (project_id)
-              project_id,
-              (e.data#>>'{}')::varchar "name"
-            FROM event e
-            WHERE project_id IN (select id FROM ps) AND type_id=$projectNameSetId
-            ORDER BY project_id, ord DESC
-          )
-        SELECT
-          ps.id,
-          COALESCE(ns.name,''),
-          COALESCE(es.events,0),
-          COALESCE(es.reqs,0),
-          ps.created_at,
-          es.last_updated_at
-          $extraColSuffix
-        FROM ps
-        LEFT JOIN es ON id=es.project_id
-        LEFT JOIN ns ON id=ns.project_id
-      """.sql
-    }
-
-    private[db] val sqlSelectAllProjectMetaDataForUser = Query[UserId, ProjectMetaData](
-      sqlProjectMetaData("WHERE usr_id=?"))
-
-    def findAllProjectMetaDataForUser(uid: UserId): ConnectionIO[List[ProjectMetaData]] =
-      sqlSelectAllProjectMetaDataForUser.toQuery0(uid).list
-
-//    private[db] val sqlSelectProjectMetaDataAndUser = Query[ProjectId, (ProjectMetaData, UserId)](
-//      sqlProjectMetaData("WHERE id=?", "usr_id"))
-//
-//    def findProjectMetaDataAndUser(pid: ProjectId): ConnectionIO[Option[(ProjectMetaData, UserId)]] =
-//      sqlSelectProjectMetaDataAndUser.toQuery0(pid).option
-
-    private[db] val sqlSelectProjectMetaData = Query[ProjectId, ProjectMetaData](
-      sqlProjectMetaData("WHERE id=?"))
-
-    def findProjectMetaData(pid: ProjectId): ConnectionIO[Option[ProjectMetaData]] =
-      sqlSelectProjectMetaData.toQuery0(pid).option
-
-    private[db] val sqlSelectProjectHeader: Query[(ProjectId, ProjectId), ProjectHeader] = {
-      val sql =
-        s"""
-          |SELECT
-          |  usr_id,
-          |  COALESCE(
-          |    (SELECT (e.data#>>'{}')::varchar
-          |      FROM event e
-          |      WHERE project_id=? AND type_id=$projectNameSetId
-          |      ORDER BY ord DESC
-          |      LIMIT 1),
-          |    '') "name"
-          |FROM project
-          |WHERE id=?
-        """.stripMargin.sql
-      Query(sql)
-    }
-
-    def findProjectHeader(pid: ProjectId): ConnectionIO[Option[ProjectHeader]] =
-      sqlSelectProjectHeader.toQuery0((pid, pid)).option
   }
 
-  // ===================================================================================================================
-  object event {
-    import EventSqlHelpers._
-
-    // select coalesce(max(ord)+1,1) from event where project_id=?
-    val sqlInsert = Update[(ProjectId, EventOrd, ActiveEvent)](
-      s"INSERT INTO event(project_id,ord,$eventE) VALUES(?,?,${eventE_?})")
-
-    val sqlInsertHashRecs = Update[(ProjectId, EventOrd, HashRec)](
-      s"INSERT INTO event_hash(project_id,ord,$eventHR) VALUES(?,?,${eventHR_?})")
-
-    def create(p: ProjectId, ord: EventOrd, e: ActiveEvent, hrs: HashRec.Collection): ConnectionIO[Unit] = {
-      val addEvent = sqlInsert.toUpdate0(p, ord, e).run
-      // TODO Send in bulk instead of foldLeft
-      hrs.foldLeft(addEvent)(_ *> sqlInsertHashRecs.toUpdate0(p, ord, _).run).void.inTransaction
-    }
-
-    val sqlSelectAll = Query[ProjectId, (EventOrd, Event)](
-      s"SELECT ord,$eventE FROM event WHERE project_id=? ORDER BY ord")
-
-    val sqlSelectAllHashes = Query[ProjectId, (EventOrd, HashRec)](
-      s"SELECT ord,$eventHR FROM event_hash WHERE project_id=?")
-
-    /** @return Events in order from lowest to highest ord. */
-    def findAll(p: ProjectId): ConnectionIO[Vector[(EventOrd, VerifiedEvent)]] = { // TODO
-      // TODO DbLogic.event.findAllEvents has shithouse impl
-      class Tmp(val e: Event) {
-        var hrs = HashRec.emptyCollection
-      }
-      (for {
-        events <- sqlSelectAll.toQuery0(p).list
-        hashes <- sqlSelectAllHashes.toQuery0(p).list
-      } yield {
-        val map = collection.mutable.HashMap.empty[EventOrd, Tmp]
-        for (t <- events)
-          map.put(t._1, new Tmp(t._2))
-        for (t <- hashes)
-          map(t._1).hrs += t._2
-        val result = Vector.newBuilder[(EventOrd, VerifiedEvent)]
-        for ((ord, tmp) <- map)
-          result += ((ord, VerifiedEvent(tmp.e, tmp.hrs)))
-        result.result().sortBy(_._1.value)
-      }).inTransaction
-    }
-
-    /** @return Events in order from lowest to highest ord. */
-    def findAll2(p: ProjectId): ConnectionIO[SortedMap[EventOrd, VerifiedEvent]] = {
-      // TODO DbLogic.event.findAllEvents has shithouse impl
-      class Tmp(val e: Event) {
-        var hrs = HashRec.emptyCollection
-      }
-      (for {
-        events <- sqlSelectAll.toQuery0(p).list
-        hashes <- sqlSelectAllHashes.toQuery0(p).list
-      } yield {
-        val map = collection.mutable.HashMap.empty[EventOrd, Tmp]
-        for (t <- events)
-          map.put(t._1, new Tmp(t._2))
-        for (t <- hashes)
-          map(t._1).hrs += t._2
-        val result = SortedMap.newBuilder[EventOrd, VerifiedEvent]
-        for ((ord, tmp) <- map)
-          result += ((ord, VerifiedEvent(tmp.e, tmp.hrs)))
-        result.result()
-      }).inTransaction
-    }
-  }
-
-  // ===================================================================================================================
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object admin {
 
     val diagSelectNow: ConnectionIO[Instant] =
@@ -420,7 +81,7 @@ object DbLogic {
       def pendingRegistration = total - registered
     }
 
-    private[db] val sqlStatsSizesByTypes = Query[String, (String, Long)]("""
+    private val sqlStatsSizesByTypes = Query[String, (String, Long)]("""
       WITH a as (
           SELECT
             relname "name"

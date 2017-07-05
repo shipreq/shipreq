@@ -21,12 +21,13 @@ object DbUtil {
 }
 
 final case class DbUtil(xa: SingleConnectionXA) {
+  import PrepareEnv.dbAlgebra
 
   private def randomStr: String =
     DbUtil.Random.nextString(32)
 
   def newProjectId(userId: UserId = getOrCreateUserId()): ProjectId =
-    xa ! DbLogic.project.create(userId)
+    xa ! dbAlgebra.createEmptyProject(userId)
 
   def getOrCreateUserId(): UserId =
     (xa ! Query0[UserId]("select id from usr where username is not null").option) getOrElse newUserId()

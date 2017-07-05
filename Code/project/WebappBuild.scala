@@ -437,6 +437,7 @@ object WebappBuild {
         (LibJetty.servletApi % "test,provided"))
       .configure(
         Common.jvmSettings,
+        useMacroParadise,
         webappCmdAliases,
         assetSettings,
         testSettings,

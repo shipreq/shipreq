@@ -61,6 +61,8 @@ object DB {
     final case class TokenExists(reg: UserRegistration.Complete, token: SecurityToken, tokenSentAt: Instant) extends PasswordResetState
   }
 
+  type ProjectEvents = SortedMap[EventOrd, VerifiedEvent]
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   trait Base[F[_]] {
@@ -68,13 +70,6 @@ object DB {
 
     /** @param level See java.sql.Connection */
     def inDbTransaction[A](level: Int, f: F[A]): F[A]
-  }
-
-  trait SaveProjectEvent[F[_]] {
-    def saveProjectEvent(id    : ProjectId)
-                        (ord   : EventOrd,
-                         event : ActiveEvent,
-                         hashes: HashRec.Collection): F[Option[Throwable]]
   }
 
   trait ForUserRegistration[F[_]] extends Base[F] {
@@ -111,6 +106,13 @@ object DB {
 
   trait ForPublicSpa[F[_]] extends ForUserRegistration[F] with ForPasswordReset[F]
 
+  trait SaveProjectEvent[F[_]] {
+    def saveProjectEvent(id    : ProjectId)
+                        (ord   : EventOrd,
+                         event : ActiveEvent,
+                         hashes: HashRec.Collection): F[Option[Throwable]]
+  }
+
   trait ForHomeSpa[F[_]] extends Base[F] with SaveProjectEvent[F] {
     def createEmptyProject          (id: UserId): F[ProjectId]
     def getAllProjectMetaDataForUser(id: UserId): F[List[ProjectMetaData]]
@@ -121,7 +123,6 @@ object DB {
     def getProjectMetaData (id: ProjectId): F[Option[ProjectMetaData]]
     def getAllProjectEvents(id: ProjectId): F[ProjectEvents]
   }
-  type ProjectEvents = SortedMap[EventOrd, VerifiedEvent]
 
   trait Algebra[F[_]]
     extends ForPublicSpa[F]

@@ -11,6 +11,7 @@ import shipreq.webapp.server.test.WebappServerTestUtil._
 import shipreq.webapp.server.test._
 
 object HomeSpaTest extends TestSuite {
+  import PrepareEnv.dbAlgebra
 
   override def tests = TestSuite {
 
@@ -22,13 +23,13 @@ object HomeSpaTest extends TestSuite {
           val uid = uf.user1.id
 
           // Confirm starting empty
-          assertEq(xa ! DbLogic.project.findAllProjectMetaDataForUser(uid), Nil)
+          assertEq(xa ! dbAlgebra.getAllProjectMetaDataForUser(uid), Nil)
 
           // Create
           val pi = xa ! HomeSpaLogic.createProject(uid, name, Instant.now())
 
           val pid = ProjectId.Extern.parseOption(pi.id.value).get
-          def events() = xa ! DbLogic.event.findAll(pid)
+          def events() = (xa ! dbAlgebra.getAllProjectEvents(pid)).toVector
           def loadProject() = applyVerifiedEventSuccessfully(Project.empty, events().map(_._2): _*)
 
           // Immediate result
@@ -37,7 +38,7 @@ object HomeSpaTest extends TestSuite {
           assertEq("Immediate reqCount", pi.reqCount, 0)
 
           // Reloaded result
-          val pc = xa ! DbLogic.project.findAllProjectMetaDataForUser(uid)
+          val pc = xa ! dbAlgebra.getAllProjectMetaDataForUser(uid)
           assertEq(pc.length, 1)
           val a = pc.head
           assertFields(pi, a)
@@ -52,8 +53,8 @@ object HomeSpaTest extends TestSuite {
           val p = loadProject()
           val e = FieldStaticRemove(StaticField.StepGraph)
           val ve = verifyEvent(p, e)
-          xa ! DbLogic.event.create(pid, nextOrd, e, ve.hashRecs)
-          val a2 = (xa ! DbLogic.project.findAllProjectMetaDataForUser(uid)).head
+          xa ! dbAlgebra.saveProjectEvent(pid)(nextOrd, e, ve.hashRecs)
+          val a2 = (xa ! dbAlgebra.getAllProjectMetaDataForUser(uid)).head
           assertEq("Next eventCount", a2.eventCount, a.eventCount + 1)
           loadProject()
         }

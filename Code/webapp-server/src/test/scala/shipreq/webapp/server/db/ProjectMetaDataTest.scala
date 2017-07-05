@@ -3,12 +3,13 @@ package shipreq.webapp.server.db
 import utest._
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.{ActiveEvent, EventOrd, RandomEventStream, VerifiedEvent}
-import shipreq.webapp.server.test.DbUtil
+import shipreq.webapp.server.test.{DbUtil, PrepareEnv}
 import shipreq.webapp.server.test.WebappServerTestUtil._
 
 /** Ensures that ProjectMetaData content always matches project content.
   */
 object ProjectMetaDataTest extends TestSuite {
+  import PrepareEnv.dbAlgebra
 
   override def tests = TestSuite {
 
@@ -24,7 +25,7 @@ object ProjectMetaDataTest extends TestSuite {
         def writeEvent(ve: VerifiedEvent, idx: Int): Unit =
           ve.event match {
             case ae: ActiveEvent =>
-              xa ! DbLogic.event.create(pid, EventOrd(idx), ae, ve.hashRecs)
+              xa ! dbAlgebra.saveProjectEvent(pid)(EventOrd(idx), ae, ve.hashRecs)
             case x =>
               fail("Can't create non-active event: " + x)
           }
@@ -41,7 +42,7 @@ object ProjectMetaDataTest extends TestSuite {
           writeEvent(ve, seq)
           p = applyEventSuccessfully(p, ve.event)
 
-          val md = xa ! DbLogic.project.findProjectMetaData(pid) getOrElse
+          val md = xa ! dbAlgebra.getProjectMetaData(pid) getOrElse
             fail(s"ProjectMetaData not found for $pid.")
 
           val e = (seq + 1 - RandomEventStream.InitialEventCount) max 0

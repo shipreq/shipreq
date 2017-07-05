@@ -56,6 +56,9 @@ object DoobieHelpers {
 
     def void: ConnectionIO[Unit] =
       self.map(_ => ())
+
+    def attemptVoid: ConnectionIO[Option[Throwable]] =
+      self.attempt.map(_.fold[Option[Throwable]](Some(_), _ => None))
   }
 
   implicit class ConnectionIOExtE[E, A](private val self: ConnectionIO[E \/ A]) extends AnyVal {
@@ -71,5 +74,14 @@ object DoobieHelpers {
       self.run.void
   }
 
+  implicit class UpdateExt[A](private val self: Update[A]) extends AnyVal {
+    def executeBatch(as: TraversableOnce[A])(implicit c: Composite[A]): ConnectionIO[Array[Int]] =
+      if (as.isEmpty)
+        Free.pure(Array.empty[Int])
+      else {
+        val addBatches = as.toIterator.map(HPS.set(_) *> FPS.addBatch).reduce(_ *> _)
+        HC.prepareStatement(self.sql)(addBatches *> FPS.executeBatch)
+      }
+  }
 
 }

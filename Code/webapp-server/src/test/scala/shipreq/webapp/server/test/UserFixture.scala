@@ -55,6 +55,7 @@ object UserFixture {
 }
 
 final case class UserFixture(xa: SingleConnectionXA) {
+  import PrepareEnv.dbAlgebra
 
   val user1 = TestUser(Username("golly"), EmailAddr("g@g.com"), PlainTextPassword("hello1234"), Set(Roles.Admin.name), PersonName("User One"), true)
   val user2 = TestUser(Username("deepti"), EmailAddr("d@d.com"), PlainTextPassword("harvest321"), Set.empty, PersonName("User Two"), false)
@@ -64,20 +65,21 @@ final case class UserFixture(xa: SingleConnectionXA) {
   val userWithExpiredToken = PendingTestUser(EmailAddr("b@p.com"), "poi098poi098", 4.weeks.ago)
   val pendingUsers = List(userWithCurrentToken, userWithExpiredToken)
 
+  private def setRoles(emailAddr: EmailAddr, roles: Set[String]): ConnectionIO[Unit] =
+    sql"UPDATE usr set roles=${Option(roles.mkString(",")).filter(_.nonEmpty)} WHERE email=${emailAddr.value}".update.execute.void
+
   def setup: IO[Unit] = {
     // Insert mock users (registered)
-    val i1 = Query[(Username, EmailAddr, PasswordAndSalt, Option[String]), UserId]("INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at, roles) VALUES(?,?,?,?,NOW(),NOW(),NOW(),?) RETURNING id")
     val inserts1: List[IO[Unit]] =
-      for (u <- users) yield {
-        i1.toQuery0(u.username, u.email, u.ps, UserFixture.roleStr(u.roles))
-          .unique
-          .map { id =>
-            u._id = Some(id)
-            id
-          }
-          .flatMap(id => DbLogic.user.sqlInsertUsrd.toUpdate0((id, u.name, u.newsletter)).execute)
-          .transact(xa)
-      }
+      for (u <- users) yield
+        (for {
+          token <- dbAlgebra.createUserPlaceholder(u.email)
+          res <- dbAlgebra.completeUserRegistration(token, u.name, u.username, u.ps, u.newsletter, None)
+          _ <- setRoles(u.email, u.roles)
+        } yield res match {
+          case DB.UserRegistrationResult.Success(id) => u._id = Some(id)
+          case x => sys.error(s"User registration failed: $x")
+        }).transact(xa)
 
     // Insert mock users (pending confirmation)
     val inserts2 = pendingUsers.map(insertPendingTestUser)

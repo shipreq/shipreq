@@ -21,7 +21,7 @@ import shipreq.webapp.base.user._
 import shipreq.webapp.server.security.AppSecurityRealm
 import shipreq.webapp.server.test.{DbUtil, TestDb}
 import shipreq.webapp.server.test.WebappServerTestUtil._
-
+/*
 object DbTest extends TestSuite {
 
   private val q3 = "\"\"\""
@@ -402,3 +402,4 @@ object DbTest extends TestSuite {
 
   }
 }
+*/

@@ -103,9 +103,8 @@ Phase 2 (dev)
   * Move member auth checks into server logic
   * Remove WS .security.Permission{,s}
   * Re-enable the disabled DB tests
-  * Enforce the token constraints in DB (see ??? in DbLogic), also ensure that no updates attempt to violate them
-  * Ensure Option[IP] in DbLogic matches schema
-  * `usr_login_log` - if stat logger is dead does it never get populated? No DB trigger?
+  * Populate `usr_login_log` on login (and stop doing it onRegister)
+  * Logic and interpreter both seem to be wrapping everything in txns
 
 
 ### New Features

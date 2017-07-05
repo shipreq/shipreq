@@ -3,6 +3,7 @@ package bootstrap.liftweb
 import japgolly.microlibs.config.{Config, ConfigParser, ConfigReport}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
+import monocle.macros.Lenses
 import net.liftweb.common.Logger
 import net.liftweb.http._
 import net.liftweb.util.Props
@@ -19,6 +20,7 @@ import shipreq.webapp.server.feature.SessionStats
 import shipreq.webapp.server.lib.Taskman
 import shipreq.webapp.server.security.AppSecurityRealm
 
+@Lenses
 final case class AppConfig(db: DbConfig, server: ServerConfig, report: ConfigReport)
 
 /**

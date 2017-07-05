@@ -772,4 +772,11 @@ object EventSqlHelpers {
       val (dataIdType, dataId, data) = codec.write(e)
       (typeId, dataIdType, dataId, if (data == null) None else Some(JsonStr(data)))
     }
+
+  /** `type_id` value for a given event */
+  def eventTypeId(e: ActiveEvent): Short =
+    EventDbCodecs.eventCodecRegistry.writer(e)._1
+
+  def eventTypeIdForProjectNameSet: Short =
+    eventTypeId(ProjectNameSet(""))
 }

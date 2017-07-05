@@ -4,9 +4,11 @@ import japgolly.microlibs.config._
 import japgolly.microlibs.config.ConfigParser.Implicits.Defaults._
 import japgolly.microlibs.config.JavaTimeConfigParsers._
 import java.time.Duration
+import monocle.macros.Lenses
 import scalaz.syntax.applicative._
 import shipreq.base.util._
 
+@Lenses
 final case class ServerConfig(supportEmailAddress: String,
 
                               baseUrl: Url.Absolute.Base,
