@@ -13,13 +13,12 @@ object TestDb extends shipreq.base.test.db.TestDb {
   }
 
   def useInLift(): Unit = {
-    implicit val cfg = Global.config
-    implicit val db = TestDb.dbAccess
-    val g = Global.default
+    val g = Global.default(TestDb.dbAccess, Global.config)
     Global.modify(_.copy(
-      db      = g.db,
-      logic   = g.logic,
-      taskman = g.taskman))
+      db       = g.db,
+      logic    = g.logic,
+      security = g.security,
+      taskman  = g.taskman))
   }
 
   lazy val truncate: IO[Unit] =

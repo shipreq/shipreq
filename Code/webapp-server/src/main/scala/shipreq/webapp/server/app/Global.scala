@@ -6,16 +6,17 @@ import shipreq.base.db.DbAccess
 import shipreq.taskman.api.TaskmanApi
 import shipreq.taskman.api.impl.TaskmanApiImpl
 import shipreq.webapp.server.ServerConfig
-import shipreq.webapp.server.logic.{ProjectServer, ServerLogic}
-import shipreq.webapp.server.security.AppSecurityRealm
+import shipreq.webapp.server.db.DbInterpreter
+import shipreq.webapp.server.logic._
+import shipreq.webapp.server.security.{AppSecurityRealm, SecurityInterpreter}
 
 final case class Global(config  : ServerConfig,
                         db      : DbAccess,
                         logic   : ServerLogic[IO],
+                        security: Security.Algebra[IO],
                         taskman : TaskmanApi[IO]) {
 
-  // TODO Delete Global.security
-  object security {
+  object securityImpure {
     def loggedInUser()    = AppSecurityRealm.authenticatedUser()
     def logout()          = AppSecurityRealm.logout()
     def isAuthenticated() = AppSecurityRealm.isAuthenticated()
@@ -32,15 +33,21 @@ object Global {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  def default(implicit db: DbAccess, config: ServerConfig): Global = {
-    assert(db ne null, "DbAccess is null, sir.")
-    val taskmanCtx = TaskmanApiImpl.Context(Some(config.taskmanSchema))
-    implicit val taskman = TaskmanApiImpl(taskmanCtx, db.io.trans)
-    import Interpreters._
+  def default(implicit dbAccess: DbAccess, config: ServerConfig): Global = {
+    assert(dbAccess ne null, "DbAccess is null, sir.")
+             val taskmanCtx    = TaskmanApiImpl.Context(Some(config.taskmanSchema))
+    implicit val taskman       = TaskmanApiImpl(taskmanCtx, dbAccess.io.trans)
+    implicit val dbAlgebra     = new DbInterpreter()
+    implicit val dbForSecurity = DB.ForSecurity.trans(DbInterpreter.ForSecurity)(dbAccess.io.trans)
+    implicit val runDB         = Interpreters.runDB
+    implicit val projectStore  = Store.Algebra.concurrentHashMap(): ProjectServer.StoreAlgebra[IO]
+    implicit val security      = new SecurityInterpreter[IO]
+    implicit val server        = Interpreters.serverAlgebra
     Global(
       config   = config,
-      db       = db,
+      db       = dbAccess,
       logic    = ServerLogic.create[ConnectionIO, IO](ProjectServer.BroadcastTo.All),
+      security = security,
       taskman  = taskman)
     }
 }

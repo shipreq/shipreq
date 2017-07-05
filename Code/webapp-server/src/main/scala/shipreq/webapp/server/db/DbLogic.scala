@@ -2,61 +2,12 @@ package shipreq.webapp.server.db
 
 import doobie.imports._
 import java.time.Instant
-import org.postgresql.util.PSQLException
-import scala.collection.immutable.SortedMap
-import scalaz.syntax.applicative._
-import scalaz.{-\/, Free, \/-}
-import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.SqlHelpers._
-import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.{ActiveEvent, Event, EventOrd, VerifiedEvent}
 import shipreq.webapp.base.user._
-import shipreq.webapp.base.hash.HashRec
+import shipreq.webapp.server.db.SqlHelpers._
 import shipreq.webapp.server.logic._
-import SqlHelpers._
 
 object DbLogic {
-
-  object user {
-    def findDescAndCredentials(usernameOrEmail: String): ConnectionIO[Option[(User, PasswordAndSalt)]] =
-      if (EmailAddr.isEmailAddr(usernameOrEmail))
-        findDescAndCredentialsByEmail(EmailAddr(usernameOrEmail))
-      else
-        findDescAndCredentialsByUsername(Username(usernameOrEmail))
-
-    private val sqlColsDesc = "id,username,email,roles"
-    private val sqlColsPwdAndSalt = "password,password_salt"
-
-    private case class UserDescAndPasswordInDb(id            : UserId,
-                                                   username      : Option[Username],
-                                                   email         : EmailAddr,
-                                                   rolesStr      : Option[String],
-                                                   hashedPassword: Option[PasswordHash],
-                                                   salt          : Option[Salt]) {
-      def resolve: Option[(User, PasswordAndSalt)] =
-        for {
-          u <- username
-          a <- hashedPassword
-          b <- salt
-          roles = rolesStr.fold(Set.empty[String])(_.split(',').toSet)
-        } yield (User(id, u, email, roles), PasswordAndSalt(a, b))
-    }
-
-    private implicit val doobieCompositeUserDescAndPasswordInDb: Composite[UserDescAndPasswordInDb] =
-      Composite.generic
-
-    private val sqlSelectDescCredByUsername = Query[Username, UserDescAndPasswordInDb](
-      s"SELECT $sqlColsDesc,$sqlColsPwdAndSalt FROM usr WHERE username=?")
-
-    private def findDescAndCredentialsByUsername(username: Username): ConnectionIO[Option[(User, PasswordAndSalt)]] =
-      sqlSelectDescCredByUsername.toQuery0(username).option.map(_.flatMap(_.resolve))
-
-    private val sqlSelectDescCredByEmail = Query[EmailAddr, UserDescAndPasswordInDb](
-      s"SELECT $sqlColsDesc,$sqlColsPwdAndSalt FROM usr WHERE email=? AND password IS NOT NULL")
-
-    private def findDescAndCredentialsByEmail(email: EmailAddr): ConnectionIO[Option[(User, PasswordAndSalt)]] =
-      sqlSelectDescCredByEmail.toQuery0(email).option.map(_.flatMap(_.resolve))
-  }
 
   object project {
     private val sqlSelectOwner = Query[ProjectId, UserId](

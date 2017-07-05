@@ -2,7 +2,7 @@ package shipreq.webapp.server.logic
 
 import java.time.Instant
 import scala.collection.immutable.SortedMap
-import scalaz.\/
+import scalaz.{\/, ~>}
 import shipreq.webapp.base.data.{ProjectMetaData, SecurityToken}
 import shipreq.webapp.base.event.{ActiveEvent, EventOrd, VerifiedEvent}
 import shipreq.webapp.base.hash.HashRec
@@ -72,6 +72,34 @@ object DB {
     def inDbTransaction[A](level: Int, f: F[A]): F[A]
   }
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  trait ForSecurity[F[_]] {
+    def getUserAndPasswordByEmail(email: EmailAddr): F[Option[(User, PasswordAndSalt)]]
+    def getUserAndPasswordByUsername(username: Username): F[Option[(User, PasswordAndSalt)]]
+    def logLoginSuccess(id: UserId, ip: Option[IP]): F[Unit]
+
+    final def getUserAndPassword(usernameOrEmail: String): F[Option[(User, PasswordAndSalt)]] =
+      if (EmailAddr.isEmailAddr(usernameOrEmail))
+        getUserAndPasswordByEmail(EmailAddr(usernameOrEmail))
+      else
+        getUserAndPasswordByUsername(Username(usernameOrEmail))
+
+    final def getUserAndPassword(id: Username \/ EmailAddr): F[Option[(User, PasswordAndSalt)]] =
+      id.fold(getUserAndPasswordByUsername, getUserAndPasswordByEmail)
+  }
+
+  object ForSecurity {
+    def trans[F[_], G[_]](f: ForSecurity[F])(t: F ~> G): ForSecurity[G] =
+      new ForSecurity[G] {
+        override def getUserAndPasswordByEmail(e: EmailAddr)     = t(f.getUserAndPasswordByEmail(e))
+        override def getUserAndPasswordByUsername(u: Username)   = t(f.getUserAndPasswordByUsername(u))
+        override def logLoginSuccess(id: UserId, ip: Option[IP]) = t(f.logLoginSuccess(id, ip))
+      }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   trait ForUserRegistration[F[_]] extends Base[F] {
     def getUserRegistration(e: EmailAddr): F[Option[UserRegistration]]
 
@@ -106,6 +134,7 @@ object DB {
 
   trait ForPublicSpa[F[_]] extends ForUserRegistration[F] with ForPasswordReset[F]
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trait SaveProjectEvent[F[_]] {
     def saveProjectEvent(id    : ProjectId)
                         (ord   : EventOrd,
@@ -123,6 +152,8 @@ object DB {
     def getProjectMetaData (id: ProjectId): F[Option[ProjectMetaData]]
     def getAllProjectEvents(id: ProjectId): F[ProjectEvents]
   }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   trait Algebra[F[_]]
     extends ForPublicSpa[F]

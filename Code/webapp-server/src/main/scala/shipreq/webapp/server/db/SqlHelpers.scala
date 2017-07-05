@@ -21,25 +21,6 @@ object SqlHelpers {
 
   implicit val doobieCompositePasswordAndSalt: Composite[PasswordAndSalt] =
     Composite.generic
-//    Composite[(PasswordHash, Salt)].xmap[PasswordAndSalt](
-//      p => PasswordAndSalt(p._1, p._2),
-//      v => (v.hashedPassword, v.salt.toBase64))
-
-//  implicit val doobieCompositePasswordAndSalt =
-//    Composite[(PasswordHash, String)].xmap[PasswordAndSalt](
-//      p => PasswordAndSalt(p._1, Salt.fromBase64(p._2)),
-//      v => (v.hashedPassword, v.salt.toBase64))
-
-//  implicit val doobieCompositeUserRegistration: Composite[DB.UserRegistration] =
-//    Composite[(PasswordHash, String)].xmap[PasswordAndSalt](
-//      p => PasswordAndSalt(p._1, Salt.fromBase64(p._2)),
-//      v => (v.hashedPassword, v.salt.toBase64))
-
-//  implicit val doobieCompositeUserRegistrationInfo: Composite[DB.UserRegistration] =
-//    Composite.generic
-//
-//  implicit val doobieCompositePasswordResetState: Composite[DB.PasswordResetState] =
-//    Composite.generic
 
   implicit val doobieCompositeUserDescriptor: Composite[User] =
     Composite[(UserId, Username, EmailAddr, Option[String])]

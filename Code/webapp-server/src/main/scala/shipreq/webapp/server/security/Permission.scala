@@ -50,7 +50,7 @@ trait Permission {
   def &(that: Permission): Permission =
     if (this eq that) this else new AndPermission(this, that)
 
-  final def using(user   : Option[User]     = Global.security.loggedInUser(),
+  final def using(user   : Option[User]     = Global.securityImpure.loggedInUser(),
                   project: Option[ProjectId.AndOwner] = None) =
     new Checker(Ctx(user, project), this)
 

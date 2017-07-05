@@ -8,6 +8,8 @@ object Security {
 
   trait Algebra[F[_]] {
 
+    val db: DB.ForSecurity[F]
+
     /** Protects a vulnerable action from external attacks.
       *
       * A vulnerable action could be logging in, requesting a password reset, checking the validity of a security token.

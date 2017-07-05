@@ -4,8 +4,8 @@ import java.time.Instant
 import utest._
 import shipreq.webapp.base.data.{Project, StaticField}
 import shipreq.webapp.base.event.FieldStaticRemove
-import shipreq.webapp.server.app.{Global, Interpreters}
-import shipreq.webapp.server.db.DbLogic
+import shipreq.webapp.server.app.Global
+import shipreq.webapp.server.db.DbInterpreter
 import shipreq.webapp.server.logic.{HomeSpaLogic, ProjectId}
 import shipreq.webapp.server.test.WebappServerTestUtil._
 import shipreq.webapp.server.test._
@@ -19,7 +19,7 @@ object HomeSpaTest extends TestSuite {
       def test(name: String): Unit =
         UserFixture.Transaction.runNow { uf =>
           import uf.xa
-          implicit val db = Interpreters.dbAlgebra(Global.config)
+          implicit val db = new DbInterpreter()(Global.config)
           val uid = uf.user1.id
 
           // Confirm starting empty

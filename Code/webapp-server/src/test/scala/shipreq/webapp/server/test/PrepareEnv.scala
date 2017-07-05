@@ -23,10 +23,11 @@ object PrepareEnv {
   }
 
   Global.Instance = Global(
-    config  = cfg.server,
-    db      = null,
-    logic   = null,
-    taskman = null)
+    config   = cfg.server,
+    db       = null,
+    logic    = null,
+    security = null,
+    taskman  = null)
 
   def global() = Global.Instance
 

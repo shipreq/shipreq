@@ -11,7 +11,6 @@ import org.apache.shiro.util.ByteSource
 import shipreq.base.util.{Allow, Deny}
 import shipreq.webapp.base.user.{PlainTextPassword, User}
 import shipreq.webapp.server.app.Global
-import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.logic.{PasswordAndSalt, PasswordHash, Salt}
 import shipreq.webapp.server.security.AppSecurityRealm._
 
@@ -20,7 +19,7 @@ import shipreq.webapp.server.security.AppSecurityRealm._
  *
  * @since 25/06/2013
  */
-class AppSecurityRealm extends AuthenticatingRealm {
+final class AppSecurityRealm extends AuthenticatingRealm {
 
   override protected def doGetAuthenticationInfo(token: AuthenticationToken) = {
     // Parse input
@@ -28,8 +27,9 @@ class AppSecurityRealm extends AuthenticatingRealm {
     val usernameOrEmail = userPassToken.getUsername
 
     // Query database
-    val result = Global.db.io.trans(DbLogic.user.findDescAndCredentials(usernameOrEmail)).unsafePerformIO()
-    if (result.isEmpty) throw new UnknownAccountException("No account found for [" + usernameOrEmail + "]")
+    val result = Global.security.db.getUserAndPassword(usernameOrEmail).unsafePerformIO()
+    if (result.isEmpty)
+      throw new UnknownAccountException("No account found for [" + usernameOrEmail + "]")
     val r = result.get
     val u = r._1
     val ps = r._2

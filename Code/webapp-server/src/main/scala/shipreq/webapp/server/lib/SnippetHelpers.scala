@@ -58,7 +58,7 @@ trait StaticSnippetHelpers extends HasLogger {
 trait SnippetHelpers extends StaticSnippetHelpers with Misc with HasLogger {
 
   @inline final def currentUser(): Option[User] =
-    Global.security.loggedInUser()
+    Global.securityImpure.loggedInUser()
 
   @inline final def currentUserId_!() : UserId =
     currentUser_!().id

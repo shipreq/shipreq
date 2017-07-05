@@ -9,7 +9,7 @@ import shipreq.webapp.server.test.WebappServerTestUtil._
 object ShiroTest extends TestSuite {
 
   def runTest[A](test: UserFixture => A): A =
-    UserFixture.Transaction.runNow(withShiro(test))
+    UserFixture.Session.runNow(withShiro(test))
 
   override def tests = TestSuite {
 

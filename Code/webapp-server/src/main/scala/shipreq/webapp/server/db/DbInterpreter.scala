@@ -53,6 +53,39 @@ object DbInterpreter {
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  object ForSecurity extends DB.ForSecurity[ConnectionIO] {
+    private final def colsUserAndPasswordInfo = "id,username,email,roles,password,password_salt"
+    private final type UserAndPasswordInfo = (UserId, Option[Username], EmailAddr, Option[String], Option[PasswordHash], Option[Salt])
+    private final val parseUserAndPasswordInfo: UserAndPasswordInfo => Option[(User, PasswordAndSalt)] = {
+      case (id, ou, e, or, op, os) =>
+        for {
+          u <- ou
+          p <- op
+          s <- os
+          r = or.fold(Set.empty[String])(_.split(',').toSet)
+        } yield (User(id, u, e, r), PasswordAndSalt(p, s))
+    }
+
+    private final val getUserAndPasswordByEmailSql =
+      Query[EmailAddr, UserAndPasswordInfo](s"SELECT $colsUserAndPasswordInfo FROM usr WHERE email=? AND password IS NOT NULL")
+
+    override final def getUserAndPasswordByEmail(email: EmailAddr): ConnectionIO[Option[(User, PasswordAndSalt)]] =
+      getUserAndPasswordByEmailSql.toQuery0(email).option.map(_.flatMap(parseUserAndPasswordInfo))
+
+    private final val getUserAndPasswordByUsernameSql =
+      Query[Username, UserAndPasswordInfo](s"SELECT $colsUserAndPasswordInfo FROM usr WHERE username=?")
+
+    override final def getUserAndPasswordByUsername(username: Username): ConnectionIO[Option[(User, PasswordAndSalt)]] =
+      getUserAndPasswordByUsernameSql.toQuery0(username).option.map(_.flatMap(parseUserAndPasswordInfo))
+
+    private final val logLoginSuccessSql =
+      Update[(UserId, Option[IP])]("INSERT INTO usr_login_log(usr_id,ip) VALUES(?,?)")
+
+    override final def logLoginSuccess(id: UserId, ip: Option[IP]): ConnectionIO[Unit] =
+      logLoginSuccessSql.toUpdate0((id, ip)).execute
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trait ForPublicSpa extends DB.ForPublicSpa[ConnectionIO] {
     import DB.{PasswordResetState, UserRegistration, UserRegistrationResult}
 
