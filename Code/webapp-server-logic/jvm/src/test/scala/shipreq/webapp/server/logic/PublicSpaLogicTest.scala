@@ -1,6 +1,5 @@
 package shipreq.webapp.server.logic
 
-import java.time.Duration
 import scalaz.{-\/, Name, \/, \/-}
 import utest._
 import shipreq.base.util._
@@ -39,14 +38,6 @@ object PublicSpaLogicTest extends TestSuite {
     def runResetPassword1 (i: ResetPassword.Fn1 .Input): ResetPassword.Fn1 .Response = assertProtected(svr.run(initData.resetPassword1)(i))
     def runResetPassword2A(i: ResetPassword.Fn2A.Input): ResetPassword.Fn2A.Response = assertProtected(svr.run(initData.resetPassword2A)(i))
     def runResetPassword2B(i: ResetPassword.Fn2B.Input): ResetPassword.Fn2B.Response = assertProtected(svr.run(initData.resetPassword2B)(i))
-
-    val user2password = PlainTextPassword("blurp12345")
-    val user2 = MockDb.UserEntry(
-      UserId(7),
-      Username("blurp"),
-      EmailAddr("blurp@bar.com"),
-      security.hashPassword(user2password).value,
-      svr.clock minus Duration.ofDays(5))
 
     db.users ::= user2
   }

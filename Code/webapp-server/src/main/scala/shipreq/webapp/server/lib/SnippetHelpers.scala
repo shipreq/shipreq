@@ -5,8 +5,9 @@ import net.liftweb.json.{NoTypeHints, Serialization, Serializer}
 import scala.xml.NodeSeq
 import shipreq.base.util.Url
 import shipreq.base.util.log.HasLogger
+import shipreq.webapp.base.PublicUrls
 import shipreq.webapp.base.user._
-import shipreq.webapp.server.app.{AppSiteMap, Global}
+import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.util.HttpResponses.ShouldNeverHappenResponse
 import shipreq.webapp.server.util.JsExt._
 
@@ -40,9 +41,11 @@ trait StaticSnippetHelpers extends HasLogger {
   def respondImmediately(response: LiftResponse): Nothing =
     throw ResponseShortcutException.shortcutResponse(response)
 
-  def redirectHome()               : Nothing = respondImmediately(AppSiteMap.redirectHome)
-  def redirectToLogin()            : Nothing = respondImmediately(AppSiteMap.redirectToLogin)
-  def redirectTo(url: Url.Relative): Nothing = S.redirectTo(url.relativeUrl)
+  def redirectToLogin(): Nothing =
+    redirectTo(PublicUrls.login)
+
+  def redirectTo(url: Url.Relative): Nothing =
+    S.redirectTo(url.relativeUrl)
 
   def shouldNeverHappen_! : Nothing =
     respondImmediately(ShouldNeverHappenResponse) // TODO do more! notify Taskman! etc

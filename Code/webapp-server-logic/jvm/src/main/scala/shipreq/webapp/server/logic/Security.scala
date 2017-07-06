@@ -24,6 +24,12 @@ object Security {
     def attemptLogin(user: Username \/ EmailAddr, password: PlainTextPassword): F[Option[User]]
 
     def hashPassword(p: PlainTextPassword): F[PasswordAndSalt]
+
+    val isAuthenticated: F[Boolean]
+
+    val authenticatedUser: F[Option[User]]
+
+    val logout: F[Unit]
   }
 
 }

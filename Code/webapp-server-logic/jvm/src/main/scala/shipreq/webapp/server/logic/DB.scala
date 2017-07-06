@@ -80,6 +80,7 @@ object DB {
     def getUserAndPasswordByEmail(email: EmailAddr): F[Option[(User, PasswordAndSalt)]]
     def getUserAndPasswordByUsername(username: Username): F[Option[(User, PasswordAndSalt)]]
     def logLoginSuccess(id: UserId, ip: Option[IP]): F[Unit]
+    def getProjectOwner(id: ProjectId): F[Option[UserId]]
 
     final def getUserAndPassword(usernameOrEmail: String): F[Option[(User, PasswordAndSalt)]] =
       if (EmailAddr.isEmailAddr(usernameOrEmail))
@@ -97,6 +98,7 @@ object DB {
         override def getUserAndPasswordByEmail(e: EmailAddr)     = t(f.getUserAndPasswordByEmail(e))
         override def getUserAndPasswordByUsername(u: Username)   = t(f.getUserAndPasswordByUsername(u))
         override def logLoginSuccess(id: UserId, ip: Option[IP]) = t(f.logLoginSuccess(id, ip))
+        override def getProjectOwner(id: ProjectId)              = t(f.getProjectOwner(id))
       }
   }
 

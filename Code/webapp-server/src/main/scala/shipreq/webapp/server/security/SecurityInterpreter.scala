@@ -3,7 +3,7 @@ package shipreq.webapp.server.security
 import org.apache.shiro.authc.AuthenticationException
 import scalaz.syntax.monad._
 import scalaz.{Monad, \/}
-import shipreq.webapp.base.user.{EmailAddr, PlainTextPassword, Username}
+import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.logic.{DB, PasswordAndSalt, Security}
 
@@ -37,4 +37,13 @@ final class SecurityInterpreter[F[_]](implicit F     : Monad[F],
 
   override def hashPassword(p: PlainTextPassword): F[PasswordAndSalt] =
     F.point(hashFn(p))
+
+  override val isAuthenticated: F[Boolean] =
+    F.point(AppSecurityRealm.isAuthenticated())
+
+  override val authenticatedUser: F[Option[User]] =
+    F.point(AppSecurityRealm.authenticatedUser())
+
+  override val logout: F[Unit] =
+    F.point(AppSecurityRealm.logout())
 }

@@ -17,7 +17,7 @@ import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.server.ServerConfig
 
 object MockDb {
-  final case class UserEntry(userId       : UserId,
+  final case class UserEntry(id           : UserId,
                              username     : Username,
                              emailAddr    : EmailAddr,
                              ps           : PasswordAndSalt,
@@ -27,10 +27,13 @@ object MockDb {
       -\/(username) :: \/-(emailAddr) :: Nil
 
     def toUser: User =
-      User(userId, username, emailAddr, Set.empty)
+      User(id, username, emailAddr, Set.empty)
 
     def toUserAndPassword: (User, PasswordAndSalt) =
       (toUser, ps)
+  }
+  object UserEntry {
+    implicit def univEq: UnivEq[UserEntry] = UnivEq.derive
   }
 
   final case class ProjectEntry(projectId    : ProjectId,
@@ -98,7 +101,7 @@ final class MockDb(now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecur
 
   override def getUserRegistration(e: EmailAddr) = Name[Option[DB.UserRegistration]] {
     userPlaceholders.get(e) orElse
-      getUser(\/-(e)).map(x => DB.UserRegistration.Complete(x.userId, x.createdAt))
+      getUser(\/-(e)).map(x => DB.UserRegistration.Complete(x.id, x.createdAt))
   }
 
   override def updateUserRegistrationToken(id: UserId) =
@@ -131,7 +134,7 @@ final class MockDb(now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecur
 
   def updateUser(id: UserId, f: MockDb.UserEntry => MockDb.UserEntry): Option[MockDb.UserEntry] = {
     var r = Option.empty[MockDb.UserEntry]
-    updateUser(_.userId ==* id, u => {
+    updateUser(_.id ==* id, u => {
       val u2 = f(u)
       r = Some(u2)
       u2
@@ -158,7 +161,7 @@ final class MockDb(now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecur
   override def getPasswordResetState(u: Username \/ EmailAddr) = Name[Option[(EmailAddr, DB.PasswordResetState)]] {
     getUserOrPlaceholder(u) map {
       case \/-(e) =>
-        val u = DB.UserRegistration.Complete(e.userId, e.createdAt)
+        val u = DB.UserRegistration.Complete(e.id, e.createdAt)
         val s = e.resetPassword match {
           case Some((t, i)) => DB.PasswordResetState.TokenExists(u, t, i)
           case None         => DB.PasswordResetState.NoToken(u)
@@ -200,6 +203,10 @@ final class MockDb(now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecur
     val now = Instant.now()
     val mde = MockDb.ProjectEntry(projectId, userId, ves, now, Some(now))
     projects = projects.add(mde)
+  }
+
+  override def getProjectOwner(id: ProjectId) = Name[Option[UserId]] {
+    projects.get(id).map(_.userId)
   }
 
   override def createEmptyProject(id: UserId) = Name[ProjectId] {
@@ -384,6 +391,10 @@ final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name]
 
   def mkPasswordAndSalt(p: PlainTextPassword, salt: Salt): PasswordAndSalt =
     PasswordAndSalt(PasswordHash(s"${salt.base64}:${p.value}"), salt)
+
+  override val isAuthenticated   = Name(loggedIn.isDefined)
+  override val authenticatedUser = Name(loggedIn.map(_.toUser))
+  override val logout            = Name(loggedIn = None)
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -413,6 +424,22 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
   implicit val security   = new MockSecurity(db)
   implicit val taskman    = new MockTaskman
   implicit val nameToName = NaturalTransformation.refl[Name]
+
+  val user2password = PlainTextPassword("blurp12345")
+  lazy val user2 = MockDb.UserEntry(
+    UserId(2),
+    Username("blurp"),
+    EmailAddr("blurp@bar.com"),
+    security.hashPassword(user2password).value,
+    svr.clock minus Duration.ofDays(50))
+
+  val user3password = PlainTextPassword("user3secret")
+  lazy val user3 = MockDb.UserEntry(
+    UserId(3),
+    Username("user3"),
+    EmailAddr("u3@test.com"),
+    security.hashPassword(user3password).value,
+    svr.clock minus Duration.ofDays(2))
 
   def assertProtected[A](a: => A): A =
     assertDifference("Protected actions", security.protectedActions)(1)(a)

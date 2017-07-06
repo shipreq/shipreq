@@ -89,8 +89,8 @@ class Boot {
     // Customise URL paths for built-in resources & AJAX requests
     LiftRules.liftContextRelativePath = WebappConfig.liftPath
 
-    // Register route whitelist
-    LiftRules.setSiteMap(AppSiteMap.sitemap)
+    // Register routes
+    LiftRules.dispatch.append((new LiftDispatcher).dispatchPF)
 
     // Force requests to be UTF-8
     LiftRules.early.append(_ setCharacterEncoding "UTF-8")

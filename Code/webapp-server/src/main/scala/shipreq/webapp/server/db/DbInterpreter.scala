@@ -43,16 +43,6 @@ final class DbInterpreter(implicit config: ServerConfig)
 object DbInterpreter {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  trait Base extends DB.Base[ConnectionIO] {
-
-    override final def inDbTransaction[A](f: ConnectionIO[A]): ConnectionIO[A] =
-      f.inTransaction
-
-    override final def inDbTransaction[A](level: Int, f: ConnectionIO[A]): ConnectionIO[A] =
-      f.inTransaction.withTransactionLevel(level)
-  }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object ForSecurity extends DB.ForSecurity[ConnectionIO] {
     private final def colsUserAndPasswordInfo = "id,username,email,roles,password,password_salt"
     private final type UserAndPasswordInfo = (UserId, Option[Username], EmailAddr, Option[String], Option[PasswordHash], Option[Salt])
@@ -83,6 +73,12 @@ object DbInterpreter {
 
     override final def logLoginSuccess(id: UserId, ip: Option[IP]): ConnectionIO[Unit] =
       logLoginSuccessSql.toUpdate0((id, ip)).execute
+
+    private final val getProjectOwnerSql =
+      Query[ProjectId, UserId]("SELECT usr_id FROM project WHERE id=?")
+
+    override final def getProjectOwner(id: ProjectId): ConnectionIO[Option[UserId]] =
+      getProjectOwnerSql.toQuery0(id).option
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -385,5 +381,15 @@ object DbInterpreter {
 
       }).inTransaction
     }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  trait Base extends DB.Base[ConnectionIO] {
+
+    override final def inDbTransaction[A](f: ConnectionIO[A]): ConnectionIO[A] =
+      f.inTransaction
+
+    override final def inDbTransaction[A](level: Int, f: ConnectionIO[A]): ConnectionIO[A] =
+      f.inTransaction.withTransactionLevel(level)
   }
 }

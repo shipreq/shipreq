@@ -29,14 +29,14 @@ object Url {
     /** Represents `/prefix/<A>`; the param is always last */
     final class Param1[-A] private[Relative](val prefix: Relative, val suffix: A => String) {
 
-      private val pre =
+      val prefixNoHeadSlash: String =
         if (prefix.isRoot)
           ""
         else
           prefix.relativeUrlNoHeadOrTailSlash + "/"
 
       def apply(a: A): Relative =
-        new Relative(pre + suffix(a))
+        new Relative(prefixNoHeadSlash + suffix(a))
     }
   }
 

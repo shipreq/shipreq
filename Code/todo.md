@@ -99,11 +99,18 @@ Phase 2 (dev)
   * Clean up db package, remove DbLogic
   * Split Interpreters file, probably into packages
   * Tests and/or laws for server logic - test impls
-  * Remove sitemap
-  * Move member auth checks into server logic
-  * Remove WS .security.Permission{,s}
   * Re-enable the disabled DB tests
+  * Handle user being logged in in PublicSpa
 
+  * Have Home/Project SPAs get the current user themselves
+  * On auth fail, redirect back after login
+  * Set Lift titles in Dispatcher
+  * Restore route: AdminStats
+  * Restore route: DiagnosticEndpoints.Endpoints
+  * Confirm project SPA works (cos it needs a param)
+  * Restore /x
+  * Restore /bc ?
+  * Remove SessionStats
 
 ### New Features
 * User profile page

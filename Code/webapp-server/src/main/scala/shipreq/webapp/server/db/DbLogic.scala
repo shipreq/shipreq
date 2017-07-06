@@ -3,21 +3,8 @@ package shipreq.webapp.server.db
 import doobie.imports._
 import java.time.Instant
 import shipreq.base.db.SqlHelpers._
-import shipreq.webapp.base.user._
-import shipreq.webapp.server.db.SqlHelpers._
-import shipreq.webapp.server.logic._
 
 object DbLogic {
-
-  object project {
-    private val sqlSelectOwner = Query[ProjectId, UserId](
-      "SELECT usr_id FROM project WHERE id=?")
-
-    def findOwner(id: ProjectId): ConnectionIO[Option[UserId]] =
-      sqlSelectOwner.toQuery0(id).option
-  }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object admin {
 
     val diagSelectNow: ConnectionIO[Instant] =

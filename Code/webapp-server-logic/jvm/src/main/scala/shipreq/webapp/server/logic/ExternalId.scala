@@ -1,6 +1,7 @@
 package shipreq.webapp.server.logic
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.BaseX
 import shipreq.webapp.base.data.{ExternalId => XId}
 
@@ -32,7 +33,7 @@ object ExternalId {
       XId(base62 encode x)
     }
 
-    private def parse(external: String): Id = {
+    private def _parse(external: String): Id = {
       val y = base62.decode(external)
       var (a, b) = splitLong(y)
       b = shuffleBitsRestore(b)
@@ -44,7 +45,10 @@ object ExternalId {
       ExternalIdRegex.matcher(str).matches
 
     def parseOption(ext: String): Option[Id] =
-      Option.when(isValidExternalId(ext))(parse(ext))
+      Option.when(isValidExternalId(ext))(_parse(ext))
+
+    val parse: String => String \/ Id =
+      ext => if (isValidExternalId(ext)) \/-(_parse(ext)) else -\/(ext)
   }
 
   private object Internal {
