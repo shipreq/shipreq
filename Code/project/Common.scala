@@ -43,19 +43,6 @@ object Common {
 
   def javacFlags = Seq("-target", targetJdk, "-source", targetJdk)
 
-  def getMethod(loader: ClassLoader, className: String, methodName: String): Option[java.lang.reflect.Method] =
-    try {
-      Option(loader.loadClass(className).getDeclaredMethod(methodName))
-    } catch {
-      case  _: Throwable => None
-    }
-
-  def shutdownTestDb(loader: ClassLoader): Unit = {
-    getMethod(loader, "shipreq.base.test.db.TestDb",          "shutdown").foreach(_ invoke null)
-    getMethod(loader, "shipreq.webapp.server.test.TestDb",    "shutdown").foreach(_ invoke null)
-    getMethod(loader, "shipreq.webapp.server.test.TestJetty", "shutdown").foreach(_ invoke null)
-  }
-
   val redirectTargetDir: File => File =
     System.getenv(if (releaseMode) "SHIPREQ_RELEASE_TARGET" else "SHIPREQ_TARGET") match {
       case null | "" => identity
@@ -155,14 +142,37 @@ object Common {
   /** Common settings used by standard modules - not benchmarks, not test modules */
   private def settings: Project => Project =
     _.configure(settingsMin)
-      .settings(
-        scalacOptions in Test ++= scalacTestFlags,
-        testOptions   in Test  += Tests.Cleanup(shutdownTestDb(_)))
-      .configure(
-        debugOrRelease(debugSettings, optimisationSettings))
+      .settings(scalacOptions in Test ++= scalacTestFlags)
+      .configure(debugOrRelease(debugSettings, optimisationSettings))
 
   lazy val jvmSettings: Project => Project =
     _.configure(settings, InBrowserTesting.jvm)
+      .settings(testOptions in Test += Tests.Cleanup(shutdownTestDb(_)))
+
+  /** This doesn't work when fork := true */
+  def shutdownTestDb(loader: ClassLoader): Unit = {
+    def invoke(objectName: String, methodName: String): Unit = {
+      import scala.util.Try
+      def Try2[A](a: => A) = {
+        val t = Try(a)
+//          println(t)
+        t
+      }
+      for {
+        objC <- Try2(loader.loadClass(objectName + "$"))
+        clsC <- Try2(loader.loadClass(objectName))
+        objM <- Try2(objC.getField("MODULE$"))
+        clsM <- Try2(clsC.getDeclaredMethod(methodName))
+        objI <- Try2(objM.get(null))
+        _    <- Try2(clsM.invoke(objI))
+      } yield ()
+    }
+
+    invoke("shipreq.webapp.server.test.LiveTestUtils", "shutdown")
+    invoke("shipreq.webapp.server.test.TestJetty",     "shutdown")
+    invoke("shipreq.webapp.server.test.TestDb",        "shutdown")
+    invoke("shipreq.base.test.db.TestDb",              "shutdown")
+  }
 
   def jsSettings(t: JsTestType): Project => Project =
     _.configure(
@@ -190,11 +200,8 @@ object Common {
         .withCheckScalaJSIR(true)))
 
   lazy val testModuleSettings = (p: Project) => settingsMin(p)
-    .settings(
-      scalacOptions      ++= scalacTestFlags,
-      testOptions in Test += Tests.Cleanup(shutdownTestDb(_)))
-    .configure(
-      debugOrRelease(debugSettings, identity))
+    .settings(scalacOptions ++= scalacTestFlags)
+    .configure(debugOrRelease(debugSettings, identity))
 
   lazy val macroModuleSettings = (p: Project) => settingsMin(p)
     .configure(
