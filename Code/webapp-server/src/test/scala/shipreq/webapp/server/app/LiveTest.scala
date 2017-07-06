@@ -3,6 +3,7 @@ package shipreq.webapp.server.app
 import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.{AssetManifest, MemberUrls, WebappConfig}
+import shipreq.webapp.base.WebappConfig.liftPath
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.server.logic.ProjectId
@@ -31,13 +32,19 @@ object LiveTest extends TestSuite {
       ()
     }
 
-    'liftAjax {
+    'liftAjaxGet {
       val root = get("/")
-      val ajaxUrl = s"/${WebappConfig.liftPath}/[a-zA-Z0-9_/]+\\.js".r.findFirstIn(root.bodyString) getOrElse fail(s"Lift Ajax not found in: ${root.bodyString}")
+      val ajaxUrl = s"/$liftPath/[a-zA-Z0-9_/]+\\.js".r.findFirstIn(root.bodyString) getOrElse fail(s"Lift Ajax not found in: ${root.bodyString}")
       get(ajaxUrl, headers = retainSession(root))
         .assertOk
         .assertContentTypeJs
         .assertBodyContains("lift_settings")
+      ()
+    }
+
+    'liftAjaxPost {
+      post(s"/$liftPath/ajax/F376706514629MSACC4")
+        .assertStatus(404) // Lift responds with 404, DispatcherLogic will respond with 405 if it catches it
       ()
     }
 
@@ -79,7 +86,7 @@ object LiveTest extends TestSuite {
 
     // ensure we don't block these (and other Lift stuff we don't know about)
     'contentSecurityPolicyReport {
-      get(s"/${WebappConfig.liftPath}/content-security-policy-report")
+      get(s"/$liftPath/content-security-policy-report")
         .assertBodyContains("content security policy report")
       ()
     }

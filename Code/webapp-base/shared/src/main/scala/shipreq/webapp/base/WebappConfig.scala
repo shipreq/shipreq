@@ -5,7 +5,7 @@ object WebappConfig {
   val appName = "ShipReq"
 
   /** The URL path under which AJAX requests are serviced. */
-  val liftPath = "L"
+  final val liftPath = "L"
 
   /** Passwords' min & max lengths. */
   val passwordLength = 8 to 128

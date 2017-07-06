@@ -7,7 +7,7 @@ import net.liftweb.util.Props
 import scala.xml.NodeSeq
 import scalaz.effect.IO
 import shipreq.base.util.Url
-import shipreq.webapp.base.MemberUrls
+import shipreq.webapp.base.{MemberUrls, WebappConfig}
 import shipreq.webapp.server.logic.DispatchLogic
 import shipreq.webapp.server.snippet.ProjectSpa.ProjectIdVar
 
@@ -20,8 +20,18 @@ object LiftDispatcher {
 final class LiftDispatcher(global: Global) {
   import LiftDispatcher._
 
+  private[this] final val liftPathPart = WebappConfig.liftPath
+
+  @inline private def isLiftRequest(r: LiftReq): Boolean = {
+    val pp = r.path.partPath
+    pp.nonEmpty && pp.head == liftPathPart
+  }
+
   def dispatchPF: LiftRules.DispatchPF = {
-    case r if r.path.suffix.isEmpty => dispatchLiftReq(r)
+    case r
+      if r.path.suffix.isEmpty // Only handle requests with no file extension
+      && !isLiftRequest(r)     // Exclude requests by/to Lift
+      => dispatchLiftReq(r)
   }
 
   val logic: DispatchLogic[IO] = {
