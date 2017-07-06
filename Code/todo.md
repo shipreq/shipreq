@@ -104,7 +104,6 @@ Phase 2 (dev)
 
   * Have Home/Project SPAs get the current user themselves
   * On auth fail, redirect back after login
-  * Set Lift titles in Dispatcher
   * Restore route: AdminStats
   * Restore route: DiagnosticEndpoints.Endpoints
   * Confirm project SPA works (cos it needs a param)

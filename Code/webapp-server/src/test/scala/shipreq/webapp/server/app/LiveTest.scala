@@ -23,6 +23,7 @@ object LiveTest extends TestSuite {
         .assertOk
         .assertContentTypeHtml
         .assertBodyContains(AssetManifest.webappClientPublicJs)
+        .assertBodyTitle(WebappConfig.makePageTitle())
       ()
     }
 
@@ -63,6 +64,7 @@ object LiveTest extends TestSuite {
         .assertOk
         .assertContentTypeHtml
         .assertBodyContains(AssetManifest.webappClientHomeJs)
+        .assertBodyTitle(WebappConfig.makePageTitle())
       ()
     }
 

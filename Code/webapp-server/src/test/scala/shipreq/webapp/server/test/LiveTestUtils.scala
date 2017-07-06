@@ -84,6 +84,9 @@ object LiveTestUtils {
     def bodyString: String =
       resp.bodyAsString.openOrThrowException(s"Unable to read body from ${resp.body}")
 
+    def bodyTitle: String =
+      "(?<=<title>).*?(?=</title>)".r.findFirstIn(bodyString) getOrElse sys.error(s"Page doesn't have a <title> tag.\n$bodyString")
+
     def redirectedTo: Option[String] =
       resp.headers.get("Location").flatMap(_.headOption)
 
@@ -104,6 +107,7 @@ object LiveTestUtils {
     def assertContentTypeJs                  = assertContentTypeContains("application/javascript")
 
     def assertBodyContains(s: String) = tap(_ => assertContains(bodyString, s))
+    def assertBodyTitle(s: String) = tap2(_.bodyTitle)(assertEq(_, s))
   }
 
   implicit def toLiveTestHttpResponse(a: HttpResponse): LiveTestHttpResponse =
