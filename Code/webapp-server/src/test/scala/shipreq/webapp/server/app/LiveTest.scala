@@ -4,10 +4,20 @@ import utest._
 import shipreq.webapp.base.{AssetManifest, MemberUrls, WebappConfig}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.server.test.LiveTestUtils._
+import shipreq.webapp.server.test._
 
 object LiveTest extends TestSuite {
 
+  import userFixture.{user1, user2}
+
+  val prepare = once {
+    LiveTestUtils.init()
+    userFixture.setup.unsafePerformIO()
+  }
+
   override def tests = TestSuite {
+    prepare()
+
     'root {
       get("/")
         .assertOk
@@ -19,8 +29,7 @@ object LiveTest extends TestSuite {
     'liftAjax {
       val root = get("/")
       val ajaxUrl = s"/${WebappConfig.liftPath}/[a-zA-Z0-9_/]+\\.js".r.findFirstIn(root.bodyString) getOrElse fail(s"Lift Ajax not found in: ${root.bodyString}")
-      val cookie = root.headers.get("Set-Cookie")
-      get(ajaxUrl, headers = cookie.toList.flatten.map(("Cookie", _)))
+      get(ajaxUrl, headers = retainSession(root))
         .assertOk
         .assertContentTypeJs
         .assertBodyContains("lift_settings")
@@ -32,6 +41,7 @@ object LiveTest extends TestSuite {
         .assertOk
         .assertContentTypeJs
         .assertBodyContains("function")
+        .assertBodyContains("public")
       ()
     }
 
@@ -47,5 +57,22 @@ object LiveTest extends TestSuite {
         .assertRedirectTo("/")
       ()
     }
+
+    'membersHome {
+      get(MemberUrls.home.relativeUrl, headers = retainSession(login(user1)))
+        .assertOk
+        .assertContentTypeHtml
+        .assertBodyContains(AssetManifest.webappClientHomeJs)
+      ()
+    }
+
+    // ensure we don't block these
+    'contentSecurityPolicyReport {
+      get(s"/${WebappConfig.liftPath}/content-security-policy-report")
+        .assertBodyContains("content security policy report")
+      ()
+    }
+
+    'teardown - userFixture.teardown.unsafePerformIO()
   }
 }

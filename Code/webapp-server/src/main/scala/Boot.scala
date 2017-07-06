@@ -49,7 +49,7 @@ class Boot {
     Global.Instance = Global.default
 
     // Prepare services
-    initRoutes()
+    initRoutes(Global.Instance)
     initTaskman(Global.Instance)
   }
 
@@ -152,8 +152,8 @@ class Boot {
         }))
         .unsafePerformIO()
 
-  def initRoutes(): Unit = {
+  def initRoutes(g: Global): Unit = {
     // (Must be done after Global is ready)
-    LiftRules.dispatch.append((new LiftDispatcher).dispatchPF)
+    LiftRules.dispatch.append(new LiftDispatcher(g).dispatchPF)
   }
 }

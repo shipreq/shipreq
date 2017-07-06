@@ -7,16 +7,22 @@ import scalaz.syntax.monad._
 import shipreq.base.util._
 import shipreq.webapp.base.{MemberUrls, PublicUrls}
 import shipreq.webapp.base.data.{ExternalId => XId}
-import shipreq.webapp.base.user.User
+import shipreq.webapp.base.user.{PlainTextPassword, User, Username}
 
 object DispatchLogic {
 
   /** A request to the server.
     *
-    * @param get_? Is the request method GET?
     * @param path Does *NOT* include query params
     */
-  final case class Request(get_? : Boolean, path: Url.Relative)
+  final case class Request(method: Method, path: Url.Relative, param: String => Option[String])
+
+  sealed abstract class Method
+  object Method {
+    case object Get   extends Method
+    case object Post  extends Method
+    case object Other extends Method
+  }
 
   sealed trait Response
   object Response {
@@ -29,6 +35,7 @@ object DispatchLogic {
     }
     case object MethodNotAllowed extends Response
     final case class Redirect(dest: Url.Relative) extends Response
+    final case class StatusOnly(status: Int) extends Response
 
     implicit def univEq: UnivEq[Response] = UnivEq.derive
 
@@ -73,44 +80,59 @@ object DispatchLogic {
       }
     }
   }
+
+  /** For tests only. Not meant for production */
+  val loginApiUrl = Url.Relative("/api/login")
 }
 
 final class DispatchLogic[F[_]](implicit F: Monad[F], security: Security.Algebra[F]) {
-  import DispatchLogic.{Request, Response}
+  import DispatchLogic.{Method, Request, Response}
+  import Method._
   import Response._
 
   type Route = Request ?=> F[Response]
 
-  private type FResp = F[Response]
-  private type Cond = FResp => Route
+  private type FR = F[Response]
 
-  private val fRedirectToPublicHome: FResp = F pure redirectToPublicHome
-  private val fRedirectToLogin     : FResp = F pure redirectToLogin
-  private val fMethodNotAllowed    : FResp = F pure MethodNotAllowed
+  private val fRedirectToPublicHome: FR = F pure redirectToPublicHome
+  private val fRedirectToLogin     : FR = F pure redirectToLogin
+  private val fMethodNotAllowed    : FR = F pure MethodNotAllowed
 
-  private def getOnly(cond: Request => Boolean): Cond =
-    resp => FnWithFallback.when(cond)(req => if (req.get_?) resp else fMethodNotAllowed)
+  private def onMethod(m: Method, resp: FR): Request => FR =
+    req => if (req.method eq m) resp else fMethodNotAllowed
 
-  private def needAuth(resp: Response): FResp =
+  private def onMethod(m: Method)(f: Request => FR): Request => FR =
+    req => if (req.method eq m) f(req) else fMethodNotAllowed
+
+  private def onGet(resp: FR)        : Request => FR = onMethod(Get, resp)
+  private def onGet(f: Request => FR): Request => FR = onMethod(Get)(f)
+
+  // Occasional type inference problem
+  @inline private def when(cond: Request => Boolean)(ok: Request => FR): Route = FnWithFallback.when(cond)(ok)
+
+  private def whenUrl(url: Url.Relative, ok: Request => FR): Route =
+    when(_.path ==* url)(ok)
+
+  private def needAuth(resp: Response): FR =
     security.isAuthenticated.map(auth => if (auth) resp else redirectToLogin)
 
-  private def needAuth(resp: FResp): FResp =
+  private def needAuth(resp: FR): FR =
     security.isAuthenticated.flatMap(auth => if (auth) resp else fRedirectToLogin)
 
-  private def needAuth(f: User => FResp): FResp =
+  private def needAuth(f: User => FR): FR =
     security.authenticatedUser.flatMap(_.fold(fRedirectToLogin)(f))
 
-  private def staticUrl(url: Url.Relative): Cond =
-    getOnly(_.path ==* url)
+  private def get(url: Url.Relative, resp: FR): Route =
+    whenUrl(url, onGet(resp))
 
-  private def spa(root: Url.Relative): Cond =
-    getOnly(DispatchLogic.spaTest(root))
+  private def spa(root: Url.Relative): FR => Route =
+    fr => when(DispatchLogic.spaTest(root))(onGet(fr))
 
   private def spaId[T, I](url: Url.Relative.Param1[XId[T]])
                          (scheme: ExternalId.Scheme[T, I])
-                         (response: String \/ I => FResp): Route =
+                         (response: String \/ I => FR): Route =
     FnWithFallback.extract(DispatchLogic.spaTest1(url))(
-      req => str => if (req.get_?) response(scheme.parse(str)) else fMethodNotAllowed)
+      req => str => onGet(response(scheme.parse(str)))(req))
 
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -140,14 +162,33 @@ final class DispatchLogic[F[_]](implicit F: Monad[F], security: Security.Algebra
     }
 
   val logout: Route =
-    staticUrl(MemberUrls.logout)(
+    get(MemberUrls.logout,
       security.logout >| redirectToPublicHome)
+
+  val main: Request ?=> F[Response] =
+    publicSpa | memberHomeSpa | projectSpa | logout
+
+  val fallback: Request => F[Response] =
+    onGet(fRedirectToPublicHome)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  val partial: Request ?=> F[Response] =
-    publicSpa | memberHomeSpa | projectSpa | logout
+  /** For tests only. Not meant for production */
+  val loginApi: Route =
+    whenUrl(DispatchLogic.loginApiUrl,
+      onMethod(Post) { req =>
 
-  val all: Request => F[Response] =
-    partial.withFallback(r => if (r.get_?) fRedirectToPublicHome else fMethodNotAllowed)
+        val credentials = for {
+          u <- req.param("user")
+          p <- req.param("pass")
+        } yield (Username.orEmail(u), PlainTextPassword(p))
+
+        credentials match {
+          case Some((u, p)) => security.protect(security.attemptLogin(u, p).map {
+            case Some(_) => StatusOnly(200)
+            case None    => StatusOnly(401)
+          })
+          case None => F pure StatusOnly(400)
+        }
+      })
 }

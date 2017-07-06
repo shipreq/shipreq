@@ -3,6 +3,7 @@ package shipreq.webapp.server.test
 import net.liftweb.http.testing._
 import org.apache.commons.httpclient.{HttpClient, HttpMethodBase}
 import shipreq.base.test.BaseTestUtil._
+import shipreq.webapp.server.logic.DispatchLogic
 
 /**
  * A test case that requires connectivity to a running Jetty instance.
@@ -17,8 +18,8 @@ object LiveTestUtils {
     PrepareEnv.routes()
     jetty.start()
     _shutdown = once {
-      import Console._
-      println(s"$BLUE_B$BOLD${WHITE}SHUTTING DOWN!$RESET")
+      //import Console._
+      //println(s"$BLUE_B$BOLD${WHITE}SHUTTING DOWN!$RESET")
       jetty.shutdown()
       TestDb.shutdown()
     }
@@ -43,12 +44,39 @@ object LiveTestUtils {
     }
   import testKit.responseCapture
 
+  def newDbConnection() = TestDb.newConnection()
+  lazy val dbUtil = DbUtil(newDbConnection())
+  lazy val userFixture = UserFixture(dbUtil.xa)
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  def get(url: String,
+  def get(url    : String,
           headers: List[(String, String)] = Nil,
-          params: List[(String, String)] = Nil): HttpResponse =
+          params : List[(String, String)] = Nil): HttpResponse =
     testKit.get(url, testKit.theHttpClient, headers, params: _*).asInstanceOf[HttpResponse]
+
+  def post(url    : String,
+           headers: List[(String, String)] = Nil,
+           params : List[(String, String)] = Nil): HttpResponse =
+    testKit.post(url, testKit.theHttpClient, headers, params: _*).asInstanceOf[HttpResponse]
+
+  def login(u: UserFixture.TestUser): HttpResponse =
+    login(u, true)
+
+  def login(id: String, password: String): HttpResponse =
+    login(id, password, true)
+
+  def login(u: UserFixture.TestUser, expectSuccess: Boolean): HttpResponse =
+    login(u.email.value, u.password.value, expectSuccess)
+
+  def login(id: String, password: String, expectSuccess: Boolean): HttpResponse =
+    post(DispatchLogic.loginApiUrl.relativeUrl, params = List("user" -> id, "pass" -> password))
+      .assertStatus(if (expectSuccess) 200 else 401)
+
+  def retainSession(r: HttpResponse): List[(String, String)] =
+      r.headers.getOrElse("Set-Cookie", Nil)
+        .filter(_ contains "JSESSIONID")
+        .map(v => ("Cookie", v.takeWhile(_ != ';')))
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

@@ -44,7 +44,7 @@ object PrepareEnv {
 
   val routes: () => Unit = once {
     db()
-    boot.initRoutes()
+    boot.initRoutes(global())
   }
 
   lazy val dbAlgebra = new DbInterpreter()(global().config)

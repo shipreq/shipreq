@@ -29,6 +29,9 @@ final case class FnWithFallback[A, B](withFallback: (A => B) => A => B) extends 
   def |(next: FnWithFallback[A, B]): A ?=> B =
     FnWithFallback(f => withFallback(next.withFallback(f)))
 
+  def |(next: Option[FnWithFallback[A, B]]): A ?=> B =
+    next.fold(this)(this | _)
+
   def partial(implicit ev: Null <:< B): A => Option[B] = {
     val n = ev(null)
     withFallback(_ => n).andThen(Option(_))

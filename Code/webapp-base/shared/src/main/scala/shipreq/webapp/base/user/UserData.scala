@@ -1,6 +1,7 @@
 package shipreq.webapp.base.user
 
 import japgolly.univeq.UnivEq
+import scalaz.{-\/, \/, \/-}
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 final case class PlainTextPassword(value: String)
@@ -31,6 +32,12 @@ final case class Username(value: String) {
 }
 object Username {
   implicit def univEq: UnivEq[Username] = UnivEq.derive
+
+  def orEmail(usernameOrEmail: String): Username \/ EmailAddr =
+    if (EmailAddr.isEmailAddr(usernameOrEmail))
+      \/-(EmailAddr(usernameOrEmail))
+    else
+      -\/(Username(usernameOrEmail))
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
