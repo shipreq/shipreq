@@ -31,6 +31,7 @@ final class LiftDispatcher(global: Global) {
   private val dispatcher: DispatchLogic.Request => IO[DispatchLogic.Response] =
     ( logic.main
     | Option.when(Props.testMode)(logic.loginApi)
+    | Option.when(Props.devMode)(logic.quickDev).flatten
     ).withFallback(logic.fallback)
 
   private val paramFn: String => Option[String] =

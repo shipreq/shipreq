@@ -107,7 +107,6 @@ Phase 2 (dev)
   * Restore route: AdminStats
   * Restore route: DiagnosticEndpoints.Endpoints
   * Confirm project SPA works (cos it needs a param)
-  * Restore /x
   * Restore /bc ?
   * Remove SessionStats
 

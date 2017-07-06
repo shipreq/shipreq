@@ -7,7 +7,7 @@ import scalaz.syntax.monad._
 import shipreq.base.util._
 import shipreq.webapp.base.{MemberUrls, PublicUrls}
 import shipreq.webapp.base.data.{ExternalId => XId}
-import shipreq.webapp.base.user.{PlainTextPassword, User, Username}
+import shipreq.webapp.base.user._
 
 object DispatchLogic {
 
@@ -83,10 +83,29 @@ object DispatchLogic {
 
   /** For tests only. Not meant for production */
   val loginApiUrl = Url.Relative("/api/login")
+
+  /** For dev only. Not meant for production */
+  val quickDevUrl = Url.Relative("/x")
+  final case class QuickDev(user: Username \/ EmailAddr,
+                            pass: PlainTextPassword,
+                            goto: Url.Relative)
+  object QuickDev {
+    import japgolly.microlibs.config._
+    import japgolly.microlibs.config.ConfigParser.Implicits.Defaults._
+
+    def config =
+      ( Config.need[String]("USER").map(Username.orEmail) |@|
+        Config.need[String]("PASS").map(PlainTextPassword(_)) |@|
+        Config.get [String]("GOTO").map(_.fold(MemberUrls.home)(Url.Relative(_)))
+      )(apply).withPrefix("SHIPREQ_DEV_")
+
+    def get(): Option[QuickDev] =
+      config.run(Props.sources).unsafePerformIO().toDisjunction.toOption
+  }
 }
 
 final class DispatchLogic[F[_]](implicit F: Monad[F], security: Security.Algebra[F]) {
-  import DispatchLogic.{Method, Request, Response}
+  import DispatchLogic._
   import Method._
   import Response._
 
@@ -126,12 +145,12 @@ final class DispatchLogic[F[_]](implicit F: Monad[F], security: Security.Algebra
     whenUrl(url, onGet(resp))
 
   private def spa(root: Url.Relative): FR => Route =
-    fr => when(DispatchLogic.spaTest(root))(onGet(fr))
+    fr => when(spaTest(root))(onGet(fr))
 
   private def spaId[T, I](url: Url.Relative.Param1[XId[T]])
                          (scheme: ExternalId.Scheme[T, I])
                          (response: String \/ I => FR): Route =
-    FnWithFallback.extract(DispatchLogic.spaTest1(url))(
+    FnWithFallback.extract(spaTest1(url))(
       req => str => onGet(response(scheme.parse(str)))(req))
 
 
@@ -175,7 +194,7 @@ final class DispatchLogic[F[_]](implicit F: Monad[F], security: Security.Algebra
 
   /** For tests only. Not meant for production */
   val loginApi: Route =
-    whenUrl(DispatchLogic.loginApiUrl,
+    whenUrl(loginApiUrl,
       onMethod(Post) { req =>
 
         val credentials = for {
@@ -191,4 +210,15 @@ final class DispatchLogic[F[_]](implicit F: Monad[F], security: Security.Algebra
           case None => F pure StatusOnly(400)
         }
       })
+
+  /** For dev only. Not meant for production */
+  val quickDev: Option[Route] =
+    QuickDev.get().map(q =>
+      get(quickDevUrl,
+        security.attemptLogin(q.user, q.pass).map {
+          case Some(_) => Redirect(q.goto)
+          case None    => redirectToLogin
+        }
+      )
+    )
 }

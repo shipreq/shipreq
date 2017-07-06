@@ -10,11 +10,12 @@ Development Environment Setup
 
 1. From SBT: `up`
 2. Open http://localhost:8080/register
-3. Create an account with
-    Email:    japgolly@gmail.com
-    Username: devuser
-    Password: dev123123
-4. Auto login at http://localhost:8080/x (dev-mode only)
+3. Create an account
+4. Add the following env vars to your shell config:
+    * `SHIPREQ_DEV_USER` - Account username or email address
+    * `SHIPREQ_DEV_PASS` - Account password
+    * `SHIPREQ_DEV_GOTO` - (Optional) A relative URL to goto after auto-login
+5. Auto-login with the above credentials at http://localhost:8080/x (dev-mode only)
 
 
 If Taskman runs into trouble, tickets should be raised at http://yoarmum.freshdesk.com/
