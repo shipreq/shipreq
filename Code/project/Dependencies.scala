@@ -27,7 +27,7 @@ object Dependencies {
   }
 
   object Scalaz {
-    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.13")
+    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.14")
     val core       = mm("scalaz-core")
     val effect     = mm("scalaz-effect") ++ core
     val concurrent = mm("scalaz-concurrent") ++ effect
@@ -106,7 +106,7 @@ object Dependencies {
   }
 
   object Lift {
-    private val mm = MultiModule.scala("net.liftweb", "3.0.1")
+    private val mm = MultiModule.scala("net.liftweb", "3.1.0")
     val webkit  = mm("lift-webkit") ++ Scala.all // because it contains lift-json
     val testkit = mm("lift-testkit")
   }
