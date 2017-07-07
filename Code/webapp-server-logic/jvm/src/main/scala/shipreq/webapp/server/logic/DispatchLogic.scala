@@ -154,7 +154,7 @@ final class DispatchLogic[F[_]](implicit F: Monad[F], security: Security.Algebra
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   val publicSpa: Route =
-    PublicUrls.PublicSpaRoute.static
+    PublicUrls.SpaRoute.static
       .map(s => spa(s.url)(F pure ServePublicSpa))
       .reduce(_ | _)
 

@@ -61,7 +61,7 @@ object DispatchLogicTest extends TestSuite {
   override def tests = TestSuite {
 
     'publicSpa {
-      import PublicUrls.PublicSpaRoute._
+      import PublicUrls.SpaRoute._
       'pages0 - static.foreach(p => testRun(Response.ServePublicSpa, p.url))
       'pages1 - needsToken.foreach(p => testRun(Response.ServePublicSpa, p.url(SecurityToken("x"))))
       'nonGet - static.foreach(p => testNonGet(p.url))

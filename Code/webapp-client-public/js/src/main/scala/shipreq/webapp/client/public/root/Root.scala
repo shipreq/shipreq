@@ -3,6 +3,7 @@ package shipreq.webapp.client.public.root
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
+import shipreq.webapp.base.PublicUrls.SpaRoute
 import shipreq.webapp.base.protocol.ClientProtocol
 
 object Root {
@@ -23,7 +24,7 @@ final class Root(cp: ClientProtocol) {
 
       val content: VdomElement =
         p.page match {
-          case Page.LandingPage => LandingPage.Props().render
+          case Page.Static(SpaRoute.Home) => LandingPage.Props().render
         }
 
       Layout.Component(Layout.Props(p.page, p.routerCtl, content))

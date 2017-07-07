@@ -48,13 +48,13 @@ object Layout {
     val left    = <.div(*.headerSides)
     val mid     = <.div(*.headerMid)
     def right   = left
-    val logoImg = <.img(*.headerLogo, ^.src := AssetManifest.shipreqLogoSvg, ^.alt := "Home")
-    val links   = List[Page.Static](Page.Login, Page.Register)
+    val logoImg = <.img(*.headerLogo, ^.src := AssetManifest.shipreqLogoSvg, ^.alt := Page.Home.linkTitle)
+    val links   = List[Page.Static](Page.Login, Page.Register1)
 
     def render(p: Props): VdomElement = {
       val logo =
-        TagMod.unless(p.currentPage ==* Page.LandingPage)(
-          p.routerCtl.link(Page.LandingPage)(logoImg))
+        TagMod.unless(p.currentPage ==* Page.Home)(
+          p.routerCtl.link(Page.Home)(logoImg))
 
       <.header(*.header,
         left(logo),
