@@ -2,11 +2,13 @@ package shipreq.webapp.client.public
 
 import boopickle.Pickler
 import japgolly.univeq.UnivEq
+import monocle.macros.{GenIso, Lenses}
 import scalaz.\/
 import shipreq.base.util._
 import shipreq.webapp.base.CommmonUiText
 import shipreq.webapp.base.data.SecurityToken
 import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.util.TextMod
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.validation._
 import shipreq.webapp.base.validation.Implicits._
@@ -26,9 +28,8 @@ object PublicSpaProtocols {
                              email     : EmailAddr,
                              msg       : Option[String],
                              newsletter: Boolean) {
-
-      def validate: Composite.Invalidity \/ Request =
-        Request.validator((name.value, email.value, msg getOrElse "", newsletter))
+      def untyped: Request.Untyped =
+        Request.Untyped(name.value, email.value, msg getOrElse "", newsletter)
     }
 
     object Request {
@@ -39,13 +40,23 @@ object PublicSpaProtocols {
 
       def validatorName  = UserValidators.personName
       def validatorEmail = UserValidators.emailAddr.unnamed
-      def validatorMsg   = CommonValidation.optionalLargeText
+      def validatorMsg   = CommonValidation.optionalLargeText.mapCorrector(_ prependLive TextMod.maxTwoConsecutiveNewLines.run)
 
-      lazy val validator: Composite.Validator[(String, String, String, Boolean), _, Request] =
+      @Lenses
+      final case class Untyped(name      : String,
+                               email     : String,
+                               msg       : String,
+                               newsletter: Boolean) {
+        def validate: Composite.Invalidity \/ Request =
+          Request.validator(this)
+      }
+
+      lazy val validator: Composite.Validator[Untyped, _, Request] =
         validatorName.named(labelName).named
           .tuple(validatorEmail.named(labelEmail).named)
           .tuple(validatorMsg.named("Your message").named)
           .tuple(Composite.Validator.id[Boolean])
+          .imapInput(GenIso.fields[Untyped])
           .mapValid((Request.apply _).tupled)
     }
 

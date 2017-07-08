@@ -1,8 +1,11 @@
 package shipreq.webapp.base.ui.semantic
 
+import japgolly.scalajs.react.Callback
+import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.dom.html
+import monocle.Lens
 import shipreq.base.util._
+import shipreq.webapp.base.data.On
 
 object Input {
   val Base        = divCls("ui input")
@@ -15,7 +18,7 @@ object Input {
     /** Text input with:
       * - icon inside on the left
       */
-    def icon(icon: VdomTag, input: VdomTagOf[html.Input], validity: Validity = Valid): VdomTag = {
+    def icon(icon: VdomTag, input: VdomTag, validity: Validity = Valid): VdomTag = {
       var r = Base(^.cls := "left icon", input, icon)
       if (validity is Invalid)
         r = r(^.cls := "error")
@@ -26,7 +29,7 @@ object Input {
       * - icon inside on the left
       * - something (usually a button) attached to the right outside
       */
-    def iconAndRightAction(icon: VdomTag, input: VdomTagOf[html.Input], right: TagMod, validity: Validity = Valid): VdomTag = {
+    def iconAndRightAction(icon: VdomTag, input: VdomTag, right: TagMod, validity: Validity = Valid): VdomTag = {
       var r = Base(^.cls := "left icon right action", icon, input, right)
       if (validity is Invalid)
         r = r(^.cls := "error")
@@ -41,9 +44,24 @@ object Input {
 
   object Checkbox {
 
-    def apply(input: TagMod, label: TagMod): VdomTag =
+    def apply(on: On,
+              change: On => Callback,
+              label: TagMod): VdomTag = {
+      val toggle = change(!on)
       <.div(^.cls := "ui checkbox",
-        <.input.checkbox(^.tabIndex := 0, ^.cls := "hidden", input),
-        <.label(label))
+        <.input.checkbox(^.checked := on.is(On), ^.onChange --> toggle),
+        <.label(^.cursor.pointer, ^.onClick --> toggle, label))
+    }
+
+    /** Note: DO NOT use this with Reusability.
+      * StateSnapshot + Lens + Reusability = NO!
+      */
+    def fromStateSnapshot[S](lens: Lens[S, Boolean],
+                             ss: StateSnapshot[S],
+                             label: TagMod): VdomTag =
+      apply(
+        On when lens.get(ss.value),
+        v => ss.modState(lens set v.is(On)),
+        label)
   }
 }

@@ -1,8 +1,12 @@
 package shipreq.webapp.client.public.root
 
-final case class State()
+import monocle.macros.Lenses
+import shipreq.webapp.client.public.pages._
+
+@Lenses
+final case class State(landingPage: LandingPage.State)
 
 object State {
   def init: State =
-    State()
+    State(LandingPage.State.init)
 }

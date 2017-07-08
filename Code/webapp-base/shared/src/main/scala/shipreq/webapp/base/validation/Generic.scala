@@ -95,6 +95,12 @@ object Generic {
     def applyAndUncorrect(i: I): I =
       uncorrect(apply(i))
 
+    def prependLive(f: I => I): Corrector[I, C] =
+      copy(live = live compose f)
+
+    def appendLive(f: I => I): Corrector[I, C] =
+      copy(live = f compose live)
+
     def xmapInput[A](g: I => A)(f: A => I): Corrector[A, C] =
       Corrector(
         g compose live compose f,

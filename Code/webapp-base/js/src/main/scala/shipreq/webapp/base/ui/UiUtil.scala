@@ -1,0 +1,22 @@
+package shipreq.webapp.base.ui
+
+import japgolly.microlibs.stdlib_ext.MutableArray
+import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.scalajs.react.vdom.html_<^._
+import scalaz.\/
+import shipreq.webapp.base.validation.Simple
+
+object UiUtil {
+
+  def renderSimpleInvalidity(d: Simple.Invalidity \/ Any): Option[VdomElement] =
+    d.fold(i => Some(renderSimpleInvalidity(i)), _ => None)
+
+  def renderSimpleInvalidity(i: Simple.Invalidity): VdomElement = {
+    def render1(err: String): VdomTag = <.span(err)
+    if (i.tail.isEmpty)
+      render1(i.head)
+    else
+      <.div(MutableArray(i.whole).sort.iterator.map(render1).intersperse(<.br).toTagMod)
+  }
+
+}

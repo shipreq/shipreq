@@ -90,15 +90,14 @@ Phase 2 (dev)
 
 ### Front pages
 * Implement new front pages
-  * [ ] LandingPage
-  * [ ] Login/ResetPassword
-  * [ ] ResetPassword2
-  * [ ] Register
-  * [ ] Register2
-  * [ ] Privacy/ToS
-* User name: name as one field is fine, call it "full name" like credit cards
+  * Login/ResetPassword
+  * ResetPassword2
+  * Register
+  * Register2
+  * Privacy/ToS
+* Implement new front pages
+  * LandingPage
 * Forms: autofocus input, disable buttons when KO, no red/error for empty
-* LandingPage form: perma-disable button after successful submission
 * Login failed: `Invalid <username|email> or ...`
 * Handle user being logged in in PublicSpa
 

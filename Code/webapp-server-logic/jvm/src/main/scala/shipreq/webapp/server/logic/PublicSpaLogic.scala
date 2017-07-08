@@ -33,8 +33,6 @@ object PublicSpaLogic {
                                  D       : Monad[D],
                                  F       : Monad[F]): PublicSpaLogic[F] = {
 
-    val absUrlResetPwd2 = config.baseUrl / PublicUrls.resetPassword2
-
     def isExpired_?(startTime: Instant, timeToLive: Duration, now: Instant): Boolean =
       startTime plus timeToLive isBefore now
 
@@ -51,7 +49,7 @@ object PublicSpaLogic {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     val landingPageFn: F[LandingPage.Fn.Instance] =
       svr.createServerSideProc(LandingPage.Fn)(
-        _.validate.onValid { req =>
+        _.untyped.validate.onValid { req =>
           val msg = Msg.LandingPageHit(
             name       = req.name.value,
             email      = req.email.toTaskman,
@@ -88,7 +86,7 @@ object PublicSpaLogic {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object RegisterFns {
 
-      private val absUrlRegister2 = config.baseUrl / PublicUrls.register2
+      private val absUrlRegister2 = config.baseUrl / PublicUrls.SpaRoute.Register2.url
 
       private def registrationProc[A, B](f: A => F[ErrorMsg \/ B]): A => F[ErrorMsg \/ B] =
         security.protectFn(
@@ -201,7 +199,7 @@ object PublicSpaLogic {
         runDB(db.getResetPasswordTokenIssueDate(t))
           .flatMap(tokenStatus(config.passwordResetTokenLifespan))
 
-      private val absUrlRegister2 = config.baseUrl / PublicUrls.register2
+      private val absUrlRegister2 = config.baseUrl / PublicUrls.SpaRoute.ResetPassword.url
 
       val resetPasswordFn1: F[ResetPassword.Fn1.Instance] =
         svr.createServerSideProc(ResetPassword.Fn1)(

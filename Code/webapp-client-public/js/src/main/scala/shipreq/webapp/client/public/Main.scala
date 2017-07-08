@@ -11,7 +11,7 @@ object Main extends ClientSideProcImpl(EntryPoint) {
 
   override def run(i: InitData): Unit = {
     val cp      = ClientProtocol.Default
-    val root    = new Root(cp)
+    val root    = new Root(i, cp)
     val baseUrl = BaseUrl.fromWindowOrigin
     val router  = Router(baseUrl, Routes.routerConfig(root))
     Styles.addToDocument()
