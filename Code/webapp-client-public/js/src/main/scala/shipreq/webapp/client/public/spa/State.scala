@@ -1,4 +1,4 @@
-package shipreq.webapp.client.public.root
+package shipreq.webapp.client.public.spa
 
 import monocle.macros.Lenses
 import shipreq.webapp.client.public.pages._

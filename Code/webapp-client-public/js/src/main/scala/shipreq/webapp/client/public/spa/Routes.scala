@@ -1,4 +1,4 @@
-package shipreq.webapp.client.public.root
+package shipreq.webapp.client.public.spa
 
 import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.extra.router.{RouterCtl => _, _}
@@ -47,12 +47,12 @@ object Page {
 
 object Routes {
 
-  def routerConfig(rootInstance: Root) =
+  def routerConfig(spa: PublicSpa) =
     RouterConfigDsl[Page].buildConfig { dsl =>
       import dsl._
 
       def render(page: Page, r: RouterCtl) =
-        rootInstance.Component(Root.Props(page, r))
+        spa.Component(PublicSpa.Props(page, r))
 
 //      val dynPage = dynRenderR((page: Page, r) => render(page, r))
 

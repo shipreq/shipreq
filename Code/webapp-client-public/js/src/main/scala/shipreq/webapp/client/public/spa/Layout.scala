@@ -1,4 +1,4 @@
-package shipreq.webapp.client.public.root
+package shipreq.webapp.client.public.spa
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._

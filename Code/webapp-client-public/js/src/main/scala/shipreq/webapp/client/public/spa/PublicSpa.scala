@@ -1,4 +1,4 @@
-package shipreq.webapp.client.public.root
+package shipreq.webapp.client.public.spa
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -9,12 +9,12 @@ import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.client.public.{PublicSpaProtocols => P}
 
-object Root {
+object PublicSpa {
   final case class Props(page: Page, routerCtl: RouterCtl)
 }
 
-final class Root(initData: P.InitData, cp: ClientProtocol) {
-  import Root._
+final class PublicSpa(initData: P.InitData, cp: ClientProtocol) {
+  import PublicSpa._
 
   val Component = ScalaComponent.builder[Props]("Root")
     .initialState(State.init)
