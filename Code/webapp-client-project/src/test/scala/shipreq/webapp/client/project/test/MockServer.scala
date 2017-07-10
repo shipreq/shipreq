@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.test
 
 import japgolly.microlibs.nonempty.NonEmptyVector
-import japgolly.scalajs.react._
 import shipreq.base.util.PotentialChange._
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.VerifiedEvent
@@ -11,7 +10,6 @@ import shipreq.webapp.base.protocol.RemoteFailure
 import shipreq.webapp.base.test._
 import shipreq.webapp.server.logic._
 import ProjectSpaProtocols._
-import TestClientProtocol.Req
 
 final case class MockServer(cd: TestClientData) extends TestClientProtocol(true) {
 
@@ -36,7 +34,7 @@ final case class MockServer(cd: TestClientData) extends TestClientProtocol(true)
     attemptI(FieldMandatorinessMod)(MakeEvent.fieldMandatorinessMod) orElse
     attemptI(ProjectNameSet       )(MakeEvent.projectNameSetFn)
 
-  override def autoResponse(r: Req): Callback =
+  autoResponseFallback = r =>
     cd.projectCB >>= { p1 =>
       // ah the hacks
       def successVE = r.success.asInstanceOf[VerifiedEvent.Seq => TCB.Success]

@@ -8,8 +8,7 @@ import org.scalajs.dom.html
 import utest._
 import shipreq.webapp.base.data.ProjectMetaData
 import shipreq.webapp.base.protocol.HomeSpaProtocols.InitData
-import shipreq.webapp.base.test.MockRemotes
-import shipreq.webapp.base.test.TestClientProtocol
+import shipreq.webapp.base.test.{MockRemotes, TestClientProtocol}
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.user._

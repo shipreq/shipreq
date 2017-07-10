@@ -1,11 +1,12 @@
 package shipreq.webapp.base.test
 
 import japgolly.scalajs.react.Callback
-import scalaz.{-\/, Equal}
+import org.scalajs.dom.console
+import scalaz.Equal
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data.TCB
 import shipreq.webapp.base.protocol._
-import TestClientProtocol.Req
+import TestClientProtocol._
 
 object TestClientProtocol {
   trait Req {
@@ -15,7 +16,7 @@ object TestClientProtocol {
     val failure: RemoteFailure[proc.protocol.Failure] => TCB.Failure
 
     override def toString =
-      s"Req($input)@${Integer.toHexString(##)}"
+      "Req[%08X]:%s(%s)".format(##, proc.key.trim, input)
 
     def force(p2: ServerSideProc) =
       this.asInstanceOf[Req {val proc: p2.type}]
@@ -30,6 +31,7 @@ object TestClientProtocol {
       else
         sys error "Request has already been responded to."
   }
+  type ReqP[P <: ServerSideProc.Protocol] = Req { val proc: ServerSideProc.For[P] }
 }
 
 class TestClientProtocol(autoRespondArg: Boolean) extends ClientProtocol {
@@ -39,10 +41,25 @@ class TestClientProtocol(autoRespondArg: Boolean) extends ClientProtocol {
   def reset(): Unit =
     reqs = Vector.empty
 
-  var autoRespond = autoRespondArg
+  var autoRespond: Boolean =
+    autoRespondArg
 
-  def autoResponse(r: Req): Callback =
-    Callback.empty
+  var autoResponsePFs: List[PartialFunction[Req, Callback]] =
+    Nil
+
+  var autoResponseFallback: Req => Callback =
+    r => Callback(console.warn(s"${Console.YELLOW}Don't know how to respond to $r${Console.RESET}"))
+
+  final def autoResponse(r: Req): Callback =
+    (autoResponsePFs.find(_.isDefinedAt(r)).getOrElse(autoResponseFallback))(r)
+
+  def addAutoResponsePF(f: PartialFunction[Req, Callback]): Unit =
+    autoResponsePFs :+= f
+
+  def addAutoResponse[P <: ServerSideProc.Protocol](p: P)(f: ReqP[P] => Callback): Unit =
+    addAutoResponsePF {
+      case r if r.proc.protocol ==* p => f(r.asInstanceOf[ReqP[P]])
+    }
 
   def call(p: ServerSideProc)(_input  : p.protocol.Input,
                               _success: p.protocol.Output => TCB.Success,

@@ -6,6 +6,7 @@ import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalaz.{-\/, \/-}
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
@@ -87,11 +88,22 @@ object LandingPage {
     private def renderForm(p: Props): VdomElement = {
       val s = p.state.value
 
+      // Disable form if:
+      // - already submitted; 1 msg/user is enough, if they really want to send another msg they can hit reload
+      // - submission in progress
+      val enabled: Enabled =
+        (s.submitted, s.async) match {
+          case (true, _)
+             | (_, Some(AsyncFeature.Status.InProgress)) => Disabled
+          case _                                         => Enabled
+        }
+
       val onSubmit: Option[Callback] =
-        (s.req.validate, s.vux) match {
-          case (\/-(r), _)                => Some(submit(p, r))
-          case (-\/(_), ValidationUX.Off) => Some(p.state.modState(State.vux set ValidationUX.Highlight))
-          case (-\/(_), _)                => None
+        (enabled, s.req.validate, s.vux) match {
+          case (Enabled,  \/-(r), _)                => Some(submit(p, r))
+          case (Enabled,  -\/(_), ValidationUX.Off) => Some(p.state.modState(State.vux set ValidationUX.Highlight))
+          case (Enabled,  -\/(_), _)
+             | (Disabled, _     , _)                => None
         }
 
       var fields = textTields.map(_(s.vux)(p.state))
@@ -111,13 +123,7 @@ object LandingPage {
             ^.onClick -->? onSubmit,
             "Express Interest"))
 
-      // Disable form if:
-      // - already submitted; 1 msg/user is enough, if they really want to send another msg they can hit reload
-      // - submission in progress
-      if (s.submitted || s.async.exists {
-        case AsyncFeature.Status.InProgress => true
-        case _                              => false
-      })
+      if (enabled is Disabled)
         fields = fields.map(_.disable)
 
       <.div(*.formCont,
