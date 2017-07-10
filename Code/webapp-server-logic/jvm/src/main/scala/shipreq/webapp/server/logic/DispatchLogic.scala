@@ -6,7 +6,7 @@ import scalaz.{-\/, Monad, \/, \/-}
 import scalaz.syntax.monad._
 import shipreq.base.util._
 import shipreq.webapp.base.{MemberUrls, PublicUrls}
-import shipreq.webapp.base.data.{ExternalId => XId}
+import shipreq.webapp.base.data.{SecurityToken, ExternalId => XId}
 import shipreq.webapp.base.user._
 
 object DispatchLogic {
@@ -147,16 +147,17 @@ final class DispatchLogic[F[_]](implicit F: Monad[F], security: Security.Algebra
   private def spaId[T, I](url: Url.Relative.Param1[XId[T]])
                          (scheme: ExternalId.Scheme[T, I])
                          (response: String \/ I => FR): Route =
-    FnWithFallback.extract(spaTest1(url))(
-      req => str => onGet(response(scheme.parse(str)))(req))
+    FnWithFallback.extract(spaTest1(url))(req => str => onGet(response(scheme.parse(str)))(req))
 
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  val publicSpa: Route =
-    PublicUrls.SpaRoute.static
-      .map(s => spa(s.url)(F pure ServePublicSpa))
-      .reduce(_ | _)
+  val publicSpa: Route = {
+    val fr: FR = F pure ServePublicSpa
+    val route1 = PublicUrls.SpaRoute.static.map(s => spa(s.url)(fr))
+    val route2 = PublicUrls.SpaRoute.needsToken.map(s => FnWithFallback.extract(spaTest1(s.url))(req => _ => onGet(fr)(req)))
+    (route1 ++ route2).reduce(_ | _)
+  }
 
   val memberHomeSpa: Route =
     spa(MemberUrls.home)(needAuth(ServeHomeSpa))
