@@ -152,9 +152,9 @@ object Common {
   /** This doesn't work when fork := true */
   def shutdownTestDb(loader: ClassLoader): Unit = {
     def invoke(objectName: String, methodName: String): Unit = {
-      import scala.util.Try
+      import scala.util._
       def Try2[A](a: => A) = {
-        val t = Try(a)
+        val t = try Success(a) catch { case e: Throwable => Failure(e) }
 //          println(t)
         t
       }
