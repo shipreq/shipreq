@@ -1,6 +1,7 @@
 package shipreq.webapp.base.user
 
 import scalaz.{-\/, \/, \/-}
+import shipreq.base.util.{Invalid, Validity}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.{CommmonUiText, WebappConfig}
 import shipreq.webapp.base.util.TextMod
@@ -23,10 +24,17 @@ object UserValidators {
 
   val password: Composite.Stateless[String, String, PlainTextPassword] =
     CV.endoValidator.lengthInRange(WebappConfig.passwordLength)
-      .addInvalidator(CV.invalidator.containsAlphaAndNumber)
+      .mapInvalidator(_.whenValid(CV.invalidator.containsAlphaAndNumber))
       .toValidator
       .mapValid(PlainTextPassword.apply)
       .named(CommmonUiText.password)
+
+  def password2(password1: String, whenEmpty: Validity = Invalid): Simple.Validator[String, String, Unit] =
+    password.corrector.withAuditor(
+      Auditor(s =>
+        if (s !=* password1) -\/(Invalidity("Doesn't match."))
+        else if (whenEmpty.is(Invalid)) CV.invalidator.nonEmpty.audit(s).map(_ => ())
+        else \/-(())))
 
   /** i.e. [password] and [confirm password] */
   type PasswordTwice = (String, String)

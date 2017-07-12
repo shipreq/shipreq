@@ -27,6 +27,7 @@ final class PublicSpa(initData: P.InitData, cp: ClientProtocol) {
     val sspLandingPage    = ServerSideProcInvoker(cp, initData.landingPage)
     val sspLogin          = ServerSideProcInvoker(cp, initData.login)
     val sspResetPassword1 = ServerSideProcInvoker(cp, initData.resetPassword1)
+    val sspResetPassword2 = ServerSideProcInvoker(cp, initData.resetPassword2)
 
     val awLandingPage = AsyncFeature.Write.D0.init($.zoomStateL(State.landingPage ^|-> LandingPage.State.async))
     val awLogin       = AsyncFeature.Write.D0.init($.zoomStateL(State.login ^|-> Login.State.async))
@@ -43,6 +44,9 @@ final class PublicSpa(initData: P.InitData, cp: ClientProtocol) {
           case Page.Static(PublicSpaRoute.Login) =>
             val ss = StateSnapshot.zoomL(State.login)(s).setStateVia($)
             Login.Props(ss, awLogin, sspLogin, sspResetPassword1).render
+
+          case Page.Token(PublicSpaRoute.ResetPassword, token) =>
+            ResetPassword.Props(token, sspResetPassword2).render
 
         }
 

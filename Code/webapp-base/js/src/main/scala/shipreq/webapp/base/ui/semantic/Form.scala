@@ -25,6 +25,11 @@ object Form {
     private[Form] val disabled = ^.cls := "disabled"
   }
 
+  val validationErr = TagMod(
+    ^.color := "#9f3a38",
+    ^.paddingTop := "0.15rem",
+    ^.fontSize := "92%")
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   final case class TextField(label  : Option[TagMod],
@@ -64,8 +69,8 @@ object Form {
             ^.value := value,
             ^.onChange ==> onChange))
 
-        val error =
-          vux.outcomeD(vali(value)).map(UiUtil.renderSimpleInvalidity)
+        val error: ValidationUX.Outcome[VdomElement] =
+          vux.outcomeD(vali(value)).map(UiUtil.renderSimpleInvalidity(_)(validationErr))
 
         TextField(label, editor, error)
       }

@@ -204,8 +204,18 @@ object Styles {
     val forgotPassword = TagMod(fontWeight.normal, cursor.pointer)
     val bottomRow      = TagMod(display.flex, width := "100%", alignItems.baseline)
     val rememberMe     = TagMod(flex := "1")
-    val submitCont     = TagMod(textAlign.right)
+    val submitCont     = TagMod(textAlign.right, paddingTop := "0.4em")
     val submitButton   = TagMod(marginRight := "0")
   }
   login // eager eval
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  object resetPassword {
+    val part1          = login.part1
+    val part2          = TagMod(width := "54ex", margin := "6em auto 0 auto")
+    val submitCont     = login.submitCont
+    val submitButton   = login.submitButton
+  }
+  resetPassword // eager eval
+
 }

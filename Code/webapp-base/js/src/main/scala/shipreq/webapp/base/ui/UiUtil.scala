@@ -8,10 +8,10 @@ import shipreq.webapp.base.validation.Simple
 
 object UiUtil {
 
-  def renderSimpleInvalidity(d: Simple.Invalidity \/ Any): Option[VdomElement] =
+  def renderSimpleInvalidity(d: Simple.Invalidity \/ Any): Option[VdomTag] =
     d.fold(i => Some(renderSimpleInvalidity(i)), _ => None)
 
-  def renderSimpleInvalidity(i: Simple.Invalidity): VdomElement = {
+  def renderSimpleInvalidity(i: Simple.Invalidity): VdomTag = {
     def render1(err: String): VdomTag = <.span(err)
     if (i.tail.isEmpty)
       render1(i.head)

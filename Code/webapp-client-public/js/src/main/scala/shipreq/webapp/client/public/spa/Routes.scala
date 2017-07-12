@@ -6,6 +6,7 @@ import japgolly.scalajs.react.vdom.Implicits._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.Urls.PublicSpaRoute
 import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.data.SecurityToken
 import shipreq.webapp.base.lib.BaseReusability._
 
 sealed trait Page {
@@ -25,11 +26,22 @@ object Page {
         case PublicSpaRoute.TermsOfService => "Terms"
       }
 
-    val pageTitle: List[String] =
+    override val pageTitle: List[String] =
       route match {
         case PublicSpaRoute.Home => Nil
         case _                   => linkTitle :: Nil
       }
+  }
+
+  final case class Token(route: PublicSpaRoute.NeedsToken, token: SecurityToken) extends Page {
+    override val linkTitle: String =
+      route match {
+        case PublicSpaRoute.Register2     => "Register"
+        case PublicSpaRoute.ResetPassword => "Reset Password"
+      }
+
+    override val pageTitle: List[String] =
+      linkTitle :: Nil
   }
 
   implicit def equality: UnivEq[Page] = UnivEq.derive
@@ -54,20 +66,26 @@ object Routes {
       def render(page: Page, r: RouterCtl) =
         spa.Component(PublicSpa.Props(page, r))
 
-//      val dynPage = dynRenderR((page: Page, r) => render(page, r))
-
-      def staticPage(route: StaticDsl.Route[Unit], page: Page) =
-        staticRoute(route, page) ~> renderR(r => render(page, r))
-
       val staticRoutes =
         Page.static.map { p =>
           val url = p.route.url
-          staticPage(if (url.isRoot) dsl.root else url.relativeUrl, p)
+          val route: StaticDsl.Route[Unit] = if (url.isRoot) dsl.root else url.relativeUrl
+          staticRoute(route, p) ~> renderR(render(p, _))
         }.reduce(_ | _)
 
-      (staticRoutes | trimSlashes)
+      val tokenRoutes =
+        PublicSpaRoute.needsToken.map { r =>
+          val tokenUrl = remainingPath.xmap(s => Page.Token(r, SecurityToken(s)))(_.token.value)
+          dynamicRoute(r.url.prefix.relativeUrl / tokenUrl) {
+            case p@ Page.Token(r2, _) if r ==* r2 => p
+          } ~> dynRenderR(render(_, _))
+        }.reduce(_ | _)
+
+      (removeTrailingSlashes | staticRoutes | tokenRoutes)
         .notFound(redirectToPage(Page.Home)(Redirect.Replace))
         .setTitle(p => WebappConfig.makePageTitle(p.pageTitle: _*))
-        .verify(Page.static.head, Page.static.tail: _*)
+        .verify(
+          Page.static.head, Page.static.tail ++
+            PublicSpaRoute.needsToken.whole.map(Page.Token(_, SecurityToken("abcd"))): _*)
     }
 }
