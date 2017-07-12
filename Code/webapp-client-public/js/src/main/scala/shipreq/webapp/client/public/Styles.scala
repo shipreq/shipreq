@@ -219,6 +219,16 @@ object Styles {
   resetPassword // eager eval
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  object register1 {
+    val part1          = TagMod(width := "48ex", margin := "5em auto 0 auto")
+    val part2          = TagMod(width := "60ex", margin := "6em auto 0 auto")
+    val part0          = TagMod(width := "66ex", margin := "6em auto 0 auto")
+    val submitCont     = login.submitCont
+    val submitButton   = login.submitButton
+  }
+  register1 // eager eval
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object legal {
     val cont: TagMod =
       cssBuilder.addClass(c =>

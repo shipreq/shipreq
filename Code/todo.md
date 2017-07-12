@@ -91,7 +91,6 @@ Phase 2 (dev)
 
 ### Front pages
 * Implement new front pages
-  * Register
   * Register2
 * Test new front pages
   * Register

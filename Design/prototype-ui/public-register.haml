@@ -22,8 +22,9 @@
       #header2 > .mid .sep { padding:0 1em; color:#aaa }
       #header2 nav span.active {font-weight:bold;color:#000}
 
-      #part1 {width:48ex; margin:8em auto 0 auto}
-      #part2 {width:64ex; margin:8em auto 0 auto}
+      #part1 {width:48ex; margin:5em auto 0 auto}
+      #part2 {width:60ex; margin:6em auto 0 auto}
+      #disabled {width:66ex; margin:6em auto 0 auto}
 
       #footer1 {
         font-size:0.85rem;
@@ -75,6 +76,16 @@
                 Check your email
               %p
                 You'll soon receive an email with a link to continue the registration process.
+
+        #disabled
+          .ui.message.icon.warning
+            %i.icon.remove.user
+            .content
+              .header
+                Registration disabled
+              %p
+                We're currently not accepting new public registrations.<br>
+                Check back later or contact us <a href="public-home.haml.html">here</a>.
 
       %footer#footer1
         %span.txt © 2013-2017 Bearded Logic
