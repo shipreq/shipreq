@@ -35,9 +35,10 @@ object Urls {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  def publicHome = PublicSpaRoute.Home.url
-  def login      = PublicSpaRoute.Login.url
-  val memberHome = Url.Relative("/home")
-  val project    = Url.Relative("/project").thenParam[ProjectId.Public](_.value)
-  val logout     = Url.Relative("/logout")
+  def publicHome     = PublicSpaRoute.Home.url
+  def login          = PublicSpaRoute.Login.url
+  def termsOfService = PublicSpaRoute.TermsOfService.url
+  val memberHome     = Url.Relative("/home")
+  val project        = Url.Relative("/project").thenParam[ProjectId.Public](_.value)
+  val logout         = Url.Relative("/logout")
 }

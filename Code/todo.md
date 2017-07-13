@@ -90,8 +90,6 @@ Phase 2 (dev)
 * Remove unused SemanticUI CSS: colours, input[radio], etc
 
 ### Front pages
-* Implement new front pages
-  * Register2
 * Test new front pages
   * Register2
 * Handle user being logged in in PublicSpa

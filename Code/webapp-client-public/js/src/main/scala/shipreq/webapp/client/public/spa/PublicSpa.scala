@@ -69,6 +69,9 @@ final class PublicSpa(initData: P.InitData, cp: ClientProtocol) {
             val ss = StateSnapshot.zoomL(State.register1)(s).setStateVia($)
             Register1.Props(initData.allowRegister, p.routerCtl, ss, awRegister1, sspRegister1).render
 
+          case Page.Token(PublicSpaRoute.Register2, token) =>
+            Register2.Props(token, sspRegister2).render
+
           case Page.Static(PublicSpaRoute.Privacy) =>
             Legal.Privacy(p.routerCtl)
 

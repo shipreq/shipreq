@@ -5,7 +5,8 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
-import shipreq.webapp.base.data.Enabled
+import shipreq.base.util.{Invalid, Valid, Validity}
+import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.ui.UiUtil
 import shipreq.webapp.base.validation.Simple
@@ -14,14 +15,12 @@ object Form {
 
   sealed abstract class Field {
     def render: VdomTag
-    def enabled: Enabled
-    def fieldCopy(enabled: Enabled = enabled): Field
-    final def disable = fieldCopy(!Enabled)
+    def setEnabled(e: Enabled): Field
+    final def disable = setEnabled(Disabled)
   }
   object Field {
     private[Form] val plain  = <.div(^.className := "field")
     private[Form] val error  = <.div(^.className := "field error")
-    private[Form] val center = plain(^.textAlign.center)
     private[Form] val disabled = ^.cls := "disabled"
   }
 
@@ -36,7 +35,7 @@ object Form {
                              editor : VdomElement,
                              error  : ValidationUX.Outcome[VdomElement],
                              enabled: Enabled = Enabled) extends Field {
-    override def fieldCopy(enabled: Enabled = enabled) = copy(enabled = enabled)
+    def setEnabled(e: Enabled) = copy(enabled = e)
     override def render: VdomTag = {
       val labelTag = label.whenDefined(<.label(_))
       val ableness = Field.disabled.unless(enabled is Enabled)
@@ -86,21 +85,38 @@ object Form {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final case class CenteredField(content: VdomElement,
-                                 enabled: Enabled = Enabled) extends Field {
-    override def fieldCopy(enabled: Enabled = enabled) = copy(enabled = enabled)
+  final case class TwoFields(f1: Field, f2: Field) extends Field {
+    def setEnabled(e: Enabled) = TwoFields(f1.setEnabled(e), f2.setEnabled(e))
     override def render: VdomTag =
-      Field.center(
-        Field.disabled.unless(enabled is Enabled),
-        content)
+      <.div(^.cls := "two fields", f1.render, f2.render)
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  final case class BasicField(content : TagMod,
+                              tagMod  : TagMod   = EmptyVdom,
+                              validity: Validity = Valid,
+                              enabled : Enabled  = Enabled) extends Field {
+    def setEnabled(e: Enabled) = copy(enabled = e)
+    override def render: VdomTag = {
+      val base = validity match {
+        case Valid   => Field.plain
+        case Invalid => Field.error
+      }
+      base(Field.disabled.unless(enabled is Enabled), tagMod, content)
+    }
+  }
+
+  object BasicField {
+    def centered(content: TagMod): BasicField = BasicField(content, ^.textAlign.center)
+    def right(content: TagMod): BasicField = BasicField(content, ^.textAlign.right)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   /** You're a LIAR! */
   final case class NotAField(render: VdomTag) extends Field {
-    override def fieldCopy(enabled: Enabled = enabled) = this // argh, why even bother anymore?
-    override def enabled = Enabled
+    override def setEnabled(e: Enabled) = this
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -69,7 +69,7 @@ object UserValidators {
   def passwordChange(matchesCurrent: CurrentPasswordTest): Composite.Validator[PasswordChange, PasswordChange, PlainTextPassword] =
     (currentPassword(matchesCurrent) tuple passwordTwice).mapValid(_._2)
 
-  val username: Composite.Stateless[String, String, Username] =
+  val username: Composite.Stateful[Set[Username], String, String, Username] =
     CV.endoValidator.lengthInRange(WebappConfig.usernameLength)
       .prependCorrector(TextMod.noWhitespace.andThen(TextMod.lowerCase).correctLive)
       .appendCorrector(TextMod.removeTrailingChar('@').correctFull)
@@ -79,19 +79,21 @@ object UserValidators {
       .toValidator
       .mapValid(Username.apply)
       .named(CommmonUiText.username)
+      .stateful(_ appendInvalidator Uniqueness.set(_))
 
   val usernameOrEmail: Composite.Validator[String, String, Username \/ EmailAddr] = {
     type R = Username \/ EmailAddr
-    val vu = username.named.mapValid(-\/(_): R)
+    val vu = username.stateless.named.mapValid(-\/(_): R)
     val ve = emailAddr.named.mapValid(\/-(_): R)
     Validator.choose(s => if (EmailAddr.isEmailAddr(s)) ve else vu)
   }
 
-  val personName: Validator[String, String, PersonName] =
+  val personName: Composite.Stateless[String, String, PersonName] =
     CV.endoCorrector.singleLineWhitespace
       .withInvalidator(
         CV.invalidator.nonEmpty.whenValid(
           CV.invalidator.shortTextLimit))
       .toValidator
       .mapValid(PersonName.apply)
+      .named(CommmonUiText.userPersonName)
 }

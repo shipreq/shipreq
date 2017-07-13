@@ -106,7 +106,7 @@ object UserValidatorTest extends TestSuite {
     }
 
     'username {
-      val test = Tester(UserValidators.username.unnamed.mapValid(_.value))
+      val test = Tester(UserValidators.username.stateless.unnamed.mapValid(_.value))
       * - test("hehe", "HEHE", "  Hehe  ")(pass)
       * - test("a" * 3)(pass)
       * - test("#$%::p1_")(fail("can only contain"))

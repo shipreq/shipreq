@@ -95,22 +95,21 @@ object LandingPage {
         Disabled.when(s.submitted || AsyncFeature.isInProgress(s.async))
 
       val onSubmit: Option[Callback] =
-        (enabled, s.req.validate, s.vux) match {
-          case (Enabled,  \/-(r), _)                => Some(submit(p, r))
-          case (Enabled,  -\/(_), ValidationUX.Off) => Some(p.state.modState(State.vux set ValidationUX.Highlight))
-          case (Enabled,  -\/(_), _)
-             | (Disabled, _     , _)                => None
-        }
+        Common.validationOffUntilFirstSubmit(
+          enabled,
+          s.vux,
+          p.state.modState(State.vux set ValidationUX.Highlight),
+          s.req.validate.toOption.map(submit(p, _)))
 
       var fields = textTields.map(_(s.vux)(p.state))
 
-      fields :+= Form.CenteredField(
+      fields :+= Form.BasicField.centered(
         Input.Checkbox.fromStateSnapshot(
           State.req ^|-> Request.Untyped.newsletter,
           p.state,
           "Subscribe to newsletter"))
 
-      fields :+= Form.CenteredField(
+      fields :+= Form.BasicField.centered(
         Common.submitButton("Express Interest", onSubmit))
 
       if (enabled is Disabled)

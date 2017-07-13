@@ -224,6 +224,15 @@ object Styles {
   register1 // eager eval
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  object register2 {
+    val part1        = TagMod(width := "72ex", margin := "4em auto 0 auto")
+    val part2        = TagMod(width := "64ex", margin := "6em auto 0 auto")
+    def submitCont   = login.submitCont
+    val begin        = fontWeight.bold
+  }
+  register2 // eager eval
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object legal {
     val cont: TagMod =
       cssBuilder.addClass(c =>

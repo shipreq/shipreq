@@ -74,7 +74,7 @@ object Register1 {
 
       <.div(*.part1,
         Form(
-          fieldEmail(p.state).fieldCopy(enabled = s.formEnabled),
+          fieldEmail(p.state).setEnabled(s.formEnabled),
           Form.NotAField(<.div(*.submitCont, submitButton))))
     }
 

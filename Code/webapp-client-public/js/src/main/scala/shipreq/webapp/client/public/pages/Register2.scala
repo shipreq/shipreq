@@ -1,0 +1,200 @@
+package shipreq.webapp.client.public.pages
+
+import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
+import monocle.Lens
+import monocle.macros.Lenses
+import scalaz.{-\/, \/, \/-}
+import shipreq.base.util.Invalid
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.lib.ValidationUX
+import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.ui.semantic.{Form, Icon, Input, Message}
+import shipreq.webapp.base.user._
+import shipreq.webapp.base.validation.Implicits._
+import shipreq.webapp.base.validation.{Composite, Simple}
+import shipreq.webapp.base.{CommmonUiText, Urls, WebappConfig}
+import shipreq.webapp.client.public.PublicSpaProtocols.Register.{Request, Response}
+import shipreq.webapp.client.public.Styles.{register2 => *}
+
+object Register2 {
+
+  final case class Props(token : SecurityToken,
+                         submit: ServerSideProcInvoker[Request, Response]) {
+    @inline def render: VdomElement = Component(this)
+  }
+
+  @Lenses
+  final case class State(personName    : String,
+                         username      : String,
+                         password1     : String,
+                         password2     : String,
+                         newsletter    : Boolean,
+                         tos           : Agreement,
+                         vux           : ValidationUX,
+                         async         : AsyncFeature.State.D0[String],
+                         takenUsernames: Set[Username],
+                         response      : Option[Response.Terminal]) {
+
+    val formEnabled: Enabled =
+      Disabled when AsyncFeature.isInProgress(async)
+  }
+
+  object State {
+    def init: State =
+      State(
+        "", "", "", "",
+        newsletter     = true,
+        tos            = Disagree,
+        vux            = ValidationUX.Off,
+        async          = None,
+        takenUsernames = UnivEq.emptySet,
+        response       = None)
+
+    val tosB: Lens[State, Boolean] =
+      tos ^<-> Agree.isoWhen(true)
+  }
+
+  final class Backend($: BackendScope[Props, State]) {
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    private val asyncW: AsyncFeature.Write.D0[String] =
+      AsyncFeature.Write.D0.init($ zoomStateL State.async)
+
+    private def onResponse(req: Request): Response => Callback = {
+      case r: Response.Terminal   => $.modState(_.copy(response = Some(r)))
+      case Response.UsernameTaken => $.modState(State.takenUsernames.modify(_ + req.username))
+    }
+
+    private def tosName = "terms of service"
+
+    private val tosLabel = TagMod("I agree to the ", Common.a_toNewWindow(Urls.termsOfService.relativeUrl)(tosName))
+
+    private val tosValidator: Composite.Stateless[Agreement, Agreement, Agree.type] =
+      Simple.Auditor[Simple.Invalidity, Agreement, Agree.type] {
+        case Agree    => \/-(Agree)
+        case Disagree => -\/(Simple.Invalidity("Agreement is mandatory."))
+      }
+        .toValidator
+        .named(tosName)
+
+    private val fieldPersonName = Form.TextField.highLevel(
+      State.personName,
+      UserValidators.personName.unnamed,
+      m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoFocus := true, m)),
+      Some(CommmonUiText.userPersonName))
+
+    private val fieldPassword1 = Form.TextField.highLevel(
+      State.password1,
+      UserValidators.password.unnamed,
+      m => Input.Text.icon(Icon.Lock.tag, <.input.password(m)),
+      Some(CommmonUiText.password))
+
+    private def renderForm(p: Props, s: State): VdomElement = {
+      val usernameValidator = UserValidators.username(s.takenUsernames)
+
+      type ValiInput = (String, String, (String, String), Agreement)
+
+      val validator: Composite.Validator[ValiInput, ValiInput, Request] =
+        UserValidators.personName.named
+          .tuple(usernameValidator.named)
+          .tuple(UserValidators.passwordTwice)
+          .tuple(tosValidator.named)
+          .mapValid {
+            case (name, username, password, Agree) =>
+              Request(p.token, name, username, password, newsletter = s.newsletter)
+          }
+
+      val fieldUsername = Form.TextField.highLevel(
+        State.username,
+        usernameValidator.unnamed,
+        m => Input.Text.icon(Icon.User.tag, <.input.text(m)),
+        Some(CommmonUiText.username))
+
+      val fieldPassword2 = Form.TextField.highLevel(
+        State.password2,
+        UserValidators.password2(s.password1),
+        m => Input.Text.icon(Icon.Lock.tag, <.input.password(m)),
+        Some("Confirm password"))
+
+      val submitCB: Option[Callback] = {
+        def submitIfValid: Composite.Invalidity \/ Callback =
+          validator((s.personName, s.username, (s.password1, s.password2), s.tos)).map(req =>
+            asyncW((s, f) => p.submit(
+              req,
+              res => s << onResponse(req)(res),
+              e => f(e) >> Callback.alert(e))))
+
+        Common.validationOffUntilFirstSubmit(
+          s.formEnabled,
+          s.vux,
+          $.modState(State.vux set ValidationUX.Full),
+          submitIfValid.toOption)
+      }
+
+      val ss = StateSnapshot(s).setStateVia($)
+
+      val fieldNewsletter =
+        Form.BasicField(
+          Input.Checkbox.fromStateSnapshot(State.newsletter, ss, "Subscribe to newsletter"))
+
+      val fieldTermsOfService =
+        Form.BasicField(
+          Input.Checkbox.fromStateSnapshot(State.tosB, ss, tosLabel),
+          validity = Invalid.when(s.tos.is(Disagree) && s.vux !=* ValidationUX.Off))
+
+      val fieldSubmit =
+        Form.BasicField(
+          Common.submitButton("Create Account", submitCB),
+          *.submitCont)
+
+      var fields: NonEmptyVector[Form.Field] =
+        NonEmptyVector(
+          fieldPersonName(s.vux)(ss),
+          fieldUsername(s.vux)(ss),
+          Form.TwoFields(
+            fieldPassword1(s.vux)(ss),
+            fieldPassword2(s.vux)(ss)),
+          fieldNewsletter,
+          fieldTermsOfService,
+          fieldSubmit)
+
+      if (s.formEnabled is Disabled)
+        fields = fields.map(_.disable)
+
+      <.div(*.part1, Form(fields))
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    private def renderResponse(r: Response.Terminal): VdomElement =
+      r match {
+        case Response.TokenExpired => Common.renderTokenExpired
+        case Response.TokenInvalid => Common.renderTokenInvalid
+        case Response.Success =>
+          <.div(*.part2,
+            Message(
+              Message.Style(Message.Type.Success),
+              Icon.Heart,
+              s"Welcome to ${WebappConfig.appName}!",
+              TagMod(
+                "Your account is now active.", <.br,
+                s"May ${WebappConfig.appName} bring you much benefit and happiness!", <.br,
+                <.a(*.begin, ^.href := Urls.memberHome.relativeUrl, "Begin..."))))
+      }
+
+    def render(p: Props, s: State): VdomElement =
+      s.response.fold(renderForm(p, s))(renderResponse)
+  }
+
+  val Component = ScalaComponent.builder[Props]("Register2")
+    .initialState(State.init)
+    .renderBackend[Backend]
+    .build
+}

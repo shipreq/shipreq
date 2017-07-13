@@ -38,7 +38,7 @@ object PublicSpaProtocols {
       def labelName  = "Your name"
       def labelEmail = "Your email address"
 
-      def validatorName  = UserValidators.personName
+      def validatorName  = UserValidators.personName.unnamed
       def validatorEmail = UserValidators.emailAddr.unnamed
       def validatorMsg   = CommonValidation.optionalLargeText.mapCorrector(_ prependLive TextMod.maxTwoConsecutiveNewLines.run)
 
@@ -80,10 +80,11 @@ object PublicSpaProtocols {
     object Request {
       implicit val pickler: Pickler[Request] = pickleCaseClass
 
+      // Only used on server-side - Request has less than the registration form
       lazy val validator: Composite.Validator[(SecurityToken, String, String, String, Boolean), _, Request] =
         Composite.Validator.id[SecurityToken]
-          .tuple(UserValidators.personName.named(CommmonUiText.userPersonName).named)
-          .tuple(UserValidators.username.named)
+          .tuple(UserValidators.personName.named)
+          .tuple(UserValidators.username.stateless.named)
           .tuple(UserValidators.password.named)
           .tuple(Composite.Validator.id[Boolean])
           .mapValid((Request.apply _).tupled)
@@ -91,9 +92,10 @@ object PublicSpaProtocols {
 
     sealed trait Response
     object Response {
-      case object Success       extends Response
-      case object TokenInvalid  extends Response
-      case object TokenExpired  extends Response
+      sealed trait Terminal     extends Response
+      case object Success       extends Terminal
+      case object TokenInvalid  extends Terminal
+      case object TokenExpired  extends Terminal
       case object UsernameTaken extends Response
 
       implicit val pickler: Pickler[Response] = derivePickler[Response]

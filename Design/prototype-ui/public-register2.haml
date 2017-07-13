@@ -22,9 +22,9 @@
       #header2 > .mid .sep { padding:0 1em; color:#aaa }
       #header2 nav span.active {font-weight:bold;color:#000}
 
-      #part1 {width:48ex; margin:8em auto 0 auto}
-      #part1v2 {width:72ex; margin:8em auto 0 auto}
-      #part2 {width:64ex; margin:8em auto 0 auto}
+      #part1   {width:48ex; margin:4em auto 0 auto}
+      #part1v2 {width:72ex; margin:4em auto 0 auto}
+      #part2   {width:64ex; margin:6em auto 0 auto}
 
       #footer1 {
         font-size:0.85rem;
@@ -129,7 +129,7 @@
               .ui.checkbox
                 %input(type="checkbox" tabindex="0" class="hidden" checked=1)
                 %label Subscribe to newsletter
-            .field
+            .field.error
               .ui.checkbox
                 %input(type="checkbox" tabindex="0" class="hidden")
                 %label I agree to the <a href="public-tos.haml.html">terms of service</a>
@@ -148,7 +148,7 @@
                 Welcome to ShipReq!
               %p
                 Your account is now active.<br/>
-                May ShipReq provide you much benefit and happiness!<br/>
+                May ShipReq bring you much benefit and happiness!<br/>
                 %a(href="x" style="font-weight:bold") Begin…
 
       %footer#footer1

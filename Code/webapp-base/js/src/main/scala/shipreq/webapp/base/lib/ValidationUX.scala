@@ -1,5 +1,6 @@
 package shipreq.webapp.base.lib
 
+import japgolly.univeq.UnivEq
 import scalaz.\/
 
 /** Description of the user experience regarding validation of data that they've supplied,
@@ -35,6 +36,8 @@ object ValidationUX {
       if (e.isEmpty) Outcome.Valid else Outcome.Invalid(e)
     }
   }
+
+  implicit def univEq: UnivEq[ValidationUX] = UnivEq.derive
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
