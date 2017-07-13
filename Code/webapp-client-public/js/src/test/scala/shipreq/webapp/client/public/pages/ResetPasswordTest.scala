@@ -11,7 +11,6 @@ import shipreq.webapp.client.public._
 import shipreq.webapp.client.public.spa._
 import shipreq.webapp.base.Urls
 import PublicSpaProtocols.ResetPassword.Response
-import PublicSpaTestUtil.semanticUiDisabled
 
 object ResetPasswordTester {
 
@@ -30,18 +29,10 @@ object ResetPasswordTester {
   }
 
   final class FormObs($: HtmlDomZipper) {
-    val password1     = new PasswordFieldObs($(".field", 1 of 2))
-    val password2     = new PasswordFieldObs($(".field", 2 of 2))
+    val password1     = new PublicSpaTestUtil.TextFieldObs($(".field", 1 of 2))
+    val password2     = new PublicSpaTestUtil.TextFieldObs($(".field", 2 of 2))
     val submit        = $("button").domAs[html.Button]
     val submitEnabled = Disabled.when(submit.disabled)
-  }
-
-  final class PasswordFieldObs($: HtmlDomZipper) {
-    val input   : html.Input     = $("input[type=password]").domAs[html.Input]
-    val value   : String         = input.value
-    val failure : Option[String] = $.collect01(">div:not(.ui),>span").innerTexts
-    val enabled : Enabled        = Disabled.when(input.disabled || semanticUiDisabled($.dom))
-    val validity: Validity       = Invalid when $.domAsHtml.classList.contains("error")
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -9,20 +9,13 @@ import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.public._
 import shipreq.webapp.client.public.spa._
-import PublicSpaTestUtil.semanticUiDisabled
+import PublicSpaTestUtil._
 
 object LandingPageTester {
 
   val * = Dsl[TestClientProtocol, Obs, Unit]
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  class TextFieldObs($: HtmlDomZipper) {
-    val input              = $("input,textarea").forceDomAs[html.Input]
-    val text    : String   = input.value
-    val enabled : Enabled  = Disabled.when(input.disabled || semanticUiDisabled($.dom))
-    val validity: Validity = Invalid when $.dom.classList.contains("error")
-  }
 
   final class Obs($: HtmlDomZipper, cp: TestClientProtocol) {
     val reqsSent = cp.reqs
@@ -41,31 +34,21 @@ object LandingPageTester {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final class TextFieldDsl(desc: String, f: Obs => TextFieldObs) {
-    val text     = *.focus(s"$desc text"    ).value($ => f($.obs).text)
-    val enabled  = *.focus(s"$desc enabled" ).value($ => f($.obs).enabled)
-    val validity = *.focus(s"$desc validity").value($ => f($.obs).validity)
-    val state    = *.focus(s"$desc text & validity").value($ => (f($.obs).text, f($.obs).validity))
-
-    def set(text: String): *.Actions =
-      *.action(s"Set $desc to [$text]")($ => SimEvent.Change(text) simulate f($.obs).input)
-  }
-
   val reqsSent      = *.focus("Requests sent").value(_.obs.reqsSent.length)
-  val name          = new TextFieldDsl("Name", _.name)
-  val email         = new TextFieldDsl("Email", _.email)
+  val name          = new TextFieldDsl(*)("Name", _.name)
+  val email         = new TextFieldDsl(*)("Email", _.email)
   val submitEnabled = *.focus("Submit button").value(_.obs.submitEnabled)
 
   def initialState: *.Points =
-    name.state.assert("", Valid) & email.state.assert("", Valid)
+    name.tv.assert("", Valid) & email.tv.assert("", Valid)
 
   def clickSubmit: *.Actions =
     *.action("Click submit")(Simulate click _.obs.submit)
       .addCheck(submitEnabled.assert(Enabled).before)
 
   def enterValidDetails: *.Actions = (
-    name.set("Bob") +> name.state.assert("Bob", Valid)
-      >> email.set("bob@qwe.com") +> email.state.assert("bob@qwe.com", Valid))
+    name.set("Bob") +> name.tv.assert("Bob", Valid)
+      >> email.set("bob@qwe.com") +> email.tv.assert("bob@qwe.com", Valid))
 
   def submitSuccessfully: *.Actions = (
     clickSubmit
@@ -96,8 +79,8 @@ object LandingPageTest extends TestSuite {
 
   def invalidity: *.Actions = (
     initialState
-      +> clickSubmit +> submitEnabled.assert(Disabled) +> name.state.assert("", Invalid) +> email.state.assert("", Invalid)
-      >> email.set("bob") +> email.state.assert("bob", Invalid)
+      +> clickSubmit +> submitEnabled.assert(Disabled) +> name.tv.assert("", Invalid) +> email.tv.assert("", Invalid)
+      >> email.set("bob") +> email.tv.assert("bob", Invalid)
       >> enterValidDetails +> reqsSent.assert(0)
       >> submitSuccessfully)
 
@@ -105,7 +88,7 @@ object LandingPageTest extends TestSuite {
     test(Plan(actions, invariants))
 
   def test(plan: *.Plan): Unit = {
-    val t = new PublicSpaTestUtil.ForTestState
+    val t = new ForTestState
     import t.cp
     cp.addAutoResponse(PublicSpaProtocols.LandingPage.Fn)(_.success(()))
     t(Page.Home)(h => plan.test(Observer.watch(new Obs(h, cp))).run((), cp))

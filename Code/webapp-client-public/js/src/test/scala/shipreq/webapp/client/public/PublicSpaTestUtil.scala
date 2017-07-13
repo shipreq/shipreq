@@ -1,9 +1,11 @@
 package shipreq.webapp.client.public
 
-import japgolly.scalajs.react.test.{MockRouterCtl, ReactTestUtils}
+import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import scala.annotation.tailrec
-import shipreq.base.util.Allow
+import teststate.data.Id
+import shipreq.base.util._
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.ServerSideProc
 import shipreq.webapp.base.test.TestClientProtocol
 import shipreq.webapp.base.test.TestState._
@@ -38,6 +40,25 @@ object PublicSpaTestUtil {
         assertTestState(r)
         ()
       }
+  }
+
+  class TextFieldObs($: HtmlDomZipper) {
+    val input   : html.Input     = $("input[type=text],input[type=email],input[type=password],textarea").domAs[html.Input]
+    val value   : String         = input.value
+    val failure : Option[String] = $.collect01(">div:not(.ui),>span").innerTexts
+    val enabled : Enabled        = Disabled.when(input.disabled || semanticUiDisabled($.dom))
+    val validity: Validity       = Invalid when $.domAsHtml.classList.contains("error")
+  }
+
+  class TextFieldDsl[R, O, S, E](final val * : Dsl[Id, R, O, S, E])(desc: String, f: O => TextFieldObs) {
+    val text     = *.focus(desc).value($ => f($.obs).value)
+    val enabled  = *.focus(desc).value($ => f($.obs).enabled)
+    val validity = *.focus(desc).value($ => f($.obs).validity)
+    val failure  = *.focus(s"$desc failure").value($ => f($.obs).failure)
+    val tv       = *.focus(s"$desc text & validity").value($ => (f($.obs).value, f($.obs).validity))
+
+    def set(text: String): *.Actions =
+      *.action(s"Set $desc to [$text]")($ => SimEvent.Change(text) simulate f($.obs).input)
   }
 
   @tailrec
