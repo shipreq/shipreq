@@ -4,13 +4,28 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.MonocleReact._
+import monocle.macros.Lenses
 import shipreq.webapp.base.Urls.PublicSpaRoute
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.client.public.{PublicSpaProtocols => P}
+import shipreq.webapp.client.public.pages._
 
 object PublicSpa {
   final case class Props(page: Page, routerCtl: RouterCtl)
+
+  @Lenses
+  final case class State(landingPage: LandingPage.State,
+                         login      : Login      .State,
+                         register1  : Register1  .State)
+
+  object State {
+    def init: State =
+      State(
+        LandingPage.State.init,
+        Login      .State.init,
+        Register1  .State.init)
+  }
 }
 
 final class PublicSpa(initData: P.InitData, cp: ClientProtocol) {
@@ -22,7 +37,6 @@ final class PublicSpa(initData: P.InitData, cp: ClientProtocol) {
     .build
 
   final class Backend($: BackendScope[Props, State]) {
-    import shipreq.webapp.client.public.pages._
 
     val sspLandingPage    = ServerSideProcInvoker(cp, initData.landingPage)
     val sspLogin          = ServerSideProcInvoker(cp, initData.login)
