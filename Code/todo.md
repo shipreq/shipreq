@@ -88,6 +88,7 @@ Phase 2 (dev)
 * Remove SessionStats
 * On auth fail, redirect back after login
 * Remove unused SemanticUI CSS: colours, input[radio], etc
+* Lockdown Taskman DB JSON codecs
 
 ### Front pages
 * Handle user being logged in in PublicSpa
