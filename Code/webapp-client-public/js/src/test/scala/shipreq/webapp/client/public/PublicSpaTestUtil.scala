@@ -42,24 +42,55 @@ object PublicSpaTestUtil {
       }
   }
 
-  class TextFieldObs($: HtmlDomZipper) {
-    val input   : html.Input     = $("input[type=text],input[type=email],input[type=password],textarea").domAs[html.Input]
-    val value   : String         = input.value
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  abstract class InputFieldObs($: HtmlDomZipper, val input: html.Input) {
     val failure : Option[String] = $.collect01(">div:not(.ui),>span").innerTexts
     val enabled : Enabled        = Disabled.when(input.disabled || semanticUiDisabled($.dom))
     val validity: Validity       = Invalid when $.domAsHtml.classList.contains("error")
   }
 
-  class TextFieldDsl[R, O, S, E](final val * : Dsl[Id, R, O, S, E])(desc: String, f: O => TextFieldObs) {
-    val text     = *.focus(desc).value($ => f($.obs).value)
-    val enabled  = *.focus(desc).value($ => f($.obs).enabled)
-    val validity = *.focus(desc).value($ => f($.obs).validity)
-    val failure  = *.focus(s"$desc failure").value($ => f($.obs).failure)
-    val tv       = *.focus(s"$desc text & validity").value($ => (f($.obs).value, f($.obs).validity))
+  class TextFieldObs($: HtmlDomZipper) extends InputFieldObs($,
+    $("input[type=text],input[type=email],input[type=password],textarea").domAs[html.Input]) {
+    val value: String = input.value
+  }
+
+  class CheckboxFieldObs($: HtmlDomZipper) extends InputFieldObs($,
+    $("input[type=checkbox]").domAs[html.Input]) {
+    val checked: Boolean = input.checked
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  class InputFieldDsl[R, O, S](final val * : Dsl[Id, R, O, S, String], desc: String, f: O => InputFieldObs) {
+    val enabled    = *.focus(desc).value($ => f($.obs).enabled)
+    val validity   = *.focus(desc).value($ => f($.obs).validity)
+    val failure    = *.focus(s"$desc failure").value($ => f($.obs).failure)
+    val hasFailure = failure.map(_.isDefined)
+  }
+
+  class TextFieldDsl[R, O, S](dsl: Dsl[Id, R, O, S, String])(desc: String, f: O => TextFieldObs) extends InputFieldDsl(dsl, desc, f) {
+    val text = *.focus(desc).value($ => f($.obs).value)
+    val tv   = *.focus(s"$desc text & validity").value($ => (f($.obs).value, f($.obs).validity))
 
     def set(text: String): *.Actions =
-      *.action(s"Set $desc to [$text]")($ => SimEvent.Change(text) simulate f($.obs).input)
+      *.action(s"Set $desc to [$text]")($ => SimEvent.Change(text) simulate f($.obs).input) <+ enabled.assert(Enabled)
   }
+
+  class CheckboxFieldDsl[R, O, S](dsl: Dsl[Id, R, O, S, String])(desc: String, f: O => CheckboxFieldObs) extends InputFieldDsl(dsl, desc, f) {
+    val checked = *.focus(s"$desc.checked").value($ => f($.obs).checked)
+
+    lazy val click: *.Actions =
+      *.action(s"Click $desc")($ => Simulate change f($.obs).input) <+ enabled.assert(Enabled)
+
+    lazy val check: *.Actions =
+      click.unless($ => f($.obs).checked).rename(s"Check $desc")
+
+    lazy val uncheck: *.Actions =
+      click.when($ => f($.obs).checked).rename(s"Uncheck $desc")
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   @tailrec
   def semanticUiDisabled(h: html.Element): Boolean =

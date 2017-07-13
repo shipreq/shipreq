@@ -67,9 +67,12 @@ object Register2 {
     private val asyncW: AsyncFeature.Write.D0[String] =
       AsyncFeature.Write.D0.init($ zoomStateL State.async)
 
+    private def showValidationFailures =
+      State.vux set ValidationUX.Full
+
     private def onResponse(req: Request): Response => Callback = {
       case r: Response.Terminal   => $.modState(_.copy(response = Some(r)))
-      case Response.UsernameTaken => $.modState(State.takenUsernames.modify(_ + req.username))
+      case Response.UsernameTaken => $.modState(showValidationFailures compose State.takenUsernames.modify(_ + req.username))
     }
 
     private def tosName = "terms of service"
@@ -134,7 +137,7 @@ object Register2 {
         Common.validationOffUntilFirstSubmit(
           s.formEnabled,
           s.vux,
-          $.modState(State.vux set ValidationUX.Full),
+          $.modState(showValidationFailures),
           submitIfValid.toOption)
       }
 
