@@ -2,7 +2,7 @@ package shipreq.webapp.server.lib
 
 import shipreq.base.util.Error
 import shipreq.taskman.api.Msg.WebappErrorOccurred
-import shipreq.base.util.Fx._
+import shipreq.base.util.FxModule._
 import shipreq.webapp.base.{Urls, WebappConfig}
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.logic.WebappTaskmanConverters._

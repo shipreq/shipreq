@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 import net.liftweb.common.{Empty, Full, Failure => BoxFailure}
 import net.liftweb.http.{BadRequestResponse, InternalServerErrorResponse, LiftResponse, S}
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.Fx._
+import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.base.protocol.ServerSideProc
 

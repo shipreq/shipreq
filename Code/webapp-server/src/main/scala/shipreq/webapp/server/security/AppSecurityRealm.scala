@@ -8,7 +8,7 @@ import org.apache.shiro.crypto.SecureRandomNumberGenerator
 import org.apache.shiro.crypto.hash.SimpleHash
 import org.apache.shiro.realm.AuthenticatingRealm
 import org.apache.shiro.util.ByteSource
-import shipreq.base.util.Fx._
+import shipreq.base.util.FxModule._
 import shipreq.webapp.base.user.{PlainTextPassword, User}
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.logic.{PasswordAndSalt, PasswordHash, Salt}

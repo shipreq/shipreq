@@ -4,7 +4,7 @@ import java.time._
 import org.apache.shiro.codec.Base64
 import org.apache.shiro.util.ByteSource
 import utest.asserts._
-import shipreq.base.util.Fx._
+import shipreq.base.util.FxModule._
 import shipreq.webapp.base.test.{WebappTestEquality, WebappTestUtil}
 import shipreq.webapp.base.user.{PlainTextPassword, User, Username}
 import shipreq.webapp.server.logic.PasswordAndSalt

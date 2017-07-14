@@ -5,7 +5,7 @@ import net.liftweb.common.{Box, Full}
 import net.liftweb.http.{Req => LiftReq, _}
 import net.liftweb.util.Props
 import scala.xml.NodeSeq
-import shipreq.base.util.Fx._
+import shipreq.base.util.FxModule._
 import shipreq.base.util.Url
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.user.User

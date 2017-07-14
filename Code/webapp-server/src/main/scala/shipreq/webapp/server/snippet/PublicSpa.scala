@@ -1,7 +1,7 @@
 package shipreq.webapp.server.snippet
 
 import net.liftweb.util.Helpers._
-import shipreq.base.util.Fx._
+import shipreq.base.util.FxModule._
 import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.lib.SnippetHelpers

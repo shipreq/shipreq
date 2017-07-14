@@ -8,9 +8,9 @@ import scalaz.syntax.catchable._
 /**
   * The chosen target for algebra interpretation.
   *
-  * Usage: import shipreq.base.util.Fx._
+  * Usage: import shipreq.base.util.FxModule._
   */
-object Fx {
+object FxModule {
 
   type Fx[A] = Free.Trampoline[A]
 

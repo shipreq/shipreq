@@ -2,7 +2,7 @@ package shipreq.webapp.server.app
 
 import doobie.imports.ConnectionIO
 import shipreq.base.db.DbAccess
-import shipreq.base.util.Fx._
+import shipreq.base.util.FxModule._
 import shipreq.taskman.api.TaskmanApi
 import shipreq.taskman.api.impl.TaskmanApiImpl
 import shipreq.webapp.server.ServerConfig

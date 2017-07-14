@@ -5,7 +5,7 @@ import net.liftweb.actor.LAScheduler
 import net.liftweb.common._
 import net.liftweb.http.S
 import scalaz.syntax.monad._
-import shipreq.base.util.Fx._
+import shipreq.base.util.FxModule._
 import shipreq.webapp.base.protocol.ServerSideProc
 import shipreq.webapp.server.logic._
 import shipreq.webapp.server.protocol.ServerProtocol

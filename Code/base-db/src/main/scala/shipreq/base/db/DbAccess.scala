@@ -10,7 +10,7 @@ import scalaz._
 import scalaz.effect.IO
 import shipreq.base.db.DbAccess.AbstractTransactor
 import shipreq.base.util.ErrorOr
-import shipreq.base.util.Fx._
+import shipreq.base.util.FxModule._
 import shipreq.base.util.effect.IoUtils._
 import shipreq.base.util.log.HasLogger
 import DbAccess.fxCapture

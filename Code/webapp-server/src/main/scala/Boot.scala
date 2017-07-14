@@ -11,7 +11,7 @@ import net.liftweb.util.Props.RunModes
 import scalaz.effect.IO
 import scalaz.syntax.applicative._
 import shipreq.base.db.{DbAccess, DbConfig}
-import shipreq.base.util.Fx._
+import shipreq.base.util.FxModule._
 import shipreq.base.util.{Props => ShipReqProps}
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.server.ServerConfig

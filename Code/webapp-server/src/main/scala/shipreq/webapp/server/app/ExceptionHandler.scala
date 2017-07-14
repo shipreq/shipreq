@@ -1,7 +1,7 @@
 package shipreq.webapp.server.app
 
 import net.liftweb.http.{S, XmlResponse, LiftResponse, Req}
-import shipreq.base.util.Fx._
+import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.server.lib.Taskman
 
