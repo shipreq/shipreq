@@ -8,33 +8,36 @@ object IdeSettings {
   private object excludes {
     val moduleTargets = List(
       "base",
-      "base-db",
-      "base-macro",
-      "base-test",
       "base-util",
-      "benchmark",
-      "project",
+      "base-db",
+      "base-test",
       "taskman",
-      "taskman-api",
-      "taskman-api-impl",
       "taskman-api-logic",
-      "taskman-server",
-      "taskman-server-impl",
+      "taskman-api",
       "taskman-server-logic",
       "taskman-server-schema",
-      "utils",
+      "taskman-server",
       "webapp",
-      "webapp-base",
-      "webapp-base-test",
-      "webapp-client",
       "webapp-macro",
-      "webapp-server")
+      "webapp-base",
+      "webapp-base-member",
+      "webapp-base-test",
+      "webapp-client-public",
+      "webapp-client-home",
+      "webapp-client-ww-api",
+      "webapp-client-ww",
+      "webapp-client-project",
+      "webapp-gen",
+      "webapp-server-logic",
+      "webapp-server",
+      "benchmark",
+      "utils")
       .flatMap(r => List(r, r + "/jvm", r + "/js", r + "/shared"))
       .map(_ + "/target")
 
     def common = "target" :: moduleTargets
     def root   = common ++ List(".idea", ".idea_modules", ".settings", "target", "log", ".bower")
-    def webapp = List("vendor", "node_modules", "src/main/webapp/assets/vendor")
+    def webapp = List("vendor")
   }
 
   private def prefix(p: String)(ss: List[String]): List[String] = ss.map(p + _)

@@ -74,9 +74,9 @@ base-db   - Reusable utility code for DB access.
 base-test - Reusable utility code for testing.
 base-util - Reusable utility code, general purpose.
 
-taskman-api-impl      - Taskman API (real: side-effects)
+taskman-api           - Taskman API (real: side-effects)
 taskman-api-logic     - Taskman API (pure: types and logic)
-taskman-server-impl   - Taskman server (real: side-effects). Exported via Docker.
+taskman-server        - Taskman server (real: side-effects). Exported via Docker.
 taskman-server-logic  - Taskman server (pure: types and logic)
 taskman-server-schema - Taskman DB schema
 

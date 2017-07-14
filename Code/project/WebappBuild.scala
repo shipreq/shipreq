@@ -430,7 +430,7 @@ object WebappBuild {
 
     def definition: Project => Project = _
       .enablePlugins(JettyPlugin, WarPlugin, DockerPlugin)
-      .dependsOn(baseDb, taskmanApiImpl, webappServerLogicJvm, webappGenJvm)
+      .dependsOn(baseDb, taskmanApi, webappServerLogicJvm, webappGenJvm)
       .deps(
         Scalaz.core ++ Lift.webkit ++ Shiro.all ++ commonsLang ++ Nyaya.gen ++
         testScope(μTest ++ Lift.testkit ++ commonsIo ++ twitterEval) ++

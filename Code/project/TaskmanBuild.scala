@@ -13,8 +13,8 @@ object TaskmanBuild {
   lazy val taskman =
     project("taskman")
       .configure(Common.jvmSettings)
-      .aggregate(taskmanApiLogic, taskmanApiImpl, taskmanServerLogic, taskmanServerImpl, taskmanServerSchema)
-      .dependsOn(taskmanApiLogic, taskmanApiImpl, taskmanServerLogic, taskmanServerImpl, taskmanServerSchema)
+      .aggregate(taskmanApiLogic, taskmanApi, taskmanServerLogic, taskmanServer, taskmanServerSchema)
+      .dependsOn(taskmanApiLogic, taskmanApi, taskmanServerLogic, taskmanServer, taskmanServerSchema)
 
   lazy val taskmanApiLogic =
     project("taskman-api-logic")
@@ -24,8 +24,8 @@ object TaskmanBuild {
         testScope(μTest ++ scalaCheck ++ Scala.reflect ++ Microlibs.testUtil))
       .dependsOn(baseUtilJvm)
 
-  lazy val taskmanApiImpl =
-    project("taskman-api-impl")
+  lazy val taskmanApi =
+    project("taskman-api")
       .configure(Common.jvmSettings, DockerEnv.test.required)
       .deps(
         Json4s.jackson ++
@@ -47,7 +47,7 @@ object TaskmanBuild {
       .configure(Common.jvmSettings)
       .dependsOn(baseDb)
 
-  lazy val taskmanServerImpl = {
+  lazy val taskmanServer: Project = {
 
     def consoleCmds =
       """
@@ -63,13 +63,13 @@ object TaskmanBuild {
       case n => n
     })
 
-    project("taskman-server-impl")
+    project("taskman-server")
       .enablePlugins(JavaAppPackaging, DockerPlugin)
       .configure(Common.jvmSettings, DockerEnv.test.required)
       .deps(
         Akka.actor ++ javaMail ++ okHttp ++ httpCore ++
         testScope(Akka.testkit ++ Specs2.combo))
-      .dependsOn(taskmanServerLogic, taskmanServerSchema, taskmanApiImpl)
+      .dependsOn(taskmanServerLogic, taskmanServerSchema, taskmanApi)
       .dependsOn(baseTestJvm % "test")
       .configure(Common.dockerBaseSettings("taskman"))
       .settings(
@@ -89,7 +89,7 @@ object TaskmanBuild {
           val jars = (stageDir / "lib").listFiles().toList
           val jarTiers: List[List[File]] =
             jars.groupBy(_.getName match {
-              case f if f contains   "taskman-server-impl"        => 92
+              case f if f contains   "taskman-server"             => 92
               case f if f contains   "taskman-server-logic"       => 91
               case f if f contains   "taskman"                    => 90
               case f if f contains   "shipreq"                    => 80

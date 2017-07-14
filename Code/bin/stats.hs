@@ -115,15 +115,15 @@ type TopLevelDeps = M.Map String [String]
 depsJvm = M.fromList [
          ("webapp-gen",              ["webapp-base-member"]),
          ("webapp-server-logic",     ["webapp-base-member", "taskman-api-logic", "webapp-client-public"]) ,
-         ("webapp-server",           ["base-db", "taskman-api-impl", "webapp-server-logic", "webapp-gen"]) ,
+         ("webapp-server",           ["base-db", "taskman-api", "webapp-server-logic", "webapp-gen"]) ,
          ("webapp-client-public",    ["webapp-base"]) ,
          ("webapp-base-member",      ["webapp-base"]) ,
          ("webapp-base",             ["webapp-macro", "base-util"]) ,
          ("webapp-macro",            ["base-util", "base-db"]) ,
-         ("taskman",                 ["taskman-server-impl"]) ,
-         ("taskman-api-impl",        ["taskman-api-logic", "base-db"]) ,
+         ("taskman",                 ["taskman-server"]) ,
+         ("taskman-api",             ["taskman-api-logic", "base-db"]) ,
          ("taskman-api-logic",       ["base-util"]) ,
-         ("taskman-server-impl",     ["taskman-server-logic", "taskman-server-schema", "taskman-api-impl"]) ,
+         ("taskman-server",          ["taskman-server-logic", "taskman-server-schema", "taskman-api"]) ,
          ("taskman-server-schema",   ["base-db"]) ,
          ("taskman-server-logic",    ["taskman-api-logic"]) ,
          ("base-db",                 ["base-util"]) ,
@@ -228,11 +228,9 @@ dropr n = reverse . drop n . reverse
 
 logicAndImpl :: [GroupD] -> [GroupD]
 logicAndImpl gs = let l = modulesWithSuffix' "-logic" gs
-                      hack = ("webapp-server", snd $ head $ modulesWithSuffix' "webapp-server" gs)
-                      i = hack : (modulesWithSuffix' "-impl" gs)
-                      keys = sort $ nub $ map fst $ l ++ i
+                      keys = sort $ map fst $ l
                       get xs k = s where Just (_,(s,_)) = find ((== k) . fst) xs
-                      getLI k = singleModuleGroup k (get l k, get i k)
+                      getLI k = singleModuleGroup k (get l k, get (concatMap modstats gs) k)
                   in  map getLI keys
 
 logicAndImplWithTotal gs = a ++ [consolidateGroups a] where a = logicAndImpl gs
