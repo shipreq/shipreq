@@ -4,12 +4,17 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
+import shipreq.webapp.base.Urls.PublicSpaRoute.Login
+import shipreq.webapp.base.user.Username
 import shipreq.webapp.base.{AssetManifest, WebappConfig}
 import shipreq.webapp.client.public.Styles.{layout => *}
 
 object Layout {
 
-  final case class Props(currentPage: Page, routerCtl: RouterCtl, content: VdomElement) {
+  final case class Props(loggedInUser: Option[Username],
+                         currentPage : Page,
+                         routerCtl   : RouterCtl,
+                         content     : VdomElement) {
     @inline def render: VdomElement = Component(this)
   }
 
@@ -31,8 +36,20 @@ object Layout {
 
   private def makeNav(p: Props, links: List[Page.Static]): TagMod = {
     def render(page: Page.Static): VdomTag = {
-      val base = if (p.currentPage ==* page) linkActive else p.routerCtl.link(page)
-      base(page.linkTitle)
+
+      val base: VdomTag =
+        if (page ==* p.currentPage)
+          linkActive
+        else
+          p.routerCtl.link(page)
+
+      val title: TagMod =
+        p.loggedInUser match {
+          case Some(u) if page.route ==* Login => TagMod(*.loggedIn, u.with_@)
+          case _                               => page.linkTitle
+        }
+
+      base(title)
     }
 
     links.iterator

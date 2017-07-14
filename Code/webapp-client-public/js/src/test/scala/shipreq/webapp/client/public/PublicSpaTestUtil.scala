@@ -15,6 +15,7 @@ object PublicSpaTestUtil {
 
   val initData = PublicSpaProtocols.InitData(
     allowRegister  = Allow,
+    loggedInUser   = None,
     landingPage    = ServerSideProc("landingPage"   , PublicSpaProtocols.LandingPage.Fn),
     register1      = ServerSideProc("register1"     , PublicSpaProtocols.Register.Fn1),
     register2      = ServerSideProc("register2"     , PublicSpaProtocols.Register.Fn2),

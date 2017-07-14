@@ -10,6 +10,7 @@ import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.public._
 import shipreq.webapp.client.public.spa._
 import PublicSpaTestUtil.semanticUiDisabled
+import shipreq.webapp.base.user.Username
 
 object LoginTester {
 
@@ -17,7 +18,7 @@ object LoginTester {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final class Obs($: HtmlDomZipper, cp: TestClientProtocol) {
+  final class Obs(val $: HtmlDomZipper, cp: TestClientProtocol) {
     val reqsSent = cp.reqs
 
     val form: Option[FormObs] =
@@ -90,11 +91,13 @@ object LoginTest extends TestSuite {
   val invariants: *.Invariants =
     *.emptyInvariant
 
-  def test(actions: *.Actions): Unit =
-    test(Plan(actions, invariants))
+  def test(actions: *.Actions, loggedInUser: Boolean = false): Unit =
+    testPlan(Plan(actions, invariants), loggedInUser)
 
-  def test(plan: *.Plan): Unit = {
+  def testPlan(plan: *.Plan, loggedInUser: Boolean = false): Unit = {
     val t = new PublicSpaTestUtil.ForTestState
+    if (loggedInUser)
+      t.initData = t.initData.copy(loggedInUser = Some(Username("dude")))
     import t.cp
     t(Page.Login)(h => plan.test(Observer.watch(new Obs(h, cp))).run((), cp))
   }
@@ -137,6 +140,9 @@ object LoginTest extends TestSuite {
         test(assertForm("", "", Off) +> enterUser(" q ") >> toggleRememberMe)
         test(assertForm("q", "", On) +> *.emptyAction)
       }
+
+//      'loggedInRedirects {
+//      }
     }
 
     'resetPassword {

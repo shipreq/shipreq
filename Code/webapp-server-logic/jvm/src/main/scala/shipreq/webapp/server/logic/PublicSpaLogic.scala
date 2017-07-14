@@ -276,13 +276,14 @@ object PublicSpaLogic {
     new PublicSpaLogic[F] {
       val initData: F[InitData] =
         for {
+          u <- security.authenticatedUser
           a <- landingPageFn
           b <- RegisterFns.registerFn1
           c <- RegisterFns.registerFn2
           d <- loginFn
           e <- ResetPasswordFns.resetPasswordFn1
           f <- ResetPasswordFns.resetPasswordFn2
-        } yield InitData(a, config.allowRegister, b, c, d, e, f)
+        } yield InitData(config.allowRegister, u.map(_.username), a, b, c, d, e, f)
     }
   }
 }

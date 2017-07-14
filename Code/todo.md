@@ -89,9 +89,6 @@ Phase 2 (dev)
 * On auth fail, redirect back after login
 * Remove unused SemanticUI CSS: colours, input[radio], etc
 
-### Front pages
-* Handle user being logged in in PublicSpa
-
 ### New Features
 * User profile page
 * Issues

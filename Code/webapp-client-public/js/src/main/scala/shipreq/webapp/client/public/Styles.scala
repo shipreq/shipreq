@@ -96,6 +96,10 @@ object Styles {
       fontWeight.bold,
       color := "#000")
 
+    val loggedIn = TagMod(
+      fontWeight.bold,
+      color := "#d00")
+
     val footer = TagMod(
       fontSize := "0.85rem",
       paddingTop := "0.1em",

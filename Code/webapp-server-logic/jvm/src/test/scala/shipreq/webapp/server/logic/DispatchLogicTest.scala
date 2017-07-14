@@ -65,7 +65,14 @@ object DispatchLogicTest extends TestSuite {
       import Urls.PublicSpaRoute._
 
       'nullary - static.foreach(p => assertUnprotected(testRun(Response.ServePublicSpa, p.url)))
+
       'nonGet - static.foreach(p => testNonGet(p.url))
+
+      'loggedIn {
+        implicit def login = user2
+        'loginRedirects - assertUnprotected(testRun(Response.redirectToMemberHome, Login.url))
+        'nonLoginRenders - static.whole.filter(_ !=* Login).foreach(p => assertUnprotected(testRun(Response.ServePublicSpa, p.url)))
+      }
 
       'resetPassword2 {
         svr.run(PublicSpaLogic[Name, Name].initData.value.resetPassword1)(\/-(user2.emailAddr)).needRight

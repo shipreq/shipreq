@@ -42,6 +42,7 @@ object DispatchLogic {
     implicit def univEq: UnivEq[Response] = UnivEq.derive
 
     val redirectToPublicHome = Redirect(Urls.publicHome)
+    val redirectToMemberHome = Redirect(Urls.memberHome)
     val redirectToLogin      = Redirect(Urls.login)
   }
 
@@ -171,8 +172,15 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
   val publicSpa: Route = {
     import Urls.{PublicSpaRoute => R}
 
+    // This logic is mirrored in .public.spa.Routes
+    val login: Route =
+      whenUrlIs(R.Login.url)(onGet(
+        security.isAuthenticated.map(a =>
+          if (a) redirectToMemberHome else ServePublicSpa)))
+
     val staticRoutes: Route =
-      whenUrlIsAnyOf(R.static.map(_.url).toNES)(onGet(F pure ServePublicSpa))
+      whenUrlIsAnyOf(R.static.filterNot(_ ==* R.Login).get.map(_.url).toNES)(onGet(
+        F pure ServePublicSpa))
 
     val securityTokenFn: R.NeedsToken => SecurityToken => F[SecurityToken.Status] = {
       case R.Register2     => PublicSpaLogic.tokenStatusFn(db.getUserRegistrationTokenIssueDate, config.confirmationTokenLifespan)
@@ -192,7 +200,7 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
         extractFlip(spaTest1(r.url))(t => onGet(respond(SecurityToken(t))))
       }.reduce(_ | _)
 
-    staticRoutes | securityTokenRoutes
+    login | staticRoutes | securityTokenRoutes
   }
 
   val memberHomeSpa: Route =

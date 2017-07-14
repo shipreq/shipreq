@@ -4,6 +4,7 @@ import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.extra.router.{RouterCtl => _, _}
 import japgolly.scalajs.react.vdom.Implicits._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.Urls
 import shipreq.webapp.base.Urls.PublicSpaRoute
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.data.SecurityToken
@@ -66,11 +67,23 @@ object Routes {
       def render(page: Page, r: RouterCtl) =
         spa.Component(PublicSpa.Props(page, r))
 
+      val userIsLoggedIn = spa.initData.loggedInUser.isDefined
+
       val staticRoutes =
         Page.static.map { p =>
           val url = p.route.url
-          val route: StaticDsl.Route[Unit] = if (url.isRoot) dsl.root else url.relativeUrl
-          staticRoute(route, p) ~> renderR(render(p, _))
+
+          val route: StaticDsl.Route[Unit] =
+            if (url.isRoot) dsl.root else url.relativeUrl
+
+          // This logic is mirrored in DispatchLogic
+          val action: Action =
+            if (userIsLoggedIn && p.route ==* PublicSpaRoute.Login)
+              redirectToPath(Urls.memberHome.relativeUrl)(Redirect.Force)
+            else
+              renderR(render(p, _))
+
+          staticRoute(route, p) ~> action
         }.reduce(_ | _)
 
       val tokenRoutes =
@@ -81,7 +94,7 @@ object Routes {
           } ~> dynRenderR(render(_, _))
         }.reduce(_ | _)
 
-      (removeTrailingSlashes | staticRoutes | tokenRoutes)
+      (removeQuery | removeTrailingSlashes | staticRoutes | tokenRoutes)
         .notFound(redirectToPage(Page.Home)(Redirect.Replace))
         .setTitle(p => WebappConfig.makePageTitle(p.pageTitle: _*))
         .verify(

@@ -153,8 +153,9 @@ object PublicSpaProtocols {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final case class InitData(landingPage   : LandingPage.Fn.Instance,
-                            allowRegister : Permission,
+  final case class InitData(allowRegister : Permission,
+                            loggedInUser  : Option[Username],
+                            landingPage   : LandingPage.Fn.Instance,
                             register1     : Register.Fn1.Instance,
                             register2     : Register.Fn2.Instance,
                             login         : Login.Fn.Instance,

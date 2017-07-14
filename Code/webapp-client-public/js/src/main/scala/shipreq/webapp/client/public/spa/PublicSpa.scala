@@ -28,7 +28,7 @@ object PublicSpa {
   }
 }
 
-final class PublicSpa(initData: P.InitData, cp: ClientProtocol) {
+final class PublicSpa(val initData: P.InitData, cp: ClientProtocol) {
   import PublicSpa._
 
   val Component = ScalaComponent.builder[Props]("Root")
@@ -79,7 +79,7 @@ final class PublicSpa(initData: P.InitData, cp: ClientProtocol) {
             Legal.TermsOfService(p.routerCtl)
         }
 
-      Layout.Component(Layout.Props(p.page, p.routerCtl, content))
+      Layout.Component(Layout.Props(initData.loggedInUser, p.page, p.routerCtl, content))
     }
   }
 
