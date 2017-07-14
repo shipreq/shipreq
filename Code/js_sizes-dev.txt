@@ -1,0 +1,18 @@
+████████████████████████████████████████████████████████████
+
+JS FastOpt Sizes
+================
+  3,216,004 →   336,502 - webapp-client-public
+  3,476,132 →   380,310 - webapp-client-home
+ 18,222,615 → 1,746,510 - webapp-client-project
+  2,151,591 →   233,771 - webapp-client-ww
+
+JS FullOpt Sizes
+================
+    626,807 →   135,881 - webapp-client-public
+    692,016 →   164,303 - webapp-client-home
+  3,417,995 →   688,516 - webapp-client-project
+    425,053 →    93,624 - webapp-client-ww
+
+[success] Total time: 126 s, completed 14/07/2017 4:35:20 PM
+
