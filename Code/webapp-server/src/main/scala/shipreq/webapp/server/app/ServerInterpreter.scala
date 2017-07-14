@@ -4,28 +4,28 @@ import java.time.{Duration, Instant}
 import net.liftweb.actor.LAScheduler
 import net.liftweb.common._
 import net.liftweb.http.S
-import scalaz.effect.IO
 import scalaz.syntax.monad._
+import shipreq.base.util.Fx._
 import shipreq.webapp.base.protocol.ServerSideProc
 import shipreq.webapp.server.logic._
 import shipreq.webapp.server.protocol.ServerProtocol
 
-object ServerInterpreter extends Server.Algebra[IO] {
+object ServerInterpreter extends Server.Algebra[Fx] {
 
-  override def createServerSideProc(p: ServerSideProc.Protocol)(localFn: p.Input => IO[p.Response]): IO[p.Instance] =
-    IO(ServerProtocol.createServerSideProc(p)(localFn(_)))
+  override def createServerSideProc(p: ServerSideProc.Protocol)(localFn: p.Input => Fx[p.Response]): Fx[p.Instance] =
+    Fx(ServerProtocol.createServerSideProc(p)(localFn(_)))
 
-  override val now: IO[Instant] =
-    IO(Instant.now())
+  override val now: Fx[Instant] =
+    Fx.now
 
-  override def delay[A](f: IO[A], d: Duration): IO[A] =
-    IO(Thread.sleep(d.toMillis)) >> f // TODO Thread.sleep lolz
+  override def delay[A](f: Fx[A], d: Duration): Fx[A] =
+    Fx(Thread.sleep(d.toMillis)) >> f // TODO Thread.sleep lolz
 
-  override def fork[A](f: IO[A]): IO[Unit] =
-    IO(LAScheduler.execute(() => f.unsafePerformIO()))
+  override def fork[A](f: Fx[A]): Fx[Unit] =
+    Fx(LAScheduler.execute(() => f.unsafeRun()))
 
-  override val clientIP: IO[Option[IP]] =
-    IO {
+  override val clientIP: Fx[Option[IP]] =
+    Fx {
       // println("X-Real-IP: " + req.header("X-Real-IP"))
       // println("X-Forwarded-For: " + req.header("X-Forwarded-For"))
       val box: Box[String] =

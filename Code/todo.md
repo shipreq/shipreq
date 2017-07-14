@@ -47,6 +47,8 @@ Backlog
 * webapp-base-member shares packages with webapp-base, plus most of that stuff should be under .project as well
 * Extract webapp-base-member-test
 * Add laws for webapp-server-logic and test in webapp-server
+* Make everything use Fx, ditch IO completely
+* Change Taskman algebras from initial to final encodings
 
 ------------------------------------------------------------------------------------------------------------------------
 Phase 2 (dev-complete)
@@ -81,7 +83,6 @@ Phase 2 (dev)
 * Rename webappClientHome now that its ambiguous in regards to the public pages
 * Only create a single Lift function per SPA instead of one per ServerSideProc
 * Add DB indicies
-* Switch from scalaz.effect.IO to Monix tasks
 * Restore AdminStats
 * Restore DiagnosticEndpoints
 * Remove SessionStats

@@ -6,10 +6,10 @@ import japgolly.microlibs.config._
 import java.time.Duration
 import scalaz.syntax.applicative._
 
-final case class RetryCriteria(delay: Duration, maxRetries: Option[Int]) {
+final case class RetryCriteria(delay: Duration, maxAttempts: Option[Int]) {
 
-  def apply(retriesSoFar: Int): Option[Duration] =
-    if (maxRetries.forall(retriesSoFar < _))
+  def apply(attemptsSoFar: Int): Option[Duration] =
+    if (maxAttempts.forall(attemptsSoFar < _))
       Some(delay)
     else
       None

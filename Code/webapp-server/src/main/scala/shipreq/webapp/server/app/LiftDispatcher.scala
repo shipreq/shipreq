@@ -5,7 +5,7 @@ import net.liftweb.common.{Box, Full}
 import net.liftweb.http.{Req => LiftReq, _}
 import net.liftweb.util.Props
 import scala.xml.NodeSeq
-import scalaz.effect.IO
+import shipreq.base.util.Fx._
 import shipreq.base.util.Url
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.user.User
@@ -39,15 +39,15 @@ final class LiftDispatcher(global: Global) {
       => dispatchLiftReq(r)
   }
 
-  val logic: DispatchLogic[IO] = {
+  val logic: DispatchLogic[Fx] = {
     implicit val config   = global.config
     implicit val security = global.security
-    implicit val db       = DB.SecurityTokenReadOnly.trans(DbInterpreter.SecurityTokenReadOnly)(global.db.trans)
+    implicit val db       = DB.SecurityTokenReadOnly.trans(DbInterpreter.SecurityTokenReadOnly)(global.db.fx.trans)
     implicit val server   = ServerInterpreter
     new DispatchLogic
   }
 
-  private val dispatcher: DispatchLogic.Request => IO[DispatchLogic.Response] =
+  private val dispatcher: DispatchLogic.Request => Fx[DispatchLogic.Response] =
     ( logic.main
     | Option.when(Props.testMode)(logic.loginApi)
     | Option.when(Props.devMode)(logic.quickDev).flatten
@@ -80,7 +80,7 @@ final class LiftDispatcher(global: Global) {
 
     val url = Url.Relative(r.request.uri)
     val req = DispatchLogic.Request(m, url, paramFn)
-    val res = dispatcher(req).unsafePerformIO()
+    val res = dispatcher(req).unsafeRun()
 //    println(s"[${req.path.relativeUrl}] -> $res")
     liftResponse(r, res)
   }

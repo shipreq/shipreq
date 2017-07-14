@@ -10,8 +10,10 @@ import scalaz._
 import scalaz.effect.IO
 import shipreq.base.db.DbAccess.AbstractTransactor
 import shipreq.base.util.ErrorOr
+import shipreq.base.util.Fx._
 import shipreq.base.util.effect.IoUtils._
 import shipreq.base.util.log.HasLogger
+import DbAccess.fxCapture
 
 final case class DbAccess(cfg               : DbConfig,
                           ds                : DataSource,
@@ -37,11 +39,7 @@ final case class DbAccess(cfg               : DbConfig,
     s"$host/$databaseName" + schema.map(":" + _).getOrElse("")
 
   val io = abstractTransactor[IO]
-
-  def trans: ConnectionIO ~> IO =
-    new (ConnectionIO ~> IO) {
-      override def apply[A](fa: ConnectionIO[A]) = io.trans(fa)
-    }
+  val fx = abstractTransactor[Fx]
 
   def verifyConnectivity(): Unit = {
     log.info.z(s"Connecting to database: $desc")
@@ -106,4 +104,9 @@ object DbAccess extends HasLogger {
     val migrator = SchemaMigrator(ds, cfg.schema)
     DbAccess(cfg, ds, xa, migrator)
   }
+
+  implicit val fxCapture: Capture[Fx] =
+    new Capture[Fx] {
+      override def apply[A](a: => A) = Fx(a)
+    }
 }

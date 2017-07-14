@@ -5,7 +5,7 @@ import scalaz.effect.IO
 import scalaz.syntax.bind._
 import shipreq.base.util.ErrorOr
 
-object IoUtils {
+object IoUtils { // TODO Delete. Let Fx reign
 
   val nop: IO[Unit] =
     IO.ioUnit

@@ -11,8 +11,8 @@ import net.liftweb.util.Props.RunModes
 import scalaz.effect.IO
 import scalaz.syntax.applicative._
 import shipreq.base.db.{DbAccess, DbConfig}
+import shipreq.base.util.Fx._
 import shipreq.base.util.{Props => ShipReqProps}
-import shipreq.base.util.effect.IoUtils._
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.app._
@@ -147,11 +147,11 @@ class Boot {
   def initTaskman(g: Global): Unit =
     if (g.config.initTaskmanOnBoot)
       Taskman.updateCfg(g)
-        .retryOnException((n, t) => g.config.initTaskmanRetry(n).map(d => IO {
+        .retryOnException((n, t) => g.config.initTaskmanRetry(n).map(d => Fx {
           logger.warn(s"Taskman initialisation error occurred. Retrying...\n${t.getMessage}")
           Thread sleep d.toMillis
         }))
-        .unsafePerformIO()
+        .unsafeRun()
 
   def preloadTemplates(): Unit = {
     import shipreq.webapp.server.snippet._

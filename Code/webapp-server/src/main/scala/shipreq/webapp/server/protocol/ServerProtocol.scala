@@ -4,14 +4,14 @@ import boopickle._
 import java.nio.ByteBuffer
 import net.liftweb.common.{Empty, Full, Failure => BoxFailure}
 import net.liftweb.http.{BadRequestResponse, InternalServerErrorResponse, LiftResponse, S}
-import scalaz.effect.IO
 import scalaz.{-\/, \/, \/-}
+import shipreq.base.util.Fx._
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.base.protocol.ServerSideProc
 
 object ServerProtocol extends HasLogger {
 
-  def createServerSideProc(p: ServerSideProc.Protocol)(localFn: p.Input => IO[p.Response]): p.Instance = {
+  def createServerSideProc(p: ServerSideProc.Protocol)(localFn: p.Input => Fx[p.Response]): p.Instance = {
     import p._
 
     val proc = S.NFuncHolder { () =>
@@ -39,7 +39,7 @@ object ServerProtocol extends HasLogger {
 
       def process(i: Input): T[Response] =
         try {
-          localFn(i).unsafePerformIO()
+          localFn(i).unsafeRun()
         } catch {
           case e: Throwable =>
             log.error(e, s"Error processing $p request $i")

@@ -1,8 +1,8 @@
 package shipreq.webapp.server.app
 
 import doobie.imports.ConnectionIO
-import scalaz.effect.IO
 import shipreq.base.db.DbAccess
+import shipreq.base.util.Fx._
 import shipreq.taskman.api.TaskmanApi
 import shipreq.taskman.api.impl.TaskmanApiImpl
 import shipreq.webapp.server.ServerConfig
@@ -12,9 +12,9 @@ import shipreq.webapp.server.security.SecurityInterpreter
 
 final case class Global(config  : ServerConfig,
                         db      : DbAccess,
-                        logic   : ServerLogic[IO],
-                        security: Security.Algebra[IO],
-                        taskman : TaskmanApi[IO])
+                        logic   : ServerLogic[Fx],
+                        security: Security.Algebra[Fx],
+                        taskman : TaskmanApi[Fx])
 
 object Global {
   var Instance: Global = _
@@ -28,18 +28,18 @@ object Global {
 
   def default(implicit dbAccess: DbAccess, config: ServerConfig): Global = {
     assert(dbAccess ne null, "DbAccess is null, sir.")
+    implicit val runDB         = dbAccess.fx.trans
              val taskmanCtx    = TaskmanApiImpl.Context(Some(config.taskmanSchema))
-    implicit val taskman       = TaskmanApiImpl(taskmanCtx, dbAccess.io.trans)
+    implicit val taskman       = TaskmanApiImpl(taskmanCtx, runDB)
     implicit val dbAlgebra     = new DbInterpreter()
-    implicit val dbForSecurity = DB.ForSecurity.trans(DbInterpreter.ForSecurity)(dbAccess.io.trans)
-    implicit val runDB         = dbAccess.trans
-    implicit val projectStore  = Store.Algebra.concurrentHashMap(): ProjectServer.StoreAlgebra[IO]
-    implicit val security      = new SecurityInterpreter[IO]
+    implicit val dbForSecurity = DB.ForSecurity.trans(DbInterpreter.ForSecurity)(runDB)
+    implicit val projectStore  = Store.Algebra.concurrentHashMap(): ProjectServer.StoreAlgebra[Fx]
+    implicit val security      = new SecurityInterpreter[Fx]
     implicit val server        = ServerInterpreter
     Global(
       config   = config,
       db       = dbAccess,
-      logic    = ServerLogic.create[ConnectionIO, IO](ProjectServer.BroadcastTo.All),
+      logic    = ServerLogic.create[ConnectionIO, Fx](ProjectServer.BroadcastTo.All),
       security = security,
       taskman  = taskman)
     }

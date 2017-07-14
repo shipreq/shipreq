@@ -4,6 +4,7 @@ import java.time._
 import org.apache.shiro.codec.Base64
 import org.apache.shiro.util.ByteSource
 import utest.asserts._
+import shipreq.base.util.Fx._
 import shipreq.webapp.base.test.{WebappTestEquality, WebappTestUtil}
 import shipreq.webapp.base.user.{PlainTextPassword, User, Username}
 import shipreq.webapp.server.logic.PasswordAndSalt
@@ -17,13 +18,13 @@ trait WebappServerTestUtil extends WebappTestUtil {
   import PrepareEnv.security
 
   def login(usernameOrEmail: String, password: PlainTextPassword): Unit =
-    security.attemptLogin(Username.orEmail(usernameOrEmail), password).unsafePerformIO() match {
+    security.attemptLogin(Username.orEmail(usernameOrEmail), password).unsafeRun() match {
       case Some(_) => ()
       case None    => sys error s"Login failed for [$usernameOrEmail] [$password]"
     }
 
   def logout(): Unit =
-    security.logout.unsafePerformIO()
+    security.logout.unsafeRun()
 
   def withLoggedIn[A](username: Username, password: PlainTextPassword)(a: => A): A = {
     login(username.value, password)
@@ -37,16 +38,16 @@ trait WebappServerTestUtil extends WebappTestUtil {
   }
 
   def assertUserLoggedIn(u: User): Unit =
-    assertEq(security.authenticatedUser.unsafePerformIO(), Some(u))
+    assertEq(security.authenticatedUser.unsafeRun(), Some(u))
 
   def assertLoggedIn(): User = {
-    val user = security.authenticatedUser.unsafePerformIO()
+    val user = security.authenticatedUser.unsafeRun()
     assert(user.isDefined)
     user.get
   }
 
   def assertNotLoggedIn(): Unit = {
-    val user = security.authenticatedUser.unsafePerformIO()
+    val user = security.authenticatedUser.unsafeRun()
     assert(user.isEmpty)
   }
 

@@ -1,8 +1,8 @@
 package shipreq.webapp.server.lib
 
-import scalaz.effect.IO
 import shipreq.base.util.Error
 import shipreq.taskman.api.Msg.WebappErrorOccurred
+import shipreq.base.util.Fx._
 import shipreq.webapp.base.{Urls, WebappConfig}
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.logic.WebappTaskmanConverters._
@@ -10,7 +10,7 @@ import shipreq.webapp.server.logic.WebappTaskmanConverters._
 object Taskman {
   import shipreq.taskman.api.CfgKeys.{Webapp => K}
 
-  def updateCfg(g: Global): IO[Unit] =
+  def updateCfg(g: Global): Fx[Unit] =
     g.taskman.cfgPutBulk(
       K.appName  -> WebappConfig.appName,
       K.homeUrl  -> g.config.baseUrl.value,
@@ -18,18 +18,18 @@ object Taskman {
 
   def webappErrorOccurred(e: Throwable, url: Option[String], suppInfo: String): WebappErrorOccurred =
     WebappErrorOccurred(
-      Global.security.authenticatedUser.unsafePerformIO().map(_.id.toTaskman),
+      Global.security.authenticatedUser.unsafeRun().map(_.id.toTaskman),
       url,
       s"${Error stackTraceStr e}\n\nSUPP: $suppInfo")
 
-  def submitAsync(w: WebappErrorOccurred): IO[Unit] =
-    IO(()) // TODO
+  def submitAsync(w: WebappErrorOccurred): Fx[Unit] =
+    Fx.unit // TODO
 
 //  private object AsyncActor extends SpecializedLiftActor[Msg] {
 //    override protected def messageHandler = {
 //      case m: Msg =>
 //        try
-//          submitMsg(m).unsafePerformIO()
+//          submitMsg(m).unsafePerformFx()
 //        catch {
 //          case e: Throwable if m.isInstanceOf[WebappErrorOccurred] =>
 //            log.error(e, s"Error occurred trying to send $m. FUCK.")

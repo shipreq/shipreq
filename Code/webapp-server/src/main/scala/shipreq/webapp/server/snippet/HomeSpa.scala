@@ -1,6 +1,7 @@
 package shipreq.webapp.server.snippet
 
 import net.liftweb.util.Helpers._
+import shipreq.base.util.Fx._
 import shipreq.webapp.base.protocol.HomeSpaProtocols
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.lib.SnippetHelpers
@@ -12,7 +13,7 @@ object HomeSpa extends SnippetHelpers {
 
   def render = {
     val user = currentUser_!()
-    val initData = Global.logic.homeSpa.initData(user).unsafePerformIO()
+    val initData = Global.logic.homeSpa.initData(user).unsafeRun()
     "*" #> EntryPoint.invokeOnLoadHtml(initData)
   }
 }

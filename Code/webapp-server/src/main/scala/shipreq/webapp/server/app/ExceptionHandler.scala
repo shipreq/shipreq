@@ -1,6 +1,7 @@
 package shipreq.webapp.server.app
 
 import net.liftweb.http.{S, XmlResponse, LiftResponse, Req}
+import shipreq.base.util.Fx._
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.server.lib.Taskman
 
@@ -10,7 +11,7 @@ object ExceptionHandler extends HasLogger {
     val uri = r.uri.toString
     val m = Taskman.webappErrorOccurred(e, Some(uri), s"Request: $r")
     log.error(e, s"500 Error serving $uri to user ${m.usr}")
-    Taskman.submitAsync(m).unsafePerformIO()
+    Taskman.submitAsync(m).unsafeRun()
 
     // TODO Oshiro.enforceHumanSpeed()
 

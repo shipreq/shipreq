@@ -4,10 +4,10 @@ import net.liftweb.common.{Box, Full}
 import net.liftweb.http._
 import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
-import scalaz.effect.IO
 import scalaz.syntax.all._
 import scalaz.{-\/, \/-}
 import shipreq.base.util.FreeOption
+import shipreq.base.util.Fx._
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.protocol.ProjectSpaProtocols
@@ -33,10 +33,10 @@ object ProjectSpa extends SingleOpStatelessSnippet {
     val logic = Global.logic.projectServer
 
     def newRegId(): ProjectServer.RegId = {
-      val register = logic.register(projectId, user.id, ve => comet.sendMsgIO(ProjectSpaComet.UpdateProject(ve)))
+      val register = logic.register(projectId, user.id, ve => comet.sendMsgFx(ProjectSpaComet.UpdateProject(ve)))
 
       val newRegId: ProjectServer.RegId =
-        register.unsafePerformIO() match {
+        register.unsafeRun() match {
           case \/-(id)                            => id
           case -\/(ProjectServer.AccessDenied)    => respondImmediately(ForbiddenResponse())
           case -\/(ProjectServer.ProjectNotFound) => respondImmediately(NotFoundResponse())
@@ -51,7 +51,7 @@ object ProjectSpa extends SingleOpStatelessSnippet {
       comet.getRegId getOrElse newRegId()
 
     val init: ProjectSpaProtocols.InitData =
-      logic.initialClient(regId, user.username).unsafePerformIO() match {
+      logic.initialClient(regId, user.username).unsafeRun() match {
         case \/-(ok)                          => ok
         case -\/(ProjectServer.NotRegistered) => shouldNeverHappen_!
       }
@@ -97,7 +97,7 @@ final class ProjectSpaComet extends MessageCometActor {
 
   override protected def localShutdown(): Unit = {
     for (id <- regId)
-      try logic.unregister(id).unsafePerformIO()
+      try logic.unregister(id).unsafeRun()
       finally regId = FreeOption.empty
     super.localShutdown()
   }
@@ -110,9 +110,9 @@ final class ProjectSpaComet extends MessageCometActor {
       if (regId.isEmpty && running)
         regId = FreeOption(id)
       else
-        logic.unregister(id).attempt.unsafePerformIO()
+        logic.unregister(id).attempt.unsafeRun()
   }
 
-  def sendMsgIO(msg: Msg): IO[Unit] =
-    IO(this ! msg)
+  def sendMsgFx(msg: Msg): Fx[Unit] =
+    Fx(this ! msg)
 }

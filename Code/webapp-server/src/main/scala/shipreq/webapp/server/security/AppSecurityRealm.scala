@@ -8,6 +8,7 @@ import org.apache.shiro.crypto.SecureRandomNumberGenerator
 import org.apache.shiro.crypto.hash.SimpleHash
 import org.apache.shiro.realm.AuthenticatingRealm
 import org.apache.shiro.util.ByteSource
+import shipreq.base.util.Fx._
 import shipreq.webapp.base.user.{PlainTextPassword, User}
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.logic.{PasswordAndSalt, PasswordHash, Salt}
@@ -26,7 +27,7 @@ final class AppSecurityRealm extends AuthenticatingRealm {
     val usernameOrEmail = userPassToken.getUsername
 
     // Query database
-    val result = Global.security.db.getUserAndPassword(usernameOrEmail).unsafePerformIO()
+    val result = Global.security.db.getUserAndPassword(usernameOrEmail).unsafeRun()
     if (result.isEmpty)
       throw new UnknownAccountException("No account found for [" + usernameOrEmail + "]")
     val r = result.get
