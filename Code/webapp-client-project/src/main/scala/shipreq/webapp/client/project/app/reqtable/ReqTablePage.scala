@@ -17,11 +17,11 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.{PotentialFilter, ValidFilter}
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{PlainText, TextSearch}
-import shipreq.webapp.client.base.feature.AsyncFeature
-import shipreq.webapp.client.base.lib.DataReusability._
-import shipreq.webapp.client.base.protocol.ServerSideProcInvoker
-import shipreq.webapp.client.base.ui.BaseStyles
-import shipreq.webapp.client.base.ui.semantic.{Icon, Message}
+import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.lib.DataReusability._
+import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.ui.BaseStyles
+import shipreq.webapp.base.ui.semantic.{Icon, Message}
 import shipreq.webapp.client.project.app.state.ClientData
 import shipreq.webapp.client.project.app.Style.reqtable.{page => *}
 import shipreq.webapp.client.project.feature._

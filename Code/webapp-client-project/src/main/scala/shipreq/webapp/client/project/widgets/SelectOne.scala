@@ -7,7 +7,7 @@ import org.scalajs.dom.raw.HTMLSelectElement
 import scala.scalajs.js
 import scalaz.Equal
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.client.base.data.{Disabled, Enabled}
+import shipreq.webapp.base.data.{Disabled, Enabled}
 
 object SelectOne {
 

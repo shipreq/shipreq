@@ -5,7 +5,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.univeq.UnivEq
 import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.base.lib.DataReusability._
+import shipreq.webapp.base.lib.DataReusability._
 
 /**
   * @param live Is the column itself live/dead.

@@ -16,8 +16,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataValidators.{field => V}
 import shipreq.webapp.base.protocol.FieldCrud
 import shipreq.webapp.base.UiText, UiText.FieldNames
-import shipreq.webapp.client.base.data._
-import shipreq.webapp.client.base.protocol.ClientProtocol
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.cfg.shared.{FieldSet => _, _}
 import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
 import shipreq.webapp.client.project.lib.DataReusability._

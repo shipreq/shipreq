@@ -10,11 +10,11 @@ import org.scalajs.dom.ext.KeyCode
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Applicable, NotApplicable}
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.base.data.{Off, On, Plain}
-import shipreq.webapp.client.base.feature.AsyncFeature
-import shipreq.webapp.client.base.lib.DomUtil._
-import shipreq.webapp.client.base.ui.{EditTheme, semantic}
-import shipreq.webapp.client.base.ui.semantic.{Icon, Message}
+import shipreq.webapp.base.data.{Off, On, Plain}
+import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.lib.DomUtil._
+import shipreq.webapp.base.ui.{EditTheme, semantic}
+import shipreq.webapp.base.ui.semantic.{Icon, Message}
 import shipreq.webapp.client.project.app.Style.reqtable.{table => *}
 import shipreq.webapp.client.project.feature.{EditorFeature, Selection}
 import shipreq.webapp.client.project.widgets.{DragToReorder, ProjectWidgets, ViewReq}

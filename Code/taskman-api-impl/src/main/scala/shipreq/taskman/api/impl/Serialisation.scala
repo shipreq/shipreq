@@ -22,6 +22,16 @@ private[taskman] object Serialisation {
         m.backward.get(name).fold(f)(newName => JField(newName, x))
     })
 
+  object CodecEmailAddr extends CustomSerializer[EmailAddr](_ => (
+    { case JString(a) => EmailAddr(a) },
+    { case a: EmailAddr => JString(a.value) }))
+
+  object CodecUserId extends CustomSerializer[UserId](_ => (
+    { case JLong(a) => UserId(a)
+      case JInt(a) => UserId(a.toLong)
+    },
+    { case a: UserId => JLong(a.value) }))
+
   implicit val formats: Formats = (
     Serialization.formats(NoTypeHints)
       + fieldRenamer[RegistrationRequested]  (BiMap(Map("email"->"e", "verifyEmailUrl"->"u")))
@@ -30,6 +40,8 @@ private[taskman] object Serialisation {
       + fieldRenamer[ReRegistrationAttempted](BiMap(Map("email"->"e", "loginUrl"->"l")))
       + fieldRenamer[PasswordResetRequested] (BiMap(Map("email"->"e", "resetPasswordUrl"->"u")))
       + fieldRenamer[LandingPageHit]         (BiMap(Map("email"->"e", "name"->"n", "msg"->"m", "newsletter"->"w")))
+      + CodecEmailAddr
+      + CodecUserId
     )
 
   def serialise(m: Msg): Ser = JsonStr(write(m))

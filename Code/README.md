@@ -10,11 +10,12 @@ Development Environment Setup
 
 1. From SBT: `up`
 2. Open http://localhost:8080/register
-3. Create an account with
-    Email:    japgolly@gmail.com
-    Username: devuser
-    Password: dev123123
-4. Auto login at http://localhost:8080/x (dev-mode only)
+3. Create an account
+4. Add the following env vars to your shell config:
+    * `SHIPREQ_DEV_USER` - Account username or email address
+    * `SHIPREQ_DEV_PASS` - Account password
+    * `SHIPREQ_DEV_GOTO` - (Optional) A relative URL to goto after auto-login
+5. Auto-login with the above credentials at http://localhost:8080/x (dev-mode only)
 
 
 If Taskman runs into trouble, tickets should be raised at http://yoarmum.freshdesk.com/
@@ -79,10 +80,10 @@ taskman-server-impl   - Taskman server (real: side-effects). Exported via Docker
 taskman-server-logic  - Taskman server (pure: types and logic)
 taskman-server-schema - Taskman DB schema
 
-webapp-base             - Shared code between front- and back-end.
-webapp-base-test        - Shared code for webapp testing. Tests for webapp-base.
-webapp-client-base      - Shared code for frontend projects.
-webapp-client-base-test - Shared code for testing frontend projects.
+webapp-base             - Shared code between client and/or server modules for public pages.
+webapp-base-member      - Shared code between client and/or server modules for member (i.e. logged-in users) pages.
+webapp-base-test        - Shared code for testing client and/or server modules. Tests for webapp-base.
+webapp-client-public    - SPA for the public pages before a user logs in.
 webapp-client-home      - SPA for when a user logs in. Project CRUDL, view/edit account, etc.
 webapp-client-project   - SPA for working with a Project.
 webapp-client-ww        - WebWorkers for big background tasks like graphviz→SVG generation.

@@ -11,7 +11,6 @@ import shipreq.base.util.univeq._
 import BoopickleMacros._
 
 object BinCodecGeneric extends BasicImplicitPicklers with TuplePicklers {
-  import shipreq.webapp.base.data.DataIdAux
 
   @inline implicit class PicklerExt[A](private val p: Pickler[A]) extends AnyVal {
     def imap[B](iso: Iso[A, B]): Pickler[B] =
@@ -57,9 +56,6 @@ object BinCodecGeneric extends BasicImplicitPicklers with TuplePicklers {
 
   def pickleIMap[K: UnivEq, V: Pickler](empty: IMap[K, V]): Pickler[IMap[K, V]] =
     xmap(empty ++ (_: Iterable[V]))(_.values)
-
-  @inline def pickleIMapD[K: UnivEq : Pickler, V: Pickler](implicit d: DataIdAux[V, K]): Pickler[IMap[K, V]] =
-    pickleIMap(d.emptyIMap)
 
   def pickleNonEmpty[N, E](f: N => E)(implicit p: Pickler[E], proof: NonEmpty.Proof[E, N]): Pickler[N] =
     p.xmap(NonEmpty require_! _)(f)

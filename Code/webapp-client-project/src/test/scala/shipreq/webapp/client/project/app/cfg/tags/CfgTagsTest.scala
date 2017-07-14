@@ -14,7 +14,7 @@ import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.{TagCrud, ServerSideProc}, TagCrud._
 import shipreq.webapp.base.test.{SampleProject => S}, S.Values._
 import shipreq.webapp.base.test.UnsafeTypes._
-import shipreq.webapp.client.base.test.TestClientProtocol
+import shipreq.webapp.base.test.TestClientProtocol
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.test._
 import DataImplicits._

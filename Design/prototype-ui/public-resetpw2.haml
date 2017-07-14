@@ -1,0 +1,124 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.js"}
+    :css
+
+      body {background:#fdfeff}
+
+      #header2 {
+        display:flex;
+        width:100%;
+        align-items:top;
+      }
+      #header2 > .left,
+      #header2 > .right {width:4em; bxackground:red; padding:0.5em}
+      #header2 > .left img {width:4em; height:4em; display:block}
+      #header2 > .mid { flex:1; text-align:center; padding-top:0.2em}
+      #header2 > .mid .sep { padding:0 1em; color:#aaa }
+      #header2 nav span.active {font-weight:bold;color:#000}
+
+      #part1 {width:44ex; margin:4em auto 0 auto}
+      #part2 {width:54ex; margin:6em auto 0 auto}
+
+      #footer1 {
+        font-size:0.85rem;
+        padding-top:0.1em;
+        padding-bottom:0.1em;
+        background:#edeeef;
+        border-top: 1px solid rgba(34,36,38,.15);
+        text-align:center;
+      }
+      #footer1 .txt {color:#888}
+      #footer1 .sep { padding:0 1em; color:#aaa }
+
+      #layout {display:flex; flex-direction: column; align-items:stretch; min-height:100%}
+      #layout > header {}
+      #layout > main {flex:1; padding-bottom:2em}
+      #layout > footer {}
+
+      .validation-errmsg {
+        color: #9f3a38;
+        padding-top: 0.15rem;
+        font-size: 92%;
+      }
+
+  %body
+    #layout
+
+      %header#header2
+        .left
+          %img(src="logo-only-dark.svg" onclick="location.href='public-home.haml.html'" style="cursor:pointer")
+        .mid
+          %nav
+            %a(href="public-login.haml.html") Login
+            %span.sep |
+            %a(href="public-register.haml.html") Register
+        .right
+
+      %main
+
+        -# #part1
+          .ui.form
+            .field
+              %label New password
+              .ui.left.icon.input
+                %input(type="password" autofocus=1)
+                %i.icon.lock
+            .field
+              %label Confirm new password
+              .ui.left.icon.input
+                %input(type="password")
+                %i.icon.lock
+            .div(style="text-align:right; padding-top:0.4em")
+              .ui.blue.submit.button.large(style="margin-right:0!important")
+                Change Password
+
+        #part1
+          .ui.form
+            .field.error
+              %label New password
+              .ui.left.icon.input
+                %input(type="password" value="abc")
+                %i.icon.lock
+              .validation-errmsg Must be at least 8 characters long.
+            .field
+              %label Confirm new password
+              .ui.left.icon.input
+                %input(type="password")
+                %i.icon.lock
+            .div(style="text-align:right; padding-top:0.4em")
+              .ui.blue.submit.button.large.disabled(style="margin-right:0!important")
+                Change Password
+
+        #part2
+          .ui.message.icon.success
+            %i.icon.lock
+            .content
+              .header
+                Changed Password
+              %p
+                Your password was updated successfully.
+
+        #part2
+          .ui.message.icon.error
+            %i.icon.warning
+            .content
+              .header
+                Invalid token
+              %p
+                The link emailed to you is no longer valid.<br>Please request a new one from the login page.
+
+
+      %footer#footer1
+        %span.txt © 2013-2017 Bearded Logic
+        %span.sep |
+        %a(href="public-about.haml.html") About
+        %span.sep |
+        %a(href="public-tos.haml.html") Terms
+        %span.sep |
+        %a(href="public-privacy.haml.html") Privacy

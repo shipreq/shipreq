@@ -1,5 +1,5 @@
 package shipreq.webapp.server.test
-
+/*
 import net.liftweb.http.js.JsCmd
 import net.liftweb.http.{LiftSession, RedirectResponse, ResponseShortcutException, S}
 import net.liftweb.util.Helpers.stringToSuper
@@ -160,5 +160,5 @@ object SnippetTestUtil {
     }
   }
 
-
 }
+*/

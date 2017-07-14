@@ -38,7 +38,7 @@
     "segment",     // Used when loading project (/project/ABC).
     //"step",
     "breadcrumb",  // Used in top-left of in all logged-in pages
-    //"form",
+    "form",        // Used in public pages (eg. login, register), user profile page
     //"grid",
     "menu",        // Used at top of all logged-in pages
     "message",     // Used when project fails to load (/project/ABC).
@@ -50,7 +50,7 @@
     //"item",
     "statistic",   // Used in projects index (/), and each project's home (/project/ABC)
     "accordion",   // Used for rich-text editor help, and filter help.
-    //"checkbox",
+    "checkbox",    // Used in public pages (eg. login, register), user profile page
     "dimmer",      // Used in [Req Lookup] card in project menu (/project/ABC).
     "dropdown",    // Used in top-right of all logged-in pages
     //"embed",
@@ -64,11 +64,11 @@
     //"sidebar",
     //"sticky",
     //"tab",
-    "transition",  // Required by dropdown
+    "transition",  // Required by dropdown, also used to flash errors in PublicSpa
     //"api",
     //"form",
     //"state",
     //"visibility",
   ],
-  "version": "2.2.2"
+  "version": "2.2.10"
 }

@@ -13,11 +13,11 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{ProjectSpaProtocols, UpdateContentCmd}
 import shipreq.webapp.base.text._
-import shipreq.webapp.client.base.data._
-import shipreq.webapp.client.base.feature.AsyncFeature
-import shipreq.webapp.client.base.protocol.ServerSideProcInvoker
-import shipreq.webapp.client.base.ui.BaseStyles
-import shipreq.webapp.client.base.ui.semantic.{Header, Icon, Message}
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.ui.BaseStyles
+import shipreq.webapp.base.ui.semantic.{Header, Icon, Message}
 import shipreq.webapp.client.project.app.Style.{reqdetail => *}
 import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.feature._

@@ -8,7 +8,7 @@ import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.SampleProject.Values._
 import shipreq.webapp.base.test._
-import shipreq.webapp.client.base.test.TestState._
+import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.root.Routes.Page
 import shipreq.webapp.client.project.test._

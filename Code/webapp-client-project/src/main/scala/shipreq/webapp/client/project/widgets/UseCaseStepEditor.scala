@@ -17,9 +17,9 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.base.event.UseCaseStepGD
-import shipreq.webapp.client.base.feature.{EditorStatus, PreviewFeature}
-import shipreq.webapp.client.base.lib.KeyboardTheme
-import shipreq.webapp.client.base.ui.{AutosizeTextarea, EditTheme}
+import shipreq.webapp.base.feature.{EditorStatus, PreviewFeature}
+import shipreq.webapp.base.lib.KeyboardTheme
+import shipreq.webapp.base.ui.{AutosizeTextarea, EditTheme}
 import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.feature.AutoCompleteFeature

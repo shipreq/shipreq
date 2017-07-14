@@ -13,7 +13,7 @@ import shipreq.base.util.MTrie.Ops
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._, WebappTestUtil._
 import shipreq.webapp.base.text.{PlainText, ProjectText}
-import shipreq.webapp.client.base.data.{Plain, Contextualise}
+import shipreq.webapp.base.data.{Plain, Contextualise}
 import shipreq.webapp.client.project.feature.AutoCompleteFeature
 import shipreq.webapp.client.project.test.PrepareEnv
 import SampleProject3._

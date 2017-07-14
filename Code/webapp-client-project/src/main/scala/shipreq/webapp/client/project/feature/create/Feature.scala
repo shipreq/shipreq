@@ -7,8 +7,8 @@ import scalaz.\/
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.protocol.CreateContentCmd
-import shipreq.webapp.client.base.feature._
-import shipreq.webapp.client.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.feature._
+import shipreq.webapp.base.protocol.ServerSideProcInvoker
 
 /** Nothing here has `Reusability` because:
   *

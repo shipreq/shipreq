@@ -4,7 +4,7 @@ import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.univeq._
 import scalaz.Equal
 import scalaz.syntax.equal._
-import shipreq.webapp.client.base.data.{Off, On}
+import shipreq.webapp.base.data.{Off, On}
 import shipreq.webapp.client.project.lib.DND
 
 /**

@@ -7,7 +7,7 @@ import scalaz.~>
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
-import shipreq.webapp.client.base.feature._
+import shipreq.webapp.base.feature._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 import Feature.{AsyncState, Editor, PreviewId, State}
 

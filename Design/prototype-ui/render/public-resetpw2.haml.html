@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html><head><title>ShipReq</title><script src="../node_modules/jquery/dist/jquery.min.js"></script><link href="../semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="../semantic/dist/semantic.js"></script><style type="text/css">
+
+body {background:#fdfeff}
+
+#header2 {
+  display:flex;
+  width:100%;
+  align-items:top;
+}
+#header2 > .left,
+#header2 > .right {width:4em; bxackground:red; padding:0.5em}
+#header2 > .left img {width:4em; height:4em; display:block}
+#header2 > .mid { flex:1; text-align:center; padding-top:0.2em}
+#header2 > .mid .sep { padding:0 1em; color:#aaa }
+#header2 nav span.active {font-weight:bold;color:#000}
+
+#part1 {width:44ex; margin:4em auto 0 auto}
+#part2 {width:54ex; margin:6em auto 0 auto}
+
+#footer1 {
+  font-size:0.85rem;
+  padding-top:0.1em;
+  padding-bottom:0.1em;
+  background:#edeeef;
+  border-top: 1px solid rgba(34,36,38,.15);
+  text-align:center;
+}
+#footer1 .txt {color:#888}
+#footer1 .sep { padding:0 1em; color:#aaa }
+
+#layout {display:flex; flex-direction: column; align-items:stretch; min-height:100%}
+#layout > header {}
+#layout > main {flex:1; padding-bottom:2em}
+#layout > footer {}
+
+.validation-errmsg {
+  color: #9f3a38;
+  padding-top: 0.15rem;
+  font-size: 92%;
+}
+
+</style></head><body><div id="layout"><header id="header2"><div class="left"><img src="logo-only-dark.svg" onclick="location.href='public-home.haml.html'" style="cursor:pointer" /></div><div class="mid"><nav><a href="public-login.haml.html">Login</a><span class="sep">|</span><a href="public-register.haml.html">Register</a></nav></div><div class="right"></div></header><main><div id="part1"><div class="ui form"><div class="field error"><label>New password</label><div class="ui left icon input"><input type="password" value="abc" /><i class="icon lock"></i></div><div class="validation-errmsg">Must be at least 8 characters long.</div></div><div class="field"><label>Confirm new password</label><div class="ui left icon input"><input type="password" /><i class="icon lock"></i></div></div><div style="text-align:right; padding-top:0.4em" class="div"><div style="margin-right:0!important" class="ui blue submit button large disabled">Change Password</div></div></div></div><div id="part2"><div class="ui message icon success"><i class="icon lock"></i><div class="content"><div class="header">Changed Password</div><p>Your password was updated successfully.</p></div></div></div><div id="part2"><div class="ui message icon error"><i class="icon warning"></i><div class="content"><div class="header">Invalid token</div><p>The link emailed to you is no longer valid.<br>Please request a new one from the login page.</p></div></div></div></main><footer id="footer1"><span class="txt">© 2013-2017 Bearded Logic</span><span class="sep">|</span><a href="public-about.haml.html">About</a><span class="sep">|</span><a href="public-tos.haml.html">Terms</a><span class="sep">|</span><a href="public-privacy.haml.html">Privacy</a></footer></div></body></html>

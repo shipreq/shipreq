@@ -5,8 +5,8 @@ import japgolly.scalajs.react.{Callback, CallbackTo}
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.protocol.{ErrorMsg, ProjectSpaProtocols, ServerSideProc}
-import shipreq.webapp.client.base.data.TCB
-import shipreq.webapp.client.base.protocol.{ClientProtocol, ServerSideProcInvoker}
+import shipreq.webapp.base.data.TCB
+import shipreq.webapp.base.protocol.{ClientProtocol, ServerSideProcInvoker}
 
 class ClientData(initialState: ProjectState) extends Broadcaster[Changes] {
 

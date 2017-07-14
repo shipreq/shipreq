@@ -11,9 +11,9 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text._
-import shipreq.webapp.client.base.feature._
-import shipreq.webapp.client.base.lib.AbortCommit
-import shipreq.webapp.client.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.feature._
+import shipreq.webapp.base.lib.AbortCommit
+import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 import Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
 import shipreq.webapp.base.event.UseCaseStepGD

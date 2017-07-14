@@ -7,10 +7,12 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import scalaz.std.list._
 import scalaz.syntax.traverse._
+import shipreq.base.db.DoobieHelpers._
 
 sealed abstract class DbTable(val name: String) {
   override def toString = name
   def count: ConnectionIO[Int] = Query0[Int]("select count(*) from " + name).unique
+  def truncate: ConnectionIO[Unit] = Update0(s"truncate table $name cascade", None).execute
 }
 
 object DbTable {
@@ -71,9 +73,5 @@ object DbTable {
       .map(Counts)
 
   lazy val truncateAll: ConnectionIO[Unit] =
-    DbTable.All
-      .whole
-      .toList
-      .map(t => Update0(s"truncate table ${t.name} cascade", None).run)
-      .sequence_
+    DbTable.All.whole.toList.map(_.truncate).sequence_
 }

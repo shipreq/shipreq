@@ -2,6 +2,7 @@ package shipreq.taskman.api
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.univeq.UnivEq
 import shipreq.base.util.Util
 
 /**
@@ -43,6 +44,8 @@ object Msg {
   case class WebappErrorOccurred(usr: Option[UserId], url: Option[String], report: String) extends Msg {
     override def toString = s"WebappErrorOccurred($usr, $url, ${Util.cutoffStr(report, 80)})"
   }
+
+  implicit def univEq: UnivEq[Msg] = UnivEq.derive
 }
 
 // =====================================================================================================================

@@ -1,0 +1,170 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.js"}
+    :css
+
+      body {background:#fdfeff}
+
+      #header1 {
+        display:flex;
+        height:3em;
+        background:#edeeef;
+        border: 1px solid rgba(34,36,38,.15);
+        box-shadow: 0 1px 2px 0 rgba(34,36,38,.15);
+        align-items:center;
+      }
+      #header1 > .left,
+      #header1 > .right {width:4em; bxackground:red; padding-left:1em}
+      #header1 > .left img {width:2.3em; height:2.3em; display:block}
+      #header1 > .mid { flex:1; text-align:center; }
+      #header1 > .mid .sep { padding:0 1em; color:#aaa }
+
+      #header2 {
+        display:flex;
+        width:100%;
+        align-items:top;
+      }
+      #header2 > .left,
+      #header2 > .right {width:4em; bxackground:red; padding:0.5em}
+      #header2 > .left img {width:4em; height:4em; display:block}
+      #header2 > .mid { flex:1; text-align:center; padding-top:0.2em}
+      #header2 > .mid .sep { padding:0 1em; color:#aaa }
+      #header2 nav span.active {font-weight:bold;color:#000}
+
+      #header3 {
+        text-align:center;
+        width:100%;
+        padding:0.2em;
+      }
+      #header3 > .sep { padding:0 1em; color:#aaa }
+
+      #part1 {width:46ex; margin:4em auto 0 auto}
+      #part2 {width:70ex; margin:6em auto 0 auto}
+
+      #footer1 {
+        font-size:0.85rem;
+        padding-top:0.1em;
+        padding-bottom:0.1em;
+        background:#edeeef;
+        border-top: 1px solid rgba(34,36,38,.15);
+        text-align:center;
+      }
+      #footer1 .txt {color:#888}
+      #footer1 .sep { padding:0 1em; color:#aaa }
+
+      #layout {display:flex; flex-direction: column; align-items:stretch; min-height:100%}
+      #layout > header {}
+      #layout > main {flex:1; padding-bottom:2em}
+      #layout > footer {}
+
+  %body
+    #layout
+
+      -# %header#header1
+        .left
+          %img{src: "logo-only-dark.svg"}
+        .mid
+          %nav
+            %a(href="x") Home
+            %span.sep |
+            %span.active Login
+            %span.sep |
+            %a(href="x") Register
+        .right
+
+      %header#header2
+        .left
+          %img(src="logo-only-dark.svg" onclick="location.href='public-home.haml.html'" style="cursor:pointer")
+        .mid
+          %nav
+            -# %a(href: "x") Home
+            -# %span.sep |
+            %span.active Login
+            %span.sep |
+            %a(href="public-register.haml.html") Register
+        .right
+
+      -# %header#header3
+        %a(href="x") Home
+        %span.sep |
+        %span.active Login
+        %span.sep |
+        %a(href="x") Register
+
+      %main
+
+        #part1
+
+          .ui.message.icon.error#xx(style="display:none")
+            %i.icon.ban
+            .content
+              .header
+                Forgotten password
+              %p
+                Invalid email address or password.
+            -# %i.close.icon
+
+          .ui.form(style="padding-top:3em;")
+            .field
+              %label Username or email
+              .ui.left.icon.input
+                %input(type="text" value="japgolly")
+                %i.user.icon
+            .field
+              %label
+                %div(style="display:flex; justify-content:space-between")
+                  %div Password
+                  %a(href="public-resetpw2.haml.html" style="font-weight:normal") Forgot password?
+              .ui.left.icon.input
+                %input(type="password" autofocus=1)
+                %i.lock.icon
+            .div(style="display:flex; width:100%; align-items: baseline;")
+              .div(style="flex:1")
+                .ui.checkbox
+                  %input(type="checkbox" tabindex="0" class="hidden" checked=1)
+                  %label Remember me
+                -# %label
+                -#   %input(type="checkbox")
+                -#   Remember me
+              .div(style="text-align:right")
+                .ui.blue.button.large(style="margin-right:0!important" onclick="$('#xx').show().transition('pulse', '320ms')") Login
+            -# .div(style="text-align:right; margin-top:1em")
+            -#     .ui.blue.submit.button.large.disabled(style="margin-right:0!important") Login
+            -# .div(style="text-align:right; margin-top:1em")
+            -#     .ui.blue.submit.button.large.disabled.loading(style="margin-right:0!important") Login
+
+          -# .ui.message.icon.error(style="margin-top:4em")
+            %i.icon.ban
+            .content
+              .header
+                Login failed
+              %p
+                Invalid username or password.
+            %i.close.icon
+
+        #part2
+          .ui.message.icon.info
+            %i.icon.mail.outline
+            .content
+              .header
+                Check your email
+              %p
+                <em>If your email address was valid,</em> you'll soon receive an email with a link to reset your password.
+              -# %p(style="margin-top:.8em")
+                If your email address was valid, you'll soon receive an email with a link to reset your password.
+              -# %p
+                If you don't receive an email, verify that you entered your email address correctly and try again.
+
+      %footer#footer1
+        %span.txt © 2013-2017 Bearded Logic
+        %span.sep |
+        %a(href="public-about.haml.html") About
+        %span.sep |
+        %a(href="public-tos.haml.html") Terms
+        %span.sep |
+        %a(href="public-privacy.haml.html") Privacy

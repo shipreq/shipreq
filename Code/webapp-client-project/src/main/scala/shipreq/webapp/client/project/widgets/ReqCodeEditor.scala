@@ -10,9 +10,9 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
 import shipreq.webapp.base.text.GrammarSpec.SeqFormat
 import shipreq.webapp.base.validation.Simple._
-import shipreq.webapp.client.base.feature.EditorStatus
-import shipreq.webapp.client.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
-import shipreq.webapp.client.base.ui.{AutosizeTextarea, EditTheme}
+import shipreq.webapp.base.feature.EditorStatus
+import shipreq.webapp.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
+import shipreq.webapp.base.ui.{AutosizeTextarea, EditTheme}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.{AutoComplete, TextEditor}

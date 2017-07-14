@@ -1,6 +1,8 @@
 const
   CamelCase = require('camelcase'),
+  Deasync = require('deasync'),
   Path = require('path'),
+  Svgo = require('svgo'),
   Webtamp = require(process.env.WEBTAMP ? `${process.env.WEBTAMP}/src/main` : 'webtamp');
 
 
@@ -10,8 +12,17 @@ const fixLinksInLiftTemplates = i =>
   /<head[ >]/.test(i.content()) ? t => t :
   tag => tag.replace(/^(<link )/, '$1data-lift="head" ');
 
+function svgoOptimizeSync(svgo, content) {
+  let res;
+  svgo.optimize(content, result => res = result);
+  Deasync.loopWhile(() => !res);
+  if (res.error) throw Error(res.error)
+  return res.data;
+}
+
 const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
 
+  const svgo = new Svgo();
   const webpackOutput = `/tmp/shipreq.webpack.${mode}`;
   const fromWebpack = o => Object.assign({ type: 'local', src: webpackOutput }, o);
 
@@ -33,16 +44,9 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
 
       images: { type: 'local', src: 'shipreq/assets', files: '*.{svg,png}', manifest: CamelCase },
 
-      public: [
-        fromWebpack({ files: 'public.css' }),
-        'jquery',
-      ],
-
-      sir: fromWebpack({ files: 'sir.css' }),
-
-      webappClientWw: [
-        { type: 'external', path: sjsPath('ww'), manifest: 'webappClientWwJs' },
-        'vizJs',
+      webappClientPublic: [
+        { type: 'external', path: sjsPath('public'), manifest: 'webappClientPublicJs' },
+        'public',
       ],
 
       webappClientHome: [
@@ -54,12 +58,29 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
         { type: 'external', path: sjsPath('project'), manifest: 'webappClientProjectJs' },
         'member',
       ],
+
+      webappClientWw: [
+        { type: 'external', path: sjsPath('ww'), manifest: 'webappClientWwJs' },
+        'vizJs',
+      ],
+
+      admin: fromWebpack({ files: 'admin.css' }),
     },
 
     optional: {
       semantic: [
         fromWebpack({ files: 'semantic.*' }),
         fromWebpack({ files: 'icons.*', transitive: true }),
+      ],
+
+      publicBundle: [
+        fromWebpack({ files: 'public.js' }),
+        'jquery',
+      ],
+
+      public: [
+        'publicBundle',
+        'semantic',
       ],
 
       memberBundle: [
@@ -88,9 +109,20 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
     },
 
     plugins: [
+
+      // Minify SVGs
+      Webtamp.plugins.Modify.content(/\.svg$/, c => svgoOptimizeSync(svgo, c)),
+
+      // Inline small images
       Webtamp.plugins.Inline.data(i => /\.(svg|png)$/.test(i.dest) && i.size() < 4096),
+
+      // Replace <require> tags and webtamp:// URIs
       Webtamp.plugins.Html.replace({ modTag: fixLinksInLiftTemplates }),
+
+      // Minify HTML
       htmlMinifyOptions && Webtamp.plugins.Html.minify({ options: htmlMinifyOptions }),
+
+      // Manifest for Scala
       Webtamp.plugins.ScalaManifest({ object: "shipreq.webapp.base.AssetManifest", outputPath: '../scala' }),
     ],
   }

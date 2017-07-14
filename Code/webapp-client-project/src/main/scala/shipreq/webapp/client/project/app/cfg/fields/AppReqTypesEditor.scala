@@ -8,7 +8,7 @@ import monocle.Lens
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{IMap, Optics}
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.base.lib.Logger
+import shipreq.webapp.base.lib.Logger
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.cfg.shared.{FieldSet => _, _}
 import shipreq.webapp.client.project.widgets.ISubsetEditor

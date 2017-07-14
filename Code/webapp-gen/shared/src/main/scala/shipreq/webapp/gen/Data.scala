@@ -1,6 +1,7 @@
 package shipreq.webapp.gen
 
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.user._
 
 object Data {
 

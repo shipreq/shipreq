@@ -51,6 +51,9 @@ object TextMod {
   val squashUnderscores =
     regexReplace("__+".r, "_")
 
+  val maxTwoConsecutiveNewLines =
+    regexReplace("\n{3,}".r, "\n\n")
+
   def truncateToLength(range: Range.Inclusive): Endo[String] =
     truncateToLength(range.end)
 
@@ -62,4 +65,6 @@ object TextMod {
     override def from = _ getOrElse ""
   }
 
+  def removeTrailingChar(c: Char): Endo[String] =
+    Endo(s => if (s.length != 0 && s(0) == c) s.substring(1) else s)
 }

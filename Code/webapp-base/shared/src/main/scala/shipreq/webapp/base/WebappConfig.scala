@@ -1,11 +1,15 @@
 package shipreq.webapp.base
 
+import shipreq.webapp.base.user.EmailAddr
+
 object WebappConfig {
 
   val appName = "ShipReq"
 
+  val supportEmailAddress = EmailAddr("contact@shipreq.com")
+
   /** The URL path under which AJAX requests are serviced. */
-  val liftPath = "L"
+  final val liftPath = "L"
 
   /** Passwords' min & max lengths. */
   val passwordLength = 8 to 128
@@ -27,4 +31,9 @@ object WebappConfig {
 
   /** The X in 1.0.X.3 shown when steps are dead. */
   final val useCaseStepsDeadNode = 'X'
+
+  def makePageTitle(subTitles: String*): String =
+    (subTitles :+ WebappConfig.appName).mkString(" | ")
+
+  val copyrightNotice = "© 2013-2017 Bearded Logic"
 }

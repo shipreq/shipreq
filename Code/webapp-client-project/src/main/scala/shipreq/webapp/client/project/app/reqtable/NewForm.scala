@@ -11,7 +11,7 @@ import scalaz.{-\/, \/-}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.{CustomReqType, ReqType, StaticReqType}
 import shipreq.webapp.base.protocol.CreateContentCmd
-import shipreq.webapp.client.base.ui.semantic.{Button, Colour, Icon, Table => SemTable}
+import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Table => SemTable}
 import shipreq.webapp.client.project.app.Style.reqtable.{creation => *}
 import shipreq.webapp.client.project.feature.CreateFeature
 import shipreq.webapp.client.project.feature.CreateFeature.FieldKey

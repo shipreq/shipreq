@@ -1,7 +1,7 @@
 package shipreq.base.util
 
 import japgolly.univeq.UnivEq
-import monocle.Lens
+import monocle.{Iso, Lens}
 import scala.collection.generic.CanBuildFrom
 import scalaz.Isomorphism.<=>
 import scalaz.{Monoid, Semigroup}
@@ -43,6 +43,15 @@ trait IsoBool[B <: IsoBool[B]] extends (Boolean <=> B) with Product with Seriali
       override val from: A => B = IsoBool.this fnToThisWhen A
       override val to  : B => A = A fnToThisWhen IsoBool.this
     }
+
+  final def isoWhen(b: Boolean): Iso[B, Boolean] =
+    if (b) Iso(from)(to) else (!this).isoWhen(true)
+
+  final def whenAllAre(bs: B*): B =
+    this when bs.forall(is)
+
+  final def whenAnyAre(bs: B*): B =
+    this when bs.exists(is)
 }
 
 object IsoBool {

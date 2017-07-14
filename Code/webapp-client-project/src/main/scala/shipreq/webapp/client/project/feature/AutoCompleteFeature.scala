@@ -6,7 +6,7 @@ import japgolly.scalajs.react.internal.JsUtil
 import org.scalajs.dom.html
 import scala.scalajs.js
 import shipreq.base.util.Vector1
-import shipreq.webapp.client.base.jsfacade.TextComplete
+import shipreq.webapp.base.jsfacade.TextComplete
 import shipreq.webapp.client.project.lib.TextEditor
 
 /**

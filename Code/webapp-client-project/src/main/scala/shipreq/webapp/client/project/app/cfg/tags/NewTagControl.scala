@@ -4,7 +4,7 @@ import japgolly.scalajs.react.Callback
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.TagType
 import shipreq.webapp.base.UiText
-import shipreq.webapp.client.base.data.Enabled
+import shipreq.webapp.base.data.Enabled
 import shipreq.webapp.client.project.widgets.{SelectInvoke, SelectOne}
 import SelectOne.Choice
 

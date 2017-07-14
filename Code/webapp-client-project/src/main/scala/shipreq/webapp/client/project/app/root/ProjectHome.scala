@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.app.root
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import shipreq.webapp.client.base.ui.{BaseStyles, ProjectItem}
+import shipreq.webapp.base.ui.{BaseStyles, ProjectItem}
 import shipreq.webapp.client.project.app.Style
 
 object ProjectHome {

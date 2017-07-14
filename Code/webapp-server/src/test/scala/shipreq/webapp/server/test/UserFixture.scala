@@ -7,11 +7,10 @@ import scalaz.syntax.bind.ToBindOps
 import scalaz.syntax.traverse._
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.test.db.{SingleConnectionXA, Usable}
-import shipreq.taskman.api.{EmailAddr, UserId}
 import shipreq.webapp.base.data._
-import shipreq.webapp.server.db.DbLogic
+import shipreq.webapp.base.user._
 import shipreq.webapp.server.logic._
-import shipreq.webapp.server.security.{PasswordAndSalt, Roles}
+import shipreq.webapp.server.security.{AppSecurityRealm, Roles}
 import shipreq.webapp.server.test.UserFixture._
 import shipreq.webapp.server.test.WebappServerTestUtil._
 
@@ -28,49 +27,58 @@ object UserFixture {
       .map(xa => IO(apply(xa)))
       .before(_.setup)
 
-  final case class TestUser(username: Username, email: EmailAddr, password: String, roles: Set[String], name: String, newsletter: Boolean) {
+  final case class TestUser(username  : Username,
+                            email     : EmailAddr,
+                            password  : PlainTextPassword,
+                            roles     : Set[String],
+                            name      : PersonName,
+                            newsletter: Boolean) {
     var _id: Option[UserId] = None
     def id: UserId = _id.getOrElse(sys error s"UserId unavailable for $this")
-    val pws = PasswordAndSalt.createWithRandomSalt(password)
-    def hashedPassword = pws.hashedPassword
-    def salt = pws.salt
+    val ps = AppSecurityRealm.randomHashFn(password)
+    def hashedPassword = ps.passwordHash
+    def salt = ps.salt
     def toUserDescriptor = User(id, username, email, roles)
 
     def withLoggedIn[A](a: => A): A =
-      WebappServerTestUtil.withLoggedIn(username.value, password)(a)
+      WebappServerTestUtil.withLoggedIn(username, password)(a)
   }
 
   final case class PendingTestUser(email: EmailAddr, token: String, tokenCreatedAt: Instant)
+
+  def roleStr(roles: Set[String]): Option[String] =
+    if (roles.isEmpty)
+      None
+    else
+      Some(roles.mkString(","))
 }
 
 final case class UserFixture(xa: SingleConnectionXA) {
+  import PrepareEnv.dbAlgebra
 
-  private implicit def autoUsername(a: String) = Username(a)
-  private implicit def autoEmailAddr(a: String) = EmailAddr(a)
-
-  val user1 = TestUser("golly", "g@g.com", "hello1234", Set(Roles.Admin.name), "User One", true)
-  val user2 = TestUser("deepti", "d@d.com", "harvest321", Set.empty, "User Two", false)
+  val user1 = TestUser(Username("golly"), EmailAddr("g@g.com"), PlainTextPassword("hello1234"), Set(Roles.Admin.name), PersonName("User One"), true)
+  val user2 = TestUser(Username("deepti"), EmailAddr("d@d.com"), PlainTextPassword("harvest321"), Set.empty, PersonName("User Two"), false)
   val users = List(user1, user2)
 
-  val userWithCurrentToken = PendingTestUser("a@p.com", "abc123abc123", 5.minutes.ago)
-  val userWithExpiredToken = PendingTestUser("b@p.com", "poi098poi098", 4.weeks.ago)
+  val userWithCurrentToken = PendingTestUser(EmailAddr("a@p.com"), "abc123abc123", 5.minutes.ago)
+  val userWithExpiredToken = PendingTestUser(EmailAddr("b@p.com"), "poi098poi098", 4.weeks.ago)
   val pendingUsers = List(userWithCurrentToken, userWithExpiredToken)
+
+  private def setRoles(emailAddr: EmailAddr, roles: Set[String]): ConnectionIO[Unit] =
+    sql"UPDATE usr set roles=${Option(roles.mkString(",")).filter(_.nonEmpty)} WHERE email=${emailAddr.value}".update.execute.void
 
   def setup: IO[Unit] = {
     // Insert mock users (registered)
-    val i1 = Query[(String, String, String, String, Option[String]), Long]("INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at, roles) VALUES(?,?,?,?,NOW(),NOW(),NOW(),?) RETURNING id")
     val inserts1: List[IO[Unit]] =
-      for (u <- users) yield {
-        i1.toQuery0(u.username.value, u.email.value, u.hashedPassword.value, u.salt, User.roleStr(u.roles))
-          .unique
-          .map { rawId =>
-            val id = UserId(rawId)
-            u._id = Some(id)
-            id
-          }
-          .flatMap(id => DbLogic.user.sqlInsertUsrd.toUpdate0((id, u.name, u.newsletter)).execute)
-          .transact(xa)
-      }
+      for (u <- users) yield
+        (for {
+          token <- dbAlgebra.createUserPlaceholder(u.email)
+          res <- dbAlgebra.completeUserRegistration(token, u.name, u.username, u.ps, u.newsletter)
+          _ <- setRoles(u.email, u.roles)
+        } yield res match {
+          case DB.UserRegistrationResult.Success(id) => u._id = Some(id)
+          case x => sys.error(s"User registration failed: $x")
+        }).transact(xa)
 
     // Insert mock users (pending confirmation)
     val inserts2 = pendingUsers.map(insertPendingTestUser)

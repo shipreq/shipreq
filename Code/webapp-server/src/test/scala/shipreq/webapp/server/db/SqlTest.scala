@@ -2,7 +2,7 @@ package shipreq.webapp.server.db
 
 import utest._
 import shipreq.base.test.db.SqlTester.test
-
+/*
 object SqlTest extends TestSuite {
 
   override def tests = TestSuite {
@@ -50,3 +50,4 @@ object SqlTest extends TestSuite {
 
   }
 }
+*/

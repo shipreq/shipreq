@@ -5,7 +5,7 @@ import japgolly.univeq._
 import org.scalajs.dom.html
 import utest._
 import shipreq.webapp.base.data.Project
-import shipreq.webapp.client.base.test.TestState._
+import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.root.Routes.Page
 import shipreq.webapp.client.project.test._

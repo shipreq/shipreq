@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.base.ui.semantic._
+import shipreq.webapp.base.ui.semantic._
 
 object FilterDeadButton {
 

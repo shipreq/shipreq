@@ -1,0 +1,126 @@
+package shipreq.webapp.server.test
+
+import net.liftweb.http.testing._
+import org.apache.commons.httpclient.{HttpClient, HttpMethodBase}
+import shipreq.base.test.BaseTestUtil._
+import shipreq.webapp.base.protocol.ClientSideProc
+import shipreq.webapp.server.app.Global
+import shipreq.webapp.server.db.DbInterpreter
+import shipreq.webapp.server.logic.DispatchLogic
+
+/**
+ * A test case that requires connectivity to a running Jetty instance.
+ */
+object LiveTestUtils {
+
+  private def jetty = TestJetty
+
+  val init: () => Unit = onceUnit {
+    PrepareEnv.shiro()
+    PrepareEnv.db()
+    PrepareEnv.routes()
+    jetty.start()
+    _shutdown = onceUnit {
+      //import Console._
+      //println(s"$BLUE_B$BOLD${WHITE}SHUTTING DOWN!$RESET")
+      jetty.shutdown()
+      TestDb.shutdown()
+    }
+  }
+
+  private var _shutdown: () => Unit =
+    () => ()
+
+  def shutdown(): Unit =
+    _shutdown()
+
+  lazy val testKit: TestKit =
+    new TestKit {
+      init()
+
+      override def baseUrl = jetty.url
+
+      implicit override def responseCapture(fullUrl: String, httpClient: HttpClient, getter: HttpMethodBase) = {
+        getter.setFollowRedirects(false)
+        super.responseCapture(fullUrl, httpClient, getter)
+      }
+    }
+  import testKit.responseCapture
+
+  def newDbConnection() = TestDb.newConnection()
+  lazy val dbUtil = DbUtil(newDbConnection())
+  lazy val userFixture = UserFixture(dbUtil.xa)
+  implicit def dbAlgebra = PrepareEnv.dbAlgebra
+  def xa = userFixture.xa
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  def get(url    : String,
+          headers: List[(String, String)] = Nil,
+          params : List[(String, String)] = Nil): HttpResponse =
+    testKit.get(url, testKit.theHttpClient, headers, params: _*).asInstanceOf[HttpResponse]
+
+  def post(url    : String,
+           headers: List[(String, String)] = Nil,
+           params : List[(String, String)] = Nil): HttpResponse =
+    testKit.post(url, testKit.theHttpClient, headers, params: _*).asInstanceOf[HttpResponse]
+
+  def login(u: UserFixture.TestUser): HttpResponse =
+    login(u, true)
+
+  def login(id: String, password: String): HttpResponse =
+    login(id, password, true)
+
+  def login(u: UserFixture.TestUser, expectSuccess: Boolean): HttpResponse =
+    login(u.email.value, u.password.value, expectSuccess)
+
+  def login(id: String, password: String, expectSuccess: Boolean): HttpResponse =
+    post(DispatchLogic.loginApiUrl.relativeUrl, params = List("user" -> id, "pass" -> password))
+      .assertStatus(if (expectSuccess) 200 else 401)
+
+  def retainSession(r: HttpResponse): List[(String, String)] =
+      r.headers.getOrElse("Set-Cookie", Nil)
+        .filter(_ contains "JSESSIONID")
+        .map(v => ("Cookie", v.takeWhile(_ != ';')))
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  final class LiveTestHttpResponse(private val resp: HttpResponse) extends AnyVal {
+    def bodyString: String =
+      resp.bodyAsString.openOrThrowException(s"Unable to read body from ${resp.body}")
+
+    def bodyTitle: String =
+      "(?<=<title>).*?(?=</title>)".r.findFirstIn(bodyString) getOrElse sys.error(s"Page doesn't have a <title> tag.\n$bodyString")
+
+    def redirectedTo: Option[String] =
+      resp.headers.get("Location").flatMap(_.headOption)
+
+    def tap(f: HttpResponse => Any): HttpResponse = { f(resp); resp }
+    def tap2[A](f: HttpResponse => A)(g: A => Any): HttpResponse = { g(f(resp)); resp }
+
+    def assertStatus(expect: Int) = tap(_ =>
+      if (resp.code != expect)
+        fail(s"Expected status $expect, got ${resp.code}.\nHeaders: ${resp.headers}\nBody: $bodyString"))
+
+    def assertOk = assertStatus(200)
+    def assertRedirect = assertStatus(302)
+    def assertRedirectTo(url: String) = assertRedirect.tap2(_.redirectedTo)(assertEq(_, Some(url)))
+
+    def assertContentTypeContains(s: String) = tap2(_.contentType)(assertContains(_, s))
+    def assertContentType        (s: String) = tap2(_.contentType)(assertEq(_, s))
+    def assertContentTypeHtml                = assertContentTypeContains("text/html")
+    def assertContentTypeJs                  = assertContentTypeContains("application/javascript")
+
+    def assertBodyContains(s: String) = tap(_ => assertContains(bodyString, s))
+    def assertBodyTitle(s: String) = tap2(_.bodyTitle)(assertEq(_, s))
+
+    def assertSpa(spaJs: String, spaEP: ClientSideProc[_]) = this
+        .assertOk
+        .assertContentTypeHtml
+        .assertBodyContains(spaJs)
+        .assertBodyContains(spaEP.objectAndMethod + "(")
+  }
+
+  implicit def toLiveTestHttpResponse(a: HttpResponse): LiveTestHttpResponse =
+    new LiveTestHttpResponse(a)
+}

@@ -11,7 +11,7 @@ import scalaz.{-\/, \/-}
 import shipreq.base.util.ConciseIntSetFormat
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.event.{ApplyEvent, EventOrd, VerifiedEvent}
-import shipreq.webapp.client.base.data.TCB
+import shipreq.webapp.base.data.TCB
 import shipreq.webapp.client.project.lib.DataReusability.reusabilityProject
 
 /**

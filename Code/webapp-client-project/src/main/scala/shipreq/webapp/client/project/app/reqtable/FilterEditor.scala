@@ -9,10 +9,10 @@ import scalaz.{-\/, \/-}
 import shipreq.base.util.{Invalid, Valid, Validity}
 import shipreq.webapp.base.data.{Project, ShowDead}
 import shipreq.webapp.base.filter._
-import shipreq.webapp.client.base.data.Contextualise
-import shipreq.webapp.client.base.jsfacade.{TextComplete => TC}
-import shipreq.webapp.client.base.lib.DataReusability._
-import shipreq.webapp.client.base.ui.semantic.{Button, Icon, Input}
+import shipreq.webapp.base.data.Contextualise
+import shipreq.webapp.base.jsfacade.{TextComplete => TC}
+import shipreq.webapp.base.lib.DataReusability._
+import shipreq.webapp.base.ui.semantic.{Button, Icon, Input}
 import shipreq.webapp.client.project.app.Style.reqtable.{filterEditor => *}
 import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.feature.AutoCompleteFeature
@@ -135,7 +135,7 @@ object FilterEditor {
         onRight    = TagMod(clearButton, onRight)
       }
 
-      Input.IconTextRight(
+      Input.Text.iconAndRightAction(
         filterIcon,
         input.ref(inputNode = _),
         onRight,

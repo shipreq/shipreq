@@ -6,7 +6,7 @@ import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import shipreq.base.util.{IMap, ISubset}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
-import shipreq.webapp.client.base.lib.ClientUtil
+import shipreq.webapp.base.lib.ClientUtil
 
 object ISubsetEditor {
 

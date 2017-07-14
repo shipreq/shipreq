@@ -2,7 +2,7 @@ package shipreq.webapp.server.test
 
 import scalaz.effect.IO
 import shipreq.base.test.db.SingleConnectionXA
-import shipreq.webapp.server.app.DI
+import shipreq.webapp.server.app.Global
 
 object TestDb extends shipreq.base.test.db.TestDb {
 
@@ -12,8 +12,16 @@ object TestDb extends shipreq.base.test.db.TestDb {
     useInLift()
   }
 
-  def useInLift(): Unit =
-    DI.dbAccess = TestDb.dbAccess
+  def useInLift(): Unit = {
+    val g1 = PrepareEnv.global()
+    val g2 = Global.default(TestDb.dbAccess, g1.config)
+    val g3 = Global.modify(_.copy(
+      db       = g2.db,
+      logic    = g2.logic,
+      security = g2.security,
+      taskman  = g2.taskman))
+    g3
+  }
 
   lazy val truncate: IO[Unit] =
     dbAccess.io trans DbTable.truncateAll
@@ -25,9 +33,9 @@ object TestDb extends shipreq.base.test.db.TestDb {
 
   override def wrapTransaction[A](xa: SingleConnectionXA, io: IO[A]): IO[A] =
     for {
-      orig <- IO(DI.dbAccess)
-      _ <- IO(DI.dbAccess = xa.dbAccess(dbAccess))
-      a <- io ensuring IO(DI.dbAccess = orig)
+      orig <- IO(Global.db)
+      _ <- IO(Global.modify(_.copy(db = xa.dbAccess(dbAccess))))
+      a <- io ensuring IO(Global.modify(_.copy(db = orig)))
     } yield a
 
 }

@@ -81,7 +81,7 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
   implicit def autoApplicableTagIdO  (i: Int): Option[ApplicableTagId]            = Some(i)
   implicit def autoDeletionReasonIdO (i: Int): Option[DeletionReasonId]           = Some(i)
 
-  implicit def autoExternId[A](s: String): ExternalId[A] = ExternalId(s)
+  implicit def autoObfuscated[A](s: String): Obfuscated[A] = Obfuscated(s)
 
   implicit def autoUseCaseStepIdPair(p: (Int, Int)): (UseCaseStepId, UseCaseStepId) = p.mapEach(UseCaseStepId)
 

@@ -5,8 +5,8 @@ import monocle.macros._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{FilterDead, HideDead}
-import shipreq.webapp.client.base.feature._
-import shipreq.webapp.client.base.ui.ProjectItem
+import shipreq.webapp.base.feature._
+import shipreq.webapp.base.ui.ProjectItem
 import shipreq.webapp.client.project.app.state.ClientData
 import shipreq.webapp.client.project.app.{reqdetail, reqtable}
 import shipreq.webapp.client.project.feature._

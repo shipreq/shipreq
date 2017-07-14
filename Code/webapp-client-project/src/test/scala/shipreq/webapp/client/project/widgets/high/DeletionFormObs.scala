@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.widgets
 
 import org.scalajs.dom.html
-import shipreq.webapp.client.base.test.TestState._
+import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.TestMarker
 
 object DeletionFormObs {

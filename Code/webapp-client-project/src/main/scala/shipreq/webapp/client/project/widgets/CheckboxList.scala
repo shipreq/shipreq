@@ -6,8 +6,8 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalaz.Equal
-import shipreq.webapp.client.base.data._
-import shipreq.webapp.client.base.lib.DataReusability._
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.lib.DataReusability._
 import CheckboxList._
 
 object CheckboxList {

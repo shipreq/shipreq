@@ -37,7 +37,7 @@ object ShipReqBuild {
       .depsForBoth(
         UnivEq.scalaz ++ Scalaz.effect ++ Nyaya.prop ++ Monocle.core ++
         Microlibs.adtMacros ++ Microlibs.config ++ Microlibs.nonempty ++ Microlibs.scalazExt ++ Microlibs.stdlibExt ++
-        testScope(μTest ++ Nyaya.test))
+        testScope(μTest ++ Nyaya.test ++ Microlibs.testUtil))
       .depsForJvm(
         SLF4J.api ++
         providedScope(logback) ++

@@ -1,7 +1,7 @@
 package shipreq.webapp.client.home.ui
 
-import shipreq.webapp.client.base.CssSettings._
-import shipreq.webapp.client.base.ui.BaseStyles
+import shipreq.webapp.base.CssSettings._
+import shipreq.webapp.base.ui.BaseStyles
 
 object Styles extends StyleSheet.Inline {
   import dsl._

@@ -4,8 +4,8 @@ import japgolly.scalajs.react.Callback
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.client.project.app.state.ClientData
-import shipreq.webapp.client.base.data.TCB
-import shipreq.webapp.client.base.protocol.ClientProtocol
+import shipreq.webapp.base.data.TCB
+import shipreq.webapp.base.protocol.ClientProtocol
 import DataImplicits._
 
 object CrudActionIO {

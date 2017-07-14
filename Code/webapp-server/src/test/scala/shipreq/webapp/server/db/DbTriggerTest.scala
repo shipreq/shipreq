@@ -4,13 +4,14 @@ import doobie.imports._
 import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.db.SingleConnectionXA
-import shipreq.taskman.api.UserId
+import shipreq.webapp.base.user._
 import shipreq.webapp.server.test._
 
 object DbTriggerTest extends TestSuite {
 
   override def tests = TestSuite {
 
+    /*
     'usr_login_log {
       def loginCount(userId: UserId)(implicit xa: SingleConnectionXA): Long =
         xa ! Query0[Long](s"SELECT login_count FROM usr WHERE id = ${userId.value}").unique
@@ -25,6 +26,7 @@ object DbTriggerTest extends TestSuite {
         xa ! DbLogic.user.logLogin(b, None); assertViewCounts(2, 1)
       }
     }
+    */
 
     'usrd {
       def nameHistory(userId: Long)(implicit xa: SingleConnectionXA) =

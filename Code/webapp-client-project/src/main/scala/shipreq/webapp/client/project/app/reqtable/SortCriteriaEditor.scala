@@ -5,7 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import shipreq.base.util.Memo
-import shipreq.webapp.client.base.ClientResources
+import shipreq.webapp.base.ClientResources
 import shipreq.webapp.client.project.app.Style.reqtable.{sortEditor => *}
 import shipreq.webapp.client.project.widgets.DragToReorder
 

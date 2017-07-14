@@ -6,6 +6,8 @@ package object util {
 
   type ErrorOr[A] = Error \/ A
 
+  type ?=>[A, B] = FnWithFallback[A, B]
+
   /** Faster than Vector(a) */
   @inline def Vector1[A](a: A): Vector[A] = Vector.empty :+ a
 

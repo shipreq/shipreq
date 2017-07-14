@@ -1,0 +1,97 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.js"}
+    :css
+
+      body {background:#fdfeff}
+
+      #header2 {
+        display:flex;
+        width:100%;
+        align-items:top;
+      }
+      #header2 > .left,
+      #header2 > .right {width:4em; bxackground:red; padding:0.5em}
+      #header2 > .left img {width:4em; height:4em; display:block}
+      #header2 > .mid { flex:1; text-align:center; padding-top:0.2em}
+      #header2 > .mid .sep { padding:0 1em; color:#aaa }
+      #header2 nav span.active {font-weight:bold;color:#000}
+
+      #part1 {width:48ex; margin:5em auto 0 auto}
+      #part2 {width:60ex; margin:6em auto 0 auto}
+      #disabled {width:66ex; margin:6em auto 0 auto}
+
+      #footer1 {
+        font-size:0.85rem;
+        padding-top:0.1em;
+        padding-bottom:0.1em;
+        background:#edeeef;
+        border-top: 1px solid rgba(34,36,38,.15);
+        text-align:center;
+      }
+      #footer1 .txt {color:#888}
+      #footer1 .sep { padding:0 1em; color:#aaa }
+
+      #layout {display:flex; flex-direction: column; align-items:stretch; min-height:100%}
+      #layout > header {}
+      #layout > main {flex:1; padding-bottom:2em}
+      #layout > footer {}
+
+  %body
+    #layout
+
+      %header#header2
+        .left
+          %img(src="logo-only-dark.svg" onclick="location.href='public-home.haml.html'" style="cursor:pointer")
+        .mid
+          %nav
+            %a(href="public-login.haml.html") Login
+            %span.sep |
+            %span.active Register
+        .right
+
+      %main
+
+        #part1
+          .ui.form
+            .field
+              %label Email address
+              .ui.left.icon.input
+                %input(type="text" autofocus=1)
+                %i.icon.mail
+            .div(style="text-align:right")
+              .ui.blue.submit.button.large(style="margin-right:0!important" onclick="location.href='public-register2.haml.html'")
+                Register
+
+        #part2
+          .ui.message.icon.success
+            %i.icon.mail.outline
+            .content
+              .header
+                Check your email
+              %p
+                You'll soon receive an email with a link to continue the registration process.
+
+        #disabled
+          .ui.message.icon.warning
+            %i.icon.remove.user
+            .content
+              .header
+                Registration disabled
+              %p
+                We're currently not accepting new public registrations.<br>
+                Check back later or contact us <a href="public-home.haml.html">here</a>.
+
+      %footer#footer1
+        %span.txt © 2013-2017 Bearded Logic
+        %span.sep |
+        %a(href="public-about.haml.html") About
+        %span.sep |
+        %a(href="public-tos.haml.html") Terms
+        %span.sep |
+        %a(href="public-privacy.haml.html") Privacy

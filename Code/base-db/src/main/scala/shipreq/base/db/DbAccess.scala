@@ -38,6 +38,11 @@ final case class DbAccess(cfg               : DbConfig,
 
   val io = abstractTransactor[IO]
 
+  def trans: ConnectionIO ~> IO =
+    new (ConnectionIO ~> IO) {
+      override def apply[A](fa: ConnectionIO[A]) = io.trans(fa)
+    }
+
   def verifyConnectivity(): Unit = {
     log.info.z(s"Connecting to database: $desc")
     ds.getConnection().close()

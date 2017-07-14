@@ -23,7 +23,7 @@ trait WebappTestUtil extends BaseTestUtil {
 
   def looseProjectMetaData(p: Project, eventCount: Int = 123): ProjectMetaData =
     ProjectMetaData(
-      ExternalId("t3sT"),
+      Obfuscated("t3sT"),
       p.name,
       eventCount,
       p.reqs.size,

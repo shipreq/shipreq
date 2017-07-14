@@ -5,9 +5,9 @@ import org.parboiled2.Parser.DeliveryScheme.Throw
 import org.scalajs.dom.{document, html}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.client.base.data._
-import shipreq.webapp.client.base.lib.DomUtil._
-import shipreq.webapp.client.base.test._
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.lib.DomUtil._
+import shipreq.webapp.base.test._
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.test._
 import TestState._

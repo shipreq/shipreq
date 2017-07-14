@@ -8,8 +8,8 @@ import japgolly.univeq.UnivEq
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.UiText.EnglishIntExt
 import shipreq.webapp.base.data.{FilterDead, HideDead, ShowDead}
-import shipreq.webapp.client.base.lib.DataReusability._
-import shipreq.webapp.client.base.ui.semantic.Icon
+import shipreq.webapp.base.lib.DataReusability._
+import shipreq.webapp.base.ui.semantic.Icon
 
 /**
   * Presents a user with a summary of select portions of the content and state of [[ReqTablePage]].

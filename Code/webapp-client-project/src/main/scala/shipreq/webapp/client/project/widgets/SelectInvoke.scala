@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import scalaz.Equal
-import shipreq.webapp.client.base.data.{Disabled, Enabled}
+import shipreq.webapp.base.data.{Disabled, Enabled}
 
 object SelectInvoke {
 

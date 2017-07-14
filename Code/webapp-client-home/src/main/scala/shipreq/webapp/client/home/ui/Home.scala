@@ -6,13 +6,14 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
-import shipreq.webapp.base.data.{ProjectMetaData, Username, DataValidators}
+import shipreq.webapp.base.data.{DataValidators, ProjectMetaData}
+import shipreq.webapp.base.user.Username
 import shipreq.webapp.base.protocol.HomeSpaProtocols
-import shipreq.webapp.client.base.ClientConfig
-import shipreq.webapp.client.base.feature.{AsyncFeature, EditorStatus}
-import shipreq.webapp.client.base.protocol.ClientProtocol
-import shipreq.webapp.client.base.ui.{BaseStyles, MemberNavBar, PlainTextEditor, ProjectItem}
-import shipreq.webapp.client.base.ui.semantic.Breadcrumb
+import shipreq.webapp.base.ClientConfig
+import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus}
+import shipreq.webapp.base.protocol.ClientProtocol
+import shipreq.webapp.base.ui.{BaseStyles, MemberNavBar, PlainTextEditor, ProjectItem}
+import shipreq.webapp.base.ui.semantic.Breadcrumb
 
 object Home {
   final case class Props(data: HomeSpaProtocols.InitData, cp: ClientProtocol) {

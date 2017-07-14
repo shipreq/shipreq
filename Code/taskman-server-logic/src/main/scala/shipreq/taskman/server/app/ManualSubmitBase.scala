@@ -2,6 +2,7 @@ package shipreq.taskman.server.app
 
 import scalaz.effect.IO
 import scalaz.{-\/, \/-}
+import scalaz.std.list._
 import shipreq.base.util.ErrorOr
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.base.util.TaggedTypes.JsonStr
@@ -15,7 +16,7 @@ abstract class ManualSubmitBase extends HasLogger {
 
   def serialise  : Msg => JsonStr[Msg]
   def deserialise: (T, JsonStr[Msg]) => ErrorOr[Msg]
-  def runner     : (ApiOpReifier => IO[Unit]) => IO[Unit]
+  def runner     : (TaskmanApi[IO] => IO[Unit]) => IO[Unit]
 
   def main(args: Array[String]): Unit =
     parseA(args) match {
@@ -102,13 +103,13 @@ abstract class ManualSubmitBase extends HasLogger {
   // -------------------------------------------------------------------------------------------------------------------
   // Submission
 
-  def submitAll(msgs: List[Msg]): ApiOpReifier => IO[Unit] =
-    aopReifier => IO {
+  def submitAll(msgs: List[Msg]): TaskmanApi[IO] => IO[Unit] =
+    api => IO {
       val msgCount = msgs.size
       log info ""
 
       log info "Submitting..."
-      val results = aopReifier(ApiOp.SubmitMsgs(msgs)).unsafePerformIO()
+      val results = api.submitMsgs(msgs).unsafePerformIO()
       for (((m,id),i) <- results.zipWithIndex.map(_.map2(_+1))) {
         log info s"[$i/$msgCount] $id <= $m"
       }

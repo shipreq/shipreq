@@ -44,7 +44,9 @@ Backlog
 * Rewrite front pages with scalajs-react (?)
 * Remove unused styles
 * Change ScalaCSS to generate Scala.JS without the runtime/JS-size overhead
-
+* webapp-base-member shares packages with webapp-base, plus most of that stuff should be under .project as well
+* Extract webapp-base-member-test
+* Add laws for webapp-server-logic and test in webapp-server
 
 ------------------------------------------------------------------------------------------------------------------------
 Phase 2 (dev-complete)
@@ -61,24 +63,34 @@ Phase 2 (dev-complete)
 * Add proper metrics
 * Britoli support
 * Do more with errors, eg. ClientData.{init,applyEvents}
+* Proper 404/500 pages
+* Duplication between public.js and member.js
 
 ------------------------------------------------------------------------------------------------------------------------
 Phase 2 (dev)
 =============
 
-### Functionality
+### Small'ish stuff
 * Add new column type: all tags (as opposed to non-field tags)
 * We have implications fields and implication columns.
   We don't seem to need all-imps vs non-field-imps...should tags not work the same way?
   Or is there similar deficiency in imps cols too?
 * Re-evaluate config: some data is useless (i.e. key of custom text fields)
 * Bug: Create-and-close closes on ajax error
+* Add info/help to MemberHome when no projects exist
+* Rename webappClientHome now that its ambiguous in regards to the public pages
+* Only create a single Lift function per SPA instead of one per ServerSideProc
+* Add DB indicies
+* Add server logic benchmarks (using MockInterpreters?)
+* Switch from scalaz.effect.IO to Monix tasks
+* Restore AdminStats
+* Restore DiagnosticEndpoints
+* Remove SessionStats
+* On auth fail, redirect back after login
+* Remove unused SemanticUI CSS: colours, input[radio], etc
 
-### UI/UX
-* Front pages
-* User name: name as one field is fine, call it "full name" like credit cards
-
-### Features
+### New Features
 * User profile page
 * Issues
 * Saved views
+* Anonymous shares

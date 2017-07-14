@@ -5,7 +5,7 @@ import monocle.macros.Lenses
 import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.filter.ValidFilter
-import shipreq.webapp.client.base.lib.DataReusability._
+import shipreq.webapp.base.lib.DataReusability._
 
 @Lenses
 final case class TableSettings(columns: NonEmptyVector[Column],

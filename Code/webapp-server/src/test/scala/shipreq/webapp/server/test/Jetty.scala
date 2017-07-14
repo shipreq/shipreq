@@ -6,6 +6,7 @@ import org.eclipse.jetty.server._
 import org.eclipse.jetty.webapp.WebAppContext
 import java.io.File
 import org.apache.commons.io.FileUtils
+import shipreq.webapp.base.AssetManifest
 
 object TestJetty extends Jetty(8090)
 
@@ -54,6 +55,16 @@ class Jetty(val port: Int) extends Logger {
     // Could use sbt or a real WAR but then we can't easily/quickly run single tests from IDE
     val tmpWarDir = createTempDir("shipreq-server-test-war")
     FileUtils.copyDirectory(file("src/main/webapp"), tmpWarDir)
+
+    // Copy a few assets over
+    val assetDir = System.getProperty("shipreq.assets")
+    def assetFile(s: String) = new File(s"$assetDir/$s")
+    def warFile(s: String) = new File(s"${tmpWarDir.getAbsolutePath}/$s")
+    FileUtils.copyFileToDirectory(assetFile(AssetManifest.favicon), tmpWarDir)
+    FileUtils.write(warFile(AssetManifest.webappClientPublicJs), "function public(){}") // Fake content
+    FileUtils.write(warFile(AssetManifest.webappClientHomeJs), "function home(){}") // Fake content
+    FileUtils.write(warFile(AssetManifest.webappClientProjectJs), "function project(){}") // Fake content
+//    ;{ import sys.process._; s"ls -la $tmpWarDir".! };
 
     val svr = new Server
     val http = new ServerConnector(svr, new HttpConnectionFactory(new HttpConfiguration))

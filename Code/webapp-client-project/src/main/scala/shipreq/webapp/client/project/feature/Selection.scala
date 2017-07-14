@@ -7,7 +7,7 @@ import japgolly.scalajs.react.extra.components.TriStateCheckbox
 import japgolly.univeq.UnivEq
 import monocle.Iso
 import org.scalajs.dom.html
-import shipreq.webapp.client.base.data.{Off, On}
+import shipreq.webapp.base.data.{Off, On}
 import shipreq.webapp.client.project.widgets.Widgets
 import Selection._
 

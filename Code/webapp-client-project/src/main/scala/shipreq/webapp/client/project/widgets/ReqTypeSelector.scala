@@ -9,15 +9,15 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.PotentialChange
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.base.feature.EditorStatus
-import shipreq.webapp.client.base.ui.EditTheme
-import shipreq.webapp.client.base.ui.semantic._
+import shipreq.webapp.base.feature.EditorStatus
+import shipreq.webapp.base.ui.EditTheme
+import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.client.project.app.Style.widgets.{reqTypeSelector => *}
 
 object ReqTypeSelector {
 
   type RT = CustomReqType
-  type AbortCommit = Option[shipreq.webapp.client.base.lib.AbortCommit[Callback, RT ~=> Callback]]
+  type AbortCommit = Option[shipreq.webapp.base.lib.AbortCommit[Callback, RT ~=> Callback]]
 
   final case class Props(initialValue: Option[RT],
                          edit        : StateSnapshot[RT],

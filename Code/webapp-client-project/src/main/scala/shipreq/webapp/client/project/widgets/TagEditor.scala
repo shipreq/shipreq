@@ -12,10 +12,10 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.SingleLine
 import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
 import shipreq.webapp.base.validation.Simple._
-import shipreq.webapp.client.base.data.Plain
-import shipreq.webapp.client.base.feature.EditorStatus
-import shipreq.webapp.client.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
-import shipreq.webapp.client.base.ui.{AutosizeTextarea, EditTheme}
+import shipreq.webapp.base.data.Plain
+import shipreq.webapp.base.feature.EditorStatus
+import shipreq.webapp.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
+import shipreq.webapp.base.ui.{AutosizeTextarea, EditTheme}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.lib.DataReusability._

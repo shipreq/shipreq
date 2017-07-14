@@ -63,14 +63,17 @@ object BoopickleMacros {
       }
   }
 
-  final def pickleObject [T]: Pickler[T] = macro BoopickleMacroImpls.quietObject[T]
+  final def  pickleObject[T]: Pickler[T] = macro BoopickleMacroImpls.quietObject[T]
   final def _pickleObject[T]: Pickler[T] = macro BoopickleMacroImpls.debugObject[T]
 
-  final def pickleCaseClass [T]: Pickler[T] = macro BoopickleMacroImpls.quietCaseClass[T]
+  final def  pickleCaseClass[T]: Pickler[T] = macro BoopickleMacroImpls.quietCaseClass[T]
   final def _pickleCaseClass[T]: Pickler[T] = macro BoopickleMacroImpls.debugCaseClass[T]
 
-  final def pickleADT [T]: Pickler[T] = macro BoopickleMacroImpls.quietADT[T]
+  final def  pickleADT[T]: Pickler[T] = macro BoopickleMacroImpls.quietADT[T]
   final def _pickleADT[T]: Pickler[T] = macro BoopickleMacroImpls.debugADT[T]
+
+  final def  derivePickler[T]: Pickler[T] = macro BoopickleMacroImpls.quietDerive[T]
+  final def _derivePickler[T]: Pickler[T] = macro BoopickleMacroImpls.debugDerive[T]
 }
 
 // =====================================================================================================================
@@ -104,14 +107,18 @@ class BoopickleMacroImpls(val c: Context) extends MacroUtils {
   def quietCaseClass[T: c.WeakTypeTag]: c.Expr[Pickler[T]] = implCaseClass[T](false)
   def debugCaseClass[T: c.WeakTypeTag]: c.Expr[Pickler[T]] = implCaseClass[T](true)
   def implCaseClass[T: c.WeakTypeTag](debug: Boolean): c.Expr[Pickler[T]] = {
-    val T      = concreteWeakTypeOf[T]
-    val apply  = tcApplyFn(T)
-    val params = primaryConstructorParams(T)
+    val T          = concreteWeakTypeOf[T].dealias
+    val params     = primaryConstructorParams(T)
+    lazy val apply = tcApplyFn(T)
 
     val impl =
       params match {
         case Nil =>
-          q"_root_.boopickle.ConstPickler[$T]($apply())"
+          val t = T.typeSymbol
+          if (t.isModuleClass)
+            q"_root_.boopickle.ConstPickler[$T](${toSelectFQN(t.asType)})"
+          else
+            q"_root_.boopickle.ConstPickler[$T]($apply())"
 
         case param :: Nil =>
           val (n, t) = nameAndType(T, param)
@@ -176,9 +183,9 @@ class BoopickleMacroImpls(val c: Context) extends MacroUtils {
 //      fail(s"Failed to resolve the following: $ignored")
 
 
-  def quietADT[T: c.WeakTypeTag]: c.Expr[Pickler[T]] = implADT[T](false)
-  def debugADT[T: c.WeakTypeTag]: c.Expr[Pickler[T]] = implADT[T](true)
-  def implADT[T: c.WeakTypeTag](debug: Boolean): c.Expr[Pickler[T]] = {
+  def quietADT[T: c.WeakTypeTag]: c.Expr[Pickler[T]] = implADT[T](false, false)
+  def debugADT[T: c.WeakTypeTag]: c.Expr[Pickler[T]] = implADT[T](true, false)
+  def implADT[T: c.WeakTypeTag](debug: Boolean, derive: Boolean): c.Expr[Pickler[T]] = {
     val T     = weakTypeOf[T]
     val types = findConcreteTypesNE(T, LeavesOnly)
                   .toList.sortBy(_.fullName)
@@ -189,11 +196,19 @@ class BoopickleMacroImpls(val c: Context) extends MacroUtils {
     var cases        = Vector.empty[CaseDef]
 
     var index = 0
+    val picklerType = c.typeOf[Pickler[_]]
     for (t <- types) {
       val t2 = fixAdtTypeForCaseDef(t)
       val fp = TermName(c.freshName())
+      val picklerImpl: Tree = if (derive)
+        tryInferImplicit(appliedType(picklerType, t)) getOrElse {
+          implCaseClass(false)(c.WeakTypeTag(t)).tree
+        }
+      else
+        q"implicitly[Pickler[$t]]"
+
       picklerNames :+= fp
-      picklers :+= q"val $fp = implicitly[Pickler[$t]].asInstanceOf[Pickler[$T]]"
+      picklers :+= q"val $fp = $picklerImpl.asInstanceOf[Pickler[$T]]"
       val ci = cq"_: $t2 => $index"
       cases :+= ci
       index += 1
@@ -215,5 +230,15 @@ class BoopickleMacroImpls(val c: Context) extends MacroUtils {
 
     if (debug) println("\n" + showCode(impl) + "\n")
     c.Expr[Pickler[T]](impl)
+  }
+
+  def quietDerive[T: c.WeakTypeTag]: c.Expr[Pickler[T]] = implDerive[T](false)
+  def debugDerive[T: c.WeakTypeTag]: c.Expr[Pickler[T]] = implDerive[T](true)
+  def implDerive[T: c.WeakTypeTag](debug: Boolean): c.Expr[Pickler[T]] = {
+    val T = weakTypeOf[T]
+    if (T.dealias.typeSymbol.isAbstract)
+      implADT(debug, true)
+    else
+      implCaseClass(debug)
   }
 }

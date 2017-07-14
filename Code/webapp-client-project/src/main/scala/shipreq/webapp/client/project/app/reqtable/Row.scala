@@ -12,7 +12,7 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.ReqCodeTreeItem
-import shipreq.webapp.client.base.lib.DataReusability._
+import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.client.project.feature.EditorFeature.RowKey
 
 /**

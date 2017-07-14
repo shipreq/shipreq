@@ -4,7 +4,7 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportTopLevel
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.protocol.ProjectSpaProtocols
-import shipreq.webapp.client.base.protocol.ClientSideProcImpl
+import shipreq.webapp.base.protocol.ClientSideProcImpl
 import shipreq.webapp.client.project.app.state.ClientData
 
 @JSExportTopLevel(ProjectSpaProtocols.CometListenerName)

@@ -7,6 +7,9 @@ object Server {
 
   trait Time[F[_]] {
     def now: F[Instant]
+  }
+
+  trait Schedule[F[_]] extends Time[F] {
     def delay[A](f: F[A], d: Duration): F[A]
     def fork[A](f: F[A]): F[Unit]
   }
@@ -15,7 +18,15 @@ object Server {
     def createServerSideProc(p: ServerSideProc.Protocol)(localFn: p.Input => F[p.Response]): F[p.Instance]
   }
 
-  trait Algebra[F[_]] extends Time[F] with Protocol[F]
+  trait Session[F[_]] {
+    val clientIP: F[Option[IP]]
+  }
+
+  trait Algebra[F[_]]
+    extends Time[F]
+       with Schedule[F]
+       with Protocol[F]
+       with Session[F]
 
   object ErrorMsgs {
     val ShouldNeverHappen: ErrorMsg =

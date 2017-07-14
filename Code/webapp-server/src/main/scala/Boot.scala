@@ -3,6 +3,7 @@ package bootstrap.liftweb
 import japgolly.microlibs.config.{Config, ConfigParser, ConfigReport}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
+import monocle.macros.Lenses
 import net.liftweb.common.Logger
 import net.liftweb.http._
 import net.liftweb.util.Props
@@ -16,16 +17,17 @@ import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.app._
 import shipreq.webapp.server.feature.SessionStats
-import shipreq.webapp.server.lib.{Taskman, TaskmanImpl}
-import shipreq.webapp.server.security.Oshiro
+import shipreq.webapp.server.lib.Taskman
+import shipreq.webapp.server.security.AppSecurityRealm
 
+@Lenses
 final case class AppConfig(db: DbConfig, server: ServerConfig, report: ConfigReport)
 
 /**
  * A class that's instantiated early and run.  It allows the application
  * to modify lift's environment
  */
-class Boot extends DI {
+class Boot {
 
   LiftRules.configureLogging()
 
@@ -33,16 +35,23 @@ class Boot extends DI {
   lazy val logger = Logger(s"$packageRoot.Boot")
 
   def boot(): Unit = {
+
+    // Read config
     val (appConfig, runMode) = readConfig()
     logger.info(appConfig.report.report)
     runMode foreach setRunMode
-    initServerConfig(appConfig.server)
-    initOshiro()
-    initServerLogic()
+
+    // Create services
+    implicit val serverConfig = appConfig.server
+    implicit val dbAccess = initDatabase(appConfig.db)
+    initShiro()
     configureLift()
+    Global.Instance = Global.default
+
+    // Prepare services
     preloadTemplates()
-    initDatabase(appConfig.db)
-    initTaskman(appConfig.server)
+    initRoutes(Global.Instance)
+    initTaskman(Global.Instance)
   }
 
   def readConfig(): (AppConfig, Option[RunModes.Value]) = {
@@ -80,9 +89,6 @@ class Boot extends DI {
 
     // Customise URL paths for built-in resources & AJAX requests
     LiftRules.liftContextRelativePath = WebappConfig.liftPath
-
-    // Register route whitelist
-    LiftRules.setSiteMap(AppSiteMap.sitemap)
 
     // Force requests to be UTF-8
     LiftRules.early.append(_ setCharacterEncoding "UTF-8")
@@ -127,40 +133,35 @@ class Boot extends DI {
     }
   }
 
-  def initOshiro(): Unit =
-    Oshiro.init()
+  def initShiro(): Unit =
+    AppSecurityRealm.init()
 
-  def initDatabase(dbConfig: DbConfig): Unit = {
+  def initDatabase(dbConfig: DbConfig): DbAccess = {
     val access = DbAccess.fromCfg(dbConfig).unsafePerformIO()
     logger.info(s"Connecting to DB: ${access.desc}")
     access.verifyConnectivity()
     access.migrator.migrate[IO].unsafePerformIO()
-    DI.dbAccess = access
+    access
   }
 
-  def initServerConfig(s: ServerConfig): Unit = {
-    DI.serverConfig = s
-  }
-
-  def initServerLogic(): Unit = {
-    DI.homeSpaLogic = Interpreters.homeSpaLogic
-    DI.projectServer = Interpreters.projectServer
-  }
-
-  def initTaskman(s: ServerConfig): Unit = {
-    DI.taskman = new TaskmanImpl(DI.dbAccess.io)
-    if (s.initTaskmanOnBoot)
-      taskman().runAll(Taskman.updateCfg)
-        .retryOnException((n, t) => s.initTaskmanRetry(n).map(d => IO {
+  def initTaskman(g: Global): Unit =
+    if (g.config.initTaskmanOnBoot)
+      Taskman.updateCfg(g)
+        .retryOnException((n, t) => g.config.initTaskmanRetry(n).map(d => IO {
           logger.warn(s"Taskman initialisation error occurred. Retrying...\n${t.getMessage}")
           Thread sleep d.toMillis
         }))
         .unsafePerformIO()
-  }
 
   def preloadTemplates(): Unit = {
     import shipreq.webapp.server.snippet._
-    DynModal
-    Quotes
+    HomeSpa
+    ProjectSpa
+    PublicSpa
+  }
+
+  def initRoutes(g: Global): Unit = {
+    // (Must be done after Global is ready)
+    LiftRules.dispatch.append(new LiftDispatcher(g).dispatchPF)
   }
 }

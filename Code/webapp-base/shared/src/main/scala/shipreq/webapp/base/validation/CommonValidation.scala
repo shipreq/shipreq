@@ -5,7 +5,7 @@ import scalaz.{-\/, \/-}
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.util.TextMod
 import Simple._
-import Simple.Implicits._
+import Implicits._
 
 object CommonValidation {
   private implicit def regexToPattern(regex: scala.util.matching.Regex): Pattern = regex.pattern
@@ -139,7 +139,7 @@ object CommonValidation {
 
   /** See also [[largeText]] */
   lazy val optionalLargeText: Validator[String, Option[String], Option[String]] =
-    endoCorrector.largeText.toCorrector.imapCorrected(TextMod.nonBlank)
+    endoCorrector.largeText.toCorrector.imapCorrectedZ(TextMod.nonBlank)
     .withAuditor(largeTextLimit.liftOption.toAuditor)
 
 }

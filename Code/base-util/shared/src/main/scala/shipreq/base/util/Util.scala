@@ -204,4 +204,12 @@ object Util {
       override def equal(a: A, b: A) = a == b
     }
   }
+
+  // Haven't benchmarked this
+  def quickStringLookup(strings: Set[String]): String => Boolean = {
+    val maxLen = strings.foldLeft(0)(_ max _.length)
+    val byLen = Array.fill(maxLen + 1)(Set.empty[String])
+    strings.foreach(s => byLen(s.length) = byLen(s.length) + s)
+    s => (s.length <= maxLen) && byLen(s.length).contains(s)
+  }
 }

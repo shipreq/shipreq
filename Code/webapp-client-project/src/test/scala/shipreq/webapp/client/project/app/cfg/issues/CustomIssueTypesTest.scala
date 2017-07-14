@@ -8,7 +8,7 @@ import shipreq.webapp.base.data.{FilterDead, HideDead}
 import shipreq.webapp.base.protocol.ServerSideProc
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.CustomIssueTypeCrud
 import shipreq.webapp.base.test.SampleProject
-import shipreq.webapp.client.base.test.TestClientProtocol
+import shipreq.webapp.base.test.TestClientProtocol
 import shipreq.webapp.client.project.app.cfg.shared.Usage
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.test.TestUtil._

@@ -18,8 +18,8 @@ import shipreq.webapp.base.data.{TagId => Id, _}, DataImplicits._
 import shipreq.webapp.base.data.DataValidators.{tag => V, hashRefKey => VH}
 import shipreq.webapp.base.protocol.TagCrud
 import shipreq.webapp.base.UiText.FieldNames
-import shipreq.webapp.client.base.data.{TCB, Disabled, On}
-import shipreq.webapp.client.base.protocol.ClientProtocol
+import shipreq.webapp.base.data.{TCB, Disabled, On}
+import shipreq.webapp.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.cfg.shared._
 import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
 import shipreq.webapp.client.project.lib.DataReusability._

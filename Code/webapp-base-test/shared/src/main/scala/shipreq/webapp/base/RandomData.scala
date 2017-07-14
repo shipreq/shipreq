@@ -24,6 +24,7 @@ import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.user._
 import shipreq.webapp.base.event.ApplyEvent.LogicVer
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Grammar, GrammarSpec, Text}
@@ -171,8 +172,8 @@ object RandomData {
   val dir =
     Gen.choose[Direction](Forwards, Backwards)
 
-  def externalId[A]: Gen[ExternalId[A]] =
-    Gen.alphaNumeric.string(4 to 12).map(ExternalId.apply[A])
+  def obfuscated[A]: Gen[Obfuscated[A]] =
+    Gen.alphaNumeric.string(4 to 12).map(Obfuscated.apply[A])
 
   lazy val username: Gen[Username] = {
     val x = WebappConfig.usernameLength.min - 2
@@ -1201,8 +1202,8 @@ object RandomData {
       p               ← genProject(cfg, reqsWithoutText, reqCodes, reqTags, reqImps)
     } yield p
 
-  def projectXId: Gen[Project.XId] =
-    externalId
+  def projectIdPublic: Gen[ProjectId.Public] =
+    obfuscated
 
   def projectName: Gen[Project.Name] =
     shortText1
@@ -1215,7 +1216,7 @@ object RandomData {
 
   lazy val projectMetaData: Gen[ProjectMetaData] =
     for {
-      id            <- projectXId
+      id            <- projectIdPublic
       name          <- projectName
       eventCount    <- Gen.chooseInt(30000)
       reqCount      <- Gen.chooseInt(eventCount min 2000)

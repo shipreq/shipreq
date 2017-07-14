@@ -5,7 +5,7 @@ import japgolly.univeq.UnivEq
 import nyaya.prop._
 import scalaz.std.anyVal.intInstance
 import shipreq.webapp.base.data.LiveDeadStat
-import shipreq.webapp.client.base.lib.DataReusability._
+import shipreq.webapp.base.lib.DataReusability._
 
 /** Stats that describe the contents of [[Table]]. */
 final case class TableContentStats(uniqueReqsInTable: LiveDeadStat[Int],

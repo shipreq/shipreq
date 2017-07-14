@@ -1,28 +1,52 @@
 package shipreq.webapp.server.logic
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
+import java.util.concurrent.ConcurrentHashMap
 import scala.collection.immutable.SortedMap
-import scalaz.Name
-import shipreq.base.util.IMap
-import shipreq.taskman.api.UserId
+import scalaz.{-\/, Name, NaturalTransformation, \/, \/-, ~>}
+import scalaz.syntax.monad._
+import shipreq.base.util._
+import shipreq.taskman.api.{Msg, MsgId, MsgStatus, TaskmanApi}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.hash.HashRec.Collection
+import shipreq.webapp.base.user._
+import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.base.protocol.ServerSideProc
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.server.ServerConfig
 
 object MockDb {
-  final case class Entry(projectId    : ProjectId,
-                         userId       : UserId,
-                         events       : VerifiedEvent.Seq,
-                         createdAt    : Instant,
-                         lastUpdatedAt: Option[Instant]) {
+  final case class UserEntry(id           : UserId,
+                             username     : Username,
+                             emailAddr    : EmailAddr,
+                             ps           : PasswordAndSalt,
+                             createdAt    : Instant,
+                             resetPassword: Option[(SecurityToken, Instant)] = None) {
+    def pubids: List[Username \/ EmailAddr] =
+      -\/(username) :: \/-(emailAddr) :: Nil
+
+    def toUser: User =
+      User(id, username, emailAddr, Set.empty)
+
+    def toUserAndPassword: (User, PasswordAndSalt) =
+      (toUser, ps)
+  }
+  object UserEntry {
+    implicit def univEq: UnivEq[UserEntry] = UnivEq.derive
+  }
+
+  final case class ProjectEntry(projectId    : ProjectId,
+                                userId       : UserId,
+                                events       : VerifiedEvent.Seq,
+                                createdAt    : Instant,
+                                lastUpdatedAt: Option[Instant]) {
 
     lazy val project: Project =
       ApplyEvent.trusted.applyVerified(events.eventVector)(Project.empty).needRight
 
     lazy val projectMetaData: ProjectMetaData =
-      ProjectMetaData(id            = ProjectId.Extern(projectId),
+      ProjectMetaData(id            = Obfuscators.projectId.obfuscate(projectId),
                       name          = project.name,
                       eventCount    = events.eventVector.length,
                       reqCount      = project.reqs.size,
@@ -32,18 +56,157 @@ object MockDb {
     lazy val projectLoad: DB.ProjectEvents =
       (SortedMap.empty: DB.ProjectEvents) ++ events.iterator
   }
-
 }
 
-final class MockDb extends DB.Algebra[Name] {
-  private var projects: IMap[ProjectId, MockDb.Entry] =
+final class MockDb(now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecurity[Name] {
+
+  override def getUserAndPasswordByEmail(email: EmailAddr) = Name[Option[(User, PasswordAndSalt)]] {
+    getUser(\/-(email)).map(_.toUserAndPassword)
+  }
+
+  override def getUserAndPasswordByUsername(username: Username) = Name[Option[(User, PasswordAndSalt)]] {
+    getUser(-\/(username)).map(_.toUserAndPassword)
+  }
+
+  var usrLoginLog = Vector.empty[(UserId, Option[IP])]
+  override def logLoginSuccess(id: UserId, ip: Option[IP]) = Name[Unit] {
+    usrLoginLog :+= ((id, ip))
+  }
+
+  var prevTokenId = 0
+  private def nextToken(): SecurityToken = {
+    prevTokenId += 1
+    prevToken()
+  }
+
+  def prevToken(): SecurityToken = {
+    assert(prevTokenId > 0)
+    SecurityToken(s"[token-$prevTokenId]")
+  }
+
+  def assertTokensIssued(expect: Int): Unit =
+    assertEq("assertTokensIssued", prevTokenId, expect)
+
+  def assertIssuesTokens[A](expect: Int)(a: => A): A =
+    assertDifference("assertIssuesTokens", prevTokenId)(expect)(a)
+
+  var userPlaceholders = Map.empty[EmailAddr, DB.UserRegistration.Pending]
+  override def createUserPlaceholder(e: EmailAddr) =
+    now.map { n =>
+      assert(!userPlaceholders.contains(e))
+      val t = nextToken()
+      userPlaceholders += e -> DB.UserRegistration.Pending(UserId(prevTokenId), t, n)
+      t
+    }
+
+  override def getUserRegistration(e: EmailAddr) = Name[Option[DB.UserRegistration]] {
+    userPlaceholders.get(e) orElse
+      getUser(\/-(e)).map(x => DB.UserRegistration.Complete(x.id, x.createdAt))
+  }
+
+  override def updateUserRegistrationToken(id: UserId) =
+    now.map { n =>
+      val (e, r) = userPlaceholders.iterator.find(_._2.id ==* id) getOrElse sys.error("User not found")
+      val t = nextToken()
+      userPlaceholders += e -> r.copy(token = t, tokenSentAt = n)
+      t
+    }
+
+  def getPendingUserRegistration(t: SecurityToken): Option[(EmailAddr, DB.UserRegistration.Pending)] =
+    userPlaceholders.iterator.collect {
+      case (ea, p: DB.UserRegistration.Pending) if p.token ==* t => (ea, p)
+    }.nextOption()
+
+  override def getUserRegistrationTokenIssueDate(t: SecurityToken) = Name[Option[Instant]] {
+    getPendingUserRegistration(t).map(_._2.tokenSentAt)
+  }
+
+  var users = List.empty[MockDb.UserEntry]
+
+  def getUser(u: Username \/ EmailAddr): Option[MockDb.UserEntry] =
+    users.find(e => u.fold(_ ==* e.username, _ ==* e.emailAddr))
+
+  def getUserOrPlaceholder(u: Username \/ EmailAddr): Option[(EmailAddr, DB.UserRegistration.Pending) \/ MockDb.UserEntry] =
+    getUser(u).map(\/-(_)) orElse u.fold(_ => None, e => userPlaceholders.get(e).map(r => -\/((e, r))))
+
+  def updateUser(w: MockDb.UserEntry => Boolean, f: MockDb.UserEntry => MockDb.UserEntry): Unit =
+    users = users.map(u => if (w(u)) f(u) else u)
+
+  def updateUser(id: UserId, f: MockDb.UserEntry => MockDb.UserEntry): Option[MockDb.UserEntry] = {
+    var r = Option.empty[MockDb.UserEntry]
+    updateUser(_.id ==* id, u => {
+      val u2 = f(u)
+      r = Some(u2)
+      u2
+    })
+    r
+  }
+
+  override def completeUserRegistration(token: SecurityToken,
+                                        name: PersonName,
+                                        username: Username,
+                                        ps: PasswordAndSalt,
+                                        newsletter: Boolean) =
+    now.map { n =>
+      (getPendingUserRegistration(token), getUser(-\/(username))) match {
+        case (None, _)          => DB.UserRegistrationResult.TokenNotFound
+        case (Some(_), Some(_)) => DB.UserRegistrationResult.UsernameTaken
+        case (Some((ea, reg)), None) =>
+          userPlaceholders = userPlaceholders - ea
+          users ::= MockDb.UserEntry(reg.id, username, ea, ps, n)
+          DB.UserRegistrationResult.Success(reg.id)
+      }
+    }
+
+  override def getPasswordResetState(u: Username \/ EmailAddr) = Name[Option[(EmailAddr, DB.PasswordResetState)]] {
+    getUserOrPlaceholder(u) map {
+      case \/-(e) =>
+        val u = DB.UserRegistration.Complete(e.id, e.createdAt)
+        val s = e.resetPassword match {
+          case Some((t, i)) => DB.PasswordResetState.TokenExists(u, t, i)
+          case None         => DB.PasswordResetState.NoToken(u)
+        }
+        (e.emailAddr, s)
+      case -\/((e, p)) =>
+        (e, DB.PasswordResetState.UserRegistrationPending(p))
+    }
+  }
+
+  override def getResetPasswordTokenIssueDate(t: SecurityToken) = Name[Option[Instant]] {
+    users.collectFirst {
+      case MockDb.UserEntry(_, _, _, _, _, Some((t2, i))) if t ==* t2 => i
+    }
+  }
+
+  override def createResetPasswordToken(id: UserId) =
+    now.map { n =>
+      val t = nextToken()
+      updateUser(id, _.copy(resetPassword = Some((t, n))))
+      t
+    }
+
+  override def updateResetPasswordTokenOnReissue(id: UserId) =
+    now.map { n =>
+      updateUser(id, u => u.copy(resetPassword = u.resetPassword.map(x => (x._1, n))))
+      ()
+    }
+
+  override def updateUserPassword(token: SecurityToken, ps: PasswordAndSalt) = Name[Unit] {
+    updateUser(_.resetPassword.exists(_._1 ==* token), _.copy(ps = ps, resetPassword = None))
+  }
+
+  private var projects: IMap[ProjectId, MockDb.ProjectEntry] =
     IMap.empty(_.projectId)
 
   def addProject(projectId: ProjectId, userId: UserId)(events: Event*): Unit = {
     val ves = VerifiedEvent.Seq(EventOrd(1), verifyEvents(Project.empty)(events: _*))
     val now = Instant.now()
-    val mde = MockDb.Entry(projectId, userId, ves, now, Some(now))
+    val mde = MockDb.ProjectEntry(projectId, userId, ves, now, Some(now))
     projects = projects.add(mde)
+  }
+
+  override def getProjectOwner(id: ProjectId) = Name[Option[UserId]] {
+    projects.get(id).map(_.userId)
   }
 
   override def createEmptyProject(id: UserId) = Name[ProjectId] {
@@ -77,7 +240,7 @@ final class MockDb extends DB.Algebra[Name] {
     projects.need(id).projectLoad
   }
 
-  override def saveProjectEvent(id: ProjectId)(ord: EventOrd, e: ActiveEvent, hrs: Collection) = Name[Option[Throwable]] {
+  private def _saveProjectEvent(id: ProjectId)(ord: EventOrd, e: ActiveEvent, hrs: HashRec.Collection) = Name[Option[Throwable]] {
     val entry = projects.need(id)
     def update(events: VerifiedEvent.Seq): Unit =
       projects = projects + entry.copy(events = events, lastUpdatedAt = Some(Instant.now()))
@@ -95,8 +258,20 @@ final class MockDb extends DB.Algebra[Name] {
     }
   }
 
-  override def inDbTransaction[A](f: Name[A]) =
-    f
+  override def saveProjectEvents(id: ProjectId)(cmds: Traversable[DB.SaveProjectEventCmd]) = Name[Option[Throwable]] {
+    cmds.toIterator
+      .map(c => _saveProjectEvent(id)(c.ord, c.event, c.hashes).value)
+      .foldLeft[Option[Throwable]](None)(_ orElse _)
+  }
+
+  override def inDbTransaction[A](f: Name[A]) = f
+  override def inDbTransaction[A](l: Int, f: Name[A]) = f
+
+  def assertNoDbChange[A](a: => A): A =
+    assertNoChange("assertNoChange:userPlaceholders", userPlaceholders.iterator.map(_.toString).mkString("\n"))(
+      assertNoChange("assertNoChange:users", users.mkString("\n"))(
+        assertNoChange("assertNoChange:projects", projects.values.mkString("\n"))(
+          a)))
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -121,6 +296,14 @@ final class MockServer extends Server.Algebra[Name] {
   var clock = Instant.now()
   override val now = Name(clock)
 
+  private def durationBorder(duration: Duration, tolerance: Duration = Duration.ofSeconds(2)): Validity => Duration = {
+    case Valid   => duration minus tolerance
+    case Invalid => duration plus tolerance
+  }
+
+  def forwardTimeToEndOfWindow(w: Duration, v: Validity): Unit =
+    clock = clock plus durationBorder(w)(v)
+
   var onDelay = List.empty[() => Unit]
   override def delay[A](f: Name[A], d: Duration) = Name[A] {
     clock = clock plus d
@@ -139,4 +322,133 @@ final class MockServer extends Server.Algebra[Name] {
     forked.foreach(_.value)
     forked = Vector.empty
   }
+
+  var nextClientIP = Option.empty[IP]
+  override val clientIP = Name(nextClientIP)
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+final class MockTaskman extends TaskmanApi[Name] {
+  private var prevMsgId = 0L
+
+  override def cfgPut(key: String, value: String) = Name[Unit] {
+    ()
+  }
+
+  var msgs = Vector.empty[(MsgId, Msg)]
+  override def submitMsg(m: Msg) = Name[MsgId] {
+    prevMsgId += 1
+    val id = MsgId(prevMsgId)
+    msgs :+= (id, m)
+    id
+  }
+
+  override def queryMsgStatus(id: MsgId) = Name[Option[MsgStatus]] {
+    None
+  }
+
+  def assertSubmitted(expect: Int): Unit =
+    if (msgs.length !=* expect)
+      fail(s"Expected $expect Taskman tasks submitted, got ${msgs.length}: ${msgs.mkString(", ")}")
+
+  def assertSubmits[A](expect: Int)(a: => A): A =
+    assertDifference("taskman.assertSubmits", msgs.length)(expect)(a)
+
+  def assertLastSubmitted[A](pf: PartialFunction[Msg, A]): A =
+    if (msgs.isEmpty)
+      fail("No tasks submitted.")
+    else
+      pf.lift(msgs.last._2) getOrElse
+        fail(s"Unexpected Taskman task submitted: ${msgs.last._2}")
+
+//  def assertSubmitted(msg: Msg*): Unit =
+//    assertEq(msg.toVector, tasksSubmitted.map(_._2))
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name] {
+
+  var protectedActions = 0
+  override def protect[A](vulnerable: Name[A]): Name[A] =
+    vulnerable.map { a =>
+      protectedActions += 1
+      a
+    }
+
+  var loggedIn = Option.empty[MockDb.UserEntry]
+  override def attemptLogin(u: Username \/ EmailAddr, p: PlainTextPassword) = Name[Option[User]] {
+    loggedIn = db.getUser(u).filter(e => e.ps ==* mkPasswordAndSalt(p, e.ps.salt))
+    loggedIn.map(_.toUser)
+  }
+
+  var prevSalt = 0
+  override def hashPassword(p: PlainTextPassword) = Name[PasswordAndSalt] {
+    prevSalt += 1
+    mkPasswordAndSalt(p, Salt(prevSalt.toString))
+  }
+
+  def mkPasswordAndSalt(p: PlainTextPassword, salt: Salt): PasswordAndSalt =
+    PasswordAndSalt(PasswordHash(s"${salt.base64}:${p.value}"), salt)
+
+  override val isAuthenticated   = Name(loggedIn.isDefined)
+  override val authenticatedUser = Name(loggedIn.map(_.toUser))
+  override val logout            = Name(loggedIn = None)
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+object MockInterpreters {
+  import JavaTimeHelpers._
+
+  val config = ServerConfig(
+    baseUrl                    = Url.Absolute.Base("https://test.shipreq.com"),
+    attackFrustrationDelay     = 1 hour,
+    securityTokenLength        = 8,
+    confirmationTokenLifespan  = 7 days,
+    passwordResetTokenLifespan = 4 days,
+    allowRegister              = Allow,
+    taskmanSchema              = "test_taskman",
+    initTaskmanOnBoot          = false,
+    initTaskmanRetry           = RetryCriteria(2 hour, Some(666)))
+}
+
+class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerConfig]) {
+  implicit val config     = modCfg(MockInterpreters.config)
+  implicit val storeMap   = new ConcurrentHashMap(): ProjectServer.StoreMap[Name, ConcurrentHashMap]
+  implicit val store      = Store.Algebra.concurrentHashMap(storeMap): ProjectServer.StoreAlgebra[Name]
+  implicit val svr        = new MockServer
+  implicit val db         = new MockDb(svr.now)
+  implicit val security   = new MockSecurity(db)
+  implicit val taskman    = new MockTaskman
+  implicit val nameToName = NaturalTransformation.refl[Name]
+
+  val user2password = PlainTextPassword("blurp12345")
+  lazy val user2 = MockDb.UserEntry(
+    UserId(2),
+    Username("blurp"),
+    EmailAddr("blurp@bar.com"),
+    security.hashPassword(user2password).value,
+    svr.clock minus Duration.ofDays(50))
+
+  val user3password = PlainTextPassword("user3secret")
+  lazy val user3 = MockDb.UserEntry(
+    UserId(3),
+    Username("user3"),
+    EmailAddr("u3@test.com"),
+    security.hashPassword(user3password).value,
+    svr.clock minus Duration.ofDays(2))
+
+  def assertProtected[A](a: => A): A =
+    assertDifference("Protected actions", security.protectedActions)(1)(a)
+
+  def assertUnprotected[A](a: => A): A =
+    assertNoChange("Protected actions", security.protectedActions)(a)
+
+  def forwardTimeToEndOfConfirmationWindow(v: Validity): Unit =
+    svr.forwardTimeToEndOfWindow(config.confirmationTokenLifespan, v)
+
+  def forwardTimeToEndOfPasswordResetWindow(v: Validity): Unit =
+    svr.forwardTimeToEndOfWindow(config.passwordResetTokenLifespan, v)
 }

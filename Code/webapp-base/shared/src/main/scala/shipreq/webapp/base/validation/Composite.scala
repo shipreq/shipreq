@@ -4,7 +4,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.nonempty.NonEmptyVector
 import scalaz.{Applicative, \/}
 import shipreq.base.util.Validity
-import Simple.Implicits._
+import Implicits._
 
 object Composite {
 

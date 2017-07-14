@@ -72,7 +72,7 @@ object Promise {
                                             retries   : Retries,
                                             initFn    : InitFn[F, E, S, A])
                                            (implicit F: Monad[F],
-                                            time      : Server.Time[F]): F[GetOrSet[E, (S, A)]] = {
+                                            time      : Server.Schedule[F]): F[GetOrSet[E, (S, A)]] = {
     type Result = GetOrSet[E, (S, A)]
     import optics._
 

@@ -29,7 +29,17 @@
   * `local` - JS bundles required by dev-side tasks and unit-tests. These are symlinked from SBT module resource dirs and referenced by filename in SBT.
 
 
-# Notes
+# Semantic UI
 
-* `semantic.json` *must* remain in this directory.
-  Semantic UI will look for it every time npm runs and think it's not installed otherwise.
+Semantic UI is a special beast...
+
+* `semantic/` and `semantic.json` *must* remain in this directory.
+  Semantic UI will look for them every time npm runs and think it's not installed otherwise.
+
+* Not all of Semantic UI (which is huge) is used. The desired subset is declared in `semantic.json5`.
+
+* When upgrading Semantic UI, npm will change the version in `semantic.json`.
+  This change must be manually applied to `semantic.json5`.
+
+* After any change to `semantic.json5` or Semantic UI is made,
+  `./semantic-update` must be run followed by `./build-parallel`

@@ -13,10 +13,10 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{TextSearch, PlainText}
-import shipreq.webapp.client.base.data.TCB
-import shipreq.webapp.client.base.feature.AsyncFeature
-import shipreq.webapp.client.base.protocol.ServerSideProcInvoker
-import shipreq.webapp.client.base.ui.semantic.{Button, Icon}
+import shipreq.webapp.base.data.TCB
+import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.ui.semantic.{Button, Icon}
 import shipreq.webapp.client.project.app.Style.reqtable.{page => *}
 import shipreq.webapp.client.project.feature.Modal
 import shipreq.webapp.client.project.lib.DataReusability._

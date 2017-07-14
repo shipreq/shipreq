@@ -12,9 +12,9 @@ import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.filter.PotentialFilter
 import shipreq.webapp.base.protocol.{ProjectSpaProtocols, UpdateContentCmd}
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
-import shipreq.webapp.client.base.feature._
-import shipreq.webapp.client.base.protocol.{ClientProtocol, ServerSideProcInvoker}
-import shipreq.webapp.client.base.ui.ProjectItem
+import shipreq.webapp.base.feature._
+import shipreq.webapp.base.protocol.{ClientProtocol, ServerSideProcInvoker}
+import shipreq.webapp.base.ui.ProjectItem
 import shipreq.webapp.client.project.app.state._
 import shipreq.webapp.client.project.app._
 import shipreq.webapp.client.project.app.reqdetail.ReqDetail

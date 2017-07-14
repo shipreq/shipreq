@@ -4,7 +4,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import japgolly.scalajs.react.vdom.VdomElement
 import shipreq.webapp.base.UiText
-import shipreq.webapp.client.base.ClientResources
+import shipreq.webapp.base.ClientResources
 
 package object shared extends EditorExt {
 

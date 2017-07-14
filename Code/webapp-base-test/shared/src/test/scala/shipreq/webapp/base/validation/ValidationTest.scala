@@ -5,7 +5,7 @@ import utest._
 import scalaz.{-\/, Equal, \/, \/-}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.test.BaseTestUtil._
-import Simple._
+import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.base.WebappConfig
 
 object ValidationTest extends TestSuite {

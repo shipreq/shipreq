@@ -16,13 +16,13 @@ import shipreq.webapp.base.{UiText, data}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd.DeleteReqs
 import shipreq.webapp.base.text.{PlainText, TextSearch}
-import shipreq.webapp.client.base.data.{On, Plain}
-import shipreq.webapp.client.base.feature.PreviewFeature
+import shipreq.webapp.base.data.{On, Plain}
+import shipreq.webapp.base.feature.PreviewFeature
 import shipreq.webapp.client.project.app.Style.{deletionForm => *}
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.feature.Selection
 import MTrie.Ops
-import shipreq.webapp.client.base.ui.semantic.{Button, Colour, Icon, Table}
+import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Table}
 
 object DeletionForm {
 

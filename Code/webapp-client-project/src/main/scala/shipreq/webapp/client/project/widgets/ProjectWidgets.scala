@@ -15,9 +15,9 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G, _}
 import shipreq.webapp.base.util.ReqCodeTreeItem
-import shipreq.webapp.client.base.data.{Contextualise, Plain}
-import shipreq.webapp.client.base.jsfacade.KaTeX
-import shipreq.webapp.client.base.lib.ClientUtil.{renderVector, sepComma, sepSpace}
+import shipreq.webapp.base.data.{Contextualise, Plain}
+import shipreq.webapp.base.jsfacade.KaTeX
+import shipreq.webapp.base.lib.ClientUtil.{renderVector, sepComma, sepSpace}
 import shipreq.webapp.client.project.app.Style.{widgets => *}
 import ProjectWidgets.{apply => _, _}
 

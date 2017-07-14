@@ -46,7 +46,7 @@ final case class ClientSideProcInvoker[I](proc: ClientSideProc[I]) {
 //    }
 
   private val runCmdHead =
-    s"${proc.objectName}.${ClientSideProc.MainMethodName}('"
+    s"${proc.objectAndMethod}('"
 
   private def invokeSB(i: I)(sb: StringBuilder): Unit = {
     sb append runCmdHead

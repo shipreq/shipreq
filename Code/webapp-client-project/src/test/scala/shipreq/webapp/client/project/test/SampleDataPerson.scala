@@ -8,8 +8,8 @@ import scalaz.syntax.equal._
 
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.util.TextMod
-import shipreq.webapp.base.validation._, Simple._, Simple.Implicits._
-import shipreq.webapp.client.base.data.TCB
+import shipreq.webapp.base.validation._, Simple._, Implicits._
+import shipreq.webapp.base.data.TCB
 import shipreq.webapp.client.project.app.cfg.shared._
 import Editors._
 import Uniqueness.Util._

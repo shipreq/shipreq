@@ -1,8 +1,9 @@
 package shipreq.webapp.base.validation
 
+import monocle.Iso
 import scalaz.Isomorphism.<=>
 import scalaz.{-\/, Applicative, Semigroup, Traverse, \/, \/-}
-import shipreq.base.util.{GenTuple, Identity, Validity, Valid}
+import shipreq.base.util.{GenTuple, Identity, Valid, Validity}
 
 object Generic {
 
@@ -42,8 +43,11 @@ object Generic {
         g compose live compose f,
         g compose full compose f)
 
-    def imap[B](iso: B <=> A): EndoCorrector[B] =
+    def imapZ[B](iso: B <=> A): EndoCorrector[B] =
       xmap(iso.from)(iso.to)
+
+    def imap[B](iso: Iso[B, A]): EndoCorrector[B] =
+      xmap(iso.reverseGet)(iso.get)
 
     def pair[AA](implicit A: GenTuple[A, A, AA]): EndoCorrector[AA] =
       this tuple this
@@ -91,14 +95,23 @@ object Generic {
     def applyAndUncorrect(i: I): I =
       uncorrect(apply(i))
 
+    def prependLive(f: I => I): Corrector[I, C] =
+      copy(live = live compose f)
+
+    def appendLive(f: I => I): Corrector[I, C] =
+      copy(live = f compose live)
+
     def xmapInput[A](g: I => A)(f: A => I): Corrector[A, C] =
       Corrector(
         g compose live compose f,
         full compose f,
         g compose uncorrect)
 
-    def imapInput[A](iso: A <=> I): Corrector[A, C] =
+    def imapInputZ[A](iso: A <=> I): Corrector[A, C] =
       xmapInput(iso.from)(iso.to)
+
+    def imapInput[A](iso: Iso[A, I]): Corrector[A, C] =
+      xmapInput(iso.reverseGet)(iso.get)
 
     def xmapCorrected[A](f: C => A)(g: A => C): Corrector[I, A] =
       Corrector(
@@ -106,8 +119,11 @@ object Generic {
         f compose full,
         uncorrect compose g)
 
-    def imapCorrected[A](iso: C <=> A): Corrector[I, A] =
+    def imapCorrectedZ[A](iso: C <=> A): Corrector[I, A] =
       xmapCorrected(iso.to)(iso.from)
+
+    def imapCorrected[A](iso: Iso[C, A]): Corrector[I, A] =
+      xmapCorrected(iso.get)(iso.reverseGet)
 
     def pair[II, CC](implicit I: GenTuple[I, I, II], C: GenTuple[C, C, CC]): Corrector[II, CC] =
       this tuple this
@@ -379,8 +395,11 @@ object Generic {
     def xmapInput[B](g: I => B)(f: B => I): Validator[E, B, C, V] =
       mapCorrector(_.xmapInput(g)(f))
 
-    def imapInput[B](iso: B <=> I): Validator[E, B, C, V] =
+    def imapInputZ[B](iso: B <=> I): Validator[E, B, C, V] =
       xmapInput(iso.from)(iso.to)
+
+    def imapInput[B](iso: Iso[B, I]): Validator[E, B, C, V] =
+      xmapInput(iso.reverseGet)(iso.get)
 
     def appendInvalidator[EE >: E](i: Invalidator[EE, V]): Validator[EE, I, C, V] =
       mapAuditor(_.appendInvalidator(i))

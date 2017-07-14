@@ -10,9 +10,9 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text._
-import shipreq.webapp.client.base.feature.{EditorStatus, PreviewFeature}
-import shipreq.webapp.client.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
-import shipreq.webapp.client.base.ui.{AutosizeTextarea, EditTheme}
+import shipreq.webapp.base.feature.{EditorStatus, PreviewFeature}
+import shipreq.webapp.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
+import shipreq.webapp.base.ui.{AutosizeTextarea, EditTheme}
 import shipreq.webapp.client.project.feature.AutoCompleteFeature
 import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.lib.DataReusability._

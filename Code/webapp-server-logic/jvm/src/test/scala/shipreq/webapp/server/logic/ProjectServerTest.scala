@@ -4,20 +4,15 @@ import java.util.concurrent.ConcurrentHashMap
 import scalaz.{-\/, Name, NaturalTransformation, ~>}
 import utest._
 import shipreq.base.util.Direction
-import shipreq.taskman.api.UserId
-import shipreq.webapp.base.data.Username
+import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.protocol.CreateContentCmd
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.user._
 
 object ProjectServerTest extends TestSuite {
 
-  class Tester {
-    implicit val storeMap: ProjectServer.StoreMap[Name, ConcurrentHashMap] = new ConcurrentHashMap()
-    implicit val store: ProjectServer.StoreAlgebra[Name] = Store.Algebra.concurrentHashMap(storeMap)
-    implicit val svr = new MockServer
-    implicit val db = new MockDb
-    implicit val nameToName: Name ~> Name = NaturalTransformation.refl
+  class Tester extends MockInterpreters {
     val logic = ProjectServer[Name, Name](ProjectServer.BroadcastTo.All)
   }
 

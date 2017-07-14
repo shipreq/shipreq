@@ -20,3 +20,6 @@ On stragery
 ===========
 * Victorious warriors win first and then go to war, while defeated warriors go to war first and then seek to win.
 
+On product motivation
+=====================
+https://twitter.com/tpolecat/status/884109373064093696

@@ -8,11 +8,10 @@ import scalaz.effect.IO
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.db.SingleConnectionXA
-import shipreq.taskman.api.UserId
-import shipreq.webapp.server.data._
+import shipreq.webapp.base.data.ProjectId
+import shipreq.webapp.base.user.UserId
 import shipreq.webapp.server.db.SqlHelpers._
 import shipreq.webapp.server.db._
-import shipreq.webapp.server.logic.ProjectId
 
 object DbUtil {
 
@@ -22,12 +21,13 @@ object DbUtil {
 }
 
 final case class DbUtil(xa: SingleConnectionXA) {
+  import PrepareEnv.dbAlgebra
 
   private def randomStr: String =
     DbUtil.Random.nextString(32)
 
   def newProjectId(userId: UserId = getOrCreateUserId()): ProjectId =
-    xa ! DbLogic.project.create(userId)
+    xa ! dbAlgebra.createEmptyProject(userId)
 
   def getOrCreateUserId(): UserId =
     (xa ! Query0[UserId]("select id from usr where username is not null").option) getOrElse newUserId()

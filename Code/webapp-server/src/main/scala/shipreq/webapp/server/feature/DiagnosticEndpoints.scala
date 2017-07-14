@@ -1,5 +1,5 @@
 package shipreq.webapp.server.feature
-
+/*
 import java.lang.{Long => JLong}
 import java.time.{Duration, Instant}
 import net.liftweb.common._
@@ -12,10 +12,9 @@ import net.liftweb.util.Props
 import scalaz.{-\/, \/-}
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.util.ErrorOr
-import shipreq.taskman.api.ApiOp.QueryMsgStatus
 import shipreq.taskman.api.Msg.SendDiagEmail
 import shipreq.taskman.api.{EmailAddr, MsgId}
-import shipreq.webapp.server.app.DI
+import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.db.DbLogic
 import shipreq.webapp.server.lib.Misc._
 import shipreq.webapp.server.lib.SnippetHelpers
@@ -25,7 +24,7 @@ import shipreq.webapp.server.lib.SnippetHelpers
  *
  * @since 28/11/2013
  */
-object DiagnosticEndpoints extends DI {
+object DiagnosticEndpoints {
   type PM[T] = Menu.ParamMenuable[T]
 
   def Endpoints = List(Ping, DbTestJson, DbTestCsv, Email, MsgStatus)
@@ -88,7 +87,7 @@ object DiagnosticEndpoints extends DI {
   def dbTest(): DbTestResult = {
     val (ab, (b, dbClock)) =
       calcTime {
-        db().io.trans(DbLogic.admin.diagSelectNow.measureDuration).unsafePerformIO()
+        Global.db.io.trans(DbLogic.admin.diagSelectNow.measureDuration).unsafePerformIO()
       }
     DbTestResult(ab, ab minus b, b, dbClock.toStringIso8601)
   }
@@ -100,12 +99,11 @@ object DiagnosticEndpoints extends DI {
 
   val Email = endpoint("mail") >> denyNonHttps >> EarlyResponse(() =>
     S.param("to") match {
-      case Full(emailAddress) => {
+      case Full(emailAddress) =>
         val token = nextFuncName
         val msg = SendDiagEmail(EmailAddr(emailAddress), token, s"Token: $token\nIssued: ${Instant.now().toStringIso8601}")
-        val (dur, msgId) = calcTime(taskman().submitMsg(msg).unsafePerformIO())
+        val (dur, msgId) = calcTime(Global.taskman.submitMsg(msg).unsafePerformIO())
         Full(jsonResponse(EmailSendResult(msgId.value, dur, token)))
-      }
       case _ => Full(BadRequestResponse())
     })
 
@@ -120,7 +118,7 @@ object DiagnosticEndpoints extends DI {
         MsgStatus.currentValue match {
           case Full(l) =>
             val id = MsgId(l)
-            taskman().run(QueryMsgStatus(id)).unsafePerformIO() match {
+            Global.taskman.queryMsgStatus(id).unsafePerformIO() match {
               case Some(status) => Full(jsonResponse(MsgStatusResult(id.value, status.toString, status.isArchived)))
               case None         => Full(NotFoundResponse("Msg not found."))
             }
@@ -128,3 +126,4 @@ object DiagnosticEndpoints extends DI {
         }
       )
 }
+*/

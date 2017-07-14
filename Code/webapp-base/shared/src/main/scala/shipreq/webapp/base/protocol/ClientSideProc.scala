@@ -9,6 +9,9 @@ import boopickle.Pickler
   */
 final case class ClientSideProc[Input](objectName: String)(implicit pi: Pickler[Input]) {
   implicit val pickler: Pickler[Input] = pi
+
+  val objectAndMethod: String =
+    s"$objectName.${ClientSideProc.MainMethodName}"
 }
 
 object ClientSideProc {

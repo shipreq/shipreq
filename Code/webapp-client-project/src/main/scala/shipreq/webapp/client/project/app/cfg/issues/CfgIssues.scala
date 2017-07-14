@@ -4,7 +4,7 @@ import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.scalajs.react.extra.StateSnapshot
 import shipreq.webapp.base.data.FilterDead
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.client.base.protocol.ClientProtocol
+import shipreq.webapp.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.cfg.shared.Usage
 import shipreq.webapp.client.project.app.state.ClientData
 

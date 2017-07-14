@@ -1,6 +1,7 @@
 package shipreq.webapp.base.test
 
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.user._
 import shipreq.webapp.base.protocol._
 
 object MockRemotes {

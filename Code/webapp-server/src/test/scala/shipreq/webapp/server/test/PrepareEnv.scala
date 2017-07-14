@@ -1,45 +1,57 @@
 package shipreq.webapp.server.test
 
-import shipreq.webapp.server.app.DI
-import shipreq.webapp.server.logic.User
-import shipreq.webapp.server.security.SecurityProvider
+import bootstrap.liftweb.AppConfig
+import java.time.Duration
+import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.app.Global
+import shipreq.webapp.server.db.DbInterpreter
+import shipreq.base.test.BaseTestUtil.onceUnit
 
 object PrepareEnv {
   private val boot = new bootstrap.liftweb.Boot
 
   private lazy val cfg = {
-    val (appConfig, runMode) = boot.readConfig()
+    var (appConfig, runMode) = boot.readConfig()
     runMode foreach boot.setRunMode
-    println("webapp-server test config:\n" + appConfig.report.reportUsed)
+    appConfig = (AppConfig.server ^|-> ServerConfig.attackFrustrationDelay).set(Duration.ZERO)(appConfig)
+    // println("webapp-server test config:\n" + appConfig.report.reportUsed)
     appConfig
   }
 
-  private def once[A](a: => A): () => Unit = {
-    lazy val o = {a; ()}
-    () => o
+  Global.Instance = Global(
+    config   = cfg.server,
+    db       = null,
+    logic    = null,
+    security = null,
+    taskman  = null)
+
+  def global() = Global.Instance
+
+  val shiro: () => Unit = onceUnit {
+    boot.initShiro()
   }
 
-  val oshiro = once {
-    boot.initServerConfig(cfg.server)
-    boot.initOshiro()
-
-    // Disable SecurityProvider.enforceHumanSpeed()
-    val defaultSecProv = DI.SecurityProvider.default.get.vend
-    DI.SecurityProvider.default.set(new SecurityProvider {
-      def loggedInUser: Option[User] = defaultSecProv.loggedInUser
-      override def enforceHumanSpeed() = ()
-    })
-  }
-
-  val lift = once {
+  val lift: () => Unit = onceUnit {
     // if (!LiftRules.doneBoot) {
-    oshiro()
+    shiro()
     boot.configureLift()
-    boot.preloadTemplates()
   }
 
   def db(): Unit = {
     TestDb.init()
     TestDb.useInLift()
+  }
+
+  val routes: () => Unit = onceUnit {
+    db()
+    boot.initRoutes(global())
+  }
+
+  lazy val dbAlgebra = new DbInterpreter()(global().config)
+
+  lazy val security = {
+    PrepareEnv.shiro()
+    db()
+    global().security
   }
 }

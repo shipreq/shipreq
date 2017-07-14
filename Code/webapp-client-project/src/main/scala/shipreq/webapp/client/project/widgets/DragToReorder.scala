@@ -5,7 +5,7 @@ import japgolly.scalajs.react.vdom.TagMod
 import org.scalajs.dom.raw.DragEffect
 import shipreq.base.util.Memo
 import shipreq.base.util.univeq._
-import shipreq.webapp.client.base.lib.DomUtil._
+import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.client.project.lib.DND
 
 object DragToReorder {

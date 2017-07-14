@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app.root
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.webapp.client.base.ui.semantic.{Icon, Message}
+import shipreq.webapp.base.ui.semantic.{Icon, Message}
 
 object LoadFailedPage {
 

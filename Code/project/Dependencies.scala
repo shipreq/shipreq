@@ -27,7 +27,7 @@ object Dependencies {
   }
 
   object Scalaz {
-    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.13")
+    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.14")
     val core       = mm("scalaz-core")
     val effect     = mm("scalaz-effect") ++ core
     val concurrent = mm("scalaz-concurrent") ++ effect
@@ -79,7 +79,7 @@ object Dependencies {
   }
 
   object React {
-    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "1.0.1")
+    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "1.1.0")
     val core    = mm("core")
     val test    = mm("test")
     val scalaz  = mm("ext-scalaz72") ++ Scalaz.effect
@@ -106,7 +106,7 @@ object Dependencies {
   }
 
   object Lift {
-    private val mm = MultiModule.scala("net.liftweb", "3.0.1")
+    private val mm = MultiModule.scala("net.liftweb", "3.1.0")
     val webkit  = mm("lift-webkit") ++ Scala.all // because it contains lift-json
     val testkit = mm("lift-testkit")
   }
@@ -169,7 +169,6 @@ object Dependencies {
   val commonsLang = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.6")
   val commonsIo   = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.43.0")
-  val scalaTest   = jvmOnly("org.scalatest"              %% "scalatest"             % "3.0.3")
   val scalaCheck  = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.13.5")
 
   val macroParadise = compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)

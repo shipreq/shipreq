@@ -53,10 +53,51 @@ trait BaseTestUtil
     }
   }
 
+  def once[A](a: => A): () => A = {
+    lazy val v = a
+    () => v
+  }
+
+  def onceUnit[A](a: => A): () => Unit =
+    once { a; () }
+
   def assertFields[A](actual: A, expect: A) =
     new BaseTestUtil.FieldAssert(actual, expect)
 
 //  def assertMatch[A](a: A)(pf: PartialFunction[A, Unit]): Unit =
 //    if (!pf.isDefinedAt(a))
 //      fail(s"Wrong shape: $a")
+
+  // TODO Move into microlibs
+  def assertChange[A, B: Equal, R](query: => A, block: => R)(actual: (A, A) => B)(expect: (A, R) => B): R =
+    assertChangeO(None, query, block)(actual)(expect)
+
+  def assertChange[A, B: Equal, R](desc: => String, query: => A, block: => R)(actual: (A, A) => B)(expect: (A, R) => B): R =
+    assertChangeO(Some(desc), query, block)(actual)(expect)
+
+  def assertChangeO[A, B: Equal, R](desc: => Option[String], query: => A, block: => R)(actual: (A, A) => B)(expect: (A, R) => B): R = {
+    val before = query
+    val result = block
+    val after  = query
+    assertEqO(desc, actual(after, before), expect(before, result))
+    result
+  }
+
+  def assertNoChange[B : Equal, A](query: => B)(block: => A): A =
+    assertNoChangeO(None, query)(block)
+
+  def assertNoChange[B : Equal, A](desc: => String, query: => B)(block: => A): A =
+    assertNoChangeO(Some(desc), query)(block)
+
+  def assertNoChangeO[B : Equal, A](desc: => Option[String], query: => B)(block: => A): A =
+    assertChangeO(desc, query, block)((b, _) => b)((b, _) => b)
+
+  def assertDifference[N: Numeric : Equal, A](query: => N)(expect: N)(block: => A): A =
+    assertDifferenceO(None, query)(expect)(block)
+
+  def assertDifference[N: Numeric : Equal, A](desc: => String, query: => N)(expect: N)(block: => A): A =
+    assertDifferenceO(Some(desc), query)(expect)(block)
+
+  def assertDifferenceO[N: Numeric : Equal, A](desc: => Option[String], query: => N)(expect: N)(block: => A): A =
+    assertChangeO(desc, query, block)(implicitly[Numeric[N]].minus)((_, _) => expect)
 }

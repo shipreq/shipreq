@@ -10,8 +10,8 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text._
-import shipreq.webapp.client.base.data._
-import shipreq.webapp.client.base.feature.AsyncFeature
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.feature._

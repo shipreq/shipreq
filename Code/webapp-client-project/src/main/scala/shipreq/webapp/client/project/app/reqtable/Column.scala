@@ -10,7 +10,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data
-import shipreq.webapp.client.base.lib.KeyGen
+import shipreq.webapp.base.lib.KeyGen
 import shipreq.webapp.client.project.feature.{CreateFeature, EditorFeature}
 
 sealed trait Column {

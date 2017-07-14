@@ -6,8 +6,8 @@ import scalaz.{Name, Need}
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.protocol.{ErrorMsg, ServerSideProc}
 import shipreq.webapp.base.validation._
-import shipreq.webapp.client.base.data.TCB
-import shipreq.webapp.client.base.protocol.ClientProtocol
+import shipreq.webapp.base.data.TCB
+import shipreq.webapp.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.state.ClientData
 
 object Persistence {

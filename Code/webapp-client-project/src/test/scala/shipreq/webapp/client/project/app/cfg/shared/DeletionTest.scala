@@ -4,7 +4,7 @@ import japgolly.scalajs.react.{Callback, CallbackTo}
 import japgolly.scalajs.react.ScalazReact._
 import utest._
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.client.base.data.TCB
+import shipreq.webapp.base.data.TCB
 import shipreq.webapp.client.project.test.TestUtil._
 
 object DeletionTest extends TestSuite {

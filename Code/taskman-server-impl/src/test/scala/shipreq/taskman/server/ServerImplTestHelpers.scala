@@ -4,7 +4,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import scalaz.effect.IO
 import shipreq.base.test.db.{SingleConnectionXA, TestDb}
 import shipreq.base.util.Props
-import shipreq.taskman.api.ApiOp
+import shipreq.taskman.api.TaskmanApi
 import shipreq.taskman.server.ServerImplTestHelpers._
 
 trait ServerImplTestHelpers {
@@ -18,12 +18,12 @@ trait ServerImplTestHelpers {
     taskmanConfig,
     cfgSrc)
 
+  lazy val taskmanApi = ctx.taskmanApi
   import ctx._
 
-  def reify[A](op: ApiOp[A]): IO[A] = aopReifier(op)
   def reify[A](op: Sop[A]): IO[A] = sopReifier(op)
 
-  def run[A](op: ApiOp[A]): A = reify(op).unsafePerformIO()
+  def runApi[A](f: TaskmanApi[IO] => IO[A]): A = f(taskmanApi).unsafePerformIO()
   def run[A](op: Sop[A]): A = reify(op).unsafePerformIO()
 }
 

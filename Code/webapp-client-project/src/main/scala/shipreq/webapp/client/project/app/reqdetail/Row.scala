@@ -4,7 +4,7 @@ import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.base.lib.KeyGen
+import shipreq.webapp.base.lib.KeyGen
 
 sealed abstract class Row(_key: String) {
   /** A value that can be passed to React to quickly identify columns. */

@@ -12,7 +12,7 @@ import shipreq.webapp.base.filter.PotentialFilter
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.CustomIssueTypeCrud
 import shipreq.webapp.base.util.TextMod
 import shipreq.webapp.base.UiText.FieldNames
-import shipreq.webapp.client.base.protocol.ClientProtocol
+import shipreq.webapp.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.cfg.shared._
 import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
 import shipreq.webapp.client.project.lib.DataReusability._

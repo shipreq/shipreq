@@ -10,10 +10,9 @@ node[style=filled fillcolor="#99ddff"]
 LandingPage
 
 subgraph cluster_publicTemplate {
-  Login
+  Login [label="Login\nResetPassword"]
   Register
   Register2
-  ResetPassword
   ResetPassword2
   EmailA [label="✉" style=bold fontsize=28 margin=0 color=red]
   EmailB [label="✉" style=bold fontsize=28 margin=0 color=red]
@@ -43,10 +42,10 @@ subgraph cluster_memberTemplate {
 # LINKS
 
 node[style=filled fillcolor=black]
-Header -> LandingPage [style=dashed color="#88ccff"]
+Header -> LandingPage -> Footer [style=dashed color="#88ccff"]
 Start -> LandingPage -> Login
 Register -> EmailA -> Register2 -> Home
-Login -> ResetPassword -> EmailB -> ResetPassword2 # -> Login
+Login -> EmailB -> ResetPassword2 # -> Login
 Login -> Home -> Project
 Logout -> LandingPage
 

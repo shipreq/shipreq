@@ -8,7 +8,7 @@ import japgolly.univeq._
 import scala.scalajs.js
 import scalacss.ScalaCssReact._
 import shipreq.base.util.Intersection
-import shipreq.webapp.client.base.ui.semantic.{Colour, Dropdown, Header, Icon, JQuery, UsesSemanticUiManually}
+import shipreq.webapp.base.ui.semantic.{Colour, Dropdown, Header, Icon, JQuery, UsesSemanticUiManually}
 import shipreq.webapp.client.project.app.Style.{home => *}
 import Routes.{Page, RouterCtl}
 

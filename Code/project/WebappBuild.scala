@@ -28,6 +28,7 @@ object WebappBuild {
     def scalaJsPath(name: String) = Def.setting {
       manifestPath(s"webappClient${name}Js").value
     }
+    def scalaJsPathPublic  = scalaJsPath("Public")
     def scalaJsPathHome    = scalaJsPath("Home")
     def scalaJsPathProject = scalaJsPath("Project")
     def scalaJsPathWw      = scalaJsPath("Ww")
@@ -37,21 +38,16 @@ object WebappBuild {
     project("webapp")
       .configure(Common.jvmSettings)
       .aggregate(
-        webappMacroJvm, webappBaseJvm, webappServerLogicJvm, webappBaseTestJvm, webappGenJvm,
-        webappMacroJs , webappBaseJs , webappServerLogicJs , webappBaseTestJs , webappGenJs ,
-        webappClient, webappServer)
+        webappMacroJvm, webappBaseJvm, webappBaseMemberJvm, webappServerLogicJvm, webappBaseTestJvm, webappGenJvm,
+        webappMacroJs , webappBaseJs , webappBaseMemberJs , webappServerLogicJs , webappBaseTestJs , webappGenJs ,
+        webappClientPublicJvm, webappClientPublicJs,
+        webappClientHome,
+        webappClientWwApi, webappClientWw, webappClientProject,
+        webappServer)
       .settings(
         jsSizesFast := jsSizesTask(Stage.FastOpt).value,
         jsSizesFull := jsSizesTask(Stage.FullOpt).value,
         addCommandAlias("jsSizes", ";jsSizesFast;jsSizesFull"))
-
-  lazy val webappClient =
-    project("webapp-client")
-      .configure(Common.jvmSettings)
-      .aggregate(
-        webappClientBase, webappClientBaseTest,
-        webappClientHome,
-        webappClientWwApi, webappClientWw, webappClientProject)
 
   lazy val webappMacroJvm = webappMacro.jvm
   lazy val webappMacroJs  = webappMacro.js
@@ -76,13 +72,22 @@ object WebappBuild {
     crossProject("webapp-base")
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
-      .depsForBoth(
-        μPickle ++ Monocle.macros ++ shapeless ++ Nyaya.prop ++ parboiled ++ boopickle ++
-        testScope(μTest)) // TODO Move tests into this
       .dependsOn(baseUtil, webappMacro)
       .configureBoth(useMacroParadise)
-      .settings(
-        unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / Frontend.scala)
+      .depsForBoth(Monocle.macros ++ Nyaya.prop ++ boopickle)
+      .depsForJs(React.most ++ scalajsDom)
+      .settings(unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / Frontend.scala)
+
+  lazy val webappBaseMemberJvm = webappBaseMember.jvm
+  lazy val webappBaseMemberJs  = webappBaseMember.js
+  lazy val webappBaseMember =
+    crossProject("webapp-base-member")
+      .configureJvm(Common.jvmSettings)
+      .configureJs(Common.jsSettings(NoTests))
+      .dependsOn(webappBase)
+      .configureBoth(useMacroParadise)
+      .depsForBoth(shapeless ++ parboiled)
+      .depsForJs(ScalaCSS.react)
 
   lazy val webappBaseTestJvm = webappBaseTest.jvm
   lazy val webappBaseTestJs  = webappBaseTest.js
@@ -90,50 +95,44 @@ object WebappBuild {
     crossProject("webapp-base-test")
       .configureBoth(Common.testModuleSettings)
       .configureJvm(Common.jvmSettings)
-      .configureJs(Common.jsSettings(NoDom))
+      .configureJs(Common.jsSettings(NeedDom))
+      .dependsOn(baseTest, webappBaseMember)
       .depsForBoth(μTest ++ Nyaya.test)
-      .dependsOn(baseTest, webappBase)
-
-  lazy val webappClientBase =
-    project("webapp-client-base")
-      .enablePlugins(ScalaJSPlugin)
-      .dependsOn(baseUtilJs, webappBaseJs, webappBaseTestJs % "test")
       .depsForJs(
-        Scalaz.effect ++ React.most ++ Monocle.macros ++ ScalaCSS.react ++ scalajsDom ++
-        μPickle ++ boopickle)
-      .configure(
-        Common.jsSettings(NeedDom),
-        useMacroParadise)
-        // Common.jsFastDevSettings,
+        React.test ++ ScalaCSS.react ++
+        TestState.nyaya ++ TestState.domZipperSizzle ++ TestState.scalajsReact)
 
-  lazy val webappClientBaseTest =
-    project("webapp-client-base-test")
-      .enablePlugins(ScalaJSPlugin)
+  /** Settings for client SPA projects.
+    *
+    * ScalaCss is deliberately missing because it's too heavy for the public SPA.
+    */
+  private lazy val clientSpa: Project => Project =
+    _.enablePlugins(ScalaJSPlugin)
       .configure(Common.jsSettings(NeedDom), useMacroParadise)
-      .dependsOn(webappClientBase, webappServerLogicJs, webappBaseTestJs)
-      .depsForJs(
-        TestState.nyaya ++ TestState.domZipperSizzle ++ TestState.scalajsReact ++
-        React.test ++ μTest ++ Nyaya.test)
+      .dependsOn(webappBaseJs, webappBaseTestJs % "test", webappServerLogicJs % "test")
+      .settings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
+
+  lazy val webappClientPublicJvm = webappClientPublic.jvm
+  lazy val webappClientPublicJs  = webappClientPublic.js
+  lazy val webappClientPublic =
+    crossProject("webapp-client-public")
+      .configureJvm(Common.jvmSettings)
+      .configureJs(Common.jsSettings(NeedDom))
+      .dependsOn(webappBase, webappBaseTest % "test")
+      .configureBoth(useMacroParadise)
+      .jsSettings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
 
   lazy val webappClientHome =
     project("webapp-client-home")
-      .enablePlugins(ScalaJSPlugin)
-      .configure(Common.jsSettings(NeedDom), useMacroParadise)
-      .dependsOn(webappClientBase, webappClientBaseTest % "test")
-      .depsForJs(
-        Scalaz.effect ++ React.most ++ Monocle.macros ++ ScalaCSS.react ++
-        μPickle ++ boopickle ++
-        testScope(
-          TestState.nyaya ++ TestState.domZipperSizzle ++ TestState.scalajsReact ++
-          React.test ++ μTest ++ Nyaya.test))
-      .settings(
-        jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
+      .configure(clientSpa)
+      .dependsOn(webappBaseMemberJs)
+      .depsForJs(ScalaCSS.react)
 
   lazy val webappClientWwApi =
     project("webapp-client-ww-api")
       .enablePlugins(ScalaJSPlugin)
       .configure(Common.jsSettings(NeedDom))
-      .dependsOn(webappBaseJs)
+      .dependsOn(webappBaseMemberJs)
       .depsForJs(
         boopickle ++ scalajsDom ++
         testScope(μTest))
@@ -142,7 +141,7 @@ object WebappBuild {
     project("webapp-client-ww")
       .enablePlugins(ScalaJSPlugin)
       .configure(Common.jsSettings(NeedDom))
-      .dependsOn(webappClientWwApi, webappClientBaseTest % "test")
+      .dependsOn(webappClientWwApi, webappBaseTestJs % "test")
       .depsForJs(
         boopickle ++ scalajsDom ++
         testScope(μTest))
@@ -152,23 +151,15 @@ object WebappBuild {
 
   lazy val webappClientProject =
     project("webapp-client-project")
-      .enablePlugins(ScalaJSPlugin)
-      .configure(Common.jsSettings(NeedDom), useMacroParadise)
-      .dependsOn(webappClientBase, webappClientWwApi, webappClientBaseTest % "test")
-      .depsForJs(
-        Scalaz.effect ++ React.most ++ Monocle.macros ++ ScalaCSS.react ++ scalajsDom ++
-        μPickle ++ boopickle ++ shapeless ++ Nyaya.prop ++ parboiled ++
-        testScope(
-          TestState.nyaya ++ TestState.domZipperSizzle ++ TestState.scalajsReact ++
-          React.test ++ μTest ++ Nyaya.test))
-      .settings(
-        jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
+      .configure(clientSpa)
+      .dependsOn(webappClientWwApi)
+      .depsForJs(ScalaCSS.react ++ scalajsDom ++ μPickle ++ shapeless ++ Nyaya.prop ++ parboiled)
 
   lazy val webappGenJvm = webappGen.jvm
   lazy val webappGenJs  = webappGen.js
   lazy val webappGen =
     crossProject("webapp-gen")
-      .configureJvm(Common.jvmSettings, _.dependsOn(webappBaseJvm)).depsForJvm(Lift.webkit)
+      .configureJvm(Common.jvmSettings, _.dependsOn(webappBaseMemberJvm)).depsForJvm(Lift.webkit)
       .configureJs(
         Common.jsSettings(NeedDom),
         _.dependsOn(webappClientProject)
@@ -181,11 +172,16 @@ object WebappBuild {
   lazy val webappServerLogicJs  = webappServerLogic.js
   lazy val webappServerLogic =
     crossProject("webapp-server-logic")
-      .configureJvm(Common.jvmSettings, _.dependsOn(taskmanApiLogic), useMacroParadise)
-      .configureJs(Common.jsSettings(NoDom))
-      .dependsOn(webappBase)
+      .configureJvm(
+        Common.jvmSettings,
+        _.dependsOn(taskmanApiLogic, webappClientPublicJvm),
+        useMacroParadise)
+      .configureJs(Common.jsSettings(NeedDom)) // TODO NeedDom isn't true but required cos webappBaseTest loads in Sizzle
+      .dependsOn(webappBaseMember)
       .dependsOn(baseTest % "test", webappBaseTest % "test")
       .depsForBoth(testScope(μTest ++ Nyaya.test))
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   lazy val webappServer =
     project("webapp-server").configure(Server.definition)
@@ -214,9 +210,10 @@ object WebappBuild {
               case other =>
                 sys.error("Unsupported virtual file type: " + other)
             }
-          copyScalaJs((scalaJSLinkedFile in Compile in webappClientHome   ).value, Frontend.scalaJsPathHome   .value)
-          copyScalaJs((scalaJSLinkedFile in Compile in webappClientProject).value, Frontend.scalaJsPathProject.value)
-          copyScalaJs((scalaJSLinkedFile in Compile in webappClientWw     ).value, Frontend.scalaJsPathWw     .value)
+          copyScalaJs((scalaJSLinkedFile in Compile in webappClientPublicJs).value, Frontend.scalaJsPathPublic .value)
+          copyScalaJs((scalaJSLinkedFile in Compile in webappClientHome    ).value, Frontend.scalaJsPathHome   .value)
+          copyScalaJs((scalaJSLinkedFile in Compile in webappClientProject ).value, Frontend.scalaJsPathProject.value)
+          copyScalaJs((scalaJSLinkedFile in Compile in webappClientWw      ).value, Frontend.scalaJsPathWw     .value)
 
           // Copy frontend assets
           val assetSrc = baseDirectory.value / Frontend.serve
@@ -231,6 +228,7 @@ object WebappBuild {
       .settings(inConfig(Test)(Seq(
         fork                         := true,
         javaOptions                  += "-Drun.mode=test",
+        javaOptions                  += s"-Dshipreq.assets=${(baseDirectory.value / Frontend.serve).absolutePath}",
         unmanagedResourceDirectories += baseDirectory.value / Frontend.serve,
         unmanagedResourceDirectories += baseDirectory.value / "src/main/webapp",
         parallelExecution            := false) // Due to UserFixture+Oshiro and LiveTest
@@ -286,6 +284,7 @@ object WebappBuild {
           // Prepare exploded WAR
           val tmpWar = prepareTmpDir("war")
           val warTiers = {
+            val scalaJsPathPublic  = Frontend.scalaJsPathPublic .value
             val scalaJsPathHome    = Frontend.scalaJsPathHome   .value
             val scalaJsPathProject = Frontend.scalaJsPathProject.value
             val scalaJsPathWw      = Frontend.scalaJsPathWw     .value
@@ -304,6 +303,7 @@ object WebappBuild {
                 case (p, None)    if p endsWith   ".html"             => (96, false) // -
                 case (p, None)    if p ==          scalaJsPathProject => (88, false) // 3.3M ***
                 case (p, None)    if p ==          scalaJsPathHome    => (86, false) // 840K *
+                case (p, None)    if p ==          scalaJsPathPublic  => (85, false)
                 case (p, None)    if p ==          scalaJsPathWw      => (84, false) // 472K
               //case (p, None)    if p endsWith   ".js"               => (83, false) // 808K *
                 case (_, Some(l)) if l startsWith "webapp-server"     => (76, true)  // 1.1M *
@@ -420,22 +420,25 @@ object WebappBuild {
             (start in Jetty).dependsOn(DockerEnv.dev.devEnvStart).value
         )
 
-    def webappCmdAliases: Project => Project =
+    def webappCmdAliases: Project => Project = {
+      val w = "webapp-server"
       addCommandAliases(
-        "js" -> "webappPrepare",            // compile JavaScript
-        "up" -> ";jetty:stop ;jetty:start", // webapp Up
-        "d"  -> "jetty:stop")               // webapp Down
+        "js" -> s"$w/webappPrepare",               // compile JavaScript
+        "up" -> s";$w/jetty:stop ;$w/jetty:start", // webapp Up
+        "d"  -> s"$w/jetty:stop")                  // webapp Down
+    }
 
     def definition: Project => Project = _
       .enablePlugins(JettyPlugin, WarPlugin, DockerPlugin)
       .dependsOn(baseDb, taskmanApiImpl, webappServerLogicJvm, webappGenJvm)
       .deps(
-        Scalaz.core ++ Lift.webkit ++ Shiro.all ++ commonsLang ++
-        testScope(μTest ++ scalaTest ++ scalaCheck ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
+        Scalaz.core ++ Lift.webkit ++ Shiro.all ++ commonsLang ++ Nyaya.gen ++
+        testScope(μTest ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
         (LibJetty.webapp % "test") ++
         (LibJetty.servletApi % "test,provided"))
       .configure(
         Common.jvmSettings,
+        useMacroParadise,
         webappCmdAliases,
         assetSettings,
         testSettings,
@@ -448,7 +451,7 @@ object WebappBuild {
         fullClasspath in console in Compile += file("src/main/webapp")) // So templates can be loaded from console
   }
 
-  // ===================================================================================================================
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   val jsSizesFast = TaskKey[Unit]("jsSizesFast", "Print JS sizes (using fastOptJS).")
   val jsSizesFull = TaskKey[Unit]("jsSizesFull", "Print JS sizes (using fullOptJS).")
@@ -475,9 +478,10 @@ object WebappBuild {
     println()
     println(header)
     println("=" * header.length)
-    report((moduleName in webappClientHome   ).value, (stageKeys(stage) in Compile in webappClientHome   ).value)
-    report((moduleName in webappClientProject).value, (stageKeys(stage) in Compile in webappClientProject).value)
-    report((moduleName in webappClientWw     ).value, (stageKeys(stage) in Compile in webappClientWw     ).value)
+    report((moduleName in webappClientPublicJs).value, (stageKeys(stage) in Compile in webappClientPublicJs).value)
+    report((moduleName in webappClientHome    ).value, (stageKeys(stage) in Compile in webappClientHome    ).value)
+    report((moduleName in webappClientProject ).value, (stageKeys(stage) in Compile in webappClientProject ).value)
+    report((moduleName in webappClientWw      ).value, (stageKeys(stage) in Compile in webappClientWw      ).value)
     println()
   }
 

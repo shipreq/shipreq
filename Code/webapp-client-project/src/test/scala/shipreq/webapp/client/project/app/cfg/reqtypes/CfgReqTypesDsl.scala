@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.app.cfg.reqtypes
 import japgolly.microlibs.stdlib_ext.ParseInt
 import japgolly.scalajs.react.test.Simulation
 import org.scalajs.dom.html
-import shipreq.webapp.client.base.test.TestState._
+import shipreq.webapp.base.test.TestState._
 
 object CfgReqTypesObs {
 
