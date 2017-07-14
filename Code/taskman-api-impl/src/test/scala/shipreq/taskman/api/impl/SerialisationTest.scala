@@ -5,7 +5,7 @@ import org.specs2.ScalaCheck
 import scalaz.{-\/, \/-}
 import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.taskman.api.TestHelpers._
-import shipreq.taskman.api.{Msg, MsgType}
+import shipreq.taskman.api.{EmailAddr, Msg, MsgType, UserId}
 import Serialisation._
 
 class SerialisationTest extends Specification with ScalaCheck {
@@ -15,6 +15,16 @@ class SerialisationTest extends Specification with ScalaCheck {
   "Serialisation" should {
     "serialise and deserialise back" ! prop{ (m: Msg) =>
       deserialise(MsgType.lookup(m).id, serialise(m)) ==== \/-(m)
+    }
+
+    "serialise Msg.RegistrationCompleted" in {
+      val m = Msg.RegistrationCompleted(UserId(666))
+      serialise(m).value ==== """{"u":666}"""
+    }
+
+    "serialise Msg.ReRegistrationAttempted" in {
+      val m = Msg.ReRegistrationAttempted(EmailAddr("x@x.com"))
+      serialise(m).value ==== """{"e":"x@x.com"}"""
     }
 
     "return an error for unknown task types" in {
