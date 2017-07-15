@@ -4,8 +4,8 @@
 
 const files = { //
   in: 'semantic/dist/semantic.min.css',
-  out: 'shipreq/semantic/pruned.min.css',
-  log: 'shipreq/semantic/pruned.log',
+  out: 'semantic/dist/semantic.pruned.min.css',
+  log: 'semantic/dist/semantic.pruned.log',
   iconsAll: 'shipreq/semantic/icons-all',
   iconsUsed: 'shipreq/semantic/icons-used',
 };
@@ -133,7 +133,7 @@ function run() {
     const p = keep ? logCfg.prefixRetain : logCfg.prefixRemove;
     const l = `${p}${c}${logCfg.reset}`;
     logVar += `${l}\n`;
-    console.log(l);
+    // console.log(l);
   }
 
   const descAtRule = rule => `@${rule.name} ${rule.params}`;

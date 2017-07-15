@@ -117,6 +117,7 @@ e.fn.transition.exists={},e.fn.transition.settings={name:"Transition",silent:!1,
 // This is loaded by webpack
 
 __webpack_require__(322);
+// require('../../semantic/dist/semantic.min.css');
 __webpack_require__(318);
 __webpack_require__(319);
 __webpack_require__(320);
