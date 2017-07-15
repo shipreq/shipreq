@@ -60,6 +60,10 @@ const unusedSizes = [
   'massive',
 ];
 
+const unusedMisc = [
+  'radio',
+];
+
 const unusedTransitions = [
   'scale',
   'fade',
@@ -75,6 +79,10 @@ const unusedTransitions = [
   // 'pulse', -- used in PublicSpa:Login
   'tada',
   'bounce',
+];
+
+const manualRemovals = [
+  s => /\.inverted/.test(s) && !/\.(?:dimmer|segment|menu)/.test(s),
 ];
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -151,12 +159,13 @@ function run() {
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       // Remove rules
 
-      const ruleMatchers = [];
+      const ruleMatchers = [].concat(manualRemovals);
       ruleMatchers.push(anyRegexMatcher(unusedTransitions.map(n => new RegExp(`[" .]${n}(?:[" .]|$)`))));
       ruleMatchers.push(anyRegexMatcher(unusedIcons.map(n => new RegExp(`\\.icon${n.replace('.', '\\.')}(?:[^a-zA-Z]|$)`))));
       ruleMatchers.push(anyRegexMatcher(unusedColours.map(n => new RegExp(`\\.${n}`))));
       ruleMatchers.push(anyRegexMatcher(unusedSizes.map(n => new RegExp(`\\.${n}(?:[^a-zA-Z]|$)`))));
-      const ruleMatcher = s => ruleMatchers.exists(f => f(s));
+      ruleMatchers.push(anyRegexMatcher(unusedMisc.map(n => new RegExp(`(?:^|[^a-zA-Z])${n}(?:[^a-zA-Z]|$)`))));
+      const ruleMatcher = s => !/:not/.test(s) && ruleMatchers.exists(f => f(s));
       css.walkRules(rule => {
         // rule keys : raws,type,nodes,parent,source,selector,lastEach,indexes
         // console.log(Object.keys(rule.parent))
