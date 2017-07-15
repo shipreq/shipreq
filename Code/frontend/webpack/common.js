@@ -63,7 +63,13 @@ const config = ({ mode }) => ({
       },
       {
         test: /.css$/,
-        use: extractCss.extract({ fallback: 'style-loader', use: 'css-loader' }),
+        use: extractCss.extract({
+          use: [
+            { loader: 'css-loader', options: { importLoaders: 1, } },
+            { loader: 'postcss-loader' },
+          ],
+          fallback: 'style-loader',
+        }),
       },
       {
         test: /\.(ico|png|svg|eot|ttf|woff2?)$/,
