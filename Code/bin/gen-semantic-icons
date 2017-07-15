@@ -4,11 +4,24 @@ cd "$(dirname "$(readlink -e "$0")")/.." || exit 1
 # To camel-case
 x='s/^([^!]*)[ _-]([a-z])/$1\u$2/g;'
 
-cat frontend/semantic/src/themes/default/elements/icon.overrides \
-  | grep -e 'i\.icon\.[^ ]*:\(before\|after\)' \
-  | perl -pe 's/:.+//; s/i\.icon\.//; s/\./ /g' \
-  | sort -u \
-  | perl -pe 's/^(.+)$/$1! extends Unmodified("$1")/' \
-  | perl -pe "$x$x$x$x$x"' s/^(.)/\u$1/; s/^(.+)!/case object $1!/' \
-  | column -t -o ' ' -s !
+d=frontend/shipreq/semantic
+t=./webapp-base/js/src/main/scala/shipreq/webapp/base/ui/semantic/Icon.scala
 
+[ ! -e $t ] && echo "File not found: $t" && exit 1
+
+used=$(
+  cat $d/icons-used \
+    | perl -pe 's/\./ /g; s/^ //; s/^(.+)$/"$1"/' \
+    | paste -d'|' -s \
+    | perl -pe 's/\|/\\\|/g'
+  )
+
+cat $d/icons-all \
+  | perl -pe 's/\./ /g; s/^ //; s/^(.+)$/$1! extends Unmodified("$1")/' \
+  | perl -pe "$x$x$x$x$x"' s/^(.)/\u$1/; s/^(.+)!/case object $1!/' \
+  | column -t -o ' ' -s ! \
+  | sed -e "/$used/! s!^!// !" \
+  | sed -e "s!^!  !" \
+ >> $t
+
+echo "Updated: $t"

@@ -1,0 +1,12 @@
+#!/bin/bash
+cd "$(dirname "$(readlink -e "$0")")" || exit 1
+
+f=icons-all
+
+cat ../../semantic/src/themes/default/elements/icon.overrides \
+  | grep -e 'i\.icon\.[^ ]*:\(before\|after\)' \
+  | perl -pe 's/:.+//; s/i\.icon\.//; s/^/./' \
+  | sort -u \
+  > icons-all
+
+wc -l "$(pwd)/$f"

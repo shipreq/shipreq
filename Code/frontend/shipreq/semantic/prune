@@ -6,6 +6,8 @@ const files = { //
   in: 'semantic/dist/semantic.min.css',
   out: 'shipreq/semantic/pruned.min.css',
   log: 'shipreq/semantic/pruned.log',
+  iconsAll: 'shipreq/semantic/icons-all',
+  iconsUsed: 'shipreq/semantic/icons-used',
 };
 
 // const cssByeByeOptions = {
@@ -69,6 +71,14 @@ const files = { //
 //   map: false, // source map
 // };
 
+const fs = require('fs');
+
+const readLines = filename =>
+  fs.readFileSync(filename).toString().split(/\n+/).map(s => s.trim()).filter(s => s != '');
+
+const usedIcons = new Set(readLines(files.iconsUsed));
+const unusedIcons = readLines(files.iconsAll).filter(s => !usedIcons.has(s));
+
 const unusedTransitions = [
   'scale',
   'fade',
@@ -101,14 +111,13 @@ function anyRegexMatcher(regexs) {
   return str => regexs.exists(r => r.test(str));
 }
 
-const fs = require('fs');
 const postcss = require('postcss');
 
 function run() {
 
   const logCfg = { //
     reset: "\033[0m",
-    prefixRemove: "\033[30;1m[remove] \033[31;1m",
+    prefixRemove: "\033[31m[remove] \033[31;1m",
     prefixRetain: "\033[30;1m[keep  ] ",
   };
 
@@ -161,7 +170,9 @@ function run() {
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       // Remove rules
 
-      const ruleMatcher = anyRegexMatcher(unusedTransitions.map(n => new RegExp(`[" .]${n}(?:[" .]|$)`)))
+      const ruleMatcher1 = anyRegexMatcher(unusedTransitions.map(n => new RegExp(`[" .]${n}(?:[" .]|$)`)))
+      const ruleMatcher2 = anyRegexMatcher(unusedIcons.map(n => new RegExp(`\\.icon${n.replace('.', '\\.')}(?:[^a-zA-Z]|$)`)))
+      const ruleMatcher = s => ruleMatcher1(s) || ruleMatcher2(s);
       css.walkRules(rule => {
         // rule keys : raws,type,nodes,parent,source,selector,lastEach,indexes
         // console.log(Object.keys(rule.parent))
