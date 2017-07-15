@@ -178,7 +178,7 @@ function run() {
       const ruleMatchers = [].concat(manualRemovals);
       ruleMatchers.push(anyRegexMatcher([
         new RegExp(`[" .]${regexUnion(unusedTransitions)}(?:[" .]|$)`),
-        new RegExp(`\\.icon${regexUnion(unusedIcons.map(n => n.replace('.', '\\.')))}(?:[^a-zA-Z]|$)`),
+        new RegExp(`\\.icon${regexUnion(unusedIcons.map(n => n.replace('.', '\\.')))}:`),
         new RegExp(`\\.${regexUnion(unusedColours)}`),
         new RegExp(`\\.${regexUnion(unusedSizes)}(?:[^a-zA-Z]|$)`),
         new RegExp(`(?:^|[^a-zA-Z])${regexUnion(unusedMisc)}(?:[^a-zA-Z]|$)`),
