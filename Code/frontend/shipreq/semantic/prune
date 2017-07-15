@@ -1,12 +1,11 @@
 #!/usr/bin/node
 
-const fs = require('fs');
-const postcss = require('postcss');
+// This prunes unnecessary CSS from Semantic UI
 
 const files = { //
   in: 'semantic/dist/semantic.min.css',
-  out: 'shipreq/styles/semantic-ui-pruned.min.css',
-  log: 'shipreq/styles/semantic-ui-pruned.log',
+  out: 'shipreq/semantic/pruned.min.css',
+  log: 'shipreq/semantic/pruned.log',
 };
 
 // const cssByeByeOptions = {
@@ -101,6 +100,9 @@ Array.prototype.forall = function(f) {
 function anyRegexMatcher(regexs) {
   return str => regexs.exists(r => r.test(str));
 }
+
+const fs = require('fs');
+const postcss = require('postcss');
 
 function run() {
 
