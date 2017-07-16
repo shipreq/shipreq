@@ -39,6 +39,17 @@ object UrlTest extends TestSuite {
         "/x/y/"  - test(Relative("/x/y/"), "/x/y")
         "/x/y//" - test(Relative("/x/y//"), "/x/y")
       }
+      '/ {
+        def test(a: String, b: String)(e: String): Unit = {
+          val c = Url.Relative(b)
+          assertEq(Url.Relative(a) / c.relativeUrl, Url.Relative(e))
+          assertEq(Url.Relative(a) / c.relativeUrlNoHeadSlash, Url.Relative(e))
+        }
+        * - test("/", "/")("/")
+        * - test("/a", "/")("/a")
+        * - test("/", "/a")("/a")
+        * - test("/a", "/b")("/a/b")
+      }
     }
 
     'absoluteBase {

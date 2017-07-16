@@ -44,7 +44,7 @@ object DispatchLogicTest extends TestSuite {
       }
 
   def testNeedAuth(url: Url.Relative): Unit =
-    testRun(Response.redirectToLogin, url)
+    testRun(Response.Redirect(s"/login/${url.relativeUrlNoHeadSlash}"), url)
 
   val spaSuffixes: List[String] =
     for {
@@ -58,6 +58,9 @@ object DispatchLogicTest extends TestSuite {
     spaSuffixes.map(s => Url.Relative(spaUrl.relativeUrlNoHeadOrTailSlash + s))
 
   val fallbackResponse = Response.Redirect(Urls.publicHome)
+
+  implicit def autoXID(p: ProjectId): ProjectId.Public =
+    Obfuscators.projectId.obfuscate(p)
 
   override def tests = TestSuite {
 
@@ -73,6 +76,9 @@ object DispatchLogicTest extends TestSuite {
         'loginRedirects - assertUnprotected(testRun(Response.redirectToMemberHome, Login.url))
         'nonLoginRenders - static.whole.filter(_ !=* Login).foreach(p => assertUnprotected(testRun(Response.ServePublicSpa, p.url)))
       }
+
+      'loginToMember - List(Urls.memberHome, Urls.project(ProjectId(1))).foreach(u =>
+        testRun(Response.ServePublicSpa, Url.Relative(s"/login/${u.relativeUrlNoHeadSlash}")))
 
       'resetPassword2 {
         svr.run(PublicSpaLogic[Name, Name].initData.value.resetPassword1)(\/-(user2.emailAddr)).needRight
@@ -106,7 +112,6 @@ object DispatchLogicTest extends TestSuite {
     }
 
     'projectSpa {
-      implicit def autoXID(p: ProjectId): ProjectId.Public = Obfuscators.projectId.obfuscate(p)
       'projectExists {
         def urls = spaUrls(Urls.project(pid))
         'anon     - urls.foreach(testNeedAuth)

@@ -21,6 +21,16 @@ object Url {
 
     def thenParam[A](f: A => String): Relative.Param1[A] =
       new Relative.Param1(new Relative(relativeUrlNoHeadOrTailSlash), f)
+
+    def /(s: String): Relative = {
+      val next = Relative(s)
+      if (this.isRoot)
+        next
+      else if (next.isRoot)
+        this
+      else
+        new Relative(relativeUrlNoHeadSlash + "/" + next.relativeUrlNoHeadSlash)
+    }
   }
 
   object Relative {

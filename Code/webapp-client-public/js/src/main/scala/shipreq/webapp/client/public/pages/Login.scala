@@ -8,7 +8,7 @@ import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import org.scalajs.dom.{html, window}
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.{Allow, Deny, Permission}
+import shipreq.base.util.{Allow, Deny, Permission, Url}
 import shipreq.webapp.base.data.{Disabled, Enabled, TCB}
 import shipreq.webapp.base.{CommmonUiText, Urls}
 import shipreq.webapp.base.feature.AsyncFeature
@@ -20,10 +20,11 @@ import shipreq.webapp.client.public.Styles.{login => *}
 
 object Login {
 
-  final case class Props(state        : StateSnapshot[State],
-                         asyncW       : AsyncFeature.Write.D0[String],
-                         attemptLogin : ServerSideProcInvoker[Request, Permission],
-                         resetPassword: ServerSideProcInvoker[Username \/ EmailAddr, Unit]) {
+  final case class Props(state          : StateSnapshot[State],
+                         asyncW         : AsyncFeature.Write.D0[String],
+                         attemptLogin   : ServerSideProcInvoker[Request, Permission],
+                         resetPassword  : ServerSideProcInvoker[Username \/ EmailAddr, Unit],
+                         redirectOnLogin: Option[Url.Relative]) {
 
     val formEnabled: Enabled =
       Disabled when AsyncFeature.isInProgress(state.value.async)
@@ -143,7 +144,8 @@ object Login {
       )
 
     private def onLoginSuccess: TCB.Success =
-      TCB Success Callback(window.location.href = Urls.memberHome.relativeUrl)
+      TCB.Success($.props.map(p =>
+        window.location.href = p.redirectOnLogin.getOrElse(Urls.memberHome).relativeUrl))
 
     private def onLoginFailure(user: Username \/ EmailAddr): Callback =
       setError("Login failed", s"Invalid ${CommmonUiText.usernameOrEmail(user.isLeft).toLowerCase} or password.")

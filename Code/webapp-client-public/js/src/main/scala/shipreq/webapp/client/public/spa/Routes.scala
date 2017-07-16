@@ -3,6 +3,7 @@ package shipreq.webapp.client.public.spa
 import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.extra.router.{RouterCtl => _, _}
 import japgolly.scalajs.react.vdom.Implicits._
+import shipreq.base.util.Url
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.Urls.PublicSpaRoute
@@ -11,14 +12,13 @@ import shipreq.webapp.base.data.SecurityToken
 import shipreq.webapp.base.lib.BaseReusability._
 
 sealed trait Page {
-  val route: PublicSpaRoute
-  val linkTitle: String
   val pageTitle: List[String]
 }
+
 object Page {
 
   final case class Static(route: PublicSpaRoute.Static) extends Page {
-    override val linkTitle: String =
+    val linkTitle: String =
       route match {
         case PublicSpaRoute.Home           => "Home"
         case PublicSpaRoute.Login          => "Login"
@@ -35,14 +35,16 @@ object Page {
   }
 
   final case class Token(route: PublicSpaRoute.NeedsToken, token: SecurityToken) extends Page {
-    override val linkTitle: String =
-      route match {
-        case PublicSpaRoute.Register2     => "Register"
-        case PublicSpaRoute.ResetPassword => "Reset Password"
-      }
-
     override val pageTitle: List[String] =
-      linkTitle :: Nil
+      route match {
+        case PublicSpaRoute.Register2     => "Register"       :: Nil
+        case PublicSpaRoute.ResetPassword => "Reset Password" :: Nil
+      }
+  }
+
+  final case class LoginFrom(url: Url.Relative) extends Page {
+    override val pageTitle: List[String] =
+      "Login" :: Nil
   }
 
   implicit def equality: UnivEq[Page] = UnivEq.derive
@@ -69,20 +71,30 @@ object Routes {
 
       val userIsLoggedIn = spa.initData.loggedInUser.isDefined
 
+      val loginFrom = {
+        val route: StaticDsl.Route[Page.LoginFrom] =
+          (Page.Login.route.url.relativeUrl / remainingPath)
+            .xmap(Url.Relative(_))(_.relativeUrlNoHeadSlash)
+            .xmap(Page.LoginFrom)(_.url)
+        val action: Page.LoginFrom => Action = p =>
+          if (userIsLoggedIn)
+            redirectToPath(p.url.relativeUrl)(Redirect.Force)
+          else
+            renderR(render(p, _))
+        dynamicRouteCT(route) ~> action
+      }
+
       val staticRoutes =
         Page.static.map { p =>
           val url = p.route.url
-
           val route: StaticDsl.Route[Unit] =
             if (url.isRoot) dsl.root else url.relativeUrl
-
           // This logic is mirrored in DispatchLogic
           val action: Action =
             if (userIsLoggedIn && p.route ==* PublicSpaRoute.Login)
               redirectToPath(Urls.memberHome.relativeUrl)(Redirect.Force)
             else
               renderR(render(p, _))
-
           staticRoute(route, p) ~> action
         }.reduce(_ | _)
 
@@ -94,11 +106,12 @@ object Routes {
           } ~> dynRenderR(render(_, _))
         }.reduce(_ | _)
 
-      (removeQuery | removeTrailingSlashes | staticRoutes | tokenRoutes)
+      (removeQuery | removeTrailingSlashes | loginFrom | staticRoutes | tokenRoutes)
         .notFound(redirectToPage(Page.Home)(Redirect.Replace))
         .setTitle(p => WebappConfig.makePageTitle(p.pageTitle: _*))
         .verify(
-          Page.static.head, Page.static.tail ++
+          Page.LoginFrom(Url.Relative("/blah")),
+          Page.static.whole ++
             PublicSpaRoute.needsToken.whole.map(Page.Token(_, SecurityToken("abcd"))): _*)
     }
 }

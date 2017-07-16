@@ -86,7 +86,6 @@ Phase 2 (dev)
 * Restore AdminStats
 * Restore DiagnosticEndpoints
 * Remove SessionStats
-* On auth fail, redirect back after login
 
 ### New Features
 * User profile page

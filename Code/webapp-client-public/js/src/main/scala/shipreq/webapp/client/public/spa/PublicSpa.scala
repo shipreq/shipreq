@@ -5,6 +5,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.MonocleReact._
 import monocle.macros.Lenses
+import shipreq.base.util.Url
 import shipreq.webapp.base.Urls.PublicSpaRoute
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol._
@@ -51,6 +52,11 @@ final class PublicSpa(val initData: P.InitData, cp: ClientProtocol) {
 
     def render(p: Props, s: State): VdomElement = {
 
+      def loginPage(redirectOnLogin: Option[Url.Relative]): VdomElement = {
+        val ss = StateSnapshot.zoomL(State.login)(s).setStateVia($)
+        Login.Props(ss, awLogin, sspLogin, sspResetPassword1, redirectOnLogin).render
+      }
+
       val content: VdomElement =
         p.page match {
 
@@ -59,8 +65,10 @@ final class PublicSpa(val initData: P.InitData, cp: ClientProtocol) {
             LandingPage.Props(ss, awLandingPage, sspLandingPage).render
 
           case Page.Static(PublicSpaRoute.Login) =>
-            val ss = StateSnapshot.zoomL(State.login)(s).setStateVia($)
-            Login.Props(ss, awLogin, sspLogin, sspResetPassword1).render
+            loginPage(None)
+
+          case Page.LoginFrom(url) =>
+            loginPage(Some(url))
 
           case Page.Token(PublicSpaRoute.ResetPassword, token) =>
             ResetPassword.Props(token, sspResetPassword2).render

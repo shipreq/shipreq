@@ -43,7 +43,6 @@ object DispatchLogic {
 
     val redirectToPublicHome = Redirect(Urls.publicHome)
     val redirectToMemberHome = Redirect(Urls.memberHome)
-    val redirectToLogin      = Redirect(Urls.login)
   }
 
   @inline private[this] def isSepChar(c: Char): Boolean =
@@ -123,17 +122,13 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
   private type FR = F[Response]
 
   private val fRedirectToPublicHome: FR = F pure redirectToPublicHome
-  private val fRedirectToLogin     : FR = F pure redirectToLogin
   private val fMethodNotAllowed    : FR = F pure MethodNotAllowed
-
-  private def onMethod(m: Method, resp: FR): Request => FR =
-    req => if (req.method eq m) resp else fMethodNotAllowed
 
   private def onMethod(m: Method)(f: Request => FR): Request => FR =
     req => if (req.method eq m) f(req) else fMethodNotAllowed
 
-  private def onGet(resp: FR)        : Request => FR = onMethod(Get, resp)
-  //private def onGet(f: Request => FR): Request => FR = onMethod(Get)(f)
+  private def onGet(f: Request => FR): Request => FR =
+    onMethod(Get)(f)
 
   // Occasional type inference problem
   @inline private def when(cond: Request => Boolean)(ok: Request => FR): Route = FnWithFallback.when(cond)(ok)
@@ -150,21 +145,24 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
     when(r => lookup(norm(r.path)))
   }
 
-  private def needAuth(f: User => Response): FR =
-    security.authenticatedUser.map(_.fold[Response](redirectToLogin)(f))
+  private def onAuthFail(req: Request): Response =
+    Redirect(Urls.login / req.path.relativeUrlNoHeadSlash)
 
-  private def needAuthF(f: User => FR): FR =
-    security.authenticatedUser.flatMap(_.fold(fRedirectToLogin)(f))
+  private def needAuth(f: User => Response): Request => FR =
+    req => security.authenticatedUser.map(_.fold(onAuthFail(req))(f))
+
+  private def needAuthF(f: User => FR): Request => FR =
+    req => security.authenticatedUser.flatMap(_.fold(F pure onAuthFail(req))(f))
 
   private def get(url: Url.Relative, resp: FR): Route =
-    whenUrlIs(url)(onGet(resp))
+    whenUrlIs(url)(onGet(_ => resp))
 
-  private def spa(root: Url.Relative): FR => Route =
-    fr => when(spaTest(root))(onGet(fr))
+  private def spa(root: Url.Relative)(f: Request => FR): Route =
+    when(spaTest(root))(onGet(f))
 
   private def spaWithObfuscatedParam[A](url       : Url.Relative.Param1[Obfuscated[A]])
                                        (obfuscator: Obfuscator[A])
-                                       (response  : String \/ A => FR): Route =
+                                       (response  : String \/ A => Request => FR): Route =
     extractFlip(spaTest1(url))(param =>
       onGet(response(obfuscator.deobfuscate(Obfuscated(param)))))
 
@@ -176,13 +174,14 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
 
     // This logic is mirrored in .public.spa.Routes
     val login: Route =
-      whenUrlIs(R.Login.url)(onGet(
+      spa(R.Login.url)(_ =>
         security.isAuthenticated.map(a =>
-          if (a) redirectToMemberHome else ServePublicSpa)))
+          if (a) redirectToMemberHome else ServePublicSpa))
 
-    val staticRoutes: Route =
-      whenUrlIsAnyOf(R.static.filterNot(_ ==* R.Login).get.map(_.url).toNES)(onGet(
-        F pure ServePublicSpa))
+    val staticRoutes: Route = {
+      val fr: FR = F pure ServePublicSpa
+      whenUrlIsAnyOf(R.static.filterNot(_ ==* R.Login).get.map(_.url).toNES)(onGet(_ => fr))
+    }
 
     val securityTokenFn: R.NeedsToken => SecurityToken => F[SecurityToken.Status] = {
       case R.Register2     => PublicSpaLogic.tokenStatusFn(db.getUserRegistrationTokenIssueDate, config.confirmationTokenLifespan)
@@ -199,7 +198,7 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
       R.needsToken.map { r =>
         val getTokenStatus = securityTokenFn(r)
         def respond(t: SecurityToken): FR = security.protect(getTokenStatus(t).map(onSecurityTokenStatus))
-        extractFlip(spaTest1(r.url))(t => onGet(respond(SecurityToken(t))))
+        extractFlip(spaTest1(r.url))(t => onGet(_ => respond(SecurityToken(t))))
       }.reduce(_ | _)
 
     login | staticRoutes | securityTokenRoutes
@@ -219,7 +218,7 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
             case None                     => ProjectSpa.InvalidId
           }
         )
-      case -\/(_) => F pure ProjectSpa.InvalidId
+      case -\/(_) => _ => F pure ProjectSpa.InvalidId
     }
 
   val logout: Route =
@@ -230,7 +229,7 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
     publicSpa | memberHomeSpa | projectSpa | logout
 
   val fallback: Request => F[Response] =
-    onGet(fRedirectToPublicHome)
+    onGet(_ => fRedirectToPublicHome)
 
   def cacheUsualPaths(f: Request => F[Response]): Request => F[Response] = {
     // Caching ignores params - beware
@@ -268,7 +267,7 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
       get(quickDevUrl,
         security.attemptLogin(q.user, q.pass).map {
           case Some(_) => Redirect(q.goto)
-          case None    => redirectToLogin
+          case None    => Redirect(Urls.login)
         }
       )
     )
