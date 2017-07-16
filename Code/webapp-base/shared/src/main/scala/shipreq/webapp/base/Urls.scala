@@ -35,10 +35,29 @@ object Urls {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  sealed abstract class MemberRoute[-A]
+  object MemberRoute {
+
+    sealed abstract class Static(val url: Url.Relative) extends MemberRoute[Any]
+
+    sealed abstract class Param1[-A](val url: Url.Relative.Param1[A]) extends MemberRoute[A] {
+      @inline final def prefix = url.prefix
+    }
+
+    case object Home    extends Static(Url.Relative("/home"))
+    case object Logout  extends Static(Url.Relative("/logout"))
+    case object Project extends Param1(Url.Relative("/project").thenParam[ProjectId.Public](_.value))
+
+    implicit def univEqStatic: UnivEq[Static] = UnivEq.derive
+    val static = AdtMacros.adtValues[Static]
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   def publicHome     = PublicSpaRoute.Home.url
   def login          = PublicSpaRoute.Login.url
   def termsOfService = PublicSpaRoute.TermsOfService.url
-  val memberHome     = Url.Relative("/home")
-  val project        = Url.Relative("/project").thenParam[ProjectId.Public](_.value)
-  val logout         = Url.Relative("/logout")
+  def memberHome     = MemberRoute.Home.url
+  def project        = MemberRoute.Project.url
+  def logout         = MemberRoute.Logout.url
 }

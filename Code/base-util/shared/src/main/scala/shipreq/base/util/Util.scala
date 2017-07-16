@@ -205,11 +205,19 @@ object Util {
     }
   }
 
-  // Haven't benchmarked this
-  def quickStringLookup(strings: Set[String]): String => Boolean = {
+  def quickStringExists(strings: Set[String]): String => Boolean = {
     val maxLen = strings.foldLeft(0)(_ max _.length)
     val byLen = Array.fill(maxLen + 1)(Set.empty[String])
     strings.foreach(s => byLen(s.length) = byLen(s.length) + s)
     s => (s.length <= maxLen) && byLen(s.length).contains(s)
+  }
+
+  // Improved a larger benchmark by 8.6%
+  def quickStringLookup[A](map: Map[String, A]): String => Option[A] = {
+    val strings = map.keySet
+    val maxLen = strings.foldLeft(0)(_ max _.length)
+    val byLen = Array.fill(maxLen + 1)(Map.empty[String, A])
+    strings.foreach(s => byLen(s.length) = byLen(s.length).updated(s, map(s)))
+    s => if (s.length <= maxLen) byLen(s.length).get(s) else None
   }
 }

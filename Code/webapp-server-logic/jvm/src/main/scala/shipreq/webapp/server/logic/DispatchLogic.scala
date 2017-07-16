@@ -146,7 +146,7 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
   private def whenUrlIsAnyOf(urls: NonEmptySet[Url.Relative]): (Request => FR) => Route = {
     import Url.dropTailSlashes
     val norm: Url.Relative => String = u => dropTailSlashes(u.underlying)
-    val lookup = Util.quickStringLookup(urls.whole.map(norm))
+    val lookup = Util.quickStringExists(urls.whole.map(norm))
     when(r => lookup(norm(r.path)))
   }
 
@@ -231,6 +231,15 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
 
   val fallback: Request => F[Response] =
     onGet(fRedirectToPublicHome)
+
+  def cacheUsualPaths(f: Request => F[Response]): Request => F[Response] = {
+    // Caching ignores params - beware
+    val noParams: String => Option[String] = _ => None
+    val urls = Urls.PublicSpaRoute.static.map(_.url) ++ Urls.MemberRoute.static.map(_.url)
+    val cacheMap = urls.iterator.map(u => u.underlying -> f(Request(Get, u, noParams))).toMap
+    val cache = Util.quickStringLookup(cacheMap)
+    req => cache(req.path.underlying) getOrElse f(req)
+  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

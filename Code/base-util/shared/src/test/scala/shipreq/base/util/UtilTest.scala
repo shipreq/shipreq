@@ -9,11 +9,11 @@ object UtilTest extends TestSuite {
 
   override def tests = TestSuite {
 
-    'quickStringLookup {
+    'quickStringExists {
       val x = "x"
       val p: Prop[Set[String]] =
-        Prop.test("quickStringLookup", ss => {
-          val f = Util.quickStringLookup(ss)
+        Prop.test("quickStringExists", ss => {
+          val f = Util.quickStringExists(ss)
           (ss + "" + "123").toList
             .flatMap(s => s.drop(1) :: (s + x) :: (x + s + x) :: s :: Nil)
             .forall(s => {
@@ -22,6 +22,20 @@ object UtilTest extends TestSuite {
             })
         })
       Gen.string(0 to 8).set.mustSatisfy(p)
+    }
+
+    'quickStringLookup {
+      val x = "x"
+      val p: Prop[Map[String, Int]] =
+        Prop.test("quickStringLookup", m => {
+          val f = Util.quickStringLookup(m)
+          (m.keySet + "" + "123").toList
+            .flatMap(s => s.drop(1) :: (s + x) :: (x + s + x) :: s :: Nil)
+            .forall(s => {
+              m.get(s) == f(s)
+            })
+        })
+      Gen.string(0 to 8).mapTo(Gen.int).mustSatisfy(p)
     }
 
   }

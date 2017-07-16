@@ -48,10 +48,12 @@ final class LiftDispatcher(global: Global) {
   }
 
   private val dispatcher: DispatchLogic.Request => Fx[DispatchLogic.Response] =
-    ( logic.main
-    | Option.when(Props.testMode)(logic.loginApi)
-    | Option.when(Props.devMode)(logic.quickDev).flatten
-    ).withFallback(logic.fallback)
+    logic.cacheUsualPaths(
+      ( logic.main
+      | Option.when(Props.testMode)(logic.loginApi)
+      | Option.when(Props.devMode)(logic.quickDev).flatten
+      ).withFallback(logic.fallback)
+    )
 
   private val paramFn: String => Option[String] =
     S.param(_).toOption
