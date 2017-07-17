@@ -1,0 +1,58 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title Projects | ShipReq
+    %script{src: "node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.min.js"}
+    :css
+      body {padding:1rem}
+
+      .ui.header {margin-bottom:0; margin-right:1em}
+      .inline-edit1:hover {cursor:pointer; outline:dotted 2px #FFA622; background: #fff4e3 !important}
+
+      .projNameText {width:42ex}
+      .projNameText:focus {border-color: #68ca7c !important;}
+      .xprojNameText:focus {border-color: #aaa !important;}
+
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+
+      .item
+        .ui.breadcrumb
+          .section Projects
+
+      .right.menu
+        .item
+          @japgolly
+
+        .item.ui.dropdown.simple
+          @japgolly
+          -# %i.dropdown.icon
+          .menu
+            %a.item{href: "member-member-account.haml.html"} Account
+            .item Logout
+
+    .ui.container{style: "margin-top:6rem"}
+
+      %div(style="margin-bottom:3em")
+        .ui.action.input
+          %input.projNameText(type="text" placeholder="New project name" autofocus="1")
+          %button.ui.button.green Create Project
+          -# %button.ui.button.green.disabled Create
+
+      .ui.icon.message.blue
+        %i.icon.info.circle
+        .content
+          .header Welcome to ShipReq!
+          %p
+            The first thing you'll want to do is create a project to contain all of your requirements.
+            <br>
+            Create a new project using the button above.
+
+  :javascript
+    $('.ui.dropdown').dropdown();
