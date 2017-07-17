@@ -7,7 +7,6 @@ import doobie.japgolly.DoobieHack
 import javax.sql.DataSource
 import scalaz.Scalaz._
 import scalaz._
-import scalaz.effect.IO
 import shipreq.base.db.DbAccess.AbstractTransactor
 import shipreq.base.util.ErrorOr
 import shipreq.base.util.FxModule._
@@ -37,7 +36,6 @@ final case class DbAccess(cfg               : DbConfig,
   def desc: String =
     s"$host/$databaseName" + schema.map(":" + _).getOrElse("")
 
-  val io = abstractTransactor[IO]
   val fx = abstractTransactor[Fx]
 
   def verifyConnectivity(): Unit = {

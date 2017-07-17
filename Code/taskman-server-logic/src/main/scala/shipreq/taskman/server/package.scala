@@ -2,9 +2,9 @@ package shipreq.taskman
 
 import java.time.{Duration, Instant}
 import scalaz.{\/-, ~>}
-import scalaz.effect.{MonadIO, IO}
 import shipreq.base.util.ErrorTag
-import shipreq.base.util.effect.IOE
+import shipreq.base.util.FxModule._
+import shipreq.base.util.effect.FxE
 import shipreq.taskman.api.{MsgId, Msg, Priority}
 
 package object server {
@@ -45,13 +45,12 @@ package object server {
    */
   case object Deliberate extends ErrorTag
 
-  type SopReifier = Sop ~> IO
+  type SopReifier = Sop ~> Fx
 
   implicit class OpExt[F[_], A](val op: F[A]) extends AnyVal {
-    def toIO(implicit opToIo: F ~> IO): IO[A] = opToIo(op)
-    def toIOE(implicit opToIo: F ~> IOE): IOE[A] = opToIo(op)
-    def liftIOM[M[_]](implicit opToIo: F ~> IO, m: MonadIO[M]): M[A] = toIO.liftIO[M]
-    def liftIOE(implicit opToIo: F ~> IO): IOE[A] = toIO.map(\/-(_))
+    def toFx(implicit opToIo: F ~> Fx): Fx[A] = opToIo(op)
+    def toFxE(implicit opToIo: F ~> FxE): FxE[A] = opToIo(op)
+    def liftFxE(implicit opToIo: F ~> Fx): FxE[A] = toFx.map(\/-(_))
   }
 
   implicit def MsgDetailToMsg(m: MsgDetail): Msg = m.msg

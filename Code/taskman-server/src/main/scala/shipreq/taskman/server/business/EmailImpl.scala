@@ -4,12 +4,12 @@ import japgolly.microlibs.config.{Config, ConfigParser}
 import javax.mail._
 import javax.mail.internet.{InternetAddress, MimeMessage}
 import scalaz.{-\/, Traverse, \/-}
-import scalaz.effect.IO
 import scalaz.old.NonEmptyList
 import scalaz.std.list._
 import scalaz.syntax.bind._
 import shipreq.base.util.ErrorOr
-import shipreq.base.util.effect.IOE
+import shipreq.base.util.FxModule._
+import shipreq.base.util.effect._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.EmailAddr
 import shipreq.taskman.server.Deterministic
@@ -97,7 +97,7 @@ final class EmailImpl(val mailSession: Session) extends HasLogger {
     r.join
   }
 
-  def send(op: SendEmail): IOE[Unit] = IO(
+  def send(op: SendEmail): FxE[Unit] = Fx(
     buildEmail(op.e, op.c).map(m => {
       Transport.send(m)
       log.info.z(s"Email sent: ${op.e.to.head} [${op.c.subject}]")

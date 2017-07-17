@@ -11,9 +11,9 @@ import org.apache.http.util.EntityUtils
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import scalaz.{\/, -\/, \/-}
-import scalaz.effect.IO
+import shipreq.base.util.FxModule._
 import shipreq.base.util.{Error, ErrorOr}
-import shipreq.base.util.effect.IOE
+import shipreq.base.util.effect._
 import shipreq.base.util.log.Logger
 import shipreq.base.util.ScalaExt.BaseUtilExtAny
 import ErrorOr.Implicits._
@@ -34,7 +34,7 @@ object Http {
   }
 
   def httpLoggers(log: Logger#AtLevel) = {
-    val p = log.printer[IO]
+    val p = log.printer[Fx]
     def s(prefix: String, str: String) = if (str.isEmpty) "" else prefix + str
     val logRequest  = (r: Req)    => p(s"HTTP request: ${r.e.method.value} ${r.e.url}${s(" ~ ", r.bodyS)}")
     val logResponse = (r: String) => p(s"HTTP response: $r")
@@ -47,12 +47,12 @@ object Http {
   val contentTypeJson = s"application/json;charset=${defaultCharset.name}"
 
   def parseIntoJson(str: String): ErrorOr[JValue] = ErrorOr.safe(parse(str))
-  def parseIntoJsonI(str: String): IOE[JValue]    = IO(parseIntoJson(str))
+  def parseIntoJsonI(str: String): FxE[JValue]    = Fx(parseIntoJson(str))
 
   // ---------------------------------------------------------------------------
   // Request
 
-  def sendRequest(httpClient: OkHttpClient)(req: Req): IOE[HttpURLConnection] = {
+  def sendRequest(httpClient: OkHttpClient)(req: Req): FxE[HttpURLConnection] = {
     val io = openConn(httpClient, req.e)
     if (req.bodyS.isEmpty)
       io
@@ -60,10 +60,10 @@ object Http {
       io >==>^ writeRequestBody(req.bodyB)
   }
 
-  def sendRequestL(httpClient: OkHttpClient, log: Req => IO[Unit])(req: Req): IOE[HttpURLConnection] =
+  def sendRequestL(httpClient: OkHttpClient, log: Req => Fx[Unit])(req: Req): FxE[HttpURLConnection] =
     sendRequest(httpClient)(req) <<^ log(req)
 
-  def openConn(httpClient: OkHttpClient, e: Endpoint): IOE[HttpURLConnection] = IOE {
+  def openConn(httpClient: OkHttpClient, e: Endpoint): FxE[HttpURLConnection] = FxE {
     val conn = httpClient.open(e.url)
     conn.setRequestProperty("Content-Type", contentTypeJson)
     conn.setRequestMethod(e.method.value)
@@ -71,14 +71,14 @@ object Http {
     conn
   }
 
-  def writeRequestBody(body: Array[Byte])(conn: HttpURLConnection): IOE[Unit] =
-    IO(ErrorOr.withResource(conn.getOutputStream)(_.close)(_ write body))
+  def writeRequestBody(body: Array[Byte])(conn: HttpURLConnection): FxE[Unit] =
+    Fx(ErrorOr.withResource(conn.getOutputStream)(_.close)(_ write body))
 
   // ---------------------------------------------------------------------------
   // Response
 
-  def recv(f: HttpURLConnection => InputStream): HttpURLConnection => IOE[String] = conn =>
-    IO(ErrorOr.withResource(f(conn))(_.close){ in =>
+  def recv(f: HttpURLConnection => InputStream): HttpURLConnection => FxE[String] = conn =>
+    Fx(ErrorOr.withResource(f(conn))(_.close){ in =>
       val entity: HttpEntity = new InputStreamEntity(in)
       val charset = Option(ContentType get entity).fold(defaultCharset)(_.getCharset)
       val bytes = EntityUtils.toByteArray(entity)
@@ -89,12 +89,12 @@ object Http {
 
   val recvResponseError = recv(_.getErrorStream)
 
-  def getResponseCode(conn: HttpURLConnection): IOE[Int] =
-    IOE(conn.getResponseCode)
+  def getResponseCode(conn: HttpURLConnection): FxE[Int] =
+    FxE(conn.getResponseCode)
 
-  def recvResponseG[R](ko: HttpURLConnection => String => IOE[R])
-                      (log: String => IO[Unit], ok: JValue => ErrorOr[R])
-                      (conn: HttpURLConnection): IOE[R] =
+  def recvResponseG[R](ko: HttpURLConnection => String => FxE[R])
+                      (log: String => Fx[Unit], ok: JValue => ErrorOr[R])
+                      (conn: HttpURLConnection): FxE[R] =
     getResponseCode(conn) >==> (code =>
       if (code == HttpURLConnection.HTTP_OK)
         recvResponseInput(conn) <-<^ log >=> (parseIntoJson(_) >=> ok)
@@ -112,10 +112,10 @@ object Http {
 
   case class ErrParser[E](parse: JValue => ErrorOr[E], mkError: E => Error)
 
-  def handleErrorResponse[R, E](ep: ErrParser[E], mkResult: E => Option[R], fallback: String => IO[Error])(resp: String): IOE[R] =
+  def handleErrorResponse[R, E](ep: ErrParser[E], mkResult: E => Option[R], fallback: String => Fx[Error])(resp: String): FxE[R] =
     parseIntoJson(resp) >==> parseErrorJson(ep, mkResult) match {
-      case \/-(-\/(e)) => IO(ep.mkError(e).toErrorOr)
-      case \/-(\/-(r)) => IOE.pure(r)
+      case \/-(-\/(e)) => Fx(ep.mkError(e).toErrorOr)
+      case \/-(\/-(r)) => FxE.pure(r)
       case -\/(_)      => fallback(resp).map(_.toErrorOr)
     }
 
@@ -128,9 +128,9 @@ object Http {
       case None    => -\/(e)
     }
 
-  def genericHttpError(c: HttpURLConnection)(resp: String): IO[Error] =
-    IO(Error(s"Unexpected HTTP response: ${c.getResponseCode} ${c.getResponseMessage}. Response: $resp"))
+  def genericHttpError(c: HttpURLConnection)(resp: String): Fx[Error] =
+    Fx(Error(s"Unexpected HTTP response: ${c.getResponseCode} ${c.getResponseMessage}. Response: $resp"))
 
-  def genericHttpErrorN[N](c: HttpURLConnection)(resp: String): IOE[N] =
+  def genericHttpErrorN[N](c: HttpURLConnection)(resp: String): FxE[N] =
     genericHttpError(c)(resp).map(_.toErrorOr)
 }

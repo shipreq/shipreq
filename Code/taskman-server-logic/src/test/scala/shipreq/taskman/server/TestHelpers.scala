@@ -6,9 +6,9 @@ import org.scalacheck.Arbitrary._
 import scala.reflect.ClassTag
 import scalaz.Lens.lensg
 import scalaz.{Endo, Heap, NonEmptyList, Order}
-import scalaz.effect.IO
 import shipreq.base.util.{Error, ErrorOr}
-import shipreq.base.util.effect.IOE
+import shipreq.base.util.FxModule._
+import shipreq.base.util.effect._
 import shipreq.base.test.{MockOpTransformer, MockOpTransformerA, OpTypeProvider}
 import shipreq.taskman.api.{EmailAddr, MsgId, Priority, UserId}
 import shipreq.taskman.api.Msg.{LandingPageHit, ReRegistrationAttempted}
@@ -84,7 +84,7 @@ object TestHelpers {
   val crashOnSendEmail     = endoMod[MockBops](_.sendEmail << ErrorOr.error("CRASH!"))
   val crashOnReportFailure = endoMod[MockBops](_.supReportFailure << ErrorOr.error("CRASH!"))
 
-  val clockReal = IO(Instant.now)
+  val clockReal = Fx.now
 
   val fpRetry: FailurePolicy =
     f => FailureResponse(UpdateMsgAbort(f.n, f.w, f.m), Nil)
@@ -95,7 +95,7 @@ object TestHelpers {
   val fpAbort: FailurePolicy =
     f => FailureResponse(UpdateMsgRetry(f.n, f.w, f.m, Duration ofDays 1), Nil)
 
-  def mpNop[F[_]]: MsgProcessor[F] = _ => IOE(ProcessorResult.Complete)
+  def mpNop[F[_]]: MsgProcessor[F] = _ => FxE(ProcessorResult.Complete)
   def mpCrash[F[_]]: MsgProcessor[F] = _ => ???
 
   def arbMap[B, A](f: A => B)(implicit a: Arbitrary[A]): Arbitrary[B] =
@@ -150,7 +150,7 @@ object SopTypeTags extends OpTypeProvider[Sop] {
   }
 }
 
-class MockSops extends MockOpTransformerA[Sop, IO] {
+class MockSops extends MockOpTransformerA[Sop, Fx] {
   override def opTypeProvider = SopTypeTags
 
   val cfgGetR                    = MockResponse(Option[String](null))
@@ -197,7 +197,7 @@ object BopTypeTags extends OpTypeProvider[Bop] {
   }
 }
 
-class MockBops extends MockOpTransformer[Bop, IOE] {
+class MockBops extends MockOpTransformer[Bop, FxE] {
   override def opTypeProvider = BopTypeTags
 
   val sendEmail            = MockResponse(ErrorOr.unit)
@@ -211,18 +211,18 @@ class MockBops extends MockOpTransformer[Bop, IOE] {
   val supReportFailure     = MockResponse(ErrorOr(TicketId(200)))
 
   override def trans[A] = {
-    case _: SendEmail                     => IO(sendEmail.pop())
-    case _: FindShipReqUser               => IOE(findShipReqUser.pop())
-    case _: FindShipReqUsers              => IOE(findShipReqUsers.pop())
-    case MailingListOp(_: GetListId)      => IOE(mlGetListId.pop())
-    case MailingListOp(_: Subscribe)      => IOE(mlSubscribe.pop())
-    case MailingListOp(_: UpdateMember)   => IOE(mlUpdateMember.pop())
-    case MailingListOp(_: BatchSubscribe) => IO(mlBatchSubscribe.pop())
+    case _: SendEmail                     => Fx(sendEmail.pop())
+    case _: FindShipReqUser               => FxE(findShipReqUser.pop())
+    case _: FindShipReqUsers              => FxE(findShipReqUsers.pop())
+    case MailingListOp(_: GetListId)      => FxE(mlGetListId.pop())
+    case MailingListOp(_: Subscribe)      => FxE(mlSubscribe.pop())
+    case MailingListOp(_: UpdateMember)   => FxE(mlUpdateMember.pop())
+    case MailingListOp(_: BatchSubscribe) => Fx(mlBatchSubscribe.pop())
     case SupportOp(o) => o match {
-      case _: NotifyLandingPage           => IOE(supNotifyLandingPage.pop())
-      case _: ReportFailure               => IO(supReportFailure.pop())
+      case _: NotifyLandingPage           => FxE(supNotifyLandingPage.pop())
+      case _: ReportFailure               => Fx(supReportFailure.pop())
     }
-//    case SupportOp(_: NotifyLandingPage)  => IOE(supNotifyLandingPage.pop())
-//    case SupportOp(_: ReportFailure)      => IO(supReportFailure.pop())
+//    case SupportOp(_: NotifyLandingPage)  => FxE(supNotifyLandingPage.pop())
+//    case SupportOp(_: ReportFailure)      => Fx(supReportFailure.pop())
   }
 }

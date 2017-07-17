@@ -5,8 +5,8 @@ import java.time.{Clock, Duration, Instant}
 import org.specs2.mutable.Specification
 import scala.reflect.ClassTag
 import scalaz.{-\/, Endo, Need, \/, \/-}
-import scalaz.effect.IO
-import shipreq.base.util.effect.IOE
+import shipreq.base.util.FxModule._
+import shipreq.base.util.effect._
 import shipreq.base.test.specs2.BaseMatchers._
 import shipreq.taskman.server.business.Bop
 import shipreq.taskman.server.business.Bop.{SendEmail, SupportOp}
@@ -25,9 +25,9 @@ class WorkerTest extends Specification {
   val wid = WorkerId(7)
   val tp = AssignmentTrustPeriod(Duration ofMinutes 3)
 
-  def everIncClock(d: Duration, start: Instant = Clock.systemUTC().instant()): IO[Instant] = {
+  def everIncClock(d: Duration, start: Instant = Clock.systemUTC().instant()): Fx[Instant] = {
     var prev: Option[Instant] = None
-    IO {
+    Fx {
       val r = prev map (_ plus d) getOrElse start
       prev = Some(r)
       r
@@ -51,7 +51,7 @@ class WorkerTest extends Specification {
     def test(sopEndo: Endo[MockSops], fp: FailurePolicy, mp: MsgProcessor[Need]) = {
       val mockSop = sopEndo(new MockSops)
       val w = new Worker(mp)(nid, wid, mockSop, tp, clockReal, fp)
-      val r: R = w.process(mh_1).unsafePerformIO()
+      val r: R = w.process(mh_1).unsafeRun()
       (r, mockSop)
     }
 
@@ -96,18 +96,18 @@ class WorkerTest extends Specification {
 
   "Worker processing msgs asynchronously" >> {
 
-    def blah(io: IOE[Unit]
-             , clock: IO[Instant] = clockReal
+    def blah(io: FxE[Unit]
+             , clock: Fx[Instant] = clockReal
              , sopEndo: Endo[MockSops] = assignWorkerAllow
               ) = {
-      val need = new AsyncScheduler[Need] { def apply[A](io: IO[A]) = IOE(Need(io.unsafePerformIO())) }
+      val need = new AsyncScheduler[Need] { def apply[A](io: Fx[A]) = FxE(Need(io.unsafeRun())) }
       val P: ProcessorResult[Need] = ProcessorResult.Complete
       val S = ProcessorResult.Schedule(need, io |>-> P)
-      val mp: MsgProcessor[Need] = _ => IOE(S)
+      val mp: MsgProcessor[Need] = _ => FxE(S)
       def run = {
         val mockSop = sopEndo(new MockSops)
         val w = new Worker(mp)(nid, wid, mockSop, tp, clock, fpRetry)
-        val r: R = w.process(mh_1).unsafePerformIO()
+        val r: R = w.process(mh_1).unsafeRun()
         (r, mockSop)
       }
       def runFuture(r1: R) = r1.asInstanceOf[Scheduled[Need]].f.value
@@ -117,7 +117,7 @@ class WorkerTest extends Specification {
     def longClock = everIncClock(tp.value plusSeconds 1)
 
     "Work completes" >> {
-      val ((r1, s1), (r2, s2)) = blah(IOE.nop)
+      val ((r1, s1), (r2, s2)) = blah(FxE.nop)
       "Immediate result"             in (r1 must haveResultA)
       "Assigns msg before future"    in (s1 must haveRun[Sop].op[GetMsgAssignWorker])
       "Future result"                in (r2 must haveResultS[Completed])
@@ -125,7 +125,7 @@ class WorkerTest extends Specification {
     }
 
     "Future crashes" >> {
-      val ((r1, s1), (r2, s2)) = blah(IOE(???))
+      val ((r1, s1), (r2, s2)) = blah(FxE(???))
       "Immediate result"           in (r1 must haveResultA)
       "Assigns msg before future"  in (s1 must haveRun[Sop].op[GetMsgAssignWorker])
       "Future result"              in (r2 must haveResultS[WorkerFailed])
@@ -133,7 +133,7 @@ class WorkerTest extends Specification {
     }
 
     "Reassigns and completes" >> {
-      val ((r1, s1), (r2, s2)) = blah(IOE.nop, clock = longClock)
+      val ((r1, s1), (r2, s2)) = blah(FxE.nop, clock = longClock)
       "Immediate result"             in (r1 must haveResultA)
       "Assigns msg before future"    in (s1 must haveRun[Sop].op[GetMsgAssignWorker])
       "Future result"                in (r2 must haveResultS[Completed])
@@ -141,7 +141,7 @@ class WorkerTest extends Specification {
     }
 
     "Future fails to reassign worker" >> {
-      val ((r1, s1), (r2, s2)) = blah(IOE.nop, clock = longClock, sopEndo = assignWorkerAllow compose reassignWorkerDeny)
+      val ((r1, s1), (r2, s2)) = blah(FxE.nop, clock = longClock, sopEndo = assignWorkerAllow compose reassignWorkerDeny)
       "Immediate result"                             in (r1 must haveResultA)
       "Assigns msg before future"                    in (s1 must haveRun[Sop].op[GetMsgAssignWorker])
       "Future result"                                in (r2 must haveResultS[CouldntReAssign])
@@ -149,7 +149,7 @@ class WorkerTest extends Specification {
     }
 
     "Future encounters taskman error" >> {
-      val ((r1, s1), (r2, s2)) = blah(IOE.nop, clock = longClock, sopEndo = assignWorkerAllow compose reassignWorkerCrash)
+      val ((r1, s1), (r2, s2)) = blah(FxE.nop, clock = longClock, sopEndo = assignWorkerAllow compose reassignWorkerCrash)
       "Immediate result"          in (r1 must haveResultA)
       "Assigns msg before future" in (s1 must haveRun[Sop].op[GetMsgAssignWorker])
       "Future result"             in (r2 must haveResultS[TaskmanFailed])
@@ -163,7 +163,7 @@ class WorkerTest extends Specification {
   "Worker.FailureHandler" >> {
     "handleFailedWorker" should {
       def test(bop: MockBops, archive: Boolean) = {
-        new FailureHandler(mockEmails(archive), bop).handleFailedWorker(sampleNotifySupportWorkerFailed).unsafePerformIO()
+        new FailureHandler(mockEmails(archive), bop).handleFailedWorker(sampleNotifySupportWorkerFailed).unsafeRun()
         bop
       }
 
@@ -185,7 +185,7 @@ class WorkerTest extends Specification {
 
     "handleFailedTaskman" should {
       def test(bop: MockBops, archive: Boolean) = {
-        new FailureHandler(mockEmails(archive), bop).handleFailedTaskman(sampleNotifySupportTaskmanError).unsafePerformIO()
+        new FailureHandler(mockEmails(archive), bop).handleFailedTaskman(sampleNotifySupportTaskmanError).unsafeRun()
         bop
       }
 

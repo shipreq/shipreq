@@ -1,8 +1,8 @@
 package shipreq.base.util
 
 import java.util.concurrent.locks.Lock
-import scalaz.effect.IO
 import scalaz.syntax.bind.ToBindOps
+import FxModule._
 
 object LockUtils {
 
@@ -13,14 +13,6 @@ object LockUtils {
 
   def maybeInMutex[A](mutex: Option[Lock])(a: => A): A =
     mutex.fold(a)(inMutex(_)(a))
-
-  def inMutexIO[A](lock: Lock)(io: IO[A]): IO[A] =
-    IO(lock.lockInterruptibly()) >> io.ensuring(IO(lock.unlock()))
-
-  def maybeInMutexIO[A](mutex: Option[Lock])(io: IO[A]): IO[A] =
-    mutex.fold(io)(inMutexIO(_)(io))
-
-  import shipreq.base.util.FxModule._
 
   def inMutexFx[A](lock: Lock)(fx: Fx[A]): Fx[A] =
     Fx(lock.lockInterruptibly()) >> fx.ensuring(Fx(lock.unlock()))

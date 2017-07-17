@@ -5,11 +5,10 @@ import japgolly.microlibs.config.{Sources => ConfigSources}
 import java.time.{Clock, Duration, Instant}
 import java.util.concurrent.{ExecutorService, TimeUnit}
 import scalaz.-\/
-import scalaz.effect.IO
 import shipreq.base.db.DbAccess
 import shipreq.base.util.FxModule._
 import shipreq.base.util._
-import shipreq.base.util.effect.IOE
+import shipreq.base.util.effect.FxE
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.UserId
 import shipreq.taskman.api.impl.TaskmanApiImpl
@@ -33,8 +32,8 @@ final class TaskmanCtx(val dbAccess: DbAccess, val config: TaskmanConfig, emailT
     def each(f: ExecutorService => Unit): Unit = f(emailS)
   }
 
-  private def runPrerequisite_![A](io: IOE[A]): A =
-    ErrorOr.require_!(io.unsafePerformIO())
+  private def runPrerequisite_![A](io: FxE[A]): A =
+    ErrorOr.require_!(io.unsafeRun())
 
   private val (emailTokens, emailTokensReport) =
     TaskmanConfig.mailTokens
@@ -49,7 +48,7 @@ final class TaskmanCtx(val dbAccess: DbAccess, val config: TaskmanConfig, emailT
 
   log.info(emailTokensReport.report)
 
-  private def getMailChimpListId(name: String): IOE[MailingList.ListId] =
+  private def getMailChimpListId(name: String): FxE[MailingList.ListId] =
     mailchimp.run(GetListId(name)) >=> (ErrorOr.fromOptionS(_, s"Mailing list not found: $name"))
 
   val email      = new EmailImpl(config.mail.sessionFn())
@@ -65,17 +64,17 @@ final class TaskmanCtx(val dbAccess: DbAccess, val config: TaskmanConfig, emailT
 
   implicit def trustPeriod   = config.taskman.trustPeriod
   implicit val taskmanApi    = TaskmanApiImpl(TaskmanApiImpl.Context(None), dbAccess.fx.trans)
-  implicit val bopReifier    = new BopImpl(dbAccess.io, email, mailchimp, freshdesk, config.shipreq.schema)
-  implicit val sopReifier    = new SopImpl(dbAccess.io, new Worker.FailureHandler(emails, bopReifier))
+  implicit val bopReifier    = new BopImpl(dbAccess.fx, email, mailchimp, freshdesk, config.shipreq.schema)
+  implicit val sopReifier    = new SopImpl(dbAccess.fx, new Worker.FailureHandler(emails, bopReifier))
   implicit val msgProcessor  = new BusinessLogic(bopReifier, emails, async.email, mailingListId)
   implicit val failurePolicy = Failure.failurePolicy
-  implicit val clock         = IO(clockClock.instant())
-  implicit val nodeId        = sopReifier.getNextNodeId.unsafePerformIO()
+  implicit val clock         = Fx(clockClock.instant())
+  implicit val nodeId        = sopReifier.getNextNodeId.unsafeRun()
 
   def testConnections(): Unit = {
     log debug "Testing connections..."
     val io = bopReifier.applyUntimed(Bop.FindShipReqUser(-\/(UserId(1))))
-    ErrorOr require_! io.unsafePerformIO()
+    ErrorOr require_! io.unsafeRun()
   }
 
   def shutdown: Fx[Unit] =

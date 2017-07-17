@@ -1,14 +1,15 @@
 package shipreq.taskman.server.business
 
 import doobie.imports._
+import java.time.Duration
 import scalaz.{-\/, \/-}
-import scalaz.effect.IO
 import shipreq.base.util.ErrorOr
-import shipreq.base.util.effect.{IOE, IoUtils}
+import shipreq.base.util.FxModule._
+import shipreq.base.util.effect._
 import shipreq.base.util.log.HasLogger
 import Bop._
 
-final class BopImpl(db: Transactor[IO],
+final class BopImpl(db: Transactor[Fx],
                     emailer: EmailImpl,
                     mailchimp: MailChimp,
                     freshDesk: FreshDesk,
@@ -16,25 +17,25 @@ final class BopImpl(db: Transactor[IO],
 
   private[this] val sri = new ShipReqInterface(shipreqSchema)
 
-  private[this] def dbio[A](q: ConnectionIO[A]): IOE[A] =
+  private[this] def dbio[A](q: ConnectionIO[A]): FxE[A] =
     db.trans(q).map(\/-(_))
 
-  override def apply[A](op: Bop[A]): IOE[A] = applyTimed(op)
+  override def apply[A](op: Bop[A]): FxE[A] = applyTimed(op)
 
-  def applyTimed[A](op: Bop[A]): IOE[A] =
-    IoUtils.time_(applyUntimed(op))(logCompletion(op))
+  def applyTimed[A](op: Bop[A]): FxE[A] =
+    for {
+      x <- applyUntimed(op).measureDuration
+      (r, dur) = x
+      _ <- logCompletion(op, r, dur)
+    } yield r
 
-  def logCompletion[A](op: Bop[A]): ErrorOr[A] => Long => IO[Unit] =
-    res => time => IO(
-      res match {
-          case \/-(_) =>
-            log.info.z(s"${simpleName(op)} completed in ${time}ms.")
-          case -\/(e) =>
-            log.error.z(s"${simpleName(op)} failed after ${time}ms with [${e.msg}]. Op: $op")
-        }
-      )
+  def logCompletion[A](op: Bop[A], res: ErrorOr[A], dur: Duration): Fx[Unit] =
+    Fx(res match {
+      case \/-(_) => log.info.z(s"${simpleName(op)} completed in ${dur.toMillis}ms.")
+      case -\/(e) => log.error.z(s"${simpleName(op)} failed after ${dur.toMillis}ms with [${e.msg}]. Op: $op")
+    })
 
-  def applyUntimed[A](op: Bop[A]): IOE[A] =
+  def applyUntimed[A](op: Bop[A]): FxE[A] =
     ErrorOr.catchExceptionM(op match {
       case s: SendEmail              => emailer.send(s)
       case MailingListOp(op)         => mailchimp.run(op)

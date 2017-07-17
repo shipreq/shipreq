@@ -51,12 +51,21 @@ object FxModule {
     @inline def unsafeRun(): A =
       fx.go(_())
 
-    def measureDuration: Fx[(Duration, A)] =
+    def tap[B](f: A => Fx[B]): Fx[A] =
+      for {
+        a <- fx
+        _ <- f(a)
+      } yield a
+
+    def unsafeTap[B](f: A => B): Fx[A] =
+      tap(a => Fx(f(a)))
+
+    def measureDuration: Fx[(A, Duration)] =
       for {
         start <- Fx.now
         a     <- fx
         end   <- Fx.now
-      } yield (Duration.between(start, end), a)
+      } yield (a, Duration.between(start, end))
 
     /**
       * @param inspect Inspect the result for failure/success

@@ -1,7 +1,7 @@
 package shipreq.taskman.server
 
 import org.slf4j.{MDC => SMDC}
-import scalaz.effect.IO
+import shipreq.base.util.FxModule._
 import shipreq.base.util.log.MDC
 
 object TaskmanLogging {
@@ -12,8 +12,8 @@ object TaskmanLogging {
 
   type MdcValues = String
 
-  val readMdc: IO[MdcValues] = IO(SMDC get whoKey)
+  val readMdc: Fx[MdcValues] = Fx(SMDC get whoKey)
 
-  def writeMdc(who: MdcValues): IO[Unit] = IO(SMDC.put(whoKey, who))
+  def writeMdc(who: MdcValues): Fx[Unit] = Fx(SMDC.put(whoKey, who))
 }
 

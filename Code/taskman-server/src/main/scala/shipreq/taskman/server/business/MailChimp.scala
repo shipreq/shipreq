@@ -7,9 +7,9 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 import scalaz.old.NonEmptyList
 import scalaz.syntax.bind._
-import shipreq.base.util.effect.IOE
-import shipreq.base.util.effect.IoUtils.IoExt
+import shipreq.base.util.FxModule._
 import shipreq.base.util.{Error, ErrorOr}
+import shipreq.base.util.effect._
 import shipreq.base.util.ScalaExt.BaseUtilExtAny
 import shipreq.base.util.log.{LogLevel, HasLogger}
 import shipreq.taskman.api.EmailAddr
@@ -178,8 +178,8 @@ final class MailChimp(httpClient: OkHttpClient, props: Props) extends HasLogger 
   private val requestBuilder =
     buildRequest(e => j => new Req(e(endpoints), apikeyJson merge j))
 
-  def run[A](api: API[A]): IOE[A] =
-    send(api) >==> recv(api) <| logResult
+  def run[A](api: API[A]): FxE[A] =
+    send(api) >==> recv(api) tap logResult
 
   @inline private def send[A](api: API[A]) =
     requestBuilder(api) |> sendRequestL(httpClient, logRequest)

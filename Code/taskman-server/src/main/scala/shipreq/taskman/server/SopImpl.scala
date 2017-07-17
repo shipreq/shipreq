@@ -4,14 +4,12 @@ import doobie.imports._
 import japgolly.microlibs.config
 import java.time.Duration
 import scalaz.\/-
-import scalaz.effect.IO
 import scalaz.std.option.optionInstance
 import scalaz.syntax.catchable._
 import scalaz.syntax.traverse._
 import shipreq.base.db.DbAccess
 import shipreq.base.util.ErrorOr
 import shipreq.base.util.FxModule._
-import shipreq.base.util.effect.IoUtils
 import shipreq.taskman.api.{Msg, MsgId, Priority}
 import shipreq.taskman.api.impl.Serialisation
 import shipreq.base.util.TaggedTypes.JsonStr
@@ -193,13 +191,13 @@ object SopImpl {
 
 // =====================================================================================================================
 
-final class SopImpl[EA](db: Transactor[IO], fh: Worker.FailureHandler) extends SopReifier {
+final class SopImpl[EA](db: Transactor[Fx], fh: Worker.FailureHandler) extends SopReifier {
   import Sop._
   import SopImpl._
 
   def getNextNodeId = db trans Dao.getNextNodeId
 
-  override def apply[A](op: Sop[A]): IO[A] = op match {
+  override def apply[A](op: Sop[A]): Fx[A] = op match {
 
     case GetMsgsAssignNode(node, limit, trustPeriod, queued) =>
       db trans Dao.getMsgsAssignNode(node, limit, trustPeriod, queued)
@@ -229,6 +227,6 @@ final class SopImpl[EA](db: Transactor[IO], fh: Worker.FailureHandler) extends S
       fh handleFailedTaskman op
 
     case Nop =>
-      IoUtils.nop
+      Fx.unit
   }
 }

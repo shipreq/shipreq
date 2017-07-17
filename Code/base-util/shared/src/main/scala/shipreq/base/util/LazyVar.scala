@@ -1,6 +1,6 @@
 package shipreq.base.util
 
-import scalaz.effect.IO
+import FxModule._
 
 /**
   * Lazy variable.
@@ -15,27 +15,27 @@ final class LazyVar[A](thunk: () => A) {
   def initialised: Boolean =
     thunkRef eq null
 
-  def get: IO[A] =
-    IO {
+  def get: Fx[A] =
+    Fx {
       if (!initialised)
-        set(thunkRef()).unsafePerformIO()
+        set(thunkRef()).unsafeRun()
       value
     }
 
-  def set(a: A): IO[Unit] =
-    IO {
+  def set(a: A): Fx[Unit] =
+    Fx {
       thunkRef = null
       value = a
     }
 
-  def mod(f: A => A): IO[Unit] =
+  def mod(f: A => A): Fx[Unit] =
     for {
       a1 <- get
       a2 = f(a1)
       _ <- set(a2)
     } yield ()
 
-  def modIO(f: A => IO[A]): IO[Unit] =
+  def modFx(f: A => Fx[A]): Fx[Unit] =
     for {
       a1 <- get
       a2 <- f(a1)
@@ -47,6 +47,6 @@ object LazyVar {
   def apply[A](a: => A): LazyVar[A] =
     new LazyVar(() => a)
 
-  def io[A](a: => IO[A]): LazyVar[A] =
-    apply(a.unsafePerformIO())
+  def io[A](a: => Fx[A]): LazyVar[A] =
+    apply(a.unsafeRun())
 }

@@ -9,9 +9,9 @@ import org.json4s.JsonDSL._
 import scalaz.std.list.listInstance
 import scalaz.syntax.traverse._
 import scalaz.syntax.bind._
-import shipreq.base.util.effect.IOE
-import shipreq.base.util.effect.IoUtils.IoExt
 import shipreq.base.util.ErrorOr
+import shipreq.base.util.FxModule._
+import shipreq.base.util.effect._
 import shipreq.base.util.log.{HasLogger, LogLevel}
 import ErrorOr.Implicits._
 import Http._
@@ -140,7 +140,7 @@ class FreshDesk0(httpClient: OkHttpClient, props: Props) extends HasLogger {
   /**
    * Turns this into a full instance that can interpret `Support.API` ops.
    */
-  def upgrade: IOE[FreshDesk] = {
+  def upgrade: FxE[FreshDesk] = {
     val orgs = List(props.failure, props.landingPage)
 
     def a = parseRespGetGroups(orgs.map(_.groupName)) _
@@ -155,8 +155,8 @@ class FreshDesk0(httpClient: OkHttpClient, props: Props) extends HasLogger {
     run(getGroupsReq(endpoints), parse)
   }
 
-  protected final def run[A](r: Req, p: JValue => ErrorOr[A]): IOE[A] =
-    sendRequestL(httpClient, logRequest)(r) >==> recvResponse[A](logResponse, p) <| logResult
+  protected final def run[A](r: Req, p: JValue => ErrorOr[A]): FxE[A] =
+    sendRequestL(httpClient, logRequest)(r) >==> recvResponse[A](logResponse, p) tap logResult
 }
 
 /**
@@ -175,6 +175,6 @@ class FreshDesk(httpClient: OkHttpClient, props: Props, val propsI: PropsI) exte
       createTicketReq(NewTicket(props.taskmanEmail, subject, desc, priority, propsI.failure))
   }
 
-  def run[A](api: API[A]): IOE[A] =
+  def run[A](api: API[A]): FxE[A] =
     run(buildRequest(api), parseResponse(api))
 }

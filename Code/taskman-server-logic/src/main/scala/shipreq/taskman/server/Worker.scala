@@ -1,16 +1,16 @@
 package shipreq.taskman.server
 
-import java.time.Instant
+import java.time.{Duration, Instant}
 import scalaz.{-\/, \/, \/-, ~>}
-import scalaz.effect.IO
 import scalaz.std.list.listInstance
 import scalaz.syntax.bind._
 import scalaz.syntax.foldable._
-import shipreq.base.util.{ErrorOr, Error}
-import shipreq.base.util.effect.{IoUtils, IOE}
+import shipreq.base.util.FxModule._
+import shipreq.base.util.{Error, ErrorOr}
+import shipreq.base.util.effect._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.{Priority => MsgPriority}
-import shipreq.taskman.server.business.{Email, Support, BopReifier, Emails}
+import shipreq.taskman.server.business.{BopReifier, Email, Emails, Support}
 import shipreq.taskman.server.business.Bop.SupportOp
 import ErrorOr.Implicits.MonadExt
 import Sop._
@@ -19,9 +19,9 @@ object Worker extends HasLogger {
 
   type MsgProcessor[F[_]] = MsgDetail => MsgProcessorOut[F]
 
-  type MsgProcessorOut[F[_]] = IOE[ProcessorResult[F]]
+  type MsgProcessorOut[F[_]] = FxE[ProcessorResult[F]]
 
-  type AsyncScheduler[F[_]] = IO ~> ({type λ[α] = IOE[F[α]]})#λ
+  type AsyncScheduler[F[_]] = Fx ~> ({type λ[α] = FxE[F[α]]})#λ
 
   /** Legal responses from a MsgProcessor to a Worker when told to process a msg. */
   sealed trait ProcessorResult[+F[_]]
@@ -32,7 +32,7 @@ object Worker extends HasLogger {
     case object Complete extends ProcessorResult[Nothing]
 
     /** Schedule for async processing. */
-    case class Schedule[F[_]](s: AsyncScheduler[F], w: IOE[ProcessorResult[F]]) extends ProcessorResult[F]
+    case class Schedule[F[_]](s: AsyncScheduler[F], w: FxE[ProcessorResult[F]]) extends ProcessorResult[F]
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -58,22 +58,22 @@ object Worker extends HasLogger {
 
   final class FailureHandler(emails: Emails, bopReifier: BopReifier) {
 
-    def raise(c: Email.Content, p: Support.Priority): IOE[Unit] = {
+    def raise(c: Email.Content, p: Support.Priority): FxE[Unit] = {
       val io1 = bopReifier(SupportOp(Support.API.ReportFailure(c.subject, c.body, p)))
-      val io2 = emails.archive(c).fold(IOE.nop)(bopReifier.apply)
+      val io2 = emails.archive(c).fold(FxE.nop)(bopReifier.apply)
       io1 execMap io2
     }
 
-    def run(catchIo: Error => IO[Unit])(f: => IOE[Unit]): IO[Unit] =
+    def run(catchIo: Error => Fx[Unit])(f: => FxE[Unit]): Fx[Unit] =
       try
-        IOE.safeExec(catchIo)(f)
+        FxE.safeExec(catchIo)(f)
       catch {
         case t: Throwable => catchIo(Error(t))
       }
 
-    def handleFailedWorker(f: NotifySupportWorkerFailed): IO[Unit] = {
-      val catchIo: Error => IO[Unit] =
-        e2 => IO(
+    def handleFailedWorker(f: NotifySupportWorkerFailed): Fx[Unit] = {
+      val catchIo: Error => Fx[Unit] =
+        e2 => Fx(
           log.error(s"""FAILED TO NOTIFY SUPPORT OF FAILED WORKER.
                 Notification error: ${e2.stackTraceStr}
                 Worker error: ${f.e.stackTraceStr}
@@ -84,9 +84,9 @@ object Worker extends HasLogger {
       )
     }
 
-    def handleFailedTaskman(f: NotifySupportTaskmanError): IO[Unit] = {
-      val catchIo: Error => IO[Unit] =
-        e2 => IO(
+    def handleFailedTaskman(f: NotifySupportTaskmanError): Fx[Unit] = {
+      val catchIo: Error => Fx[Unit] =
+        e2 => Fx(
           log.error(s"""FAILED TO NOTIFY SUPPORT OF TASKMAN FAILURE. FUCK.
               Notification error: ${e2.stackTraceStr}
               Original error: ${f.e.stackTraceStr}
@@ -132,69 +132,76 @@ final class Worker[F[_]](msgProcessor: MsgProcessor[F])(
              worker: WorkerId,
              sopToIo: SopReifier,
              trustPeriod: AssignmentTrustPeriod,
-             clock: IO[Instant],
+             clock: Fx[Instant],
              failurePolicy: FailurePolicy
     ) extends HasLogger {
 
-  def process(m: MsgHeader): IO[WorkResult[F]] =
-    IoUtils.time_(catchTaskmanErrorsN(assign(m)))(logWorkResult)
+  def process(m: MsgHeader): Fx[WorkResult[F]] =
+    logWorkResult(catchTaskmanErrorsN(assign(m)))
 
-  private[this] def catchExecErrorsIOE[A]: IOE[A] => IOE[A] =
-    _.except(IOE error _)
+  private[this] def catchExecErrorsFxE[A]: FxE[A] => FxE[A] =
+    _.except(FxE error _)
 
-  private[this] def catchTaskmanErrorsG[T](m: => Option[MsgDetail], ef: TaskmanFailed => IO[T]): IO[T] => IO[T] =
+  private[this] def catchTaskmanErrorsG[T](m: => Option[MsgDetail], ef: TaskmanFailed => Fx[T]): Fx[T] => Fx[T] =
     _.except(t => {
       val e = Error(t)
       val notifySupport = clock >>= (t => sopToIo(NotifySupportTaskmanError(t, e, m)))
       notifySupport >> ef(TaskmanFailed(e, m))
     })
 
-  private[this] def catchTaskmanErrors(m: => Option[MsgDetail]) = catchTaskmanErrorsG[WorkResult[F]](m, f => IO(f))
+  private[this] def catchTaskmanErrors(m: => Option[MsgDetail]) = catchTaskmanErrorsG[WorkResult[F]](m, f => Fx(f))
   private[this] val catchTaskmanErrorsN = catchTaskmanErrors(None)
 
-  private[this] def assign(mh: MsgHeader): IO[WorkResult[F]] =
-    GetMsgAssignWorker(node, worker, mh).toIO >>= {
+  private[this] def assign(mh: MsgHeader): Fx[WorkResult[F]] =
+    GetMsgAssignWorker(node, worker, mh).toFx >>= {
       case Some(m) => catchTaskmanErrors(Some(m))(logWorkStart(m) >> clock >>= performWork(m))
-      case None    => IO(CouldntAssign(mh))
+      case None    => Fx(CouldntAssign(mh))
     }
 
-  private[this] def logWorkStart(md: MsgDetail): IO[Unit] =
-    IO(log.debug.z(s"Starting work: $md"))
+  private[this] def logWorkStart(md: MsgDetail): Fx[Unit] =
+    Fx(log.debug.z(s"Starting work: $md"))
 
-  private[this] def performWork(m: MsgDetail)(assignedSince: Instant): IO[WorkResult[F]] = {
+  private[this] def performWork(m: MsgDetail)(assignedSince: Instant): Fx[WorkResult[F]] = {
     val io: MsgProcessorOut[F] =
-      try catchExecErrorsIOE(msgProcessor(m)) catch {case t: Throwable => IOE error t}
+      try catchExecErrorsFxE(msgProcessor(m)) catch {case t: Throwable => FxE error t}
     io flatMap taskEnd(m, assignedSince)
   }
 
-  private[this] def taskEnd(m: MsgDetail, assignedSince: Instant): ErrorOr[ProcessorResult[F]] => IO[WorkResult[F]] = {
+  private[this] def taskEnd(m: MsgDetail, assignedSince: Instant): ErrorOr[ProcessorResult[F]] => Fx[WorkResult[F]] = {
     case \/-(ProcessorResult.Complete) =>
-      UpdateMsgSuccess(node, worker, m).toIO >> IO(Completed(m))
+      UpdateMsgSuccess(node, worker, m).toFx >> Fx(Completed(m))
 
     case \/-(ProcessorResult.Schedule(schedule, w)) =>
-      schedule(wrapAsync(m, assignedSince)(w)).cmapE(f => IO(Scheduled(f, m)), handleTaskFailure(m))
+      schedule(wrapAsync(m, assignedSince)(w)).cmapE(f => Fx(Scheduled(f, m)), handleTaskFailure(m))
 
     case -\/(e) =>
       handleTaskFailure(m)(e)
   }
 
-  private[this] def handleTaskFailure(m: MsgDetail)(e: Error): IO[WorkResult[F]] =
+  private[this] def handleTaskFailure(m: MsgDetail)(e: Error): Fx[WorkResult[F]] =
     clock >>= handleTaskFailure2(m, e)
 
-  private[this] def handleTaskFailure2(m: MsgDetail, e: Error)(now: Instant): IO[WorkResult[F]] = {
+  private[this] def handleTaskFailure2(m: MsgDetail, e: Error)(now: Instant): Fx[WorkResult[F]] = {
     val f = failurePolicy(FailureCtx(node, worker, m, e, now))
-    val addOps: IO[Unit] = f.additionalOps.traverse_(sopToIo)
-    f.reaction.toIO >> addOps >> IO(WorkerFailed(m, e, f.reaction))
+    val addOps: Fx[Unit] = f.additionalOps.traverse_(sopToIo)
+    f.reaction.toFx >> addOps >> Fx(WorkerFailed(m, e, f.reaction))
   }
 
-  private[this] def logWorkResult(r: WorkResult[F])(time: Long): IO[Unit] =
-    IO(r match {
+  private[this] def logWorkResult(task: Fx[WorkResult[F]]): Fx[WorkResult[F]] =
+    for {
+      x <- task.measureDuration
+      (r, dur) = x
+      _ <- logWorkResult(r, dur)
+    } yield r
+
+  private[this] def logWorkResult(r: WorkResult[F], dur: Duration): Fx[Unit] =
+    Fx(r match {
       case CouldntAssign(m) =>
         log.debug.z(s"Couldn't assign: $m")
       case CouldntReAssign(m) =>
         log.warn.z(s"Couldn't reassign: $m")
       case Completed(m) =>
-        log.info.z(s"Successfully completed in ${time}ms: $m")
+        log.info.z(s"Successfully completed in ${dur.toMillis}ms: $m")
       case Scheduled(_, m) =>
         log.debug.z(s"Scheduled to run asynchronously: $m")
       case WorkerFailed(_, e, f) =>
@@ -202,27 +209,27 @@ final class Worker[F[_]](msgProcessor: MsgProcessor[F])(
         if (e is Deliberate)
           log.info.z(s"Worker deliberately failed: ${e.msg} // $f")
         else
-          log.error(e, s"Worker failed after ${time}ms: $f")
+          log.error(e, s"Worker failed after ${dur.toMillis}ms: $f")
       case TaskmanFailed(e, Some(m)) =>
         log.error(e, s"Taskman error occurred processing $m")
       case TaskmanFailed(e, None) =>
         log.error(e, "Taskman error occurred! (no msg)")
     })
 
-  private[this] def wrapAsync(m: MsgDetail, assignedSince: Instant): IOE[ProcessorResult[F]] => IO[WorkResult[F]] =
+  private[this] def wrapAsync(m: MsgDetail, assignedSince: Instant): FxE[ProcessorResult[F]] => Fx[WorkResult[F]] =
     work =>
-      IoUtils.time_(
+      logWorkResult(
         catchTaskmanErrors(Some(m))(
           reassignIfNeeded(m, assignedSince) flatMap {
-            case Some(r) => IO(r)
-            case None    => catchExecErrorsIOE(work) flatMap taskEnd(m, assignedSince)
+            case Some(r) => Fx(r)
+            case None    => catchExecErrorsFxE(work) flatMap taskEnd(m, assignedSince)
           }
         )
-      )(logWorkResult)
+      )
 
-  private[this] val reassignmentOk: IO[Option[WorkResult[F]]] = IO(None)
+  private[this] val reassignmentOk: Fx[Option[WorkResult[F]]] = Fx(None)
 
-  private[this] def reassignIfNeeded(m: MsgDetail, assignedSince: Instant): IO[Option[WorkResult[F]]] =
+  private[this] def reassignIfNeeded(m: MsgDetail, assignedSince: Instant): Fx[Option[WorkResult[F]]] =
     clock.flatMap(now =>
       if (now.isBefore(assignedSince plus trustPeriod.value))
         reassignmentOk
@@ -230,8 +237,8 @@ final class Worker[F[_]](msgProcessor: MsgProcessor[F])(
         reassign(m)
       )
 
-  private[this] def reassign(m: MsgDetail): IO[Option[WorkResult[F]]] =
-    ReAssignWorker(node, worker, m).toIO.map {
+  private[this] def reassign(m: MsgDetail): Fx[Option[WorkResult[F]]] =
+    ReAssignWorker(node, worker, m).toFx.map {
       case true  => None
       case false => Some(CouldntReAssign(m))
     }

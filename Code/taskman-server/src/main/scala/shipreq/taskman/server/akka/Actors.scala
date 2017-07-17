@@ -4,6 +4,7 @@ import akka.actor.{Props, Actor, ActorRef}
 import java.util.concurrent.atomic.AtomicInteger
 import scala.concurrent.duration._
 import shipreq.base.util.JavaTimeHelpers.DurationExt
+import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Priority
 import shipreq.taskman.server.{TaskmanLogging, TaskmanCtx, MsgHeader}
@@ -25,11 +26,11 @@ class SourceActor(ctx: TaskmanCtx) extends Actor with HasLogger {
 
   val mdc = TaskmanLogging.mdc("source")
   val source = new Source(pollGap, queueSize)
-  var state = source.empty.unsafePerformIO()
+  var state = source.empty.unsafeRun()
 
   override def receive = mdc.pf {
     case RequestForWork(qs) =>
-      val (s2, ms) = source.poll(qs).run(state).unsafePerformIO()
+      val (s2, ms) = source.poll(qs).run(state).unsafeRun()
       state = s2
       if (ms.nonEmpty)
         sender() ! IncomingWork(ms)
@@ -109,7 +110,7 @@ class WorkerActor(ctx: TaskmanCtx, manager: ActorRef) extends Actor with HasLogg
       requestWork()
 
     case m: MsgHeader =>
-      worker.process(m).unsafePerformIO()
+      worker.process(m).unsafeRun()
       requestWork()
   }
 }

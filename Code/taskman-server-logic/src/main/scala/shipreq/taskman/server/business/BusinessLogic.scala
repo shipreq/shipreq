@@ -2,10 +2,10 @@ package shipreq.taskman.server.business
 
 import scalaz.{-\/, \/-}
 import scalaz.old.NonEmptyList
-import scalaz.effect.IO
 import scalaz.syntax.bind._
 import shipreq.base.util.{ErrorOr, Error}
-import shipreq.base.util.effect.IOE
+import shipreq.base.util.FxModule._
+import shipreq.base.util.effect.FxE
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Msg._
 import shipreq.taskman.api.{EmailAddr, UserId}
@@ -24,7 +24,7 @@ final class BusinessLogic[F[_]](
 
   type MO = MsgProcessorOut[F]
 
-  @inline private[this] def complete(io: IOE[_]): MO = io |>-> Complete
+  @inline private[this] def complete(io: FxE[_]): MO = io |>-> Complete
 
   private[this] implicit def autoParseEa(ea: EmailAddr): Email.Addr = Email.Addr(ea)
 
@@ -32,11 +32,11 @@ final class BusinessLogic[F[_]](
     sendEmailAsync(emails.sendToUser(to, c))
 
   @inline private[this] def sendEmailAsync(e: Bop.SendEmail): MO =
-    IOE pure Schedule(emailScheduler, complete(bopReifier(e)))
+    FxE pure Schedule(emailScheduler, complete(bopReifier(e)))
 
-  @inline private[this] def run[A](a: MailingList.API[A]): IOE[A] = bopReifier(MailingListOp(a))
-  @inline private[this] def run[A](a: Support.API[A])    : IOE[A] = bopReifier(SupportOp(a))
-  @inline private[this] def run[A](a: Bop[A])            : IOE[A] = bopReifier(a)
+  @inline private[this] def run[A](a: MailingList.API[A]): FxE[A] = bopReifier(MailingListOp(a))
+  @inline private[this] def run[A](a: Support.API[A])    : FxE[A] = bopReifier(SupportOp(a))
+  @inline private[this] def run[A](a: Bop[A])            : FxE[A] = bopReifier(a)
 
   override def apply(md: MsgDetail): MO = md.msg match {
 
@@ -65,7 +65,7 @@ final class BusinessLogic[F[_]](
       complete(ActiveUser syncToML cond)
 
     case WebappErrorOccurred(usr, url, report) =>
-      val usrDescIo = usr.fold(IO("None"))(ActiveUser.tryDesc)
+      val usrDescIo = usr.fold(Fx("None"))(ActiveUser.tryDesc)
       usrDescIo.flatMap { usrd =>
         val subj = s"Webapp failure${url.fold("")(" on: " + _)}"
         val desc = s"User: $usrd\n\nURL: $url\n\n$report"
@@ -80,10 +80,10 @@ final class BusinessLogic[F[_]](
   object ActiveUser {
     import MailingList._
 
-    def get(id: UserId): IOE[ShipReqUser] =
+    def get(id: UserId): FxE[ShipReqUser] =
       run(FindShipReqUser(-\/(id))) >=> (ErrorOr.fromOptionS(_, s"User not found: $id"))
 
-    def tryDesc(id: UserId): IO[String] =
+    def tryDesc(id: UserId): Fx[String] =
       get(id).map {
         case \/-(u) => u.toString
         case -\/(e) => s"Error occurred looking up user #$id: ${e.msg}"
@@ -92,19 +92,19 @@ final class BusinessLogic[F[_]](
     def subscription(u: ShipReqUser) =
       Subscription(u.email, u.name, u.newsletter, AccountStatus.Active)
 
-    def updateML(id: UserId): IOE[Unit] =
+    def updateML(id: UserId): FxE[Unit] =
       get(id) >==> updateML
 
-    def updateML(u: ShipReqUser): IOE[Unit] =
+    def updateML(u: ShipReqUser): FxE[Unit] =
       run(API.BatchSubscribe(mailingListId, NonEmptyList(subscription(u))))
 
-    def syncToML(sqlCond: Option[String]): IOE[Unit] =
+    def syncToML(sqlCond: Option[String]): FxE[Unit] =
       run(FindShipReqUsers(sqlCond)) >-> (_ map subscription) >==> {
         case Nil =>
-          IOE(log info "No users to sync to mailing list.")
+          FxE(log info "No users to sync to mailing list.")
         case h :: t =>
           val ss = NonEmptyList.nel(h, t)
-          IO(log.info z s"Syncing ${ss.size} users to mailing list...") >>
+          Fx(log.info z s"Syncing ${ss.size} users to mailing list...") >>
             run(API.BatchSubscribe(mailingListId, ss))
       }
   }
@@ -120,21 +120,21 @@ final class BusinessLogic[F[_]](
       }
     }
 
-    def updateMailingListIfNeeded(addr: EmailAddr, name: String, newsletter: Boolean): IOE[Unit] =
+    def updateMailingListIfNeeded(addr: EmailAddr, name: String, newsletter: Boolean): FxE[Unit] =
       unlessShipReqUser(addr)(updateMailingList(addr, name, newsletter))
 
-    def unlessShipReqUser(addr: EmailAddr)(action: => IOE[Unit]): IOE[Unit] =
+    def unlessShipReqUser(addr: EmailAddr)(action: => FxE[Unit]): FxE[Unit] =
       run(FindShipReqUser(\/-(addr))) >==> {
         case None    => action
-        case Some(_) => IOE.nop
+        case Some(_) => FxE.nop
       }
 
-    def updateMailingList(addr: EmailAddr, name: String, newsletter: Boolean): IOE[Unit] = {
+    def updateMailingList(addr: EmailAddr, name: String, newsletter: Boolean): FxE[Unit] = {
       import MailingList._
       val s = Subscription(addr, name, newsletter, AccountStatus.Never)
       run(API.Subscribe(mailingListId, s, newsletter)) >==> {
         case Ok =>
-          IOE.nop
+          FxE.nop
         case AlreadySubscribed =>
           run(API.UpdateMember(mailingListId, s)) >=> {
             case Ok => ErrorOr.unit
@@ -143,7 +143,7 @@ final class BusinessLogic[F[_]](
       }
     }
 
-    def createSupportTicket(m: MsgHeader, l: LandingPageHit, c: Email.Content): IOE[Support.TicketId] = {
+    def createSupportTicket(m: MsgHeader, l: LandingPageHit, c: Email.Content): FxE[Support.TicketId] = {
       import Support._
       val from = s"${l.name} <${l.email}>"
       val p = if (l.msg.isDefined) Priority.Medium else Priority.Low
@@ -154,7 +154,7 @@ final class BusinessLogic[F[_]](
   private[this] def dummy(md: MsgDetail, msg: DummyMsg): MO = {
     import msg._
 
-    val io: IOE[Unit] = IO {
+    val io: FxE[Unit] = Fx {
       if (processingTimeMs > 0)
         Thread.sleep(processingTimeMs)
       ErrorOr.tag[Unit](Deliberate)(
@@ -168,7 +168,7 @@ final class BusinessLogic[F[_]](
     }
 
     async match {
-      case true  => IOE pure Schedule(emailScheduler, complete(io))
+      case true  => FxE pure Schedule(emailScheduler, complete(io))
       case false => complete(io)
     }
   }

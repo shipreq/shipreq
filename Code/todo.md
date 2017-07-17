@@ -41,13 +41,11 @@ Backlog
 * Test env: Use different DBs for each module
 * Switch to semantic-react
 * Remove jQuery
-* Rewrite front pages with scalajs-react (?)
 * Remove unused styles
 * Change ScalaCSS to generate Scala.JS without the runtime/JS-size overhead
 * webapp-base-member shares packages with webapp-base, plus most of that stuff should be under .project as well
 * Extract webapp-base-member-test
 * Add laws for webapp-server-logic and test in webapp-server
-* Make everything use Fx, ditch IO completely
 * Change Taskman algebras from initial to final encodings
 
 ------------------------------------------------------------------------------------------------------------------------

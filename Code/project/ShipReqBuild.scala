@@ -35,7 +35,7 @@ object ShipReqBuild {
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoDom))
       .depsForBoth(
-        UnivEq.scalaz ++ Scalaz.effect ++ Nyaya.prop ++ Monocle.core ++
+        UnivEq.scalaz ++ Scalaz.core ++ Nyaya.prop ++ Monocle.core ++
         Microlibs.adtMacros ++ Microlibs.config ++ Microlibs.nonempty ++ Microlibs.scalazExt ++ Microlibs.stdlibExt ++
         testScope(μTest ++ Nyaya.test ++ Microlibs.testUtil))
       .depsForJvm(

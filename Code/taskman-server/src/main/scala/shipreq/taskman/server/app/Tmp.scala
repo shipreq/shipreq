@@ -55,6 +55,6 @@ object Tmp extends MainTemplate {
       val now = Instant.now()
       val m = MsgDetail(MsgHeader(MsgId(0), Priority.Medium, now), Msg.RegistrationCompleted(UserId(0)), 0)
       val f = Sop.NotifySupportWorkerFailed(now, m ,Error("Test from Tmp", new RuntimeException))
-      ctx.sopReifier(f).unsafePerformIO()
+      ctx.sopReifier(f).unsafeRun()
     }).unsafeRun()
 }

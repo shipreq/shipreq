@@ -3,9 +3,9 @@ package shipreq.taskman.server
 import java.util.concurrent.{ExecutorService, Callable, Executors, ThreadFactory}
 import java.util.concurrent.atomic.AtomicInteger
 import org.slf4j.{MDC => SMDC}
-import scalaz.effect.IO
 import scalaz.syntax.bind._
-import shipreq.base.util.effect.IOE
+import shipreq.base.util.FxModule._
+import shipreq.base.util.effect.FxE
 
 object Async {
 
@@ -25,16 +25,16 @@ object Async {
     }
   }
 
-  final case class CallableIO[A](io: IO[A]) extends Callable[A] {
-    def call() = io.unsafePerformIO()
+  final case class CallableFx[A](io: Fx[A]) extends Callable[A] {
+    def call() = io.unsafeRun()
   }
 
   def scheduler(es: ExecutorService): Scheduler =
     new Scheduler {
-      def apply[A](io: IO[A]) =
+      def apply[A](io: Fx[A]) =
         TaskmanLogging.readMdc >>= { who =>
           val fio = TaskmanLogging.writeMdc(s"$who*") >> io
-          IOE(es submit CallableIO(fio))
+          FxE(es submit CallableFx(fio))
         }
     }
 

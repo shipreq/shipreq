@@ -1,42 +1,45 @@
 package shipreq.taskman.server
 
 import java.time.{Duration, Instant}
+import scalaz.{StateT, State}
+import shipreq.base.util.FxModule._
 import shipreq.taskman.api.Priority
 import shipreq.taskman.server.Sop.GetMsgsAssignNode
-import scalaz.{StateT, State}
-import scalaz.effect.IO
 import Source._
 
 object Source {
   type S = Instant
   type ST[A] = State[S, A]
-  type STIO[A] = StateT[IO, S, A]
+  type STFx[A] = StateT[Fx, S, A]
   type QueueStatus = Option[(Priority, Int)]
 }
 
 final class Source(pollGap: Duration, batchSize: Int)(
   implicit node: NodeId,
-           clock: IO[Instant],
+           clock: Fx[Instant],
            trustPeriod: AssignmentTrustPeriod,
            sopReifier: SopReifier) {
 
-  def empty: IO[S] =
+  def empty: Fx[S] =
     clock.map(_ minus pollGap)
 
-  val outsidePollGap: STIO[Boolean] =
+  val outsidePollGap: STFx[Boolean] =
     StateT(s => clock.map(now => (s, now.isAfter(s plus pollGap))))
 
-  val updateTime: STIO[Unit] =
+  val updateTime: STFx[Unit] =
     StateT(_ => clock.map(n => (n, ())))
 
-  val noResults: STIO[Seq[MsgHeader]] =
+  val noResults: STFx[Seq[MsgHeader]] =
     StateT.stateT(Seq.empty)
 
-  def poll(qs: QueueStatus): STIO[Seq[MsgHeader]] =
+  def runOp[A](op: Sop[A]): STFx[A] =
+    StateT((s: S) => op.toFx.map((s, _)))
+
+  def poll(qs: QueueStatus): STFx[Seq[MsgHeader]] =
     outsidePollGap flatMap (ok =>
       if (ok)
         for {
-          ms <- GetMsgsAssignNode(node, batchSize, trustPeriod.value, qs).liftIOM[STIO]
+          ms <- runOp(GetMsgsAssignNode(node, batchSize, trustPeriod.value, qs))
           _  <- updateTime
         } yield ms
       else

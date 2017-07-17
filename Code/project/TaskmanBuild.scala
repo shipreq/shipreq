@@ -19,9 +19,7 @@ object TaskmanBuild {
   lazy val taskmanApiLogic =
     project("taskman-api-logic")
       .configure(Common.jvmSettings)
-      .deps(
-        Scalaz.core ++ Scalaz.effect ++
-        testScope(μTest ++ scalaCheck ++ Scala.reflect ++ Microlibs.testUtil))
+      .deps(testScope(μTest ++ scalaCheck ++ Scala.reflect ++ Microlibs.testUtil))
       .dependsOn(baseUtilJvm)
 
   lazy val taskmanApi =
