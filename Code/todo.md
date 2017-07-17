@@ -40,7 +40,7 @@ Backlog
 * Use fast boopickle codecs for webworkers: https://github.com/ochrons/boopickle#codecs
 * Test env: Use different DBs for each module
 * Switch to semantic-react
-* Remove jQuery
+* Remove jQuery - lift and semantic UI blocking this
 * Remove unused styles
 * Change ScalaCSS to generate Scala.JS without the runtime/JS-size overhead
 * webapp-base-member shares packages with webapp-base, plus most of that stuff should be under .project as well
@@ -82,6 +82,7 @@ Phase 2
 ### Tech
 * Only create a single Lift function per SPA instead of one per ServerSideProc
 * Fix member layout using flex instead of whatever stupidity exists atm
+* Switch to textcomplete
 
 ### New Features
 * User profile page
