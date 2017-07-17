@@ -81,7 +81,6 @@ Phase 2
 
 ### Tech
 * Bug: Create-and-close closes on ajax error
-* Add info/help to MemberHome when no projects exist
 * Only create a single Lift function per SPA instead of one per ServerSideProc
 * Fix member layout using flex instead of whatever stupidity exists atm
 

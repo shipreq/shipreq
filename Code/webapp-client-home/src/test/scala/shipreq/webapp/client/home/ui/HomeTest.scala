@@ -24,7 +24,7 @@ final class HomeObs(cp: TestClientProtocol, $: HtmlDomZipper) {
     projectDoms.mapZippers(_("h1").innerText)
 
   object createProject {
-    private val cont = $("." + Styles.createProjectContainer.className.value)
+    private val cont = $("." + Styles.createProjectCont.className.value)
 
     val input  = cont("input").domAs[html.Input]
     val button = cont("button").domAs[html.Button]

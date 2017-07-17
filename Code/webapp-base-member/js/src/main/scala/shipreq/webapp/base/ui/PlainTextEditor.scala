@@ -99,26 +99,27 @@ object PlainTextEditor {
     */
   object WithButton {
 
-    final case class Props(text       : String,
-                           updateText : String => Callback,
-                           status     : EditorStatus,
-                           buttonLabel: String,
-                           inputMod   : TagMod) {
+    final case class Props(text        : String,
+                           updateText  : String => Callback,
+                           status      : EditorStatus,
+                           buttonColour: ColourPlus,
+                           buttonLabel : String,
+                           inputMod    : TagMod) {
       @inline def render = Component(this)
     }
 
     //  implicit val reusabilityProps: Reusability[Props] =
     //    Reusability.caseClass
 
-    val buttonOk       = Button(colour = ColourPlus.Primary)
-    val buttonDisabled = Button(colour = ColourPlus.Primary,  state = Button.State.Disabled)
-    val buttonError    = Button(colour = ColourPlus.Negative, state = Button.State.Disabled)
-    val buttonLoading  = Button(colour = ColourPlus.Primary,  state = Button.State.Loading)
-
     final class Backend($: BackendScope[Props, Unit]) {
 
       def render(p: Props): VdomElement = {
         val onChange = (_: ReactEventFromInput).extract(_.target.value)(t => p.status.wrapEdit(p updateText t))
+
+        def buttonOk       = Button(colour = p.buttonColour)
+        def buttonDisabled = Button(colour = p.buttonColour,  state = Button.State.Disabled)
+        def buttonError    = Button(colour = ColourPlus.Negative, state = Button.State.Disabled)
+        def buttonLoading  = Button(colour = ColourPlus.Primary,  state = Button.State.Loading)
 
         val input =
           <.input.text(

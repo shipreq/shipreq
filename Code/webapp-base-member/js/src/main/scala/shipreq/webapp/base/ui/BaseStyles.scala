@@ -50,7 +50,7 @@ object BaseStyles extends StyleSheet.Inline {
   val projectItems = new ProjectItems
   final class ProjectItems {
 
-    def vspace = 1 rem
+    def vspace = 2 rem
 
     val item = style(
       display.flex,
@@ -60,10 +60,6 @@ object BaseStyles extends StyleSheet.Inline {
       &.not(_.firstChild)(
         borderTop(1 px, solid, rgba(34, 36, 38, .15)), // .ui.divided.items>.item
         paddingTop(vspace)),
-      &.lastChild(
-        paddingBottom(`0`)),
-      &.not(_.lastChild)(
-        paddingBottom(vspace)),
       &.not(_.hover)(
         unsafeChild("a")(
           color(rgba(0, 0, 0, .85))))) // .ui.items>.item>.content>.header

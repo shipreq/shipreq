@@ -9,11 +9,11 @@ import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data.{DataValidators, ProjectMetaData}
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.base.protocol.HomeSpaProtocols
-import shipreq.webapp.base.ClientConfig
+import shipreq.webapp.base.{ClientConfig, WebappConfig}
 import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus}
 import shipreq.webapp.base.protocol.ClientProtocol
 import shipreq.webapp.base.ui.{BaseStyles, MemberNavBar, PlainTextEditor, ProjectItem}
-import shipreq.webapp.base.ui.semantic.Breadcrumb
+import shipreq.webapp.base.ui.semantic.{Breadcrumb, Colour, Icon, Message}
 
 object Home {
   final case class Props(data: HomeSpaProtocols.InitData, cp: ClientProtocol) {
@@ -79,34 +79,49 @@ object HomeContent {
       Reusable.byRef(Breadcrumb.Item.Div(ClientConfig.BreadcrumbNameMemberHome) :: Nil)
 
     val inputMod: TagMod =
-      ^.placeholder := "New project name..."
+      TagMod(^.placeholder := "New project name", Styles.createProjectInput)
 
     def render(p: Props): VdomElement = {
-
       val menu = MemberNavBar.Props(p.username, navBarLeft).render
 
-      val projectCreate = {
+      val noProjects = p.projects.isEmpty
+
+      val createProject = {
         val status: EditorStatus =
           EditorStatus.async(p.createProjectAS) getOrElse
             EditorStatus.ignoreOrValidate(DataValidators.projectName.unnamed)(
               p.createProjectText.value, _.isEmpty, s => Some(p.createProjectIO(s)))
-
-        PlainTextEditor.WithButton.Props(
-          p.createProjectText.value,
-          p.createProjectText.setState,
-          status,
-          buttonLabel = "Create",
-          inputMod = inputMod)
-          .render
+        <.div(Styles.createProjectCont,
+          PlainTextEditor.WithButton.Props(
+            p.createProjectText.value,
+            p.createProjectText.setState,
+            status,
+            Colour.Green,
+            buttonLabel = "Create Project",
+            inputMod = inputMod((^.autoFocus := true).when(noProjects)))
+            .render)
       }
 
-      val projectList = p.projects.sortBy(_.name).map(ProjectItem.AsLink.Component(_))
+      def noProjectGreeting: VdomTag =
+        <.div(Styles.noProjects,
+          Message(
+            Message.Style(Message.Type.Info),
+            Icon.InfoCircle,
+            s"Welcome to ${WebappConfig.appName}!",
+            TagMod(
+              "The first thing you'll want to do is create a project to contain all of your requirements.",
+              <.br,
+              "Create a new project using the button above.")))
+
+      def projectList: VdomTag =
+        <.div(Styles.projectList,
+          p.projects.sortBy(_.name).toTagMod(ProjectItem.AsLink.Component(_)))
 
       <.div(
         menu,
         <.main(BaseStyles.containerLarge,
-          <.div(Styles.createProjectContainer, projectCreate),
-          projectList.toTagMod))
+          createProject,
+          if (noProjects) noProjectGreeting else projectList))
     }
   }
 

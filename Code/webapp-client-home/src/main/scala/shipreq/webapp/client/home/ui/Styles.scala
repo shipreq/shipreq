@@ -6,6 +6,16 @@ import shipreq.webapp.base.ui.BaseStyles
 object Styles extends StyleSheet.Inline {
   import dsl._
 
-  val createProjectContainer = style(
-    marginBottom(BaseStyles.projectItems.vspace))
+  val createProjectCont = style(
+    marginTop(7 rem))
+
+  val createProjectInput = style(
+    width(42 ex),
+    &.focus(borderColor(c"#68ca7c").important))
+
+  val noProjects = style(
+    marginTop(3 rem))
+
+  val projectList = style(
+    marginTop(3 rem))
 }
