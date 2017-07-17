@@ -2,12 +2,7 @@ import org.scalajs.core.tools.io._
 import org.scalajs.jsenv.phantomjs.PhantomJSEnv
 
 // https://github.com/scala-js/scala-js/issues/1555
-class PhantomJS2Env(jettyClassLoader: ClassLoader,
-                    phantomjsPath: String = "phantomjs",
-                    addArgs: Seq[String] = Seq("--debug=false"),
-                    addEnv: Map[String, String] = Map.empty,
-                    override val autoExit: Boolean = true)
-    extends PhantomJSEnv(phantomjsPath, addArgs, addEnv, autoExit, jettyClassLoader) {
+class PhantomJS2Env(c: PhantomJSEnv.Config) extends PhantomJSEnv(c) {
 
   override protected def vmName: String = "PhantomJS2"
 

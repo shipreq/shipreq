@@ -3,11 +3,12 @@ import java.nio.file.{Files, Path}
 import scala.concurrent.duration._
 import com.typesafe.sbt.GitPlugin.autoImport._
 import org.scalajs.core.tools.sem._
+import org.scalajs.jsenv.phantomjs.PhantomJSEnv
 import org.scalajs.sbtplugin.cross.CrossProject
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import com.timushev.sbt.updates.UpdatesPlugin.autoImport._
 import sbtdocker.DockerPlugin, DockerPlugin.autoImport._
-import LibDependency.{Dep, HasJs, HasJvm, HasBoth, JVM, JS, ModDepScope}
+import LibDependency.{Dep, HasBoth, HasJs, HasJvm, JS, JVM, ModDepScope}
 
 sealed trait JsTestType
 case object NoTests extends JsTestType
@@ -232,7 +233,7 @@ object Common {
         _.settings(
           requiresDOM                         := true,
           emitSourceMaps in fastOptJS in Test := false, // PhantomJS doesn't use
-          jsEnv                       in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
+          jsEnv                       in Test := new PhantomJS2Env(PhantomJSEnv.Config().withJettyClassLoader(scalaJSPhantomJSClassLoader.value)))
 //          emitSourceMaps in fastOptJS in Test := true)
     }
 
