@@ -41,10 +41,12 @@ object MemberNavBar {
       tagMod = *.navMenu)
 
   private val itemLogo =
-    Menu.Item.Div(
-      <.img(
-        ^.src := AssetManifest.shipreqCircleDarkSvg,
-        ^.alt := WebappConfig.appName))
+    Menu.Item.Link(
+      <.a(
+        ^.href := Urls.publicHome.relativeUrl,
+        <.img(
+          ^.src := AssetManifest.shipreqCircleDarkSvg,
+          ^.alt := WebappConfig.appName)))
 
   private val breadcrumbStyle =
     Breadcrumb.Style()
