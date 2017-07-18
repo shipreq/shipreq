@@ -28,10 +28,13 @@ const config = ({ mode }) => ({
       'expose-loader?ReactDOM!react-dom',
       'expose-loader?ReactDOMServer!react-dom/server',
       'expose-loader?ReactCollapse!react-collapse',
-      'jquery-textcomplete', // pulls in jquery
       'expose-loader?loadjs!loadjs',
       'expose-loader?moment!moment',
       'expose-loader?autosize!autosize',
+      'expose-loader?TextComplete!textcomplete/lib/textcomplete',
+      'expose-loader?TextCompleteTA!textcomplete/lib/textarea',
+      'expose-loader?jQuery!jquery', // for Semantic UI
+      'expose-loader?$!jquery', // for Semantic UI
     ]),
 
     admin: './shipreq/styles/admin.less',

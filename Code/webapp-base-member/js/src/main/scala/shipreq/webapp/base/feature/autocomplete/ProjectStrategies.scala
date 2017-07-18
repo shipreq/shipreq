@@ -1,80 +1,47 @@
-package shipreq.webapp.client.project.lib
+package shipreq.webapp.base.feature.autocomplete
 
 import japgolly.microlibs.nonempty._
-import scala.annotation.tailrec
-import scalacss.ScalaCssReact._
-import japgolly.scalajs.react._, vdom.html_<^._
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
+import scala.annotation.tailrec
 import scalajs.js.{UndefOr, undefined}
-import scalaz.{\/-, -\/, \/}
-import shapeless.syntax.singleton._
+import scalacss.ScalaCssReact._
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{Grammar, GrammarSpec, PlainText, Text, TextSearch}
+import shipreq.webapp.base.text.{Grammar, PlainText, Text, TextSearch}
 import shipreq.webapp.base.data.{Contextualise, Plain}
-import shipreq.webapp.base.jsfacade.{TextComplete => TC}
-import shipreq.webapp.client.project.app.Style.widgets.{autoComplete => *}
-import shipreq.webapp.client.project.feature.AutoCompleteFeature
-import AutoCompleteFeature.{Strategies, autoLiftSingleStrategy}
-import TC.{Query, Strategy}
+import shipreq.webapp.base.jsfacade.TextComplete.Strategy
+import shipreq.webapp.base.ui.BaseStyles.{autoComplete => *}
+import Implicits.autoLiftTextCompleteStrategy
+import Utils.{Context, Strategies}
 
-object AutoComplete {
+object ProjectStrategies {
 
-  def forRichText(text: Text.Generic)
-                 (p: Project, pt: PlainText.ForProject, ts: TextSearch): AutoCompleteFeature.ForChild = {
-    var ac = Vector.empty[Strategy]
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Rich text
 
-    ac ++= AutoComplete.hashtag(p, HideDead, issues = text.supportsIssues, tags = text.supportsTags)(Contextualise)
+  def richText(text: Text.Generic)
+              (p: Project, pt: PlainText.ForProject, ts: TextSearch): Strategies = {
+    val s = Vector.newBuilder[Strategy[_]]
+
+    s ++= hashtag(p, HideDead, issues = text.supportsIssues, tags = text.supportsTags)(Contextualise)
 
     if (text.supportsReqRefs) {
-      ac ++= AutoComplete.reqCode.ref(p, pt)
-      ac ++= AutoComplete.req(ts, AutoComplete.reqItems(p, pt), Contextualise)
+      s ++= reqCode.ref(p, pt)
+      s ++= req(ts, reqItems(p, pt), Contextualise)
     }
 
     if (text.supportsPTM)
-      ac ++= AutoComplete.math
+      s ++= math
 
-    ac
+    s.result()
   }
 
-  // ===================================================================================================================
-
-  private class Context(val prefixRegex: String,
-                        val suffixRegex: String,
-                        val applyContext: String => String) {
-    // Util.regexEscapeAndWrap turns empty strings into (?:) which is fine
-    // val acSuffix = if (suffixRegex.isEmpty) "$" else suffixRegex + "?$"
-
-    def strategy[A](mainRegex     : String,
-                    searchFn      : Query[A])
-                   (replacementA  : A => String,
-                    replacementEnd: String): Contextualise => Strategy.B3[A] = {
-
-      case Contextualise =>
-        Strategy.pattern(s"$prefixRegex$mainRegex$suffixRegex?$$", index = 1)
-          .search(searchFn)
-          .replace(s => applyContext(replacementA(s)) + replacementEnd)
-
-      case Plain =>
-        Strategy.pattern(s"(^|\\s)$prefixRegex?$mainRegex$suffixRegex?$$", index = 2)
-          .search(searchFn)
-          .replace(s => "$1" + replacementA(s) + replacementEnd)
-    }
-  }
-
-  private object Context {
-    def apply(s: GrammarSpec.Surrounds): Context = {
-      val (a, b) = s.parsing.regexEscapeAndWrap
-      new Context(a, b, s.display.apply)
-    }
-
-    def literal(pre: String, suf: String): Context =
-      new Context(Util regexEscapeAndWrap pre, Util regexEscapeAndWrap suf, pre + _ + suf)
-  }
-
-  // ===================================================================================================================
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // #ISSUE #TAG
 
   private val hashtagContext = Context.literal(Grammar.hashRefKey.prefix, "")
@@ -82,8 +49,8 @@ object AutoComplete {
   def hashtag(legal: Stream[HashRefKey]): Contextualise => Strategies = {
     import Grammar.{hashRefKey => G}
     val mainRegex = s"(|${G.firstChar.one}${G.tailChars.*})$$"
-    val searchFn  = TC.caseInsensitiveContains(legal.map(_.value).sorted)
-    hashtagContext.strategy(mainRegex, searchFn)(identity, "")(_)
+    val searchFn  = Utils.caseInsensitiveContains(legal.map(_.value).sorted)
+    hashtagContext[String](mainRegex, Identity.apply, "", _.search(searchFn))
   }
 
   def hashtag(issues: Stream[CustomIssueType],
@@ -108,7 +75,7 @@ object AutoComplete {
   def tag(legal: Stream[ApplicableTag], fd: FilterDead): Contextualise => Strategies =
     hashtag(Stream.empty, legal, fd)
 
-  // ===================================================================================================================
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // [REF]
 
   private val reflinkContext = Context(Grammar.reflinkSurround)
@@ -116,11 +83,10 @@ object AutoComplete {
   def reqItems(p: Project, pt: PlainText.ForProject): Stream[ReqItem] =
     reqItems(p, pt, p.reqs.reqIterator.toStream)
 
-  def reqItems(p: Project, pt: PlainText.ForProject, legal: Stream[Req]): Stream[ReqItem] = {
+  def reqItems(p: Project, pt: PlainText.ForProject, legal: Stream[Req]): Stream[ReqItem] =
     legal.filter(_.live(p.config.reqTypes) is Live)
-      .map(req => new ReqItem(req.id, req.pubid, p.config.reqTypes.need(req.pubid.reqTypeId), pt reqTitle req))
+      .map(req => ReqItem(req.id, req.pubid, p.config.reqTypes.need(req.pubid.reqTypeId), pt reqTitle req))
       .sortBy(_.sortKey)
-  }
 
   def req(textSearch: TextSearch, legal: Stream[ReqItem], Contextualise: Contextualise): Strategies = {
     val searchTitles =
@@ -128,23 +94,24 @@ object AutoComplete {
         .filterReqsIds(legal.map(_.reqId).toSet)
         .titlesOnly
 
-    val searchFn: TC.Query[ReqItem] = { term =>
-      val titles = searchTitles.searchAll(term).take(10).map(_.id).toSet
-      val np     = normaliseReqPubid(term)
-      // TODO TextComplete should use multiple result tiers. Titles shouldn't be searched when there are matching pubids
-      legal.filter(i => i.pubidStrNorm.contains(np) || titles.contains(i.reqId))
-    }
-
     def li(i: ReqItem): VdomElement =
       <.div(
         <.div(*.itemTitle, i.pubidStr),
         <.div(*.itemDesc, i.title))
 
-    reflinkContext.strategy(s"(\\S+?)", searchFn)(_.pubidStr, " ")(Contextualise)
-      .template((i, _) => ReactDOMServer.renderToStaticMarkup(li(i)))
+    reflinkContext[ReqItem](
+      s"(\\S+?)", _.pubidStr, " ",
+      _.search { term =>
+        val titles = searchTitles.searchAll(term).take(10).map(_.id).toSet
+        val np = normaliseReqPubid(term)
+        // TODO TextComplete should use multiple result tiers. Titles shouldn't be searched when there are matching pubids
+        legal.filter(i => i.pubidStrNorm.contains(np) || titles.contains(i.reqId))
+      }
+        .template((i, _) => ReactDOMServer.renderToStaticMarkup(li(i)))
+    )(Contextualise)
   }
 
-  case class ReqItem(reqId: ReqId, pubid: Pubid, reqType: ReqType, title: String) {
+  final case class ReqItem(reqId: ReqId, pubid: Pubid, reqType: ReqType, title: String) {
     val pubidStr     = PlainText.pubid(reqType, pubid.pos)
     val pubidStrNorm = normaliseReqPubid(pubidStr)
     val sortKey      = (reqType.mnemonic.value, pubid.pos.value)
@@ -156,7 +123,7 @@ object AutoComplete {
   @inline def normaliseReqPubid(s: String): String =
     Grammar.pubid.seqFormat.normEach(s)
 
-  // ===================================================================================================================
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // ReqCodes
 
   object reqCode {
@@ -177,12 +144,12 @@ object AutoComplete {
       @inline def contextualise = Plain
 
       // Example: abc & abc.def
-      def completeFromStart(trie: Trie): Strategy = {
+      def completeFromStart(trie: Trie): Strategies = {
         val mainRegex = s"($node($sep$node)*$sep?)"
 
         type A = (Vector[Node], String)
 
-        val searchFn0: TC.Query[A] = { term =>
+        val searchFn0: Utils.Query[A] = { term =>
 
           // Parse input
           var nodes = term.split(G.nodeSeparator).toVector
@@ -201,17 +168,20 @@ object AutoComplete {
           r.toStream.sorted.map((path, _))
         }
 
-        val searchFn = TC.ignorePerfectMatch(searchFn0)(_ ==* _._2)
+        val searchFn: Utils.Query[A] =
+          Utils.ignorePerfectMatch(searchFn0)(_ ==* _._2)
 
-        def replace(r: A) =
-          (r._1.map(_.value) :+ r._2).mkString(G.nodeSeparator.toString)
+        val replace: A => String =
+          a => (a._1.map(_.value) :+ a._2).mkString(G.nodeSeparator.toString)
 
-        reflinkContext.strategy(mainRegex, searchFn)(replace, "")(contextualise)
-          .template((v, _) => v._2)
+        reflinkContext[A](
+          mainRegex, replace, "",
+          _.search(searchFn).template((v, _) => v._2)
+        )(contextualise)
       }
 
       // Example: .xyz
-      def completeFromMid(trie: Trie): Strategy = {
+      def completeFromMid(trie: Trie): Strategies = {
         val mainRegex = s"$sep($node)"
 
         val activePaths: Stream[Path] =
@@ -228,19 +198,17 @@ object AutoComplete {
           go(NonEmptyVector one path.head, path.tail)
         }
 
-        val searchFn: TC.Query[String] = term =>
+        val searchFn: Utils.Query[String] = term =>
           activePaths.map(isMatch(term, _))
             .jsDefined
             .distinctSafe
             .map(PlainText.reqCode)
             .sorted
 
-        reflinkContext.strategy(mainRegex, searchFn)(identity, "")(contextualise)
+        reflinkContext[String](mainRegex, identity, "", _.search(searchFn))(contextualise)
       }
 
-      Vector(
-        completeFromStart(trie),
-        completeFromMid(trie))
+      completeFromStart(trie) ++ completeFromMid(trie)
     }
 
     /**
@@ -281,7 +249,7 @@ object AutoComplete {
         regex.r
       }
 
-      val searchFn: TC.Query[A] = term => {
+      val searchFn: Utils.Query[A] = term => {
         val p = termToRegex(term).pattern
         activePaths.filter(x => p.matcher(x._1).matches)
       }
@@ -302,19 +270,23 @@ object AutoComplete {
         }
       }
 
-      reflinkContext.strategy(mainRegex, searchFn)(_._1, " ")(Contextualise)
-        .template((i, _) => ReactDOMServer.renderToStaticMarkup(li(i)))
+      reflinkContext[A](
+        mainRegex, _._1, " ",
+        _.search(searchFn).template((i, _) => ReactDOMServer.renderToStaticMarkup(li(i)))
+      )(Contextualise)
     }
 
   }
 
-  // ===================================================================================================================
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // <math>
 
-  private def htmllike = Stream("math")
+  private val htmllike = List("math")
 
-  def math: Strategies =
-    Strategy.pattern("""(^|\s)<([a-z]+)$""", index = 2)
+  lazy val math: Strategies =
+    Strategy.builder
+      .regex("""(^|\s)<([a-z]+)$""", index = 2)
       .search(term => htmllike.filter(_ startsWith term))
       .replace2(tag => (s"$$1<$tag>", s"</$tag>"))
+      .result()
 }

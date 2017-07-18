@@ -621,21 +621,6 @@ object Style extends StyleSheet.Inline {
       val abort = style(
         &.hover(color(c"#DB2828").important))
     }
-
-    object autoComplete {
-      val itemTitle = style(
-        fontWeight.bold)
-
-      val itemTitle2 = style(
-        paddingLeft(1 ex),
-        color(c"#333"))
-
-      val itemDesc = style(
-        color(c"#444"),
-        fontStyle.italic,
-        overflow.hidden,
-        maxWidth(36 ex))
-    }
   }
 
   // ===================================================================================================================
@@ -684,7 +669,6 @@ object Style extends StyleSheet.Inline {
     reqdetail.detailTable,
     reqdetail.useCaseStep.container,
     widgets.issue,
-    widgets.autoComplete.itemTitle,
     widgets.reqTypeSelector.dropdown)
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()
 //  ConsoleIO(_.info(s"Styles: ${Style.register.styles.length}")).unsafePerformIO()

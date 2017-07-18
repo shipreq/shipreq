@@ -1,28 +1,25 @@
 package shipreq.webapp.client.project.widgets
 
 import japgolly.microlibs.stdlib_ext.MutableArray
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react._
-import vdom.html_<^._
-import org.scalajs.dom.html
-import scalaz.{-\/, \/-}
+import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.vdom.html_<^._
 import scalaz.syntax.either._
+import scalaz.{-\/, \/-}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{Grammar, PlainText, SingleLine, TextSearch}
-import shipreq.webapp.base.validation._
-import shipreq.webapp.base.validation.Simple._
-import shipreq.webapp.base.data.Plain
+import shipreq.webapp.base.data.DataImplicits._
+import shipreq.webapp.base.data.{Plain, _}
+import shipreq.webapp.base.feature.AutoCompleteFeature.AutoComplete.Project.ReqItem
+import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.EditorStatus
 import shipreq.webapp.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
+import shipreq.webapp.base.text.{Grammar, PlainText, SingleLine, TextSearch}
 import shipreq.webapp.base.ui.{AutosizeTextarea, EditTheme}
-import shipreq.webapp.client.project.lib.AutoComplete
+import shipreq.webapp.base.validation.Simple._
+import shipreq.webapp.base.validation._
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.feature.AutoCompleteFeature
-import AutoComplete.ReqItem
-import DataImplicits._
 
 object ImplicationEditor {
 
@@ -38,7 +35,7 @@ object ImplicationEditor {
 
   object Lookup {
     def all(p: Project, pt: PlainText.ForProject): Lookup =
-      Lookup(AutoComplete.reqItems(p, pt), UnivEq.emptyMap)
+      Lookup(AutoComplete.Project.reqItems(p, pt), UnivEq.emptyMap)
 
     def forCustomColumn(p: Project, l: Lookup, fid: CustomField.Implication.Id): Lookup = {
       val f = p.config.customField(fid)
@@ -124,16 +121,16 @@ object ImplicationEditor {
       .mapValid(_.toSet)
       .andThenAuditor(validator2(p, subject, initialValues, dir))
 
-  final class Backend($: BackendScope[Props, Unit]) {
+  final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.EditorBackend {
     private val pxLookup = Px.props($).map(_.lookup).withReuse.autoRefresh
     private val pxTextSearch = Px.props($).map(_.textSearch).withReuse.autoRefresh
 
-    val pxAutoComplete =
+    override val pxAutoComplete =
       for {
         l <- pxLookup
         s <- pxTextSearch
       } yield
-        AutoComplete.req(s, l.legal, Plain)
+        AutoComplete.Project.req(s, l.legal, Plain)
 
     @inline private def lineCardinality = SingleLine
 
@@ -153,11 +150,6 @@ object ImplicationEditor {
         RichTextEditor.minRows(lineCardinality),
         keys)
     }
-
-    private val editorRef = ScalaComponent.mutableRefTo(AutosizeTextarea.Component)
-
-    def getTextarea(): html.TextArea =
-      editorRef.value.getDOMNode.domCast
 
     def render(p: Props) = {
       def editor(validity: Validity): VdomElement =
@@ -188,6 +180,6 @@ object ImplicationEditor {
       .renderBackend[Backend]
       .configure(
 //        Reusability.shouldComponentUpdate,
-        AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.setState))
+        AutoComplete.install)
       .build
 }

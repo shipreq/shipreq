@@ -1,10 +1,10 @@
 /*
-These are styles for https://github.com/yuku-t/jquery-textcomplete
+These are styles for https://github.com/yuku-t/textcomplete
 
 The plugin doesn't come with any styles but it's classes work such that if bootstrap (css)
 is loaded, it is styled correctly.
 
-These styles are copy-pasted from Semantic UI dropdowns and fitted to jquery-textcomplete.
+These styles were originally copy-pasted from Semantic UI dropdowns and fitted to textcomplete.
 */
 
 .textcomplete-dropdown {
@@ -42,11 +42,16 @@ These styles are copy-pasted from Semantic UI dropdowns and fitted to jquery-tex
 }
 
 .textcomplete-item.active {
-  background: rgba(0,0,0,.05);
+  background: rgba(48,64,240,.14); /* my colour choice here */
 }
 .textcomplete-item.active, .textcomplete-item.active a {
   color: rgba(0,0,0,.95);
 }
+
+.textcomplete-header, .textcomplete-footer {
+  display:none;
+}
+
 
 /*
 For reference, these are the applied bootstrap styles:

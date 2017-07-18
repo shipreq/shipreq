@@ -21,9 +21,9 @@ const config = {
       'expose-loader?ReactCollapse!react-collapse',
       'expose-loader?moment!moment',
       'expose-loader?autosize!autosize',
-      'expose-loader?jQuery!jquery',
-      'expose-loader?$!jquery',
-      'jquery-textcomplete',
+      'expose-loader?TextComplete!textcomplete/lib/textcomplete',
+      'expose-loader?TextCompleteTA!textcomplete/lib/textarea',
+      'expose-loader?$!expose-loader?jQuery!jquery', // for Semantic UI -- must precede it! order in this array matters
       './semantic/dist/semantic.min', //.js
     ],
   },

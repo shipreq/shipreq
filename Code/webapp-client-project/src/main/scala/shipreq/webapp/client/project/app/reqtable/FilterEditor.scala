@@ -10,12 +10,10 @@ import shipreq.base.util.{Invalid, Valid, Validity}
 import shipreq.webapp.base.data.{Project, ShowDead}
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.data.Contextualise
-import shipreq.webapp.base.jsfacade.{TextComplete => TC}
+import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui.semantic.{Button, Icon, Input}
 import shipreq.webapp.client.project.app.Style.reqtable.{filterEditor => *}
-import shipreq.webapp.client.project.lib.AutoComplete
-import shipreq.webapp.client.project.feature.AutoCompleteFeature
 import shipreq.webapp.client.project.widgets.FilterHelp
 
 /** Widget that allows users to edit the current filter.
@@ -45,15 +43,19 @@ object FilterEditor {
       Reusability.caseClass
   }
 
-  private val autoCompleteKeywords: TC.Strategy =
-    TC.Strategy.pattern("""(^|[^\w:])([a-z]+)$""", index = 2)
-      .search(TC caseInsensitiveStartsWith Stream("has", "no", "implies", "impliedBy"))
+  private val autoCompleteKeywords: AutoComplete.Strategy =
+    AutoComplete.Strategy.builder
+      .regex("""(^|[^\w:])([a-z]+)$""", index = 2)
+      .search(AutoComplete.Utils caseInsensitiveStartsWith Stream("has", "no", "implies", "impliedBy"))
       .replace("$1" + _ + ":")
+      .result()
 
-  private val autoCompletePresenceLackAttr: TC.Strategy =
-    TC.Strategy.pattern("""\b((?:has|no):)([a-z]*)$""", index = 2)
-      .search(TC caseInsensitiveStartsWith ValidFilter.Attr.values.toStream.map(_.name))
+  private val autoCompletePresenceLackAttr: AutoComplete.Strategy =
+    AutoComplete.Strategy.builder
+      .regex("""\b((?:has|no):)([a-z]*)$""", index = 2)
+      .search(AutoComplete.Utils caseInsensitiveStartsWith ValidFilter.Attr.values.toStream.map(_.name))
       .replace("$1" + _ + " ")
+      .result()
 
   private val correctInput: String => String = {
     val newlines = """\s*[\n\r]\s*""".r
@@ -81,8 +83,7 @@ object FilterEditor {
     (State(txt, p._1), p._2)
   }
 
-  final class Backend($: BackendScope[Props, Unit]) {
-    var inputNode: html.Input = _
+  final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.BackendI {
 
     private val pxProject: Px[Project] =
       Px.props($).map(_.project).withReuse.autoRefresh
@@ -90,9 +91,9 @@ object FilterEditor {
     private val pxFilterValidator: Px[PotentialFilter.Validator] =
       pxProject.map(PotentialFilter.validator)
 
-    val autoCompleteStrategies: Px[AutoCompleteFeature.Strategies] =
+    val pxAutoComplete: Px[AutoComplete.Strategies] =
       pxProject.map { p =>
-        val hashtags = AutoComplete.hashtag(p, ShowDead, issues = true, tags = true)(Contextualise)
+        val hashtags = AutoComplete.Project.hashtag(p, ShowDead, issues = true, tags = true)(Contextualise)
         hashtags :+ autoCompletePresenceLackAttr :+ autoCompleteKeywords
       }
 
@@ -114,6 +115,13 @@ object FilterEditor {
         p ← $.props
         _ ← p.update(State(input, r._1), r._2)
       } yield ()
+
+    var inputNode: html.Input = _
+
+    override val autoCompleteCtx =
+      CallbackTo(
+        Option(inputNode).map(
+          AutoCompleteCtx(pxAutoComplete.value(), _)))
 
     def render(p: Props): VdomElement = {
 
@@ -146,6 +154,6 @@ object FilterEditor {
   val Component = ScalaComponent.builder[Props]("FilterEditor")
     .renderBackend[Backend]
     .configure(shouldComponentUpdate)
-    .configure(AutoCompleteFeature.installB(_.backend.inputNode, _.autoCompleteStrategies.value(), _.updateFilterText))
+    .configure(AutoComplete.install(autoCompletableInput))
     .build
 }

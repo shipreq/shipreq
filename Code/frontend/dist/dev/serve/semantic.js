@@ -60,23 +60,23 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 317);
+/******/ 	return __webpack_require__(__webpack_require__.s = 324);
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ 317:
+/***/ 324:
 /***/ (function(module, exports, __webpack_require__) {
 
 // This is loaded by webpack
 
-__webpack_require__(318);
-__webpack_require__(319);
+__webpack_require__(325);
+__webpack_require__(326);
 
 
 /***/ }),
 
-/***/ 318:
+/***/ 325:
 /***/ (function(module, exports) {
 
  /*
@@ -13262,35 +13262,35 @@ $.fn.transition.settings = {
 
 /***/ }),
 
-/***/ 319:
+/***/ 326:
 /***/ (function(module, exports, __webpack_require__) {
 
 // This is loaded by webpack
 
 // require('../../semantic/dist/semantic.min.css');
-__webpack_require__(320);
+__webpack_require__(327);
 
-__webpack_require__(321);
-__webpack_require__(322);
+__webpack_require__(328);
+__webpack_require__(329);
 
 
 /***/ }),
 
-/***/ 320:
+/***/ 327:
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
 
-/***/ 321:
+/***/ 328:
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
 
-/***/ 322:
+/***/ 329:
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin

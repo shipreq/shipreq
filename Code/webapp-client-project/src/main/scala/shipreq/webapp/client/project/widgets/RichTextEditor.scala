@@ -3,20 +3,18 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.dom.html
-import shipreq.base.util.{PotentialChange, Validity}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
+import shipreq.base.util.{PotentialChange, Validity}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.Text.Equality._
-import shipreq.webapp.base.text._
+import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{EditorStatus, PreviewFeature}
 import shipreq.webapp.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
+import shipreq.webapp.base.text.Text.Equality._
+import shipreq.webapp.base.text._
 import shipreq.webapp.base.ui.{AutosizeTextarea, EditTheme}
-import shipreq.webapp.client.project.feature.AutoCompleteFeature
-import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.lib.DataReusability._
-import RichTextEditor.hardcodedLive
+import shipreq.webapp.client.project.widgets.RichTextEditor.hardcodedLive
 
 sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, final val text: TextType) {
 
@@ -51,13 +49,13 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
   val liveCorrect: EndoFn[String] =
     RichTextEditor.liveCorrect(text)
 
-  final class Backend($: BackendScope[Props, Unit]) {
+  final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.EditorBackend {
     private val pxProject    = Px.props($).map(_.project).withReuse.autoRefresh
     private val pxPlainText  = Px.props($).map(_.plainText).withReuse.autoRefresh
     private val pxTextSearch = Px.props($).map(_.textSearch).withReuse.autoRefresh
 
-    val pxAutoComplete =
-      Px.apply3(pxProject, pxPlainText, pxTextSearch)(AutoComplete.forRichText(text))
+    override val pxAutoComplete =
+      Px.apply3(pxProject, pxPlainText, pxTextSearch)(AutoComplete.Project.richText(text))
 
     val textareaConst: TagMod = {
       val keys =
@@ -77,11 +75,6 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
         RichTextEditor.minRows(text.lineCardinality),
         keys)
     }
-
-    val editorRef = ScalaComponent.mutableRefTo(AutosizeTextarea.Component)
-
-    def getTextarea(): html.TextArea =
-      editorRef.value.getDOMNode.domCast
 
     def render(p: Props) = {
 
@@ -111,7 +104,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
       .renderBackend[Backend]
       .configure(
 //        Reusability.shouldComponentUpdate,
-        AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.setState))
+        AutoComplete.install)
       .build
 }
 

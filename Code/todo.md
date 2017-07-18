@@ -7,10 +7,6 @@ Backlog
 * Show past IDs in ReqTable
 * Group req types in filter from ALL to ANY.
 * Say "no implications" in imp graph
-* Autocomplete problems
-  * The popup is far away from the textarea
-  * Ideally replace jquery-textcomplete with textcomplete (problems encountered)
-  * Maybe write my own based on React
 
 ### Nice UI
 * Cfg Fields
@@ -79,7 +75,6 @@ Phase 2
 
 ### Tech
 * Only create a single Lift function per SPA instead of one per ServerSideProc
-* Switch to textcomplete
 * Improve load times, maybe defer stuff? Or maybe on-demand loading?
   * Katex.js can be loaded on demand. Only the CSS is required for rendering.
   * Create and use HomeSpaLoader

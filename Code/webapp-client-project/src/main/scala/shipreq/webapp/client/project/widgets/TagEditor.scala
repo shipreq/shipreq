@@ -3,21 +3,17 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.dom.html
-import scalaz.{-\/, \/, \/-}
-import scalacss.ScalaCssReact._
+import scalaz.\/
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.SingleLine
-import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
-import shipreq.webapp.base.validation.Simple._
-import shipreq.webapp.base.data.Plain
+import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.EditorStatus
 import shipreq.webapp.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
+import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
+import shipreq.webapp.base.text.SingleLine
 import shipreq.webapp.base.ui.{AutosizeTextarea, EditTheme}
-import shipreq.webapp.client.project.feature._
-import shipreq.webapp.client.project.lib.AutoComplete
+import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.client.project.lib.DataReusability._
 
 object TagEditor {
@@ -91,11 +87,11 @@ object TagEditor {
 //  implicit val reusabilityProps: Reusability[Props] =
 //    Reusability.never // TODO Reusability.caseClass
 
-  final class Backend($: BackendScope[Props, Unit]) {
+  final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.EditorBackend {
     private val pxLookup = Px.props($).map(_.lookup).withReuse.autoRefresh
 
-    val pxAutoComplete = pxLookup.map(l =>
-      AutoComplete.tag(l.values.toStream, HideDead)(Plain))
+    override val pxAutoComplete = pxLookup.map(l =>
+      AutoComplete.Project.tag(l.values.toStream, HideDead)(Plain))
 
     @inline private def lineCardinality = SingleLine
 
@@ -115,11 +111,6 @@ object TagEditor {
         RichTextEditor.minRows(lineCardinality),
         keys)
     }
-
-    val editorRef = ScalaComponent.mutableRefTo(AutosizeTextarea.Component)
-
-    def getTextarea(): html.TextArea =
-      editorRef.value.getDOMNode.domCast
 
     def render(p: Props) = {
 
@@ -143,6 +134,6 @@ object TagEditor {
       .renderBackend[Backend]
       .configure(
 //        Reusability.shouldComponentUpdate,
-        AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.setState))
+        AutoComplete.install)
       .build
 }

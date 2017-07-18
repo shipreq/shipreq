@@ -1,22 +1,22 @@
 package shipreq.webapp.client.project.widgets
 
-import japgolly.scalajs.react._, vdom.html_<^._
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import org.scalajs.dom.html
+import japgolly.scalajs.react.vdom.html_<^._
 import scalaz.\/
 import shipreq.base.util._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.data.DataValidators.{reqCode => V}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
-import shipreq.webapp.base.text.GrammarSpec.SeqFormat
-import shipreq.webapp.base.validation.Simple._
+import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.EditorStatus
 import shipreq.webapp.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
+import shipreq.webapp.base.text.GrammarSpec.SeqFormat
+import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
 import shipreq.webapp.base.ui.{AutosizeTextarea, EditTheme}
-import shipreq.webapp.client.project.feature._
+import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.lib.{AutoComplete, TextEditor}
-import DataValidators.{reqCode => V}
+import shipreq.webapp.client.project.lib.TextEditor
 
 sealed abstract class ReqCodeEditor[In: Reusability, Out] {
   final type Output = Out
@@ -55,16 +55,11 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
 //  implicit lazy val reusabilityProps: Reusability[Props] =
 //    Reusability.never // TODO Reusability.caseClass
 
-  final class Backend($: BackendScope[Props, Unit]) {
+  final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.EditorBackend {
     private val pxTrie = Px.props($).map(_.trie).withReuse.autoRefresh
 
-    val pxAutoComplete = pxTrie.map(t =>
-      AutoComplete.reqCode.prefixes(t))
-
-    private val editorRef = ScalaComponent.mutableRefTo(AutosizeTextarea.Component)
-
-    def getTextarea(): html.TextArea =
-      editorRef.value.getDOMNode.domCast
+    override val pxAutoComplete = pxTrie.map(t =>
+      AutoComplete.Project.reqCode.prefixes(t))
 
     val textareaConst: TagMod = {
       val keys =
@@ -106,7 +101,7 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
       .renderBackend[Backend]
       .configure(
 //        Reusability.shouldComponentUpdate,
-        AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.setState))
+        AutoComplete.install)
       .build
 }
 

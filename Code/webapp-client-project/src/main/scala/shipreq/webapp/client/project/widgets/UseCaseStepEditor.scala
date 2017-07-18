@@ -3,8 +3,6 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.dom.html
-import scalacss.ScalaCssReact._
 import scalaz.\/
 import scalaz.syntax.traverse._
 import scalaz.std.option.optionInstance
@@ -17,12 +15,11 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.base.event.UseCaseStepGD
-import shipreq.webapp.base.feature.{EditorStatus, PreviewFeature}
 import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.ui.{AutosizeTextarea, EditTheme}
-import shipreq.webapp.client.project.lib.AutoComplete
+import shipreq.webapp.base.feature.AutoCompleteFeature._
+import shipreq.webapp.base.feature.{EditorStatus, PreviewFeature}
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.feature.AutoCompleteFeature
 import RichTextEditor.hardcodedLive
 import Text.Equality._
 import Text.UseCaseStep.{OptionalText, lineCardinality}
@@ -105,13 +102,13 @@ object UseCaseStepEditor {
   val liveCorrect: EndoFn[String] =
     RichTextEditor.liveCorrect(Text.UseCaseStep)
 
-  final class Backend($: BackendScope[Props, Unit]) {
+  final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.EditorBackend {
     private val pxProject    = Px.props($).map(_.project).withReuse.autoRefresh
     private val pxPlainText  = Px.props($).map(_.plainText).withReuse.autoRefresh
     private val pxTextSearch = Px.props($).map(_.textSearch).withReuse.autoRefresh
 
-    val pxAutoComplete =
-      Px.apply3(pxProject, pxPlainText, pxTextSearch)(AutoComplete.forRichText(Text.UseCaseStep))
+    override val pxAutoComplete =
+      Px.apply3(pxProject, pxPlainText, pxTextSearch)(AutoComplete.Project.richText(Text.UseCaseStep))
 
     val textareaConst: TagMod = {
       val keys =
@@ -132,8 +129,6 @@ object UseCaseStepEditor {
         keys)
     }
 
-    private val editorRef = ScalaComponent.mutableRefTo(AutosizeTextarea.Component)
-
     def render(p: Props) = {
       def editor(validity: Validity): VdomElement =
         editorRef.component(EditTheme.autosizeTextareaProps(validity, p.edit.value, textareaConst))
@@ -153,9 +148,6 @@ object UseCaseStepEditor {
 
       EditTheme.renderEditor(p.status, editor, richText, instructions, preview)
     }
-
-    def getTextarea(): html.TextArea =
-      editorRef.value.getDOMNode.domCast
   }
 
   val Component =
@@ -163,6 +155,6 @@ object UseCaseStepEditor {
       .renderBackend[Backend]
       .configure(
 //        Reusability.shouldComponentUpdate,
-        AutoCompleteFeature.installBP(_.backend.getTextarea(), _.pxAutoComplete.value(), _.edit.setState))
+        AutoComplete.install)
       .build
 }
