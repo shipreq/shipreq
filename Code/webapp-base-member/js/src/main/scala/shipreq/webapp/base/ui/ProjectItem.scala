@@ -6,9 +6,10 @@ import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.UiText.EnglishStringExt
-import shipreq.webapp.base.data.{ProjectMetaData, DataValidators}
+import shipreq.webapp.base.data.{DataValidators, ProjectMetaData}
 import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus}
 import shipreq.webapp.base.jsfacade.MomentJs
 import shipreq.webapp.base.ui.semantic.{Icon, Size, Statistic, StatisticGroup}
@@ -78,7 +79,7 @@ object ProjectItem {
     //   Reusability.caseClass
 
     @Lenses
-    case class EditState(edit: String, async: AsyncFeature.State.D0[String])
+    case class EditState(edit: String, async: AsyncFeature.State.D0[ErrorMsg])
 
     type State = Option[EditState]
     object State {

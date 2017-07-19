@@ -8,12 +8,11 @@ import japgolly.scalajs.react.extra._
 import japgolly.univeq._
 import org.scalajs.dom.window
 import scalacss.ScalaCssReact._
-import shipreq.base.util.Allow
+import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
-import shipreq.webapp.base.text.{TextSearch, PlainText}
-import shipreq.webapp.base.data.TCB
+import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.semantic.{Button, Icon}
@@ -38,7 +37,7 @@ object SelectionCtrls {
                          widgets    : ProjectWidgets,
                          projectText: PlainText.ForProject,
                          textSearch : TextSearch,
-                         updateIO   : ServerSideProcInvoker[UpdateContentCmd, Any],
+                         updateIO   : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any],
                          async      : AsyncFeature.Write.D1[Row.SourceId, Nothing]) {
     @inline def render: VdomElement = Component(this)
   }
@@ -174,9 +173,9 @@ object SelectionCtrls {
         }
 
       def callServer: Callback = {
-        val s = TCB.Success(unlockRows >> uncheckRows)
-        val f = (err: String) => TCB.Failure.lazily(
-          if (window.confirm(s"Deletion failed. $err\n\nRetry?"))
+        val s = unlockRows >> uncheckRows
+        val f = (err: ErrorMsg) => Callback.lazily(
+          if (window.confirm(s"Deletion failed. ${err.value}\n\nRetry?"))
             callServer
           else
             unlockRows

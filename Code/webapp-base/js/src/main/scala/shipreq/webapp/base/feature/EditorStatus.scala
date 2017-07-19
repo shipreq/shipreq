@@ -3,7 +3,7 @@ package shipreq.webapp.base.feature
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.PotentialChange
+import shipreq.base.util.{ErrorMsg, PotentialChange}
 import shipreq.webapp.base.validation.Simple._
 import EditorStatus._
 
@@ -102,9 +102,9 @@ object EditorStatus {
                             (commit: A => Option[Callback], unchanged: Option[Callback]): Sync =
     potentialChange(vu)(commit, unchanged)(Invalidity.toText)
 
-  def async[F, I](a: AsyncFeature.Read.D0[F])(implicit f: F => TagMod): Option[Async] =
+  def async[I](a: AsyncFeature.Read.D0[ErrorMsg]): Option[Async] =
     a map {
-      case AsyncFeature.Status.InProgress   => InTransit
-      case x: AsyncFeature.Status.Failed[F] => AsyncError(f(x.failure), retry = x.retry, clearAsync = x.cancel)
+      case AsyncFeature.Status.InProgress          => InTransit
+      case x: AsyncFeature.Status.Failed[ErrorMsg] => AsyncError(x.failure.value, retry = x.retry, clearAsync = x.cancel)
     }
 }

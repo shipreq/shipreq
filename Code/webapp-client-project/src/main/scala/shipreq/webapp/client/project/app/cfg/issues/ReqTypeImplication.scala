@@ -14,6 +14,7 @@ private[issues] object ReqTypeImplication {
 
   final case class Props(cp: ClientProtocol, remote: ReqTypeImplicationMod.Instance, clientData: ClientData) {
     @inline def component = Component(this)
+    def proc = clientData.serverSideProcToEvents(cp, remote)
   }
 
   val rowStore = SavedRowStore.data[CustomReqType](_.imp)
@@ -39,7 +40,7 @@ private[issues] object ReqTypeImplication {
 
     def save(id: CustomReqTypeId): CallbackTo[ST] =
       $.props.map(p =>
-        Persistence.simpleAsyncUpdate(rowStore)(p.remote, p.clientData, p.cp, $ runState _, id))
+        Persistence.simpleAsyncUpdate(rowStore)(p.proc, $ runState _, id))
 
     val genEditor =
       Editors.checkboxEditor.imap(On <=> ImplicationRequired)

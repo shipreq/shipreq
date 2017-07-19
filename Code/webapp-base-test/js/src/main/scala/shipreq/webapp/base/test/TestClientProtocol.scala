@@ -2,31 +2,33 @@ package shipreq.webapp.base.test
 
 import japgolly.scalajs.react.Callback
 import org.scalajs.dom.console
-import scalaz.Equal
+import scalaz.{-\/, Equal, \/, \/-}
 import shipreq.base.test.BaseTestUtil._
-import shipreq.webapp.base.data.TCB
 import shipreq.webapp.base.protocol._
 import TestClientProtocol._
 
 object TestClientProtocol {
   trait Req {
-    val proc   : ServerSideProc
-    val input  : proc.protocol.Input
-    val success: proc.protocol.Output => TCB.Success
-    val failure: RemoteFailure[proc.protocol.Failure] => TCB.Failure
+    val proc      : ServerSideProc[_, _]
+    val input     : proc.protocol.Input
+    val onResponse: Throwable \/ proc.protocol.Output => Callback
 
     override def toString =
       "Req[%08X]:%s(%s)".format(##, proc.key.trim, input)
 
-    def force(p2: ServerSideProc) = {
-      assertEq[ServerSideProc.Protocol](proc.protocol, p2.protocol)
+    def force[I, O](p2: ServerSideProc[I, O]) = {
+//      assertEq[ServerSideProc.Protocol[_, _]](proc.protocol, p2.protocol)
+      assert(proc == p2)
       this.asInstanceOf[Req {val proc: p2.type}]
     }
 
-    def forceP(p2: ServerSideProc.Protocol) = {
-      assertEq[ServerSideProc.Protocol](proc.protocol, p2)
-      this.asInstanceOf[ReqP[p2.type]]
+    def forceP[I, O](p2: ServerSideProc.Protocol[I, O]) = {
+      assert(proc.protocol == p2)
+      forceIO[I, O]
     }
+
+    def forceIO[I, O] =
+      this.asInstanceOf[ReqP[I, O]]
 
     var _pendingResponse = true
     def responsePending = _pendingResponse
@@ -38,7 +40,7 @@ object TestClientProtocol {
       else
         sys error "Request has already been responded to."
   }
-  type ReqP[P <: ServerSideProc.Protocol] = Req { val proc: ServerSideProc.For[P] }
+  type ReqP[I, O] = Req { val proc: ServerSideProc[I, O] }
 }
 
 class TestClientProtocol(autoRespondArg: Boolean) extends ClientProtocol {
@@ -63,21 +65,20 @@ class TestClientProtocol(autoRespondArg: Boolean) extends ClientProtocol {
   def addAutoResponsePF(f: PartialFunction[Req, Callback]): Unit =
     autoResponsePFs :+= f
 
-  def addAutoResponse[P <: ServerSideProc.Protocol](p: P)(f: ReqP[P] => Callback): Unit =
+  def addAutoResponse[I, O](p: ServerSideProc.Protocol[I, O])(f: ReqP[I, O] => Callback): Unit =
     addAutoResponsePF {
-      case r if r.proc.protocol ==* p => f(r.asInstanceOf[ReqP[P]])
+      case r if r.proc.protocol ==* p => f(r.asInstanceOf[ReqP[I, O]])
     }
 
-  def call(p: ServerSideProc)(_input  : p.protocol.Input,
-                              _success: p.protocol.Output => TCB.Success,
-                              _failure: RemoteFailure[p.protocol.Failure] => TCB.Failure): Callback = {
+  override def call[I, O](_proc      : ServerSideProc[I, O])
+                         (_input     : I,
+                          _onResponse: Throwable \/ O => Callback): Callback = {
     //println(s"RPC: ${_r.d}(${_r.n}) ← ${_i}")
     Callback {
       val r = new Req {
-        override val proc: p.type = p
-        override val input   = _input
-        override val success = _success
-        override val failure = _failure
+        override val proc: _proc.type = _proc
+        override val input = _input
+        override val onResponse = _onResponse
       }
       reqs :+= r
       if (autoRespond)
@@ -90,11 +91,11 @@ class TestClientProtocol(autoRespondArg: Boolean) extends ClientProtocol {
 
   def last = reqs.last
 
-  def respondToLast(p: ServerSideProc)(o: p.protocol.Output): Unit =
-    last.force(p).success(o).runNow()
+  def respondToLast[I, O](p: ServerSideProc[I, O])(o: O): Unit =
+    last.force(p).onResponse(\/-(o)).runNow()
 
-  def respondToLastP(p: ServerSideProc.Protocol)(o: p.Output): Unit =
-    last.forceP(p).success(o).runNow()
+  def respondToLastP[I, O](p: ServerSideProc.Protocol[I, O])(o: O): Unit =
+    last.forceP(p).onResponse(\/-(o)).runNow()
 
   def autoRespondToLast(): Unit = {
     val r = last
@@ -105,15 +106,15 @@ class TestClientProtocol(autoRespondArg: Boolean) extends ClientProtocol {
   def failLast(): Unit = {
     val r = last
     r.markResponded()
-    r.failure(RemoteFailure.exception(new Throwable("Dummy error from TestClientProtocol.failLast()"))).runNow()
+    r.onResponse(-\/(new Throwable("Dummy error from TestClientProtocol.failLast()"))).runNow()
   }
 
-  def lastTwo(r: ServerSideProc) = {
+  def lastTwo[I, O](r: ServerSideProc[I, O]) = {
     val Vector(a, b) = reqs.takeRight(2).map(_.force(r))
     (a, b)
   }
 
-  def assertLastTwoRequestsEqual(p: ServerSideProc)(implicit e: Equal[p.protocol.Input]): Unit = {
+  def assertLastTwoRequestsEqual[I, O](p: ServerSideProc[I, O])(implicit e: Equal[I]): Unit = {
     val (a, b) = lastTwo(p)
     assertEq("Last two requests", a.input, b.input)
   }

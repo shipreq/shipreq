@@ -1,21 +1,21 @@
 package shipreq.webapp.base
 
+import shipreq.base.util.ErrorMsg
+
 package object protocol {
   import boopickle.Pickler
   import scalaz.\/
-  import BinCodecGeneric.pickleXor
   import shipreq.webapp.base.event.VerifiedEvent
+  import BinCodecGeneric._
+  import BinCodecBaseData._
   import BinCodecEvents._
 
   implicit val pickleErrorMsgOrVerifiedEventSeq: Pickler[ErrorMsg \/ VerifiedEvent.Seq] =
-    pickleXor(ErrorMsg.pickleErrorMsg, pickleVerifiedEventSeq)
+    pickleXor(picklerErrorMsg, pickleVerifiedEventSeq)
 
   implicit class MemberExt_ServerSideProcProtocol(private val self: ServerSideProc.Protocol.type) extends AnyVal {
-    import ServerSideProc.Protocol._
-
-    def toEvents[I: Pickler]: Aux[ErrorMsg, I, VerifiedEvent.Seq] =
-      lowLevel[ErrorMsg, I, VerifiedEvent.Seq]
+    def toEvents[I: Pickler]: ServerSideProc.Protocol[I, ErrorMsg \/ VerifiedEvent.Seq] =
+      ServerSideProc.Protocol.apply
   }
-
 
 }

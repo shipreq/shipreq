@@ -2,24 +2,26 @@ package shipreq.webapp.client.project.app.cfg.fields
 
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._, MonocleReact._
+import japgolly.scalajs.react._
+import vdom.html_<^._
+import ScalazReact._
+import MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import scala.language.reflectiveCalls
-import scalajs.js.{undefined, UndefOr}
-import scalaz.{Equal, -\/, \/-, \/}
-
+import scalajs.js.{UndefOr, undefined}
+import scalaz.{-\/, Equal, \/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataValidators.{field => V}
-import shipreq.webapp.base.protocol.FieldCrud
-import shipreq.webapp.base.UiText, UiText.FieldNames
+import shipreq.webapp.base.protocol.{ClientProtocol, FieldCrud, ServerSideProcInvoker}
+import shipreq.webapp.base.UiText
+import UiText.FieldNames
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.cfg.shared.{FieldSet => _, _}
-import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
+import shipreq.webapp.client.project.app.state.{ChangeListener, ClientData}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.DND
 import shipreq.webapp.client.project.widgets._
@@ -193,10 +195,13 @@ private[fields] object MainTable {
   case class ProtocolBackend(cp: ClientProtocol, remote: FieldCrud.Protocol.Instance, cd: ClientData) {
     import FieldCrud._
 
+    def proc = cp(remote).mergeFailure
+
     private def call(a: CfgAction): (TCB.Success, TCB.Failure) => Callback =
-      (s, f) => cp.call(remote)(a,
-        cd.applyEventSeqSCB(_) >> s,
-        _.consume >> f)
+      (s, f) => proc(
+        a,
+        cd.applyEventSeqCB(_) >> s,
+        _ => f)
 
     def createIO(v: Values) =
       call(CfgAction.Create(v))

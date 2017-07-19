@@ -8,7 +8,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{Applicable, NotApplicable}
+import shipreq.base.util.{Applicable, ErrorMsg, NotApplicable}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.{Off, On, Plain}
 import shipreq.webapp.base.feature.AsyncFeature
@@ -61,7 +61,7 @@ object Table {
                            cols       : NonEmptyVector[ColumnPlus],
                            selection  : RowSelectionVisible,
                            editor     : EditorFeature.ReadWrite.ForProject,
-                           rowAsync   : AsyncFeature.Read.D1[Row.SourceId, String],
+                           rowAsync   : AsyncFeature.Read.D1[Row.SourceId, ErrorMsg],
                            config     : ProjectConfig,
                            pw         : ProjectWidgets,
                            modSettings: ModFn[TableSettings]) {
@@ -245,7 +245,7 @@ object Table {
                      editor       : RowEditor,
                      cols         : NonEmptyVector[ColumnPlus],
                      applicability: Applicability[Column, Row],
-                     rowAsync     : AsyncFeature.Read.D0[String],
+                     rowAsync     : AsyncFeature.Read.D0[ErrorMsg],
                      selection    : Selection.OneUI[Row.SourceId]) {
       @inline def render = Component.withKey(row.id.key)(this)
     }
@@ -308,17 +308,17 @@ object Table {
       }
 
       p.rowAsync match {
-        case None                                        => renderNormal
-        case Some(AsyncFeature.Status.InProgress)        => renderLocked
-        case Some(s: AsyncFeature.Status.Failed[String]) =>
+        case None                                          => renderNormal
+        case Some(AsyncFeature.Status.InProgress)          => renderLocked
+        case Some(s: AsyncFeature.Status.Failed[ErrorMsg]) =>
           // Currently, whole-row state is only used when a row is being deleted/restored.
           // To save dev-time, if the RPC fails an alert popups asking to retry/cancel, thus this part of the code
           // should only execute when the row is locked. Whole-row editing + failure won't occur.
-          dom.console.warn(s.failure)
+          dom.console.warn(s.failure.value)
           rowBase(
             <.td(^.colSpan := (p.cols.length + 1),
               <.div(
-                s.failure,
+                s.failure.value,
                 <.button("Retry", ^.onClick --> s.retry),
                 <.button("Abort", ^.onClick --> s.cancel))))
       }

@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
-import shipreq.base.util.{Deny, Permission}
+import shipreq.base.util.{Deny, ErrorMsg, Permission}
 import shipreq.webapp.base.CommmonUiText
 import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.feature.AsyncFeature
@@ -20,14 +20,14 @@ object Register1 {
   final case class Props(allowRegister: Permission,
                          rc           : RouterCtl,
                          state        : StateSnapshot[State],
-                         asyncW       : AsyncFeature.Write.D0[String],
-                         submit       : ServerSideProcInvoker[EmailAddr, Unit]) {
+                         asyncW       : AsyncFeature.Write.D0[ErrorMsg],
+                         submit       : ServerSideProcInvoker[EmailAddr, ErrorMsg, Unit]) {
     @inline def render: VdomElement = Component(this)
   }
 
   @Lenses
   final case class State(email    : String,
-                         async    : AsyncFeature.State.D0[String],
+                         async    : AsyncFeature.State.D0[ErrorMsg],
                          submitted: Boolean) {
 
     val formEnabled: Enabled =
@@ -52,7 +52,7 @@ object Register1 {
         p.asyncW((s, f) => p.submit(
           email,
           _ => s << $.props.flatMap(_.state.modState(_.copy(submitted = true))),
-          e => f(e) >> Callback.alert(e)))
+          e => f(e) >> Callback.alert(e.value)))
 
     private val attemptSubmit: Callback =
       $.props.flatMap(submitCB(_).getOrEmpty)

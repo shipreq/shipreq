@@ -81,7 +81,7 @@ object DispatchLogicTest extends TestSuite {
         testRun(Response.ServePublicSpa, Url.Relative(s"/login/${u.relativeUrlNoHeadSlash}")))
 
       'resetPassword2 {
-        svr.run(PublicSpaLogic[Name, Name].initData.value.resetPassword1)(\/-(user2.emailAddr)).needRight
+        svr.run(PublicSpaLogic[Name, Name].initData.value.resetPassword1)(\/-(user2.emailAddr))
 
         'invalid - assertProtected(testRun(Response.redirectToPublicHome, ResetPassword.url(SecurityToken("wwwweeeeeeeeeee33333"))))
         'valid   - assertProtected(testRun(Response.ServePublicSpa, ResetPassword.url(db.prevToken())))

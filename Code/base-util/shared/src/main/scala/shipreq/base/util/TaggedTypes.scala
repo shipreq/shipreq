@@ -69,10 +69,10 @@ object TaggedTypes {
   implicit def taggedScalazTC_int   [T <: TaggedType {type U = Int   }] = taggedTC_int   .subst[T].ScalazTC
   implicit def taggedScalazTC_short [T <: TaggedType {type U = Short }] = taggedTC_short .subst[T].ScalazTC
 
+  implicit def autoUnboxTaggedString[T <: TaggedType {type U = String}](t: T): String = t.value
   implicit def autoUnboxTaggedLong  [T <: TaggedType {type U = Long}]  (t: T): Long   = t.value
   implicit def autoUnboxTaggedInt   [T <: TaggedType {type U = Int}]   (t: T): Int    = t.value
   implicit def autoUnboxTaggedShort [T <: TaggedType {type U = Short}] (t: T): Short  = t.value
-  implicit def autoUnboxTaggedString[T <: TaggedType {type U = String}](t: T): String = t.value
 
   // -------------------------------------------------------------------------------------------------------------------
 

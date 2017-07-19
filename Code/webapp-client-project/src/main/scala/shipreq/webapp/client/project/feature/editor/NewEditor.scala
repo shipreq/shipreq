@@ -46,7 +46,7 @@ object NewEditor {
                           pxPlainText     : Px[PlainText.ForProject],
                           pxProjectWidgets: Px[ProjectWidgets],
                           pxTextSearch    : Px[TextSearch],
-                          saveIO          : ServerSideProcInvoker[UpdateContentCmd, Any]) {
+                          saveIO          : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any]) {
 
     private[NewEditor] val internal = new Internal(this)
   }

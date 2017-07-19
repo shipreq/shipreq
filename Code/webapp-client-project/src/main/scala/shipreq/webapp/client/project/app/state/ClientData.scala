@@ -2,10 +2,11 @@ package shipreq.webapp.client.project.app.state
 
 import japgolly.scalajs.react.extra.{Broadcaster, Px, Reusability}
 import japgolly.scalajs.react.{Callback, CallbackTo}
+import scalaz.\/
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.event.VerifiedEvent
-import shipreq.webapp.base.protocol.{ErrorMsg, ProjectSpaProtocols, ServerSideProc}
-import shipreq.webapp.base.data.TCB
+import shipreq.webapp.base.protocol.{ProjectSpaProtocols, ServerSideProc}
 import shipreq.webapp.base.protocol.{ClientProtocol, ServerSideProcInvoker}
 
 class ClientData(initialState: ProjectState) extends Broadcaster[Changes] {
@@ -25,12 +26,12 @@ class ClientData(initialState: ProjectState) extends Broadcaster[Changes] {
   final val pxProject                               : Px[Project]         = mutableState.pxProject
   final val projectCB                               : CallbackTo[Project] = pxProject.toCallback
   final def applyEventSeqCB(ves: VerifiedEvent.Seq) : Callback            = mutableState.applyEventSeqCB(ves)
-  final def applyEventSeqSCB(ves: VerifiedEvent.Seq): TCB.Success         = mutableState.applyEventSeqSCB(ves)
 
-  final def serverSideProcToEvents[I](proc: ServerSideProc.Aux[ErrorMsg, I, VerifiedEvent.Seq],
-                                      cp: ClientProtocol): ServerSideProcInvoker[I, VerifiedEvent.Seq] =
-    new ServerSideProcInvoker((i, s, f) =>
-      cp.call(proc)(i, e => mutableState.applyEventSeqSCB(e) >> s(e), _ consumeAnd f))
+  final def serverSideProcToEvents[I](cp: ClientProtocol,
+                                      proc: ServerSideProc[I, ErrorMsg \/ VerifiedEvent.Seq]): ServerSideProcInvoker[I, ErrorMsg, VerifiedEvent.Seq] =
+    cp(proc)
+      .mergeFailure
+      .onSuccess((ves, s) => s << mutableState.applyEventSeqCB(ves))
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -42,12 +43,13 @@ object ClientData {
   def initAsync(cp          : ClientProtocol,
                 remoteInit  : ProjectSpaProtocols.InitAsync.Instance)
                (onSuccess   : ClientData => Callback,
-                onFailure   : String => Callback): Callback =
-    cp.call(remoteInit)((),
+                onFailure   : ErrorMsg => Callback): Callback =
+    cp(remoteInit).mergeFailure.apply(
+      (),
       i => {
         val s = ProjectState.init(i.project, i.projectMetaData, i.latestEventOrd)
         def cd = new ClientData(s)
-        TCB.Success(onSuccess(cd))
+        onSuccess(cd)
       },
-      _.consumeAnd(e => TCB.Failure(onFailure(e))))
+      onFailure)
 }

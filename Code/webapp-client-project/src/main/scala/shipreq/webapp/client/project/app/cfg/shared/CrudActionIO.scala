@@ -7,12 +7,14 @@ import shipreq.webapp.client.project.app.state.ClientData
 import shipreq.webapp.base.data.TCB
 import shipreq.webapp.base.protocol.ClientProtocol
 import DataImplicits._
+import shipreq.base.util.ErrorMsg
+import shipreq.webapp.base.event.VerifiedEvent
 
 object CrudActionIO {
-  def apply[O, D, I, U](o: O, rd: CrudProtocol.Aux[I, U])
+  def apply[O, D, I, U](o: O, rd: CrudProtocol[I, U])
                        (cp: ClientProtocol, remote: rd.Instance, clientData: ClientData)
                        (implicit O: ObjDataId[O, D, I]) =
-    new CrudActionIO[D, I, U, rd.type](cp, remote, clientData)
+    new CrudActionIO[D, I, U](clientData.serverSideProcToEvents(cp, remote))
 }
 
 /**
@@ -20,16 +22,11 @@ object CrudActionIO {
  * @tparam I Data ID.
  * @tparam U Updated data values.
  */
-final class CrudActionIO[D, I, U, RD <: CrudProtocol.Aux[I, U]](cp        : ClientProtocol,
-                                                                remote    : ServerSideProc.For[RD],
-                                                                clientData: ClientData)
-                                                               (implicit I: DataIdAux[D, I]) {
+final class CrudActionIO[D, I, U](proc: ServerSideProcInvoker[CrudAction[I, U], ErrorMsg, VerifiedEvent.Seq])
+                                 (implicit I: DataIdAux[D, I]) {
 
-  private def crudIO(s: TCB.Success, f: TCB.Failure, a: CrudAction[I, U]): Callback = {
-    cp.call(remote)(a,
-      clientData.applyEventSeqSCB(_) >> s,
-      _.consume >> f)
-  }
+  private def crudIO(s: TCB.Success, f: TCB.Failure, a: CrudAction[I, U]): Callback =
+    proc(a, _ => s, _ => f)
 
   def createIO(values: U, s: TCB.Success, f: TCB.Failure): Callback =
     crudIO(s, f, CrudAction.Create(values))

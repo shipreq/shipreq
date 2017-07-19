@@ -9,7 +9,6 @@ import shipreq.base.util._
 import shipreq.taskman.api.{Msg, TaskmanApi}
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data.SecurityToken
-import shipreq.webapp.base.protocol.ErrorMsg
 import shipreq.webapp.base.user._
 import shipreq.webapp.client.public.PublicSpaProtocols._
 import shipreq.webapp.server.ServerConfig
@@ -93,7 +92,7 @@ object PublicSpaLogic {
     val loginFn: F[Login.Fn.Instance] =
       svr.createServerSideProc(Login.Fn)(
         security.protectFn(req =>
-          attemptLogin(req.user, req.password).map(\/-(_))))
+          attemptLogin(req.user, req.password)))
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object RegisterFns {
@@ -244,7 +243,7 @@ object PublicSpaLogic {
               now <- svr.now
               msg <- runDB(resetInDb(now))
               _   <- taskman.submitMsgs_(msg)
-            } yield rightUnit
+            } yield ()
           })
 
       val resetPasswordFn2: F[ResetPassword.Fn2.Instance] =

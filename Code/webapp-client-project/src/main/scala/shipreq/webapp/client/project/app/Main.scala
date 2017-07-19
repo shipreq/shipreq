@@ -6,8 +6,9 @@ import org.scalajs.dom
 import scala.scalajs.js.annotation.JSExportTopLevel
 import shipreq.webapp.base.CssSettings._
 import scalacss.ScalaCssReact._
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.protocol.ProjectSpaProtocols
-import shipreq.webapp.base.protocol.{ClientSideProcImpl, ClientProtocol}
+import shipreq.webapp.base.protocol.{ClientProtocol, ClientSideProcImpl}
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.client.project.app.root._
 import shipreq.webapp.client.project.app.state.ClientData
@@ -36,7 +37,7 @@ object Main extends ClientSideProcImpl(ProjectSpaProtocols.EntryPoint) {
         router().renderIntoDOM(`#root`)
       }
 
-    def onFailure(error: String): Callback =
+    def onFailure(error: ErrorMsg): Callback =
       Callback {
         val lp = LoadingPage.Props(i.username, i.projectName)
         val lf = LoadFailedPage.Props(lp, error)

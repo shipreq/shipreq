@@ -51,8 +51,8 @@ abstract class BaseReusability {
   implicit def reusabilityNonEmptySet[A: Reusability]: Reusability[NonEmptySet[A]] =
     Reusability.byRef || Reusability.by(_.whole)
 
-  implicit def reusabilityServerSideProc[P <: ServerSideProc] =
-    Reusability.by((_: P).key)
+  implicit def reusabilityServerSideProc[I, O]: Reusability[ServerSideProc[I, O]] =
+    Reusability.by(_.key)
 
   //implicit def reusabilityValidation[S, I, C, V]: Reusability[Validator[S, I, C, V]] =
   //  Reusability.byRef

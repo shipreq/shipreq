@@ -13,7 +13,7 @@ import shipreq.webapp.client.project.lib.DataReusability._
 
 object Feature {
 
-  type AsyncError = String
+  type AsyncError = ErrorMsg
   type AsyncState = AsyncFeature.Read.D0[AsyncError]
 
   /** This is not safe for reusability because implementation calls `CallbackTo#runNow()`. */
@@ -27,7 +27,7 @@ object Feature {
     type Change[+A] = PotentialChange[Invalidity, A]
   }
 
-  /** Id used for [[shipreq.webapp.client.project.feature.PreviewFeature]] */
+  /** Id used for [[shipreq.webapp.base.feature.PreviewFeature]] */
   final case class PreviewId(row: RowKey, cell: FieldKey)
   object PreviewId {
     implicit def equality: UnivEq[PreviewId] = UnivEq.derive

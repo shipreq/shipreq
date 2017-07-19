@@ -41,7 +41,7 @@ object HomeSpaLogic {
 
         val createProjectFn: F[HomeSpaProtocols.CreateProject.Instance] =
           svr.createServerSideProc(HomeSpaProtocols.CreateProject)(name =>
-            svr.now.flatMap(now => runDB(createProject(user.id, name, now).map(\/-(_)))))
+            svr.now.flatMap(now => runDB(createProject(user.id, name, now))))
 
         for {
           p <- runDB(db.getAllProjectMetaDataForUser(user.id))

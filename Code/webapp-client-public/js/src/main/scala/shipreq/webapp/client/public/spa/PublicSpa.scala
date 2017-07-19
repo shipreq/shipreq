@@ -39,12 +39,12 @@ final class PublicSpa(val initData: P.InitData, cp: ClientProtocol) {
 
   final class Backend($: BackendScope[Props, State]) {
 
-    val sspLandingPage    = ServerSideProcInvoker(cp, initData.landingPage)
-    val sspLogin          = ServerSideProcInvoker(cp, initData.login)
-    val sspResetPassword1 = ServerSideProcInvoker(cp, initData.resetPassword1)
-    val sspResetPassword2 = ServerSideProcInvoker(cp, initData.resetPassword2)
-    val sspRegister1      = ServerSideProcInvoker(cp, initData.register1)
-    val sspRegister2      = ServerSideProcInvoker(cp, initData.register2)
+    val sspLandingPage    = cp(initData.landingPage).mergeFailure
+    val sspLogin          = cp(initData.login)
+    val sspResetPassword1 = cp(initData.resetPassword1)
+    val sspResetPassword2 = cp(initData.resetPassword2).mergeFailure
+    val sspRegister1      = cp(initData.register1).mergeFailure
+    val sspRegister2      = cp(initData.register2).mergeFailure
 
     val awLandingPage = AsyncFeature.Write.D0.init($.zoomStateL(State.landingPage ^|-> LandingPage.State.async))
     val awLogin       = AsyncFeature.Write.D0.init($.zoomStateL(State.login       ^|-> Login      .State.async))

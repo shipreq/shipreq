@@ -3,7 +3,7 @@ package shipreq.webapp.base.protocol
 import boopickle._
 import boopickle.Default.unitPickler
 import japgolly.microlibs.scalaz_ext.ScalazMacros
-import scalaz.Equal
+import scalaz.{Equal, \/, \/-}
 import scalaz.Leibniz.===
 import scalaz.syntax.equal._
 import utest._
@@ -16,6 +16,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.{RandomData => $}
 import $.TextGenExt
+import shipreq.base.util.ErrorMsg
 
 object ProtocolTest extends TestSuite {
 
@@ -27,9 +28,9 @@ object ProtocolTest extends TestSuite {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def kitR(r: ServerSideProc.Protocol) = {
+  def kitR[I, O](r: ServerSideProc.Protocol[I, O]) = {
     import r._
-    new KitIO[Input, Output]("Routines." + r.getClass.getSimpleName.replace("$",""))
+    new KitIO[I, O]("Routines." + r.getClass.getSimpleName.replace("$",""))
   }
 
   def kitCF[I](c: ClientSideProc[I], name: String) = {
@@ -80,13 +81,13 @@ object ProtocolTest extends TestSuite {
     // TODO Add more procs
 
     'ServerSideProcs {
-      type CrudFn[I] = ServerSideProc.Protocol.Aux[ErrorMsg, I, VerifiedEvent.Seq]
+      type CrudFn[I] = ServerSideProc.Protocol[I, ErrorMsg \/ VerifiedEvent.Seq]
 
       def testCrud[I](r: CrudFn[I])(g: Gen[r.Input])(implicit e: Equal[r.Input]): Unit =
         kitR(r).propI mustBeSatisfiedBy g
 
-      def testUnitI[O](r: ServerSideProc.Protocol.Aux[ErrorMsg, Unit, O])(g: Gen[O])(implicit e: Equal[O]): Unit =
-        kitR(r).propO mustBeSatisfiedBy g
+      def testUnitI[O](r: ServerSideProc.Protocol[Unit, ErrorMsg \/ O])(g: Gen[O])(implicit e: Equal[O]): Unit =
+        kitR(r).propO mustBeSatisfiedBy g.map[ErrorMsg \/ O](\/-(_))
 
       'InitAsync           - testUnitI(ProjectSpaProtocols.InitAsync         )($.routines.projectSpaInitAsyncData)
       'CustomIssueTypeCrud - testCrud(ProjectSpaProtocols.CustomIssueTypeCrud)($.routines.customIssueTypeCrud.any)

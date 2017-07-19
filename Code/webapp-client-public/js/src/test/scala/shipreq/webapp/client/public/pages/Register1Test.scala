@@ -2,6 +2,7 @@ package shipreq.webapp.client.public.pages
 
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
+import scalaz.\/-
 import utest._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -51,7 +52,7 @@ object Register1Tester {
       .addCheck(submitEnabled.assert(Enabled).before)
 
   def serverResponse: *.Actions =
-    *.action("Server response")(_.ref.respondToLastP(PublicSpaProtocols.Register.Fn1)(())) <+ reqsSent.assert.not.equal(0)
+    *.action("Server response")(_.ref.respondToLastP(PublicSpaProtocols.Register.Fn1)(\/-(()))) <+ reqsSent.assert.not.equal(0)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████

@@ -11,7 +11,7 @@ import shipreq.webapp.base.protocol.ServerSideProc
 
 object ServerProtocol extends HasLogger {
 
-  def createServerSideProc(p: ServerSideProc.Protocol)(localFn: p.Input => Fx[p.Response]): p.Instance = {
+  def createServerSideProc[I, O](p: ServerSideProc.Protocol[I, O])(localFn: I => Fx[O]): p.Instance = {
     import p._
 
     val proc = S.NFuncHolder { () =>
@@ -37,7 +37,7 @@ object ServerProtocol extends HasLogger {
           case e: Throwable => BadRequestResponse()
         }
 
-      def process(i: Input): T[Response] =
+      def process(i: Input): T[Output] =
         try {
           localFn(i).unsafeRun()
         } catch {
@@ -46,7 +46,7 @@ object ServerProtocol extends HasLogger {
             InternalServerErrorResponse()
         }
 
-      def sendResponse(r: Response): T[LiftResponse] =
+      def sendResponse(r: Output): T[LiftResponse] =
         try {
           val binary = PickleImpl.intoBytes(r)
           BinaryResponse(binary)

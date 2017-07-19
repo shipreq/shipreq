@@ -13,7 +13,7 @@ import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ApplyEvent, EventOrd, VerifiedEvent}
-import shipreq.webapp.base.protocol.{ErrorMsg, ProjectSpaProtocols}
+import shipreq.webapp.base.protocol.ProjectSpaProtocols
 import shipreq.webapp.base.user._
 import ProjectServer._
 
@@ -200,7 +200,7 @@ object ProjectServer {
           case e@ -\/(_) => F pure e
         }
 
-      private def initAsyncData(r: RegId): F[ProjectSpaProtocols.InitAsync.Response] =
+      private def initAsyncData(r: RegId): F[ProjectSpaProtocols.InitAsync.Output] =
         getOrSetLoadedState(r) map {
 
           case Promise.GetOrSet.Success((_, s)) =>

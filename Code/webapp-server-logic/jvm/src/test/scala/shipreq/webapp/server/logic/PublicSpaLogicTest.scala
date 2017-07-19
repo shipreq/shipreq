@@ -15,8 +15,8 @@ object PublicSpaLogicTest extends TestSuite {
     val logic = PublicSpaLogic[Name, Name]
     val initData = logic.initData.value
 
-    def runLogin(i: Login.Fn.Input): Login.Fn.Response = assertProtected(svr.run(initData.login)(i))
-//    def runLogin(usernameOrEmail: String, password: String): Login.Fn.Response = {
+    def runLogin(i: Login.Fn.Input): Login.Fn.Output = assertProtected(svr.run(initData.login)(i))
+//    def runLogin(usernameOrEmail: String, password: String): Login.Fn.Output = {
 //      val u: Username \/ EmailAddr =
 //        if (EmailAddr.isEmailAddr(usernameOrEmail))
 //          \/-(EmailAddr(usernameOrEmail))
@@ -25,11 +25,11 @@ object PublicSpaLogicTest extends TestSuite {
 //      runLogin(Login.Request(u, PlainTextPassword(password)))
 //    }
 
-    def runRegister1(i: Register.Fn1.Input): Register.Fn1.Response = assertProtected(svr.run(initData.register1)(i))
-    def runRegister2(i: Register.Fn2.Input): Register.Fn2.Response = assertProtected(svr.run(initData.register2)(i))
+    def runRegister1(i: Register.Fn1.Input): Register.Fn1.Output = assertProtected(svr.run(initData.register1)(i))
+    def runRegister2(i: Register.Fn2.Input): Register.Fn2.Output = assertProtected(svr.run(initData.register2)(i))
 
-    def runResetPassword1(i: ResetPassword.Fn1.Input): ResetPassword.Fn1.Response = assertProtected(svr.run(initData.resetPassword1)(i))
-    def runResetPassword2(i: ResetPassword.Fn2.Input): ResetPassword.Fn2.Response = assertProtected(svr.run(initData.resetPassword2)(i))
+    def runResetPassword1(i: ResetPassword.Fn1.Input): ResetPassword.Fn1.Output = assertProtected(svr.run(initData.resetPassword1)(i))
+    def runResetPassword2(i: ResetPassword.Fn2.Input): ResetPassword.Fn2.Output = assertProtected(svr.run(initData.resetPassword2)(i))
 
     db.users ::= user2
   }
@@ -50,7 +50,7 @@ object PublicSpaLogicTest extends TestSuite {
 
       def test(usernameOrEmail: Username \/ EmailAddr, password: PlainTextPassword)(expect: Permission) =
         assertDifference("usrLoginLog", db.usrLoginLog.length)(if (expect is Allow) 1 else 0) {
-          assertEq(runLogin(Login.Request(usernameOrEmail, password)), \/-(expect))
+          assertEq(runLogin(Login.Request(usernameOrEmail, password)), expect)
           svr.runForked()
         }
 
@@ -128,7 +128,7 @@ object PublicSpaLogicTest extends TestSuite {
         taskman.assertLastSubmitted { case r: Msg.RegistrationCompleted => () }
       }
 
-      def assertFailure(req: Request): Fn2.Response =
+      def assertFailure(req: Request): Fn2.Output =
         assertDifference(db.userPlaceholders.size)(0)(
           assertDifference(db.users.length)(0)(
             assertDifference(taskman.msgs.length)(0)(
@@ -158,7 +158,7 @@ object PublicSpaLogicTest extends TestSuite {
         import t._
         db.assertIssuesTokens(tokensIssued)(
           taskman.assertSubmits(msgsSubmitted)(
-            runResetPassword1(id).needRight))
+            runResetPassword1(id)))
       }
 
       def assertResetPasswordEmailSent()(implicit t: Tester): Unit = {
@@ -202,8 +202,8 @@ object PublicSpaLogicTest extends TestSuite {
         val t = new Tester(); import t._
         db.assertNoDbChange(
           assertDifference(taskman.msgs.length)(0) {
-            runResetPassword1(-\/(Username("xxxxxxxxxxxxxx"))).needRight
-            runResetPassword1(\/-(EmailAddr("xxxxxxxxx@xxxxx.com"))).needRight
+            runResetPassword1(-\/(Username("xxxxxxxxxxxxxx")))
+            runResetPassword1(\/-(EmailAddr("xxxxxxxxx@xxxxx.com")))
           }
         )
       }
@@ -220,7 +220,7 @@ object PublicSpaLogicTest extends TestSuite {
       import ResetPassword._
       implicit val t = new Tester(); import t._
       val i = \/-(user2.emailAddr)
-      runResetPassword1(i).needRight
+      runResetPassword1(i)
       val token = db.prevToken()
       val p2 = PlainTextPassword("asdjhf2314sdfajk")
 

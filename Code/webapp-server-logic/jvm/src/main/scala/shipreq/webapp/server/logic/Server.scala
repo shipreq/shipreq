@@ -1,7 +1,8 @@
 package shipreq.webapp.server.logic
 
 import java.time.{Duration, Instant}
-import shipreq.webapp.base.protocol.{ErrorMsg, ServerSideProc}
+import shipreq.base.util.ErrorMsg
+import shipreq.webapp.base.protocol.ServerSideProc
 
 object Server {
 
@@ -15,7 +16,7 @@ object Server {
   }
 
   trait Protocol[F[_]] {
-    def createServerSideProc(p: ServerSideProc.Protocol)(localFn: p.Input => F[p.Response]): F[p.Instance]
+    def createServerSideProc[I, O](p: ServerSideProc.Protocol[I, O])(localFn: I => F[O]): F[ServerSideProc[I, O]]
   }
 
   trait Session[F[_]] {

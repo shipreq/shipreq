@@ -34,7 +34,7 @@ object ReqDetail {
       .renderBackend
       .build
 
-  case class StaticProps(updateIO             : ServerSideProcInvoker[UpdateContentCmd, Any],
+  case class StaticProps(updateIO             : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any],
                          reqDetailRC          : RouterCtl[ExternalPubid],
                          webWorker            : WebWorkerClient,
                          updateContentFn      : ProjectSpaProtocols.UpdateContent.Instance,
@@ -50,7 +50,7 @@ object ReqDetail {
                           state     : StateSnapshot[State])
 
   case class ReqProps(editor: EditorFeature.ReadWrite.ForReq,
-                      async : AsyncFeature.ReadWrite.D1[Cell, String])
+                      async : AsyncFeature.ReadWrite.D1[Cell, ErrorMsg])
 
   type State = Modal.State
 
@@ -344,7 +344,7 @@ object ReqDetail {
     }
 
     def runActionNoAsync(cmd: UpdateContentCmd): Callback =
-      updateIO(cmd, TCB.Success._nop, f => TCB.Failure(Callback.alert(f)))
+      updateIO(cmd, _ => Callback.empty, e => Callback.alert(e.value))
 
     def delete(id: ReqId): Callback =
       CallbackTo {

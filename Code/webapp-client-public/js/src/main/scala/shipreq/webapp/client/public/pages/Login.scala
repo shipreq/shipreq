@@ -8,7 +8,7 @@ import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import org.scalajs.dom.{html, window}
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.{Allow, Deny, Permission, Url}
+import shipreq.base.util._
 import shipreq.webapp.base.data.{Disabled, Enabled, TCB}
 import shipreq.webapp.base.{CommmonUiText, Urls}
 import shipreq.webapp.base.feature.AsyncFeature
@@ -21,9 +21,9 @@ import shipreq.webapp.client.public.Styles.{login => *}
 object Login {
 
   final case class Props(state          : StateSnapshot[State],
-                         asyncW         : AsyncFeature.Write.D0[String],
-                         attemptLogin   : ServerSideProcInvoker[Request, Permission],
-                         resetPassword  : ServerSideProcInvoker[Username \/ EmailAddr, Unit],
+                         asyncW         : AsyncFeature.Write.D0[ErrorMsg],
+                         attemptLogin   : ServerSideProcInvoker[Request, ErrorMsg, Permission],
+                         resetPassword  : ServerSideProcInvoker[Username \/ EmailAddr, ErrorMsg, Unit],
                          redirectOnLogin: Option[Url.Relative]) {
 
     val formEnabled: Enabled =
@@ -70,7 +70,7 @@ object Login {
   final case class State(req          : Request.Untyped,
                          rememberMe   : Boolean,
                          errorFlash   : Option[ErrorFlash],
-                         async        : AsyncFeature.State.D0[String],
+                         async        : AsyncFeature.State.D0[ErrorMsg],
                          passwordReset: Option[Username \/ EmailAddr]) {
 
     def apply(localStorage: LocalStorage) = {
@@ -118,8 +118,8 @@ object Login {
         }
       }
 
-    private def handleAsyncError(f: String => TCB.Failure): String => TCB.Failure =
-      e => f(e) >> setError("Error occurred", e)
+    private def handleAsyncError(f: ErrorMsg => Callback): ErrorMsg => Callback =
+      e => f(e) >> setError("Error occurred", e.value)
 
     private def setError(title: String, content: String): Callback =
       for {

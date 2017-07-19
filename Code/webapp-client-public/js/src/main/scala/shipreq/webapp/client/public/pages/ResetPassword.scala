@@ -6,6 +6,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{Disabled, Enabled, SecurityToken}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ValidationUX
@@ -18,14 +19,14 @@ import shipreq.webapp.client.public.Styles.{resetPassword => *}
 object ResetPassword {
 
   final case class Props(token: SecurityToken,
-                         resetPassword: ServerSideProcInvoker[P.Request, P.Response]) {
+                         resetPassword: ServerSideProcInvoker[P.Request, ErrorMsg, P.Response]) {
     @inline def render: VdomElement = Component(this)
   }
 
   @Lenses
   final case class State(password1: String,
                          password2: String,
-                         async    : AsyncFeature.State.D0[String],
+                         async    : AsyncFeature.State.D0[ErrorMsg],
                          response : Option[P.Response]) {
 
     val formEnabled: Enabled =
@@ -42,7 +43,7 @@ object ResetPassword {
 
   final class Backend($: BackendScope[Props, State]) {
 
-    val asyncW: AsyncFeature.Write.D0[String] =
+    val asyncW: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.async)
 
     def submitCB(props: Props, state: State): Option[Callback] =
@@ -53,7 +54,7 @@ object ResetPassword {
         asyncW((s, f) => props.resetPassword(
           P.Request(props.token, newPassword),
           res => s << $.modState(_.copy(response = Some(res))),
-          e => f(e) >> Callback.alert(e)))
+          e => f(e) >> Callback.alert(e.value)))
 
     val attemptSubmit: Callback =
       $.props.flatMap(p =>

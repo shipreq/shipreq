@@ -11,7 +11,7 @@ import Persistence.Realise
 trait TypicalSupp[P, I, K, U] {
   val sas: TypicalStoresAndState[P, I, K]
   val realise: Realise[sas.S]
-  val crudIO: Px[CrudActionIO[P, K, U, _]]
+  val crudIO: Px[CrudActionIO[P, K, U]]
 
   import sas._
 
@@ -31,12 +31,12 @@ trait TypicalSupp[P, I, K, U] {
 
 object TypicalSupp {
   @inline def apply[P, I, K, U](_sas: TypicalStoresAndState[P, I, K])
-                               (_crudIO: => CrudActionIO[P, K, U, _],
+                               (_crudIO: => CrudActionIO[P, K, U],
                                 _c: StateAccessPure[_sas.S])
   : TypicalSupp[P, I, K, U] {val sas: _sas.type} =
     new TypicalSupp[P, I, K, U] {
       override val sas: _sas.type = _sas
       override val realise: Realise[sas.S] = _c.runState(_)
-      override val crudIO = Px(_crudIO: AnyRef).withReuse(Reusability.byRef).autoRefresh.asInstanceOf[Px[CrudActionIO[P, K, U, _]]]
+      override val crudIO = Px(_crudIO: AnyRef).withReuse(Reusability.byRef).autoRefresh.asInstanceOf[Px[CrudActionIO[P, K, U]]]
     }
 }

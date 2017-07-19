@@ -2,6 +2,7 @@ package shipreq.webapp.client.public.pages
 
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
+import scalaz.\/-
 import utest._
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Disabled, Enabled}
@@ -90,7 +91,7 @@ object LandingPageTest extends TestSuite {
   def test(plan: *.Plan): Unit = {
     val t = new ForTestState
     import t.cp
-    cp.addAutoResponse(PublicSpaProtocols.LandingPage.Fn)(_.success(()))
+    cp.addAutoResponse(PublicSpaProtocols.LandingPage.Fn)(_.onResponse(\/-(\/-(()))))
     t(Page.Home)(h => plan.test(Observer.watch(new Obs(h, cp))).run((), cp))
   }
 

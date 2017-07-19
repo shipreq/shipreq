@@ -6,9 +6,10 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{DataValidators, ProjectMetaData}
 import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus}
-import shipreq.webapp.base.protocol.{ClientProtocol, HomeSpaProtocols}
+import shipreq.webapp.base.protocol.{ClientProtocol, HomeSpaProtocols, ServerSideProcInvoker}
 import shipreq.webapp.base.ui._
 import shipreq.webapp.base.ui.semantic.{Breadcrumb, Colour, Icon, Message}
 import shipreq.webapp.base.{ClientConfig, WebappConfig}
@@ -16,11 +17,14 @@ import shipreq.webapp.base.{ClientConfig, WebappConfig}
 object Home {
   final case class Props(data: HomeSpaProtocols.InitData, cp: ClientProtocol) {
     @inline def render = Component(this)
+
+    def createProjectIO: ServerSideProcInvoker[String, ErrorMsg, ProjectMetaData] =
+      cp(data.createProject)
   }
 
   @Lenses
   final case class State(createProjectText: String,
-                         createProjectAAS : AsyncFeature.Read.D0[String],
+                         createProjectAAS : AsyncFeature.Read.D0[ErrorMsg],
                          projects         : List[ProjectMetaData])
 
   final class Backend($: BackendScope[Props, State]) {
@@ -28,7 +32,7 @@ object Home {
     val setCreateProjectText: String ~=> Callback =
       Reusable.fn.state($ zoomStateL State.createProjectText).set
 
-    val createProjectAF: AsyncFeature.Write.D0[String] =
+    val createProjectAF: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.createProjectAAS)
 
     def addProject(i: ProjectMetaData): Callback =
@@ -38,10 +42,10 @@ object Home {
       name =>
         $.props >>= (p =>
           createProjectAF((onSuccess, onFailure) =>
-            p.cp.call(p.data.createProject)(
+            p.createProjectIO(
               name,
               i => onSuccess >> setCreateProjectText("") >> addProject(i),
-              _ consumeAnd onFailure)))
+              onFailure)))
 
     val navBarLeft: MemberNavBar.LeftProps =
       Reusable.byRef(Breadcrumb.Item.Div(ClientConfig.BreadcrumbNameMemberHome) :: Nil)
@@ -75,7 +79,7 @@ object HomeContent {
 
   final case class Props(projects         : List[ProjectMetaData],
                          createProjectText: StateSnapshot[String],
-                         createProjectAS  : AsyncFeature.Read.D0[String],
+                         createProjectAS  : AsyncFeature.Read.D0[ErrorMsg],
                          createProjectIO  : String => Callback,
                          tagMod           : TagMod) {
     @inline def render = Component(this)

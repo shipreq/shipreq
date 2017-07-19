@@ -6,9 +6,8 @@ import japgolly.scalajs.react.MonocleReact._
 import scalaz.\/
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.protocol.CreateContentCmd
+import shipreq.webapp.base.protocol.{CreateContentCmd, ServerSideProcInvoker}
 import shipreq.webapp.base.feature._
-import shipreq.webapp.base.protocol.ServerSideProcInvoker
 
 /** Nothing here has `Reusability` because:
   *
@@ -21,7 +20,7 @@ import shipreq.webapp.base.protocol.ServerSideProcInvoker
   */
 object Feature {
 
-  type AsyncError = String
+  type AsyncError = ErrorMsg
   type AsyncState = AsyncFeature.Read.D0[AsyncError]
 
   /** This is not safe for Reusability because implementations call `CallbackTo#runNow()`.
@@ -44,7 +43,7 @@ object Feature {
       }
   }
 
-  /** Id used for [[shipreq.webapp.client.project.feature.PreviewFeature]] */
+  /** Id used for [[shipreq.webapp.base.feature.PreviewFeature]] */
   final case class PreviewId(row: RowKey, cell: FieldKey)
   object PreviewId {
     implicit def equality: UnivEq[PreviewId] = UnivEq.derive
@@ -102,7 +101,7 @@ object Feature {
     final case class ForRow[-FK <: FieldKey](rowAccess : StateAccessPure[State.ForFields],
                                              rowEditors: NewEditor.ForFields[FK],
                                              async     : AsyncFeature.Write.D0[AsyncError],
-                                             createIO  : ServerSideProcInvoker[CreateContentCmd, Any]) {
+                                             createIO  : ServerSideProcInvoker[CreateContentCmd, ErrorMsg, Any]) {
       def startEditor(field: FK): Editor[field.Value] = {
         val stateAccess: StateAccessPure[State.ForEditor[Any]] = rowAccess zoomStateL Optics.mapValue(field)
         val ctx = NewEditor.Ctx[field.Value](field.cast2(stateAccess))
@@ -117,7 +116,7 @@ object Feature {
     final case class ForProject(static     : NewEditor.Static,
                                 stateAccess: StateAccessPure[State.ForProject],
                                 async      : AsyncFeature.Write.D1[RowKey, AsyncError],
-                                createIO   : ServerSideProcInvoker[CreateContentCmd, Any]) {
+                                createIO   : ServerSideProcInvoker[CreateContentCmd, ErrorMsg, Any]) {
       def apply(row: RowKey): ForRow[row.FieldKey] =
         ForRow[row.FieldKey](
           stateAccess zoomStateL Optics.innerMap(row),

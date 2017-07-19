@@ -12,7 +12,7 @@ import monocle.Lens
 import monocle.macros.Lenses
 import org.scalajs.dom.document
 import scalacss.ScalaCssReact._
-import shipreq.base.util.Allow
+import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.{PotentialFilter, ValidFilter}
 import shipreq.webapp.base.protocol.UpdateContentCmd
@@ -44,12 +44,12 @@ object ReqTablePage {
                                pxTextSearch    : Px[TextSearch],
                                pxProjectWidgets: Px[ProjectWidgets],
                                reqDetailRC     : RouterCtl[ExternalPubid],
-                               updateIO        : ServerSideProcInvoker[UpdateContentCmd, Any],
-                               rowAsyncW       : AsyncFeature.Write.D1[Row.SourceId, String])
+                               updateIO        : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any],
+                               rowAsyncW       : AsyncFeature.Write.D1[Row.SourceId, ErrorMsg])
 
   final case class Props(create    : CreateFeature.ReadWrite.ForProject,
                          editor    : EditorFeature.ReadWrite.ForProject,
-                         rowAsync  : AsyncFeature.Read.D1[Row.SourceId, String],
+                         rowAsync  : AsyncFeature.Read.D1[Row.SourceId, ErrorMsg],
                          filterDead: StateSnapshot[FilterDead],
                          state     : State)
 

@@ -5,7 +5,6 @@ import japgolly.univeq.UnivEq
 import monocle.macros.{GenIso, Lenses}
 import scalaz.\/
 import shipreq.base.util._
-import shipreq.webapp.base.CommmonUiText
 import shipreq.webapp.base.data.SecurityToken
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.util.TextMod
@@ -60,12 +59,12 @@ object PublicSpaProtocols {
           .mapValid((Request.apply _).tupled)
     }
 
-    val Fn = ServerSideProc.Protocol[Request, Unit]
+    val Fn = ServerSideProc.Protocol[Request, ErrorMsg \/ Unit]
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object Register {
-    val Fn1 = ServerSideProc.Protocol[EmailAddr, Unit]
+    val Fn1 = ServerSideProc.Protocol[EmailAddr, ErrorMsg \/ Unit]
 
     final case class Request(token     : SecurityToken,
                              personName: PersonName,
@@ -103,7 +102,7 @@ object PublicSpaProtocols {
     }
 
     /** Upon successful submission the user account is activated. */
-    val Fn2 = ServerSideProc.Protocol[Request, Response]
+    val Fn2 = ServerSideProc.Protocol[Request, ErrorMsg \/ Response]
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -148,7 +147,7 @@ object PublicSpaProtocols {
       implicit def univEq: UnivEq[Response] = UnivEq.derive
     }
 
-    val Fn2 = ServerSideProc.Protocol[Request, Response]
+    val Fn2 = ServerSideProc.Protocol[Request, ErrorMsg \/ Response]
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

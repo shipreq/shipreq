@@ -2,6 +2,7 @@ package shipreq.webapp.client.public.pages
 
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
+import scalaz.\/-
 import utest._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -68,7 +69,7 @@ object ResetPasswordTester {
       .addCheck(submitEnabled.assert(Enabled).before)
 
   def serverResponse(r: Response): *.Actions =
-    *.action(s"Server response: $r")(_.ref.respondToLastP(PublicSpaProtocols.ResetPassword.Fn2)(r)) <+ reqsSent.assert.not.equal(0)
+    *.action(s"Server response: $r")(_.ref.respondToLastP(PublicSpaProtocols.ResetPassword.Fn2)(\/-(r))) <+ reqsSent.assert.not.equal(0)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████

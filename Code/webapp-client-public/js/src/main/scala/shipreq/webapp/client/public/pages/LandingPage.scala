@@ -5,7 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
-import scalaz.{-\/, \/-}
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ValidationUX
@@ -18,11 +18,11 @@ import shipreq.webapp.client.public.Styles.{landingPage => *}
 object LandingPage {
 
   final case class Props(state: StateSnapshot[State],
-                         asyncW: AsyncFeature.Write.D0[String],
-                         submit: ServerSideProcInvoker[Request, Unit]) {
+                         asyncW: AsyncFeature.Write.D0[ErrorMsg],
+                         submit: ServerSideProcInvoker[Request, ErrorMsg, Unit]) {
     @inline def render = Component(this)
 
-    val async: AsyncFeature.ReadWrite.D0[String] =
+    val async: AsyncFeature.ReadWrite.D0[ErrorMsg] =
       AsyncFeature.ReadWrite.D0(asyncW, state.value.async)
   }
 
@@ -30,7 +30,7 @@ object LandingPage {
   final case class State(req      : Request.Untyped,
                          vux      : ValidationUX,
                          submitted: Boolean,
-                         async    : AsyncFeature.State.D0[String])
+                         async    : AsyncFeature.State.D0[ErrorMsg])
 
   object State {
     def init: State =
@@ -83,7 +83,7 @@ object LandingPage {
       p.asyncW((s, f) =>
         p.submit(r,
           _ => s << p.state.modState(State.submitted.set(true)) >> Callback.alert("Great to hear from you.\n\nWe'll be in touch!"),
-          e => f(e) >> Callback.alert(e)))
+          e => f(e) >> Callback.alert(e.value)))
 
     private def renderForm(p: Props): VdomElement = {
       val s = p.state.value

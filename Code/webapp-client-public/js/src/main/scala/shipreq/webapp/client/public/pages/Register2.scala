@@ -9,7 +9,7 @@ import japgolly.univeq._
 import monocle.Lens
 import monocle.macros.Lenses
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.Invalid
+import shipreq.base.util.{ErrorMsg, Invalid}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ValidationUX
@@ -25,7 +25,7 @@ import shipreq.webapp.client.public.Styles.{register2 => *}
 object Register2 {
 
   final case class Props(token : SecurityToken,
-                         submit: ServerSideProcInvoker[Request, Response]) {
+                         submit: ServerSideProcInvoker[Request, ErrorMsg, Response]) {
     @inline def render: VdomElement = Component(this)
   }
 
@@ -37,7 +37,7 @@ object Register2 {
                          newsletter    : Boolean,
                          tos           : Agreement,
                          vux           : ValidationUX,
-                         async         : AsyncFeature.State.D0[String],
+                         async         : AsyncFeature.State.D0[ErrorMsg],
                          takenUsernames: Set[Username],
                          response      : Option[Response.Terminal]) {
 
@@ -64,7 +64,7 @@ object Register2 {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    private val asyncW: AsyncFeature.Write.D0[String] =
+    private val asyncW: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.async)
 
     private def showValidationFailures =
@@ -132,7 +132,7 @@ object Register2 {
             asyncW((s, f) => p.submit(
               req,
               res => s << onResponse(req)(res),
-              e => f(e) >> Callback.alert(e))))
+              e => f(e) >> Callback.alert(e.value))))
 
         Common.validationOffUntilFirstSubmit(
           s.formEnabled,

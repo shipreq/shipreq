@@ -22,15 +22,15 @@ object PotentialFilter {
 
   type Reqs = NonEmptyVector[ReqsSpec]
 
-  case class SimpleText(text: String)                      extends PotentialFilter
-  case class QuotedText(text: String, quoteChar: Char)     extends PotentialFilter
-  case class Regex     (text: String)                      extends PotentialFilter
-  case class ReqType   (value: Mnemonic)                   extends PotentialFilter
-  case class HashRef   (text: HashRefKey)                  extends PotentialFilter
-  case class Implies   (reqs: Reqs)                        extends PotentialFilter
-  case class ImpliedBy (reqs: Reqs)                        extends PotentialFilter
-  case class Presence  (attr: String)                      extends PotentialFilter
-  case class Lack      (attr: String)                      extends PotentialFilter
+  case class SimpleText(text: String)                           extends PotentialFilter
+  case class QuotedText(text: String, quoteChar: Char)          extends PotentialFilter
+  case class Regex     (text: String)                           extends PotentialFilter
+  case class ReqType   (value: Mnemonic)                        extends PotentialFilter
+  case class HashRef   (text: HashRefKey)                       extends PotentialFilter
+  case class Implies   (reqs: Reqs)                             extends PotentialFilter
+  case class ImpliedBy (reqs: Reqs)                             extends PotentialFilter
+  case class Presence  (attr: String)                           extends PotentialFilter
+  case class Lack      (attr: String)                           extends PotentialFilter
   case class AllOf     (inner: NonEmptyVector[PotentialFilter]) extends PotentialFilter
   case class AnyOf     (inner: NonEmptyVector[PotentialFilter]) extends PotentialFilter
   case class Not       (expr: PotentialFilter)                  extends PotentialFilter
@@ -63,8 +63,8 @@ object PotentialFilter {
         case SimpleText(text)        => text
         case QuotedText(text, qChar) => qChar ~ text ~ qChar
         case Regex     (text)        => '/' ~ text.replace("/", "\\/") ~ '/'
-        case ReqType   (value)       => value
-        case HashRef   (text)        => Grammar.hashRefKey.prefix ~ text
+        case ReqType   (value)       => value.value
+        case HashRef   (text)        => Grammar.hashRefKey.prefix ~ text.value
         case Implies   (reqs)        => "implies:" ~ fmtReqs(reqs)
         case ImpliedBy (reqs)        => "impliedBy:" ~ fmtReqs(reqs)
         case Presence  (attr)        => "has:" ~ attr

@@ -281,15 +281,15 @@ final class MockServer extends Server.Algebra[Name] {
   private var fns: Map[String, Any] =
     UnivEq.emptyMap
 
-  override def createServerSideProc(p: ServerSideProc.Protocol)(localFn: p.Input => Name[p.Response]) = Name[p.Instance] {
+  override def createServerSideProc[I, O](p: ServerSideProc.Protocol[I, O])(localFn: I => Name[O]) = Name[p.Instance] {
     prevFn += 1
     val key = prevFn.toString
     fns = fns.updated(key, localFn)
     ServerSideProc(key, p)
   }
 
-  def run(p: ServerSideProc)(i: p.protocol.Input): p.protocol.Response = {
-    val f = fns(p.key).asInstanceOf[p.protocol.Input => Name[p.protocol.Response]]
+  def run[I, O](p: ServerSideProc[I, O])(i: I): O = {
+    val f = fns(p.key).asInstanceOf[I => Name[O]]
     f(i).value
   }
 

@@ -1,26 +1,26 @@
 package shipreq.webapp.client.project.test
 
 import japgolly.microlibs.nonempty.NonEmptyVector
+import scalaz.{-\/, \/, \/-}
+import shipreq.base.util.ErrorMsg
 import shipreq.base.util.PotentialChange._
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.base.data.TCB
-import shipreq.webapp.base.protocol.RemoteFailure
 import shipreq.webapp.base.test._
 import shipreq.webapp.server.logic._
 import ProjectSpaProtocols._
 
 final case class MockServer(cd: TestClientData) extends TestClientProtocol(true) {
 
-  type Attempt = PartialFunction[(ServerSideProc.Protocol, Any, Project), MakeEvent.Result]
+  type Attempt = PartialFunction[(ServerSideProc.Protocol[_, _], Any, Project), MakeEvent.Result]
 
-  private def attempt(r: ServerSideProc.Protocol)(f: (r.Input, Project) => MakeEvent.Result): Attempt = {
+  private def attempt[I, O](r: ServerSideProc.Protocol[I, O])(f: (I, Project) => MakeEvent.Result): Attempt = {
     case (fn, input, p) if r == fn =>
       f(input.asInstanceOf[r.Input], p)
   }
 
-  private def attemptI(r: ServerSideProc.Protocol)(f: r.Input => MakeEvent.Result): Attempt =
+  private def attemptI[I](r: ServerSideProc.Protocol[I, ErrorMsg \/ VerifiedEvent.Seq])(f: I => MakeEvent.Result): Attempt =
     attempt(r)((i, p) => f(i))
 
   val handler: Attempt =
@@ -37,20 +37,20 @@ final case class MockServer(cd: TestClientData) extends TestClientProtocol(true)
   autoResponseFallback = r =>
     cd.projectCB >>= { p1 =>
       // ah the hacks
-      def successVE = r.success.asInstanceOf[VerifiedEvent.Seq => TCB.Success]
+      def onResponse = r.forceIO[Nothing, (ErrorMsg \/ VerifiedEvent.Seq)].onResponse
 
       val h = handler((r.proc.protocol, r.input, p1))
       ApplyNewEvent(h, p1) match {
 
         case Success(ApplyNewEvent.Updated(p2, ae, ve)) =>
           cd.verifiedEventNES(NonEmptyVector one ve).flatMap(ves =>
-            cd.applyEventSeqCB(ves) >> successVE(ves).cb)
+            cd.applyEventSeqCB(ves) >> onResponse(\/-(\/-(ves))))
 
         case Unchanged =>
-          successVE(VerifiedEvent.EmptySeq).cb
+          onResponse(\/-(\/-(VerifiedEvent.EmptySeq)))
 
         case Failure(e) =>
-          r.failure(RemoteFailure lift e.asInstanceOf[r.proc.protocol.Failure]).cb
+          onResponse(\/-(-\/(ErrorMsg(e))))
       }
     }
 }

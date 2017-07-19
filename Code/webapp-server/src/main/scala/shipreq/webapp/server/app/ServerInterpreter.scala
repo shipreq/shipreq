@@ -12,7 +12,7 @@ import shipreq.webapp.server.protocol.ServerProtocol
 
 object ServerInterpreter extends Server.Algebra[Fx] {
 
-  override def createServerSideProc(p: ServerSideProc.Protocol)(localFn: p.Input => Fx[p.Response]): Fx[p.Instance] =
+  override def createServerSideProc[I, O](p: ServerSideProc.Protocol[I, O])(localFn: I => Fx[O]): Fx[ServerSideProc[I, O]] =
     Fx(ServerProtocol.createServerSideProc(p)(localFn(_)))
 
   override val now: Fx[Instant] =

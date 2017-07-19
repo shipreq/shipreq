@@ -15,6 +15,7 @@ private[issues] object MandatoryFields {
 
   final case class Props(cp: ClientProtocol, remote: FieldMandatorinessMod.Instance, clientData: ClientData) {
     @inline def component = Component(this)
+    def proc = clientData.serverSideProcToEvents(cp, remote)
   }
 
   val rowStore = SavedRowStore.data[CustomField](_.mandatory)
@@ -44,7 +45,7 @@ private[issues] object MandatoryFields {
 
     def save(id: CustomFieldId): CallbackTo[ST] =
       $.props.map(p =>
-        Persistence.simpleAsyncUpdate(rowStore)(p.remote, p.clientData, p.cp, $ runState _, id))
+        Persistence.simpleAsyncUpdate(rowStore)(p.proc, $ runState _, id))
 
     val genEditor =
       Editors.checkboxEditor.imap(On <=> Mandatory)

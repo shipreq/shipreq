@@ -5,7 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.vdom.VdomElement
-import shipreq.base.util.{Allow, Intersection}
+import shipreq.base.util.{Allow, ErrorMsg, Intersection}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{FilterDead, ReqId}
 import shipreq.webapp.base.event.VerifiedEvent
@@ -49,13 +49,13 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
     val pxCreateEditability = pxProject.map(p => CreateFeature.Editability(p.config))
     val pxEditEditability   = pxProject.map(EditorFeature.Editability.apply)
 
-    val updateIO: ServerSideProcInvoker[UpdateContentCmd, VerifiedEvent.Seq] =
-      cd.serverSideProcToEvents(initData.updateContent, cp)
+    val updateIO: ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, VerifiedEvent.Seq] =
+      cd.serverSideProcToEvents(cp, initData.updateContent)
 
     val previewW: PreviewFeature.Write.Composite[PreviewId] =
       PreviewFeature.Write.Composite($ zoomStateL State.preview)
 
-    val createAsyncW: AsyncFeature.Write.D1[CreateFeature.RowKey, String] =
+    val createAsyncW: AsyncFeature.Write.D1[CreateFeature.RowKey, ErrorMsg] =
       AsyncFeature.Write.D1.init($ zoomStateL State.createAsync)
 
     val createW: CreateFeature.Write.ForProject =
@@ -68,9 +68,9 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
           pxTextSearch),
         $ zoomStateL State.create,
         createAsyncW,
-        cd.serverSideProcToEvents(initData.createContent, cp))
+        cd.serverSideProcToEvents(cp, initData.createContent))
 
-    val editAsyncW: AsyncFeature.Write.D2[EditorFeature.RowKey, AsyncKey, String] =
+    val editAsyncW: AsyncFeature.Write.D2[EditorFeature.RowKey, AsyncKey, ErrorMsg] =
       AsyncFeature.Write.D2.init($ zoomStateL State.editAsync)
 
     val editW: EditorFeature.Write.ForProject =
@@ -85,7 +85,7 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
         $ zoomStateL State.edit,
         editAsyncW.mapKey1(AsyncKey.ToEditor))
 
-    val rowAsyncW: AsyncFeature.Write.D1[EditorFeature.RowKey, String] =
+    val rowAsyncW: AsyncFeature.Write.D1[EditorFeature.RowKey, ErrorMsg] =
       editAsyncW.withKey1(AsyncKey.WholeReq)
 
     val reqTable = ReqTablePage(
@@ -145,13 +145,13 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
           .link(Page.ReqTable))
 
     lazy val projectNameAF =
-      AsyncFeature.Write.D0[String](
+      AsyncFeature.Write.D0[ErrorMsg](
         Reusable.fn(
-          $.modStateFn[AsyncFeature.State.D0[String]](s =>
+          $.modStateFn[AsyncFeature.State.D0[ErrorMsg]](s =>
             State.projectName.modify(ProjectItem.WithEditableName.State setAsync s))))
 
     val setProjectNameIO: String => Callback = {
-      val proc = cd.serverSideProcToEvents(initData.projectNameSet, cp)
+      val proc = cd.serverSideProcToEvents(cp, initData.projectNameSet)
       newName => {
         def close = $.modState(State.projectName set None)
         def save = projectNameAF((s, f) => proc(newName, _ => s >> close, f))

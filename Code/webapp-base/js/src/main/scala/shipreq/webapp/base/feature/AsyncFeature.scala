@@ -7,7 +7,6 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.univeq.UnivEq
 import scala.reflect.ClassTag
 import shipreq.base.util.{Intersection, Optics}
-import shipreq.webapp.base.data.TCB
 import shipreq.webapp.base.lib.BaseReusability._
 
 /** Provides the following functionality around async actions:
@@ -73,7 +72,7 @@ object AsyncFeature {
     * one for you to call on async success
     * one for you to call on async failure
     */
-  type AsyncCall[+F] = (TCB.Success, F => TCB.Failure) => Callback
+  type AsyncCall[+F] = (Callback, F => Callback) => Callback
 
   private val _doNothingReusability = Reusable.byRef(new AnyRef)
   private def withDoNothingReusability[A](a: => A): Reusable[A] =
@@ -230,11 +229,11 @@ object AsyncFeature {
         setStateFn.map(setState => call => {
           val clearStatus = setState(None)
 
-          def onSuccess: TCB.Success =
-            TCB Success clearStatus
+          def onSuccess: Callback =
+            clearStatus
 
-          def onFailure: F => TCB.Failure =
-            f => TCB Failure setState(Some(Status.Failed(f, Callback byName doIt, clearStatus)))
+          def onFailure: F => Callback =
+            f => setState(Some(Status.Failed(f, Callback byName doIt, clearStatus)))
 
           lazy val doIt: Callback =
             // Switching this around breaks tests' MockServer's order of events.

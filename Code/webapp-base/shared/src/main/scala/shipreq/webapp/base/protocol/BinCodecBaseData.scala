@@ -36,4 +36,6 @@ object BinCodecBaseData {
   implicit lazy val picklerSecurityTokenStatus: Pickler[SecurityToken.Status] =
     derivePickler[SecurityToken.Status]
 
+  implicit val picklerErrorMsg: Pickler[ErrorMsg] =
+    BoopickleMacros.pickleCaseClass
 }

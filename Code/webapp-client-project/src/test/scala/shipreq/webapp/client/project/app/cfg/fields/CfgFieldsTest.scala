@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.cfg.fields
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import scala.scalajs.js.JSConverters._
@@ -74,7 +73,7 @@ object CfgFieldsTest extends TestSuite {
     cp.respondToLast(remote) {
       import CustomTextFieldGD._
       val e = FieldCustomTextCreate(666, nev(Name("blahh"), Key("blahh"), Mandatory(true), ReqTypes(allReqTypes)))
-      cd.verifyEventsCB(e).runNow()
+      \/-(cd.verifyEventsCB(e).runNow())
     }
     assert(getNewRow.isEmpty)
 
@@ -88,7 +87,7 @@ object CfgFieldsTest extends TestSuite {
         .toJSArray)
     cp.assertReqsSent(2)
     cp.respondToLast(remote)(
-      cd.verifyEventsCB(FieldCustomDelete(666.CFText)).runNow())
+      \/-(cd.verifyEventsCB(FieldCustomDelete(666.CFText)).runNow()))
 
     assertEq(htmlScrub run html, htmlScrub run initialView)
   }

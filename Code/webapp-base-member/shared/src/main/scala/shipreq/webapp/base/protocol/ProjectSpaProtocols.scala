@@ -1,10 +1,13 @@
 package shipreq.webapp.base.protocol
 
+import scalaz.\/
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.event.{EventOrd, VerifiedEvent}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.user._
 import BoopickleMacros._
 import BinCodecGeneric._
+import BinCodecBaseData._
 import BinCodecMemberData._
 import BinCodecUser._
 import BinCodecEvents._
@@ -17,7 +20,7 @@ object ProjectSpaProtocols {
   final case class InitAsyncData(project: Project, projectMetaData: ProjectMetaData, latestEventOrd: EventOrd)
   implicit val picklerInitAsyncData = pickleCaseClass[InitAsyncData]
 
-  val InitAsync             = ServerSideProc.Protocol[Unit, InitAsyncData]
+  val InitAsync             = ServerSideProc.Protocol[Unit, ErrorMsg \/ InitAsyncData]
   val ProjectNameSet        = ServerSideProc.Protocol.toEvents[String]
   val FieldMandatorinessMod = ServerSideProc.Protocol.toEvents[(CustomFieldId, Mandatory)]
   val ReqTypeImplicationMod = ServerSideProc.Protocol.toEvents[(CustomReqTypeId, ImplicationRequired)]

@@ -3,13 +3,17 @@ package shipreq.webapp.base.protocol
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.Reusability
 import scala.util.{Failure, Success}
-import scalaz.{-\/, \/-}
-import shipreq.webapp.base.data.TCB
+import scalaz.{-\/, \/, \/-}
+import shipreq.base.util.ErrorMsg
 
 trait ClientProtocol {
-  def call(p: ServerSideProc)(input  : p.protocol.Input,
-                              success: p.protocol.Output => TCB.Success,
-                              failure: RemoteFailure[p.protocol.Failure] => TCB.Failure): Callback
+  def call[I, O](proc      : ServerSideProc[I, O])
+                (input     : I,
+                 onResponse: Throwable \/ O => Callback): Callback
+
+  final def apply[I, O](proc: ServerSideProc[I, O]): ServerSideProcInvoker[I, ErrorMsg, O] =
+    new ServerSideProcInvoker[I, Throwable, O]((i, s, f) => call(proc)(i, _.fold(f, s)))
+      .mapFailure(ServerSideProcInvoker.throwableToErrorMsg)
 }
 
 object ClientProtocol {
@@ -63,19 +67,17 @@ object ClientProtocol {
       promise.future.map(r => TypedArrayBuffer.wrap(r.response.asInstanceOf[ArrayBuffer]))
     }
 
-    override def call(p: ServerSideProc)(input  : p.protocol.Input,
-                                         success: p.protocol.Output => TCB.Success,
-                                         failure: RemoteFailure[p.protocol.Failure] => TCB.Failure): Callback = Callback {
-      import p.protocol._
-      val url = LiftAjax.calcAjaxUrl(ajaxPath, null) + "?" + p.key
+    override def call[I, O](proc      : ServerSideProc[I, O])
+                           (input     : I,
+                            onResponse: Throwable \/ O => Callback) = Callback {
+      import proc.protocol._
+      val url = LiftAjax.calcAjaxUrl(ajaxPath, null) + "?" + proc.key
       val bin = PickleImpl.intoBytes(input)
-      val res = postBinary(url, bin).map(UnpickleImpl(pickleResponse) fromBytes _)
+      val res = postBinary(url, bin).map(UnpickleImpl(pickleOutput) fromBytes _)
       res.onComplete {
-        case Success(\/-(o)) => success(o)                        .runNow()
-        case Success(-\/(f)) => failure(RemoteFailure lift f)     .runNow()
-        case Failure(t)      => failure(RemoteFailure exception t).runNow()
+        case Success(o) => onResponse(\/-(o)).runNow()
+        case Failure(e) => onResponse(-\/(e)).runNow()
       }
-      ()
     }
   }
 }

@@ -1280,7 +1280,7 @@ object RandomData {
     val remoteFnKey =
       Gen.alphaNumeric.string(4)
 
-    def remoteFn(f: ServerSideProc.Protocol) =
+    def remoteFn[I, O](f: ServerSideProc.Protocol[I, O]): Gen[ServerSideProc[I, O]] =
       remoteFnKey.map(ServerSideProc(_, f))
 
     def projectSpaInitAsyncData: Gen[ProjectSpaProtocols.InitAsyncData] =
@@ -1306,7 +1306,7 @@ object RandomData {
         k <- remoteFn(ProjectSpaProtocols.ProjectNameSet)
       } yield ProjectSpaProtocols.InitData(u, a, b, c, d, e, f, g, h, i, j, k)
 
-    class CrudActionGens[I, V](c: CrudProtocol.Aux[I, V])(idG: Gen[I], vG: Gen[V]) {
+    class CrudActionGens[I, V](c: CrudProtocol[I, V])(idG: Gen[I], vG: Gen[V]) {
       lazy val create  = vG.map(CrudAction.Create[I, V])
       lazy val update  = Gen.apply2(CrudAction.Update[I, V])(idG, vG)
       lazy val delete  = idG map CrudAction.Delete[I, V]

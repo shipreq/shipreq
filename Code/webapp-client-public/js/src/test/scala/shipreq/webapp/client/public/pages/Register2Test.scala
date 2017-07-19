@@ -2,6 +2,7 @@ package shipreq.webapp.client.public.pages
 
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
+import scalaz.\/-
 import utest._
 import shipreq.base.util._
 import shipreq.webapp.base.Urls
@@ -73,7 +74,7 @@ object Register2Tester {
       reqsSent.assert.increment
 
   def serverResponse(r: Response): *.Actions =
-    *.action(s"Server responds with $r")(_.ref.respondToLastP(Fn2)(r)) <+ reqsSent.assert.not.equal(0)
+    *.action(s"Server responds with $r")(_.ref.respondToLastP(Fn2)(\/-(r))) <+ reqsSent.assert.not.equal(0)
 
   private val pwd = "qqqqqq123QWE"
 

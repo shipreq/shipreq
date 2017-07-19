@@ -2,7 +2,7 @@ package shipreq.webapp.server.logic
 
 import scalaz.{-\/, Monad, \/, \/-}
 import scalaz.syntax.monad._
-import shipreq.webapp.base.protocol.ErrorMsg
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.validation.{Composite, Simple}
 
 private[logic] object Implicits {
