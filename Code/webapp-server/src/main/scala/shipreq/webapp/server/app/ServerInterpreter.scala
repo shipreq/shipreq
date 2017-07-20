@@ -6,14 +6,13 @@ import net.liftweb.common._
 import net.liftweb.http.S
 import scalaz.syntax.monad._
 import shipreq.base.util.FxModule._
-import shipreq.webapp.base.protocol.ServerSideProc
 import shipreq.webapp.server.logic._
 import shipreq.webapp.server.protocol.ServerProtocol
 
 object ServerInterpreter extends Server.Algebra[Fx] {
 
-  override def createServerSideProc[I, O](p: ServerSideProc.Protocol[I, O])(localFn: I => Fx[O]): Fx[ServerSideProc[I, O]] =
-    Fx(ServerProtocol.createServerSideProc(p)(localFn(_)))
+  override val registerServerSideProc = localFn =>
+    Fx(ServerProtocol.registerServerSideProc(localFn))
 
   override val now: Fx[Instant] =
     Fx.now

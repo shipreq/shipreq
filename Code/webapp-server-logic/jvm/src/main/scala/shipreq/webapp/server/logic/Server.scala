@@ -1,8 +1,11 @@
 package shipreq.webapp.server.logic
 
+import boopickle.{PickleImpl, UnpickleImpl}
+import java.nio.ByteBuffer
 import java.time.{Duration, Instant}
+import scalaz.{-\/, Monad, \/, \/-}
 import shipreq.base.util.ErrorMsg
-import shipreq.webapp.base.protocol.ServerSideProc
+import shipreq.webapp.base.protocol._
 
 object Server {
 
@@ -15,8 +18,46 @@ object Server {
     def fork[A](f: F[A]): F[Unit]
   }
 
+  sealed trait ProtocolError
+  final case class RequestPickleError(exception: Throwable) extends ProtocolError
+  final case class ResponsePickleError(exception: Throwable) extends ProtocolError
+
   trait Protocol[F[_]] {
-    def createServerSideProc[I, O](p: ServerSideProc.Protocol[I, O])(localFn: I => F[O]): F[ServerSideProc[I, O]]
+
+    val registerServerSideProc: (ByteBuffer => F[ProtocolError \/ ByteBuffer]) => F[ServerSideProcId]
+
+    final def createServerSideProc[I, O](p: ServerSideProc.Protocol[I, O])
+                                        (localFn: I => F[O])
+                                        (implicit F: Monad[F]): F[ServerSideProc[I, O]] = {
+
+      // very frequent use - avoid implicit syntax and EitherT - code is small so not a big readability loss
+
+      val parseInput: ByteBuffer => F[RequestPickleError \/ I] =
+        bb => F.point {
+          try {
+            \/-(UnpickleImpl(p.pickleInput).fromBytes(bb))
+          } catch {
+            case e: Throwable => -\/(RequestPickleError(e))
+          }
+        }
+
+      val encodeOutput: O => F[ProtocolError \/ ByteBuffer] =
+        o => F.point {
+          try {
+            \/-(PickleImpl.intoBytes(o)(implicitly, p.pickleOutput))
+          } catch {
+            case e: Throwable => -\/(ResponsePickleError(e))
+          }
+        }
+
+      val process: ByteBuffer => F[ProtocolError \/ ByteBuffer] =
+        bb => F.bind(parseInput(bb)) {
+          case \/-(i)    => F.bind(localFn(i))(encodeOutput)
+          case e@ -\/(_) => F pure e
+        }
+
+      F.map(registerServerSideProc(process))(ServerSideProc(_, p))
+    }
   }
 
   trait Session[F[_]] {

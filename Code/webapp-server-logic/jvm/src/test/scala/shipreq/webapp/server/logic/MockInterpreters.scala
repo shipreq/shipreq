@@ -1,6 +1,8 @@
 package shipreq.webapp.server.logic
 
+import boopickle.{PickleImpl, UnpickleImpl}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import java.nio.ByteBuffer
 import java.time.{Duration, Instant}
 import java.util.concurrent.ConcurrentHashMap
 import scala.collection.immutable.SortedMap
@@ -278,19 +280,23 @@ final class MockDb(now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecur
 
 final class MockServer extends Server.Algebra[Name] {
   private var prevFn = 0
-  private var fns: Map[String, Any] =
+  private var fns: Map[String, ByteBuffer => Name[Server.ProtocolError \/ ByteBuffer]] =
     UnivEq.emptyMap
 
-  override def createServerSideProc[I, O](p: ServerSideProc.Protocol[I, O])(localFn: I => Name[O]) = Name[p.Instance] {
+  override val registerServerSideProc = localFn => Name {
     prevFn += 1
     val key = prevFn.toString
     fns = fns.updated(key, localFn)
-    ServerSideProc(ServerSideProcId(key), p)
+    ServerSideProcId(key)
   }
 
   def run[I, O](p: ServerSideProc[I, O])(i: I): O = {
-    val f = fns(p.id.value).asInstanceOf[I => Name[O]]
-    f(i).value
+    import p.protocol._
+    val f = fns(p.id.value)
+    f(PickleImpl.intoBytes(i)).value match {
+      case \/-(b) => UnpickleImpl[O].fromBytes(b)
+      case -\/(e) => sys error s"ProtocolError: $e"
+    }
   }
 
   var clock = Instant.now()
