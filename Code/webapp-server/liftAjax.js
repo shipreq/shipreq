@@ -512,6 +512,8 @@
         return self;
       };
 
+      self['catch'] = self.fail;
+
       self.done = function(f) {
         _doneFuncs.push(f);
         if (_done) {
@@ -652,12 +654,14 @@
   window.liftJQuery = {
     onEvent: function(elementOrId, eventName, fn) {
       if (typeof elementOrId === 'string') {
-        elementOrId = '#' + elementOrId;
+        elementOrId = document.getElementById(elementOrId);
       }
 
       jQuery(elementOrId).on(eventName, fn);
     },
-    onDocumentReady: jQuery(document).ready,
+    onDocumentReady: function(fn) {
+      jQuery(document).ready(fn);
+    },
     ajaxPost: function(url, data, dataType, onSuccess, onFailure) {
       var processData = true,
           contentType = 'application/x-www-form-urlencoded; charset=UTF-8';
@@ -712,7 +716,21 @@
         element = document.getElementById(elementOrId);
       }
 
-      element[add](pre + eventName, fn, false);
+      // This is a Lift addition to allow return false to properly do
+      // cross-browser preventDefault/stopPropagation/etc work.
+      function normalizeEventReturn(event) {
+        var result = fn(event);
+        if (result === false) {
+          if (typeof event.preventDefault === "function") {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }
+
+        return result;
+      }
+
+      element[add](pre + eventName, normalizeEventReturn, false);
     },
     onDocumentReady: function(fn) {
       var settings = this, done = false, top = true,
