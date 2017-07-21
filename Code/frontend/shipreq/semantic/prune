@@ -18,7 +18,7 @@ const readLines = filename =>
 const usedIcons = new Set(readLines(files.iconsUsed));
 const unusedIcons = readLines(files.iconsAll).filter(s => !usedIcons.has(s));
 
-const unusedSizes = [
+const unusedClasses = [
   'mini',
   // 'tiny',
   'small',
@@ -27,9 +27,7 @@ const unusedSizes = [
   'big',
   'huge',
   'massive',
-];
 
-const unusedMisc = [
   'radio',
   'facebook',
   'twitter',
@@ -39,9 +37,12 @@ const unusedMisc = [
   'google',
   'pinterest',
   'vk',
+
   'vertical',
   'sortable',
+  'striped',
   // 'secondary', IN USE - reqtable/ViewsMenu.scala
+
   // 'two',       IN USE - .ui.form .two.fields
   // 'three',     IN USE - .ui.cards.three
   'four',
@@ -57,6 +58,15 @@ const unusedMisc = [
   'fourteen',
   'fifteen',
   'sixteen',
+
+  // Used colours are in manualRemovals
+  'brown',
+  'olive',
+  'orange',
+  'pink',
+  'purple',
+  'teal',
+  'violet',
 ];
 
 const unusedTransitions = [
@@ -74,17 +84,6 @@ const unusedTransitions = [
   // 'pulse', -- used in PublicSpa:Login
   'tada',
   'bounce',
-];
-
-// Used colours are in manualRemovals
-const unusedColours = [
-  'brown',
-  'olive',
-  'orange',
-  'pink',
-  'purple',
-  'teal',
-  'violet',
 ];
 
 const manualRemovals = [
@@ -161,6 +160,9 @@ function run() {
       rule.remove();
   }
 
+  const notUnused = new RegExp(`: *not *\\( *\\. *${regexUnion(unusedClasses)} *\\)`, 'g');
+  const rulePreprocessor = s => s.replace(notUnused, '');
+
   const prune = postcss.plugin('semantic-ui-prune', function myplugin() {
     return function(css) {
 
@@ -197,16 +199,20 @@ function run() {
       ruleMatchers.push(anyRegexMatcher([
         new RegExp(`[" .]${regexUnion(unusedTransitions)}(?:[" .]|$)`),
         new RegExp(`\\.icon${regexUnion(unusedIcons.map(n => n.replace('.', '\\.')))}:`),
-        new RegExp(`\\.${regexUnion(unusedColours)}`),
-        new RegExp(`\\.${regexUnion(unusedSizes)}(?:[^a-zA-Z]|$)`),
-        new RegExp(`(?:^|[^a-zA-Z])${regexUnion(unusedMisc)}(?:[^a-zA-Z]|$)`),
+        new RegExp(`\\.${regexUnion(unusedClasses)}(?:[^a-zA-Z0-9_-]|$)`),
       ]));
-      const ruleMatcher = s => !/:not/.test(s) && ruleMatchers.exists(f => f(s));
+      const ruleMatcher = s => {
+        const s2 = s.replace(/: *not *\( *: *(?:first-child|last-child|empty) *\)/gi, '');
+        return !/:not/.test(s2) && ruleMatchers.exists(f => f(s2));
+      };
       css.walkRules(rule => {
         // rule keys : raws,type,nodes,parent,source,selector,lastEach,indexes
         // console.log(Object.keys(rule.parent))
         // console.log(rule.parent.type)
-        let desc = rule.selector;
+
+        rule.selectors = rule.selectors.map(rulePreprocessor);
+
+        let desc = rule.selectors.reduce((a, b) => `${a},${b}`);
         if (rule.parent.type === 'atrule')
           desc = `${descAtRule(rule.parent)} ${desc}`;
 
@@ -214,6 +220,7 @@ function run() {
         const [removed, kept] = rule.selectors.partition(ruleMatcher);
         const partial = kept.length > 0 && removed.length > 0;
         const remove = kept.length === 0;
+
         if (partial) {
           const desc = a => a.join(", ");
           // console.log(`From: ${rule.selectors}\nKeep: ${desc(kept)}\nDrop: ${desc(removed)}\n\n`)

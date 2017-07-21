@@ -224,8 +224,7 @@
    131 [keep  ] legend
     54 [keep  ] progress
     23 [keep  ] textarea
-    12 [remove] [type=radio]
-    79 [keep  ] [type=checkbox]
+    91 [keep  ] [type=checkbox],[type=radio]
     94 [keep  ] [type=number]::-webkit-inner-spin-button,[type=number]::-webkit-outer-spin-button
     63 [keep  ] [type=search]
    109 [keep  ] [type=search]::-webkit-search-cancel-button,[type=search]::-webkit-search-decoration
@@ -474,7 +473,7 @@
    214 [keep  ] .ui.basic.black.button:focus,.ui.basic.black.buttons .button:focus
    216 [keep  ] .ui.basic.black.active.button,.ui.basic.black.buttons .active.button
    191 [keep  ] .ui.basic.black.button:active,.ui.basic.black.buttons .button:active
-    82 [keep  ] .ui.buttons:not(.vertical)>.basic.black.button:not(:first-child)
+    67 [keep  ] .ui.buttons>.basic.black.button:not(:first-child)
    199 [remove] .ui.inverted.black.button,.ui.inverted.black.buttons .button
    367 [remove] .ui.inverted.black.button.active,.ui.inverted.black.button:active,.ui.inverted.black.button:focus,.ui.inverted.black.button:hover,.ui.inverted.black.buttons .button.active,.ui.inverted.black.buttons .button:active,.ui.inverted.black.buttons .button:focus,.ui.inverted.black.buttons .button:hover
     95 [remove] .ui.inverted.black.button:hover,.ui.inverted.black.buttons .button:hover
@@ -497,7 +496,7 @@
    212 [remove] .ui.basic.grey.button:focus,.ui.basic.grey.buttons .button:focus
    214 [remove] .ui.basic.grey.active.button,.ui.basic.grey.buttons .active.button
    189 [remove] .ui.basic.grey.button:active,.ui.basic.grey.buttons .button:active
-    81 [keep  ] .ui.buttons:not(.vertical)>.basic.grey.button:not(:first-child)
+    66 [remove] .ui.buttons>.basic.grey.button:not(:first-child)
    197 [remove] .ui.inverted.grey.button,.ui.inverted.grey.buttons .button
    369 [remove] .ui.inverted.grey.button.active,.ui.inverted.grey.button:active,.ui.inverted.grey.button:focus,.ui.inverted.grey.button:hover,.ui.inverted.grey.buttons .button.active,.ui.inverted.grey.buttons .button:active,.ui.inverted.grey.buttons .button:focus,.ui.inverted.grey.buttons .button:hover
     96 [remove] .ui.inverted.grey.button:hover,.ui.inverted.grey.buttons .button:hover
@@ -520,7 +519,7 @@
    214 [remove] .ui.basic.brown.button:focus,.ui.basic.brown.buttons .button:focus
    216 [remove] .ui.basic.brown.active.button,.ui.basic.brown.buttons .active.button
    191 [remove] .ui.basic.brown.button:active,.ui.basic.brown.buttons .button:active
-    82 [keep  ] .ui.buttons:not(.vertical)>.basic.brown.button:not(:first-child)
+    67 [remove] .ui.buttons>.basic.brown.button:not(:first-child)
    202 [remove] .ui.inverted.brown.button,.ui.inverted.brown.buttons .button
    367 [remove] .ui.inverted.brown.button.active,.ui.inverted.brown.button:active,.ui.inverted.brown.button:focus,.ui.inverted.brown.button:hover,.ui.inverted.brown.buttons .button.active,.ui.inverted.brown.buttons .button:active,.ui.inverted.brown.buttons .button:focus,.ui.inverted.brown.buttons .button:hover
     98 [remove] .ui.inverted.brown.button:hover,.ui.inverted.brown.buttons .button:hover
@@ -543,7 +542,7 @@
    212 [keep  ] .ui.basic.blue.button:focus,.ui.basic.blue.buttons .button:focus
    214 [keep  ] .ui.basic.blue.active.button,.ui.basic.blue.buttons .active.button
    189 [keep  ] .ui.basic.blue.button:active,.ui.basic.blue.buttons .button:active
-    81 [keep  ] .ui.buttons:not(.vertical)>.basic.blue.button:not(:first-child)
+    66 [keep  ] .ui.buttons>.basic.blue.button:not(:first-child)
    200 [remove] .ui.inverted.blue.button,.ui.inverted.blue.buttons .button
    359 [remove] .ui.inverted.blue.button.active,.ui.inverted.blue.button:active,.ui.inverted.blue.button:focus,.ui.inverted.blue.button:hover,.ui.inverted.blue.buttons .button.active,.ui.inverted.blue.buttons .button:active,.ui.inverted.blue.buttons .button:focus,.ui.inverted.blue.buttons .button:hover
     96 [remove] .ui.inverted.blue.button:hover,.ui.inverted.blue.buttons .button:hover
@@ -566,7 +565,7 @@
    214 [keep  ] .ui.basic.green.button:focus,.ui.basic.green.buttons .button:focus
    216 [keep  ] .ui.basic.green.active.button,.ui.basic.green.buttons .active.button
    191 [keep  ] .ui.basic.green.button:active,.ui.basic.green.buttons .button:active
-    82 [keep  ] .ui.buttons:not(.vertical)>.basic.green.button:not(:first-child)
+    67 [keep  ] .ui.buttons>.basic.green.button:not(:first-child)
    202 [remove] .ui.inverted.green.button,.ui.inverted.green.buttons .button
    367 [remove] .ui.inverted.green.button.active,.ui.inverted.green.button:active,.ui.inverted.green.button:focus,.ui.inverted.green.button:hover,.ui.inverted.green.buttons .button.active,.ui.inverted.green.buttons .button:active,.ui.inverted.green.buttons .button:focus,.ui.inverted.green.buttons .button:hover
     98 [remove] .ui.inverted.green.button:hover,.ui.inverted.green.buttons .button:hover
@@ -589,7 +588,7 @@
    216 [remove] .ui.basic.orange.button:focus,.ui.basic.orange.buttons .button:focus
    218 [remove] .ui.basic.orange.active.button,.ui.basic.orange.buttons .active.button
    193 [remove] .ui.basic.orange.button:active,.ui.basic.orange.buttons .button:active
-    83 [keep  ] .ui.buttons:not(.vertical)>.basic.orange.button:not(:first-child)
+    68 [remove] .ui.buttons>.basic.orange.button:not(:first-child)
    204 [remove] .ui.inverted.orange.button,.ui.inverted.orange.buttons .button
    375 [remove] .ui.inverted.orange.button.active,.ui.inverted.orange.button:active,.ui.inverted.orange.button:focus,.ui.inverted.orange.button:hover,.ui.inverted.orange.buttons .button.active,.ui.inverted.orange.buttons .button:active,.ui.inverted.orange.buttons .button:focus,.ui.inverted.orange.buttons .button:hover
    100 [remove] .ui.inverted.orange.button:hover,.ui.inverted.orange.buttons .button:hover
@@ -612,7 +611,7 @@
    212 [remove] .ui.basic.pink.button:focus,.ui.basic.pink.buttons .button:focus
    214 [remove] .ui.basic.pink.active.button,.ui.basic.pink.buttons .active.button
    189 [remove] .ui.basic.pink.button:active,.ui.basic.pink.buttons .button:active
-    81 [keep  ] .ui.buttons:not(.vertical)>.basic.pink.button:not(:first-child)
+    66 [remove] .ui.buttons>.basic.pink.button:not(:first-child)
    200 [remove] .ui.inverted.pink.button,.ui.inverted.pink.buttons .button
    359 [remove] .ui.inverted.pink.button.active,.ui.inverted.pink.button:active,.ui.inverted.pink.button:focus,.ui.inverted.pink.button:hover,.ui.inverted.pink.buttons .button.active,.ui.inverted.pink.buttons .button:active,.ui.inverted.pink.buttons .button:focus,.ui.inverted.pink.buttons .button:hover
     96 [remove] .ui.inverted.pink.button:hover,.ui.inverted.pink.buttons .button:hover
@@ -635,7 +634,7 @@
    216 [remove] .ui.basic.violet.button:focus,.ui.basic.violet.buttons .button:focus
    218 [remove] .ui.basic.violet.active.button,.ui.basic.violet.buttons .active.button
    193 [remove] .ui.basic.violet.button:active,.ui.basic.violet.buttons .button:active
-    83 [keep  ] .ui.buttons:not(.vertical)>.basic.violet.button:not(:first-child)
+    68 [remove] .ui.buttons>.basic.violet.button:not(:first-child)
    204 [remove] .ui.inverted.violet.button,.ui.inverted.violet.buttons .button
    375 [remove] .ui.inverted.violet.button.active,.ui.inverted.violet.button:active,.ui.inverted.violet.button:focus,.ui.inverted.violet.button:hover,.ui.inverted.violet.buttons .button.active,.ui.inverted.violet.buttons .button:active,.ui.inverted.violet.buttons .button:focus,.ui.inverted.violet.buttons .button:hover
    100 [remove] .ui.inverted.violet.button:hover,.ui.inverted.violet.buttons .button:hover
@@ -658,7 +657,7 @@
    216 [remove] .ui.basic.purple.button:focus,.ui.basic.purple.buttons .button:focus
    218 [remove] .ui.basic.purple.active.button,.ui.basic.purple.buttons .active.button
    193 [remove] .ui.basic.purple.button:active,.ui.basic.purple.buttons .button:active
-    83 [keep  ] .ui.buttons:not(.vertical)>.basic.purple.button:not(:first-child)
+    68 [remove] .ui.buttons>.basic.purple.button:not(:first-child)
    204 [remove] .ui.inverted.purple.button,.ui.inverted.purple.buttons .button
    375 [remove] .ui.inverted.purple.button.active,.ui.inverted.purple.button:active,.ui.inverted.purple.button:focus,.ui.inverted.purple.button:hover,.ui.inverted.purple.buttons .button.active,.ui.inverted.purple.buttons .button:active,.ui.inverted.purple.buttons .button:focus,.ui.inverted.purple.buttons .button:hover
    100 [remove] .ui.inverted.purple.button:hover,.ui.inverted.purple.buttons .button:hover
@@ -681,7 +680,7 @@
    210 [keep  ] .ui.basic.red.button:focus,.ui.basic.red.buttons .button:focus
    212 [keep  ] .ui.basic.red.active.button,.ui.basic.red.buttons .active.button
    187 [keep  ] .ui.basic.red.button:active,.ui.basic.red.buttons .button:active
-    80 [keep  ] .ui.buttons:not(.vertical)>.basic.red.button:not(:first-child)
+    65 [keep  ] .ui.buttons>.basic.red.button:not(:first-child)
    198 [remove] .ui.inverted.red.button,.ui.inverted.red.buttons .button
    351 [remove] .ui.inverted.red.button.active,.ui.inverted.red.button:active,.ui.inverted.red.button:focus,.ui.inverted.red.button:hover,.ui.inverted.red.buttons .button.active,.ui.inverted.red.buttons .button:active,.ui.inverted.red.buttons .button:focus,.ui.inverted.red.buttons .button:hover
     94 [remove] .ui.inverted.red.button:hover,.ui.inverted.red.buttons .button:hover
@@ -704,7 +703,7 @@
    212 [remove] .ui.basic.teal.button:focus,.ui.basic.teal.buttons .button:focus
    214 [remove] .ui.basic.teal.active.button,.ui.basic.teal.buttons .active.button
    189 [remove] .ui.basic.teal.button:active,.ui.basic.teal.buttons .button:active
-    81 [keep  ] .ui.buttons:not(.vertical)>.basic.teal.button:not(:first-child)
+    66 [remove] .ui.buttons>.basic.teal.button:not(:first-child)
    200 [remove] .ui.inverted.teal.button,.ui.inverted.teal.buttons .button
    369 [remove] .ui.inverted.teal.button.active,.ui.inverted.teal.button:active,.ui.inverted.teal.button:focus,.ui.inverted.teal.button:hover,.ui.inverted.teal.buttons .button.active,.ui.inverted.teal.buttons .button:active,.ui.inverted.teal.buttons .button:focus,.ui.inverted.teal.buttons .button:hover
     96 [remove] .ui.inverted.teal.button:hover,.ui.inverted.teal.buttons .button:hover
@@ -727,7 +726,7 @@
    214 [remove] .ui.basic.olive.button:focus,.ui.basic.olive.buttons .button:focus
    216 [remove] .ui.basic.olive.active.button,.ui.basic.olive.buttons .active.button
    191 [remove] .ui.basic.olive.button:active,.ui.basic.olive.buttons .button:active
-    82 [keep  ] .ui.buttons:not(.vertical)>.basic.olive.button:not(:first-child)
+    67 [remove] .ui.buttons>.basic.olive.button:not(:first-child)
    202 [remove] .ui.inverted.olive.button,.ui.inverted.olive.buttons .button
    377 [remove] .ui.inverted.olive.button.active,.ui.inverted.olive.button:active,.ui.inverted.olive.button:focus,.ui.inverted.olive.button:hover,.ui.inverted.olive.buttons .button.active,.ui.inverted.olive.buttons .button:active,.ui.inverted.olive.buttons .button:focus,.ui.inverted.olive.buttons .button:hover
     98 [remove] .ui.inverted.olive.button:hover,.ui.inverted.olive.buttons .button:hover
@@ -750,7 +749,7 @@
    216 [remove] .ui.basic.yellow.button:focus,.ui.basic.yellow.buttons .button:focus
    218 [remove] .ui.basic.yellow.active.button,.ui.basic.yellow.buttons .active.button
    193 [remove] .ui.basic.yellow.button:active,.ui.basic.yellow.buttons .button:active
-    83 [keep  ] .ui.buttons:not(.vertical)>.basic.yellow.button:not(:first-child)
+    68 [remove] .ui.buttons>.basic.yellow.button:not(:first-child)
    204 [remove] .ui.inverted.yellow.button,.ui.inverted.yellow.buttons .button
    385 [remove] .ui.inverted.yellow.button.active,.ui.inverted.yellow.button:active,.ui.inverted.yellow.button:focus,.ui.inverted.yellow.button:hover,.ui.inverted.yellow.buttons .button.active,.ui.inverted.yellow.buttons .button:active,.ui.inverted.yellow.buttons .button:focus,.ui.inverted.yellow.buttons .button:hover
    100 [remove] .ui.inverted.yellow.button:hover,.ui.inverted.yellow.buttons .button:hover
@@ -773,7 +772,7 @@
    218 [keep  ] .ui.basic.primary.button:focus,.ui.basic.primary.buttons .button:focus
    220 [keep  ] .ui.basic.primary.active.button,.ui.basic.primary.buttons .active.button
    195 [keep  ] .ui.basic.primary.button:active,.ui.basic.primary.buttons .button:active
-    84 [keep  ] .ui.buttons:not(.vertical)>.basic.primary.button:not(:first-child)
+    69 [keep  ] .ui.buttons>.basic.primary.button:not(:first-child)
    126 [keep  ] .ui.secondary.button,.ui.secondary.buttons .button
    117 [keep  ] .ui.secondary.button
    116 [keep  ] .ui.secondary.button:hover,.ui.secondary.buttons .button:hover
@@ -785,7 +784,7 @@
    222 [keep  ] .ui.basic.secondary.button:focus,.ui.basic.secondary.buttons .button:focus
    224 [keep  ] .ui.basic.secondary.active.button,.ui.basic.secondary.buttons .active.button
    199 [keep  ] .ui.basic.secondary.button:active,.ui.basic.secondary.buttons .button:active
-    84 [keep  ] .ui.buttons:not(.vertical)>.basic.primary.button:not(:first-child)
+    69 [keep  ] .ui.buttons>.basic.primary.button:not(:first-child)
    124 [keep  ] .ui.positive.button,.ui.positive.buttons .button
    116 [keep  ] .ui.positive.button
    114 [keep  ] .ui.positive.button:hover,.ui.positive.buttons .button:hover
@@ -797,7 +796,7 @@
    220 [keep  ] .ui.basic.positive.button:focus,.ui.basic.positive.buttons .button:focus
    222 [keep  ] .ui.basic.positive.active.button,.ui.basic.positive.buttons .active.button
    197 [keep  ] .ui.basic.positive.button:active,.ui.basic.positive.buttons .button:active
-    84 [keep  ] .ui.buttons:not(.vertical)>.basic.primary.button:not(:first-child)
+    69 [keep  ] .ui.buttons>.basic.primary.button:not(:first-child)
    124 [keep  ] .ui.negative.button,.ui.negative.buttons .button
    116 [keep  ] .ui.negative.button
    114 [keep  ] .ui.negative.button:hover,.ui.negative.buttons .button:hover
@@ -809,7 +808,7 @@
    220 [keep  ] .ui.basic.negative.button:focus,.ui.basic.negative.buttons .button:focus
    222 [keep  ] .ui.basic.negative.active.button,.ui.basic.negative.buttons .active.button
    197 [keep  ] .ui.basic.negative.button:active,.ui.basic.negative.buttons .button:active
-    84 [keep  ] .ui.buttons:not(.vertical)>.basic.primary.button:not(:first-child)
+    69 [keep  ] .ui.buttons>.basic.primary.button:not(:first-child)
    242 [keep  ] .ui.buttons
     79 [keep  ] .ui.buttons:not(.basic):not(.inverted)
     82 [keep  ] .ui.buttons:after
@@ -2453,13 +2452,13 @@
    584 [keep  ] .ui.form input:not([type]):focus,.ui.form input[type=date]:focus,.ui.form input[type=datetime-local]:focus,.ui.form input[type=email]:focus,.ui.form input[type=file]:focus,.ui.form input[type=number]:focus,.ui.form input[type=password]:focus,.ui.form input[type=search]:focus,.ui.form input[type=tel]:focus,.ui.form input[type=text]:focus,.ui.form input[type=time]:focus,.ui.form input[type=url]:focus
    230 [keep  ] .ui.form textarea:focus
     60 [keep  ] .ui.form.success .success.message:not(:empty)
-    75 [keep  ] .ui.form.success .compact.success.message:not(:empty)
+    75 [remove] .ui.form.success .compact.success.message:not(:empty)
    104 [keep  ] .ui.form.success .icon.success.message:not(:empty)
     60 [keep  ] .ui.form.warning .warning.message:not(:empty)
-    75 [keep  ] .ui.form.warning .compact.warning.message:not(:empty)
+    75 [remove] .ui.form.warning .compact.warning.message:not(:empty)
    104 [keep  ] .ui.form.warning .icon.warning.message:not(:empty)
     56 [keep  ] .ui.form.error .error.message:not(:empty)
-    71 [keep  ] .ui.form.error .compact.error.message:not(:empty)
+    71 [remove] .ui.form.error .compact.error.message:not(:empty)
    100 [keep  ] .ui.form.error .icon.error.message:not(:empty)
    144 [keep  ] .ui.form .field.error .input,.ui.form .field.error label,.ui.form .fields.error .field .input,.ui.form .fields.error .field label
    112 [keep  ] .ui.form .field.error .corner.label,.ui.form .fields.error .field .corner.label
@@ -2554,8 +2553,8 @@
     34 [keep  ] .ui.menu:first-child
     36 [keep  ] .ui.menu:last-child
     24 [keep  ] .ui.menu .menu
-    83 [keep  ] .ui.menu:not(.vertical)>.menu
-   149 [keep  ] .ui.menu:not(.vertical) .item
+    68 [keep  ] .ui.menu>.menu
+   134 [keep  ] .ui.menu .item
    688 [keep  ] .ui.menu .item
     71 [keep  ] .ui.menu>.item:first-child
    116 [keep  ] .ui.menu .item:before
@@ -2563,10 +2562,10 @@
     42 [keep  ] .ui.menu .item>p:first-child
     44 [keep  ] .ui.menu .item>p:last-child
     69 [keep  ] .ui.menu .item>i.icon
-   142 [keep  ] .ui.menu:not(.vertical) .item>.button
+   127 [keep  ] .ui.menu .item>.button
    264 [keep  ] .ui.menu>.container,.ui.menu>.grid
     33 [keep  ] .ui.menu .item>.input
-    76 [keep  ] .ui.menu:not(.vertical) .item>.input
+    61 [keep  ] .ui.menu .item>.input
     93 [keep  ] .ui.menu .item>.input input
     30 [remove] .ui.vertical.menu .header.item
     84 [keep  ] .ui.menu .header.item
@@ -2605,8 +2604,8 @@
     36 [remove] .ui.vertical.menu .active.item:hover
     84 [keep  ] .ui.menu .active.item:hover
    132 [keep  ] .ui.menu .item.disabled,.ui.menu .item.disabled:hover
-   151 [keep  ] .ui.menu:not(.vertical) .left.item,.ui.menu:not(.vertical) .left.menu
-   152 [keep  ] .ui.menu:not(.vertical) .right.item,.ui.menu:not(.vertical) .right.menu
+   121 [keep  ] .ui.menu .left.item,.ui.menu .left.menu
+   122 [keep  ] .ui.menu .right.item,.ui.menu .right.menu
     82 [keep  ] .ui.menu .right.item::before,.ui.menu .right.menu>.item::before
    245 [remove] .ui.vertical.menu
     87 [remove] .ui.vertical.menu .item
@@ -3045,9 +3044,9 @@
     58 [keep  ] .ui.table[class*="top attached"]:first-child
    176 [keep  ] .ui[class*="bottom attached"].table
     63 [keep  ] .ui[class*="bottom attached"].table:last-child
-   110 [keep  ] .ui.striped.table tbody tr:nth-child(2n),.ui.striped.table>tr:nth-child(2n)
+   110 [remove] .ui.striped.table tbody tr:nth-child(2n),.ui.striped.table>tr:nth-child(2n)
    133 [remove] .ui.inverted.striped.table tbody tr:nth-child(2n),.ui.inverted.striped.table>tr:nth-child(2n)
-   134 [keep  ] .ui.striped.selectable.selectable.selectable.table tbody tr.active:hover
+   134 [remove] .ui.striped.selectable.selectable.selectable.table tbody tr.active:hover
     84 [keep  ] .ui.table [class*="single line"],.ui.table[class*="single line"]
     84 [keep  ] .ui.table [class*="single line"],.ui.table[class*="single line"]
     44 [remove] .ui.red.table
@@ -3134,12 +3133,12 @@
     51 [keep  ] .ui.basic.table th
     64 [keep  ] .ui.basic.table tbody tr
     34 [keep  ] .ui.basic.table td
-    90 [keep  ] .ui.basic.striped.table tbody tr:nth-child(2n)
+    90 [remove] .ui.basic.striped.table tbody tr:nth-child(2n)
     43 [keep  ] .ui[class*="very basic"].table
-   137 [keep  ] .ui[class*="very basic"].table:not(.sortable):not(.striped) td,.ui[class*="very basic"].table:not(.sortable):not(.striped) th
-   165 [keep  ] .ui[class*="very basic"].table:not(.sortable):not(.striped) td:first-child,.ui[class*="very basic"].table:not(.sortable):not(.striped) th:first-child
-   164 [keep  ] .ui[class*="very basic"].table:not(.sortable):not(.striped) td:last-child,.ui[class*="very basic"].table:not(.sortable):not(.striped) th:last-child
-    98 [keep  ] .ui[class*="very basic"].table:not(.sortable):not(.striped) thead tr:first-child th
+    79 [keep  ] .ui[class*="very basic"].table td,.ui[class*="very basic"].table th
+   107 [keep  ] .ui[class*="very basic"].table td:first-child,.ui[class*="very basic"].table th:first-child
+   106 [keep  ] .ui[class*="very basic"].table td:last-child,.ui[class*="very basic"].table th:last-child
+    69 [keep  ] .ui[class*="very basic"].table thead tr:first-child th
     86 [keep  ] .ui.celled.table tr td,.ui.celled.table tr th
     87 [keep  ] .ui.celled.table tr td:first-child,.ui.celled.table tr th:first-child
     55 [keep  ] .ui.padded.table th
@@ -3419,8 +3418,7 @@
    233 [keep  ] .ui.accordion .accordion .title .dropdown.icon,.ui.accordion .title .dropdown.icon
    113 [keep  ] .ui.accordion .accordion .title .dropdown.icon:before,.ui.accordion .title .dropdown.icon:before
    229 [keep  ] .ui.checkbox
-    30 [remove] .ui.checkbox input[type=radio]
-   144 [keep  ] .ui.checkbox input[type=checkbox]
+   174 [keep  ] .ui.checkbox input[type=checkbox],.ui.checkbox input[type=radio]
    128 [keep  ] .ui.checkbox .box,.ui.checkbox label
    611 [keep  ] .ui.checkbox .box:before,.ui.checkbox label:before
    595 [keep  ] .ui.checkbox .box:after,.ui.checkbox label:after
