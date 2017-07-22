@@ -42,6 +42,7 @@ Backlog
 * Add laws for webapp-server-logic and test in webapp-server
 * Change Taskman algebras from initial to final encodings
 * Rename webapp-client-{home ⇒ member} now that its ambiguous in regards to the public pages
+* Make webtamp hash filenames of urls in Semantic CSS (icons.*)
 
 
 ------------------------------------------------------------------------------------------------------------------------

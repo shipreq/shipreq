@@ -69,7 +69,7 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
 
     optional: {
       semantic: [
-        fromWebpack({ files: 'semantic.*' }),
+        fromWebpack({ files: 'semantic.*', manifest: CamelCase }),
         fromWebpack({ files: 'icons.*', transitive: true }),
       ],
 
@@ -123,6 +123,7 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
       htmlMinifyOptions && Webtamp.plugins.Html.minify({ options: htmlMinifyOptions }),
 
       // Manifest for Scala
+      Webtamp.plugins.Manifest.extractCss({}),
       Webtamp.plugins.Manifest.generate.scala({
         object: "shipreq.webapp.base.AssetManifest",
         outputPath: '../scala',

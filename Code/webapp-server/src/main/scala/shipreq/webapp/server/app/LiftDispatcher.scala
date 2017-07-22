@@ -97,8 +97,12 @@ final class LiftDispatcher(global: Global) {
   private def render(req: LiftReq, t: Template): Box[LiftResponse] =
     S.session.flatMap(_.processTemplate(t, req, req.path, 200))
 
+  private val setHeader: ((String, String)) => Unit =
+    x => S.setHeader(x._1, x._2)
+
   private def liftResponse(req: LiftReq, response: DispatchLogic.Response): Box[LiftResponse] = {
     import DispatchLogic.Response._
+    response.headers.foreach(setHeader)
     response match {
       case ServePublicSpa         => render(req, templatePublic)
       case ServeHomeSpa(u)        => UserVar.set(u); render(req, templateHome)

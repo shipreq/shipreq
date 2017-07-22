@@ -6,7 +6,7 @@ import japgolly.univeq._
 import scalaz.{-\/, Monad, \/, \/-}
 import scalaz.syntax.monad._
 import shipreq.base.util._
-import shipreq.webapp.base.Urls
+import shipreq.webapp.base.{AssetManifest, Urls}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerConfig
@@ -26,17 +26,43 @@ object DispatchLogic {
     case object Other extends Method
   }
 
-  sealed trait Response
+  sealed trait Response {
+    def headers: Response.Headers = Nil
+  }
   object Response {
-    case object ServePublicSpa extends Response
+    type Header = (String, String)
+    type Headers = List[Header]
+
+    private def linkHeader(params: TraversableOnce[String]): Header =
+      ("Link", params.mkString(", "))
+
+    private def preloadCss(url: String): String = {
+      val x = s"<$url>; rel=preload; as=style"
+      if (url.contains("://")) x else s"$x; nopush"
+    }
+
+    case object ServePublicSpa extends Response {
+      override val headers: Headers = {
+        val cssUrls = AssetManifest.semanticCssUrls.filter(_ contains "css")
+        val links = cssUrls.map(preloadCss)
+        linkHeader(links) :: Nil
+      }
+    }
+
     final case class ServeHomeSpa(user: User) extends Response
+
     object ProjectSpa {
       final case class Serve(user: User, projectId: ProjectId) extends Response
       case object NotOwner extends Response
       case object InvalidId extends Response
     }
+
+    /** Respond in a way that indicates the HTTP method (GET, POST etc) wasn't allowed */
     case object MethodNotAllowed extends Response
+
     final case class Redirect(dest: Url.Relative) extends Response
+
+    /** Respond with a HTTP status only; no content */
     final case class StatusOnly(status: Int) extends Response
 
     implicit def univEq: UnivEq[Response] = UnivEq.derive

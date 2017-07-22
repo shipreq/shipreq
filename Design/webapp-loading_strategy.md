@@ -16,6 +16,10 @@ Loading Strategy for Web Pages
 Specifically:
 =============
 
+* DispatchLogic adds Link header to preload Google font declared in Semantic CSS.
+
+### TODO
+
 * extract resources from Semantic CSS and add preload directives
 * ClientSideProcInvoker must wait until async JS available
 * add async JS lib support in SJS, initially just for Katex
