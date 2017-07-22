@@ -1626,6 +1626,14 @@ fs-extra@^3.0.1:
     jsonfile "^3.0.0"
     universalify "^0.1.0"
 
+fs-extra@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-4.0.0.tgz#414fb4ca2d2170ba0014159d3a8aec3303418d9e"
+  dependencies:
+    graceful-fs "^4.1.2"
+    jsonfile "^3.0.0"
+    universalify "^0.1.0"
+
 fs.realpath@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
@@ -5397,13 +5405,13 @@ webpack@^3.3.0:
     webpack-sources "^1.0.1"
     yargs "^6.0.0"
 
-webtamp@^0.3.2:
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/webtamp/-/webtamp-0.3.2.tgz#366b5ce80e64edfbc6421e353d8baf4165db285d"
+webtamp@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/webtamp/-/webtamp-0.4.0.tgz#193a76c2ec93cd4a2fcb50c3010ce7e42b0b78a6"
   dependencies:
     camelcase "^4.0.0"
     commander "^2.9.0"
-    fs-extra "^3.0.1"
+    fs-extra "^4.0.0"
     glob "^7.1.1"
     html-minifier "^3.4.2"
     mime-types "^2.1.15"

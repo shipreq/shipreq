@@ -123,7 +123,10 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
       htmlMinifyOptions && Webtamp.plugins.Html.minify({ options: htmlMinifyOptions }),
 
       // Manifest for Scala
-      Webtamp.plugins.ScalaManifest({ object: "shipreq.webapp.base.AssetManifest", outputPath: '../scala' }),
+      Webtamp.plugins.Manifest.generate.scala({
+        object: "shipreq.webapp.base.AssetManifest",
+        outputPath: '../scala',
+      }),
     ],
   }
 };
