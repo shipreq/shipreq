@@ -9,14 +9,15 @@ object ResourceHintJs {
   type ResourceHint = shipreq.webapp.base.util.ResourceHint
   val  ResourceHint = shipreq.webapp.base.util.ResourceHint
 
-  implicit class ResourceHintPreloadLikeExt(private val rh: ResourceHint.PreloadLike) extends AnyVal {
+  implicit class ResourceHintPreloadLikeExt(private val rh: ResourceHint) extends AnyVal {
     def toLinkElement(): html.Link = {
       val link = document.createElement("link").asInstanceOf[html.Link]
-      link.href = rh.href
-      link.rel = rh.rel.value
-      link.asInstanceOf[js.Dynamic].as = rh.as.value
-      rh.`type`.foreach(link.`type` = _)
-      rh.generic.crossorigin.foreach(link.asInstanceOf[js.Dynamic].crossOrigin = _)
+      val g = rh.generic
+      link.rel = g.rel
+      link.href = g.href
+      g.`type`.foreach(link.`type` = _)
+      g.as.foreach(link.asInstanceOf[js.Dynamic].as = _)
+      g.crossorigin.foreach(link.asInstanceOf[js.Dynamic].crossOrigin = _)
       link
     }
 

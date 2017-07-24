@@ -30,11 +30,9 @@ object ResourceHint {
     override def generic = this
   }
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  sealed abstract class PreloadRel(final val value: String) {
-    protected def create(href: String, as: As, `type`: String = null) =
-      PreloadLike(href, this, as, Option(`type`))
+  sealed trait PreloadLike[F] {
+    import Preload.As
+    protected def create(href: String, as: As, `type`: String = null): F
 
     def style    (href: String)                 = create(href, As.Style)
     def script   (href: String)                 = create(href, As.Script)
@@ -42,43 +40,61 @@ object ResourceHint {
     def fontWoff2(href: String)                 = font(href, "font/woff2")
   }
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   /**
     * Mandatory and high-priority fetch for a resource that is necessary for the current navigation.
     */
-  case object Preload extends PreloadRel("preload")
+  final case class Preload(href : String,
+                           as   : Preload.As,
+                           `type`: Option[String]) extends ResourceHint {
+    import Preload.As
 
-  /**
-    * Optional and low-priority fetch for a resource that might be used by a subsequent navigation.
-    */
-  case object Prefetch extends PreloadRel("prefetch")
-
-  final case class PreloadLike(href : String,
-                               rel  : PreloadRel,
-                               as   : As,
-                              `type`: Option[String]) extends ResourceHint {
     override val generic = Generic(
       href        = href,
-      rel         = rel.value,
+      rel         = "preload",
       as          = Some(as.value),
       `type`      = `type`,
       crossorigin = Option.when(as ==* As.Font || absoluteHref)("anonymous"))
   }
 
-  sealed abstract class As(final val value: String)
-  object As {
-    //    case object Audio extends As("audio")
-    //    case object Video extends As("video")
-    //    case object Track extends As("track")
-    case object Script extends As("script")
-    case object Style extends As("style")
-    case object Font extends As("font")
-    //    case object Image extends As("image")
-    //    case object Fetch extends As("fetch")
-    case object Worker extends As("worker")
-    //    case object Embed extends As("embed")
-    //    case object Object extends As("object")
-    //    case object Document extends As("document")
-    implicit def univEq: UnivEq[As] = UnivEq.derive
+  object Preload extends PreloadLike[Preload] {
+    override protected def create(href: String, as: As, `type`: String = null) = apply(href, as, Option(`type`))
+
+    sealed abstract class As(final val value: String)
+    object As {
+      //    case object Audio extends As("audio")
+      //    case object Video extends As("video")
+      //    case object Track extends As("track")
+      case object Script extends As("script")
+      case object Style extends As("style")
+      case object Font extends As("font")
+      //    case object Image extends As("image")
+      //    case object Fetch extends As("fetch")
+      case object Worker extends As("worker")
+      //    case object Embed extends As("embed")
+      //    case object Object extends As("object")
+      //    case object Document extends As("document")
+      implicit def univEq: UnivEq[As] = UnivEq.derive
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  /**
+    * Optional and low-priority fetch for a resource that might be used by a subsequent navigation.
+    */
+  final case class Prefetch(href : String) extends ResourceHint {
+    override val generic = Generic(
+      href        = href,
+      rel         = "prefetch",
+      as          = None,
+      `type`      = None,
+      crossorigin = Option.when(absoluteHref)("anonymous"))
+  }
+
+  object Prefetch extends PreloadLike[Prefetch] {
+    override protected def create(href: String, as: Preload.As, `type`: String = null) = apply(href)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
