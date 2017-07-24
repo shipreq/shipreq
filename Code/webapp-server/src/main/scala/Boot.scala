@@ -39,6 +39,7 @@ class Boot {
     val (appConfig, runMode) = readConfig()
     logger.info(appConfig.report.report)
     runMode foreach setRunMode
+    logger.info(s"RunMode = ${Props.mode}")
 
     // Create services
     implicit val serverConfig = appConfig.server
@@ -71,7 +72,8 @@ class Boot {
   def setRunMode(runMode: RunModes.Value): Unit = {
     System.clearProperty("run.mode")
     Props.autoDetectRunModeFn.set(() => runMode)
-    assert(Props.mode ==* runMode)
+    if (Props.mode !=* runMode)
+      throw new IllegalStateException(s"Run mode (${Props.mode}) ≠ desired run mode ($runMode)")
   }
 
   def configureLift(): Unit = {

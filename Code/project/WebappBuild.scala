@@ -403,6 +403,9 @@ object WebappBuild {
         }
       )
 
+    def runMode =
+      if (releaseMode) "production" else "development"
+
     def connectToDockerDevEnv: Project => Project =
       _.configure(DockerEnv.dev.commands)
         .settings(
@@ -412,7 +415,7 @@ object WebappBuild {
 
           javaOptions in Jetty ++=
             "-Ddb.port=14032" ::
-            "-Drun.mode=development" ::
+            s"-Drun.mode=$runMode" ::
               DockerEnv.javaOptionsFromDockerComposeEnv("webapp", baseDirectory.value / "../docker/dev/docker-compose.yml")
                 .filterNot(s => s.startsWith("-Ddb.host=") || s.startsWith("-Drun.mode=")),
 
