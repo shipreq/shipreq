@@ -1,5 +1,6 @@
 package shipreq.webapp.base.util
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 
 /** Browser support:
@@ -13,10 +14,7 @@ import japgolly.univeq._
   */
 sealed trait ResourceHint {
   val href: String
-  def relValue: String
-  def crossorigin: Boolean
-  def useAs(f: String => Unit): Unit
-  def useType(f: String => Unit): Unit
+  def generic: ResourceHint.Generic
 
   final def absoluteHref: Boolean = href.contains("://")
   final def relativeHref: Boolean = !absoluteHref
@@ -24,18 +22,20 @@ sealed trait ResourceHint {
 
 object ResourceHint {
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  sealed abstract class PreloadLike extends ResourceHint {
-    val as: As
-    val `type`: String
-    override def crossorigin                = as ==* As.Font || absoluteHref
-    override def useAs(f: String => Unit)   = f(as.value)
-    override def useType(f: String => Unit) = if (`type`.nonEmpty) f(`type`)
+  final case class Generic(href       : String,
+                           rel        : String,
+                           as         : Option[String],
+                           `type`     : Option[String],
+                           crossorigin: Option[String]) extends ResourceHint {
+    override def generic = this
   }
 
-  sealed trait PreloadLikeObj[F] {
-    protected def create(href: String, as: As, `type`: String = ""): F
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  sealed abstract class PreloadRel(final val value: String) {
+    protected def create(href: String, as: As, `type`: String = null) =
+      PreloadLike(href, this, as, Option(`type`))
+
     def style    (href: String)                 = create(href, As.Style)
     def script   (href: String)                 = create(href, As.Script)
     def font     (href: String, `type`: String) = create(href, As.Font, `type`)
@@ -45,22 +45,23 @@ object ResourceHint {
   /**
     * Mandatory and high-priority fetch for a resource that is necessary for the current navigation.
     */
-  final case class Preload(href: String, as: As, `type`: String) extends PreloadLike {
-    override def relValue = "preload"
-  }
+  case object Preload extends PreloadRel("preload")
 
   /**
     * Optional and low-priority fetch for a resource that might be used by a subsequent navigation.
     */
-  final case class Prefetch(href: String, as: As, `type`: String = "") extends PreloadLike {
-    override def relValue = "prefetch"
-  }
+  case object Prefetch extends PreloadRel("prefetch")
 
-  object Preload extends PreloadLikeObj[Preload] {
-    override protected def create(href: String, as: As, `type`: String = "") = Preload(href, as, `type`)
-  }
-  object Prefetch extends PreloadLikeObj[Prefetch] {
-    override protected def create(href: String, as: As, `type`: String = "") = Prefetch(href, as, `type`)
+  final case class PreloadLike(href : String,
+                               rel  : PreloadRel,
+                               as   : As,
+                              `type`: Option[String]) extends ResourceHint {
+    override val generic = Generic(
+      href        = href,
+      rel         = rel.value,
+      as          = Some(as.value),
+      `type`      = `type`,
+      crossorigin = Option.when(as ==* As.Font || absoluteHref)("anonymous"))
   }
 
   sealed abstract class As(final val value: String)
@@ -87,10 +88,12 @@ object ResourceHint {
     * allows the user agent to mask the high latency costs of establishing a connection.
     */
   final case class Preconnect(href: String) extends ResourceHint {
-    override def relValue                   = "preconnect"
-    override def crossorigin                = absoluteHref
-    override def useAs(f: String => Unit)   = ()
-    override def useType(f: String => Unit) = ()
+    override val generic = Generic(
+      href        = href,
+      rel         = "preconnect",
+      as          = None,
+      `type`      = None,
+      crossorigin = None)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

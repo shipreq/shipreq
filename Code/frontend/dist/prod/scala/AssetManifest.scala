@@ -5,7 +5,15 @@ object AssetManifest {
 
   def favicon = "/286b75985993da80759cbdc5142de4d3.ico"
 
+  def katexCss = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css"
+
+  def katexJs = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.js"
+
   def loadingSpinSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjMjJjIj48cGF0aCBvcGFjaXR5PSIuMjUiIGQ9Ik0xNiAwYTE2IDE2IDAgMCAwIDAgMzIgMTYgMTYgMCAwIDAgMC0zMm0wIDRhMTIgMTIgMCAwIDEgMCAyNCAxMiAxMiAwIDAgMSAwLTI0Ii8+PHBhdGggZD0iTTE2IDBhMTYgMTYgMCAwIDEgMTYgMTZoLTRBMTIgMTIgMCAwIDAgMTYgNHoiPjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiBmcm9tPSIwIDE2IDE2IiB0bz0iMzYwIDE2IDE2IiBkdXI9IjAuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9wYXRoPjwvc3ZnPg=="
+
+  def memberJs = "/51ede128351d2b67e9e590569bf424af.js"
+
+  def reactDomServerJs = "https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react-dom-server.min.js"
 
   def semanticCss = "/00c37cfd0db0e4b788791d59affb06e9.css"
 

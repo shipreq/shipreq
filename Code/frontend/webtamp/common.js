@@ -89,6 +89,9 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
         fromWebpack({ files: 'icons.*', transitive: true }),
       ],
 
+      // BE ADVISED that when you changes these bundles, you may want to change how assets are prefetched.
+      // grep Scala source code for AssetManifest.
+
       public: [
         'react',
         'jquery',
@@ -97,7 +100,7 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
 
       member: [
         'reactDomSvr',
-        fromWebpack({ files: 'member.js' }),
+        fromWebpack({ files: 'member.js', manifest: CamelCase }),
         'jquery',
         'semantic',
         'katex',
@@ -109,11 +112,14 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
         fromCdnjs('react', mode == 'dev' ? 'react-with-addons.js' : 'react.min.js'),
         fromCdnjs({cdn: 'react', npm: 'react-dom'}, `react-dom${dotMin}.js`),
       ],
-      reactDomSvr: ['react', fromCdnjs({cdn: 'react', npm: 'react-dom'}, `react-dom-server${dotMin}.js`)],
+      reactDomSvr: [
+        'react',
+        fromCdnjs({cdn: 'react', npm: 'react-dom'}, `react-dom-server${dotMin}.js`, 'reactDomServerJs'),
+      ],
 
       katex: [
-        fromCdnjs({cdn: 'KaTeX', npm: 'katex'}, `katex.min.js`),
-        fromCdnjs({cdn: 'KaTeX', npm: 'katex'}, `katex.min.css`),
+        fromCdnjs({cdn: 'KaTeX', npm: 'katex'}, `katex.min.js`, 'katexJs'),
+        fromCdnjs({cdn: 'KaTeX', npm: 'katex'}, `katex.min.css`, 'katexCss'),
         // { type: 'local', src: 'node_modules/katex/dist', files: '*.min.{js,css}' },
         // { type: 'local', src: 'node_modules/katex/dist', files: 'fonts/**/*', transitive: true },
       ],

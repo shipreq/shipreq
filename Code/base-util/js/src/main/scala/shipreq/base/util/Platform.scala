@@ -26,6 +26,11 @@ object Platform extends PlatformShared {
   override def memoInt[A](f: Int => A): Int => A =
     memo(f)
 
+  override def memoFn0[A](f: () => A): () => A = {
+    lazy val a = f()
+    () => a
+  }
+
   class StreamUExt[A](val _a: Stream[UndefOr[A]]) extends AnyVal {
     def jsDefined: Stream[A] =
       _a.filter(_.isDefined).map(_.get)

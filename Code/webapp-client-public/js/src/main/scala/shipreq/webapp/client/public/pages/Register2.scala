@@ -19,6 +19,7 @@ import shipreq.webapp.base.user._
 import shipreq.webapp.base.validation.Implicits._
 import shipreq.webapp.base.validation.{Composite, Simple}
 import shipreq.webapp.base.{CommmonUiText, Urls, WebappConfig}
+import shipreq.webapp.client.public.Prefetch
 import shipreq.webapp.client.public.PublicSpaProtocols.Register.{Request, Response}
 import shipreq.webapp.client.public.Styles.{register2 => *}
 
@@ -100,6 +101,10 @@ object Register2 {
       Some(CommmonUiText.password))
 
     private def renderForm(p: Props, s: State): VdomElement = {
+
+      // User is very close to creating an account and logging in - prefetch new resources for next page
+      Prefetch.memberHome()
+
       val usernameValidator = UserValidators.username(s.takenUsernames)
 
       type ValiInput = (String, String, (String, String), Agreement)

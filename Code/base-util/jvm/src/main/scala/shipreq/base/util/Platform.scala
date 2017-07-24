@@ -37,6 +37,20 @@ object Platform extends PlatformShared {
     )
   }
 
+  override def memoFn0[A](f: () => A): () => A = {
+//    var lock = new AnyRef
+//    @volatile var fvar: () => A = null
+//    fvar = () => lock.synchronized {
+//      val a = f()
+//      fvar = () => a
+//      lock = null
+//      a
+//    }
+//    fvar
+    lazy val a = f()
+    () => a
+  }
+
   abstract class ScalaExt {
   }
 }

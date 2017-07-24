@@ -10,4 +10,6 @@ trait PlatformShared {
   def looseMemo[A: UnivEq, B](): LooseMemo[A, B]
 
   def memoInt[A](f: Int => A): Int => A
+
+  def memoFn0[A](f: () => A): () => A
 }

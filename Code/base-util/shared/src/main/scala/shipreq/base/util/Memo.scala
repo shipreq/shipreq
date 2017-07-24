@@ -18,6 +18,9 @@ object Memo {
   @inline def int[A](f: Int => A): Int => A =
     platform memoInt f
 
+  @inline def fn0[A](a: => A): () => A =
+    platform.memoFn0(() => a)
+
   def curry2[A: UnivEq, B: UnivEq, Z](f: A => B => Z): A => B => Z =
     Memo[A, B => Z](a => Memo(f(a)))
 

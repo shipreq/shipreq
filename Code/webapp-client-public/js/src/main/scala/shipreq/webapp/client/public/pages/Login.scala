@@ -3,18 +3,19 @@ package shipreq.webapp.client.public.pages
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import org.scalajs.dom.{html, window}
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Disabled, Enabled, TCB}
-import shipreq.webapp.base.{CommmonUiText, Urls}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.base.user.{EmailAddr, UserValidators, Username}
+import shipreq.webapp.base.{CommmonUiText, Urls}
+import shipreq.webapp.client.public.Prefetch
 import shipreq.webapp.client.public.PublicSpaProtocols.Login.Request
 import shipreq.webapp.client.public.Styles.{login => *}
 
@@ -97,6 +98,9 @@ object Login {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   final class Backend($: BackendScope[Props, Unit]) {
+
+    // User is likely to log in - prefetch new resources for next page
+    Prefetch.memberHome()
 
     def readCredentials: Callback =
       $.props.flatMap(_.state.modState(_(LocalStorage.read()))) >> focusForm(3).delayMs(20).void

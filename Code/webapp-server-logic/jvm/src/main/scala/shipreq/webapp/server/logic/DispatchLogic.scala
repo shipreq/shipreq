@@ -37,13 +37,18 @@ object DispatchLogic {
     private def linkHeader(params: TraversableOnce[String]): Header =
       ("Link", params.mkString(", "))
 
-    implicit class ResourceHintExt(private val r: ResourceHint) extends AnyVal {
+    implicit class ResourceHintExt(private val rh: ResourceHint) extends AnyVal {
       def headerValue: String = {
-        var h = s"<${r.href}>; rel=${r.relValue}"
-        r.useAs(as => h = s"$h; as=$as")
-        r.useType(t => h = h + "; type=\"" + t + "\"")
-        if (r.crossorigin) h = h + "; crossorigin"
-        if (r.relativeHref) h = h + "; nopush"
+        val g = rh.generic
+        var h = s"<${g.href}>; rel=${g.rel}"
+        g.as.foreach(as => h = s"$h; as=$as")
+        g.`type`.foreach(t => h = h + "; type=\"" + t + "\"")
+        g.crossorigin match {
+          case Some("anonymous") => h = h + "; crossorigin"
+          case Some(v)           => h = h + "; crossorigin=\"" + v + "\""
+          case None              => ()
+        }
+        if (g.relativeHref) h = h + "; nopush"
         h
       }
     }
