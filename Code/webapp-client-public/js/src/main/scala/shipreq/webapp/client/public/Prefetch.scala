@@ -14,6 +14,8 @@ object Prefetch {
         ResourceHint.Prefetch.script(AssetManifest.reactDomServerJs) ::
         ResourceHint.Prefetch.script(AssetManifest.memberJs) ::
         ResourceHint.Prefetch.script(AssetManifest.webappClientHomeJs) ::
+        ResourceHint.Prefetch.script(AssetManifest.katexCss) ::
+        ResourceHint.Prefetch.script(AssetManifest.katexJs) ::
         Nil
       Callback(res.foreach(_.install())).delayMs(200).runNow()
     }
