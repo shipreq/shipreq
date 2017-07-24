@@ -9,7 +9,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.{AssetManifest, Urls}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.user._
-import shipreq.webapp.base.util.Preload
+import shipreq.webapp.base.util.ResourceHint
 import shipreq.webapp.server.ServerConfig
 
 object DispatchLogic {
@@ -37,19 +37,28 @@ object DispatchLogic {
     private def linkHeader(params: TraversableOnce[String]): Header =
       ("Link", params.mkString(", "))
 
-    private def preloadToHeader(p: Preload): String = {
-      var h = s"<${p.href}>; rel=${p.rel.value}; as=${p.as.value}"
-      if (p.`type`.nonEmpty) h = h + "; type=\"" + p.`type` + "\""
-      if (p.crossorigin)     h = h + "; crossorigin"
-      if (p.relativeHref)    h = h + "; nopush"
-      h
+    implicit class ResourceHintExt(private val r: ResourceHint) extends AnyVal {
+      def headerValue: String = {
+        var h = s"<${r.href}>; rel=${r.relValue}"
+        r.useAs(as => h = s"$h; as=$as")
+        r.useType(t => h = h + "; type=\"" + t + "\"")
+        if (r.crossorigin) h = h + "; crossorigin"
+        if (r.relativeHref) h = h + "; nopush"
+        h
+      }
     }
 
     case object ServePublicSpa extends Response {
       override val headers: Headers = {
-        val preloads: List[Preload] =
-          AssetManifest.semanticCssUrls.filter(_ contains "css").map(Preload.style) // avoids waiting until semantic.css has been fetched and parsed
-        linkHeader(preloads map preloadToHeader) :: Nil
+        var hints = List.empty[ResourceHint]
+
+        // Semantic uses Google Fonts which the host instructs not to cache
+        // preload is useless and results in double queries
+        val googleFonts = "https://fonts.googleapis.com"
+        require(AssetManifest.semanticCssUrls.exists(_ startsWith googleFonts), "Is Google Fonts not in use anymore?")
+        hints ::= ResourceHint.Preconnect(googleFonts)
+
+        linkHeader(hints.map(_.headerValue)) :: Nil
       }
     }
 
