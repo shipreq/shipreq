@@ -7,6 +7,7 @@ Backlog
 * Show past IDs in ReqTable
 * Group req types in filter from ALL to ANY.
 * Say "no implications" in imp graph
+* Create and use HomeSpaLoader (matbe - might have a negative effect)
 
 ### Nice UI
 * Cfg Fields
@@ -43,6 +44,7 @@ Backlog
 * Change Taskman algebras from initial to final encodings
 * Rename webapp-client-{home ⇒ member} now that its ambiguous in regards to the public pages
 * Make webtamp hash filenames of urls in Semantic CSS (icons.*)
+* webapp-base{,-member} packages are shit. Reorg!
 
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -73,11 +75,6 @@ Phase 2
   We don't seem to need all-imps vs non-field-imps...should tags not work the same way?
   Or is there similar deficiency in imps cols too?
 * Re-evaluate config: some data is useless (i.e. key of custom text fields)
-
-### Tech
-* Improve load times, maybe defer stuff? Or maybe on-demand loading?
-  * Katex.js can be loaded on demand. Only the CSS is required for rendering.
-  * Create and use HomeSpaLoader
 
 ### New Features
 * User profile page
