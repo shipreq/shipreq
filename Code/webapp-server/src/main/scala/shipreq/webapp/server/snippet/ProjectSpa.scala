@@ -8,6 +8,7 @@ import scalaz.syntax.all._
 import scalaz.{-\/, \/-}
 import shipreq.base.util.FreeOption
 import shipreq.base.util.FxModule._
+import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.protocol.ProjectSpaProtocols
@@ -19,7 +20,18 @@ import shipreq.webapp.server.protocol._
 
 object ProjectSpa extends SingleOpStatelessSnippet {
 
-  val EntryPoint = ClientSideProcInvoker(ProjectSpaProtocols.EntryPoint)
+  private def ResourceBundle =
+    LoadJs.Bundle(
+      LoadJs.Resource(AssetManifest.semanticJs),
+      LoadJs.Resource(AssetManifest.reactJs),
+      LoadJs.Resource(AssetManifest.reactDomJs),
+      LoadJs.Resource(AssetManifest.reactDomServerJs),
+      LoadJs.Resource(AssetManifest.memberLibBundleJs),
+      LoadJs.Resource(AssetManifest.webappClientProjectJs),
+      LoadJs.Resource(AssetManifest.katexCss),
+      LoadJs.Resource(AssetManifest.katexJs))
+
+  val EntryPoint = ClientSideProcInvoker(ProjectSpaProtocols.EntryPoint, ResourceBundle)
 
   override def render = {
     val projectId = LiftDispatcher.ProjectIdVar.is

@@ -61,17 +61,16 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
 
       webappClientPublic: [
         { type: 'external', path: sjsPath('public'), manifest: 'webappClientPublicJs' },
-        'public',
+        'publicLibs',
       ],
 
       webappClientHome: [
         { type: 'external', path: sjsPath('home'), manifest: 'webappClientHomeJs' },
-        'member',
+        'memberLibs',
       ],
 
       webappClientProject: [
         { type: 'external', path: sjsPath('project'), manifest: 'webappClientProjectJs' },
-        'member',
       ],
 
       webappClientWw: [
@@ -80,38 +79,48 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
       ],
 
       admin: fromWebpack({ files: 'admin.css' }),
-    },
 
-    optional: {
-      semantic: [
+      // ---------------------------------------------------------------------------------------------------------------
+      // BE ADVISED that when you changes these bundles, you may need to change how assets are used from Scala.
+      // grep Scala source code for AssetManifest.
+
+      spaWithLoader: [
+        'jquery', // Lift needs this immediately
+        'semanticCss',
+        'loadjs',
+       ],
+
+      semanticCss: [
         { type: 'cdn', url: semanticUiImport, as: 'style' },
-        fromWebpack({ files: 'semantic.*', manifest: CamelCase }),
+        fromWebpack({ files: 'semantic*.css', manifest: CamelCase }),
         fromWebpack({ files: 'icons.*', transitive: true }),
       ],
 
-      // BE ADVISED that when you changes these bundles, you may want to change how assets are prefetched.
-      // grep Scala source code for AssetManifest.
+      semanticJs: fromWebpack({ files: 'semantic*.js', manifest: CamelCase }),
 
-      public: [
+      semantic: ['semanticCss', 'semanticJs'],
+
+      publicLibs: [
         'react',
         'jquery',
         'semantic',
       ],
 
-      member: [
+      memberLibs: [
         'reactDomSvr',
-        fromWebpack({ files: 'member.js', manifest: CamelCase }),
+        fromWebpack({ files: 'member-lib-bundle.js', manifest: CamelCase }),
         'jquery',
         'semantic',
         'katex',
       ],
 
-      jquery: fromCdnjs('jquery', 'jquery.min.js'),
+      jquery: fromCdnjs('jquery', 'jquery.min.js', 'jqueryJs'),
 
       react: [
-        fromCdnjs('react', mode == 'dev' ? 'react-with-addons.js' : 'react.min.js'),
-        fromCdnjs({cdn: 'react', npm: 'react-dom'}, `react-dom${dotMin}.js`),
+        fromCdnjs('react', mode == 'dev' ? 'react-with-addons.js' : 'react.min.js', 'reactJs'),
+        fromCdnjs({cdn: 'react', npm: 'react-dom'}, `react-dom${dotMin}.js`, 'reactDomJs'),
       ],
+
       reactDomSvr: [
         'react',
         fromCdnjs({cdn: 'react', npm: 'react-dom'}, `react-dom-server${dotMin}.js`, 'reactDomServerJs'),
@@ -125,6 +134,8 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
       ],
 
       vizJs: { type: 'local', files: 'vendor/viz.js', manifest: true },
+
+      loadjs: { type: 'local', files: `node_modules/loadjs/dist/loadjs${dotMin}.js`, manifest: true },
     },
 
     plugins: [

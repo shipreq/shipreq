@@ -2799,7 +2799,7 @@ loader-utils@^1.0.2, loader-utils@^1.1.0:
     emojis-list "^2.0.0"
     json5 "^0.5.0"
 
-loadjs@3.5.0:
+loadjs@^3.5.0:
   version "3.5.0"
   resolved "https://registry.yarnpkg.com/loadjs/-/loadjs-3.5.0.tgz#1dd8934c064c5dad9c62c513875918e87db8e6e1"
 
@@ -5405,9 +5405,9 @@ webpack@^3.3.0:
     webpack-sources "^1.0.1"
     yargs "^6.0.0"
 
-webtamp@^0.4.6:
-  version "0.4.6"
-  resolved "https://registry.yarnpkg.com/webtamp/-/webtamp-0.4.6.tgz#6dc2ce006922df5564a17130bace754334a92d1a"
+webtamp@^0.4.7:
+  version "0.4.7"
+  resolved "https://registry.yarnpkg.com/webtamp/-/webtamp-0.4.7.tgz#f721697faaeedce693207de636c631f1481ff752"
   dependencies:
     camelcase "^4.0.0"
     commander "^2.9.0"

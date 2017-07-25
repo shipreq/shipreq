@@ -15,7 +15,7 @@ const config = ({ mode }) => ({
 
     semantic: `./shipreq/semantic/require-${mode}`,
 
-    member: entryPoints([
+    'member-lib-bundle': entryPoints([
       'expose-loader?ReactCollapse!react-collapse',
       'expose-loader?moment!moment',
       'expose-loader?autosize!autosize',

@@ -11,39 +11,9 @@ import shipreq.webapp.base.protocol._
 /**
   * Generates code to invoke client-side procedures.
   */
-final case class ClientSideProcInvoker[I](proc: ClientSideProc[I]) {
+final class ClientSideProcInvoker[I](proc: ClientSideProc[I], bundle: Option[LoadJs.Bundle]) {
   import ClientSideProcInvoker._
   import proc.pickler
-
-  private def onWindowLoadSB(f: StringBuilder => Unit): StringBuilder => Unit =
-    sb => {
-      sb append "window.onload=function(){"
-      f(sb)
-      sb append "};"
-    }
-
-//  private def setTimeout(ms: Int)(f: StringBuilder => Unit): StringBuilder => Unit =
-//    sb => {
-//      sb append "setTimeout(function(){"
-//      f(sb)
-//      sb append "},"
-//      sb append ms
-//      sb append ");"
-//    }
-
-//  private def loadAsyncThenWhenReady(assets: Asset.InitAndNext[_], name: String = "x")
-//                                    (onReady: StringBuilder => Unit): StringBuilder => Unit =
-//    sb => {
-//      sb append "loadjs("
-//      sb append assets.nextPathsArray
-//      sb append ",'"
-//      sb append name
-//      sb append "');loadjs.ready('"
-//      sb append name
-//      sb append "',{success:function(){"
-//      onReady(sb)
-//      sb append "}});"
-//    }
 
   private val runCmdHead =
     s"${proc.objectAndMethod}('"
@@ -51,32 +21,42 @@ final case class ClientSideProcInvoker[I](proc: ClientSideProc[I]) {
   private def invokeSB(i: I)(sb: StringBuilder): Unit = {
     sb append runCmdHead
     byteBufferToBase64SB(PickleImpl.intoBytes(i))(sb)
-    sb append "');"
+    sb append "')"
   }
 
-  def invokeJs(i: I): String =
+  private def invokeJs(i: I): String =
     quickJSB(invokeSB(i))
 
   def invokeJsCmd(i: I): JsCmd =
     JsCmds.Run(invokeJs(i))
 
-  def invokeOnLoadJs(i: I): String =
-    quickJSB(onWindowLoadSB(invokeSB(i)))
+  // TODO Potential optimisation: have this estimate a good initial SB size for itself by observing past results
+  private val invokeOnLoadJs: I => String =
+      bundle match {
+        case Some(loadjs) =>
+          i => {
+            val js = quickJSB(invokeSB(i))
+            loadjs.onSuccess(js)
+          }
+        case None =>
+          i => quickJSB { sb =>
+            sb append "window.onload=function(){"
+            invokeSB(i)(sb)
+            sb append "};"
+          }
+      }
 
   def invokeOnLoadHtml(i: I) =
     <script type="text/javascript">{invokeOnLoadJs(i)}</script>
-
-  //  def loadJsAndRun(assets: Asset.InitAndNext[_], name: String = "x")(i: I): String =
-//    quickSB(
-//      runOnWindowLoad(
-//        loadAsyncThenWhenReady(assets, name)(
-//          run(i))))
-
-//  def htmlToLoadJsAndRun(assets: Asset.InitAndNext[_], name: String = "x")(i: I) =
-//    <script type="text/javascript">{loadJsAndRun(assets, name)(i)}</script>
 }
 
 object ClientSideProcInvoker {
+
+  def apply[I](proc: ClientSideProc[I]): ClientSideProcInvoker[I] =
+    new ClientSideProcInvoker(proc, None)
+
+  def apply[I](proc: ClientSideProc[I], bundle: LoadJs.Bundle): ClientSideProcInvoker[I] =
+    new ClientSideProcInvoker(proc, Some(bundle))
 
   def byteBufferToBinary(bb: ByteBuffer): Array[Byte] = {
     val size = bb.limit()

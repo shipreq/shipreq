@@ -6,7 +6,7 @@
     "autosize": "^4.0.0",
     "jquery": "2.2.4",
     "katex": "0.7.1",
-    "loadjs": "3.5.0",
+    "loadjs": "^3.5.0",
     "moment": "2.18.1",
     "react": "^15.6.1",
     "react-addons-perf": "15.5.0-rc.2",
@@ -37,6 +37,6 @@
     "svgo": "^0.7.2",
     "webpack": "^3.3.0",
     "webpack-merge": "^4.1.0",
-    "webtamp": "^0.4.6"
+    "webtamp": "^0.4.7"
   }
 }

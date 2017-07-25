@@ -20,10 +20,18 @@ Specifically:
 * PublicSpa.{Login,Register2} prefetches assets for MemberSpa
 * MemberSpa HTML prefetches ProjectSpa
 * ProjectSpa HTML prefetches WebWorker & GraphViz
+  NOTE: This is disabled because it could cause double-loads.
+* ProjectSpa uses loadjs to render loader fast.
+* There is a LoadJs class in webapp-server.
+  ClientSideProcInvoker can accept a LoadJs.Bundle.
 
 ### TODO
 
-* ClientSideProcInvoker must wait until async JS available
-* add async JS lib support in SJS, initially just for Katex
+* add async JS lib support in SJS, initially just for [Katex which needs ReactDOMServer too]
 * add loading pages for public & home?
 
+Notes
+=====
+
+* Async/defer tags don't work in place of loadjs
+  Using defer + lift-provided script has unreliable execution order
