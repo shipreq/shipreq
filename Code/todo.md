@@ -38,13 +38,12 @@ Backlog
 * Remove jQuery - lift and semantic UI blocking this
 * Remove unused styles
 * Change ScalaCSS to generate Scala.JS without the runtime/JS-size overhead
+* webapp-base{,-member} packages are shit. Reorg!
 * webapp-base-member shares packages with webapp-base, plus most of that stuff should be under .project as well
 * Extract webapp-base-member-test
 * Add laws for webapp-server-logic and test in webapp-server
-* Change Taskman algebras from initial to final encodings
 * Rename webapp-client-{home ⇒ member} now that its ambiguous in regards to the public pages
 * Make webtamp hash filenames of urls in Semantic CSS (icons.*)
-* webapp-base{,-member} packages are shit. Reorg!
 
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -62,7 +61,6 @@ Phase 2
 * Add proper metrics
 * Do more with errors, eg. ClientData.{init,applyEvents}
 * Proper 404/500 pages
-* Duplication between public.js and member.js
 * Add DB indicies
 * Restore AdminStats
 * Restore DiagnosticEndpoints
