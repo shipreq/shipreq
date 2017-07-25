@@ -1,6 +1,6 @@
 const makeConfig = require('./common');
 
-const sjsPaths = {
+const sjsNames = {
   public : 'a',
   home   : 'h',
   project: 'p',
@@ -10,7 +10,7 @@ const sjsPaths = {
 module.exports = makeConfig({
   mode: 'prod',
   name: '[hash:32].[ext]',
-  sjsPath: n => `/${sjsPaths[n]}.js`,
+  sjsName: n => `${sjsNames[n]}.js`,
   htmlMinifyOptions: {
     removeComments: true,
     collapseWhitespace: true,

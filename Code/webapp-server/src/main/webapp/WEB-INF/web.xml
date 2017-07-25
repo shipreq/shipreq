@@ -9,7 +9,7 @@
       <description>Serves static content using pre-gzipped resources when available.</description>
       <servlet-name>static</servlet-name>
       <servlet-class>org.eclipse.jetty.servlet.DefaultServlet</servlet-class>
-      <init-param><param-name>gzip</param-name><param-value>true</param-value></init-param>
+      <init-param><param-name>precompressed</param-name><param-value>br=.br,gzip=.gz</param-value></init-param>
       <init-param><param-name>dirAllowed</param-name><param-value>false</param-value></init-param>
       <init-param><param-name>etags</param-name><param-value>true</param-value></init-param>
       <init-param><param-name>cacheControl</param-name><param-value>must-revalidate</param-value></init-param>
@@ -18,11 +18,7 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>static</servlet-name>
-        <url-pattern>/a/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>static</servlet-name>
-        <url-pattern>/dev/*</url-pattern>
+        <url-pattern>/s/*</url-pattern>
     </servlet-mapping>
 
     <!-- Avoid TLD Scans. https://www.eclipse.org/jetty/documentation/current/quickstart-webapp.html -->
@@ -36,6 +32,10 @@
     <mime-mapping>
       <!-- Jetty 9.3 otherwise uses application/gzip -->
       <extension>css.gz</extension>
+      <mime-type>text/css</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+      <extension>css.br</extension>
       <mime-type>text/css</mime-type>
     </mime-mapping>
 

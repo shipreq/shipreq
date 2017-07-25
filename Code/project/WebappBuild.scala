@@ -333,7 +333,8 @@ object WebappBuild {
           }
           // printFileBatches(warTiers.map(_.map(_._1)))
 
-          val comp = if (releaseMode) "pigz -k -11" else "pigz -k -9"
+          val compGz = s"pigz -k -${if (releaseMode) 11 else 9}"
+          val compBr = s"bro --quality ${if (releaseMode) 11 else 9} --input {} --output {}.br"
 
           val warStages =
             warTiers.map { case (i, fixJars, batch) =>
@@ -348,7 +349,9 @@ object WebappBuild {
                   "for f in  $(find -name '*.jar'); do unzip -l $f| cut -b31- | grep '/$' | xargs zip -dq $f META-INF/MANIFEST.MF; done")
 
               // Compress assets
-              execInBash(s"cd ${stage.getAbsolutePath} && find -type f | egrep -v '\\.(gz|zip|jar|html|eot|woff2?)$$' | parallel --no-notice $comp")
+              val compressable = s"cd ${stage.getAbsolutePath} && find -type f | egrep -v '\\.(br|gz|zip|jar|html|eot|woff2?)$$'"
+              execInBash(s"$compressable | parallel --no-notice $compGz")
+              execInBash(s"$compressable | parallel --no-notice $compBr")
 
               // Redirect HTTP to HTTPS
               val stagedWebXml = stage / webXml

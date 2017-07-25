@@ -3,8 +3,13 @@ Development Environment Setup
 
 ### System
 
-* Install SBT.
-* Install docker-compose.
+* Install:
+  * SBT
+  * Docker & docker-compose
+  * parallel
+  * pigz
+  * brotli
+  * unzip
 
 ### Dev account for web front-end
 

@@ -60,7 +60,6 @@ Phase 2
 * Add healthchecks
 * Send logs to service
 * Add proper metrics
-* Britoli support
 * Do more with errors, eg. ClientData.{init,applyEvents}
 * Proper 404/500 pages
 * Duplication between public.js and member.js

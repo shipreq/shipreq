@@ -5,7 +5,7 @@ object AssetManifest {
 
   final case class CDN(href: String, integrity: Option[String])
 
-  def favicon = "/286b75985993da80759cbdc5142de4d3.ico"
+  def favicon = "/s/286b75985993da80759cbdc5142de4d3.ico"
 
   def jqueryJs = CDN(
     href = "https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js",
@@ -21,9 +21,9 @@ object AssetManifest {
 
   def loadingSpinSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjMjJjIj48cGF0aCBvcGFjaXR5PSIuMjUiIGQ9Ik0xNiAwYTE2IDE2IDAgMCAwIDAgMzIgMTYgMTYgMCAwIDAgMC0zMm0wIDRhMTIgMTIgMCAwIDEgMCAyNCAxMiAxMiAwIDAgMSAwLTI0Ii8+PHBhdGggZD0iTTE2IDBhMTYgMTYgMCAwIDEgMTYgMTZoLTRBMTIgMTIgMCAwIDAgMTYgNHoiPjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiBmcm9tPSIwIDE2IDE2IiB0bz0iMzYwIDE2IDE2IiBkdXI9IjAuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9wYXRoPjwvc3ZnPg=="
 
-  def loadjs = "/d8dd38ec39012a0dbad02f9e639bbad2.js"
+  def loadjs = "/s/d8dd38ec39012a0dbad02f9e639bbad2.js"
 
-  def memberLibBundleJs = "/51ede128351d2b67e9e590569bf424af.js"
+  def memberLibBundleJs = "/s/51ede128351d2b67e9e590569bf424af.js"
 
   def reactDomJs = CDN(
     href = "https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react-dom.min.js",
@@ -37,7 +37,7 @@ object AssetManifest {
     href = "https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react.min.js",
     integrity = Some("sha256-ivdPAn5h6U67z6OPgwfiLM9ug6levxmYFqWNxNCV0YE="))
 
-  def semanticCss = "/00c37cfd0db0e4b788791d59affb06e9.css"
+  def semanticCss = "/s/00c37cfd0db0e4b788791d59affb06e9.css"
 
   def semanticCssUrls: List[String] =
     "icons.eot" ::
@@ -48,9 +48,9 @@ object AssetManifest {
     "icons.svg#icons" ::
     Nil
 
-  def semanticJs = "/439840bb2a1360a10d17f19b937c0f50.js"
+  def semanticJs = "/s/439840bb2a1360a10d17f19b937c0f50.js"
 
-  def shipreqBannerSvg = "/878536f0a4ad0029794669f88dbf5f35.svg"
+  def shipreqBannerSvg = "/s/878536f0a4ad0029794669f88dbf5f35.svg"
 
   def shipreqCircleDarkSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMTYuMzIiIGhlaWdodD0iMzE5LjMyNiI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJhIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNlODY2MDAiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNlZWZmMjMiIHN0b3Atb3BhY2l0eT0iLjI2OCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxlbGxpcHNlIGN4PSIxNDkuOTUiIGN5PSIxNTAuMDUiIHJ4PSIxNTguMTYiIHJ5PSIxNTkuNjYzIiBmaWxsPSIjZmZmIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg4LjIxIDkuNjEzKSIvPjxwYXRoIGQ9Ik0xNjUuNTYyIDE5OC40NzdsMTkuNDgyLTIxLjQzMS0xOS40ODIgMTEuODU2LTM1LjAwNS0yNS41MzQgMzUuMDA1IDM1LjEwOSIgZmlsbD0iI2E4ZWRmZiIgZmlsbC1ydWxlPSJldmVub2RkIi8+PGcgZmlsbD0iIzAwNWRiMyIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMTIyLjA3NSAyMDIuMDY3bDIuMDggMjIuNzEzLTU2LjUxNSAyMC4zNzcgMi4yMjItMjQuMjYyIDUyLjIxMy0xOC44MjhNMTE2LjE4NiAxMzcuNzJsMi4wNzggMjIuNzEtNDQuMzMyIDE1Ljk4NyAyLjIyMS0yNC4yNjEgNDAuMDMzLTE0LjQzNU04MS42OCA5MS43NjdoMzAuM2wuMzk1IDQuMzE2LTMyLjE1MiAxMS41OTQgMS40NTctMTUuOTFNOTYuODMgNzcuOTQ3SDgxLjY4YzAtOC40NTcgNi43ODItMTUuMzEzIDE1LjE1LTE1LjMxMyA4LjM2NiAwIDE1LjE0OCA2Ljg1NiAxNS4xNDggMTUuMzEzSDk2LjgzTTE2NC4xODggMTAuNzcyYzAgMTguOTI5IDEwLjM5NiA0MS45NjcgMjMuODk1IDY2Ljg5OGg5Mi43ODZjLTI1LjI0My0zOC40MDUtNjcuNTk2LTY0LjkyMi0xMTYuNjgxLTY2Ljg5OHptMzYuMzE1IDg5LjE4M2M0NC4yIDc3LjcxMiA5Ny41NjggMTY2LjkzLTM2LjMxNSAyMDguNDk0IDc4LjYyLTMuMTY3IDE0MS4zOTItNjguNTg3IDE0MS4zOTItMTQ4LjgzOCAwLTE3LjE4My0yLjk5Ny0zMy44NjMtOC41MS00OS40NGwtOTYuNTY3LTEwLjIxNnoiLz48L2c+PGcgZmlsbD0iIzAwMmQ1MSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNMTE5LjEzIDE2OS44OTNsMi4wNzkgMjIuNzEzLTUwLjQyIDE4LjE4MSAyLjIxOC0yNC4yNjEgNDYuMTIzLTE2LjYzM00xMTMuMjQgMTA1LjU0NmwyLjA4IDIyLjcxLTM4LjI0MiAxMy43OTEgMi4yMjEtMjQuMjYyIDMzLjk0LTEyLjI0TTc0LjM4NiA4OC4xOTZoNDQuODg5di03LjE0M0g3NC4zODZ2Ny4xNDN6Ii8+PHBhdGggZD0iTTE1OC4yMDMgMTAuNjQ5YzEuMTg3IDAgMi4zOC4wMTIgMy41NTUuMDQyLTQ4LjM3MiA2Ljk3Ni0xMzAuNzQgMzYuNTY2LTEzMC43NCAxNDguOTIgMCA0OC4wOTIgMjUuOTQ3IDczLjc1IDY0LjUxNCA4NS4zMDVsMzAuMjUtMTAuODY0LS4xMTYtOS40NDMgMTcuOTMzLTEyLjI5IDE4LjE1OSAxMi4zODkuMTY0IDI5LjUyaC0uMTY0djU0LjMwOGMtMS4xNzUuMDMtMi4zNjguMDQyLTMuNTU1LjA0Mi04MS4zODMgMC0xNDcuMzY0LTY2LjY5Ni0xNDcuMzY0LTE0OC45NjcgMC04Mi4yNzggNjUuOTgxLTE0OC45NjIgMTQ3LjM2NC0xNDguOTYyIi8+PHBhdGggZD0iTTExOS43MDcgODQuNTIzbDE3NC42MTMgMTguNDkyYy0yLjYzOC02LjM5My01LjczLTEyLjU1NS05LjE5Ny0xOC40OTJIMTE5LjcwN3oiLz48L2c+PC9zdmc+"
 
@@ -60,13 +60,13 @@ object AssetManifest {
 
   def sortBlankSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmlld0JveD0iMCAwIDIwIDIwIj48ZWxsaXBzZSBjeD0iMTAiIGN5PSIxMDQyLjM2MiIgcng9IjguOSIgcnk9IjguOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjIuMiIgc3Ryb2tlLW1pdGVybGltaXQ9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjIuMjAwMDAwMDUsIDQuNDAwMDAwMTEiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgLTEwMzIuMzYyKSIvPjwvc3ZnPg=="
 
-  def vizJs = "/89ebc70c1db15261e3688b68ab62b513.js"
+  def vizJs = "/s/89ebc70c1db15261e3688b68ab62b513.js"
 
-  def webappClientHomeJs = "/h.js"
+  def webappClientHomeJs = "/s/h.js"
 
-  def webappClientProjectJs = "/p.js"
+  def webappClientProjectJs = "/s/p.js"
 
-  def webappClientPublicJs = "/a.js"
+  def webappClientPublicJs = "/s/a.js"
 
-  def webappClientWwJs = "/w.js"
+  def webappClientWwJs = "/s/w.js"
 }

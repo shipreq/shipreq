@@ -23,12 +23,27 @@ function svgoOptimizeSync(svgo, content) {
 
 const semanticUiImport = 'https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin';
 
-const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
+const makeConfig = ({ mode, name, sjsName, htmlMinifyOptions }) => {
+
+  // static resources all go in /s/ as is configured in web.xml
+  const staticDir = 's';
+
+  const sjs = (name, manifest) => ({
+    type: 'external',
+    path: `${staticDir}/${sjsName(name)}`,
+    manifest,
+  });
 
   const svgo = new Svgo();
   const webpackOutput = `/tmp/shipreq.webpack.${mode}`;
-  const fromWebpack = o => Object.assign({ type: 'local', src: webpackOutput }, o);
   const dotMin = mode == 'dev' ? '' : '.min';
+
+  const fromWebpack = o => Object.assign({
+    type: 'local',
+    src: webpackOutput,
+    outputPath: staticDir,
+    outputName: name,
+   }, o);
 
   const fromCdnjs = (lib, filename, manifest) => {
     const libC = lib.cdn || lib;
@@ -47,7 +62,7 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
 
     output: {
       dir: `dist/${mode}/serve`,
-      name: name,
+      name: `${staticDir}/${name}`,
       manifest: false,
     },
 
@@ -60,21 +75,21 @@ const makeConfig = ({ mode, name, sjsPath, htmlMinifyOptions }) => {
       images: { type: 'local', src: 'shipreq/assets', files: '*.{svg,png}', manifest: CamelCase },
 
       webappClientPublic: [
-        { type: 'external', path: sjsPath('public'), manifest: 'webappClientPublicJs' },
+        sjs('public', 'webappClientPublicJs'),
         'publicLibs',
       ],
 
       webappClientHome: [
-        { type: 'external', path: sjsPath('home'), manifest: 'webappClientHomeJs' },
+        sjs('home', 'webappClientHomeJs'),
         'memberLibs',
       ],
 
       webappClientProject: [
-        { type: 'external', path: sjsPath('project'), manifest: 'webappClientProjectJs' },
+        sjs('project', 'webappClientProjectJs'),
       ],
 
       webappClientWw: [
-        { type: 'external', path: sjsPath('ww'), manifest: 'webappClientWwJs' },
+        sjs('ww', 'webappClientWwJs'),
         'vizJs',
       ],
 
