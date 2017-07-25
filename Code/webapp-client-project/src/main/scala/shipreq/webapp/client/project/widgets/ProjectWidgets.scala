@@ -11,7 +11,7 @@ import scalajs.js.{UndefOr, undefined}
 import scalaz.\/
 import shipreq.base.util._
 import shipreq.base.util.SafeStringOps._
-import shipreq.webapp.base.{ClientResources, UiText}
+import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G, _}
 import shipreq.webapp.base.util.ReqCodeTreeItem
@@ -20,7 +20,6 @@ import shipreq.webapp.base.jsfacade.KaTeX
 import shipreq.webapp.base.lib.ClientUtil.{renderVector, sepComma, sepSpace}
 import shipreq.webapp.client.project.app.Style.{widgets => *}
 import ProjectWidgets.{apply => _, _}
-import shipreq.webapp.base.lib.LazyResources
 
 object ProjectWidgets {
   def apply(project: Project, plainText: PlainText.ForProject, reqDetailRC: RouterCtl[ExternalPubid]) =
@@ -199,14 +198,10 @@ final class ProjectWidgets private(project    : Project,
     }
 
   def katex(m: Atom.PlainTextMarkup#MathTeX): VdomTag =
-    LazyResources.katex.use {
-      case Some(katex) =>
-        try
-          <.span(*.math, ^.dangerouslySetInnerHtml := katex.renderToStringUnsafe(m.value))
-        catch {
-          case _: Throwable => <.span(*.mathFail, UiText.mathFailed)
-        }
-      case None => ClientResources.spinnerImg
+    try
+      <.span(*.math, ^.dangerouslySetInnerHtml := KaTeX.renderToStringUnsafe(m.value))
+    catch {
+      case _: Throwable => <.span(*.mathFail, UiText.mathFailed)
     }
 
   override val format: ProjectText.FormatAtomFn[VdomTag] = (live, input) => {

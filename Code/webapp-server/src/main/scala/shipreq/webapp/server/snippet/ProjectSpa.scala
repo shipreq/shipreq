@@ -25,11 +25,11 @@ object ProjectSpa extends SingleOpStatelessSnippet {
       LoadJs.Resource(AssetManifest.semanticJs),
       LoadJs.Resource(AssetManifest.reactJs),
       LoadJs.Resource(AssetManifest.reactDomJs),
-//      LoadJs.Resource(AssetManifest.reactDomServerJs),
+      LoadJs.Resource(AssetManifest.reactDomServerJs),
       LoadJs.Resource(AssetManifest.memberLibBundleJs),
-      LoadJs.Resource(AssetManifest.webappClientProjectJs))
-//      LoadJs.Resource(AssetManifest.katexCss),
-//      LoadJs.Resource(AssetManifest.katexJs))
+      LoadJs.Resource(AssetManifest.webappClientProjectJs),
+      LoadJs.Resource(AssetManifest.katexCss),
+      LoadJs.Resource(AssetManifest.katexJs))
 
   val EntryPoint = ClientSideProcInvoker(ProjectSpaProtocols.EntryPoint, ResourceBundle)
 
