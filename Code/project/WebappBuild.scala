@@ -349,7 +349,7 @@ object WebappBuild {
                   "for f in  $(find -name '*.jar'); do unzip -l $f| cut -b31- | grep '/$' | xargs zip -dq $f META-INF/MANIFEST.MF; done")
 
               // Compress assets
-              val compressable = s"cd ${stage.getAbsolutePath} && find -type f | egrep -v '\\.(br|gz|zip|jar|html|eot|woff2?)$$'"
+              val compressable = s"cd ${stage.getAbsolutePath} && find -type f | egrep -v '\\.(br|gz|zip|jar|html|xml|eot|woff2?)$$'"
               execInBash(s"$compressable | parallel --no-notice $compGz")
               execInBash(s"$compressable | parallel --no-notice $compBr")
 
