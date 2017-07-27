@@ -7,96 +7,14 @@
     :css
 
       body {
-        background-color:#fdfeff;
-
-        background-image:url(../fontawesome/gen/tile-question.svg);
-        xbackground-image:url(../fontawesome/gen/tile-question-circle-o.svg);
-        xbackground-image:url(../fontawesome/gen/tile-question-circle.svg);
-        xbackground-image:url(../fontawesome/gen/tile-exclamation.svg);
-        xbackground-image:url(../fontawesome/gen/tile-exclamation-circle.svg);
-        xbackground-image:url(../fontawesome/gen/tile-exclamation-triangle.svg);
-
-        xbackground-image:url(../fontawesome/exclamation-circle.svg), url(../fontawesome/exclamation.svg);
-        xbackground-repeat: repeat, repeat;
-        xbackground-position: 0, 5vmin;
-        xbackground-size: 0, 5vmin;
-
-        xbackground:
-          url(../fontawesome/exclamation-circle.svg) repeat 0vmin/5vmin,
-          url(../fontawesome/exclamation.svg) repeat 10vmin/5vmin,
-          #fdfeff;
+        background:url(../fontawesome/gen/tile-question.svg) #fdfeff;
       }
-
-      *  {xborder:solid 1px #eee}
 
       main>div {line-height:1em}
-
-      img {
-        display:none; /* is shit */
-        top: 5vh;
-        left: 5vw;
-        width: 90vmin;
-        height: auto;
-        opacity: 0.02;
-        position: absolute;
-        z-index: -1;
-        overflow-y: hidden;
-      }
-
-      xmain {
-         background-repeat:repeat-y;
-      }
-      xmain:before {
-        content: "\f06a";
-        font-size: 10vmin;
-
-        /* i.icon
-        display: inline-block;
-        opacity: 1;
-        margin: 0em 0.25rem 0em 0em;
-        width: 1.18em;
-        height: 1em;
-        font-family: 'Icons';
-        font-style: normal;
-        font-weight: normal;
-        text-decoration: inherit;
-        text-align: center;
-        speak: none;
-        font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        -webkit-font-smoothing: antialiased;
-        -webkit-backface-visibility: hidden;
-        backface-visibility: hidden;
-        */
-        font-family: 'Icons';
-        font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        -webkit-font-smoothing: antialiased;
-        -webkit-backface-visibility: hidden;
-        backface-visibility: hidden;
-      }
-
-      div.fontawesomebg {
-        position:relative;
-      }
-
-      div.fontawesomebg:before {
-        position:absolute;
-        font-family: 'Icons';
-        font-size: 48px;
-        color: #563d7c;
-        top:0;
-        left:0;
-        margin-right: 5px;
-        content: "\f10b";
-      }
 
       a {font-weight:bold}
 
   %body
-
-    -# %fontawesomebg wer
-    -# %img(src="logo-only.svg")
 
     %div(style="height:66.67%; display:flex")
       %main(style="margin:auto; font-size:1vmin")
