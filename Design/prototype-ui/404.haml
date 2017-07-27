@@ -1,7 +1,7 @@
 !!! 5
 %html
   %head
-    -# %meta(http-equiv="refresh" content="1")
+    -# %meta(http-equiv="refresh" content="0.4")
     %title 404 | ShipReq
     %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
     :css
@@ -14,12 +14,23 @@
 
       a {font-weight:bold}
 
+      main { margin:auto; padding:0 2vw}
+      #a {font-size:37vw; font-weight:bold}
+      #b {font-size:9.75vw}
+      #c {font-size:5.2vw; margin-top:3.7em}
+
+      @media screen and (min-width: 512px) {
+      #a {font-size:14rem}
+      #b {font-size:3.69rem}
+      #c {font-size:1.6rem}
+      }
+
   %body
 
-    %div(style="height:66.67%; display:flex")
-      %main(style="margin:auto; font-size:1vmin")
-        %div(style="font-size:16em; font-weight:bold") 404
-        %div(style="font-size:4.22em") Page not found.
-        %div(style="font-size:2em; margin-top:6vmin")
+    %div(style="height:66.67%; width:100vw; display:flex;")
+      %main
+        #a 404
+        #b Page not found.
+        #c
           -# %a(href="public-home.haml.html") Let me take you home...
           %a(href="public-home.haml.html") Come, let's go home...

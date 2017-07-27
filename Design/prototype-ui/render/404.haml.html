@@ -9,4 +9,15 @@ main>div {line-height:1em}
 
 a {font-weight:bold}
 
-</style></head><body><div style="height:66.67%; display:flex"><main style="margin:auto; font-size:1vmin"><div style="font-size:16em; font-weight:bold">404</div><div style="font-size:4.22em">Page not found.</div><div style="font-size:2em; margin-top:6vmin"><a href="public-home.haml.html">Come, let's go home...</a></div></main></div></body></html>
+main { margin:auto; padding:0 2vw}
+#a {font-size:37vw; font-weight:bold}
+#b {font-size:9.75vw}
+#c {font-size:5.2vw; margin-top:3.7em}
+
+@media screen and (min-width: 512px) {
+#a {font-size:14rem}
+#b {font-size:3.69rem}
+#c {font-size:1.6rem}
+}
+
+</style></head><body><div style="height:66.67%; width:100vw; display:flex;"><main><div id="a">404</div><div id="b">Page not found.</div><div id="c"><a href="public-home.haml.html">Come, let's go home...</a></div></main></div></body></html>
