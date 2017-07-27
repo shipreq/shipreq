@@ -37,6 +37,6 @@
     "svgo": "^0.7.2",
     "webpack": "^3.3.0",
     "webpack-merge": "^4.1.0",
-    "webtamp": "^0.4.7"
+    "webtamp": "^0.4.8"
   }
 }

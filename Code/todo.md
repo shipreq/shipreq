@@ -100,7 +100,6 @@ Phase 2
 
 ### Misc
 * Remove the spa HTML template
-* Proper 404/500 pages
 * Confirm caching directives for hash-named static assets & SJS output
 
 ### User-Functional Design

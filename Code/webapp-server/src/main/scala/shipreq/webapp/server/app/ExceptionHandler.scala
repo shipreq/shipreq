@@ -1,6 +1,8 @@
 package shipreq.webapp.server.app
 
-import net.liftweb.http.{S, XmlResponse, LiftResponse, Req}
+/*
+import net.liftweb.http.{LiftResponse, Req, S, XmlResponse}
+import scala.xml.Group
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.server.lib.Taskman
@@ -15,8 +17,9 @@ object ExceptionHandler extends HasLogger {
 
     // TODO Oshiro.enforceHumanSpeed()
 
-    val content = S.render(<lift:embed what="500" />, r.request)
-    XmlResponse(content.head, 500, "text/html", r.cookies)
+    val content = r.normalizeHtml(S.render(<lift:embed what="500" />, r.request))
+    XmlResponse(Group(content), 500, "text/html; charset=utf-8", r.cookies)
   }
 
 }
+*/

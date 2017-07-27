@@ -14,5 +14,6 @@ module.exports = makeConfig({
   htmlMinifyOptions: {
     removeComments: true,
     collapseWhitespace: true,
+    minifyCSS: true,
   },
 });
