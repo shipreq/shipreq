@@ -1,0 +1,28 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title 500 | ShipReq
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    :css
+
+      body {
+        background:url(../fontawesome/gen/tile-exclamation.svg) #fdfeff;
+      }
+
+      main>div {line-height:1em}
+
+      a {font-weight:bold}
+
+  %body
+
+    %div(style="height:66.67%; display:flex")
+      %main(style="margin:auto 14vw; font-size:1vmin")
+        %div(style="font-size:16em; font-weight:bold") 500
+        %div(style="font-size:4.22em") Internal Server Error.
+        %div(style="font-size:2em; margin-top:6vmin; line-height:1.6em")
+          Please wait a while and try again.
+          %br
+          Something has gone wrong on our servers and we need to fix it.
+          %br
+          We apologise for this disgrace.
