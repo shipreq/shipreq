@@ -451,6 +451,7 @@ object WebappBuild {
         connectToDockerDevEnv,
         dockerSettings)
       .settings(
+        scalacOptions -= "-Xcheckinit", // TODO https://github.com/scala/bug/issues/10437
         containerLibs in Jetty := LibJetty.runner(JVM).map(_.intransitive()), // Specify Jetty version
         javaOptions in Jetty += "-Xmx1g",
         initialCommands += consoleCmds,
