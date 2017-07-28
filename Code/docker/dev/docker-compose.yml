@@ -12,6 +12,8 @@ services:
       - POSTGRES_PASSWORD=sqd
     logging:
       driver: none
+    mem_limit: 600m
+    cpuset: "0"
 
   taskman:
     image: shipreq/taskman
@@ -25,6 +27,8 @@ services:
       - db.database=shipreq_dev
       - db.username=dev
       - db.password=sqd
+    mem_limit: 600m
+    cpuset: "1"
 
   webapp:
     image: shipreq/webapp
@@ -44,4 +48,5 @@ services:
       - run.mode=staging
       - shipreq.url=https://localhost:14443
       - external.port.ssl=14443
-
+    mem_limit: 1741m
+    cpuset: "2"
