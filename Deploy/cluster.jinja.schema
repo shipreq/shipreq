@@ -1,0 +1,10 @@
+info:
+  title: GKE cluster
+
+required:
+- zone
+
+properties:
+  zone:
+    type: string
+    description: Zone in which the cluster should run.

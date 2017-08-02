@@ -1,0 +1,10 @@
+info:
+  title: PostgreSQL DB
+
+required:
+- zone
+
+properties:
+  zone:
+    type: string
+    description: Zone in which the DB should run.
