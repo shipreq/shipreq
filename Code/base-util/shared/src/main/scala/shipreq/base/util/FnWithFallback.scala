@@ -16,10 +16,22 @@ final case class FnWithFallback[A, B](withFallback: (A => B) => A => B) extends 
   def withFallbackByName(b: => B): A => B =
     withFallback(_ => b)
 
-  def when(f: A => Boolean): A ?=> B =
+  def when(cond: A => Boolean): A ?=> B =
     FnWithFallback(fallback => {
       val attempt = withFallback(fallback)
-      a => (if (f(a)) attempt else fallback)(a)
+      a => (if (cond(a)) attempt else fallback)(a)
+    })
+
+  def embed(cond: A => Boolean, update: A => A): A ?=> B =
+    FnWithFallback(fallback => {
+      val attempt = withFallback(fallback)
+      a => if (cond(a)) attempt(update(a)) else fallback(a)
+    })
+
+  def embed(f: A => Option[A]): A ?=> B =
+    FnWithFallback(fallback => {
+      val attempt = withFallback(fallback)
+      a => f(a).fold(fallback(a))(attempt)
     })
 
   /**

@@ -1,6 +1,7 @@
 package shipreq.webapp.server.app
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import java.nio.charset.Charset
 import net.liftweb.common.{Box, Full}
 import net.liftweb.http.{Req => LiftReq, _}
 import net.liftweb.util.Props
@@ -20,30 +21,22 @@ object LiftDispatcher {
   final case class StatusOnlyResponse(status: Int) extends LiftResponse with HeaderDefaults {
     def toResponse = InMemoryResponse(Array.empty, headers, cookies, status)
   }
+
+  val UTF8 = Charset.forName("UTF-8")
+  final case class GenericResponse(status: Int, body: String) extends LiftResponse with HeaderDefaults {
+    def toResponse = InMemoryResponse(body.getBytes(UTF8), headers, cookies, status)
+  }
 }
 
 final class LiftDispatcher(global: Global) {
   import LiftDispatcher._
 
-  private[this] final val liftPathPart = WebappConfig.liftPath
-
-  /** Is a request by/to Lift (eg. Ajax, Comet) */
-  private def isLiftRequest(r: LiftReq): Boolean = {
-    val pp = r.path.partPath // path separated by slashes
-    pp.nonEmpty && pp.head == liftPathPart
+  def init(): Unit = {
+    LiftRules.dispatch.append(mainDispatchPF)
+    LiftRules.statelessDispatch.prepend(opsDispatchPF)
   }
 
-  private def noFileExtension(r: LiftReq): Boolean =
-    r.path.suffix.isEmpty && // Fast path
-      r.request.uri.indexOf('.') == -1 // Because r.path.suffix is empty when more than one '.' exists
-
-  private def hasHtmlFileExtension(r: LiftReq): Boolean =
-    r.request.uri endsWith ".html"
-
-  def dispatchPF: LiftRules.DispatchPF = {
-    case r if noFileExtension(r) && !isLiftRequest(r) => dispatchLiftReq(r)
-    case r if hasHtmlFileExtension(r)                 => () => Full(r.createNotFound)
-  }
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   val logic: DispatchLogic[Fx] = {
     implicit val config   = global.config
@@ -53,18 +46,23 @@ final class LiftDispatcher(global: Global) {
     new DispatchLogic
   }
 
-  private val dispatcher: DispatchLogic.Request => Fx[DispatchLogic.Response] =
-    logic.cacheUsualPaths(
-      ( logic.main
-      | Option.when(Props.testMode)(logic.loginApi)
-      | Option.when(Props.devMode)(logic.quickDev).flatten
-      ).withFallback(logic.fallback)
-    )
+  private[this] final val liftPathPart = WebappConfig.liftPath
+
+  private def applyDispatcher(d: DispatchLogic.Request => Fx[DispatchLogic.Response], r: LiftReq): () => Box[LiftResponse] =
+    () => {
+      val req = liftReqToLogicReq(r)
+      val res = d(req).unsafeRun()
+      // println(s"[${req.path.relativeUrl}] -> $res")
+      liftResponse(r, res)
+    }
 
   private val paramFn: String => Option[String] =
     S.param(_).toOption
 
-  private def dispatchLiftReq(r: LiftReq): () => Box[LiftResponse] = () => {
+  private def liftReqUrl(r: LiftReq): Url.Relative =
+    Url.Relative(r.request.uri)
+
+  private def liftReqToLogicReq(r: LiftReq): DispatchLogic.Request = {
     val m: DispatchLogic.Method =
       if (r.get_?)       DispatchLogic.Method.Get
       else if (r.post_?) DispatchLogic.Method.Post
@@ -86,11 +84,8 @@ final class LiftDispatcher(global: Global) {
     //      // Url.Relative(pp.mkString("/"))
     //  }
 
-    val url = Url.Relative(r.request.uri)
-    val req = DispatchLogic.Request(m, url, paramFn)
-    val res = dispatcher(req).unsafeRun()
-//    println(s"[${req.path.relativeUrl}] -> $res")
-    liftResponse(r, res)
+    val url = liftReqUrl(r)
+    DispatchLogic.Request(m, url, paramFn)
   }
 
   private type Template = Box[NodeSeq]
@@ -115,7 +110,49 @@ final class LiftDispatcher(global: Global) {
          | ProjectSpa.InvalidId   => Full(RedirectResponse(Urls.memberHome.relativeUrl))
       case Redirect(to)           => Full(RedirectResponse(to.relativeUrl))
       case MethodNotAllowed       => Full(MethodNotAllowedResponse())
-      case StatusOnly(s)          => Full(StatusOnlyResponse(s))
+      case Generic(status, body)  => Full(GenericResponse(status, body))
+      case StatusOnly(status)     => Full(StatusOnlyResponse(status))
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  val mainDispatchPF: LiftRules.DispatchPF = {
+
+    /** Is a request by/to Lift (eg. Ajax, Comet) */
+    def isLiftRequest(r: LiftReq): Boolean = {
+      val pp = r.path.partPath // path separated by slashes
+      pp.nonEmpty && pp.head == liftPathPart
+    }
+
+    def noFileExtension(r: LiftReq): Boolean =
+      r.path.suffix.isEmpty && // Fast path
+        r.request.uri.indexOf('.') == -1 // Because r.path.suffix is empty when more than one '.' exists
+
+    def hasHtmlFileExtension(r: LiftReq): Boolean =
+      r.request.uri endsWith ".html"
+
+    val dispatch: DispatchLogic.Request => Fx[DispatchLogic.Response] =
+      logic.cacheUsualPaths(
+        ( logic.main
+          | Option.when(Props.testMode)(logic.loginApi)
+          | Option.when(Props.devMode)(logic.quickDev).flatten
+          ).withFallback(logic.fallback)
+      )
+
+    {
+      case r if noFileExtension(r) && !isLiftRequest(r) => applyDispatcher(dispatch, r)
+      case r if hasHtmlFileExtension(r)                 => () => Full(r.createNotFound)
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  val opsDispatchPF: LiftRules.DispatchPF = {
+    val dispatch = logic.OpsRoutes.total
+
+    {
+      case r if logic.OpsRoutes.candidate(liftReqUrl(r)) => applyDispatcher(dispatch, r)
     }
   }
 }

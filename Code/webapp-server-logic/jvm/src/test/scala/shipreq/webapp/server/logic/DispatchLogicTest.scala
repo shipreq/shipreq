@@ -27,7 +27,12 @@ object DispatchLogicTest extends TestSuite {
   def run(url: Url.Relative, method: Method = Get)
          (implicit logIn: MockDb.UserEntry = null): Response = {
     security.loggedIn = Option(logIn)
-    dispatch(Request(method, url, _ => None)).value
+    val req = Request(method, url, _ => None)
+    val d = if (dispatcher.OpsRoutes.candidate(url))
+      dispatcher.OpsRoutes.total
+    else
+      dispatch
+    d(req).value
   }
 
   def testRun(expect: Response, u: Url.Relative, method: Method = Get)
@@ -78,7 +83,7 @@ object DispatchLogicTest extends TestSuite {
       }
 
       'loginToMember - List(Urls.memberHome, Urls.project(ProjectId(1))).foreach(u =>
-        testRun(Response.ServePublicSpa, Url.Relative(s"/login/${u.relativeUrlNoHeadSlash}")))
+        testRun(Response.ServePublicSpa, s"/login/${u.relativeUrlNoHeadSlash}"))
 
       'resetPassword2 {
         svr.run(PublicSpaLogic[Name, Name].initData.value.resetPassword1)(\/-(user2.emailAddr))
@@ -141,6 +146,12 @@ object DispatchLogicTest extends TestSuite {
       'anon   - test()
       'auth   - test(user2)
       'nonGet - testNonGet(Urls.logout)
+    }
+
+    'ops {
+      'ok   - testRun(Response.Generic(200, "OK."), "/ops/ok")
+      'what - testRun(Response.Generic(404, "Not found."), "/ops/what")
+      'root - testRun(Response.Generic(404, "Not found."), "/ops")
     }
 
     'fallback {

@@ -161,6 +161,6 @@ class Boot {
 
   def initRoutes(g: Global): Unit = {
     // (Must be done after Global is ready)
-    LiftRules.dispatch.append(new LiftDispatcher(g).dispatchPF)
+    new LiftDispatcher(g).init()
   }
 }

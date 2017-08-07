@@ -50,6 +50,32 @@ object UrlTest extends TestSuite {
         * - test("/", "/a")("/a")
         * - test("/a", "/b")("/a/b")
       }
+
+      'isParentOf {
+        def test(a: String, b: String, e: Boolean): Unit =
+          assertEq(s"$a isParentOf $b", Relative(a).isParentOf(Relative(b)), e)
+        * - test("/abc", "/abc", false)
+        * - test("/abc", "/ab", false)
+        * - test("/abc", "/abc/def", true)
+        * - test("/abc", "/abcdef", false)
+        * - test("/abc/", "/abc", false)
+        * - test("/abc/", "/ab", false)
+        * - test("/abc/", "/abc/def", true)
+        * - test("/abc/", "/abcdef", false)
+      }
+
+      'isEqualToOrParentOf {
+        def test(a: String, b: String, e: Boolean): Unit =
+          assertEq(s"$a isEqualToOrParentOf $b", Relative(a).isEqualToOrParentOf(Relative(b)), e)
+        * - test("/abc", "/abc", true)
+        * - test("/abc", "/ab", false)
+        * - test("/abc", "/abc/def", true)
+        * - test("/abc", "/abcdef", false)
+        * - test("/abc/", "/abc", true)
+        * - test("/abc/", "/ab", false)
+        * - test("/abc/", "/abc/def", true)
+        * - test("/abc/", "/abcdef", false)
+      }
     }
 
     'absoluteBase {

@@ -22,6 +22,27 @@ object Url {
     def thenParam[A](f: A => String): Relative.Param1[A] =
       new Relative.Param1(new Relative(relativeUrlNoHeadOrTailSlash), f)
 
+    def isParentOf: Relative => Boolean = {
+      val prefix = relativeUrlNoHeadOrTailSlash + "/"
+      _.underlying.startsWith(prefix)
+    }
+
+    def isEqualToOrParentOf: Relative => Boolean = {
+      val prefix = relativeUrlNoHeadOrTailSlash
+      child => {
+        val lencmp = child.relativeUrlNoHeadSlash.length - prefix.length
+        (lencmp >= 0) &&
+          (child.relativeUrlNoHeadOrTailSlash startsWith prefix) &&
+          ((lencmp == 0) || (child.relativeUrlNoHeadSlash.charAt(prefix.length) == '/'))
+      }
+    }
+
+    /** Use isEqualToOrParentOf first or else this may crash! */
+    def removeSelfOrParent: Relative => Relative = {
+      val l = relativeUrlNoHeadOrTailSlash.length
+      child => Relative(child.relativeUrlNoHeadSlash.substring(l))
+    }
+
     def /(s: String): Relative = {
       val next = Relative(s)
       if (this.isRoot)

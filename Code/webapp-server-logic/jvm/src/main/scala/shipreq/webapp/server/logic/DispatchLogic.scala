@@ -3,6 +3,7 @@ package shipreq.webapp.server.logic
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
+import monocle.macros.Lenses
 import scalaz.{-\/, Monad, \/, \/-}
 import scalaz.syntax.monad._
 import shipreq.base.util._
@@ -18,6 +19,7 @@ object DispatchLogic {
     *
     * @param path Does *NOT* include query params
     */
+  @Lenses
   final case class Request(method: Method, path: Url.Relative, param: String => Option[String])
 
   sealed abstract class Method
@@ -71,6 +73,8 @@ object DispatchLogic {
     /** Respond with a HTTP status only; no content */
     final case class StatusOnly(status: Int) extends Response
 
+    final case class Generic(status: Int, body: String) extends Response
+
     implicit def univEq: UnivEq[Response] = UnivEq.derive
 
     val redirectToPublicHome = Redirect(Urls.publicHome)
@@ -114,6 +118,9 @@ object DispatchLogic {
       }
     }
   }
+
+  /** Prefix for all ops routes */
+  val opsRoot = Url.Relative("/ops")
 
   /** For tests only. Not meant for production */
   val loginApiUrl = Url.Relative("/api/login")
@@ -198,6 +205,16 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
     extractFlip(spaTest1(url))(param =>
       onGet(response(obfuscator.deobfuscate(Obfuscated(param)))))
 
+  /**
+    * Re-scopes routes so that they must first match a prefix.
+    *
+    * Eg. /a & /b can be re-scoped under /x resulting in /x/a and /x/b
+    */
+  private def scope(prefix: Url.Relative, routes: Route): Route = {
+    val test = prefix.isEqualToOrParentOf
+    val mod = prefix.removeSelfOrParent
+    routes.embed(r => test(r.path), Request.path.modify(mod))
+  }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
@@ -273,6 +290,30 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Ops & Diagnostics
+
+  object OpsRoutes {
+
+    /** Is the request a candidate for ops route parsing? */
+    val candidate: Url.Relative => Boolean =
+      opsRoot.isEqualToOrParentOf
+
+    val ok: Route = {
+      val response: FR = F pure Response.Generic(200, "OK.")
+      whenUrlIs(Url.Relative("ok"))(onGet(_ => response))
+    }
+
+    val routes: Request ?=> F[Response] =
+      scope(opsRoot, ok)
+
+    val total: Request => F[Response] = {
+      val notFound: FR = F pure Response.Generic(404, "Not found.")
+      routes.withFallback(onGet(_ => notFound))
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Non-prod routes
 
   /** For tests only. Not meant for production */
   val loginApi: Route =

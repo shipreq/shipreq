@@ -99,6 +99,11 @@ object LiveTest extends TestSuite {
       ()
     }
 
+    'opsOk {
+      get("/ops/ok").assertOk
+      ()
+    }
+
     'templateAccess {
       val templates = List(
         "admin-stats.html",
