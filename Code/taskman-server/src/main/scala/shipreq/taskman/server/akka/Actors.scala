@@ -1,13 +1,15 @@
 package shipreq.taskman.server.akka
 
-import akka.actor.{Props, Actor, ActorRef}
+import akka.actor.{Actor, ActorRef, Props}
+import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
+import org.apache.commons.io.FileUtils
 import scala.concurrent.duration._
 import shipreq.base.util.JavaTimeHelpers.DurationExt
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Priority
-import shipreq.taskman.server.{TaskmanLogging, TaskmanCtx, MsgHeader}
+import shipreq.taskman.server.{MsgHeader, TaskmanCtx, TaskmanLogging}
 
 // =====================================================================================================================
 
@@ -22,18 +24,24 @@ class SourceActor(ctx: TaskmanCtx) extends Actor with HasLogger {
   import SourceActor._
   import shipreq.taskman.server.Source
   import ctx._
-  import ctx.config.taskman.{trustPeriod => _, _}
 
   val mdc = TaskmanLogging.mdc("source")
-  val source = new Source(pollGap, queueSize)
+  val source = new Source(config.taskman.pollGap, config.taskman.queueSize)
   var state = source.empty.unsafeRun()
+
+  val touchHealthFile: () => Unit =
+    config.taskman.healthFile.map(new File(_)) match {
+      case None    => () => ()
+      case Some(f) => () => FileUtils.touch(f)
+    }
 
   override def receive = mdc.pf {
     case RequestForWork(qs) =>
-      val (s2, ms) = source.poll(qs).run(state).unsafeRun()
+      val (s2, msgs) = source.poll(qs).run(state).unsafeRun()
       state = s2
-      if (ms.nonEmpty)
-        sender() ! IncomingWork(ms)
+      if (msgs.nonEmpty)
+        sender() ! IncomingWork(msgs)
+      touchHealthFile()
   }
 }
 

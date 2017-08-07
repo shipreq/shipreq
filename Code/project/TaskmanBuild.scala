@@ -65,7 +65,7 @@ object TaskmanBuild {
       .enablePlugins(JavaAppPackaging, DockerPlugin)
       .configure(Common.jvmSettings, DockerEnv.test.required)
       .deps(
-        Akka.actor ++ javaMail ++ okHttp ++ httpCore ++
+        Akka.actor ++ javaMail ++ okHttp ++ httpCore ++ commonsIo ++
         testScope(Akka.testkit ++ Specs2.combo))
       .dependsOn(taskmanServerLogic, taskmanServerSchema, taskmanApi)
       .dependsOn(baseTestJvm % "test")

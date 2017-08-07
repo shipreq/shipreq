@@ -3,6 +3,7 @@ package shipreq.taskman.server
 import japgolly.microlibs.config.ConfigParser.Implicits.Defaults._
 import japgolly.microlibs.config.JavaTimeConfigParsers._
 import japgolly.microlibs.config._
+import java.io.File
 import java.time.Duration
 import javax.mail.Session
 import scalaz.syntax.applicative._
@@ -84,11 +85,16 @@ object TaskmanConfig extends HasLogger {
 
   // ===================================================================================================================
 
+  /**
+    * @param healthFile A file that will be touched very regularly so that the health of the system is externally
+    *                   observable.
+    */
   case class Taskman(remoteCfgRetry: RetryCriteria,
                      queueSize     : Int,
                      trustPeriod   : AssignmentTrustPeriod,
                      pollEvery     : Duration,
-                     pollGap       : Duration)
+                     pollGap       : Duration,
+                     healthFile    : Option[String])
 
   def taskman: Config[Taskman] =
     (RetryCriteria.config.withPrefix("remoteCfg.retry.")
@@ -96,11 +102,12 @@ object TaskmanConfig extends HasLogger {
       |@| Config.need[Duration]("trustPeriod").ensure(!_.isShorterThan(10 seconds), "Must be at least 10 seconds.")
       |@| Config.need[Duration]("poll.every").ensure(!_.isShorterThan(50 millis), "Must be at least 50 ms.")
       |@| Config.get[Duration]("poll.gap").ensure(_.fold(true)(!_.isShorterThan(50 millis)), "Must be at least 50 ms.")
-      ) { (remoteCfgRetry, qs, tp, pollEvery, pollGapO) =>
+      |@| Config.get[String]("healthFile")
+      ) { (remoteCfgRetry, qs, tp, pollEvery, pollGapO, healthFile) =>
       val pollGap = pollGapO getOrElse pollEvery
       if (pollGap isLongerThan pollEvery)
         log.warn.z(s"The minimum poll gap ($pollGap) is larger than the poll time ($pollEvery). Wasteful.")
-      Taskman(remoteCfgRetry, qs, AssignmentTrustPeriod(tp), pollEvery, pollGap)
+      Taskman(remoteCfgRetry, qs, AssignmentTrustPeriod(tp), pollEvery, pollGap, healthFile)
     }
       .withPrefix("taskman.")
 }

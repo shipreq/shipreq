@@ -12,6 +12,7 @@ spec:
         app: taskman
     spec:
       containers:
+
       - name: taskman
         image: "$GCP_GCR_IO/$GCP_PROJECT/taskman:latest"
         imagePullPolicy: Always
@@ -27,6 +28,14 @@ spec:
           mountPath: /taskman/conf
         - name: taskman-secrets
           mountPath: /taskman/secrets
+        livenessProbe:
+          exec:
+            command:
+            - /taskman/bin/healthcheck
+            - /taskman/taskman.lives
+          initialDelaySeconds: 60
+          periodSeconds: 60
+
       - name: cloudsql-proxy
         image: gcr.io/cloudsql-docker/gce-proxy:1.09
         command: ["/cloud_sql_proxy", "--dir=/cloudsql",
@@ -40,6 +49,7 @@ spec:
             mountPath: /etc/ssl/certs
           - name: cloudsql
             mountPath: /cloudsql
+
       volumes:
       - name: taskman-props
         configMap:

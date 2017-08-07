@@ -1,0 +1,10 @@
+#!/bin/bash
+[ $# -ne 1 ] && echo "Usage: $0 <health file>" && exit 2
+
+# find in alpine is limited.
+# -mmin 0 gives us "updated in the last minute" which is good enough
+
+d="$(dirname "$1")"
+f="$(basename "$1")"
+exec test -n "$(find "$d" -name "$f" -mmin 0)"
+
