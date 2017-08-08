@@ -39,7 +39,7 @@ services:
       - "14080:8080"
       - "14443:8443"
     volumes:
-      - ./webapp:/shipreq/resources:ro
+      - ./webapp:/shipreq/conf:ro
     environment:
       - db.host=postgres
       - db.database=shipreq_dev
@@ -47,6 +47,6 @@ services:
       - db.password=sqd
       - run.mode=staging
       - shipreq.url=https://localhost:14443
-      - external.port.ssl=14443
+      - EXTERNAL_PORT_SSL=14443
     mem_limit: 1856m # 2.25*1024 - 448 for Taskman
     cpuset: "1,2"

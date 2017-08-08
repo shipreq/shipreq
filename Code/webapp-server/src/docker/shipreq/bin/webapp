@@ -4,13 +4,13 @@ declare -a args=()
 
 i="$(printenv run.mode)"
 [ -n "$i" ] && args+=("-Drun.mode=$i")
+[ -n "$RUN_MODE" ] && args+=("-Drun.mode=$RUN_MODE")
 
-sslPort="$(printenv external.port.ssl)"
-[ -z "$sslPort" ] \
-  && echo "Environment variable not specified: external.port.ssl" \
+[ -z "$EXTERNAL_PORT_SSL" ] \
+  && echo "Environment variable not specified: EXTERNAL_PORT_SSL" \
   && echo "This must be the SSL port as seen from outside Docker." \
   && exit 3
-args+=("-Djetty.httpConfig.securePort=$sslPort")
+args+=("-Djetty.httpConfig.securePort=$EXTERNAL_PORT_SSL")
 
 args+=("$@")
 

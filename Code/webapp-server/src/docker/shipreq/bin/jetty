@@ -1,3 +1,6 @@
 #!/bin/bash
 
+[ -e "$JETTY_BASE/conf"   ] && cp -r "$JETTY_BASE/conf/."   "$JETTY_BASE/resources/."
+[ -e "$JETTY_BASE/secret" ] && cp -r "$JETTY_BASE/secret/." "$JETTY_BASE/resources/."
+
 exec java -jar $JETTY_HOME/start.jar "${JAVA_OPTS[@]}" "${JAVA_OPTIONS[@]}" "$@"
