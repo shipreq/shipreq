@@ -8,27 +8,6 @@ import scalaz.Semigroup
 
 object ScalaExt extends Platform.ScalaExt {
 
-  // TODO Move into microlibs
-  @inline implicit def BaseUtilExt_IntLong(n: Int): BaseUtilExt_Long = new BaseUtilExt_Long(n)
-  @inline implicit class BaseUtilExt_Long(private val n: Long) extends AnyVal {
-    @inline def nanos  : Duration = Duration.ofNanos(n)
-    @inline def micros : Duration = (n * 1000).nanos
-    @inline def millis : Duration = Duration.ofMillis(n)
-    @inline def seconds: Duration = Duration.ofSeconds(n)
-    @inline def minutes: Duration = Duration.ofMinutes(n)
-    @inline def hours  : Duration = Duration.ofHours(n)
-    @inline def days   : Duration = Duration.ofDays(n)
-  }
-  @inline implicit class BaseUtilExt_Double(private val n: Double) extends AnyVal {
-    def nanos  : Duration = n.toLong.nanos
-    def micros : Duration = (n * 1000).nanos
-    def millis : Duration = (n * 1000).micros
-    def seconds: Duration = (n * 1000).millis
-    def minutes: Duration = (n * 60).seconds
-    def hours  : Duration = (n * 60).minutes
-    def days   : Duration = (n * 24).hours
-  }
-
   type EndoFn[A] = A => A
 
   @inline final def none[A]: Option[A] = None

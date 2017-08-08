@@ -1,7 +1,7 @@
 package shipreq.taskman.server
 
 import java.time.Duration
-import shipreq.base.util.JavaTimeHelpers._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Msg.DummyMsg
 import shipreq.taskman.api.Priority
@@ -106,7 +106,7 @@ object Failure extends HasLogger {
       , 30 minutes  // Failure #13, next attempt @ 80 min
       , 40 minutes  // Failure #14, next attempt @ 2 hr
     ) ?>>?
-      retryEveryUntil(1 hour, 24 hours)
+      retryEveryUntil(1 hours, 24 hours)
 
   val patientRetries: RetryRule =
     chooseByFailureCount(
@@ -117,7 +117,7 @@ object Failure extends HasLogger {
       , 10 minutes // Failure #5, next attempt @ 20 min
       , 15 minutes // Failure #6, next attempt @ 35 min
       , 25 minutes // Failure #7, next attempt @  1 hr
-      , 1 hour     // Failure #8, next attempt @  2 hr
+      , 1 hours    // Failure #8, next attempt @  2 hr
       , 2 hours    // Failure #9, next attempt @  4 hr
     ) ?>>?
       retryEveryUntil(4 hours, 24 hours)

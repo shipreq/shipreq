@@ -3,7 +3,7 @@ package shipreq.taskman.server
 import japgolly.microlibs.config.ConfigParser.Implicits.Defaults._
 import japgolly.microlibs.config.JavaTimeConfigParsers._
 import japgolly.microlibs.config._
-import java.io.File
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Duration
 import javax.mail.Session
 import scalaz.syntax.applicative._

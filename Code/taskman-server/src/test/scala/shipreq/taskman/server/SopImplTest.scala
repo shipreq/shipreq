@@ -8,7 +8,6 @@ import org.specs2.mutable.Specification
 import scala.util.Random
 import shipreq.base.db.SqlHelpers._
 import shipreq.base.test.specs2.db.DatabaseTest
-import shipreq.base.util.JavaTimeHelpers._
 import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.taskman.api.impl.Serialisation
 import shipreq.taskman.api._
@@ -73,7 +72,7 @@ class SopImplTest extends Specification with DatabaseTest {
     def insert(node: Boolean = false,
                worker: Boolean = false,
                pri: Priority = Priority(50),
-               created: Duration = -1 second,
+               created: Duration = -1 seconds,
                updated: Duration = null,
                effective: Duration = null
                 ): MsgId =
@@ -137,7 +136,7 @@ class SopImplTest extends Specification with DatabaseTest {
       }
 
       "filter by effective_from" in {
-        insert(effective = 1 minute)
+        insert(effective = 1 minutes)
         dao.getMsgsAssignNode(n, 2, 2.days, queue).runNow() must be empty
       }
     }

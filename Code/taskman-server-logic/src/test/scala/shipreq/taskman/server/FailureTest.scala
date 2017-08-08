@@ -1,10 +1,10 @@
 package shipreq.taskman.server
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Duration
 import org.specs2.matcher.Matcher
 import org.specs2.mutable._
 import shipreq.base.util.Error
-import shipreq.base.util.JavaTimeHelpers._
 import TestHelpers._
 import Sop._
 import Failure._

@@ -410,14 +410,14 @@ object MockInterpreters {
 
   val config = ServerConfig(
     baseUrl                    = Url.Absolute.Base("https://test.shipreq.com"),
-    attackFrustrationDelay     = 1 hour,
+    attackFrustrationDelay     = 1 hours,
     securityTokenLength        = 8,
     registrationTokenLifespan  = 7 days,
     passwordResetTokenLifespan = 4 days,
     publicRegistration         = Allow,
     taskmanSchema              = "test_taskman",
     initTaskmanOnBoot          = false,
-    initTaskmanRetry           = RetryCriteria(2 hour, Some(666)))
+    initTaskmanRetry           = RetryCriteria(2 hours, Some(666)))
 }
 
 class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerConfig]) {

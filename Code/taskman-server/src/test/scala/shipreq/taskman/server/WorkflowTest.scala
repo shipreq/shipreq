@@ -1,10 +1,10 @@
 package shipreq.taskman.server
 
 import doobie.imports._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import org.specs2.matcher.ThrownExpectations
 import org.specs2.mutable.Specification
 import shipreq.base.test.specs2.db.DatabaseTest
-import shipreq.base.util.JavaTimeHelpers._
 import shipreq.taskman.api.{EmailAddr, MsgStatus, MsgId}
 import shipreq.taskman.api.Msg.ReRegistrationAttempted
 import shipreq.taskman.server.Sop._
@@ -18,7 +18,7 @@ class WorkflowTest extends Specification with DatabaseTest with ThrownExpectatio
   val w = WorkerId(666)
   val defaultMsg = ReRegistrationAttempted(EmailAddr("haha cool"))
 
-  val assignNode = GetMsgsAssignNode(n, 10, 1 minute, None)
+  val assignNode = GetMsgsAssignNode(n, 10, 1 minutes, None)
 
   def findAndStartWork = {
     // assign node -> cant(assign node)
