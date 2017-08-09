@@ -30,6 +30,9 @@ spec:
             memory: "1300Mi"
           limits:
             memory: "1856Mi"
+        ports:
+        - containerPort: 8080
+        - containerPort: 8443
         volumeMounts:
         - name: webapp-props
           mountPath: /shipreq/conf
@@ -72,3 +75,22 @@ spec:
           secretName: webapp-service-account
       - name: webapp-sql
         emptyDir:
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp
+spec:
+  selector:
+    name: webapp
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 8443
+    protocol: TCP
