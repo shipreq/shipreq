@@ -17,6 +17,7 @@ import shipreq.webapp.base.data.{ProjectId, SecurityToken}
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.logic._
+import DispatchLogic._
 
 /**
   * > sbt
@@ -85,7 +86,7 @@ class DispatchBM {
 //  @Benchmark def name       = test(DispatchBM.name)
 //  @Benchmark def trampoline = test(DispatchBM.trampoline)
 
-  def test[F[_]](i: Interpreters[F])(f: Interpreters[F] => DispatchLogic.Request => F[DispatchLogic.Response]): Any = {
+  def test[F[_]](i: Interpreters[F])(f: Interpreters[F] => Request => F[Response]): Any = {
     val d = f(i)
     DispatchRequests.map(r => i.run(d(r)))
   }
@@ -149,16 +150,15 @@ object DispatchBM {
       override val now = F point Instant.now()
     }
 
-    val dispatchLogic = new DispatchLogic[F]
+    val dispatchLogic = new DispatchLogic[F, Request, Response](r => r, (_, r) => F.point(r))
 
-    val dispatcher1 = dispatchLogic.main.withFallback(dispatchLogic.fallback)
+    val dispatcher1 = dispatchLogic.mainRoutes.withFallback(dispatchLogic.mainFallback)
     val dispatcher2 = dispatchLogic.cacheUsualPaths(dispatcher1)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  val DispatchRequests: List[DispatchLogic.Request] = {
-    import DispatchLogic._
+  val DispatchRequests: List[Request] = {
     import Method._
     implicit def autoXID(p: ProjectId): ProjectId.Public = Obfuscators.projectId.obfuscate(p)
     val param: String => Option[String] = _ => None

@@ -147,12 +147,15 @@ object DispatchLogic {
   }
 }
 
-final class DispatchLogic[F[_]](implicit F: Monad[F],
-                                config    : ServerConfig,
-                                security  : Security.Algebra[F],
-                                db        : DB.SecurityTokenReadOnly[F],
-                                svr       : Server.Time[F]) {
-  import DispatchLogic._
+import DispatchLogic._
+
+final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Request,
+                                                  makeRealRes: (RealReq, Response) => F[RealRes])
+                                                 (implicit F: Monad[F],
+                                                  config    : ServerConfig,
+                                                  security  : Security.Algebra[F],
+                                                  db        : DB.SecurityTokenReadOnly[F],
+                                                  svr       : Server.Time[F]) {
   import Method._
   import Response._
 
@@ -216,6 +219,12 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
     routes.embed(r => test(r.path), Request.path.modify(mod))
   }
 
+  def makeReal(d: Request => F[Response]): RealReq => F[RealRes] =
+    realReq => {
+      val req = readRealReq(realReq)
+      d(req).flatMap(makeRealRes(realReq, _))
+    }
+
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   val publicSpa: Route = {
@@ -274,10 +283,10 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
     get(Urls.logout,
       security.logout >| redirectToPublicHome)
 
-  val main: Request ?=> F[Response] =
+  val mainRoutes: Request ?=> F[Response] =
     publicSpa | memberHomeSpa | projectSpa | logout
 
-  val fallback: Request => F[Response] =
+  val mainFallback: Request => F[Response] =
     onGet(_ => fRedirectToPublicHome)
 
   def cacheUsualPaths(f: Request => F[Response]): Request => F[Response] = {
@@ -286,8 +295,19 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
     val urls = Urls.PublicSpaRoute.static.map(_.url) ++ Urls.MemberRoute.static.map(_.url)
     val cacheMap = urls.iterator.map(u => u.underlying -> f(Request(Get, u, noParams))).toMap
     val cache = Util.quickStringLookup(cacheMap)
-    req => cache(req.path.underlying) getOrElse f(req)
+    req => cache(req.path.underlying).fold(f(req))(
+      cachedResponse => if (req.method eq Get) cachedResponse else fMethodNotAllowed)
   }
+
+  def mainDispatcher(devMode: Boolean, testMode: Boolean): RealReq => F[RealRes] =
+    makeReal(
+      cacheUsualPaths(
+        ( mainRoutes
+        | Option.when(testMode)(loginApi)
+        | Option.when(devMode)(quickDev).flatten
+        ).withFallback(mainFallback)
+      )
+    )
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Ops & Diagnostics
@@ -306,10 +326,11 @@ final class DispatchLogic[F[_]](implicit F: Monad[F],
     val routes: Request ?=> F[Response] =
       scope(opsRoot, ok)
 
-    val total: Request => F[Response] = {
-      val notFound: FR = F pure Response.Generic(404, "Not found.")
-      routes.withFallback(onGet(_ => notFound))
-    }
+    val total: RealReq => F[RealRes] =
+      makeReal {
+        val notFound: FR = F pure Response.Generic(404, "Not found.")
+        routes.withFallback(onGet(_ => notFound))
+      }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

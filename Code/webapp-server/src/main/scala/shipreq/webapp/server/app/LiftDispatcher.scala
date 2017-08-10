@@ -38,81 +38,63 @@ final class LiftDispatcher(global: Global) {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  val logic: DispatchLogic[Fx] = {
-    implicit val config   = global.config
-    implicit val security = global.security
-    implicit val db       = DB.SecurityTokenReadOnly.trans(DbInterpreter.SecurityTokenReadOnly)(global.db.fx.trans)
-    implicit val server   = ServerInterpreter
-    new DispatchLogic
-  }
-
-  private[this] final val liftPathPart = WebappConfig.liftPath
-
-  private def applyDispatcher(d: DispatchLogic.Request => Fx[DispatchLogic.Response], r: LiftReq): () => Box[LiftResponse] =
-    () => {
-      val req = liftReqToLogicReq(r)
-      val res = d(req).unsafeRun()
-      // println(s"[${req.path.relativeUrl}] -> $res")
-      liftResponse(r, res)
-    }
-
   private val paramFn: String => Option[String] =
     S.param(_).toOption
 
   private def liftReqUrl(r: LiftReq): Url.Relative =
     Url.Relative(r.request.uri)
 
-  private def liftReqToLogicReq(r: LiftReq): DispatchLogic.Request = {
+  def parseReq(r: LiftReq): DispatchLogic.Request = {
     val m: DispatchLogic.Method =
       if (r.get_?)       DispatchLogic.Method.Get
       else if (r.post_?) DispatchLogic.Method.Post
       else               DispatchLogic.Method.Other
 
-    //// Was thinking a fast path here might be good because r.uri is lazy and non-trivial.
-    //// Decided to use r.request.uri instead which seems to be fine
-    //val pp = r.path.partPath
-    //val url: Url.Relative =
-    //  if (pp.isEmpty)
-    //  if (pp.isEmpty)
-    //    Url.Relative("")
-    //  else {
-    //    val t = pp.tail
-    //    if (t.isEmpty)
-    //      Url.Relative(pp.head)
-    //    else
-    //       Url.Relative(r.uri)
-    //      // Url.Relative(pp.mkString("/"))
-    //  }
-
     val url = liftReqUrl(r)
     DispatchLogic.Request(m, url, paramFn)
   }
 
-  private type Template = Box[NodeSeq]
-  private val templatePublic : Template = Templates("public" :: Nil)
-  private val templateHome   : Template = Templates("members-home" :: Nil)
-  private val templateProject: Template = Templates("members-project" :: Nil)
+  val makeResponse: (LiftReq, DispatchLogic.Response) => Fx[Box[LiftResponse]] = {
+    type Template = Box[NodeSeq]
+    val templatePublic : Template = Templates("public" :: Nil)
+    val templateHome   : Template = Templates("members-home" :: Nil)
+    val templateProject: Template = Templates("members-project" :: Nil)
 
-  private def render(req: LiftReq, t: Template): Box[LiftResponse] =
-    S.session.flatMap(_.processTemplate(t, req, req.path, 200))
+    def render(req: LiftReq, t: Template): Box[LiftResponse] =
+      S.session.flatMap(_.processTemplate(t, req, req.path, 200))
 
-  private val setHeader: ((String, String)) => Unit =
-    x => S.setHeader(x._1, x._2)
+    val setHeader: ((String, String)) => Unit =
+      x => S.setHeader(x._1, x._2)
 
-  private def liftResponse(req: LiftReq, response: DispatchLogic.Response): Box[LiftResponse] = {
-    import DispatchLogic.Response._
-    response.headers.foreach(setHeader)
-    response match {
-      case ServePublicSpa         => render(req, templatePublic)
-      case ServeHomeSpa(u)        => UserVar.set(u); render(req, templateHome)
-      case ProjectSpa.Serve(u, p) => UserVar.set(u); ProjectIdVar.set(p); render(req, templateProject)
-      case ProjectSpa.NotOwner
-         | ProjectSpa.InvalidId   => Full(RedirectResponse(Urls.memberHome.relativeUrl))
-      case Redirect(to)           => Full(RedirectResponse(to.relativeUrl))
-      case MethodNotAllowed       => Full(MethodNotAllowedResponse())
-      case Generic(status, body)  => Full(GenericResponse(status, body))
-      case StatusOnly(status)     => Full(StatusOnlyResponse(status))
+    (req, response) => {
+      import DispatchLogic.Response._
+
+      val setHeaders: Fx[Unit] =
+        Fx(response.headers.foreach(setHeader))
+
+      val respond: Fx[Box[LiftResponse]] =
+        response match {
+          case ServePublicSpa         => Fx{ render(req, templatePublic) }
+          case ServeHomeSpa(u)        => Fx{ UserVar.set(u); render(req, templateHome) }
+          case ProjectSpa.Serve(u, p) => Fx{ UserVar.set(u); ProjectIdVar.set(p); render(req, templateProject) }
+          case ProjectSpa.NotOwner
+             | ProjectSpa.InvalidId   => Fx pure Full(RedirectResponse(Urls.memberHome.relativeUrl))
+          case Redirect(to)           => Fx pure Full(RedirectResponse(to.relativeUrl))
+          case MethodNotAllowed       => Fx pure Full(MethodNotAllowedResponse())
+          case Generic(status, body)  => Fx pure Full(GenericResponse(status, body))
+          case StatusOnly(status)     => Fx pure Full(StatusOnlyResponse(status))
+        }
+
+      setHeaders.flatMap(_ => respond)
     }
+  }
+
+  val logic: DispatchLogic[Fx, LiftReq, Box[LiftResponse]] = {
+    implicit val config   = global.config
+    implicit val security = global.security
+    implicit val db       = DB.SecurityTokenReadOnly.trans(DbInterpreter.SecurityTokenReadOnly)(global.db.fx.trans)
+    implicit val server   = ServerInterpreter
+    new DispatchLogic(parseReq, makeResponse)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -122,7 +104,7 @@ final class LiftDispatcher(global: Global) {
     /** Is a request by/to Lift (eg. Ajax, Comet) */
     def isLiftRequest(r: LiftReq): Boolean = {
       val pp = r.path.partPath // path separated by slashes
-      pp.nonEmpty && pp.head == liftPathPart
+      pp.nonEmpty && pp.head == WebappConfig.liftPath
     }
 
     def noFileExtension(r: LiftReq): Boolean =
@@ -132,16 +114,10 @@ final class LiftDispatcher(global: Global) {
     def hasHtmlFileExtension(r: LiftReq): Boolean =
       r.request.uri endsWith ".html"
 
-    val dispatch: DispatchLogic.Request => Fx[DispatchLogic.Response] =
-      logic.cacheUsualPaths(
-        ( logic.main
-          | Option.when(Props.testMode)(logic.loginApi)
-          | Option.when(Props.devMode)(logic.quickDev).flatten
-          ).withFallback(logic.fallback)
-      )
+    val dispatch = logic.mainDispatcher(devMode = Props.devMode, testMode = Props.testMode)
 
     {
-      case r if noFileExtension(r) && !isLiftRequest(r) => applyDispatcher(dispatch, r)
+      case r if noFileExtension(r) && !isLiftRequest(r) => () => dispatch(r).unsafeRun()
       case r if hasHtmlFileExtension(r)                 => () => Full(r.createNotFound)
     }
   }
@@ -152,7 +128,7 @@ final class LiftDispatcher(global: Global) {
     val dispatch = logic.OpsRoutes.total
 
     {
-      case r if logic.OpsRoutes.candidate(liftReqUrl(r)) => applyDispatcher(dispatch, r)
+      case r if logic.OpsRoutes.candidate(liftReqUrl(r)) => () => dispatch(r).unsafeRun()
     }
   }
 }

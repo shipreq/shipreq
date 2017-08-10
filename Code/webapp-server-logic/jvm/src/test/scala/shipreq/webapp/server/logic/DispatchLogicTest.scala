@@ -13,8 +13,8 @@ import shipreq.webapp.base.user.EmailAddr
 object DispatchLogicTest extends TestSuite {
 
   object Tester extends MockInterpreters {
-    val dispatcher = new DispatchLogic[Name]
-    val dispatch = dispatcher.main.withFallback(dispatcher.fallback)
+    val dispatcher = new DispatchLogic[Name, Request, Response](r => r, (_, r) => Name(r))
+    val dispatch = dispatcher.mainDispatcher(false, false)
     db.users ::= user2
     db.users ::= user3
     val pid = ProjectId(9)
