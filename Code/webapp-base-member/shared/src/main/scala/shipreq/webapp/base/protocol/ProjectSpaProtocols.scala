@@ -20,14 +20,14 @@ object ProjectSpaProtocols {
   final case class InitAsyncData(project: Project, projectMetaData: ProjectMetaData, latestEventOrd: EventOrd)
   implicit val picklerInitAsyncData = pickleCaseClass[InitAsyncData]
 
-  val InitAsync             = ServerSideProc.Protocol[Unit, ErrorMsg \/ InitAsyncData]
-  val ProjectNameSet        = ServerSideProc.Protocol.toEvents[String]
-  val FieldMandatorinessMod = ServerSideProc.Protocol.toEvents[(CustomFieldId, Mandatory)]
-  val ReqTypeImplicationMod = ServerSideProc.Protocol.toEvents[(CustomReqTypeId, ImplicationRequired)]
-  val CreateContent         = ServerSideProc.Protocol.toEvents[CreateContentCmd]
-  val UpdateContent         = ServerSideProc.Protocol.toEvents[UpdateContentCmd]
-  val CustomIssueTypeCrud   = CrudProtocol[CustomIssueTypeId, (HashRefKey, Option[String])]
-  val CustomReqTypeCrud     = CrudProtocol[CustomReqTypeId, (ReqType.Mnemonic, String, ImplicationRequired)]
+  val InitAsync             = ServerSideProc.Protocol[Unit, ErrorMsg \/ InitAsyncData]("Project.InitAsync")
+  val ProjectNameSet        = ServerSideProc.Protocol.toEvents[String]("Project.ProjectNameSet")
+  val FieldMandatorinessMod = ServerSideProc.Protocol.toEvents[(CustomFieldId, Mandatory)]("Project.FieldMandatorinessMod")
+  val ReqTypeImplicationMod = ServerSideProc.Protocol.toEvents[(CustomReqTypeId, ImplicationRequired)]("Project.ReqTypeImplicationMod")
+  val CreateContent         = ServerSideProc.Protocol.toEvents[CreateContentCmd]("Project.CreateContent")
+  val UpdateContent         = ServerSideProc.Protocol.toEvents[UpdateContentCmd]("Project.UpdateContent")
+  val CustomIssueTypeCrud   = CrudProtocol[CustomIssueTypeId, (HashRefKey, Option[String])]("Project.CustomIssueTypeCrud")
+  val CustomReqTypeCrud     = CrudProtocol[CustomReqTypeId, (ReqType.Mnemonic, String, ImplicationRequired)]("Project.CustomReqTypeCrud")
 
   import InitAsync            .{pickleInstance => _i1}
   import ProjectNameSet       .{pickleInstance => _i2}

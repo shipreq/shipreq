@@ -12,7 +12,7 @@ import BinCodecUser._
   */
 object HomeSpaProtocols {
 
-  val CreateProject = ServerSideProc.Protocol[String, ProjectMetaData]
+  val CreateProject = ServerSideProc.Protocol[String, ProjectMetaData]("Home.CreateProject")
 
   import CreateProject.{pickleInstance => _i1}
 

@@ -29,8 +29,8 @@ object CrudAction {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-final class CrudProtocol[I: Pickler, V: Pickler]
-    extends ServerSideProc.Protocol[CrudAction[I, V], ErrorMsg \/ VerifiedEvent.Seq]()(
+final class CrudProtocol[I: Pickler, V: Pickler](name: String)
+    extends ServerSideProc.Protocol[CrudAction[I, V], ErrorMsg \/ VerifiedEvent.Seq](name)(
       CrudAction.pickler[I, V],
       pickleErrorMsgOrVerifiedEventSeq) {
 
@@ -45,6 +45,6 @@ final class CrudProtocol[I: Pickler, V: Pickler]
 }
 
 object CrudProtocol {
-  private[protocol] def apply[I: Pickler, V: Pickler]: CrudProtocol[I, V] =
-    new CrudProtocol()
+  private[protocol] def apply[I: Pickler, V: Pickler](name: String): CrudProtocol[I, V] =
+    new CrudProtocol(name)
 }

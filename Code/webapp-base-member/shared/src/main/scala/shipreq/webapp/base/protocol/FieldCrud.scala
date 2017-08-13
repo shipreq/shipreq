@@ -64,5 +64,5 @@ object FieldCrud {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  val Protocol = ServerSideProc.Protocol.toEvents[CfgAction]
+  val Protocol = ServerSideProc.Protocol.toEvents[CfgAction]("FieldCrud")
 }

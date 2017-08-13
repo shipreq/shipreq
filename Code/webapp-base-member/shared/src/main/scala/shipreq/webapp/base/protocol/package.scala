@@ -14,8 +14,8 @@ package object protocol {
     pickleXor(picklerErrorMsg, pickleVerifiedEventSeq)
 
   implicit class MemberExt_ServerSideProcProtocol(private val self: ServerSideProc.Protocol.type) extends AnyVal {
-    def toEvents[I: Pickler]: ServerSideProc.Protocol[I, ErrorMsg \/ VerifiedEvent.Seq] =
-      ServerSideProc.Protocol.apply
+    def toEvents[I: Pickler](name: String): ServerSideProc.Protocol[I, ErrorMsg \/ VerifiedEvent.Seq] =
+      ServerSideProc.Protocol(name)
   }
 
 }

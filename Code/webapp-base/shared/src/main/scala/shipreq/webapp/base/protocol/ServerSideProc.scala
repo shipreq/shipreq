@@ -28,7 +28,7 @@ object ServerSideProc {
     *
     * Input => Failure \/ Output
     */
-  class Protocol[I, O](implicit pi: Pickler[I], po: Pickler[O]) extends EqualsByRef {
+  class Protocol[I, O](final val name: String)(implicit pi: Pickler[I], po: Pickler[O]) extends EqualsByRef {
     final type Input = I
     final type Output = O
     final implicit val pickleInput : Pickler[I] = pi
@@ -41,7 +41,7 @@ object ServerSideProc {
   }
 
   object Protocol {
-    def apply[I: Pickler, O: Pickler]: Protocol[I, O] =
-      new Protocol
+    def apply[I: Pickler, O: Pickler](name: String): Protocol[I, O] =
+      new Protocol(name)
   }
 }

@@ -59,12 +59,12 @@ object PublicSpaProtocols {
           .mapValid((Request.apply _).tupled)
     }
 
-    val Fn = ServerSideProc.Protocol[Request, ErrorMsg \/ Unit]
+    val Fn = ServerSideProc.Protocol[Request, ErrorMsg \/ Unit]("Public.LandingPage")
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object Register {
-    val Fn1 = ServerSideProc.Protocol[EmailAddr, ErrorMsg \/ Unit]
+    val Fn1 = ServerSideProc.Protocol[EmailAddr, ErrorMsg \/ Unit]("Public.Register1")
 
     final case class Request(token     : SecurityToken,
                              personName: PersonName,
@@ -102,7 +102,7 @@ object PublicSpaProtocols {
     }
 
     /** Upon successful submission the user account is activated. */
-    val Fn2 = ServerSideProc.Protocol[Request, ErrorMsg \/ Response]
+    val Fn2 = ServerSideProc.Protocol[Request, ErrorMsg \/ Response]("Public.Register2")
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -127,12 +127,12 @@ object PublicSpaProtocols {
           .imapInput(GenIso.fields[Untyped])
           .mapValid((Request.apply _).tupled)
     }
-    val Fn = ServerSideProc.Protocol[Request, Permission]
+    val Fn = ServerSideProc.Protocol[Request, Permission]("Public.Login")
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object ResetPassword {
-    val Fn1 = ServerSideProc.Protocol[Username \/ EmailAddr, Unit]
+    val Fn1 = ServerSideProc.Protocol[Username \/ EmailAddr, Unit]("Public.ResetPassword1")
 
     final case class Request(token: SecurityToken, newPassword: PlainTextPassword)
     implicit val pickler: Pickler[Request] = pickleCaseClass[Request]
@@ -147,7 +147,7 @@ object PublicSpaProtocols {
       implicit def univEq: UnivEq[Response] = UnivEq.derive
     }
 
-    val Fn2 = ServerSideProc.Protocol[Request, ErrorMsg \/ Response]
+    val Fn2 = ServerSideProc.Protocol[Request, ErrorMsg \/ Response]("Public.ResetPassword2")
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
