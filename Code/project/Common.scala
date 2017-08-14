@@ -187,7 +187,9 @@ object Common {
       parallelExecution in testOnly := false,
       // scalaJSOptimizerOptions in fullOptJS ~= (_ withPrettyPrintFullOptJS true),
       scalaJSSemantics in fullOptJS ~= (_
-        .withRuntimeClassName(_ => "")
+        .withProductionMode(true)
+        .withRuntimeClassNameMapper(Semantics.RuntimeClassNameMapper.discardAll())
+        .withArrayIndexOutOfBounds(CheckedBehavior.Unchecked)
         .withAsInstanceOfs(CheckedBehavior.Unchecked)))
 
   private def jsDevSettings: Project => Project =

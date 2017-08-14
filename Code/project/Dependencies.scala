@@ -27,7 +27,7 @@ object Dependencies {
   }
 
   object Scalaz {
-    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.14")
+    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.15")
     val core       = mm("scalaz-core")
     val effect     = mm("scalaz-effect") ++ core
     val concurrent = mm("scalaz-concurrent") ++ effect
@@ -95,7 +95,7 @@ object Dependencies {
   }
 
   object Json4s {
-    private val mm = MultiModule.scala("org.json4s", "3.5.2")
+    private val mm = MultiModule.scala("org.json4s", "3.5.3")
     val jackson = mm("json4s-jackson") ++ Scala.all
   }
 
@@ -127,7 +127,7 @@ object Dependencies {
   }
 
   object Akka {
-    private val mm = MultiModule.scala("com.typesafe.akka", "2.5.3")
+    private val mm = MultiModule.scala("com.typesafe.akka", "2.5.4")
     val actor   = mm("akka-actor") ++ mm("akka-slf4j")
     val testkit = mm("akka-testkit")
   }
@@ -178,7 +178,7 @@ object Dependencies {
 
   val httpCore    = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.6")
   val javaMail    = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.5.6")
-  val postgresql  = jvmOnly("org.postgresql"              % "postgresql"            % "42.1.3")
+  val postgresql  = jvmOnly("org.postgresql"              % "postgresql"            % "42.1.4")
   val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "2.6.3")
   val flyway      = jvmOnly("com.googlecode.flyway"       % "flyway-core"           % "2.3.1")
   val logback     = jvmOnly("ch.qos.logback"              % "logback-classic"       % "1.2.3")
