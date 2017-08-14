@@ -10,7 +10,7 @@ import scalaz.effect.IO
 import scalaz.Free.Trampoline
 import scalaz.std.function.function0Instance
 import scalaz.syntax.monad._
-import scalaz.{Monad, Name, \/}
+import scalaz.{Monad, Name, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data.{ProjectId, SecurityToken}
@@ -154,10 +154,13 @@ object DispatchBM {
     implicit val trace: Trace.Algebra[F, Request, Response] =
       Trace.off
 
+    implicit val publicApi: PublicSpaLogic.ForApi[F] =
+      _ => F.pure(\/-(()))
+
     val dispatchLogic = new DispatchLogic[F, Request, Response](r => r, (_, r) => F.point(r))
 
-    val dispatcher1 = dispatchLogic.mainRoutes.withFallback(dispatchLogic.mainFallback)
-    val dispatcher2 = dispatchLogic.cacheUsualPaths(dispatcher1)
+    val dispatcher1 = dispatchLogic.Main.routes.withFallback(dispatchLogic.Main.fallback)
+    val dispatcher2 = dispatchLogic.Main.cacheUsualPaths(dispatcher1)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
