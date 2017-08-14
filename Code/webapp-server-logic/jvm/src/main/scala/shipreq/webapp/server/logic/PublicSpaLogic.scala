@@ -15,11 +15,21 @@ import shipreq.webapp.server.ServerConfig
 import WebappTaskmanConverters._
 import Implicits._
 
-trait PublicSpaLogic[F[_]] {
+trait PublicSpaLogic[F[_]] extends PublicSpaLogic.ForApi[F] {
   val initData: F[InitData]
 }
 
 object PublicSpaLogic {
+
+  trait ForApi[F[_]] {
+
+    /** Ignores publicRegistration setting.
+      * Lacks security protection.
+      */
+    def register1(emailAddr: String): F[ErrorMsg \/ Unit]
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   private[this] val rightUnit = \/-(())
 
@@ -47,7 +57,8 @@ object PublicSpaLogic {
     issueDate(_).flatMap(f)
   }
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+
   def apply[D[_], F[_]](implicit config  : ServerConfig,
                                  db      : DB.ForPublicSpa[D],
                                  runDB   : D ~> F,
@@ -133,8 +144,7 @@ object PublicSpaLogic {
       private def registrationRequestedTask(email: EmailAddr, token: SecurityToken): Msg =
         Msg.RegistrationRequested(email.toTaskman, absUrlRegister2(token).absoluteUrl)
 
-      val registerFn1: F[Register.Fn1.Instance] = {
-
+      def register1(emailAddrStr: String): F[ErrorMsg \/ Unit] = {
         def registerInDb(emailAddr: EmailAddr, now: Instant): D[Msg] =
           db.inDbTransaction(
             db.getUserRegistration(emailAddr).flatMap {
@@ -145,16 +155,19 @@ object PublicSpaLogic {
         def onNewUser(email: EmailAddr): D[Msg] =
           db.createUserPlaceholder(email).map(registrationRequestedTask(email, _))
 
+        UserValidators.emailAddr.named(emailAddrStr).onValid(emailAddr =>
+          for {
+            now <- svr.now
+            msg <- runDB(registerInDb(emailAddr, now))
+            _   <- taskman.submitMsg(msg)
+          } yield rightUnit
+        )
+      }
+
+      val registerFn1: F[Register.Fn1.Instance] =
         svr.createServerSideProc(Register.Fn1)(
           registrationProc(i =>
-            UserValidators.emailAddr.unnamed(i.value).onValid(emailAddr =>
-              for {
-                now <- svr.now
-                msg <- runDB(registerInDb(emailAddr, now))
-                _   <- taskman.submitMsg(msg)
-              } yield rightUnit
-            )))
-      }
+            register1(i.value)))
 
       val registerFn2: F[Register.Fn2.Instance] =
         svr.createServerSideProc(Register.Fn2)(
@@ -273,6 +286,10 @@ object PublicSpaLogic {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     new PublicSpaLogic[F] {
+
+      override def register1(emailAddr: String): F[ErrorMsg \/ Unit] =
+        RegisterFns.register1(emailAddr)
+
       val initData: F[InitData] =
         for {
           u <- security.authenticatedUser

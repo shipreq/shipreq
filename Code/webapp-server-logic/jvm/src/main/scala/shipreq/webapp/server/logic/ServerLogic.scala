@@ -9,7 +9,11 @@ import shipreq.webapp.server.ServerConfig
   */
 final case class ServerLogic[F[_]](publicSpa    : PublicSpaLogic[F],
                                    homeSpa      : HomeSpaLogic  [F],
-                                   projectServer: ProjectServer [F])
+                                   projectServer: ProjectServer [F]) {
+
+  def publicApi: PublicSpaLogic.ForApi[F] =
+    publicSpa
+}
 
 object ServerLogic {
 

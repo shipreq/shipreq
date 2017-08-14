@@ -90,11 +90,12 @@ final class LiftDispatcher(global: Global) {
   }
 
   val logic: DispatchLogic[Fx, LiftReq, Box[LiftResponse]] = {
-    implicit val config   = global.config
-    implicit val trace    = global.trace
-    implicit val security = global.security
-    implicit val db       = DB.SecurityTokenReadOnly.trans(DbInterpreter.SecurityTokenReadOnly)(global.db.fx.trans)
-    implicit val server   = ServerInterpreter
+    implicit val config    = global.config
+    implicit val trace     = global.trace
+    implicit val security  = global.security
+    implicit val publicApi = global.logic.publicApi
+    implicit val db        = DB.SecurityTokenReadOnly.trans(DbInterpreter.SecurityTokenReadOnly)(global.db.fx.trans)
+    implicit val server    = ServerInterpreter
     new DispatchLogic(parseReq, makeResponse)
   }
 

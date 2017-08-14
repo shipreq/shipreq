@@ -11,6 +11,7 @@ import shipreq.webapp.base.{AssetManifest, Urls}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.util.ResourceHint
+import shipreq.webapp.base.validation.Simple
 import shipreq.webapp.server.ServerConfig
 
 object DispatchLogic {
@@ -81,6 +82,14 @@ object DispatchLogic {
     val redirectToMemberHome = Redirect(Urls.memberHome)
   }
 
+  object StatusCode {
+    final val OK           = 200
+    final val BadRequest   = 400
+    final val Unauthorized = 401
+    final val Forbidden    = 403
+    final val NotFound     = 404
+  }
+
   @inline private[this] def isSepChar(c: Char): Boolean =
     c == '/' || c == '#'
 
@@ -119,6 +128,18 @@ object DispatchLogic {
     }
   }
 
+  /** This is a lazy, hardcoded password to validate admin access. When ShipReq gets serious this shit will be
+    * replaced with proper authentication and authorisation.
+    */
+  val apiSecretAdmin = PlainTextPassword("Hooquail2aehiey1viemiefaayengeiGhuch8Eishee3OHu4aiKieth3lieshaid")
+
+  /** API for invoking the first part of the registration process (regardless of whether public registrations are
+    * enabled or not).
+    *
+    * Meant for admin/ops only.
+    */
+  val apiUrlRegister1 = Url.Relative("/api/register1")
+
   /** For tests only. Not meant for production */
   val apiUrlLogin = Url.Relative("/api/login")
 
@@ -155,6 +176,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
                                                   config    : ServerConfig,
                                                   security  : Security.Algebra[F],
                                                   db        : DB.SecurityTokenReadOnly[F],
+                                                  publicApi : PublicSpaLogic.ForApi[F],
                                                   svr       : Server.Time[F],
                                                   tracer    : Trace.Algebra[F, RealReq, RealRes]) {
   import Method._
@@ -219,6 +241,23 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
     val mod = prefix.removeSelfOrParent
     routes.embed(r => test(r.path), Request.path.modify(mod))
   }
+
+  private def protectedPostApi(url: Url.Relative)(f: Request => FR): Route =
+    whenUrlIs(url)(onMethod(Post)(security.protectFn(f)))
+
+  private def secretPostApi(url: Url.Relative)(f: Request => FR): Route =
+    protectedPostApi(url)(req =>
+      parseParams(req.param("secret"))(s =>
+        if (s ==* apiSecretAdmin.value)
+          f(req)
+        else
+          F pure StatusOnly(StatusCode.Unauthorized)))
+
+  private def parseParams[A](parsed: Option[A])(f: A => FR): FR =
+    parsed match {
+      case Some(a) => f(a)
+      case None    => F pure StatusOnly(StatusCode.BadRequest)
+    }
 
   def makeReal(trace: Boolean)(d: Request => F[Response]): RealReq => F[RealRes] =
     if (trace)
@@ -309,28 +348,35 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object Api {
 
-    def routes(testMode: Boolean): Option[Route] =
-      Option.when(testMode)(login)
-
     /** For tests only. Not meant for production */
     val login: Route =
-      whenUrlIs(apiUrlLogin)(
-        onMethod(Post) { req =>
-
-          val credentials = for {
+      protectedPostApi(apiUrlLogin)(req =>
+        parseParams(
+          for {
             u <- req.param("user")
             p <- req.param("pass")
           } yield (Username.orEmail(u), PlainTextPassword(p))
-
-          credentials match {
-            case Some((u, p)) => security.protect(security.attemptLogin(u, p).map {
-              case Some(_) => StatusOnly(200)
-              case None    => StatusOnly(401)
-            })
-            case None => F pure StatusOnly(400)
+        ) { case (u, p) =>
+          security.attemptLogin(u, p).map {
+            case Some(_) => StatusOnly(StatusCode.OK)
+            case None    => StatusOnly(StatusCode.Unauthorized)
           }
-        })
+        }
+      )
 
+    // TODO This doesn't need a session, it should be in with the "stateless" routes which is currently just Ops.routes
+    val register1: Route =
+      secretPostApi(apiUrlRegister1)(req =>
+        parseParams(req.param("email"))(e =>
+          publicApi.register1(e).map {
+            case \/-(_) => StatusOnly(StatusCode.OK)
+            case -\/(m) => Generic(StatusCode.BadRequest, m.value)
+          }
+        )
+      )
+
+    def routes(testMode: Boolean): Route =
+      register1 | Option.when(testMode)(login)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
