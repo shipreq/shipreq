@@ -75,7 +75,7 @@ object LiveTestUtils {
     login(u.email.value, u.password.value, expectSuccess)
 
   def login(id: String, password: String, expectSuccess: Boolean): HttpResponse =
-    post(DispatchLogic.loginApiUrl.relativeUrl, params = List("user" -> id, "pass" -> password))
+    post(DispatchLogic.apiUrlLogin.relativeUrl, params = List("user" -> id, "pass" -> password))
       .assertStatus(if (expectSuccess) 200 else 401)
 
   def retainSession(r: HttpResponse): List[(String, String)] =

@@ -119,11 +119,11 @@ object DispatchLogic {
     }
   }
 
+  /** For tests only. Not meant for production */
+  val apiUrlLogin = Url.Relative("/api/login")
+
   /** Prefix for all ops routes */
   val opsRoot = Url.Relative("/ops")
-
-  /** For tests only. Not meant for production */
-  val loginApiUrl = Url.Relative("/api/login")
 
   /** For dev only. Not meant for production */
   val quickDevUrl = Url.Relative("/x")
@@ -230,95 +230,113 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
     else
       realReq => d(readRealReq(realReq)).flatMap(makeRealRes(realReq, _))
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  object Main {
 
-  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+    val publicSpa: Route = {
+      import Urls.{PublicSpaRoute => R}
 
-  val publicSpa: Route = {
-    import Urls.{PublicSpaRoute => R}
+      // This logic is mirrored in .public.spa.Routes
+      val login: Route =
+        spa(R.Login.url)(_ =>
+          security.isAuthenticated.map(a =>
+            if (a) redirectToMemberHome else ServePublicSpa))
 
-    // This logic is mirrored in .public.spa.Routes
+      val staticRoutes: Route = {
+        val fr: FR = F pure ServePublicSpa
+        whenUrlIsAnyOf(R.static.filterNot(_ ==* R.Login).get.map(_.url).toNES)(onGet(_ => fr))
+      }
+
+      val securityTokenFn: R.NeedsToken => SecurityToken => F[SecurityToken.Status] = {
+        case R.Register2     => PublicSpaLogic.tokenStatusFn(db.getUserRegistrationTokenIssueDate, config.registrationTokenLifespan)
+        case R.ResetPassword => PublicSpaLogic.tokenStatusFn(db.getResetPasswordTokenIssueDate, config.passwordResetTokenLifespan)
+      }
+
+      val onSecurityTokenStatus: SecurityToken.Status => Response = {
+        case SecurityToken.Status.Valid   => ServePublicSpa
+        case SecurityToken.Status.Invalid => redirectToPublicHome
+        case SecurityToken.Status.Expired => redirectToPublicHome // could be better but good enough
+      }
+
+      val securityTokenRoutes: Route =
+        R.needsToken.map { r =>
+          val getTokenStatus = securityTokenFn(r)
+          def respond(t: SecurityToken): FR = security.protect(getTokenStatus(t).map(onSecurityTokenStatus))
+          extractFlip(spaTest1(r.url))(t => onGet(_ => respond(SecurityToken(t))))
+        }.reduce(_ | _)
+
+      login | staticRoutes | securityTokenRoutes
+    }
+
+    val memberHomeSpa: Route =
+      spa(Urls.memberHome)(needAuth(ServeHomeSpa))
+
+    val projectSpa: Route =
+      spaWithObfuscatedParam(Urls.project)(Obfuscators.projectId) {
+        case \/-(projectId) =>
+          needAuthF(user =>
+            // TODO Check ProjectStore first
+            security.db.getProjectOwner(projectId).map {
+              case Some(o) if o ==* user.id => ProjectSpa.Serve(user, projectId)
+              case Some(_)                  => ProjectSpa.NotOwner
+              case None                     => ProjectSpa.InvalidId
+            }
+          )
+        case -\/(_) => _ => F pure ProjectSpa.InvalidId
+      }
+
+    val logout: Route =
+      get(Urls.logout,
+        security.logout >| redirectToPublicHome)
+
+    val routes: Request ?=> F[Response] =
+      publicSpa | memberHomeSpa | projectSpa | logout
+
+    val fallback: Request => F[Response] =
+      onGet(_ => fRedirectToPublicHome)
+
+    def cacheUsualPaths(f: Request => F[Response]): Request => F[Response] = {
+      // Caching ignores params - beware
+      val noParams: String => Option[String] = _ => None
+      val urls = Urls.PublicSpaRoute.static.map(_.url) ++ Urls.MemberRoute.static.map(_.url)
+      val cacheMap = urls.iterator.map(u => u.underlying -> f(Request(Get, u, noParams))).toMap
+      val cache = Util.quickStringLookup(cacheMap)
+      req => cache(req.path.underlying).fold(f(req))(
+        cachedResponse => if (req.method eq Get) cachedResponse else fMethodNotAllowed)
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  object Api {
+
+    def routes(testMode: Boolean): Option[Route] =
+      Option.when(testMode)(login)
+
+    /** For tests only. Not meant for production */
     val login: Route =
-      spa(R.Login.url)(_ =>
-        security.isAuthenticated.map(a =>
-          if (a) redirectToMemberHome else ServePublicSpa))
+      whenUrlIs(apiUrlLogin)(
+        onMethod(Post) { req =>
 
-    val staticRoutes: Route = {
-      val fr: FR = F pure ServePublicSpa
-      whenUrlIsAnyOf(R.static.filterNot(_ ==* R.Login).get.map(_.url).toNES)(onGet(_ => fr))
-    }
+          val credentials = for {
+            u <- req.param("user")
+            p <- req.param("pass")
+          } yield (Username.orEmail(u), PlainTextPassword(p))
 
-    val securityTokenFn: R.NeedsToken => SecurityToken => F[SecurityToken.Status] = {
-      case R.Register2     => PublicSpaLogic.tokenStatusFn(db.getUserRegistrationTokenIssueDate, config.registrationTokenLifespan)
-      case R.ResetPassword => PublicSpaLogic.tokenStatusFn(db.getResetPasswordTokenIssueDate, config.passwordResetTokenLifespan)
-    }
-
-    val onSecurityTokenStatus: SecurityToken.Status => Response = {
-      case SecurityToken.Status.Valid   => ServePublicSpa
-      case SecurityToken.Status.Invalid => redirectToPublicHome
-      case SecurityToken.Status.Expired => redirectToPublicHome // could be better but good enough
-    }
-
-    val securityTokenRoutes: Route =
-      R.needsToken.map { r =>
-        val getTokenStatus = securityTokenFn(r)
-        def respond(t: SecurityToken): FR = security.protect(getTokenStatus(t).map(onSecurityTokenStatus))
-        extractFlip(spaTest1(r.url))(t => onGet(_ => respond(SecurityToken(t))))
-      }.reduce(_ | _)
-
-    login | staticRoutes | securityTokenRoutes
-  }
-
-  val memberHomeSpa: Route =
-    spa(Urls.memberHome)(needAuth(ServeHomeSpa))
-
-  val projectSpa: Route =
-    spaWithObfuscatedParam(Urls.project)(Obfuscators.projectId) {
-      case \/-(projectId) =>
-        needAuthF(user =>
-          // TODO Check ProjectStore first
-          security.db.getProjectOwner(projectId).map {
-            case Some(o) if o ==* user.id => ProjectSpa.Serve(user, projectId)
-            case Some(_)                  => ProjectSpa.NotOwner
-            case None                     => ProjectSpa.InvalidId
+          credentials match {
+            case Some((u, p)) => security.protect(security.attemptLogin(u, p).map {
+              case Some(_) => StatusOnly(200)
+              case None    => StatusOnly(401)
+            })
+            case None => F pure StatusOnly(400)
           }
-        )
-      case -\/(_) => _ => F pure ProjectSpa.InvalidId
-    }
+        })
 
-  val logout: Route =
-    get(Urls.logout,
-      security.logout >| redirectToPublicHome)
-
-  val mainRoutes: Request ?=> F[Response] =
-    publicSpa | memberHomeSpa | projectSpa | logout
-
-  val mainFallback: Request => F[Response] =
-    onGet(_ => fRedirectToPublicHome)
-
-  def cacheUsualPaths(f: Request => F[Response]): Request => F[Response] = {
-    // Caching ignores params - beware
-    val noParams: String => Option[String] = _ => None
-    val urls = Urls.PublicSpaRoute.static.map(_.url) ++ Urls.MemberRoute.static.map(_.url)
-    val cacheMap = urls.iterator.map(u => u.underlying -> f(Request(Get, u, noParams))).toMap
-    val cache = Util.quickStringLookup(cacheMap)
-    req => cache(req.path.underlying).fold(f(req))(
-      cachedResponse => if (req.method eq Get) cachedResponse else fMethodNotAllowed)
   }
-
-  def mainDispatcher(devMode: Boolean, testMode: Boolean): RealReq => F[RealRes] =
-    makeReal(trace = true)(
-      cacheUsualPaths(
-        ( mainRoutes
-        | Option.when(testMode)(loginApi)
-        | Option.when(devMode)(quickDev).flatten
-        ).withFallback(mainFallback)
-      )
-    )
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Ops & Diagnostics
 
-  object OpsRoutes {
+  object Ops {
 
     /** Is the request a candidate for ops route parsing? */
     val candidate: Url.Relative => Boolean =
@@ -340,26 +358,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // Non-prod routes
-
-  /** For tests only. Not meant for production */
-  val loginApi: Route =
-    whenUrlIs(loginApiUrl)(
-      onMethod(Post) { req =>
-
-        val credentials = for {
-          u <- req.param("user")
-          p <- req.param("pass")
-        } yield (Username.orEmail(u), PlainTextPassword(p))
-
-        credentials match {
-          case Some((u, p)) => security.protect(security.attemptLogin(u, p).map {
-            case Some(_) => StatusOnly(200)
-            case None    => StatusOnly(401)
-          })
-          case None => F pure StatusOnly(400)
-        }
-      })
+  // Other
 
   /** For dev only. Not meant for production */
   val quickDev: Option[Route] =
@@ -371,4 +370,15 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
         }
       )
     )
+
+  def mainDispatcher(devMode: Boolean, testMode: Boolean): RealReq => F[RealRes] =
+    makeReal(trace = true)(
+      Main.cacheUsualPaths(
+        ( Main.routes
+        | Api.routes(testMode = testMode)
+        | Option.when(devMode)(quickDev).flatten
+        ).withFallback(Main.fallback)
+      )
+    )
+
 }

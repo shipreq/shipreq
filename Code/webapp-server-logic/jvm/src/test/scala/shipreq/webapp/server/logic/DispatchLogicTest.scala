@@ -29,8 +29,8 @@ object DispatchLogicTest extends TestSuite {
          (implicit logIn: MockDb.UserEntry = null): Response = {
     security.loggedIn = Option(logIn)
     val req = Request(method, url, _ => None)
-    val d = if (dispatcher.OpsRoutes.candidate(url))
-      dispatcher.OpsRoutes.total
+    val d = if (dispatcher.Ops.candidate(url))
+      dispatcher.Ops.total
     else
       dispatch
     d(req).value

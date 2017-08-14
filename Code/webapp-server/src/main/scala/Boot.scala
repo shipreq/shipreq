@@ -113,7 +113,7 @@ class Boot {
         base
       val csp = ContentSecurityPolicy(
         scriptSources  = js,
-        styleSources  = css,
+        styleSources   = css,
         imageSources   = Nil,
         defaultSources = base)
       SecurityRules(

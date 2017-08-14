@@ -126,10 +126,11 @@ final class LiftDispatcher(global: Global) {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   val opsDispatchPF: LiftRules.DispatchPF = {
-    val dispatch = logic.OpsRoutes.total
+    val dispatch = logic.Ops.total
+    val candidate = logic.Ops.candidate
 
     {
-      case r if logic.OpsRoutes.candidate(liftReqUrl(r)) => () => dispatch(r).unsafeRun()
+      case r if candidate(liftReqUrl(r)) => () => dispatch(r).unsafeRun()
     }
   }
 }
