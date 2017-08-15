@@ -7,7 +7,7 @@ Backlog
 * Show past IDs in ReqTable
 * Group req types in filter from ALL to ANY.
 * Say "no implications" in imp graph
-* Create and use HomeSpaLoader (matbe - might have a negative effect)
+* Create and use HomeSpaLoader (maybe - might have a negative effect)
 
 ### Nice UI
 * Cfg Fields
@@ -29,6 +29,7 @@ Backlog
 
 ### New features
 * Anonymous shares and read-only/presentation mode
+* Tag/Implication Browser (aka Distribution manager/console)
 
 ### Tech
 * Stop using scalaz.std.anything which brings in too much other stuff;
@@ -48,12 +49,14 @@ Backlog
 * Rename webapp-client-{home ⇒ member} now that its ambiguous in regards to the public pages
 * Make webtamp hash filenames of urls in Semantic CSS (icons.*)
 * Add DB indicies (don't look at code! metrics dashboard should indicate)
+* SSL shouldn't be in Docker - resolve TODO in WebappBuild.scala
 
 ------------------------------------------------------------------------------------------------------------------------
 Phase 2
 =======
 
 ### Social
+* Co-founder criteria
 * Presentation
 
 ### Devops & Deployment
@@ -65,20 +68,15 @@ Phase 2
   * Mailchimp
   * ZenDesk
   * GCP
-    * Compute
-    * DB
     * Monitoring
     * Logging
     * Metrics
     * Alerting
-    * Docker repo
     * DNS
     * SMTP
   * Email addresses
   * Google Analytics
 * Env
-  * Automate provisioning
-  * Automate deployment
   * Automate releases
   * Automate ops (dashboards, alerts, etc)
 * Devops
@@ -86,16 +84,13 @@ Phase 2
   * Code to send metrics
   * Revise all logging
   * Determine and implement valuable metrics (tech & business)
-  * Add healthchecks
   * Do more with errors (client & server), eg. ClientData.{init,applyEvents}
   * Restore or delete AdminStats
   * Restore or delete DiagnosticEndpoints
   * Restore or delete SessionStats
 * Recovery
-  * Create app rollback plan
   * Create db rollback plan
 * Security
-  * SSL in Docker - resolve TODO in WebappBuild.scala
   * Upgrade JDK and audit crypto mechanisms
 
 ### User-Functional Design
@@ -106,6 +101,6 @@ Phase 2
 * Re-evaluate config: some data is useless (i.e. key of custom text fields)
 
 ### New Features
-* User profile page (and remove newsletter from Register2)
+* User profile page
 * Issues
 * Saved views
