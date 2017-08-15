@@ -94,11 +94,14 @@ Phase 2
   * Upgrade JDK and audit crypto mechanisms
 
 ### User-Functional Design
-* Add new column type: all tags (as opposed to non-field tags)
-* We have implications fields and implication columns.
-  We don't seem to need all-imps vs non-field-imps...should tags not work the same way?
-  Or is there similar deficiency in imps cols too?
-* Re-evaluate config: some data is useless (i.e. key of custom text fields)
+* All tags/imps vs non-column tags/imps. Options:
+  1. Add new columns
+  2. Different behaviour in view vs edit.
+     For Column.Tags/Imps, view=non-column, edit=all
+     For CustomFields, view=custom, edit=custom
+* Allow refs to custom text fields (e.g. [UC-1.detail])
+* Clicking a UCRef should open the UC in ReqDetail (just like ReqRefs)
+* Consider previous mnemonics in PastIds field
 
 ### New Features
 * User profile page

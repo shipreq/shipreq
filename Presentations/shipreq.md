@@ -58,6 +58,10 @@ Alternative Businesses
 
 Features
 
+* ReqTable excel-like, bulk mindset over time
+* ReqDetail, single focus, detailed mindset
+* Switch back-and-forth
+
 * Create requirements
   * Normal requirements - user-definable
   * Special requirements - use cases
@@ -65,16 +69,23 @@ Features
 * Innovative
   * Req codes
   * Customisability
+    * Tag/imp fields are dynamic views, detached from storage
+    * Fields per req-type
+  * Tags are many:many tree
 * Integrity
   * Compile-time
     * Links between requirements
       * References in text
       * Implications
       * Use case flow
+    * IDs never lost - req.type change, reqtype.mnemonic change
   * Runtime
     * tag conflicts
     * empty fields
     * issues
+      * rules via config
+      * custom via tags
+      * loose
     * dead refs
 * Comprehensibility
   * Req codes
@@ -83,6 +94,7 @@ Features
   * Distribution manager
 * Modifyability
   * <go back and look at reqs>
+  * delete/restore considers implication graph
 
 * Audit history
 * Quality
