@@ -5,6 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
+import scala.collection.immutable.SortedSet
 import scalacss.ScalaCssReact._
 import scalacss.StyleA
 import scalajs.js.{UndefOr, undefined}
@@ -17,7 +18,7 @@ import shipreq.webapp.base.text.{Grammar => G, _}
 import shipreq.webapp.base.util.ReqCodeTreeItem
 import shipreq.webapp.base.data.{Contextualise, Plain}
 import shipreq.webapp.base.jsfacade.KaTeX
-import shipreq.webapp.base.lib.ClientUtil.{renderVector, sepComma, sepSpace}
+import shipreq.webapp.base.lib.ClientUtil.{renderSeq, renderVector, sepComma, sepSpace}
 import shipreq.webapp.client.project.app.Style.{widgets => *}
 import ProjectWidgets.{apply => _, _}
 
@@ -105,8 +106,10 @@ final class ProjectWidgets private(project    : Project,
   def implicationList(ids: Vector[Pubid]): VdomElement =
     PubidFormat.validWhenDead.pubids(ids)
 
-  def pastPubids(ids: Vector[Pubid]): VdomElement =
-    renderVector(ids, sepComma)(id => <.span(*.pastPubid, PlainText.pubid(id, project)))
+  def pastPubids(ids: SortedSet[ExternalPubid]): VdomElement =
+    renderSeq(
+      ids.toIterator.map(ep => <.span(*.pastPubid, PlainText.pubid(ep))),
+      sepComma)
 
   /** Contextualised */
   val codeRef: ReqCodeId => VdomElement =

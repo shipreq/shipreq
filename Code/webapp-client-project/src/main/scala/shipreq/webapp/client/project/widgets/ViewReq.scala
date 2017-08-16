@@ -2,6 +2,7 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react.vdom.html_<^._
+import scala.collection.immutable.SortedSet
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
@@ -78,7 +79,7 @@ object ViewReq {
                   customTags : CustomField.Tag.Id => Vector[ApplicableTagId],
                   generalImps: Direction => Vector[Pubid],
                   customImps : CustomField.Implication.Id => Vector[Pubid],
-                  pastPubids : Vector[Pubid],
+                  pastPubids : SortedSet[ExternalPubid],
                   reqTypes   : ReqTypes) {
 
     def apply(pw: ProjectWidgets): ViewReq =
@@ -127,10 +128,15 @@ object ViewReq {
       val customImps: CustomField.Implication.Id => Vector[Pubid] =
         fid => sortPubids(customImpLookup(fid)(id))
 
-      val pastPubids: Vector[Pubid] =
-        MutableArray(req.pastPubids(project.reqs.pubids))
-          .sortBySchwartzian(pubidSortKeyFn)
-          .to[Vector]
+      val pastPubids: SortedSet[ExternalPubid] = {
+        val b = SortedSet.newBuilder[ExternalPubid]
+        b ++= req.pubid.pastExternals(project)
+        for (pubid <- req.pastPubids(project.reqs.pubids)) {
+          b += pubid.external(project)
+          b ++= pubid.pastExternals(project)
+        }
+        b.result()
+      }
 
       Data(
         req,

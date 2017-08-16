@@ -26,9 +26,18 @@ final case class ReqTypePos(value: Int) extends TaggedInt
  * Eg. "FR-3"
  */
 final case class PubidT[+T <: ReqTypeId](reqTypeId: T, pos: ReqTypePos) {
+
+  /** The current, active [[ExternalPubid]] */
   def external(p: Project): ExternalPubid = {
     val rt = p.config.reqTypes.need(reqTypeId)
     ExternalPubid(rt.mnemonic, pos)
+  }
+
+  /** Past [[ExternalPubid]] for this Pubid.
+    * Note that requirements can also have past-Pubids; this method doesn't check the [[PubidRegister]]. */
+  def pastExternals(p: Project): Set[ExternalPubid] = {
+    val rt = p.config.reqTypes.need(reqTypeId)
+    rt.oldMnemonics.map(ExternalPubid(_, pos))
   }
 }
 
@@ -73,6 +82,14 @@ object ExternalPubid {
 
   @inline def preprocessor =
     Grammar.pubid.preprocessor
+
+  implicit val ordering: Ordering[ExternalPubid] =
+    Ordering.fromLessThan((a, b) =>
+      a.mnemonic.value.compareTo(b.mnemonic.value) match {
+        case 0 => a.pos.value < b.pos.value
+        case n => n < 0
+      }
+    )
 
   sealed abstract class LookupFailure
   object LookupFailure {

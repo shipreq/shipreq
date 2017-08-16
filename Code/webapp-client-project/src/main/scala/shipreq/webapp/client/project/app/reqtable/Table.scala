@@ -7,6 +7,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
+import scala.collection.immutable.SortedSet
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Applicable, ErrorMsg, NotApplicable}
 import shipreq.webapp.base.data._
@@ -356,7 +357,7 @@ object Table {
         row.exp.cfTags.getOrElse(_, Vector.empty),
         row.exp.implications.apply,
         row.exp.cfImps.getOrElse(_, Vector.empty),
-        Vector.empty, // pastPubids unused
+        SortedSet.empty[ExternalPubid], // ReqTable doesn't display pastPubids
         reqTypes)
         .apply(pw)
 

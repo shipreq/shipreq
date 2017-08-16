@@ -2,6 +2,7 @@ package shipreq.webapp.base.lib
 
 import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 
 object ClientUtil {
 
@@ -36,5 +37,12 @@ object ClientUtil {
       NonEmptyVector.option(as).whenDefined(as =>
         TagMod.fromTraversableOnce(
           as.intercalateF(separator)(g compose renderEach).whole)))
+
+  def renderSeq[A](as: TraversableOnce[A], separator: TagMod)(implicit f: A => TagMod): VdomTag =
+    <.span(
+      TagMod.fromTraversableOnce(
+        as.toIterator
+          .map(f)
+          .intersperse(separator)))
 
 }
