@@ -50,6 +50,9 @@ Backlog
 * Make webtamp hash filenames of urls in Semantic CSS (icons.*)
 * Add DB indicies (don't look at code! metrics dashboard should indicate)
 * SSL shouldn't be in Docker - resolve TODO in WebappBuild.scala
+* Hide Tags/Imps columns when guaranteed to be empty & useless.
+  (i.e. all possible tags/imps are allocated to columns)
+  Also consider FilterDead=ShowDead when designing this.
 
 ------------------------------------------------------------------------------------------------------------------------
 Phase 2
@@ -94,11 +97,6 @@ Phase 2
   * Upgrade JDK and audit crypto mechanisms
 
 ### User-Functional Design
-* All tags/imps vs non-column tags/imps. Options:
-  1. Add new columns
-  2. Different behaviour in view vs edit.
-     For Column.Tags/Imps, view=non-column, edit=all
-     For CustomFields, view=custom, edit=custom
 * Allow refs to custom text fields (e.g. [UC-1.detail])
 * Clicking a UCRef should open the UC in ReqDetail (just like ReqRefs)
 * Consider previous mnemonics in PastIds field
