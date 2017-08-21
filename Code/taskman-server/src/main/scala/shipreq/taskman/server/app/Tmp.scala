@@ -1,6 +1,7 @@
 package shipreq.taskman.server.app
 
 import java.time.Instant
+import scalaz.old.NonEmptyList
 import shipreq.taskman.api._
 import shipreq.base.util.Error
 import shipreq.base.util.ErrorOr.Implicits._
@@ -16,6 +17,17 @@ object Tmp extends MainTemplate {
   def main(args: Array[String]): Unit =
     withTaskmanCtx(ctx => Fx {
       //ctx.testConnections()
+
+      println(ctx.config.mail)
+      val op = Bop.SendEmail(
+        Email.Envelope(
+          from = Email.Addr(EmailAddr("david.barri@shipreq.com")),
+          to = NonEmptyList(Email.Addr(EmailAddr("japgolly+test@gmail.com")))),
+        Email.Content(
+          subject = "Email Test",
+          body = "Hello"))
+      val result = ctx.email.send(op).unsafeRun()
+      println(result)
 
       /*
       import javax.mail._
@@ -52,9 +64,11 @@ object Tmp extends MainTemplate {
       // val e = Sop.NotifySupportTaskmanError(DateTime.now, Error("Test from Tmp", new RuntimeException), None)
       // ctx.sopReifier(e).unsafePerformIO()
 
+      /*
       val now = Instant.now()
       val m = MsgDetail(MsgHeader(MsgId(0), Priority.Medium, now), Msg.RegistrationCompleted(UserId(0)), 0)
       val f = Sop.NotifySupportWorkerFailed(now, m ,Error("Test from Tmp", new RuntimeException))
       ctx.sopReifier(f).unsafeRun()
+      */
     }).unsafeRun()
 }

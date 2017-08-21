@@ -43,6 +43,29 @@ To BCC FreshDesk ingress to archive@shipreq.com:
 3. Uncheck 'Suppress bounces from this recipient'
 4. Check 'Change envelope recipient' and enter archive@shipreq.com
 
+Configure SMTP for Taskman
+1. Search for "SMTP relay service" from https://admin.google.com/shipreq.com
+2. …which leads to https://admin.google.com/shipreq.com/AdminHome?fral=1&groupId=archive@shipreq.com&chromeless=1#ServiceSettings/notab=1&service=email&subtab=filters
+3. Click "CONFIGURE"
+  1. Enter desc: "SMTP for Taskman"
+  2. Set 'Allowed senders' to 'Only addresses in my domain'
+  3. Check 'Require SMTP Authentication'
+  4. Check 'Require TLS encryption'
+  5. Click 'ADD SETTING'
+4. Search for setting: "Less secure apps" → https://admin.google.com/shipreq.com/AdminHome?fral=1#ServiceSettings/notab=1&service=securitysetting&subtab=lesssecureappsaccess
+5. Select: 'Allow users to manage their access to less secure apps'
+6. Enable "Allow less secure apps" for the user@shipreq.com that will login to SMTP
+7. Taskman ettings:
+    mail.smtp.auth                     = true
+    mail.smtp.host                     = smtp-relay.gmail.com
+    mail.smtp.port                     = 587
+    mail.smtp.starttls.enable          = true
+    mail.user                          = <user>@shipreq.com
+    mail.password                      = <user's password>
+↑ Problems:
+1. Google security. Usage from new IP will fail, user will have to login and approve IP.
+2. Google Compute Engine does not allow outbound connections on ports 25, 465, and 587.
+
 
 ## MailChimp
 
