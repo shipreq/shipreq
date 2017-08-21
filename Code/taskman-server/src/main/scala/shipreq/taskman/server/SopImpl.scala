@@ -192,12 +192,12 @@ object SopImpl {
 // =====================================================================================================================
 
 final class SopImpl[EA](db: Transactor[Fx], fh: Worker.FailureHandler) extends SopReifier {
-  import Sop._
+  import ServerOp._
   import SopImpl._
 
   def getNextNodeId = db trans Dao.getNextNodeId
 
-  override def apply[A](op: Sop[A]): Fx[A] = op match {
+  override def apply[A](op: ServerOp[A]): Fx[A] = op match {
 
     case GetMsgsAssignNode(node, limit, trustPeriod, queued) =>
       db trans Dao.getMsgsAssignNode(node, limit, trustPeriod, queued)
@@ -205,7 +205,7 @@ final class SopImpl[EA](db: Transactor[Fx], fh: Worker.FailureHandler) extends S
     case GetMsgAssignWorker(node, worker, hdr) =>
       db trans Dao.getMsgAssignWorker(node, worker, hdr)
 
-    case ReAssignWorker(n, w, m) =>
+    case ReassignWorker(n, w, m) =>
       db trans Dao.reassignWorker(n, w, m)
 
     case UpdateMsgSuccess(n, w, m) =>

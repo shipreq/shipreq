@@ -13,7 +13,7 @@ import shipreq.taskman.api.{Priority => MsgPriority}
 import shipreq.taskman.server.business.{BopReifier, Email, Emails, Support}
 import shipreq.taskman.server.business.Bop.SupportOp
 import ErrorOr.Implicits.MonadExt
-import Sop._
+import ServerOp._
 
 object Worker extends HasLogger {
 
@@ -47,7 +47,7 @@ object Worker extends HasLogger {
    * @param reaction What to do with the job itself.
    * @param additionalOps Optional additional operations to perform (esp. notifying support).
    */
-  case class FailureResponse(reaction: FailedJobReaction, additionalOps: List[Sop[Unit]])
+  case class FailureResponse(reaction: FailedJobReaction, additionalOps: List[ServerOp[Unit]])
 
   def priorityForWorkerFailure(mp: MsgPriority): Support.Priority =
     mp.value match {
@@ -76,11 +76,11 @@ object Worker extends HasLogger {
         e2 => Fx(
           log.error(s"""FAILED TO NOTIFY SUPPORT OF FAILED WORKER.
                 Notification error: ${e2.stackTraceStr}
-                Worker error: ${f.e.stackTraceStr}
-                Msg: ${f.m}""")
-        ) >> handleFailedTaskman(NotifySupportTaskmanError(f.t, e2, Some(f.m)))
+                Worker error: ${f.err.stackTraceStr}
+                Msg: ${f.md}""")
+        ) >> handleFailedTaskman(NotifySupportTaskmanError(f.when, e2, Some(f.md)))
       run(catchIo)(
-        raise(emails.workerFailureEmail(f.t, f.m, f.e), priorityForWorkerFailure(f.m.priority))
+        raise(emails.workerFailureEmail(f.when, f.md, f.err), priorityForWorkerFailure(f.md.priority))
       )
     }
 
@@ -89,11 +89,11 @@ object Worker extends HasLogger {
         e2 => Fx(
           log.error(s"""FAILED TO NOTIFY SUPPORT OF TASKMAN FAILURE. FUCK.
               Notification error: ${e2.stackTraceStr}
-              Original error: ${f.e.stackTraceStr}
-              Msg: ${f.m}""")
+              Original error: ${f.err.stackTraceStr}
+              Msg: ${f.md}""")
         )
       run(catchIo)(
-        raise(emails.taskmanErrorEmail(f.t, f.e, f.m), Support.Priority.Urgent)
+        raise(emails.taskmanErrorEmail(f.when, f.err, f.md), Support.Priority.Urgent)
       )
     }
   }
@@ -238,7 +238,7 @@ final class Worker[F[_]](msgProcessor: MsgProcessor[F])(
       )
 
   private[this] def reassign(m: MsgDetail): Fx[Option[WorkResult[F]]] =
-    ReAssignWorker(node, worker, m).toFx.map {
+    ReassignWorker(node, worker, m).toFx.map {
       case true  => None
       case false => Some(CouldntReAssign(m))
     }

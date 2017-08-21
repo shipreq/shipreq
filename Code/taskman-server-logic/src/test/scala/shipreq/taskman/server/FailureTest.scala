@@ -6,7 +6,7 @@ import org.specs2.matcher.Matcher
 import org.specs2.mutable._
 import shipreq.base.util.Error
 import TestHelpers._
-import Sop._
+import ServerOp._
 import Failure._
 import Worker._
 

@@ -7,7 +7,7 @@ import org.specs2.mutable.Specification
 import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.taskman.api.{EmailAddr, MsgStatus, MsgId}
 import shipreq.taskman.api.Msg.ReRegistrationAttempted
-import shipreq.taskman.server.Sop._
+import shipreq.taskman.server.ServerOp._
 
 class WorkflowTest extends Specification with DatabaseTest with ThrownExpectations
     with ServerImplTestHelpers {

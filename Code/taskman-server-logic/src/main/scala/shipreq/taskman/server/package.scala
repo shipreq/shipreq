@@ -45,7 +45,7 @@ package object server {
    */
   case object Deliberate extends ErrorTag
 
-  type SopReifier = Sop ~> Fx
+  type SopReifier = ServerOp ~> Fx
 
   implicit class OpExt[F[_], A](val op: F[A]) extends AnyVal {
     def toFx(implicit opToIo: F ~> Fx): Fx[A] = opToIo(op)

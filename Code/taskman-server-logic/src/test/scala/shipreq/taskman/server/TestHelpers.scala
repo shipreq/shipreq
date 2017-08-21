@@ -15,7 +15,7 @@ import shipreq.taskman.api.Msg.{LandingPageHit, ReRegistrationAttempted}
 import shipreq.taskman.server.business.{Bop, Email, Emails, MailingList, ShipReqUser, Support}
 import shipreq.taskman.server.business.Email.Addr
 import Bop._
-import Sop._
+import ServerOp._
 import Manager.{JobQueue, PrioritisationOrderZ}
 import Worker._
 import MailingList._
@@ -135,7 +135,7 @@ import TestHelpers.manifest
 
 // =====================================================================================================================
 
-object SopTypeTags extends OpTypeProvider[Sop] {
+object SopTypeTags extends OpTypeProvider[ServerOp] {
   override def apply[A] = {
     case _: CfgGet                    => manifest[CfgGet]
     case _: GetMsgsAssignNode         => manifest[GetMsgsAssignNode]
@@ -145,12 +145,12 @@ object SopTypeTags extends OpTypeProvider[Sop] {
     case _: UpdateMsgRetry            => manifest[UpdateMsgRetry]
     case _: NotifySupportWorkerFailed => manifest[NotifySupportWorkerFailed]
     case _: NotifySupportTaskmanError => manifest[NotifySupportTaskmanError]
-    case _: ReAssignWorker            => manifest[ReAssignWorker]
+    case _: ReassignWorker            => manifest[ReassignWorker]
     case    Nop                       => manifest[Nop.type]
   }
 }
 
-class MockSops extends MockOpTransformerA[Sop, Fx] {
+class MockSops extends MockOpTransformerA[ServerOp, Fx] {
   override def opTypeProvider = SopTypeTags
 
   val cfgGetR                    = MockResponse(Option[String](null))
@@ -172,7 +172,7 @@ class MockSops extends MockOpTransformerA[Sop, Fx] {
     case _: UpdateMsgRetry            => updateMsgRetryR.pop()
     case _: NotifySupportWorkerFailed => notifySupportWorkerFailedR.pop()
     case _: NotifySupportTaskmanError => notifySupportTaskmanErrorR.pop()
-    case _: ReAssignWorker            => reassignWorkerR.pop()
+    case _: ReassignWorker            => reassignWorkerR.pop()
     case    Nop                       =>
   }
 }

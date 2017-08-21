@@ -4,7 +4,7 @@ import java.time.{Duration, Instant}
 import scalaz.{StateT, State}
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.Priority
-import shipreq.taskman.server.Sop.GetMsgsAssignNode
+import shipreq.taskman.server.ServerOp.GetMsgsAssignNode
 import Source._
 
 object Source {
@@ -32,7 +32,7 @@ final class Source(pollGap: Duration, batchSize: Int)(
   val noResults: STFx[Seq[MsgHeader]] =
     StateT.stateT(Seq.empty)
 
-  def runOp[A](op: Sop[A]): STFx[A] =
+  def runOp[A](op: ServerOp[A]): STFx[A] =
     StateT((s: S) => op.toFx.map((s, _)))
 
   def poll(qs: QueueStatus): STFx[Seq[MsgHeader]] =

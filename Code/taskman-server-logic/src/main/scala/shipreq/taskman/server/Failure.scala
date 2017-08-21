@@ -5,7 +5,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Msg.DummyMsg
 import shipreq.taskman.api.Priority
-import Sop._
+import ServerOp._
 import Worker.{FailureResponse, FailurePolicy, FailureCtx}
 
 object Failure extends HasLogger {
@@ -55,16 +55,16 @@ object Failure extends HasLogger {
     }
   }
 
-  def addOp(op: Sop[Unit])(r: FailureResponse): FailureResponse =
+  def addOp(op: ServerOp[Unit])(r: FailureResponse): FailureResponse =
     r.copy(additionalOps = op :: r.additionalOps)
 
-  def addOpF(op: FailureCtx => Sop[Unit]) =
+  def addOpF(op: FailureCtx => ServerOp[Unit]) =
     composeF(addOp, op)
 
   def retryResponse(ctx: FailureCtx)(delay: Duration): FailureResponse =
     FailureResponse(UpdateMsgRetry(ctx.n, ctx.w, ctx.m, delay), Nil)
 
-  def notifySupport(ctx: FailureCtx): Sop[Unit] =
+  def notifySupport(ctx: FailureCtx): ServerOp[Unit] =
     if (ctx.err is Deliberate)
       Nop
     else

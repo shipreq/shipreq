@@ -13,7 +13,7 @@ import shipreq.taskman.server.business.Bop.{SendEmail, SupportOp}
 import shipreq.taskman.server.business.Support.API.ReportFailure
 import shipreq.base.util.ErrorOr.Implicits.MonadExt
 import TestHelpers._
-import Sop._
+import ServerOp._
 import Worker._
 import WorkResult._
 
@@ -58,37 +58,37 @@ class WorkerTest extends Specification {
     "Work completes" >> {
       val (r,s) = test(assignWorkerAllow, fpRetry, mpNop)
       "Result"                in (r must haveResultS[Completed])
-      "Marks msg as complete" in (s must haveRun[Sop].ops2[GetMsgAssignWorker, UpdateMsgSuccess])
+      "Marks msg as complete" in (s must haveRun[ServerOp].ops2[GetMsgAssignWorker, UpdateMsgSuccess])
     }
 
     "Worker crashes (retry)" >> {
       val (r, s) = test(assignWorkerAllow, fpRetry, mpCrash)
       "Result"          in (r must haveResultS[WorkerFailed])
-      "Schedules retry" in (s must haveRun[Sop].ops2[GetMsgAssignWorker, UpdateMsgAbort])
+      "Schedules retry" in (s must haveRun[ServerOp].ops2[GetMsgAssignWorker, UpdateMsgAbort])
     }
 
     "Worker crashes (abort)" >> {
       val (r, s) = test(assignWorkerAllow, fpAbort, mpCrash)
       "Result"     in (r must haveResultS[WorkerFailed])
-      "Aborts job" in (s must haveRun[Sop].ops2[GetMsgAssignWorker, UpdateMsgRetry])
+      "Aborts job" in (s must haveRun[ServerOp].ops2[GetMsgAssignWorker, UpdateMsgRetry])
     }
 
     "Worker crashes (retry and notify support)" >> {
       val (r, s) = test(assignWorkerAllow, fpRetrySupport, mpCrash)
       "Result"                       in (r must haveResultS[WorkerFailed])
-      "Fails job & notifies support" in (s must haveRun[Sop].ops3[GetMsgAssignWorker, UpdateMsgAbort, NotifySupportWorkerFailed])
+      "Fails job & notifies support" in (s must haveRun[ServerOp].ops3[GetMsgAssignWorker, UpdateMsgAbort, NotifySupportWorkerFailed])
     }
 
     "Taskman crashes pre-work" >> {
       val (r, s) = test(assignWorkerCrash, fpRetry, mpCrash)
       "Result"           in (r must haveResultS[TaskmanFailed])
-      "Notifies support" in (s must haveRun[Sop].ops2[GetMsgAssignWorker, NotifySupportTaskmanError])
+      "Notifies support" in (s must haveRun[ServerOp].ops2[GetMsgAssignWorker, NotifySupportTaskmanError])
     }
 
     "Taskman crashes post-work" >> {
       val (r, s) = test(crashOnUpdateMsgSuccess compose assignWorkerAllow, fpRetry, mpNop)
       "Result"           in (r must haveResultS[TaskmanFailed])
-      "Notifies support" in (s must haveRun[Sop].ops3[GetMsgAssignWorker, UpdateMsgSuccess, NotifySupportTaskmanError])
+      "Notifies support" in (s must haveRun[ServerOp].ops3[GetMsgAssignWorker, UpdateMsgSuccess, NotifySupportTaskmanError])
     }
   }
 
@@ -119,41 +119,41 @@ class WorkerTest extends Specification {
     "Work completes" >> {
       val ((r1, s1), (r2, s2)) = blah(FxE.nop)
       "Immediate result"             in (r1 must haveResultA)
-      "Assigns msg before future"    in (s1 must haveRun[Sop].op[GetMsgAssignWorker])
+      "Assigns msg before future"    in (s1 must haveRun[ServerOp].op[GetMsgAssignWorker])
       "Future result"                in (r2 must haveResultS[Completed])
-      "Future marks msg as complete" in (s2 must haveRun[Sop].ops2[GetMsgAssignWorker, UpdateMsgSuccess])
+      "Future marks msg as complete" in (s2 must haveRun[ServerOp].ops2[GetMsgAssignWorker, UpdateMsgSuccess])
     }
 
     "Future crashes" >> {
       val ((r1, s1), (r2, s2)) = blah(FxE(???))
       "Immediate result"           in (r1 must haveResultA)
-      "Assigns msg before future"  in (s1 must haveRun[Sop].op[GetMsgAssignWorker])
+      "Assigns msg before future"  in (s1 must haveRun[ServerOp].op[GetMsgAssignWorker])
       "Future result"              in (r2 must haveResultS[WorkerFailed])
-      "Future marks msg as failed" in (s2 must haveRun[Sop].ops2[GetMsgAssignWorker, UpdateMsgAbort])
+      "Future marks msg as failed" in (s2 must haveRun[ServerOp].ops2[GetMsgAssignWorker, UpdateMsgAbort])
     }
 
     "Reassigns and completes" >> {
       val ((r1, s1), (r2, s2)) = blah(FxE.nop, clock = longClock)
       "Immediate result"             in (r1 must haveResultA)
-      "Assigns msg before future"    in (s1 must haveRun[Sop].op[GetMsgAssignWorker])
+      "Assigns msg before future"    in (s1 must haveRun[ServerOp].op[GetMsgAssignWorker])
       "Future result"                in (r2 must haveResultS[Completed])
-      "Future marks msg as complete" in (s2 must haveRun[Sop].ops3[GetMsgAssignWorker, ReAssignWorker, UpdateMsgSuccess])
+      "Future marks msg as complete" in (s2 must haveRun[ServerOp].ops3[GetMsgAssignWorker, ReassignWorker, UpdateMsgSuccess])
     }
 
     "Future fails to reassign worker" >> {
       val ((r1, s1), (r2, s2)) = blah(FxE.nop, clock = longClock, sopEndo = assignWorkerAllow compose reassignWorkerDeny)
       "Immediate result"                             in (r1 must haveResultA)
-      "Assigns msg before future"                    in (s1 must haveRun[Sop].op[GetMsgAssignWorker])
+      "Assigns msg before future"                    in (s1 must haveRun[ServerOp].op[GetMsgAssignWorker])
       "Future result"                                in (r2 must haveResultS[CouldntReAssign])
-      "Future does nothing after reassignment fails" in (s2 must haveRun[Sop].ops2[GetMsgAssignWorker, ReAssignWorker])
+      "Future does nothing after reassignment fails" in (s2 must haveRun[ServerOp].ops2[GetMsgAssignWorker, ReassignWorker])
     }
 
     "Future encounters taskman error" >> {
       val ((r1, s1), (r2, s2)) = blah(FxE.nop, clock = longClock, sopEndo = assignWorkerAllow compose reassignWorkerCrash)
       "Immediate result"          in (r1 must haveResultA)
-      "Assigns msg before future" in (s1 must haveRun[Sop].op[GetMsgAssignWorker])
+      "Assigns msg before future" in (s1 must haveRun[ServerOp].op[GetMsgAssignWorker])
       "Future result"             in (r2 must haveResultS[TaskmanFailed])
-    "Future notifies support"   in (s2 must haveRun[Sop].ops3[GetMsgAssignWorker, ReAssignWorker, NotifySupportTaskmanError])
+    "Future notifies support"   in (s2 must haveRun[ServerOp].ops3[GetMsgAssignWorker, ReassignWorker, NotifySupportTaskmanError])
     }
 
   }
