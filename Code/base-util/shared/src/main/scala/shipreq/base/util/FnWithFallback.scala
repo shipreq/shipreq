@@ -48,6 +48,20 @@ final case class FnWithFallback[A, B](withFallback: (A => B) => A => B) extends 
     val n = ev(null)
     withFallback(_ => n).andThen(Option(_))
   }
+
+  def mapWithInput[C](f: (A, B) => C)(implicit ev: Null <:< B): A ?=> C = {
+    val emptyB = ev(null)
+    val ab = withFallback(_ => emptyB)
+    FnWithFallback[A, C] { ac =>
+      a => {
+        val b: B = ab(a)
+        if (b == null)
+          ac(a)
+        else
+          f(a, b)
+      }
+    }
+  }
 }
 
 object FnWithFallback {
@@ -67,4 +81,10 @@ object FnWithFallback {
 
   def extract[A, B, E](cond: A => Option[E])(ok: A => E => B): A ?=> B =
     apply(f => a => cond(a).fold(f(a))(ok(a)))
+
+  def optionKleisli[A, B](g: A => Option[B]): A ?=> B =
+    apply(f => a => g(a) getOrElse f(a))
+
+  def choose[A, B](g: A => (A ?=> B)): A ?=> B =
+    apply(f => a => g(a).withFallback(f)(a))
 }

@@ -1,4 +1,4 @@
-package shipreq.taskman.server.business
+package shipreq.taskman.server.logic.business
 
 import shipreq.taskman.api.EmailAddr
 import scalaz.old.NonEmptyList
@@ -8,9 +8,9 @@ object MailingList {
   // ===================================================================================================================
   // Data
 
-  case class ListId(value: String)
+  final case class ListId(value: String)
 
-  sealed abstract class AccountStatus(val remoteValue: String)
+  sealed abstract class AccountStatus(final val remoteValue: String)
   object AccountStatus {
 
     /** User has never had a ShipReq account. */
@@ -20,7 +20,10 @@ object MailingList {
     case object Active extends AccountStatus("Active")
   }
 
-  case class Subscription(addr: EmailAddr, name: String, newsletter: Boolean, status: AccountStatus)
+  final case class Subscription(addr      : EmailAddr,
+                                name      : String,
+                                newsletter: Boolean,
+                                status    : AccountStatus)
 
   // Result types
   sealed trait ResultOps
@@ -35,16 +38,16 @@ object MailingList {
   // ===================================================================================================================
   // API
 
-  sealed trait API[R]
+  sealed trait API[A]
   object API {
 
     /** Looks up the ID of a mailing list by name. */
-    case class GetListId(name: String) extends API[Option[ListId]]
+    final case class GetListId(name: String) extends API[Option[ListId]]
 
-    case class Subscribe(l: ListId, s: Subscription, sendConfEmail: Boolean) extends API[SubscribeResult]
+    final case class Subscribe(listId: ListId, sub: Subscription, sendConfEmail: Boolean) extends API[SubscribeResult]
 
-    case class UpdateMember(l: ListId, s: Subscription) extends API[UpdateMemberResult]
+    final case class UpdateMember(listId: ListId, sub: Subscription) extends API[UpdateMemberResult]
 
-    case class BatchSubscribe(l: ListId, ss: NonEmptyList[Subscription]) extends API[Unit]
+    final case class BatchSubscribe(listId: ListId, subs: NonEmptyList[Subscription]) extends API[Unit]
   }
 }

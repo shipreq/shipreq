@@ -19,7 +19,7 @@ package object effect {
     @inline def error[A](m: String, e: Throwable): FxE[A] = error(Error(m, e))
 
     @inline def safeExec[A](catchIo: Error => Fx[Unit])(io: FxE[A]): Fx[Unit] =
-      io.except(error(_)).execE(catchIo)
+      io.recoverException(error[A](_)).execE(catchIo)
 
     val nop = apply(())
     
@@ -27,7 +27,7 @@ package object effect {
 
     implicit val ioeCatchable: Catchable[FxE] =
       new Catchable[FxE] {
-        override def attempt[A](f: FxE[A]): FxE[Throwable \/ A] = f.except(error(_)) >-> \/.right
+        override def attempt[A](f: FxE[A]): FxE[Throwable \/ A] = f.recoverException(error[A](_)) >-> \/.right
         override def fail[A](e: Throwable): FxE[A]              = FxE error e
       }
   }

@@ -1,9 +1,9 @@
-package shipreq.taskman.server.app
+package shipreq.taskman.server.logic.app
 
-import scalaz.{-\/, \/-}
-import scalaz.std.list._
-import shipreq.base.util.ErrorOr
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import scalaz.std.list._
+import scalaz.{-\/, \/-}
+import shipreq.base.util.ErrorOr
 import shipreq.base.util.FxModule._
 import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.base.util.log.HasLogger

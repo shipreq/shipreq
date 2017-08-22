@@ -1,10 +1,9 @@
-package shipreq.taskman.server
+package shipreq.taskman.server.logic
 
 import java.time.{Duration, Instant}
-import scalaz.{StateT, State}
+import scalaz.{State, StateT, ~>}
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.Priority
-import shipreq.taskman.server.ServerOp.GetMsgsAssignNode
 import Source._
 
 object Source {
@@ -14,11 +13,12 @@ object Source {
   type QueueStatus = Option[(Priority, Int)]
 }
 
-final class Source(pollGap: Duration, batchSize: Int)(
-  implicit node: NodeId,
-           clock: Fx[Instant],
-           trustPeriod: AssignmentTrustPeriod,
-           sopReifier: SopReifier) {
+final class Source(pollGap      : Duration,
+                   batchSize    : Int)
+                  (implicit node: NodeId,
+                   clock        : Fx[Instant],
+                   trustPeriod  : AssignmentTrustPeriod,
+                   serverOpFx   : ServerOp ~> Fx) {
 
   def empty: Fx[S] =
     clock.map(_ minus pollGap)
@@ -33,13 +33,13 @@ final class Source(pollGap: Duration, batchSize: Int)(
     StateT.stateT(Seq.empty)
 
   def runOp[A](op: ServerOp[A]): STFx[A] =
-    StateT((s: S) => op.toFx.map((s, _)))
+    StateT(s => serverOpFx(op).map((s, _)))
 
   def poll(qs: QueueStatus): STFx[Seq[MsgHeader]] =
-    outsidePollGap flatMap (ok =>
+    outsidePollGap.flatMap(ok =>
       if (ok)
         for {
-          ms <- runOp(GetMsgsAssignNode(node, batchSize, trustPeriod.value, qs))
+          ms <- runOp(ServerOp.GetMsgsAssignNode(node, batchSize, trustPeriod.value, qs))
           _  <- updateTime
         } yield ms
       else

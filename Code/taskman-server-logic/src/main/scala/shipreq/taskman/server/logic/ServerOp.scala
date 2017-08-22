@@ -1,7 +1,7 @@
-package shipreq.taskman.server
+package shipreq.taskman.server.logic
 
 import java.time.{Duration, Instant}
-import shipreq.base.util.Error
+import shipreq.base.util.ArticulateError
 import shipreq.taskman.api.Priority
 
 /**
@@ -56,10 +56,10 @@ object ServerOp {
 
   final case class NotifySupportWorkerFailed(when: Instant,
                                              md  : MsgDetail,
-                                             err : Error) extends ServerOp[Unit]
+                                             err : ArticulateError) extends ServerOp[Unit]
 
   final case class NotifySupportTaskmanError(when: Instant,
-                                             err : Error,
+                                             err : ArticulateError,
                                              md  : Option[MsgDetail]) extends ServerOp[Unit]
 
   case object Nop extends ServerOp[Unit]

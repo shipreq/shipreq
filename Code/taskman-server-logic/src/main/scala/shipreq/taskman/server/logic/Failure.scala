@@ -1,93 +1,71 @@
-package shipreq.taskman.server
+package shipreq.taskman.server.logic
 
 import java.time.Duration
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import shipreq.base.util.ArticulateError.Deterministic
+import shipreq.base.util.{?=>, FnWithFallback}
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Msg.DummyMsg
 import shipreq.taskman.api.Priority
 import ServerOp._
-import Worker.{FailureResponse, FailurePolicy, FailureCtx}
+import Worker.{FailureCtx, FailurePolicy, FailureResponse}
 
 object Failure extends HasLogger {
 
-  def composeF[R,A,B,C](h: B => A => C, g: R => B): R => A => C =
-    r => h(g(r))
-
-  def mapO[A,B,C](g: A => B => C)(f: A => Option[B]): A => Option[C] =
-    c => f(c).map(a => g(c)(a))
-
-  def ifO[A, B](p: A => Boolean, f: A => B): A => Option[B] =
-    a => if (p(a)) Some(f(a)) else None
-
-  def chooseByIndex[A, B](f: A => Int, values: IndexedSeq[B]): A => Option[B] = {
+  private def chooseByIndex[A, B](f: A => Int, values: IndexedSeq[B]): A ?=> B = {
     val vs = values.map(Some(_)).toVector
-    a => {
+    FnWithFallback.optionKleisli { a =>
       val i = f(a)
       if (i >= vs.length) None else vs(i)
     }
   }
 
-  implicit class PriMExt[A, B](val f: A => Option[B]) extends AnyVal {
-    def ?>>?(g: A => Option[B]): A => Option[B] =
-      a => f(a) orElse g(a)
-
-    def ?>>(g: A => B): A => B =
-      a => f(a) getOrElse g(a)
-
-    def =<<[C](g: A => B => C): A => Option[C] =
-      mapO(g)(f)
-  }
-
   // ===================================================================================================================
 
-  type Attempt[A] = FailureCtx => Option[A]
+  type Attempt[A] = FailureCtx ?=> A
   type Rule = Attempt[FailureResponse]
   type RetryRule = Attempt[Duration]
 
   def chooseByFailureCount[A](values: A*): Attempt[A] =
-    chooseByIndex(_.m.failureCount, values.toIndexedSeq)
+    chooseByIndex(_.msg.failureCount, values.toIndexedSeq)
 
   def retryEveryUntil(every: Duration, cutoff: Duration): RetryRule = {
-    val everyS = Some(every)
-    ctx => {
-      val retryExpiry = ctx.m.created plus cutoff
-      if (ctx.now.isAfter(retryExpiry)) None else everyS
+    val someEvery = Some(every)
+    FnWithFallback.optionKleisli { ctx =>
+      val retryExpiry = ctx.msg.hdr.created plus cutoff
+      if (ctx.now.isAfter(retryExpiry)) None else someEvery
     }
   }
 
-  def addOp(op: ServerOp[Unit])(r: FailureResponse): FailureResponse =
+  def addOp(r: FailureResponse, op: ServerOp[Unit]): FailureResponse =
     r.copy(additionalOps = op :: r.additionalOps)
 
-  def addOpF(op: FailureCtx => ServerOp[Unit]) =
-    composeF(addOp, op)
-
-  def retryResponse(ctx: FailureCtx)(delay: Duration): FailureResponse =
-    FailureResponse(UpdateMsgRetry(ctx.n, ctx.w, ctx.m, delay), Nil)
+  def retryResponse(ctx: FailureCtx, delay: Duration): FailureResponse =
+    FailureResponse(UpdateMsgRetry(ctx.node, ctx.worker, ctx.msg, delay), Nil)
 
   def notifySupport(ctx: FailureCtx): ServerOp[Unit] =
     if (ctx.err is Deliberate)
       Nop
     else
-      NotifySupportWorkerFailed(ctx.now, ctx.m, ctx.err)
+      NotifySupportWorkerFailed(ctx.now, ctx.msg, ctx.err)
 
   val abortAndDontNotify: FailurePolicy =
-    ctx => FailureResponse(UpdateMsgAbort(ctx.n, ctx.w, ctx.m), Nil)
+    ctx => FailureResponse(UpdateMsgAbort(ctx.node, ctx.worker, ctx.msg), Nil)
 
   val abortAndNotify: FailurePolicy =
-    ctx => FailureResponse(UpdateMsgAbort(ctx.n, ctx.w, ctx.m), notifySupport(ctx) :: Nil)
+    ctx => FailureResponse(UpdateMsgAbort(ctx.node, ctx.worker, ctx.msg), notifySupport(ctx) :: Nil)
 
   def abortDeterministicErrors: Rule =
-    ifO(_.err is Deterministic, abortAndNotify)
+    FnWithFallback.when((_: FailureCtx).err is Deterministic)(abortAndNotify)
 
   def dummyMsgRules: Rule =
-    ctx => ctx.m.msg match {
-      case m: DummyMsg =>
-        if (ctx.err is Deterministic)
-          Some(abortAndDontNotify(ctx))
-        else
-          Some(retryResponse(ctx)(m.retryDelaySec seconds))
-      case _ => None
-    }
+    FnWithFallback(f => (ctx: FailureCtx) =>
+      ctx.msg.msg match {
+        case _: DummyMsg if ctx.err is Deterministic => abortAndDontNotify(ctx)
+        case m: DummyMsg                             => retryResponse(ctx, m.retryDelaySec seconds)
+        case _                                       => f(ctx)
+      }
+    )
 
   val impatientRetries: RetryRule =
     chooseByFailureCount(
@@ -105,8 +83,7 @@ object Failure extends HasLogger {
       , 20 minutes  // Failure #12, next attempt @ 50 min
       , 30 minutes  // Failure #13, next attempt @ 80 min
       , 40 minutes  // Failure #14, next attempt @ 2 hr
-    ) ?>>?
-      retryEveryUntil(1 hours, 24 hours)
+    ) | retryEveryUntil(1 hours, 24 hours)
 
   val patientRetries: RetryRule =
     chooseByFailureCount(
@@ -119,21 +96,19 @@ object Failure extends HasLogger {
       , 25 minutes // Failure #7, next attempt @  1 hr
       , 1 hours    // Failure #8, next attempt @  2 hr
       , 2 hours    // Failure #9, next attempt @  4 hr
-    ) ?>>?
-      retryEveryUntil(4 hours, 24 hours)
+    ) | retryEveryUntil(4 hours, 24 hours)
 
   val priorityBasedRetryRule: RetryRule =
-    ctx => {
-      val p = ctx.m.priority.value
-      val r: RetryRule =
-        if (p >= Priority.High.value) impatientRetries
-        else patientRetries
-      r(ctx)
-    }
+    FnWithFallback.choose((ctx: FailureCtx) =>
+      if (ctx.msg.priority.value >= Priority.High.value)
+        impatientRetries
+      else
+        patientRetries)
 
   val retryAndNotify: Rule =
-    priorityBasedRetryRule =<< retryResponse =<< addOpF(notifySupport)
+    priorityBasedRetryRule
+      .mapWithInput((ctx, dur) => addOp(retryResponse(ctx, dur), notifySupport(ctx)))
 
   val failurePolicy: FailurePolicy =
-    dummyMsgRules ?>>? abortDeterministicErrors ?>>? retryAndNotify ?>> abortAndNotify
+    (dummyMsgRules | abortDeterministicErrors | retryAndNotify) withFallback abortAndNotify
 }
