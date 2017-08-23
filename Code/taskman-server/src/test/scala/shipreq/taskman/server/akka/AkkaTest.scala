@@ -10,7 +10,7 @@ import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Msg.DummyMsg
 import shipreq.taskman.api.MsgId
 import shipreq.taskman.server.ServerImplTestHelpers
-import shipreq.taskman.server.SopImpl.{Succeeded, FailAndAbort, ArchiveIntent}
+import shipreq.taskman.server.ServerOpFx.{Succeeded, FailAndAbort, ArchiveIntent}
 import shipreq.taskman.server.app.Server
 
 class AkkaTest extends Specification with DatabaseTest with HasLogger with ServerImplTestHelpers {

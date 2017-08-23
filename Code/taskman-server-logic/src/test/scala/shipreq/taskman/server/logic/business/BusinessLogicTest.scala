@@ -1,20 +1,21 @@
-package shipreq.taskman.server.business
+package shipreq.taskman.server.logic.business
 
 import org.specs2.mutable.Specification
+import scalaz.syntax.catchable._
 import shipreq.base.test.specs2.BaseMatchers._
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.Msg
-import shipreq.taskman.server.TestHelpers._
-import shipreq.taskman.server.{MsgDetail, MockBops}
-import Bop._
+import shipreq.taskman.server.logic.TestHelpers._
+import shipreq.taskman.server.logic.{MsgDetail, MockBops}
+import BusinessOp._
 import MailingList.API._
 
 class BusinessLogicTest extends Specification {
 
   def testM(bop: MockBops, msg: Msg) = {
-    val bl = new BusinessLogic(bop, mockEmails(false), null, null)
-    val io = bl(MsgDetail(mh_1, msg, 0))
-    (bop, io.unsafeRun())
+    val bl = new BusinessLogic(mockEmails(false), null, null)(bop)
+    val fx = bl(MsgDetail(mh_1, msg, 0))
+    (bop, fx.attempt.unsafeRun())
   }
 
   type raiseTicket = SupportOp[Support.API.NotifyLandingPage]
@@ -25,25 +26,25 @@ class BusinessLogicTest extends Specification {
 
     "Add to ML & raise support ticket" in {
       val bop = new MockBops
-      test(bop)._1 must haveRun[Bop].ops3[FindShipReqUser, MailingListOp[Subscribe], raiseTicket]
+      test(bop)._1 must haveRun[BusinessOp].ops3[FindShipReqUser, MailingListOp[Subscribe], raiseTicket]
     }
 
     "Update ML & raise support ticket" in {
       val bop = new MockBops
       bop.mlSubscribe << MailingList.AlreadySubscribed
-      test(bop)._1 must haveRun[Bop].ops4[FindShipReqUser, MailingListOp[Subscribe], MailingListOp[UpdateMember], raiseTicket]
+      test(bop)._1 must haveRun[BusinessOp].ops4[FindShipReqUser, MailingListOp[Subscribe], MailingListOp[UpdateMember], raiseTicket]
     }
 
     "Skip the ML update when user already has account" in {
       val bop = new MockBops
       bop.findShipReqUser << Some(null)
-      test(bop)._1 must haveRun[Bop].ops2[FindShipReqUser, raiseTicket]
+      test(bop)._1 must haveRun[BusinessOp].ops2[FindShipReqUser, raiseTicket]
     }
 
     "Fail on ML error" in {
       val bop = new MockBops
       bop.mlSubscribe << ???
-      test(bop) must match2(haveRun[Bop].anyBut1[raiseTicket], beAnError)
+      test(bop) must match2(haveRun[BusinessOp].anyBut1[raiseTicket], beAnError)
     }
   }
 
@@ -54,7 +55,7 @@ class BusinessLogicTest extends Specification {
     "update ML" in {
       val bop = new MockBops
       bop.findShipReqUser << Some(sampleShipReqUser)
-      test(bop) must match2(haveRun[Bop].ops2[FindShipReqUser, MailingListOp[BatchSubscribe]], notBeAnError)
+      test(bop) must match2(haveRun[BusinessOp].ops2[FindShipReqUser, MailingListOp[BatchSubscribe]], notBeAnError)
     }
   }
 }

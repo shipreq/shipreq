@@ -1,4 +1,4 @@
-package shipreq.taskman.server
+package shipreq.taskman.server.logic
 
 import java.time.Duration
 import java.time.temporal.ChronoUnit
@@ -7,12 +7,12 @@ import org.specs2.mutable._
 import shipreq.base.util.FxModule._
 import shipreq.base.test.MockOpTransformer1
 import TestHelpers._
-import Sop._
+import ServerOp._
 
 class SourceTest extends Specification with ScalaCheck {
   implicit val node = NodeId(8)
   val mockMsgs = List(mh_1, mh_2)
-  implicit val mockSop = MockOpTransformer1[Sop, Fx, GetMsgsAssignNode, List[MsgHeader]](SopTypeTags, mockMsgs)
+  implicit val mockSop = MockOpTransformer1[ServerOp, Fx, GetMsgsAssignNode, List[MsgHeader]](SopTypeTags, mockMsgs)
   implicit val clock = Fx(timeNow)
   implicit val tp = AssignmentTrustPeriod(Duration ofDays 3)
   val source = new Source(Duration ofSeconds 1, 20)

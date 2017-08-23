@@ -11,12 +11,13 @@ import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.taskman.api.impl.Serialisation
 import shipreq.taskman.api._
+import shipreq.taskman.server.logic.{MsgDetail, MsgHeader, NodeId, WorkerId}
 import Msg.ReRegistrationAttempted
-import SopImpl.Sql._
+import ServerOpFx.Sql._
 
-class SopImplTest extends Specification with DatabaseTest {
+class ServerOpFxTest extends Specification with DatabaseTest {
 
-  def dao = SopImpl.Dao
+  def dao = ServerOpFx.Dao
   val n = NodeId(123)
   val w = WorkerId(666)
   val rng = new Random()

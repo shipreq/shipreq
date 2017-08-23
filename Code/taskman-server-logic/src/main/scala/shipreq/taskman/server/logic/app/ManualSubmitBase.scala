@@ -1,9 +1,9 @@
-package shipreq.taskman.server.app
+package shipreq.taskman.server.logic.app
 
-import scalaz.{-\/, \/-}
-import scalaz.std.list._
-import shipreq.base.util.ErrorOr
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import scalaz.std.list._
+import scalaz.{-\/, \/, \/-}
+import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.base.util.log.HasLogger
@@ -15,7 +15,7 @@ import shipreq.taskman.api.{MsgType => T, _}
 abstract class ManualSubmitBase extends HasLogger {
 
   def serialise  : Msg => JsonStr[Msg]
-  def deserialise: (T, JsonStr[Msg]) => ErrorOr[Msg]
+  def deserialise: (T, JsonStr[Msg]) => ArticulateError \/ Msg
   def runner     : (TaskmanApi[Fx] => Fx[Unit]) => Fx[Unit]
 
   def main(args: Array[String]): Unit =
@@ -55,7 +55,7 @@ abstract class ManualSubmitBase extends HasLogger {
           case Some(msgType) =>
             val msgData = JsonStr[Msg](m group 2)
             deserialise(msgType, msgData) match {
-              case -\/(e) => ParseError(e.msg)
+              case -\/(e) => ParseError(e.show)
               case \/-(m) => Ok(m :: msgs)
             }
         }

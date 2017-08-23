@@ -3,18 +3,16 @@ package shipreq.taskman.server.business
 import japgolly.microlibs.config.{Config, ConfigParser}
 import javax.mail._
 import javax.mail.internet.{InternetAddress, MimeMessage}
-import scalaz.{-\/, Traverse, \/-}
+import scalaz.{-\/, Traverse, \/, \/-}
 import scalaz.old.NonEmptyList
 import scalaz.std.list._
 import scalaz.syntax.bind._
-import shipreq.base.util.ErrorOr
+import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
-import shipreq.base.util.effect._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.EmailAddr
-import shipreq.taskman.server.Deterministic
-import Bop.SendEmail
-import Email._
+import shipreq.taskman.server.logic.business.BusinessOp.SendEmail
+import shipreq.taskman.server.logic.business.Email._
 
 object EmailImpl extends HasLogger {
 
@@ -22,28 +20,29 @@ object EmailImpl extends HasLogger {
     case a: Address => a
   }
 
-  def parse1(ea: EmailAddr): ErrorOr[Address] =
-    ErrorOr.catchAndTag(Deterministic) {
+  def parse1(ea: EmailAddr): ArticulateError \/ Address =
+    ArticulateError.safe {
       val as = InternetAddress.parse(ea.value)
       if (as.size == 1)
-        ErrorOr(as.head)
+        \/-(as.head)
       else
-        ErrorOr error s"Email address '$ea' is expected to parse into a single address, but parsed into ${as.toList}"
-    }
+        -\/(ArticulateError(s"Email address '$ea' is expected to parse into a single address, but parsed into ${as.toList}"))
+    }.leftMap(_.tagDeterministic)
 
-  def parseN(s: String): ErrorOr[List[Address]] =
-    ErrorOr.safeT(Deterministic)(InternetAddress.parse(s).toList)
+  def parseN(s: String): ArticulateError \/ List[Address] =
+    ArticulateError.attempt(InternetAddress.parse(s).toList)
+      .leftMap(_.tagDeterministic)
 
   object ConfigParsers {
 
     implicit def parseAddr1(implicit p: ConfigParser[String]): ConfigParser[Addr] =
       p.mapAttempt { s =>
         val ea = EmailAddr(s)
-        parse1(ea).bimap(_.msg, p => Addr(ea, Some(p)))
+        parse1(ea).bimap(_.getMessage, p => Addr(ea, Some(p)))
       }
 
     implicit def parseAddrN(implicit p: ConfigParser[String]): ConfigParser[List[Addr]] =
-      p.mapAttempt(parseN(_).bimap(_.msg, _.map(a => Addr(EmailAddr(a.toString), Some(a)))))
+      p.mapAttempt(parseN(_).bimap(_.getMessage, _.map(a => Addr(EmailAddr(a.toString), Some(a)))))
 
     implicit def parseAddrNEL(implicit p: ConfigParser[String]): ConfigParser[NonEmptyList[Addr]] =
       parseAddrN.mapAttempt {
@@ -66,7 +65,8 @@ object EmailImpl extends HasLogger {
   }
 
   implicit class EAExtF[F[_]](val f: F[Addr]) extends AnyVal {
-    def parsed(implicit F: Traverse[F]): ErrorOr[F[Address]] = F.traverse[ErrorOr, Addr, Address](f)(_.parsed)
+    def parsed(implicit F: Traverse[F]): ArticulateError \/ F[Address] =
+      F.traverse[ArticulateError \/ ?, Addr, Address](f)(_.parsed)
   }
 }
 
@@ -75,7 +75,7 @@ final class EmailImpl(val mailSession: Session) extends HasLogger {
 
   val charset = "UTF-8"
 
-  def buildEmail(e: Envelope, c: Content): ErrorOr[MimeMessage] = {
+  def buildEmail(e: Envelope, c: Content): ArticulateError \/ MimeMessage = {
     val r = for {
       from <- e.from.parsed
       to   <- e.to.parsed
@@ -84,7 +84,7 @@ final class EmailImpl(val mailSession: Session) extends HasLogger {
     } yield {
       val m = new MimeMessage(mailSession)
       m.setSentDate(new java.util.Date)
-      ErrorOr.safeT(Deterministic) {
+      ArticulateError.attempt {
         m.setFrom(from)
         m.setRecipients(Message.RecipientType.TO, to.list.toArray)
         m.setRecipients(Message.RecipientType.CC, cc.toArray)
@@ -92,16 +92,15 @@ final class EmailImpl(val mailSession: Session) extends HasLogger {
         m.setSubject(c.subject, charset)
         m.setText(c.body, charset)
         m
-      }
+      }.leftMap(_.tagDeterministic)
     }
     r.join
   }
 
-  def send(op: SendEmail): FxE[Unit] = Fx(
-    buildEmail(op.e, op.c).map(m => {
-      Transport.send(m)
-      log.info.z(s"Email sent: ${op.e.to.head} [${op.c.subject}]")
-    })
-  )
+  def send(op: SendEmail): Fx[Unit] =
+    for {
+      m <- Fx.lift(buildEmail(op.envelope, op.content))
+      _ <- Fx(Transport.send(m))
+    } yield log.info.z(s"Email sent: ${op.envelope.to.head} [${op.content.subject}]")
 }
 

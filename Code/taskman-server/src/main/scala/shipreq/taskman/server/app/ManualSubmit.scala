@@ -1,6 +1,7 @@
 package shipreq.taskman.server.app
 
 import shipreq.taskman.api.impl.Serialisation
+import shipreq.taskman.server.logic.app.ManualSubmitBase
 
 /**
  * Submits message(s) specified on the command line.

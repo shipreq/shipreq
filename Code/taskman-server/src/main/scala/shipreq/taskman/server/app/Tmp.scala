@@ -3,12 +3,12 @@ package shipreq.taskman.server.app
 import java.time.Instant
 import scalaz.old.NonEmptyList
 import shipreq.taskman.api._
-import shipreq.base.util.Error
-import shipreq.base.util.ErrorOr.Implicits._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.TaggedTypes._
 import shipreq.taskman.server._
 import shipreq.taskman.server.business._
+import shipreq.taskman.server.logic._
+import shipreq.taskman.server.logic.business._
 import MailingList.API._
 import Support.API._
 
@@ -19,7 +19,7 @@ object Tmp extends MainTemplate {
       //ctx.testConnections()
 
       println(ctx.config.mail)
-      val op = Bop.SendEmail(
+      val op = BusinessOp.SendEmail(
         Email.Envelope(
           from = Email.Addr(EmailAddr("david.barri@shipreq.com")),
           to = NonEmptyList(Email.Addr(EmailAddr("japgolly+test@gmail.com")))),

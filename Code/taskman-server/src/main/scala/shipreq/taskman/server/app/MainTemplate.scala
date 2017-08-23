@@ -12,24 +12,28 @@ private[app] trait MainTemplate extends HasLogger {
 
   def withDatabase[A](f: DbAccess => Fx[A]): Fx[A] =
     for {
-      tmp <- DbConfig.config.withReport.run(Props.sources).map(_.getOrDie)
+      tmp          <- DbConfig.config.withReport.run(Props.sources).map(_.getOrDie)
       (cfg, report) = tmp
-      _ <- Fx(log.info(report.report))
-      dbAccess <- DbAccess.fromCfg(cfg)
-      a <- dbAccess.setupRunShutdown(f(dbAccess))
+      _            <- Fx(log.info(report.report))
+      dbAccess     <- DbAccess.fromCfg(cfg)
+      a            <- dbAccess.setupRunShutdown(f(dbAccess))
     } yield a
 
-  def withTaskmanCtx[A](f: TaskmanCtx => Fx[A]): Fx[A] =
-    for {
-      tmp <- (DbConfig.config tuple TaskmanConfig.config).withReport.run(Props.sources).map(_.getOrDie)
-      ((dbCfg, taskmanCfg), report) = tmp
-      _ <- Fx(log.info(report.report))
-      dbAccess <- DbAccess.fromCfg(dbCfg)
-      a <- dbAccess.setupRunShutdown(
-        for {
-          ctx <- Fx(TaskmanCtx(dbAccess, taskmanCfg))
-          a <- f(ctx) ensuring ctx.shutdown
-        } yield a
-      )
+  def withTaskmanCtx[A](f: TaskmanCtx => Fx[A]): Fx[A] = {
+    val readConfig = (DbConfig.config tuple TaskmanConfig.config).withReport.run(Props.sources)
+
+    def onShutDown(dbAccess: DbAccess, taskmanCfg: TaskmanConfig) =
+      for {
+      ctx <- Fx(TaskmanCtx(dbAccess, taskmanCfg))
+      a <- f(ctx) andFinally ctx.shutdown
     } yield a
+
+    for {
+      tmp                          <- readConfig.map(_.getOrDie)
+      ((dbCfg, taskmanCfg), report) = tmp
+      _                            <- Fx(log.info(report.report))
+      dbAccess                     <- DbAccess.fromCfg(dbCfg)
+      a                            <- dbAccess.setupRunShutdown(onShutDown(dbAccess, taskmanCfg))
+    } yield a
+  }
 }

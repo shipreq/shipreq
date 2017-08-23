@@ -9,7 +9,8 @@ import shipreq.base.util.JavaTimeHelpers.DurationExt
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Priority
-import shipreq.taskman.server.{MsgHeader, TaskmanCtx, TaskmanLogging}
+import shipreq.taskman.server.logic.MsgHeader
+import shipreq.taskman.server.{TaskmanCtx, TaskmanLogging}
 
 // =====================================================================================================================
 
@@ -22,7 +23,7 @@ object SourceActor {
 
 class SourceActor(ctx: TaskmanCtx) extends Actor with HasLogger {
   import SourceActor._
-  import shipreq.taskman.server.Source
+  import shipreq.taskman.server.logic.Source
   import ctx._
 
   val mdc = TaskmanLogging.mdc("source")
@@ -58,7 +59,7 @@ object ManagerActor {
 
 class ManagerActor(ctx: TaskmanCtx, source: ActorRef) extends Actor with HasLogger {
   import ManagerActor._
-  import shipreq.taskman.server.{Manager => M}
+  import shipreq.taskman.server.logic.{Manager => M}
   import context.dispatcher
 
   val mdc = TaskmanLogging.mdc("manager")
@@ -92,7 +93,7 @@ class ManagerActor(ctx: TaskmanCtx, source: ActorRef) extends Actor with HasLogg
 // =====================================================================================================================
 
 object WorkerActor {
-  import shipreq.taskman.server.WorkerId
+  import shipreq.taskman.server.logic.WorkerId
 
   def props(ctx: TaskmanCtx, manager: ActorRef) = Props(classOf[WorkerActor], ctx, manager)
 
@@ -101,7 +102,7 @@ object WorkerActor {
 }
 
 class WorkerActor(ctx: TaskmanCtx, manager: ActorRef) extends Actor with HasLogger {
-  import shipreq.taskman.server.Worker
+  import shipreq.taskman.server.logic.Worker
   import ManagerActor.{RequestForWork, WorkAvailable}
   import ctx._
 

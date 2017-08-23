@@ -5,26 +5,22 @@ import java.net.URL
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
-import scalaz.old.NonEmptyList
-import scalaz.syntax.bind._
+import scalaz.{-\/, \/, \/-}
+import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
-import shipreq.base.util.{Error, ErrorOr}
-import shipreq.base.util.effect._
 import shipreq.base.util.ScalaExt.BaseUtilExtAny
-import shipreq.base.util.log.{LogLevel, HasLogger}
+import shipreq.base.util.log.{HasLogger, LogLevel}
 import shipreq.taskman.api.EmailAddr
-import ErrorOr.Implicits._
+import shipreq.taskman.server.logic.business.MailingList._
+import shipreq.taskman.server.logic.business.MailingList.API._
 import Http._
-import MailingList._
-import MailingList.API._
 
 object MailChimp {
 
-  final case class Props(
-    dc: String,
-    key: String,
-    masterList: String,
-    logLevel: LogLevel)
+  final case class Props(dc        : String,
+                         key       : String,
+                         masterList: String,
+                         logLevel  : LogLevel)
 
   // ---------------------------------------------------------------------------
   // Request
@@ -42,7 +38,7 @@ object MailChimp {
     ("email" -> ("email" -> s.addr.value)) ~ ("merge_vars" ->
       ("NAME" -> s.name) ~ ("NEWSLETTER" -> boolAsInt(s.newsletter)) ~ ("ACCT" -> s.status.remoteValue))
 
-  class Endpoints(urlPrefix: String) {
+  final class Endpoints(urlPrefix: String) {
     private[this] def url(path: String) = Endpoint(new URL(s"$urlPrefix/$path.json"), Post, None)
     object lists {
       val list           = url("lists/list")
@@ -74,8 +70,8 @@ object MailChimp {
   // ---------------------------------------------------------------------------
   // Response
 
-  def parseResponse[R](a: API[R]): JValue => ErrorOr[R] =
-    j => ErrorOr.safe(a match {
+  def parseResponse[A](a: API[A]): JValue => ArticulateError \/ A =
+    j => ArticulateError.attempt(a match {
 
       case _: GetListId =>
         val JInt(total) = j \ "total"
@@ -91,78 +87,77 @@ object MailChimp {
       case _: UpdateMember   => Ok
     })
 
-  def parseResponseE[R](a: API[R])(f: TotalApiFailure): Option[R] = a match {
-    case _: Subscribe    if f.name == "List_AlreadySubscribed" => Some(AlreadySubscribed)
-    case _: UpdateMember if f.name == "List_NotSubscribed"     => Some(NotSubscribed)
-    case _ => None
-  }
+  def interpretApiFailure[A](a: API[A])(f: ApiFailure.Total): Option[A] =
+    a match {
+      case _: Subscribe    if f.name == "List_AlreadySubscribed" => Some(AlreadySubscribed)
+      case _: UpdateMember if f.name == "List_NotSubscribed"     => Some(NotSubscribed)
+      case _                                                     => None
+    }
 
   // ---------------------------------------------------------------------------
   // Error handling
 
   object ApiFailure {
+
+    final case class Total(code: Int, name: String, msg: String) {
+      def toArticulateError: ArticulateError =
+        ArticulateError("MailChimp API Failure")
+          .hint(s"code = $code")
+          .hint(s"name = $name")
+          .hint(s"msg  = $msg")
+    }
+
     object Total {
-      def apply(f: TotalApiFailure): Error = Error(f.fullMsg).withSupp(f)
-      def unapply(e: Error): Option[TotalApiFailure] = e.trySupp { case f: TotalApiFailure => f }
+      val errParser = ErrParser[Total](parseHttpErrorJson, _.toArticulateError)
+
+      def parseHttpErrorJson(j: JValue): ArticulateError \/ Total =
+        ArticulateError.safe(
+          (j \ "status") match {
+            case JString("error") =>
+              val JInt(code)    = j \ "code"
+              val JString(name) = j \ "name"
+              val JString(msg)  = j \ "error"
+              \/-(Total(code.toInt, name, msg))
+            case _ => -\/(ArticulateError("Not an error."))
+          }
+        )
+    }
+
+    final case class Partial(code: Int, msg: String, email: Option[EmailAddr]) {
+      def fullMsg: String = {
+        val emailPrefix = email.fold("")(e => s"$e: ")
+        s"$emailPrefix[$code] $msg"
+      }
     }
 
     object Partial {
-      def apply(h: PartialApiFailure, t: List[PartialApiFailure]): Error =
-        Error(s"${t.size + 1} partial API failure(s) occurred.").withSupp(NonEmptyList.nel(h, t))
+      def toArticulateError(h: Partial, t: List[Partial]): ArticulateError =
+        ArticulateError(s"${t.size + 1} partial MailChimp API failure(s) occurred.")
+          .hint(h.fullMsg, t.map(_.fullMsg): _*)
 
-      def unapply(e: Error): Option[NonEmptyList[PartialApiFailure]] = e.trySupp {
-        case r@ NonEmptyList(_: PartialApiFailure, _) => r.asInstanceOf[NonEmptyList[PartialApiFailure]]
-      }
+      def parse(j: JValue): ArticulateError \/ List[Partial] =
+        ArticulateError.attempt(
+          for {
+            JArray(errors) <- j \ "errors"
+            e <- errors
+          } yield {
+            val JInt(code) = e \ "code"
+            val JString(msg) = e \ "error"
+            val opEmail = (e \ "email").toOption.map { i =>
+              val JString(email) = i \ "email"
+              EmailAddr(email)
+            }
+            Partial(code.toInt, msg, opEmail)
+          }
+        )
     }
   }
 
-  final case class TotalApiFailure(code: Int, name: String, msg: String) {
-    def fullMsg = s"[$code] $name: $msg"
-    def shortMsg = s"[$code] $name"
-  }
-
-  final case class PartialApiFailure(code: Int, msg: String, email: Option[EmailAddr]) {
-    def fullMsg = {
-      val emailPrefix = email.fold("")(e => s"$e: ")
-      s"$emailPrefix[$code] $msg"
+  def catchPartialFailures(j: JValue): ArticulateError \/ JValue =
+    ApiFailure.Partial.parse(j).flatMap {
+      case Nil    => \/-(j)
+      case h :: t => -\/(ApiFailure.Partial.toArticulateError(h, t))
     }
-  }
-
-  def parseHttpErrorJson(j: JValue): ErrorOr[TotalApiFailure] =
-    ErrorOr.catchException (
-      (j \ "status") match {
-        case JString("error") =>
-          val JInt(code)    = j \ "code"
-          val JString(name) = j \ "name"
-          val JString(msg)  = j \ "error"
-          ErrorOr(TotalApiFailure(code.toInt, name, msg))
-        case _ => ErrorOr error "Not an error."
-      }
-    )
-
-  val totalErrParser = ErrParser[TotalApiFailure](parseHttpErrorJson, ApiFailure.Total.apply)
-
-  val catchPartialFailures: JValue => ErrorOr[JValue] =
-    j => parsePartialFailures(j) >=> {
-      case Nil    => ErrorOr(j)
-      case h :: t => ApiFailure.Partial(h, t).toErrorOr
-    }
-
-  def parsePartialFailures: JValue => ErrorOr[List[PartialApiFailure]] =
-    j => ErrorOr.safe(
-      for {
-        JArray(errors) <- j \ "errors"
-        e <- errors
-      } yield {
-        val JInt(code) = e \ "code"
-        val JString(msg) = e \ "error"
-        val opEmail = (e \ "email").toOption.map { i =>
-          val JString(email) = i \ "email"
-          EmailAddr(email)
-        }
-        PartialApiFailure(code.toInt, msg, opEmail)
-      }
-    )
 }
 
 // =====================================================================================================================
@@ -176,15 +171,16 @@ final class MailChimp(httpClient: OkHttpClient, props: Props) extends HasLogger 
   private val apikeyJson = render("apikey" -> props.key)
 
   private val requestBuilder =
-    buildRequest(e => j => new Req(e(endpoints), apikeyJson merge j))
+    buildRequest(e => j => Req(e(endpoints), apikeyJson merge j))
 
-  def run[A](api: API[A]): FxE[A] =
-    send(api) >==> recv(api) tap logResult
+  def run[A](api: API[A]): Fx[A] =
+    send(api) flatMap recv(api) tap logResult
 
   @inline private def send[A](api: API[A]) =
-    requestBuilder(api) |> sendRequestL(httpClient, logRequest)
+    requestBuilder(api) |> sendRequestAndLog(httpClient, logRequest)
 
   @inline private def recv[A](api: API[A]) =
-    recvResponseE[A, TotalApiFailure](totalErrParser, parseResponseE(api))(logResponse,
-      catchPartialFailures(_) >=> parseResponse(api))
+    recvResponseE[A, ApiFailure.Total](ApiFailure.Total.errParser, interpretApiFailure(api))(
+      logResponse,
+      catchPartialFailures(_) flatMap parseResponse(api))
 }

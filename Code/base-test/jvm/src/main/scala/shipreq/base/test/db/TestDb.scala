@@ -46,8 +46,8 @@ trait TestDb extends DbTemplate with TestDbUsageDefaults[Usable[SingleConnection
             if (inTransaction)
               xa.useAndRollback(wrapTransaction(xa, block(xa)))
             else
-              xa.useWithAutoCommit(block(xa)) ensuring requireClean
-          fx ensuring xa.close
+              xa.useWithAutoCommit(block(xa)) andFinally requireClean
+          fx andFinally xa.close
         }
     }
 

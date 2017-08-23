@@ -3,6 +3,7 @@ package shipreq.taskman.server.business
 import doobie.imports._
 import shipreq.base.db.SqlHelpers._
 import shipreq.taskman.api.{EmailAddr, UserId}
+import shipreq.taskman.server.logic.business.ShipReqUser
 
 final case class ShipReqInterface(schema: Option[String]) {
 

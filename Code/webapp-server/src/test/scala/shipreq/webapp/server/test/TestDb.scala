@@ -31,11 +31,11 @@ object TestDb extends shipreq.base.test.db.TestDb {
     truncate.unsafeRun()
   }
 
-  override def wrapTransaction[A](xa: SingleConnectionXA, io: Fx[A]): Fx[A] =
+  override def wrapTransaction[A](xa: SingleConnectionXA, fx: Fx[A]): Fx[A] =
     for {
       orig <- Fx(Global.db)
-      _ <- Fx(Global.modify(_.copy(db = xa.dbAccess(dbAccess))))
-      a <- io ensuring Fx(Global.modify(_.copy(db = orig)))
+      _    <- Fx(Global.modify(_.copy(db = xa.dbAccess(dbAccess))))
+      a    <- fx andFinally Fx(Global.modify(_.copy(db = orig)))
     } yield a
 
 }

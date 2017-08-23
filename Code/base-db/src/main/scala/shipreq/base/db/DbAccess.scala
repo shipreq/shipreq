@@ -8,7 +8,7 @@ import javax.sql.DataSource
 import scalaz.Scalaz._
 import scalaz._
 import shipreq.base.db.DbAccess.AbstractTransactor
-import shipreq.base.util.ErrorOr
+import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import DbAccess.fxCapture
@@ -43,13 +43,13 @@ final case class DbAccess(cfg               : DbConfig,
     ds.getConnection().close()
   }
 
-  def shutdown(): Unit = {
-    ErrorOr.safe(ds match {
-      case h: HikariDataSource => h.close()
-      case _ => ()
-    }).leftMap(e => log.error(e, "Error closing database connections."))
-    ()
-  }
+  def shutdown(): Unit =
+    ArticulateError.attempt(
+      ds match {
+        case h: HikariDataSource => h.close()
+        case _ => ()
+      }
+    ).swap.foreach(e => log.error(e, "Error closing database connections."))
 
   def setupRunShutdown[M[_] : Catchable : Capture : Monad, A](app: => M[A]): M[A] =
     for {

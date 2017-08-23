@@ -9,12 +9,12 @@ import org.apache.http.HttpEntity
 import org.apache.http.util.EntityUtils
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import scalaz.{\/, -\/, \/-}
+import japgolly.univeq._
+import scalaz.{-\/, \/, \/-}
+import scalaz.syntax.applicative._
+import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
-import shipreq.base.util.{Error, ErrorOr}
-import shipreq.base.util.effect._
 import shipreq.base.util.log.Logger
-import ErrorOr.Implicits._
 
 object Http {
 
@@ -50,81 +50,96 @@ object Http {
 
   val contentTypeJson = s"application/json;charset=${defaultCharset.name}"
 
-  def parseIntoJson(str: String): ErrorOr[JValue] = ErrorOr.safe(parse(str))
-  def parseIntoJsonI(str: String): FxE[JValue]    = Fx(parseIntoJson(str))
+  def parseIntoJson(str: String): ArticulateError \/ JValue =
+    ArticulateError.attempt(parse(str))
 
   // ---------------------------------------------------------------------------
   // Request
 
-  def sendRequest(httpClient: OkHttpClient)(req: Req): FxE[HttpURLConnection] = {
-    val io = openConn(httpClient, req.e)
+  def sendRequest(httpClient: OkHttpClient)(req: Req): Fx[HttpURLConnection] = {
+    val open = openConn(httpClient, req.e)
     if (req.bodyS.isEmpty)
-      io
+      open
     else
-      io >==>^ writeRequestBody(req.bodyB)
+      open tap writeRequestBody(req.bodyB)
   }
 
-  def sendRequestL(httpClient: OkHttpClient, log: Req => Fx[Unit])(req: Req): FxE[HttpURLConnection] =
-    sendRequest(httpClient)(req) <<^ log(req)
+  def sendRequestAndLog(httpClient: OkHttpClient, log: Req => Fx[Unit])(req: Req): Fx[HttpURLConnection] =
+    sendRequest(httpClient)(req) tap_ log(req)
 
-  def openConn(httpClient: OkHttpClient, e: Endpoint): FxE[HttpURLConnection] = FxE {
-    val conn = new OkUrlFactory(httpClient).open(e.url)
-    conn.setRequestProperty("Content-Type", contentTypeJson)
-    conn.setRequestMethod(e.method.value)
-    for (c <- e.credential) conn.addRequestProperty("Authorization", c.getHeaderValue)
-    conn
-  }
+  def openConn(httpClient: OkHttpClient, e: Endpoint): Fx[HttpURLConnection] =
+    Fx {
+      val conn = new OkUrlFactory(httpClient).open(e.url)
+      conn.setRequestProperty("Content-Type", contentTypeJson)
+      conn.setRequestMethod(e.method.value)
+      for (c <- e.credential) conn.addRequestProperty("Authorization", c.getHeaderValue)
+      conn
+    }
 
-  def writeRequestBody(body: Array[Byte])(conn: HttpURLConnection): FxE[Unit] =
-    Fx(ErrorOr.withResource(conn.getOutputStream)(_.close)(_ write body))
+  def writeRequestBody(body: Array[Byte])(conn: HttpURLConnection): Fx[Unit] =
+    Fx(conn.getOutputStream).bracket(
+      release = c => Fx(c.close()),
+      use     = c => Fx(c write body))
 
   // ---------------------------------------------------------------------------
   // Response
 
-  def recv(f: HttpURLConnection => InputStream): HttpURLConnection => FxE[String] = conn =>
-    Fx(ErrorOr.withResource(f(conn))(_.close){ in =>
-      val entity: HttpEntity = new InputStreamEntity(in)
-      val charset = Option(ContentType get entity).fold(defaultCharset)(_.getCharset)
-      val bytes = EntityUtils.toByteArray(entity)
-      new String(bytes, charset)
-    })
+  def recv(f: HttpURLConnection => InputStream): HttpURLConnection => Fx[String] = conn =>
+    Fx(f(conn)).bracket(
+      release = i => Fx(i.close()),
+      use = i => Fx {
+        val entity: HttpEntity = new InputStreamEntity(i)
+        val charset = Option(ContentType get entity).fold(defaultCharset)(_.getCharset)
+        val bytes = EntityUtils.toByteArray(entity)
+        new String(bytes, charset)
+      })
 
   val recvResponseInput = recv(_.getInputStream)
 
   val recvResponseError = recv(_.getErrorStream)
 
-  def getResponseCode(conn: HttpURLConnection): FxE[Int] =
-    FxE(conn.getResponseCode)
+  def getResponseCode(conn: HttpURLConnection): Fx[Int] =
+    Fx(conn.getResponseCode)
 
-  def recvResponseG[R](ko: HttpURLConnection => String => FxE[R])
-                      (log: String => Fx[Unit], ok: JValue => ErrorOr[R])
-                      (conn: HttpURLConnection): FxE[R] =
-    getResponseCode(conn) >==> (code =>
-      if (code == HttpURLConnection.HTTP_OK)
-        recvResponseInput(conn) <-<^ log >=> (parseIntoJson(_) >=> ok)
+  def recvResponseG[A](ko: (HttpURLConnection, String) => Fx[A])
+                      (log: String => Fx[Unit], ok: JValue => ArticulateError \/ A)
+                      (conn: HttpURLConnection): Fx[A] =
+    getResponseCode(conn).flatMap(code =>
+      if (code ==* HttpURLConnection.HTTP_OK)
+        for {
+          s <- recvResponseInput(conn)
+          _ <- log(s)
+          a <- Fx.lift(parseIntoJson(s).flatMap(ok))
+        } yield a
       else
-        recvResponseError(conn) <-<^ log >==> ko(conn)
-      )
+        for {
+          s <- recvResponseError(conn)
+          _ <- log(s)
+          a <- ko(conn, s)
+        } yield a
+    )
 
   def recvResponse[R] = recvResponseG[R](genericHttpErrorN) _
 
   def recvResponseE[R, E](ep: ErrParser[E], er: E => Option[R]) =
-    recvResponseG[R](conn => handleErrorResponse(ep, er, genericHttpError(conn))) _
+    recvResponseG[R]((conn, resp) => handleErrorResponse(ep)(er)(genericHttpErrorN(conn, _), resp)) _
 
   // ---------------------------------------------------------------------------
   // Error handling
 
-  case class ErrParser[E](parse: JValue => ErrorOr[E], mkError: E => Error)
+  final case class ErrParser[E](parse: JValue => ArticulateError \/ E,
+                                mkError: E => ArticulateError)
 
-  def handleErrorResponse[R, E](ep: ErrParser[E], mkResult: E => Option[R], fallback: String => Fx[Error])(resp: String): FxE[R] =
-    parseIntoJson(resp) >==> parseErrorJson(ep, mkResult) match {
-      case \/-(-\/(e)) => Fx(ep.mkError(e).toErrorOr)
-      case \/-(\/-(r)) => FxE.pure(r)
-      case -\/(_)      => fallback(resp).map(_.toErrorOr)
-    }
+  def handleErrorResponse[R, E](ep: ErrParser[E])(mkResult: E => Option[R])(fallback: String => Fx[R], resp: String): Fx[R] =
+    Fx.lift(parseIntoJson(resp)).flatMap(j =>
+      parseErrorJson(ep, mkResult, j) match {
+        case \/-(-\/(e)) => Fx.fail(ep.mkError(e))
+        case \/-(\/-(r)) => Fx.pure(r)
+        case -\/(_)      => fallback(resp)
+      })
 
-  def parseErrorJson[R, E](ep: ErrParser[E], mkResult: E => Option[R]): JValue => ErrorOr[E \/ R] =
-    ep.parse(_) >-> tryMkResult(mkResult)
+  def parseErrorJson[R, E](ep: ErrParser[E], mkResult: E => Option[R], json: JValue): ArticulateError \/ (E \/ R) =
+    ep.parse(json).map(tryMkResult(mkResult))
 
   def tryMkResult[R, E](mkResult: E => Option[R])(e: E): E \/ R =
     mkResult(e) match {
@@ -132,9 +147,9 @@ object Http {
       case None    => -\/(e)
     }
 
-  def genericHttpError(c: HttpURLConnection)(resp: String): Fx[Error] =
-    Fx(Error(s"Unexpected HTTP response: ${c.getResponseCode} ${c.getResponseMessage}. Response: $resp"))
+  def genericHttpError(c: HttpURLConnection, resp: String): Fx[ArticulateError] =
+    Fx(ArticulateError(s"Unexpected HTTP response: ${c.getResponseCode} ${c.getResponseMessage}. Response: $resp"))
 
-  def genericHttpErrorN[N](c: HttpURLConnection)(resp: String): FxE[N] =
-    genericHttpError(c)(resp).map(_.toErrorOr)
+  def genericHttpErrorN[N](c: HttpURLConnection, resp: String): Fx[N] =
+    genericHttpError(c, resp).flatMap(Fx.fail)
 }

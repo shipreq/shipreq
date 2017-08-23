@@ -25,7 +25,7 @@ object FxModule {
           catch { case t: Throwable => -\/(t) })
 
       override def fail[A](err: Throwable): Fx[A] =
-        Fx(throw err)
+        Fx.fail(err)
     }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -36,6 +36,16 @@ object FxModule {
 
     def pure[A](a: A): Fx[A] =
       Free.pure(a)
+
+    /** In case there are errors in construction (!) */
+    def safe[A](fa: => Fx[A]): Fx[A] =
+      Fx(fa).flatMap(Identity.apply)
+
+    def fail[A](err: Throwable): Fx[A] =
+      Fx(throw err)
+
+    def lift[A](fa: Throwable \/ A): Fx[A] =
+      fa.fold(fail, pure)
 
     val unit: Fx[Unit] =
       Free.pure(())
@@ -56,6 +66,9 @@ object FxModule {
         a <- fx
         _ <- f(a)
       } yield a
+
+    def tap_[B](f: Fx[B]): Fx[A] =
+      tap(_ => f)
 
     def unsafeTap[B](f: A => B): Fx[A] =
       tap(a => Fx(f(a)))
@@ -95,30 +108,53 @@ object FxModule {
     def retryOnException(continue: (Int, Throwable) => Option[Fx[Unit]]): Fx[A] =
       fx.attempt.retry(identity)(continue).map(_.fold(throw _, identity))
 
-    //=============================
-    // ↓ Copied from MonadCatchIO ↓
-    //=============================
-
     /** Executes the handler if an exception is raised. */
-    def except(handler: Throwable => Fx[A]): Fx[A] =
+    def recoverException[AA >: A](handler: Throwable => Fx[AA]): Fx[AA] =
       fx.attempt.flatMap {
         case \/-(a) => Fx.pure(a)
         case -\/(e) => handler(e)
       }
 
-    /**Like "finally", but only performs the final action if there was an exception. */
-    def onException[B](action: Fx[B]): Fx[A] =
-      except(e =>
-        for {
-          _ <- action
-          a <- (throw e): Fx[A]
-        } yield a)
+    def recoverArticulateError[AA >: A](handler: ArticulateError => Fx[AA]): Fx[AA] =
+      recoverException(t => handler(ArticulateError(t)))
 
-    def ensuring[B](finallyClause: Fx[B]): Fx[A] =
+    def attemptArticulateError: Fx[ArticulateError \/ A] =
+      fx.attempt.map(_.leftMap(ArticulateError(_)))
+
+    def mapArticulateError(f: ArticulateError => Throwable): Fx[A] =
+      recoverArticulateError(e => Fx.fail(f(e)))
+
+    /** Like `finally`, but only performs the final action if there was an exception. */
+    def onException[B](action: Throwable => Fx[B]): Fx[A] =
+      recoverException(e => action(e).flatMap(_ => Fx.fail(e)))
+
+    /** Like `finally`, but only performs the final action if there was an exception. */
+    def onArticulateError[B](action: ArticulateError => Fx[B]): Fx[A] =
+      onException(t => action(ArticulateError(t)))
+
+    def andFinally[B](finallyClause: Fx[B]): Fx[A] =
       for {
-        r <- onException(finallyClause)
+        r <- onException(_ => finallyClause)
         _ <- finallyClause
       } yield r
+
+    def bracket[B, C](release: A => Fx[B], use: A => Fx[C]): Fx[C] =
+      fx.flatMap(a => use(a).andFinally(release(a)))
+
+    def bracket_[B, C](release: Fx[B], use: Fx[C]): Fx[C] = {
+      val useAndRelease = use.andFinally(release)
+      fx.flatMap(_ => useAndRelease)
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  implicit class FxOptionOps[A](private val fx: Fx[Option[A]]) extends AnyVal {
+    def getOrFail(errMsg: => String): Fx[A] =
+      fx.flatMap {
+        case Some(a) => Fx pure a
+        case None    => Fx fail ArticulateError(errMsg)
+      }
   }
 
 }

@@ -1,11 +1,12 @@
-package shipreq.taskman.server
+package shipreq.taskman.server.logic
 
 import scalaz.{Heap, State}
 
 object Manager {
 
   final case class JobQueue(q: Heap[MsgHeader]) {
-    lazy val status: Source.QueueStatus = q.minimumO.map(m => (m.priority, q.size))
+    lazy val status: Source.QueueStatus =
+      q.minimumO.map(m => (m.priority, q.size))
   }
 
   type JobQueueS[A] = State[JobQueue, A]
@@ -21,7 +22,8 @@ object Manager {
     }
   }
 
-  implicit val PrioritisationOrderZ = scalaz.Order.fromScalaOrdering[MsgHeader]
+  implicit val PrioritisationOrderZ: scalaz.Order[MsgHeader] =
+    scalaz.Order.fromScalaOrdering[MsgHeader]
 
   def empty: JobQueue =
     JobQueue(Heap.Empty[MsgHeader])

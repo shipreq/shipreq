@@ -1,13 +1,14 @@
-package shipreq.taskman.server.business
+package shipreq.taskman.server.logic.business
 
 import java.time.{Instant, ZoneId, ZoneOffset}
+import scalaz.{\/, \/-}
 import scalaz.old.NonEmptyList
-import shipreq.base.util.{Error, ErrorOr, Util}
 import shipreq.base.util.ScalaExt.StringBuilderExt
+import shipreq.base.util.{ArticulateError, Util}
 import shipreq.taskman.api.EmailAddr
 import shipreq.taskman.api.Msg.LandingPageHit
-import shipreq.taskman.server.{MsgDetail, MsgHeader}
-import Email._
+import shipreq.taskman.server.logic.business.Email._
+import shipreq.taskman.server.logic.{MsgDetail, MsgHeader}
 
 object Email {
 
@@ -19,10 +20,10 @@ object Email {
         case Some(p) => s"${p.getClass.getSimpleName}($p)"
       }
 
-    def tryParse[P](reuse: PartialFunction[AnyRef, P], parse: EmailAddr => ErrorOr[P]): ErrorOr[P] =
+    def tryParse[E, P](reuse: PartialFunction[AnyRef, P], parse: EmailAddr => E \/ P): E \/ P =
       preParsed match {
-        case Some(p) if reuse.isDefinedAt(p) => ErrorOr(reuse(p))
-        case _ => parse(addr)
+        case Some(p) if reuse.isDefinedAt(p) => \/-(reuse(p))
+        case _                               => parse(addr)
       }
   }
 
@@ -30,13 +31,12 @@ object Email {
 
   final case class TokenValues(shipreqName: String, loginUrl: String)
 
-  case class EnvelopeFront(to: NonEmptyList[Addr], cc: List[Addr] = Nil, bcc: List[Addr] = Nil) {
+  final case class EnvelopeFront(to: NonEmptyList[Addr], cc: List[Addr] = Nil, bcc: List[Addr] = Nil) {
     override def toString =
       Util.quickToString(getClass)(
         _.kv("to", to),
         _.kv("cc", cc, cc.nonEmpty),
-        _.kv("bcc", bcc, bcc.nonEmpty)
-      )
+        _.kv("bcc", bcc, bcc.nonEmpty))
 
     def from(from: Addr) = Envelope(from, to, cc, bcc)
   }
@@ -47,8 +47,7 @@ object Email {
         _.kv("from", from),
         _.kv("to", to),
         _.kv("cc", cc, cc.nonEmpty),
-        _.kv("bcc", bcc, bcc.nonEmpty)
-      )
+        _.kv("bcc", bcc, bcc.nonEmpty))
   }
 
   final case class Content(subject: String, body: String)
@@ -60,11 +59,11 @@ final class Emails(ep: EnvelopeProps, tv: TokenValues) {
   import ep._
   import tv._
 
-  type SendOp = Bop.SendEmail
+  type SendOp = BusinessOp.SendEmail
 
   def sendToUser(a: Addr, c: Content): SendOp = {
     val e = Envelope(publicFrom, NonEmptyList(a), bcc = archiveAddrs)
-    Bop.SendEmail(e, c)
+    BusinessOp.SendEmail(e, c)
   }
 
   def diagnosticEmail(subject: String, body: String, msg: MsgDetail) =
@@ -79,7 +78,7 @@ final class Emails(ep: EnvelopeProps, tv: TokenValues) {
     }
 
   def archive(c: => Content): Option[SendOp] =
-    archiveEnv.map(Bop.SendEmail(_, c))
+    archiveEnv.map(BusinessOp.SendEmail(_, c))
 
   private def timeFieldsForSupport(i: Instant): String = {
     val utc = i.atOffset(ZoneOffset.UTC)
@@ -87,15 +86,27 @@ final class Emails(ep: EnvelopeProps, tv: TokenValues) {
     s"TIME: $utc\n      $sydney"
   }
 
-  def workerFailureEmail(t: Instant, m: MsgDetail, e: Error) = Content(
-    s"Taskman worker failed on msg (${m.id.value}) ${m.msg.msgTypeStr}",
-    s"${timeFieldsForSupport(t)}\n\nMSG: $m\n\nERROR: ${e.stackTraceStr}"
-  )
+  def workerFailureEmail(t: Instant, m: MsgDetail, e: ArticulateError): Content =
+    Content(
+      s"Taskman worker failed on msg (${m.id.value}) ${m.msg.msgTypeStr}",
+      s"""
+         |${timeFieldsForSupport(t)}
+         |
+         |Msg: $m
+         |
+         |${e.show}
+       """.stripMargin.trim)
 
-  def taskmanErrorEmail(t: Instant, e: Error, m: Option[MsgDetail]) = Content(
-    "Taskman infrastructure failed",
-    s"${timeFieldsForSupport(t)}\n\nERROR: ${e.stackTraceStr}\n\nMSG: $m"
-  )
+  def taskmanErrorEmail(t: Instant, e: ArticulateError, m: Option[MsgDetail]): Content =
+    Content(
+      "Taskman infrastructure failed",
+      s"""
+         |${timeFieldsForSupport(t)}
+         |
+         |Msg: $m
+         |
+         |${e.show}
+       """.stripMargin.trim)
 
   // ---------------------------------------------------------------------------
 
@@ -107,8 +118,7 @@ final class Emails(ep: EnvelopeProps, tv: TokenValues) {
         ,_.kv("Name", l.name)
         ,_.kv("Email", l.email)
         ,_.kv("Newsletter", l.newsletter)
-        ,_.kv("Message", l.msg.fold("<no msg>")("\n\n" + _))
-      ))
+        ,_.kv("Message", l.msg.fold("<no msg>")("\n\n" + _))))
     Email.Content("Landing Page Contact", body)
   }
 

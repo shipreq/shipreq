@@ -3,7 +3,8 @@ package shipreq.taskman.api.impl
 import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
-import shipreq.base.util.{BiMap, ErrorOr}
+import scalaz.{-\/, \/}
+import shipreq.base.util.{ArticulateError, BiMap}
 import shipreq.base.util.TaggedTypes._
 import shipreq.taskman.api._
 import Msg._
@@ -11,7 +12,7 @@ import Msg._
 private[taskman] object Serialisation {
 
   type Ser = JsonStr[Msg]
-  type DeSer = ErrorOr[Msg]
+  type DeSer = ArticulateError \/ Msg
 
   private def fieldRenamer[A: Manifest](m: BiMap[String, String]): FieldSerializer[A] =
     FieldSerializer({
@@ -49,14 +50,11 @@ private[taskman] object Serialisation {
   def deserialise(msgTypeId: Short, s: Ser): DeSer =
     MsgType.lookup(msgTypeId) match {
       case Some(t) => deserialise(t, s)
-      case None    => ErrorOr.error(s"Unknown message type: $msgTypeId")
+      case None    => -\/(ArticulateError(s"Deserialisation failed. Unknown message type: $msgTypeId"))
     }
 
   def deserialise(t: MsgType, s: Ser): DeSer =
-    ErrorOr.annotate(s"Failed to parse JSON: $s") {
-      ErrorOr.catchException {
-        val m: Msg = read(s.value)(implicitly[Formats], Manifest.classType(t.msgClass))
-        ErrorOr(m)
-      }
-    }
+    ArticulateError
+      .attempt(read[Msg](s.value)(implicitly[Formats], Manifest.classType(t.msgClass)))
+      .leftMap(_.setErrorMsg("Deserialisation failed.").hint(s"JSON = $s").tagDeterministic)
 }

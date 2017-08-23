@@ -1,21 +1,20 @@
-package shipreq.taskman.server
+package shipreq.taskman.server.logic
 
 import java.time.{Duration, Instant, ZoneId}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Arbitrary._
 import scala.reflect.ClassTag
 import scalaz.Lens.lensg
-import scalaz.{Endo, Heap, NonEmptyList, Order}
-import shipreq.base.util.{Error, ErrorOr}
+import scalaz.{-\/, Endo, Heap, NonEmptyList, Order, \/, \/-}
+import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
-import shipreq.base.util.effect._
 import shipreq.base.test.{MockOpTransformer, MockOpTransformerA, OpTypeProvider}
 import shipreq.taskman.api.{EmailAddr, MsgId, Priority, UserId}
 import shipreq.taskman.api.Msg.{LandingPageHit, ReRegistrationAttempted}
-import shipreq.taskman.server.business.{Bop, Email, Emails, MailingList, ShipReqUser, Support}
-import shipreq.taskman.server.business.Email.Addr
-import Bop._
-import Sop._
+import shipreq.taskman.server.logic.business._
+import shipreq.taskman.server.logic.business.Email.Addr
+import BusinessOp._
+import ServerOp._
 import Manager.{JobQueue, PrioritisationOrderZ}
 import Worker._
 import MailingList._
@@ -48,8 +47,8 @@ object TestHelpers {
 
   val sampleShipReqUser = ShipReqUser(sampleUserId, "usrnm", sampleEmailAddr, "Bob Bobb", true)
 
-  val sampleNotifySupportWorkerFailed = NotifySupportWorkerFailed(timeNow, md_1, Error("WORKED FAILED"))
-  val sampleNotifySupportTaskmanError = NotifySupportTaskmanError(timeNow, Error("WORKED FAILED"), Some(md_1))
+  val sampleNotifySupportWorkerFailed = NotifySupportWorkerFailed(timeNow, md_1, ArticulateError("WORKED FAILED"))
+  val sampleNotifySupportTaskmanError = NotifySupportTaskmanError(timeNow, ArticulateError("WORKED FAILED"), Some(md_1))
 
   val sampleLP = LandingPageHit(sampleEmailAddr, "Bob", None, true)
 
@@ -65,7 +64,7 @@ object TestHelpers {
       val createdL = lensg[MsgHeader, Instant](m => c => m.copy(created = c), _.created)
     }
     object failureCtx {
-      val msgL = lensg[FailureCtx, MsgDetail](c => md => c.copy(m = md), _.m)
+      val msgL = lensg[FailureCtx, MsgDetail](c => md => c.copy(msg = md), _.msg)
       val failureCountL = msgL >=> msgDetail.failureCountL
       val priorityL = msgL >=> msgDetail.priorityL
       val createdL = msgL >=> msgDetail.createdL
@@ -81,21 +80,21 @@ object TestHelpers {
   val reassignWorkerDeny               = endoMod[MockSops](_.reassignWorkerR << false)
   val reassignWorkerCrash              = endoMod[MockSops](_.reassignWorkerR << ???)
 
-  val crashOnSendEmail     = endoMod[MockBops](_.sendEmail << ErrorOr.error("CRASH!"))
-  val crashOnReportFailure = endoMod[MockBops](_.supReportFailure << ErrorOr.error("CRASH!"))
+  val crashOnSendEmail     = endoMod[MockBops](_.sendEmail << -\/(ArticulateError("CRASH!")))
+  val crashOnReportFailure = endoMod[MockBops](_.supReportFailure << -\/(ArticulateError("CRASH!")))
 
   val clockReal = Fx.now
 
   val fpRetry: FailurePolicy =
-    f => FailureResponse(UpdateMsgAbort(f.n, f.w, f.m), Nil)
+    f => FailureResponse(UpdateMsgAbort(f.node, f.worker, f.msg), Nil)
 
   val fpRetrySupport: FailurePolicy =
-    f => FailureResponse(UpdateMsgAbort(f.n, f.w, f.m), NotifySupportWorkerFailed(timeNow, f.m, f.err) :: Nil)
+    f => FailureResponse(UpdateMsgAbort(f.node, f.worker, f.msg), NotifySupportWorkerFailed(timeNow, f.msg, f.err) :: Nil)
 
   val fpAbort: FailurePolicy =
-    f => FailureResponse(UpdateMsgRetry(f.n, f.w, f.m, Duration ofDays 1), Nil)
+    f => FailureResponse(UpdateMsgRetry(f.node, f.worker, f.msg, Duration ofDays 1), Nil)
 
-  def mpNop[F[_]]: MsgProcessor[F] = _ => FxE(ProcessorResult.Complete)
+  def mpNop[F[_]]: MsgProcessor[F] = _ => Fx(ProcessorResult.Complete)
   def mpCrash[F[_]]: MsgProcessor[F] = _ => ???
 
   def arbMap[B, A](f: A => B)(implicit a: Arbitrary[A]): Arbitrary[B] =
@@ -135,7 +134,7 @@ import TestHelpers.manifest
 
 // =====================================================================================================================
 
-object SopTypeTags extends OpTypeProvider[Sop] {
+object SopTypeTags extends OpTypeProvider[ServerOp] {
   override def apply[A] = {
     case _: CfgGet                    => manifest[CfgGet]
     case _: GetMsgsAssignNode         => manifest[GetMsgsAssignNode]
@@ -145,12 +144,12 @@ object SopTypeTags extends OpTypeProvider[Sop] {
     case _: UpdateMsgRetry            => manifest[UpdateMsgRetry]
     case _: NotifySupportWorkerFailed => manifest[NotifySupportWorkerFailed]
     case _: NotifySupportTaskmanError => manifest[NotifySupportTaskmanError]
-    case _: ReAssignWorker            => manifest[ReAssignWorker]
+    case _: ReassignWorker            => manifest[ReassignWorker]
     case    Nop                       => manifest[Nop.type]
   }
 }
 
-class MockSops extends MockOpTransformerA[Sop, Fx] {
+class MockSops extends MockOpTransformerA[ServerOp, Fx] {
   override def opTypeProvider = SopTypeTags
 
   val cfgGetR                    = MockResponse(Option[String](null))
@@ -163,7 +162,7 @@ class MockSops extends MockOpTransformerA[Sop, Fx] {
   val notifySupportTaskmanErrorR = MockResponse(())
   val reassignWorkerR            = MockResponse(true)
 
-  override def cotrans[A] = {
+  override def cotrans[A]: ServerOp[A] => A = {
     case _: CfgGet                    => cfgGetR.pop()
     case _: GetMsgsAssignNode         => assignNodeR.pop()
     case _: GetMsgAssignWorker        => assignWorkerR.pop()
@@ -172,14 +171,14 @@ class MockSops extends MockOpTransformerA[Sop, Fx] {
     case _: UpdateMsgRetry            => updateMsgRetryR.pop()
     case _: NotifySupportWorkerFailed => notifySupportWorkerFailedR.pop()
     case _: NotifySupportTaskmanError => notifySupportTaskmanErrorR.pop()
-    case _: ReAssignWorker            => reassignWorkerR.pop()
-    case    Nop                       =>
+    case _: ReassignWorker            => reassignWorkerR.pop()
+    case    Nop                       => ()
   }
 }
 
 // =====================================================================================================================
 
-object BopTypeTags extends OpTypeProvider[Bop] {
+object BopTypeTags extends OpTypeProvider[BusinessOp] {
   override def apply[A] = {
     case _: SendEmail                     => manifest[SendEmail]
     case _: FindShipReqUser               => manifest[FindShipReqUser]
@@ -197,30 +196,30 @@ object BopTypeTags extends OpTypeProvider[Bop] {
   }
 }
 
-class MockBops extends MockOpTransformer[Bop, FxE] {
+class MockBops extends MockOpTransformer[BusinessOp, Fx] {
   override def opTypeProvider = BopTypeTags
 
-  val sendEmail            = MockResponse(ErrorOr.unit)
+  val sendEmail            = MockResponse[Throwable \/ Unit](\/-(()))
   val findShipReqUser      = MockResponse[Option[ShipReqUser]](None)
   val findShipReqUsers     = MockResponse[List[ShipReqUser]](Nil)
   val mlGetListId          = MockResponse[Option[ListId]](None)
   val mlSubscribe          = MockResponse[SubscribeResult](Ok)
   val mlUpdateMember       = MockResponse[UpdateMemberResult](Ok)
-  val mlBatchSubscribe     = MockResponse(ErrorOr.unit)
+  val mlBatchSubscribe     = MockResponse[Throwable \/ Unit](\/-(()))
   val supNotifyLandingPage = MockResponse[TicketId](TicketId(666))
-  val supReportFailure     = MockResponse(ErrorOr(TicketId(200)))
+  val supReportFailure     = MockResponse[Throwable \/ TicketId](\/-(TicketId(200)))
 
-  override def trans[A] = {
-    case _: SendEmail                     => Fx(sendEmail.pop())
-    case _: FindShipReqUser               => FxE(findShipReqUser.pop())
-    case _: FindShipReqUsers              => FxE(findShipReqUsers.pop())
-    case MailingListOp(_: GetListId)      => FxE(mlGetListId.pop())
-    case MailingListOp(_: Subscribe)      => FxE(mlSubscribe.pop())
-    case MailingListOp(_: UpdateMember)   => FxE(mlUpdateMember.pop())
-    case MailingListOp(_: BatchSubscribe) => Fx(mlBatchSubscribe.pop())
+  override def trans[A]: BusinessOp[A] => Fx[A] = {
+    case _: SendEmail                     => Fx.lift(sendEmail.pop())
+    case _: FindShipReqUser               => Fx(findShipReqUser.pop())
+    case _: FindShipReqUsers              => Fx(findShipReqUsers.pop())
+    case MailingListOp(_: GetListId)      => Fx(mlGetListId.pop())
+    case MailingListOp(_: Subscribe)      => Fx(mlSubscribe.pop())
+    case MailingListOp(_: UpdateMember)   => Fx(mlUpdateMember.pop())
+    case MailingListOp(_: BatchSubscribe) => Fx.lift(mlBatchSubscribe.pop())
     case SupportOp(o) => o match {
-      case _: NotifyLandingPage           => FxE(supNotifyLandingPage.pop())
-      case _: ReportFailure               => Fx(supReportFailure.pop())
+      case _: NotifyLandingPage           => Fx(supNotifyLandingPage.pop())
+      case _: ReportFailure               => Fx.lift(supReportFailure.pop())
     }
 //    case SupportOp(_: NotifyLandingPage)  => FxE(supNotifyLandingPage.pop())
 //    case SupportOp(_: ReportFailure)      => Fx(supReportFailure.pop())

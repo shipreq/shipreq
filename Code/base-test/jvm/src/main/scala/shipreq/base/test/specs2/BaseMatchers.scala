@@ -5,11 +5,12 @@ import org.specs2.matcher.Matcher
 import org.specs2.matcher.Matchers._
 import org.specs2.matcher.describe.{Diffable, PrimitiveDifference, PrimitiveIdentical}
 import scala.reflect.ClassTag
-import scalaz.{-\/, \/-}
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.test.MockOpTransformerResults
-import shipreq.base.util.ErrorOr
 
 object BaseMatchers {
+
+  type ErrorOr[T] = Throwable \/ T
 
   def match2[A, B](a: Matcher[A], b: Matcher[B]): Matcher[(A, B)] =
     (a, b).zip(i => i, i => i)
