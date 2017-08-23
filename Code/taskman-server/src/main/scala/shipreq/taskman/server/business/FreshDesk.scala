@@ -10,38 +10,38 @@ import scalaz.\/
 import scalaz.std.list.listInstance
 import scalaz.syntax.traverse._
 import scalaz.syntax.bind._
+import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.{HasLogger, LogLevel}
 import shipreq.taskman.server.logic.business.Support._
 import shipreq.taskman.server.logic.business.Support.API._
 import Http._
-import shipreq.base.util.ArticulateError
 
 object FreshDesk {
 
   final case class Props(domain      : String,
                          key         : String,
                          taskmanEmail: String,
-                         landingPage : TicketOrg,
-                         failure     : TicketOrg,
+                         landingPage : UnverifiedTicketOrg,
+                         failure     : UnverifiedTicketOrg,
                          logLevel    : LogLevel)
 
-  final case class PropsI(landingPage: TicketOrgI, failure: TicketOrgI)
+  final case class VerifiedProps(landingPage: TicketOrg, failure: TicketOrg)
 
-  final case class TicketOrg(groupName: String, ticketType: String)
+  final case class UnverifiedTicketOrg(groupName: String, ticketType: String)
 
-  final case class TicketOrgI(group: Group, ticketType: String) {
+  final case class TicketOrg(group: Group, ticketType: String) {
     val json = ("group_id" -> group.id) ~ ("ticket_type" -> ticketType)
   }
 
+  final case class Group(id: Long, name: String)
+
   object ConfigParsers {
-    implicit def parseTicketOrg(implicit s: ConfigParser[String]): ConfigParser[TicketOrg] =
+    implicit def parseTicketOrg(implicit s: ConfigParser[String]): ConfigParser[UnverifiedTicketOrg] =
       s.mapOption(
-        """^\s*(\S[^/]*?)\s*/\s*(\S[^/]*?)\s*$""".r.findFirstMatchIn(_).map(m => TicketOrg(m group 1, m group 2)),
+        """^\s*(\S[^/]*?)\s*/\s*(\S[^/]*?)\s*$""".r.findFirstMatchIn(_).map(m => UnverifiedTicketOrg(m group 1, m group 2)),
         "Expected TicketOrg format: <groupName> / <ticketType>")
   }
-
-  final case class Group(id: Long, name: String)
 
   sealed abstract class Source(val value: Int) { val json = JInt(value) }
   object Source {
@@ -76,7 +76,7 @@ object FreshDesk {
                              subject : String,
                              desc    : String,
                              priority: Priority,
-                             org     : TicketOrgI,
+                             org     : TicketOrg,
                              status  : Status = Status.Open,
                              source  : Source = Source.Portal) {
     def json: JValue =
@@ -152,15 +152,14 @@ sealed class FreshDesk0(httpClient: OkHttpClient, props: Props) extends HasLogge
    */
   def upgrade: Fx[FreshDesk] = {
     def parse(j: JValue): ArticulateError \/ FreshDesk = {
-      val orgs = List(props.failure, props.landingPage)
-      parseRespGetGroups(orgs.map(_.groupName))(j).map { groups =>
-        val ticketOrgs = groups.zip(orgs).map(x => TicketOrgI(x._1, x._2.ticketType))
-        val failureTO :: landingPageTO :: Nil = ticketOrgs
-        val propsI = PropsI(failure = failureTO, landingPage = landingPageTO)
-        new FreshDesk(httpClient, props, propsI)
+      val unverifiedOrgs = List(props.failure, props.landingPage)
+      parseRespGetGroups(unverifiedOrgs.map(_.groupName))(j).map { groups =>
+        val ticketOrgs = groups.zip(unverifiedOrgs).map(x => TicketOrg(x._1, x._2.ticketType))
+        val failureOrg :: landingPageOrg :: Nil = ticketOrgs
+        val verifiedProps = VerifiedProps(failure = failureOrg, landingPage = landingPageOrg)
+        new FreshDesk(httpClient, props, verifiedProps)
       }
     }
-
     run(getGroupsReq(endpoints), parse)
   }
 
@@ -173,7 +172,7 @@ sealed class FreshDesk0(httpClient: OkHttpClient, props: Props) extends HasLogge
 /**
  * Full interpreter for `Support.API` ops.
  */
-final class FreshDesk(httpClient: OkHttpClient, props: Props, val propsI: PropsI) extends FreshDesk0(httpClient, props) {
+final class FreshDesk(httpClient: OkHttpClient, props: Props, val verifiedProps: VerifiedProps) extends FreshDesk0(httpClient, props) {
 
   private def createTicketReq(t: NewTicket) =
     Req(endpoints.createTicket, t.json)
@@ -181,10 +180,10 @@ final class FreshDesk(httpClient: OkHttpClient, props: Props, val propsI: PropsI
   val buildRequest: API[_] => Req = {
 
     case NotifyLandingPage(email, subject, desc, priority) =>
-      createTicketReq(NewTicket(email, subject, desc, priority, propsI.landingPage))
+      createTicketReq(NewTicket(email, subject, desc, priority, verifiedProps.landingPage))
 
     case ReportFailure(subject, desc, priority) =>
-      createTicketReq(NewTicket(props.taskmanEmail, subject, desc, priority, propsI.failure))
+      createTicketReq(NewTicket(props.taskmanEmail, subject, desc, priority, verifiedProps.failure))
   }
 
   def run[A](api: API[A]): Fx[A] =
