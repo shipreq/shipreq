@@ -16,14 +16,8 @@ object TaggedTypes {
 
   trait PreventToString {
     def value: Any
-    override final def toString: Nothing = {
-      val expl = s"${getClass.getSimpleName}($value).toString CALLED."
-      println("=" * 120)
-      println(expl)
-      println(Error.stackTraceStr(new Throwable()).lines.filter(_ contains "shipreq").mkString("\n"))
-      println("-" * 80)
-      throw new RuntimeException(expl)
-    }
+    override final def toString: Nothing =
+      throw ArticulateError(s"${getClass.getSimpleName}($value).toString CALLED.")
   }
 
   trait TaggedInt    extends TaggedType { final override type U = Int }

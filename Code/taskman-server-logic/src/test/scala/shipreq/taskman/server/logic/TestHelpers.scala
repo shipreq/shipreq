@@ -6,9 +6,8 @@ import org.scalacheck.Arbitrary._
 import scala.reflect.ClassTag
 import scalaz.Lens.lensg
 import scalaz.{-\/, Endo, Heap, NonEmptyList, Order, \/, \/-}
-import shipreq.base.util.{ArticulateError, Error, ErrorOr}
+import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
-import shipreq.base.util.effect._
 import shipreq.base.test.{MockOpTransformer, MockOpTransformerA, OpTypeProvider}
 import shipreq.taskman.api.{EmailAddr, MsgId, Priority, UserId}
 import shipreq.taskman.api.Msg.{LandingPageHit, ReRegistrationAttempted}

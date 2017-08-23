@@ -1,6 +1,6 @@
 package shipreq.webapp.server.lib
 
-import shipreq.base.util.Error
+import shipreq.base.util.ArticulateError
 import shipreq.taskman.api.Msg.WebappErrorOccurred
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.{Urls, WebappConfig}
@@ -20,7 +20,7 @@ object Taskman {
     WebappErrorOccurred(
       Global.security.authenticatedUser.unsafeRun().map(_.id.toTaskman),
       url,
-      s"${Error stackTraceStr e}\n\nSUPP: $suppInfo")
+      ArticulateError(e).hint(suppInfo).show)
 
   def submitAsync(w: WebappErrorOccurred): Fx[Unit] =
     Fx.unit // TODO

@@ -4,7 +4,6 @@ import japgolly.microlibs.config.ConfigParser
 import java.util.Locale
 import org.slf4j.{LoggerFactory, Logger => slf4jLogger}
 import scalaz.Applicative
-import shipreq.base.util.Error
 
 object Logger {
   def forClass(c: Class[_]): Logger =
@@ -69,12 +68,6 @@ final class Logger(log: slf4jLogger) {
     @inline final def fmt (t: Throwable, f: String, arg : Any           ): Unit = if (?) apply(t, f1(f, arg))
     @inline final def fmt (t: Throwable, f: String, arg1: Any, arg2: Any): Unit = if (?) apply(t, f2(f, arg1, arg2: Any))
     @inline final def fmtN(t: Throwable, f: String, args: Any*          ): Unit = if (?) apply(t, fn(f, args))
-
-    @inline final def apply(e: Error, msg: String)                   : Unit = apply(e.throwable, msg)
-    @inline final def z(e: Error, msg: => String)                    : Unit = z(e.throwable, msg)
-    @inline final def fmt (e: Error, f: String, arg : Any           ): Unit = fmt(e.throwable, f, arg)
-    @inline final def fmt (e: Error, f: String, arg1: Any, arg2: Any): Unit = fmt(e.throwable, f, arg1, arg2)
-    @inline final def fmtN(e: Error, f: String, args: Any*          ): Unit = fmtN(e.throwable, f, args: _*)
 
     final def printer[M[_]](implicit M: Applicative[M]): (=> String) => M[Unit] =
       if (?)
