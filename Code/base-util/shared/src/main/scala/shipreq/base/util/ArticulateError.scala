@@ -3,6 +3,7 @@ package shipreq.base.util
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.stdlib_ext.MutableArray
 import scala.collection.immutable.SortedSet
+import scala.util.control.NonFatal
 import scalaz.{-\/, \&/, \/, \/-}
 
 /** An error intended to be articulate and comprehensible.
@@ -14,11 +15,14 @@ final class ArticulateError(val cause: String \&/ Throwable,
                             val hints: SortedSet[String])
     extends RuntimeException(
       ArticulateError.getMessage(cause),
-      cause.onlyThat.orNull) {
+      cause.b.orNull) {
 
-  def copy(cause: String \&/ Throwable     = cause,
-           tags : Set[ArticulateError.Tag] = tags ,
-           hints: SortedSet[String]        = hints): ArticulateError =
+  if (cause.b.isDefined)
+    setStackTrace(Array.empty)
+
+  def copy(cause: String \&/ Throwable     = this.cause,
+           tags : Set[ArticulateError.Tag] = this.tags ,
+           hints: SortedSet[String]        = this.hints): ArticulateError =
     new ArticulateError(cause, tags, hints)
 
   def setErrorMsg(msg: String): ArticulateError =
@@ -61,17 +65,13 @@ final class ArticulateError(val cause: String \&/ Throwable,
     var sections = Vector.empty[String]
 
     def addSection(title: String, value: String): Unit =
-      sections :+= s"$title:\n$value"
+      sections :+= s"$title:\n${value.trim}"
 
-    for (m <- cause.onlyThis)
+    for (m <- cause.a)
       addSection("Error", m)
 
-    for (t <- cause.onlyThat) {
-      var str = t.stackTraceAsString
-      for (m <- Option(t.getMessage).filter(_.nonEmpty))
-        str = s"$m\n$str"
-      addSection("Underlying Exception", str)
-    }
+    for (t <- cause.b)
+      addSection("Underlying Exception", t.stackTraceAsString.replace("\t", "  "))
 
     if (tags.nonEmpty)
       addSection("Tags", showItems(MutableArray(tags.toIterator.map(_.toString)).sort.iterator))
@@ -98,7 +98,8 @@ object ArticulateError {
     safe(\/-(a))
 
   def safe[A](f: => (ArticulateError \/ A)): ArticulateError \/ A =
-    try f catch { case t: Throwable => -\/(apply(t)) }
+    // try f catch { case t: Throwable => -\/(apply(t)) }
+    try f catch { case NonFatal(t) => -\/(apply(t)) }
 
   def fromOption[A](o: Option[A], errMsg: => String): ArticulateError \/ A =
     o.fold[ArticulateError \/ A](-\/(apply(errMsg)))(\/-(_))
@@ -127,7 +128,7 @@ object ArticulateError {
 //      case \&/.That(e)    => e.getMessage
 //      case \&/.Both(m, e) => merge(m, e.getMessage)
 //    }
-    cause.onlyThis.orElse(cause.onlyThat.map(_.getMessage)).orNull
+    cause.a.orElse(cause.b.map(_.getMessage)).orNull
   }
 
   trait Tag

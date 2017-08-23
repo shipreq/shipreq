@@ -97,10 +97,10 @@ class WorkerTest extends Specification {
     def blah(fx     : Fx[Unit],
              clock  : Fx[Instant] = clockReal,
              sopEndo: Endo[MockSops] = assignWorkerAllow) = {
-      val need = new AsyncScheduler[Need] { def apply[A](io: Fx[A]) = Fx(Need(io.unsafeRun())) }
-      val P: ProcessorResult[Need] = ProcessorResult.Complete
-      val S = ProcessorResult.Schedule(need, fx.map(_ => P))
-      val mp: MsgProcessor[Need] = _ => Fx(S)
+      val scheduler = new AsyncScheduler[Need] { def apply[A](io: Fx[A]) = Fx(Need(io.unsafeRun())) }
+      val prComplete: ProcessorResult[Need] = ProcessorResult.Complete
+      val schedule = ProcessorResult.Schedule(scheduler, fx.map(_ => prComplete))
+      val mp: MsgProcessor[Need] = _ => Fx(schedule)
       def run = {
         val mockSop = sopEndo(new MockSops)
         val w = new Worker(mp)(nid, wid, mockSop, tp, clock, fpRetry)
@@ -152,7 +152,6 @@ class WorkerTest extends Specification {
       "Future result"             in (r2 must haveResultS[TaskmanFailed])
     "Future notifies support"   in (s2 must haveRun[ServerOp].ops3[GetMsgAssignWorker, ReassignWorker, NotifySupportTaskmanError])
     }
-
   }
 
   // -------------------------------------------------------------------------------------------------------------------

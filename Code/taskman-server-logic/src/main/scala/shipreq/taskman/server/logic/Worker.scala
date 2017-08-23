@@ -5,7 +5,7 @@ import scalaz.std.list.listInstance
 import scalaz.syntax.bind._
 import scalaz.syntax.catchable._
 import scalaz.syntax.foldable._
-import scalaz.~>
+import scalaz.{-\/, \/, \/-, ~>}
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
@@ -92,7 +92,7 @@ object Worker extends HasLogger {
         handleFailedTaskman(NotifySupportTaskmanError(f.when, e, Some(f.md)))
 
       Fx.safe(raise(emails.workerFailureEmail(f.when, f.md, f.err), priorityForWorkerFailure(f.md.priority)))
-        .onArticulateError(e => logError(e) andFinally notifySupport(e))
+        .recoverArticulateError(e => logError(e) andFinally notifySupport(e))
     }
 
     def handleFailedTaskman(f: NotifySupportTaskmanError): Fx[Unit] = {
@@ -112,7 +112,7 @@ object Worker extends HasLogger {
            """.stripMargin.trim))
 
       Fx.safe(raise(emails.taskmanErrorEmail(f.when, f.err, f.md), Support.Priority.Urgent))
-        .onArticulateError(logError)
+        .recoverArticulateError(logError)
     }
   }
 
@@ -154,7 +154,7 @@ final class Worker[F[_]](msgProcessor : MsgProcessor[F])
                          failurePolicy: FailurePolicy) extends HasLogger {
 
   def process(m: MsgHeader): Fx[WorkResult[F]] =
-    logWorkResult(handleTaskmanErrorsNoMsg(assign(m)))
+    logWorkResult(recoverTaskmanErrorsNoMsg(assign(m)))
 
   private def handleAndRecoverTaskmanErrors[T](m: => Option[MsgDetail], recover: TaskmanFailed => Fx[T]): Fx[T] => Fx[T] =
     _.recoverArticulateError { e =>
@@ -162,11 +162,11 @@ final class Worker[F[_]](msgProcessor : MsgProcessor[F])
       notifySupport >> recover(TaskmanFailed(e, m))
     }
 
-  private def handleTaskmanErrors(m: => Option[MsgDetail]): Fx[WorkResult[F]] => Fx[WorkResult[F]] =
+  private def recoverTaskmanErrors(m: => Option[MsgDetail]): Fx[WorkResult[F]] => Fx[WorkResult[F]] =
     handleAndRecoverTaskmanErrors(m, Fx.pure)
 
-  private val handleTaskmanErrorsNoMsg: Fx[WorkResult[F]] => Fx[WorkResult[F]] =
-    handleTaskmanErrors(None)
+  private val recoverTaskmanErrorsNoMsg: Fx[WorkResult[F]] => Fx[WorkResult[F]] =
+    recoverTaskmanErrors(None)
 
   private def handleTaskFailure(m: MsgDetail, e: ArticulateError): Fx[WorkResult[F]] =
     clock >>= (handleTaskFailure(m, e, _))
@@ -179,7 +179,7 @@ final class Worker[F[_]](msgProcessor : MsgProcessor[F])
 
   private def assign(mh: MsgHeader): Fx[WorkResult[F]] =
     serverOpFx(GetMsgAssignWorker(node, worker, mh)).flatMap {
-      case s@ Some(m) => handleTaskmanErrors(s)(logWorkStart(m) >> clock >>= performWork(m))
+      case s@ Some(m) => recoverTaskmanErrors(s)(logWorkStart(m) >> clock >>= performWork(m))
       case None       => Fx(CouldntAssign(mh))
     }
 
@@ -187,16 +187,19 @@ final class Worker[F[_]](msgProcessor : MsgProcessor[F])
     Fx(log.debug.z(s"Starting work: $md"))
 
   private def performWork(m: MsgDetail)(assignedSince: Instant): Fx[WorkResult[F]] =
-    Fx.safe(msgProcessor(m)) flatMap taskEnd(m, assignedSince)
+    Fx.safe(msgProcessor(m)).attemptArticulateError flatMap taskEnd(m, assignedSince)
 
-  private def taskEnd(m: MsgDetail, assignedSince: Instant): ProcessorResult[F] => Fx[WorkResult[F]] = {
-    case ProcessorResult.Complete =>
+  private def taskEnd(m: MsgDetail, assignedSince: Instant): ArticulateError \/ ProcessorResult[F] => Fx[WorkResult[F]] = {
+    case \/-(ProcessorResult.Complete) =>
       serverOpFx(UpdateMsgSuccess(node, worker, m)).map(_ => Completed(m))
 
-    case ProcessorResult.Schedule(scheduler, work) =>
+    case \/-(ProcessorResult.Schedule(scheduler, work)) =>
       scheduler(wrapAsync(m, assignedSince)(work))
         .map(Scheduled(_, m))
         .recoverArticulateError(handleTaskFailure(m, _))
+
+    case -\/(err) =>
+      handleTaskFailure(m, err)
   }
 
   private def logWorkResult(task: Fx[WorkResult[F]]): Fx[WorkResult[F]] =
@@ -230,10 +233,10 @@ final class Worker[F[_]](msgProcessor : MsgProcessor[F])
 
   private def wrapAsync(m: MsgDetail, assignedSince: Instant)(work: Fx[ProcessorResult[F]]): Fx[WorkResult[F]] =
     logWorkResult(
-      handleTaskmanErrors(Some(m))(
+      recoverTaskmanErrors(Some(m))(
         reassignIfNeeded(m, assignedSince).flatMap {
           case Some(r) => Fx.pure(r)
-          case None    => work flatMap taskEnd(m, assignedSince)
+          case None    => work.attemptArticulateError flatMap taskEnd(m, assignedSince)
         }))
 
   private val reassignmentOk: Fx[Option[WorkResult[F]]] =

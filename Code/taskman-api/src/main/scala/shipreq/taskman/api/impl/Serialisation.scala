@@ -54,6 +54,7 @@ private[taskman] object Serialisation {
     }
 
   def deserialise(t: MsgType, s: Ser): DeSer =
-    ArticulateError.attempt(read(s.value)(implicitly[Formats], Manifest.classType(t.msgClass)))
+    ArticulateError
+      .attempt(read[Msg](s.value)(implicitly[Formats], Manifest.classType(t.msgClass)))
       .leftMap(_.setErrorMsg("Deserialisation failed.").hint(s"JSON = $s").tagDeterministic)
 }

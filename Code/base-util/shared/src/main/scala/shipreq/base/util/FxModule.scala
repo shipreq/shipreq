@@ -118,8 +118,8 @@ object FxModule {
     def recoverArticulateError[AA >: A](handler: ArticulateError => Fx[AA]): Fx[AA] =
       recoverException(t => handler(ArticulateError(t)))
 
-//    def attemptArticulateError: Fx[ArticulateError \/ A] =
-//      fx.attempt.map(_.leftMap(ArticulateError(_)))
+    def attemptArticulateError: Fx[ArticulateError \/ A] =
+      fx.attempt.map(_.leftMap(ArticulateError(_)))
 
     def mapArticulateError(f: ArticulateError => Throwable): Fx[A] =
       recoverArticulateError(e => Fx.fail(f(e)))
