@@ -13,7 +13,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import scalaz.syntax.bind._
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.ArticulateError
+import shipreq.base.util.{ArticulateError, Identity}
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.Logger
 
@@ -131,32 +131,35 @@ object Http {
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 object HttpLoggers {
-  def apply(logger: Logger#AtLevel): HttpLoggers =
-    new HttpLoggers(logger)
+  def apply(logger: Logger#AtLevel, mod: String => String = Identity.apply): HttpLoggers =
+    new HttpLoggers(logger, mod)
 }
-final class HttpLoggers(logger: Logger#AtLevel) {
+final class HttpLoggers(logger: Logger#AtLevel, mod: String => String) {
   private[this] val enabled = logger.?
   private def p(prefix: String, str: String) = if (str.isEmpty) "" else prefix + str
 
-  private val log: (=> String) => Fx[Unit] =
+  def logFx(s: => String): Fx[Unit] =
+    Fx(logger.z(mod(s)))
+
+  private val logIfEnabled: (=> String) => Fx[Unit] =
     if (enabled)
-      s => Fx(logger.z(s))
+      logFx
     else
       _ => Fx.unit
 
   val request: (HttpURLConnection, String) => Fx[Unit] =
-    (c, body) => log(s"HTTP request: ${c.getRequestMethod} ${c.getURL.toExternalForm}${p(" ~ ", body)}")
+    (c, body) => logIfEnabled(s"HTTP request: ${c.getRequestMethod} ${c.getURL.toExternalForm}${p(" ← ", body)}")
 
   def response[A](fx: Fx[(HttpURLConnection, A)]): Fx[(HttpURLConnection, A)] =
     if (enabled)
-      fx.unsafeTap(x =>
-        log(s"HTTP response: ${x._1.getResponseCode} ${x._1.getResponseMessage}${p(" ~ ", x._2.toString)}"))
+      fx.tap(x =>
+        logFx(s"HTTP response: ${x._1.getResponseCode} ${x._1.getResponseMessage}${p(" → ", x._2.toString)}"))
     else
       fx
 
   def result[A](fx: Fx[A]): Fx[A] =
     if (enabled)
-      fx.attemptArticulateError.flatMap(r => log(s"HTTP result: $r") >> Fx.lift(r))
+      fx.attemptArticulateError.flatMap(r => logFx(s"HTTP result: $r") >> Fx.lift(r))
     else
       fx
 }
