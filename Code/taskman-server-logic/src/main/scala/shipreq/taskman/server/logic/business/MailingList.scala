@@ -1,5 +1,6 @@
 package shipreq.taskman.server.logic.business
 
+import japgolly.univeq.UnivEq
 import shipreq.taskman.api.EmailAddr
 import scalaz.old.NonEmptyList
 
@@ -34,6 +35,9 @@ object MailingList {
 
   sealed trait UpdateMemberResult extends ResultOps
   case object NotSubscribed extends UpdateMemberResult
+
+  implicit def univEqSubscribeResult: UnivEq[SubscribeResult] = UnivEq.derive
+  implicit def univEqUpdateMemberResult: UnivEq[UpdateMemberResult] = UnivEq.derive
 
   // ===================================================================================================================
   // API

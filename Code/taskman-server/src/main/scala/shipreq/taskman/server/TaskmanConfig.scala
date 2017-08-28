@@ -58,7 +58,7 @@ object TaskmanConfig extends HasLogger {
 
   def mailchimp: Config[MailChimp.Props] =
     (Config.need[String]("dc")
-      |@| Config.need[String]("key")
+      |@| Config.need[String]("key").obfuscateInReport
       |@| Config.need[String]("masterList")
       |@| Config.need[LogLevel]("logLevel")
       ) (MailChimp.Props)
@@ -68,7 +68,7 @@ object TaskmanConfig extends HasLogger {
 
   def freshdesk: Config[FreshDesk.Props] =
     (Config.need[String]("domain")
-      |@| Config.need[String]("key")
+      |@| Config.need[String]("key").obfuscateInReport
       |@| Config.need[String]("taskmanEmail")
       |@| Config.need[FreshDesk.UnverifiedTicketOrg]("org.landingPage")
       |@| Config.need[FreshDesk.UnverifiedTicketOrg]("org.failure")

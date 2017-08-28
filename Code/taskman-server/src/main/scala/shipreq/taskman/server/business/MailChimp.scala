@@ -109,7 +109,7 @@ object MailChimp {
           .parseJsonResponse(
             ok = _ => \/-(Ok),
             ko = ApiFailure.Total.recoverOrHandle(f =>
-              Option.when(f.name ==* "List_NotSubscribed")(NotSubscribed)))
+              Option.when(f.name ==* "Email_NotExists" || f.name ==* "List_NotSubscribed")(NotSubscribed)))
 
     }
 

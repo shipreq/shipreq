@@ -1,9 +1,11 @@
 package shipreq.taskman.server.app
 
 import java.time.Instant
+import scalaz.Equal
 import scalaz.old.NonEmptyList
 import scalaz.syntax.bind._
 import shipreq.taskman.api._
+import shipreq.base.util.univeq._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.TaggedTypes._
 import shipreq.taskman.server._
@@ -18,6 +20,7 @@ object Tmp extends MainTemplate {
   def main(args: Array[String]): Unit =
     withTaskmanCtx(_ => Fx.unit).unsafeRun()
 //    withTaskmanCtx(testFreshDesk).unsafeRun()
+//    withTaskmanCtx(testMailChimp).unsafeRun()
 
 //    withTaskmanCtx(ctx => Fx {
 //      //ctx.testConnections()
@@ -77,8 +80,43 @@ object Tmp extends MainTemplate {
 //      */
 //    }).unsafeRun()
 
+  private def assertResult[A: Equal](name: String, expect: A, actual: A): Unit = {
+    import Console._
+    if (Equal[A].equal(expect, actual))
+      println(s"$GREEN$BOLD✓$RESET $name ($actual)")
+    else
+      println(s"$RED$BOLD✘$RESET $RED$name$RESET ($RED$actual$RESET) ≠ $expect")
+  }
+
   private def testFreshDesk(ctx: TaskmanCtx): Fx[Unit] =
     ctx.freshdesk(Support.API.ReportFailure("Manual test", "Hi. This is a test", Support.Priority.Low))
       .unsafeTap(r => println(s"Raised ticket: $r"))
       .void
+
+  private def testMailChimp(ctx: TaskmanCtx): Fx[Unit] = {
+    import MailingList._
+
+    val listId = ctx.mailingListId
+
+    val subscription = Subscription(
+      EmailAddr(s"japgolly+${System.currentTimeMillis}@gmail.com"),
+      "David Barri",
+      false,
+      AccountStatus.Active)
+
+    val subscribe = ctx.mailchimp(API.Subscribe(listId, subscription, sendConfEmail = false))
+    val update = ctx.mailchimp(API.UpdateMember(listId, subscription.copy(newsletter = true)))
+
+    for {
+      u1 <- update
+      s1 <- subscribe
+      s2 <- subscribe
+      u2 <- update
+    } yield {
+      assertResult("Update non-existing", NotSubscribed, u1)
+      assertResult("Subscribe new", Ok, s1)
+      assertResult("Subscribe existing", AlreadySubscribed, s2)
+      assertResult("Update existing", Ok, u2)
+    }
+  }
 }
