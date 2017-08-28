@@ -73,7 +73,6 @@ Phase 2
     * Logging
     * Metrics
     * Alerting
-    * SMTP
   * Google Analytics
 * Env
   * Automate releases

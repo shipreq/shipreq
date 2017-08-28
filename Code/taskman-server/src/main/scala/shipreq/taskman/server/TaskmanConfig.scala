@@ -6,6 +6,7 @@ import japgolly.microlibs.config._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Duration
 import javax.mail.Session
+import scalaz.{-\/, \/, \/-}
 import scalaz.syntax.applicative._
 import shipreq.base.util.JavaTimeHelpers._
 import shipreq.base.util.RetryCriteria
@@ -29,30 +30,47 @@ object TaskmanConfig extends HasLogger {
   def config: Config[TaskmanConfig] =
     (mail |@| mailchimp |@| freshdesk |@| shipreq |@| taskman) (apply)
 
-  // TODO Put props and parsers in Business classes
-
-  // ===================================================================================================================
-
-  case class Mail(publicFrom: Email.Addr,
-                  archiveAddrs: List[Email.Addr],
-                  concurrencyMax: Int,
-                  sessionFn: () => Session) {
-    def envelopeProps = Email.EnvelopeProps(publicFrom, archiveAddrs)
-  }
-
-  def mail: Config[Mail] = {
-    val custom =
-      (Config.need[Email.Addr]("public.from")
-        |@| Config.getOrUse[List[Email.Addr]]("archive.to", Nil)
-        |@| Config.need[Int]("concurrency.max").ensure(_ >= 1, "Must be ≥ 1.")
-        ).tupled.withPrefix("mail.")
-    (custom |@| JavaMailConfig.sessionFn) { case ((a, b, c), s) => Mail(a, b, c, s) }
-  }
-
   def mailTokens: Config[Email.TokenValues] =
     (Config.need[String](CfgKeys.Webapp.appName)
       |@| Config.need[String](CfgKeys.Webapp.loginUrl)
       ) (Email.TokenValues)
+
+  // TODO Put props and parsers in Business classes
+
+  // ===================================================================================================================
+
+  case class Mail(publicFrom    : Email.Addr,
+                  archiveAddrs  : List[Email.Addr],
+                  mechanism     : TaskmanConfig.JavaMail \/ MailGun.Props,
+                  concurrencyMax: Int) {
+    def envelopeProps = Email.EnvelopeProps(publicFrom, archiveAddrs)
+  }
+
+  def mail: Config[Mail] =
+    ((Config.need[Email.Addr]("public.from")
+      |@| Config.getOrUse[List[Email.Addr]]("archive.to", Nil)
+      |@| Config.need[Int]("concurrency.max").ensure(_ >= 1, "Must be ≥ 1.")
+      ).tupled.withPrefix("mail.")
+      |@| mailMechanism) { case ((a, b, c), m) => Mail(a, b, m, c) }
+
+  def mailMechanism: Config[TaskmanConfig.JavaMail \/ MailGun.Props] =
+    Config.need[String]("mail.via").map(_.toLowerCase).chooseAttempt {
+      case "javamail" => \/-(javaMail.map(-\/(_)))
+      case "mailgun"  => \/-(mailGun.map(\/-(_)))
+      case _          => -\/("Legal values are [JavaMail, MailGun].")
+    }
+
+  case class JavaMail(sessionFn: () => Session)
+
+  def javaMail: Config[JavaMail] =
+    JavaMailConfig.sessionFn.map(JavaMail.apply)
+
+  def mailGun: Config[MailGun.Props] =
+    (Config.need[String]("domain")
+      |@| Config.need[String]("key").obfuscateInReport
+      |@| Config.need[LogLevel]("logLevel")
+      ) (MailGun.Props.apply)
+      .withPrefix("mailgun.")
 
   // ===================================================================================================================
 

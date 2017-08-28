@@ -4,6 +4,7 @@ import okhttp3.OkHttpClient
 import japgolly.microlibs.config.{Sources => ConfigSources}
 import java.time.{Clock, Duration, Instant}
 import java.util.concurrent.{ExecutorService, TimeUnit}
+import scalaz.{-\/, \/-}
 import scalaz.syntax.catchable._
 import shipreq.base.db.DbAccess
 import shipreq.base.util.FxModule._
@@ -24,10 +25,8 @@ object TaskmanCtx {
 
 final class TaskmanCtx(val dbAccess: DbAccess, val config: TaskmanConfig, emailTokenSource: ConfigSources[Fx]) extends HasLogger {
 
-  private object async {
-    val (emailS, email) = Async.newPool("email", config.mail.concurrencyMax)
-    def each(f: ExecutorService => Unit): Unit = f(emailS)
-  }
+  private def getMailChimpListId(name: String): Fx[MailingList.ListId] =
+    mailchimp(MailingList.API.GetListId(name)) getOrFail s"Mailing list not found: $name"
 
   private val (emailTokens, emailTokensReport) =
     TaskmanConfig.mailTokens
@@ -42,24 +41,33 @@ final class TaskmanCtx(val dbAccess: DbAccess, val config: TaskmanConfig, emailT
 
   log.info(emailTokensReport.report)
 
-  private def getMailChimpListId(name: String): Fx[MailingList.ListId] =
-    mailchimp(MailingList.API.GetListId(name)) getOrFail s"Mailing list not found: $name"
+  private object async {
+    val (emailExecutorService, emailScheduler) = Async.newPool("email", config.mail.concurrencyMax)
+
+    def each(f: ExecutorService => Unit): Unit =
+      f(emailExecutorService)
+  }
 
   private val http = new OkHttpClient()
 
-  val email         = new JavaMail(config.mail.sessionFn())
+  val sendMail: BusinessOp.SendEmail => Fx[Unit] =
+    config.mail.mechanism match {
+      case \/-(p) => new MailGun(p)(http)
+      case -\/(p) => new JavaMail(p.sessionFn())
+    }
+
   val emails        = new Emails(config.mail.envelopeProps, emailTokens)
-  val mailchimp     = new MailChimp(config.mailchimp)(http)
   val freshdesk     = new FreshDesk0(config.freshdesk)(http).upgrade.unsafeRun()
+  val mailchimp     = new MailChimp(config.mailchimp)(http)
   val mailingListId = getMailChimpListId(config.mailchimp.masterList).unsafeRun()
 
   private val clockClock = Clock.systemUTC()
 
   implicit def trustPeriod   = config.taskman.trustPeriod
   implicit val taskmanApi    = TaskmanApiImpl(TaskmanApiImpl.Context(None), dbAccess.fx.trans)
-  implicit val businessOpFx  = new BusinessOpFx(email, mailchimp, freshdesk, dbAccess.fx, config.shipreq.schema)
+  implicit val businessOpFx  = new BusinessOpFx(sendMail, mailchimp, freshdesk, dbAccess.fx, config.shipreq.schema)
   implicit val serverOpFx    = new ServerOpFx(dbAccess.fx, new Worker.FailureHandler(emails)(businessOpFx))
-  implicit val msgProcessor  = new BusinessLogic(emails, async.email, mailingListId)(businessOpFx)
+  implicit val msgProcessor  = new BusinessLogic(emails, async.emailScheduler, mailingListId)(businessOpFx)
   implicit val failurePolicy = Failure.failurePolicy
   implicit val clock         = Fx(clockClock.instant())
   implicit val nodeId        = serverOpFx.getNextNodeId.unsafeRun()

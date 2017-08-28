@@ -42,6 +42,10 @@ object Email {
   }
 
   final case class Envelope(from: Addr, to: NonEmptyList[Addr], cc: List[Addr] = Nil, bcc: List[Addr] = Nil) {
+
+    def showTo: String =
+      to.list.iterator.map(_.addr.value).mkString(",")
+
     override def toString =
       Util.quickToString(getClass)(
         _.kv("from", from),

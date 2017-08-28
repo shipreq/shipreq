@@ -6,6 +6,7 @@ import okhttp3._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import scalaz.syntax.bind._
+import scalaz.syntax.catchable._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{ArticulateError, Identity}
 import shipreq.base.util.FxModule._
@@ -78,7 +79,7 @@ object Http {
 
     def noRequest: Http[Unit, Unit] =
       Http(
-        (_, c, log) => prep(c, log).map(_.build).tap(log.request(_, "")),
+        (_, c, log) => prep(c, log).map(_.build).tap(log.request(_, () => "")),
         (_, _) => Fx.unit)
   }
 
@@ -96,7 +97,7 @@ object Http {
   }
 
   implicit class PreCallExt1(private val http: PreCall[Unit]) extends AnyVal {
-    def request[I](buildReq: (Request.Builder, I) => Fx[(Request, String)]): Http[I, Unit] =
+    def request[I](buildReq: (Request.Builder, I) => Fx[(Request, () => String)]): Http[I, Unit] =
       Http((i, client, log) =>
         for {
           reqBuilder  ← http.prep((), client, log)
@@ -111,7 +112,16 @@ object Http {
         val str = compact(i)
         val body = RequestBody.create(MediaTypeJson, str.getBytes(DefaultCharset))
         val req = b.method(http.method.value, body).build
-        (req, str)
+        (req, () => str)
+      })
+
+    def formRequest[I](formData: I => TraversableOnce[(String, String)]): Http[I, Unit] =
+      request[I]((reqBuilder, i) => Fx {
+        val bodyBuilder = new FormBody.Builder()
+        formData(i).foreach(x => bodyBuilder.add(x._1, x._2))
+        val body = bodyBuilder.build()
+        val req = reqBuilder.method(http.method.value, body).build
+        (req, () => formData(i).toIterator.map(x => s"${x._1}=${x._2}").mkString("{", ", ", "}"))
       })
   }
 
@@ -134,8 +144,14 @@ object Http {
       })
   }
 
-  def genericResponseErrorHandler[A](r: Response, response: Any): Fx[A] =
-    Fx.fail(ArticulateError(s"Unexpected HTTP response: ${r.code} ${r.message}. Response: $response"))
+  def genericResponseErrorHandler[A](r: Response, response: Any): Fx[A] = {
+    val respString: String =
+      response match {
+        case j: JValue => compact(j)
+        case a         => a.toString
+      }
+    Fx.fail(ArticulateError(s"Unexpected HTTP response: ${r.code} ${r.message}. Response: $respString"))
+  }
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -157,8 +173,8 @@ final class HttpLoggers(logger: Logger#AtLevel, mod: String => String) {
     else
       _ => Fx.unit
 
-  val request: (Request, String) => Fx[Unit] =
-    (r, body) => logIfEnabled(s"HTTP request: ${r.method} ${r.url.url.toExternalForm}${p(" ← ", body)}")
+  val request: (Request, () => String) => Fx[Unit] =
+    (r, body) => logIfEnabled(s"HTTP request: ${r.method} ${r.url.url.toExternalForm}${p(" ← ", body())}")
 
   val response: (Response, String) => Fx[Unit] =
     (r, body) => logIfEnabled(s"HTTP response: ${r.code} ${r.message}${p(" → ", body)}")

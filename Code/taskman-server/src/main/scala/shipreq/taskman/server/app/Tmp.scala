@@ -21,21 +21,10 @@ object Tmp extends MainTemplate {
     withTaskmanCtx(_ => Fx.unit).unsafeRun()
 //    withTaskmanCtx(testFreshDesk).unsafeRun()
 //    withTaskmanCtx(testMailChimp).unsafeRun()
+//    withTaskmanCtx(testSendMail).unsafeRun()
 
 //    withTaskmanCtx(ctx => Fx {
 //      //ctx.testConnections()
-//
-//      println(ctx.config.mail)
-//      val op = BusinessOp.SendEmail(
-//        Email.Envelope(
-//          from = Email.Addr(EmailAddr("david.barri@shipreq.com")),
-//          to = NonEmptyList(Email.Addr(EmailAddr("japgolly+test@gmail.com")))),
-//        Email.Content(
-//          subject = "Email Test",
-//          body = "Hello"))
-//      val result = ctx.email(op).unsafeRun()
-//      println(result)
-//      */
 //
 //      /*
 //      import javax.mail._
@@ -118,5 +107,15 @@ object Tmp extends MainTemplate {
       assertResult("Subscribe existing", AlreadySubscribed, s2)
       assertResult("Update existing", Ok, u2)
     }
+  }
+
+  private def testSendMail(ctx: TaskmanCtx): Fx[Unit] = Fx {
+    println("Mail Config: " + ctx.config.mail)
+    val op = ctx.emails.sendToUser(
+      Email.Addr(EmailAddr("japgolly+test@gmail.com")),
+      Email.Content(
+        subject = "Email Test",
+        body = s"Hello!\n\nThis was sent from ${getClass.getCanonicalName}"))
+    ctx.sendMail(op).unsafeRun()
   }
 }
