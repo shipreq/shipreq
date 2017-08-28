@@ -1,4 +1,5 @@
 digraph G {
+  rankdir=LR
   compound=true
   labelloc=t
   label="ShipReq System Diagram\n(arrows denote a component's knowledge of another)"
@@ -35,23 +36,31 @@ digraph G {
     label="G-Suite"
     gsuite_mail [label="GMail"]
     gsuite_route [label="Mail\nRouting"]
-    gsuite_smtp [label="SMTP"]
     gsuite_web [label="Web interface" shape=tab fillcolor=burlywood]
     {node[shape=folder style=filled fillcolor="#c0c8e0"]
-      gsuite_groups [label="archive@shipreq.com\rnews@shipreq.com\rnotice@shipreq.com\r"]
+      gsuite_groups [label="Google groups:\larchive@shipreq.com\rnews@shipreq.com\rnotice@shipreq.com\r"]
     }
   }
 
-  subgraph cluster_mc {
+  subgraph cluster_mailgun {
+    fillcolor="#ccddcc"
+    label="MailGun"
+    mg_mx [label="MX"]
+    mg_api [label="API"]
+    mg_web [label="Web interface" shape=tab fillcolor=burlywood]
+  }
+
+  subgraph cluster_mailchimp {
     fillcolor="#ccddcc"
     label="MailChimp"
     mc_api [label="API"]
     mc_web [label="Web interface" shape=tab fillcolor=burlywood]
   }
 
-  subgraph cluster_fd {
+  subgraph cluster_freshdesk {
     fillcolor="#ccddcc"
-    label="Freshdesk"
+    label="FreshDesk"
+    fd_dkim [label="DKIM"]
     fd_mail [label="shipreqcomcontact@\nshipreq.freshdesk.com" shape=folder style=filled fillcolor="#aabbff"]
     fd_web [label="Web interface" shape=tab fillcolor=burlywood]
     fd_api [label="API"]
@@ -59,29 +68,30 @@ digraph G {
 
   // -----------------------------------------------------------------------------------------------
 
-  cloud_dns     -> gsuite_mail [label="MX"]
-  cloud_dns     -> webapp      [label="A:<ip>"]
-  cloud_dns:w   -> cloud_dns:w [label="CNAME:www " dir=back]
-  cloudsqlproxy -> cloud_sql
-  fd_web        -> fd_mail
-  fd_web        -> gsuite_groups [label="bcc:archive@"]
-  fd_web        -> staff_mail
-  gandi_dns     -> cloud_dns
-  gsuite_route  -> fd_mail
-  gsuite_smtp   -> gsuite_mail
-  gsuite_web    -> gsuite_mail,gsuite_groups,gsuite_route
-  mc_web        -> gsuite_groups [style=dashed label="from:notice@\lfrom:news@\l"]
+  cloud_dns      -> gsuite_mail [label="MX & DKIM"]
+  cloud_dns      -> mg_mx       [label="MX & DKIM"]
+  cloud_dns      -> fd_dkim     [label="DKIM"]
+  cloud_dns      -> webapp      [label="A:<ip>"]
+  cloud_dns:n    -> cloud_dns:n [label="CNAME:www " dir=back]
+  cloudsqlproxy  -> cloud_sql
+  fd_web         -> fd_mail
+  fd_web         -> gsuite_groups [label="bcc:archive@"]
+  fd_web         -> staff_mail
+  gandi_dns      -> cloud_dns
+  gsuite_route:e -> fd_mail [constraint=false]
+  gsuite_web     -> gsuite_mail,gsuite_groups,gsuite_route
+  mc_web         -> gsuite_groups [style=dashed label="from:notice@\lfrom:news@\l"]
 
   edge[color="#ff9900" penwidth=2]
-  taskman       -> cloudsqlproxy
-  taskman       -> fd_api
-  taskman       -> gsuite_groups [label="bcc:archive@"]
-  taskman       -> gsuite_smtp
-  taskman       -> mc_api
+  taskman        -> cloudsqlproxy
+  taskman        -> fd_api
+  taskman        -> gsuite_groups [label="bcc:archive@"]
+  taskman        -> mg_api
+  taskman        -> mc_api
 
   edge[color=hotpink penwidth=2]
-  webapp        -> cloudsqlproxy
-  webapp        -> gsuite_route  [label="mailto:contact@"]
+  webapp         -> cloudsqlproxy
+  webapp         -> gsuite_route  [label="mailto:contact@"]
 
 /*
   // Email from users

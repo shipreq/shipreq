@@ -1,3 +1,10 @@
+Overview
+========
+
+There are diagrams in `../Design` that show all the infrastructure involved
+and their relationships.
+
+
 Setup
 =====
 

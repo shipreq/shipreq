@@ -63,10 +63,6 @@ Phase 2
 * Presentation
 
 ### Devops & Deployment
-* Document
-  * env/infra diagram
-  * each service's details
-  * everything below both wrt ShipReq employee, and as personal study notes
 * Services - create/confirm, cleanse, configure accounts
   * GCP
     * Monitoring

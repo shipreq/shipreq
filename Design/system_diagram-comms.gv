@@ -31,7 +31,6 @@ digraph G {
   subgraph cluster_gsuite {
     fillcolor="#ebebeb"
     label="G-Suite"
-    smtp [label="SMTP"]
     node[shape=folder style=filled fillcolor="#c0c8e0"]
     ea_contact   [label="contact@shipreq.com\n(Routing rule)"]
     ea_broadcast [label="news@shipreq.com\rnotice@shipreq.com\r(Group)"]
@@ -48,16 +47,23 @@ digraph G {
     taskman [fillcolor="#ffff99" label="taskman"]
   }
 
-  subgraph cluster_mc {
+  subgraph cluster_mailgun {
+    fillcolor="#ebebeb"
+    label="MailGun"
+    mg_api [label="API"]
+    mg_web [label="Web interface" shape=tab fillcolor=burlywood]
+  }
+
+  subgraph cluster_mailchimp {
     fillcolor="#ebebeb"
     label="MailChimp"
     mc_api [label="API"]
     mc_web [label="Web interface" shape=tab fillcolor=burlywood]
   }
 
-  subgraph cluster_fd {
+  subgraph cluster_freshdesk {
     fillcolor="#ebebeb"
-    label="Freshdesk"
+    label="FreshDesk"
     fd_mail [label="shipreqcomcontact@\nshipreq.freshdesk.com" shape=folder style=filled fillcolor="#aabbff"]
     fd_web [label="Web interface" shape=tab fillcolor=burlywood]
     fd_api [label="API"]
@@ -81,7 +87,7 @@ digraph G {
     usr_web -> fd_web
 
     // User's comms read by staff in Freshdesk UI
-    fd_web -> staff_web:e
+    fd_web -> staff_web:w
     staff_web -> staff
 
     // FreshDesk emails assigned staff
@@ -112,7 +118,7 @@ digraph G {
     // Staff broadcasts
     usr_mail -> ea_broadcast
     ea_broadcast -> mc_web [style=dashed]
-    mc_web -> staff_web:w
+    mc_web -> staff_web:e
 
     // Staff replies to user emails
     ea_broadcast -> gsuite_web -> staff_web
@@ -130,10 +136,11 @@ digraph G {
     usr -> usr_web -> usr_mail
 
     // Automated comms (reset password, register1)
-    usr_mail -> smtp -> taskman
+    usr_mail -> mg_api -> taskman
 
     // BCC to archive
-    smtp -> ea_archive -> gsuite_web -> staff_web -> staff [dir=foward]
+    mg_api -> ea_archive -> gsuite_web -> staff_web -> staff [dir=foward]
+    mg_api -> mg_web [dir=foward constraint=false style=dashed]
   }
 
 }
