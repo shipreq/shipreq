@@ -87,7 +87,6 @@ Configure SMTP for Taskman
   * Required email footer content <- fill in as appropriate
 
 
-
 ## FreshDesk
 
 https://shipreq.freshdesk.com
@@ -105,3 +104,28 @@ https://shipreq.freshdesk.com
     * Type --> [x] Required when closing, RFI|RFC|Incident|Problem|Lead|Other
 4. Security
     * SSL --> On
+
+
+## MailGun
+
+Add `mg.shipreq.com` as a domain and follow the instructions
+(which are just adding DNS records for DKIM).
+
+
+# Google Analytics
+
+Currently under account of japgolly@gmail.com.
+There is a User Management tab so that I can give others access.
+Long term, GA supports moving buckets ("Properties") to different accounts:
+https://stackoverflow.com/questions/26386483/is-there-a-way-to-move-google-analytics-property-to-a-new-account
+
+1. Goto https://analytics.google.com
+2. On the left-side panel, open Admin.
+3. Create account called ShipReq. It will be created with one Property.
+4. Edit the Property and
+  * rename it to "ShipReq: Production".
+  * enable "Enable Users Metric in Reporting"
+5. Create a new Property
+  * name = "ShipReq: Test"
+  * url = "http://local.shipreq.com"
+  * enable "Enable Users Metric in Reporting"

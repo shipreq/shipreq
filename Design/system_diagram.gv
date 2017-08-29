@@ -25,8 +25,8 @@ digraph G {
     subgraph cluster_gke {
       fillcolor="#aabbaa"
       label="GKE Cluster"
-      webapp  [fillcolor="hotpink" label="webapp"]
-      taskman [fillcolor="#ff9900" label="taskman"]
+      webapp  [fillcolor="#FF00FF" label="webapp"]
+      taskman [fillcolor="#FACA11" label="taskman"]
       cloudsqlproxy [label="cloudsql-proxy"]
     }
   }
@@ -40,6 +40,14 @@ digraph G {
     {node[shape=folder style=filled fillcolor="#c0c8e0"]
       gsuite_groups [label="Google groups:\larchive@shipreq.com\rnews@shipreq.com\rnotice@shipreq.com\r"]
     }
+  }
+
+  subgraph cluster_ga {
+    fillcolor="#ccddcc"
+    label="Google Analytics"
+    ga_api [label="API"]
+    ga_acct [label="Property ID" shape=folder style=filled fillcolor="#aabbff"]
+    ga_web [label="Web interface" shape=tab fillcolor=burlywood]
   }
 
   subgraph cluster_mailgun {
@@ -81,28 +89,17 @@ digraph G {
   gsuite_route:e -> fd_mail [constraint=false]
   gsuite_web     -> gsuite_mail,gsuite_groups,gsuite_route
   mc_web         -> gsuite_groups [style=dashed label="from:notice@\lfrom:news@\l"]
-
-  edge[color="#ff9900" penwidth=2]
   taskman        -> cloudsqlproxy
-  taskman        -> fd_api
+  webapp         -> cloudsqlproxy
+
+  edge[color="#FACA11" penwidth=2]
+  taskman        -> fd_api [constraint=false]
   taskman        -> gsuite_groups [label="bcc:archive@"]
-  taskman        -> mg_api
+  taskman        -> mg_api [constraint=false]
   taskman        -> mc_api
 
-  edge[color=hotpink penwidth=2]
-  webapp         -> cloudsqlproxy
+  edge[color="#FF00FF" penwidth=2]
   webapp         -> gsuite_route  [label="mailto:contact@"]
-
-/*
-  // Email from users
-  {
-    edge [style=dashed color=red fontcolor=red]
-  }
-
-  // Email to users
-  {
-    edge [style=dashed color="#000099" fontcolor="#000099"]
-  }
-*/
+  webapp         -> ga_acct,ga_api [constraint=false]
 
 }
