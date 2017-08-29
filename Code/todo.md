@@ -31,6 +31,9 @@ Backlog
 * Anonymous shares and read-only/presentation mode
 * Tag/Implication Browser (aka Distribution manager/console)
 
+### DevOps
+* Create db rollback plan
+
 ### Tech
 * Stop using scalaz.std.anything which brings in too much other stuff;
   use custom instances that have the minimum typeclasses needed.
@@ -80,15 +83,13 @@ Phase 2
   * Restore or delete AdminStats
   * Restore or delete DiagnosticEndpoints
   * Restore or delete SessionStats
-* Recovery
-  * Create db rollback plan
-* Security
-  * Upgrade JDK and audit crypto mechanisms
 
 ### Dev
 * Allow refs to custom text fields (e.g. [UC-1.detail])
 * Clicking a UCRef should open the UC in ReqDetail (just like ReqRefs)
 * Revise ProjectTemplate - reduce reqtypes, BL without BR is weird
+* /login/home should just be /login
+* Upgrade JDK and audit crypto mechanisms (pending next Jetty release)
 
 ### New Features
 * User profile page
