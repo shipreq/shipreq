@@ -88,7 +88,6 @@ Phase 2
 * Allow refs to custom text fields (e.g. [UC-1.detail])
 * Clicking a UCRef should open the UC in ReqDetail (just like ReqRefs)
 * Revise ProjectTemplate - reduce reqtypes, BL without BR is weird
-* /login/home should just be /login
 * Upgrade JDK and audit crypto mechanisms (pending next Jetty release)
 * Warn when closing page and there are open, dirty editors
 * Delete projects

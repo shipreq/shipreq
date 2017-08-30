@@ -211,7 +211,11 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
   }
 
   private def onAuthFail(req: Request): Response =
-    Redirect(Urls.login / req.path.relativeUrlNoHeadSlash)
+    Redirect(
+      if (req.path ==* Urls.memberHome)
+        Urls.login
+      else
+        Urls.login / req.path.relativeUrlNoHeadSlash)
 
   private def needAuth(f: User => Response): Request => FR =
     req => security.authenticatedUser.map(_.fold(onAuthFail(req))(f))

@@ -49,8 +49,10 @@ object DispatchLogicTest extends TestSuite {
         assertEq("405 shouldn't log user out", security.loggedIn, Option(logIn))
       }
 
-  def testNeedAuth(url: Url.Relative): Unit =
-    testRun(Response.Redirect(s"/login/${url.relativeUrlNoHeadSlash}"), url)
+  def testNeedAuth(url: Url.Relative): Unit = {
+    val expect = if (url ==* Urls.memberHome) "/login" else s"/login/${url.relativeUrlNoHeadSlash}"
+    testRun(Response.Redirect(expect), url)
+  }
 
   val spaSuffixes: List[String] =
     for {
