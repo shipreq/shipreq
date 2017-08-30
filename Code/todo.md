@@ -90,6 +90,10 @@ Phase 2
 * Revise ProjectTemplate - reduce reqtypes, BL without BR is weird
 * /login/home should just be /login
 * Upgrade JDK and audit crypto mechanisms (pending next Jetty release)
+* Warn when closing page and there are open, dirty editors
+* Delete projects
+* Super-basic style for cfg pages
+* Stop changing order of columns in selector popup! A-Z it all
 
 ### New Features
 * User profile page

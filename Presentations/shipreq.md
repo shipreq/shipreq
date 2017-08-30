@@ -5,6 +5,13 @@ layout: true
 .bottom-bar[
   {{title}}
 ]
+
+NOTE TO SELF: To prepare demo,
+* Build Docker images in release mode
+* `bin/env dev up`
+* https://local.shipreq.com
+* Ensure user exists and can login
+* Create req-code demo
 -->
 
 ---
@@ -111,7 +118,7 @@ my home and my strength.
 
 ---
 
-# Current State
+# Current Industry State
 
 --
 
@@ -225,7 +232,7 @@ TODO Screenshot of a use case in ShipReq
   Initial feedback:
   * very positive
   * need to handle other requirement types
-  * few feature requests
+  * a few feature requests
 
 ---
 
@@ -255,14 +262,137 @@ TODO Screenshot of a use case in ShipReq
 * v3.0: Collaboration, enterprise, social
 --
 
-* Future: 3rd party integrations, increase domain capabilities
+* Future versions: many, many ideas
+  <br>Will triage later according to market and customer feedback
 
 ---
 
-# Features?
+# Features
+
+(and product demo)
+
+*new project → req table → create a few reqs*
 
 ---
 exclude: true
+
+====================================================================================================
+
+* Defining attributes
+  * Quality
+  * Attn to detail
+  * Ease of use
+  * Capability
+
+*new project → req table → create a few reqs*
+
+* Requirement Types
+  * Use Cases
+  * User-defined
+* Switch to cfg/reqtypes & back (no network)
+
+* Rich text
+  * Refs (show hover)
+  * Lists
+  * Links (web/mail)
+  * Math
+  * More interesting features later
+
+* UX
+  * ReqTable: Excel-like, bulk mindset, edit many in parallel
+  * ReqDetail: single focus, detailed mindset
+
+* UX
+  * FAST! Even on poor networks.
+  * Only network activity when a change is made. Non-blocking.
+  * Switch back-and-forth (Table↔Detail), even mid-edit
+* ReqDetail → CfgFields → change order, mod text field → ReqDetail
+
+* UX
+  * Real-time
+    * updates between users/devices/tabs
+    * responses to nearly all operations
+
+* Tags
+  * in Tags column
+  * in text
+  * in own columns (many:many & transitive)
+
+* Implications
+  A → B
+  If requirement A exists, requirement B must exist too.
+  If requirement A doesn't exist, requirement B might not need to exist.
+  Turns a flat list of requirements into an explicable web
+
+* Demonstration
+
+* New Use Case
+  * Create flow
+  * Show diagram
+
+* New tab, create GRs implied by the UC
+
+* Create a GR implied by a GR
+* Show locality graph in ReqDetail
+* Show project ImpGraph
+
+* Create a MF and imply UC
+* Show transitivity: MF → UC → FRs
+* Create imp column
+
+* Comprehensibility & maintainability
+  * Becomes more important as project grows
+  * Implications aid comprehensibility
+  * Delete UC: Show implied reqs auto-selected
+
+* Comprehensibility
+  * Another tool: req codes
+    * open demo project, show with/without
+    * show reappearance for cross-concerns
+
+* Comprehensibility
+  * Power filter
+  * Instant search feedback
+
+* Comprehensibility
+  * Distribution manager (planned)
+
+# Data Integrity
+Huge problem as requirements projects grow.
+1. Preventable errors.
+1. Detectable errors.
+1. Security.
+
+* Preventable errors
+  * Links between requirements
+    * References in text (req, UC step, code)
+    * Implications
+    * Use case flow
+
+* Preventable errors
+  * IDs never lost (change req type, reqtype mnemonic)
+
+* Detectable errors
+  * mandatory fields
+  * tag conflicts
+  * dead refs
+  * all implying reqs are dead
+  * user-defined issues
+  * loose issues
+
+* Detectable errors
+  * screen WIP
+
+* Security
+  * Audit history
+  * Tamper-proof (similar to crypto-currencies like Bitcoin)
+  * UI pending
+
+* Data Integrity & UX (ease-of-use + feedback speed) mean:
+  * Cost of user failure/play/experimentation nearly zero
+    * Delete/undelete anything at will
+    * Tag/imp fields are dynamic views, detached from storage
+
 ====================================================================================================
 
 
@@ -272,53 +402,6 @@ Alternative Businesses
   - Licence to
   - Parter with
   - Create own
-
-Features
-
-* ReqTable excel-like, bulk mindset over time
-* ReqDetail, single focus, detailed mindset
-* Switch back-and-forth
-
-* Create requirements
-  * Normal requirements - user-definable
-  * Special requirements - use cases
-  * Rich text
-* Innovative
-  * Req codes
-  * Customisability
-    * Tag/imp fields are dynamic views, detached from storage
-    * Fields per req-type
-  * Tags are many:many tree
-* Integrity
-  * Compile-time
-    * Links between requirements
-      * References in text
-      * Implications
-      * Use case flow
-    * IDs never lost - req.type change, reqtype.mnemonic change
-  * Runtime
-    * tag conflicts
-    * empty fields
-    * issues
-      * rules via config
-      * custom via tags
-      * loose
-    * dead refs
-* Comprehensibility
-  * Req codes
-  * Power filter
-  * Instant search feedback
-  * Distribution manager
-* Modifyability
-  * <go back and look at reqs>
-  * delete/restore considers implication graph
-
-* Audit history
-* Quality
-* Real-time
-  * updates between users/devices/tabs
-  * responses to nearly all operations
-
 
 3.0 - Social
 * no more confusion between teams, external parties, individuals
