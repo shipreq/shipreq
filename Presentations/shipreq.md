@@ -264,14 +264,15 @@ TODO Screenshot of a use case in ShipReq
 
 * Future versions: many, many ideas
   <br>Will triage later according to market and customer feedback
-
 ---
 
 # Features
 
 (and product demo)
+---
 
-*new project → req table → create a few reqs*
+
+
 
 ---
 exclude: true
@@ -288,15 +289,18 @@ exclude: true
 
 * Requirement Types
   * Use Cases
-  * User-defined
-* Switch to cfg/reqtypes & back (no network)
+  * User-defined (show cfg/reqtypes)
 
 * Rich text
   * Refs (show hover)
   * Lists
   * Links (web/mail)
   * Math
-  * More interesting features later
+  * More features later
+
+* Use Cases
+  * Create flow
+  * Show diagram
 
 * UX
   * ReqTable: Excel-like, bulk mindset, edit many in parallel
@@ -306,12 +310,11 @@ exclude: true
   * FAST! Even on poor networks.
   * Only network activity when a change is made. Non-blocking.
   * Switch back-and-forth (Table↔Detail), even mid-edit
-* ReqDetail → CfgFields → change order, mod text field → ReqDetail
+* *ReqDetail → CfgFields → change order, mod text field → ReqDetail*
 
-* UX
-  * Real-time
-    * updates between users/devices/tabs
-    * responses to nearly all operations
+* UX: Real-time
+  * Real-time responses to nearly all operations (by avoiding network)
+  * Real-time updates between users/devices/tabs (server push)
 
 * Tags
   * in Tags column
@@ -324,26 +327,23 @@ exclude: true
   If requirement A doesn't exist, requirement B might not need to exist.
   Turns a flat list of requirements into an explicable web
 
-* Demonstration
+* Implication Demonstration 1
+  * New Use Case
+  * New tab, create GRs implied by the UC
+  * Create a GR implied by a GR
+  * Show locality graph in ReqDetail
+  * Show project ImpGraph
 
-* New Use Case
-  * Create flow
-  * Show diagram
-
-* New tab, create GRs implied by the UC
-
-* Create a GR implied by a GR
-* Show locality graph in ReqDetail
-* Show project ImpGraph
-
-* Create a MF and imply UC
-* Show transitivity: MF → UC → FRs
-* Create imp column
+* Implication Demonstration 2
+  * Create a MF and imply UC
+  * Show transitivity: MF → UC → FRs
+  * Create imp column
 
 * Comprehensibility & maintainability
   * Becomes more important as project grows
-  * Implications aid comprehensibility
-  * Delete UC: Show implied reqs auto-selected
+  * Implications aid comprehensibility, especially with business reqs (demonstrate)
+
+* Delete UC: Show implied reqs auto-selected
 
 * Comprehensibility
   * Another tool: req codes
@@ -381,17 +381,17 @@ Huge problem as requirements projects grow.
   * loose issues
 
 * Detectable errors
-  * screen WIP
+  * Issues screen WIP
 
 * Security
   * Audit history
-  * Tamper-proof (similar to crypto-currencies like Bitcoin)
+  * Tamper-proof (similar to crypto-currencies like Bitcoin) and exposable
   * UI pending
 
-* Data Integrity & UX (ease-of-use + feedback speed) mean:
-  * Cost of user failure/play/experimentation nearly zero
-    * Delete/undelete anything at will
-    * Tag/imp fields are dynamic views, detached from storage
+Data Integrity & UX (ease-of-use + feedback speed) mean:
+* Cost of user failure/play/experimentation nearly zero
+  * Delete/undelete anything at will
+  * Tag/imp fields are dynamic views, detached from storage
 
 ====================================================================================================
 
