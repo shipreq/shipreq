@@ -1,0 +1,188 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title CardBoard | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.min.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+      #reqTypesTable > tbody > * > td:nth-child(1) {font-family: monospace;}
+      #reqTypesTable > tbody > * > td:nth-child(1) input {width: 8ex; font-family: monospace;}
+      #reqTypesTable > tbody > * > td:nth-child(2) input {width: 100%}
+      #reqTypesTable > tbody > * > td:nth-child(2) {width: 100%}
+      #reqTypesTable > tbody > * > td:nth-child(5) .ui.button {white-space:pre}
+
+      #reqTypesTable .ui.input input {
+        padding: 2px 4px !important;
+      }
+
+      .Style-cfg-deadMnemonic {
+        color: #aaa;
+        text-decoration: line-through;
+        margin-top: 0.4ex;
+      }
+
+  %body
+
+    %nav(style="margin-bottom:5rem")
+      .ui.menu.borderless.fixed.inverted
+        .item
+          %img{src: "logo-only-dark2.svg"}
+        .item
+          .ui.breadcrumb
+            %a.section{href: "member-home.haml.html"} Projects
+            %i.divider.icon.right.angle
+            %a.section{href: "project-index.haml.html"} CardBoard
+            %i.divider.icon.right.angle
+            .section // .active
+              .ui.dropdown.inline
+                Req Types
+                &nbsp;
+                %i.icon.dropdown
+                .menu
+                  .header Content
+                  .item Implication Graph
+                  .item ReqTable
+                  .header Configuration
+                  .item Fields
+                  .item Issues
+                  .item.active Req Types
+                  .item Tags
+        .item.ui.right.dropdown.simple
+          @japgolly
+          -# %i.dropdown.icon
+          .menu
+            %a.item{href: "member-account.haml.html"} Account
+            .item Logout
+
+    -# =============================================================================================
+    .ui.container#main
+
+      %div(style="display:flex")
+        %div.left(style="flex:1")
+          %button.ui.button.green
+            %i.icon.plus
+            New
+        %div.right
+          %button.ui.button.icon.has-popup{data-content: "Click to show deleted content."}
+            %i.icon.trash.outline.large.grey
+          %button.ui.button.icon.red.has-popup{data-content: "Showing deleted content.", style: "display:none"}
+            %i.icon.trash.outline.large.white
+
+      %table#reqTypesTable(class="ui table celled compact unstackable")
+        %thead
+          %tr
+            %th Mnemonic
+            %th Name
+            %th Implication<br>Required
+            %th Usage
+            %th
+        %tbody
+          %tr.live.sync
+            %td
+              %div
+                %input(value="BR")
+              .Style-cfg-deadMnemonic BL
+            %td
+              %div
+                %input(value="Business Rule")
+            %td
+              %input(type="checkbox" checked=1)
+            %td
+              %a(href="blah") 4
+            %td
+              .ui.button.negative.basic
+                %i.icon.trash
+                Delete
+          %tr.live.sync
+            %td
+              %div
+                %input(value="CO")
+            %td
+              %div
+                %input(value="Constraint")
+            %td
+              %input(type="checkbox" checked=1)
+            %td
+              %a(href="blah") 1
+            %td
+              .ui.button.negative.basic
+                %i.icon.trash
+                Delete
+          %tr.live.sync
+            %td
+              %div
+                %input(value="FR")
+            %td
+              %div
+                %input(value="Functional Requirement")
+            %td
+              %input(type="checkbox" checked=1)
+            %td
+              %span 0
+            %td
+              .ui.button.negative.basic
+                %i.icon.trash
+                Delete
+          %tr.live.sync
+            %td
+              %div
+                %input(value="OE")
+            %td
+              %div
+                %input(value="Operating Environment")
+            %td
+              %input(type="checkbox" checked=1)
+            %td
+              %span 0
+            %td
+              .ui.button.negative.basic
+                %i.icon.trash
+                Delete
+          %tr.live.sync
+            %td
+              %div
+                %input(value="QA")
+            %td
+              %div
+                %input(value="Quality Attribute")
+            %td
+              %input(type="checkbox" checked=1)
+            %td
+              %span 0
+            %td
+              .ui.button.negative.basic
+                %i.icon.trash
+                Delete
+          %tr.live.sync
+            %td
+              %div
+                %input(value="SI")
+            %td
+              %div
+                %input(value="Solution Idea")
+            %td
+              %input(type="checkbox" checked=1)
+            %td
+              %span 0
+            %td
+              .ui.button.negative.basic
+                %i.icon.trash
+                Delete
+          %tr.static.sync
+            %td UC
+            %td Use Case
+            %td
+              %input(disabled=1 type="checkbox" checked=1)
+            %td
+              %a(href="blah") 3
+            %td
+
+  :javascript
+    $('.ui.dropdown').dropdown();

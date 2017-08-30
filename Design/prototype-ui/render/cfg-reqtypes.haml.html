@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html><head><title>CardBoard | ShipReq</title><script src="../node_modules/jquery/dist/jquery.min.js"></script><link href="../semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="../semantic/dist/semantic.min.js"></script><style type="text/css">
+body {padding:1rem}
+.ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+.ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+.ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+#reqTypesTable > tbody > * > td:nth-child(1) {font-family: monospace;}
+#reqTypesTable > tbody > * > td:nth-child(1) input {width: 8ex; font-family: monospace;}
+#reqTypesTable > tbody > * > td:nth-child(2) input {width: 100%}
+#reqTypesTable > tbody > * > td:nth-child(2) {width: 100%}
+#reqTypesTable > tbody > * > td:nth-child(5) .ui.button {white-space:pre}
+
+#reqTypesTable .ui.input input {
+  padding: 2px 4px !important;
+}
+
+.Style-cfg-deadMnemonic {
+  color: #aaa;
+  text-decoration: line-through;
+  margin-top: 0.4ex;
+}
+
+</style></head><body><nav style="margin-bottom:5rem"><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="member-home.haml.html" class="section">Projects</a><i class="divider icon right angle"></i><a href="project-index.haml.html" class="section">CardBoard</a><i class="divider icon right angle"></i><div class="section"><!--/ .active--><div class="ui dropdown inline">Req Types&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="header">Content</div><div class="item">Implication Graph</div><div class="item">ReqTable</div><div class="header">Configuration</div><div class="item">Fields</div><div class="item">Issues</div><div class="item active">Req Types</div><div class="item">Tags</div></div></div></div></div></div><div class="item ui right dropdown simple">@japgolly<div class="menu"><a href="member-account.haml.html" class="item">Account</a><div class="item">Logout</div></div></div></div></nav><div class="ui container" id="main"><div style="display:flex"><div style="flex:1" class="left"><button class="ui button green"><i class="icon plus"></i>New</button></div><div class="right"><button data-content="Click to show deleted content." class="ui button icon has-popup"><i class="icon trash outline large grey"></i></button><button data-content="Showing deleted content." style="display:none" class="ui button icon red has-popup"><i class="icon trash outline large white"></i></button></div></div><table class="ui table celled compact unstackable" id="reqTypesTable"><thead><tr><th>Mnemonic</th><th>Name</th><th>Implication<br>Required</th><th>Usage</th><th></th></tr></thead><tbody><tr class="live sync"><td><div><input value="BR" /></div><div class="Style-cfg-deadMnemonic">BL</div></td><td><div><input value="Business Rule" /></div></td><td><input type="checkbox" checked="1" /></td><td><a href="blah">4</a></td><td><div class="ui button negative basic"><i class="icon trash"></i>Delete</div></td></tr><tr class="live sync"><td><div><input value="CO" /></div></td><td><div><input value="Constraint" /></div></td><td><input type="checkbox" checked="1" /></td><td><a href="blah">1</a></td><td><div class="ui button negative basic"><i class="icon trash"></i>Delete</div></td></tr><tr class="live sync"><td><div><input value="FR" /></div></td><td><div><input value="Functional Requirement" /></div></td><td><input type="checkbox" checked="1" /></td><td><span>0</span></td><td><div class="ui button negative basic"><i class="icon trash"></i>Delete</div></td></tr><tr class="live sync"><td><div><input value="OE" /></div></td><td><div><input value="Operating Environment" /></div></td><td><input type="checkbox" checked="1" /></td><td><span>0</span></td><td><div class="ui button negative basic"><i class="icon trash"></i>Delete</div></td></tr><tr class="live sync"><td><div><input value="QA" /></div></td><td><div><input value="Quality Attribute" /></div></td><td><input type="checkbox" checked="1" /></td><td><span>0</span></td><td><div class="ui button negative basic"><i class="icon trash"></i>Delete</div></td></tr><tr class="live sync"><td><div><input value="SI" /></div></td><td><div><input value="Solution Idea" /></div></td><td><input type="checkbox" checked="1" /></td><td><span>0</span></td><td><div class="ui button negative basic"><i class="icon trash"></i>Delete</div></td></tr><tr class="static sync"><td>UC</td><td>Use Case</td><td><input disabled="1" type="checkbox" checked="1" /></td><td><a href="blah">3</a></td><td></td></tr></tbody></table></div></body>
+<script type="text/javascript">
+//<![CDATA[
+$('.ui.dropdown').dropdown();
+//]]>
+</script>
+</html>
