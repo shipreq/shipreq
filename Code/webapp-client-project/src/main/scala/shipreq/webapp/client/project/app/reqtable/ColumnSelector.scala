@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty.NonEmptyVector
-import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -58,21 +58,14 @@ object ColumnSelector {
 
   private def render(p: Props): VdomElement = {
 
-    val active: NonEmptyVector[ColumnPlus] =
-      NonEmptyVector force p.active.iterator.map(p.available.apply).filterDefined.toVector
-
     val activeColumns: Set[Column] =
-      active.iterator.map(_.column).toSet
-
-    val unselectedColumns: Array[ColumnPlus] =
-      p.available.columns
-        .iterator
-        .filter(c => !activeColumns.contains(c.column))
-        .toArray
-        .sortBy(_.name)
+      p.active.toNES.whole
 
     val columns: NonEmptyVector[(ColumnPlus, On)] =
-      active.map((_, On)) ++ unselectedColumns.map((_, Off))
+      NonEmptyVector.force(
+        MutableArray.map(p.available.columns.whole)(c => (c, On when activeColumns.contains(c.column)))
+          .sortBy(_._1.name)
+          .to[Vector])
 
     val items: NonEmptyVector[ColumnCheckboxes.Item] =
       columns.map { case (c, on) =>

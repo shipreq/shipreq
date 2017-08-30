@@ -93,7 +93,6 @@ Phase 2
 * Warn when closing page and there are open, dirty editors
 * Delete projects
 * Super-basic style for cfg pages
-* Stop changing order of columns in selector popup! A-Z it all
 
 ### New Features
 * User profile page
