@@ -107,6 +107,7 @@ object DispatchBM {
     registrationTokenLifespan  = 7 days,
     passwordResetTokenLifespan = 4 days,
     publicRegistration         = Allow,
+    googleAnalyticsTrackingId  = None,
     taskmanSchema              = "test_taskman",
     initTaskmanOnBoot          = false,
     initTaskmanRetry           = RetryCriteria(2 hours, Some(666)),
