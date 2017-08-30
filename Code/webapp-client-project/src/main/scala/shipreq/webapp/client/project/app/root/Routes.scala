@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.app.root
 
 import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.extra.router.{RouterCtl => RouterCtl_, _}
@@ -8,11 +9,13 @@ import japgolly.scalajs.react.vdom.Implicits._
 import monocle._
 import monocle.macros._
 import scala.annotation.elidable
+import shipreq.base.util.Url
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.{AnalyticsConfig, WebappConfig}
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.data.{ExternalPubid, ReqType, ReqTypePos}
 import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.base.util.GoogleAnalytics
 
 object Routes {
 
@@ -82,6 +85,7 @@ object Routes {
       def title(p: Page): String =
         WebappConfig.makePageTitle(Page.title(p) :+ rootInstance.cd.project().name: _*)
 
+
       ( staticPage(dsl.root       , Page.Index      )
       | staticPage(reqTablePath   , Page.ReqTable   )
       | staticPage("#impgraph"    , Page.ImpGraph   )
@@ -93,6 +97,22 @@ object Routes {
       | trimSlashes
       ).notFound(redirectToPage(Page.Index)(Redirect.Replace))
         .setTitle(title)
+        .onPostRender(trackPage)
         .verify(Page.sampleValues.head, Page.sampleValues.tail: _*)
+    }
+
+    private val trackPage: (Option[Page], Page) => Callback = {
+      val root = Url.Relative("/project/<id>")
+      val path: Page => Url.Relative = {
+        case Page.Index        => root
+        case Page.ReqTable     => root / "reqTable"
+        case Page.ReqDetail(_) => root / "reqDetail"
+        case Page.ImpGraph     => root / "impGraph"
+        case Page.CfgFields    => root / "cfg/fields"
+        case Page.CfgIssues    => root / "cfg/issues"
+        case Page.CfgReqTypes  => root / "cfg/reqTypes"
+        case Page.CfgTags      => root / "cfg/tags"
+      }
+      GoogleAnalytics.onRouteChange(_, _)(path)
     }
 }

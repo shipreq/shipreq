@@ -65,208 +65,6 @@
 /************************************************************************/
 /******/ ({
 
-/***/ 10:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * Copyright 2017 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/**
- * @fileoverview
- * The functions exported by this module make it easier (and safer) to override
- * foreign object methods (in a modular way) and respond to or modify their
- * invocation. The primary feature is the ability to override a method without
- * worrying if it's already been overridden somewhere else in the codebase. It
- * also allows for safe restoring of an overridden method by only fully
- * restoring a method once all overrides have been removed.
- */
-
-var instances = [];
-
-/**
- * A class that wraps a foreign object method and emit events before and
- * after the original method is called.
- */
-
-var MethodChain = function () {
-  _createClass(MethodChain, null, [{
-    key: "add",
-
-    /**
-     * Adds the passed override method to the list of method chain overrides.
-     * @param {!Object} context The object containing the method to chain.
-     * @param {string} methodName The name of the method on the object.
-     * @param {!Function} methodOverride The override method to add.
-     */
-    value: function add(context, methodName, methodOverride) {
-      getOrCreateMethodChain(context, methodName).add(methodOverride);
-    }
-
-    /**
-     * Removes a method chain added via `add()`. If the override is the
-     * only override added, the original method is restored.
-     * @param {!Object} context The object containing the method to unchain.
-     * @param {string} methodName The name of the method on the object.
-     * @param {!Function} methodOverride The override method to remove.
-     */
-
-  }, {
-    key: "remove",
-    value: function remove(context, methodName, methodOverride) {
-      getOrCreateMethodChain(context, methodName).remove(methodOverride);
-    }
-
-    /**
-     * Wraps a foreign object method and overrides it. Also stores a reference
-     * to the original method so it can be restored later.
-     * @param {!Object} context The object containing the method.
-     * @param {string} methodName The name of the method on the object.
-     */
-
-  }]);
-
-  function MethodChain(context, methodName) {
-    var _this = this;
-
-    _classCallCheck(this, MethodChain);
-
-    this.context = context;
-    this.methodName = methodName;
-    this.isTask = /Task$/.test(methodName);
-
-    this.originalMethodReference = this.isTask ? context.get(methodName) : context[methodName];
-
-    this.methodChain = [];
-    this.boundMethodChain = [];
-
-    // Wraps the original method.
-    this.wrappedMethod = function () {
-      var lastBoundMethod = _this.boundMethodChain[_this.boundMethodChain.length - 1];
-
-      return lastBoundMethod.apply(undefined, arguments);
-    };
-
-    // Override original method with the wrapped one.
-    if (this.isTask) {
-      context.set(methodName, this.wrappedMethod);
-    } else {
-      context[methodName] = this.wrappedMethod;
-    }
-  }
-
-  /**
-   * Adds a method to the method chain.
-   * @param {!Function} overrideMethod The override method to add.
-   */
-
-
-  _createClass(MethodChain, [{
-    key: "add",
-    value: function add(overrideMethod) {
-      this.methodChain.push(overrideMethod);
-      this.rebindMethodChain();
-    }
-
-    /**
-     * Removes a method from the method chain and restores the prior order.
-     * @param {!Function} overrideMethod The override method to remove.
-     */
-
-  }, {
-    key: "remove",
-    value: function remove(overrideMethod) {
-      var index = this.methodChain.indexOf(overrideMethod);
-      if (index > -1) {
-        this.methodChain.splice(index, 1);
-        if (this.methodChain.length > 0) {
-          this.rebindMethodChain();
-        } else {
-          this.destroy();
-        }
-      }
-    }
-
-    /**
-     * Loops through the method chain array and recreates the bound method
-     * chain array. This is necessary any time a method is added or removed
-     * to ensure proper original method context and order.
-     */
-
-  }, {
-    key: "rebindMethodChain",
-    value: function rebindMethodChain() {
-      this.boundMethodChain = [];
-      for (var method, i = 0; method = this.methodChain[i]; i++) {
-        var previousMethod = this.boundMethodChain[i - 1] || this.originalMethodReference.bind(this.context);
-        this.boundMethodChain.push(method(previousMethod));
-      }
-    }
-
-    /**
-     * Calls super and destroys the instance if no registered handlers remain.
-     */
-
-  }, {
-    key: "destroy",
-    value: function destroy() {
-      var index = instances.indexOf(this);
-      if (index > -1) {
-        instances.splice(index, 1);
-        if (this.isTask) {
-          this.context.set(this.methodName, this.originalMethodReference);
-        } else {
-          this.context[this.methodName] = this.originalMethodReference;
-        }
-      }
-    }
-  }]);
-
-  return MethodChain;
-}();
-
-/**
- * Gets a MethodChain instance for the passed object and method. If the method
- * has already been wrapped via an existing MethodChain instance, that
- * instance is returned.
- * @param {!Object} context The object containing the method.
- * @param {string} methodName The name of the method on the object.
- * @return {!MethodChain}
- */
-
-
-/* harmony default export */ __webpack_exports__["a"] = (MethodChain);
-function getOrCreateMethodChain(context, methodName) {
-  var methodChain = instances.filter(function (h) {
-    return h.context == context && h.methodName == methodName;
-  })[0];
-
-  if (!methodChain) {
-    methodChain = new MethodChain(context, methodName);
-    instances.push(methodChain);
-  }
-  return methodChain;
-}
-
-/***/ }),
-
 /***/ 159:
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -278,7 +76,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = closest;
 
-var _matches = __webpack_require__(30);
+var _matches = __webpack_require__(28);
 
 var _matches2 = _interopRequireDefault(_matches);
 
@@ -341,7 +139,7 @@ function parents(element) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__event_emitter__ = __webpack_require__(219);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utilities__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utilities__ = __webpack_require__(7);
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -628,7 +426,7 @@ function parse(source) {
 
 /***/ }),
 
-/***/ 18:
+/***/ 17:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -663,15 +461,16 @@ var NULL_DIMENSION = '(not set)';
 
 /***/ }),
 
-/***/ 19:
+/***/ 18:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = provide;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__constants__ = __webpack_require__(18);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utilities__ = __webpack_require__(5);
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 /**
- * Copyright 2016 Google Inc. All Rights Reserved.
+ * Copyright 2017 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -686,161 +485,180 @@ var NULL_DIMENSION = '(not set)';
  * limitations under the License.
  */
 
+/**
+ * @fileoverview
+ * The functions exported by this module make it easier (and safer) to override
+ * foreign object methods (in a modular way) and respond to or modify their
+ * invocation. The primary feature is the ability to override a method without
+ * worrying if it's already been overridden somewhere else in the codebase. It
+ * also allows for safe restoring of an overridden method by only fully
+ * restoring a method once all overrides have been removed.
+ */
 
-
+var instances = [];
 
 /**
- * Provides a plugin for use with analytics.js, accounting for the possibility
- * that the global command queue has been renamed or not yet defined.
- * @param {string} pluginName The plugin name identifier.
- * @param {Function} pluginConstructor The plugin constructor function.
+ * A class that wraps a foreign object method and emit events before and
+ * after the original method is called.
  */
-function provide(pluginName, pluginConstructor) {
-  var gaAlias = window.GoogleAnalyticsObject || 'ga';
-  window[gaAlias] = window[gaAlias] || function () {
-    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-      args[_key] = arguments[_key];
+
+var MethodChain = function () {
+  _createClass(MethodChain, null, [{
+    key: "add",
+
+    /**
+     * Adds the passed override method to the list of method chain overrides.
+     * @param {!Object} context The object containing the method to chain.
+     * @param {string} methodName The name of the method on the object.
+     * @param {!Function} methodOverride The override method to add.
+     */
+    value: function add(context, methodName, methodOverride) {
+      getOrCreateMethodChain(context, methodName).add(methodOverride);
     }
 
-    (window[gaAlias].q = window[gaAlias].q || []).push(args);
-  };
+    /**
+     * Removes a method chain added via `add()`. If the override is the
+     * only override added, the original method is restored.
+     * @param {!Object} context The object containing the method to unchain.
+     * @param {string} methodName The name of the method on the object.
+     * @param {!Function} methodOverride The override method to remove.
+     */
 
-  // Adds the autotrack dev ID if not already included.
-  window.gaDevIds = window.gaDevIds || [];
-  if (window.gaDevIds.indexOf(__WEBPACK_IMPORTED_MODULE_0__constants__["a" /* DEV_ID */]) < 0) {
-    window.gaDevIds.push(__WEBPACK_IMPORTED_MODULE_0__constants__["a" /* DEV_ID */]);
-  }
+  }, {
+    key: "remove",
+    value: function remove(context, methodName, methodOverride) {
+      getOrCreateMethodChain(context, methodName).remove(methodOverride);
+    }
 
-  // Formally provides the plugin for use with analytics.js.
-  window[gaAlias]('provide', pluginName, pluginConstructor);
+    /**
+     * Wraps a foreign object method and overrides it. Also stores a reference
+     * to the original method so it can be restored later.
+     * @param {!Object} context The object containing the method.
+     * @param {string} methodName The name of the method on the object.
+     */
 
-  // Registers the plugin on the global gaplugins object.
-  window.gaplugins = window.gaplugins || {};
-  window.gaplugins[Object(__WEBPACK_IMPORTED_MODULE_1__utilities__["b" /* capitalize */])(pluginName)] = pluginConstructor;
-}
+  }]);
 
-/***/ }),
+  function MethodChain(context, methodName) {
+    var _this = this;
 
-/***/ 20:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+    _classCallCheck(this, MethodChain);
 
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return plugins; });
-/* harmony export (immutable) */ __webpack_exports__["b"] = trackUsage;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__constants__ = __webpack_require__(18);
-/**
- * Copyright 2016 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+    this.context = context;
+    this.methodName = methodName;
+    this.isTask = /Task$/.test(methodName);
 
+    this.originalMethodReference = this.isTask ? context.get(methodName) : context[methodName];
 
+    this.methodChain = [];
+    this.boundMethodChain = [];
 
-var plugins = {
-  CLEAN_URL_TRACKER: 1,
-  EVENT_TRACKER: 2,
-  IMPRESSION_TRACKER: 3,
-  MEDIA_QUERY_TRACKER: 4,
-  OUTBOUND_FORM_TRACKER: 5,
-  OUTBOUND_LINK_TRACKER: 6,
-  PAGE_VISIBILITY_TRACKER: 7,
-  SOCIAL_WIDGET_TRACKER: 8,
-  URL_CHANGE_TRACKER: 9,
-  MAX_SCROLL_TRACKER: 10
-};
+    // Wraps the original method.
+    this.wrappedMethod = function () {
+      var lastBoundMethod = _this.boundMethodChain[_this.boundMethodChain.length - 1];
 
-var PLUGIN_COUNT = Object.keys(plugins).length;
+      return lastBoundMethod.apply(undefined, arguments);
+    };
 
-/**
- * Tracks the usage of the passed plugin by encoding a value into a usage
- * string sent with all hits for the passed tracker.
- * @param {!Tracker} tracker The analytics.js tracker object.
- * @param {number} plugin The plugin enum.
- */
-function trackUsage(tracker, plugin) {
-  trackVersion(tracker);
-  trackPlugin(tracker, plugin);
-}
-
-/**
- * Converts a hexadecimal string to a binary string.
- * @param {string} hex A hexadecimal numeric string.
- * @return {string} a binary numeric string.
- */
-function convertHexToBin(hex) {
-  return parseInt(hex || '0', 16).toString(2);
-}
-
-/**
- * Converts a binary string to a hexadecimal string.
- * @param {string} bin A binary numeric string.
- * @return {string} a hexadecimal numeric string.
- */
-function convertBinToHex(bin) {
-  return parseInt(bin || '0', 2).toString(16);
-}
-
-/**
- * Adds leading zeros to a string if it's less than a minimum length.
- * @param {string} str A string to pad.
- * @param {number} len The minimum length of the string
- * @return {string} The padded string.
- */
-function padZeros(str, len) {
-  if (str.length < len) {
-    var toAdd = len - str.length;
-    while (toAdd) {
-      str = '0' + str;
-      toAdd--;
+    // Override original method with the wrapped one.
+    if (this.isTask) {
+      context.set(methodName, this.wrappedMethod);
+    } else {
+      context[methodName] = this.wrappedMethod;
     }
   }
-  return str;
-}
+
+  /**
+   * Adds a method to the method chain.
+   * @param {!Function} overrideMethod The override method to add.
+   */
+
+
+  _createClass(MethodChain, [{
+    key: "add",
+    value: function add(overrideMethod) {
+      this.methodChain.push(overrideMethod);
+      this.rebindMethodChain();
+    }
+
+    /**
+     * Removes a method from the method chain and restores the prior order.
+     * @param {!Function} overrideMethod The override method to remove.
+     */
+
+  }, {
+    key: "remove",
+    value: function remove(overrideMethod) {
+      var index = this.methodChain.indexOf(overrideMethod);
+      if (index > -1) {
+        this.methodChain.splice(index, 1);
+        if (this.methodChain.length > 0) {
+          this.rebindMethodChain();
+        } else {
+          this.destroy();
+        }
+      }
+    }
+
+    /**
+     * Loops through the method chain array and recreates the bound method
+     * chain array. This is necessary any time a method is added or removed
+     * to ensure proper original method context and order.
+     */
+
+  }, {
+    key: "rebindMethodChain",
+    value: function rebindMethodChain() {
+      this.boundMethodChain = [];
+      for (var method, i = 0; method = this.methodChain[i]; i++) {
+        var previousMethod = this.boundMethodChain[i - 1] || this.originalMethodReference.bind(this.context);
+        this.boundMethodChain.push(method(previousMethod));
+      }
+    }
+
+    /**
+     * Calls super and destroys the instance if no registered handlers remain.
+     */
+
+  }, {
+    key: "destroy",
+    value: function destroy() {
+      var index = instances.indexOf(this);
+      if (index > -1) {
+        instances.splice(index, 1);
+        if (this.isTask) {
+          this.context.set(this.methodName, this.originalMethodReference);
+        } else {
+          this.context[this.methodName] = this.originalMethodReference;
+        }
+      }
+    }
+  }]);
+
+  return MethodChain;
+}();
 
 /**
- * Accepts a binary numeric string and flips the digit from 0 to 1 at the
- * specified index.
- * @param {string} str The binary numeric string.
- * @param {number} index The index to flip the bit.
- * @return {string} The new binary string with the bit flipped on
+ * Gets a MethodChain instance for the passed object and method. If the method
+ * has already been wrapped via an existing MethodChain instance, that
+ * instance is returned.
+ * @param {!Object} context The object containing the method.
+ * @param {string} methodName The name of the method on the object.
+ * @return {!MethodChain}
  */
-function flipBitOn(str, index) {
-  return str.substr(0, index) + 1 + str.substr(index + 1);
-}
 
-/**
- * Accepts a tracker and a plugin index and flips the bit at the specified
- * index on the tracker's usage parameter.
- * @param {Object} tracker An analytics.js tracker.
- * @param {number} pluginIndex The index of the plugin in the global list.
- */
-function trackPlugin(tracker, pluginIndex) {
-  var usageHex = tracker.get('&' + __WEBPACK_IMPORTED_MODULE_0__constants__["c" /* USAGE_PARAM */]);
-  var usageBin = padZeros(convertHexToBin(usageHex), PLUGIN_COUNT);
 
-  // Flip the bit of the plugin being tracked.
-  usageBin = flipBitOn(usageBin, PLUGIN_COUNT - pluginIndex);
+/* harmony default export */ __webpack_exports__["a"] = (MethodChain);
+function getOrCreateMethodChain(context, methodName) {
+  var methodChain = instances.filter(function (h) {
+    return h.context == context && h.methodName == methodName;
+  })[0];
 
-  // Stores the modified usage string back on the tracker.
-  tracker.set('&' + __WEBPACK_IMPORTED_MODULE_0__constants__["c" /* USAGE_PARAM */], convertBinToHex(usageBin));
-}
-
-/**
- * Accepts a tracker and adds the current version to the version param.
- * @param {Object} tracker An analytics.js tracker.
- */
-function trackVersion(tracker) {
-  tracker.set('&' + __WEBPACK_IMPORTED_MODULE_0__constants__["e" /* VERSION_PARAM */], __WEBPACK_IMPORTED_MODULE_0__constants__["d" /* VERSION */]);
+  if (!methodChain) {
+    methodChain = new MethodChain(context, methodName);
+    instances.push(methodChain);
+  }
+  return methodChain;
 }
 
 /***/ }),
@@ -854,7 +672,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_autotrack_lib_plugins_clean_url_tracker__ = __webpack_require__(211);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_autotrack_lib_plugins_outbound_link_tracker__ = __webpack_require__(216);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_autotrack_lib_plugins_page_visibility_tracker__ = __webpack_require__(217);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_autotrack_lib_plugins_url_change_tracker__ = __webpack_require__(220);
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 /*
@@ -866,7 +683,6 @@ See https://philipwalton.com/articles/the-google-analytics-setup-i-use-on-every-
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ShipReq-specific
-
 
 
 
@@ -902,15 +718,11 @@ var metrics = {
   PAGE_LOADS: 'metric5'
 };
 
-var requireAutotrackPlugins = function requireAutotrackPlugins() {
+var requireAutotrackPlugins = function requireAutotrackPlugins(sendPageviewNow) {
 
   ga('require', 'cleanUrlTracker', {
     stripQuery: true,
-    trailingSlash: 'remove',
-    urlFieldsFilter: function urlFieldsFilter(fieldsObj, parseUrl) {
-      fieldsObj.page = parseUrl(fieldsObj.page).pathname.replace(/^\/login\/.*/, '/login').replace(/^\/project\/[a-zA-Z0-9]+/, '/project/<id>');
-      return fieldsObj;
-    }
+    trailingSlash: 'remove'
   });
 
   ga('require', 'outboundLinkTracker', {
@@ -919,15 +731,11 @@ var requireAutotrackPlugins = function requireAutotrackPlugins() {
   });
 
   ga('require', 'pageVisibilityTracker', {
-    sendInitialPageview: true, // replaces ga('send','pageview')
+    sendInitialPageview: sendPageviewNow, // replaces ga('send','pageview') when true
     pageLoadsMetricIndex: getDefinitionIndex(metrics.PAGE_LOADS),
     visibleMetricIndex: getDefinitionIndex(metrics.PAGE_VISIBLE),
     timeZone: TIMEZONE,
     fieldsObj: _defineProperty({}, dimensions.HIT_SOURCE, 'pageVisibilityTracker')
-  });
-
-  ga('require', 'urlChangeTracker', {
-    fieldsObj: _defineProperty({}, dimensions.HIT_SOURCE, 'urlChangeTracker')
   });
 };
 
@@ -947,20 +755,15 @@ var NULL_VALUE = '(not set)';
  * Initializes all the analytics setup. Creates trackers and sets initial
  * values on the trackers.
  */
-var init = function init(TRACKING_ID) {
+var init = function init(TRACKING_ID, sendPageviewNow) {
   // Initialize the command queue in case analytics.js hasn't loaded yet.
-  window.ga = window.ga || function () {
-    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-      args[_key] = arguments[_key];
-    }
-
-    return (ga.q = ga.q || []).push(args);
-  };
+  // window.ga = window.ga || ((...args) => (ga.q = ga.q || []).push(args));
+  // ↑ no need for this; it's been added to the Lift snippet, Analytics.scala
 
   createTracker(TRACKING_ID);
   trackErrors();
   trackCustomDimensions();
-  requireAutotrackPlugins();
+  requireAutotrackPlugins(sendPageviewNow);
   sendNavigationTimingMetrics();
 };
 
@@ -1111,8 +914,8 @@ var sendNavigationTimingMetrics = function sendNavigationTimingMetrics() {
   // In some edge cases browsers return very obviously incorrect NT values,
   // e.g. 0, negative, or future times. This validates values before sending.
   var allValuesAreValid = function allValuesAreValid() {
-    for (var _len2 = arguments.length, values = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-      values[_key2] = arguments[_key2];
+    for (var _len = arguments.length, values = Array(_len), _key = 0; _key < _len; _key++) {
+      values[_key] = arguments[_key];
     }
 
     return values.every(function (value) {
@@ -1162,13 +965,13 @@ window.ga2 = { i: init };
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils__ = __webpack_require__(29);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_dom_utils__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__constants__ = __webpack_require__(18);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__method_chain__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__provide__ = __webpack_require__(19);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__usage__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__utilities__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__constants__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__method_chain__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__provide__ = __webpack_require__(29);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__usage__ = __webpack_require__(30);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__utilities__ = __webpack_require__(7);
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1426,7 +1229,7 @@ var _closest = __webpack_require__(159);
 
 var _closest2 = _interopRequireDefault(_closest);
 
-var _matches = __webpack_require__(30);
+var _matches = __webpack_require__(28);
 
 var _matches2 = _interopRequireDefault(_matches);
 
@@ -1654,11 +1457,11 @@ function parseUrl(url) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils__ = __webpack_require__(29);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_dom_utils__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__provide__ = __webpack_require__(19);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__usage__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__utilities__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__provide__ = __webpack_require__(29);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__usage__ = __webpack_require__(30);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__utilities__ = __webpack_require__(7);
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1862,13 +1665,13 @@ function linkClickWillUnloadCurrentPage(event, link) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__constants__ = __webpack_require__(18);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__method_chain__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__provide__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__constants__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__method_chain__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__provide__ = __webpack_require__(29);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__session__ = __webpack_require__(218);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__store__ = __webpack_require__(161);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__usage__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__utilities__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__usage__ = __webpack_require__(30);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__utilities__ = __webpack_require__(7);
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
@@ -2299,9 +2102,9 @@ Object(__WEBPACK_IMPORTED_MODULE_2__provide__["a" /* default */])('pageVisibilit
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__method_chain__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__method_chain__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__store__ = __webpack_require__(161);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__utilities__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__utilities__ = __webpack_require__(7);
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2688,211 +2491,7 @@ var EventEmitter = function () {
 
 /***/ }),
 
-/***/ 220:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__method_chain__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__provide__ = __webpack_require__(19);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__usage__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__utilities__ = __webpack_require__(5);
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * Copyright 2016 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-
-
-
-
-
-/**
- * Class for the `urlChangeTracker` analytics.js plugin.
- * @implements {UrlChangeTrackerPublicInterface}
- */
-
-var UrlChangeTracker = function () {
-  /**
-   * Adds handler for the history API methods
-   * @param {!Tracker} tracker Passed internally by analytics.js
-   * @param {?Object} opts Passed by the require command.
-   */
-  function UrlChangeTracker(tracker, opts) {
-    _classCallCheck(this, UrlChangeTracker);
-
-    Object(__WEBPACK_IMPORTED_MODULE_2__usage__["b" /* trackUsage */])(tracker, __WEBPACK_IMPORTED_MODULE_2__usage__["a" /* plugins */].URL_CHANGE_TRACKER);
-
-    // Feature detects to prevent errors in unsupporting browsers.
-    if (!history.pushState || !window.addEventListener) return;
-
-    /** @type {UrlChangeTrackerOpts} */
-    var defaultOpts = {
-      shouldTrackUrlChange: this.shouldTrackUrlChange,
-      trackReplaceState: false,
-      fieldsObj: {},
-      hitFilter: null
-    };
-
-    this.opts = /** @type {UrlChangeTrackerOpts} */Object(__WEBPACK_IMPORTED_MODULE_3__utilities__["a" /* assign */])(defaultOpts, opts);
-
-    this.tracker = tracker;
-
-    // Sets the initial page field.
-    // Don't set this on the tracker yet so campaign data can be retreived
-    // from the location field.
-    this.path = getPath();
-
-    // Binds methods.
-    this.pushStateOverride = this.pushStateOverride.bind(this);
-    this.replaceStateOverride = this.replaceStateOverride.bind(this);
-    this.handlePopState = this.handlePopState.bind(this);
-
-    // Watches for history changes.
-    __WEBPACK_IMPORTED_MODULE_0__method_chain__["a" /* default */].add(history, 'pushState', this.pushStateOverride);
-    __WEBPACK_IMPORTED_MODULE_0__method_chain__["a" /* default */].add(history, 'replaceState', this.replaceStateOverride);
-    window.addEventListener('popstate', this.handlePopState);
-  }
-
-  /**
-   * Handles invocations of the native `history.pushState` and calls
-   * `handleUrlChange()` indicating that the history updated.
-   * @param {!Function} originalMethod A reference to the overridden method.
-   * @return {!Function}
-   */
-
-
-  _createClass(UrlChangeTracker, [{
-    key: 'pushStateOverride',
-    value: function pushStateOverride(originalMethod) {
-      var _this = this;
-
-      return function () {
-        originalMethod.apply(undefined, arguments);
-        _this.handleUrlChange(true);
-      };
-    }
-
-    /**
-     * Handles invocations of the native `history.replaceState` and calls
-     * `handleUrlChange()` indicating that history was replaced.
-     * @param {!Function} originalMethod A reference to the overridden method.
-     * @return {!Function}
-     */
-
-  }, {
-    key: 'replaceStateOverride',
-    value: function replaceStateOverride(originalMethod) {
-      var _this2 = this;
-
-      return function () {
-        originalMethod.apply(undefined, arguments);
-        _this2.handleUrlChange(false);
-      };
-    }
-
-    /**
-     * Handles responding to the popstate event and calls
-     * `handleUrlChange()` indicating that history was updated.
-     */
-
-  }, {
-    key: 'handlePopState',
-    value: function handlePopState() {
-      this.handleUrlChange(true);
-    }
-
-    /**
-     * Updates the page and title fields on the tracker and sends a pageview
-     * if a new history entry was created.
-     * @param {boolean} historyDidUpdate True if the history was changed via
-     *     `pushState()` or the `popstate` event. False if the history was just
-     *     modified via `replaceState()`.
-     */
-
-  }, {
-    key: 'handleUrlChange',
-    value: function handleUrlChange(historyDidUpdate) {
-      var _this3 = this;
-
-      // Calls the update logic asychronously to help ensure that app logic
-      // responding to the URL change happens prior to this.
-      setTimeout(function () {
-        var oldPath = _this3.path;
-        var newPath = getPath();
-
-        if (oldPath != newPath && _this3.opts.shouldTrackUrlChange.call(_this3, newPath, oldPath)) {
-          _this3.path = newPath;
-          _this3.tracker.set({
-            page: newPath,
-            title: document.title
-          });
-
-          if (historyDidUpdate || _this3.opts.trackReplaceState) {
-            /** @type {FieldsObj} */
-            var defaultFields = { transport: 'beacon' };
-            _this3.tracker.send('pageview', Object(__WEBPACK_IMPORTED_MODULE_3__utilities__["c" /* createFieldsObj */])(defaultFields, _this3.opts.fieldsObj, _this3.tracker, _this3.opts.hitFilter));
-          }
-        }
-      }, 0);
-    }
-
-    /**
-     * Determines whether or not the tracker should send a hit with the new page
-     * data. This default implementation can be overrided in the config options.
-     * @param {string} newPath The path after the URL change.
-     * @param {string} oldPath The path prior to the URL change.
-     * @return {boolean} Whether or not the URL change should be tracked.
-     */
-
-  }, {
-    key: 'shouldTrackUrlChange',
-    value: function shouldTrackUrlChange(newPath, oldPath) {
-      return !!(newPath && oldPath);
-    }
-
-    /**
-     * Removes all event listeners and restores overridden methods.
-     */
-
-  }, {
-    key: 'remove',
-    value: function remove() {
-      __WEBPACK_IMPORTED_MODULE_0__method_chain__["a" /* default */].remove(history, 'pushState', this.pushStateOverride);
-      __WEBPACK_IMPORTED_MODULE_0__method_chain__["a" /* default */].remove(history, 'replaceState', this.replaceStateOverride);
-      window.removeEventListener('popstate', this.handlePopState);
-    }
-  }]);
-
-  return UrlChangeTracker;
-}();
-
-Object(__WEBPACK_IMPORTED_MODULE_1__provide__["a" /* default */])('urlChangeTracker', UrlChangeTracker);
-
-/**
- * @return {string} The path value of the current URL.
- */
-function getPath() {
-  return location.pathname + location.search;
-}
-
-/***/ }),
-
-/***/ 29:
+/***/ 27:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2919,7 +2518,7 @@ var _getAttributes = __webpack_require__(214);
 
 var _getAttributes2 = _interopRequireDefault(_getAttributes);
 
-var _matches = __webpack_require__(30);
+var _matches = __webpack_require__(28);
 
 var _matches2 = _interopRequireDefault(_matches);
 
@@ -2943,7 +2542,7 @@ exports.parseUrl = _parseUrl2.default;
 
 /***/ }),
 
-/***/ 30:
+/***/ 28:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3000,7 +2599,189 @@ function matchesSelector(element, selector) {
 
 /***/ }),
 
-/***/ 5:
+/***/ 29:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = provide;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__constants__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utilities__ = __webpack_require__(7);
+/**
+ * Copyright 2016 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+
+
+/**
+ * Provides a plugin for use with analytics.js, accounting for the possibility
+ * that the global command queue has been renamed or not yet defined.
+ * @param {string} pluginName The plugin name identifier.
+ * @param {Function} pluginConstructor The plugin constructor function.
+ */
+function provide(pluginName, pluginConstructor) {
+  var gaAlias = window.GoogleAnalyticsObject || 'ga';
+  window[gaAlias] = window[gaAlias] || function () {
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    (window[gaAlias].q = window[gaAlias].q || []).push(args);
+  };
+
+  // Adds the autotrack dev ID if not already included.
+  window.gaDevIds = window.gaDevIds || [];
+  if (window.gaDevIds.indexOf(__WEBPACK_IMPORTED_MODULE_0__constants__["a" /* DEV_ID */]) < 0) {
+    window.gaDevIds.push(__WEBPACK_IMPORTED_MODULE_0__constants__["a" /* DEV_ID */]);
+  }
+
+  // Formally provides the plugin for use with analytics.js.
+  window[gaAlias]('provide', pluginName, pluginConstructor);
+
+  // Registers the plugin on the global gaplugins object.
+  window.gaplugins = window.gaplugins || {};
+  window.gaplugins[Object(__WEBPACK_IMPORTED_MODULE_1__utilities__["b" /* capitalize */])(pluginName)] = pluginConstructor;
+}
+
+/***/ }),
+
+/***/ 30:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return plugins; });
+/* harmony export (immutable) */ __webpack_exports__["b"] = trackUsage;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__constants__ = __webpack_require__(17);
+/**
+ * Copyright 2016 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+
+var plugins = {
+  CLEAN_URL_TRACKER: 1,
+  EVENT_TRACKER: 2,
+  IMPRESSION_TRACKER: 3,
+  MEDIA_QUERY_TRACKER: 4,
+  OUTBOUND_FORM_TRACKER: 5,
+  OUTBOUND_LINK_TRACKER: 6,
+  PAGE_VISIBILITY_TRACKER: 7,
+  SOCIAL_WIDGET_TRACKER: 8,
+  URL_CHANGE_TRACKER: 9,
+  MAX_SCROLL_TRACKER: 10
+};
+
+var PLUGIN_COUNT = Object.keys(plugins).length;
+
+/**
+ * Tracks the usage of the passed plugin by encoding a value into a usage
+ * string sent with all hits for the passed tracker.
+ * @param {!Tracker} tracker The analytics.js tracker object.
+ * @param {number} plugin The plugin enum.
+ */
+function trackUsage(tracker, plugin) {
+  trackVersion(tracker);
+  trackPlugin(tracker, plugin);
+}
+
+/**
+ * Converts a hexadecimal string to a binary string.
+ * @param {string} hex A hexadecimal numeric string.
+ * @return {string} a binary numeric string.
+ */
+function convertHexToBin(hex) {
+  return parseInt(hex || '0', 16).toString(2);
+}
+
+/**
+ * Converts a binary string to a hexadecimal string.
+ * @param {string} bin A binary numeric string.
+ * @return {string} a hexadecimal numeric string.
+ */
+function convertBinToHex(bin) {
+  return parseInt(bin || '0', 2).toString(16);
+}
+
+/**
+ * Adds leading zeros to a string if it's less than a minimum length.
+ * @param {string} str A string to pad.
+ * @param {number} len The minimum length of the string
+ * @return {string} The padded string.
+ */
+function padZeros(str, len) {
+  if (str.length < len) {
+    var toAdd = len - str.length;
+    while (toAdd) {
+      str = '0' + str;
+      toAdd--;
+    }
+  }
+  return str;
+}
+
+/**
+ * Accepts a binary numeric string and flips the digit from 0 to 1 at the
+ * specified index.
+ * @param {string} str The binary numeric string.
+ * @param {number} index The index to flip the bit.
+ * @return {string} The new binary string with the bit flipped on
+ */
+function flipBitOn(str, index) {
+  return str.substr(0, index) + 1 + str.substr(index + 1);
+}
+
+/**
+ * Accepts a tracker and a plugin index and flips the bit at the specified
+ * index on the tracker's usage parameter.
+ * @param {Object} tracker An analytics.js tracker.
+ * @param {number} pluginIndex The index of the plugin in the global list.
+ */
+function trackPlugin(tracker, pluginIndex) {
+  var usageHex = tracker.get('&' + __WEBPACK_IMPORTED_MODULE_0__constants__["c" /* USAGE_PARAM */]);
+  var usageBin = padZeros(convertHexToBin(usageHex), PLUGIN_COUNT);
+
+  // Flip the bit of the plugin being tracked.
+  usageBin = flipBitOn(usageBin, PLUGIN_COUNT - pluginIndex);
+
+  // Stores the modified usage string back on the tracker.
+  tracker.set('&' + __WEBPACK_IMPORTED_MODULE_0__constants__["c" /* USAGE_PARAM */], convertBinToHex(usageBin));
+}
+
+/**
+ * Accepts a tracker and adds the current version to the version param.
+ * @param {Object} tracker An analytics.js tracker.
+ */
+function trackVersion(tracker) {
+  tracker.set('&' + __WEBPACK_IMPORTED_MODULE_0__constants__["e" /* VERSION_PARAM */], __WEBPACK_IMPORTED_MODULE_0__constants__["d" /* VERSION */]);
+}
+
+/***/ }),
+
+/***/ 7:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3017,9 +2798,9 @@ function matchesSelector(element, selector) {
 /* unused harmony export toArray */
 /* harmony export (immutable) */ __webpack_exports__["g"] = now;
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "h", function() { return uuid; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils__ = __webpack_require__(29);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils__ = __webpack_require__(27);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_dom_utils__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__method_chain__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__method_chain__ = __webpack_require__(18);
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 /**

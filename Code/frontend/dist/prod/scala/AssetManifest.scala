@@ -5,7 +5,7 @@ object AssetManifest {
 
   final case class CDN(href: String, integrity: Option[String])
 
-  def analyticsJs = "/s/a119a37a3f7e2dc4a8782787581e7a29.js"
+  def analyticsJs = "/s/4aa0f48c55c769567f922ebfbc3f99cf.js"
 
   def favicon = "/s/286b75985993da80759cbdc5142de4d3.ico"
 
@@ -25,7 +25,7 @@ object AssetManifest {
 
   def loadjs = "/s/d8dd38ec39012a0dbad02f9e639bbad2.js"
 
-  def memberLibBundleJs = "/s/9debde90bc3bcae2d7821c2f726135ee.js"
+  def memberLibBundleJs = "/s/8add205090b19b58368059d715127bc9.js"
 
   def reactDomJs = CDN(
     href = "https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react-dom.min.js",

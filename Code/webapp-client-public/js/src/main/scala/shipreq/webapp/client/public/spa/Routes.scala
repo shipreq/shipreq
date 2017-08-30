@@ -1,15 +1,16 @@
 package shipreq.webapp.client.public.spa
 
+import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.extra.router.{RouterCtl => _, _}
 import japgolly.scalajs.react.vdom.Implicits._
 import shipreq.base.util.Url
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.Urls
+import shipreq.webapp.base.{AnalyticsConfig, Urls, WebappConfig}
 import shipreq.webapp.base.Urls.PublicSpaRoute
-import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.data.SecurityToken
 import shipreq.webapp.base.lib.BaseReusability._
+import shipreq.webapp.base.util.GoogleAnalytics
 
 sealed trait Page {
   val pageTitle: List[String]
@@ -109,9 +110,19 @@ object Routes {
       (removeQuery | removeTrailingSlashes | loginFrom | staticRoutes | tokenRoutes)
         .notFound(redirectToPage(Page.Home)(Redirect.Replace))
         .setTitle(p => WebappConfig.makePageTitle(p.pageTitle: _*))
+        .onPostRender(trackPage)
         .verify(
           Page.LoginFrom(Url.Relative("/blah")),
           Page.static.whole ++
             PublicSpaRoute.needsToken.whole.map(Page.Token(_, SecurityToken("abcd"))): _*)
+    }
+
+    private val trackPage: (Option[Page], Page) => Callback = {
+      val path: Page => Url.Relative = {
+        case Page.Static(route)   => route.url
+        case Page.LoginFrom(_)    => PublicSpaRoute.Login.url
+        case Page.Token(route, _) => route.prefix / "<token>"
+      }
+      GoogleAnalytics.onRouteChange(_, _)(path)
     }
 }

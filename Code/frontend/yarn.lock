@@ -6000,9 +6000,9 @@ webpack@^3.5.5:
     webpack-sources "^1.0.1"
     yargs "^8.0.2"
 
-webtamp@^0.4.8:
-  version "0.4.8"
-  resolved "https://registry.yarnpkg.com/webtamp/-/webtamp-0.4.8.tgz#b7968f11db9fa7fd8eaea2e6447c794bcc5c2a8c"
+webtamp@^0.4.9:
+  version "0.4.9"
+  resolved "https://registry.yarnpkg.com/webtamp/-/webtamp-0.4.9.tgz#5139e92b5fe7f1ae8c9c62b31ed0364966b23e48"
   dependencies:
     camelcase "^4.0.0"
     commander "^2.9.0"

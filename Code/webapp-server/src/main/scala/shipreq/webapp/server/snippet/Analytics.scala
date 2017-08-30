@@ -1,31 +1,45 @@
 package shipreq.webapp.server.snippet
 
-import net.liftweb.util.Helpers._
+import net.liftweb.http.DispatchSnippet
 import scala.xml._
 import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.server.app.Global
-import shipreq.webapp.server.lib.SingleOpStatelessSnippet
 
 /**
   * Enables Google Analytics if the server was started with a tracking ID.
   */
-object Analytics extends SingleOpStatelessSnippet {
+object Analytics extends DispatchSnippet {
 
-  override val render: NodeSeq => NodeSeq = {
-    val replacement = Global.config.googleAnalyticsTrackingId.fold(disable)(enable)
-    "*" #> replacement
-  }
+  override val dispatch: DispatchIt =
+    Global.config.googleAnalyticsTrackingId match {
 
-  def disable: NodeSeq =
-    Group(Nil)
+      case None =>
+        val remove: NodeSeq => NodeSeq = Function const Group(Nil)
+        PartialFunction(_ => remove)
 
-  def enable(trackingId: String): NodeSeq = {
-    val initErrorListener = "addEventListener('error',window.__e=function f(e){f.q=f.q||[];f.q.push(e)})"
-    val initMain = s"ga2.i('$trackingId')" // window.ga2 is created at the bottom of analyticsJs
-    Group(
-      <script type="text/javascript" data-lift="head">{initErrorListener}</script> ::
-      <script type="text/javascript" async="async" src={AssetManifest.analyticsJs} onload={initMain}></script> ::
-      <script type="text/javascript" async="async" src="https://www.google-analytics.com/analytics.js"></script> ::
-      Nil)
-  }
+      case Some(trackingId) =>
+
+        // so that analytics from Scala.JS aren't lost
+        val initGA = "window.ga=function(){ga.q.push(arguments)};ga.q=[]"
+
+        // required by analyticsJs, see https://philipwalton.com/articles/the-google-analytics-setup-i-use-on-every-site-i-build/
+        val initErr = "addEventListener('error',window.__e=function f(e){f.q=f.q||[];f.q.push(e)})"
+
+        // window.ga2 is created at the bottom of analyticsJs
+        val initAs = s"ga2.i('$trackingId',1)" // sets sendPageviewNow to true
+        val initAm = s"ga2.i('$trackingId')"   // SPA Router sends initial pageview
+
+        val scriptInit = <script type="text/javascript" data-lift="head">{initErr};{initGA}</script>
+        val scriptGA   = <script type="text/javascript" async="async" src="https://www.google-analytics.com/analytics.js"></script>
+        val scriptAs   = <script type="text/javascript" async="async" src={AssetManifest.analyticsJs} onload={initAs}></script>
+        val scriptAm   = <script type="text/javascript" async="async" src={AssetManifest.analyticsJs} onload={initAm}></script>
+
+        val singleRoute = Group(scriptInit :: scriptAs :: scriptGA :: Nil)
+        val multiRoute  = Group(scriptInit :: scriptAm :: scriptGA :: Nil)
+
+        {
+          case "multiRoute"  => _ => multiRoute
+          case "singleRoute" => _ => singleRoute
+        }
+    }
 }

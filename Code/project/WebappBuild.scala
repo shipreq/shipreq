@@ -284,10 +284,10 @@ object WebappBuild {
           // Prepare exploded WAR
           val tmpWar = prepareTmpDir("war")
           val warTiers = {
-            val scalaJsPathPublic  = Frontend.scalaJsPathPublic .value
-            val scalaJsPathHome    = Frontend.scalaJsPathHome   .value
-            val scalaJsPathProject = Frontend.scalaJsPathProject.value
-            val scalaJsPathWw      = Frontend.scalaJsPathWw     .value
+            val scalaJsPathPublic  = Frontend.scalaJsPathPublic    .value
+            val scalaJsPathHome    = Frontend.scalaJsPathHome      .value
+            val scalaJsPathProject = Frontend.scalaJsPathProject   .value
+            val scalaJsPathWw      = Frontend.scalaJsPathWw        .value
             val vizJs              = Frontend.manifestPath("vizJs").value
             val japgollyLib        = ".*(adt-macros|config_|macro-utils|nonempty|nyaya|scalaz-ext|stdlib-ext|univeq).*"
             val images             = ".*\\.(?:ico|svg|png)$"

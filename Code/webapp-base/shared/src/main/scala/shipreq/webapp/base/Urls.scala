@@ -12,7 +12,7 @@ object Urls {
 
     sealed abstract class Static(val url: Url.Relative) extends PublicSpaRoute
 
-    sealed abstract class NeedsToken(prefix: Url.Relative) extends PublicSpaRoute {
+    sealed abstract class NeedsToken(val prefix: Url.Relative) extends PublicSpaRoute {
       val url = prefix.thenParam[SecurityToken](_.value)
     }
 

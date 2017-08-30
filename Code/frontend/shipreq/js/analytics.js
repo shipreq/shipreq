@@ -11,7 +11,6 @@ See https://philipwalton.com/articles/the-google-analytics-setup-i-use-on-every-
 import 'autotrack/lib/plugins/clean-url-tracker';
 import 'autotrack/lib/plugins/outbound-link-tracker';
 import 'autotrack/lib/plugins/page-visibility-tracker';
-import 'autotrack/lib/plugins/url-change-tracker';
 
 /**
  * Bump this when making backwards incompatible changes to the tracking
@@ -43,17 +42,11 @@ const metrics = {
   PAGE_LOADS       : 'metric5',
 };
 
-const requireAutotrackPlugins = () => {
+const requireAutotrackPlugins = sendPageviewNow => {
 
   ga('require', 'cleanUrlTracker', {
     stripQuery: true,
     trailingSlash: 'remove',
-    urlFieldsFilter: function(fieldsObj, parseUrl) {
-      fieldsObj.page = parseUrl(fieldsObj.page).pathname
-        .replace(/^\/login\/.*/, '/login')
-        .replace(/^\/project\/[a-zA-Z0-9]+/, '/project/<id>');
-      return fieldsObj;
-    },
   });
 
   ga('require', 'outboundLinkTracker', {
@@ -62,15 +55,11 @@ const requireAutotrackPlugins = () => {
   });
 
   ga('require', 'pageVisibilityTracker', {
-    sendInitialPageview: true, // replaces ga('send','pageview')
+    sendInitialPageview: sendPageviewNow, // replaces ga('send','pageview') when true
     pageLoadsMetricIndex: getDefinitionIndex(metrics.PAGE_LOADS),
     visibleMetricIndex: getDefinitionIndex(metrics.PAGE_VISIBLE),
     timeZone: TIMEZONE,
     fieldsObj: {[dimensions.HIT_SOURCE]: 'pageVisibilityTracker'},
-  });
-
-  ga('require', 'urlChangeTracker', {
-    fieldsObj: {[dimensions.HIT_SOURCE]: 'urlChangeTracker'},
   });
 };
 
@@ -90,14 +79,15 @@ const NULL_VALUE = '(not set)';
  * Initializes all the analytics setup. Creates trackers and sets initial
  * values on the trackers.
  */
-const init = TRACKING_ID => {
+const init = (TRACKING_ID, sendPageviewNow) => {
   // Initialize the command queue in case analytics.js hasn't loaded yet.
-  window.ga = window.ga || ((...args) => (ga.q = ga.q || []).push(args));
+  // window.ga = window.ga || ((...args) => (ga.q = ga.q || []).push(args));
+  // ↑ no need for this; it's been added to the Lift snippet, Analytics.scala
 
   createTracker(TRACKING_ID);
   trackErrors();
   trackCustomDimensions();
-  requireAutotrackPlugins();
+  requireAutotrackPlugins(sendPageviewNow);
   sendNavigationTimingMetrics();
 };
 
