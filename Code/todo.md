@@ -91,7 +91,6 @@ Phase 2
 * Upgrade JDK and audit crypto mechanisms (pending next Jetty release)
 * Warn when closing page and there are open, dirty editors
 * Delete projects
-* Super-basic style for cfg pages
 
 ### New Features
 * User profile page
