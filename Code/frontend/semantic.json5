@@ -23,7 +23,7 @@
     "reset",       // Ensures consistent underlying styles across browsers.
     "site",        // Ensures consistent underlying styles across browsers.
     "button",      // Used all over the place.
-    "container",   // Used in project's home (/project/ABC).
+    //"container",
     //"divider",
     //"flag",
     "header",      // Used in (loaded) project menu (/project/ABC).
