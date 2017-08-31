@@ -18,13 +18,13 @@ private[issues] object MandatoryFields {
     def proc = clientData.serverSideProcToEvents(cp, remote)
   }
 
-  val rowStore = SavedRowStore.data[CustomField](_.mandatory)
+  private val rowStore = SavedRowStore.data[CustomField](_.mandatory)
 
-  type S = rowStore.State
-  val  ST = ReactS.FixCB[S]
-  type ST = ST.T[Unit]
+  private type S = rowStore.State
+  private val  ST = ReactS.FixCB[S]
+  private type ST = ST.T[Unit]
 
-  val changeListener = ChangeListener.store(rowStore)(_.customFieldTypes, _.config.fields.customFields.get)
+  private val changeListener = ChangeListener.store(rowStore)(_.customFieldTypes, _.config.fields.customFields.get)
 
   val Component = ScalaComponent.builder[Props]("MandatoryFields")
     .initialStateFromProps(initialState)
@@ -40,50 +40,46 @@ private[issues] object MandatoryFields {
 
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
 
-    val pxProject = Px.props($).map(_.clientData.project()).withReuse.autoRefresh
-    val labelFn   = pxProject map Field.nameFromProject
+    private val pxProject = Px.props($).map(_.clientData.project()).withReuse.autoRefresh
+    private val labelFn   = pxProject map Field.nameFromProject
 
-    def save(id: CustomFieldId): CallbackTo[ST] =
+    private def save(id: CustomFieldId): CallbackTo[ST] =
       $.props.map(p =>
         Persistence.simpleAsyncUpdate(rowStore)(p.proc, $ runState _, id))
 
-    val genEditor =
+    private val genEditor =
       Editors.checkboxEditor.imap(On <=> Mandatory)
         .strengthR[Field].labelSuffix(a => labelFn.value()(a._2))
 
-    val editor =
+    private val editor =
       genEditor.cmapA[(Mandatory, CustomField)](a => a)
         .zoomU[S].applyRowUpdate(rowStore)(_._2.id)
         .paddSTA(a => { case OnEditFinished(_) => save(a._2.id).runNow() })
 
-    val editable = editor.editableByRowStatus($)
+    private val editable = editor.editableByRowStatus($)
 
-    def editorI(r: rowStore.Row): editor.Input =
-      EditorI((r.i, r.p), "", editable(r.status))
-
-    def renderStaticField(f: StaticField) =
-      <.tr(
+    private def renderStaticField(f: StaticField) =
+      <.div(
         ^.key := f.name,
-        <.td(genEditor render EditorI((f.mandatory, f), "", None)))
+        genEditor render EditorI((f.mandatory, f), "", None))
 
-    def renderCustomField(f: CustomField, s: S) = {
+    private def renderCustomField(f: CustomField, s: S) = {
       val r = rowStore.get(f.id)(s)
-      <.tr(
+      <.div(
         ^.key := f.id.value,
-        <.td(
-          editor render editorI(r),
-          rowStatusCtrls(r.status, EmptyVdom)))
+        editor render EditorI((r.i, r.p), "", editable(r.status)),
+        rowStatusCtrls(r.status, EmptyVdom))
     }
 
-    def renderRows(p: Project, s: S): VdomNode = {
+    private def renderRows(p: Project, s: S): VdomNode = {
       val fs = p.config.fields.fields
       HideDead(fs)(_ live p.config).toVdomArray(
         _.fold(renderStaticField, renderCustomField(_, s)))
     }
 
     def render(p: Props, s: S): VdomElement =
-      <.table(
-        <.thead(<.tr(<.th("Mandatory Fields"))),
-        <.tbody(renderRows(p.clientData.project(), s)))
+      <.section(
+        <.h5("Mandatory Fields"),
+        renderRows(p.clientData.project(), s))
   }
 }

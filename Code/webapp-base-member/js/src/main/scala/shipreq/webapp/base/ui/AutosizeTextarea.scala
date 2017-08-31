@@ -2,6 +2,7 @@ package shipreq.webapp.base.ui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom
 import shipreq.webapp.base.jsfacade.Autosize
 
 object AutosizeTextarea {
@@ -11,8 +12,14 @@ object AutosizeTextarea {
 
   val Component = ScalaComponent.builder[TagMod]("AutosizeTextarea")
     .render_P(<.textarea(_))
-    .componentDidMount   (i => Callback(Autosize        (i.getDOMNode)))
-    .componentDidUpdate  (i => Callback(Autosize.update (i.getDOMNode)))
-    .componentWillUnmount(i => Callback(Autosize.destroy(i.getDOMNode)))
+    .configure(applyTo(e => e))
     .build
+
+  def applyTo[P, C <: Children, S, B](f: dom.Element => Autosize.Targets): ScalaComponent.Config[P, C, S, B] = _
+    .componentDidMount   (i => Callback(Autosize        (f(i.getDOMNode))))
+    .componentDidUpdate  (i => Callback(Autosize.update (f(i.getDOMNode))))
+    .componentWillUnmount(i => Callback(Autosize.destroy(f(i.getDOMNode))))
+
+  def applyToChildren[P, C <: Children, S, B](sel: String): ScalaComponent.Config[P, C, S, B] =
+    applyTo(_.querySelectorAll(sel))
 }

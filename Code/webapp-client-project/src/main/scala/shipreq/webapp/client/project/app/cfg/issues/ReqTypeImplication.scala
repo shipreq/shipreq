@@ -61,18 +61,17 @@ private[issues] object ReqTypeImplication {
     def customRows(s: S): Rows =
       rowStore.getAll(s).filter(_.p.live is Live).map(r => {
         val re: VdomElement =
-          <.tr(^.key := r.p.id.value,
-            <.td(
-              editor render editorI(r),
-              rowStatusCtrls(r.status, EmptyVdom)))
+          <.div(^.key := r.p.id.value,
+            editor render editorI(r),
+            rowStatusCtrls(r.status, EmptyVdom))
         (r.p.mnemonic, re)
       })
 
     val staticRows: Rows =
       StaticReqType.values.toStream.map(s => {
         val re: VdomElement =
-          <.tr(^.key := s.mnemonic.value,
-            <.td(genEditor render EditorI((s.imp, s), "", None)))
+          <.div(^.key := s.mnemonic.value,
+            genEditor render EditorI((s.imp, s), "", None))
         (s.mnemonic, re)
       })
 
@@ -80,8 +79,8 @@ private[issues] object ReqTypeImplication {
       (staticRows #::: customRows(s)).sortBy(_._1).map(_._2).toVdomArray
 
     def render(s: S): VdomElement =
-      <.table(
-        <.thead(<.tr(<.th("Req-Types Requiring Implication"))),
-        <.tbody(renderRows(s)))
+      <.section(
+        <.h5("Req-Types Requiring Implication"),
+        renderRows(s))
   }
 }

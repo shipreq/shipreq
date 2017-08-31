@@ -1,9 +1,12 @@
 package shipreq.webapp.client.project.app.cfg.issues
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
+import japgolly.scalajs.react._
+import vdom.html_<^._
+import ScalazReact._
 import japgolly.scalajs.react.extra._
 import scala.language.reflectiveCalls
+import scalacss.ScalaCssReact._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
@@ -13,10 +16,12 @@ import shipreq.webapp.base.protocol.ProjectSpaProtocols.CustomIssueTypeCrud
 import shipreq.webapp.base.util.TextMod
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.protocol.ClientProtocol
+import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.cfg.shared._
-import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
+import shipreq.webapp.client.project.app.state.{ChangeListener, ClientData}
 import shipreq.webapp.client.project.lib.DataReusability._
 import DataImplicits._
+import shipreq.webapp.base.ui.AutosizeTextarea
 
 private[issues] object CustomIssueTypes {
 
@@ -39,6 +44,7 @@ private[issues] object CustomIssueTypes {
       .initialStateFromProps(initialState)
       .renderBackend[Backend]
       .configure(changeListener.install(_.clientData))
+      .configure(AutosizeTextarea.applyToChildren("textarea"))
       .build
 
   private def initialState(p: Props): S =
@@ -80,7 +86,6 @@ private[issues] object CustomIssueTypes {
       val descE = Editors.textareaEditor.applyStatefulValidator(V.desc.unnamedFn)
       val e = Editor.merge2S(fields, keyE, descE).tupleI.zoomU[S]
 
-      // TODO simplify
       val saveFn = crudIO.map(c =>
         Persistence.asyncSaveS(V.all, savedRowStoreS)(
           newRowStoreS,
@@ -117,7 +122,7 @@ private[issues] object CustomIssueTypes {
         }
       }
 
-      // TODO Few $.state.runNow() in CustomIssueTypes - safe because in lambdas
+      // Few $.state.runNow() in CustomIssueTypes - safe because in lambdas
       def s = $.state.runNow()
       CfgTable(rowE, savedRowStoreS, newRowStoreS).build(
           _.key, rowRenderer,
@@ -131,15 +136,15 @@ private[issues] object CustomIssueTypes {
 
     val table = {
       val headerRow = CfgTable.header(List(FieldNames.hashRefKey, FieldNames.desc, FieldNames.usage))
-      () => cfgTable.table(headerRow, Stream.empty)
+      () => cfgTable.justTheTable(headerRow, Stream.empty)
     }
-
-    val outer =
-      cfgTable.wrapWithFilterDeadCheckbox(fd => $.props.flatMap(_.filterDead setState fd))
 
     def render: VdomElement = {
       Px.refresh(project, filterDead, usageShow)
-      outer(table())
+      cfgTable.wrapWithFilterDeadCheckbox2(
+        fd => $.props.flatMap(_.filterDead setState fd),
+        cfgTable.newButton,
+        table())
     }
   }
 }

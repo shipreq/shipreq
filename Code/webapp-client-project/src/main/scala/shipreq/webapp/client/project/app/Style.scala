@@ -149,6 +149,13 @@ object Style extends StyleSheet.Inline {
       unsafeChild(">table>*>*>td:nth-child(6) button")(marginLeft(1 ex)))
 
     // HACK!
+    val issues = style(
+      unsafeChild(">div>table>*>*>td:nth-child(1) input")(monospace, width((Grammar.hashRefKey.length.total.last + 1).ch)),
+      unsafeChild(">div>table>*>*>td:nth-child(2)")(width(100 %%)),
+      unsafeChild(">div>table>*>*>td:nth-child(2) textarea")(width(100 %%)),
+      unsafeChild(">.other input")(marginRight(0.6 ex).important, marginBottom(0.9 ex).important))
+
+    // HACK!
     val reqTypes = style(
       unsafeChild(">table>*>*>td:nth-child(1)")(monospace),
       unsafeChild(">table>*>*>td:nth-child(1) input")(monospace, width((Grammar.reqTypeMnemonic.length.total.last + 1).ch)),
