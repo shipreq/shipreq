@@ -23,6 +23,18 @@ PRODUCT SHOWCASE
 
 ---
 
+# Agenda
+
+<br>
+
+1. What and why is ShipReq?
+
+1. Roadmap
+
+1. Features and Demo
+
+---
+
 # ShipReq is...
 a cloud-based web platform for businesses to
 
