@@ -24,7 +24,7 @@ PRODUCT SHOWCASE
 ---
 
 # ShipReq is...
-a real-time, cloud-based web platform for businesses to
+a cloud-based web platform for businesses to
 
 * record
 * maintain
@@ -38,7 +38,7 @@ name: requirements
 # Requirements
 
 Requirements are details that describe and communicate the
-<br>who, what, when, where, why, how of a goal.
+<br>{who, what, when, where, why, how} of a goal.
 <br><br><br>
 
 ---
@@ -105,6 +105,7 @@ Some stats from studies:
 --
 
 * Rework often consumes 30-50% of total dev cost
+
 --
 
 * 70-85% of rework is caused by bad requirements
@@ -113,8 +114,9 @@ Some stats from studies:
 
 # Initial focus
 
-ShipReq's initial focus is software development,<br>
-my home and my strength.
+ShipReq's initial focus is software development,
+
+my primary expertise and strength.
 
 ---
 
@@ -179,8 +181,6 @@ my home and my strength.
 # Problems
 
 * social
---
-
   * miscommunication
   * information socialisation (esp wrt change)
   * lack of transparency
@@ -209,16 +209,23 @@ my home and my strength.
 
 # Roadmap
 
-I'm not there yet. I'm just getting started...
+I'm not there yet.<br>
+v2.0 nearly complete but I'm just getting started...
 
 --
 
 * v1.0: Use Cases
-
 ---
 
-TODO Add a screenshot of a use case
+exclude: true
+class: fullscreenImg
 
+<div><img src="uc-eg-scrabble.png"></div>
+---
+
+class: fullscreenImg
+
+<div><img src="uc-eg-chemicals.png"></div>
 ---
 
 TODO Screenshot of a use case in ShipReq
@@ -239,6 +246,35 @@ TODO Screenshot of a use case in ShipReq
 # Roadmap
 
 * v1.0: Use Cases
+* v1.1: Support & Community
+--
+
+  * communicate to users
+  * users can communicate to me
+--
+
+  * support desk
+--
+
+  * ability to hire Support staff
+  * ability to hire Community Manager
+
+---
+
+class: fullscreenImg
+
+<div><img src="system_diagram-comms.gv.svg"></div>
+---
+
+class: fullscreenImg
+
+<div><img src="system_diagram.gv.svg"></div>
+---
+
+# Roadmap
+
+* v1.0: Use Cases
+* v1.1: Support & Community
 * v2.0: General Requirements
 --
 
@@ -254,9 +290,10 @@ TODO Screenshot of a use case in ShipReq
 
 # Roadmap
 
-* v1.0: Use Cases
-* v2.0: General Requirements *[Sep 2017]*
-* Find co-founder; business-mode: on *[Oct 2017]*
+* v1.0: Use Cases *[Q1 2014]*
+* v1.1: Support & Community *[Q3 2014]*
+* v2.0: General Requirements *[Oct 2017]*
+* Find co-founder. Business-mode: on. *[Nov 2017]*
 --
 
 * v3.0: Collaboration, enterprise, social
@@ -319,7 +356,7 @@ TODO Screenshot of a use case in ShipReq
 
 ## Tags
 * in Tags column
-* in text
+* in text (great for nouns: actors, components)
 * in own columns (many:many & transitive)
 ---
 

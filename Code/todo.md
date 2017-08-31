@@ -91,6 +91,14 @@ Phase 2
 * Upgrade JDK and audit crypto mechanisms (pending next Jetty release)
 * Warn when closing page and there are open, dirty editors
 * Delete projects
+* Use Case Steps
+  * preview should show when flow exists (or better: just always)
+  * fix rendering of multiple steps in flow
+  * fix rendering of steps in text
+  * parser should allow `.0.1`
+  * exception levels are off-by-one. 4.E.1.a.i should be 4.E.1.1.a
+  * KB shortcuts: <<, >>, ↑, ↓, +, (save,+,↓)
+
 
 ### New Features
 * User profile page
