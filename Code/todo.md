@@ -99,6 +99,10 @@ Phase 2
   * exception levels are off-by-one. 4.E.1.a.i should be 4.E.1.1.a
   * KB shortcuts: <<, >>, ↑, ↓, +, (save,+,↓)
 
+TODO context affects:
+* UC steps             - UC-4.0.1 vs 4.0.1 vs .0.1
+* req/code/ucstep refs - text vs link
+
 
 ### New Features
 * User profile page

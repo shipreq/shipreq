@@ -1,0 +1,196 @@
+package shipreq.webapp.base.text
+
+import japgolly.microlibs.nonempty.NonEmptyVector
+import scala.annotation.tailrec
+import shipreq.base.util._
+import shipreq.base.util.SafeStringOps._
+import shipreq.base.util.univeq._
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.{Grammar => G}
+import shipreq.webapp.base.text.GrammarSpec.Surrounds
+import shipreq.webapp.base.util.ReqCodeTreeItem
+import shipreq.webapp.base.UiText
+import Atom.AnyAtom
+
+/**
+ * Turns elements of data into user-facing plain text.
+ */
+object PlainText2 {
+
+  def apply[Ctx <: ProjectText2.Context](p: Project, ctx: Ctx): ForProject[Ctx] =
+    new ForProject(p, ctx)
+
+  def reqCodeIndentation(is: NonEmptyVector[ReqCodeTreeItem.Indent]): String = {
+    import ReqCodeTreeItem._
+    val I = "│"
+    is.reduceMapLeft1({
+      case IndentChild    => I
+      case IndentSpace(l) => I ~ (" " * (l - 1))
+    })(_ ~ ' ' ~ _)
+  }
+
+  def reqCodeTreeItem(ti: ReqCodeTreeItem): String =
+    NonEmptyVector.option(ti.indent) match {
+      case None     => reqCode(ti.suffix)
+      case Some(is) => reqCodeIndentation(is) ~ G.reqCode.nodeSeparator ~ reqCode(ti.suffix)
+    }
+
+  def reqCode(c: ReqCode.Value): String =
+    ReqCode.valueToStr(c, G.reqCode.nodeSeparator)
+
+  def hashtag(key: HashRefKey): String =
+    G.hashRefKey.prefix ~ key.value
+
+  def pubidByReqId(id: ReqId, p: Project): String =
+    pubidByReqId(id, p.reqs, p.config.reqTypes)
+
+  def pubidByReqId(id: ReqId, reqs: Requirements, reqTypes: ReqTypes): String = {
+    val pid = reqs.need(id).pubid
+    pubid(pid, reqTypes)
+  }
+
+  def pubid(pid: Pubid, p: Project): String =
+    pubid(pid, p.config.reqTypes)
+
+  def pubid(pid: Pubid, reqTypes: ReqTypes): String = {
+    val rt = pid.reqTypeId.foldId(identity, reqTypes.need)
+    pubid(rt, pid.pos)
+  }
+
+  def pubid(reqType: ReqType, pos: ReqTypePos): String =
+    pubid(reqType.mnemonic, pos)
+
+  def pubid(externalPubid: ExternalPubid): String =
+    pubid(externalPubid.mnemonic, externalPubid.pos)
+
+  def pubid(mnemonic: ReqType.Mnemonic, pos: ReqTypePos): String =
+    mnemonic.value ~ "-" ~ pos.value
+
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+
+  private implicit def surroundDisplay(s: Surrounds) = s.display
+
+  private implicit class OptionalTextOps[T <: Text.Generic](val _t: T#OptionalText) extends AnyVal {
+    @inline def asOption: Option[_t.type] =
+      if (_t.isEmpty) None else Some[_t.type](_t)
+
+    @inline def net: Option[T#NonEmptyText] =
+      NonEmptyVector.option(_t)
+  }
+
+  private final val bullet = "* "
+
+  // Don't make this final! I'm using eq below.
+  private val outOfListNewline = "\n\n"
+
+  final class ForProject[Ctx <: ProjectText2.Context](p: Project, ctx: Ctx) extends ProjectText2[Ctx, String](p, ctx) {
+
+    def withCtx[Ctx2 <: ProjectText2.Context](newCtx: Ctx2): ForProject[Ctx2] =
+      new ForProject(p, newCtx)
+
+    override def text(text: Text.AnyOptional, live: Live): String =
+      nestedText("", outOfListNewline, live, text)
+
+    private def nestedText(acc: String, newline: String, live: Live, atoms: Vector[AnyAtom]): String = {
+      @tailrec def go(acc: String, atoms: Vector[AnyAtom]): String =
+        if (atoms.isEmpty)
+          acc
+        else {
+          val nextAtoms = atoms.tail
+          import Atom._
+          val cur = atoms.head match {
+            case a: Literal         # Literal        => a.value
+            case a: NewLine         # BlankLine      => newline
+            case a: ReqRef          # ReqRef         => reqRef(a.value)
+            case a: ReqRef          # CodeRef        => codeRef(a.value)
+            case a: UseCaseStepRef  # UseCaseStepRef => useCaseStepRef(a.value)
+            case a: Issue           # Issue          => issue(a.typ, a.desc.asOption.map(text(_, live)))
+            case a: PlainTextMarkup # WebAddress     => a.value
+            case a: PlainTextMarkup # EmailAddress   => a.value
+            case a: PlainTextMarkup # MathTeX        => G.mathTexSurround(a.value)
+            case a: TagRef          # TagRef         => tagRef(a.value)
+            case a: ListMarkup      # UnorderedList  =>
+              val listNL = if (newline eq outOfListNewline) "\n  " else newline ~ "  "
+              val r = a.items.foldLeft("") { (q, li) =>
+                val pre = if (q.isEmpty && acc.isEmpty) bullet else q ~ newline ~ bullet
+                nestedText(pre, listNL, live, li)
+              }
+              if (nextAtoms.isEmpty) r else r ~ newline
+          }
+          go(acc ~ cur, nextAtoms)
+        }
+      go(acc, atoms)
+    }
+
+    private def reqRef(req: ReqId): String = {
+      val pid = p.reqs.need(req).pubid
+      val rt  = p.config.reqTypes.need(pid.reqTypeId)
+      G.reflinkSurround(pubid(rt, pid.pos))
+    }
+
+    private def codeRef(id: ReqCodeId): String = {
+      import ProjectText2.ReqCodeResolution, ReqCodeResolution._
+      ReqCodeResolution(id, p.reqCodes) match {
+        case ActiveCodeToReq     (c, _) => G reflinkSurround reqCode(c)
+        case ActiveCodeToGroup   (c, _) => G reflinkSurround reqCode(c)
+        case DeadGroup           (c, _) => G reflinkSurround reqCode(c)
+        case ReqWithAltCode      (c, _) => G reflinkSurround reqCode(c)
+        case ReqWithoutActiveCode(_, r) => reqRef(r)
+      }
+    }
+
+    private def useCaseStepRef(id: UseCaseStepId): String =
+      G.reflinkSurround(useCaseStepLabelById(id))
+
+    private def tagRef(id: ApplicableTagId): String = {
+      val t = p.config.atag(id)
+      hashtag(t.key)
+    }
+
+    private def issue(id: CustomIssueTypeId, desc: Option[String]): String = {
+      val it = p.config.customIssueType(id)
+      desc.foldLeft(hashtag(it.key))(_ ~ G.issueDescSurround(_))
+    }
+
+    def useCaseStepLabel(focus: UseCaseStep.Focus): String = {
+      import focus._
+      val mne = byCtx {
+        case ProjectText2.Context.Project    => true
+        case ProjectText2.Context.UseCase(i) => i !=* uc.id
+      }
+      field.stepLabel(uc.pubid.pos, ploc, mnemonicPrefix = mne)
+    }
+
+    private def useCaseStepLabelById(id: UseCaseStepId): String =
+      useCaseStepLabel(p.reqs.useCases.focusStep(id))
+
+    override def useCaseStepTextAndFlow(step: UseCaseStepFlowText.TextAndFlow[Text.AnyOptional, Set[UseCaseStepId]],
+                                        live: Live): String =
+      Util.quickSB { sb =>
+        sb append text(step.text, live)
+        for (d <- UseCaseStepFlowText.DefaultArrowOrder) {
+          val ids = step.flow(d)
+          if (ids.nonEmpty) {
+            if (sb.nonEmpty) sb append ' '
+            sb append UseCaseStepFlowText.AsciiArrows(d)
+            for (ref <- useCaseFlowElementsById(ids).iterator) {
+              sb append ' '
+              sb append ref
+            }
+          }
+        }
+      }
+
+    override protected val useCaseFlowElement: UseCaseStep.Focus => String =
+      useCaseStepLabel
+
+    // Keep in sync with ProjectWidgets because it's used together for sorting/rendering in ReqTable
+    override protected def deletionReasonWhenNoneGiven: String =
+      ""
+
+    // Keep in sync with ProjectWidgets because it's used together for sorting/rendering in ReqTable
+    override protected def deletionReasonWhenReqTypeIsDead(rt: ReqType): String =
+      UiText.ColumnNames.reqType + " " + rt.mnemonic.value + " is deleted."
+  }
+
+}

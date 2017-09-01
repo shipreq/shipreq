@@ -13,7 +13,7 @@ import ViewReq._
 /**
   * Easy means to view/render a requirement.
   */
-final case class ViewReq(data: Data, pw: ProjectWidgets, fmtReqTypeShort: Boolean = true) {
+final case class ViewReq(data: Data, pw: ProjectWidgets2.AnyCtx, fmtReqTypeShort: Boolean = true) {
 
   def reqType: VdomElement =
     (if (fmtReqTypeShort) pw.reqTypeShort else pw.reqTypeFull)(data.req.reqTypeId)
@@ -30,9 +30,8 @@ final case class ViewReq(data: Data, pw: ProjectWidgets, fmtReqTypeShort: Boolea
   def imps(scope: ImplicationScope): VdomElement =
     scope.fold(imps(_), imps(_))
 
-  /** None means N/A */
-  def deletionReason: Option[VdomTag] =
-    ProjectWidgets.DeletionReason.forReq(data.req)(data.reqTypes, pw)
+  def deletionReason: IfApplicable[VdomTag] =
+    pw.deleteReasonForReq(data.req)
 
   def pastPubids: VdomElement =
     pw pastPubids data.pastPubids
@@ -73,16 +72,15 @@ final case class ViewReq(data: Data, pw: ProjectWidgets, fmtReqTypeShort: Boolea
 
 object ViewReq {
 
-  case class Data(req        : Req,
-                  codes      : Traversable[ReqCode.Value],
-                  generalTags: Vector[ApplicableTagId],
-                  customTags : CustomField.Tag.Id => Vector[ApplicableTagId],
-                  generalImps: Direction => Vector[Pubid],
-                  customImps : CustomField.Implication.Id => Vector[Pubid],
-                  pastPubids : SortedSet[ExternalPubid],
-                  reqTypes   : ReqTypes) {
+  final case class Data(req        : Req,
+                        codes      : Traversable[ReqCode.Value],
+                        generalTags: Vector[ApplicableTagId],
+                        customTags : CustomField.Tag.Id => Vector[ApplicableTagId],
+                        generalImps: Direction => Vector[Pubid],
+                        customImps : CustomField.Implication.Id => Vector[Pubid],
+                        pastPubids : SortedSet[ExternalPubid]) {
 
-    def apply(pw: ProjectWidgets): ViewReq =
+    def apply(pw: ProjectWidgets2.AnyCtx): ViewReq =
       ViewReq(this, pw)
   }
 
@@ -145,8 +143,7 @@ object ViewReq {
         customTags,
         generalImps,
         customImps,
-        pastPubids,
-        project.config.reqTypes)
+        pastPubids)
     }
 
   }
