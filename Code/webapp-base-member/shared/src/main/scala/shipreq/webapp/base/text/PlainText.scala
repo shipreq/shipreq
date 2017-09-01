@@ -15,21 +15,10 @@ import Atom.AnyAtom
 /**
  * Turns elements of data into user-facing plain text.
  */
-object PlainText {
+object PlainText2 {
 
-  // ScalaJS StringBuilder just uses String concatenation so fuck it.
-
-  private implicit def surroundDisplay(s: Surrounds) = s.display
-
-  private implicit class OptionalTextOps[T <: Text.Generic](val _t: T#OptionalText) extends AnyVal {
-    @inline def asOption: Option[_t.type] =
-      if (_t.isEmpty) None else Some[_t.type](_t)
-
-    @inline def net: Option[T#NonEmptyText] =
-      NonEmptyVector.option(_t)
-  }
-
-  // -------------------------------------------------------------------------------------------------------------------
+  def apply[Ctx <: ProjectText2.Context](p: Project, ctx: Ctx): ForProject[Ctx] =
+    new ForProject(p, ctx)
 
   def reqCodeIndentation(is: NonEmptyVector[ReqCodeTreeItem.Indent]): String = {
     import ReqCodeTreeItem._
@@ -79,35 +68,58 @@ object PlainText {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  @inline def apply(p: Project, ctx: ProjectText.Context): ForProject =
-    new ForProject(p, ctx)
+  private implicit def surroundDisplay(s: Surrounds) = s.display
 
-  final class ForProject(p: Project, ctx: ProjectText.Context) extends ProjectText[String](p, ctx) {
+  private implicit class OptionalTextOps[T <: Text.Generic](val _t: T#OptionalText) extends AnyVal {
+    @inline def asOption: Option[_t.type] =
+      if (_t.isEmpty) None else Some[_t.type](_t)
 
-    override def withCtx(newCtx: ProjectText.Context): ForProject =
+    @inline def net: Option[T#NonEmptyText] =
+      NonEmptyVector.option(_t)
+  }
+
+  private final val bullet = "* "
+
+  // Don't make this final! I'm using eq below.
+  private val outOfListNewline = "\n\n"
+
+  final class ForProject[Ctx <: ProjectText2.Context](p: Project, ctx: Ctx) extends ProjectText2[Ctx, String](p, ctx) {
+
+    def withCtx[Ctx2 <: ProjectText2.Context](newCtx: Ctx2): ForProject[Ctx2] =
       new ForProject(p, newCtx)
 
-    def useCaseStepLabel(id: UseCaseStepId): String =
-      useCaseStepLabel(p.reqs.useCases.focusStep(id))
+    override def text(text: Text.AnyOptional, live: Live): String =
+      nestedText("", outOfListNewline, live, text)
 
-    def useCaseStepLabel(focus: UseCaseStep.Focus): String = {
-      import focus._
-      val mne  = ctx match {
-        case ProjectText.Context.None       => true
-        case ProjectText.Context.UseCase(i) => i !=* uc.id
-      }
-      field.stepLabel(uc.pubid.pos, ploc, mnemonicPrefix = mne)
-    }
-
-    private def codeRef(id: ReqCodeId): String = {
-      import ProjectText.ReqCodeResolution._
-      ProjectText.resolveReqCode(id, p.reqCodes) match {
-        case ActiveCodeToReq     (c, _) => G reflinkSurround reqCode(c)
-        case ActiveCodeToGroup   (c, _) => G reflinkSurround reqCode(c)
-        case DeadGroup           (c, _) => G reflinkSurround reqCode(c)
-        case ReqWithAltCode      (c, _) => G reflinkSurround reqCode(c)
-        case ReqWithoutActiveCode(_, r) => reqRef(r)
-      }
+    private def nestedText(acc: String, newline: String, live: Live, atoms: Vector[AnyAtom]): String = {
+      @tailrec def go(acc: String, atoms: Vector[AnyAtom]): String =
+        if (atoms.isEmpty)
+          acc
+        else {
+          val nextAtoms = atoms.tail
+          import Atom._
+          val cur = atoms.head match {
+            case a: Literal         # Literal        => a.value
+            case a: NewLine         # BlankLine      => newline
+            case a: ReqRef          # ReqRef         => reqRef(a.value)
+            case a: ReqRef          # CodeRef        => codeRef(a.value)
+            case a: UseCaseStepRef  # UseCaseStepRef => useCaseStepRef(a.value)
+            case a: Issue           # Issue          => issue(a.typ, a.desc.asOption.map(text(_, live)))
+            case a: PlainTextMarkup # WebAddress     => a.value
+            case a: PlainTextMarkup # EmailAddress   => a.value
+            case a: PlainTextMarkup # MathTeX        => G.mathTexSurround(a.value)
+            case a: TagRef          # TagRef         => tagRef(a.value)
+            case a: ListMarkup      # UnorderedList  =>
+              val listNL = if (newline eq outOfListNewline) "\n  " else newline ~ "  "
+              val r = a.items.foldLeft("") { (q, li) =>
+                val pre = if (q.isEmpty && acc.isEmpty) bullet else q ~ newline ~ bullet
+                nestedText(pre, listNL, live, li)
+              }
+              if (nextAtoms.isEmpty) r else r ~ newline
+          }
+          go(acc ~ cur, nextAtoms)
+        }
+      go(acc, atoms)
     }
 
     private def reqRef(req: ReqId): String = {
@@ -116,8 +128,19 @@ object PlainText {
       G.reflinkSurround(pubid(rt, pid.pos))
     }
 
+    private def codeRef(id: ReqCodeId): String = {
+      import ProjectText2.ReqCodeResolution, ReqCodeResolution._
+      ReqCodeResolution(id, p.reqCodes) match {
+        case ActiveCodeToReq     (c, _) => G reflinkSurround reqCode(c)
+        case ActiveCodeToGroup   (c, _) => G reflinkSurround reqCode(c)
+        case DeadGroup           (c, _) => G reflinkSurround reqCode(c)
+        case ReqWithAltCode      (c, _) => G reflinkSurround reqCode(c)
+        case ReqWithoutActiveCode(_, r) => reqRef(r)
+      }
+    }
+
     private def useCaseStepRef(id: UseCaseStepId): String =
-      G.reflinkSurround(useCaseStepLabel(id))
+      G.reflinkSurround(useCaseStepLabelById(id))
 
     private def tagRef(id: ApplicableTagId): String = {
       val t = p.config.atag(id)
@@ -129,56 +152,28 @@ object PlainText {
       desc.foldLeft(hashtag(it.key))(_ ~ G.issueDescSurround(_))
     }
 
-    private val outOfListNewline = "\n\n"
-
-    override val format: ProjectText.FormatAtomFn[String] = {
-      def nest(acc: String, newline: String, live: Live, atoms: Vector[AnyAtom]): String = {
-        @tailrec def go(acc: String, atoms: Vector[AnyAtom]): String =
-          if (atoms.isEmpty)
-            acc
-          else {
-            val nextAtoms = atoms.tail
-            import Atom._
-            val cur = atoms.head match {
-              case a: Literal         # Literal        => a.value
-              case a: NewLine         # BlankLine      => newline
-              case a: ReqRef          # ReqRef         => reqRef(a.value)
-              case a: ReqRef          # CodeRef        => codeRef(a.value)
-              case a: UseCaseStepRef  # UseCaseStepRef => useCaseStepRef(a.value)
-              case a: Issue           # Issue          => issue(a.typ, a.desc.asOption map (run(live, _)))
-              case a: PlainTextMarkup # WebAddress     => a.value
-              case a: PlainTextMarkup # EmailAddress   => a.value
-              case a: PlainTextMarkup # MathTeX        => G.mathTexSurround(a.value)
-              case a: TagRef          # TagRef         => tagRef(a.value)
-              case a: ListMarkup      # UnorderedList  =>
-                val listNL = if (newline eq outOfListNewline) "\n  " else newline ~ "  "
-                val r = a.items.foldLeft("") { (q, li) =>
-                  val pre = if (q.isEmpty && acc.isEmpty) bullet else q ~ newline ~ bullet
-                  nest(pre, listNL, live, li)
-                }
-                if (nextAtoms.isEmpty) r else r ~ newline
-            }
-            go(acc ~ cur, nextAtoms)
-          }
-        go(acc, atoms)
+    def useCaseStepLabel(focus: UseCaseStep.Focus): String = {
+      import focus._
+      val mne = byCtx {
+        case ProjectText2.Context.Project    => true
+        case ProjectText2.Context.UseCase(i) => i !=* uc.id
       }
-
-      @inline def run(live: Live, atoms: Vector[AnyAtom]) = nest("", outOfListNewline, live, atoms)
-      run
+      field.stepLabel(uc.pubid.pos, ploc, mnemonicPrefix = mne)
     }
 
-    override def useCaseStep(l: Live, s: UseCaseStep[Set[UseCaseStepId]]): String =
-      useCaseStepA(l, s, UseCaseStepFlowText.AsciiArrows)
+    private def useCaseStepLabelById(id: UseCaseStepId): String =
+      useCaseStepLabel(p.reqs.useCases.focusStep(id))
 
-    private def useCaseStepA(l: Live, s: UseCaseStep[Set[UseCaseStepId]], arrows: Direction => String): String =
+    override def useCaseStepTextAndFlow(step: UseCaseStepFlowText.TextAndFlow[Text.AnyOptional, Set[UseCaseStepId]],
+                                        live: Live): String =
       Util.quickSB { sb =>
-        sb append format(l, s.text)
+        sb append text(step.text, live)
         for (d <- UseCaseStepFlowText.DefaultArrowOrder) {
-          val ids = s.flow(d)
+          val ids = step.flow(d)
           if (ids.nonEmpty) {
             if (sb.nonEmpty) sb append ' '
-            sb append arrows(d)
-            for (ref <- useCaseFlowStepsOrdered(ids)) {
+            sb append UseCaseStepFlowText.AsciiArrows(d)
+            for (ref <- useCaseFlowElementsById(ids).iterator) {
               sb append ' '
               sb append ref
             }
@@ -186,19 +181,16 @@ object PlainText {
         }
       }
 
-    override protected def useCaseFlowStep(f: UseCaseStep.Focus): String =
-      useCaseStepLabel(f)
-  }
+    override protected val useCaseFlowElement: UseCaseStep.Focus => String =
+      useCaseStepLabel
 
-  private final val bullet = "* "
+    // Keep in sync with ProjectWidgets because it's used together for sorting/rendering in ReqTable
+    override protected def deletionReasonWhenNoneGiven: String =
+      ""
 
-  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-
-  // Keep in sync with ProjectWidgets.DeletionReason because they're used together for sorting/rendering in ReqTable
-  object DeletionReason extends ProjectText.DeletionReasonFormatter[String] {
-    override type PT = ProjectText[String]
-    override protected def noReasonGiven = ""
-    override protected def reqTypeIsDead(rt: ReqType)(pt: PT) =
+    // Keep in sync with ProjectWidgets because it's used together for sorting/rendering in ReqTable
+    override protected def deletionReasonWhenReqTypeIsDead(rt: ReqType): String =
       UiText.ColumnNames.reqType + " " + rt.mnemonic.value + " is deleted."
   }
+
 }

@@ -6,30 +6,27 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.Must._
-import DataImplicits._
-import ProjectText.FormatAtomFn
+import ProjectText2._
 
-object ProjectText {
-  type FormatAtomFn[Out] = (Live, Text.AnyOptional) => Out
+object ProjectText2 {
 
-  // -------------------------------------------------------------------------------------------------------------------
-
-  /**
-   * Depending on the context in which requirement data is being viewed, the data may need to be rendered differently.
-   */
-  sealed abstract class Context
+  /** The context in which the user will view the [[ProjectText2]] output.
+    *
+    * Different elements of the project are presented in different ways depending on the context in which they are
+    * presented.
+    */
+  sealed trait Context
   object Context {
 
-    case object None extends Context
+    /** User is looking at the entire project. */
+    case object Project extends Context
+    type Project = Project.type
 
-    /**
-     * In the context of a single, specific use case, references to its own steps needn't be prefixed with the UC's
-     * pubid.
-     */
-    case class UseCase(id: UseCaseId) extends Context
+    /** User is looking at a single UC. */
+    final case class UseCase(id: UseCaseId) extends Context
   }
 
-  // -------------------------------------------------------------------------------------------------------------------
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   /** Judgement on how a ReqCode-based reference (eg. [email.failure]) should be displayed */
   sealed trait ReqCodeResolution
@@ -39,145 +36,154 @@ object ProjectText {
     case class ReqWithoutActiveCode(code: ReqCode.Value, reqId: ReqId)         extends ReqCodeResolution
     case class ActiveCodeToGroup   (code: ReqCode.Value, group: LiveCodeGroup) extends ReqCodeResolution
     case class DeadGroup           (code: ReqCode.Value, group: DeadCodeGroup) extends ReqCodeResolution
-  }
 
-  /**
-   * FR-152: For refs to reqs made using semantic ID, System shall render the ref accordingly...
-   *  - If target req has no semIDs anymore, display the pubid.
-   *  - If target req has the semID entered on ref creation, display the semID.
-   *  - If target req doesn't have the semID entered on ref creation, display the closest semID.
-   *
-   * FR-292: For refs to SHRs, System shall render the ref accordingly...
-   *  - If target exists, display the semID.
-   *  - If target doesn't exist, display the semID and mark it as an issue.
-   */
-  def resolveReqCode(id: ReqCodeId, rc: ReqCodes): ReqCodeResolution = {
-    import ReqCodeResolution._
-    import ReqCode._
-    import PlainText.reqCode
+    /**
+     * FR-152: For refs to reqs made using semantic ID, System shall render the ref accordingly...
+     *  - If target req has no semIDs anymore, display the pubid.
+     *  - If target req has the semID entered on ref creation, display the semID.
+     *  - If target req doesn't have the semID entered on ref creation, display the closest semID.
+     *
+     * FR-292: For refs to SHRs, System shall render the ref accordingly...
+     *  - If target exists, display the semID.
+     *  - If target doesn't exist, display the semID and mark it as an issue.
+     */
+    def apply(id: ReqCodeId, rc: ReqCodes): ReqCodeResolution = {
+      import ReqCode._
+      import PlainText.reqCode
 
-    // "display the closest semID" is translated here to closest via Levenshtein distance.
-    // Algorithm could be improved to be more meaningful, like most common (node) prefix, nodes in common, etc.
-    def findAlt(reqId: ReqId, deadCode: Value): Option[ReqWithAltCode] = {
-      val deadCodeStr = reqCode(deadCode)
-      NonEmptySet.option(rc.activeReqCodesByReqId(reqId) - deadCode).map { cs =>
-        val c = cs.whole.minBy(c => Util.levenshtein(deadCodeStr, reqCode(c)))
-        ReqWithAltCode(c, reqId)
-      }
-    }
-
-    val code = rc.reqCode(id)
-    rc(code) match {
-      case d: ActiveReq   if d.id ==* id => ActiveCodeToReq(code, d.reqId)
-      case d: ActiveGroup if d.id ==* id => ActiveCodeToGroup(code, d.group)
-      case d =>
-        d.deadGroup match {
-          case Some(g) if g.id ==* id => DeadGroup(code, g)
-          case _ =>
-            d.reqInactive.m.find(_._2 contains id) match {
-              case Some((reqId, _)) => findAlt(reqId, code) getOrElse ReqWithoutActiveCode(code, reqId)
-              case None             => mustNotHappen(s"$id not found in $code: $d")
-            }
+      // "display the closest semID" is translated here to closest via Levenshtein distance.
+      // Algorithm could be improved to be more meaningful, like most common (node) prefix, nodes in common, etc.
+      def findAlt(reqId: ReqId, deadCode: Value): Option[ReqWithAltCode] = {
+        val deadCodeStr = reqCode(deadCode)
+        NonEmptySet.option(rc.activeReqCodesByReqId(reqId) - deadCode).map { cs =>
+          val c = cs.whole.minBy(c => Util.levenshtein(deadCodeStr, reqCode(c)))
+          ReqWithAltCode(c, reqId)
         }
-    }
-  }
-
-  // -------------------------------------------------------------------------------------------------------------------
-
-  abstract class DeletionReasonFormatter[Out] {
-    type PT <: ProjectText[Out]
-
-    /** None means N/A */
-    final type Output = Option[Out]
-
-    protected def noReasonGiven: Out
-    protected def reqTypeIsDead(rt: ReqType)(pt: PT): Out
-
-    private def latestReason(id: ReqId)(pt: PT): Out =
-      pt.latestDeletionReason(id) getOrElse noReasonGiven
-
-    final def forReq(req: Req)(reqTypes: ReqTypes, pt: PT): Output =
-      req match {
-
-        case r: GenericReq =>
-          import GenericReq.ImplicitLiveStatus._
-          r.liveExplicitly match { // explicit must be checked before implicit
-            case Live =>
-              r.implicitLiveStatus(reqTypes) match {
-                case NoImpact      => None // req is live
-                case ReqTypeIsDead => Some(reqTypeIsDead(reqTypes.need(r.pubid.reqTypeId))(pt))
-              }
-            case Dead => Some(latestReason(r.id)(pt))
-          }
-
-        case uc: UseCase =>
-          uc.liveUC match {
-            case Live => None
-            case Dead => Some(latestReason(uc.id)(pt))
-          }
       }
 
-    final def forCodeGroup: Output =
-      None
+      val code = rc.reqCode(id)
+      rc(code) match {
+        case d: ActiveReq   if d.id ==* id => ActiveCodeToReq(code, d.reqId)
+        case d: ActiveGroup if d.id ==* id => ActiveCodeToGroup(code, d.group)
+        case d =>
+          d.deadGroup match {
+            case Some(g) if g.id ==* id => DeadGroup(code, g)
+            case _                      =>
+              d.reqInactive.m.find(_._2 contains id) match {
+                case Some((reqId, _)) => findAlt(reqId, code) getOrElse ReqWithoutActiveCode(code, reqId)
+                case None             => mustNotHappen(s"$id not found in $code: $d")
+              }
+          }
+      }
+    }
   }
 }
 
-abstract class ProjectText[Out](project: Project, val ctx: ProjectText.Context) {
-  final val cfg = project.config
+// █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  def withCtx(newCtx: ProjectText.Context): ProjectText[Out]
+abstract class ProjectText2[Ctx <: Context, Out](project: Project, final val ctx: Ctx) {
 
-  val format: FormatAtomFn[Out]
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Abstract
 
-  val format1: (Live, Text.AnyNonEmpty) => Out =
-    (l, nev) => format(l, nev.whole)
+  def text(text: Text.AnyOptional, live: Live): Out
 
-  final type UseCaseStep[Flow] = UseCaseStepFlowText.TextAndFlow[Text.AnyOptional, Flow]
+  def useCaseStepTextAndFlow(step: UseCaseStepFlowText.TextAndFlow[Text.AnyOptional, Set[UseCaseStepId]],
+                             live: Live): Out
 
-  private def memoByReqId = Memo.by[Req, ReqId](_.id)
+  /** A single element in the set of flow sources/targets.
+    *
+    * eg. [This in an example step --> 2.0.1, 2.0.4]
+    * could be:                        ↑↑↑↑↑
+    * or:                                     ↑↑↑↑↑
+    */
+  protected val useCaseFlowElement: UseCaseStep.Focus => Out
 
-  val reqTitle: Req => Out =
+  protected def deletionReasonWhenNoneGiven: Out
+  protected def deletionReasonWhenReqTypeIsDead(rt: ReqType): Out
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Derived: protected
+
+  protected final val cfg = project.config
+
+  // Avoids need to explicitly down-cast to pattern-match
+  @inline protected final def byCtx[A](f: ProjectText2.Context => A): A =
+    f(ctx)
+
+  protected final def memoByReqId = Memo.by[Req, ReqId](_.id)
+
+  protected final val latestDeletionReasonById: ReqId => Option[Out] =
+    Memo(id =>
+      project.deletionReasons.getLatest(id).map(text(_, Dead)))
+
+  protected final def useCaseFlowElementById(id: UseCaseStepId): Out =
+    useCaseFlowElement(project.reqs.useCases.focusStep(id))
+
+  protected final def useCaseFlowElements(elements: Iterator[UseCaseStep.Focus]): MutableArray[Out] =
+    MutableArray(elements)
+      .sortBy(_.ploc)
+      .map(useCaseFlowElement)
+
+  protected final def useCaseFlowElementsById(ids: Set[UseCaseStepId]): MutableArray[Out] =
+    useCaseFlowElements(ids.iterator.map(project.reqs.useCases.focusStep))
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Derived: public
+
+  final def text(text: Text.AnyNonEmpty, live: Live): Out =
+    this.text(text.whole, live)
+
+  final val reqTitle: Req => Out =
     memoByReqId {
-      case gr: GenericReq => format(gr live cfg.reqTypes, gr.title)
-      case uc: UseCase    => format(uc.liveUC, uc.title)
+      case gr: GenericReq => text(gr.title, gr live cfg.reqTypes)
+      case uc: UseCase    => text(uc.title, uc.liveUC)
     }
 
-  val codeGroupTitle: CodeGroup => Out =
-    Memo.by((_: CodeGroup).id)(g =>
-      format(g.live, g.title))
-
-  def reqTitleById(id: ReqId): Out =
+  final def reqTitleById(id: ReqId): Out =
     reqTitle(project.reqs.need(id))
 
-  val customTextField: CustomField.Text.Id => Req => Option[Out] =
+  final val codeGroupTitle: CodeGroup => Out =
+    Memo.by((_: CodeGroup).id)(g =>
+      text(g.title, g.live))
+
+  final val customTextField: CustomField.Text.Id => Req => Option[Out] =
     Memo { fid =>
       project.reqText.get(fid) match {
         case Some(m) =>
           val liveField = cfg.fields.customFields.need(fid).live(cfg)
           memoByReqId(r =>
-            m.get(r.id) map (format1(liveField & r.live(cfg.reqTypes), _)))
+            m.get(r.id).map(text(_, liveField & r.live(cfg.reqTypes))))
         case None =>
           Function const None
       }
     }
 
-  val latestDeletionReason: ReqId => Option[Out] =
-    Memo(id =>
-      project.deletionReasons.getLatest(id).map(format1(Dead, _)))
+  final def deleteReasonForReq(req: Req): IfApplicable[Out] = {
+    def latestReason(id: ReqId): Out =
+      latestDeletionReasonById(id) getOrElse deletionReasonWhenNoneGiven
 
-  def useCaseStep(l: Live, s: UseCaseStep[Set[UseCaseStepId]]): Out
+    req match {
 
-  protected def useCaseFlowStep(f: UseCaseStep.Focus): Out
+      case r: GenericReq =>
+        import GenericReq.ImplicitLiveStatus._
+        r.liveExplicitly match { // explicit must be checked before implicit
+          case Live =>
+            r.implicitLiveStatus(cfg.reqTypes) match {
+              case NoImpact      => NotApplicable // req is live
+              case ReqTypeIsDead => Applicable(deletionReasonWhenReqTypeIsDead(cfg.reqTypes.need(r.pubid.reqTypeId)))
+            }
+          case Dead => Applicable(latestReason(r.id))
+        }
 
-  protected final def useCaseFlowStepId(id: UseCaseStepId): Out =
-    useCaseFlowStep(project.reqs.useCases.focusStep(id))
+      case uc: UseCase =>
+        uc.liveUC match {
+          case Live => NotApplicable
+          case Dead => Applicable(latestReason(uc.id))
+        }
+    }
+  }
 
-  protected final def useCaseFlowStepsOrdered(ids: Set[UseCaseStepId]): Seq[Out] =
-    useCaseFlowStepsOrderedF(ids.iterator.map(project.reqs.useCases.focusStep))
-
-  protected final def useCaseFlowStepsOrderedF(fs: Iterator[UseCaseStep.Focus]): Seq[Out] =
-    MutableArray(fs)
-      .sortBy(_.ploc)
-      .map(useCaseFlowStep)
-      .to[Seq]
+  final def deleteReasonForCodeGroup: NotApplicable.type =
+    NotApplicable
 }
