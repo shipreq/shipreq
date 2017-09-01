@@ -24,7 +24,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
   case class Props(project         : Project,
                    plainTextNoCtx  : PlainText.ForProject.NoCtx,
                    textSearch      : TextSearch,
-                   projectWidgets  : ProjectWidgets.AnyCtx,
+                   projectWidgets  : ProjectWidgets,
                    edit            : StateSnapshot[String],
                    asyncStatus     : Option[EditorStatus.Async],
                    abortCommit     : AbortCommit,

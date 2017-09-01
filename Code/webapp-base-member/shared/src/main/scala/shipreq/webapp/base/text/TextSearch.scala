@@ -8,7 +8,7 @@ import shipreq.webapp.base.data._
 
 object TextSearch {
 
-  def apply(project: Project,  plainText: PlainText.ForProject.AnyCtx): TextSearch =
+  def apply(project: Project,  plainText: PlainText.ForProject): TextSearch =
     new TextSearch(project, plainText)
 
   // ===================================================================================================================
@@ -221,7 +221,7 @@ object TextSearch {
 
 }
 
-final class TextSearch(project: Project,  plainText: PlainText.ForProject.AnyCtx) {
+final class TextSearch(project: Project,  plainText: PlainText.ForProject) {
   import TextSearch.{apply => _, _}
 
   private def index(norm: Normaliser): Index = {

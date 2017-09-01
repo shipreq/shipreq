@@ -13,7 +13,7 @@ import ViewReq._
 /**
   * Easy means to view/render a requirement.
   */
-final case class ViewReq(data: Data, pw: ProjectWidgets.AnyCtx, fmtReqTypeShort: Boolean = true) {
+final case class ViewReq(data: Data, pw: ProjectWidgets, fmtReqTypeShort: Boolean = true) {
 
   def reqType: VdomElement =
     (if (fmtReqTypeShort) pw.reqTypeShort else pw.reqTypeFull)(data.req.reqTypeId)
@@ -80,7 +80,7 @@ object ViewReq {
                         customImps : CustomField.Implication.Id => Vector[Pubid],
                         pastPubids : SortedSet[ExternalPubid]) {
 
-    def apply(pw: ProjectWidgets.AnyCtx): ViewReq =
+    def apply(pw: ProjectWidgets): ViewReq =
       ViewReq(this, pw)
   }
 

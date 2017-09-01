@@ -18,11 +18,15 @@ import Atom.AnyAtom
 object PlainText {
 
   object ForProject {
-    type AnyCtx = ForProject[_ <: ProjectText.Context]
-    type NoCtx  = ForProject[ProjectText.Context.None]
 
-    def apply[Ctx <: ProjectText.Context](p: Project, ctx: Ctx): ForProject[Ctx] =
-      new ForProject(p, ctx)
+    type WithCtx[C <: ProjectText.Context] = ForProject { type Ctx = C }
+    type NoCtx  = WithCtx[ProjectText.Context.None]
+
+    def apply[C <: ProjectText.Context](p: Project, c: C): WithCtx[C] =
+      new ForProject(p) {
+        override type Ctx = C
+        override val ctx = c
+      }
 
     def noCtx(p: Project): NoCtx =
       apply(p, ProjectText.Context.None)
@@ -91,10 +95,13 @@ object PlainText {
   // Don't make this final! I'm using eq below.
   private val outOfListNewline = "\n\n"
 
-  final class ForProject[Ctx <: ProjectText.Context](p: Project, ctx: Ctx) extends ProjectText[Ctx, String](p, ctx) {
+  sealed abstract class ForProject(p: Project) extends ProjectText[String](p) {
 
-    def withCtx[Ctx2 <: ProjectText.Context](newCtx: Ctx2): ForProject[Ctx2] =
-      new ForProject(p, newCtx)
+    def withCtx[Ctx2 <: ProjectText.Context](newCtx: Ctx2): ForProject.WithCtx[Ctx2] =
+      if (newCtx ==* ctx)
+        this.asInstanceOf[ForProject.WithCtx[Ctx2]]
+      else
+        PlainText.ForProject(p, newCtx)
 
     override def text(text: Text.AnyOptional, live: Live): String =
       nestedText("", outOfListNewline, live, text)

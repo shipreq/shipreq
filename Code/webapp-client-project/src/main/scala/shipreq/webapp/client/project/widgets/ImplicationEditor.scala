@@ -34,7 +34,7 @@ object ImplicationEditor {
   }
 
   object Lookup {
-    def all(p: Project, pt: PlainText.ForProject.AnyCtx): Lookup =
+    def all(p: Project, pt: PlainText.ForProject): Lookup =
       Lookup(AutoComplete.Project.reqItems(p, pt), UnivEq.emptyMap)
 
     def forCustomColumn(p: Project, l: Lookup, fid: CustomField.Implication.Id): Lookup = {

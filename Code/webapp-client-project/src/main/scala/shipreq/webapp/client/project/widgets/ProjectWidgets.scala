@@ -4,7 +4,6 @@ import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
-import japgolly.scalajs.react.vdom.html_<^
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import scala.collection.immutable.SortedSet
@@ -26,13 +25,16 @@ import shipreq.webapp.client.project.app.Style.{widgets => *}
 
 object ProjectWidgets {
 
-  type AnyCtx = ProjectWidgets[_ <: ProjectText.Context]
-  type NoCtx  = ProjectWidgets[ProjectText.Context.None]
+  type WithCtx[C <: ProjectText.Context] = ProjectWidgets { type Ctx = C }
+  type NoCtx = WithCtx[ProjectText.Context.None]
 
-  def apply[Ctx <: ProjectText.Context](project    : Project,
-                                        plainText  : PlainText.ForProject[Ctx],
-                                        reqDetailRC: RouterCtl[ExternalPubid]): ProjectWidgets[Ctx] =
-    new ProjectWidgets(project, plainText, reqDetailRC)
+  def apply[C <: ProjectText.Context](project    : Project,
+                                      plainText  : PlainText.ForProject.WithCtx[C],
+                                      reqDetailRC: RouterCtl[ExternalPubid]): WithCtx[C] =
+    new ProjectWidgets(project, reqDetailRC) {
+      override type Ctx = C
+      override val ctx: Ctx = plainText.ctx
+    }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -71,15 +73,19 @@ object ProjectWidgets {
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-final class ProjectWidgets[Ctx <: ProjectText.Context](project      : Project,
-                                                       val plainText: PlainText.ForProject[Ctx],
-                                                       reqDetailRC  : RouterCtl[ExternalPubid])
-    extends ProjectText[Ctx, VdomTag](project, plainText.ctx) {
+sealed class ProjectWidgets(project    : Project,
+                            reqDetailRC: RouterCtl[ExternalPubid])
+    extends ProjectText[VdomTag](project) {
 
   import ProjectWidgets.Internal._
 
-  def withCtx[Ctx2 <: ProjectText.Context](newCtx: Ctx2): ProjectWidgets[Ctx2] =
-    new ProjectWidgets(project, plainText withCtx newCtx, reqDetailRC)
+  val plainText: PlainText.ForProject.WithCtx[Ctx]
+
+  def withCtx[C <: ProjectText.Context](newCtx: C): ProjectWidgets.WithCtx[C] =
+      if (newCtx ==* ctx)
+        this.asInstanceOf[ProjectWidgets.WithCtx[C]]
+      else
+        ProjectWidgets(project, plainText withCtx newCtx, reqDetailRC)
 
   override def text(text: AnyOptional, live: Live): VdomTag =
     <.span(text map textByLive(live): _*)

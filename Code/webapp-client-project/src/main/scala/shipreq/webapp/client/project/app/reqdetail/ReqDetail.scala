@@ -66,13 +66,13 @@ object ReqDetail {
          val req       : Req,
              upstreamFD: FilterDead) {
 
-    val pxProjectWidgets: Px[ProjectWidgets.AnyCtx] =
+    val pxProjectWidgets: Px[ProjectWidgets] =
       req match {
         case uc: UseCase    => sp.pxProjectWidgetsNoCtx.map(_ withCtx ProjectText.Context.UseCase(uc.id))
         case _ : GenericReq => sp.pxProjectWidgetsNoCtx.map(a => a)
       }
 
-    val pxPlainText: Px[PlainText.ForProject.AnyCtx] =
+    val pxPlainText: Px[PlainText.ForProject] =
       pxProjectWidgets.map(_.plainText)
 
     val live = req.live(project.config.reqTypes)

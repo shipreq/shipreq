@@ -24,6 +24,8 @@ object ProjectText {
 
     /** User is looking at a single UC. */
     final case class UseCase(id: UseCaseId) extends Context
+
+    implicit def univEq: UnivEq[Context] = UnivEq.derive
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -81,10 +83,13 @@ object ProjectText {
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-abstract class ProjectText[Ctx <: Context, Out](project: Project, final val ctx: Ctx) {
+abstract class ProjectText[Out](project: Project) {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Abstract
+
+  type Ctx <: Context
+  val ctx: Ctx
 
   def text(text: Text.AnyOptional, live: Live): Out
 
