@@ -94,7 +94,10 @@ object PlainText {
   final class ForProject[Ctx <: ProjectText.Context](p: Project, ctx: Ctx) extends ProjectText[Ctx, String](p, ctx) {
 
     def withCtx[Ctx2 <: ProjectText.Context](newCtx: Ctx2): ForProject[Ctx2] =
-      new ForProject(p, newCtx)
+      if (newCtx ==* ctx)
+        this.asInstanceOf[ForProject[Ctx2]]
+      else
+        ForProject(p, newCtx)
 
     override def text(text: Text.AnyOptional, live: Live): String =
       nestedText("", outOfListNewline, live, text)

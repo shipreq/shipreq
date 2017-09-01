@@ -44,7 +44,7 @@ object NewEditor {
   final case class Static(previewW        : PreviewFeature.Write.Composite[PreviewId],
                           pxProject       : Px[Project],
                           pxPlainTextNoCtx: Px[PlainText.ForProject.NoCtx],
-                          pxProjectWidgets: Px[ProjectWidgets.AnyCtx],
+                          pxProjectWidgets: Px[ProjectWidgets.NoCtx],
                           pxTextSearch    : Px[TextSearch],
                           saveIO          : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any]) {
 

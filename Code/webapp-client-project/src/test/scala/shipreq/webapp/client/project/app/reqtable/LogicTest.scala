@@ -81,11 +81,11 @@ object LogicTest extends TestSuite {
   private type Rows    = Vector[Row]
   private type Filter  = Option[ValidFilter]
 
-  private case class PCache(p: Project, pt: PlainText.ForProject, ts: TextSearch)
+  private case class PCache(p: Project, pt: PlainText.ForProject.NoCtx, ts: TextSearch)
   private var _pcache: List[PCache] = Nil
   private def pcache(p: Project): PCache =
     _pcache.find(_.p eq p).getOrElse {
-      val pt = PlainText.ForProject(p, ProjectText.Context.None)
+      val pt = PlainText.ForProject.noCtx(p)
       val c = PCache(p, pt, TextSearch(p, pt))
       _pcache ::= c
       c
@@ -99,7 +99,7 @@ object LogicTest extends TestSuite {
     testUnsorted(p, C.Pubid, f, ShowDead, fmt)(d)
   }
 
-  private def gatherSortConsolidate(p: Project, s: TableSettings, fd: FilterDead, pt: PlainText.ForProject, ts: TextSearch): Vector[Row] = {
+  private def gatherSortConsolidate(p: Project, s: TableSettings, fd: FilterDead, pt: PlainText.ForProject.NoCtx, ts: TextSearch): Vector[Row] = {
     def r1: Array       [Row] = Logic.gather(p, s, fd, pt, ts)
     def r2: MutableArray[Row] = Logic.sort(p, s, pt)(r1)
     val r3: Vector      [Row] = Logic.consolidateAdjacentDups(r2.iterator)
@@ -177,7 +177,7 @@ object LogicTest extends TestSuite {
   private def rowToAsToStr2[A](f: Row.ForReq => Vector[A])(g: Row.ForReq => A => String) =
     rowToStr(r => f(r).ifelse(_.isEmpty, _z, _ map g(r) mkString ","), _z)
 
-  private def rowToCustomText(pt: PlainText.ForProject, id: CustomField.Text.Id): Row => String = {
+  private def rowToCustomText(pt: PlainText.ForProject.NoCtx, id: CustomField.Text.Id): Row => String = {
     val f = pt.customTextField(id)
     rowToStr(r => f(r.req) getOrElse z, _z)
   }

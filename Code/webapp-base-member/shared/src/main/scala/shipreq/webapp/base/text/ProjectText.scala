@@ -24,6 +24,8 @@ object ProjectText {
 
     /** User is looking at a single UC. */
     final case class UseCase(id: UseCaseId) extends Context
+
+    implicit def univEq: UnivEq[Context] = UnivEq.derive
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

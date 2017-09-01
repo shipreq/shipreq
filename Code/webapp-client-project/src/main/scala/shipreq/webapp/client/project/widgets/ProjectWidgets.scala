@@ -4,7 +4,6 @@ import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
-import japgolly.scalajs.react.vdom.html_<^
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import scala.collection.immutable.SortedSet
@@ -79,7 +78,10 @@ final class ProjectWidgets[Ctx <: ProjectText.Context](project      : Project,
   import ProjectWidgets.Internal._
 
   def withCtx[Ctx2 <: ProjectText.Context](newCtx: Ctx2): ProjectWidgets[Ctx2] =
-    new ProjectWidgets(project, plainText withCtx newCtx, reqDetailRC)
+    if (newCtx ==* ctx)
+      this.asInstanceOf[ProjectWidgets[Ctx2]]
+    else
+      ProjectWidgets(project, plainText withCtx newCtx, reqDetailRC)
 
   override def text(text: AnyOptional, live: Live): VdomTag =
     <.span(text map textByLive(live): _*)
@@ -205,10 +207,10 @@ final class ProjectWidgets[Ctx <: ProjectText.Context](project      : Project,
     }
 
   override def useCaseStepTextAndFlow(step: UseCaseStepFlowText.TextAndFlow[AnyOptional, Set[UseCaseStepId]], live: Live): VdomTag =
-    makeUseCaseStepTextAndFlow(live, step)(useCaseFlowElementsById(_).iterator)
+    makeUseCaseStepTextAndFlow(step, live)(useCaseFlowElementsById(_).iterator)
 
-  private def makeUseCaseStepTextAndFlow[C[x] <: TraversableOnce[x], A](l: Live,
-                                                                        s: UseCaseStepFlowText.TextAndFlow[AnyOptional, C[A]])
+  private def makeUseCaseStepTextAndFlow[C[x] <: TraversableOnce[x], A](s: UseCaseStepFlowText.TextAndFlow[AnyOptional, C[A]],
+                                                                        l: Live)
                                                                        (f: C[A] => TraversableOnce[VdomTag]): VdomTag = {
 
     val stepText = text(s.text, l)
@@ -255,10 +257,6 @@ final class ProjectWidgets[Ctx <: ProjectText.Context](project      : Project,
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Public additions not part of ProjectText
-
-//  /** eg. "1.p" instead of "1.0" */
-//  def erroneousUseCaseStepRef(s: String): VdomTag =
-//  <.span(*.erroneousUseCaseStepRef, s)
 
   def implicationList(ids: Vector[Pubid]): VdomElement =
     PubidFormat.validWhenDead.pubids(ids)
@@ -307,9 +305,15 @@ final class ProjectWidgets[Ctx <: ProjectText.Context](project      : Project,
   def tagList(ids: Vector[ApplicableTagId]): VdomElement =
     renderVector(ids, sepSpace)(tagPlain)
 
-//  def useCaseStepE[C[x] <: Traversable[x]](l: Live, s: UseCaseStep[C[String \/ UseCaseStepId]]): VdomTag =
-//    makeUseCaseStepTextAndFlow(l, s)(
-//      _.map(_.fold(erroneousUseCaseStepRef, useCaseFlowStepId))(collection.breakOut))
+  def useCaseStepTextAndMaybeInvalidFlow[C[x] <: Traversable[x]](s: UseCaseStepFlowText.TextAndFlow[AnyOptional, C[String \/ UseCaseStepId]],
+                                                                 l: Live): VdomTag = {
+    /** eg. "1.p" instead of "1.0" */
+    def erroneousUseCaseStepRef(s: String): VdomTag =
+      <.span(*.erroneousUseCaseStepRef, s)
+
+    makeUseCaseStepTextAndFlow(s, l)(
+      _.map(_.fold(erroneousUseCaseStepRef, useCaseFlowElementById))(collection.breakOut))
+  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

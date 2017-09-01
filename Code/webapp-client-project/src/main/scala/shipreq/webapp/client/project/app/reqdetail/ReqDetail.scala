@@ -291,7 +291,7 @@ object ReqDetail {
             ImplicationGraph.Props(
               Some(req.id), data.filterDead,
               project.implications, project.reqs, project.config.reqTypes,
-              data.pxPlainText.value(),
+              pxProjectWidgetsNoCtx.value().plainText,
               reqDetailRC,
               webWorker
             ).render

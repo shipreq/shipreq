@@ -141,7 +141,7 @@ object UseCaseStepEditor {
           Some(RichTextEditorHelp.modal.show))
 
       def richText =
-        p.projectWidgets.useCaseStepE(p.parsed, hardcodedLive)
+        p.projectWidgets.useCaseStepTextAndMaybeInvalidFlow(p.parsed, hardcodedLive)
 
       def preview =
         EditTheme.renderPreview(p.preview, p.wantPreview, richText)
