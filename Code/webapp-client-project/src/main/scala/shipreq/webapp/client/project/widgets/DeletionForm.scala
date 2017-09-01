@@ -44,11 +44,12 @@ object DeletionForm {
                          reason        : String)
 
   final case class Props(data           : Data,
-                         widgets        : ProjectWidgets,
-                         projectText    : PlainText.ForProject,
+                         widgets        : ProjectWidgets.AnyCtx,
                          textSearch     : TextSearch,
                          perform        : DeleteReqs => Callback,
-                         cancel         : Callback)
+                         cancel         : Callback) {
+    def projectText = widgets.plainText
+  }
 
   final case class ReqRow(req: Req, indent: Int, impliedBy: Vector[Req])
 

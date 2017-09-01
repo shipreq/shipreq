@@ -6,7 +6,7 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.user._
-import shipreq.webapp.base.text.{Atom, PlainText, TextSearch}
+import shipreq.webapp.base.text.{Atom, PlainText, ProjectText, TextSearch}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text.UseCaseStepFlowText.TextAndFlow
 import shipreq.webapp.base.jsfacade.MomentJs
@@ -54,7 +54,7 @@ abstract class DataReusability extends BaseReusability {
   implicit def reusabilityReqTypes: Reusability[ReqTypes] =
     Reusability.byRefOrUnivEq
 
-  implicit def reusabilityPlainText: Reusability[PlainText.ForProject] =
+  implicit def reusabilityPlainText[C <: ProjectText.Context]: Reusability[PlainText.ForProject[C]] =
     Reusability.byRef
 
   implicit def reusabilityTextSearch: Reusability[TextSearch] =

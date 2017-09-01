@@ -25,7 +25,9 @@ object ProjectStrategies {
   // Rich text
 
   def richText(text: Text.Generic)
-              (p: Project, pt: PlainText.ForProject, ts: TextSearch): Strategies = {
+              (p: Project,
+               pt: PlainText.ForProject.AnyCtx,
+               ts: TextSearch): Strategies = {
     val s = Vector.newBuilder[Strategy[_]]
 
     s ++= hashtag(p, HideDead, issues = text.supportsIssues, tags = text.supportsTags)(Contextualise)
@@ -80,10 +82,10 @@ object ProjectStrategies {
 
   private val reflinkContext = Context(Grammar.reflinkSurround)
 
-  def reqItems(p: Project, pt: PlainText.ForProject): Stream[ReqItem] =
+  def reqItems(p: Project, pt: PlainText.ForProject.AnyCtx): Stream[ReqItem] =
     reqItems(p, pt, p.reqs.reqIterator.toStream)
 
-  def reqItems(p: Project, pt: PlainText.ForProject, legal: Stream[Req]): Stream[ReqItem] =
+  def reqItems(p: Project, pt: PlainText.ForProject.AnyCtx, legal: Stream[Req]): Stream[ReqItem] =
     legal.filter(_.live(p.config.reqTypes) is Live)
       .map(req => ReqItem(req.id, req.pubid, p.config.reqTypes.need(req.pubid.reqTypeId), pt reqTitle req))
       .sortBy(_.sortKey)
@@ -216,7 +218,7 @@ object ProjectStrategies {
      *
      * Matches whole paths, wraps in reflink syntax.
      */
-    def ref(project: Project, pt: PlainText.ForProject): Strategies = {
+    def ref(project: Project, pt: PlainText.ForProject.AnyCtx): Strategies = {
       val mainRegex = s"($sep?$node($sep$node)*$sep?)"
 
       type A = (String, ActiveGroup \/ ActiveReq)

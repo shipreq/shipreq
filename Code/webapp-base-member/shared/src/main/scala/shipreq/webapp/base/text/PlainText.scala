@@ -17,8 +17,12 @@ import Atom.AnyAtom
  */
 object PlainText {
 
-  def apply[Ctx <: ProjectText.Context](p: Project, ctx: Ctx): ForProject[Ctx] =
-    new ForProject(p, ctx)
+  object ForProject {
+    type AnyCtx = ForProject[_ <: ProjectText.Context]
+
+    def apply[Ctx <: ProjectText.Context](p: Project, ctx: Ctx): ForProject[Ctx] =
+      new ForProject(p, ctx)
+  }
 
   def reqCodeIndentation(is: NonEmptyVector[ReqCodeTreeItem.Indent]): String = {
     import ReqCodeTreeItem._

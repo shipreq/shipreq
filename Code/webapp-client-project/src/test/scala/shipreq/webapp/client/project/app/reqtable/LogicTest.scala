@@ -85,7 +85,7 @@ object LogicTest extends TestSuite {
   private var _pcache: List[PCache] = Nil
   private def pcache(p: Project): PCache =
     _pcache.find(_.p eq p).getOrElse {
-      val pt = PlainText(p, ProjectText.Context.None)
+      val pt = PlainText.ForProject(p, ProjectText.Context.Project)
       val c = PCache(p, pt, TextSearch(p, pt))
       _pcache ::= c
       c

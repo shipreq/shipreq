@@ -172,9 +172,6 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
 
   implicit def setLikePatchAdd(s: Set[ReqCode.IdAndValue]): Multimap[ReqCode.Value, Set, ReqCodeId] =
     Multimap(s.toList.map(iv => iv.value -> Set(iv.id)).toMap)
-
-  implicit def useCaseIdToProjectTextContext(id: UseCaseId): ProjectText.Context =
-    ProjectText.Context.UseCase(id)
 }
 
 object UnsafeTypes extends UnsafeTypesMedPriority {

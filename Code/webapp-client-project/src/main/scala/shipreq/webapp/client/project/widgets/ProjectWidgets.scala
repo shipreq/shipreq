@@ -29,8 +29,8 @@ object ProjectWidgets {
   type AnyCtx = ProjectWidgets[_ <: ProjectText.Context]
 
   def apply[Ctx <: ProjectText.Context](project    : Project,
-                                         plainText  : PlainText.ForProject[Ctx],
-                                         reqDetailRC: RouterCtl[ExternalPubid]): ProjectWidgets[Ctx] =
+                                        plainText  : PlainText.ForProject[Ctx],
+                                        reqDetailRC: RouterCtl[ExternalPubid]): ProjectWidgets[Ctx] =
     new ProjectWidgets(project, plainText, reqDetailRC)
   
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -70,9 +70,9 @@ object ProjectWidgets {
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-final class ProjectWidgets[Ctx <: ProjectText.Context](project    : Project,
-                                                         plainText  : PlainText.ForProject[Ctx],
-                                                         reqDetailRC: RouterCtl[ExternalPubid])
+final class ProjectWidgets[Ctx <: ProjectText.Context](project      : Project,
+                                                       val plainText: PlainText.ForProject[Ctx],
+                                                       reqDetailRC  : RouterCtl[ExternalPubid])
     extends ProjectText[Ctx, VdomTag](project, plainText.ctx) {
 
   import ProjectWidgets.Internal._

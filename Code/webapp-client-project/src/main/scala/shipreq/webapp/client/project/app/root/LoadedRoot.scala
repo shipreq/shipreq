@@ -43,7 +43,7 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
     val setFilterDead: FilterDead ~=> Callback =
       Reusable.fn.state($ zoomStateL State.filterDead).set
 
-    val pxPlainText         = pxProject.map(PlainText(_, ProjectText.Context.None))
+    val pxPlainText         = pxProject.map(PlainText.ForProject(_, ProjectText.Context.Project))
     val pxTextSearch        = Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
     val pxProjectWidgets    = Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
     val pxCreateEditability = pxProject.map(p => CreateFeature.Editability(p.config))

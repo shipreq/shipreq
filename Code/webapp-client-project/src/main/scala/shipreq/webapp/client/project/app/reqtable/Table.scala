@@ -21,6 +21,7 @@ import shipreq.webapp.client.project.feature.{EditorFeature, Selection}
 import shipreq.webapp.client.project.widgets.{DragToReorder, ProjectWidgets, ViewReq}
 import shipreq.webapp.client.project.lib.DataReusability._
 import EditorFeature.FieldKey
+import shipreq.webapp.base.text.ProjectText
 
 object Table {
   import Shared._
@@ -64,7 +65,7 @@ object Table {
                            editor     : EditorFeature.ReadWrite.ForProject,
                            rowAsync   : AsyncFeature.Read.D1[Row.SourceId, ErrorMsg],
                            config     : ProjectConfig,
-                           pw         : ProjectWidgets,
+                           pw         : ProjectWidgets[ProjectText.Context.Project],
                            modSettings: ModFn[TableSettings]) {
       @inline def render = Component(this)
     }

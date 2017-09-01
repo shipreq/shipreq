@@ -5,11 +5,10 @@ import scalaz.Need
 import shipreq.base.util.{FilterFn, IMap}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-import TextSearch.{apply => _, _}
 
 object TextSearch {
 
-  def apply(project: Project,  plainText: PlainText.ForProject): TextSearch =
+  def apply(project: Project,  plainText: PlainText.ForProject.AnyCtx): TextSearch =
     new TextSearch(project, plainText)
 
   // ===================================================================================================================
@@ -222,7 +221,8 @@ object TextSearch {
 
 }
 
-final class TextSearch(project: Project,  plainText: PlainText.ForProject) {
+final class TextSearch(project: Project,  plainText: PlainText.ForProject.AnyCtx) {
+  import TextSearch.{apply => _, _}
 
   private def index(norm: Normaliser): Index = {
 

@@ -38,17 +38,17 @@ object SampleProject6 {
 
   lazy val project = WebappTestUtil.applyEventsSuccessfully(project0
     , UseCaseStepCreate(16, uc1, NA, "0.0".ploc) // becomes UC-n.0.2, followed by n.0.3, n.0.4.
-    , UseCaseStepDelete(16)                   // becomes UC-n.0.X.1, now looks the same as before live
+    , UseCaseStepDelete(16)                      // becomes UC-n.0.X.1, now looks the same as before live
     , UseCaseStepCreate(17, uc1, E, ∅)           // becomes UC-n.E.1
     , UseCaseStepCreate(18, uc1, E, ∅)           // becomes UC-n.E.2
-    , UseCaseStepDelete(17)                   // becomes UC-n.E.X.1
+    , UseCaseStepDelete(17)                      // becomes UC-n.E.X.1
     , UseCaseStepCreate(19, uc1, NA, "0.2".ploc) // becomes UC-n.0.3
-    , UseCaseStepShiftRight(19)               // becomes UC-n.0.2.a
+    , UseCaseStepShiftRight(19)                  // becomes UC-n.0.2.a
     , UseCaseStepCreate(20, uc1, NA, ∅)          // becomes UC-n.1
-    , UseCaseStepDelete(20)                   // becomes UC-n.X.0
+    , UseCaseStepDelete(20)                      // becomes UC-n.X.0
     , UseCaseTitleSet(uc1, newTitle)
     )
 
-  lazy val plainText  = PlainText(project, ProjectText.Context.None)
+  lazy val plainText  = PlainText.ForProject(project, ProjectText.Context.Project)
   lazy val textSearch = TextSearch(project, plainText)
 }

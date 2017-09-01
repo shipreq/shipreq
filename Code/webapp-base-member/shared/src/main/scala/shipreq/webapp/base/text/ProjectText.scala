@@ -184,6 +184,6 @@ abstract class ProjectText[Ctx <: Context, Out](project: Project, final val ctx:
     }
   }
 
-  final def deleteReasonForCodeGroup: NotApplicable.type =
+  final def deleteReasonForCodeGroup: IfApplicable[Nothing] =
     NotApplicable
 }

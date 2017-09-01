@@ -30,9 +30,9 @@ object DataValidators {
   private val genericDesc: Composite.Stateless[String, Option[String], Option[String]] =
     V.optionalLargeText.named(FieldNames.desc)
 
-  def genericRichText(pt: PlainText.ForProject): Invalidator[Text.AnyOptional] =
+  def genericRichText(pt: PlainText.ForProject.AnyCtx): Invalidator[Text.AnyOptional] =
     Invalidator.test(
-      pt.format(Live, _).length <= WebappConfig.largeTextMaxLength,
+      pt.text(_, Live).length <= WebappConfig.largeTextMaxLength,
       Invalidity("Text too large.")) // english
 
   // TODO Make vals lazy
