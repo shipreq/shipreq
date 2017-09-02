@@ -95,6 +95,9 @@ abstract class ParsingUtil extends Parser {
   def popNES[A: UnivEq]: RuleAB[Set[A], NonEmptySet[A]] =
     rule(run((v: Set[A]) => test(v.nonEmpty) ~ push(NonEmptySet(v.head, v.tail))))
 
+  def pushOptional[A](o: Option[A]): Rule1[A] =
+    rule(run(test(o.isDefined) ~ push(o.get)))
+
   def grammarStr[G](g: G)(f: G => FirstChar, w: G => CharWhitelist, l: G => Length): Rule0 =
     rule( f(g).charPredicate ~ (l(g).minus1 times w(g).charPredicate) )
 

@@ -2,9 +2,9 @@ package shipreq.webapp.base.text
 
 import japgolly.univeq.UnivEq
 import org.parboiled2._
-import scalaz.{Applicative, Functor, Monoid, \/, \/-, -\/}
+import scalaz.{-\/, Applicative, Functor, Monoid, \/, \/-}
 import shipreq.base.util.{Backwards, Direction, Forwards}
-import shipreq.webapp.base.data.{Requirements, UseCaseStepId}
+import shipreq.webapp.base.data.{ReqTypePos, Requirements, UseCaseStepId}
 import shipreq.webapp.base.util.ParsingUtil
 
 /**
@@ -86,7 +86,7 @@ object UseCaseStepFlowText {
       rule(
         !lastCharIs(PunctuationOrSymbol) ~
         (arrowF | arrowB) ~
-        !PunctuationOrSymbol
+        (&(ch('.')) | !PunctuationOrSymbol)
         ~> Elem.Arrow)
 
     def step: Rule1[Elem.Step[String]] =
@@ -121,13 +121,15 @@ object UseCaseStepFlowText {
 //    new StepParser(reqs, step).useCaseStepLabel.run()(Parser.DeliveryScheme.Try).toOption
 
   /** @return The input, `step`, on the left, not an error message. */
-  def parseStep(reqs: Requirements)(step: String): String \/ UseCaseStepId =
-    new StepParser(reqs, step).useCaseStepLabel.run()(Parser.DeliveryScheme.Either) match {
+  def parseStep(reqs: Requirements, currentUseCase: Option[ReqTypePos])(step: String): String \/ UseCaseStepId =
+    new StepParser(reqs, currentUseCase, step).useCaseStepLabel.run()(Parser.DeliveryScheme.Either) match {
       case Right(id) => \/-(id)
       case Left(_)   => -\/(step)
     }
 
-  private final class StepParser(val reqs: Requirements, val input: ParserInput) extends Parsers.UseCaseStepLabel {
+  private final class StepParser(override val reqs: Requirements,
+                                 override val currentUseCase: Option[ReqTypePos],
+                                 override val input: ParserInput) extends Parsers.UseCaseStepLabel {
     override def OWS = rule(SLWS.*)
   }
 

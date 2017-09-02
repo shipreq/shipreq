@@ -100,7 +100,7 @@ object ParsersTest extends TestSuite {
     def testGenericReqTitle(src: Text.GenericReqTitle.OptionalText) = {
       count(src)
       val txt = txt2str(src)
-      val parser = Text.GenericReqTitle.parser(p)(txt)
+      val parser = Text.GenericReqTitle.parser(p, None)(txt)
       val parsed = assertSuccess(parser, parser.optionalText.run())
       cmp("[GenericReqDesc] toStr |> parse = id", parsed, src)
     }
@@ -109,17 +109,17 @@ object ParsersTest extends TestSuite {
       val src = t.whole
       count(src)
       val txt = txt2str(src)
-      val parsed = Text.CustomTextField.parse(p)(txt)
+      val parsed = Text.CustomTextField.parse(p, None)(txt)
       cmp(s"[CustomTextField] toStr |> parse = id\n${quoteStringForDisplay(txt)}", parsed, src)
     }
 
     def testStringML(in0: String) = {
       val in1    = preprocessStr(in0, MultiLine)
-      val parser = Text.CustomTextField.parser(p)(in0) // in0, not in1, cos it should preprocess by itself
+      val parser = Text.CustomTextField.parser(p, None)(in0) // in0, not in1, cos it should preprocess by itself
       val par1   = assertSuccess(parser, parser.optionalText.run())
       val in2    = txt2str(par1)
       val in3    = preprocessStr(in2, MultiLine)
-      val par2   = Text.CustomTextField.parse(p)(in2)
+      val par2   = Text.CustomTextField.parse(p, None)(in2)
 //      if (in2 startsWith "\n")
 //        println(
 //          List(
@@ -185,13 +185,13 @@ object ParsersTest extends TestSuite {
   val reqCode_hereiam3 = ReqCodeId(11)
 
   def propEmailAddress = parserProp("EmailAddress",
-    (_: T.EmailAddress).value, T.parserI(P))(_.emailAddress.run())
+    (_: T.EmailAddress).value, T.parserI(P, None))(_.emailAddress.run())
 
   def propWebAddress = parserProp("WebAddress",
-    (_: T.WebAddress).value, T.parserI(P))(_.webAddress.run())
+    (_: T.WebAddress).value, T.parserI(P, None))(_.webAddress.run())
 
   def propMathTeX = parserProp("MathTeX",
-    (_: T.MathTeX).value |> Grammar.mathTexSurround.display, T.parserI(P))(_.mathtex.run())
+    (_: T.MathTeX).value |> Grammar.mathTexSurround.display, T.parserI(P, None))(_.mathtex.run())
 
   val whitespaceCombos: Set[String] = {
     val chars = List(' ', '\n', '\r', '\t')
@@ -224,8 +224,14 @@ object ParsersTest extends TestSuite {
         assertEq(text2, parse(p)(text2), e)
       }
 
-      def test(text: String)(as: T.Atom*): Unit =
-        testT(P, T.parse, text)(as: _*)
+      def test(text: String)(as: T.Atom*): Unit = {
+        testWithUcCtx(text, None)(as: _*)
+        testWithUcCtx(text, Some(1))(as: _*)
+        testWithUcCtx(text, Some(99999))(as: _*)
+      }
+
+      def testWithUcCtx(text: String, currentUC: Option[ReqTypePos])(as: T.Atom*): Unit =
+        testT(P, T.parse(_, currentUC), text)(as: _*)
 
       def testLit(text: String): Unit =
         test(text)(T.Literal(text))
@@ -257,8 +263,10 @@ object ParsersTest extends TestSuite {
 
       'useCaseStepRef {
         def testU(id: UseCaseStepId, stepLabel: String): Unit = {
+          val stepLabelUC = wrapString(stepLabel).takeWhile(Character.isDigit).toInt
           val expect = T.UseCaseStepRef(id)
           for {
+            ucCtx    <- List[Option[ReqTypePos]](None, Some(1), Some(99999))
             prefix   <- "" :: "UC-" :: "uc" :: " Uc - " :: Nil
             suffix   <- "" :: " " :: Nil
             dotNoise <- null :: " ." :: ". " :: "  .  " :: Nil
@@ -266,6 +274,8 @@ object ParsersTest extends TestSuite {
             padZero  <- false :: true :: Nil
           } {
             var s = stepLabel
+            if (ucCtx.exists(_.value ==* stepLabelUC))
+              s = wrapString(s).dropWhile(Character.isDigit)
             chCase match {
               case Some(true)  => s = s.toLowerCase.replace(".x.", ".X.")
               case Some(false) => s = s.toUpperCase
@@ -274,7 +284,7 @@ object ParsersTest extends TestSuite {
             if (dotNoise ne null) s = s.replace(".", dotNoise)
             if (padZero) s = s.replaceAll("(?=\\d+)", "0")
             s = "[" + prefix + s + suffix + "]"
-            test(s)(expect)
+            testWithUcCtx(s, ucCtx)(expect)
           }
         }
 
@@ -320,14 +330,14 @@ object ParsersTest extends TestSuite {
       val graphUnit = 1000 `JVM|JS` 10
       val graphChar = "#" `JVM|JS` "."
       println("Parser test distribution")
-      println("========================")
+      println("=========================")
       Atom.Type.values.foreach { t =>
         val c = counts(t).get()
-        printf("%-13s :%7d | %s\n", t.toString, c, graphChar * (c / graphUnit))
+        printf("%-14s :%7d | %s\n", t.toString, c, graphChar * (c / graphUnit))
       }
-      println("-----------------------+")
-      printf("%-13s :%7d |\n", "Total", counts.values.map(_.get).sum)
-      println("-----------------------+")
+      println("------------------------+")
+      printf("%-14s :%7d |\n", "Total", counts.values.map(_.get).sum)
+      println("------------------------+")
       println()
     }
   }

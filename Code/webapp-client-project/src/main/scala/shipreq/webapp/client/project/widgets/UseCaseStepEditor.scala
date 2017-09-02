@@ -37,16 +37,16 @@ object UseCaseStepEditor {
 
   type CommitFn = UseCaseStepGD.NonEmptyValues ~=> Callback
 
-  case class Props(project       : Project,
-                   plainTextNoCtx: PlainText.ForProject.NoCtx,
-                   textSearch    : TextSearch,
-                   projectWidgets: ProjectWidgets.AnyCtx,
-                   edit          : StateSnapshot[String],
-                   asyncStatus   : Option[EditorStatus.Async],
-                   abort         : Callback,
-                   commit        : CommitFn,
-                   preview       : PreviewFeature.ReadWrite.Single,
-                   preEditValue  : Option[InitialValue]) {
+  final case class Props(project       : Project,
+                         plainTextNoCtx: PlainText.ForProject.NoCtx,
+                         textSearch    : TextSearch,
+                         projectWidgets: ProjectWidgets.AnyCtx,
+                         edit          : StateSnapshot[String],
+                         asyncStatus   : Option[EditorStatus.Async],
+                         abort         : Callback,
+                         commit        : CommitFn,
+                         preview       : PreviewFeature.ReadWrite.Single,
+                         preEditValue  : Option[InitialValue]) {
 
     private val rawElems: Seq[UseCaseStepFlowText.Elem[String, String]] =
       UseCaseStepFlowText.parse(edit.value)
@@ -54,10 +54,13 @@ object UseCaseStepEditor {
     private val rawTextFlow: TextAndFlow[String, Vector[String]] =
       UseCaseStepFlowText.separateTextAndFlow(rawElems)
 
+    private val ucNum: Option[ReqTypePos] =
+      projectWidgets.ctx.ucNum(project)
+
     val parsed: TextAndFlow[OptionalText, Vector[String \/ UseCaseStepId]] =
       rawTextFlow.bimap(
-        Text.UseCaseStep.parse(project),
-        _.map(UseCaseStepFlowText.parseStep(project.reqs)))
+        Text.UseCaseStep.parse(project, ucNum),
+        _.map(UseCaseStepFlowText.parseStep(project.reqs, ucNum)))
 
     val valResult: TextAndFlow[Invalidity \/ OptionalText, Invalidity \/ Set[UseCaseStepId]] =
       parsed.bimap(

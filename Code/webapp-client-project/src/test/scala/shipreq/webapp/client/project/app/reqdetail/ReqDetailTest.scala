@@ -81,6 +81,18 @@ object ReqDetailTest extends TestSuite {
           +> stepText("1.1").assert("No food?←1.0.2→1.1.1")
           +> stepText("1.0.2").assert("Put in mouth←1.1.1→1.1")
           +> stepText("1.1.1").assert("Steal food←1.1→1.0.2")
+
+          >> editStepText("1.1.1", "-->.0.3 .1")
+          +> stepText("1.1").assert("No food?←1.0.2, 1.1.1")
+          +> stepText("1.0.2").assert("Put in mouth→1.1")
+          +> stepText("1.1.1").assert("→1.0.3, 1.1")
+          +> stepText("1.0.3").assert("Still hungry?←1.1.1→1.0.1")
+
+          >> editStepText("1.1.1", "uc ref to step [.0.3]  <---- ")
+          +> stepText("1.1").assert("No food?←1.0.2")
+          +> stepText("1.0.2").assert("Put in mouth→1.1")
+          +> stepText("1.1.1").assert("uc ref to step 1.0.3")
+          +> stepText("1.0.3").assert("Still hungry?→1.0.1")
       ))
 
       'dead - test("UC-1")(Plan.action(

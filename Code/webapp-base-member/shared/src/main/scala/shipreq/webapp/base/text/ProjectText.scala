@@ -15,7 +15,13 @@ object ProjectText {
     * Different elements of the project are presented in different ways depending on the context in which they are
     * presented.
     */
-  sealed trait Context
+  sealed trait Context {
+    final def ucNum(p: Project): Option[ReqTypePos] =
+      this match {
+        case ProjectText.Context.UseCase(uc) => Some(p.reqs.need(uc).pubid.pos)
+        case ProjectText.Context.None        => None
+      }
+  }
   object Context {
 
     /** User is looking at the entire project. */
@@ -109,10 +115,6 @@ abstract class ProjectText[Ctx <: Context, Out](project: Project, final val ctx:
 
   protected final val cfg = project.config
 
-  // Avoids need to explicitly down-cast to pattern-match
-  @inline protected final def byCtx[A](f: ProjectText.Context => A): A =
-    f(ctx)
-
   protected final def memoByReqId = Memo.by[Req, ReqId](_.id)
 
   protected final val latestDeletionReasonById: ReqId => Option[Out] =
@@ -132,6 +134,10 @@ abstract class ProjectText[Ctx <: Context, Out](project: Project, final val ctx:
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Derived: public
+
+  // Generic context. Upcasts for pattern-matching
+  @inline final def gctx: ProjectText.Context =
+    ctx
 
   final def text(text: Text.AnyNonEmpty, live: Live): Out =
     this.text(text.whole, live)

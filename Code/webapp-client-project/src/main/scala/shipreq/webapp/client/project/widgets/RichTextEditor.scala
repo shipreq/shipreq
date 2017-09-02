@@ -32,7 +32,8 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                    preEditValue    : Option[text.OptionalText],
                    showInstructions: Boolean) {
 
-    val richText    = text.parse(project)(edit.value)
+    val ucNum       = projectWidgets.ctx.ucNum(project)
+    val richText    = text.parse(project, ucNum)(edit.value)
     val parseResult = DataValidators.genericRichText(plainTextNoCtx).audit(richText)
     val validated   = PotentialChange.fromDisjunction(parseResult).ignoreOption(preEditValue)
     def abort       = abortCommit.map(_.abort)

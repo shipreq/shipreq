@@ -166,12 +166,15 @@ object Parsers {
 
     def reqs: Requirements
 
+    /** If specified, allows parsing of [.1] instead of [n.1] where n is the value specified */
+    def currentUseCase: Option[ReqTypePos]
+
     /** Expects no leading whitespace.
       * Gobbles any trailing whitespace.
       */
     def useCaseStepLabel: Rule1[UseCaseStepId] = rule(
         ((ch('U')|'u') ~ (ch('C')|'c') ~ OWS ~ ('-' ~ OWS).?).?  // UC-
-        ~ reqTypePos ~ OWS                                       // 1
+        ~ ((reqTypePos ~ OWS) | pushOptional(currentUseCase))    // 1
         ~ ('.' ~ OWS ~ capture(CP.Alpha.+ | CP.Digit.+) ~ OWS).+ // .E.0.X.1.a.ii
         ~> lookupStep ~ popOptional[UseCaseStepId])
 

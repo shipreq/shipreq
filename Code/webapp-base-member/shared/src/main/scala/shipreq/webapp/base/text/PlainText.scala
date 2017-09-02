@@ -165,7 +165,7 @@ object PlainText {
 
     def useCaseStepLabel(focus: UseCaseStep.Focus): String = {
       import focus._
-      val fmt = byCtx {
+      val fmt = gctx match {
         case ProjectText.Context.None                      => UseCaseStepLabelFmt.`UC-N.m`
      // case ProjectText.Context.UseCase(i) if i ==* uc.id => UseCaseStepLabelFmt.    `.m` // looks too confusing
         case ProjectText.Context.UseCase(_)                => UseCaseStepLabelFmt.   `N.m`

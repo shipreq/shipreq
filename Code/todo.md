@@ -94,7 +94,6 @@ Phase 2
 * Use Case Steps
   * preview should show when flow exists (or better: just always)
   * fix rendering of steps in text
-  * parser should allow `.0.1`
   * exception levels are off-by-one. 4.E.1.a.i should be 4.E.1.1.a
   * KB shortcuts: <<, >>, ↑, ↓, +, (save,+,↓)
 
