@@ -40,7 +40,7 @@ object UseCaseStepEditor {
   case class Props(project       : Project,
                    plainTextNoCtx: PlainText.ForProject.NoCtx,
                    textSearch    : TextSearch,
-                   projectWidgets: ProjectWidgets.AnyCtx, // TODO
+                   projectWidgets: ProjectWidgets.AnyCtx,
                    edit          : StateSnapshot[String],
                    asyncStatus   : Option[EditorStatus.Async],
                    abort         : Callback,

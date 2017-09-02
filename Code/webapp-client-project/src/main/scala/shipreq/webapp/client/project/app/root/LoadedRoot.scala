@@ -43,11 +43,20 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
     val setFilterDead: FilterDead ~=> Callback =
       Reusable.fn.state($ zoomStateL State.filterDead).set
 
-    val pxPlainText         = pxProject.map(PlainText.ForProject.noCtx)
-    val pxTextSearch        = Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
-    val pxProjectWidgets    = Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
-    val pxCreateEditability = pxProject.map(p => CreateFeature.Editability(p.config))
-    val pxEditEditability   = pxProject.map(EditorFeature.Editability.apply)
+    val pxPlainText =
+      pxProject.map(PlainText.ForProject.noCtx)
+
+    val pxTextSearch =
+      Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
+
+    val pxProjectWidgets =
+      Reusable byRef Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
+
+    val pxCreateEditability =
+      pxProject.map(p => CreateFeature.Editability(p.config))
+
+    val pxEditEditability =
+      pxProject.map(EditorFeature.Editability.apply)
 
     val updateIO: ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, VerifiedEvent.Seq] =
       cd.serverSideProcToEvents(cp, initData.updateContent)
@@ -79,7 +88,6 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
           previewW.mapId(PreviewId.ToEditor),
           pxProject,
           pxPlainText,
-          pxProjectWidgets,
           pxTextSearch,
           updateIO),
         $ zoomStateL State.edit,

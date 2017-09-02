@@ -34,22 +34,22 @@ object ReqDetail {
       .renderBackend
       .build
 
-  case class StaticProps(updateIO             : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any],
-                         reqDetailRC          : RouterCtl[ExternalPubid],
-                         webWorker            : WebWorkerClient,
-                         updateContentFn      : ProjectSpaProtocols.UpdateContent.Instance,
-                         pxProject            : Px[Project],
-                         pxTextSearch         : Px[TextSearch],
-                         pxProjectWidgetsNoCtx: Px[ProjectWidgets.NoCtx])
+  final case class StaticProps(updateIO             : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any],
+                               reqDetailRC          : RouterCtl[ExternalPubid],
+                               webWorker            : WebWorkerClient,
+                               updateContentFn      : ProjectSpaProtocols.UpdateContent.Instance,
+                               pxProject            : Px[Project],
+                               pxTextSearch         : Px[TextSearch],
+                               pxProjectWidgetsNoCtx: Px[ProjectWidgets.NoCtx])
 
-  case class DynamicProps(extPubid  : ExternalPubid,
-                          filterDead: StateSnapshot[FilterDead],
-                          reqProps  : ReqId => ReqProps,
-                          editorUCS : EditorFeature.ReadWrite.ForUseCaseSteps,
-                          state     : StateSnapshot[State])
+  final case class DynamicProps(extPubid  : ExternalPubid,
+                                filterDead: StateSnapshot[FilterDead],
+                                reqProps  : ReqId => ReqProps,
+                                editorUCS : EditorFeature.ReadWrite.ForUseCaseSteps,
+                                state     : StateSnapshot[State])
 
-  case class ReqProps(editor: EditorFeature.ReadWrite.ForReq,
-                      async : AsyncFeature.ReadWrite.D1[Cell, ErrorMsg])
+  final case class ReqProps(editor: EditorFeature.ReadWrite.ForReq,
+                            async : AsyncFeature.ReadWrite.D1[Cell, ErrorMsg])
 
   type State = Modal.State
 
@@ -61,19 +61,20 @@ object ReqDetail {
    *
    * Cached by its inputs.
    */
-  class Data(sp        : StaticProps,
-         val project   : Project,
-         val req       : Req,
-             upstreamFD: FilterDead) {
+  final class Data(sp        : StaticProps,
+               val project   : Project,
+               val req       : Req,
+                   upstreamFD: FilterDead) {
 
-    val pxProjectWidgets: Px[ProjectWidgets.AnyCtx] =
-      req match {
-        case uc: UseCase    => sp.pxProjectWidgetsNoCtx.map(_ withCtx ProjectText.Context.UseCase(uc.id))
-        case _ : GenericReq => sp.pxProjectWidgetsNoCtx.map(a => a)
-      }
+    val pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]] =
+      Reusable.byRef(
+        req match {
+          case uc: UseCase    => sp.pxProjectWidgetsNoCtx.map(_ withCtx ProjectText.Context.UseCase(uc.id))
+          case _ : GenericReq => sp.pxProjectWidgetsNoCtx.map(a => a)
+        })
 
     val pxPlainText: Px[PlainText.ForProject.AnyCtx] =
-      pxProjectWidgets.map(_.plainText)
+      pxProjectWidgets.value.map(_.plainText)
 
     val live = req.live(project.config.reqTypes)
 
@@ -198,7 +199,7 @@ object ReqDetail {
       val view      = data.viewData(pw).copy(fmtReqTypeShort = false)
 
       def renderEditable(key: EditorFeature.FieldKey.ForSomeReq): TagMod =
-        reqEditor(key).themedRenderOr(view.editable(key))
+        reqEditor(key, data.pxProjectWidgets).themedRenderOr(view.editable(key))
 
       def renderHeader: VdomElement = {
         val hstyle = headerStyle(data.live)
@@ -209,7 +210,7 @@ object ReqDetail {
             Header(hstyle, pubidText + ":")),
 
           <.div(*.headerTitle,
-            reqEditor(EditorFeature.FieldKey.reqTitle(req.id)).themedRenderOr(
+            reqEditor(EditorFeature.FieldKey.reqTitle(req.id), data.pxProjectWidgets).themedRenderOr(
               Header(hstyle, view.title))),
 
           <.div(*.headerFilterDeadButton,
@@ -318,7 +319,7 @@ object ReqDetail {
 
       def renderStepTree(ucData: UseCaseData, stepData: UseCaseStepTree.StepData) = {
         val renderBody: UseCaseStepTree.RenderBodyFn = (id, live, textAndFlow) =>
-          props.editorUCS(EditorFeature.FieldKey.UseCaseStep(id)).themedRenderOr(
+          props.editorUCS(EditorFeature.FieldKey.UseCaseStep(id), data.pxProjectWidgets).themedRenderOr(
             pw.useCaseStepTextAndFlow(textAndFlow, live))
 
         UseCaseStepTree.Props(

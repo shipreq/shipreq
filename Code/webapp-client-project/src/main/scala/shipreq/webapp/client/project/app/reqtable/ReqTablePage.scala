@@ -41,7 +41,7 @@ object ReqTablePage {
   final case class StaticProps(stateAccess     : StateAccessPure[State],
                                cd              : ClientData,
                                pxTextSearch    : Px[TextSearch],
-                               pxProjectWidgets: Px[ProjectWidgets.NoCtx],
+                               pxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
                                reqDetailRC     : RouterCtl[ExternalPubid],
                                updateIO        : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any],
                                rowAsyncW       : AsyncFeature.Write.D1[Row.SourceId, ErrorMsg])
@@ -200,6 +200,8 @@ object ReqTablePage {
       } yield SelectionCtrls.Props(
         sel, rows, setModal, project, projectWidgets, textSearch, updateIO, rowAsyncW)
 
+    val reqTable = new Table(pxProjectWidgets)
+
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     def render(p: Props): VdomElement = {
@@ -257,7 +259,7 @@ object ReqTablePage {
         onFilterChange,
       ).render
 
-      def table(mode: Table.Mode) = Table.Whole.Props(
+      def renderTable(mode: Table.Mode) = reqTable.Whole.Props(
         mode,
         activeColumnsPlus,
         pxRowSelectionVisible.value(),
@@ -270,8 +272,8 @@ object ReqTablePage {
 
       val body: VdomElement =
         mode match {
-          case Mode.HasContent           => table(Table.Mode.Normal(rows))
-          case Mode.NoContentCosFilter   => table(Table.Mode.FilteredOut)
+          case Mode.HasContent           => renderTable(Table.Mode.Normal(rows))
+          case Mode.NoContentCosFilter   => renderTable(Table.Mode.FilteredOut)
           case Mode.NoContentCosHideDead => renderAllContentDead
           case Mode.EmptyProject         => renderEmptyProject
         }

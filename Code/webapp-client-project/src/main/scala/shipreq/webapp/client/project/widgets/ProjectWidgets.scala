@@ -32,6 +32,11 @@ object ProjectWidgets {
                                         reqDetailRC: RouterCtl[ExternalPubid]): ProjectWidgets[Ctx] =
     new ProjectWidgets(project, plainText, reqDetailRC)
 
+  implicit def subst1[F[_], C <: ProjectText.Context](pw: F[ProjectWidgets[C]]): F[ProjectWidgets.AnyCtx] =
+    pw.asInstanceOf[F[AnyCtx]]
+  implicit def subst2[F[_], G[_], C <: ProjectText.Context](pw: F[G[ProjectWidgets[C]]]): F[G[ProjectWidgets.AnyCtx]] =
+    pw.asInstanceOf[F[G[AnyCtx]]]
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   val emptySpan: VdomTag =

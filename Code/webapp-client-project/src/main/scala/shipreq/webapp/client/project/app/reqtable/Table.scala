@@ -11,7 +11,6 @@ import scala.collection.immutable.SortedSet
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Applicable, ErrorMsg, NotApplicable}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.{Off, On, Plain}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.ui.{EditTheme, semantic}
@@ -22,50 +21,20 @@ import shipreq.webapp.client.project.widgets.{DragToReorder, ProjectWidgets, Vie
 import shipreq.webapp.client.project.lib.DataReusability._
 import EditorFeature.FieldKey
 
-object Table {
+final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
+  import Table._
   import Shared._
-
-  sealed abstract class Mode
-  object Mode {
-
-    final case class Normal(rows: Vector[Row]) extends Mode
-
-    case object FilteredOut extends Mode {
-      def render: VdomTag =
-        Message(
-          Message.Style(Message.Type.Info),
-          Icon.Filter,
-          "No filter results.",
-          "None of the project content matches the specified filter criteria.")
-    }
-
-    private val reusabilityNormal: Reusability[Normal] =
-      Reusability.caseClass
-
-    implicit val reusability: Reusability[Mode] =
-      Reusability((a, b) => // TODO Replace with Reusability.derive
-        a match {
-          case x: Normal => b match {
-            case y: Normal => reusabilityNormal.test(x, y)
-            case _ => false
-          }
-          case FilteredOut => a == b
-        }
-      )
-  }
-
-  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   object Whole {
 
-    final case class Props(mode       : Mode,
-                           cols       : NonEmptyVector[ColumnPlus],
-                           selection  : RowSelectionVisible,
-                           editor     : EditorFeature.ReadWrite.ForProject,
-                           rowAsync   : AsyncFeature.Read.D1[Row.SourceId, ErrorMsg],
-                           config     : ProjectConfig,
-                           pw         : ProjectWidgets.NoCtx,
-                           modSettings: ModFn[TableSettings]) {
+    case class Props(mode            : Mode,
+                     cols            : NonEmptyVector[ColumnPlus],
+                     selection       : RowSelectionVisible,
+                     editor          : EditorFeature.ReadWrite.ForProject,
+                     rowAsync        : AsyncFeature.Read.D1[Row.SourceId, ErrorMsg],
+                     config          : ProjectConfig,
+                     pw              : ProjectWidgets.NoCtx,
+                     modSettings     : ModFn[TableSettings]) {
       @inline def render = Component(this)
     }
 
@@ -74,13 +43,13 @@ object Table {
 
     final class Backend($: BackendScope[Props, Unit]) {
 
-      val pxProjectWidgets = Px.props($).map(_.pw).withReuse.manualRefresh
-      val pxProjectConfig  = Px.props($).map(_.config).withReuse.manualRefresh
+      private val pxProjectWidgets = Px.props($).map(_.pw).withReuse.manualRefresh
+      private val pxProjectConfig  = Px.props($).map(_.config).withReuse.manualRefresh
 
-      val pxPubidFmt: Px[ProjectWidgets.NoCtx#PubidFormat] =
+      private val pxPubidFmt: Px[ProjectWidgets.NoCtx#PubidFormat] =
         pxProjectWidgets.map(_.PubidFormat(Plain, *.pubidColumnValue(_), titleFn = _ => None))
 
-      val pxApplicability: Px[Applicability[Column, Row]] =
+      private val pxApplicability: Px[Applicability[Column, Row]] =
         pxProjectConfig.map(cfg => Row.applicability(cfg.applicability))
 
       def render(p: Props): VdomElement = {
@@ -241,13 +210,13 @@ object Table {
     final type ViewInput = _ViewInput
     final type RowEditor = EditorFeature.ReadWrite.ForFields[FK]
 
-    case class Props(row          : RowData,
-                     viewInput    : ViewInput,
-                     editor       : RowEditor,
-                     cols         : NonEmptyVector[ColumnPlus],
-                     applicability: Applicability[Column, Row],
-                     rowAsync     : AsyncFeature.Read.D0[ErrorMsg],
-                     selection    : Selection.OneUI[Row.SourceId]) {
+    case class Props(row             : RowData,
+                     viewInput       : ViewInput,
+                     editor          : RowEditor,
+                     cols            : NonEmptyVector[ColumnPlus],
+                     applicability   : Applicability[Column, Row],
+                     rowAsync        : AsyncFeature.Read.D0[ErrorMsg],
+                     selection       : Selection.OneUI[Row.SourceId]) {
       @inline def render = Component.withKey(row.id.key)(this)
     }
 
@@ -298,7 +267,7 @@ object Table {
 
         val columnToEditorField = rowToColumnToEditorField(p.row)
 
-        val colCells = mkColumnCells(col => p.editor.optional(columnToEditorField(col)))
+        val colCells = mkColumnCells(col => p.editor.optional(columnToEditorField(col), rootPxProjectWidgets))
 
         rowBase(selCell, colCells)
       }
@@ -422,9 +391,9 @@ object Table {
 
   private object Cell {
 
-    final case class Props(cellState: CellState,
-                           editor   : EditorFeature.ReadWrite.ForEditor[Any],
-                           view     : Reusable[TagMod])
+    case class Props(cellState: CellState,
+                     editor   : EditorFeature.ReadWrite.ForEditor[Any],
+                     view     : Reusable[TagMod])
 
     object Props {
       implicit val reusability: Reusability[Props] = {
@@ -507,8 +476,42 @@ object Table {
       .configure(shouldComponentUpdate)
       .build
   }
+}
 
-  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+// █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+
+object Table {
+
+  sealed abstract class Mode
+  object Mode {
+
+    final case class Normal(rows: Vector[Row]) extends Mode
+
+    case object FilteredOut extends Mode {
+      def render: VdomTag =
+        Message(
+          Message.Style(Message.Type.Info),
+          Icon.Filter,
+          "No filter results.",
+          "None of the project content matches the specified filter criteria.")
+    }
+
+    private val reusabilityNormal: Reusability[Normal] =
+      Reusability.caseClass
+
+    implicit val reusability: Reusability[Mode] =
+      Reusability((a, b) => // TODO Replace with Reusability.derive
+        a match {
+          case x: Normal => b match {
+            case y: Normal => reusabilityNormal.test(x, y)
+            case _ => false
+          }
+          case FilteredOut => a == b
+        }
+      )
+  }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   object Shared {
 
@@ -557,3 +560,4 @@ object Table {
       }
   }
 }
+

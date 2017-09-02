@@ -10,6 +10,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.widgets.ProjectWidgets
 
 object Feature {
 
@@ -134,11 +135,16 @@ object Feature {
   object Write {
 
     final case class ForEditor(newEditor: Reusable[NewEditor], async: AsyncFeature.Write.D0[AsyncError]) {
-      def startEdit(state: Read.ForEditor[Any], h: NewEditor.Hooks = NewEditor.Hooks.empty): Option[Callback] =
+      def startEdit(state           : Read.ForEditor[Any],
+                    pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]],
+                    hooks           : NewEditor.Hooks = NewEditor.Hooks.empty): Option[Callback] =
+        startEditWithArgs(state, FreeOption(NewEditor.Args(pxProjectWidgets, hooks)))
+
+      private[Feature] def startEditWithArgs(state: Read.ForEditor[Any], args: FreeOption[NewEditor.Args]): Option[Callback] =
         if (state.editability.is(Deny) || state.editor.isDefined)
           None
         else
-          Some(newEditor.create(h))
+          args.fold(None, a => Some(newEditor.create(a)))
     }
 
     object ForEditor {
@@ -232,7 +238,7 @@ object Feature {
 
   object ReadWrite {
 
-    final case class ForEditor[+C](read: Read.ForEditor[C], write: Write.ForEditor, hooks: NewEditor.Hooks) {
+    final case class ForEditor[+C](read: Read.ForEditor[C], write: Write.ForEditor, args: FreeOption[NewEditor.Args]) {
       @inline def render(): Option[VdomElement] =
         read.render()
 
@@ -249,13 +255,13 @@ object Feature {
         *         `Some[Callback]` otherwise that, when invoked, will add an editor to state and UI.
         */
       def startEdit: Option[Callback] =
-        write.startEdit(read, hooks)
+        write.startEditWithArgs(read, args)
 
       def onStart(cb: Callback): ForEditor[C] =
-        copy(hooks = NewEditor.Hooks.onStart.modify(_ >> cb)(hooks))
+        copy(args = args.map(NewEditor.Args.onStart.modify(_ >> cb)))
 
       def onClose(cb: Callback): ForEditor[C] =
-        copy(hooks = NewEditor.Hooks.onClose.modify(_ >> cb)(hooks))
+        copy(args = args.map(NewEditor.Args.onClose.modify(_ >> cb)))
 
       def asyncFeature = write.async
       def asyncState = read.async
@@ -263,18 +269,24 @@ object Feature {
 
     object ForEditor {
       val doNothing: ForEditor[Nothing] =
-        apply(Read.ForEditor.doNothing, Write.ForEditor.doNothing, NewEditor.Hooks.empty)
+        apply(
+          Read.ForEditor.doNothing,
+          Write.ForEditor.doNothing,
+          FreeOption.empty)
     }
 
     final case class ForFields[-FK <: FieldKey](read: Read.ForFields[FK], write: Write.ForFields[FK]) {
       def asyncFeature = write.async
       def asyncState = read.async
 
-      def apply(field: FK): ForEditor[field.Change] =
-        ForEditor(read(field), write.apply(field), NewEditor.Hooks.empty)
+      def apply(field: FK, pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]]): ForEditor[field.Change] =
+        ForEditor(
+          read(field),
+          write.apply(field),
+          FreeOption(NewEditor.Args(pxProjectWidgets, NewEditor.Hooks.empty)))
 
-      def optional(field: Option[FK]): ForEditor[Any] =
-        field.fold[ForEditor[Any]](ForEditor.doNothing)(apply(_))
+      def optional(field: Option[FK], pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]]): ForEditor[Any] =
+        field.fold[ForEditor[Any]](ForEditor.doNothing)(apply(_, pxProjectWidgets))
     }
 
     implicit class ForFieldsInvariantExt[FK <: FieldKey](private val self: ForFields[FK]) extends AnyVal {

@@ -6,17 +6,16 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalaz.~>
-import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.UpdateContentCmd
-import shipreq.webapp.base.text._
+import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.lib.AbortCommit
-import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.protocol.{ServerSideProcInvoker, UpdateContentCmd}
+import shipreq.webapp.base.text._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 import Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
-import shipreq.webapp.base.event.UseCaseStepGD
 
 /** Interface to start a new editor (if possible).
   * If not all required data is available then the execution of this Callback could result in a no-op.
@@ -25,15 +24,30 @@ import shipreq.webapp.base.event.UseCaseStepGD
   *
   * Doesn't perform ANY applicability checks. That's performed by the higher-level Feature API.
   */
-final case class NewEditor(create: NewEditor.Hooks => Callback) extends AnyVal
+final case class NewEditor(create: NewEditor.Args => Callback) extends AnyVal
 
 object NewEditor {
+
+  @Lenses
+  final case class Args(pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]], hooks: Hooks) {
+    val cbProjectWidgets: CallbackTo[ProjectWidgets.AnyCtx] =
+      pxProjectWidgets.toCallback
+  }
+
+  object Args {
+    val onClose = hooks ^|-> Hooks.onClose
+    val onStart = hooks ^|-> Hooks.onStart
+
+    implicit val reusability: Reusability[Args] =
+      Reusability.byRef || Reusability.caseClass
+  }
 
   @Lenses
   final case class Hooks(onStart: Callback, onClose: Callback)
 
   object Hooks {
-    val empty: Hooks = Hooks(Callback.empty, Callback.empty)
+    val empty: Hooks =
+      Hooks(Callback.empty, Callback.empty)
 
     implicit val reusability: Reusability[Hooks] = {
       implicit val x: Reusability[Callback] = Reusability.by((_: Callback).toScalaFn)(Reusability.byRef)
@@ -44,7 +58,6 @@ object NewEditor {
   final case class Static(previewW        : PreviewFeature.Write.Composite[PreviewId],
                           pxProject       : Px[Project],
                           pxPlainTextNoCtx: Px[PlainText.ForProject.NoCtx],
-                          pxProjectWidgets: Px[ProjectWidgets.NoCtx], // TODO
                           pxTextSearch    : Px[TextSearch],
                           saveIO          : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any]) {
 
@@ -77,8 +90,8 @@ object NewEditor {
       *   2. This might become likely when collaborative features are edited.
       *      (eg. Alice renders start-edit button, Bob deletes req, Alice attempts to start editor)
       */
-    type Init[Change] = Hooks => CallbackOption[Editor[Change]]
-
+    type Init[Change] = Args => CallbackOption[Editor[Change]]
+    
     trait EditorImpl[Change] extends Editor[Change] {
       protected type Props
       protected val props: AsyncState => CallbackTo[Props]
@@ -175,7 +188,7 @@ object NewEditor {
         }
 
       def newEditor(init: => Internal.Init[C]): NewEditor =
-        NewEditor(hooks => init(hooks).asCallback.flatMap(stateAccess.setState(_, hooks.onStart)))
+        NewEditor(args => init(args).asCallback.flatMap(stateAccess.setState(_, args.hooks.onStart)))
     }
 
     def getGenericReq(id: GenericReqId): CallbackOption[GenericReq] =
@@ -210,7 +223,7 @@ object NewEditor {
 
       val pxCustomReqTypes = ReqTypeSelector.pxCustomReqTypes(pxProject)
 
-      def apply(id: GenericReqId): InitFn = ictx => hooks => {
+      def apply(id: GenericReqId): InitFn = ictx => args => {
         import ictx._, ctx._
 
         case class State(initialValue: Some[RT],
@@ -235,7 +248,7 @@ object NewEditor {
         }
 
         val abortCommit: ReqTypeSelector.AbortCommit =
-          Some(makeAbortCommit[RT](t => UpdateContentCmd.SetGenericReqType(id, t.id), hooks).value)
+          Some(makeAbortCommit[RT](t => UpdateContentCmd.SetGenericReqType(id, t.id), args.hooks).value)
 
         for {
           req     <- getGenericReq(id)
@@ -259,14 +272,14 @@ object NewEditor {
 
         override type Change = RCE.Output
 
-        def apply(id: ReqId): InitFn = ictx => hooks => {
+        def apply(id: ReqId): InitFn = ictx => args => {
           import ictx._
 
           val initialValuesCB: CallbackTo[Set[ReqCode.Value]] =
             pxProject.toCallback.map(_.reqCodes.activeReqCodesByReqId(id))
 
           val abortCommit: ReqCodeEditor.Multiple.AbortCommit =
-            makeAbortCommit(UpdateContentCmd.PatchReqCodes(id, _), hooks)
+            makeAbortCommit(UpdateContentCmd.PatchReqCodes(id, _), args.hooks)
 
           startWithStateSnapshot(
             initialValuesCB.toCBO)(
@@ -299,14 +312,14 @@ object NewEditor {
 
         override type Change = RCE.Output
 
-        def apply(id: ReqCodeId): InitFn = ictx => hooks => {
+        def apply(id: ReqCodeId): InitFn = ictx => args => {
           import ictx._
 
           val initialValueCB: CallbackOption[ReqCode.Value] =
             pxProject.toCallback.map(_.reqCodes.reqCode(id)).toCBO
 
           val abortCommit: ReqCodeEditor.Single.AbortCommit =
-            makeAbortCommit(UpdateContentCmd.SetCodeGroupCode(id, _), hooks)
+            makeAbortCommit(UpdateContentCmd.SetCodeGroupCode(id, _), args.hooks)
 
           startWithStateSnapshot(initialValueCB)(PlainText.reqCode)(
             i => new State(_, Some(i), abortCommit))
@@ -354,7 +367,7 @@ object NewEditor {
         start(id, dir, lookup)
       }
 
-      private def start(id: ReqId, dir: Direction, pxLookup: Px[Lookup]): InitFn = ictx => hooks => {
+      private def start(id: ReqId, dir: Direction, pxLookup: Px[Lookup]): InitFn = ictx => args => {
         import ictx._
 
         val pxPubids = pxProject.map(p => ImplicationEditor.initialValue(p, dir, id))
@@ -373,7 +386,7 @@ object NewEditor {
           } yield ImplicationEditor.validationFn(project, id.some, init._1, dir)
 
         val abortCommit: ImplicationEditor.AbortCommit =
-          makeAbortCommit(UpdateContentCmd.PatchImplications(id, dir, _), hooks)
+          makeAbortCommit(UpdateContentCmd.PatchImplications(id, dir, _), args.hooks)
 
         startWithStateSnapshot(pxInit.toCallback.toCBO)(_._2)(
           _ => new State(_, pxLookup, pxValFn, abortCommit))
@@ -410,7 +423,7 @@ object NewEditor {
 
       override type Change = TagEditor.Output
 
-      def apply(id: ReqId, fid: Option[CustomField.Tag.Id]): InitFn = ictx => hooks => {
+      def apply(id: ReqId, fid: Option[CustomField.Tag.Id]): InitFn = ictx => args => {
         import ictx._
 
         val lookupFn = fid.fold[Project => Lookup](Lookup.notUsedInTagFields)(Lookup.forTagField)
@@ -423,7 +436,7 @@ object NewEditor {
           } yield TagEditor.initialValues(project.reqTags(id), project.config, lookup)
 
         val abortCommit: TagEditor.AbortCommit =
-          makeAbortCommit(UpdateContentCmd.PatchReqTags(id, _), hooks)
+          makeAbortCommit(UpdateContentCmd.PatchReqTags(id, _), args.hooks)
 
         startWithStateSnapshot(pxInit.toCallback.toCBO)(_._2)(
           init => new State(_, Some(init._1), pxLookup, abortCommit))
@@ -462,29 +475,30 @@ object NewEditor {
 
         protected def start(cmd           : T.OptionalText => UpdateContentCmd,
                             initialValueCB: CallbackOption[T.OptionalText],
-                            pid           : PreviewId): InitFn = ictx => hooks => {
+                            pid           : PreviewId): InitFn = ictx => args => {
           import ictx._
 
           val abortCommit: editor.AbortCommit =
-            makeAbortCommit(cmd, hooks)
+            makeAbortCommit(cmd, args.hooks)
 
           val initCB =
             for {
               initialValue   <- initialValueCB
-              projectWidgets <- pxProjectWidgets.toCallback.toCBO
+              projectWidgets <- args.cbProjectWidgets.toCBO
             } yield {
               val initialText = projectWidgets.plainText.text(initialValue, RichTextEditor.hardcodedLive)
               (initialValue, initialText)
             }
 
           startWithStateSnapshot(initCB)(_._2)(
-            i => new State(_, Some(i._1), pid, abortCommit))
+            i => new State(_, Some(i._1), args.cbProjectWidgets, pid, abortCommit))
         }
 
-        private class State(ss         : StateSnapshot[String],
-                            initial    : Some[T.OptionalText],
-                            pid        : PreviewId,
-                            abortCommit: editor.AbortCommit) extends EditorImpl {
+        private class State(ss              : StateSnapshot[String],
+                            initial         : Some[T.OptionalText],
+                            projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
+                            pid             : PreviewId,
+                            abortCommit     : editor.AbortCommit) extends EditorImpl {
 
           override type Props = editor.Props
           override def renderImpl = _.render
@@ -495,7 +509,7 @@ object NewEditor {
               project        <- pxProject.toCallback
               plainTextNoCtx <- pxPlainTextNoCtx.toCallback
               textSearch     <- pxTextSearch.toCallback
-              projectWidgets <- pxProjectWidgets.toCallback
+              projectWidgets <- projectWidgetsCB
             } yield editor.Props(
               project,
               plainTextNoCtx,
@@ -547,11 +561,11 @@ object NewEditor {
 
       override type Change = UseCaseStepGD.NonEmptyValues
 
-      def apply(id: UseCaseStepId, pid: PreviewId): InitFn = ictx => hooks => {
+      def apply(id: UseCaseStepId, pid: PreviewId): InitFn = ictx => args => {
         import ictx._
 
         val commitFn: UseCaseStepEditor.CommitFn =
-          Reusable.fn(v => commit(UpdateContentCmd.UpdateUseCaseStep(id, v), hooks))
+          Reusable.fn(v => commit(UpdateContentCmd.UpdateUseCaseStep(id, v), args.hooks))
 
         val pxStepFocus: Px[UseCaseStep.Focus] =
           pxProject.map(_.reqs.useCases.focusStep(id))
@@ -559,7 +573,7 @@ object NewEditor {
         val pxInit: Px[(UseCaseStepEditor.InitialValue, String)] =
           for {
             stepFocus      <- pxStepFocus
-            projectWidgets <- pxProjectWidgets
+            projectWidgets <- args.pxProjectWidgets.value
           } yield {
             val initialValue = TextAndFlow(stepFocus.step.titleExplicitly, stepFocus.flow)
             val initialText = projectWidgets.plainText.useCaseStepTextAndFlow(initialValue, hardcodedLive)
@@ -567,14 +581,15 @@ object NewEditor {
           }
 
         startWithStateSnapshot(pxInit.toCallback.toCBO)(_._2)(
-          i => new State(_, Some(i._1), pid, abort(hooks), commitFn))
+          i => new State(_, Some(i._1), args.cbProjectWidgets, pid, abort(args.hooks), commitFn))
       }
 
-      private class State(ss     : StateSnapshot[String],
-                          initial: Some[UseCaseStepEditor.InitialValue],
-                          pid    : PreviewId,
-                          abort  : Callback,
-                          commit : UseCaseStepEditor.CommitFn) extends EditorImpl {
+      private class State(ss              : StateSnapshot[String],
+                          initial         : Some[UseCaseStepEditor.InitialValue],
+                          projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
+                          pid             : PreviewId,
+                          abort           : Callback,
+                          commit          : UseCaseStepEditor.CommitFn) extends EditorImpl {
 
         override type Props = UseCaseStepEditor.Props
         override def renderImpl = _.render
@@ -585,7 +600,7 @@ object NewEditor {
             project        <- pxProject.toCallback
             plainTextNoCtx <- pxPlainTextNoCtx.toCallback
             textSearch     <- pxTextSearch.toCallback
-            projectWidgets <- pxProjectWidgets.toCallback
+            projectWidgets <- projectWidgetsCB
           } yield UseCaseStepEditor.Props(
             project,
             plainTextNoCtx,

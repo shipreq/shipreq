@@ -15,6 +15,10 @@ object DataReusability extends DataReusability
 
 abstract class DataReusability extends BaseReusability {
 
+  implicit def freeOption[A >: Null : Reusability]: Reusability[FreeOption[A]] =
+    Reusability((x, y) =>
+      x.fold(y.isEmpty, a => y.exists(a ~=~ _)))
+
   implicit def reusabilityMomentJs: Reusability[MomentJs] =
     Reusability.by(_.toEpochMilli)
 
