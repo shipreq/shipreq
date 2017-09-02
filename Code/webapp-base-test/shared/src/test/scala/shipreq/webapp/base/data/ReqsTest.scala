@@ -57,8 +57,9 @@ object ReqsTest extends TestSuite { // TODO Update for UCs
         s.split('.').toVector.map(s => if (s == "X") -1 else s.toInt))
 
       def test(f: StaticField.UseCaseStepTree, uc: ReqTypePos, p: PartialLocation, exp: String): Unit = {
-        assertEq(f.stepLabel(uc, p, false), exp)
-        assertEq(f.stepLabel(uc, p, true), "UC-" + exp)
+        assertEq(f.stepLabel(uc, p, UseCaseStepLabelFmt.`UC-N.m`), "UC-" + exp)
+        assertEq(f.stepLabel(uc, p, UseCaseStepLabelFmt.   `N.m`),         exp)
+        assertEq(f.stepLabel(uc, p, UseCaseStepLabelFmt.    `.m`),         exp.replaceFirst("^\\d+", ""))
       }
 
       'live {

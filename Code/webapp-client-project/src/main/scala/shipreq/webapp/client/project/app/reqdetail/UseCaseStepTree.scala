@@ -61,7 +61,7 @@ object UseCaseStepTree {
       if (stepFilter(partialLoc)) {
         val id        = step.id
         val live      = UseCaseStep.live(uc, partialLoc)
-        val fullLabel = field.stepLabel(pos, partialLoc, mnemonicPrefix = false)
+        val fullLabel = field.stepLabel(pos, partialLoc, UseCaseStepLabelFmt.`N.m`)
 
         def text =
           stepBodyBase(
@@ -95,7 +95,7 @@ object UseCaseStepTree {
     if (row.tailStep && uc.liveUC.is(Live)) {
       val loc   = VectorTree.Location(steps.tree.children.count(_.value.liveExplicitly is Live))
       val ploc  = VectorTree.PartialLocation(loc, Valid)
-      val lbl   = field.stepLabel(pos, ploc, false)
+      val lbl   = field.stepLabel(pos, ploc, UseCaseStepLabelFmt.`N.m`)
       def cmd   = UpdateContentCmd.AddUseCaseStep(uc.id, field, VectorTree.ParentLocation.Empty)
       val cell  = Cell.AddUseCaseTailStep(row)
       val cb    = runCmd(cell)(cmd)

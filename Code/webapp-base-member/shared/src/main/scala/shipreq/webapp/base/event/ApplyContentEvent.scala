@@ -323,7 +323,7 @@ trait ApplyContentEvent {
           case Some(uc2) => ucIMap addOrUpdate uc2
           case None =>
             val ploc = VectorTree.PartialLocation(loc, Valid)
-            val locStr = e.field.stepLabel(uc.pos, ploc, mnemonicPrefix = false)
+            val locStr = e.field.stepLabel(uc.pos, ploc, UseCaseStepLabelFmt.`N.m`)
             SE fail s"${show(step.id)} cannot be added to ${show(uc.id)} at location: $locStr"
         }
 

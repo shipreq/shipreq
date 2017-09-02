@@ -165,11 +165,12 @@ object PlainText {
 
     def useCaseStepLabel(focus: UseCaseStep.Focus): String = {
       import focus._
-      val mne = byCtx {
-        case ProjectText.Context.None       => true
-        case ProjectText.Context.UseCase(i) => i !=* uc.id
+      val fmt = byCtx {
+        case ProjectText.Context.None                      => UseCaseStepLabelFmt.`UC-N.m`
+     // case ProjectText.Context.UseCase(i) if i ==* uc.id => UseCaseStepLabelFmt.    `.m` // looks too confusing
+        case ProjectText.Context.UseCase(_)                => UseCaseStepLabelFmt.   `N.m`
       }
-      field.stepLabel(uc.pubid.pos, ploc, mnemonicPrefix = mne)
+      field.stepLabel(uc.pubid.pos, ploc, fmt)
     }
 
     private def useCaseStepLabelById(id: UseCaseStepId): String =

@@ -180,7 +180,7 @@ object Graphs {
         steps.tree.subtreeLocAndValueIterator[(PartialLocation, Content)](tf(steps.tree), (loc, step) => {
           val ploc = steps.partialLocs.forward(loc)
           if (ploc.validity is Valid) {
-            val label = field.stepLabel(uc.pos, ploc, mnemonicPrefix = false)
+            val label = field.stepLabel(uc.pos, ploc, UseCaseStepLabelFmt.`N.m`)
             val node = step.id.value.toString
             register(step.id, node)
             val nodeDOT: Content = () => {

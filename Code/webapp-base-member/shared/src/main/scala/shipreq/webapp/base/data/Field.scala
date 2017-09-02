@@ -142,6 +142,13 @@ sealed abstract class StaticField(         val name     : String,
   override final def foldId[A](s: StaticField => A, c: CustomFieldId => A): A = s(this)
 }
 
+sealed trait UseCaseStepLabelFmt
+object UseCaseStepLabelFmt {
+  case object `UC-N.m` extends UseCaseStepLabelFmt
+  case object    `N.m` extends UseCaseStepLabelFmt
+  case object     `.m` extends UseCaseStepLabelFmt
+}
+
 object StaticField {
   val useCaseOnly: ApplicableReqTypes =
     ISubset.Only(NonEmptySet one StaticReqType.UseCase)
@@ -161,14 +168,23 @@ object StaticField {
     val useCaseSteps: Lens[UseCase, UseCaseSteps]
     val useCaseStepTree: Lens[UseCase, UseCaseSteps.Tree] // Has to be lazy to be implemented here. No.
 
-    final def stepLabel(ucNumber: ReqTypePos, loc: VectorTree.PartialLocation, mnemonicPrefix: Boolean): String =
-      Util.quickSB { sb =>
+    final def stepLabel(ucNumber: ReqTypePos,
+                        loc     : VectorTree.PartialLocation,
+                        fmt     : UseCaseStepLabelFmt): String =
+      Util.quickJSB { sb =>
+        import UseCaseStepLabelFmt._
         @inline def sep = '.'
-        if (mnemonicPrefix) {
-          sb append StaticReqType.UseCase.mnemonic.value
-          sb append '-'
+
+        fmt match {
+          case `UC-N.m` =>
+            sb append StaticReqType.UseCase.mnemonic.value
+            sb append '-'
+            sb append ucNumber.value
+          case `N.m` =>
+            sb append ucNumber.value
+          case `.m` =>
         }
-        sb append ucNumber.value
+
         for (p <- stepLabelPrefix) {
           sb append sep
           sb append p
