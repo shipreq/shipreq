@@ -12,6 +12,11 @@ NOTE TO SELF: To prepare demo,
 * https://local.shipreq.com
 * Ensure user exists and can login
 * Create req-code demo
+
+Speaker notes:
+==============
+v1.1 - Everyone talks about "getting users" but as soon as you've got them, you need to support them,
+  and a community starts growing.
 -->
 
 ---
@@ -315,9 +320,12 @@ class: fullscreenImg
   <br>Will triage later according to market and customer feedback
 ---
 
-# Features
+class: middle
 
-(and product demo)
+# Features and Product Demo
+---
+
+# Features
 
 *new project → req table → create a few reqs*
 ---
@@ -457,7 +465,7 @@ template: preventable-errors
 * IDs are never ambiguous
 
 <br>
-*(change req type, reqtype mnemonic)*
+*(change req.type, reqtype.mnemonic)*
 ---
 name: detectable-errors
 
