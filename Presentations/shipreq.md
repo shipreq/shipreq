@@ -234,16 +234,18 @@ v2.0 nearly complete but I'm just getting started...
 * v1.0: Use Cases
 ---
 
+class: fullscreenImg
+
+<div><img src="uc-eg-chemicals.png"></div>
+---
+
 exclude: true
 class: fullscreenImg
 
 <div><img src="uc-eg-scrabble.png"></div>
 ---
 
-class: fullscreenImg
-
-<div><img src="uc-eg-chemicals.png"></div>
----
+exclude: true
 
 TODO Screenshot of a use case in ShipReq
 
@@ -524,11 +526,12 @@ That's the gist of Phase 2.
 
 <br>
 One final feature...
+--
 
 ## Meta-Feature: Consistent Principals
 * Quality
 * Attention to detail
-* Ease of use
+* User experience
 * Capability
 ---
 
