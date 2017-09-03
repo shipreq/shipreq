@@ -56,6 +56,30 @@ object ColumnSelector {
       rs.toTagMod(r => Popup.renderCheckbox(r.checkbox, r.label)))
       .render)
 
+  private def updateColumnList(active: NonEmptyVector[Column], clicked: Column, addClicked: Boolean): NonEmptyVector[Column] =
+    NonEmptyVector force {
+
+      val insertAfter: Option[Column.Mandatory] =
+        clicked match {
+          case Column.Code => Some(Column.Pubid)
+          case _           => None
+        }
+
+      val b = Vector.newBuilder[Column]
+      for (c <- active.whole) {
+        if (c !=* clicked)
+          b += c
+        if (addClicked && insertAfter.exists(_ ==* c))
+          b += clicked
+      }
+
+      // Append new items to the end by default
+      if (addClicked && insertAfter.isEmpty)
+        b += clicked
+
+      b.result()
+    }
+
   private def render(p: Props): VdomElement = {
 
     val activeColumns: Set[Column] =
@@ -74,7 +98,7 @@ object ColumnSelector {
 
     ColumnCheckboxes.Props(
       items,
-      p.update.map(set => update => set(NonEmptyVector force update.newSelection)))
+      p.update.map(set => update => set(updateColumnList(p.active, update.clickedItem.value, update.newValue is On))))
       .render
   }
 

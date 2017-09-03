@@ -33,13 +33,14 @@ object Column {
   sealed trait BuiltIn extends Column {
     override final val key = KeyGen.global.next()
   }
+  sealed trait Mandatory extends BuiltIn {self: BuiltIn => }
 
   // -------------------------------------------------------------------------------------------------------------------
 
   // NOTE: Keep .builtInValues in sync
-  case object Pubid                       extends BuiltIn with SortConclusive
+  case object Pubid                       extends BuiltIn with SortConclusive                  with Mandatory
   case object Code                        extends BuiltIn with SortInconclusive with HasBlanks
-  case object Title                       extends BuiltIn with SortInconclusive with HasBlanks
+  case object Title                       extends BuiltIn with SortInconclusive with HasBlanks with Mandatory
   case object ReqType                     extends BuiltIn with SortInconclusive with NoBlanks
   case object Tags                        extends BuiltIn with SortInconclusive with HasBlanks
   case class Implications(dir: Direction) extends BuiltIn with SortInconclusive with HasBlanks
@@ -78,12 +79,14 @@ object Column {
       Implications(Forwards), Implications(Backwards),
       DeletionReason)
 
-  val mandatory: Set[BuiltIn] =
-    UnivEq.emptySet[BuiltIn] + Pubid + Title
+  val mandatory: Set[Mandatory] =
+    builtInValues.iterator.collect {
+      case m: Mandatory => m
+    }.toSet
 
   val isMandatory: Column => Boolean = {
-    case b: BuiltIn     => mandatory contains b
-    case _: CustomField => false
+    case _: Mandatory   => true
+    case _              => false
   }
 
   val editorFieldCG = Intersection[Column, EditorFeature.FieldKey.ForCodeGroup] {
