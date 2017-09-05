@@ -42,7 +42,12 @@ object FilterHelp {
         "To select a specific requirement, enter its ID (in upper-case).",
         <.br,
         <.br, "Note: If you want to specify a requirements ID as text, either use lower-case or wrap it as a phrase.",
-      )("FR-30", "UC-6")),
+      )("FR-30", "UC-6"),
+
+      Example(
+        "To specify a number of specific requirements of the same type, surround the numbers with braces ", code("{…}"),
+        " and separate by commas. You can also use a dash for an inclusive range."
+      )("FR-{1,3,5,7}", "FR-{10-20}")),
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     Group("Issues & Tags")(

@@ -372,7 +372,7 @@ private[reqtable] object Logic {
         r => f(issueLookup.forReq(r.id)),
         g => f(issueLookup.forReqCode(g.id)))
 
-    def byImplication(reqs: ValidFilter.Reqs, tc: TransitiveClosure[ReqId]): R = {
+    def byImplication(reqs: ValidFilter.ReqIds, tc: TransitiveClosure[ReqId]): R = {
       val whitelist = reqs.foldLeft(Set.empty[ReqId])(_ ++ tc(_))
       if (whitelist.isEmpty)
         None
@@ -382,7 +382,7 @@ private[reqtable] object Logic {
 
     def interpret(subj: ValidFilter): R =
       subj match {
-        case Req(id)              => Filters(req = _.id ==* id)
+        case Reqs(ids)            => Filters(req = r => ids.contains(r.id))
         case ReqType(rt)          => Filters(req = _.reqTypeId ==* rt)
         case Tag(tag)             => byTag(_ contains tag)
         case Presence(AnyTag)     => byTag(_.nonEmpty)

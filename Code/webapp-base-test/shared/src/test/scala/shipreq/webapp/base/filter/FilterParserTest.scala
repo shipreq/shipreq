@@ -130,11 +130,13 @@ object FilterParserTest extends TestSuite {
       'escape - test("""/\\ \. \d \s \n \/ \W/""", Regex("""\\ \. \d \s \n / \W"""))
     }
 
-    'req {
-      'exact     - test("MF-3",   Req(ExternalPubid("MF", 3)))
-      'noDash    - test("MF3",    Req(ExternalPubid("MF", 3)))
-      'lowerCase - test("mf-3",   SimpleText("mf-3"))
-      'quoted    - test("'MF-3'", QuotedText("MF-3", '\''))
+    'reqs {
+      'single       - test("MF-3",         Reqs("MF", NES(3)))
+      'singleNoDash - test("MF3",          Reqs("MF", NES(3)))
+      'range        - test("MF-{2,4,6-8}", Reqs("MF", NES(2,4,6,7,8)))
+      'rangeNoDash  - test("MF{2,4,6-8}",  Reqs("MF", NES(2,4,6,7,8)))
+      'lowerCase    - test("mf-3",         SimpleText("mf-3"))
+      'quoted       - test("'MF-3'",       QuotedText("MF-3", '\''))
     }
 
     'reqType {

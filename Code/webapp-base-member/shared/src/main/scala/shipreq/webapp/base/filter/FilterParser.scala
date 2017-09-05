@@ -68,11 +68,11 @@ object FilterParser {
       case Some(ns) => SomeOfType(rt, ns)
     }
 
-  private type ImpType = Reqs => PotentialFilter
+  private type ImpType = ReqSpecs => PotentialFilter
   private val mkImplies  : ImpType = Implies
   private val mkImpliedBy: ImpType = ImpliedBy
-  private val mkImplication: (ImpType, Reqs) => PotentialFilter = _(_)
-  private val mkReq: (Mnemonic, ReqTypePos) => Req = (m, p) => Req(ExternalPubid(m, p))
+  private val mkImplication: (ImpType, ReqSpecs) => PotentialFilter = _(_)
+  private val mkReqs: (Mnemonic, NonEmptySet[Int]) => Reqs = (m, ns) => Reqs(m, ns)
 
   private val mkClause: (PotentialFilter, Seq[PotentialFilter]) => NonEmptyVector[PotentialFilter] =
     (h, t) => NonEmptyVector(h, t: _*)
@@ -109,7 +109,7 @@ private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
   def reqsSpec: Rule1[ReqsSpec] =
     rule(reqTypeMnemonicCI ~ optional('-'.? ~ numberOrRange) ~> mkReqsSpec)
 
-  def reqs: Rule1[Reqs] =
+  def reqSpecs: Rule1[ReqSpecs] =
     rule((reqsSpec + ',') ~ popSeqToNEV[ReqsSpec])
 
   private case class QuoteRule(char: Char) {
@@ -136,8 +136,8 @@ private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
   def hashRef: Rule1[HashRef] =
     rule(hashRefStr_! ~ end ~> HashRefKey ~> HashRef)
 
-  def req: Rule1[Req] =
-    rule(reqTypeMnemonicCS ~ '-'.? ~ reqTypePos ~> mkReq)
+  def reqs: Rule1[Reqs] =
+    rule(reqTypeMnemonicCS ~ '-'.? ~ numberOrRange ~> mkReqs)
 
   def reqType: Rule1[ReqType] =
     rule(reqTypeMnemonicCS ~ end ~> ReqType)
@@ -155,10 +155,10 @@ private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
   def implication: Rule1[PotentialFilter] =
     rule("implie" ~ (
       ('s' ~ push(mkImplies)) | ("dBy" ~ push(mkImpliedBy))
-      ) ~ ':' ~!~ reqs ~ end ~> mkImplication)
+      ) ~ ':' ~!~ reqSpecs ~ end ~> mkImplication)
 
   def positive: Rule1[PotentialFilter] =
-    rule(allOf | anyOf | quotedText | regex | hashRef | presence | lack | implication | req | reqType | simpleText)
+    rule(allOf | anyOf | quotedText | regex | hashRef | presence | lack | implication | reqs | reqType | simpleText)
 
   def negative: Rule1[PotentialFilter] =
     rule('-' ~!~ (('-' ~!~ expr) | (expr ~> Not)))

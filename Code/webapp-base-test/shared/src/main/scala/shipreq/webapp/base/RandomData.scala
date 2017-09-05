@@ -1381,27 +1381,31 @@ object RandomData {
       val wholeType =
         reqTypeMnemonic map WholeType
 
+      val numberRange: Gen[NonEmptySet[Int]] =
+        Gen.chooseInt(1,10000).nes(0 to (20 `JVM|JS` 6), implicitly)
+
       val someOfType =
-        Gen.apply2(SomeOfType)(reqTypeMnemonic, Gen.chooseInt(1,10000).nes(0 to (20 `JVM|JS` 6), implicitly))
+        Gen.apply2(SomeOfType)(reqTypeMnemonic, numberRange)
 
       val reqsSpec: Gen[ReqsSpec] =
         Gen.chooseGen(wholeType, someOfType)
 
-      val reqs: Gen[Reqs] =
+      val reqSpecs: Gen[ReqSpecs] =
         reqsSpec.nev(0 to 8)
 
       val attr: Gen[String] =
         charPred(FilterParser.attrChar).string1
 
+      val reqs       = Gen.apply2(Reqs)(reqTypeMnemonic, numberRange)
       val reqType    = reqTypeMnemonic map ReqType
       val hashRef    = hashRefKey map HashRef
-      val implies    = reqs map Implies
-      val impliedBy  = reqs map ImpliedBy
+      val implies    = reqSpecs map Implies
+      val impliedBy  = reqSpecs map ImpliedBy
       val presence   = attr map Presence
       val lack       = attr map Lack
 
       val flatGens: NonEmptyVector[Gen[PotentialFilter]] =
-        NonEmptyVector(quotedText, simpleText, regex, reqType, hashRef, implies, impliedBy, presence, lack)
+        NonEmptyVector(quotedText, simpleText, regex, reqs, reqType, hashRef, implies, impliedBy, presence, lack)
 
       val flatGen: Gen[PotentialFilter] =
         Gen.chooseGenNE(flatGens)
@@ -1440,7 +1444,7 @@ object RandomData {
     object valid {
       import ValidFilter.{Text => FText, _}
 
-      def reqs(id: Gen[ReqId]): Gen[Reqs] =
+      def reqIds(id: Gen[ReqId]): Gen[ReqIds] =
         id.set
 
       val attr     = Gen.choose[Attr](Attr.AnyIssue, Attr.AnyTag)
@@ -1458,21 +1462,23 @@ object RandomData {
       val textPatternish: Gen[ValidFilter] =
         textPattern.flatMap(_.fold(text: Gen[ValidFilter])(Gen.pure))
 
+      def reqs       (gr: Gen[ReqIds])           : Gen[Reqs]           = gr map Reqs
       def reqType    (id: Gen[ReqTypeId])        : Gen[ReqType]        = id map ReqType
       def tag        (id: Gen[ApplicableTagId])  : Gen[Tag]            = id map Tag
       def customIssue(id: Gen[CustomIssueTypeId]): Gen[CustomIssue]    = id map CustomIssue
-      def implies    (gr: Gen[Reqs])             : Gen[ImpliesAnyOf]   = gr map ImpliesAnyOf
-      def impliedBy  (gr: Gen[Reqs])             : Gen[ImpliedByAnyOf] = gr map ImpliedByAnyOf
+      def implies    (gr: Gen[ReqIds])           : Gen[ImpliesAnyOf]   = gr map ImpliesAnyOf
+      def impliedBy  (gr: Gen[ReqIds])           : Gen[ImpliedByAnyOf] = gr map ImpliedByAnyOf
 
       def flatGens(gr: Option[Gen[ReqId]],
                    gy: Option[Gen[ReqTypeId]],
                    gt: Option[Gen[ApplicableTagId]],
                    gi: Option[Gen[CustomIssueTypeId]]): NonEmptyVector[Gen[ValidFilter]] = {
-        val ogr = gr.map(reqs)
+        val ogr = gr.map(reqIds)
         NonEmptyVector[Gen[ValidFilter]](text, textPatternish, presence, lack) ++
           gy.map(reqType) ++
           gt.map(tag) ++
           gi.map(customIssue) ++
+          ogr.map(reqs) ++
           ogr.map(implies) ++
           ogr.map(impliedBy)
       }

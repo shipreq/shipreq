@@ -20,21 +20,21 @@ object PotentialFilter {
   case class WholeType (reqtype: Mnemonic)                            extends ReqsSpec
   case class SomeOfType(reqtype: Mnemonic, numbers: NonEmptySet[Int]) extends ReqsSpec
 
-  type Reqs = NonEmptyVector[ReqsSpec]
+  type ReqSpecs = NonEmptyVector[ReqsSpec]
 
-  case class SimpleText(text: String)                           extends PotentialFilter
-  case class QuotedText(text: String, quoteChar: Char)          extends PotentialFilter
-  case class Regex     (text: String)                           extends PotentialFilter
-  case class Req       (value: ExternalPubid)                   extends PotentialFilter
-  case class ReqType   (value: Mnemonic)                        extends PotentialFilter
-  case class HashRef   (text: HashRefKey)                       extends PotentialFilter
-  case class Implies   (reqs: Reqs)                             extends PotentialFilter
-  case class ImpliedBy (reqs: Reqs)                             extends PotentialFilter
-  case class Presence  (attr: String)                           extends PotentialFilter
-  case class Lack      (attr: String)                           extends PotentialFilter
-  case class AllOf     (inner: NonEmptyVector[PotentialFilter]) extends PotentialFilter
-  case class AnyOf     (inner: NonEmptyVector[PotentialFilter]) extends PotentialFilter
-  case class Not       (expr: PotentialFilter)                  extends PotentialFilter
+  case class SimpleText(text: String)                                 extends PotentialFilter
+  case class QuotedText(text: String, quoteChar: Char)                extends PotentialFilter
+  case class Regex     (text: String)                                 extends PotentialFilter
+  case class Reqs      (reqtype: Mnemonic, numbers: NonEmptySet[Int]) extends PotentialFilter
+  case class ReqType   (value: Mnemonic)                              extends PotentialFilter
+  case class HashRef   (text: HashRefKey)                             extends PotentialFilter
+  case class Implies   (reqs: ReqSpecs)                               extends PotentialFilter
+  case class ImpliedBy (reqs: ReqSpecs)                               extends PotentialFilter
+  case class Presence  (attr: String)                                 extends PotentialFilter
+  case class Lack      (attr: String)                                 extends PotentialFilter
+  case class AllOf     (inner: NonEmptyVector[PotentialFilter])       extends PotentialFilter
+  case class AnyOf     (inner: NonEmptyVector[PotentialFilter])       extends PotentialFilter
+  case class Not       (expr: PotentialFilter)                        extends PotentialFilter
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -44,27 +44,30 @@ object PotentialFilter {
     def fmtClause(clause: NonEmptyVector[PotentialFilter]): String =
       clause.reduceMapLeft1(fmtExpr)(_ ~ ' ' ~ _)
 
-    def fmtReqs(r: Reqs): String =
+    def fmtReqs(r: ReqSpecs): String =
       r.reduceMapLeft1(fmtReqsSpec)(_ ~ ',' ~ _)
 
     def fmtReqsSpec(r: ReqsSpec): String =
       r match {
         case WholeType (mn)     => mn.value
-        case SomeOfType(mn, ns) =>
-          val n =
-            if (ns.tail.isEmpty)
-              ns.head.toString
-            else
-              '{' ~ ConciseIntSetFormat.short(ns) ~ '}'
-          mn.value ~ '-' ~ n
+        case SomeOfType(mn, ns) => fmtSomeReqs(mn, ns)
       }
+
+    def fmtSomeReqs(m: Mnemonic, ns: NonEmptySet[Int]): String = {
+      val n =
+        if (ns.tail.isEmpty)
+          ns.head.toString
+        else
+          '{' ~ ConciseIntSetFormat.short(ns) ~ '}'
+      m.value ~ '-' ~ n
+    }
 
     def fmtExpr(fs: PotentialFilter): String =
       fs match {
         case SimpleText(text)        => text
         case QuotedText(text, qChar) => qChar ~ text ~ qChar
         case Regex     (text)        => '/' ~ text.replace("/", "\\/") ~ '/'
-        case Req       (value)       => value.mnemonic.value ~ '-' ~ value.pos.value
+        case Reqs      (mn, ns)      => fmtSomeReqs(mn, ns)
         case ReqType   (value)       => value.value
         case HashRef   (text)        => Grammar.hashRefKey.prefix ~ text.value
         case Implies   (reqs)        => "implies:" ~ fmtReqs(reqs)
@@ -106,16 +109,17 @@ object PotentialFilter {
     def lookupReqsByType(mn: data.ReqType.Mnemonic): String \/ Vector[data.ReqId] =
       lookupReqType(mn).map(rt => p.reqs.pubids.value(rt.reqTypeId))
 
-    val lookupReqs: ReqsSpec => String \/ ValidFilter.Reqs = {
-      case SomeOfType(mn, nums) =>
-        lookupReqsByType(mn).map(vec =>
-          nums.foldLeft[ValidFilter.Reqs](Set.empty)((q, num) =>
-            if (num > vec.length) q else q + vec(num - 1)))
-      case WholeType(mn) =>
-        lookupReqsByType(mn).map(_.toSet)
+    def lookupSomeReqs(mn: Mnemonic, nums: NonEmptySet[Int]): String \/ ValidFilter.ReqIds =
+      lookupReqsByType(mn).map(vec =>
+        nums.foldLeft[ValidFilter.ReqIds](Set.empty)((q, num) =>
+          if (num > vec.length) q else q + vec(num - 1)))
+
+    val lookupReqs: ReqsSpec => String \/ ValidFilter.ReqIds = {
+      case SomeOfType(mn, ns) => lookupSomeReqs(mn, ns)
+      case WholeType(mn)      => lookupReqsByType(mn).map(_.toSet)
     }
 
-    def byReqs(f: ValidFilter.Reqs => ValidFilter, reqs: Reqs): R =
+    def byReqs(f: ValidFilter.ReqIds => ValidFilter, reqs: ReqSpecs): R =
       reqs.traverse(lookupReqs).map(sets =>
         f(sets.reduce(_ ++ _)))
 
@@ -123,16 +127,13 @@ object PotentialFilter {
       specs.traverse(translate).map( v =>
         Min2Set.maybe1(v.toNES)(identity)(f))
 
-    def reqIdLookupErrorMsg(ep: ExternalPubid, l: ExternalPubid.LookupFailure): String =
-      s"Req ${PlainText.pubid(ep)} doesn't exist."
-
     def translate(pf: PotentialFilter): R =
       pf match {
         case SimpleText(text)    => ValidFilter.Text(text)
         case QuotedText(text, _) => ValidFilter.Text(text)
         case Presence(attr)      => byAttr(ValidFilter.Presence, attr)
         case Lack(attr)          => byAttr(ValidFilter.Lack, attr)
-        case Req(ep)             => ep.lookup(p).bimap(reqIdLookupErrorMsg(ep, _), req => ValidFilter.Req(req.id))
+        case Reqs(mn, ns)        => lookupSomeReqs(mn, ns).map(ValidFilter.Reqs)
         case ReqType(mn)         => lookupReqType(mn).map(rt => ValidFilter.ReqType(rt.reqTypeId))
         case Implies(reqs)       => byReqs(ValidFilter.ImpliesAnyOf, reqs)
         case ImpliedBy(reqs)     => byReqs(ValidFilter.ImpliedByAnyOf, reqs)

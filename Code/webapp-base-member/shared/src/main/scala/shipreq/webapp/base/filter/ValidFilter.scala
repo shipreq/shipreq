@@ -17,7 +17,7 @@ sealed trait ValidFilter
 
 object ValidFilter {
 
-  type Reqs = Set[data.ReqId] // If empty, then it's instant fail for the filter.
+  type ReqIds = Set[data.ReqId] // If empty, then it's instant fail for the filter.
 
   sealed abstract class Attr(val name: String, val additionalNames: String*)
   object Attr {
@@ -42,13 +42,13 @@ object ValidFilter {
 
   case class Presence      (attr: Attr)                  extends ValidFilter
   case class Lack          (attr: Attr)                  extends ValidFilter
-  case class Req           (id: data.ReqId)              extends ValidFilter
+  case class Reqs          (reqs: ReqIds)                extends ValidFilter
   case class ReqType       (id: data.ReqTypeId)          extends ValidFilter
   case class Tag           (id: data.ApplicableTagId)    extends ValidFilter
   case class CustomIssue   (id: data.CustomIssueTypeId)  extends ValidFilter
   case class Text          (substring: String)           extends ValidFilter
-  case class ImpliesAnyOf  (reqs: Reqs)                  extends ValidFilter
-  case class ImpliedByAnyOf(reqs: Reqs)                  extends ValidFilter
+  case class ImpliesAnyOf  (reqs: ReqIds)                extends ValidFilter
+  case class ImpliedByAnyOf(reqs: ReqIds)                extends ValidFilter
   case class AllOf         (inner: Min2Set[ValidFilter]) extends ValidFilter
   case class AnyOf         (inner: Min2Set[ValidFilter]) extends ValidFilter
   case class Not           (expr: ValidFilter)           extends ValidFilter
@@ -136,7 +136,7 @@ object ValidFilter {
       a match {
         case _: Presence
            | _: Lack
-           | _: Req
+           | _: Reqs
            | _: ReqType
            | _: Tag
            | _: ImpliesAnyOf
