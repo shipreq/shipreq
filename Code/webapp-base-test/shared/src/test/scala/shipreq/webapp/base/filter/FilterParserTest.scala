@@ -144,18 +144,20 @@ object FilterParserTest extends TestSuite {
     }
 
     'implication {
-      'empty1    - testFail("implies:")
-      'empty2    - testFail("impliedBy:  ")
-      'open1     - testFail("impliedBy:MF-")
-      'open2     - testFail("impliedBy:MF-{")
-      'open3     - testFail("impliedBy:MF-{3,4")
-      'wholeType - test("impliedBy:MF",                  ImpliedBy(WholeType("MF")))
-      'single    - test("implies:MF-2",                  Implies  (SomeOfType("MF", NES(2))))
-      'specific  - test("impliedBy:CO-{3,5,7}",          ImpliedBy(SomeOfType("CO", NES(3,5,7))))
-      'range     - test("implies:CO-{3-6}",              Implies  (SomeOfType("CO", NES(3,4,5,6))))
-      'rangeRev  - test("impliedBy:CO-{9-7}",            ImpliedBy(SomeOfType("CO", NES(7,8,9))))
-      'combo     - test("implies:SI,DD-{3-5,9,12-14,1}", Implies  (NonEmptyVector(WholeType("SI"), SomeOfType("DD", NES(3,4,5,9,12,13,14,1)))))
-      'lower     - test("impliedBy:dgh",                 ImpliedBy(WholeType("DGH")))
+      'empty1       - testFail("implies:")
+      'empty2       - testFail("impliedBy:  ")
+      'open1        - testFail("impliedBy:MF-")
+      'open2        - testFail("impliedBy:MF-{")
+      'open3        - testFail("impliedBy:MF-{3,4")
+      'wholeType    - test("impliedBy:MF",                  ImpliedBy(WholeType("MF")))
+      'single       - test("implies:MF-2",                  Implies  (SomeOfType("MF", NES(2))))
+      'singleNoDash - test("implies:MF2",                   Implies  (SomeOfType("MF", NES(2))))
+      'specific     - test("impliedBy:CO-{3,5,7}",          ImpliedBy(SomeOfType("CO", NES(3,5,7))))
+      'range        - test("implies:CO-{3-6}",              Implies  (SomeOfType("CO", NES(3,4,5,6))))
+      'rangeNoDash  - test("implies:CO{3-6}",               Implies  (SomeOfType("CO", NES(3,4,5,6))))
+      'rangeRev     - test("impliedBy:CO-{9-7}",            ImpliedBy(SomeOfType("CO", NES(7,8,9))))
+      'combo        - test("implies:SI,DD-{3-5,9,12-14,1}", Implies  (NonEmptyVector(WholeType("SI"), SomeOfType("DD", NES(3,4,5,9,12,13,14,1)))))
+      'lowercase    - test("impliedBy:dgh",                 ImpliedBy(WholeType("DGH")))
     }
 
     'presence {

@@ -106,7 +106,7 @@ private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
 
   /** MF or MF-3 or MF-{1,3,5-9,12} */
   def reqsSpec: Rule1[ReqsSpec] =
-    rule(reqTypeMnemonicCI ~ optional('-' ~!~ numberOrRange) ~> mkReqsSpec)
+    rule(reqTypeMnemonicCI ~ optional('-'.? ~ numberOrRange) ~> mkReqsSpec)
 
   def reqs: Rule1[Reqs] =
     rule((reqsSpec + ',') ~ popSeqToNEV[ReqsSpec])
