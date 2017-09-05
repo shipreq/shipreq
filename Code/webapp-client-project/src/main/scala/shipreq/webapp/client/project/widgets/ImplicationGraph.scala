@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
-import org.scalajs.dom.{document, svg}
+import org.scalajs.dom.document
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
@@ -41,8 +41,7 @@ object ImplicationGraph {
 
     override def enrich(p: Props): Callback =
       $.getDOMNode.map { root =>
-        val nodes = root.querySelectorAll("g.node")
-        for (node <- nodes.iterator.map(_.domCast[svg.G])) {
+        for (node <- graphNodeIterator(root)) {
           val pubid = node.querySelector("text").textContent
           for {
             ep  <- ExternalPubid.parse(pubid)

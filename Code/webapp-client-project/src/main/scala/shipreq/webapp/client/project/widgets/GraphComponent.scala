@@ -1,8 +1,11 @@
 package shipreq.webapp.client.project.widgets
 
-import japgolly.scalajs.react._, vdom.html_<^._
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
+import org.scalajs.dom
 import scalacss.ScalaCssReact._
+import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.client.project.app.{Style, WebWorkerClient}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.ww.api._
@@ -44,6 +47,9 @@ object GraphComponent {
         case Some(svg) => <.div(Style.svgGraph, ^.dangerouslySetInnerHtml := svg.content)
         case None      => <.div
       }
+
+    protected def graphNodeIterator(root: dom.Element): Iterator[dom.svg.G] =
+      root.querySelectorAll("g.node").iterator.map(_.domCast[dom.svg.G])
   }
 
   def graphConfig[P <: HasWebWorker : Reusability, C <: Children, B <: GraphBackend[P]]: ScalaComponent.Config[P, C, State, B] =

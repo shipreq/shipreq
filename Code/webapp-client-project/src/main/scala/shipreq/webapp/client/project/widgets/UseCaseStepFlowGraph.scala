@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import org.scalajs.dom.svg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.text.ProjectText
@@ -29,8 +28,7 @@ object UseCaseStepFlowGraph {
 
     override def enrich(p: Props): Callback =
       $.getDOMNode.map { root =>
-        def nodes = root.querySelectorAll("g.node").iterator.map(_.domCast[svg.G])
-        for (node <- nodes) {
+        for (node <- graphNodeIterator(root)) {
           val hasTitle = node.children.headOption.exists(_.hasAttribute("xlink:title"))
           node.style.cursor = if (hasTitle) "help" else "default"
         }
