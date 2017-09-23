@@ -196,7 +196,7 @@ object ReqDetail {
       val view      = data.viewData(pw).copy(fmtReqTypeShort = false)
 
       def renderEditable(key: EditorFeature.FieldKey.ForSomeReq): TagMod =
-        reqEditor(key, data.pxProjectWidgets).themedRenderOr(view.editable(key))
+        reqEditor(key, data.pxProjectWidgets).themedRenderOr(())(view.editable(key))
 
       def renderHeader: VdomElement = {
         val hstyle = headerStyle(data.live)
@@ -207,8 +207,9 @@ object ReqDetail {
             Header(hstyle, pubidText + ":")),
 
           <.div(*.headerTitle,
-            reqEditor(EditorFeature.FieldKey.reqTitle(req.id), data.pxProjectWidgets).themedRenderOr(
-              Header(hstyle, view.title))),
+            reqEditor(EditorFeature.FieldKey.reqTitle(req.id), data.pxProjectWidgets)
+              .themedRenderOr(())(
+                Header(hstyle, view.title))),
 
           <.div(*.headerFilterDeadButton,
             FilterDeadButton.whenLive(data.live)(StateSnapshot.withReuse(props.filterDead.value)(setFilterDead))))
@@ -316,8 +317,9 @@ object ReqDetail {
 
       def renderStepTree(ucData: UseCaseData, stepData: UseCaseStepTree.StepData) = {
         val renderBody: UseCaseStepTree.RenderBodyFn = (id, live, textAndFlow) =>
-          props.editorUCS(EditorFeature.FieldKey.UseCaseStep(id), data.pxProjectWidgets).themedRenderOr(
-            pw.useCaseStepTextAndFlow(textAndFlow, live))
+          props.editorUCS(EditorFeature.FieldKey.UseCaseStep(id), data.pxProjectWidgets)
+            .themedRenderOr(123)(
+              pw.useCaseStepTextAndFlow(textAndFlow, live))
 
         UseCaseStepTree.Props(
           ucData.uc,

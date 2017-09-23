@@ -44,8 +44,8 @@ object EditorFeature {
   type FieldKey = editor.FieldKey
   val  FieldKey = editor.FieldKey
 
-  type Editor[+Change] = editor.Feature.Editor[Change]
-  val  Editor          = editor.Feature.Editor
+  type Editor[-Args, +Change] = editor.Feature.Editor[Args, Change]
+  val  Editor                 = editor.Feature.Editor
 
   type PreviewId = editor.Feature.PreviewId
   val  PreviewId = editor.Feature.PreviewId

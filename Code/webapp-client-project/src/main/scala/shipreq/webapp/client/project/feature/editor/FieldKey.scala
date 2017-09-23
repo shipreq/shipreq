@@ -15,22 +15,33 @@ import shipreq.webapp.client.project.lib.DataReusability._
  * Meant to be used as a key for some given content (e.g. for requirement FR-1).
  */
 sealed trait FieldKey {
-  type Args = Unit
+  type Args
   type Change
   @inline final def cast2[F[_], G[_, _], A, B](f: F[G[A, B]]) = f.asInstanceOf[F[G[Args, Change]]]
 }
 
 object FieldKey {
 
-  sealed trait ForCodeGroup  extends FieldKey   { def foldCG[F[_, _]](f: FoldForCodeGroup [F]): F[Args, Change] }
-  sealed trait ForGenericReq extends ForSomeReq { def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] }
-  sealed trait ForUseCase    extends ForSomeReq { def foldUC[F[_, _]](f: FoldForUseCase   [F]): F[Args, Change] }
-
   /** Fields apply to one or more type of reqs */
-  sealed trait ForSomeReq extends FieldKey
+  sealed trait ForSomeReq extends FieldKey {
+    override final type Args = Unit
+  }
 
   /** Fields apply to all types of reqs */
   sealed trait ForAllReqs extends ForGenericReq with ForUseCase
+
+  sealed trait ForCodeGroup extends FieldKey {
+    override final type Args = Unit
+    def foldCG[F[_, _]](f: FoldForCodeGroup[F]): F[Args, Change];
+  }
+
+  sealed trait ForGenericReq extends ForSomeReq {
+    def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change]
+  }
+
+  sealed trait ForUseCase extends ForSomeReq {
+    def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change]
+  }
 
   case object Code extends ForCodeGroup {
     override type Change = ReqCode.Value
@@ -77,6 +88,7 @@ object FieldKey {
   }
 
   final case class UseCaseStep(id: UseCaseStepId) extends FieldKey {
+    override type Args = Int
     override type Change = UseCaseStepGD.NonEmptyValues
     def foldUCS[F[_, _]](f: FoldForUseCaseSteps[F]): F[Args, Change] = f.step(this)
   }
@@ -102,6 +114,7 @@ object FieldKey {
     }
 
   type Aux[A, C] = FieldKey { type Args = A; type Change = C }
+  type Nullary = FieldKey { type Args = Unit }
 
   /** This shit is required to workaround Scala failing to be check exhaustivity when pattern-matching on Aux */
   trait Fold[-FK <: FieldKey, F[_, _]] {

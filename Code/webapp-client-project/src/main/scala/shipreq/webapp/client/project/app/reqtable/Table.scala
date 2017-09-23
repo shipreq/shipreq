@@ -191,9 +191,9 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   private sealed abstract class RowTemplate[
-        _RowData   <: Row     : Reusability,
-        FK         <: FieldKey,
-        _ViewInput            : Reusability,
+        FK         <: FieldKey.Nullary,
+        _RowData   <: Row              : Reusability,
+        _ViewInput                     : Reusability,
       ](displayName: String) {
 
     protected val rowToColumnToEditorField: RowData => Column => Option[FK]
@@ -249,7 +249,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
           case NotApplicable => Cell.Props.`n/a`(rowSelected)
         }
 
-      def mkColumnCells(columnEditor: Column => EditorFeature.ReadWrite.ForEditor[Any]): VdomArray =
+      def mkColumnCells(columnEditor: Column => EditorFeature.ReadWrite.ForEditor[Unit, Any]): VdomArray =
         p.cols.whole.toVdomArray { colPlus =>
           val col    = colPlus.column
           def editor = columnEditor(col)
@@ -267,7 +267,11 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
 
         val columnToEditorField = rowToColumnToEditorField(p.row)
 
-        val colCells = mkColumnCells(col => p.editor.optional(columnToEditorField(col), rootPxProjectWidgets))
+        val colCells = mkColumnCells(col =>
+          columnToEditorField(col) match {
+            case Some(f) => p.editor(f, rootPxProjectWidgets)
+            case None    => EditorFeature.ReadWrite.ForEditor.doNothing
+          })
 
         rowBase(selCell, colCells)
       }
@@ -303,8 +307,8 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   private object ReqRow extends RowTemplate[
-      Row.ForReq,
       FieldKey.ForSomeReq,
+      Row.ForReq,
       (ReqTypes, ProjectWidgets.NoCtx, ProjectWidgets.NoCtx#PubidFormat),
     ]("ReqRow") {
 
@@ -352,8 +356,8 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   private object CodeGroupRow extends RowTemplate[
-      Row.ForCodeGroup,
       FieldKey.ForCodeGroup,
+      Row.ForCodeGroup,
       ProjectWidgets.NoCtx,
     ]("CodeGroupRow") {
 
@@ -392,7 +396,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
   private object Cell {
 
     case class Props(cellState: CellState,
-                     editor   : EditorFeature.ReadWrite.ForEditor[Any],
+                     editor   : EditorFeature.ReadWrite.ForEditor[Unit, Any],
                      view     : Reusable[TagMod])
 
     object Props {
@@ -438,7 +442,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
       e.target == e.currentTarget ||
         (try e.target.tabIndex < 0 catch { case _: Throwable => false }) // .tabIndex is undefined from tests
 
-    def onKeyDown(editor: EditorFeature.ReadWrite.ForEditor[Any]): ReactKeyboardEventFromHtml => Callback = e => {
+    def onKeyDown(editor: EditorFeature.ReadWrite.ForAnyEditor): ReactKeyboardEventFromHtml => Callback = e => {
       def focusChild: CallbackOption[Unit] =
         CallbackOption
           .liftOption(focusableChildren(e.currentTarget.domAsHtml).nextOption())
@@ -468,7 +472,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
       cellBase(
         *.dataCell(p.cellState),
         ^.onKeyDown ==> onKeyDown(editor),
-        editor.themedRenderOr(p.view))
+        editor.themedRenderOr(())(p.view))
     }
 
     val Component = ScalaComponent.builder[Props]("Cell")

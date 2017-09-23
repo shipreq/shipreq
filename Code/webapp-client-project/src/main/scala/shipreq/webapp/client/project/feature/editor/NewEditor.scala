@@ -212,7 +212,7 @@ object NewEditor {
       pxProject.toCallback.map(_.config.reqTypes.custom.get(id)).asCBO
 
     trait ForChangeType {
-      type Args = Unit
+      type Args
       type Change
       final type EditorImpl = Internal.EditorImpl[Args, Change]
       final type Init       = Internal.Init[Args, Change]
@@ -224,6 +224,7 @@ object NewEditor {
       import shipreq.webapp.client.project.widgets.ReqTypeSelector
       import ReqTypeSelector.RT
 
+      override type Args   = Unit
       override type Change = CustomReqType
 
       val pxCustomReqTypes = ReqTypeSelector.pxCustomReqTypes(pxProject)
@@ -275,6 +276,7 @@ object NewEditor {
       object Multiple extends ForChangeType {
         import ReqCodeEditor.{Multiple => RCE}
 
+        override type Args   = Unit
         override type Change = RCE.Output
 
         def apply(id: ReqId): InitFn = ictx => args => {
@@ -315,6 +317,7 @@ object NewEditor {
       object Single extends ForChangeType {
         import ReqCodeEditor.{Single => RCE}
 
+        override type Args   = Unit
         override type Change = RCE.Output
 
         def apply(id: ReqCodeId): InitFn = ictx => args => {
@@ -358,6 +361,7 @@ object NewEditor {
 
       val pxLookupAll = Px.apply2(pxProject, pxPlainTextNoCtx)(ImplicationEditor.Lookup.all)
 
+      override type Args   = Unit
       override type Change = ImplicationEditor.Output
 
       def apply(id: ReqId, scope: ImplicationScope): InitFn =
@@ -426,6 +430,7 @@ object NewEditor {
       import shipreq.webapp.client.project.widgets.TagEditor
       import TagEditor.Lookup
 
+      override type Args   = Unit
       override type Change = TagEditor.Output
 
       def apply(id: ReqId, fid: Option[CustomField.Tag.Id]): InitFn = ictx => args => {
@@ -476,6 +481,7 @@ object NewEditor {
       abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) extends ForChangeType {
         val T: editor.text.type = editor.text
 
+        override type Args   = Unit
         override type Change = T.OptionalText
 
         protected def start(cmd           : T.OptionalText => UpdateContentCmd,
@@ -564,6 +570,7 @@ object NewEditor {
       import shipreq.webapp.client.project.widgets.UseCaseStepEditor
       import UseCaseStepFlowText.TextAndFlow
 
+      override type Args = Int
       override type Change = UseCaseStepGD.NonEmptyValues
 
       def apply(id: UseCaseStepId, pid: PreviewId): InitFn = ictx => args => {
