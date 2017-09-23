@@ -25,21 +25,21 @@ import Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
   *
   * Doesn't perform ANY applicability checks. That's performed by the higher-level Feature API.
   */
-final case class NewEditor[-A](create: NewEditor.Args[A] => Callback) extends AnyVal
+final case class NewEditor(create: NewEditor.Args => Callback) extends AnyVal
 
 object NewEditor {
 
-  final case class Args[+A](args: A, pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]], hooks: Hooks) {
+  @Lenses
+  final case class Args(pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]], hooks: Hooks) {
     val cbProjectWidgets: CallbackTo[ProjectWidgets.AnyCtx] =
       pxProjectWidgets.toCallback
   }
 
   object Args {
-    def hooks  [A]: Lens[Args[A], Hooks]    = Lens[Args[A], Hooks](_.hooks)(h => _.copy(hooks = h))
-    def onClose[A]: Lens[Args[A], Callback] = hooks ^|-> Hooks.onClose
-    def onStart[A]: Lens[Args[A], Callback] = hooks ^|-> Hooks.onStart
+    val onClose = hooks ^|-> Hooks.onClose
+    val onStart = hooks ^|-> Hooks.onStart
 
-    implicit def reusability[A: Reusability]: Reusability[Args[A]] =
+    implicit val reusability: Reusability[Args] =
       Reusability.byRef || Reusability.caseClass
   }
 
@@ -70,12 +70,12 @@ object NewEditor {
 
   type ForFields[FK <: FieldKey] = FieldKey.Fold[FK, ForEditor]
 
-  type ForEditor[A, Change] = Ctx[A, Change] ⇒ NewEditor[A]
+  type ForEditor[A, Change] = Ctx[A, Change] ⇒ NewEditor
 
   def forRow(static: Static, rowKey: RowKey): ForFields[rowKey.FieldKey] =
     static.internal.perRow(rowKey)
 
-  def doNothing: NewEditor[Any] =
+  def doNothing: NewEditor =
     NewEditor(_ => Callback.empty)
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -91,7 +91,7 @@ object NewEditor {
       *   2. This might become likely when collaborative features are edited.
       *      (eg. Alice renders start-edit button, Bob deletes req, Alice attempts to start editor)
       */
-    type Init[A, Change] = Args[A] => CallbackOption[Editor[A, Change]]
+    type Init[A, Change] = Args => CallbackOption[Editor[A, Change]]
     
     trait EditorImpl[Args, Change] extends Editor[Args, Change] {
       protected type Props
@@ -191,7 +191,7 @@ object NewEditor {
           CallbackOption.liftOption(newEditor(initialValue(s)))
         }
 
-      def newEditor(init: => Internal.Init[A, C]): NewEditor[A] =
+      def newEditor(init: => Internal.Init[A, C]): NewEditor =
         NewEditor(args => init(args).asCallback.flatMap(stateAccess.setState(_, args.hooks.onStart)))
     }
 
