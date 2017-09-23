@@ -4,8 +4,9 @@ import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
+import monocle.Lens
 import monocle.macros.Lenses
-import scalaz.~>
+import scalaz.~~>
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -24,21 +25,21 @@ import Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
   *
   * Doesn't perform ANY applicability checks. That's performed by the higher-level Feature API.
   */
-final case class NewEditor(create: NewEditor.Args => Callback) extends AnyVal
+final case class NewEditor[-A](create: NewEditor.Args[A] => Callback) extends AnyVal
 
 object NewEditor {
 
-  @Lenses
-  final case class Args(pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]], hooks: Hooks) {
+  final case class Args[+A](args: A, pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]], hooks: Hooks) {
     val cbProjectWidgets: CallbackTo[ProjectWidgets.AnyCtx] =
       pxProjectWidgets.toCallback
   }
 
   object Args {
-    val onClose = hooks ^|-> Hooks.onClose
-    val onStart = hooks ^|-> Hooks.onStart
+    def hooks  [A]: Lens[Args[A], Hooks]    = Lens[Args[A], Hooks](_.hooks)(h => _.copy(hooks = h))
+    def onClose[A]: Lens[Args[A], Callback] = hooks ^|-> Hooks.onClose
+    def onStart[A]: Lens[Args[A], Callback] = hooks ^|-> Hooks.onStart
 
-    implicit val reusability: Reusability[Args] =
+    implicit def reusability[A: Reusability]: Reusability[Args[A]] =
       Reusability.byRef || Reusability.caseClass
   }
 
@@ -50,7 +51,7 @@ object NewEditor {
       Hooks(Callback.empty, Callback.empty)
 
     implicit val reusability: Reusability[Hooks] = {
-      implicit val x: Reusability[Callback] = Reusability.by((_: Callback).toScalaFn)(Reusability.byRef)
+      implicit val x: Reusability[Callback] = Reusability.by((_: Callback).toScalaFn)(Reusability.byRef) // TODO Use Reusability.callbackByRef
       Reusability.byRef || Reusability.caseClass
     }
   }
@@ -64,17 +65,17 @@ object NewEditor {
     private[NewEditor] val internal = new Internal(this)
   }
 
-  final case class Ctx[Change](stateAccess : StateAccessPure[State.ForEditor[Change]],
-                               asyncFeature: AsyncFeature.Write.D0[AsyncError])
+  final case class Ctx[A, Change](stateAccess : StateAccessPure[State.ForEditor[A, Change]],
+                                  asyncFeature: AsyncFeature.Write.D0[AsyncError])
 
   type ForFields[FK <: FieldKey] = FieldKey.Fold[FK, ForEditor]
 
-  type ForEditor[Change] = Ctx[Change] ⇒ NewEditor
+  type ForEditor[A, Change] = Ctx[A, Change] ⇒ NewEditor[A]
 
   def forRow(static: Static, rowKey: RowKey): ForFields[rowKey.FieldKey] =
     static.internal.perRow(rowKey)
 
-  def doNothing: NewEditor =
+  def doNothing: NewEditor[Any] =
     NewEditor(_ => Callback.empty)
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -90,24 +91,24 @@ object NewEditor {
       *   2. This might become likely when collaborative features are edited.
       *      (eg. Alice renders start-edit button, Bob deletes req, Alice attempts to start editor)
       */
-    type Init[Change] = Args => CallbackOption[Editor[Change]]
+    type Init[A, Change] = Args[A] => CallbackOption[Editor[A, Change]]
     
-    trait EditorImpl[Change] extends Editor[Change] {
+    trait EditorImpl[Args, Change] extends Editor[Args, Change] {
       protected type Props
-      protected val props: AsyncState => CallbackTo[Props]
+      protected val props: (Args, AsyncState) => CallbackTo[Props]
       protected def renderImpl: Props => VdomElement
       protected def changeImpl: Props => Editor.Change[Change]
 
-      final override def render(p: Permission, a: AsyncState): Option[VdomElement] =
+      final override def render(p: Permission, as: AsyncState, args: Args): Option[VdomElement] =
         // Looks like this could block async but not so. Can't go from edit → async → notAllowed.
         // Unsafety is allowed here because EditorInstance is never Reusable
         p match {
-          case Allow => Some(renderImpl(props(a).runNow()))
+          case Allow => Some(renderImpl(props(args, as).runNow()))
           case Deny  => None
         }
 
-      final override def change() =
-        changeImpl(props(None).runNow())
+      final override def change(args: Args) =
+        changeImpl(props(args, None).runNow())
     }
   }
 
@@ -117,12 +118,15 @@ object NewEditor {
     import static._
 
     val perRow: RowKey.Fold[ForFields] = {
-      type LogicPerField[Change] = InternalCtx[Change] => Internal.Init[Change]
+      type LogicPerField[A, Change] = InternalCtx[A, Change] => Internal.Init[A, Change]
 
-      val logicToPerField: LogicPerField ~> ForEditor =
-        λ[LogicPerField ~> ForEditor] { init => ctx =>
-          val ictx = new InternalCtx(ctx)
-          ictx.newEditor(init(ictx))
+      val logicToPerField: LogicPerField ~~> ForEditor =
+        new (LogicPerField ~~> ForEditor) {
+          override def apply[A, C](init: LogicPerField[A, C]): ForEditor[A, C] =
+            ctx => {
+              val ictx = new InternalCtx[A, C](ctx)
+              ictx.newEditor(init(ictx))
+            }
         }
 
       def prepareCG(r: RowKey.CodeGroup) = FieldKey.FoldForCodeGroup[LogicPerField](
@@ -154,7 +158,7 @@ object NewEditor {
         useCaseSteps = () => forUseCaseSteps)
     }
 
-    final class InternalCtx[C](val ctx: Ctx[C]) {
+    final class InternalCtx[A, C](val ctx: Ctx[A, C]) {
       import ctx._
 
       def abort(hooks: Hooks): Callback =
@@ -163,31 +167,31 @@ object NewEditor {
       def commit(cmd: UpdateContentCmd, hooks: Hooks): Callback =
         asyncFeature((s, f) => saveIO(cmd, _ => s >> abort(hooks), f))
 
-      def makeAbortCommit[A](cmd: A => UpdateContentCmd, hooks: Hooks): Some[AbortCommit[Callback, A ~=> Callback]] =
+      def makeAbortCommit[B](cmd: B => UpdateContentCmd, hooks: Hooks): Some[AbortCommit[Callback, B ~=> Callback]] =
         Some(AbortCommit(abort(hooks), Reusable.fn(v => commit(cmd(v), hooks))))
 
       /** Creates a Callback that when invoked, will initialise and start an editor.
         *
         * @tparam S Initial data. Data captured before starting the editor.
-        * @tparam A The initial value of the editor.
+        * @tparam B The initial value of the editor.
         * @tparam E The editor
         */
-      def startWithStateSnapshot[S, A: Reusability, E <: Editor[C]](initialData: CallbackOption[S])
-                                                                   (initialValue: S => A)
-                                                                   (editor: S => StateSnapshot[A] => E): CallbackOption[E] =
+      def startWithStateSnapshot[S, B: Reusability, E <: Editor[A, C]](initialData: CallbackOption[S])
+                                                                      (initialValue: S => B)
+                                                                      (editor: S => StateSnapshot[B] => E): CallbackOption[E] =
         initialData.flatMap { s =>
           val editorCtor = editor(s)
 
-          lazy val update: A ~=> Callback =
+          lazy val update: B ~=> Callback =
             Reusable.fn(b => stateAccess.setState(newEditor(b)))
 
-          def newEditor: A => Some[E] =
+          def newEditor: B => Some[E] =
             b => Some(editorCtor(StateSnapshot.withReuse(b)(update)))
 
           CallbackOption.liftOption(newEditor(initialValue(s)))
         }
 
-      def newEditor(init: => Internal.Init[C]): NewEditor =
+      def newEditor(init: => Internal.Init[A, C]): NewEditor[A] =
         NewEditor(args => init(args).asCallback.flatMap(stateAccess.setState(_, args.hooks.onStart)))
     }
 
@@ -208,10 +212,11 @@ object NewEditor {
       pxProject.toCallback.map(_.config.reqTypes.custom.get(id)).asCBO
 
     trait ForChangeType {
+      type Args = Unit
       type Change
-      final type EditorImpl = Internal.EditorImpl[Change]
-      final type Init       = Internal.Init[Change]
-      final type InitFn     = InternalCtx[Change] => Init
+      final type EditorImpl = Internal.EditorImpl[Args, Change]
+      final type Init       = Internal.Init[Args, Change]
+      final type InitFn     = InternalCtx[Args, Change] => Init
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -236,14 +241,14 @@ object NewEditor {
           override type Props = ReqTypeSelector.Props
           override def renderImpl = _.render
           override def changeImpl = _.change
-          override val props = as =>
+          override val props = (_, asyncState) =>
             for {
               choices <- pxChoices.toCallback
             } yield ReqTypeSelector.Props(
               initialValue,
               ss,
               choices,
-              EditorStatus.async(as),
+              EditorStatus.async(asyncState),
               abortCommit)
         }
 
@@ -294,14 +299,14 @@ object NewEditor {
           override type Props = RCE.Props
           override def renderImpl = _.render
           override def changeImpl = _.validated
-          override val props = as =>
+          override val props = (_, asyncState) =>
             for {
               trie <- trieCB
             } yield RCE.Props(
               ss,
               initial,
               trie,
-              EditorStatus.async(as),
+              EditorStatus.async(asyncState),
               abortCommit,
               showInstructions = true)
         }
@@ -332,14 +337,14 @@ object NewEditor {
           override type Props = RCE.Props
           override def renderImpl = _.render
           override def changeImpl = _.validated
-          override val props = as =>
+          override val props = (_, asyncState) =>
             for {
               trie <- trieCB
             } yield RCE.Props(
               ss,
               initial,
               trie,
-              EditorStatus.async(as),
+              EditorStatus.async(asyncState),
               abortCommit,
               showInstructions = true)
         }
@@ -400,7 +405,7 @@ object NewEditor {
         override type Props = ImplicationEditor.Props
         override def renderImpl = _.render
         override def changeImpl = _.validated
-        override val props = as =>
+        override val props = (_, asyncState) =>
           for {
             lookup     <- pxLookup.toCallback
             valFn      <- pxValFn.toCallback
@@ -409,7 +414,7 @@ object NewEditor {
             ss,
             lookup,
             valFn,
-            EditorStatus.async(as),
+            EditorStatus.async(asyncState),
             abortCommit,
             textSearch,
             showInstructions = true)
@@ -450,14 +455,14 @@ object NewEditor {
         override type Props = TagEditor.Props
         override def renderImpl = _.render
         override def changeImpl = _.validated
-        override val props = as =>
+        override val props = (_, asyncState) =>
           for {
             lookup <- pxLookup.toCallback
           } yield TagEditor.Props(
             initialValues,
             ss,
             lookup,
-            EditorStatus.async(as),
+            EditorStatus.async(asyncState),
             abortCommit,
             showInstructions = true)
       }
@@ -503,7 +508,7 @@ object NewEditor {
           override type Props = editor.Props
           override def renderImpl = _.render
           override def changeImpl = _.validated
-          override val props = as =>
+          override val props = (_, asyncState) =>
             for {
               previewRW      <- previewW.toReadWriteCB
               project        <- pxProject.toCallback
@@ -516,7 +521,7 @@ object NewEditor {
               textSearch,
               projectWidgets,
               ss,
-              EditorStatus.async(as),
+              EditorStatus.async(asyncState),
               abortCommit,
               previewRW(pid),
               initial,
@@ -594,7 +599,7 @@ object NewEditor {
         override type Props = UseCaseStepEditor.Props
         override def renderImpl = _.render
         override def changeImpl = _.validatedChanges
-        override val props = as =>
+        override val props = (_, asyncState) =>
           for {
             previewRW      <- previewW.toReadWriteCB
             project        <- pxProject.toCallback
@@ -607,7 +612,7 @@ object NewEditor {
             textSearch,
             projectWidgets,
             ss,
-            EditorStatus.async(as),
+            EditorStatus.async(asyncState),
             abort,
             commit,
             previewRW(pid),
