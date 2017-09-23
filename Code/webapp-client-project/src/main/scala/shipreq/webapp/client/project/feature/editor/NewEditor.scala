@@ -4,7 +4,6 @@ import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import monocle.Lens
 import monocle.macros.Lenses
 import scalaz.~~>
 import shipreq.base.util.ScalaExt._
@@ -25,21 +24,21 @@ import Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
   *
   * Doesn't perform ANY applicability checks. That's performed by the higher-level Feature API.
   */
-final case class NewEditor(create: NewEditor.Args => Callback) extends AnyVal
+final case class NewEditor(create: NewEditor.CreationArgs => Callback) extends AnyVal
 
 object NewEditor {
 
   @Lenses
-  final case class Args(pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]], hooks: Hooks) {
+  final case class CreationArgs(pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]], hooks: Hooks) {
     val cbProjectWidgets: CallbackTo[ProjectWidgets.AnyCtx] =
       pxProjectWidgets.toCallback
   }
 
-  object Args {
+  object CreationArgs {
     val onClose = hooks ^|-> Hooks.onClose
     val onStart = hooks ^|-> Hooks.onStart
 
-    implicit val reusability: Reusability[Args] =
+    implicit val reusability: Reusability[CreationArgs] =
       Reusability.byRef || Reusability.caseClass
   }
 
@@ -91,7 +90,7 @@ object NewEditor {
       *   2. This might become likely when collaborative features are edited.
       *      (eg. Alice renders start-edit button, Bob deletes req, Alice attempts to start editor)
       */
-    type Init[A, Change] = Args => CallbackOption[Editor[A, Change]]
+    type Init[FieldArgs, Change] = CreationArgs => CallbackOption[Editor[FieldArgs, Change]]
     
     trait EditorImpl[Args, Change] extends Editor[Args, Change] {
       protected type Props

@@ -21,7 +21,7 @@ object Feature {
   trait Editor[-Args, +Change] {
 
     /** impure */
-    def render(p: Permission, a: AsyncState, args: Args): Option[VdomElement]
+    def render(p: Permission, as: AsyncState, args: Args): Option[VdomElement]
 
     /** impure */
     def change(args: Args): Editor.Change[Change]
@@ -129,14 +129,14 @@ object Feature {
         forRow(RowKey.UseCaseSteps)(Reusable implicitly editability.forUseCaseSteps)
     }
 
-             val reusabilityForEditorAny   : Reusability[ForAnyEditor] = Reusability.caseClass
-    implicit def reusabilityForEditor[A, C]: Reusability[ForEditor[A, C]        ] = reusabilityForEditorAny.narrow
-    implicit val reusabilityForCodeGroup   : Reusability[ForCodeGroup           ] = Reusability.caseClass
-    implicit val reusabilityForGenericReq  : Reusability[ForGenericReq          ] = Reusability.caseClass
-    implicit val reusabilityForReq         : Reusability[ForReq                 ] = Reusability.caseClass
-    implicit val reusabilityForUseCase     : Reusability[ForUseCase             ] = Reusability.caseClass
-    implicit val reusabilityForUseCaseSteps: Reusability[ForUseCaseSteps        ] = Reusability.caseClass
-    implicit val reusabilityForProject     : Reusability[ForProject             ] = Reusability.caseClass
+             val reusabilityForEditorAny   : Reusability[ForAnyEditor   ] = Reusability.caseClass
+    implicit def reusabilityForEditor[A, C]: Reusability[ForEditor[A, C]] = reusabilityForEditorAny.narrow
+    implicit val reusabilityForCodeGroup   : Reusability[ForCodeGroup   ] = Reusability.caseClass
+    implicit val reusabilityForGenericReq  : Reusability[ForGenericReq  ] = Reusability.caseClass
+    implicit val reusabilityForReq         : Reusability[ForReq         ] = Reusability.caseClass
+    implicit val reusabilityForUseCase     : Reusability[ForUseCase     ] = Reusability.caseClass
+    implicit val reusabilityForUseCaseSteps: Reusability[ForUseCaseSteps] = Reusability.caseClass
+    implicit val reusabilityForProject     : Reusability[ForProject     ] = Reusability.caseClass
   }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -150,10 +150,10 @@ object Feature {
                     hooks           : NewEditor.Hooks = NewEditor.Hooks.empty): Option[Callback] =
         startEditWithArgs(
           state,
-          FreeOption(NewEditor.Args(pxProjectWidgets, hooks)))
+          FreeOption(NewEditor.CreationArgs(pxProjectWidgets, hooks)))
 
       private[Feature] def startEditWithArgs(state: Read.ForAnyEditor,
-                                             args : FreeOption[NewEditor.Args]): Option[Callback] =
+                                             args : FreeOption[NewEditor.CreationArgs]): Option[Callback] =
         if (state.editability.is(Deny) || state.editor.isDefined)
           None
         else
@@ -253,7 +253,10 @@ object Feature {
 
     type ForAnyEditor = ForEditor[Nothing, Any]
 
-    final case class ForEditor[-A, +C](read: Read.ForEditor[A, C], write: Write.ForEditor, args: FreeOption[NewEditor.Args]) {
+    final case class ForEditor[-A, +C](read        : Read.ForEditor[A, C],
+                                       write       : Write.ForEditor,
+                                       creationArgs: FreeOption[NewEditor.CreationArgs]) {
+
       /** impure */
       @inline def render(args: A): Option[VdomElement] =
         read.render(args)
@@ -273,13 +276,13 @@ object Feature {
         *         `Some[Callback]` otherwise that, when invoked, will add an editor to state and UI.
         */
       def startEdit: Option[Callback] =
-        write.startEditWithArgs(read, args)
+        write.startEditWithArgs(read, creationArgs)
 
       def onStart(cb: Callback): ForEditor[A, C] =
-        copy(args = args.map(NewEditor.Args.onStart.modify(_ >> cb)))
+        copy(creationArgs = creationArgs.map(NewEditor.CreationArgs.onStart.modify(_ >> cb)))
 
       def onClose(cb: Callback): ForEditor[A, C] =
-        copy(args = args.map(NewEditor.Args.onClose.modify(_ >> cb)))
+        copy(creationArgs = creationArgs.map(NewEditor.CreationArgs.onClose.modify(_ >> cb)))
 
       def asyncFeature = write.async
       def asyncState = read.async
@@ -301,7 +304,7 @@ object Feature {
         ForEditor(
           read(f),
           write.apply(f),
-          FreeOption(NewEditor.Args(pxProjectWidgets, NewEditor.Hooks.empty)))
+          FreeOption(NewEditor.CreationArgs(pxProjectWidgets, NewEditor.Hooks.empty)))
     }
 
     implicit class ForFieldsInvariantExt[FK <: FieldKey](private val self: ForFields[FK]) extends AnyVal {

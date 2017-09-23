@@ -15,8 +15,13 @@ import shipreq.webapp.client.project.lib.DataReusability._
  * Meant to be used as a key for some given content (e.g. for requirement FR-1).
  */
 sealed trait FieldKey {
+
+  /** Arguments required for every .render call */
   type Args
+
+  /** Description of changes the user has made in the editor */
   type Change
+
   @inline final def cast2[F[_], G[_, _], A, B](f: F[G[A, B]]) = f.asInstanceOf[F[G[Args, Change]]]
 }
 
