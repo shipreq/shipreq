@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.feature.editor
 
+import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.Reusability
 import scala.reflect.ClassTag
 import scalaz.~~>
@@ -7,6 +8,8 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.UseCaseStepGD
+import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.client.project.lib.DataReusability._
 
@@ -93,9 +96,16 @@ object FieldKey {
   }
 
   final case class UseCaseStep(id: UseCaseStepId) extends FieldKey {
-    override type Args = Int
+    override type Args = UseCaseStep.Args
     override type Change = UseCaseStepGD.NonEmptyValues
     def foldUCS[F[_, _]](f: FoldForUseCaseSteps[F]): F[Args, Change] = f.step(this)
+  }
+  object UseCaseStep {
+    /** @param shiftAsyncState Async state as pertains to shifting the step left/right.
+      * @param shiftRun        Action to shift the step left/right.
+      */
+    final case class Args(shiftAsyncState: AsyncFeature.Read.D0[Any],
+                          shiftRun       : UpdateContentCmd.ForUseCaseStep => Callback)
   }
 
   case object UseCaseTitle extends ForUseCase {

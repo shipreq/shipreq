@@ -3,6 +3,7 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom.ext.KeyCode
 import scalaz.\/
 import scalaz.syntax.traverse._
 import scalaz.std.option.optionInstance
@@ -15,10 +16,11 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.base.event.UseCaseStepGD
-import shipreq.webapp.base.lib.KeyboardTheme
-import shipreq.webapp.base.ui.{AutosizeTextarea, EditTheme}
+import shipreq.webapp.base.lib.{KeyHandler, KeyboardTheme}
+import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.base.feature.AutoCompleteFeature._
-import shipreq.webapp.base.feature.{EditorStatus, PreviewFeature}
+import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus, PreviewFeature}
+import shipreq.webapp.base.UiText
 import shipreq.webapp.client.project.lib.DataReusability._
 import RichTextEditor.hardcodedLive
 import Text.Equality._
@@ -37,16 +39,23 @@ object UseCaseStepEditor {
 
   type CommitFn = UseCaseStepGD.NonEmptyValues ~=> Callback
 
-  final case class Props(project       : Project,
-                         plainTextNoCtx: PlainText.ForProject.NoCtx,
-                         textSearch    : TextSearch,
-                         projectWidgets: ProjectWidgets.AnyCtx,
-                         edit          : StateSnapshot[String],
-                         asyncStatus   : Option[EditorStatus.Async],
-                         abort         : Callback,
-                         commit        : CommitFn,
-                         preview       : PreviewFeature.ReadWrite.Single,
-                         preEditValue  : Option[InitialValue]) {
+  final case class ShiftProps(asyncState: AsyncFeature.Read.D0[Any],
+                              run       : LeftRight.Values[Option[Callback]]) {
+    def apply(d: LeftRight): Option[Callback] =
+      if (asyncState.isEmpty) run(d) else None
+  }
+
+  final case class Props(project        : Project,
+                         plainTextNoCtx : PlainText.ForProject.NoCtx,
+                         textSearch     : TextSearch,
+                         projectWidgets : ProjectWidgets.AnyCtx,
+                         edit           : StateSnapshot[String],
+                         asyncStatus    : Option[EditorStatus.Async],
+                         abort          : Callback,
+                         commit         : CommitFn,
+                         shift          : ShiftProps,
+                         preview        : PreviewFeature.ReadWrite.Single,
+                         preEditValue   : Option[InitialValue]) {
 
     private val rawElems: Seq[UseCaseStepFlowText.Elem[String, String]] =
       UseCaseStepFlowText.parse(edit.value)
@@ -105,6 +114,23 @@ object UseCaseStepEditor {
   val liveCorrect: EndoFn[String] =
     RichTextEditor.liveCorrect(Text.UseCaseStep)
 
+  private val shiftKeyCriterion: LeftRight.Values[KeyHandler.Criterion] =
+    LeftRight.Values { d =>
+      import KeyHandler._
+      val keyCode = d match {
+        case LeftRight.Left  => KeyCode.Left
+        case LeftRight.Right => KeyCode.Right
+      }
+      Criterion(EventType.KeyDown, keyCode, ModKey.Alt)
+    }
+  private val shiftKeyDesc: LeftRight => String = {
+    case LeftRight.Left  => "alt-left"
+    case LeftRight.Right => "alt-right"
+  }
+
+  private val rightLeft: List[LeftRight] =
+    LeftRight.Right :: LeftRight.Left :: Nil
+
   final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.EditorBackend {
     private val pxProject    = Px.props($).map(_.project).withReuse.autoRefresh
     private val pxPlainText  = Px.props($).map(_.projectWidgets.plainText).withReuse.autoRefresh
@@ -114,9 +140,15 @@ object UseCaseStepEditor {
       Px.apply3(pxProject, pxPlainText, pxTextSearch)(AutoComplete.Project.richText(Text.UseCaseStep))
 
     val textareaConst: TagMod = {
-      val keys =
-        KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort)) +
-          KeyboardTheme.commitCO($.props.map(_.status.getCommit), lineCardinality)
+      def shiftStepKeyHandler(d: LeftRight): KeyHandler =
+        shiftKeyCriterion(d).handle(
+          $.props.flatMap(_.shift(d).getOrEmpty)
+        ).asEventDefault
+
+      val keys = (
+        LeftRight.mapReduce(shiftStepKeyHandler)(_ + _)
+          + KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort))
+          + KeyboardTheme.commitCO($.props.map(_.status.getCommit), lineCardinality))
 
       val updateState: ReactEventFromTextArea => Callback =
         e => $.props >>= (p =>
@@ -132,16 +164,26 @@ object UseCaseStepEditor {
         keys)
     }
 
+    private def instructions(p: Props) = {
+      // Usual clauses
+      var clauses = KeyboardTheme.Instructions.clausesForTextEditor(
+        lineCardinality,
+        commit = p.status.getCommit,
+        abort = Some(p.abort))
+
+      // Shift left/right clauses
+      for {
+        d  <- rightLeft
+        cb <- p.shift(d)
+      } clauses ::=
+        KeyboardTheme.Instructions.Clause.keyToAction(shiftKeyDesc(d))(UiText.useCaseStepShift(d).toLowerCase, cb)
+
+      KeyboardTheme.Instructions(clauses, help = Some(RichTextEditorHelp.modal.show))
+    }
+
     def render(p: Props) = {
       def editor(validity: Validity): VdomElement =
         editorRef.component(EditTheme.autosizeTextareaProps(validity, p.edit.value, textareaConst))
-
-      def instructions =
-        KeyboardTheme.Instructions.forTextEditor(
-          lineCardinality,
-          commit = p.status.getCommit,
-          abort = Some(p.abort),
-          help = Some(RichTextEditorHelp.modal.show))
 
       def richText =
         p.projectWidgets.useCaseStepTextAndMaybeInvalidFlow(p.parsed, hardcodedLive)
@@ -149,7 +191,7 @@ object UseCaseStepEditor {
       def preview =
         EditTheme.renderPreview(p.preview, p.wantPreview, richText)
 
-      EditTheme.renderEditor(p.status, editor, richText, instructions, preview)
+      EditTheme.renderEditor(p.status, editor, richText, instructions(p), preview)
     }
   }
 

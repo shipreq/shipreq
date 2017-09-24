@@ -1,6 +1,6 @@
 package shipreq.webapp.base
 
-import shipreq.base.util.{Backwards, Direction, Forwards}
+import shipreq.base.util.{Backwards, Direction, Forwards, LeftRight}
 import shipreq.webapp.base.data.{Dead, Live, StaticField, StaticFieldType}
 
 object UiText {
@@ -102,4 +102,9 @@ object UiText {
   // isn't popping up properly or they haven't hovered long enough.
   def hoverText(t: String): String =
     if (t.isEmpty) "<blank>" else t
+
+  val useCaseStepShift: LeftRight => String = {
+    case LeftRight.Left  => "Unindent"
+    case LeftRight.Right => "Indent"
+  }
 }

@@ -316,10 +316,16 @@ object ReqDetail {
       }
 
       def renderStepTree(ucData: UseCaseData, stepData: UseCaseStepTree.StepData) = {
-        val renderBody: UseCaseStepTree.RenderBodyFn = (id, live, textAndFlow) =>
-          props.editorUCS(EditorFeature.FieldKey.UseCaseStep(id), data.pxProjectWidgets)
-            .themedRenderOr(123)(
+
+        val renderBody: UseCaseStepTree.RenderBodyFn = (id, live, textAndFlow) => {
+          import EditorFeature.FieldKey.UseCaseStep
+          val ctrlCell = Cell.UseCaseStepCtrls(id)
+          def args = UseCaseStep.Args(reqProps.async.read(ctrlCell), runCmd(ctrlCell))
+
+          props.editorUCS(UseCaseStep(id), data.pxProjectWidgets)
+            .themedRenderOr(args)(
               pw.useCaseStepTextAndFlow(textAndFlow, live))
+        }
 
         UseCaseStepTree.Props(
           ucData.uc,

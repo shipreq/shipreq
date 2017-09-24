@@ -569,7 +569,7 @@ object NewEditor {
       import shipreq.webapp.client.project.widgets.UseCaseStepEditor
       import UseCaseStepFlowText.TextAndFlow
 
-      override type Args = Int
+      override type Args = FieldKey.UseCaseStep.Args
       override type Change = UseCaseStepGD.NonEmptyValues
 
       def apply(id: UseCaseStepId, pid: PreviewId): InitFn = ictx => args => {
@@ -592,12 +592,13 @@ object NewEditor {
           }
 
         startWithStateSnapshot(pxInit.toCallback.toCBO)(_._2)(
-          i => new State(_, Some(i._1), args.cbProjectWidgets, pid, abort(args.hooks), commitFn))
+          i => new State(_, Some(i._1), args.cbProjectWidgets, pxStepFocus.toCallback, pid, abort(args.hooks), commitFn))
       }
 
       private class State(ss              : StateSnapshot[String],
                           initial         : Some[UseCaseStepEditor.InitialValue],
                           projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
+                          stepFocusCB     : CallbackTo[UseCaseStep.Focus],
                           pid             : PreviewId,
                           abort           : Callback,
                           commit          : UseCaseStepEditor.CommitFn) extends EditorImpl {
@@ -605,24 +606,34 @@ object NewEditor {
         override type Props = UseCaseStepEditor.Props
         override def renderImpl = _.render
         override def changeImpl = _.validatedChanges
-        override val props = (_, asyncState) =>
+        override val props = (args, asyncState) =>
           for {
             previewRW      <- previewW.toReadWriteCB
             project        <- pxProject.toCallback
             plainTextNoCtx <- pxPlainTextNoCtx.toCallback
             textSearch     <- pxTextSearch.toCallback
             projectWidgets <- projectWidgetsCB
-          } yield UseCaseStepEditor.Props(
-            project,
-            plainTextNoCtx,
-            textSearch,
-            projectWidgets,
-            ss,
-            EditorStatus.async(asyncState),
-            abort,
-            commit,
-            previewRW(pid),
-            initial)
+            stepFocus      <- stepFocusCB
+          } yield {
+            val shiftRun: LeftRight.Values[Option[Callback]] =
+              LeftRight.Values { d =>
+                def cmd = UpdateContentCmd.ShiftUseCaseStep(stepFocus.id, d)
+                stepFocus.canShift(d).option(args.shiftRun(cmd))
+              }
+
+            UseCaseStepEditor.Props(
+              project,
+              plainTextNoCtx,
+              textSearch,
+              projectWidgets,
+              ss,
+              EditorStatus.async(asyncState),
+              abort,
+              commit,
+              UseCaseStepEditor.ShiftProps(args.shiftAsyncState, shiftRun),
+              previewRW(pid),
+              initial)
+          }
       }
     }
 

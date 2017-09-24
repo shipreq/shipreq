@@ -6,10 +6,9 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.{UiText, WebappConfig}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
-import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -101,15 +100,14 @@ object UseCaseStepRow {
         live match {
 
           case Live =>
-            val delete     = field.canDelete(loc)   .option(ButtonDesc(runCtrl(DeleteUseCaseStep    (id)), "Delete "   + label))
-            val shiftLeft  = field.canShiftLeft(loc).option(ButtonDesc(runCtrl(ShiftUseCaseStepLeft (id)), "Unindent " + label))
-            val shiftRight = canShiftRight          .option(ButtonDesc(runCtrl(ShiftUseCaseStepRight(id)), "Indent "   + label))
+            val canShift: LeftRight => Permission = {
+              case LeftRight.Left  => field.canShiftLeft(loc)
+              case LeftRight.Right => canShiftRight
+            }
             CurStepButtons.WhenLive(
-              delete = delete,
-              shift = LeftRight.Values {
-                case LeftRight.Left  => shiftLeft
-                case LeftRight.Right => shiftRight
-              })
+              delete = field.canDelete(loc).option(ButtonDesc(runCtrl(DeleteUseCaseStep(id)), "Delete " + label)),
+              shift = LeftRight.Values(d => canShift(d).option(
+                ButtonDesc(runCtrl(ShiftUseCaseStep(id, d)), UiText.useCaseStepShift(d) + " " + label))))
 
           case Dead =>
             CurStepButtons.WhenDead(
