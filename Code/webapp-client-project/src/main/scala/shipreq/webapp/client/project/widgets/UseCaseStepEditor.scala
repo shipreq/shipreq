@@ -48,6 +48,7 @@ object UseCaseStepEditor {
                          abort          : Callback,
                          commit         : CommitFn,
                          shiftRunner    : AsyncFeature.Runner.D0O[LeftRight, Any],
+                         addStepRunner  : AsyncFeature.Runner.D0O[Unit, Any],
                          preview        : PreviewFeature.ReadWrite.Single,
                          preEditValue   : Option[InitialValue]) {
 
@@ -99,6 +100,12 @@ object UseCaseStepEditor {
       asyncStatus.getOrElse(
         EditorStatus.fromValidatedChange(validatedChanges)(v => Some(commit(v)), Some(abort)))
 
+    val saveAndAdd: Option[Callback] =
+      for {
+        c <- status.getCommit
+        a <- addStepRunner.runOption(())
+      } yield c >> a
+
     def render: VdomElement = Component(this)
   }
 
@@ -107,6 +114,9 @@ object UseCaseStepEditor {
 
   val liveCorrect: EndoFn[String] =
     RichTextEditor.liveCorrect(Text.UseCaseStep)
+
+  private def saveAndAddKeyCriterion = KeyHandler.Criterion.AltEnter
+  private def saveAndAddKeyDesc = "alt-enter"
 
   private val shiftKeyCriterion: LeftRight.Values[KeyHandler.Criterion] =
     LeftRight.Values { d =>
@@ -134,12 +144,14 @@ object UseCaseStepEditor {
       Px.apply3(pxProject, pxPlainText, pxTextSearch)(AutoComplete.Project.richText(Text.UseCaseStep))
 
     val textareaConst: TagMod = {
+
       def shiftStepKeyHandler(d: LeftRight): KeyHandler =
         shiftKeyCriterion(d).handle(
           $.props.flatMap(_.shiftRunner.runOrDoNothing(d)))
 
       val keys = (
         LeftRight.mapReduce(shiftStepKeyHandler)(_ + _)
+          + saveAndAddKeyCriterion.handle($.props.flatMap(_.saveAndAdd.getOrEmpty))
           + KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort))
           + KeyboardTheme.commitCO($.props.map(_.status.getCommit), lineCardinality))
 
@@ -158,20 +170,26 @@ object UseCaseStepEditor {
     }
 
     private def instructions(p: Props) = {
+      import KeyboardTheme.Instructions
+
       // Usual clauses
-      var clauses = KeyboardTheme.Instructions.clausesForTextEditor(
+      var clauses = Instructions.clausesForTextEditor(
         lineCardinality,
         commit = p.status.getCommit,
         abort = Some(p.abort))
+
+      // Save-and-add
+      p.saveAndAdd.foreach(cb =>
+        clauses ::= Instructions.Clause.keyToAction(saveAndAddKeyDesc)("save and add next step", cb))
 
       // Shift left/right clauses
       for {
         d  <- rightLeft
         cb <- p.shiftRunner.runOption(d)
       } clauses ::=
-        KeyboardTheme.Instructions.Clause.keyToAction(shiftKeyDesc(d))(UiText.useCaseStepShift(d).toLowerCase, cb)
+        Instructions.Clause.keyToAction(shiftKeyDesc(d))(UiText.useCaseStepShift(d).toLowerCase, cb)
 
-      KeyboardTheme.Instructions(clauses, help = Some(RichTextEditorHelp.modal.show))
+      Instructions(clauses, help = Some(RichTextEditorHelp.modal.show))
     }
 
     def render(p: Props) = {

@@ -99,7 +99,7 @@ Phase 2
 * Upgrade JDK and audit crypto mechanisms (pending next Jetty release)
 * ReqDetail KB shortcuts
   * All rows: ↑, ↓, F2, Tab in/out
-  * UseCaseSteps: +, (save,+,↓)
+* Auto open editor of new steps created via + buttons
 
 ### New Features
 * User profile page

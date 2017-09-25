@@ -7,6 +7,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalaz.~~>
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.VectorTree.LocationOps
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.UseCaseStepGD
@@ -606,24 +607,27 @@ object NewEditor {
         override type Props = UseCaseStepEditor.Props
         override def renderImpl = _.render
         override def changeImpl = _.validatedChanges
-        override val props = (args, asyncState) =>
+        override val props = (args: Args, asyncState) =>
           for {
             previewRW      <- previewW.toReadWriteCB
             project        <- pxProject.toCallback
             plainTextNoCtx <- pxPlainTextNoCtx.toCallback
             textSearch     <- pxTextSearch.toCallback
             projectWidgets <- projectWidgetsCB
-            stepFocus      <- stepFocusCB
+            step           <- stepFocusCB
           } yield {
 
             val shiftRunner: AsyncFeature.Runner.D0O[LeftRight, Any] =
-              AsyncFeature.Runner.D0O[LeftRight, Any](
-                args.ctrlRunner.asyncState,
-                Reusable.never { d =>
-                  def cmd = UpdateContentCmd.ShiftUseCaseStep(stepFocus.id, d)
-                  stepFocus.canShift(d).option(args.ctrlRunner.run(cmd))
-                }
-              )
+              args.shiftRunner.mapRunOption(run =>
+                Reusable.never(d =>
+                  step.canShift(d).option(
+                    run(UpdateContentCmd.ShiftUseCaseStep(step.id, d)))))
+
+            val addStepRunner: AsyncFeature.Runner.D0O[Unit, Any] =
+              args.addStepRunner.mapRunOption(run =>
+                Reusable.never(_ =>
+                  step.field.canInsertAfter(step.loc).option(
+                    run(UpdateContentCmd.AddUseCaseStep(step.useCaseId, step.field, step.loc.asParentLoc)))))
 
             UseCaseStepEditor.Props(
               project,
@@ -635,6 +639,7 @@ object NewEditor {
               abort,
               commit,
               shiftRunner,
+              addStepRunner,
               previewRW(pid),
               initial)
           }

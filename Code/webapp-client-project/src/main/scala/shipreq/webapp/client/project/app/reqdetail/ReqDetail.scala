@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.app.reqdetail
 
 import japgolly.microlibs.nonempty._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -11,6 +12,7 @@ import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.{UseCaseStepCreate, VerifiedEvent}
 import shipreq.webapp.base.protocol.{ProjectSpaProtocols, UpdateContentCmd}
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.data._
@@ -34,7 +36,7 @@ object ReqDetail {
       .renderBackend
       .build
 
-  final case class StaticProps(updateIO             : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any],
+  final case class StaticProps(updateIO             : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, VerifiedEvent.Seq],
                                reqDetailRC          : RouterCtl[ExternalPubid],
                                webWorker            : WebWorkerClient,
                                updateContentFn      : ProjectSpaProtocols.UpdateContent.Instance,
@@ -114,6 +116,7 @@ object ReqDetail {
   }
 
   // TODO Better performance if cells are (components + shouldComponentRender) or cached
+  // TODO Make everything private
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   final class Backend(SP: StaticProps, $: BackendScope[DynamicProps, Unit]) {
@@ -123,6 +126,9 @@ object ReqDetail {
     val pxExtPubid    = Px.props($).map(_.extPubid).withReuse.manualRefresh
     val pxUpstreamFD  = Px.props($).map(_.filterDead.value).withReuse.manualRefresh
 
+    private def refreshPx(): Unit =
+      Px.refresh(pxExtPubid, pxUpstreamFD)
+
     val pxData: Px[LookupFailure \/ Data] =
       for {
         p <- pxProject
@@ -131,14 +137,41 @@ object ReqDetail {
       } yield
         e.lookup(p).map(new Data(SP, p, _, f))
 
+    val cbData: CallbackOption[Data] =
+      Callback(refreshPx()).toCBO >> pxData.toCallback.map(_.toOption).asCBO
+
     val setFilterDead: FilterDead ~=> Callback =
       Reusable.fn(v => $.props.flatMap(_.filterDead setState v))
 
-    val runCmd = Reusable.fn[ReqId, Cell, UpdateContentCmd, Callback](
-      (reqId, cell, cmd) =>
-        $.props >>= (p =>
-          p.reqProps(reqId).async.write(cell)((s, f) =>
-            updateIO(cmd, _ => s, f))))
+    private def mkRunCmdFn(onSuccess: (VerifiedEvent.Seq, Callback) => Callback): ReqId ~=> (Cell ~=> (UpdateContentCmd ~=> Callback)) =
+      Reusable.fn[ReqId, Cell, UpdateContentCmd, Callback](
+        (reqId, cell, cmd) =>
+          $.props >>= (p =>
+            p.reqProps(reqId).async.write(cell)((s, f) =>
+              updateIO(cmd, onSuccess(_, s), f))))
+
+    val runCmd: ReqId ~=> (Cell ~=> (UpdateContentCmd ~=> Callback)) =
+      mkRunCmdFn((_, s) => s)
+
+    val runCmdAndEditNewUseCaseStep: ReqId ~=> (Cell ~=> (UpdateContentCmd ~=> Callback)) =
+      mkRunCmdFn { (ves, onSuccess) =>
+
+        val startEditor: Callback =
+          ves.iterator.map(_._2.event).collect {
+            case e: UseCaseStepCreate => startUseCaseStepEditor(e.id).delayMs(50).void
+          }.nextOption().getOrEmpty
+
+        onSuccess >> startEditor
+      }
+
+    def startUseCaseStepEditor(id: UseCaseStepId): Callback =
+      for {
+        data  ← cbData
+        props ← $.props.toCBO
+        key   = EditorFeature.FieldKey.UseCaseStep(id)
+        start ← CallbackOption liftOption props.editorUCS(key, data.pxProjectWidgets).startEdit
+        _     ← start.toCBO
+      } yield ()
 
     def setModal(modal: Modal.State): Callback =
       $.props >>= (_.state setState modal)
@@ -167,7 +200,7 @@ object ReqDetail {
       <.main(
         BaseStyles.containerFull,
         p.state.value renderOrElse {
-          Px.refresh(pxExtPubid, pxUpstreamFD)
+          refreshPx()
           pxData.value() match {
             case \/-(data)             => renderDetail(p, data)
             case -\/(_: LookupFailure) => renderNotFound(p.extPubid)
@@ -192,7 +225,6 @@ object ReqDetail {
       val reqProps  = props.reqProps(req.id)
       val reqEditor = reqProps.editor
       val fieldName = pxFieldNameFn.value()
-      val cmdRunner = AsyncFeature.Runner.D1(reqProps.async.read, runCmd(req.id))
       val view      = data.viewData(pw).copy(fmtReqTypeShort = false)
 
       def renderEditable(key: EditorFeature.FieldKey.ForSomeReq): TagMod =
@@ -316,11 +348,14 @@ object ReqDetail {
       }
 
       def renderStepTree(ucData: UseCaseData, stepData: UseCaseStepTree.StepData) = {
+        val cmdRunner  = AsyncFeature.Runner.D1(reqProps.async.read, runCmd(req.id))
+        val cmdRunner2 = AsyncFeature.Runner.D1(reqProps.async.read, runCmdAndEditNewUseCaseStep(req.id))
 
         val renderBody: UseCaseStepTree.RenderBodyFn = (id, live, textAndFlow) => {
           import EditorFeature.FieldKey.UseCaseStep
-          val ctrlCell = Cell.UseCaseStepCtrls(id)
-          def args = UseCaseStep.Args(cmdRunner(ctrlCell))
+          def args = UseCaseStep.Args(
+            cmdRunner(Cell.UseCaseStepCtrls(id)),
+            cmdRunner2(Cell.AddUseCaseStep(id)))
 
           props.editorUCS(UseCaseStep(id), data.pxProjectWidgets)
             .themedRenderOr(args)(

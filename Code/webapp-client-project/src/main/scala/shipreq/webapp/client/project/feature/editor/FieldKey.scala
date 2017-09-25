@@ -101,8 +101,12 @@ object FieldKey {
     def foldUCS[F[_, _]](f: FoldForUseCaseSteps[F]): F[Args, Change] = f.step(this)
   }
   object UseCaseStep {
-    /** @param ctrlRunner so users can shift the step left/right via keyboard shortcuts. */
-    final case class Args(ctrlRunner: AsyncFeature.Runner.D0[UpdateContentCmd.ForUseCaseStep, Any])
+    /**
+      * @param shiftRunner   so users can shift the step left/right via keyboard shortcuts.
+      * @param addStepRunner so users can add a new step via keyboard shortcuts.
+      */
+    final case class Args(shiftRunner  : AsyncFeature.Runner.D0[UpdateContentCmd.ForUseCaseStep, Any],
+                          addStepRunner: AsyncFeature.Runner.D0[UpdateContentCmd.AddUseCaseStep, Any])
   }
 
   case object UseCaseTitle extends ForUseCase {

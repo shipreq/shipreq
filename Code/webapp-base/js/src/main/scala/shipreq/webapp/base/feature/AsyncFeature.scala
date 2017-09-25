@@ -416,6 +416,9 @@ object AsyncFeature {
 //
 //      def toD0O: D0O[I, F] =
 //        D0O(asyncState, run.map(_.andThen(Some(_))))
+
+      def mapRunOption[I2](f: (I ~=> Callback) => (I2 ~=> Option[Callback])): D0O[I2, F] =
+        D0O(asyncState, f(run))
     }
 
     /** D0 + O for Option. run becomes tryRun with the result being Option[Callback] */

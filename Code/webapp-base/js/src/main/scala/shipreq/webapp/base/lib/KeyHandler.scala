@@ -93,6 +93,7 @@ object KeyHandler {
     import org.scalajs.dom.ext.KeyCode
     val Escape    = Criterion(EventType.KeyDown, KeyCode.Escape)
     val Enter     = Criterion(EventType.KeyDown, KeyCode.Enter)
+    val AltEnter  = Criterion(EventType.KeyDown, KeyCode.Enter, ModKey.Alt)
     val CtrlEnter = Criterion(EventType.KeyDown, KeyCode.Enter, ModKey.Ctrl)
   }
 
