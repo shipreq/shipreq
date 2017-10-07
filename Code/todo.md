@@ -61,6 +61,7 @@ Backlog
 * New Form preview.show? shouldn't consider focus (?)
 * Warn when closing page and there are open, dirty editors
 * Imp/Code editors are way too wide in NewReqForm
+* Allow users to choose template when creating a project
 
 ------------------------------------------------------------------------------------------------------------------------
 Phase 2
@@ -89,16 +90,14 @@ Phase 2
   * Restore or delete SessionStats
 
 ### Dev
-* Allow ctrl-enter in NewForm editors to create (and not close)
 
 ### Backlog
 * Allow refs to custom text fields (e.g. [UC-1.detail])
-* Revise default columns
-  * On new project, only NewForm displays. Default columns are shit and can't be changed.
+* Revise default columns: on new project, only NewForm is visible; default columns are shit and can't be changed.
 * Revise ProjectTemplate - reduce reqtypes, BL without BR is weird
 * Upgrade JDK and audit crypto mechanisms (pending next Jetty release)
-* ReqDetail KB shortcuts
-  * All rows: ↑, ↓, F2, Tab in/out
+* ReqDetail KB shortcuts: ↑, ↓, F2, Tab in/out
+* Allow ctrl-enter in NewForm editors to create (and not close)
 
 ### New Features
 * User profile page
