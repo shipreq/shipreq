@@ -98,6 +98,8 @@ Phase 2
 * Upgrade JDK and audit crypto mechanisms (pending next Jetty release)
 * ReqDetail KB shortcuts: ↑, ↓, F2, Tab in/out
 * Allow ctrl-enter in NewForm editors to create (and not close)
+* CfgReqTypes restore button allows icon/text wrap. Fix CSS.
+* Add LastUpdated field
 
 ### New Features
 * User profile page
