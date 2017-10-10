@@ -3,7 +3,6 @@ Backlog
 
 ### UX
 * Keyboard nav for ReqTablePage (not just the table) (?)
-* Keyboard nav for ReqDetail
 * Show past IDs in ReqTable
 * Group req types in filter from ALL to ANY.
 * Say "no implications" in imp graph
@@ -56,7 +55,7 @@ Backlog
 * Hide Tags/Imps columns when guaranteed to be empty & useless.
   (i.e. all possible tags/imps are allocated to columns)
   Also consider FilterDead=ShowDead when designing this.
-* UseCase exception levels are off-by-one. 4.E.1.a.i should be 4.E.1.1.a (should it though?)
+  Also consider dead tags in use in text are always displayed which shows in them in Tags columns even when HideDead
 * Allow project deletion. Maybe soft delete with ShowFilterButton. What about unique name constraint?
 * New Form preview.show? shouldn't consider focus (?)
 * Warn when closing page and there are open, dirty editors
@@ -92,13 +91,16 @@ Phase 2
 ### Dev
 
 ### Backlog
+* UseCase exception levels are off-by-one. 4.E.1.a.i should be 4.E.1.1.a (should it though?)
 * Allow refs to custom text fields (e.g. [UC-1.detail])
 * Revise default columns: on new project, only NewForm is visible; default columns are shit and can't be changed.
 * Revise ProjectTemplate - reduce reqtypes, BL without BR is weird
 * Upgrade JDK and audit crypto mechanisms (pending next Jetty release)
 * ReqDetail KB shortcuts: ↑, ↓, F2, Tab in/out
-* Allow ctrl-enter in NewForm editors to create (and not close)
+* Allow ctrl-enter in NewForm editors to create and close.
+* Allow alt-enter in NewForm editors to create and not close.
 * CfgReqTypes restore button allows icon/text wrap. Fix CSS.
+* Add and use RestorationForm just like the DeletionForm
 * Add LastUpdated field
 
 ### New Features
