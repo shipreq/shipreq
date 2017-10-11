@@ -1,0 +1,267 @@
+!!! 5
+%html
+  %head
+    %meta(http-equiv="refresh" content="1")
+    %title Issues | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+      h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
+
+      .content.pic {text-align:center; padding-top:2.2em !important}
+      .content.pic > i {font-size:3rem}
+
+      /** workaround for https://github.com/Semantic-Org/Semantic-UI/issues/2978 */
+      .active-hack {font-weight:700!important; box-shadow: none!important;}
+      .active-hack.red {border-color: #DB2828!important; color: #DB2828!important;}
+      .active-hack.orange {border-color: #F2711C!important; color: #F2711C!important;}
+
+      #view-ctrls > div:not(:first-child) {margin-left: 1em}
+      .sort > button {margin-left: 1ex !important}
+      #cols-popup label {white-space: nowrap !important}
+
+      .status i {margin-right:0}
+
+      .sortCriterion:not(i) {cursor:move}
+
+      #reqtable {        margin-bottom: 1rem; }
+      #reqtable > thead > tr > th {padding: 4px}
+      #reqtable > tbody > tr > td {padding: 4px; vertical-align:top}
+      #reqtable a:hover {text-decoration: underline}
+      #reqtable .selcol {width: 24px !important; text-align: center}
+      .is-tag {padding: 4px 6px !important}
+      .tagRef {color:#2185D0!important}
+      .issueRef {color:#db2828!important}
+
+      #reqtable > tbody > tr > td:nth-child(2) {white-space:nowrap}
+
+      .syntax-help .h {font-weight:bold}
+      .syntax-help table {margin-bottom:1em}
+      .syntax-help tr:nth-child(odd)  td.e {background:#fffde8}
+      .syntax-help tr:nth-child(even) td.e {background:#def2fc}
+      .syntax-help tr:nth-child(odd)  td.d {background:#fcf8e3}
+      .syntax-help tr:nth-child(even) td.d {background:#d9edf7}
+      .syntax-help .d {}
+      .syntax-help .d code {background:#fff; font-family: monospace}
+      .syntax-help .e {font-family: monospace; white-space:nowrap; color:#f39}
+
+      .inline-edit:hover {
+        cursor:pointer;
+        outline:dotted 2px #FFA622;
+        background: #fff4e3 !important;
+        }
+      .can-focus:hover {
+      /*
+        xcursor:pointer;
+        xoutline:solid 1px #00b5ad;
+        outline:solid 1px #a333c8;
+      */
+      }
+      .has-focus {
+        xoutline:solid 2px #00b5ad;
+        outline:solid 2px #a333c8;
+        xoutline:solid 2px #6435c9;
+      }
+
+      #reqtableX >tbody >tr:hover > td {background: rgba(0,15,30,.03)}
+
+      .texteditor {
+        width:100%;
+        margin: 0;
+        -webkit-appearance: none;
+        tap-highlight-color: rgba(255,255,255,0);
+        padding: .78571429em 1em;
+        background: #fff;
+        border: 1px solid rgba(34,36,38,.15);
+        outline: 0;
+        color: rgba(0,0,0,.87);
+        border-radius: .28571429rem;
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0) inset;
+        -webkit-transition: color .1s ease,border-color .1s ease;
+        transition: color .1s ease,border-color .1s ease;
+        font-size: 1em;
+        line-height: 1.2857;
+
+        /*overflow: scroll;*/
+        resize: none;
+
+        padding:.3em .4em !important;
+        background: #fff4e3 !important;
+        xborder-color:#FFA622 !important;
+        border-color:rgba(255, 166, 34, .5) !important;
+      }
+
+      .edit-notes {
+        text-align:right;
+          font-size: 0.75rem;
+          line-height: 1em;
+          margin-bottom: 1rem;
+          color: #4c4c4c;
+      }
+
+      .mid-edit {padding:1ex !important}
+      .mid-edit textarea:focus {border-width:2px !important; border-color:rgba(255, 166, 34, 1) !important}
+      .preview-cont {margin:0 !important}
+      .preview-header {padding-top: 0.3em !important; padding-bottom: 0.3em !important; background:#89d6e5!important; color:#0d1516!important}
+      .preview-body {
+        background-clip: border-box !important;
+        background-color: rgba(0, 0, 0, 0)  !important;
+        background-image: repeating-linear-gradient(-225deg,
+          rgba(0, 0, 0, 0),
+          rgba(0, 0, 0, 0)        5ex,
+          rgba(137,214,229, 0.1)  5ex,
+          rgba(137,214,229, 0.1) 10ex) !important;
+        background-origin: padding-box  !important;
+      }
+
+      .ui.dropdown.reqtype {
+        background: #fff4e3 !important;
+        border-color: rgba(255, 166, 34, .5) !important;
+      }
+
+      .reqtype .ui.buttons button:first-child:hover {color:#21BA45}
+      .reqtype .ui.buttons button:last-child:hover {color:#DB2828}
+
+      .blueHover:hover {color:#2185D0!important}
+
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+
+      .item
+        .ui.breadcrumb
+          %a.section{href: "member-home.haml.html"} Projects
+          %i.divider.icon.right.angle
+          %a.section{href: "project-index.haml.html"} CardBoard
+          .ui.dropdown.inline
+            &nbsp;
+            %i.icon.dropdown
+            .menu
+              .item.active CardBoard
+              .item ShipReq
+          %i.divider.icon.right.angle
+          .section // .active
+            .ui.dropdown.inline
+              Issues
+              &nbsp;
+              %i.icon.dropdown
+              .menu
+                .header Content
+                .item.active Issues
+                .item Implication Graph
+                .item ReqTable
+                .header Configuration
+                .item Fields
+                .item Issues
+                .item Req Types
+                .item Tags
+
+      .item.ui.right.dropdown.simple
+        @japgolly
+        -# %i.dropdown.icon
+        .menu
+          %a.item{href: "member-account.haml.html"} Account
+          .item Logout
+
+    -# =============================================================================================
+    %main{style: "margin-top:4rem"}
+
+
+      -# =============================================================================================
+      %section#action-ctrls{style: "display:flex; align-content: center; margin: 2em 0"}
+        %div.status{style: "text-align: right; flex-grow: 1"}
+          -# Showing 21 rows: 19 reqs (17 live + 3 dead - 1 filtered) + 2 dups.
+          = "Showing 21 rows: 18"
+          %i.icon.cubes{title: "requirements"}
+          = " (17 - 1"
+          %i.icon.filter{title: "excluded by the filter"}
+          = " + 2"
+          %i.icon.copy{title: "reappearances due to sorting"}
+          = ") + 3"
+          %i.icon.open.folder.outline{title: "code groups"}
+          .
+
+      -# =============================================================================================
+      %section#view-ctrls{style: "display:flex; align-content: center; margin-top: 2em"}
+        .sort
+          Sort:
+          %button.ui.button.right.labeled.icon.tiny.basic.sortCriterion
+            %i.icon.sort.descending
+            Priority
+          %button.ui.button.right.labeled.icon.tiny.basic.sortCriterion
+            %i.icon.sort.ascending
+            ID
+
+        .item.space{style: "flex-grow: 1"}
+
+        .item.filter
+          .ui.left.icon.input.right.action
+            %i.icon.filter
+            %input{type: "text", placeholder: "Filter..."}
+            .ui.button.icon(onclick="$('#filter-help').modal('show')")
+              %i.icon.help.circle
+
+        .item
+          %button.ui.icon.button#cols-button
+            %i.icon.columns
+          .ui.popup#cols-popup
+            %div
+              .ui.checkbox
+                %input{type: "checkbox"}
+                %label Actors
+            %div
+              .ui.checkbox
+                %input{type: "checkbox", checked: "checked"}
+                %label ID
+            %div
+              .ui.checkbox
+                %input{type: "checkbox"}
+                %label Fart
+            %div
+              .ui.checkbox
+                %input{type: "checkbox", checked: "checked"}
+                %label Major Feature
+            %div
+              .ui.checkbox
+                %input{type: "checkbox", checked: "checked"}
+                %label Tags
+
+      -# =============================================================================================
+      %table#reqtable.ui.table.celled.compact.unstackable
+        %thead
+          %tr
+            %th.selcol
+              %input{type: "checkbox"}
+            %th ID
+            %th Title
+            %th Priority
+            %th Major Feature
+            %th Tags
+        %tbody
+
+          %tr
+            %td.selcol.can-focus
+              %input{type: "checkbox"}
+            %td.has-focus
+              %a{href:"project-reqdetail.haml.html"} FR-1
+            %td.inline-edit
+              = "Fix "
+              %span.tagRef focus
+              = " and keyboard nav."
+            %td.inline-edit
+              .ui.label.blue.is-tag should
+            %td.inline-edit
+              %a{href:"#"} MF-7
+            %td.inline-edit
+              .ui.label.blue.is-tag bug
+              .ui.label.blue.is-tag focus
+
+  :javascript

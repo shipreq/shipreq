@@ -14,7 +14,7 @@
       .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
       .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
 
-      h1.ui.header {margin-bottom:0; margin-right:1em; color:#d00}
+      h1.ui.header {margin-bottom:0; margin-right:1em; color:#1e70bf}
       .inline-edit:hover {cursor:pointer; outline:dotted 2px #FFA622; background: #fff4e3 !important}
 
       h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
@@ -112,7 +112,7 @@
         %i.icon.file.text.outline
         .content Content
 
-      .ui.cards.three
+      .ui.cards.four
 
         .ui.card.blue{onclick: "location.href='project-reqtable.haml.html'", style: "cursor:pointer"}
           .content.pic
@@ -139,45 +139,54 @@
 
         .ui.card.blue
           .content.pic
+            %i.icon.warning.sign
+          .content
+            .header Issues
+            .description View and resolve outstanding issues.
+            .floating.ui.red.circular.label 123
+
+        .ui.card.blue
+          .content.pic
             %i.icon.share.alternate
           .content
             .header Implication Graph
-            .description ???
+            .description View project-wide implication.
+
 
       %h3.ui.dividing.header
         %i.icon.setting
         -# %i.icon.ellipsis.vertical
         .content Configuration
 
-      .ui.cards.three
+      .ui.cards.four
 
         .ui.card.yellow
           .content.pic
             %i.icon.list.layout.grey
           .content
             .header Fields
-            .description ???
+            .description Configure fields that each type of req has.
 
         .ui.card.yellow
           .content.pic
             %i.icon.warning.sign.grey
           .content
             .header Issues
-            .description ???
+            .description Configure types and causes of issues.
 
         .ui.card.yellow
           .content.pic
             %i.icon.inbox.grey
           .content
             .header Req Types
-            .description ???
+            .description Configure types of reqs.
 
         .ui.card.yellow
           .content.pic
             %i.icon.tags.grey
           .content
             .header Tags
-            .description ???
+            .description Configure attributes for content and organisation.
 
   :javascript
     $('.ui.dropdown').dropdown();
