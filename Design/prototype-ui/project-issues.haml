@@ -58,42 +58,50 @@
 
       .can-edit:hover {
         cursor:pointer;
-        outline:dotted 2px #FFA622;
-        background: #fff4e3 !important;
+        background-color: #fffad7 !important;
       }
 
       .texteditor {
-        width:100%;
+        width: 100%;
         margin: 0;
-        -webkit-appearance: none;
-        tap-highlight-color: rgba(255,255,255,0);
-        padding: .78571429em 1em;
-        background: #fff;
-        border: 1px solid rgba(34,36,38,.15);
-        outline: 0;
-        color: rgba(0,0,0,.87);
-        border-radius: .28571429rem;
+        padding: 0.3em 0.4em;
+        outline-style: none;
+        -moz-box-shadow: 0 0 0 0 rgba(0, 0, 0, 0) inset;
         box-shadow: 0 0 0 0 rgba(0, 0, 0, 0) inset;
+        -o-transition: color .1s ease,border-color .1s ease;
         -webkit-transition: color .1s ease,border-color .1s ease;
+        -moz-transition: color .1s ease,border-color .1s ease;
         transition: color .1s ease,border-color .1s ease;
         font-size: 1em;
         line-height: 1.2857;
-
-        /*overflow: scroll;*/
+        -moz-resize: none;
         resize: none;
-
-        padding:.3em .4em !important;
-        background: #fff4e3 !important;
-        xborder-color:#FFA622 !important;
-        border-color:rgba(255, 166, 34, .5) !important;
+        color: rgba(0,0,0,0.87);
+        background-color: #fffad7;
+        border-width: 1px;
+        border-style: solid;
+        -moz-border-radius: 0.28571429rem;
+        border-radius: 0.28571429rem;
+        border-color: rgba(239,207,9,0.6);
       }
 
-      .edit-notes {
-        text-align:right;
+      /* Editor instructions from real ShipReq */
+      ._ah {
           font-size: 0.75rem;
           line-height: 1em;
-          margin-bottom: 1rem;
-          color: #4c4c4c;
+          color: #a4a6a8;
+          text-align: right;
+          margin-bottom: 0.4em;
+      }
+      ._aj:not(:hover) {
+          color: #a4a6a8 !important;
+          border-bottom: solid 1px #e0e2e4;
+      }
+      ._aj {
+          cursor: pointer;
+      }
+      ._ai:not(:last-child) {
+          margin-right: 1.1ex;
       }
 
       .mid-edit {padding:1ex !important}
@@ -131,19 +139,19 @@
           %i.divider.icon.right.angle
           .section // .active
             .ui.dropdown.inline
-              Issues
+              <i class='icon warning sign'></i> Issues
               &nbsp;
               %i.icon.dropdown
               .menu
                 .header Content
-                .item.active Issues
-                .item Implication Graph
-                .item ReqTable
+                .item.active ="<i class='icon warning sign'></i> Issues"
+                .item ="<i class='icon share alternate'></i>Implication Graph"
+                .item ="<i class='icon cubes'></i> ReqTable"
                 .header Configuration
-                .item Fields
-                .item Issues
-                .item Req Types
-                .item Tags
+                .item ="<i class='icon list layout'></i> Fields"
+                .item ="<i class='icon warning sign'></i> Issues"
+                .item ="<i class='icon inbox'></i> Req Types"
+                .item ="<i class='icon tags'></i> Tags"
 
       .item.ui.right.dropdown.simple
         @japgolly
@@ -175,6 +183,31 @@
           -# %i.icon.unordered.list{title: "loose"}
           -# %i.icon.calendar.outline{title: "loose"}
           %i.icon.comment.outline{title: "loose"}
+
+      -# =============================================================================================
+      %section#new-closed{style: "display:flex; margin: 2em 0"}
+        %div
+          %button.ui.button.green
+            %i.icon.plus
+            New loose issue
+      %section#new-open{style: "display:flex; margin: 2em 0"}
+        %div
+          %button.ui.button.green.disabled
+            %i.icon.plus
+            New loose issue
+        %div(style="flex:1; padding-left:1ex")
+          %textarea.texteditor
+            Remove Bob's reqs? (eg. [fr3] and [fr18])
+          <div class="_ah"><span class="_ai"><!-- react-text: 2158 -->ctrl-enter to <!-- /react-text --><a class="_aj">save</a><!-- react-text: 2160 -->,<!-- /react-text --></span><span class="_ai"><!-- react-text: 2162 -->esc to <!-- /react-text --><a class="_aj">cancel</a><!-- react-text: 2164 -->.<!-- /react-text --></span><i class="icon help circle _ak"></i></div>
+          .ui.segments.preview-cont.raised
+            .ui.segment.preview-header.inverted
+              Preview
+            .ui.segment.preview-body
+              = "Remove Bob's reqs? (eg. "
+              %a{href:"#"} FR-3
+              = " and "
+              %a{href:"#"} FR-18
+              )
 
       -# =============================================================================================
       %section#view-ctrls{style: "display:flex; align-content: center; margin-top: 2em"}
@@ -432,9 +465,19 @@
             %td.pri.na
 
   :javascript
+    // $('th:nth-child(7), td:nth-child(7)').css('display','none');
+
     $('td[rowspan]').each((_,a) =>
       $(a).append('<div class="mergesum">(<span>'+a.rowSpan+'</span>)</div>'))
 
     $('td.actions').filter((_,a) => a.textContent == '').addClass('na');
 
     $('td.na').append('<span>–</span>');
+
+    $('.can-edit').attr('title', 'double-click to edit');
+
+    $('#new-open').hide();
+    $('#new-closed button,#new-open').click(() =>
+      $('#new-closed,#new-open').toggle());
+
+    $('.ui.dropdown').dropdown();

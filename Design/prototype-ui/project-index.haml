@@ -19,6 +19,8 @@
 
       h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
 
+      .ui.card>.content, .ui.cards>.card>.content {flex-grow:0!important}
+
       .content.pic {text-align:center; padding-top:2.2em !important}
       .content.pic > i {font-size:3rem}
 
@@ -137,7 +139,7 @@
             .header Req Lookup
             .description View and edit a single req.
 
-        .ui.card.blue
+        .ui.card.blue{onclick: "location.href='project-issues.haml.html'", style: "cursor:pointer"}
           .content.pic
             %i.icon.warning.sign
           .content
@@ -153,12 +155,12 @@
             .description View project-wide implication.
 
 
-      %h3.ui.dividing.header
+      %h3.ui.dividing.header(style="margin-top:3em")
         %i.icon.setting
         -# %i.icon.ellipsis.vertical
         .content Configuration
 
-      .ui.cards.four
+      .ui.cards.four(style="margin-top:-.875em")
 
         .ui.card.yellow
           .content.pic
