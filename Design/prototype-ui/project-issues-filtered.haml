@@ -119,6 +119,13 @@
         background-origin: padding-box  !important;
       }
 
+      .item.filter input {
+        background-color: #FCFFF5;
+        color: #2C662D;
+        box-shadow: 0px 0px 0px 1px #A3C293 inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
+      }
+      .item.filter i.filter {color:#2c662d;opacity:1!important}
+
   %body
 
     .ui.menu.borderless.fixed.inverted
@@ -191,16 +198,18 @@
                   )
 
         %div.status(style="text-align: right; padding-left:2em; xcolor:#800")
-          = "Showing 20 issues: 1"
+          = "Showing 0 issues: 20"
+          %i.icon.warning.sign{title: "issues"}
+          = "(1"
           %i.icon.setting{title: "config"}
           = "+ 17 "
           %i.icon.cubes{title: "reqs"}
           = " + 1 "
           %i.icon.open.folder.outline{title: "code groups"}
           = " + 1 "
-          -# %i.icon.unordered.list{title: "loose"}
-          -# %i.icon.calendar.outline{title: "loose"}
-          %i.icon.comment.outline{title: "loose"}
+          %i.icon.comment.outline(title="loose" style="margin-right:-0.01ex")
+          = ") - 20"
+          %i.icon.filter{title: "excluded by the filter"}
 
       -# =============================================================================================
       %section#view-ctrls{style: "display:flex; align-content: center; margin-top: 2em"}
@@ -216,10 +225,12 @@
         .item.space{style: "flex-grow: 1"}
 
         .item.filter
-          .ui.left.icon.input.right.action
-            %i.icon.filter
-            %input{type: "text", placeholder: "Filter..."}
-            .ui.button.icon(onclick="$('#filter-help').modal('show')")
+          .ui.left.icon.input.right.action.positive
+            %i.icon.filter.positive
+            %input{type: "text", placeholder: "Filter...", value: "qweqwewq"}
+            .ui.button.icon
+              %i.icon.close
+            .ui.button.icon
               %i.icon.help.circle
 
         .item
@@ -254,208 +265,20 @@
             %th.issue Issue
             %th.id ID
             %th.title Title
-            %th.fname Field
+            %th.fname Field Name
             %th.fedit Field Editor
             %th.actions Actions
             %th.pri Priority
         %tbody
 
           %tr
-            %td.issue(rowspan=6) Blank field
-            %td.id(rowspan=2) %a(href="project-reqdetail.haml.html") UC-3
-            %td.title(rowspan=2) User logs in via smartphone
-            %td.fname Detail
-            %td.fedit.can-edit.issue-blank
-            %td.actions
-            %td.pri .ui.label.blue.is-tag high
-
-          %tr
-            %td.fname Implications
-            %td.fedit.can-edit.issue-blank
-            %td.actions
-            %td.pri .ui.label.blue.is-tag high
-
-          %tr
-            %td.id %a(href="project-reqdetail.haml.html") UC-4
-            %td.title User logs in via fax
-            %td.fname Major Feature
-            %td.fedit.can-edit.issue-blank
-            %td.actions
-            %td.pri .ui.label.blue.is-tag urgent
-
-          %tr
-            %td.id %a(href="project-reqdetail.haml.html") UC-8
-            %td.title User logs in via shouting
-            %td.fname Priority
-            %td.fedit.can-edit.issue-blank
-            %td.actions
-            %td.pri.issue-blank
-
-          %tr
-            %td.id %a(href="project-reqdetail.haml.html") UC-1
-            %td.title
-            %td.fname Title
-            %td.fedit.can-edit.issue-blank
-            %td.actions
-            %td.pri .ui.label.blue.is-tag critical
-
-          %tr
-            %td.id %a(href="project-reqdetail.haml.html") UC-4
-            %td.title User logs in via fax
-            %td.fname Step 4.E.1
-            %td.fedit.can-edit.issue-blank
-            %td.actions
-            %td.pri .ui.label.blue.is-tag urgent
-
-          %tr
-            %td.issue Code group has nothing to group.
-            %td.id %a(href="project-reqtable.haml.html") backend.tasks
-            %td.title Backend Tasks
-            %td.fname.na
-            %td.fedit.na
-            %td.actions
-              .ui.button.negative.basic
-                %i.icon.trash
-                Delete backend.tasks
-            %td.pri.na
-
-          %tr
-            %td.issue(rowspan=2) Conflicting Priority tags
-            %td.id %a(href="project-reqdetail.haml.html") FR-14
-            %td.title Admin must be able to connect 100 fax machines simultaneously.
-            %td.fname Tags
-            %td.fedit.can-edit
-              .ui.label.red.is-tag critical
-              .ui.label.red.is-tag urgent
-              .ui.label.blue.is-tag wip
-            %td.actions
-            %td.pri.na
-
-          %tr
-            %td.id %a(href="project-reqdetail.haml.html") UC-5
-            %td.title User logs in via stern eye contact
-            %td.fname Priority
-            %td.fedit.can-edit
-              .ui.label.red.is-tag urgent
-              .ui.label.red.is-tag critical
-            %td.actions
-            %td.pri
-              .ui.label.red.is-tag urgent
-              .ui.label.red.is-tag critical
-
-          %tr
-            %td.issue(rowspan=2) Deleted issue tag in use: #TBD
-            %td.id %a(href="project-reqdetail.haml.html") CO-12
-            %td.title Max login/hr = <span class="issue-deadissuetag">#TBD{ ask Bob }</span>
-            %td.fname Title
-            %td.fedit.can-edit Max login/hr = <span class="issue-deadissuetag">#TBD{ ask Bob }</span>
-            %td.actions
-              .ui.button.green
-                %i.icon.undo
-                Restore #TBD
-            %td.pri.na
-
-          %tr
-            %td.id %a(href="project-reqdetail.haml.html") UC-4
-            %td.title User logs in via fax
-            %td.fname Detail
-            %td.fedit.can-edit
-              <span class="issue-deadissuetag">#TBD{ talk to Bob }</span>
-            %td.actions
-              .ui.button.green
-                %i.icon.undo
-                Restore #TBD
-            %td.pri .ui.label.blue.is-tag urgent
-
-          %tr
-            %td.issue Deleted tag in use: #backend
-            %td.id %a(href="project-reqdetail.haml.html") UC-5
-            %td.title User logs in via stern eye contact
-            %td.fname Detail
-            %td.fedit.can-edit Part of <span class="issue-deadtag">#backend</span>
-            %td.actions
-              .ui.button.green
-                %i.icon.undo
-                Restore #backend
-            %td.pri .ui.label.blue.is-tag urgent
-
-          %tr
-            %td.issue(rowspan=4) Reference to deleted data
-            %td.id(rowspan=4) %a(href="project-reqdetail.haml.html") UC-4
-            %td.title(rowspan=4) User logs in via fax
-            %td.fname Detail
-            %td.fedit.can-edit See <span class="issue-liveRef_deadreq">[FR-99]</span>.
-            %td.actions
-              .ui.button.green
-                %i.icon.undo
-                Restore <span class="pubid">FR-99</span>
-            %td.pri .ui.label.blue.is-tag urgent
-
-          %tr
-            %td.fname Step 4.1
-            %td.fedit.can-edit See <span class="issue-liveRef_liveUC_deadStep">[UC-17.E.2.a]</span>.
-            %td.actions
-              .ui.button.green
-                %i.icon.undo
-                Restore <span class="pubid">UC-17.E.2.a</span>
-            %td.pri .ui.label.blue.is-tag urgent
-
-          %tr
-            %td.fname Step 4.2
-            %td.fedit.can-edit See <span class="issue-liveRef_deadUC_liveStep">[UC-18.E.3]</span>.
-            %td.actions
-              .ui.button.green
-                %i.icon.undo
-                Restore <span class="pubid">UC-18</span>
-            %td.pri .ui.label.blue.is-tag urgent
-
-          %tr
-            %td.fname Step 4.3
-            %td.fedit.can-edit See <span class="issue-liveRef_deadUC_deadStep">[UC-18.E.X.1]</span>.
-            %td.actions
-            %td.pri .ui.label.blue.is-tag urgent
-
-          %tr
-            %td.issue Status field has no tags
-            %td.id.na
-            %td.title.na
-            %td.fname.na
-            %td.fedit.na
-            %td.actions
-              .ui.button.negative.basic
-                %i.icon.trash
-                Delete Status
-            %td.pri.na
-
-          %tr
-            %td.issue(rowspan=2) User-defined: #PENDING
-            %td.id %a(href="project-reqdetail.haml.html") CO-12
-            %td.title Max login/hr = <span class="issue-issuetag">#PENDING{ ask Bob }</span>
-            %td.fname Title
-            %td.fedit.can-edit Max login/hr = <span class="issue-issuetag">#PENDING{ ask Bob }</span>
-            %td.actions
-            %td.pri.na
-
-          %tr
-            %td.id %a(href="project-reqdetail.haml.html") UC-4
-            %td.title User logs in via fax
-            %td.fname Detail
-            %td.fedit.can-edit
-              <span class="issue-issuetag">#PENDING{ talk to Bob }</span>
-            %td.actions
-            %td.pri .ui.label.blue.is-tag urgent
-
-          %tr.issue-loose
-            %td.issue User-defined: loose
-            %td.id.na
-            %td.title.na
-            %td.fname.na
-            %td.fedit.can-edit Revise all Major Features
-            %td.actions
-              .ui.button.negative.basic
-                %i.icon.remove.circle
-                Close issue
-            %td.pri.na
+            %td(colspan=6 style="padding:2em")
+              .ui.icon.message.info
+                %i.icon.filter
+                .content
+                  .header No filter results.
+                  %p
+                    None of the outstanding issues match the specified filter criteria.
 
   :javascript
     // $('th:nth-child(7), td:nth-child(7)').css('display','none');

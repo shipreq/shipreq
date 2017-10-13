@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html><head><title>Issues | ShipReq</title><script src="../node_modules/jquery/dist/jquery.min.js"></script><link href="../semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="../semantic/dist/semantic.js"></script><style type="text/css">
+body {padding:1rem}
+.ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+.ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+.ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
+
+#view-ctrls > div:not(:first-child) {margin-left: 1em}
+.sort > button {margin-left: 1ex !important}
+#cols-popup label {white-space: nowrap !important}
+.sortCriterion:not(i) {cursor:move}
+
+#reqtable {        margin-bottom: 1rem; }
+#reqtable > thead > tr > th {padding: 4px}
+#reqtable > tbody > tr > td {padding: 4px; vertical-align:top}
+#reqtable a:hover {text-decoration: underline}
+#reqtable .selcol {width: 24px !important; text-align: center}
+.is-tag {padding: 4px 6px !important}
+.tagRef {color:#2185D0!important}
+.issueRef {color:#db2828!important}
+
+#reqtable .id {white-space:nowrap}
+.pubid {white-space:nowrap}
+td.fedit.issue-blank {min-width:40ex}
+.issue-blank {background:#fdd /*hsl(0, 90%, 80%)*/}
+.issue-issuetag ,
+.issue-liveRef_deadreq ,
+.issue-liveRef_deadUC_deadStep ,
+.issue-liveRef_deadUC_liveStep ,
+.issue-liveRef_liveUC_deadStep {color:#c00; background:#fee}
+.issue-deadtag, .issue-deadissuetag {color:#c00; background:#fee; text-decoration: line-through;}
+
+x.ui.button {white-space:nowrap}
+
+.mergesum {display:none; }
+.id .mergesum {display:inline; color:#999; padding-left:1ex; white-space:nowrap}
+.mergesum span {color:#c66}
+
+td.na {
+  padding: 4px !important;
+  vertical-align: top !important;
+  background-color: #f5f5f5;
+}
+td.na > span {
+  color: #666;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.can-edit:hover {
+  cursor:pointer;
+  background-color: #fffad7 !important;
+}
+
+.texteditor {
+  width: 100%;
+  margin: 0;
+  padding: 0.3em 0.4em;
+  outline-style: none;
+  -moz-box-shadow: 0 0 0 0 rgba(0, 0, 0, 0) inset;
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 0) inset;
+  -o-transition: color .1s ease,border-color .1s ease;
+  -webkit-transition: color .1s ease,border-color .1s ease;
+  -moz-transition: color .1s ease,border-color .1s ease;
+  transition: color .1s ease,border-color .1s ease;
+  font-size: 1em;
+  line-height: 1.2857;
+  -moz-resize: none;
+  resize: none;
+  color: rgba(0,0,0,0.87);
+  background-color: #fffad7;
+  border-width: 1px;
+  border-style: solid;
+  -moz-border-radius: 0.28571429rem;
+  border-radius: 0.28571429rem;
+  border-color: rgba(239,207,9,0.6);
+}
+
+/* Editor instructions from real ShipReq */
+._ah {
+    font-size: 0.75rem;
+    line-height: 1em;
+    color: #a4a6a8;
+    text-align: right;
+    margin-bottom: 0.4em;
+}
+._aj:not(:hover) {
+    color: #a4a6a8 !important;
+    border-bottom: solid 1px #e0e2e4;
+}
+._aj {
+    cursor: pointer;
+}
+._ai:not(:last-child) {
+    margin-right: 1.1ex;
+}
+
+.mid-edit {padding:1ex !important}
+.mid-edit textarea:focus {border-width:2px !important; border-color:rgba(255, 166, 34, 1) !important}
+.preview-cont {margin:0 !important}
+.preview-header {padding-top: 0.3em !important; padding-bottom: 0.3em !important; background:#89d6e5!important; color:#0d1516!important}
+.preview-body {
+  background-clip: border-box !important;
+  background-color: rgba(0, 0, 0, 0)  !important;
+  background-image: repeating-linear-gradient(-225deg,
+    rgba(0, 0, 0, 0),
+    rgba(0, 0, 0, 0)        5ex,
+    rgba(137,214,229, 0.1)  5ex,
+    rgba(137,214,229, 0.1) 10ex) !important;
+  background-origin: padding-box  !important;
+}
+
+</style></head><body><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="member-home.haml.html" class="section">Projects</a><i class="divider icon right angle"></i><a href="project-index.haml.html" class="section">CardBoard</a><div class="ui dropdown inline">&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div><i class="divider icon right angle"></i><div class="section"><!--/ .active--><div class="ui dropdown inline"><i class='icon warning sign'></i> Issues&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="header">Content</div><div class="item active"><i class='icon warning sign'></i> Issues</div><div class="item"><i class='icon share alternate'></i>Implication Graph</div><div class="item"><i class='icon cubes'></i> ReqTable</div><div class="header">Configuration</div><div class="item"><i class='icon list layout'></i> Fields</div><div class="item"><i class='icon warning sign'></i> Issues</div><div class="item"><i class='icon inbox'></i> Req Types</div><div class="item"><i class='icon tags'></i> Tags</div></div></div></div></div></div><div class="item ui right dropdown simple">@japgolly<div class="menu"><a href="member-account.haml.html" class="item">Account</a><div class="item">Logout</div></div></div></div><main style="margin-top:4rem"><section style="display:flex; margin: 2em 0"><div style="flex:1"><div id="new-closed"><button class="ui button orange"><i class="icon plus"></i>New loose issue</button></div><div style="display:flex" id="new-open"><div><button class="ui button orange disabled"><i class="icon plus"></i>New loose issue</button></div><div style="flex:1; padding-left:1ex"><textarea class="texteditor">Remove Bob's reqs? (eg. [fr3] and [fr18])</textarea><div class="_ah"><span class="_ai"><!-- react-text: 2158 -->ctrl-enter to <!-- /react-text --><a class="_aj">save</a><!-- react-text: 2160 -->,<!-- /react-text --></span><span class="_ai"><!-- react-text: 2162 -->esc to <!-- /react-text --><a class="_aj">cancel</a><!-- react-text: 2164 -->.<!-- /react-text --></span><i class="icon help circle _ak"></i></div><div class="ui segments preview-cont raised"><div class="ui segment preview-header inverted">Preview</div><div class="ui segment preview-body">Remove Bob's reqs? (eg. <a href="#">FR-3</a> and <a href="#">FR-18</a>)</div></div></div></div></div><div style="text-align: right; padding-left:2em; xcolor:#800" class="status">Showing 20 issues: 1<i title="config" class="icon setting"></i>+ 17 <i title="reqs" class="icon cubes"></i> + 1 <i title="code groups" class="icon open folder outline"></i> + 1 <i title="loose" class="icon comment outline"></i></div></section><section style="display:flex; align-content: center; margin-top: 2em" id="view-ctrls"><div class="sort">Sort:<button class="ui button right labeled icon tiny basic sortCriterion"><i class="icon sort ascending"></i>ID</button><button class="ui button right labeled icon tiny basic sortCriterion"><i class="icon sort ascending"></i>Issue</button><button class="ui button right labeled icon tiny basic sortCriterion"><i class="icon sort ascending"></i>Field</button></div><div style="flex-grow: 1" class="item space"></div><div class="item filter"><div class="ui left icon input right action"><i class="icon filter"></i><input type="text" placeholder="Filter..." /><div onclick="$('#filter-help').modal('show')" class="ui button icon"><i class="icon help circle"></i></div></div></div><div class="item"><button class="ui icon button" id="cols-button"><i class="icon columns"></i></button><div class="ui popup" id="cols-popup"><div><div class="ui checkbox"><input type="checkbox" /><label>Actors</label></div></div><div><div class="ui checkbox"><input type="checkbox" checked="checked" /><label>ID</label></div></div><div><div class="ui checkbox"><input type="checkbox" /><label>Fart</label></div></div><div><div class="ui checkbox"><input type="checkbox" checked="checked" /><label>Major Feature</label></div></div><div><div class="ui checkbox"><input type="checkbox" checked="checked" /><label>Tags</label></div></div></div></div></section><table class="ui table celled compact unstackable" id="reqtable"><thead><tr><th class="issue">Issue</th><th class="id">ID</th><th class="title">Title</th><th class="fname">Field</th><th class="fedit">Field Editor</th><th class="actions">Actions</th><th class="pri">Priority</th></tr></thead><tbody><tr><td class="issue">Code group has nothing to group.</td><td class="id"><a href="project-reqtable.haml.html">backend.tasks</a></td><td class="title">Backend Tasks</td><td class="fname na"></td><td class="fedit na"></td><td class="actions"><div class="ui button negative basic"><i class="icon trash"></i>Delete backend.tasks</div></td><td class="pri na"></td></tr><tr><td class="issue">Deleted issue tag in use: #TBD</td><td class="id"><a href="project-reqdetail.haml.html">CO-12</a></td><td class="title">Max login/hr = <span class="issue-deadissuetag">#TBD{ ask Bob }</span></td><td class="fname">Title</td><td class="fedit can-edit">Max login/hr = <span class="issue-deadissuetag">#TBD{ ask Bob }</span></td><td class="actions"><div class="ui button green"><i class="icon undo"></i>Restore #TBD</div></td><td class="pri na"></td></tr><tr><td class="issue">User-defined: #PENDING</td><td class="id"><a href="project-reqdetail.haml.html">CO-13</a></td><td class="title">Max logout/hr = <span class="issue-issuetag">#PENDING{ ask Bob }</span></td><td class="fname">Title</td><td class="fedit can-edit">Max logout/hr = <span class="issue-issuetag">#PENDING{ ask Bob }</span></td><td class="actions"></td><td class="pri na"></td></tr><tr><td class="issue">Conflicting Priority tags</td><td class="id"><a href="project-reqdetail.haml.html">FR-14</a></td><td class="title">Admin must be able to connect 100 fax machines simultaneously.</td><td class="fname">Tags</td><td class="fedit can-edit"><div class="ui label red is-tag">critical</div><div class="ui label red is-tag">urgent</div><div class="ui label blue is-tag">wip</div></td><td class="actions"></td><td class="pri na"></td></tr><tr><td class="issue">Blank field</td><td class="id"><a href="project-reqdetail.haml.html">UC-1</a></td><td class="title"></td><td class="fname">Title</td><td class="fedit can-edit issue-blank"></td><td class="actions"></td><td class="pri"><div class="ui label blue is-tag">critical</div></td></tr><tr><td rowspan="2" class="issue">Blank field</td><td rowspan="2" class="id"><a href="project-reqdetail.haml.html">UC-3</a></td><td rowspan="2" class="title">User logs in via smartphone</td><td class="fname">Detail</td><td class="fedit can-edit issue-blank"></td><td class="actions"></td><td class="pri"><div class="ui label blue is-tag">high</div></td></tr><tr><td class="fname">Implications</td><td class="fedit can-edit issue-blank"></td><td class="actions"></td><td class="pri"><div class="ui label blue is-tag">high</div></td></tr><tr><td rowspan="2" class="issue">Blank field</td><td rowspan="8" class="id"><a href="project-reqdetail.haml.html">UC-4</a></td><td rowspan="8" class="title">User logs in via fax</td><td class="fname">Major Feature</td><td class="fedit can-edit issue-blank"></td><td class="actions"></td><td class="pri"><div class="ui label blue is-tag">urgent</div></td></tr><tr><td class="fname">Step 4.E.1</td><td class="fedit can-edit issue-blank"></td><td class="actions"></td><td class="pri"><div class="ui label blue is-tag">urgent</div></td></tr><tr><td class="issue">Deleted issue tag in use: #TBD</td><td class="fname">Detail</td><td class="fedit can-edit"><span class="issue-deadissuetag">#TBD{ talk to Bob }</span></td><td class="actions"><div class="ui button green"><i class="icon undo"></i>Restore #TBD</div></td><td class="pri"><div class="ui label blue is-tag">urgent</div></td></tr><tr><td rowspan="4" class="issue">Reference to deleted data</td><td class="fname">Detail</td><td class="fedit can-edit">See <span class="issue-liveRef_deadreq">[FR-99]</span>.</td><td class="actions"><div class="ui button green"><i class="icon undo"></i>Restore <span class="pubid">FR-99</span></div></td><td class="pri"><div class="ui label blue is-tag">urgent</div></td></tr><tr><td class="fname">Step 4.1</td><td class="fedit can-edit">See <span class="issue-liveRef_liveUC_deadStep">[UC-17.E.2.a]</span>.</td><td class="actions"><div class="ui button green"><i class="icon undo"></i>Restore <span class="pubid">UC-17.E.2.a</span></div></td><td class="pri"><div class="ui label blue is-tag">urgent</div></td></tr><tr><td class="fname">Step 4.2</td><td class="fedit can-edit">See <span class="issue-liveRef_deadUC_liveStep">[UC-18.E.3]</span>.</td><td class="actions"><div class="ui button green"><i class="icon undo"></i>Restore <span class="pubid">UC-18</span></div></td><td class="pri"><div class="ui label blue is-tag">urgent</div></td></tr><tr><td class="fname">Step 4.3</td><td class="fedit can-edit">See <span class="issue-liveRef_deadUC_deadStep">[UC-18.E.X.1]</span>.</td><td class="actions"></td><td class="pri"><div class="ui label blue is-tag">urgent</div></td></tr><tr><td class="issue">User-defined: #PENDING</td><td class="fname">Detail</td><td class="fedit can-edit"><span class="issue-issuetag">#PENDING{ talk to Bob }</span></td><td class="actions"></td><td class="pri"><div class="ui label blue is-tag">urgent</div></td></tr><tr><td class="issue">Deleted tag in use: #backend</td><td rowspan="2" class="id"><a href="project-reqdetail.haml.html">UC-5</a></td><td rowspan="2" class="title">User logs in via stern eye contact</td><td class="fname">Detail</td><td class="fedit can-edit">Part of <span class="issue-deadtag">#backend</span></td><td class="actions"><div class="ui button green"><i class="icon undo"></i>Restore #backend</div></td><td class="pri"><div class="ui label blue is-tag">urgent</div></td></tr><tr><td class="issue">Conflicting Priority tags</td><td class="fname">Priority</td><td class="fedit can-edit"><div class="ui label red is-tag">urgent</div><div class="ui label red is-tag">critical</div></td><td class="actions"></td><td class="pri"><div class="ui label red is-tag">urgent</div><div class="ui label red is-tag">critical</div></td></tr><tr><td class="issue">Blank field</td><td class="id"><a href="project-reqdetail.haml.html">UC-8</a></td><td class="title">User logs in via shouting</td><td class="fname">Priority</td><td class="fedit can-edit issue-blank"></td><td class="actions"></td><td class="pri issue-blank"></td></tr><tr><td class="issue">Status field has no tags</td><td class="id na"></td><td class="title na"></td><td class="fname na"></td><td class="fedit na"></td><td class="actions"><div class="ui button negative basic"><i class="icon trash"></i>Delete Status</div></td><td class="pri na"></td></tr><tr class="issue-loose"><td class="issue">User-defined: loose</td><td class="id na"></td><td class="title na"></td><td class="fname na"></td><td class="fedit can-edit">Revise all Major Features</td><td class="actions"><div class="ui button negative basic"><i class="icon remove circle"></i>Close issue</div></td><td class="pri na"></td></tr></tbody></table></main></body>
+<script type="text/javascript">
+//<![CDATA[
+// $('th:nth-child(7), td:nth-child(7)').css('display','none');
+
+$('td[rowspan]').each((_,a) =>
+  $(a).append('<div class="mergesum">(<span>'+a.rowSpan+'</span>)</div>'))
+
+$('td.actions').filter((_,a) => a.textContent == '').addClass('na');
+
+$('td.na').append('<span>–</span>');
+
+$('.can-edit').attr('title', 'double-click to edit');
+
+$('#new-open').hide();
+$('#new-closed button,#new-open').click(() =>
+  $('#new-closed,#new-open').toggle());
+
+$('.ui.dropdown').dropdown();
+//]]>
+</script>
+</html>
