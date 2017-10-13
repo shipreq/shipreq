@@ -63,6 +63,7 @@ Backlog
 * Allow users to choose template when creating a project
 * Add LastUpdated field to ReqTable/Detail
 * Add Change Count field to ReqTable/Detail (help find most volatile/unstable reqs)
+* Allow refs to custom text fields (e.g. [UC-1.detail])
 
 ------------------------------------------------------------------------------------------------------------------------
 Phase 2
@@ -93,7 +94,6 @@ Phase 2
 ### Misc
 * Fix bug with autocompletion popup not closing on blur and then blocking the whole UI
 * UseCase exception levels are off-by-one. 4.E.1.a.i should be 4.E.1.1.a (should it though?)
-* Allow refs to custom text fields (e.g. [UC-1.detail])
 * Revise default columns: on new project, only NewForm is visible; default columns are shit and can't be changed.
 * Revise ProjectTemplate - reduce reqtypes, BL without BR is weird
 * Upgrade JDK and audit crypto mechanisms (pending next Jetty release)
