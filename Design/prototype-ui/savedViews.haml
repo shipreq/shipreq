@@ -29,8 +29,8 @@
           Unsaved view
           .menu
             .item
-              %i.icon.save
-              Save as...
+              %i.icon.plus
+              Save as new...
         .right.menu#FilterDeadButton
           .item{style: "padding-right:0 !important"}
             %button.ui.button.icon.has-popup{data-content: "Click to show deleted content."}
@@ -47,9 +47,6 @@
               %i.icon.write
               Rename...
             .item
-              %i.icon.copy
-              Save as...
-            .item
               %i.icon.trash
               Delete
         %a.item.ui.dropdown.onhover#other
@@ -62,9 +59,6 @@
               %i.icon.write
               Rename...
             .item
-              %i.icon.copy
-              Save as...
-            .item
               %i.icon.trash
               Delete
         .right.menu
@@ -73,7 +67,7 @@
               %i.icon.trash.outline.large.grey
 
 
-    %section.sample
+    -# %section.sample
       .ui.secondary.pointing.menu
         %a.item.ui.dropdown.onhover.active-hack.orange
           %i.icon.star.yellow
@@ -81,11 +75,11 @@
           %span(style="font-style:italic; margin-left:1ex") (changed)
           .menu
             .item
-              %i.icon.save
-              Save
+              %i.icon.plus
+              Save as new...
             .item
               %i.icon.save
-              Save as...
+              Save
             .item
               %i.icon.undo
               Revert changes
@@ -98,36 +92,32 @@
               %i.icon.trash.outline.large.grey
 
 
-    %section.sample
-      %div(style="text-align:center; color:#555") or
-      .ui.secondary.pointing.menu
+    %section.sample(style="display:flex")
+      -# %div(style="text-align:center; color:#555") or
+      .ui.secondary.pointing.menu(style="flex:1;display:flex;flex-wrap:wrap")
         .item.orange.ui.dropdown.onhover.active-hack
           Unsaved view
           .menu
             .item
-              %i.icon.save
-              Save as My Favs
+              %i.icon.plus
+              Save as new...
             .item
               %i.icon.save
-              Save as...
+              Replace My Favs
         %a.item.ui.dropdown.onhover
           %i.icon.star.yellow
           My Favs
           .menu
             .item
-              %i.icon.copy
-              Save as...
-            .item
               %i.icon.trash
               Delete
-        .right.menu
-          .item{style: "padding-right:0 !important"}
-            %button.ui.button.icon.has-popup{data-content: "Click to show deleted content."}
-              %i.icon.trash.outline.large.grey
+      %div(style="padding-left:2em")
+        %button.ui.button.icon.has-popup{data-content: "Click to show deleted content."}
+          %i.icon.trash.outline.large.grey
 
 
-    %section.sample#overflow-eg0(style="margin-top:6rem")
-      .ui.secondary.pointing.menu(style="display:flex;flex-wrap:wrap")
+    %section.sample#overflow-eg0(style="margin-top:6rem; display:flex")
+      .ui.secondary.pointing.menu(style="flex:1;display:flex;flex-wrap:wrap")
         %a.item.ui.dropdown.onhover.active-hack.orange
           %i.icon.star.yellow
           Blah
@@ -136,80 +126,11 @@
               %i.icon.write
               Rename...
             .item
-              %i.icon.copy
-              Save as...
-            .item
               %i.icon.trash
               Delete
-        -# %a.item MRU #2
-        -# %a.item MRU #3
-        -# %a.item Overflow!!!
-        -# %a.item Overflow!!!
-        -# %a.item Overflow!!!
-        -# %a.item Overflow!!!
-        -# %a.item Overflow!!!
-        -# %a.item Overflow!!!
-        -# %a.item Overflow!!!
-        -# %a.item Overflow!!!
-        -# %a.item Overflow!!!
-        -# %a.item Overflow!!!
-        -# %a.item Overflow!!!
-        -# %a.item Overflow!!!
-        -# .right.menu
-          .item{style: "padding-right:0 !important"}
-            %button.ui.button.icon.has-popup{data-content: "Click to show deleted content."}
-              %i.icon.trash.outline.large.grey
-    -# %section.sample
-      .ui.secondary.pointing.menu(style="display:flex;flex-wrap:wrap")
-        %a.item.ui.dropdown.onhover
-          %i.icon.star.yellow
-          MRU #1
-          .menu
-            .item
-              %i.icon.write
-              Rename...
-            .item
-              %i.icon.copy
-              Save as...
-            .item
-              %i.icon.trash
-              Delete
-        %a.item MRU #1
-        %a.item MRU #2
-        %a.item MRU #3
-        %a.item Overflow!!!
-        %a.item Overflow!!!
-        %a.item Overflow!!!
-        %a.item Overflow!!!
-        %a.item Overflow!!!
-        %a.item Overflow!!!
-        %a.item Overflow!!!
-        %a.item Overflow!!!
-        %a.item Overflow!!!
-        %a.item.active-hack.orange Overflow!!!
-        %a.item Overflow!!!
-        %a.item Overflow!!!
-        .right.menu
-          .item{style: "padding-right:0 !important"}
-            %button.ui.button.icon.has-popup{data-content: "Click to show deleted content."}
-              %i.icon.trash.outline.large.grey
-
-      -# %div#overflow-eg1
-        .ui.simple.dropdown
-          Overflow
-          .menu
-            .item
-              %i.icon.star
-              Set as default
-            .item
-              %i.icon.write
-              Rename...
-            .item
-              %i.icon.copy
-              Save as...
-            .item
-              %i.icon.trash
-              Delete
+      %div(style="padding-left:2em")
+        %button.ui.button.icon.has-popup{data-content: "Click to show deleted content."}
+          %i.icon.trash.outline.large.grey
 
 
     %section.sample
@@ -269,9 +190,6 @@
               %i.icon.write
               Rename...
             .item
-              %i.icon.copy
-              Save as...
-            .item
               %i.icon.trash
               Delete
         .ui.compact.menu
@@ -311,8 +229,8 @@
 
     times(5, () => $('#overflow-eg1 .ui').clone().appendTo('#overflow-eg1'));
 
-    times(20, () => $('#other').clone().appendTo('#overflow-eg0 > *'));
-    $('#FilterDeadButton').clone().appendTo('#overflow-eg0 > *');
+    times(20, () => $('#other').clone().appendTo('#overflow-eg0 > .menu'));
+    // $('#FilterDeadButton').clone().appendTo('#overflow-eg0 > *');
     $('#overflow-eg0 > * > .item').click(function(e){
       $('#overflow-eg0 > * > .item').removeClass('orange').removeClass('active-hack');
       $(e.target).addClass('orange').addClass('active-hack');
