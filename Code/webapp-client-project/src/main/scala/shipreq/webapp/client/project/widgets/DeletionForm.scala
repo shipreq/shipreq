@@ -14,15 +14,15 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util._
 import shipreq.webapp.base.{UiText, data}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.feature.PreviewFeature
+import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.UpdateContentCmd.DeleteReqs
 import shipreq.webapp.base.text.{PlainText, TextSearch}
-import shipreq.webapp.base.data.{On, Plain}
-import shipreq.webapp.base.feature.PreviewFeature
+import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Table}
 import shipreq.webapp.client.project.app.Style.{deletionForm => *}
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.feature.Selection
 import MTrie.Ops
-import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Table}
 
 object DeletionForm {
 
@@ -314,6 +314,7 @@ object DeletionForm {
         abortCommit      = None,
         preview          = PreviewFeature.ReadWrite.Single.alwaysShow,
         preEditValue     = None,
+        extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
         showInstructions = true)
 
     def renderReqTable(p: Props, s: State): VdomElement = {

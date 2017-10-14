@@ -6,6 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalaz.~~>
 import shipreq.base.util._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.feature._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
@@ -297,6 +298,7 @@ object NewEditor {
               None,
               previewRW(pid),
               None,
+              KeyboardTheme.Shortcuts.empty,
               showInstructions = ShowInstructions)
         }
       }

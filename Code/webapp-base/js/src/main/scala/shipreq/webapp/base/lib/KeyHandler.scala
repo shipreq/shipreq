@@ -145,6 +145,14 @@ final case class KeyHandlers(handlers: List[KeyHandler]) extends AnyVal {
         et.domKey ==> combinedResponse
       })
   }
+
+  def baseToReact: KeyHandlers => TagMod = {
+    val none = toReact
+    more => if (more.handlers.isEmpty)
+      none
+    else
+      (this ++ more).toReact
+  }
 }
 
 object KeyHandlers {

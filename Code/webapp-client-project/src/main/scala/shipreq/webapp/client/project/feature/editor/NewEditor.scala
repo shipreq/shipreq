@@ -12,7 +12,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature._
-import shipreq.webapp.base.lib.AbortCommit
+import shipreq.webapp.base.lib.{AbortCommit, KeyboardTheme}
 import shipreq.webapp.base.protocol.{ServerSideProcInvoker, UpdateContentCmd}
 import shipreq.webapp.base.text._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
@@ -531,6 +531,7 @@ object NewEditor {
               abortCommit,
               previewRW(pid),
               initial,
+              KeyboardTheme.Shortcuts.empty,
               showInstructions = true)
         }
       }

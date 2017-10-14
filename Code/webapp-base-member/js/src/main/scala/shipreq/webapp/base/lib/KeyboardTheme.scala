@@ -38,6 +38,15 @@ object KeyboardTheme {
   def commitCO(commit: CallbackTo[Option[Callback]], lc: LineCardinality): KeyHandler =
     commitCriterion.handle(commit >>= (Callback sequenceOption _))
 
+  /** Commit and progress, as in "save and let's move on".
+    *
+    * Progress is different depending on the context.
+    * For UC steps, it means close the current step, create a new child step and focus it.
+    * For fields in the ReqTable new requirement form, it means close the form (implicitly yielding focus to the table).
+    */
+  def commitAndProgressCriterion = KeyHandler.Criterion.AltEnter
+  def commitAndProgressKeyDesc   = "alt-enter"
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object Instructions {
     sealed trait Atom
@@ -117,4 +126,24 @@ object KeyboardTheme {
       clauses
     }
   }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  /**
+    * @param instructions These will be prepended to the typical editor instructions.
+    */
+  final case class Shortcuts(keyHandlers: KeyHandlers, instructions: List[Instructions.Clause]) {
+    def ++(that: Shortcuts): Shortcuts =
+      Shortcuts(
+        this.keyHandlers ++ that.keyHandlers,
+        this.instructions ::: that.instructions)
+  }
+
+  object Shortcuts {
+    val empty: Shortcuts =
+      apply(KeyHandlers.empty, Nil)
+  }
+
+  def Shortcut[A](keyHandlers: KeyHandler, instructions: Option[Instructions.Clause]): Shortcuts =
+    Shortcuts(keyHandlers.toKeyHandlers, instructions.toList)
 }

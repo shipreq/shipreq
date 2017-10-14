@@ -30,6 +30,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                    abortCommit     : AbortCommit,
                    preview         : PreviewFeature.ReadWrite.Single,
                    preEditValue    : Option[text.OptionalText],
+                   extraKbShortcuts: KeyboardTheme.Shortcuts,
                    showInstructions: Boolean) {
 
     val ucNum       = projectWidgets.ctx.ucNum(project)
@@ -58,10 +59,12 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     override val pxAutoComplete =
       Px.apply3(pxProject, pxPlainText, pxTextSearch)(AutoComplete.Project.richText(text))
 
+    private val keyHandlerBase =
+      (KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort)) +
+        KeyboardTheme.commitCO($.props.map(_.status.getCommit), text.lineCardinality))
+        .baseToReact
+
     val textareaConst: TagMod = {
-      val keys =
-        KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort)) +
-        KeyboardTheme.commitCO($.props.map(_.status.getCommit), text.lineCardinality)
 
       val updateState: ReactEventFromTextArea => Callback =
         e => $.props >>= (p =>
@@ -73,21 +76,24 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
         ^.onBlur   --> (autoCompleteBlur >> $.props.flatMap(_.preview.onBlur)),
         ^.onChange ==> updateState,
         ^.onFocus  --> $.props.flatMap(p => p.preview.onFocus(p.wantPreview)),
-        RichTextEditor.minRows(text.lineCardinality),
-        keys)
+        RichTextEditor.minRows(text.lineCardinality))
     }
 
     def render(p: Props) = {
 
-      def editor(validity: Validity): VdomElement =
-        editorRef.component(EditTheme.autosizeTextareaProps(validity, p.edit.value, textareaConst))
+      def editor(validity: Validity): VdomElement = {
+        val keys = keyHandlerBase(p.extraKbShortcuts.keyHandlers)
+        val base = textareaConst(keys)
+        editorRef.component(EditTheme.autosizeTextareaProps(validity, p.edit.value, base))
+      }
 
       def instructions: TagMod =
         TagMod.when(p.showInstructions)(
-          KeyboardTheme.Instructions.forTextEditor(
-            text.lineCardinality,
-            commit = p.status.getCommit,
-            abort = p.abort,
+          KeyboardTheme.Instructions(
+            p.extraKbShortcuts.instructions ::: KeyboardTheme.Instructions.clausesForTextEditor(
+              text.lineCardinality,
+              commit = p.status.getCommit,
+              abort = p.abort),
             help = Some(RichTextEditorHelp.modal.show)))
 
       def richText: VdomTag =
