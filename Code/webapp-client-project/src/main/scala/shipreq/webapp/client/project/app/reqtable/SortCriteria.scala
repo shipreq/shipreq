@@ -67,21 +67,23 @@ object SortCriterion {
     case d: SortInconclusive with NoBlanks  => possibilitiesIIB(d)
   }
 
-  // Syntax Helpers
-  @inline implicit class SortCriterionExt1(private val c: SortInconclusive with HasBlanks) extends AnyVal {
-    @inline def /(sm: ConsiderBlanks) = InconclusiveCB(c, sm)
-  }
-  @inline implicit class SortCriterionExt2(private val c: SortInconclusive with NoBlanks) extends AnyVal {
-    @inline def /(sm: IgnoreBlanks) = InconclusiveIB(c, sm)
-  }
-  @inline implicit class SortCriterionExt3(private val c: SortConclusive) extends AnyVal {
-    @inline def /(sm: IgnoreBlanks) = Conclusive(c, sm)
+  object SyntaxHelpers {
+    @inline implicit class SortCriterionExt1(private val c: SortInconclusive with HasBlanks) extends AnyVal {
+      @inline def /(sm: ConsiderBlanks) = InconclusiveCB(c, sm)
+    }
+    @inline implicit class SortCriterionExt2(private val c: SortInconclusive with NoBlanks) extends AnyVal {
+      @inline def /(sm: IgnoreBlanks) = InconclusiveIB(c, sm)
+    }
+    @inline implicit class SortCriterionExt3(private val c: SortConclusive) extends AnyVal {
+      @inline def /(sm: IgnoreBlanks) = Conclusive(c, sm)
+    }
   }
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 import SortCriterion._
+import SortCriterion.SyntaxHelpers._
 
 @Lenses
 case class SortCriteria(init: Vector[Inconclusive], last: Conclusive) {
@@ -195,10 +197,6 @@ object SortCriteria {
 
   def byPubidOnly =
     SortCriteria(Vector.empty, defaultConclusive)
-
-  val default = SortCriteria(
-    Vector(Column.Code / SortMethod.AscThenBlanks, Column.Title / SortMethod.BlanksThenAsc),
-    defaultConclusive)
 
   def attempt(n: Vector[SortCriterion]): Option[SortCriteria] = {
     var init = Vector.empty[Inconclusive]

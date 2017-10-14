@@ -106,11 +106,13 @@ object LogicTest extends TestSuite {
     r3
   }
 
+  private def defaultOrder = TableSettings.default.order
+
   private def testUnsorted[A: Equal](p: Project, c: C, f: Filter, fd: FilterDead, extract: Rows => A)(expect: A): Unit =
     testUnsorted2(p, NonEmptyVector one c, f, fd, extract)(expect)
 
   private def testUnsorted2[A: Equal](p: Project, cs: NonEmptyVector[C], f: Filter, fd: FilterDead, extract: Rows => A)(expect: A): Unit = {
-    val vs = TableSettings(columnState(p, cs), SortCriteria.default.copy(init = Vector.empty), f)
+    val vs = TableSettings(columnState(p, cs), defaultOrder.copy(init = Vector.empty), f)
     val pc = pcache(p)
     import pc.{pt, ts}
     val r = gatherSortConsolidate(p, vs, fd, pt, ts)
@@ -118,7 +120,7 @@ object LogicTest extends TestSuite {
   }
 
   private def vsSortedByCB(p: Project, c: C.SortInconclusive with C.HasBlanks, sm: ConsiderBlanks, f: Filter): TableSettings =
-    TableSettings(columnState(p, c), SortCriteria.default.copy(init = Vector(SC.InconclusiveCB(c, sm))), f)
+    TableSettings(columnState(p, c), defaultOrder.copy(init = Vector(SC.InconclusiveCB(c, sm))), f)
 
   private def testCB[A: Equal](p: Project, c: C.SortInconclusive with C.HasBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(ConsiderBlanks, A)]) = {
     val pc = pcache(p)
@@ -143,7 +145,7 @@ object LogicTest extends TestSuite {
     allSortsCBA(z, zcount)(_ + sep + _, asc, desc)
 
   private def vsSortedByIB(p: Project, c: C.SortInconclusive with C.NoBlanks, sm: IgnoreBlanks, f: Filter): TableSettings =
-    TableSettings(columnState(p, c), SortCriteria.default.copy(init = Vector(SC.InconclusiveIB(c, sm))), f)
+    TableSettings(columnState(p, c), defaultOrder.copy(init = Vector(SC.InconclusiveIB(c, sm))), f)
 
   private def testIB[A: Equal](p: Project, c: C.SortInconclusive with C.NoBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(IgnoreBlanks, A)]) = {
     val pc = pcache(p)

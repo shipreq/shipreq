@@ -68,7 +68,13 @@ object TableSettings {
 
   def default: TableSettings = {
     import Column._
-    val cols = NonEmptyVector[Column](Code, Pubid, Title, Tags)
-    TableSettings(cols, SortCriteria.default, None)
+    val cols = NonEmptyVector[Column.BuiltIn](Pubid, Title, Tags)
+
+    import SortCriterion.SyntaxHelpers._
+    val order = SortCriteria(
+      Vector.empty, // (Column.Code / SortMethod.AscThenBlanks, Column.Title / SortMethod.BlanksThenAsc),
+      SortCriteria.defaultConclusive)
+
+    TableSettings(cols, order, None)
   }
 }
