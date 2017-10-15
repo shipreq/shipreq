@@ -97,8 +97,6 @@ Phase 2
 * Revise ProjectTemplate - reduce reqtypes, BL without BR is weird
 * Upgrade JDK and audit crypto mechanisms (pending next Jetty release)
 * ReqDetail KB shortcuts: ↑, ↓, F2, Tab in/out
-* Allow ctrl-enter in NewForm editors to create and close.
-* Allow alt-enter in NewForm editors to create and not close.
 * Add and use RestorationForm just like the DeletionForm
 * NewForm is opening at the wrong row! Move up one! Should be above sort,filter,cols
 * Add icons to project navbar dropdown (reqtable,impgraph etc) and sync to dashboard order (not A-Z)
