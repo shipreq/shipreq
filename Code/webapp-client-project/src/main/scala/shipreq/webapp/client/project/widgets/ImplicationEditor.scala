@@ -14,9 +14,9 @@ import shipreq.webapp.base.data.{Plain, _}
 import shipreq.webapp.base.feature.AutoCompleteFeature.AutoComplete.Project.ReqItem
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.EditorStatus
-import shipreq.webapp.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
+import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.text.{Grammar, PlainText, SingleLine, TextSearch}
-import shipreq.webapp.base.ui.{AutosizeTextarea, EditTheme}
+import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.base.validation._
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -68,22 +68,21 @@ object ImplicationEditor {
     (reqs.map(_.id).toSet, text)
   }
 
-  type Output      = SetDiff.NE[ReqId]
-  type CommitFn    = Output ~=> Callback
-  type AbortCommit = Option[AbortCommit2[Callback, CommitFn]]
+  type Output   = SetDiff.NE[ReqId]
+  type CommitFn = Output ~=> Callback
 
   case class Props(edit            : StateSnapshot[String],
                    lookup          : Lookup,
                    validationFn    : ValidationFn,
                    asyncStatus     : Option[EditorStatus.Async],
-                   abortCommit     : AbortCommit,
+                   abort           : Option[Callback],
+                   commitFn        : Option[CommitFn],
                    textSearch      : TextSearch,
                    showInstructions: Boolean) {
 
     val parseResult = validationFn(lookup)(edit.value)
     val validated   = PotentialChange.fromDisjunction(parseResult).ignoreEmpty
-    def abort       = abortCommit.map(_.abort)
-    def commit      = (r: Output) => abortCommit.map(_ commit r)
+    def commit      = (r: Output) => commitFn.map(_ apply r)
     val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
 
     @inline def render: VdomElement = Component(this)

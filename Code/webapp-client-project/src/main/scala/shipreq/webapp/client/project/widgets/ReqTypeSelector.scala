@@ -17,23 +17,19 @@ import shipreq.webapp.client.project.app.Style.widgets.{reqTypeSelector => *}
 object ReqTypeSelector {
 
   type RT = CustomReqType
-  type AbortCommit = Option[shipreq.webapp.base.lib.AbortCommit[Callback, RT ~=> Callback]]
 
   final case class Props(initialValue: Option[RT],
                          edit        : StateSnapshot[RT],
                          choices     : NonEmptySet[RT],
                          asyncStatus : Option[EditorStatus.Async],
-                         abortCommit : AbortCommit) {
+                         abort       : Option[Callback],
+                         commitFn    : Option[RT ~=> Callback]) {
 
     val change: PotentialChange[Nothing, RT] =
       PotentialChange.Success(edit.value).ignoreOption(initialValue)
 
-    val abort: Option[Callback] =
-      abortCommit.map(_.abort)
-
     val commit: Option[Callback] =
-      change.toOption.flatMap(v => abortCommit.map(_.commit(v)))
-
+      change.toOption.flatMap(v => commitFn.map(_ apply v))
 
     val status: EditorStatus =
       asyncStatus getOrElse EditorStatus.fromValidatedChange(change)(_ => commit, abort)

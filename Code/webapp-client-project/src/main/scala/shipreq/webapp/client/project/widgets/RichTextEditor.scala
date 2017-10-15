@@ -9,7 +9,7 @@ import shipreq.base.util.{PotentialChange, Validity}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{EditorStatus, PreviewFeature}
-import shipreq.webapp.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
+import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.ui.EditTheme
@@ -19,7 +19,6 @@ import shipreq.webapp.client.project.widgets.RichTextEditor.hardcodedLive
 sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, final val text: TextType) {
 
   type CommitFn    = text.OptionalText ~=> Callback
-  type AbortCommit = Option[AbortCommit2[Callback, CommitFn]]
 
   case class Props(project         : Project,
                    plainTextNoCtx  : PlainText.ForProject.NoCtx,
@@ -27,7 +26,8 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                    projectWidgets  : ProjectWidgets.AnyCtx,
                    edit            : StateSnapshot[String],
                    asyncStatus     : Option[EditorStatus.Async],
-                   abortCommit     : AbortCommit,
+                   abort           : Option[Callback],
+                   commitFn        : Option[CommitFn],
                    preview         : PreviewFeature.ReadWrite.Single,
                    preEditValue    : Option[text.OptionalText],
                    extraKbShortcuts: KeyboardTheme.Shortcuts,
@@ -37,8 +37,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     val richText    = text.parse(project, ucNum)(edit.value)
     val parseResult = DataValidators.genericRichText(plainTextNoCtx).audit(richText)
     val validated   = PotentialChange.fromDisjunction(parseResult).ignoreOption(preEditValue)
-    def abort       = abortCommit.map(_.abort)
-    def commit      = (t: text.OptionalText) => abortCommit.map(_ commit t)
+    def commit      = (t: text.OptionalText) => commitFn.map(_ apply t)
     val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
     val wantPreview = Text isRich richText
 

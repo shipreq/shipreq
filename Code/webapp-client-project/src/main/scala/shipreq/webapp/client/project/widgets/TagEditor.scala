@@ -9,10 +9,10 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.EditorStatus
-import shipreq.webapp.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
+import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
 import shipreq.webapp.base.text.SingleLine
-import shipreq.webapp.base.ui.{AutosizeTextarea, EditTheme}
+import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.client.project.lib.DataReusability._
 
@@ -52,9 +52,8 @@ object TagEditor {
     (ids, text)
   }
 
-  type Output      = SetDiff.NE[ApplicableTagId]
-  type CommitFn    = Output ~=> Callback
-  type AbortCommit = Option[AbortCommit2[Callback, CommitFn]]
+  type Output   = SetDiff.NE[ApplicableTagId]
+  type CommitFn = Output ~=> Callback
 
   val validator: Lookup => Validator[String, Stream[String], Stream[ApplicableTag]] =
     l => G.seqFormat.validator(Auditor.optionFn(l.get)(i => Invalidity(s"Invalid tag: $i")))
@@ -63,7 +62,8 @@ object TagEditor {
                    edit            : StateSnapshot[String],
                    lookup          : Lookup,
                    asyncStatus     : Option[EditorStatus.Async],
-                   abortCommit     : AbortCommit,
+                   abort           : Option[Callback],
+                   commitFn        : Option[CommitFn],
                    showInstructions: Boolean) {
 
     // TODO Really? Stream?
@@ -74,8 +74,7 @@ object TagEditor {
       parseResult.map(_.map(_.id)(collection.breakOut))
 
     val validated = PotentialChange.fromDisjunction(parseResultSet).setDiffOption(preEditValue)
-    def abort     = abortCommit.map(_.abort)
-    def commit    = (r: Output) => abortCommit.map(_ commit r)
+    def commit    = (r: Output) => commitFn.map(_ apply r)
     val status    = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
 
     def render: VdomElement = Component(this)

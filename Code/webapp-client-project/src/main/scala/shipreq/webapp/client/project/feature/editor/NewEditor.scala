@@ -12,7 +12,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature._
-import shipreq.webapp.base.lib.{AbortCommit, KeyboardTheme}
+import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.{ServerSideProcInvoker, UpdateContentCmd}
 import shipreq.webapp.base.text._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
@@ -167,8 +167,8 @@ object NewEditor {
       def commit(cmd: UpdateContentCmd, hooks: Hooks): Callback =
         asyncFeature((s, f) => saveIO(cmd, _ => s >> abort(hooks), f))
 
-      def makeAbortCommit[B](cmd: B => UpdateContentCmd, hooks: Hooks): Some[AbortCommit[Callback, B ~=> Callback]] =
-        Some(AbortCommit(abort(hooks), Reusable.fn(v => commit(cmd(v), hooks))))
+      def makeAbortCommitFn[B](cmd: B => UpdateContentCmd, hooks: Hooks): (Some[Callback], Some[B ~=> Callback]) =
+        (Some(abort(hooks)), Some(Reusable.fn(v => commit(cmd(v), hooks))))
 
       /** Creates a Callback that when invoked, will initialise and start an editor.
         *
@@ -235,7 +235,8 @@ object NewEditor {
         case class State(initialValue: Some[RT],
                          editValue   : RT,
                          pxChoices   : Px[NonEmptySet[RT]],
-                         abortCommit : ReqTypeSelector.AbortCommit) extends EditorImpl {
+                         abort       : Some[Callback],
+                         commitFn    : Some[RT ~=> Callback]) extends EditorImpl {
 
           def ss = StateSnapshot(editValue)(e => stateAccess.setState(copy(editValue = e).some))
 
@@ -246,22 +247,23 @@ object NewEditor {
             for {
               choices <- pxChoices.toCallback
             } yield ReqTypeSelector.Props(
-              initialValue,
-              ss,
-              choices,
-              EditorStatus.async(asyncState),
-              abortCommit)
+              initialValue = initialValue,
+              edit         = ss,
+              choices      = choices,
+              asyncStatus  = EditorStatus.async(asyncState),
+              abort        = abort,
+              commitFn     = commitFn)
         }
 
-        val abortCommit: ReqTypeSelector.AbortCommit =
-          Some(makeAbortCommit[RT](t => UpdateContentCmd.SetGenericReqType(id, t.id), args.hooks).value)
+        val (abort, commitFn) =
+          makeAbortCommitFn[RT](t => UpdateContentCmd.SetGenericReqType(id, t.id), args.hooks)
 
         for {
           req     <- getGenericReq(id)
           initial <- getCustomReqTypeCB(req.reqTypeId)
         } yield {
           val pxChoices = ReqTypeSelector.pxChoices(initial, pxCustomReqTypes)
-          State(Some(initial), initial, pxChoices, abortCommit)
+          State(Some(initial), initial, pxChoices, abort, commitFn)
         }
       }
     }
@@ -285,18 +287,19 @@ object NewEditor {
           val initialValuesCB: CallbackTo[Set[ReqCode.Value]] =
             pxProject.toCallback.map(_.reqCodes.activeReqCodesByReqId(id))
 
-          val abortCommit: ReqCodeEditor.Multiple.AbortCommit =
-            makeAbortCommit(UpdateContentCmd.PatchReqCodes(id, _), args.hooks)
+          val (abort, commitFn) =
+            makeAbortCommitFn[RCE.Output](UpdateContentCmd.PatchReqCodes(id, _), args.hooks)
 
           startWithStateSnapshot(
             initialValuesCB.toCBO)(
             ReqCodeEditor.Multiple.seqFmt merge _.toVector.map(PlainText.reqCode).sorted)(
-            initialValues => new State(_, Some(initialValues), abortCommit))
+            initialValues => new State(_, Some(initialValues), abort, commitFn))
         }
 
-        private class State(ss         : StateSnapshot[String],
-                            initial    : Some[Set[ReqCode.Value]],
-                            abortCommit: RCE.AbortCommit) extends EditorImpl {
+        private class State(ss      : StateSnapshot[String],
+                            initial : Some[Set[ReqCode.Value]],
+                            abort   : Some[Callback],
+                            commitFn: Some[RCE.CommitFn]) extends EditorImpl {
 
           override type Props = RCE.Props
           override def renderImpl = _.render
@@ -305,11 +308,12 @@ object NewEditor {
             for {
               trie <- trieCB
             } yield RCE.Props(
-              ss,
-              initial,
-              trie,
-              EditorStatus.async(asyncState),
-              abortCommit,
+              edit             = ss,
+              initialValue     = initial,
+              trie             = trie,
+              asyncStatus      = EditorStatus.async(asyncState),
+              abort            = abort,
+              commitFn         = commitFn,
               showInstructions = true)
         }
       }
@@ -326,16 +330,17 @@ object NewEditor {
           val initialValueCB: CallbackOption[ReqCode.Value] =
             pxProject.toCallback.map(_.reqCodes.reqCode(id)).toCBO
 
-          val abortCommit: ReqCodeEditor.Single.AbortCommit =
-            makeAbortCommit(UpdateContentCmd.SetCodeGroupCode(id, _), args.hooks)
+          val (abort, commitFn) =
+            makeAbortCommitFn[RCE.Output](UpdateContentCmd.SetCodeGroupCode(id, _), args.hooks)
 
           startWithStateSnapshot(initialValueCB)(PlainText.reqCode)(
-            i => new State(_, Some(i), abortCommit))
+            i => new State(_, Some(i), abort, commitFn))
         }
 
-        private class State(ss         : StateSnapshot[String],
-                            initial    : Some[ReqCode.Value],
-                            abortCommit: RCE.AbortCommit) extends EditorImpl {
+        private class State(ss      : StateSnapshot[String],
+                            initial : Some[ReqCode.Value],
+                            abort   : Some[Callback],
+                            commitFn: Some[RCE.CommitFn]) extends EditorImpl {
 
           override type Props = RCE.Props
           override def renderImpl = _.render
@@ -344,11 +349,12 @@ object NewEditor {
             for {
               trie <- trieCB
             } yield RCE.Props(
-              ss,
-              initial,
-              trie,
-              EditorStatus.async(asyncState),
-              abortCommit,
+              edit             = ss,
+              initialValue     = initial,
+              trie             = trie,
+              asyncStatus      = EditorStatus.async(asyncState),
+              abort            = abort,
+              commitFn         = commitFn,
               showInstructions = true)
         }
       }
@@ -357,7 +363,7 @@ object NewEditor {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditImplications extends ForChangeType {
       import shipreq.webapp.client.project.widgets.ImplicationEditor
-      import ImplicationEditor.{Lookup, ValidationFn}
+      import ImplicationEditor.{CommitFn, Lookup, ValidationFn}
 
       val pxLookupAll = Px.apply2(pxProject, pxPlainTextNoCtx)(ImplicationEditor.Lookup.all)
 
@@ -394,17 +400,18 @@ object NewEditor {
             init    <- pxInit
           } yield ImplicationEditor.validationFn(project, id.some, init._1, dir)
 
-        val abortCommit: ImplicationEditor.AbortCommit =
-          makeAbortCommit(UpdateContentCmd.PatchImplications(id, dir, _), args.hooks)
+        val (abort, commitFn) =
+          makeAbortCommitFn[ImplicationEditor.Output](UpdateContentCmd.PatchImplications(id, dir, _), args.hooks)
 
         startWithStateSnapshot(pxInit.toCallback.toCBO)(_._2)(
-          _ => new State(_, pxLookup, pxValFn, abortCommit))
+          _ => new State(_, pxLookup, pxValFn, abort, commitFn))
       }
 
       private class State(ss         : StateSnapshot[String],
                           pxLookup   : Px[Lookup],
                           pxValFn    : Px[ValidationFn],
-                          abortCommit: ImplicationEditor.AbortCommit) extends EditorImpl {
+                          abort      : Some[Callback],
+                          commitFn   : Some[CommitFn]) extends EditorImpl {
 
         override type Props = ImplicationEditor.Props
         override def renderImpl = _.render
@@ -415,12 +422,13 @@ object NewEditor {
             valFn      <- pxValFn.toCallback
             textSearch <- pxTextSearch.toCallback
           } yield ImplicationEditor.Props(
-            ss,
-            lookup,
-            valFn,
-            EditorStatus.async(asyncState),
-            abortCommit,
-            textSearch,
+            edit             = ss,
+            lookup           = lookup,
+            validationFn     = valFn,
+            asyncStatus      = EditorStatus.async(asyncState),
+            abort            = abort,
+            commitFn         = commitFn,
+            textSearch       = textSearch,
             showInstructions = true)
       }
     }
@@ -428,7 +436,7 @@ object NewEditor {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditTags extends ForChangeType {
       import shipreq.webapp.client.project.widgets.TagEditor
-      import TagEditor.Lookup
+      import TagEditor.{CommitFn, Lookup}
 
       override type Args   = Unit
       override type Change = TagEditor.Output
@@ -445,17 +453,18 @@ object NewEditor {
             lookup <- pxLookup
           } yield TagEditor.initialValues(project.reqTags(id), project.config, lookup)
 
-        val abortCommit: TagEditor.AbortCommit =
-          makeAbortCommit(UpdateContentCmd.PatchReqTags(id, _), args.hooks)
+        val (abort, commitFn) =
+          makeAbortCommitFn[TagEditor.Output](UpdateContentCmd.PatchReqTags(id, _), args.hooks)
 
         startWithStateSnapshot(pxInit.toCallback.toCBO)(_._2)(
-          init => new State(_, Some(init._1), pxLookup, abortCommit))
+          init => new State(_, Some(init._1), pxLookup, abort, commitFn))
       }
 
       private class State(ss           : StateSnapshot[String],
                           initialValues: Some[Set[ApplicableTagId]],
                           pxLookup     : Px[Lookup],
-                          abortCommit  : TagEditor.AbortCommit) extends EditorImpl {
+                          abort        : Some[Callback],
+                          commitFn     : Some[CommitFn]) extends EditorImpl {
 
         override type Props = TagEditor.Props
         override def renderImpl = _.render
@@ -464,11 +473,12 @@ object NewEditor {
           for {
             lookup <- pxLookup.toCallback
           } yield TagEditor.Props(
-            initialValues,
-            ss,
-            lookup,
-            EditorStatus.async(asyncState),
-            abortCommit,
+            preEditValue     = initialValues,
+            edit             = ss,
+            lookup           = lookup,
+            asyncStatus      = EditorStatus.async(asyncState),
+            abort            = abort,
+            commitFn         = commitFn,
             showInstructions = true)
       }
     }
@@ -489,8 +499,8 @@ object NewEditor {
                             pid           : PreviewId): InitFn = ictx => args => {
           import ictx._
 
-          val abortCommit: editor.AbortCommit =
-            makeAbortCommit(cmd, args.hooks)
+          val (abort, commitFn) =
+            makeAbortCommitFn(cmd, args.hooks)
 
           val initCB =
             for {
@@ -502,14 +512,15 @@ object NewEditor {
             }
 
           startWithStateSnapshot(initCB)(_._2)(
-            i => new State(_, Some(i._1), args.cbProjectWidgets, pid, abortCommit))
+            i => new State(_, Some(i._1), args.cbProjectWidgets, pid, abort, commitFn))
         }
 
         private class State(ss              : StateSnapshot[String],
                             initial         : Some[T.OptionalText],
                             projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
                             pid             : PreviewId,
-                            abortCommit     : editor.AbortCommit) extends EditorImpl {
+                            abort           : Some[Callback],
+                            commitFn        : Some[editor.CommitFn]) extends EditorImpl {
 
           override type Props = editor.Props
           override def renderImpl = _.render
@@ -522,16 +533,17 @@ object NewEditor {
               textSearch     <- pxTextSearch.toCallback
               projectWidgets <- projectWidgetsCB
             } yield editor.Props(
-              project,
-              plainTextNoCtx,
-              textSearch,
-              projectWidgets,
-              ss,
-              EditorStatus.async(asyncState),
-              abortCommit,
-              previewRW(pid),
-              initial,
-              KeyboardTheme.Shortcuts.empty,
+              project          = project,
+              plainTextNoCtx   = plainTextNoCtx,
+              textSearch       = textSearch,
+              projectWidgets   = projectWidgets,
+              edit             = ss,
+              asyncStatus      = EditorStatus.async(asyncState),
+              abort            = abort,
+              commitFn         = commitFn,
+              preview          = previewRW(pid),
+              preEditValue     = initial,
+              extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
               showInstructions = true)
         }
       }
@@ -603,7 +615,7 @@ object NewEditor {
                           stepFocusCB     : CallbackTo[UseCaseStep.Focus],
                           pid             : PreviewId,
                           abort           : Callback,
-                          commit          : UseCaseStepEditor.CommitFn) extends EditorImpl {
+                          commitFn        : UseCaseStepEditor.CommitFn) extends EditorImpl {
 
         override type Props = UseCaseStepEditor.Props
         override def renderImpl = _.render
@@ -631,18 +643,18 @@ object NewEditor {
                     run(UpdateContentCmd.AddUseCaseStep(step.useCaseId, step.field, step.loc.asParentLoc)))))
 
             UseCaseStepEditor.Props(
-              project,
-              plainTextNoCtx,
-              textSearch,
-              projectWidgets,
-              ss,
-              EditorStatus.async(asyncState),
-              abort,
-              commit,
-              shiftRunner,
-              addStepRunner,
-              previewRW(pid),
-              initial)
+              project        = project,
+              plainTextNoCtx = plainTextNoCtx,
+              textSearch     = textSearch,
+              projectWidgets = projectWidgets,
+              edit           = ss,
+              asyncStatus    = EditorStatus.async(asyncState),
+              abort          = abort,
+              commit         = commitFn,
+              shiftRunner    = shiftRunner,
+              addStepRunner  = addStepRunner,
+              preview        = previewRW(pid),
+              preEditValue   = initial)
           }
       }
     }

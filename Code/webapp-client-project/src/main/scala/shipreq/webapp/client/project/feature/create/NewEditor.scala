@@ -148,11 +148,12 @@ object NewEditor {
             for {
               trie <- trieCB
             } yield RCE.Props(
-              ss,
-              None,
-              trie,
-              EditorStatus.async(asyncState),
-              None,
+              edit             = ss,
+              initialValue     = None,
+              trie             = trie,
+              asyncStatus      = EditorStatus.async(asyncState),
+              abort            = None,
+              commitFn         = None,
               showInstructions = ShowInstructions)
         }
       }
@@ -173,11 +174,12 @@ object NewEditor {
             for {
               trie <- trieCB
             } yield RCE.Props(
-              ss,
-              None,
-              trie,
-              EditorStatus.async(asyncState),
-              None,
+              edit             = ss,
+              initialValue     = None,
+              trie             = trie,
+              asyncStatus      = EditorStatus.async(asyncState),
+              abort            = None,
+              commitFn         = None,
               showInstructions = ShowInstructions)
         }
       }
@@ -223,12 +225,13 @@ object NewEditor {
             valFn      <- pxValFn.toCallback
             textSearch <- pxTextSearch.toCallback
           } yield ImplicationEditor.Props(
-            ss,
-            lookup,
-            valFn,
-            EditorStatus.async(asyncState),
-            None,
-            textSearch,
+            edit             = ss,
+            lookup           = lookup,
+            validationFn     = valFn,
+            asyncStatus      = EditorStatus.async(asyncState),
+            abort            = None,
+            commitFn         = None,
+            textSearch       = textSearch,
             showInstructions = ShowInstructions)
       }
     }
@@ -255,11 +258,12 @@ object NewEditor {
           for {
             lookup <- pxLookup.toCallback
           } yield TagEditor.Props(
-            None,
-            ss,
-            lookup,
-            EditorStatus.async(asyncState),
-            None,
+            preEditValue     = None,
+            edit             = ss,
+            lookup           = lookup,
+            asyncStatus      = EditorStatus.async(asyncState),
+            abort            = None,
+            commitFn         = None,
             showInstructions = ShowInstructions)
       }
     }
@@ -289,16 +293,17 @@ object NewEditor {
               textSearch     <- pxTextSearch.toCallback
               projectWidgets <- pxProjectWidgets.toCallback
             } yield editor.Props(
-              project,
-              plainTextNoCtx,
-              textSearch,
-              projectWidgets,
-              ss,
-              EditorStatus.async(asyncState),
-              None,
-              previewRW(pid),
-              None,
-              KeyboardTheme.Shortcuts.empty,
+              project          = project,
+              plainTextNoCtx   = plainTextNoCtx,
+              textSearch       = textSearch,
+              projectWidgets   = projectWidgets,
+              edit             = ss,
+              asyncStatus      = EditorStatus.async(asyncState),
+              abort            = None,
+              commitFn         = None,
+              preview          = previewRW(pid),
+              preEditValue     = None,
+              extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
               showInstructions = ShowInstructions)
         }
       }
