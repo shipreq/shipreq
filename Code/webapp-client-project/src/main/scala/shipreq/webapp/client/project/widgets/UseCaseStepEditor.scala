@@ -116,21 +116,16 @@ object UseCaseStepEditor {
     RichTextEditor.liveCorrect(Text.UseCaseStep)
 
   private def saveAndAddKeyCriterion = KeyHandler.Criterion.AltEnter
-  private def saveAndAddKeyDesc = "alt-enter"
 
   private val shiftKeyCriterion: LeftRight.Values[KeyHandler.Criterion] =
     LeftRight.Values { d =>
       import KeyHandler._
-      val keyCode = d match {
-        case LeftRight.Left  => KeyCode.Left
-        case LeftRight.Right => KeyCode.Right
+      val (desc, keyCode) = d match {
+        case LeftRight.Left  => ("alt-left", KeyCode.Left)
+        case LeftRight.Right => ("alt-right", KeyCode.Right)
       }
-      Criterion(EventType.KeyDown, keyCode, ModKey.Alt)
+      Criterion(desc, EventType.KeyDown, keyCode, ModKey.Alt)
     }
-  private val shiftKeyDesc: LeftRight => String = {
-    case LeftRight.Left  => "alt-left"
-    case LeftRight.Right => "alt-right"
-  }
 
   private val rightLeft: List[LeftRight] =
     LeftRight.Right :: LeftRight.Left :: Nil
@@ -180,14 +175,14 @@ object UseCaseStepEditor {
 
       // Save-and-add
       p.saveAndAdd.foreach(cb =>
-        clauses ::= Instructions.Clause.keyToAction(saveAndAddKeyDesc)("save and add next step", cb))
+        clauses ::= Instructions.Clause.keyToAction(saveAndAddKeyCriterion.desc)("save and add next step", cb))
 
       // Shift left/right clauses
       for {
         d  <- rightLeft
         cb <- p.shiftRunner.runOption(d)
       } clauses ::=
-        Instructions.Clause.keyToAction(shiftKeyDesc(d))(UiText.useCaseStepShift(d).toLowerCase, cb)
+        Instructions.Clause.keyToAction(shiftKeyCriterion(d).desc)(UiText.useCaseStepShift(d).toLowerCase, cb)
 
       Instructions(clauses, help = Some(RichTextEditorHelp.modal.show))
     }

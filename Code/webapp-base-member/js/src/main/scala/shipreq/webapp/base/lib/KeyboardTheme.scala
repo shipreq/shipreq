@@ -15,7 +15,6 @@ import shipreq.webapp.base.ui.semantic.Icon
 object KeyboardTheme {
 
   @inline def abortCriterion = Criterion.Escape
-  @inline def abortKeyDesc   = "esc"
 
   def abort(abort: Callback): KeyHandler =
     abortCriterion.handle(abort)
@@ -27,7 +26,6 @@ object KeyboardTheme {
     * now nil, in that nothing happens; where as previously it would trigger a save which can be very annoying.
     */
   @inline def commitCriterion = Criterion.CtrlEnter
-  @inline def commitKeyDesc   = "ctrl-enter"
 
   def commitO(commit: => Option[Callback], lc: LineCardinality): KeyHandler = {
     // LineCardinality is no longer used here but will be kept as an arg for a while longer until confidence in the new
@@ -45,7 +43,6 @@ object KeyboardTheme {
     * For fields in the ReqTable new requirement form, it means close the form (implicitly yielding focus to the table).
     */
   def commitAndProgressCriterion = KeyHandler.Criterion.AltEnter
-  def commitAndProgressKeyDesc   = "alt-enter"
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object Instructions {
@@ -60,10 +57,10 @@ object KeyboardTheme {
         NonEmptyVector(Vdom(key + " to "), Vector.empty :+ Link(action, actionCB))
 
       def abort(c: Callback): Clause =
-        keyToAction(abortKeyDesc)("cancel", c)
+        keyToAction(abortCriterion.desc)("cancel", c)
 
       def commit(c: Callback): Clause =
-        keyToAction(commitKeyDesc)("save", c)
+        keyToAction(commitCriterion.desc)("save", c)
 
       val multiLine: Clause =
         NonEmptyVector one Vdom("enter for new line")
