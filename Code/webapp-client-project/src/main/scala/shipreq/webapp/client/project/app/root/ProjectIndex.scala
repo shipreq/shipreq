@@ -16,7 +16,12 @@ object ProjectIndex {
 
   sealed abstract class Item(final val title   : String,
                              final val icon    : Icon,
-                             final val subtitle: String)
+                             final val subtitle: String) {
+
+    final val iconAndTitle: TagMod =
+      <.span(icon.tag, " " + title)
+  }
+
   object Item {
 
     sealed abstract class WithPage(title   : String,
@@ -77,9 +82,9 @@ object ProjectIndex {
       Iterator.single(Dropdown.Item.Header(c.title)) ++
       c.items.iterator.flatMap(i =>
         if (active.exists(_ ==* i))
-          Dropdown.Item.Div(i.title, Dropdown.ItemState.Active) :: Nil
+          Dropdown.Item.Div(i.iconAndTitle, Dropdown.ItemState.Active) :: Nil
         else Item.ToPage.getOption(i) match {
-          case Some(p) => Dropdown.Item.Link(rc.link(p)(i.title)) :: Nil
+          case Some(p) => Dropdown.Item.Link(rc.link(p)(i.iconAndTitle)) :: Nil
           case None    => Nil
         }
       )

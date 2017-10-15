@@ -38,15 +38,16 @@ object Layout {
 
         case Page.ReqDetail(id) =>
           val menuItems  = ProjectIndex.dropdownItems(None, rc)
-          val reqTable   = rc.link(Page.ReqTable)(ProjectIndex.Item.ReqTable.title)
+          val reqTable   = rc.link(Page.ReqTable)(ProjectIndex.Item.ReqTable.iconAndTitle)
           val menu       = Breadcrumb.Item.LinkAndDropdown(reqTable, menuItems)
-          val req        = Breadcrumb.Item.Div(PlainText pubid id, Breadcrumb.ItemState.Active)
+          val reqLabel   = <.span(ProjectIndex.Item.ReqDetail.icon.tag, " " + PlainText.pubid(id))
+          val req        = Breadcrumb.Item.Div(reqLabel, Breadcrumb.ItemState.Active)
           index :: menu :: req :: Nil
 
         case p =>
           val activeItem = ProjectIndex.Item.ToPage.reverse getOption p getOrElse sys.error("No breadcrumb menu item for " + p)
           val menuItems  = ProjectIndex.dropdownItems(Some(activeItem), rc)
-          val menu       = Breadcrumb.Item.DropDown(activeItem.title, menuItems)
+          val menu       = Breadcrumb.Item.DropDown(activeItem.iconAndTitle, menuItems)
           index :: menu :: Nil
       }
 

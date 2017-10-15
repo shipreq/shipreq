@@ -78,7 +78,7 @@ object ProjectSpaTestDsl {
     val page: Page =
       dropdownCrumbName match {
         case Some("Req Table") => Page.ReqTable
-        case Some("Content")   => Page.ReqDetail(ExternalPubid.parse(breadcrumbs.zippers.last.innerText).get)
+        case Some("Content")   => Page.ReqDetail(ExternalPubid.parse(breadcrumbs.zippers.last.innerText.trim).get)
         case Some("Fields")    => Page.CfgFields
         case Some("Issues")    => Page.CfgIssues
         case Some("Req Types") => Page.CfgReqTypes

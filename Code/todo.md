@@ -98,7 +98,6 @@ Phase 2
 * Upgrade JDK and audit crypto mechanisms (pending next Jetty release)
 * ReqDetail KB shortcuts: ↑, ↓, F2, Tab in/out
 * Add and use RestorationForm just like the DeletionForm
-* Add icons to project navbar dropdown (reqtable,impgraph etc) and sync to dashboard order (not A-Z)
 
 ### New Features
 * Issues
