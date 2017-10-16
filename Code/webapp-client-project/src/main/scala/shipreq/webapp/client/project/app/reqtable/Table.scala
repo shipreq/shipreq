@@ -255,7 +255,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
           def editor = columnEditor(col)
           val cs     = cellStateFn(row.live & colPlus.live)
           val cp     = mkProps(col, Cell.Props(cs, editor, _))
-          Cell.Component.withKey(col.key)(cp)
+          Cell.Component.withKey(Column key col)(cp)
         }
 
       def renderNormal = {

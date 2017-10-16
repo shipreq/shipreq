@@ -176,7 +176,7 @@ sealed trait NewForm {
       val editorCells: VdomArray =
         p.editableCols.whole.toVdomArray { case (cp, e) =>
           <.td(
-            ^.key := cp.column.key,
+            ^.key := Column.key(cp.column),
             e.value.render(renderArgs))
         }
 
