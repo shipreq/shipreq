@@ -1,6 +1,7 @@
 package shipreq.base.util
 
 import japgolly.microlibs.nonempty._
+import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.univeq.UnivEq
 import scala.collection.GenTraversableOnce
 import scalaz.{-\/, Semigroup, \/, \/-}
@@ -14,9 +15,9 @@ import Min2Set.Maybe
 final class Min2Set[A] private[util] (val head: A, val tail: NonEmptySet[A]) {
   private[this] implicit def univEq: UnivEq[A] = UnivEq.force
 
-  override def toString = "Min2" + whole.toString
+  override def toString = MutableArray(whole).map(_.toString).sort.mkString("Min2Set(", ", ", ")")
 
-  override def hashCode = head.## * 31 + tail.##
+  override def hashCode = whole.##
 
   override def equals(o: Any) = o match {
     case that: Min2Set[_] => this.whole == that.whole
@@ -100,6 +101,9 @@ object Min2Set {
 
   def maybe1[A: UnivEq, B](s: NonEmptySet[A])(one: A => B)(f: Min2Set[A] => B): B =
    apply(s).fold(o => one(o.head), f)
+
+  def force[A: UnivEq](as: Set[A]): Min2Set[A] =
+    new Min2Set(as.head, NonEmptySet force as.tail)
 
   def unwrapOption[A](o: Option[Min2Set[A]]): Set[A] =
     o.fold(Set.empty[A])(_.whole)
