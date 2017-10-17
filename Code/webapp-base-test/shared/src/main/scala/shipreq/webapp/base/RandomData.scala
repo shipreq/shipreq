@@ -1322,16 +1322,17 @@ object RandomData {
 
     def savedViewForProject(p: Project): Gen[SavedView] =
       for {
+        i <- id.map(SavedView.Id)
         a <- savedViewName
         b <- filterDead
         c <- visibleColumns(p)
         d <- sortCriteria(c)
         e <- filter.valid.forProject(p).option
-      } yield SavedView(a, b, c, d, e)
+      } yield SavedView(i, a, b, c, d, e)
 
     def nonEmptySavedViewsForProject(p: Project): Gen[SavedViews.NonEmpty] = {
       val gen = savedViewForProject(p)
-      Gen.apply2(SavedViews.NonEmpty)(gen, gen.vector(0 to 4))
+      Gen.apply2(SavedViews.NonEmpty.apply)(gen, gen.vector(0 to 4).map(SavedViews.emptyNonDefault ++ _))
     }
 
     def savedViewsForProject(p: Project): Gen[SavedViews.Optional] =

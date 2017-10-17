@@ -265,6 +265,7 @@ sealed abstract class DataHasher extends GenericDashHasher {
     implicit val hashSortCriterion   : Hash[SortCriterion               ] = hashADT
     implicit val hashSortCriteria    : Hash[SortCriteria                ] = hashCaseClass
 
+    implicit val hashSavedViewId  : Hash[SavedView.Id       ] = hashCaseClass
     implicit val hashSavedViewName: Hash[SavedView.Name     ] = hashCaseClass
     implicit val hashSavedView    : Hash[SavedView          ] = hashCaseClass
     implicit val hashSavedViews   : Hash[SavedViews.NonEmpty] = hashCaseClass

@@ -27,6 +27,9 @@ final class Min2Set[A] private[util] (val head: A, val tail: NonEmptySet[A]) {
   def size: Int =
     tail.size + 1
 
+  def iterator: Iterator[A] =
+    whole.iterator
+
   def whole: Set[A] =
     tail.whole + head
 

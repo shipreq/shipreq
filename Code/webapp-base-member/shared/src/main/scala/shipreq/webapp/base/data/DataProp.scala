@@ -7,15 +7,16 @@ import scala.annotation.tailrec
 import scala.collection.GenTraversableOnce
 import scala.collection.mutable
 import scala.reflect.ClassTag
-import scalaz.{Monoid, Foldable}
+import scalaz.{Foldable, Monoid, \/-}
 import scalaz.syntax.equal._
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
 import scalaz.std.vector.vectorInstance
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.filter.ValidFilter
 import shipreq.webapp.base.text.{Atom, Text}
+import shipreq.webapp.base.WebappConfig
 import DataImplicits._
 import Debug._
 import MTrie.Ops
@@ -460,6 +461,43 @@ object DataProp {
     val anyTextI: Prop[Iterator[Text.AnyOptional]] = anyText.forallF
   }
 
+  // -------------------------------------------------------------------------------------------------------------------
+  object savedViews {
+    import reqtable._
+
+    private def single: Prop[SavedView] = {
+      val viewId: Prop[SavedView] =
+        id[SavedView.Id].contramap(_.id)
+
+      val name: Prop[SavedView] =
+        Prop.equal("name")(s => \/-(s.name), SavedView.Name.validator apply _.name.value)
+
+      val uniqueColumnsVisible: Prop[SavedView] =
+        Prop.distinct("Columns", _.columns.whole)
+
+      val sortByVisibleColumns: Prop[SavedView] =
+        Prop.whitelist("column")(_.columns.whole.toSet, _.sortCriteria.all.iterator.map(_.column))
+
+      val uniqueColumnsInSort: Prop[SavedView] =
+        Prop.distinctI("Sort Columns", _.sortCriteria.all.iterator.map(_.column))
+
+      viewId & name & uniqueColumnsVisible & sortByVisibleColumns & uniqueColumnsInSort
+    }
+
+    private def nonEmpty: Prop[SavedViews.NonEmpty] = {
+      val noDup: Prop[SavedViews.NonEmpty] =
+        Prop.blacklist("non-default")(_.nonDefault.keySet, _.default.id :: Nil)
+
+      val all: Prop[SavedViews.NonEmpty] =
+        single.forallF[Iterator].contramap(_.iterator)
+
+      noDup ∧ all
+    }
+
+    val optional: Prop[SavedViews.Optional] =
+      nonEmpty.forallF[Option].rename("Saved ReqTable Views")
+  }
+
   // ===================================================================================================================
   object projectConfig {
     type P = ProjectConfig
@@ -527,6 +565,7 @@ object DataProp {
       ∧        reqCodes.all.contramap[P](_.reqCodes)
       ∧    implications.all.contramap[P](_.implications)
       ∧ deletionReasons.all.contramap[P](_.deletionReasons)
+      ∧ savedViews.optional.contramap[P](_.reqtableViews)
     ) rename "constituents"
 
     def liveReqCodeRequiresLiveTarget =
@@ -559,6 +598,15 @@ object DataProp {
       def validTagIds     = whitelist(_._2.tagIds) _
       def validIssueTypes = whitelist(_._1.config.customIssueTypes.keySet) _
 
+      /** Saved View Filter leaves */
+      def svf[A](f: ValidFilter.LeafRefs.type => (ValidFilter.Leaf => GenTraversableOnce[A])): Project => Iterator[A] =
+        _.savedViewLeaves.iterator.flatMap(f(ValidFilter.LeafRefs))
+
+      val columnField: reqtable.Column => List[CustomFieldId] = {
+        case x: reqtable.Column.CustomField => x.id :: Nil
+        case _: reqtable.Column.BuiltIn     => Nil
+      }
+
       ( validReqTypeIds("Pubid keys",                 _.reqs.pubids.value.m.keys)
       ∧ validReqIds    ("ReqCode ReqIds (active)",    _.reqCodes.activeReqCodesByReqId.keys)
       ∧ validReqIds    ("ReqCode ReqIds (inactive)",  _.reqCodes.inactiveIdsByReqId.keys)
@@ -574,6 +622,13 @@ object DataProp {
       ∧ validIssueTypes("Atoms: Issues",              _.atomScan.issues.all.all.map(_.typ))
       ∧ validReqIds    ("DeletionReason reqIds",      _.deletionReasons.reqApplication.keys)
       ∧ validUCStepIds ("UseCase step flow",          _.reqs.useCases.stepFlow.memberIterator)
+      ∧ validIssueTypes("SavedViews: Issues",         svf(_.issues))
+      ∧ validReqIds    ("SavedViews: Reqs",           svf(_.reqs))
+      ∧ validReqTypeIds("SavedViews: ReqTypes",       svf(_.reqTypes))
+      ∧ validTagIds    ("SavedViews: Tags",           svf(_.tags))
+      ∧ validFieldIds  ("SavedViews: Columns",        _.reqtableViewIterator.flatMap(_.columns.whole).flatMap(columnField))
+      ∧ validFieldIds  ("SavedViews: Sort Columns",   _.reqtableViewIterator.flatMap(_.sortCriteria.all.whole).map(_.column).flatMap(columnField))
+
       ).rename("Cross-constituent refs").contramap[P](_ mapStrengthR mkRefs)
     }
 

@@ -40,28 +40,31 @@ object ValidFilter {
       names.get(n.toLowerCase)
   }
 
-  case class Presence      (attr: Attr)                  extends ValidFilter
-  case class Lack          (attr: Attr)                  extends ValidFilter
-  case class Reqs          (reqs: ReqIds)                extends ValidFilter
-  case class ReqType       (id: data.ReqTypeId)          extends ValidFilter
-  case class Tag           (id: data.ApplicableTagId)    extends ValidFilter
-  case class CustomIssue   (id: data.CustomIssueTypeId)  extends ValidFilter
-  case class Text          (substring: String)           extends ValidFilter
-  case class ImpliesAnyOf  (reqs: ReqIds)                extends ValidFilter
-  case class ImpliedByAnyOf(reqs: ReqIds)                extends ValidFilter
-  case class AllOf         (inner: Min2Set[ValidFilter]) extends ValidFilter
-  case class AnyOf         (inner: Min2Set[ValidFilter]) extends ValidFilter
-  case class Not           (expr: ValidFilter)           extends ValidFilter
+  /** Non-recursive case */
+  sealed trait Leaf extends ValidFilter
 
-  case class TextPattern(pattern: Pattern) extends ValidFilter {
+  final case class AllOf         (inner: Min2Set[ValidFilter]) extends ValidFilter
+  final case class AnyOf         (inner: Min2Set[ValidFilter]) extends ValidFilter
+  final case class Not           (expr: ValidFilter)           extends ValidFilter
+
+  final case class Presence      (attr: Attr)                  extends Leaf
+  final case class Lack          (attr: Attr)                  extends Leaf
+  final case class Reqs          (reqs: ReqIds)                extends Leaf
+  final case class ReqType       (id: data.ReqTypeId)          extends Leaf
+  final case class Tag           (id: data.ApplicableTagId)    extends Leaf
+  final case class CustomIssue   (id: data.CustomIssueTypeId)  extends Leaf
+  final case class Text          (substring: String)           extends Leaf
+  final case class ImpliesAnyOf  (reqs: ReqIds)                extends Leaf
+  final case class ImpliedByAnyOf(reqs: ReqIds)                extends Leaf
+  final case class TextPattern   (pattern: Pattern)            extends Leaf {
     override def hashCode = pattern.pattern.##
     override def equals(o: Any) = o match {
       case TextPattern(q) => (pattern.pattern ==* q.pattern) && (pattern.flags ==* q.flags)
       case _              => false
     }
   }
-  implicit def univEqTextPattern: UnivEq[TextPattern] = UnivEq.force
 
+  implicit def univEqTextPattern: UnivEq[TextPattern] = UnivEq.force
   implicit def univEq: UnivEq[ValidFilter] = UnivEq.derive
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -150,5 +153,68 @@ object ValidFilter {
       }
 
     reorder(evalSpeed, 3)
+  }
+
+  def leafIterator(v: ValidFilter): Iterator[Leaf] = {
+    v match {
+      case l: Leaf  => Iterator.single(l)
+      case x: AllOf => x.inner.iterator.flatMap(leafIterator)
+      case x: AnyOf => x.inner.iterator.flatMap(leafIterator)
+      case x: Not   => leafIterator(x.expr)
+    }
+  }
+
+  object LeafRefs {
+    val issues: ValidFilter.Leaf => List[data.CustomIssueTypeId] = {
+      case x: CustomIssue    => x.id :: Nil
+      case _: ImpliedByAnyOf
+         | _: ImpliesAnyOf
+         | _: Lack
+         | _: Presence
+         | _: Reqs
+         | _: ReqType
+         | _: Tag
+         | _: Text
+         | _: TextPattern    => Nil
+    }
+
+    val reqs: ValidFilter.Leaf => ReqIds = {
+      case x: ImpliedByAnyOf => x.reqs
+      case x: ImpliesAnyOf   => x.reqs
+      case x: Reqs           => x.reqs
+      case _: CustomIssue
+         | _: Lack
+         | _: Presence
+         | _: ReqType
+         | _: Tag
+         | _: Text
+         | _: TextPattern => Set.empty
+    }
+
+    val reqTypes: ValidFilter.Leaf => List[data.ReqTypeId] = {
+      case x: ReqType        => x.id :: Nil
+      case _: CustomIssue
+         | _: ImpliedByAnyOf
+         | _: ImpliesAnyOf
+         | _: Lack
+         | _: Presence
+         | _: Reqs
+         | _: Tag
+         | _: Text
+         | _: TextPattern    => Nil
+    }
+
+    val tags: ValidFilter.Leaf => List[data.ApplicableTagId] = {
+      case x: Tag            => x.id :: Nil
+      case _: CustomIssue
+         | _: ImpliedByAnyOf
+         | _: ImpliesAnyOf
+         | _: Lack
+         | _: Presence
+         | _: Reqs
+         | _: ReqType
+         | _: Text
+         | _: TextPattern    => Nil
+    }
   }
 }

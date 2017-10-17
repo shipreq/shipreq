@@ -42,6 +42,10 @@ trait EventEquality {
   implicit val equalReqImplicationsPatch  : Equal[ReqImplicationsPatch  ] = ScalazMacros.deriveEqual
   implicit val equalReqsDelete            : Equal[ReqsDelete            ] = ScalazMacros.deriveEqual
   implicit val equalReqTagsPatch          : Equal[ReqTagsPatch          ] = ScalazMacros.deriveEqual
+  implicit val equalSavedViewCreate       : Equal[SavedViewCreate       ] = ScalazMacros.deriveEqual
+  implicit val equalSavedViewDefaultSet   : Equal[SavedViewDefaultSet   ] = ScalazMacros.deriveEqual
+  implicit val equalSavedViewDelete       : Equal[SavedViewDelete       ] = ScalazMacros.deriveEqual
+  implicit val equalSavedViewUpdate       : Equal[SavedViewUpdate       ] = ScalazMacros.deriveEqual
   implicit val equalTagDelete             : Equal[TagDelete             ] = ScalazMacros.deriveEqual
   implicit val equalTagGroupCreate        : Equal[TagGroupCreate        ] = ScalazMacros.deriveEqual
   implicit val equalTagGroupUpdate        : Equal[TagGroupUpdate        ] = ScalazMacros.deriveEqual

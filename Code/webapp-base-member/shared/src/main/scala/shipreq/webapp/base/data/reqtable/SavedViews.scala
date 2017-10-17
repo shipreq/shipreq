@@ -2,6 +2,8 @@ package shipreq.webapp.base.data.reqtable
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.univeq.UnivEq
+import shipreq.base.util.IMap
+import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.data.FilterDead
 import shipreq.webapp.base.filter.ValidFilter
 import shipreq.webapp.base.validation.{CommonValidation => V, _}
@@ -15,13 +17,16 @@ import shipreq.webapp.base.validation.Implicits._
   * For example, one of the columns visible in the saved view could be later deleted, in which case it would have to
   * be ignored when the saved view is used henceforth.
   */
-final case class SavedView(name        : SavedView.Name,
+final case class SavedView(id          : SavedView.Id,
+                           name        : SavedView.Name,
                            filterDead  : FilterDead,
                            columns     : NonEmptyVector[Column],
                            sortCriteria: SortCriteria,
                            filter      : Option[ValidFilter]) // TODO Should more of the original text be preserved? (text quotes, Min2Vector instead of Set)
 
 object SavedView {
+
+  final case class Id(value: Int) extends TaggedInt
 
   final case class Name(value: String) extends AnyVal
 
@@ -49,8 +54,21 @@ object SavedViews {
 
   def empty: Optional = None
 
-  final case class NonEmpty(default: SavedView, nonDefault: Vector[SavedView])
+  type NonDefault = IMap[SavedView.Id, SavedView]
 
-  implicit def univEqNonEmpty: UnivEq[NonEmpty] = UnivEq.derive
+  val emptyNonDefault: NonDefault =
+    IMap.empty(_.id)
+
+  final case class NonEmpty(default: SavedView, nonDefault: NonDefault) {
+    def iterator: Iterator[SavedView] =
+      Iterator.single(default) ++ nonDefault.valuesIterator
+  }
+
+  object NonEmpty {
+    def single(default: SavedView): NonEmpty =
+      NonEmpty(default, emptyNonDefault)
+
+    implicit def univEq: UnivEq[NonEmpty] = UnivEq.derive
+  }
 
 }

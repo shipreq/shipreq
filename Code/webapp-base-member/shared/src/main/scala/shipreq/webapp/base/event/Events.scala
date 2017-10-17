@@ -6,6 +6,7 @@ import scala.collection.immutable.ListMap
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.reqtable.{SavedView, SavedViews}
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.util._
 import Text.{UseCaseStep => StepTitle, _}
@@ -180,10 +181,18 @@ final case class ReqFieldCustomTextSet(id   : ReqId,
                                        fid  : CustomField.Text.Id,
                                        value: CustomTextField.OptionalText) extends ActiveEvent
 
-final case class ReqsDelete(reqs         : NonEmptySet[ReqId],
+final case class ReqsDelete(reqs      : NonEmptySet[ReqId],
                             codeGroups: Set[ReqCodeId],
-                            reason       : DeletionReason.OptionalText) extends ActiveEvent
+                            reason    : DeletionReason.OptionalText) extends ActiveEvent
 
 // TODO Would it be better to have a CodeGroupId which is a subtype of ReqCodeId?
-final case class ContentRestore(reqs         : Set[ReqId],
+final case class ContentRestore(reqs      : Set[ReqId],
                                 codeGroups: Set[ReqCodeId]) extends ActiveEvent
+
+// =====================================================================================================================
+// Saved Views
+
+final case class SavedViewCreate    (id: SavedView.Id, vs: SavedViewGD.NonEmptyValues) extends ActiveEvent
+final case class SavedViewUpdate    (id: SavedView.Id, vs: SavedViewGD.NonEmptyValues) extends ActiveEvent
+final case class SavedViewDelete    (id: SavedView.Id)                                 extends ActiveEvent
+final case class SavedViewDefaultSet(id: SavedView.Id)                                 extends ActiveEvent

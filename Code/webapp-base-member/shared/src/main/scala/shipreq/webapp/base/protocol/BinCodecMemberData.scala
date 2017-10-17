@@ -184,6 +184,7 @@ object BinCodecMemberData {
     implicit val pickleColumnSC : Pickler[Column.SortConclusive           ] = pickleADT
     implicit val pickleColumnSIs: Pickler[Vector[Column.SortInconclusive] ] = iterablePickler
     implicit val pickleColumn   : Pickler[Column                          ] = pickleADT
+    implicit val pickleColumnNEV: Pickler[NonEmptyVector[Column]          ] = pickleNEV
 
     implicit val pickleSortMethodAsc           : Pickler[SortMethod.Asc           .type] = pickleObject
     implicit val pickleSortMethodAscThenBlanks : Pickler[SortMethod.AscThenBlanks .type] = pickleObject
@@ -203,9 +204,11 @@ object BinCodecMemberData {
     implicit val pickleSortCriterion   : Pickler[SortCriterion                     ] = pickleADT
     implicit val pickleSortCriteria    : Pickler[SortCriteria                      ] = pickleCaseClass
 
-    implicit val pickleSavedViewName: Pickler[SavedView.Name     ] = pickleCaseClass
-    implicit val pickleSavedView    : Pickler[SavedView          ] = pickleCaseClass
-    implicit val pickleSavedViews   : Pickler[SavedViews.NonEmpty] = pickleCaseClass
+    implicit val pickleSavedViewId  : Pickler[SavedView.Id         ] = pickleCaseClass
+    implicit val pickleSavedViewName: Pickler[SavedView.Name       ] = pickleCaseClass
+    implicit val pickleSavedView    : Pickler[SavedView            ] = pickleCaseClass
+    implicit val pickleSavedViewsND : Pickler[SavedViews.NonDefault] = pickleIMap(SavedViews.emptyNonDefault)
+    implicit val pickleSavedViews   : Pickler[SavedViews.NonEmpty  ] = pickleCaseClass
   }
   import ReqTableDataPicklers.pickleSavedViews
 

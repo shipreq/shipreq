@@ -1,6 +1,7 @@
 package shipreq.webapp.base.data
 
 import japgolly.microlibs.scalaz_ext.ScalazMacros
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Lens
 import monocle.macros.Lenses
 import scalaz.{-\/, Equal, \/, \/-}
@@ -8,6 +9,7 @@ import scalaz.std.anyVal.intInstance
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.filter.ValidFilter
 import shipreq.webapp.base.text.{Atom, Text}
 import shipreq.webapp.base.util.ShowSize
 import DataImplicits._
@@ -120,4 +122,11 @@ final case class Project(name           : Project.Name,
 
   private def implicationTransitiveClosure(dir: Direction): TransitiveClosure[ReqId] =
     implications.transitiveClosure(dir, reqs.idIterator, TransitiveClosure.Filter terminalSet deadReqIds)
+
+  def reqtableViewIterator: Iterator[reqtable.SavedView] =
+    reqtableViews.fold[Iterator[reqtable.SavedView]](Iterator.empty)(_.iterator)
+
+  // Only here to speed up DataProp
+  private[data] lazy val savedViewLeaves: Vector[ValidFilter.Leaf] =
+    reqtableViewIterator.map(_.filter).filterDefined.flatMap(ValidFilter.leafIterator).toVector
 }
