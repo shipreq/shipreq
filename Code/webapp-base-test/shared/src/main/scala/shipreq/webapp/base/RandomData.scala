@@ -1817,12 +1817,19 @@ object RandomData {
       import gd._
       import reqtableData._
       private val colNev = customFieldColumn.vector.map(ColumnIGen).flatMap(_.columnNEV)
+
+      val genColumns      = colNev
+      val genFilter       = filter.valid.arbitrary.option
+      val genFilterDead   = filterDead
+      val genName         = savedViewName
+      val genSortCriteria = colNev.flatMap(sortCriteria)
+
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case Columns      => colNev                        map Columns     .apply
-        case Filter       => filter.valid.arbitrary.option map Filter      .apply
-        case FilterDead   => filterDead                    map FilterDead  .apply
-        case Name         => savedViewName                 map Name        .apply
-        case SortCriteria => colNev.flatMap(sortCriteria)  map SortCriteria.apply
+        case Columns      => genColumns      map Columns     .apply
+        case Filter       => genFilter       map Filter      .apply
+        case FilterDead   => genFilterDead   map FilterDead  .apply
+        case Name         => genName         map Name        .apply
+        case SortCriteria => genSortCriteria map SortCriteria.apply
       }
     }
 
@@ -1976,7 +1983,13 @@ object RandomData {
       Gen.apply2(UseCaseStepUpdate)(useCaseStepId, useCaseStepGD.nonEmptyValues)
 
     val genSavedViewCreate: Gen[SavedViewCreate] =
-      Gen.apply2(SavedViewCreate)(reqtableData.savedViewId, savedViewGD.nonEmptyValues)
+      Gen.apply6(SavedViewCreate)(
+        reqtableData.savedViewId,
+        savedViewGD.genName,
+        savedViewGD.genFilterDead,
+        savedViewGD.genColumns,
+        savedViewGD.genSortCriteria,
+        savedViewGD.genFilter)
 
     val genSavedViewDefaultSet: Gen[SavedViewDefaultSet] =
       reqtableData.savedViewId map SavedViewDefaultSet

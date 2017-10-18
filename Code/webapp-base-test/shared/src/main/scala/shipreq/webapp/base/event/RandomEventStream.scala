@@ -435,12 +435,17 @@ class ApplicableEventGen(p: Project) {
     import reqtable.Column
     import RandomData.reqtableData._
     private val colNev = ColumnIGen(p.config.fields.customFields.keysIterator.map(Column.CustomField).toVector).columnNEV
+    val genColumns      = colNev
+    val genFilter       = filter.valid.forProject(p).option
+    val genFilterDead   = filterDead
+    val genName         = savedViewName
+    val genSortCriteria = colNev.flatMap(sortCriteria)
     override def valueFor(a: Attr) = a match {
-      case Columns      => colNev                            map Columns     .apply
-      case Filter       => filter.valid.forProject(p).option map Filter      .apply
-      case FilterDead   => filterDead                        map FilterDead  .apply
-      case Name         => savedViewName                     map Name        .apply
-      case SortCriteria => colNev.flatMap(sortCriteria)      map SortCriteria.apply
+      case Columns      => genColumns      map Columns     .apply
+      case Filter       => genFilter       map Filter      .apply
+      case FilterDead   => genFilterDead   map FilterDead  .apply
+      case Name         => genName         map Name        .apply
+      case SortCriteria => genSortCriteria map SortCriteria.apply
     }
   }
 
@@ -741,7 +746,13 @@ class ApplicableEventGen(p: Project) {
     RandomData.projectName.map(Some(_).filter(_ !=* p.name)).optionGet map ProjectNameSet
 
   def genSavedViewCreate: Gen[SavedViewCreate] =
-    Gen.apply2(SavedViewCreate)(nextSavedViewId, savedViewGD.nonEmptyValues)
+      Gen.apply6(SavedViewCreate)(
+        nextSavedViewId,
+        savedViewGD.genName,
+        savedViewGD.genFilterDead,
+        savedViewGD.genColumns,
+        savedViewGD.genSortCriteria,
+        savedViewGD.genFilter)
 
   def genSavedViewUpdate: Option[Gen[SavedViewUpdate]] =
     savedViewId.map(Gen.apply2(SavedViewUpdate)(_, savedViewGD.nonEmptyValues))

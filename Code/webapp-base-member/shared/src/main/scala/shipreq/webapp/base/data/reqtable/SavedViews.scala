@@ -22,7 +22,7 @@ final case class SavedView(id          : SavedView.Id,
                            filterDead  : FilterDead,
                            columns     : NonEmptyVector[Column],
                            sortCriteria: SortCriteria,
-                           filter      : Option[ValidFilter]) // TODO Should more of the original text be preserved? (text quotes, Min2Vector instead of Set)
+                           filter      : Option[ValidFilter])
 
 object SavedView {
 

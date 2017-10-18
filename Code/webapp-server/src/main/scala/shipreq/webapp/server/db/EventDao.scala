@@ -763,7 +763,6 @@ object EventDbCodecs {
   implicit val dbCodecReqImplicationsPatch  : DbCodec[ReqImplicationsPatch  ] = dbCodecIdAnd('dir -> "d", 'patch -> "")
   implicit val dbCodecReqsDelete            : DbCodec[ReqsDelete            ] = dbCodecJust('reqs -> "r", 'codeGroups_? -> "g", 'reason_? -> "j")
   implicit val dbCodecReqTagsPatch          : DbCodec[ReqTagsPatch          ] = dbCodec2
-  implicit val dbCodecSavedViewCreate       : DbCodec[SavedViewCreate       ] = dbCodec2
   implicit val dbCodecSavedViewDefaultSet   : DbCodec[SavedViewDefaultSet   ] = dbCodecIdOnly
   implicit val dbCodecSavedViewDelete       : DbCodec[SavedViewDelete       ] = dbCodecIdOnly
   implicit val dbCodecSavedViewUpdate       : DbCodec[SavedViewUpdate       ] = dbCodec2
@@ -779,6 +778,16 @@ object EventDbCodecs {
   implicit val dbCodecUseCaseStepShiftRight : DbCodec[UseCaseStepShiftRight ] = dbCodecIdOnly
   implicit val dbCodecUseCaseStepUpdate     : DbCodec[UseCaseStepUpdate     ] = dbCodec2
   implicit val dbCodecUseCaseTitleSet       : DbCodec[UseCaseTitleSet       ] = dbCodec2
+
+  implicit val dbCodecSavedViewCreate       : DbCodec[SavedViewCreate       ] = {
+    import ReqTableData._
+    dbCodecIdAnd(
+      'columns      -> "c",
+      'name         -> "n",
+      'filter_?     -> "f",
+      'filterDead   -> "x",
+      'sortCriteria -> "s")
+  }
 
   /**
    * Assigns each event a `type_id` ∈ [0,32767].
