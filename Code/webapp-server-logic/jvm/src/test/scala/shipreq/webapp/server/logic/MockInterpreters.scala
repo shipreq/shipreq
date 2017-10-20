@@ -400,7 +400,7 @@ final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name]
 
   override val isAuthenticated   = Name(loggedIn.isDefined)
   override val authenticatedUser = Name(loggedIn.map(_.toUser))
-  override val logout            = Name(loggedIn = None)
+  override val logout            = Name{loggedIn = None}
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
