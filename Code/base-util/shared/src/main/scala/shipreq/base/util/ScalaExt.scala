@@ -62,18 +62,6 @@ object ScalaExt extends Platform.ScalaExt {
   implicit class StringExt(private val s: String) extends AnyVal {
     def flatMapSB(f: (Char, StringBuilder) => Unit): String =
       Util.quickSB(sb => s.foreach(c => f(c, sb)))
-
-    def indent(i: String): String = // TODO Delete after next microlibs release
-      if (i.isEmpty)
-        s
-      else
-        i + s.replace("\n", "\n" + i)
-
-    def indent(spaces: Int): String =
-      if (spaces <= 0)
-        s
-      else
-        indent(" " * spaces)
   }
 
   implicit class OptionExt[A](private val o: Option[A]) extends AnyVal {

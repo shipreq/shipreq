@@ -1,5 +1,6 @@
 package shipreq.taskman.server.logic
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import scalaz.std.list.listInstance
 import scalaz.syntax.bind._
@@ -9,7 +10,6 @@ import scalaz.{-\/, \/, \/-, ~>}
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
-import shipreq.base.util.ScalaExt._
 import shipreq.taskman.api.{Priority => MsgPriority}
 import shipreq.taskman.server.logic.ServerOp._
 import shipreq.taskman.server.logic.business.{BusinessOp, Email, Emails, Support}

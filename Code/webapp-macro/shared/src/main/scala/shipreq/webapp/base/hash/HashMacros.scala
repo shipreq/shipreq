@@ -61,15 +61,6 @@ class HashMacroImpls(val c: Context) extends MacroUtils {
     c.Expr[Hash[T]](impl)
   }
 
-  final def readMacroArg_symbolBoolean(e: c.Expr[(scala.Symbol, Boolean)]): (String, Boolean) = // TODO Delete after next microlibs release
-    e match {
-      // 'k -> "v"
-      case Expr(Apply(TypeApply(Select(Apply(_, List(Apply(_, List(Literal(Constant(k: String)))))), _), _), List(Literal(Constant(b: Boolean))))) =>
-        (k, b)
-      case x =>
-        fail(s"""Expected 'k -> b, got: $x\n${showRaw(x)}""")
-    }
-
   def quietCaseClassSubset[T: c.WeakTypeTag](include: c.Expr[(scala.Symbol, Boolean)]*): c.Expr[Hash[T]] = implCaseClassSubset[T](false, include)
   def debugCaseClassSubset[T: c.WeakTypeTag](include: c.Expr[(scala.Symbol, Boolean)]*): c.Expr[Hash[T]] = implCaseClassSubset[T](true , include)
   def implCaseClassSubset[T: c.WeakTypeTag](debug: Boolean, include: Seq[c.Expr[(scala.Symbol, Boolean)]]): c.Expr[Hash[T]] = {
