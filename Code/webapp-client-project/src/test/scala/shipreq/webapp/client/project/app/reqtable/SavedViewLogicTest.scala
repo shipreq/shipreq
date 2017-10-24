@@ -5,7 +5,7 @@ import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
-import shipreq.webapp.base.filter.ValidFilter
+import shipreq.webapp.base.filter.Filter
 import SortCriterion.SyntaxHelpers._
 import SortMethod.{Asc, AscThenBlanks, BlanksThenDesc, Desc}
 import SavedViewLogic._
@@ -26,7 +26,7 @@ object SavedViewLogicTest extends TestSuite {
     filterDead   = ShowDead,
     columns      = Column.builtInValues.reverse,
     sortCriteria = SortCriteria(Vector(Column.Implications(Forwards) / AscThenBlanks), Column.Pubid / Desc),
-    filter       = Some(ValidFilter.Text("ah")))
+    filter       = Some(Filter.Valid.text("ah")))
 
   val SVc = SavedView(
     id           = SavedView.Id(3),

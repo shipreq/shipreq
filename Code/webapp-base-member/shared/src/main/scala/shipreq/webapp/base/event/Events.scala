@@ -2,12 +2,11 @@ package shipreq.webapp.base.event
 
 import japgolly.microlibs.nonempty._
 import nyaya.util.Multimap
-import scala.collection.immutable.ListMap
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable.SavedView
-import shipreq.webapp.base.filter.ValidFilter
+import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.util._
 import Text.{UseCaseStep => StepTitle, _}
@@ -198,7 +197,7 @@ final case class SavedViewCreate(id          : SavedView.Id,
                                  filterDead  : FilterDead,
                                  columns     : NonEmptyVector[reqtable.Column],
                                  sortCriteria: reqtable.SortCriteria,
-                                 filter      : Option[ValidFilter]) extends ActiveEvent
+                                 filter      : Option[Filter.Valid]) extends ActiveEvent
 
 final case class SavedViewUpdate    (id: SavedView.Id, vs: SavedViewGD.NonEmptyValues) extends ActiveEvent
 final case class SavedViewDelete    (id: SavedView.Id)                                 extends ActiveEvent

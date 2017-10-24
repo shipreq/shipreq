@@ -2,7 +2,6 @@ package shipreq.webapp.base.protocol
 
 import boopickle._
 import java.time.Instant
-import java.util.regex.Pattern
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import BinCodecGeneric._
@@ -15,19 +14,6 @@ object BinCodecBaseData {
 
   implicit lazy val pickleInstant: Pickler[Instant] =
     xmap(Instant.ofEpochMilli)(_.toEpochMilli)
-
-  implicit lazy val picklePattern: Pickler[Pattern] =
-    new Pickler[Pattern] {
-      override def pickle(p: Pattern)(implicit state: PickleState): Unit = {
-        state.enc.writeString(p.pattern)
-        state.enc.writeInt(p.flags)
-      }
-      override def unpickle(implicit state: UnpickleState) = {
-        val p = state.dec.readString
-        val f = state.dec.readInt
-        Pattern.compile(p, f)
-      }
-    }
 
   implicit lazy val pickleVectorTreeLoc: Pickler[VectorTree.Location] =
     pickleNEV

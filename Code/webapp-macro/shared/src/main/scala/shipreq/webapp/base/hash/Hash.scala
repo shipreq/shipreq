@@ -52,6 +52,7 @@ object Hash {
 
   trait Algorithm extends HashMacros {
     implicit val hashBoolean                  : Hash[Boolean]
+    implicit val hashChar                     : Hash[Char]
     implicit val hashInt                      : Hash[Int]
     implicit val hashLong                     : Hash[Long]
     implicit val hashString                   : Hash[String]

@@ -2,7 +2,7 @@ package shipreq.webapp.base.text
 
 import scala.collection.immutable.IntMap
 import scalaz.Need
-import shipreq.base.util.{FilterFn, IMap}
+import shipreq.base.util.{IMap, OptionalBoolFn}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 
@@ -157,30 +157,39 @@ object TextSearch {
 
   @inline private implicit def autoNeedValue[A](n: Need[A]): A = n.value
 
-  type IndexEntryFilter = FilterFn.Pair[IndexEntryR, IndexEntryG]
-  @inline private def IEF(r: IndexEntryR => Boolean,
-                          g: IndexEntryG => Boolean): IndexEntryFilter =
-    FilterFn.Pair(r, g)
+  final case class IndexEntryFilter(req      : OptionalBoolFn[IndexEntryR],
+                                    codeGroup: OptionalBoolFn[IndexEntryG]) {
+
+    def &&(that: IndexEntryFilter): IndexEntryFilter =
+      IndexEntryFilter(
+        req && that.req,
+        codeGroup && that.codeGroup)
+  }
+
+  @inline private def IEF(req      : IndexEntryR => Boolean = null,
+                          codeGroup: IndexEntryG => Boolean = null): IndexEntryFilter =
+    IndexEntryFilter(
+      OptionalBoolFn(Option(req)),
+      OptionalBoolFn(Option(codeGroup)))
 
   private type SearchFn = BoyerMooreHorspool => IndexEntryFilter
 
   private val searchAll: SearchFn =
-    a => FilterFn.Pair(e => a.search(e.title) || a.search(e.textFields), _.title |> a.search)
+    a => IEF(e => a.search(e.title) || a.search(e.textFields), _.title |> a.search)
 
   private val searchTitles: SearchFn =
-    a => FilterFn.Pair(_.title |> a.search, _.title |> a.search)
+    a => IEF(_.title |> a.search, _.title |> a.search)
 
   // Indexes
 
-  case class IndexEntryG(group: CodeGroup, title: Normalised)
-  case class IndexEntryR(req: Req, title: Normalised, textFields: Need[Normalised])
+  final case class IndexEntryG(group: CodeGroup, title: Normalised)
+  final case class IndexEntryR(req: Req, title: Normalised, textFields: Need[Normalised])
 
   final class Index private[TextSearch](norm    : Normaliser,
                                         indexR  : IMap[ReqId,     IndexEntryR],
                                         indexG  : IMap[ReqCodeId, IndexEntryG],
                                         filter  : Option[IndexEntryFilter],
                                         searchFn: SearchFn) {
-    import FilterFn.`n/a`
 
     private def newFilter(f: IndexEntryFilter): IndexEntryFilter =
       filter.fold(f)(_ && f)
@@ -189,7 +198,7 @@ object TextSearch {
       new Index(norm, indexR, indexG, Some(newFilter(f)), searchFn)
 
     def filterReq(f: Req => Boolean): Index =
-      withNewFilter(IEF(_.req |> f, `n/a`))
+      withNewFilter(IEF(_.req |> f))
 
     def filterReqsIds(ids: Set[ReqId]): Index =
       filterReq(ids contains _.id)
@@ -197,7 +206,7 @@ object TextSearch {
     def titlesOnly: Index =
       new Index(norm, indexR, indexG, filter, searchTitles)
 
-    private def search[A](substr: String, matchEverything: => A)(s: IndexEntryFilter => A): A =
+    private def search[A](substr: String, s: IndexEntryFilter => A)(matchEverything: => A): A =
       if (substr.isEmpty)
         matchEverything
       else {
@@ -206,16 +215,16 @@ object TextSearch {
         s(f)
       }
 
-    def searchFilter(substr: String): FilterFn.Pair[ReqId, ReqCodeId] =
-      search(substr, FilterFn.Pair[ReqId, ReqCodeId](`n/a`, `n/a`))(f =>
-        FilterFn.Pair[ReqId, ReqCodeId](
-          indexR.get(_) exists f.fa,
-          indexG.get(_) exists f.fb))
+    def searchFilter(substr: String): (OptionalBoolFn[ReqId], OptionalBoolFn[ReqCodeId]) =
+      search(substr, i => (
+        i.req      .map[ReqId]    (f => indexR.get(_) exists f),
+        i.codeGroup.map[ReqCodeId](f => indexG.get(_) exists f)))(
+        (OptionalBoolFn.empty, OptionalBoolFn.empty))
 
     def searchAll(substr: String): Stream[Req] = {
       // whitespace.split(substr).filter(_.nonEmpty)
       def all = indexR.values.toStream
-      search(substr, all)(all filter _.fa).map(_.req)
+      search(substr, all filter _.req.toFn)(all).map(_.req)
     }
   }
 

@@ -4,13 +4,14 @@ import japgolly.scalajs.react.extra.Reusability
 import monocle.macros.Lenses
 import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.filter.ValidFilter
+import shipreq.webapp.base.filter.Filter
+import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.lib.DataReusability._
 
 @Lenses
 final case class TableSettings(columns: NonEmptyVector[Column],
                                order  : SortCriteria,
-                               filter : Option[ValidFilter]) {
+                               filter : Option[Filter.Valid]) {
 
   def isVisible(c: Column): Boolean =
     isVisible(_ ==* c)

@@ -2,9 +2,10 @@ package shipreq.webapp.base.protocol
 
 import boopickle._
 import japgolly.microlibs.nonempty._
+import japgolly.microlibs.recursion._
 import monocle.Iso
 import nyaya.util.{MultiValues, Multimap}
-import scalaz.{-\/, \&/, \/, \/-}
+import scalaz.{-\/, Functor, \&/, \/, \/-}
 import scalaz.Isomorphism.<=>
 import shipreq.base.util._
 import shipreq.base.util.univeq._
@@ -15,6 +16,14 @@ object BinCodecGeneric extends BasicImplicitPicklers with TuplePicklers {
   @inline implicit class PicklerExt[A](private val p: Pickler[A]) extends AnyVal {
     def imap[B](iso: Iso[A, B]): Pickler[B] =
       p.xmap(iso.get)(iso.reverseGet)
+
+    /** Unpickling is safe but pickling will break if you pass it b⊄A */
+    @inline def unsafeWiden[B >: A]: Pickler[B] =
+//      new Pickler[B] {
+//        override def pickle(b: B)(implicit state: PickleState): Unit = p.pickle(b.asInstanceOf[A])
+//        override def unpickle(implicit state: UnpickleState)  : A    = p.unpickle
+//      }
+      p.asInstanceOf[Pickler[B]]
   }
 
   def pickleLazily[A](f: => Pickler[A]): Pickler[A] = {
@@ -125,7 +134,30 @@ object BinCodecGeneric extends BasicImplicitPicklers with TuplePicklers {
     }
   }
 
-  implicit def pickleMin2Set[A: UnivEq](implicit p: Pickler[Set[A]]): Pickler[Min2Set[A]] =
-    p.xmap(Min2Set.force(_))(_.whole)
+  def pickleFix[F[_]: Functor](implicit p: Pickler[F[Unit]]): Pickler[Fix[F]] =
+    new Pickler[Fix[F]] {
+      override def pickle(f: Fix[F])(implicit state: PickleState): Unit = {
 
+        // val fUnit = Functor[F].void(f.unfix)
+        // p.pickle(fUnit)
+        // Functor[F].map(f.unfix)(pickle)
+
+        // Compared to ↑, this ↓ is generally on-par for small trees, and around 30% faster for larger, deeper trees
+
+        val fields = new collection.mutable.ArrayBuffer[Fix[F]](32)
+        val fUnit = Functor[F].map(f.unfix) { a =>
+          fields += a
+          ()
+        }
+        p.pickle(fUnit)
+        fields.foreach(pickle)
+
+        ()
+      }
+
+      override def unpickle(implicit state: UnpickleState) = {
+        val fUnit = p.unpickle
+        Fix(Functor[F].map(fUnit)(_ => unpickle))
+      }
+    }
 }

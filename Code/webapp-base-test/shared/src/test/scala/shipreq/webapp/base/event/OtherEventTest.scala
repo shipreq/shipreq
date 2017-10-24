@@ -2,13 +2,14 @@ package shipreq.webapp.base.event
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import utest._
-import shipreq.base.util.{Forwards, Min2Set}
+import shipreq.base.util.Forwards
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
-import shipreq.webapp.base.filter.ValidFilter
+import shipreq.webapp.base.filter._
 import ApplyEventTestFns._
 import ContentEventTestHelp.{assertBadIdsRejected, fr, at1, issueType1}
+import FilterAst.Attr
 import SortCriterion.SyntaxHelpers._
 import SortMethod.{Asc, AscThenBlanks, BlanksThenDesc, Desc}
 
@@ -18,11 +19,9 @@ object OtherEventTest extends TestSuite {
     ContentEventTestHelp.createCTF1,
     ContentEventTestHelp.createFR,
     ContentEventTestHelp.createAT1,
-    ContentEventTestHelp.createIssueType1,
-    ContentEventTestHelp.emptyUC1)
+    ContentEventTestHelp.createIssueType1)
 
   val ColCF1 = Column.CustomField(ContentEventTestHelp.cf1)
-  val UC1 = ContentEventTestHelp.emptyUC1.id
 
   val SV1 = SavedView(
     id           = SavedView.Id(1),
@@ -39,18 +38,19 @@ object OtherEventTest extends TestSuite {
     columns      = Column.builtInValues.reverse :+ ColCF1,
     sortCriteria = SortCriteria(Vector(ColCF1 / BlanksThenDesc, Column.Implications(Forwards) / AscThenBlanks), Column.Pubid / Desc),
     filter       = Some {
-      import ValidFilter._
-      AnyOf(Min2Set(
-        Not(Text("hehe")),
-        Presence(Attr.AnyIssue),
-        Reqs(Set(UC1)),
-        ImpliesAnyOf(Set(UC1)),
-        ImpliedByAnyOf(Set(UC1)),
-        Tag(at1),
-        CustomIssue(issueType1),
-        TextPattern("[a-z]".r.pattern),
-        ReqType(fr),
-        ReqType(StaticReqType.UseCase)))
+      import Filter.Valid._
+      val reqSet = NonEmptyVector(IntensionalReqSet.WholeType(StaticReqType.UseCase))
+      anyOf(
+        not(text("hehe")),
+        presence(Attr.AnyIssue),
+        reqs(reqSet),
+        impliesAnyOf(reqSet),
+        impliedByAnyOf(reqSet),
+        tag(at1),
+        issue(issueType1),
+        regex("[a-z]"),
+        reqType(fr),
+        reqType(StaticReqType.UseCase))
     })
 
   val SV3 = SavedView(
@@ -147,7 +147,6 @@ object OtherEventTest extends TestSuite {
           'filterBadRT    - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.createFR))
           'filterBadTag   - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.createAT1))
           'filterBadIssue - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.createIssueType1))
-          'filterBadReq   - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.emptyUC1))
 
           // Note: mandatory columns may increase in future in which case they will just be tacked on the SavedViews
           // without them at runtime. Not going to bother adding a mandatory check cos it will invalidate past events in
@@ -189,7 +188,6 @@ object OtherEventTest extends TestSuite {
           'filterBadRT    - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.createFR))
           'filterBadTag   - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.createAT1))
           'filterBadIssue - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.createIssueType1))
-          'filterBadReq   - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.emptyUC1))
         }
       }
 

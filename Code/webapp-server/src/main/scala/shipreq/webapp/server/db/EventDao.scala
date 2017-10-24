@@ -2,7 +2,9 @@ package shipreq.webapp.server.db
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty._
+import japgolly.microlibs.recursion._
 import scala.annotation.tailrec
+import scalaz.{-\/, Functor, \/, \/-}
 import scalaz.Isomorphism.<=>
 import shipreq.base.util._
 import shipreq.base.util.univeq._
@@ -12,11 +14,10 @@ import ApplyEvent.LogicVer
 import TaggedTypes.JsonStr
 
 object EventDbCodecs {
-  import java.util.regex.Pattern
-  import nyaya.util.{Multimap, MultiValues}
+  import nyaya.util.Multimap
   import upickle._
   import upickle.Fns._
-  import upickle.BaseCodecs.StringRW
+  import upickle.BaseCodecs.{CharRW, StringRW}
   import shipreq.webapp.base.data._
   import shipreq.webapp.base.data.reqtable.SavedView
   import shipreq.webapp.base.protocol.MPickleMacros._
@@ -29,11 +30,6 @@ object EventDbCodecs {
 
   implicit val pickleInt: ReadWriter[Int] =
     ReadWriter(i => Js.Num(i), { case Js.Num(i) => i.toInt })
-
-  implicit val picklePattern: ReadWriter[Pattern] =
-    ReadWriter(
-      p => Js.Arr(Js.Str(p.pattern), Js.Num(p.flags)),
-      { case Js.Arr(Js.Str(p), Js.Num(f)) => Pattern.compile(p, f.toInt) })
 
   private def isOneElemCollection[A](c: Iterable[A]): Boolean = {
     val i = c.iterator
@@ -62,9 +58,6 @@ object EventDbCodecs {
         s => if (isOneElemCollection(s)) w1(s.head) else rws.write(s),
         r1 orElse rws.read)
     }
-
-    def min2Set(implicit ev: UnivEq[A]): ReadWriter[Min2Set[A]] =
-      set.xmap(Min2Set.force(_))(_.whole)
 
     def vector: ReadWriter[Vector[A]] =
       ReadWriter.merge(SeqishR[A, Vector], SeqishW[A, Vector])
@@ -109,7 +102,7 @@ object EventDbCodecs {
       t => if (iso from t) jsNum1 else jsNum0,
       { case Js.Num(n) => iso to (n.toInt != 0) })
 
-  def addOptionWithNoneAs0[A](rw: ReadWriter[A]): ReadWriter[Option[A]] =
+  def addOptionWithNoneAs0[A](implicit rw: ReadWriter[A]): ReadWriter[Option[A]] =
     ReadWriter({
       case None    => jsNum0
       case Some(t) => rw write t
@@ -164,6 +157,28 @@ object EventDbCodecs {
 
   def pickleMap[K: ReadWriter: UnivEq, V: ReadWriter]: ReadWriter[Map[K, V]] =
     ReadWriter.merge(StdlibCodecs.All.MapR, StdlibCodecs.All.MapW)
+
+  private val jsStrL = Js.Str("L")
+  private val jsStrR = Js.Str("R")
+  def pickleDisj[A, B](implicit A: ReadWriter[A], B: ReadWriter[B]): ReadWriter[A \/ B] =
+    ReadWriter[A \/ B](
+      _.fold(a => Js.Obj("L" -> A.write(a)), b => Js.Obj("R" -> B.write(b))),
+      {
+        case Js.Obj((jsStrL, a)) => -\/(A.read(a))
+        case Js.Obj((jsStrR, b)) => \/-(B.read(b))
+      }
+    )
+
+  def pickleFix[F[_]: Functor](implicit rw: ReadWriter[F[Js.Value]]): ReadWriter[Fix[F]] = {
+    val algebra  : Algebra  [F, Js.Value] = rw.write
+    val coalgebra: Coalgebra[F, Js.Value] = rw.read
+    ReadWriter[Fix[F]](
+      Recursion.cata(algebra)(_),
+      { case j => Recursion.ana(coalgebra)(j) })
+  }
+
+  implicit val pickleJsValue: ReadWriter[Js.Value] =
+    ReadWriter[Js.Value](Identity.apply, { case j => j })
 
   implicit val pickleLive          = boolCase(Live)
   implicit val pickleImplRequired  = boolCase(ImplicationRequired)
@@ -532,47 +547,65 @@ object EventDbCodecs {
   } nev
 
   object ReqTableData {
-    import shipreq.webapp.base.filter.ValidFilter
+    import shipreq.webapp.base.filter._
+    import shipreq.webapp.base.filter.Filter._
+    import shipreq.webapp.base.filter.Filter.Implicits._
     import reqtable._
 
-    private class ForValidFilter {
-      import ValidFilter._
+    implicit val pickleValidFilter: ReadWriter[Filter.Valid] = {
+      import FilterAst._
+
+      implicit val pickleOptionChar: ReadWriter[Option[Char]] = addOptionWithNoneAs0
+
+      implicit val pickleNonEmptySetInt: ReadWriter[NonEmptySet[Int]] = implicitly[ReadWriter[Int]].nesNice
+
+      implicit val pickleNonEmptyVectorJs: ReadWriter[NonEmptyVector[Js.Value]] = pickleJsValue.nev
+
       implicit val pickleVF_Attr: ReadWriter[Attr] = pickleAdtOS {
         case Attr.AnyIssue => "i"
         case Attr.AnyTag   => "t"
       }
-      implicit val pickleVF_Min2Filters   : ReadWriter[Min2Set[ValidFilter]] = pickleValidFilter.min2Set
-      implicit val pickleVF_Presence      : ReadWriter[Presence            ] = caseClass1
-      implicit val pickleVF_Lack          : ReadWriter[Lack                ] = caseClass1
-      implicit val pickleVF_Reqs          : ReadWriter[Reqs                ] = caseClass1
-      implicit val pickleVF_ReqType       : ReadWriter[ReqType             ] = caseClass1
-      implicit val pickleVF_Tag           : ReadWriter[Tag                 ] = caseClass1
-      implicit val pickleVF_CustomIssue   : ReadWriter[CustomIssue         ] = caseClass1
-      implicit val pickleVF_Text          : ReadWriter[Text                ] = caseClass1
-      implicit val pickleVF_ImpliesAnyOf  : ReadWriter[ImpliesAnyOf        ] = caseClass1
-      implicit val pickleVF_ImpliedByAnyOf: ReadWriter[ImpliedByAnyOf      ] = caseClass1
-      implicit val pickleVF_AllOf         : ReadWriter[AllOf               ] = caseClass1
-      implicit val pickleVF_AnyOf         : ReadWriter[AnyOf               ] = caseClass1
-      implicit val pickleVF_Not           : ReadWriter[Not                 ] = caseClass1
-      implicit val pickleVF_TextPattern   : ReadWriter[TextPattern         ] = caseClass1
-      val pickler: ReadWriter[ValidFilter] = pickleAdtOS {
-        case _: AllOf          => "&"
-        case _: AnyOf          => "|"
-        case _: Not            => "!"
-        case _: CustomIssue    => "i"
-        case _: ImpliedByAnyOf => "<"
-        case _: ImpliesAnyOf   => ">"
-        case _: Lack           => "0"
-        case _: Presence       => "1"
-        case _: Reqs           => "r"
-        case _: ReqType        => "T"
-        case _: Tag            => "t"
-        case _: Text           => "x"
-        case _: TextPattern    => "p"
+
+      implicit def pickleIRSetS [A: ReadWriter]: ReadWriter[IntensionalReqSet.SomeOfType[A]        ] = caseClassAsArray('reqType, 'numbers)
+      implicit def pickleIRSetW [A: ReadWriter]: ReadWriter[IntensionalReqSet.WholeType [A]        ] = caseClass1
+      implicit def pickleIRSet  [A: ReadWriter]: ReadWriter[IntensionalReqSet           [A]        ] = pickleAdtOS {
+        case _: IntensionalReqSet.SomeOfType[A] => "s"
+        case _: IntensionalReqSet.WholeType [A] => "w"
       }
+
+      implicit val pickleValidHashTag       : ReadWriter[Valid.HashTag                          ] = pickleDisj
+      implicit val pickleValidReqSubset     : ReadWriter[Valid.ReqSubset                        ] = pickleIRSet[ReqTypeId]
+      implicit val pickleValidReqSet        : ReadWriter[Valid.ReqSet                           ] = pickleValidReqSubset.nev
+      implicit val pickleValidText          : ReadWriter[FilterAst.Text                         ] = caseClassAsArray('text, 'quoteChar)
+      implicit val pickleValidRegex         : ReadWriter[FilterAst.Regex                        ] = caseClass1
+      implicit val pickleValidPresence      : ReadWriter[FilterAst.Presence      [Valid.Attr]   ] = caseClass1
+      implicit val pickleValidLack          : ReadWriter[FilterAst.Lack          [Valid.Attr]   ] = caseClass1
+      implicit val pickleValidReqs          : ReadWriter[FilterAst.Reqs          [Valid.ReqSet] ] = caseClass1
+      implicit val pickleValidReqType       : ReadWriter[FilterAst.ReqType       [Valid.ReqType]] = caseClass1
+      implicit val pickleValidHashRef       : ReadWriter[FilterAst.HashRef       [Valid.HashTag]] = caseClass1
+      implicit val pickleValidImpliesAnyOf  : ReadWriter[FilterAst.ImpliesAnyOf  [Valid.ReqSet] ] = caseClass1
+      implicit val pickleValidImpliedByAnyOf: ReadWriter[FilterAst.ImpliedByAnyOf[Valid.ReqSet] ] = caseClass1
+      implicit val pickleValidAllOf         : ReadWriter[FilterAst.AllOf         [Js.Value]     ] = caseClass1
+      implicit val pickleValidAnyOf         : ReadWriter[FilterAst.AnyOf         [Js.Value]     ] = caseClass1
+      implicit val pickleValidNot           : ReadWriter[FilterAst.Not           [Js.Value]     ] = caseClass1
+      implicit val pickleValidF             : ReadWriter[ValidF                  [Js.Value]     ] = pickleAdtOS {
+        case _: Text                          => "x"
+        case _: Regex                         => "/"
+        case _: Presence      [Valid.Attr]    => "1"
+        case _: Lack          [Valid.Attr]    => "0"
+        case _: Reqs          [Valid.ReqSet]  => "r"
+        case _: ReqType       [Valid.ReqType] => "T"
+        case _: HashRef       [Valid.HashTag] => "#"
+        case _: ImpliesAnyOf  [Valid.ReqSet]  => ">"
+        case _: ImpliedByAnyOf[Valid.ReqSet]  => "<"
+        case _: AllOf         [Js.Value]      => "&"
+        case _: AnyOf         [Js.Value]      => "|"
+        case _: Not           [Js.Value]      => "!"
+      }
+      pickleFix[ValidF]
     }
-    implicit lazy val pickleValidFilter: ReadWriter[ValidFilter] = pickleLazily((new ForValidFilter).pickler)
-    implicit val pickleOptionValidFilter: ReadWriter[Option[ValidFilter]] = addOptionWithNoneAs0(pickleValidFilter)
+
+    implicit val pickleOptionValidFilter: ReadWriter[Option[Filter.Valid]] = addOptionWithNoneAs0(pickleValidFilter)
 
     implicit val pickleColumnCustomField : ReadWriter[Column.CustomField ] = caseClass1
     implicit val pickleColumnImplications: ReadWriter[Column.Implications] = caseClass1

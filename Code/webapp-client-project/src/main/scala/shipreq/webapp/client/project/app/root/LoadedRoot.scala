@@ -9,7 +9,7 @@ import shipreq.base.util.{Allow, ErrorMsg, Intersection}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{FilterDead, ReqId}
 import shipreq.webapp.base.event.VerifiedEvent
-import shipreq.webapp.base.filter.PotentialFilter
+import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol.{ProjectSpaProtocols, UpdateContentCmd}
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.base.feature._
@@ -139,16 +139,16 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
     val reqDetailSetState: ReqDetail.State ~=> Callback =
       Reusable.fn.state($ zoomStateL State.reqDetail).set
 
-    def setReqTableView(fd: FilterDead, pf: PotentialFilter): Callback =
+    def setReqTableView(fd: FilterDead, f: Filter.Valid): Callback =
       pxProject.toCallback.flatMap(project =>
         $.modState(s => s.copy(
           filterDead = fd,
-          reqTable = s.reqTable.setFilter(pf, PotentialFilter.validator(project)))))
+          reqTable = s.reqTable.setFilter(f, project.config))))
 
     val usageShow =
-      Usage.Show((fd, pf) =>
+      Usage.Show((filterDead, filter) =>
         routerCtl
-          .onSet(setReqTableView(fd, pf()) >> _)
+          .onSet(setReqTableView(filterDead, filter()) >> _)
           .link(Page.ReqTable))
 
     lazy val projectNameAF =

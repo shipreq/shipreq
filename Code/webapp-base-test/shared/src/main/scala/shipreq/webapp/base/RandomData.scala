@@ -2,6 +2,7 @@ package shipreq.webapp.base
 
 import japgolly.microlibs.adt_macros.AdtMacros._
 import japgolly.microlibs.nonempty._
+import japgolly.microlibs.recursion._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import java.time.Instant
@@ -12,7 +13,7 @@ import monocle.function.Field1.first
 import monocle.function.Field2.second
 import scala.annotation.tailrec
 import scala.collection.immutable.ListSet
-import scalaz.Need
+import scalaz.{Need, -\/, \/-}
 import scalaz.std.list._
 import scalaz.std.option.{none => _, _}
 import scalaz.std.set._
@@ -24,11 +25,11 @@ import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.user._
 import shipreq.webapp.base.event.ApplyEvent.LogicVer
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Grammar, GrammarSpec, Text}
 import shipreq.webapp.base.util.{GenericData, PreProcessor}
+import shipreq.webapp.base.user._
 import DataImplicits._
 import Field.ApplicableReqTypes
 import MTrie.Ops
@@ -1460,6 +1461,9 @@ object RandomData {
   // ===================================================================================================================
   object filter {
     import shipreq.webapp.base.filter._
+    import shipreq.webapp.base.filter.Filter._
+    import shipreq.webapp.base.filter.Filter.Implicits._
+    import shipreq.webapp.base.filter.IntensionalReqSet._
 
     val quotedText =
       for {
@@ -1471,7 +1475,7 @@ object RandomData {
           case '\n' | '\r' => ' '
           case x => x
         }
-        PotentialFilter.QuotedText(s2, q)
+        FilterAst.Text(s2, Some(q))
       }
 
     private val illegalSimpleTextStart = "/-#(){}'`\"".toCharArray.toSet
@@ -1481,7 +1485,7 @@ object RandomData {
         "_"
       else if (s.headOption exists illegalSimpleTextStart.contains)
         "!" + s
-      else if (DataValidators.reqType.mnemonic.stateless.validity(s) is Valid)
+      else if (DataValidators.reqType.mnemonic.stateless.validity(s) is shipreq.base.util.Valid)
         s + "?"
       else
         s
@@ -1500,159 +1504,155 @@ object RandomData {
 
     val simpleText =
       charPred(FilterParser.simpleTextChar).string1
-        .map(s => PotentialFilter.SimpleText(fixSimpleText(s)))
+        .map(s => FilterAst.Text(fixSimpleText(s), None))
 
     val regex =
-      unicodeString1.map(s => PotentialFilter.Regex(fixRegex(s)))
+      unicodeString1.map(s => FilterAst.Regex(fixRegex(s)))
+
+    def fixRoot[A, B, C, D](f: FilterAst.Fixed[A, B, C, D]): FilterAst.Fixed[A, B, C, D] =
+      f.unfix match {
+        case FilterAst.AllOf(a) if a.tail.isEmpty => a.head
+        case _ => f
+      }
 
     // -----------------------------------------------------------------------------------------------------------------
     object potential {
-      import PotentialFilter._
 
-      val wholeType =
-        reqTypeMnemonic map WholeType
+      val wholeType: Gen[WholeType[Potential.ReqType]] =
+        reqTypeMnemonic.map(WholeType(_))
 
       val numberRange: Gen[NonEmptySet[Int]] =
         Gen.chooseInt(1,10000).nes(0 to (20 `JVM|JS` 6), implicitly)
 
-      val someOfType =
-        Gen.apply2(SomeOfType)(reqTypeMnemonic, numberRange)
+      val someOfType: Gen[SomeOfType[Potential.ReqType]] =
+        for {
+          rt <- reqTypeMnemonic
+          ns <- numberRange
+        } yield SomeOfType(rt, ns)
 
-      val reqsSpec: Gen[ReqsSpec] =
+      val reqsSpec: Gen[Potential.ReqSubset] =
         Gen.chooseGen(wholeType, someOfType)
 
-      val reqSpecs: Gen[ReqSpecs] =
-        reqsSpec.nev(0 to 8)
+      val reqSpecs: Gen[Potential.ReqSet] =
+        reqsSpec.nev(0 to 5)
 
       val attr: Gen[String] =
         charPred(FilterParser.attrChar).string1
 
-      val reqs       = Gen.apply2(Reqs)(reqTypeMnemonic, numberRange)
-      val reqType    = reqTypeMnemonic map ReqType
-      val hashRef    = hashRefKey map HashRef
-      val implies    = reqSpecs map Implies
-      val impliedBy  = reqSpecs map ImpliedBy
-      val presence   = attr map Presence
-      val lack       = attr map Lack
+      val reqType    = reqTypeMnemonic.map(FilterAst.ReqType(_))
+      val hashRef    = hashRefKey     .map(FilterAst.HashRef(_))
+      val reqs       = someOfType     .map(s => FilterAst.Reqs(NonEmptyVector.one(s)))
+      val implies    = reqSpecs       .map(FilterAst.ImpliesAnyOf(_))
+      val impliedBy  = reqSpecs       .map(FilterAst.ImpliedByAnyOf(_))
+      val presence   = attr           .map(FilterAst.Presence(_))
+      val lack       = attr           .map(FilterAst.Lack(_))
 
-      val flatGens: NonEmptyVector[Gen[PotentialFilter]] =
+      private val flatGens: NonEmptyVector[Gen[PotentialF[Nothing]]] =
         NonEmptyVector(quotedText, simpleText, regex, reqs, reqType, hashRef, implies, impliedBy, presence, lack)
 
-      val flatGen: Gen[PotentialFilter] =
+      private val flatGen: Gen[PotentialF[Nothing]] =
         Gen.chooseGenNE(flatGens)
 
-      val fixRoot: EndoFn[PotentialFilter] = {
-        case AllOf(n) if n.tail.isEmpty => n.head
-        case s => s
-      }
-
-      private def expr(depth: Int): Gen[PotentialFilter] =
-        if (depth <= 1)
-          flatGen
-        else {
-          val next   = expr(depth - 1)
-          val clause = next.nev(0 to (8 `JVM|JS` 3))
-
-          val allOf: Gen[PotentialFilter] =
-            clause.map(c => if (c.tail.isEmpty) c.head else AllOf(c))
-
-          val anyOf: Gen[PotentialFilter] =
-            clause map AnyOf
-
-          val not: Gen[PotentialFilter] =
-            next map {
-              case n: Not => n
-              case e      => Not(e)
-            }
-
-          Gen.chooseGenNE(flatGens :+ allOf :+ anyOf :+ not)
+      private val coalgebra: CoalgebraM[Gen, PotentialF, Int] =
+        remainingDepth => {
+          if (remainingDepth <= 0)
+            flatGen
+          else {
+            val next = remainingDepth - 1
+            val genNEV = Gen.pure(next).nev(1 to (5 `JVM|JS` 3))
+            var gens: NonEmptyVector[Gen[PotentialF[Int]]] = flatGens
+            gens :+= Gen.pure(FilterAst.Not(next))
+            gens :+= genNEV.map(FilterAst.AllOf(_))
+            gens :+= genNEV.map(FilterAst.AnyOf(_))
+            Gen.chooseGenNE(flatGens)
+          }
         }
 
-      val gen = expr(4 `JVM|JS` 3)
+      val gen: Gen[Potential] =
+        Recursion.anaM(coalgebra)(4 `JVM|JS` 3).map(fixRoot)
     }
 
     // -----------------------------------------------------------------------------------------------------------------
     object valid {
-      import ValidFilter.{Text => FText, _}
+      import FilterAst.Attr
 
-      def reqIds(id: Gen[ReqId]): Gen[ReqIds] =
-        id.set
+      def wholeType(g: Gen[Valid.ReqType]): Gen[WholeType[Valid.ReqType]] =
+        g.map(WholeType(_))
 
-      val attr     = Gen.choose[Attr](Attr.AnyIssue, Attr.AnyTag)
-      val presence = attr map Presence
-      val lack     = attr map Lack
+      def numberRange: Gen[NonEmptySet[Int]] =
+        potential.numberRange
 
-      val text: Gen[FText] =
-        Gen.chooseGen(
-          simpleText.map(t => FText(t.text)),
-          quotedText.map(t => FText(t.text)))
+      def someOfType(g: Gen[Valid.ReqType]): Gen[SomeOfType[Valid.ReqType]] =
+        for {
+          rt <- g
+          ns <- numberRange
+        } yield SomeOfType(rt, ns)
 
-      val textPattern: Gen[Option[TextPattern]] =
-        regex.map(r => ValidFilter.textPattern(r.text).toOption)
+      def reqsSpec(g: Gen[Valid.ReqType]): Gen[Valid.ReqSubset] =
+        Gen.chooseGen(wholeType(g), someOfType(g))
 
-      val textPatternish: Gen[ValidFilter] =
-        textPattern.flatMap(_.fold(text: Gen[ValidFilter])(Gen.pure))
+      def reqSpecs(g: Gen[Valid.ReqType]): Gen[Valid.ReqSet] =
+        reqsSpec(g).nev(0 to 5)
 
-      def reqs       (gr: Gen[ReqIds])           : Gen[Reqs]           = gr map Reqs
-      def reqType    (id: Gen[ReqTypeId])        : Gen[ReqType]        = id map ReqType
-      def tag        (id: Gen[ApplicableTagId])  : Gen[Tag]            = id map Tag
-      def customIssue(id: Gen[CustomIssueTypeId]): Gen[CustomIssue]    = id map CustomIssue
-      def implies    (gr: Gen[ReqIds])           : Gen[ImpliesAnyOf]   = gr map ImpliesAnyOf
-      def impliedBy  (gr: Gen[ReqIds])           : Gen[ImpliedByAnyOf] = gr map ImpliedByAnyOf
+      val attr: Gen[Attr] =
+        Gen.choose[Attr](Attr.AnyIssue, Attr.AnyTag)
 
-      def flatGens(gr: Option[Gen[ReqId]],
-                   gy: Option[Gen[ReqTypeId]],
+      val presence = attr.map(FilterAst.Presence(_))
+      val lack = attr.map(FilterAst.Lack(_))
+
+      def reqs       (g: Gen[Valid.ReqType])    : Gen[ValidF[Nothing]] = someOfType(g).map(s => FilterAst.Reqs(NonEmptyVector.one(s)))
+      def implies    (g: Gen[Valid.ReqSet])     : Gen[ValidF[Nothing]] = g.map(FilterAst.ImpliesAnyOf(_))
+      def impliedBy  (g: Gen[Valid.ReqSet])     : Gen[ValidF[Nothing]] = g.map(FilterAst.ImpliedByAnyOf(_))
+      def reqType    (g: Gen[Valid.ReqType])    : Gen[ValidF[Nothing]] = g.map(FilterAst.ReqType(_))
+      def tag        (g: Gen[ApplicableTagId])  : Gen[ValidF[Nothing]] = g.map(i => FilterAst.HashRef(\/-(i)))
+      def customIssue(g: Gen[CustomIssueTypeId]): Gen[ValidF[Nothing]] = g.map(i => FilterAst.HashRef(-\/(i)))
+
+      type FlatGens = NonEmptyVector[Gen[ValidF[Nothing]]]
+
+      def flatGens(gy: Option[Gen[ReqTypeId]],
                    gt: Option[Gen[ApplicableTagId]],
-                   gi: Option[Gen[CustomIssueTypeId]]): NonEmptyVector[Gen[ValidFilter]] = {
-        val ogr = gr.map(reqIds)
-        NonEmptyVector[Gen[ValidFilter]](text, textPatternish, presence, lack) ++
+                   gi: Option[Gen[CustomIssueTypeId]]): FlatGens = {
+        val greqs = gy.map(reqSpecs)
+        NonEmptyVector[Gen[ValidF[Nothing]]](quotedText, simpleText, regex, presence, lack) ++
           gy.map(reqType) ++
           gt.map(tag) ++
           gi.map(customIssue) ++
-          ogr.map(reqs) ++
-          ogr.map(implies) ++
-          ogr.map(impliedBy)
+          gy.map(reqs) ++
+          greqs.map(implies) ++
+          greqs.map(impliedBy)
       }
 
-      private def expr(gens: NonEmptyVector[Gen[ValidFilter]], depth: Int): Gen[ValidFilter] =
-        if (depth <= 1)
-          Gen.chooseGenNE(gens)
-        else {
-          val next   = expr(gens, depth - 1)
-          val clause = next.nes(0 to (8 `JVM|JS` 3), implicitly)
+      private def coalgebra(flatGens: FlatGens): CoalgebraM[Gen, ValidF, Int] = {
+        val flatGen = Gen.chooseGenNE(flatGens)
+        remainingDepth =>
+          if (remainingDepth <= 0)
+            flatGen
+          else {
+            val next = remainingDepth - 1
+            val genNEV = Gen.pure(next).nev(1 to (5 `JVM|JS` 3))
+            var gens: NonEmptyVector[Gen[ValidF[Int]]] = flatGens
+            gens :+= Gen.pure(FilterAst.Not(next))
+            gens :+= genNEV.map(FilterAst.AllOf(_))
+            gens :+= genNEV.map(FilterAst.AnyOf(_))
+            Gen.chooseGenNE(flatGens)
+          }
+      }
 
-          val allOf: Gen[ValidFilter] =
-            clause.map(Min2Set.maybe1(_)(identity)(AllOf))
+      private def gen(f: FlatGens): Gen[Valid] =
+        Recursion.anaM(coalgebra(f))(4 `JVM|JS` 3).map(fixRoot)
 
-          val anyOf: Gen[ValidFilter] =
-            clause.map(Min2Set.maybe1(_)(identity)(AnyOf))
-
-          val not: Gen[ValidFilter] =
-            next map {
-              case n: Not => n
-              case e      => Not(e)
-            }
-
-          Gen.chooseGenNE(gens :+ allOf :+ anyOf :+ not)
-        }
-
-      private def gen(flatGens: NonEmptyVector[Gen[ValidFilter]]): Gen[ValidFilter] =
-        expr(flatGens, 4 `JVM|JS` 3)
-
-      def forProject(p: Project): Gen[ValidFilter] = {
-        val gr: Option[Gen[ReqId]]             = Gen tryGenChoose p.reqs.idIterator.toVector
+      def forProject(p: Project): Gen[Valid] = {
         val gy: Option[Gen[ReqTypeId]]         = Gen tryGenChoose p.config.reqTypes.all.whole.map(_.reqTypeId)
         val gt: Option[Gen[ApplicableTagId]]   = Gen tryGenChoose p.config.atagIterator.map(_.id)
         val gi: Option[Gen[CustomIssueTypeId]] = Gen tryGenChoose p.config.customIssueTypes.keys.toVector
-        gen(flatGens(gr, gy, gt, gi))
+        gen(flatGens(gy, gt, gi))
       }
 
-      lazy val arbitrary: Gen[ValidFilter] = {
-        val gr: Option[Gen[ReqId]]             = Some(reqId)
+      lazy val arbitrary: Gen[Valid] = {
         val gy: Option[Gen[ReqTypeId]]         = Some(reqTypeId)
         val gt: Option[Gen[ApplicableTagId]]   = Some(applicableTagId)
         val gi: Option[Gen[CustomIssueTypeId]] = Some(customIssueTypeId)
-        gen(flatGens(gr, gy, gt, gi))
+        gen(flatGens(gy, gt, gi))
       }
     }
   }

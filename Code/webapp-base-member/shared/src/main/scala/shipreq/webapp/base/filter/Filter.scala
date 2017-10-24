@@ -1,0 +1,135 @@
+package shipreq.webapp.base.filter
+
+import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.recursion._
+import scalaz.{-\/, Traverse, \/, \/-}
+import shipreq.base.util.univeq._
+import shipreq.webapp.base.data
+import shipreq.webapp.base.text.{PlainText, TextSearch}
+
+object Filter {
+  import Implicits._
+
+  type Validator = AlgebraM[String \/ ?, PotentialF, Valid]
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  type Potential = Fix[PotentialF]
+
+  type PotentialF[+F] = FilterAst[
+    Potential.Attr,
+    Potential.HashTag,
+    Potential.ReqSet,
+    Potential.ReqType,
+    F]
+
+  object Potential extends FilterAst.Dsl {
+    type Attr      = String
+    type HashTag   = data.HashRefKey
+    type ReqSubset = IntensionalReqSet[data.ReqType.Mnemonic]
+    type ReqSet    = NonEmptyVector[ReqSubset]
+    type ReqType   = data.ReqType.Mnemonic
+
+    def reqSet(i1: ReqSubset, in: ReqSubset*): ReqSet =
+      NonEmptyVector(i1, in.toVector)
+
+    def validate(pf: Potential, validator: Validator): String \/ Filter.Valid =
+      Recursion.cataM[String \/ ?, PotentialF, Valid](validator)(pf)
+
+    def toText(f: Potential): String =
+      AtomOrComposite.cata(FilterAlgebra.unparse)(f)
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  type Valid = Fix[ValidF]
+
+  type ValidF[+F] = FilterAst[
+    Valid.Attr,
+    Valid.HashTag,
+    Valid.ReqSet,
+    Valid.ReqType,
+    F]
+
+  object Valid extends FilterAst.Dsl {
+    type Attr      = FilterAst.Attr
+    type HashTag   = data.CustomIssueTypeId \/ data.ApplicableTagId
+    type ReqSubset = IntensionalReqSet[data.ReqTypeId]
+    type ReqSet    = NonEmptyVector[ReqSubset]
+    type ReqType   = data.ReqTypeId
+
+    def reqSet(i1: ReqSubset, in: ReqSubset*): ReqSet =
+      NonEmptyVector(i1, in.toVector)
+
+    def tag  (id: data.ApplicableTagId)  : Valid = apply(FilterAst.HashRef(\/-(id)))
+    def issue(id: data.CustomIssueTypeId): Valid = apply(FilterAst.HashRef(-\/(id)))
+
+    def toText(cfg: data.ProjectConfig, f: Valid): String =
+      Potential.toText(
+        Recursion.cata(FilterAlgebra.unvalidate(cfg))(f))
+
+    type Compiler = Valid => CompiledFilter
+
+    def compiler(p          : data.Project,
+                 projectText: PlainText.ForProject.NoCtx,
+                 textSearch : TextSearch,
+                 issueLookup: data.DataLogic.IssueLookup,
+                 tagLookup  : data.DataLogic.TagLookup): Compiler = {
+      val extensional = FilterAlgebra.makeExtensional(p)
+      val compile = FilterAlgebra.compile(p, projectText, textSearch, issueLookup, tagLookup)
+      v => Recursion.cata(compile)(Recursion.cata(extensional)(v))
+    }
+   }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  type Extensional = Fix[ExtensionalF]
+
+  type ExtensionalF[+F] = FilterAst[
+    Extensional.Attr,
+    Extensional.HashTag,
+    Extensional.ReqSet,
+    Extensional.ReqType,
+    F]
+
+  object Extensional extends FilterAst.Dsl {
+    type Attr    = Valid.Attr
+    type HashTag = Valid.HashTag
+    type ReqSet  = Set[data.ReqId]
+    type ReqType = Valid.ReqType
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  object Implicits {
+
+    implicit val traverseFilterPotential: Traverse[PotentialF] =
+      FilterAst.traverse
+
+    implicit val traverseFilterValid: Traverse[ValidF] =
+      FilterAst.traverse
+
+    implicit val traverseFilterExtensional: Traverse[ExtensionalF] =
+      FilterAst.traverse
+
+    implicit val univEqFilterPotential: UnivEq[Potential] = {
+      import Potential._
+      FilterAst.univEqFix[Attr, HashTag, ReqSet, ReqType]
+    }
+
+    implicit val univEqFilterValid: UnivEq[Valid] = {
+      import Valid._
+      FilterAst.univEqFix[Attr, HashTag, ReqSet, ReqType]
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  def parseAndValidate(input: String, validator: Validator): (FilterParser.Failure \/ String) \/ Option[Filter.Valid] =
+    FilterParser.parse(input) match {
+      case \/-(Some(f)) => Potential.validate(f, validator).bimap(\/-(_), Some(_))
+      case \/-(None)    => \/-(None)
+      case f@ -\/(_)    => -\/(f)
+    }
+
+}

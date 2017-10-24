@@ -1,20 +1,22 @@
 package shipreq.webapp.base.data
 
 import japgolly.microlibs.nonempty._
+import japgolly.microlibs.recursion._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop._
 import scala.annotation.tailrec
 import scala.collection.GenTraversableOnce
 import scala.collection.mutable
 import scala.reflect.ClassTag
-import scalaz.{Foldable, Monoid, \/-}
+import scalaz.{-\/, Foldable, Monoid, \/-}
 import scalaz.syntax.equal._
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
 import scalaz.std.vector.vectorInstance
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.filter.ValidFilter
+import shipreq.webapp.base.filter._
+import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.text.{Atom, Text}
 import shipreq.webapp.base.WebappConfig
 import DataImplicits._
@@ -554,12 +556,74 @@ object DataProp {
   object project {
     type P = Project
 
-    case class Refs(fieldIds      : Set[CustomFieldId],
-                    reqIds        : Set[ReqId],
-                    reqCodeIds    : Set[ReqCodeId],
-                    useCaseStepIds: Set[UseCaseStepId],
-                    reqTypeIds    : Set[ReqTypeId],
-                    tagIds        : Set[TagId])
+    final case class Refs(fieldIds      : Set[CustomFieldId],
+                          issueIds      : Set[CustomIssueTypeId],
+                          reqIds        : Set[ReqId],
+                          reqCodeIds    : Set[ReqCodeId],
+                          useCaseStepIds: Set[UseCaseStepId],
+                          reqTypeIds    : Set[ReqTypeId],
+                          tagIds        : Set[TagId]) {
+      def addCustomFieldId    (id : CustomFieldId    ): Refs = copy(fieldIds       = fieldIds       + id)
+      def addCustomIssueTypeId(id : CustomIssueTypeId): Refs = copy(issueIds       = issueIds       + id)
+      def addReqId            (id : ReqId            ): Refs = copy(reqIds         = reqIds         + id)
+      def addReqCodeId        (id : ReqCodeId        ): Refs = copy(reqCodeIds     = reqCodeIds     + id)
+      def addUseCaseStepId    (id : UseCaseStepId    ): Refs = copy(useCaseStepIds = useCaseStepIds + id)
+      def addReqTypeId        (id : ReqTypeId        ): Refs = copy(reqTypeIds     = reqTypeIds     + id)
+      def addTagId            (id : TagId            ): Refs = copy(tagIds         = tagIds         + id)
+      def ++(o: Refs): Refs =
+        Refs(
+          fieldIds       = fieldIds       ++ o.fieldIds      ,
+          issueIds       = issueIds       ++ o.issueIds      ,
+          reqIds         = reqIds         ++ o.reqIds        ,
+          reqCodeIds     = reqCodeIds     ++ o.reqCodeIds    ,
+          useCaseStepIds = useCaseStepIds ++ o.useCaseStepIds,
+          reqTypeIds     = reqTypeIds     ++ o.reqTypeIds    ,
+          tagIds         = tagIds         ++ o.tagIds        )
+    }
+
+    object Refs {
+      val empty: Refs =
+        Refs(UnivEq.emptySet, UnivEq.emptySet, UnivEq.emptySet, UnivEq.emptySet, UnivEq.emptySet, UnivEq.emptySet, UnivEq.emptySet)
+
+      import reqtable._
+
+      def savedViewFilters(svs: SavedViews.Optional): Refs =
+        svs.fold(empty)(savedViewFiltersNE)
+
+      def savedViewFiltersNE(svs: SavedViews.NonEmpty): Refs =
+        svs.iterator.foldLeft(empty)(_ ++ savedViewFilter(_))
+
+      def savedViewFilter(sv: SavedView): Refs =
+        sv.filter.fold(empty)(Recursion.cata(validFilter)(_))
+
+      private def validFilterReqSetRefs(reqs: Filter.Valid.ReqSet): Refs =
+        Refs.empty.copy(reqTypeIds =
+          reqs.iterator.map {
+            case IntensionalReqSet.WholeType(r)     => r
+            case IntensionalReqSet.SomeOfType(r, _) => r
+          }.toSet)
+
+      private val validFilter: Algebra[Filter.ValidF, Refs] = {
+        case FilterAst.Reqs          (reqs)          => validFilterReqSetRefs(reqs)
+        case FilterAst.ImpliesAnyOf  (reqs)          => validFilterReqSetRefs(reqs)
+        case FilterAst.ImpliedByAnyOf(reqs)          => validFilterReqSetRefs(reqs)
+        case FilterAst.ReqType       (rt)            => Refs.empty addReqTypeId rt
+        case FilterAst.HashRef       (-\/(issue))    => Refs.empty addCustomIssueTypeId issue
+        case FilterAst.HashRef       (\/-(tag))      => Refs.empty addTagId tag
+        case FilterAst.AllOf         (fs)            => fs.reduce(_ ++ _)
+        case FilterAst.AnyOf         (fs)            => fs.reduce(_ ++ _)
+        case FilterAst.Not           (f)             => f
+        case _: FilterAst.Text
+           | _: FilterAst.Regex
+           | _: FilterAst.Lack[Filter.Valid.Attr]
+           | _: FilterAst.Presence[Filter.Valid.Attr] => Refs.empty
+      }
+
+      val reqtableColumnField: reqtable.Column => List[CustomFieldId] = {
+        case x: reqtable.Column.CustomField => x.id :: Nil
+        case _: reqtable.Column.BuiltIn     => Nil
+      }
+    }
 
     def atoms: Prop[P] =
       Prop.eval[(String, Iterator[Text.AnyOptional])](t => text.anyTextI(t._2).rename(t._1))
@@ -584,18 +648,20 @@ object DataProp {
 
       def mkRefs(p: Project): Refs = Refs(
         p.config.fields.customFields.keySet,
+        p.config.customIssueTypes.keySet,
         p.reqs.reqIterator.map(_.id).toSet,
         p.reqCodes.idSet,
         p.reqs.useCases.stepIterator.map(_.id).toSet,
         p.config.reqTypes.all.whole.map(_.reqTypeId)(collection.breakOut),
         p.config.tags.keySet)
 
-      def whitelist[A](refs: TR => Set[A])(name: String, test: P => TraversableOnce[A]) =
+      def whitelist[A](refs: TR => Set[A])(name: String, test: P => TraversableOnce[A]): Prop[TR] =
         // Two steps here results in better failure messages
         Prop.whitelist[(P, Set[A])](name + " resolve")(_._2, _._1 |> test)
           .contramap[TR](t => t put2 refs(t))
 
       def validFieldIds   = whitelist(_._2.fieldIds) _
+      def validIssueIds   = whitelist(_._2.issueIds) _
       def validReqIds     = whitelist(_._2.reqIds) _
       def validUCStepIds  = whitelist(_._2.useCaseStepIds) _
       def validReqCodeIds = whitelist(_._2.reqCodeIds) _
@@ -603,13 +669,17 @@ object DataProp {
       def validTagIds     = whitelist(_._2.tagIds) _
       def validIssueTypes = whitelist(_._1.config.customIssueTypes.keySet) _
 
-      /** Saved View Filter leaves */
-      def svf[A](f: ValidFilter.LeafRefs.type => (ValidFilter.Leaf => GenTraversableOnce[A])): Project => Iterator[A] =
-        _.savedViewLeaves.iterator.flatMap(f(ValidFilter.LeafRefs))
-
-      val columnField: reqtable.Column => List[CustomFieldId] = {
-        case x: reqtable.Column.CustomField => x.id :: Nil
-        case _: reqtable.Column.BuiltIn     => Nil
+      def fullRefCmp[A](name: String, refs: P => Refs): Prop[TR] = {
+        type X = (Refs, TR)
+        val px = (
+          Prop.whitelist[X](name + ": fieldIds resolve")      (_._2._2.fieldIds      , _._1.fieldIds)       &
+          Prop.whitelist[X](name + ": issueIds resolve")      (_._2._2.issueIds      , _._1.issueIds)       &
+          Prop.whitelist[X](name + ": reqIds resolve")        (_._2._2.reqIds        , _._1.reqIds)         &
+          Prop.whitelist[X](name + ": reqCodeIds resolve")    (_._2._2.reqCodeIds    , _._1.reqCodeIds)     &
+          Prop.whitelist[X](name + ": useCaseStepIds resolve")(_._2._2.useCaseStepIds, _._1.useCaseStepIds) &
+          Prop.whitelist[X](name + ": reqTypeIds resolve")    (_._2._2.reqTypeIds    , _._1.reqTypeIds)     &
+          Prop.whitelist[X](name + ": tagIds resolve")        (_._2._2.tagIds        , _._1.tagIds)         )
+        px.contramap[TR](tr => (refs(tr._1) , tr))
       }
 
       ( validReqTypeIds("Pubid keys",                 _.reqs.pubids.value.m.keys)
@@ -627,12 +697,9 @@ object DataProp {
       ∧ validIssueTypes("Atoms: Issues",              _.atomScan.issues.all.all.map(_.typ))
       ∧ validReqIds    ("DeletionReason reqIds",      _.deletionReasons.reqApplication.keys)
       ∧ validUCStepIds ("UseCase step flow",          _.reqs.useCases.stepFlow.memberIterator)
-      ∧ validIssueTypes("SavedViews: Issues",         svf(_.issues))
-      ∧ validReqIds    ("SavedViews: Reqs",           svf(_.reqs))
-      ∧ validReqTypeIds("SavedViews: ReqTypes",       svf(_.reqTypes))
-      ∧ validTagIds    ("SavedViews: Tags",           svf(_.tags))
-      ∧ validFieldIds  ("SavedViews: Columns",        _.reqtableViewIterator.flatMap(_.columns.whole).flatMap(columnField))
-      ∧ validFieldIds  ("SavedViews: Sort Columns",   _.reqtableViewIterator.flatMap(_.sortCriteria.all.whole).map(_.column).flatMap(columnField))
+      ∧ fullRefCmp     ("SavedView filters",          p => Refs.savedViewFilters(p.reqtableViews))
+      ∧ validFieldIds  ("SavedViews: Columns",        _.reqtableViewIterator.flatMap(_.columns.whole).flatMap(Refs.reqtableColumnField))
+      ∧ validFieldIds  ("SavedViews: Sort Columns",   _.reqtableViewIterator.flatMap(_.sortCriteria.all.whole).map(_.column).flatMap(Refs.reqtableColumnField))
 
       ).rename("Cross-constituent refs").contramap[P](_ mapStrengthR mkRefs)
     }

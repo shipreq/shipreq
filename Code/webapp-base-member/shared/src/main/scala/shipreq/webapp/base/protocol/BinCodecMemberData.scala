@@ -1,11 +1,12 @@
 package shipreq.webapp.base.protocol
 
 import boopickle._
-import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.univeq.UnivEq
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.filter.ValidFilter
+import shipreq.webapp.base.filter.{Filter, FilterAst, IntensionalReqSet}
+import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.text.{AtomTC, ProjectText}
 import DataImplicits._
 import BinCodecGeneric._
@@ -212,26 +213,31 @@ object BinCodecMemberData {
   }
   import ReqTableDataPicklers.pickleSavedViews
 
-  private class BinCodecValidFilter {
-    import ValidFilter._
-    implicit val pickleVF_Min2Filters   : Pickler[Min2Set[ValidFilter]] = pickleMin2Set
-    implicit val pickleVF_Attr          : Pickler[Attr                ] = derivePickler
-    implicit val pickleVF_Presence      : Pickler[Presence            ] = pickleCaseClass
-    implicit val pickleVF_Lack          : Pickler[Lack                ] = pickleCaseClass
-    implicit val pickleVF_Reqs          : Pickler[Reqs                ] = pickleCaseClass
-    implicit val pickleVF_ReqType       : Pickler[ReqType             ] = pickleCaseClass
-    implicit val pickleVF_Tag           : Pickler[Tag                 ] = pickleCaseClass
-    implicit val pickleVF_CustomIssue   : Pickler[CustomIssue         ] = pickleCaseClass
-    implicit val pickleVF_Text          : Pickler[Text                ] = pickleCaseClass
-    implicit val pickleVF_ImpliesAnyOf  : Pickler[ImpliesAnyOf        ] = pickleCaseClass
-    implicit val pickleVF_ImpliedByAnyOf: Pickler[ImpliedByAnyOf      ] = pickleCaseClass
-    implicit val pickleVF_AllOf         : Pickler[AllOf               ] = pickleCaseClass
-    implicit val pickleVF_AnyOf         : Pickler[AnyOf               ] = pickleCaseClass
-    implicit val pickleVF_Not           : Pickler[Not                 ] = pickleCaseClass
-    implicit val pickleVF_TextPattern   : Pickler[TextPattern         ] = pickleCaseClass
-             val pickler                : Pickler[ValidFilter         ] = pickleADT
+  implicit val pickleValidFilter: Pickler[Filter.Valid] = {
+    import Filter._
+    implicit val pickleNonEmptyVectorUnit : Pickler[NonEmptyVector[Unit]                   ] = implicitly[Pickler[Int]].xmap(NonEmptyVector force Vector.fill(_)(()))(_.length)
+    implicit val pickleNonEmptySetInt     : Pickler[NonEmptySet[Int]                       ] = pickleNES
+    implicit def pickleIRSetS [A: Pickler]: Pickler[IntensionalReqSet.SomeOfType[A]        ] = pickleCaseClass
+    implicit def pickleIRSetW [A: Pickler]: Pickler[IntensionalReqSet.WholeType [A]        ] = pickleCaseClass
+    implicit def pickleIRSet  [A: Pickler]: Pickler[IntensionalReqSet           [A]        ] = pickleADT
+    implicit val pickleValidReqSubset     : Pickler[Valid.ReqSubset                        ] = pickleADT
+    implicit val pickleValidReqSet        : Pickler[Valid.ReqSet                           ] = pickleNEV
+    implicit val pickleValidAttr          : Pickler[FilterAst.Attr                         ] = derivePickler
+    implicit val pickleValidText          : Pickler[FilterAst.Text                         ] = pickleCaseClass
+    implicit val pickleValidRegex         : Pickler[FilterAst.Regex                        ] = pickleCaseClass
+    implicit val pickleValidPresence      : Pickler[FilterAst.Presence      [Valid.Attr]   ] = pickleCaseClass
+    implicit val pickleValidLack          : Pickler[FilterAst.Lack          [Valid.Attr]   ] = pickleCaseClass
+    implicit val pickleValidReqs          : Pickler[FilterAst.Reqs          [Valid.ReqSet] ] = pickleCaseClass
+    implicit val pickleValidReqType       : Pickler[FilterAst.ReqType       [Valid.ReqType]] = pickleCaseClass
+    implicit val pickleValidHashRef       : Pickler[FilterAst.HashRef       [Valid.HashTag]] = pickleCaseClass
+    implicit val pickleValidImpliesAnyOf  : Pickler[FilterAst.ImpliesAnyOf  [Valid.ReqSet] ] = pickleCaseClass
+    implicit val pickleValidImpliedByAnyOf: Pickler[FilterAst.ImpliedByAnyOf[Valid.ReqSet] ] = pickleCaseClass
+    implicit val pickleValidAllOf         : Pickler[FilterAst.AllOf         [Unit]         ] = pickleCaseClass
+    implicit val pickleValidAnyOf         : Pickler[FilterAst.AnyOf         [Unit]         ] = pickleCaseClass
+    implicit val pickleValidNot           : Pickler[FilterAst.Not           [Unit]         ] = pickleCaseClass
+    implicit val pickleValidF             : Pickler[ValidF                  [Unit]         ] = pickleADT
+    pickleFix[ValidF]
   }
-  implicit lazy val pickleValidFilter: Pickler[ValidFilter] = pickleLazily((new BinCodecValidFilter).pickler)
 
   implicit lazy val pickleIdCeilings   : Pickler[IdCeilings   ] = pickleCaseClass
   implicit lazy val pickleProjectConfig: Pickler[ProjectConfig] = pickleCaseClass

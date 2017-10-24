@@ -13,9 +13,10 @@ import monocle.Lens
 import monocle.macros.Lenses
 import org.scalajs.dom.document
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{Allow, ErrorMsg}
+import shipreq.base.util.{Allow, ErrorMsg, Valid}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.filter.{PotentialFilter, ValidFilter}
+import shipreq.webapp.base.filter.Filter
+import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.base.feature.AsyncFeature
@@ -60,10 +61,10 @@ object ReqTablePage {
                          newStuff     : NewStuff.State,
                          modal        : Modal.State) {
 
-    def setFilter(pf: PotentialFilter, v: PotentialFilter.Validator): State = {
-      val r = FilterEditor.parseGenerated(pf, v)
-      copy(filter = r._1, tableSettings = tableSettings.copy(filter = r._2))
-    }
+    def setFilter(f: Filter.Valid, cfg: ProjectConfig): State =
+      copy(
+        filter = FilterEditor.State(Filter.Valid.toText(cfg, f), Valid),
+        tableSettings = tableSettings.copy(filter = Some(f)))
   }
 
   object State {
@@ -75,7 +76,7 @@ object ReqTablePage {
         NewStuff.State.init,
         Modal.none)
 
-    val validFilter: Lens[State, Option[ValidFilter]] =
+    val validFilter: Lens[State, Option[Filter.Valid]] =
       tableSettings ^|-> TableSettings.filter
 
     val sortCriteria: Lens[State, SortCriteria] =

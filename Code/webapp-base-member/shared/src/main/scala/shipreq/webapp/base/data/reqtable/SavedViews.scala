@@ -1,7 +1,6 @@
 package shipreq.webapp.base.data.reqtable
 
 import japgolly.microlibs.nonempty.NonEmptyVector
-import monocle.Lens
 import monocle.macros.Lenses
 import scalaz.Equal
 import shipreq.base.util.univeq._
@@ -9,7 +8,8 @@ import shipreq.base.util.IMap
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.FilterDead
-import shipreq.webapp.base.filter.ValidFilter
+import shipreq.webapp.base.filter.Filter
+import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.validation.{CommonValidation => V, _}
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.base.validation.Implicits._
@@ -27,7 +27,7 @@ final case class SavedView(id          : SavedView.Id,
                            filterDead  : FilterDead,
                            columns     : NonEmptyVector[Column],
                            sortCriteria: SortCriteria,
-                           filter      : Option[ValidFilter])
+                           filter      : Option[Filter.Valid])
 
 object SavedView {
 

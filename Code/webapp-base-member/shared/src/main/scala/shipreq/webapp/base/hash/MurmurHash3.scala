@@ -38,6 +38,11 @@ object MurmurHash3 extends Hash.Algorithm {
   override def hashUnordered[T[x] <: TraversableOnce[x], A: Hash]: Hash[T[A]] =
     Hash.fn(unorderedHash(_, unordSeed))
 
+  implicit override val hashChar: Hash[Char] = Hash.fn { a =>
+    val h = mix(0, a.toInt)
+    finalizeHash(h, 2)
+  }
+
   // ===================================================================================================================
   // Copied from Clojure
   // Changed to remove special case for 0.

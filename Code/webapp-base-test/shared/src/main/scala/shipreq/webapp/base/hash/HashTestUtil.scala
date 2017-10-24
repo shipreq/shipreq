@@ -13,6 +13,7 @@ object HashTestUtil {
       new Hash(a => modI(h hash a))
 
     override implicit val hashBoolean                = modH(a.hashBoolean)
+    override implicit val hashChar                   = modH(a.hashChar)
     override implicit val hashLong                   = modH(a.hashLong)
     override implicit val hashString                 = modH(a.hashString)
     override implicit val hashInt                    = modH(a.hashInt)

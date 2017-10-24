@@ -8,6 +8,7 @@ package shipreq.webapp.base.hash
 object InternalHash extends Hash.Algorithm {
 
   implicit override val hashBoolean                  : Hash[Boolean]   = Hash.internal
+  implicit override val hashChar                     : Hash[Char]      = Hash.internal
   implicit override val hashInt                      : Hash[Int]       = Hash.internal
   implicit override val hashLong                     : Hash[Long]      = Hash.internal
   implicit override val hashString                   : Hash[String]    = Hash.internal

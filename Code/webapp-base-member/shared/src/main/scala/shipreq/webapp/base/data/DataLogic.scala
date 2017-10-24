@@ -7,6 +7,7 @@ import shipreq.base.util.{Memo, Util}
 import shipreq.base.util.Digraph.BiDir
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.text.Atom
 import DataImplicits._
 
 object DataLogic {
@@ -160,6 +161,29 @@ object DataLogic {
     else
       ImpRequiredResult(BiDir(r._1.reverse), r._2, BiDir(r._3.reverse))
   }
+
+  // ===================================================================================================================
+  // Issues
+
+  final class IssueLookup(p: Project, fd: FilterDead) {
+    import AtomScan._
+
+    type Issues = Vector[Atom.AnyIssue]
+
+    private val get = fd.ldStatAccessor[Issues]
+
+    private def forLoc(loc: IssueLoc): Issues =
+      get(p.atomScan.issues(loc))
+
+    def forReq(id: ReqId): Issues =
+      forLoc(InReq(id))
+
+    def forReqCode(id: ReqCodeId): Issues =
+      forLoc(InRCG(id))
+  }
+
+  def issueLookup(p: Project, fd: FilterDead): IssueLookup =
+    new IssueLookup(p, fd)
 
   // ===================================================================================================================
   // Misc

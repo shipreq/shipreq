@@ -3,6 +3,7 @@ package shipreq.webapp.base.event
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import scalaz.Equal
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.text.Text.Equality._
 
 object EventEquality extends EventEquality

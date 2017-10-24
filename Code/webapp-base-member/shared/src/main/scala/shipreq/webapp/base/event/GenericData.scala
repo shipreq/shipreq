@@ -5,9 +5,10 @@ import scalaz.{Equal, Order}
 import shipreq.base.util.{SetDiff, Util}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.text.Text
+import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.util._
-import Text.Equality._
 
 // DO NOT EDIT THIS
 // This file is generated in its entirety by bin/gen-generic_data
@@ -496,7 +497,7 @@ object GenericReqGD extends GenericData {
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 object SavedViewGD extends GenericData {
-  import shipreq.webapp.base.filter.ValidFilter
+  import shipreq.webapp.base.filter.Filter.{Valid => ValidFilter}
   import reqtable._
 
   sealed abstract class Attr extends AttrBase
