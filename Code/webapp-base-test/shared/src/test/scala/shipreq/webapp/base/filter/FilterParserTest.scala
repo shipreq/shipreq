@@ -104,10 +104,12 @@ object FilterParserTest extends TestSuite {
     }
 
     'simpleText {
-      'simple      - test("a",         text("a"))
-      'blurt       - test("weqfd351!", text("weqfd351!"))
-      'singleQuote - test("they're",   text("they're"))
-      'longUpper   - test("Q"*30,      text("Q"*30))
+      def testSimple(str: String): Unit = test(str, text(str))
+      'simple      - testSimple("a")
+      'blurt       - testSimple("weqfd351!")
+      'singleQuote - testSimple("they're")
+      'longUpper   - testSimple("Q"*30)
+      'underscore  - testSimple("L5_X")
     }
 
     'quotedText {
@@ -237,6 +239,8 @@ object FilterParserTest extends TestSuite {
     'combos {
       'anyAll - test("{(MF)}",      anyOf(allOf(reqType("MF"))))
       'allAny - test("({MF})",      allOf(anyOf(reqType("MF"))))
+
+      * - test(" a b_c ", allOf(text("a"), text("b_c")))
 
       * - test("abc  {MF FR}  -( eat drink {has:a has:b})", allOf(
             text("abc"),

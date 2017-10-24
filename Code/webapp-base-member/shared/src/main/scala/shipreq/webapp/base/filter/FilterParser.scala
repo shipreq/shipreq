@@ -140,7 +140,7 @@ private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
     rule(hashRefStr_! ~ end ~> ((s: String) => Potential.hashRef(data.HashRefKey(s))))
 
   def reqs: Rule1[Potential] =
-    rule(reqTypeMnemonicCS ~ '-'.? ~ numberOrRange ~> mkReqs)
+    rule(reqTypeMnemonicCS ~ '-'.? ~ numberOrRange ~ end ~> mkReqs)
 
   def reqType: Rule1[Potential] =
     rule(reqTypeMnemonicCS ~ end ~> ((i: Mnemonic) => Potential.reqType(i)))
