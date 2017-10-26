@@ -158,15 +158,10 @@ object EventDbCodecs {
   def pickleMap[K: ReadWriter: UnivEq, V: ReadWriter]: ReadWriter[Map[K, V]] =
     ReadWriter.merge(StdlibCodecs.All.MapR, StdlibCodecs.All.MapW)
 
-  private val jsStrL = Js.Str("L")
-  private val jsStrR = Js.Str("R")
   def pickleDisj[A, B](implicit A: ReadWriter[A], B: ReadWriter[B]): ReadWriter[A \/ B] =
     ReadWriter[A \/ B](
       _.fold(a => Js.Obj("L" -> A.write(a)), b => Js.Obj("R" -> B.write(b))),
-      {
-        case Js.Obj((jsStrL, a)) => -\/(A.read(a))
-        case Js.Obj((jsStrR, b)) => \/-(B.read(b))
-      }
+      { case Js.Obj((k, v)) => if (k == "L") -\/(A read v) else \/-(B read v) }
     )
 
   def pickleFix[F[_]: Functor](implicit rw: ReadWriter[F[Js.Value]]): ReadWriter[Fix[F]] = {
