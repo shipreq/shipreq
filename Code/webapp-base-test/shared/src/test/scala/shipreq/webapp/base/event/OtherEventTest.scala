@@ -24,42 +24,45 @@ object OtherEventTest extends TestSuite {
   val ColCF1 = Column.CustomField(ContentEventTestHelp.cf1)
 
   val SV1 = SavedView(
-    id           = SavedView.Id(1),
-    name         = SavedView.Name("View1"),
-    filterDead   = HideDead,
-    columns      = Column.mandatory.toNEV,
-    sortCriteria = SortCriteria.byPubidOnly,
-    filter       = None)
+    SavedView.Id(1),
+    SavedView.Name("View1"),
+    View(
+      filterDead = HideDead,
+      columns    = Column.mandatory.toNEV,
+      order      = SortCriteria.byPubidOnly,
+      filter     = None))
 
   val SV2 = SavedView(
-    id           = SavedView.Id(2),
-    name         = SavedView.Name("II"),
-    filterDead   = ShowDead,
-    columns      = Column.builtInValues.reverse :+ ColCF1,
-    sortCriteria = SortCriteria(Vector(ColCF1 / BlanksThenDesc, Column.Implications(Forwards) / AscThenBlanks), Column.Pubid / Desc),
-    filter       = Some {
-      import Filter.Valid._
-      val reqSet = NonEmptyVector(IntensionalReqSet.WholeType(StaticReqType.UseCase))
-      anyOf(
-        not(text("hehe")),
-        presence(Attr.AnyIssue),
-        reqs(reqSet),
-        impliesAnyOf(reqSet),
-        impliedByAnyOf(reqSet),
-        tag(at1),
-        issue(issueType1),
-        regex("[a-z]"),
-        reqType(fr),
-        reqType(StaticReqType.UseCase))
-    })
+    SavedView.Id(2),
+    SavedView.Name("II"),
+    View(
+      filterDead = ShowDead,
+      columns    = Column.builtInValues.reverse :+ ColCF1,
+      order      = SortCriteria(Vector(ColCF1 / BlanksThenDesc, Column.Implications(Forwards) / AscThenBlanks), Column.Pubid / Desc),
+      filter     = Some {
+        import Filter.Valid._
+        val reqSet = NonEmptyVector(IntensionalReqSet.WholeType(StaticReqType.UseCase))
+        anyOf(
+          not(text("hehe")),
+          presence(Attr.AnyIssue),
+          reqs(reqSet),
+          impliesAnyOf(reqSet),
+          impliedByAnyOf(reqSet),
+          tag(at1),
+          issue(issueType1),
+          regex("[a-z]"),
+          reqType(fr),
+          reqType(StaticReqType.UseCase))
+      }))
 
   val SV3 = SavedView(
-    id           = SavedView.Id(3),
-    name         = SavedView.Name("Three!"),
-    filterDead   = ShowDead,
-    columns      = Column.builtInValues,
-    sortCriteria = SortCriteria(Vector(Column.Title / AscThenBlanks), Column.Pubid / Asc),
-    filter       = None)
+    SavedView.Id(3),
+    SavedView.Name("Three!"),
+    View(
+      filterDead = ShowDead,
+      columns    = Column.builtInValues,
+      order      = SortCriteria(Vector(Column.Title / AscThenBlanks), Column.Pubid / Asc),
+      filter     = None))
 
   val badColImp = Column.CustomField(CustomField.Implication.Id(5000))
   val badColTag = Column.CustomField(CustomField.Tag.Id(5000))
@@ -70,27 +73,27 @@ object OtherEventTest extends TestSuite {
 
   implicit def autoCreateSV(sv: SavedView): SavedViewCreate =
     SavedViewCreate(
-      id           = sv.id          ,
-      name         = sv.name        ,
-      filterDead   = sv.filterDead  ,
-      columns      = sv.columns     ,
-      sortCriteria = sv.sortCriteria,
-      filter       = sv.filter      )
+      id         = sv.id,
+      name       = sv.name,
+      filterDead = sv.view.filterDead,
+      columns    = sv.view.columns,
+      order      = sv.view.order,
+      filter     = sv.view.filter)
 
   implicit final class SavedViewTestExt(private val self: SavedView) extends AnyVal {
     type Mod[A] = A => A
-    def modCols(f: Mod[NonEmptyVector[Column]]): SavedView = self.copy(columns = f(self.columns))
-    def modSort(f: Mod[SortCriteria]          ): SavedView = self.copy(sortCriteria = f(self.sortCriteria))
+    def modCols(f: Mod[NonEmptyVector[Column]]): SavedView = SavedView.columns.modify(f)(self)
+    def modSort(f: Mod[SortCriteria]          ): SavedView = SavedView.order.modify(f)(self)
 
-    def vmodCols(f: Mod[NonEmptyVector[Column]]) = SavedViewGD.ValueForColumns     (f(self.columns))
-    def vmodSort(f: Mod[SortCriteria]          ) = SavedViewGD.ValueForSortCriteria(f(self.sortCriteria))
+    def vmodCols(f: Mod[NonEmptyVector[Column]]) = SavedViewGD.ValueForColumns(f(self.columns))
+    def vmodSort(f: Mod[SortCriteria]          ) = SavedViewGD.ValueForOrder  (f(self.order))
 
     def valuesWithoutName: SavedViewGD.NonEmptyValues =
       SavedViewGD.nev(
-        SavedViewGD.ValueForFilterDead  (self.filterDead  ),
-        SavedViewGD.ValueForColumns     (self.columns     ),
-        SavedViewGD.ValueForSortCriteria(self.sortCriteria),
-        SavedViewGD.ValueForFilter      (self.filter      ))
+        SavedViewGD.ValueForFilterDead(self.filterDead),
+        SavedViewGD.ValueForColumns   (self.columns),
+        SavedViewGD.ValueForOrder     (self.order),
+        SavedViewGD.ValueForFilter    (self.filter))
 
     def values: SavedViewGD.NonEmptyValues =
       SavedViewGD.nev(SavedViewGD.ValueForName(self.name), valuesWithoutName.value.values.toList: _*)
@@ -167,7 +170,7 @@ object OtherEventTest extends TestSuite {
           'name1   - test(SV1, SV2)(SV1.id, ValueForName("hehe!"))     (SavedViews(SV1.copy(name = "hehe!")) + SV2)
           'name2   - test(SV1, SV2)(SV2.id, ValueForName("hehe!"))     (SavedViews(SV1) + SV2.copy(name = "hehe!"))
           'notName - test(SV1)     (SV1.id, SV2.valuesWithoutName)     (SavedViews(SV2.copy(id = SV1.id, name = SV1.name)))
-          'filter  - test(SV1)     (SV1.id, ValueForFilter(SV2.filter))(SavedViews(SV1.copy(filter = SV2.filter)))
+          'filter  - test(SV1)     (SV1.id, ValueForFilter(SV2.filter))(SavedViews(SavedView.filter.set(SV2.view.filter)(SV1)))
         }
         'invalid {
           implicit def initialEvents = SVIE.add(SV1)

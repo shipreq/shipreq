@@ -3,6 +3,7 @@ package shipreq.webapp.client.project.app.reqtable
 import scalaz.{-\/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.data.reqtable.Column._
 import shipreq.webapp.base.data
 import shipreq.webapp.base.lib.KeyGen

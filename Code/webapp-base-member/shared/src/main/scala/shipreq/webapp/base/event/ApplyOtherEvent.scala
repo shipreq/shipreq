@@ -26,14 +26,14 @@ trait ApplyOtherEvent {
     private val updateColumns      = fieldUpdateFn(SavedView.columns)
     private val updateFilter       = fieldUpdateFn(SavedView.filter)
     private val updateFilterDead   = fieldUpdateFn(SavedView.filterDead)
-    private val updateSortCriteria = fieldUpdateFn(SavedView.sortCriteria)
+    private val updateOrder        = fieldUpdateFn(SavedView.order)
 
     private val updateValues = GD.updateEachValue {
-      case v: ^.ValueForName         => sv => validateName(Some(sv.id), v.value).map(SavedView.name.set(_)(sv))
-      case v: ^.ValueForColumns      => updateColumns     (v.value)
-      case v: ^.ValueForFilter       => updateFilter      (v.value)
-      case v: ^.ValueForFilterDead   => updateFilterDead  (v.value)
-      case v: ^.ValueForSortCriteria => updateSortCriteria(v.value)
+      case v: ^.ValueForName       => sv => validateName(Some(sv.id), v.value).map(SavedView.name.set(_)(sv))
+      case v: ^.ValueForColumns    => updateColumns   (v.value)
+      case v: ^.ValueForFilter     => updateFilter    (v.value)
+      case v: ^.ValueForFilterDead => updateFilterDead(v.value)
+      case v: ^.ValueForOrder      => updateOrder     (v.value)
     }
 
     private val updateIdCeiling = updateIdCeilingFn(IdCeilings.reqtableView)
@@ -63,13 +63,11 @@ trait ApplyOtherEvent {
       for {
         _    ← whenUntrusted(validateId)
         name ← validateName(None, e.name)
-        sv   = SavedView(
-                 id           = e.id,
-                 name         = name,
-                 filterDead   = e.filterDead,
-                 columns      = e.columns,
-                 sortCriteria = e.sortCriteria,
-                 filter       = e.filter)
+        sv   = SavedView(e.id, name, View(
+                 filterDead = e.filterDead,
+                 columns    = e.columns,
+                 order      = e.order,
+                 filter     = e.filter))
         _    ← Project.reqtableViews.modify(add(sv))
         _    ← updateIdCeiling(e.id)
       } yield ()

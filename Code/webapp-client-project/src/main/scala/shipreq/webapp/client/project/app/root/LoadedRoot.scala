@@ -139,11 +139,12 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
     val reqDetailSetState: ReqDetail.State ~=> Callback =
       Reusable.fn.state($ zoomStateL State.reqDetail).set
 
-    def setReqTableView(fd: FilterDead, f: Filter.Valid): Callback =
-      pxProject.toCallback.flatMap(project =>
-        $.modState(s => s.copy(
-          filterDead = fd,
-          reqTable = s.reqTable.setFilter(f, project.config))))
+    def setReqTableView(fd: FilterDead, filter: Filter.Valid): Callback =
+      for {
+        p ← pxProject.toCallback
+        f = ReqTablePage.State.modifyView(p, fd, true)(_.withFilter(Some(filter)))
+        _ ← $.modState(State.reqTable.modify(f) compose State.filterDead.set(fd))
+      } yield ()
 
     val usageShow =
       Usage.Show((filterDead, filter) =>

@@ -108,6 +108,4 @@ object State {
       HideDead,
       reqtable.ReqTablePage.State.init,
       ReqDetail.initState)
-
-  val reqTableSettings = State.reqTable ^|-> reqtable.ReqTablePage.State.tableSettings
 }

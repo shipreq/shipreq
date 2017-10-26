@@ -555,25 +555,25 @@ object SavedViewGD extends GenericData {
     }
   }
 
-  case object SortCriteria extends Attr {
+  case object Order extends Attr {
     override type Data = SortCriteria
-    override def apply(data: Data) = ValueForSortCriteria(data)
+    override def apply(data: Data) = ValueForOrder(data)
     val dataEquality: Equal[Data] = implicitly[Equal[SortCriteria]]
   }
-  final case class ValueForSortCriteria(value: SortCriteria.Data) extends Value {
-    override val attr: SortCriteria.type = SortCriteria
+  final case class ValueForOrder(value: Order.Data) extends Value {
+    override val attr: Order.type = Order
     override def equals(o: Any): Boolean = o match {
-      case v2: ValueForSortCriteria => SortCriteria.dataEquality.equal(value, v2.value)
+      case v2: ValueForOrder => Order.dataEquality.equal(value, v2.value)
       case _ => false
     }
   }
 
   override implicit val equalityAttr: Order[Attr] with UnivEq[Attr] =
-    Util.univEqAndArbitraryOrder(Vector(Columns, Filter, FilterDead, Name, SortCriteria))
+    Util.univEqAndArbitraryOrder(Vector(Columns, Filter, FilterDead, Name, Order))
 
   @inline override implicit def equalityValue: UnivEq[Value] = UnivEq.force
 
-  override val attrs = NonEmptySet[Attr](Columns, Filter, FilterDead, Name, SortCriteria)
+  override val attrs = NonEmptySet[Attr](Columns, Filter, FilterDead, Name, Order)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████

@@ -1,15 +1,11 @@
 package shipreq.webapp.base.data.reqtable
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import monocle.macros.Lenses
 import scalaz.Equal
 import shipreq.base.util.univeq._
 import shipreq.base.util.IMap
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.data.FilterDead
-import shipreq.webapp.base.filter.Filter
-import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.validation.{CommonValidation => V, _}
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.base.validation.Implicits._
@@ -22,14 +18,13 @@ import shipreq.webapp.base.validation.Implicits._
   * be ignored when the saved view is used henceforth.
   */
 @Lenses
-final case class SavedView(id          : SavedView.Id,
-                           name        : SavedView.Name,
-                           filterDead  : FilterDead,
-                           columns     : NonEmptyVector[Column],
-                           sortCriteria: SortCriteria,
-                           filter      : Option[Filter.Valid])
+final case class SavedView(id: SavedView.Id, name: SavedView.Name, view: View)
 
 object SavedView {
+  val columns    = view ^|-> View.columns
+  val order      = view ^|-> View.order
+  val filterDead = view ^|-> View.filterDead
+  val filter     = view ^|-> View.filter
 
   final case class Id(value: Int) extends TaggedInt
 

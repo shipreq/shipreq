@@ -441,11 +441,11 @@ class ApplicableEventGen(p: Project) {
     val genName         = savedViewName
     val genSortCriteria = colNev.flatMap(sortCriteria)
     override def valueFor(a: Attr) = a match {
-      case Columns      => genColumns      map Columns     .apply
-      case Filter       => genFilter       map Filter      .apply
-      case FilterDead   => genFilterDead   map FilterDead  .apply
-      case Name         => genName         map Name        .apply
-      case SortCriteria => genSortCriteria map SortCriteria.apply
+      case Columns    => genColumns      map Columns   .apply
+      case Filter     => genFilter       map Filter    .apply
+      case FilterDead => genFilterDead   map FilterDead.apply
+      case Name       => genName         map Name      .apply
+      case Order      => genSortCriteria map Order     .apply
     }
   }
 

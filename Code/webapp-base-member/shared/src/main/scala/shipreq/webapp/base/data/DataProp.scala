@@ -478,14 +478,14 @@ object DataProp {
             .unnamed apply s.name.value)
 
       val visibleColumnsUnique: Prop[SavedView] =
-        Prop.distinct("Column", _.columns.whole)
+        Prop.distinct("Column", _.view.columns.whole)
 
       val sortByVisibleColumns: Prop[SavedView] =
-        Prop.whitelist[SavedView]("column")(_.columns.whole.toSet, _.sortCriteria.all.iterator.map(_.column))
+        Prop.whitelist[SavedView]("column")(_.view.columns.whole.toSet, _.view.order.all.iterator.map(_.column))
           .rename("All sort columns are visible")
 
       val sortColumnsUnique: Prop[SavedView] =
-        Prop.distinctI("Sort Column", _.sortCriteria.all.iterator.map(_.column))
+        Prop.distinctI("Sort Column", _.view.order.all.iterator.map(_.column))
 
       (viewId & name & visibleColumnsUnique & sortByVisibleColumns & sortColumnsUnique)
         .rename("SavedView")
@@ -594,7 +594,7 @@ object DataProp {
         svs.iterator.foldLeft(empty)(_ ++ savedViewFilter(_))
 
       def savedViewFilter(sv: SavedView): Refs =
-        sv.filter.fold(empty)(Recursion.cata(validFilter)(_))
+        sv.view.filter.fold(empty)(Recursion.cata(validFilter)(_))
 
       private def validFilterReqSetRefs(reqs: Filter.Valid.ReqSet): Refs =
         Refs.empty.copy(reqTypeIds =
@@ -698,8 +698,8 @@ object DataProp {
       ∧ validReqIds    ("DeletionReason reqIds",      _.deletionReasons.reqApplication.keys)
       ∧ validUCStepIds ("UseCase step flow",          _.reqs.useCases.stepFlow.memberIterator)
       ∧ fullRefCmp     ("SavedView filters",          p => Refs.savedViewFilters(p.reqtableViews))
-      ∧ validFieldIds  ("SavedViews: Columns",        _.reqtableViewIterator.flatMap(_.columns.whole).flatMap(Refs.reqtableColumnField))
-      ∧ validFieldIds  ("SavedViews: Sort Columns",   _.reqtableViewIterator.flatMap(_.sortCriteria.all.whole).map(_.column).flatMap(Refs.reqtableColumnField))
+      ∧ validFieldIds  ("SavedViews: Columns",        _.reqtableViewIterator.flatMap(_.view.columns.whole).flatMap(Refs.reqtableColumnField))
+      ∧ validFieldIds  ("SavedViews: Sort Columns",   _.reqtableViewIterator.flatMap(_.view.order.all.whole).map(_.column).flatMap(Refs.reqtableColumnField))
 
       ).rename("Cross-constituent refs").contramap[P](_ mapStrengthR mkRefs)
     }

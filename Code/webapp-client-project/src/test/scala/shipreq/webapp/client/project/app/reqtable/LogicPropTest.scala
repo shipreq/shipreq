@@ -12,8 +12,9 @@ import shipreq.base.util.univeq._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.reqtable.{SortCriterion => SC, Column => C}
 import shipreq.webapp.base.text.{Atom, PlainText, Text, TextSearch, ProjectText}
-import shipreq.webapp.client.project.app.reqtable.{SortCriterion => SC, Column => C}
 import shipreq.webapp.client.project.test.ClientTestSettings._
 import SortMethod._
 import Sorter._
@@ -23,8 +24,10 @@ import LogicTestUtil._
 object LogicPropTest extends TestSuite {
   val nop = Eval.pass()
 
-  case class LogicTests(ts: TableSettings, fd: FilterDead, p: Project) {
+  case class LogicTests(v: View, p: Project) {
     val E = EvalOver(this)
+
+    def fd = v.filterDead
 
     val expectVisible: ReqId => Boolean =
       if (fd ==* HideDead)
@@ -34,18 +37,18 @@ object LogicPropTest extends TestSuite {
 
     val plainText   = PlainText.ForProject.noCtx(p)
     val textSearch  = TextSearch(p, plainText)
-    val gathered    = Logic.gather[Vector](p, ts, fd, plainText, textSearch)
+    val gathered    = Logic.gather[Vector](p, v, plainText, textSearch)
     val gatheredG   = gathered.iterator.filterSubType[Row.ForReq].toList
     val rowReqCodes = gathered.flatMap(codesInRow)
     val rowGReqIds  = gatheredG.map(_.req.id).toSet
     val srcGReqIds  = p.reqs.idIterator.filterSubType[GenericReqId].filter(expectVisible).toSet
-    val finalRows   = Logic.rowsForTable(p, ts, fd, plainText, textSearch)
+    val finalRows   = Logic.rowsForTable(p, v, plainText, textSearch)
     val tableStats  = Logic.stats(p, finalRows)
 
     val expectedVisibleReqCodes = {
       val b = Set.newBuilder[ReqCode.Value]
       p.reqCodes.activeReqCodesByReqId.values.foreach(b ++= _)
-      if (ts.viewCodeGroups)
+      if (v.viewCodeGroups)
         p.reqCodes.groups.foreach(g =>
           if ((g.live is Live) || (fd is ShowDead))
             b += p.reqCodes.reqCode(g.id))
@@ -71,7 +74,7 @@ object LogicPropTest extends TestSuite {
 
     // NOTE: ReqCodes *can* be duplicated. Imagine sorting by MF > Code.
     def reqCodeProps =
-      E.test("", ts.isVisible(C.Code)) ==> (
+      E.test("", v.isVisible(C.Code)) ==> (
         E.allPresent("all req codes are displayed", expectedVisibleReqCodes, rowReqCodes)
         ∧ noEmptyAndNonEmptyReqCodesMixed)
 
@@ -88,16 +91,16 @@ object LogicPropTest extends TestSuite {
       implicitly[Ordering[String]].on[T#OptionalText](t => plainText.text(t, Live).toLowerCase)
 
     def universalSort = {
-      val revOrder  = ts.order.reverse
-      val revCri    = ts.copy(order = revOrder)
-      val sorted    = Logic.sort(p, ts, plainText)(gathered).to[Vector]
-      def criRev    = E.equal("cri.rev.rev = cri", revOrder.reverse, ts.order)
-      def sortTwice = E.equal("sort.sort = sort", Logic.sort(p, ts, plainText)(sorted).to[Vector], sorted)
+      val revOrder  = v.order.reverse
+      val revCri    = v.copy(order = revOrder)
+      val sorted    = Logic.sort(p, v, plainText)(gathered).to[Vector]
+      def criRev    = E.equal("cri.rev.rev = cri", revOrder.reverse, v.order)
+      def sortTwice = E.equal("sort.sort = sort", Logic.sort(p, v, plainText)(sorted).to[Vector], sorted)
       def sortRev   = reverseSortOnReverseCri(sorted, revCri)
       (criRev ∧ sortRev ∧ sortTwice) rename "Universal sort props"
     }
 
-    def reverseSortOnReverseCri(origSorted: Vector[Row], revCri: TableSettings): EvalL = {
+    def reverseSortOnReverseCri(origSorted: Vector[Row], revCri: View): EvalL = {
       /*
       def rev[A](c: Column, l: Vector[A]): Vector[A] =
         if (revCri isOrdered c) l.reverse else l
@@ -132,13 +135,13 @@ object LogicPropTest extends TestSuite {
     }
 
     def sortCri(c: SC.Inconclusive): SortCriteria =
-      this.ts.order.copy(init = Vector(c))
+      this.v.order.copy(init = Vector(c))
 
     def gatherOn(c: C.SortInconclusive, sc: SortCriteria): Vector[Row] =
-      if (ts isVisible c)
+      if (v isVisible c)
         gathered
       else
-        Logic.gather(p, TableSettings(columnState(p, c), sc, ts.filter), fd, plainText, textSearch)
+        Logic.gather(p, View(columnState(p, c), sc, fd, v.filter), plainText, textSearch)
 
     def sortCriAndGather(c: SC.Inconclusive) =
       sortCri(c).mapStrengthR(gatherOn(c.column, _))
@@ -148,8 +151,8 @@ object LogicPropTest extends TestSuite {
       Logic.sort(p, newTableSettingsForSort(sc), plainText)(input).to[Vector]
     }
 
-    def newTableSettingsForSort(sc: SortCriteria): TableSettings =
-      ts.copy(order = sc)
+    def newTableSettingsForSort(sc: SortCriteria): View =
+      v.copy(order = sc)
 
     /** @return error \/ (blank, non-blank) */
     def separateBlanks[A](expectBlanksFirst: Boolean, asi: Iterable[A])(isBlank: A => Boolean): String \/ (List[A], List[A]) = asi.toList match {
@@ -269,9 +272,9 @@ object LogicPropTest extends TestSuite {
     for {
       p  <- RandomData.project
       fd <- RandomData.filterDead
-      ts <- RandomReqTableData.tableSettings(p, allowFilter = false)
+      v  <- RandomReqTableData.view(p, fd, allowFilter = false)
     } yield
-      LogicTests(ts, fd, p)
+      LogicTests(v, p)
 
   override def tests = TestSuite {
     gen.mustSatisfyE(_.all)//(implicitly[Settings].setSeed(0).setDebug.setSampleSize(20))

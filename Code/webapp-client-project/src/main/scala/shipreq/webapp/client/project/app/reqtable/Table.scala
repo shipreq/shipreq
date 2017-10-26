@@ -11,6 +11,7 @@ import scala.collection.immutable.SortedSet
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Applicable, ErrorMsg, NotApplicable}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.ui.{EditTheme, semantic}
@@ -34,7 +35,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
                      rowAsync        : AsyncFeature.Read.D1[Row.SourceId, ErrorMsg],
                      config          : ProjectConfig,
                      pw              : ProjectWidgets.NoCtx,
-                     modSettings     : ModFn[TableSettings]) {
+                     modifyView      : ModFn[View]) {
       @inline def render = Component(this)
     }
 
@@ -61,8 +62,8 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
             Header.Props(
               p.cols,
               p.selection,
-              p.modSettings.map(f => cs => f(_ setColumns cs.map(_.column))),
-              p.modSettings.map(f => c => f(TableSettings.order.modify(_ want c.column)))))
+              p.modifyView.map(f => cs => f(_ withColumns cs.map(_.column))),
+              p.modifyView.map(f => c => f(_ orderByColumn c.column))))
 
         def renderMsg(msg: VdomTag): VdomTag =
           <.tr(<.td(*.noContent, ^.colSpan := p.cols.length + 1, msg))

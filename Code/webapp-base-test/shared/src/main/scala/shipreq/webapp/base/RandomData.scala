@@ -1335,15 +1335,20 @@ object RandomData {
       } yield SavedView.Name.validator.stateless.unnamed(d)
         .valueOr(e => sys error s"$e: '${SavedView.Name.validator.stateless.corrector.full(d)}' ← '$d'")
 
+    def viewForProject(p: Project): Gen[View] =
+      for {
+        d <- filterDead
+        c <- visibleColumns(p)
+        o <- sortCriteria(c)
+        f <- filter.valid.forProject(p).option
+      } yield View(c, o, d, f)
+
     def savedViewForProject(p: Project): Gen[SavedView] =
       for {
         i <- savedViewId
-        a <- savedViewName
-        b <- filterDead
-        c <- visibleColumns(p)
-        d <- sortCriteria(c)
-        e <- filter.valid.forProject(p).option
-      } yield SavedView(i, a, b, c, d, e)
+        n <- savedViewName
+        f <- viewForProject(p)
+      } yield SavedView(i, n, f)
 
     def nonEmptySavedViewsForProject(p: Project): Gen[SavedViews.NonEmpty] = {
       val gen = savedViewForProject(p)
@@ -1828,11 +1833,11 @@ object RandomData {
       val genSortCriteria = colNev.flatMap(sortCriteria)
 
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case Columns      => genColumns      map Columns     .apply
-        case Filter       => genFilter       map Filter      .apply
-        case FilterDead   => genFilterDead   map FilterDead  .apply
-        case Name         => genName         map Name        .apply
-        case SortCriteria => genSortCriteria map SortCriteria.apply
+        case Columns    => genColumns      map Columns   .apply
+        case Filter     => genFilter       map Filter    .apply
+        case FilterDead => genFilterDead   map FilterDead.apply
+        case Name       => genName         map Name      .apply
+        case Order      => genSortCriteria map Order     .apply
       }
     }
 

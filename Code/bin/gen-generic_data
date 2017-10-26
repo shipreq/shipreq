@@ -134,11 +134,11 @@ val gens = List(
     "FlowOut" -> "SetDiff.NE[UseCaseStepId]",
   ),
   Gen("SavedViewGD", init = "import shipreq.webapp.base.filter.Filter.{Valid => ValidFilter}\nimport reqtable._")(
-    "Name"         -> "SavedView.Name",
-    "FilterDead"   -> "FilterDead",
-    "Columns"      -> "NonEmptyVector[Column]",
-    "SortCriteria" -> "SortCriteria",
-    "Filter"       -> "Option[ValidFilter]",
+    "Name"       -> "SavedView.Name",
+    "FilterDead" -> "FilterDead",
+    "Columns"    -> "NonEmptyVector[Column]",
+    "Order"      -> "SortCriteria",
+    "Filter"     -> "Option[ValidFilter]",
   ),
 )
 

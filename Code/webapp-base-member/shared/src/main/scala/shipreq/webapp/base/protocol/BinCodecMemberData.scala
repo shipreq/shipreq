@@ -205,6 +205,7 @@ object BinCodecMemberData {
     implicit val pickleSortCriterion   : Pickler[SortCriterion                     ] = pickleADT
     implicit val pickleSortCriteria    : Pickler[SortCriteria                      ] = pickleCaseClass
 
+    implicit val pickleView         : Pickler[View                 ] = pickleCaseClass
     implicit val pickleSavedViewId  : Pickler[SavedView.Id         ] = pickleCaseClass
     implicit val pickleSavedViewName: Pickler[SavedView.Name       ] = pickleCaseClass
     implicit val pickleSavedView    : Pickler[SavedView            ] = pickleCaseClass

@@ -3,11 +3,12 @@ package shipreq.webapp.client.project.app.reqtable
 import org.parboiled2.ParseError
 import org.parboiled2.Parser.DeliveryScheme.Throw
 import org.scalajs.dom.{document, html}
+import shipreq.base.util.{Invalid, Validity}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.test._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.test._
 import TestState._
@@ -92,6 +93,9 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
 
   val filterValue: String =
     filterInput.value
+
+  val filterValueValidity: Validity =
+    Invalid when filterInput.parentNode.asInstanceOf[html.Element].classList.contains("error")
 
   val filterDeadButton: html.Button =
     $(s"${Style.reqtable.page.filterDeadButtonContainer.selector} button").domAs[html.Button]

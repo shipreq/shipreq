@@ -672,11 +672,11 @@ object EventDbCodecs {
     implicit val pickleSavedViewName: ReadWriter[SavedView.Name] = caseClass1
 
     implicit val pickleSavedViewGD = gdMPickler(SavedViewGD, true) {
-      case SavedViewGD.Columns      => "c"
-      case SavedViewGD.Filter       => "f"
-      case SavedViewGD.FilterDead   => "x"
-      case SavedViewGD.Name         => "n"
-      case SavedViewGD.SortCriteria => "s"
+      case SavedViewGD.Columns    => "c"
+      case SavedViewGD.Filter     => "f"
+      case SavedViewGD.FilterDead => "x"
+      case SavedViewGD.Name       => "n"
+      case SavedViewGD.Order      => "o"
     } nev
   }
   import ReqTableData.pickleSavedViewGD
@@ -819,7 +819,7 @@ object EventDbCodecs {
       'name         -> "n",
       'filter_?     -> "f",
       'filterDead   -> "x",
-      'sortCriteria -> "s")
+      'order        -> "o")
   }
 
   /**

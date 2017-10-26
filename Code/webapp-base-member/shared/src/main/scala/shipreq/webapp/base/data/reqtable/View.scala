@@ -1,17 +1,17 @@
-package shipreq.webapp.client.project.app.reqtable
+package shipreq.webapp.base.data.reqtable
 
-import japgolly.scalajs.react.extra.Reusability
-import monocle.macros.Lenses
 import japgolly.microlibs.nonempty.NonEmptyVector
+import monocle.macros.Lenses
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.data.{FilterDead, HideDead, Live}
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.filter.Filter.Implicits._
-import shipreq.webapp.base.lib.DataReusability._
 
 @Lenses
-final case class TableSettings(columns: NonEmptyVector[Column],
-                               order  : SortCriteria,
-                               filter : Option[Filter.Valid]) {
+final case class View(columns   : NonEmptyVector[Column],
+                      order     : SortCriteria,
+                      filterDead: FilterDead,
+                      filter    : Option[Filter.Valid]) {
 
   def isVisible(c: Column): Boolean =
     isVisible(_ ==* c)
@@ -24,17 +24,14 @@ final case class TableSettings(columns: NonEmptyVector[Column],
   @inline def isOrderedI(c: Column.SortInconclusive)            = order.isOrderedI(c)
   @inline def isOrderedI(f: Column.SortInconclusive => Boolean) = order.isOrderedI(f)
 
-  def tryFilterColumns(f: Column => Boolean): Option[TableSettings] =
-    columns.filter(f).map(cols =>
-      TableSettings(cols, order filterColumns f, filter))
-
-  def filterColumns(f: Column => Boolean): TableSettings =
-    tryFilterColumns(f) getOrElse TableSettings.default
-
-  def setColumns(newCols0: NonEmptyVector[Column]): TableSettings = {
+  /** Return a version of this where:
+    *
+    * - all mandatory columns are present
+    * - only visible columns are used in sort criteria
+    */
+  def makeCorrect: View = {
     // Ensure mandatory columns are present
-    val set = newCols0.toNES
-    val newCols = newCols0 ++ Column.mandatory.iterator.filterNot(set.contains)
+    val newCols = columns ++ Column.mandatory.iterator.filterNot(columns.toNES.contains)
 
     // Filter order
     val icols = newCols.foldLeft(UnivEq.emptySet[Column.SortInconclusive])((q, c) => c match {
@@ -43,8 +40,26 @@ final case class TableSettings(columns: NonEmptyVector[Column],
     })
     val newOrder = order.whitelistColumns(icols)
 
-    TableSettings(newCols, newOrder, filter)
+    View(newCols, newOrder, filterDead, filter)
   }
+
+  def filterByFilterDead(l: Column => Live): View =
+    filterDead.filterFn.value.fold(this)(f => filterColumns(f compose l))
+
+  def filterColumns(f: Column => Boolean): View =
+    tryFilterColumns(f) getOrElse withColumns(View.default.columns)
+
+  def tryFilterColumns(f: Column => Boolean): Option[View] =
+    columns.filter(f).map(withColumns)
+
+  def withColumns(newCols0: NonEmptyVector[Column]): View =
+    copy(columns = newCols0).makeCorrect
+
+  def orderByColumn(c: Column): View =
+    copy(order = order.want(c))
+
+  def withFilter(f: Option[Filter.Valid]): View =
+    copy(filter = f)
 
   /**
    * When `true`, render the reqcode column to resemble a tree. Meaning:
@@ -56,18 +71,21 @@ final case class TableSettings(columns: NonEmptyVector[Column],
     order.init.headOption.exists(s =>
       s.column ==* Column.Code)
 
-  // Doesn't make sense showing CodeGroups below everything they represent.
   val viewCodeGroups: Boolean =
     order.init.headOption.exists(s =>
-      (s.column ==* Column.Code) && s.method.ascending)
+      (s.column ==* Column.Code) &&
+        s.method.ascending // Doesn't make sense showing CodeGroups below everything they represent
+    )
 }
 
 
-object TableSettings {
-  implicit def equality   : UnivEq[TableSettings]      = UnivEq.derive
-  implicit val reusability: Reusability[TableSettings] = Reusability.byRefOrUnivEq
+object View {
+  implicit def equality: UnivEq[View] = UnivEq.derive
 
-  def default: TableSettings = {
+  def default: View =
+    default(HideDead)
+
+  def default(fd: FilterDead): View = {
     import Column._
     val cols = NonEmptyVector[Column.BuiltIn](Pubid, Title, Tags)
 
@@ -76,6 +94,6 @@ object TableSettings {
       Vector.empty, // (Column.Code / SortMethod.AscThenBlanks, Column.Title / SortMethod.BlanksThenAsc),
       SortCriteria.defaultConclusive)
 
-    TableSettings(cols, order, None)
+    View(cols, order, fd, None)
   }
 }

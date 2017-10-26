@@ -7,6 +7,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.test.SampleProject.Values._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.TestState._
@@ -56,8 +57,8 @@ object ReqTableTest extends TestSuite {
   def testDeadToggleInvariants =
     *.genActionsBy("testDeadToggleInvariants")(i =>
         for {
-          ts <- RandomReqTableData.tableSettings(i.state, allowFilter = true)
           fd <- RandomData.filterDead
+          ts <- RandomReqTableData.view(i.state, fd, allowFilter = true)
         } yield setViewSettings("Apply random view settings", fd, (_, _) => ts) >> filterDeadShowHide)
 
   def testDeadNotEditable =

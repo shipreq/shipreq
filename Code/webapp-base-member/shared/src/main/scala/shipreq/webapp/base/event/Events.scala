@@ -192,12 +192,12 @@ final case class ContentRestore(reqs      : Set[ReqId],
 // =====================================================================================================================
 // Saved Views
 
-final case class SavedViewCreate(id          : SavedView.Id,
-                                 name        : SavedView.Name,
-                                 filterDead  : FilterDead,
-                                 columns     : NonEmptyVector[reqtable.Column],
-                                 sortCriteria: reqtable.SortCriteria,
-                                 filter      : Option[Filter.Valid]) extends ActiveEvent
+final case class SavedViewCreate(id        : SavedView.Id,
+                                 name      : SavedView.Name,
+                                 filterDead: FilterDead,
+                                 columns   : NonEmptyVector[reqtable.Column],
+                                 order     : reqtable.SortCriteria,
+                                 filter    : Option[Filter.Valid]) extends ActiveEvent
 
 final case class SavedViewUpdate    (id: SavedView.Id, vs: SavedViewGD.NonEmptyValues) extends ActiveEvent
 final case class SavedViewDelete    (id: SavedView.Id)                                 extends ActiveEvent

@@ -7,6 +7,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui.semantic.{Button, Icon, Popup}
 import shipreq.webapp.client.project.widgets.CheckboxList

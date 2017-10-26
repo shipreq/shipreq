@@ -11,12 +11,13 @@ import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.{event => E}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.reqtable.{Column => C, SortCriterion => SC}
 import shipreq.webapp.base.text.{PlainText, ProjectText, Text, TextSearch}
 import shipreq.webapp.base.test._
-import WebappTestUtil._
 import shipreq.webapp.base.util.ReqCodeTreeItem
-import shipreq.webapp.client.project.app.reqtable.{Column => C, SortCriterion => SC}
 import SortMethod._
+import WebappTestUtil._
 
 object LogicTestUtil {
   def codesInRow(r: Row): Vector[ReqCode.Value] =
@@ -100,35 +101,35 @@ object LogicTest extends TestSuite {
     testUnsorted(p, C.Pubid, f, ShowDead, fmt)(d)
   }
 
-  private def gatherSortConsolidate(p: Project, s: TableSettings, fd: FilterDead, pt: PlainText.ForProject.NoCtx, ts: TextSearch): Vector[Row] = {
-    def r1: Array       [Row] = Logic.gather(p, s, fd, pt, ts)
-    def r2: MutableArray[Row] = Logic.sort(p, s, pt)(r1)
+  private def gatherSortConsolidate(p: Project, v: View, pt: PlainText.ForProject.NoCtx, ts: TextSearch): Vector[Row] = {
+    def r1: Array       [Row] = Logic.gather(p, v, pt, ts)
+    def r2: MutableArray[Row] = Logic.sort(p, v, pt)(r1)
     val r3: Vector      [Row] = Logic.consolidateAdjacentDups(r2.iterator)
     r3
   }
 
-  private def defaultOrder = TableSettings.default.order
+  private def defaultOrder = View.default.order
 
   private def testUnsorted[A: Equal](p: Project, c: C, f: Filter, fd: FilterDead, extract: Rows => A)(expect: A): Unit =
     testUnsorted2(p, NonEmptyVector one c, f, fd, extract)(expect)
 
   private def testUnsorted2[A: Equal](p: Project, cs: NonEmptyVector[C], f: Filter, fd: FilterDead, extract: Rows => A)(expect: A): Unit = {
-    val vs = TableSettings(columnState(p, cs), defaultOrder.copy(init = Vector.empty), f)
+    val v = View(columnState(p, cs), defaultOrder.copy(init = Vector.empty), fd, f)
     val pc = pcache(p)
     import pc.{pt, ts}
-    val r = gatherSortConsolidate(p, vs, fd, pt, ts)
+    val r = gatherSortConsolidate(p, v, pt, ts)
     assertEq(extract(r), expect)
   }
 
-  private def vsSortedByCB(p: Project, c: C.SortInconclusiveHasBlanks, sm: ConsiderBlanks, f: Filter): TableSettings =
-    TableSettings(columnState(p, c), defaultOrder.copy(init = Vector(SC.InconclusiveCB(c, sm))), f)
+  private def viewSortedByCB(p: Project, c: C.SortInconclusiveHasBlanks, sm: ConsiderBlanks, fd: FilterDead, f: Filter): View =
+    View(columnState(p, c), defaultOrder.copy(init = Vector(SC.InconclusiveCB(c, sm))), fd, f)
 
   private def testCB[A: Equal](p: Project, c: C.SortInconclusiveHasBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(ConsiderBlanks, A)]) = {
     val pc = pcache(p)
     import pc.{pt, ts}
     for ((sm, expect) <- tests) {
-      val vs = vsSortedByCB(p, c, sm, f)
-      val r = gatherSortConsolidate(p, vs, fd, pt, ts)
+      val v = viewSortedByCB(p, c, sm, fd, f)
+      val r = gatherSortConsolidate(p, v, pt, ts)
       assertEq(sm.toString, extract(r), expect)
     }
   }
@@ -145,15 +146,15 @@ object LogicTest extends TestSuite {
   private def allSortsCB(zcount: Int, asc: String, desc: String): Seq[(ConsiderBlanks, String)] =
     allSortsCBA(z, zcount)(_ + sep + _, asc, desc)
 
-  private def vsSortedByIB(p: Project, c: C.SortInconclusiveNoBlanks, sm: IgnoreBlanks, f: Filter): TableSettings =
-    TableSettings(columnState(p, c), defaultOrder.copy(init = Vector(SC.InconclusiveIB(c, sm))), f)
+  private def viewSortedByIB(p: Project, c: C.SortInconclusiveNoBlanks, sm: IgnoreBlanks, fd: FilterDead, f: Filter): View =
+    View(columnState(p, c), defaultOrder.copy(init = Vector(SC.InconclusiveIB(c, sm))), fd, f)
 
   private def testIB[A: Equal](p: Project, c: C.SortInconclusiveNoBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(IgnoreBlanks, A)]) = {
     val pc = pcache(p)
     import pc.{pt, ts}
     for ((sm, expect) <- tests) {
-      val vs = vsSortedByIB(p, c, sm, f)
-      val r = gatherSortConsolidate(p, vs, fd, pt, ts)
+      val v = viewSortedByIB(p, c, sm, fd, f)
+      val r = gatherSortConsolidate(p, v, pt, ts)
       assertEq(sm.toString, extract(r), expect)
     }
   }
