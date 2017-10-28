@@ -107,11 +107,14 @@ object PotentialChange {
       }
   }
 
-  case class Success[+A](update: A) extends NonFailure[A]
+  final case class Success[+A](update: A) extends NonFailure[A]
 
   case object Unchanged extends NonFailure[Nothing]
 
-  case class Failure[+E](failure: E) extends PotentialChange[E, Nothing]
+  final case class Failure[+E](failure: E) extends PotentialChange[E, Nothing]
+
+  implicit def univEq[E: UnivEq, A: UnivEq]: UnivEq[PotentialChange[E, A]] =
+    UnivEq.force // TODO UnivEq.derive doesn't handle
 
   import scalaz.{\/, \/-, -\/}
 

@@ -58,6 +58,9 @@ abstract class GenericData {
   def values(vs: Value*): Values =
     emptyValues ++ vs
 
+  def values(vs: TraversableOnce[Value]): Values =
+    emptyValues ++ vs
+
   def nev(v1: Value, vn: Value*): NonEmptyValues =
     NonEmpty.force(emptyValues + v1 ++ vn)
 

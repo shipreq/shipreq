@@ -749,9 +749,9 @@ class ApplicableEventGen(p: Project) {
       Gen.apply6(SavedViewCreate)(
         nextSavedViewId,
         savedViewGD.genName,
-        savedViewGD.genFilterDead,
         savedViewGD.genColumns,
         savedViewGD.genSortCriteria,
+        savedViewGD.genFilterDead,
         savedViewGD.genFilter)
 
   def genSavedViewUpdate: Option[Gen[SavedViewUpdate]] =

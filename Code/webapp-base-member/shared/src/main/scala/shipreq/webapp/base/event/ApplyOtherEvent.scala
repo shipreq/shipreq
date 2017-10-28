@@ -43,7 +43,7 @@ trait ApplyOtherEvent {
         SE.ret(newName)
       else
         SE.get.flatMap { p =>
-          val state = SavedView.Name.State(subject, () => p.reqtableViewIterator.map(v => (Some(v.id), v.name)))
+          val state = SavedView.Name.State(subject, p.reqtableViews)
           val validate = validateI(SavedView.Name.validator(state))(_.value)
           validate(newName)
         }

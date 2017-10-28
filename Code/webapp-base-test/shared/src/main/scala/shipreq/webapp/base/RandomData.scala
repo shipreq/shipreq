@@ -1994,9 +1994,9 @@ object RandomData {
       Gen.apply6(SavedViewCreate)(
         reqtableData.savedViewId,
         savedViewGD.genName,
-        savedViewGD.genFilterDead,
         savedViewGD.genColumns,
         savedViewGD.genSortCriteria,
+        savedViewGD.genFilterDead,
         savedViewGD.genFilter)
 
     val genSavedViewDefaultSet: Gen[SavedViewDefaultSet] =

@@ -474,7 +474,7 @@ object DataProp {
 
       val name: Prop[SavedView] =
         Prop.equal("name")(s => \/-(s.name), s =>
-          SavedView.Name.validator(SavedView.Name.State(Some(s.id), () => allViews.iterator.map(v => (Some(v.id), v.name))))
+          SavedView.Name.validator(SavedView.Name.State(Some(s.id), allViews))
             .unnamed apply s.name.value)
 
       val visibleColumnsUnique: Prop[SavedView] =

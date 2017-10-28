@@ -413,7 +413,6 @@ object DbTest extends TestSuite {
             SavedViewCreate(
               SavedView.Id(7593),
               SavedView.Name("7AvWNHb95"),
-              ShowDead,
               NonEmptyVector(
                 Implications(Forwards),
                 Implications(Backwards),
@@ -424,6 +423,7 @@ object DbTest extends TestSuite {
                 InconclusiveIB(ReqType, Desc),
                 InconclusiveCB(Tags, BlanksThenDesc)),
                 Conclusive(Pubid, Desc)),
+              ShowDead,
               Some(
                 not(
                   anyOf(
@@ -434,9 +434,9 @@ object DbTest extends TestSuite {
             """
               |{
               |  "n":"7AvWNHb95",
-              |  "x":"s",
               |  "c":[{"i":"f"},{"i":"b"},{"f":{"t":27887}},"d"],
               |  "o":[[{"_":["d","a_"]},{"i":["T","d"]},{"_":["#","_d"]}],["I","d"]],
+              |  "x":"s",
               |  "f":{
               |    "!":{
               |      "|":[

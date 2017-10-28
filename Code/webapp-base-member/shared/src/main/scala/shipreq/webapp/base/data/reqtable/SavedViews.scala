@@ -49,6 +49,14 @@ object SavedView {
       def invalidator: Invalidator[Name] =
         Uniqueness.optionalKeyWithValue(data)(subject)
     }
+
+    object State {
+      def apply(subject: Option[Id], svs: SavedViews.Optional): State =
+        svs.fold(apply(subject, () => Nil))(apply(subject, _))
+
+      def apply(subject: Option[Id], svs: SavedViews.NonEmpty): State =
+        apply(subject, () => svs.iterator.map(v => (Some(v.id), v.name)))
+    }
   }
 
   implicit def univEq: UnivEq[SavedView] = UnivEq.derive

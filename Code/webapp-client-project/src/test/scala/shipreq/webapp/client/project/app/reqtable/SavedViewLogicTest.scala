@@ -1,14 +1,18 @@
 package shipreq.webapp.client.project.app.reqtable
 
+import japgolly.microlibs.scalaz_ext.ScalazMacros._
+import scalaz.{-\/, Equal, \/, \/-}
 import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.event.SavedViewGD
 import shipreq.webapp.base.filter.Filter
+import shipreq.webapp.base.protocol.{SavedViewCmd => Cmd}
+import SavedViewLogic._
 import SortCriterion.SyntaxHelpers._
 import SortMethod.{Asc, AscThenBlanks, BlanksThenDesc, Desc}
-import SavedViewLogic._
 
 object SavedViewLogicTest extends TestSuite {
 
@@ -44,6 +48,32 @@ object SavedViewLogicTest extends TestSuite {
   val `SVs-B` = SavedViews(SVa) + SVc
   val `SVs-C` = SavedViews(SVb) + SVa
 
+  val `SVa->b`: SavedViewGD.NonEmptyValues =
+    SavedViewGD.nev(
+      SavedViewGD.ValueForColumns   (SVb.view.columns),
+      SavedViewGD.ValueForOrder     (SVb.view.order),
+      SavedViewGD.ValueForFilter    (SVb.view.filter),
+      SavedViewGD.ValueForFilterDead(SVb.view.filterDead))
+
+  val `SVb->a`: SavedViewGD.NonEmptyValues =
+    SavedViewGD.nev(
+      SavedViewGD.ValueForColumns   (SVa.view.columns),
+      SavedViewGD.ValueForOrder     (SVa.view.order),
+      SavedViewGD.ValueForFilter    (SVa.view.filter),
+      SavedViewGD.ValueForFilterDead(SVa.view.filterDead))
+
+  val `SVc->a`: SavedViewGD.NonEmptyValues =
+    SavedViewGD.nev(
+      SavedViewGD.ValueForColumns   (SVa.view.columns),
+      SavedViewGD.ValueForOrder     (SVa.view.order),
+      SavedViewGD.ValueForFilter    (SVa.view.filter))
+
+  val `SVc->b`: SavedViewGD.NonEmptyValues =
+    SavedViewGD.nev(
+      SavedViewGD.ValueForColumns   (SVb.view.columns),
+      SavedViewGD.ValueForOrder     (SVb.view.order),
+      SavedViewGD.ValueForFilterDead(SVb.view.filterDead))
+
   val Dirty1 = SVa.view.copy(filter = None)
   val Dirty2 = SVa.view.copy(filter = Some(Filter.Valid.text("WOAH!!")))
 
@@ -56,13 +86,73 @@ object SavedViewLogicTest extends TestSuite {
   implicit def savedViewToSomeId(v: SavedView): Option[SavedView.Id] =
     Some(v.id)
 
-  implicit final class SavedViewTestExt(private val self: SavedView) extends AnyVal {
+  val leftBlank = -\/("Cannot be blank.")
+  val leftTaken = -\/("Already in use.")
+
+  implicit final class SavedViewTestExt(private val sv: SavedView) extends AnyVal {
+    private def nv = nameValidationFn(
+      sva = if (sv eq SVa) \/-(SVa.name) else leftTaken,
+      svb = if (sv eq SVb) \/-(SVb.name) else leftTaken,
+      svc = if (sv eq SVc) \/-(SVc.name) else leftTaken,
+    )
+
     def asDefault: Menu.Item.Default =
-      Menu.Item.Default(self.id, self.name.value)
+      Menu.Item.default(nv, sv)
 
     def asNonDefault: Menu.Item.NonDefault =
-      Menu.Item.NonDefault(self.id, self.name.value)
+      Menu.Item.nonDefault(nv, sv)
   }
+
+  val testNames: List[SavedView.Name] =
+    SVa.name ::
+    SVb.name ::
+    SVc.name ::
+    SavedView.Name("  xxx  ") ::
+    SavedView.Name("") :: Nil
+
+  def testNameFn[A >: Null](default: SavedView.Name => A)
+                           (sva  : A = null,
+                            svb  : A = null,
+                            svc  : A = null,
+                            xxx  : A = null,
+                            empty: A = null): SavedView.Name => A =
+    i => SavedView.Name(i.value.trim) match {
+      case s if s       ==* SVa.name => Option(sva  ).getOrElse(default(s))
+      case s if s       ==* SVb.name => Option(svb  ).getOrElse(default(s))
+      case s if s       ==* SVc.name => Option(svc  ).getOrElse(default(s))
+      case s if s.value ==* "xxx"    => Option(xxx  ).getOrElse(default(s))
+      case s if s.value ==* ""       => Option(empty).getOrElse(default(s))
+    }
+
+  def nameValidationFn(sva: String \/ SavedView.Name = null,
+                       svb: String \/ SavedView.Name = null,
+                       svc: String \/ SavedView.Name = null,
+                       xxx: String \/ SavedView.Name = null): SavedView.Name => String \/ SavedView.Name =
+    testNameFn[String \/ SavedView.Name](\/-(_))(sva = sva, svb = svb, svc = svc, xxx = xxx, empty = leftBlank)
+
+  implicit def nameFnEquality[A: Equal]: Equal[SavedView.Name => A] =
+    Equal.equal((f, g) => testNames.forall { n =>
+      val pass = Equal[A].equal(f(n), g(n))
+      if (!pass) {
+        println(s"$n -- ${f(n)} ≠ ${g(n)}")
+      }
+      pass
+    })
+
+  implicit val equalMenuActionReplace    : Equal[Menu.Action.Replace    ] = deriveEqual
+  implicit val equalMenuActionDelete     : Equal[Menu.Action.Delete     ] = deriveEqual
+  implicit val equalMenuActionMakeDefault: Equal[Menu.Action.MakeDefault] = deriveEqual
+  implicit val equalMenuActionSaveAsNew  : Equal[Menu.Action.SaveAsNew  ] = deriveEqual
+  implicit val equalMenuActionRename     : Equal[Menu.Action.Rename     ] = deriveEqual
+  implicit val equalMenuActionUnsaved    : Equal[Menu.Action.Unsaved    ] = deriveEqual
+  implicit val equalMenuItemD            : Equal[Menu.Item.Default      ] = deriveEqual
+  implicit val equalMenuItemND           : Equal[Menu.Item.NonDefault   ] = deriveEqual
+  implicit val equalMenuItemS            : Equal[Menu.Item.Saved        ] = deriveEqual
+  implicit val equalMenuItemU            : Equal[Menu.Item.Unsaved      ] = deriveEqual
+  implicit val equalMenuU                : Equal[Menu.NoSaved           ] = deriveEqual
+  implicit val equalMenuSD               : Equal[Menu.SavedDirty        ] = deriveEqual
+  implicit val equalMenuSC               : Equal[Menu.SavedClean        ] = deriveEqual
+  implicit val equalMenu                 : Equal[Menu                   ] = deriveEqual
 
   override def tests = TestSuite {
 
@@ -121,59 +211,83 @@ object SavedViewLogicTest extends TestSuite {
         Menu.determine(savedViews, s, s.activeView(savedViews, filterDeadFallback))
       }
 
+      def dirtyAnon(activeView: View): Item.Unsaved = {
+        val nv        = nameValidationFn(sva = leftTaken, svb = leftTaken, svc = leftTaken)
+        val saveAsNew = Action.saveAsNew(nv, activeView)
+        Item.Unsaved(saveAsNew, None)
+      }
+
+      def dirty(ref: SavedView, changes: SavedViewGD.NonEmptyValues, activeView: View): Item.Unsaved = {
+        val nv        = nameValidationFn(sva = leftTaken, svb = leftTaken, svc = leftTaken)
+        val saveAsNew = Action.saveAsNew(nv, activeView)
+        val replace   = Action.Replace(Cmd.Update(ref.id, changes), ref.name)
+        Item.Unsaved(saveAsNew, Some(replace))
+      }
+
       'noSaved {
         // no matter the current view state, the user can save it
+
+        def saveAsNew(v: View) = Action.saveAsNew(nameValidationFn(), v)
+
         'clean {
-          val m = determine(None, HideDead)(None, None)
-          assertEq(m, NoSaved)
+          val fd = HideDead
+          val m = determine(None, fd)(None, None)
+          assertEq(m, NoSaved(Item.Unsaved(saveAsNew(View.default(fd)), None)))
         }
+
         'dirty {
           val m = determine(None, HideDead)(SVa.view, None)
-          assertEq(m, NoSaved)
+          assertEq(m, NoSaved(Item.Unsaved(saveAsNew(SVa.view), None)))
         }
       }
 
       'savedClean {
+
         'defaultUnclicked {
           val m = determine(SVs, SVb)(None, None)
-          assertEq(m, SavedClean(SVb.asDefault, Set(SVa.asNonDefault, SVc.asNonDefault), SVb.id))
+          assertEq(m, SavedClean(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), SVb.id))
         }
 
         'defaultClicked {
           val m = determine(SVs, SVb)(None, SVb.id)
-          assertEq(m, SavedClean(SVb.asDefault, Set(SVa.asNonDefault, SVc.asNonDefault), SVb.id))
+          assertEq(m, SavedClean(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), SVb.id))
         }
 
         'nonDefaultClickedA {
           val m = determine(SVs, SVa)(None, SVa.id)
-          assertEq(m, SavedClean(SVb.asDefault, Set(SVa.asNonDefault, SVc.asNonDefault), SVa.id))
+          assertEq(m, SavedClean(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), SVa.id))
         }
 
         'nonDefaultClickedC {
           val m = determine(SVs, SVc)(None, SVc.id)
-          assertEq(m, SavedClean(SVb.asDefault, Set(SVa.asNonDefault, SVc.asNonDefault), SVc.id))
+          assertEq(m, SavedClean(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), SVc.id))
         }
       }
 
       'savedDirty {
         'postDeletion {
           val m = determine(SVs, SVa)(SVa.view, None)
-          assertEq(m, SavedDirty(SVb.asDefault, Set(SVa.asNonDefault, SVc.asNonDefault), Item.dirty(SVb)))
+          assertEq(m, SavedDirty(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), dirtyAnon(SVa.view)))
         }
 
         'defaultClicked {
           val m = determine(SVs, ShowDead)(SVa.view, SVb.id)
-          assertEq(m, SavedDirty(SVb.asDefault, Set(SVa.asNonDefault, SVc.asNonDefault), Item.dirty(SVb)))
+          assertEq(m, SavedDirty(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), dirty(SVb, `SVb->a`, SVa.view)))
         }
 
-        'nonDefaultClickedA {
+        'nonDefaultClickedAB {
           val m = determine(SVs, ShowDead)(SVb.view, SVa.id)
-          assertEq(m, SavedDirty(SVb.asDefault, Set(SVa.asNonDefault, SVc.asNonDefault), Item.dirty(SVa)))
+          assertEq(m, SavedDirty(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), dirty(SVa, `SVa->b`, SVb.view)))
         }
 
-        'nonDefaultClickedC {
+        'nonDefaultClickedCA {
           val m = determine(SVs, ShowDead)(SVa.view, SVc.id)
-          assertEq(m, SavedDirty(SVb.asDefault, Set(SVa.asNonDefault, SVc.asNonDefault), Item.dirty(SVc)))
+          assertEq(m, SavedDirty(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), dirty(SVc, `SVc->a`, SVa.view)))
+        }
+
+        'nonDefaultClickedCB {
+          val m = determine(SVs, ShowDead)(SVb.view, SVc.id)
+          assertEq(m, SavedDirty(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), dirty(SVc, `SVc->b`, SVb.view)))
         }
       }
 

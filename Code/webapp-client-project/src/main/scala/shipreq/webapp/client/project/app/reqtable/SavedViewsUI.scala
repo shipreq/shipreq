@@ -43,9 +43,9 @@ object SavedViewsUI {
     private def interpretMenuItem(i: SavedViewLogic.Menu.Item, active: Boolean): Menu.Item = {
       val label: TagMod =
         if (i.default)
-          TagMod(defaultIcon, i.name)
+          TagMod(defaultIcon, i.name.value)
         else
-          i.name
+          i.name.value
 
       val actions =
         i.actions.whole.map(interpretMenuAction)
@@ -56,15 +56,17 @@ object SavedViewsUI {
     private def interpretMenuAction(a: SavedViewLogic.Menu.Action): Dropdown.Item = {
       import SavedViewLogic.Menu.Action
 
-      val (icon, label) = a match {
-        case Action.SaveAsNew     => (Icon.Plus , "Save as new...")
-        case Action.Replace(_, n) => (Icon.Save , "Replace " + n)
-        case Action.SetAsDefault  => (Icon.Star , "Set as default")
-        case Action.Delete        => (Icon.Trash, "Delete...")
-        case Action.Rename        => (Icon.Write, "Rename...")
+      val n = SavedView.Name("XXX")
+
+      val (icon, label, cmd) = a match {
+        case Action.SaveAsNew  (c)    => (Icon.Plus , "Save as new...", c(n))
+        case Action.Replace    (c, n) => (Icon.Save , "Replace " + n, c)
+        case Action.MakeDefault(c)    => (Icon.Star , "Set as default", c)
+        case Action.Delete     (c)    => (Icon.Trash, "Delete...", c)
+        case Action.Rename     (c)    => (Icon.Write, "Rename...", c(n))
       }
 
-      Dropdown.Item.Div(TagMod(icon.tag, label, ^.onClick --> Callback.alert(s"Clicked $a")))
+      Dropdown.Item.Div(TagMod(icon.tag, label, ^.onClick --> Callback.alert(cmd.toString)))
     }
 
     def render(p: Props): VdomElement = {
