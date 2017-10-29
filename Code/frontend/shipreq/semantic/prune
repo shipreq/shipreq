@@ -94,7 +94,7 @@ const manualRemovals = [
   s => /\.green/.test(s) && !/\.(?:button)/.test(s),
   s => /\.grey/.test(s) && !/\.(?:icon)/.test(s),
   s => /\.red/.test(s) && !/\.(?:label|button|icon)/.test(s),
-  s => /\.yellow/.test(s) && !/\.(?:card)/.test(s),
+  s => /\.yellow/.test(s) && !/\.(?:card|icon)/.test(s),
 ];
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████

@@ -95,12 +95,12 @@ object SavedViewLogic {
     }
 
     final case class SavedClean(default: Item.Default, nonDefaults: Vector[Item.NonDefault], active: Id) extends Menu {
-      override protected def unsortedItems = NonEmptyVector(default, nonDefaults.toVector)
+      override protected def unsortedItems = NonEmptyVector(default, nonDefaults)
       override def isActive = _.optionId.exists(_ ==* active)
     }
 
     final case class SavedDirty(default: Item.Default, nonDefaults: Vector[Item.NonDefault], unsaved: Item.Unsaved) extends Menu {
-      override protected def unsortedItems = NonEmptyVector(default, nonDefaults.toVector :+ unsaved)
+      override protected def unsortedItems = NonEmptyVector(default, nonDefaults :+ unsaved)
       override def isActive = _.optionId.isEmpty
     }
 
@@ -143,20 +143,20 @@ object SavedViewLogic {
         override val actions = NonEmptyVector(makeDefault, rename, delete)
       }
 
-      def default(validate: Name => String \/ Name, sv: SavedView): Default =
+      def default(validate: String => String \/ Name, sv: SavedView): Default =
         Item.Default(
           sv.id,
           sv.name,
           Action.rename(validate, sv),
-          Action.delete(sv.id))
+          Action.delete(sv))
 
-      def nonDefault(validate: Name => String \/ Name, sv: SavedView): NonDefault =
+      def nonDefault(validate: String => String \/ Name, sv: SavedView): NonDefault =
         Item.NonDefault(
           sv.id,
           sv.name,
           Action.makeDefault(sv.id),
           Action.rename(validate, sv),
-          Action.delete(sv.id))
+          Action.delete(sv))
     }
 
     sealed trait Action
@@ -165,23 +165,23 @@ object SavedViewLogic {
       sealed trait Unsaved extends Action
       sealed trait Saved   extends Action
 
-      final case class SaveAsNew  (cmd: Name => String \/ SavedViewCmd.Create)                extends Unsaved
-      final case class Rename     (cmd: Name => PotentialChange[String, SavedViewCmd.Update]) extends Saved
-      final case class Replace    (cmd: SavedViewCmd.Update, name: Name)                      extends Unsaved
-      final case class Delete     (cmd: SavedViewCmd.Delete)                                  extends Saved
-      final case class MakeDefault(cmd: SavedViewCmd.MakeDefault)                             extends Saved
+      final case class SaveAsNew  (cmd: String => String \/ SavedViewCmd.Create)                            extends Unsaved
+      final case class Rename     (name: Name, cmd: String => PotentialChange[String, SavedViewCmd.Update]) extends Saved
+      final case class Replace    (name: Name, cmd: SavedViewCmd.Update)                                    extends Unsaved
+      final case class Delete     (name: Name, cmd: SavedViewCmd.Delete)                                    extends Saved
+      final case class MakeDefault(cmd: SavedViewCmd.MakeDefault)                                           extends Saved
 
-      def saveAsNew(validate: Name => String \/ Name, view: View): SaveAsNew =
+      def saveAsNew(validate: String => String \/ Name, view: View): SaveAsNew =
         SaveAsNew(validate(_).map(SavedViewCmd.Create(_, view)))
 
       def makeDefault(id: Id): MakeDefault =
         MakeDefault(SavedViewCmd.MakeDefault(id))
 
-      def delete(id: Id): Delete =
-        Delete(SavedViewCmd.Delete(id))
+      def delete(sv: SavedView): Delete =
+        Delete(sv.name, SavedViewCmd.Delete(sv.id))
 
-      def rename(validate: Name => String \/ Name, sv: SavedView): Rename =
-        Rename(i =>
+      def rename(validate: String => String \/ Name, sv: SavedView): Rename =
+        Rename(sv.name, i =>
           PotentialChange.fromDisjunction(validate(i))
             .ignore(_ ==* sv.name)
             .map(n => SavedViewCmd.Update(sv.id, SavedViewGD.Name(n))))
@@ -209,10 +209,10 @@ object SavedViewLogic {
                   state     : State,
                   activeView: View): Menu = {
 
-      def validateName(id: Option[Id], name: Name): String \/ Name =
+      def validateName(id: Option[Id], name: String): String \/ Name =
         Name.validator(Name.State(id, savedViews))
           .unnamed
-          .apply(name.value)
+          .apply(name)
           .leftMap(Simple.Invalidity.toText)
 
       def saveAsNew: Action.SaveAsNew =
@@ -248,7 +248,7 @@ object SavedViewLogic {
                 case None =>
                   SavedClean(default, nonDefaults, ref.id)
                 case Some(changes) =>
-                  val replace   = Action.Replace(SavedViewCmd.Update(ref.id, changes), ref.name)
+                  val replace   = Action.Replace(ref.name, SavedViewCmd.Update(ref.id, changes))
                   val dirtyItem = Item.Unsaved(saveAsNew, Some(replace))
                   SavedDirty(default, nonDefaults, dirtyItem)
               }

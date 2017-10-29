@@ -2,7 +2,7 @@ package shipreq.base.util
 
 import japgolly.microlibs.nonempty.NonEmpty
 import japgolly.univeq.UnivEq
-import scalaz.Equal
+import scalaz.{-\/, Equal, \/, \/-}
 import PotentialChange._
 
 sealed abstract class PotentialChange[+E, +A] {
@@ -94,6 +94,13 @@ sealed abstract class PotentialChange[+E, +A] {
     this match {
       case Success(a)             => Some(a)
       case Failure(_) | Unchanged => None
+    }
+
+  final def toDisjOption: E \/ Option[A] =
+    this match {
+      case Success(a) => \/-(Some(a))
+      case Unchanged  => \/-(None)
+      case Failure(e) => -\/(e)
     }
 }
 

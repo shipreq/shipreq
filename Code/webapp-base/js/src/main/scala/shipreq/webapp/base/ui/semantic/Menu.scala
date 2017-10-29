@@ -3,7 +3,7 @@ package shipreq.webapp.base.ui.semantic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
-import org.scalajs.dom.html
+import org.scalajs.dom.{html, Node}
 import shipreq.webapp.base.ui.semantic.{Dropdown => SDropdown}
 
 /** http://semantic-ui.com/collections/menu.html
@@ -92,6 +92,11 @@ object Menu {
                         tagMod: TagMod    = EmptyVdom) {
     val cont: VdomTag =
       (`type`.cont <+ state <+ colour)(tagMod)
+
+    def withOnClick(getDOMNode: CallbackTo[Node], cb: Callback): Item = {
+      val onClick = cb >> getDOMNode.map(Dropdown.jquery(_).dropdown("hide"))
+      copy(tagMod = tagMod(^.onClick --> onClick))
+    }
   }
 
   type Items = Seq[Item]
@@ -118,7 +123,7 @@ object Menu {
         o <- dropdownOptions
         n <- $.getDOMNode.toCBO
       } yield
-        JQuery(n).find(".ui.dropdown").dropdown(o)
+        Dropdown.jquery(n).dropdown(o)
 
     def render(p: Props) =
       p.style.cont(

@@ -21,7 +21,7 @@ import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.lib.DataReusability._
-import shipreq.webapp.base.protocol.{ServerSideProcInvoker, UpdateContentCmd}
+import shipreq.webapp.base.protocol.{SavedViewCmd, ServerSideProcInvoker, UpdateContentCmd}
 import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.ui.semantic.{Icon, Message}
@@ -47,6 +47,7 @@ object ReqTablePage {
                                pxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
                                reqDetailRC     : RouterCtl[ExternalPubid],
                                updateIO        : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any],
+                               savedViewIO     : ServerSideProcInvoker[SavedViewCmd, ErrorMsg, Any],
                                rowAsyncW       : AsyncFeature.Write.D1[Row.SourceId, ErrorMsg])
 
   final case class Props(create    : CreateFeature.ReadWrite.ForProject,
@@ -89,15 +90,25 @@ object ReqTablePage {
 
     def setModifiedView(project         : Project,
                         updateFilterText: Boolean)
-                       (newView         : View): State => State = {
-      val action   = SavedViewLogic.Action.Modify(newView)
+                       (newView         : View): State => State =
+      runSavedViewAction(project, updateFilterText)(SavedViewLogic.Action.Modify(newView))
+
+    def runSavedViewAction(project         : Project,
+                           updateFilterText: Boolean)
+                          (action          : SavedViewLogic.Action): State => State = {
       val modSVS   = SavedViewLogic.Action.interpret(project.reqtableViews)(action)
       val modState = view.modify(modSVS)
-      if (updateFilterText) {
-        val txt = newView.filter.fold("")(Filter.Valid.toText(project.config, _))
-        modState andThen filter.set(FilterEditor.State(txt, Valid))
-      } else
+      if (updateFilterText)
+        modState andThen this.updateFilterText(project)
+      else
         modState
+    }
+
+    def updateFilterText(project: Project): State => State = s => {
+      val filterDeadFallback = ShowDead // This doesn't impact filter text
+      val v = s.view.activeView(project.reqtableViews, filterDeadFallback)
+      val txt = v.filter.fold("")(Filter.Valid.toText(project.config, _))
+      filter.set(FilterEditor.State(txt, Valid))(s)
     }
   }
 
@@ -276,6 +287,18 @@ object ReqTablePage {
         .map(x => CreateFeature.RowKey.req(x._1.reqTypeId))
     }
 
+    val runSavedViewAction: SavedViewLogic.Action ~=> Callback =
+      Reusable.fn { action =>
+        for {
+          project ← pxProject.toCallback
+          mod     = State.runSavedViewAction(project, true)(action)
+          _       ← stateAccess.modState(mod)
+        } yield ()
+    }
+
+    val runSavedViewCmd: SavedViewCmd ~=> Callback =
+      Reusable.fn(cmd => savedViewIO(cmd, e => Callback.log(s"SUCCESS: $e"), f => Callback.alert(f.value))) // TODO TEMP
+
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     def render(p: Props): VdomElement = {
@@ -335,12 +358,10 @@ object ReqTablePage {
         p.create,
         activeColumnsPlus)
 
-      val savedViews = SavedViewsUI.Props(
-        SavedViewLogic.Menu.determine(
-          project.reqtableViews,
-          p.state.view,
-          activeView)
-      ).render
+      val savedViews = {
+        val menu = SavedViewLogic.Menu.determine(project.reqtableViews, p.state.view, activeView) // TODO Cache
+        SavedViewsUI.Props(menu, runSavedViewAction, runSavedViewCmd).render
+      }
 
       val filterEditor = FilterEditor.Props(
         p.state.filter,

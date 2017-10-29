@@ -115,8 +115,8 @@ object SavedViewLogicTest extends TestSuite {
                             svb  : A = null,
                             svc  : A = null,
                             xxx  : A = null,
-                            empty: A = null): SavedView.Name => A =
-    i => SavedView.Name(i.value.trim) match {
+                            empty: A = null): String => A =
+    i => SavedView.Name(i.trim) match {
       case s if s       ==* SVa.name => Option(sva  ).getOrElse(default(s))
       case s if s       ==* SVb.name => Option(svb  ).getOrElse(default(s))
       case s if s       ==* SVc.name => Option(svc  ).getOrElse(default(s))
@@ -127,11 +127,12 @@ object SavedViewLogicTest extends TestSuite {
   def nameValidationFn(sva: String \/ SavedView.Name = null,
                        svb: String \/ SavedView.Name = null,
                        svc: String \/ SavedView.Name = null,
-                       xxx: String \/ SavedView.Name = null): SavedView.Name => String \/ SavedView.Name =
+                       xxx: String \/ SavedView.Name = null): String => String \/ SavedView.Name =
     testNameFn[String \/ SavedView.Name](\/-(_))(sva = sva, svb = svb, svc = svc, xxx = xxx, empty = leftBlank)
 
-  implicit def nameFnEquality[A: Equal]: Equal[SavedView.Name => A] =
-    Equal.equal((f, g) => testNames.forall { n =>
+  implicit def nameFnEquality[A: Equal]: Equal[String => A] =
+    Equal.equal((f, g) => testNames.forall { nn =>
+      val n = nn.value
       val pass = Equal[A].equal(f(n), g(n))
       if (!pass) {
         println(s"$n -- ${f(n)} ≠ ${g(n)}")
@@ -220,7 +221,7 @@ object SavedViewLogicTest extends TestSuite {
       def dirty(ref: SavedView, changes: SavedViewGD.NonEmptyValues, activeView: View): Item.Unsaved = {
         val nv        = nameValidationFn(sva = leftTaken, svb = leftTaken, svc = leftTaken)
         val saveAsNew = Action.saveAsNew(nv, activeView)
-        val replace   = Action.Replace(Cmd.Update(ref.id, changes), ref.name)
+        val replace   = Action.Replace(ref.name, Cmd.Update(ref.id, changes))
         Item.Unsaved(saveAsNew, Some(replace))
       }
 

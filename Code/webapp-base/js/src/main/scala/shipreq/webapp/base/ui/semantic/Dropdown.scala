@@ -2,7 +2,7 @@ package shipreq.webapp.base.ui.semantic
 
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
-import org.scalajs.dom.html
+import org.scalajs.dom.{html, Node}
 import scala.scalajs.js
 import scala.scalajs.js.annotation.ScalaJSDefined
 
@@ -83,6 +83,7 @@ object Dropdown {
     object Action {
       /** Hides the dropdown menu and stores value, but does not change text */
       @inline def Hide = "hide".asInstanceOf[Action]
+      @inline def nothing = "nothing".asInstanceOf[Action]
     }
 
     @ScalaJSDefined
@@ -137,4 +138,6 @@ object Dropdown {
     }
   }
 
+  def jquery(n: Node): JQuery =
+    JQuery(n).find(".ui.dropdown")
 }
