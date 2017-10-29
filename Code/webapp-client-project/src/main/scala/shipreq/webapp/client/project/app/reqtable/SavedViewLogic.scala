@@ -79,181 +79,181 @@ object SavedViewLogic {
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   sealed trait Menu {
-    protected def unsortedItems: NonEmptyVector[Menu.Item]
-    def isActive: Menu.Item => Boolean
+    protected def unsortedItems: NonEmptyVector[MenuItem]
+    def isActive: MenuItem => Boolean
 
-    final val items: NonEmptyVector[Menu.Item] =
+    final val items: NonEmptyVector[MenuItem] =
       unsortedItems.sortBy(_.name.value.toUpperCase)
 
     assert(items.whole.count(isActive) == 1)
   }
 
   object Menu {
-    final case class NoSaved(unsaved: Item.Unsaved) extends Menu {
+    final case class NoSaved(unsaved: MenuItem.Unsaved) extends Menu {
       override protected def unsortedItems = NonEmptyVector one unsaved
       override def isActive = _ => true
     }
 
-    final case class SavedClean(default: Item.Default, nonDefaults: Vector[Item.NonDefault], active: Id) extends Menu {
+    final case class SavedClean(default: MenuItem.Default, nonDefaults: Vector[MenuItem.NonDefault], active: Id) extends Menu {
       override protected def unsortedItems = NonEmptyVector(default, nonDefaults)
       override def isActive = _.optionId.exists(_ ==* active)
     }
 
-    final case class SavedDirty(default: Item.Default, nonDefaults: Vector[Item.NonDefault], unsaved: Item.Unsaved) extends Menu {
+    final case class SavedDirty(default: MenuItem.Default, nonDefaults: Vector[MenuItem.NonDefault], unsaved: MenuItem.Unsaved) extends Menu {
       override protected def unsortedItems = NonEmptyVector(default, nonDefaults :+ unsaved)
       override def isActive = _.optionId.isEmpty
     }
+  }
 
-    sealed trait Item {
-      def optionId: Option[Id]
-      def name: Name
-      def default: Boolean
-      def actions: NonEmptyVector[Action]
+  sealed trait MenuItem {
+    def optionId: Option[Id]
+    def name: Name
+    def default: Boolean
+    def actions: NonEmptyVector[MenuAction]
+  }
+
+  object MenuItem {
+    final case class Unsaved(saveAsNew: MenuAction.SaveAsNew,
+                             replace  : Option[MenuAction.Replace]) extends MenuItem {
+      override def optionId = None
+      override def name = Name("Unsaved view") // TODO Prohibit in name validation
+      override def default = false
+      override val actions = replace.fold(NonEmptyVector.one[MenuAction](saveAsNew))(NonEmptyVector(saveAsNew, _))
     }
 
-    object Item {
-      final case class Unsaved(saveAsNew: Action.SaveAsNew,
-                               replace  : Option[Action.Replace]) extends Item {
-        override def optionId = None
-        override def name = Name("Unsaved view") // TODO Prohibit in name validation
-        override def default = false
-        override val actions = replace.fold(NonEmptyVector.one[Action](saveAsNew))(NonEmptyVector(saveAsNew, _))
-      }
-
-      sealed trait Saved extends Item {
-        def id: Id
-        final override val optionId = Some(id)
-        override def actions: NonEmptyVector[Action.Saved]
-      }
-
-      final case class Default(id    : Id,
-                               name  : Name,
-                               rename: Action.Rename,
-                               delete: Action.Delete) extends Saved {
-        override def default = true
-        override val actions = NonEmptyVector(rename, delete)
-      }
-
-      final case class NonDefault(id         : Id,
-                                  name       : Name,
-                                  makeDefault: Action.MakeDefault,
-                                  rename     : Action.Rename,
-                                  delete     : Action.Delete) extends Saved {
-        override def default = false
-        override val actions = NonEmptyVector(makeDefault, rename, delete)
-      }
-
-      def default(validate: String => String \/ Name, sv: SavedView): Default =
-        Item.Default(
-          sv.id,
-          sv.name,
-          Action.rename(validate, sv),
-          Action.delete(sv))
-
-      def nonDefault(validate: String => String \/ Name, sv: SavedView): NonDefault =
-        Item.NonDefault(
-          sv.id,
-          sv.name,
-          Action.makeDefault(sv.id),
-          Action.rename(validate, sv),
-          Action.delete(sv))
+    sealed trait Saved extends MenuItem {
+      def id: Id
+      final override val optionId = Some(id)
+      override def actions: NonEmptyVector[MenuAction.Saved]
     }
 
-    sealed trait Action
-
-    object Action {
-      sealed trait Unsaved extends Action
-      sealed trait Saved   extends Action
-
-      final case class SaveAsNew  (cmd: String => String \/ SavedViewCmd.Create)                            extends Unsaved
-      final case class Rename     (name: Name, cmd: String => PotentialChange[String, SavedViewCmd.Update]) extends Saved
-      final case class Replace    (name: Name, cmd: SavedViewCmd.Update)                                    extends Unsaved
-      final case class Delete     (name: Name, cmd: SavedViewCmd.Delete)                                    extends Saved
-      final case class MakeDefault(cmd: SavedViewCmd.MakeDefault)                                           extends Saved
-
-      def saveAsNew(validate: String => String \/ Name, view: View): SaveAsNew =
-        SaveAsNew(validate(_).map(SavedViewCmd.Create(_, view)))
-
-      def makeDefault(id: Id): MakeDefault =
-        MakeDefault(SavedViewCmd.MakeDefault(id))
-
-      def delete(sv: SavedView): Delete =
-        Delete(sv.name, SavedViewCmd.Delete(sv.id))
-
-      def rename(validate: String => String \/ Name, sv: SavedView): Rename =
-        Rename(sv.name, i =>
-          PotentialChange.fromDisjunction(validate(i))
-            .ignore(_ ==* sv.name)
-            .map(n => SavedViewCmd.Update(sv.id, SavedViewGD.Name(n))))
+    final case class Default(id    : Id,
+                             name  : Name,
+                             rename: MenuAction.Rename,
+                             delete: MenuAction.Delete) extends Saved {
+      override def default = true
+      override val actions = NonEmptyVector(rename, delete)
     }
 
-    private def diff(ref: SavedView, activeView: View): Option[SavedViewGD.NonEmptyValues] = {
-      def changedAttr[A: UnivEq, B](lens: Lens[View, A]): Option[A] = {
-        val a = lens.get(ref.view)
-        val b = lens.get(activeView)
-        Option.unless(a ==* b)(b)
-      }
-
-      NonEmpty(
-        SavedViewGD.values(
-          SavedViewGD.attrs.iterator.map {
-            case SavedViewGD.Name           => None
-            case a @ SavedViewGD.Columns    => changedAttr(View.columns)   .map(a.apply)
-            case a @ SavedViewGD.Order      => changedAttr(View.order)     .map(a.apply)
-            case a @ SavedViewGD.FilterDead => changedAttr(View.filterDead).map(a.apply)
-            case a @ SavedViewGD.Filter     => changedAttr(View.filter)    .map(a.apply)
-          }.filterDefined))
+    final case class NonDefault(id         : Id,
+                                name       : Name,
+                                makeDefault: MenuAction.MakeDefault,
+                                rename     : MenuAction.Rename,
+                                delete     : MenuAction.Delete) extends Saved {
+      override def default = false
+      override val actions = NonEmptyVector(makeDefault, rename, delete)
     }
 
-    def determine(savedViews: SavedViews.Optional,
-                  state     : State,
-                  activeView: View): Menu = {
+    def default(validate: String => String \/ Name, sv: SavedView): Default =
+      MenuItem.Default(
+        sv.id,
+        sv.name,
+        MenuAction.rename(validate, sv),
+        MenuAction.delete(sv))
 
-      def validateName(id: Option[Id], name: String): String \/ Name =
-        Name.validator(Name.State(id, savedViews))
-          .unnamed
-          .apply(name)
-          .leftMap(Simple.Invalidity.toText)
+    def nonDefault(validate: String => String \/ Name, sv: SavedView): NonDefault =
+      MenuItem.NonDefault(
+        sv.id,
+        sv.name,
+        MenuAction.makeDefault(sv.id),
+        MenuAction.rename(validate, sv),
+        MenuAction.delete(sv))
+  }
 
-      def saveAsNew: Action.SaveAsNew =
-        Action.saveAsNew(validateName(None, _), activeView)
+  sealed trait MenuAction
 
-      savedViews match {
-        case None =>
-          NoSaved(Item.Unsaved(saveAsNew, replace = None))
+  object MenuAction {
+    sealed trait Unsaved extends MenuAction
+    sealed trait Saved   extends MenuAction
 
-        case Some(svs) =>
+    final case class SaveAsNew  (cmd: String => String \/ SavedViewCmd.Create)                            extends Unsaved
+    final case class Rename     (name: Name, cmd: String => PotentialChange[String, SavedViewCmd.Update]) extends Saved
+    final case class Replace    (name: Name, cmd: SavedViewCmd.Update)                                    extends Unsaved
+    final case class Delete     (name: Name, cmd: SavedViewCmd.Delete)                                    extends Saved
+    final case class MakeDefault(cmd: SavedViewCmd.MakeDefault)                                           extends Saved
 
-          val default = {
-            val sv = svs.default
-            Item.default(validateName(Some(sv.id), _), sv)
-          }
+    def saveAsNew(validate: String => String \/ Name, view: View): SaveAsNew =
+      SaveAsNew(validate(_).map(SavedViewCmd.Create(_, view)))
 
-          val nonDefaults = svs.nonDefault
-            .valuesIterator
-            .map(sv => Item.nonDefault(validateName(Some(sv.id), _), sv))
-            .toVector
+    def makeDefault(id: Id): MakeDefault =
+      MakeDefault(SavedViewCmd.MakeDefault(id))
 
-          state.referenceViewId.flatMap(svs.get) match {
-            case None =>
-              state.manualView match {
-                case None =>
-                  SavedClean(default, nonDefaults, svs.default.id)
-                case Some(_) =>
-                  val dirtyItem = Item.Unsaved(saveAsNew, None)
-                  SavedDirty(default, nonDefaults, dirtyItem)
-              }
-            case Some(ref) =>
-              diff(ref, activeView) match {
-                case None =>
-                  SavedClean(default, nonDefaults, ref.id)
-                case Some(changes) =>
-                  val replace   = Action.Replace(ref.name, SavedViewCmd.Update(ref.id, changes))
-                  val dirtyItem = Item.Unsaved(saveAsNew, Some(replace))
-                  SavedDirty(default, nonDefaults, dirtyItem)
-              }
-          }
-      }
+    def delete(sv: SavedView): Delete =
+      Delete(sv.name, SavedViewCmd.Delete(sv.id))
+
+    def rename(validate: String => String \/ Name, sv: SavedView): Rename =
+      Rename(sv.name, i =>
+        PotentialChange.fromDisjunction(validate(i))
+          .ignore(_ ==* sv.name)
+          .map(n => SavedViewCmd.Update(sv.id, SavedViewGD.Name(n))))
+  }
+
+  private def diff(ref: SavedView, activeView: View): Option[SavedViewGD.NonEmptyValues] = {
+    def changedAttr[A: UnivEq, B](lens: Lens[View, A]): Option[A] = {
+      val a = lens.get(ref.view)
+      val b = lens.get(activeView)
+      Option.unless(a ==* b)(b)
+    }
+
+    NonEmpty(
+      SavedViewGD.values(
+        SavedViewGD.attrs.iterator.map {
+          case SavedViewGD.Name           => None
+          case a @ SavedViewGD.Columns    => changedAttr(View.columns)   .map(a.apply)
+          case a @ SavedViewGD.Order      => changedAttr(View.order)     .map(a.apply)
+          case a @ SavedViewGD.FilterDead => changedAttr(View.filterDead).map(a.apply)
+          case a @ SavedViewGD.Filter     => changedAttr(View.filter)    .map(a.apply)
+        }.filterDefined))
+  }
+
+  def menu(savedViews: SavedViews.Optional,
+           state     : State,
+           activeView: View): Menu = {
+
+    def validateName(id: Option[Id], name: String): String \/ Name =
+      Name.validator(Name.State(id, savedViews))
+        .unnamed
+        .apply(name)
+        .leftMap(Simple.Invalidity.toText)
+
+    def saveAsNew: MenuAction.SaveAsNew =
+      MenuAction.saveAsNew(validateName(None, _), activeView)
+
+    savedViews match {
+      case None =>
+        Menu.NoSaved(MenuItem.Unsaved(saveAsNew, replace = None))
+
+      case Some(svs) =>
+
+        val default = {
+          val sv = svs.default
+          MenuItem.default(validateName(Some(sv.id), _), sv)
+        }
+
+        val nonDefaults = svs.nonDefault
+          .valuesIterator
+          .map(sv => MenuItem.nonDefault(validateName(Some(sv.id), _), sv))
+          .toVector
+
+        state.referenceViewId.flatMap(svs.get) match {
+          case None =>
+            state.manualView match {
+              case None =>
+                Menu.SavedClean(default, nonDefaults, svs.default.id)
+              case Some(_) =>
+                val dirtyItem = MenuItem.Unsaved(saveAsNew, None)
+                Menu.SavedDirty(default, nonDefaults, dirtyItem)
+            }
+          case Some(ref) =>
+            diff(ref, activeView) match {
+              case None =>
+                Menu.SavedClean(default, nonDefaults, ref.id)
+              case Some(changes) =>
+                val replace   = MenuAction.Replace(ref.name, SavedViewCmd.Update(ref.id, changes))
+                val dirtyItem = MenuItem.Unsaved(saveAsNew, Some(replace))
+                Menu.SavedDirty(default, nonDefaults, dirtyItem)
+            }
+        }
     }
   }
 

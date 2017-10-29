@@ -7,13 +7,14 @@ import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data.reqtable.SavedView
 import shipreq.webapp.base.protocol.SavedViewCmd
 import shipreq.webapp.base.ui.semantic.Dropdown.JsOptionsOps
-import shipreq.webapp.base.ui.semantic.{Colour, Dropdown, Icon, Menu, SemExtAny}
+import shipreq.webapp.base.ui.semantic.{Colour, Dropdown, Icon, Menu => SemUiMenu, SemExtAny}
 import shipreq.webapp.client.project.app.Style.reqtable.{savedViews => *}
+import SavedViewLogic._
 
 object SavedViewsUI {
 
-  final case class Props(menu     : SavedViewLogic.Menu,
-                         runAction: SavedViewLogic.Action ~=> Callback,
+  final case class Props(menu     : Menu,
+                         runAction: Action ~=> Callback,
                          runCmd   : SavedViewCmd ~=> Callback) {
     @inline def render: VdomElement = Component(this)
   }
@@ -22,8 +23,8 @@ object SavedViewsUI {
   //  Reusability.caseClass
 
   private val menuStyle =
-    Menu.Style(
-      Menu.Attr.Secondary + Menu.Attr.Pointing,
+    SemUiMenu.Style(
+      SemUiMenu.Attr.Secondary + SemUiMenu.Attr.Pointing,
       tagMod = *.menu)
 
   private val dropdownOptions =
@@ -36,34 +37,32 @@ object SavedViewsUI {
 
   final class Backend($: BackendScope[Props, Unit]) {
 
-    private def interpretMenu(interpretMenuItem: (SavedViewLogic.Menu.Item, Boolean) => Menu.Item)
-                             (m: SavedViewLogic.Menu): Menu.Props =
-      Menu.Props(
+    private def interpretMenu(interpretMenuItem: (MenuItem, Boolean) => SemUiMenu.Item)
+                             (m: Menu): SemUiMenu.Props =
+      SemUiMenu.Props(
         menuStyle,
         m.items.whole.map(i => interpretMenuItem(i, m.isActive(i))),
         dropdownOptions = dropdownOptions)
 
-    private def interpretMenuItem(runAction          : SavedViewLogic.Action => Callback,
-                                  interpretMenuAction: SavedViewLogic.Menu.Action => Dropdown.Item)
-                                 (i                  : SavedViewLogic.Menu.Item,
-                                  active             : Boolean): Menu.Item = {
+    private def interpretMenuItem(runAction          : Action => Callback,
+                                  interpretMenuAction: MenuAction => Dropdown.Item)
+                                 (mi                 : MenuItem,
+                                  active             : Boolean): SemUiMenu.Item = {
       val label: TagMod =
-        if (i.default)
-          TagMod(defaultIcon, i.name.value)
+        if (mi.default)
+          TagMod(defaultIcon, mi.name.value)
         else
-          i.name.value
+          mi.name.value
 
       val actions =
-        i.actions.whole.map(interpretMenuAction)
+        mi.actions.whole.map(interpretMenuAction)
 
-      Menu.DropdownType.OnHover(label, actions)
+      SemUiMenu.DropdownType.OnHover(label, actions)
         .toItem(tagMod = *.activeItem.when(active))
-        .withOnClick($.getDOMNode, i.optionId.map(id => runAction(SavedViewLogic.Action.Select(id))).getOrEmpty)
+        .withOnClick($.getDOMNode, mi.optionId.map(id => runAction(Action.Select(id))).getOrEmpty)
     }
 
-    private def interpretMenuAction(runCmd: SavedViewCmd ~=> Callback)
-                                   (a: SavedViewLogic.Menu.Action): Dropdown.Item = {
-      import SavedViewLogic.Menu.Action
+    private def interpretMenuAction(runCmd: SavedViewCmd ~=> Callback): MenuAction => Dropdown.Item = {
 
       def item(icon: Icon, label: String, onClick: Callback) =
         Dropdown.Item.Div(TagMod(icon.tag, label, ^.onClick --> onClick))
@@ -80,28 +79,27 @@ object SavedViewsUI {
           _ <- runCmd(cmd).toCBO
         } yield ()
 
-      a match {
-
-        case Action.SaveAsNew(cmdFn) =>
+      {
+        case MenuAction.SaveAsNew(cmdFn) =>
           val cb = promptThenRun(
             CallbackTo.prompt("Enter a name for this view"),
             cmdFn(_).map(Some(_)).toEither)
           item(Icon.Plus, "Save as new...", cb)
 
-        case Action.Replace(name, cmd) =>
+        case MenuAction.Replace(name, cmd) =>
           item(Icon.Save, s"Replace ${name.value}", runCmd(cmd))
 
-        case Action.MakeDefault(cmd) =>
+        case MenuAction.MakeDefault(cmd) =>
           item(Icon.Star, "Set as default", runCmd(cmd))
 
-        case Action.Delete(name, cmd) =>
+        case MenuAction.Delete(name, cmd) =>
           val cb = for {
             _ <- CallbackTo.confirm(s"Really delete the '${name.value}' view?").requireCBO
             _ <- runCmd(cmd).toCBO
           } yield ()
           item(Icon.Trash, "Delete...", cb)
 
-        case Action.Rename(name, cmdFn) =>
+        case MenuAction.Rename(name, cmdFn) =>
           val cb = promptThenRun(
             CallbackTo.prompt(s"Enter a new name for ${name.value}", name.value),
             cmdFn(_).toDisjOption.toEither)

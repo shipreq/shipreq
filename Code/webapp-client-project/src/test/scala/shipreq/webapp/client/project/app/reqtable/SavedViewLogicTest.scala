@@ -96,11 +96,11 @@ object SavedViewLogicTest extends TestSuite {
       svc = if (sv eq SVc) \/-(SVc.name) else leftTaken,
     )
 
-    def asDefault: Menu.Item.Default =
-      Menu.Item.default(nv, sv)
+    def asDefault: MenuItem.Default =
+      MenuItem.default(nv, sv)
 
-    def asNonDefault: Menu.Item.NonDefault =
-      Menu.Item.nonDefault(nv, sv)
+    def asNonDefault: MenuItem.NonDefault =
+      MenuItem.nonDefault(nv, sv)
   }
 
   val testNames: List[SavedView.Name] =
@@ -140,20 +140,20 @@ object SavedViewLogicTest extends TestSuite {
       pass
     })
 
-  implicit val equalMenuActionReplace    : Equal[Menu.Action.Replace    ] = deriveEqual
-  implicit val equalMenuActionDelete     : Equal[Menu.Action.Delete     ] = deriveEqual
-  implicit val equalMenuActionMakeDefault: Equal[Menu.Action.MakeDefault] = deriveEqual
-  implicit val equalMenuActionSaveAsNew  : Equal[Menu.Action.SaveAsNew  ] = deriveEqual
-  implicit val equalMenuActionRename     : Equal[Menu.Action.Rename     ] = deriveEqual
-  implicit val equalMenuActionUnsaved    : Equal[Menu.Action.Unsaved    ] = deriveEqual
-  implicit val equalMenuItemD            : Equal[Menu.Item.Default      ] = deriveEqual
-  implicit val equalMenuItemND           : Equal[Menu.Item.NonDefault   ] = deriveEqual
-  implicit val equalMenuItemS            : Equal[Menu.Item.Saved        ] = deriveEqual
-  implicit val equalMenuItemU            : Equal[Menu.Item.Unsaved      ] = deriveEqual
-  implicit val equalMenuU                : Equal[Menu.NoSaved           ] = deriveEqual
-  implicit val equalMenuSD               : Equal[Menu.SavedDirty        ] = deriveEqual
-  implicit val equalMenuSC               : Equal[Menu.SavedClean        ] = deriveEqual
-  implicit val equalMenu                 : Equal[Menu                   ] = deriveEqual
+  implicit val equalMenuActionReplace    : Equal[MenuAction.Replace    ] = deriveEqual
+  implicit val equalMenuActionDelete     : Equal[MenuAction.Delete     ] = deriveEqual
+  implicit val equalMenuActionMakeDefault: Equal[MenuAction.MakeDefault] = deriveEqual
+  implicit val equalMenuActionSaveAsNew  : Equal[MenuAction.SaveAsNew  ] = deriveEqual
+  implicit val equalMenuActionRename     : Equal[MenuAction.Rename     ] = deriveEqual
+  implicit val equalMenuActionUnsaved    : Equal[MenuAction.Unsaved    ] = deriveEqual
+  implicit val equalMenuItemD            : Equal[MenuItem.Default      ] = deriveEqual
+  implicit val equalMenuItemND           : Equal[MenuItem.NonDefault   ] = deriveEqual
+  implicit val equalMenuItemS            : Equal[MenuItem.Saved        ] = deriveEqual
+  implicit val equalMenuItemU            : Equal[MenuItem.Unsaved      ] = deriveEqual
+  implicit val equalMenuU                : Equal[Menu.NoSaved          ] = deriveEqual
+  implicit val equalMenuSD               : Equal[Menu.SavedDirty       ] = deriveEqual
+  implicit val equalMenuSC               : Equal[Menu.SavedClean       ] = deriveEqual
+  implicit val equalMenu                 : Equal[Menu                  ] = deriveEqual
 
   override def tests = TestSuite {
 
@@ -202,43 +202,43 @@ object SavedViewLogicTest extends TestSuite {
     }
 
     'menu {
-      import Menu.{determine => _, _}
+      import Menu._
 
       def determine(savedViews        : SavedViews.Optional,
                     filterDeadFallback: FilterDead)
                    (manualView        : Option[View],
                     referenceView     : Option[SavedView.Id]): Menu = {
         val s = State(manualView, referenceView)
-        Menu.determine(savedViews, s, s.activeView(savedViews, filterDeadFallback))
+        menu(savedViews, s, s.activeView(savedViews, filterDeadFallback))
       }
 
-      def dirtyAnon(activeView: View): Item.Unsaved = {
+      def dirtyAnon(activeView: View): MenuItem.Unsaved = {
         val nv        = nameValidationFn(sva = leftTaken, svb = leftTaken, svc = leftTaken)
-        val saveAsNew = Action.saveAsNew(nv, activeView)
-        Item.Unsaved(saveAsNew, None)
+        val saveAsNew = MenuAction.saveAsNew(nv, activeView)
+        MenuItem.Unsaved(saveAsNew, None)
       }
 
-      def dirty(ref: SavedView, changes: SavedViewGD.NonEmptyValues, activeView: View): Item.Unsaved = {
+      def dirty(ref: SavedView, changes: SavedViewGD.NonEmptyValues, activeView: View): MenuItem.Unsaved = {
         val nv        = nameValidationFn(sva = leftTaken, svb = leftTaken, svc = leftTaken)
-        val saveAsNew = Action.saveAsNew(nv, activeView)
-        val replace   = Action.Replace(ref.name, Cmd.Update(ref.id, changes))
-        Item.Unsaved(saveAsNew, Some(replace))
+        val saveAsNew = MenuAction.saveAsNew(nv, activeView)
+        val replace   = MenuAction.Replace(ref.name, Cmd.Update(ref.id, changes))
+        MenuItem.Unsaved(saveAsNew, Some(replace))
       }
 
       'noSaved {
         // no matter the current view state, the user can save it
 
-        def saveAsNew(v: View) = Action.saveAsNew(nameValidationFn(), v)
+        def saveAsNew(v: View) = MenuAction.saveAsNew(nameValidationFn(), v)
 
         'clean {
           val fd = HideDead
           val m = determine(None, fd)(None, None)
-          assertEq(m, NoSaved(Item.Unsaved(saveAsNew(View.default(fd)), None)))
+          assertEq(m, NoSaved(MenuItem.Unsaved(saveAsNew(View.default(fd)), None)))
         }
 
         'dirty {
           val m = determine(None, HideDead)(SVa.view, None)
-          assertEq(m, NoSaved(Item.Unsaved(saveAsNew(SVa.view), None)))
+          assertEq(m, NoSaved(MenuItem.Unsaved(saveAsNew(SVa.view), None)))
         }
       }
 

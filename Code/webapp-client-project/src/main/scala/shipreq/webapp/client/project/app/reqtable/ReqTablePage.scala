@@ -359,7 +359,7 @@ object ReqTablePage {
         activeColumnsPlus)
 
       val savedViews = {
-        val menu = SavedViewLogic.Menu.determine(project.reqtableViews, p.state.view, activeView) // TODO Cache
+        val menu = SavedViewLogic.menu(project.reqtableViews, p.state.view, activeView) // TODO Cache
         SavedViewsUI.Props(menu, runSavedViewAction, runSavedViewCmd).render
       }
 
