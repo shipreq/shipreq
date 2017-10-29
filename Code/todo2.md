@@ -3,11 +3,11 @@ TODO NOW (?)
 * add SavedViews as a sub-hash of Other?
 * add an 'other' section to DataProp
 
-* Run SavedViewLogic.Actions in addition to cmds
 * Reusability.shouldComponentUpdate for SavedViewUI
 * Cache SVUI Props
 * SVUI IO error handling
 * SVUI async
+* Prohibit in name validation
 
 
 TODO POST-MERGE

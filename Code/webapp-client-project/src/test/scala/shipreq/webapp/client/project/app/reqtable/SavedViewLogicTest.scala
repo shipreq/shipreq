@@ -96,11 +96,11 @@ object SavedViewLogicTest extends TestSuite {
       svc = if (sv eq SVc) \/-(SVc.name) else leftTaken,
     )
 
-    def asDefault: MenuItem.Default =
-      MenuItem.default(nv, sv)
+    def asDefault(implicit state: State, svs: SavedViews.NonEmpty): MenuItem.Default =
+      MenuItem.default(nv, state, svs)(sv)
 
-    def asNonDefault: MenuItem.NonDefault =
-      MenuItem.nonDefault(nv, sv)
+    def asNonDefault(implicit state: State, svs: SavedViews.NonEmpty): MenuItem.NonDefault =
+      MenuItem.nonDefault(nv, state, svs)(sv)
   }
 
   val testNames: List[SavedView.Name] =
@@ -140,6 +140,7 @@ object SavedViewLogicTest extends TestSuite {
       pass
     })
 
+  implicit val equalActionDelete         : Equal[Action.Delete         ] = deriveEqual
   implicit val equalMenuActionReplace    : Equal[MenuAction.Replace    ] = deriveEqual
   implicit val equalMenuActionDelete     : Equal[MenuAction.Delete     ] = deriveEqual
   implicit val equalMenuActionMakeDefault: Equal[MenuAction.MakeDefault] = deriveEqual
@@ -182,35 +183,35 @@ object SavedViewLogicTest extends TestSuite {
       }
 
       'delete {
+        def testDel(state: State)(del: SavedView, svs2: SavedViews.Optional)(expectedState: State, expectedView: View) = {
+          val ma = MenuAction.delete(del, state, SVs)
+          test(svs2, state)(ma.action, svs2)(expectedState, expectedView)
+        }
+
         // Three letters are:
         // 1. [_m]  - Manual view
         // 2. [_ab] - Ref view id
         // 3. [ab]  - Delete
-        '__b - test(SVs, State(None  , None))(Delete(SVb.id), `SVs-B`)(State(SVb.view, None), SVb.view)
-        '__a - test(SVs, State(None  , None))(Delete(SVa.id), `SVs-A`)(State(None    , None), SVb.view)
-        '_bb - test(SVs, State(None  , SVb ))(Delete(SVb.id), `SVs-B`)(State(SVb.view, None), SVb.view)
-        '_ba - test(SVs, State(None  , SVb ))(Delete(SVa.id), `SVs-A`)(State(None    , SVb ), SVb.view)
-        '_ab - test(SVs, State(None  , SVa ))(Delete(SVb.id), `SVs-B`)(State(None    , SVa ), SVa.view)
-        '_aa - test(SVs, State(None  , SVa ))(Delete(SVa.id), `SVs-A`)(State(SVa.view, None), SVa.view)
-        'm_b - test(SVs, State(Dirty1, None))(Delete(SVb.id), `SVs-B`)(State(Dirty1  , None), Dirty1  )
-        'm_a - test(SVs, State(Dirty1, None))(Delete(SVa.id), `SVs-A`)(State(Dirty1  , None), Dirty1  )
-        'mbb - test(SVs, State(Dirty1, SVb ))(Delete(SVb.id), `SVs-B`)(State(Dirty1  , None), Dirty1  )
-        'mba - test(SVs, State(Dirty1, SVb ))(Delete(SVa.id), `SVs-A`)(State(Dirty1  , SVb ), Dirty1  )
-        'mab - test(SVs, State(Dirty1, SVa ))(Delete(SVb.id), `SVs-B`)(State(Dirty1  , SVa ), Dirty1  )
-        'maa - test(SVs, State(Dirty1, SVa ))(Delete(SVa.id), `SVs-A`)(State(Dirty1  , None), Dirty1  )
+        '__b - testDel(State(None  , None))(SVb, `SVs-B`)(State(SVb.view, None), SVb.view)
+        '__a - testDel(State(None  , None))(SVa, `SVs-A`)(State(None    , None), SVb.view)
+        '_bb - testDel(State(None  , SVb ))(SVb, `SVs-B`)(State(SVb.view, None), SVb.view)
+        '_ba - testDel(State(None  , SVb ))(SVa, `SVs-A`)(State(None    , SVb ), SVb.view)
+        '_ab - testDel(State(None  , SVa ))(SVb, `SVs-B`)(State(None    , SVa ), SVa.view)
+        '_aa - testDel(State(None  , SVa ))(SVa, `SVs-A`)(State(SVa.view, None), SVa.view)
+        'm_b - testDel(State(Dirty1, None))(SVb, `SVs-B`)(State(Dirty1  , None), Dirty1  )
+        'm_a - testDel(State(Dirty1, None))(SVa, `SVs-A`)(State(Dirty1  , None), Dirty1  )
+        'mbb - testDel(State(Dirty1, SVb ))(SVb, `SVs-B`)(State(Dirty1  , None), Dirty1  )
+        'mba - testDel(State(Dirty1, SVb ))(SVa, `SVs-A`)(State(Dirty1  , SVb ), Dirty1  )
+        'mab - testDel(State(Dirty1, SVa ))(SVb, `SVs-B`)(State(Dirty1  , SVa ), Dirty1  )
+        'maa - testDel(State(Dirty1, SVa ))(SVa, `SVs-A`)(State(Dirty1  , None), Dirty1  )
       }
     }
 
     'menu {
       import Menu._
 
-      def determine(savedViews        : SavedViews.Optional,
-                    filterDeadFallback: FilterDead)
-                   (manualView        : Option[View],
-                    referenceView     : Option[SavedView.Id]): Menu = {
-        val s = State(manualView, referenceView)
-        menu(savedViews, s, s.activeView(savedViews, filterDeadFallback))
-      }
+      def testNE(filterDeadFallback: FilterDead)(implicit s: State, svs: SavedViews.NonEmpty): Menu =
+        menu(Some(svs), s, s.activeView(Some(svs), filterDeadFallback))
 
       def dirtyAnon(activeView: View): MenuItem.Unsaved = {
         val nv        = nameValidationFn(sva = leftTaken, svb = leftTaken, svc = leftTaken)
@@ -228,66 +229,86 @@ object SavedViewLogicTest extends TestSuite {
       'noSaved {
         // no matter the current view state, the user can save it
 
+        def test(filterDeadFallback: FilterDead)
+                (manualView: Option[View],
+                 referenceView: Option[SavedView.Id]): Menu = {
+          val s = State(manualView, referenceView)
+          val savedViews = None
+          menu(savedViews, s, s.activeView(savedViews, filterDeadFallback))
+        }
+
         def saveAsNew(v: View) = MenuAction.saveAsNew(nameValidationFn(), v)
 
         'clean {
           val fd = HideDead
-          val m = determine(None, fd)(None, None)
+          val m = test(fd)(None, None)
           assertEq(m, NoSaved(MenuItem.Unsaved(saveAsNew(View.default(fd)), None)))
         }
 
         'dirty {
-          val m = determine(None, HideDead)(SVa.view, None)
+          val m = test(HideDead)(SVa.view, None)
           assertEq(m, NoSaved(MenuItem.Unsaved(saveAsNew(SVa.view), None)))
         }
       }
 
       'savedClean {
+        implicit def _svs: SavedViews.NonEmpty = SVs.getOrElse(???)
 
         'defaultUnclicked {
-          val m = determine(SVs, SVb)(None, None)
+          implicit val s = State(None, None)
+          val m = testNE(SVb)
           assertEq(m, SavedClean(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), SVb.id))
         }
 
         'defaultClicked {
-          val m = determine(SVs, SVb)(None, SVb.id)
+          implicit val s = State(None, SVb.id)
+          val m = testNE(SVb)
           assertEq(m, SavedClean(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), SVb.id))
         }
 
         'nonDefaultClickedA {
-          val m = determine(SVs, SVa)(None, SVa.id)
+          implicit val s = State(None, SVa.id)
+          val m = testNE(SVa)
           assertEq(m, SavedClean(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), SVa.id))
         }
 
         'nonDefaultClickedC {
-          val m = determine(SVs, SVc)(None, SVc.id)
+          implicit val s = State(None, SVc.id)
+          val m = testNE(SVc)
           assertEq(m, SavedClean(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), SVc.id))
         }
       }
 
       'savedDirty {
+        implicit def _svs: SavedViews.NonEmpty = SVs.getOrElse(???)
+
         'postDeletion {
-          val m = determine(SVs, SVa)(SVa.view, None)
+          implicit val s = State(SVa.view, None)
+          val m = testNE(SVa)
           assertEq(m, SavedDirty(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), dirtyAnon(SVa.view)))
         }
 
         'defaultClicked {
-          val m = determine(SVs, ShowDead)(SVa.view, SVb.id)
+          implicit val s = State(SVa.view, SVb.id)
+          val m = testNE(ShowDead)
           assertEq(m, SavedDirty(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), dirty(SVb, `SVb->a`, SVa.view)))
         }
 
         'nonDefaultClickedAB {
-          val m = determine(SVs, ShowDead)(SVb.view, SVa.id)
+          implicit val s = State(SVb.view, SVa.id)
+          val m = testNE(ShowDead)
           assertEq(m, SavedDirty(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), dirty(SVa, `SVa->b`, SVb.view)))
         }
 
         'nonDefaultClickedCA {
-          val m = determine(SVs, ShowDead)(SVa.view, SVc.id)
+          implicit val s = State(SVa.view, SVc.id)
+          val m = testNE(ShowDead)
           assertEq(m, SavedDirty(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), dirty(SVc, `SVc->a`, SVa.view)))
         }
 
         'nonDefaultClickedCB {
-          val m = determine(SVs, ShowDead)(SVb.view, SVc.id)
+          implicit val s = State(SVb.view, SVc.id)
+          val m = testNE(ShowDead)
           assertEq(m, SavedDirty(SVb.asDefault, Vector(SVa.asNonDefault, SVc.asNonDefault), dirty(SVc, `SVc->b`, SVb.view)))
         }
       }

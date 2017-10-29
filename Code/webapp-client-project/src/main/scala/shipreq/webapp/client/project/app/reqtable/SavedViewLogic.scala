@@ -20,6 +20,9 @@ import shipreq.webapp.base.validation.Simple
 object SavedViewLogic {
 
   implicit class SavedViewsOptionalOps[A](private val self: SavedViews.Optional) extends AnyVal {
+    def defaultSavedViewId: Option[Id] =
+      self.map(_.default.id)
+
     def get(id: Id): Option[SavedView] =
       self.flatMap(_.get(id))
   }
@@ -48,7 +51,7 @@ object SavedViewLogic {
   object Action {
     final case class Modify(view: View) extends Action
     final case class Select(id: Id) extends Action
-    final case class Delete(id: Id) extends Action
+    final case class Delete(id: Id, retainView: Option[View]) extends Action
 
     // This is not part of the algebra because if it is applied before the async save completes and the savedviews are
     // updated, then the view will be out-of-sync... At least on failure...
@@ -56,23 +59,20 @@ object SavedViewLogic {
     // final case class Save(id: Id) extends Action
 
     def interpret(savedViews: SavedViews.Optional): Action => State => State = {
-      def defaultSavedViewId = savedViews.map(_.default.id)
+      case Modify(view) =>
+        s =>
+          State(
+            Some(view),
+            s.referenceViewId orElse savedViews.defaultSavedViewId)
 
-      {
-        case Modify(view) =>
-          s => State(Some(view), s.referenceViewId orElse defaultSavedViewId)
+      case Select(id) =>
+        _ => State(None, Some(id))
 
-        case Select(id) =>
-          _ => State(None, Some(id))
-
-        case Delete(id) =>
-          s => {
-            def visible = s.referenceViewId orElse defaultSavedViewId
-            State(
-              s.manualView orElse visible.filter(_ ==* id).flatMap(savedViews.get(_).map(_.view)),
-              s.referenceViewId.filter(_ !=* id))
-          }
-      }
+      case Delete(id, retainView) =>
+        s =>
+          State(
+            s.manualView orElse retainView,
+            s.referenceViewId.filterNot(_ ==* id))
     }
   }
 
@@ -144,20 +144,20 @@ object SavedViewLogic {
       override val actions = NonEmptyVector(makeDefault, rename, delete)
     }
 
-    def default(validate: String => String \/ Name, sv: SavedView): Default =
+    def default(validate: String => String \/ Name, state: State, svs: SavedViews.NonEmpty)(sv: SavedView): Default =
       MenuItem.Default(
         sv.id,
         sv.name,
         MenuAction.rename(validate, sv),
-        MenuAction.delete(sv))
+        MenuAction.delete(sv, state, svs))
 
-    def nonDefault(validate: String => String \/ Name, sv: SavedView): NonDefault =
+    def nonDefault(validate: String => String \/ Name, state: State, svs: SavedViews.NonEmpty)(sv: SavedView): NonDefault =
       MenuItem.NonDefault(
         sv.id,
         sv.name,
         MenuAction.makeDefault(sv.id),
         MenuAction.rename(validate, sv),
-        MenuAction.delete(sv))
+        MenuAction.delete(sv, state, svs))
   }
 
   sealed trait MenuAction
@@ -166,11 +166,15 @@ object SavedViewLogic {
     sealed trait Unsaved extends MenuAction
     sealed trait Saved   extends MenuAction
 
-    final case class SaveAsNew  (cmd: String => String \/ SavedViewCmd.Create)                            extends Unsaved
-    final case class Rename     (name: Name, cmd: String => PotentialChange[String, SavedViewCmd.Update]) extends Saved
-    final case class Replace    (name: Name, cmd: SavedViewCmd.Update)                                    extends Unsaved
-    final case class Delete     (name: Name, cmd: SavedViewCmd.Delete)                                    extends Saved
-    final case class MakeDefault(cmd: SavedViewCmd.MakeDefault)                                           extends Saved
+    final case class SaveAsNew(cmd: String => String \/ SavedViewCmd.Create) extends Unsaved
+
+    final case class Replace(name: Name, cmd: SavedViewCmd.Update) extends Unsaved
+
+    final case class Rename(name: Name, cmd: String => PotentialChange[String, SavedViewCmd.Update]) extends Saved
+
+    final case class MakeDefault(cmd: SavedViewCmd.MakeDefault) extends Saved
+
+    final case class Delete(name: Name, cmd: SavedViewCmd.Delete, action: Action.Delete) extends Saved
 
     def saveAsNew(validate: String => String \/ Name, view: View): SaveAsNew =
       SaveAsNew(validate(_).map(SavedViewCmd.Create(_, view)))
@@ -178,8 +182,13 @@ object SavedViewLogic {
     def makeDefault(id: Id): MakeDefault =
       MakeDefault(SavedViewCmd.MakeDefault(id))
 
-    def delete(sv: SavedView): Delete =
-      Delete(sv.name, SavedViewCmd.Delete(sv.id))
+    def delete(sv: SavedView, state: State, svs: SavedViews.NonEmpty): Delete = {
+      val visible = state.referenceViewId getOrElse svs.default.id
+      Delete(
+        sv.name,
+        SavedViewCmd.Delete(sv.id),
+        Action.Delete(sv.id, Option.when(visible ==* sv.id)(sv.view)))
+    }
 
     def rename(validate: String => String \/ Name, sv: SavedView): Rename =
       Rename(sv.name, i =>
@@ -227,12 +236,12 @@ object SavedViewLogic {
 
         val default = {
           val sv = svs.default
-          MenuItem.default(validateName(Some(sv.id), _), sv)
+          MenuItem.default(validateName(Some(sv.id), _), state, svs)(sv)
         }
 
         val nonDefaults = svs.nonDefault
           .valuesIterator
-          .map(sv => MenuItem.nonDefault(validateName(Some(sv.id), _), sv))
+          .map(sv => MenuItem.nonDefault(validateName(Some(sv.id), _), state, svs)(sv))
           .toVector
 
         state.referenceViewId.flatMap(svs.get) match {

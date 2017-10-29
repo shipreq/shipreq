@@ -17,6 +17,7 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.{Allow, ErrorMsg, Valid}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.filter.Filter.Implicits._
@@ -47,7 +48,7 @@ object ReqTablePage {
                                pxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
                                reqDetailRC     : RouterCtl[ExternalPubid],
                                updateIO        : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any],
-                               savedViewIO     : ServerSideProcInvoker[SavedViewCmd, ErrorMsg, Any],
+                               savedViewIO     : ServerSideProcInvoker[SavedViewCmd, ErrorMsg, VerifiedEvent.Seq],
                                rowAsyncW       : AsyncFeature.Write.D1[Row.SourceId, ErrorMsg])
 
   final case class Props(create    : CreateFeature.ReadWrite.ForProject,
@@ -296,9 +297,6 @@ object ReqTablePage {
         } yield ()
     }
 
-    val runSavedViewCmd: SavedViewCmd ~=> Callback =
-      Reusable.fn(cmd => savedViewIO(cmd, e => Callback.log(s"SUCCESS: $e"), f => Callback.alert(f.value))) // TODO TEMP
-
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     def render(p: Props): VdomElement = {
@@ -360,7 +358,7 @@ object ReqTablePage {
 
       val savedViews = {
         val menu = SavedViewLogic.menu(project.reqtableViews, p.state.view, activeView) // TODO Cache
-        SavedViewsUI.Props(menu, runSavedViewAction, runSavedViewCmd).render
+        SavedViewsUI.Props(menu, runSavedViewAction, savedViewIO).render
       }
 
       val filterEditor = FilterEditor.Props(
