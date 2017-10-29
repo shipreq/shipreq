@@ -86,8 +86,8 @@ object SavedViewLogicTest extends TestSuite {
   implicit def savedViewToSomeId(v: SavedView): Option[SavedView.Id] =
     Some(v.id)
 
-  val leftBlank = -\/("Cannot be blank.")
-  val leftTaken = -\/("Already in use.")
+  val leftBlank = -\/("Invalid name: Cannot be blank.")
+  val leftTaken = -\/("Invalid name: Already in use.")
 
   implicit final class SavedViewTestExt(private val sv: SavedView) extends AnyVal {
     private def nv = nameValidationFn(

@@ -223,7 +223,7 @@ object SavedViewLogic {
       Name.validator(Name.State(id, savedViews))
         .unnamed
         .apply(name)
-        .leftMap(Simple.Invalidity.toText)
+        .leftMap("Invalid name: " + Simple.Invalidity.toText(_))
 
     def saveAsNew: MenuAction.SaveAsNew =
       MenuAction.saveAsNew(validateName(None, _), activeView)
