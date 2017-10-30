@@ -9,6 +9,7 @@ import nyaya.prop._
 import nyaya.test._
 import nyaya.test.PropTestOps._
 import utest._
+import scalaz.{-\/, \/-}
 import shipreq.base.db.SqlHelpers._
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.util._
@@ -16,6 +17,7 @@ import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash.HashRec
+import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.security.AppSecurityRealm
@@ -399,6 +401,49 @@ object DbTest extends TestSuite {
         //'setUseCaseStepText    - demo(RandomData.events.setUseCaseStepText   )
         //'setUseCaseTitle       - demo(RandomData.events.setUseCaseTitle      )
         //'createUseCase         - demo(RandomData.events.createUseCase        )
+
+        'savedViewCreate {
+          import reqtable._
+          import Column.{CustomField => CF, _}
+          import SortCriterion._
+          import SortMethod._
+          import Filter.Valid._
+
+          val e =
+            SavedViewCreate(
+              SavedView.Id(7593),
+              SavedView.Name("7AvWNHb95"),
+              NonEmptyVector(
+                Implications(Forwards),
+                Implications(Backwards),
+                CF(CustomField.Tag.Id(27887)),
+                DeletionReason),
+              SortCriteria(Vector(
+                InconclusiveCB(DeletionReason, AscThenBlanks),
+                InconclusiveIB(ReqType, Desc),
+                InconclusiveCB(Tags, BlanksThenDesc)),
+                Conclusive(Pubid, Desc)),
+              ShowDead,
+              Some(
+                not(
+                  anyOf(
+                    hashRef(\/-(ApplicableTagId(300))),
+                    hashRef(-\/(CustomIssueTypeId(400)))))))
+
+          testRW(e, 2100, 7593, ' ',
+            """
+              |{
+              |  "n":"7AvWNHb95",
+              |  "c":[{"i":"f"},{"i":"b"},{"f":{"t":27887}},"d"],
+              |  "o":[[{"_":["d","a_"]},{"i":["T","d"]},{"_":["#","_d"]}],["I","d"]],
+              |  "x":"s",
+              |  "f":{
+              |    "!":{
+              |      "|":[
+              |         {"#":{"R":300}},
+              |         {"#":{"L":400}}]}}}
+            """.stripMargin.replaceAll(" *\n *", "").trim)
+        }
 
       }
     }

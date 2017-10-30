@@ -1,15 +1,15 @@
 package shipreq.benchmark
 
 import japgolly.scalajs.benchmark._, gui._
-import shipreq.webapp.base.hash.Hash.HashableValueOps
-import shipreq.webapp.base.hash.HashScheme
+import shipreq.webapp.base.data.Project
+import shipreq.webapp.base.hash._
 
 object Hashing {
-  implicit val projectHash = HashScheme.latest.value.hashProject
+  val projectHash: Project => Int = HashScheme.latest.hasher(HashScope.WholeProject, _)
 
   val suite = GuiSuite(
     Suite("Hashing")(
-      projectBM("Hash project")(_.hash)
+      projectBM("Hash project")(projectHash)
     )
   )
 }

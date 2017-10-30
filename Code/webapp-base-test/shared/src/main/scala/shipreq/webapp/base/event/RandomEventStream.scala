@@ -15,12 +15,13 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.reqtable.SavedView
 import shipreq.webapp.base.hash._
 import shipreq.webapp.base.test.DataTestExt._
 import shipreq.webapp.base.test.WebappBaseGen._
 import shipreq.webapp.base.text.Text
 import ApplicableEventGen.ObserveFn
-import RandomData.{fieldRefKey, hashRefKey, implicationRequired, mandatory, mutexChildren}
+import RandomData.{fieldRefKey, filter, filterDead, hashRefKey, implicationRequired, mandatory, mutexChildren}
 import RandomData.{TextGen, TextGenExt, reqCode, reqTypeMnemonic, unicodeString1}
 import ScalaExt._
 
@@ -171,6 +172,9 @@ class ApplicableEventGen(p: Project) {
 
   val nextUseCaseStepId: Gen[UseCaseStepId] =
     IncCounter genInt p.idCeilings.useCaseStep map UseCaseStepId
+
+  val nextSavedViewId: Gen[SavedView.Id] =
+    IncCounter genInt p.idCeilings.reqtableView map SavedView.Id
 
   val tagId: Live => Option[Gen[TagId]] =
     tryGenChooseLiveDead(l => p.config.tags.valuesIterator.map(_.tag).filter(_.live is l).map(_.id))
@@ -423,6 +427,25 @@ class ApplicableEventGen(p: Project) {
         vs += Title(useCaseStepTitle run c)
 
       NonEmpty force vs
+    }
+  }
+
+  object savedViewGD extends GenericDataGen(SavedViewGD) {
+    import gd._
+    import reqtable.Column
+    import RandomData.reqtableData._
+    private val colNev = ColumnIGen(p.config.fields.customFields.keysIterator.map(Column.CustomField).toVector).columnNEV
+    val genColumns      = colNev
+    val genFilter       = filter.valid.forProject(p).option
+    val genFilterDead   = filterDead
+    val genName         = savedViewName
+    val genSortCriteria = colNev.flatMap(sortCriteria)
+    override def valueFor(a: Attr) = a match {
+      case Columns    => genColumns      map Columns   .apply
+      case Filter     => genFilter       map Filter    .apply
+      case FilterDead => genFilterDead   map FilterDead.apply
+      case Name       => genName         map Name      .apply
+      case Order      => genSortCriteria map Order     .apply
     }
   }
 
@@ -713,8 +736,32 @@ class ApplicableEventGen(p: Project) {
       } yield UseCaseStepUpdate(step.id, vs)
     )
 
+  lazy val savedViewId: Option[Gen[SavedView.Id]] =
+    Gen.tryGenChoose(p.reqtableViewIterator.map(_.id))
+
+  lazy val savedViewIdNonDefault: Option[Gen[SavedView.Id]] =
+    p.reqtableViews.flatMap(svs => Gen.tryGenChoose(svs.nonDefault.keys))
+
   def genProjectNameSet: Gen[ProjectNameSet] =
     RandomData.projectName.map(Some(_).filter(_ !=* p.name)).optionGet map ProjectNameSet
+
+  def genSavedViewCreate: Gen[SavedViewCreate] =
+      Gen.apply6(SavedViewCreate)(
+        nextSavedViewId,
+        savedViewGD.genName,
+        savedViewGD.genColumns,
+        savedViewGD.genSortCriteria,
+        savedViewGD.genFilterDead,
+        savedViewGD.genFilter)
+
+  def genSavedViewUpdate: Option[Gen[SavedViewUpdate]] =
+    savedViewId.map(Gen.apply2(SavedViewUpdate)(_, savedViewGD.nonEmptyValues))
+
+  def genSavedViewDefaultSet: Option[Gen[SavedViewDefaultSet]] =
+    savedViewIdNonDefault.map(_ map SavedViewDefaultSet)
+
+  def genSavedViewDelete: Option[Gen[SavedViewDelete]] =
+    savedViewId.map(_ map SavedViewDelete)
 
   val possibleEventGens: NonEmptyVector[Option[Gen[Event]]] =
     valuesForAdt[Event, Option[Gen[Event]]] {
@@ -753,6 +800,10 @@ class ApplicableEventGen(p: Project) {
       case _: ReqImplicationsPatch   => genReqImplicationsPatch
       case _: ReqsDelete             => genReqsDelete
       case _: ReqTagsPatch           => genReqTagsPatch
+      case _: SavedViewCreate        => genSavedViewCreate
+      case _: SavedViewDefaultSet    => genSavedViewDefaultSet
+      case _: SavedViewDelete        => genSavedViewDelete
+      case _: SavedViewUpdate        => genSavedViewUpdate
       case _: TagDelete              => genTagDelete
       case _: TagGroupCreate         => genTagGroupCreate
       case _: TagGroupUpdate         => genTagGroupUpdate

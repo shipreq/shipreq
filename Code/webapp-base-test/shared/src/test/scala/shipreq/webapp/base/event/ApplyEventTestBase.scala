@@ -66,6 +66,7 @@ object ApplyEventTestFns {
     var useCases         = 0
     var genericReqs      = 0
     var delReasons       = 0
+    var savedViews       = 0
 
     es foreach {
       case _: GenericReqCreate      => genericReqs += 1
@@ -96,6 +97,9 @@ object ApplyEventTestFns {
       case r: ContentRestore =>
         activeRCGs += r.codeGroups.size
 
+      case _: SavedViewCreate => savedViews += 1
+      case _: SavedViewDelete => savedViews -= 1
+
       case _: ApplicableTagUpdate
          | _: CustomIssueTypeDelete
          | _: CustomIssueTypeRestore
@@ -119,6 +123,8 @@ object ApplyEventTestFns {
          | _: ReqFieldCustomTextSet
          | _: ReqImplicationsPatch
          | _: ReqTagsPatch
+         | _: SavedViewDefaultSet
+         | _: SavedViewUpdate
          | _: TagDelete
          | _: TagGroupUpdate
          | _: TagRestore
@@ -160,6 +166,7 @@ object ApplyEventTestFns {
 case class InitialEvents(es: Event*) {
   def ++(next: Seq[Event]) = es ++ next
   def add(es: Event*) = InitialEvents(this.es ++ es: _*)
+  def filter(f: Event => Boolean) = InitialEvents(es.filter(f): _*)
 }
 trait NoInitialEvents {
   implicit val init = InitialEvents()

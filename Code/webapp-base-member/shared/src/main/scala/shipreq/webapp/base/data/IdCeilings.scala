@@ -19,7 +19,9 @@ case class IdCeilings(
     tag             : Int,
     req             : Int,
     useCaseStep     : Int,
-    reqCode         : Int) {
+    reqCode         : Int,
+    reqtableView    : Int, // i.e. reqtable.SavedView.Id
+    ) {
 
   def update(lens: Lens[IdCeilings, Int], n: Int): IdCeilings = {
     val i = lens.get(this)
@@ -34,7 +36,7 @@ object IdCeilings {
   implicit def equality: UnivEq[IdCeilings] = UnivEq.derive
 
   def init(z: Int): IdCeilings =
-    IdCeilings(z, z, z, z, z, z, z)
+    IdCeilings(z, z, z, z, z, z, z, z)
 
   def zero = init(0)
 
@@ -59,7 +61,9 @@ object IdCeilings {
       tag             = imapKeys(p.config.tags),
       req             = imapKeys(p.reqs.genericReqs) max imapKeys(p.reqs.useCases.imap),
       useCaseStep     = maxOfF(p.reqs.useCases.stepIterator)(_.id.value),
-      reqCode         = maxOf(p.reqCodes.idList))
+      reqCode         = maxOf(p.reqCodes.idList),
+      reqtableView    = maxOf(p.reqtableViewIterator.map(_.id)),
+    )
   }
 
   /**

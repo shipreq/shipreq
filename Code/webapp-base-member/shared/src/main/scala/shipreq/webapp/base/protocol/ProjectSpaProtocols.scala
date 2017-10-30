@@ -26,6 +26,7 @@ object ProjectSpaProtocols {
   val ReqTypeImplicationMod = ServerSideProc.Protocol.toEvents[(CustomReqTypeId, ImplicationRequired)]("Project.ReqTypeImplicationMod")
   val CreateContent         = ServerSideProc.Protocol.toEvents[CreateContentCmd]("Project.CreateContent")
   val UpdateContent         = ServerSideProc.Protocol.toEvents[UpdateContentCmd]("Project.UpdateContent")
+  val UpdateSavedViews      = ServerSideProc.Protocol.toEvents[SavedViewCmd]("Project.SavedViewCmd")
   val CustomIssueTypeCrud   = CrudProtocol[CustomIssueTypeId, (HashRefKey, Option[String])]("Project.CustomIssueTypeCrud")
   val CustomReqTypeCrud     = CrudProtocol[CustomReqTypeId, (ReqType.Mnemonic, String, ImplicationRequired)]("Project.CustomReqTypeCrud")
 
@@ -37,21 +38,23 @@ object ProjectSpaProtocols {
   import ReqTypeImplicationMod.{pickleInstance => _i6}
   import CreateContent        .{pickleInstance => _i7}
   import UpdateContent        .{pickleInstance => _i8}
-  import TagCrud.Protocol     .{pickleInstance => _i9}
-  import FieldCrud.Protocol   .{pickleInstance => _i10}
+  import UpdateSavedViews     .{pickleInstance => _i9}
+  import TagCrud.Protocol     .{pickleInstance => _i10}
+  import FieldCrud.Protocol   .{pickleInstance => _i11}
 
-  final case class InitData(username       : Username,
-                            projectName    : Project.Name,
-                            initAsync      : InitAsync            .Instance,
-                            issueTypeCrud  : CustomIssueTypeCrud  .Instance,
-                            reqTypeCrud    : CustomReqTypeCrud    .Instance,
-                            reqTypeImpMod  : ReqTypeImplicationMod.Instance,
-                            fieldMandMod   : FieldMandatorinessMod.Instance,
-                            fieldCrud      : FieldCrud.Protocol   .Instance,
-                            tagCrud        : TagCrud.Protocol     .Instance,
-                            createContent  : CreateContent        .Instance,
-                            updateContent  : UpdateContent        .Instance,
-                            projectNameSet : ProjectNameSet       .Instance)
+  final case class InitData(username        : Username,
+                            projectName     : Project.Name,
+                            initAsync       : InitAsync            .Instance,
+                            issueTypeCrud   : CustomIssueTypeCrud  .Instance,
+                            reqTypeCrud     : CustomReqTypeCrud    .Instance,
+                            reqTypeImpMod   : ReqTypeImplicationMod.Instance,
+                            fieldMandMod    : FieldMandatorinessMod.Instance,
+                            fieldCrud       : FieldCrud.Protocol   .Instance,
+                            tagCrud         : TagCrud.Protocol     .Instance,
+                            createContent   : CreateContent        .Instance,
+                            updateContent   : UpdateContent        .Instance,
+                            updateSavedViews: UpdateSavedViews     .Instance,
+                            projectNameSet  : ProjectNameSet       .Instance)
   implicit val picklerInitData = pickleCaseClass[InitData]
 
   final val EntryPointName = "P"

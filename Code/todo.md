@@ -98,6 +98,15 @@ Phase 2
 * Upgrade JDK and audit crypto mechanisms (pending next Jetty release)
 * ReqDetail KB shortcuts: ↑, ↓, F2, Tab in/out
 * Add and use RestorationForm just like the DeletionForm
+* Hashing
+  * Clear DataHasher history
+  * Revise the HashScheme evolution stuff. Seems a bit too complicated (and had to determine correct)...
+  * Add HashScheme test that covers SavedViews
+  * Make a decision about the inclusion of IdCeilings (it's calculatable state of other parts of the project, transient = should exclude right?)
+  * Add a HashScope just for SavedViews
+  * Remove the HashScope => Validity stuff. Too hard, too fickle, too complex
+* Prevent -- (not not) in the FilterParser?
+* Add ProjectContent, similar to ProjectConfig?
 
 ### New Features
 * Issues

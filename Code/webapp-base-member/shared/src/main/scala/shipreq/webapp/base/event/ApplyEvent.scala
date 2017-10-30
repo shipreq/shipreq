@@ -204,6 +204,10 @@ final class ApplyEvent(implicit val trust: Trust)
       case e: ReqImplicationsPatch   => ContentCommon          applyReqImplicationsPatch  e
       case e: ReqsDelete             => ContentCommon          applyDelete                e
       case e: ReqTagsPatch           => ContentCommon          applyReqTagsPatch          e
+      case e: SavedViewCreate        => SavedViewEvents        applyCreate                e
+      case e: SavedViewDefaultSet    => SavedViewEvents        applyDefaultSet            e
+      case e: SavedViewDelete        => SavedViewEvents        applyDelete                e
+      case e: SavedViewUpdate        => SavedViewEvents        applyUpdate                e
       case e: TagDelete              => TagEvents              applyDelete                e
       case e: TagGroupCreate         => TagGroupEvents         applyCreate                e
       case e: TagGroupUpdate         => TagGroupEvents         applyUpdate                e

@@ -59,6 +59,11 @@ object CommonValidation {
     def containsRegex(regex: String): InvalidatorLogic[String] =
       matchesRegex(s".*(?:$regex).*".r)
 
+    /** Validates that a string contains at least one letter. */
+    def containsAlpha: Invalidator[String] =
+      containsRegex("[A-Za-z]")(
+        Invalidity("Must contain at least one letter."))
+
     /** Validates that a string contains at least one letter, and at least one number. */
     def containsAlphaAndNumber: Invalidator[String] =
       containsRegex("[A-Za-z].*[0-9]|[0-9].*[A-Za-z]")(

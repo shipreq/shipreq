@@ -1,6 +1,6 @@
 package shipreq.webapp.base.validation
 
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import scalaz.Equal
 import scalaz.syntax.equal._
 import shipreq.base.util.OptionalConflict
@@ -50,6 +50,15 @@ object Uniqueness {
   /** Ensure A doesn't exist in a set of As */
   def set[A: UnivEq](data: => Set[A]): Invalidator[A] =
     Invalidator.test[A](!data.contains(_), notUnique)
+
+  def string(data: => TraversableOnce[String]): Invalidator[String] =
+    Invalidator.test[String](s => data.forall(s !=* _), notUnique)
+
+  def stringIgnoreCase(data: => TraversableOnce[String]): Invalidator[String] =
+    Invalidator.test[String](s0 => {
+      val s = s0.toLowerCase
+      data.forall(s !=* _.toLowerCase)
+    }, notUnique)
 
   // ===================================================================================================================
 

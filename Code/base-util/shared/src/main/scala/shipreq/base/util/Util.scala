@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq.UnivEq
 import java.net.URL
 import scalaz.Order
@@ -219,5 +220,17 @@ object Util {
     val byLen = Array.fill(maxLen + 1)(Map.empty[String, A])
     strings.foreach(s => byLen(s.length) = byLen(s.length).updated(s, map(s)))
     s => if (s.length <= maxLen) byLen(s.length).get(s) else None
+  }
+
+  def dups[A: UnivEq](as: TraversableOnce[A]): Iterator[A] = { // TODO Move to microlibs
+    val seen = collection.mutable.HashSet.empty[A]
+    as.toIterator.map { a =>
+      if (seen contains a)
+        Some(a)
+      else {
+        seen += a
+        None
+      }
+    }.filterDefined
   }
 }

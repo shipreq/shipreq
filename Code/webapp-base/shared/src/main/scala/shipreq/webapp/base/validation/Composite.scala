@@ -121,6 +121,9 @@ object Composite {
     def apply(s: S): Stateless[I, C, V] =
       new Stateless(unnamedFn(s), name)
 
+    def optionalState(o: Option[S]): Stateless[I, C, V] =
+      o.fold(stateless)(apply)
+
     def contramap[SS](f: SS => S): Stateful[SS, I, C, V] =
       new Stateful(stateless, unnamedFn compose f)
 

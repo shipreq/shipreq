@@ -11,13 +11,13 @@ import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.{event => E}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.filter.ValidFilter
+import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.reqtable.{Column => C, SortCriterion => SC}
 import shipreq.webapp.base.text.{PlainText, ProjectText, Text, TextSearch}
 import shipreq.webapp.base.test._
-import WebappTestUtil._
 import shipreq.webapp.base.util.ReqCodeTreeItem
-import shipreq.webapp.client.project.app.reqtable.{Column => C, SortCriterion => SC}
 import SortMethod._
+import WebappTestUtil._
 
 object LogicTestUtil {
   def codesInRow(r: Row): Vector[ReqCode.Value] =
@@ -69,7 +69,9 @@ object LogicTest extends TestSuite {
   import ProjectDsl._
   import UnsafeTypes._
   import SampleProject.Values._
-  import shipreq.webapp.base.filter.{ValidFilter => F}, F.Attr._
+  import shipreq.webapp.base.filter.Filter.{Valid => F}
+  import shipreq.webapp.base.filter.FilterAst.Attr.{AnyIssue, AnyTag}
+  import shipreq.webapp.base.filter.IntensionalReqSet._
   import LogicTestUtil._
 
   private      def P3  = SampleProject3.project
@@ -79,7 +81,7 @@ object LogicTest extends TestSuite {
   private      val z   = "∅"
   private      val _z  = (_: Any) => z
   private type Rows    = Vector[Row]
-  private type Filter  = Option[ValidFilter]
+  private type Filter  = Option[F]
 
   private case class PCache(p: Project, pt: PlainText.ForProject.NoCtx, ts: TextSearch)
   private var _pcache: List[PCache] = Nil
@@ -91,7 +93,7 @@ object LogicTest extends TestSuite {
       c
     }
 
-  implicit def autoSomeFilter(f: ValidFilter): Filter = Some(f)
+  implicit def autoSomeFilter(f: F): Filter = Some(f)
   private def testFilter(p: Project, f: Filter)(live: String, dead: String): Unit = {
     val fmt = rowToPubid(p)
     val d = if (dead.isEmpty) live else sortPubidsInString(s"$live  $dead")
@@ -99,35 +101,35 @@ object LogicTest extends TestSuite {
     testUnsorted(p, C.Pubid, f, ShowDead, fmt)(d)
   }
 
-  private def gatherSortConsolidate(p: Project, s: TableSettings, fd: FilterDead, pt: PlainText.ForProject.NoCtx, ts: TextSearch): Vector[Row] = {
-    def r1: Array       [Row] = Logic.gather(p, s, fd, pt, ts)
-    def r2: MutableArray[Row] = Logic.sort(p, s, pt)(r1)
+  private def gatherSortConsolidate(p: Project, v: View, pt: PlainText.ForProject.NoCtx, ts: TextSearch): Vector[Row] = {
+    def r1: Array       [Row] = Logic.gather(p, v, pt, ts)
+    def r2: MutableArray[Row] = Logic.sort(p, v, pt)(r1)
     val r3: Vector      [Row] = Logic.consolidateAdjacentDups(r2.iterator)
     r3
   }
 
-  private def defaultOrder = TableSettings.default.order
+  private def defaultOrder = View.default.order
 
   private def testUnsorted[A: Equal](p: Project, c: C, f: Filter, fd: FilterDead, extract: Rows => A)(expect: A): Unit =
     testUnsorted2(p, NonEmptyVector one c, f, fd, extract)(expect)
 
   private def testUnsorted2[A: Equal](p: Project, cs: NonEmptyVector[C], f: Filter, fd: FilterDead, extract: Rows => A)(expect: A): Unit = {
-    val vs = TableSettings(columnState(p, cs), defaultOrder.copy(init = Vector.empty), f)
+    val v = View(columnState(p, cs), defaultOrder.copy(init = Vector.empty), fd, f)
     val pc = pcache(p)
     import pc.{pt, ts}
-    val r = gatherSortConsolidate(p, vs, fd, pt, ts)
+    val r = gatherSortConsolidate(p, v, pt, ts)
     assertEq(extract(r), expect)
   }
 
-  private def vsSortedByCB(p: Project, c: C.SortInconclusive with C.HasBlanks, sm: ConsiderBlanks, f: Filter): TableSettings =
-    TableSettings(columnState(p, c), defaultOrder.copy(init = Vector(SC.InconclusiveCB(c, sm))), f)
+  private def viewSortedByCB(p: Project, c: C.SortInconclusiveHasBlanks, sm: ConsiderBlanks, fd: FilterDead, f: Filter): View =
+    View(columnState(p, c), defaultOrder.copy(init = Vector(SC.InconclusiveCB(c, sm))), fd, f)
 
-  private def testCB[A: Equal](p: Project, c: C.SortInconclusive with C.HasBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(ConsiderBlanks, A)]) = {
+  private def testCB[A: Equal](p: Project, c: C.SortInconclusiveHasBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(ConsiderBlanks, A)]) = {
     val pc = pcache(p)
     import pc.{pt, ts}
     for ((sm, expect) <- tests) {
-      val vs = vsSortedByCB(p, c, sm, f)
-      val r = gatherSortConsolidate(p, vs, fd, pt, ts)
+      val v = viewSortedByCB(p, c, sm, fd, f)
+      val r = gatherSortConsolidate(p, v, pt, ts)
       assertEq(sm.toString, extract(r), expect)
     }
   }
@@ -144,15 +146,15 @@ object LogicTest extends TestSuite {
   private def allSortsCB(zcount: Int, asc: String, desc: String): Seq[(ConsiderBlanks, String)] =
     allSortsCBA(z, zcount)(_ + sep + _, asc, desc)
 
-  private def vsSortedByIB(p: Project, c: C.SortInconclusive with C.NoBlanks, sm: IgnoreBlanks, f: Filter): TableSettings =
-    TableSettings(columnState(p, c), defaultOrder.copy(init = Vector(SC.InconclusiveIB(c, sm))), f)
+  private def viewSortedByIB(p: Project, c: C.SortInconclusiveNoBlanks, sm: IgnoreBlanks, fd: FilterDead, f: Filter): View =
+    View(columnState(p, c), defaultOrder.copy(init = Vector(SC.InconclusiveIB(c, sm))), fd, f)
 
-  private def testIB[A: Equal](p: Project, c: C.SortInconclusive with C.NoBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(IgnoreBlanks, A)]) = {
+  private def testIB[A: Equal](p: Project, c: C.SortInconclusiveNoBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(IgnoreBlanks, A)]) = {
     val pc = pcache(p)
     import pc.{pt, ts}
     for ((sm, expect) <- tests) {
-      val vs = vsSortedByIB(p, c, sm, f)
-      val r = gatherSortConsolidate(p, vs, fd, pt, ts)
+      val v = viewSortedByIB(p, c, sm, fd, f)
+      val r = gatherSortConsolidate(p, v, pt, ts)
       assertEq(sm.toString, extract(r), expect)
     }
   }
@@ -641,7 +643,7 @@ object LogicTest extends TestSuite {
       def testWithFilters(tag: ApplicableTagId, tagStr: String): Unit = {
         val ids = withIds.filter(_._1 == tagStr).map(_._2)
         val expect = ids.map("DD-" + _) mkString sep
-        testUnsorted(p, C.Tags, F.Tag(tag), fd, fmtRowsHasFilter)(expect)
+        testUnsorted(p, C.Tags, F.tag(tag), fd, fmtRowsHasFilter)(expect)
       }
       testWithFilters(liveTag, L)
       testWithFilters(deadTag, D)
@@ -698,7 +700,7 @@ object LogicTest extends TestSuite {
       def testWithFilters(issue: CustomIssueTypeId, issueStr: String): Unit = {
         val ids = withIds.filter(_._1 == issueStr).map(_._2)
         val expect = ids.map("DD-" + _) mkString sep
-        testUnsorted(p, C.Tags, F.CustomIssue(issue), fd, fmtRows)(expect)
+        testUnsorted(p, C.Tags, F.issue(issue), fd, fmtRows)(expect)
       }
       testWithFilters(liveIssue, L)
       testWithFilters(deadIssue, D)
@@ -860,73 +862,78 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterText(): Unit = {
-    testFilter(P3, F.Text("req"))("MF-12  MF-13  MF-22  MF-23  MF-24", dead = "CO-2")
-    testFilter(P3, F.Text("l r"))("MF-12  MF-22  MF-23  MF-27", dead = "CO-2")
-    testFilter(P3, F.Text(" is "))("FR-1  FR-2", "")
-    testFilter(P3, F.Text("github.com"))("FR-1", "")
+    testFilter(P3, F.text("req"))("MF-12  MF-13  MF-22  MF-23  MF-24", dead = "CO-2")
+    testFilter(P3, F.text("l r"))("MF-12  MF-22  MF-23  MF-27", dead = "CO-2")
+    testFilter(P3, F.text(" is "))("FR-1  FR-2", "")
+    testFilter(P3, F.text("github.com"))("FR-1", "")
   }
 
   def testFilterTextPattern(): Unit = {
-    val r = """.*\W[A-Z]{3}\W.*""".r.pattern
-    testFilter(P3, F.TextPattern(r))("FR-2  MF-3  MF-21", "") // FR-2 because of …#TBD …
+    val r = """.*\W[A-Z]{3}\W.*"""
+    testFilter(P3, F.regex(r))("FR-2  MF-3  MF-21", "") // FR-2 because of …#TBD …
   }
 
   def testFilterPresence(): Unit = {
-    testFilter(P3, F.Presence(AnyIssue))("FR-1  FR-2", "")
+    testFilter(P3, F.presence(AnyIssue))("FR-1  FR-2", "")
   }
 
   def testFilterLack(): Unit = {
-    testFilter(P3, F.Lack(AnyTag))("FR-1  FR-2", dead = "CO-2")
+    testFilter(P3, F.lack(AnyTag))("FR-1  FR-2", dead = "CO-2")
   }
 
   def testFilterTag(): Unit = {
-    testFilter(P3, F.Tag(wip))("MF-5  MF-6  MF-7  MF-12  MF-13  MF-22", "")
-    testFilter(P3, F.Tag(v10))("MF-1  MF-2  MF-7", dead = "CO-1")
+    testFilter(P3, F.tag(wip))("MF-5  MF-6  MF-7  MF-12  MF-13  MF-22", "")
+    testFilter(P3, F.tag(v10))("MF-1  MF-2  MF-7", dead = "CO-1")
   }
 
   def testFilterCustomIssue(): Unit = {
-    testFilter(P3, F.CustomIssue(1))("FR-1", "")
-    testFilter(P3, F.CustomIssue(2))("FR-2", "")
+    testFilter(P3, F.issue(1))("FR-1", "")
+    testFilter(P3, F.issue(2))("FR-2", "")
   }
 
   def testFilterReqType(): Unit = {
-    testFilter(P3, F.ReqType(fr))("FR-1  FR-2", "")
-    testFilter(P3, F.ReqType(co))("", dead = "CO-1  CO-2")
+    testFilter(P3, F.reqType(fr))("FR-1  FR-2", "")
+    testFilter(P3, F.reqType(co))("", dead = "CO-1  CO-2")
   }
 
   def testFilterImplies(): Unit = {
     import SampleImplicationGraph._
-    testFilter(project, F.ImpliesAnyOf(Set(fr2)))("BR-1  FR-1  FR-2  MF-1  MF-2", "")
-    //                                                reflexivity ↑
-    testFilter(project, F.ImpliesAnyOf(Set(fr5, fr6)))("BR-1  BR-2  FR-4  FR-5  FR-6  MF-3  MF-4", "")
-    //                                                                  ↗ reflexivity ↖
+    val justFR2 = F.reqSet(SomeOfType(fr, NonEmptySet(2)))
+    testFilter(project, F.impliesAnyOf(justFR2))("BR-1  FR-1  FR-2  MF-1  MF-2", "")
+    //                                               reflexivity ↑
+    val fr5and6 = F.reqSet(SomeOfType(fr, NonEmptySet(5, 6)))
+    testFilter(project, F.impliesAnyOf(fr5and6))("BR-1  BR-2  FR-4  FR-5  FR-6  MF-3  MF-4", "")
+    //                                                            ↗ reflexivity ↖
   }
 
   def testFilterImpliedBy(): Unit = {
     import SampleImplicationGraph._
-    testFilter(project, F.ImpliedByAnyOf(Set(mf2)))("FR-2  FR-3  MF-2", "")
-    //                                                  reflexivity ↑
-    testFilter(project, F.ImpliedByAnyOf(Set(mf1, mf2)))("FR-1  FR-2  FR-3  MF-1  MF-2", "")
-    //                                                                      ↑ reflexivity ↖
+    val justMF2 = F.reqSet(SomeOfType(mf, NonEmptySet(2)))
+    testFilter(project, F.impliedByAnyOf(justMF2))("FR-2  FR-3  MF-2", "")
+    //                                                 reflexivity ↑
+    val mf1and2 = F.reqSet(SomeOfType(mf, NonEmptySet(1, 2)))
+    testFilter(project, F.impliedByAnyOf(mf1and2))("FR-1  FR-2  FR-3  MF-1  MF-2", "")
+    //                                                                ↑ reflexivity ↖
   }
 
   def testFilterImplyNothing(): Unit = {
     import SampleImplicationGraph._
-    testFilter(project, F.ImpliedByAnyOf(Set.empty))("", "")
-    testFilter(project, F.ImpliesAnyOf  (Set.empty))("", "")
+    val e = F.reqSet(SomeOfType(mf, NonEmptySet(9999999)))
+    testFilter(project, F.impliedByAnyOf(e))("", "")
+    testFilter(project, F.impliesAnyOf  (e))("", "")
   }
 
   def testFilterAll(): Unit = {
-    testFilter(P3, F.AllOf(min2set(F.Tag(wip), F.Tag(v10))))("MF-7", "")
-    testFilter(P3, F.AllOf(min2set(F.Tag(wip), F.Text("req"))))("MF-12  MF-13  MF-22", "")
+    testFilter(P3, F.allOf(F.tag(wip), F.tag(v10)))("MF-7", "")
+    testFilter(P3, F.allOf(F.tag(wip), F.text("req")))("MF-12  MF-13  MF-22", "")
   }
 
   def testFilterAny(): Unit = {
-    testFilter(P3, F.AnyOf(min2set(F.ReqType(co), F.ReqType(fr))))("FR-1  FR-2", dead = "CO-1  CO-2")
+    testFilter(P3, F.anyOf(F.reqType(co), F.reqType(fr)))("FR-1  FR-2", dead = "CO-1  CO-2")
   }
 
   def testFilterNot(): Unit = {
-    testFilter(P3, F.Not(F.ReqType(mf)))("FR-1  FR-2", dead = "CO-1  CO-2")
+    testFilter(P3, F.not(F.reqType(mf)))("FR-1  FR-2", dead = "CO-1  CO-2")
   }
 
   private class RCGFilterTester {
@@ -950,7 +957,7 @@ object LogicTest extends TestSuite {
 
     def test(p: Project, fd: FilterDead): Unit = {
       val expectStr = expect.toVector.sorted.mkString(sep)
-      testCB(p, C.Code, F.Text(filterHit), fd, rowToReqCodes)(Seq(BlanksThenAsc -> expectStr))
+      testCB(p, C.Code, F.text(filterHit), fd, rowToReqCodes)(Seq(BlanksThenAsc -> expectStr))
     }
 
     def common = (

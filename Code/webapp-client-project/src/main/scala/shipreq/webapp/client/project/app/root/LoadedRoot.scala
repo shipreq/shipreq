@@ -9,11 +9,10 @@ import shipreq.base.util.{Allow, ErrorMsg, Intersection}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{FilterDead, ReqId}
 import shipreq.webapp.base.event.VerifiedEvent
-import shipreq.webapp.base.filter.PotentialFilter
-import shipreq.webapp.base.protocol.{ProjectSpaProtocols, UpdateContentCmd}
+import shipreq.webapp.base.filter.Filter
+import shipreq.webapp.base.protocol.{ClientProtocol, ProjectSpaProtocols, SavedViewCmd, ServerSideProcInvoker, UpdateContentCmd}
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.base.feature._
-import shipreq.webapp.base.protocol.{ClientProtocol, ServerSideProcInvoker}
 import shipreq.webapp.base.ui.ProjectItem
 import shipreq.webapp.client.project.app.state._
 import shipreq.webapp.client.project.app._
@@ -61,6 +60,9 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
     val updateIO: ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, VerifiedEvent.Seq] =
       cd.serverSideProcToEvents(cp, initData.updateContent)
 
+    val savedViewIO: ServerSideProcInvoker[SavedViewCmd, ErrorMsg, VerifiedEvent.Seq] =
+      cd.serverSideProcToEvents(cp, initData.updateSavedViews)
+
     val previewW: PreviewFeature.Write.Composite[PreviewId] =
       PreviewFeature.Write.Composite($ zoomStateL State.preview)
 
@@ -95,6 +97,9 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
     val rowAsyncW: AsyncFeature.Write.D1[EditorFeature.RowKey, ErrorMsg] =
       editAsyncW.withKey1(AsyncKey.WholeReq)
 
+    val savedViewAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
+      AsyncFeature.Write.D0.init($ zoomStateL State.savedViewAsync)
+
     val reqTable = ReqTablePage(
       ReqTablePage.StaticProps(
         $ zoomStateL State.reqTable,
@@ -102,7 +107,9 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
         pxTextSearch, pxProjectWidgets,
         reqDetailRC,
         updateIO,
-        rowAsyncW.mapKey(reqtable.Row.SourceId.ToEditorRow.reverse)))
+        savedViewIO,
+        rowAsyncW.mapKey(reqtable.Row.SourceId.ToEditorRow.reverse),
+        savedViewAsyncW))
 
     val pxReqDetailId = Px[Option[ReqId]](None).withReuse.manualUpdate
 
@@ -139,16 +146,17 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
     val reqDetailSetState: ReqDetail.State ~=> Callback =
       Reusable.fn.state($ zoomStateL State.reqDetail).set
 
-    def setReqTableView(fd: FilterDead, pf: PotentialFilter): Callback =
-      pxProject.toCallback.flatMap(project =>
-        $.modState(s => s.copy(
-          filterDead = fd,
-          reqTable = s.reqTable.setFilter(pf, PotentialFilter.validator(project)))))
+    def setReqTableView(fd: FilterDead, filter: Filter.Valid): Callback =
+      for {
+        p ← pxProject.toCallback
+        f = ReqTablePage.State.modifyView(p, fd, true)(_.withFilter(Some(filter)))
+        _ ← $.modState(State.reqTable.modify(f) compose State.filterDead.set(fd))
+      } yield ()
 
     val usageShow =
-      Usage.Show((fd, pf) =>
+      Usage.Show((filterDead, filter) =>
         routerCtl
-          .onSet(setReqTableView(fd, pf()) >> _)
+          .onSet(setReqTableView(filterDead, filter()) >> _)
           .link(Page.ReqTable))
 
     lazy val projectNameAF =
@@ -215,6 +223,7 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
               createRW,
               editRW,
               rowAsync,
+              s.savedViewAsync,
               filterDeadSS,
               s.reqTable))
 

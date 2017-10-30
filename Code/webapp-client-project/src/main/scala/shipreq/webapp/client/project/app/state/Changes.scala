@@ -55,6 +55,10 @@ case class Changes(ves: VerifiedEvent.NonEmptySeq, p1: Project, p2: Project) {
          | _: ReqImplicationsPatch
          | _: ReqsDelete
          | _: ReqTagsPatch
+         | _: SavedViewCreate
+         | _: SavedViewDefaultSet
+         | _: SavedViewDelete
+         | _: SavedViewUpdate
          | _: UseCaseCreate
          | _: UseCaseStepCreate
          | _: UseCaseStepDelete

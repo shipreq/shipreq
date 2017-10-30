@@ -23,6 +23,7 @@ object Common {
     "-unchecked",
     "-deprecation",
     "-target:jvm-" + targetJdk,
+    "-Xsource:2.13",
     // "-Xstrict-inference", // Don't infer known-unsound types
     // "-Yno-generic-signatures", // Stuffs up json4s
     "-Ypartial-unification",

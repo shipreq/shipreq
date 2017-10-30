@@ -235,6 +235,7 @@ object ProjectServer {
           fieldMandatorinessMod ← f(FieldMandatorinessMod)(i => updProj(_ ⇒ MakeEvent.fieldMandatorinessMod(i)))
           createContent         ← f(CreateContent        )(i => updProj(p ⇒ MakeEvent.createContent(i, p)))
           updateContent         ← f(UpdateContent        )(i => updProj(p ⇒ MakeEvent.updateContent(i, p)))
+          updateSavedViews      ← f(UpdateSavedViews     )(i => updProj(p ⇒ MakeEvent.updateSavedViews(i, p)))
           projectNameSet        ← f(ProjectNameSet       )(i => updProj(_ ⇒ MakeEvent.projectNameSetFn(i)))
         } yield InitData(
           username,
@@ -248,6 +249,7 @@ object ProjectServer {
           tagCrud,
           createContent,
           updateContent,
+          updateSavedViews,
           projectNameSet)
       }
 

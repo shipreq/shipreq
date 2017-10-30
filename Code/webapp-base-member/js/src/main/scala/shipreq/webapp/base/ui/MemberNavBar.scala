@@ -9,6 +9,7 @@ import shipreq.webapp.base.{AssetManifest, Urls, WebappConfig}
 import shipreq.webapp.base.ClientConfig
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui.semantic.{Breadcrumb, Dropdown, Icon, Menu, SemExtAny}
+import shipreq.webapp.base.ui.semantic.Dropdown.JsOptionsOps
 import BaseStyles.{layout => *}
 
 /** At top of member (logged-in) screens:
@@ -40,13 +41,17 @@ object MemberNavBar {
       attr = Menu.Attr.Borderless + Menu.Attr.Inverted,
       tagMod = *.navMenu)
 
+  private val dropdownOptions =
+    Dropdown.JsOptions.default
+
   private val itemLogo =
-    Menu.Item.Link(
+    Menu.ItemType.Link(
       <.a(
         ^.href := Urls.publicHome.relativeUrl,
         <.img(
           ^.src := AssetManifest.shipreqCircleDarkSvg,
-          ^.alt := WebappConfig.appName)))
+          ^.alt := WebappConfig.appName))
+    ).toItem
 
   private val breadcrumbStyle =
     Breadcrumb.Style()
@@ -59,18 +64,21 @@ object MemberNavBar {
 
     def render(p: Props): VdomElement = {
       val leftBreadcrumb =
-        Menu.Item.Div(
-          Breadcrumb.Props(breadcrumbStyle, p.leftWithDividers).render)
+        Menu.ItemType.Div(
+          Breadcrumb.Props(breadcrumbStyle, p.leftWithDividers).render
+        ).toItem
 
       val rightDropdown =
-        Menu.Item.DropdownSimple(
+        Menu.DropdownType.Simple(
           p.username.with_@,
-          p.right :+ dropdownLogout)
+          p.right :+ dropdownLogout
+        ).toItem
 
       val menu = Menu.Props(
         menuStyle,
         itemLogo :: leftBreadcrumb :: Nil,
-        rightDropdown :: Nil)
+        rightDropdown :: Nil,
+        dropdownOptions)
 
       <.nav(menu.render)
     }

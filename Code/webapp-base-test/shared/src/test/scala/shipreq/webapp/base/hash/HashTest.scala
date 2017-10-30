@@ -7,9 +7,9 @@ import nyaya.util.NyayaUtilAnyExt
 import nyaya.test._
 import nyaya.test.PropTestOps._
 import utest._
-
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.RandomData
+import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.protocol.BinCodecMemberData._
 import Hash.HashableValueOps
 
@@ -87,8 +87,6 @@ object HashTest extends TestSuite {
   // ===================================================================================================================
   // Data hashing
 
-  import HashScheme.latest.value._
-
   case class DataHashTest[A: Hash : Pickler](a1: A, a2: A, a3: A) {
     val E = EvalOver(this)
 
@@ -115,7 +113,7 @@ object HashTest extends TestSuite {
   def dataHashTest[A] = Prop.eval[DataHashTest[A]](_.main)
 
   def testData[A: Hash : Pickler](g: Gen[A]): Unit = {
-    val t = for {a <- g; b <- g; c <- g} yield new DataHashTest(a, b, c)
+    val t = for {a <- g; b <- g; c <- g} yield DataHashTest(a, b, c)
     dataHashTest[A] mustBeSatisfiedBy t
   }
 
@@ -125,6 +123,7 @@ object HashTest extends TestSuite {
       'murmur3 - testAlgo(MurmurHash3, murmur3)
     }
     'data {
+      implicit val h = Hash.fn[Project](HashScheme.latest.hasher(HashScope.WholeProject, _))
       'project - testData(RandomData.project)
     }
   }

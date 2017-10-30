@@ -19,8 +19,11 @@ sealed abstract class Icon(val clsName: ClassName) {
   *
   * When a new icon is needed:
   *     1. cd frontend
-  *     2. Edit shipreq/semantic/icons-used
-  *     3. Run shipreq/semantic/prune
+  *     2. vim shipreq/semantic/icons-used
+  *     3. shipreq/semantic/prune
+  *     4. ./build-parallel
+  *     5. cd .. && bin/gen-semantic-icons
+  *     6. New icons will be appended to this file. Cut and paste into object. :/
   */
 object Icon {
 
@@ -683,7 +686,7 @@ object Icon {
   // case object Rupee                             extends Unmodified("rupee")
   // case object S15                               extends Unmodified("s15")
   // case object Safari                            extends Unmodified("safari")
-  // case object Save                              extends Unmodified("save")
+  case object Save                              extends Unmodified("save")
   // case object Scribd                            extends Unmodified("scribd")
   case object Search                            extends Unmodified("search")
   // case object SelectedRadio                     extends Unmodified("selected radio")
@@ -750,7 +753,7 @@ object Icon {
   // case object SquareOutline                     extends Unmodified("square outline")
   // case object StackExchange                     extends Unmodified("stack exchange")
   // case object StackOverflow                     extends Unmodified("stack overflow")
-  // case object Star                              extends Unmodified("star")
+  case object Star                              extends Unmodified("star")
   // case object StarHalf                          extends Unmodified("star half")
   // case object StarHalfEmpty                     extends Unmodified("star half empty")
   // case object StarHalfFull                      extends Unmodified("star half full")

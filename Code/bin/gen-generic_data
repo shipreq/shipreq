@@ -30,12 +30,13 @@ object Gen {
      """.stripMargin
   }
 
-  def apply(objName: String)(fields: (String, String)*): String = {
+  def apply(objName: String, init: String = "")(fields: (String, String)*): String = {
     val attrNames = fields.map(_._1).sorted.mkString(", ")
+    val initLine = Option(init.replace("\n", "\n  ").trim).filter(_.nonEmpty).fold("")("  " + _ + "\n\n")
 
     s"""
       |object $objName extends GenericData {
-      |  sealed abstract class Attr extends AttrBase
+      |$initLine  sealed abstract class Attr extends AttrBase
       |  sealed abstract class Value extends ValueBase
       |
       |  ${fields.sortBy(_._1).map((attrAndValue _).tupled).mkString.trim}
@@ -132,6 +133,13 @@ val gens = List(
     "FlowIn"  -> "SetDiff.NE[UseCaseStepId]",
     "FlowOut" -> "SetDiff.NE[UseCaseStepId]",
   ),
+  Gen("SavedViewGD", init = "import shipreq.webapp.base.filter.Filter.{Valid => ValidFilter}\nimport reqtable._")(
+    "Name"       -> "SavedView.Name",
+    "FilterDead" -> "FilterDead",
+    "Columns"    -> "NonEmptyVector[Column]",
+    "Order"      -> "SortCriteria",
+    "Filter"     -> "Option[ValidFilter]",
+  ),
 )
 
 
@@ -141,19 +149,20 @@ val content =
   s"""
      |package shipreq.webapp.base.event
      |
-     |import japgolly.microlibs.nonempty.NonEmptySet
+     |import japgolly.microlibs.nonempty._
      |import scalaz.{Equal, Order}
      |import shipreq.base.util.{SetDiff, Util}
      |import shipreq.base.util.univeq._
      |import shipreq.webapp.base.data._
-     |import shipreq.webapp.base.util._
+     |import shipreq.webapp.base.filter.Filter.Implicits._
      |import shipreq.webapp.base.text.Text
-     |import Text.Equality._
+     |import shipreq.webapp.base.text.Text.Equality._
+     |import shipreq.webapp.base.util._
      |
      |// DO NOT EDIT THIS
      |// This file is generated in its entirety by bin/gen-generic_data
      |
-     |${gens.map(header + _.trim).sortBy(_.replaceFirst("^[^\u0000]+?object ", "")).mkString("\n\n")}
+     |${gens.map(header + _.trim).sortBy(_.replaceFirst("^[^\u0000]+?object ", "")).mkString("\n\n").replaceAll(" +\n", "\n")}
    """.stripMargin.trim
 
 // println(content)

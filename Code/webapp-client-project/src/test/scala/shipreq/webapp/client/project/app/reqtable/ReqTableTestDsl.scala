@@ -9,7 +9,8 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.test._
 import shipreq.webapp.client.project.test._
 import teststate.domzipper.DomZipper.EditableSel
@@ -36,7 +37,7 @@ object ReqTableTestDsl {
   def selectVisibleColumns(isOn: Column => Boolean, p: Project, fd: FilterDead): NonEmptyVector[Column] = {
     // I want Pubid as the first column so that obs.table.entireContent is readable
     val set: Set[Column] =
-      Column.mandatory ++ ColumnPlus.All(p, fd).columns.whole.map(_.column).filter(isOn) - Column.Pubid
+      Column.mandatory.whole ++ ColumnPlus.All(p, fd).columns.whole.map(_.column).filter(isOn) - Column.Pubid
     NonEmptyVector(Column.Pubid, set.toVector)
   }
 
@@ -241,10 +242,10 @@ object ReqTableTestDsl {
   def modState(name: => String, mod: (Project, ReqTablePage.State) => ReqTablePage.State): *.Actions =
     *.action(name)(i => i.ref.$.modState(s => mod(i.state, s)))
 
-  def setViewSettings(name: => String, fd: FilterDead, mod: (Project, TableSettings) => TableSettings): *.Actions =
-    (setFilterDead(fd) >> *.action("setTableSettings")(i =>
-      i.ref.$.modState(s => s.copy(tableSettings = mod(i.state, s.tableSettings))))
-      ).renameContextFree(name)
+  def setViewSettings(name: => String, fd: FilterDead, mod: (Project, View) => View): *.Actions =
+    (setFilterDead(fd) >> *.action("setView")(i =>
+      i.ref.$.modState(ReqTablePage.State.modifyView(i.state, fd, true)(mod(i.state, _)))))
+      .renameContextFree(name)
 
 //  def applyTableSettings(ts: TableSettings): *.Actions =
 //    applyTableSettings("ApplyTableSettings: " + ts, _ => ts)
@@ -270,7 +271,7 @@ object ReqTableTestDsl {
   val showBuiltInColumnsSortedByPubid: *.Actions =
     setViewSettings("Show built-in columns sorted by pubid.", ShowDead, (p, s) => {
       val cs = selectVisibleColumns(Column.builtInValues.whole.contains, p, ShowDead)
-      TableSettings(cs, SortCriteria.byPubidOnly, None)
+      View(cs, SortCriteria.byPubidOnly, s.filterDead, None)
     })
 
   def showHideColumn(columnName: String): *.Actions =

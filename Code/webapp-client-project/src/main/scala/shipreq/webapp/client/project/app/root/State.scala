@@ -84,16 +84,17 @@ object AsyncKey {
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 @Lenses
-case class State(projectName : ProjectItem.WithEditableName.State,
-                 reqLookup   : String,
-                 create      : CreateFeature.State.ForProject,
-                 createAsync : AsyncFeature.State.D1[CreateFeature.RowKey, CreateFeature.AsyncError],
-                 edit        : EditorFeature.State.ForProject,
-                 editAsync   : AsyncFeature.State.D2[EditorFeature.RowKey, AsyncKey, EditorFeature.AsyncError],
-                 preview     : PreviewFeature.State[PreviewId],
-                 filterDead  : FilterDead,
-                 reqTable    : reqtable.ReqTablePage.State,
-                 reqDetail   : ReqDetail.State)
+case class State(projectName   : ProjectItem.WithEditableName.State,
+                 reqLookup     : String,
+                 create        : CreateFeature.State.ForProject,
+                 createAsync   : AsyncFeature.State.D1[CreateFeature.RowKey, CreateFeature.AsyncError],
+                 edit          : EditorFeature.State.ForProject,
+                 editAsync     : AsyncFeature.State.D2[EditorFeature.RowKey, AsyncKey, EditorFeature.AsyncError],
+                 savedViewAsync: AsyncFeature.State.D0[EditorFeature.AsyncError],
+                 preview       : PreviewFeature.State[PreviewId],
+                 filterDead    : FilterDead,
+                 reqTable      : reqtable.ReqTablePage.State,
+                 reqDetail     : ReqDetail.State)
 
 object State {
   def init(cd: ClientData): State =
@@ -104,10 +105,9 @@ object State {
       AsyncFeature.State.initD1,
       EditorFeature.State.initForProject,
       AsyncFeature.State.initD2,
+      AsyncFeature.State.initD0,
       PreviewFeature.State.init,
       HideDead,
       reqtable.ReqTablePage.State.init,
       ReqDetail.initState)
-
-  val reqTableSettings = State.reqTable ^|-> reqtable.ReqTablePage.State.tableSettings
 }

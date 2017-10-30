@@ -5,6 +5,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.univeq.UnivEq
 import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.lib.DataReusability._
 
 /**

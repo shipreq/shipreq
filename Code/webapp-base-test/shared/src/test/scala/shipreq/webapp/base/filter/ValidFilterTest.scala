@@ -5,16 +5,18 @@ import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.filter.{PotentialFilter => PF}
-import ValidFilter._
+import shipreq.webapp.base.filter.Filter.Implicits._
 
 object ValidFilterTest extends TestSuite {
 
-  def assertTranslation(s: PF, p: Project = SampleProject6.project)(expect: ValidFilter): Unit =
-    assertEq(PF.validator(p).run(s), \/-(expect))
+  val PF = Filter.Potential
+  val VF = Filter.Valid
 
-  def assertTranslationFails(s: PF, p: Project = SampleProject6.project)(errFrag: String): Unit =
-    PF.validator(p).run(s) match {
+  def assertTranslation(pf: Filter.Potential, p: Project = SampleProject6.project)(expect: Filter.Valid): Unit =
+    assertEq(Filter.Potential.validate(pf, FilterAlgebra.validate(p.config)), \/-(expect))
+
+  def assertTranslationFails(pf: Filter.Potential, p: Project = SampleProject6.project)(errFrag: String): Unit =
+    Filter.Potential.validate(pf, FilterAlgebra.validate(p.config)) match {
       case -\/(e) => assertContainsCI(e, errFrag)
       case \/-(v) => fail(s"Expected an error containing '$errFrag'. Got: $v")
     }
@@ -23,13 +25,11 @@ object ValidFilterTest extends TestSuite {
     import UnsafeTypes._
     import SampleProject6.Values._
 
-    'translation {
-
+    'fromPotential {
       'reqType {
-        'ok  - assertTranslation(PF.ReqType("MF"))(ReqType(mf))
-        'bad - assertTranslationFails(PF.ReqType("XWE"))("unknown type")
+        'ok  - assertTranslation(PF.reqType("MF"))(VF.reqType(mf))
+        'bad - assertTranslationFails(PF.reqType("XWE"))("unknown type")
       }
-
     }
   }
 }

@@ -103,6 +103,7 @@ object SampleProject {
       reqTags,
       reqImps,
       DeletionReasons.empty,
+      reqtable.SavedViews.empty,
       _))
 
   lazy val tagTree = project.config.tags.mapValues(_.children)

@@ -16,10 +16,10 @@ import shipreq.webapp.base.data.ReqType.Mnemonic
 import shipreq.webapp.base.text.{Grammar, PlainText, Text}
 import shipreq.webapp.base.util.TextMod
 import shipreq.webapp.base.validation.{CommonValidation => V, _}
-import shipreq.webapp.base.UiText.FieldNames
-import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.base.validation.Implicits._
+import shipreq.webapp.base.UiText.FieldNames
+import shipreq.webapp.base.WebappConfig
 import Uniqueness.Util._
 
 object DataValidators {

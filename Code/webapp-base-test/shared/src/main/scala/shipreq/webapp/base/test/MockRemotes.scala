@@ -20,15 +20,16 @@ object MockRemotes {
     ProjectSpaProtocols.InitData(
       username,
       p,
-      ServerSideProc("initAsync"     , InitAsync            ),
-      ServerSideProc("issueTypeCrud" , CustomIssueTypeCrud  ),
-      ServerSideProc("reqTypeCrud"   , CustomReqTypeCrud    ),
-      ServerSideProc("reqTypeImpMod" , ReqTypeImplicationMod),
-      ServerSideProc("fieldMandMod"  , FieldMandatorinessMod),
-      ServerSideProc("fieldCrud"     , FieldCrud.Protocol   ),
-      ServerSideProc("tagCrud"       , TagCrud.Protocol     ),
-      ServerSideProc("createContent" , CreateContent        ),
-      ServerSideProc("updateContent" , UpdateContent        ),
-      ServerSideProc("projectNameSet", ProjectNameSet       ))
+      ServerSideProc("initAsync"       , InitAsync            ),
+      ServerSideProc("issueTypeCrud"   , CustomIssueTypeCrud  ),
+      ServerSideProc("reqTypeCrud"     , CustomReqTypeCrud    ),
+      ServerSideProc("reqTypeImpMod"   , ReqTypeImplicationMod),
+      ServerSideProc("fieldMandMod"    , FieldMandatorinessMod),
+      ServerSideProc("fieldCrud"       , FieldCrud.Protocol   ),
+      ServerSideProc("tagCrud"         , TagCrud.Protocol     ),
+      ServerSideProc("createContent"   , CreateContent        ),
+      ServerSideProc("updateContent"   , UpdateContent        ),
+      ServerSideProc("updateSavedViews", UpdateSavedViews     ),
+      ServerSideProc("projectNameSet"  , ProjectNameSet       ))
   }
 }

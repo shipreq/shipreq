@@ -142,7 +142,7 @@ object DispatchBM {
       override def hashPassword(p: PlainTextPassword) = F point ps
       override val isAuthenticated                    = F.point(loggedIn.isDefined)
       override val authenticatedUser                  = F.point(loggedIn)
-      override val logout                             = F.point(loggedIn = None)
+      override val logout                             = F.point{loggedIn = None}
 
       override def attemptLogin(u: \/[Username, EmailAddr], p: PlainTextPassword) =
         F.point { loggedIn = Option.when(loginSuccess)(user); loggedIn }

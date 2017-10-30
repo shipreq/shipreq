@@ -205,7 +205,6 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     c.Expr[DbCodec[T]](impl)
   }
 
-  type SymStrPair = (scala.Symbol, String)
   def quietDbCodecJust   [T: c.WeakTypeTag]                          (keys: c.Expr[SymStrPair]*): c.Expr[DbCodec[T]] = implDbCodecPlusKeys[T](false)(false, None,     keys)
   def debugDbCodecJust   [T: c.WeakTypeTag]                          (keys: c.Expr[SymStrPair]*): c.Expr[DbCodec[T]] = implDbCodecPlusKeys[T](true )(false, None,     keys)
   def quietDbCodecIdAnd  [T: c.WeakTypeTag]                          (keys: c.Expr[SymStrPair]*): c.Expr[DbCodec[T]] = implDbCodecPlusKeys[T](false)(true,  None,     keys)
@@ -337,7 +336,9 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
   case class OptionalJsonObjectFieldHelper(createEmpty: Tree, isEmpty: Tree => Tree = t => q"$t.isEmpty")
   def optionalJsonObjectFieldHelper(t: Type, dealiased: Boolean = false): OptionalJsonObjectFieldHelper = {
     val s = t.toString
-    if (s startsWith "Set[")
+    if (s startsWith "Option[")
+      OptionalJsonObjectFieldHelper(q"None: $t")
+    else if (s startsWith "Set[")
       OptionalJsonObjectFieldHelper(q"Set.empty: $t")
     else if (s startsWith "scala.collection.immutable.Vector[")
       OptionalJsonObjectFieldHelper(q"Vector.empty: $t")

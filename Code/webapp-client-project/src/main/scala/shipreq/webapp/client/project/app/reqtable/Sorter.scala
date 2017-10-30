@@ -9,10 +9,11 @@ import scala.reflect.ClassTag
 import scalaz.std.option.optionInstance
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.reqtable.{Column => C, SortCriterion => SC, SortMethod => SM}
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.client.project.app.reqtable.{Column => C, SortCriterion => SC, SortMethod => SM}
-import SortMethod.{Asc, AscThenBlanks, BlanksThenAsc}
 import shipreq.base.util.{Applicable, NotApplicable}
+import SM.{Asc, AscThenBlanks, BlanksThenAsc}
 
 trait Sorter {
   type T
@@ -321,11 +322,11 @@ object Sorter {
   // ===================================================================================================================
   // Sort criteria
 
-  val inconclusiveIB: C.SortInconclusive with C.NoBlanks => SorterForSMIB = {
+  val inconclusiveIB: C.SortInconclusiveNoBlanks => SorterForSMIB = {
     case C.ReqType => SorterForSMIB(reqTypeSorter)
   }
 
-  val inconclusiveCB: C.SortInconclusive with C.HasBlanks => SorterForSMCB = {
+  val inconclusiveCB: C.SortInconclusiveHasBlanks => SorterForSMCB = {
     case c: C.CustomField =>
       c.id match {
         case id: CustomField.Text       .Id => customTextFieldSorter(id, c)
@@ -354,15 +355,15 @@ object Sorter {
   /**
    * Sort visible data in [[Expansion]]/[[MultiValues]] that won't be sorted by [[SortCriteria]].
    */
-  def sortUnspecified(ts: TableSettings): RowModFn = {
+  def sortUnspecified(view: View): RowModFn = {
     val fns =
-      ts.columns.whole
+      view.columns.whole
         .iterator
         .filterSubType[C.SortInconclusive]
-        .filterNot(ts.isOrdered)
+        .filterNot(view.isOrdered)
         .map({
-          case c: C.HasBlanks => inconclusiveCB(c)(SM.BlanksThenAsc)
-          case c: C.NoBlanks  => inconclusiveIB(c)(SM.Asc)
+          case c: C.SortInconclusiveHasBlanks => inconclusiveCB(c)(SM.BlanksThenAsc)
+          case c: C.SortInconclusiveNoBlanks  => inconclusiveIB(c)(SM.Asc)
         })
         .map(_.rowModFn)
 

@@ -14,16 +14,16 @@ import HashRec.ValidationFailure
  *
  * @param hash `None` means "disable integrity checking".
  */
-case class HashRec(scope   : HashScope,
-                   logicVer: LogicVer,
-                   scheme  : HashScheme)(
-               val hash    : Option[Int]) {
+final case class HashRec(scope   : HashScope,
+                         logicVer: LogicVer,
+                         scheme  : HashScheme)(
+                     val hash    : Option[Int]) {
 
   override def toString =
     s"HashRec($scope, $logicVer, $scheme)(${hash.fold("∅")(_.toString)})"
 
   def recalc(p: Project): Int =
-    HashScope.hash(scope, scheme.value, p)
+    scheme.hasher(scope, p)
 
   def validate(p: Project): Validity =
     Valid when validateF(p).isEmpty
@@ -61,9 +61,9 @@ object HashRec {
   def apply(p: Project): HashRec.Collection = {
     val scheme = HashScheme.latest
     var r = emptyCollection
-    val d = scheme.value
+    val d = scheme.hasher
     for (s <- defaultHashScopes) {
-      val h = HashScope.hash(s, d, p)
+      val h = d(s, p)
       r += HashRec(s, LogicVer.Current, scheme)(Some(h))
     }
     r
@@ -75,10 +75,10 @@ object HashRec {
   /** Public for testing */
   def __changes(scopes: TraversableOnce[HashScope], lv: LogicVer, scheme: HashScheme, p1: Project, p2: Project): HashRec.Collection = {
     var r = emptyCollection
-    val d = scheme.value
+    val d = scheme.hasher
     for (s <- scopes) {
-      val h1 = HashScope.hash(s, d, p1)
-      val h2 = HashScope.hash(s, d, p2)
+      val h1 = d(s, p1)
+      val h2 = d(s, p2)
       if (h1 !=* h2)
         r += HashRec(s, lv, scheme)(Some(h2))
     }

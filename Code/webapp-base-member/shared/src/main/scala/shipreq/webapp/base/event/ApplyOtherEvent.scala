@@ -3,7 +3,6 @@ package shipreq.webapp.base.event
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{DataValidators => V, _}
 import ApplyEventLib._, SE.SE
-import DataImplicits._
 
 trait ApplyOtherEvent {
   this: ApplyEvent =>
@@ -14,5 +13,104 @@ trait ApplyOtherEvent {
     def applyProjectNameSet(e: ProjectNameSet): SE[Unit] =
       validateProjectName(e.name) >>= (name =>
         SE.mod(Project.name.set(name)))
+  }
+
+  // ===================================================================================================================
+
+  object SavedViewEvents {
+    import reqtable._
+
+    private val ^ = SavedViewGD
+    private val GD = GenericDataApp[SavedView](^)
+
+    private val updateColumns      = fieldUpdateFn(SavedView.columns)
+    private val updateFilter       = fieldUpdateFn(SavedView.filter)
+    private val updateFilterDead   = fieldUpdateFn(SavedView.filterDead)
+    private val updateOrder        = fieldUpdateFn(SavedView.order)
+
+    private val updateValues = GD.updateEachValue {
+      case v: ^.ValueForName       => sv => validateName(Some(sv.id), v.value).map(SavedView.name.set(_)(sv))
+      case v: ^.ValueForColumns    => updateColumns   (v.value)
+      case v: ^.ValueForFilter     => updateFilter    (v.value)
+      case v: ^.ValueForFilterDead => updateFilterDead(v.value)
+      case v: ^.ValueForOrder      => updateOrder     (v.value)
+    }
+
+    private val updateIdCeiling = updateIdCeilingFn(IdCeilings.reqtableView)
+
+    private def validateName(subject: Option[SavedView.Id], newName: SavedView.Name)(implicit trust: Trust): SE[SavedView.Name] =
+      if (trust is Trusted)
+        SE.ret(newName)
+      else
+        SE.get.flatMap { p =>
+          val state = SavedView.Name.State(subject, p.reqtableViews)
+          val validate = validateI(SavedView.Name.validator(state))(_.value)
+          validate(newName)
+        }
+
+    def applyCreate(e: SavedViewCreate): SE[Unit] = {
+
+      def validateId: SE[Unit] =
+        SE.test(
+          _.reqtableViewIterator.forall(_.id !=* e.id),
+          s"${show(e.id)} already exists.")
+
+      def add(sv: SavedView): SavedViews.Optional => SavedViews.Optional = {
+        case None      => Some(SavedViews(sv))
+        case Some(svs) => Some(svs + sv)
+      }
+
+      for {
+        _    ← whenUntrusted(validateId)
+        name ← validateName(None, e.name)
+        sv   = SavedView(e.id, name, View(
+                 filterDead = e.filterDead,
+                 columns    = e.columns,
+                 order      = e.order,
+                 filter     = e.filter))
+        _    ← Project.reqtableViews.modify(add(sv))
+        _    ← updateIdCeiling(e.id)
+      } yield ()
+    }
+
+    private def notFound(id: SavedView.Id) = s"${show(id)} not found."
+
+    def applyUpdate(e: SavedViewUpdate): SE[Unit] =
+      optionalModSE(Project.reqtableView(e.id), notFound(e.id))(
+        updateValues(e.vs))
+
+    def applyDefaultSet(e: SavedViewDefaultSet): SE[Unit] =
+      optionalModSE(Project.reqtableViewsNE, notFound(e.id)) { ne =>
+        val get: SE[SavedView] =
+          if (trust is Untrusted)
+            optionGet(ne.nonDefault.get(e.id), notFound(e.id))
+          else
+            SE ret ne.nonDefault.need(e.id)
+        get.map(SavedViews.NonEmpty(_, ne.nonDefault - e.id + ne.default))
+      }
+
+    def applyDelete(e: SavedViewDelete): SE[Unit] = {
+
+      def delDefault(ne: SavedViews.NonEmpty): SavedViews.Optional =
+        if (ne.nonDefault.isEmpty)
+          None
+        else {
+          val min = ne.nonDefault.valuesIterator.minBy(_.name.value.toUpperCase)
+          val svs = new SavedViews.NonEmpty(min, ne.nonDefault - min.id)
+          Some(svs)
+        }
+
+      def delNonDefault(ne: SavedViews.NonEmpty): SavedViews.Optional =
+        Some(ne.copy(nonDefault = ne.nonDefault - e.id))
+
+      for {
+        p      ← SE.get
+        svs    ← optionGet(p.reqtableViews, notFound(e.id))
+        _      ← whenUntrusted(optionGet(svs.get(e.id), notFound(e.id)).void)
+        result = if (svs.default.id ==* e.id) delDefault(svs) else delNonDefault(svs)
+        _      ← Project.reqtableViews.set(result)
+      } yield ()
+    }
+
   }
 }

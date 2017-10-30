@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable
+package shipreq.webapp.base.data.reqtable
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.Util

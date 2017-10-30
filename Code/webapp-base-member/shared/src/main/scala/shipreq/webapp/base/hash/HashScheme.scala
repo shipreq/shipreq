@@ -12,17 +12,16 @@ final case class HashSchemeId(value: Char) extends AnyVal
  *
  * To add a new hash scheme because data structures have changed, do the following:
  *
- * - Create a new `DataHasherVₙ` class to do what [[DataHasherCurrent]] used to before your data structure change.
- *   This will likely mean excluding a newly-added field.
+ * - Create a new `DataHasherVₙ` class.
  *
- * - Add the new `DataHasherVₙ` class to `HashScheme.raw`. It should be inserted before [[DataHasherCurrent]],
- *   i.e. second-last.
+ * - Append the new `DataHasherVₙ` class to `HashScheme.allOldToNew`.
  *
- * - Update `HashSchemeTest`. Rename `latest` to `vₙ` and add a new `latest` test with values that consider the
- *   newly-added data structure changes.
+ * - Update the `HashScheme.Latest` type alias.
+ *
+ * - Update `HashSchemeTest`.
  */
-final case class HashScheme private[hash](value: DataHasher, id: HashSchemeId, invalidScopes: Set[HashScope]) {
-  override val hashCode = value.##
+final case class HashScheme private[hash](hasher: DataHasher, id: HashSchemeId, invalidScopes: Set[HashScope]) {
+  override val hashCode = hasher.##
   override def equals(o: Any): Boolean =
     o match {
       case b: AnyRef => b eq this
@@ -37,7 +36,7 @@ object HashScheme {
   /**
    * Order is oldest to most recent.
    */
-  val all: NonEmptyVector[HashScheme] = {
+  val allOldToNew: NonEmptyVector[HashScheme] = {
     var i = 'a'.toInt - 1
 
     def make(d: DataHasher)(scopeValidity: HashScope => Validity): HashScheme = {
@@ -51,13 +50,21 @@ object HashScheme {
 
     // APPEND-ONLY. DO NOT ALTER POSITION OF EXISTING ENTRIES.
     NonEmptyVector(
-      make(new DataHasherCurrent(MurmurHash3))(_ => Valid))
+      make(new DataHasherV1(MurmurHash3)) {
+        case HashScope.Other
+           | HashScope.Content => Invalid
+        case _                 => Valid
+      },
+      make(new DataHasherV2(MurmurHash3))(_ => Valid),
+    )
   }
 
-  val latest: HashScheme =
-    all.last
+  type Latest = DataHasherV2
 
-  private[this] val allWhole = all.whole
+  val latest: HashScheme =
+    allOldToNew.last
+
+  private[this] val allWhole = allOldToNew.whole
 
   def unsafeGet(id: HashSchemeId): HashScheme =
     allWhole(id.value - 'a')

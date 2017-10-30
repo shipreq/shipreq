@@ -2,7 +2,7 @@ package shipreq.webapp.base.hash
 
 import japgolly.microlibs.macro_utils.MacroUtils
 import scala.reflect.macros.blackbox.Context
-import shipreq.base.util.Util
+import shipreq.base.util.{SetDiff, Util}
 
 trait HashMacros {
   def joinHashes(hashes: List[Int]): Int
@@ -10,8 +10,8 @@ trait HashMacros {
   final def  hashCaseClass[T]: Hash[T] = macro HashMacroImpls.quietCaseClass[T]
   final def _hashCaseClass[T]: Hash[T] = macro HashMacroImpls.debugCaseClass[T]
 
-  final def  hashCaseClassExcept[T](fields: Symbol*): Hash[T] = macro HashMacroImpls.quietCaseClassExcept[T]
-  final def _hashCaseClassExcept[T](fields: Symbol*): Hash[T] = macro HashMacroImpls.debugCaseClassExcept[T]
+  final def  hashCaseClassSubset[T](include: (Symbol, Boolean)*): Hash[T] = macro HashMacroImpls.quietCaseClassSubset[T]
+  final def _hashCaseClassSubset[T](include: (Symbol, Boolean)*): Hash[T] = macro HashMacroImpls.debugCaseClassSubset[T]
 
   final def  hashConstClass[T](key: String): Hash[T] = macro HashMacroImpls.quietConstClass[T]
   final def _hashConstClass[T](key: String): Hash[T] = macro HashMacroImpls.debugConstClass[T]
@@ -61,31 +61,21 @@ class HashMacroImpls(val c: Context) extends MacroUtils {
     c.Expr[Hash[T]](impl)
   }
 
-  /**
-   * Constraints:
-   * - Type must be concrete (not abstract, synthetic, or a trait)
-   * - Type must have a primary constructor.
-   * - Primary constructor must have more than 0 params.
-   */
-  def quietCaseClassExcept[T: c.WeakTypeTag](fields: c.Expr[scala.Symbol]*): c.Expr[Hash[T]] = implCaseClassExcept[T](false, fields)
-  def debugCaseClassExcept[T: c.WeakTypeTag](fields: c.Expr[scala.Symbol]*): c.Expr[Hash[T]] = implCaseClassExcept[T](true , fields)
-  def implCaseClassExcept[T: c.WeakTypeTag](debug: Boolean, fields: Seq[c.Expr[scala.Symbol]]): c.Expr[Hash[T]] = {
-    if (fields.isEmpty)
-      fail("At least one field name is required.")
-    val fieldVector = fields.map(readMacroArg_symbol).toVector
-    val fieldSet = fieldVector.toSet
-    if (fieldSet.size != fieldVector.size) {
-      val dups = fieldSet.foldLeft(fieldVector)((q, f) => Util.deleteVectorElement(q, q indexOf f))
-      fail("Duplicate field names found: " + dups.mkString(", "))
-    }
+  def quietCaseClassSubset[T: c.WeakTypeTag](include: c.Expr[(scala.Symbol, Boolean)]*): c.Expr[Hash[T]] = implCaseClassSubset[T](false, include)
+  def debugCaseClassSubset[T: c.WeakTypeTag](include: c.Expr[(scala.Symbol, Boolean)]*): c.Expr[Hash[T]] = implCaseClassSubset[T](true , include)
+  def implCaseClassSubset[T: c.WeakTypeTag](debug: Boolean, include: Seq[c.Expr[(scala.Symbol, Boolean)]]): c.Expr[Hash[T]] = {
+    val spec: Vector[(String, Boolean)] = include.map(readMacroArg_symbolBoolean)(collection.breakOut)
+    if (debug) println(s"Subset spec: $spec")
+
+    val map: Map[String, Boolean] = spec.toMap
+    if (map.size != spec.length)
+      fail("Duplicate field names found: " + Util.dups(spec.iterator.map(_._1)).toSet.mkString(", "))
 
     implCaseClass[T](debug, ps => {
-      val r = ps.filterNot(fieldSet contains _._1.decodedName.toString)
-      if ((ps.size - r.size) != fieldSet.size) {
-        val missing = fieldSet &~ ps.map(_._1.decodedName.toString).toSet
-        fail(s"Field(s) not found: ${missing mkString ", "}")
-      }
-      r
+      val fieldDiff = SetDiff.compare(ps.map(_._1.decodedName.toString).toSet, map.keySet)
+      if (fieldDiff.nonEmpty)
+        fail(s"Mismatch between ${weakTypeOf[T]} fields and specified fields: $fieldDiff")
+      ps.filter(p => map(p._1.decodedName.toString))
     })
   }
 

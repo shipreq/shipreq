@@ -11,12 +11,12 @@ import nyaya.prop._
 import nyaya.gen.Gen
 import nyaya.test.Settings
 import nyaya.test.PropTest._
-import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.VerifiedEvent
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.{RandomData => $}
 import $.TextGenExt
-import shipreq.base.util.ErrorMsg
 
 object ProtocolTest extends TestSuite {
 
@@ -105,11 +105,21 @@ object ProtocolTest extends TestSuite {
 
     'Codecs {
       import BinCodecMemberData._
+      import BinCodecMemberData.ReqTableDataPicklers._
       import AtomPicklers.instances._
       implicit def autoSomeG[A](g: Gen[A]): Option[Gen[A]] = Some(g)
 
       def test[A: Pickler : Equal](name: String, g: Gen[A]): Unit =
-        g.mustSatisfy(new KitIO[A, Unit](name).propI)//(implicitly[Settings].setDebug.copy(debugMaxLen = 5000))
+        g.mustSatisfy(new KitIO[A, Unit](name).propI)(implicitly[Settings].setSampleSize(20))
+//        g.mustSatisfy(new KitIO[A, Unit](name).propI)//(implicitly[Settings].setDebug.copy(debugMaxLen = 5000))
+//        g.mustSatisfy(new KitIO[A, Unit](name).propI)(implicitly[Settings].setDebug.copy(seed = Some(0L)))
+
+      'ReqTableData {
+//        'SortCriterionC - test("SortCriterionC", $.reqtableData.sortCriteriaC)
+//        'SortCriteria - test("SortCriteria", $.project.flatMap($.reqtableData.visibleColumns).flatMap($.reqtableData.sortCriteria(_)))
+//        'ValidFilter - test("ValidFilter", $.project.flatMap($.filter.valid.forProject))
+        'SavedViews - test("SavedViews", $.project.flatMap($.reqtableData.nonEmptySavedViewsForProject))
+      }
 
       'Text {
         import shipreq.webapp.base.text.Text._

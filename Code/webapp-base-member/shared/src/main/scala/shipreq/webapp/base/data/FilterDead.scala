@@ -1,23 +1,23 @@
 package shipreq.webapp.base.data
 
 import scala.collection.TraversableLike
-import shipreq.base.util.IsoBool
+import shipreq.base.util.{IsoBool, OptionalBoolFn}
 import shipreq.base.util.univeq._
 
-sealed abstract class FilterDead(val filterFn: Option[Live => Boolean]) extends IsoBool[FilterDead] {
+sealed abstract class FilterDead(val filterFn: OptionalBoolFn[Live]) extends IsoBool[FilterDead] {
   override final def companion = FilterDead
 
   final def apply[A, C[x] <: TraversableLike[x, C[x]]](as: C[A])(f: => (A => Live)): C[A] =
-    filterFn.fold(as)(g => as.filter(g compose f))
+    filterFn.value.fold(as)(g => as.filter(g compose f))
 
   final def apply[A](as: Iterator[A])(f: => (A => Live)): Iterator[A] =
-    filterFn.fold(as)(g => as.filter(g compose f))
+    filterFn.value.fold(as)(g => as.filter(g compose f))
 
   final val filter: Live => Boolean =
-    filterFn.getOrElse(_ => true)
+    filterFn.toFn
 
   final def filterFnBy[A](f: A => Live): A => Boolean =
-    filterFn.fold((_: A) => true)(_ compose f)
+    filterFn.value.fold((_: A) => true)(_ compose f)
 
   def ldStatAccessor[A]: LiveDeadStat[A] => A
 
@@ -32,10 +32,10 @@ object FilterDead extends IsoBool.Object[FilterDead] {
   override def negative = ShowDead
 }
 
-case object HideDead extends FilterDead(Some(_ ==* Live)) {
+case object HideDead extends FilterDead(OptionalBoolFn(_ ==* Live)) {
   override def ldStatAccessor[A] = _.live
 }
 
-case object ShowDead extends FilterDead(None) {
+case object ShowDead extends FilterDead(OptionalBoolFn.empty) {
   override def ldStatAccessor[A] = _.all
 }

@@ -25,9 +25,11 @@
 .plus
 .remove
 .remove.user
+.save
 .search
 .setting
 .share.alternate
+.star
 .tags
 .trash
 .trash.outline

@@ -1,12 +1,12 @@
 package shipreq.webapp.base.data
 
 import japgolly.microlibs.scalaz_ext.ScalazMacros
-import monocle.Lens
+import monocle.{Lens, Optional}
 import monocle.macros.Lenses
+import monocle.std.option.pSome
 import scalaz.{-\/, Equal, \/, \/-}
 import scalaz.std.anyVal.intInstance
 import shipreq.base.util._
-import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.text.{Atom, Text}
 import shipreq.webapp.base.util.ShowSize
@@ -27,6 +27,12 @@ object Project {
   val useCaseIMap         : Lens[Project, UseCaseIMap        ] = useCases ^|-> UseCases.imap
   val useCaseStepIndex    : Lens[Project, UseCases.StepIndex ] = useCases ^|-> UseCases.stepIndex
 
+  val reqtableViewsNE: Optional[Project, reqtable.SavedViews.NonEmpty] =
+    reqtableViews ^<-? pSome
+
+  def reqtableView(id: reqtable.SavedView.Id): Optional[Project, reqtable.SavedView] =
+    reqtableViewsNE ^|-? reqtable.SavedViews.NonEmpty.at(id)
+
   import ReqData._ // for equality
   implicit lazy val equality: Equal[Project] = ScalazMacros.deriveEqual
 
@@ -46,6 +52,7 @@ object Project {
       ReqData.emptyTags,
       Implications.emptyBiDir,
       DeletionReasons.empty,
+      reqtable.SavedViews.empty,
       IdCeilings.zero)
 }
 
@@ -58,6 +65,7 @@ final case class Project(name           : Project.Name,
                          reqTags        : ReqData.Tags,
                          implications   : Implications.BiDir,
                          deletionReasons: DeletionReasons,
+                         reqtableViews  : reqtable.SavedViews.Optional,
                          idCeilings     : IdCeilings) {
 
   override def toString =
@@ -118,4 +126,7 @@ final case class Project(name           : Project.Name,
 
   private def implicationTransitiveClosure(dir: Direction): TransitiveClosure[ReqId] =
     implications.transitiveClosure(dir, reqs.idIterator, TransitiveClosure.Filter terminalSet deadReqIds)
+
+  def reqtableViewIterator: Iterator[reqtable.SavedView] =
+    reqtableViews.fold[Iterator[reqtable.SavedView]](Iterator.empty)(_.iterator)
 }

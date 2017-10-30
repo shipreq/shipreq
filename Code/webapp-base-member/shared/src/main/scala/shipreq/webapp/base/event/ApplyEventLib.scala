@@ -6,6 +6,7 @@ import scalaz.{-\/, Equal, \/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.reqtable.SavedView
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.GenericData
 import shipreq.webapp.base.validation.{Composite, Simple}
@@ -51,13 +52,13 @@ private[event] object ApplyEventLib {
       case -\/(f) => fail(Composite.Invalidity.toText(f))
     }
 
-  def validateA[A](v: Composite.Stateless[A, A, A])(implicit trust: Trust, eq: Equal[A]): A => SE[A] =
+  def validateA[A](v: => Composite.Stateless[A, A, A])(implicit trust: Trust, eq: Equal[A]): A => SE[A] =
     whenUntrusted(_validate(v))
 
-  def validateO[I, O](v: Composite.Stateless[I, O, O])(implicit trust: Trust, eq: Equal[I]): O => SE[O] =
+  def validateO[I, O](v: => Composite.Stateless[I, O, O])(implicit trust: Trust, eq: Equal[I]): O => SE[O] =
     whenUntrusted(o => _validate(v)(v.corrector.uncorrect(o)))
 
-  def validateI[I, O](v: Composite.Stateless[I, I, O])(f: O => I)(implicit trust: Trust, eq: Equal[I]): O => SE[O] =
+  def validateI[I, O](v: => Composite.Stateless[I, I, O])(f: O => I)(implicit trust: Trust, eq: Equal[I]): O => SE[O] =
     whenUntrusted(o => _validate(v)(f(o)))
 
   private def _validate[I, C, O](v: Composite.Stateless[I, C, O])(i: I)(implicit trust: Trust, eq: Equal[I]): SE[O] = {
@@ -70,6 +71,12 @@ private[event] object ApplyEventLib {
 
   def ensureNone[A](oa: Option[A])(err: A => String)(implicit trust: Trust): SE[Unit] =
     whenUntrusted(oa.fold(nop)(a => fail(err(a))))
+
+  def ensureDistinct[A](field: String, as: => TraversableOnce[A])(implicit trust: Trust, u: UnivEq[A]): SE[Unit] =
+    whenUntrusted {
+      val dups = Util.dups(as)
+      if (dups.isEmpty) nop else SE.fail(s"Duplicates found in $field: ${dups.toVector.distinct.mkString(", ")}")
+    }
 
   def ensureLiveIs(actual: Live)(expect: Live, name: => String)(implicit trust: Trust): SE[Unit] =
     whenUntrusted(
@@ -123,6 +130,7 @@ private[event] object ApplyEventLib {
   def show(v: CustomReqTypeId ): String = s"ReqType #${v.value}"
   def show(v: UseCaseId       ): String = s"Use case #${v.value}"
   def show(v: UseCaseStepId   ): String = s"Use case step #${v.value}"
+  def show(v: SavedView.Id    ): String = s"Saved view #${v.value}"
 
   def showLoc(v: VectorTree.Location): String = v.whole.mkString("loc ", ":", "")
 
@@ -156,6 +164,14 @@ private[event] object ApplyEventLib {
     def >>=@[C, D](l: PLens[C, D, A, B]): A => C => SE[D] =
       thenUpdateBC(l.set)
   }
+
+  def optionalModSE[A](l: monocle.Optional[Project, A], notFound: => String)(mod: A => SE[A]): SE[Unit] =
+    for {
+      p   ← SE.get
+      sv1 ← optionGet(l.getOption(p), notFound)
+      sv2 ← mod(sv1)
+      _   ← l.set(sv2)
+    } yield ()
 
   def foldMapBind[A, B](b: B, as: Iterable[A])(f: A => B => SE[B]): SE[B] =
     // ret(b).foldMapBind(as)(f)

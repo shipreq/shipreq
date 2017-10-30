@@ -62,6 +62,7 @@ object UiText {
     def useCaseStepFlowGraph = StaticFieldType.StepGraph.name
     def deletionReason       = "Deletion Reason"
     def pastPubids           = "Past IDs"
+    def savedViewName        = "Name"
   }
 
   object Cfg {

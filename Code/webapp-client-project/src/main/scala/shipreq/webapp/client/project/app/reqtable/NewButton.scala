@@ -12,6 +12,7 @@ import shipreq.webapp.base.data.ReqType.Mnemonic
 import shipreq.webapp.base.data.{Live, ReqTypes}
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui.semantic.{Dropdown, Icon, JQuery, UsesSemanticUiManually}
+import shipreq.webapp.base.ui.semantic.Dropdown.JsOptionsOps
 import shipreq.webapp.client.project.app.Style.reqtable.{creation => *}
 import shipreq.webapp.client.project.feature.CreateFeature.RowKey
 
@@ -116,9 +117,7 @@ object NewButton {
       } yield ()
 
     private val dropdownOptions: Dropdown.JsOptions =
-      new Dropdown.JsOptions {
-        override val onChange = (selectChoice(_).runNow()): Dropdown.JsOptions.OnChange
-      }
+      Dropdown.JsOptions.default.withOnChange(selectChoice(_).runNow())
 
     val enableDropdown: Callback =
       Callback {

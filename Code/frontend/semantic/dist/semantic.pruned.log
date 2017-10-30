@@ -988,7 +988,7 @@
     38 [remove] i.orange.icon
     47 [remove] i.inverted.orange.icon
    120 [remove] i.inverted.bordered.orange.icon,i.inverted.circular.orange.icon
-    38 [remove] i.yellow.icon
+    38 [keep  ] i.yellow.icon
     47 [remove] i.inverted.yellow.icon
    120 [remove] i.inverted.bordered.yellow.icon,i.inverted.circular.yellow.icon
     37 [remove] i.olive.icon
@@ -1431,7 +1431,7 @@
     52 [remove] i.icon.bluetooth.alternative:before
     40 [remove] i.icon.microchip:before
     36 [keep  ] i.icon.heart:before
-    35 [remove] i.icon.star:before
+    35 [keep  ] i.icon.star:before
     41 [remove] i.icon.empty.star:before
     48 [remove] i.icon.thumbs.outline.up:before
     50 [remove] i.icon.thumbs.outline.down:before
@@ -1525,7 +1525,7 @@
     34 [remove] i.icon.cut:before
     35 [keep  ] i.icon.copy:before
     37 [remove] i.icon.attach:before
-    35 [remove] i.icon.save:before
+    35 [keep  ] i.icon.save:before
     38 [remove] i.icon.content:before
     45 [remove] i.icon.unordered.list:before
     43 [remove] i.icon.ordered.list:before

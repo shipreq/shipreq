@@ -9,19 +9,21 @@ import BoopickleMacros._
 import BinCodecGeneric._
 import BinCodecBaseData._
 import BinCodecMemberData._
+import ReqTableDataPicklers._
 import AtomPicklers.instances._
 import ApplyEvent.LogicVer
 
 object BinCodecEvents {
 
   implicit val pickleApplicableTagGD   = binpickler(ApplicableTagGD  ).nev
+  implicit val pickleCodeGroupGD       = binpickler(CodeGroupGD      ).nev
   implicit val pickleCustomImpFieldGD  = binpickler(CustomImpFieldGD ).nev
   implicit val pickleCustomIssueTypeGD = binpickler(CustomIssueTypeGD).nev
   implicit val pickleCustomReqTypeGD   = binpickler(CustomReqTypeGD  ).nev
   implicit val pickleCustomTagFieldGD  = binpickler(CustomTagFieldGD ).nev
   implicit val pickleCustomTextFieldGD = binpickler(CustomTextFieldGD).nev
   implicit val pickleGenericReqGD      = binpickler(GenericReqGD     ).values
-  implicit val pickleCodeGroupGD       = binpickler(CodeGroupGD      ).nev
+  implicit val pickleSavedViewGD       = binpickler(SavedViewGD      ).nev
   implicit val pickleTagGroupGD        = binpickler(TagGroupGD       ).nev
   implicit val pickleUseCaseGD         = binpickler(UseCaseGD        ).values
   implicit val pickleUseCaseStepGD     = binpickler(UseCaseStepGD    ).nev
@@ -63,6 +65,10 @@ object BinCodecEvents {
   implicit val pickleReqImplicationsPatch  : Pickler[ReqImplicationsPatch  ] = pickleCaseClass
   implicit val pickleReqsDelete            : Pickler[ReqsDelete            ] = pickleCaseClass
   implicit val pickleReqTagsPatch          : Pickler[ReqTagsPatch          ] = pickleCaseClass
+  implicit val pickleSavedViewCreate       : Pickler[SavedViewCreate       ] = pickleCaseClass
+  implicit val pickleSavedViewDefaultSet   : Pickler[SavedViewDefaultSet   ] = pickleCaseClass
+  implicit val pickleSavedViewDelete       : Pickler[SavedViewDelete       ] = pickleCaseClass
+  implicit val pickleSavedViewUpdate       : Pickler[SavedViewUpdate       ] = pickleCaseClass
   implicit val pickleTagDelete             : Pickler[TagDelete             ] = pickleCaseClass
   implicit val pickleTagGroupCreate        : Pickler[TagGroupCreate        ] = pickleCaseClass
   implicit val pickleTagGroupUpdate        : Pickler[TagGroupUpdate        ] = pickleCaseClass
@@ -79,7 +85,7 @@ object BinCodecEvents {
   implicit val pickleActiveEvent: Pickler[ActiveEvent] = pickleADT
   implicit val pickleEvent      : Pickler[Event      ] = pickleADT
 
-  implicit val pickleHashScheme: Pickler[HashScheme         ] = pickleEnum(HashScheme.all)
+  implicit val pickleHashScheme: Pickler[HashScheme         ] = pickleEnum(HashScheme.allOldToNew)
   implicit val pickleHashScope : Pickler[HashScope          ] = pickleEnum(HashScope.all)
   implicit val pickleLogicVer  : Pickler[ApplyEvent.LogicVer] = ConstPickler(ApplyEvent.LogicVer.Current)
 

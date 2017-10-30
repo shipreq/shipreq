@@ -9,6 +9,7 @@ import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.{CustomReqType, ReqType, StaticReqType}
+import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.CreateContentCmd
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Table => SemTable}
@@ -176,7 +177,7 @@ sealed trait NewForm {
       val editorCells: VdomArray =
         p.editableCols.whole.toVdomArray { case (cp, e) =>
           <.td(
-            ^.key := cp.column.key,
+            ^.key := Column.key(cp.column),
             e.value.render(renderArgs))
         }
 

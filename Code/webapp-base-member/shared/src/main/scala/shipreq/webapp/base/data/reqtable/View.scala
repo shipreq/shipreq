@@ -1,0 +1,99 @@
+package shipreq.webapp.base.data.reqtable
+
+import japgolly.microlibs.nonempty.NonEmptyVector
+import monocle.macros.Lenses
+import shipreq.base.util.univeq._
+import shipreq.webapp.base.data.{FilterDead, HideDead, Live}
+import shipreq.webapp.base.filter.Filter
+import shipreq.webapp.base.filter.Filter.Implicits._
+
+@Lenses
+final case class View(columns   : NonEmptyVector[Column],
+                      order     : SortCriteria,
+                      filterDead: FilterDead,
+                      filter    : Option[Filter.Valid]) {
+
+  def isVisible(c: Column): Boolean =
+    isVisible(_ ==* c)
+
+  def isVisible(f: Column => Boolean): Boolean =
+    columns.exists(f)
+
+  @inline def isOrdered (c: Column)                             = order.isOrdered(c)
+  @inline def isOrdered (f: Column => Boolean)                  = order.isOrdered(f)
+  @inline def isOrderedI(c: Column.SortInconclusive)            = order.isOrderedI(c)
+  @inline def isOrderedI(f: Column.SortInconclusive => Boolean) = order.isOrderedI(f)
+
+  /** Return a version of this where:
+    *
+    * - all mandatory columns are present
+    * - only visible columns are used in sort criteria
+    */
+  def makeCorrect: View = {
+    // Ensure mandatory columns are present
+    val newCols = columns ++ Column.mandatory.iterator.filterNot(columns.toNES.contains)
+
+    // Filter order
+    val icols = newCols.foldLeft(UnivEq.emptySet[Column.SortInconclusive])((q, c) => c match {
+      case i: Column.SortInconclusive => q + i
+      case _: Column.SortConclusive   => q
+    })
+    val newOrder = order.whitelistColumns(icols)
+
+    View(newCols, newOrder, filterDead, filter)
+  }
+
+  def filterByFilterDead(l: Column => Live): View =
+    filterDead.filterFn.value.fold(this)(f => filterColumns(f compose l))
+
+  def filterColumns(f: Column => Boolean): View =
+    tryFilterColumns(f) getOrElse withColumns(View.default.columns)
+
+  def tryFilterColumns(f: Column => Boolean): Option[View] =
+    columns.filter(f).map(withColumns)
+
+  def withColumns(newCols0: NonEmptyVector[Column]): View =
+    copy(columns = newCols0).makeCorrect
+
+  def orderByColumn(c: Column): View =
+    copy(order = order.want(c))
+
+  def withFilter(f: Option[Filter.Valid]): View =
+    copy(filter = f)
+
+  /**
+   * When `true`, render the reqcode column to resemble a tree. Meaning:
+   *  - display reqcode groups.
+   *  - replace common prefixes with indentation.
+   *  - use a monospace font.
+   */
+  val viewReqCodesAsTree: Boolean =
+    order.init.headOption.exists(s =>
+      s.column ==* Column.Code)
+
+  val viewCodeGroups: Boolean =
+    order.init.headOption.exists(s =>
+      (s.column ==* Column.Code) &&
+        s.method.ascending // Doesn't make sense showing CodeGroups below everything they represent
+    )
+}
+
+
+object View {
+  implicit def equality: UnivEq[View] = UnivEq.derive
+
+  def default: View =
+    default(HideDead)
+
+  def default(fd: FilterDead): View = {
+    import Column._
+    val cols = NonEmptyVector[Column.BuiltIn](Pubid, Title, Tags)
+
+    import SortCriterion.SyntaxHelpers._
+    val order = SortCriteria(
+      Vector.empty, // (Column.Code / SortMethod.AscThenBlanks, Column.Title / SortMethod.BlanksThenAsc),
+      SortCriteria.defaultConclusive)
+
+    View(cols, order, fd, None)
+  }
+}

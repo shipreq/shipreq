@@ -3,12 +3,14 @@ package shipreq.webapp.client.project.app.root
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
+import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data.ProjectMetaData
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui._
 import shipreq.webapp.base.ui.semantic.Breadcrumb
+import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.widgets.{FilterHelp, RichTextEditorHelp}
 import Routes.{Page, RouterCtl}
 
@@ -59,6 +61,7 @@ object Layout {
       MemberNavBar.Props(p.username, navBarLeft(p.page, p.project, p.rc)),
       <.div(
         _,
+        Style.layout,
         FilterHelp.modal.render,
         RichTextEditorHelp.modal.render,
         p.content))

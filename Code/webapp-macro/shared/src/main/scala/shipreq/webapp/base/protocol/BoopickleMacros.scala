@@ -136,11 +136,18 @@ class BoopickleMacroImpls(val c: Context) extends MacroUtils {
             val (n, t) = nameAndType(T, p)
             val fp = init.valImp(PicklerType(t))
             pickleFields   :+= q"state.pickle(value.$n)($fp)"
+            // pickleFields   :+= q"""{println("PICKLING: " + value.$n); state.pickle(value.$n)($fp)}"""
             unpickleFields :+= q"state.unpickle($fp)"
           }
 
           def pickleImpl = q"..$pickleFields"
-          def unpickleImpl = q"$apply(..$unpickleFields)"
+
+          def unpickleImpl = {
+             q"$apply(..$unpickleFields)"
+//            val i2 = Init()
+//            val terms = unpickleFields.map(t => q"""{val x = $t; println("UNPICKLED: " + x); x}""").map(i2.valDef)
+//            q"{..$i2; $apply(..$terms)}"
+          }
 
           q""" {
             import _root_.boopickle.{Pickler, PickleState, UnpickleState}
@@ -207,7 +214,7 @@ class BoopickleMacroImpls(val c: Context) extends MacroUtils {
           needInferImplicit(PicklerType(t))
 
       picklerNames :+= fp
-      picklers :+= q"val $fp = $picklerImpl.asInstanceOf[Pickler[$T]]"
+      picklers :+= q"val $fp = _root_.shipreq.webapp.base.protocol.BinCodecGeneric.PicklerExt($picklerImpl).unsafeWiden[$T]"
       val ci = cq"_: $t2 => $index"
       cases :+= ci
       index += 1

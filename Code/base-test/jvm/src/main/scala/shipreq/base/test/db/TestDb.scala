@@ -35,7 +35,7 @@ trait TestDb extends DbTemplate with TestDbUsageDefaults[Usable[SingleConnection
     ()
 
   private val initFx = Fx(init())
-  private val requireClean = Fx(cleanRequired = true)
+  private val requireClean = Fx{cleanRequired = true}
 
   override def apply(inTransaction: Boolean = true, mutex: Option[Lock] = None): Usable[SingleConnectionXA] =
     new Usable[SingleConnectionXA] {

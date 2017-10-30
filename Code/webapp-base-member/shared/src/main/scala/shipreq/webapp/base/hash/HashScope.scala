@@ -3,7 +3,6 @@ package shipreq.webapp.base.hash
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty._
 import japgolly.univeq.UnivEq
-import shipreq.webapp.base.data.Project
 
 sealed abstract class HashScope
 
@@ -45,25 +44,4 @@ object HashScope {
     ImplicationData,
     DeletionReasons,
     Other          )
-
-  def hash(scope: HashScope, h: DataHasher, p: Project): Int =
-    scope match {
-      case WholeProject    => h.hashProject          hash p
-      case Config          => h.hashProjectConfig    hash p.config
-      case CfgIssueTypes   => h.hashCustomIssueTypes hash p.config.customIssueTypes
-      case CfgReqTypes     => h.hashReqTypes         hash p.config.reqTypes
-      case CfgFields       => h.hashFieldSet         hash p.config.fields
-      case CfgTags         => h.hashTagTree          hash p.config.tags
-      case Content         => h.hashProjectContent   hash p
-      case Reqs            => h.hashRequirements     hash p.reqs
-      case GenericReqs     => h.hashGenericReqs      hash p.reqs.genericReqs
-      case UseCases        => h.hashUseCases         hash p.reqs.useCases
-      case PubidRegister   => h.hashPubidRegister    hash p.reqs.pubids
-      case ReqCodes        => h.hashReqCodes         hash p.reqCodes
-      case TextFieldData   => h.hashReqDataText      hash p.reqText
-      case TagData         => h.hashReqDataTags      hash p.reqTags
-      case ImplicationData => h.hashImplications     hash p.implications
-      case DeletionReasons => h.hashDeletionReasons  hash p.deletionReasons
-      case Other           => h.hashProjectOther     hash p
-    }
 }

@@ -1,13 +1,14 @@
 package shipreq.webapp.base.event
 
-import japgolly.microlibs.nonempty.NonEmptySet
+import japgolly.microlibs.nonempty._
 import scalaz.{Equal, Order}
 import shipreq.base.util.{SetDiff, Util}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.util._
+import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.text.Text
-import Text.Equality._
+import shipreq.webapp.base.text.Text.Equality._
+import shipreq.webapp.base.util._
 
 // DO NOT EDIT THIS
 // This file is generated in its entirety by bin/gen-generic_data
@@ -30,7 +31,7 @@ object ApplicableTagGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Desc extends Attr {
     override type Data = Option[String]
     override def apply(data: Data) = ValueForDesc(data)
@@ -43,7 +44,7 @@ object ApplicableTagGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Key extends Attr {
     override type Data = HashRefKey
     override def apply(data: Data) = ValueForKey(data)
@@ -56,7 +57,7 @@ object ApplicableTagGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Name extends Attr {
     override type Data = String
     override def apply(data: Data) = ValueForName(data)
@@ -69,7 +70,7 @@ object ApplicableTagGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Parents extends Attr {
     override type Data = TagInTree.Parents
     override def apply(data: Data) = ValueForParents(data)
@@ -109,7 +110,7 @@ object CodeGroupGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Title extends Attr {
     override type Data = Text.CodeGroupTitle.OptionalText
     override def apply(data: Data) = ValueForTitle(data)
@@ -149,7 +150,7 @@ object CustomImpFieldGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object ReqTypeId extends Attr {
     override type Data = ReqTypeId
     override def apply(data: Data) = ValueForReqTypeId(data)
@@ -162,7 +163,7 @@ object CustomImpFieldGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object ReqTypes extends Attr {
     override type Data = Field.ApplicableReqTypes
     override def apply(data: Data) = ValueForReqTypes(data)
@@ -202,7 +203,7 @@ object CustomIssueTypeGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Key extends Attr {
     override type Data = HashRefKey
     override def apply(data: Data) = ValueForKey(data)
@@ -242,7 +243,7 @@ object CustomReqTypeGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Mnemonic extends Attr {
     override type Data = ReqType.Mnemonic
     override def apply(data: Data) = ValueForMnemonic(data)
@@ -255,7 +256,7 @@ object CustomReqTypeGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Name extends Attr {
     override type Data = String
     override def apply(data: Data) = ValueForName(data)
@@ -295,7 +296,7 @@ object CustomTagFieldGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object ReqTypes extends Attr {
     override type Data = Field.ApplicableReqTypes
     override def apply(data: Data) = ValueForReqTypes(data)
@@ -308,7 +309,7 @@ object CustomTagFieldGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object TagId extends Attr {
     override type Data = TagId
     override def apply(data: Data) = ValueForTagId(data)
@@ -348,7 +349,7 @@ object CustomTextFieldGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Mandatory extends Attr {
     override type Data = Mandatory
     override def apply(data: Data) = ValueForMandatory(data)
@@ -361,7 +362,7 @@ object CustomTextFieldGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Name extends Attr {
     override type Data = String
     override def apply(data: Data) = ValueForName(data)
@@ -374,7 +375,7 @@ object CustomTextFieldGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object ReqTypes extends Attr {
     override type Data = Field.ApplicableReqTypes
     override def apply(data: Data) = ValueForReqTypes(data)
@@ -419,7 +420,7 @@ object GenericReqGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object CustomText extends Attr {
     override type Data = Event.NonEmptyCustomTextMap
     override def apply(data: Data) = ValueForCustomText(data)
@@ -432,7 +433,7 @@ object GenericReqGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object ImpSrcs extends Attr {
     override type Data = NonEmptySet[ReqId]
     override def apply(data: Data) = ValueForImpSrcs(data)
@@ -445,7 +446,7 @@ object GenericReqGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object ImpTgts extends Attr {
     override type Data = NonEmptySet[ReqId]
     override def apply(data: Data) = ValueForImpTgts(data)
@@ -458,7 +459,7 @@ object GenericReqGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Tags extends Attr {
     override type Data = NonEmptySet[ApplicableTagId]
     override def apply(data: Data) = ValueForTags(data)
@@ -471,7 +472,7 @@ object GenericReqGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Title extends Attr {
     override type Data = Text.GenericReqTitle.NonEmptyText
     override def apply(data: Data) = ValueForTitle(data)
@@ -495,6 +496,88 @@ object GenericReqGD extends GenericData {
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
+object SavedViewGD extends GenericData {
+  import shipreq.webapp.base.filter.Filter.{Valid => ValidFilter}
+  import reqtable._
+
+  sealed abstract class Attr extends AttrBase
+  sealed abstract class Value extends ValueBase
+
+  case object Columns extends Attr {
+    override type Data = NonEmptyVector[Column]
+    override def apply(data: Data) = ValueForColumns(data)
+    val dataEquality: Equal[Data] = implicitly[Equal[NonEmptyVector[Column]]]
+  }
+  final case class ValueForColumns(value: Columns.Data) extends Value {
+    override val attr: Columns.type = Columns
+    override def equals(o: Any): Boolean = o match {
+      case v2: ValueForColumns => Columns.dataEquality.equal(value, v2.value)
+      case _ => false
+    }
+  }
+
+  case object Filter extends Attr {
+    override type Data = Option[ValidFilter]
+    override def apply(data: Data) = ValueForFilter(data)
+    val dataEquality: Equal[Data] = implicitly[Equal[Option[ValidFilter]]]
+  }
+  final case class ValueForFilter(value: Filter.Data) extends Value {
+    override val attr: Filter.type = Filter
+    override def equals(o: Any): Boolean = o match {
+      case v2: ValueForFilter => Filter.dataEquality.equal(value, v2.value)
+      case _ => false
+    }
+  }
+
+  case object FilterDead extends Attr {
+    override type Data = FilterDead
+    override def apply(data: Data) = ValueForFilterDead(data)
+    val dataEquality: Equal[Data] = implicitly[Equal[FilterDead]]
+  }
+  final case class ValueForFilterDead(value: FilterDead.Data) extends Value {
+    override val attr: FilterDead.type = FilterDead
+    override def equals(o: Any): Boolean = o match {
+      case v2: ValueForFilterDead => FilterDead.dataEquality.equal(value, v2.value)
+      case _ => false
+    }
+  }
+
+  case object Name extends Attr {
+    override type Data = SavedView.Name
+    override def apply(data: Data) = ValueForName(data)
+    val dataEquality: Equal[Data] = implicitly[Equal[SavedView.Name]]
+  }
+  final case class ValueForName(value: Name.Data) extends Value {
+    override val attr: Name.type = Name
+    override def equals(o: Any): Boolean = o match {
+      case v2: ValueForName => Name.dataEquality.equal(value, v2.value)
+      case _ => false
+    }
+  }
+
+  case object Order extends Attr {
+    override type Data = SortCriteria
+    override def apply(data: Data) = ValueForOrder(data)
+    val dataEquality: Equal[Data] = implicitly[Equal[SortCriteria]]
+  }
+  final case class ValueForOrder(value: Order.Data) extends Value {
+    override val attr: Order.type = Order
+    override def equals(o: Any): Boolean = o match {
+      case v2: ValueForOrder => Order.dataEquality.equal(value, v2.value)
+      case _ => false
+    }
+  }
+
+  override implicit val equalityAttr: Order[Attr] with UnivEq[Attr] =
+    Util.univEqAndArbitraryOrder(Vector(Columns, Filter, FilterDead, Name, Order))
+
+  @inline override implicit def equalityValue: UnivEq[Value] = UnivEq.force
+
+  override val attrs = NonEmptySet[Attr](Columns, Filter, FilterDead, Name, Order)
+}
+
+// █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+
 object TagGroupGD extends GenericData {
   sealed abstract class Attr extends AttrBase
   sealed abstract class Value extends ValueBase
@@ -511,7 +594,7 @@ object TagGroupGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Desc extends Attr {
     override type Data = Option[String]
     override def apply(data: Data) = ValueForDesc(data)
@@ -524,7 +607,7 @@ object TagGroupGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object MutexChildren extends Attr {
     override type Data = MutexChildren
     override def apply(data: Data) = ValueForMutexChildren(data)
@@ -537,7 +620,7 @@ object TagGroupGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Name extends Attr {
     override type Data = String
     override def apply(data: Data) = ValueForName(data)
@@ -550,7 +633,7 @@ object TagGroupGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Parents extends Attr {
     override type Data = TagInTree.Parents
     override def apply(data: Data) = ValueForParents(data)
@@ -595,7 +678,7 @@ object UseCaseGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object CustomText extends Attr {
     override type Data = Event.NonEmptyCustomTextMap
     override def apply(data: Data) = ValueForCustomText(data)
@@ -608,7 +691,7 @@ object UseCaseGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object ImpSrcs extends Attr {
     override type Data = NonEmptySet[ReqId]
     override def apply(data: Data) = ValueForImpSrcs(data)
@@ -621,7 +704,7 @@ object UseCaseGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object ImpTgts extends Attr {
     override type Data = NonEmptySet[ReqId]
     override def apply(data: Data) = ValueForImpTgts(data)
@@ -634,7 +717,7 @@ object UseCaseGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Tags extends Attr {
     override type Data = NonEmptySet[ApplicableTagId]
     override def apply(data: Data) = ValueForTags(data)
@@ -647,7 +730,7 @@ object UseCaseGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Title extends Attr {
     override type Data = Text.UseCaseTitle.NonEmptyText
     override def apply(data: Data) = ValueForTitle(data)
@@ -687,7 +770,7 @@ object UseCaseStepGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object FlowOut extends Attr {
     override type Data = SetDiff.NE[UseCaseStepId]
     override def apply(data: Data) = ValueForFlowOut(data)
@@ -700,7 +783,7 @@ object UseCaseStepGD extends GenericData {
       case _ => false
     }
   }
-     
+
   case object Title extends Attr {
     override type Data = Text.UseCaseStep.OptionalText
     override def apply(data: Data) = ValueForTitle(data)

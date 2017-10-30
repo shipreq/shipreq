@@ -5,8 +5,12 @@ import scala.reflect.macros.blackbox.Context
 import upickle._
 
 object MPickleMacros {
-  def  caseClass[T]: ReadWriter[T] = macro MPickleMacroImpls.quietCaseClass[T]
-  def _caseClass[T]: ReadWriter[T] = macro MPickleMacroImpls.debugCaseClass[T]
+
+  def  caseClass1[T]: ReadWriter[T] = macro MPickleMacroImpls.quietCaseClass1[T]
+  def _caseClass1[T]: ReadWriter[T] = macro MPickleMacroImpls.debugCaseClass1[T]
+
+  def  caseClassAsArray[T](arrayOrder: Symbol*): ReadWriter[T] = macro MPickleMacroImpls.quietCaseClassAsArray[T]
+  def _caseClassAsArray[T](arrayOrder: Symbol*): ReadWriter[T] = macro MPickleMacroImpls.debugCaseClassAsArray[T]
 
   /**
    * ADT to a String and/or Object.
@@ -55,14 +59,35 @@ trait MPickleMacroUtils { self: MacroUtils =>
 
   def readFromJsonStr(reader: TermName, value: Tree): Tree =
     q"$reader.read(_root_.upickle.json read $value)"
+
+  final type SymStrPair = (scala.Symbol, String)
 }
 
 class MPickleMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtils {
   import c.universe._
 
-  def quietCaseClass[T: c.WeakTypeTag]: c.Expr[ReadWriter[T]] = implCaseClass[T](false)
-  def debugCaseClass[T: c.WeakTypeTag]: c.Expr[ReadWriter[T]] = implCaseClass[T](true)
-  def implCaseClass[T: c.WeakTypeTag](debug: Boolean): c.Expr[ReadWriter[T]] = {
+  def quietCaseClass1[T: c.WeakTypeTag]: c.Expr[ReadWriter[T]] = implCaseClass1[T](false)
+  def debugCaseClass1[T: c.WeakTypeTag]: c.Expr[ReadWriter[T]] = implCaseClass1[T](true)
+  def implCaseClass1[T: c.WeakTypeTag](debug: Boolean): c.Expr[ReadWriter[T]] = {
+    val T      = concreteWeakTypeOf[T]
+    val TC     = T.typeSymbol.companion
+    val param  = primaryConstructorParams_require1(T)
+    val init   = Init(importMPickle)
+    val (n, t) = nameAndType(T, param)
+    val vr     = summonR(init, t)
+    val vw     = summonW(init, t)
+
+    val impl: Tree =
+      // invokeReadJs will break PF composition because lhs will always match
+      init.wrap(q"ReadWriter[$T](j => $vw.write(j.$n), $vr.read.andThen($TC.apply))")
+
+    if (debug) println("\n" + showCode(impl) + "\n")
+    c.Expr[ReadWriter[T]](impl)
+  }
+
+  def quietCaseClassAsArray[T: c.WeakTypeTag](arrayOrder: c.Expr[scala.Symbol]*): c.Expr[ReadWriter[T]] = implCaseClassAsArray[T](arrayOrder, false)
+  def debugCaseClassAsArray[T: c.WeakTypeTag](arrayOrder: c.Expr[scala.Symbol]*): c.Expr[ReadWriter[T]] = implCaseClassAsArray[T](arrayOrder, true)
+  def implCaseClassAsArray[T: c.WeakTypeTag](arrayOrderArgs: Seq[c.Expr[scala.Symbol]], debug: Boolean): c.Expr[ReadWriter[T]] = {
     val T      = concreteWeakTypeOf[T]
     val TC     = T.typeSymbol.companion
     val params = primaryConstructorParams(T)
@@ -79,31 +104,35 @@ class MPickleMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
       q"$r.read($subj)"
     }
 
-    val impl =
+    val impl: Tree =
       params match {
         case Nil =>
-          fail("Class constructor has no parameters.")
+          fail("Class constructor has no parameters, codec not required.")
 
-        case param :: Nil =>
-          val (n, t) = nameAndType(T, param)
-          val vr     = summonR(init, t)
-          val vw     = summonW(init, t)
-          // invokeReadJs will break PF composition because lhs will always match
-          init.wrap(q"ReadWriter[$T](j => $vw.write(j.$n), $vr.read.andThen($TC.apply))")
+        case _ :: Nil =>
+          fail("Use caseClass1.")
 
         case _ =>
-          val j = TermName("j")
+          val arrayOrder: Vector[String] = arrayOrderArgs.map(readMacroArg_symbol).toVector
+          if (arrayOrder.toSet.size != arrayOrderArgs.size)
+            fail(s"Duplicate field name in: $arrayOrder")
+          if (arrayOrder.size != params.size)
+            fail(s"Expected ${params.size} keys, got ${arrayOrder.size}.\n  Fields: $params\n  Keys: $arrayOrder")
+          val i = TermName("i")
           var writes = Vector.empty[Tree]
+          var reads = Vector.fill(arrayOrder.length)(null: Tree)
           var nextChar = 'a'.toInt
-          val tmp = params map { p =>
+          val paramsAndIdxByName = params.zipWithIndex.map(p => p._1.asTerm.name.toString -> p).toMap
+          val vals = arrayOrder map { fieldName =>
+            val (p, pi) = paramsAndIdxByName.getOrElse(fieldName, sys error s"Field not found: $fieldName")
             val v = TermName(nextChar.toChar.toString)
             nextChar += 1
-            writes :+= invokeWriteJs(j, p)
-            (pq"$v", invokeReadJs(v, p))
+            writes :+= invokeWriteJs(i, p)
+            reads = reads.updated(pi, invokeReadJs(v, p))
+            pq"$v"
           }
-          val (vals, reads) = tmp.unzip
           val rCases = cq"Js.Arr(..$vals) => $TC(..$reads)"
-          init.wrap(q"ReadWriter[$T](j => Js.Arr(..$writes), {case $rCases} )")
+          init.wrap(q"ReadWriter[$T](i => Js.Arr(..$writes), {case $rCases} )")
       }
 
     if (debug) println("\n" + showCode(impl) + "\n")

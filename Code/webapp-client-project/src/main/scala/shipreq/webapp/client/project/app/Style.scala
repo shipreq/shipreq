@@ -86,6 +86,9 @@ object Style extends StyleSheet.Inline {
     width(24.px).important,
     textAlign.center.important)
 
+  val layout = style(
+    unsafeRoot(".ui.button")(marginRight(`0`).important))
+
   // ===================================================================================================================
   object home {
 
@@ -187,6 +190,12 @@ object Style extends StyleSheet.Inline {
     object page {
 
       val ctrlHGap = 1.2 ex
+
+      val viewRow = style(display.flex)
+
+      val viewRowSV = style(
+        flexGrow(1),
+        paddingRight(1.rem))
 
       val viewCtrls = style(
         display.flex,
@@ -380,6 +389,18 @@ object Style extends StyleSheet.Inline {
       val sortMethodFull       = style(sortMethodBase, height(0.6.em))
       val sortMethodHalfTop    = style(sortMethodHalf, marginBottom(0.26.em))
       val sortMethodHalfBottom = style(sortMethodHalf)
+    }
+
+    object savedViews {
+
+      val menu = TagMod(^^.display.flex, ^^.flexWrap.wrap)
+
+      val activeItem = style(
+        fontWeight._700.important,
+        (boxShadow := "none").important,
+        borderColor(c"#F2711C").important,
+        color(c"#F2711C").important)
+
     }
   }
 
@@ -710,6 +731,7 @@ object Style extends StyleSheet.Inline {
     reqtable.sortEditor.dragArea,
     reqtable.page.viewCtrls,
     reqtable.table.selectionColumnHeader,
+    reqtable.savedViews.activeItem,
     reqdetail.detailTable,
     reqdetail.useCaseStep.container,
     widgets.issue,

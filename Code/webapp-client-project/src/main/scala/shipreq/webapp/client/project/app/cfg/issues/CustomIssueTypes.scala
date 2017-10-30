@@ -11,17 +11,17 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataValidators.{customIssueType => V, hashRefKey => VH}
-import shipreq.webapp.base.filter.PotentialFilter
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.CustomIssueTypeCrud
+import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.util.TextMod
-import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.protocol.ClientProtocol
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.CustomIssueTypeCrud
+import shipreq.webapp.base.ui.AutosizeTextarea
+import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.cfg.shared._
 import shipreq.webapp.client.project.app.state.{ChangeListener, ClientData}
 import shipreq.webapp.client.project.lib.DataReusability._
 import DataImplicits._
-import shipreq.webapp.base.ui.AutosizeTextarea
 
 private[issues] object CustomIssueTypes {
 
@@ -101,7 +101,7 @@ private[issues] object CustomIssueTypes {
 
     val usageFn = Usage((_: CustomIssueType).id)(
       _.atomScan.issueCounts,
-      PotentialFilter HashRef _.key,
+      Filter.Valid.issue,
       project, filterDead, usageShow)
 
     val cfgTable = {

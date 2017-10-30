@@ -408,4 +408,22 @@ object MakeEvent {
         UseCaseStepShiftRight(id)
     }
 
+  def updateSavedViews(cmd: SavedViewCmd, project: Project): Result = {
+    import reqtable._
+    cmd match {
+
+      case SavedViewCmd.Create(name, view) =>
+        val id = SavedView.Id(project.idCeilings.reqtableView + 1)
+        SavedViewCreate(id, name, view.columns, view.order, view.filterDead, view.filter)
+
+      case SavedViewCmd.Update(id, vs) =>
+        SavedViewUpdate(id, vs)
+
+      case SavedViewCmd.MakeDefault(id) =>
+        SavedViewDefaultSet(id)
+
+      case SavedViewCmd.Delete(id) =>
+        SavedViewDelete(id)
+    }
+  }
 }

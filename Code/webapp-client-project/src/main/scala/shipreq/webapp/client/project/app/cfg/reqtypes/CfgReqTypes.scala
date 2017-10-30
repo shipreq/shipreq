@@ -14,10 +14,10 @@ import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data._
 import DataImplicits._
 import shipreq.webapp.base.data.DataValidators.{reqType => V}
-import shipreq.webapp.base.filter.PotentialFilter
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.CustomReqTypeCrud
 import shipreq.webapp.base.data.On
+import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol.ClientProtocol
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.CustomReqTypeCrud
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.cfg.shared._
@@ -97,7 +97,7 @@ object CfgReqTypes {
 
     val usageFn = Usage((_: ReqType).reqTypeId)(
       _.reqTypeCount,
-      PotentialFilter ReqType _.mnemonic,
+      Filter.Valid.reqType,
       project, filterDead, usageShow)
 
     val cfgTable = {

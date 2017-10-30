@@ -1,9 +1,10 @@
-package shipreq.webapp.client.project.app.reqtable
+package shipreq.webapp.base.data.reqtable
 
 import nyaya.prop._
 import nyaya.test._
 import nyaya.test.PropTest._
 import utest._
+import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.test.WebappTestUtil._
 import SortCriterion._
 import SortMethod._
@@ -65,12 +66,12 @@ object SortCriteriaTest extends TestSuite {
   }
 
   val wantTest = for {
-    cfs  ← RandomReqTableData.customFieldColumn.vector
-    gi   = RandomReqTableData.ColumnIGen(cfs)
+    cfs  ← RandomData.reqtableData.customFieldColumn.vector
+    gi   = RandomData.reqtableData.ColumnIGen(cfs)
     scis ← gi.sortCriIs
     ci   ← gi.columnI
-    cc   ← RandomReqTableData.columnC
-    sc   ← RandomReqTableData.sortCriteria(scis)
+    cc   ← RandomData.reqtableData.columnC
+    sc   ← RandomData.reqtableData.sortCriteria(scis)
   } yield WantTest(sc, ci, cc)
 
   override def tests = TestSuite {

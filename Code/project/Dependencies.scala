@@ -17,7 +17,7 @@ object Dependencies {
 
   object Scala {
     private val mm = scalaItself(version)
-    def version  = "2.12.3"
+    def version  = "2.12.4"
     val library  = mm("scala-library")
     val reflect  = mm("scala-reflect")
     val compiler = mm("scala-compiler") ++ reflect ++ scalaXml
@@ -42,7 +42,7 @@ object Dependencies {
   }
 
   object Microlibs {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "1.11")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "1.12")
     val adtMacros  = mm("adt-macros")
     val config     = mm("config")
     val macroUtils = mm("macro-utils")
@@ -79,7 +79,7 @@ object Dependencies {
   }
 
   object React {
-    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "1.1.0")
+    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "1.1.1")
     val core    = mm("core")
     val test    = mm("test")
     val scalaz  = mm("ext-scalaz72") ++ Scalaz.effect
