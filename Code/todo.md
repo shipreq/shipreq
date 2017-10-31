@@ -105,6 +105,9 @@ Phase 2
   * Make a decision about the inclusion of IdCeilings (it's calculatable state of other parts of the project, transient = should exclude right?)
   * Add a HashScope just for SavedViews
   * Remove the HashScope => Validity stuff. Too hard, too fickle, too complex
+* Hashing #2!
+  * Create ListInt module and benchmark Hash using it
+  * Use Vector instead of Map in Schemes
 * Prevent -- (not not) in the FilterParser?
 * Add ProjectContent, similar to ProjectConfig?
 
