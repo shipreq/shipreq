@@ -48,6 +48,9 @@ object ApplyEvent {
      */
     val Current: LogicVer = all.last
 
+    assert(all.length == 1, "If you're gonna actually use multiple logicVer, then remove LogicVer.SoleInstance")
+    def SoleInstance = Current
+
     implicit def equality: UnivEq[LogicVer] = UnivEq.derive
   }
 }

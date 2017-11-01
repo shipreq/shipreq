@@ -107,7 +107,8 @@ Phase 2
   * Remove the HashScope => Validity stuff. Too hard, too fickle, too complex
 * Hashing #2!
   * Create ListInt module and benchmark Hash using it
-  * Use Vector instead of Map in Schemes
+  * Create OptionInt module and benchmark Hash using it
+  * Change HashScope.To to use List & int specialisation
 * Prevent -- (not not) in the FilterParser?
 * Add ProjectContent, similar to ProjectConfig?
 

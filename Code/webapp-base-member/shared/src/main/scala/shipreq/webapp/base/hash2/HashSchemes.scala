@@ -3,7 +3,10 @@ package shipreq.webapp.base.hash2
 import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.webapp.base.data.Project
 
-final class HashSchemes(schemes: NonEmptyVector[HashScheme]) {
+final class HashSchemes(schemesWithoutIds: NonEmptyVector[HashSchemeId => HashScheme]) {
+
+  private val schemes: NonEmptyVector[HashScheme] =
+    schemesWithoutIds.mapWithIndex((f, i) => f(HashSchemeId.zero.plus(i)))
 
   val latest: HashScheme =
     schemes.last
@@ -19,29 +22,33 @@ final class HashSchemes(schemes: NonEmptyVector[HashScheme]) {
   import HashSchemes.EvolutionOp
 
   private[hash2] def addEvolution(op1: EvolutionOp, opN: EvolutionOp*): HashSchemes = {
-    val newScheme: HashScheme =
-      (op1 +: opN).foldLeft(latest) { (cur, op) =>
+    val newScopes: HashScope.VersionedHashFns =
+      (op1 +: opN).foldLeft(latest.hashFns) { (cur, op) =>
 
-        def assertScopeExists(s: HashScope) = assert(cur.hashFns.contains(s), s"Evolution error! Scheme doesn't contain scope: $s")
-        def assertScopeDoesntExist(s: HashScope) = assert(!cur.hashFns.contains(s), s"Evolution error! Scheme already contains scope: $s")
+        def assertScopeExists(s: HashScope) = {
+          assert(cur.contains(s), s"Evolution error! Scheme doesn't contain scope: $s")
+          cur.need(s)
+        }
+
+        def assertScopeDoesntExist(s: HashScope): Unit =
+          assert(!cur.contains(s), s"Evolution error! Scheme already contains scope: $s")
 
         op match {
-
-          case EvolutionOp.Add((s, h)) =>
+          case EvolutionOp.AddNew((s, h)) =>
             assertScopeDoesntExist(s)
-            HashScheme(cur.hashFns.updated(s, h))
+            cur.updated(s, HashScope.VersionedHashFn.init(h))
 
           case EvolutionOp.Evolve((s, h)) =>
-            assertScopeExists(s)
-            HashScheme(cur.hashFns.updated(s, h))
+            val old = assertScopeExists(s)
+            cur.updated(s, old.evolve(h))
 
           case EvolutionOp.Drop(s) =>
             assertScopeExists(s)
-            HashScheme(cur.hashFns - s)
+            cur - s
         }
       }
 
-    new HashSchemes(schemes :+ newScheme)
+    new HashSchemes(schemesWithoutIds :+ HashScheme.withoutId(newScopes))
   }
 }
 
@@ -52,33 +59,34 @@ object HashSchemes {
   private sealed trait EvolutionOp
 
   private object EvolutionOp {
-    case class Add   (kv: (HashScope, HashFn[Project])) extends EvolutionOp
+//    case class AddUnm(kv: (HashScope, HashFn[Project])) extends EvolutionOp
+    case class AddNew(kv: (HashScope, HashFn[Project])) extends EvolutionOp
     case class Evolve(kv: (HashScope, HashFn[Project])) extends EvolutionOp
     case class Drop  (k: HashScope)                     extends EvolutionOp
   }
 
   import EvolutionOp._
 
-  private def init(first: HashScheme): HashSchemes =
-    new HashSchemes(NonEmptyVector one first)
+  private def init(values: (HashScope, HashFn[Project])*): HashSchemes =
+    new HashSchemes(NonEmptyVector one HashScheme.withoutId(
+      HashScope.To(values.toMap).map(h => HashScope.VersionedHashFn.init(h))))
 
-  val all: HashSchemes =
+  val Registry: HashSchemes =
     init(
-      HashScheme(Map(
-        HashScope.ProjectName     --> ProjectHasher.hashProjectName,
-        HashScope.CfgIssueTypes   --> ProjectHasher.hashCustomIssueTypes,
-        HashScope.CfgReqTypes     --> ProjectHasher.hashReqTypes,
-        HashScope.CfgFields       --> ProjectHasher.hashFieldSet,
-        HashScope.CfgTags         --> ProjectHasher.hashTagTree,
-        HashScope.GenericReqs     --> ProjectHasher.hashGenericReqs,
-        HashScope.UseCases        --> ProjectHasher.hashUseCases,
-        HashScope.PubidRegister   --> ProjectHasher.hashPubidRegister,
-        HashScope.ReqCodes        --> ProjectHasher.hashReqCodes,
-        HashScope.TextFieldData   --> ProjectHasher.hashReqDataText,
-        HashScope.TagData         --> ProjectHasher.hashReqDataTags,
-        HashScope.ImplicationData --> ProjectHasher.hashImplications,
-        HashScope.DeletionReasons --> ProjectHasher.hashDeletionReasons,
-        HashScope.SavedViews      --> ProjectHasher.hashSavedViews,
-      )))
+      HashScope.ProjectName     --> ProjectHasher.hashProjectName,
+      HashScope.CfgIssueTypes   --> ProjectHasher.hashCustomIssueTypes,
+      HashScope.CfgReqTypes     --> ProjectHasher.hashReqTypes,
+      HashScope.CfgFields       --> ProjectHasher.hashFieldSet,
+      HashScope.CfgTags         --> ProjectHasher.hashTagTree,
+      HashScope.GenericReqs     --> ProjectHasher.hashGenericReqs,
+      HashScope.UseCases        --> ProjectHasher.hashUseCases,
+      HashScope.PubidRegister   --> ProjectHasher.hashPubidRegister,
+      HashScope.ReqCodes        --> ProjectHasher.hashReqCodes,
+      HashScope.TextFieldData   --> ProjectHasher.hashReqDataText,
+      HashScope.TagData         --> ProjectHasher.hashReqDataTags,
+      HashScope.ImplicationData --> ProjectHasher.hashImplications,
+      HashScope.DeletionReasons --> ProjectHasher.hashDeletionReasons,
+      HashScope.SavedViews      --> ProjectHasher.hashSavedViews,
+    )
 
 }

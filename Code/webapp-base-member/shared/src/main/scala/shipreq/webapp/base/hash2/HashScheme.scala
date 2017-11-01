@@ -1,6 +1,7 @@
 package shipreq.webapp.base.hash2
 
 import japgolly.univeq.UnivEq
+import shipreq.base.util.EqualsByRef
 import shipreq.webapp.base.data.Project
 
 final case class HashSchemeId(value: Char) extends AnyVal {
@@ -19,14 +20,15 @@ object HashSchemeId {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-final case class HashScheme(hashFns: Map[HashScope, HashFn[Project]]) {
+final case class HashScheme(id: HashSchemeId, hashFns: HashScope.VersionedHashFns) extends EqualsByRef {
 
-  // dataBefore: Option[A] should be "'hashes with this Scheme' before" for cache-ability
-//    def check(dataBefore: Option[A], dataNow: A, recs: Map[S, Option[Int]]): Map[S, HashFailure] =
-//      // warn about irrelavent scopes with values
-//      // compare hashes for each relevant scope
-//      // Hash=None == force pass
-//      // missing entry for scope means no change to scope from before
-//      ???
+  override def toString = s"HashScope(${id.value})"
+
+  def hash(p: Project): HashScope.To[Int] =
+    hashFns.map(_.hashFn(p))
 }
 
+object HashScheme {
+  def withoutId(hashFns: HashScope.VersionedHashFns): HashSchemeId => HashScheme =
+    apply(_, hashFns)
+}

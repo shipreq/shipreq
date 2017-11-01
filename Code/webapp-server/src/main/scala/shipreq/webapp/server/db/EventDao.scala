@@ -9,7 +9,7 @@ import scalaz.Isomorphism.<=>
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.hash._
+import shipreq.webapp.base.hash2._
 import ApplyEvent.LogicVer
 import TaggedTypes.JsonStr
 
@@ -954,7 +954,10 @@ object EventSqlHelpers {
   final val eventHR_? = "?,?,?,?"
   implicit val doobieCompositeHashRec: Composite[HashRec] =
     Composite[(HashScope, LogicVer, HashScheme, Option[Int])].xmap[HashRec](
-      x => HashRec(x._1, x._2, x._3)(x._4),
+      db => {
+        assert(db._2 ==* LogicVer.SoleInstance)
+        HashRec(db._3, db._1)(db._4)
+      },
       hr => (hr.scope, hr.logicVer, hr.scheme, hr.hash))
 
   private type MsgJson = JsonStr[Any]
