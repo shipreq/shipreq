@@ -30,39 +30,45 @@ object HashScope {
   implicit def univEq: UnivEq[HashScope] = UnivEq.force
 
   // type To[A] = Map[HashScope, A]
-  final case class To[A](private val map: Map[HashScope, A]) extends AnyVal {
-    def isEmpty: Boolean = map.isEmpty
-    def nonEmpty: Boolean = map.nonEmpty
+  final case class To[A](temp: Map[HashScope, A]) extends AnyVal {
+    def isEmpty: Boolean = temp.isEmpty
+    def nonEmpty: Boolean = temp.nonEmpty
 
     def contains(s: HashScope): Boolean =
-      map.contains(s)
+      temp.contains(s)
 
     def get(s: HashScope): Option[A] =
-      map.get(s)
+      temp.get(s)
 
     def need(s: HashScope): A =
-      map(s)
+      temp(s)
+
+    def filter(f: (HashScope, A) => Boolean) =
+      To(temp filter f.tupled)
+
+    def scopeSet: Set[HashScope] =
+      temp.keySet
 
     def scopeIterator: Iterator[HashScope] =
-      map.keysIterator
+      temp.keysIterator
 
     def map[B](f: A => B): To[B] =
-      To(map.mapValuesNow(f))
+      To(temp.mapValuesNow(f))
 
     def mapOrRemoveEntries[B](f: (HashScope, A) => Option[(HashScope, B)]): To[B] =
-      To(map.mapOrRemoveEntries(f))
+      To(temp.mapOrRemoveEntries(f))
 
     def foreach(f: ((HashScope, A)) => Unit): Unit =
-      map.foreach(f)
+      temp.foreach(f)
 
 //    def mapWithScope[B](f: (HashScope, A) => B): To[B] =
 //      To(map.mapEntriesNow((k, v) => (k, f(k, v))))
 
     def updated(s: HashScope, a: A): To[A] =
-      To(map.updated(s, a))
+      To(temp.updated(s, a))
 
     def -(s: HashScope): To[A] =
-      To(map - s)
+      To(temp - s)
   }
 
   final case class Version(value: Int) {

@@ -2,10 +2,11 @@ package shipreq.webapp.base.hash2
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.webapp.base.data.Project
+import HashSchemes.EvolutionOp
 
 final class HashSchemes(schemesWithoutIds: NonEmptyVector[HashSchemeId => HashScheme]) {
 
-  private val schemes: NonEmptyVector[HashScheme] =
+  private[hash2] val schemes: NonEmptyVector[HashScheme] =
     schemesWithoutIds.mapWithIndex((f, i) => f(HashSchemeId.zero.plus(i)))
 
   val latest: HashScheme =
@@ -18,8 +19,6 @@ final class HashSchemes(schemesWithoutIds: NonEmptyVector[HashSchemeId => HashSc
 
   def unsafeGet(id: HashSchemeId): HashScheme =
     allWhole(id.value - HashSchemeId.zero.value)
-
-  import HashSchemes.EvolutionOp
 
   private[hash2] def addEvolution(op1: EvolutionOp, opN: EvolutionOp*): HashSchemes = {
     val newScopes: HashScope.VersionedHashFns =
@@ -34,7 +33,7 @@ final class HashSchemes(schemesWithoutIds: NonEmptyVector[HashSchemeId => HashSc
           assert(!cur.contains(s), s"Evolution error! Scheme already contains scope: $s")
 
         op match {
-          case EvolutionOp.AddNew((s, h)) =>
+          case EvolutionOp.Add((s, h)) =>
             assertScopeDoesntExist(s)
             cur.updated(s, HashScope.VersionedHashFn.init(h))
 
@@ -56,20 +55,20 @@ final class HashSchemes(schemesWithoutIds: NonEmptyVector[HashSchemeId => HashSc
 
 object HashSchemes {
 
-  private sealed trait EvolutionOp
+  private[hash2] sealed trait EvolutionOp
 
-  private object EvolutionOp {
-//    case class AddUnm(kv: (HashScope, HashFn[Project])) extends EvolutionOp
-    case class AddNew(kv: (HashScope, HashFn[Project])) extends EvolutionOp
+  private[hash2] object EvolutionOp {
+    case class Add   (kv: (HashScope, HashFn[Project])) extends EvolutionOp
     case class Evolve(kv: (HashScope, HashFn[Project])) extends EvolutionOp
     case class Drop  (k: HashScope)                     extends EvolutionOp
   }
 
-  import EvolutionOp._
-
-  private def init(values: (HashScope, HashFn[Project])*): HashSchemes =
-    new HashSchemes(NonEmptyVector one HashScheme.withoutId(
+  private[hash2] def init(values: (HashScope, HashFn[Project])*): HashSchemes =
+    initF(HashScheme.withoutId(
       HashScope.To(values.toMap).map(h => HashScope.VersionedHashFn.init(h))))
+
+  private[hash2] def initF(f: HashSchemeId => HashScheme): HashSchemes =
+    new HashSchemes(NonEmptyVector one f)
 
   val Registry: HashSchemes =
     init(

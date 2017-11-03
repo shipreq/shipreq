@@ -153,6 +153,34 @@ object ProjectHasher {
 
   implicit val hashDeletionReasons: HashFn[DeletionReasons] = hashCaseClass
 
+  protected implicit val hashNonEmptySetInt               : HashFn[NonEmptySet[Int]               ] = hashNES
+  protected implicit def hashIntensionalReqSetS[A: HashFn]: HashFn[IntensionalReqSet.SomeOfType[A]] = hashCaseClass
+  protected implicit def hashIntensionalReqSetW[A: HashFn]: HashFn[IntensionalReqSet.WholeType [A]] = hashCaseClass
+  protected implicit def hashIntensionalReqSet [A: HashFn]: HashFn[IntensionalReqSet           [A]] = hashADT
+
+  protected implicit val hashValidFilter: HashFn[Filter.Valid] = {
+    import Filter._
+    implicit val hashValidReqSubset     : HashFn[Valid.ReqSubset                        ] = hashADT
+    implicit val hashValidReqSet        : HashFn[Valid.ReqSet                           ] = hashNEV
+    implicit val hashValidText          : HashFn[FilterAst.Text                         ] = hashCaseClass
+    implicit val hashValidRegex         : HashFn[FilterAst.Regex                        ] = hashCaseClass
+    implicit val hashValidAttrI         : HashFn[FilterAst.Attr.AnyIssue .type          ] = hashConstClass("I")
+    implicit val hashValidAttrT         : HashFn[FilterAst.Attr.AnyTag   .type          ] = hashConstClass("T")
+    implicit val hashValidAttr          : HashFn[FilterAst.Attr                         ] = hashADT
+    implicit val hashValidPresence      : HashFn[FilterAst.Presence      [Valid.Attr]   ] = hashCaseClass
+    implicit val hashValidLack          : HashFn[FilterAst.Lack          [Valid.Attr]   ] = hashCaseClass
+    implicit val hashValidReqs          : HashFn[FilterAst.Reqs          [Valid.ReqSet] ] = hashCaseClass
+    implicit val hashValidReqType       : HashFn[FilterAst.ReqType       [Valid.ReqType]] = hashCaseClass
+    implicit val hashValidHashRef       : HashFn[FilterAst.HashRef       [Valid.HashTag]] = hashCaseClass
+    implicit val hashValidImpliesAnyOf  : HashFn[FilterAst.ImpliesAnyOf  [Valid.ReqSet] ] = hashCaseClass
+    implicit val hashValidImpliedByAnyOf: HashFn[FilterAst.ImpliedByAnyOf[Valid.ReqSet] ] = hashCaseClass
+    implicit val hashValidAllOf         : HashFn[FilterAst.AllOf         [Int]          ] = hashCaseClass
+    implicit val hashValidAnyOf         : HashFn[FilterAst.AnyOf         [Int]          ] = hashCaseClass
+    implicit val hashValidNot           : HashFn[FilterAst.Not           [Int]          ] = hashCaseClass
+             val hashValidInt           : HashFn[ValidF                  [Int]          ] = hashADT
+    hashFix(hashValidInt.hashFn)
+  }
+
   private object ReqTableData {
     import reqtable._
 
@@ -196,32 +224,4 @@ object ProjectHasher {
     implicit val hashSavedViews   : HashFn[SavedViews.Optional] = hashOption
   }
   implicit val hashSavedViews = ReqTableData.hashSavedViews
-
-  protected implicit val hashNonEmptySetInt             : HashFn[NonEmptySet[Int]               ] = hashNES
-  protected implicit def hashIntensionalReqSetS[A: HashFn]: HashFn[IntensionalReqSet.SomeOfType[A]] = hashCaseClass
-  protected implicit def hashIntensionalReqSetW[A: HashFn]: HashFn[IntensionalReqSet.WholeType [A]] = hashCaseClass
-  protected implicit def hashIntensionalReqSet [A: HashFn]: HashFn[IntensionalReqSet           [A]] = hashADT
-
-  protected implicit val hashValidFilter: HashFn[Filter.Valid] = {
-    import Filter._
-    implicit val hashValidReqSubset     : HashFn[Valid.ReqSubset                        ] = hashADT
-    implicit val hashValidReqSet        : HashFn[Valid.ReqSet                           ] = hashNEV
-    implicit val hashValidText          : HashFn[FilterAst.Text                         ] = hashCaseClass
-    implicit val hashValidRegex         : HashFn[FilterAst.Regex                        ] = hashCaseClass
-    implicit val hashValidAttrI         : HashFn[FilterAst.Attr.AnyIssue .type          ] = hashConstClass("I")
-    implicit val hashValidAttrT         : HashFn[FilterAst.Attr.AnyTag   .type          ] = hashConstClass("T")
-    implicit val hashValidAttr          : HashFn[FilterAst.Attr                         ] = hashADT
-    implicit val hashValidPresence      : HashFn[FilterAst.Presence      [Valid.Attr]   ] = hashCaseClass
-    implicit val hashValidLack          : HashFn[FilterAst.Lack          [Valid.Attr]   ] = hashCaseClass
-    implicit val hashValidReqs          : HashFn[FilterAst.Reqs          [Valid.ReqSet] ] = hashCaseClass
-    implicit val hashValidReqType       : HashFn[FilterAst.ReqType       [Valid.ReqType]] = hashCaseClass
-    implicit val hashValidHashRef       : HashFn[FilterAst.HashRef       [Valid.HashTag]] = hashCaseClass
-    implicit val hashValidImpliesAnyOf  : HashFn[FilterAst.ImpliesAnyOf  [Valid.ReqSet] ] = hashCaseClass
-    implicit val hashValidImpliedByAnyOf: HashFn[FilterAst.ImpliedByAnyOf[Valid.ReqSet] ] = hashCaseClass
-    implicit val hashValidAllOf         : HashFn[FilterAst.AllOf         [Int]          ] = hashCaseClass
-    implicit val hashValidAnyOf         : HashFn[FilterAst.AnyOf         [Int]          ] = hashCaseClass
-    implicit val hashValidNot           : HashFn[FilterAst.Not           [Int]          ] = hashCaseClass
-             val hashValidInt           : HashFn[ValidF                  [Int]          ] = hashADT
-    hashFix(hashValidInt.hashFn)
-  }
 }

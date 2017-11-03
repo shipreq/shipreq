@@ -97,24 +97,166 @@ object HashLogic {
   type Batch[A] = (List[A], HashRecs)
   type Batches[A] = List[Batch[A]]
 
-  final case class Batcher[A, B](ab: A => B, hashRecs: A => HashRecs) {
+  final case class Batcher[A, B](ab: A => B, hashRecs: A => HashRecs, schemeRegistry: HashSchemes) {
+
+    private val forcePass =
+      HashRecs(
+        schemeRegistry
+          .schemes
+          .iterator
+          .map(scheme => HashRecs.ByScheme(scheme, scheme.hashFns.map(_ => Option.empty[Int])))
+          .toList)
+
+    // TODO Shouldn't need HashRecs
+    private val propogation: HashScheme => HashRecs => HashScope.To[Option[Int]] =
+      if (schemeRegistry.schemes.length ==* 1)
+        _ => _ => HashScope.To(Map.empty)
+      else {
+
+        val om =
+        for {
+          s1 <- schemeRegistry.schemes.whole
+          s2 <- schemeRegistry.schemes.whole if s2 !=* s1
+          hashFns = s2.hashFns.filter((scope, hashFn) => s1.hashFns.get(scope).exists(_.version.value <= hashFn.version.value))
+        } yield s1 -> (s2 -> hashFns)
+
+        val omg: Map[HashScheme, Vector[(HashScheme, HashScope.To[HashScope.VersionedHashFn])]] =
+          om.groupBy(_._1).mapValuesNow(_.map(_._2).filter(_._2.scopeSet.nonEmpty))
+
+//            for ((a, b) <- omg)
+//              println(s"$a -- ${b.map(_.map2(_.map(_.version)))}")
+
+
+        scheme => {
+          omg.get(scheme) match {
+            case None =>
+              _ => HashScope.To(Map.empty)
+            case Some(xx) =>
+
+              hrs => {
+                val qqqqqqqqq =
+                  xx.iterator
+                    .map { case (scheme2, hashFns) => hrs(scheme2).map(_ -> hashFns) }
+                    .filterDefined
+                    .flatMap { case (hr2, hf) => hf.scopeIterator.map(s => hr2.hashes.get(s).map((s, _))).filterDefined }
+                  .toMap
+
+                HashScope.To(qqqqqqqqq)
+              }
+          }
+        }
+      }
 
     val oneByOne: Vector[A] => Batches[B] =
       _.map(a => (ab(a) :: Nil, hashRecs(a)))(collection.breakOut)
 
-    val optimal: Vector[A] => Batches[B] =
-      ???
-      // as.toList.map(a => (ab(a) :: Nil, hashRecs(a)))
-      //    var results = List.empty[(List[B], HashRec.Collection)]
-      //    var bs = List.empty[B]
-      //    var i = as.length
-      //    while (i > 0) {
-      //      i -= 1
-      //      val a = as(i)
-      //      val b = ab(a)
-      //      // compare hashschemes to next
-      //    }
-      //    results
+    val optimal: Vector[A] => Batches[B] = as => {
+
+      var results: Batches[B] = Nil
+
+      //      // as.toList.map(a => (ab(a) :: Nil, hashRecs(a)))
+      //      //    var results = List.empty[(List[B], HashRec.Collection)]
+      //      //    var bs = List.empty[B]
+      var i = as.length
+      while (i > 0) {
+        i -= 1
+        val a = as(i)
+        val b = ab(a)
+        val curSRs = hashRecs(a)
+
+        results = results match {
+
+          case Nil =>
+            val hrs = if (curSRs.values.isEmpty)
+              forcePass
+            else
+              curSRs
+            (b :: Nil, hrs) :: Nil
+
+          case (nextBs, nextSRs) :: nextResults =>
+            if (nextSRs.values eq forcePass.values) {
+              if (curSRs.values.isEmpty)
+                (b :: nextBs, forcePass) :: nextResults
+              else
+                (b :: Nil, curSRs) :: results
+            }
+
+            else if (curSRs.values.map(_.scheme).toSet ==* nextSRs.values.map(_.scheme).toSet) {
+
+              val xx =
+                curSRs.values.map { curHashesByScheme =>
+                  val scheme = curHashesByScheme.scheme
+                  val nextRs = nextSRs(scheme).get // TODO !
+                var nextHashes = nextRs.hashes
+                  curHashesByScheme.hashes.foreach { case (s, h) =>
+                    if (!nextRs.hashes.contains(s))
+                      nextHashes = nextHashes.updated(s, h)
+                  }
+                  HashRecs.ByScheme(scheme, nextHashes)
+                }
+
+              (b :: nextBs, HashRecs(xx)) :: nextResults
+            }
+
+            else (curSRs.values, nextSRs.values) match {
+
+              case (Nil, _) =>
+                (b :: Nil, forcePass) :: results
+
+//              case (curRs :: Nil, nextRs :: Nil) =>
+//                var nextRs2 = nextRs
+//                curRs.scheme.hashFns.foreach { case (s, verHashFn) =>
+//                  nextRs2.scheme.hashFns.get(s).foreach(verHashFn2 =>
+//                    if (verHashFn.version.value >= verHashFn2.version.value)
+//                      curRs.hashes.get(s).foreach(h =>
+//                        nextRs2 = nextRs2.copy(hashes = nextRs2.hashes.updated(s, h))))
+//                }
+//                (b :: Nil, curSRs) :: (nextBs, HashRecs(nextRs2 :: Nil)) :: nextResults
+
+              case _ =>
+                // curSRs.values, nextSRs.values
+                // (nextBs, nextSRs) :: nextResults
+                val isThereSchemeOverlap = curSRs.values.exists(bs => nextSRs.values.exists(_.scheme ==* bs.scheme))
+                if (isThereSchemeOverlap) {
+                  (b :: Nil, curSRs) :: results
+                } else {
+
+                  val nextSRs2 =
+                    HashRecs(
+                      nextSRs.values.map { byScheme =>
+                        val scheme = byScheme.scheme
+                        var hashes2 = byScheme.hashes.temp
+                        propogation(scheme)(curSRs).temp.foreach { case (scope, hash) =>
+                          if (!hashes2.contains(scope))
+                            hashes2 = hashes2.updated(scope, hash)
+                        }
+                        HashRecs.ByScheme(scheme, HashScope.To(hashes2))
+                      }
+                    )
+
+//                  for {
+//                    byScheme <- nextSRs.values
+//                    hashes2 = byScheme.hashes
+//                    temp <- propogation(byScheme.scheme)(curSRs).temp
+//                    (scope, hash) = temp
+//                  } yield byScheme.copy(hashes = hashes2)
+//
+//                  curSRs.values.flatMap(byScheme =>
+//                    byScheme.
+//                  )
+
+                  (b :: Nil, curSRs) :: (nextBs, nextSRs2) :: nextResults
+
+                }
+            }
+
+
+        }
+
+      }
+
+      results
+    }
   }
 
 //  object Batches {

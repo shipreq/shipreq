@@ -107,7 +107,7 @@ final class ApplyEvent(implicit val trust: Trust)
         plan.exec(p)
       }
 
-    private val batcher = HashLogic.Batcher[VerifiedEvent, Event](_.event, _.hashRecs)
+    private val batcher = HashLogic.Batcher[VerifiedEvent, Event](_.event, _.hashRecs, ???)
 
     private def applyEventBatches(batches: HashLogic.Batches[Event]): SE[Unit] =
       SE.foldMapRun(batches)(applyEventBatch)
