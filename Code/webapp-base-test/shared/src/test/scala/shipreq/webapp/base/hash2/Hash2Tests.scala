@@ -44,10 +44,10 @@ object Hash2Tests extends TestSuite {
       p
     }
 
-    private def allScopesPerScheme =
-      E.forall(batches.flatMap(_.recs)) { case (scheme, byScope) =>
-        E.equal(s"$scheme scopes", byScope.keySet, scheme.hashFns.keySet)
-      }.rename("All scopes exist per scheme")
+//    private def allScopesPerScheme =
+//      E.forall(batches.flatMap(_.recs)) { case (scheme, byScope) =>
+//        E.equal(s"$scheme scopes", byScope.keySet, scheme.hashFns.keySet)
+//      }.rename("All scopes exist per scheme")
 
     lazy val all =
       elements & latestHashRecIntact // TODO & allScopesPerScheme
@@ -240,6 +240,19 @@ object Hash2Tests extends TestSuite {
         'bad0  - testFail(FakeData(1, 2, 3, 4), FakeData(9, 8, 7, 6), hr(0, A -> none, B -> none, C -> 0))(0 -> List(C1))
       }
     }
+
+    /*
+    Gen schemes
+    Gen events that affect (1-n fields)
+      - foreach event, choose 0-n schemes, calculate diff (discard if no diff)
+
+    Partition [(event x recs)] by into [0..3] groups
+    Consolidate each group
+    Ensure each group applies and passes validation
+
+    Use OneByOne
+    Ensure each group applies and passes validation
+     */
 
   }
 }
