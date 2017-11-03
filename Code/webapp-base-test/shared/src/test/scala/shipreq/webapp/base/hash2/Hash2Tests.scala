@@ -140,11 +140,12 @@ object Hash2Tests extends TestSuite {
 //    val genHashRecs: Gen[HashRecs] =
 //      genHashSchemes.flatMap(genHashRecs(_))
 
-    def genBatchingTest(batch: Vector[HI] => Batches[Int]): Gen[BatchingTest] =
+    def genBatchingTest(batch: Batcher[HI, Int] => Vector[HI] => Batches[Int]): Gen[BatchingTest] =
       for {
         hs <- genHashSchemes
+        b = Batcher[HI, Int](_._2, _._1, hs)
         rs <- genHashRecs(hs).vector(0 to 63)
-      } yield new BatchingTest(???, batch, rs)
+      } yield new BatchingTest(b, batch(b), rs)
 
   }
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -207,9 +208,9 @@ object Hash2Tests extends TestSuite {
 
     'batching {
 
-//      'optimal - RandomData.genBatchingTest(batcher.optimal).mustSatisfyE(_.all)
+      'oneByOne - RandomData.genBatchingTest(_.oneByOne).mustSatisfyE(_.all)
 
-//      'oneByOne - RandomData.genBatchingTest(batcher.oneByOne).mustSatisfyE(_.all)
+      'optimal - RandomData.genBatchingTest(_.optimal).mustSatisfyE(_.all)
 
       'manual {
         import Manual._

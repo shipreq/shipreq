@@ -154,9 +154,6 @@ object HashLogic {
 
       var results: Batches[B] = Nil
 
-      //      // as.toList.map(a => (ab(a) :: Nil, hashRecs(a)))
-      //      //    var results = List.empty[(List[B], HashRec.Collection)]
-      //      //    var bs = List.empty[B]
       var i = as.length
       while (i > 0) {
         i -= 1
@@ -174,15 +171,14 @@ object HashLogic {
             (b :: Nil, hrs) :: Nil
 
           case (nextBs, nextSRs) :: nextResults =>
+
             if (nextSRs.values eq forcePass.values) {
               if (curSRs.values.isEmpty)
                 (b :: nextBs, forcePass) :: nextResults
               else
                 (b :: Nil, curSRs) :: results
-            }
 
-            else if (curSRs.values.map(_.scheme).toSet ==* nextSRs.values.map(_.scheme).toSet) {
-
+            } else if (curSRs.values.map(_.scheme).toSet ==* nextSRs.values.map(_.scheme).toSet) {
               val xx =
                 curSRs.values.map { curHashesByScheme =>
                   val scheme = curHashesByScheme.scheme
@@ -194,63 +190,31 @@ object HashLogic {
                   }
                   HashRecs.ByScheme(scheme, nextHashes)
                 }
-
               (b :: nextBs, HashRecs(xx)) :: nextResults
-            }
 
-            else (curSRs.values, nextSRs.values) match {
+            } else if (curSRs.values.isEmpty)
+              (b :: Nil, forcePass) :: results
 
-              case (Nil, _) =>
-                (b :: Nil, forcePass) :: results
-
-//              case (curRs :: Nil, nextRs :: Nil) =>
-//                var nextRs2 = nextRs
-//                curRs.scheme.hashFns.foreach { case (s, verHashFn) =>
-//                  nextRs2.scheme.hashFns.get(s).foreach(verHashFn2 =>
-//                    if (verHashFn.version.value >= verHashFn2.version.value)
-//                      curRs.hashes.get(s).foreach(h =>
-//                        nextRs2 = nextRs2.copy(hashes = nextRs2.hashes.updated(s, h))))
-//                }
-//                (b :: Nil, curSRs) :: (nextBs, HashRecs(nextRs2 :: Nil)) :: nextResults
-
-              case _ =>
-                // curSRs.values, nextSRs.values
-                // (nextBs, nextSRs) :: nextResults
-                val isThereSchemeOverlap = curSRs.values.exists(bs => nextSRs.values.exists(_.scheme ==* bs.scheme))
-                if (isThereSchemeOverlap) {
-                  (b :: Nil, curSRs) :: results
-                } else {
-
-                  val nextSRs2 =
-                    HashRecs(
-                      nextSRs.values.map { byScheme =>
-                        val scheme = byScheme.scheme
-                        var hashes2 = byScheme.hashes.temp
-                        propogation(scheme)(curSRs).temp.foreach { case (scope, hash) =>
-                          if (!hashes2.contains(scope))
-                            hashes2 = hashes2.updated(scope, hash)
-                        }
-                        HashRecs.ByScheme(scheme, HashScope.To(hashes2))
+            else {
+              val isThereSchemeOverlap = curSRs.values.exists(bs => nextSRs.values.exists(_.scheme ==* bs.scheme))
+              if (isThereSchemeOverlap) {
+                (b :: Nil, curSRs) :: results
+              } else {
+                val nextSRs2 =
+                  HashRecs(
+                    nextSRs.values.map { byScheme =>
+                      val scheme = byScheme.scheme
+                      var hashes2 = byScheme.hashes.temp
+                      propogation(scheme)(curSRs).temp.foreach { case (scope, hash) =>
+                        if (!hashes2.contains(scope))
+                          hashes2 = hashes2.updated(scope, hash)
                       }
-                    )
-
-//                  for {
-//                    byScheme <- nextSRs.values
-//                    hashes2 = byScheme.hashes
-//                    temp <- propogation(byScheme.scheme)(curSRs).temp
-//                    (scope, hash) = temp
-//                  } yield byScheme.copy(hashes = hashes2)
-//
-//                  curSRs.values.flatMap(byScheme =>
-//                    byScheme.
-//                  )
-
-                  (b :: Nil, curSRs) :: (nextBs, nextSRs2) :: nextResults
-
-                }
+                      HashRecs.ByScheme(scheme, HashScope.To(hashes2))
+                    }
+                  )
+                (b :: Nil, curSRs) :: (nextBs, nextSRs2) :: nextResults
+              }
             }
-
-
         }
 
       }
