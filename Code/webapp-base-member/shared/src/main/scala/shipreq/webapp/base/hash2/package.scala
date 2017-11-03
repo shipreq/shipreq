@@ -8,7 +8,7 @@ package object hash2 {
 //    override type Scope = HashScope
 //    override type Data  = Project
 
-  object ProjectHashModule extends EvoHashModule2[HashScope, Project] {
+  object ProjectHashModule extends EvoHashModule[HashScope, Project] {
 
     override val schemeRegistry =
       initSchemes(

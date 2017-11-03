@@ -5,153 +5,53 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import shipreq.base.util.EqualsByRef
 
-//trait EvoHashModule {
-//
-//  type Scope
-//  type Data
-//  protected def univEqScope: UnivEq[Scope]
-//  protected def univEqData: UnivEq[Data]
-
-abstract class EvoHashModule[_Scope: UnivEq, _Data] {
-  final type Scope = _Scope
-  final type Data = _Data
+abstract class EvoHashModule[_Scope: UnivEq, _Data] extends EvoHashModule.Types[_Scope, _Data] {
 
   protected val schemeRegistry: Schemes
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  final type ScopeVer = EvoHashModule.ScopeVer
-  final val  ScopeVer = EvoHashModule.ScopeVer
-
-  final type SchemeId = EvoHashModule.SchemeId
-  final val  SchemeId = EvoHashModule.SchemeId
-
-  final type VersionedHashFn = EvoHashModule.VersionedHashFn[Data]
-  final val  VersionedHashFn = EvoHashModule.VersionedHashFn
-
-  final type ScopesTo[+A] = Map[Scope, A]
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  final class Schemes(schemesWithoutIds: NonEmptyVector[SchemeId => Scheme]) {
-
-    val schemes: NonEmptyVector[Scheme] =
-      schemesWithoutIds.mapWithIndex((f, i) => f(SchemeId(i)))
-
-    val latest: Scheme =
-      schemes.last
-
-    val latestId: SchemeId =
-      latest.id
-
-    private[this] val allWhole = schemes.whole
-
-    def unsafeGet(id: SchemeId): Scheme =
-      allWhole(id.index)
-
-    import Schemes.EvolutionOp
-
-    def addEvolution(op1: EvolutionOp, opN: EvolutionOp*): Schemes = {
-      val newScopes: ScopesTo[VersionedHashFn] =
-        (op1 +: opN).foldLeft(latest.hashFns) { (cur, op) =>
-
-          def assertScopeExists(s: Scope) = {
-            assert(cur.contains(s), s"Evolution error! Scheme doesn't contain scope: $s")
-            cur(s)
-          }
-
-          def assertScopeDoesntExist(s: Scope): Unit =
-            assert(!cur.contains(s), s"Evolution error! Scheme already contains scope: $s")
-
-          op match {
-            case EvolutionOp.Add((s, h)) =>
-              assertScopeDoesntExist(s)
-              cur.updated(s, VersionedHashFn.init(h))
-
-            case EvolutionOp.Evolve((s, h)) =>
-              val old = assertScopeExists(s)
-              cur.updated(s, old.addEvolution(h))
-
-            case EvolutionOp.Drop(s) =>
-              assertScopeExists(s)
-              cur - s
-          }
-        }
-
-      new Schemes(schemesWithoutIds :+ Scheme.withoutId(newScopes))
-    }
-  }
-
-  object Schemes {
-
-    sealed trait EvolutionOp
-    object EvolutionOp {
-      case class Add   (kv: (Scope, HashFn[Data])) extends EvolutionOp
-      case class Evolve(kv: (Scope, HashFn[Data])) extends EvolutionOp
-      case class Drop  (k: Scope)                  extends EvolutionOp
-    }
-
-    def init(value1: (Scope, HashFn[Data]), values: (Scope, HashFn[Data])*): Schemes =
-      one(Scheme.withoutId((value1 +: values).toMap.mapValuesNow(VersionedHashFn.init)))
-
-    def one(f: SchemeId => Scheme): Schemes =
-      new Schemes(NonEmptyVector one f)
-  }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  final case class Scheme(id: SchemeId, hashFns: ScopesTo[VersionedHashFn]) extends EqualsByRef {
-
-    override def toString = s"HashScope(${id.asChar})"
-
-    def hash(data: Data): ScopesTo[Int] =
-      hashFns.mapValuesNow(_.hashFn(data))
-  }
-
-  object Scheme {
-    def withoutId(hashFns: ScopesTo[VersionedHashFn]): SchemeId => Scheme =
-      apply(_, hashFns)
-  }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  final type HashRecs = Map[Scheme, ScopesTo[Option[Int]]]
-
-  object HashRecs {
-
-    val empty: HashRecs =
-      UnivEq.emptyMap
-
-    private val latestScheme = schemeRegistry.latest
-
-    def full(p: Data): HashRecs =
-      empty.updated(latestScheme, latestScheme.hash(p).mapValuesNow(Some(_)))
-
-    def changes(p1: Data, p2: Data): HashRecs =
-      __changes(latestScheme, p1, p2)
-
-    /** Public for testing */
-    def __changes(scheme: Scheme, p1: Data, p2: Data): HashRecs = {
-      var r = Map.empty[Scope, Option[Int]]
-      for (kv <- scheme.hashFns) {
-        val scope = kv._1
-        val hashFn = kv._2.hashFn
-        val h1 = hashFn(p1)
-        val h2 = hashFn(p2)
-        if (h1 !=* h2)
-          r += scope -> Some(h2)
-      }
-      empty.updated(scheme, r)
-    }
-  }
-
+  protected def initSchemes(value1: (Scope, HashFn[Data]), values: (Scope, HashFn[Data])*): Schemes =
+    Schemes.init(value1, values: _*)
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 object EvoHashModule {
+
+  class Types[_Scope: UnivEq, _Data] {
+
+    final type Scope = _Scope
+    final type Data = _Data
+
+    final type VersionedHashFn = EvoHashModule.VersionedHashFn[Data]
+    final val  VersionedHashFn = EvoHashModule.VersionedHashFn
+
+    final type Scheme = EvoHashModule.Scheme[Scope, Data]
+    final val  Scheme = EvoHashModule.Scheme
+
+    final type Schemes = EvoHashModule.Schemes[Scope, Data]
+    final val  Schemes = EvoHashModule.Schemes
+
+    final type ScopeMap[+A] = EvoHashModule.ScopeMap[Scope, A]
+
+    final type HashRecs = EvoHashModule.HashRecs[Scope, Data]
+    object HashRecs {
+      def empty: HashRecs = UnivEq.emptyMap
+    }
+
+    final type EvolutionOp = EvoHashModule.Schemes.EvolutionOp[Scope, Data]
+    final val  EvolutionOp = EvoHashModule.Schemes.EvolutionOp
+
+    final type HashDiscrepancy = EvoHashModule.HashDiscrepancy[Scope, Data]
+    final val  HashDiscrepancy = EvoHashModule.HashDiscrepancy
+
+    //  final type ScopeVer = EvoHashModule.ScopeVer
+    //  final val  ScopeVer = EvoHashModule.ScopeVer
+    //
+    //  final type SchemeId = EvoHashModule.SchemeId
+    //  final val  SchemeId = EvoHashModule.SchemeId
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   final case class SchemeId(index: Int) extends AnyVal {
     def asChar: Char =
@@ -191,6 +91,121 @@ object EvoHashModule {
   object VersionedHashFn {
     def init[A](hashFn: HashFn[A]): VersionedHashFn[A] =
       apply(ScopeVer.init, hashFn)
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  // TODO Optimise & specialise A
+  type ScopeMap[S, +A] = Map[S, A]
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  type HashRecs[Scope, Data] = Map[Scheme[Scope, Data], ScopeMap[Scope, Option[Int]]]
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  final case class Scheme[Scope, Data](id: SchemeId, hashFns: ScopeMap[Scope, VersionedHashFn[Data]]) extends EqualsByRef {
+
+    override def toString = s"HashScope(${id.asChar})"
+
+    def hash(a: Data): ScopeMap[Scope, Int] =
+      hashFns.mapValuesNow(_.hashFn(a))
+  }
+
+  object Scheme {
+    def withoutId[Scope, Data](hashFns: ScopeMap[Scope, VersionedHashFn[Data]]): SchemeId => Scheme[Scope, Data] =
+      apply(_, hashFns)
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  final class Schemes[Scope, Data](schemesWithoutIds: NonEmptyVector[SchemeId => Scheme[Scope, Data]]) {
+
+    val schemes: NonEmptyVector[Scheme[Scope, Data]] =
+      schemesWithoutIds.mapWithIndex((f, i) => f(SchemeId(i)))
+
+    val latest: Scheme[Scope, Data] =
+      schemes.last
+
+    val latestId: SchemeId =
+      latest.id
+
+    private[this] val allWhole = schemes.whole
+
+    def unsafeGet(id: SchemeId): Scheme[Scope, Data] =
+      allWhole(id.index)
+
+    type EvolutionOp = Schemes.EvolutionOp[Scope, Data]
+
+    def addEvolution(op1: EvolutionOp, opN: EvolutionOp*): Schemes[Scope, Data] = {
+      import Schemes.EvolutionOp
+
+      val newScopes: ScopeMap[Scope, VersionedHashFn[Data]] =
+        (op1 +: opN).foldLeft(latest.hashFns) { (cur, op) =>
+
+          def assertScopeExists(s: Scope) = {
+            assert(cur.contains(s), s"Evolution error! Scheme doesn't contain scope: $s")
+            cur(s)
+          }
+
+          def assertScopeDoesntExist(s: Scope): Unit =
+            assert(!cur.contains(s), s"Evolution error! Scheme already contains scope: $s")
+
+          op match {
+            case EvolutionOp.Add((s, h)) =>
+              assertScopeDoesntExist(s)
+              cur.updated(s, VersionedHashFn.init(h))
+
+            case EvolutionOp.Evolve((s, h)) =>
+              val old = assertScopeExists(s)
+              cur.updated(s, old.addEvolution(h))
+
+            case EvolutionOp.Drop(s) =>
+              assertScopeExists(s)
+              cur - s
+          }
+        }
+
+      new Schemes(schemesWithoutIds :+ Scheme.withoutId(newScopes))
+    }
+  }
+
+  object Schemes {
+    sealed trait EvolutionOp[+Scope, +Data] extends Product with Serializable
+    object EvolutionOp {
+      case class Add   [Scope, Data](kv: (Scope, HashFn[Data])) extends EvolutionOp[Scope, Data]
+      case class Evolve[Scope, Data](kv: (Scope, HashFn[Data])) extends EvolutionOp[Scope, Data]
+      case class Drop  [Scope]      (k: Scope)                  extends EvolutionOp[Scope, Nothing]
+    }
+
+    def init[Scope, Data](value1: (Scope, HashFn[Data]), values: (Scope, HashFn[Data])*): Schemes[Scope, Data] =
+      one(Scheme.withoutId((value1 +: values).toMap.mapValuesNow(VersionedHashFn.init)))
+
+    def one[Scope, Data](f: SchemeId => Scheme[Scope, Data]): Schemes[Scope, Data] =
+      new Schemes(NonEmptyVector one f)
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  final case class HashDiscrepancy[Scope, Data](scheme: Scheme[Scope, Data],
+                                                scope : Scope,
+                                                expect: Int,
+                                                actual: Int) {
+    assert(actual != expect)
+
+    def scopeVer: ScopeVer =
+      scheme.hashFns(scope).ver
+
+    def msg = s"$scheme.$scope(v$scopeVer) $actual should be $expect."
+  }
+
+  object HashDiscrepancy {
+    def cmp[Scope, Data](scheme: Scheme[Scope, Data],
+                         scope : Scope,
+                         actual: Int,
+                         expect: Int): Option[HashDiscrepancy[Scope, Data]] =
+      Option.when(expect !=* actual)(
+        HashDiscrepancy(scheme, scope, expect = expect, actual = actual))
   }
 
 }

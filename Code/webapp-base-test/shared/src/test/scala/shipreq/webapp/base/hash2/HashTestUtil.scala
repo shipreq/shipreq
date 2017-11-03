@@ -8,7 +8,7 @@ import scalaz.syntax.applicative._
 import shipreq.base.test.BaseUtilGen._
 
 object HashTestUtil {
-  import EvoHashModule2.SchemeId
+  import EvoHashModule.SchemeId
 
   final case class XorAlgorithm(a: Hash.Algorithm, xor: Int) extends Hash.Algorithm {
     private def modI(i: Int): Int =
@@ -39,11 +39,11 @@ object HashTestUtil {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   final case class RandomHashData[S: UnivEq, D](allScopes: NonEmptyVector[S]) {
-    val types = new EvoHashModule2.Types[S, D]
+    val types = new EvoHashModule.Types[S, D]
     import types._
 
     val dudVersionedHashFn: VersionedHashFn =
-      EvoHashModule2.VersionedHashFn.init(HashFn const 0)
+      EvoHashModule.VersionedHashFn.init(HashFn const 0)
 
     val genScope: Gen[Scope] =
       Gen.chooseNE(allScopes)
@@ -61,7 +61,7 @@ object HashTestUtil {
       for {
         scopes <- genScopes
         hashFns <- genScopeTo(scopes.whole.toSet, Gen pure dudVersionedHashFn)
-      } yield EvoHashModule2.Scheme.withoutId(hashFns)
+      } yield EvoHashModule.Scheme.withoutId(hashFns)
 
     val genEvolutionOps: StateGen[Schemes, NonEmptyVector[EvolutionOp]] =
       StateGen.genA(hs =>
@@ -84,7 +84,7 @@ object HashTestUtil {
       for {
         init <- genScheme
         evos <- Gen.chooseInt(4)
-        hs   <- genEvolve.replicateM_(evos).exec(EvoHashModule2.Schemes.one(init))
+        hs   <- genEvolve.replicateM_(evos).exec(EvoHashModule.Schemes.one(init))
       } yield hs
 
     val genHash: Gen[Option[Int]] = {
@@ -115,7 +115,7 @@ object HashTestUtil {
     implicit def univEqFakeScope: UnivEq[FakeScope] = UnivEq.derive
   }
 
-  object FakeModule extends EvoHashModule2[FakeScope, FakeData] {
+  object FakeModule extends EvoHashModule[FakeScope, FakeData] {
     private val h1 = InternalHash.hashInt
     private val h2 = XorAlgorithm(InternalHash, 1).hashInt
 

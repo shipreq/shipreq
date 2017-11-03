@@ -2,78 +2,9 @@ package shipreq.webapp.base.hash2
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
-import EvoHashModule2._
-
-/*
-final case class HashDiscrepancy(scheme: HashScheme,
-                                 scope : HashScope,
-                                 expect: Int,
-                                 actual: Int) {
-  assert(actual != expect)
-
-  def scopeVer: HashScope.Version =
-    scheme.hashFns.need(scope).version
-
-  def msg = s"$scheme.$scope(v$scopeVer) $actual should be $expect."
-}
-
-object HashDiscrepancy {
-  def cmp(hashScheme: HashScheme,
-          hashScope : HashScope,
-          actual    : Int,
-          expect    : Int): Option[HashDiscrepancy] =
-    Option.when(expect !=* actual)(
-      HashDiscrepancy(hashScheme, hashScope, expect = expect, actual = actual))
-}
- */
+import EvoHashModule._
 
 object HashLogic {
-//  /**
-//    * Rules:
-//    * - All arguments must correspond to the same HashScheme
-//    * - prev & actual must contain values for all HashScopes in the HashScheme
-//    */
-//  def validateSingleScheme(hashScheme: HashScheme,
-//                           prev      : HashScope.To[Int],
-//                           actual    : HashScope.To[Int],
-//                           expect    : HashScope.To[Option[Int]]): List[HashDiscrepancy] = {
-//
-//    assert(
-//      expect.scopeIterator.forall(actual.contains),
-//      s"HashScheme previously provided the hash for a scope, which seems to have been removed. THIS IS AGAINST ITS LAWS.")
-//
-//    var errors = List.empty[HashDiscrepancy]
-//
-//    def cmp(hashScope: HashScope, actual: Int, expect: Int) =
-//      if (expect !=* actual)
-//        errors ::= HashDiscrepancy(hashScheme, hashScope, expect = expect, actual = actual)
-//
-//    actual.foreach {x =>
-//      val s = x._1
-//      val ha = x._2
-//      expect.get(s) match {
-//        case Some(Some(he)) => cmp(s, actual = ha, expect = he)
-//        case None           => cmp(s, actual = ha, expect = prev.need(s))
-//        case Some(None)     => () // expectation of None means force pass - TODO SHOULD CARRY OVER UNTIL OVERRIDDEN?
-//      }
-//    }
-//
-//    errors
-//  }
-//
-//  def validateMultiScheme(prevProject: Project, p: Project, recs: HashRec.Collection): List[HashDiscrepancy] = {
-//    val byScheme = recs.groupBy(_.scheme)
-//    var errors = List.empty[HashDiscrepancy]
-//    for ((scheme, recs) <- byScheme) {
-//      val prev  : HashScope.To[Int] = scheme.hash(prevProject)
-//      val actual: HashScope.To[Int] = scheme.hash(p)
-//      val expect: HashScope.To[Option[Int]] = HashScope.To(recs.map(r => r.scope -> r.hash).toMap)
-//      val es = validateSingleScheme(scheme, prev, actual, expect)
-//      if (es.nonEmpty)
-//        errors :::= es
-//    }
-//    errors
-//  }
 
   // Optimisations:
   // - Merge hash recs
@@ -99,14 +30,14 @@ object HashLogic {
   type Batches[Scope, Data, +A] = List[Batch[Scope, Data, A]]
 
   final case class Batcher[Scope: UnivEq, Data, A, B](ab: A => B,
-                                                      hashRecs: A => EvoHashModule2.HashRecs[Scope, Data],
-                                                      schemeRegistry: EvoHashModule2.Schemes[Scope, Data]) {
+                                                      hashRecs: A => EvoHashModule.HashRecs[Scope, Data],
+                                                      schemeRegistry: EvoHashModule.Schemes[Scope, Data]) {
 
-    type VersionedHashFn = EvoHashModule2.VersionedHashFn[Data]
-    type Scheme          = EvoHashModule2.Scheme[Scope, Data]
-    type Schemes         = EvoHashModule2.Schemes[Scope, Data]
-    type ScopeMap[+X]    = EvoHashModule2.ScopeMap[Scope, X]
-    type HashRecs        = EvoHashModule2.HashRecs[Scope, Data]
+    type VersionedHashFn = EvoHashModule.VersionedHashFn[Data]
+    type Scheme          = EvoHashModule.Scheme[Scope, Data]
+    type Schemes         = EvoHashModule.Schemes[Scope, Data]
+    type ScopeMap[+X]    = EvoHashModule.ScopeMap[Scope, X]
+    type HashRecs        = EvoHashModule.HashRecs[Scope, Data]
     type Batch           = HashLogic.Batch[Scope, Data, B]
     type Batches         = HashLogic.Batches[Scope, Data, B]
 
@@ -190,8 +121,8 @@ object HashLogic {
             } else if (curSRs.keySet ==* nextSRs.keySet) {
               val xx =
                 curSRs.map { case (scheme, curRs) =>
-                  val nextRs = nextSRs(scheme) // TODO ! unsafe
-                var nextHashes = nextRs
+                  val nextRs = nextSRs(scheme)
+                  var nextHashes = nextRs
                   curRs.foreach { case (s, h) =>
                     if (!nextRs.contains(s))
                       nextHashes = nextHashes.updated(s, h)
@@ -227,15 +158,53 @@ object HashLogic {
     }
   }
 
-//  object Batches {
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+//  /**
+//    * Rules:
+//    * - All arguments must correspond to the same HashScheme
+//    * - prev & actual must contain values for all HashScopes in the HashScheme
+//    */
+//  def validateSingleScheme(hashScheme: HashScheme,
+//                           prev      : HashScope.To[Int],
+//                           actual    : HashScope.To[Int],
+//                           expect    : HashScope.To[Option[Int]]): List[HashDiscrepancy] = {
 //
-//    def oneByOne[A, B](as: Vector[A])(hashRecs: A => HashRecs, ab: A => B): Batches[B] =
-//      as.map(a => (ab(a) :: Nil, hashRecs(a)))(collection.breakOut)
+//    assert(
+//      expect.scopeIterator.forall(actual.contains),
+//      s"HashScheme previously provided the hash for a scope, which seems to have been removed. THIS IS AGAINST ITS LAWS.")
 //
-//    def optimal[A, B](as: Vector[A])(hashRecs: A => HashRecs, ab: A => B): Batches[B] = {
+//    var errors = List.empty[HashDiscrepancy]
+//
+//    def cmp(hashScope: HashScope, actual: Int, expect: Int) =
+//      if (expect !=* actual)
+//        errors ::= HashDiscrepancy(hashScheme, hashScope, expect = expect, actual = actual)
+//
+//    actual.foreach {x =>
+//      val s = x._1
+//      val ha = x._2
+//      expect.get(s) match {
+//        case Some(Some(he)) => cmp(s, actual = ha, expect = he)
+//        case None           => cmp(s, actual = ha, expect = prev.need(s))
+//        case Some(None)     => () // expectation of None means force pass - TODO SHOULD CARRY OVER UNTIL OVERRIDDEN?
+//      }
 //    }
 //
-//    // def consolidate[A](b1: Batches[A], b2: Batches[A]): Batches[A] = ???
+//    errors
+//  }
+//
+//  def validateMultiScheme(prevProject: Project, p: Project, recs: HashRec.Collection): List[HashDiscrepancy] = {
+//    val byScheme = recs.groupBy(_.scheme)
+//    var errors = List.empty[HashDiscrepancy]
+//    for ((scheme, recs) <- byScheme) {
+//      val prev  : HashScope.To[Int] = scheme.hash(prevProject)
+//      val actual: HashScope.To[Int] = scheme.hash(p)
+//      val expect: HashScope.To[Option[Int]] = HashScope.To(recs.map(r => r.scope -> r.hash).toMap)
+//      val es = validateSingleScheme(scheme, prev, actual, expect)
+//      if (es.nonEmpty)
+//        errors :::= es
+//    }
+//    errors
 //  }
 
 //  def validateBatchHashes(p: Project, batchHashes: BatchHashes): List[HashDiscrepancy] = {
@@ -249,23 +218,6 @@ object HashLogic {
 //    } errs ::= err
 //      errs
 //  }
-//
-////  def consolidateAlternate[A, B](as: Vector[A])(hashRecs: A => HashRec.Collection, ab: A => B): Consolidated[B] = {
-//
-//  def batchHashesIsoToHRC_from: BatchHashes => HashRec.Collection =
-//    _.toIterable.flatMap(x =>
-//      x._2.scopeIterator.map(s => HashRec(x._1, s)(x._2.need(s)))).to
-//
-////    b => {
-////     var x = HashRec.Collection.empty
-////      for {
-////        (scheme, hs) <- b
-////        (sco, h) <- hs
-////      } x += HashRec(scheme, sco)(h)
-////     x
-////    }
-//  def batchHashesIsoToHRC_to: HashRec.Collection => BatchHashes =
-//    ???
 }
 
 /*

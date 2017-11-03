@@ -1,26 +1,22 @@
 package shipreq.webapp.base.hash2
 
-import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptyVector
 import nyaya.gen._
 import nyaya.prop._
 import nyaya.test._
 import nyaya.test.PropTest._
-import scalaz.syntax.applicative._
 import utest._
 import shipreq.base.test.BaseTestUtil._
-import shipreq.base.test.BaseUtilGen._
 import shipreq.webapp.base.data.Project
 
 object Hash2Tests extends TestSuite {
-  import EvoHashModule2.{Schemes, SchemeId}
-  import Schemes.EvolutionOp
+  import EvoHashModule.Schemes
   import HashLogic.{Batcher, Batches}
   import HashTestUtil._
 
-  class BatchingTest[Scope: UnivEq, Data](batcher: Batcher[Scope, Data, (EvoHashModule2.HashRecs[Scope, Data], Int), Int],
-                                          batch: Vector[(EvoHashModule2.HashRecs[Scope, Data], Int)] => Batches[Scope, Data, Int],
-                                          hs: Vector[EvoHashModule2.HashRecs[Scope, Data]]) {
+  class BatchingTest[Scope: UnivEq, Data](batcher: Batcher[Scope, Data, (EvoHashModule.HashRecs[Scope, Data], Int), Int],
+                                          batch: Vector[(EvoHashModule.HashRecs[Scope, Data], Int)] => Batches[Scope, Data, Int],
+                                          hs: Vector[EvoHashModule.HashRecs[Scope, Data]]) {
     private val E = EvalOver(hs)
 
     private val his = hs.zipWithIndex
@@ -71,7 +67,7 @@ object Hash2Tests extends TestSuite {
   object GenBatchingTest {
     type Scope = Char
     type Data = Unit
-    type HashRecs = EvoHashModule2.HashRecs[Scope, Data]
+    type HashRecs = EvoHashModule.HashRecs[Scope, Data]
     type HI = (HashRecs, Int)
 
     val rnd = RandomHashData[Scope, Data](NonEmptyVector force 'A'.to('M').to)
@@ -154,15 +150,6 @@ object Hash2Tests extends TestSuite {
           }
         }
 
-        // Scheme 0 to 1
-        // A dropped
-        // B carry forward
-        // C replaced
-
-        // Scheme n
-        // - replace
-        // - add
-
         // no hash recs at all for an event = they've been manually removed = force pass
         // TODO Ensure that all events come with hash recs
         "0-0" - test(HashRecs.empty, HashRecs.empty)(forcePass)
@@ -186,21 +173,6 @@ object Hash2Tests extends TestSuite {
         "2-2" - test(X12, Y12)(Y12)
         "1-2" - test(X1, Y12)(X1, Y12)
         "2-1" - test(X12, Y2)(X12, Y2)
-        // 1 -> 2
-        // 2 -> 1
-        // 2 -> 2
-
-  //      'pairs {
-  //        "0a_0a" - test(hr(0, A -> 5), hr(0, A -> 6))(hr(0, A -> 6))
-  //        "0a_0b" - test(hr(0, A -> 5), hr(0, B -> 6))(hr(0, A -> 5, B -> 6))
-  //        "0a_0C" - test(hr(0, A -> 5), hr(0, C -> 6))(hr(0, A -> 5, C -> 6))
-  //        "0b_0a" - test(hr(0, B -> 5), hr(0, A -> 6))(hr(0, A -> 6, B -> 5))
-  //        "0b_0b" - test(hr(0, B -> 5), hr(0, B -> 3))(hr(0, B -> 3))
-  //        "0b_0C" - test(hr(0, B -> 5), hr(0, C -> 6))(hr(0, B -> 5, C -> 6))
-  //        "0c_0a" - test(hr(0, C -> 5), hr(0, A -> 6))(hr(0, A -> 6, C -> 5))
-  //        "0c_0b" - test(hr(0, C -> 5), hr(0, B -> 6))(hr(0, B -> 6, C -> 5))
-  //        "0c_0C" - test(hr(0, C -> 5), hr(0, C -> 6))(hr(0, C -> 6))
-  //      }
       }
     }
 
