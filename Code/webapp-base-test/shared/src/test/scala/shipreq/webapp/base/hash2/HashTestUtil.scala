@@ -104,7 +104,22 @@ object HashTestUtil {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final case class FakeData(a: Int, b: Int, c: Int, d: Int)
+  final case class FakeData(a: Int, b: Int, c: Int, d: Int) {
+    def set(s: FakeScope, i: Int): FakeData =
+      s match {
+        case FakeScope.A => copy(a = i)
+        case FakeScope.B => copy(b = i)
+        case FakeScope.C => copy(c = i)
+        case FakeScope.D => copy(d = i)
+      }
+    def mod(s: FakeScope, f: Int => Int): FakeData =
+      s match {
+        case FakeScope.A => copy(a = f(a))
+        case FakeScope.B => copy(b = f(b))
+        case FakeScope.C => copy(c = f(c))
+        case FakeScope.D => copy(d = f(d))
+      }
+  }
 
   sealed trait FakeScope
   object FakeScope {
@@ -113,6 +128,7 @@ object HashTestUtil {
     case object C extends FakeScope
     case object D extends FakeScope
     implicit def univEqFakeScope: UnivEq[FakeScope] = UnivEq.derive
+    val all = AdtMacros.adtValues[FakeScope]
   }
 
   object FakeModule extends EvoHashModule[FakeScope, FakeData] {
@@ -134,10 +150,21 @@ object HashTestUtil {
     val batcher: HashLogic.Batcher[Scope, Data, (HashRecs, Int), Int] =
       HashLogic.Batcher(_._2, _._1, schemeRegistry)
 
+    val batcherVE: HashLogic.Batcher[Scope, Data, FakeVerifiedEvent, FakeEvent] =
+      HashLogic.Batcher(_.event, _.recs, schemeRegistry)
+
     val A1: VersionedHashFn = schemeRegistry.schemes.whole(0).hashFns(FakeScope.A)
     val B1: VersionedHashFn = schemeRegistry.schemes.whole(0).hashFns(FakeScope.B)
     val C1: VersionedHashFn = schemeRegistry.schemes.whole(0).hashFns(FakeScope.C)
     val C2: VersionedHashFn = schemeRegistry.schemes.whole(1).hashFns(FakeScope.C)
     val D1: VersionedHashFn = schemeRegistry.schemes.whole(1).hashFns(FakeScope.D)
   }
+
+  final case class FakeEvent(updates: Map[FakeScope, Int]) {
+    def apply(d: FakeData): FakeData =
+      updates.foldLeft(d) { case (d2, (s, v)) => d2.set(s, v) }
+  }
+
+  final case class FakeVerifiedEvent(event: FakeEvent, recs: FakeModule.HashRecs)
+
 }

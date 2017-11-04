@@ -168,8 +168,11 @@ object Hash2Tests extends TestSuite {
           }
           'diff {
             'drop - test(hr(0, A -> 5), hr(1, B -> 6))(hr(0, A -> 5), hr(1, B -> 6))
-            'carry - test(hr(0, B -> 5), hr(1, C -> 6))(hr(0, B -> 5), hr(1, B -> 5, C -> 6))
             'replace - test(hr(0, C -> 5), hr(1, C -> 6))(hr(0, C -> 5), hr(1, C -> 6))
+
+            // This doesn't make sense actully, the 2nd batch doesn't change B so there's no need to carry over B from
+            // the first batch. The lack of a B hash in batch 2 already means "no change to B"
+            // 'carry - test(hr(0, B -> 5), hr(1, C -> 6))(hr(0, B -> 5), hr(1, B -> 5, C -> 6))
           }
         }
 

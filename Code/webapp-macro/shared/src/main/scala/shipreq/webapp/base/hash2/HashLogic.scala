@@ -135,21 +135,22 @@ object HashLogic {
               Batch(b :: Nil, forcePass) :: results
 
             else {
-              val isThereSchemeOverlap = curSRs.keysIterator.exists(nextSRs.contains)
-              if (isThereSchemeOverlap) {
+//              val isThereSchemeOverlap = curSRs.keysIterator.exists(nextSRs.contains)
+//              if (isThereSchemeOverlap) {
                 Batch(b :: Nil, curSRs) :: results
-              } else {
-                val nextSRs2 =
-                  nextSRs.map { case (scheme, byScheme) =>
-                    var hashes2 = byScheme
-                    propogation(scheme)(curSRs).foreach { case (scope, hash) =>
-                      if (!hashes2.contains(scope))
-                        hashes2 = hashes2.updated(scope, hash)
-                    }
-                    scheme -> hashes2
-                  }
-                Batch(b :: Nil, curSRs) :: Batch(nextBs, nextSRs2) :: nextResults
-              }
+//              } else {
+//                val nextSRs2 =
+//                  nextSRs.map { case (scheme, byScheme) =>
+//                    var hashes2 = byScheme
+//                    propogation(scheme)(curSRs).foreach { case (scope, hash) =>
+//                      if (!hashes2.contains(scope))
+//                        hashes2 = hashes2.updated(scope, hash)
+//                    }
+//                    scheme -> hashes2
+//                  }
+//                Batch(b :: Nil, curSRs) :: Batch(nextBs, nextSRs2) :: nextResults
+//                Batch(b :: Nil, curSRs) :: results
+//              }
             }
         }
       }

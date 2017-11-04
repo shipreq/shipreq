@@ -109,22 +109,41 @@ object EvoHashModule {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final case class Scheme[Scope, Data](id: SchemeId, hashFns: ScopeMap[Scope, VersionedHashFn[Data]]) extends EqualsByRef {
+  final case class Scheme[Scope: UnivEq, Data](id: SchemeId, hashFns: ScopeMap[Scope, VersionedHashFn[Data]]) extends EqualsByRef {
 
     override def toString = s"HashScope(${id.asChar})"
 
     def hash(a: Data): ScopeMap[Scope, Int] =
       hashFns.mapValuesNow(_.hashFn(a))
+
+    /** @param d1 Data before change
+      * @param d2 Data after change
+      */
+    def changes(d1: Data, d2: Data): HashRecs[Scope, Data] = {
+      var m: ScopeMap[Scope, Option[Int]] = UnivEq.emptyMap
+      for ((s, hf) <- hashFns) {
+        val h1 = hf(d1)
+        val h2 = hf(d2)
+        if (h1 !=* h2)
+          m = m.updated(s, Some(h2))
+      }
+      val r: HashRecs[Scope, Data] = UnivEq.emptyMap
+      if (m.isEmpty)
+        r
+      else
+        r.updated(this, m)
+    }
+
   }
 
   object Scheme {
-    def withoutId[Scope, Data](hashFns: ScopeMap[Scope, VersionedHashFn[Data]]): SchemeId => Scheme[Scope, Data] =
+    def withoutId[Scope: UnivEq, Data](hashFns: ScopeMap[Scope, VersionedHashFn[Data]]): SchemeId => Scheme[Scope, Data] =
       apply(_, hashFns)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final class Schemes[Scope, Data](schemesWithoutIds: NonEmptyVector[SchemeId => Scheme[Scope, Data]]) {
+  final class Schemes[Scope: UnivEq, Data](schemesWithoutIds: NonEmptyVector[SchemeId => Scheme[Scope, Data]]) {
 
     val schemes: NonEmptyVector[Scheme[Scope, Data]] =
       schemesWithoutIds.mapWithIndex((f, i) => f(SchemeId(i)))
@@ -183,10 +202,10 @@ object EvoHashModule {
       case class Drop  [Scope]      (k: Scope)                  extends EvolutionOp[Scope, Nothing]
     }
 
-    def init[Scope, Data](value1: (Scope, HashFn[Data]), values: (Scope, HashFn[Data])*): Schemes[Scope, Data] =
+    def init[Scope: UnivEq, Data](value1: (Scope, HashFn[Data]), values: (Scope, HashFn[Data])*): Schemes[Scope, Data] =
       one(Scheme.withoutId((value1 +: values).toMap.mapValuesNow(VersionedHashFn.init)))
 
-    def one[Scope, Data](f: SchemeId => Scheme[Scope, Data]): Schemes[Scope, Data] =
+    def one[Scope: UnivEq, Data](f: SchemeId => Scheme[Scope, Data]): Schemes[Scope, Data] =
       new Schemes(NonEmptyVector one f)
   }
 
