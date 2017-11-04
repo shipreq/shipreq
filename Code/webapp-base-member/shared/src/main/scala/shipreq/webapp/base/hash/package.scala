@@ -24,13 +24,8 @@ package object hash {
         HashScope.SavedViews      --> ProjectHasher.hashSavedViews)
   }
 
-  val HashSchemes = ProjectHashModule.schemeRegistry
-
-  type HashScheme = ProjectHashModule.Scheme
-
-  final type HashSchemeId = EvoHashModule.SchemeId
-  final val  HashSchemeId = EvoHashModule.SchemeId // TODO sort of dumb, move out of EvoHashModule
-
-  type HashRecs = ProjectHashModule.HashRecs
   type HashRecsForScheme = EvoHashModule.ScopeMap[HashScope, Option[Int]]
+  type HashRecs          = ProjectHashModule.HashRecs
+  type HashScheme        = ProjectHashModule.Scheme
+  val  HashSchemes       = ProjectHashModule.schemeRegistry
 }

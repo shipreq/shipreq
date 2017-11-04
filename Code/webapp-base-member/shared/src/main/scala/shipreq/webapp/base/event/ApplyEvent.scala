@@ -26,8 +26,8 @@ object ApplyEvent {
    */
   val untrusted = new ApplyEvent()(Untrusted)
 
-  val eventBatcher: HashLogic.Batcher[HashScope, Project, VerifiedEvent, Event] =
-    HashLogic.Batcher(_.event, _.hashRecs, HashSchemes)
+  val eventBatcher: ProjectHashModule.Batcher[VerifiedEvent, Event] =
+    ProjectHashModule.Batcher(_.event, _.hashRecs)
 
   case class LogicVer(value: Char) extends AnyVal {
     def isCurrent: Boolean =

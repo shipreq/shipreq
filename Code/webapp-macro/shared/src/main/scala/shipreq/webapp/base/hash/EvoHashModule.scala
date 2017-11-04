@@ -5,12 +5,17 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import shipreq.base.util.EqualsByRef
 
+/** Module for hashing with scheme evolutions.
+  */
 abstract class EvoHashModule[_Scope: UnivEq, _Data] extends EvoHashModule.Types[_Scope, _Data] {
 
   protected val schemeRegistry: Schemes
 
   protected def initSchemes(value1: (Scope, HashFn[Data]), values: (Scope, HashFn[Data])*): Schemes =
     Schemes.init(value1, values: _*)
+
+  final def Batcher[A, B](ab: A => B, hashRecs: A => HashRecs): Batcher[A, B] =
+    HashLogic.Batcher(ab, hashRecs, schemeRegistry)
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -44,46 +49,14 @@ object EvoHashModule {
     final type HashDiscrepancy = EvoHashModule.HashDiscrepancy[Scope, Data]
     final val  HashDiscrepancy = EvoHashModule.HashDiscrepancy
 
-    //  final type ScopeVer = EvoHashModule.ScopeVer
-    //  final val  ScopeVer = EvoHashModule.ScopeVer
-    //
-    //  final type SchemeId = EvoHashModule.SchemeId
-    //  final val  SchemeId = EvoHashModule.SchemeId
+    final type Batch  [+A]   = HashLogic.Batch  [Scope, Data, A]
+    final type Batches[+A]   = HashLogic.Batches[Scope, Data, A]
+    final type Batcher[A, B] = HashLogic.Batcher[Scope, Data, A, B]
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final case class SchemeId(index: Int) extends AnyVal {
-    def asChar: Char =
-      ('a' + index).toChar
-  }
-
-  object SchemeId {
-    implicit def univEq: UnivEq[SchemeId] =
-      UnivEq.derive
-
-    def fromChar(char: Char): SchemeId =
-      apply(char - 'a')
-  }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  final case class ScopeVer(value: Int) extends AnyVal {
-    @inline def inc: ScopeVer =
-      ScopeVer(value + 1)
-
-    @inline def <=(x: ScopeVer): Boolean =
-      value <= x.value
-  }
-
-  object ScopeVer {
-    val init: ScopeVer =
-      apply(1)
-  }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  final case class VersionedHashFn[A](ver: ScopeVer, hashFn: HashFn[A]) {
+  final case class VersionedHashFn[A](ver: HashScopeVer, hashFn: HashFn[A]) {
     // override def toString = s"VersionedHashFn(${ver.value})"
 
     @inline def apply(a: A): Int =
@@ -95,21 +68,18 @@ object EvoHashModule {
 
   object VersionedHashFn {
     def init[A](hashFn: HashFn[A]): VersionedHashFn[A] =
-      apply(ScopeVer.init, hashFn)
+      apply(HashScopeVer.init, hashFn)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  // TODO Optimise & specialise A
   type ScopeMap[S, +A] = Map[S, A]
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   type HashRecs[Scope, Data] = Map[Scheme[Scope, Data], ScopeMap[Scope, Option[Int]]]
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final case class Scheme[Scope: UnivEq, Data](id: SchemeId, hashFns: ScopeMap[Scope, VersionedHashFn[Data]]) extends EqualsByRef {
+  final case class Scheme[Scope: UnivEq, Data](id: HashSchemeId, hashFns: ScopeMap[Scope, VersionedHashFn[Data]]) extends EqualsByRef {
 
     override def toString = s"HashScope(${id.asChar})"
 
@@ -137,26 +107,26 @@ object EvoHashModule {
   }
 
   object Scheme {
-    def withoutId[Scope: UnivEq, Data](hashFns: ScopeMap[Scope, VersionedHashFn[Data]]): SchemeId => Scheme[Scope, Data] =
+    def withoutId[Scope: UnivEq, Data](hashFns: ScopeMap[Scope, VersionedHashFn[Data]]): HashSchemeId => Scheme[Scope, Data] =
       apply(_, hashFns)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final class Schemes[Scope: UnivEq, Data](schemesWithoutIds: NonEmptyVector[SchemeId => Scheme[Scope, Data]]) {
+  final class Schemes[Scope: UnivEq, Data](schemesWithoutIds: NonEmptyVector[HashSchemeId => Scheme[Scope, Data]]) {
 
     val schemes: NonEmptyVector[Scheme[Scope, Data]] =
-      schemesWithoutIds.mapWithIndex((f, i) => f(SchemeId(i)))
+      schemesWithoutIds.mapWithIndex((f, i) => f(HashSchemeId(i)))
 
     val latest: Scheme[Scope, Data] =
       schemes.last
 
-    val latestId: SchemeId =
+    val latestId: HashSchemeId =
       latest.id
 
     private[this] val allWhole = schemes.whole
 
-    def unsafeGet(id: SchemeId): Scheme[Scope, Data] =
+    def unsafeGet(id: HashSchemeId): Scheme[Scope, Data] =
       allWhole(id.index)
 
     type EvolutionOp = Schemes.EvolutionOp[Scope, Data]
@@ -205,7 +175,7 @@ object EvoHashModule {
     def init[Scope: UnivEq, Data](value1: (Scope, HashFn[Data]), values: (Scope, HashFn[Data])*): Schemes[Scope, Data] =
       one(Scheme.withoutId((value1 +: values).toMap.mapValuesNow(VersionedHashFn.init)))
 
-    def one[Scope: UnivEq, Data](f: SchemeId => Scheme[Scope, Data]): Schemes[Scope, Data] =
+    def one[Scope: UnivEq, Data](f: HashSchemeId => Scheme[Scope, Data]): Schemes[Scope, Data] =
       new Schemes(NonEmptyVector one f)
   }
 
@@ -217,19 +187,10 @@ object EvoHashModule {
                                                 actual: Int) {
     assert(actual != expect)
 
-    def scopeVer: ScopeVer =
+    def scopeVer: HashScopeVer =
       scheme.hashFns(scope).ver
 
     def msg = s"$scheme.$scope(v$scopeVer) $actual should be $expect."
-  }
-
-  object HashDiscrepancy {
-    def cmp[Scope, Data](scheme: Scheme[Scope, Data],
-                         scope : Scope,
-                         actual: Int,
-                         expect: Int): Option[HashDiscrepancy[Scope, Data]] =
-      Option.when(expect !=* actual)(
-        HashDiscrepancy(scheme, scope, expect = expect, actual = actual))
   }
 
 }

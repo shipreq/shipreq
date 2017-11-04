@@ -57,7 +57,7 @@ object HashTestUtil {
     def genScopeTo[A](scopes: Set[Scope], g: Gen[A]): Gen[ScopeMap[A]] =
       Gen.traverse(scopes.toList)(s => g.map((s, _))).map(_.toMap)
 
-    val genScheme: Gen[SchemeId => Scheme] =
+    val genScheme: Gen[HashSchemeId => Scheme] =
       for {
         scopes <- genScopes
         hashFns <- genScopeTo(scopes.whole.toSet, Gen pure dudVersionedHashFn)
