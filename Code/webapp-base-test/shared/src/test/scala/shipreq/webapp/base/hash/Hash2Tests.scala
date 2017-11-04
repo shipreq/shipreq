@@ -1,4 +1,4 @@
-package shipreq.webapp.base.hash2
+package shipreq.webapp.base.hash
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._

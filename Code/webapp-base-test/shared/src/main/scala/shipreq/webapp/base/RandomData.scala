@@ -2081,21 +2081,16 @@ object RandomData {
       Gen.chooseInt(100000).map(EventOrd(_))
 
     val hashScheme: Gen[HashScheme] =
-      Gen.chooseNE(HashScheme.allOldToNew)
+      Gen.chooseNE(HashSchemes.schemes)
 
-    val hash: Gen[Int] = Gen.int
-
-    val logicVer: Gen[LogicVer] =
-      Gen pure LogicVer.Current
+    val hash: Gen[Int] =
+      Gen.int
 
     val hashScope: Gen[HashScope] =
       Gen.chooseNE(HashScope.all)
 
-    val hashRec: Gen[HashRec] =
-      Gen.lift4(hashScope, logicVer, hashScheme, hash.option)(HashRec(_, _, _)(_))
-
-    val hashRecs: Gen[HashRec.Collection] =
-      hashRec.stream.map(_.to[ListSet])
+    val hashRecs: Gen[HashRecs] =
+      hash.option.mapBy(hashScope)(1 to 4).mapBy(hashScheme)(1 to HashSchemes.schemes.length)
 
     val verifiedEvent: Gen[VerifiedEvent] =
       Gen.apply2(VerifiedEvent.apply)(event, hashRecs)

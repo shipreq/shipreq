@@ -1,4 +1,4 @@
-package shipreq.webapp.base.hash2
+package shipreq.webapp.base.hash
 
 import japgolly.microlibs.macro_utils.MacroUtils
 import scala.reflect.macros.blackbox.Context
@@ -24,7 +24,7 @@ class HashMacroImpls(val c: Context) extends MacroUtils {
   import c.universe._
 
   private def HashFn =
-    c.universe.Ident(c.mirror staticModule "shipreq.webapp.base.hash2.HashFn")
+    c.universe.Ident(c.mirror staticModule "shipreq.webapp.base.hash.HashFn")
 
   /**
    * Constraints:

@@ -1,4 +1,4 @@
-package shipreq.webapp.base.hash2
+package shipreq.webapp.base.hash
 
 object Hash {
 

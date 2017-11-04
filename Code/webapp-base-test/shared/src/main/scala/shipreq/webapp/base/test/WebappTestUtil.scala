@@ -5,7 +5,7 @@ import java.time.temporal.ChronoUnit._
 import shipreq.base.test._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.hash.HashRec
+import shipreq.webapp.base.hash.HashSchemes
 import shipreq.webapp.base.text.Text
 
 trait WebappTestEquality
@@ -35,7 +35,7 @@ trait WebappTestUtil extends BaseTestUtil {
 
   def _verifyEvent(p: Project, e: Event): (Project, VerifiedEvent) = {
     val p2 = ApplyEvent.untrusted.apply1(e)(p).fold(sys.error, identity)
-    val hrs = HashRec.changes(p, p2)
+    val hrs = HashSchemes.latest.changes(p, p2)
     (p2, VerifiedEvent(e, hrs))
   }
 
@@ -55,7 +55,7 @@ trait WebappTestUtil extends BaseTestUtil {
     es.foldLeft(p)(applyEventSuccessfully)
 
   def applyVerifiedEventSuccessfully(p: Project, e: VerifiedEvent): Project =
-    ApplyEvent.untrusted.applyVerified(e :: Nil)(p).fold(sys.error, identity)
+    ApplyEvent.untrusted.applyVerified(Vector(e))(p).fold(sys.error, identity)
 
   def applyVerifiedEventSuccessfully(p: Project, es: VerifiedEvent*): Project =
     es.foldLeft(p)(applyVerifiedEventSuccessfully)

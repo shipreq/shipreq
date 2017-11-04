@@ -1,4 +1,4 @@
-package shipreq.webapp.base.hash2
+package shipreq.webapp.base.hash
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptyVector

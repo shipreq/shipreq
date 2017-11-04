@@ -43,7 +43,7 @@ object RandomEventStream {
       eventGen(p).map(e =>
         ApplyEvent.untrusted.apply1(e)(p) match {
           case \/-(p2) =>
-            val hrs = HashRec.changes(p, p2)
+            val hrs = HashSchemes.latest.changes(p, p2)
             if (hrs.isEmpty)
               None
             else
@@ -837,7 +837,7 @@ class ApplicableEventGen(p: Project) {
     BindRec[Gen].tailrecM((s: S) =>
       eventGen.map { e =>
         var r = ApplyEvent.untrusted.apply1(e)(p)
-        r foreach { p2 => if (HashRec.changes(p, p2).isEmpty) r = -\/("No change") }
+        r foreach { p2 => if (HashSchemes.latest.changes(p, p2).isEmpty) r = -\/("No change") }
         val s2 = observe(s, e, r)
         r.bimap(_ => s2, p2 => ((s2, p2), e))
       }

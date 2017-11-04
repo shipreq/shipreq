@@ -2,11 +2,7 @@ package shipreq.webapp.base
 
 import shipreq.webapp.base.data.Project
 
-package object hash2 {
-
-//  val ProjectHashModule = new EvoHashModule {
-//    override type Scope = HashScope
-//    override type Data  = Project
+package object hash {
 
   object ProjectHashModule extends EvoHashModule[HashScope, Project] {
 
@@ -30,5 +26,11 @@ package object hash2 {
 
   val HashSchemes = ProjectHashModule.schemeRegistry
 
+  type HashScheme = ProjectHashModule.Scheme
+
+  final type HashSchemeId = EvoHashModule.SchemeId
+  final val  HashSchemeId = EvoHashModule.SchemeId // TODO sort of dumb, move out of EvoHashModule
+
   type HashRecs = ProjectHashModule.HashRecs
+  type HashRecsForScheme = EvoHashModule.ScopeMap[HashScope, Option[Int]]
 }

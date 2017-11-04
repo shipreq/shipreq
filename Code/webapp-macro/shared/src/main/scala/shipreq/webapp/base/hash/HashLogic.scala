@@ -1,4 +1,4 @@
-package shipreq.webapp.base.hash2
+package shipreq.webapp.base.hash
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._

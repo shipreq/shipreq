@@ -1,13 +1,13 @@
 package shipreq.webapp.base.event
 
 import japgolly.microlibs.nonempty.NonEmptyVector
-import shipreq.webapp.base.hash.HashRec
+import shipreq.webapp.base.hash.HashRecs
 
 /**
  * A verified event is an event that has been validated by the server, proven applicable, and retains hashes expected
  * of the Project after application.
  */
-final case class VerifiedEvent(event: Event, hashRecs: HashRec.Collection)
+final case class VerifiedEvent(event: Event, hashRecs: HashRecs)
 
 object VerifiedEvent {
 

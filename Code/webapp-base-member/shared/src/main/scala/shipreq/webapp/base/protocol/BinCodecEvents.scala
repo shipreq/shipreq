@@ -85,26 +85,12 @@ object BinCodecEvents {
   implicit val pickleActiveEvent: Pickler[ActiveEvent] = pickleADT
   implicit val pickleEvent      : Pickler[Event      ] = pickleADT
 
-  implicit val pickleHashScheme: Pickler[HashScheme         ] = pickleEnum(HashScheme.allOldToNew)
-  implicit val pickleHashScope : Pickler[HashScope          ] = pickleEnum(HashScope.all)
-  implicit val pickleLogicVer  : Pickler[ApplyEvent.LogicVer] = ConstPickler(ApplyEvent.LogicVer.Current)
-
-  implicit val pickleHashRec: Pickler[HashRec] =
-    new Pickler[HashRec] {
-      val oi = optionPickler[Int]
-      override def pickle(x: HashRec)(implicit s: PickleState): Unit = {
-        s.pickle(x.scope)
-        s.pickle(x.logicVer)
-        s.pickle(x.scheme)
-        s.pickle(x.hash)(oi)
-      }
-
-      override def unpickle(implicit s: UnpickleState) = HashRec(
-        s.unpickle[HashScope],
-        s.unpickle[LogicVer],
-        s.unpickle[HashScheme])(
-        s.unpickle(oi))
-    }
+  implicit val pickleHashScheme: Pickler[HashScheme] = intPickler.xmap(HashSchemes unsafeGet HashSchemeId(_))(_.id.index)
+  implicit val pickleHashScope : Pickler[HashScope ] = pickleEnum(HashScope.all)
+  implicit val pickleHashRecs  : Pickler[HashRecs  ] = {
+    implicit val pickleHashRecs2: Pickler[HashRecsForScheme] = mapPickler
+    mapPickler[HashScheme, HashRecsForScheme, Map]
+  }
 
   implicit val pickleEventOrd        : Pickler[EventOrd                     ] = pickleCaseClass
   implicit val pickleVerifiedEvent   : Pickler[VerifiedEvent                ] = pickleCaseClass

@@ -22,7 +22,7 @@ object ApplyEventTest extends TestSuite {
       case -\/(x) => fail(s"Init failed: $x")
     }
 
-    val hrs = HashRec.changes(p1, p2)
+    val hrs = HashSchemes.latest.changes(p1, p2)
     assert(hrs.nonEmpty)
     val ve = VerifiedEvent(e1, hrs)
 
@@ -169,7 +169,7 @@ object ApplyEventTest extends TestSuite {
 
       'pass {
         import Data1._
-        ApplyEvent.untrusted.applyVerified(List(ve))(p1) match {
+        ApplyEvent.untrusted.applyVerified(Vector(ve))(p1) match {
           case \/-(p) => assertEq(p, p2)
           case -\/(e) => fail(s"applyVerified failed: $e")
         }

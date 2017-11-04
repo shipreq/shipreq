@@ -1,4 +1,4 @@
-package shipreq.webapp.base.hash2
+package shipreq.webapp.base.hash
 
 import scala.util.hashing.{MurmurHash3 => *}
 import *.{mix, mixLast, finalizeHash}

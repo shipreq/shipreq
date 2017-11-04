@@ -8,8 +8,9 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.Valid
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{DataProp, Project}
+import shipreq.webapp.base.hash._
 import ApplyEventLib._, SE.SE
-import ApplyEvent.{Events, Result}
+import ApplyEvent.{Events, Result, eventBatcher}
 
 object ApplyEvent {
   type Result = String \/ Project
@@ -24,6 +25,9 @@ object ApplyEvent {
    * Applies untrusted events (i.e. new events created in response to a user request).
    */
   val untrusted = new ApplyEvent()(Untrusted)
+
+  val eventBatcher: HashLogic.Batcher[HashScope, Project, VerifiedEvent, Event] =
+    HashLogic.Batcher(_.event, _.hashRecs, HashSchemes)
 
   case class LogicVer(value: Char) extends AnyVal {
     def isCurrent: Boolean =
@@ -77,115 +81,39 @@ final class ApplyEvent(implicit val trust: Trust)
       }
     }
 
-
-
-
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  private object H2 {
-    import shipreq.webapp.base.hash2._
-    private val batcher = HashLogic.Batcher((_: VerifiedEvent).event, (_: VerifiedEvent).hashRecs, HashSchemes)
-
-    case class VerifiedEvent(event: Event, hashRecs: HashRecs)
-
-    def applyVerified(ves: Vector[VerifiedEvent])(p: Project): Result =
-      if (ves.isEmpty)
-        \/-(p)
-      else {
-        // debug(ves, p)
-
-        val plan: SE[Unit] =
-          applyEventBatches(batcher optimal ves)
-            .improveFailure(applyEventBatches(batcher oneByOne ves)) {
-              case (_, -\/(e)) => e
-              case (e, \/-(_)) => s"Batch application failed but incremental application passed (!)\n$e"
-            }
-
-        plan.exec(p)
-      }
-
-    private def applyEventBatches(batches: batcher.Batches): SE[Unit] =
-      SE.foldMapRun(batches)(applyEventBatch)
-
-    private val applyEventBatch: batcher.Batch => SE[Unit] =
-      eb =>
-        SE.get.flatMap(p1 =>
-          applyAllSafe(eb.elements) >> SE.testO { p2 =>
-            val errs = HashLogic.validate(eb.recs, before = p1, current = p2)
-            if (errs.isEmpty)
-              None
-            else Some {
-              val each = errs.map("* " + _.msg).mkString("\n")
-              val events = eb.elements.map("* " + _).mkString("\n")
-              s"Hash Discrepancy:\n$each\nEvents:\n$events"
-            }
-          }
-        )
-
-    // TODO delete findFirstFailure
-  }
-
-  import shipreq.webapp.base.hash.HashRec
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-
-
-  def applyVerified(ves: Iterable[VerifiedEvent])(p: Project): Result =
+  def applyVerified(ves: Vector[VerifiedEvent])(p: Project): Result =
     if (ves.isEmpty)
       \/-(p)
     else {
       // debug(ves, p)
-      val events          = ves.map(_.event)(collection.breakOut): List[Event]
-      val initialHashRecs = HashRec(p)
-      val finalHashRecs   = ves.iterator.map(_.hashRecs).foldLeft(initialHashRecs)(HashRec.merge)
-      val plan            = applyAllSafe(events) >> validateHashRecs(finalHashRecs)
 
-      plan.exec(p).leftMap(bulkError =>
-        findFirstFailure(p, ves) match {
-          case \/-(msg) => msg
-          case -\/(p2)  => s"Bulk validation failed but incremental passed.\n$bulkError"
-        })
+      val plan: SE[Unit] =
+        applyEventBatches(eventBatcher optimal ves)
+          .improveFailure(applyEventBatches(eventBatcher oneByOne ves)) {
+            case (_, -\/(e)) => e
+            case (e, \/-(_)) => s"Batch application failed but incremental application passed (!)\n$e"
+          }
+
+      plan.exec(p)
     }
 
-  private def validateHashRecs(recs: HashRec.Collection): SE[Unit] =
-    SE.testO(p =>
-      if (recs.forall(_.validate(p) is Valid))
-        None
-      else {
-        val failures = recs.iterator
-          .map(r => (r, r validateF p))
-          .filterDefined_2
-          .map { case (r, f) => s"$r failed: ${f.msg}" }
-          .toVector
-          .sorted
-        Some(s"Hash Mismatch. ${failures.size} mismatches:${failures.map("\n  - " + _) mkString ""}")
-      }
-    )
+  private def applyEventBatches(batches: eventBatcher.Batches): SE[Unit] =
+    SE.foldMapRun(batches)(applyEventBatch)
 
-  private def findFirstFailure(p: Project, ves: Iterable[VerifiedEvent]): Project \/ String = {
-    val it = ves.iterator
-
-    @tailrec
-    def go(index: Int, p: Project, lastHR: HashRec.Collection): Project \/ String =
-      if (it.hasNext) {
-        val h    = it.next()
-        val hr   = HashRec.merge(lastHR, h.hashRecs)
-        val plan = apply1Safe(h.event) >> validateHashRecs(hr)
-
-        plan exec p match {
-          case \/-(p2)  => go(index + 1, p2, hr)
-          case -\/(err) => \/-(s"$err\nEvent #$index = ${h.event}")
+  private val applyEventBatch: eventBatcher.Batch => SE[Unit] =
+    eb =>
+      SE.get.flatMap(p1 =>
+        applyAllSafe(eb.elements) >> SE.testO { p2 =>
+          val errs = HashLogic.validate(eb.recs, before = p1, current = p2)
+          if (errs.isEmpty)
+            None
+          else Some {
+            val each = errs.map("* " + _.msg).mkString("\n")
+            val events = eb.elements.map("* " + _).mkString("\n")
+            s"Hash Discrepancy:\n$each\nEvents:\n$events"
+          }
         }
-      } else
-        -\/(p)
-
-    go(0, p, HashRec(p))
-  }
+      )
 
   /*
   private def debug(ves: Iterable[VerifiedEvent], p0: Project): Unit = {

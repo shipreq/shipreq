@@ -1,4 +1,4 @@
-package shipreq.webapp.base.hash2
+package shipreq.webapp.base.hash
 
 /**
  * Provides a 32-bit hash of a value inhabiting an invariant type.

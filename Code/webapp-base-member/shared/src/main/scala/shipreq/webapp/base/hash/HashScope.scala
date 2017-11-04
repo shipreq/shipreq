@@ -1,5 +1,6 @@
-package shipreq.webapp.base.hash2
+package shipreq.webapp.base.hash
 
+import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.univeq.UnivEq
 import shipreq.webapp.base.data.Project
 
@@ -27,4 +28,6 @@ object HashScope {
   case object SavedViews      extends WithProjectAccess(_.reqtableViews)
 
   implicit def univEq: UnivEq[HashScope] = UnivEq.force
+
+  val all = AdtMacros.adtValues[HashScope]
 }
