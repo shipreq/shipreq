@@ -167,7 +167,7 @@ object Dependencies {
   }
 
   val scalajsDom       = jsOnly("org.scala-js"                          %%%! "scalajs-dom"       % "0.9.3")
-  val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %%%! "benchmark"         % "0.2.4")
+  val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %%%! "benchmark"         % "0.2.5")
   val scalajsJavaTime  = jsOnly("org.scala-js"                          %%%! "scalajs-java-time" % "0.2.2")
 
   val boopickle = jvmAndJs("me.chrons",                        "boopickle", "1.2.5")
