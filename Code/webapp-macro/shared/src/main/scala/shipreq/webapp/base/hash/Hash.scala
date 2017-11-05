@@ -2,7 +2,7 @@ package shipreq.webapp.base.hash
 
 object Hash {
 
-  @inline def apply[A](a: A)(implicit h: HashFn[A]): Int =
+  @inline def apply[@specialized(Int, Long, Char, Boolean) A](a: A)(implicit h: HashFn[A]): Int =
     h.hashFn(a)
 
 

@@ -36,10 +36,4 @@ object HashFn {
 
   @inline def internal[@specialized(Int, Long, Char, Boolean) A]: HashFn[A] =
     apply(_.##)
-
-//  final val UnsupportedValue: Int =
-//    0xffffffff
-//
-//  @inline def unsupported[A]: HashFn[A] =
-//    const(UnsupportedValue)
 }
