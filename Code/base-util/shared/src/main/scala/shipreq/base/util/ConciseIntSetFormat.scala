@@ -12,7 +12,7 @@ object ConciseIntSetFormat {
 
   def apply(ints: NonEmptySet[Int], sep: String, rangeSep: String): String = {
 
-    val comps = ints.toStream.sorted.foldRight(List.empty[Any])((i, cs) =>
+    val comps = ints.whole.toArray.sorted.foldRight(List.empty[Any])((i, cs) =>
       cs match {
         case (a: Int) :: (b: Int) :: t if i == a - 1 && a == b - 1 =>
           (i, b) :: t
