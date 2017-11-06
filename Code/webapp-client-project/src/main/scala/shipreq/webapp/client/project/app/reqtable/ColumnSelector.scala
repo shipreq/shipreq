@@ -97,10 +97,11 @@ object ColumnSelector {
         ColumnCheckboxes.Item(c.column, c.name, on, Disabled when Column.isMandatory(c.column))
       }
 
-    ColumnCheckboxes.Props(
-      items,
-      p.update.map(set => update => set(updateColumnList(p.active, update.clickedItem.value, update.newValue is On))))
-      .render
+    val updateFn: ColumnCheckboxes.Update ~=> Callback =
+      Reusable.ap(p.update, Reusable.implicitly(p.active))((set, active) =>
+        update => set(updateColumnList(active, update.clickedItem.value, update.newValue is On)))
+
+    ColumnCheckboxes.Props(items, updateFn).render
   }
 
   val Component = ScalaComponent.builder[Props]("ColumnSelector")
