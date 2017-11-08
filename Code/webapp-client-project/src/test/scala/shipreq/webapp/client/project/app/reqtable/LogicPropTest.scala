@@ -31,7 +31,7 @@ object LogicPropTest extends TestSuite {
 
     val expectVisible: ReqId => Boolean =
       if (fd ==* HideDead)
-        id => p.reqs.need(id).live(p.config.reqTypes) is Live
+        id => p.content.reqs.need(id).live(p.config.reqTypes) is Live
       else
         _ => true
 
@@ -41,17 +41,17 @@ object LogicPropTest extends TestSuite {
     val gatheredG   = gathered.iterator.filterSubType[Row.ForReq].toList
     val rowReqCodes = gathered.flatMap(codesInRow)
     val rowGReqIds  = gatheredG.map(_.req.id).toSet
-    val srcGReqIds  = p.reqs.idIterator.filterSubType[GenericReqId].filter(expectVisible).toSet
+    val srcGReqIds  = p.content.reqs.idIterator.filterSubType[GenericReqId].filter(expectVisible).toSet
     val finalRows   = Logic.rowsForTable(p, v, plainText, textSearch)
     val tableStats  = Logic.stats(p, finalRows)
 
     val expectedVisibleReqCodes = {
       val b = Set.newBuilder[ReqCode.Value]
-      p.reqCodes.activeReqCodesByReqId.values.foreach(b ++= _)
+      p.content.reqCodes.activeReqCodesByReqId.values.foreach(b ++= _)
       if (v.viewCodeGroups)
-        p.reqCodes.groups.foreach(g =>
+        p.content.reqCodes.groups.foreach(g =>
           if ((g.live is Live) || (fd is ShowDead))
-            b += p.reqCodes.reqCode(g.id))
+            b += p.content.reqCodes.reqCode(g.id))
       b.result()
     }
 

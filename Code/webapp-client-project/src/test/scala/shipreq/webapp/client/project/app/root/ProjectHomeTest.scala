@@ -45,7 +45,7 @@ object ProjectHomeTestDsl {
   val * = Dsl[MockServer, ProjectHomeObs, Project]
 
   val invariants: *.Invariants =
-    *.focus("Req count").obsAndState(_.reqCount, _.reqs.size).assert.equal &
+    *.focus("Req count").obsAndState(_.reqCount, _.content.reqs.size).assert.equal &
     *.focus("Changes").value(_.obs.changes).test(_ + " must be positive.")(_ >= 0) &
     *.chooseInvariant("Project name")(_.obs.projectNameView match {
       case Some(name) => *.focus("Project name").value(_ => name).assert.equalBy(_.state.name)

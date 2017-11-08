@@ -49,6 +49,6 @@ object ProjectMetaData {
   def props(project: Project): Prop[ProjectMetaData] = {
     type P = ProjectMetaData
     Prop.equal[P]("Project name")(_.name, _ => project.name) &
-      Prop.equal[P]("Req count")(_.reqCount, _ => project.reqs.size)
+      Prop.equal[P]("Req count")(_.reqCount, _ => project.content.reqs.size)
   }
 }

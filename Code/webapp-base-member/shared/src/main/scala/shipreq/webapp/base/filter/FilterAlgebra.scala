@@ -154,14 +154,14 @@ object FilterAlgebra {
   def makeExtensional(p: data.Project): Algebra[ValidF, Extensional] = {
 
     def lookupSomeReqs(reqTypeId: data.ReqTypeId, nums: NonEmptySet[Int]): Set[data.ReqId] = {
-      val vec = p.reqs.pubids.value(reqTypeId)
+      val vec = p.content.reqs.pubids.value(reqTypeId)
       nums.foldLeft[Set[data.ReqId]](UnivEq.emptySet)((ids, num) =>
         if (num > vec.length) ids else ids + vec(num - 1))
     }
 
     val lookupReqSubset: Valid.ReqSubset => Extensional.ReqSet = {
       case IntensionalReqSet.SomeOfType(reqTypeId, ns) => lookupSomeReqs(reqTypeId, ns)
-      case IntensionalReqSet.WholeType(reqTypeId)      => p.reqs.pubids.value(reqTypeId).toSet
+      case IntensionalReqSet.WholeType(reqTypeId)      => p.content.reqs.pubids.value(reqTypeId).toSet
     }
 
     def lookupReqSet(ss: NonEmptyVector[Valid.ReqSubset]): Extensional.ReqSet =

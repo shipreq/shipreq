@@ -81,7 +81,7 @@ object DeletionForm {
                                                          directlySelectedReqs  : NonEmptySet[ReqId],
                                                          directlySelectedGroups: Set[ReqCodeId]): Data = {
       val directlySelectedCodeGroups: Set[ReqCode.Value] =
-        directlySelectedGroups.map(project.reqCodes.reqCode)
+        directlySelectedGroups.map(project.content.reqCodes.reqCode)
 
       val deletableReqs   = calcDeletableReqs(project, directlySelectedReqs)
       val deletableGroups = calcDeletableGroups(project, directlySelectedCodeGroups, deletableReqs)
@@ -97,8 +97,8 @@ object DeletionForm {
     // Requirement logic
 
     private def calcDeletableReqs(p: Project, directSel: NonEmptySet[ReqId]): DeletableReqs = {
-      val imps_> = p.implications.forwards
-      val imps_< = p.implications.backwards
+      val imps_> = p.content.implications.forwards
+      val imps_< = p.content.implications.backwards
 
       val reqOrder = Ordering.by((_: Req).pubid)(p.config.reqTypes.pubidOrdering)
 
@@ -109,7 +109,7 @@ object DeletionForm {
         _.live(p.config.reqTypes) is Live
 
       def lookupAll(reqIds: TraversableOnce[ReqId]): Array[Req] = {
-        val a = reqIds.toIterator.map(p.reqs.need).filter(reqFilter).toArray
+        val a = reqIds.toIterator.map(p.content.reqs.need).filter(reqFilter).toArray
         sortReqs(a)
         a
       }
@@ -229,7 +229,7 @@ object DeletionForm {
       // By "externally" I mean external to this fn/logic. All deletable if this fn did nothing.
       val externallyDeletable: List[Code] = {
         var b = Set.newBuilder[Code]
-        b ++= deletableReqs.iterator.flatMap(r => p.reqCodes.activeReqCodesByReqId(r.req.id).iterator)
+        b ++= deletableReqs.iterator.flatMap(r => p.content.reqCodes.activeReqCodesByReqId(r.req.id).iterator)
         b ++= directSelRcgCodes
         b.result().toList
       }
@@ -237,7 +237,7 @@ object DeletionForm {
       // Step 1. After all deletions have occurred, under everything selected(able?), what's useless?
 
       val trie1: Trie =
-        p.reqCodes.trie @-- externallyDeletable
+        p.content.reqCodes.trie @-- externallyDeletable
 
       val step1: Set[Code] =
         codesOfUselessChildGroups(trie1, externallyDeletable, Set.empty)
@@ -257,7 +257,7 @@ object DeletionForm {
         var subGrps = Set.newBuilder[(ReqCodeId, String)]
         def subCodeStr(c2: Code) = "." + PlainText.reqCode(c2)
 
-        p.reqCodes.trie.dropPath(c).foreachPathAndValue {
+        p.content.reqCodes.trie.dropPath(c).foreachPathAndValue {
           case (k, a: ActiveReq)   => subReqs += ((a.reqId, subCodeStr(k)))
           case (k, a: ActiveGroup) => subGrps += ((a.id, subCodeStr(k)))
           case (_, _: Inactive)    => ()
@@ -266,7 +266,7 @@ object DeletionForm {
       }
 
       step2.iterator
-        .map(c => (c, p.reqCodes.get(c)))
+        .map(c => (c, p.content.reqCodes.get(c)))
         .collect { case (c, Some(a: ActiveGroup)) => makeRcgRow(c, a.group) }
         .toVector
         .sortBy(_.codeStr)
@@ -284,13 +284,13 @@ object DeletionForm {
           .toSet
 
       def codesOfSelectedReqs: Iterator[Code] =
-        selectedReqs.iterator.flatMap(id => p.reqCodes.activeReqCodesByReqId(id).iterator)
+        selectedReqs.iterator.flatMap(id => p.content.reqCodes.activeReqCodesByReqId(id).iterator)
 
       val postDeletionTrie: Trie =
-        p.reqCodes.trie @-- codesOfSelectedReqs
+        p.content.reqCodes.trie @-- codesOfSelectedReqs
 
       val select: Set[ReqCodeId] =
-        indirectGroupIds.filter(id => isUselessLookingDown(postDeletionTrie, p.reqCodes.reqCode(id)))
+        indirectGroupIds.filter(id => isUselessLookingDown(postDeletionTrie, p.content.reqCodes.reqCode(id)))
 
       directSelGroups | select
     }

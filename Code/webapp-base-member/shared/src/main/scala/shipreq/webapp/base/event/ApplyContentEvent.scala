@@ -195,7 +195,7 @@ trait ApplyContentEvent {
 
       e => for {
         rt      ← needLiveCustomReqType(e.rt)
-        reqData ← SE.get(_.reqs)
+        reqData ← SE.get(_.content.reqs)
         id      = e.id
         title   = ^.Title.get(e.vs).fold(emptyTitle)(_.value.whole)
         pp      = reqData.pubids.allocC(rt.id)(id)
@@ -242,12 +242,12 @@ trait ApplyContentEvent {
 
     def ensureStepExistence(id: UseCaseStepId, expectToExist: Boolean): SE[Unit] =
       whenUntrusted(SE.test(
-        _.reqs.useCases.stepIndex.contains(id) ==* expectToExist,
+        _.content.reqs.useCases.stepIndex.contains(id) ==* expectToExist,
         show(id) + (if (expectToExist) " not found." else " already exists.")))
 
     def ensureStepsExist(_ids: => Traversable[UseCaseStepId]): SE[Unit] =
       whenUntrusted(SE.testO { p =>
-        val si = p.reqs.useCases.stepIndex
+        val si = p.content.reqs.useCases.stepIndex
         val ids = _ids
         if (ids forall si.contains)
           None
@@ -272,16 +272,16 @@ trait ApplyContentEvent {
       SE.mod { p =>
         // Update step index
         val ptr = UseCases.StepTreeKey(ucId, field)
-        val si2 = p.reqs.useCases.stepIndex.updated(stepId, ptr)
-        val ucs2 = p.reqs.useCases.copy(stepIndex = si2)
+        val si2 = p.content.reqs.useCases.stepIndex.updated(stepId, ptr)
+        val ucs2 = p.content.reqs.useCases.copy(stepIndex = si2)
 
         // Update reqs
-        val reqs2 = updReqs(p.reqs, ucs2)
+        val reqs2 = updReqs(p.content.reqs, ucs2)
 
         // Update ID ceilings
         val ic2 = updStepIdCeil(p.idCeilings, p.idCeilings.useCaseStep max stepId)
 
-        p.copy(reqs = reqs2, idCeilings = ic2)
+        p.copy(content = p.content.copy(reqs = reqs2), idCeilings = ic2)
       }
 
     val applyCreate: UseCaseCreate => SE[Unit] = {
@@ -306,7 +306,7 @@ trait ApplyContentEvent {
         _       <- ensureStepDoesntExist(e.stepId)
         id      = e.id
         title   = ^.Title.get(e.vs).fold(Text.UseCaseTitle.empty)(_.value.whole)
-        pp      ← SE get (_.reqs.pubids allocUC id)
+        pp      ← SE get (_.content.reqs.pubids allocUC id)
         uc      = UseCase.empty(id, pp._2.pos, title, e.stepId)
         _       ← ucIMap.create(uc)
         _       ← postAdd(pp._1, id, e.stepId)
@@ -340,7 +340,7 @@ trait ApplyContentEvent {
     }
 
     def needStepIndex(id: UseCaseStepId): SE[UseCases.StepTreeKey] =
-      SE.get(_.reqs.useCases.stepIndex.get(id)) >>= (optionGet(_, s"${show(id)} not found."))
+      SE.get(_.content.reqs.useCases.stepIndex.get(id)) >>= (optionGet(_, s"${show(id)} not found."))
 
     private def findStepModTree(id: UseCaseStepId)(mod: (UseCaseSteps, StepField, Location, UseCaseStep) => SE[UseCaseSteps.Tree]): SE[Unit] =
       needStepIndex(id) >>= { idx =>
@@ -495,11 +495,11 @@ trait ApplyContentEvent {
       optionGet(d.deadGroup, s"Expected to find dead group at ${show(v)}.")
 
     def needCode(id: ReqCodeId): SE[Value] =
-      SE(p => optionGetR(p, p.reqCodes.reqCodesById get id, s"${show(id)} not found."))
+      SE(p => optionGetR(p, p.content.reqCodes.reqCodesById get id, s"${show(id)} not found."))
 
     def needCodes[A](ids: TraversableOnce[ReqCodeId], f: (ReqCodeId, Value) => A): SE[Vector[A]] = {
       SE { p =>
-        val m = p.reqCodes.reqCodesById
+        val m = p.content.reqCodes.reqCodesById
         val found = Vector.newBuilder[A]
         var missing = Vector.empty[ReqCodeId]
         for (id <- ids)
@@ -628,7 +628,7 @@ trait ApplyContentEvent {
       getTrie >>= (inactivateBelongingToReqsT(_, reqIds)) >>= Project.reqCodeTrie.set
 
     def inactivateBelongingToReqsT(trie: Trie, reqIds: Set[ReqId]): SE[Trie] =
-      SE.get(_.reqCodes.activeReqCodesByReqId) >>= (m =>
+      SE.get(_.content.reqCodes.activeReqCodesByReqId) >>= (m =>
         foldMapBind(trie, reqIds)(reqId => inactivateReqsByCodeT(_, m(reqId), _ => true, ensureActiveReqIs(reqId))))
 
     /**
@@ -742,7 +742,7 @@ trait ApplyContentEvent {
       restoreBelongingToReqsT(trie, set1(reqId))
 
     def restoreBelongingToReqsT(trie: Trie, reqIds: Set[ReqId]): SE[Trie] =
-      SE.get(_.reqCodes.inactiveIdsByReqId) >>= (m =>
+      SE.get(_.content.reqCodes.inactiveIdsByReqId) >>= (m =>
         foldMapBind(trie, reqIds)(reqId => restoreToReqByIdsT(_, reqId, m(reqId))))
 
     def restoreBelongingToReqs(reqIds: Set[ReqId]): SE[Unit] =
@@ -803,7 +803,7 @@ trait ApplyContentEvent {
         p    ← SE.get
         refd = p.atomScan.codeRefs
         keep = e.add.values.foldLeft(refd)(_ &~_)
-        t0   = p.reqCodes.trie
+        t0   = p.content.reqCodes.trie
         t1   ← inactivateReqsByIdT(t0, e.remove, keep.contains, ensureActiveReqIs(e.id))
         t2   ← restoreToReqByIdsT(t1, e.id, e.restore)
         t3   ← addAllT(t2, addCodesToReq(e.id, e.add))

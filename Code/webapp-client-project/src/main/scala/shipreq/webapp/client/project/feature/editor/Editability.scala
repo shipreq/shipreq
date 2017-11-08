@@ -17,7 +17,7 @@ import shipreq.webapp.client.project.lib.DataReusability._
 object Editability {
 
   def apply(p: Project): ForProject =
-    ForProject(p.config, p.reqs, p.reqCodes)
+    ForProject(p.config, p.content.reqs, p.content.reqCodes)
 
   final case class ForProject(cfg: ProjectConfig, reqs: Requirements, reqCodes: ReqCodes) {
     val forReqs = ForReqs(cfg, reqs)

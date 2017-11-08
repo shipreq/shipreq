@@ -26,7 +26,7 @@ trait WebappTestUtil extends BaseTestUtil {
       Obfuscated("t3sT"),
       p.name,
       eventCount,
-      p.reqs.size,
+      p.content.reqs.size,
       Instant.now().minus(28, DAYS),
       Some(Instant.now().minus(1, DAYS)))
 

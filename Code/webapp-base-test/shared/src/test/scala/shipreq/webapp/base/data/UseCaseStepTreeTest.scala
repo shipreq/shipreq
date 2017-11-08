@@ -45,7 +45,7 @@ object UseCaseStepTreeTest extends TestSuite {
     }
 
   class Tester(p: Project) {
-    val uc = p.reqs.useCases.imap.valuesIterator.next()
+    val uc = p.content.reqs.useCases.imap.valuesIterator.next()
     val nextStepId = UseCaseStepId(p.idCeilings.useCaseStep + 1)
 
     def compare(actual: Permission, event: Event) = {

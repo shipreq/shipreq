@@ -59,7 +59,7 @@ object GenericReqEventTest extends TestSuite {
         val rcs = NonEmptySet[ReqCode.IdAndValue](7 -> "a.b.c", 8 -> "d")
         val p = _assertPass(emptyGR1.copy(vs = nev(Codes(rcs))))
         assertGR(p, 1)(GenericReq(1, PubidT(mf, 1), ∅, Live), reqCodes = rcs.whole.map(_.value))
-        assertEq(p.reqCodes.reqCodesById, rcs.whole.map(_.toTupleIV).toMap)
+        assertEq(p.content.reqCodes.reqCodesById, rcs.whole.map(_.toTupleIV).toMap)
       }
 
       def customText: Event.NonEmptyCustomTextMap = NonEmpty.force(Map(cf1 -> "1", cf2 -> "2"))
@@ -111,10 +111,10 @@ object GenericReqEventTest extends TestSuite {
       'groupDead     - assertFail("is not an ActiveGroup.")(delRCG2, ReqsDelete(5, 2, ∅))
       'ok {
         val p = _assertPass(ReqsDelete(5, 2, ∅))
-        assertEq("RC#1", p.reqCodes(RCG1_code).isActive, true)
-        assertEq("RC#2", p.reqCodes(RCG2_code).isActive, false)
-        assertEq("GR #1", p.reqs.genericReqs.need(1).liveExplicitly, Live)
-        assertEq("GR #5", p.reqs.genericReqs.need(5).liveExplicitly, Dead)
+        assertEq("RC#1", p.content.reqCodes(RCG1_code).isActive, true)
+        assertEq("RC#2", p.content.reqCodes(RCG2_code).isActive, false)
+        assertEq("GR #1", p.content.reqs.genericReqs.need(1).liveExplicitly, Live)
+        assertEq("GR #5", p.content.reqs.genericReqs.need(5).liveExplicitly, Dead)
       }
     }
 
@@ -132,7 +132,7 @@ object GenericReqEventTest extends TestSuite {
         def test(e: Event)(expect: PubidC): Unit = {
           es :+= e
           val p = _assertPass(es: _*)
-          val d = p.reqs
+          val d = p.content.reqs
           assertEq(d.genericReqs.size, 2)
           assertEq(d.genericReqs.get(1).get.pubid, expect)
         }
@@ -150,7 +150,7 @@ object GenericReqEventTest extends TestSuite {
     'setGenericReqTitle {
       'ok {
         val p = _assertPass(emptyGR1, setTitleGR1)
-        assertEq(p.reqs.genericReqs.get(1).get.title, someTitleGR)
+        assertEq(p.content.reqs.genericReqs.get(1).get.title, someTitleGR)
       }
       'reqNotFound - assertFail("found")(setTitleGR1)
       'reqIsDead   - assertFail("dead")(emptyGR1, delGR1, setTitleGR1)

@@ -209,17 +209,17 @@ private[reqtable] object Logic {
     // It would be erroneous to display inactive reqs for a live req.
     val reqCodesByReq = Live.memo {
       case Live =>
-        p.reqCodes.activeReqCodesByReqId
+        p.content.reqCodes.activeReqCodesByReqId
       case Dead =>
         UnivEq.emptySetMultimap[ReqId, ReqCode.Value] ++
-          p.reqCodes.inactiveIdsByReqId.m.mapValuesNow(_ map p.reqCodes.reqCode)
+          p.content.reqCodes.inactiveIdsByReqId.m.mapValuesNow(_ map p.content.reqCodes.reqCode)
     }
 
-    val pImplications = p.implications
+    val pImplications = p.content.implications
     val multiValuesFn = this.multiValuesFn(tagFieldDist, tagLookup)
 
     def pubid(reqId: ReqId): Option[Pubid] = {
-      val req = p.reqs.need(reqId)
+      val req = p.content.reqs.need(reqId)
       if (filterDead.req(req))
         Some(req.pubid)
       else
@@ -253,7 +253,7 @@ private[reqtable] object Logic {
       val seeExpandedCodes = codesSeen.addFn[Expanded[ReqCode.Value]](add => _.foreach(_ foreach add))
 
       // Add requirements
-      for (r <- p.reqs.reqIterator)
+      for (r <- p.content.reqs.reqIterator)
         if (fullFilter.req(r)) {
           val id = r.id
           val live = r live p.config.reqTypes
@@ -275,8 +275,8 @@ private[reqtable] object Logic {
 
       // Add CodeGroups
       if (view.viewCodeGroups)
-        for (g <- p.reqCodes.groups) {
-          val code = p.reqCodes reqCode g.id
+        for (g <- p.content.reqCodes.groups) {
+          val code = p.content.reqCodes reqCode g.id
           val row = Row.ForCodeGroup(g, code, None)
           if (fullFilter.codeGroup(g)) {
             codesSeen.add(row.reqCode)
@@ -447,7 +447,7 @@ private[reqtable] object Logic {
     }
 
     val deadReqsInProject = p.deadReqCount
-    val liveReqsInProject = p.reqs.size - deadReqsInProject
+    val liveReqsInProject = p.content.reqs.size - deadReqsInProject
 
     val reqsFilteredOut = LiveDeadStat(
       live = liveReqsInProject - uniqueReqsInTable.live,

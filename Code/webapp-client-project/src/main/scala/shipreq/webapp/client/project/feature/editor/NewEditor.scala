@@ -196,13 +196,13 @@ object NewEditor {
     }
 
     def getGenericReq(id: GenericReqId): CallbackOption[GenericReq] =
-      pxProject.toCallback.map(_.reqs.genericReqs.get(id)).asCBO
+      pxProject.toCallback.map(_.content.reqs.genericReqs.get(id)).asCBO
 
     def getUseCase(id: UseCaseId): CallbackOption[UseCase] =
-      pxProject.toCallback.map(_.reqs.useCases.imap.get(id)).asCBO
+      pxProject.toCallback.map(_.content.reqs.useCases.imap.get(id)).asCBO
 
     def getCodeGroup(id: ReqCodeId): CallbackOption[LiveCodeGroup] =
-      pxProject.toCallback.map(_.reqCodes.getById(id).flatMap {
+      pxProject.toCallback.map(_.content.reqCodes.getById(id).flatMap {
         case d: ReqCode.ActiveGroup => d.group.some
         case _: ReqCode.ActiveReq
              | _: ReqCode.Inactive    => None
@@ -275,7 +275,7 @@ object NewEditor {
       import shipreq.webapp.client.project.widgets.ReqCodeEditor
 
       val trieCB: CallbackTo[ReqCode.Trie] =
-        pxProject.toCallback.map(_.reqCodes.trie)
+        pxProject.toCallback.map(_.content.reqCodes.trie)
 
       object Multiple extends ForChangeType {
         import ReqCodeEditor.{Multiple => RCE}
@@ -287,7 +287,7 @@ object NewEditor {
           import ictx._
 
           val initialValuesCB: CallbackTo[Set[ReqCode.Value]] =
-            pxProject.toCallback.map(_.reqCodes.activeReqCodesByReqId(id))
+            pxProject.toCallback.map(_.content.reqCodes.activeReqCodesByReqId(id))
 
           val (abort, commitFn) =
             makeAbortCommitFn[RCE.Output](UpdateContentCmd.PatchReqCodes(id, _), args.hooks)
@@ -332,7 +332,7 @@ object NewEditor {
           import ictx._
 
           val initialValueCB: CallbackOption[ReqCode.Value] =
-            pxProject.toCallback.map(_.reqCodes.reqCode(id)).toCBO
+            pxProject.toCallback.map(_.content.reqCodes.reqCode(id)).toCBO
 
           val (abort, commitFn) =
             makeAbortCommitFn[RCE.Output](UpdateContentCmd.SetCodeGroupCode(id, _), args.hooks)
@@ -459,7 +459,7 @@ object NewEditor {
           for {
             project <- pxProject
             lookup <- pxLookup
-          } yield TagEditor.initialValues(project.reqTags(id), project.config, lookup)
+          } yield TagEditor.initialValues(project.content.reqTags(id), project.config, lookup)
 
         val (abort, commitFn) =
           makeAbortCommitFn[TagEditor.Output](UpdateContentCmd.PatchReqTags(id, _), args.hooks)
@@ -569,7 +569,7 @@ object NewEditor {
       object CustomTextField extends Base(RichTextEditor.CustomTextField) {
         def apply(id: ReqId, fid: CustomField.Text.Id, pid: PreviewId): InitFn = start(
           UpdateContentCmd.SetCustomTextField(id, fid, _),
-          pxProject.toCallback.map(p => ReqData.textAt(fid, id).get(p.reqText)).toCBO,
+          pxProject.toCallback.map(p => ReqData.textAt(fid, id).get(p.content.reqText)).toCBO,
           pid)
       }
 
@@ -604,7 +604,7 @@ object NewEditor {
           Reusable.fn(v => commit(UpdateContentCmd.UpdateUseCaseStep(id, v), args.hooks))
 
         val pxStepFocus: Px[UseCaseStep.Focus] =
-          pxProject.map(_.reqs.useCases.focusStep(id))
+          pxProject.map(_.content.reqs.useCases.focusStep(id))
 
         val pxInit: Px[(UseCaseStepEditor.InitialValue, String)] =
           for {

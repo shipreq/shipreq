@@ -271,7 +271,7 @@ object MakeEvent {
         def makeEvent(id: ReqCodeId) =
           Success(CodeGroupCreate(id, gdAllValues(CodeGroupGD, "")))
 
-        project.reqCodes.get(code) match {
+        project.content.reqCodes.get(code) match {
           case None => makeEvent(nextCodeId())
           case Some(d) =>
             if (d.isActive)
@@ -347,7 +347,7 @@ object MakeEvent {
 
         import ReqCode._
         for (c <- cs.value.removed)
-          project.reqCodes.get(c) match {
+          project.content.reqCodes.get(c) match {
             case Some(a: ActiveReq) if a.reqId ==* reqId => remove += a.id
             case od if od.exists(_.isActive)             => fail(s"Cannot remove ${PlainText reqCode c}: Doesn't belong to $reqId.")
             case _                                       => fail(s"Cannot remove ${PlainText reqCode c}: Not found.")
@@ -356,7 +356,7 @@ object MakeEvent {
         if (r.isEmpty) {
           val nextCodeId = reqCodeIdCounter(project)
           for (c <- cs.value.added)
-            project.reqCodes.get(c) match {
+            project.content.reqCodes.get(c) match {
               case Some(d) if d.isActive =>
                 Failure(s"Code in use: ${PlainText reqCode c}.")
 

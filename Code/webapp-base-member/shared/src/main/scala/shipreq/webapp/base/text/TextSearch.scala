@@ -244,7 +244,7 @@ final class TextSearch(project: Project,  plainText: PlainText.ForProject.NoCtx)
         ))
         IndexEntryR(r, title, textFields)
       }
-      project.reqs.reqIterator map each
+      project.content.reqs.reqIterator map each
     }
 
     def indexValuesG: Iterator[IndexEntryG] = {
@@ -252,7 +252,7 @@ final class TextSearch(project: Project,  plainText: PlainText.ForProject.NoCtx)
         val title = norm(plainText codeGroupTitle g)
         IndexEntryG(g, title)
       }
-      project.reqCodes.groups.iterator map each
+      project.content.reqCodes.groups.iterator map each
     }
 
     val indexR = IMap.empty[ReqId,     IndexEntryR](_.req.id)   ++ indexValuesR

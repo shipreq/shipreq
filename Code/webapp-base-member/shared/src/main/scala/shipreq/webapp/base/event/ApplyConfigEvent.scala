@@ -91,7 +91,7 @@ trait ApplyConfigEvent {
       imap.setLive(id, newState) >> reqsToCascadeReqTypeLiveChange(id) >>= cascade
 
     private def reqsToCascadeReqTypeLiveChange(id: CustomReqTypeId): SE[Set[ReqId]] =
-      SE.get(_.reqs.genericReqs
+      SE.get(_.content.reqs.genericReqs
         .values.toStream
         .filter(r => r.reqTypeId ==* id && r.liveExplicitly ==* Live)
         .map(_.id: ReqId)

@@ -46,7 +46,7 @@ object ParsersTest extends TestSuite {
 
 //    println(p.countAtoms.showTree + "\n")
 //    println()
-//    p.reqCodes.trie.foreachPathAndValue((c,d) => println(s"${d.activeId.fold("-")(_.value.toString)} : ${PlainText reqCode c} - $d"))
+//    p.content.reqCodes.trie.foreachPathAndValue((c,d) => println(s"${d.activeId.fold("-")(_.value.toString)} : ${PlainText reqCode c} - $d"))
 //    println()
 
     val E = EvalOver(this)
@@ -54,14 +54,14 @@ object ParsersTest extends TestSuite {
     val txt2str = PlainText.ForProject.noCtx(p).text(_: Text.AnyOptional, Live)
 
     val genericReqTitles =
-      p.reqs.reqIterator
+      p.content.reqs.reqIterator
         .filterSubType[GenericReq]
         //.filter(_.live(p.config.reqTypes) :: Live)
         .map(_.title)
         .toList
 
     val customTextFieldValues =
-      p.reqText.values.toStream.flatMap(_.values.toStream)
+      p.content.reqText.values.toStream.flatMap(_.values.toStream)
 
     def cmp[A <: AnyAtom](t: => String, actual0: Iterable[A], expect0: Iterable[A]): EvalL = {
 

@@ -240,7 +240,8 @@ object BinCodecMemberData {
     pickleFix[ValidF]
   }
 
-  implicit lazy val pickleIdCeilings   : Pickler[IdCeilings   ] = pickleCaseClass
-  implicit lazy val pickleProjectConfig: Pickler[ProjectConfig] = pickleCaseClass
-  implicit lazy val pickleProject      : Pickler[Project      ] = pickleCaseClass
+  implicit lazy val pickleIdCeilings    : Pickler[IdCeilings    ] = pickleCaseClass
+  implicit lazy val pickleProjectConfig : Pickler[ProjectConfig ] = pickleCaseClass
+  implicit lazy val pickleProjectContent: Pickler[ProjectContent] = pickleCaseClass
+  implicit lazy val pickleProject       : Pickler[Project       ] = pickleCaseClass
 }

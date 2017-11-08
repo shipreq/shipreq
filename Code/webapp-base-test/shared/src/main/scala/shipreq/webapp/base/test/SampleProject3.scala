@@ -96,7 +96,7 @@ object SampleProject3 {
         .add(cos(2), 2)
     )
 
-    (contentByDsl ! project0).copy(deletionReasons = dr)
+    Project.deletionReasons.set(dr)(contentByDsl ! project0)
   }
 
   lazy val plainText  = PlainText.ForProject.noCtx(project)

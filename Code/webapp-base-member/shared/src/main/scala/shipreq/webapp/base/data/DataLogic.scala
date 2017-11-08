@@ -40,7 +40,7 @@ object DataLogic {
   type TagLookup = ReqId => ReqTags
 
   def tagLookup(p: Project, fd: FilterDead): TagLookup = {
-    val reqTags = p.reqTags
+    val reqTags = p.content.reqTags
     val tagsInText = p.atomScan.tagRefs
 
     fd match {
@@ -99,7 +99,7 @@ object DataLogic {
       // (source of implication for this column) → (all it transitively implies)
       val f = p.config.customField(fid)
       val srcs: List[(Pubid, Set[ReqId])] =
-        p.reqs.reqsByType(f.reqTypeId).iterator
+        p.content.reqs.reqsByType(f.reqTypeId).iterator
           .filter(filter)
           .map(r => (r.pubid, p.implicationSrcToTgtTC(r.id)))
           .toList

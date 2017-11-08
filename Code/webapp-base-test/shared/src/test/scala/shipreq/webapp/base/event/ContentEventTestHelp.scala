@@ -21,12 +21,12 @@ object DetachedGenericReq {
   implicit def equality: UnivEq[DetachedGenericReq] = UnivEq.derive
 
   def extract(p: Project, id: GenericReqId): Option[DetachedGenericReq] =
-    p.reqs.genericReqs.get(id).map { r =>
-      val codes      = p.reqCodes.activeReqCodesByReqId(id)
-      val customText = ReqData.allTextForReq(id, p.reqText)
-      val impliedBy  = p.implications.backwards(id)
-      val implies    = p.implications.forwards(id)
-      val tags       = p.reqTags(id)
+    p.content.reqs.genericReqs.get(id).map { r =>
+      val codes      = p.content.reqCodes.activeReqCodesByReqId(id)
+      val customText = ReqData.allTextForReq(id, p.content.reqText)
+      val impliedBy  = p.content.implications.backwards(id)
+      val implies    = p.content.implications.forwards(id)
+      val tags       = p.content.reqTags(id)
       DetachedGenericReq(r, customText, tags, impliedBy, implies, codes)
     }
 }
@@ -42,12 +42,12 @@ object DetachedUseCase {
   implicit def equality: UnivEq[DetachedUseCase] = UnivEq.derive
 
   def extract(p: Project, id: UseCaseId): Option[DetachedUseCase] =
-    p.reqs.useCases.imap.get(id).map { r =>
-      val codes      = p.reqCodes.activeReqCodesByReqId(id)
-      val customText = ReqData.allTextForReq(id, p.reqText)
-      val impliedBy  = p.implications.backwards(id)
-      val implies    = p.implications.forwards(id)
-      val tags       = p.reqTags(id)
+    p.content.reqs.useCases.imap.get(id).map { r =>
+      val codes      = p.content.reqCodes.activeReqCodesByReqId(id)
+      val customText = ReqData.allTextForReq(id, p.content.reqText)
+      val impliedBy  = p.content.implications.backwards(id)
+      val implies    = p.content.implications.forwards(id)
+      val tags       = p.content.reqTags(id)
       DetachedUseCase(r, customText, tags, impliedBy, implies, codes)
     }
 }
@@ -60,7 +60,7 @@ object ContentEventTestHelp {
 
   implicit class ProjectEventTestExt(private val p: Project) extends AnyVal {
     def needUC(id: UseCaseId): UseCase =
-      p.reqs.useCases.imap need id
+      p.content.reqs.useCases.imap need id
   }
 
   def createRCG(id: ReqCodeId, code: ReqCode.Value, title: T.CodeGroupTitle.OptionalText = ∅) = {
@@ -139,7 +139,7 @@ object ContentEventTestHelp {
   // ===================================================================================================================
 
   def assertSoleReqCode(p: Project, code: ReqCode.Value): ReqCode.Data = {
-    val v = p.reqCodes.trie.flatStream.toVector
+    val v = p.content.reqCodes.trie.flatStream.toVector
     assertEq("Trie size", v.size, 1)
     assertEq("Sole req code", v.head._1, code)
     v.head._2

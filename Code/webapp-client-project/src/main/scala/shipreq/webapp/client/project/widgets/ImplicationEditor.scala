@@ -47,8 +47,8 @@ object ImplicationEditor {
     UnivEq.derive
 
   def initialValue(p: Project, dir: Direction, id: ReqId): Vector[Pubid] =
-    MutableArray(p.implications(dir)(id))
-      .map(p.reqs.need(_).pubid)
+    MutableArray(p.content.implications(dir)(id))
+      .map(p.content.reqs.need(_).pubid)
       .sortBySchwartzian(DataLogic.pubidSortKeyFn(p.config))
       .to[Vector]
 
@@ -56,7 +56,7 @@ object ImplicationEditor {
     val reqs = {
       val legal = initial.foldLeft(l.legal.map(_.reqId).toSet)(_ - _._1)
       initial.fold(Stream.empty[Pubid])(_._2.toStream)
-        .map(p.reqs.needByPubid)
+        .map(p.content.reqs.needByPubid)
         .filter(legal contains _.id)
     }
 
@@ -106,7 +106,7 @@ object ImplicationEditor {
       val newValues = subject.foldLeft(in)(_ - _) // Tolerate reflexivity
       val diff = SetDiff.compare(initialValues, newValues)
 
-      val pi = p.implications
+      val pi = p.content.implications
       var is = pi(dir)
       for (i <- subject)
         is = is.mod(i, diff.apply)

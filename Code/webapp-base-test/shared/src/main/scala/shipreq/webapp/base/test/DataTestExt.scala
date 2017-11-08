@@ -8,12 +8,12 @@ object DataTestExt {
   implicit class ProjectTestExt(private val p: Project) extends AnyVal {
 
     def useCaseStepsDeletableRestorable(liveFilter: Live): Iterator[UseCaseStep.Focus] =
-      p.reqs.useCases.imap.valuesIterator
+      p.content.reqs.useCases.imap.valuesIterator
         .filter(_.liveUC is Live)
         .flatMap { uc =>
           val root = uc.rootStep.id
           uc.stepIterator
-            .map(s => p.reqs.useCases.focusStep(s.id))
+            .map(s => p.content.reqs.useCases.focusStep(s.id))
             .filter(f => f.live is liveFilter && f.id !=* root)
         }
 

@@ -240,7 +240,7 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
           val p = cd.project()
           val g = ImplicationGraph.Props(
             None, s.filterDead,
-            p.implications, p.reqs, p.config.reqTypes,
+            p.content.implications, p.content.reqs, p.config.reqTypes,
             pxPlainText.value(),
             reqDetailRC,
             ww)

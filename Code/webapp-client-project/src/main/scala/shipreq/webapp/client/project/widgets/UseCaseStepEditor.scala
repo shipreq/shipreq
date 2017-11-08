@@ -64,7 +64,7 @@ object UseCaseStepEditor {
     val parsed: TextAndFlow[OptionalText, Vector[String \/ UseCaseStepId]] =
       rawTextFlow.bimap(
         Text.UseCaseStep.parse(project, ucNum),
-        _.map(UseCaseStepFlowText.parseStep(project.reqs, ucNum)))
+        _.map(UseCaseStepFlowText.parseStep(project.content.reqs, ucNum)))
 
     val valResult: TextAndFlow[Invalidity \/ OptionalText, Invalidity \/ Set[UseCaseStepId]] =
       parsed.bimap(

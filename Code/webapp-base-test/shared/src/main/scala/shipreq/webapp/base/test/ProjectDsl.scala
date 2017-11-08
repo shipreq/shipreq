@@ -55,28 +55,29 @@ object ProjectDslInternals {
     }
 
     def done: Project =
-      IdCeilings.supply(ids =>
-        p.copy(
-          reqs         = succ(p.reqs,         Requirements(reqs, p.reqs.useCases, pubids)),
-          reqCodes     = succ(p.reqCodes,     ReqCodes(reqCodeTrie)),
-          reqText      = succ(p.reqText,      text),
-          reqTags      = succ(p.reqTags,      tags),
-          implications = succ(p.implications, Implications.BiDir(imps)),
-          idCeilings   = ids))
+      IdCeilings.supply { ids =>
+        var f = Project.idCeilings set ids
+        f = f compose Project.reqs        .modify(r => succ(r, Requirements(reqs, r.useCases, pubids)))
+        f = f compose Project.reqCodes    .modify(succ(_, ReqCodes(reqCodeTrie)))
+        f = f compose Project.reqText     .modify(succ(_, text))
+        f = f compose Project.reqTags     .modify(succ(_, tags))
+        f = f compose Project.implications.modify(succ(_, Implications.BiDir(imps)))
+        f(p)
+      }
   }
 
   private def succ[A](old: A, n: A) = n // obsolete. Used to increse Rev
 
   def projectState(p: Project) = ProjectState(p,
-    nextId         = p.reqs.idIterator.ifelse(_.isEmpty, _ => 1, _.max.value),
+    nextId         = p.content.reqs.idIterator.ifelse(_.isEmpty, _ => 1, _.max.value),
     defaultReqType = p.config.reqTypes.custom.values.headOption.map(_.id),
-    reqs           = p.reqs.genericReqs,
-    pubids         = p.reqs.pubids,
-    reqCodeTrie    = p.reqCodes.trie,
-    maxReqCodeId   = p.reqCodes.idList match {case Nil => 0; case l => l.iterator.map(_.value).max},
-    text           = p.reqText,
-    tags           = p.reqTags,
-    imps           = p.implications.forwards)
+    reqs           = p.content.reqs.genericReqs,
+    pubids         = p.content.reqs.pubids,
+    reqCodeTrie    = p.content.reqCodes.trie,
+    maxReqCodeId   = p.content.reqCodes.idList match {case Nil => 0; case l => l.iterator.map(_.value).max},
+    text           = p.content.reqText,
+    tags           = p.content.reqTags,
+    imps           = p.content.implications.forwards)
 
   type CFTextId     = CustomField.Text.Id
   type CFTextValue  = Text.CustomTextField.NonEmptyText

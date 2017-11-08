@@ -64,7 +64,7 @@ object Parsers {
       (m, n) =>
         project.config.reqTypes.allByMnemonic.get(m)
           .map(t => PubidT(t.reqTypeId, n))
-          .flatMap(project.reqs.pubids.apply)
+          .flatMap(project.content.reqs.pubids.apply)
 
     def hashRef: Rule1[HashRefTarget] =
       rule(hashRefStr ~> (project.config.hashRefLookup _) ~ popOptional)
@@ -147,7 +147,7 @@ object Parsers {
 
     val lookupCode: Seq[Node] => Option[ReqCodeId] = ss =>
       NonEmptyVector.maybe(ss.toVector, None: Option[ReqCodeId])(code =>
-        project.reqCodes.get(code).flatMap(_.activeId))
+        project.content.reqCodes.get(code).flatMap(_.activeId))
 
     def reqRef: Rule1[t.Atom] =
       rule(codeRef | pubidRef)
@@ -241,7 +241,7 @@ object Parsers {
 
     import G.reflinkSurround.parsing.{prefix, suffix}
 
-    override def reqs = project.reqs
+    override def reqs = project.content.reqs
 
     def useCaseStepRef: Rule1[t.Atom] =
       rule(prefix ~ OWS ~ useCaseStepLabel ~ suffix ~> t.UseCaseStepRef)

@@ -96,7 +96,7 @@ object UseCaseEventTest extends TestSuite {
         val rcs = NonEmptySet[ReqCode.IdAndValue](7 -> "a.b.c", 8 -> "d")
         val p = _assertPass(emptyUC1.copy(vs = nev(Codes(rcs))))
         assertUC(p, 1)(UC1, reqCodes = rcs.whole.map(_.value))
-        assertEq(p.reqCodes.reqCodesById, rcs.whole.map(_.toTupleIV).toMap)
+        assertEq(p.content.reqCodes.reqCodesById, rcs.whole.map(_.toTupleIV).toMap)
       }
 
       def customText: Event.NonEmptyCustomTextMap = NonEmpty.force(Map(cf1 -> "1", cf2 -> "2"))
@@ -148,10 +148,10 @@ object UseCaseEventTest extends TestSuite {
       'groupDead     - assertFail("is not an ActiveGroup.")(delRCG2, ReqsDelete(5, 2, ∅))
       'ok {
         val p = _assertPass(ReqsDelete(5, 2, ∅))
-        assertEq("RC#1", p.reqCodes(RCG1_code).isActive, true)
-        assertEq("RC#2", p.reqCodes(RCG2_code).isActive, false)
-        assertEq("UC #1", p.reqs.useCases.imap.need(1).liveExplicitly, Live)
-        assertEq("UC #5", p.reqs.useCases.imap.need(5).liveExplicitly, Dead)
+        assertEq("RC#1", p.content.reqCodes(RCG1_code).isActive, true)
+        assertEq("RC#2", p.content.reqCodes(RCG2_code).isActive, false)
+        assertEq("UC #1", p.content.reqs.useCases.imap.need(1).liveExplicitly, Live)
+        assertEq("UC #5", p.content.reqs.useCases.imap.need(5).liveExplicitly, Dead)
       }
     }
 
@@ -166,7 +166,7 @@ object UseCaseEventTest extends TestSuite {
     'setUseCaseTitle {
       'ok {
         val p = _assertPass(emptyUC1, setTitleUC1)
-        assertEq(p.reqs.useCases.imap.need(1).title, someTitleUC)
+        assertEq(p.content.reqs.useCases.imap.need(1).title, someTitleUC)
       }
       'ucNotFound - assertFail("found")(setTitleUC1)
       'ucIsDead   - assertFail("dead")(emptyUC1, delUC1, setTitleUC1)
@@ -279,7 +279,7 @@ object UseCaseEventTest extends TestSuite {
                   .addvs(7, Set(9))     // 1.0.1   → [1.1]
                   .addvs(8, Set(1,7,9)) // 1.0.1.a → [1.0, 1.0.1, 1.1]
                   .addvs(9, Set(1))     // 1.1     → [1.0]
-        assertEq(p.reqs.useCases.stepFlow.forwards, e)
+        assertEq(p.content.reqs.useCases.stepFlow.forwards, e)
       }
     }
 
@@ -289,7 +289,7 @@ object UseCaseEventTest extends TestSuite {
       'title {
         'ok {
           val p = _assertPass(emptyUC1, addStepTo1, setStepTitle4)
-          assertEq(p.reqs.useCases.imap.need(1).stepsNA.tree.findValue(_.id.value ==* 4).get.titleExplicitly, someStepText)
+          assertEq(p.content.reqs.useCases.imap.need(1).stepsNA.tree.findValue(_.id.value ==* 4).get.titleExplicitly, someStepText)
         }
         'stepNotFound - assertFail("found")(setStepTitle4)
         'ucIsDead     - assertFail("dead")(emptyUC1, addStepTo1, delUC1, setStepTitle4)
@@ -313,7 +313,7 @@ object UseCaseEventTest extends TestSuite {
             4 -> 2,
             4 -> 3,
             5 -> 2)
-          assertEq(p.reqs.useCases.stepFlow.forwards, e)
+          assertEq(p.content.reqs.useCases.stepFlow.forwards, e)
         }
         'subjStepNotFound - assertFail("not found")(emptyUC1, UseCaseStepUpdate(9, ^.FlowIn (nesd()(1))))
         'iAddStepNotFound - assertFail("not found")(emptyUC1, UseCaseStepUpdate(1, ^.FlowIn (nesd()(9))))

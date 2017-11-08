@@ -29,11 +29,11 @@ object SampleProject4 {
 
   lazy val project = {
     val p   = SampleProject3.project
-    var pr  = p.reqs.pubids
+    var pr  = p.content.reqs.pubids
     var ucs = emptyDataMap(UseCase)
     var sf  = StepFlow.emptyUniDir
     var ic  = p.idCeilings
-    var rt  = p.reqText
+    var rt  = p.content.reqText
 
     def addUseCase(id   : Int                            = -1,
                    title: Text.UseCaseTitle.OptionalText = Vector.empty,
@@ -79,11 +79,12 @@ object SampleProject4 {
 
     sf = sf.addPairs(13 -> 11, 15 -> 12)
 
-    val p2 = p.copy(
-      name       = "Sample Project 4(+)",
-      reqs       = Requirements(p.reqs.genericReqs, UseCases.Stateless(ucs, StepFlow BiDir sf).withState, pr),
-      reqText    = rt,
-      idCeilings = ic)
+    val p2 =
+      (Project.name.set("Sample Project 4(+)") compose
+        Project.reqs.set(Requirements(p.content.reqs.genericReqs, UseCases.Stateless(ucs, StepFlow BiDir sf).withState, pr)) compose
+        Project.reqText.set(rt) compose
+        Project.idCeilings.set(ic)
+        ) (p)
     DataProp.project.allIncludingConfig assert p2
     p2
   }

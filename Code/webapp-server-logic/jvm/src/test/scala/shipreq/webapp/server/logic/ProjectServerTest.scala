@@ -84,7 +84,7 @@ object ProjectServerTest extends TestSuite {
       assertEq("[3]", recv2, Vector.empty)
       assertEq("[4]", recv1, Vector(ves1))
       assertEq("[5]", asyncData2.latestEventOrd, asyncData1.latestEventOrd + 1)
-      assertEq("[6]", asyncData2.project.reqs.size, 1)
+      assertEq("[6]", asyncData2.project.content.reqs.size, 1)
 
       val ves2 = svr.run(client2.createContent)(newUC).needRight
       assertEq("[7]", recv1, Vector(ves1, ves2))

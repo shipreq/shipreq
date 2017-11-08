@@ -28,11 +28,11 @@ object BinCodecTest extends TestSuite {
 //    RandomData.revAndTagTree mustSatisfy prop
 //    RandomData.customFieldId mustSatisfy prop
 //    RandomData.projectConfig mustSatisfy prop
-//    RandomData.project.map(_.reqs) mustSatisfy prop // FAIL
-//    RandomData.project.map(_.reqCodes) mustSatisfy prop // FAIL
-//    RandomData.project.map(_.reqText.data) mustSatisfy prop // FAIL
-//    RandomData.project.map(_.reqTags) mustSatisfy prop // PASS
-//    RandomData.project.map(_.implications) mustSatisfy prop // PASS
+//    RandomData.project.map(_.content.reqs) mustSatisfy prop // FAIL
+//    RandomData.project.map(_.content.reqCodes) mustSatisfy prop // FAIL
+//    RandomData.project.map(_.content.reqText.data) mustSatisfy prop // FAIL
+//    RandomData.project.map(_.content.reqTags) mustSatisfy prop // PASS
+//    RandomData.project.map(_.content.implications) mustSatisfy prop // PASS
 
     RandomData.project mustSatisfy prop
   }

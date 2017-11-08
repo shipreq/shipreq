@@ -20,7 +20,7 @@ object ProjectText {
       this match {
         case ProjectText.Context.None
            | ProjectText.Context.Req(_: GenericReqId) => None
-        case ProjectText.Context.Req(uc: UseCaseId)   => Some(p.reqs.need(uc).pubid.pos)
+        case ProjectText.Context.Req(uc: UseCaseId)   => Some(p.content.reqs.need(uc).pubid.pos)
       }
   }
   object Context {
@@ -120,10 +120,10 @@ abstract class ProjectText[Ctx <: Context, Out](project: Project, final val ctx:
 
   protected final val latestDeletionReasonById: ReqId => Option[Out] =
     Memo(id =>
-      project.deletionReasons.getLatest(id).map(text(_, Dead)))
+      project.content.deletionReasons.getLatest(id).map(text(_, Dead)))
 
   protected final def useCaseFlowElementById(id: UseCaseStepId): Out =
-    useCaseFlowElement(project.reqs.useCases.focusStep(id))
+    useCaseFlowElement(project.content.reqs.useCases.focusStep(id))
 
   protected final def useCaseFlowElements(elements: Iterator[UseCaseStep.Focus]): MutableArray[Out] =
     MutableArray(elements)
@@ -131,7 +131,7 @@ abstract class ProjectText[Ctx <: Context, Out](project: Project, final val ctx:
       .map(useCaseFlowElement)
 
   protected final def useCaseFlowElementsById(ids: Set[UseCaseStepId]): MutableArray[Out] =
-    useCaseFlowElements(ids.iterator.map(project.reqs.useCases.focusStep))
+    useCaseFlowElements(ids.iterator.map(project.content.reqs.useCases.focusStep))
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Derived: public
@@ -150,7 +150,7 @@ abstract class ProjectText[Ctx <: Context, Out](project: Project, final val ctx:
     }
 
   final def reqTitleById(id: ReqId): Out =
-    reqTitle(project.reqs.need(id))
+    reqTitle(project.content.reqs.need(id))
 
   final val codeGroupTitle: CodeGroup => Out =
     Memo.by((_: CodeGroup).id)(g =>
@@ -158,7 +158,7 @@ abstract class ProjectText[Ctx <: Context, Out](project: Project, final val ctx:
 
   final val customTextField: CustomField.Text.Id => Req => Option[Out] =
     Memo { fid =>
-      project.reqText.get(fid) match {
+      project.content.reqText.get(fid) match {
         case Some(m) =>
           val liveField = cfg.fields.customFields.need(fid).live(cfg)
           memoByReqId(r =>

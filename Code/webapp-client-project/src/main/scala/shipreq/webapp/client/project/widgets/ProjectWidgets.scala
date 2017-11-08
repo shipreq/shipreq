@@ -133,7 +133,7 @@ final class ProjectWidgets[Ctx <: ProjectText.Context](project      : Project,
         invalidWhenDead(a)
 
       def toRef(code: ReqCode.Value, r: ReqId): VdomElement = {
-        val req = project.reqs.need(r)
+        val req = project.content.reqs.need(r)
         ref(
           linkOrSpan(req)(*.reqRef(req live project.config.reqTypes)),
           code,
@@ -148,7 +148,7 @@ final class ProjectWidgets[Ctx <: ProjectText.Context](project      : Project,
           ^.title := UiText.hoverText(title),
           G.reflinkSurround(PlainText reqCode code))
 
-      ProjectText.ReqCodeResolution(id, project.reqCodes) match {
+      ProjectText.ReqCodeResolution(id, project.content.reqCodes) match {
         case ActiveCodeToReq     (c, r) => toRef(c, r)
         case ActiveCodeToGroup   (c, g) => toGroup(c, g)
         case DeadGroup           (c, g) => toGroup(c, g)
@@ -158,7 +158,7 @@ final class ProjectWidgets[Ctx <: ProjectText.Context](project      : Project,
     }
 
   private def useCaseStepRefById(id: UseCaseStepId): VdomTag =
-    useCaseStepRef(project.reqs.useCases.focusStep(id))
+    useCaseStepRef(project.content.reqs.useCases.focusStep(id))
 
   private val useCaseStepRef: UseCaseStep.Focus => VdomTag =
     Memo.by((_: UseCaseStep.Focus).id)(
@@ -373,7 +373,7 @@ final class ProjectWidgets[Ctx <: ProjectText.Context](project      : Project,
 
     private val memo: ReqId => Out =
       Memo { reqId =>
-        val req  = project.reqs.need(reqId)
+        val req  = project.content.reqs.need(reqId)
         val ep   = req.pubid.external(project)
         val txt  = label(ep)
         val live = liveFn(req)
@@ -391,7 +391,7 @@ final class ProjectWidgets[Ctx <: ProjectText.Context](project      : Project,
       memo(req.id)
 
     def apply(pubid: Pubid): Out =
-      apply(project.reqs.reqIdByPubid(pubid))
+      apply(project.content.reqs.reqIdByPubid(pubid))
 
     private val sep: TagMod =
       contextualise match {

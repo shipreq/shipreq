@@ -139,7 +139,7 @@ object Graphs {
     val EndNode   = "E"
 
     val ptext    = PlainText.ForProject(project, ctx)
-    val useCases = project.reqs.useCases
+    val useCases = project.content.reqs.useCases
     val uc       = useCases.imap.need(id)
     val stepsNA  = NA.useCaseSteps get uc
     val stepsE   = E .useCaseSteps get uc
@@ -335,7 +335,7 @@ object Graphs {
     sb append """node[style=filled color="#333333"]"""
 
   def implicationFocused(focus: ReqId, fd: FilterDead, p: Project): DOT =
-    implicationFocused(focus, fd, p.implications, p.reqs, p.config.reqTypes)
+    implicationFocused(focus, fd, p.content.implications, p.content.reqs, p.config.reqTypes)
 
   def implicationFocused(focus: ReqId, fd: FilterDead,
                          imps: Implications.BiDir, reqs: Requirements, reqTypes: ReqTypes): DOT =
@@ -423,7 +423,7 @@ object Graphs {
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   def implicationAll(fd: FilterDead, p: Project): DOT =
-    implicationAll(fd, p.implications, p.reqs, p.config.reqTypes)
+    implicationAll(fd, p.content.implications, p.content.reqs, p.config.reqTypes)
 
   def implicationAll(fd: FilterDead,
                      imps: Implications.BiDir, reqs: Requirements, reqTypes: ReqTypes): DOT =

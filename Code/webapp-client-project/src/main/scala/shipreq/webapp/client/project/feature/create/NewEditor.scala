@@ -130,7 +130,7 @@ object NewEditor {
       import shipreq.webapp.client.project.widgets.ReqCodeEditor
 
       val trieCB: CallbackTo[ReqCode.Trie] =
-        pxProject.toCallback.map(_.reqCodes.trie)
+        pxProject.toCallback.map(_.content.reqCodes.trie)
 
       object Multiple extends ForValueType {
         import ReqCodeEditor.{Multiple => RCE}

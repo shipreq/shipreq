@@ -83,7 +83,7 @@ object ProjectStrategies {
   private val reflinkContext = Context(Grammar.reflinkSurround)
 
   def reqItems(p: Project, pt: PlainText.ForProject.AnyCtx): Stream[ReqItem] =
-    reqItems(p, pt, p.reqs.reqIterator.toStream)
+    reqItems(p, pt, p.content.reqs.reqIterator.toStream)
 
   def reqItems(p: Project, pt: PlainText.ForProject.AnyCtx, legal: Stream[Req]): Stream[ReqItem] =
     legal.filter(_.live(p.config.reqTypes) is Live)
@@ -224,7 +224,7 @@ object ProjectStrategies {
       type A = (String, ActiveGroup \/ ActiveReq)
 
       val activePaths: Stream[A] =
-        project.reqCodes.trie.flatStream
+        project.content.reqCodes.trie.flatStream
           .collect {
             case (c, a: ActiveReq)   => (PlainText reqCode c, \/-(a))
             case (c, a: ActiveGroup) => (PlainText reqCode c, -\/(a))

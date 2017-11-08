@@ -1,6 +1,8 @@
 name      := "ShipReq"
 startYear := Some(2013)
 
+logLevel in Global in update := Level.Warn
+
 val root                  = ShipReqBuild.root
 
 val base                  = ShipReqBuild.base

@@ -627,20 +627,20 @@ object DataProp {
 
     def atoms: Prop[P] =
       Prop.eval[(String, Iterator[Text.AnyOptional])](t => text.anyTextI(t._2).rename(t._1))
-        .forallF[List].contramap[P](_.allRichText) rename "Atoms"
+        .forallF[List].contramap[P](_.content.allRichText) rename "Atoms"
 
     def constituents = (
-                   reqs.all.contramap[P](_.reqs)
-      ∧        reqCodes.all.contramap[P](_.reqCodes)
-      ∧    implications.all.contramap[P](_.implications)
-      ∧ deletionReasons.all.contramap[P](_.deletionReasons)
+                   reqs.all.contramap[P](_.content.reqs)
+      ∧        reqCodes.all.contramap[P](_.content.reqCodes)
+      ∧    implications.all.contramap[P](_.content.implications)
+      ∧ deletionReasons.all.contramap[P](_.content.deletionReasons)
       ∧ savedViews.optional.contramap[P](_.reqtableViews)
     ) rename "constituents"
 
     def liveReqCodeRequiresLiveTarget =
       Prop.whitelist[Project]("Live ReqCode requires Live Target")(
-        p => p.reqs.reqIterator.filter(_.live(p.config.reqTypes) is Live).map(_.id).toSet,
-        _.reqCodes.activeReqCodesByReqId.keySet)
+        p => p.content.reqs.reqIterator.filter(_.live(p.config.reqTypes) is Live).map(_.id).toSet,
+        _.content.reqCodes.activeReqCodesByReqId.keySet)
 
     def validRefs = {
       type TR = (P, Refs)
@@ -649,9 +649,9 @@ object DataProp {
       def mkRefs(p: Project): Refs = Refs(
         p.config.fields.customFields.keySet,
         p.config.customIssueTypes.keySet,
-        p.reqs.reqIterator.map(_.id).toSet,
-        p.reqCodes.idSet,
-        p.reqs.useCases.stepIterator.map(_.id).toSet,
+        p.content.reqs.reqIterator.map(_.id).toSet,
+        p.content.reqCodes.idSet,
+        p.content.reqs.useCases.stepIterator.map(_.id).toSet,
         p.config.reqTypes.all.whole.map(_.reqTypeId)(collection.breakOut),
         p.config.tags.keySet)
 
@@ -682,21 +682,21 @@ object DataProp {
         px.contramap[TR](tr => (refs(tr._1) , tr))
       }
 
-      ( validReqTypeIds("Pubid keys",                 _.reqs.pubids.value.m.keys)
-      ∧ validReqIds    ("ReqCode ReqIds (active)",    _.reqCodes.activeReqCodesByReqId.keys)
-      ∧ validReqIds    ("ReqCode ReqIds (inactive)",  _.reqCodes.inactiveIdsByReqId.keys)
-      ∧ validFieldIds  ("ReqData.text TextField ids", _.reqText.keys)
-      ∧ validReqIds    ("ReqData.text.*.reqIds",      _.reqText.valuesIterator.flatMap(_.keysIterator))
-      ∧ validReqIds    ("ReqData.config.tags keys",   _.reqTags.keys)
-      ∧ validTagIds    ("ReqData.config.tags values", _.reqTags.valueIterator)
-      ∧ validReqIds    ("ReqData.implications",       _.implications.members)
+      ( validReqTypeIds("Pubid keys",                 _.content.reqs.pubids.value.m.keys)
+      ∧ validReqIds    ("ReqCode ReqIds (active)",    _.content.reqCodes.activeReqCodesByReqId.keys)
+      ∧ validReqIds    ("ReqCode ReqIds (inactive)",  _.content.reqCodes.inactiveIdsByReqId.keys)
+      ∧ validFieldIds  ("ReqData.text TextField ids", _.content.reqText.keys)
+      ∧ validReqIds    ("ReqData.text.*.reqIds",      _.content.reqText.valuesIterator.flatMap(_.keysIterator))
+      ∧ validReqIds    ("ReqData.config.tags keys",   _.content.reqTags.keys)
+      ∧ validTagIds    ("ReqData.config.tags values", _.content.reqTags.valueIterator)
+      ∧ validReqIds    ("ReqData.implications",       _.content.implications.members)
       ∧ validReqIds    ("Atoms: ReqRefs",             _.atomScan.reqRefs)
       ∧ validReqCodeIds("Atoms: CodeRefs",            _.atomScan.codeRefs)
       ∧ validUCStepIds ("Atoms: UseCaseStepRefs",     _.atomScan.useCaseStepRefs)
       ∧ validTagIds    ("Atoms: TagRefs",             _.atomScan.tagRefs.all.all)
       ∧ validIssueTypes("Atoms: Issues",              _.atomScan.issues.all.all.map(_.typ))
-      ∧ validReqIds    ("DeletionReason reqIds",      _.deletionReasons.reqApplication.keys)
-      ∧ validUCStepIds ("UseCase step flow",          _.reqs.useCases.stepFlow.memberIterator)
+      ∧ validReqIds    ("DeletionReason reqIds",      _.content.deletionReasons.reqApplication.keys)
+      ∧ validUCStepIds ("UseCase step flow",          _.content.reqs.useCases.stepFlow.memberIterator)
       ∧ fullRefCmp     ("SavedView filters",          p => Refs.savedViewFilters(p.reqtableViews))
       ∧ validFieldIds  ("SavedViews: Columns",        _.reqtableViewIterator.flatMap(_.view.columns.whole).flatMap(Refs.reqtableColumnField))
       ∧ validFieldIds  ("SavedViews: Sort Columns",   _.reqtableViewIterator.flatMap(_.view.order.all.whole).map(_.column).flatMap(Refs.reqtableColumnField))

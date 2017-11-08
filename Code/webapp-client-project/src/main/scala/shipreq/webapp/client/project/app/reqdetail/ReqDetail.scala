@@ -321,7 +321,7 @@ object ReqDetail {
           case Row.ImplicationGraph =>
             ImplicationGraph.Props(
               Some(req.id), data.filterDead,
-              project.implications, project.reqs, project.config.reqTypes,
+              project.content.implications, project.content.reqs, project.config.reqTypes,
               data.pxPlainText.value(),
               reqDetailRC,
               webWorker
@@ -366,7 +366,7 @@ object ReqDetail {
           ucData.uc,
           stepData,
           data.filterDead,
-          project.reqs.useCases.stepFlow,
+          project.content.reqs.useCases.stepFlow,
           renderBody,
           cmdRunner,
           addCmdRunner,

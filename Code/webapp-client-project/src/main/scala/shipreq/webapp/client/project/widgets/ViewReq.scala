@@ -87,7 +87,7 @@ object ViewReq {
   object Data {
 
     def fromProject(id: ReqId, project: Project, filterDead: FilterDead): Data = {
-      val req             = project.reqs.need(id)
+      val req             = project.content.reqs.need(id)
       val pubidSortKeyFn  = DataLogic.pubidSortKeyFn(project.config)
       val impFilter       = DataLogic.impValueFilter(project.config, filterDead)
       val customImpLookup = DataLogic.customFieldImps(project, impFilter)
@@ -110,16 +110,16 @@ object ViewReq {
           .to[Vector]
 
       val codes: List[ReqCode.Value] =
-        MutableArray(project.reqCodes.activeReqCodesByReqId(id))
+        MutableArray(project.content.reqCodes.activeReqCodesByReqId(id))
           .sortBySchwartzian(PlainText.reqCode)
           .to[List]
 
       val generalImps: Direction => Vector[Pubid] =
         Direction.memo(dir =>
           sortPubids(
-            project.implications(dir)(id)
+            project.content.implications(dir)(id)
               .iterator
-              .map(project.reqs.need)
+              .map(project.content.reqs.need)
               .filter(impFilter)
               .map(_.pubid)))
 
@@ -129,7 +129,7 @@ object ViewReq {
       val pastPubids: SortedSet[ExternalPubid] = {
         val b = SortedSet.newBuilder[ExternalPubid]
         b ++= req.pubid.pastExternals(project)
-        for (pubid <- req.pastPubids(project.reqs.pubids)) {
+        for (pubid <- req.pastPubids(project.content.reqs.pubids)) {
           b += pubid.external(project)
           b ++= pubid.pastExternals(project)
         }

@@ -207,19 +207,19 @@ class ApplicableEventGen(p: Project) {
     RandomData.applicableReqTypes(cfg.reqTypes.custom.keySet)
 
   lazy val existingReqId: Option[Gen[ReqId]] =
-    Gen.tryGenChoose(p.reqs.idIterator)
+    Gen.tryGenChoose(p.content.reqs.idIterator)
 
   lazy val liveReqIds: Vector[ReqId] =
-    p.reqs.reqIterator.filter(_.live(cfg.reqTypes) is Live).map(_.id).toVector
+    p.content.reqs.reqIterator.filter(_.live(cfg.reqTypes) is Live).map(_.id).toVector
 
   lazy val liveReqId: Option[Gen[ReqId]] =
     Gen.tryGenChoose(liveReqIds)
 
   val genericReqId: Live => Option[Gen[GenericReqId]] =
-    tryGenChooseLiveDead(l => p.reqs.genericReqs.valuesIterator.filter(_.live(cfg.reqTypes) is l).map(_.id))
+    tryGenChooseLiveDead(l => p.content.reqs.genericReqs.valuesIterator.filter(_.live(cfg.reqTypes) is l).map(_.id))
 
   def liveUseCaseIterator: Iterator[UseCase] =
-    p.reqs.useCases.imap.valuesIterator.filter(_.liveUC is Live)
+    p.content.reqs.useCases.imap.valuesIterator.filter(_.liveUC is Live)
 
   lazy val liveUseCase: Option[Gen[UseCase]] =
     Gen.tryGenChoose(liveUseCaseIterator)
@@ -228,13 +228,13 @@ class ApplicableEventGen(p: Project) {
     liveUseCase.map(_.map(_.id))
 
   lazy val existingUseCaseStepId: Option[Gen[UseCaseStepId]] =
-    Gen.tryGenChoose(p.reqs.useCases.stepIterator.map(_.id))
+    Gen.tryGenChoose(p.content.reqs.useCases.stepIterator.map(_.id))
 
   lazy val existingReqCodeId: Option[Gen[ReqCodeId]] =
-    Gen.tryGenChoose(p.reqCodes.idList)
+    Gen.tryGenChoose(p.content.reqCodes.idList)
 
   val codeGroupId: Live => Option[Gen[ReqCodeId]] =
-    tryGenChooseLiveDead(l => p.reqCodes.groups.iterator.filter(_.live is l).map(_.id).toVector)
+    tryGenChooseLiveDead(l => p.content.reqCodes.groups.iterator.filter(_.live is l).map(_.id).toVector)
 
   lazy val existingCustomIssueTypeId: Option[Gen[CustomIssueTypeId]] =
     Gen.tryGenChoose(cfg.customIssueTypes.keySet)
@@ -413,7 +413,7 @@ class ApplicableEventGen(p: Project) {
       Gen.choose_!(uc.stepIterator.map(_.id)).set
 
     def gFlow(dir: Direction) =
-      gSteps.map(ss => NonEmpty(SetDiff.xor(p.reqs.useCases.stepFlow(dir)(step.id), ss)))
+      gSteps.map(ss => NonEmpty(SetDiff.xor(p.content.reqs.useCases.stepFlow(dir)(step.id), ss)))
 
     Gen { c =>
       var vs = emptyValues
@@ -559,7 +559,7 @@ class ApplicableEventGen(p: Project) {
         RandomData.dir.flatMap { dir =>
           gReqId.flatMap { id =>
             Gen.choose_!(liveReqIds.filter(_ !=* id)).set1.map { ids =>
-              val sd = SetDiff.xor(p.implications(dir)(id), ids)
+              val sd = SetDiff.xor(p.content.implications(dir)(id), ids)
               ReqImplicationsPatch(id, dir, NonEmpty force sd)
             }
           }
@@ -570,10 +570,10 @@ class ApplicableEventGen(p: Project) {
     liveReqId.map(gReqId =>
       for {
         reqId          ← gReqId
-        inactiveValues = p.reqCodes.inactiveIdsByReqId(reqId)
+        inactiveValues = p.content.reqCodes.inactiveIdsByReqId(reqId)
         restore        ← Gen.tryGenChoose(inactiveValues.toVector).setE(0 to 2)
-        activeValues   = p.reqCodes.activeReqCodesByReqId(reqId)
-        activeIds      = activeValues.map(p.reqCodes(_).activeId.get)
+        activeValues   = p.content.reqCodes.activeReqCodesByReqId(reqId)
+        activeIds      = activeValues.map(p.content.reqCodes(_).activeId.get)
         remove         ← Gen.tryGenChoose(activeIds.toVector).setE(0 to 2)
         renameIds      ← Gen.tryGenChoose(remove.toVector).setE(0 to 2)
         addMin         = if (remove.nonEmpty || restore.nonEmpty) 0 else 1
@@ -591,7 +591,7 @@ class ApplicableEventGen(p: Project) {
       id   <- gId
       tags <- gTag.nes(1 to 5, implicitly)
     } yield {
-      val sd = SetDiff.xor(p.reqTags(id), tags.whole)
+      val sd = SetDiff.xor(p.content.reqTags(id), tags.whole)
       ReqTagsPatch(id, NonEmpty force sd)
     }
 
@@ -611,7 +611,7 @@ class ApplicableEventGen(p: Project) {
 
   def genContentRestore: Option[Gen[ContentRestore]] = {
     val restorableReqIds = Gen.tryGenChoose[ReqId](
-      p.reqs.reqIterator.filter {
+      p.content.reqs.reqIterator.filter {
         case g: GenericReq => (g.liveExplicitly is Dead) && (g.copy(liveExplicitly = Live).live(cfg.reqTypes) is Live)
         case u: UseCase    => (u.liveExplicitly is Dead) && (u.copy(liveExplicitly = Live).live(cfg.reqTypes) is Live)
       }.map(_.id).toVector)

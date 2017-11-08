@@ -99,7 +99,6 @@ Phase 2
 * ReqDetail KB shortcuts: ↑, ↓, F2, Tab in/out
 * Add and use RestorationForm just like the DeletionForm
 * Prevent -- (not not) in the FilterParser? Or allow /\-+/ and auto-correct on blur?
-* Add ProjectContent, similar to ProjectConfig?
 
 ### New Features
 * Issues

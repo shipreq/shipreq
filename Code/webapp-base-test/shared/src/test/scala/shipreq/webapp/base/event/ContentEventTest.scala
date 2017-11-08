@@ -63,7 +63,7 @@ object ContentEventTest extends TestSuite {
       def apply(expected: Set[String], more: String*): Unit = apply((expected ++ more).toSeq: _*)
       def apply(expected: String*): Unit =
         ScriptTester.this(e) { name =>
-          val act: Set[String] = fmtRCs(p.reqCodes)
+          val act: Set[String] = fmtRCs(p.content.reqCodes)
           val exp: Set[String] = expected.map(_.replaceFirst(" +:", ":")).toSet
           if (act != exp) {
             val same = act & exp
@@ -130,7 +130,7 @@ object ContentEventTest extends TestSuite {
         import CodeGroupGD._
         val t = Vector(CodeGroupTitle.Literal("hi there"))
         val p = _assertPass(createRCG(1, "a"), CodeGroupUpdate(1, nev(Title(t))))
-        assertEq(p.reqCodes.groups.head.title, t)
+        assertEq(p.content.reqCodes.groups.head.title, t)
       }
 
       'code {
@@ -483,7 +483,7 @@ object ContentEventTest extends TestSuite {
         def test(remove: ApplicableTagId*)(add: ApplicableTagId*)(expect: ApplicableTagId*): Unit = {
           es :+= patch(1)(remove: _*)(add: _*)
           val p = _assertPass(es: _*)
-          val a = p.reqTags(1)
+          val a = p.content.reqTags(1)
           assertEq(a, expect.toSet)
         }
         test()(at1, at2)(at1, at2)
@@ -518,7 +518,7 @@ object ContentEventTest extends TestSuite {
           val sd = setdiff(remove: _*)(add: _*)
           es :+= ReqImplicationsPatch(subj, dir, sd)
           val p = _assertPass(es: _*)
-          val a = p.implications.forwards.m
+          val a = p.content.implications.forwards.m
           assertEq(a, expect.toMap)
         }
         implicit def ii(t: (Int, Int)): (ReqId, Set[ReqId]) = (t._1, Set(t._2))
@@ -552,7 +552,7 @@ object ContentEventTest extends TestSuite {
       def e = ReqFieldCustomTextSet(1, cf1, someCTF1)
       'add {
         val p = _assertPass(emptyGR1, e)
-        val d = p.reqText
+        val d = p.content.reqText
         assertEq(d.size, 1)
         val m = d(cf1)
         assertEq(m.size, 1)
@@ -560,7 +560,7 @@ object ContentEventTest extends TestSuite {
       }
       'remove {
         val p = _assertPass(emptyGR1, e, ReqFieldCustomTextSet(1, cf1, ∅))
-        val d = p.reqText
+        val d = p.content.reqText
         assertEq(d.size, 0)
       }
       'reqNotFound   - assertFail("found")(e)
@@ -584,7 +584,7 @@ object ContentEventTest extends TestSuite {
         'emptyTitleNoRefs - {
           val p = _assertPass(createRCG(1, "abc.def"), delRCG1)
           // It's more work to check for text references to decide whether or not to retain empty RCGs. Just keep em.
-          // assertEq("No CodeRefs & no title = no need to retain anything.", p.reqCodes.trie.isEmpty, true)
+          // assertEq("No CodeRefs & no title = no need to retain anything.", p.content.reqCodes.trie.isEmpty, true)
           val d = assertSoleReqCode(p, "abc.def")
           assertEq(d, ReqCode.Data.empty.copy(deadGroup = Some(DeadCodeGroup(1, ∅))))
         }
@@ -621,14 +621,14 @@ object ContentEventTest extends TestSuite {
               txt.fold(none)(_.mkString("").replaceAll("Literal\\((.*?)\\)", "$1"))
 
             def req(id: GenericReqId): R =
-              p.reqs.genericReqs.need(id) match {
+              p.content.reqs.genericReqs.need(id) match {
                 case r if r.live(p.config.reqTypes) is Live => live
-                case _                                      => fmt(p.deletionReasons getLatest id)
+                case _                                      => fmt(p.content.deletionReasons getLatest id)
               }
 
             // RCGs don't get reasons
             def rcg(c: ReqCode.Value): R =
-              p.reqCodes(c) match {
+              p.content.reqCodes(c) match {
                 case _: ReqCode.ActiveGroup     => live
                 case d if d.deadGroup.isDefined => dead
                 case _                          => none

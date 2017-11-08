@@ -50,7 +50,7 @@ object PlainText {
     G.hashRefKey.prefix ~ key.value
 
   def pubidByReqId(id: ReqId, p: Project): String =
-    pubidByReqId(id, p.reqs, p.config.reqTypes)
+    pubidByReqId(id, p.content.reqs, p.config.reqTypes)
 
   def pubidByReqId(id: ReqId, reqs: Requirements, reqTypes: ReqTypes): String = {
     val pid = reqs.need(id).pubid
@@ -134,14 +134,14 @@ object PlainText {
     }
 
     private def reqRef(req: ReqId): String = {
-      val pid = p.reqs.need(req).pubid
+      val pid = p.content.reqs.need(req).pubid
       val rt  = p.config.reqTypes.need(pid.reqTypeId)
       G.reflinkSurround(pubid(rt, pid.pos))
     }
 
     private def codeRef(id: ReqCodeId): String = {
       import ProjectText.ReqCodeResolution, ReqCodeResolution._
-      ReqCodeResolution(id, p.reqCodes) match {
+      ReqCodeResolution(id, p.content.reqCodes) match {
         case ActiveCodeToReq     (c, _) => G reflinkSurround reqCode(c)
         case ActiveCodeToGroup   (c, _) => G reflinkSurround reqCode(c)
         case DeadGroup           (c, _) => G reflinkSurround reqCode(c)
@@ -175,7 +175,7 @@ object PlainText {
     }
 
     private def useCaseStepLabelById(id: UseCaseStepId): String =
-      useCaseStepLabel(p.reqs.useCases.focusStep(id))
+      useCaseStepLabel(p.content.reqs.useCases.focusStep(id))
 
     override def useCaseStepTextAndFlow(step: UseCaseStepFlowText.TextAndFlow[Text.AnyOptional, Set[UseCaseStepId]],
                                         live: Live): String =

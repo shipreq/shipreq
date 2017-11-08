@@ -1177,12 +1177,13 @@ object RandomData {
       p1         = Project(
                      name,
                      cfg,
-                     reqs,
-                     ReqCodes(reqCodes2),
-                     reqText,
-                     reqTags,
-                     reqImps,
-                     dr,
+                     ProjectContent(
+                       reqs,
+                       ReqCodes(reqCodes2),
+                       reqText,
+                       reqTags,
+                       reqImps,
+                       dr),
                      reqtable.SavedViews.empty,
                      IdCeilings.zero)
       savedViews ← reqtableData.savedViewsForProject(p1)

@@ -51,7 +51,7 @@ object MockDb {
       ProjectMetaData(id            = Obfuscators.projectId.obfuscate(projectId),
                       name          = project.name,
                       eventCount    = events.eventVector.length,
-                      reqCount      = project.reqs.size,
+                      reqCount      = project.content.reqs.size,
                       createdAt     = createdAt,
                       lastUpdatedAt = lastUpdatedAt)
 

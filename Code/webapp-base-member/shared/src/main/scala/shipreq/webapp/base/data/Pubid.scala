@@ -52,7 +52,7 @@ final case class ExternalPubid(mnemonic: ReqType.Mnemonic, pos: ReqTypePos) {
   import ExternalPubid.LookupFailure
 
   def lookup(p: Project): LookupFailure \/ Req =
-    lookup(p.config.reqTypes, p.reqs)
+    lookup(p.config.reqTypes, p.content.reqs)
 
   def lookup(reqTypes: ReqTypes, reqs: Requirements): LookupFailure \/ Req =
     reqTypes.allByMnemonic.get(mnemonic) match {

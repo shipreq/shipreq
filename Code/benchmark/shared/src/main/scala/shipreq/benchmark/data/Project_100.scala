@@ -765,12 +765,13 @@ object Project_100 {
           ReqTypes(customReqTypes),
           fieldSet,
           tagTree),
-        Requirements(reqsById, UseCases.empty, pubidRegister),
-        ReqCodes(reqCodeTrie),
-        reqDataText,
-        reqDataTags,
-        implications,
-        DeletionReasons.empty,
+        ProjectContent(
+          Requirements(reqsById, UseCases.empty, pubidRegister),
+          ReqCodes(reqCodeTrie),
+          reqDataText,
+          reqDataTags,
+          implications,
+          DeletionReasons.empty),
         reqtable.SavedViews.empty,
         _))
 }

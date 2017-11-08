@@ -92,17 +92,13 @@ object SampleProject {
   lazy val reqImps  = Implications.emptyBiDir
 
   lazy val projectConfig = ProjectConfig(customIssueTypes, ReqTypes(customReqTypes), fields, tags)
+  lazy val projectContent = ProjectContent(reqs, reqCodes, reqText, reqTags, reqImps, DeletionReasons.empty)
 
   lazy val project = IdCeilings.supply(
     Project(
       "Sample Project",
       projectConfig,
-      reqs,
-      reqCodes,
-      reqText,
-      reqTags,
-      reqImps,
-      DeletionReasons.empty,
+      projectContent,
       reqtable.SavedViews.empty,
       _))
 
