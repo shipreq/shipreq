@@ -139,7 +139,7 @@ object ApplyEventTestFns {
 
     val cfg = p.config
     assertEq("Σ CustomIssueTypes", cfg.customIssueTypes.size, customIssueTypes)
-    assertEq("Σ CustomReqTypes", cfg.reqTypes.custom.size, customReqTypes)
+    assert(cfg.reqTypes.custom.size <= customReqTypes, "Σ CustomReqTypes")
     assertEq("Σ Tags", tags, cfg.tags.size)
     assertEq("Σ CustomFields", customFields, cfg.fields.customFields.size)
     assertEq("Σ Generic Reqs", genericReqs, p.content.reqs.genericReqs.size)
@@ -210,6 +210,9 @@ abstract class SharedTests(implicit val init: InitialEvents) extends TestSuite {
   def setId(c: CE, id: Int): CE
   def copyId(to: CE, from: CE): CE
 
+  def prepForSoftDelete(es: Event*): Seq[Event] =
+    c1 +: es
+
   override def tests = TestSuite {
     'create {
       'one      - assertPass(c1)
@@ -221,14 +224,14 @@ abstract class SharedTests(implicit val init: InitialEvents) extends TestSuite {
 
     'update {
       'notFound - assertFail("not found")(u1)
-      'dead     - assertFail("dead")     (c1, sd1, u1)
+      'dead     - assertFail("dead")     (prepForSoftDelete(sd1, u1): _*)
       //'afterHD  - assertFail("not found")(c1, hd1, u1)
     }
 
     'delete {
-      'okSoft    - assertPass(c1, sd1)
-      'okRest    - assertPass(c1, sd1, r1)
-      'okMulti   - assertPass(c1, sd1, r1, sd1, r1)
+      'okSoft    - assertPass(prepForSoftDelete(sd1): _*)
+      'okRest    - assertPass(prepForSoftDelete(sd1, r1): _*)
+      'okMulti   - assertPass(prepForSoftDelete(sd1, r1, sd1, r1): _*)
       'notFound  - List(sd1, r1).foreach(d => assertFail("not found")(d))
 
       // All hard-deletion has been removed

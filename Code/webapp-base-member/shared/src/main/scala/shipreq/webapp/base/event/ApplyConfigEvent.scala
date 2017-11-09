@@ -69,23 +69,35 @@ trait ApplyConfigEvent {
       } yield ()
 
     val updateName     = validateName >>=@ CustomReqType.name
-    val updateMnemonic = validateMnemonic thenUpdate ((_: CustomReqType) setMnemonic _) // TODO fix lens
+    val updateMnemonic = Memo.bool(validateMnemonic >>=@ CustomReqType.mnemonic(_))
     val updateImp      = fieldUpdateFn(CustomReqType.imp)
 
-    val updateValues = GD.updateEachValue {
-      case v: ^.ValueForName     => updateName    (v.value)
-      case v: ^.ValueForImp      => updateImp     (v.value)
-      case v: ^.ValueForMnemonic => updateMnemonic(v.value)
-    }
+    val updateValues = Memo.bool(retainMnemonic =>
+      GD.updateEachValue {
+        case v: ^.ValueForName     => updateName    (v.value)
+        case v: ^.ValueForImp      => updateImp     (v.value)
+        case v: ^.ValueForMnemonic => updateMnemonic(retainMnemonic)(v.value)
+      })
 
     def applyUpdate(e: CustomReqTypeUpdate): SE[Unit] =
-      imap.updateLive(e.id, updateValues(e.vs))
+      isInUse(e.id).flatMap(inUse =>
+        imap.updateLive(e.id, updateValues(inUse)(e.vs)))
 
     def applyDelete(e: CustomReqTypeDelete): SE[Unit] =
-      deleteOrRestore(e.id, Dead, ReqCodeLogic.inactivateBelongingToReqs)
+      ifInUse(e.id,
+        notInUse  = imap.hardDelete(e.id),
+        whenInUse = deleteOrRestore(e.id, Dead, ReqCodeLogic.inactivateBelongingToReqs))
 
     def applyRestore(e: CustomReqTypeRestore): SE[Unit] =
       deleteOrRestore(e.id, Live, ReqCodeLogic.restoreBelongingToReqs)
+
+    private def isInUse(id: CustomReqTypeId): SE[Boolean] =
+      SE.get(_.content.reqs.pubids.value(id).nonEmpty)
+
+    private def ifInUse[A](id       : CustomReqTypeId,
+                           notInUse : => SE[A],
+                           whenInUse: => SE[A]): SE[A] =
+      isInUse(id).flatMap(inUse => if (inUse) whenInUse else notInUse)
 
     private def deleteOrRestore(id: CustomReqTypeId, newState: Live, cascade: Set[ReqId] => SE[Unit]): SE[Unit] =
       imap.setLive(id, newState) >> reqsToCascadeReqTypeLiveChange(id) >>= cascade

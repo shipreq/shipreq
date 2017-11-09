@@ -4,7 +4,8 @@ package shipreq.webapp.base.data
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.MutableArray
-import monocle.macros.Lenses
+import monocle.Lens
+import monocle.macros.{GenLens, Lenses}
 import scalaz.Order
 import scalaz.std.anyVal.intInstance
 import scalaz.syntax.order._
@@ -76,7 +77,6 @@ final case class CustomReqTypeId(value: Int) extends TaggedInt with ReqTypeId {
   override def foldId[A](s: StaticReqType => A, c: CustomReqTypeId => A): A = c(this)
 }
 
-@Lenses
 final case class CustomReqType(id          : CustomReqTypeId,
                                mnemonic    : Mnemonic,
                                oldMnemonics: Set[Mnemonic],
@@ -88,8 +88,12 @@ final case class CustomReqType(id          : CustomReqTypeId,
 
   override def fold[A](s: StaticReqType => A, c: CustomReqType => A): A = c(this)
 
-  def setMnemonic(nv: Mnemonic): CustomReqType =
-    copy(mnemonic = nv, oldMnemonics = allMnemonics - nv)
+  def setMnemonic(m2: Mnemonic, retain: Boolean): CustomReqType = {
+    var old2 = oldMnemonics - m2
+    if (retain)
+      old2 += mnemonic
+    copy(mnemonic = m2, oldMnemonics = old2)
+  }
 }
 
 object CustomReqType {
@@ -99,6 +103,14 @@ object CustomReqType {
     override def id(d: CustomReqType) = d.id
     override val unapplyData: AnyRef => Option[CustomReqType] = {case r: CustomReqType => Some(r); case _ => None}
   }
+
+  val name        : Lens[CustomReqType, String]              = GenLens[CustomReqType](_.name)
+  val imp         : Lens[CustomReqType, ImplicationRequired] = GenLens[CustomReqType](_.imp)
+  val live        : Lens[CustomReqType, Live]                = GenLens[CustomReqType](_.live)
+  def oldMnemonics: Lens[CustomReqType, Set[Mnemonic]]       = GenLens[CustomReqType](_.oldMnemonics)
+
+  val mnemonic: Boolean => Lens[CustomReqType, Mnemonic] =
+    Memo.bool(retain => Lens((_: CustomReqType).mnemonic)(m => _.setMnemonic(m, retain)))
 }
 
 // =====================================================================================================================

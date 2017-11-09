@@ -239,7 +239,7 @@ object RandomData {
     def dname = Distinct.str.at(CustomReqType.name)
     def dmnemonic = {
       val distm = reqTypeMnemonicFixer.distinct
-      val cur = distm.at(CustomReqType.mnemonic)
+      val cur = distm.at(CustomReqType.mnemonic(false))
       val old = distm.lift[Set].at(CustomReqType.oldMnemonics)
       cur + old
     }

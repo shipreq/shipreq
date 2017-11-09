@@ -84,7 +84,7 @@ object GenericReqEventTest extends TestSuite {
       'idInUseByGR     - assertFail("exists")(emptyGR1, emptyGR1)
       'idInUseByUC     - assertFail("unique req id")(createUC(emptyGR1.id.value.UC, 1), emptyGR1)
       'reqTypeNotFound - assertFail("found")(emptyGR1.copy(rt = 666))
-      'reqTypeDead     - assertFail("dead")(CustomReqTypeDelete(mf), emptyGR1)
+      'reqTypeDead     - assertFail("dead")(emptyGR1, CustomReqTypeDelete(mf), emptyGR3)
       'tagNotFound     - assertFail("tag")(emptyGR1.copy(vs = nev(Tags(6.AT))))
       'tagIsGroup      - assertFail("tag")(emptyGR1.copy(vs = nev(Tags(tg1.value.AT))))
       // tagIsDead - allow it
@@ -144,7 +144,7 @@ object GenericReqEventTest extends TestSuite {
       'reqNotFound     - assertFail("found")(GenericReqTypeSet(1, fr))
       'reqIsDead       - assertFail("dead")(emptyGR1, delGR1, GenericReqTypeSet(1, fr))
       'reqTypeNotFound - assertFail("found")(emptyGR1, GenericReqTypeSet(1, 321))
-      'reqTypeIsDead   - assertFail("dead")(emptyGR1, CustomReqTypeDelete(fr), GenericReqTypeSet(1, fr))
+      'reqTypeIsDead   - assertFail("dead")(emptyGR1, createGR(8, fr), CustomReqTypeDelete(fr), GenericReqTypeSet(1, fr))
     }
 
     'setGenericReqTitle {

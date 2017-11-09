@@ -19,11 +19,13 @@ trait CustomReqTypeEvents {
   val u1  = CustomReqTypeUpdate(1, nev(Mnemonic("M")))
   val sd1 = CustomReqTypeDelete(1)
   val r1  = CustomReqTypeRestore(1)
+  val use1 = GenericReqCreate(1.GR, 1, GenericReqGD.emptyValues)
 }
 
 object CustomReqTypeEventSharedTests extends SharedTests with CustomReqTypeEvents {
-  def setId(c: CE, i: Int) = c.copy(id = i)
-  def copyId(to: CE, from: CE) = to.copy(id = from.id)
+  override def setId(c: CE, i: Int) = c.copy(id = i)
+  override def copyId(to: CE, from: CE) = to.copy(id = from.id)
+  override def prepForSoftDelete(es: Event*) = c1 +: use1 +: es
 }
 
 object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
@@ -45,8 +47,19 @@ object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
     }
 
     'update {
-      'ok - {
+      'notInUse - {
         var es = Vector(c1, u1)
+        def r = _assertPass(es: _*).config.reqTypes.custom.get(1).get
+        assertEq(r, CustomReqType(1, "M", Set(), mfName, ImplicationRequired, Live))
+
+        es :+= CustomReqTypeUpdate(1, nev(Mnemonic("X"), Name("xxx")))
+        assertEq(r, CustomReqType(1, "X", Set(), "xxx", ImplicationRequired, Live))
+
+        es :+= CustomReqTypeUpdate(1, nev(Mnemonic("MF"), Imp(ImplicationRequired.Not)))
+        assertEq(r ,CustomReqType(1, "MF", Set(), "xxx", ImplicationRequired.Not, Live))
+      }
+      'inUse - {
+        var es = Vector(c1, use1, u1)
         def r = _assertPass(es: _*).config.reqTypes.custom.get(1).get
         assertEq(r, CustomReqType(1, "M", Set("MF"), mfName, ImplicationRequired, Live))
 
@@ -70,12 +83,16 @@ object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
         assertEq("liveExplicitly", exp, f.liveExplicitly)
       }
       'whenLiveImpField {
-        testImpFieldLiveness(Dead, Live)(c1, CustomImpFieldEventTest.c1, sd1)
-        testImpFieldLiveness(Live, Live)(c1, CustomImpFieldEventTest.c1, sd1, r1)
+        testImpFieldLiveness(Dead, Live)(c1, CustomImpFieldEventTest.c1, use1, sd1)
+        testImpFieldLiveness(Live, Live)(c1, CustomImpFieldEventTest.c1, use1, sd1, r1)
       }
       'whenDeadImpField {
-        testImpFieldLiveness(Dead, Dead)(c1, CustomImpFieldEventTest.c1, CustomImpFieldEventTest.sd1, sd1)
-        testImpFieldLiveness(Dead, Dead)(c1, CustomImpFieldEventTest.c1, CustomImpFieldEventTest.sd1, sd1, r1)
+        testImpFieldLiveness(Dead, Dead)(c1, CustomImpFieldEventTest.c1, use1, CustomImpFieldEventTest.sd1, sd1)
+        testImpFieldLiveness(Dead, Dead)(c1, CustomImpFieldEventTest.c1, use1, CustomImpFieldEventTest.sd1, sd1, r1)
+      }
+      'hardDelete {
+        val p = _assertPass(c1, sd1)
+        assertEq(p.config.reqTypes.custom.values.toList, Nil)
       }
 
       'deleteRestoreReqsAndReqCodes {

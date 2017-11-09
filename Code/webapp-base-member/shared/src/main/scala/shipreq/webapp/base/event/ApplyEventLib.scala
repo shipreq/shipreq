@@ -295,10 +295,13 @@ private[event] object ApplyEventLib {
 
   class IMapStore[Id, Data](L: Lens[Project, IMap[Id, Data]])(implicit trust: Trust) {
     final def ensureAbsent(id: Id): SE[Unit] =
-      test(p => !L.get(p).containsK(id), s"$id already exists.")
+      whenUntrusted(test(p => !L.get(p).containsK(id), s"$id already exists."))
+
+    final def ensurePresent(id: Id): SE[Unit] =
+      whenUntrusted(test(p => L.get(p).containsK(id), s"$id not found."))
 
     final def ensureAbsentData(data: Data): SE[Unit] =
-      test(p => !L.get(p).containsV(data), s"$data already exists.")
+      whenUntrusted(test(p => !L.get(p).containsV(data), s"$data already exists."))
 
     final def need(id: Id): SE[Data] =
       getE(p => L.get(p).attempt(id))
@@ -314,6 +317,9 @@ private[event] object ApplyEventLib {
 
     final def updateF(id: Id, updateFn: Data => Data): SE[Unit] =
       need(id) |> updateFn >>= addOrUpdate
+
+    final def hardDelete(id: Id): SE[Unit] =
+      ensurePresent(id) >> StateEither.mod(L.modify(_ - id))
   }
 
   // -------------------------------------------------------------------------------------------------------------------

@@ -2,6 +2,7 @@ package shipreq.webapp.base.test
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit._
+import scalaz.{-\/, \/-}
 import shipreq.base.test._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.data._
@@ -59,4 +60,11 @@ trait WebappTestUtil extends BaseTestUtil {
 
   def applyVerifiedEventSuccessfully(p: Project, es: VerifiedEvent*): Project =
     es.foldLeft(p)(applyVerifiedEventSuccessfully)
+
+  def assertEventFails(p: Project, e: Event, errFrag: String = ""): Unit =
+    ApplyEvent.untrusted.apply1(e)(p) match {
+      case -\/(f) => assertContainsCI(f, errFrag)
+      case \/-(_) => fail(s"Failure expected but didn't occur applying $e")
+    }
+
 }

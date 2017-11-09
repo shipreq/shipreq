@@ -210,7 +210,7 @@ object CustomImpFieldEventSharedTests extends SharedTests()(CustomImpFieldEventT
 object CustomImpFieldEventTest extends TestSuite with CustomImpFieldEvents {
   import CustomImpFieldGD._
 
-  implicit val init = InitialEvents(CustomReqTypeEventTest.c1)
+  implicit val init = InitialEvents(CustomReqTypeEventTest.c1, CustomReqTypeEventTest.use1)
 
   val softDelRT1 = CustomReqTypeEventTest.sd1
 
