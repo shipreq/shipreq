@@ -1,6 +1,7 @@
 package shipreq.base.util
 
 import japgolly.microlibs.nonempty.NonEmpty
+import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.univeq.UnivEq
 import monocle._
 import scalaz.{Applicative, Equal, Order, \/}
@@ -54,8 +55,16 @@ final class IMap[K: UnivEq, V] private (key: V => K, m: Map[K, V]) extends IMapB
   def attempt(k: K): String \/ V =
     toRight(get(k))(badKeyMsg(k))
 
-  private def badKeyMsg(k: K): String =
-    s"Value not found for $k. Keys = $keySet."
+  private def badKeyMsg(k: K): String = {
+    val keyArray = MutableArray(keysIterator.map(_.toString)).sort
+    val max = 10
+    val keyDesc =
+      if (keyArray.length > max)
+        keyArray.iterator.take(max).mkString("{", ", ", ", ... }")
+      else
+        keyArray.iterator.mkString("{", ", ", "}")
+    s"Value not found for $k.\nKeys = $keyDesc"
+  }
 
   def mod(k: K, f: V => V)(implicit ev: V <:< AnyRef): This =
     _mod(k, f, this)

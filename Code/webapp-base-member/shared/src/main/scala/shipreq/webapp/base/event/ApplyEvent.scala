@@ -4,6 +4,7 @@ import japgolly.microlibs.nonempty.NonEmptyVector
 import nyaya.prop.LogicPropExt
 import scala.collection.mutable
 import scalaz.{-\/, \/, \/-}
+import shipreq.base.util.Identity
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{DataProp, Project}
 import shipreq.webapp.base.hash._
@@ -25,8 +26,8 @@ object ApplyEvent {
    */
   val untrusted = new ApplyEvent()(Untrusted)
 
-  val eventBatcher: ProjectHashModule.Batcher[VerifiedEvent, Event] =
-    ProjectHashModule.Batcher(_.event, _.hashRecs)
+  val eventBatcher: ProjectHashModule.Batcher[VerifiedEvent, VerifiedEvent] =
+    ProjectHashModule.Batcher(Identity.apply, _.hashRecs)
 
   case class LogicVer(value: Char) extends AnyVal {
     def isCurrent: Boolean =
@@ -112,20 +113,27 @@ final class ApplyEvent(implicit val trust: Trust)
   private def applyEventBatches(batches: eventBatcher.Batches): SE[Unit] =
     SE.foldMapRun(batches)(applyEventBatch)
 
-  private val applyEventBatch: eventBatcher.Batch => SE[Unit] =
-    eb =>
-      SE.get.flatMap(p1 =>
-        applyAllSafe(eb.elements) >> SE.testO { p2 =>
-          val errs = HashLogic.validate(eb.recs, before = p1, current = p2)
-          if (errs.isEmpty)
-            None
-          else Some {
-            val each = errs.map("* " + _.msg).mkString("\n")
-            val events = eb.elements.map("* " + _).mkString("\n")
-            s"Hash Discrepancy:\n$each\nEvents:\n$events"
-          }
+  private val applyEventBatch: eventBatcher.Batch => SE[Unit] = eb => {
+    def showEvents: String =
+      eb.elements.map(e => s"* #${e.ord.value}: ${e.event}").mkString("Events:\n", "\n", "")
+
+    val applyEvents =
+      applyAllSafe(eb.elements.map(_.event))
+        .leftMap(_ + "\n\n" + showEvents)
+
+    def validateHashes(p1: Project) =
+      SE.testO { p2 =>
+        val errs = HashLogic.validate(eb.recs, before = p1, current = p2)
+        if (errs.isEmpty)
+          None
+        else Some {
+          val each = errs.map("* " + _.msg).mkString("\n")
+          s"Hash Discrepancy:\n$each\n\n$showEvents"
         }
-      )
+      }
+
+    SE.get.flatMap(applyEvents >> validateHashes(_))
+  }
 
   /*
   private def debug(ves: Iterable[VerifiedEvent], p0: Project): Unit = {

@@ -81,6 +81,9 @@ final class StateEither[S, E, +A](val run: S => Result[S, E, A]) extends AnyVal 
   def foldMapBind[AA >: A, B](bs: TraversableOnce[B])(f: B => AA => StateEither[S, E, AA]): StateEither[S, E, AA] =
     bs.foldLeft(this: StateEither[S, E, AA])(_ >>= f(_))
 
+  def leftMap[E2](f: E => E2): StateEither[S, E2, A] =
+    StateEither(s1 => run(s1).leftMap(f))
+
   def improveFailure[E2, E3, B](onFailure: => StateEither[S, E2, B])
                                (mergeResults: (E, E2 \/ (S, B)) => E3): StateEither[S, E3, A] =
     StateEither(s1 => run(s1).leftMap(e => mergeResults(e, onFailure.run(s1).toDisj)))

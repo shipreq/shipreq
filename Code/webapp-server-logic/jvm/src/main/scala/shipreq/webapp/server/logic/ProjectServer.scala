@@ -76,9 +76,10 @@ object ProjectServer {
     def errorMsg = Server.ErrorMsgs.ShouldNeverHappen
   }
   final case class BuildError(error: String, events: VerifiedEvent.Seq) extends LoadError {
-    def errorMsg = Server.ErrorMsgs.ShouldNeverHappen
-    def eventRange: String =
-      NonEmptySet.maybe(events.map(_.ord.value), "∅")(ConciseIntSetFormat.spaced)
+    def errorMsg =
+      ErrorMsg(s"${Server.ErrorMsgs.ShouldNeverHappen.value}\n\nEvent application failure.\n$error")
+//    def eventRange: String =
+//      NonEmptySet.maybe(events.map(_.ord.value), "∅")(ConciseIntSetFormat.spaced)
   }
 
   sealed trait AddEventError {

@@ -14,7 +14,7 @@ object LoadFailedPage {
       Message.Style(Message.Type.Error),
       Icon.WarningCircle,
       "Error loading project",
-      p.error.value)
+      TagMod(^.whiteSpace.`pre-wrap`, p.error.value))
 
     LoadingPage.layout(p.lp)(
       <.div(^.paddingTop := "4rem", msg))
