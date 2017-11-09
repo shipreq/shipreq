@@ -30,10 +30,6 @@ object ProjectStateTest extends TestSuite {
     }
   }
 
-  def mkEventSeq(v: Vector[(VerifiedEvent, Int)], ordOffset: EventOrd): VerifiedEvent.Seq =
-    NonEmptyVector.maybe(v, VerifiedEvent.Seq.empty)(x =>
-      VerifiedEvent.NonEmptySeq(ordOffset + x.head._2, x.map(_._1)))
-
   override def tests = TestSuite {
 
     val p1 = Project.empty
@@ -43,9 +39,8 @@ object ProjectStateTest extends TestSuite {
         initialOrd        ← Gen.chooseInt(100).map(EventOrd(_))
         initialEventCount ← Gen.chooseInt(100)
         initialState      = ProjectState.init(p1, looseProjectMetaData(p1, eventCount = initialEventCount), initialOrd)
-        (p2, ves)         ← RandomEventStream.verifiedEvents(140).run(p1)
-        batches           ← Gen_batches(ves.zipWithIndex, 0 to 7)
-                              .map(_.map(mkEventSeq(_, initialOrd + 1)))
+        ((p2, _), ves)    ← RandomEventStream.verifiedEvents(140).run((p1, initialOrd + 1))
+        batches           ← Gen_batches(ves, 0 to 7)
                               .pair.map(x => x._1 ++ x._2) // duplicate all events (in different batches) to test idempotency
                               .shuffle // shuffle to test commutivity
       } yield {
@@ -53,7 +48,7 @@ object ProjectStateTest extends TestSuite {
 //        println(s"Generated ${ves.length} events and ${batches.length} batches starting at #${initialOrd.value + 1}")
 //        batches.foreach(println)
 //        m.addListener((ves, _, s) => Callback(println(s"Adding: $ves, pending: ${s.futureEventRange}")))
-        batches.foreach(m.applyEventSeqCB(_).runNow())
+        batches.foreach(b => m.applyEventSeqCB(b.to).runNow())
         (initialState, ves, p2, m.state())
       }
 

@@ -2,10 +2,8 @@ package shipreq.webapp.base.event
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import nyaya.prop.LogicPropExt
-import scala.annotation.tailrec
+import scala.collection.mutable
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.ScalaExt._
-import shipreq.base.util.Valid
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{DataProp, Project}
 import shipreq.webapp.base.hash._
@@ -82,15 +80,28 @@ final class ApplyEvent(implicit val trust: Trust)
       }
     }
 
-  def applyVerified(ves: IndexedSeq[VerifiedEvent])(p: Project): Result =
+  def applyVerified(ves: TraversableOnce[VerifiedEvent])(p: Project): Result =
     if (ves.isEmpty)
       \/-(p)
     else {
-      // debug(ves, p)
+      val verifiedEvents: IndexedSeq[VerifiedEvent] =
+        ves match {
+          case x: VerifiedEvent.Seq =>
+            val b = new mutable.ArrayBuilder.ofRef[VerifiedEvent]
+            b.sizeHint(x.lastKey.ord.value - x.firstKey.ord.value + 1)
+            b ++= x
+            b.result()
+          case x: IndexedSeq[VerifiedEvent] =>
+            x
+          case x =>
+            x.toArray[VerifiedEvent]
+        }
+
+      // debug(verifiedEvents, p)
 
       val plan: SE[Unit] =
-        applyEventBatches(eventBatcher optimal ves)
-          .improveFailure(applyEventBatches(eventBatcher oneByOne ves)) {
+        applyEventBatches(eventBatcher optimal verifiedEvents)
+          .improveFailure(applyEventBatches(eventBatcher oneByOne verifiedEvents)) {
             case (_, -\/(e)) => e
             case (e, \/-(_)) => s"Batch application failed but incremental application passed (!)\n$e"
           }

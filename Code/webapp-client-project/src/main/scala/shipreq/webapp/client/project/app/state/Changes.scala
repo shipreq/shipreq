@@ -14,7 +14,7 @@ case class Changes(ves: VerifiedEvent.NonEmptySeq, p1: Project, p2: Project) {
   private var _tagsChanged  = false
   private var _staticFields = false
 
-  for (ve <- ves.events.whole)
+  for (ve <- ves.values)
     ve.event match {
       case e: CustomIssueTypeCreate  => _customIssueTypes += e.id
       case e: CustomIssueTypeDelete  => _customIssueTypes += e.id

@@ -74,7 +74,7 @@ object ProjectServerTest extends TestSuite {
       val asyncData1 = svr.run(client1.initAsync)(()).needRight
       assertEq("[1]", recv1, Vector.empty)
 
-      val ves1 = svr.run(client1.createContent)(newUC).needRight
+      val ves1 = svr.run(client1.createContent)(newUC).needRight.needNES
       assertEq("[2]", recv1, Vector(ves1)) // Because BroadcastTo.All
 
       var recv2 = Vector.empty[VerifiedEvent.NonEmptySeq]
@@ -86,16 +86,16 @@ object ProjectServerTest extends TestSuite {
       assertEq("[5]", asyncData2.latestEventOrd, asyncData1.latestEventOrd + 1)
       assertEq("[6]", asyncData2.project.content.reqs.size, 1)
 
-      val ves2 = svr.run(client2.createContent)(newUC).needRight
+      val ves2 = svr.run(client2.createContent)(newUC).needRight.needNES
       assertEq("[7]", recv1, Vector(ves1, ves2))
       assertEq("[8]", recv2, Vector(ves2)) // Because BroadcastTo.All
 
-      val ves3 = svr.run(client1.createContent)(newUC).needRight
+      val ves3 = svr.run(client1.createContent)(newUC).needRight.needNES
       assertEq("[9]", recv1, Vector(ves1, ves2, ves3)) // Because BroadcastTo.All
       assertEq("[A]", recv2, Vector(ves2, ves3))
 
       logic.unregister(regId1).value
-      val ves4 = svr.run(client2.createContent)(newUC).needRight
+      val ves4 = svr.run(client2.createContent)(newUC).needRight.needNES
       assertEq("[B]", recv1, Vector(ves1, ves2, ves3))
       assertEq("[C]", recv2, Vector(ves2, ves3, ves4))
     }

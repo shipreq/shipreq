@@ -24,7 +24,7 @@ object ApplyEventTest extends TestSuite {
 
     val hrs = HashSchemes.latest.changes(p1, p2)
     assert(hrs.nonEmpty)
-    val ve = VerifiedEvent(e1, hrs)
+    val ve = VerifiedEvent(EventOrd(-1), e1, hrs)
 
     (p2, ve)
   }

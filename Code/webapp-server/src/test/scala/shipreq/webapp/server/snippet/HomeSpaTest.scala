@@ -27,7 +27,7 @@ object HomeSpaTest extends TestSuite {
 
           val pid = Obfuscators.projectId.deobfuscate(pi.id).toOption.get
           def events() = (xa ! db.getAllProjectEvents(pid)).toVector
-          def loadProject() = applyVerifiedEventSuccessfully(Project.empty, events().map(_._2): _*)
+          def loadProject() = applyVerifiedEventSuccessfully(Project.empty, events(): _*)
 
           // Immediate result
           assertEq("Immediate name", pi.name, name)
@@ -46,7 +46,7 @@ object HomeSpaTest extends TestSuite {
           assertEq("Event count", events().length, 2)
 
           // Next event
-          val nextOrd = events().maxBy(_._1.value)._1 + 1
+          val nextOrd = events().maxBy(_.ord.value).ord + 1
           val p = loadProject()
           val e = FieldStaticRemove(StaticField.StepGraph)
           val ve = verifyEvent(p, e)

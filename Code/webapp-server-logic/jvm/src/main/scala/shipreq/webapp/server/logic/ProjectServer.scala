@@ -44,9 +44,9 @@ object ProjectServer {
   }
 
   final case class LoadedState(project: Project, projectMetaData: ProjectMetaData, nextOrd: EventOrd) {
-    def update(project: Project, ve: VerifiedEvent, latestOrd: EventOrd, when: Instant): LoadedState = {
+    def update(project: Project, ve: VerifiedEvent, when: Instant): LoadedState = {
       val md = projectMetaData.applyEvent(ve, when)
-      LoadedState(project, md, latestOrd + 1)
+      LoadedState(project, md, ve.ord + 1)
     }
   }
 
@@ -75,10 +75,10 @@ object ProjectServer {
   case object LoadNotStarted extends LoadError {
     def errorMsg = Server.ErrorMsgs.ShouldNeverHappen
   }
-  final case class BuildError(error: String, events: SortedSet[EventOrd]) extends LoadError {
+  final case class BuildError(error: String, events: VerifiedEvent.Seq) extends LoadError {
     def errorMsg = Server.ErrorMsgs.ShouldNeverHappen
     def eventRange: String =
-      NonEmptySet.maybe(events.map(_.value), "∅")(ConciseIntSetFormat.spaced)
+      NonEmptySet.maybe(events.map(_.ord.value), "∅")(ConciseIntSetFormat.spaced)
   }
 
   sealed trait AddEventError {
@@ -116,22 +116,15 @@ object ProjectServer {
   val SaveRetries: Retries =
     Retries.exponentiallyFrom(15.millis)(_.toMillis <= 4.seconds.toMillis)
 
-  def buildProject(load: DB.ProjectEvents): BuildError \/ (Project, EventOrd) =
+  def buildProject(load: VerifiedEvent.Seq): BuildError \/ (Project, EventOrd) =
     if (load.isEmpty) {
       val ord = EventOrd(1) // Nice to reserve 0 for ApplyTemplate.
       \/-((Project.empty, ord))
-    } else {
-      val verifiedEvents: IndexedSeq[VerifiedEvent] = {
-        val b = new mutable.ArrayBuilder.ofRef[VerifiedEvent]
-        b.sizeHint(load.lastKey.value - load.firstKey.value + 1)
-        b ++= load.values
-        b.result()
+    } else
+      ApplyEvent.trusted.applyVerified(load)(Project.empty) match {
+        case \/-(p) => \/-((p, load.lastKey.ord + 1))
+        case -\/(e) => -\/(BuildError(e, load))
       }
-      ApplyEvent.trusted.applyVerified(verifiedEvents)(Project.empty) match {
-        case \/-(p) => \/-((p, load.lastKey + 1))
-        case -\/(e) => -\/(BuildError(e, load.keySet))
-      }
-    }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   def apply[D[_], F[_]](broadcastTo: BroadcastTo)
@@ -225,7 +218,7 @@ object ProjectServer {
           trace.sub("UpdateProject")(
             addEvent(r, mkEvent, SaveRetries).map {
               case PotentialChange.Success(es) => \/-(es)
-              case PotentialChange.Unchanged   => \/-(VerifiedEvent.EmptySeq)
+              case PotentialChange.Unchanged   => \/-(VerifiedEvent.Seq.empty)
               case PotentialChange.Failure(e)  => -\/(e.errorMsg)
             }
           )
@@ -266,13 +259,14 @@ object ProjectServer {
             trace.sub("MakeEvent")(F pure ApplyNewEvent(mkEvent(s1.project), s1.project)) flatMap {
               case PotentialChange.Success(updated) =>
                 val ord = s1.nextOrd
-                runDB(db.saveProjectEvent(r.key)(ord, updated.ae, updated.ve.hashRecs)).flatMap {
+                runDB(db.saveProjectEvent(r.key)(ord, updated.event, updated.hashRecs)).flatMap {
 
                   case None =>
-                    val ves = VerifiedEvent.NonEmptySeq.one(ord, updated.ve)
+                    val ve = VerifiedEvent(ord, updated.event, updated.hashRecs)
+                    val ves = VerifiedEvent.NonEmptySeq.one(ve)
                     for {
                       now <- svr.now
-                      s2a = s1.update(updated.project, updated.ve, ord, now)
+                      s2a = s1.update(updated.project, ve, now)
                       s2  <- store.storeModIfPresent(r.key)(_.modValue(_ set s2a))
                       _   <- s2.fold(fUnit)(broadcastEvents(r, ves, _))
                     } yield PotentialChange.Success(ves)
@@ -283,7 +277,7 @@ object ProjectServer {
                         val retry = addEvent(r, mkEvent, nextRetries)
                         svr.delay(retry, delay)
                       case None =>
-                        val opsInfo = s"Error saving new event ${updated.ae} to project ${r.key.value} with ordinal #${ord.value}."
+                        val opsInfo = s"Error saving new event ${updated.event} to project ${r.key.value} with ordinal #${ord.value}."
                         F pure PotentialChange.Failure(SaveError(opsInfo, error))
                     }
                 }

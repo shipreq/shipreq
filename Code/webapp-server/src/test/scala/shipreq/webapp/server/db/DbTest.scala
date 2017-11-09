@@ -241,8 +241,8 @@ object DbTest extends TestSuite {
             xa ! db.saveProjectEvent(projectId)(org, i._1, i._2)
             val loaded =
               dbu.debugSelectOnError(s"select * from event e, event_hash eh where e.project_id=eh.project_id and e.ord=eh.ord and e.ord = ${org.value}") {
-                (xa ! db.getAllProjectEvents(projectId)).toVector.filter(_._1 ==* org).map(r => r._2.event match {
-                  case ae: ActiveEvent => (ae, r._2.hashRecs)
+                (xa ! db.getAllProjectEvents(projectId)).toVector.filter(_.ord ==* org).map(r => r.event match {
+                  case ae: ActiveEvent => (ae, r.hashRecs)
                   case e               => sys error s"Not an ActiveEvent: $e"
                 })
               }

@@ -66,8 +66,6 @@ object DB {
     assert(hashes.forall(_._2.nonEmpty), s"Empty hash set found: $this")
   }
 
-  type ProjectEvents = SortedMap[EventOrd, VerifiedEvent]
-
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   trait Base[F[_]] {
@@ -170,7 +168,7 @@ object DB {
   trait ForProjectSpa[F[_]] extends Base[F] with SaveProjectEvent[F] {
     def getProjectHeader   (id: ProjectId): F[Option[ProjectHeader]]
     def getProjectMetaData (id: ProjectId): F[Option[ProjectMetaData]]
-    def getAllProjectEvents(id: ProjectId): F[ProjectEvents]
+    def getAllProjectEvents(id: ProjectId): F[VerifiedEvent.Seq]
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

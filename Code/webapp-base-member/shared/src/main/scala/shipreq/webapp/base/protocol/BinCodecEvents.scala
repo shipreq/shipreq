@@ -96,10 +96,8 @@ object BinCodecEvents {
     mapPickler[HashScheme, HashRecsForScheme, Map]
   }
 
-  implicit val pickleEventOrd        : Pickler[EventOrd                     ] = pickleCaseClass
-  implicit val pickleVerifiedEvent   : Pickler[VerifiedEvent                ] = pickleCaseClass
-  implicit val pickleVerifiedEventNEV: Pickler[NonEmptyVector[VerifiedEvent]] = pickleNEV
-  implicit val pickleVerifiedEventES : Pickler[VerifiedEvent.EmptySeq.type  ] = ConstPickler(VerifiedEvent.EmptySeq)
-  implicit val pickleVerifiedEventNES: Pickler[VerifiedEvent.NonEmptySeq    ] = pickleCaseClass
-  implicit val pickleVerifiedEventSeq: Pickler[VerifiedEvent.Seq            ] = pickleADT
+  implicit val pickleEventOrd        : Pickler[EventOrd                 ] = pickleCaseClass
+  implicit val pickleVerifiedEvent   : Pickler[VerifiedEvent            ] = pickleCaseClass
+  implicit val pickleVerifiedEventSeq: Pickler[VerifiedEvent.Seq        ] = iterablePickler
+  implicit val pickleVerifiedEventNES: Pickler[VerifiedEvent.NonEmptySeq] = pickleCaseClass
 }

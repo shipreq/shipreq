@@ -6,7 +6,6 @@ import japgolly.scalajs.react.extra.Px
 import java.time.Instant
 import org.scalajs.dom.console
 import scala.annotation.tailrec
-import scala.collection.immutable.SortedMap
 import scalaz.{-\/, \/-}
 import shipreq.base.util.ConciseIntSetFormat
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
@@ -25,48 +24,46 @@ import shipreq.webapp.client.project.lib.DataReusability.reusabilityProject
 final case class ProjectState(project        : Project,
                               projectMetaData: ProjectMetaData,
                               latestEventOrd : EventOrd,
-                              futureEvents   : ProjectState.EventMap) {
+                              futureEvents   : VerifiedEvent.Seq) {
 
-  assert(futureEvents.keysIterator.forall(_ > latestEventOrd))
+  assert(futureEvents.forall(_.ord > latestEventOrd))
 
-  def addFutureEvents(es: Iterator[(EventOrd, VerifiedEvent)]): ProjectState =
-    copy(futureEvents = futureEvents ++ es.dropWhile(_._1 <= latestEventOrd))
+  def addFutureEvents(es: Iterator[VerifiedEvent]): ProjectState =
+    copy(futureEvents = futureEvents ++ es.dropWhile(_.ord <= latestEventOrd))
 
   def futureEventRange: String =
-    NonEmptySet.maybe(futureEvents.keysIterator.map(_.value).toSet, "[]")(
+    NonEmptySet.maybe(futureEvents.iterator.map(_.ord.value).toSet, "[]")(
       "[" + ConciseIntSetFormat.short(_) + "]")
 }
 
 object ProjectState {
-  type EventMap = SortedMap[EventOrd, VerifiedEvent]
 
   def init(p: Project, md: ProjectMetaData, o: EventOrd): ProjectState =
-    ProjectState(p, md, o, SortedMap.empty)
+    ProjectState(p, md, o, VerifiedEvent.Seq.empty)
 
-  def removeConsecutive(events: EventMap, headFilter: EventOrd => Boolean): Option[(VerifiedEvent.NonEmptySeq, EventMap)] =
+  def removeConsecutive(events: VerifiedEvent.Seq, headFilter: EventOrd => Boolean): Option[(VerifiedEvent.NonEmptySeq, VerifiedEvent.Seq)] =
     events.headOption
-      .filter(x => headFilter(x._1))
-      .map { case (o1, e1) =>
-        val b = Vector.newBuilder[VerifiedEvent]
-        @tailrec def go(prev: EventOrd, remainder: EventMap): EventMap =
+      .filter(ve => headFilter(ve.ord))
+      .map { ve1 =>
+        var ves = VerifiedEvent.Seq.empty
+        @tailrec def go(prev: EventOrd, remainder: VerifiedEvent.Seq): VerifiedEvent.Seq =
           remainder.headOption match {
-            case Some((o, e)) if o.immediatelyFollows(prev) =>
-              b += e
-              go(o, remainder.tail)
+            case Some(ve) if ve.ord.immediatelyFollows(prev) =>
+              ves += ve
+              go(ve.ord, remainder.tail)
             case _ => remainder
           }
-        val remainder = go(o1, events.tail)
-        val ves = NonEmptyVector(e1, b.result())
-        (VerifiedEvent.NonEmptySeq(o1, ves), remainder)
+        val remainder = go(ve1.ord, events.tail)
+        (VerifiedEvent.NonEmptySeq(ve1, ves), remainder)
       }
 
   def applyFutureEvents(s: ProjectState): Option[(VerifiedEvent.NonEmptySeq, ProjectState)] =
     removeConsecutive(s.futureEvents, _.immediatelyFollows(s.latestEventOrd))
       .map { case ((ves, futureEvents2)) =>
-        ApplyEvent.trusted.applyVerified(ves.eventVector)(s.project) match {
+        ApplyEvent.trusted.applyVerified(ves)(s.project) match {
           case \/-(p2) =>
-            val md2 = s.projectMetaData.applyEvents(ves.eventVector, Instant.now())
-            val s2 = ProjectState(p2, md2, ves.lastOrd, futureEvents2)
+            val md2 = s.projectMetaData.applyEvents(ves, Instant.now())
+            val s2 = ProjectState(p2, md2, ves.lastKey.ord, futureEvents2)
             (ves, s2)
           case -\/(err) =>
             // TODO Do more when VerifiedEvent application fails
@@ -113,17 +110,15 @@ object ProjectState {
       }
 
     def applyEventSeqCB(ves: VerifiedEvent.Seq): Callback =
-      ves match {
-        case ves2: VerifiedEvent.NonEmptySeq =>
-          stateCB.flatMap { s1 =>
-            val s2 = s1.addFutureEvents(ves2.iterator)
-            applyFutureEvents(s2) match {
-              case Some((ves3, s3)) => setState(ves3, s3)
-              case None             => setState(VerifiedEvent.EmptySeq, s2)
-            }
+      Callback.unless(ves.isEmpty)(
+        stateCB.flatMap { s1 =>
+          val s2 = s1.addFutureEvents(ves.iterator)
+          applyFutureEvents(s2) match {
+            case Some((ves3, s3)) => setState(ves3, s3)
+            case None             => setState(VerifiedEvent.Seq.empty, s2)
           }
-        case VerifiedEvent.EmptySeq => Callback.empty
-      }
+        }
+      )
 
     def applyEventSeqSCB(ves: VerifiedEvent.Seq): TCB.Success =
       TCB.Success(applyEventSeqCB(ves))

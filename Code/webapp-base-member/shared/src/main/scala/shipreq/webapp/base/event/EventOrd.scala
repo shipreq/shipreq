@@ -7,7 +7,7 @@ import japgolly.univeq._
   *
   * The order of an event in an event stream.
   */
-final case class EventOrd(value: Int) { // No point making AnyVal, it gets boxed
+final case class EventOrd(value: Int) extends AnyVal {
   def +(n: Int): EventOrd = EventOrd(value + n)
   def -(n: Int): EventOrd = EventOrd(value - n)
 
@@ -23,7 +23,4 @@ final case class EventOrd(value: Int) { // No point making AnyVal, it gets boxed
 object EventOrd {
   implicit def univEq: UnivEq[EventOrd] =
     UnivEq.derive
-
-  implicit val ordering: Ordering[EventOrd] =
-    Ordering.by(_.value)
 }

@@ -45,18 +45,18 @@ object MockDb {
                                 lastUpdatedAt: Option[Instant]) {
 
     lazy val project: Project =
-      ApplyEvent.trusted.applyVerified(events.eventVector)(Project.empty).needRight
+      ApplyEvent.trusted.applyVerified(events)(Project.empty).needRight
 
     lazy val projectMetaData: ProjectMetaData =
       ProjectMetaData(id            = Obfuscators.projectId.obfuscate(projectId),
                       name          = project.name,
-                      eventCount    = events.eventVector.length,
+                      eventCount    = events.size,
                       reqCount      = project.content.reqs.size,
                       createdAt     = createdAt,
                       lastUpdatedAt = lastUpdatedAt)
 
-    lazy val projectLoad: DB.ProjectEvents =
-      (SortedMap.empty: DB.ProjectEvents) ++ events.iterator
+    def projectLoad: VerifiedEvent.Seq =
+      events
   }
 }
 
@@ -201,7 +201,7 @@ final class MockDb(now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecur
     IMap.empty(_.projectId)
 
   def addProject(projectId: ProjectId, userId: UserId)(events: Event*): Unit = {
-    val ves = VerifiedEvent.Seq(EventOrd(1), verifyEvents(Project.empty)(events: _*))
+    val ves = verifyEvents(Project.empty)(events: _*)
     val now = Instant.now()
     val mde = MockDb.ProjectEntry(projectId, userId, ves, now, Some(now))
     projects = projects.add(mde)
@@ -237,7 +237,7 @@ final class MockDb(now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecur
   }
 
   var loadProjectLog = Vector.empty[ProjectId]
-  override def getAllProjectEvents(id: ProjectId) = Name[DB.ProjectEvents] {
+  override def getAllProjectEvents(id: ProjectId) = Name[VerifiedEvent.Seq] {
     loadProjectLog :+= id
     projects.need(id).projectLoad
   }
@@ -246,18 +246,15 @@ final class MockDb(now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecur
     val entry = projects.need(id)
     def update(events: VerifiedEvent.Seq): Unit =
       projects = projects + entry.copy(events = events, lastUpdatedAt = Some(Instant.now()))
-    val ve = verifyEvent(entry.project, e)
-    entry.events match {
-      case ves: VerifiedEvent.NonEmptySeq =>
-        if (ord.immediatelyFollows(ves.lastOrd)) {
-          update(ves.copy(events = ves.events :+ ve))
-          None
-        } else
-          Some(new RuntimeException(s"$ord doesn't follow ${ves.lastOrd}"))
-      case VerifiedEvent.EmptySeq =>
-        update(VerifiedEvent.NonEmptySeq.one(ord, ve))
-        None
-    }
+    val ve = verifyEvent(entry.project, e, ord)
+    if (entry.events.isEmpty) {
+      update(VerifiedEvent.Seq.empty + ve)
+      None
+    } else if (ord.immediatelyFollows(entry.events.lastKey.ord)) {
+      update(entry.events + ve)
+      None
+    } else
+      Some(new RuntimeException(s"$ord doesn't follow ${entry.events.lastKey.ord}"))
   }
 
   override def saveProjectEvents(id: ProjectId)(cmds: Traversable[DB.SaveProjectEventCmd]) = Name[Option[Throwable]] {

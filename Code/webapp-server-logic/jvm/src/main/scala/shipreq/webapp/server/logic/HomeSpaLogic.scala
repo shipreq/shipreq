@@ -25,8 +25,8 @@ object HomeSpaLogic {
         pid ← db.createEmptyProject(userId)
         e1  = ApplyNewEvent.mustApply(ProjectNameSet(name), InitProject.project)
         _   ← db.saveProjectEvents(pid)(
-                DB.SaveProjectEventCmd(EventOrd(0), InitProject.ae, InitProject.ve.hashRecs) ::
-                DB.SaveProjectEventCmd(EventOrd(1), e1.ae, e1.ve.hashRecs) ::
+                DB.SaveProjectEventCmd(EventOrd(0), InitProject.event, InitProject.hashRecs) ::
+                DB.SaveProjectEventCmd(EventOrd(1), e1.event, e1.hashRecs) ::
                 Nil)
       } yield ProjectMetaData(Obfuscators.projectId.obfuscate(pid), name, 0, 0, now, None))
 

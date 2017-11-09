@@ -2094,6 +2094,6 @@ object RandomData {
       hash.option.mapBy(hashScope)(1 to 4).mapBy(hashScheme)(1 to HashSchemes.schemes.length)
 
     val verifiedEvent: Gen[VerifiedEvent] =
-      Gen.apply2(VerifiedEvent.apply)(event, hashRecs)
+      Gen.apply3(VerifiedEvent.apply)(eventOrd, event, hashRecs)
   }
 }

@@ -51,9 +51,6 @@ object CfgFieldsTest extends TestSuite {
     val t = new Tester
     import t._
 
-    implicit def hack(ves: Vector[VerifiedEvent]): VerifiedEvent.Seq =
-      cd.verifiedEventSeq(ves).runNow()
-
     selectNewText()
     def html = c.getDOMNode.outerHTML
     val initialView = html

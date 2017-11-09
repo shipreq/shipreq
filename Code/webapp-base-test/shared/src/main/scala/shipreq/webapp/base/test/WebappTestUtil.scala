@@ -31,19 +31,19 @@ trait WebappTestUtil extends BaseTestUtil {
       Instant.now().minus(28, DAYS),
       Some(Instant.now().minus(1, DAYS)))
 
-  def verifyEvent(p: Project, e: Event): VerifiedEvent =
-    _verifyEvent(p, e)._2
+  def verifyEvent(p: Project, e: Event, o: EventOrd = EventOrd(-1)): VerifiedEvent =
+    _verifyEvent(p, e, o)._2
 
-  def _verifyEvent(p: Project, e: Event): (Project, VerifiedEvent) = {
+  def _verifyEvent(p: Project, e: Event, o: EventOrd = EventOrd(-1)): (Project, VerifiedEvent) = {
     val p2 = ApplyEvent.untrusted.apply1(e)(p).fold(sys.error, identity)
     val hrs = HashSchemes.latest.changes(p, p2)
-    (p2, VerifiedEvent(e, hrs))
+    (p2, VerifiedEvent(o, e, hrs))
   }
 
-  def verifyEvents(p0: Project)(es: Event*): Vector[VerifiedEvent] = {
+  def verifyEvents(p0: Project, firstOrd: EventOrd = EventOrd(1))(es: Event*): VerifiedEvent.Seq = {
     var p = p0
-    es.toVector.map { e =>
-      val (p2, ve) = _verifyEvent(p, e)
+    VerifiedEvent.Seq.empty ++ es.iterator.zipWithIndex.map { case (e, i) =>
+      val (p2, ve) = _verifyEvent(p, e, firstOrd + i)
       p = p2
       ve
     }
@@ -66,5 +66,10 @@ trait WebappTestUtil extends BaseTestUtil {
       case -\/(f) => assertContainsCI(f, errFrag)
       case \/-(_) => fail(s"Failure expected but didn't occur applying $e")
     }
+
+  implicit final class VerifiedEventSeqExt(private val self: VerifiedEvent.Seq) {
+    def needNES: VerifiedEvent.NonEmptySeq =
+      VerifiedEvent.NonEmptySeq(self.head, self.tail)
+  }
 
 }

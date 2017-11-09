@@ -1,7 +1,7 @@
 package shipreq.benchmark.data
 
 import shipreq.webapp.base.data.Project
-import shipreq.webapp.base.event.{ApplyEvent, RandomEventStream}
+import shipreq.webapp.base.event.{ApplyEvent, EventOrd, RandomEventStream}
 
 object EventStreamSample {
 
@@ -12,9 +12,9 @@ object EventStreamSample {
 //    println()
 //  }
 
-  def sample = RandomEventStream.verifiedEvents(200).run(Project.empty).withSeed(0).sample
+  def sample = RandomEventStream.verifiedEvents(200).run((Project.empty, EventOrd(0))).withSeed(0).sample
 
-  val (p, ves) = sample
+  val ((p, _), ves) = sample
 
   assert(ves.toString == sample._2.toString)
 

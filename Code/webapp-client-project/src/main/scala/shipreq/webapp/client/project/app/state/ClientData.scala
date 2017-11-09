@@ -15,9 +15,9 @@ class ClientData(initialState: ProjectState) extends Broadcaster[Changes] {
 
   // Broadcast changes
   mutableState.addListener((ves, ps1, ps2) =>
-    ves match {
-      case ne: VerifiedEvent.NonEmptySeq => broadcast(Changes(ne, ps1.project, ps2.project))
-      case VerifiedEvent.EmptySeq        => Callback.empty // Events queued but not applied
+    VerifiedEvent.NonEmptySeq.maybe(ves) match {
+      case Some(ne) => broadcast(Changes(ne, ps1.project, ps2.project))
+      case None     => Callback.empty // Events queued but not applied
     })
 
   // Old API

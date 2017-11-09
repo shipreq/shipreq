@@ -4,12 +4,12 @@ import scalaz.{-\/, \/-}
 import shipreq.base.util.PotentialChange
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.hash.HashSchemes
+import shipreq.webapp.base.hash.{HashRecs, HashSchemes}
 import PotentialChange._
 
 object ApplyNewEvent {
 
-  case class Updated(project: Project, ae: ActiveEvent, ve: VerifiedEvent)
+  final case class Updated(project: Project, event: ActiveEvent, hashRecs: HashRecs)
 
   type Result = PotentialChange[String, Updated]
 
@@ -19,11 +19,10 @@ object ApplyNewEvent {
         val hrs = HashSchemes.latest.changes(p1, p2)
         if (hrs.isEmpty)
           Unchanged
-        else {
-          val ve = VerifiedEvent(e, hrs)
-          Success(Updated(p2, e, ve))
-        }
-      case -\/(err) => Failure(err)
+        else
+          Success(Updated(p2, e, hrs))
+      case -\/(err) =>
+        Failure(err)
     }
 
   def apply(r: MakeEvent.Result, p1: Project): Result =

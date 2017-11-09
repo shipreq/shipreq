@@ -84,7 +84,7 @@ object SavedViewsUI {
       type OnSuccess = VerifiedEvent.Seq => Callback
 
       def runActionOnSuccess(f: PartialFunction[Event, Action]): VerifiedEvent.Seq => Callback =
-        _.eventVector.lastOption.map(_.event).collect(f).map(runAction).getOrEmpty
+        _.lastOption.map(_.event).collect(f).map(runAction).getOrEmpty
 
       def runCmd(cmd: SavedViewCmd, onSuccess: OnSuccess = _ => Callback.empty): Callback =
         asyncW((s, f) => savedViewIO(cmd, s >> onSuccess(_), f))

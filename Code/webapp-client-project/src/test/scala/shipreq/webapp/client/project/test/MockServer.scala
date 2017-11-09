@@ -42,12 +42,14 @@ final case class MockServer(cd: TestClientData) extends TestClientProtocol(true)
       val h = handler((r.proc.protocol, r.input, p1))
       ApplyNewEvent(h, p1) match {
 
-        case Success(ApplyNewEvent.Updated(p2, ae, ve)) =>
-          cd.verifiedEventNES(NonEmptyVector one ve).flatMap(ves =>
-            cd.applyEventSeqCB(ves) >> onResponse(\/-(\/-(ves))))
+        case Success(ApplyNewEvent.Updated(p2, event, hrs)) =>
+          cd.nextEventOrd
+            .map(o => VerifiedEvent.Seq.empty + VerifiedEvent(o, event, hrs))
+            .flatTap(cd.applyEventSeqCB)
+            .flatMap(ves => onResponse(\/-(\/-(ves))))
 
         case Unchanged =>
-          onResponse(\/-(\/-(VerifiedEvent.EmptySeq)))
+          onResponse(\/-(\/-(VerifiedEvent.Seq.empty)))
 
         case Failure(e) =>
           onResponse(\/-(-\/(ErrorMsg(e))))

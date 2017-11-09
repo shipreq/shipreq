@@ -6,7 +6,7 @@ import japgolly.univeq._
 import java.time.Instant
 import nyaya.gen.Gen
 import org.postgresql.util.PSQLException
-import scala.collection.immutable.SortedMap
+import scala.collection.immutable.TreeSet
 import scalaz.syntax.applicative._
 import scalaz.{-\/, Free, \/, \/-}
 import shipreq.base.db.DoobieHelpers._
@@ -267,7 +267,6 @@ object DbInterpreter {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trait ForMembers extends DB.ForHomeSpa[ConnectionIO] with DB.ForProjectSpa[ConnectionIO] {
-    import DB.ProjectEvents
     import EventSqlHelpers._
 
     private final val createEmptyProjectSql =
@@ -390,7 +389,7 @@ object DbInterpreter {
     }
 
     /** @return Events in order from lowest to highest ord. */
-    override final def getAllProjectEvents(p: ProjectId): ConnectionIO[ProjectEvents] = {
+    override final def getAllProjectEvents(p: ProjectId): ConnectionIO[VerifiedEvent.Seq] = {
       (for {
         events <- sqlSelectAllEvents.toQuery0(p).list
         hashes <- sqlSelectAllEventHashes.toQuery0(p).list
@@ -405,9 +404,9 @@ object DbInterpreter {
         for (t <- hashes) map(t._1).add(t._2)
 
         // time = O(e log e)
-        val result = SortedMap.newBuilder[EventOrd, VerifiedEvent]
+        val result = TreeSet.newBuilder[VerifiedEvent]
         for ((ord, tmp) <- map)
-          result += ((ord, VerifiedEvent(tmp.e, tmp.result())))
+          result += VerifiedEvent(ord, tmp.e, tmp.result())
         result.result()
 
         // TODO Improve getAllProjectEvents. Currently server time = O(e.log(e) + e + h.H)

@@ -157,7 +157,7 @@ object ReqDetail {
       mkRunCmdFn { (ves, onSuccess) =>
 
         val startEditor: Callback =
-          ves.iterator.map(_._2.event).collect {
+          ves.iterator.map(_.event).collect {
             case e: UseCaseStepCreate => startUseCaseStepEditor(e.id).delayMs(50).void
           }.nextOption().getOrEmpty
 

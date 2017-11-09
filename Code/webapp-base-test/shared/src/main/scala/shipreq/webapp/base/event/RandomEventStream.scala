@@ -33,21 +33,23 @@ import ScalaExt._
   */
 object RandomEventStream {
 
-  type ProjectDepGen[A] = StateGen[Project, A]
+  type State = (Project, EventOrd)
+
+  type ProjectDepGen[A] = StateGen[State, A]
 
   def liftGE(eventGen: Gen[Event]): ProjectDepGen[VerifiedEvent] =
     liftPGE(_ => eventGen)
 
-  def liftPGE(eventGen: Project => Gen[Event]): ProjectDepGen[VerifiedEvent] =
-    StateGen(p =>
-      eventGen(p).map(e =>
-        ApplyEvent.untrusted.apply1(e)(p) match {
+  def liftPGE(eventGen: State => Gen[Event]): ProjectDepGen[VerifiedEvent] =
+    StateGen(s =>
+      eventGen(s).map(e =>
+        ApplyEvent.untrusted.apply1(e)(s._1) match {
           case \/-(p2) =>
-            val hrs = HashSchemes.latest.changes(p, p2)
+            val hrs = HashSchemes.latest.changes(s._1, p2)
             if (hrs.isEmpty)
               None
             else
-              Some((p2, VerifiedEvent(e, hrs)))
+              Some(((p2, s._2 + 1), VerifiedEvent(s._2, e, hrs)))
           case -\/(_) => None
         }
       ).optionGetLimit(40)
@@ -55,13 +57,12 @@ object RandomEventStream {
 
   val InitialEventCount = 2
 
-  lazy val initialEvents: Gen[(Project, Vector[VerifiedEvent])] =
+  lazy val initialEvents: Gen[(State, Vector[VerifiedEvent])] =
     Vector(
       liftGE(RandomData.events.genProjectTemplateApply),
-      liftPGE(ApplicableEventGen(_).genProjectNameSet)
-    )
-      .sequenceU
-      .run(Project.empty)
+      liftPGE(ApplicableEventGen(_).genProjectNameSet),
+    ).sequenceU
+      .run((Project.empty, EventOrd(0)))
 
   val verifiedEvent: ProjectDepGen[VerifiedEvent] =
     StateGen(ApplicableEventGen(_).verifiedEvent)
@@ -71,11 +72,11 @@ object RandomEventStream {
       ss.gen.flatMap(size =>
         Vector.fill(size)(verifiedEvent).sequenceU.run(p)))
 
-  def entireEventStream(implicit ss: SizeSpec): Gen[(Project, Vector[VerifiedEvent], Vector[VerifiedEvent])] =
+  def entireEventStream(implicit ss: SizeSpec): Gen[(State, Vector[VerifiedEvent], Vector[VerifiedEvent])] =
     for {
-      (p1, e1) <- initialEvents
-      (p2, e2) <- verifiedEvents(ss).run(p1)
-    } yield (p2, e1, e2)
+      (s1, e1) <- initialEvents
+      (s2, e2) <- verifiedEvents(ss).run(s1)
+    } yield (s2, e1, e2)
 
 //  def applicableEventS[S](observe: ObserveFn[S]): StateGen[(S, Project), Event] =
 //    StateGen(sp =>
@@ -106,14 +107,17 @@ object RandomEventStream {
 }
 
 // =====================================================================================================================
+import RandomEventStream.{State, ProjectDepGen}
 
 object ApplicableEventGen {
-  @inline def apply(p: Project) = new ApplicableEventGen(p)
+  def apply(curState: State) = new ApplicableEventGen(curState)
 
   type ObserveFn[S] = (S, Event, ApplyEvent.Result) => S
 }
 
-class ApplicableEventGen(p: Project) {
+final class ApplicableEventGen(curState: State) {
+  val p = curState._1
+
   private implicit val gss: SizeSpec = 0 to 3
 
   // If the starting state isn't valid, event application will never succeed and thus, loop forever
@@ -843,6 +847,6 @@ class ApplicableEventGen(p: Project) {
       }
     )(init)
 
-  def verifiedEvent: Gen[(Project, VerifiedEvent)] =
-    RandomEventStream.liftGE(eventGen).run(p)
+  def verifiedEvent: Gen[(State, VerifiedEvent)] =
+    RandomEventStream.liftGE(eventGen).run(curState)
 }
