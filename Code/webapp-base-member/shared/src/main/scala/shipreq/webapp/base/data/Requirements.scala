@@ -425,9 +425,9 @@ object Requirements {
 }
 
 @Lenses
-case class Requirements(genericReqs: GenericReqIMap,
-                        useCases   : UseCases,
-                        pubids     : PubidRegister) {
+final case class Requirements(genericReqs: GenericReqIMap,
+                              useCases   : UseCases,
+                              pubids     : PubidRegister) {
 
   def isEmpty = reqIterator.isEmpty
   def nonEmpty = !isEmpty
