@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.feature.delerest
+package shipreq.webapp.base.data.deletion
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.nonempty.NonEmptySet
@@ -20,13 +20,16 @@ final class DeleRestProps(mode: Mode,
                           projectBasic: Project) {
   import DeleRestProps._
 
-//  println("="*120)
-//  println("Before:")
-//  println(projectFree.prettyPrintImplicationGraph)
-//  println()
-
   private def invariants(T: Results) = {
     import T._
+
+//    println("="*120)
+//    println(s"Inputs = $input")
+//    println(s"Auto   = $auto")
+//    println(s"Extra  = $extra")
+//    println("Before:")
+//    println(p.prettyPrintImplicationGraph)
+//    println()
 
     def allLive =
       E.forall(all)(id =>
@@ -94,29 +97,38 @@ final class DeleRestProps(mode: Mode,
     val T = new Results(mode, _input, projectBasic)
     import T._
 
-    def noExtra =
-      E.test("Extra should be empty", extra.isEmpty)
+    def noneOff =
+      E.test("Off should be empty", off.isEmpty)
 
     def autoIsEverythingImplied =
       E.equal("auto = TC", auto,
-        input.iterator.map(p.implicationSrcToTgtTC(_)).reduce(_ ++ _))
+        input.iterator.map(p.implicationSrcToTgtTC(_)).reduce(_ ++ _) -- input.whole)
 
-    def performReverse = {
-      val apply   = mode.perform(result.initialState.selectedReqs.selected).get
-      val p2      = applyEventSuccessfully(p, apply)
-      val t2      = new Results(!mode, input, p2)
-      val reverse = (!mode).perform(t2.result.initialState.selectedReqs.selected).get
-      val p3      = applyEventSuccessfully(p2, reverse)
-      def norm(p: Project) = p.content.copy(deletionReasons = DeletionReasons.empty)
-      E.equal("apply.reverse = id", norm(p3), norm(p))
-    }
+      // TODO Pending: Restore
+//    def performReverse = {
+//      val apply   = mode.perform(result.initialReqs).get
+//      val p2      = applyEventSuccessfully(p, apply)
+//      val t2      = new Results(!mode, input, p2)
+//      val reverse = (!mode).perform(t2.result.initialReqs).get
+//      val p3      = applyEventSuccessfully(p2, reverse)
+//      def norm(p: Project) = p.content.copy(deletionReasons = DeletionReasons.empty)
+//
+//      println("=" * 120)
+//      println("Apply: " + apply)
+//      println("Reverse: " + reverse)
+//      println(p3.prettyPrintImplicationGraph)
+//      println()
+//
+//      E.equal("apply.reverse = id", norm(p3), norm(p))
+//      E.equal("apply.reverse = id", true, false)
+//    }
 
-    (invariants(T) & noExtra & autoIsEverythingImplied & performReverse)
+    (invariants(T) & noneOff & autoIsEverythingImplied ) // TODO & performReverse)
       .rename(s"basic(${input.whole.map(_.value).mkString(",")})")
   }
 
   def allProps =
-//    testWithInputs(projectBasic, _ => true, basic).rename("projectBasic") &
+    testWithInputs(projectBasic, _ => true, basic).rename("projectBasic") &
       testWithInputs(projectFree, _.live(projectFree.config.reqTypes) is mode.from, free).rename("projectFree")
 }
 
@@ -127,11 +139,11 @@ object DeleRestProps {
   final class Results(mode: Mode, val input: NonEmptySet[ReqId], val p: Project) {
     val E = EvalOver(input)
 
-    val result: DeleteLogic.Data =
-      DeleteLogic.Data.forReqs(p, input)
+    val result: DeletionLogic.Data =
+      DeletionLogic.Data.forReqs(p, input)
 
     val auto: Set[ReqId] =
-      result.initialState.selectedReqs.selected -- input.whole
+      result.initialReqs -- input.whole
 
     val off: Set[ReqId] =
       result.deletableReqs.iterator.map(_.req.id).filterNot(auto.contains).toSet -- input.whole
@@ -148,9 +160,13 @@ object DeleRestProps {
 
   def chooseInputs(p: Project, f: Req => Boolean): List[NonEmptySet[ReqId]] = {
     val ids     = p.content.reqs.reqIterator.filter(f).map(_.id).toList
+    val idCount = ids.size
     val singles = ids.take(20).map(NonEmptySet one _)
-    val pairs   = ids.combinations(2).map(NonEmptySet force _.toSet).take(1).toList // TODO THIS IS REALLY SLOW
-    singles ::: pairs
+    val pairs   = ids.combinations(2).map(NonEmptySet force _.toSet).take(6).toList // TODO THIS IS REALLY SLOW
+    var l = singles ::: pairs
+    if (idCount > 4)
+      l :::= ids.combinations(idCount >> 1).map(NonEmptySet force _.toSet).take(6).toList // TODO THIS IS REALLY SLOW
+    l
   }
 
   def testWithInputs(p: Project, f: Req => Boolean, t: NonEmptySet[ReqId] => EvalL): EvalL =

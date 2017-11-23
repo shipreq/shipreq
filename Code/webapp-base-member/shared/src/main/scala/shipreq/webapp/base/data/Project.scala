@@ -122,7 +122,7 @@ final case class Project(name         : Project.Name,
           if (content.reqs.need(id).live(config.reqTypes) is Live)
             a
           else
-            "!" + a
+            a + "!"
         }
 
       val fmt = Memo(_fmt)

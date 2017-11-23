@@ -1,16 +1,14 @@
-package shipreq.webapp.client.project.feature.delerest
+package shipreq.webapp.base.data.deletion
 
 import japgolly.microlibs.nonempty._
 import japgolly.univeq._
-import monocle.macros.Lenses
 import scala.annotation.tailrec
 import scala.collection.TraversableOnce
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.client.project.feature.Selection
 
-object DeleteLogic {
+object DeletionLogic {
 
   type DeletableReqs   = Vector[ReqRow]
   type DeletableGroups = Vector[GroupRow]
@@ -18,16 +16,12 @@ object DeleteLogic {
   final case class Data(project        : Project,
                         deletableReqs  : DeletableReqs,
                         deletableGroups: DeletableGroups,
-                        initialState   : State) {
+                        initialReqs    : Set[ReqId],
+                        initialGroups  : Set[ReqCodeId]) {
 
     val optionalReqIds: Set[ReqId] =
       deletableReqs.iterator.filter(_.indent !=* 0).map(_.req.id).toSet
   }
-
-  @Lenses
-  final case class State(selectedReqs  : Selection[ReqId],
-                         selectedGroups: Selection[ReqCodeId],
-                         reason        : String)
 
   final case class ReqRow(req: Req, indent: Int, impliedBy: Vector[Req])
 
@@ -51,13 +45,16 @@ object DeleteLogic {
     def forReqs(project: Project, directlySelectedReqs: NonEmptySet[ReqId]): Data = {
       val deletableReqs = calcDeletableReqs(project, directlySelectedReqs)
       val initSelReqs   = calcInitiallySelectedReqs(project, deletableReqs, directlySelectedReqs).whole
-      val state         = State(Selection(initSelReqs), Selection(Set.empty), "")
-      Data(project, deletableReqs, Vector.empty, state)
+      Data(project         = project,
+           deletableReqs   = deletableReqs,
+           deletableGroups = Vector.empty,
+           initialReqs     = initSelReqs,
+           initialGroups   = Set.empty)
     }
 
-    private[delerest] def forReqsAndCodeGroups__TEST_ONLY(project               : Project,
-                                                          directlySelectedReqs  : NonEmptySet[ReqId],
-                                                          directlySelectedGroups: Set[ReqCodeId]): Data = {
+    def forReqsAndCodeGroups__TEST_ONLY(project               : Project,
+                                        directlySelectedReqs  : NonEmptySet[ReqId],
+                                        directlySelectedGroups: Set[ReqCodeId]): Data = {
       val directlySelectedCodeGroups: Set[ReqCode.Value] =
         directlySelectedGroups.map(project.content.reqCodes.reqCode)
 
@@ -67,8 +64,11 @@ object DeleteLogic {
       val initSelReqs   = calcInitiallySelectedReqs(project, deletableReqs, directlySelectedReqs).whole
       val initSelGroups = calcInitiallySelectedGroups(project, directlySelectedGroups, deletableGroups, initSelReqs)
 
-      val state = State(Selection(initSelReqs), Selection(initSelGroups), "")
-      Data(project, deletableReqs, deletableGroups, state)
+      Data(project         = project,
+           deletableReqs   = deletableReqs,
+           deletableGroups = deletableGroups,
+           initialReqs     = initSelReqs,
+           initialGroups   = initSelGroups)
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

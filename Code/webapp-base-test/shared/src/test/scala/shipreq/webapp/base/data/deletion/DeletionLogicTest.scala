@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.feature.delerest
+package shipreq.webapp.base.data.deletion
 
 import utest._
 import japgolly.microlibs.nonempty._
@@ -7,11 +7,11 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{IMap, Util}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
-import DeleteLogic.{Data, GroupRow}
+import DeletionLogic.{Data, GroupRow}
 import UnsafeTypes._
 import WebappTestUtil._
 
-object DeleteLogicTestData {
+object DeletionLogicTestData {
   import ProjectDsl._
   import ProjectDslInternals.{ToState, Composite}
   import SampleProject.Values._
@@ -224,8 +224,8 @@ object DeleteLogicTestData {
     }
 }
 
-object DeleteLogicTest extends TestSuite {
-  import DeleteLogicTestData._
+object DeletionLogicTest extends TestSuite {
+  import DeletionLogicTestData._
 
   implicit val rcgRowEquality = UnivEq.derive[GroupRow]
 
@@ -255,7 +255,7 @@ object DeleteLogicTest extends TestSuite {
         assertEq("Deletable group", ar, er)
     }
 
-    'initialReqs   - assertSet("Initial reqs"  , result.initialState.selectedReqs  .selected, expectInitialReqs)
-    'initialGroups - assertSet("Initial groups", result.initialState.selectedGroups.selected, expectInitialRCGs)
+    'initialReqs   - assertSet("Initial reqs"  , result.initialReqs, expectInitialReqs)
+    'initialGroups - assertSet("Initial groups", result.initialGroups, expectInitialRCGs)
   }
 }

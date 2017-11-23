@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.feature.delerest
+package shipreq.webapp.base.data.deletion
 
 import japgolly.microlibs.nonempty.NonEmptySet
 import shipreq.webapp.base.data.{Dead, Live, ReqId}

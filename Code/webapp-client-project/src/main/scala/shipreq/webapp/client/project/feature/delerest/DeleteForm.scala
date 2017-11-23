@@ -6,10 +6,12 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
+import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.deletion._
 import shipreq.webapp.base.feature.PreviewFeature
 import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.UpdateContentCmd.DeleteReqs
@@ -17,10 +19,11 @@ import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Table}
 import shipreq.webapp.client.project.app.Style.{deletionForm => *}
 import shipreq.webapp.client.project.app.TestMarker
+import shipreq.webapp.client.project.feature.Selection
 import shipreq.webapp.client.project.widgets.{ProjectWidgets, RichTextEditor, Widgets}
 
 object DeleteForm {
-  import DeleteLogic._
+  import DeletionLogic._
 
   final case class Props(data      : Data,
                          widgets   : ProjectWidgets.NoCtx,
@@ -28,6 +31,18 @@ object DeleteForm {
                          perform   : DeleteReqs => Callback,
                          cancel    : Callback) {
     def render: VdomElement = Component(this)
+  }
+
+  @Lenses
+  final case class State(selectedReqs  : Selection[ReqId],
+                         selectedGroups: Selection[ReqCodeId],
+                         reason        : String)
+  object State {
+    def init(p: Props): State =
+      apply(
+        Selection(p.data.initialReqs),
+        Selection(p.data.initialGroups),
+        "")
   }
 
   final class Backend($: BackendScope[Props, State]) {
@@ -164,7 +179,7 @@ object DeleteForm {
   }
 
   val Component = ScalaComponent.builder[Props]("Deletion")
-    .initialStateFromProps(_.data.initialState)
+    .initialStateFromProps(State.init)
     .renderBackend[Backend]
     .build
 
