@@ -10,7 +10,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{IMap, Util}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
-import DeletionLogic.{Data, GroupRow}
+import DeletionRestorationLogic.{Data, GroupRow}
 import UnsafeTypes._
 import WebappTestUtil._
 
@@ -202,7 +202,7 @@ object DeletionLogicTestData {
     |. 512 <- 510 511
   """.stripMargin.trim
 
-  lazy val result               = Data.forReqsAndCodeGroups__TEST_ONLY(p, NonEmptySet force _selectedReqIds, _selectedRCGs)
+  lazy val result               = DeletionRestorationLogic.forReqsAndCodeGroups__TEST_ONLY(p, NonEmptySet force _selectedReqIds, _selectedRCGs)
   lazy val expectInitialReqs    = _expectInitialReqs
   lazy val expectInitialRCGs    = _expectInitialRCGs
   lazy val expectUnselectedReqs = _expectUnselectedReqs
@@ -210,7 +210,7 @@ object DeletionLogicTestData {
 
   def fmtReqRows(p: Data): String =
     Util.quickSB { sb =>
-      p.deletableReqs.foreach { r =>
+      p.actionableReqs.foreach { r =>
         if (sb.nonEmpty)
           sb append '\n'
         for (_ <- 1 to r.indent)
@@ -251,7 +251,7 @@ object DeletionLogicTest extends TestSuite {
 
     'deletableGroups {
       val e = expectDeletableRCGs
-      val a = result.deletableGroups
+      val a = result.actionableGroups
       assertSet("Deletable groups", a.toSet, e.toSet)
       assertEq("Deletable group count", a.length, e.length)
       for ((ar,er) <- a zip e)

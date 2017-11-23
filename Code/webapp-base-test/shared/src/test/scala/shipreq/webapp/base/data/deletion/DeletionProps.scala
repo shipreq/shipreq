@@ -177,19 +177,14 @@ object DeletionProps {
   final class Results(mode: DeleteOrRestore, val input: NonEmptySet[ReqId], val p: Project) {
     val E = EvalOver(input)
 
-    val result: DeletionLogic.Data =
-      if (mode ==* Delete)
-        DeletionLogic.Data.forReqs(p, input)
-      else {
-        val d = RestorationLogic.Data.forReqs(p, input)
-        DeletionLogic.Data(d.project, d.restorableReqs, Vector.empty, d.initialReqs, Set.empty)
-      }
+    val result: DeletionRestorationLogic.Data =
+      DeletionRestorationLogic.forReqs(mode, p, input)
 
     val auto: Set[ReqId] =
       result.initialReqs -- input.whole
 
     val off: Set[ReqId] =
-      result.deletableReqs.iterator.map(_.req.id).filterNot(auto.contains).toSet -- input.whole
+      result.actionableReqs.iterator.map(_.req.id).filterNot(auto.contains).toSet -- input.whole
 
     val extra: Set[ReqId] =
       auto ++ off
