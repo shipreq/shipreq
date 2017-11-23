@@ -233,4 +233,20 @@ object Util {
       }
     }.filterDefined
   }
+
+  def sideBySideStrings(str1: String, str2: String, sep: String = " | "): String =
+    sideBySideStringSeqs(str1 split '\n', str2 split '\n', sep) mkString "\n"
+
+  def sideBySideStringSeqs(vec1: IndexedSeq[String], vec2: IndexedSeq[String], sep: String = " | "): Vector[String] = {
+    def get(x: IndexedSeq[String], i: Int): String =
+      if (i < x.length) x(i) else ""
+    val fmt = s"%-${(vec1 :+ "").iterator.map(_.length).max}s%s%s"
+    val b = Vector.newBuilder[String]
+    for (i <- 0 until vec1.length.max(vec2.length)) {
+      val x = get(vec1, i)
+      val y = get(vec2, i)
+      b += fmt.format(x, sep, y)
+    }
+    b.result()
+  }
 }

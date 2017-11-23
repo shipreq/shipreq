@@ -46,6 +46,8 @@ sealed abstract class ReqT[+RT <: ReqTypeId] {
   val pubid: PubidT[RT]
   val title: Text.AnyOptional
 
+  def liveExplicitly: Live
+
   def live(reqTypes: ReqTypes): Live
 
   /** Can this req's (explicit-) live state be changed? */

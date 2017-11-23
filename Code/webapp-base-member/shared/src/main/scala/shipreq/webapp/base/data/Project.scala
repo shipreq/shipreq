@@ -118,11 +118,13 @@ final case class Project(name         : Project.Name,
 
       val _fmt: ReqId => String =
         id => {
-          val a = id.value.toString
-          if (content.reqs.need(id).live(config.reqTypes) is Live)
-            a
-          else
-            a + "!"
+          var a = id.value.toString
+          val r = content.reqs.need(id)
+          if (r.live(config.reqTypes) is Dead) {
+            a += (if (r.liveExplicitly is Dead) "!" else "-")
+            if (r.allowLiveChange(config.reqTypes) is Deny) a += "!"
+          }
+          a
         }
 
       val fmt = Memo(_fmt)

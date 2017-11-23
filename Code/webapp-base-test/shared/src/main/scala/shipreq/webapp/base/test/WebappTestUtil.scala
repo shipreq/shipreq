@@ -35,7 +35,7 @@ trait WebappTestUtil extends BaseTestUtil {
     _verifyEvent(p, e, o)._2
 
   def _verifyEvent(p: Project, e: Event, o: EventOrd = EventOrd(-1)): (Project, VerifiedEvent) = {
-    val p2 = ApplyEvent.untrusted.apply1(e)(p).fold(sys.error, identity)
+    val p2 = ApplyEvent.untrusted.apply1(e)(p).fold(err => sys error s"Failed to apply event $e: $err", identity)
     val hrs = HashSchemes.latest.changes(p, p2)
     (p2, VerifiedEvent(o, e, hrs))
   }

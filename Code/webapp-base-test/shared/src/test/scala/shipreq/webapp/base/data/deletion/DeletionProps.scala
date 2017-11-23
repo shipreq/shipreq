@@ -5,6 +5,7 @@ import japgolly.microlibs.nonempty.NonEmptySet
 import nyaya.gen._
 import nyaya.prop._
 import scalaz.std.set.setInstance
+import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ContentRestore, Event, ReqsDelete}
 import shipreq.webapp.base.test.TestOptics
@@ -26,7 +27,7 @@ final class DeletionProps(mode: DeleteOrRestore,
 //    println("="*120)
 //    println(s"Inputs = $input")
 //    println(s"Auto   = $auto")
-//    println(s"Extra  = $extra")
+//    println(s"Off    = $off")
 //    println("Before:")
 //    println(p.prettyPrintImplicationGraph)
 //    println()
@@ -34,19 +35,22 @@ final class DeletionProps(mode: DeleteOrRestore,
     def allLive =
       E.forall(all)(id =>
         E.equal(s"$id.live", p.content.reqs.need(id).live(p.config.reqTypes), mode.fromState))
+        .rename(s"All actionable reqs should be ${mode.fromState}")
 
     def extraSubsetOfOptional =
       E.whitelist("extra ⊆ optional", result.optionalReqIds, extra)
 
     def extraImpliedBySomethingVisible =
       E.forall(extra)(id =>
-        E.test(s"$id is implied by something visible",
+        E.test(s"$id should be implied by something visible",
           p.content.implications.backwards(id).exists(all.contains)))
+        .rename("All extra reqs should be implied by something visible")
 
     def extraTransitivelyImpliedByInputs =
       E.forall(extra)(id =>
-        E.test(s"$id is implied by something visible",
-          p.implicationTgtToSrcTC(id).exists(parent => input.contains(parent))))
+        E.test(s"$id should be transitively implied by inputs",
+          impTgtToSrcTC(id).exists(parent => input.contains(parent))))
+        .rename("All extra reqs should be transitively implied by inputs")
 
     def ifAutosActioned: EvalL =
       perform(mode, autoAndInput).map { event =>
@@ -65,18 +69,51 @@ final class DeletionProps(mode: DeleteOrRestore,
       perform(mode, all).map { event =>
         val p2 = applyEventSuccessfully(p, event)
 
-//        println("="*120)
-//        println("After All: " + event)
-//        println(p2.prettyPrintImplicationGraph)
+//        println("=" * 120)
+//        println(s"Inputs = $input")
+//        println(s"Auto   = $auto")
+//        println(s"Off    = $off")
+//        println(Util.sideBySideStrings(p.prettyPrintImplicationGraph, p2.prettyPrintImplicationGraph))
 //        println()
 
-        // TODO restored have dead imps (is this always true? children of this case might not hold)
+        // Currently, Delete/Restore logic doesn't go through already deleted/restored stuff to find transitive eligible
+        // candidates. This would require showing users a bunch of child reqs that are already in the target state and
+        // can't be selected. Rather than complicate the UX, for now the delete form only shows deletable stuff.
+        //
+        // Example:
+        // ================
+        // Implication tree
+        // ================
+        // 41629!
+        // . 29264
+        // . . 21800
+        // . . 26788
+        // . . . 21800
+        // . . . 30427!
+        // ================
+        // This only presents 41629 as a candidate for restoration, even though transitively 30427 could be considered
+        // a candidate for restoration too.
 
-        // inputs have no dead imps
+        val impSrcToTgtTC2 =
+          p2.content.implications.transitiveClosure(
+            Forwards,
+            p2.content.reqs.idIterator,
+            id => p2.content.reqs.need(id).allowLiveChange(p2.config.reqTypes) match {
+              case Allow =>
+                def isInput = input.contains(id)
+                def wasAlreadyInTargetState = p.content.reqs.need(id).live(p.config.reqTypes) ==* mode.toState
+                if (!isInput && wasAlreadyInTargetState)
+                  TransitiveClosure.Filter.Exclude
+                else
+                  TransitiveClosure.Filter.Follow
+              case Deny =>
+                TransitiveClosure.Filter.Exclude
+            })
+
         E.forall(input.whole)(id =>
-          E.test(s"All transitive implications of input $id are now ${mode.toState}",
-            p2.implicationSrcToTgtTC(id).forall(child =>
-              p2.content.reqs.need(child).live(p2.config.reqTypes) ==* mode.toState)))
+          E.equal(s"All transitive implications of input $id are now ${mode.toState}",
+            impSrcToTgtTC2(id).filter(p2.content.reqs.need(_).live(p2.config.reqTypes) !=* mode.toState),
+            Set.empty[ReqId]))
 
       }.getOrElse(E.pass).rename("ifAllActioned")
 
@@ -101,8 +138,7 @@ final class DeletionProps(mode: DeleteOrRestore,
       E.test("Off should be empty", off.isEmpty)
 
     def autoIsEverythingImplied =
-      E.equal("auto = TC", auto,
-        input.iterator.map(p.implicationSrcToTgtTC(_)).reduce(_ ++ _) -- input.whole)
+      E.equal("auto = TC", auto, input.iterator.map(impSrcToTgtTC(_)).reduce(_ ++ _) -- input.whole)
 
       // TODO Pending: Restore
 //    def performReverse = {
@@ -127,23 +163,27 @@ final class DeletionProps(mode: DeleteOrRestore,
       .rename(s"basic(${input.whole.map(_.value).mkString(",")})")
   }
 
+  private def eligible(p: Project): Req => Boolean =
+    r => r.live(p.config.reqTypes).is(mode.fromState) && r.allowLiveChange(p.config.reqTypes).is(Allow)
+
   def allProps =
     testWithInputs(projectBasic, _ => true, basic).rename("projectBasic") &
-      testWithInputs(projectFree, _.live(projectFree.config.reqTypes) is mode.fromState, free).rename("projectFree")
+      testWithInputs(projectFree, eligible(projectFree), free).rename("projectFree")
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 object DeletionProps {
-
   final class Results(mode: DeleteOrRestore, val input: NonEmptySet[ReqId], val p: Project) {
     val E = EvalOver(input)
 
     val result: DeletionLogic.Data =
       if (mode ==* Delete)
         DeletionLogic.Data.forReqs(p, input)
-      else
-        ???
+      else {
+        val d = RestorationLogic.Data.forReqs(p, input)
+        DeletionLogic.Data(d.project, d.restorableReqs, Vector.empty, d.initialReqs, Set.empty)
+      }
 
     val auto: Set[ReqId] =
       result.initialReqs -- input.whole
@@ -159,6 +199,12 @@ object DeletionProps {
 
     val autoAndInput: Set[ReqId] =
       auto ++ input.whole
+
+    lazy val impSrcToTgtTC =
+      changableImpTC(p, Forwards)
+
+    val impTgtToSrcTC =
+      changableImpTC(p, Backwards)
   }
 
   def perform(mode: DeleteOrRestore, reqIds: Set[ReqId]): Option[Event] =
@@ -167,14 +213,24 @@ object DeletionProps {
       case Restore => Some(ContentRestore(reqIds, Set.empty))
     }
 
+  def changableImpTC(p: Project, dir: Direction) =
+    p.content.implications.transitiveClosure(
+      dir,
+      p.content.reqs.idIterator,
+      p.content.reqs.need(_).allowLiveChange(p.config.reqTypes) match {
+        case Allow => TransitiveClosure.Filter.Follow
+        case Deny  => TransitiveClosure.Filter.Exclude
+      })
+
+
   def chooseInputs(p: Project, f: Req => Boolean): List[NonEmptySet[ReqId]] = {
     val ids     = p.content.reqs.reqIterator.filter(f).map(_.id).toList
     val idCount = ids.size
     val singles = ids.take(20).map(NonEmptySet one _)
-    val pairs   = ids.combinations(2).map(NonEmptySet force _.toSet).take(6).toList // TODO THIS IS REALLY SLOW
+    val pairs   = ids.combinations(2).map(NonEmptySet force _.toSet).take(6).toList
     var l = singles ::: pairs
     if (idCount > 4)
-      l :::= ids.combinations(idCount >> 1).map(NonEmptySet force _.toSet).take(6).toList // TODO THIS IS REALLY SLOW
+      l :::= ids.combinations(idCount >> 1).map(NonEmptySet force _.toSet).take(6).toList
     l
   }
 

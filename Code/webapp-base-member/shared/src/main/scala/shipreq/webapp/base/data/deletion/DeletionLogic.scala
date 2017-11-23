@@ -125,7 +125,7 @@ object DeletionLogic {
 
       // Copy-paste with Backend#render
       def liveGivenState(r: Req): Live =
-        (Dead when select.contains(r.id)) & r.live(p.config.reqTypes)
+        Dead.when(select contains r.id) //& r.live(p.config.reqTypes)
 
       // Decide which implied reqs to recommend cascading deletion
       // (I'm sure there's a smarter way but this will do)

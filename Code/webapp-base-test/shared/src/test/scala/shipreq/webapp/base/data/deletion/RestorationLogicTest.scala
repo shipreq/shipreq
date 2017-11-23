@@ -12,7 +12,7 @@ object RestorationLogicTest extends TestSuite {
     'props - {
       val g = DeletionProps.RandomData(Restore).genProps
       g.mustSatisfyE(_.allProps)(DefaultSettings.propSettings.setSampleSize(7 * 1))
-      // scala.util.Try(g.bugHunt(10009, 8)(Prop.eval(_.allProps))(DefaultSettings.propSettings.setDebug)); ()
+//       scala.util.Try(g.bugHunt(100, 500)(Prop.eval(_.allProps))(DefaultSettings.propSettings.setDebug)); ()
     }
 
   }
