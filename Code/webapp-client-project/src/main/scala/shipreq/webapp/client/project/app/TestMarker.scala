@@ -17,6 +17,7 @@ object TestMarker {
   }
 
   val deletionForm = create()
+  val restorationForm = create()
   val useCaseStepLabel = create()
   val useCaseStepText = create()
   val useCaseTailStep = create()

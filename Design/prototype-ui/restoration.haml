@@ -1,0 +1,173 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title CardBoard | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.min.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+      #main > table {margin-bottom:4em}
+
+      #table3 {margin-top:1ex}
+      #table3 >thead>tr>th:last-child {text-align:center}
+      #table3 >thead>tr:nth-child(2)>th {text-align:center; padding-top:0!important}
+      #table3 >thead i.icon {margin:0!important}
+      #table3 >thead>tr>th,
+      #table3 >tbody>tr>td {padding:.44em!important}
+      #table3 >tbody>tr>td {line-height: 1em}
+      /*#table3 >tbody>tr>td:last-child {border-left:none!important}*/
+      #table3 .col-sel {width:24px; text-align:center}
+      #table3 .pointer {cursor:pointer}
+      #table3 td.col-id {display:flex; white-space:nowrap}
+      #table3 td.col-id .indent-1 {width: 0ex}
+      #table3 td.col-id .indent-2 {width: 2ex}
+      #table3 td.col-id .prefix {color:#a8a8a8}
+      #table3 td.col-id .prefix::before {content:"↳"}
+      #table3 td.col-id .id:not(:first-child) {flex-grow:1; padding-left:0.5ex}
+      #table3 .imps span {white-space:nowrap}
+      #table3 .imps span:not(:first-child) {margin-left:1ex}
+      #table3 .imps span:not(:last-child)::after {content:","}
+
+      #table3 tr.live {background-color:rgba(0,192,0,.07)}
+      #table3 tr.live:hover {background-color:rgba(0,192,0,.16)}
+      #table3 .col-imp.dead span,
+      #table3 tr.dead .col-id .id,
+      #table3 tr.dead .col-title {color:hsl(0, 71%, 50%)}
+      #table3 tr.dead:hover {background-color:hsla(0, 71%, 50%, .10)}
+
+  %body
+
+    %nav(style="margin-bottom:5rem")
+      .ui.menu.borderless.fixed.inverted
+        .item
+          %img{src: "logo-only-dark2.svg"}
+
+        .item
+          .ui.breadcrumb
+            %a.section{href: "member-home.haml.html"} Projects
+            %i.divider.icon.right.angle
+            .ui.dropdown.inline
+              CardBoard&nbsp;
+              %i.icon.dropdown
+              .menu
+                .item.active CardBoard
+                .item ShipReq
+
+        .item.ui.right.dropdown.simple
+          @japgolly
+          -# %i.dropdown.icon
+          .menu
+            %a.item{href: "member-account.haml.html"} Account
+            .item Logout
+
+    -# =============================================================================================
+    .ui.container#main
+
+      %h2 You are about to restore the following requirements:
+
+      .reqHelp(style="margin-top:2em")
+        In addition to those you selected, implied requirements are also presented with exclusively-implied requirements auto-selected for restoration.
+
+      -# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      %table.ui.table.celled.compact.unstackable#table3
+        %thead
+          %tr
+            %th.col-sel(rowspan=2)
+              %input.indeterminate(type="checkbox")
+            %th.col-id(rowspan=2) ID
+            %th.col-title(rowspan=2) Title
+            %th(colspan=2 style="border-bottom:none") Implied By
+          %tr
+            %th.col-imp.dead(style="border-left: 1px solid rgba(34,36,38,.1);")
+              %i.icon.trash.outline.red
+            %th.col-imp.live(style="border-left:none")
+              %i.icon.unhide
+        %tbody
+
+          %tr.live
+            %td.col-sel
+              %input(type="checkbox" disabled=1 checked=1)
+            %td.col-id
+              .id UC-4
+            %td.col-title
+              Pellentesque et iaculis ex, id pellentesque libero
+            %td.col-imp.dead
+            %td.col-imp.live
+
+          %tr.dead
+            %td.col-sel.pointer
+              %input(type="checkbox")
+            %td.col-id
+              .indent-1
+              .prefix
+              .id FR-2
+            %td.col-title
+              Phasellus vitae venenatis quam, a pretium ligula
+            %td.col-imp.dead
+              .imps
+                %span UC-1
+            %td.col-imp.live
+              .imps
+                %span UC-4
+
+          %tr.dead
+            %td.col-sel.pointer
+              %input(type="checkbox")
+            %td.col-id
+              .indent-2
+              .prefix
+              .id FR-8
+            %td.col-title
+              Duis varius, magna eget varius vehicula, tellus erat aliquam urna, in tristique nisi tortor sed ex.
+            %td.col-imp.dead
+              .imps
+                %span FR-2
+            %td.col-imp.live
+
+          %tr.live
+            %td.col-sel.pointer
+              %input(type="checkbox" checked=1)
+            %td.col-id
+              .indent-1
+              .prefix
+              .id CO-1
+            %td.col-title
+              Fusce vel lobortis sapien
+            %td.col-imp.dead
+            %td.col-imp.live
+              .imps
+                %span UC-4
+
+          %tr.live
+            %td.col-sel.pointer
+              %input(type="checkbox" checked=1)
+            %td.col-id
+              .indent-2
+              .prefix
+              .id FR-13
+            %td.col-title
+              Nulla bibendum finibus dui in cursus
+            %td.col-imp.dead
+            %td.col-imp.live
+              .imps
+                %span CO-1
+
+
+      %section(style="text-align:right")
+        %button.ui.button.basic.black(style="margin-right:2.6em")
+          %i.icon.remove
+          Cancel
+        %button.ui.button.basic.green
+          %i.icon.undo
+          Restore
+
+  :javascript
+    $('.ui.dropdown').dropdown();
+    $('.indeterminate').toArray().forEach(i => i.indeterminate = true);

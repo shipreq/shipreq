@@ -205,8 +205,9 @@ object Style extends StyleSheet.Inline {
 
       def actionCtrls = viewCtrls
 
-      val actionCtrlButton = style(
-        marginRight(ctrlHGap).important)
+      val actionCtrlButtonWrap = style(
+        marginRight(ctrlHGap),
+        display.inline)
 
       val summary = style(
         flexGrow(1),
@@ -405,7 +406,7 @@ object Style extends StyleSheet.Inline {
   }
 
   // ===================================================================================================================
-  object deletionForm {
+  object deletionRestorationForms {
 
     val main = style(
       margin.horizontal(auto),
@@ -448,6 +449,14 @@ object Style extends StyleSheet.Inline {
 
     val reqTableTitle = styleF(D.live)(l => styleS(mixinIf(l is Dead)(color(deadTextColour))))
     val reqTableImps = styleF(D.live)(l => styleS(reqTableTitle(l), whiteSpace.nowrap))
+  }
+
+  // ===================================================================================================================
+  object deletionForm {
+    import deletionRestorationForms.deadTextColour
+
+    def main    = deletionRestorationForms.main
+    def reqHelp = deletionRestorationForms.reqHelp
 
     val reqTableRow = styleF(D.live) {
       case Live => styleS(
@@ -464,6 +473,25 @@ object Style extends StyleSheet.Inline {
     val bottomSections = style(display.flex, marginTop(4 em))
     val bottomSectionL = style(flexGrow(1), alignSelf.flexEnd)
     val bottomSectionR = style(paddingLeft(6 em), alignSelf.flexEnd)
+  }
+
+  // ===================================================================================================================
+  object restorationForm {
+    import deletionRestorationForms.deadTextColour
+
+    def main    = deletionRestorationForms.main
+    def reqHelp = deletionRestorationForms.reqHelp
+
+    val reqTableRow = styleF(D.live) {
+      case Live => styleS(
+        backgroundColor(rgba(0, 192, 0, .07)),
+        &.hover(backgroundColor(rgba(0, 192, 0, .16))))
+      case Dead => styleS(
+        &.hover(backgroundColor(deadTextColour(.1))))
+    }
+
+    val bottomSection = style(marginTop(4 em), textAlign.right)
+    val buttonGap     = style(width(2.6 em), display.inlineBlock)
   }
 
   // ===================================================================================================================
@@ -725,7 +753,9 @@ object Style extends StyleSheet.Inline {
     help.examplesTable,
     impgraphPage.graph,
     cfg.deadMnemonic,
-    deletionForm.reqHelp,
+    deletionRestorationForms.main,
+    deletionForm.bottomSections,
+    restorationForm.bottomSection,
     reqtable.creation.buttonDropdown,
     reqtable.filterEditor.input(Valid),
     reqtable.sortEditor.dragArea,

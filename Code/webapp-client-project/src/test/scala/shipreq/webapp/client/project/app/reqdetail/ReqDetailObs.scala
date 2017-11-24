@@ -8,7 +8,7 @@ import shipreq.webapp.base.data.{Dead, Live, ShowDead}
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.client.project.app.TestMarker
-import shipreq.webapp.client.project.widgets.DeletionFormObs
+import shipreq.webapp.client.project.feature.deletion.{DeletionFormObs, RestorationFormObs}
 import ReqDetailTestDsl.Mode
 import ReqDetailObs.NAE
 
@@ -38,6 +38,7 @@ final class ReqDetailObs($: HtmlDomZipper) {
   }
 
   val deletionForm = DeletionFormObs.option($)
+  val restorationForm = RestorationFormObs.option($)
 
   object generic {
     private val root = $(">*")
@@ -149,6 +150,8 @@ final class ReqDetailObs($: HtmlDomZipper) {
       Mode.Error
     else if (deletionForm.isDefined)
       Mode.Delete
+    else if (restorationForm.isDefined)
+      Mode.Restore
     else
       Mode.Details
 

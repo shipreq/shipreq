@@ -16,7 +16,8 @@ object ReqDetailTestDsl {
   object Mode {
     case object Error   extends Mode
     case object Details extends Mode
-    case object Delete extends Mode
+    case object Delete  extends Mode
+    case object Restore extends Mode
     implicit def univEq: UnivEq[Mode] = UnivEq.derive
     implicit def equal : Equal [Mode] = Equal.by_==
   }
@@ -125,6 +126,7 @@ object ReqDetailTestDsl {
     *.chooseInvariant("Mode invariants")(i => i.state.mode match {
       case Mode.Error   => invariantsWhenBad
       case Mode.Delete  => *.emptyInvariant
+      case Mode.Restore => *.emptyInvariant
       case Mode.Details =>
         if (i.state.pubidStr startsWith "UC-")
           invariantsUC
@@ -201,13 +203,24 @@ object ReqDetailTestDsl {
       }))(i => clickEnabled(i.obs.generic.lifeChangeButton.get))
 
   // Hit delete on the delete screen
-  def deleteDelete =
+  def deleteScreenDelete =
     *.action("Hit Delete")(i => clickEnabled(i.obs.deletionForm.get.deleteButton))
       .updateState(stateMode set Mode.Details)
 
   // Hit cancel on the delete screen
-  def deleteCancel =
+  def deleteScreenCancel =
     *.action("Hit Cancel")(i => clickEnabled(i.obs.deletionForm.get.cancelButton))
+      .updateState(stateMode set Mode.Details)
+
+
+  // Hit restore on the restore screen
+  def restoreScreenRestore =
+    *.action("Hit Restore")(i => clickEnabled(i.obs.restorationForm.get.restoreButton))
+      .updateState(stateMode set Mode.Details)
+
+  // Hit cancel on the restore screen
+  def restoreScreenCancel =
+    *.action("Hit Cancel")(i => clickEnabled(i.obs.restorationForm.get.cancelButton))
       .updateState(stateMode set Mode.Details)
 
   val doubleClickTitle =

@@ -96,7 +96,7 @@ object ReqDetailTest extends TestSuite {
       ))
 
       'dead - test("UC-1")(Plan.action(
-        changeLife.updateState(stateMode set Mode.Delete) >> deleteDelete
+        changeLife.updateState(stateMode set Mode.Delete) >> deleteScreenDelete
           +> life.assert(Dead)
           +> tailStepAC.test("doesn't exist")(_.isEmpty)
           +> tailStepEC.test("doesn't exist")(_.isEmpty)
@@ -125,9 +125,10 @@ object ReqDetailTest extends TestSuite {
     }
 
     'deleteRestore - test("UC-1")(Plan.action(
-      changeLife.updateState(stateMode set Mode.Delete) <+ life.assert(Live)
-      >> deleteDelete                                   +> life.assert(Dead)
-      >> changeLife                                     +> life.assert(Live)
+      changeLife.updateState(stateMode set Mode.Delete)     <+ life.assert(Live)
+      >> deleteScreenDelete                                 +> life.assert(Dead)
+      >> changeLife.updateState(stateMode set Mode.Restore)
+      >> restoreScreenRestore                               +> life.assert(Live)
     ))
 
     'editors - test("UC-1")(Plan(

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html><head><title>CardBoard | ShipReq</title><script src="../node_modules/jquery/dist/jquery.min.js"></script><link href="../semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="../semantic/dist/semantic.min.js"></script><style type="text/css">
+body {padding:1rem}
+.ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+.ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+.ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+#main > table {margin-bottom:4em}
+
+#table3 {margin-top:1ex}
+#table3 >thead>tr>th:last-child {text-align:center}
+#table3 >thead>tr:nth-child(2)>th {text-align:center; padding-top:0!important}
+#table3 >thead i.icon {margin:0!important}
+#table3 >thead>tr>th,
+#table3 >tbody>tr>td {padding:.44em!important}
+#table3 >tbody>tr>td {line-height: 1em}
+/*#table3 >tbody>tr>td:last-child {border-left:none!important}*/
+#table3 .col-sel {width:24px; text-align:center}
+#table3 .pointer {cursor:pointer}
+#table3 td.col-id {display:flex; white-space:nowrap}
+#table3 td.col-id .indent-1 {width: 0ex}
+#table3 td.col-id .indent-2 {width: 2ex}
+#table3 td.col-id .prefix {color:#a8a8a8}
+#table3 td.col-id .prefix::before {content:"↳"}
+#table3 td.col-id .id:not(:first-child) {flex-grow:1; padding-left:0.5ex}
+#table3 .imps span {white-space:nowrap}
+#table3 .imps span:not(:first-child) {margin-left:1ex}
+#table3 .imps span:not(:last-child)::after {content:","}
+
+#table3 tr.live {background-color:rgba(0,192,0,.07)}
+#table3 tr.live:hover {background-color:rgba(0,192,0,.16)}
+#table3 .col-imp.dead span,
+#table3 tr.dead .col-id .id,
+#table3 tr.dead .col-title {color:hsl(0, 71%, 50%)}
+#table3 tr.dead:hover {background-color:hsla(0, 71%, 50%, .10)}
+
+</style></head><body><nav style="margin-bottom:5rem"><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="member-home.haml.html" class="section">Projects</a><i class="divider icon right angle"></i><div class="ui dropdown inline">CardBoard&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div></div></div><div class="item ui right dropdown simple">@japgolly<div class="menu"><a href="member-account.haml.html" class="item">Account</a><div class="item">Logout</div></div></div></div></nav><div class="ui container" id="main"><h2>You are about to restore the following requirements:</h2><div style="margin-top:2em" class="reqHelp">In addition to those you selected, implied requirements are also presented with exclusively-implied requirements auto-selected for restoration.</div><table class="ui table celled compact unstackable" id="table3"><thead><tr><th rowspan="2" class="col-sel"><input type="checkbox" class="indeterminate" /></th><th rowspan="2" class="col-id">ID</th><th rowspan="2" class="col-title">Title</th><th colspan="2" style="border-bottom:none">Implied By</th></tr><tr><th style="border-left: 1px solid rgba(34,36,38,.1);" class="col-imp dead"><i class="icon trash outline red"></i></th><th style="border-left:none" class="col-imp live"><i class="icon unhide"></i></th></tr></thead><tbody><tr class="live"><td class="col-sel"><input type="checkbox" disabled="1" checked="1" /></td><td class="col-id"><div class="id">UC-4</div></td><td class="col-title">Pellentesque et iaculis ex, id pellentesque libero</td><td class="col-imp dead"></td><td class="col-imp live"></td></tr><tr class="dead"><td class="col-sel pointer"><input type="checkbox" /></td><td class="col-id"><div class="indent-1"></div><div class="prefix"></div><div class="id">FR-2</div></td><td class="col-title">Phasellus vitae venenatis quam, a pretium ligula</td><td class="col-imp dead"><div class="imps"><span>UC-1</span></div></td><td class="col-imp live"><div class="imps"><span>UC-4</span></div></td></tr><tr class="dead"><td class="col-sel pointer"><input type="checkbox" /></td><td class="col-id"><div class="indent-2"></div><div class="prefix"></div><div class="id">FR-8</div></td><td class="col-title">Duis varius, magna eget varius vehicula, tellus erat aliquam urna, in tristique nisi tortor sed ex.</td><td class="col-imp dead"><div class="imps"><span>FR-2</span></div></td><td class="col-imp live"></td></tr><tr class="live"><td class="col-sel pointer"><input type="checkbox" checked="1" /></td><td class="col-id"><div class="indent-1"></div><div class="prefix"></div><div class="id">CO-1</div></td><td class="col-title">Fusce vel lobortis sapien</td><td class="col-imp dead"></td><td class="col-imp live"><div class="imps"><span>UC-4</span></div></td></tr><tr class="live"><td class="col-sel pointer"><input type="checkbox" checked="1" /></td><td class="col-id"><div class="indent-2"></div><div class="prefix"></div><div class="id">FR-13</div></td><td class="col-title">Nulla bibendum finibus dui in cursus</td><td class="col-imp dead"></td><td class="col-imp live"><div class="imps"><span>CO-1</span></div></td></tr></tbody></table><section style="text-align:right"><button style="margin-right:2.6em" class="ui button basic black"><i class="icon remove"></i>Cancel</button><button class="ui button basic green"><i class="icon undo"></i>Restore</button></section></div></body>
+<script type="text/javascript">
+//<![CDATA[
+$('.ui.dropdown').dropdown();
+$('.indeterminate').toArray().forEach(i => i.indeterminate = true);
+//]]>
+</script>
+</html>

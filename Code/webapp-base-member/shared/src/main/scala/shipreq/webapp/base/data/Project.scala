@@ -1,6 +1,8 @@
 package shipreq.webapp.base.data
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.scalaz_ext.ScalazMacros
+import japgolly.microlibs.stdlib_ext.MutableArray
 import monocle.{Lens, Optional}
 import monocle.macros.Lenses
 import monocle.std.option.pSome
@@ -107,4 +109,37 @@ final case class Project(name         : Project.Name,
 
   def reqtableViewIterator: Iterator[reqtable.SavedView] =
     reqtableViews.fold[Iterator[reqtable.SavedView]](Iterator.empty)(_.iterator)
+
+  def prettyPrintImplicationGraph: String =
+    Util.quickJSB { sb =>
+
+      val indentFn: Int => String =
+        Memo(". " * _)
+
+      val _fmt: ReqId => String =
+        id => {
+          var a = id.value.toString
+          val r = content.reqs.need(id)
+          if (r.live(config.reqTypes) is Dead) {
+            a += (if (r.liveExplicitly is Dead) "!" else "-")
+            if (r.allowLiveChange(config.reqTypes) is Deny) a += "!"
+          }
+          a
+        }
+
+      val fmt = Memo(_fmt)
+
+      var first = true
+
+      def go(_ids: TraversableOnce[ReqId], indent: Int): Unit = {
+        val indentStr = indentFn(indent)
+        MutableArray(_ids).map(id => (id, fmt(id))).sortBy(_._2).array.foreach { case (id, show) =>
+          if (first) first = false else sb append '\n'
+          sb append indentStr
+          sb append show
+          go(content.implications.forwards(id), indent + 1)
+        }
+      }
+      go(content.reqs.idIterator.filter(content.implications.backwards(_).isEmpty), 0)
+    }
 }

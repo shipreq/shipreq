@@ -46,6 +46,8 @@ sealed abstract class ReqT[+RT <: ReqTypeId] {
   val pubid: PubidT[RT]
   val title: Text.AnyOptional
 
+  def liveExplicitly: Live
+
   def live(reqTypes: ReqTypes): Live
 
   /** Can this req's (explicit-) live state be changed? */
@@ -425,9 +427,9 @@ object Requirements {
 }
 
 @Lenses
-case class Requirements(genericReqs: GenericReqIMap,
-                        useCases   : UseCases,
-                        pubids     : PubidRegister) {
+final case class Requirements(genericReqs: GenericReqIMap,
+                              useCases   : UseCases,
+                              pubids     : PubidRegister) {
 
   def isEmpty = reqIterator.isEmpty
   def nonEmpty = !isEmpty

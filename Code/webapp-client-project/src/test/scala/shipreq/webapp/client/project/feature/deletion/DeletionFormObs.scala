@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.widgets
+package shipreq.webapp.client.project.feature.deletion
 
 import org.scalajs.dom.html
 import shipreq.webapp.base.test.TestState._

@@ -1,5 +1,8 @@
-package shipreq.webapp.client.project.widgets
+package shipreq.webapp.client.project.feature.deletion
 
+import nyaya.prop.Prop
+import nyaya.test.DefaultSettings
+import nyaya.test.PropTest._
 import utest._
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
@@ -7,11 +10,11 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{IMap, Util}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
-import WebappTestUtil._
-import DeletionForm.{Data, GroupRow}
+import DeletionRestorationLogic.{Data, GroupRow}
 import UnsafeTypes._
+import WebappTestUtil._
 
-object DeletionFormTestData {
+object DeletionLogicTestData {
   import ProjectDsl._
   import ProjectDslInternals.{ToState, Composite}
   import SampleProject.Values._
@@ -199,7 +202,7 @@ object DeletionFormTestData {
     |. 512 <- 510 511
   """.stripMargin.trim
 
-  lazy val result               = DeletionForm.Data.forReqsAndCodeGroups__TEST_ONLY(p, NonEmptySet force _selectedReqIds, _selectedRCGs)
+  lazy val result               = DeletionRestorationLogic.forReqsAndCodeGroups__TEST_ONLY(p, NonEmptySet force _selectedReqIds, _selectedRCGs)
   lazy val expectInitialReqs    = _expectInitialReqs
   lazy val expectInitialRCGs    = _expectInitialRCGs
   lazy val expectUnselectedReqs = _expectUnselectedReqs
@@ -207,7 +210,7 @@ object DeletionFormTestData {
 
   def fmtReqRows(p: Data): String =
     Util.quickSB { sb =>
-      p.deletableReqs.foreach { r =>
+      p.actionableReqs.foreach { r =>
         if (sb.nonEmpty)
           sb append '\n'
         for (_ <- 1 to r.indent)
@@ -224,8 +227,8 @@ object DeletionFormTestData {
     }
 }
 
-object DeletionFormTest extends TestSuite {
-  import DeletionFormTestData._
+object DeletionLogicTest extends TestSuite {
+  import DeletionLogicTestData._
 
   implicit val rcgRowEquality = UnivEq.derive[GroupRow]
 
@@ -248,14 +251,20 @@ object DeletionFormTest extends TestSuite {
 
     'deletableGroups {
       val e = expectDeletableRCGs
-      val a = result.deletableGroups
+      val a = result.actionableGroups
       assertSet("Deletable groups", a.toSet, e.toSet)
       assertEq("Deletable group count", a.length, e.length)
       for ((ar,er) <- a zip e)
         assertEq("Deletable group", ar, er)
     }
 
-    'initialReqs   - assertSet("Initial reqs"  , result.initialState.selectedReqs  .selected, expectInitialReqs)
-    'initialGroups - assertSet("Initial groups", result.initialState.selectedGroups.selected, expectInitialRCGs)
+    'initialReqs   - assertSet("Initial reqs"  , result.initialReqs, expectInitialReqs)
+    'initialGroups - assertSet("Initial groups", result.initialGroups, expectInitialRCGs)
+
+    'props - {
+      val g = DeletionProps.RandomData(Delete).genProps
+      g.mustSatisfyE(_.allProps)(DefaultSettings.propSettings.setSampleSize(2))
+      // scala.util.Try(g.bugHunt(10009, 8)(Prop.eval(_.allProps))(DefaultSettings.propSettings.setDebug)); ()
+    }
   }
 }
