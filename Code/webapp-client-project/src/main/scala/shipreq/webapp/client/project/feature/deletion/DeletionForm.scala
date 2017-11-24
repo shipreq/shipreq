@@ -60,75 +60,15 @@ object DeletionForm {
         extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
         showInstructions = true)
 
-    private def renderReqTable(p: Props, s: State): VdomElement = {
-      val project        = p.data.project
-      val customReqTypes = project.config.reqTypes
-      val selection      = s.selectedReqs.updateBy(setReqSel).legal(p.data.optionalReqIds)
-
-      val header: VdomTag =
-        <.thead(
-          <.tr(
-            <.th(^.rowSpan := 2, *.reqTableSelCol, selection.total.checkboxAndOnClick),
-            <.th(^.rowSpan := 2, UiText.ColumnNames.pubid),
-            <.th(^.rowSpan := 2, UiText.ColumnNames.title),
-            <.th(^.colSpan := 2, *.reqTableHeaderImpsTop, UiText.ColumnNames.implications(Backwards))),
-          <.tr(
-            <.th(
-              *.reqTableHeaderImpsBottomLeft,
-              Icon.TrashOutline.withColour(Colour.Red).tag(*.reqTableHeaderImpsIcon)),
-            <.th(
-              *.reqTableHeaderImpsBottomRight,
-              Icon.Unhide.tag(*.reqTableHeaderImpsIcon))))
-
-      val liveGivenState: Req => Live =
-        r => Dead when s.selectedReqs.selected.contains(r.id)
-
-      val renderImpliedByItem =
-        p.widgets.PubidFormat(Plain, *.reqTableImps(_), liveFn = liveGivenState)
-
-      def reqRow(rr: ReqRow): VdomTag = {
-        val req: Req = rr.req
-        val id: ReqId = rr.req.id
-        val live: Live = liveGivenState(req)
-
-        val sel: TagMod =
-          if (selection.legal contains id)
-            selection(rr.req.id).checkboxAndOnClick
-          else
-            Widgets.checkboxReadOnly(On)
-
-        val pubidStr: String =
-          PlainText.pubid(req.pubid, project)
-
-        val indentedPubid: TagMod =
-          if (rr.indent ==* 0)
-            <.div(*.pubid(live), pubidStr)
-          else
-            TagMod(
-              <.div(^.width := *.indentWidth(rr.indent)),
-              <.div(*.reqTableTreeIndicator, "↳"),
-              <.div(*.pubid(live), pubidStr))
-
-        val imps: Live.Values[VdomTag] =
-          Live.Values
-            .partition[Vector, Req](rr.impliedBy)(liveGivenState)
-            .map(renderImpliedByItem.reqs)
-
-        <.tr(
-          *.reqTableRow(live),
-          ^.key := id.value,
-          <.td(*.reqTableSelCol, sel),
-          <.td(*.reqTablePubidCell, indentedPubid),
-          <.td(*.reqTableTitle(live), p.widgets reqTitle rr.req),
-          <.td(*.reqTableImpsCell, imps(Dead)),
-          <.td(*.reqTableImpsCell, imps(Live)))
-      }
-
-      Table.celledCompactUnstackable(
-        *.reqTable,
-        header,
-        <.tbody(p.data.actionableReqs.toVdomArray(reqRow)))
-    }
+    private def renderReqTable(p: Props, selectedReqs: Selection[ReqId]): VdomElement =
+      SharedUI.reqTable(
+        Delete,
+        p.data.project,
+        p.widgets,
+        p.data.actionableReqs,
+        selectedReqs,
+        selectedReqs.updateBy(setReqSel).legal(p.data.optionalReqIds),
+        *.reqTableRow(_))
 
     private val cancelButton: VdomTag =
       Button(
@@ -166,7 +106,7 @@ object DeletionForm {
         <.h2("You are about to delete the following requirements:"),
         <.section(
           <.div(*.reqHelp, "In addition to those you selected, implied requirements are also presented with exclusively-implied requirements auto-selected for deletion."),
-          renderReqTable(p, s)),
+          renderReqTable(p, s.selectedReqs)),
         <.div(*.bottomSections,
           <.div(*.bottomSectionL, deletionReason),
           <.div(*.bottomSectionR, cancelButton, <.br, deleteButton)))

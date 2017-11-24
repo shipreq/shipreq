@@ -406,7 +406,7 @@ object Style extends StyleSheet.Inline {
   }
 
   // ===================================================================================================================
-  object deletionForm {
+  object deletionRestorationForms {
 
     val main = style(
       margin.horizontal(auto),
@@ -449,6 +449,14 @@ object Style extends StyleSheet.Inline {
 
     val reqTableTitle = styleF(D.live)(l => styleS(mixinIf(l is Dead)(color(deadTextColour))))
     val reqTableImps = styleF(D.live)(l => styleS(reqTableTitle(l), whiteSpace.nowrap))
+  }
+
+  // ===================================================================================================================
+  object deletionForm {
+    import deletionRestorationForms.deadTextColour
+
+    def main    = deletionRestorationForms.main
+    def reqHelp = deletionRestorationForms.reqHelp
 
     val reqTableRow = styleF(D.live) {
       case Live => styleS(
@@ -469,23 +477,10 @@ object Style extends StyleSheet.Inline {
 
   // ===================================================================================================================
   object restorationForm {
-    import deletionForm.deadTextColour
+    import deletionRestorationForms.deadTextColour
 
-    def main                          = deletionForm.main
-    def reqHelp                       = deletionForm.reqHelp
-    def reqTable                      = deletionForm.reqTable
-    def reqTableImpsCell              = deletionForm.reqTableImpsCell
-    def reqTableHeaderImpsTop         = deletionForm.reqTableHeaderImpsTop
-    def reqTableHeaderImpsBottomLeft  = deletionForm.reqTableHeaderImpsBottomLeft
-    def reqTableHeaderImpsBottomRight = deletionForm.reqTableHeaderImpsBottomRight
-    def reqTableHeaderImpsIcon        = deletionForm.reqTableHeaderImpsIcon
-    def indentWidth(i: Int)           = deletionForm.indentWidth(i)
-    def reqTableSelCol                = deletionForm.reqTableSelCol
-    def reqTablePubidCell             = deletionForm.reqTablePubidCell
-    def reqTableTreeIndicator         = deletionForm.reqTableTreeIndicator
-    def pubid                         = deletionForm.pubid
-    def reqTableTitle                 = deletionForm.reqTableTitle
-    def reqTableImps                  = deletionForm.reqTableImps
+    def main    = deletionRestorationForms.main
+    def reqHelp = deletionRestorationForms.reqHelp
 
     val reqTableRow = styleF(D.live) {
       case Live => styleS(
@@ -758,8 +753,9 @@ object Style extends StyleSheet.Inline {
     help.examplesTable,
     impgraphPage.graph,
     cfg.deadMnemonic,
-    deletionForm.reqHelp,
-    restorationForm.buttonGap,
+    deletionRestorationForms.main,
+    deletionForm.bottomSections,
+    restorationForm.bottomSection,
     reqtable.creation.buttonDropdown,
     reqtable.filterEditor.input(Valid),
     reqtable.sortEditor.dragArea,

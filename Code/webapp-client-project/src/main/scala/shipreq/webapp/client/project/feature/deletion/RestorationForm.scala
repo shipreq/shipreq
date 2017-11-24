@@ -10,7 +10,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd.RestoreContent
-import shipreq.webapp.base.text.{PlainText, TextSearch}
+import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Table}
 import shipreq.webapp.client.project.app.Style.{restorationForm => *}
 import shipreq.webapp.client.project.app.TestMarker
@@ -35,75 +35,15 @@ object RestorationForm {
   final class Backend($: BackendScope[Props, State]) {
     private val setReqSel = Reusable.fn.state($).set
 
-    private def renderReqTable(p: Props, selectedReqs: State): VdomElement = {
-      val project        = p.data.project
-      val customReqTypes = project.config.reqTypes
-      val selection      = selectedReqs.updateBy(setReqSel).legal(p.data.optionalReqIds)
-
-      val header: VdomTag =
-        <.thead(
-          <.tr(
-            <.th(^.rowSpan := 2, *.reqTableSelCol, selection.total.checkboxAndOnClick),
-            <.th(^.rowSpan := 2, UiText.ColumnNames.pubid),
-            <.th(^.rowSpan := 2, UiText.ColumnNames.title),
-            <.th(^.colSpan := 2, *.reqTableHeaderImpsTop, UiText.ColumnNames.implications(Backwards))),
-          <.tr(
-            <.th(
-              *.reqTableHeaderImpsBottomLeft,
-              Icon.TrashOutline.withColour(Colour.Red).tag(*.reqTableHeaderImpsIcon)),
-            <.th(
-              *.reqTableHeaderImpsBottomRight,
-              Icon.Unhide.tag(*.reqTableHeaderImpsIcon))))
-
-      val liveGivenState: Req => Live =
-        r => Live when selectedReqs.selected.contains(r.id)
-
-      val renderImpliedByItem =
-        p.widgets.PubidFormat(Plain, *.reqTableImps(_), liveFn = liveGivenState)
-
-      def reqRow(rr: ReqRow): VdomTag = {
-        val req: Req = rr.req
-        val id: ReqId = rr.req.id
-        val live: Live = liveGivenState(req)
-
-        val sel: TagMod =
-          if (selection.legal contains id)
-            selection(rr.req.id).checkboxAndOnClick
-          else
-            Widgets.checkboxReadOnly(On)
-
-        val pubidStr: String =
-          PlainText.pubid(req.pubid, project)
-
-        val indentedPubid: TagMod =
-          if (rr.indent ==* 0)
-            <.div(*.pubid(live), pubidStr)
-          else
-            TagMod(
-              <.div(^.width := *.indentWidth(rr.indent)),
-              <.div(*.reqTableTreeIndicator, "↳"),
-              <.div(*.pubid(live), pubidStr))
-
-        val imps: Live.Values[VdomTag] =
-          Live.Values
-            .partition[Vector, Req](rr.impliedBy)(liveGivenState)
-            .map(renderImpliedByItem.reqs)
-
-        <.tr(
-          *.reqTableRow(live),
-          ^.key := id.value,
-          <.td(*.reqTableSelCol, sel),
-          <.td(*.reqTablePubidCell, indentedPubid),
-          <.td(*.reqTableTitle(live), p.widgets reqTitle rr.req),
-          <.td(*.reqTableImpsCell, imps(Dead)),
-          <.td(*.reqTableImpsCell, imps(Live)))
-      }
-
-      Table.celledCompactUnstackable(
-        *.reqTable,
-        header,
-        <.tbody(p.data.actionableReqs.toVdomArray(reqRow)))
-    }
+    private def renderReqTable(p: Props, selectedReqs: State): VdomElement =
+      SharedUI.reqTable(
+        Restore,
+        p.data.project,
+        p.widgets,
+        p.data.actionableReqs,
+        selectedReqs,
+        selectedReqs.updateBy(setReqSel).legal(p.data.optionalReqIds),
+        *.reqTableRow(_))
 
     private val cancelButton: VdomTag =
       Button(
