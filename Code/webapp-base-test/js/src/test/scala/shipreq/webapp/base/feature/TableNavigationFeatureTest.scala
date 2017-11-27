@@ -44,11 +44,30 @@ object TableNavigationFeatureTest extends TestSuite {
       this
     }
 
-    def result(): Boolean => List[List[TablePos]] = {
+    def result(): TestMoves = {
       newBatch()
-      Memo.bool(b => if (b) batchMoves.result() else batchSubMoves.result())
+
+      val moveTests: List[List[TablePos]] =
+        batchMoves.result()
+
+      val subTests: List[List[TablePos]] =
+        batchSubMoves.result()
+          .flatten
+          .groupBy(_.copy(sub = None))
+          .iterator
+          .map(_._2)
+          .map {
+            case a :: b :: Nil     if a ==* b      => a :: Nil
+            case h :: (t@(_ :: _)) if h ==* t.last => t
+            case x                                 => x
+          }
+          .toList
+
+      TestMoves(moveTests, subTests)
     }
   }
+
+  case class TestMoves(moveTests: List[List[TablePos]], subTests: List[List[TablePos]])
 
   /**
     * LR = Left to Right = header cells on the left, data cells on the right
@@ -94,7 +113,6 @@ object TableNavigationFeatureTest extends TestSuite {
               <.td(TablePos(0, 5, 1, None), <.input.text,     <.div, <.div(focusable)), // ReqDetail implications *-
               <.td(TablePos(0, 5, 2, None), <.div(focusable), <.div, <.input.text),     // ReqDetail implications -*
               <.td(TablePos(0, 5, 3, None), <.textarea,       <.div, <.textarea),       // ReqDetail implications **
-              // TODO subMove should jump into textarea where as move ignores
               // TODO what about buttons?
             ),
           )
@@ -105,16 +123,16 @@ object TableNavigationFeatureTest extends TestSuite {
       .renderBackend[Backend]
       .build
 
-    val leftMoves = MovesBuilder()
+    val rightMoves = MovesBuilder()
       .general(TablePos(0, 0, 3, None))
-      .general(TablePos(0, 0, 2, None))
       .general(TablePos(0, 0, 1, None))
+      .general(TablePos(0, 0, 2, None))
       .general(TablePos(0, 0, 3, None))
       .newBatch()
-      .general(TablePos(0, 1, 3, None))
-      .general(TablePos(0, 1, 1, None))
       .general(TablePos(0, 1, 0, None))
+      .general(TablePos(0, 1, 1, None))
       .general(TablePos(0, 1, 3, None))
+      .general(TablePos(0, 1, 0, None))
       .newBatch()
       .general(TablePos(0, 2, 1, None))
       .general(TablePos(0, 2, 1, None))
@@ -123,27 +141,27 @@ object TableNavigationFeatureTest extends TestSuite {
       .general(TablePos(0, 3, 0, None))
       .newBatch()
       .general(TablePos(0, 4, 0, None))
-      .general(TablePos(0, 4, 7, Some(PosXY(1, 0))))
-      .general(TablePos(0, 4, 7, Some(PosXY(0, 0))))
-      .general(TablePos(0, 4, 7, None))
-      .general(TablePos(0, 4, 6, Some(PosXY(0, 0))))
-      .general(TablePos(0, 4, 6, None))
-      .general(TablePos(0, 4, 5, Some(PosXY(1, 0))))
-      .general(TablePos(0, 4, 5, Some(PosXY(0, 0))))
-      .subOnly(TablePos(0, 4, 4, Some(PosXY(0, 0))))
-      .subOnly(TablePos(0, 4, 3, Some(PosXY(0, 0))))
-      .general(TablePos(0, 4, 3, None))
       .general(TablePos(0, 4, 2, Some(PosXY(0, 0))))
+      .general(TablePos(0, 4, 3, None))
+      .subOnly(TablePos(0, 4, 3, Some(PosXY(0, 0))))
+      .subOnly(TablePos(0, 4, 4, Some(PosXY(0, 0))))
+      .general(TablePos(0, 4, 5, Some(PosXY(0, 0))))
+      .general(TablePos(0, 4, 5, Some(PosXY(1, 0))))
+      .general(TablePos(0, 4, 6, None))
+      .general(TablePos(0, 4, 6, Some(PosXY(0, 0))))
+      .general(TablePos(0, 4, 7, None))
+      .general(TablePos(0, 4, 7, Some(PosXY(0, 0))))
+      .general(TablePos(0, 4, 7, Some(PosXY(1, 0))))
       .general(TablePos(0, 4, 0, None))
       .newBatch()
       .general(TablePos(0, 5, 0, Some(PosXY(0, 0))))
-      .subOnly(TablePos(0, 5, 3, Some(PosXY(1, 0))))
-      .subOnly(TablePos(0, 5, 3, Some(PosXY(0, 0))))
-      .subOnly(TablePos(0, 5, 2, Some(PosXY(1, 0))))
-      .general(TablePos(0, 5, 2, Some(PosXY(0, 0))))
-      .general(TablePos(0, 5, 1, Some(PosXY(1, 0))))
-      .subOnly(TablePos(0, 5, 1, Some(PosXY(0, 0))))
       .general(TablePos(0, 5, 0, Some(PosXY(1, 0))))
+      .subOnly(TablePos(0, 5, 1, Some(PosXY(0, 0))))
+      .general(TablePos(0, 5, 1, Some(PosXY(1, 0))))
+      .general(TablePos(0, 5, 2, Some(PosXY(0, 0))))
+      .subOnly(TablePos(0, 5, 2, Some(PosXY(1, 0))))
+      .subOnly(TablePos(0, 5, 3, Some(PosXY(0, 0))))
+      .subOnly(TablePos(0, 5, 3, Some(PosXY(1, 0))))
       .general(TablePos(0, 5, 0, Some(PosXY(0, 0))))
       .result()
   }
@@ -167,9 +185,9 @@ object TableNavigationFeatureTest extends TestSuite {
     z2
   }
 
-  def testMoves(table: html.Table, axis: Axis, movement: Movement, moves: List[List[TablePos]], movesDir: Direction): Unit = {
+  def testMoves(table: html.Table, axis: Axis, movement: Movement, moves: TestMoves, movesDir: Direction): Unit = {
     val z = init(table)
-    moves.foreach { ms =>
+    moves.moveTests.foreach { ms =>
       testMoves2(z, axis, movement, changeDir(movesDir)(ms))
     }
   }
@@ -181,21 +199,11 @@ object TableNavigationFeatureTest extends TestSuite {
       assertEq(s"$axis $movement: $from --> $to", actual, \/-(to))
     }
 
-  def testSubMoves(table: html.Table, movement: Movement, moves: List[List[TablePos]], movesDir: Direction): Unit = {
+  def testSubMoves(table: html.Table, movement: Movement, moves: TestMoves, movesDir: Direction): Unit = {
     val z = init(table)
 
     def testData: Iterator[List[TablePos]] =
-      moves
-        .flatten
-        .groupBy(_.copy(sub = None))
-        .iterator
-        .map(_._2)
-        .map(changeDir(movesDir))
-        .map {
-          case a :: b :: Nil     if a ==* b      => a :: Nil
-          case h :: (t@(_ :: _)) if h ==* t.last => t
-          case x                                 => x
-        }
+      moves.subTests.iterator.map(changeDir(movesDir))
 
     for (ps <- testData)
       if (ps.tail.isEmpty) {
@@ -238,10 +246,10 @@ object TableNavigationFeatureTest extends TestSuite {
       }
     }
 
-    'moveLeft  - testMoves(lr, Axis.LeftRight, Movement.Prev, LR.leftMoves(true), Forwards)
-    'moveRight - testMoves(lr, Axis.LeftRight, Movement.Next, LR.leftMoves(true), Backwards)
+    'moveLeft  - testMoves(lr, Axis.LeftRight, Movement.Prev, LR.rightMoves, Backwards)
+    'moveRight - testMoves(lr, Axis.LeftRight, Movement.Next, LR.rightMoves, Forwards)
 
-    'subMoveLeft  - testSubMoves(lr, Movement.Prev, LR.leftMoves(false), Forwards)
-    'subMoveRight - testSubMoves(lr, Movement.Next, LR.leftMoves(false), Backwards)
+    'subMoveLeft  - testSubMoves(lr, Movement.Prev, LR.rightMoves, Backwards)
+    'subMoveRight - testSubMoves(lr, Movement.Next, LR.rightMoves, Forwards)
   }
 }

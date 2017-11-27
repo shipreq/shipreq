@@ -95,8 +95,8 @@ object TableNavigationFeature {
             for {
               tr        <- cellAtSuperPos(pos)
               rowResults = rowContentsIterator(tr, pos).map(_._1).filterNot(subMoveOnly).toVector
-              i         <- findFocusIndex(rowResults)(Identity.apply)
-            } yield _move(m, i, rowResults)(Identity.apply)
+              i         <- findFocusIndex(rowResults)
+            } yield _move(m, i, rowResults)
         }
       )
 
@@ -111,11 +111,11 @@ object TableNavigationFeature {
         for {
           tr         <- cellAtSuperPos(pos)
           superPos    = pos.withoutSub
-          cellResults = rowContentsIterator(tr, pos).filter(_._2.withoutSub ==* superPos).toVector
-          i          <- findFocusIndex(cellResults)(_._1)
+          cellResults = rowContentsIterator(tr, pos).filter(_._2.withoutSub ==* superPos).map(_._1).toVector
+          i          <- findFocusIndex(cellResults)
         } yield
           Option.when(cellResults.length > 1)(
-            _move(leftRight, i, cellResults)(_._1))
+            _move(leftRight, i, cellResults))
       )
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -187,7 +187,10 @@ object TableNavigationFeature {
 //    private def findFocusAndIndex[A](as: TraversableOnce[A])(element: A => html.Element): F[(A, Int)] =
 //      findFocus(as.toIterator.zipWithIndex)(x => element(x._1))
 
-    private def findFocusIndex[A](as: IndexedSeq[A])(element: A => html.Element): F[Int] = {
+    private def findFocusIndex(as: IndexedSeq[html.Element]): F[Int] =
+      findFocusIndexA(as)(Identity.apply)
+
+    private def findFocusIndexA[A](as: IndexedSeq[A])(element: A => html.Element): F[Int] = {
       val i = as.indexWhere(element(_) eq focus)
       if (i < 0)
         -\/("Focus not found")
@@ -195,7 +198,10 @@ object TableNavigationFeature {
         \/-(i)
     }
 
-    private def _move[A](m: Movement, i: Int, as: IndexedSeq[A])(element: A => html.Element) = {
+    private def _move(m: Movement, i: Int, as: IndexedSeq[html.Element]) =
+      _moveA(m, i, as)(Identity.apply)
+
+    private def _moveA[A](m: Movement, i: Int, as: IndexedSeq[A])(element: A => html.Element) = {
       val j = Util.fitCollectionIndex(m adjustIndex i, as.length)
       val e2 = element(as(j))
       TableCellZipper(e2)
