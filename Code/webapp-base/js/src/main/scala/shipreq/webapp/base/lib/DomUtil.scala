@@ -70,6 +70,8 @@ object DomUtil {
   }
 
   @inline implicit class NodeIteratorExt[N >: html.Element <: Node](private val it: Iterator[N]) extends AnyVal {
+    def asHtml: Iterator[html.Element] =
+      it.asInstanceOf[Iterator[html.Element]]
     def filterHtml: Iterator[html.Element] =
       it.filterSubType[html.Element]
     def focusable: Iterator[html.Element] =

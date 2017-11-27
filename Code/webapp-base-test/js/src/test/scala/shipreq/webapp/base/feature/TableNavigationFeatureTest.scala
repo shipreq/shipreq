@@ -45,6 +45,15 @@ object TableNavigationFeatureTest extends TestSuite {
             <.tr(
               <.th(TablePos(0, 3, 0, None), focusable),
             ),
+            <.tr(
+              <.th(TablePos(0, 4, 0, None), focusable),
+              <.th(TablePos(0, 4, 1, None)),
+              <.td(TablePos(0, 4, 2, None), <.input.checkbox),
+              <.td(TablePos(0, 4, 3, None), <.input.text, focusable),
+              <.td(TablePos(0, 4, 4, None), <.input.text),
+              <.td(TablePos(0, 4, 5, None), <.input.checkbox, <.input.checkbox),
+              <.td(TablePos(0, 4, 6, None), <.input.checkbox, focusable),
+            ),
           )
         )
     }
@@ -74,6 +83,15 @@ object TableNavigationFeatureTest extends TestSuite {
         TablePos(0, 3, 0, None),
         TablePos(0, 3, 0, None),
       ),
+      List(
+        TablePos(0, 4, 6, Some(PosXY(0, 0))),
+        TablePos(0, 4, 6, None),
+        TablePos(0, 4, 5, Some(PosXY(1, 0))),
+        TablePos(0, 4, 5, Some(PosXY(0, 0))),
+        TablePos(0, 4, 3, None),
+        TablePos(0, 4, 2, Some(PosXY(0, 0))),
+        TablePos(0, 4, 0, None),
+      ),
     )
   }
 
@@ -91,7 +109,9 @@ object TableNavigationFeatureTest extends TestSuite {
   def testMoves2(table: html.Table, axis: Axis, movement: Movement, moves: List[TablePos]): Unit = {
     val z = TableCellZipper(lr.querySelectorAll("td,th").iterator.focusable.next())
     for ((from, to) <- moves zip moves.tail) {
-      val actual = z.goto(from).flatMap(_.move(axis, movement)).flatMap(_.focusPos)
+      val z2 = z.goto(from).needRight
+      assertEq(s"goto($from).focusPos", z2.focusPos, \/-(from))
+      val actual = z2.move(axis, movement).flatMap(_.focusPos)
       assertEq(s"$axis $movement: $from --> $to", actual, \/-(to))
     }
   }
@@ -99,18 +119,21 @@ object TableNavigationFeatureTest extends TestSuite {
   override def tests = TestSuite {
 
     'posDetection {
+      def text(e: html.Element): String =
+        ReactTestUtils.removeReactInternals(e.innerHTML).replaceFirst("\\).+", ")")
+
       val cells = lr.querySelectorAll("td,th").iterator.focusable.toList
       assert(cells.nonEmpty)
       for (c <- cells) {
         val z = TableCellZipper(c)
         val pos = z.focusPos.needRight
         val tableRoot = z.root.needRight
-        assertEq(pos.toString, c.innerHTML)
+        assertEq(pos.toString, text(c))
         assert(tableRoot == lr)
 
         val z2 = z.goto(pos).needRight
         val pos2 = z2.focusPos.needRight
-        assertEq(pos2.toString, c.innerHTML)
+        assertEq(pos2.toString, text(c))
         assertEq(pos2, pos)
       }
     }
