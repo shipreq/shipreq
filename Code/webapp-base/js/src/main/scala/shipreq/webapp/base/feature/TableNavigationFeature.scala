@@ -6,10 +6,11 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.{raw => _, _}
 import scala.annotation.tailrec
 import scalajs.js
-import org.scalajs.dom.{Element, console, html}
+import org.scalajs.dom.{ClientRect, console, html}
 import scalaz.{-\/, \/, \/-}
 import scalaz.syntax.std.option._
 import shipreq.base.util.{Identity, Util}
+import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.lib.DomUtil.{TableCellZipper => _, _}
 
 object TableNavigationFeature {
@@ -87,15 +88,15 @@ object TableNavigationFeature {
           -\/("Unable to determine table structure")
       }
 
-    def rowContentsIterator(tr: html.Element, pos: TablePos): Iterator[(html.Element, TablePos)] =
+    def rowContentsIterator(tr: html.Element): Iterator[(html.Element, (Int, Option[PosXY]))] =
       (0 until tr.children.length).iterator.flatMap { i =>
         val h = tr.children(i).domAsHtml
-        var rs: List[(html.Element, TablePos)] =
+        var rs: List[(html.Element, (Int, Option[PosXY]))] =
           cellContentsIterator(h)
-            .map(_.map2(s => pos.copy(cell = i, sub = Some(s))))
+            .map(_.map2(s => (i, Some(s))))
             .toList
         if (isFocusable(h))
-          rs = (h, pos.copy(cell = i, sub = None)) :: rs
+          rs = (h, (i, None)) :: rs
         rs
       }
 
@@ -107,14 +108,19 @@ object TableNavigationFeature {
         .zipWithIndex
         .map { case (e, j) => e -> PosXY(j, 0) }
 
-    def _move(m: Movement, i: Int, as: IndexedSeq[html.Element]) =
-      _moveA(m, i, as)(Identity.apply)
-
-    def _moveA[A](m: Movement, i: Int, as: IndexedSeq[A])(element: A => html.Element) = {
-      val j = Util.fitCollectionIndex(m adjustIndex i, as.length)
-      val e2 = element(as(j))
-      TableCellZipper(e2)
-    }
+//    def _move(m: Movement, i: Int, as: IndexedSeq[html.Element]) =
+//      _moveA(m, i, as)(Identity.apply)
+//
+//    def _moveA[A](m: Movement, i: Int, as: IndexedSeq[A])(element: A => html.Element) = {
+//      val j = Util.fitCollectionIndex(m adjustIndex i, as.length)
+//      val e2 = element(as(j))
+//      TableCellZipper(e2)
+//    }
+//
+//    def __moveA[A](m: Movement, i: Int, as: IndexedSeq[A])(element: A => html.Element): A = {
+//      val j = Util.fitCollectionIndex(m adjustIndex i, as.length)
+//      element(as(j))
+//    }
 
     def subMoveOnly: html.Element => Boolean = {
       case i: html.Input    => i.`type` ==* "text"
@@ -122,6 +128,27 @@ object TableNavigationFeature {
       case _                => false
     }
 
+    def indexWhereF[A](as: IndexedSeq[A])(f: A => Boolean, err: => String): F[Int] = {
+      val i = as.indexWhere(f)
+      if (i < 0)
+        -\/(err)
+      else
+        \/-(i)
+    }
+
+    def hypotenuse(x: Double, y: Double): Double =
+      Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2))
+
+    def centerXY(r: ClientRect): (Double, Double) =
+      (r.left + r.width / 2, r.top + r.height / 2)
+
+    def distanceRect(a: ClientRect): ClientRect => Double = {
+      val aa = centerXY(a)
+      b => distanceXY(aa, centerXY(b))
+    }
+
+    def distanceXY(a: (Double, Double), b: (Double, Double)): Double =
+      hypotenuse(a._1 - b._1, a._2 - b._2)
   }
   import Internals._
 
@@ -139,16 +166,54 @@ object TableNavigationFeature {
       rootAndPos.map(_._2)
 
     def move(a: Axis, m: Movement): F[TableCellZipper] =
-      focusPos.flatMap(pos =>
         a match {
           case Axis.LeftRight =>
             for {
-              tr         ← cellAtSuperPos(pos)
-              rowResults = rowContentsIterator(tr, pos).map(_._1).filterNot(subMoveOnly).toVector
+              pos        ← focusPos
+              tr         ← rowAtPos(pos)
+              rowResults = rowContentsIterator(tr).map(_._1).filterNot(subMoveOnly).toVector
               i          ← findFocusIndex(rowResults)
-            } yield _move(m, i, rowResults)
+              // TODO i should be lazy, movement might ignore it
+            } yield TableCellZipper(m(rowResults, i))
+
+          case Axis.UpDown =>
+
+            for {
+              pos        ← focusPos
+              table <- root
+              tbody <- table.child(pos.body)
+              tr    <- tbody.child(pos.row)
+              td    <- tr.child(pos.cell)
+
+              rows: Vector[html.TableRow] =
+                table
+                  .children.iterator
+                  .filter(t => t.tagName ==* "TBODY" || t.tagName ==* "THEAD")
+                  .flatMap(_.domAsHtml
+                    .children.iterator
+                    .filter(_.tagName ==* "TR")
+                    .map(_.domCast[html.TableRow])
+                    .filter(rowContentsIterator(_).nonEmpty))
+                  .toVector
+
+              rowIndex <- indexWhereF(rows)(_ eq tr, "Focus row not found")
+
+            } yield {
+
+              // TODO ↓ ignores moving up/down within the same cell ↓
+              val newRow = m(rows, rowIndex)
+
+              newRow.child(pos.cell) match {
+                case \/-(cell) if isFocusable(cell) =>
+                  TableCellZipper(cell)
+
+                case _ =>
+                  val distRectFn = distanceRect(focus.getBoundingClientRect())
+                  val closest = rowContentsIterator(newRow).minBy(x => distRectFn(x._1.getBoundingClientRect()))
+                  TableCellZipper(closest._1)
+              }
+            }
         }
-      )
 
     /** Move horizontally within the same cell, if there is somewhere to move to.
       *
@@ -157,23 +222,19 @@ object TableNavigationFeature {
       * navigate the text itself inside the editor.
       * */
     def subMove(leftRight: Movement): F[Option[TableCellZipper]] =
-      focusPos.flatMap(pos =>
-        for {
-          tr          ← cellAtSuperPos(pos)
-          superPos    = pos.withoutSub
-          cellResults = rowContentsIterator(tr, pos).filter(_._2.withoutSub ==* superPos).map(_._1).toVector
-          i           ← findFocusIndex(cellResults)
-        } yield
-          Option.when(cellResults.length > 1)(
-            _move(leftRight, i, cellResults))
-      )
+      for {
+        pos         ← focusPos
+        tr          ← rowAtPos(pos)
+        cellResults = rowContentsIterator(tr).filter(_._2._1 ==* pos.cell).map(_._1).toVector
+        i           ← findFocusIndex(cellResults)
+        // TODO i should be lazy, movement might ignore it & cellResults might preclude it
+      } yield
+        Option.when(cellResults.length > 1)(
+          TableCellZipper(leftRight(cellResults, i)))
 
     def goto(pos: TablePos): F[TableCellZipper] =
       for {
-        table  <- root
-        tbody  <- table.child(pos.body)
-        tr     <- tbody.child(pos.row)
-        td     <- tr   .child(pos.cell)
+        td     <- cellAtPos(pos)
         result <- pos.sub match {
           case None    => \/-(TableCellZipper(td))
           case Some(s) =>
@@ -186,24 +247,25 @@ object TableNavigationFeature {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    /** Ignores sub-pos */
-    private def cellAtSuperPos(pos: TablePos): F[html.Element] =
+    private def rowAtPos(pos: TablePos): F[html.TableRow] =
       for {
         table <- root
         tbody <- table.child(pos.body)
         tr    <- tbody.child(pos.row)
-      } yield tr
+      } yield tr.domCast[html.TableRow]
+
+    /** Ignores sub-pos */
+    private def cellAtPos(pos: TablePos): F[html.TableCell] =
+      for {
+        tr <- rowAtPos(pos)
+        td <- tr.child(pos.cell)
+      } yield td.domCast[html.TableCell]
 
     private def findFocusIndex(as: IndexedSeq[html.Element]): F[Int] =
       findFocusIndexA(as)(Identity.apply)
 
-    private def findFocusIndexA[A](as: IndexedSeq[A])(element: A => html.Element): F[Int] = {
-      val i = as.indexWhere(element(_) eq focus)
-      if (i < 0)
-        -\/("Focus not found")
-      else
-        \/-(i)
-    }
+    private def findFocusIndexA[A](as: IndexedSeq[A])(element: A => html.Element): F[Int] =
+      indexWhereF(as)(element(_) eq focus, "Focus not found")
 
   }
 }

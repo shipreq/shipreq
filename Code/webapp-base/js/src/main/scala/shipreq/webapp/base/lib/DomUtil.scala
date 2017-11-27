@@ -159,9 +159,16 @@ object DomUtil {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Structures
 
-  sealed abstract class Movement(val adjustIndex: Int => Int)
+  sealed abstract class Movement(val adjustIndex: Int => Int) {
+    def apply[A](as: IndexedSeq[A], currentIndex: Int): A = {
+      val j = Util.fitCollectionIndex(adjustIndex(currentIndex), as.length)
+      as(j)
+    }
+  }
   object Movement {
-    case object None extends Movement(identity)
+    case object None extends Movement(identity) {
+      override def apply[A](as: IndexedSeq[A], i: Int): A = as(i)
+    }
     case object Prev extends Movement(_ - 1)
     case object Next extends Movement(_ + 1)
     case object Head extends Movement(_ => 0)
