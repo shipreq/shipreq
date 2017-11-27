@@ -19,7 +19,10 @@ object TableNavigationFeature {
     implicit def univEq: UnivEq[PosXY] = UnivEq.derive
   }
 
-  final case class TablePos(body: Int, row: Int, cell: Int, sub: Option[PosXY])
+  final case class TablePos(body: Int, row: Int, cell: Int, sub: Option[PosXY]) {
+    def withoutSub: TablePos =
+      copy(sub = None)
+  }
   object TablePos {
     implicit def univEq: UnivEq[TablePos] = UnivEq.derive
   }
@@ -97,15 +100,22 @@ object TableNavigationFeature {
         }
       )
 
-    /** Move horizontally within the same cell */
-    def subMove(leftRight: Movement): F[TableCellZipper] =
+    /** Move horizontally within the same cell, if there is somewhere to move to.
+      *
+      * This is usually tab/shift-tab in table cells so users can jump in/out of text editors.
+      * The reason that up/down/left/right doesn't automatically enter text editors is that those keys are used to
+      * navigate the text itself inside the editor.
+      * */
+    def subMove(leftRight: Movement): F[Option[TableCellZipper]] =
       focusPos.flatMap(pos =>
         for {
           tr         <- cellAtSuperPos(pos)
-          superPos    = pos.copy(sub = None)
-          cellResults = rowContentsIterator(tr, pos).filter(_._2.copy(sub = None) ==* superPos).toVector
+          superPos    = pos.withoutSub
+          cellResults = rowContentsIterator(tr, pos).filter(_._2.withoutSub ==* superPos).toVector
           i          <- findFocusIndex(cellResults)(_._1)
-        } yield _move(leftRight, i, cellResults)(_._1)
+        } yield
+          Option.when(cellResults.length > 1)(
+            _move(leftRight, i, cellResults)(_._1))
       )
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

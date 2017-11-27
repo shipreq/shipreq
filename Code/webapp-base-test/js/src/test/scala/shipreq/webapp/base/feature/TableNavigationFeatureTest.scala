@@ -6,6 +6,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.test.ReactTestUtils
 import org.scalajs.dom.html
 import scalaz.\/-
+import scalaz.syntax.traverse._
 import utest._
 import shipreq.webapp.base.lib.DomUtil.{TableCellZipper => _, _}
 import shipreq.base.test.BaseTestUtil._
@@ -109,44 +110,62 @@ object TableNavigationFeatureTest extends TestSuite {
     case Backwards => _.reverse
   }
 
-  def testMoves(table: html.Table, axis: Axis, movement: Movement, moves: List[List[TablePos]], movesDir: Direction): Unit =
-    moves.foreach { ms =>
-      testMoves2(table, axis, movement, changeDir(movesDir)(ms))
-    }
+  def init(table: html.Table): TableCellZipper =
+    TableCellZipper(table.querySelectorAll("td,th").iterator.focusable.next())
 
-  def testMoves2(table: html.Table, axis: Axis, movement: Movement, moves: List[TablePos]): Unit = {
-    val z = TableCellZipper(lr.querySelectorAll("td,th").iterator.focusable.next())
-    for ((from, to) <- moves zip moves.tail) {
-      val z2 = z.goto(from).needRight
-      assertEq(s"goto($from).focusPos", z2.focusPos, \/-(from))
-      val actual = z2.move(axis, movement).flatMap(_.focusPos)
-      assertEq(s"$axis $movement: $from --> $to", actual, \/-(to))
+  def needGoto(z: TableCellZipper, pos: TablePos): TableCellZipper = {
+    val z2 = z.goto(pos).needRight
+    assertEq(s"goto($pos).focusPos", z2.focusPos, \/-(pos))
+    z2
+  }
+
+  def testMoves(table: html.Table, axis: Axis, movement: Movement, moves: List[List[TablePos]], movesDir: Direction): Unit = {
+    val z = init(table)
+    moves.foreach { ms =>
+      testMoves2(z, axis, movement, changeDir(movesDir)(ms))
     }
   }
 
+  def testMoves2(z: TableCellZipper, axis: Axis, movement: Movement, moves: List[TablePos]): Unit =
+    for ((from, to) <- moves zip moves.tail) {
+      val z2 = needGoto(z, from)
+      val actual = z2.move(axis, movement).flatMap(_.focusPos)
+      assertEq(s"$axis $movement: $from --> $to", actual, \/-(to))
+    }
+
   def testSubMoves(table: html.Table, movement: Movement, moves: List[List[TablePos]], movesDir: Direction): Unit = {
+    val z = init(table)
+
     def testData: Iterator[List[TablePos]] =
       moves
         .flatten
         .groupBy(_.copy(sub = None))
         .iterator
-        .filter(_._2.tail.nonEmpty)
         .map(_._2)
         .map(changeDir(movesDir))
-    for (ps <- testData) {
-      testSubMoves2(table, movement, ps.last :: ps)
-    }
+        .map {
+          case h :: t :: Nil if h ==* t => h :: Nil
+          case x                        => x
+        }
+
+    for (ps <- testData)
+      if (ps.tail.isEmpty) {
+        // Test movement returns None
+        val pos = ps.head
+        val z2 = needGoto(z, pos)
+        val actual = z2.subMove(movement).map(_.void)
+        assertEq(s"subMove $movement: $pos --> None", actual, \/-(None))
+      } else
+        // Test movement succeeds
+        testSubMoves2(z, movement, ps.last :: ps)
   }
 
-  def testSubMoves2(table: html.Table, movement: Movement, moves: List[TablePos]): Unit = {
-    val z = TableCellZipper(lr.querySelectorAll("td,th").iterator.focusable.next())
+  def testSubMoves2(z: TableCellZipper, movement: Movement, moves: List[TablePos]): Unit =
     for ((from, to) <- moves zip moves.tail) {
-      val z2 = z.goto(from).needRight
-      assertEq(s"goto($from).focusPos", z2.focusPos, \/-(from))
-      val actual = z2.subMove(movement).flatMap(_.focusPos)
-      assertEq(s"subMove $movement: $from --> $to", actual, \/-(to))
+      val z2 = needGoto(z, from)
+      val actual = z2.subMove(movement).flatMap(_.traverse(_.focusPos))
+      assertEq(s"subMove $movement: $from --> $to", actual, \/-(Some(to)))
     }
-  }
 
   override def tests = TestSuite {
 
