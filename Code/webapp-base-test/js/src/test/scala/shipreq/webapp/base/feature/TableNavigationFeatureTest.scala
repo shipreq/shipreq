@@ -53,6 +53,7 @@ object TableNavigationFeatureTest extends TestSuite {
               <.td(TablePos(0, 4, 4, None), <.input.text),
               <.td(TablePos(0, 4, 5, None), <.input.checkbox, <.input.checkbox),
               <.td(TablePos(0, 4, 6, None), <.input.checkbox, focusable),
+              <.td(TablePos(0, 4, 7, None), <.span(<.input.checkbox), <.input.checkbox, focusable),
             ),
           )
         )
@@ -84,6 +85,9 @@ object TableNavigationFeatureTest extends TestSuite {
         TablePos(0, 3, 0, None),
       ),
       List(
+        TablePos(0, 4, 7, Some(PosXY(1, 0))),
+        TablePos(0, 4, 7, Some(PosXY(0, 0))),
+        TablePos(0, 4, 7, None),
         TablePos(0, 4, 6, Some(PosXY(0, 0))),
         TablePos(0, 4, 6, None),
         TablePos(0, 4, 5, Some(PosXY(1, 0))),
@@ -100,10 +104,14 @@ object TableNavigationFeatureTest extends TestSuite {
     LR.Component().renderIntoDOM(root).getDOMNode.domCast[html.Table]
   }
 
+  val changeDir: Direction => List[TablePos] => List[TablePos] = {
+    case Forwards  => identity
+    case Backwards => _.reverse
+  }
+
   def testMoves(table: html.Table, axis: Axis, movement: Movement, moves: List[List[TablePos]], movesDir: Direction): Unit =
     moves.foreach { ms =>
-      val ms2 = if (movesDir is Forwards) ms else ms.reverse
-      testMoves2(table, axis, movement, ms2)
+      testMoves2(table, axis, movement, changeDir(movesDir)(ms))
     }
 
   def testMoves2(table: html.Table, axis: Axis, movement: Movement, moves: List[TablePos]): Unit = {
@@ -113,6 +121,30 @@ object TableNavigationFeatureTest extends TestSuite {
       assertEq(s"goto($from).focusPos", z2.focusPos, \/-(from))
       val actual = z2.move(axis, movement).flatMap(_.focusPos)
       assertEq(s"$axis $movement: $from --> $to", actual, \/-(to))
+    }
+  }
+
+  def testSubMoves(table: html.Table, movement: Movement, moves: List[List[TablePos]], movesDir: Direction): Unit = {
+    def testData: Iterator[List[TablePos]] =
+      moves
+        .flatten
+        .groupBy(_.copy(sub = None))
+        .iterator
+        .filter(_._2.tail.nonEmpty)
+        .map(_._2)
+        .map(changeDir(movesDir))
+    for (ps <- testData) {
+      testSubMoves2(table, movement, ps.last :: ps)
+    }
+  }
+
+  def testSubMoves2(table: html.Table, movement: Movement, moves: List[TablePos]): Unit = {
+    val z = TableCellZipper(lr.querySelectorAll("td,th").iterator.focusable.next())
+    for ((from, to) <- moves zip moves.tail) {
+      val z2 = z.goto(from).needRight
+      assertEq(s"goto($from).focusPos", z2.focusPos, \/-(from))
+      val actual = z2.subMove(movement).flatMap(_.focusPos)
+      assertEq(s"subMove $movement: $from --> $to", actual, \/-(to))
     }
   }
 
@@ -141,5 +173,7 @@ object TableNavigationFeatureTest extends TestSuite {
     'moveLeft  - testMoves(lr, Axis.LeftRight, Movement.Prev, LR.leftMoves, Forwards)
     'moveRight - testMoves(lr, Axis.LeftRight, Movement.Next, LR.leftMoves, Backwards)
 
+    'subMoveLeft  - testSubMoves(lr, Movement.Prev, LR.leftMoves, Forwards)
+    'subMoveRight - testSubMoves(lr, Movement.Next, LR.leftMoves, Backwards)
   }
 }

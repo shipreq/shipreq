@@ -8,6 +8,7 @@ import scala.annotation.tailrec
 import scalajs.js
 import org.scalajs.dom.{Element, console, html}
 import scalaz.{-\/, \/, \/-}
+import scalaz.syntax.std.option._
 import shipreq.base.util.Util
 import shipreq.webapp.base.lib.DomUtil.{TableCellZipper => _, _}
 
@@ -68,39 +69,6 @@ object TableNavigationFeature {
     def focusPos: F[TablePos] =
       stuff.map(_._2)
 
-    private def findStuff(innerElements: Int): F[(html.Table, TablePos)] = {
-      val parentStream2 = parentStream.drop(innerElements)
-      parentStream2.map(_._1.tagName) match {
-
-        case ("TD" | "TH") #:: "TR" #:: ("TBODY" | "THEAD") #:: "TABLE" #:: _ =>
-          val (td #:: tr #:: tbody #:: table #:: _) = parentStream2
-          val subAttempt: String \/ Option[PosXY] =
-            if (innerElements ==* 0)
-              \/-(None)
-            else
-              cellContentsIterator(td._1).find(_._1 eq focus) match {
-                case Some((_, subPos)) => \/-(Some(subPos))
-                case None              =>
-//                  println("="*120)
-//                  println(td._1.outerHTML)
-//                  println(parentStream.drop(innerElements).map(_._1.tagName).mkString(", "))
-//                  println("="*120)
-//                  cellContentsIterator(td._1).foreach(println)
-//                  println("="*120)
-                  -\/("Unable to determine subpos of " + focus.outerHTML.take(100))
-              }
-
-          subAttempt.map(sub =>
-            (table._1.domCast[html.Table], TablePos(tbody._2, tr._2, td._2, sub)))
-
-        case _ #:: _ =>
-          findStuff(innerElements + 1)
-
-        case Stream.Empty =>
-          -\/("Unable to determine table structure")
-      }
-    }
-
     def goto(pos: TablePos): F[TableCellZipper] =
       for {
         table <- root
@@ -117,6 +85,84 @@ object TableNavigationFeature {
         }
       } yield result
 
+    def move(a: Axis, m: Movement): F[TableCellZipper] =
+      focusPos.flatMap(pos =>
+        a match {
+          case Axis.LeftRight =>
+            for {
+              tr        <- cellAtSuperPos(pos)
+              rowResults = rowContentsIterator(tr, pos).toVector
+              i         <- findFocusIndex(rowResults)(_._1)
+            } yield _move(m, i, rowResults)(_._1)
+        }
+      )
+
+    /** Move horizontally within the same cell */
+    def subMove(leftRight: Movement): F[TableCellZipper] =
+      focusPos.flatMap(pos =>
+        for {
+          tr         <- cellAtSuperPos(pos)
+          superPos    = pos.copy(sub = None)
+          cellResults = rowContentsIterator(tr, pos).filter(_._2.copy(sub = None) ==* superPos).toVector
+          i          <- findFocusIndex(cellResults)(_._1)
+        } yield _move(leftRight, i, cellResults)(_._1)
+      )
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    private def findStuff(innerElements: Int): F[(html.Table, TablePos)] = {
+      val parentStream2 = parentStream.drop(innerElements)
+      parentStream2.map(_._1.tagName) match {
+
+        case ("TD" | "TH") #:: "TR" #:: ("TBODY" | "THEAD") #:: "TABLE" #:: _ =>
+          val (td #:: tr #:: tbody #:: table #:: _) = parentStream2
+          val subAttempt: String \/ Option[PosXY] =
+            if (innerElements ==* 0)
+              \/-(None)
+            else
+              cellContentsIterator(td._1).find(_._1 eq focus) match {
+                case Some((_, subPos)) => \/-(Some(subPos))
+                case None              =>
+                  //                  println("="*120)
+                  //                  println(td._1.outerHTML)
+                  //                  println(parentStream.drop(innerElements).map(_._1.tagName).mkString(", "))
+                  //                  println("="*120)
+                  //                  cellContentsIterator(td._1).foreach(println)
+                  //                  println("="*120)
+                  -\/("Unable to determine subpos of " + focus.outerHTML.take(100))
+              }
+
+          subAttempt.map(sub =>
+            (table._1.domCast[html.Table], TablePos(tbody._2, tr._2, td._2, sub)))
+
+        case _ #:: _ =>
+          findStuff(innerElements + 1)
+
+        case Stream.Empty =>
+          -\/("Unable to determine table structure")
+      }
+    }
+
+    /** Ignores sub-pos */
+    private def cellAtSuperPos(pos: TablePos): F[html.Element] =
+      for {
+        table <- root
+        tbody <- table.child(pos.body)
+        tr    <- tbody.child(pos.row)
+      } yield tr
+
+    private def rowContentsIterator(tr: html.Element, pos: TablePos): Iterator[(html.Element, TablePos)] =
+      (0 until tr.children.length).iterator.flatMap { i =>
+        val h = tr.children(i).domAsHtml
+        var rs: List[(html.Element, TablePos)] =
+          cellContentsIterator(h)
+            .map(_.map2(s => pos.copy(cell = i, sub = Some(s))))
+            .toList
+        if (isFocusable(h))
+          rs = (h, pos.copy(cell = i, sub = None)) :: rs
+        rs
+      }
+
     private def cellContentsIterator(cell: html.Element): Iterator[(html.Element, PosXY)] =
       cell.querySelectorAll("input")
         .iterator
@@ -126,46 +172,24 @@ object TableNavigationFeature {
         .zipWithIndex
         .map { case (e, j) => e -> PosXY(j, 0) }
 
-    def move(a: Axis, m: Movement): F[TableCellZipper] =
-      focusPos.flatMap(pos =>
-        a match {
-          case Axis.LeftRight =>
-            for {
-              table <- root
-              tbody <- table.child(pos.body)
-              tr    <- tbody.child(pos.row)
-            } yield {
+//    private def findFocus[A](as: TraversableOnce[A])(element: A => html.Element): F[A] =
+//      as.find(element(_) eq focus) \/> "Focus not found"
+//
+//    private def findFocusAndIndex[A](as: TraversableOnce[A])(element: A => html.Element): F[(A, Int)] =
+//      findFocus(as.toIterator.zipWithIndex)(x => element(x._1))
 
-              val rowResuts: Vector[(html.Element, TablePos)] =
-                (0 until tr.children.length).iterator.flatMap { i =>
-                  val h = tr.children(i).domAsHtml
-                  var rs: List[(html.Element, TablePos)] =
-                    cellContentsIterator(h)
-                      .map(_.map2(s => pos.copy(cell = i, sub = Some(s))))
-                      .toList
-                  if (isFocusable(h))
-                    rs = (h, pos.copy(cell = i, sub = None)) :: rs
-                  rs
-                }.toVector
+    private def findFocusIndex[A](as: IndexedSeq[A])(element: A => html.Element): F[Int] = {
+      val i = as.indexWhere(element(_) eq focus)
+      if (i < 0)
+        -\/("Focus not found")
+      else
+        \/-(i)
+    }
 
-              val i = rowResuts.indexWhere(_._1 eq focus)
-
-//              if (pos == TablePos(0,4,5,Some(PosXY(0,0)))) {
-//                println(s"\n\n${rowResuts.zipWithIndex.mkString("\n")}\ni = $i\n")
-//              }
-
-              if (i < 0) {
-                console.warn(s"$pos not found in $rowResuts")
-                this
-              } else {
-                val j = Util.fitCollectionIndex(m adjustIndex i, rowResuts.length)
-                val (e2, pos2) = rowResuts(j)
-                // println(s"$a $m $i --> $j = ${e.outerHTML}")
-                TableCellZipper(e2)
-              }
-            }
-        }
-      )
-
+    private def _move[A](m: Movement, i: Int, as: IndexedSeq[A])(element: A => html.Element) = {
+      val j = Util.fitCollectionIndex(m adjustIndex i, as.length)
+      val e2 = element(as(j))
+      TableCellZipper(e2)
+    }
   }
 }
