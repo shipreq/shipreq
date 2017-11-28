@@ -16,7 +16,7 @@ object TableNavigationFeatureTest extends TestSuite {
 
   val focusable = ^.tabIndex := -1
 
-  def MovesBuilder() = new MovesBuilder
+  def MovesBuilder(): MovesBuilder = new MovesBuilder
   class MovesBuilder {
     private var moves = List.newBuilder[TablePos]
     private var subMoves = List.newBuilder[TablePos]
@@ -66,7 +66,12 @@ object TableNavigationFeatureTest extends TestSuite {
     }
   }
 
-  case class TestMoves(moveTests: List[List[TablePos]], subTests: List[List[TablePos]])
+  case class TestMoves(moveTests: List[List[TablePos]], subTests: List[List[TablePos]]) {
+    def ++(t: TestMoves): TestMoves =
+      TestMoves(moveTests ::: t.moveTests, subTests ::: t.subTests)
+    def reverse: TestMoves =
+      TestMoves(moveTests.map(_.reverse), subTests.map(_.reverse))
+  }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
@@ -114,7 +119,10 @@ object TableNavigationFeatureTest extends TestSuite {
               <.td(TablePos(0, 5, 1, None), <.input.text,     <.div, <.div(focusable)), // ReqDetail implications *-
               <.td(TablePos(0, 5, 2, None), <.div(focusable), <.div, <.input.text),     // ReqDetail implications -*
               <.td(TablePos(0, 5, 3, None), <.textarea,       <.div, <.textarea),       // ReqDetail implications **
-              // TODO what about buttons?
+            ),
+            <.tr(
+              <.td(TablePos(0, 6, 0, None), focusable, <.div(focusable), <.div, <.div(focusable)),
+              <.td(TablePos(0, 6, 1, None), focusable, <.div(focusable), <.div, <.div(focusable)),
             ),
           )
         )
@@ -166,27 +174,27 @@ object TableNavigationFeatureTest extends TestSuite {
       .general(TablePos(0, 5, 0, Some(PosXY(0, 0))))
       .result()
 
-    val downMoves = MovesBuilder()
+    private val downShared = MovesBuilder()
       .general(TablePos(0, 0, 1, None))
       .general(TablePos(0, 1, 1, None))
       .general(TablePos(0, 2, 1, None))
-      .newBatch()
+      .result()
+
+    val downMoves = downShared ++ MovesBuilder()
       .general(TablePos(0, 1, 0, None))
       .general(TablePos(0, 2, 1, None)) // 0 not available
       .general(TablePos(0, 3, 0, None)) // 1 not available
       .general(TablePos(0, 4, 0, None))
       .general(TablePos(0, 5, 0, Some(PosXY(0, 0))))
+      .general(TablePos(0, 6, 0, Some(PosXY(0, 0))))
       .general(TablePos(0, 0, 1, None))
       .general(TablePos(0, 1, 1, None))
       .result()
 
-    val upMoves = MovesBuilder()
-      .general(TablePos(0, 2, 1, None))
+    val upMoves = downShared.reverse ++ MovesBuilder()
       .general(TablePos(0, 1, 1, None))
       .general(TablePos(0, 0, 1, None))
-      .newBatch()
-      .general(TablePos(0, 1, 1, None))
-      .general(TablePos(0, 0, 1, None))
+      .general(TablePos(0, 6, 1, None))
       .general(TablePos(0, 5, 1, Some(PosXY(1, 0))))
       .general(TablePos(0, 4, 2, Some(PosXY(0, 0)))) // or .general(TablePos(0, 4, 0, None))
       .general(TablePos(0, 3, 0, None))

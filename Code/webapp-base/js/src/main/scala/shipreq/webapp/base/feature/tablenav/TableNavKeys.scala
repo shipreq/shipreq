@@ -17,7 +17,7 @@ object TableNavKeys {
 
     // The outer-only restriction prevents arrow-keys being overridden in textarea
     val outerOnly: CallbackOption[Unit] =
-      CallbackOption.require(TableCellZipper.allowMove(e.target)) >> (
+      CallbackOption.require(Logic.allowMove(e.target)) >> (
         CallbackOption.keyCodeSwitch(e) {
           case KeyCode.Up    => move(e, ↕ = Movement.Prev)
           case KeyCode.Down  => move(e, ↕ = Movement.Next)

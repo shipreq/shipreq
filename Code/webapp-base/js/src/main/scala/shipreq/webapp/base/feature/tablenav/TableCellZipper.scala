@@ -6,6 +6,7 @@ import japgolly.univeq._
 import org.scalajs.dom.html
 import scalaz.{-\/, \/-}
 import shipreq.base.util.Identity
+import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.lib.DomUtil._
 
 object TableCellZipper {
@@ -21,26 +22,12 @@ object TableCellZipper {
       \/-(apply(e))
     else
       option(focusableChildren(e).nextOption())
-
-  val allowMove: html.Element => Boolean = {
-    // Allow checkboxes
-    case i: html.Input => i.`type` ==* "checkbox"
-
-    // These are not focusable by default, so if they are, I've specifically enabled them for this purpose
-    case _: html.Div
-         | _: html.Span
-         | _: html.TableCell => true
-
-    // Ignore non-whitelisted
-    case _ => false
-  }
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 final case class TableCellZipper(focus: html.Element) {
   import Logic._
-  import TableCellZipper.allowMove
 
   private lazy val rootAndPos =
     findRootAndPos(parentsAndIndices(focus), false, focus)
@@ -74,7 +61,7 @@ final case class TableCellZipper(focus: html.Element) {
             table    ← root
             tbody    ← table.child(pos.body)
             tr       ← tbody.child(pos.row)
-            rows     = rowIterator(table).toVector
+            rows     = movableRowIterator(table).toVector
             rowIndex ← indexWhereF(rows)(_ eq tr, "Focus row not found")
           } yield {
 
@@ -82,22 +69,35 @@ final case class TableCellZipper(focus: html.Element) {
             // …which is fine for now because there's no logic to create more than one sub-row in a cell
             val newRow = m(rows, rowIndex)
 
-            newRow.child(pos.cell) match {
-              case \/-(cell) if isFocusable(cell) =>
-                TableCellZipper(cell)
+            def focusClosestInNewRow: TableCellZipper =
+              focusClosest(focus, rowContentsIterator(newRow).map(_._1).filter(allowMove))
+                .get // newRow is proven not to be empty via .filter in movableRowIterator
 
-              case _ =>
-                // Note: If I ever add logic to start making use of the Y in PosXY this logic will need some
-                // adjustment. It doesn't consider height wrapping. If the user presses down in the last row and the
-                // top row cells have sub-items with PosXY.y > 0 the distance fn will rank the bottom ones is being
-                // closer to the currentFocus which doesn't make sense; in such a case the user would expect pressing
-                // down from the very bottom will go the very top, not the bottom of the top-most row.
-                val distRectFn = distanceRect(focus.getBoundingClientRect())
-                val closest = rowContentsIterator(newRow)
-                  .map(_._1)
-                  .filter(allowMove)
-                  .minBy(e => distRectFn(e.getBoundingClientRect()))
-                TableCellZipper(closest)
+            newRow.child(pos.cell) match {
+              case \/-(cell) =>
+                pos.sub match {
+                  case None =>
+                    if (isFocusable(cell))
+                      TableCellZipper(cell)
+                    else
+                      focusableChildren(cell).filter(allowMove).nextOption() match {
+                        case Some(sub) => TableCellZipper(sub)
+                        case None      => focusClosestInNewRow
+                      }
+                  case Some(xy) =>
+                    cellContentsIterator(cell, false)
+                      .filter(_._1 |> allowMove)
+                      .find(_._2.exists(_ ==* xy)) match {
+                      case Some((sub, _)) =>
+                        TableCellZipper(sub)
+                      case None =>
+                        focusClosest(focus, cellContentsIterator(cell, true).map(_._1).filter(allowMove))
+                          .getOrElse(focusClosestInNewRow)
+                    }
+                }
+
+              case -\/(_) =>
+                focusClosestInNewRow
             }
           }
       }
@@ -125,7 +125,7 @@ final case class TableCellZipper(focus: html.Element) {
       result <- pos.sub match {
         case None    => \/-(TableCellZipper(td))
         case Some(s) =>
-          cellContentsIterator(td).find(_._2 ==* s) match {
+          cellContentsIterator(td, false).find(_._2.exists(_ ==* s)) match {
             case Some((e, _)) => \/-(TableCellZipper(e))
             case None         => -\/(s"Nothing at $s")
           }

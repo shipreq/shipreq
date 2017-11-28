@@ -6,9 +6,23 @@ import japgolly.univeq._
 import org.scalajs.dom.{ClientRect, html}
 import scala.annotation.tailrec
 import scalaz.{-\/, \/, \/-}
+import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.lib.DomUtil._
 
 private[tablenav] object Logic {
+
+  val allowMove: html.Element => Boolean = {
+    // Allow checkboxes
+    case i: html.Input => i.`type` ==* "checkbox"
+
+    // These are not focusable by default, so if they are, I've specifically enabled them for this purpose
+    case _: html.Div
+       | _: html.Span
+       | _: html.TableCell => true
+
+    // Ignore non-whitelisted
+    case _ => false
+  }
 
   type ParentStream = Stream[(html.Element, Int)]
 
@@ -36,8 +50,8 @@ private[tablenav] object Logic {
         val (td #:: tr #:: tbody #:: table #:: _) = parentStream
         val subAttempt: String \/ Option[PosXY] =
           if (sub)
-            cellContentsIterator(td._1).find(_._1 eq focus) match {
-              case Some((_, subPos)) => \/-(Some(subPos))
+            cellContentsIterator(td._1, false).find(_._1 eq focus) match {
+              case Some((_, subPos)) => \/-(subPos)
               case None              =>
                 // println("="*120)
                 // println(td._1.outerHTML)
@@ -60,7 +74,7 @@ private[tablenav] object Logic {
         -\/("Unable to determine table structure")
     }
 
-  def rowIterator(table: html.Table): Iterator[html.TableRow] =
+  def movableRowIterator(table: html.Table): Iterator[html.TableRow] =
     table
       .children.iterator
       .filter(t => t.tagName ==* "TBODY" || t.tagName ==* "THEAD")
@@ -68,27 +82,26 @@ private[tablenav] object Logic {
         .children.iterator
         .filter(_.tagName ==* "TR")
         .map(_.domCast[html.TableRow])
-        .filter(rowContentsIterator(_).nonEmpty))
+        .filter(rowContentsIterator(_).exists(_._1 |> allowMove)))
 
   def rowContentsIterator(tr: html.Element): Iterator[(html.Element, (Int, Option[PosXY]))] =
     (0 until tr.children.length).iterator.flatMap { i =>
       val h = tr.children(i).domAsHtml
-      var rs: List[(html.Element, (Int, Option[PosXY]))] =
-        cellContentsIterator(h)
-          .map(_.map2(s => (i, Some(s))))
-          .toList
-      if (isFocusable(h))
-        rs = (h, (i, None)) :: rs
-      rs
+      cellContentsIterator(h, true).map(_.map2(s => (i, s)))
     }
 
-  /** excludes argument from results */
-  def cellContentsIterator(cell: html.Element): Iterator[(html.Element, PosXY)] =
-    cell.children.deepIteratorDepthFirst
-      .filterHtml
-      .focusable
-      .zipWithIndex
-      .map { case (e, j) => e -> PosXY(j, 0) }
+  def cellContentsIterator(cell: html.Element, includeSelf: Boolean): Iterator[(html.Element, Option[PosXY])] = {
+    val it: Iterator[(html.Element, Option[PosXY])] =
+      cell.children.deepIteratorDepthFirst
+        .filterHtml
+        .focusable
+        .zipWithIndex
+        .map { case (e, j) => e -> Some(PosXY(j, 0)) }
+    if (includeSelf && isFocusable(cell))
+      Iterator.single(cell -> None) ++ it
+    else
+      it
+  }
 
   def indexWhereF[A](as: IndexedSeq[A])(f: A => Boolean, err: => String): F[Int] = {
     val i = as.indexWhere(f)
@@ -114,7 +127,20 @@ private[tablenav] object Logic {
     hypotenuse(a._1 - b._1, a._2 - b._2)
   */
 
-  // As per the notes in TableCellZipper, the PosXY#Y component isn't used right now, so only the X-axis is needed
+  // PosXY#Y component isn't used right now, so only the X-axis is needed
   def distanceRect(a: ClientRect): ClientRect => Double =
     b => Math.abs((a.left + a.width / 2) - (b.left + b.width / 2))
+
+  def focusClosest(focus: html.Element, candidates: Iterator[html.Element]): Option[TableCellZipper] = {
+    // Note: If I ever add logic to start making use of the Y in PosXY this logic will need some
+    // adjustment. It doesn't consider height wrapping. If the user presses down in the last row and the
+    // top row cells have sub-items with PosXY.y > 0 the distance fn will rank the bottom ones is being
+    // closer to the currentFocus which doesn't make sense; in such a case the user would expect pressing
+    // down from the very bottom will go the very top, not the bottom of the top-most row.
+    val distRectFn = distanceRect(focus.getBoundingClientRect())
+    val closest = candidates
+      .filter(allowMove)
+      .minOptionBy(e => distRectFn(e.getBoundingClientRect()))
+    closest.map(TableCellZipper(_))
+  }
 }
