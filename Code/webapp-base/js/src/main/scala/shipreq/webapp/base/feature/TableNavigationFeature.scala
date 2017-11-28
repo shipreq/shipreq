@@ -209,8 +209,13 @@ object TableNavigationFeature {
 
                 case _ =>
                   val distRectFn = distanceRect(focus.getBoundingClientRect())
-                  val closest = rowContentsIterator(newRow).minBy(x => distRectFn(x._1.getBoundingClientRect()))
-                  TableCellZipper(closest._1)
+                  // TODO closest doesn't consider wrap and movement dir
+                  // eg. moving up from top should select furthest Y
+                  val closest = rowContentsIterator(newRow)
+                    .map(_._1)
+                    .filterNot(subMoveOnly)
+                    .minBy(e => distRectFn(e.getBoundingClientRect()))
+                  TableCellZipper(closest)
               }
             }
         }

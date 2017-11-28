@@ -178,6 +178,19 @@ object TableNavigationFeatureTest extends TestSuite {
       .general(TablePos(0, 0, 1, None))
       .general(TablePos(0, 1, 1, None))
       .result()
+
+    val upMoves = MovesBuilder()
+      .general(TablePos(0, 2, 1, None))
+      .general(TablePos(0, 1, 1, None))
+      .general(TablePos(0, 0, 1, None))
+      .newBatch()
+      .general(TablePos(0, 1, 1, None))
+      .general(TablePos(0, 0, 1, None))
+      .general(TablePos(0, 5, 1, Some(PosXY(1, 0))))
+      .general(TablePos(0, 4, 2, Some(PosXY(0, 0)))) // or .general(TablePos(0, 4, 0, None))
+      .general(TablePos(0, 3, 0, None))
+      .general(TablePos(0, 2, 1, None)) // 0 not available
+      .result()
   }
 
   lazy val lr: html.Table = {
@@ -260,10 +273,10 @@ object TableNavigationFeatureTest extends TestSuite {
       }
     }
 
-    'moveLeft  - testMoves(lr, Axis.LeftRight, Movement.Prev, LR.rightMoves, Backwards)
     'moveRight - testMoves(lr, Axis.LeftRight, Movement.Next, LR.rightMoves, Forwards)
-//    'moveUp    - testMoves(lr, Axis.UpDown   , Movement.Prev, LR.downMoves , Backwards)
+    'moveLeft  - testMoves(lr, Axis.LeftRight, Movement.Prev, LR.rightMoves, Backwards)
     'moveDown  - testMoves(lr, Axis.UpDown   , Movement.Next, LR.downMoves , Forwards)
+    'moveUp    - testMoves(lr, Axis.UpDown   , Movement.Prev, LR.upMoves   , Forwards)
 
     'subMoveLeft  - testSubMoves(lr, Movement.Prev, LR.rightMoves, Backwards)
     'subMoveRight - testSubMoves(lr, Movement.Next, LR.rightMoves, Forwards)
