@@ -5,7 +5,7 @@ import japgolly.scalajs.react.{raw => _, _}
 import scala.annotation.tailrec
 import scalajs.js
 import org.scalajs.dom._
-import shipreq.base.util.Util
+import shipreq.base.util.{Identity, Util}
 
 object DomUtil {
 
@@ -70,8 +70,6 @@ object DomUtil {
   }
 
   @inline implicit class NodeIteratorExt[N >: html.Element <: Node](private val it: Iterator[N]) extends AnyVal {
-    def asHtml: Iterator[html.Element] =
-      it.asInstanceOf[Iterator[html.Element]]
     def filterHtml: Iterator[html.Element] =
       it.filterSubType[html.Element]
     def focusable: Iterator[html.Element] =
@@ -95,11 +93,21 @@ object DomUtil {
   def focusableChildren(e: Element): Iterator[html.Element] =
     e.children.deepIteratorDepthFirst.focusable
 
-  def isFocusable(e: html.Element): Boolean =
-    (e.tabIndex >= 0
-      || e.hasAttribute("tabIndex") // .tabIndex == -1 when unspecified too. Thus check if specified.
-      ) && !e._disabled.exists(identity) // ignore disabled
+  def isFocusable(e: html.Element): Boolean = {
+    @inline def hasTabIndex =
+      e.tabIndex >= 0 || e.hasAttribute("tabIndex") // .tabIndex == -1 when unspecified so check if specified
 
+    @inline def enabled =
+      e._disabled.forall(!_)
+
+    @inline def blacklisted = e match {
+      // Chrome (at least) doesn't allow anchors without hrefs to have focus
+      case a: html.Anchor => a.href.isEmpty
+      case _ => false
+    }
+
+    hasTabIndex && enabled && !blacklisted
+  }
 
   def isDragWithinNode(e: ReactDragEvent, node: Node): Boolean = {
     @inline def between(value: Double, from: Double, to: Double) =
@@ -107,15 +115,6 @@ object DomUtil {
     val r = node.domAsHtml.getBoundingClientRect()
     between(e.clientX, r.left, r.right) && between(e.clientY, r.top, r.bottom)
   }
-
-  def keyCodeSwitch(e       : ReactKeyboardEvent,
-                    altKey  : Boolean = false,
-                    ctrlKey : Boolean = false,
-                    metaKey : Boolean = false,
-                    shiftKey: Boolean = false)
-                   (keyCodeSwitch: PartialFunction[Int, Callback]): CallbackOption[Unit] =
-    CallbackOption.asEventDefault(e,
-      CallbackOption.keyCodeSwitch(e, altKey, ctrlKey, metaKey, shiftKey)(keyCodeSwitch))
 
   /**
    * Determine the index of an element amongst its parent's children.
@@ -155,72 +154,4 @@ object DomUtil {
    */
   def siblingAtOffset(e: html.Element, offset: Int) =
     siblingAt(e, _ + offset)
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // Structures
-
-  sealed abstract class Movement(val adjustIndex: Int => Int) {
-    def apply[A](as: IndexedSeq[A], currentIndex: Int): A = {
-      val j = Util.fitCollectionIndex(adjustIndex(currentIndex), as.length)
-      as(j)
-    }
-  }
-  object Movement {
-    case object None extends Movement(identity) {
-      override def apply[A](as: IndexedSeq[A], i: Int): A = as(i)
-    }
-    case object Prev extends Movement(_ - 1)
-    case object Next extends Movement(_ + 1)
-    case object Head extends Movement(_ => 0)
-    case object Last extends Movement(_ => -1)
-  }
-
-  /**
-   * Not very robust yet. Expects:
-   *
-   * - a THEAD with exactly 1 row.
-   * - a TBODY with 0-n rows.
-   * - at least one column.
-   * - the same number of columns (no colspans) in each row.
-   *
-   * @param focus Either table>thead>tr>th or table>tbody>tr>td
-   */
-  final case class TableCellZipper(focus: html.Element) {
-    @inline implicit private def autoCastHtml(e: Element) = e.domAsHtml
-
-    def focusRow    : html.Element = focus.parentElement    // TH | TD
-    def focusSection: html.Element = focusRow.parentElement // THEAD | TBODY
-
-    val rowIndex: Int =
-      focusSection.tagName match {
-        case "THEAD" => 0
-        case "TBODY" => siblingIndex(focusRow) + 1
-      }
-
-    val colIndex: Int =
-      siblingIndex(focus)
-
-    private def rowAtIndex(i: Int): html.Element = {
-      val table = focusSection.parentElement
-      assert("TABLE" == table.tagName, s"Expected TABLE, got: ${table.tagName}")
-      def thead = table.children(0)
-      val tbody = table.children(1)
-      val j = Util.fitCollectionIndex(i, tbody.children.length + 1)
-      if (j == 0)
-        thead.children(0)
-      else
-        tbody.children(j - 1)
-    }
-
-    def move_-(m: Movement): TableCellZipper =
-      if (m == Movement.None) this else
-        TableCellZipper(siblingAt(focus, m.adjustIndex))
-
-    def move_|(m: Movement): TableCellZipper =
-      if (m == Movement.None) this else {
-        val tgtRow  = rowAtIndex(m adjustIndex rowIndex)
-        val tgtCell = tgtRow.children(colIndex)
-        TableCellZipper(tgtCell)
-      }
-  }
 }

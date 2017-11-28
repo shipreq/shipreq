@@ -2,18 +2,17 @@ package shipreq.webapp.base.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.test.ReactTestUtils
 import org.scalajs.dom.html
-import scalaz.\/-
+import scalaz.{Equal, \/-}
 import scalaz.syntax.traverse._
 import utest._
-import shipreq.webapp.base.lib.DomUtil.{TableCellZipper => _, _}
+import shipreq.webapp.base.lib.DomUtil._
 import shipreq.base.test.BaseTestUtil._
-import shipreq.base.util.{Backwards, Direction, Forwards, Memo}
+import shipreq.base.util.{Backwards, Direction, Forwards}
+import tablenav._
 
 object TableNavigationFeatureTest extends TestSuite {
-  import TableNavigationFeature._
 
   val focusable = ^.tabIndex := -1
 
@@ -101,7 +100,7 @@ object TableNavigationFeatureTest extends TestSuite {
               <.th(TablePos(0, 3, 0, None), focusable),
             ),
             <.tr(
-              <.th(TablePos(0, 4, 0, None), focusable),
+              <.th(TablePos(0, 4, 0, None), focusable, <.span(<.span)),
               <.th(TablePos(0, 4, 1, None)),
               <.td(TablePos(0, 4, 2, None), <.input.checkbox),
               <.td(TablePos(0, 4, 3, None), <.input.text, focusable),
@@ -341,30 +340,41 @@ object TableNavigationFeatureTest extends TestSuite {
       assertEq(s"subMove $movement: $from --> $to", actual, \/-(Some(to)))
     }
 
+//  def testNoMovement(table: html.Table): Unit = {
+//    implicit val ee = Equal.equalRef[html.Element]
+//    for (e <- DomUtil.focusableChildren(table)) {
+//      val z = TableCellZipper(e)
+//      assertEq(z.move(Axis.UpDown, Movement.None).map(_.focus), \/-(e))
+//      assertEq(z.move(Axis.LeftRight, Movement.None).map(_.focus), \/-(e))
+//    }
+//  }
+
   override def tests = TestSuite {
 
     'lr {
       def t = lr
       def T = LR
-      'posDetection - testCellLabels(t)
-      'moveRight    - testMoves(t, Axis.LeftRight, Movement.Next, T.rightMoves, Forwards)
-      'moveLeft     - testMoves(t, Axis.LeftRight, Movement.Prev, T.rightMoves, Backwards)
-      'moveDown     - testMoves(t, Axis.UpDown   , Movement.Next, T.downMoves , Forwards)
-      'moveUp       - testMoves(t, Axis.UpDown   , Movement.Prev, T.upMoves   , Forwards)
-      'subMoveLeft  - testSubMoves(t, Movement.Prev, T.rightMoves, Backwards)
-      'subMoveRight - testSubMoves(t, Movement.Next, T.rightMoves, Forwards)
+      'posDetection   - testCellLabels(t)
+//      'testNoMovement - testNoMovement(t)
+      'moveRight      - testMoves(t, Axis.LeftRight, Movement.Next, T.rightMoves, Forwards)
+      'moveLeft       - testMoves(t, Axis.LeftRight, Movement.Prev, T.rightMoves, Backwards)
+      'moveDown       - testMoves(t, Axis.UpDown   , Movement.Next, T.downMoves , Forwards)
+      'moveUp         - testMoves(t, Axis.UpDown   , Movement.Prev, T.upMoves   , Forwards)
+      'subMoveLeft    - testSubMoves(t, Movement.Prev, T.rightMoves, Backwards)
+      'subMoveRight   - testSubMoves(t, Movement.Next, T.rightMoves, Forwards)
     }
 
     'td {
       def t = td
       def T = TD
-      'posDetection - testCellLabels(t)
-      'moveRight    - testMoves(t, Axis.LeftRight, Movement.Next, T.rightMoves, Forwards)
-      'moveLeft     - testMoves(t, Axis.LeftRight, Movement.Prev, T.rightMoves, Backwards)
-      'moveDown     - testMoves(t, Axis.UpDown   , Movement.Next, T.downMoves , Forwards)
-      'moveUp       - testMoves(t, Axis.UpDown   , Movement.Prev, T.downMoves , Backwards)
-      'subMoveLeft  - testSubMoves(t, Movement.Prev, T.rightMoves, Backwards)
-      'subMoveRight - testSubMoves(t, Movement.Next, T.rightMoves, Forwards)
+      'posDetection   - testCellLabels(t)
+//      'testNoMovement - testNoMovement(t)
+      'moveRight      - testMoves(t, Axis.LeftRight, Movement.Next, T.rightMoves, Forwards)
+      'moveLeft       - testMoves(t, Axis.LeftRight, Movement.Prev, T.rightMoves, Backwards)
+      'moveDown       - testMoves(t, Axis.UpDown   , Movement.Next, T.downMoves , Forwards)
+      'moveUp         - testMoves(t, Axis.UpDown   , Movement.Prev, T.downMoves , Backwards)
+      'subMoveLeft    - testSubMoves(t, Movement.Prev, T.rightMoves, Backwards)
+      'subMoveRight   - testSubMoves(t, Movement.Next, T.rightMoves, Forwards)
     }
 
   }
