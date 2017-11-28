@@ -46,8 +46,8 @@ object TableNavKeys {
     dom.console.error(s)
 
   private def move(e: ReactKeyboardEventFromHtml,
-                        ↔ : Option[Movement] = None,
-                        ↕ : Option[Movement] = None): Callback =
+                   ↔ : Option[Movement] = None,
+                   ↕ : Option[Movement] = None): Callback =
     Callback {
       import TableCellZipper.within
       (within(e.target) orElse within(e.currentTarget)) // not a fan of this but it works fine so far

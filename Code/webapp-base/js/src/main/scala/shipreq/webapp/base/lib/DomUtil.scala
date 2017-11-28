@@ -84,7 +84,7 @@ object DomUtil {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Functions
 
-  def focusedHtmlElement: CallbackTo[Option[html.Element]] =
+  def activeHtmlElement: CallbackTo[Option[html.Element]] =
     CallbackTo(
       document.activeElement
         .domToHtml

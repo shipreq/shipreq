@@ -423,7 +423,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
 
     def focus($: Mounted): Callback =
       for {
-        focused <- focusedHtmlElement
+        focused <- activeHtmlElement
         cell <- domCB($)
       } yield
         // If this cell's child is focused, or there is no focus at all, then focus this cell.

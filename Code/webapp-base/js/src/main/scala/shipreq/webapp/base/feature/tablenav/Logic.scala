@@ -98,6 +98,7 @@ private[tablenav] object Logic {
       \/-(i)
   }
 
+  /*
   def hypotenuse(x: Double, y: Double): Double =
     Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2))
 
@@ -111,4 +112,9 @@ private[tablenav] object Logic {
 
   def distanceXY(a: (Double, Double), b: (Double, Double)): Double =
     hypotenuse(a._1 - b._1, a._2 - b._2)
+  */
+
+  // As per the notes in TableCellZipper, the PosXY#Y component isn't used right now, so only the X-axis is needed
+  def distanceRect(a: ClientRect): ClientRect => Double =
+    b => Math.abs((a.left + a.width / 2) - (b.left + b.width / 2))
 }
