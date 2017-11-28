@@ -100,6 +100,8 @@ Phase 2
 * Prevent -- (not not) in the FilterParser? Or allow /\-+/ and auto-correct on blur?
 * Hard-deletion of field (via hard-deletion of ReqType) breaks SavedViews!
 * Add KB shortcut to move colums in ReqTable
+* Firefox: ctrl-home space doesn't work properly
+* Firefox: Content security policy violations appear
 
 ### New Features
 * Issues

@@ -12,7 +12,7 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.{Applicable, ErrorMsg, NotApplicable}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
-import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}
 import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.ui.{EditTheme, semantic}
 import shipreq.webapp.base.ui.semantic.{Icon, Message}
@@ -142,9 +142,9 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
         focusKeyHandlers(e)
 
       private def dataColKeyDown(col: ColumnPlus)(e: ReactKeyboardEventFromHtml): Callback =
-        focusKeyHandlers(e) | keyCodeSwitch(e) {
+        focusKeyHandlers(e) | CallbackOption.asEventDefault(e, CallbackOption.keyCodeSwitch(e) {
           case KeyCode.Space => $.props.flatMap(_ clickSort col)
-        }
+        })
 
       private def renderFn(p: Props, content: DragToReorder.Content[ColumnPlus]): VdomElement = {
         val selectionCell =
@@ -423,7 +423,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
 
     def focus($: Mounted): Callback =
       for {
-        focused <- focusedHtmlElement
+        focused <- activeHtmlElement
         cell <- domCB($)
       } yield
         // If this cell's child is focused, or there is no focus at all, then focus this cell.
@@ -452,18 +452,14 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
       def focusOrStartEditor: CallbackOption[Unit] =
         if (editor.read.editor.isDefined) focusChild else editor.startEdit.getOrEmpty
 
-      val cellEvents: CallbackOption[Unit] =
-        CallbackOption.require(doesEventTargetCell(e)) >> (
-        focusKeyHandlers(e) | keyCodeSwitch(e) {
-          case KeyCode.F2 => focusOrStartEditor
-        })
+      def cellEvents: CallbackOption[Unit] =
+        CallbackOption.asEventDefault(e,
+          CallbackOption.require(doesEventTargetCell(e)) >>
+            CallbackOption.keyCodeSwitch(e) {
+              case KeyCode.F2 => focusOrStartEditor
+            })
 
-      val childEvents: CallbackOption[Unit] =
-        CallbackOption.require(e.target != e.currentTarget) >> keyCodeSwitch(e) {
-          case KeyCode.Tab => Callback(e.currentTarget.focus())
-        }
-
-      CallbackOption.asEventDefault(e, cellEvents | childEvents)
+      focusKeyHandlers(e) | cellEvents
     }
 
     val cellBase = <.td(^.tabIndex := -1)
@@ -534,35 +530,8 @@ object Table {
     val reusableNA: Reusable[TagMod] =
       Reusable.byRef(`n/a`)
 
-    def moveFocus(cur: dom.html.Element, ↔ : Movement = Movement.None, ↕ : Movement = Movement.None): Callback =
-      Callback {
-        val cell: dom.html.Element =
-          if ("INPUT" == cur.tagName) // Selection checkbox
-            cur.parentElement
-          else
-            cur
-        val z = TableCellZipper(cell) move_- ↔ move_| ↕
-        val f: dom.html.Element =
-          if (z.colIndex == 0)
-            z.focus.children(0).domAsHtml // Selection checkbox
-          else
-            z.focus
-        f.focus()
-      }
-
-    def focusKeyHandlers(e: ReactKeyboardEventFromHtml): CallbackOption[Unit] =
-      keyCodeSwitch(e) {
-        case KeyCode.Up     => moveFocus(e.currentTarget, ↕ = Movement.Prev)
-        case KeyCode.Down   => moveFocus(e.currentTarget, ↕ = Movement.Next)
-        case KeyCode.Left   => moveFocus(e.currentTarget, ↔ = Movement.Prev)
-        case KeyCode.Right  => moveFocus(e.currentTarget, ↔ = Movement.Next)
-        case KeyCode.Home   => moveFocus(e.currentTarget, ↔ = Movement.Head)
-        case KeyCode.End    => moveFocus(e.currentTarget, ↔ = Movement.Last)
-        case KeyCode.Escape => Callback(e.target.blur())
-      } | keyCodeSwitch(e, ctrlKey = true) {
-        case KeyCode.Home   => moveFocus(e.currentTarget, Movement.Head, Movement.Head)
-        case KeyCode.End    => moveFocus(e.currentTarget, Movement.Last, Movement.Last)
-      }
+    @inline def focusKeyHandlers =
+      TableNavigationFeature.Keys.handler
   }
 }
 

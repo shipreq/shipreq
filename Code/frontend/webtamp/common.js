@@ -148,12 +148,12 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
 
       react: [
         fromCdnjs('react', mode == 'dev' ? 'react-with-addons.js' : 'react.min.js', 'reactJs'),
-        fromCdnjs({cdn: 'react', npm: 'react-dom'}, `react-dom${dotMin}.js`, 'reactDomJs'),
+        fromCdnjs('react-dom', `react-dom${dotMin}.js`, 'reactDomJs'),
       ],
 
       reactDomSvr: [
         'react',
-        fromCdnjs({cdn: 'react', npm: 'react-dom'}, `react-dom-server${dotMin}.js`, 'reactDomServerJs'),
+        fromCdnjs('react-dom', `react-dom-server${dotMin}.js`, 'reactDomServerJs'),
       ],
 
       katex: [

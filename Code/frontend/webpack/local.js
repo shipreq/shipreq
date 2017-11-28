@@ -8,11 +8,22 @@ const
 const config = {
 
   entry: {
+
+    // Projects access this via symlink in src/test/resources
     'webapp-gen-deps': [
       'expose-loader?React!react',
       'expose-loader?ReactDOM!react-dom',
       'expose-loader?ReactDOMServer!react-dom/server',
     ],
+
+    // Projects access this via symlink in src/test/resources
+    'webapp-base-test': [
+      'expose-loader?React!react',
+      'expose-loader?ReactDOM!react-dom',
+      'expose-loader?React.addons.TestUtils!react-dom/test-utils',
+    ],
+
+    // Projects access this via symlink in src/test/resources
     'webapp-client-test': [
       'expose-loader?React!react',
       'expose-loader?ReactDOM!react-dom',

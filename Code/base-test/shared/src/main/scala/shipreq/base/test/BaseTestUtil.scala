@@ -17,9 +17,9 @@ object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
 
   final class BaseTestUtilOpsDisj[A, B](private val d: A \/ B) extends AnyVal {
     def needLeft: A =
-      d.fold(Identity.apply, sys error _.toString)
+      d.fold(Identity.apply, e => fail(s"needLeft got \\/-($e)"))
     def needRight: B =
-      d.fold(sys error _.toString, Identity.apply)
+      d.fold(e => fail(s"needRight got -\\/($e)"), Identity.apply)
   }
 
   final class FieldAssert[A](actual: A, expect: A) {

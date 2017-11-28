@@ -1,0 +1,1 @@
+../../../../../frontend/dist/local/webapp-base-test.js

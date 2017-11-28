@@ -36,6 +36,18 @@ object ScalaExt extends Platform.ScalaExt {
       if (t.isEmpty) None else Some(f(t))
   }
 
+  // TODO MOVE INTO MICROLIBS!
+  implicit class GenTravOExt[A](private val as: TraversableOnce[A]) extends AnyVal {
+    def minOption[B >: A](implicit ord: Ordering[B]): Option[A] =
+      if (as.isEmpty) None else Some(as.min[B])
+    def minOptionBy[B](f: A => B)(implicit ord: Ordering[B]): Option[A] =
+      if (as.isEmpty) None else Some(as.minBy(f))
+    def maxOption[B >: A](implicit ord: Ordering[B]): Option[A] =
+      if (as.isEmpty) None else Some(as.max[B])
+    def maxOptionBy[B](f: A => B)(implicit ord: Ordering[B]): Option[A] =
+      if (as.isEmpty) None else Some(as.maxBy(f))
+  }
+
   implicit class StringBuilderExt(val sb: StringBuilder) extends AnyVal {
     @inline def kv(k: String, v: Any): Unit = {
       sb append k
