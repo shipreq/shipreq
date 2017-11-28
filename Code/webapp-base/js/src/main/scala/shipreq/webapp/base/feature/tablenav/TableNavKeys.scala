@@ -26,6 +26,10 @@ object TableNavKeys {
           case KeyCode.Home  => move(e, ↔ = Movement.Head)
           case KeyCode.End   => move(e, ↔ = Movement.Last)
         } | CallbackOption.keyCodeSwitch(e, ctrlKey = true) {
+          case KeyCode.Up    => move(e, ↕ = Movement.Head)
+          case KeyCode.Down  => move(e, ↕ = Movement.Last)
+          case KeyCode.Left  => move(e, ↔ = Movement.Head)
+          case KeyCode.Right => move(e, ↔ = Movement.Last)
           case KeyCode.Home  => move(e, Movement.Head, Movement.Head)
           case KeyCode.End   => move(e, Movement.Last, Movement.Last)
         })
