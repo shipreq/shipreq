@@ -111,8 +111,8 @@ object TableNavigationFeatureTest extends TestSuite {
               <.td(TablePos(0, 4, 3, None), <.input.text, focusable),
               <.td(TablePos(0, 4, 4, None), <.input.text),
               <.td(TablePos(0, 4, 5, None), <.input.checkbox, <.input.checkbox),
-              <.td(TablePos(0, 4, 6, None), <.input.checkbox, focusable),
-              <.td(TablePos(0, 4, 7, None), <.span(<.input.checkbox), <.input.checkbox, focusable),
+              <.td(TablePos(0, 4, 6, None), focusable, <.input.checkbox),  // ignore cell focusability cos of sub-movable
+              <.td(TablePos(0, 4, 7, None), focusable, <.span(<.input.checkbox), <.input.checkbox), // ignore cell focusability cos of sub-movables
             ),
             <.tr(
               <.td(TablePos(0, 5, 0, None), <.div(focusable), <.div, <.div(focusable)), // ReqDetail implications --
@@ -121,8 +121,8 @@ object TableNavigationFeatureTest extends TestSuite {
               <.td(TablePos(0, 5, 3, None), <.textarea,       <.div, <.textarea),       // ReqDetail implications **
             ),
             <.tr(
-              <.td(TablePos(0, 6, 0, None), focusable, <.div(focusable), <.div, <.div(focusable)),
-              <.td(TablePos(0, 6, 1, None), focusable, <.div(focusable), <.div, <.div(focusable)),
+              <.td(TablePos(0, 6, 0, None), focusable, <.div(focusable), <.div, <.div(focusable)), // ignore cell focusability cos of sub-movable
+              <.td(TablePos(0, 6, 1, None), focusable, <.div(focusable), <.div, <.div(focusable)), // ignore cell focusability cos of sub-movable
             ),
           )
         )
@@ -156,9 +156,9 @@ object TableNavigationFeatureTest extends TestSuite {
       .subOnly(TablePos(0, 4, 4, Some(PosXY(0, 0))))
       .general(TablePos(0, 4, 5, Some(PosXY(0, 0))))
       .general(TablePos(0, 4, 5, Some(PosXY(1, 0))))
-      .general(TablePos(0, 4, 6, None))
+//      .general(TablePos(0, 4, 6, None)) // no, cos it has sub-movables
       .general(TablePos(0, 4, 6, Some(PosXY(0, 0))))
-      .general(TablePos(0, 4, 7, None))
+//      .general(TablePos(0, 4, 7, None)) // no, cos it has sub-movables
       .general(TablePos(0, 4, 7, Some(PosXY(0, 0))))
       .general(TablePos(0, 4, 7, Some(PosXY(1, 0))))
       .general(TablePos(0, 4, 0, None))
@@ -194,7 +194,7 @@ object TableNavigationFeatureTest extends TestSuite {
     val upMoves = downShared.reverse ++ MovesBuilder()
       .general(TablePos(0, 1, 1, None))
       .general(TablePos(0, 0, 1, None))
-      .general(TablePos(0, 6, 1, None))
+      .general(TablePos(0, 6, 1, Some(PosXY(0, 0)))) // not PosXY cos it has sub-movables
       .general(TablePos(0, 5, 1, Some(PosXY(1, 0))))
       .general(TablePos(0, 4, 2, Some(PosXY(0, 0)))) // or .general(TablePos(0, 4, 0, None))
       .general(TablePos(0, 3, 0, None))

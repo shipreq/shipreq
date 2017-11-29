@@ -1,11 +1,14 @@
 package shipreq.webapp.base.feature.tablenav
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.ReactExt_DomNode
 import japgolly.univeq._
 import org.scalajs.dom.html
 import scalaz.{-\/, \/-}
-import shipreq.base.util.Identity
+import scalaz.std.option.optionInstance
+import scalaz.syntax.traverse._
+import shipreq.base.util.{Deny, Identity}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.lib.DomUtil._
 
@@ -46,14 +49,6 @@ final case class TableCellZipper(focus: html.Element) {
 
   def move(a: Axis, m: Movement): F[TableCellZipper] =
       a match {
-        case Axis.LeftRight =>
-          for {
-            pos        ← focusPos
-            tr         ← rowAtPos(pos)
-            rowResults = rowContentsIterator(tr).map(_._1).filter(allowMove).toVector
-            i          ← findFocusIndex(rowResults)
-            // TODO i should be lazy, movement might ignore it
-          } yield TableCellZipper(m(rowResults, i))
 
         case Axis.UpDown =>
           for {
@@ -61,38 +56,32 @@ final case class TableCellZipper(focus: html.Element) {
             table    ← root
             tbody    ← table.child(pos.body)
             tr       ← tbody.child(pos.row)
-            rows     = movableRowIterator(table).toVector
-            rowIndex ← indexWhereF(rows)(_ eq tr, "Focus row not found")
+            rows     ← needNev(movableRowIterator(table), "no rows")
+                       // This ignores moving up/down within the same cell
+                       // …which is fine for now because there's no logic to create more than one sub-row in a cell
+            rowIdxF  = indexWhereF(rows.whole)(_ eq tr, "Focus row not found")
+            newRow   ← m.moveNevF(rows, rowIdxF)
           } yield {
 
-            // This ignores moving up/down within the same cell
-            // …which is fine for now because there's no logic to create more than one sub-row in a cell
-            val newRow = m(rows, rowIndex)
-
             def focusClosestInNewRow: TableCellZipper =
-              focusClosest(focus, rowContentsIterator(newRow).map(_._1).filter(allowMove))
-                .get // newRow is proven not to be empty via .filter in movableRowIterator
+              focusClosest(focus, rowMovableElementsIterator(newRow)).get // newRow is proven not to be empty via .filter in movableRowIterator
 
             newRow.child(pos.cell) match {
+
               case \/-(cell) =>
+                def subMovables = focusableChildren(cell).filter(allowMove)
+                def whenNoSubs = if (isFocusable(cell)) TableCellZipper(cell) else focusClosestInNewRow
+
                 pos.sub match {
                   case None =>
-                    if (isFocusable(cell))
-                      TableCellZipper(cell)
-                    else
-                      focusableChildren(cell).filter(allowMove).nextOption() match {
-                        case Some(sub) => TableCellZipper(sub)
-                        case None      => focusClosestInNewRow
-                      }
+                    subMovables.nextOption() match {
+                      case Some(sub) => TableCellZipper(sub)
+                      case None      => whenNoSubs
+                    }
                   case Some(xy) =>
-                    cellContentsIterator(cell, false)
-                      .filter(_._1 |> allowMove)
-                      .find(_._2.exists(_ ==* xy)) match {
-                      case Some((sub, _)) =>
-                        TableCellZipper(sub)
-                      case None =>
-                        focusClosest(focus, cellContentsIterator(cell, true).map(_._1).filter(allowMove))
-                          .getOrElse(focusClosestInNewRow)
+                    subAt(cell, xy).filter(allowMove) match {
+                      case Some(sub) => TableCellZipper(sub)
+                      case None      => focusClosest(focus, subMovables).getOrElse(whenNoSubs)
                     }
                 }
 
@@ -100,6 +89,15 @@ final case class TableCellZipper(focus: html.Element) {
                 focusClosestInNewRow
             }
           }
+
+        case Axis.LeftRight =>
+          for {
+            pos        ← focusPos
+            tr         ← rowAtPos(pos)
+            rowResults = rowContentsIterator(tr).filter(_._1 |> allowMove).toVector
+            indexF     = findFocusIndexA(rowResults)(_._1)
+            target     ← m.moveSelectiveF(rowResults, indexF)((a, i) => allowMove2(a, rowResults.get(i + 1)))
+          } yield target.fold(this)(t => TableCellZipper(t._1))
       }
 
   /** Move horizontally within the same cell, if there is somewhere to move to.
@@ -108,16 +106,29 @@ final case class TableCellZipper(focus: html.Element) {
     * The reason that up/down/left/right doesn't automatically enter text editors is that those keys are used to
     * navigate the text itself inside the editor.
     * */
-  def subMove(leftRight: Movement): F[Option[TableCellZipper]] =
+  def subMove(leftRight: Movement): F[Option[TableCellZipper]] = {
+
+    // Removes the outer cell from consideration if there are sub-cells allowed by allowMove (i.e. arrow-keys)
+    def excludeOuter(cell: NonEmptyVector[RowContent]): (NonEmptyVector[RowContent], F[Int]) = {
+      def subMoveable = cell.iterator.drop(1).filter(_._1 |> allowMove).nextOption()
+      val cell2 =
+        cell.tailNonEmpty match {
+          case Some(tail) if allowMove2(cell.head, subMoveable) is Deny => tail
+          case _                                                        => cell
+        }
+      val indexF =
+        (if (cell.head._1 eq focus) \/-(0) else -\/("")) orElse findFocusIndexA(cell2.whole)(_._1)
+      (cell2, indexF)
+    }
+
     for {
-      pos         ← focusPos
-      tr          ← rowAtPos(pos)
-      cellResults = rowContentsIterator(tr).filter(_._2._1 ==* pos.cell).map(_._1).toVector
-      i           ← findFocusIndex(cellResults)
-      // TODO i should be lazy, movement might ignore it & cellResults might preclude it
-    } yield
-      Option.when(cellResults.length > 1)(
-        TableCellZipper(leftRight(cellResults, i)))
+      pos                ← focusPos
+      tr                 ← rowAtPos(pos)
+      cellRes1           ← needNev(rowContentsIterator(tr).filter(_._2._1 ==* pos.cell), "empty cell")
+      (cellRes2, indexF) = excludeOuter(cellRes1)
+      result             ← Option.when(cellRes2.length > 1)(leftRight.moveNevF(cellRes2, indexF)).sequence
+    } yield result.map(t => TableCellZipper(t._1))
+  }
 
   def goto(pos: TablePos): F[TableCellZipper] =
     for {

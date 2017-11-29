@@ -1,11 +1,13 @@
 package shipreq.webapp.base.feature.tablenav
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.ReactExt_DomNode
 import japgolly.univeq._
 import org.scalajs.dom.{ClientRect, html}
 import scala.annotation.tailrec
 import scalaz.{-\/, \/, \/-}
+import shipreq.base.util.{Deny, Permission}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.lib.DomUtil._
 
@@ -82,9 +84,23 @@ private[tablenav] object Logic {
         .children.iterator
         .filter(_.tagName ==* "TR")
         .map(_.domCast[html.TableRow])
-        .filter(rowContentsIterator(_).exists(_._1 |> allowMove)))
+        .filter(rowMovableElementsIterator(_).nonEmpty))
 
-  def rowContentsIterator(tr: html.Element): Iterator[(html.Element, (Int, Option[PosXY]))] =
+  def rowMovableElementsIterator(tr: html.Element): Iterator[html.Element] =
+    (0 until tr.children.length).iterator.flatMap { i =>
+      val cell = tr.children(i).domAsHtml
+      val children = focusableChildren(cell).filter(allowMove)
+      if (children.nonEmpty)
+        children
+      else if (isFocusable(cell))
+        cell :: Nil
+      else
+        Nil
+    }
+
+  type RowContent = (html.Element, (Int, Option[PosXY]))
+
+  def rowContentsIterator(tr: html.Element): Iterator[RowContent] =
     (0 until tr.children.length).iterator.flatMap { i =>
       val h = tr.children(i).domAsHtml
       cellContentsIterator(h, true).map(_.map2(s => (i, s)))
@@ -92,9 +108,7 @@ private[tablenav] object Logic {
 
   def cellContentsIterator(cell: html.Element, includeSelf: Boolean): Iterator[(html.Element, Option[PosXY])] = {
     val it: Iterator[(html.Element, Option[PosXY])] =
-      cell.children.deepIteratorDepthFirst
-        .filterHtml
-        .focusable
+      focusableChildren(cell)
         .zipWithIndex
         .map { case (e, j) => e -> Some(PosXY(j, 0)) }
     if (includeSelf && isFocusable(cell))
@@ -143,4 +157,34 @@ private[tablenav] object Logic {
       .minOptionBy(e => distRectFn(e.getBoundingClientRect()))
     closest.map(TableCellZipper(_))
   }
+
+  /** Special-case: When a table cell contains sub-items that are focusable and satisfy allowMove (i.e. can be accessed
+    * via arrow keys, not just tab), then the table cell itself should be excluded from move consideration.
+    *
+    * Examples:
+    *
+    * - A cell is focusable and has nothing but plain text in it, focus the cell when the user navigates there.
+    *
+    * - If it's got a checkbox in it, bypass the cell and focus the checkbox directly.
+    *
+    * - In the case of the implications field on the ReqDetail table, there are two divs that can be turned into editors,
+    * focus those divs directly.
+    *
+    * - In the case of use case steps fields, if there are steps, then focus the steps themselves, not the surrounding
+    * cell.
+    */
+  def allowMove2(a: RowContent, ob: Option[RowContent]): Permission =
+    allowMove2A(a, ob)(_._2._1, _._2._2)
+
+  def allowMove2A[A](a: A, ob: Option[A])(cell: A => Int, sub: A => Option[PosXY]): Permission =
+    Deny.when(sub(a).isEmpty && ob.exists(b => sub(b).isDefined && cell(a) ==* cell(b)))
+
+  def needNev[A](as: TraversableOnce[A], err: => String): F[NonEmptyVector[A]] =
+    NonEmptyVector.maybe[A, F[NonEmptyVector[A]]](as.toVector, -\/(err))(\/-(_))
+
+  def subAt(cell: html.Element, xy: PosXY): Option[html.Element] =
+    cellContentsIterator(cell, false)
+      .find(_._2.exists(_ ==* xy))
+      .map(_._1)
+
 }
