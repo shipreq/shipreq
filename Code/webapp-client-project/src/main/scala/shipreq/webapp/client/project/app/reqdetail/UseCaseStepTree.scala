@@ -25,7 +25,12 @@ object UseCaseStepTree {
     val mdt = steps.tree.maxDepthTree
   }
 
-  type RenderBodyFn = (UseCaseStepId, Live, TextAndFlow[Text.AnyOptional, Set[UseCaseStepId]]) => TagMod
+  final case class RenderArgs(base       : VdomTag,
+                              id         : UseCaseStepId,
+                              live       : Live,
+                              textAndFlow: () => TextAndFlow[Text.AnyOptional, Set[UseCaseStepId]])
+
+  type RenderBodyFn = RenderArgs => VdomElement
 
   final case class Props(uc          : UseCase,
                          stepData    : StepData,
@@ -74,8 +79,12 @@ object UseCaseStepTree {
         val fullLabel = field.stepLabel(pos, partialLoc, UseCaseStepLabelFmt.`N.m`)
 
         def text =
-          stepBodyBase(
-            renderBody(id, live, TextAndFlow(step.titleA(uc), Direction.Values(flow(_)(id)))))
+          renderBody(
+            RenderArgs(
+              stepBodyBase,
+              id,
+              live,
+              () => TextAndFlow(step.titleA(uc), Direction.Values(flow(_)(id)))))
 
         def ctrls: VdomElement =
           uc.liveUC match {

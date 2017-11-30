@@ -399,15 +399,22 @@ object ReqDetail {
         val cmdRunner    = AsyncFeature.Runner.D1(reqProps.async.read, runCmd(req.id))
         val addCmdRunner = AsyncFeature.Runner.D1(reqProps.async.read, runAddAndEditNewUseCaseStep(req.id))
 
-        val renderBody: UseCaseStepTree.RenderBodyFn = (id, live, textAndFlow) => {
+        val renderBody: UseCaseStepTree.RenderBodyFn = args => {
           import EditorFeature.FieldKey.UseCaseStep
-          def args = UseCaseStep.Args(
+          import args.id
+
+          val editor = props.editorUCS(UseCaseStep(id), data.pxProjectWidgets)
+
+          def editorArgs = UseCaseStep.Args(
             cmdRunner(Cell.UseCaseStepCtrls(id)),
             addCmdRunner(Cell.AddUseCaseStep(id)))
 
-          props.editorUCS(UseCaseStep(id), data.pxProjectWidgets)
-            .themedRenderOr(args)(
-              pw.useCaseStepTextAndFlow(textAndFlow, live))
+          EditableCell.Props(
+            args.base,
+            editor,
+            editorArgs,
+            () => pw.useCaseStepTextAndFlow(args.textAndFlow(), args.live))
+            .render
         }
 
         UseCaseStepTree.Props(

@@ -11,11 +11,36 @@ import shipreq.webapp.client.project.feature.EditorFeature
   */
 private[reqdetail] object EditableCell {
 
-  final case class Props(cellBase: VdomTag,
-                         editor  : EditorFeature.ReadWrite.ForEditor[Unit, Any],
-                         view    : () => TagMod) {
-    @inline def render: VdomElement = Component(this)
+  trait Props {
+    type A
+    def cellBase: VdomTag
+    def editor: EditorFeature.ReadWrite.ForEditor[A, Any]
+    def editorArgs: A
+    def view: () => TagMod
+
+    @inline final def render: VdomElement = Component(this)
   }
+
+  object Props {
+    def apply(cellBase: VdomTag,
+              editor  : EditorFeature.ReadWrite.ForEditor[Unit, Any],
+              view    : () => TagMod): Props =
+      apply(cellBase, editor, (), view)
+
+    def apply[B](_cellBase  : VdomTag,
+                 _editor    : EditorFeature.ReadWrite.ForEditor[B, Any],
+                 _editorArgs: B,
+                 _view      : () => TagMod): Props =
+      new Props {
+        override type A         = B
+        override def cellBase   = _cellBase
+        override def editorArgs = _editorArgs
+        override def editor     = _editor
+        override def view       = _view
+      }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   private def render($: ScalaComponent.Lifecycle.RenderScope[Props, Unit, Unit], p: Props): VdomElement = {
 
@@ -29,7 +54,7 @@ private[reqdetail] object EditableCell {
 
     p.cellBase(
       ^.onKeyDown ==> onKeyDown,
-      editor.themedRenderOr(())(p.view()))
+      editor.themedRenderOr(p.editorArgs)(p.view()))
   }
 
   val Component = ScalaComponent.builder[Props]("EditableCell")
