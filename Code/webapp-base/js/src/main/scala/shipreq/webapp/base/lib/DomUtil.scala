@@ -117,6 +117,29 @@ object DomUtil {
   }
 
   /**
+   * When a Button in the cell is clicked, we still get the event here in which case, the focus is set after the
+   * button callback runs, meaning that (because separate modState()s don't compose) we trample the state change made by
+   * the button, and replace it with a focus update.
+   *
+   * Rather than force all cell children to stop propagation of events, we apply so logic here to filter the events to
+   * which we react.
+   */
+  def doesEventTargetCell(e: ReactEventFromHtml): Boolean =
+    e.target == e.currentTarget ||
+      (try e.target.tabIndex < 0 catch { case _: Throwable => false }) // .tabIndex is undefined from tests
+
+  def focusParentOnChildClose(parentCB: CallbackTo[Element]): Callback =
+    for {
+      focused <- activeHtmlElement
+      parentE <- parentCB
+    } yield
+      for (parent <- parentE.domToHtml)
+        // If this cell's child is focused, or there is no focus at all, then focus this cell.
+        // Otherwise, don't steal another element's focus
+        if (focused.forall(parent.contains))
+          parent.focus()
+
+  /**
    * Determine the index of an element amongst its parent's children.
    *
    * @return ≥ 0

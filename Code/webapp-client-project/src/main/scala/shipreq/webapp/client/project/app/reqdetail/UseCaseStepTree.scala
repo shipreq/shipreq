@@ -11,7 +11,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}
 import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.feature._
@@ -25,7 +25,12 @@ object UseCaseStepTree {
     val mdt = steps.tree.maxDepthTree
   }
 
-  type RenderBodyFn = (UseCaseStepId, Live, TextAndFlow[Text.AnyOptional, Set[UseCaseStepId]]) => TagMod
+  final case class RenderArgs(base       : VdomTag,
+                              id         : UseCaseStepId,
+                              live       : Live,
+                              textAndFlow: () => TextAndFlow[Text.AnyOptional, Set[UseCaseStepId]])
+
+  type RenderBodyFn = RenderArgs => VdomElement
 
   final case class Props(uc          : UseCase,
                          stepData    : StepData,
@@ -41,8 +46,18 @@ object UseCaseStepTree {
     .render_P(render)
     .build
 
-  private val stepBodyBase = <.div(*.body, TestMarker.useCaseStepText.tagMod)
-  private val tailStepBase = <.div(*.container, ^.key := "TS", TestMarker.useCaseTailStep.tagMod)
+  private val stepBodyBase =
+    <.div(
+      *.body,
+      TestMarker.useCaseStepText.tagMod,
+      ^.tabIndex := -1,
+      TableNavigationFeature.newRow)
+
+  private val tailStepBase =
+    <.div(
+      *.container,
+      ^.key := "TS",
+      TestMarker.useCaseTailStep.tagMod)
 
   private val stepFilterM: FilterDead => VectorTree.PartialLocation => Boolean =
     FilterDead.memo(_.filterFnBy(Live whenValid _.validity))
@@ -64,8 +79,12 @@ object UseCaseStepTree {
         val fullLabel = field.stepLabel(pos, partialLoc, UseCaseStepLabelFmt.`N.m`)
 
         def text =
-          stepBodyBase(
-            renderBody(id, live, TextAndFlow(step.titleA(uc), Direction.Values(flow(_)(id)))))
+          renderBody(
+            RenderArgs(
+              stepBodyBase,
+              id,
+              live,
+              () => TextAndFlow(step.titleA(uc), Direction.Values(flow(_)(id)))))
 
         def ctrls: VdomElement =
           uc.liveUC match {

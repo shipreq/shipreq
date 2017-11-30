@@ -13,6 +13,8 @@ import shipreq.base.util.{Backwards, Direction, Forwards}
 import tablenav._
 
 object TableNavigationFeatureTest extends TestSuite {
+  import Axis._
+  import Movement._
 
   val focusable = ^.tabIndex := -1
 
@@ -27,6 +29,11 @@ object TableNavigationFeatureTest extends TestSuite {
     def general(p: TablePos): this.type = {
       moves += p
       subMoves += p
+      this
+    }
+
+    def movOnly(p: TablePos): this.type = {
+      moves += p
       this
     }
 
@@ -111,8 +118,8 @@ object TableNavigationFeatureTest extends TestSuite {
               <.td(TablePos(0, 4, 3, None), <.input.text, focusable),
               <.td(TablePos(0, 4, 4, None), <.input.text),
               <.td(TablePos(0, 4, 5, None), <.input.checkbox, <.input.checkbox),
-              <.td(TablePos(0, 4, 6, None), <.input.checkbox, focusable),
-              <.td(TablePos(0, 4, 7, None), <.span(<.input.checkbox), <.input.checkbox, focusable),
+              <.td(TablePos(0, 4, 6, None), focusable, <.input.checkbox),  // ignore cell focusability cos of sub-movable
+              <.td(TablePos(0, 4, 7, None), focusable, <.span(<.input.checkbox), <.input.checkbox), // ignore cell focusability cos of sub-movables
             ),
             <.tr(
               <.td(TablePos(0, 5, 0, None), <.div(focusable), <.div, <.div(focusable)), // ReqDetail implications --
@@ -121,8 +128,9 @@ object TableNavigationFeatureTest extends TestSuite {
               <.td(TablePos(0, 5, 3, None), <.textarea,       <.div, <.textarea),       // ReqDetail implications **
             ),
             <.tr(
-              <.td(TablePos(0, 6, 0, None), focusable, <.div(focusable), <.div, <.div(focusable)),
-              <.td(TablePos(0, 6, 1, None), focusable, <.div(focusable), <.div, <.div(focusable)),
+              <.td(TablePos(0, 6, 0, None), focusable, <.div(focusable), <.div, <.div(focusable)), // ignore cell focusability cos of sub-movable
+              <.td(TablePos(0, 6, 1, None), focusable, <.div(focusable), <.div, <.div(focusable)), // ignore cell focusability cos of sub-movable
+              <.td(TablePos(0, 6, 2, None), <.table(TableNavigationFeature.nestedTable, <.tbody(<.tr(<.td(<.div(focusable)), <.td(<.div(focusable)))))), // nested table
             ),
           )
         )
@@ -156,9 +164,9 @@ object TableNavigationFeatureTest extends TestSuite {
       .subOnly(TablePos(0, 4, 4, Some(PosXY(0, 0))))
       .general(TablePos(0, 4, 5, Some(PosXY(0, 0))))
       .general(TablePos(0, 4, 5, Some(PosXY(1, 0))))
-      .general(TablePos(0, 4, 6, None))
+//      .general(TablePos(0, 4, 6, None)) // no, cos it has sub-movables
       .general(TablePos(0, 4, 6, Some(PosXY(0, 0))))
-      .general(TablePos(0, 4, 7, None))
+//      .general(TablePos(0, 4, 7, None)) // no, cos it has sub-movables
       .general(TablePos(0, 4, 7, Some(PosXY(0, 0))))
       .general(TablePos(0, 4, 7, Some(PosXY(1, 0))))
       .general(TablePos(0, 4, 0, None))
@@ -178,6 +186,9 @@ object TableNavigationFeatureTest extends TestSuite {
       .general(TablePos(0, 0, 1, None))
       .general(TablePos(0, 1, 1, None))
       .general(TablePos(0, 2, 1, None))
+      .newBatch()
+      .general(TablePos(0, 5, 2, Some(PosXY(0, 0))))
+      .general(TablePos(0, 6, 2, Some(PosXY(0, 0))))
       .result()
 
     val downMoves = downShared ++ MovesBuilder()
@@ -194,9 +205,9 @@ object TableNavigationFeatureTest extends TestSuite {
     val upMoves = downShared.reverse ++ MovesBuilder()
       .general(TablePos(0, 1, 1, None))
       .general(TablePos(0, 0, 1, None))
-      .general(TablePos(0, 6, 1, None))
+      .general(TablePos(0, 6, 1, Some(PosXY(0, 0)))) // not PosXY cos it has sub-movables
       .general(TablePos(0, 5, 1, Some(PosXY(1, 0))))
-      .general(TablePos(0, 4, 2, Some(PosXY(0, 0)))) // or .general(TablePos(0, 4, 0, None))
+      .general(TablePos(0, 4, 0, None)) // or .general(TablePos(0, 4, 2, Some(PosXY(0, 0))))
       .general(TablePos(0, 3, 0, None))
       .general(TablePos(0, 2, 1, None)) // 0 not available
       .result()
@@ -207,6 +218,7 @@ object TableNavigationFeatureTest extends TestSuite {
     */
   object TD {
     final class Backend($: BackendScope[Unit, Unit]) {
+      val subRow = <.div(focusable, TableNavigationFeature.newRow)
       implicit def renderTablePos(p: TablePos): TagMod = p.toString
       def render: VdomElement =
         <.table(
@@ -217,6 +229,7 @@ object TableNavigationFeatureTest extends TestSuite {
               <.th(TablePos(0, 0, 2, None), focusable),
               <.th(TablePos(0, 0, 3, None)),
               <.th(TablePos(0, 0, 4, None), focusable),
+              <.th(TablePos(0, 0, 5, None), focusable),
             ),
           ),
           <.tbody(
@@ -226,6 +239,7 @@ object TableNavigationFeatureTest extends TestSuite {
               <.td(TablePos(1, 0, 2, None), focusable),
               <.td(TablePos(1, 0, 3, None), focusable),
               <.td(TablePos(1, 0, 4, None)),
+              <.td(TablePos(1, 0, 5, None), focusable, subRow, subRow, subRow), // 0x[0,2]
             ),
             <.tr(
               <.td(TablePos(1, 1, 0, None), <.input.checkbox),
@@ -233,6 +247,7 @@ object TableNavigationFeatureTest extends TestSuite {
               <.td(TablePos(1, 1, 2, None), focusable),
               <.td(TablePos(1, 1, 3, None), focusable),
               <.td(TablePos(1, 1, 4, None)),
+              <.td(TablePos(1, 1, 5, None), focusable, subRow, <.div(focusable), subRow, <.div(focusable)), // [01]x[01]
             ),
           )
         )
@@ -247,7 +262,25 @@ object TableNavigationFeatureTest extends TestSuite {
       .general(TablePos(0, 0, 1, None))
       .general(TablePos(0, 0, 2, None))
       .general(TablePos(0, 0, 4, None))
+      .general(TablePos(0, 0, 5, None))
       .general(TablePos(0, 0, 0, Some(PosXY(0, 0))))
+      .newBatch()
+      .general(TablePos(1, 0, 0, Some(PosXY(0, 0))))
+      .general(TablePos(1, 0, 1, None))
+      .general(TablePos(1, 0, 2, None))
+      .general(TablePos(1, 0, 3, None))
+      .movOnly(TablePos(1, 0, 5, Some(PosXY(0, 0))))
+      .general(TablePos(1, 0, 0, Some(PosXY(0, 0))))
+      .newBatch()
+      .general(TablePos(1, 1, 0, Some(PosXY(0, 0))))
+      .general(TablePos(1, 1, 1, None))
+      .general(TablePos(1, 1, 2, None))
+      .general(TablePos(1, 1, 3, None))
+      .movOnly(TablePos(1, 1, 5, Some(PosXY(0, 0))))
+      .movOnly(TablePos(1, 1, 5, Some(PosXY(1, 0))))
+      .newBatch()
+      .movOnly(TablePos(1, 1, 5, Some(PosXY(0, 1))))
+      .movOnly(TablePos(1, 1, 5, Some(PosXY(1, 1))))
       .result()
 
     val downMoves = MovesBuilder()
@@ -260,6 +293,17 @@ object TableNavigationFeatureTest extends TestSuite {
       .general(TablePos(1, 0, 1, None))
       .general(TablePos(1, 1, 1, None))
       .general(TablePos(0, 0, 1, None))
+      .newBatch()
+      .general(TablePos(1, 0, 5, Some(PosXY(0, 0))))
+      .general(TablePos(1, 0, 5, Some(PosXY(0, 1))))
+      .general(TablePos(1, 0, 5, Some(PosXY(0, 2))))
+      .general(TablePos(1, 1, 5, Some(PosXY(0, 0))))
+      .general(TablePos(1, 1, 5, Some(PosXY(0, 1))))
+      .general(TablePos(0, 0, 5, None))
+      .general(TablePos(1, 0, 5, Some(PosXY(0, 0))))
+      .newBatch()
+      .general(TablePos(1, 1, 5, Some(PosXY(1, 0))))
+      .general(TablePos(1, 1, 5, Some(PosXY(1, 1))))
       .result()
   }
 
@@ -317,11 +361,14 @@ object TableNavigationFeatureTest extends TestSuite {
   }
 
   def testMoves2(z: TableCellZipper, axis: Axis, movement: Movement, moves: List[TablePos]): Unit =
-    for ((from, to) <- moves zip moves.tail) {
-      val z2 = needGoto(z, from)
-      val actual = z2.move(axis, movement).flatMap(_.focusPos)
-      assertEq(s"$axis $movement: $from --> $to", actual, \/-(to))
-    }
+    for ((from, to) <- moves zip moves.tail)
+      testMove(z, axis, movement, from, to)
+
+  def testMove(z: TableCellZipper, axis: Axis, movement: Movement, from: TablePos, to: TablePos): Unit = {
+    val z2 = needGoto(z, from)
+    val actual = z2.move(axis, movement).flatMap(_.focusPos)
+    assertEq(s"$axis $movement: $from --> $to", actual, \/-(to))
+  }
 
   def testSubMoves(table: html.Table, movement: Movement, moves: TestMoves, movesDir: Direction): Unit = {
     val z = init(table)
@@ -348,41 +395,38 @@ object TableNavigationFeatureTest extends TestSuite {
       assertEq(s"subMove $movement: $from --> $to", actual, \/-(Some(to)))
     }
 
-//  def testNoMovement(table: html.Table): Unit = {
-//    implicit val ee = Equal.equalRef[html.Element]
-//    for (e <- DomUtil.focusableChildren(table)) {
-//      val z = TableCellZipper(e)
-//      assertEq(z.move(Axis.UpDown, Movement.None).map(_.focus), \/-(e))
-//      assertEq(z.move(Axis.LeftRight, Movement.None).map(_.focus), \/-(e))
-//    }
-//  }
-
   override def tests = TestSuite {
 
     'lr {
       def t = lr
       def T = LR
       'posDetection   - testCellLabels(t)
-//      'testNoMovement - testNoMovement(t)
-      'moveRight      - testMoves(t, Axis.LeftRight, Movement.Next, T.rightMoves, Forwards)
-      'moveLeft       - testMoves(t, Axis.LeftRight, Movement.Prev, T.rightMoves, Backwards)
-      'moveDown       - testMoves(t, Axis.UpDown   , Movement.Next, T.downMoves , Forwards)
-      'moveUp         - testMoves(t, Axis.UpDown   , Movement.Prev, T.upMoves   , Forwards)
-      'subMoveLeft    - testSubMoves(t, Movement.Prev, T.rightMoves, Backwards)
-      'subMoveRight   - testSubMoves(t, Movement.Next, T.rightMoves, Forwards)
+      'moveRight      - testMoves(t, LeftRight, Next, T.rightMoves, Forwards)
+      'moveLeft       - testMoves(t, LeftRight, Prev, T.rightMoves, Backwards)
+      'moveDown       - testMoves(t, UpDown   , Next, T.downMoves , Forwards)
+      'moveUp         - testMoves(t, UpDown   , Prev, T.upMoves   , Forwards)
+      'subMoveLeft    - testSubMoves(t, Prev, T.rightMoves, Backwards)
+      'subMoveRight   - testSubMoves(t, Next, T.rightMoves, Forwards)
     }
 
     'td {
       def t = td
       def T = TD
       'posDetection   - testCellLabels(t)
-//      'testNoMovement - testNoMovement(t)
-      'moveRight      - testMoves(t, Axis.LeftRight, Movement.Next, T.rightMoves, Forwards)
-      'moveLeft       - testMoves(t, Axis.LeftRight, Movement.Prev, T.rightMoves, Backwards)
-      'moveDown       - testMoves(t, Axis.UpDown   , Movement.Next, T.downMoves , Forwards)
-      'moveUp         - testMoves(t, Axis.UpDown   , Movement.Prev, T.downMoves , Backwards)
-      'subMoveLeft    - testSubMoves(t, Movement.Prev, T.rightMoves, Backwards)
-      'subMoveRight   - testSubMoves(t, Movement.Next, T.rightMoves, Forwards)
+      'moveRight      - testMoves(t, LeftRight, Next, T.rightMoves, Forwards)
+      'moveLeft       - testMoves(t, LeftRight, Prev, T.rightMoves, Backwards)
+      'moveDown       - testMoves(t, UpDown   , Next, T.downMoves , Forwards)
+      'moveUp         - testMoves(t, UpDown   , Prev, T.downMoves , Backwards)
+      'subMoveLeft    - testSubMoves(t, Prev, T.rightMoves, Backwards)
+      'subMoveRight   - testSubMoves(t, Next, T.rightMoves, Forwards)
+
+      'fromOuter {
+        val z = init(t)
+        'up     - testMove(z, UpDown, Prev, TablePos(1, 1, 5, None), TablePos(1, 0, 5, Some(PosXY(0, 2))))
+        'down   - testMove(z, UpDown, Next, TablePos(1, 1, 5, None), TablePos(1, 1, 5, Some(PosXY(0, 0))))
+        'top    - testMove(z, UpDown, Head, TablePos(1, 1, 5, None), TablePos(0, 0, 5, None))
+        'bottom - testMove(z, UpDown, Last, TablePos(1, 1, 5, None), TablePos(1, 1, 5, Some(PosXY(0, 1))))
+      }
     }
 
   }

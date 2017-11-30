@@ -541,7 +541,8 @@ object Style extends StyleSheet.Inline {
 
     private def detailTableCell = mixin(
       padding(0.6 rem, 0.7 rem),
-      verticalAlign.top)
+      verticalAlign.top,
+      &.focus(BaseStyles.focus.glowOutline))
 
     val detailTableKey = styleF(D.live)(live => styleS(
       detailTableCell,
@@ -560,6 +561,7 @@ object Style extends StyleSheet.Inline {
       width(100 %%))
 
     val generalImpsSide = style(
+      &.focus(BaseStyles.focus.glowOutline),
       width(50 %%),
       textAlign.center)
 
@@ -596,7 +598,8 @@ object Style extends StyleSheet.Inline {
 
       val body = style(
         flexGrow(1),
-        paddingLeft(0.6 ex))
+        paddingLeft(0.6 ex),
+        &.focus(BaseStyles.focus.glowOutline))
 
       val ctrls = style(
         width(8.9 rem),

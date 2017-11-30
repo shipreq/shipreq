@@ -138,11 +138,8 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
         NonEmptyVector.maybe(newOrder, Callback.empty)(newCols =>
           $.props.flatMap(_ reorder newCols))
 
-      private def selColKeyDown(e: ReactKeyboardEventFromHtml): Callback =
-        focusKeyHandlers(e)
-
       private def dataColKeyDown(col: ColumnPlus)(e: ReactKeyboardEventFromHtml): Callback =
-        focusKeyHandlers(e) | CallbackOption.asEventDefault(e, CallbackOption.keyCodeSwitch(e) {
+        TableNavigationFeature.Keys(e) | CallbackOption.asEventDefault(e, CallbackOption.keyCodeSwitch(e) {
           case KeyCode.Space => $.props.flatMap(_ clickSort col)
         })
 
@@ -150,7 +147,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
         val selectionCell =
           <.th(
             *.selectionColumnHeader,
-            ^.onKeyDown ==> selColKeyDown,
+            ^.onKeyDown ==> TableNavigationFeature.Keys.handler,
             p.selection.total.checkboxAndOnClick) // TODO *.selectionCheckbox
 
         val cols =
@@ -238,9 +235,6 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
       val cellStateFn = CellState(rowSelected)
       val selBase     = <.td(*.selectionDataCell(cellStateFn(row.live)))
 
-      def selCellKeyDown(e: ReactKeyboardEventFromHtml): Callback =
-        focusKeyHandlers(e)
-
       val mkViewWhenApplicable: Column => Reusable[TagMod] =
         viewMaker(row, p.viewInput)
 
@@ -262,7 +256,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
       def renderNormal = {
         val selCell =
           selBase(
-            ^.onKeyDown ==> selCellKeyDown,
+            ^.onKeyDown ==> TableNavigationFeature.Keys.handler,
             sel.onClick,
             sel.checkbox(*.selectionCheckbox, ^.tabIndex := -1))
 
@@ -418,54 +412,13 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
     type Mounted = ScalaComponent.MountedPure[Props, Unit, Unit]
     type Dom = dom.html.TableDataCell
 
-    def domCB($: Mounted): CallbackTo[Dom] =
-      $.getDOMNode.map(_.domCast[Dom])
-
-    def focus($: Mounted): Callback =
-      for {
-        focused <- activeHtmlElement
-        cell <- domCB($)
-      } yield
-        // If this cell's child is focused, or there is no focus at all, then focus this cell.
-        // Otherwise, don't steal another element's focus
-        if (focused.forall(cell.contains))
-          cell.focus()
-
-    /**
-     * When a Button in the cell is clicked, we still get the event here in which case, the focus is set after the
-     * button callback runs, meaning that (because separate modState()s don't compose) we trample the state change made by
-     * the button, and replace it with a focus update.
-     *
-     * Rather than force all cell children to stop propagation of events, we apply so logic here to filter the events to
-     * which we react.
-     */
-    def doesEventTargetCell(e: ReactEventFromHtml): Boolean =
-      e.target == e.currentTarget ||
-        (try e.target.tabIndex < 0 catch { case _: Throwable => false }) // .tabIndex is undefined from tests
-
-    def onKeyDown(editor: EditorFeature.ReadWrite.ForAnyEditor): ReactKeyboardEventFromHtml => Callback = e => {
-      def focusChild: CallbackOption[Unit] =
-        CallbackOption
-          .liftOption(focusableChildren(e.currentTarget.domAsHtml).nextOption())
-          .map(_.focus())
-
-      def focusOrStartEditor: CallbackOption[Unit] =
-        if (editor.read.editor.isDefined) focusChild else editor.startEdit.getOrEmpty
-
-      def cellEvents: CallbackOption[Unit] =
-        CallbackOption.asEventDefault(e,
-          CallbackOption.require(doesEventTargetCell(e)) >>
-            CallbackOption.keyCodeSwitch(e) {
-              case KeyCode.F2 => focusOrStartEditor
-            })
-
-      focusKeyHandlers(e) | cellEvents
-    }
+    def onKeyDown(editor: EditorFeature.ReadWrite.ForAnyEditor): ReactKeyboardEventFromHtml => Callback =
+      e => TableNavigationFeature.Keys(e) | EditorFeature.Keys(editor)(e)
 
     val cellBase = <.td(^.tabIndex := -1)
 
     def render($: RenderScope, p: Props): VdomElement = {
-      val editor = p.editor.onClose(focus($.mountedPure))
+      val editor = p.editor.onClose(focusParentOnChildClose($.mountedPure.getDOMNode))
       cellBase(
         *.dataCell(p.cellState),
         ^.onKeyDown ==> onKeyDown(editor),
@@ -529,9 +482,6 @@ object Table {
 
     val reusableNA: Reusable[TagMod] =
       Reusable.byRef(`n/a`)
-
-    @inline def focusKeyHandlers =
-      TableNavigationFeature.Keys.handler
   }
 }
 

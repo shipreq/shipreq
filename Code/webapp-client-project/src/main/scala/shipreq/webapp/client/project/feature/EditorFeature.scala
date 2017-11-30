@@ -65,4 +65,6 @@ object EditorFeature {
   val Read      = editor.Feature.Read
   val Write     = editor.Feature.Write
   val ReadWrite = editor.Feature.ReadWrite
+
+  val Keys = editor.EditorKeys
 }

@@ -16,7 +16,7 @@ import shipreq.webapp.base.event.{UseCaseStepCreate, VerifiedEvent}
 import shipreq.webapp.base.protocol.{ProjectSpaProtocols, UpdateContentCmd}
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.ui.semantic.{Header, Icon, Message}
@@ -196,6 +196,9 @@ object ReqDetail {
 
     val emptyRow: VdomElement = <.span
 
+    val impRowSubBase =
+      <.td(*.generalImpsSide, ^.tabIndex := -1)
+
     def render(p: DynamicProps): VdomElement =
       <.main(
         BaseStyles.containerFull,
@@ -216,7 +219,10 @@ object ReqDetail {
       Live.memo(l => <.th(*.detailTableKey(l)))
 
     private val rowData: Live => VdomTag =
-      Live.memo(l => <.td(*.detailTableValue(l)))
+      Live.memo(l =>
+        <.td(
+          *.detailTableValue(l),
+          ^.tabIndex := -1))
 
     def renderDetail(props: DynamicProps, data: Data): VdomElement = {
       import data.{project, req, pubidText}
@@ -226,9 +232,6 @@ object ReqDetail {
       val reqEditor = reqProps.editor
       val fieldName = pxFieldNameFn.value()
       val view      = data.viewData(pw).copy(fmtReqTypeShort = false)
-
-      def renderEditable(key: EditorFeature.FieldKey.ForSomeReq): TagMod =
-        reqEditor(key, data.pxProjectWidgets).themedRenderOr(())(view.editable(key))
 
       def renderHeader: VdomElement = {
         val hstyle = headerStyle(data.live)
@@ -276,8 +279,10 @@ object ReqDetail {
         <.tr(
           ^.key := row.key,
           rowHeader(headerDataLive._1)(renderRowTitle(row)),
-          rowData(headerDataLive._2)(renderRowData(row)))
+          renderRowData(rowData(headerDataLive._2), row))
       }
+
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
       def renderRowTitle(row: Row): VdomNode =
         row match {
@@ -296,54 +301,97 @@ object ReqDetail {
           case Row.Life             => UiText.Life.field
         }
 
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
       // TODO Test that this applies applicability
-      def renderRowData(row: Row): TagMod = {
+      def renderRowData(cellBase: VdomTag, row: Row): VdomElement = {
         import EditorFeature.FieldKey
+
+        def editableCell(key: FieldKey.ForSomeReq): VdomElement =
+          EditableCell.Props(cellBase, reqEditor(key, data.pxProjectWidgets), () => view.editable(key))
+            .render
+
+        def nonDirectlyEditableCell(t: TagMod): VdomElement =
+          cellBase(^.onKeyDown ==> TableNavigationFeature.Keys.handler, t)
+
+        def useCaseStepsCell(f: UseCaseData => UseCaseStepTree.StepData): VdomElement = {
+          val d = data.useCaseData.get
+          nonDirectlyEditableCell(renderStepTree(d, f(d)))
+        }
+
         row match {
-          case Row.CustomField(id: CustomField.Text       .Id) => renderEditable(FieldKey.CustomTextField(id))
-          case Row.CustomField(id: CustomField.Tag        .Id) => renderEditable(FieldKey.Tags(Some(id)))
-          case Row.CustomField(id: CustomField.Implication.Id) => renderEditable(FieldKey.Implications(-\/(id)))
-          case Row.Codes                                       => renderEditable(FieldKey.Codes)
-          case Row.ReqType                                     => renderEditable(FieldKey.ReqType)
-          case Row.Tags                                        => renderEditable(FieldKey.Tags(None))
-          case Row.DeletionReason                              => view.deletionReason getOrElse emptySpan
-          case Row.PastPubids                                  => view.pastPubids
+          case Row.CustomField(id: CustomField.Text.Id) =>
+            editableCell(FieldKey.CustomTextField(id))
+
+          case Row.CustomField(id: CustomField.Tag.Id) =>
+            editableCell(FieldKey.Tags(Some(id)))
+
+          case Row.CustomField(id: CustomField.Implication.Id) =>
+            editableCell(FieldKey.Implications(-\/(id)))
+
+          case Row.Codes =>
+            editableCell(FieldKey.Codes)
+
+          case Row.ReqType =>
+            editableCell(FieldKey.ReqType)
+
+          case Row.Tags =>
+            editableCell(FieldKey.Tags(None))
+
+          case Row.DeletionReason =>
+            nonDirectlyEditableCell(view.deletionReason getOrElse emptySpan)
+
+          case Row.PastPubids =>
+            nonDirectlyEditableCell(view.pastPubids)
 
           case Row.Implications =>
-            def one(dir: Direction) = renderEditable(FieldKey.Implications(\/-(dir)))
-            <.table(*.generalImpsCont,
-              <.tbody(
-                <.tr(
-                  <.td(*.generalImpsSide, one(Backwards)),
-                  <.td(*.generalImpsMiddle, s"→ $pubidText →"),
-                  <.td(*.generalImpsSide, one(Forwards)))))
+            def renderHalf(dir: Direction) = {
+              val key = FieldKey.Implications(\/-(dir))
+              EditableCell.Props(impRowSubBase, reqEditor(key, data.pxProjectWidgets), () => view.editable(key))
+                .render
+            }
+            nonDirectlyEditableCell(
+              <.table(
+                TableNavigationFeature.nestedTable,
+                *.generalImpsCont,
+                <.tbody(
+                  <.tr(
+                    renderHalf(Backwards),
+                    <.td(*.generalImpsMiddle, s"→ $pubidText →"),
+                    renderHalf(Forwards)))))
 
           case Row.ImplicationGraph =>
-            ImplicationGraph.Props(
-              Some(req.id), data.filterDead,
-              project.content.implications, project.content.reqs, project.config.reqTypes,
-              data.pxPlainText.value(),
-              reqDetailRC,
-              webWorker
-            ).render
+            nonDirectlyEditableCell(
+              ImplicationGraph.Props(
+                Some(req.id), data.filterDead,
+                project.content.implications, project.content.reqs, project.config.reqTypes,
+                data.pxPlainText.value(),
+                reqDetailRC,
+                webWorker
+              ).render)
 
-          case Row.UseCaseStepsN => val d = data.useCaseData.get; renderStepTree(d, d.stepsN)
-          case Row.UseCaseStepsA => val d = data.useCaseData.get; renderStepTree(d, d.stepsA)
-          case Row.UseCaseStepsE => val d = data.useCaseData.get; renderStepTree(d, d.stepsE)
+          case Row.UseCaseStepsN =>
+            useCaseStepsCell(_.stepsN)
+
+          case Row.UseCaseStepsA =>
+            useCaseStepsCell(_.stepsA)
+
+          case Row.UseCaseStepsE =>
+            useCaseStepsCell(_.stepsE)
 
           case Row.StepGraph =>
             val ucId = data.useCaseData.get.uc.id
-            UseCaseStepFlowGraph.Props(ucId, project, pw.ctx, webWorker).render
+            nonDirectlyEditableCell(UseCaseStepFlowGraph.Props(ucId, project, pw.ctx, webWorker).render)
 
           case Row.Life =>
-            data.live match {
-              case Live =>
-                LifeButton.Delete withStatusOnLeft delete(req.id)
-              case Dead =>
-                LifeButton.Restore.withStatusOnLeft(
-                  req.allowLiveChange(project.config.reqTypes) option restore(req.id))
-            }
-
+            nonDirectlyEditableCell(
+              data.live match {
+                case Live =>
+                  LifeButton.Delete withStatusOnLeft delete(req.id)
+                case Dead =>
+                  LifeButton.Restore.withStatusOnLeft(
+                    req.allowLiveChange(project.config.reqTypes) option restore(req.id))
+              })
         }
       }
 
@@ -351,15 +399,22 @@ object ReqDetail {
         val cmdRunner    = AsyncFeature.Runner.D1(reqProps.async.read, runCmd(req.id))
         val addCmdRunner = AsyncFeature.Runner.D1(reqProps.async.read, runAddAndEditNewUseCaseStep(req.id))
 
-        val renderBody: UseCaseStepTree.RenderBodyFn = (id, live, textAndFlow) => {
+        val renderBody: UseCaseStepTree.RenderBodyFn = args => {
           import EditorFeature.FieldKey.UseCaseStep
-          def args = UseCaseStep.Args(
+          import args.id
+
+          val editor = props.editorUCS(UseCaseStep(id), data.pxProjectWidgets)
+
+          def editorArgs = UseCaseStep.Args(
             cmdRunner(Cell.UseCaseStepCtrls(id)),
             addCmdRunner(Cell.AddUseCaseStep(id)))
 
-          props.editorUCS(UseCaseStep(id), data.pxProjectWidgets)
-            .themedRenderOr(args)(
-              pw.useCaseStepTextAndFlow(textAndFlow, live))
+          EditableCell.Props(
+            args.base,
+            editor,
+            editorArgs,
+            () => pw.useCaseStepTextAndFlow(args.textAndFlow(), args.live))
+            .render
         }
 
         UseCaseStepTree.Props(
@@ -377,6 +432,8 @@ object ReqDetail {
         renderHeader,
         renderRows)
     }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     def runActionNoAsync(cmd: UpdateContentCmd): Callback =
       updateIO(cmd, _ => Callback.empty, e => Callback.alert(e.value))

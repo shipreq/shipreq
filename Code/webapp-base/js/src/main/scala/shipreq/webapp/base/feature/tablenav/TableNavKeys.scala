@@ -11,9 +11,9 @@ object TableNavKeys {
     Some(m)
 
   @inline def apply(e: ReactKeyboardEventFromHtml): CallbackOption[Unit] =
-    handler(e)
+    handlerFn(e)
 
-  val handler: ReactKeyboardEventFromHtml => CallbackOption[Unit] = e => {
+  val handlerFn: ReactKeyboardEventFromHtml => CallbackOption[Unit] = e => {
 
     // The outer-only restriction prevents arrow-keys being overridden in textarea
     val outerOnly: CallbackOption[Unit] =
@@ -44,6 +44,9 @@ object TableNavKeys {
 
     CallbackOption.asEventDefault(e, outerOnly | outerAndInner)
   }
+
+  val handler: ReactKeyboardEventFromHtml => Callback =
+    handlerFn(_)
 
   @elidable(elidable.ASSERTION)
   private def onError(s: String): Unit =
