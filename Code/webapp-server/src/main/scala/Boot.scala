@@ -99,25 +99,36 @@ class Boot {
 
     // Security policies
     LiftRules.securityRules = () => {
+      val nonProd = Props.devMode || Props.testMode
       import ContentSourceRestriction._
-      val base = List(
+      var base = List(
         Host("https:"), // allow any https content
-        Scheme("data"), // webtamp inlines small assets
         Self)
+      if (nonProd)
+        base ::= Host("http:")
       val js =
-        UnsafeEval ::   // Lift itself needs this
-        UnsafeInline :: // old-school form snippets (like Login) use this
+        Scheme("data") :: // webtamp inlines small assets
+        UnsafeEval     :: // Lift itself needs this
+        UnsafeInline   :: // Snippets use this
         base
       val css =
-        UnsafeInline :: // For React styles
+        Scheme("data") :: // webtamp inlines small assets
+        UnsafeInline   :: // React styles
+        base
+      val font =
+        Scheme("data") ::
+        base
+      val img =
+        Scheme("data") ::
         base
       val csp = ContentSecurityPolicy(
+        defaultSources = base,
         scriptSources  = js,
         styleSources   = css,
-        imageSources   = Nil,
-        defaultSources = base)
+        fontSources    = font,
+        imageSources   = img)
       SecurityRules(
-        https               = Some(HttpsRules.secure).filterNot(_ => Props.devMode || Props.testMode),
+        https               = Some(HttpsRules.secure).filterNot(_ => nonProd),
         content             = Some(csp),
         frameRestrictions   = Some(FrameRestrictions.Deny),
         enforceInDevMode    = true,

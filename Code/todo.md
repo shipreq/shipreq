@@ -100,7 +100,7 @@ Phase 2
 * Hard-deletion of field (via hard-deletion of ReqType) breaks SavedViews!
 * Add KB shortcut to move colums in ReqTable
 * Firefox: ctrl-home space doesn't work properly
-* Firefox: Content security policy violations appear
+* Firefox: UC step graph doesn't shrink
 
 ### New Features
 * Issues
