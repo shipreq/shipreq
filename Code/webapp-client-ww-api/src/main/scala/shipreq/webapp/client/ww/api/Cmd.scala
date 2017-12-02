@@ -17,26 +17,21 @@ sealed abstract class Cmd[Result](implicit r: Pickler[Result]) {
 object Cmd {
   case class GraphUseCaseStepFlow(id     : UseCaseId,
                                   project: Project,
-                                  ctx    : ProjectText.Context) extends Cmd[SVG]
+                                  ctx    : ProjectText.Context) extends Cmd[Svg]
 
   case class GraphAllImplications(filterDead: FilterDead,
                                   imps      : Implications.BiDir,
                                   reqs      : Requirements,
-                                  reqTypes  : ReqTypes) extends Cmd[SVG]
+                                  reqTypes  : ReqTypes) extends Cmd[Svg]
 
   case class GraphReqImplications(focus     : ReqId,
                                   filterDead: FilterDead,
                                   imps      : Implications.BiDir,
                                   reqs      : Requirements,
-                                  reqTypes  : ReqTypes) extends Cmd[SVG]
+                                  reqTypes  : ReqTypes) extends Cmd[Svg]
 
   implicit val pickleGraphUseCaseStepFlow: Pickler[GraphUseCaseStepFlow] = pickleCaseClass
   implicit val pickleGraphAllImplications: Pickler[GraphAllImplications] = pickleCaseClass
   implicit val pickleGraphReqImplications: Pickler[GraphReqImplications] = pickleCaseClass
   implicit val pickleCmd                 : Pickler[Cmd[_]              ] = pickleADT
-}
-
-case class SVG(content: String) extends AnyVal
-object SVG {
-  implicit val pickle: Pickler[SVG] = pickleCaseClass
 }

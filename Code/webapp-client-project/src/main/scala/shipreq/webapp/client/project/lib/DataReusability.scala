@@ -3,11 +3,11 @@ package shipreq.webapp.client.project.lib
 import japgolly.scalajs.react.extra._
 import shipreq.webapp.base.text.ProjectText
 import shipreq.webapp.client.project.widgets.ProjectWidgets
-import shipreq.webapp.client.ww.api.SVG
+import shipreq.webapp.client.ww.api.Svg
 
 object DataReusability extends shipreq.webapp.base.lib.DataReusability {
 
-  implicit def reusabilitySVG: Reusability[SVG] =
+  implicit def reusabilitySvg: Reusability[Svg] =
     Reusability.caseClass
 
   implicit def reusabilityProjectWidgets_ : Reusability[ProjectWidgets.AnyCtx] =

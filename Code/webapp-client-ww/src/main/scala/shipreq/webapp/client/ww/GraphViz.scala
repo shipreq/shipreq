@@ -4,7 +4,7 @@ import org.scalajs.dom.console
 import org.scalajs.dom.webworkers.DedicatedWorkerGlobalScope
 import scala.scalajs.js
 import shipreq.webapp.base.AssetManifest
-import shipreq.webapp.client.ww.api.SVG
+import shipreq.webapp.client.ww.api.Svg
 
 object GraphViz {
   type Fn = js.Function2[String, String, String]
@@ -16,19 +16,19 @@ object GraphViz {
 
   private val titlesAndComments = "(?:<title>[^<>]*?</title>|<!--[^\u0000]*?-->)".r
 
-  def apply(dot: DOT): SVG =
+  def apply(dot: DOT): Svg =
     try {
       var svg = instance(dot.content, "svg")
       svg = titlesAndComments.replaceAllIn(svg, "")
-      SVG(svg)
+      Svg(svg)
     } catch {
       case t: Throwable =>
         console.error("GraphViz crash: ", dot.content)
         throw t
     }
 
-  case class DOT(content: String) extends AnyVal {
-    @inline def toSVG: SVG =
+  final case class DOT(content: String) extends AnyVal {
+    @inline def toSvg: Svg =
       GraphViz(this)
   }
 }

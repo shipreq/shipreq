@@ -25,13 +25,13 @@ object GraphComponent {
     val webWorker: WebWorkerClient
   }
 
-  type State = Option[SVG]
+  type State = Option[Svg]
 
   def initialState: State = None
 
   abstract class GraphBackend[Props <: HasWebWorker]($: BackendScope[Props, State]) {
 
-    def cmd(p: Props): Cmd[SVG]
+    def cmd(p: Props): Cmd[Svg]
 
     def refresh(p: Props): Callback =
       p.webWorker.postCB(cmd(p))(svg => $.setState(Some(svg)))
