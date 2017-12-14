@@ -7,8 +7,8 @@ object Dependencies {
 
   object Java {
     val major = 8
-    val minor = 144
-    val build = "01"
+    val minor = 152
+    val build = "16"
   }
 
   object Docker {
