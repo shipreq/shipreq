@@ -336,7 +336,7 @@ object WebappBuild {
           printFileBatches(warTiers.map(_._3.map(_._1)))
 
           val compGz = s"pigz -kT${if (releaseMode) 11 else 9}"
-          val compBr = s"bro --quality ${if (releaseMode) 11 else 9} --input {} --output {}.br"
+          val compBr = s"brotli -k${if (releaseMode) "Z" else "9"}"
 
           val warStages =
             warTiers.map { case (i, fixJars, batch) =>

@@ -300,7 +300,12 @@ object Common {
   }
 
   def execInBash(cmd: String): Unit =
-    sys.process.Process(List("bash", "-c", cmd)).!!
+    try sys.process.Process(List("bash", "-c", cmd)).!!
+    catch {
+      case t: Throwable =>
+        System.err.println(s"> $cmd\n$t")
+        throw t
+    }
 
   def fileSync(from: File, to: File, mandatory: Boolean)(implicit log: Logger): Unit =
     if (from.exists()) {
