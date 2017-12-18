@@ -99,7 +99,6 @@ Phase 2
 * Revise defaults
   * Add a nice Default saved view
   * Revise ProjectTemplate - reduce reqtypes, BL without BR is weird
-* Upgrade JDK and audit crypto mechanisms (pending next Jetty release)
 
 ### New Features
 * Issues
