@@ -20,15 +20,17 @@ Backlog
   * Lose the ability to quickly grep from DB.
   * Less storage/transport cost.
   * More CPU required to build a project from events.
-* Will [saved views] be stored in projects' event streams?
-  * Consider impact on existing event stuff.
-  * What about user-space views (as opposed to project-wide/shared views)?
-    * Should they even be supported?
-    * Where/how should they be stored?
 
 ### New features
 * Anonymous shares and read-only/presentation mode
 * Tag/Implication Browser (aka Distribution manager/console)
+* Project deletion. Maybe soft delete with ShowFilterButton. What about unique name constraint?
+* Allow users to choose template when creating a project
+* Add LastUpdated field to ReqTable/Detail
+* Add Change Count field to ReqTable/Detail (help find most volatile/unstable reqs)
+* Allow refs to custom text fields (e.g. [UC-1.detail])
+* Warn when closing page and there are open, dirty editors
+* Add KB shortcut to move colums in ReqTable
 
 ### DevOps
 * Create db rollback plan
@@ -56,16 +58,9 @@ Backlog
   (i.e. all possible tags/imps are allocated to columns)
   Also consider FilterDead=ShowDead when designing this.
   Also consider dead tags in use in text are always displayed which shows in them in Tags columns even when HideDead
-* Allow project deletion. Maybe soft delete with ShowFilterButton. What about unique name constraint?
 * New Form preview.show? shouldn't consider focus (?)
-* Warn when closing page and there are open, dirty editors
 * Imp/Code editors are way too wide in NewReqForm
-* Allow users to choose template when creating a project
-* Add LastUpdated field to ReqTable/Detail
-* Add Change Count field to ReqTable/Detail (help find most volatile/unstable reqs)
-* Allow refs to custom text fields (e.g. [UC-1.detail])
 * Prevent -- (not not) in the FilterParser? Or allow /\-+/ and auto-correct on blur?
-* Add KB shortcut to move colums in ReqTable
 * Firefox: ctrl-home space doesn't work properly
 * Firefox: UC step graph doesn't shrink
 
@@ -94,8 +89,6 @@ Phase 2
   * Restore or delete AdminStats
   * Restore or delete DiagnosticEndpoints
   * Restore or delete SessionStats
-
-### Misc
 
 ### New Features
 * Issues
