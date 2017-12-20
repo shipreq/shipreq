@@ -17,6 +17,12 @@ java_opt=(
 
   # Default in Java 9, may as well use it now
   -XX:+UseG1GC
+
+  # Useful for diagnostics
+  -XX:+PrintFlagsFinal
+  -XX:+UnlockDiagnosticVMOptions
+  -XX:+PrintActiveCpus
+  -XshowSettings:vm
 )
 
 if [ -z "$client" ]; then
