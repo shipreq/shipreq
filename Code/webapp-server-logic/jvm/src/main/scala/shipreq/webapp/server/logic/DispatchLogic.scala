@@ -354,6 +354,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
   // Ops & Diagnostics
 
   object Ops {
+    import upickle.Js
 
     private val notFoundSecure: FR =
       security.protect( // prevent response-time hacking to discover endpoints (meaning ops URLs)
@@ -384,8 +385,8 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
       endpoint(Post, Url.Relative("register1"))(req =>
         parseParams(req.param("email"))(e =>
           publicApi.register1(e).map {
-            case \/-(_) => Response.StatusOnly(StatusCode.OK)
-            case -\/(m) => Response.Text(StatusCode.BadRequest, m.value)
+            case \/-(id) => Response.Json(StatusCode.OK, Js.Obj("taskId" -> Js.Num(id.value)))
+            case -\/(m)  => Response.Text(StatusCode.BadRequest, m.value)
           }
         )
       )

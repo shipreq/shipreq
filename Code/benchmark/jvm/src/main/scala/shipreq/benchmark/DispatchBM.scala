@@ -12,6 +12,7 @@ import scalaz.std.function.function0Instance
 import scalaz.syntax.monad._
 import scalaz.{Monad, Name, \/, \/-}
 import shipreq.base.util._
+import shipreq.taskman.api.MsgId
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data.{ProjectId, SecurityToken}
 import shipreq.webapp.base.user._
@@ -156,7 +157,7 @@ object DispatchBM {
       Trace.off
 
     implicit val publicApi: PublicSpaLogic.ForApi[F] =
-      _ => F.pure(\/-(()))
+      _ => F.pure(\/-(MsgId(1000)))
 
     val dispatchLogic = new DispatchLogic[F, Request, Response](r => r, (_, r) => F.point(r))
 

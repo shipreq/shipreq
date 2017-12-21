@@ -6,7 +6,7 @@ import scalaz.{-\/, Monad, \/, \/-, ~>}
 import scalaz.std.option.optionInstance
 import scalaz.syntax.monad._
 import shipreq.base.util._
-import shipreq.taskman.api.{Msg, TaskmanApi}
+import shipreq.taskman.api.{Msg, MsgId, TaskmanApi}
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data.SecurityToken
 import shipreq.webapp.base.user._
@@ -26,7 +26,7 @@ object PublicSpaLogic {
     /** Ignores publicRegistration setting.
       * Lacks security protection.
       */
-    def register1(emailAddr: String): F[ErrorMsg \/ Unit]
+    def register1(emailAddr: String): F[ErrorMsg \/ MsgId]
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -144,7 +144,7 @@ object PublicSpaLogic {
       private def registrationRequestedTask(email: EmailAddr, token: SecurityToken): Msg =
         Msg.RegistrationRequested(email.toTaskman, absUrlRegister2(token).absoluteUrl)
 
-      def register1(emailAddrStr: String): F[ErrorMsg \/ Unit] = {
+      def register1(emailAddrStr: String): F[ErrorMsg \/ MsgId] = {
         def registerInDb(emailAddr: EmailAddr, now: Instant): D[Msg] =
           db.inDbTransaction(
             db.getUserRegistration(emailAddr).flatMap {
@@ -159,15 +159,15 @@ object PublicSpaLogic {
           for {
             now <- svr.now
             msg <- runDB(registerInDb(emailAddr, now))
-            _   <- taskman.submitMsg(msg)
-          } yield rightUnit
+            id  <- taskman.submitMsg(msg)
+          } yield \/-(id)
         )
       }
 
       val registerFn1: F[Register.Fn1.Instance] =
         svr.createServerSideProc(Register.Fn1)(
           registrationProc(i =>
-            register1(i.value)))
+            register1(i.value).map(_.void)))
 
       val registerFn2: F[Register.Fn2.Instance] =
         svr.createServerSideProc(Register.Fn2)(
@@ -287,7 +287,7 @@ object PublicSpaLogic {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     new PublicSpaLogic[F] {
 
-      override def register1(emailAddr: String): F[ErrorMsg \/ Unit] =
+      override def register1(emailAddr: String): F[ErrorMsg \/ MsgId] =
         RegisterFns.register1(emailAddr)
 
       val initData: F[InitData] =

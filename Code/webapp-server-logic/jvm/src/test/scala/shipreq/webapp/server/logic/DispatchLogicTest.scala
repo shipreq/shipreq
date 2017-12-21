@@ -1,5 +1,6 @@
 package shipreq.webapp.server.logic
 
+import upickle.Js
 import scalaz.{Name, \/-}
 import utest._
 import shipreq.base.util.{Invalid, Url}
@@ -161,7 +162,10 @@ object DispatchLogicTest extends TestSuite {
 
       def register1Url = opsRoot / "register1"
       def register1Params = Map(opsSecretKey -> opsSecretValue.value, "email" -> "a@bc.com")
-      'register1 - assertProtected(testRun(Response.StatusOnly(200), register1Url, Post, register1Params))
+
+      'register1 - assertProtected(testRun(
+        Response.Json(200, Js.Obj("taskId" -> Js.Num(9))),
+        register1Url, Post, register1Params))
 
       // For security reasons, the same response is observed for all failures.
       // This prevents hackers determining:
