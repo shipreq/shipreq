@@ -373,6 +373,12 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
         }
       )
 
+    private def whenValid[A](fa: F[ErrorMsg \/ A])(f: A => Response): FR =
+      fa.map {
+        case \/-(a) => f(a)
+        case -\/(e) => Response.Text(StatusCode.BadRequest, e.value)
+      }
+
     /** Return a static 200.
       * Useful to test that the web-server is up and serving requests.
       * Used for container health-checks.
@@ -386,13 +392,9 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
       */
     private val register1: Route =
       endpoint(Post, Url.Relative("register1"))(req =>
-        parseParams(req.param("email"))(e =>
-          publicApi.register1(e).map {
-            case \/-(id) => Response.Json(StatusCode.OK, Js.Obj("taskId" -> Js.Num(id.value)))
-            case -\/(m)  => Response.Text(StatusCode.BadRequest, m.value)
-          }
-        )
-      )
+        parseParams(req.param("email"))(email =>
+          whenValid(publicApi.register1(email))(id =>
+            Response.Json(StatusCode.OK, Js.Obj("taskId" -> Js.Num(id.value))))))
 
     /** API to inspect the status of a Taskman message. */
     private val task: Route =
@@ -405,8 +407,14 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
         )
       )
 
+    private val testSendMail: Route =
+      endpoint(Post, Url.Relative("test-sendmail"))(req =>
+        parseParams(req.param("email"))(email =>
+          whenValid(ops.sendMail(email))(r =>
+            Response.Json(StatusCode.OK, r.toJsValue))))
+
     private def routes: Route =
-      scope(opsRoot, ok | register1 | task)
+      scope(opsRoot, ok | register1 | task | testSendMail)
 
     /** Is the request a candidate for ops route parsing? */
     val candidate: Url.Relative => Boolean =

@@ -91,20 +91,5 @@ object DiagnosticEndpoints {
       }
     DbTestResult(ab, ab minus b, b, dbClock.toStringIso8601)
   }
-
-  // -------------------------------------------------------------------------------------------------------------------
-  // Email
-
-  case class EmailSendResult(id: Long, time: Duration, token: String)
-
-  val Email = endpoint("mail") >> denyNonHttps >> EarlyResponse(() =>
-    S.param("to") match {
-      case Full(emailAddress) =>
-        val token = nextFuncName
-        val msg = SendDiagEmail(EmailAddr(emailAddress), token, s"Token: $token\nIssued: ${Instant.now().toStringIso8601}")
-        val (dur, msgId) = calcTime(Global.taskman.submitMsg(msg).unsafePerformIO())
-        Full(jsonResponse(EmailSendResult(msgId.value, dur, token)))
-      case _ => Full(BadRequestResponse())
-    })
 }
 */

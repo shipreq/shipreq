@@ -103,7 +103,7 @@ final class LiftDispatcher(global: Global) {
     implicit val taskman   = global.taskman
     implicit val security  = global.security
     implicit val publicApi = global.logic.publicApi
-    implicit val ops       = OpsLogic[Fx]
+    implicit val ops       = global.ops
     implicit val db        = DB.SecurityTokenReadOnly.trans(DbInterpreter.SecurityTokenReadOnly)(global.db.fx.trans)
     implicit val server    = ServerInterpreter
     new DispatchLogic(parseReq, makeResponse)

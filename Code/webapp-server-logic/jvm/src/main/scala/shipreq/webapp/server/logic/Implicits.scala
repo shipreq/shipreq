@@ -1,5 +1,7 @@
 package shipreq.webapp.server.logic
 
+import java.time.{Instant, ZoneOffset}
+import java.time.format.DateTimeFormatter
 import scalaz.{-\/, Monad, \/, \/-}
 import scalaz.syntax.monad._
 import shipreq.base.util.ErrorMsg
@@ -33,4 +35,10 @@ private[logic] object Implicits {
       }
   }
 
+  val Iso8601Format = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC)
+
+  implicit class InstantExt(private val i: Instant) extends AnyVal {
+    def toStringIso8601: String =
+      Iso8601Format.format(i)
+  }
 }

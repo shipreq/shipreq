@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+cd "$(dirname "$(readlink -e "$0")")"
+source ./lib.sh
+[ $# -ne 2 ] && echo "Usage: $0 $envSyntax <email-address>" && exit 1
+
+post "$1" /ops/test-sendmail "email=$2"
+
+echo
+echo "Now do:"
+echo "  watch ./task $1 <id>"

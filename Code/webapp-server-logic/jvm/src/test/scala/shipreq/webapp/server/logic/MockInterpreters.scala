@@ -427,7 +427,7 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
   implicit val db         = new MockDb(svr.now)
   implicit val security   = new MockSecurity(db)
   implicit val taskman    = new MockTaskman
-  implicit val ops        = OpsLogic[Name]
+  implicit val ops        = OpsLogic[Name](randomToken = Name("blah"))
   implicit val nameToName = NaturalTransformation.refl[Name]
   implicit val publicApi  = PublicSpaLogic[Name, Name]: PublicSpaLogic.ForApi[Name]
 

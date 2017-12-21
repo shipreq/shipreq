@@ -23,6 +23,7 @@ object PrepareEnv {
     config   = cfg.server,
     db       = null,
     logic    = null,
+    ops      = null,
     security = null,
     taskman  = null,
     trace    = Trace.off)

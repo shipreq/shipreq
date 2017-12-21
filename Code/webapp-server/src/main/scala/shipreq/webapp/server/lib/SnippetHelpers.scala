@@ -46,7 +46,7 @@ trait StaticSnippetHelpers extends HasLogger {
  *
  * @since 11/06/2013
  */
-trait SnippetHelpers extends StaticSnippetHelpers with Misc with HasLogger {
+trait SnippetHelpers extends StaticSnippetHelpers with HasLogger {
 
   @inline final def currentUserId_!() : UserId =
     currentUser_!().id
