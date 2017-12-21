@@ -36,7 +36,7 @@ object Global {
     implicit val taskman       = TaskmanApiImpl(taskmanCtx, runDB)
     implicit val dbAlgebra     = new DbInterpreter()
     implicit val dbForSecurity = DB.ForSecurity.trans(DbInterpreter.ForSecurity)(runDB)
-    implicit val dbForOps      = DB.ForOps.trans(DbInterpreter.ForOps)(runDB)
+    implicit val dbForOps      = DB.ForOps.trans(new DbInterpreter.ForOps(dbAccess.databaseName))(runDB)
     implicit val projectStore  = Store.Algebra.concurrentHashMap(): ProjectServer.StoreAlgebra[Fx]
     implicit val security      = new SecurityInterpreter[Fx]
     implicit val server        = trace.server(ServerInterpreter)

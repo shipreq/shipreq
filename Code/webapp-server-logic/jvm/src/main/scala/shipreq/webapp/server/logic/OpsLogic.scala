@@ -45,13 +45,15 @@ object OpsLogic {
           first   <- measureDuration(db.now)
           users   <- db.userStats
           tables  <- db.tableStats
+          dbSize  <- db.dbSize
           last    <- measureDuration(db.now)
         } yield DbStats(
           now        = first._1,
           latency1   = first._2,
           latency2   = last._2,
           userStats  = users,
-          tableStats = tables)
+          tableStats = tables,
+          dbSize     = dbSize)
 
       override def taskmanMsgStatus(id: MsgId) =
         taskman.queryMsgStatus(id).map(_.map(status =>
@@ -102,7 +104,8 @@ object OpsLogic {
                            latency1  : Duration,
                            latency2  : Duration,
                            userStats : DB.ForOps.UserStats,
-                           tableStats: List[DB.ForOps.TableStat]) {
+                           tableStats: List[DB.ForOps.TableStat],
+                           dbSize    : Long) {
     import DB.ForOps.TableStat
 
     def toJsValue: Js.Value = {
@@ -135,6 +138,7 @@ object OpsLogic {
         "now"     -> jsInstant(now),
         "latency" -> Js.Arr(jsDuration(latency1), jsDuration(latency2)),
         "tables"  -> tables,
+        "dbSize"  -> Js.Num(dbSize),
         "users"   -> users)
     }
   }

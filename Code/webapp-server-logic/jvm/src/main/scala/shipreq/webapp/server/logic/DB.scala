@@ -174,9 +174,10 @@ object DB {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   trait ForOps[F[_]] {
-    val now: F[Instant]
-    val userStats: F[ForOps.UserStats]
+    val now       : F[Instant]
+    val userStats : F[ForOps.UserStats]
     val tableStats: F[List[ForOps.TableStat]]
+    val dbSize    : F[Long]
   }
 
   object ForOps {
@@ -196,6 +197,7 @@ object DB {
         override val now        = t(f.now)
         override val userStats  = t(f.userStats)
         override val tableStats = t(f.tableStats)
+        override val dbSize     = t(f.dbSize)
       }
   }
 

@@ -429,7 +429,7 @@ object DbInterpreter {
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  object ForOps extends DB.ForOps[ConnectionIO] {
+  class ForOps(dbName: String) extends DB.ForOps[ConnectionIO] {
     import DB.ForOps._
 
     override val now: ConnectionIO[Instant] =
@@ -461,9 +461,9 @@ object DbInterpreter {
         .list
         .map(_.map((TableStat.apply _).tupled))
 
-//    def statsDatabaseSize(dbName: String): ConnectionIO[Long] =
-//      Query[String, Long]("SELECT pg_database_size(?)")
-//        .toQuery0(dbName.replaceFirst("^.*/", ""))
-//        .unique
+    override val dbSize: ConnectionIO[Long] =
+      Query[String, Long]("SELECT pg_database_size(?)")
+        .toQuery0(dbName.replaceFirst("^.*/", ""))
+        .unique
   }
 }
