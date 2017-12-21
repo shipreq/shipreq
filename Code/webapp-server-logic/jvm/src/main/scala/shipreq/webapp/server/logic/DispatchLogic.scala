@@ -84,9 +84,17 @@ object DispatchLogic {
     /** Respond with a HTTP status only; no content */
     final case class StatusOnly(status: Int) extends Response
 
-    final case class Generic(status: Int, body: String) extends Response
+    final case class Text(status: Int, body: String) extends Response
 
-    implicit def univEq: UnivEq[Response] = UnivEq.derive
+    final case class Json(status: Int, bodyJs: upickle.Js.Value) extends Response {
+      val body: String =
+        upickle.json.write(bodyJs)
+    }
+
+    implicit def univEq: UnivEq[Response] = {
+      implicit def a: UnivEq[upickle.Js.Value] = UnivEq.force
+      UnivEq.derive
+    }
 
     val redirectToPublicHome = Redirect(Urls.publicHome)
     val redirectToMemberHome = Redirect(Urls.memberHome)
@@ -179,20 +187,19 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
                                                   makeRealRes: (RealReq, Response) => F[RealRes])
                                                  (implicit F: Monad[F],
                                                   config    : ServerConfig,
-                                                  security  : Security.Algebra[F],
                                                   db        : DB.SecurityTokenReadOnly[F],
                                                   publicApi : PublicSpaLogic.ForApi[F],
+                                                  security  : Security.Algebra[F],
                                                   svr       : Server.Time[F],
                                                   tracer    : Trace.Algebra[F, RealReq, RealRes]) {
   import Method._
-  import Response._
 
   type Route = Request ?=> F[Response]
 
   private type FR = F[Response]
 
-  private val fRedirectToPublicHome: FR = F pure redirectToPublicHome
-  private val fMethodNotAllowed    : FR = F pure MethodNotAllowed
+  private val fRedirectToPublicHome: FR = F pure Response.redirectToPublicHome
+  private val fMethodNotAllowed    : FR = F pure Response.MethodNotAllowed
 
   private def onMethod(m: Method)(f: Request => FR): Request => FR =
     req => if (req.method eq m) f(req) else fMethodNotAllowed
@@ -216,7 +223,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
   }
 
   private def onAuthFail(req: Request): Response =
-    Redirect(
+    Response.Redirect(
       if (req.path ==* Urls.memberHome)
         Urls.login
       else
@@ -254,7 +261,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
   private def parseParams[A](parsed: Option[A])(f: A => FR): FR =
     parsed match {
       case Some(a) => f(a)
-      case None    => F pure StatusOnly(StatusCode.BadRequest)
+      case None    => F pure Response.StatusOnly(StatusCode.BadRequest)
     }
 
   def makeReal(trace: Boolean)(d: Request => F[Response]): RealReq => F[RealRes] =
@@ -277,10 +284,10 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
       val login: Route =
         spa(R.Login.url)(_ =>
           security.isAuthenticated.map(a =>
-            if (a) redirectToMemberHome else ServePublicSpa))
+            if (a) Response.redirectToMemberHome else Response.ServePublicSpa))
 
       val staticRoutes: Route = {
-        val fr: FR = F pure ServePublicSpa
+        val fr: FR = F pure Response.ServePublicSpa
         whenUrlIsAnyOf(R.static.filterNot(_ ==* R.Login).get.map(_.url).toNES)(onGet(_ => fr))
       }
 
@@ -290,9 +297,9 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
       }
 
       val onSecurityTokenStatus: SecurityToken.Status => Response = {
-        case SecurityToken.Status.Valid   => ServePublicSpa
-        case SecurityToken.Status.Invalid => redirectToPublicHome
-        case SecurityToken.Status.Expired => redirectToPublicHome // could be better but good enough
+        case SecurityToken.Status.Valid   => Response.ServePublicSpa
+        case SecurityToken.Status.Invalid => Response.redirectToPublicHome
+        case SecurityToken.Status.Expired => Response.redirectToPublicHome // could be better but good enough
       }
 
       val securityTokenRoutes: Route =
@@ -306,7 +313,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
     }
 
     val memberHomeSpa: Route =
-      spa(Urls.memberHome)(needAuth(ServeHomeSpa))
+      spa(Urls.memberHome)(needAuth(Response.ServeHomeSpa))
 
     val projectSpa: Route =
       spaWithObfuscatedParam(Urls.project)(Obfuscators.projectId) {
@@ -314,17 +321,17 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
           needAuthF(user =>
             // TODO Check ProjectStore first
             security.db.getProjectOwner(projectId).map {
-              case Some(o) if o ==* user.id => ProjectSpa.Serve(user, projectId)
-              case Some(_)                  => ProjectSpa.NotOwner
-              case None                     => ProjectSpa.InvalidId
+              case Some(o) if o ==* user.id => Response.ProjectSpa.Serve(user, projectId)
+              case Some(_)                  => Response.ProjectSpa.NotOwner
+              case None                     => Response.ProjectSpa.InvalidId
             }
           )
-        case -\/(_) => _ => F pure ProjectSpa.InvalidId
+        case -\/(_) => _ => F pure Response.ProjectSpa.InvalidId
       }
 
     val logout: Route =
       get(Urls.logout,
-        security.logout >| redirectToPublicHome)
+        security.logout >| Response.redirectToPublicHome)
 
     val routes: Request ?=> F[Response] =
       publicSpa | memberHomeSpa | projectSpa | logout
@@ -350,12 +357,12 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
 
     private val notFoundSecure: FR =
       security.protect( // prevent response-time hacking to discover endpoints (meaning ops URLs)
-        F pure Response.Generic(404, "Not found."))
+        F pure Response.Text(404, "Not found."))
 
-    private def post(url: Url.Relative)(resp: Request => FR): Route =
+    private def endpoint(method: Method, url: Url.Relative)(resp: Request => FR): Route =
       whenUrlIs(url)(req =>
         req.param(opsSecretKey) match {
-          case Some(key) if key ==* opsSecretValue.value && req.method ==* Post =>
+          case Some(key) if key ==* opsSecretValue.value && req.method ==* method =>
             security.protect(resp(req))
           case _ =>
             notFoundSecure
@@ -368,17 +375,17 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
       */
     private val ok: Route =
       get(Url.Relative("ok"),
-        F pure Response.Generic(200, "OK."))
+        F pure Response.Text(StatusCode.OK, "OK."))
 
     /** API for invoking the first part of the registration process
       * (regardless of whether public registrations are enabled or not).
       */
     private val register1: Route =
-      post(Url.Relative("register1"))(req =>
+      endpoint(Post, Url.Relative("register1"))(req =>
         parseParams(req.param("email"))(e =>
           publicApi.register1(e).map {
-            case \/-(_) => StatusOnly(StatusCode.OK)
-            case -\/(m) => Generic(StatusCode.BadRequest, m.value)
+            case \/-(_) => Response.StatusOnly(StatusCode.OK)
+            case -\/(m) => Response.Text(StatusCode.BadRequest, m.value)
           }
         )
       )
@@ -402,8 +409,8 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
     QuickDev.get().map(q =>
       get(quickDevUrl,
         security.attemptLogin(q.user, q.pass).map {
-          case Some(_) => Redirect(q.goto)
-          case None    => Redirect(Urls.login)
+          case Some(_) => Response.Redirect(q.goto)
+          case None    => Response.Redirect(Urls.login)
         }
       )
     )
@@ -418,8 +425,8 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Reques
         } yield (Username.orEmail(u), PlainTextPassword(p))
       ) { case (u, p) =>
         security.attemptLogin(u, p).map {
-          case Some(_) => StatusOnly(StatusCode.OK)
-          case None    => StatusOnly(StatusCode.Unauthorized)
+          case Some(_) => Response.StatusOnly(StatusCode.OK)
+          case None    => Response.StatusOnly(StatusCode.Unauthorized)
         }
       }
     )))

@@ -24,8 +24,13 @@ object LiftDispatcher {
   }
 
   val UTF8 = Charset.forName("UTF-8")
-  final case class GenericResponse(status: Int, body: String) extends LiftResponse with HeaderDefaults {
-    def toResponse = InMemoryResponse(body.getBytes(UTF8), headers, cookies, status)
+
+  final case class GenericResponse(status: Int, body: String, mime: String) extends LiftResponse with HeaderDefaults {
+    def toResponse = {
+      val bytes = body.getBytes(UTF8)
+      val headers2 = ("Content-Length", bytes.length.toString) :: ("Content-Type", mime + "; charset=utf-8") :: headers
+      InMemoryResponse(bytes, headers2, cookies, status)
+    }
   }
 }
 
@@ -83,7 +88,8 @@ final class LiftDispatcher(global: Global) {
              | ProjectSpa.InvalidId   => Fx pure Full(RedirectResponse(Urls.memberHome.relativeUrl))
           case Redirect(to)           => Fx pure Full(RedirectResponse(to.relativeUrl))
           case MethodNotAllowed       => Fx pure Full(MethodNotAllowedResponse())
-          case Generic(status, body)  => Fx pure Full(GenericResponse(status, body))
+          case r: Text                => Fx pure Full(GenericResponse(r.status, r.body, "text/plain"))
+          case r: Json                => Fx pure Full(GenericResponse(r.status, r.body, "application/json"))
           case StatusOnly(status)     => Fx pure Full(StatusOnlyResponse(status))
         }
 

@@ -157,7 +157,7 @@ object DispatchLogicTest extends TestSuite {
     }
 
     'ops {
-      'ok - testRun(Response.Generic(200, "OK."), "/ops/ok")
+      'ok - testRun(Response.Text(200, "OK."), "/ops/ok")
 
       def register1Url = opsRoot / "register1"
       def register1Params = Map(opsSecretKey -> opsSecretValue.value, "email" -> "a@bc.com")
@@ -169,7 +169,7 @@ object DispatchLogicTest extends TestSuite {
       // - the secret key param
       // - the secret key value
       def testKO(url: Url.Relative, method: Method, params: Map[String, String] = Map.empty) =
-        assertProtected(testRun(Response.Generic(404, "Not found."), url, method, params))
+        assertProtected(testRun(Response.Text(404, "Not found."), url, method, params))
 
       'root      - testKO("/ops", Get)
       'notFound  - testKO("/ops/what", Get)
