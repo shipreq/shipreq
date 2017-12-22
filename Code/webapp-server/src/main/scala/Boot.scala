@@ -15,7 +15,6 @@ import shipreq.base.util.{Props => ShipReqProps}
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.app._
-import shipreq.webapp.server.feature.SessionStats
 import shipreq.webapp.server.lib.Taskman
 import shipreq.webapp.server.security.AppSecurityRealm
 
@@ -50,6 +49,7 @@ class Boot {
 
     // Prepare services
     preloadTemplates()
+    initOps(Global.Instance)
     initRoutes(Global.Instance)
     initTaskman(Global.Instance)
   }
@@ -80,10 +80,6 @@ class Boot {
   }
 
   def configureLift(): Unit = {
-
-    // Collect session stats
-    LiftSession.afterSessionCreate ::= SessionStats.onSessionCreation _
-    LiftSession.onShutdownSession ::= SessionStats.onSessionExpiration _
 
     // App package path
     LiftRules.addToPackages(packageRoot)
@@ -173,6 +169,11 @@ class Boot {
     HomeSpa
     ProjectSpa
     PublicSpa
+  }
+
+  def initOps(g: Global): Unit = {
+    LiftSession.afterSessionCreate ::= g.ops.sessionTracker.onSessionCreation
+    LiftSession.onShutdownSession ::= g.ops.sessionTracker.onSessionExpiration
   }
 
   def initRoutes(g: Global): Unit = {

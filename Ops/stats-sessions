@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+cd "$(dirname "$(readlink -e "$0")")"
+source ./lib.sh
+[ $# -ne 1 ] && echo "Usage: $0 $envSyntax" && exit 1
+
+post "$1" /ops/stats/sessions

@@ -442,9 +442,13 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
   implicit val db         = new MockDb(svr.now)
   implicit val security   = new MockSecurity(db)
   implicit val taskman    = new MockTaskman
-  implicit val ops        = OpsLogic[Name](randomToken = Name("blah"))
   implicit val nameToName = NaturalTransformation.refl[Name]
   implicit val publicApi  = PublicSpaLogic[Name, Name]: PublicSpaLogic.ForApi[Name]
+
+  implicit object ops extends OpsLogic.Base[Name] {
+    override val randomToken = Name("blah")
+    override val sessionStats = Name(OpsLogic.SessionStats(0, None))
+  }
 
   val user2password = PlainTextPassword("blurp12345")
   lazy val user2 = MockDb.UserEntry(

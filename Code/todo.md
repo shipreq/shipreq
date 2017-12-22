@@ -86,8 +86,6 @@ Phase 2
   * Revise all logging
   * Determine and implement valuable metrics (tech & business)
   * Do more with errors (client & server), eg. ClientData.{init,applyEvents}
-  * Restore or delete AdminStats
-  * Restore or delete SessionStats
 
 ### New Features
 * Issues

@@ -13,7 +13,7 @@ import shipreq.webapp.server.security.SecurityInterpreter
 final case class Global(config  : ServerConfig,
                         db      : DbAccess,
                         logic   : ServerLogic[Fx],
-                        ops     : OpsLogic[Fx],
+                        ops     : OpsInterpreter,
                         security: Security.Algebra[Fx],
                         taskman : TaskmanApi[Fx],
                         trace   : TraceInterpreter.ForLift[Fx])
@@ -40,8 +40,7 @@ object Global {
     implicit val projectStore  = Store.Algebra.concurrentHashMap(): ProjectServer.StoreAlgebra[Fx]
     implicit val security      = new SecurityInterpreter[Fx]
     implicit val server        = trace.server(ServerInterpreter)
-             val rndOpsToken   = Fx(nyaya.gen.Gen.alphaNumeric.string(16).sample())
-    implicit val ops           = OpsLogic[Fx](rndOpsToken)
+    implicit val ops           = new OpsInterpreter()
     Global(
       config   = config,
       db       = dbAccess,

@@ -14,6 +14,8 @@ trait OpsLogic[F[_]] {
 
   def dbStats: F[DbStats]
 
+  def sessionStats: F[SessionStats]
+
   def userStats: F[UserStats]
 
   def taskmanMsgStatus(id: MsgId): F[Option[MsgStatusResult]]
@@ -27,54 +29,56 @@ trait OpsLogic[F[_]] {
 object OpsLogic {
   import Implicits._
 
-  def apply[F[_]](randomToken: F[String])
-                 (implicit F: Monad[F],
-                  db: DB.ForOps[F],
-                  svr: Server.Time[F],
-                  taskman: TaskmanApi[F]): OpsLogic[F] =
-    new OpsLogic[F] {
-      import WebappTaskmanConverters._
+  abstract class Base[F[_]](implicit F: Monad[F],
+                            db: DB.ForOps[F],
+                            svr: Server.Time[F],
+                            taskman: TaskmanApi[F]) extends OpsLogic[F] {
 
-      private def measureDuration[A](f: F[A]): F[(A, Duration)] =
+    import WebappTaskmanConverters._
+
+    protected def randomToken: F[String]
+
+    protected def measureDuration[A](f: F[A]): F[(A, Duration)] =
+      for {
+        t1 <- svr.now
+        a  <- f
+        t2 <- svr.now
+      } yield (a, Duration.between(t1, t2))
+
+    override def dbStats =
+      for {
+        first   <- measureDuration(db.now)
+        tables  <- db.tableStats
+        dbSize  <- db.dbSize
+        last    <- measureDuration(db.now)
+      } yield DbStats(
+        now        = first._1,
+        latency1   = first._2,
+        latency2   = last._2,
+        tableStats = tables,
+        dbSize     = dbSize)
+
+    override def sessionStats: F[SessionStats]
+
+    override def userStats =
+      db.userStats.map(UserStats)
+
+    override def taskmanMsgStatus(id: MsgId) =
+      taskman.queryMsgStatus(id).map(_.map(status =>
+        MsgStatusResult(id, status.toString, status.isArchived)))
+
+    override def sendMail(emailAddrStr: String) =
+      UserValidators.emailAddr.named(emailAddrStr).onValid(emailAddr =>
         for {
-          t1 <- svr.now
-          a  <- f
-          t2 <- svr.now
-        } yield (a, Duration.between(t1, t2))
-
-      override def dbStats =
-        for {
-          first   <- measureDuration(db.now)
-          tables  <- db.tableStats
-          dbSize  <- db.dbSize
-          last    <- measureDuration(db.now)
-        } yield DbStats(
-          now        = first._1,
-          latency1   = first._2,
-          latency2   = last._2,
-          tableStats = tables,
-          dbSize     = dbSize)
-
-      override def userStats =
-        db.userStats.map(UserStats)
-
-      override def taskmanMsgStatus(id: MsgId) =
-        taskman.queryMsgStatus(id).map(_.map(status =>
-          MsgStatusResult(id, status.toString, status.isArchived)))
-
-      override def sendMail(emailAddrStr: String) =
-        UserValidators.emailAddr.named(emailAddrStr).onValid(emailAddr =>
-          for {
-            token     ← randomToken
-            now       ← svr.now
-            subj      = "ShipReq send-mail test"
-            body      = s"Token: $token\nIssued: ${now.toStringIso8601}"
-            msg       = Msg.SendDiagEmail(emailAddr.toTaskman, subj, body)
-            r         ← measureDuration(taskman.submitMsg(msg))
-          } yield \/-(SendMailResult(r._1, r._2, token))
-        )
-
-    }
+          token     ← randomToken
+          now       ← svr.now
+          subj      = "ShipReq send-mail test"
+          body      = s"Token: $token\nIssued: ${now.toStringIso8601}"
+          msg       = Msg.SendDiagEmail(emailAddr.toTaskman, subj, body)
+          r         ← measureDuration(taskman.submitMsg(msg))
+        } yield \/-(SendMailResult(r._1, r._2, token))
+      )
+  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -105,6 +109,24 @@ object OpsLogic {
         "id" -> Js.Num(id.value),
         "token" -> Js.Str(token),
         "time" -> jsDuration(time))
+  }
+
+  final case class SessionStats(active     : Long,
+//                                loggedIn   : Long,
+//                                uniqueUsers: Long,
+                                timeout    : Option[Duration]) extends HasJsValue {
+//    def anonymous: Long =
+//      active - loggedIn
+
+    def toJsValue: Js.Value =
+      Js.Obj(
+        "active" -> Js.Obj(
+//          "anonymous"   -> Js.Num(anonymous),
+//          "loggedIn"    -> Js.Num(loggedIn),
+          "total"       -> Js.Num(active),
+//          "uniqueUsers" -> Js.Num(uniqueUsers)),
+        ),
+        "timeout" -> timeout.fold[Js.Value](Js.Str("?"))(jsDuration))
   }
 
   final case class UserStats(stats: DB.ForOps.UserStats) extends HasJsValue {
