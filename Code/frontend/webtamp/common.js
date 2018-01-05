@@ -15,7 +15,7 @@ const fixLinksInLiftTemplates = i =>
 
 function svgoOptimizeSync(svgo, content) {
   let res;
-  svgo.optimize(content, result => res = result);
+  svgo.optimize(content).then(result => res = result);
   Deasync.loopWhile(() => !res);
   if (res.error) throw Error(res.error)
   return res.data;
@@ -34,7 +34,11 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
     manifest,
   });
 
-  const svgo = new Svgo();
+  const svgo = new Svgo({
+    plugins: [{
+      removeViewBox: false,
+    }],
+  });
   const webpackOutput = `/tmp/shipreq.webpack.${mode}`;
   const dotMin = mode == 'dev' ? '' : '.min';
 
