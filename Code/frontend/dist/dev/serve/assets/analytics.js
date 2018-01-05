@@ -60,12 +60,249 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 210);
+/******/ 	return __webpack_require__(__webpack_require__.s = 185);
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ 159:
+/***/ 10:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return VERSION; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return DEV_ID; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "e", function() { return VERSION_PARAM; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return USAGE_PARAM; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return NULL_DIMENSION; });
+/**
+ * Copyright 2016 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+var VERSION = '2.4.1';
+var DEV_ID = 'i5iSjo';
+
+var VERSION_PARAM = '_av';
+var USAGE_PARAM = '_au';
+
+var NULL_DIMENSION = '(not set)';
+
+/***/ }),
+
+/***/ 11:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * Copyright 2017 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * @fileoverview
+ * The functions exported by this module make it easier (and safer) to override
+ * foreign object methods (in a modular way) and respond to or modify their
+ * invocation. The primary feature is the ability to override a method without
+ * worrying if it's already been overridden somewhere else in the codebase. It
+ * also allows for safe restoring of an overridden method by only fully
+ * restoring a method once all overrides have been removed.
+ */
+
+var instances = [];
+
+/**
+ * A class that wraps a foreign object method and emit events before and
+ * after the original method is called.
+ */
+
+var MethodChain = function () {
+  _createClass(MethodChain, null, [{
+    key: "add",
+
+    /**
+     * Adds the passed override method to the list of method chain overrides.
+     * @param {!Object} context The object containing the method to chain.
+     * @param {string} methodName The name of the method on the object.
+     * @param {!Function} methodOverride The override method to add.
+     */
+    value: function add(context, methodName, methodOverride) {
+      getOrCreateMethodChain(context, methodName).add(methodOverride);
+    }
+
+    /**
+     * Removes a method chain added via `add()`. If the override is the
+     * only override added, the original method is restored.
+     * @param {!Object} context The object containing the method to unchain.
+     * @param {string} methodName The name of the method on the object.
+     * @param {!Function} methodOverride The override method to remove.
+     */
+
+  }, {
+    key: "remove",
+    value: function remove(context, methodName, methodOverride) {
+      getOrCreateMethodChain(context, methodName).remove(methodOverride);
+    }
+
+    /**
+     * Wraps a foreign object method and overrides it. Also stores a reference
+     * to the original method so it can be restored later.
+     * @param {!Object} context The object containing the method.
+     * @param {string} methodName The name of the method on the object.
+     */
+
+  }]);
+
+  function MethodChain(context, methodName) {
+    var _this = this;
+
+    _classCallCheck(this, MethodChain);
+
+    this.context = context;
+    this.methodName = methodName;
+    this.isTask = /Task$/.test(methodName);
+
+    this.originalMethodReference = this.isTask ? context.get(methodName) : context[methodName];
+
+    this.methodChain = [];
+    this.boundMethodChain = [];
+
+    // Wraps the original method.
+    this.wrappedMethod = function () {
+      var lastBoundMethod = _this.boundMethodChain[_this.boundMethodChain.length - 1];
+
+      return lastBoundMethod.apply(undefined, arguments);
+    };
+
+    // Override original method with the wrapped one.
+    if (this.isTask) {
+      context.set(methodName, this.wrappedMethod);
+    } else {
+      context[methodName] = this.wrappedMethod;
+    }
+  }
+
+  /**
+   * Adds a method to the method chain.
+   * @param {!Function} overrideMethod The override method to add.
+   */
+
+
+  _createClass(MethodChain, [{
+    key: "add",
+    value: function add(overrideMethod) {
+      this.methodChain.push(overrideMethod);
+      this.rebindMethodChain();
+    }
+
+    /**
+     * Removes a method from the method chain and restores the prior order.
+     * @param {!Function} overrideMethod The override method to remove.
+     */
+
+  }, {
+    key: "remove",
+    value: function remove(overrideMethod) {
+      var index = this.methodChain.indexOf(overrideMethod);
+      if (index > -1) {
+        this.methodChain.splice(index, 1);
+        if (this.methodChain.length > 0) {
+          this.rebindMethodChain();
+        } else {
+          this.destroy();
+        }
+      }
+    }
+
+    /**
+     * Loops through the method chain array and recreates the bound method
+     * chain array. This is necessary any time a method is added or removed
+     * to ensure proper original method context and order.
+     */
+
+  }, {
+    key: "rebindMethodChain",
+    value: function rebindMethodChain() {
+      this.boundMethodChain = [];
+      for (var method, i = 0; method = this.methodChain[i]; i++) {
+        var previousMethod = this.boundMethodChain[i - 1] || this.originalMethodReference.bind(this.context);
+        this.boundMethodChain.push(method(previousMethod));
+      }
+    }
+
+    /**
+     * Calls super and destroys the instance if no registered handlers remain.
+     */
+
+  }, {
+    key: "destroy",
+    value: function destroy() {
+      var index = instances.indexOf(this);
+      if (index > -1) {
+        instances.splice(index, 1);
+        if (this.isTask) {
+          this.context.set(this.methodName, this.originalMethodReference);
+        } else {
+          this.context[this.methodName] = this.originalMethodReference;
+        }
+      }
+    }
+  }]);
+
+  return MethodChain;
+}();
+
+/**
+ * Gets a MethodChain instance for the passed object and method. If the method
+ * has already been wrapped via an existing MethodChain instance, that
+ * instance is returned.
+ * @param {!Object} context The object containing the method.
+ * @param {string} methodName The name of the method on the object.
+ * @return {!MethodChain}
+ */
+
+
+/* harmony default export */ __webpack_exports__["a"] = (MethodChain);
+function getOrCreateMethodChain(context, methodName) {
+  var methodChain = instances.filter(function (h) {
+    return h.context == context && h.methodName == methodName;
+  })[0];
+
+  if (!methodChain) {
+    methodChain = new MethodChain(context, methodName);
+    instances.push(methodChain);
+  }
+  return methodChain;
+}
+
+/***/ }),
+
+/***/ 146:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -76,11 +313,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = closest;
 
-var _matches = __webpack_require__(28);
+var _matches = __webpack_require__(21);
 
 var _matches2 = _interopRequireDefault(_matches);
 
-var _parents = __webpack_require__(160);
+var _parents = __webpack_require__(147);
 
 var _parents2 = _interopRequireDefault(_parents);
 
@@ -107,7 +344,7 @@ function closest(element, selector) {
 
 /***/ }),
 
-/***/ 160:
+/***/ 147:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -134,12 +371,12 @@ function parents(element) {
 
 /***/ }),
 
-/***/ 161:
+/***/ 148:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__event_emitter__ = __webpack_require__(219);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utilities__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__event_emitter__ = __webpack_require__(194);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utilities__ = __webpack_require__(3);
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -426,252 +663,15 @@ function parse(source) {
 
 /***/ }),
 
-/***/ 17:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return VERSION; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return DEV_ID; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "e", function() { return VERSION_PARAM; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return USAGE_PARAM; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return NULL_DIMENSION; });
-/**
- * Copyright 2016 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-var VERSION = '2.4.1';
-var DEV_ID = 'i5iSjo';
-
-var VERSION_PARAM = '_av';
-var USAGE_PARAM = '_au';
-
-var NULL_DIMENSION = '(not set)';
-
-/***/ }),
-
-/***/ 18:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * Copyright 2017 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/**
- * @fileoverview
- * The functions exported by this module make it easier (and safer) to override
- * foreign object methods (in a modular way) and respond to or modify their
- * invocation. The primary feature is the ability to override a method without
- * worrying if it's already been overridden somewhere else in the codebase. It
- * also allows for safe restoring of an overridden method by only fully
- * restoring a method once all overrides have been removed.
- */
-
-var instances = [];
-
-/**
- * A class that wraps a foreign object method and emit events before and
- * after the original method is called.
- */
-
-var MethodChain = function () {
-  _createClass(MethodChain, null, [{
-    key: "add",
-
-    /**
-     * Adds the passed override method to the list of method chain overrides.
-     * @param {!Object} context The object containing the method to chain.
-     * @param {string} methodName The name of the method on the object.
-     * @param {!Function} methodOverride The override method to add.
-     */
-    value: function add(context, methodName, methodOverride) {
-      getOrCreateMethodChain(context, methodName).add(methodOverride);
-    }
-
-    /**
-     * Removes a method chain added via `add()`. If the override is the
-     * only override added, the original method is restored.
-     * @param {!Object} context The object containing the method to unchain.
-     * @param {string} methodName The name of the method on the object.
-     * @param {!Function} methodOverride The override method to remove.
-     */
-
-  }, {
-    key: "remove",
-    value: function remove(context, methodName, methodOverride) {
-      getOrCreateMethodChain(context, methodName).remove(methodOverride);
-    }
-
-    /**
-     * Wraps a foreign object method and overrides it. Also stores a reference
-     * to the original method so it can be restored later.
-     * @param {!Object} context The object containing the method.
-     * @param {string} methodName The name of the method on the object.
-     */
-
-  }]);
-
-  function MethodChain(context, methodName) {
-    var _this = this;
-
-    _classCallCheck(this, MethodChain);
-
-    this.context = context;
-    this.methodName = methodName;
-    this.isTask = /Task$/.test(methodName);
-
-    this.originalMethodReference = this.isTask ? context.get(methodName) : context[methodName];
-
-    this.methodChain = [];
-    this.boundMethodChain = [];
-
-    // Wraps the original method.
-    this.wrappedMethod = function () {
-      var lastBoundMethod = _this.boundMethodChain[_this.boundMethodChain.length - 1];
-
-      return lastBoundMethod.apply(undefined, arguments);
-    };
-
-    // Override original method with the wrapped one.
-    if (this.isTask) {
-      context.set(methodName, this.wrappedMethod);
-    } else {
-      context[methodName] = this.wrappedMethod;
-    }
-  }
-
-  /**
-   * Adds a method to the method chain.
-   * @param {!Function} overrideMethod The override method to add.
-   */
-
-
-  _createClass(MethodChain, [{
-    key: "add",
-    value: function add(overrideMethod) {
-      this.methodChain.push(overrideMethod);
-      this.rebindMethodChain();
-    }
-
-    /**
-     * Removes a method from the method chain and restores the prior order.
-     * @param {!Function} overrideMethod The override method to remove.
-     */
-
-  }, {
-    key: "remove",
-    value: function remove(overrideMethod) {
-      var index = this.methodChain.indexOf(overrideMethod);
-      if (index > -1) {
-        this.methodChain.splice(index, 1);
-        if (this.methodChain.length > 0) {
-          this.rebindMethodChain();
-        } else {
-          this.destroy();
-        }
-      }
-    }
-
-    /**
-     * Loops through the method chain array and recreates the bound method
-     * chain array. This is necessary any time a method is added or removed
-     * to ensure proper original method context and order.
-     */
-
-  }, {
-    key: "rebindMethodChain",
-    value: function rebindMethodChain() {
-      this.boundMethodChain = [];
-      for (var method, i = 0; method = this.methodChain[i]; i++) {
-        var previousMethod = this.boundMethodChain[i - 1] || this.originalMethodReference.bind(this.context);
-        this.boundMethodChain.push(method(previousMethod));
-      }
-    }
-
-    /**
-     * Calls super and destroys the instance if no registered handlers remain.
-     */
-
-  }, {
-    key: "destroy",
-    value: function destroy() {
-      var index = instances.indexOf(this);
-      if (index > -1) {
-        instances.splice(index, 1);
-        if (this.isTask) {
-          this.context.set(this.methodName, this.originalMethodReference);
-        } else {
-          this.context[this.methodName] = this.originalMethodReference;
-        }
-      }
-    }
-  }]);
-
-  return MethodChain;
-}();
-
-/**
- * Gets a MethodChain instance for the passed object and method. If the method
- * has already been wrapped via an existing MethodChain instance, that
- * instance is returned.
- * @param {!Object} context The object containing the method.
- * @param {string} methodName The name of the method on the object.
- * @return {!MethodChain}
- */
-
-
-/* harmony default export */ __webpack_exports__["a"] = (MethodChain);
-function getOrCreateMethodChain(context, methodName) {
-  var methodChain = instances.filter(function (h) {
-    return h.context == context && h.methodName == methodName;
-  })[0];
-
-  if (!methodChain) {
-    methodChain = new MethodChain(context, methodName);
-    instances.push(methodChain);
-  }
-  return methodChain;
-}
-
-/***/ }),
-
-/***/ 210:
+/***/ 185:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "trackError", function() { return trackError; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_autotrack_lib_plugins_clean_url_tracker__ = __webpack_require__(211);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_autotrack_lib_plugins_outbound_link_tracker__ = __webpack_require__(216);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_autotrack_lib_plugins_page_visibility_tracker__ = __webpack_require__(217);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_autotrack_lib_plugins_clean_url_tracker__ = __webpack_require__(186);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_autotrack_lib_plugins_outbound_link_tracker__ = __webpack_require__(191);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_autotrack_lib_plugins_page_visibility_tracker__ = __webpack_require__(192);
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 /*
@@ -961,17 +961,17 @@ window.ga2 = { i: init };
 
 /***/ }),
 
-/***/ 211:
+/***/ 186:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils__ = __webpack_require__(20);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_dom_utils__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__constants__ = __webpack_require__(17);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__method_chain__ = __webpack_require__(18);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__provide__ = __webpack_require__(29);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__usage__ = __webpack_require__(30);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__utilities__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__constants__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__method_chain__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__provide__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__usage__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__utilities__ = __webpack_require__(3);
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1214,7 +1214,7 @@ Object(__WEBPACK_IMPORTED_MODULE_3__provide__["a" /* default */])('cleanUrlTrack
 
 /***/ }),
 
-/***/ 212:
+/***/ 187:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1225,11 +1225,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = delegate;
 
-var _closest = __webpack_require__(159);
+var _closest = __webpack_require__(146);
 
 var _closest2 = _interopRequireDefault(_closest);
 
-var _matches = __webpack_require__(28);
+var _matches = __webpack_require__(21);
 
 var _matches2 = _interopRequireDefault(_matches);
 
@@ -1284,7 +1284,7 @@ function delegate(ancestor, eventType, selector, callback) {
 
 /***/ }),
 
-/***/ 213:
+/***/ 188:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1346,7 +1346,7 @@ function dispatch(element, eventType) {
 
 /***/ }),
 
-/***/ 214:
+/***/ 189:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1381,7 +1381,7 @@ function getAttributes(element) {
 
 /***/ }),
 
-/***/ 215:
+/***/ 190:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1453,15 +1453,15 @@ function parseUrl(url) {
 
 /***/ }),
 
-/***/ 216:
+/***/ 191:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils__ = __webpack_require__(20);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_dom_utils__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__provide__ = __webpack_require__(29);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__usage__ = __webpack_require__(30);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__utilities__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__provide__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__usage__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__utilities__ = __webpack_require__(3);
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1661,17 +1661,17 @@ function linkClickWillUnloadCurrentPage(event, link) {
 
 /***/ }),
 
-/***/ 217:
+/***/ 192:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__constants__ = __webpack_require__(17);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__method_chain__ = __webpack_require__(18);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__provide__ = __webpack_require__(29);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__session__ = __webpack_require__(218);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__store__ = __webpack_require__(161);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__usage__ = __webpack_require__(30);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__utilities__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__constants__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__method_chain__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__provide__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__session__ = __webpack_require__(193);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__store__ = __webpack_require__(148);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__usage__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__utilities__ = __webpack_require__(3);
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
@@ -2098,13 +2098,13 @@ Object(__WEBPACK_IMPORTED_MODULE_2__provide__["a" /* default */])('pageVisibilit
 
 /***/ }),
 
-/***/ 218:
+/***/ 193:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__method_chain__ = __webpack_require__(18);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__store__ = __webpack_require__(161);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__utilities__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__method_chain__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__store__ = __webpack_require__(148);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__utilities__ = __webpack_require__(3);
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2359,7 +2359,7 @@ Session.DEFAULT_TIMEOUT = 30; // minutes
 
 /***/ }),
 
-/***/ 219:
+/***/ 194:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2491,7 +2491,7 @@ var EventEmitter = function () {
 
 /***/ }),
 
-/***/ 27:
+/***/ 20:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2502,31 +2502,31 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.parseUrl = exports.parents = exports.matches = exports.getAttributes = exports.dispatch = exports.delegate = exports.closest = undefined;
 
-var _closest = __webpack_require__(159);
+var _closest = __webpack_require__(146);
 
 var _closest2 = _interopRequireDefault(_closest);
 
-var _delegate = __webpack_require__(212);
+var _delegate = __webpack_require__(187);
 
 var _delegate2 = _interopRequireDefault(_delegate);
 
-var _dispatch = __webpack_require__(213);
+var _dispatch = __webpack_require__(188);
 
 var _dispatch2 = _interopRequireDefault(_dispatch);
 
-var _getAttributes = __webpack_require__(214);
+var _getAttributes = __webpack_require__(189);
 
 var _getAttributes2 = _interopRequireDefault(_getAttributes);
 
-var _matches = __webpack_require__(28);
+var _matches = __webpack_require__(21);
 
 var _matches2 = _interopRequireDefault(_matches);
 
-var _parents = __webpack_require__(160);
+var _parents = __webpack_require__(147);
 
 var _parents2 = _interopRequireDefault(_parents);
 
-var _parseUrl = __webpack_require__(215);
+var _parseUrl = __webpack_require__(190);
 
 var _parseUrl2 = _interopRequireDefault(_parseUrl);
 
@@ -2542,7 +2542,7 @@ exports.parseUrl = _parseUrl2.default;
 
 /***/ }),
 
-/***/ 28:
+/***/ 21:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2599,13 +2599,13 @@ function matchesSelector(element, selector) {
 
 /***/ }),
 
-/***/ 29:
+/***/ 22:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = provide;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__constants__ = __webpack_require__(17);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utilities__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__constants__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utilities__ = __webpack_require__(3);
 /**
  * Copyright 2016 Google Inc. All Rights Reserved.
  *
@@ -2657,13 +2657,13 @@ function provide(pluginName, pluginConstructor) {
 
 /***/ }),
 
-/***/ 30:
+/***/ 23:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return plugins; });
 /* harmony export (immutable) */ __webpack_exports__["b"] = trackUsage;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__constants__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__constants__ = __webpack_require__(10);
 /**
  * Copyright 2016 Google Inc. All Rights Reserved.
  *
@@ -2781,7 +2781,7 @@ function trackVersion(tracker) {
 
 /***/ }),
 
-/***/ 7:
+/***/ 3:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2798,9 +2798,9 @@ function trackVersion(tracker) {
 /* unused harmony export toArray */
 /* harmony export (immutable) */ __webpack_exports__["g"] = now;
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "h", function() { return uuid; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils__ = __webpack_require__(20);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_dom_utils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_dom_utils__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__method_chain__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__method_chain__ = __webpack_require__(11);
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 /**

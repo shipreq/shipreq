@@ -28,16 +28,16 @@ object AssetManifest {
   def memberLibBundleJs = "/assets/member-lib-bundle.js"
 
   def reactDomJs = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/15.6.2/react-dom.js",
-    integrity = Some("sha256-OIC5dwnvmz1pxUwicCbHXXhib7/y1bU2HyiXUR8LMNc="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.2.0/umd/react-dom.development.js",
+    integrity = Some("sha256-MENkb7k+X0cdQau8EP2kECRfc0A4Lq9uo6QGSnWgK0o="))
 
   def reactDomServerJs = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/15.6.2/react-dom-server.js",
-    integrity = Some("sha256-r2E0Oqf2wrlkg7QOWnIPDlt5op4cBlj0tKSkPWAzZCc="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.2.0/umd/react-dom-server.browser.development.js",
+    integrity = Some("sha256-R+MLr9ozphm831YSmYynV29oV/IPCnLE19vzF4jCkmc="))
 
   def reactJs = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/react/15.6.2/react-with-addons.js",
-    integrity = Some("sha256-JJVacUQxr7NTTXXXNb1TvC4khQRthXIKZziticKTfAs="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/react/16.2.0/umd/react.development.js",
+    integrity = Some("sha256-oK7yxCBxbvB6f0k30sHQEN7rIMklxeiFkzO/xOqA054="))
 
   def semanticCss = "/assets/semantic.css"
 

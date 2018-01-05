@@ -42,6 +42,8 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
   const webpackOutput = `/tmp/shipreq.webpack.${mode}`;
   const dotMin = mode == 'dev' ? '' : '.min';
 
+  const addSlash = d => (!d || /\/$/.test(d)) ? d : `${d}/`;
+
   const fromWebpack = o => Object.assign({
     type: 'local',
     src: webpackOutput,
@@ -49,15 +51,24 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
     outputName: name,
    }, o);
 
-  const fromCdnjs = (lib, filename, manifest) => {
+  const fromCdnjs = (lib, filename, opts) => {
     const libC = lib.cdn || lib;
     const libN = lib.npm || lib;
+    const pathO = opts.path || {};
+    const pathC = addSlash(pathO.cdn || opts.path || '');
+    const pathN = addSlash(pathO.npm || opts.path || 'dist');
     return {
       type: 'cdn',
-      url: `https://cdnjs.cloudflare.com/ajax/libs/${libC}/${moduleVer(libN)}/${filename}`,
-      integrity: { files: `node_modules/${libN}/dist/${filename}` },
-      manifest,
+      url: `https://cdnjs.cloudflare.com/ajax/libs/${libC}/${moduleVer(libN)}/${pathC}${filename}`,
+      integrity: { files: `node_modules/${libN}/${pathN}${filename}` },
+      manifest: opts.manifest,
     };
+  };
+
+  const reactLib = (lib, basename, opts) => {
+    const suffix   = mode == 'dev' ? 'development.js' : 'production.min.js';
+    const filename = `${basename}.${suffix}`;
+    return fromCdnjs(lib, filename, Object.assign(opts, {path: 'umd'}));
   };
 
   const indent = (by, str) => by + str.replace(/\n/g, "\n" + by);
@@ -148,21 +159,21 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
         'katex',
       ],
 
-      jquery: fromCdnjs('jquery', 'jquery.min.js', 'jqueryJs'),
+      jquery: fromCdnjs('jquery', 'jquery.min.js', {manifest: 'jqueryJs'}),
 
       react: [
-        fromCdnjs('react', mode == 'dev' ? 'react-with-addons.js' : 'react.min.js', 'reactJs'),
-        fromCdnjs('react-dom', `react-dom${dotMin}.js`, 'reactDomJs'),
+        reactLib('react', 'react', {manifest: 'reactJs'}),
+        reactLib('react-dom', 'react-dom', {manifest: 'reactDomJs'}),
       ],
 
       reactDomSvr: [
         'react',
-        fromCdnjs('react-dom', `react-dom-server${dotMin}.js`, 'reactDomServerJs'),
+        reactLib('react-dom', 'react-dom-server.browser', {manifest: 'reactDomServerJs'}),
       ],
 
       katex: [
-        fromCdnjs({cdn: 'KaTeX', npm: 'katex'}, `katex.min.js`, 'katexJs'),
-        fromCdnjs({cdn: 'KaTeX', npm: 'katex'}, `katex.min.css`, 'katexCss'),
+        fromCdnjs({cdn: 'KaTeX', npm: 'katex'}, `katex.min.js`, {manifest: 'katexJs'}),
+        fromCdnjs({cdn: 'KaTeX', npm: 'katex'}, `katex.min.css`, {manifest: 'katexCss'}),
         // { type: 'local', src: 'node_modules/katex/dist', files: '*.min.{js,css}' },
         // { type: 'local', src: 'node_modules/katex/dist', files: 'fonts/**/*', transitive: true },
         // { type: 'local', src: 'node_modules/katex/dist', files: 'images/**/*', transitive: true },

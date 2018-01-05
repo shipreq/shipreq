@@ -5,7 +5,7 @@ object AssetManifest {
 
   final case class CDN(href: String, integrity: Option[String])
 
-  def analyticsJs = "/s/4aa0f48c55c769567f922ebfbc3f99cf.js"
+  def analyticsJs = "/s/fbc0ca70f2a34deabef8bec7f441a4fc.js"
 
   def favicon = "/s/286b75985993da80759cbdc5142de4d3.ico"
 
@@ -25,19 +25,19 @@ object AssetManifest {
 
   def loadjs = "/s/7f8f2966a3634ba5d1b206bc19d7c7ec.js"
 
-  def memberLibBundleJs = "/s/4b9ef479604912c28dd98652cab5e909.js"
+  def memberLibBundleJs = "/s/2e8cc8f395057cb878944b110fdcd5f5.js"
 
   def reactDomJs = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/15.6.2/react-dom.min.js",
-    integrity = Some("sha256-Xhtg7QJuNhwB5AzaUcgr0iqNtCitzN+c/6k5/SOtENU="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.2.0/umd/react-dom.production.min.js",
+    integrity = Some("sha256-9hrJxD4IQsWHdNpzLkJKYGiY/SEZFJJSUqyeZPNKd8g="))
 
   def reactDomServerJs = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/15.6.2/react-dom-server.min.js",
-    integrity = Some("sha256-vP88vH0QVvZLXoVumoEOKLjbIKQDnRdD/0orATveuk4="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.2.0/umd/react-dom-server.browser.production.min.js",
+    integrity = Some("sha256-KWr3upHriTeIBt/QL9rtKDIVhIvcS5M0k7cMKYyx9CE="))
 
   def reactJs = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/react/15.6.2/react.min.js",
-    integrity = Some("sha256-c/17te7UpABi7+wcIHAAiIMOrNMVcTIzoxtRTDoYB4s="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/react/16.2.0/umd/react.production.min.js",
+    integrity = Some("sha256-wouRkivKKXA3y6AuyFwcDcF50alCNV8LbghfYCH6Z98="))
 
   def semanticCss = "/s/d089664b79dd957f6d571adaef052e8c.css"
 
@@ -50,7 +50,7 @@ object AssetManifest {
     "icons.svg#icons" ::
     Nil
 
-  def semanticJs = "/s/74429bb8686aa776ef428b88b1a36c6b.js"
+  def semanticJs = "/s/f834308b873788dc184cf56bf73f4a69.js"
 
   def shipreqBannerSvg = "/s/878536f0a4ad0029794669f88dbf5f35.svg"
 
