@@ -9,8 +9,13 @@ import shipreq.base.test.BaseTestUtil._
   */
 object StalenessTest extends TestSuite {
 
-  def assertGen[A](g: Generator[A])(actual: Html, data: A): Unit =
-    assertEq(s"${g.name} * $data", actual, g(data))
+  def assertGen[A](g: Generator[A])(actual: Html, data: A): Unit = {
+    val expect = g(data)
+    def split(h: Html): String =
+      h.value.replace("<", "\n<").split('\n').toList.flatMap(_.grouped(80)).mkString("\n")
+    assertMultiline(split(actual), split(expect))
+    assertEq(s"${g.name} * $data", actual, expect)
+  }
 
   def test[A](g: Generator[A])(actual: MainAndTest[Html]): Unit = {
     assertGen(g)(actual.main, g.data.main)
