@@ -7,10 +7,13 @@ const
 
 const config = {
 
+  // NOTE: airbnb-js-shims can be upgraded to airbnb-browser-shims if future shit crashes PhantomJS
+
   entry: {
 
     // Projects access this via symlink in src/test/resources
     'webapp-gen-deps': [
+      'airbnb-js-shims',
       'expose-loader?React!react',
       'expose-loader?ReactDOM!react-dom',
       'expose-loader?ReactDOMServer!react-dom/server',
@@ -18,6 +21,7 @@ const config = {
 
     // Projects access this via symlink in src/test/resources
     'webapp-base-test': [
+      'airbnb-js-shims',
       'expose-loader?React!react',
       'expose-loader?ReactDOM!react-dom',
       'expose-loader?React.addons.TestUtils!react-dom/test-utils',
@@ -25,6 +29,7 @@ const config = {
 
     // Projects access this via symlink in src/test/resources
     'webapp-client-test': [
+      'airbnb-js-shims',
       'expose-loader?React!react',
       'expose-loader?ReactDOM!react-dom',
       'expose-loader?ReactDOMServer!react-dom/server',
