@@ -27,7 +27,7 @@ object Dependencies {
   }
 
   object Scalaz {
-    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.17")
+    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.18")
     val core       = mm("scalaz-core")
     val effect     = mm("scalaz-effect") ++ core
     val concurrent = mm("scalaz-concurrent") ++ effect
@@ -172,7 +172,7 @@ object Dependencies {
 
   val boopickle = jvmAndJs("me.chrons",                        "boopickle", "1.2.5")
   val parboiled = jvmAndJs("org.parboiled",                    "parboiled", "2.1.4")
-  val shapeless = jvmAndJs("com.chuusai",                      "shapeless", "2.3.2")
+  val shapeless = jvmAndJs("com.chuusai",                      "shapeless", "2.3.3")
   val μPickle   = jvmAndJs("com.github.japgolly.fork.upickle", "upickle",   "custom-7")
   val μTest     = jvmAndJs("com.lihaoyi",                      "utest",     "0.4.8") // 0.5.4+ breaks PhantomJS in webapp-base-test-js
 
