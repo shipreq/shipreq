@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# If you see a bunch of warnings in docker like:
+#
+#   shipreq_dev_webapp | 01:11:29.034 WARN  [o.e.j.a.AnnotationParser        ] {          } com.google.type.TimeOfDay scanned from multiple locations: [jar:file:///shipreq/webapps/ROOT/WEB-INF/lib/grpc-google-common-protos-0.1.1.jar!/com/google/type/TimeOfDay.class, jar:file:///shipreq/webapps/ROOT/WEB-INF/lib/proto-google-common-protos-0.1.9.jar!/com/google/type/TimeOfDay.class]
+#   shipreq_dev_webapp | 01:11:29.035 WARN  [o.e.j.a.AnnotationParser        ] {          } com.google.type.TimeOfDayOrBuilder scanned from multiple locations: [jar:file:///shipreq/webapps/ROOT/WEB-INF/lib/grpc-google-common-protos-0.1.1.jar!/com/google/type/TimeOfDayOrBuilder.class, jar:file:///shipreq/webapps/ROOT/WEB-INF/lib/proto-google-common-protos-0.1.9.jar!/com/google/type/TimeOfDayOrBuilder.class]
+#   shipreq_dev_webapp | 01:11:29.035 WARN  [o.e.j.a.AnnotationParser        ] {          } com.google.type.TimeOfDayProto$1 scanned from multiple locations: [jar:file:///shipreq/webapps/ROOT/WEB-INF/lib/grpc-google-common-protos-0.1.1.jar!/com/google/type/TimeOfDayProto$1.class, jar:file:///shipreq/webapps/ROOT/WEB-INF/lib/proto-google-common-protos-0.1.9.jar!/com/google/type/TimeOfDayProto$1.class]
+#   shipreq_dev_webapp | 01:11:29.035 WARN  [o.e.j.a.AnnotationParser        ] {          } com.google.type.TimeOfDayProto scanned from multiple locations: [jar:file:///shipreq/webapps/ROOT/WEB-INF/lib/grpc-google-common-protos-0.1.1.jar!/com/google/type/TimeOfDayProto.class, jar:file:///shipreq/webapps/ROOT/WEB-INF/lib/proto-google-common-protos-0.1.9.jar!/com/google/type/TimeOfDayProto.class]
+#
+# copy and paste them into a file, then run this over it.
+
+
+
+cd "$(dirname "$(readlink -e "$0")")" || exit 1
+[ $# -ne 1 ] && echo "Usage: $0 <conflicts file>" && exit 1
+
+cat "$1" \
+  | fgrep 'scanned from multiple locations' \
+  | perl -pe 's/^.+ (\S+) scanned from.+?: \[(.+)\]/$2\t$1/; s/![^\t,\n]+//g; s/jar:\S+\///g' \
+  | sort
+
