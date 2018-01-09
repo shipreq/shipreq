@@ -1,8 +1,0 @@
-#!/bin/bash
-
-exp='$_.gsub!(/{.+}/){|x| "("+ x[1..-2].gsub(/(?:(?:"(.+?)"|:(\S+?)) *=>|([a-zA-Z_]\S*?):) */,"\\1\\2\\3=").gsub(/, /," ") +")" }'
-if [ $# -gt 0 ]; then
-  ruby -pi -e "$exp" "$@"
-else
-  ruby -pe "$exp"
-fi
