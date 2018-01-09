@@ -154,16 +154,12 @@ object Dependencies {
     val servletApi = jvmOnly("javax.servlet" % "javax.servlet-api" % "3.1.0")
   }
 
-  object GoogleCloudTrace {
-    private val mm = MultiModule.java("com.github.japgolly.fork.google-cloud-trace", "0.3.3")
-    val core                = mm("core")
-    val traceGrpcApiService = mm("trace-grpc-api-service")
+  object GoogleCloud {
+    // private val mm = MultiModule.java("com.google.cloud", "0.32.0-beta")
+    // val trace = mm("google-cloud-trace")
+    // ↑ This is not enough. It's just REST API wrappers. Doesn't do batching and rate-limiting etc
 
-    val googleOauth2 = jvmOnly("com.google.auth" % "google-auth-library-oauth2-http" % "0.7.1")
-    val grpcNetty    = jvmOnly("io.grpc"         % "grpc-netty"                      % "1.5.0")
-    val nettySsl     = jvmOnly("io.netty"        % "netty-tcnative-boringssl-static" % "2.0.5.Final") // % Runtime)
-
-    val all = core ++ traceGrpcApiService ++ googleOauth2 ++ grpcNetty ++ nettySsl
+    val trace = jvmOnly("com.google.cloud.trace" % "trace-grpc-api-service" % "0.5.0")
   }
 
   val scalajsDom       = jsOnly("org.scala-js"                          %%%! "scalajs-dom"       % "0.9.4")

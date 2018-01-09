@@ -17,7 +17,7 @@ object StackdriverTrace {
     /** GCP project the traces should be associated with. */
     projectId: String,
 
-    /** Credentials to be used for Stackdriver Trace API calls. */
+    /** Credentials file to be used for Stackdriver Trace API calls. */
     credentials: Option[String],
 
     /** The maximum number of seconds a Trace will be buffered locally before
@@ -37,7 +37,12 @@ object StackdriverTrace {
 
       b.setProjectId(projectId)
 
-      credentials.foreach(a => b.setCredentials(GoogleCredentials.fromStream(new FileInputStream(a))))
+      for (filename <- credentials) {
+        val fin = new FileInputStream(filename)
+        val cred = GoogleCredentials.fromStream(fin)
+        fin.close()
+        b.setCredentials(cred)
+      }
 
       b.setScheduledDelay(scheduledDelaySec)
 
