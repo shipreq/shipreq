@@ -28,6 +28,9 @@
       .tagRef {color:#2185D0!important}
       .issueRef {color:#db2828!important}
 
+      /* Without this the rowspans cause semantic-UI to remove the border-left of cells */
+      td.issue, td.id {border-left: 1px solid #2224261a !important}
+
       #reqtable .id {white-space:nowrap}
       .pubid {white-space:nowrap}
       td.fedit.issue-blank {min-width:40ex}
@@ -42,6 +45,7 @@
       x.ui.button {white-space:nowrap}
 
       .mergesum {display:none; }
+      .itype .mergesum,
       .issue .mergesum {display:inline; color:#999; padding-left:1ex; white-space:nowrap}
       .mergesum span {color:#c66}
 
@@ -208,6 +212,9 @@
           Sort:
           %button.ui.button.right.labeled.icon.tiny.basic.sortCriterion
             %i.icon.sort.ascending
+            Issue Type
+          %button.ui.button.right.labeled.icon.tiny.basic.sortCriterion
+            %i.icon.sort.ascending
             Issue
           %button.ui.button.right.labeled.icon.tiny.basic.sortCriterion
             %i.icon.sort.ascending
@@ -251,6 +258,7 @@
       %table#reqtable.ui.table.celled.compact.unstackable
         %thead
           %tr
+            %th.issue Issue Type
             %th.issue Issue
             %th.id ID
             %th.title Title
@@ -261,65 +269,7 @@
         %tbody
 
           %tr
-            %td.issue(rowspan=6) Blank field
-            %td.id(rowspan=2) %a(href="project-reqdetail.haml.html") UC-3
-            %td.title(rowspan=2) User logs in via smartphone
-            %td.fname Detail
-            %td.fedit.can-edit.issue-blank
-            %td.actions
-            %td.pri .ui.label.blue.is-tag high
-
-          %tr
-            %td.fname Implications
-            %td.fedit.can-edit.issue-blank
-            %td.actions
-            %td.pri .ui.label.blue.is-tag high
-
-          %tr
-            %td.id %a(href="project-reqdetail.haml.html") UC-4
-            %td.title User logs in via fax
-            %td.fname Major Feature
-            %td.fedit.can-edit.issue-blank
-            %td.actions
-            %td.pri .ui.label.blue.is-tag urgent
-
-          %tr
-            %td.id %a(href="project-reqdetail.haml.html") UC-8
-            %td.title User logs in via shouting
-            %td.fname Priority
-            %td.fedit.can-edit.issue-blank
-            %td.actions
-            %td.pri.issue-blank
-
-          %tr
-            %td.id %a(href="project-reqdetail.haml.html") UC-1
-            %td.title
-            %td.fname Title
-            %td.fedit.can-edit.issue-blank
-            %td.actions
-            %td.pri .ui.label.blue.is-tag critical
-
-          %tr
-            %td.id %a(href="project-reqdetail.haml.html") UC-4
-            %td.title User logs in via fax
-            %td.fname Step 4.E.1
-            %td.fedit.can-edit.issue-blank
-            %td.actions
-            %td.pri .ui.label.blue.is-tag urgent
-
-          %tr
-            %td.issue Code group has nothing to group.
-            %td.id %a(href="project-reqtable.haml.html") backend.tasks
-            %td.title Backend Tasks
-            %td.fname.na
-            %td.fedit.na
-            %td.actions
-              .ui.button.negative.basic
-                %i.icon.trash
-                Delete backend.tasks
-            %td.pri.na
-
-          %tr
+            %td.itype(rowspan=9) Bad data
             %td.issue(rowspan=2) Conflicting Priority tags
             %td.id %a(href="project-reqdetail.haml.html") FR-14
             %td.title Admin must be able to connect 100 fax machines simultaneously.
@@ -416,6 +366,19 @@
             %td.pri .ui.label.blue.is-tag urgent
 
           %tr
+            %td.itype(rowspan=2) Futility
+            %td.issue Code group has nothing to group.
+            %td.id %a(href="project-reqtable.haml.html") backend.tasks
+            %td.title Backend Tasks
+            %td.fname.na
+            %td.fedit.na
+            %td.actions
+              .ui.button.negative.basic
+                %i.icon.trash
+                Delete backend.tasks
+            %td.pri.na
+
+          %tr
             %td.issue Status field has no tags
             %td.id.na
             %td.title.na
@@ -428,7 +391,56 @@
             %td.pri.na
 
           %tr
-            %td.issue(rowspan=2) User-defined: #PENDING
+            %td.itype(rowspan=6) Missing data
+            %td.issue(rowspan=6) Blank field
+            %td.id(rowspan=2) %a(href="project-reqdetail.haml.html") UC-3
+            %td.title(rowspan=2) User logs in via smartphone
+            %td.fname Detail
+            %td.fedit.can-edit.issue-blank
+            %td.actions
+            %td.pri .ui.label.blue.is-tag high
+
+          %tr
+            %td.fname Implications
+            %td.fedit.can-edit.issue-blank
+            %td.actions
+            %td.pri .ui.label.blue.is-tag high
+
+          %tr
+            %td.id %a(href="project-reqdetail.haml.html") UC-4
+            %td.title User logs in via fax
+            %td.fname Major Feature
+            %td.fedit.can-edit.issue-blank
+            %td.actions
+            %td.pri .ui.label.blue.is-tag urgent
+
+          %tr
+            %td.id %a(href="project-reqdetail.haml.html") UC-8
+            %td.title User logs in via shouting
+            %td.fname Priority
+            %td.fedit.can-edit.issue-blank
+            %td.actions
+            %td.pri.issue-blank
+
+          %tr
+            %td.id %a(href="project-reqdetail.haml.html") UC-1
+            %td.title
+            %td.fname Title
+            %td.fedit.can-edit.issue-blank
+            %td.actions
+            %td.pri .ui.label.blue.is-tag critical
+
+          %tr
+            %td.id %a(href="project-reqdetail.haml.html") UC-4
+            %td.title User logs in via fax
+            %td.fname Step 4.E.1
+            %td.fedit.can-edit.issue-blank
+            %td.actions
+            %td.pri .ui.label.blue.is-tag urgent
+
+          %tr
+            %td.itype(rowspan=3) User-defined
+            %td.issue(rowspan=2) \#PENDING
             %td.id %a(href="project-reqdetail.haml.html") CO-12
             %td.title Max login/hr = <span class="issue-issuetag">#PENDING{ ask Bob }</span>
             %td.fname Title
@@ -446,7 +458,7 @@
             %td.pri .ui.label.blue.is-tag urgent
 
           %tr.issue-loose
-            %td.issue User-defined: loose
+            %td.issue Loose
             %td.id.na
             %td.title.na
             %td.fname.na
