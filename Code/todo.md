@@ -91,3 +91,13 @@ Phase 2
 * Issues
 * Send feedback (with screenshot). Add link beside @username in top bar
 * User profile page
+
+### Other
+* Allow system to add new field/columns in future without breaking existing projects.
+  eg. User adds a "Last Updated" custom field, later ShipReq provides an auto-populated
+  column with the same name. System needs a way to rename user's field without
+  breaking user's project, history & hashes.
+  Maybe a dynamic approach that compares versions, or maybe a migration task
+  that adds a new event to everyone's projects to do the rename once when the
+  new version is deployed.
+* Issues prototype: add collapse/expand by issue{type,} columns
