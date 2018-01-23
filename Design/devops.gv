@@ -1,0 +1,40 @@
+digraph G {
+
+services [label="ShipReq\nservices" fillcolor=lightblue style=filled]
+kamon,fluentd [fillcolor=lightblue style=filled]
+
+// Devops cluster
+subgraph cluster_devops {
+  fillcolor="#e6ffe6"
+  style=filled
+  node [style=filled fillcolor="#77bb66"]
+
+  es [label="ElasticSearch" fillcolor=lightyellow style=filled]
+  prometheus_storage [label="Cortex |\nInfluxDB |\nTimescaleDB" fillcolor=lightyellow style=filled]
+  jaeger [label="[tracing]\njaeger"]
+  prometheus [label="[monitoring] [alerting]\nprometheus"]
+  grafana [label="[monitoring]\ngrafana"]
+  alertmanager [label="[alerting]\nalertmanager"]
+  kibana [label="[logging]\nkibana"]
+
+  portal [label="DevOps portal\nCustom, simple HTML"]
+  portal -> jaeger,prometheus,grafana,kibana
+}
+
+// App
+services -> kamon,fluentd [arrowhead=none]
+
+// Monitoring & Alerting
+prometheus -> services,kamon,alertmanager
+grafana -> prometheus
+alertmanager -> email,slack,sms
+prometheus -> prometheus_storage [style=dotted]
+
+// Logging
+fluentd,kibana -> es
+
+// Tracing
+kamon -> jaeger
+jaeger -> es [style=dotted]
+
+}
