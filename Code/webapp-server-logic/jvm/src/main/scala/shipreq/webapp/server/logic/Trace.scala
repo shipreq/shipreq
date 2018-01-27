@@ -10,17 +10,32 @@ import shipreq.base.util.Url
 object Trace {
 
   trait Basic[F[_]] {
-    /** Trace a generic task. */
+
+    /** Trace a generic task.
+      *
+      * Creates either a top-level trace, or a sub-trace if nested.
+      */
     def generic[A](name: String)(f: => F[A]): F[A]
 
-    /** Sub-trace. Trace a sub-task in a parent task. */
+    /** Sub-trace.
+      *
+      * Creates a sub-task in a parent task. If not nested under a top-level trace, then no trace is created.
+      */
     def sub[A](name: String)(f: => F[A]): F[A]
   }
 
   trait Algebra[F[_], Req, Res] extends Basic[F] {
 
+    /** Trace a HTTP request.
+      *
+      * Creates a top-level trace.
+      */
     def http(req: Req, path: Url.Relative)(f: => F[Res]): F[Res]
 
+    /** Trace the invocation of a server-side procedure (by the user's browser).
+      *
+      * Creates a top-level trace.
+      */
     def serverSideProc(name: String, input: ByteBuffer)(f: => Server.SspResponse[F]): Server.SspResponse[F]
 
     // Provided:

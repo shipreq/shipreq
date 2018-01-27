@@ -101,3 +101,17 @@ Phase 2
   that adds a new event to everyone's projects to do the rename once when the
   new version is deployed.
 * Issues prototype: add collapse/expand by issue{type,} columns
+
+
+SQL makes no sense as a top-level
+remove /login/xxx
+remove /project/xxx
+prefix all URLs with "URL: "
+JDBC top-level? maybe suffix with method
+RegisterSSP.xxx shouldn't be a top-level. at least move the proc path into tag
+SSP.xxx -- move the proc path into tag. Change to ExecuteSSP or AJAX something.
+Code top levels? Security dely, MakeEvent, UpdateProject. Prefix with "Fn: " or something?
+Add user id tag to everything
+JDBC (and maybe SQL) should be a different component (i.e. not webapp)
+Link AJAX to initial request?
+

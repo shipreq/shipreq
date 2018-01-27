@@ -1,6 +1,7 @@
 package shipreq.webapp.server.app
 
 import doobie.imports.ConnectionIO
+import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.db.DbAccess
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.TaskmanApi
@@ -30,7 +31,13 @@ object Global {
 
   def default(implicit dbAccess: DbAccess, config: ServerConfig): Global = {
     assert(dbAccess ne null, "DbAccess is null, sir.")
-    implicit val trace         = config.trace.map(TraceInterpreter.apply).getOrElse(Trace.off) //.compose(Trace.logToStdout)
+
+    var tracers = Vector.empty[TraceInterpreter.ForLift[Fx]]
+    config.trace.foreach(tracers :+= TraceInterpreter.stackdriver(_))
+     tracers :+= TraceInterpreter.kamon
+    // tracers :+= Trace.logToStdout
+
+    implicit val trace         = NonEmptyVector.option(tracers).map(_.reduce(_.compose(_))).getOrElse(Trace.off)
     implicit val runDB         = trace.db(dbAccess.fx.trans)
              val taskmanCtx    = TaskmanApiImpl.Context(Some(config.taskmanSchema))
     implicit val taskman       = TaskmanApiImpl(taskmanCtx, runDB)

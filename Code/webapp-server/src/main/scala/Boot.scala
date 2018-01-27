@@ -10,6 +10,7 @@ import net.liftweb.util._
 import net.liftweb.util.Props.RunModes
 import scalaz.syntax.applicative._
 import shipreq.base.db.{DbAccess, DbConfig}
+import shipreq.base.ops.KamonBased
 import shipreq.base.util.FxModule._
 import shipreq.base.util.{Props => ShipReqProps}
 import shipreq.webapp.base.WebappConfig
@@ -33,6 +34,16 @@ class Boot {
   lazy val logger = Logger(s"$packageRoot.Boot")
 
   def boot(): Unit = {
+
+    import com.typesafe.config.ConfigFactory
+    import kamon._
+    Kamon.reconfigure(ConfigFactory.load("kamon"))
+    Kamon.addReporter(new kamon.prometheus.PrometheusReporter)
+    Kamon.addReporter(new kamon.zipkin.ZipkinReporter)
+    Kamon.addReporter(new kamon.jaeger.JaegerReporter)
+    val myTaggedCounter = Kamon.counter("test.counter").refine("env" -> "test")
+    myTaggedCounter.increment(17)
+
 
     // Read config
     val (cfg, runMode) = readConfig()
@@ -146,8 +157,11 @@ class Boot {
     AppSecurityRealm.init()
 
   def initDatabase(cfg: BootConfig): DbAccess = {
+
+    cfg.db.modifyHikariDataSource(KamonBased.sqlTracer.apply)
     for (t <- cfg.server.trace.map(_.sqlTracer()))
       cfg.db.modifyHikariDataSource(t.apply)
+
     val access = DbAccess.fromCfg(cfg.db).unsafeRun()
     logger.info(s"Connecting to DB: ${access.desc}")
     access.verifyConnectivity()

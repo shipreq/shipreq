@@ -51,7 +51,7 @@ object ShipReqBuild {
         Common.jvmSettings,
         Common.macroModuleSettings)
       .dependsOn(baseUtilJvm)
-      .deps(GoogleCloud.trace)
+      .deps(GoogleCloud.trace ++ Kamon.core)
 
   lazy val baseDb =
     project("base-db")

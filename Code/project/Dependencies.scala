@@ -137,14 +137,15 @@ object Dependencies {
   }
 
   object Akka {
-    private val mm = MultiModule.scala("com.typesafe.akka", "2.5.8")
+    val shortVer = "2.5"
+    private val mm = MultiModule.scala("com.typesafe.akka", shortVer + ".8")
     val actor   = mm("akka-actor") ++ mm("akka-slf4j")
     val testkit = mm("akka-testkit")
   }
 
   object OkHttp {
     private val mm = MultiModule.java("com.squareup.okhttp3", "3.8.1")
-    val core          = mm("okhttp")
+    val core = mm("okhttp")
     // val urlConnection = mm("okhttp-urlconnection") ++ core
   }
 
@@ -170,6 +171,17 @@ object Dependencies {
     // ↑ This is not enough. It's just REST API wrappers. Doesn't do batching and rate-limiting etc
 
     val trace = jvmOnly("com.google.cloud.trace" % "trace-grpc-api-service" % "0.5.0") ++ SLF4J.jcl // Use SLF4J in place of commons-logging
+  }
+
+  object Kamon {
+    val core          = jvmOnly("io.kamon" %%  "kamon-core"                  % "1.0.0")
+    val jdbc          = jvmOnly("io.kamon" %%  "kamon-jdbc"                  % "1.0.0")
+    val akka          = jvmOnly("io.kamon" %% s"kamon-akka-${Akka.shortVer}" % "1.0.0")
+    val systemMetrics = jvmOnly("io.kamon" %%  "kamon-system-metrics"        % "1.0.0")
+    val logback       = jvmOnly("io.kamon" %%  "kamon-logback"               % "1.0.0")
+    val prometheus    = jvmOnly("io.kamon" %%  "kamon-prometheus"            % "1.0.0")
+    val zipkin        = jvmOnly("io.kamon" %%  "kamon-zipkin"                % "1.0.0")
+    val jaeger        = jvmOnly("io.kamon" %%  "kamon-jaeger"                % "1.0.1")
   }
 
   val scalajsDom       = jsOnly("org.scala-js"                          %%%! "scalajs-dom"       % "0.9.4")
