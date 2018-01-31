@@ -213,7 +213,10 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
     F.bind(f)(makeRealRes(req.real, _))
 
   @inline private def traceUrl(url: Url.Relative, f: F[RealRes])(implicit req: Request): F[RealRes] =
-    tracer.http(url.relativeUrl, req.real, req.path)(_ => f)
+    traceUrlWithSpan(url, _ => f)
+
+  @inline private def traceUrlWithSpan(url: Url.Relative, f: tracer.Span => F[RealRes])(implicit req: Request): F[RealRes] =
+    tracer.http(url.relativeUrl, req.real, req.path)(f)
 
   private def onMethod(m: Method, f: F[AbsRes])(implicit req: Request): F[RealRes] =
     if (req.method eq m)
@@ -242,28 +245,26 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
       else
         Urls.login / req.path.relativeUrlNoHeadSlash)
 
-  private def needAuth(f: User => AbsRes)(implicit req: Request): F[AbsRes] =
-    security.authenticatedUser.map(_.fold(loginRequired)(f))
-
-  private def needAuthF(f: User => F[AbsRes])(implicit req: Request): F[AbsRes] =
-    security.authenticatedUser.flatMap(_.fold(F pure loginRequired)(f))
+  private def needAuth(f: User => F[AbsRes])(implicit span: tracer.Span, req: Request): F[AbsRes] =
+    security.authenticatedUser.flatMap(_.fold(F pure loginRequired)(u =>
+      tracer.alg.addAttrs(Trace.Attr.ShipReqUserId(u.id.value) :: Nil) >> f(u)))
 
   private def get(url: Url.Relative, resp: F[AbsRes]): Request ?=> F[RealRes] =
     whenUrlIs(url)(implicit req =>
       traceUrl(req.path,
         onMethod(Get, resp)))
 
-  private def spa(root: Url.Relative, onGet: Request => F[AbsRes]): Request ?=> F[RealRes] =
+  private def spa(root: Url.Relative, onGet: (tracer.Span, Request) => F[AbsRes]): Request ?=> F[RealRes] =
     when(spaTest(root))(implicit req =>
-      traceUrl(root,
-        onMethod(Get, onGet(req))))
+      traceUrlWithSpan(root, span =>
+        onMethod(Get, onGet(span, req))))
 
   private def spaWithObfuscatedParam[A](url       : Url.Relative.Param1[Obfuscated[A]])
                                        (obfuscator: Obfuscator[A])
-                                       (onGet     : Request => String \/ A => F[AbsRes]): Request ?=> F[RealRes] =
+                                       (onGet     : (tracer.Span, Request, String \/ A) => F[AbsRes]): Request ?=> F[RealRes] =
     extract(spaTest1(url))(implicit req => param =>
-      traceUrl(url.prefix,
-        onMethod(Get, onGet(req)(obfuscator.deobfuscate(Obfuscated(param))))))
+      traceUrlWithSpan(url.prefix, span =>
+        onMethod(Get, onGet(span, req, obfuscator.deobfuscate(Obfuscated(param))))))
 
   private def parseParams[A](parsed: Option[A])(f: A => F[AbsRes]): F[AbsRes] =
     parsed match {
@@ -290,7 +291,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
 
       // This logic is mirrored in .public.spa.Routes
       val login: Request ?=> F[RealRes] =
-        spa(R.Login.url, _ =>
+        spa(R.Login.url, (_, _) =>
           security.isAuthenticated.map(a =>
             if (a) Response.redirectToMemberHome else Response.ServePublicSpa))
 
@@ -329,21 +330,26 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
     }
 
     val memberHomeSpa: Request ?=> F[RealRes] =
-      spa(Urls.memberHome, needAuth(Response.ServeHomeSpa)(_))
+      spa(Urls.memberHome, needAuth(F pure Response.ServeHomeSpa(_))(_, _))
 
     val projectSpa: Request ?=> F[RealRes] =
-      spaWithObfuscatedParam(Urls.project)(Obfuscators.projectId) { implicit req => {
-        case \/-(projectId) =>
-          needAuthF(user =>
-            // TODO Check ProjectStore first
-            security.db.getProjectOwner(projectId).map {
-              case Some(o) if o ==* user.id => Response.ProjectSpa.Serve(user, projectId)
-              case Some(_)                  => Response.ProjectSpa.NotOwner
-              case None                     => Response.ProjectSpa.InvalidId
-            }
-          )
-        case -\/(_) => F pure Response.ProjectSpa.InvalidId
-      }}
+      spaWithObfuscatedParam(Urls.project)(Obfuscators.projectId) { (span, req, result) =>
+        implicit val _span = span
+        implicit val _req = req
+        result match {
+          case \/-(projectId) =>
+            tracer.alg.addAttrs(Trace.Attr.ShipReqProjectId(projectId) :: Nil) >>
+            needAuth(user =>
+              // TODO Check ProjectStore first
+              security.db.getProjectOwner(projectId).map {
+                case Some(o) if o ==* user.id => Response.ProjectSpa.Serve(user, projectId)
+                case Some(_)                  => Response.ProjectSpa.NotOwner
+                case None                     => Response.ProjectSpa.InvalidId
+              }
+            )
+          case -\/(_) => F pure Response.ProjectSpa.InvalidId
+        }
+      }
 
     val logout: Request ?=> F[RealRes] =
       get(Urls.logout,

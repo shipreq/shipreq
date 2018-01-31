@@ -129,12 +129,12 @@ object Trace {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  abstract class Algebra[F[_]] { outer =>
+  abstract class Algebra[F[_]](implicit F: Monad[F]) { outer =>
     type Span
 
     def newSpan[A](name: String)(f: Span => F[A]): F[A]
     def newSubSpan[A](name: String, parent: Span)(f: Span => F[A]): F[A]
-    def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): Unit
+    def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): F[Unit]
 
     def compose(inner: Algebra[F]): Algebra[F] =
       new Algebra[F] {
@@ -147,35 +147,35 @@ object Trace {
           outer.newSubSpan(name, parent._1)(ospan =>
             inner.newSubSpan(name, parent._2)(ispan =>
               f((ospan, ispan))))
-        override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): Unit = {
-          outer.addAttrs(attrs)(span._1)
-          inner.addAttrs(attrs)(span._2)
-        }
+        override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): F[Unit] =
+          outer.addAttrs(attrs)(span._1) >> inner.addAttrs(attrs)(span._2)
       }
   }
 
   object Algebra {
-    def apply[F[_]](algebras: TraversableOnce[Algebra[F]]): Algebra[F] =
+    def apply[F[_]: Monad](algebras: TraversableOnce[Algebra[F]]): Algebra[F] =
       if (algebras.isEmpty)
         off
       else
         algebras.reduce(_ compose _)
 
-    def off[F[_]]: Algebra[F] =
+    def off[F[_]](implicit F: Monad[F]): Algebra[F] =
       new Algebra[F] {
+        val fUnit = F.point(())
         override type Span                                              = Unit
         override def newSpan[A](n: String)(f: Span => F[A])             = f(())
         override def newSubSpan[A](n: String, p: Span)(f: Span => F[A]) = f(())
-        override def addAttrs(a: List[Trace.Attr])(implicit span: Span) = ()
+        override def addAttrs(a: List[Trace.Attr])(implicit span: Span) = fUnit
         override def compose(a: Algebra[F])                             = a
       }
 
     def logToStdout[F[_]](implicit F: Monad[F]): Algebra[F] =
       new Algebra[F] {
+        val fUnit = F.point(())
         override type Span                                              = Unit
         override def newSpan[A](n: String)(f: Span => F[A])             = this(n, f)
         override def newSubSpan[A](n: String, p: Span)(f: Span => F[A]) = this(n, f)
-        override def addAttrs(a: List[Trace.Attr])(implicit span: Span) = ()
+        override def addAttrs(a: List[Trace.Attr])(implicit span: Span) = fUnit
         private def apply[A](name: String, f: Span => F[A]) =
           for {
             start <- F point System.nanoTime()
@@ -205,7 +205,8 @@ object Trace {
       *
       * Creates a top-level trace.
       */
-    def http(routeName: String, req: HttpReq, path: Url.Relative)(respond: Span => F[HttpRes]): F[HttpRes] =
+    def http(routeName: String, req: HttpReq, path: Url.Relative)
+            (respond: Span => F[HttpRes]): F[HttpRes] =
       newSpan("HTTP: " + routeName) { implicit span =>
         addAttrs(
           Attr.EndpointName(routeName) ::
@@ -221,20 +222,18 @@ object Trace {
       *
       * Creates a top-level trace.
       */
-    def serverSideProc(sspName: String, parent: Span, input: ByteBuffer)(respond: Span => F[Server.SspResponse]): F[Server.SspResponse] =
+    def serverSideProc(sspName: String, parent: Span, input: ByteBuffer)
+                      (respond: Span => F[Server.SspResponse]): F[Server.SspResponse] =
       // Making this a child span ruins the times of both the initial HTTP request, and the AJAX call when searching and
       // filtering....which is ok.
       // Use metrics system for timings of HTTP/AJAX, tracing is for debugging and/or perspective of higher-level
       // processes...
       newSubSpan("AJAX: " + sspName, parent) { implicit span =>
-        addAttrs(
-          Attr.EndpointName(sspName) ::
-          Attr.HttpRequestSize(input.limit) ::
-          AttrFor.sspRequest)
-        F.map(respond(span)) { res =>
-          addAttrs(AttrFor.sspResponse(res))
-          res
-        }
+        for {
+          _ <- addAttrs(Attr.EndpointName(sspName) :: Attr.HttpRequestSize(input.limit) :: AttrFor.sspRequest)
+          r <- respond(span)
+          _ <- addAttrs(AttrFor.sspResponse(r))
+        } yield r
       }
 
     def injectDb(real: ConnectionIO ~> F): ConnectionIO ~> F =
@@ -253,7 +252,7 @@ object Trace {
         // Customisation:
         override val registerServerSideProc = (name, f) =>
           newSpan("RegisterSSP") { implicit span =>
-            addAttrs(Attr.EndpointName(name) :: Nil)
+            addAttrs(Attr.EndpointName(name) :: Nil) >>
             orig.registerServerSideProc(name, i =>
               serverSideProc(name, span, i)(_ =>
                 f(i)))

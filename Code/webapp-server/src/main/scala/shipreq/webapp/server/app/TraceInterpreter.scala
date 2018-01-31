@@ -89,15 +89,16 @@ object TraceInterpreter {
           httpResponseSize = (l, a) => {l.add(StackdriverTrace.Label.HttpResponseSize, a.value.toString); null},
           error            = (l, a) => {l.add(StackdriverTrace.Label.ErrorMessage, a.value.getMessage); a.value})
 
-      override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): Unit = {
-        val labels = Labels.builder()
-        for (a <- attrs) {
-          val t = attrInterpretter(labels, a)
-          if (t ne null)
-            tracer.setStackTrace(span, ThrowableStackTraceHelper.createBuilder(t).build)
+      override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): Fx[Unit] =
+        Fx {
+          val labels = Labels.builder()
+          for (a <- attrs) {
+            val t = attrInterpretter(labels, a)
+            if (t ne null)
+              tracer.setStackTrace(span, ThrowableStackTraceHelper.createBuilder(t).build)
+          }
+          tracer.annotateSpan(span, labels.build())
         }
-        tracer.annotateSpan(span, labels.build())
-      }
     }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -136,8 +137,8 @@ object TraceInterpreter {
         httpResponseSize = (s, a) => s.tag("http.response_size", a.value),
         error            = (s, a) => s.addError(a.value.getMessage, a.value))
 
-    override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): Unit =
-      attrs.foreach(attrInterpretter(span, _))
+    override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): Fx[Unit] =
+      Fx(attrs.foreach(attrInterpretter(span, _)))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -184,8 +185,8 @@ object TraceInterpreter {
         httpResponseSize = (s, a) => s.setTag("http.response_size", a.value),
         error            = (s, a) => setError(s, a.value))
 
-    override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): Unit =
-      attrs.foreach(attrInterpretter(span, _))
+    override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): Fx[Unit] =
+      Fx(attrs.foreach(attrInterpretter(span, _)))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
