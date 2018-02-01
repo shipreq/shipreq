@@ -5,7 +5,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.{Node, html}
 import scala.scalajs.js
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /** http://semantic-ui.com/modules/dropdown.html
   */
@@ -62,7 +61,6 @@ object Dropdown {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  @ScalaJSDefined
   trait JsOptions extends js.Object {
     import JsOptions._
 
@@ -80,7 +78,6 @@ object Dropdown {
 
   object JsOptions {
 
-    @ScalaJSDefined
     sealed trait On extends js.Any
     object On {
       /** Dropdown appears when user clicks the dropdown */
@@ -89,7 +86,6 @@ object Dropdown {
       @inline def Hover = "hover".asInstanceOf[On]
     }
 
-    @ScalaJSDefined
     sealed trait Action extends js.Any
     object Action {
       /** Hides the dropdown menu and stores value, but does not change text */
@@ -97,7 +93,6 @@ object Dropdown {
       @inline def nothing = "nothing".asInstanceOf[Action]
     }
 
-    @ScalaJSDefined
     sealed trait Match extends js.Any
     object Match {
       @inline def Both  = "both".asInstanceOf[Match]
@@ -105,7 +100,6 @@ object Dropdown {
       @inline def Value = "value".asInstanceOf[Match]
     }
 
-    @ScalaJSDefined
     trait Delay extends js.Object {
       val show: js.UndefOr[Int] = js.undefined
       val hide: js.UndefOr[Int] = js.undefined

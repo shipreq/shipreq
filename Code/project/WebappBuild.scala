@@ -165,6 +165,7 @@ object WebappBuild {
         Common.jsSettings(NeedDom),
         _.dependsOn(webappClientProject)
           .settings(
+            scalaJSUseMainModuleInitializer := true,
             jsDependencies += ProvidedJS / "webapp-gen-deps.js"))
       .depsForBoth(testScope(μTest))
       .dependsOn(webappBaseTest % "test")
