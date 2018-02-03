@@ -115,3 +115,17 @@ Add user id tag to everything
 JDBC (and maybe SQL) should be a different component (i.e. not webapp)
 Link AJAX to initial request?
 
+
+What I need.
+
+Generically:
+  span - top-level or nested
+  sub  - nested only or WARN
+  Some means to add attributes where the attribute differs by provider
+
+Make Kamon/Stackdriver configurable
+Remove jaeger direct client
+Sql tracing should be injected by Trace.Logic
+Prefix logic fns like makeEvent
+Add more tags to logic fns (eg. event being applied) (?)
+

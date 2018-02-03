@@ -7,7 +7,7 @@ import java.nio.ByteBuffer
 import java.time.Duration
 import scalaz.syntax.monad._
 import scalaz.{-\/, Monad, \/-, ~>}
-import shipreq.base.util.Url
+import shipreq.base.util.{Identity, Url}
 
 object Trace {
 
@@ -151,7 +151,13 @@ object Trace {
     def newSubSpan[A](name: String, parent: Span)(f: Span => F[A]): F[A]
     def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): F[Unit]
 
-    def compose(inner: Algebra[F]): Algebra[F] =
+    protected def _propagateCtx[A]: F[F[A] => F[A]]
+
+    private[this] final val _propagateCtxInstance = _propagateCtx[Any]
+    final def propagateCtx[A]: F[F[A] => F[A]] =
+      _propagateCtxInstance.asInstanceOf[F[F[A] => F[A]]]
+
+    def compose(inner: Algebra[F])(implicit F: Monad[F]): Algebra[F] =
       new Algebra[F] {
         override type Span = (outer.Span, inner.Span)
         override def newSpan[A](name: String)(f: Span => F[A]): F[A] =
@@ -164,6 +170,14 @@ object Trace {
               f((ospan, ispan))))
         override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): F[Unit] =
           outer.addAttrs(attrs)(span._1) >> inner.addAttrs(attrs)(span._2)
+        override def _propagateCtx[A]: F[F[A] => F[A]] = {
+          val o = outer.propagateCtx[A]
+          val i = inner.propagateCtx[A]
+          for {
+            f <- o
+            g <- i
+          } yield g compose f
+        }
       }
   }
 
@@ -181,7 +195,8 @@ object Trace {
         override def newSpan[A](n: String)(f: Span => F[A])             = f(())
         override def newSubSpan[A](n: String, p: Span)(f: Span => F[A]) = f(())
         override def addAttrs(a: List[Trace.Attr])(implicit span: Span) = fUnit
-        override def compose(a: Algebra[F])                             = a
+        override def compose(a: Algebra[F])(implicit F: Monad[F])       = a
+        override def _propagateCtx[A]                                   = F point Identity.apply
       }
 
     def logToStdout[F[_]](implicit F: Monad[F]): Algebra[F] =
@@ -191,6 +206,7 @@ object Trace {
         override def newSpan[A](n: String)(f: Span => F[A])             = this(n, f)
         override def newSubSpan[A](n: String, p: Span)(f: Span => F[A]) = this(n, f)
         override def addAttrs(a: List[Trace.Attr])(implicit span: Span) = fUnit
+        override def _propagateCtx[A]                                   = F point Identity.apply
         private def apply[A](name: String, f: Span => F[A]) =
           for {
             start <- F point System.nanoTime()
@@ -257,11 +273,15 @@ object Trace {
     def injectServer(orig: Server.Algebra[F]): Server.Algebra[F] =
       new Server.Algebra[F] {
         override def delay[A](f: F[A], d: Duration) = orig.delay(f, d)
-        override def fork[A](f: F[A])               = orig.fork(f)
         override val clientIP                       = orig.clientIP
         override val sessionId                      = orig.sessionId
         override def now                            = orig.now
-        // Customisation:
+
+        // Injection:
+
+        override def fork[A](fa: F[A]) =
+          newSpan("fork")(Function const propagateCtx[A].flatMap(f => orig fork f(fa)))
+
         override val registerServerSideProc = (name, f) =>
           newSpan("RegisterSSP") { implicit span =>
             addAttrs(Attr.EndpointName(name) :: Nil) >>

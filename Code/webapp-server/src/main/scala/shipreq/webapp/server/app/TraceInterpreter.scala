@@ -6,6 +6,7 @@ import net.liftweb.http.LiftResponse
 import net.liftweb.http.provider.servlet.HTTPRequestServlet
 import shipreq.base.ops.StackdriverTrace
 import shipreq.base.util.FxModule._
+import shipreq.base.util.Identity
 import shipreq.webapp.server.logic.Trace
 
 object TraceInterpreter {
@@ -55,7 +56,7 @@ object TraceInterpreter {
   }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-
+/*
   def stackdriverAlgebra(cfg: StackdriverTrace.Cfg): Trace.Algebra[Fx] =
     new Trace.Algebra[Fx] {
       import com.google.cloud.trace.core._
@@ -114,29 +115,61 @@ object TraceInterpreter {
           tracer.annotateSpan(span, labels.build())
         }
     }
+*/
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   object KamonAlgebra extends Trace.Algebra[Fx] {
-    import _root_.kamon.Kamon
+    import kamon.Kamon
 
-    override type Span = _root_.kamon.trace.Span
+    override type Span = kamon.trace.Span
+    private[this] val Span = kamon.trace.Span
+    private[this] val SpanContextKey = Span.ContextKey
+
+    private def withNewSpan[A](createSpan: => Span)(f: Span => Fx[A]): Fx[A] =
+      Fx {
+        val span = createSpan
+        unsafeWithActiveSpan(span)(f(span).unsafeRun())
+      }
+
+    private def withActiveSpan[A](span: Span, f: Fx[A]): Fx[A] =
+      Fx(unsafeWithActiveSpan(span)(f.unsafeRun()))
+
+    private def unsafeWithActiveSpan[A](span: Span)(body: => A): A =
+      try
+        Kamon.withContextKey(SpanContextKey, span) {
+          body
+        }
+      catch {
+        case t: Throwable =>
+          setError(span, t)
+          throw t
+      }
+      finally
+        span.finish()
+
+    private def setError(span: Span, err: Throwable): Unit = {
+      span.tag("error", true)
+      span.tag("event", "error")
+      span.tag("error.kind", err.getClass.getName)
+      span.tag("message", err.getMessage)
+      span.tag("stack", err.stackTraceAsString)
+    }
 
     override def newSpan[A](name: String)(f: Span => Fx[A]): Fx[A] =
-      Fx {
-        val span = Kamon.buildSpan(name).start()
-        Kamon.withSpan(span, finishSpan = true) {
-          f(span).unsafeRun()
-        }
-      }
+      withNewSpan(Kamon.buildSpan(name).start())(f)
 
     override def newSubSpan[A](name: String, parent: Span)(f: Span => Fx[A]): Fx[A] =
-      Fx {
-        val span = Kamon.buildSpan(name).asChildOf(parent).start()
-        Kamon.withSpan(span, finishSpan = true) {
-          f(span).unsafeRun()
-        }
-      }
+      withNewSpan(Kamon.buildSpan(name).asChildOf(parent).start())(f)
+
+    override def _propagateCtx[A]: Fx[Fx[A] => Fx[A]] =
+      Fx((f: Fx[A]) => {
+        val span = Kamon.currentSpan()
+        if (span eq null)
+          f
+        else
+          withActiveSpan(span, f)
+      })
 
     private[this] val attrInterpretter = Trace.Attr.interpret[Span, Unit](
         endpointName     = (s, a) => s.tag("endpoint.name", a.value),
@@ -152,7 +185,7 @@ object TraceInterpreter {
         httpUserAgent    = (s, a) => s.tag("http.user_agent", a.value),
         shipReqProjectId = (s, a) => s.tag("shipreq.project_id", a.value),
         shipReqUserId    = (s, a) => s.tag("shipreq.user_id", a.value),
-        error            = (s, a) => s.addError(a.value.getMessage, a.value))
+        error            = (s, a) => setError(s, a.value))
 
     override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): Fx[Unit] =
       Fx(attrs.foreach(attrInterpretter(span, _)))
@@ -160,8 +193,10 @@ object TraceInterpreter {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  /*
   final class OpenTracingAlgebra(tracer: io.opentracing.Tracer) extends Trace.Algebra[Fx] {
     import com.google.common.collect.ImmutableMap
+    import io.opentracing.Scope
     import io.opentracing.log.Fields
     import io.opentracing.tag.Tags
 
@@ -214,10 +249,29 @@ object TraceInterpreter {
 
     override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): Fx[Unit] =
       Fx(attrs.foreach(attrInterpretter(span, _)))
+
+    private[this] val closeScope = (s: Scope) => Fx(s.close())
+
+    override protected def _propagateCtx[A]: Fx[Fx[A] => Fx[A]] =
+      Fx {
+        val span = tracer.activeSpan()
+        if (span eq null)
+          Identity.apply
+        else {
+//          val reinstate = Fx(tracer.scopeManager().activate(span, false))
+          val reinstate = Fx {
+            val s = tracer.asChildOf(span).start()
+            tracer.scopeManager().activate(s, true)
+          }
+          (f: Fx[A]) => reinstate.bracket(close, _ => f)
+        }
+      }
   }
+  */
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  /*
   def jaegerAlgebra: Trace.Algebra[Fx] = {
     import com.uber.jaeger.Configuration
     import com.uber.jaeger.Tracer
@@ -238,4 +292,5 @@ object TraceInterpreter {
     val tracer = config.getTracer()
     new OpenTracingAlgebra(tracer)
   }
+  */
 }

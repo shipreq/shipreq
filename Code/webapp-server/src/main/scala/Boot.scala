@@ -33,18 +33,16 @@ class Boot {
   val packageRoot = "shipreq.webapp.server"
   lazy val logger = Logger(s"$packageRoot.Boot")
 
-  def boot(): Unit = {
-
+  def initKamon(): Unit = {
     import com.typesafe.config.ConfigFactory
     import kamon._
     Kamon.reconfigure(ConfigFactory.load("kamon"))
-//    Kamon.addReporter(new kamon.prometheus.PrometheusReporter)
-//    Kamon.addReporter(new kamon.zipkin.ZipkinReporter)
+    //    Kamon.addReporter(new kamon.prometheus.PrometheusReporter)
+    //    Kamon.addReporter(new kamon.zipkin.ZipkinReporter)
     Kamon.addReporter(new kamon.jaeger.JaegerReporter)
-//    val myTaggedCounter = Kamon.counter("test.counter").refine("env" -> "test")
-//    myTaggedCounter.increment(17)
+  }
 
-
+  def boot(): Unit = {
     // Read config
     val (cfg, runMode) = readConfig()
     logger.info(cfg.report.report)
@@ -63,6 +61,8 @@ class Boot {
     initOps(Global.Instance)
     initRoutes(Global.Instance)
     initTaskman(Global.Instance)
+
+    initKamon()
   }
 
   def readConfig(): (BootConfig, Option[RunModes.Value]) = {
@@ -159,7 +159,7 @@ class Boot {
   def initDatabase(cfg: BootConfig): DbAccess = {
 
     // TODO Reenable JDBC tracing - although it should be done be Trace.Logic#injectDb
-//     cfg.db.modifyHikariDataSource(KamonBased.sqlTracer.apply)
+     cfg.db.modifyHikariDataSource(KamonBased.sqlTracer.apply)
 //    for (t <- cfg.server.trace.map(_.sqlTracer()))
 //      cfg.db.modifyHikariDataSource(t.apply)
 
