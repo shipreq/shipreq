@@ -1,11 +1,15 @@
 import sbt._
 import sbt.Keys._
-import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
-import org.scalajs.sbtplugin.cross.CrossProject
-import org.scalajs.sbtplugin.ScalaJSPluginInternal._
-import org.scalajs.jsenv.selenium._
+//import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
+//import org.scalajs.sbtplugin.cross.CrossProject
+//import org.scalajs.sbtplugin.ScalaJSPluginInternal._
+//import org.scalajs.jsenv.selenium._
+
+// https://github.com/scala-js/scala-js/blob/v0.6.22/sbt-plugin/src/main/scala/org/scalajs/sbtplugin/ScalaJSPlugin.scala
+// https://github.com/scala-js/scala-js/blob/v0.6.22/sbt-plugin/src/main/scala/org/scalajs/sbtplugin/ScalaJSPluginInternal.scala
 
 object InBrowserTesting {
+/*
 
   lazy val testAll = TaskKey[Unit]("test-all", "Run tests in all test platforms.")
 
@@ -94,4 +98,7 @@ object InBrowserTesting {
 
   def cross: CrossProject => CrossProject =
     _.jvmConfigure(jvm).jsConfigure(js)
+*/
+  def jvm: Project => Project = identity
+  def js: Project => Project = identity
 }

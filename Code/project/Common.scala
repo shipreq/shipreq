@@ -175,6 +175,7 @@ object Common {
       InBrowserTesting.js)
     .depsForJs(Dependencies.scalajsJavaTime)
     .settings(
+      scalacOptions += "-P:scalajs:sjsDefinedByDefault",
       parallelExecution in testOnly := false,
       // scalaJSOptimizerOptions in fullOptJS ~= (_ withPrettyPrintFullOptJS true),
       scalaJSSemantics in fullOptJS ~= (_
@@ -219,12 +220,9 @@ object Common {
         _.settings(test := ())
       case NoDom =>
         _.settings(
-          requiresDOM := false)
-//          jsEnv in Test := NodeJSEnv().value)
-//          jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
+          jsEnv in Test := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv)
       case NeedDom =>
         _.settings(
-          requiresDOM                         := true,
           emitSourceMaps in fastOptJS in Test := false, // PhantomJS doesn't use
           jsEnv                       in Test := new PhantomJS2Env(PhantomJSEnv.Config().withJettyClassLoader(scalaJSPhantomJSClassLoader.value)))
 //          emitSourceMaps in fastOptJS in Test := true)

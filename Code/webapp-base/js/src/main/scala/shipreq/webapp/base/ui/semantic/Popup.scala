@@ -5,7 +5,6 @@ import japgolly.scalajs.react.vdom.TopNode
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scala.scalajs.js
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /** http://semantic-ui.com/modules/popup.html */
 object Popup {
@@ -45,7 +44,6 @@ object Popup {
   /** Uses JavaScript. */
   object Js {
 
-    @ScalaJSDefined
     trait Options extends js.Object {
       import Options._
       val closable      : js.UndefOr[Boolean] = js.undefined
@@ -64,7 +62,6 @@ object Popup {
     }
 
     object Options {
-      @ScalaJSDefined
       trait Delay extends js.Object {
         val show: js.UndefOr[Int] = js.undefined
         val hide: js.UndefOr[Int] = js.undefined

@@ -1,12 +1,10 @@
 package shipreq.webapp.client.ww.api
 
 import scalajs.js
-import scalajs.js.annotation._
 import org.scalajs.dom.console
 
 object Protocol {
 
-  @ScalaJSDefined
   class Message[+C](val key: Int, val cmd: C) extends js.Object
 
   trait Codec[E, R[_], W[_]] {
