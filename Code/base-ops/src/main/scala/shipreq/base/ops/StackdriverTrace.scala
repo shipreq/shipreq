@@ -109,9 +109,12 @@ object StackdriverTrace {
 
     // Custom
     final val EndpointName       = "/endpoint/name"
+    final val HttpRemoteHost     = "/http/remote/host"
+    final val HttpRemotePort     = "/http/remote/port"
+    final val HttpSessionId      = "/http/session_id"
     final val HttpUri            = "/http/uri"
-    final val ShipReqUserId      = "/shipreq/user_id"
     final val ShipReqProjectId   = "/shipreq/project_id"
+    final val ShipReqUserId      = "/shipreq/user_id"
   }
 
   def sqlTracer(tracer: Tracer): SqlTracer =

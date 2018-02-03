@@ -1,7 +1,6 @@
 package shipreq.webapp.server.app
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import javax.servlet.http.HttpServletRequest
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.LiftResponse
 import net.liftweb.http.provider.servlet.HTTPRequestServlet
@@ -22,31 +21,21 @@ object TraceInterpreter {
 
     implicit val attrForHttpReq: Trace.AttrFor[HttpReq] =
       req => {
-
+        val r2 = req.request
         var attrs =
           Trace.Attr.HttpMethod(req.requestType.method) ::
-            Trace.Attr.HttpUrl(req.request.url) ::
+            Trace.Attr.HttpUrl(r2.url) ::
+            Trace.Attr.HttpRemoteHost(r2.remoteHost) ::
+            Trace.Attr.HttpRemotePort(r2.remotePort) ::
             req.userAgent.toList.map(Trace.Attr.HttpUserAgent)
-
-        req.request match {
-          case x: HTTPRequestServlet =>
-            attrs ::= Trace.Attr.HttpRequestSize(x.req.getContentLengthLong)
-          case _ => ()
+        r2 match {
+          case x: HTTPRequestServlet => attrs ::= Trace.Attr.HttpRequestSize(x.req.getContentLengthLong)
+          case _                     => ()
         }
-
-        println()
-        println()
-        println()
-//        println("RA: " + req.request.remoteAddress)
-        println("RH: " + req.request.remoteHost)
-        println("RP: " + req.request.remotePort)
-        println("SI: " + req.request.sessionId)
-        println()
-        println()
-        println()
-//        IP (remote addr/port/host)
-//        session ID
-
+        r2.sessionId match {
+          case b: Full[String] => attrs ::= Trace.Attr.HttpSessionId(b.value)
+          case _               => ()
+        }
         attrs
       }
 
@@ -99,17 +88,20 @@ object TraceInterpreter {
         newSpan(name)(f)
 
       private[this] val attrInterpretter = Trace.Attr.interpret[Labels.Builder, Throwable](
-          shipReqUserId    = (l, a) => {l.add(StackdriverTrace.Label.ShipReqUserId, a.value.toString); null},
-          shipReqProjectId = (l, a) => {l.add(StackdriverTrace.Label.ShipReqProjectId, a.value.toString); null},
           endpointName     = (l, a) => {l.add(StackdriverTrace.Label.EndpointName, a.value); null},
+          error            = (l, a) => {l.add(StackdriverTrace.Label.ErrorMessage, a.value.getMessage); a.value},
           httpMethod       = (l, a) => {l.add(StackdriverTrace.Label.HttpMethod, a.value); null},
+          httpRemoteHost   = (l, a) => {l.add(StackdriverTrace.Label.HttpRemoteHost, a.value); null},
+          httpRemotePort   = (l, a) => {l.add(StackdriverTrace.Label.HttpRemotePort, a.value.toString); null},
+          httpRequestSize  = (l, a) => {l.add(StackdriverTrace.Label.HttpRequestSize, a.value.toString); null},
+          httpResponseSize = (l, a) => {l.add(StackdriverTrace.Label.HttpResponseSize, a.value.toString); null},
+          httpSessionId    = (l, a) => {l.add(StackdriverTrace.Label.HttpSessionId, a.value); null},
+          httpStatusCode   = (l, a) => {l.add(StackdriverTrace.Label.HttpStatusCode, a.str); null},
           httpUri          = (l, a) => {l.add(StackdriverTrace.Label.HttpUri, a.value); null},
           httpUrl          = (l, a) => {l.add(StackdriverTrace.Label.HttpUrl, a.value); null},
           httpUserAgent    = (l, a) => {l.add(StackdriverTrace.Label.HttpUserAgent, a.value); null},
-          httpStatusCode   = (l, a) => {l.add(StackdriverTrace.Label.HttpStatusCode, a.str); null},
-          httpRequestSize  = (l, a) => {l.add(StackdriverTrace.Label.HttpRequestSize, a.value.toString); null},
-          httpResponseSize = (l, a) => {l.add(StackdriverTrace.Label.HttpResponseSize, a.value.toString); null},
-          error            = (l, a) => {l.add(StackdriverTrace.Label.ErrorMessage, a.value.getMessage); a.value})
+          shipReqProjectId = (l, a) => {l.add(StackdriverTrace.Label.ShipReqProjectId, a.value.toString); null},
+          shipReqUserId    = (l, a) => {l.add(StackdriverTrace.Label.ShipReqUserId, a.value.toString); null})
 
       override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): Fx[Unit] =
         Fx {
@@ -147,16 +139,19 @@ object TraceInterpreter {
       }
 
     private[this] val attrInterpretter = Trace.Attr.interpret[Span, Unit](
-        shipReqUserId    = (s, a) => s.tag("shipreq.user_id", a.value),
-        shipReqProjectId = (s, a) => s.tag("shipreq.project_id", a.value),
         endpointName     = (s, a) => s.tag("endpoint.name", a.value),
         httpMethod       = (s, a) => s.tag("http.method", a.value),
-        httpUrl          = (s, a) => s.tag("http.url", a.value),
-        httpUri          = (s, a) => s.tag("http.uri", a.value),
-        httpUserAgent    = (s, a) => s.tag("http.user_agent", a.value),
-        httpStatusCode   = (s, a) => s.tag("http.status_code", a.value),
+        httpRemoteHost   = (s, a) => s.tag("http.remote_host", a.value),
+        httpRemotePort   = (s, a) => s.tag("http.remote_port", a.value),
         httpRequestSize  = (s, a) => s.tag("http.request_size", a.value),
         httpResponseSize = (s, a) => s.tag("http.response_size", a.value),
+        httpSessionId    = (s, a) => s.tag("http.session_id", a.value),
+        httpStatusCode   = (s, a) => s.tag("http.status_code", a.value),
+        httpUri          = (s, a) => s.tag("http.uri", a.value),
+        httpUrl          = (s, a) => s.tag("http.url", a.value),
+        httpUserAgent    = (s, a) => s.tag("http.user_agent", a.value),
+        shipReqProjectId = (s, a) => s.tag("shipreq.project_id", a.value),
+        shipReqUserId    = (s, a) => s.tag("shipreq.user_id", a.value),
         error            = (s, a) => s.addError(a.value.getMessage, a.value))
 
     override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): Fx[Unit] =
@@ -202,16 +197,19 @@ object TraceInterpreter {
       withSpan(tracer.buildSpan(name).asChildOf(parent).start())(f)
 
     private[this] val attrInterpretter = Trace.Attr.interpret[Span, Unit](
-        shipReqUserId    = (s, a) => s.setTag("shipreq.user_id", a.value),
-        shipReqProjectId = (s, a) => s.setTag("shipreq.project_id", a.value),
         endpointName     = (s, a) => s.setTag("endpoint.name", a.value),
         httpMethod       = (s, a) => s.setTag("http.method", a.value),
-        httpUrl          = (s, a) => s.setTag("http.url", a.value),
-        httpUri          = (s, a) => s.setTag("http.uri", a.value),
-        httpUserAgent    = (s, a) => s.setTag("http.user_agent", a.value),
-        httpStatusCode   = (s, a) => s.setTag("http.status_code", a.value),
+        httpRemoteHost   = (s, a) => s.setTag("http.remote_host", a.value),
+        httpRemotePort   = (s, a) => s.setTag("http.remote_port", a.value),
         httpRequestSize  = (s, a) => s.setTag("http.request_size", a.value),
         httpResponseSize = (s, a) => s.setTag("http.response_size", a.value),
+        httpSessionId    = (s, a) => s.setTag("http.session_id", a.value),
+        httpStatusCode   = (s, a) => s.setTag("http.status_code", a.value),
+        httpUri          = (s, a) => s.setTag("http.uri", a.value),
+        httpUrl          = (s, a) => s.setTag("http.url", a.value),
+        httpUserAgent    = (s, a) => s.setTag("http.user_agent", a.value),
+        shipReqProjectId = (s, a) => s.setTag("shipreq.project_id", a.value),
+        shipReqUserId    = (s, a) => s.setTag("shipreq.user_id", a.value),
         error            = (s, a) => setError(s, a.value))
 
     override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): Fx[Unit] =

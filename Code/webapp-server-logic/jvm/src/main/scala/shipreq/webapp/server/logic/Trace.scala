@@ -25,31 +25,37 @@ object Trace {
       private[this] def assign(): Int = {val i = _size; _size += 1; i}
 
       // One tag per Attr type
-      val ShipReqUserId   : Int = assign()
-      val ShipReqProjectId: Int = assign()
       val EndpointName    : Int = assign()
+      val Error           : Int = assign()
       val HttpMethod      : Int = assign()
+      val HttpRemoteHost  : Int = assign()
+      val HttpRemotePort  : Int = assign()
+      val HttpRequestSize : Int = assign()
+      val HttpResponseSize: Int = assign()
+      val HttpSessionId   : Int = assign()
+      val HttpStatusCode  : Int = assign()
       val HttpUri         : Int = assign()
       val HttpUrl         : Int = assign()
       val HttpUserAgent   : Int = assign()
-      val HttpStatusCode  : Int = assign()
-      val HttpRequestSize : Int = assign()
-      val HttpResponseSize: Int = assign()
-      val Error           : Int = assign()
+      val ShipReqProjectId: Int = assign()
+      val ShipReqUserId   : Int = assign()
     }
 
     // Attributes
-    final case class ShipReqUserId   (value: Long)      extends Attr(Tag.ShipReqUserId)
-    final case class ShipReqProjectId(value: Long)      extends Attr(Tag.ShipReqProjectId)
     final case class EndpointName    (value: String)    extends Attr(Tag.EndpointName)
+    final case class Error           (value: Throwable) extends Attr(Tag.Error)
     final case class HttpMethod      (value: String)    extends Attr(Tag.HttpMethod)
+    final case class HttpRemoteHost  (value: String)    extends Attr(Tag.HttpRemoteHost)
+    final case class HttpRemotePort  (value: Long)      extends Attr(Tag.HttpRemotePort)
+    final case class HttpRequestSize (value: Long)      extends Attr(Tag.HttpRequestSize)
+    final case class HttpResponseSize(value: Long)      extends Attr(Tag.HttpResponseSize)
+    final case class HttpSessionId   (value: String)    extends Attr(Tag.HttpSessionId )
+    final case class HttpStatusCode  (value: Long)      extends Attr(Tag.HttpStatusCode) {val str = value.toString}
     final case class HttpUri         (value: String)    extends Attr(Tag.HttpUri)
     final case class HttpUrl         (value: String)    extends Attr(Tag.HttpUrl)
     final case class HttpUserAgent   (value: String)    extends Attr(Tag.HttpUserAgent)
-    final case class HttpStatusCode  (value: Long)      extends Attr(Tag.HttpStatusCode) {val str = value.toString}
-    final case class HttpRequestSize (value: Long)      extends Attr(Tag.HttpRequestSize)
-    final case class HttpResponseSize(value: Long)      extends Attr(Tag.HttpResponseSize)
-    final case class Error           (value: Throwable) extends Attr(Tag.Error)
+    final case class ShipReqProjectId(value: Long)      extends Attr(Tag.ShipReqProjectId)
+    final case class ShipReqUserId   (value: Long)      extends Attr(Tag.ShipReqUserId)
 
     val HttpStatus200 = HttpStatusCode(200)
 
@@ -58,30 +64,36 @@ object Trace {
 
     private val exampleValues: NonEmptyVector[Attr] =
       AdtMacros.adtValuesManually[Attr](
-        ShipReqUserId   (0),
-        ShipReqProjectId(0),
         EndpointName    (""),
+        Error           (null),
         HttpMethod      (""),
+        HttpRemoteHost  (""),
+        HttpRemotePort  (0),
+        HttpRequestSize (0),
+        HttpResponseSize(0),
+        HttpSessionId   (""),
+        HttpStatusCode  (0),
         HttpUri         (""),
         HttpUrl         (""),
         HttpUserAgent   (""),
-        HttpStatusCode  (0),
-        HttpRequestSize (0),
-        HttpResponseSize(0),
-        Error           (null))
+        ShipReqProjectId(0),
+        ShipReqUserId   (0))
 
     def interpret[S, A](
-        shipReqUserId   : (S, ShipReqUserId   ) => A,
-        shipReqProjectId: (S, ShipReqProjectId) => A,
         endpointName    : (S, EndpointName    ) => A,
+        error           : (S, Error           ) => A,
         httpMethod      : (S, HttpMethod      ) => A,
+        httpRemoteHost  : (S, HttpRemoteHost  ) => A,
+        httpRemotePort  : (S, HttpRemotePort  ) => A,
+        httpRequestSize : (S, HttpRequestSize ) => A,
+        httpResponseSize: (S, HttpResponseSize) => A,
+        httpSessionId   : (S, HttpSessionId   ) => A,
+        httpStatusCode  : (S, HttpStatusCode  ) => A,
         httpUri         : (S, HttpUri         ) => A,
         httpUrl         : (S, HttpUrl         ) => A,
         httpUserAgent   : (S, HttpUserAgent   ) => A,
-        httpStatusCode  : (S, HttpStatusCode  ) => A,
-        httpRequestSize : (S, HttpRequestSize ) => A,
-        httpResponseSize: (S, HttpResponseSize) => A,
-        error           : (S, Error           ) => A): (S, Attr) => A = {
+        shipReqProjectId: (S, ShipReqProjectId) => A,
+        shipReqUserId   : (S, ShipReqUserId   ) => A): (S, Attr) => A = {
       type F = (S, Attr) => A
       val fns = Array.fill[F](exampleValues.length)(null)
       def addFn(f: Attr => (S, _ <: Attr) => A)(a: Attr): Unit = {
@@ -89,17 +101,20 @@ object Trace {
         fns(a.tag) = f(a).asInstanceOf[F]
       }
       exampleValues.foreach(addFn {
-        case _: ShipReqUserId    => shipReqUserId
-        case _: ShipReqProjectId => shipReqProjectId
         case _: EndpointName     => endpointName
+        case _: Error            => error
         case _: HttpMethod       => httpMethod
+        case _: HttpRemoteHost   => httpRemoteHost
+        case _: HttpRemotePort   => httpRemotePort
+        case _: HttpRequestSize  => httpRequestSize
+        case _: HttpResponseSize => httpResponseSize
+        case _: HttpSessionId    => httpSessionId
+        case _: HttpStatusCode   => httpStatusCode
         case _: HttpUri          => httpUri
         case _: HttpUrl          => httpUrl
         case _: HttpUserAgent    => httpUserAgent
-        case _: HttpStatusCode   => httpStatusCode
-        case _: HttpRequestSize  => httpRequestSize
-        case _: HttpResponseSize => httpResponseSize
-        case _: Error            => error
+        case _: ShipReqProjectId => shipReqProjectId
+        case _: ShipReqUserId    => shipReqUserId
       })
       // Result:
       (s, a) => fns(a.tag)(s, a)
@@ -208,14 +223,11 @@ object Trace {
     def http(routeName: String, req: HttpReq, path: Url.Relative)
             (respond: Span => F[HttpRes]): F[HttpRes] =
       newSpan("HTTP: " + routeName) { implicit span =>
-        addAttrs(
-          Attr.EndpointName(routeName) ::
-          Attr.HttpUri(path.relativeUrl) ::
-          attrForHttpReq(req))
-        F.map(respond(span)) { res =>
-          addAttrs(attrForHttpRes(res))
-          res
-        }
+        for {
+          _   <- addAttrs(Attr.EndpointName(routeName) :: Attr.HttpUri(path.relativeUrl) :: attrForHttpReq(req))
+          res <- respond(span)
+          _   <- addAttrs(attrForHttpRes(res))
+        } yield res
       }
 
     /** Trace the invocation of a server-side procedure (by the user's browser).
