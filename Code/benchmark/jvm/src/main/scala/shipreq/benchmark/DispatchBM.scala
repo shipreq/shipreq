@@ -2,6 +2,7 @@ package shipreq.benchmark
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Instant
+import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import monix.eval.Coeval
 import scala.concurrent.duration.FiniteDuration
@@ -24,7 +25,7 @@ import DispatchLogic._
   * > sbt
   * > benchmark-jvm/jmh:run -wi 10 -i 10 -f 2 -prof gc DispatchBM
   *
-  * [info] Benchmark                                                   Mode  Cnt       Score      Error   Units
+  * [info] Benchmark                                                 Mode  Cnt       Score      Error   Units
   * [info] DispatchBM.trampoline1                                   thrpt   20  106079.139 ± 1666.218   ops/s
   * [info] DispatchBM.trampoline1:·gc.alloc.rate                    thrpt   20    1096.726 ±   21.104  MB/sec
   * [info] DispatchBM.trampoline1:·gc.alloc.rate.norm               thrpt   20   16264.016 ±   71.273    B/op
@@ -50,7 +51,7 @@ import DispatchLogic._
   *
   * [info] # Run complete. Total time: 00:20:09
   * [info]
-  * [info] Benchmark                                                   Mode  Cnt       Score     Error   Units
+  * [info] Benchmark                                                 Mode  Cnt       Score     Error   Units
   * [info] DispatchBM.trampoline1                                   thrpt  200   97969.640 ± 605.218   ops/s
   * [info] DispatchBM.trampoline1:·gc.alloc.rate                    thrpt  200     899.342 ±   6.729  MB/sec
   * [info] DispatchBM.trampoline1:·gc.alloc.rate.norm               thrpt  200   14440.004 ±  43.401    B/op
@@ -74,6 +75,8 @@ import DispatchLogic._
   * [success] Total time: 1213 s, completed 16/07/2017 5:52:16 PM
   */
 @State(Scope.Benchmark)
+@BenchmarkMode(Array(Mode.AverageTime))
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
 class DispatchBM {
   import DispatchBM._
 
@@ -87,13 +90,13 @@ class DispatchBM {
 //  @Benchmark def name       = test(DispatchBM.name)
 //  @Benchmark def trampoline = test(DispatchBM.trampoline)
 
-  def test[F[_]](i: Interpreters[F])(f: Interpreters[F] => Request => F[Response]): Any = {
+  def test[F[_]](i: Interpreters[F])(f: Interpreters[F] => Request[Request[Unit]] => F[Response]): Any = {
     val d = f(i)
-    DispatchRequests.map(r => i.run(d(r)))
+    DispatchRequests.map(r => i.run(d(Request(r.method, r.path, r.param, r))))
   }
 
   @Benchmark def trampoline1 = test(DispatchBM.trampoline)(_.dispatcher1)
-  @Benchmark def trampoline2 = test(DispatchBM.trampoline)(_.dispatcher2)
+//  @Benchmark def trampoline2 = test(DispatchBM.trampoline)(_.dispatcher2)
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -153,8 +156,8 @@ object DispatchBM {
       override val now = F point Instant.now()
     }
 
-    implicit val trace: Trace.Algebra[F, Request, Response] =
-      Trace.off
+    implicit val trace: Trace.Logic[F, Request[Unit], Response] =
+      Trace.Logic.off
 
     implicit val publicApi: PublicSpaLogic.ForApi[F] =
       _ => F.pure(\/-(MsgId(1000)))
@@ -169,23 +172,24 @@ object DispatchBM {
       override def trackLogout(s: SessionId)         = F.pure(())
     }
 
-    val dispatchLogic = new DispatchLogic[F, Request, Response](r => r, (_, r) => F.point(r))
+    val dispatchLogic = new DispatchLogic[F, Request[Unit], Response](
+      r => Request(r.method, r.path, r.param, r), (_, r) => F.point(r))
 
     val dispatcher1 = dispatchLogic.Main.routes.withFallback(dispatchLogic.Main.fallback)
-    val dispatcher2 = dispatchLogic.Main.cacheUsualPaths(dispatcher1)
+//    val dispatcher2 = dispatchLogic.Main.cacheUsualPaths(dispatcher1)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  val DispatchRequests: List[Request] = {
+  val DispatchRequests: List[Request[Unit]] = {
     import Method._
     implicit def autoXID(p: ProjectId): ProjectId.Public = Obfuscators.projectId.obfuscate(p)
     val param: String => Option[String] = _ => None
     val token = SecurityToken("MnVC8cvPX9b1jiCpyxoYLk4RqQ8idHlV4lf7OHzIQctHLgw6C")
-    val b = List.newBuilder[Request]
-    b ++= Urls.PublicSpaRoute.static.whole.toList.map(r => Request(Get, r.url, param))
-    b ++= Urls.MemberRoute.static.whole.toList.map(r => Request(Get, r.url, param))
-    b ++= Urls.PublicSpaRoute.needsToken.whole.toList.map(r => Request(Get, r.url(token), param))
+    val b = List.newBuilder[Request[Unit]]
+    b ++= Urls.PublicSpaRoute.static.whole.toList.map(r => Request(Get, r.url, param, ()))
+    b ++= Urls.MemberRoute.static.whole.toList.map(r => Request(Get, r.url, param, ()))
+    b ++= Urls.PublicSpaRoute.needsToken.whole.toList.map(r => Request(Get, r.url(token), param, ()))
 //    b ++= (1 to 10).map(i => Request(Get, Urls.project(ProjectId(i)), param))
     val rs = b.result()
     List.fill(10)(rs).flatten
