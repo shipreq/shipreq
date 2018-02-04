@@ -39,17 +39,14 @@ final case class ServerConfig(baseUrl: Url.Absolute.Base,
                               initTaskmanOnBoot: Boolean,
                               initTaskmanRetry: RetryCriteria,
 
-                              traceWithKamon: Boolean,
-
-                              traceWithStackdriver: Option[TraceWithStackdriver.Cfg]) {
+                              traceWithKamon: Boolean) {
 
   val attackFrustrationDelayMs: Long =
     attackFrustrationDelay.toMillis
 
   lazy val traceAlgebraFx: Trace.Algebra[Fx] =
     Trace.Algebra(
-      Option.when(traceWithKamon)(TraceWithKamon.algebraFx).toList :::
-      traceWithStackdriver.map(TraceWithStackdriver.algebraFx).toList)
+      Option.when(traceWithKamon)(TraceWithKamon.algebraFx).toList)
 }
 
 object ServerConfig {
@@ -65,8 +62,7 @@ object ServerConfig {
       Config.need    [String  ]      ("taskman.schema") |@|
       Config.getOrUse[Boolean ]      ("taskman.init", true) |@|
       RetryCriteria.config.withPrefix("taskman.init.retry.") |@|
-      Config.getOrUse[Boolean ]      ("trace.kamon", true) |@|
-      TraceWithStackdriver.config.withPrefix("trace.stackdriver.")
+      Config.getOrUse[Boolean ]      ("trace.kamon", true)
     ) (apply).withPrefix("shipreq.")
 
 }

@@ -165,14 +165,6 @@ object Dependencies {
     val servletApi = jvmOnly("javax.servlet" % "javax.servlet-api" % "3.1.0")
   }
 
-  object GoogleCloud {
-    // private val mm = MultiModule.java("com.google.cloud", "0.32.0-beta")
-    // val trace = mm("google-cloud-trace")
-    // ↑ This is not enough. It's just REST API wrappers. Doesn't do batching and rate-limiting etc
-
-    val trace = jvmOnly("com.google.cloud.trace" % "trace-grpc-api-service" % "0.5.0") ++ SLF4J.jcl // Use SLF4J in place of commons-logging
-  }
-
   object Kamon {
     val core          = jvmOnly("io.kamon" %%  "kamon-core"                  % "1.0.1")
   //val jdbc          = jvmOnly("io.kamon" %%  "kamon-jdbc"                  % "1.0.0")
