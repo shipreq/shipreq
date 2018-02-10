@@ -10,6 +10,7 @@ subgraph cluster_devops {
   node [style=filled fillcolor="#77bb66"]
 
   es [label="ElasticSearch" fillcolor=lightyellow style=filled]
+  jaeger_storage [label="Cassandra" fillcolor=lightyellow style=filled]
   prometheus_storage [label="Cortex |\nInfluxDB |\nTimescaleDB" fillcolor=lightyellow style=filled]
   jaeger [label="[tracing]\njaeger"]
   prometheus [label="[monitoring] [alerting]\nprometheus"]
@@ -37,6 +38,6 @@ logstash,kibana -> es
 
 // Tracing
 kamon -> jaeger
-jaeger -> es [style=dotted]
+jaeger -> jaeger_storage [style=dotted]
 
 }
