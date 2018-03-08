@@ -1,13 +1,13 @@
 package shipreq.webapp.client.project.test
 
 import japgolly.scalajs.react._
-import vdom.html_<^._
-import ScalazReact._
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.ScalazReact._
 import org.scalajs.dom
-import dom.{EventTarget, KeyboardEvent}
+import org.scalajs.dom.{EventTarget, KeyboardEvent}
 import japgolly.scalajs.react.test.ReactTestUtils
 import scala.scalajs.js
-import js.{UndefOr, undefined}
+import scala.scalajs.js.{UndefOr, undefined}
 import scalaz.Equal
 import scalaz.std.AllInstances._
 import nyaya.gen.Gen

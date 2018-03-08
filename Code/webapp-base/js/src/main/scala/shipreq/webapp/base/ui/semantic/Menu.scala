@@ -135,7 +135,7 @@ object Menu {
         Dropdown.jquery(n).dropdown(o)
 
     def disableDropdown: Callback =
-      $.getDOMNode.map(_.asElement).map(Dropdown.jquery(_).dropdown("hide"))
+      $.getDOMNode.map(n => Dropdown.jquery(n.asElement).dropdown("hide"))
 
     def render(p: Props) =
       p.style.cont(

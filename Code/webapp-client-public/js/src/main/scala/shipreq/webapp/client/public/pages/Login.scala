@@ -130,7 +130,7 @@ object Login {
       for {
         p <- $.props
         _ <- p.state.modState(_.copy(errorFlash = Some(ErrorFlash(title, content))))
-        _ <- $.getDOMNode.map(_.asElement).map(JQuery(_).find(Message.jquerySel).transition(Transition.pulse, "320ms")).delayMs(10)
+        _ <- $.getDOMNode.map(n => JQuery(n.asElement).find(Message.jquerySel).transition(Transition.pulse, "320ms")).delayMs(10)
       } yield ()
 
     private val attemptLogin: Callback =
