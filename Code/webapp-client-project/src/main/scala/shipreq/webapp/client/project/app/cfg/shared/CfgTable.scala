@@ -152,14 +152,14 @@ final class CfgTable[S, K <: TaggedInt, P, I, A, B, C, V, RowKey, R](editor     
       header,
       <.tbody(newRow, allSortableRows(static)))
 
-  def wrapWithFilterDeadCheckbox(set: FilterDead => Callback): VdomElement => VdomElement = {
+  def wrapWithFilterDeadCheckbox(set: SetStateFnPure[FilterDead]): VdomElement => VdomElement = {
     def props: FilterDeadButton.Props =
       StateSnapshot(filterDeadCB.runNow())(set)
     inner => <.div(FilterDeadButton.Component(props), inner)
   }
 
   // I don't care - all this shit will go in the bin soon anyway
-  def wrapWithFilterDeadCheckbox2(setFD: FilterDead => Callback, left: VdomElement, table: VdomElement): VdomTag =
+  def wrapWithFilterDeadCheckbox2(setFD: SetStateFnPure[FilterDead], left: VdomElement, table: VdomElement): VdomTag =
     <.div(
       <.div(^.display.flex,
         <.div(^.flex := "1", left),

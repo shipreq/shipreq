@@ -27,7 +27,7 @@ object UseCaseStepFlowGraph {
       Cmd.GraphUseCaseStepFlow(p.id, p.project, p.ctx)
 
     override def enrich(p: Props): Callback =
-      $.getDOMNode.map { root =>
+      $.getDOMNode.map(_.asElement).map { root =>
         for (node <- graphNodeIterator(root)) {
           val hasTitle = node.children.headOption.exists(_.hasAttribute("xlink:title"))
           node.style.cursor = if (hasTitle) "help" else "default"

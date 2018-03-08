@@ -165,7 +165,7 @@ object CfgReqTypes {
     def render: VdomElement = {
       Px.refresh(project, filterDead, usageShow)
       cfgTable.wrapWithFilterDeadCheckbox2(
-        fd => $.props.flatMap(_.filterDead setState fd),
+        SetStateFn((o, cb) => $.props.flatMap(_.filterDead.setStateOption(o, cb))),
         cfgTable.newButton,
         table())(
         BaseStyles.containerLarge, Style.cfg.reqTypes)

@@ -130,12 +130,12 @@ object Menu {
     val enableDropdowns: Callback =
       for {
         o <- dropdownOptions
-        n <- $.getDOMNode.toCBO
+        n <- $.getDOMNode.map(_.asElement).toCBO
       } yield
         Dropdown.jquery(n).dropdown(o)
 
     def disableDropdown: Callback =
-      $.getDOMNode.map(Dropdown.jquery(_).dropdown("hide"))
+      $.getDOMNode.map(_.asElement).map(Dropdown.jquery(_).dropdown("hide"))
 
     def render(p: Props) =
       p.style.cont(

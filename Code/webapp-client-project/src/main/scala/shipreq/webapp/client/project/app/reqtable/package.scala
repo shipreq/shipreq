@@ -11,8 +11,8 @@ import shipreq.webapp.client.project.feature.Selection
 
 package object reqtable {
 
-  type SetFn[A] = A ~=> Callback
-  type ModFn[A] = (A => A) ~=> Callback
+  type SetFn[A] = Reusable[SetStateFnPure[A]]
+  type ModFn[A] = Reusable[ModStateFnPure[A]]
 
   type RowSelection        = Selection[Row.SourceId]
   type RowSelectionVisible = Selection.LegalWithUpdateFn[Row.SourceId]

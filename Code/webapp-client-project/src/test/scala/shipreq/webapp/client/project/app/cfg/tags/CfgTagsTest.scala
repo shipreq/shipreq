@@ -34,7 +34,7 @@ object CfgTagsTest extends TestSuite {
     }
 
   def nameAsTextTree(c: GenericComponent.MountedRaw) =
-    Sizzle("td.name", ReactDOM.raw findDOMNode c.raw).toVector.map(nameCellToText(_, ""))
+    Sizzle("td.name", ReactDOM.findDOMNode(c.raw).asElement).toVector.map(nameCellToText(_, ""))
 
   class FakeUpdateIO {
     var reqs = Vector.empty[(Tag, TagCrud.Protocol.Value)]

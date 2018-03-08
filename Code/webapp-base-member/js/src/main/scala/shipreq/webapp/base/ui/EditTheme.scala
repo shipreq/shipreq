@@ -21,7 +21,7 @@ object EditTheme {
     editableInline(^.onDblClick --> startEdit)
 
   def editableInline(startEdit: Option[Callback]): TagMod =
-    startEdit.fold(EmptyVdom)(editableInline(_))
+    startEdit.fold(TagMod.empty)(editableInline(_))
 
   def autosizeTextareaProps(validity: Validity, value: String, tagMod: TagMod): TagMod =
     TagMod(

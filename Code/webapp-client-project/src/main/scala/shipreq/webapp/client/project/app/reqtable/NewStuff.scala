@@ -29,7 +29,7 @@ object NewStuff {
 }
 
 final class NewStuff(state        : State,
-                     setState     : State ~=> Callback,
+                     setState     : SetFn[State],
                      reqTypes     : ReqTypes,
                      allowRCG     : Permission,
                      defaultType  : Option[RowKey],
@@ -39,8 +39,8 @@ final class NewStuff(state        : State,
   private val buttonUpdate: Reusable[NewButton.Update] =
     setState.map(f =>
       NewButton.Update(
-        s => f(State.Closed(s)),
-        s => f(State.Open(s))))
+        s => f.setState(State.Closed(s)),
+        s => f.setState(State.Open(s))))
 
   val buttonProps: NewButton.Props =
     state match {
@@ -60,7 +60,7 @@ final class NewStuff(state        : State,
       case State.Open(s) if buttonProps.update.isEmpty =>
 
         val cancel: Callback =
-          setState(State.Closed(Some(s)))
+          setState.setState(State.Closed(Some(s)))
 
         val props: NewForm#Props =
           s match {

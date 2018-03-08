@@ -130,9 +130,9 @@ object ReqTablePage {
     import sp._
     import cd.pxProject
 
-    val setNewStuff : SetFn[NewStuff.State] = Reusable.fn.state(stateAccess zoomStateL State.newStuff).set
-    val setSelection: SetFn[RowSelection  ] = Reusable.fn.state(stateAccess zoomStateL State.selection).set
-    val setModal    : SetFn[Modal.State   ] = Reusable.fn.state(stateAccess zoomStateL State.modal).set
+    val setNewStuff : SetFn[NewStuff.State] = Reusable.fn.state(stateAccess zoomStateL State.newStuff).setStateFn
+    val setSelection: SetFn[RowSelection  ] = Reusable.fn.state(stateAccess zoomStateL State.selection).setStateFn
+    val setModal    : SetFn[Modal.State   ] = Reusable.fn.state(stateAccess zoomStateL State.modal).setStateFn
 
     // TODO Externalise this manualRefresh - actually...move into sjsreact
     private var manualRefresh = List.empty[Px.ThunkM[_]]
@@ -173,25 +173,27 @@ object ReqTablePage {
       pxActiveView.map(_.order).withReuse
 
     val modifyViewFn: ModFn[View] =
-      Reusable.fn(mod => for {
-        p  ← pxProject.toCallback
-        fd ← pxFilterDeadFalback.toCallback
-        s1 ← stateAccess.state
-        v2 = s1.modifyView(p.reqtableViews, fd, mod)
-        s2 = State.setModifiedView(p, false)(v2)(s1)
-        _  ← stateAccess setState s2
-        _  ← $.props.flatMap(_.filterDead.setState(v2.filterDead))
-      } yield ())
+      Reusable.byRef(ModStateFn((mod, cb) =>
+        for {
+          p  ← pxProject.toCallback
+          fd ← pxFilterDeadFalback.toCallback
+          s1 ← stateAccess.state
+          v2 = s1.modifyView(p.reqtableViews, fd, v => mod(v) getOrElse v)
+          s2 = State.setModifiedView(p, false)(v2)(s1)
+          _  ← stateAccess.setState(s2)
+          _  ← $.props.flatMap(_.filterDead.setState(v2.filterDead, cb)) // TODO Double setState
+        } yield ()))
 
     val setFilterDeadFn: SetFn[FilterDead] =
-      Reusable.fn(fd =>
-        for {
-          props                 ← $.props
-          project               ← pxProject.toCallback
-          showingBuiltInDefault = project.reqtableViews.isEmpty && props.state.view.manualView.isEmpty
-          _                     ← modifyViewFn(_.copy(filterDead = fd)).unless_(showingBuiltInDefault)
-          _                     ← props.filterDead.setState(fd)
-        } yield ())
+      Reusable.byRef(SetStateFn((fdO, cb) =>
+        fdO.fold(cb)(fd =>
+          for {
+            props                 ← $.props
+            project               ← pxProject.toCallback
+            showingBuiltInDefault = project.reqtableViews.isEmpty && props.state.view.manualView.isEmpty
+            _                     ← modifyViewFn.modState(_.copy(filterDead = fd)).unless_(showingBuiltInDefault)
+            _                     ← props.filterDead.setState(fd) // TODO Double setState
+          } yield ())))
 
     val pxRows: Px[Vector[Row]] =
       for {
@@ -214,7 +216,7 @@ object ReqTablePage {
         wr <- pxRowIdsWithWholeRowAsync
         s  <- pxSelection
       } yield
-        s.updateBy(setSelection).legal(rs.iterator.map(_.sourceId).toSet &~ wr)
+        s.updateBy(setSelection.map(_.setState)).legal(rs.iterator.map(_.sourceId).toSet &~ wr)
 
     val pxActiveColumnsPlus: Px[NonEmptyVector[ColumnPlus]] =
       (for {
@@ -235,7 +237,7 @@ object ReqTablePage {
         sel <- pxActiveColumns
         all <- pxColumnPlusAll
       } yield
-        ColumnSelector.Props(sel, all, modifyViewFn.map(m => u => m(_.withColumns(u)))).render
+        ColumnSelector.Props(sel, all, modifyViewFn.map(m => u => m.modState(_.withColumns(u)))).render
 
     val onFilterChange: FilterEditor.UpdateFn =
       (newState, newFilter) =>
@@ -268,7 +270,7 @@ object ReqTablePage {
       for {
         o <- pxActiveOrder
         c <- pxColumnPlusAll
-      } yield SortCriteriaEditor.Props(o, modifyViewFn.map(m => o => m(View.order set o)), c).render
+      } yield SortCriteriaEditor.Props(o, modifyViewFn.map(m => o => m.modState(View.order set o)), c).render
 
     val pxSelectionCtrls: Px[SelectionCtrls.Props] =
       for {
@@ -278,7 +280,7 @@ object ReqTablePage {
         rows           <- pxRows
         sel            <- pxRowSelectionVisible
       } yield SelectionCtrls.Props(
-        sel, rows, setModal, project, projectWidgets, textSearch, updateIO, rowAsyncW)
+        sel, rows, setModal.map(_.setState), project, projectWidgets, textSearch, updateIO, rowAsyncW)
 
     val pxSavedViewsMenu: Px[SavedViewLogic.Menu] =
       for {

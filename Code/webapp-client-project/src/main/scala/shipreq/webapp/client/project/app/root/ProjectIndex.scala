@@ -102,7 +102,7 @@ object ProjectIndex {
     private val dimIt = "xd"
 
     def enableDimmer: Callback =
-      $.getDOMNode.map { node =>
+      $.getDOMNode.map(_.asElement).map { node =>
         val opt = js.Dynamic.literal(on = "hover")
         JQuery(node).find("." + dimIt).dimmer(opt)
       }

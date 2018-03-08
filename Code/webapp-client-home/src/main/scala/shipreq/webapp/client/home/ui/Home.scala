@@ -29,8 +29,8 @@ object Home {
 
   final class Backend($: BackendScope[Props, State]) {
 
-    val setCreateProjectText: String ~=> Callback =
-      Reusable.fn.state($ zoomStateL State.createProjectText).set
+    val setCreateProjectText: Reusable[SetStateFnPure[String]] =
+      Reusable.fn.state($ zoomStateL State.createProjectText).setStateFn
 
     val createProjectAF: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.createProjectAAS)
@@ -44,7 +44,7 @@ object Home {
           createProjectAF((onSuccess, onFailure) =>
             p.createProjectIO(
               name,
-              i => onSuccess >> setCreateProjectText("") >> addProject(i),
+              i => onSuccess >> setCreateProjectText.setState("") >> addProject(i),
               onFailure)))
 
     val navBarLeft: MemberNavBar.LeftProps =

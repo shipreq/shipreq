@@ -187,7 +187,7 @@ object ProjectSpaTestDsl {
       val tt  = Plan(action, invariants).test(Observer(_.observe()))
       val r   = tt.run(init, Ref(cd, svr, tester))
       assertTestState(r)
-//      assertTestState(r, println(s"${"=" * 120}\n${htmlScrub run tester.component.getDOMNode.outerHTML}\n"))
+//      assertTestState(r, println(s"${"=" * 120}\n${htmlScrub run tester.component.getDOMNode.map(_.asElement).outerHTML}\n"))
     }
   }
 

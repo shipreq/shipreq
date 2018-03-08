@@ -3,8 +3,8 @@ package shipreq.webapp.base.text
 import nyaya.prop._
 import nyaya.test._
 import nyaya.test.PropTest._
-import scalaz.Memo
 import utest._
+import shipreq.base.util.Memo
 import shipreq.webapp.base.test.WebappTestUtil._
 import TextSearch._
 
@@ -14,8 +14,7 @@ object TextSearchTest extends TestSuite {
 
   implicit def dontNormalise(s: String): Normalised = new Normalised(s.toCharArray)
 
-  val algo = Memo.mutableHashMapMemo(
-    (s: String) => new BoyerMooreHorspool(s))
+  val algo = Memo((s: String) => new BoyerMooreHorspool(s))
 
   def prop = Prop.equal[Input]("search == String.contains")(
     i => algo(i.needle).search(i.haystack),

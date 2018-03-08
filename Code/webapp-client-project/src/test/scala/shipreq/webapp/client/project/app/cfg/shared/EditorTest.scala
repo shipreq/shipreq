@@ -68,7 +68,7 @@ object EditorTest extends TestSuite {
 //    val c = ReactTestUtils.renderIntoDocument(Component(props))
 
     def test(tgtCss: String, revertable: Boolean, teste: String => Unit, testn: => Unit): Unit = {
-      val tgt = Sizzle(tgtCss, c.getDOMNode).soleDom[HTMLInputElement]()
+      val tgt = Sizzle(tgtCss, c).soleDom[HTMLInputElement]()
       val expect4 = savedRowStoreS.getI(4)(c.state)
 
       def test1(expect: String): Unit = {

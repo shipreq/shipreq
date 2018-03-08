@@ -39,8 +39,8 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
     val routerCtl = $.props.runNow().routerCtl
     val reqDetailRC = routerCtl.contramap(Page.ReqDetail.apply)
 
-    val setFilterDead: FilterDead ~=> Callback =
-      Reusable.fn.state($ zoomStateL State.filterDead).set
+    val setFilterDead: Reusable[SetStateFnPure[FilterDead]] =
+      Reusable.fn.state($ zoomStateL State.filterDead).setStateFn
 
     val pxPlainText =
       pxProject.map(PlainText.ForProject.noCtx)
@@ -143,8 +143,8 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
       updateIO, reqDetailRC, ww, initData.updateContent,
       pxProject, pxTextSearch, pxProjectWidgets))
 
-    val reqDetailSetState: ReqDetail.State ~=> Callback =
-      Reusable.fn.state($ zoomStateL State.reqDetail).set
+    val reqDetailSetState: Reusable[SetStateFnPure[ReqDetail.State]] =
+      Reusable.fn.state($ zoomStateL State.reqDetail).setStateFn
 
     def setReqTableView(fd: FilterDead, filter: Filter.Valid): Callback =
       for {
@@ -161,9 +161,8 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
 
     lazy val projectNameAF =
       AsyncFeature.Write.D0[ErrorMsg](
-        Reusable.fn(
-          $.modStateFn[AsyncFeature.State.D0[ErrorMsg]](s =>
-            State.projectName.modify(ProjectItem.WithEditableName.State setAsync s))))
+        Reusable.fn((s: AsyncFeature.State.D0[ErrorMsg]) =>
+          $.modState(State.projectName.modify(ProjectItem.WithEditableName.State setAsync s))))
 
     val setProjectNameIO: String => Callback = {
       val proc = cd.serverSideProcToEvents(cp, initData.projectNameSet)

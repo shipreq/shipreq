@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
-import shipreq.base.util._
+import shipreq.base.util.{Ref => _, _}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.ReqType.Mnemonic
 import shipreq.webapp.base.data.{Live, ReqTypes}
@@ -64,7 +64,7 @@ object NewButton {
                                   key     : String)
 
   final class Backend($: BackendScope[Props, Unit]) {
-    var dropdownNode: html.Element = null
+    val dropdownNode = Ref[html.Element]
 
     @UsesSemanticUiManually
     def render(p: Props): VdomElement = {
@@ -84,7 +84,7 @@ object NewButton {
           ^.onClick -->? p.update.map(_.create(selected.value)))
 
       def renderDropdown: VdomTag =
-        <.div.ref(dropdownNode = _)(
+        <.div.withRef(dropdownNode)(
           ^.cls := "ui dropdown label",
           *.buttonDropdown,
           selected.mnemonic.fold(selected.name)(_.value),
@@ -120,9 +120,7 @@ object NewButton {
       Dropdown.JsOptions.default.withOnChange(selectChoice(_).runNow())
 
     val enableDropdown: Callback =
-      Callback {
-        JQuery(dropdownNode).dropdown(dropdownOptions)
-      }
+      dropdownNode.foreach(JQuery(_).dropdown(dropdownOptions))
   }
 
   val Component = ScalaComponent.builder[Props]("NewButton")
