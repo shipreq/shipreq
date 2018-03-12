@@ -62,7 +62,7 @@ object Dependencies {
   }
 
   object TestState {
-    val Ver = "2.1.3-SNAPSHOT"
+    val Ver = "2.1.3"
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.test-state", Ver)
     private val js = MultiModule.js("com.github.japgolly.test-state", Ver)
     val core            = mm("core")
@@ -79,7 +79,7 @@ object Dependencies {
   }
 
   object React {
-    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "1.2.0-SNAPSHOT")
+    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "1.2.0")
     val core    = mm("core")
     val test    = mm("test")
     val scalaz  = mm("ext-scalaz72") ++ Scalaz.effect
