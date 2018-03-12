@@ -69,7 +69,7 @@ object SavedViewsUI {
 
         SemUiMenu.DropdownType.OnHover(label, actions)
           .toItem(itemState, tagMod = *.activeItem.when(active))
-          .withOnClick($.getDOMNode, mi.optionId.map(id => runAction(Action.Select(id))).getOrEmpty)
+          .withOnClick($.getDOMNode.map(_.asElement), mi.optionId.map(id => runAction(Action.Select(id))).getOrEmpty)
       }
     }
 
@@ -79,7 +79,7 @@ object SavedViewsUI {
 
       def item(icon: Icon, label: String, onClick: Callback) =
         Dropdown.Item.Div(TagMod(icon.tag, label))
-          .withOnClick($.getDOMNode, onClick)
+          .withOnClick($.getDOMNode.map(_.asElement), onClick)
 
       type OnSuccess = VerifiedEvent.Seq => Callback
 

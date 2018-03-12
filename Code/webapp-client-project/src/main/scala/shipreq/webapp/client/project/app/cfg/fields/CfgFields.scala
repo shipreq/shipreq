@@ -294,7 +294,7 @@ private[fields] object MainTable {
             SelectOne.Props(
               s.newFieldTypeSel,
               choices.sortBy(_.label),
-              Some($ setStateFnL State.newFieldTypeSel)
+              Some($ modState State.newFieldTypeSel.set(_))
             ),
             onInvoke, UiText.Cfg.startNewButton,
             Disabled when customFieldStores.exists(_.n.editing(s))))
@@ -312,7 +312,7 @@ private[fields] object MainTable {
         BaseStyles.containerFull, Style.cfg.fields,
         <.div(^.display.flex,
           <.div(^.flex := "1", newFieldControl(s)),
-          <.div(FilterDeadButton.Component(StateSnapshot(fd)(v => $.props.flatMap(_.filterDead setState v))))),
+          <.div(FilterDeadButton.Component(StateSnapshot(fd)((v, cb) => $.props.flatMap(_.filterDead.setStateOption(v, cb)))))),
         Table.celledCompactUnstackable(
           headerRow,
           <.tbody(renderNewField(s).whenDefined, renderFields(fd, s))))

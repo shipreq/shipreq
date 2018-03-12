@@ -41,14 +41,13 @@ object AutoCompleteFeature extends autocomplete.Implicits {
       protected val pxAutoComplete: Px[Strategies]
 
       final val editorRef =
-        ScalaComponent.mutableRefTo(AutosizeTextarea.Component)
+        Ref.toScalaComponent(AutosizeTextarea.Component)
 
       override final val autoCompleteCtx =
-        CallbackTo(
-          for {
-            r <- Option(editorRef.value)
-            n <- Option(r.getDOMNode)
-          } yield Ctx(pxAutoComplete.value(), n.domCast[html.TextArea]))
+        for {
+          r <- editorRef.get
+          n <- r.withEffectsPure.getDOMNode.map(_.toOption).asCBO
+        } yield Ctx(pxAutoComplete.value(), n.domCast[html.TextArea])
     }
 
   }

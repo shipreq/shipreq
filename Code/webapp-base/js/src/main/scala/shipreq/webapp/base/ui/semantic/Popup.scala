@@ -78,17 +78,16 @@ object Popup {
 
     final class Backend($: BackendScope[Props, Unit]) {
 
-      var anchorDom: Option[TopNode] = None
+      val anchorDom = Ref[TopNode]
 
       def render(p: Props): VdomElement =
         <.div(
-          p.anchor.ref(r => anchorDom = Some(r)),
+          p.anchor.withRef(anchorDom),
           uiPopup(p.popup))
 
       val applyPopup: Callback =
-        $.props.map { p =>
-          anchorDom.foreach(JQuery(_).popup(p.options))
-        }
+        $.props.flatMap(p =>
+          anchorDom.foreach(JQuery(_).popup(p.options)))
     }
 
     val Component = ScalaComponent.builder[Props]("Name")

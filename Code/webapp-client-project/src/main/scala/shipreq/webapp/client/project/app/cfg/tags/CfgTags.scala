@@ -202,7 +202,7 @@ private[tags] object MainTable {
     def newTagControlProps(state: State) = NewTagControl.props(
       state.newSel,
       onNewInvoke,
-      $ setStateFnL State.newSel,
+      $ modState State.newSel.set(_),
       Disabled when newRowActive(state))
 
     val onNewInvoke =
@@ -257,7 +257,7 @@ private[tags] object MainTable {
 
         <.div(^.display.flex,
           <.div(^.flex := "1", NewTagControl.Component(newTagControlProps(s))),
-          <.div(FilterDeadButton.Component(StateSnapshot(fd)(v => $.props.flatMap(_.filterDead setState v))))),
+          <.div(FilterDeadButton.Component(StateSnapshot(fd)((o, cb) => $.props.flatMap(_.filterDead.setStateOption(o, cb)))))),
 
         Table.celledCompactUnstackable(
           headerRow,
@@ -265,8 +265,8 @@ private[tags] object MainTable {
 
         DetailPaneFns.render(
           s, crudIO.value().updateIO,
-          parentSel = $ setStateFnL State.detailRowSelParent,
-          childSel  = $ setStateFnL State.detailRowSelChild))
+          parentSel = $ modState State.detailRowSelParent.set(_),
+          childSel  = $ modState State.detailRowSelChild.set(_)))
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -305,7 +305,7 @@ private[tags] object MainTable {
                      (name: VdomNode, refkey: VdomNode, mutexChildren: VdomNode, desc: VdomNode)
                      (ctrls: => TagMod): VdomTag = {
         val focus = oid.map(id =>
-          RowDetailButton.Props.forRow(id)(s.detailRow.map(_.id), $ modStateFn setDetail))
+          RowDetailButton.Props.forRow(id)(s.detailRow.map(_.id), $ modState setDetail(_)))
         <.tr(
           ^.key := key,
           ^.classSet1(rowStatusRowClass(rs), "focusrow" -> focus.exists(_.isActive)),

@@ -40,7 +40,7 @@ object ImplicationGraph {
 
 
     override def enrich(p: Props): Callback =
-      $.getDOMNode.map { root =>
+      $.getDOMNode.map(_.asElement).map { root =>
         for (node <- graphNodeIterator(root)) {
           val pubid = node.querySelector("text").textContent
           for {

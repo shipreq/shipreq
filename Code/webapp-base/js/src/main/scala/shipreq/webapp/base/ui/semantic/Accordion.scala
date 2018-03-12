@@ -14,7 +14,7 @@ object Accordion {
   final class Backend($: BackendScope[Props, Unit]) {
 
     def open: Callback =
-      $.getDOMNode.map(JQuery(_).accordion("open"))
+      $.getDOMNode.map(n => JQuery(n.asElement).accordion("open"))
 
     def renderItem(i: Item, active: Boolean): TagMod = {
       val x = if (active) " active" else ""

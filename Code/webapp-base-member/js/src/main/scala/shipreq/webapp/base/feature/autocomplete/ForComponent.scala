@@ -41,14 +41,14 @@ object ForComponent {
   trait Backend[D <: AnyRef] {
     final type AutoCompleteCtx = Ctx[D]
     final def AutoCompleteCtx(strategies: Strategies, dom: D): AutoCompleteCtx = Ctx(strategies, dom)
-    val autoCompleteCtx: CallbackTo[Option[AutoCompleteCtx]]
+    val autoCompleteCtx: CallbackOption[AutoCompleteCtx]
 
     private[this] var textComplete: Option[TextComplete] = None
     private[this] var textCompletePrev: Option[AutoCompleteCtx] = None
 
     final def autoCompleteMount(implicit ac: AutoCompletable[D]): Callback =
       for {
-        ctx <- autoCompleteCtx.asCBO if ctx.strategies.nonEmpty
+        ctx <- autoCompleteCtx if ctx.strategies.nonEmpty
         tc <- lowLevelInstall(ctx)(ac).toCBO
       } yield {
         textComplete = Some(tc)
@@ -58,7 +58,7 @@ object ForComponent {
     final def autoCompleteUpdate(implicit ac: AutoCompletable[D]): Callback =
       for {
         prev ← CallbackTo(textCompletePrev)
-        next ← autoCompleteCtx
+        next ← autoCompleteCtx.asCallback
         same = prev ==* next
         _    ← (autoCompleteUnmount >> autoCompleteMount).unless(same)
       } yield textCompletePrev = next

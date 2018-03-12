@@ -13,7 +13,7 @@ import Style.{impgraphPage => *}
 
 object ImplicationGraphPage {
 
-  final case class Props(graph: ImplicationGraph.Props, setFilterDead: FilterDead ~=> Callback) {
+  final case class Props(graph: ImplicationGraph.Props, setFilterDead: Reusable[StateSnapshot.SetFn[FilterDead]]) {
     @inline def render = Component(this)
   }
 

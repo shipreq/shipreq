@@ -1,8 +1,13 @@
 package shipreq.webapp.client.project.test
 
-import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
-import org.scalajs.dom, dom.{EventTarget, KeyboardEvent}
-import scala.scalajs.js, js.{undefined, UndefOr}
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.ScalazReact._
+import org.scalajs.dom
+import org.scalajs.dom.{EventTarget, KeyboardEvent}
+import japgolly.scalajs.react.test.ReactTestUtils
+import scala.scalajs.js
+import scala.scalajs.js.{UndefOr, undefined}
 import scalaz.Equal
 import scalaz.std.AllInstances._
 import nyaya.gen.Gen
@@ -56,7 +61,8 @@ object TestUtil extends WebappTestUtil with WebappTestEquality {
       sole().asInstanceOf[N]
   }
 
-  implicit def autodomnode(c: GenericComponent.MountedRaw) = ReactDOM.raw findDOMNode c.raw
+  implicit def autodomnode(c: GenericComponent.MountedRaw) =
+    ReactDOM.findDOMNode(c.raw).get.asElement
 
   val nopJsFn: js.Function0[js.Any] = () => ((): js.Any)
 

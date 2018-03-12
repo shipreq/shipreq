@@ -107,8 +107,8 @@ object NewEditor {
 
       def startWithStateSnapshot[B: Reusability, E <: Editor[A, V]](initialValue: B)
                                                                    (editor: StateSnapshot[B] => E): E = {
-        lazy val update: B ~=> Callback =
-          Reusable.fn(b => stateAccess.setState(Some(newEditor(b))))
+        lazy val update: Reusable[SetStateFnPure[B]] =
+          Reusable.byRef(stateAccess.toSetStateFn.contramap(b => Some(newEditor(b))))
 
         def newEditor: B => E =
           a => editor(StateSnapshot.withReuse(a)(update))

@@ -6,7 +6,7 @@ import shipreq.webapp.base.feature.TableNavigationFeature
 import shipreq.webapp.base.lib.DomUtil
 import shipreq.webapp.client.project.feature.EditorFeature
 
-/** This is effectively a hack so that `$.getDOMNode` provides access to the cell, which can then be used to refocus the
+/** This is effectively a hack so that `$.getDOMNode.map(_.asElement)` provides access to the cell, which can then be used to refocus the
   * cell when the editor closes.
   */
 private[reqdetail] object EditableCell {
@@ -45,7 +45,7 @@ private[reqdetail] object EditableCell {
   private def render($: ScalaComponent.Lifecycle.RenderScope[Props, Unit, Unit], p: Props): VdomElement = {
 
     // This is the main point of this component
-    val editorOnClose = DomUtil.focusParentOnChildClose($.mountedPure.getDOMNode)
+    val editorOnClose = DomUtil.focusParentOnChildClose($.mountedPure.getDOMNode.map(_.asElement))
 
     val editor = p.editor.onClose(editorOnClose)
 

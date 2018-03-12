@@ -182,8 +182,8 @@ object NewEditor {
         initialData.flatMap { s =>
           val editorCtor = editor(s)
 
-          lazy val update: B ~=> Callback =
-            Reusable.fn(b => stateAccess.setState(newEditor(b)))
+          lazy val update: Reusable[SetStateFnPure[B]] =
+            Reusable.byRef(stateAccess.toSetStateFn.contramap(newEditor))
 
           def newEditor: B => Some[E] =
             b => Some(editorCtor(StateSnapshot.withReuse(b)(update)))
@@ -240,7 +240,7 @@ object NewEditor {
                          abort       : Some[Callback],
                          commitFn    : Some[RT ~=> Callback]) extends EditorImpl {
 
-          def ss = StateSnapshot(editValue)(e => stateAccess.setState(copy(editValue = e).some))
+          def ss = StateSnapshot(editValue)(stateAccess.toSetStateFn.contramap(e => copy(editValue = e).some))
 
           override type Props = ReqTypeSelector.Props
           override def renderImpl = _.render

@@ -8,7 +8,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import org.scalajs.dom.{html, window}
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util._
+import shipreq.base.util.{Ref => _, _}
 import shipreq.webapp.base.data.{Disabled, Enabled, TCB}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
@@ -116,7 +116,8 @@ object Login {
 
     private def focusForm(retries: Int): Callback =
       $.props.flatMap { p =>
-        Option(if (p.state.value.req.user.isEmpty) refUser else refPassword).filterNot(_.disabled) match {
+        val ref = if (p.state.value.req.user.isEmpty) refUser else refPassword
+        ref.get.filterNot(_.disabled).asCallback.flatMap {
           case Some(i) => Callback(i.focus())
           case None    => focusForm(retries - 1).delayMs(20).when_(retries > 1)
         }
@@ -129,7 +130,7 @@ object Login {
       for {
         p <- $.props
         _ <- p.state.modState(_.copy(errorFlash = Some(ErrorFlash(title, content))))
-        _ <- $.getDOMNode.map(JQuery(_).find(Message.jquerySel).transition(Transition.pulse, "320ms")).delayMs(10)
+        _ <- $.getDOMNode.map(n => JQuery(n.asElement).find(Message.jquerySel).transition(Transition.pulse, "320ms")).delayMs(10)
       } yield ()
 
     private val attemptLogin: Callback =
@@ -172,16 +173,16 @@ object Login {
         }
       )
 
-    private var refUser: html.Input = _
+    private val refUser = Ref[html.Input]
     private val fieldUser = Form.TextField.unvalidated(
       State.user,
-      m => Input.Text.icon(Icon.User.tag, <.input.text(m, submitOnEnter).ref(refUser = _)),
+      m => Input.Text.icon(Icon.User.tag, <.input.text(m, submitOnEnter).withRef(refUser)),
       Some(CommmonUiText.usernameOrEmail))
 
-    private var refPassword: html.Input = _
+    private val refPassword = Ref[html.Input]
     private val fieldPassword = Form.TextField.unvalidated(
       State.password,
-      m => Input.Text.icon(Icon.Lock.tag, <.input.password(m, submitOnEnter).ref(refPassword = _)),
+      m => Input.Text.icon(Icon.Lock.tag, <.input.password(m, submitOnEnter).withRef(refPassword)),
       Some(
         <.div(*.passwordLabel,
           <.div(CommmonUiText.password),

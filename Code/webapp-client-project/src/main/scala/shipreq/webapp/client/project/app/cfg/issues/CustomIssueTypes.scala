@@ -142,7 +142,7 @@ private[issues] object CustomIssueTypes {
     def render: VdomElement = {
       Px.refresh(project, filterDead, usageShow)
       cfgTable.wrapWithFilterDeadCheckbox2(
-        fd => $.props.flatMap(_.filterDead setState fd),
+        SetStateFn((o, cb) => $.props.flatMap(_.filterDead.setStateOption(o, cb))),
         cfgTable.newButton,
         table())
     }

@@ -62,8 +62,8 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
             Header.Props(
               p.cols,
               p.selection,
-              p.modifyView.map(f => cs => f(_ withColumns cs.map(_.column))),
-              p.modifyView.map(f => c => f(_ orderByColumn c.column))))
+              p.modifyView.map(f => cs => f.modState(_ withColumns cs.map(_.column))),
+              p.modifyView.map(f => c => f.modState(_ orderByColumn c.column))))
 
         def renderMsg(msg: VdomTag): VdomTag =
           <.tr(<.td(*.noContent, ^.colSpan := p.cols.length + 1, msg))
@@ -418,7 +418,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
     val cellBase = <.td(^.tabIndex := -1)
 
     def render($: RenderScope, p: Props): VdomElement = {
-      val editor = p.editor.onClose(focusParentOnChildClose($.mountedPure.getDOMNode))
+      val editor = p.editor.onClose(focusParentOnChildClose($.mountedPure.getDOMNode.map(_.asElement)))
       cellBase(
         *.dataCell(p.cellState),
         ^.onKeyDown ==> onKeyDown(editor),

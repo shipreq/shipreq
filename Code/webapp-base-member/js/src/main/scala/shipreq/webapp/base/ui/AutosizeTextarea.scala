@@ -16,9 +16,9 @@ object AutosizeTextarea {
     .build
 
   def applyTo[P, C <: Children, S, B](f: dom.Element => Autosize.Targets): ScalaComponent.Config[P, C, S, B] = _
-    .componentDidMount   (i => Callback(Autosize        (f(i.getDOMNode))))
-    .componentDidUpdate  (i => Callback(Autosize.update (f(i.getDOMNode))))
-    .componentWillUnmount(i => Callback(Autosize.destroy(f(i.getDOMNode))))
+    .componentDidMount   (i => Callback(Autosize        (f(i.getDOMNode.asElement))))
+    .componentDidUpdate  (i => Callback(Autosize.update (f(i.getDOMNode.asElement))))
+    .componentWillUnmount(i => Callback(Autosize.destroy(f(i.getDOMNode.asElement))))
 
   def applyToChildren[P, C <: Children, S, B](sel: String): ScalaComponent.Config[P, C, S, B] =
     applyTo(_.querySelectorAll(sel))

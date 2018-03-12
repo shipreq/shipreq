@@ -35,7 +35,7 @@ object AutoCompleteTest extends TestSuite {
     override val autoCompleteCtx: CallbackTo[AutoCompleteCtx] =
       for {
         p <- $.props
-        n <- $.getDOMNode
+        n <- $.getDOMNode.map(_.asElement)
       } yield AutoCompleteCtx(p, n.domCast[N])
   }
   val Tester = ScalaComponent.builder[AutoComplete.Strategies]("AutoComplete test")
@@ -46,7 +46,7 @@ object AutoCompleteTest extends TestSuite {
   trait Editor {
     def setState(s: String): Unit
     def getDOMNode: N
-    def state: String = getDOMNode.value
+    def state: String = getDOMNode.map(_.asElement).value
   }
 
   def editor(ac: AutoComplete.Strategies): Editor = {
@@ -65,7 +65,7 @@ object AutoCompleteTest extends TestSuite {
   }
 
   case class TestCtx(editor: Editor, acDomSel: String = "") {
-    def $ = Dynamic.global.$(editor.getDOMNode)
+    def $ = Dynamic.global.$(editor.getDOMNode.map(_.asElement))
   }
 
   def allTextCompleteULs =
@@ -78,7 +78,7 @@ object AutoCompleteTest extends TestSuite {
       uls.dropRight(1).foreach(_.style.display = "none")
 
     ctx.editor.setState(text.replace("|", ""))
-    val n = ctx.editor.getDOMNode
+    val n = ctx.editor.getDOMNode.map(_.asElement)
     var p = text.indexOf('|')
     if (p < 0) p = text.length
     n.setSelectionRange(p, p)
@@ -127,7 +127,7 @@ object AutoCompleteTest extends TestSuite {
   }
 
   def testCursorPos(pos: Int)(implicit ctx: TestCtx): Unit = {
-    val n = ctx.editor.getDOMNode
+    val n = ctx.editor.getDOMNode.map(_.asElement)
     assertEq((pos, pos), (n.selectionStart, n.selectionEnd))
   }
 

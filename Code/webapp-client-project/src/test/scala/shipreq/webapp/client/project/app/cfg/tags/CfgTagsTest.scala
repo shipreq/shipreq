@@ -34,7 +34,7 @@ object CfgTagsTest extends TestSuite {
     }
 
   def nameAsTextTree(c: GenericComponent.MountedRaw) =
-    Sizzle("td.name", ReactDOM.raw findDOMNode c.raw).toVector.map(nameCellToText(_, ""))
+    Sizzle("td.name", ReactDOM.findDOMNode(c.raw).get.asElement).toVector.map(nameCellToText(_, ""))
 
   class FakeUpdateIO {
     var reqs = Vector.empty[(Tag, TagCrud.Protocol.Value)]
@@ -46,7 +46,7 @@ object CfgTagsTest extends TestSuite {
     lazy val filterDead = ReactTestVar[FilterDead](HideDead)
     lazy val clientData = TestClientData(S.project)
     lazy val cp         = new TestClientProtocol(true)
-    lazy val props      = new CfgTags.Props(cp, remote, clientData, filterDead.stateSnapshotWithReuse())
+    lazy val props      = CfgTags.Props(cp, remote, clientData, filterDead.stateSnapshotWithReuse())
     lazy val re         = MainTable.Component(props)
     lazy val c          = ReactTestUtils.renderIntoDocument(re)
   }

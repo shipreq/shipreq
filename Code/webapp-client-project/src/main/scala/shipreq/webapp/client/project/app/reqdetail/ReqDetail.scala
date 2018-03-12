@@ -140,8 +140,8 @@ object ReqDetail {
     val cbData: CallbackOption[Data] =
       Callback(refreshPx()).toCBO >> pxData.toCallback.map(_.toOption).asCBO
 
-    val setFilterDead: FilterDead ~=> Callback =
-      Reusable.fn(v => $.props.flatMap(_.filterDead setState v))
+    val setFilterDead: Reusable[StateSnapshot.SetFn[FilterDead]] =
+      Reusable.byRef((v, cb) => $.props.flatMap(_.filterDead.setStateOption(v, cb)))
 
     private def mkRunCmdFn[Cmd <: UpdateContentCmd](onSuccess: (VerifiedEvent.Seq, Callback) => Callback) =
       Reusable.fn[ReqId, Cell, Cmd, Callback](

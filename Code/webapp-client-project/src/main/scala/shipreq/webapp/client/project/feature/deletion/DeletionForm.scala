@@ -41,8 +41,8 @@ object DeletionForm {
   }
 
   final class Backend($: BackendScope[Props, State]) {
-    private val setReqSel = Reusable.fn($ setStateFnL State.selectedReqs)
-    private val setReason = Reusable.fn($ setStateFnL State.reason)
+    private val setReqSel = Reusable.fn.state($ zoomStateL State.selectedReqs).set
+    private val setReason = Reusable.fn.state($ zoomStateL State.reason).setStateFn
 
     private def reasonEditorProps(p: Props, s: State): RichTextEditor.DeletionReason.Props =
       RichTextEditor.DeletionReason.Props(

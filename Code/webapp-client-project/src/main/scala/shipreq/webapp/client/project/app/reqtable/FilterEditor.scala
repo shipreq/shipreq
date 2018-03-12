@@ -103,12 +103,10 @@ object FilterEditor {
         _ ← p.update(State(input, r._1), r._2)
       } yield ()
 
-    var inputNode: html.Input = _
+    val inputNode = Ref[html.Input]
 
     override val autoCompleteCtx =
-      CallbackTo(
-        Option(inputNode).map(
-          AutoCompleteCtx(pxAutoComplete.value(), _)))
+      inputNode.get.map(AutoCompleteCtx(pxAutoComplete.value(), _))
 
     def render(p: Props): VdomElement = {
 
@@ -133,7 +131,7 @@ object FilterEditor {
 
       Input.Text.iconAndRightAction(
         filterIcon,
-        input.ref(inputNode = _),
+        input.withRef(inputNode),
         onRight,
         p.state.validity)
     }
