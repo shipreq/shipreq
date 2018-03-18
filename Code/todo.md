@@ -88,7 +88,6 @@ Phase 2
   * Do more with errors (client & server), eg. ClientData.{init,applyEvents}
 
 ### Tech
-* Upgrade to new scalajs-react
 * Add component error handling and possibly report to server
 
 ### New Features
