@@ -166,7 +166,7 @@ object Dependencies {
   }
 
   object Kamon {
-    val core          = jvmOnly("io.kamon" %%  "kamon-core"                  % "1.0.1")
+    val core          = jvmOnly("io.kamon" %%  "kamon-core"                  % "1.1.0")
   //val jdbc          = jvmOnly("io.kamon" %%  "kamon-jdbc"                  % "1.0.0")
   //val akka          = jvmOnly("io.kamon" %% s"kamon-akka-${Akka.shortVer}" % "1.0.1")
   //val systemMetrics = jvmOnly("io.kamon" %%  "kamon-system-metrics"        % "1.0.0")
