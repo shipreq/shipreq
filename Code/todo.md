@@ -108,12 +108,15 @@ Phase 2
 
 ================================================
 
-Add tracing to Taskman
+* Add tracing to Taskman
 
-Code top levels? Security dely, MakeEvent, UpdateProject. Prefix with "Fn: " or something?
-Add user id tag to everything
-Failed login attempts - add tags for username/email field, and password hash, maybe also for reason for failure?
-Prefix logic fns like makeEvent
-Add more tags to logic fns (eg. event being applied) (?)
-Serve Prometheus metrics via Lift instead of embedded http
-Abort if sysctl vm whatever isn't set (needed for ES)
+* Naming convention for code top-levels {Security delay, MakeEvent, UpdateProject}. Prefix with "Fn: " or something?
+* Add user id tag to sub-spans. Only on top-level atm
+* Failed login attempts - add tags for username/email field, and password hash, maybe also for reason for failure?
+  Should use metrics & logs
+* Add more tags to logic fns (eg. event being applied) (?)
+  Will be needed for metrics too
+* Serve Prometheus metrics via Lift instead of embedded http
+* [bin/env] Abort if sysctl vm whatever isn't set (needed for ES)
+* Revise all logging
+* Determine real metrics desired and implement through to the dashboard
