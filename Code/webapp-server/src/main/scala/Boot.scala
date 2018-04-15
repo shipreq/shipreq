@@ -10,7 +10,6 @@ import net.liftweb.util._
 import net.liftweb.util.Props.RunModes
 import scalaz.syntax.applicative._
 import shipreq.base.db.{DbAccess, DbConfig}
-import shipreq.base.ops.Trace
 import shipreq.base.util.FxModule._
 import shipreq.base.util.{Props => ShipReqProps}
 import shipreq.webapp.base.WebappConfig
@@ -55,6 +54,7 @@ class Boot {
 
     // Start services
     cfg.server.kamonConfFile.foreach(initKamon) // keep this after initTaskman() - don't want that SQL traced
+    initPrometheus(cfg.server.prometheus)
   }
 
   def readConfig(): (BootConfig, Option[RunModes.Value]) = {
@@ -197,4 +197,10 @@ class Boot {
     Kamon.loadReportersFromConfig()
   }
 
+  def initPrometheus(cfg: ServerConfig.Prometheus): Unit =
+    if (cfg.enabled) {
+      if (cfg.hotspot)
+        io.prometheus.client.hotspot.DefaultExports.initialize()
+      // More occurs in AppServletFilter
+    }
 }

@@ -36,6 +36,8 @@ final case class ServerConfig(baseUrl: Url.Absolute.Base,
                               /** Filename or classpath-resource-name of Kamon config */
                               kamonConfFile: Option[String],
 
+                              prometheus: ServerConfig.Prometheus,
+
                               /** The DB schema in which the Taskman interfaces reside. */
                               taskmanSchema: String,
 
@@ -52,6 +54,15 @@ final case class ServerConfig(baseUrl: Url.Absolute.Base,
 
 object ServerConfig {
 
+  final case class Prometheus(enabled: Boolean, hotspot: Boolean, path: String)
+  object Prometheus {
+    def config: Config[Prometheus] =
+      ( Config.getOrUse[Boolean]("enabled", true) |@|
+        Config.getOrUse[Boolean]("hotspot", true) |@|
+        Config.getOrUse[String ]("path", "/ops/metrics").map(_.replaceFirst("^/*", "/"))
+    ) (apply)
+  }
+
   def config: Config[ServerConfig] =
     ( Config.need    [String  ]      ("url").map(Url.Absolute.Base.apply) |@|
       Config.need    [Duration]      ("attack_frustration_delay") |@|
@@ -61,6 +72,7 @@ object ServerConfig {
       Config.getOrUse[Boolean ]      ("feature.publicRegistration", true).map(Allow.when) |@|
       Config.get     [String  ]      ("googleAnalytics.trackingId") |@|
       Config.get     [String  ]      ("kamon.conf") |@|
+      Prometheus.config.withPrefix   ("prometheus.") |@|
       Config.need    [String  ]      ("taskman.schema") |@|
       Config.getOrUse[Boolean ]      ("taskman.init", true) |@|
       RetryCriteria.config.withPrefix("taskman.init.retry.")

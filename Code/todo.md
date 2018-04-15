@@ -108,6 +108,8 @@ Phase 2
 
 ================================================
 
+* Replace loggers with lightbend logger
+
 * Add tracing to Taskman
 
 * Naming convention for code top-levels {Security delay, MakeEvent, UpdateProject}. Prefix with "Fn: " or something?
@@ -118,5 +120,9 @@ Phase 2
   Will be needed for metrics too
 * Serve Prometheus metrics via Lift instead of embedded http
 * [bin/env] Abort if sysctl vm whatever isn't set (needed for ES)
-* Revise all logging
+* Revise all logging, especially around user login/password-{change,forget,reset} etc and log IPs
 * Determine real metrics desired and implement through to the dashboard
+* Metrics through HTTPS
+* Metrics need secret key
+* Remove Prometheus port from Docker EXPOSE
+* Only allow ops/ok in web.xml HTTP whitelist (at least outside of dev-mode)

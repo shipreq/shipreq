@@ -176,6 +176,14 @@ object Dependencies {
     val jaeger        = jvmOnly("io.kamon" %%  "kamon-jaeger"                % "1.0.1")
   }
 
+  object Prometheus {
+    private val mm = MultiModule.java("io.prometheus", "0.3.0")
+    val client     = mm("simpleclient")
+    val hotspot    = mm("simpleclient_hotspot")
+    val httpserver = mm("simpleclient_httpserver")
+    val servlet    = mm("simpleclient_servlet")
+  }
+
   val scalajsDom       = jsOnly("org.scala-js"                          %%%! "scalajs-dom"       % "0.9.4")
   val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %%%! "benchmark"         % "0.2.5")
   val scalajsJavaTime  = jsOnly("org.scala-js"                          %%%! "scalajs-java-time" % "0.2.3")

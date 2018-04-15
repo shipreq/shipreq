@@ -127,7 +127,7 @@
 
     <filter>
       <filter-name>LiftFilter</filter-name>
-      <filter-class>net.liftweb.http.LiftFilter</filter-class>
+      <filter-class>shipreq.webapp.server.app.AppServletFilter</filter-class>
     </filter>
 
     <filter-mapping>
