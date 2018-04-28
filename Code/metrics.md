@@ -59,7 +59,7 @@
 
 ```
 [C] shipreq_http_bytes_total
-    x {method, status_code, name, dir=request|response}
+    x {method, status_code, name, dir=in|out}
 
 [H] shipreq_http_response_duration_seconds
       x {method, status_code, name, delay=none|security}
@@ -70,15 +70,13 @@
 [C] shipreq_http_sessions_total
 
 [G] shipreq_logins_active
-      x {type=unique|total}
-
-[C] shipreq_logins_total
+      x {unique=y|n}
 
 [G] shipreq_projects_active
 
 [C] shipreq_secure_request_count
-      x {type   = login|forgot_password|reset_password,
-         result = success|failure}
+      x {type    = login|forgot_password|reset_password,
+         success = y|n}
 ```
 
 ##### Considered
