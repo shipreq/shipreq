@@ -40,7 +40,7 @@ object Global {
         MetricsLogic.const(Fx.unit)
 
     implicit val traceAlgebra  = config.traceAlgebraFx
-    implicit val trace         = new TraceLogic.Logic: TraceInterpreter.ForLift[Fx]
+    implicit val trace         = new TraceLogic: TraceInterpreter.ForLift[Fx]
     implicit val runDB         = trace.injectDb(dbAccess.fx.trans)
              val taskmanCtx    = TaskmanApiImpl.Context(Some(config.taskmanSchema))
     implicit val taskman       = TaskmanApiImpl(taskmanCtx, runDB)

@@ -200,7 +200,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
                                                   publicApi : PublicSpaLogic.ForApi[F],
                                                   security  : Security.Algebra[F],
                                                   svr       : Server.Time[F],
-                                                  tracer    : TraceLogic.Logic[F, RealReq, RealRes]) {
+                                                  tracer    : TraceLogic[F, RealReq, RealRes]) {
 
   import DispatchLogic.{Request => _, Response => AbsRes, _}
   import DispatchLogic.Method._

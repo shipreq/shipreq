@@ -160,8 +160,8 @@ object DispatchBM {
     implicit val metrics: MetricsLogic[F] =
       MetricsLogic.const(F.pure(()))
 
-    implicit val trace: TraceLogic.Logic[F, Request[Unit], Response] =
-      TraceLogic.Logic.off
+    implicit val trace: TraceLogic[F, Request[Unit], Response] =
+      TraceLogic.off
 
     implicit val publicApi: PublicSpaLogic.ForApi[F] =
       _ => F.pure(\/-(MsgId(1000)))

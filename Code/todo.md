@@ -127,5 +127,4 @@ Phase 2
 * Remove Prometheus port from Docker EXPOSE
 * Only allow ops/ok in web.xml HTTP whitelist (at least outside of dev-mode)
 
-* Rename TraceLogic.Logic to TraceLogic
 * Add ThreadLocal delay flag

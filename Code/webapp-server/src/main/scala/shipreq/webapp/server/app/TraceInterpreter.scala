@@ -11,7 +11,7 @@ object TraceInterpreter {
   type HttpReq = net.liftweb.http.Req
   type HttpRes = Box[LiftResponse]
 
-  type ForLift[F[_]] = TraceLogic.Logic[F, HttpReq, HttpRes]
+  type ForLift[F[_]] = TraceLogic[F, HttpReq, HttpRes]
 
   object Implicits {
 

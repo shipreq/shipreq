@@ -28,7 +28,7 @@ object PrepareEnv {
     ops      = null,
     security = null,
     taskman  = null,
-    trace    = TraceLogic.Logic.off)
+    trace    = TraceLogic.off)
 
   def global() = Global.Instance
 
