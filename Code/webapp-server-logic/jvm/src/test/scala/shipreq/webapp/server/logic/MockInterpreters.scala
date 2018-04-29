@@ -451,6 +451,8 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
 
   implicit object metrics extends MetricsLogic[Name] {
     private val noop = Name(())
+    override def setHttpName(name: String) = noop
+    override def setServerSideProcName(name: String) = noop
     override def sessionStart(sessionId: SessionId): Name[Unit] = noop
     override def sessionEnd(sessionId: SessionId): Name[Unit] = noop
     override def login(sessionId: SessionId, user: User) = noop

@@ -1,5 +1,6 @@
 package shipreq.webapp.base
 
+import java.time.Year
 import shipreq.webapp.base.user.EmailAddr
 
 object WebappConfig {
@@ -9,7 +10,10 @@ object WebappConfig {
   val supportEmailAddress = EmailAddr("contact@shipreq.com")
 
   /** The URL path under which AJAX requests are serviced. */
-  final val liftPath = "L"
+  final val liftPath1 = "L"
+
+  /** The URL path under which lift.js is served */
+  final val liftPath2 = "l"
 
   /** Passwords' min & max lengths. */
   val passwordLength = 8 to 255
@@ -35,5 +39,8 @@ object WebappConfig {
   def makePageTitle(subTitles: String*): String =
     (subTitles :+ WebappConfig.appName).mkString(" | ")
 
-  val copyrightNotice = "© 2013-2017 Bearded Logic"
+  lazy val copyrightNotice: String = {
+    val year = Year.now()
+    s"© 2013-$year Bearded Logic"
+  }
 }

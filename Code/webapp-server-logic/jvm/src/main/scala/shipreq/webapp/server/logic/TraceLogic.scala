@@ -80,14 +80,7 @@ object TraceLogic {
       }
 
     def injectServer(orig: Server.Algebra[F]): Server.Algebra[F] =
-      new Server.Algebra[F] {
-        override def delay[A](f: F[A], d: Duration) = orig.delay(f, d)
-        override val clientIP                       = orig.clientIP
-        override val sessionId                      = orig.sessionId
-        override def now                            = orig.now
-
-        // Injection:
-
+      new Server.Delegate(orig) {
         override def fork[A](fa: F[A]) =
           newSpan("fork")(Function const propagateCtx[A].flatMap(f => orig fork f(fa)))
 

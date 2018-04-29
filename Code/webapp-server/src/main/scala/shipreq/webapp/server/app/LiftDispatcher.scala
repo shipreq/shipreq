@@ -99,6 +99,7 @@ final class LiftDispatcher(global: Global) {
 
   val logic: DispatchLogic[Fx, LiftReq, Box[LiftResponse]] = {
     implicit val config    = global.config
+    implicit val metrics   = global.metrics
     implicit val trace     = global.trace
     implicit val taskman   = global.taskman
     implicit val security  = global.security
@@ -116,7 +117,7 @@ final class LiftDispatcher(global: Global) {
     /** Is a request by/to Lift (eg. Ajax, Comet) */
     def isLiftRequest(r: LiftReq): Boolean = {
       val pp = r.path.partPath // path separated by slashes
-      pp.nonEmpty && pp.head == WebappConfig.liftPath
+      pp.nonEmpty && pp.head == WebappConfig.liftPath1
     }
 
     def noFileExtension(r: LiftReq): Boolean =

@@ -40,6 +40,7 @@ object PrometheusMetrics extends HasLogger {
     final val Delay      = "delay"
     final val Dir        = "dir"
     final val Method     = "method"
+    final val Name       = "name"
     final val StatusCode = "status_code"
     final val Unique     = "unique"
   }
@@ -60,35 +61,35 @@ object PrometheusMetrics extends HasLogger {
     final class HttpRequests private[Metrics] {
       private[this] val m =
         Counter.build(prefix + "http_requests_total", "Total HTTP requests received")
-          .labelNames(Label.Method, Label.StatusCode) // TODO endpoint/name
+          .labelNames(Label.Method, Label.Name, Label.StatusCode)
           .register()
-      def apply(method: HttpMethod, statusCode: StatusCode) =
-        m.labels(method.value, statusCode.value)
+      def apply(implicit method: HttpMethod, endpoint: Endpoint, statusCode: StatusCode) =
+        m.labels(method.value, endpoint.value, statusCode.value)
     }
 
     val HttpDuration = new HttpDuration
     final class HttpDuration private[Metrics] {
       private[this] val m =
         Histogram.build(prefix + "http_response_duration_seconds", "Duration of HTTP request in seconds")
-          .labelNames(Label.Method, Label.StatusCode) // TODO Delay, endpoint/name
+          .labelNames(Label.Method, Label.Name, Label.StatusCode) // TODO Delay
           .buckets(
             0.005, 0.010, 0.025, 0.050, 0.075, 0.100, // no security delay
             0.125, 0.130, 0.145, 0.170, 0.195, 0.220, // with 120 ms security delay (see ServerConfig)
             0.300, 0.500, 0.750,
             1, 2, 3, 5, 8, 12)
           .register()
-      def apply(method: HttpMethod, statusCode: StatusCode) =
-        m.labels(method.value, statusCode.value)
+      def apply(implicit method: HttpMethod, endpoint: Endpoint, statusCode: StatusCode) =
+        m.labels(method.value, endpoint.value, statusCode.value)
     }
 
     val HttpIO = new HttpIO
     final class HttpIO private[Metrics] {
       private[this] val m =
         Counter.build(prefix + "http_bytes_total", "Size of HTTP content in bytes")
-          .labelNames(Label.Dir, Label.Method, Label.StatusCode) // TODO endpoint/name
+          .labelNames(Label.Dir, Label.Method, Label.Name, Label.StatusCode)
           .register()
-      def apply(dir: CommDir, method: HttpMethod, statusCode: StatusCode) =
-        m.labels(dir, method.value, statusCode.value)
+      def apply(dir: CommDir)(implicit method: HttpMethod, endpoint: Endpoint, statusCode: StatusCode) =
+        m.labels(dir, method.value, endpoint.value, statusCode.value)
     }
 
     val HttpSessionsActive =
@@ -122,42 +123,74 @@ object PrometheusMetrics extends HasLogger {
         .register()
   }
 
+  private[PrometheusMetrics] object Unsafe {
+    val endpointVar = new ThreadLocal[String]()
+  }
+
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  final class Unsafe(cfg: ServerConfig.Prometheus) {
+  final class Unsafe(metricsCfg: ServerConfig.Prometheus) {
     import Metrics._
 
     private def unsafeSecondsSince(startNanos: Long): Double =
       SimpleTimer.elapsedSecondsFromNanos(startNanos, System.nanoTime())
 
-    // TODO Comets too
+    private[this] val getEndpoint =
+      Endpoint.resolver(metricsPath = metricsCfg.path)
+
+    private[this] val endpointVar =
+      Unsafe.endpointVar
+
     def unsafeObserveHttp(req: HttpServletRequest, resp: HttpServletResponse)(run: => Unit): Unit = {
       val startNanos = System.nanoTime()
-      try
+      try {
+        endpointVar.set(null)
         run
-      finally {
+      } finally {
         val durationSec = unsafeSecondsSince(startNanos)
+        val path        = req.getRequestURI
         val status      = resp.getStatus
-        val method      = HttpMethod(req.getMethod)
-        val statusCode  = StatusCode(status)
 
-        HttpRequests(method, statusCode).inc()
-        HttpDuration(method, statusCode).observe(durationSec)
+        implicit val method     = HttpMethod(req.getMethod)
+        implicit val statusCode = StatusCode(status)
 
-        println(s"> ${req.getMethod} ${req.getRequestURI()}")
+        implicit val endpoint: Endpoint =
+          endpointVar.get() match {
+            case null =>
+              getEndpoint(path).getOrElse {
+                log.warn(s"Unknown endpoint: ${method.value} $path")
+                Endpoint.Unknown
+              }
+            case s =>
+              Endpoint.Specified(s)
+          }
+
+        // printf(s"--- %-60s ---> %s\n", path, endpoint.toString)
+
+        HttpRequests.apply.inc()
+
+        // Duration in the context of a comet (which is a long-poll) is how long after the user loads the page until
+        // the server decides it needs to push something to them.
+        if (endpoint != Endpoint.Comet) {
+          HttpDuration.apply.observe(durationSec)
+        }
 
         if (req.getContentLengthLong > 0)
-          HttpIO(CommDir.Recv, method, statusCode).inc(req.getContentLengthLong)
+          HttpIO(CommDir.Recv).inc(req.getContentLengthLong)
 
         resp.getHeader("Content-Length") match {
           case null =>
-            if (status != 304 && req.getRequestURI != cfg.path)
+            if (status == 304)
+              () // Client's cache validated as non-stale - 0 content in reply
+            else if (endpoint == Endpoint.Metrics)
+              () // /ops/metrics writes directly to output without calculating size - ignore for now
+            else
               log.warn(s"No Content-Length for request: ${req.getMethod} ${req.getRequestURI} ${resp.getStatus}")
           case ParseLong(len) =>
             if (len > 0)
-              HttpIO(CommDir.Send, method, statusCode).inc(len)
+              HttpIO(CommDir.Send).inc(len)
           case str =>
-            log.warn(s"Unable to parse Content-Length '$str' as Long.")
+            log.warn(s"Unable to parse ${method.value} $path response's Content-Length ($str) as Long.")
         }
       }
     }
@@ -167,11 +200,20 @@ object PrometheusMetrics extends HasLogger {
 final class PrometheusMetrics extends MetricsLogic[Fx] {
   import PrometheusMetrics.Metrics._
 
+  private[this] val endpointVar =
+    PrometheusMetrics.Unsafe.endpointVar
+
   private[this] val sessions =
     new ConcurrentHashMap[SessionId, Option[User]]
 
   private[this] val sessionsActive =
     new AtomicLong(0)
+
+  override def setHttpName(name: String): Fx[Unit] =
+    Fx(endpointVar.set(name))
+
+  override def setServerSideProcName(name: String): Fx[Unit] =
+    Fx(endpointVar.set(name))
 
   // Replace this in future with more variables and prop-test to ensure the larger set of vars don't go out of sync
   private def updateActiveLogins(): Unit = {

@@ -73,6 +73,15 @@ object Server {
        with Protocol[F]
        with Session[F]
 
+  abstract class Delegate[F[_]](underlying: Algebra[F]) extends Algebra[F] {
+    override def delay[A](f: F[A], d: Duration) = underlying.delay(f, d)
+    override def fork[A](fa: F[A])              = underlying.fork(fa)
+    override val clientIP                       = underlying.clientIP
+    override val sessionId                      = underlying.sessionId
+    override def now                            = underlying.now
+    override val registerServerSideProc         = (name, f) => underlying.registerServerSideProc(name, f)
+  }
+
   object ErrorMsgs {
     val ShouldNeverHappen: ErrorMsg =
       ErrorMsg("Something technical went wrong on our server.")

@@ -157,6 +157,9 @@ object DispatchBM {
       override val now = F point Instant.now()
     }
 
+    implicit val metrics: MetricsLogic[F] =
+      MetricsLogic.const(F.pure(()))
+
     implicit val trace: TraceLogic.Logic[F, Request[Unit], Response] =
       TraceLogic.Logic.off
 

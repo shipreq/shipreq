@@ -91,7 +91,13 @@ class Boot {
     LiftRules.funcNameGenerator = S.generateFuncName _
 
     // Customise URL paths for built-in resources & AJAX requests
-    LiftRules.liftContextRelativePath = WebappConfig.liftPath
+    LiftRules.liftContextRelativePath = WebappConfig.liftPath1
+
+    // Customise URL paths for lift.js
+    LiftRules.resourceServerPath = WebappConfig.liftPath2
+
+    // Disable request logging - we have metrics for that
+    LiftRules.logServiceRequestTiming = false
 
     // Force requests to be UTF-8
     LiftRules.early.append(_ setCharacterEncoding "UTF-8")

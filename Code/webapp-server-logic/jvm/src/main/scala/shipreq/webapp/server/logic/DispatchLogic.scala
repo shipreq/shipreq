@@ -195,6 +195,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
                                                  (implicit F: Monad[F],
                                                   config    : ServerConfig,
                                                   db        : DB.SecurityTokenReadOnly[F],
+                                                  metrics   : MetricsLogic[F],
                                                   ops       : OpsEndpoints[F],
                                                   publicApi : PublicSpaLogic.ForApi[F],
                                                   security  : Security.Algebra[F],
@@ -217,7 +218,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
     traceUrlWithSpan(url, _ => f)
 
   @inline private def traceUrlWithSpan(url: Url.Relative, f: tracer.Span => F[RealRes])(implicit req: Request): F[RealRes] =
-    tracer.http(url.relativeUrl, req.real, req.path)(f)
+    metrics.setHttpName(url.relativeUrl) >> tracer.http(url.relativeUrl, req.real, req.path)(f)
 
   private def onMethod(m: Method, f: F[AbsRes])(implicit req: Request): F[RealRes] =
     if (req.method eq m)

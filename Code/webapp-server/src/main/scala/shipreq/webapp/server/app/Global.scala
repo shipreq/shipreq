@@ -48,7 +48,7 @@ object Global {
     implicit val dbForSecurity = DB.ForSecurity.trans(DbInterpreter.ForSecurity)(runDB)
     implicit val dbForOps      = DB.ForOps.trans(new DbInterpreter.ForOps(dbAccess.databaseName))(runDB)
     implicit val projectStore  = Store.Algebra.concurrentHashMap(): ProjectServer.StoreAlgebra[Fx]
-    implicit val server        = trace.injectServer(ServerInterpreter)
+    implicit val server        = metrics.injectServer(trace.injectServer(ServerInterpreter))
     implicit val ops           = new OpsEndpointInterpreter()
     implicit val security      = new SecurityInterpreter[Fx]
 

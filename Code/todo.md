@@ -126,3 +126,7 @@ Phase 2
 * Metrics need secret key
 * Remove Prometheus port from Docker EXPOSE
 * Only allow ops/ok in web.xml HTTP whitelist (at least outside of dev-mode)
+
+* Rename TraceLogic.Logic to TraceLogic
+* Add ThreadLocal delay flag
+* Split Endpoint into type={page|asset|lift|comet|ajax}
