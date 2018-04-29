@@ -433,6 +433,7 @@ object MockInterpreters {
     googleAnalyticsTrackingId  = None,
     taskmanSchema              = "test_taskman",
     kamonConfFile              = None,
+    prometheus                 = ServerConfig.Prometheus(true, true, "/ops/metrics"),
     initTaskmanOnBoot          = false,
     initTaskmanRetry           = RetryCriteria(2 hours, Some(666)))
 }
@@ -450,7 +451,6 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
 
   implicit object ops extends OpsLogic.Base[Name] {
     override val randomToken = Name("blah")
-    override val sessionStats = Name(OpsLogic.SessionStats(0, 0, 0, None))
     override def trackLogin(sessionId: SessionId, user: User) = Name(())
     override def trackLogout(sessionId: SessionId) = Name(())
   }

@@ -13,8 +13,6 @@ trait OpsLogic[F[_]] {
 
   def dbStats: F[DbStats]
 
-  def sessionStats: F[SessionStats]
-
   def userStats: F[UserStats]
 
   def taskmanMsgStatus(id: MsgId): F[Option[MsgStatusResult]]
@@ -59,8 +57,6 @@ object OpsLogic {
         latency2   = last._2,
         tableStats = tables,
         dbSize     = dbSize)
-
-    override def sessionStats: F[SessionStats]
 
     override def userStats =
       db.userStats.map(UserStats)
@@ -111,23 +107,6 @@ object OpsLogic {
         "id" -> Js.Num(id.value),
         "token" -> Js.Str(token),
         "time" -> jsDuration(time))
-  }
-
-  final case class SessionStats(active     : Long,
-                                loggedIn   : Long,
-                                uniqueUsers: Long,
-                                timeout    : Option[Duration]) extends HasJsValue {
-    def anonymous: Long =
-      active - loggedIn
-
-    def toJsValue: Js.Value =
-      Js.Obj(
-        "active" -> Js.Obj(
-          "anonymous"   -> Js.Num(anonymous),
-          "loggedIn"    -> Js.Num(loggedIn),
-          "total"       -> Js.Num(active),
-          "uniqueUsers" -> Js.Num(uniqueUsers)),
-        "timeout" -> timeout.fold[Js.Value](Js.Str("?"))(jsDuration))
   }
 
   final case class UserStats(stats: DB.ForOps.UserStats) extends HasJsValue {

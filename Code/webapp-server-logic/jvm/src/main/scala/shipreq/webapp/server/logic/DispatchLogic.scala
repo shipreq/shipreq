@@ -431,10 +431,6 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
       endpoint(Post, Url.Relative("stats/db"))(
         Function const ops.dbStats.map(jsonResponse))
 
-    private val statsSessions: Request ?=> F[RealRes] =
-      endpoint(Post, Url.Relative("stats/sessions"))(
-        Function const ops.sessionStats.map(jsonResponse))
-
     private val statsUsers: Request ?=> F[RealRes] =
       endpoint(Post, Url.Relative("stats/users"))(
         Function const ops.userStats.map(jsonResponse))
@@ -457,7 +453,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
             jsonResponse)))
 
     private def routes: Request ?=> F[RealRes] =
-      scope(opsRoot, ok | register1 | statsDb | statsSessions | statsUsers | task | testSendMail)
+      scope(opsRoot, ok | register1 | statsDb | statsUsers | task | testSendMail)
 
     /** Is the request a candidate for ops route parsing? */
     val candidate: Url.Relative => Boolean =

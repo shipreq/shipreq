@@ -3,7 +3,6 @@ package shipreq.webapp.server
 import japgolly.microlibs.config._
 import japgolly.microlibs.config.ConfigParser.Implicits.Defaults._
 import japgolly.microlibs.config.JavaTimeConfigParsers._
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Duration
 import monocle.macros.Lenses
 import scalaz.syntax.applicative._
@@ -14,7 +13,12 @@ import shipreq.base.util.FxModule._
 @Lenses
 final case class ServerConfig(baseUrl: Url.Absolute.Base,
 
-                              /** A short amount of time, unnoticeable to humans, to sleep in order to frustrate automated security attacks. */
+                              /** A short amount of time, unnoticeable to humans, to sleep in order to
+                                * frustrate automated security attacks.
+                                *
+                                * The http response time metrics histogram buckets have been crafted around
+                                * this delay being the default 120ms so only reconfigure this in unit tests.
+                                */
                               attackFrustrationDelay: Duration,
 
                               /** Number of characters in tokens used for email & reset-password verification. */
@@ -65,7 +69,7 @@ object ServerConfig {
 
   def config: Config[ServerConfig] =
     ( Config.need    [String  ]      ("url").map(Url.Absolute.Base.apply) |@|
-      Config.need    [Duration]      ("attack_frustration_delay") |@|
+      Config.getOrUse[Duration]      ("attack_frustration_delay", Duration.ofMillis(120)) |@|
       Config.need    [Int     ]      ("token.length") |@|
       Config.need    [Duration]      ("token.lifespan.register") |@|
       Config.need    [Duration]      ("token.lifespan.resetpw") |@|

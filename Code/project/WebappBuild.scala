@@ -412,8 +412,7 @@ object WebappBuild {
 
             expose(
               8080, // HTTP
-              8443, // HTTPS
-              9095) // Prometheus
+              8443) // HTTPS
 
             env(Common.dockerBaseEnv.value: _*)
             cmd("bin/webapp")
@@ -448,10 +447,9 @@ object WebappBuild {
       .dependsOn(baseDb, baseOps, taskmanApi, webappServerLogicJvm, webappGenJvm)
       .deps(
         Scalaz.core ++ Lift.webkit ++ Shiro.all ++ commonsLang ++ Nyaya.gen ++ Logback.withPlugins ++
-        Prometheus.client ++ Prometheus.hotspot ++ Prometheus.servlet ++
+        Prometheus.client ++ Prometheus.hotspot ++ Prometheus.servlet ++ LibJetty.servletApi ++
         testScope(μTest ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
-        (LibJetty.webapp % Test) ++
-        (LibJetty.servletApi % "test,provided"))
+        (LibJetty.webapp % Test))
       .configure(
         Common.jvmSettings,
         useMacroParadise,
