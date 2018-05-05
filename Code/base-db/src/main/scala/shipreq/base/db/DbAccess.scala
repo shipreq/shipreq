@@ -39,7 +39,7 @@ final case class DbAccess(cfg               : DbConfig,
   val fx = abstractTransactor[Fx]
 
   def verifyConnectivity(): Unit = {
-    log.info.z(s"Connecting to database: $desc")
+    log.info(s"Connecting to database: $desc")
     ds.getConnection().close()
   }
 
@@ -49,7 +49,7 @@ final case class DbAccess(cfg               : DbConfig,
         case h: HikariDataSource => h.close()
         case _ => ()
       }
-    ).swap.foreach(e => log.error(e, "Error closing database connections."))
+    ).swap.foreach(log.error("Error closing database connections.", _))
 
   def setupRunShutdown[M[_] : Catchable : Capture : Monad, A](app: => M[A]): M[A] =
     for {

@@ -7,7 +7,7 @@ import org.json4s._
 import scalaz.{\/, ~>}
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
-import shipreq.base.util.log.{HasLogger, LogLevel}
+import shipreq.base.util.log.HasLogger
 import shipreq.taskman.server.logic.business.Support
 import shipreq.taskman.server.logic.business.Support.API._
 import shipreq.taskman.server.logic.business.Support._
@@ -20,8 +20,7 @@ object FreshDesk {
                          key         : String,
                          taskmanEmail: String,
                          landingPage : UnverifiedTicketOrg,
-                         failure     : UnverifiedTicketOrg,
-                         logLevel    : LogLevel)
+                         failure     : UnverifiedTicketOrg)
 
   final case class VerifiedProps(landingPage: TicketOrg, failure: TicketOrg)
 
@@ -135,7 +134,7 @@ object FreshDesk {
 sealed class FreshDesk0(props: Props)(implicit httpClient: HttpClient) extends HasLogger {
 
   protected final implicit val httpLoggers: HttpLoggers =
-    HttpLoggers(log.atLevel(props.logLevel))
+    HttpLoggers(log)
 
   protected final val endpoints: Endpoints =
     new Endpoints(s"https://${props.domain}.freshdesk.com", props.key)

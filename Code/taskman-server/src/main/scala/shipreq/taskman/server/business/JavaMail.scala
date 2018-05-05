@@ -103,6 +103,6 @@ final class JavaMail(val mailSession: Session) extends AbstractFunction1[Busines
     for {
       m <- Fx.lift(buildEmail(op.envelope, op.content))
       _ <- Fx(Transport.send(m))
-    } yield log.info.z(s"Email sent: ${op.envelope.showTo} [${op.content.subject}]")
+    } yield log.info(s"Email sent: ${op.envelope.showTo} [${op.content.subject}]")
 }
 

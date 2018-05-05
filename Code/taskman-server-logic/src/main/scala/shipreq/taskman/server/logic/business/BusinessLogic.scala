@@ -101,7 +101,7 @@ final class BusinessLogic[F[_]](emails        : Emails,
           Fx(log info "No users to sync to mailing list.")
         case h :: t =>
           val ss = NonEmptyList.nel(h, t)
-          Fx(log.info z s"Syncing ${ss.size} users to mailing list...") >>
+          Fx(log info s"Syncing ${ss.size} users to mailing list...") >>
             run(API.BatchSubscribe(mailingListId, ss))
       }
   }

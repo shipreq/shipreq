@@ -27,8 +27,8 @@ final class BusinessOpFx(sendMailFx   : BusinessOp.SendEmail => Fx[Unit],
 
   def logCompletion[A](op: BusinessOp[A], res: Throwable \/ A, dur: Duration): Fx[Unit] =
     Fx(res match {
-      case \/-(_) => log.info.z(s"${simpleName(op)} completed in ${dur.toMillis}ms.")
-      case -\/(e) => log.error.z(s"${simpleName(op)} failed after ${dur.toMillis}ms with [${e.getMessage}]. Op: $op")
+      case \/-(_) => log.info(s"${simpleName(op)} completed in ${dur.toMillis}ms.")
+      case -\/(e) => log.error(s"${simpleName(op)} failed after ${dur.toMillis}ms with [${e.getMessage}]. Op: $op")
     })
 
   def applyUntimed[A](bop: BusinessOp[A]): Fx[A] =

@@ -82,7 +82,6 @@ Phase 2
   * Do more with errors (client & server), eg. ClientData.{init,applyEvents}
   * Add React component error handling and possibly report to server
 * Logging
-  * Replace loggers with lightbend logger
   * Revise all logging
   * Security events - log with much detail including IP, username/email field, and password hash, failure reason
 * Metrics

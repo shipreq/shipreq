@@ -10,8 +10,7 @@ import scalaz.{-\/, \/, \/-}
 import scalaz.syntax.applicative._
 import shipreq.base.util.JavaTimeHelpers._
 import shipreq.base.util.RetryCriteria
-import shipreq.base.util.log.LogLevel.configParserShipReqLogLevel
-import shipreq.base.util.log.{HasLogger, LogLevel}
+import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.CfgKeys
 import shipreq.taskman.server.business._
 import shipreq.taskman.server.business.JavaMail.ConfigParsers._
@@ -68,7 +67,6 @@ object TaskmanConfig extends HasLogger {
   def mailGun: Config[MailGun.Props] =
     (Config.need[String]("domain")
       |@| Config.need[String]("key").obfuscateInReport
-      |@| Config.need[LogLevel]("logLevel")
       ) (MailGun.Props.apply)
       .withPrefix("mailgun.")
 
@@ -78,7 +76,6 @@ object TaskmanConfig extends HasLogger {
     (Config.need[String]("dc")
       |@| Config.need[String]("key").obfuscateInReport
       |@| Config.need[String]("masterList")
-      |@| Config.need[LogLevel]("logLevel")
       ) (MailChimp.Props)
       .withPrefix("mailchimp.")
 
@@ -90,7 +87,6 @@ object TaskmanConfig extends HasLogger {
       |@| Config.need[String]("taskmanEmail")
       |@| Config.need[FreshDesk.UnverifiedTicketOrg]("org.landingPage")
       |@| Config.need[FreshDesk.UnverifiedTicketOrg]("org.failure")
-      |@| Config.need[LogLevel]("logLevel")
       ) (FreshDesk.Props)
       .withPrefix("freshdesk.")
 
@@ -126,7 +122,7 @@ object TaskmanConfig extends HasLogger {
       ) { (remoteCfgRetry, qs, tp, pollEvery, pollGapO, healthFile) =>
       val pollGap = pollGapO getOrElse pollEvery
       if (pollGap isLongerThan pollEvery)
-        log.warn.z(s"The minimum poll gap ($pollGap) is larger than the poll time ($pollEvery). Wasteful.")
+        log.warn(s"The minimum poll gap ($pollGap) is larger than the poll time ($pollEvery). Wasteful.")
       Taskman(remoteCfgRetry, qs, AssignmentTrustPeriod(tp), pollEvery, pollGap, healthFile)
     }
       .withPrefix("taskman.")

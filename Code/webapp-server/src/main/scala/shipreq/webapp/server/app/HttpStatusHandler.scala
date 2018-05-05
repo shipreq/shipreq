@@ -44,7 +44,7 @@ object HttpStatusHandler extends HasLogger {
       //    val m = Taskman.webappErrorOccurred(e, Some(uri), s"Request: $r")
       //    log.error(e, s"500 Error serving $uri to user ${m.usr}")
       //    Taskman.submitAsync(m).unsafeRun()
-      log.error(exception, s"${exception.getClass.getSimpleName} serving $uri")
+      log.error(s"${exception.getClass.getSimpleName} serving $uri", exception)
       render500(req)
     })
 }

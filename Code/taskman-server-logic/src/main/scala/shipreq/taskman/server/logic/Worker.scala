@@ -184,7 +184,7 @@ final class Worker[F[_]](msgProcessor : MsgProcessor[F])
     }
 
   private def logWorkStart(md: MsgDetail): Fx[Unit] =
-    Fx(log.debug.z(s"Starting work: $md"))
+    Fx(log.debug(s"Starting work: $md"))
 
   private def performWork(m: MsgDetail)(assignedSince: Instant): Fx[WorkResult[F]] =
     Fx.safe(msgProcessor(m)).attemptArticulateError flatMap taskEnd(m, assignedSince)
@@ -212,23 +212,23 @@ final class Worker[F[_]](msgProcessor : MsgProcessor[F])
   private def logWorkResult(r: WorkResult[F], dur: Duration): Fx[Unit] =
     Fx(r match {
       case CouldntAssign(m) =>
-        log.debug.z(s"Couldn't assign: $m")
+        log.debug(s"Couldn't assign: $m")
       case CouldntReassign(m) =>
-        log.warn.z(s"Couldn't reassign: $m")
+        log.warn(s"Couldn't reassign: $m")
       case Completed(m) =>
-        log.info.z(s"Successfully completed in ${dur.toMillis}ms: $m")
+        log.info(s"Successfully completed in ${dur.toMillis}ms: $m")
       case Scheduled(_, m) =>
-        log.debug.z(s"Scheduled to run asynchronously: $m")
+        log.debug(s"Scheduled to run asynchronously: $m")
       case WorkerFailed(_, e, f) =>
         // f contains m so no need to print separately
         if (e is Deliberate)
-          log.info.z(s"Worker deliberately failed: ${e.getMessage} // $f")
+          log.info(s"Worker deliberately failed: ${e.getMessage} // $f")
         else
-          log.error(e, s"Worker failed after ${dur.toMillis}ms: $f")
+          log.error(s"Worker failed after ${dur.toMillis}ms: $f", e)
       case TaskmanFailed(e, Some(m)) =>
-        log.error(e, s"Taskman error occurred processing $m")
+        log.error(s"Taskman error occurred processing $m", e)
       case TaskmanFailed(e, None) =>
-        log.error(e, "Taskman error occurred! (no msg)")
+        log.error("Taskman error occurred! (no msg)", e)
     })
 
   private def wrapAsync(m: MsgDetail, assignedSince: Instant)(work: Fx[ProcessorResult[F]]): Fx[WorkResult[F]] =

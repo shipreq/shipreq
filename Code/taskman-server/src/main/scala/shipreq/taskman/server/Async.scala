@@ -2,7 +2,7 @@ package shipreq.taskman.server
 
 import java.util.concurrent.{Callable, ExecutorService, Executors, ThreadFactory}
 import java.util.concurrent.atomic.AtomicInteger
-import org.slf4j.{MDC => SMDC}
+import org.slf4j.{MDC => Slf4jMDC}
 import scalaz.syntax.bind._
 import shipreq.base.util.FxModule._
 import shipreq.taskman.server.logic.Worker
@@ -16,7 +16,7 @@ object Async {
     val back = Executors.defaultThreadFactory
     override def newThread(r: Runnable): Thread = {
       val r2: Runnable = () => {
-        SMDC.clear()
+        Slf4jMDC.clear()
         r.run()
       }
       val t = back.newThread(r2)

@@ -4,7 +4,7 @@ import scala.runtime.AbstractFunction1
 import scalaz.\/-
 import scalaz.syntax.bind._
 import shipreq.base.util.FxModule._
-import shipreq.base.util.log.{HasLogger, LogLevel}
+import shipreq.base.util.log.HasLogger
 import shipreq.taskman.server.business.Http._
 import shipreq.taskman.server.business.MailGun._
 import shipreq.taskman.server.logic.business.BusinessOp
@@ -12,7 +12,7 @@ import shipreq.taskman.server.logic.business.BusinessOp.SendEmail
 
 object MailGun {
 
-  final case class Props(domain: String, key: String, logLevel: LogLevel)
+  final case class Props(domain: String, key: String)
 
   final class Endpoints(domain: String, apiKey: String) {
     val send: Http[SendEmail, Unit] =
@@ -34,11 +34,11 @@ final class MailGun(props: Props)(implicit httpClient: HttpClient)
     extends AbstractFunction1[BusinessOp.SendEmail, Fx[Unit]] with HasLogger {
 
   private implicit val httpLoggers: HttpLoggers =
-    HttpLoggers(log.atLevel(props.logLevel))
+    HttpLoggers(log)
 
   private val endpoints = new Endpoints(props.domain, props.key)
 
   override def apply(op: SendEmail): Fx[Unit] =
     endpoints.send.run(op) >>
-      Fx(log.info.z(s"Email sent: ${op.envelope.showTo} [${op.content.subject}]"))
+      Fx(log.info(s"Email sent: ${op.envelope.showTo} [${op.content.subject}]"))
 }

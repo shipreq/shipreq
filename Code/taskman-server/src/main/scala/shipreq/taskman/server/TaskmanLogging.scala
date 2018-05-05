@@ -6,14 +6,16 @@ import shipreq.base.util.log.MDC
 
 object TaskmanLogging {
 
-  val whoKey = "who"
-
-  def mdc(who: String) = MDC(whoKey -> who)
+  private final val whoKey = "who"
 
   type MdcValues = String
 
-  val readMdc: Fx[MdcValues] = Fx(SMDC get whoKey)
+  def mdc(who: String): MDC.Ctx =
+    MDC(whoKey -> who)
 
-  def writeMdc(who: MdcValues): Fx[Unit] = Fx(SMDC.put(whoKey, who))
+  val readMdc: Fx[MdcValues] =
+    Fx(SMDC get whoKey)
+
+  def writeMdc(who: MdcValues): Fx[Unit] =
+    Fx(SMDC.put(whoKey, who))
 }
-

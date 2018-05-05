@@ -10,7 +10,7 @@ import scalaz.syntax.std.option._
 import scalaz.{-\/, \/, \/-, ~>}
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
-import shipreq.base.util.log.{HasLogger, LogLevel}
+import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.EmailAddr
 import shipreq.taskman.server.logic.business.MailingList
 import shipreq.taskman.server.logic.business.MailingList.API._
@@ -25,8 +25,7 @@ object MailChimp {
     */
   final case class Props(dc        : String,
                          key       : String,
-                         masterList: String,
-                         logLevel  : LogLevel)
+                         masterList: String)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Protocol
@@ -210,7 +209,7 @@ object MailChimp {
 
 final class MailChimp(props: Props)(implicit httpClient: HttpClient) extends (MailingList.API ~> Fx) with HasLogger {
   private implicit val httpLoggers: HttpLoggers =
-    HttpLoggers(log.atLevel(props.logLevel), _.replace(props.key, "<KEY>"))
+    HttpLoggers(log, _.replace(props.key, "<KEY>"))
 
   private val endpoints: Endpoints =
     Endpoints(props)

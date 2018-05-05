@@ -50,7 +50,7 @@ trait DbTemplate extends HasLogger {
       val allowed = "shipreq_test"
       if (databaseName != allowed)
         sys.error(s"You're trying to wipe $databaseName. Only $allowed is allowed to be wiped.")
-      log.info.z(s"Wiping database: $databaseName")
+      log.info(s"Wiping database: $databaseName")
       migrator.drop[Id]
     }
 

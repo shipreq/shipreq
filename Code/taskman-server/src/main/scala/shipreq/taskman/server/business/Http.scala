@@ -1,5 +1,6 @@
 package shipreq.taskman.server.business
 
+import com.typesafe.scalalogging.Logger
 import japgolly.univeq._
 import java.nio.charset.Charset
 import okhttp3._
@@ -10,7 +11,6 @@ import scalaz.syntax.catchable._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{ArticulateError, Identity}
 import shipreq.base.util.FxModule._
-import shipreq.base.util.log.Logger
 import Http._
 
 final case class Http[I, O](prep: (I, HttpClient, HttpLoggers) => Fx[Request],
@@ -157,15 +157,18 @@ object Http {
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 object HttpLoggers {
-  def apply(logger: Logger#AtLevel, mod: String => String = Identity.apply): HttpLoggers =
-    new HttpLoggers(logger, mod)
+  def apply(logger: Logger, mod: String => String = Identity.apply): HttpLoggers =
+    new HttpLoggers(logger.underlying, mod)
 }
-final class HttpLoggers(logger: Logger#AtLevel, mod: String => String) {
-  private[this] val enabled = logger.?
-  private def p(prefix: String, str: String) = if (str.isEmpty) "" else prefix + str
+final class HttpLoggers(logger: org.slf4j.Logger, mod: String => String) {
+  private[this] val enabled =
+    logger.isDebugEnabled
+
+  private def p(prefix: String, str: String) =
+    if (str.isEmpty) "" else prefix + str
 
   def logFx(s: => String): Fx[Unit] =
-    Fx(logger.z(mod(s)))
+    Fx(logger.debug(mod(s)))
 
   private val logIfEnabled: (=> String) => Fx[Unit] =
     if (enabled)

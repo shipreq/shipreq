@@ -14,7 +14,7 @@ object MDC {
     new Ctx(_ setContextMap map)
   }
 
-  final class Ctx(m: MDCAdapter => Unit) {
+  final class Ctx(private val m: MDCAdapter => Unit) extends AnyVal {
 
     def apply[A](f: => A): A = {
       val mdc = slf4jMDC.getMDCAdapter
