@@ -27,12 +27,10 @@ object Dependencies {
   }
 
   object Scalaz {
-    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.20")
+    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.22")
     val core       = mm("scalaz-core")
     val effect     = mm("scalaz-effect") ++ core
     val concurrent = mm("scalaz-concurrent") ++ effect
-    val iteratee   = mm("scalaz-iteratee") ++ effect
-    val scalacheck = mm("scalaz-scalacheck-binding") ++ concurrent ++ iteratee
   }
 
   object Monocle {
@@ -113,7 +111,7 @@ object Dependencies {
     val core = mm("logback-classic") ++ mm("logback-core")
 
     val withPlugins = core ++
-      jvmOnly("net.logstash.logback" % "logstash-logback-encoder" % "4.11")
+      jvmOnly("net.logstash.logback" % "logstash-logback-encoder" % "5.1")
   }
 
   object Lift {
@@ -139,7 +137,7 @@ object Dependencies {
 
   object Akka {
     val shortVer = "2.5"
-    private val mm = MultiModule.scala("com.typesafe.akka", shortVer + ".11")
+    private val mm = MultiModule.scala("com.typesafe.akka", shortVer + ".12")
     val actor   = mm("akka-actor") ++ mm("akka-slf4j")
     val testkit = mm("akka-testkit")
   }
@@ -156,7 +154,7 @@ object Dependencies {
   }
 
   object LibJetty {
-    private val mm = MultiModule.java("org.eclipse.jetty", "9.4.8.v20171121")
+    private val mm = MultiModule.java("org.eclipse.jetty", "9.4.10.v20180503")
     val webapp = mm("jetty-webapp")
     val runner = mm("jetty-runner")
     val dist   = mm("jetty-distribution").modAll(_.artifacts(Artifact("jetty-distribution", "tar.gz", "tar.gz")).intransitive())
@@ -172,8 +170,8 @@ object Dependencies {
   //val akka          = jvmOnly("io.kamon" %% s"kamon-akka-${Akka.shortVer}" % "1.0.1")
   //val systemMetrics = jvmOnly("io.kamon" %%  "kamon-system-metrics"        % "1.0.0") // requires Sigar
   //val logback       = jvmOnly("io.kamon" %%  "kamon-logback"               % "1.0.0") // requires agent
-    val prometheus    = jvmOnly("io.kamon" %%  "kamon-prometheus"            % "1.0.0")
-    val jaeger        = jvmOnly("io.kamon" %%  "kamon-jaeger"                % "1.0.1")
+  //val prometheus    = jvmOnly("io.kamon" %%  "kamon-prometheus"            % "1.0.0")
+    val jaeger        = jvmOnly("io.kamon" %%  "kamon-jaeger"                % "1.0.2")
   }
 
   object Prometheus {
@@ -184,9 +182,9 @@ object Dependencies {
     val servlet    = mm("simpleclient_servlet")
   }
 
-  val scalajsDom       = jsOnly("org.scala-js"                          %%%! "scalajs-dom"       % "0.9.4")
+  val scalajsDom       = jsOnly("org.scala-js"                          %%%! "scalajs-dom"       % "0.9.5")
   val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %%%! "benchmark"         % "0.2.5")
-  val scalajsJavaTime  = jsOnly("org.scala-js"                          %%%! "scalajs-java-time" % "0.2.3")
+  val scalajsJavaTime  = jsOnly("org.scala-js"                          %%%! "scalajs-java-time" % "0.2.4")
 
   val boopickle = jvmAndJs("me.chrons",                        "boopickle", "1.2.5")
   val parboiled = jvmAndJs("org.parboiled",                    "parboiled", "2.1.4")
@@ -194,11 +192,11 @@ object Dependencies {
   val μPickle   = jvmAndJs("com.github.japgolly.fork.upickle", "upickle",   "custom-7")
   val μTest     = jvmAndJs("com.lihaoyi",                      "utest",     "0.4.8") // 0.5.4+ breaks PhantomJS in webapp-base-test-js
 
-  val scalaXml    = jvmOnly("org.scala-lang.modules"     %% "scala-xml"             % "1.0.6")
+  val scalaXml    = jvmOnly("org.scala-lang.modules"     %% "scala-xml"             % "1.1.0")
   val httpCore    = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.9")
   val javaMail    = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.5.6")
   val postgresql  = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.2")
-  val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "2.7.8")
+  val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.1.0")
   val flyway      = jvmOnly("com.googlecode.flyway"       % "flyway-core"           % "2.3.1")
   val commonsLang = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.7")
   val commonsIo   = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")

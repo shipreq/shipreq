@@ -44,7 +44,7 @@ object ShipReqBuild {
       .depsForJvm(
         SLF4J.api ++
         providedScope(Logback.core) ++
-        testScope(Specs2.combo ++ Scalaz.scalacheck))
+        testScope(Specs2.combo))
 
   lazy val baseOps =
     project("base-ops")
@@ -52,7 +52,7 @@ object ShipReqBuild {
         Common.jvmSettings,
         Common.macroModuleSettings)
       .dependsOn(baseUtilJvm)
-      .deps(Kamon.core ++ Kamon.jaeger ++ Kamon.prometheus)
+      .deps(Kamon.core ++ Kamon.jaeger)
 
   lazy val baseDb =
     project("base-db")
