@@ -14,7 +14,7 @@
   </appender>
 
   <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-    <destination>logstash:14500</destination>
+    <destination>logstash:14500,localhost:14500</destination>
     <encoder class="net.logstash.logback.encoder.LogstashEncoder">
       <customFields>{"app":"taskman"}</customFields>
     </encoder>
