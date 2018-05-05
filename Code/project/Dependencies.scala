@@ -23,7 +23,7 @@ object Dependencies {
     val compiler = mm("scala-compiler") ++ reflect ++ scalaXml
     val p        = mm("scalap") ++ compiler
     val all      = reflect ++ library ++ p
-    val macroDef = reflect ++ library ++ (compiler % "provided")
+    val macroDef = reflect ++ library ++ (compiler % Provided)
   }
 
   object Scalaz {

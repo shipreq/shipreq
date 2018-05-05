@@ -75,7 +75,7 @@ object ShipReqBuild {
         testScope(μTest ++ Nyaya.test))
       .configureJvm(_
         .deps(providedScope(Specs2.combo))
-        .dependsOn(baseDb % "provided"))
+        .dependsOn(baseDb % Provided))
 
   // ===================================================================================================================
   // utils & benchmark-*

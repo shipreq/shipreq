@@ -29,8 +29,8 @@ object TaskmanBuild {
         Json4s.jackson ++
         testScope(Specs2.combo ++ scalaCheck ++ Scala.reflect))
       .dependsOn(taskmanApiLogic, baseDb)
-      .dependsOn(taskmanServerSchema % "test")
-      .dependsOn(baseTestJvm % "test")
+      .dependsOn(taskmanServerSchema % Test)
+      .dependsOn(baseTestJvm % Test)
     .settings(fork in Test := true) // else modules using specs2 v3+ seem to interfere with each other
 
   lazy val taskmanServerLogic =
@@ -38,7 +38,7 @@ object TaskmanBuild {
       .configure(Common.jvmSettings)
       .deps(Logback.withPlugins ++ testScope(Specs2.combo))
       .dependsOn(taskmanApiLogic)
-      .dependsOn(baseTestJvm % "test")
+      .dependsOn(baseTestJvm % Test)
 
   lazy val taskmanServerSchema =
     project("taskman-server-schema")
@@ -77,7 +77,7 @@ object TaskmanBuild {
         Akka.actor ++ javaMail ++ OkHttp.core ++ httpCore ++ commonsIo ++ Logback.withPlugins ++
         testScope(Akka.testkit ++ Specs2.combo))
       .dependsOn(taskmanServerLogic, taskmanServerSchema, taskmanApi)
-      .dependsOn(baseTestJvm % "test")
+      .dependsOn(baseTestJvm % Test)
       .configure(Common.dockerBaseSettings("taskman"))
       .configure(runWithDockerDev)
       .settings(

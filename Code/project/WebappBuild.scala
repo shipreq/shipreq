@@ -110,7 +110,7 @@ object WebappBuild {
   private lazy val clientSpa: Project => Project =
     _.enablePlugins(ScalaJSPlugin)
       .configure(Common.jsSettings(NeedDom), useMacroParadise)
-      .dependsOn(webappBaseJs, webappBaseTestJs % "test", webappServerLogicJs % "test")
+      .dependsOn(webappBaseJs, webappBaseTestJs % Test, webappServerLogicJs % Test)
       .settings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
 
   lazy val webappClientPublicJvm = webappClientPublic.jvm
@@ -119,7 +119,7 @@ object WebappBuild {
     crossProject("webapp-client-public")
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NeedDom))
-      .dependsOn(webappBase, webappBaseTest % "test")
+      .dependsOn(webappBase, webappBaseTest % Test)
       .configureBoth(useMacroParadise)
       .jsSettings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
 
@@ -142,7 +142,7 @@ object WebappBuild {
     project("webapp-client-ww")
       .enablePlugins(ScalaJSPlugin)
       .configure(Common.jsSettings(NeedDom))
-      .dependsOn(webappClientWwApi, webappBaseTestJs % "test")
+      .dependsOn(webappClientWwApi, webappBaseTestJs % Test)
       .depsForJs(
         boopickle ++ scalajsDom ++
         testScope(μTest))
@@ -168,7 +168,7 @@ object WebappBuild {
             scalaJSUseMainModuleInitializer := true,
             jsDependencies += ProvidedJS / "webapp-gen-deps.js"))
       .depsForBoth(testScope(μTest))
-      .dependsOn(webappBaseTest % "test")
+      .dependsOn(webappBaseTest % Test)
 
   lazy val webappServerLogicJvm = webappServerLogic.jvm
   lazy val webappServerLogicJs  = webappServerLogic.js
@@ -180,7 +180,7 @@ object WebappBuild {
         useMacroParadise)
       .configureJs(Common.jsSettings(NeedDom)) // TODO NeedDom isn't true but required cos webappBaseTest loads in Sizzle
       .dependsOn(webappBaseMember)
-      .dependsOn(baseTest % "test", webappBaseTest % "test")
+      .dependsOn(baseTest % Test, webappBaseTest % Test)
       .depsForBoth(testScope(μTest ++ Nyaya.test))
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -226,7 +226,7 @@ object WebappBuild {
 
     def testSettings = (_: Project)
       .configure(DockerEnv.test.required)
-      .dependsOn(webappBaseTestJvm % "test")
+      .dependsOn(webappBaseTestJvm % Test)
       .settings(inConfig(Test)(Seq(
         fork                         := true,
         javaOptions                  += "-Drun.mode=test",
