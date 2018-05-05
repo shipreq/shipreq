@@ -12,6 +12,14 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
+VM_MAX_MAP_COUNT="$(sysctl vm.max_map_count | sed 's/^.*= *//')"
+if [[ -z "$VM_MAX_MAP_COUNT" || "$VM_MAX_MAP_COUNT" -lt 262144 ]]; then
+  echo "sysctl vm.max_map_count = $VM_MAX_MAP_COUNT. ElasticSearch requires it be >= 262144" >&2
+  cmd="sudo sysctl -w vm.max_map_count=262144"
+  echo "> $cmd" >&2
+  $cmd || exit 1
+fi
+
 env="$1"
 shift
 

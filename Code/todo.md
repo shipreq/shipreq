@@ -63,7 +63,6 @@ Backlog
 * Prevent -- (not not) in the FilterParser? Or allow /\-+/ and auto-correct on blur?
 * Firefox: ctrl-home space doesn't work properly
 * Firefox: UC step graph doesn't shrink
-* `bin/env`: Abort if sysctl vm whatever isn't set (needed for ES)
 
 ------------------------------------------------------------------------------------------------------------------------
 Phase 2
