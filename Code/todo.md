@@ -121,6 +121,5 @@ Phase 2
 * [bin/env] Abort if sysctl vm whatever isn't set (needed for ES)
 * Revise all logging, especially around user login/password-{change,forget,reset} etc and log IPs
 * Metrics need secret key
-* Only allow ops/ok in web.xml HTTP whitelist (at least outside of dev-mode)
 * Add ThreadLocal security-delay flag and affect metrics
 * Add secure event metrics

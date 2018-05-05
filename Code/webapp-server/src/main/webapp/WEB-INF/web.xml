@@ -141,7 +141,7 @@
       <web-resource-collection>
         <web-resource-name>HTTP OK</web-resource-name>
         <url-pattern>/robots.txt</url-pattern>
-        <url-pattern>/ops/*</url-pattern>
+        <url-pattern>/ops/ok</url-pattern>
       </web-resource-collection>
       <user-data-constraint>
         <transport-guarantee>NONE</transport-guarantee>
