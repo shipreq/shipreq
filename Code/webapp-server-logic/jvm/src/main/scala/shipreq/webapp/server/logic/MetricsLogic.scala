@@ -19,6 +19,8 @@ trait MetricsLogic[F[_]] {
   def login(sessionId: SessionId, user: User): F[Unit]
   def logout(sessionId: SessionId): F[Unit]
 
+  def securityEvent(event: Security.Event, result: Security.Result): F[Unit]
+
   def setActiveProjectCount(n: Int): F[Unit]
 
   def injectServer(orig: Server.Algebra[F])(implicit F: Monad[F]): Server.Algebra[F] =
@@ -60,6 +62,7 @@ object MetricsLogic {
       override def sessionEnd           (x: SessionId)                                           = f
       override def login                (x: SessionId, y: User)                                  = f
       override def logout               (x: SessionId)                                           = f
+      override def securityEvent        (x: Security.Event, y: Security.Result)                  = f
       override def setActiveProjectCount(x: Int)                                                 = f
       override def injectServer         (x: Server.Algebra[F])(implicit F: Monad[F])             = x
       override def injectProjectStore   (x: ProjectServer.StoreAlgebra[F])(implicit F: Monad[F]) = x

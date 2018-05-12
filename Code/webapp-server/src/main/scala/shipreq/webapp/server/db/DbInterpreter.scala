@@ -237,15 +237,17 @@ object DbInterpreter {
       updateResetPasswordTokenOnReissueSql.toUpdate0(id).execute
 
     private final val updateUserPasswordSql =
-      Update[(PasswordAndSalt, SecurityToken)]("""
+      Query[(PasswordAndSalt, SecurityToken), UserId]("""
         UPDATE usr SET
           password = ?, password_salt = ?, password_changed_at = NOW(),
           reset_password_token = NULL
-        WHERE reset_password_token = ? """.sql)
+        WHERE reset_password_token = ?
+        RETURNING id
+        """.sql)
 
     /** This also clears the token */
-    override final def updateUserPassword(token: SecurityToken, ps: PasswordAndSalt): ConnectionIO[Unit] =
-      updateUserPasswordSql.toUpdate0(ps, token).execute
+    override final def updateUserPassword(token: SecurityToken, ps: PasswordAndSalt): ConnectionIO[Option[UserId]] =
+      updateUserPasswordSql.toQuery0(ps, token).option
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

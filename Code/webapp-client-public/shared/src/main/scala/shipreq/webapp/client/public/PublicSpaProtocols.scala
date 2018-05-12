@@ -139,9 +139,9 @@ object PublicSpaProtocols {
 
     sealed trait Response
     object Response {
-      case object Success       extends Response
-      case object TokenInvalid  extends Response
-      case object TokenExpired  extends Response
+      case object Success      extends Response
+      case object TokenInvalid extends Response
+      case object TokenExpired extends Response
 
       implicit val pickler: Pickler[Response] = derivePickler[Response]
       implicit def univEq: UnivEq[Response] = UnivEq.derive

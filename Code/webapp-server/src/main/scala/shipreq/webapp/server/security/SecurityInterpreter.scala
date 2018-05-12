@@ -11,9 +11,7 @@ import shipreq.webapp.server.logic._
 
 final class SecurityInterpreter[F[_]](implicit F: Monad[F],
                                       config : ServerConfig,
-                                      metrics: MetricsLogic[F],
                                       secDb  : DB.ForSecurity[F],
-                                      svr    : Server.Session[F],
                                       trace  : Trace.Algebra[F]) extends Security.Algebra[F] {
 
   override val db = secDb
@@ -31,26 +29,16 @@ final class SecurityInterpreter[F[_]](implicit F: Monad[F],
   override def protect[A](vulnerable: F[A]): F[A] =
     delay >> vulnerable
 
-  override def attemptLogin(user: Username \/ EmailAddr, password: PlainTextPassword) = {
-    val login: F[Option[User]] =
-      F.point {
-        val userOrEmail = user.fold(_.value, _.value)
-        try {
-          AppSecurityRealm.loginOrThrow(userOrEmail, password)
-          AppSecurityRealm.authenticatedUser()
-        } catch {
-          case _: AuthenticationException => None
-        }
+  override def attemptLogin(user: Username \/ EmailAddr, password: PlainTextPassword) =
+    F.point {
+      val userOrEmail = user.fold(_.value, _.value)
+      try {
+        AppSecurityRealm.loginOrThrow(userOrEmail, password)
+        AppSecurityRealm.authenticatedUser()
+      } catch {
+        case _: AuthenticationException => None
       }
-
-    def trackLogin(user: User): F[Unit] =
-      svr.sessionId.flatMap(_.fold(fUnit)(metrics.login(_, user)))
-
-    for {
-      ou <- login
-      _  <- ou.fold(fUnit)(trackLogin)
-    } yield ou
-  }
+    }
 
   private[this] val hashFn = AppSecurityRealm.randomHashFn
 
@@ -63,9 +51,6 @@ final class SecurityInterpreter[F[_]](implicit F: Monad[F],
   override val authenticatedUser: F[Option[User]] =
     F.point(AppSecurityRealm.authenticatedUser())
 
-  override val logout: F[Unit] = {
-    val updateShiro = F.point(AppSecurityRealm.logout())
-    val updateOps   = svr.sessionId.flatMap(_.fold(fUnit)(metrics.logout))
-    updateShiro >> updateOps
-  }
+  override val logout: F[Unit] =
+    F.point(AppSecurityRealm.logout())
 }

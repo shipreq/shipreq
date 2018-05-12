@@ -26,7 +26,7 @@ final class MonadEE[M[_], E, F]()(implicit M: Monad[M]) extends Types[M, E, F] {
   implicit def toStackExt_FA[A](m: F \/ A)  : StackExt_FA[M, E, F, A] = new StackExt_FA(m)
   implicit def toStackExt_SA[A](m: Stack[A]): StackExt_SA[M, E, F, A] = new StackExt_SA(m.underlying)
 
-  @inline implicit def autoStack[A](m: M[(E \/ F) \/ A]): Stack[A] = Instance(m)
+//  @inline implicit def autoStack[A](m: M[(E \/ F) \/ A]): Stack[A] = Instance(m)
 }
 
 object MonadEE {

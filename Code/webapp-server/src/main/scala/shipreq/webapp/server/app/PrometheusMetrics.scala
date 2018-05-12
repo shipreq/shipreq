@@ -11,7 +11,7 @@ import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.base.user.User
 import shipreq.webapp.server.ServerConfig
-import shipreq.webapp.server.logic.{MetricsLogic, SessionId}
+import shipreq.webapp.server.logic.{MetricsLogic, Security, SessionId}
 import shipreq.webapp.server.util.CommDir
 
 object PrometheusMetrics extends HasLogger {
@@ -42,6 +42,7 @@ object PrometheusMetrics extends HasLogger {
     final val Dir        = "dir"
     final val Method     = "method"
     final val Name       = "name"
+    final val Success    = "success"
     final val StatusCode = "status_code"
     final val Type       = "type"
     final val Unique     = "unique"
@@ -112,13 +113,24 @@ object PrometheusMetrics extends HasLogger {
         m.labels(yesOrNo(unique))
     }
 
-//    val SecureRequestsTotal = new SecureRequestsTotal
-//    final class SecureRequestsTotal private[Metrics] {
-//      private[this] val m =
-//        Counter.build(prefix + "secure_requests_total", "Total security-sensitive requests processed")
-//          .labelNames(Outcome, Type)
-//          .register()
-//    }
+    val SecureEventsTotal = new SecureEventsTotal
+    final class SecureEventsTotal private[Metrics] {
+      private[this] val m =
+        Counter.build(prefix + "secure_events_total", "Total security-sensitive events that occurred")
+          .labelNames(Label.Name, Label.Success)
+          .register()
+
+      private[this] val name: Security.Event => String = {
+        case Security.Event.Login          => "login"
+        case Security.Event.Register1      => "register_1"
+        case Security.Event.Register2      => "register_2"
+        case Security.Event.ResetPassword1 => "reset_password_1"
+        case Security.Event.ResetPassword2 => "reset_password_2"
+      }
+
+      def apply(event: Security.Event, result: Security.Result) =
+        m.labels(name(event), yesOrNo(result.isSuccess))
+    }
 
     val ProjectsActive =
       Gauge.build(prefix + "projects_active", "Projects currently being served").register()
@@ -257,6 +269,9 @@ final class PrometheusMetrics extends MetricsLogic[Fx] {
       sessions.computeIfPresent(sessionId, (_, _) => None)
       updateActiveLogins()
     }
+
+  override def securityEvent(event: Security.Event, result: Security.Result): Fx[Unit] =
+    Fx(SecureEventsTotal(event, result).inc())
 
   override def setActiveProjectCount(n: Int): Fx[Unit] =
     Fx(ProjectsActive.set(n))

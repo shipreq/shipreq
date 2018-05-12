@@ -5,6 +5,7 @@ import upickle.Js
 import scalaz.{Monad, \/, \/-}
 import scalaz.syntax.monad._
 import shipreq.base.util.ErrorMsg
+import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.{Msg, MsgId, TaskmanApi}
 import shipreq.webapp.base.user.UserValidators
 
@@ -22,7 +23,7 @@ trait OpsEndpoints[F[_]] {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-object OpsEndpoints {
+object OpsEndpoints extends HasLogger {
   import Implicits._
 
   abstract class Base[F[_]](implicit F: Monad[F],

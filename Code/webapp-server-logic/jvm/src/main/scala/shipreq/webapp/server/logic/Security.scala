@@ -21,7 +21,6 @@ object Security {
     final def protectFn[A, B](vulnerable: A => F[B]): A => F[B] =
       a => protect(vulnerable(a))
 
-    // You're expected to call OpsLogic.trackLogin within
     def attemptLogin(user: Username \/ EmailAddr, password: PlainTextPassword): F[Option[User]]
 
     def hashPassword(p: PlainTextPassword): F[PasswordAndSalt]
@@ -30,8 +29,21 @@ object Security {
 
     val authenticatedUser: F[Option[User]]
 
-    // You're expected to call OpsLogic.trackLogout within
     val logout: F[Unit]
   }
 
+  sealed trait Event
+  object Event {
+    case object Login extends Event
+    case object Register1 extends Event
+    case object Register2 extends Event
+    case object ResetPassword1 extends Event
+    case object ResetPassword2 extends Event
+  }
+
+  sealed abstract class Result(final val isSuccess: Boolean)
+  object Result {
+    case object Success extends Result(true)
+    case object Failure extends Result(false)
+  }
 }

@@ -22,5 +22,6 @@ object HasLogger {
 }
 
 trait HasLogger {
-  final protected val logger = HasLogger.forClass(getClass)
+  final protected implicit val logger: ScalaLogger =
+    HasLogger.forClass(getClass)
 }

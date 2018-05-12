@@ -199,6 +199,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
                                                   ops       : OpsEndpoints[F],
                                                   publicApi : PublicSpaLogic.ForApi[F],
                                                   security  : Security.Algebra[F],
+                                                  svrS      : Server.Session[F],
                                                   svr       : Server.Time[F],
                                                   tracer    : TraceLogic[F, RealReq, RealRes]) {
 
@@ -354,8 +355,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
       }
 
     val logout: Request ?=> F[RealRes] =
-      get(Urls.logout,
-        security.logout >| Response.redirectToPublicHome)
+      get(Urls.logout, SimpleEndpoints.logout >| Response.redirectToPublicHome)
 
     val routes: Request ?=> F[RealRes] =
       publicSpa | memberHomeSpa | projectSpa | logout

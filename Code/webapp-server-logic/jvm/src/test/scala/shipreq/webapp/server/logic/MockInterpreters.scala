@@ -197,8 +197,11 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
       ()
     }
 
-  override def updateUserPassword(token: SecurityToken, ps: PasswordAndSalt) = Name[Unit] {
-    updateUser(_.resetPassword.exists(_._1 ==* token), _.copy(ps = ps, resetPassword = None))
+  override def updateUserPassword(token: SecurityToken, ps: PasswordAndSalt) = Name[Option[UserId]] {
+    users.find(_.resetPassword.exists(_._1 ==* token)).map { u =>
+      updateUser(_.id ==* u.id, _.copy(ps = ps, resetPassword = None))
+      u.id
+    }
   }
 
   private var projects: IMap[ProjectId, MockDb.ProjectEntry] =
@@ -418,7 +421,7 @@ final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name]
   override val logout            = Name{loggedIn = None}
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 object MockInterpreters {
   import JavaTimeHelpers._
@@ -447,8 +450,8 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
   implicit val security   = new MockSecurity(db)
   implicit val taskman    = new MockTaskman
   implicit val nameToName = NaturalTransformation.refl[Name]
-  implicit val publicApi  = PublicSpaLogic[Name, Name]: PublicSpaLogic.ForApi[Name]
   implicit val metrics    = MetricsLogic.const(Name(()))
+  implicit val publicApi  = PublicSpaLogic[Name, Name]: PublicSpaLogic.ForApi[Name]
 
   implicit object ops extends OpsEndpoints.Base[Name] {
     override val randomToken = Name("blah")

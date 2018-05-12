@@ -1,5 +1,6 @@
 package shipreq.webapp.server.logic
 
+import com.typesafe.scalalogging.Logger
 import java.time.{Instant, ZoneOffset}
 import java.time.format.DateTimeFormatter
 import scalaz.{-\/, Monad, \/, \/-}
@@ -28,10 +29,15 @@ private[logic] object Implicits {
   }
 
   implicit class LeftCompositeInvalidityExt[A](private val d: Composite.Invalidity \/ A) extends AnyVal {
-    def onValid[F[_], B](g: A => F[ErrorMsg \/ B])(implicit F: Monad[F]): F[ErrorMsg \/ B] =
+    def onValid[F[_], B](g: A => F[ErrorMsg \/ B])(implicit F: Monad[F], logger: Logger): F[ErrorMsg \/ B] =
       d match {
         case \/-(a) => g(a)
-        case -\/(e) => F pure -\/(e.toErrorMsg)
+        case -\/(e) => F.point {
+          // Client JS is supposed to prevent this
+          val errMsg = e.toErrorMsg
+          logger.warn(s"Validation failure: $errMsg")
+          -\/(errMsg)
+        }
       }
   }
 

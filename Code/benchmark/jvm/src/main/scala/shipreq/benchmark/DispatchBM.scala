@@ -153,7 +153,12 @@ object DispatchBM {
         F.point { loggedIn = Option.when(loginSuccess)(user); loggedIn }
     }
 
-    implicit val svr: Server.Time[F] = new Server.Time[F] {
+    implicit val svrSession: Server.Session[F] = new Server.Session[F] {
+      override val clientIP: F[Option[IP]] = F.pure(None)
+      override val sessionId: F[Option[SessionId]] = F.pure(None)
+    }
+
+    implicit val svrTime: Server.Time[F] = new Server.Time[F] {
       override val now = F point Instant.now()
     }
 

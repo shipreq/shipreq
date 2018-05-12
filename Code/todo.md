@@ -81,13 +81,13 @@ Phase 2
   * Do more with errors (client & server), eg. ClientData.{init,applyEvents}
   * Add React component error handling and possibly report to server
 * Logging
-  * Revise all logging
-  * Security events - log with much detail including IP, username/email field, and password hash, failure reason
+  * Add to webapp: TaskmanApi
+  * Add to webapp: DB
+  * Add to webapp: project events
 * Metrics
   * Metrics endpoint needs secret key
   * Add ThreadLocal security-delay flag and affect metrics
   * HikariCP metrics
-  * Security event metrics - include detail such as failure reason
   * Taskman metrics
   * Business metrics (see metrics.md)
 * Tracing

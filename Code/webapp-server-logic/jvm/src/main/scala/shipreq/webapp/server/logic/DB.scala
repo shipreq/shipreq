@@ -144,7 +144,7 @@ object DB {
     def updateResetPasswordTokenOnReissue(id: UserId): F[Unit]
 
     /** This also clears the token */
-    def updateUserPassword(token: SecurityToken, ps: PasswordAndSalt): F[Unit]
+    def updateUserPassword(token: SecurityToken, ps: PasswordAndSalt): F[Option[UserId]]
   }
 
   trait ForPublicSpa[F[_]] extends ForUserRegistration[F] with ForPasswordReset[F]
