@@ -37,10 +37,10 @@ trait DbTemplate extends HasLogger {
     if (initPending)
       initLock.synchronized(
         if (initPending) {
-          log.debug("Database initialising...")
+          log.info("Database initialising...")
           _connection = dbCfg.pgDataSource.getConnection()
           unsafeInit()
-          log.debug("Database initialised.")
+          log.info("Database initialised.")
         }
       )
 
@@ -58,10 +58,10 @@ trait DbTemplate extends HasLogger {
     if (initialised)
       initLock.synchronized(
         if (initialised) {
-          log.debug("Database shutting down...")
+          log.info("Database shutting down...")
           unsafeShutdown()
           _connection = null
-          log.debug("Database shut down.")
+          log.info("Database shut down.")
         }
       )
 }

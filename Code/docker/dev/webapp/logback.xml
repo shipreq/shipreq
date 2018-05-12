@@ -22,6 +22,7 @@
   </appender>
 
   <logger name="org.apache.commons" level="WARN" />
+  <logger name="net.liftweb.util.Props" level="OFF" />
   <logger name="shipreq" level="DEBUG" />
 
   <root level="INFO">

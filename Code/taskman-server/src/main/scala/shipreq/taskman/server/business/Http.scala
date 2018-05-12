@@ -7,25 +7,23 @@ import okhttp3._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import scalaz.syntax.bind._
-import scalaz.syntax.catchable._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{ArticulateError, Identity}
 import shipreq.base.util.FxModule._
 import Http._
 
-final case class Http[I, O](prep: (I, HttpClient, HttpLoggers) => Fx[Request],
+final case class Http[I, O](prep: (I, HttpClient, HttpLogger) => Fx[Request],
                             recv: (Response, String) => Fx[O]) {
 
-  def run(i: I)(implicit client: HttpClient, log: HttpLoggers): Fx[O] =
+  def run(i: I)(implicit client: HttpClient, log: HttpLogger): Fx[O] =
     log.result(
-      prep(i, client, log)
-        .map(req => client.newCall(req).execute())
-        .bracket(
-          release = r => Fx(r.close()),
-          use = r =>
-            Fx(r.body.string())
-              .tap(log.response(r, _))
-              .flatMap(recv(r, _))))
+      prep(i, client, log).flatMap(req =>
+        Fx(client.newCall(req).execute()).bracket(
+          release = resp => Fx(resp.close()),
+          use = resp =>
+            Fx(resp.body.string())
+              .tap(log.response(req, resp, _))
+              .flatMap(recv(resp, _)))))
 
   def contramap[A](f: A => I): Http[A, O] =
     Http((a, c, l) => prep(f(a), c, l), recv)
@@ -70,7 +68,7 @@ object Http {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final case class PreCallGet(prep: (HttpClient, HttpLoggers) => Fx[Request.Builder]) {
+  final case class PreCallGet(prep: (HttpClient, HttpLogger) => Fx[Request.Builder]) {
     def map(f: Request.Builder => Request.Builder): PreCallGet =
       PreCallGet(prep(_, _) map f)
 
@@ -85,7 +83,7 @@ object Http {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final case class PreCall[I](prep: (I, HttpClient, HttpLoggers) => Fx[Request.Builder], method: Method) {
+  final case class PreCall[I](prep: (I, HttpClient, HttpLogger) => Fx[Request.Builder], method: Method) {
     def contramap[A](f: A => I): PreCall[A] =
       PreCall((a, c, l) => prep(f(a), c, l), method)
 
@@ -156,35 +154,31 @@ object Http {
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-object HttpLoggers {
-  def apply(logger: Logger, mod: String => String = Identity.apply): HttpLoggers =
-    new HttpLoggers(logger.underlying, mod)
+object HttpLogger {
+  def apply(log: Logger, modContent: String => String = Identity.apply): HttpLogger =
+    new HttpLogger(log, modContent)
 }
-final class HttpLoggers(logger: org.slf4j.Logger, mod: String => String) {
-  private[this] val enabled =
-    logger.isDebugEnabled
 
-  private def p(prefix: String, str: String) =
-    if (str.isEmpty) "" else prefix + str
-
-  def logFx(s: => String): Fx[Unit] =
-    Fx(logger.debug(mod(s)))
-
-  private val logIfEnabled: (=> String) => Fx[Unit] =
-    if (enabled)
-      logFx
-    else
-      _ => Fx.unit
+final class HttpLogger(log: Logger, modContent: String => String) {
+  private[this] val debugEnabled = log.underlying.isDebugEnabled
 
   val request: (Request, () => String) => Fx[Unit] =
-    (r, body) => logIfEnabled(s"HTTP request: ${r.method} ${r.url.url.toExternalForm}${p(" ← ", body())}")
+    (req, body) => Fx {
+      def url = req.url.url.toExternalForm
+      log.debug(s"HTTP request: ${req.method} $url ← ${modContent(body())}")
+    }
 
-  val response: (Response, String) => Fx[Unit] =
-    (r, body) => logIfEnabled(s"HTTP response: ${r.code} ${r.message}${p(" → ", body)}")
+  val response: (Request, Response, String) => Fx[Unit] =
+    (req, resp, body) => Fx {
+      def url = req.url.url.toExternalForm
+      def dur = resp.receivedResponseAtMillis() - resp.sentRequestAtMillis()
+      log.info(s"HTTP ${req.method} $url responded with ${resp.code} ${resp.message} in $dur ms")
+      log.debug(s"HTTP response body: ${modContent(body)}")
+    }
 
   def result[A](fx: Fx[A]): Fx[A] =
-    if (enabled)
-      fx.attemptArticulateError.flatMap(r => logFx(s"HTTP result: $r") >> Fx.lift(r))
+    if (debugEnabled)
+      fx.attemptArticulateError.flatMap(r => Fx(log.debug(s"HTTP result: ${modContent(r.toString)}")) >> Fx.lift(r))
     else
       fx
 }

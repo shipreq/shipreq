@@ -94,5 +94,5 @@ final class TaskmanCtx(val dbAccess: DbAccess, val config: TaskmanConfig, emailT
       async.each(_.shutdownNow())
     }
       .attempt
-      .map(_.swap.foreach(log.error("Error shutting down ctx.", _)))
+      .map(_.swap.foreach(log.warn("Error shutting down ctx.", _)))
 }

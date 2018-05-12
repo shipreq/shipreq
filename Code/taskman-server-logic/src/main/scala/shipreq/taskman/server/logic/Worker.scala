@@ -222,7 +222,7 @@ final class Worker[F[_]](msgProcessor : MsgProcessor[F])
       case WorkerFailed(_, e, f) =>
         // f contains m so no need to print separately
         if (e is Deliberate)
-          log.info(s"Worker deliberately failed: ${e.getMessage} // $f")
+          log.warn(s"Worker deliberately failed: ${e.getMessage} // $f")
         else
           log.error(s"Worker failed after ${dur.toMillis}ms: $f", e)
       case TaskmanFailed(e, Some(m)) =>

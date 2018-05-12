@@ -24,7 +24,7 @@ trait TestDb extends DbTemplate with TestDbUsageDefaults[Usable[SingleConnection
   protected final val cleanIfRequired: Fx[Unit] =
     Fx {
       if (cleanRequired) {
-        log.debug("Cleaning DB.")
+        log.info("Cleaning DB.")
         unsafeClean()
         cleanRequired = false
       }

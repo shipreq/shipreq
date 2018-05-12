@@ -33,8 +33,8 @@ object MailGun {
 final class MailGun(props: Props)(implicit httpClient: HttpClient)
     extends AbstractFunction1[BusinessOp.SendEmail, Fx[Unit]] with HasLogger {
 
-  private implicit val httpLoggers: HttpLoggers =
-    HttpLoggers(log)
+  private implicit val httpLogger: HttpLogger =
+    HttpLogger(log)
 
   private val endpoints = new Endpoints(props.domain, props.key)
 
