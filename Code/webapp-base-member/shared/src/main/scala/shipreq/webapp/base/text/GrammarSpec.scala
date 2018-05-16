@@ -1,12 +1,12 @@
 package shipreq.webapp.base.text
 
+import japgolly.microlibs.utils.Utils
 import java.util.regex.Pattern
 import org.parboiled2.CharPredicate
 import scala.collection.immutable.NumericRange
 import scala.runtime.AbstractFunction1
 import scalaz.std.stream.streamInstance
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.Util
 import shipreq.webapp.base.validation.CommonValidation
 import shipreq.webapp.base.validation.Simple._
 
@@ -70,7 +70,7 @@ object GrammarSpec {
       prefix + s + suffix
 
     def regexEscapeAndWrap: (String, String) =
-      (Util.regexEscapeAndWrap(prefix), Util.regexEscapeAndWrap(suffix))
+      (Utils.regexEscapeAndWrap(prefix), Utils.regexEscapeAndWrap(suffix))
 
     def addInner(innerPrefix: String, innerSuffix: String): Surround =
       new Surround(prefix + innerPrefix, innerSuffix + suffix)

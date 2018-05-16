@@ -1,6 +1,6 @@
 package shipreq.webapp.base.feature.autocomplete
 
-import shipreq.base.util.Util
+import japgolly.microlibs.utils.{Utils => Util}
 import shipreq.webapp.base.text.GrammarSpec
 import shipreq.webapp.base.data.{Contextualise, Plain}
 import shipreq.webapp.base.jsfacade.TextComplete.Strategy

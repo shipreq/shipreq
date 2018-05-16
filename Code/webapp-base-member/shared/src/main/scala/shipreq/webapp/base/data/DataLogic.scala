@@ -76,18 +76,18 @@ object DataLogic {
   type TagOrder = Map[ApplicableTagId, Int]
 
   def tagOrderByName(tags: TagTree): TagOrder =
-    Util.mapToOrder(
-      MutableArray(tags.valuesIterator.map(_.tag).filterSubType[ApplicableTag])
-        .sortBySchwartzian(_.key.value |> normaliseStringForSorting)
-        .map(_.id)
-        .iterator)
+    MutableArray(tags.valuesIterator.map(_.tag).filterSubType[ApplicableTag])
+      .sortBySchwartzian(_.key.value |> normaliseStringForSorting)
+      .map(_.id)
+      .iterator
+      .mapToOrder
 
   def tagOrderByPos(tags: TagTree): TagOrder =
-    Util.mapToOrder(
-      FlatTag.flatten(tags)(_ => true, FlatTag.FilterPolicy.OmitNothing)
-        .iterator
-        .map(_.id)
-        .filterSubType[ApplicableTagId])
+    FlatTag.flatten(tags)(_ => true, FlatTag.FilterPolicy.OmitNothing)
+      .iterator
+      .map(_.id)
+      .filterSubType[ApplicableTagId]
+      .mapToOrder
 
   // ===================================================================================================================
   // Implications

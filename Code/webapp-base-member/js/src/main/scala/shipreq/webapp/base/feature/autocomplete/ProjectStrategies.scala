@@ -1,6 +1,7 @@
 package shipreq.webapp.base.feature.autocomplete
 
 import japgolly.microlibs.nonempty._
+import japgolly.microlibs.utils.{Utils => Util}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
@@ -133,7 +134,7 @@ object ProjectStrategies {
     import ReqCode.{Node, Trie, Value => Path, ActiveGroup, ActiveReq}
 
     private val sepStr = G.nodeSeparator.toString
-    private val sep    = Util regexEscapeAndWrap sepStr
+    private val sep    = Util.regexEscapeAndWrap(sepStr)
     private val sepR   = sep.r
     private val node   = s"(?:${G.firstChar.one}${G.tailChars.*})"
 

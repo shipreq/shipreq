@@ -1,5 +1,6 @@
 package shipreq.webapp.server.logic
 
+import japgolly.microlibs.utils.Utils
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.ParseLong
 import japgolly.microlibs.stdlib_ext.StdlibExt._
@@ -237,7 +238,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
   private def whenUrlIsAnyOf[A](urls: NonEmptySet[Url.Relative]): (Request => F[A]) => Request ?=> F[A] = {
     import Url.dropTailSlashes
     val norm: Url.Relative => String = u => dropTailSlashes(u.underlying)
-    val lookup = Util.quickStringExists(urls.whole.map(norm))
+    val lookup = Utils.quickStringExists(urls.whole.map(norm))
     when(r => lookup(norm(r.path)))
   }
 

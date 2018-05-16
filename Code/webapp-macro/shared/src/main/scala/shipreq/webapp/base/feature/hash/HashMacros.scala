@@ -1,8 +1,9 @@
 package shipreq.webapp.base.feature.hash
 
 import japgolly.microlibs.macro_utils.MacroUtils
+import japgolly.microlibs.utils.Utils
 import scala.reflect.macros.blackbox.Context
-import shipreq.base.util.{SetDiff, Util}
+import shipreq.base.util.SetDiff
 
 trait HashMacros {
   def joinHashes(hashes: List[Int]): Int
@@ -69,7 +70,7 @@ class HashMacroImpls(val c: Context) extends MacroUtils {
 
     val map: Map[String, Boolean] = spec.toMap
     if (map.size != spec.length)
-      fail("Duplicate field names found: " + Util.dups(spec.iterator.map(_._1)).toSet.mkString(", "))
+      fail("Duplicate field names found: " + Utils.dups(spec.iterator.map(_._1)).toSet.mkString(", "))
 
     implCaseClass[T](debug, ps => {
       val fieldDiff = SetDiff.compare(ps.map(_._1.decodedName.toString).toSet, map.keySet)

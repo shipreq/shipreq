@@ -1,5 +1,6 @@
 package shipreq.webapp.base.event
 
+import japgolly.microlibs.utils.Utils
 import monocle._
 import scala.reflect.ClassTag
 import scalaz.{-\/, Equal, \/, \/-}
@@ -74,7 +75,7 @@ private[event] object ApplyEventLib {
 
   def ensureDistinct[A](field: String, as: => TraversableOnce[A])(implicit trust: Trust, u: UnivEq[A]): SE[Unit] =
     whenUntrusted {
-      val dups = Util.dups(as)
+      val dups = Utils.dups(as)
       if (dups.isEmpty) nop else SE.fail(s"Duplicates found in $field: ${dups.toVector.distinct.mkString(", ")}")
     }
 

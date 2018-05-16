@@ -58,13 +58,6 @@ object Util {
     else
       s.substring(0, cutoff - 1) + "\u2026"
 
-  def deleteVectorElement[A](v: Vector[A], n: Int): Vector[A] = {
-    val b = v.companion.newBuilder[A]
-    var i = 0
-    v.foreach{ x => if (i != n) b += x; i += 1 }
-    b.result()
-  }
-
   def foldAndIndex[A, B, K](as: TraversableOnce[A], z: B, ik: Int => K)(f: (B, K, A) => B): (B, Map[K, A]) = {
     var i = 0
     var m = Map.empty[K, A]
@@ -101,53 +94,12 @@ object Util {
   @inline final def filterOutAndSortByName[A](as: GenTraversable[A])(f: A => Boolean, name: A => String): Iterable[A] =
     filterAndSortByName(as)(!f(_), name)
 
-  /**
-   * Pattern.quote doesn't work in Scala.JS.
-   *
-   * http://stackoverflow.com/questions/2593637/how-to-escape-regular-expression-in-javascript
-   */
-  def regexEscape(s: String): String = {
-    var r = s
-    r = regexEscape1.replaceAllIn(r, """\\$1""")
-    r = regexEscape2.replaceAllIn(r, """\\x08""")
-    r
-  }
-
-  private[this] val regexEscape1 = """([-()\[\]{}+?*.$\^|,:#<!\\])""".r
-  private[this] val regexEscape2 = """\x08""".r
-
-  def regexEscapeAndWrap(s: String): String =
-    s"(?:${regexEscape(s)})"
-
   //def fix[A, B <: A, C >: A](before: B, after: A)(test: A => Boolean, fix: A => C): C =
   def fixBeforeAfter[A](before: A, after: A)(test: A => Boolean, fix: A => A): A =
     if (test(before) && !test(after))
       fix(after)
     else
       after
-
-  /**
-   * Space = Θ(mn)
-   * Time  = Θ(nᵐ)
-   */
-  def levenshtein(str1: String, str2: String): Int = {
-    val m = str1.length
-    val n = str2.length
-
-    val d: Array[Array[Int]] = Array.ofDim(m + 1, n + 1)
-    for (i <- 0 to m) d(i)(0) = i
-    for (j <- 0 to n) d(0)(j) = j
-
-    for (i <- 1 to m; j <- 1 to n) {
-      val cost = if (str1(i - 1) == str2(j - 1)) 0 else 1
-      val a = d(i-1)(j  ) + 1     // deletion
-      val b = d(i  )(j-1) + 1     // insertion
-      val c = d(i-1)(j-1) + cost  // substitution
-      d(i)(j) = a min b min c
-    }
-
-    d(m)(n)
-  }
 
   @inline def maybeUse[A](allow: Boolean)(ok: => Stream[A]): Stream[A] =
     if (allow) ok else Stream.empty
@@ -189,15 +141,6 @@ object Util {
     j
   }
 
-  def togglePresence[A](as: Set[A])(a: A): Set[A] =
-    if (as contains a)
-      as - a
-    else
-      as + a
-
-  def mapToOrder[A](as: TraversableOnce[A]): Map[A, Int] =
-    as.toIterator.zipWithIndex.toMap
-
   def univEqAndArbitraryOrder[A](values: Iterable[A]): UnivEq[A] with Order[A] = {
     val fixedOrder = values.zipWithIndex.toMap
     new UnivEq[A] with Order[A] {
@@ -205,34 +148,6 @@ object Util {
       override def order(a: A, b: A) = Order[Int].order(int(a), int(b))
       override def equal(a: A, b: A) = a == b
     }
-  }
-
-  def quickStringExists(strings: Set[String]): String => Boolean = {
-    val maxLen = strings.foldLeft(0)(_ max _.length)
-    val byLen = Array.fill(maxLen + 1)(Set.empty[String])
-    strings.foreach(s => byLen(s.length) = byLen(s.length) + s)
-    s => (s.length <= maxLen) && byLen(s.length).contains(s)
-  }
-
-  // Improved a larger benchmark by 8.6%
-  def quickStringLookup[A](map: Map[String, A]): String => Option[A] = {
-    val strings = map.keySet
-    val maxLen = strings.foldLeft(0)(_ max _.length)
-    val byLen = Array.fill(maxLen + 1)(Map.empty[String, A])
-    strings.foreach(s => byLen(s.length) = byLen(s.length).updated(s, map(s)))
-    s => if (s.length <= maxLen) byLen(s.length).get(s) else None
-  }
-
-  def dups[A: UnivEq](as: TraversableOnce[A]): Iterator[A] = { // TODO Move to microlibs
-    val seen = collection.mutable.HashSet.empty[A]
-    as.toIterator.map { a =>
-      if (seen contains a)
-        Some(a)
-      else {
-        seen += a
-        None
-      }
-    }.filterDefined
   }
 
   def sideBySideStrings(str1: String, str2: String, sep: String = " | "): String =

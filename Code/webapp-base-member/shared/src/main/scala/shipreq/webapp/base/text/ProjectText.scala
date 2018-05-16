@@ -1,5 +1,6 @@
 package shipreq.webapp.base.text
 
+import japgolly.microlibs.utils.Utils
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.utils.Memo
@@ -66,7 +67,7 @@ object ProjectText {
       def findAlt(reqId: ReqId, deadCode: Value): Option[ReqWithAltCode] = {
         val deadCodeStr = reqCode(deadCode)
         NonEmptySet.option(rc.activeReqCodesByReqId(reqId) - deadCode).map { cs =>
-          val c = cs.whole.minBy(c => Util.levenshtein(deadCodeStr, reqCode(c)))
+          val c = cs.whole.minBy(c => Utils.levenshtein(deadCodeStr, reqCode(c)))
           ReqWithAltCode(c, reqId)
         }
       }

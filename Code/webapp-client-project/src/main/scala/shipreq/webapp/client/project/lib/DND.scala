@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.lib
 
 import scalaz._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
 import shipreq.base.util.Util
 
@@ -49,7 +50,7 @@ object DND { // TODO Remove? DragToReorder makes this redundant?
         tmp2
       else fromB match {
         case Some(b) => tmp2.updated(putLater, b)
-        case None    => Util.deleteVectorElement(tmp2, putLater)
+        case None    => tmp2.delete(putLater).getOrElse(tmp2)
       }
     assert(result.size == bs.size, s"DND Move failure.\nBefore: $bs\n After: $result")
     result
