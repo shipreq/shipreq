@@ -317,6 +317,13 @@ final class MockServer extends Server.Algebra[Name] {
   var clock = Instant.now()
   override val now = Name(clock)
 
+  override def measureDuration[A](f: Name[A]): Name[(A, Duration)] =
+    for {
+      start <- now
+      a     <- f
+      end   <- now
+    } yield (a, Duration.between(start, end))
+
   private def durationBorder(duration: Duration, tolerance: Duration = Duration.ofSeconds(2)): Validity => Duration = {
     case Valid   => duration minus tolerance
     case Invalid => duration plus tolerance
@@ -452,7 +459,6 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
   implicit val nameToName = NaturalTransformation.refl[Name]
   implicit val metrics    = MetricsLogic.const(Name(()))
   implicit val publicApi  = PublicSpaLogic[Name, Name]: PublicSpaLogic.ForApi[Name]
-  implicit val fxOps      = FxOps.fromMonad[Name]
 
   implicit object ops extends OpsEndpoints.Base[Name] {
     override val randomToken = Name("blah")

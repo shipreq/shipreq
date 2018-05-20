@@ -10,7 +10,8 @@ import shipreq.webapp.base.protocol._
 object Server {
 
   trait Time[F[_]] {
-    def now: F[Instant]
+    val now: F[Instant]
+    def measureDuration[A](f: F[A]): F[(A, Duration)]
   }
 
   trait Schedule[F[_]] extends Time[F] {
@@ -76,9 +77,10 @@ object Server {
   abstract class Delegate[F[_]](underlying: Algebra[F]) extends Algebra[F] {
     override def delay[A](f: F[A], d: Duration) = underlying.delay(f, d)
     override def fork[A](fa: F[A])              = underlying.fork(fa)
+    override def measureDuration[A](fa: F[A])   = underlying.measureDuration(fa)
     override val clientIP                       = underlying.clientIP
     override val sessionId                      = underlying.sessionId
-    override def now                            = underlying.now
+    override val now                            = underlying.now
     override val registerServerSideProc         = (name, f) => underlying.registerServerSideProc(name, f)
   }
 

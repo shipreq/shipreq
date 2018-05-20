@@ -1,7 +1,7 @@
 package shipreq.benchmark
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import java.time.Instant
+import java.time.{Duration, Instant}
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import monix.eval.Coeval
@@ -160,6 +160,12 @@ object DispatchBM {
 
     implicit val svrTime: Server.Time[F] = new Server.Time[F] {
       override val now = F point Instant.now()
+      override def measureDuration[A](f: F[A]): F[(A, Duration)] =
+        for {
+          start <- now
+          a     <- f
+          end   <- now
+        } yield (a, Duration.between(start, end))
     }
 
     implicit val metrics: MetricsLogic[F] =

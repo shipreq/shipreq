@@ -2,7 +2,6 @@ package shipreq.webapp.server.logic
 
 import scalaz.{Monad, ~>}
 import shipreq.base.ops.Trace
-import shipreq.base.util.FxOps
 import shipreq.taskman.api.TaskmanApi
 import shipreq.webapp.server.ServerConfig
 
@@ -22,7 +21,6 @@ object ServerLogic {
   def create[D[_] : Monad
                   : DB.Algebra,
              F[_] : Monad
-                  : FxOps
                   : MetricsLogic
                   : ProjectServer.StoreAlgebra
                   : Security.Algebra

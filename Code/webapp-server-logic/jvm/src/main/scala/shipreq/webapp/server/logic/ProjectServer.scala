@@ -9,7 +9,6 @@ import scalaz.syntax.std.option._
 import scalaz.{-\/, Monad, \/, \/-, ~>}
 import shipreq.base.ops.Trace
 import shipreq.base.util._
-import shipreq.base.util.FxOps.Implicits._
 import shipreq.base.util.log.HasLogger
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
@@ -134,7 +133,6 @@ object ProjectServer extends HasLogger {
                         svr: Server.Algebra[F],
                         trace: Trace.Algebra[F],
                         runDB: D ~> F,
-                        fxOps: FxOps[F],
                         F: Monad[F],
                         D: Monad[D]): ProjectServer[F] =
     new ProjectServer[F] {
@@ -197,7 +195,7 @@ object ProjectServer extends HasLogger {
 
         def init: F[LoadError \/ LoadedState] =
           for {
-            (result, dur) <- init0.measureDuration
+            (result, dur) <- svr.measureDuration(init0)
             _ <- F.point {
               result match {
                 case \/-(_) => logger.info(s"Loaded project #${pid.value} in ${dur.toMillis} ms")
