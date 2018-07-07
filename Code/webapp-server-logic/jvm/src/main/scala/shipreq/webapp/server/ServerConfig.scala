@@ -1,8 +1,6 @@
 package shipreq.webapp.server
 
-import japgolly.microlibs.config._
-import japgolly.microlibs.config.ConfigParser.Implicits.Defaults._
-import japgolly.microlibs.config.JavaTimeConfigParsers._
+import japgolly.clearconfig._
 import java.time.Duration
 import monocle.macros.Lenses
 import scalaz.syntax.applicative._
@@ -68,27 +66,27 @@ object ServerConfig {
       jdbc = true,
       path = (DispatchLogic.opsRoot / "metrics").relativeUrl)
 
-    def config: Config[Prometheus] =
-      ( Config.getOrUse[Boolean]("enabled", default.enabled) |@|
-        Config.getOrUse[Boolean]("hikaricp", default.hikaricp) |@|
-        Config.getOrUse[Boolean]("hotspot", default.hotspot) |@|
-        Config.getOrUse[Boolean]("jdbc", default.hotspot) |@|
-        Config.getOrUse[String ]("path", default.path).map(_.replaceFirst("^/*", "/"))
+    def config: ConfigDef[Prometheus] =
+      ( ConfigDef.getOrUse[Boolean]("enabled", default.enabled) |@|
+        ConfigDef.getOrUse[Boolean]("hikaricp", default.hikaricp) |@|
+        ConfigDef.getOrUse[Boolean]("hotspot", default.hotspot) |@|
+        ConfigDef.getOrUse[Boolean]("jdbc", default.hotspot) |@|
+        ConfigDef.getOrUse[String ]("path", default.path).map(_.replaceFirst("^/*", "/"))
     ) (apply)
   }
 
-  def config: Config[ServerConfig] =
-    ( Config.need    [String  ]      ("url").map(Url.Absolute.Base.apply) |@|
-      Config.getOrUse[Duration]      ("attack_frustration_delay", Duration.ofMillis(120)) |@|
-      Config.need    [Int     ]      ("token.length") |@|
-      Config.need    [Duration]      ("token.lifespan.register") |@|
-      Config.need    [Duration]      ("token.lifespan.resetpw") |@|
-      Config.getOrUse[Boolean ]      ("feature.publicRegistration", true).map(Allow.when) |@|
-      Config.get     [String  ]      ("googleAnalytics.trackingId") |@|
-      Config.get     [String  ]      ("kamon.conf") |@|
-      Prometheus.config.withPrefix   ("prometheus.") |@|
-      Config.need    [String  ]      ("taskman.schema") |@|
-      Config.getOrUse[Boolean ]      ("taskman.init", true) |@|
+  def config: ConfigDef[ServerConfig] =
+    ( ConfigDef.need    [String  ]      ("url").map(Url.Absolute.Base.apply) |@|
+      ConfigDef.getOrUse[Duration]      ("attack_frustration_delay", Duration.ofMillis(120)) |@|
+      ConfigDef.need    [Int     ]      ("token.length") |@|
+      ConfigDef.need    [Duration]      ("token.lifespan.register") |@|
+      ConfigDef.need    [Duration]      ("token.lifespan.resetpw") |@|
+      ConfigDef.getOrUse[Boolean ]      ("feature.publicRegistration", true).map(Allow.when) |@|
+      ConfigDef.get     [String  ]      ("googleAnalytics.trackingId") |@|
+      ConfigDef.get     [String  ]      ("kamon.conf") |@|
+      Prometheus.config.withPrefix      ("prometheus.") |@|
+      ConfigDef.need    [String  ]      ("taskman.schema") |@|
+      ConfigDef.getOrUse[Boolean ]      ("taskman.init", true) |@|
       RetryCriteria.config.withPrefix("taskman.init.retry.")
     ) (apply).withPrefix("shipreq.")
 

@@ -1,6 +1,6 @@
 package shipreq.taskman.server.business
 
-import japgolly.microlibs.config.{Config, ConfigParser}
+import japgolly.clearconfig._
 import javax.mail._
 import javax.mail.internet.{InternetAddress, MimeMessage}
 import scala.runtime.AbstractFunction1
@@ -35,31 +35,32 @@ object JavaMail extends HasLogger {
     ArticulateError.attempt(InternetAddress.parse(s).toList)
       .leftMap(_.tagDeterministic)
 
-  object ConfigParsers {
+  object ConfigValueParsers {
 
-    implicit def parseAddr1(implicit p: ConfigParser[String]): ConfigParser[Addr] =
-      p.mapAttempt { s =>
+    implicit def parseAddr1: ConfigValueParser[Addr] =
+      ConfigValueParser.id.mapAttempt { s =>
         val ea = EmailAddr(s)
         parse1(ea).bimap(_.getMessage, p => Addr(ea, Some(p)))
       }
 
-    implicit def parseAddrN(implicit p: ConfigParser[String]): ConfigParser[List[Addr]] =
-      p.mapAttempt(parseN(_).bimap(_.getMessage, _.map(a => Addr(EmailAddr(a.toString), Some(a)))))
+    implicit def parseAddrN: ConfigValueParser[List[Addr]] =
+      ConfigValueParser.id
+        .mapAttempt(parseN(_).bimap(_.getMessage, _.map(a => Addr(EmailAddr(a.toString), Some(a)))))
 
-    implicit def parseAddrNEL(implicit p: ConfigParser[String]): ConfigParser[NonEmptyList[Addr]] =
+    implicit def parseAddrNEL: ConfigValueParser[NonEmptyList[Addr]] =
       parseAddrN.mapAttempt {
         case Nil    => -\/("At least one address required.")
         case h :: t => \/-(NonEmptyList.nel(h, t))
       }
 
-    def configEnvelopeFront(implicit p: ConfigParser[String]): Config[EnvelopeFront] =
-      ( Config.need[NonEmptyList[Addr]]("to") |@|
-        Config.getOrUse[List[Addr]]("cc", Nil) |@|
-        Config.getOrUse[List[Addr]]("bcc", Nil)
+    def configEnvelopeFront: ConfigDef[EnvelopeFront] =
+      ( ConfigDef.need[NonEmptyList[Addr]]("to") |@|
+        ConfigDef.getOrUse[List[Addr]]("cc", Nil) |@|
+        ConfigDef.getOrUse[List[Addr]]("bcc", Nil)
       )(EnvelopeFront)
 
-    def configEnvelope(implicit p: ConfigParser[String]): Config[Envelope] =
-      (configEnvelopeFront |@| Config.need[Addr]("from"))(_ from _)
+    def configEnvelope: ConfigDef[Envelope] =
+      (configEnvelopeFront |@| ConfigDef.need[Addr]("from"))(_ from _)
   }
 
   implicit class EAExt(val ea: Addr) extends AnyVal {

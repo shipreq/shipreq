@@ -1,7 +1,7 @@
 package shipreq.webapp.server.logic
 
-import japgolly.microlibs.stdlib_ext.AsciiTable
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.microlibs.utils.AsciiTable
 import japgolly.univeq.UnivEq
 import java.time.{Duration, Instant}
 import monocle.macros.Lenses

@@ -1,8 +1,6 @@
 package shipreq.taskman.server
 
-import japgolly.microlibs.config.ConfigParser.Implicits.Defaults._
-import japgolly.microlibs.config.JavaTimeConfigParsers._
-import japgolly.microlibs.config._
+import japgolly.clearconfig._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Duration
 import javax.mail.Session
@@ -13,8 +11,8 @@ import shipreq.base.util.RetryCriteria
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.CfgKeys
 import shipreq.taskman.server.business._
-import shipreq.taskman.server.business.JavaMail.ConfigParsers._
-import shipreq.taskman.server.business.FreshDesk.ConfigParsers._
+import shipreq.taskman.server.business.JavaMail.ConfigValueParsers._
+import shipreq.taskman.server.business.FreshDesk.ConfigValueParsers._
 import shipreq.taskman.server.logic._
 import shipreq.taskman.server.logic.business._
 
@@ -26,12 +24,12 @@ final case class TaskmanConfig(mail     : TaskmanConfig.Mail,
 
 object TaskmanConfig extends HasLogger {
 
-  def config: Config[TaskmanConfig] =
+  def config: ConfigDef[TaskmanConfig] =
     (mail |@| mailchimp |@| freshdesk |@| shipreq |@| taskman) (apply)
 
-  def mailTokens: Config[Email.TokenValues] =
-    (Config.need[String](CfgKeys.Webapp.appName)
-      |@| Config.need[String](CfgKeys.Webapp.loginUrl)
+  def mailTokens: ConfigDef[Email.TokenValues] =
+    (ConfigDef.need[String](CfgKeys.Webapp.appName)
+      |@| ConfigDef.need[String](CfgKeys.Webapp.loginUrl)
       ) (Email.TokenValues)
 
   // TODO Put props and parsers in Business classes
@@ -45,15 +43,15 @@ object TaskmanConfig extends HasLogger {
     def envelopeProps = Email.EnvelopeProps(publicFrom, archiveAddrs)
   }
 
-  def mail: Config[Mail] =
-    ((Config.need[Email.Addr]("public.from")
-      |@| Config.getOrUse[List[Email.Addr]]("archive.to", Nil)
-      |@| Config.need[Int]("concurrency.max").ensure(_ >= 1, "Must be ≥ 1.")
+  def mail: ConfigDef[Mail] =
+    ((ConfigDef.need[Email.Addr]("public.from")
+      |@| ConfigDef.getOrUse[List[Email.Addr]]("archive.to", Nil)
+      |@| ConfigDef.need[Int]("concurrency.max").ensure(_ >= 1, "Must be ≥ 1.")
       ).tupled.withPrefix("mail.")
       |@| mailMechanism) { case ((a, b, c), m) => Mail(a, b, m, c) }
 
-  def mailMechanism: Config[TaskmanConfig.JavaMail \/ MailGun.Props] =
-    Config.need[String]("mail.via").map(_.toLowerCase).chooseAttempt {
+  def mailMechanism: ConfigDef[TaskmanConfig.JavaMail \/ MailGun.Props] =
+    ConfigDef.need[String]("mail.via").map(_.toLowerCase).chooseAttempt {
       case "javamail" => \/-(javaMail.map(-\/(_)))
       case "mailgun"  => \/-(mailGun.map(\/-(_)))
       case _          => -\/("Legal values are [JavaMail, MailGun].")
@@ -61,32 +59,32 @@ object TaskmanConfig extends HasLogger {
 
   case class JavaMail(sessionFn: () => Session)
 
-  def javaMail: Config[JavaMail] =
+  def javaMail: ConfigDef[JavaMail] =
     JavaMailConfig.sessionFn.map(JavaMail.apply)
 
-  def mailGun: Config[MailGun.Props] =
-    (Config.need[String]("domain")
-      |@| Config.need[String]("key").obfuscateInReport
+  def mailGun: ConfigDef[MailGun.Props] =
+    (ConfigDef.need[String]("domain")
+      |@| ConfigDef.need[String]("key").secret
       ) (MailGun.Props.apply)
       .withPrefix("mailgun.")
 
   // ===================================================================================================================
 
-  def mailchimp: Config[MailChimp.Props] =
-    (Config.need[String]("dc")
-      |@| Config.need[String]("key").obfuscateInReport
-      |@| Config.need[String]("masterList")
+  def mailchimp: ConfigDef[MailChimp.Props] =
+    (ConfigDef.need[String]("dc")
+      |@| ConfigDef.need[String]("key").secret
+      |@| ConfigDef.need[String]("masterList")
       ) (MailChimp.Props)
       .withPrefix("mailchimp.")
 
   // ===================================================================================================================
 
-  def freshdesk: Config[FreshDesk.Props] =
-    (Config.need[String]("domain")
-      |@| Config.need[String]("key").obfuscateInReport
-      |@| Config.need[String]("taskmanEmail")
-      |@| Config.need[FreshDesk.UnverifiedTicketOrg]("org.landingPage")
-      |@| Config.need[FreshDesk.UnverifiedTicketOrg]("org.failure")
+  def freshdesk: ConfigDef[FreshDesk.Props] =
+    (ConfigDef.need[String]("domain")
+      |@| ConfigDef.need[String]("key").secret
+      |@| ConfigDef.need[String]("taskmanEmail")
+      |@| ConfigDef.need[FreshDesk.UnverifiedTicketOrg]("org.landingPage")
+      |@| ConfigDef.need[FreshDesk.UnverifiedTicketOrg]("org.failure")
       ) (FreshDesk.Props)
       .withPrefix("freshdesk.")
 
@@ -94,8 +92,8 @@ object TaskmanConfig extends HasLogger {
 
   case class ShipReq(schema: Option[String])
 
-  def shipreq: Config[ShipReq] =
-    Config.get[String]("schema")
+  def shipreq: ConfigDef[ShipReq] =
+    ConfigDef.get[String]("schema")
       .map(ShipReq)
       .withPrefix("shipreq.")
 
@@ -112,13 +110,13 @@ object TaskmanConfig extends HasLogger {
                      pollGap       : Duration,
                      healthFile    : Option[String])
 
-  def taskman: Config[Taskman] =
+  def taskman: ConfigDef[Taskman] =
     (RetryCriteria.config.withPrefix("remoteCfg.retry.")
-      |@| Config.need[Int]("queueSize").ensure(_ >= 1, "Must be ≥ 1.")
-      |@| Config.need[Duration]("trustPeriod").ensure(!_.isShorterThan(10 seconds), "Must be at least 10 seconds.")
-      |@| Config.need[Duration]("poll.every").ensure(!_.isShorterThan(50 millis), "Must be at least 50 ms.")
-      |@| Config.get[Duration]("poll.gap").ensure(_.fold(true)(!_.isShorterThan(50 millis)), "Must be at least 50 ms.")
-      |@| Config.get[String]("healthFile")
+      |@| ConfigDef.need[Int]("queueSize").ensure(_ >= 1, "Must be ≥ 1.")
+      |@| ConfigDef.need[Duration]("trustPeriod").ensure(!_.isShorterThan(10 seconds), "Must be at least 10 seconds.")
+      |@| ConfigDef.need[Duration]("poll.every").ensure(!_.isShorterThan(50 millis), "Must be at least 50 ms.")
+      |@| ConfigDef.get[Duration]("poll.gap").ensure(_.fold(true)(!_.isShorterThan(50 millis)), "Must be at least 50 ms.")
+      |@| ConfigDef.get[String]("healthFile")
       ) { (remoteCfgRetry, qs, tp, pollEvery, pollGapO, healthFile) =>
       val pollGap = pollGapO getOrElse pollEvery
       if (pollGap isLongerThan pollEvery)

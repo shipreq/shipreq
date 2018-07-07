@@ -1,17 +1,17 @@
 package shipreq.base.util
 
-import japgolly.microlibs.config._
+import japgolly.clearconfig._
 import shipreq.base.util.FxModule._
 
 object Props {
 
-  def fileSources: Sources[Fx] =
-    Source.propFileOnClasspath[Fx]("shipreq.properties", optional = true) >
-    Source.propFileOnClasspath[Fx]("db.properties", optional = true) >
-    Source.propFileOnClasspath[Fx]("secret.properties", optional = true)
+  def fileSources: ConfigSources[Fx] =
+    ConfigSource.propFileOnClasspath[Fx]("shipreq.properties", optional = true) >
+    ConfigSource.propFileOnClasspath[Fx]("db.properties", optional = true) >
+    ConfigSource.propFileOnClasspath[Fx]("secret.properties", optional = true)
 
-  def sources: Sources[Fx] =
-    Source.environment[Fx].mapKeyQueries(k => List(k, k.replace('.', '_'))) >
+  def sources: ConfigSources[Fx] =
+    ConfigSource.environment[Fx] >
     fileSources >
-    Source.system[Fx]
+    ConfigSource.system[Fx]
 }

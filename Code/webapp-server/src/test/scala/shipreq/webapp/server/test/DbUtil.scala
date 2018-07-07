@@ -1,7 +1,7 @@
 package shipreq.webapp.server.test
 
 import doobie.imports._
-import japgolly.microlibs.stdlib_ext.AsciiTable
+import japgolly.microlibs.utils.AsciiTable
 import org.postgresql.util.PSQLException
 import scala.util.Random
 import shipreq.base.db.DoobieHelpers._

@@ -40,9 +40,8 @@ object Dependencies {
   }
 
   object Microlibs {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "1.15")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "1.16")
     val adtMacros  = mm("adt-macros")
-    val config     = mm("config")
     val macroUtils = mm("macro-utils")
     val nonempty   = mm("nonempty")
     val recursion  = mm("recursion")
@@ -186,11 +185,12 @@ object Dependencies {
   val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %%%! "benchmark"         % "0.2.5")
   val scalajsJavaTime  = jsOnly("org.scala-js"                          %%%! "scalajs-java-time" % "0.2.4")
 
-  val boopickle = jvmAndJs("me.chrons",                        "boopickle", "1.2.5")
-  val parboiled = jvmAndJs("org.parboiled",                    "parboiled", "2.1.4")
-  val shapeless = jvmAndJs("com.chuusai",                      "shapeless", "2.3.3")
-  val μPickle   = jvmAndJs("com.github.japgolly.fork.upickle", "upickle",   "custom-7")
-  val μTest     = jvmAndJs("com.lihaoyi",                      "utest",     "0.4.8") // 0.5.4+ breaks PhantomJS in webapp-base-test-js
+  val boopickle   = jvmAndJs("me.chrons",                        "boopickle", "1.2.5")
+  val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",      "1.2.1")
+  val parboiled   = jvmAndJs("org.parboiled",                    "parboiled", "2.1.4")
+  val shapeless   = jvmAndJs("com.chuusai",                      "shapeless", "2.3.3")
+  val μPickle     = jvmAndJs("com.github.japgolly.fork.upickle", "upickle",   "custom-7")
+  val μTest       = jvmAndJs("com.lihaoyi",                      "utest",     "0.4.8") // 0.5.4+ breaks PhantomJS in webapp-base-test-js
 
   val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.0")
   val scalaXml     = jvmOnly("org.scala-lang.modules"     %% "scala-xml"             % "1.1.0")

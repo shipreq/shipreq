@@ -1,8 +1,7 @@
 package bootstrap.liftweb
 
-import com.zaxxer.hikari.HikariDataSource
 import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
-import japgolly.microlibs.config.{Config, ConfigParser, ConfigReport}
+import japgolly.clearconfig._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import monocle.macros.Lenses
@@ -38,7 +37,7 @@ class Boot {
   def boot(): Unit = {
     // Read config
     val (cfg, runMode) = readConfig()
-    logger.info(cfg.report.report)
+    logger.info(cfg.report.full)
     runMode foreach setRunMode
     logger.info(s"RunMode = ${Props.mode}")
 
@@ -61,10 +60,9 @@ class Boot {
   }
 
   def readConfig(): (BootConfig, Option[RunModes.Value]) = {
-    import ConfigParser.Implicits.Defaults._
 
-    val cfgRunMode: Config[Option[RunModes.Value]] =
-      Config.get[String]("shipreq.lift.runMode").mapOption {
+    val cfgRunMode: ConfigDef[Option[RunModes.Value]] =
+      ConfigDef.get[String]("shipreq.lift.runMode").mapOption {
         case Some(i) => RunModes.values.iterator.filter(_.toString.toLowerCase ==* i).nextOption().map(Some(_))
         case None    => Some(None)
       }

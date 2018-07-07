@@ -1,7 +1,7 @@
 package shipreq.taskman.server
 
 import doobie.imports._
-import japgolly.microlibs.config
+import japgolly.clearconfig._
 import java.time.Duration
 import scalaz.{-\/, \/, \/-, ~>}
 import scalaz.std.option.optionInstance
@@ -180,12 +180,13 @@ object ServerOpFx {
       cfgGetAllQ.list
   }
 
-  def configSource(dbAccess: DbAccess): config.Source[Fx] =
-    config.Source[Fx](
-      config.SourceName(dbAccess.desc),
+  def configSource(dbAccess: DbAccess): ConfigSource[Fx] =
+  // TODO Remove "new "
+    new ConfigSource[Fx](
+      new ConfigSourceName(dbAccess.desc),
       dbAccess.fx.trans(Dao.cfgGetAll)
         .attempt
-        .map(_.bimap(_.toString, kvs => config.ConfigStore.stringMap(kvs.toMap))))
+        .map(_.bimap(_.toString, kvs => ConfigStore.ofMap[Fx](kvs.toMap))))
 }
 
 // =====================================================================================================================

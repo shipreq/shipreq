@@ -37,12 +37,11 @@ object ShipReqBuild {
       .configureJs(Common.jsSettings(NoDom))
       .depsForBoth(
         UnivEq.scalaz ++ Scalaz.core ++ Nyaya.prop ++ Monocle.core ++
-        Microlibs.adtMacros ++ Microlibs.config ++ Microlibs.nonempty ++
-        Microlibs.recursion ++ Microlibs.scalazExt ++ Microlibs.stdlibExt ++
-        Microlibs.utils ++
+        Microlibs.adtMacros ++ Microlibs.nonempty ++ Microlibs.recursion ++
+        Microlibs.scalazExt ++ Microlibs.stdlibExt ++ Microlibs.utils ++
         testScope(μTest ++ Nyaya.test ++ Microlibs.testUtil))
       .depsForJvm(
-        SLF4J.api ++ Logback.core ++ scalaLogging ++
+        SLF4J.api ++ Logback.core ++ scalaLogging ++ clearConfig ++
         testScope(Specs2.combo))
 
   lazy val baseOps =

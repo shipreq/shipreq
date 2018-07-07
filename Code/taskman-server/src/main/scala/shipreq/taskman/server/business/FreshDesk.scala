@@ -1,6 +1,6 @@
 package shipreq.taskman.server.business
 
-import japgolly.microlibs.config.ConfigParser
+import japgolly.clearconfig._
 import japgolly.univeq._
 import org.json4s.JsonDSL._
 import org.json4s._
@@ -32,8 +32,8 @@ object FreshDesk {
 
   final case class Group(id: Long, name: String)
 
-  object ConfigParsers {
-    implicit def parseTicketOrg(implicit s: ConfigParser[String]): ConfigParser[UnverifiedTicketOrg] =
+  object ConfigValueParsers {
+    implicit def parseTicketOrg(implicit s: ConfigValueParser[String]): ConfigValueParser[UnverifiedTicketOrg] =
       s.mapOption(
         """^\s*(\S[^/]*?)\s*/\s*(\S[^/]*?)\s*$""".r.findFirstMatchIn(_).map(m => UnverifiedTicketOrg(m group 1, m group 2)),
         "Expected TicketOrg format: <groupName> / <ticketType>")

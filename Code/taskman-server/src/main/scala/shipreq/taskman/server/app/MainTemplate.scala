@@ -14,7 +14,7 @@ private[app] trait MainTemplate extends HasLogger {
     for {
       tmp          <- DbConfig.config.withReport.run(Props.sources).map(_.getOrDie)
       (cfg, report) = tmp
-      _            <- Fx(logger.info(report.report))
+      _            <- Fx(logger.info(report.full))
       dbAccess     <- DbAccess.fromCfg(cfg)
       a            <- dbAccess.setupRunShutdown(f(dbAccess))
     } yield a
@@ -31,7 +31,7 @@ private[app] trait MainTemplate extends HasLogger {
     for {
       tmp                          <- readConfig.map(_.getOrDie)
       ((dbCfg, taskmanCfg), report) = tmp
-      _                            <- Fx(logger.info(report.report))
+      _                            <- Fx(logger.info(report.full))
       dbAccess                     <- DbAccess.fromCfg(dbCfg)
       a                            <- dbAccess.setupRunShutdown(onShutDown(dbAccess, taskmanCfg))
     } yield a

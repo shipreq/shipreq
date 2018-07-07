@@ -1,8 +1,6 @@
 package shipreq.base.util
 
-import japgolly.microlibs.config.ConfigParser.Implicits.Defaults._
-import japgolly.microlibs.config.JavaTimeConfigParsers._
-import japgolly.microlibs.config._
+import japgolly.clearconfig._
 import java.time.Duration
 import scalaz.syntax.applicative._
 
@@ -17,6 +15,6 @@ final case class RetryCriteria(delay: Duration, maxAttempts: Option[Int]) {
 
 object RetryCriteria {
 
-  def config: Config[RetryCriteria] =
-    (Config.need[Duration]("delay") |@| Config.get[Int]("limit")) (apply _)
+  def config: ConfigDef[RetryCriteria] =
+    (ConfigDef.need[Duration]("delay") |@| ConfigDef.get[Int]("limit"))(apply)
 }

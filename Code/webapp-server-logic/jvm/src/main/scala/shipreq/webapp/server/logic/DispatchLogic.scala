@@ -173,13 +173,12 @@ object DispatchLogic {
                             pass: PlainTextPassword,
                             goto: Url.Relative)
   object QuickDev {
-    import japgolly.microlibs.config._
-    import japgolly.microlibs.config.ConfigParser.Implicits.Defaults._
+    import japgolly.clearconfig._
 
     def config =
-      ( Config.need[String]("USER").map(Username.orEmail) |@|
-        Config.need[String]("PASS").map(PlainTextPassword(_)) |@|
-        Config.get [String]("GOTO").map(_.fold(Urls.memberHome)(Url.Relative(_)))
+      ( ConfigDef.need[String]("USER").map(Username.orEmail) |@|
+        ConfigDef.need[String]("PASS").map(PlainTextPassword(_)) |@|
+        ConfigDef.get [String]("GOTO").map(_.fold(Urls.memberHome)(Url.Relative(_)))
       )(apply).withPrefix("SHIPREQ_DEV_")
 
     def get(): Option[QuickDev] = {

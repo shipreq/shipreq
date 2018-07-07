@@ -1,25 +1,24 @@
 package shipreq.taskman.server.business
 
-import japgolly.microlibs.config._
+import japgolly.clearconfig._
 import java.util.Properties
 import scalaz.syntax.applicative._
-import ConfigParser.Implicits.Defaults._
 import javax.mail.{Authenticator, PasswordAuthentication, Session}
 import scalaz.{-\/, \/-}
 
 object JavaMailConfig {
 
-  private def get[A](n1: String)(implicit prefix: Prefix, p: ConfigParser[A]): Config[Properties => Unit] = {
+  private def get[A](n1: String)(implicit prefix: Prefix, p: ConfigValueParser[A]): ConfigDef[Properties => Unit] = {
     val n = prefix.value + n1
-    Config.get(n)(p).map(oa => p => oa.foreach(a => p.setProperty(n, a.toString)))
+    ConfigDef.get(n)(p).map(oa => p => oa.foreach(a => p.setProperty(n, a.toString)))
   }
 
   private case class Prefix(value: String)
 
   // https://javamail.java.net/nonav/docs/api/com/sun/mail/smtp/package-summary.html
-  private def main: Config[Properties => Unit] = {
+  private def main: ConfigDef[Properties => Unit] = {
     implicit val prefix = Prefix("mail.")
-    Config.mergeConsumerFns(
+    ConfigDef.mergeConsumerFns(
       get[Boolean]("debug"),
       get[String]("from"),
       get[String]("host"),
@@ -30,8 +29,8 @@ object JavaMailConfig {
   }
 
   // https://javamail.java.net/nonav/docs/api/com/sun/mail/smtp/package-summary.html
-  private def smtp(implicit prefix: Prefix): Config[Properties => Unit] =
-    Config.mergeConsumerFns(
+  private def smtp(implicit prefix: Prefix): ConfigDef[Properties => Unit] =
+    ConfigDef.mergeConsumerFns(
       get[Boolean]("allow8bitmime"),
       get[Boolean]("auth"),
       get[Boolean]("auth.digest-md5.disable"),
@@ -84,8 +83,8 @@ object JavaMailConfig {
       get[Int]("writetimeout")
     )
 
-  def props: Config[Properties] =
-    Config.mergeConsumerFns(
+  def props: ConfigDef[Properties] =
+    ConfigDef.mergeConsumerFns(
       smtp(Prefix("mail.smtp.")),
       // smtp(Prefix("mail.smtps.")),
       main
@@ -95,8 +94,8 @@ object JavaMailConfig {
       p
     }
 
-  def passwordAuthentication: Config[Option[PasswordAuthentication]] =
-    (Config.get[String]("mail.user") tuple Config.get[String]("mail.password"))
+  def passwordAuthentication: ConfigDef[Option[PasswordAuthentication]] =
+    (ConfigDef.get[String]("mail.user") tuple ConfigDef.get[String]("mail.password"))
       .mapAttempt[Option[PasswordAuthentication]] {
         case (Some(u), Some(p)) => \/-(Some(new PasswordAuthentication(u, p)))
         case (None, Some(_)) => -\/("Username not specified.")
@@ -104,14 +103,14 @@ object JavaMailConfig {
         case (None, None) => \/-(None)
       }
 
-  def authenticator: Config[Option[Authenticator]] =
+  def authenticator: ConfigDef[Option[Authenticator]] =
     passwordAuthentication.map(_.map(a =>
       new Authenticator {
         override def getPasswordAuthentication = a
       }
     ))
 
-  def sessionFn: Config[() => Session] =
+  def sessionFn: ConfigDef[() => Session] =
     (props |@| authenticator) ((p, oa) => () => Session.getInstance(p, oa.orNull))
 
 }

@@ -1,7 +1,7 @@
 package shipreq.taskman.server
 
 import okhttp3.OkHttpClient
-import japgolly.microlibs.config.{Sources => ConfigSources}
+import japgolly.clearconfig.ConfigSources
 import java.time.{Clock, Duration, Instant}
 import java.util.concurrent.{ExecutorService, TimeUnit}
 import scalaz.{-\/, \/-}
@@ -40,7 +40,7 @@ final class TaskmanCtx(val dbAccess: DbAccess, val config: TaskmanConfig, emailT
       }))
       .unsafeRun()
 
-  logger.info(emailTokensReport.report)
+  logger.info(emailTokensReport.full)
 
   private object async {
     val (emailExecutorService, emailScheduler) = Async.newPool("email", config.mail.concurrencyMax)

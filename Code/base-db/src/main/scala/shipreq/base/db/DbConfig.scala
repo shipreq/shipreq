@@ -1,8 +1,7 @@
 package shipreq.base.db
 
 import com.zaxxer.hikari.HikariConfig
-import japgolly.microlibs.config.ConfigParser.Implicits.Defaults._
-import japgolly.microlibs.config._
+import japgolly.clearconfig._
 import javax.sql.DataSource
 import org.postgresql.ds.PGSimpleDataSource
 import scalaz.syntax.apply._
@@ -19,25 +18,25 @@ final case class DbConfig(
 
 object DbConfig {
 
-  def config: Config[DbConfig] = {
+  def config: ConfigDef[DbConfig] = {
 
-    val schemaCfg: Config[Option[String]] =
-      Config.get[String]("schema")
+    val schemaCfg: ConfigDef[Option[String]] =
+      ConfigDef.get[String]("schema")
 
-    val schemaSearchPathCfg: Config[(Option[String], Option[String])] =
-      schemaCfg tuple Config.get[String]("search_path")
+    val schemaSearchPathCfg: ConfigDef[(Option[String], Option[String])] =
+      schemaCfg tuple ConfigDef.get[String]("search_path")
 
     def ifSchemaValid[A](s: String, a: => A): String \/ A =
       if (s contains "-") -\/("PostgreSQL doesn't allow dashes in schema names.") else \/-(a)
 
-    val pgCurrentSchema: Config[PGSimpleDataSource => Unit] =
+    val pgCurrentSchema: ConfigDef[PGSimpleDataSource => Unit] =
       schemaSearchPathCfg mapAttempt {
         case (Some(s), None) => ifSchemaValid(s, _.setCurrentSchema(s))
         case _               => \/-(_ => ())
       }
 
     // If search path, set here in Hikari
-    val hikariSearchPath: Config[HikariConfig => Unit] =
+    val hikariSearchPath: ConfigDef[HikariConfig => Unit] =
       schemaSearchPathCfg mapAttempt {
         case (Some(_), Some(_)) => -\/("You can't set both the DB schema and search_path.")
         case (None,    Some(s)) => ifSchemaValid(s, _.setConnectionInitSql(s"SET search_path TO $s"))
@@ -45,12 +44,12 @@ object DbConfig {
            | (None,    None)    => \/-(_ => ())
       }
 
-    val pgdsCfg: Config[PGSimpleDataSource] =
+    val pgdsCfg: ConfigDef[PGSimpleDataSource] =
       (
-        Config.need[String]("database") |@|
-        Config.need[String]("username") |@|
-        Config.need[String]("password") |@|
-        Config.consumerFn[PGSimpleDataSource](
+        ConfigDef.need[String]("database") |@|
+        ConfigDef.need[String]("username") |@|
+        ConfigDef.need[String]("password") |@|
+        ConfigDef.consumerFn[PGSimpleDataSource](
           _ => pgCurrentSchema,
           _.getOrUse("host", _.setServerName)("localhost"),
           _.get("appname"               , _.setApplicationName),
@@ -79,8 +78,8 @@ object DbConfig {
         pgds
       }
 
-    val hikariCfg: Config[HikariConfig] =
-      Config.consumerFn[HikariConfig](
+    val hikariCfg: ConfigDef[HikariConfig] =
+      ConfigDef.consumerFn[HikariConfig](
         _ => hikariSearchPath,
         _.get("allowPoolSuspension"      , _.setAllowPoolSuspension),
         _.get("catalog"                  , _.setCatalog),
