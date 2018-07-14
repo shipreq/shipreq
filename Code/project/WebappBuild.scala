@@ -131,6 +131,7 @@ object WebappBuild {
       .configure(clientSpa)
       .dependsOn(webappBaseMemberJs)
       .depsForJs(ScalaCSS.react)
+      .settings(jsEnv in Test := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv) // phantomjs crashes
 
   lazy val webappClientWwApi =
     project("webapp-client-ww-api")

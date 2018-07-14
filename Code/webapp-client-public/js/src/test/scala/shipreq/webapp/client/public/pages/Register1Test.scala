@@ -71,7 +71,7 @@ object Register1Test extends TestSuite {
     val t = new PublicSpaTestUtil.ForTestState
     t.initData = t.initData.copy(publicRegistration = publicRegistration)
     import t.cp
-    t(Page.Register1)(h => plan.test(Observer.watch(new Obs(h, cp))).run((), cp))
+    t(Page.Register1)(h => plan.test(Observer.watch(new Obs(h, cp))).stateless.withRef(cp).run())
   }
 
   def success: *.Actions = (

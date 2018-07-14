@@ -87,7 +87,7 @@ object ResetPasswordTest extends TestSuite {
   def test(plan: *.Plan): Unit = {
     val t = new PublicSpaTestUtil.ForTestState
     import t.cp
-    t(page)(h => plan.test(Observer.watch(new Obs(h, cp))).run((), cp))
+    t(page)(h => plan.test(Observer.watch(new Obs(h, cp))).stateless.withRef(cp).run())
   }
 
   val page = Page.Token(Urls.PublicSpaRoute.ResetPassword, SecurityToken("abcd1234"))

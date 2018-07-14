@@ -61,7 +61,7 @@ object Dependencies {
   }
 
   object TestState {
-    val Ver = "2.1.3"
+    val Ver = "2.2.0"
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.test-state", Ver)
     private val js = MultiModule.js("com.github.japgolly.test-state", Ver)
     val core            = mm("core")

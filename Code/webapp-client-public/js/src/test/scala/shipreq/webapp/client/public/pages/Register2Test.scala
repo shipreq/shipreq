@@ -123,7 +123,7 @@ object Register2Test extends TestSuite {
   def test(plan: *.Plan): Unit = {
     val t = new ForTestState
     import t.cp
-    t(page)(h => plan.test(Observer.watch(new Obs(h, cp))).run((), cp))
+    t(page)(h => plan.test(Observer.watch(new Obs(h, cp))).stateless.withRef(cp).run())
   }
 
   val page = Page.Token(Urls.PublicSpaRoute.Register2, SecurityToken("abcd1234"))

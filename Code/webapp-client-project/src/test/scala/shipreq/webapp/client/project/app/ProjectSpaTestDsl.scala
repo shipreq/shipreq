@@ -184,9 +184,12 @@ object ProjectSpaTestDsl {
 
     ReactTestUtils.withRenderedIntoBody(spa.Component(Props(init.page, rc))) { m =>
       val tester = new ComponentTester(spa.Component)(m)
-      val tt  = Plan(action, invariants).test(Observer(_.observe()))
-      val r   = tt.run(init, Ref(cd, svr, tester))
-      assertTestState(r)
+      val report = Plan(action, invariants)
+                     .test(Observer(_.observe()))
+                     .withInitialState(init)
+                     .withRefByName(Ref(cd, svr, tester))
+                     .run()
+      assertTestState(report)
 //      assertTestState(r, println(s"${"=" * 120}\n${htmlScrub run tester.component.getDOMNode.map(_.asElement).outerHTML}\n"))
     }
   }

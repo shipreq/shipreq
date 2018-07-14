@@ -59,7 +59,7 @@ final class ReqDetailObs($: HtmlDomZipper) {
 
     val fields: Map[String, HtmlDomZipperAt[html.TableCell]] =
       table(">tbody").collect1n(">tr")
-        .mapZippers(z => z(">th").innerText -> z(">td").as[html.TableCell])
+        .map(z => z(">th").innerText -> z(">td").as[html.TableCell])
         .toMap
 
     val lifeRow = fields(UiText.Life.field)
@@ -84,7 +84,7 @@ final class ReqDetailObs($: HtmlDomZipper) {
     val treeCells = ReqDetailObs.TreeNames.map(fields)
 
     val stepRows: NAE[Vector[StepRow]] =
-      treeCells.map(_.collect0n(">div>div").mapZippers(StepRow))
+      treeCells.map(_.collect0n(">div>div").map(StepRow))
 
     case class StepRow($: HtmlDomZipper) {
       private def ctrl(icon: Icon, icon2: Icon = null): Option[html.Button] = {

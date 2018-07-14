@@ -75,7 +75,7 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
     }
 
     val entirety: Vector[ColumnDom] =
-      root.collect1n("div.ui.checkbox").asHtml.mapZippers(ColumnDom)
+      root.collect1n("div.ui.checkbox").asHtml.map(ColumnDom)
 
     def column(name: String): ColumnDom =
       findOne(name, entirety)(_.name)
@@ -120,7 +120,7 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
       val name = nameDom.textContent
     }
 
-    val criteriaDom = $.collect1n("tr").mapZippers(tr => CriteriaDom(
+    val criteriaDom = $.collect1n("tr").map(tr => CriteriaDom(
       tr("td", 1 of 2).dom,
       tr("td", 2 of 2)("*[title]").dom))
 
@@ -155,7 +155,7 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
     }
 
     val columnDoms: Vector[ColumnDom] =
-      thead.collect1n("th").as[html.TableCell].mapZippers(ColumnDom)
+      thead.collect1n("th").as[html.TableCell].map(ColumnDom)
 
     val columns: Vector[String] =
       columnDoms.map(_.name)

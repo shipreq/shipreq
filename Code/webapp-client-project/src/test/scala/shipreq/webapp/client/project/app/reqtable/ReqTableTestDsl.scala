@@ -13,7 +13,7 @@ import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.test._
 import shipreq.webapp.client.project.test._
-import teststate.domzipper.DomZipper.EditableSel
+import teststate.domzipper.DomZipperModule.EditableSel
 import TestState._
 
 object ReqTableTestDsl {
@@ -86,8 +86,6 @@ object ReqTableTestDsl {
     CellEditor(_.table.cellLoc(pubid = pubid, col = col))
 
   final case class CellEditor(loc: ReqTableObs => ReqTableObs.CellLoc) {
-
-    private implicit def ROStoOS(r: *.ROS) = r.os
 
     private def editorCss      = EditableSel
 

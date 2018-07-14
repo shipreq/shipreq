@@ -92,7 +92,7 @@ object LandingPageTest extends TestSuite {
     val t = new ForTestState
     import t.cp
     cp.addAutoResponse(PublicSpaProtocols.LandingPage.Fn)(_.onResponse(\/-(\/-(()))))
-    t(Page.Home)(h => plan.test(Observer.watch(new Obs(h, cp))).run((), cp))
+    t(Page.Home)(h => plan.test(Observer.watch(new Obs(h, cp))).stateless.withRef(cp).run())
   }
 
   override def tests = TestSuite {

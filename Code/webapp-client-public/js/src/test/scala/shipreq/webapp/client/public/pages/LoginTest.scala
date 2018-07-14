@@ -99,7 +99,7 @@ object LoginTest extends TestSuite {
     if (loggedInUser)
       t.initData = t.initData.copy(loggedInUser = Some(Username("dude")))
     import t.cp
-    t(Page.Login)(h => plan.test(Observer.watch(new Obs(h, cp))).run((), cp))
+    t(Page.Login)(h => plan.test(Observer.watch(new Obs(h, cp))).stateless.withRef(cp).run())
   }
 
   // Can't test window.location.href because relative URLs are rejected by PhantomJS

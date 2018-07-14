@@ -23,6 +23,9 @@ object TestState
   implicit val displayTestReq: Display[TestClientProtocol.Req] =
     Display(i => s"${i.proc.protocol}: ${i.input}")
 
+  override implicit def testStateErrorHandler: ErrorHandler[String] =
+    ErrorHandler.toStringWithStackTrace("shipreq|scalajs.dom".r.pattern)
+
   // TODO Add to DomZipper exports
   implicit def univEqDomElement[D <: Element] = UnivEq.force[D]
 
@@ -36,7 +39,7 @@ object TestState
       case Some(f) =>
         onFailure
         as.onFail.print(r)
-        f.cause.foreach(_.printStackTrace())
+        // f.cause.foreach(_.printStackTrace())
         TestUtil.fail(f.failure)
     }
 }

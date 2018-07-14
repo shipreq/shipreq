@@ -21,7 +21,7 @@ final class HomeObs(cp: TestClientProtocol, $: HtmlDomZipper) {
   val projectDoms = $.collect0n("." + BaseStyles.projectItems.item.className.value)
 
   val projectNames: Vector[String] =
-    projectDoms.mapZippers(_("h1").innerText)
+    projectDoms.map(_("h1").innerText)
 
   object createProject {
     private val cont = $("." + Styles.createProjectCont.className.value)
@@ -110,7 +110,8 @@ object HomeTest extends TestSuite {
         .addInvariants(invariants)
         .withInitialState(State("", CPState.Blank, ps.map(_.name)(collection.breakOut), 0))
         .test(Observer(new HomeObs(_, c.htmlDomZipper)))
-        .run(cp)
+        .withRef(cp)
+        .run()
     )
   }
 
