@@ -13,7 +13,7 @@ object IndexLabelTest extends TestSuite {
       assert(ap == Option(i))
     }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'numeric0 {
       val test = testFn(NumericFrom0)

@@ -80,7 +80,7 @@ object UseCaseStepTreeTest extends TestSuite {
 
   val prop = Prop.eval[Project](new Tester(_).all)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     "UseCaseStepTree.canXxx" - genProject.mustSatisfy(prop)(defaultPropSettings.setSampleSize(10 `JVM|JS` 3))
   }
 }

@@ -276,7 +276,7 @@ object LogicPropTest extends TestSuite {
     } yield
       LogicTests(v, p)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     gen.mustSatisfyE(_.all)//(implicitly[Settings].setSeed(0).setDebug.setSampleSize(20))
   }
 }

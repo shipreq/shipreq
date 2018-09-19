@@ -95,7 +95,7 @@ object LandingPageTest extends TestSuite {
     t(Page.Home)(h => plan.test(Observer.watch(new Obs(h, cp))).stateless.withRef(cp).run())
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'validity - test(validity)
     'invalidity - test(invalidity)
   }

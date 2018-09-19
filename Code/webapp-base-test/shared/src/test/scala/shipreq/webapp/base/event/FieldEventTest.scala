@@ -22,7 +22,7 @@ object CustomFieldEventTest extends TestSuite {
   val t1 = CustomTextFieldEventTest.c1.id
   val t2 = CustomTextFieldEventTest.c2.id
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'reposition {
       var es = Vector[Event]()
@@ -89,7 +89,7 @@ object CustomTextFieldEventTest extends TestSuite with CustomTextFieldEvents {
       a.copy(vs = NonEmpty.force(f(a.vs.value)))
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'create {
       'needName      - assertFail("Name")     (c1.mod(_ - Name))
       'needKey       - assertFail("Key")      (c1.mod(_ - Key))
@@ -159,7 +159,7 @@ object CustomTagFieldEventTest extends TestSuite with CustomTagFieldEvents {
       a.copy(vs = NonEmpty.force(f(a.vs.value)))
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'create {
       'needTagId     - assertFail("TagId")    (c1.mod(_ - TagId))
       'needMandatory - assertFail("Mandatory")(c1.mod(_ - Mandatory))
@@ -219,7 +219,7 @@ object CustomImpFieldEventTest extends TestSuite with CustomImpFieldEvents {
       a.copy(vs = NonEmpty.force(f(a.vs.value)))
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'create {
       'needReqTypeId     - assertFail("ReqTypeId")(c1.mod(_ - ReqTypeId))
       'needMandatory     - assertFail("Mandatory")(c1.mod(_ - Mandatory))

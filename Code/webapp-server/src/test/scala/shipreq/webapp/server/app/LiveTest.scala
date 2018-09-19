@@ -24,7 +24,7 @@ object LiveTest extends TestSuite {
     pid = Some(xa ! dbAlgebra.createEmptyProject(user1.id))
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     prepare()
 
     'root {

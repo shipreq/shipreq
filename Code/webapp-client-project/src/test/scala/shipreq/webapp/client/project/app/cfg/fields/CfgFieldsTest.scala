@@ -47,7 +47,7 @@ object CfgFieldsTest extends TestSuite {
 
   implicit val stateEquality = Equal.equalA[State]
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     val t = new Tester
     import t._
 

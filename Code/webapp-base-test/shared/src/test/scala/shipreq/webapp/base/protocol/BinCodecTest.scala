@@ -20,7 +20,7 @@ object BinCodecTest extends TestSuite {
 
   implicit val settings = DefaultSettings.propSettings.setSampleSize(8*4) //.setSeed(5).setDebug
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
 //    RandomData.projectConfig.map(_.customIssueTypes.data) mustSatisfy prop
 //    RandomData.customReqTypes mustSatisfy prop

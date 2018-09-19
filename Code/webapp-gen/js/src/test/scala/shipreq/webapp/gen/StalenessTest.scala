@@ -24,7 +24,7 @@ object StalenessTest extends TestSuite {
       assertGen(g)(actual.tests(i), g.data.tests(i))
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'size -
       assertEq("JS template count", Manifest.All.length, ExpectedTemplateCount)

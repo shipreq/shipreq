@@ -178,7 +178,7 @@ object AutoCompleteTest extends TestSuite {
   }
   lazy val plainText2 = PlainText.ForProject.noCtx(project2)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'issue {
       implicit val ctx = TestCtx(cIssuesC)

@@ -25,7 +25,7 @@ object TransitiveClosureTest extends TestSuite {
 
   def gen = RandomData.tagTree.map(Tester)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     gen.mustSatisfyE(_.test)
   }
 }

@@ -35,7 +35,7 @@ object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
       a.copy(vs = NonEmpty.force(f(a.vs.value)))
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'create {
       'needName - assertFail("Name")    (c1.mod(_ - Name))
       'needMne  - assertFail("Mnemonic")(c1.mod(_ - Mnemonic))

@@ -47,7 +47,7 @@ object ReqsTest extends TestSuite { // TODO Update for UCs
       reqType    ← Gen.newOrOld(RandomData.customReqTypeId, reqTypeIds)
     } yield PubidRegisterProps(prAndIds.pr, req, reqType)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'pubidRegister - gen.mustSatisfyE(_.all)
 
     'ucStepLabels {

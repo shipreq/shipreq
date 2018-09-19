@@ -13,7 +13,7 @@ object DataTest extends TestSuite {
   val tagData = Stream(tr(1.AT, "abc"), tr(2.AT, "def"))
   val issueData = Stream(ir(1, "tbd"), ir(3, "todo"))
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'validation {
       'hashRefKeyUniqueness {
         import DataValidators.hashRefKey._

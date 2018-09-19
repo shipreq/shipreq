@@ -12,7 +12,7 @@ object MicroCacheTest extends TestSuite {
     () => {i += 1; i}
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'CacheVar {
       def newCacheVar(policy: CachePolicy[Any]) = {

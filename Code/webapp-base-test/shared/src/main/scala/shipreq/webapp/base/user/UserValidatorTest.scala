@@ -44,7 +44,7 @@ object UserValidatorTest extends TestSuite {
   def fail(e: String) = (_: Any) => -\/(e)
   implicit def someString(e: String) = Option(e)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'email {
       val test = Tester(UserValidators.emailAddr.unnamed.mapValid(_.value))

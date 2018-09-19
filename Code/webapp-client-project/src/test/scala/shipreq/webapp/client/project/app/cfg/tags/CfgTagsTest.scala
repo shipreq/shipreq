@@ -51,7 +51,7 @@ object CfgTagsTest extends TestSuite {
     lazy val c          = ReactTestUtils.renderIntoDocument(re)
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     val t = new Tester
     import t._
 

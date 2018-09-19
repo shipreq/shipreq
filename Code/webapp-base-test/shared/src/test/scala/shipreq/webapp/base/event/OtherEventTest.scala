@@ -100,7 +100,7 @@ object OtherEventTest extends TestSuite {
   }
 
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'ProjectNameSet {
       import NoInitialEvents._

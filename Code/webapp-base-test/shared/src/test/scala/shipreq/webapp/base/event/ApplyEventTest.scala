@@ -166,7 +166,7 @@ object ApplyEventTest extends TestSuite {
   }
   */
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'applyVerified {
       'pass {

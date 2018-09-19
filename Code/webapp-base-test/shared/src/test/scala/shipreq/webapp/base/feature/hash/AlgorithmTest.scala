@@ -111,7 +111,7 @@ object AlgorithmTest extends TestSuite {
   def testAlgo(a: Hash.Algorithm, expect: AlgorithmResults): Unit =
     algorithmProp(expect).assert(a)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'murmur3 - testAlgo(
       MurmurHash3,

@@ -174,7 +174,7 @@ object PromiseTest extends TestSuite {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'stateMatrix {
       import LooseStateMachine._

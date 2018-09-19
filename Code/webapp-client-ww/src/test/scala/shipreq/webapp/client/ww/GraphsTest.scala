@@ -34,7 +34,7 @@ object GraphsTest extends TestSuite {
   lazy val SIG_deadMF4: Project =
     applyEventsSuccessfully(SampleImplicationGraph.project, deleteReqs(SampleImplicationGraph.mf4))
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'stepFlow {
       // TODO Test Graphs.useCaseStepFlow with more complicated flow

@@ -7,7 +7,7 @@ import utest._
 
 object RestorationLogicTest extends TestSuite {
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'props - {
       val g = DeletionProps.RandomData(Restore).genProps

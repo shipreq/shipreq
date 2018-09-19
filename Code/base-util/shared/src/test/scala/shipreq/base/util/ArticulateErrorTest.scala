@@ -10,7 +10,7 @@ object ArticulateErrorTest extends TestSuite {
     throw o
   }.swap.toOption.get
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'tag {
       var a = ArticulateError("Stuff failed.")

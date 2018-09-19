@@ -9,7 +9,7 @@ object RelPosTest extends TestSuite {
   def toVec(s: String) = s.toCharArray.toVector
   val abcd = toVec("abcd")
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'get {
       assert(RelPos.get(abcd, 'd') ==* None)

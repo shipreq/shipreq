@@ -181,7 +181,7 @@ object SavedViewLogicTest extends TestSuite {
   implicit val equalMenuSC               : Equal[Menu.SavedClean       ] = deriveEqual
   implicit val equalMenu                 : Equal[Menu                  ] = deriveEqual
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'actions {
       import Action._

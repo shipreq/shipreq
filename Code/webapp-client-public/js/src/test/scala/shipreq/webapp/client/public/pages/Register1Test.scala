@@ -82,7 +82,7 @@ object Register1Test extends TestSuite {
       >> serverResponse
       +> message.assert(Some("Check your email")))
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'success - test(
       emailValue.assert("")        +> emailEnabled.assert(Enabled) +> submitEnabled.assert(Disabled)

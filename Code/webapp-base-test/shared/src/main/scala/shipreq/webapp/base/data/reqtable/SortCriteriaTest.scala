@@ -18,7 +18,7 @@ object SortCriteriaTest extends TestSuite {
 
   val sc1 = SortCriteria(Vector(Code / AscThenBlanks, ReqType / Desc, Title / BlanksThenAsc), Pubid / Desc)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'want {
       'inconclusive {
         'new_cb - testWant(sc1, Tags, )
@@ -74,7 +74,7 @@ object SortCriteriaTest extends TestSuite {
     sc   ← RandomData.reqtableData.sortCriteria(scis)
   } yield WantTest(sc, ci, cc)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'want {
       'props - wantTest.mustSatisfyE(_.all)
     }

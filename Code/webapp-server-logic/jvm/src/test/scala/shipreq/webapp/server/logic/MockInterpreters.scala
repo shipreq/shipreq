@@ -362,12 +362,17 @@ final class MockServer extends Server.Algebra[Name] {
 
 final class MockTaskman extends TaskmanApi[Name] {
   private var prevMsgId = 0L
+  var msgs = Vector.empty[(MsgId, Msg)]
+
+  def reset(): Unit = {
+    prevMsgId = 0L
+    msgs = Vector.empty
+  }
 
   override def cfgPut(key: String, value: String) = Name[Unit] {
     ()
   }
 
-  var msgs = Vector.empty[(MsgId, Msg)]
   override def submitMsg(m: Msg) = Name[MsgId] {
     prevMsgId += 1
     val id = MsgId(prevMsgId)

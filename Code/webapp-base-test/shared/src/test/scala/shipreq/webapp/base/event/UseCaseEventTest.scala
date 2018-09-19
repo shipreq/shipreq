@@ -58,7 +58,7 @@ object UseCaseEventTest extends TestSuite {
     assertAllUcSteps(p needUC 1)(nc: _*)(e: _*)
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'createUseCase {
       'empty {

@@ -8,7 +8,7 @@ import shipreq.webapp.client.project.test.PrepareEnv
 object ReqCodeEditorTest extends TestSuite {
   PrepareEnv()
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'forReqs {
       'liveCorrect {
         def test(in: String, out: String): Unit =

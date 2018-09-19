@@ -38,7 +38,7 @@ object IntersectionTest extends TestSuite {
     (i *** c).map(x => new Laws(x._1, x._2, ic))
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'forwards { domain mustProve Prop.eval(_.eval) }
     'backwards { domain.map(_.reverse) mustProve Prop.eval(_.eval) }
 

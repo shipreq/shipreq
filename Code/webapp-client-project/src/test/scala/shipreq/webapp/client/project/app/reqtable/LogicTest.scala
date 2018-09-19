@@ -1048,7 +1048,7 @@ object LogicTest extends TestSuite {
 
   // NOTE: The Tags column is *not* expanded. Only custom tag columns are.
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'sort {
       'reqCodes - testReqCodes()
       'reqType  - testReqType()

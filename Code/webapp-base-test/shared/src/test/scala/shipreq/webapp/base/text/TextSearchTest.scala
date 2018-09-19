@@ -27,7 +27,7 @@ object TextSearchTest extends TestSuite {
 
   def domain = (words(1) *** words(0)).map((Input.apply _).tupled)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'algorithm {
       println(s"Proving text search algorithm with ${domain.size} samples...")
       domain.mustProve(prop)(DefaultSettings.propSettings.setSingleThreaded)

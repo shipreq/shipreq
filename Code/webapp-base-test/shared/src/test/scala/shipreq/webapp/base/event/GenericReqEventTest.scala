@@ -21,7 +21,7 @@ object GenericReqEventTest extends TestSuite {
 
   implicit val init = testHelpInit
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'createGenericReq {
       'empty {

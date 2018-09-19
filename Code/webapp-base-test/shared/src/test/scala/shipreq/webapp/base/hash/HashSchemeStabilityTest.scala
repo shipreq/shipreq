@@ -70,7 +70,7 @@ object HashSchemeStabilityTest extends TestSuite {
     def ~[A](a: A) = (a, i)
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'V1 - {
       def h = h1
 

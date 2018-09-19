@@ -10,7 +10,7 @@ object UrlTest extends TestSuite {
   val googleStr = "https://google.com"
   val google = Absolute.Base(googleStr)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'relative {
       'nullary {

@@ -9,7 +9,7 @@ import shipreq.webapp.server.test._
 
 object DbTriggerTest extends TestSuite {
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     /*
     'usr_login_log {

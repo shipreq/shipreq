@@ -43,7 +43,7 @@ object PublicSpaLogicTest extends TestSuite {
     assertContains(m.verifyEmailUrl, db.prevToken().value)
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'login {
       implicit val t = new Tester(); import t._

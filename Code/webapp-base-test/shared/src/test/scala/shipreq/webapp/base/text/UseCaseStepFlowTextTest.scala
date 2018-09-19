@@ -93,7 +93,7 @@ object UseCaseStepFlowTextTest extends TestSuite {
   val genTester: Gen[Tester] =
     genInput.map(new Tester(_))
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'spotCheck {
       import Elem._

@@ -47,7 +47,7 @@ object EventPropTests extends TestSuite {
 
   val prop = Prop.eval((p: Project) => new Tester(p).all)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     RandomData.project.mustSatisfy(prop)(defaultPropSettings
       .setGenSize(4 `JVM|JS` 2)
       .setSampleSize(7 `JVM|JS` 2)

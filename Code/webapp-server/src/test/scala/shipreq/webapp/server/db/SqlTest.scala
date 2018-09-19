@@ -5,7 +5,7 @@ import shipreq.base.test.db.SqlTester.test
 /*
 object SqlTest extends TestSuite {
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'user {
       import DbLogic.user._

@@ -10,7 +10,7 @@ object ShiroTest extends TestSuite {
   def runTest[A](test: UserFixture => A): Unit =
     UserFixture.Session.runNow(withShiro(test))
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'Authentication {
       'allowUsername - runTest { uf =>

@@ -7,7 +7,7 @@ import shipreq.webapp.base.test.UnsafeTypes._
 
 object GrammarTest extends TestSuite {
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'pubid {
       'stringPrism {
         import Grammar.pubid.stringPrism

@@ -72,7 +72,7 @@ class MPickleMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val T      = concreteWeakTypeOf[T]
     val TC     = T.typeSymbol.companion
     val param  = primaryConstructorParams_require1(T)
-    val init   = Init(importMPickle)
+    val init   = new Init("i$" + _); init += importMPickle
     val (n, t) = nameAndType(T, param)
     val vr     = summonR(init, t)
     val vw     = summonW(init, t)
@@ -91,7 +91,8 @@ class MPickleMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val T      = concreteWeakTypeOf[T]
     val TC     = T.typeSymbol.companion
     val params = primaryConstructorParams(T)
-    val init   = Init(importMPickle)
+    val init   = new Init("i$" + _)
+    init += importMPickle
 
     def invokeWriteJs(subj: TermName, param: Symbol) = {
       val (n, t) = nameAndType(T, param)
@@ -151,12 +152,13 @@ class MPickleMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val keyCases = readMacroArg_tToLitFn(keys)
     if (debug) println(s"Keys: $keyCases")
 
-    val init        = Init(importMPickle)
     var defaultCase = Option.empty[(Tree, CaseDef)]
     var wCases      = Vector.empty[CaseDef]
     var roCases     = Vector.empty[CaseDef]
     var rsCases     = Vector.empty[CaseDef]
     var unseenTypes = types
+    val init        = new Init("i$" + _)
+    init += importMPickle
 
     def defaultNotAllowedHere() = fail("Only a class can have an empty key (i.e. be a default).")
 
@@ -253,10 +255,11 @@ class MPickleMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val keyCases = readMacroArg_tToLitFn(keys)
     if (debug) println(s"Keys: $keyCases")
 
-    val init        = Init(importMPickle)
     var wCases      = Vector.empty[CaseDef]
     var rCases      = Vector.empty[CaseDef]
     var unseenTypes = types
+    val init        = new Init("i$" + _)
+    init += importMPickle
 
     for ((te, key) <- keyCases)
       te match {

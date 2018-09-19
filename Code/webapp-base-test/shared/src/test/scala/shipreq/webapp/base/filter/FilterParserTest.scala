@@ -84,7 +84,7 @@ object FilterParserTest extends TestSuite {
       case \/-(None)    => fail(s"[$str] succeeded with <blank>")
     }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'prop {
       import PropTest.defaultPropSettings

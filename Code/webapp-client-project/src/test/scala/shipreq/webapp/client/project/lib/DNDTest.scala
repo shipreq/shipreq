@@ -7,7 +7,7 @@ import utest._
 object DNDTest extends TestSuite {
   val vec12345 = Vector(1, 2, 3, 4, 5)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'move {
       def test(from: Int, to: Int, expect: Vector[Int]): Unit =
         assertEq(DND.moveE(from, to)(vec12345), expect)

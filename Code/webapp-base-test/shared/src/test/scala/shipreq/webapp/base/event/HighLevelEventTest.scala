@@ -8,7 +8,7 @@ import AutoNES._
 
 object HighLevelEventTest extends TestSuite {
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'unusedReqTypeMnemonicsCanBeReclaimed {
       import NoInitialEvents._

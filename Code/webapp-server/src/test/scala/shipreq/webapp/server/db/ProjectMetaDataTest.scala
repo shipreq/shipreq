@@ -11,7 +11,7 @@ import shipreq.webapp.server.test.WebappServerTestUtil._
 object ProjectMetaDataTest extends TestSuite {
   import PrepareEnv.dbAlgebra
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     DbUtil.use().runNow { dbu =>
       import dbu.xa

@@ -109,7 +109,7 @@ object LoginTest extends TestSuite {
       +> reqsSent.assert.increment
       >> serverLoginResponse(Allow))
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     window.localStorage.clear()
 
     'login {

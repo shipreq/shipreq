@@ -128,7 +128,7 @@ class BoopickleMacroImpls(val c: Context) extends MacroUtils {
           q"_root_.shipreq.webapp.base.protocol.BoopickleMacros.xmap[$T,$t]($apply)(_.$n)"
 
         case _ =>
-          val init = Init()
+          val init           = new Init("i$" + _)
           var pickleFields   = Vector.empty[Tree]
           var unpickleFields = Vector.empty[Tree]
 

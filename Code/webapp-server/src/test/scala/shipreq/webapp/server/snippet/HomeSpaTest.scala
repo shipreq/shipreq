@@ -11,7 +11,7 @@ import shipreq.webapp.server.test._
 object HomeSpaTest extends TestSuite {
   implicit def db = PrepareEnv.dbAlgebra
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'createProject {
       def test(name: String): Unit =

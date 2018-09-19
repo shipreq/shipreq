@@ -7,7 +7,7 @@ import shipreq.webapp.base.data.ProjectId
 /** Ensures that obfuscation algos don't change - important because they are being used in clients' urls */
 object ObfuscatorsTest extends TestSuite {
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'projectId {
       def test(i: Int, s: String): Unit =
         assertEq(Obfuscators.projectId.obfuscate(ProjectId(i)).value, s)

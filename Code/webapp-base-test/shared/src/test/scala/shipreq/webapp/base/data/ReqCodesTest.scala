@@ -47,7 +47,7 @@ object ReqCodesTest extends TestSuite {
       code    ← Gen.newOrOld(RandomData.reqCode.value)(trie.flatStream.map(_._1))
     } yield TrieProps(trie, Data(maxId + 1, target), code)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     gen.mustSatisfyE(_.all)
   }
 }

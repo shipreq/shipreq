@@ -94,7 +94,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val T     = weakTypeOf[T]
     val types = findConcreteTypesNE(T, LeavesOnly)
 
-    val init      = Init()
+    val init      = new Init("i$" + _)
     var byteCases = Vector.empty[CaseDef]
     var intCases  = Vector.empty[CaseDef]
     var makeCases = Vector.empty[CaseDef]
@@ -146,7 +146,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val apply    = tcApplyFn(T)
     val f        = primaryConstructorParams_require1(T)
     val (fn, ft) = nameAndType(T, f)
-    val init     = Init()
+    val init     = new Init("i$" + _)
 
     val (idByte, idInteger, idMake) = implicitIdFns(ft)
     val writeFn = writeIdAnd(T)(fn, idByte, q"Some($idInteger)")(Literal(Constant(null)))
@@ -163,7 +163,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val T         = concreteWeakTypeOf[T]
     val apply     = tcApplyFn(T)
     val f         = primaryConstructorParams_require1(T)
-    val init      = Init()
+    val init      = new Init("i$" + _)
     val (fn, ft)  = nameAndType(T, f)
     val (fr, fw)  = summonRW(init, ft)
     val readData  = readFromJsonStr(fr, q"d")
@@ -187,7 +187,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val T          = concreteWeakTypeOf[T]
     val apply      = tcApplyFn(T)
     val (f1, f2)   = primaryConstructorParams_require2(T)
-    val init       = Init()
+    val init       = new Init("i$" + _)
     val (f1n, f1t) = nameAndType(T, f1)
     val (f2n, f2t) = nameAndType(T, f2)
     val (f2r, f2w) = summonRW(init, f2t)
@@ -237,9 +237,10 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     }
 
     type TT = Tree => Tree
-    val init  = Init(importMPickle)
     var dataW = Vector.empty[TT => Tree]
     var dataR = Vector.empty[Tree]
+    val init  = new Init("i$" + _)
+    init += importMPickle
 
     for ((pn, pt) <- ps)
       gdNT match {
@@ -363,7 +364,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val dbCodec_  = typeOf[DbCodec[_]]
     val dbCodecR  = appliedType(dbCodec_, R)
     val dbCodecW  = appliedType(dbCodec_, W)
-    val init      = Init()
+    val init      = new Init("i$" + _)
     var remaining = types
     var rCases    = Vector.empty[CaseDef]
     var wCases    = Vector.empty[CaseDef]

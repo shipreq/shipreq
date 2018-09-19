@@ -103,7 +103,7 @@ object ResetPasswordTest extends TestSuite {
   val p1 = "abcdEFGH1234"
   val p2 = "zyx_abcdEFGH123456"
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'success - test(
       assertForm("", Invalid, "", Invalid, Enabled)

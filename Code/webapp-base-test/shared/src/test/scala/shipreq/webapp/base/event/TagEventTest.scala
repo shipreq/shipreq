@@ -45,7 +45,7 @@ abstract class SharedTagEventTests extends TestSuite {
   def tagId1: TagId
   val createTagField1 = CustomTagFieldEventTest.mkC1(tagId1)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'create {
       'three - {
         val a = _assertPass(c1, c2, c3)
@@ -225,7 +225,7 @@ object TagGroupEventSharedTests2 extends SharedTagEventTests with TagGroupEvents
 object TagGroupEventTest extends TestSuite with TagGroupEvents {
   import TagGroupGD._
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'create {
       'needMC - assertFail("Mutex")(c1.mod(_ - MutexChildren))
     }
@@ -296,7 +296,7 @@ object ApplicableTagEventSharedTests2 extends SharedTagEventTests with Applicabl
 object ApplicableTagEventTest extends TestSuite with ApplicableTagEvents {
   import ApplicableTagGD._
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'create {
       'needKey - assertFail("Key")   (c1.mod(_ - Key))
       'dupKey  - assertFail("unique")(c1, c2.mod(_ + Key("c1")))

@@ -7,7 +7,7 @@ import shipreq.webapp.base.test.WebappTestUtil._
 
 object ProjectMetaDataTest extends TestSuite {
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'applyEvent {
       val (_, vesInit, ves) = RandomEventStream.entireEventStream(100).samples().next()

@@ -232,7 +232,7 @@ object DeletionLogicTest extends TestSuite {
 
   implicit val rcgRowEquality = UnivEq.derive[GroupRow]
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'deletableReqs {
       val manual        = expectedDeletableReqs_manual

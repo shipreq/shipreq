@@ -61,7 +61,7 @@ object ShowSrcTest extends TestSuite {
     //.setDebug
     //.setSeed(5)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     RandomData.project mustSatisfy showSrcIso
 
 //    * - { RandomData.project.mustSatisfy(showSrcIso)(settings.setSeed(3)) }

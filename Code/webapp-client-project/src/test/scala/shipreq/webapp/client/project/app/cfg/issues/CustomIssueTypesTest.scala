@@ -18,7 +18,7 @@ import utest._
 
 object CustomIssueTypesTest extends TestSuite {
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     val filterDead = ReactTestVar[FilterDead](HideDead)
     val remote     = ServerSideProc(ServerSideProcId("x"), CustomIssueTypeCrud)
     val clientData = TestClientData(SampleProject.project)

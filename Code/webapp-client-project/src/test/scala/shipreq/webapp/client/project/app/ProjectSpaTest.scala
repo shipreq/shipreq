@@ -46,7 +46,7 @@ object ProjectSpaTest extends TestSuite {
         & RT.tablePubids.assert.forall("be UC (or code group)", _.matches("^(?:UC-.*|–)$"))
       ).lift)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'reqTableColumnsSync    - runTest(reqTableColumnsSync   , Page.ReqTable)
     'reqTableFilterDeadSync - runTest(reqTableFilterDeadSync, Page.ReqTable)

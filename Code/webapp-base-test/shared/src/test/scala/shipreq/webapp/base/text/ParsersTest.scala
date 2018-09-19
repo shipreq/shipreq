@@ -204,7 +204,7 @@ object ParsersTest extends TestSuite {
 
   val maybeSpace = List("", " ")
 
-  override val tests = TestSuite {
+  override val tests = Tests {
     'preprocess {
       // This isn't a standard trim - see preprocess() for explanation
       def post(s: String) = ">" + s.replace('\n', '_') + "<"

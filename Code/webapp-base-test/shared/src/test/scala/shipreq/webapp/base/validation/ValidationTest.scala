@@ -44,7 +44,7 @@ object ValidationTest extends TestSuite {
   def fail(e: String) = (_: Any) => -\/(e)
   implicit def someString(e: String) = Option(e)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'common {
 

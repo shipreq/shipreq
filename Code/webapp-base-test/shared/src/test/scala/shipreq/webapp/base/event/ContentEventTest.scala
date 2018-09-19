@@ -105,7 +105,7 @@ object ContentEventTest extends TestSuite {
   val restoreCode3From1 = patchCodes(1, restore = Set(3))
   val removeCode3From1  = patchCodes(1, remove = Set(3))
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'createCodeGroup {
       'badId          - assertBadIdsRejected(createRCG(_, "hi"))

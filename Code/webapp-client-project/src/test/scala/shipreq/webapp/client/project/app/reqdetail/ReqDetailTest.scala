@@ -43,7 +43,7 @@ object ReqDetailTest extends TestSuite {
   val deadCanRestore = UiText.Life.dead + "." + UiText.Life.restore
   val deadNoRestore  = UiText.Life.dead + "."
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'badReqType - testError("QL-1", "QL-1 doesn't exist")
     'badReq     - testError("FR-9", "FR-9 doesn't exist")

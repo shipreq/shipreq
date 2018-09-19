@@ -26,7 +26,7 @@ object ProjectServerTest extends TestSuite {
 
   val nop = (_: Any) => Name(())
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'registrationAndLoading {
       val t = new Tester; import t._

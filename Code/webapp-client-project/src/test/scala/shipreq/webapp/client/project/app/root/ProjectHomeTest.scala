@@ -118,7 +118,7 @@ object ProjectHomeTest extends TestSuite {
     runTest(actions.lift, page = Page.Index)
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'projectNameEditing - run(projectNameEditing)
   }
 }

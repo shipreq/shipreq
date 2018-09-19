@@ -125,7 +125,7 @@ object EditorTest extends TestSuite {
     testNewUpdateAndRevert()
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
 //    'applyLiveCorrection {
 //      val e = SimpleTestEditor[String].applyCorrection(usernameV.unnamedFn.andThen(_.corrector))

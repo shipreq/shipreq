@@ -25,6 +25,10 @@ object DispatchLogicTest extends TestSuite {
   }
   import Tester._
 
+  override def utestBeforeEach(path: Seq[String]): Unit = {
+    taskman.reset()
+  }
+
   implicit def autoRelUrl(s: String): Url.Relative = Url.Relative(s)
 
   def run(url   : Url.Relative,
@@ -45,7 +49,10 @@ object DispatchLogicTest extends TestSuite {
               method: Method              = Get,
               params: Map[String, String] = Map.empty)
              (implicit logIn: MockDb.UserEntry = null): Unit =
-    assertEq(url.relativeUrl, run(url, method, params)(logIn), expect)
+    assertEq(
+      s"${method.toString.toUpperCase} ${url.relativeUrl} ${params.mkString(", ")}",
+      run(url, method, params)(logIn),
+      expect)
 
   def testNonGet(url: Url.Relative): Unit =
     for {
@@ -77,7 +84,7 @@ object DispatchLogicTest extends TestSuite {
   implicit def autoXID(p: ProjectId): ProjectId.Public =
     Obfuscators.projectId.obfuscate(p)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'publicSpa {
       import Urls.PublicSpaRoute._
@@ -165,7 +172,7 @@ object DispatchLogicTest extends TestSuite {
       def register1Params = Map(opsSecretKey -> opsSecretValue.value, "email" -> "a@bc.com")
 
       'register1 - assertProtected(testRun(
-        Response.Json(200, Js.Obj("taskId" -> Js.Num(9))),
+        Response.Json(200, Js.Obj("taskId" -> Js.Num(1))),
         register1Url, Post, register1Params))
 
       // For security reasons, the same response is observed for all failures.

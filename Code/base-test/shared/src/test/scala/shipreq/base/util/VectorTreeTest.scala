@@ -207,7 +207,7 @@ object VectorTreeTest extends TestSuite {
           str.split('.').iterator.map(s => if (s == "X") -1 else s.toInt).toVector)
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'props { props mustBeSatisfiedBy genIntTree }
 
     'modifyChildren {

@@ -297,7 +297,7 @@ object ReqTableTest extends TestSuite {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'initialState - runTest(*.emptyPlan)
 
     'filter       - runTest(Plan action testFilter named "testFilter")

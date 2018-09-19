@@ -124,7 +124,7 @@ object HomeTest extends TestSuite {
     val pc  = List(piE, piO)
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'createProject - run(Data.pc)(Plan.action(
       setCPText("    ")
         >> setCPText("Oh and I see and I know, and suddenly I'm on my own, but it's now and it's no, at least it isn't tomorrow. " * 3, CPState.InputError)

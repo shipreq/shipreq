@@ -6,7 +6,7 @@ import NoInitialEvents._
 
 object TemplateTest extends TestSuite {
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     // All templates must apply to a new project
     for (t <- ProjectTemplate.values)

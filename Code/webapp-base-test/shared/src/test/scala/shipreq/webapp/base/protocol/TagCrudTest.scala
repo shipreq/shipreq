@@ -91,7 +91,7 @@ object TagCrudTest extends TestSuite {
   }
   //println(TagTree.prettyPrint(sampleTagTree_f))
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     import S.Values._
 
     'PovRelations {

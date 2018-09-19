@@ -1,7 +1,7 @@
 package shipreq.webapp.base.event
 
 import scalaz.{-\/, \/-}
-import utest._
+import utest.{assert => _, _}
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.WebappTestUtil._
@@ -219,7 +219,7 @@ abstract class SharedTests(implicit val init: InitialEvents) extends TestSuite {
   def prepForSoftDelete(es: Event*): Seq[Event] =
     c1 +: es
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'create {
       'one      - assertPass(c1)
       'two      - assertPass(c1, c2)

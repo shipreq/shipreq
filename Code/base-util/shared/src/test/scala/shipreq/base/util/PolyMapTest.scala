@@ -9,7 +9,7 @@ object PolyMapTest extends TestSuite {
   val noneKey = M.accessKey[None.type](None)[String].value
   val someKey = M.accessKey[Some[Int]](Some(666))[Int].value
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     var m = M.empty
     assert(noneKey.get(m) == None)
     assert(someKey.get(m) == None)

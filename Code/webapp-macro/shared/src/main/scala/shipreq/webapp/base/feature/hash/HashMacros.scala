@@ -50,7 +50,7 @@ class HashMacroImpls(val c: Context) extends MacroUtils {
           q"$h.contramap[$T](_.$pName)"
 
         case _ =>
-          val init = new Init
+          val init           = new Init("i$" + _)
           val hashes = params.foldLeft(LitNil: c.universe.Tree) { case (q, (pName, pType)) =>
             val h = init.valImp(HashType(pType))
             q"$q.::($h hashFn t.$pName)"
@@ -117,7 +117,7 @@ class HashMacroImpls(val c: Context) extends MacroUtils {
     val T      = weakTypeOf[T]
     val types  = findConcreteAdtTypesNE(T, DirectOnly)
     val a      = TermName("a")
-    val init   = new Init
+    val init   = new Init("i$" + _)
     val HashFn = this.HashFn
     val cases  = types.map { t =>
       val h = init.valImp(HashType(t))

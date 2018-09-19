@@ -31,7 +31,7 @@ object ObfuscatorTest extends TestSuite {
 
   val prop = Prop.eval[Long](new Test(_).result)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     Gen.long mustSatisfy prop
   }
 }

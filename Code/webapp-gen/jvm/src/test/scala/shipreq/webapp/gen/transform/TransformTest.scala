@@ -14,7 +14,7 @@ object TransformTest extends TestSuite {
       assertGen(t)(t.templates.tests(i), t.data.tests(i))
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'size -
       assertEq("JVM template count", Transformer.All.length, ExpectedTemplateCount)

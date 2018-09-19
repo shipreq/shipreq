@@ -12,7 +12,7 @@ object DeletionTest extends TestSuite {
   case class MockState(status: RowStatus)
   val setRowStatus: Persistence.SetRowStatus[MockState] = r => ReactS.modT(_.copy(status = r))
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     var cb: Option[(TCB.Success, TCB.Failure)] = None
     var s = MockState(RowStatus.Sync)
     val r = (st: ReactST[CallbackTo, MockState, Unit]) => ReactS.unlift(st).exec(s).map { s2 => s = s2}

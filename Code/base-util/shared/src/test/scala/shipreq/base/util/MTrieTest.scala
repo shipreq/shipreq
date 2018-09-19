@@ -51,7 +51,7 @@ object MTrieTest extends TestSuite {
       (t, r)
     }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'remove {
       'l1_all - testRevert(empty,               _.put("x", 6).remove("x"))
       'l1_sib - testRevert(empty.put("a", 7),   _.put("x", 6).remove("x"))

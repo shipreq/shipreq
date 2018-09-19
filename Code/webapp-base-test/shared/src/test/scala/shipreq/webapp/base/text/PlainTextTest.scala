@@ -11,7 +11,7 @@ object PlainTextTest extends TestSuite {
   def ctxUc1 = ProjectText.Context.Req(uc1 )
   def ctxUc0 = ProjectText.Context.Req(0.UC)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'useCaseStepRefs {
       val full = s"[UC-$step16_label] and [UC-$step17_label] are dead. [UC-$step19_label] and [UC-$step18_label] are not."
 

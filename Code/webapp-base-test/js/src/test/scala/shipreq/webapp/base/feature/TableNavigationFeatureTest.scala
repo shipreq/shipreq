@@ -395,7 +395,7 @@ object TableNavigationFeatureTest extends TestSuite {
       assertEq(s"subMove $movement: $from --> $to", actual, \/-(Some(to)))
     }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'lr {
       def t = lr

@@ -21,7 +21,7 @@ object ValidFilterTest extends TestSuite {
       case \/-(v) => fail(s"Expected an error containing '$errFrag'. Got: $v")
     }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     import UnsafeTypes._
     import SampleProject6.Values._
 

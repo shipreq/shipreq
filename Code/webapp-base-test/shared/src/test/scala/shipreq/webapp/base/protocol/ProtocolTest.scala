@@ -76,7 +76,7 @@ object ProtocolTest extends TestSuite {
     def propO(implicit e: Equal[O]) = propA[O](logFmtO, s"$subject⁺: read(write(a)) = a")
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     // TODO Add more procs
 

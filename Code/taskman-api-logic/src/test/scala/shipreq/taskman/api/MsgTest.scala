@@ -6,7 +6,7 @@ import scalaz.std.AllInstances._
 
 object MsgTest extends TestSuite {
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     // TODO Use adt-macros
     //    "have as many values as Msg" in {

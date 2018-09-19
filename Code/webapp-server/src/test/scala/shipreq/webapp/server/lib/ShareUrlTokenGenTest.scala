@@ -7,7 +7,7 @@ object ShareUrlTokenGenTest extends TestSuite {
 
   def next = ShareUrlTokenGen.fn()
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'size - assertEq(next.value.length, ShareUrlTokenGen.len)
 

@@ -62,7 +62,7 @@ object SavedRowStoreTest extends TestSuite {
       TestInput(t, s, f, a1, b1, a2, b2, k1, k2, r1, r2)
     }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     g mustSatisfyE (_.eval)
   }
 }

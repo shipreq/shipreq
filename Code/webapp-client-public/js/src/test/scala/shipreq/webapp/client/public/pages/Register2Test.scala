@@ -134,7 +134,7 @@ object Register2Test extends TestSuite {
       >> serverResponse(Response.Success)
       +> message.assert(Some("Welcome to ShipReq!")))
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'success - test(
       assertForm(Enabled)

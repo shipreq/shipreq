@@ -30,7 +30,7 @@ object CustomIssueTypeEventTest extends TestSuite with CustomIssueTypeEvents {
       a.copy(vs = NonEmpty.force(f(a.vs.value)))
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'create {
       'needKey  - assertFail("Key")   (c1.mod(_ - Key))
       'needDesc - assertFail("Desc")  (c1.mod(_ - Desc))

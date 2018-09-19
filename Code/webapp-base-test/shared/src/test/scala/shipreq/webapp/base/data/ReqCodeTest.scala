@@ -20,7 +20,7 @@ object ReqCodeTest extends TestSuite {
   val vs0 = V.State(sampleCodeTrie, Set.empty)
   val vs2 = V.State(sampleCodeTrie, Set("aa.b.c"))
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'codeValidation {
 

@@ -139,10 +139,11 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
 
     val attrsAndValues = resolveAttrsAndValues(debug)(D)
 
-    val init     = Init(importMPickle)
     var wCases   = List.empty[CaseDef]
     var rCases   = List.empty[CaseDef]
     var keysUsed = Set.empty[String]
+    val init     = new Init("i$" + _)
+    init += importMPickle
 
     for ((attr, value) <- attrsAndValues) {
       val name  = attr.name.toString

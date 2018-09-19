@@ -14,7 +14,7 @@ object EndpointTest extends TestSuite {
   def test(expect: Endpoint, path: String, providedOrNull: Endpoint = null): Unit =
     assertEq(path, endpoint(path, FreeOption(providedOrNull)).toOption, Some(expect))
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     'comet {
       test(Endpoint.Comet, "/L/comet/11301008944/F86889457609DUVAIE/F86889457707YSS5WS")

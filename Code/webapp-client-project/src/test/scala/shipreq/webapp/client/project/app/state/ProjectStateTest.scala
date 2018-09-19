@@ -30,7 +30,7 @@ object ProjectStateTest extends TestSuite {
     }
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
 
     val p1 = Project.empty
 
