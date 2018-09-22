@@ -1,8 +1,6 @@
 package shipreq.webapp.base.test
 
 import japgolly.microlibs.testutil.TestUtil
-import japgolly.univeq.UnivEq
-import org.scalajs.dom.Element
 import scalacss.internal.StyleA
 import teststate.run.Report.AssertionSettings
 import shipreq.base.util.DebugImplicits
@@ -25,9 +23,6 @@ object TestState
 
   override implicit def testStateErrorHandler: ErrorHandler[String] =
     ErrorHandler.toStringWithStackTrace("shipreq|scalajs.dom".r.pattern)
-
-  // TODO Add to DomZipper exports
-  implicit def univEqDomElement[D <: Element] = UnivEq.force[D]
 
   def KB = japgolly.scalajs.react.test.SimEvent.Keyboard
 

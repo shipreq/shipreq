@@ -72,7 +72,7 @@ object Dependencies {
   }
 
   object UnivEq {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.0.2")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.0.4")
     val univeq = mm("univeq")
     val scalaz = mm("univeq-scalaz") ++ univeq ++ Scalaz.core
   }
