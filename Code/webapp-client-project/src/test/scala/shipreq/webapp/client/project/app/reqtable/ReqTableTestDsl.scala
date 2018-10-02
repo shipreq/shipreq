@@ -235,7 +235,7 @@ object ReqTableTestDsl {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Actions
 
-  implicit def autoGetDomFromZipper(d: DomZipper): ReactOrDomNode = d.dom.domAsHtml
+  implicit def autoGetDomFromZipper(d: DomZipperJs): ReactOrDomNode = d.domAsHtml
 
   def modState(name: => String, mod: (Project, ReqTablePage.State) => ReqTablePage.State): *.Actions =
     *.action(name)(i => i.ref.$.modState(s => mod(i.state, s)))

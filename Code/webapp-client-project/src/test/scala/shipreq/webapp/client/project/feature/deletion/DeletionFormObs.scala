@@ -6,12 +6,12 @@ import shipreq.webapp.client.project.app.TestMarker
 
 object DeletionFormObs {
 
-  def option($: DomZipper): Option[DeletionFormObs] =
+  def option($: DomZipperJs): Option[DeletionFormObs] =
     $.findSelfOrChildWithAttribute(TestMarker.deletionForm.name)
       .map(new DeletionFormObs(_))
 }
 
-class DeletionFormObs($: DomZipper) {
+class DeletionFormObs($: DomZipperJs) {
 
   val reasonEditor: html.TextArea =
     $("textarea").domAs[html.TextArea]
