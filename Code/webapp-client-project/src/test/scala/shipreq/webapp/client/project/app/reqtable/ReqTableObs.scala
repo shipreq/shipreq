@@ -149,7 +149,7 @@ final class ReqTableObs(cp: TestClientProtocol, $: DomZipperJs) {
     val thead = $("ReqTable", ">thead")
     val tbody = $("ReqTable", ">tbody")
 
-    case class ColumnDom(zipper: HtmlDomZipperAt[html.TableCell]) {
+    case class ColumnDom(zipper: DomZipperJs) {
       val headerCell = zipper.dom
       val name = headerCell.textContent
     }
@@ -181,7 +181,7 @@ final class ReqTableObs(cp: TestClientProtocol, $: DomZipperJs) {
 //    }
 
     val allRows : Vector[html.TableRow] =
-      tbody.collect0n(">tr").as[html.TableRow].doms
+      tbody.collect0n(">tr").domsAs[html.TableRow]
 
     // Existence of a Live cell means the row is Live
     // Existence of a Dead cell does NOT mean the row is Dead
@@ -226,18 +226,18 @@ final class ReqTableObs(cp: TestClientProtocol, $: DomZipperJs) {
     def rowIndexByPubid(pubid: String): Int =
       findIndex(pubid, rowPubids, s"Row with pubid [$pubid] not found.")
 
-    def cell(loc: CellLoc): HtmlDomZipperAt[html.TableCell] =
+    def cell(loc: CellLoc): DomZipperJs =
       cell(row = loc.row, col = loc.col)
 
-    def cell(row: Int, col: Int): HtmlDomZipperAt[html.TableCell] = {
+    def cell(row: Int, col: Int): DomZipperJs = {
       var c = col
       if (c < 0) c += columns.length
       var r = row
       if (r < 0) r += allRows.size
-      tbody(s">tr:nth-child(${r + 1}) >td:nth-child(${c + 1})").as[html.TableCell]
+      tbody(s">tr:nth-child(${r + 1}) >td:nth-child(${c + 1})")
     }
 
-    def cell(pubid: String, col: String): HtmlDomZipperAt[html.TableCell] =
+    def cell(pubid: String, col: String): DomZipperJs =
       cell(cellLoc(pubid, col))
 
     def cellLoc(pubid: String, col: String): CellLoc =

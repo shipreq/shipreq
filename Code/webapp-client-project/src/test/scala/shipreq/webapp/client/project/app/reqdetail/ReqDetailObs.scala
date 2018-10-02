@@ -75,7 +75,7 @@ final class ReqDetailObs($: DomZipperJs) {
     }
 
     val lifeChangeButton: Option[html.Button] =
-      lifeRow.collect01("button").as[html.Button].doms
+      lifeRow.collect01("button").domsAs[html.Button]
   }
 
   object uc {
@@ -90,7 +90,7 @@ final class ReqDetailObs($: DomZipperJs) {
       private def ctrl(icon: Icon, icon2: Icon = null): Option[html.Button] = {
         val is  = (icon :: Option(icon2).toList).map(_.clsName.replace(' ', '.'))
         val sel = is.map(i => s"button:has(i.icon.$i)") mkString ","
-        $.collect01(sel).as[html.Button].doms
+        $.collect01(sel).domsAs[html.Button]
       }
 
       val isTailStepRow: Boolean =

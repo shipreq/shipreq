@@ -11,7 +11,7 @@ object CfgReqTypesObs {
 
     val mnemonic: String = {
       val mnemonicCell = row(">td:first")
-      mnemonicCell.collect01("input").as[html.Input].doms match {
+      mnemonicCell.collect01("input").domsAs[html.Input] match {
         case Some(i) => i.value
         case None    => mnemonicCell.innerText
       }
@@ -25,7 +25,7 @@ object CfgReqTypesObs {
       }
 
     val usageLink: Option[html.Anchor] =
-      usageCell.collect01("a").as[html.Anchor].doms
+      usageCell.collect01("a").domsAs[html.Anchor]
   }
 }
 

@@ -14,13 +14,13 @@ class ProjectHomeObs($: DomZipperJs) {
   private val projectArea = $(">section", 1 of 2)
 
   val projectNameViewDom: Option[html.Element] =
-    projectArea.collect01("h1").doms
+    projectArea.collect01("h1").domsAsHtml
 
   val projectNameView: Option[String] =
     projectNameViewDom.map(_.textContent)
 
   val projectNameEditInput: Option[html.Input] =
-    projectArea.collect01("input:text").as[html.Input].doms
+    projectArea.collect01("input:text").domsAs[html.Input]
 
   val projectNameEditValue: Option[String] =
     projectNameEditInput.map(_.value)
