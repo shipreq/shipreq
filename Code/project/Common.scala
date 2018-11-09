@@ -43,7 +43,9 @@ object Common {
 
   val optimisationSettings: Project => Project =
     nonTestCompilerFlags(
-      "-opt:l:classpath",
+      "-opt:l:method",
+      "-opt:l:inline",
+      "-opt-inline-from:**",
       //"-opt-warnings:at-inline-failed",
       "-Xelide-below", "OFF")
 
