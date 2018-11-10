@@ -186,7 +186,7 @@ object Dependencies {
   val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %% "benchmark"         % "0.2.5")
   val scalajsJavaTime  = jsOnly("org.scala-js"                          %% "scalajs-java-time" % "0.2.5")
 
-  val boopickle   = jvmAndJs("me.chrons",                        "boopickle", "1.2.5")
+  val boopickle   = jvmAndJs("io.suzaku",                        "boopickle", "1.3.0")
   val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",      "1.2.1")
   val parboiled   = jvmAndJs("org.parboiled",                    "parboiled", "2.1.5")
   val shapeless   = jvmAndJs("com.chuusai",                      "shapeless", "2.3.3")
