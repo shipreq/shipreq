@@ -1,4 +1,4 @@
-addSbtPlugin("com.earldouglas"    % "xsbt-web-plugin"          % "4.0.1")
+addSbtPlugin("com.earldouglas"    % "xsbt-web-plugin"          % "4.0.2")
 addSbtPlugin("com.typesafe.sbt"   % "sbt-git"                  % "0.9.3")
 addSbtPlugin("com.typesafe.sbt"   % "sbt-native-packager"      % "1.3.2")
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.5.0")
