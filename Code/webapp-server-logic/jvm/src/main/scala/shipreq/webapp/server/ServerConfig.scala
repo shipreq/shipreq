@@ -41,6 +41,8 @@ final case class ServerConfig(baseUrl: Url.Absolute.Base,
 
                               prometheus: ServerConfig.Prometheus,
 
+                              ssrEnabled: Boolean,
+
                               /** The DB schema in which the Taskman interfaces reside. */
                               taskmanSchema: String,
 
@@ -57,37 +59,76 @@ final case class ServerConfig(baseUrl: Url.Absolute.Base,
 
 object ServerConfig {
 
-  final case class Prometheus(enabled: Boolean, hikaricp: Boolean, hotspot: Boolean, jdbc: Boolean, path: String)
+  final case class Prometheus(enabled: Boolean,
+                              hikaricp: Boolean,
+                              hotspot: Boolean,
+                              jdbc: Boolean,
+                              ssr: Boolean,
+                              path: String)
   object Prometheus {
     val default = apply(
       enabled = true,
       hikaricp = true,
       hotspot = true,
       jdbc = true,
+      ssr = true,
       path = (DispatchLogic.opsRoot / "metrics").relativeUrl)
 
     def config: ConfigDef[Prometheus] =
-      ( ConfigDef.getOrUse[Boolean]("enabled", default.enabled) |@|
+      ( ConfigDef.getOrUse[Boolean]("enabled",  default.enabled) |@|
         ConfigDef.getOrUse[Boolean]("hikaricp", default.hikaricp) |@|
-        ConfigDef.getOrUse[Boolean]("hotspot", default.hotspot) |@|
-        ConfigDef.getOrUse[Boolean]("jdbc", default.hotspot) |@|
-        ConfigDef.getOrUse[String ]("path", default.path).map(_.replaceFirst("^/*", "/"))
+        ConfigDef.getOrUse[Boolean]("hotspot",  default.hotspot) |@|
+        ConfigDef.getOrUse[Boolean]("jdbc",     default.hotspot) |@|
+        ConfigDef.getOrUse[Boolean]("ssr",      default.ssr) |@|
+        ConfigDef.getOrUse[String ]("path",     default.path).map(_.replaceFirst("^/*", "/"))
     ) (apply)
   }
 
   def config: ConfigDef[ServerConfig] =
-    ( ConfigDef.need    [String  ]      ("url").map(Url.Absolute.Base.apply) |@|
-      ConfigDef.getOrUse[Duration]      ("attack_frustration_delay", Duration.ofMillis(120)) |@|
-      ConfigDef.need    [Int     ]      ("token.length") |@|
-      ConfigDef.need    [Duration]      ("token.lifespan.register") |@|
-      ConfigDef.need    [Duration]      ("token.lifespan.resetpw") |@|
-      ConfigDef.getOrUse[Boolean ]      ("feature.publicRegistration", true).map(Allow.when) |@|
-      ConfigDef.get     [String  ]      ("googleAnalytics.trackingId") |@|
-      ConfigDef.get     [String  ]      ("kamon.conf") |@|
-      Prometheus.config.withPrefix      ("prometheus.") |@|
-      ConfigDef.need    [String  ]      ("taskman.schema") |@|
-      ConfigDef.getOrUse[Boolean ]      ("taskman.init", true) |@|
+    ((ConfigDef.need    [String  ]("url").map(Url.Absolute.Base.apply) |@|
+      ConfigDef.getOrUse[Duration]("attack_frustration_delay", Duration.ofMillis(120)) |@|
+      ConfigDef.need    [Int     ]("token.length") |@|
+      ConfigDef.need    [Duration]("token.lifespan.register") |@|
+      ConfigDef.need    [Duration]("token.lifespan.resetpw") |@|
+      ConfigDef.getOrUse[Boolean ]("feature.publicRegistration", true).map(Allow.when) |@|
+      ConfigDef.get     [String  ]("googleAnalytics.trackingId")).tupled |@| (
+      ConfigDef.get     [String  ]("kamon.conf") |@|
+      Prometheus.config.withPrefix("prometheus.") |@|
+      ConfigDef.getOrUse[Boolean ]("ssr", true) |@|
+      ConfigDef.need    [String  ]("taskman.schema") |@|
+      ConfigDef.getOrUse[Boolean ]("taskman.init", true) |@|
       RetryCriteria.config.withPrefix("taskman.init.retry.")
-    ) (apply).withPrefix("shipreq.")
+    ).tupled) {
+      case ((
+          baseUrl,
+          attackFrustrationDelay,
+          securityTokenLength,
+          registrationTokenLifespan,
+          passwordResetTokenLifespan,
+          publicRegistration,
+          googleAnalyticsTrackingId), (
+          kamonConfFile,
+          prometheus,
+          ssrEnabled,
+          taskmanSchema,
+          initTaskmanOnBoot,
+          initTaskmanRetry,
+        )) =>
+        apply(
+          baseUrl                    = baseUrl,
+          attackFrustrationDelay     = attackFrustrationDelay,
+          securityTokenLength        = securityTokenLength,
+          registrationTokenLifespan  = registrationTokenLifespan,
+          passwordResetTokenLifespan = passwordResetTokenLifespan,
+          publicRegistration         = publicRegistration,
+          googleAnalyticsTrackingId  = googleAnalyticsTrackingId,
+          kamonConfFile              = kamonConfFile,
+          prometheus                 = prometheus,
+          ssrEnabled                 = ssrEnabled,
+          taskmanSchema              = taskmanSchema,
+          initTaskmanOnBoot          = initTaskmanOnBoot,
+          initTaskmanRetry           = initTaskmanRetry,
+        )
+    }.withPrefix("shipreq.")
 
 }

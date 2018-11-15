@@ -449,6 +449,7 @@ object MockInterpreters {
     taskmanSchema              = "test_taskman",
     kamonConfFile              = None,
     prometheus                 = ServerConfig.Prometheus.default,
+    ssrEnabled                 = true,
     initTaskmanOnBoot          = false,
     initTaskmanRetry           = RetryCriteria(2 hours, Some(666)))
 }

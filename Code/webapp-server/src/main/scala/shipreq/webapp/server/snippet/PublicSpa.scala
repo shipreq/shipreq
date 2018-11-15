@@ -6,19 +6,30 @@ import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.lib.SnippetHelpers
 import shipreq.webapp.server.protocol._
-import shipreq.webapp.ssr.SsrJvm
 
 object PublicSpa extends SnippetHelpers {
 
   val EntryPoint = ClientSideProcInvoker(PublicSpaProtocols.EntryPoint)
 
   def render = {
-    val initData = Global.logic.publicSpa.initData.unsafeRun()
+//    val initData = Global.logic.publicSpa.initData.unsafeRun()
+    import scalaz.std.option.optionInstance
+    import scalaz.syntax.traverse._
 
-    val x = SsrJvm.TEMP.public(initData)
-    println()
-    println(x)
-    println()
+    val initFx =
+      for {
+        initData <- Global.logic.publicSpa.initData
+        html <- Global.ssr.traverse(_.public(initData))
+      } yield {
+        html.foreach { x =>
+          println()
+          println(x)
+          println()
+        }
+        initData
+      }
+
+    val initData = initFx.unsafeRun()
 
     "*" #> EntryPoint.invokeOnLoadHtml(initData)
   }

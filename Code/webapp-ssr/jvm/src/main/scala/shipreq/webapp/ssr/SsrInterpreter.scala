@@ -2,49 +2,57 @@ package shipreq.webapp.ssr
 
 import com.typesafe.scalalogging.StrictLogging
 import japgolly.scalagraal._
-import shipreq.webapp.client.public.PublicSpaProtocols.{InitData => PublicInitData}
-import GraalJs._
-import GraalBoopickle._
+import japgolly.scalagraal.GraalJs._
+import japgolly.scalagraal.GraalBoopickle._
+import shipreq.base.util.FxModule._
+import SsrAlgebra.Types._
 
-// TODO Make this a minimal trait, wrap results in F[_], handle errors
-final class SsrJvm(ctx: ContextSync) extends StrictLogging {
+final class SsrInterpreter(ctx: ContextSync) extends SsrAlgebra[Fx] with StrictLogging {
 
   private[this] val exprPublic =
     Expr.compileFnCall1[PublicInitData]("public")(_.asString.timed)
 
-  // TODO Take url and userAgent too
-  def public(i: PublicInitData): String = {
-    val Right((time, s)) = ctx.eval(exprPublic(i))
-    logger.info(s"SSR:public completed in $time")
-    s
+  override def public(i: PublicInitData) = Fx {
+    // TODO Add evalOrThrow
+    ctx.eval(exprPublic(i)) match {
+
+      case Right((time, html)) =>
+        // TODO evalTimed would be better than timed on the Expr (what about a MetricsWriter?)
+        logger.info("SSR:public completed in %,d ms".format(time.toMillis))
+        Html(html)
+
+      case Left(e) =>
+        throw e.underlying
+    }
   }
 }
 
-object SsrJvm {
+object SsrInterpreter {
 
-  // TODO Initialise in Boot, allow off via Config, store in Global
-  lazy val TEMP = apply()
-
-  def apply(): SsrJvm = {
-    val init = (
+  def apply(prometheus: Boolean): SsrInterpreter = {
+    val setup = (
       Expr("window = {console: console, location: {protocol: 'https:', hostname: 'shipreq.com', port:'', href: 'https://shipreq.com'}, navigator: {userAgent: ''}}")
-      >> Expr.requireFileOnClasspath("webapp-ssr-deps.js")
-      >> Expr.requireFileOnClasspath("webapp-ssr.js"))
+        >> Expr.requireFileOnClasspath("webapp-ssr-deps.js")
+        >> Expr.requireFileOnClasspath("webapp-ssr.js"))
 
-    val prometheus = GraalPrometheus.Builder().registerAndBuild()
+    var ctxBuilder = ContextSync.Builder.fixedContext()
+      .onContextCreate(setup)
 
-    val ctx = ContextSync.Builder.fixedContext()
-      .onContextCreate(init)
-      .writeMetrics(prometheus)
+    if (prometheus) {
+      val w = GraalPrometheus.Builder().registerAndBuild()
+      ctxBuilder = ctxBuilder.writeMetrics(w)
+    }
+
+    val ctx = ctxBuilder
       .writeMetrics(ContextMetrics.Print())
       .build()
 
-    new SsrJvm(ctx)
+    new SsrInterpreter(ctx)
   }
 
-  // TODO Remove SsrJvm.main
+  // TODO Remove SsrInterpreter.main
   def main(args: Array[String]): Unit = {
-    val ssr = apply()
+    val ssr = apply(false)
 
     import shipreq.base.util.Allow
     import shipreq.webapp.base.protocol.{ServerSideProc, ServerSideProcId}
