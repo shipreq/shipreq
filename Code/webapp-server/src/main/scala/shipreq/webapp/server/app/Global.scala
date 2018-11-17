@@ -1,7 +1,6 @@
 package shipreq.webapp.server.app
 
 import doobie.imports.ConnectionIO
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.base.db.DbAccess
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.TaskmanApi
@@ -18,7 +17,7 @@ final case class Global(config  : ServerConfig,
                         metrics : MetricsLogic[Fx],
                         ops     : OpsEndpointInterpreter,
                         security: Security.Algebra[Fx],
-                        ssr     : Option[SsrAlgebra[Fx]],
+                        ssr     : SsrAlgebra[Fx],
                         taskman : TaskmanApi[Fx],
                         trace   : TraceInterpreter.ForLift[Fx])
 
@@ -63,7 +62,7 @@ object Global {
       metrics  = metrics,
       ops      = ops,
       security = security,
-      ssr      = Option.when(config.ssrEnabled)(SsrInterpreter(ssrPrometheus)),
+      ssr      = if (config.ssrEnabled) SsrInterpreter(ssrPrometheus) else SsrAlgebra.Off,
       taskman  = taskman,
       trace    = trace)
     }

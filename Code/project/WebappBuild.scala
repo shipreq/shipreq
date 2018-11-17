@@ -182,7 +182,7 @@ object WebappBuild {
       .configureJs(Common.jsSettings(NeedDom))
       .dependsOn(webappClientPublic)
       .depsForBoth(ScalaGraal.extBoopickle)
-      .depsForJvm(ScalaGraal.extPrometheus)
+      .depsForJvm(ScalaGraal.extPrometheus ++ scalaXml)
       .jsSettings(
         emitSourceMaps := false,
         artifactPath in (Compile, fastOptJS) := (crossTarget.value / "webapp-ssr.js"),
@@ -474,7 +474,7 @@ object WebappBuild {
       .dependsOn(baseDb, baseOps, taskmanApi, webappServerLogicJvm, webappGenJvm)
       .deps(
         Scalaz.core ++ Lift.webkit ++ Shiro.all ++ commonsLang ++ Nyaya.gen ++ Logback.withPlugins ++
-        Prometheus.client ++ Prometheus.hotspot ++ Prometheus.servlet ++ LibJetty.servletApi ++
+        Prometheus.client ++ Prometheus.hotspot ++ Prometheus.servlet ++ LibJetty.servletApi ++ scalaXml ++
         testScope(μTest ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
         (LibJetty.webapp % Test))
       .configure(

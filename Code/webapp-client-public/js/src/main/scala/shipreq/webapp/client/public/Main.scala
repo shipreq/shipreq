@@ -14,7 +14,7 @@ object Main extends ClientSideProcImpl(EntryPoint) {
     val cp      = ClientProtocol.Default
     val router  = component(i, cp)
     Styles.addToDocument()
-    router.renderIntoDOM(`#root`)
+    hydrateOrRender(router, `#root`)
   }
 
   def component(i: InitData, cp: ClientProtocol): VdomElement = {

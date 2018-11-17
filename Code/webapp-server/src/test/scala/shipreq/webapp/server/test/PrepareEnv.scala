@@ -8,6 +8,7 @@ import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.db.DbInterpreter
 import shipreq.webapp.server.logic.{MetricsLogic, TraceLogic}
+import shipreq.webapp.ssr.SsrAlgebra
 
 object PrepareEnv {
   private val boot = new bootstrap.liftweb.Boot
@@ -27,7 +28,7 @@ object PrepareEnv {
     metrics  = MetricsLogic.const(Fx.unit),
     ops      = null,
     security = null,
-    ssr      = None,
+    ssr      = SsrAlgebra.Off,
     taskman  = null,
     trace    = TraceLogic.off)
 

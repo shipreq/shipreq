@@ -8,6 +8,7 @@ import shipreq.webapp.base.user._
 import shipreq.webapp.server.app.LiftDispatcher
 import shipreq.webapp.server.util.HttpResponses.ShouldNeverHappenResponse
 
+// TODO Move SnippetHelpers into .snippet
 object SnippetHelpers extends StaticSnippetHelpers {
 
   lazy val NodeSeqJsonSerializer: Serializer[NodeSeq] = new Serializer[NodeSeq] {
@@ -25,6 +26,14 @@ object SnippetHelpers extends StaticSnippetHelpers {
  * Snippet helpers without Misc, Global and implicit vals/defs.
  */
 trait StaticSnippetHelpers extends HasLogger {
+
+  /** This removes the outer-most tag that contained the data-lift directive.
+    *
+    * Eg. <div data-lift=X>A</div> would normally transform to <div>B</div>,
+    * where as with this it will be just B.
+    */
+  final val removeSnippetTag: NodeSeq => NodeSeq =
+    _.head.child
 
   def respondImmediately(response: LiftResponse): Nothing =
     throw ResponseShortcutException.shortcutResponse(response)
@@ -56,6 +65,9 @@ trait SnippetHelpers extends StaticSnippetHelpers with HasLogger {
     assert(user != null, "LiftDispatcher.UserVar isn't set!")
     user
   }
+
+  final def request_!() =
+    S.request.openOrThrowException("How can a snippet not have a request")
 }
 
 /** A stateless snippet with only one rendering method. */
