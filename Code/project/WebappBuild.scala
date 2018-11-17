@@ -179,9 +179,9 @@ object WebappBuild {
   lazy val webappSsr =
     crossProject("webapp-ssr")
       .configureJvm(Common.jvmSettings)
-      .configureJs(Common.jsSettings(NeedDom))
+      .configureJs(Common.jsSettings(NoDom))
       .dependsOn(webappClientPublic)
-      .depsForBoth(ScalaGraal.extBoopickle)
+      .depsForBoth(ScalaGraal.extBoopickle ++ testScope(μTest))
       .depsForJvm(ScalaGraal.extPrometheus ++ scalaXml)
       .jsSettings(
         emitSourceMaps := false,

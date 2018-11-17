@@ -11,32 +11,12 @@ import shipreq.base.util.Url
 
 final class SsrInterpreter(ctx: ContextSync) extends SsrAlgebra[Fx] with StrictLogging {
 
-  val reg = "^(.+?:)//(.+?)(?::([0-9]+))?(/.*)?$".r
-
-  private val setWindowUrl =
-    Expr.compileExpr7[String, String, String, String, String, String, String]((a, b, c, d, e, f, g) =>
-      s"window.location={href:$a,protocol:$b,hostname:$c,port:$d,pathname:$e,host:$f,origin:$g}")
+  private val setUrl = Expr.compileFnCall1[String]("setUrl")(identity)
 
   private def runner[A](name: String, expr: A => Expr[String]): (Url.Absolute, A) => Fx[Option[Html]] = {
     val logHead = s"Rendered $name in "
     val mw = ContextMetrics.Writer(s => logger.info(logHead + s.total.toStrMs))
-    (url, a) => {
-      println(s"URL = $url")
-      val e = url.absoluteUrl match {
-        case reg(protocol, hostname, port0, path0) =>
-
-//          hash: ""
-//          search: ""
-
-          val port = if (port0 eq null) "" else port0
-          val path = if (path0 eq null) "" else path0
-          val host = if (port0 eq null) hostname else hostname + ":" + port0
-          val origin = protocol + "//" + host
-          println(s"PARTS = $protocol, $hostname, $port, $path, $host, $origin")
-          setWindowUrl(url.absoluteUrl, protocol, hostname, port, path, host, origin)
-      }
-      run(e >> expr(a), mw, name)
-    }
+    (url, a) => run(setUrl(url.absoluteUrl) >> expr(a), mw, name)
   }
 
   private def run(expr: Expr[String], mw: ContextMetrics.Writer, name: String): Fx[Option[Html]] =
@@ -62,11 +42,9 @@ object SsrInterpreter {
 
   def apply(prometheus: Boolean): SsrInterpreter = {
     val setup = (
-      Expr("window = {console: console, navigator: {userAgent: ''}}")
-//      Expr("window = {console: console, location: {protocol: 'https:', hostname: 'shipreq.com', port:'', href: 'https://shipreq.com'}, navigator: {userAgent: ''}}")
-//      Expr("window = {console: console, location: {protocol: 'http:', hostname: 'localhost', port:':8080', href: 'http://localhost:8080/'}, navigator: {userAgent: ''}}")
-        >> Expr.requireFileOnClasspath("webapp-ssr-deps.js")
-        >> Expr.requireFileOnClasspath("webapp-ssr.js"))
+      Expr("window = {console: console, navigator: {userAgent:''}}")
+       >> Expr.requireFileOnClasspath("webapp-ssr-deps.js")
+       >> Expr.requireFileOnClasspath("webapp-ssr.js"))
 
     var ctxBuilder = ContextSync.Builder.fixedContext()
       .onContextCreate(setup)

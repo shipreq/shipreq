@@ -1,8 +1,10 @@
 package shipreq.webapp.server.lib
 
+import net.liftweb.common.Full
 import net.liftweb.http._
 import net.liftweb.json.{NoTypeHints, Serialization, Serializer}
 import scala.xml.NodeSeq
+import shipreq.base.util.Url
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.app.LiftDispatcher
@@ -66,8 +68,20 @@ trait SnippetHelpers extends StaticSnippetHelpers with HasLogger {
     user
   }
 
-  final def request_!() =
+  final def request_!(): Req =
     S.request.openOrThrowException("How can a snippet not have a request")
+
+  final def requestUrl(req: Req = request_!()): Url.Absolute =
+    Url.Absolute {
+      var u = req.request.url
+      if (req.uri == "/" && u.last == '/')
+        u = u.dropRight(1)
+      req.request.queryString match {
+        case Full(q) => u = u + "?" + q
+        case _       => ()
+      }
+      u
+    }
 }
 
 /** A stateless snippet with only one rendering method. */
