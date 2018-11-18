@@ -1,0 +1,11 @@
+#!/bin/bash
+
+args=(
+  --rm
+)
+[ $# -eq 0 ] && args+=( -it )
+args+=( shipreq/base "$@" )
+[ $# -eq 0 ] && args+=( sh -l )
+
+echo "> docker run ${args[@]}"
+exec docker run "${args[@]}"

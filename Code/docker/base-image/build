@@ -1,0 +1,22 @@
+#!/bin/bash
+cd "$(dirname "$0")" || exit 1
+
+set -e
+
+GRAAL_VERSION=1.0.0-rc9
+
+IMAGE_NAME=shipreq/base
+IMAGE_VER=1
+IMAGE_TAG_SUFFIX="-graal-$GRAAL_VERSION"
+
+GRAAL_FILE=graalvm-ce-$GRAAL_VERSION-linux-amd64.tar.gz
+
+[ -e $GRAAL_FILE ] || \
+  curl -O https://github.com/oracle/graal/releases/download/vm-$GRAAL_VERSION/$GRAAL_FILE
+
+exec docker build \
+  --build-arg GRAAL_VERSION="$GRAAL_VERSION" \
+  -t "$IMAGE_NAME:${IMAGE_VER}${IMAGE_TAG_SUFFIX}" \
+  -t "$IMAGE_NAME:latest${IMAGE_TAG_SUFFIX}" \
+  -t "$IMAGE_NAME:latest" \
+  .
