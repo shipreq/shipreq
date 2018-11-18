@@ -7,23 +7,22 @@ FROM alpine:3.8
 
 ARG GRAAL_VERSION
 
+#========#
+# System #
+#========#
+
 ENV LANG=C.UTF-8
 
-COPY .profile /root/.profile
-
-RUN apk --no-cache upgrade
-
-RUN apk --no-cache add \
+RUN apk --no-cache upgrade \
+ && apk --no-cache add \
     ca-certificates \
     curl \
-    htop \
-    procps \
-    tree \
-    wget \
-    vim
+    wget
 
-# Install glibc
-#
+#=======#
+# glibc #
+#=======#
+
 # Taken from docker-alpine-glibc with the following changes:
 # - don't use apk at all because...
 #    1) wget already upgraded
@@ -62,12 +61,16 @@ RUN ALPINE_GLIBC_BASE_URL="https://github.com/sgerrand/alpine-pkg-glibc/releases
         "$ALPINE_GLIBC_BIN_PACKAGE_FILENAME" \
         "$ALPINE_GLIBC_I18N_PACKAGE_FILENAME"
 
-
-# Change to /opt/graal later
-ADD graalvm-ce-${GRAAL_VERSION}-linux-amd64.tar.gz /opt/
+#=======#
+# Graal #
+#=======#
 
 # Most deletions taken from docker-alpine-java
-RUN cd /opt \
+RUN mkdir /opt \
+ && cd /opt \
+ && wget https://github.com/oracle/graal/releases/download/vm-$GRAAL_VERSION/graalvm-ce-$GRAAL_VERSION-linux-amd64.tar.gz \
+ && tar xzf graalvm-ce-$GRAAL_VERSION-linux-amd64.tar.gz \
+ && rm graalvm-ce-$GRAAL_VERSION-linux-amd64.tar.gz \
  && ln -s graalvm-ce-${GRAAL_VERSION} graal \
  && cd graal \
  && rm -rf *src.zip \
@@ -104,7 +107,20 @@ RUN cd /opt \
            sample \
            jre/languages/llvm
 
-RUN sed -i 's/#networkaddress.cache.ttl=-1/networkaddress.cache.ttl=10/' jre/lib/security/java.security \
+RUN cd /opt/graal \
+ && sed -i 's/#networkaddress.cache.ttl=-1/networkaddress.cache.ttl=10/' jre/lib/security/java.security \
  && echo 'export PATH="${PATH}:/opt/graal/bin"' > /etc/profile.d/path-graal.sh
 
 ENV JAVA_HOME=/opt/graal
+
+#=============#
+# Environment #
+#=============#
+
+RUN apk --no-cache add \
+    htop \
+    procps \
+    tree \
+    vim
+
+COPY .profile /root/.profile
