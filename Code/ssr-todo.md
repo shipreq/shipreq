@@ -1,4 +1,8 @@
-* replace webapp-gen with ssr (means it becomes mandatory instead of optional (?) or maybe some crap default)
+* avoid hardcoded ssr fn names in annotations & Exprs
+* warmup on idle (not just ssr)
+
+* update bin/stats
+* update modules doc
 
 * Router in SSR tries to pushState/replaceState
   - let it crash and hide from logs?

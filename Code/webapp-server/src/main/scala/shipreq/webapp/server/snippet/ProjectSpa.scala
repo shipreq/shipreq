@@ -12,11 +12,11 @@ import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.protocol.ProjectSpaProtocols
-import shipreq.webapp.gen.transform.ProjectSpaLoader
 import shipreq.webapp.server.app.{Global, LiftDispatcher}
 import shipreq.webapp.server.lib.SingleOpStatelessSnippet
 import shipreq.webapp.server.logic._
 import shipreq.webapp.server.protocol._
+import shipreq.webapp.ssr.{ProjectSpaLoaderData, SsrAlgebra}
 
 object ProjectSpa extends SingleOpStatelessSnippet {
 
@@ -32,6 +32,9 @@ object ProjectSpa extends SingleOpStatelessSnippet {
       LoadJs.Resource(AssetManifest.katexJs))
 
   val EntryPoint = ClientSideProcInvoker(ProjectSpaProtocols.EntryPoint, ResourceBundle)
+
+  private val ssrFallback = SsrAlgebra.Types.Html(
+    """<div style="margin-top:33vh;text-align:center;font-size:150%;color:#333;">loading ...</div>""")
 
   override def render = {
     val projectId = LiftDispatcher.ProjectIdVar.is
@@ -68,10 +71,12 @@ object ProjectSpa extends SingleOpStatelessSnippet {
         case -\/(ProjectServer.NotRegistered) => shouldNeverHappen_!
       }
 
-    "*" #> (
-      ProjectSpaLoader.xml(user.username, init.projectName) :+
-        EntryPoint.invokeOnLoadHtml(init))
-    // ClientFn.ProjectSpa.htmlToLoadJsAndRun(Assets.ProjectSpa)(initData(user.username, p)))
+    val loaderHtml =
+      Global.ssr.projectSpaLoader(ProjectSpaLoaderData(user.username, init.projectName)).unsafeRun()
+        .getOrElse(ssrFallback)
+        .toXml
+
+    "*" #> (loaderHtml :+ EntryPoint.invokeOnLoadHtml(init))
   }
 }
 

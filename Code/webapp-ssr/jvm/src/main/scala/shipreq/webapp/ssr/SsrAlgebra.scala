@@ -10,6 +10,8 @@ trait SsrAlgebra[F[_]] {
   def warmup: F[Unit]
 
   val public: (Url.Absolute, PublicInitData) => F[Option[Html]]
+
+  val projectSpaLoader: ProjectSpaLoaderData => F[Option[Html]]
 }
 
 object SsrAlgebra {
@@ -27,5 +29,6 @@ object SsrAlgebra {
     private val none = Fx.pure(Option.empty[Html])
     override def warmup = Fx.unit
     override val public = (_, _) => none
+    override val projectSpaLoader = _ => none
   }
 }

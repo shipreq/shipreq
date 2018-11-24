@@ -41,8 +41,8 @@ object WebappBuild {
     project("webapp")
       .configure(Common.jvmSettings)
       .aggregate(
-        webappMacroJvm, webappBaseJvm, webappBaseMemberJvm, webappServerLogicJvm, webappBaseTestJvm, webappGenJvm,
-        webappMacroJs , webappBaseJs , webappBaseMemberJs , webappServerLogicJs , webappBaseTestJs , webappGenJs ,
+        webappMacroJvm, webappBaseJvm, webappBaseMemberJvm, webappServerLogicJvm, webappBaseTestJvm,
+        webappMacroJs , webappBaseJs , webappBaseMemberJs , webappServerLogicJs , webappBaseTestJs ,
         webappClientPublicJvm, webappClientPublicJs,
         webappClientHome,
         webappClientWwApi, webappClientWw, webappClientProject,
@@ -161,34 +161,13 @@ object WebappBuild {
       .dependsOn(webappClientWwApi)
       .depsForJs(ScalaCSS.react ++ scalajsDom ++ μPickle ++ shapeless ++ Nyaya.prop ++ parboiled)
 
-  // TODO Replace webappGen with webappSsr
-  lazy val webappGenJvm = webappGen.jvm
-  lazy val webappGenJs  = webappGen.js
-  lazy val webappGen =
-    crossProject("webapp-gen")
-      .configureJvm(Common.jvmSettings, _.dependsOn(webappBaseMemberJvm)).depsForJvm(Lift.webkit)
-      .configureJs(
-        Common.jsSettings(NeedDom),
-        _.dependsOn(webappClientProject)
-          .settings(
-            scalaJSUseMainModuleInitializer := true,
-            jsDependencies += ProvidedJS / "webapp-gen-deps.js"))
-      .depsForBoth(testScope(μTest))
-      .dependsOn(webappBaseTest % Test)
-
   lazy val webappSsr =
     crossProject("webapp-ssr")
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoDom))
-      .dependsOn(webappClientPublic)
+      .dependsOn(webappBaseMember, webappClientPublic)
       .depsForBoth(ScalaGraal.extBoopickle ++ testScope(μTest))
       .depsForJvm(ScalaGraal.extPrometheus ++ scalaXml)
-      .jsSettings(
-        emitSourceMaps := false,
-        artifactPath in (Compile, fastOptJS) := (crossTarget.value / "webapp-ssr.js"),
-        artifactPath in (Compile, fullOptJS) := (crossTarget.value / "webapp-ssr.js"))
-
-  lazy val webappSsrJs  = webappSsr.js
 
   lazy val webappSsrJvm = webappSsr.jvm
     .settings(unmanagedResources in Compile += Def.taskDyn {
@@ -196,6 +175,13 @@ object WebappBuild {
       val task = stageKeys(stage)
       Def.task((task in Compile in webappSsrJs).value.data)
     }.value)
+
+  lazy val webappSsrJs = webappSsr.js
+    .dependsOn(webappClientHome, webappClientProject)
+    .settings(
+      emitSourceMaps := false,
+      artifactPath in (Compile, fastOptJS) := (crossTarget.value / "webapp-ssr.js"),
+      artifactPath in (Compile, fullOptJS) := (crossTarget.value / "webapp-ssr.js"))
 
   lazy val webappServerLogicJvm = webappServerLogic.jvm
   lazy val webappServerLogicJs  = webappServerLogic.js
@@ -471,7 +457,7 @@ object WebappBuild {
 
     def definition: Project => Project = _
       .enablePlugins(JettyPlugin, WarPlugin, DockerPlugin)
-      .dependsOn(baseDb, baseOps, taskmanApi, webappServerLogicJvm, webappGenJvm)
+      .dependsOn(baseDb, baseOps, taskmanApi, webappServerLogicJvm)
       .deps(
         Scalaz.core ++ Lift.webkit ++ Shiro.all ++ commonsLang ++ Nyaya.gen ++ Logback.withPlugins ++
         Prometheus.client ++ Prometheus.hotspot ++ Prometheus.servlet ++ LibJetty.servletApi ++ scalaXml ++

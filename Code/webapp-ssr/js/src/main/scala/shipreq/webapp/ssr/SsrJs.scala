@@ -7,6 +7,7 @@ import scala.scalajs.js.annotation.JSExportTopLevel
 import shipreq.webapp.base.protocol.ClientProtocol
 import shipreq.webapp.client.public.PublicSpaProtocols.{InitData => PublicInitData}
 import shipreq.webapp.client.public.{Main => PublicMain}
+import shipreq.webapp.client.project.app.root.LoadingPage
 
 object SsrJs {
 
@@ -36,5 +37,11 @@ object SsrJs {
   def public(i: Pickled[PublicInitData]): String = {
     val component = PublicMain.component(i.value, cp)
     ReactDOMServer.renderToString(component)
+  }
+
+  @JSExportTopLevel("projectSpaLoader")
+  def projectSpaLoader(i: Pickled[ProjectSpaLoaderData]): String = {
+    val component = LoadingPage.Props(i.value.username, i.value.projectName).render
+    ReactDOMServer.renderToStaticMarkup(component)
   }
 }

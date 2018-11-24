@@ -17,17 +17,20 @@ object SsrInterpreter {
 
   final case class Config(enabled: Boolean,
                           poolSize: Int,
-                          timeoutPublic: FiniteDuration)
+                          timeoutPublic: FiniteDuration,
+                          timeoutProjectSpaLoader: FiniteDuration)
   object Config {
     val default = apply(
       enabled = true,
       poolSize = 2,
-      timeoutPublic = 64 millis)
+      timeoutPublic = 64 millis,
+      timeoutProjectSpaLoader = 500 millis)
 
     def configDef: ConfigDef[Config] =
-      ( ConfigDef.getOrUse("enabled",        default.enabled) |@|
-        ConfigDef.getOrUse("pool.size",      default.poolSize) |@|
-        ConfigDef.getOrUse("timeout.public", default.timeoutPublic)
+      ( ConfigDef.getOrUse("enabled",                  default.enabled) |@|
+        ConfigDef.getOrUse("pool.size",                default.poolSize) |@|
+        ConfigDef.getOrUse("timeout.public",           default.timeoutPublic) |@|
+        ConfigDef.getOrUse("timeout.projectSpaLoader", default.timeoutProjectSpaLoader)
       ) (apply)
   }
 
@@ -102,9 +105,18 @@ final class SsrInterpreter(ctx: ContextPool, cfg: SsrInterpreter.Config) extends
 
   private val setUrl = Expr.compileFnCall1[String]("setUrl")(identity)
 
-  private def runner[A](name: String, timeout: Duration, expr: A => Expr[String]): (Url.Absolute, A) => Fx[Option[Html]] = {
+  private def metricLogger[A](name: String): ContextMetrics.Writer = {
     val logHead = s"Rendered $name in "
-    val mw = ContextMetrics.Writer(s => logger.info(logHead + s.total.toStrMs))
+    ContextMetrics.Writer(s => logger.info(logHead + s.total))
+  }
+
+  private def runner[A](name: String, timeout: Duration, expr: A => Expr[String]): A => Fx[Option[Html]] = {
+    val mw = metricLogger(name)
+    a => run(expr(a), timeout, mw, name)
+  }
+
+  private def runnerU[A](name: String, timeout: Duration, expr: A => Expr[String]): (Url.Absolute, A) => Fx[Option[Html]] = {
+    val mw = metricLogger(name)
     (url, a) => run(setUrl(url.absoluteUrl) >> expr(a), timeout, mw, name)
   }
 
@@ -137,5 +149,8 @@ final class SsrInterpreter(ctx: ContextPool, cfg: SsrInterpreter.Config) extends
     }
 
   private val publicExpr = Expr.compileFnCall1[PublicInitData]("public")(_.asString)
-  override val public = runner("public", cfg.timeoutPublic, publicExpr)
+  override val public = runnerU("public", cfg.timeoutPublic, publicExpr)
+
+  private val projectSpaLoaderExpr = Expr.compileFnCall1[ProjectSpaLoaderData]("projectSpaLoader")(_.asString)
+  override val projectSpaLoader = runner("projectSpaLoader", cfg.timeoutProjectSpaLoader, projectSpaLoaderExpr)
 }
