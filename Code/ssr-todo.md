@@ -1,4 +1,3 @@
-* avoid hardcoded ssr fn names in annotations & Exprs
 * warmup on idle (not just ssr)
 
 * update bin/stats

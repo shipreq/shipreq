@@ -104,7 +104,7 @@ final class SsrInterpreter(ctx: ContextPool, cfg: SsrInterpreter.Config) extends
     logger.info("Warm up complete.")
   }
 
-  private val setUrl = Expr.compileFnCall1[String]("setUrl")(identity)
+  private val setUrl = Expr.compileFnCall1[String](SsrManifest.SetUrl)(identity)
 
   private def metricLogger[A](name: String): ContextMetrics.Writer = {
     val logHead = s"Rendered $name in "
@@ -149,9 +149,9 @@ final class SsrInterpreter(ctx: ContextPool, cfg: SsrInterpreter.Config) extends
       }
     }
 
-  private val publicExpr = Expr.compileFnCall1[PublicInitData]("public")(_.asString)
+  private val publicExpr = Expr.compileFnCall1[PublicInitData](SsrManifest.Public)(_.asString)
   override val public = runnerU("public", cfg.timeoutPublic, publicExpr)
 
-  private val projectSpaLoaderExpr = Expr.compileFnCall1[ProjectSpaLoaderData]("projectSpaLoader")(_.asString)
+  private val projectSpaLoaderExpr = Expr.compileFnCall1[ProjectSpaLoaderData](SsrManifest.ProjectSpaLoader)(_.asString)
   override val projectSpaLoader = runner("projectSpaLoader", cfg.timeoutProjectSpaLoader, projectSpaLoaderExpr)
 }

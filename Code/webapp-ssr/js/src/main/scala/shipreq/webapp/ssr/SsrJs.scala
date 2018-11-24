@@ -13,7 +13,7 @@ object SsrJs {
 
   private val cp = ClientProtocol.Noop
 
-  @JSExportTopLevel("setUrl")
+  @JSExportTopLevel(SsrManifest.SetUrl)
   def setUrl(url: String): Unit =
     WindowLocation.parse(url) match {
       case Some(src) =>
@@ -33,13 +33,13 @@ object SsrJs {
         throw new RuntimeException("Failed to parse URL:" + url)
     }
 
-  @JSExportTopLevel("public")
+  @JSExportTopLevel(SsrManifest.Public)
   def public(i: Pickled[PublicInitData]): String = {
     val component = PublicMain.component(i.value, cp)
     ReactDOMServer.renderToString(component)
   }
 
-  @JSExportTopLevel("projectSpaLoader")
+  @JSExportTopLevel(SsrManifest.ProjectSpaLoader)
   def projectSpaLoader(i: Pickled[ProjectSpaLoaderData]): String = {
     val component = LoadingPage.Props(i.value.username, i.value.projectName).render
     ReactDOMServer.renderToStaticMarkup(component)
