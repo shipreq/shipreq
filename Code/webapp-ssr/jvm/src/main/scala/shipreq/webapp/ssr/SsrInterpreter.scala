@@ -67,15 +67,12 @@ object SsrInterpreter {
           _.bucketsInMs(.5, 1, 2, 4, 8, 12, 20, 30, 40, 50, 60, 75, 100, 250, 500, 750, 1000)
       }
       .registerAndBuild()
-}
 
-final class SsrInterpreter(ctx: ContextPool, cfg: SsrInterpreter.Config) extends SsrAlgebra[Fx] with StrictLogging {
-
-  private def samplePublicInitData: PublicInitData = {
+  def samplePublicInitData: PublicInitData = {
     import shipreq.base.util.Allow
     import shipreq.webapp.base.protocol.{ServerSideProc, ServerSideProcId}
     import shipreq.webapp.client.public.PublicSpaProtocols._
-    val sspId = ServerSideProcId("X")
+    val sspId = ServerSideProcId("X" * 24)
     PublicInitData(
       publicRegistration = Allow,
       loggedInUser = None,
@@ -87,10 +84,14 @@ final class SsrInterpreter(ctx: ContextPool, cfg: SsrInterpreter.Config) extends
       resetPassword2 = ServerSideProc(sspId, ResetPassword.Fn2))
   }
 
+}
+
+final class SsrInterpreter(ctx: ContextPool, cfg: SsrInterpreter.Config) extends SsrAlgebra[Fx] with StrictLogging {
+
   override def warmup = Fx {
     logger.info("Warming up SSR....")
 
-    val expr = setUrl("https://shipreq.com") >> publicExpr(samplePublicInitData)
+    val expr = setUrl("https://shipreq.com") >> publicExpr(SsrInterpreter.samplePublicInitData)
 
     // TODO Warmup config hardcoded
     val warmupFutures =

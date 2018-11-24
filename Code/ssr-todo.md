@@ -11,5 +11,3 @@
 * need to render after hydration...
   - if window.location.hash is set (because server doesn't consider)
   - if localStorage isn't available and I decide to disable the remember me button
-
-* webapp-ssr tests
