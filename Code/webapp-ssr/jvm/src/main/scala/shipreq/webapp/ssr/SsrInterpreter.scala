@@ -40,7 +40,7 @@ object SsrInterpreter {
        >> Expr.requireFileOnClasspath("webapp-ssr-deps.js")
        >> Expr.requireFileOnClasspath("webapp-ssr.js"))
 
-    val ctx = ContextPool.Builder.fixedThreadPool(2)
+    val ctx = ContextPool.Builder.fixedThreadPool(cfg.poolSize)
       .fixedContextPerThread()
       .configure { b0 =>
         var b = b0.onContextCreate(setup)
