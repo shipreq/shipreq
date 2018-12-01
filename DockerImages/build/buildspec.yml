@@ -3,25 +3,17 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - pwd
-      - ls -l
+      - cd DockerImages/build
       - env|sort
-      - echo IMAGE_URL = $IMAGE_URL
-      - echo "IMAGE_URL = $IMAGE_URL"
-      - echo "Logging in to Amazon ECR..."
       - $(aws ecr get-login --no-include-email --region $AWS_REGION)
   build:
     commands:
-      - echo "Build started on `date`"
-      - echo "Building the Docker image..."
       - >
         docker build
-        -t $IMAGE_URL:$CODEBUILD_RESOLVED_SOURCE_VERSION
+        -t $IMAGE_URL:git-$CODEBUILD_RESOLVED_SOURCE_VERSION
         -t $IMAGE_URL:latest
         .
   post_build:
     commands:
-      - echo "Build completed on `date`"
-      - echo "Pushing the Docker image..."
-      - docker push $IMAGE_URL:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - docker push $IMAGE_URL:git-$CODEBUILD_RESOLVED_SOURCE_VERSION
       - docker push $IMAGE_URL:latest
