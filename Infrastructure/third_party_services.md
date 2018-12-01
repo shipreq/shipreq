@@ -55,7 +55,7 @@ Configure SMTP for Taskman
 4. Search for setting: "Less secure apps" → https://admin.google.com/shipreq.com/AdminHome?fral=1#ServiceSettings/notab=1&service=securitysetting&subtab=lesssecureappsaccess
 5. Select: 'Allow users to manage their access to less secure apps'
 6. Enable "Allow less secure apps" for the user@shipreq.com that will login to SMTP
-7. Taskman ettings:
+7. Taskman settings:
     mail.smtp.auth                     = true
     mail.smtp.host                     = smtp-relay.gmail.com
     mail.smtp.port                     = 587
