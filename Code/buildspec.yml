@@ -1,0 +1,17 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - cd Code
+      - env|sort
+  build:
+    commands:
+      - sbt -DMODE=release test
+    finally:
+      - find /root/.ivy2 /root/.sbt -name '*.lock' -type f -exec rm -fv {} +
+
+cache:
+  paths:
+    - '/root/.ivy2/**/*'
+    - '/root/.sbt/**/*'
