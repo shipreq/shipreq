@@ -8,7 +8,22 @@ phases:
       - env|sort
   build:
     commands:
-      - sbt -DMODE=release test:compile fullOptJS test
+      - >
+        sbt -DMODE=release
+        test:compile
+        webapp-base-test-js/test:fullOptJS
+        webapp-client-home/fullOptJS
+        webapp-client-home/test:fullOptJS
+        webapp-client-project/fullOptJS
+        webapp-client-project/test:fullOptJS
+        webapp-client-public-js/fullOptJS
+        webapp-client-public-js/test:fullOptJS
+        webapp-client-ww/fullOptJS
+        webapp-client-ww/test:fullOptJS
+        webapp-gen-js/fullOptJS
+        webapp-gen-js/test:fullOptJS
+        webapp-server-logic-js/test:fullOptJS
+        test
     finally:
       - find /root/.ivy2 /root/.sbt -name '*.lock' -type f -exec rm -fv {} +
 
