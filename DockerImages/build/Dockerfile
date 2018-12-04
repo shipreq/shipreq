@@ -223,3 +223,5 @@ RUN export PHANTOM_JS="phantomjs-2.1.1-linux-x86_64" \
  ##############
 
 ENV SBT_OPTS="-XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC"
+
+COPY strip-ansi /bin

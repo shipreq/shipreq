@@ -1,0 +1,2 @@
+#!/bin/bash
+exec sed -r 's~\x01?(\x1B\(B)?\x1B\[([0-9;]*)?[JKmsu]\x02?~~g'
