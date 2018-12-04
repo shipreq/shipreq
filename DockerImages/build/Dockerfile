@@ -218,3 +218,8 @@ RUN export PHANTOM_JS="phantomjs-2.1.1-linux-x86_64" \
  && mv $PHANTOM_JS /usr/local/share \
  && ln -s /usr/local/share/$PHANTOM_JS/bin/phantomjs /usr/bin
 
+ ##############
+ # Misc small #
+ ##############
+
+ENV SBT_OPTS="-XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC"
