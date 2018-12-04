@@ -6,6 +6,7 @@ phases:
       - cd Code
       - export JAVA_OPTS="-Xms512m -Xmx4g -Xss2m"
       - env|sort
+      - set -o pipefail
   build:
     commands:
       - >
