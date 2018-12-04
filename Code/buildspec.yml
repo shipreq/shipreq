@@ -9,7 +9,7 @@ phases:
   build:
     commands:
       - >
-        /bin/bash -c "set -o pipefail;
+        /bin/bash -c 'set -o pipefail;
         sbt -DMODE=release
         test:compile
         webapp-base-test-js/test:fullOptJS
