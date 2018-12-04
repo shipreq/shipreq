@@ -34,4 +34,4 @@ cache:
     - '/root/.cache/coursier/**/*'
     - '/root/.ivy2/**/*'
     - '/root/.sbt/**/*'
-    - '/shipreq.out'
+    - '/shipreq.out/**/*'
