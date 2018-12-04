@@ -5,11 +5,10 @@ phases:
     commands:
       - cd Code
       - export JAVA_OPTS="-Xms512m -Xmx4g -Xss2m"
-      - env|sort
-      - set -o pipefail
   build:
     commands:
       - >
+        /bin/bash -c "set -o pipefail;
         sbt -DMODE=release
         test:compile
         webapp-base-test-js/test:fullOptJS
@@ -25,7 +24,7 @@ phases:
         webapp-gen-js/test:fullOptJS
         webapp-server-logic-js/test:fullOptJS
         test
-        | sed -r 's~\x01?(\x1B\(B)?\x1B\[([0-9;]*)?[JKmsu]\x02?~~g'
+        | strip-ansi'
     finally:
       - find /root/.cache/coursier /root/.ivy2 /root/.sbt -name '*.lock' -type f -exec rm -fv {} +
 
