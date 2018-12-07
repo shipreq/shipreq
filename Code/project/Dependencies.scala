@@ -18,7 +18,7 @@ object Dependencies {
 
   object Scala {
     private val mm = scalaItself(version)
-    def version  = "2.12.6"
+    def version  = "2.12.8"
     val library  = mm("scala-library")
     val reflect  = mm("scala-reflect")
     val compiler = mm("scala-compiler") ++ reflect ++ scalaXml
