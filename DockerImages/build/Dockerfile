@@ -201,7 +201,7 @@ RUN mkdir -p /root/.sbt/0.13/plugins/ \
  && cd /tmp/scala \
  && mkdir project \
  && echo 'sbt.version=0.13.17' > project/build.properties \
- && echo 'scalaVersion := "2.12.6"' > build.sbt \
+ && echo 'scalaVersion := "2.12.8"' > build.sbt \
  && echo 'object M{}' > M.scala \
  && sbt test \
  && cd / \
@@ -221,6 +221,8 @@ RUN export PHANTOM_JS="phantomjs-2.1.1-linux-x86_64" \
  ##############
  # Misc small #
  ##############
+
+ ENV NODE_PATH=/usr/local/lib/node_modules
 
 ENV SBT_OPTS="-XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC"
 
