@@ -14,7 +14,7 @@ exec docker run \
   -v"$(pwd)/../../Code":/Code:ro \
   -w /Code \
   -m 15G \
-  -e JAVA_OPTS="-Xss2m" \
+  -e JAVA_OPTS="-Xss2m -XX:ReservedCodeCacheSize=192m" \
   -e SHIPREQ_RELEASE_TARGET=/shipreq.out \
   shipreq/build \
   bash
