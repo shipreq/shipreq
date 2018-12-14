@@ -95,7 +95,7 @@ object Common {
       isSnapshot                  := git.gitUncommittedChanges.value,
       version                     := versionFn(git.gitHeadCommit.value, isSnapshot.value),
       shellPrompt in ThisBuild    := ((s: State) => Project.extract(s).currentRef.project + "> "),
-      incOptions                  := incOptions.value.withNameHashing(true).withLogRecompileOnMacro(false),
+      incOptions                  := incOptions.value.withLogRecompileOnMacro(false),
       updateOptions               := updateOptions.value.withCachedResolution(true),
       aggregate in update         := true,
       scalaVersion                := Dependencies.Scala.version,
@@ -225,7 +225,7 @@ object Common {
   private def jsTests(t: JsTestType): Project => Project =
     t match {
       case NoTests =>
-        _.settings(test := ())
+        _.settings(test := {})
       case NoDom =>
         _.settings(
           jsEnv in Test := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv)
@@ -254,7 +254,7 @@ object Common {
   lazy val releaseMode: Boolean = {
     val mode = System.getProperty("MODE", "").trim
     val r = mode.compareToIgnoreCase("release") == 0
-    if (r) println("[mode] \033[1;31mRelease Mode.\033[0m")
+    if (r) println("[mode] \u001b[1;31mRelease Mode.\u001b[0m")
     r
   }
 

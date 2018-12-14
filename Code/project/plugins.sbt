@@ -9,13 +9,8 @@ addSbtPlugin("se.marcuslonnberg"  % "sbt-docker"               % "1.5.0")
 //addSbtPlugin("org.scoverage"      % "sbt-scoverage"        % "1.5.0")
 
 // Facilitates running Scala.JS tests in real browsers
-// libraryDependencies += "org.scala-js" %% "scalajs-env-selenium" % "0.1.3"
+//libraryDependencies += "org.scala-js" %% "scalajs-env-selenium" % "0.2.0"
 
 // AspectJ agent for Kamon
 //resolvers += Resolver.bintrayRepo("kamon-io", "sbt-plugins")
 //addSbtPlugin("io.kamon" % "sbt-aspectj-runner" % "1.0.4")
-
-// https://github.com/JetBrains/sbt-ide-settings
-resolvers += Resolver.url("jetbrains-bintray", url("http://dl.bintray.com/jetbrains/sbt-plugins/"))(Resolver.ivyStylePatterns)
-resolvers += Resolver.typesafeIvyRepo("releases")
-addSbtPlugin("org.jetbrains" % "sbt-ide-settings" % "1.0.0")

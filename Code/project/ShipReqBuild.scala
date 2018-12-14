@@ -15,13 +15,13 @@ object ShipReqBuild {
 
   def crossProject(dir: String): CrossProject =
     CrossProject(dir, file(dir))(JVMPlatform, JSPlatform)
-      .jvmConfigure(_.copy(id = dir + "-jvm"))
-      .jsConfigure(_.copy(id = dir + "-js"))
+      .jvmConfigure(_.withId(dir + "-jvm"))
+      .jsConfigure(_.withId(dir + "-js"))
       .settings(name := dir)
 
   lazy val root =
     Project("root", file("."))
-      .configure(Common.jvmSettings, IdeSettings.settingsForRoot)
+      .configure(Common.jvmSettings)
       .aggregate(base, taskman, webapp, utils, benchmarkJvm, benchmarkJs)
       .settings(addCommandAlias("dockers", ";root/compile ;taskman-server/docker ;webapp-server/docker"))
 

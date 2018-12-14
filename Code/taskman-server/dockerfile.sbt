@@ -22,8 +22,9 @@ dockerfile in docker := {
       .map(_._2.sortBy(_.getName))
   // printFileBatches(jarTiers)
 
+  val fixJarFilenameValue = fixJarFilename.value
   val classpath = PackagerKeys.scriptClasspath.value
-    .map(n => fixJarFilename.value(lib + n))
+    .map(n => fixJarFilenameValue(lib + n))
     .mkString(":")
 
   new Dockerfile {

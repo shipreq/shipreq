@@ -205,26 +205,38 @@ object WebappBuild {
 
     def assetSettings: Project => Project =
       _.settings(
-        webappPostProcess := { (target: File) =>
+        webappPostProcess := {
           implicit val log = streams.value.log
 
-          // Copy Scala.JS output
-          def copyScalaJs(jsf: VirtualJSFile, to: String): Unit =
-            jsf match {
-              case f: FileVirtualJSFile =>
-                fileSync(f.file, target / to, mandatory = true)
-              case other =>
-                sys.error("Unsupported virtual file type: " + other)
-            }
-          copyScalaJs((scalaJSLinkedFile in Compile in webappClientPublicJs).value, Frontend.scalaJsPathPublic .value)
-          copyScalaJs((scalaJSLinkedFile in Compile in webappClientHome    ).value, Frontend.scalaJsPathHome   .value)
-          copyScalaJs((scalaJSLinkedFile in Compile in webappClientProject ).value, Frontend.scalaJsPathProject.value)
-          copyScalaJs((scalaJSLinkedFile in Compile in webappClientWw      ).value, Frontend.scalaJsPathWw     .value)
+          val baseDirectoryValue     = baseDirectory.value
+          val jsWebappClientPublicJs = (scalaJSLinkedFile in Compile in webappClientPublicJs).value
+          val jsWebappClientHome     = (scalaJSLinkedFile in Compile in webappClientHome    ).value
+          val jsWebappClientProject  = (scalaJSLinkedFile in Compile in webappClientProject ).value
+          val jsWebappClientWw       = (scalaJSLinkedFile in Compile in webappClientWw      ).value
+          val pathScalaJsPathPublic  = Frontend.scalaJsPathPublic .value
+          val pathScalaJsPathHome    = Frontend.scalaJsPathHome   .value
+          val pathScalaJsPathProject = Frontend.scalaJsPathProject.value
+          val pathScalaJsPathWw      = Frontend.scalaJsPathWw     .value
+          (target: File) => {
 
-          // Copy frontend assets
-          val assetSrc = baseDirectory.value / Frontend.serve
-          log.info(s"Copying ${assetSrc.getCanonicalPath} → ${target.absolutePath}")
-          IO.copyDirectory(assetSrc, target, overwrite = true)
+            // Copy Scala.JS output
+            def copyScalaJs(jsf: VirtualJSFile, to: String): Unit =
+              jsf match {
+                case f: FileVirtualJSFile =>
+                  fileSync(f.file, target / to, mandatory = true)
+                case other =>
+                  sys.error("Unsupported virtual file type: " + other)
+              }
+            copyScalaJs(jsWebappClientPublicJs, pathScalaJsPathPublic )
+            copyScalaJs(jsWebappClientHome    , pathScalaJsPathHome   )
+            copyScalaJs(jsWebappClientProject , pathScalaJsPathProject)
+            copyScalaJs(jsWebappClientWw      , pathScalaJsPathWw     )
+
+            // Copy frontend assets
+            val assetSrc = baseDirectoryValue / Frontend.serve
+            log.info(s"Copying ${assetSrc.getCanonicalPath} → ${target.absolutePath}")
+            IO.copyDirectory(assetSrc, target, overwrite = true)
+          }
         }
       )
 

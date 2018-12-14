@@ -100,7 +100,7 @@ dockerfile in docker := {
       val stage = tmpWar / s"bucket-$i"
       val stageDir = stage.getAbsolutePath
       assert(stage.mkdir(), s"Failed to create $stage")
-      IO.copy(batch.map { case (f, n) => f -> stage / n }, preserveLastModified = true)
+      IO.copy(batch.map { case (f, n) => f.asFile -> stage / n }, overwrite = true, preserveLastModified = true, preserveExecutable = true)
 
       // Make jars deterministic
       if (fixJars)
