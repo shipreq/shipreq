@@ -1,21 +1,17 @@
 package shipreq.webapp.base.data
 
+import nyaya.gen.Gen
 import nyaya.prop._
-import nyaya.test._
 import nyaya.test.PropTest._
-import scalaz.std.AllFunctions._
-import scalaz.std.AllInstances._
 import utest._
-import shipreq.base.util.ScalaExt._
 import shipreq.base.util.MTrie, MTrie.Ops
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
 
-/*
-// TODO ReqCodesTest disabled
 object ReqCodesTest extends TestSuite {
   import ReqCode._
 
-  case class TrieProps(trie: Trie, data: Data, code: ReqCode.Value) {
+  final private case class TrieProps(trie: Trie, data: Data, code: ReqCode.Value) {
     val E          = EvalOver(this)
     val flat       = trie.flattenTrie
     val flatStream = trie.flatStream
@@ -27,7 +23,7 @@ object ReqCodesTest extends TestSuite {
     }
 
     def createFromFlatten = {
-      val n = flat.foldLeft(emptyTrie) { case (q, (c, t)) => q.put(c, t) }
+      val n = flat.foldLeft(ReqCode.Trie.empty) { case (q, (c, t)) => q.put(c, t) }
       E.equal("createFromFlatten", trie, n)
     }
 
@@ -38,17 +34,17 @@ object ReqCodesTest extends TestSuite {
       flattenEqualsFlatStream ∧ put ∧ createFromFlatten)
   }
 
-  def gen: Gen[TrieProps] =
+  private def gen: Gen[TrieProps] = {
+    val someGenReqId = Some(RandomData.reqId)
+    val genData      = RandomData.reqCode.data(someGenReqId, someGenReqId)(0 to 3)
     for {
-      targets ← RandomData.reqId.list.sup
-      trie    ← RandomData.reqCode.trie(Gen oneofO targets).lim(10)
-      target  ← Gen.newOrOld(RandomData.reqId)(targets) // add SHRs
-      maxId   = ReqCodeId(trie.cataV(0L)((q,_,d) => (q #:: d.ids.map(_.value)).max))
-      code    ← Gen.newOrOld(RandomData.reqCode.value)(trie.flatStream.map(_._1))
-    } yield TrieProps(trie, Data(maxId + 1, target), code)
+      trie <- RandomData.reqCode.trie(genData, 3)
+      data <- Gen.newOrOld(genData, trie.allValues)
+      code <- Gen.newOrOld(RandomData.reqCode.value, trie.flatStream.map(_._1))
+    } yield TrieProps(trie, data, code)
+  }
 
   override def tests = Tests {
-    gen.mustSatisfyE(_.all)
+    'props - gen.mustSatisfyE(_.all)
   }
 }
-*/
