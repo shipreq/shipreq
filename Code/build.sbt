@@ -4,6 +4,7 @@ startYear := Some(2013)
 logLevel in Global in update := Level.Warn
 
 val root                  = ShipReqBuild.root
+val js                    = ShipReqBuild.js
 
 val base                  = ShipReqBuild.base
 val baseUtilJvm           = ShipReqBuild.baseUtilJvm
@@ -38,10 +39,9 @@ val webappClientProject   = WebappBuild.webappClientProject
 val webappGenJvm          = WebappBuild.webappGenJvm
 val webappGenJs           = WebappBuild.webappGenJs
 val webappServerLogicJvm  = WebappBuild.webappServerLogicJvm
-val webappServerLogiJsc   = WebappBuild.webappServerLogicJs
+val webappServerLogicJs   = WebappBuild.webappServerLogicJs
 val webappServer          = WebappBuild.webappServer
 
 val benchmarkJvm          = ShipReqBuild.benchmarkJvm
 val benchmarkJs           = ShipReqBuild.benchmarkJs
 val utils                 = ShipReqBuild.utils
-
