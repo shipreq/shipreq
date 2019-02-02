@@ -28,7 +28,7 @@ object AtomScan {
   case class InRCG(id: ReqCodeId) extends IssueLoc
   implicit def issueLocEq: UnivEq[IssueLoc] = UnivEq.derive
 
-  private implicit val tagSetMonoid = monoidSet[ApplicableTagId]
+  private implicit val tagSetMonoid = scalazMonoidSet[ApplicableTagId]
 
   def apply(p: Project): AtomScan = {
     val tagRefs         = new LiveDeadStatMap.Builder[ReqId, Set[ApplicableTagId]]
