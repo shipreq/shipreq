@@ -32,17 +32,12 @@ Backlog
 * Warn when closing page and there are open, dirty editors
 * Add KB shortcut to move colums in ReqTable
 
-### DevOps
-* Create db rollback plan
-
 ### Tech
-* Stop using scalaz.std.anything which brings in too much other stuff;
-  use custom instances that have the minimum typeclasses needed.
 * Remove ScalaCheck. Use Nyaya.
 * Use fast boopickle codecs for webworkers: https://github.com/ochrons/boopickle#codecs
 * Test env: Use different DBs for each module
 * Switch to semantic-react
-* Remove jQuery - lift and semantic UI blocking this
+* Remove jQuery - Lift and Semantic UI blocking this
 * Remove unused styles
 * Change ScalaCSS to generate Scala.JS without the runtime/JS-size overhead
 * webapp-base{,-member} packages are shit. Reorg!
@@ -62,13 +57,18 @@ Backlog
 * Prevent -- (not not) in the FilterParser? Or allow /\-+/ and auto-correct on blur?
 * Firefox: ctrl-home space doesn't work properly
 * Firefox: UC step graph doesn't shrink
+* Tracing
+  * Add user id tag to sub-spans. Only on top-level atm
+  * Add tracing to Taskman
+  * Naming convention for code top-levels {Security delay, MakeEvent, UpdateProject}. Prefix with "Fn: " or something?
 
 ------------------------------------------------------------------------------------------------------------------------
-Phase 2
-=======
+Phase 2B
+========
 
-### Social
-* Co-founder criteria
+### Business
+* Potential angel clients
+  * Research BA consultencies
 
 ### Deployment
 * Automate ShipReq releases
@@ -79,24 +79,26 @@ Phase 2
 * Process
   * Do more with errors (client & server), eg. ClientData.{init,applyEvents}
   * Add React component error handling and possibly report to server
+* Review & audit state of devops -- logging/metrics/tracing -- now vs goal
 * Metrics
   * Metrics endpoint needs secret key
   * Add ThreadLocal security-delay flag and affect metrics
   * Taskman metrics
   * Business metrics (see metrics.md)
-* Tracing
-  * Add user id tag to sub-spans. Only on top-level atm
-  * Add tracing to Taskman
-  * Naming convention for code top-levels {Security delay, MakeEvent, UpdateProject}. Prefix with "Fn: " or something?
+* Disable/remove Tracing and/or Kamon
+* Data backups
 
 ### New Features
 * Issues
-* Send feedback (with screenshot). Add link beside @username in top bar
+* Send Feedback / Report Issue (with screenshot). Add link beside @username in top bar
 * User profile page
 
 ### Other
+
 * Cell copy-and-paste on Req{Table,Detail}
+
 * Issues prototype: add collapse/expand by issue{type,} columns
+
 * Allow system to add new field/columns in future without breaking existing projects.
   eg. User adds a "Last Updated" custom field, later ShipReq provides an auto-populated
   column with the same name. System needs a way to rename user's field without
@@ -104,3 +106,21 @@ Phase 2
   Maybe a dynamic approach that compares versions, or maybe a migration task
   that adds a new event to everyone's projects to do the rename once when the
   new version is deployed.
+
+* Automate visual testing so changes to styling (mostly Semantic UI upgrades) can be verified.
+  Could add to test-state... But then how to make it account for tiny differents like moment.js "updated x sec ago" things?
+  Any free tool?
+
+### Architecture
+
+This architecture doesn't need to be implemented but I'm feeling increasingly uncomfortable without
+it planned.
+
+* Where I want to be
+  * Horizontal scalability (for both handling scale and zero-downtime deploys)
+  * User management + enterprise support
+    * multiple login/signup methods (oauth?)
+    * mailing list ~~~ system accounts ~~~ ownership/perms wrt relation to data
+    * groups/org etc for phase 3
+  * Encryption
+  * Fast SSR (caching or node)
