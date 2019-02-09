@@ -2,14 +2,6 @@
 bin="$(dirname "$0")"
 code="$(cd "$bin/.." && pwd)"
 
-pkg_rule=
-case "$1" in
-  --pkg|-p)
-    pkg_rule='--replace=/[^/]+\.scala$ --with=/all.scala'
-    shift
-    ;;
- esac
-
 exec source-map-explorer \
   --replace='(/(shared|js))?/src/main/scala/' --with=/ \
   --replace=japgolly/scalajs/react/'(extra/)?' --with= \
@@ -17,5 +9,4 @@ exec source-map-explorer \
   --replace='/scala/scala/' --with=/scala/ \
   --replace='/src/library/scala/|//' --with=/ \
   --replace="$code/" --with=shipreq/ \
-  $pkg_rule \
   "$@"
