@@ -159,16 +159,6 @@ object Dependencies {
     val servletApi = jvmOnly("javax.servlet" % "javax.servlet-api" % "3.1.0")
   }
 
-  object Kamon {
-    val core          = jvmOnly("io.kamon" %%  "kamon-core"                  % "1.1.5")
-  //val jdbc          = jvmOnly("io.kamon" %%  "kamon-jdbc"                  % "1.0.0") // requires agent
-  //val akka          = jvmOnly("io.kamon" %% s"kamon-akka-${Akka.shortVer}" % "1.0.1")
-  //val systemMetrics = jvmOnly("io.kamon" %%  "kamon-system-metrics"        % "1.0.0") // requires Sigar
-  //val logback       = jvmOnly("io.kamon" %%  "kamon-logback"               % "1.0.0") // requires agent
-  //val prometheus    = jvmOnly("io.kamon" %%  "kamon-prometheus"            % "1.0.0")
-    val jaeger        = jvmOnly("io.kamon" %%  "kamon-jaeger"                % "1.0.2")
-  }
-
   object Prometheus {
     private val mm = MultiModule.java("io.prometheus", "0.6.0")
     val client     = mm("simpleclient")
@@ -177,8 +167,8 @@ object Dependencies {
     val servlet    = mm("simpleclient_servlet")
   }
 
-  val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "0.9.6")
   val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %% "benchmark"         % "0.2.6")
+  val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "0.9.6")
   val scalajsJavaTime  = jsOnly("org.scala-js"                          %% "scalajs-java-time" % "0.2.5")
 
   val boopickle   = jvmAndJs("io.suzaku",                        "boopickle", "1.3.0")
@@ -188,17 +178,18 @@ object Dependencies {
   val μPickle     = jvmAndJs("com.github.japgolly.fork.upickle", "upickle",   "custom-7")
   val μTest       = jvmAndJs("com.lihaoyi",                      "utest",     "0.6.6")
 
-  val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.2")
-  val scalaXml     = jvmOnly("org.scala-lang.modules"     %% "scala-xml"             % "1.1.1")
+  val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
+  val commonsLang  = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.8.1")
+  val flyway       = jvmOnly("com.googlecode.flyway"       % "flyway-core"           % "2.3.1")
+  val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.3.0")
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.11")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
+  val kamonJaeger  = jvmOnly("io.kamon"                   %% "kamon-jaeger"          % "1.0.2")
   val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.5")
-  val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.3.0")
-  val flyway       = jvmOnly("com.googlecode.flyway"       % "flyway-core"           % "2.3.1")
-  val commonsLang  = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.8.1")
-  val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
-  val twitterEval  = jvmOnly("com.twitter"                %% "util-eval"             % "6.43.0")
   val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.13.5")
+  val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.2")
+  val scalaXml     = jvmOnly("org.scala-lang.modules"     %% "scala-xml"             % "1.1.1")
+  val twitterEval  = jvmOnly("com.twitter"                %% "util-eval"             % "6.43.0")
 
   val betterMonadicFor = compilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.0-M4")
   val useBetterMonadicFor = (_: Project).settings(addCompilerPlugin(betterMonadicFor))

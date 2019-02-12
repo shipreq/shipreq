@@ -79,13 +79,14 @@ Phase 2B
 * Process
   * Do more with errors (client & server), eg. ClientData.{init,applyEvents}
   * Add React component error handling and possibly report to server
-* Review & audit state of devops -- logging/metrics/tracing -- now vs goal
+* Review & audit state of devops -- metrics/tracing -- now vs goal
 * Metrics
   * Metrics endpoint needs secret key
   * Add ThreadLocal security-delay flag and affect metrics
+  * Add metrics for logs @ logLevel (webapp & taskman)
   * Taskman metrics
   * Business metrics (see metrics.md)
-* Disable/remove Tracing and/or Kamon
+* Replace kamonJaeger with just jaeger client
 * Data backups
 
 ### New Features
