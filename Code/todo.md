@@ -112,6 +112,8 @@ Phase 2B
   Could add to test-state... But then how to make it account for tiny differents like moment.js "updated x sec ago" things?
   Any free tool?
 
+* Benchmark ZIO to back Fx
+
 ### Architecture
 
 This architecture doesn't need to be implemented but I'm feeling increasingly uncomfortable without
