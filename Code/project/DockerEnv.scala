@@ -95,11 +95,11 @@ object DockerEnv {
 
     def javaOptions(serviceName: String, baseDirectory: File): List[String] = {
       val envRoot = this.envRoot(baseDirectory)
+      val jaegerPort = envFileValue(envRoot, "PORT_JAEGER_COLLECTOR")
       Options(DockerEnv.javaOptionsFromDockerComposeEnv(serviceName, envRoot))
         .add("db.host", "localhost")
         .add("db.port", envFileValue(envRoot, "PORT_POSTGRES"))
-        .add("JAEGER_HOST", "localhost")
-        .add("JAEGER_PORT", envFileValue(envRoot, "PORT_JAEGER_COLLECTOR"))
+        .add("JAEGER_ENDPOINT", s"http://localhost:$jaegerPort/api/traces")
         .add("run.mode", runMode)
         .value
     }

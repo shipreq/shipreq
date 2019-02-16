@@ -114,7 +114,7 @@ object DispatchBM {
     googleAnalyticsTrackingId  = None,
     taskmanSchema              = "test_taskman",
     prometheus                 = ServerConfig.Prometheus.default.copy(enabled = false),
-    kamonConfFile              = None,
+    jaegerTracingConfig        = None,
     initTaskmanOnBoot          = false,
     initTaskmanRetry           = RetryCriteria(2 hours, Some(666)))
 

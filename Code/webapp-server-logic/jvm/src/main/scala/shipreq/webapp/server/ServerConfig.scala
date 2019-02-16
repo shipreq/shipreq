@@ -1,5 +1,6 @@
 package shipreq.webapp.server
 
+import io.jaegertracing.Configuration
 import japgolly.clearconfig._
 import java.time.Duration
 import monocle.macros.Lenses
@@ -36,8 +37,7 @@ final case class ServerConfig(baseUrl: Url.Absolute.Base,
 
                               googleAnalyticsTrackingId: Option[String],
 
-                              /** Filename or classpath-resource-name of Kamon config */
-                              kamonConfFile: Option[String],
+                              jaegerTracingConfig: Option[Configuration],
 
                               prometheus: ServerConfig.Prometheus,
 
@@ -52,7 +52,7 @@ final case class ServerConfig(baseUrl: Url.Absolute.Base,
 
   lazy val traceAlgebraFx: Trace.Algebra[Fx] =
     Trace.Algebra(
-      kamonConfFile.map(_ => TraceWithKamon.algebraFx).toList)
+      jaegerTracingConfig.map(c => OpenTracing.algebraFx(c.getTracer)).toList)
 }
 
 object ServerConfig {
@@ -76,6 +76,7 @@ object ServerConfig {
   }
 
   def config: ConfigDef[ServerConfig] =
+    JaegerTracingConfig.external *>
     ( ConfigDef.need    [String  ]      ("url").map(Url.Absolute.Base.apply) |@|
       ConfigDef.getOrUse[Duration]      ("attack_frustration_delay", Duration.ofMillis(120)) |@|
       ConfigDef.need    [Int     ]      ("token.length") |@|
@@ -83,7 +84,7 @@ object ServerConfig {
       ConfigDef.need    [Duration]      ("token.lifespan.resetpw") |@|
       ConfigDef.getOrUse[Boolean ]      ("feature.publicRegistration", true).map(Allow.when) |@|
       ConfigDef.get     [String  ]      ("googleAnalytics.trackingId") |@|
-      ConfigDef.get     [String  ]      ("kamon.conf") |@|
+      JaegerTracingConfig.main("webapp") |@|
       Prometheus.config.withPrefix      ("prometheus.") |@|
       ConfigDef.need    [String  ]      ("taskman.schema") |@|
       ConfigDef.getOrUse[Boolean ]      ("taskman.init", true) |@|

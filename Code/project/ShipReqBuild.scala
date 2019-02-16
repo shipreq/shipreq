@@ -70,7 +70,7 @@ object ShipReqBuild {
         Common.jvmSettings,
         Common.macroModuleSettings)
       .dependsOn(baseUtilJvm)
-      .deps(kamonJaeger ++ Prometheus.client)
+      .deps(jaegerClient ++ Prometheus.client)
 
   lazy val baseDb =
     project("base-db")

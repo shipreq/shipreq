@@ -447,7 +447,7 @@ object MockInterpreters {
     publicRegistration         = Allow,
     googleAnalyticsTrackingId  = None,
     taskmanSchema              = "test_taskman",
-    kamonConfFile              = None,
+    jaegerTracingConfig        = None,
     prometheus                 = ServerConfig.Prometheus.default,
     initTaskmanOnBoot          = false,
     initTaskmanRetry           = RetryCriteria(2 hours, Some(666)))

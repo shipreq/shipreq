@@ -50,11 +50,12 @@ services:
       - db.username=dev
       - db.password=sqd
       - run.mode=staging
-      - shipreq.kamon.conf=kamon
       - shipreq.url=https://localhost:$PORT_SHIPREQ_WEBAPP_HTTPS
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      - JAEGER_REPORTER_FLUSH_INTERVAL=2000
+      - JAEGER_SAMPLER_TYPE=const
+      - JAEGER_SAMPLER_PARAM=1
       - EXTERNAL_PORT_SSL=$PORT_SHIPREQ_WEBAPP_HTTPS
-      - JAEGER_HOST=jaeger
-      - JAEGER_PORT=14268
     cpus: 2
     mem_limit: 1856m # 2.25*1024 - 448 for Taskman
 
@@ -66,7 +67,7 @@ services:
     volumes:
       - ./portal.html:/usr/share/nginx/html/index.html:ro
     cpus: 0.1
-    mem_limit: 4m
+    mem_limit: 10m
 
   prometheus:
     image: prom/prometheus:v2.2.1

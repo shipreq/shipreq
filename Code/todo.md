@@ -86,7 +86,6 @@ Phase 2B
   * Add metrics for logs @ logLevel (webapp & taskman)
   * Taskman metrics
   * Business metrics (see metrics.md)
-* Replace kamonJaeger with just jaeger client
 * Data backups
 
 ### New Features

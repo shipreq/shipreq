@@ -55,7 +55,6 @@ class Boot {
     initTaskman(Global.Instance)
 
     // Start services
-    cfg.server.kamonConfFile.foreach(initKamon) // keep this after initTaskman() - don't want that SQL traced
     initPrometheus(cfg.server.prometheus)
   }
 
@@ -209,19 +208,6 @@ class Boot {
   def initRoutes(g: Global): Unit = {
     // (Must be done after Global is ready)
     new LiftDispatcher(g).init()
-  }
-
-  def initKamon(confName: String): Unit = {
-    import com.typesafe.config.ConfigFactory
-    import kamon.Kamon
-    val file = new java.io.File(confName)
-    val config =
-      if (file.exists())
-        ConfigFactory.parseFile(file)
-      else
-        ConfigFactory.load(confName)
-    Kamon.reconfigure(config)
-    Kamon.loadReportersFromConfig()
   }
 
   def initPrometheus(cfg: ServerConfig.Prometheus): Unit =
