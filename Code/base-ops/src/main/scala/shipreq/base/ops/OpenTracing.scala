@@ -77,10 +77,24 @@ object OpenTracing {
 
       override def sqlTracer(spanName: String) =
         Some(new SqlTracer {
+
+          /** System.nanoTime() isn't relative to epoch.
+            * This offset roughly converts a nanoTime value (in μs) to μs-since-epoch.
+            */
+          val nanoTimeOffsetUs = {
+            val n1         = System.nanoTime()
+            val m          = System.currentTimeMillis()
+            val n2         = System.nanoTime()
+            val n          = n1 + (n2 - n1) / 2
+            val nanoTimeUs = n / 1000
+            val epochUs    = m * 1000
+            epochUs - nanoTimeUs
+          }
+
           override def logExecute(method: String, sql: String, batches: Int,
                                   err: Option[Throwable], startTimeNs: Long, endTimeNs: Long): Unit = {
-            val startTimeUs = startTimeNs / 1000
-            val endTimeUs   = endTimeNs / 1000
+            val startTimeUs = nanoTimeOffsetUs + startTimeNs / 1000
+            val endTimeUs   = nanoTimeOffsetUs + endTimeNs / 1000
             val span        = tracer.buildSpan(spanName).withStartTimestamp(startTimeUs).start()
             span.setTag("jdbc.class", "PreparedStatement")
             span.setTag("jdbc.method", method)
