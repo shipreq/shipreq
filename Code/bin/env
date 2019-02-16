@@ -9,6 +9,7 @@ if [ $# -eq 0 ]; then
   echo "Examples:"
   echo "  $self test up -d"
   echo "  $self dev up"
+  echo "  $self dev stop"
   exit 1
 fi
 
@@ -32,6 +33,16 @@ fi
 # Expose localhost so that prometheus can collect metrics when running via SBT
 export DOCKER0="$(ip route show | grep docker0 | awk '{print $9}')"
 [[ ! "$DOCKER0" =~ ^[0-9][0-9.]*$ ]] && echo "Invalid docker0 ip: $DOCKER0" && exit 3
+
+# Prevent muscle-memory blowing all state
+down=0
+for arg in "$@"; do
+  [ "$arg" == down ] && down=1
+done
+[ $down == 1 ] \
+  && echo "WARNING: The 'down' command will remove containers after stopping them meaning you'll lose all state." \
+  && echo "         Use 'stop' instead if you want to retain state..." \
+  && sleep 4
 
 # In project name (-p) dashes and underscores and removed automatically
 exec docker-compose \
