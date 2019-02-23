@@ -1,5 +1,7 @@
 ------------------------------------------------- MODULE project_cache -------------------------------------------------
 
+EXTENDS Naturals
+
 CONSTANT RequestId,
          User
 
@@ -11,19 +13,22 @@ VARIABLES db,    \* The state of the DB
 vars == << db, redis, proc, user >>
 
 TypeInvariants ==
-  /\ db    = {}
+  /\ db    \in [ver: Nat] \* The version of the Project aka the number of events
   /\ redis = {}
   /\ proc  = {}
-  /\ user \in [User -> [
-       online: BOOLEAN,
-       reqs  : SUBSET RequestId \* Requests for which a response hasn't be received
-       \* TODO: project, futureEvents
-     ]]
+  /\ user  \in [User -> [
+                  online : BOOLEAN,
+                  ver    : Nat,                \* The version of the built Project
+                  reqs   : SUBSET RequestId ]] \* Requests for which a response hasn't be received
+  /\ \A u \in User : user[u].online => user[u].ver > 0
 
-OfflineUser == [online |-> FALSE, reqs |-> {}]
+OfflineUser == [
+  online |-> FALSE,
+  reqs   |-> {},
+  ver    |-> 0]
 
 Init ==
-  /\ db    = {}
+  /\ db    = [ver |-> 1]
   /\ redis = {}
   /\ proc  = {}
   /\ user  = [u \in User |-> OfflineUser]
@@ -33,9 +38,8 @@ Init ==
 
 UserConnect == \E u \in User :
   /\ ~user[u].online
-  /\ user' = [user EXCEPT ![u].online = TRUE]
+  /\ user' = [user EXCEPT ![u].online = TRUE, ![u].ver = db.ver]
   /\ UNCHANGED << db, redis, proc >>
-  \* TODO new user needs the latest project
   
 UserDisconnect == \E u \in User :
   /\ user[u].online
