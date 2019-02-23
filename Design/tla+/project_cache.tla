@@ -63,7 +63,9 @@ Init ==
 
 ------------------------------------------------------------------------------------------------------------------------
 
-Remove(set, el) == {\A a \in set : a /= el}
+Remove(set, el) == {a \in set : a /= el}
+
+Replace(set, old, new) == { IF a = old THEN new ELSE a : a \in set}
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -89,40 +91,40 @@ ModRequest == \E u \in User : userState[u].online                  \* For an onl
 
 Respond_ReadRedis(p) ==
   /\ p.status = "ready"
-  /\ procs' = [procs EXCEPT ![p].ver = RedisVer, ![p].status = "post-read-redis"]
+  /\ procs' = Replace(procs, p, [p EXCEPT !.ver = RedisVer, !.status = "post-read-redis"])
   /\ UNCHANGED << db, redis, pub, userState >>
 
 Respond_ReadDB(p) ==
   /\ p.status = "post-read-redis"
   /\ p.ver = 0
-  /\ procs' = [procs EXCEPT ![p].ver = db.ver, ![p].status = "init-redis"]
+  /\ procs' = Replace(procs, p, [p EXCEPT !.ver = db.ver, !.status = "init-redis"])
   /\ UNCHANGED << db, redis, pub, userState >>
 
 Respond_InitRedis(p) ==
   /\ p.status = "init-redis"
   /\ IF p.ver >= RedisVer
      THEN /\ redis' = [ver |-> p.ver, events |-> {}]
-          /\ procs' = [procs EXCEPT ![p].status = "create"]
+          /\ procs' = Replace(procs, p, [p EXCEPT !.status = "create"])
      ELSE \* Redis has a more recent state than this proc
-          /\ procs' = [procs EXCEPT ![p].status = "ready"]
+          /\ procs' = Replace(procs, p, [p EXCEPT !.status = "ready"])
           /\ UNCHANGED redis
-  /\ UNCHANGED << db, userState >>
+  /\ UNCHANGED << db, pub, userState >>
 
 Respond_NewEventWriteDB(p) ==
   /\ p.status = "create"
   /\ IF p.ver = db.ver
      THEN /\ db'    = [ver |-> p.ver + 1]
-          /\ procs' = [procs EXCEPT ![p].status = "post-create", ![p].ver = @ + 1]
+          /\ procs' = Replace(procs, p, [p EXCEPT !.status = "post-create", !.ver = @ + 1])
      ELSE \* DB has been updated without our knowledge
-          /\ procs' = [procs EXCEPT ![p].status = "ready"]
+          /\ procs' = Replace(procs, p, [p EXCEPT !.status = "ready"])
           /\ UNCHANGED db
   /\ UNCHANGED << redis, pub, userState >>
 
 Respond_WriteRedis(p) ==
   /\ p.status = "post-create"
-  /\ pub'     = pub \union { <<u, p.ver>> : u \in (\A u \in User : userState[u].online) }
+  /\ pub'     = pub \union { <<u, p.ver>> : u \in {u \in User : userState[u].online} }
   /\ redis'   = [ver |-> p.ver, events |-> {}] \* TODO: Write to Redis properly
-  /\ procs'   = [procs EXCEPT ![p].status = "done"]
+  /\ procs'   = Replace(procs, p, [p EXCEPT !.status = "done"])
   /\ UNCHANGED << db, userState >>
 
 Respond_Done(p) ==
@@ -130,7 +132,7 @@ Respond_Done(p) ==
   /\ IF userState[p.user].online
      THEN userState' = [userState EXCEPT ![p.user].reqs = Remove(@, p.req)]
      ELSE UNCHANGED userState
-  /\ procs' = {\A q \in procs : q.req /= p.req }
+  /\ procs' = Remove(procs, p)
   /\ UNCHANGED << db, redis, pub >>
 
 ModRespond ==
@@ -147,11 +149,11 @@ Publish ==
   /\ pub /= {}
   /\ \E <<u,v>> \in pub :
     \* TODO Remove ver check, add futureEvents to userState
-    \/ IF userState[u].online /\ (v = 1 + userState[u].ver)
+    /\ IF userState[u].online /\ (v = 1 + userState[u].ver)
        THEN userState' = [userState EXCEPT ![u].ver = v]
        ELSE UNCHANGED userState
-    \/ pub' = Remove(pub, <<u,v>>)
-  /\ UNCHANGED << db, redis, procs >>
+    /\ pub' = Remove(pub, <<u,v>>)
+    /\ UNCHANGED << db, redis, procs >>
 
 
 Action ==
