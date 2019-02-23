@@ -149,6 +149,7 @@ Publish ==
   /\ pub /= {}
   /\ \E <<u,v>> \in pub :
     \* TODO Remove ver check, add futureEvents to userState
+    \* TODO This doesn't cause a failure because that user will eventually just disconnect
     /\ IF userState[u].online /\ (v = 1 + userState[u].ver)
        THEN userState' = [userState EXCEPT ![u].ver = v]
        ELSE UNCHANGED userState
@@ -158,14 +159,19 @@ Publish ==
 
 Action ==
   \/ UserConnect
-  \/ UserDisconnect
+\*  \/ UserDisconnect
   \/ ModRequest
   \/ ModRespond
   \/ Publish
 
+Fairness ==
+  /\ WF_vars(ModRequest)
+  /\ SF_vars(ModRespond)
+  /\ SF_vars(Publish)
+
 ------------------------------------------------------------------------------------------------------------------------
 
-Spec == Init /\ [][Action]_<<vars>>
+Spec == Init /\ [][Action]_<<vars>> /\ Fairness /\ <>(db.ver=5)
 
 THEOREM  Spec => [](TypeInvariants /\ DataInvariants)
 
