@@ -1,0 +1,31 @@
+digraph G {
+  Start -> ReadRedis [label="ready"]
+  //{rank=same; ReadDB ; InitRedis}
+  ReadRedis -> ReadDB [label="post-read-redis\n(miss)"]
+  ReadDB -> InitRedis [label="init-redis"]
+  InitRedis -> ReadRedis [label="KO" color=red]
+  EvalAndWriteDB [label="New Event\nWrite DB"]
+  InitRedis -> EvalAndWriteDB [label="create"]
+  ReadRedis -> EvalAndWriteDB [label="post-read-redis\n(hit)"]
+  EvalAndWriteDB -> ReadRedis [label="KO" color=red]
+  WriteRedis [label="Broadcast Event\nWrite Redis"]
+  EvalAndWriteDB -> WriteRedis [label="post-create"]
+  WriteRedis -> Done [label=""]
+  
+  WriteRedisFailure [label="?"]
+  WriteRedis -> WriteRedisFailure [label="Write KO" color=red]
+}
+
+/*
+
+/\ redis     \in [
+  ver: Nat,           \* The version of a Project snapshot, or 0 if cache empty
+  events: SUBSET Nat] \* A set of events represented by their version numbers
+
+
+req   : Request,
+user  : User,
+
+status: {"ready", "post-read-redis"},
+ver   : Nat] \* The version of the Project in memory (0=none)
+*/
