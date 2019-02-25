@@ -1,6 +1,7 @@
 ------------------------------------------------- MODULE project_cache -------------------------------------------------
 
-EXTENDS Naturals
+EXTENDS Naturals,
+        TLC
 
 CONSTANT Request,
          User
@@ -25,7 +26,7 @@ TypeInvariants ==
 
   /\ procs \in SUBSET [
        req   : Request,
-       status: {"ready", "post-read-redis", "init-redis", "create", "post-create", "done"},
+       status: {"ready", "read-db", "init-redis", "create", "post-create", "done"},
        user  : User,
        ver   : Nat] \* The version of the Project in memory (0=none)
 
@@ -89,18 +90,20 @@ ModRequest == \E u \in User : userState[u].online                  \* For an onl
     /\ procs'     = procs \union {[user |-> u, req |-> r, status |-> "ready", ver |-> 0]}
     /\ UNCHANGED << db, redis, pub >>
 
-Respond_ReadRedis(p) ==
+Respond_ReadRedis == \E p \in procs :
   /\ p.status = "ready"
-  /\ procs' = Replace(procs, p, [p EXCEPT !.ver = RedisVer, !.status = "post-read-redis"])
+  /\ procs' = Replace(procs, p, [p EXCEPT !.ver = RedisVer, !.status = IF RedisVer > p.ver
+                                                                       THEN "create"
+                                                                       ELSE "read-db"])
   /\ UNCHANGED << db, redis, pub, userState >>
+\*  /\ PrintT([db |-> db.ver, redis |-> redis.ver, proc |-> p.ver])
 
-Respond_ReadDB(p) ==
-  /\ p.status = "post-read-redis"
-  /\ p.ver = 0
+Respond_ReadDB == \E p \in procs :
+  /\ p.status = "read-db"
   /\ procs' = Replace(procs, p, [p EXCEPT !.ver = db.ver, !.status = "init-redis"])
   /\ UNCHANGED << db, redis, pub, userState >>
 
-Respond_InitRedis(p) ==
+Respond_InitRedis == \E p \in procs :
   /\ p.status = "init-redis"
   /\ IF p.ver >= RedisVer
      THEN /\ redis' = [ver |-> p.ver, events |-> {}]
@@ -110,7 +113,7 @@ Respond_InitRedis(p) ==
           /\ UNCHANGED redis
   /\ UNCHANGED << db, pub, userState >>
 
-Respond_NewEventWriteDB(p) ==
+Respond_NewEventWriteDB == \E p \in procs :
   /\ p.status = "create"
   /\ IF p.ver = db.ver
      THEN /\ db'    = [ver |-> p.ver + 1]
@@ -120,14 +123,15 @@ Respond_NewEventWriteDB(p) ==
           /\ UNCHANGED db
   /\ UNCHANGED << redis, pub, userState >>
 
-Respond_WriteRedis(p) ==
+Respond_WriteRedis == \E p \in procs :
   /\ p.status = "post-create"
   /\ pub'     = pub \union { <<u, p.ver>> : u \in {u \in User : userState[u].online} }
   /\ redis'   = [ver |-> p.ver, events |-> {}] \* TODO: Write to Redis properly
   /\ procs'   = Replace(procs, p, [p EXCEPT !.status = "done"])
   /\ UNCHANGED << db, userState >>
 
-Respond_Done(p) ==
+\* Responds to user
+Respond_Done == \E p \in procs :
   /\ p.status = "done"
   /\ IF userState[p.user].online
      THEN userState' = [userState EXCEPT ![p.user].reqs = Remove(@, p.req)]
@@ -137,13 +141,12 @@ Respond_Done(p) ==
 
 ModRespond ==
   /\ procs /= {}
-  /\ \E p \in procs :
-    \/ Respond_ReadRedis(p)
-    \/ Respond_ReadDB(p)
-    \/ Respond_InitRedis(p)
-    \/ Respond_NewEventWriteDB(p)
-    \/ Respond_WriteRedis(p)
-    \/ Respond_Done(p)
+  /\ \/ Respond_ReadRedis
+     \/ Respond_ReadDB
+     \/ Respond_InitRedis
+     \/ Respond_NewEventWriteDB
+     \/ Respond_WriteRedis
+     \/ Respond_Done
 
 Publish ==
   /\ pub /= {}
@@ -157,22 +160,42 @@ Publish ==
     /\ UNCHANGED << db, redis, procs >>
 
 
-Action ==
+ActionAct ==
   \/ UserConnect
 \*  \/ UserDisconnect
   \/ ModRequest
+
+ActionReact ==
   \/ ModRespond
   \/ Publish
+
+Action == ActionAct \/ ActionReact
+
+------------------------------------------------------------------------------------------------------------------------
 
 Fairness ==
   /\ WF_vars(ModRequest)
   /\ SF_vars(ModRespond)
   /\ SF_vars(Publish)
 
-------------------------------------------------------------------------------------------------------------------------
-
-Spec == Init /\ [][Action]_<<vars>> /\ Fairness /\ <>(db.ver=5)
+Spec == Init /\ [][Action]_<<vars>> /\ Fairness
 
 THEOREM  Spec => [](TypeInvariants /\ DataInvariants)
+
+------------------------------------------------------------------------------------------------------------------------
+
+AnythingInFlight ==
+  /\ procs /= {}
+  /\ \E u \in User : userState[u].reqs /= {}
+  /\ pub /= {}
+
+CONSTANT MCVerLimit
+
+MCSymmetry == Permutations(User) \union Permutations(Request)
+MCLimit    == db.ver >= MCVerLimit
+MCDone     == MCLimit /\ ~AnythingInFlight
+MCContinue == ~MCDone
+MCAction   == IF MCLimit THEN ActionReact ELSE Action
+MCSpec     == Init /\ [][MCAction]_<<vars>> /\ Fairness
 
 ========================================================================================================================
