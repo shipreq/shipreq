@@ -24,3 +24,7 @@ This spec models infinite behavior - one can keep adding modifications forever s
 Instead I had to add a configurable limit, then specify that beyond that limit, the system only reacts and doesn't
 produce any more modifications. Then add both a liveness condition to ensure we flush and stablise, and a constraint to
 make TLC stop.
+
+It's not enough to just stop when events have been flushed/drained, to really confirm our
+expected behaviour, add a test to ensure all users have the expected/correct content.
+I added a new invariant: `MCDone => AllUsersUpToDate`

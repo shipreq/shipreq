@@ -90,7 +90,7 @@ ModRequest == \E u \in User : userState[u].online                  \* For an onl
     /\ procs'     = procs \union {[user |-> u, req |-> r, status |-> "ready", ver |-> 0]}
     /\ UNCHANGED << db, redis, pub >>
 
-Respond_ReadRedis == \E p \in procs :
+Respond_ReadRedis == procs /= {} /\ \E p \in procs :
   /\ p.status = "ready"
   /\ procs' = Replace(procs, p, [p EXCEPT !.ver = RedisVer, !.status = IF RedisVer > p.ver
                                                                        THEN "create"
@@ -98,7 +98,7 @@ Respond_ReadRedis == \E p \in procs :
   /\ UNCHANGED << db, redis, pub, userState >>
 \*  /\ PrintT([db |-> db.ver, redis |-> redis.ver, proc |-> p.ver])
 
-Respond_ReadDB == \E p \in procs :
+Respond_ReadDB == procs /= {} /\ \E p \in procs :
   /\ p.status = "read-db"
   /\ procs' = Replace(procs, p, [p EXCEPT !.ver = db.ver, !.status = "init-redis"])
   /\ UNCHANGED << db, redis, pub, userState >>
@@ -113,7 +113,7 @@ Respond_InitRedis == \E p \in procs :
           /\ UNCHANGED redis
   /\ UNCHANGED << db, pub, userState >>
 
-Respond_NewEventWriteDB == \E p \in procs :
+Respond_NewEventWriteDB == procs /= {} /\ \E p \in procs :
   /\ p.status = "create"
   /\ IF p.ver = db.ver
      THEN /\ db'    = [ver |-> p.ver + 1]
@@ -123,7 +123,7 @@ Respond_NewEventWriteDB == \E p \in procs :
           /\ UNCHANGED db
   /\ UNCHANGED << redis, pub, userState >>
 
-Respond_WriteRedis == \E p \in procs :
+Respond_WriteRedis == procs /= {} /\ \E p \in procs :
   /\ p.status = "post-create"
   /\ pub'     = pub \union { <<u, p.ver>> : u \in {u \in User : userState[u].online} }
   /\ redis'   = [ver |-> p.ver, events |-> {}] \* TODO: Write to Redis properly
@@ -131,7 +131,7 @@ Respond_WriteRedis == \E p \in procs :
   /\ UNCHANGED << db, userState >>
 
 \* Responds to user
-Respond_Done == \E p \in procs :
+Respond_Done == procs /= {} /\ \E p \in procs :
   /\ p.status = "done"
   /\ IF userState[p.user].online
      THEN userState' = [userState EXCEPT ![p.user].reqs = Remove(@, p.req)]
@@ -140,22 +140,23 @@ Respond_Done == \E p \in procs :
   /\ UNCHANGED << db, redis, pub >>
 
 ModRespond ==
-  /\ procs /= {}
-  /\ \/ Respond_ReadRedis
-     \/ Respond_ReadDB
-     \/ Respond_InitRedis
-     \/ Respond_NewEventWriteDB
-     \/ Respond_WriteRedis
-     \/ Respond_Done
+  \/ Respond_ReadRedis
+  \/ Respond_ReadDB
+  \/ Respond_InitRedis
+  \/ Respond_NewEventWriteDB
+  \/ Respond_WriteRedis
+  \/ Respond_Done
 
 Publish ==
   /\ pub /= {}
   /\ \E <<u,v>> \in pub :
     \* TODO Remove ver check, add futureEvents to userState
     \* TODO This doesn't cause a failure because that user will eventually just disconnect
-    /\ IF userState[u].online /\ (v = 1 + userState[u].ver)
-       THEN userState' = [userState EXCEPT ![u].ver = v]
-       ELSE UNCHANGED userState
+    /\ IF userState[u].online /\ (userState[u].ver = v - 1)
+       THEN /\ userState' = [userState EXCEPT ![u].ver = v]
+\*            /\ PrintT([ok |-> TRUE, u |->  userState[u].ver, v |-> v])
+       ELSE /\ UNCHANGED userState
+\*            /\ PrintT([ok |-> FALSE, u |->  userState[u].ver, v |-> v])
     /\ pub' = Remove(pub, <<u,v>>)
     /\ UNCHANGED << db, redis, procs >>
 
@@ -184,18 +185,22 @@ THEOREM  Spec => [](TypeInvariants /\ DataInvariants)
 
 ------------------------------------------------------------------------------------------------------------------------
 
-AnythingInFlight ==
-  /\ procs /= {}
-  /\ \E u \in User : userState[u].reqs /= {}
-  /\ pub /= {}
+NothingInFlight ==
+  /\ procs = {}
+  /\ pub = {}
+  /\ \A u \in User : userState[u].reqs = {}
+
+AllUsersUpToDate ==
+  \A u \in User : userState[u].online => userState[u].ver = db.ver
 
 CONSTANT MCVerLimit
 
-MCSymmetry == Permutations(User) \union Permutations(Request)
-MCLimit    == db.ver >= MCVerLimit
-MCDone     == MCLimit /\ ~AnythingInFlight
-MCContinue == ~MCDone
-MCAction   == IF MCLimit THEN ActionReact ELSE Action
-MCSpec     == Init /\ [][MCAction]_<<vars>> /\ Fairness
+MCSymmetry        == Permutations(User) \union Permutations(Request)
+MCLimitReached    == db.ver >= MCVerLimit
+MCDone            == MCLimitReached /\ NothingInFlight
+MCFinalInvariants == MCDone => AllUsersUpToDate
+MCContinue        == ~MCDone
+MCAction          == (~MCLimitReached /\ ActionAct) \/ ActionReact
+MCSpec            == Init /\ [][MCAction]_<<vars>> /\ Fairness
 
 ========================================================================================================================
