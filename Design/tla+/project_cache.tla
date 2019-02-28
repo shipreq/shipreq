@@ -47,7 +47,6 @@ DataInvariants ==
     IN /\ s.online => s.ver > 0
        /\ s.ver <= db.ver
        /\ \A e \in s.future : e > s.ver + 1
-  /\ \A p \in procs : userState[p.user].online
   /\ \A e \in redis.events : e - 1 \in ({redis.ver} \union redis.events)
   /\ RedisVer <= db.ver
 
@@ -75,6 +74,7 @@ Replace(set, old, new) == { IF a = old THEN new ELSE a : a \in set}
 \* In reality this is: open page, establish websocket, receive project, subscribe to pub/sub channel
 UserConnect == \E u \in User :
   /\ ~userState[u].online
+  /\ \A p \in procs : p.user /= u \* This is a model constraint, not a reflection of reality - TODO think
   /\ userState' = [userState EXCEPT ![u].online = TRUE, ![u].ver = db.ver]
   /\ UNCHANGED << db, redis, procs, pub >>
 
@@ -82,9 +82,8 @@ UserConnect == \E u \in User :
 \* TODO: If the tab remains open on a disconnect, the client should reestablish a websocket and say where it's up to
 UserDisconnect == \E u \in User : userState[u].online
   /\ userState' = [userState EXCEPT ![u] = OfflineUser]
-  /\ procs'     = {p \in procs : p.user /= u} \* TODO User disconnection doesn't interrupt the proc
   /\ pub'       = {usrEvt \in pub : usrEvt[1] /= u}
-  /\ UNCHANGED << db, redis >>
+  /\ UNCHANGED << db, redis, procs >>
 
 ModRequest == \E u \in User : userState[u].online                  \* For an online user
   /\ \E r \in Request : \A i \in User : r \notin userState[i].reqs \* get a unique req Id
@@ -163,13 +162,16 @@ Publish ==
   IN
     /\ pub /= {}
     /\ \E <<u,v>> \in pub :
-      /\ userState' = [userState EXCEPT ![u] = RecvEvent(@, v)]
+      /\ PrintT(userState[u])
+      /\ IF userState[u].online
+         THEN userState' = [userState EXCEPT ![u] = RecvEvent(@, v)]
+         ELSE UNCHANGED userState
       /\ pub' = Remove(pub, <<u,v>>)
       /\ UNCHANGED << db, redis, procs >>
 
 ActionAct ==
   \/ UserConnect
-\*  \/ UserDisconnect
+  \/ UserDisconnect
   \/ ModRequest
 
 ActionReact ==
