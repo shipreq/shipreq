@@ -25,10 +25,11 @@ TypeInvariants ==
   /\ pub \in SUBSET (User \X Nat) \* Set of (target user, event)
 
   /\ procs \in SUBSET [
-       req   : Request,
-       status: {"ready", "read-db", "init-redis", "create", "post-create", "done"},
-       user  : User,
-       ver   : Nat] \* The version of the Project in memory (0=none)
+       req     : Request,
+       status  : {"ready", "read-db", "init-redis", "create", "post-create", "done"},
+       user    : User,
+       redisVer: Nat, \* The version of Redis at the last read from Redis
+       ver     : Nat] \* The version of the Project in memory (0=none)
 
   /\ userState \in [
        User -> [
@@ -101,16 +102,15 @@ UserDisconnect == \E u \in User : userState[u].online
 ModRequest == \E u \in User : userState[u].online                  \* For an online user
   /\ \E r \in Request : \A i \in User : r \notin userState[i].reqs \* get a unique req Id
     /\ userState' = [userState EXCEPT ![u].reqs = @ \union {r}]
-    /\ procs'     = procs \union {[user |-> u, req |-> r, status |-> "ready", ver |-> 0]}
+    /\ procs'     = procs \union {[user |-> u, req |-> r, status |-> "ready", redisVer |-> 0, ver |-> 0]}
     /\ UNCHANGED << db, redis, pub >>
 
 Respond_ReadRedis == procs /= {} /\ \E p \in procs :
   /\ p.status = "ready"
-  /\ procs' = Replace(procs, p, [p EXCEPT !.ver = RedisVer, !.status = IF RedisVer > p.ver
-                                                                       THEN "create"
-                                                                       ELSE "read-db"])
+  /\ procs' = Replace(procs, p, [p EXCEPT !.ver      = RedisVer,
+                                          !.redisVer = RedisVer,
+                                          !.status   = IF RedisVer > p.ver THEN "create" ELSE "read-db"])
   /\ UNCHANGED << db, redis, pub, userState >>
-\*  /\ PrintT([db |-> db.ver, redis |-> redis.ver, proc |-> p.ver])
 
 Respond_ReadDB == procs /= {} /\ \E p \in procs :
   /\ p.status = "read-db"
@@ -119,12 +119,25 @@ Respond_ReadDB == procs /= {} /\ \E p \in procs :
 
 Respond_InitRedis == \E p \in procs :
   /\ p.status = "init-redis"
-  /\ IF p.ver > RedisVer
-     THEN /\ redis' = [ver |-> p.ver, events |-> {}]
-          /\ procs' = Replace(procs, p, [p EXCEPT !.status = "create"])
-     ELSE \* Redis has a more recent state than this proc
-          /\ procs' = Replace(procs, p, [p EXCEPT !.status = "ready"])
-          /\ UNCHANGED redis
+  /\ LET Continue == procs' = Replace(procs, p, [p EXCEPT !.status = "create"])
+         Retry    == procs' = Replace(procs, p, [p EXCEPT !.status = "ready"])
+         WriteSnapshot ==
+           IF p.ver > RedisVer
+           THEN /\ redis' = [ver |-> p.ver, events |-> {}]
+                /\ Continue
+           ELSE \* Redis has a more recent state than this proc
+                /\ Retry
+                /\ UNCHANGED redis
+         WriteEvents ==
+           LET firstEvent == p.redisVer + 1
+               tryEvents  == firstEvent .. p.ver
+               newEvents  == {e \in tryEvents : e > RedisVer}
+           IN IF firstEvent + 1 > RedisVer \* Is there a missing event? Would this create a gap?
+              THEN WriteSnapshot
+              ELSE /\ redis' = [redis EXCEPT !.events = @ \union newEvents]
+                   /\ Continue
+     IN \/ WriteSnapshot
+        \/ WriteEvents
   /\ UNCHANGED << db, pub, userState >>
 
 Respond_NewEventWriteDB == procs /= {} /\ \E p \in procs :
