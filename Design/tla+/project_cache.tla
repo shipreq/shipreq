@@ -29,7 +29,7 @@ TypeInvariants ==
 
   /\ procs \in SUBSET [
        req     : Request,
-       status  : {"ready", "read-db", "init-redis", "create", "post-create", "done"},
+       status  : {"ReadRedis", "ReadDB", "WriteRedis1", "WriteDB", "WriteRedis2", "Done"},
        user    : User,
        redisVer: Nat, \* The version of Redis at the last read from Redis
        ver     : Nat] \* The version of the Project in memory (0=none)
@@ -107,25 +107,25 @@ UserDisconnect ==
 ModRequest == \E u \in User : userState[u].online                  \* For an online user
   /\ \E r \in Request : \A i \in User : r \notin userState[i].reqs \* get a unique req Id
     /\ userState' = [userState EXCEPT ![u].reqs = @ \union {r}]
-    /\ procs'     = procs \union {[user |-> u, req |-> r, status |-> "ready", redisVer |-> 0, ver |-> 0]}
+    /\ procs'     = procs \union {[user |-> u, req |-> r, status |-> "ReadRedis", redisVer |-> 0, ver |-> 0]}
     /\ UNCHANGED << db, redis, pub >>
 
 Respond_ReadRedis == procs /= {} /\ \E p \in procs :
-  /\ p.status = "ready"
+  /\ p.status = "ReadRedis"
   /\ procs' = Replace(procs, p, [p EXCEPT !.ver      = RedisVer,
                                           !.redisVer = RedisVer,
-                                          !.status   = IF RedisVer > p.ver THEN "create" ELSE "read-db"])
+                                          !.status   = IF RedisVer > p.ver THEN "WriteDB" ELSE "ReadDB"])
   /\ UNCHANGED << db, redis, pub, userState >>
 
 Respond_ReadDB == procs /= {} /\ \E p \in procs :
-  /\ p.status = "read-db"
-  /\ procs' = Replace(procs, p, [p EXCEPT !.ver = db.ver, !.status = "init-redis"])
+  /\ p.status = "ReadDB"
+  /\ procs' = Replace(procs, p, [p EXCEPT !.ver = db.ver, !.status = "WriteRedis1"])
   /\ UNCHANGED << db, redis, pub, userState >>
 
-Respond_InitRedis == \E p \in procs :
-  /\ p.status = "init-redis"
-  /\ LET Continue == procs' = Replace(procs, p, [p EXCEPT !.status = "create"])
-         Retry    == procs' = Replace(procs, p, [p EXCEPT !.status = "ready"])
+Respond_WriteRedis1 == \E p \in procs :
+  /\ p.status = "WriteRedis1"
+  /\ LET Continue == procs' = Replace(procs, p, [p EXCEPT !.status = "WriteDB"])
+         Retry    == procs' = Replace(procs, p, [p EXCEPT !.status = "ReadRedis"])
          WriteSnapshot ==
            IF p.ver > RedisVer
            THEN /\ redis' = [ver |-> p.ver, events |-> {}]
@@ -145,19 +145,23 @@ Respond_InitRedis == \E p \in procs :
         \/ WriteEvents
   /\ UNCHANGED << db, pub, userState >>
 
-Respond_NewEventWriteDB == procs /= {} /\ \E p \in procs :
-  /\ p.status = "create"
-  /\ IF p.ver = db.ver
-     THEN LET newVer == db.ver + 1
-          IN /\ db'    = [ver |-> newVer]
-             /\ procs' = Replace(procs, p, [p EXCEPT !.status = "post-create", !.ver = newVer])
-     ELSE \* DB has been updated without our knowledge; INSERT fails
-          /\ procs' = Replace(procs, p, [p EXCEPT !.status = "ready"])
-          /\ UNCHANGED db
-  /\ UNCHANGED << redis, pub, userState >>
+Respond_WriteDB == procs /= {} /\ \E p \in procs :
+  /\ p.status = "WriteDB"
+  /\ \/ \* Request is valid
+        /\ IF p.ver = db.ver
+           THEN LET newVer == db.ver + 1
+                IN /\ db'    = [ver |-> newVer]
+                   /\ procs' = Replace(procs, p, [p EXCEPT !.status = "WriteRedis2", !.ver = newVer])
+           ELSE \* DB has been updated without our knowledge; INSERT fails
+                /\ procs' = Replace(procs, p, [p EXCEPT !.status = "ReadRedis"])
+                /\ UNCHANGED db
+        /\ UNCHANGED << redis, pub, userState >>
+     \/ \* Request is invalid
+        /\ procs' = Replace(procs, p, [p EXCEPT !.status = "Done"])
+        /\ UNCHANGED << db, redis, pub, userState >>
 
-Respond_WriteRedis == procs /= {} /\ \E p \in procs :
-  /\ p.status = "post-create"
+Respond_WriteRedis2 == procs /= {} /\ \E p \in procs :
+  /\ p.status = "WriteRedis2"
   /\ pub' = pub \union { <<p.user, p.ver>> }                \* Proc does this
                 \union { <<u, p.ver>> : u \in OnlineUsers } \* Redis does this
   /\ \/ \* Send a snapshot to Redis
@@ -168,12 +172,12 @@ Respond_WriteRedis == procs /= {} /\ \E p \in procs :
         IF p.ver = RedisVer + 1
         THEN redis' = [redis EXCEPT !.events = @ \union {p.ver}]
         ELSE UNCHANGED redis
-  /\ procs' = Replace(procs, p, [p EXCEPT !.status = "done"])
+  /\ procs' = Replace(procs, p, [p EXCEPT !.status = "Done"])
   /\ UNCHANGED << db, userState >>
 
 \* Responds to user
 Respond_Done == procs /= {} /\ \E p \in procs :
-  /\ p.status = "done"
+  /\ p.status = "Done"
   /\ IF userState[p.user].online
      THEN userState' = [userState EXCEPT ![p.user].reqs = Remove(@, p.req)]
      ELSE UNCHANGED userState
@@ -183,9 +187,9 @@ Respond_Done == procs /= {} /\ \E p \in procs :
 ModRespond ==
   \/ Respond_ReadRedis
   \/ Respond_ReadDB
-  \/ Respond_InitRedis
-  \/ Respond_NewEventWriteDB
-  \/ Respond_WriteRedis
+  \/ Respond_WriteRedis1
+  \/ Respond_WriteDB
+  \/ Respond_WriteRedis2
   \/ Respond_Done
 
 Publish ==

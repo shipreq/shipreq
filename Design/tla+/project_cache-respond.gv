@@ -1,17 +1,15 @@
 digraph G {
-  Start -> ReadRedis [label="ready"]
-  //{rank=same; ReadDB ; InitRedis}
-  ReadRedis -> ReadDB [label="read-db\n(cache-miss)"]
-  ReadDB -> InitRedis [label="init-redis"]
-  InitRedis -> ReadRedis [label="KO" color=red]
-  EvalAndWriteDB [label="New Event\nWrite DB"]
-  InitRedis -> EvalAndWriteDB [label="create"]
-  ReadRedis -> EvalAndWriteDB [label="create\n(cache-hit)"]
-  EvalAndWriteDB -> ReadRedis [label="KO" color=red]
-  WriteRedis [label="Broadcast Event\nWrite Redis"]
-  EvalAndWriteDB -> WriteRedis [label="post-create"]
-  WriteRedis -> Done [label=""]
-  
-  WriteRedisFailure [label="?"]
-  WriteRedis -> WriteRedisFailure [label="Write KO" color=red]
+  Start       -> ReadRedis
+  ReadRedis   -> ReadDB [label="redis ≤ local\n(cache-miss)"]
+  ReadDB      -> WriteRedis1
+  WriteRedis1 -> ReadRedis [color=red]
+  WriteRedis1 -> WriteDB
+  ReadRedis   -> WriteDB [label="redis > local\n(cache-hit)"]
+  WriteDB     -> ReadRedis [color=red]
+  WriteDB     -> Done [color=red constraint=false label="Invalid\nrequest" fontcolor="#aa0000"]
+  WriteDB     -> WriteRedis2
+  WriteRedis2 -> Done
+
+  WriteDB     [label="WriteDB\n(new event)"]
+  WriteRedis2 [label="WriteRedis2\n(and broadcast event)"]
 }
