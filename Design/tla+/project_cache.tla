@@ -13,7 +13,7 @@ VARIABLES db,       \* The state of the DB
           pub,      \* Set of events being published
           userState \* Users' states
 
-ASSUME IncludeUserDisconnect \in {TRUE,FALSE}
+ASSUME IncludeUserDisconnect \in BOOLEAN
 
 vars == << db, redis, procs, pub, userState >>
 
