@@ -59,7 +59,7 @@ TARGET STATE
   * Use AWS Redis
     * Initially in non-cluster mode because no need to scale
     * Later in cluster node which supports online up/down scaling of shards and/or replicas
-  * Details TBD wrt snapshot/events & concurrency/traffic-size & DB/staleness
+  * Algorithm for snapshot/event caching detailed in `tla+/project_cache.*`
 
 
 REJECTED / FUTURE IDEAS
