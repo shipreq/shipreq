@@ -154,31 +154,38 @@ UserConnect ==
 
 \* TODO Also model the fact that i'll start preloading on HTTP GET before the websocket connects
 
-Load == \E p \in procsL :
-  /\ CASE p.status = "ReadRedis" ->
-            /\ procsL' = Replace(procsL, p, [p EXCEPT !.ver    = RedisTotalVer,
-                                                      !.status = IF RedisTotalVer = 0 THEN "ReadDB" ELSE "Respond"])
-            /\ UNCHANGED << redis, userState >>
+Load_ReadRedis == \E p \in procsL :
+  /\ p.status = "ReadRedis"
+  /\ procsL' = Replace(procsL, p, [p EXCEPT !.ver    = RedisTotalVer,
+                                            !.status = IF RedisTotalVer = 0 THEN "ReadDB" ELSE "Respond"])
+  /\ UNCHANGED << db, procsU, pub, redis, userState >>
 
-       [] p.status = "ReadDB" ->
-            /\ procsL' = Replace(procsL, p, [p EXCEPT !.ver    = db.ver,
-                                                      !.status = "WriteRedis"])
-            /\ UNCHANGED << redis, userState >>
+Load_ReadDB == \E p \in procsL :
+  /\ p.status = "ReadDB"
+  /\ procsL' = Replace(procsL, p, [p EXCEPT !.ver    = db.ver,
+                                            !.status = "WriteRedis"])
+  /\ UNCHANGED << db, procsU, pub, redis, userState >>
 
-       [] p.status = "WriteRedis" ->
-            /\ procsL' = Replace(procsL, p, [p EXCEPT !.status = "Respond"])
-            /\ RedisWriteSnapshot(p.ver, TRUE, TRUE)
-            /\ UNCHANGED userState
+Load_WriteRedis == \E p \in procsL :
+  /\ p.status = "WriteRedis"
+  /\ procsL' = Replace(procsL, p, [p EXCEPT !.status = "Respond"])
+  /\ RedisWriteSnapshot(p.ver, TRUE, TRUE)
+  /\ UNCHANGED << db, procsU, pub, userState >>
 
-       [] p.status = "Respond" ->
-            /\ procsL' = procsL \ {p}
-            /\ LET us == userState[p.user]
-                   r  == ApplyEvents[p.ver, {e \in us.future : e > p.ver}]
-                   us2 == [us EXCEPT !.ver = r[1], !.future = r[2], !.status = "active"]
-               IN userState' = [userState EXCEPT ![p.user] = us2]
-            /\ UNCHANGED redis
+Load_Respond == \E p \in procsL :
+  /\ p.status = "Respond"
+  /\ procsL' = procsL \ {p}
+  /\ LET us == userState[p.user]
+         r  == ApplyEvents[p.ver, {e \in us.future : e > p.ver}]
+         us2 == [us EXCEPT !.ver = r[1], !.future = r[2], !.status = "active"]
+     IN userState' = [userState EXCEPT ![p.user] = us2]
+  /\ UNCHANGED << db, procsU, pub, redis >>
 
-  /\ UNCHANGED << db, procsU, pub >>
+Load ==
+  \/ Load_ReadRedis
+  \/ Load_ReadDB
+  \/ Load_WriteRedis
+  \/ Load_Respond
 
 ------------------------------------------------------------------------------------------------------------------------
 

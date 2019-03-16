@@ -63,27 +63,27 @@ State  3: Load_ReadRedis
 State  4: Load_ReadDB
 State  5: Load_WriteRedis
 State  6: Load_Respond
-State  7: ModRequest
-State  8: Respond_ReadRedis
-State  9: Respond_WriteDB
+State  7: UpdateRequest
+State  8: Update_ReadRedis
+State  9: Update_WriteDB
 State 10: WebappDeath
 State 11: UserConnect
 State 12: Load_ReadRedis
 State 13: RedisEviction
 State 14: Load_Respond
-State 15: ModRequest
-State 16: Respond_ReadRedis
-State 17: Respond_ReadDB
-State 18: Respond_WriteRedis1
-State 19: Respond_WriteDB
-State 20: Respond_WriteRedis2
-State 21: Respond_Respond
+State 15: UpdateRequest
+State 16: Update_ReadRedis
+State 17: Update_ReadDB
+State 18: Update_WriteRedis1
+State 19: Update_WriteDB
+State 20: Update_WriteRedis2
+State 21: Update_Respond
 State 22: Publish
 
 /\ db        = [ver |-> 3]
 /\ redis     = [ver |-> 3, events |-> {}]
-/\ procs     = {}
 /\ procsL    = {}
+/\ procsU    = {}
 /\ pub       = {}
 /\ userState = (u1 :> [ver |-> 1, status |-> "active", future |-> {3}, reqs |-> {}])
 
