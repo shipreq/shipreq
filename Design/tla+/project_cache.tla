@@ -19,7 +19,7 @@ ASSUME /\ IsFiniteSet(User)
 VARIABLES db,       \* The state of the DB
           redis,    \* The state of Redis
           procsL,   \* The state of load processors (i.e. threads in webapps)
-          procsU,   \* The state of request processors (i.e. threads in webapps)
+          procsU,   \* The state of update processors (i.e. threads in webapps)
           pub,      \* Set of events being published
           userState \* Users' states
 
@@ -35,7 +35,7 @@ TypeInvariants ==
        ver     : Nat] \* The version of the Project in memory (0=none)
   /\ procsU \in SUBSET [
        req     : Request,
-       status  : {"ReadRedis", "ReadDB", "WriteRedis1", "WriteDB", "WriteRedis2", "Done"},
+       status  : {"ReadRedis", "ReadDB", "WriteRedis1", "WriteDB", "WriteRedis2", "Respond"},
        user    : User,
        redisVer: Nat, \* The version of Redis at the last read from Redis
        ver     : Nat] \* The version of the Project in memory (0=none)
@@ -182,7 +182,7 @@ Load == \E p \in procsL :
 
 ------------------------------------------------------------------------------------------------------------------------
 
-ModRequest ==
+UpdateRequest ==
   /\ MCAllowAct
   /\ \E u \in User : userState[u].status = "active"                   \* For an online user
      /\ \E r \in Request : \A i \in User : r \notin userState[i].reqs \* get a unique req Id
@@ -190,19 +190,19 @@ ModRequest ==
         /\ procsU'    = procsU \union {[user |-> u, req |-> r, status |-> "ReadRedis", redisVer |-> 0, ver |-> 0]}
         /\ UNCHANGED << db, redis, pub, procsL >>
 
-Respond_ReadRedis == procsU /= {} /\ \E p \in procsU :
+Update_ReadRedis == procsU /= {} /\ \E p \in procsU :
   /\ p.status = "ReadRedis"
   /\ procsU' = Replace(procsU, p, [p EXCEPT !.ver      = RedisTotalVer,
                                             !.redisVer = RedisTotalVer,
                                             !.status   = IF RedisTotalVer > p.ver THEN "WriteDB" ELSE "ReadDB"])
   /\ UNCHANGED << db, redis, pub, userState, procsL >>
 
-Respond_ReadDB == procsU /= {} /\ \E p \in procsU :
+Update_ReadDB == procsU /= {} /\ \E p \in procsU :
   /\ p.status = "ReadDB"
   /\ procsU' = Replace(procsU, p, [p EXCEPT !.ver = db.ver, !.status = "WriteRedis1"])
   /\ UNCHANGED << db, redis, pub, userState, procsL >>
 
-Respond_WriteRedis1 == \E p \in procsU :
+Update_WriteRedis1 == \E p \in procsU :
   /\ p.status = "WriteRedis1"
   /\ LET Continue == procsU' = Replace(procsU, p, [p EXCEPT !.status = "WriteDB"])
          Retry    == procsU' = Replace(procsU, p, [p EXCEPT !.status = "ReadRedis"])
@@ -219,7 +219,7 @@ Respond_WriteRedis1 == \E p \in procsU :
         \/ WriteEvents
   /\ UNCHANGED << db, pub, userState, procsL >>
 
-Respond_WriteDB == procsU /= {} /\ \E p \in procsU :
+Update_WriteDB == procsU /= {} /\ \E p \in procsU :
   /\ p.status = "WriteDB"
   /\ \/ \* Request is valid
         /\ IF p.ver = db.ver
@@ -231,10 +231,10 @@ Respond_WriteDB == procsU /= {} /\ \E p \in procsU :
                 /\ UNCHANGED db
         /\ UNCHANGED << redis, procsL, pub, userState >>
      \/ \* Request is invalid
-        /\ procsU' = Replace(procsU, p, [p EXCEPT !.status = "Done"])
+        /\ procsU' = Replace(procsU, p, [p EXCEPT !.status = "Respond"])
         /\ UNCHANGED << db, redis, procsL, pub, userState >>
 
-Respond_WriteRedis2 == procsU /= {} /\ \E p \in procsU :
+Update_WriteRedis2 == procsU /= {} /\ \E p \in procsU :
   /\ p.status = "WriteRedis2"
   /\ pub' = pub \union { <<p.user, p.ver>> }                \* Proc does this
                 \union { <<u, p.ver>> : u \in OnlineUsers } \* Redis does this
@@ -246,25 +246,25 @@ Respond_WriteRedis2 == procsU /= {} /\ \E p \in procsU :
         IF p.ver = RedisPartialVer + 1
         THEN redis' = [redis EXCEPT !.events = @ \union {p.ver}]
         ELSE UNCHANGED redis
-  /\ procsU' = Replace(procsU, p, [p EXCEPT !.status = "Done"])
+  /\ procsU' = Replace(procsU, p, [p EXCEPT !.status = "Respond"])
   /\ UNCHANGED << db, procsL, userState >>
 
 \* Responds to user
-Respond_Done == procsU /= {} /\ \E p \in procsU :
-  /\ p.status = "Done"
+Update_Respond == procsU /= {} /\ \E p \in procsU :
+  /\ p.status = "Respond"
   /\ IF userState[p.user].status = "active"
      THEN userState' = [userState EXCEPT ![p.user].reqs = @ \ {p.req}]
      ELSE UNCHANGED userState
   /\ procsU' = procsU \ {p}
   /\ UNCHANGED << db, redis, procsL, pub >>
 
-ModRespond ==
-  \/ Respond_ReadRedis
-  \/ Respond_ReadDB
-  \/ Respond_WriteRedis1
-  \/ Respond_WriteDB
-  \/ Respond_WriteRedis2
-  \/ Respond_Done
+UpdateRespond ==
+  \/ Update_ReadRedis
+  \/ Update_ReadDB
+  \/ Update_WriteRedis1
+  \/ Update_WriteDB
+  \/ Update_WriteRedis2
+  \/ Update_Respond
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -317,23 +317,23 @@ WebappDeath ==
 \* These are all guarded by MCAllowAct but the guard had to be inlined, else TLC won't report what its doing in the stack trace
 Act ==
   \/ UserConnect
-  \/ ModRequest
+  \/ UpdateRequest
   \/ RedisEviction
   \/ UserDisconnect
   \/ WebappDeath
 
 React ==
   \/ Load
-  \/ ModRespond
+  \/ UpdateRespond
   \/ Publish
 
 Next == Act \/ React
 
 \*Fairness ==
-\*  /\ WF_vars(ModRequest)
+\*  /\ WF_vars(UpdateRequest)
 \*  /\ SF_vars(Load)
 \*  /\ UserConnect ~> Load_Respond
-\*  /\ SF_vars(ModRespond)
+\*  /\ SF_vars(UpdateRespond)
 \*  /\ SF_vars(Publish)
 
 Spec == Init /\ [][Next]_<<vars>> \* /\ Fairness
