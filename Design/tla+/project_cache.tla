@@ -1,14 +1,13 @@
 ------------------------------------------------- MODULE project_cache -------------------------------------------------
 
-EXTENDS FiniteSets,
-        Naturals,
-        Sequences,
-        TLC
+EXTENDS FiniteSets, Naturals, Sequences, TLC
 
 CONSTANT User,
          Request,
          MCVerLimit,
          MCAllowUserDisconnect
+
+MCSymmetry == Permutations(User) \union Permutations(Request)
 
 ASSUME /\ IsFiniteSet(User)
        /\ IsFiniteSet(Request)
@@ -68,39 +67,14 @@ varDesc == [db        |-> db.ver,
 
 ------------------------------------------------------------------------------------------------------------------------
 
-EmptyProcsS == [u \in User |-> {}]
-
-AllUsersUpToDate ==
-  \A user \in User :
-    /\ LET u == userState[user]
-           s == u.status
-       IN CASE s = "offline" -> TRUE
-            [] s = "loading" -> FALSE
-            [] s = "active"  -> u.ver = db.ver
-
-MCAllowAct == db.ver < MCVerLimit
-
-------------------------------------------------------------------------------------------------------------------------
-
 Min[as \in SUBSET Nat] == CHOOSE a \in as : \A b \in as : a <= b
 Max[as \in SUBSET Nat] == CHOOSE a \in as : \A b \in as : a >= b
 
 Replace(set, old, new) == { IF a = old THEN new ELSE a : a \in set }
 
-ApplyEvents[v \in Nat, es \in SUBSET Nat] ==
-  LET n == v + 1
-  IN IF n \in es
-     THEN ApplyEvents[n, es \ {n}]
-     ELSE <<v,es>>
+------------------------------------------------------------------------------------------------------------------------
 
-RedisPartialVer == IF redis.events = {} THEN redis.ver ELSE Max[redis.events]
-RedisTotalVer   == IF redis.ver    = 0  THEN 0         ELSE RedisPartialVer
-
-OfflineUserState == [
-  status |-> "offline",
-  ver    |-> 0,
-  future |-> {},
-  reqs   |-> {}]
+EmptyProcsS == [u \in User |-> {}]
 
 InitProcL(u) == [
   user        |-> u,
@@ -109,7 +83,16 @@ InitProcL(u) == [
   dbVer       |-> 0,
   respondVer  |-> 0]
 
+OfflineUserState == [
+  status |-> "offline",
+  ver    |-> 0,
+  future |-> {},
+  reqs   |-> {}]
+
 OnlineUsers == {u \in User : userState[u].status /= "offline"}
+
+RedisPartialVer == IF redis.events = {} THEN redis.ver ELSE Max[redis.events]
+RedisTotalVer   == IF redis.ver    = 0  THEN 0         ELSE RedisPartialVer
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -141,7 +124,15 @@ DataInvariants ==
        THEN (e - 1) \in (redis.events \union {redis.ver})
        ELSE (e - 1) \in (redis.events) \/ e = Min[redis.events]
 
+MCAllowAct == db.ver < MCVerLimit
+
 ------------------------------------------------------------------------------------------------------------------------
+
+ApplyEvents[v \in Nat, es \in SUBSET Nat] ==
+  LET n == v + 1
+  IN IF n \in es
+     THEN ApplyEvents[n, es \ {n}]
+     ELSE <<v,es>>
 
 RedisWriteSnapshot(ver, OnOk, OnFail) ==
   IF ver > RedisTotalVer
@@ -403,11 +394,19 @@ Next == Act \/ React
 \*  /\ SF_vars(UpdateRespond)
 \*  /\ SF_vars(Publish)
 
-Spec == Init /\ [][Next]_<<vars>> \* /\ Fairness
+Spec == Init /\ [][Next]_<<vars>>
 
-MCSymmetry == Permutations(User) \union Permutations(Request)
 MCDone     == ~MCAllowAct /\ ~ENABLED(React)
 MCContinue == ~MCDone
+
+AllUsersUpToDate ==
+  \A user \in User :
+    /\ LET u == userState[user]
+           s == u.status
+       IN CASE s = "offline" -> TRUE
+            [] s = "loading" -> FALSE
+            [] s = "active"  -> u.ver = db.ver
+
 FinalInvariants == MCDone => AllUsersUpToDate
 
 ========================================================================================================================
