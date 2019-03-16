@@ -53,3 +53,43 @@ Summary
   * safety props vs lifeness
   * many of the props in our head are implicit - your spec could pass but there's an implicit property you haven't specified that's being violated (e.g. all users have latest project)
   * adding props is like guiding a horse to water without interacting with it, but by modifying its env, eg. adding fences
+
+
+Example error found:
+
+State  1: <Initial predicate>
+State  2: UserConnect
+State  3: Load_ReadRedis
+State  4: Load_ReadDB
+State  5: Load_WriteRedis
+State  6: Load_Respond
+State  7: ModRequest
+State  8: Respond_ReadRedis
+State  9: Respond_WriteDB
+State 10: WebappDeath
+State 11: UserConnect
+State 12: Load_ReadRedis
+State 13: RedisEviction
+State 14: Load_Respond
+State 15: ModRequest
+State 16: Respond_ReadRedis
+State 17: Respond_ReadDB
+State 18: Respond_WriteRedis1
+State 19: Respond_WriteDB
+State 20: Respond_WriteRedis2
+State 21: Respond_Respond
+State 22: Publish
+
+/\ db        = [ver |-> 3]
+/\ redis     = [ver |-> 3, events |-> {}]
+/\ procs     = {}
+/\ procsL    = {}
+/\ pub       = {}
+/\ userState = (u1 :> [ver |-> 1, status |-> "active", future |-> {3}, reqs |-> {}])
+
+Imagine a bug report describing this, then having to track it down
+
+With TLC
+- this error is caught on every single run (deterministic & exhaustive)
+- it takes < 1 sec to catch
+- the happenings of the entire universe from start to crash is presented and can fit on one screen

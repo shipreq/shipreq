@@ -7,48 +7,21 @@ EXTENDS FiniteSets,
 
 CONSTANT User,
          Request,
-         IncludeUserDisconnect
+         MCVerLimit,
+         MCAllowUserDisconnect
 
 ASSUME /\ IsFiniteSet(User)
        /\ IsFiniteSet(Request)
-       /\ IncludeUserDisconnect \in BOOLEAN
+       /\ MCVerLimit \in Nat
+       /\ MCVerLimit > 1
+       /\ MCAllowUserDisconnect \in BOOLEAN
 
 VARIABLES db,       \* The state of the DB
           redis,    \* The state of Redis
-          procsI,
+          procsL,   \* The state of load processors (i.e. threads in webapps)
           procs,    \* The state of request processors (i.e. threads in webapps)
           pub,      \* Set of events being published
           userState \* Users' states
-
-vars == << db, redis, procsI, procs, pub, userState >>
-
-varDesc == [db        |-> db.ver,
-            redis     |-> <<redis.ver, redis.events>>,
-            procsI    |-> procsI,
-            procs     |-> procs,
-            pub       |-> pub,
-            userState |-> userState]
-
-------------------------------------------------------------------------------------------------------------------------
-
-Min[as \in SUBSET Nat] == CHOOSE a \in as : \A b \in as : a <= b
-Max[as \in SUBSET Nat] == CHOOSE a \in as : \A b \in as : a >= b
-
-Replace(set, old, new) == { IF a = old THEN new ELSE a : a \in set }
-
-ApplyEvents[v \in Nat, es \in SUBSET Nat] ==
-  LET n == v + 1
-  IN IF n \in es
-     THEN ApplyEvents[n, es \ {n}]
-     ELSE <<v,es>>
-
-
-RedisPartialVer == IF redis.events = {} THEN redis.ver ELSE Max[redis.events]
-RedisTotalVer   == IF redis.ver    = 0  THEN 0         ELSE RedisPartialVer
-
-OnlineUsers == {u \in User : userState[u].status /= "offline"}
-
-------------------------------------------------------------------------------------------------------------------------
 
 TypeInvariants ==
   /\ db \in [ver: Nat] \* The version of the Project aka the number of events
@@ -56,7 +29,7 @@ TypeInvariants ==
        ver   : Nat,        \* The version of a Project snapshot, or 0 if cache empty
        events: SUBSET Nat] \* A set of events represented by their version numbers
   /\ pub \in SUBSET (User \X Nat) \* Set of (target user, event)
-  /\ procsI \in SUBSET [
+  /\ procsL \in SUBSET [
        status  : {"ReadRedis", "ReadDB", "WriteRedis", "Respond"},
        user    : User,
        ver     : Nat] \* The version of the Project in memory (0=none)
@@ -73,6 +46,70 @@ TypeInvariants ==
          future : SUBSET Nat,       \* Future events that can't be applied cos intermediate event is missing
          reqs   : SUBSET Request ]] \* Requests for which a response hasn't be received
 
+vars == << db, redis, procsL, procs, pub, userState >>
+
+varDesc == [db        |-> db.ver,
+            redis     |-> <<redis.ver, redis.events>>,
+            procsL    |-> procsL,
+            procs     |-> procs,
+            pub       |-> pub,
+            userState |-> userState]
+
+------------------------------------------------------------------------------------------------------------------------
+
+NothingInFlight ==
+  /\ procsL = {}
+  /\ procs  = {}
+  /\ pub    = {}
+  /\ \A u \in User : userState[u].reqs = {}
+
+AllUsersUpToDate ==
+  \A user \in User :
+    /\ LET u == userState[user]
+           s == u.status
+       IN CASE s = "offline" -> TRUE
+            [] s = "loading" -> FALSE
+            [] s = "active"  -> u.ver = db.ver
+
+MCSymmetry == Permutations(User) \union Permutations(Request)
+MCAllowAct == db.ver < MCVerLimit
+MCDone     == ~MCAllowAct /\ NothingInFlight
+MCContinue == ~MCDone
+
+------------------------------------------------------------------------------------------------------------------------
+
+Min[as \in SUBSET Nat] == CHOOSE a \in as : \A b \in as : a <= b
+Max[as \in SUBSET Nat] == CHOOSE a \in as : \A b \in as : a >= b
+
+Replace(set, old, new) == { IF a = old THEN new ELSE a : a \in set }
+
+ApplyEvents[v \in Nat, es \in SUBSET Nat] ==
+  LET n == v + 1
+  IN IF n \in es
+     THEN ApplyEvents[n, es \ {n}]
+     ELSE <<v,es>>
+
+RedisPartialVer == IF redis.events = {} THEN redis.ver ELSE Max[redis.events]
+RedisTotalVer   == IF redis.ver    = 0  THEN 0         ELSE RedisPartialVer
+
+OfflineUserState == [
+  status |-> "offline",
+  ver    |-> 0,
+  future |-> {},
+  reqs   |-> {}]
+
+OnlineUsers == {u \in User : userState[u].status /= "offline"}
+
+------------------------------------------------------------------------------------------------------------------------
+
+Init ==
+  /\ db        = [ver |-> 1]
+  /\ redis     = [ver |-> 0, events |-> {}]
+  /\ procsL    = {}
+  /\ procs     = {}
+  /\ pub       = {}
+  /\ userState = [u \in User |-> OfflineUserState]
+
 DataInvariants ==
   \* /\ PrintT(varDesc)
   /\ \A u \in User :
@@ -88,19 +125,7 @@ DataInvariants ==
        THEN (e - 1) \in (redis.events \union {redis.ver})
        ELSE (e - 1) \in (redis.events) \/ e = Min[redis.events]
 
-OfflineUser == [
-  status |-> "offline",
-  ver    |-> 0,
-  future |-> {},
-  reqs   |-> {}]
-
-Init ==
-  /\ db        = [ver |-> 1]
-  /\ redis     = [ver |-> 0, events |-> {}]
-  /\ procsI    = {}
-  /\ procs     = {}
-  /\ pub       = {}
-  /\ userState = [u \in User |-> OfflineUser]
+FinalInvariants == MCDone => AllUsersUpToDate
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -117,36 +142,38 @@ RedisWriteSnapshot(ver, OnOk, OnFail) ==
 ------------------------------------------------------------------------------------------------------------------------
 
 \* In reality this is: open page, establish websocket, receive project, subscribe to pub/sub channel
-UserConnect == \E u \in User :
-  /\ userState[u].status = "offline"
-  /\ \A p \in procs : p.user /= u \* A new user (connection) is distinct.
-                                  \* If the model value is still being used in an orphan proc, it can be recycled here yet
-  /\ userState' = [userState EXCEPT ![u].status = "loading"]
-  /\ procsI' = procsI \union {[user |-> u, status |-> "ReadRedis", ver |-> 0]}
-  /\ UNCHANGED << db, redis, procs, pub >>
+UserConnect ==
+  /\ MCAllowAct
+  /\ \E u \in User :
+     /\ userState[u].status = "offline"
+     /\ \A p \in procs : p.user /= u \* A new user (connection) is distinct.
+                                     \* If the model value is still being used in an orphan proc, it can be recycled here yet
+     /\ userState' = [userState EXCEPT ![u].status = "loading"]
+     /\ procsL' = procsL \union {[user |-> u, status |-> "ReadRedis", ver |-> 0]}
+     /\ UNCHANGED << db, redis, procs, pub >>
 
 \* TODO Also model the fact that i'll start preloading on HTTP GET before the websocket connects
 
-Load == \E p \in procsI :
+Load == \E p \in procsL :
   /\ CASE p.status = "ReadRedis" ->
-            /\ procsI' = Replace(procsI, p, [p EXCEPT !.ver    = RedisTotalVer,
+            /\ procsL' = Replace(procsL, p, [p EXCEPT !.ver    = RedisTotalVer,
                                                       !.status = IF RedisTotalVer = 0 THEN "ReadDB" ELSE "Respond"])
             /\ UNCHANGED << redis, userState >>
 
        [] p.status = "ReadDB" ->
-            /\ procsI' = Replace(procsI, p, [p EXCEPT !.ver    = db.ver,
+            /\ procsL' = Replace(procsL, p, [p EXCEPT !.ver    = db.ver,
                                                       !.status = "WriteRedis"])
             /\ UNCHANGED << redis, userState >>
 
        [] p.status = "WriteRedis" ->
-            /\ procsI' = Replace(procsI, p, [p EXCEPT !.status = "Respond"])
+            /\ procsL' = Replace(procsL, p, [p EXCEPT !.status = "Respond"])
             /\ RedisWriteSnapshot(p.ver, TRUE, TRUE)
             /\ UNCHANGED userState
 
        [] p.status = "Respond" ->
-            /\ procsI' = procsI \ {p}
+            /\ procsL' = procsL \ {p}
             /\ LET us == userState[p.user]
-                   r  == ApplyEvents[p.ver, us.future \ {p.ver}]
+                   r  == ApplyEvents[p.ver, {e \in us.future : e > p.ver}]
                    us2 == [us EXCEPT !.ver = r[1], !.future = r[2], !.status = "active"]
                IN userState' = [userState EXCEPT ![p.user] = us2]
             /\ UNCHANGED redis
@@ -155,23 +182,25 @@ Load == \E p \in procsI :
 
 ------------------------------------------------------------------------------------------------------------------------
 
-ModRequest == \E u \in User : userState[u].status = "active"       \* For an online user
-  /\ \E r \in Request : \A i \in User : r \notin userState[i].reqs \* get a unique req Id
-    /\ userState' = [userState EXCEPT ![u].reqs = @ \union {r}]
-    /\ procs'     = procs \union {[user |-> u, req |-> r, status |-> "ReadRedis", redisVer |-> 0, ver |-> 0]}
-    /\ UNCHANGED << db, redis, pub, procsI >>
+ModRequest ==
+  /\ MCAllowAct
+  /\ \E u \in User : userState[u].status = "active"                   \* For an online user
+     /\ \E r \in Request : \A i \in User : r \notin userState[i].reqs \* get a unique req Id
+        /\ userState' = [userState EXCEPT ![u].reqs = @ \union {r}]
+        /\ procs'     = procs \union {[user |-> u, req |-> r, status |-> "ReadRedis", redisVer |-> 0, ver |-> 0]}
+        /\ UNCHANGED << db, redis, pub, procsL >>
 
 Respond_ReadRedis == procs /= {} /\ \E p \in procs :
   /\ p.status = "ReadRedis"
   /\ procs' = Replace(procs, p, [p EXCEPT !.ver      = RedisTotalVer,
                                           !.redisVer = RedisTotalVer,
                                           !.status   = IF RedisTotalVer > p.ver THEN "WriteDB" ELSE "ReadDB"])
-  /\ UNCHANGED << db, redis, pub, userState, procsI >>
+  /\ UNCHANGED << db, redis, pub, userState, procsL >>
 
 Respond_ReadDB == procs /= {} /\ \E p \in procs :
   /\ p.status = "ReadDB"
   /\ procs' = Replace(procs, p, [p EXCEPT !.ver = db.ver, !.status = "WriteRedis1"])
-  /\ UNCHANGED << db, redis, pub, userState, procsI >>
+  /\ UNCHANGED << db, redis, pub, userState, procsL >>
 
 Respond_WriteRedis1 == \E p \in procs :
   /\ p.status = "WriteRedis1"
@@ -188,7 +217,7 @@ Respond_WriteRedis1 == \E p \in procs :
                    /\ Continue
      IN \/ RedisWriteSnapshot(p.ver, Continue, Retry)
         \/ WriteEvents
-  /\ UNCHANGED << db, pub, userState, procsI >>
+  /\ UNCHANGED << db, pub, userState, procsL >>
 
 Respond_WriteDB == procs /= {} /\ \E p \in procs :
   /\ p.status = "WriteDB"
@@ -200,10 +229,10 @@ Respond_WriteDB == procs /= {} /\ \E p \in procs :
            ELSE \* DB has been updated without our knowledge; INSERT fails
                 /\ procs' = Replace(procs, p, [p EXCEPT !.status = "ReadRedis"])
                 /\ UNCHANGED db
-        /\ UNCHANGED << redis, procsI, pub, userState >>
+        /\ UNCHANGED << redis, procsL, pub, userState >>
      \/ \* Request is invalid
         /\ procs' = Replace(procs, p, [p EXCEPT !.status = "Done"])
-        /\ UNCHANGED << db, redis, procsI, pub, userState >>
+        /\ UNCHANGED << db, redis, procsL, pub, userState >>
 
 Respond_WriteRedis2 == procs /= {} /\ \E p \in procs :
   /\ p.status = "WriteRedis2"
@@ -218,7 +247,7 @@ Respond_WriteRedis2 == procs /= {} /\ \E p \in procs :
         THEN redis' = [redis EXCEPT !.events = @ \union {p.ver}]
         ELSE UNCHANGED redis
   /\ procs' = Replace(procs, p, [p EXCEPT !.status = "Done"])
-  /\ UNCHANGED << db, procsI, userState >>
+  /\ UNCHANGED << db, procsL, userState >>
 
 \* Responds to user
 Respond_Done == procs /= {} /\ \E p \in procs :
@@ -227,7 +256,7 @@ Respond_Done == procs /= {} /\ \E p \in procs :
      THEN userState' = [userState EXCEPT ![p.user].reqs = @ \ {p.req}]
      ELSE UNCHANGED userState
   /\ procs' = procs \ {p}
-  /\ UNCHANGED << db, redis, procsI, pub >>
+  /\ UNCHANGED << db, redis, procsL, pub >>
 
 ModRespond ==
   \/ Respond_ReadRedis
@@ -252,50 +281,53 @@ Publish ==
          THEN userState' = [userState EXCEPT ![u] = RecvEvent(@, v)]
          ELSE UNCHANGED userState
       /\ pub' = pub \ {<<u,v>>}
-      /\ UNCHANGED << db, redis, procs, procsI >>
+      /\ UNCHANGED << db, redis, procs, procsL >>
 
 \* This is the websocket being closed and not being restablished (i.e. user closes tab)
 \* TODO: If the tab remains open on a disconnect, the client should reestablish a websocket and say where it's up to
 UserDisconnect ==
-  /\ IncludeUserDisconnect
+  /\ MCAllowAct
+  /\ MCAllowUserDisconnect
   /\ \E u \in User : userState[u].status /= "offline"
-    /\ userState' = [userState EXCEPT ![u] = OfflineUser]
+    /\ userState' = [userState EXCEPT ![u] = OfflineUserState]
     /\ pub'       = {usrEvt \in pub : usrEvt[1] /= u}
-    /\ UNCHANGED << db, redis, procs, procsI >>
+    /\ UNCHANGED << db, redis, procs, procsL >>
 
 RedisEviction ==
+  /\ MCAllowAct
   /\ \/ redis' = [redis EXCEPT !.ver = 0]
      \/ redis' = [redis EXCEPT !.events = {}]
-  /\ UNCHANGED << db, procs, procsI, pub, userState >>
+  /\ UNCHANGED << db, procs, procsL, pub, userState >>
 
 WebappDeath ==
   \* Start with a subset of users because each user communicates through a websocket which is tied to a specific worker
   \* Also remember the user isn't a ShipReq user; it's a browser tab, a session.
-  /\ OnlineUsers /= {}
-  /\ \E affectedUsers \in SUBSET(OnlineUsers) :
-    /\ affectedUsers /= {}
+  /\ MCAllowAct
+  /\ \E affectedUsers \in (SUBSET(OnlineUsers) \ {}) :
     /\ userState' = [u \in User |-> IF u \in affectedUsers
-                                    THEN [userState[u] EXCEPT !.status = "offline", !.reqs = {}]
+                                    THEN OfflineUserState \* TODO Add reconnect suuport - this is the user reloading page
                                     ELSE userState[u]]
+    /\ procsL' = {p \in procsL : p.user \notin affectedUsers}
     /\ procs' = {p \in procs : p.user \notin affectedUsers}
     /\ pub' = {usrEvt \in pub : usrEvt[1] \notin affectedUsers}
-    /\ UNCHANGED << db, redis, procsI >>
+    /\ UNCHANGED << db, redis >>
 
 ------------------------------------------------------------------------------------------------------------------------
 
-ActionAct ==
+\* These are all guarded by MCAllowAct but the guard had to be inlined, else TLC won't report what its doing in the stack trace
+Act ==
   \/ UserConnect
   \/ ModRequest
   \/ RedisEviction
   \/ UserDisconnect
   \/ WebappDeath
 
-ActionReact ==
+React ==
   \/ Load
   \/ ModRespond
   \/ Publish
 
-Action == ActionAct \/ ActionReact
+Next == Act \/ React
 
 \*Fairness ==
 \*  /\ WF_vars(ModRequest)
@@ -304,34 +336,6 @@ Action == ActionAct \/ ActionReact
 \*  /\ SF_vars(ModRespond)
 \*  /\ SF_vars(Publish)
 
-Spec == Init /\ [][Action]_<<vars>> \* /\ Fairness
-
-THEOREM  Spec => [](TypeInvariants /\ DataInvariants)
-
-------------------------------------------------------------------------------------------------------------------------
-
-NothingInFlight ==
-  /\ procsI = {}
-  /\ procs  = {}
-  /\ pub    = {}
-  /\ \A u \in User : userState[u].reqs = {}
-
-AllUsersUpToDate ==
-  \A user \in User :
-    /\ LET u == userState[user]
-           s == u.status
-       IN CASE s = "offline" -> TRUE
-            [] s = "loading" -> FALSE
-            [] s = "active"  -> u.ver = db.ver
-
-CONSTANT MCVerLimit
-
-MCSymmetry        == Permutations(User) \union Permutations(Request)
-MCLimitReached    == db.ver >= MCVerLimit
-MCDone            == MCLimitReached /\ NothingInFlight
-MCFinalInvariants == MCDone => AllUsersUpToDate
-MCContinue        == ~MCDone
-MCAction          == (~MCLimitReached /\ ActionAct) \/ ActionReact
-MCSpec            == Init /\ [][MCAction]_<<vars>> \* /\ Fairness
+Spec == Init /\ [][Next]_<<vars>> \* /\ Fairness
 
 ========================================================================================================================
