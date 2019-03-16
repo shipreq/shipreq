@@ -1,0 +1,13 @@
+#!/bin/sh
+exec perl -pe '
+  s/^(Warning:.*)$/\e[30;43m$1\e[0m/;
+  s/^(Error:(?! The behavior up to this point is).*)$/\e[97;41m$1\e[0m/;
+  s/^(State 1:.*)$/\n\e[93m$1\e[0m/;
+  s/^(State \d+: <)(\S+?)( line.+)$/\e[93m$1\e[0;30;43m$2\e[0;93m$3\e[0m/;
+  s/^(Model checking completed. No error.*)$/\e[30;42m$1\e[0m/;
+'
+
+
+  s/^(State \d+: <)(\S+?)( line.+)$/\e[1;93m$1\e[0;30;43m$2\e[0;1;93m$3\e[0m/;
+  s/^(State \d+: <)(\S+?)( line.+)$/\e[1;95m$1\e[0;45;60m$2\e[0;1;95m$3\e[0m/;
+  s/^(State \d+: <)(\S+?)( line.+)$/\e[1;96m$1\e[0;46;60m$2\e[0;1;96m$3\e[0m/;
