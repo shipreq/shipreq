@@ -358,7 +358,7 @@ WebappDeath ==
   \* Start with a subset of users because each user communicates through a websocket which is tied to a specific worker
   \* Also remember the user isn't a ShipReq user; it's a browser tab, a session.
   /\ MCAllowAct
-  /\ \E affectedUsers \in (SUBSET(OnlineUsers) \ {}) :
+  /\ \E affectedUsers \in (SUBSET(OnlineUsers) \ {{}}) :
     /\ userState' = [u \in User |-> IF u \in affectedUsers
                                     THEN OfflineUserState \* TODO Add reconnect suuport - this is the user reloading page
                                     ELSE userState[u]]
