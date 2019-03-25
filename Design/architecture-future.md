@@ -9,6 +9,8 @@ it planned.
     * groups/org etc for phase 3
   * Encryption
   * Fast SSR (caching or node)
+    * Removing Lift's private SSP tokens => cachability
+    * Maybe just on / path
 
 
 CURRENT STATE
@@ -30,6 +32,11 @@ CURRENT STATE
 
 UNDER CONSIDERATION
 ===================
+
+* Server-side procs
+  * single endpoint, cmd type -> cmd -> resp
+  * multiple endpoints
+  * live updates with generated binary codecs could result in breakage
 
 * AWS Cognito
   * would get:
@@ -69,11 +76,13 @@ TARGET STATE
   * only needed for login proof / userId
   * can avoid DB lookup by including user metadata (like `@golly`)
   * Java lib: https://github.com/jwtk/jjwt
+  * store in a httpOnly cookie (don't use {local,session}Storage)
+  * use expiryTime
 
 * Server-side procs
   * Scala.JS makes regular ajax calls
   * auth via JWT
-  * single endpoint, cmd type -> cmd -> resp
+  * endpoint(s) require a valid JWT - even if not logged in
 
 * Event pub/sub
   * Use Redis channels
@@ -92,6 +101,34 @@ TARGET STATE
     * Initially in non-cluster mode because no need to scale
     * Later in cluster node which supports online up/down scaling of shards and/or replicas
   * Algorithm for snapshot/event caching detailed in `Format/project.tla`
+
+MIGRATION
+=========
+* PublicSpa
+  * Read JWT from request
+  * Add JWT to response (or at least update expiry time)
+  * New SSPs
+    * New defns, new types, new codecs
+    * Server-side JWT check
+    * Client side AJAX (compare with Lift's. Add features? Auto retry maybe?)
+  * Use Lift stateless dispatch
+* HomeSpa
+  * use new AJAX procs
+  * use Lift stateless dispatch
+* ProjectSpa
+  * Establish WebSocket
+  * Re-establist WebSocket on loss
+  * Generic req/respond over WebSocket (eg. (ReqId, Req) => | => (ReqId, Resp))
+  * Project AJAX over WS
+  * Push events over WS
+    * Add Redis
+    * Redis pub/sub
+    * Remove comets
+  * use Lift stateless dispatch
+* Remove
+  * Old SSP
+  * Shiro
+* Implement protocol & caching according to TLA+ spec
 
 
 REJECTED / FUTURE IDEAS
