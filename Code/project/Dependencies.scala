@@ -128,6 +128,14 @@ object Dependencies {
     val main     = core ++ postgres ++ hikari
   }
 
+  object JJWT {
+    private val mm = MultiModule.java("io.jsonwebtoken", "0.10.6")
+    val api     = mm("jjwt-api")
+    val impl    = mm("jjwt-impl") % Runtime
+    val jackson = mm("jjwt-jackson") % Runtime
+    val all     = api ++ impl ++ jackson
+  }
+
   object Shiro {
     private val mm = MultiModule.java("org.apache.shiro", "1.3.2")
     val core = mm("shiro-core") ++ SLF4J.jcl // Use SLF4J in place of commons-logging

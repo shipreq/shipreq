@@ -120,6 +120,7 @@ object ShipReqBuild {
         .dependsOn(webappServer)
         .configure(Common.jvmSettings)
         .settings(libraryDependencies += "io.monix" %% "monix-eval" % "2.3.3")
+        .deps(JJWT.all)
     }
 
     def jsSettings: Project => Project = {
