@@ -290,7 +290,7 @@ object WebappBuild {
       .enablePlugins(JettyPlugin, WarPlugin, DockerPlugin)
       .dependsOn(baseDb, baseOps, taskmanApi, webappServerLogicJvm, webappGenJvm)
       .deps(
-        Scalaz.core ++ Lift.webkit ++ Shiro.all ++ commonsLang ++ Nyaya.gen ++ Logback.withPlugins ++
+        Scalaz.core ++ Lift.webkit ++ Shiro.all ++ commonsLang ++ Nyaya.gen ++ Logback.withPlugins ++ JJWT.all ++
         Prometheus.client ++ Prometheus.hotspot ++ Prometheus.servlet ++ LibJetty.servletApi ++
         testScope(μTest ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
         (LibJetty.webapp % Test))
