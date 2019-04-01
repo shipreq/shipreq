@@ -16,7 +16,7 @@ object DispatchLogicTest extends TestSuite {
   object Tester extends MockInterpreters {
     implicit val trace = TraceLogic.off[Name, Request[Unit], Response]
     val dispatcher = new DispatchLogic[Name, Request[Unit], Response](
-      r => Request(r.method, r.path, r.param, r), (_, r) => Name(r))
+      r => Request(r.method, r.path, r.param, r.cookie, r), (_, r) => Name(r))
     val dispatch = dispatcher.mainDispatcher(false, false)
     db.users ::= user2
     db.users ::= user3
@@ -31,12 +31,13 @@ object DispatchLogicTest extends TestSuite {
 
   implicit def autoRelUrl(s: String): Url.Relative = Url.Relative(s)
 
-  def run(url   : Url.Relative,
-          method: Method              = Get,
-          params: Map[String, String] = Map.empty)
+  def run(url    : Url.Relative,
+          method : Method              = Get,
+          params : Map[String, String] = Map.empty,
+          cookies: Map[String, String] = Map.empty)
          (implicit logIn: MockDb.UserEntry = null): Response = {
     security.loggedIn = Option(logIn)
-    val req = Request(method, url, params.get, ())
+    val req = Request(method, url, params.get, cookies.get, ())
     val d = if (dispatcher.Ops.candidate(url))
       dispatcher.Ops.total
     else

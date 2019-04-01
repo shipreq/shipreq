@@ -92,7 +92,7 @@ class DispatchBM {
 
   def test[F[_]](i: Interpreters[F])(f: Interpreters[F] => Request[Request[Unit]] => F[Response]): Any = {
     val d = f(i)
-    DispatchRequests.map(r => i.run(d(Request(r.method, r.path, r.param, r))))
+    DispatchRequests.map(r => i.run(d(Request(r.method, r.path, r.param, r.cookie, r))))
   }
 
   @Benchmark def trampoline1 = test(DispatchBM.trampoline)(_.dispatcher1)
@@ -185,7 +185,7 @@ object DispatchBM {
     }
 
     val dispatchLogic = new DispatchLogic[F, Request[Unit], Response](
-      r => Request(r.method, r.path, r.param, r), (_, r) => F.point(r))
+      r => Request(r.method, r.path, r.param, r.cookie, r), (_, r) => F.point(r))
 
     val dispatcher1 = dispatchLogic.Main.routes.withFallback(dispatchLogic.Main.fallback)
 //    val dispatcher2 = dispatchLogic.Main.cacheUsualPaths(dispatcher1)
@@ -197,11 +197,12 @@ object DispatchBM {
     import Method._
     implicit def autoXID(p: ProjectId): ProjectId.Public = Obfuscators.projectId.obfuscate(p)
     val param: String => Option[String] = _ => None
+    val cookie: String => Option[String] = _ => None
     val token = SecurityToken("MnVC8cvPX9b1jiCpyxoYLk4RqQ8idHlV4lf7OHzIQctHLgw6C")
     val b = List.newBuilder[Request[Unit]]
-    b ++= Urls.PublicSpaRoute.static.whole.toList.map(r => Request(Get, r.url, param, ()))
-    b ++= Urls.MemberRoute.static.whole.toList.map(r => Request(Get, r.url, param, ()))
-    b ++= Urls.PublicSpaRoute.needsToken.whole.toList.map(r => Request(Get, r.url(token), param, ()))
+    b ++= Urls.PublicSpaRoute.static.whole.toList.map(r => Request(Get, r.url, param, cookie, ()))
+    b ++= Urls.MemberRoute.static.whole.toList.map(r => Request(Get, r.url, param, cookie, ()))
+    b ++= Urls.PublicSpaRoute.needsToken.whole.toList.map(r => Request(Get, r.url(token), param, cookie, ()))
 //    b ++= (1 to 10).map(i => Request(Get, Urls.project(ProjectId(i)), param))
     val rs = b.result()
     List.fill(10)(rs).flatten
