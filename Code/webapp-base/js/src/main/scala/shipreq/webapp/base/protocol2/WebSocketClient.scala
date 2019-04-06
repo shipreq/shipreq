@@ -1,23 +1,27 @@
 package shipreq.webapp.base.protocol2
 
-import boopickle.Pickler
+import boopickle._
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
+import java.nio.ByteBuffer
 import org.scalajs.dom.{CloseEvent, Event, MessageEvent, WebSocket}
 import org.scalajs.dom.console
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
-import scalaz.{-\/, \/-}
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.JsExt._
 
-final class WebSocketClient[Req, Res, Push](
+final class WebSocketClient[
+    ReqRes <: Protocol.RequestResponse[Pickler],
+    Push](
     ws: WebSocket,
 //    createWS: CallbackTo[WebSocket],
-    protocol: Protocol.WebSocket.ClientReqAndServerPush[Pickler, Int, Req, Res, Push],
-    recvPush: Push => Callback) {
+    protocolCS: Pickler[(Int, ByteBuffer)], // ByteBuffer is actually ReqRes#PreparedRequestType
+    protocolSC: Pickler[Push \/ (Int, ByteBuffer)],
+    recvPush    : Push => Callback) {
 
 //  private var wsInstance = Option.empty[WebSocket]
 
-  private val requestManager: WebSocketClient.RequestManager[Int, Res] =
+  private val requestManager: WebSocketClient.RequestManager[Int, ByteBuffer] =
     WebSocketClient.RequestManager.arrayStore
 
 //  private def reconnect(): Unit =
@@ -57,30 +61,29 @@ final class WebSocketClient[Req, Res, Push](
     console.log(s"[${ws.readyState}] onclose: ", e)
   }
 
-  // TODO response should depend on request type
-  def send(req: Req): CallbackTo[AsyncCallback[Res]] = {
-    requestManager.newRequest.flatMap { case (reqId, ac) =>
+  def send(p: ReqRes)(request: p.RequestType): CallbackTo[AsyncCallback[p.ResponseType]] =
+    requestManager.newRequest.flatMap { case (reqId, callback) =>
       // TODO unregister on err below
       CallbackTo {
-        val msgValue = (reqId, req)
-        val msgBinary = BinaryJs.encode(msgValue)(protocol.clientToServer.codec)
+        val prep      = p.prepareSend(request)
+        val reqBB     = BinaryJs.encodetoByteBufferP(prep.request)
+        val msgValue  = (reqId, reqBB)
+        val msgBinary = BinaryJs.encode(msgValue)(protocolCS)
         ws.send(msgBinary.buffer)
-        ac
+        callback.map(UnpickleImpl(prep.response.codec).fromBytes(_))
       }
     }
-  }
 
   def onmessage(e: MessageEvent): Unit = {
     console.log(s"[${ws.readyState}] onmessage: ", e)
     val handler: Callback =
-      CallbackTo(BinaryJs.decodeUnsafe(e.data)(protocol.serverToClient.codec)).flatMap {
+      CallbackTo(BinaryJs.decodeUnsafe(e.data)(protocolSC)).flatMap {
         case \/-((id, res)) => requestManager.complete(id, Success(res)) // TODO what about Failure??
         case -\/(push)      => recvPush(push)
       }
     // TODO handle errors how?
     handler.runNow()
   }
-
 
 }
 

@@ -1,64 +1,96 @@
 package shipreq.webapp.base.protocol2
 
-import scalaz.\/
 import shipreq.base.util.Url
+
+trait Protocol[F[_]] { self =>
+  type Type
+  val codec: F[Type]
+
+  final type AndValue = Protocol.AndValue[F] { type Type = self.Type }
+
+  final def andValue(v: Type): AndValue =
+    new Protocol.AndValue[F] {
+      override type Type = self.Type
+      override val codec = self.codec
+      override val value = v
+    }
+}
 
 object Protocol {
 
-  trait Channel[F[_]] {
+  type Of[F[_], A] = Protocol[F] { type Type = A }
+
+  def apply[F[_], A](c: F[A]): Of[F, A] =
+    new Protocol[F] {
+      override type Type = A
+      override val codec = c
+    }
+
+  // ===================================================================================================================
+
+  trait AndValue[F[_]] {
     type Type
     val codec: F[Type]
+    val value: Type
   }
 
-  object Channel {
-
-    type Of[F[_], A] = Channel[F] { type Type = A }
-
-    def apply[F[_], A](c: F[A]): Of[F, A] =
-      new Channel[F] {
-        override type Type = A
-        override val codec = c
-      }
+  object AndValue {
+    type Of[F[_], A] = AndValue[F] { type Type = A }
   }
 
   // ===================================================================================================================
 
   trait RequestResponse[F[_]] {
-    val request : Channel[F]
-    val response: Channel[F]
+    type RequestType
+    type ResponseType
+
+    final type PreparedSend = RequestResponse.PreparedSend.Of[F, PreparedRequestType, ResponseType]
+    type PreparedRequestType
+    def prepareSend(r: RequestType): PreparedSend
   }
 
   object RequestResponse {
 
     type Of[F[_], Req, Res] = RequestResponse[F] {
-      val request : Channel.Of[F, Req]
-      val response: Channel.Of[F, Res]
+      type RequestType  = Req
+      type ResponseType = Res
     }
 
-    def apply[F[_], Req, Res](req: Channel.Of[F, Req], res: Channel.Of[F, Res]): Of[F, Req, Res] =
-      new RequestResponse[F] {
-        override val request  = req
-        override val response = res
+    // -----------------------------------------------------------------------------------------------------------------
+
+    trait PreparedSend[F[_]] {
+      val request : Protocol.AndValue[F]
+      val response: Protocol[F]
+    }
+
+    object PreparedSend {
+      type Of[F[_], Req, Res] = PreparedSend[F] {
+        val request : Protocol.AndValue.Of[F, Req]
+        val response: Protocol.Of[F, Res]
       }
+
+      def apply[F[_], Req, Res](req: Protocol.AndValue.Of[F, Req], res: Protocol.Of[F, Res]): Of[F, Req, Res] =
+        new PreparedSend[F] {
+          override val request  = req
+          override val response = res
+        }
+    }
   }
 
   // ===================================================================================================================
 
-  final case class Ajax[F[_], Req, Res](url        : Url.Relative,
-                                        protocol   : RequestResponse.Of[F, Req, Res])
+  final case class Ajax[F[_], Req, Res](url     : Url.Relative,
+                                        protocol: RequestResponse.Of[F, Req, Res])
 
   // ===================================================================================================================
 
-//  final case class WebSocket[F[_], Res, Req, Push](fromClient: Protocol.RequestResponse.Of[F, Req, Res],
-//                                                   fromServer: Protocol.Channel.Of[F, Push])
-
-  final case class WebSocket[F[_], CS, SC](clientToServer: Protocol.Channel.Of[F, CS],
-                                           serverToClient: Protocol.Channel.Of[F, SC])
-
   object WebSocket {
-
-    type ClientReqAndServerPush[F[_], ReqId, Req, Res, Push] =
-      WebSocket[F, (ReqId, Req), Push \/ (ReqId, Res)]
-
+    final case class ClientReqServerPush[
+      F[_],
+      ReqId,
+      Req,
+      ReqRes <: Protocol.RequestResponse[F] { type PreparedRequestType = Req },
+      Push](
+      protocolPush: Protocol.Of[F, Push])
   }
 }

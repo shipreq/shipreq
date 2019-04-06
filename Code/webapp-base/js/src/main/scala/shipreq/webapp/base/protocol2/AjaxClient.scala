@@ -7,16 +7,18 @@ import org.scalajs.dom.ext.AjaxException
 
 trait AjaxClient[F[_]] {
   def apply[Req, Res](p: Protocol.Ajax[F, Req, Res])
-                     (req: p.protocol.request.Type): AsyncCallback[p.protocol.response.Type]
+                     (req: p.protocol.RequestType): AsyncCallback[p.protocol.ResponseType]
 }
 
 object AjaxClient {
 
   object Binary extends AjaxClient[Pickler] {
     override def apply[Req, Res](p: Protocol.Ajax[Pickler, Req, Res])
-                                (req: p.protocol.request.Type): AsyncCallback[p.protocol.response.Type] = {
+                                (req: p.protocol.RequestType): AsyncCallback[p.protocol.ResponseType] = {
 
-      val reqBinary = BinaryJs.encode(req)(p.protocol.request.codec)
+      val prep = p.protocol.prepareSend(req)
+
+      val reqBinary = BinaryJs.encodeP(prep.request)
 
       Ajax("POST", p.url.relativeUrl)
         .setRequestHeader("Content-Type", "application/octet-stream")
@@ -25,7 +27,7 @@ object AjaxClient {
         .asAsyncCallback
         .map { xhr =>
           if (xhr.status == 200)
-            BinaryJs.decodeUnsafe(xhr.response)(p.protocol.response.codec)
+            BinaryJs.decodeUnsafe(xhr.response)(prep.response.codec)
           else
             throw AjaxException(xhr)
         }
