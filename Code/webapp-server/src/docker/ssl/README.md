@@ -18,14 +18,18 @@ Keystore & SSL
     www.shipreq.com.crt
     www.shipreq.com.csr
     www.shipreq.com.key
+    GandiStandardSSLCA2.pem (Intermediate cert - login to gandi.net to download)
+
+* Combine SSL & intermediate SSL into a cert chain
+    cat www.shipreq.com.crt GandiStandardSSLCA2.pem > shipreq-gandi.crt
 
 * Combine key and crt into a pkcs12.
-    openssl pkcs12 -inkey www.shipreq.com.key -in www.shipreq.com.crt -export -out www.shipreq.com.pkcs12
+    openssl pkcs12 -inkey www.shipreq.com.key -in shipreq-gandi.crt -export -out shipreq-gandi.pkcs12
 
 * Create a keystore with both the certificate and the pkcs12.
     k=keystore
-    keytool -keystore $k -import -alias shipreq_cert -file www.shipreq.com.crt
-    keytool -importkeystore -srckeystore www.shipreq.com.pkcs12 -srcstoretype PKCS12 -destkeystore $k
+    keytool -keystore $k -import -alias shipreq_cert -file shipreq-gandi.crt -noprompt
+    keytool -importkeystore -srckeystore shipreq-gandi.pkcs12 -srcstoretype PKCS12 -destkeystore $k
     keytool -changealias -alias 1 -destalias shipreq_key -keystore $k
 
 ### Jetty Integration
