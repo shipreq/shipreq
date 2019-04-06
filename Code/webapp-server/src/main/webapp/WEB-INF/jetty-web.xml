@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure.dtd">
+
+<Configure class="org.eclipse.jetty.webapp.WebAppContext">
+<!-- This here is the only way to configure Jetty's WebAppContext.
+     This is empty for now but every time I run into Jetty problems and read online help,
+     it often mentions configuring WebAppContext and then I search all local files to see
+     if I'm already doing it somewhere... I'm keeping this here as a placeholder so that
+     it appears next time I search.
+     There's no way to configure it programmatically if Jetty is loading ShipReq as an external webapp.
+     This is the only way.
+-->
+</Configure>
