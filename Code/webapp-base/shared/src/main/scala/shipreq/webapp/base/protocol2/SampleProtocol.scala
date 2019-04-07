@@ -20,7 +20,6 @@ object SampleProtocol {
       }
 
     override final type PreparedRequestType = ReqRes.AndReq
-    override final val protocolPreparedReq = ReqRes.AndReq.protocol
 
     override final def prepareSend(r: RequestType): PreparedSend = {
       val req = AndReq(r)

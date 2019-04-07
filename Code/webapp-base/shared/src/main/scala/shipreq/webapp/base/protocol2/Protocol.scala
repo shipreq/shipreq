@@ -46,7 +46,6 @@ object Protocol {
 
     final type PreparedSend = RequestResponse.PreparedSend.Of[F, PreparedRequestType, ResponseType]
     type PreparedRequestType
-    val protocolPreparedReq: Protocol.Of[F, PreparedRequestType]
     def prepareSend(r: RequestType): PreparedSend
   }
 
@@ -81,8 +80,9 @@ object Protocol {
   // ===================================================================================================================
 
   trait Ajax[F[_]] {
-    val url     : Url.Relative
-    val protocol: RequestResponse[F]
+    val url            : Url.Relative
+    val protocol       : RequestResponse[F]
+    val protocolPrepReq: Protocol.Of[F, protocol.PreparedRequestType]
   }
 
   // ===================================================================================================================
@@ -95,7 +95,7 @@ object Protocol {
     trait ClientReqServerPush[F[_]] {
       type ReqId
       type Req
-      type ReqRes <: Protocol.RequestResponse[F]  { type PreparedRequestType = Req }
+      type ReqRes <: Protocol.RequestResponse[F] { type PreparedRequestType = Req }
       type Push
       val url         : Url.Relative
       val protocolReq : Protocol.Of[F, Req]
