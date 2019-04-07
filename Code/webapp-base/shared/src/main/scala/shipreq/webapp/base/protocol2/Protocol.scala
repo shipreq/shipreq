@@ -5,15 +5,6 @@ import shipreq.base.util.Url
 trait Protocol[F[_]] { self =>
   type Type
   val codec: F[Type]
-
-  final type AndValue = Protocol.AndValue[F] { type Type = self.Type }
-
-  final def andValue(v: Type): AndValue =
-    new Protocol.AndValue[F] {
-      override type Type = self.Type
-      override val codec = self.codec
-      override val value = v
-    }
 }
 
 object Protocol {
@@ -25,18 +16,6 @@ object Protocol {
       override type Type = A
       override val codec = c
     }
-
-  // ===================================================================================================================
-
-  trait AndValue[F[_]] {
-    type Type
-    val codec: F[Type]
-    val value: Type
-  }
-
-  object AndValue {
-    type Of[F[_], A] = AndValue[F] { type Type = A }
-  }
 
   // ===================================================================================================================
 
@@ -55,8 +34,6 @@ object Protocol {
       type RequestType  = Req
       type ResponseType = Res
     }
-
-    // -----------------------------------------------------------------------------------------------------------------
 
     trait PreparedSend[F[_], Req] {
       val request : Req
