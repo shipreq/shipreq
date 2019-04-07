@@ -64,6 +64,7 @@ object SampleProtocol {
     trait AndReq {
       val reqRes: ReqRes
       val req: reqRes.RequestType
+      override def toString = s"$reqRes.AndReq($req)"
     }
 
     object AndReq {
@@ -100,7 +101,7 @@ object SampleProtocol {
   type G[R <: ReqRes] = R#ResponseType
   val respondFold = ReqRes.Fold[F, G](
     isEven = r => (r&1)==0,
-    xs     = r => "x" * r,
+    xs     = r => ("x." * r).dropRight(1),
   )
   def respond(r: ReqRes.AndReq): ByteBuffer = {
     val res = r.reqRes.fold(respondFold)(r.req)

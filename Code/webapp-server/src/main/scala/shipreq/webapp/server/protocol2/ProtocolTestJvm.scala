@@ -7,9 +7,10 @@ import scalaz.{\/, \/-}
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.protocol2._
 
-class WebSocketSvr[Req, Push](protocolCS: Pickler[(Int, Req)],
-                              protocolSC: Pickler[Push \/ (Int, ByteBuffer)],
-                              respond   : Req => ByteBuffer) extends Endpoint {
+class WebSocketSvr[Req, Push](val protocolCS: Pickler[(Int, ByteBuffer)],
+                              val protocolReq: Pickler[Req],
+                              val protocolSC: Pickler[Push \/ (Int, ByteBuffer)],
+                              val respond   : Req => ByteBuffer) extends Endpoint {
 
   private def toByteBuffer[A](p: Pickler[A])(a: A): ByteBuffer =
     PickleImpl.intoBytes(a)(implicitly, p)
@@ -24,13 +25,7 @@ class WebSocketSvr[Req, Push](protocolCS: Pickler[(Int, Req)],
     session.addMessageHandler(new MessageHandler.Whole[ByteBuffer] {
       override def onMessage(message: ByteBuffer): Unit = {
 
-        val recv = UnpickleImpl(protocolCS).fromBytes(message)
-        println(s"RECV 1: " + recv)
-        val (reqId, req) = recv
-        val res = \/-(reqId, respond(req))
-        println(s"RECV 2: " + res)
-        val resBB = toByteBuffer(protocolSC)(res)
-        remote.sendBinary(resBB)
+        ???
       }
     })
   }
@@ -47,9 +42,8 @@ object WebSocketSvr {
            (respond : protocol.Req => ByteBuffer): WebSocketSvr[protocol.Req, protocol.Push] = {
     import WebSocketShared._
     import protocol._
-    implicit def protocolReq: Pickler[Req] = protocol.protocolReq.codec
     implicit def protocolPush: Pickler[Push] = protocol.protocolPush.codec
-    new WebSocketSvr[Req, Push](protocolCS, protocolSC, respond)
+    new WebSocketSvr[Req, Push](protocolCS, protocolReq.codec, protocolSC, respond)
   }
 }
 
@@ -66,14 +60,28 @@ import javax.websocket.server.ServerEndpoint
 @ServerEndpoint(value = Urls._projectSpaWebSocket)
 class EventSocket {
 
+  import ProtocolTestJvm.sampleSvr.{protocolCS, protocolReq ,protocolSC, respond}
+  private def toByteBuffer[A](p: Pickler[A])(a: A): ByteBuffer =
+    PickleImpl.intoBytes(a)(implicitly, p)
+
   @OnOpen
   def onWebSocketConnect(s: Session): Unit = {
-    println(s"Socket Connected: $s")
+//    println(s"Socket Connected: $s")
   }
 
   @OnMessage
   def onMessage(s: Session, bb: ByteBuffer): Unit = {
-    println(s"Received message: $bb")
+//    bb.mark()
+    println(s"Received message: (${bb.limit()}) ${bb.array().toList.map(_.toInt)}")
+//    bb.reset()
+    val recv = UnpickleImpl(protocolCS).fromBytes(bb)
+    val (reqId, reqBB) = recv
+    val req = UnpickleImpl(protocolReq).fromBytes(reqBB)
+    println(s"RECV: " + (reqId, req))
+    val res = \/-(reqId, respond(req))
+    println(s"RESP: " + res)
+    val resBB = toByteBuffer(protocolSC)(res)
+    s.getBasicRemote.sendBinary(resBB)
   }
 
   @OnClose
@@ -83,8 +91,7 @@ class EventSocket {
 
   @OnError
   def onWebSocketError(cause: Throwable): Unit = {
-    println("Socket error: " + cause)
-    // cause.printStackTrace(System.err)
+     cause.printStackTrace(System.err)
   }
 }
 /*

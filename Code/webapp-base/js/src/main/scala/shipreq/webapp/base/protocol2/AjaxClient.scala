@@ -18,16 +18,16 @@ object AjaxClient {
 
       val prep = p.protocol.prepareSend(req)
 
-      val reqBinary = BinaryJs.encodeP(prep.request)
+      val reqAB = BinaryJs.encodeToArrayBufferP(prep.request)
 
       Ajax("POST", p.url.relativeUrl)
         .setRequestHeader("Content-Type", "application/octet-stream")
         .and(_.responseType = "arraybuffer")
-        .send(reqBinary)
+        .send(reqAB)
         .asAsyncCallback
         .map { xhr =>
           if (xhr.status == 200)
-            BinaryJs.decodeUnsafe(xhr.response)(prep.response.codec)
+            BinaryJs.decodeFromArrayBufferUnsafe(xhr.response)(prep.response.codec)
           else
             throw AjaxException(xhr)
         }

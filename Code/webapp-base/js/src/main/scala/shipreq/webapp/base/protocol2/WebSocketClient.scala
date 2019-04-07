@@ -4,7 +4,7 @@ import boopickle._
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import java.nio.ByteBuffer
 import org.scalajs.dom.{CloseEvent, Event, MessageEvent, WebSocket}
-import org.scalajs.dom.{console, window}
+import org.scalajs.dom.console
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 import scalaz.{-\/, \/, \/-}
@@ -67,18 +67,18 @@ final class WebSocketClient[
       // TODO unregister on err below
       CallbackTo {
         val prep      = p.prepareSend(request)
-        val reqBB     = BinaryJs.encodetoByteBufferP(prep.request)
+        val reqBB     = BinaryJs.encodeToByteBufferP(prep.request)
         val msgValue  = (reqId, reqBB)
-        val msgBinary = BinaryJs.encode(msgValue)(protocolCS)
-        ws.send(msgBinary.buffer)
+        val msgAB     = BinaryJs.encodeToArrayBuffer(msgValue)(protocolCS)
+        ws.send(msgAB)
         callback.map(UnpickleImpl(prep.response.codec).fromBytes(_))
       }
     }
 
   def onmessage(e: MessageEvent): Unit = {
-    console.log(s"[${ws.readyState}] onmessage: ", e)
+//    console.log(s"[${ws.readyState}] onmessage: ", e)
     val handler: Callback =
-      CallbackTo(BinaryJs.decodeUnsafe(e.data)(protocolSC)).flatMap {
+      CallbackTo(BinaryJs.decodeFromArrayBufferUnsafe(e.data)(protocolSC)).flatMap {
         case \/-((id, res)) => requestManager.complete(id, Success(res)) // TODO what about Failure??
         case -\/(push)      => recvPush(push)
       }
