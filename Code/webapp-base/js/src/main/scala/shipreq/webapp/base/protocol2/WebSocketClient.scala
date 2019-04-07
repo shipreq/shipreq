@@ -4,11 +4,12 @@ import boopickle._
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import java.nio.ByteBuffer
 import org.scalajs.dom.{CloseEvent, Event, MessageEvent, WebSocket}
-import org.scalajs.dom.console
+import org.scalajs.dom.{console, window}
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.JsExt._
+import shipreq.base.util.Url
 
 final class WebSocketClient[
     ReqRes <: Protocol.RequestResponse[Pickler],
@@ -84,20 +85,31 @@ final class WebSocketClient[
     // TODO handle errors how?
     handler.runNow()
   }
-
 }
 
+// =====================================================================================================================
 
 object WebSocketClient {
 
+  def apply(urlBase: Url.Absolute.Base,
+            protocol: Protocol.WebSocket.ClientReqServerPush[Pickler])
+           (recvPush: protocol.Push => Callback): WebSocketClient[protocol.ReqRes, protocol.Push] = {
+    import WebSocketShared._
+    implicit def protocolPush: Pickler[protocol.Push] = protocol.protocolPush.codec
+    val url = (urlBase / protocol.url).absoluteUrl
+    val ws = new WebSocket(url)
+    new WebSocketClient(ws, protocolCS, protocolSC, recvPush)
+  }
 
-  trait RequestManager[Id, A] {
+  // ===================================================================================================================
+
+  private[WebSocketClient] trait RequestManager[Id, A] {
     val newRequest: CallbackTo[(Id, AsyncCallback[A])]
     def complete(id: Id, a: Try[A]): Callback
     def completeAll(t: Try[A]): CallbackTo[List[Throwable]]
   }
 
-  object RequestManager {
+  private[WebSocketClient] object RequestManager {
     private final class ArrayStore[A] extends RequestManager[Int, A] {
       private var prevId = 0
       private var size = 0
@@ -145,6 +157,8 @@ object WebSocketClient {
     def arrayStore[A]: RequestManager[Int, A] =
       new ArrayStore[A]
   }
+
+  // ===================================================================================================================
 
   /*
   def start: Callback = {
@@ -201,9 +215,3 @@ object WebSocketClient {
     }
    */
 }
-
-//sealed trait WebSocketError
-//object WebSocketError {
-//  case object Xxxx extends WebSocketError
-//  final case class Xxxx() extends WebSocketError
-//}

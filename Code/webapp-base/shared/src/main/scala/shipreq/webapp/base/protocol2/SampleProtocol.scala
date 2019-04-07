@@ -3,7 +3,7 @@ package shipreq.webapp.base.protocol2
 import boopickle.DefaultBasic._
 import japgolly.microlibs.adt_macros.AdtMacros
 import java.nio.ByteBuffer
-import scalaz.~>
+import shipreq.webapp.base.Urls
 
 object SampleProtocol {
 
@@ -12,16 +12,14 @@ object SampleProtocol {
     protected[SampleProtocol] val protocolRes: Protocol.Of[Pickler, ResponseType]
     protected[SampleProtocol] val key: Int
 
-//    val request : Protocol[Pickler]
-//    val response: Protocol[Pickler]
-//    val key: Int
-//    override type RequestType = Int
-//    override type ResponseType = Boolean
-
     override final type PreparedRequestType = ReqRes.AndReq
 
     final type AndReq = ReqRes.AndReq { val reqRes: self.type }
-    final def AndReq(r: RequestType): AndReq = ???
+    final def AndReq(r: RequestType): AndReq =
+      new ReqRes.AndReq {
+        override val reqRes: self.type = self
+        override val req = r
+      }
 
     override final def prepareSend(r: RequestType): PreparedSend = {
       val req = AndReq(r)
@@ -29,7 +27,6 @@ object SampleProtocol {
       Protocol.RequestResponse.PreparedSend(protocolAndReq, protocolRes)
     }
 
-//    def foldReq[A](f: ReqRes.AndReq.Fold[A], r: RequestType): A
     def fold[F[_ <: ReqRes], G[_ <: ReqRes]](f: ReqRes.Fold[F, G])(r: F[this.type]): G[this.type]
   }
 
@@ -42,11 +39,9 @@ object SampleProtocol {
     }
 
     case object IsEven extends Help[Long, Boolean](1) {
-//      override def foldReq[A](f: ReqRes.AndReq.Fold[A], r: RequestType): A = f.isEven(r)
       override def fold[F[_ <: ReqRes], G[_ <: ReqRes]](f: ReqRes.Fold[F, G])(r: F[this.type]) = f.isEven(r)
     }
     case object Xs extends Help[Int, String](2) {
-//      override def foldReq[A](f: ReqRes.AndReq.Fold[A], r: RequestType): A = f.xs(r)
       override def fold[F[_ <: ReqRes], G[_ <: ReqRes]](f: ReqRes.Fold[F, G])(r: F[this.type]) = f.xs(r)
     }
 
@@ -64,21 +59,11 @@ object SampleProtocol {
         Fold(
           isEven = f => h.isEven(self.isEven(f)),
           xs     = f => h.xs    (self.xs    (f)))
-//      def map[H[_]](h: G ~> H): Fold[F, H] =
-//        Fold(
-//          isEven = f => h(self.isEven(f)),
-//          xs     = f => h(self.xs    (f)))
-    }
-    object Fold {
-//      def uniform[F[+_ <: ReqRes], G[+_ <: ReqRes]](f: F[_ <: ReqRes] => G[_ <: ReqRes]): Fold[F, G] =
-//        apply[F, G](f, f)
     }
 
     trait AndReq {
       val reqRes: ReqRes
       val req: reqRes.RequestType
-
-//      final def apply[A](f: AndReq.Fold[A]): A = reqRes.foldReq(f, req)
     }
 
     object AndReq {
@@ -98,15 +83,18 @@ object SampleProtocol {
           }
         }
       )
-
-//      final case class Fold[A](isEven: IsEven.RequestType => A, xs: Xs.RequestType => A)
     }
   }
 
-  type Push = String
-  val push = Protocol[Pickler, Push](implicitly)
-  val WS = Protocol.WebSocket.ClientReqServerPush[Pickler, Int, ReqRes.AndReq, ReqRes, Push](push)
-
+  object WS extends Protocol.WebSocket.ClientReqServerPush[Pickler] {
+    override type ReqId        = Int
+    override type Req          = ReqRes.AndReq
+    override type ReqRes       = SampleProtocol.ReqRes
+    override type Push         = String
+    override val  url          = Urls.projectSpaWebSocket
+    override val  protocolReq  = ReqRes.AndReq.protocol
+    override val  protocolPush = Protocol[Pickler, Push](implicitly)
+  }
 
   type F[R <: ReqRes] = R#RequestType
   type G[R <: ReqRes] = R#ResponseType

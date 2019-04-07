@@ -54,10 +54,15 @@ object Urls {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  def publicHome     = PublicSpaRoute.Home.url
-  def login          = PublicSpaRoute.Login.url
-  def termsOfService = PublicSpaRoute.TermsOfService.url
-  def memberHome     = MemberRoute.Home.url
-  def project        = MemberRoute.Project.url
-  def logout         = MemberRoute.Logout.url
+  final val _projectSpaWebSocket = "/w/p"
+  val projectSpaWebSocket = Url.Relative(_projectSpaWebSocket)
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  def publicHome          = PublicSpaRoute.Home.url
+  def login               = PublicSpaRoute.Login.url
+  def termsOfService      = PublicSpaRoute.TermsOfService.url
+  def memberHome          = MemberRoute.Home.url
+  def project             = MemberRoute.Project.url
+  def logout              = MemberRoute.Logout.url
 }

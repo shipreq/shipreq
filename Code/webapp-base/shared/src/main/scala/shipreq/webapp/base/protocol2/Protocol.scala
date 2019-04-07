@@ -85,12 +85,18 @@ object Protocol {
   // ===================================================================================================================
 
   object WebSocket {
-    final case class ClientReqServerPush[
-      F[_],
-      ReqId,
-      Req,
-      ReqRes <: Protocol.RequestResponse[F] { type PreparedRequestType = Req },
-      Push](
-      protocolPush: Protocol.Of[F, Push])
+
+    /** Client can send requests (ReqRes)
+      * Server can send messages (Push)
+      */
+    trait ClientReqServerPush[F[_]] {
+      type ReqId
+      type Req
+      type ReqRes <: Protocol.RequestResponse[F]  { type PreparedRequestType = Req }
+      type Push
+      val url         : Url.Relative
+      val protocolReq : Protocol.Of[F, Req]
+      val protocolPush: Protocol.Of[F, Push]
+    }
   }
 }

@@ -1,7 +1,11 @@
 package shipreq.webapp.client.public
 
+import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.router.{BaseUrl, Router}
+import org.scalajs.dom.window
+import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportTopLevel
+import shipreq.base.util.Url
 import shipreq.webapp.base.protocol.{ClientProtocol, ClientSideProcImpl}
 import shipreq.webapp.client.public.spa._
 import PublicSpaProtocols._
@@ -16,5 +20,15 @@ object Main extends ClientSideProcImpl(EntryPoint) {
     val router  = Router(baseUrl, Routes.routerConfig(spa))
     Styles.addToDocument()
     router().renderIntoDOM(`#root`)
+
+    import shipreq.webapp.base.protocol2._
+    import SampleProtocol._
+
+    val wsUrlBase = Url.Absolute.Base(window.location.protocol.replace("http", "ws") + "//" + window.location.host)
+    val ws = WebSocketClient(wsUrlBase, WS)(push => Callback.log("WS PUSH RECV: ", push))
+    val send1 = ws.send(ReqRes.IsEven)(7).flatMap(_.map(r => println("IsEven result = " + r)).toCallback)
+    val send2 = ws.send(ReqRes.Xs)(20).flatMap(_.map(r => println("XS result = " + r)).toCallback)
+    js.timers.setInterval(4000)(send1.runNow())
+    js.timers.setTimeout(2000)(js.timers.setInterval(4000)(send2.runNow()))
   }
 }

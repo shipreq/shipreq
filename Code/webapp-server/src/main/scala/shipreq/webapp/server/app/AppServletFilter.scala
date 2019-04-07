@@ -7,6 +7,7 @@ import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import net.liftweb.http.LiftFilter
 import org.slf4j.MDC
 import shipreq.base.util.log.HasLogger
+import shipreq.webapp.base.Urls
 
 /** Servlet entry-point into ShipReq (as specified in web.xml).
   *
@@ -31,6 +32,9 @@ final class AppServletFilter extends LiftFilter with HasLogger {
     if (p.enabled)
       installPrometheus(new PrometheusMetrics.Unsafe(p), p.path)
 
+    // Don't handle websockets
+    ignore(_ == Urls._projectSpaWebSocket)
+
     // Initialise logging
     installLogging()
   }
@@ -52,6 +56,16 @@ final class AppServletFilter extends LiftFilter with HasLogger {
             real(req, res, chain))
       } else
         real(req, res, chain)
+  }
+
+  /** Don't process matching requests with this filter, leaving them to be handled by the servlet container (Jetty) */
+  private def ignore(ignoreUri: String => Boolean): Unit = {
+    val real = doFilterFn
+    doFilterFn = (req, res, chain) =>
+      req match {
+        case r: HttpServletRequest if ignoreUri(r.getRequestURI) => chain.doFilter(req, res)
+        case _                                                   => real(req, res, chain)
+      }
   }
 
   /** Version of Prometheus' [[MetricsServlet]] that exposes it's service proc */
