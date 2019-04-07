@@ -30,11 +30,6 @@ object Protocol {
 
   object RequestResponse {
 
-    type Of[F[_], Req, Res] = RequestResponse[F] {
-      type RequestType  = Req
-      type ResponseType = Res
-    }
-
     trait PreparedSend[F[_], Req] {
       val request : Req
       val response: Protocol[F]
