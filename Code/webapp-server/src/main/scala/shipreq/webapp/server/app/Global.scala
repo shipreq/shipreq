@@ -33,6 +33,8 @@ object Global {
     assert(dbAccess ne null, "DbAccess is null, sir.")
     import TraceInterpreter.Implicits._
 
+    implicit def configSecurity = config.security
+
     implicit val metrics: MetricsLogic[Fx] =
       if (config.prometheus.enabled)
         new PrometheusMetrics

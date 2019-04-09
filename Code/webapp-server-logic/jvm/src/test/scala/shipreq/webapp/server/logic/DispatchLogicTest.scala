@@ -32,9 +32,9 @@ object DispatchLogicTest extends TestSuite {
   implicit def autoRelUrl(s: String): Url.Relative = Url.Relative(s)
 
   def run(url    : Url.Relative,
-          method : Method              = Get,
-          params : Map[String, String] = Map.empty,
-          cookies: Map[String, String] = Map.empty)
+          method : Method                   = Get,
+          params : Map[String, String]      = Map.empty,
+          cookies: Map[Cookie.Name, String] = Map.empty)
          (implicit logIn: MockDb.UserEntry = null): Response = {
     security.loggedIn = Option(logIn)
     val req = Request(method, url, params.get, cookies.get, ())

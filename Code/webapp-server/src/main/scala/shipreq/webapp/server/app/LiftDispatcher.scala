@@ -14,7 +14,7 @@ import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.user.User
 import shipreq.webapp.base.{Urls, WebappConfig}
 import shipreq.webapp.server.db.DbInterpreter
-import shipreq.webapp.server.logic.{DB, DispatchLogic}
+import shipreq.webapp.server.logic.{Cookie, DB, DispatchLogic}
 
 object LiftDispatcher {
   object ProjectIdVar extends RequestVar[ProjectId](null)
@@ -49,8 +49,8 @@ final class LiftDispatcher(global: Global) {
   private val paramFn: String => Option[String] =
     S.param(_).toOption
 
-  private val cookieFn: String => Option[String] =
-    S.cookieValue(_).toOption
+  private val cookieFn: Cookie.Name => Option[String] =
+    n => S.cookieValue(n.value).toOption
 
   private def liftReqUrl(r: LiftReq): Url.Relative =
     Url.Relative(r.request.uri)
@@ -77,12 +77,12 @@ final class LiftDispatcher(global: Global) {
     val setHeader: ((String, String)) => Unit =
       x => S.setHeader(x._1, x._2)
 
-    val deleteCookie: String => Unit =
-      S.deleteCookie
+    val deleteCookie: Cookie.Name => Unit =
+      n => S.deleteCookie(n.value)
 
-    val addCookie: DispatchLogic.Response.Cookie => Unit =
+    val addCookie: Cookie => Unit =
       c => S.addCookie(new HTTPCookie(
-        name     = c.name,
+        name     = c.name.value,
         value    = Full(c.value),
         maxAge   = c.maxAgeInSec,
         secure_? = c.secure,
@@ -97,8 +97,8 @@ final class LiftDispatcher(global: Global) {
       val setHeaders: Fx[Unit] =
         Fx {
           response.headers.foreach(setHeader)
-          response.cookiesToRemove.foreach(deleteCookie)
-          response.cookiesToAdd.foreach(addCookie)
+          response.cookies.remove.foreach(deleteCookie)
+          response.cookies.add.foreach(addCookie)
         }
 
       val respond: Fx[Box[LiftResponse]] =

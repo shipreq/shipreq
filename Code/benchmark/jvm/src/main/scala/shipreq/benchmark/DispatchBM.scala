@@ -106,17 +106,23 @@ object DispatchBM {
 
   implicit val config = ServerConfig(
     baseUrl                    = Url.Absolute.Base("https://test.shipreq.com"),
-    attackFrustrationDelay     = 1 hours,
-    securityTokenLength        = 8,
-    registrationTokenLifespan  = 7 days,
-    passwordResetTokenLifespan = 4 days,
     publicRegistration         = Allow,
     googleAnalyticsTrackingId  = None,
     taskmanSchema              = "test_taskman",
-    prometheus                 = ServerConfig.Prometheus.default.copy(enabled = false),
-    jaegerTracingConfig        = None,
     initTaskmanOnBoot          = false,
-    initTaskmanRetry           = RetryCriteria(2 hours, Some(666)))
+    initTaskmanRetry           = RetryCriteria(2 hours, Some(666)),
+    jaegerTracingConfig        = None,
+    prometheus                 = ServerConfig.Prometheus.default.copy(enabled = false),
+    security = ServerConfig.Security(
+      attackFrustrationDelay     = 1 hours,
+      jwtCookieSecure            = false,
+      jwtLifespan                = 24 hours,
+      jwtSecret                  = new ServerConfig.Security.JwtSecret("x"*64),
+      jwtSecretPrevious          = None,
+      passwordSaltLength         = 64,
+      securityTokenLength        = 8,
+      registrationTokenLifespan  = 7 days,
+      passwordResetTokenLifespan = 4 days))
 
   val user = User(UserId(1), Username("asds"), Set.empty)
   val ps = PasswordAndSalt(PasswordHash("wdsef34r"), Salt("32165498bdef"))
@@ -197,7 +203,7 @@ object DispatchBM {
     import Method._
     implicit def autoXID(p: ProjectId): ProjectId.Public = Obfuscators.projectId.obfuscate(p)
     val param: String => Option[String] = _ => None
-    val cookie: String => Option[String] = _ => None
+    val cookie: Cookie.Name => Option[String] = _ => None
     val token = SecurityToken("MnVC8cvPX9b1jiCpyxoYLk4RqQ8idHlV4lf7OHzIQctHLgw6C")
     val b = List.newBuilder[Request[Unit]]
     b ++= Urls.PublicSpaRoute.static.whole.toList.map(r => Request(Get, r.url, param, cookie, ()))

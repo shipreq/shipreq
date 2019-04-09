@@ -20,7 +20,7 @@ import shipreq.webapp.server.db.DbInterpreter._
 import shipreq.webapp.server.db.SqlHelpers._
 import shipreq.webapp.server.logic._
 
-final class DbInterpreter(implicit config: ServerConfig)
+final class DbInterpreter(implicit config: ServerConfig.Security)
     extends DB.Algebra[ConnectionIO]
        with ForPublicSpa
        with ForMembers

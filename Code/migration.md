@@ -3,13 +3,14 @@ MIGRATION
 * [ ] PublicSpa
   * [ ] Capabilities:
     * [x] Read/write cookies
-    * [ ] Read JWT from request
-    * [ ] Add JWT to response (or at least update expiry time)
+    * [x] Read JWT from request
+    * [x] Add JWT to response (or at least update expiry time)
     * [ ] New SSPs (AJAX)
       * [x] New defns, new types, new codecs
       * [ ] Server-side JWT check
       * [ ] Client side AJAX (compare with Lift's. Add features? Auto retry maybe?)
   * [ ] Replace:
+    * [ ] Shiro with JWT
     * [ ] Use JWT & new SSPs
     * [ ] Use Lift stateless dispatch
 * [ ] HomeSpa
@@ -33,7 +34,8 @@ MIGRATION
   * [ ] Old SSP
   * [ ] Shiro
   * [ ] Lift statelful dispatch
-  * [ ] webapp-logic: Server.Session, Security
+  * [ ] webapp-logic: Security (v1)
+  * [ ] webapp-logic: Server.Session
   * [ ] Remove comets
   * [ ] Remove Promse logic (probably)
 * [ ] Implement protocol & caching according to TLA+ spec
@@ -41,3 +43,4 @@ MIGRATION
   * [ ] Add Redis
   * [ ] Redis pub/sub
 
+* Add a correlation ID to JWTs?

@@ -138,14 +138,14 @@ object PublicSpaLogic extends HasLogger {
         )
 
       private val getTokenStatus: SecurityToken => F[SecurityToken.Status] =
-        tokenStatusFn(t => runDB(db.getUserRegistrationTokenIssueDate(t)), config.registrationTokenLifespan)
+        tokenStatusFn(t => runDB(db.getUserRegistrationTokenIssueDate(t)), config.security.registrationTokenLifespan)
 
       def preRegistrationMsg(email: EmailAddr, u: DB.UserRegistration, now: Instant): D[(Msg, Security.Result)] =
         u match {
           case _: DB.UserRegistration.Complete =>
             D pure onAlreadyRegistered(email)
           case r: DB.UserRegistration.Pending =>
-            if (isExpired_?(r.tokenSentAt, config.registrationTokenLifespan, now))
+            if (isExpired_?(r.tokenSentAt, config.security.registrationTokenLifespan, now))
               onTokenExpired(email, r.id)
             else
               D pure onTokenReusable(email, r.token)
@@ -260,7 +260,7 @@ object PublicSpaLogic extends HasLogger {
     object ResetPasswordFns {
 
       private val getTokenStatus: SecurityToken => F[SecurityToken.Status] =
-        tokenStatusFn(t => runDB(db.getResetPasswordTokenIssueDate(t)), config.passwordResetTokenLifespan)
+        tokenStatusFn(t => runDB(db.getResetPasswordTokenIssueDate(t)), config.security.passwordResetTokenLifespan)
 
       private val absUrlRegister2 = config.baseUrl / Urls.PublicSpaRoute.ResetPassword.url
 
@@ -279,7 +279,7 @@ object PublicSpaLogic extends HasLogger {
                       (Some(resetMsg(email, token)), Security.Result.Failure))
 
                   // Valid token available
-                  case Some((email, t: TokenExists)) if !isExpired_?(t.tokenSentAt, config.passwordResetTokenLifespan, now) =>
+                  case Some((email, t: TokenExists)) if !isExpired_?(t.tokenSentAt, config.security.passwordResetTokenLifespan, now) =>
                     db.updateResetPasswordTokenOnReissue(t.reg.id).map(_ =>
                       (Some(resetMsg(email, t.token)), Security.Result.Success))
 

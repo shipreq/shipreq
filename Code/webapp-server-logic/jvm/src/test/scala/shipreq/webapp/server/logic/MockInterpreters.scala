@@ -439,17 +439,23 @@ object MockInterpreters {
 
   val config = ServerConfig(
     baseUrl                    = Url.Absolute.Base("https://test.shipreq.com"),
-    attackFrustrationDelay     = 1 hours,
-    securityTokenLength        = 8,
-    registrationTokenLifespan  = 7 days,
-    passwordResetTokenLifespan = 4 days,
     publicRegistration         = Allow,
     googleAnalyticsTrackingId  = None,
     taskmanSchema              = "test_taskman",
+    initTaskmanOnBoot          = false,
+    initTaskmanRetry           = RetryCriteria(2 hours, Some(666)),
     jaegerTracingConfig        = None,
     prometheus                 = ServerConfig.Prometheus.default,
-    initTaskmanOnBoot          = false,
-    initTaskmanRetry           = RetryCriteria(2 hours, Some(666)))
+    security = ServerConfig.Security(
+      attackFrustrationDelay     = 1 hours,
+      jwtCookieSecure            = false,
+      jwtLifespan                = 24 hours,
+      jwtSecret                  = new ServerConfig.Security.JwtSecret("x"*64),
+      jwtSecretPrevious          = None,
+      passwordSaltLength         = 64,
+      securityTokenLength        = 8,
+      registrationTokenLifespan  = 7 days,
+      passwordResetTokenLifespan = 4 days))
 }
 
 class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerConfig]) {
@@ -491,8 +497,8 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
     assertNoChange("Protected actions", security.protectedActions)(a)
 
   def forwardTimeToEndOfConfirmationWindow(v: Validity): Unit =
-    svr.forwardTimeToEndOfWindow(config.registrationTokenLifespan, v)
+    svr.forwardTimeToEndOfWindow(config.security.registrationTokenLifespan, v)
 
   def forwardTimeToEndOfPasswordResetWindow(v: Validity): Unit =
-    svr.forwardTimeToEndOfWindow(config.passwordResetTokenLifespan, v)
+    svr.forwardTimeToEndOfWindow(config.security.passwordResetTokenLifespan, v)
 }

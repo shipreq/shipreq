@@ -34,7 +34,7 @@ object DispatchLogic {
   final case class Request[+Real](method: Method,
                                   path  : Url.Relative,
                                   param : String => Option[String],
-                                  cookie: String => Option[String],
+                                  cookie: Cookie.LookupFn,
                                   real  : Real)
 
   sealed abstract class Method
@@ -46,18 +46,11 @@ object DispatchLogic {
   }
 
   sealed trait Response {
-    def cookiesToAdd   : List[Response.Cookie] = Nil
-    def cookiesToRemove: List[String]          = Nil
-    def headers        : Response.Headers      = Nil
+    def headers: Response.Headers = Nil
+    def cookies: Cookie.Update    = Cookie.Update.empty
   }
 
   object Response {
-
-    final case class Cookie(name       : String,
-                            value      : String,
-                            maxAgeInSec: Option[Int],
-                            httpOnly   : Option[Boolean],
-                            secure     : Option[Boolean])
 
     type Header = (String, String)
     type Headers = List[Header]
@@ -318,8 +311,8 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
       }
 
       val securityTokenFn: R.NeedsToken => SecurityToken => F[SecurityToken.Status] = {
-        case R.Register2     => PublicSpaLogic.tokenStatusFn(db.getUserRegistrationTokenIssueDate, config.registrationTokenLifespan)
-        case R.ResetPassword => PublicSpaLogic.tokenStatusFn(db.getResetPasswordTokenIssueDate, config.passwordResetTokenLifespan)
+        case R.Register2     => PublicSpaLogic.tokenStatusFn(db.getUserRegistrationTokenIssueDate, config.security.registrationTokenLifespan)
+        case R.ResetPassword => PublicSpaLogic.tokenStatusFn(db.getResetPasswordTokenIssueDate, config.security.passwordResetTokenLifespan)
       }
 
       val onSecurityTokenStatus: SecurityToken.Status => AbsRes = {

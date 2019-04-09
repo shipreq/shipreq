@@ -15,7 +15,8 @@ object PrepareEnv {
   private val cfg = {
     var (appConfig, runMode) = boot.readConfig()
     runMode foreach boot.setRunMode
-    appConfig = (BootConfig.server ^|-> ServerConfig.attackFrustrationDelay).set(Duration.ZERO)(appConfig)
+    val attackDelayL = BootConfig.server ^|-> ServerConfig.security ^|-> ServerConfig.Security.attackFrustrationDelay
+    appConfig = attackDelayL.set(Duration.ZERO)(appConfig)
     // println("webapp-server test config:\n" + appConfig.report.reportUsed)
     appConfig
   }
@@ -53,7 +54,7 @@ object PrepareEnv {
   }
 
   lazy val dbAlgebra =
-    new DbInterpreter()(global().config)
+    new DbInterpreter()(global().config.security)
 
   lazy val security = {
     PrepareEnv.shiro()
