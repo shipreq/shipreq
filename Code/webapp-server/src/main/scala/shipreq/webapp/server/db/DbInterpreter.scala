@@ -56,16 +56,16 @@ object DbInterpreter {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object ForSecurity extends DB.ForSecurity[ConnectionIO] {
-    private final def colsUserAndPasswordInfo = "id,username,email,roles,password,password_salt"
-    private final type UserAndPasswordInfo = (UserId, Option[Username], EmailAddr, Option[String], Option[PasswordHash], Option[Salt])
+    private final def colsUserAndPasswordInfo = "id,username,roles,password,password_salt"
+    private final type UserAndPasswordInfo = (UserId, Option[Username], Option[String], Option[PasswordHash], Option[Salt])
     private final val parseUserAndPasswordInfo: UserAndPasswordInfo => Option[(User, PasswordAndSalt)] = {
-      case (id, ou, e, or, op, os) =>
+      case (id, ou, or, op, os) =>
         for {
           u <- ou
           p <- op
           s <- os
           r = or.fold(Set.empty[String])(_.split(',').toSet)
-        } yield (User(id, u, e, r), PasswordAndSalt(p, s))
+        } yield (User(id, u, r), PasswordAndSalt(p, s))
     }
 
     private[db] final val getUserAndPasswordByEmailSql =

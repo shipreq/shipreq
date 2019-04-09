@@ -5,7 +5,6 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.nio.ByteBuffer
 import java.time.{Duration, Instant}
 import java.util.concurrent.ConcurrentHashMap
-import scala.collection.immutable.SortedMap
 import scalaz.{-\/, Name, NaturalTransformation, \/, \/-, ~>}
 import scalaz.syntax.monad._
 import shipreq.base.util._
@@ -29,7 +28,7 @@ object MockDb {
       -\/(username) :: \/-(emailAddr) :: Nil
 
     def toUser: User =
-      User(id, username, emailAddr, Set.empty)
+      User(id, username, Set.empty)
 
     def toUserAndPassword: (User, PasswordAndSalt) =
       (toUser, ps)

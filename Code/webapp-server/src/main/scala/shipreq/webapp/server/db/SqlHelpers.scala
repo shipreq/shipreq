@@ -23,8 +23,8 @@ object SqlHelpers {
     Composite.generic
 
   implicit val doobieCompositeUser: Composite[User] =
-    Composite[(UserId, Username, EmailAddr, Option[String])]
-      .readOnly(r => User(r._1, r._2, r._3, userRoles(r._4)))
+    Composite[(UserId, Username, Option[String])]
+      .readOnly(r => User(r._1, r._2, userRoles(r._3)))
 
   def userRoles(r: Option[String]): Set[String] =
     r match {

@@ -118,7 +118,7 @@ object DispatchBM {
     initTaskmanOnBoot          = false,
     initTaskmanRetry           = RetryCriteria(2 hours, Some(666)))
 
-  val user = User(UserId(1), Username("asds"), EmailAddr("x@x.com"), Set.empty)
+  val user = User(UserId(1), Username("asds"), Set.empty)
   val ps = PasswordAndSalt(PasswordHash("wdsef34r"), Salt("32165498bdef"))
 
   final class Interpreters[F[_]](val run: F[_] => Any)(implicit val F: Monad[F]) {

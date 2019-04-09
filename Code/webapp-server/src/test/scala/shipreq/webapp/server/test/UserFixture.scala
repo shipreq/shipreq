@@ -38,7 +38,7 @@ object UserFixture {
     val ps = AppSecurityRealm.randomHashFn(password)
     def hashedPassword = ps.passwordHash
     def salt = ps.salt
-    def toUserDescriptor = User(id, username, email, roles)
+    def toUserDescriptor = User(id, username, roles)
 
     def withLoggedIn[A](a: => A): A =
       WebappServerTestUtil.withLoggedIn(username, password)(a)
