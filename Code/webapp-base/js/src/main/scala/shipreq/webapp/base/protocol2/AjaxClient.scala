@@ -12,26 +12,29 @@ trait AjaxClient[F[_]] {
 
 object AjaxClient {
 
-  object Binary extends AjaxClient[Pickler] {
-    override def apply(p: Protocol.Ajax[Pickler])
-                      (req: p.protocol.RequestType): AsyncCallback[p.protocol.ResponseType] = {
+  type Binary = AjaxClient[Pickler]
 
-      val prep = p.protocol.prepareSend(req)
+  val Binary: Binary =
+    new AjaxClient[Pickler] {
+      override def apply(p: Protocol.Ajax[Pickler])
+                        (req: p.protocol.RequestType): AsyncCallback[p.protocol.ResponseType] = {
 
-      val reqAB = BinaryJs.encodeToArrayBuffer(prep.request)(p.protocolPrepReq.codec)
+        val prep = p.protocol.prepareSend(req)
 
-      Ajax("POST", p.url.relativeUrl)
-        .setRequestHeader("Content-Type", "application/octet-stream")
-        .and(_.responseType = "arraybuffer")
-        .send(reqAB)
-        .asAsyncCallback
-        .map { xhr =>
-          if (xhr.status == 200)
-            BinaryJs.decodeFromArrayBufferUnsafe(xhr.response)(prep.response.codec)
-          else
-            throw AjaxException(xhr)
-        }
+        val reqAB = BinaryJs.encodeToArrayBuffer(prep.request)(p.protocolPrepReq.codec)
+
+        Ajax("POST", p.url.relativeUrl)
+          .setRequestHeader("Content-Type", "application/octet-stream")
+          .and(_.responseType = "arraybuffer")
+          .send(reqAB)
+          .asAsyncCallback
+          .map { xhr =>
+            if (xhr.status == 200)
+              BinaryJs.decodeFromArrayBufferUnsafe(xhr.response)(prep.response.codec)
+            else
+              throw AjaxException(xhr)
+          }
+      }
     }
-  }
 
 }
