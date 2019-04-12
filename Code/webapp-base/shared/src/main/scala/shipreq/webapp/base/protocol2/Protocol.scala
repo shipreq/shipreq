@@ -94,11 +94,9 @@ object Protocol {
     val url     : Url.Relative
     val protocol: RequestResponse[F]
     val prepReq : Protocol.Of[F, protocol.PreparedRequestType]
-    final def prepareSend(r: protocol.RequestType) = protocol.prepareSend(r)
   }
 
   object Ajax {
-
     final case class Simple[F[_], _Req, _Res](url: Url.Relative,
                                               req: Protocol.Of[F, _Req],
                                               res: Protocol.Of[F, _Res]) extends Ajax[F] {
@@ -107,7 +105,6 @@ object Protocol {
       override val protocol = RequestResponse.simple[F, Req, Res](res)
       override val prepReq  = req
     }
-
   }
 
   // ===================================================================================================================
