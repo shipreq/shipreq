@@ -159,6 +159,33 @@ object DispatchBM {
         F.point { loggedIn = Option.when(loginSuccess)(user); loggedIn }
     }
 
+    implicit object security2 extends Security.Algebra2[F] {
+      override val db                                 = self.db
+      val delay                                       = F.point(())
+      override def protect[A](vulnerable: F[A])       = delay >> vulnerable
+      override def hashPassword(p: PlainTextPassword) = F point ps
+      private val loggedInToken                       = Security.SessionToken(Some(user))
+      private val cookieName                          = Cookie.Name("S")
+
+      override def attemptLogin(u: Username \/ EmailAddr, p: PlainTextPassword) = F.point {
+        if (u.fold(_ == user.username, _ => ???))
+          Some(loggedInToken)
+        else
+          None
+      }
+      override def sessionRestore(cookies: Cookie.LookupFn) = F.point {
+        cookies(cookieName) match {
+          case Some("1") => loggedInToken
+          case _         => Security.SessionToken.anonymous
+        }
+      }
+      override def sessionPersist(token: Security.SessionToken) = F.point {
+        val value = if (token.authenticatedUser.isEmpty) "" else "1"
+        val cookie = Cookie(cookieName, value, None, None, None)
+        Cookie.Update.add(cookie)
+      }
+    }
+
     implicit val svrSession: Server.Session[F] = new Server.Session[F] {
       override val clientIP: F[Option[IP]] = F.pure(None)
       override val sessionId: F[Option[SessionId]] = F.pure(None)

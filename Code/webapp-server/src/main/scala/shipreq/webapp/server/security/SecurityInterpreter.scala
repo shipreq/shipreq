@@ -1,7 +1,7 @@
 package shipreq.webapp.server.security
 
 import com.typesafe.scalalogging.StrictLogging
-import io.jsonwebtoken.{Claims, JwtParser, Jwts}
+import io.jsonwebtoken.{JwtParser, Jwts}
 import io.jsonwebtoken.security.Keys
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._

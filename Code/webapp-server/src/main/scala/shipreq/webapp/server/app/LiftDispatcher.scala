@@ -92,17 +92,17 @@ final class LiftDispatcher(global: Global) {
         version  = Empty))
 
     (req, response) => {
-      import DispatchLogic.Response._
+      import DispatchLogic.ResponseCmd._
 
       val setHeaders: Fx[Unit] =
         Fx {
-          response.headers.foreach(setHeader)
+          response.cmd.headers.foreach(setHeader)
           response.cookies.remove.foreach(deleteCookie)
           response.cookies.add.foreach(addCookie)
         }
 
       val respond: Fx[Box[LiftResponse]] =
-        response match {
+        response.cmd match {
           case ServePublicSpa         => Fx{ render(req, templatePublic) }
           case ServeHomeSpa(u)        => Fx{ UserVar.set(u); render(req, templateHome) }
           case ProjectSpa.Serve(u, p) => Fx{ UserVar.set(u); ProjectIdVar.set(p); render(req, templateProject) }
@@ -129,6 +129,7 @@ final class LiftDispatcher(global: Global) {
     implicit val ops       = global.ops
     implicit val db        = DB.SecurityTokenReadOnly.trans(DbInterpreter.SecurityTokenReadOnly)(global.db.fx.trans)
     implicit val server    = ServerInterpreter
+implicit val security2 = new shipreq.webapp.server.security.SecurityInterpreter2[Fx]()(implicitly, config.security, security.db, config.traceAlgebraFx)
     new DispatchLogic(parseReq, makeResponse)
   }
 

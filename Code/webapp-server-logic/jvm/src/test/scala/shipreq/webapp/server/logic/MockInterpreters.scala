@@ -432,6 +432,60 @@ final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name]
   override val logout            = Name{loggedIn = None}
 }
 
+final class MockSecurity2(override val db: MockDb) extends Security.Algebra2[Name] {
+  import Security.SessionToken
+
+  var protectedActions = 0
+  override def protect[A](vulnerable: Name[A]): Name[A] =
+    vulnerable.map { a =>
+      protectedActions += 1
+      a
+    }
+
+  override def attemptLogin(u: Username \/ EmailAddr, p: PlainTextPassword) = Name[Option[SessionToken]] {
+    db.getUser(u)
+      .filter(e => e.ps ==* mkPasswordAndSalt(p, e.ps.salt))
+      .map(l => SessionToken(Some(l.toUser)))
+  }
+
+  var prevSalt = 0
+  override def hashPassword(p: PlainTextPassword) = Name[PasswordAndSalt] {
+    prevSalt += 1
+    mkPasswordAndSalt(p, Salt(prevSalt.toString))
+  }
+
+  def mkPasswordAndSalt(p: PlainTextPassword, salt: Salt): PasswordAndSalt =
+    PasswordAndSalt(PasswordHash(s"${salt.base64}:${p.value}"), salt)
+
+  private val cookieName = Cookie.Name("MockSecurity")
+
+  override def sessionPersist(token: SessionToken) = Name[Cookie.Update] {
+    val header = System.nanoTime().toString + ":"
+    val body = token.authenticatedUser match {
+      case None    => ""
+      case Some(u) => s"${u.id.value} ${u.username.value}"
+    }
+    val cookie = Cookie(cookieName, header + body, None, None, None)
+    Cookie.Update.add(cookie)
+  }
+
+  override def sessionRestore(cookies: Cookie.LookupFn) = Name[SessionToken] {
+    cookies(cookieName) match {
+      case None => SessionToken.anonymous
+      case Some(cookieValue) =>
+        if (cookieValue.endsWith(":"))
+          SessionToken.anonymous
+        else {
+          val body     = cookieValue.dropWhile(_ != ':').drop(1).split(' ')
+          val userId   = UserId(body(0).toInt)
+          val username = Username(body(1))
+          val user     = User(userId, username, Set.empty)
+          SessionToken(Some(user))
+        }
+    }
+  }
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 object MockInterpreters {
@@ -465,6 +519,7 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
   implicit val svr        = new MockServer
   implicit val db         = new MockDb(svr.now)
   implicit val security   = new MockSecurity(db)
+  implicit val security2  = new MockSecurity2(db)
   implicit val taskman    = new MockTaskman
   implicit val nameToName = NaturalTransformation.refl[Name]
   implicit val metrics    = MetricsLogic.const(Name(()))
@@ -479,7 +534,7 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
     UserId(2),
     Username("blurp"),
     EmailAddr("blurp@bar.com"),
-    security.hashPassword(user2password).value,
+    security2.hashPassword(user2password).value,
     svr.clock minus Duration.ofDays(50))
 
   val user3password = PlainTextPassword("user3secret")
@@ -487,14 +542,14 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
     UserId(3),
     Username("user3"),
     EmailAddr("u3@test.com"),
-    security.hashPassword(user3password).value,
+    security2.hashPassword(user3password).value,
     svr.clock minus Duration.ofDays(2))
 
   def assertProtected[A](a: => A): A =
-    assertDifference("Protected actions", security.protectedActions)(1)(a)
+    assertDifference("Protected actions", security2.protectedActions)(1)(a)
 
   def assertUnprotected[A](a: => A): A =
-    assertNoChange("Protected actions", security.protectedActions)(a)
+    assertNoChange("Protected actions", security2.protectedActions)(a)
 
   def forwardTimeToEndOfConfirmationWindow(v: Validity): Unit =
     svr.forwardTimeToEndOfWindow(config.security.registrationTokenLifespan, v)

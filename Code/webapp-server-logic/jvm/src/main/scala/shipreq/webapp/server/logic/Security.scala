@@ -60,9 +60,7 @@ object Security {
 
   // ===================================================================================================================
 
-  final case class SessionToken(authenticatedUser: Option[User]) {
-    def isAuthenticated = authenticatedUser.isDefined
-  }
+  final case class SessionToken(authenticatedUser: Option[User])
 
   object SessionToken extends StrictLogging {
     val anonymous = apply(None)
