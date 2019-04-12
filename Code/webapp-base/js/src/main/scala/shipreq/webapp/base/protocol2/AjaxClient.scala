@@ -21,7 +21,7 @@ object AjaxClient {
 
         val prep = p.protocol.prepareSend(req)
 
-        val reqAB = BinaryJs.encodeToArrayBuffer(prep.request)(p.protocolPrepReq.codec)
+        val reqAB = BinaryJs.encodeToArrayBuffer(prep.request)(p.prepReq.codec)
 
         Ajax("POST", p.url.relativeUrl)
           .setRequestHeader("Content-Type", "application/octet-stream")

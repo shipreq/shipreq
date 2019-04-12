@@ -54,6 +54,19 @@ object Protocol {
 
   object RequestResponse {
 
+    type Simple[F[_], Req, Res] = RequestResponse[F] {
+      type RequestType         = Req
+      type ResponseType        = Res
+      type PreparedRequestType = Req
+    }
+
+    def simple[F[_], Req, Res](res: Protocol.Of[F, Res]): Simple[F, Req, Res] =
+      new RequestResponse[F] {
+        override type RequestType         = Req
+        override type ResponseType        = Res
+        override type PreparedRequestType = Req
+        override def prepareSend(r: Req) = PreparedSend(r, res)
+      }
 
     // -----------------------------------------------------------------------------------------------------------------
     trait PreparedSend[F[_], Req] {
@@ -78,9 +91,23 @@ object Protocol {
   // ===================================================================================================================
 
   trait Ajax[F[_]] {
-    val url            : Url.Relative
-    val protocol       : RequestResponse[F]
-    val protocolPrepReq: Protocol.Of[F, protocol.PreparedRequestType]
+    val url     : Url.Relative
+    val protocol: RequestResponse[F]
+    val prepReq : Protocol.Of[F, protocol.PreparedRequestType]
+    final def prepareSend(r: protocol.RequestType) = protocol.prepareSend(r)
+  }
+
+  object Ajax {
+
+    final case class Simple[F[_], _Req, _Res](url: Url.Relative,
+                                              req: Protocol.Of[F, _Req],
+                                              res: Protocol.Of[F, _Res]) extends Ajax[F] {
+      type Req = _Req
+      type Res = _Res
+      override val protocol = RequestResponse.simple[F, Req, Res](res)
+      override val prepReq  = req
+    }
+
   }
 
   // ===================================================================================================================
