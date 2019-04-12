@@ -113,24 +113,25 @@ object DispatchLogicTest extends TestSuite {
     'publicSpa {
       import Urls.PublicSpaRoute._
 
-      'nullary - static.foreach(p => assertUnprotected(testRun(ResponseCmd.ServePublicSpa, p.url)))
+      'nullary - static.foreach(p => assertUnprotected(testRun(ResponseCmd.ServePublicSpa(None), p.url)))
 
       'nonGet - static.foreach(p => testNonGet(p.url))
 
       'loggedIn {
         implicit def login = user2
         'loginRedirects - assertUnprotected(testRun(ResponseCmd.redirectToMemberHome, Login.url))
-        'nonLoginRenders - static.whole.filter(_ !=* Login).foreach(p => assertUnprotected(testRun(ResponseCmd.ServePublicSpa, p.url)))
+        'nonLoginRenders - static.whole.filter(_ !=* Login).foreach(p =>
+          assertUnprotected(testRun(ResponseCmd.ServePublicSpa(Some(login.toUser)), p.url)))
       }
 
-      'loginToMember - List(Urls.memberHome, Urls.project(ProjectId(1))).foreach(u =>
-        testRun(ResponseCmd.ServePublicSpa, s"/login/${u.relativeUrlNoHeadSlash}"))
+      'loginToMember - List(Urls.memberHome, Urls.project(ProjectId(1))).foreach(url =>
+        testRun(ResponseCmd.ServePublicSpa(None), s"/login/${url.relativeUrlNoHeadSlash}"))
 
       'resetPassword2 {
-        svr.run(PublicSpaLogic[Name, Name].initData.value.resetPassword1)(\/-(user2.emailAddr))
+        svr.run(PublicSpaLogic[Name, Name].initData(None).value.resetPassword1)(\/-(user2.emailAddr))
 
         'invalid - assertProtected(testRun(ResponseCmd.redirectToPublicHome, ResetPassword.url(SecurityToken("wwwweeeeeeeeeee33333"))))
-        'valid   - assertProtected(testRun(ResponseCmd.ServePublicSpa, ResetPassword.url(db.prevToken())))
+        'valid   - assertProtected(testRun(ResponseCmd.ServePublicSpa(None), ResetPassword.url(db.prevToken())))
         'expired {
           forwardTimeToEndOfPasswordResetWindow(Invalid)
           assertProtected(testRun(ResponseCmd.redirectToPublicHome, ResetPassword.url(db.prevToken())))
@@ -138,10 +139,10 @@ object DispatchLogicTest extends TestSuite {
       }
 
       'register2 {
-        svr.run(PublicSpaLogic[Name, Name].initData.value.register1)(EmailAddr("x@x.io")).needRight
+        svr.run(PublicSpaLogic[Name, Name].initData(None).value.register1)(EmailAddr("x@x.io")).needRight
 
         'invalid - assertProtected(testRun(ResponseCmd.redirectToPublicHome, Register2.url(SecurityToken("wwwweeeeeeeeeee66666"))))
-        'valid   - assertProtected(testRun(ResponseCmd.ServePublicSpa, Register2.url(db.prevToken())))
+        'valid   - assertProtected(testRun(ResponseCmd.ServePublicSpa(None), Register2.url(db.prevToken())))
         'expired {
           forwardTimeToEndOfConfirmationWindow(Invalid)
           assertProtected(testRun(ResponseCmd.redirectToPublicHome, Register2.url(db.prevToken())))

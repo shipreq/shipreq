@@ -19,7 +19,7 @@ import WebappTaskmanConverters._
 import Implicits._
 
 trait PublicSpaLogic[F[_]] extends PublicSpaLogic.ForApi[F] {
-  val initData: F[InitData]
+  def initData(u: Option[User]): F[InitData]
 }
 
 object PublicSpaLogic extends HasLogger {
@@ -68,7 +68,7 @@ object PublicSpaLogic extends HasLogger {
                                  db      : DB.ForPublicSpa[D],
                                  runDB   : D ~> F,
                                  metrics : MetricsLogic[F],
-                                 security: Security.Algebra[F],
+                                 security: Security.Algebra2[F],
                                  svr     : Server.Algebra[F],
                                  taskman : TaskmanApi[F],
                                  D       : Monad[D],
@@ -105,6 +105,7 @@ object PublicSpaLogic extends HasLogger {
               case None    => F.point(logger.warn("Login succeeded but session unavailable."))
             }
 
+          // TODO set cookies
           log >> logToDB >> updateMetrics >> loginPass
 
         case None =>
@@ -363,9 +364,8 @@ object PublicSpaLogic extends HasLogger {
       override def register1(emailAddr: String): F[ErrorMsg \/ MsgId] =
         RegisterFns.register1(emailAddr)
 
-      val initData: F[InitData] =
+      override def initData(u: Option[User]) =
         for {
-          u <- security.authenticatedUser
           a <- landingPageFn
           b <- RegisterFns.registerFn1
           c <- RegisterFns.registerFn2

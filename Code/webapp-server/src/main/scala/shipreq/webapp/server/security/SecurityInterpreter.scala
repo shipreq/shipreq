@@ -108,12 +108,10 @@ final class SecurityInterpreter2[F[_]](implicit F: Monad[F],
     PasswordHash.fromBytes(hashBytes)
   }
 
-  override def attemptLogin(id: Username \/ EmailAddr, providedPassword: PlainTextPassword): F[Option[SessionToken]] =
+  override def attemptLogin(id: Username \/ EmailAddr, providedPassword: PlainTextPassword): F[Option[User]] =
     db.getUserAndPassword(id).map(_.flatMap { case (user, real) =>
       val providedHash = doHash(providedPassword, real.salt.toBytes)
-      Option.when(providedHash ==* real.passwordHash) {
-        SessionToken(Some(user))
-      }
+      Option.when(providedHash ==* real.passwordHash)(user)
     })
 
   private[this] final val claimUserId = "uid"

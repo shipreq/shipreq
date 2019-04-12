@@ -56,6 +56,9 @@ trait SnippetHelpers extends StaticSnippetHelpers with HasLogger {
     assert(user != null, "LiftDispatcher.UserVar isn't set!")
     user
   }
+
+  final def currentUserOption(): Option[User] =
+    Option(LiftDispatcher.UserVar.is)
 }
 
 /** A stateless snippet with only one rendering method. */

@@ -442,10 +442,10 @@ final class MockSecurity2(override val db: MockDb) extends Security.Algebra2[Nam
       a
     }
 
-  override def attemptLogin(u: Username \/ EmailAddr, p: PlainTextPassword) = Name[Option[SessionToken]] {
+  override def attemptLogin(u: Username \/ EmailAddr, p: PlainTextPassword) = Name[Option[User]] {
     db.getUser(u)
       .filter(e => e.ps ==* mkPasswordAndSalt(p, e.ps.salt))
-      .map(l => SessionToken(Some(l.toUser)))
+      .map(_.toUser)
   }
 
   var prevSalt = 0

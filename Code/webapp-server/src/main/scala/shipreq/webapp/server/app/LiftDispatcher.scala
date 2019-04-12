@@ -103,7 +103,7 @@ final class LiftDispatcher(global: Global) {
 
       val respond: Fx[Box[LiftResponse]] =
         response.cmd match {
-          case ServePublicSpa         => Fx{ render(req, templatePublic) }
+          case ServePublicSpa(ou)     => Fx{ ou.foreach(UserVar.set); render(req, templatePublic) }
           case ServeHomeSpa(u)        => Fx{ UserVar.set(u); render(req, templateHome) }
           case ProjectSpa.Serve(u, p) => Fx{ UserVar.set(u); ProjectIdVar.set(p); render(req, templateProject) }
           case ProjectSpa.NotOwner
@@ -125,11 +125,11 @@ final class LiftDispatcher(global: Global) {
     implicit val trace     = global.trace
     implicit val taskman   = global.taskman
     implicit val security  = global.security
+implicit val security2  = global.security2
     implicit val publicApi = global.logic.publicApi
     implicit val ops       = global.ops
     implicit val db        = DB.SecurityTokenReadOnly.trans(DbInterpreter.SecurityTokenReadOnly)(global.db.fx.trans)
     implicit val server    = ServerInterpreter
-implicit val security2 = new shipreq.webapp.server.security.SecurityInterpreter2[Fx]()(implicitly, config.security, security.db, config.traceAlgebraFx)
     new DispatchLogic(parseReq, makeResponse)
   }
 

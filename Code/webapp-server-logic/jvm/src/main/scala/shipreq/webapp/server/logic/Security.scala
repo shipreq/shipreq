@@ -51,7 +51,7 @@ object Security {
 
     def hashPassword(p: PlainTextPassword): F[PasswordAndSalt]
 
-    def attemptLogin(user: Username \/ EmailAddr, password: PlainTextPassword): F[Option[SessionToken]]
+    def attemptLogin(user: Username \/ EmailAddr, password: PlainTextPassword): F[Option[User]]
 
     def sessionRestore(cookies: Cookie.LookupFn): F[SessionToken]
 

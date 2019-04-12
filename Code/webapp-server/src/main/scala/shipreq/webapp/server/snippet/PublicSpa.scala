@@ -12,7 +12,8 @@ object PublicSpa extends SnippetHelpers {
   val EntryPoint = ClientSideProcInvoker(PublicSpaProtocols.EntryPoint)
 
   def render = {
-    val initData = Global.logic.publicSpa.initData.unsafeRun()
+    val user = currentUserOption()
+    val initData = Global.logic.publicSpa.initData(user).unsafeRun()
     "*" #> EntryPoint.invokeOnLoadHtml(initData)
   }
 }

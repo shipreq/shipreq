@@ -13,7 +13,7 @@ object PublicSpaLogicTest extends TestSuite {
 
   class Tester(publicRegistration: Permission = Allow) extends MockInterpreters(_.copy(publicRegistration = publicRegistration)) {
     val logic = PublicSpaLogic[Name, Name]
-    val initData = logic.initData.value
+    val initData = logic.initData(None).value
 
     def runLogin(i: Login.Fn.Input): Login.Fn.Output = assertProtected(svr.run(initData.login)(i))
 //    def runLogin(usernameOrEmail: String, password: String): Login.Fn.Output = {
@@ -225,9 +225,9 @@ object PublicSpaLogicTest extends TestSuite {
       val p2 = PlainTextPassword("asdjhf2314sdfajk")
 
       "update the password when valid" - {
-        assertEq(security.attemptLogin(i, p2).value, None)
+        assertEq(security2.attemptLogin(i, p2).value, None)
         assertEq(runResetPassword2(Request(token, p2)), \/-(Response.Success))
-        assertEq(security.attemptLogin(i, p2).value.isDefined, true)
+        assertEq(security2.attemptLogin(i, p2).value.isDefined, true)
       }
 
       "reject invalid passwords" -

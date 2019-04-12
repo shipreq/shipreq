@@ -168,10 +168,7 @@ object DispatchBM {
       private val cookieName                          = Cookie.Name("S")
 
       override def attemptLogin(u: Username \/ EmailAddr, p: PlainTextPassword) = F.point {
-        if (u.fold(_ == user.username, _ => ???))
-          Some(loggedInToken)
-        else
-          None
+        Option.when(u.fold(_ == user.username, _ => ???))(user)
       }
       override def sessionRestore(cookies: Cookie.LookupFn) = F.point {
         cookies(cookieName) match {

@@ -72,7 +72,7 @@ object DispatchLogic {
       }
     }
 
-    case object ServePublicSpa extends ResponseCmd
+    final case class ServePublicSpa(user: Option[User]) extends ResponseCmd
 
     final case class ServeHomeSpa(user: User) extends ResponseCmd
 
@@ -276,11 +276,11 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
     routes.embed(r => test(r.path), r => r.copy(path = mod(r.path)))
   }
 
-  private def extendSession(cmd: ResponseCmd)(implicit req: Request): F[Response] =
+  private def extendSession(cmd: Security.SessionToken => ResponseCmd)(implicit req: Request): F[Response] =
     for {
       s  <- security.sessionRestore(req.cookie)
       cu <- security.sessionPersist(s)
-    } yield Response(cmd, cu)
+    } yield Response(cmd(s), cu)
 
   private def cmdWhenLoginRequired(implicit req: Request): ResponseCmd =
     ResponseCmd.Redirect(
@@ -315,7 +315,9 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
         spa(R.Login.url, (_, req) =>
           security.sessionRestore(req.cookie).flatMap(s =>
             if (s.authenticatedUser.isEmpty)
-              security.sessionPersist(s).map(Response(ResponseCmd.ServePublicSpa, _))
+              for {
+                cu <- security.sessionPersist(s)
+              } yield Response(ResponseCmd.ServePublicSpa(s.authenticatedUser), cu)
             else
               F pure Response(ResponseCmd.redirectToMemberHome, Cookie.Update.empty)))
 
@@ -323,18 +325,13 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
         whenUrlIsAnyOf(R.static.filterNot(_ ==* R.Login).get.map(_.url).toNES) { implicit req =>
           traceUrl(req.path,
             onMethod(Get,
-              extendSession(ResponseCmd.ServePublicSpa)))
+              extendSession(t =>
+                ResponseCmd.ServePublicSpa(t.authenticatedUser))))
         }
 
       val securityTokenFn: R.NeedsToken => SecurityToken => F[SecurityToken.Status] = {
         case R.Register2     => PublicSpaLogic.tokenStatusFn(db.getUserRegistrationTokenIssueDate, config.security.registrationTokenLifespan)
         case R.ResetPassword => PublicSpaLogic.tokenStatusFn(db.getResetPasswordTokenIssueDate, config.security.passwordResetTokenLifespan)
-      }
-
-      val onSecurityTokenStatus: SecurityToken.Status => ResponseCmd = {
-        case SecurityToken.Status.Valid   => ResponseCmd.ServePublicSpa
-        case SecurityToken.Status.Invalid => ResponseCmd.redirectToPublicHome
-        case SecurityToken.Status.Expired => ResponseCmd.redirectToPublicHome // could be better but good enough
       }
 
       val securityTokenRoutes: Request ?=> F[RealRes] =
@@ -347,8 +344,13 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
                 security.protect(
                   for {
                     status <- getTokenStatus(token)
-                    cmd     = onSecurityTokenStatus(status)
-                    resp   <- extendSession(cmd)
+                    resp   <- extendSession(s =>
+                                status match {
+                                  case SecurityToken.Status.Valid   => ResponseCmd.ServePublicSpa(s.authenticatedUser)
+                                  case SecurityToken.Status.Invalid => ResponseCmd.redirectToPublicHome
+                                  case SecurityToken.Status.Expired => ResponseCmd.redirectToPublicHome // could be better but good enough
+                                }
+                              )
                   } yield resp
                 )))
           }
@@ -498,7 +500,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
       get(quickDevUrl,
         security.attemptLogin(q.user, q.pass).flatMap {
           case None    => F pure Response(ResponseCmd.Redirect(Urls.login), Cookie.Update.empty)
-          case Some(t) => security.sessionPersist(t).map(Response(ResponseCmd.Redirect(q.goto), _))
+          case Some(u) => security.sessionPersist(Security.SessionToken(Some(u))).map(Response(ResponseCmd.Redirect(q.goto), _))
         }
       )
     )
@@ -514,7 +516,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
           } yield (Username.orEmail(u), PlainTextPassword(p))
         ) { case (u, p) =>
           security.attemptLogin(u, p).flatMap {
-            case Some(t) => security.sessionPersist(t).map(Response(ResponseCmd.StatusOnly(StatusCode.OK), _))
+            case Some(u) => security.sessionPersist(Security.SessionToken(Some(u))).map(Response(ResponseCmd.StatusOnly(StatusCode.OK), _))
             case None    => F pure Response(ResponseCmd.StatusOnly(StatusCode.Unauthorized), Cookie.Update.empty)
           }
         }

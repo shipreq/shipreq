@@ -28,6 +28,7 @@ object PrepareEnv {
     metrics  = MetricsLogic.const(Fx.unit),
     ops      = null,
     security = null,
+    security2 = null,
     taskman  = null,
     trace    = TraceLogic.off)
 
