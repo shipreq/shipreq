@@ -109,10 +109,9 @@ final class LiftDispatcher(global: Global) {
           case ProjectSpa.NotOwner
              | ProjectSpa.InvalidId   => Fx pure Full(RedirectResponse(Urls.memberHome.relativeUrl))
           case Redirect(to)           => Fx pure Full(RedirectResponse(to.relativeUrl))
-          case MethodNotAllowed       => Fx pure Full(MethodNotAllowedResponse())
+          case StatusOnly(status)     => Fx pure Full(StatusOnlyResponse(status))
           case r: Text                => Fx pure Full(GenericResponse(r.status, r.body, "text/plain"))
           case r: Json                => Fx pure Full(GenericResponse(r.status, r.body, "application/json"))
-          case StatusOnly(status)     => Fx pure Full(StatusOnlyResponse(status))
         }
 
       setHeaders.flatMap(_ => respond)

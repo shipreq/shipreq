@@ -15,15 +15,12 @@ import shipreq.webapp.base.user._
 import shipreq.webapp.base.util.ResourceHint
 import shipreq.webapp.server.ServerConfig
 
-/**
-  * Usage
-  * =====
+/** Usage:
   *
   * 1. Wire up [[DispatchLogic.Ops]] to session-less dispatch.
   *    Use [[DispatchLogic.Ops.candidate]] as the condition and [[DispatchLogic.Ops.total]] as the handler.
   *
   * 2. Wire up [[DispatchLogic.mainDispatcher()]] to normal (session-dependent) dispatch.
-  *
   */
 object DispatchLogic {
 
@@ -44,6 +41,8 @@ object DispatchLogic {
     case object Other extends Method
     implicit def univEq: UnivEq[Method] = UnivEq.derive
   }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   final case class Response(cmd: ResponseCmd, cookies: Cookie.Update)
 
@@ -82,13 +81,31 @@ object DispatchLogic {
       case object InvalidId extends ResponseCmd
     }
 
-    /** Respond in a way that indicates the HTTP method (GET, POST etc) wasn't allowed */
-    case object MethodNotAllowed extends ResponseCmd
-
     final case class Redirect(dest: Url.Relative) extends ResponseCmd
 
     /** Respond with a HTTP status only; no content */
-    final case class StatusOnly(status: Int) extends ResponseCmd
+    final case class StatusOnly(status: Int) extends ResponseCmd {
+      val withoutCookieUpdate = Response(this, Cookie.Update.empty)
+    }
+
+    object StatusOnly {
+
+      val OK = apply(200)
+
+      /** The server cannot or will not process the request due to an apparent client error
+        * (e.g., malformed request syntax, size too large). */
+      val BadRequest = apply(400)
+
+      /** The request was valid, but the server is refusing action.
+        * The user might not have the necessary permissions for a resource, or may need an account of some sort. */
+      val Forbidden = apply(403)
+
+      /** The requested resource could not be found but may be available in the future. */
+      val NotFound = apply(404)
+
+      /** Indicates the HTTP method (GET, POST etc) wasn't allowed */
+      val MethodNotAllowed = apply(405)
+    }
 
     final case class Text(status: Int, body: String) extends ResponseCmd
 
@@ -107,11 +124,8 @@ object DispatchLogic {
   }
 
   object StatusCode {
-    final val OK           = 200
-    final val BadRequest   = 400
-    final val Unauthorized = 401
-    final val Forbidden    = 403
-    final val NotFound     = 404
+    final val OK         = 200
+    final val BadRequest = 400
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -226,7 +240,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
     if (req.method eq m)
       makeRealF(f)
     else
-      makeReal(Response(ResponseCmd.MethodNotAllowed, Cookie.Update.empty))
+      makeReal(ResponseCmd.StatusOnly.MethodNotAllowed.withoutCookieUpdate)
 
   // Occasional type inference problem
   @inline private def when[A](cond: Request => Boolean)(ok: Request => F[A]): Request ?=> F[A] = FnWithFallback.when(cond)(ok)
@@ -262,7 +276,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
   private def parseParams[A](parsed: Option[A])(f: A => F[Response]): F[Response] =
     parsed match {
       case Some(a) => f(a)
-      case None    => F pure Response(ResponseCmd.StatusOnly(StatusCode.BadRequest), Cookie.Update.empty)
+      case None    => F pure ResponseCmd.StatusOnly.BadRequest.withoutCookieUpdate
     }
 
   /**
@@ -396,7 +410,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
         if (req.method eq Get)
           ResponseCmd.redirectToPublicHome
         else
-          ResponseCmd.MethodNotAllowed
+          ResponseCmd.StatusOnly.MethodNotAllowed
       makeReal(Response(cmd, Cookie.Update.empty))
     }
   }
@@ -413,7 +427,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
 
     private val notFoundSecure: F[Response] =
       security.protect( // prevent response-time hacking to discover endpoints (meaning ops URLs)
-        F pure response(ResponseCmd.Text(404, "Not found.")))
+        F pure ResponseCmd.StatusOnly.NotFound.withoutCookieUpdate)
 
     private def endpoint(method: Method, url: Url.Relative)(f: Request => F[Response]): Request ?=> F[RealRes] =
       whenUrlIs(url) { implicit req =>
@@ -438,9 +452,10 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
       * Useful to test that the web-server is up and serving requests.
       * Used for container health-checks.
       */
-    private val ok: Request ?=> F[RealRes] =
-      get(Url.Relative("ok"),
-        F pure response(ResponseCmd.Text(StatusCode.OK, "OK.")))
+    private val ok: Request ?=> F[RealRes] = {
+      val r = response(ResponseCmd.Text(StatusCode.OK, "OK."))
+      get(Url.Relative("ok"), F pure r)
+    }
 
     /** API for invoking the first part of the registration process
       * (regardless of whether public registrations are enabled or not).
@@ -465,7 +480,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
         parseParams(req.param("id") flatMap ParseLong.unapply)(id =>
           ops.taskmanMsgStatus(MsgId(id)).map {
             case Some(r) => jsonResponse(r)
-            case None    => response(ResponseCmd.StatusOnly(StatusCode.NotFound))
+            case None    => response(ResponseCmd.StatusOnly.NotFound)
           }
         )
       )
@@ -516,8 +531,8 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
           } yield (Username.orEmail(u), PlainTextPassword(p))
         ) { case (u, p) =>
           security.attemptLogin(u, p).flatMap {
-            case Some(u) => security.sessionPersist(Security.SessionToken(Some(u))).map(Response(ResponseCmd.StatusOnly(StatusCode.OK), _))
-            case None    => F pure Response(ResponseCmd.StatusOnly(StatusCode.Unauthorized), Cookie.Update.empty)
+            case Some(u) => security.sessionPersist(Security.SessionToken(Some(u))).map(Response(ResponseCmd.StatusOnly.OK, _))
+            case None    => F pure ResponseCmd.StatusOnly.Forbidden.withoutCookieUpdate
           }
         }
       ))

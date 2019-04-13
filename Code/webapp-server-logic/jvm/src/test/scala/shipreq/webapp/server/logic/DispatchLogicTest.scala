@@ -83,7 +83,7 @@ object DispatchLogicTest extends TestSuite {
       method <- List[Method](Post, Other)
       logIn <- List[MockDb.UserEntry](null, user2)
     } {
-        val r = testRun(ResponseCmd.MethodNotAllowed, url, method)(logIn)
+        val r = testRun(ResponseCmd.StatusOnly.MethodNotAllowed, url, method)(logIn)
         assertEq("405 shouldn't log user out", r.authUser, Option(logIn).map(_.toUser))
       }
 
