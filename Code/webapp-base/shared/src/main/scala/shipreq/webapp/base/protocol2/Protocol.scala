@@ -94,6 +94,10 @@ object Protocol {
     val url     : Url.Relative
     val protocol: RequestResponse[F]
     val prepReq : Protocol.Of[F, protocol.PreparedRequestType]
+
+    def responseProtocol(req: protocol.PreparedRequestType): Protocol.Of[F, protocol.ResponseType]
+
+    final type ServerSideFn[G[_]] = protocol.PreparedRequestType => G[protocol.ResponseType]
   }
 
   object Ajax {
@@ -104,6 +108,7 @@ object Protocol {
       type Res = _Res
       override val protocol = RequestResponse.simple[F, Req, Res](res)
       override val prepReq  = req
+      override def responseProtocol(req: Req) = res
     }
   }
 

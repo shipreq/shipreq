@@ -469,10 +469,8 @@ final class MockSecurity2(override val db: MockDb) extends Security.Algebra2[Nam
     Cookie.Update.add(cookie)
   }
 
-  override def sessionRestore(cookies: Cookie.LookupFn) = Name[SessionToken] {
-    cookies(cookieName) match {
-      case None => SessionToken.anonymous
-      case Some(cookieValue) =>
+  override def sessionRestore(cookies: Cookie.LookupFn) = Name[Option[SessionToken]] {
+    cookies(cookieName) map { cookieValue =>
         if (cookieValue.endsWith(":"))
           SessionToken.anonymous
         else {
@@ -513,17 +511,17 @@ object MockInterpreters {
 }
 
 class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerConfig]) {
-  implicit val config     = modCfg(MockInterpreters.config)
-  implicit val storeMap   = new ConcurrentHashMap(): ProjectServer.StoreMap[Name, ConcurrentHashMap]
-  implicit val store      = Store.Algebra.concurrentHashMap(storeMap): ProjectServer.StoreAlgebra[Name]
-  implicit val svr        = new MockServer
-  implicit val db         = new MockDb(svr.now)
-  implicit val security   = new MockSecurity(db)
-  implicit val security2  = new MockSecurity2(db)
-  implicit val taskman    = new MockTaskman
-  implicit val nameToName = NaturalTransformation.refl[Name]
-  implicit val metrics    = MetricsLogic.const(Name(()))
-  implicit val publicApi  = PublicSpaLogic[Name, Name]: PublicSpaLogic.ForApi[Name]
+  implicit val config         = modCfg(MockInterpreters.config)
+  implicit val storeMap       = new ConcurrentHashMap(): ProjectServer.StoreMap[Name, ConcurrentHashMap]
+  implicit val store          = Store.Algebra.concurrentHashMap(storeMap): ProjectServer.StoreAlgebra[Name]
+  implicit val svr            = new MockServer
+  implicit val db             = new MockDb(svr.now)
+  implicit val security       = new MockSecurity(db)
+  implicit val security2      = new MockSecurity2(db)
+  implicit val taskman        = new MockTaskman
+  implicit val nameToName     = NaturalTransformation.refl[Name]
+  implicit val metrics        = MetricsLogic.const(Name(()))
+  implicit val publicDispatch = PublicSpaLogic[Name, Name]: PublicSpaLogic.ForDispatch[Name]
 
   implicit object ops extends OpsEndpoints.Base[Name] {
     override val randomToken = Name("blah")

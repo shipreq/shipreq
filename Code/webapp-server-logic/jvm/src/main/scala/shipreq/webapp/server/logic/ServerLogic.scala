@@ -12,7 +12,7 @@ final case class ServerLogic[F[_]](publicSpa    : PublicSpaLogic[F],
                                    homeSpa      : HomeSpaLogic  [F],
                                    projectServer: ProjectServer [F]) {
 
-  def publicApi: PublicSpaLogic.ForApi[F] =
+  def publicSpaDispatch: PublicSpaLogic.ForDispatch[F] =
     publicSpa
 }
 

@@ -1,7 +1,7 @@
 package shipreq.webapp.server.logic
 
 import upickle.Js
-import scalaz.{Name, \/-}
+import scalaz.{Name, Need, \/-}
 import utest._
 import shipreq.base.util.{Invalid, Url}
 import shipreq.base.test.BaseTestUtil._
@@ -19,14 +19,15 @@ object DispatchLogicTest extends TestSuite {
                                cookies: Map[Cookie.Name, String]) {
 
     def toAbstract: Request[TestRequest] =
-      Request(method, path, params.get, cookies.get, this)
+      Request(method, path, Need(None), params.get, cookies.get, this)
   }
 
   def patchCookies(m: Map[Cookie.Name, String], u: Cookie.Update): Map[Cookie.Name, String] =
     m -- u.remove ++ u.add.map(c => c.name -> c.value)
 
   final case class TestResponse(cmd: ResponseCmd, cookies: Map[Cookie.Name, String]) {
-    def authUser(implicit s: Security.Algebra2[Name]) = s.sessionRestore(cookies.get).value.authenticatedUser
+    def authUser(implicit s: Security.Algebra2[Name]) =
+      s.sessionRestore(cookies.get).value.flatMap(_.authenticatedUser)
   }
 
   object Tester extends MockInterpreters {

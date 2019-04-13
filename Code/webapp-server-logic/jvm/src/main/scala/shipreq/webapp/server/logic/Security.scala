@@ -53,7 +53,7 @@ object Security {
 
     def attemptLogin(user: Username \/ EmailAddr, password: PlainTextPassword): F[Option[User]]
 
-    def sessionRestore(cookies: Cookie.LookupFn): F[SessionToken]
+    def sessionRestore(cookies: Cookie.LookupFn): F[Option[SessionToken]]
 
     def sessionPersist(token: SessionToken): F[Cookie.Update]
   }

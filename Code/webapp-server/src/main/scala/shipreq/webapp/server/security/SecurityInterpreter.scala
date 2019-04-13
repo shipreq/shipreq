@@ -77,7 +77,7 @@ final class SecurityInterpreter2[F[_]](implicit F: Monad[F],
   override val db = secDb
 
   private[this] val fUnit                    = F.point(())
-  private[this] val fNewToken                = F pure SessionToken.anonymous
+  private[this] val fNoToken                 = F.pure[Option[SessionToken]](None)
   private[this] val passwordSecretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512")
   private[this] val cookieName               = Cookie.Name("shipreq.jwt")
   private[this] val jwtMainKey               = Keys.hmacShaKeyFor(config.jwtSecret.bytes)
@@ -182,17 +182,17 @@ final class SecurityInterpreter2[F[_]](implicit F: Monad[F],
         j => _parseAndVerifyJws(j, jwtMainParser) orElse _parseAndVerifyJws(j, altParser)
     }
 
-  override def sessionRestore(cookies: LookupFn): F[SessionToken] =
+  override def sessionRestore(cookies: LookupFn): F[Option[SessionToken]] =
     cookies(cookieName) match {
       case Some(jws) =>
         F.point {
-          parseAndVerifyJws(jws).getOrElse {
+          parseAndVerifyJws(jws).orElse {
             logger.warn("Failed to parse/verify JWT: " + StringEscapeUtils.escapeJava(jws))
-            SessionToken.anonymous
+            None
           }
         }
 
-      case None => fNewToken
+      case None => fNoToken
     }
 
 }

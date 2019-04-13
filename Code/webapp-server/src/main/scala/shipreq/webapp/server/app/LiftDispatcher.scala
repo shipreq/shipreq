@@ -1,15 +1,17 @@
 package shipreq.webapp.server.app
 
+import com.typesafe.scalalogging.StrictLogging
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import java.nio.charset.Charset
-import net.liftweb.common.{Box, Empty, Full}
+import net.liftweb.common.{Box, Empty, Failure => BoxFailure, Full}
 import net.liftweb.http.provider.HTTPCookie
 import net.liftweb.http.{Req => LiftReq, _}
 import net.liftweb.util.Props
 import scala.xml.NodeSeq
+import scalaz.Need
 import shipreq.base.util.FxModule._
-import shipreq.base.util.Url
+import shipreq.base.util.{BinaryData, Url}
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.user.User
 import shipreq.webapp.base.{Urls, WebappConfig}
@@ -20,11 +22,11 @@ object LiftDispatcher {
   object ProjectIdVar extends RequestVar[ProjectId](null)
   object UserVar      extends RequestVar[User     ](null)
 
+  val UTF8 = Charset.forName("UTF-8")
+
   final case class StatusOnlyResponse(status: Int) extends LiftResponse with HeaderDefaults {
     def toResponse = InMemoryResponse(Array.empty, headers, cookies, status)
   }
-
-  val UTF8 = Charset.forName("UTF-8")
 
   final case class GenericResponse(status: Int, body: String, mime: String) extends LiftResponse with HeaderDefaults {
     def toResponse = {
@@ -33,9 +35,16 @@ object LiftDispatcher {
       InMemoryResponse(bytes, headers2, cookies, status)
     }
   }
+
+  final case class BinaryResponse(status: Int, body: BinaryData) extends LiftResponse with HeaderDefaults {
+    def toResponse = {
+      val headers2 = ("Content-Length" -> body.length.toString) :: ("Content-Type" -> "application/octet-stream") :: headers
+      new OutputStreamResponse(body.writeTo, body.length, headers2, cookies, status)
+    }
+  }
 }
 
-final class LiftDispatcher(global: Global) {
+final class LiftDispatcher(global: Global) extends StrictLogging {
   import LiftDispatcher._
 
   def init(): Unit = {
@@ -56,13 +65,22 @@ final class LiftDispatcher(global: Global) {
     Url.Relative(r.request.uri)
 
   def parseReq(r: LiftReq): DispatchLogic.Request[LiftReq] = {
-    val m: DispatchLogic.Method =
+    val method: DispatchLogic.Method =
       if (r.get_?)       DispatchLogic.Method.Get
       else if (r.post_?) DispatchLogic.Method.Post
       else               DispatchLogic.Method.Other
 
     val url = liftReqUrl(r)
-    DispatchLogic.Request(m, url, paramFn, cookieFn, r)
+
+    val body = Need {
+      S.request.flatMap(_.body) match {
+        case Full(b)       => Some(BinaryData.unsafeFromArray(b))
+        case Empty         => None
+        case e: BoxFailure => logger.warn(s"Failure reading request body: ${e.msg}", e.rootExceptionCause); None
+      }
+    }
+
+    DispatchLogic.Request(method, url, body, paramFn, cookieFn, r)
   }
 
   val makeResponse: (LiftReq, DispatchLogic.Response) => Fx[Box[LiftResponse]] = {
@@ -109,9 +127,10 @@ final class LiftDispatcher(global: Global) {
           case ProjectSpa.NotOwner
              | ProjectSpa.InvalidId   => Fx pure Full(RedirectResponse(Urls.memberHome.relativeUrl))
           case Redirect(to)           => Fx pure Full(RedirectResponse(to.relativeUrl))
-          case StatusOnly(status)     => Fx pure Full(StatusOnlyResponse(status))
+          case r: Binary              => Fx pure Full(BinaryResponse(r.status, r.body))
           case r: Text                => Fx pure Full(GenericResponse(r.status, r.body, "text/plain"))
           case r: Json                => Fx pure Full(GenericResponse(r.status, r.body, "application/json"))
+          case StatusOnly(status)     => Fx pure Full(StatusOnlyResponse(status))
         }
 
       setHeaders.flatMap(_ => respond)
@@ -125,7 +144,7 @@ final class LiftDispatcher(global: Global) {
     implicit val taskman   = global.taskman
     implicit val security  = global.security
 implicit val security2  = global.security2
-    implicit val publicApi = global.logic.publicApi
+    implicit val publicSpa = global.logic.publicSpaDispatch
     implicit val ops       = global.ops
     implicit val db        = DB.SecurityTokenReadOnly.trans(DbInterpreter.SecurityTokenReadOnly)(global.db.fx.trans)
     implicit val server    = ServerInterpreter

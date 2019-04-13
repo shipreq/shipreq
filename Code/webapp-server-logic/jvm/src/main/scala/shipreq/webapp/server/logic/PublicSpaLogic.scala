@@ -12,24 +12,27 @@ import shipreq.base.util.log.{HasLogger, MDC}
 import shipreq.taskman.api.{Msg, MsgId, TaskmanApi}
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data.SecurityToken
+import shipreq.webapp.base.protocol2.PublicSpaProtocols
 import shipreq.webapp.base.user._
 import shipreq.webapp.client.public.PublicSpaProtocols._
 import shipreq.webapp.server.ServerConfig
 import WebappTaskmanConverters._
 import Implicits._
 
-trait PublicSpaLogic[F[_]] extends PublicSpaLogic.ForApi[F] {
+trait PublicSpaLogic[F[_]] extends PublicSpaLogic.ForDispatch[F] {
   def initData(u: Option[User]): F[InitData]
 }
 
 object PublicSpaLogic extends HasLogger {
 
-  trait ForApi[F[_]] {
+  trait ForDispatch[F[_]] {
 
     /** Ignores publicRegistration setting.
       * Lacks security protection.
       */
-    def register1(emailAddr: String): F[ErrorMsg \/ MsgId]
+    def apiRegister1(emailAddr: String): F[ErrorMsg \/ MsgId]
+
+    val ajaxLogin: PublicSpaProtocols.login.ServerSideFn[F]
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -361,8 +364,12 @@ object PublicSpaLogic extends HasLogger {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     new PublicSpaLogic[F] {
 
-      override def register1(emailAddr: String): F[ErrorMsg \/ MsgId] =
+      override def apiRegister1(emailAddr: String): F[ErrorMsg \/ MsgId] =
         RegisterFns.register1(emailAddr)
+
+      override val ajaxLogin =
+        security.protectFn(req =>
+          attemptLogin(req.user, req.password))
 
       override def initData(u: Option[User]) =
         for {

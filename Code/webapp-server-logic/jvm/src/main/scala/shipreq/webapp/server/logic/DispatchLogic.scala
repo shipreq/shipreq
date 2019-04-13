@@ -1,16 +1,20 @@
 package shipreq.webapp.server.logic
 
+import boopickle.Pickler
+import com.typesafe.scalalogging.StrictLogging
 import japgolly.microlibs.utils.Utils
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.ParseLong
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
-import scalaz.{-\/, Monad, \/, \/-}
+import scala.util.{Failure, Success}
+import scalaz.{-\/, Monad, Need, \/, \/-}
 import scalaz.syntax.monad._
 import shipreq.base.ops.Trace
 import shipreq.base.util._
 import shipreq.webapp.base.{AssetManifest, Urls}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol2.{BinaryJvm, Protocol, PublicSpaProtocols}
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.util.ResourceHint
 import shipreq.webapp.server.ServerConfig
@@ -30,6 +34,7 @@ object DispatchLogic {
     */
   final case class Request[+Real](method: Method,
                                   path  : Url.Relative,
+                                  body  : Need[Option[BinaryData]],
                                   param : String => Option[String],
                                   cookie: Cookie.LookupFn,
                                   real  : Real)
@@ -113,6 +118,8 @@ object DispatchLogic {
       val body: String =
         upickle.json.write(bodyJs)
     }
+
+    final case class Binary(status: Int, body: BinaryData) extends ResponseCmd
 
     implicit def univEq: UnivEq[ResponseCmd] = {
       implicit def a: UnivEq[upickle.Js.Value] = UnivEq.force
@@ -213,7 +220,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
                                                   db        : DB.SecurityTokenReadOnly[F],
                                                   metrics   : MetricsLogic[F],
                                                   ops       : OpsEndpoints[F],
-                                                  publicApi : PublicSpaLogic.ForApi[F],
+                                                  publicSpa : PublicSpaLogic.ForDispatch[F],
                                                   security  : Security.Algebra2[F],
                                                   svrS      : Server.Session[F],
                                                   svr       : Server.Time[F],
@@ -236,7 +243,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
   @inline private def traceUrlWithSpan(url: Url.Relative, f: tracer.Span => F[RealRes])(implicit req: Request): F[RealRes] =
     metrics.setHttpName(url.relativeUrl) >> tracer.http(url.relativeUrl, req.real, req.path)(f)
 
-  private def onMethod(m: Method, f: F[Response])(implicit req: Request): F[RealRes] =
+  private def onMethod(m: Method)(f: F[Response])(implicit req: Request): F[RealRes] =
     if (req.method eq m)
       makeRealF(f)
     else
@@ -259,19 +266,19 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
   private def get(url: Url.Relative, resp: F[Response]): Request ?=> F[RealRes] =
     whenUrlIs(url)(implicit req =>
       traceUrl(req.path,
-        onMethod(Get, resp)))
+        onMethod(Get)(resp)))
 
   private def spa(root: Url.Relative, onGet: (tracer.Span, Request) => F[Response]): Request ?=> F[RealRes] =
     when(spaTest(root))(implicit req =>
       traceUrlWithSpan(root, span =>
-        onMethod(Get, onGet(span, req))))
+        onMethod(Get)(onGet(span, req))))
 
   private def spaWithObfuscatedParam[A](url       : Url.Relative.Param1[Obfuscated[A]])
                                        (obfuscator: Obfuscator[A])
                                        (onGet     : (tracer.Span, Request, String \/ A) => F[Response]): Request ?=> F[RealRes] =
     extract(spaTest1(url))(implicit req => param =>
       traceUrlWithSpan(url.prefix, span =>
-        onMethod(Get, onGet(span, req, obfuscator.deobfuscate(Obfuscated(param))))))
+        onMethod(Get)(onGet(span, req, obfuscator.deobfuscate(Obfuscated(param))))))
 
   private def parseParams[A](parsed: Option[A])(f: A => F[Response]): F[Response] =
     parsed match {
@@ -290,11 +297,18 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
     routes.embed(r => test(r.path), r => r.copy(path = mod(r.path)))
   }
 
-  private def extendSession(cmd: Security.SessionToken => ResponseCmd)(implicit req: Request): F[Response] =
+  private def initOrExtendSession(cmd: Security.SessionToken => ResponseCmd)(implicit req: Request): F[Response] =
     for {
-      s  <- security.sessionRestore(req.cookie)
+      so <- security.sessionRestore(req.cookie)
+      s   = so.getOrElse(Security.SessionToken.anonymous)
       cu <- security.sessionPersist(s)
     } yield Response(cmd(s), cu)
+
+  private def requireSession(fCmd: Security.SessionToken => F[Response])(implicit req: Request): F[Response] =
+    security.sessionRestore(req.cookie).flatMap {
+      case Some(s) => fCmd(s)
+      case None    => F pure ResponseCmd.StatusOnly.Forbidden.withoutCookieUpdate
+    }
 
   private def cmdWhenLoginRequired(implicit req: Request): ResponseCmd =
     ResponseCmd.Redirect(
@@ -305,7 +319,8 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
 
   private def needAuth(f: User => F[ResponseCmd])(implicit span: tracer.Span, req: Request): F[Response] =
     for {
-      session  <- security.sessionRestore(req.cookie)
+      sessionO <- security.sessionRestore(req.cookie)
+      session   = sessionO.getOrElse(Security.SessionToken.anonymous)
       response <- session.authenticatedUser match {
                     case Some(u) =>
                       for {
@@ -327,19 +342,21 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
       // This logic is mirrored in .public.spa.Routes
       val login: Request ?=> F[RealRes] =
         spa(R.Login.url, (_, req) =>
-          security.sessionRestore(req.cookie).flatMap(s =>
+          security.sessionRestore(req.cookie).flatMap { os =>
+            val s = os.getOrElse(Security.SessionToken.anonymous)
             if (s.authenticatedUser.isEmpty)
               for {
                 cu <- security.sessionPersist(s)
               } yield Response(ResponseCmd.ServePublicSpa(s.authenticatedUser), cu)
             else
-              F pure Response(ResponseCmd.redirectToMemberHome, Cookie.Update.empty)))
+              F pure Response(ResponseCmd.redirectToMemberHome, Cookie.Update.empty)
+          })
 
       val staticRoutes: Request ?=> F[RealRes] =
         whenUrlIsAnyOf(R.static.filterNot(_ ==* R.Login).get.map(_.url).toNES) { implicit req =>
           traceUrl(req.path,
-            onMethod(Get,
-              extendSession(t =>
+            onMethod(Get)(
+              initOrExtendSession(t =>
                 ResponseCmd.ServePublicSpa(t.authenticatedUser))))
         }
 
@@ -354,11 +371,11 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
           extract(spaTest1(r.url)) { implicit req => param =>
             val token = SecurityToken(param)
             traceUrl(r.url.prefix,
-              onMethod(Get,
+              onMethod(Get)(
                 security.protect(
                   for {
                     status <- getTokenStatus(token)
-                    resp   <- extendSession(s =>
+                    resp   <- initOrExtendSession(s =>
                                 status match {
                                   case SecurityToken.Status.Valid   => ResponseCmd.ServePublicSpa(s.authenticatedUser)
                                   case SecurityToken.Status.Invalid => ResponseCmd.redirectToPublicHome
@@ -416,6 +433,70 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  object Ajax extends StrictLogging {
+
+    private type Handler = BinaryData => F[Response \/ BinaryData]
+
+    private val ajaxLibrary: Map[String, Handler] = {
+      val m = new Url.Relative.MutableMap[Handler]
+
+      def register(p: Protocol.Ajax[Pickler])(f: p.ServerSideFn[F]): Unit = {
+        assert(p.url.underlying startsWith Urls.ajaxRoot.underlying, s"${p.url} must start with ${Urls.ajaxRoot}")
+
+        val h: Handler = reqBin =>
+          BinaryJvm.attemptDecode(reqBin, p.prepReq) match {
+            case Success(req) =>
+              val responseProtocol = p.responseProtocol(req)
+              f(req).map(res => \/-(BinaryJvm.encode(responseProtocol)(res)))
+            case Failure(t) =>
+              F.point {
+                logger.warn("Failed to decode ajax binary body.", t)
+                -\/(ResponseCmd.StatusOnly.BadRequest.withoutCookieUpdate)
+              }
+          }
+
+        m += (p.url -> h)
+      }
+
+      register(PublicSpaProtocols.login)(publicSpa.ajaxLogin)
+
+      m.toMapNoHeadSlash
+    }
+
+    private val notFound: Response =
+      Response(ResponseCmd.StatusOnly.NotFound, Cookie.Update.empty)
+
+    val all: Request ?=> F[RealRes] =
+      when(_.path.underlying startsWith Urls.ajaxRoot.underlying) { implicit req =>
+
+        ajaxLibrary.get(req.path.relativeUrlNoHeadSlash) match {
+          case Some(handler) =>
+
+            val fResponse: F[Response] =
+              requireSession(s =>
+                if (req.method eq Post)
+                  req.body.value match {
+                    case Some(reqBin) =>
+                      handler(reqBin).flatMap {
+                        case \/-(resBin) => security.sessionPersist(s).map(Response(ResponseCmd.Binary(StatusCode.OK, resBin), _))
+                        case -\/(resp)   => F pure resp
+                      }
+                    case None =>
+                      F pure ResponseCmd.StatusOnly.BadRequest.withoutCookieUpdate
+                  }
+                else
+                  F pure ResponseCmd.StatusOnly.MethodNotAllowed.withoutCookieUpdate
+              )
+
+            makeRealF(fResponse)
+
+          case None =>
+            makeReal(notFound)
+        }
+      }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Ops & Diagnostics
 
   object Ops {
@@ -463,7 +544,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
     private val register1: Request ?=> F[RealRes] =
       endpoint(Post, Url.Relative("register1"))(req =>
         parseParams(req.param("email"))(email =>
-          whenValid(publicApi.register1(email))(id =>
+          whenValid(publicSpa.apiRegister1(email))(id =>
             response(ResponseCmd.Json(StatusCode.OK, Js.Obj("taskId" -> Js.Num(id.value)))))))
 
     private val statsDb: Request ?=> F[RealRes] =
@@ -523,7 +604,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
   /** FOR UNIT-TESTS ONLY */
   private val unitTestLogin: Request ?=> F[RealRes] =
     whenUrlIs(unitTestLoginUrl){ implicit req =>
-      onMethod(Post, security.protect(
+      onMethod(Post)(security.protect(
         parseParams(
           for {
             u <- req.param("user")
@@ -541,6 +622,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
   /** Stateful routes (i.e. using a session) */
   def mainDispatcher(devMode: Boolean, testMode: Boolean): RealReq => F[RealRes] =
     ( Main.routes
+    | Ajax.all
     | Option.when(devMode)(quickDev).flatten
     | Option.when(testMode)(unitTestLogin)
     ).withFallback(Main.fallback)

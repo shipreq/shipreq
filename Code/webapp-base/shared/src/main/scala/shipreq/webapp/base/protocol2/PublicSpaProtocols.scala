@@ -22,6 +22,9 @@ import BinCodecUser._
   */
 object PublicSpaProtocols {
 
+//  final val EntryPointName = "A"
+//  val EntryPoint = ClientSideProc[InitData](EntryPointName)
+
   private def newAjax[Req: Pickler, Res: Pickler](path: String): Protocol.Ajax.Simple[Pickler, Req, Res] =
     Protocol.Ajax.Simple(Urls.ajaxRoot / "pub" / path, Protocol(implicitly), Protocol(implicitly))
 
@@ -62,14 +65,12 @@ object PublicSpaProtocols {
           .imapInput(GenIso.fields[Untyped])
           .mapValid((Request.apply _).tupled)
     }
-
-    val ajax = newAjax[Request, ErrorMsg \/ Unit]("lp")
   }
+
+  val landingPage = newAjax[LandingPage.Request, ErrorMsg \/ Unit]("lp")
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object Register {
-    val ajax1 = newAjax[EmailAddr, ErrorMsg \/ Unit]("reg1")
-
     final case class Request(token     : SecurityToken,
                              personName: PersonName,
                              username  : Username,
@@ -104,10 +105,10 @@ object PublicSpaProtocols {
       implicit val pickler: Pickler[Response] = derivePickler[Response]
       implicit def univEq: UnivEq[Response] = UnivEq.derive
     }
-
-    /** Upon successful submission the user account is activated. */
-    val ajax2 = newAjax[Request, ErrorMsg \/ Response]("reg2")
   }
+
+  val register1 = newAjax[EmailAddr, ErrorMsg \/ Unit]("reg1")
+  val register2 = newAjax[Register.Request, ErrorMsg \/ Register.Response]("reg2")
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object Login {
@@ -131,14 +132,12 @@ object PublicSpaProtocols {
           .imapInput(GenIso.fields[Untyped])
           .mapValid((Request.apply _).tupled)
     }
-
-    val ajax = newAjax[Request, Permission]("l")
   }
+
+  val login = newAjax[Login.Request, Permission]("l")
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object ResetPassword {
-    val ajax1 = newAjax[Username \/ EmailAddr, Unit]("rp1")
-
     final case class Request(token: SecurityToken, newPassword: PlainTextPassword)
     implicit val pickler: Pickler[Request] = pickleCaseClass[Request]
 
@@ -151,20 +150,9 @@ object PublicSpaProtocols {
       implicit val pickler: Pickler[Response] = derivePickler[Response]
       implicit def univEq: UnivEq[Response] = UnivEq.derive
     }
-
-    val ajax2 = newAjax[Request, ErrorMsg \/ Response]("rp2")
   }
 
-//  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-//                            landingPage       : LandingPage.Fn.Instance,
-//                            register1         : Register.Fn1.Instance,
-//                            register2         : Register.Fn2.Instance,
-//                            login             : Login.Fn.Instance,
-//                            resetPassword1    : ResetPassword.Fn1.Instance,
-//                            resetPassword2    : ResetPassword.Fn2.Instance)
-//
-//  final val EntryPointName = "A"
-//  val EntryPoint = ClientSideProc[InitData](EntryPointName)
+  val resetPassword1 = newAjax[Username \/ EmailAddr, Unit]("rp1")
+  val resetPassword2 = newAjax[ResetPassword.Request, ErrorMsg \/ ResetPassword.Response]("rp2")
 
 }
