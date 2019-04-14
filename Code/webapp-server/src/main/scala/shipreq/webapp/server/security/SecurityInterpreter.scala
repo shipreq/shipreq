@@ -71,16 +71,21 @@ final class SecurityInterpreter[F[_]](implicit F: Monad[F],
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
+object SecurityInterpreter2 {
+  val cookieName = Cookie.Name("shipreq.jwt")
+}
+
 final class SecurityInterpreter2[F[_]](implicit F: Monad[F],
                                        config : ServerConfig.Security,
                                        secDb  : DB.ForSecurity[F],
                                        trace  : Trace.Algebra[F]) extends Security.Algebra2[F] with StrictLogging {
+  import SecurityInterpreter2._
+
   override val db = secDb
 
   private[this] val fUnit                    = F.point(())
   private[this] val fNoToken                 = F.pure[Option[SessionToken]](None)
   private[this] val passwordSecretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512")
-  private[this] val cookieName               = Cookie.Name("shipreq.jwt")
   private[this] val jwtMainKey               = Keys.hmacShaKeyFor(config.jwtSecret.bytes)
   private[this] val jwtMainParser            = Jwts.parser().setSigningKey(jwtMainKey)
 

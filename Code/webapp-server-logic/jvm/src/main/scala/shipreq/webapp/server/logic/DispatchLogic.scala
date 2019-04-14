@@ -192,7 +192,7 @@ object DispatchLogic {
   val unitTestLoginUrl = Url.Relative("/c8c8f430-93b2-43fe-a072-11f9a1ab52a0")
 
   /** DEV-MODE ONLY */
-  val quickDevUrl = Url.Relative("/x")
+  val quickDevUrl = Url.Relative("/xx")
   final case class QuickDev(user: Username \/ EmailAddr,
                             pass: PlainTextPassword,
                             goto: Url.Relative)

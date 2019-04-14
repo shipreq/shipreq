@@ -1,13 +1,15 @@
 package shipreq.webapp.server.test
 
+import boopickle.Pickler
 import net.liftweb.http.testing._
 import org.apache.commons.httpclient.{HttpClient, HttpMethodBase}
-import shipreq.base.util.FxModule._
 import shipreq.base.test.BaseTestUtil._
+import shipreq.base.util.FxModule._
 import shipreq.webapp.base.protocol.ClientSideProc
+import shipreq.webapp.base.protocol2.{BinaryJvm, Protocol}
 import shipreq.webapp.server.app.Global
-import shipreq.webapp.server.db.DbInterpreter
-import shipreq.webapp.server.logic.{Cookie, DispatchLogic, Security}
+import shipreq.webapp.server.logic.{Cookie, Security}
+import shipreq.webapp.server.security.SecurityInterpreter2
 
 /**
  * A test case that requires connectivity to a running Jetty instance.
@@ -60,7 +62,7 @@ object LiveTestUtils {
           token  : Option[Security.SessionToken] = None,
           headers: List[(String, String)] = Nil,
           params : List[(String, String)] = Nil): HttpResponse = {
-    val h2 = token.map(tokenCooke).toList
+    val h2 = token.map(tokenCookie).toList
     testKit.get(url, testKit.theHttpClient, h2 ::: headers, params: _*).asInstanceOf[HttpResponse]
   }
 
@@ -68,11 +70,22 @@ object LiveTestUtils {
            token  : Option[Security.SessionToken] = None,
            headers: List[(String, String)] = Nil,
            params : List[(String, String)] = Nil): HttpResponse = {
-    val h2 = token.map(tokenCooke).toList
+    val h2 = token.map(tokenCookie).toList
     testKit.post(url, testKit.theHttpClient, h2 ::: headers, params: _*).asInstanceOf[HttpResponse]
   }
 
-  private def tokenCooke(t: Security.SessionToken): (String, String) = {
+  def ajaxPost(p: Protocol.Ajax[Pickler])
+              (req: p.protocol.RequestType,
+               token  : Security.SessionToken = Security.SessionToken.anonymous,
+               headers: List[(String, String)] = Nil): HttpResponse = {
+    val h2 = tokenCookie(token)
+    val prep = p.protocol.prepareSend(req)
+    val body = BinaryJvm.encode(p.prepReq)(prep.request).toNewArray
+    testKit.post(p.url.relativeUrl, testKit.theHttpClient, h2 :: headers, body, "application/octet-stream")
+      .asInstanceOf[HttpResponse]
+  }
+
+  private def tokenCookie(t: Security.SessionToken): (String, String) = {
     Global.security2.sessionPersist(t).unsafeRun() match {
       case Cookie.Update(c :: Nil, Nil) => ("Cookie", s"${c.name.value}=${c.value}")
       case c => sys.error("Got: " + c)
@@ -120,6 +133,17 @@ object LiveTestUtils {
         .assertContentTypeHtml
         .assertBodyContains(spaJs)
         .assertBodyContains(spaEP.objectAndMethod + "(")
+
+    def assertJwt(expect: Option[Security.SessionToken]) = {
+      val prefix = SecurityInterpreter2.cookieName.value + "="
+      val cookieValue = resp.headers.getOrElse("Set-Cookie", Nil).find(_.startsWith(prefix)).map(_.drop(prefix.length))
+      val actual = cookieValue.flatMap { v =>
+        val m = Map(SecurityInterpreter2.cookieName -> v.takeWhile(_ != ';'))
+        Global.security2.sessionRestore(m.get).unsafeRun()
+      }
+      assertEq(actual, expect)
+      this
+    }
   }
 
   implicit def toLiveTestHttpResponse(a: HttpResponse): LiveTestHttpResponse =

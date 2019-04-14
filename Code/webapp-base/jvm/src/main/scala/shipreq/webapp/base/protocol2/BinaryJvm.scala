@@ -1,7 +1,6 @@
 package shipreq.webapp.base.protocol2
 
 import boopickle.{PickleImpl, Pickler, UnpickleImpl}
-import java.nio.ByteBuffer
 import scala.util.Try
 import shipreq.base.util.BinaryData
 

@@ -1,8 +1,6 @@
 package shipreq.webapp.server.app
 
 import com.typesafe.scalalogging.StrictLogging
-import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.univeq._
 import java.nio.charset.Charset
 import net.liftweb.common.{Box, Empty, Failure => BoxFailure, Full}
 import net.liftweb.http.provider.HTTPCookie
@@ -42,6 +40,9 @@ object LiftDispatcher {
       new OutputStreamResponse(body.writeTo, body.length, headers2, cookies, status)
     }
   }
+
+  def redirectWithCookies(uri: String): RedirectResponse =
+    RedirectResponse(uri, S.responseCookies: _*)
 }
 
 final class LiftDispatcher(global: Global) extends StrictLogging {
@@ -98,7 +99,8 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
     val deleteCookie: Cookie.Name => Unit =
       n => S.deleteCookie(n.value)
 
-    val addCookie: Cookie => Unit =
+    val addCookie: Cookie => Unit = {
+      val path = Full("/") // This is required for browsers to update the cookie on AJAX
       c => S.addCookie(new HTTPCookie(
         name     = c.name.value,
         value    = Full(c.value),
@@ -106,8 +108,9 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
         secure_? = c.secure,
         httpOnly = c.httpOnly,
         domain   = Empty,
-        path     = Empty,
+        path     = path,
         version  = Empty))
+      }
 
     (req, response) => {
       import DispatchLogic.ResponseCmd._
@@ -125,12 +128,13 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
           case ServeHomeSpa(u)        => Fx{ UserVar.set(u); render(req, templateHome) }
           case ProjectSpa.Serve(u, p) => Fx{ UserVar.set(u); ProjectIdVar.set(p); render(req, templateProject) }
           case ProjectSpa.NotOwner
-             | ProjectSpa.InvalidId   => Fx pure Full(RedirectResponse(Urls.memberHome.relativeUrl))
-          case Redirect(to)           => Fx pure Full(RedirectResponse(to.relativeUrl))
-          case r: Binary              => Fx pure Full(BinaryResponse(r.status, r.body))
-          case r: Text                => Fx pure Full(GenericResponse(r.status, r.body, "text/plain"))
-          case r: Json                => Fx pure Full(GenericResponse(r.status, r.body, "application/json"))
-          case StatusOnly(status)     => Fx pure Full(StatusOnlyResponse(status))
+             | ProjectSpa.InvalidId   => Fx(Full(RedirectResponse(Urls.memberHome.relativeUrl)))
+          case Redirect(to)           => Fx(Full(redirectWithCookies(to.relativeUrl)))
+          case r: Binary              => Fx(Full(BinaryResponse(r.status, r.body)))
+          case r: Text                => Fx(Full(GenericResponse(r.status, r.body, "text/plain")))
+          case r: Json                => Fx(Full(GenericResponse(r.status, r.body, "application/json")))
+          case StatusOnly(status)     => Fx(Full(StatusOnlyResponse(status)))
+          // NOTE: Do NOT use Fx.pure here. These lift responses need to be created after headers/cookies are set
         }
 
       setHeaders.flatMap(_ => respond)

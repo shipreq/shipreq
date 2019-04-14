@@ -1,5 +1,6 @@
 package shipreq.webapp.server.app
 
+import scalaz.-\/
 import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.FxModule._
@@ -56,6 +57,21 @@ object LiveTest extends TestSuite {
       ()
     }
 
+    'loginAjax {
+      ajaxPost(PublicSpaProtocols.login)(PublicSpaProtocols.Login.Request(-\/(user1.username), user1.password))
+        .assertOk
+        .assertContentType("application/octet-stream")
+        .assertJwt(Some(user1.toToken))
+      ()
+    }
+
+    'logout {
+      get(Urls.logout.relativeUrl, Some(user1.toToken))
+        .assertRedirectTo("/")
+        .assertJwt(Some(Security.SessionToken.anonymous))
+      ()
+    }
+
     'webappClientPublicJs {
       get(AssetManifest.webappClientPublicJs)
         .assertOk
@@ -69,12 +85,6 @@ object LiveTest extends TestSuite {
       get(AssetManifest.favicon)
         .assertOk
         .assertContentType("image/x-icon")
-      ()
-    }
-
-    'logout - {
-      get(Urls.logout.relativeUrl)
-        .assertRedirectTo("/")
       ()
     }
 

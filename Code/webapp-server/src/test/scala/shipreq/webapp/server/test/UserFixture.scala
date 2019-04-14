@@ -10,7 +10,7 @@ import shipreq.base.test.db.{SingleConnectionXA, Usable}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.logic._
-import shipreq.webapp.server.security.{AppSecurityRealm, Roles}
+import shipreq.webapp.server.security.Roles
 import shipreq.webapp.server.test.UserFixture._
 import shipreq.webapp.server.test.WebappServerTestUtil._
 
@@ -35,13 +35,15 @@ object UserFixture {
                             newsletter: Boolean) {
     var _id: Option[UserId] = None
     def id: UserId = _id.getOrElse(sys error s"UserId unavailable for $this")
-    val ps = AppSecurityRealm.randomHashFn(password)
+    val ps = PrepareEnv.global().security2.hashPassword(password).unsafeRun()
     def hashedPassword = ps.passwordHash
     def salt = ps.salt
     def toUserDescriptor = User(id, username, roles)
 
     def withLoggedIn[A](a: => A): A =
       WebappServerTestUtil.withLoggedIn(username, password)(a)
+
+    def toToken = Security.SessionToken(Some(toUserDescriptor))
   }
 
   final case class PendingTestUser(email: EmailAddr, token: String, tokenCreatedAt: Instant)
