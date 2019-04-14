@@ -99,7 +99,7 @@ object Dependencies {
   }
 
   object SLF4J {
-    private val mm = MultiModule.java("org.slf4j", "1.7.25")
+    private val mm = MultiModule.java("org.slf4j", "1.7.26")
     val api = mm("slf4j-api")
     val jcl = mm("jcl-over-slf4j")
   }
@@ -150,7 +150,7 @@ object Dependencies {
   }
 
   object LibJetty {
-    private def ver = "9.4.15.v20190215"
+    private def ver = "9.4.16.v20190411"
     private val mm = MultiModule.java("org.eclipse.jetty", ver)
     private val ws = MultiModule.java("org.eclipse.jetty.websocket", ver)
 
