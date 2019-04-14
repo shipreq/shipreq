@@ -11,7 +11,7 @@ import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Disabled, Enabled, TCB}
 import shipreq.webapp.base.feature.AsyncFeature
-import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.protocol2.ServerSideProcInvoker
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.base.user.{EmailAddr, UserValidators, Username}
 import shipreq.webapp.base.{CommmonUiText, Urls}

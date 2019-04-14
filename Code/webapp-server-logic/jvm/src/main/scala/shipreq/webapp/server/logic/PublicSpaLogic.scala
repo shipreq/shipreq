@@ -12,30 +12,28 @@ import shipreq.base.util.log.{HasLogger, MDC}
 import shipreq.taskman.api.{Msg, MsgId, TaskmanApi}
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data.SecurityToken
-import shipreq.webapp.base.protocol2.PublicSpaProtocols
 import shipreq.webapp.base.user._
-import shipreq.webapp.client.public.PublicSpaProtocols._
+import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.server.ServerConfig
 import WebappTaskmanConverters._
 import Implicits._
 
-trait PublicSpaLogic[F[_]] extends PublicSpaLogic.ForDispatch[F] {
-  def initData(u: Option[User]): F[InitData]
+trait PublicSpaLogic[F[_]] {
+
+  val ajaxLandingPage   : PublicSpaProtocols.landingPage   .ServerSideFn[F]
+  val ajaxLogin         : PublicSpaProtocols.login         .ServerSideFn[F]
+  val ajaxRegister1     : PublicSpaProtocols.register1     .ServerSideFn[F]
+  val ajaxRegister2     : PublicSpaProtocols.register2     .ServerSideFn[F]
+  val ajaxResetPassword1: PublicSpaProtocols.resetPassword1.ServerSideFn[F]
+  val ajaxResetPassword2: PublicSpaProtocols.resetPassword2.ServerSideFn[F]
+
+  /** Ignores publicRegistration setting.
+    * Lacks security protection.
+    */
+  def apiRegister1(emailAddr: String): F[ErrorMsg \/ MsgId]
 }
 
 object PublicSpaLogic extends HasLogger {
-
-  trait ForDispatch[F[_]] {
-
-    /** Ignores publicRegistration setting.
-      * Lacks security protection.
-      */
-    def apiRegister1(emailAddr: String): F[ErrorMsg \/ MsgId]
-
-    val ajaxLogin: PublicSpaProtocols.login.ServerSideFn[F]
-  }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   private[this] val rightUnit = \/-(())
 
@@ -75,11 +73,10 @@ object PublicSpaLogic extends HasLogger {
                                  svr     : Server.Algebra[F],
                                  taskman : TaskmanApi[F],
                                  D       : Monad[D],
-                                 F       : Monad[F]): PublicSpaLogic[F] = {
+                                 F       : Monad[F]): PublicSpaLogic[F] =
+    new PublicSpaLogic[F] {
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    val landingPageFn: F[LandingPage.Fn.Instance] =
-      svr.createServerSideProc(LandingPage.Fn)(
+      override val ajaxLandingPage =
         _.untyped.validate.onValid { req =>
           val msg = Msg.LandingPageHit(
             name       = req.name.value,
@@ -88,124 +85,126 @@ object PublicSpaLogic extends HasLogger {
             newsletter = req.newsletter)
           taskman.submitMsg(msg).map(_ => rightUnit)
         }
-      )
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    val loginPass: F[Permission] = F pure Allow
-    val loginFail: F[Permission] = F pure Deny
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    def attemptLogin(id: Username \/ EmailAddr, password: PlainTextPassword): F[Permission] =
-      security.attemptLogin(id, password).flatMap {
+      private[this] val loginPass: F[Permission] = F pure Allow
+      private[this] val loginFail: F[Permission] = F pure Deny
 
-        case Some(user) =>
-          // Login succeeded
-          val logToDB = svr.clientIP.flatMap(ip => svr.fork(security.db.logLoginSuccess(user.id, ip)))
-          val log = F.point(logger.info(s"User #${user.id.value} logged in."))
-          val updateMetrics: F[Unit] =
-            metrics.securityEvent(Security.Event.Login, Security.Result.Success) >>
-            svr.sessionId.flatMap {
-              case Some(s) => metrics.login(s, user)
-              case None    => F.point(logger.warn("Login succeeded but session unavailable."))
-            }
+      private def attemptLogin(id: Username \/ EmailAddr, password: PlainTextPassword): F[Permission] =
+        security.attemptLogin(id, password).flatMap {
 
-          // TODO set cookies
-          log >> logToDB >> updateMetrics >> loginPass
+          case Some(user) =>
+            // Login succeeded
+            val logToDB = svr.clientIP.flatMap(ip => svr.fork(security.db.logLoginSuccess(user.id, ip)))
+            val log = F.point(logger.info(s"User #${user.id.value} logged in."))
+            val updateMetrics: F[Unit] =
+              metrics.securityEvent(Security.Event.Login, Security.Result.Success) >>
+                svr.sessionId.flatMap {
+                  case Some(s) => metrics.login(s, user)
+                  case None    => F.point(logger.warn("Login succeeded but session unavailable."))
+                }
 
-        case None =>
-          // User not found, or password didn't match
-          // The inability to distinguish is a security feature
-          val log = F.point(logger.warn(s"Login for ${id.fold(_.with_@, _.value)} with password hash ${password.hashStr} failed."))
-          val updateMetrics = metrics.securityEvent(Security.Event.Login, Security.Result.Failure)
-          log >> updateMetrics >> loginFail
-      }
+            // TODO set cookies
+            log >> logToDB >> updateMetrics >> loginPass
 
-    val loginFn: F[Login.Fn.Instance] =
-      svr.createServerSideProc(Login.Fn)(
-        security.protectFn(req =>
-          attemptLogin(req.user, req.password)))
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    object RegisterFns {
-
-      private val absUrlRegister2 = config.baseUrl / Urls.PublicSpaRoute.Register2.url
-
-      private def registrationProc[A, B](e: Security.Event, f: A => F[ErrorMsg \/ B]): A => F[ErrorMsg \/ B] =
-        security.protectFn(
-          config.publicRegistration match {
-            case Allow => f
-            case Deny  => _ =>
-              for {
-                _ <- metrics.securityEvent(e, Security.Result.Failure)
-                _ <- F.point(logger.warn("Denying public registration."))
-              } yield -\/(ErrorMsg("Registration is disabled."))
-          }
-        )
-
-      private val getTokenStatus: SecurityToken => F[SecurityToken.Status] =
-        tokenStatusFn(t => runDB(db.getUserRegistrationTokenIssueDate(t)), config.security.registrationTokenLifespan)
-
-      def preRegistrationMsg(email: EmailAddr, u: DB.UserRegistration, now: Instant): D[(Msg, Security.Result)] =
-        u match {
-          case _: DB.UserRegistration.Complete =>
-            D pure onAlreadyRegistered(email)
-          case r: DB.UserRegistration.Pending =>
-            if (isExpired_?(r.tokenSentAt, config.security.registrationTokenLifespan, now))
-              onTokenExpired(email, r.id)
-            else
-              D pure onTokenReusable(email, r.token)
+          case None =>
+            // User not found, or password didn't match
+            // The inability to distinguish is a security feature
+            val log = F.point(logger.warn(s"Login for ${id.fold(_.with_@, _.value)} with password hash ${password.hashStr} failed."))
+            val updateMetrics = metrics.securityEvent(Security.Event.Login, Security.Result.Failure)
+            log >> updateMetrics >> loginFail
         }
 
-      private def onTokenReusable(email: EmailAddr, token: SecurityToken): (Msg, Security.Result) =
-        registrationRequestedTask(email, token)
+      override val ajaxLogin =
+        security.protectFn(req =>
+          attemptLogin(req.user, req.password))
 
-      private def onTokenExpired(email: EmailAddr, id: UserId): D[(Msg, Security.Result)] =
-        db.updateUserRegistrationToken(id).map(registrationRequestedTask(email, _))
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      private def onAlreadyRegistered(email: EmailAddr): (Msg, Security.Result) =
-        (Msg.ReRegistrationAttempted(email.toTaskman), Security.Result.Failure)
+      override def apiRegister1(emailAddr: String) = RegisterFns.register1(emailAddr)
+      override val ajaxRegister1 = RegisterFns.register1
+      override val ajaxRegister2 = RegisterFns.register2
 
-      private def registrationRequestedTask(email: EmailAddr, token: SecurityToken): (Msg, Security.Result) =
-        (Msg.RegistrationRequested(email.toTaskman, absUrlRegister2(token).absoluteUrl), Security.Result.Success)
+      private[this] object RegisterFns {
 
-      def register1(emailAddrStr: String): F[ErrorMsg \/ MsgId] = {
-        def registerInDb(emailAddr: EmailAddr, now: Instant): D[(Msg, Security.Result)] =
-          db.inDbTransaction(
-            db.getUserRegistration(emailAddr).flatMap {
-              case None    => onNewUser(emailAddr)
-              case Some(u) => preRegistrationMsg(emailAddr, u, now)
-            })
+        private val absUrlRegister2 = config.baseUrl / Urls.PublicSpaRoute.Register2.url
 
-        def onNewUser(email: EmailAddr): D[(Msg, Security.Result)] =
-          db.createUserPlaceholder(email).map(registrationRequestedTask(email, _))
-
-        val main: F[ErrorMsg \/ (MsgId, Security.Result)] =
-          UserValidators.emailAddr.named(emailAddrStr).onValid(emailAddr =>
-            for {
-              now           <- svr.now
-              (msg, secRes) <- runDB(registerInDb(emailAddr, now))
-              id            <- taskman.submitMsg(msg)
-            } yield \/-((id, secRes))
+        private def registrationProc[A, B](e: Security.Event, f: A => F[ErrorMsg \/ B]): A => F[ErrorMsg \/ B] =
+          security.protectFn(
+            config.publicRegistration match {
+              case Allow => f
+              case Deny  => _ =>
+                for {
+                  _ <- metrics.securityEvent(e, Security.Result.Failure)
+                  _ <- F.point(logger.warn("Denying public registration."))
+                } yield -\/(ErrorMsg("Registration is disabled."))
+            }
           )
 
-        for {
-          result ← main
-          secRes = result.fold(_ => Security.Result.Failure, _._2)
-          _      ← metrics.securityEvent(Security.Event.Register1, secRes)
-        } yield result.map(_._1)
-      }
+        private val getTokenStatus: SecurityToken => F[SecurityToken.Status] =
+          tokenStatusFn(t => runDB(db.getUserRegistrationTokenIssueDate(t)), config.security.registrationTokenLifespan)
 
-      val registerFn1: F[Register.Fn1.Instance] =
-        svr.createServerSideProc(Register.Fn1)(
+        def preRegistrationMsg(email: EmailAddr, u: DB.UserRegistration, now: Instant): D[(Msg, Security.Result)] =
+          u match {
+            case _: DB.UserRegistration.Complete =>
+              D pure onAlreadyRegistered(email)
+            case r: DB.UserRegistration.Pending =>
+              if (isExpired_?(r.tokenSentAt, config.security.registrationTokenLifespan, now))
+                onTokenExpired(email, r.id)
+              else
+                D pure onTokenReusable(email, r.token)
+          }
+
+        private def onTokenReusable(email: EmailAddr, token: SecurityToken): (Msg, Security.Result) =
+          registrationRequestedTask(email, token)
+
+        private def onTokenExpired(email: EmailAddr, id: UserId): D[(Msg, Security.Result)] =
+          db.updateUserRegistrationToken(id).map(registrationRequestedTask(email, _))
+
+        private def onAlreadyRegistered(email: EmailAddr): (Msg, Security.Result) =
+          (Msg.ReRegistrationAttempted(email.toTaskman), Security.Result.Failure)
+
+        private def registrationRequestedTask(email: EmailAddr, token: SecurityToken): (Msg, Security.Result) =
+          (Msg.RegistrationRequested(email.toTaskman, absUrlRegister2(token).absoluteUrl), Security.Result.Success)
+
+        def register1(emailAddrStr: String): F[ErrorMsg \/ MsgId] = {
+          def registerInDb(emailAddr: EmailAddr, now: Instant): D[(Msg, Security.Result)] =
+            db.inDbTransaction(
+              db.getUserRegistration(emailAddr).flatMap {
+                case None    => onNewUser(emailAddr)
+                case Some(u) => preRegistrationMsg(emailAddr, u, now)
+              })
+
+          def onNewUser(email: EmailAddr): D[(Msg, Security.Result)] =
+            db.createUserPlaceholder(email).map(registrationRequestedTask(email, _))
+
+          val main: F[ErrorMsg \/ (MsgId, Security.Result)] =
+            UserValidators.emailAddr.named(emailAddrStr).onValid(emailAddr =>
+              for {
+                now           <- svr.now
+                (msg, secRes) <- runDB(registerInDb(emailAddr, now))
+                id            <- taskman.submitMsg(msg)
+              } yield \/-((id, secRes))
+            )
+
+          for {
+            result ← main
+            secRes = result.fold(_ => Security.Result.Failure, _._2)
+            _      ← metrics.securityEvent(Security.Event.Register1, secRes)
+          } yield result.map(_._1)
+        }
+
+        val register1: PublicSpaProtocols.register1.ServerSideFn[F] =
           registrationProc(Security.Event.Register1, i =>
-            register1(i.value).map(_.void)))
+            register1(i.value).map(_.void))
 
-      val registerFn2: F[Register.Fn2.Instance] =
-        svr.createServerSideProc(Register.Fn2)(
+        val register2: PublicSpaProtocols.register2.ServerSideFn[F] =
           registrationProc(Security.Event.Register2,
             _.validate.onValid(req =>
               MDC(MdcSecurityToken, req.token.value) {
 
-                import Register.Response
+                import PublicSpaProtocols.Register.Response
                 val stack = MonadEE[F, ErrorMsg, Response]
                 import stack._
 
@@ -257,19 +256,23 @@ object PublicSpaLogic extends HasLogger {
                   _             <- metrics.securityEvent(Security.Event.Register2, secRes)
                 } yield res
               }
-            )))
-    }
+            )
+          )
+      }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    object ResetPasswordFns {
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      private val getTokenStatus: SecurityToken => F[SecurityToken.Status] =
-        tokenStatusFn(t => runDB(db.getResetPasswordTokenIssueDate(t)), config.security.passwordResetTokenLifespan)
+      override val ajaxResetPassword1 = ResetPasswordFns.resetPassword1
+      override val ajaxResetPassword2 = ResetPasswordFns.resetPassword2
 
-      private val absUrlRegister2 = config.baseUrl / Urls.PublicSpaRoute.ResetPassword.url
+      private[this] object ResetPasswordFns {
 
-      val resetPasswordFn1: F[ResetPassword.Fn1.Instance] =
-        svr.createServerSideProc(ResetPassword.Fn1)(
+        private val getTokenStatus: SecurityToken => F[SecurityToken.Status] =
+          tokenStatusFn(t => runDB(db.getResetPasswordTokenIssueDate(t)), config.security.passwordResetTokenLifespan)
+
+        private val absUrlRegister2 = config.baseUrl / Urls.PublicSpaRoute.ResetPassword.url
+
+        val resetPassword1: PublicSpaProtocols.resetPassword1.ServerSideFn[F] =
           security.protectFn { user =>
 
             def resetInDb(now: Instant): D[(Option[Msg], Security.Result)] = {
@@ -311,15 +314,14 @@ object PublicSpaLogic extends HasLogger {
               _             <- metrics.securityEvent(Security.Event.ResetPassword1, secRes)
               _             <- taskman.submitMsgs_(msg)
             } yield ()
-          })
+          }
 
-      val resetPasswordFn2: F[ResetPassword.Fn2.Instance] =
-        svr.createServerSideProc(ResetPassword.Fn2)(
+        val resetPassword2: PublicSpaProtocols.resetPassword2.ServerSideFn[F] =
           security.protectFn(req =>
             MDC(MdcSecurityToken, req.token.value)(
               UserValidators.password.named(req.newPassword.value).onValid { newPassword =>
 
-                import ResetPassword.Response
+                import PublicSpaProtocols.ResetPassword.Response
                 val stack = MonadEE[F, ErrorMsg, Response]
                 import stack._
 
@@ -358,28 +360,10 @@ object PublicSpaLogic extends HasLogger {
                   (res, secRes) <- logAndMap(stackRes)
                   _             <- metrics.securityEvent(Security.Event.ResetPassword2, secRes)
                 } yield res
-              })))
+              }
+            )
+          )
+      }
+
     }
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    new PublicSpaLogic[F] {
-
-      override def apiRegister1(emailAddr: String): F[ErrorMsg \/ MsgId] =
-        RegisterFns.register1(emailAddr)
-
-      override val ajaxLogin =
-        security.protectFn(req =>
-          attemptLogin(req.user, req.password))
-
-      override def initData(u: Option[User]) =
-        for {
-          a <- landingPageFn
-          b <- RegisterFns.registerFn1
-          c <- RegisterFns.registerFn2
-          d <- loginFn
-          e <- ResetPasswordFns.resetPasswordFn1
-          f <- ResetPasswordFns.resetPasswordFn2
-        } yield InitData(config.publicRegistration, u.map(_.username), a, b, c, d, e, f)
-    }
-  }
 }

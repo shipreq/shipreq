@@ -9,7 +9,7 @@ import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ValidationUX
-import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.protocol2.ServerSideProcInvoker
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.base.{AssetManifest, WebappConfig}
 import shipreq.webapp.client.public.PublicSpaProtocols.LandingPage.Request

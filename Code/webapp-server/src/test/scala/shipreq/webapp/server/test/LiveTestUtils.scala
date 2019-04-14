@@ -2,11 +2,12 @@ package shipreq.webapp.server.test
 
 import net.liftweb.http.testing._
 import org.apache.commons.httpclient.{HttpClient, HttpMethodBase}
+import shipreq.base.util.FxModule._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.protocol.ClientSideProc
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.db.DbInterpreter
-import shipreq.webapp.server.logic.DispatchLogic
+import shipreq.webapp.server.logic.{Cookie, DispatchLogic, Security}
 
 /**
  * A test case that requires connectivity to a running Jetty instance.
@@ -56,27 +57,27 @@ object LiveTestUtils {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   def get(url    : String,
+          token  : Option[Security.SessionToken] = None,
           headers: List[(String, String)] = Nil,
-          params : List[(String, String)] = Nil): HttpResponse =
-    testKit.get(url, testKit.theHttpClient, headers, params: _*).asInstanceOf[HttpResponse]
+          params : List[(String, String)] = Nil): HttpResponse = {
+    val h2 = token.map(tokenCooke).toList
+    testKit.get(url, testKit.theHttpClient, h2 ::: headers, params: _*).asInstanceOf[HttpResponse]
+  }
 
   def post(url    : String,
+           token  : Option[Security.SessionToken] = None,
            headers: List[(String, String)] = Nil,
-           params : List[(String, String)] = Nil): HttpResponse =
-    testKit.post(url, testKit.theHttpClient, headers, params: _*).asInstanceOf[HttpResponse]
+           params : List[(String, String)] = Nil): HttpResponse = {
+    val h2 = token.map(tokenCooke).toList
+    testKit.post(url, testKit.theHttpClient, h2 ::: headers, params: _*).asInstanceOf[HttpResponse]
+  }
 
-  def login(u: UserFixture.TestUser): HttpResponse =
-    login(u, true)
-
-  def login(id: String, password: String): HttpResponse =
-    login(id, password, true)
-
-  def login(u: UserFixture.TestUser, expectSuccess: Boolean): HttpResponse =
-    login(u.email.value, u.password.value, expectSuccess)
-
-  def login(id: String, password: String, expectSuccess: Boolean): HttpResponse =
-    post(DispatchLogic.unitTestLoginUrl.relativeUrl, params = List("user" -> id, "pass" -> password))
-      .assertStatus(if (expectSuccess) 200 else 401)
+  private def tokenCooke(t: Security.SessionToken): (String, String) = {
+    Global.security2.sessionPersist(t).unsafeRun() match {
+      case Cookie.Update(c :: Nil, Nil) => ("Cookie", s"${c.name.value}=${c.value}")
+      case c => sys.error("Got: " + c)
+    }
+  }
 
   def retainSession(r: HttpResponse): List[(String, String)] =
       r.headers.getOrElse("Set-Cookie", Nil)

@@ -1,35 +1,24 @@
 package shipreq.webapp.server.logic
 
-import scalaz.{-\/, Name, \/, \/-}
+import scalaz.{-\/, \/, \/-}
 import utest._
 import shipreq.base.util._
 import shipreq.taskman.api.Msg
 import shipreq.webapp.base.data.SecurityToken
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.user._
-import shipreq.webapp.client.public.PublicSpaProtocols._
+import shipreq.webapp.client.public.PublicSpaProtocols
 
 object PublicSpaLogicTest extends TestSuite {
 
   class Tester(publicRegistration: Permission = Allow) extends MockInterpreters(_.copy(publicRegistration = publicRegistration)) {
-    val logic = PublicSpaLogic[Name, Name]
-    val initData = logic.initData(None).value
+    val initData = PublicSpaProtocols.InitData(Allow, None)
 
-    def runLogin(i: Login.Fn.Input): Login.Fn.Output = assertProtected(svr.run(initData.login)(i))
-//    def runLogin(usernameOrEmail: String, password: String): Login.Fn.Output = {
-//      val u: Username \/ EmailAddr =
-//        if (EmailAddr.isEmailAddr(usernameOrEmail))
-//          \/-(EmailAddr(usernameOrEmail))
-//        else
-//          -\/(Username(usernameOrEmail))
-//      runLogin(Login.Request(u, PlainTextPassword(password)))
-//    }
-
-    def runRegister1(i: Register.Fn1.Input): Register.Fn1.Output = assertProtected(svr.run(initData.register1)(i))
-    def runRegister2(i: Register.Fn2.Input): Register.Fn2.Output = assertProtected(svr.run(initData.register2)(i))
-
-    def runResetPassword1(i: ResetPassword.Fn1.Input): ResetPassword.Fn1.Output = assertProtected(svr.run(initData.resetPassword1)(i))
-    def runResetPassword2(i: ResetPassword.Fn2.Input): ResetPassword.Fn2.Output = assertProtected(svr.run(initData.resetPassword2)(i))
+    def runLogin(i: PublicSpaProtocols.login.Req) = assertProtected(publicSpa.ajaxLogin(i).value)
+    def runRegister1(i: PublicSpaProtocols.register1.Req) = assertProtected(publicSpa.ajaxRegister1(i).value)
+    def runRegister2(i: PublicSpaProtocols.register2.Req) = assertProtected(publicSpa.ajaxRegister2(i).value)
+    def runResetPassword1(i: PublicSpaProtocols.resetPassword1.Req) = assertProtected(publicSpa.ajaxResetPassword1(i).value)
+    def runResetPassword2(i: PublicSpaProtocols.resetPassword2.Req) = assertProtected(publicSpa.ajaxResetPassword2(i).value)
 
     db.users ::= user2
   }
@@ -46,11 +35,12 @@ object PublicSpaLogicTest extends TestSuite {
   override def tests = Tests {
 
     'login {
+      import PublicSpaProtocols.Login._
       implicit val t = new Tester(); import t._
 
       def test(usernameOrEmail: Username \/ EmailAddr, password: PlainTextPassword)(expect: Permission) =
         assertDifference("usrLoginLog", db.usrLoginLog.length)(if (expect is Allow) 1 else 0) {
-          assertEq(runLogin(Login.Request(usernameOrEmail, password)), expect)
+          assertEq(runLogin(Request(usernameOrEmail, password)), expect)
           svr.runForked()
         }
 
@@ -107,7 +97,7 @@ object PublicSpaLogicTest extends TestSuite {
     }
 
     'register2 {
-      import Register._
+      import PublicSpaProtocols.Register._
       val t = new Tester(); import t._
 
       // Mock user (pending)
@@ -128,7 +118,7 @@ object PublicSpaLogicTest extends TestSuite {
         taskman.assertLastSubmitted { case r: Msg.RegistrationCompleted => () }
       }
 
-      def assertFailure(req: Request): Fn2.Output =
+      def assertFailure(req: Request) =
         assertDifference(db.userPlaceholders.size)(0)(
           assertDifference(db.users.length)(0)(
             assertDifference(taskman.msgs.length)(0)(
@@ -217,7 +207,7 @@ object PublicSpaLogicTest extends TestSuite {
     }
 
     'resetPassword2 {
-      import ResetPassword._
+      import PublicSpaProtocols.ResetPassword._
       implicit val t = new Tester(); import t._
       val i = \/-(user2.emailAddr)
       runResetPassword1(i)

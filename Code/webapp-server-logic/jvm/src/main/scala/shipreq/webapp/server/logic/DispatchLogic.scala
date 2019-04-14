@@ -14,9 +14,10 @@ import shipreq.base.ops.Trace
 import shipreq.base.util._
 import shipreq.webapp.base.{AssetManifest, Urls}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol2.{BinaryJvm, Protocol, PublicSpaProtocols}
+import shipreq.webapp.base.protocol2.{BinaryJvm, Protocol}
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.util.ResourceHint
+import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.server.ServerConfig
 
 /** Usage:
@@ -220,7 +221,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
                                                   db        : DB.SecurityTokenReadOnly[F],
                                                   metrics   : MetricsLogic[F],
                                                   ops       : OpsEndpoints[F],
-                                                  publicSpa : PublicSpaLogic.ForDispatch[F],
+                                                  publicSpa : PublicSpaLogic[F],
                                                   security  : Security.Algebra2[F],
                                                   svrS      : Server.Session[F],
                                                   svr       : Server.Time[F],
@@ -437,10 +438,11 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
 
     private type Handler = BinaryData => F[Response \/ BinaryData]
 
-    private val ajaxLibrary: Map[String, Handler] = {
-      val m = new Url.Relative.MutableMap[Handler]
+    private val _library = {
+      val handlerMap = new Url.Relative.MutableMap[Handler]
+      var nameMap = Map.empty[Url.Relative, String]
 
-      def register(p: Protocol.Ajax[Pickler])(f: p.ServerSideFn[F]): Unit = {
+      def register(p: Protocol.Ajax[Pickler])(f: p.ServerSideFn[F], name: String): Unit = {
         assert(p.url.underlying startsWith Urls.ajaxRoot.underlying, s"${p.url} must start with ${Urls.ajaxRoot}")
 
         val h: Handler = reqBin =>
@@ -455,21 +457,37 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
               }
           }
 
-        m += (p.url -> h)
+        handlerMap += (p.url -> h)
+        nameMap += (p.url -> name)
       }
 
-      register(PublicSpaProtocols.login)(publicSpa.ajaxLogin)
+      // Register endpoints
+      register(PublicSpaProtocols.landingPage   )(publicSpa.ajaxLandingPage   , "landingPage")
+      register(PublicSpaProtocols.login         )(publicSpa.ajaxLogin         , "login")
+      register(PublicSpaProtocols.register1     )(publicSpa.ajaxRegister1     , "register1")
+      register(PublicSpaProtocols.register2     )(publicSpa.ajaxRegister2     , "register2")
+      register(PublicSpaProtocols.resetPassword1)(publicSpa.ajaxResetPassword1, "resetPassword1")
+      register(PublicSpaProtocols.resetPassword2)(publicSpa.ajaxResetPassword2, "resetPassword2")
 
-      m.toMapNoHeadSlash
+      (handlerMap.toMapNoHeadSlash, nameMap)
     }
+
+    private[this] val handlers: Map[String, Handler] =
+      _library._1
+
+    val pathsToNames: Map[Url.Relative, String] =
+      _library._2
 
     private val notFound: Response =
       Response(ResponseCmd.StatusOnly.NotFound, Cookie.Update.empty)
 
-    val all: Request ?=> F[RealRes] =
-      when(_.path.underlying startsWith Urls.ajaxRoot.underlying) { implicit req =>
+    val candidate: Url.Relative => Boolean =
+      Urls.ajaxRoot.isEqualToOrParentOf
 
-        ajaxLibrary.get(req.path.relativeUrlNoHeadSlash) match {
+    val routes: Request ?=> F[RealRes] =
+      when(r => candidate(r.path)) { implicit req =>
+
+        handlers.get(req.path.relativeUrlNoHeadSlash) match {
           case Some(handler) =>
 
             val fResponse: F[Response] =
@@ -572,19 +590,18 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
           whenValid(ops.sendMail(email))(
             jsonResponse)))
 
-    private def routes: Request ?=> F[RealRes] =
-      scope(opsRoot, ok | register1 | statsDb | statsUsers | task | testSendMail)
-
-    /** Is the request a candidate for ops route parsing? */
-    val candidate: Url.Relative => Boolean =
-      opsRoot.isEqualToOrParentOf
+    private def innerRoutes: Request ?=> F[RealRes] =
+      ok | register1 | statsDb | statsUsers | task | testSendMail
 
     private def fallback: Request => F[RealRes] = { implicit req =>
       makeRealF(notFoundSecure)
     }
 
-    val total: RealReq => F[RealRes] =
-      routes.withFallback(fallback).compose(readRealReq)
+    val candidate: Url.Relative => Boolean =
+      opsRoot.isEqualToOrParentOf
+
+    val routes: Request ?=> F[RealRes] =
+      when(r => candidate(r.path))(scope(opsRoot, innerRoutes).withFallback(fallback))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -619,13 +636,24 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
       ))
     }
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   /** Stateful routes (i.e. using a session) */
-  def mainDispatcher(devMode: Boolean, testMode: Boolean): RealReq => F[RealRes] =
+  def statefulDispatcher(devMode: Boolean, testMode: Boolean): RealReq => F[RealRes] =
     ( Main.routes
-    | Ajax.all
     | Option.when(devMode)(quickDev).flatten
     | Option.when(testMode)(unitTestLogin)
     ).withFallback(Main.fallback)
       .compose(readRealReq)
+
+  /** Stateless routes (i.e. using a session) */
+  val statelessDispatcher: RealReq => F[RealRes] =
+    ( Ajax.routes
+    | Ops.routes
+    ).withFallback(Main.fallback)
+      .compose(readRealReq)
+
+  def statelessCandidate(u: Url.Relative): Boolean =
+    Ajax.candidate(u) || Ops.candidate(u)
 
 }

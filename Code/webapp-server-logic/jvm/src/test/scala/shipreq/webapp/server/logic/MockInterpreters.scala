@@ -32,6 +32,9 @@ object MockDb {
 
     def toUserAndPassword: (User, PasswordAndSalt) =
       (toUser, ps)
+
+    def token: Security.SessionToken =
+      Security.SessionToken(Some(toUser))
   }
   object UserEntry {
     implicit def univEq: UnivEq[UserEntry] = UnivEq.derive
@@ -457,7 +460,7 @@ final class MockSecurity2(override val db: MockDb) extends Security.Algebra2[Nam
   def mkPasswordAndSalt(p: PlainTextPassword, salt: Salt): PasswordAndSalt =
     PasswordAndSalt(PasswordHash(s"${salt.base64}:${p.value}"), salt)
 
-  private val cookieName = Cookie.Name("MockSecurity")
+  val cookieName = Cookie.Name("MockSecurity")
 
   override def sessionPersist(token: SessionToken) = Name[Cookie.Update] {
     val header = System.nanoTime().toString + ":"
@@ -521,7 +524,7 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
   implicit val taskman        = new MockTaskman
   implicit val nameToName     = NaturalTransformation.refl[Name]
   implicit val metrics        = MetricsLogic.const(Name(()))
-  implicit val publicDispatch = PublicSpaLogic[Name, Name]: PublicSpaLogic.ForDispatch[Name]
+  implicit val publicSpa      = PublicSpaLogic[Name, Name]
 
   implicit object ops extends OpsEndpoints.Base[Name] {
     override val randomToken = Name("blah")

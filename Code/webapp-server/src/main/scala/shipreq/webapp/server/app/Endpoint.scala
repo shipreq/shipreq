@@ -1,10 +1,8 @@
 package shipreq.webapp.server.app
 
 import japgolly.univeq.UnivEq
-import scala.collection.JavaConverters._
-import shipreq.webapp.base.AssetManifest
-import shipreq.base.util.FreeOption
-import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.{AssetManifest, Urls, WebappConfig}
+import shipreq.base.util.{FreeOption, Url}
 import shipreq.webapp.server.logic.DispatchLogic
 
 sealed abstract class Endpoint(final val `type`: String, final val name: String)
@@ -30,8 +28,11 @@ object Endpoint {
   private[this] val opsPrefix           = DispatchLogic.opsRoot.relativeUrlNoTailSlash + "/"
   private[this] val isSlash             = (_: Char) == '/'
 
-  def resolver(metricsPath: String): (String, FreeOption[Endpoint]) => FreeOption[Endpoint] = {
+  type Resolver = (String, FreeOption[Endpoint]) => FreeOption[Endpoint]
+
+  def resolver(metricsPath: String, ajaxPaths: Map[Url.Relative, String]): Resolver = {
     val exactMatches = new java.util.HashMap[String, Endpoint]
+    for((u, n) <- ajaxPaths) exactMatches.put(u.relativeUrl, ServerSideProc(n))
     exactMatches.put(metricsPath                          , Metrics)
     exactMatches.put(s"/${WebappConfig.liftPath2}/lift.js", LiftJsStatic)
     exactMatches.put(AssetManifest.webappClientHomeJs     , AssetSpecific("js", "shipreq-home"))

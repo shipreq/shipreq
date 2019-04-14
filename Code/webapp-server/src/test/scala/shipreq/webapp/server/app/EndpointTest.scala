@@ -5,11 +5,13 @@ import japgolly.microlibs.testutil.TestUtil._
 import shipreq.base.util.univeq._
 import shipreq.base.util.FreeOption
 import shipreq.webapp.base.{AssetManifest, WebappConfig}
+import shipreq.webapp.client.public.PublicSpaProtocols
 
 object EndpointTest extends TestSuite {
 
   private val metricsPath = "/opsssss/metric"
-  private val endpoint = Endpoint.resolver(metricsPath)
+  private val ajaxPaths = Map(PublicSpaProtocols.login.url -> "login")
+  private val endpoint = Endpoint.resolver(metricsPath, ajaxPaths)
 
   def test(expect: Endpoint, path: String, providedOrNull: Endpoint = null): Unit =
     assertEq(path, endpoint(path, FreeOption(providedOrNull)).toOption, Some(expect))
@@ -57,13 +59,15 @@ object EndpointTest extends TestSuite {
     'semanticJs            - test(Endpoint.AssetSpecific("js", "semantic"),          AssetManifest.semanticJs)
     'semanticCss           - test(Endpoint.AssetSpecific("css", "semantic"),         AssetManifest.semanticCss)
 
+    'ajax - test(Endpoint.ServerSideProc("login"), PublicSpaProtocols.login.url.relativeUrl)
+
     'genericAssets {
-      'css   - test(Endpoint.AssetGeneric("css"),    "/x/x.css")
-      'svg   - test(Endpoint.AssetGeneric("svg"),    "/x/x.svg")
+      'css   - test(Endpoint.AssetGeneric("css"),    "/blah/x.css")
+      'svg   - test(Endpoint.AssetGeneric("svg"),    "/blah/x.svg")
       'svg   - test(Endpoint.AssetGeneric("svg"),    "/assets/shipreq-banner.svg")
-      'woff2 - test(Endpoint.AssetGeneric("woff2"),  "/x/x.woff2")
+      'woff2 - test(Endpoint.AssetGeneric("woff2"),  "/blah/x.woff2")
       'woff2 - test(Endpoint.AssetGeneric("woff2"),  "/assets/icons.woff2")
-      'jsMap - test(Endpoint.AssetGeneric("js.map"), "/x/x.js.map")
+      'jsMap - test(Endpoint.AssetGeneric("js.map"), "/blah/x.js.map")
       'jsMap - test(Endpoint.AssetGeneric("js.map"), "/j/webapp-client-public-fastopt.js.map")
     }
 

@@ -6,20 +6,24 @@ import monocle.macros.{GenIso, Lenses}
 import scalaz.\/
 import shipreq.base.util._
 import shipreq.webapp.base.data.SecurityToken
-import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.protocol2._
+import shipreq.webapp.base.protocol.BoopickleMacros._
+import shipreq.webapp.base.protocol.BinCodecGeneric._
+import shipreq.webapp.base.protocol.BinCodecBaseData._
+import shipreq.webapp.base.protocol.BinCodecUser._
 import shipreq.webapp.base.util.TextMod
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.validation._
 import shipreq.webapp.base.validation.Implicits._
-import BoopickleMacros._
-import BinCodecGeneric._
-import BinCodecBaseData._
-import BinCodecUser._
+import shipreq.webapp.base.Urls
 
 /**
   * Protocols for the Public SPA / webapp-client-public module.
   */
 object PublicSpaProtocols {
+
+  private def newAjax[Req: Pickler, Res: Pickler](path: String): Protocol.Ajax.Simple[Pickler, Req, Res] =
+    Protocol.Ajax.Simple(Urls.ajaxRoot / "pub" / path, Protocol(implicitly), Protocol(implicitly))
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object LandingPage {
@@ -58,14 +62,12 @@ object PublicSpaProtocols {
           .imapInput(GenIso.fields[Untyped])
           .mapValid((Request.apply _).tupled)
     }
-
-    val Fn = ServerSideProc.Protocol[Request, ErrorMsg \/ Unit]("Public.LandingPage")
   }
+
+  val landingPage = newAjax[LandingPage.Request, ErrorMsg \/ Unit]("lp")
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object Register {
-    val Fn1 = ServerSideProc.Protocol[EmailAddr, ErrorMsg \/ Unit]("Public.Register1")
-
     final case class Request(token     : SecurityToken,
                              personName: PersonName,
                              username  : Username,
@@ -100,10 +102,10 @@ object PublicSpaProtocols {
       implicit val pickler: Pickler[Response] = derivePickler[Response]
       implicit def univEq: UnivEq[Response] = UnivEq.derive
     }
-
-    /** Upon successful submission the user account is activated. */
-    val Fn2 = ServerSideProc.Protocol[Request, ErrorMsg \/ Response]("Public.Register2")
   }
+
+  val register1 = newAjax[EmailAddr, ErrorMsg \/ Unit]("reg1")
+  val register2 = newAjax[Register.Request, ErrorMsg \/ Register.Response]("reg2")
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object Login {
@@ -127,13 +129,12 @@ object PublicSpaProtocols {
           .imapInput(GenIso.fields[Untyped])
           .mapValid((Request.apply _).tupled)
     }
-    val Fn = ServerSideProc.Protocol[Request, Permission]("Public.Login")
   }
+
+  val login = newAjax[Login.Request, Permission]("l")
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object ResetPassword {
-    val Fn1 = ServerSideProc.Protocol[Username \/ EmailAddr, Unit]("Public.ResetPassword1")
-
     final case class Request(token: SecurityToken, newPassword: PlainTextPassword)
     implicit val pickler: Pickler[Request] = pickleCaseClass[Request]
 
@@ -146,28 +147,18 @@ object PublicSpaProtocols {
       implicit val pickler: Pickler[Response] = derivePickler[Response]
       implicit def univEq: UnivEq[Response] = UnivEq.derive
     }
-
-    val Fn2 = ServerSideProc.Protocol[Request, ErrorMsg \/ Response]("Public.ResetPassword2")
   }
+
+  val resetPassword1 = newAjax[Username \/ EmailAddr, Unit]("rp1")
+  val resetPassword2 = newAjax[ResetPassword.Request, ErrorMsg \/ ResetPassword.Response]("rp2")
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   final case class InitData(publicRegistration: Permission,
-                            loggedInUser      : Option[Username],
-                            landingPage       : LandingPage.Fn.Instance,
-                            register1         : Register.Fn1.Instance,
-                            register2         : Register.Fn2.Instance,
-                            login             : Login.Fn.Instance,
-                            resetPassword1    : ResetPassword.Fn1.Instance,
-                            resetPassword2    : ResetPassword.Fn2.Instance)
-
-  import LandingPage  .Fn .{pickleInstance => _i1}
-  import Register     .Fn1.{pickleInstance => _i2}
-  import Register     .Fn2.{pickleInstance => _i3}
-  import Login        .Fn .{pickleInstance => _i4}
-  import ResetPassword.Fn1.{pickleInstance => _i5}
-  import ResetPassword.Fn2.{pickleInstance => _i6}
-  implicit val picklerInitData = pickleCaseClass[InitData]
+                            loggedInUser      : Option[Username])
+  object InitData {
+    implicit val pickler = pickleCaseClass[InitData]
+  }
 
   final val EntryPointName = "A"
   val EntryPoint = ClientSideProc[InitData](EntryPointName)

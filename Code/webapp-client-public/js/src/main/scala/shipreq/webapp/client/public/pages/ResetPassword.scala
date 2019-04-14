@@ -10,7 +10,7 @@ import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{Disabled, Enabled, SecurityToken}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ValidationUX
-import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.protocol2.ServerSideProcInvoker
 import shipreq.webapp.base.ui.semantic.{Form, Icon, Input, Message}
 import shipreq.webapp.base.user.{PlainTextPassword, UserValidators}
 import shipreq.webapp.client.public.PublicSpaProtocols.{ResetPassword => P}

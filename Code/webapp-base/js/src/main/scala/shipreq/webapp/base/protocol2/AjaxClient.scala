@@ -4,10 +4,19 @@ import boopickle._
 import japgolly.scalajs.react.AsyncCallback
 import japgolly.scalajs.react.extra.Ajax
 import org.scalajs.dom.ext.AjaxException
+import shipreq.base.util.ErrorMsg
 
 trait AjaxClient[F[_]] {
   def apply(p: Protocol.Ajax[F])
            (req: p.protocol.RequestType): AsyncCallback[p.protocol.ResponseType]
+
+  final def invoker(p: Protocol.Ajax[F]): ServerSideProcInvoker[p.protocol.RequestType, ErrorMsg, p.protocol.ResponseType] =
+    new ServerSideProcInvoker[p.protocol.RequestType, ErrorMsg, p.protocol.ResponseType](
+      (req, onOK, onKO) => apply(p)(req).attempt.flatMap {
+        case Right(res) => onOK(res).asAsyncCallback
+        case Left (err) => onKO(ServerSideProcInvoker.throwableToErrorMsg(err)).asAsyncCallback
+      }.toCallback
+    )
 }
 
 object AjaxClient {

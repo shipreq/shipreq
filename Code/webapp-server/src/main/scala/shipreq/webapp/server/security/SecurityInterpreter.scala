@@ -11,6 +11,7 @@ import javax.crypto.spec.PBEKeySpec
 import net.logstash.logback.encoder.org.apache.commons.lang.StringEscapeUtils
 import org.apache.shiro.authc.AuthenticationException
 import scala.concurrent.blocking
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 import scalaz.syntax.monad._
 import scalaz.{-\/, Monad, \/, \/-}
@@ -145,50 +146,61 @@ final class SecurityInterpreter2[F[_]](implicit F: Monad[F],
     Cookie.Update.add(cookie)
   }
 
-  private def _parseAndVerifyJws(jws: String, parser: JwtParser): Option[SessionToken] =
-    try {
-      def warnThrow(errMsg: String): Nothing = {
-        logger.warn(errMsg)
+  private def _parseAndVerifyJws(jws: String, parser: JwtParser): Try[SessionToken] =
+    Try {
+      def fail(errMsg: String): Nothing = {
+        // logger.warn(errMsg)
         throw new RuntimeException(errMsg)
       }
 
-      val claims   = parser.parseClaimsJws(jws).getBody
-      val username = Username(claims.getSubject)
-      val userIdOb = Obfuscated[UserId](claims.get(claimUserId, classOf[String]))
-      val userId   = Obfuscators.userId.deobfuscate(userIdOb) match {
-        case \/-(x) => x
-        case -\/(e) => warnThrow(s"Failed to deobfuscate user ID ${StringEscapeUtils.escapeJava(userIdOb.value)}: $e")
+      val claims = parser.parseClaimsJws(jws).getBody
+      val subject = claims.getSubject
+      if (subject eq null)
+        SessionToken.anonymous
+      else {
+        val username = Username(subject)
+        val userIdOb = Obfuscated[UserId](claims.get(claimUserId, classOf[String]))
+        val userId   = Obfuscators.userId.deobfuscate(userIdOb) match {
+          case \/-(x) => x
+          case -\/(e) => fail(s"Failed to deobfuscate user ID ${StringEscapeUtils.escapeJava(userIdOb.value)}: $e")
+        }
+        val roles = claims.get(claimRoles) match {
+          case null      => Set.empty[String]
+          case s: String => s.split(',').toSet
+          case x         => fail(s"Failed to parse roles: $x")
+        }
+        val user = User(userId, username, roles)
+        SessionToken(Some(user))
       }
-      val roles = claims.get(claimRoles) match {
-        case null      => Set.empty[String]
-        case s: String => s.split(',').toSet
-        case x         => warnThrow(s"Failed to parse roles: $x")
-      }
-      val user = User(userId, username, roles)
-      Some(SessionToken(Some(user)))
-
-    } catch {
-      case NonFatal(_) =>
-        None
     }
 
-  private[this] val parseAndVerifyJws: String => Option[SessionToken] =
+  private[this] val parseAndVerifyJws: String => Try[SessionToken] =
     config.jwtSecretPrevious match {
       case None =>
         _parseAndVerifyJws(_, jwtMainParser)
 
       case Some(altKey) =>
         val altParser = Jwts.parser().setSigningKey(Keys.hmacShaKeyFor(altKey.bytes))
-        j => _parseAndVerifyJws(j, jwtMainParser) orElse _parseAndVerifyJws(j, altParser)
+        j => {
+          val t1 = _parseAndVerifyJws(j, jwtMainParser)
+          if (t1.isSuccess)
+            t1
+          else {
+            val t2 = _parseAndVerifyJws(j, altParser)
+            if (t2.isSuccess) t2 else t1
+          }
+        }
     }
 
   override def sessionRestore(cookies: LookupFn): F[Option[SessionToken]] =
     cookies(cookieName) match {
       case Some(jws) =>
         F.point {
-          parseAndVerifyJws(jws).orElse {
-            logger.warn("Failed to parse/verify JWT: " + StringEscapeUtils.escapeJava(jws))
-            None
+          parseAndVerifyJws(jws) match {
+            case Success(t) => Some(t)
+            case Failure(t) =>
+              logger.warn("Failed to parse/verify JWT: " + StringEscapeUtils.escapeJava(jws), t)
+              None
           }
         }
 

@@ -64,6 +64,10 @@ object Cookie {
     val empty = apply(Nil, Nil)
     def add(c: Cookie) = apply(c :: Nil, Nil)
   }
+
+  implicit def univEqName  : UnivEq[Name]   = UnivEq.derive
+  implicit def univEqCookie: UnivEq[Cookie] = UnivEq.derive
+  implicit def univEqUpdate: UnivEq[Update] = UnivEq.derive
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

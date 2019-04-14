@@ -1,31 +1,37 @@
 package shipreq.webapp.server.logic
 
-import upickle.Js
+import boopickle.Pickler
 import scalaz.{Name, Need, \/-}
+import upickle.Js
 import utest._
-import shipreq.base.util.{Invalid, Url}
 import shipreq.base.test.BaseTestUtil._
-import shipreq.webapp.base.data._
+import shipreq.base.util.{BinaryData, Invalid, Url}
 import shipreq.webapp.base.Urls
-import DispatchLogic._
-import Method._
-import shipreq.webapp.base.user.EmailAddr
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol2.{BinaryJvm, Protocol}
+import shipreq.webapp.base.user.{EmailAddr, PersonName}
+import shipreq.webapp.client.public.PublicSpaProtocols
+import shipreq.webapp.server.logic.DispatchLogic.Method._
+import shipreq.webapp.server.logic.DispatchLogic._
 
 object DispatchLogicTest extends TestSuite {
 
   final case class TestRequest(method : Method,
                                path   : Url.Relative,
+                               body   : Option[BinaryData],
                                params : Map[String, String],
                                cookies: Map[Cookie.Name, String]) {
 
     def toAbstract: Request[TestRequest] =
-      Request(method, path, Need(None), params.get, cookies.get, this)
+      Request(method, path, Need(body), params.get, cookies.get, this)
   }
 
   def patchCookies(m: Map[Cookie.Name, String], u: Cookie.Update): Map[Cookie.Name, String] =
     m -- u.remove ++ u.add.map(c => c.name -> c.value)
 
-  final case class TestResponse(cmd: ResponseCmd, cookies: Map[Cookie.Name, String]) {
+  final case class TestResponse(cmd         : ResponseCmd,
+                                cookieUpdate: Cookie.Update,
+                                cookies     : Map[Cookie.Name, String]) {
     def authUser(implicit s: Security.Algebra2[Name]) =
       s.sessionRestore(cookies.get).value.flatMap(_.authenticatedUser)
   }
@@ -35,9 +41,9 @@ object DispatchLogicTest extends TestSuite {
 
     val dispatcher = new DispatchLogic[Name, TestRequest, TestResponse](
       _.toAbstract,
-      (req, res) => Name(TestResponse(res.cmd, patchCookies(req.cookies, res.cookies))))
+      (req, res) => Name(TestResponse(res.cmd, res.cookies, patchCookies(req.cookies, res.cookies))))
 
-    val dispatch = dispatcher.mainDispatcher(false, false)
+    val statefulDispatcher = dispatcher.statefulDispatcher(devMode = false, testMode = false)
 
     db.users ::= user2
     db.users ::= user3
@@ -56,25 +62,39 @@ object DispatchLogicTest extends TestSuite {
 
   def run(url    : Url.Relative,
           method : Method                   = Get,
+          body   : Option[BinaryData]       = None,
           params : Map[String, String]      = Map.empty,
           cookies: Map[Cookie.Name, String] = Map.empty)
-         (implicit logIn: MockDb.UserEntry = null): TestResponse = {
-    val cookies2 = if (logIn eq null) cookies else
-        patchCookies(cookies, security2.sessionPersist(Security.SessionToken(Some(logIn.toUser))).value)
-    val req = TestRequest(method, url, params, cookies2)
-    val d = if (dispatcher.Ops.candidate(url))
-      dispatcher.Ops.total
+         (implicit token: Security.SessionToken = null): (TestRequest, TestResponse) = {
+    val cookies2 =
+      if (token ne null)
+        patchCookies(cookies, security2.sessionPersist(token).value)
+      else
+        cookies
+    val req = TestRequest(method, url, body, params, cookies2)
+    val d = if (dispatcher.statelessCandidate(url))
+      dispatcher.statelessDispatcher
     else
-      dispatch
-    d(req).value
+      statefulDispatcher
+    (req, d(req).value)
+  }
+
+  def runAjax(p      : Protocol.Ajax[Pickler])
+             (req    : p.prepReq.Type,
+              method : Method                   = Post,
+              cookies: Map[Cookie.Name, String] = Map.empty)
+             (implicit token: Security.SessionToken = null) = {
+    val bin = BinaryJvm.encode(p.prepReq)(req)
+    run(p.url, method, Some(bin), Map.empty, cookies)(token)
   }
 
   def testRun(expect: ResponseCmd,
               url   : Url.Relative,
               method: Method              = Get,
+              body   : Option[BinaryData] = None,
               params: Map[String, String] = Map.empty)
-             (implicit logIn: MockDb.UserEntry = null): TestResponse = {
-    val actual = run(url, method, params)(logIn)
+             (implicit token: Security.SessionToken = null): TestResponse = {
+    val actual = run(url, method, body, params)(token)._2
     assertEq(s"${method.toString.toUpperCase} ${url.relativeUrl} ${params.mkString(", ")}", actual.cmd, expect)
     actual
   }
@@ -82,10 +102,10 @@ object DispatchLogicTest extends TestSuite {
   def testNonGet(url: Url.Relative): Unit =
     for {
       method <- List[Method](Post, Other)
-      logIn <- List[MockDb.UserEntry](null, user2)
+      user   <- List[MockDb.UserEntry](null, user2)
     } {
-        val r = testRun(ResponseCmd.StatusOnly.MethodNotAllowed, url, method)(logIn)
-        assertEq("405 shouldn't log user out", r.authUser, Option(logIn).map(_.toUser))
+        val r = testRun(ResponseCmd.StatusOnly.MethodNotAllowed, url, method)(user)
+        assertEq("405 shouldn't log user out", r.authUser, Option(user).map(_.toUser))
       }
 
   def testNeedAuth(url: Url.Relative): Unit = {
@@ -109,6 +129,9 @@ object DispatchLogicTest extends TestSuite {
   implicit def autoXID(p: ProjectId): ProjectId.Public =
     Obfuscators.projectId.obfuscate(p)
 
+  implicit def userToToken(u: MockDb.UserEntry): Security.SessionToken =
+    if (u eq null) null else u.token
+
   override def tests = Tests {
 
     'publicSpa {
@@ -119,17 +142,17 @@ object DispatchLogicTest extends TestSuite {
       'nonGet - static.foreach(p => testNonGet(p.url))
 
       'loggedIn {
-        implicit def login = user2
+        implicit def token = user2.token
         'loginRedirects - assertUnprotected(testRun(ResponseCmd.redirectToMemberHome, Login.url))
         'nonLoginRenders - static.whole.filter(_ !=* Login).foreach(p =>
-          assertUnprotected(testRun(ResponseCmd.ServePublicSpa(Some(login.toUser)), p.url)))
+          assertUnprotected(testRun(ResponseCmd.ServePublicSpa(token.authenticatedUser), p.url)))
       }
 
       'loginToMember - List(Urls.memberHome, Urls.project(ProjectId(1))).foreach(url =>
         testRun(ResponseCmd.ServePublicSpa(None), s"/login/${url.relativeUrlNoHeadSlash}"))
 
       'resetPassword2 {
-        svr.run(PublicSpaLogic[Name, Name].initData(None).value.resetPassword1)(\/-(user2.emailAddr))
+        publicSpa.ajaxResetPassword1(\/-(user2.emailAddr)).value
 
         'invalid - assertProtected(testRun(ResponseCmd.redirectToPublicHome, ResetPassword.url(SecurityToken("wwwweeeeeeeeeee33333"))))
         'valid   - assertProtected(testRun(ResponseCmd.ServePublicSpa(None), ResetPassword.url(db.prevToken())))
@@ -140,7 +163,7 @@ object DispatchLogicTest extends TestSuite {
       }
 
       'register2 {
-        svr.run(PublicSpaLogic[Name, Name].initData(None).value.register1)(EmailAddr("x@x.io")).needRight
+        publicSpa.ajaxRegister1(EmailAddr("x@x.io")).value.needRight
 
         'invalid - assertProtected(testRun(ResponseCmd.redirectToPublicHome, Register2.url(SecurityToken("wwwweeeeeeeeeee66666"))))
         'valid   - assertProtected(testRun(ResponseCmd.ServePublicSpa(None), Register2.url(db.prevToken())))
@@ -191,6 +214,45 @@ object DispatchLogicTest extends TestSuite {
       'nonGet - testNonGet(Urls.logout)
     }
 
+    'ajax {
+      def test(token: Option[Security.SessionToken])
+              (expectFailure: Option[Int],
+               expectNewToken: Option[Security.SessionToken]) = {
+
+        val lpReq = PublicSpaProtocols.LandingPage.Request(
+          PersonName("Mike"),
+          EmailAddr("qwe@jasdkf.com"),
+          Some("yo"),
+          true)
+
+        val (req, res) = runAjax(PublicSpaProtocols.landingPage)(lpReq)(token.orNull)
+
+        expectFailure match {
+          case Some(c) => assertEq(res.cmd, ResponseCmd.StatusOnly(c))
+          case None => res.cmd match {
+            case ResponseCmd.Binary(200, _) => ()
+            case x => fail("Expected ResponseCmd.Binary(200, _), got " + x)
+          }
+        }
+
+        assertEq(res.cookieUpdate.remove, Nil)
+        expectNewToken match {
+          case None =>
+            assertEq(res.cookieUpdate.add, Nil)
+          case Some(t) =>
+            assertEq(res.cookieUpdate.add.map(_.name), security2.cookieName :: Nil)
+            val v1 = req.cookies(security2.cookieName)
+            val v2 = res.cookies(security2.cookieName)
+            assert(v1 != v2) // JWT expected to change (new expiry)
+            assertEq(security2.sessionRestore(res.cookies.get).value, Some(t))
+        }
+      }
+
+      'requireJwt - test(None)(Some(403), None)
+      'anon - test(Some(Security.SessionToken.anonymous))(None, Some(Security.SessionToken.anonymous))
+      'auth - test(Some(user2.token))(None, Some(user2.token))
+    }
+
     'ops {
       'ok - testRun(ResponseCmd.Text(200, "OK."), "/ops/ok")
 
@@ -199,7 +261,7 @@ object DispatchLogicTest extends TestSuite {
 
       'register1 - assertProtected(testRun(
         ResponseCmd.Json(200, Js.Obj("taskId" -> Js.Num(1))),
-        register1Url, Post, register1Params))
+        register1Url, Post, None, register1Params))
 
       // For security reasons, the same response is observed for all failures.
       // This prevents hackers determining:
@@ -207,7 +269,7 @@ object DispatchLogicTest extends TestSuite {
       // - the secret key param
       // - the secret key value
       def testKO(url: Url.Relative, method: Method, params: Map[String, String] = Map.empty) =
-        assertProtected(testRun(ResponseCmd.Text(404, "Not found."), url, method, params))
+        assertProtected(testRun(ResponseCmd.StatusOnly(404), url, method, None, params))
 
       'root      - testKO("/ops", Get)
       'notFound  - testKO("/ops/what", Get)

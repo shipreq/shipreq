@@ -11,7 +11,7 @@ import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.base.user.User
 import shipreq.webapp.server.ServerConfig
-import shipreq.webapp.server.logic.{MetricsLogic, Security, SessionId}
+import shipreq.webapp.server.logic.{DispatchLogic, MetricsLogic, Security, SessionId}
 import shipreq.webapp.server.util.CommDir
 
 object PrometheusMetrics extends HasLogger {
@@ -20,16 +20,20 @@ object PrometheusMetrics extends HasLogger {
 
   final class StatusCode(val value: String) extends AnyVal
   object StatusCode {
+    private[this] val StatusCode101 = "101"
     private[this] val StatusCode200 = "200"
     private[this] val StatusCode302 = "302"
     private[this] val StatusCode304 = "304"
+    private[this] val StatusCode403 = "403"
     private[this] val StatusCode404 = "404"
     def apply(value: Int): StatusCode =
       new StatusCode(value match {
         case 200 => StatusCode200
         case 302 => StatusCode302
         case 304 => StatusCode304
+        case 403 => StatusCode403
         case 404 => StatusCode404
+        case 101 => StatusCode101
         case _   => value.toString
       })
   }
@@ -142,14 +146,11 @@ object PrometheusMetrics extends HasLogger {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  final class Unsafe(metricsCfg: ServerConfig.Prometheus) {
+  final class Unsafe(endpointResolver: Endpoint.Resolver) {
     import Metrics._
 
     private def unsafeSecondsSince(startNanos: Long): Double =
       SimpleTimer.elapsedSecondsFromNanos(startNanos, System.nanoTime())
-
-    private[this] val getEndpoint =
-      Endpoint.resolver(metricsPath = metricsCfg.path)
 
     private[this] val endpointVar =
       Unsafe.endpointVar
@@ -169,7 +170,7 @@ object PrometheusMetrics extends HasLogger {
 
         implicit val endpoint: Endpoint = {
           val provided = FreeOption(endpointVar.get())
-          getEndpoint(path, provided).getOrElse {
+          endpointResolver(path, provided).getOrElse {
             logger.warn(s"Unknown endpoint: ${method.value} $path")
             Endpoint.Unknown
           }

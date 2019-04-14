@@ -9,18 +9,19 @@ import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.test._
+import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.client.public.PublicSpaProtocols.Register._
 import shipreq.webapp.client.public.PublicSpaTestUtil._
 import shipreq.webapp.client.public.spa._
 
 object Register2Tester {
 
-  val * = Dsl[TestClientProtocol, Obs, Unit]
+  val * = Dsl[TestAjaxClient, Obs, Unit]
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final class Obs($: DomZipperJs, cp: TestClientProtocol) {
-    val reqsSent = cp.reqs
+  final class Obs($: DomZipperJs, ajax: TestAjaxClient) {
+    val reqsSent = ajax.reqs
 
     val form: Option[FormObs] =
       $.collect01(".ui.form").doms.map(_ => new FormObs($))
@@ -74,7 +75,7 @@ object Register2Tester {
       reqsSent.assert.increment
 
   def serverResponse(r: Response): *.Actions =
-    *.action(s"Server responds with $r")(_.ref.respondToLastP(Fn2)(\/-(r))) <+ reqsSent.assert.not.equal(0)
+    *.action(s"Server responds with $r")(_.ref.respondToLast(PublicSpaProtocols.register2)(\/-(r))) <+ reqsSent.assert.not.equal(0)
 
   private val pwd = "qqqqqq123QWE"
 
@@ -122,8 +123,8 @@ object Register2Test extends TestSuite {
 
   def test(plan: *.Plan): Unit = {
     val t = new ForTestState
-    import t.cp
-    t(page)(h => plan.test(Observer.watch(new Obs(h, cp))).stateless.withRef(cp).run())
+    import t.ajax
+    t(page)(h => plan.test(Observer.watch(new Obs(h, ajax))).stateless.withRef(ajax).run())
   }
 
   val page = Page.Token(Urls.PublicSpaRoute.Register2, SecurityToken("abcd1234"))

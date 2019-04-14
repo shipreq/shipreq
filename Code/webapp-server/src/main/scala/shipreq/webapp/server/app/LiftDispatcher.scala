@@ -48,8 +48,8 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
   import LiftDispatcher._
 
   def init(): Unit = {
-    LiftRules.dispatch.append(mainDispatchPF)
-    LiftRules.statelessDispatch.prepend(opsDispatchPF)
+    LiftRules.dispatch.append(statefulDispatchPF)
+    LiftRules.statelessDispatch.prepend(statelessDispatchPF)
     LiftRules.statelessDispatch.prepend(removeWwwSubdomainPF)
   }
 
@@ -144,7 +144,7 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
     implicit val taskman   = global.taskman
     implicit val security  = global.security
 implicit val security2  = global.security2
-    implicit val publicSpa = global.logic.publicSpaDispatch
+    implicit val publicSpa = global.logic.publicSpa
     implicit val ops       = global.ops
     implicit val db        = DB.SecurityTokenReadOnly.trans(DbInterpreter.SecurityTokenReadOnly)(global.db.fx.trans)
     implicit val server    = ServerInterpreter
@@ -153,7 +153,7 @@ implicit val security2  = global.security2
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  val mainDispatchPF: LiftRules.DispatchPF = {
+  val statefulDispatchPF: LiftRules.DispatchPF = {
 
     /** Is a request by/to Lift (eg. Ajax, Comet) */
     def isLiftRequest(r: LiftReq): Boolean = {
@@ -168,7 +168,7 @@ implicit val security2  = global.security2
     def hasHtmlFileExtension(r: LiftReq): Boolean =
       r.request.uri endsWith ".html"
 
-    val dispatch = logic.mainDispatcher(devMode = Props.devMode, testMode = Props.testMode)
+    val dispatch = logic.statefulDispatcher(devMode = Props.devMode, testMode = Props.testMode)
 
     {
       case r if (r.request ne null) && noFileExtension(r) && !isLiftRequest(r) => () => dispatch(r).unsafeRun()
@@ -178,13 +178,11 @@ implicit val security2  = global.security2
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  val opsDispatchPF: LiftRules.DispatchPF = {
-    val dispatch = logic.Ops.total
-    val candidate = logic.Ops.candidate
+  val statelessDispatchPF: LiftRules.DispatchPF = {
+    val dispatch = logic.statelessDispatcher
 
     {
-      case r if (r.request ne null) && candidate(liftReqUrl(r)) =>
-        () => dispatch(r).unsafeRun()
+      case r if (r.request ne null) && logic.statelessCandidate(liftReqUrl(r)) => () => dispatch(r).unsafeRun()
     }
   }
 

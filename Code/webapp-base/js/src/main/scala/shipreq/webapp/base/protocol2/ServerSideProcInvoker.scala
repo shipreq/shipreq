@@ -1,4 +1,4 @@
-package shipreq.webapp.base.protocol
+package shipreq.webapp.base.protocol2
 
 import japgolly.scalajs.react.{Callback, Reusability}
 import org.scalajs.dom.ext.AjaxException

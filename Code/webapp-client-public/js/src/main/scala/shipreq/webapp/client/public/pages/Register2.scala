@@ -13,7 +13,7 @@ import shipreq.base.util.{ErrorMsg, Invalid}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ValidationUX
-import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.protocol2.ServerSideProcInvoker
 import shipreq.webapp.base.ui.semantic.{Form, Icon, Input, Message}
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.validation.Implicits._

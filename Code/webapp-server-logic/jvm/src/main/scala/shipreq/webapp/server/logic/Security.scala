@@ -1,6 +1,7 @@
 package shipreq.webapp.server.logic
 
 import com.typesafe.scalalogging.StrictLogging
+import japgolly.univeq.UnivEq
 import scalaz.\/
 import shipreq.webapp.base.user._
 
@@ -65,51 +66,7 @@ object Security {
   object SessionToken extends StrictLogging {
     val anonymous = apply(None)
 
-//    val jwtWriter: Writer[SessionToken] = {
-//      val empty = Js.Obj()
-//      Writer[SessionToken](_.authenticatedUser match {
-//        case Some(u) =>
-//          var userFields: List[(String, Js.Value)] =
-//            "id" -> Js.Str(Obfuscators.userId.obfuscate(u.id).value) ::
-//            "un" -> Js.Str(u.username.value) ::
-//            Nil
-//          if (u.roles.nonEmpty)
-//            userFields ::= "rl" -> Js.Arr(u.roles.iterator.map(Js.Str).toSeq: _*)
-//          Js.Obj("usr" -> Js.Obj(userFields: _*))
-//        case None => empty
-//      })
-//    }
-//
-//    val jwtReader: Reader[SessionToken] =
-//      Reader { case Js.Obj(kvs@_*) =>
-//        if (kvs.isEmpty)
-//          anonymous
-//        else {
-//          def warnThrow(errMsg: String): Nothing = {
-//            logger.warn(errMsg)
-//            throw new RuntimeException(errMsg)
-//          }
-//          var id      : UserId = null
-//          var username: Username = null
-//          var roles   = Set.empty[String]
-//          kvs foreach {
-//            case ("id", Js.Str(v)) => Obfuscators.userId.deobfuscate(Obfuscated(v)) match {
-//              case \/-(x) => id = x
-//              case -\/(e) => warnThrow("Failed to deobfuscate user ID in JWT: " + e)
-//            }
-//            case ("un", Js.Str(v)) => username = Username(v)
-//            case ("rl", Js.Arr(rs@_*)) => roles = rs.map {
-//              case Js.Str(r) => r
-//              case x => warnThrow(s"Unknown role in JWT: $x")
-//            }.toSet
-//            case (k, v) => warnThrow(s"Unknown data in JWT: $k:$v")
-//          }
-//          if (id eq null) warnThrow("JWT missing id field.")
-//          if (username eq null) warnThrow("JWT missing username field.")
-//          val user = User(id, username, roles)
-//          SessionToken(Some(user))
-//        }
-//      }
+    implicit def univEq: UnivEq[SessionToken] = UnivEq.derive
   }
 
   // ===================================================================================================================
