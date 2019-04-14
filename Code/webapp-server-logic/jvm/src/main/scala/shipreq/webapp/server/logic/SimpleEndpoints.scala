@@ -8,7 +8,7 @@ object SimpleEndpoints extends HasLogger {
 
   def logout[F[_]](implicit F: Monad[F],
                    metrics: MetricsLogic[F],
-                   security: Security.Algebra2[F],
+                   security: Security.Algebra[F],
                    svr: Server.Session[F]): F[Cookie.Update] = {
 
     val updateMetrics: F[Unit] =

@@ -35,14 +35,10 @@ object UserFixture {
                             newsletter: Boolean) {
     var _id: Option[UserId] = None
     def id: UserId = _id.getOrElse(sys error s"UserId unavailable for $this")
-    val ps = PrepareEnv.global().security2.hashPassword(password).unsafeRun()
+    val ps = PrepareEnv.global().security.hashPassword(password).unsafeRun()
     def hashedPassword = ps.passwordHash
     def salt = ps.salt
     def toUserDescriptor = User(id, username, roles)
-
-    def withLoggedIn[A](a: => A): A =
-      WebappServerTestUtil.withLoggedIn(username, password)(a)
-
     def toToken = Security.SessionToken(Some(toUserDescriptor))
   }
 

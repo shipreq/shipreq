@@ -18,7 +18,6 @@ import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.app._
 import shipreq.webapp.server.lib.Taskman
-import shipreq.webapp.server.security.AppSecurityRealm
 
 @Lenses
 final case class BootConfig(db: DbConfig, server: ServerConfig, report: ConfigReport)
@@ -44,7 +43,6 @@ class Boot {
     // Create services
     implicit val serverConfig = cfg.server
     implicit val dbAccess = initDatabase(cfg)
-    initShiro()
     configureLift()
     Global.Instance = Global.default
 
@@ -150,9 +148,6 @@ class Boot {
     // Handle 404s, 500s, etc
     HttpStatusHandler.init()
   }
-
-  def initShiro(): Unit =
-    AppSecurityRealm.init()
 
   def initDatabase(cfg: BootConfig): DbAccess = {
     val dbCfg = cfg.db

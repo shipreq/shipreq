@@ -32,7 +32,7 @@ object DispatchLogicTest extends TestSuite {
   final case class TestResponse(cmd         : ResponseCmd,
                                 cookieUpdate: Cookie.Update,
                                 cookies     : Map[Cookie.Name, String]) {
-    def authUser(implicit s: Security.Algebra2[Name]) =
+    def authUser(implicit s: Security.Algebra[Name]) =
       s.sessionRestore(cookies.get).value.flatMap(_.authenticatedUser)
   }
 
@@ -68,7 +68,7 @@ object DispatchLogicTest extends TestSuite {
          (implicit token: Security.SessionToken = null): (TestRequest, TestResponse) = {
     val cookies2 =
       if (token ne null)
-        patchCookies(cookies, security2.sessionPersist(token).value)
+        patchCookies(cookies, security.sessionPersist(token).value)
       else
         cookies
     val req = TestRequest(method, url, body, params, cookies2)
@@ -145,7 +145,7 @@ object DispatchLogicTest extends TestSuite {
         val u = user2
         val req = PublicSpaProtocols.Login.Request(-\/(u.username), user2password)
         val res = runAjax(PublicSpaProtocols.login)(req)(Security.SessionToken.anonymous)._2
-        val tok = security2.sessionRestore(res.cookies.get).value
+        val tok = security.sessionRestore(res.cookies.get).value
         assertEq(tok, Some(user2.token))
       }
 
@@ -247,11 +247,11 @@ object DispatchLogicTest extends TestSuite {
           case None =>
             assertEq(res.cookieUpdate.add, Nil)
           case Some(t) =>
-            assertEq(res.cookieUpdate.add.map(_.name), security2.cookieName :: Nil)
-            val v1 = req.cookies(security2.cookieName)
-            val v2 = res.cookies(security2.cookieName)
+            assertEq(res.cookieUpdate.add.map(_.name), security.cookieName :: Nil)
+            val v1 = req.cookies(security.cookieName)
+            val v2 = res.cookies(security.cookieName)
             assert(v1 != v2) // JWT expected to change (new expiry)
-            assertEq(security2.sessionRestore(res.cookies.get).value, Some(t))
+            assertEq(security.sessionRestore(res.cookies.get).value, Some(t))
         }
       }
 

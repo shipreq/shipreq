@@ -28,19 +28,13 @@ object PrepareEnv {
     metrics  = MetricsLogic.const(Fx.unit),
     ops      = null,
     security = null,
-    security2 = null,
     taskman  = null,
     trace    = TraceLogic.off)
 
   def global() = Global.Instance
 
-  val shiro: () => Unit = onceUnit {
-    boot.initShiro()
-  }
-
   val lift: () => Unit = onceUnit {
     // if (!LiftRules.doneBoot) {
-    shiro()
     boot.configureLift()
   }
 
@@ -58,7 +52,6 @@ object PrepareEnv {
     new DbInterpreter()(global().config.security)
 
   lazy val security = {
-    PrepareEnv.shiro()
     db()
     global().security
   }

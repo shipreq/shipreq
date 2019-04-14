@@ -69,7 +69,7 @@ object PublicSpaLogic extends HasLogger {
                                  db      : DB.ForPublicSpa[D],
                                  runDB   : D ~> F,
                                  metrics : MetricsLogic[F],
-                                 security: Security.Algebra2[F],
+                                 security: Security.Algebra[F],
                                  svr     : Server.Algebra[F],
                                  taskman : TaskmanApi[F],
                                  D       : Monad[D],

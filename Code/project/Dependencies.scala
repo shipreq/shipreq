@@ -136,13 +136,6 @@ object Dependencies {
     val all     = api ++ impl ++ jackson
   }
 
-  object Shiro {
-    private val mm = MultiModule.java("org.apache.shiro", "1.3.2")
-    val core = mm("shiro-core") ++ SLF4J.jcl // Use SLF4J in place of commons-logging
-    val web  = mm("shiro-web")
-    val all  = core ++ web
-  }
-
   object Akka {
     val shortVer = "2.5"
     private val mm = MultiModule.scala("com.typesafe.akka", shortVer + ".20")

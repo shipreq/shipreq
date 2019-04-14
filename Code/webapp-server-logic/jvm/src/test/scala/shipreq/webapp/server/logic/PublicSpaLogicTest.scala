@@ -227,9 +227,9 @@ object PublicSpaLogicTest extends TestSuite {
       val p2 = PlainTextPassword("asdjhf2314sdfajk")
 
       "update the password when valid" - {
-        assertEq(security2.attemptLogin(i, p2).value, None)
+        assertEq(security.attemptLogin(i, p2).value, None)
         assertEq(runResetPassword2(Request(token, p2)), \/-(Response.Success))
-        assertEq(security2.attemptLogin(i, p2).value.isDefined, true)
+        assertEq(security.attemptLogin(i, p2).value.isDefined, true)
       }
 
       "reject invalid passwords" -

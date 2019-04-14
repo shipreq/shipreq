@@ -407,35 +407,6 @@ final class MockTaskman extends TaskmanApi[Name] {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name] {
-
-  var protectedActions = 0
-  override def protect[A](vulnerable: Name[A]): Name[A] =
-    vulnerable.map { a =>
-      protectedActions += 1
-      a
-    }
-
-  var loggedIn = Option.empty[MockDb.UserEntry]
-  override def attemptLogin(u: Username \/ EmailAddr, p: PlainTextPassword) = Name[Option[User]] {
-    loggedIn = db.getUser(u).filter(e => e.ps ==* mkPasswordAndSalt(p, e.ps.salt))
-    loggedIn.map(_.toUser)
-  }
-
-  var prevSalt = 0
-  override def hashPassword(p: PlainTextPassword) = Name[PasswordAndSalt] {
-    prevSalt += 1
-    mkPasswordAndSalt(p, Salt(prevSalt.toString))
-  }
-
-  def mkPasswordAndSalt(p: PlainTextPassword, salt: Salt): PasswordAndSalt =
-    PasswordAndSalt(PasswordHash(s"${salt.base64}:${p.value}"), salt)
-
-  override val isAuthenticated   = Name(loggedIn.isDefined)
-  override val authenticatedUser = Name(loggedIn.map(_.toUser))
-  override val logout            = Name{loggedIn = None}
-}
-
-final class MockSecurity2(override val db: MockDb) extends Security.Algebra2[Name] {
   import Security.SessionToken
 
   var protectedActions = 0
@@ -520,7 +491,6 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
   implicit val svr            = new MockServer
   implicit val db             = new MockDb(svr.now)
   implicit val security       = new MockSecurity(db)
-  implicit val security2      = new MockSecurity2(db)
   implicit val taskman        = new MockTaskman
   implicit val nameToName     = NaturalTransformation.refl[Name]
   implicit val metrics        = MetricsLogic.const(Name(()))
@@ -535,7 +505,7 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
     UserId(2),
     Username("blurp"),
     EmailAddr("blurp@bar.com"),
-    security2.hashPassword(user2password).value,
+    security.hashPassword(user2password).value,
     svr.clock minus Duration.ofDays(50))
 
   val user3password = PlainTextPassword("user3secret")
@@ -543,14 +513,14 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
     UserId(3),
     Username("user3"),
     EmailAddr("u3@test.com"),
-    security2.hashPassword(user3password).value,
+    security.hashPassword(user3password).value,
     svr.clock minus Duration.ofDays(2))
 
   def assertProtected[A](a: => A): A =
-    assertDifference("Protected actions", security2.protectedActions)(1)(a)
+    assertDifference("Protected actions", security.protectedActions)(1)(a)
 
   def assertUnprotected[A](a: => A): A =
-    assertNoChange("Protected actions", security2.protectedActions)(a)
+    assertNoChange("Protected actions", security.protectedActions)(a)
 
   def forwardTimeToEndOfConfirmationWindow(v: Validity): Unit =
     svr.forwardTimeToEndOfWindow(config.security.registrationTokenLifespan, v)

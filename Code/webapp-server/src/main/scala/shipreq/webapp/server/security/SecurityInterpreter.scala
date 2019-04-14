@@ -8,11 +8,9 @@ import japgolly.univeq._
 import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
-import net.logstash.logback.encoder.org.apache.commons.lang.StringEscapeUtils
-import org.apache.shiro.authc.AuthenticationException
+import net.logstash.logback.encoder.org.apache.commons.lang.StringEscapeUtils // TODO
 import scala.concurrent.blocking
 import scala.util.{Failure, Success, Try}
-import scala.util.control.NonFatal
 import scalaz.syntax.monad._
 import scalaz.{-\/, Monad, \/, \/-}
 import shipreq.base.ops.Trace
@@ -23,63 +21,15 @@ import shipreq.webapp.server.logic.Cookie.LookupFn
 import shipreq.webapp.server.logic.Security.SessionToken
 import shipreq.webapp.server.logic._
 
-final class SecurityInterpreter[F[_]](implicit F: Monad[F],
-                                      config : ServerConfig.Security,
-                                      secDb  : DB.ForSecurity[F],
-                                      trace  : Trace.Algebra[F]) extends Security.Algebra[F] {
-
-  override val db = secDb
-
-  private[this] val fUnit = F.point(())
-
-  private[this] val delay: F[Unit] =
-    config.attackFrustrationDelayMs match {
-      case 0  => fUnit
-      case ms =>
-        val f = F.point(blocking(Thread.sleep(ms)))
-        trace.newSpan("Security delay")(_ => f)
-    }
-
-  override def protect[A](vulnerable: F[A]): F[A] =
-    delay >> vulnerable
-
-  override def attemptLogin(user: Username \/ EmailAddr, password: PlainTextPassword) =
-    F.point {
-      val userOrEmail = user.fold(_.value, _.value)
-      try {
-        AppSecurityRealm.loginOrThrow(userOrEmail, password)
-        AppSecurityRealm.authenticatedUser()
-      } catch {
-        case _: AuthenticationException => None
-      }
-    }
-
-  private[this] val hashFn = AppSecurityRealm.randomHashFn
-
-  override def hashPassword(p: PlainTextPassword): F[PasswordAndSalt] =
-    F.point(hashFn(p))
-
-  override val isAuthenticated: F[Boolean] =
-    F.point(AppSecurityRealm.isAuthenticated())
-
-  override val authenticatedUser: F[Option[User]] =
-    F.point(AppSecurityRealm.authenticatedUser())
-
-  override val logout: F[Unit] =
-    F.point(AppSecurityRealm.logout())
-}
-
-// █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-
-object SecurityInterpreter2 {
+object SecurityInterpreter {
   val cookieName = Cookie.Name("jwt")
 }
 
-final class SecurityInterpreter2[F[_]](implicit F: Monad[F],
-                                       config : ServerConfig.Security,
-                                       secDb  : DB.ForSecurity[F],
-                                       trace  : Trace.Algebra[F]) extends Security.Algebra2[F] with StrictLogging {
-  import SecurityInterpreter2._
+final class SecurityInterpreter[F[_]](implicit F: Monad[F],
+                                      config : ServerConfig.Security,
+                                      secDb  : DB.ForSecurity[F],
+                                      trace  : Trace.Algebra[F]) extends Security.Algebra[F] with StrictLogging {
+  import SecurityInterpreter._
 
   override val db = secDb
 

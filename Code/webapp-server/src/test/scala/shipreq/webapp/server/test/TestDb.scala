@@ -20,7 +20,6 @@ object TestDb extends shipreq.base.test.db.TestDb {
       logic    = g2.logic,
       ops      = g2.ops,
       security = g2.security,
-      security2 = g2.security2,
       taskman  = g2.taskman))
     g3
   }

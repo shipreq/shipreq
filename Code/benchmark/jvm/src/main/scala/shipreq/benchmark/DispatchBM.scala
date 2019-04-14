@@ -146,22 +146,6 @@ object DispatchBM {
     }
 
     implicit object security extends Security.Algebra[F] {
-      var loginSuccess = true
-      var loggedIn = Option.empty[User]
-
-      override val db                                 = self.db
-      val delay                                       = F.point(())
-      override def protect[A](vulnerable: F[A])       = delay >> vulnerable
-      override def hashPassword(p: PlainTextPassword) = F point ps
-      override val isAuthenticated                    = F.point(loggedIn.isDefined)
-      override val authenticatedUser                  = F.point(loggedIn)
-      override val logout                             = F.point{loggedIn = None}
-
-      override def attemptLogin(u: \/[Username, EmailAddr], p: PlainTextPassword) =
-        F.point { loggedIn = Option.when(loginSuccess)(user); loggedIn }
-    }
-
-    implicit object security2 extends Security.Algebra2[F] {
       override val db                                 = self.db
       val delay                                       = F.point(())
       override def protect[A](vulnerable: F[A])       = delay >> vulnerable

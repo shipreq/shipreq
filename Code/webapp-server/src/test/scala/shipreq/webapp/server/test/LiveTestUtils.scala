@@ -9,7 +9,7 @@ import shipreq.webapp.base.protocol.ClientSideProc
 import shipreq.webapp.base.protocol2.{BinaryJvm, Protocol}
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.logic.{Cookie, Security}
-import shipreq.webapp.server.security.SecurityInterpreter2
+import shipreq.webapp.server.security.SecurityInterpreter
 
 /**
  * A test case that requires connectivity to a running Jetty instance.
@@ -19,7 +19,6 @@ object LiveTestUtils {
   private def jetty = TestJetty
 
   val init: () => Unit = onceUnit {
-    PrepareEnv.shiro()
     PrepareEnv.db()
     PrepareEnv.routes()
     jetty.start()
@@ -86,7 +85,7 @@ object LiveTestUtils {
   }
 
   private def tokenCookie(t: Security.SessionToken): (String, String) = {
-    Global.security2.sessionPersist(t).unsafeRun() match {
+    Global.security.sessionPersist(t).unsafeRun() match {
       case Cookie.Update(c :: Nil, Nil) => ("Cookie", s"${c.name.value}=${c.value}")
       case c => sys.error("Got: " + c)
     }
@@ -135,11 +134,11 @@ object LiveTestUtils {
         .assertBodyContains(spaEP.objectAndMethod + "(")
 
     def assertJwt(expect: Option[Security.SessionToken]) = {
-      val prefix = SecurityInterpreter2.cookieName.value + "="
+      val prefix = SecurityInterpreter.cookieName.value + "="
       val cookieValue = resp.headers.getOrElse("Set-Cookie", Nil).find(_.startsWith(prefix)).map(_.drop(prefix.length))
       val actual = cookieValue.flatMap { v =>
-        val m = Map(SecurityInterpreter2.cookieName -> v.takeWhile(_ != ';'))
-        Global.security2.sessionRestore(m.get).unsafeRun()
+        val m = Map(SecurityInterpreter.cookieName -> v.takeWhile(_ != ';'))
+        Global.security.sessionRestore(m.get).unsafeRun()
       }
       assertEq(actual, expect)
       this

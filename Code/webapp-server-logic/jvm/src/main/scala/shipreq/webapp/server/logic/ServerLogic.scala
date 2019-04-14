@@ -19,7 +19,7 @@ object ServerLogic {
              F[_] : Monad
                   : MetricsLogic
                   : ProjectServer.StoreAlgebra
-                  : Security.Algebra2
+                  : Security.Algebra
                   : Server.Algebra
                   : TaskmanApi
                   : Trace.Algebra]

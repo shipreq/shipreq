@@ -222,7 +222,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
                                                   metrics   : MetricsLogic[F],
                                                   ops       : OpsEndpoints[F],
                                                   publicSpa : PublicSpaLogic[F],
-                                                  security  : Security.Algebra2[F],
+                                                  security  : Security.Algebra[F],
                                                   svrS      : Server.Session[F],
                                                   svr       : Server.Time[F],
                                                   tracer    : TraceLogic[F, RealReq, RealRes]) {

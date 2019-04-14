@@ -9,7 +9,6 @@ import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.db.DbInterpreter
 import shipreq.webapp.server.logic._
 import shipreq.webapp.server.security.SecurityInterpreter
-import shipreq.webapp.server.security.SecurityInterpreter2
 
 final case class Global(config  : ServerConfig,
                         db      : DbAccess,
@@ -17,7 +16,6 @@ final case class Global(config  : ServerConfig,
                         metrics : MetricsLogic[Fx],
                         ops     : OpsEndpointInterpreter,
                         security: Security.Algebra[Fx],
-security2: Security.Algebra2[Fx],
                         taskman : TaskmanApi[Fx],
                         trace   : TraceInterpreter.ForLift[Fx])
 
@@ -54,7 +52,6 @@ object Global {
     implicit val server        = metrics.injectServer(trace.injectServer(ServerInterpreter))
     implicit val ops           = new OpsEndpointInterpreter()
     implicit val security      = new SecurityInterpreter[Fx]
-    implicit val security2     = new SecurityInterpreter2[Fx]
 
     Global(
       config   = config,
@@ -63,7 +60,6 @@ object Global {
       metrics  = metrics,
       ops      = ops,
       security = security,
-      security2 = security2,
       taskman  = taskman,
       trace    = trace)
     }
