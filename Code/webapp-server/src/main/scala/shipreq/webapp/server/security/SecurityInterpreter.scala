@@ -72,7 +72,7 @@ final class SecurityInterpreter[F[_]](implicit F: Monad[F],
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 object SecurityInterpreter2 {
-  val cookieName = Cookie.Name("shipreq.jwt")
+  val cookieName = Cookie.Name("jwt")
 }
 
 final class SecurityInterpreter2[F[_]](implicit F: Monad[F],
