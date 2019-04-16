@@ -1,0 +1,159 @@
+package shipreq.webapp.base.protocol2
+
+import boopickle.{PickleState, Pickler, UnpickleState}
+import japgolly.microlibs.adt_macros.AdtMacros
+import scalaz.\/
+import shipreq.base.util.{ErrorMsg, StaticLookupFn}
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.user._
+import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.Urls
+import shipreq.webapp.base.event.{EventOrd, VerifiedEvent}
+import BoopickleMacros._
+import BinCodecGeneric._
+import BinCodecBaseData._
+import BinCodecMemberData._
+import BinCodecUser._
+import BinCodecEvents._
+
+/**
+  * Protocols for the Project SPA / webapp-client-project module.
+  */
+object ProjectSpaProtocols {
+
+  final case class InitPageData(username: Username, projectName: Project.Name)
+
+  implicit val picklerInitPageData = pickleCaseClass[InitPageData]
+
+  final val EntryPointName = "P"
+  val EntryPoint = ClientSideProc[InitPageData](EntryPointName)
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  final case class InitAppData(project: Project, projectMetaData: ProjectMetaData, latestEventOrd: EventOrd)
+
+  implicit val picklerInitAppData = pickleCaseClass[InitAppData]
+
+  object WebSocket extends Protocol.WebSocket.ClientReqServerPush[Pickler] {
+    override val  url    = Urls.projectSpaWebSocket
+    override type ReqId  = WebSocketShared.ReqId
+    override val  push   = Protocol[Pickler, VerifiedEvent.NonEmptySeq](implicitly)
+    override val  req    = ReqRes.AndReq.protocol
+
+    sealed trait ReqRes extends Protocol.RequestResponse[Pickler] { self =>
+      protected[WebSocket] val protocolReq: Protocol.Of[Pickler, RequestType]
+      protected[WebSocket] val protocolRes: Protocol.Of[Pickler, ResponseType]
+      protected[WebSocket] val key: Int
+
+      final type AndReq = ReqRes.AndReq { val reqRes: self.type }
+      final def AndReq(r: RequestType): AndReq =
+        new ReqRes.AndReq {
+          override val reqRes: self.type = self
+          override val req = r
+        }
+
+      override final type PreparedRequestType = ReqRes.AndReq
+
+      override final def prepareSend(r: RequestType): PreparedSend = {
+        val req = AndReq(r)
+        Protocol.RequestResponse.PreparedSend(req, protocolRes)
+      }
+
+      def fold[F[_ <: ReqRes], G[_ <: ReqRes]](f: ReqRes.Fold[F, G])(r: F[this.type]): G[this.type]
+    }
+
+    object ReqRes {
+      sealed abstract class Base[Req: Pickler, Res: Pickler](override final protected[WebSocket] val key: Int) extends ReqRes {
+        override final type RequestType = Req
+        override final type ResponseType = Res
+        override final protected[WebSocket] val protocolReq = Protocol(implicitly)
+        override final protected[WebSocket] val protocolRes = Protocol(implicitly)
+      }
+
+      type EventResult = ErrorMsg \/ VerifiedEvent.Seq
+
+      case object InitApp extends Base[ProjectId.Public, ErrorMsg \/ InitAppData](0) {
+        override def fold[F[_ <: ReqRes], G[_ <: ReqRes]](f: ReqRes.Fold[F, G])(r: F[this.type]) = f.onInitApp(r)
+      }
+
+      case object ProjectNameSet extends Base[String, EventResult](1) {
+        override def fold[F[_ <: ReqRes], G[_ <: ReqRes]](f: ReqRes.Fold[F, G])(r: F[this.type]) = f.onProjectNameSet(r)
+      }
+
+      case object FieldMandatorinessMod extends Base[(CustomFieldId, Mandatory), EventResult](2) {
+        override def fold[F[_ <: ReqRes], G[_ <: ReqRes]](f: ReqRes.Fold[F, G])(r: F[this.type]) = f.onFieldMandatorinessMod(r)
+      }
+
+      case object ReqTypeImplicationMod extends Base[(CustomReqTypeId, ImplicationRequired), EventResult](3) {
+        override def fold[F[_ <: ReqRes], G[_ <: ReqRes]](f: ReqRes.Fold[F, G])(r: F[this.type]) = f.onReqTypeImplicationMod(r)
+      }
+
+      case object CreateContent extends Base[CreateContentCmd, EventResult](4) {
+        override def fold[F[_ <: ReqRes], G[_ <: ReqRes]](f: ReqRes.Fold[F, G])(r: F[this.type]) = f.onCreateContent(r)
+      }
+
+      case object UpdateContent extends Base[UpdateContentCmd, EventResult](5) {
+        override def fold[F[_ <: ReqRes], G[_ <: ReqRes]](f: ReqRes.Fold[F, G])(r: F[this.type]) = f.onUpdateContent(r)
+      }
+
+      case object UpdateSavedViews extends Base[SavedViewCmd, EventResult](6) {
+        override def fold[F[_ <: ReqRes], G[_ <: ReqRes]](f: ReqRes.Fold[F, G])(r: F[this.type]) = f.onUpdateSavedViews(r)
+      }
+
+      val values = AdtMacros.adtValues[ReqRes]
+      val byKey = StaticLookupFn.arrayBy(values.whole)(_.key)
+
+      final case class Fold[F[_ <: ReqRes], G[_ <: ReqRes]](
+          onInitApp              : F[InitApp              .type] => G[InitApp              .type],
+          onProjectNameSet       : F[ProjectNameSet       .type] => G[ProjectNameSet       .type],
+          onFieldMandatorinessMod: F[FieldMandatorinessMod.type] => G[FieldMandatorinessMod.type],
+          onReqTypeImplicationMod: F[ReqTypeImplicationMod.type] => G[ReqTypeImplicationMod.type],
+          onCreateContent        : F[CreateContent        .type] => G[CreateContent        .type],
+          onUpdateContent        : F[UpdateContent        .type] => G[UpdateContent        .type],
+          onUpdateSavedViews     : F[UpdateSavedViews     .type] => G[UpdateSavedViews     .type],
+          ) { self =>
+        def compose[H[_ <: ReqRes]](h: Fold[G, H]): Fold[F, H] =
+          Fold(
+            onInitApp               = f => h.onInitApp              (self.onInitApp              (f)),
+            onProjectNameSet        = f => h.onProjectNameSet       (self.onProjectNameSet       (f)),
+            onFieldMandatorinessMod = f => h.onFieldMandatorinessMod(self.onFieldMandatorinessMod(f)),
+            onReqTypeImplicationMod = f => h.onReqTypeImplicationMod(self.onReqTypeImplicationMod(f)),
+            onCreateContent         = f => h.onCreateContent        (self.onCreateContent        (f)),
+            onUpdateContent         = f => h.onUpdateContent        (self.onUpdateContent        (f)),
+            onUpdateSavedViews      = f => h.onUpdateSavedViews     (self.onUpdateSavedViews     (f)),
+          )
+      }
+
+      trait AndReq {
+        val reqRes: ReqRes
+        val req: reqRes.RequestType
+        override def toString = s"$reqRes.AndReq($req)"
+      }
+
+      object AndReq {
+        val protocol: Protocol.Of[Pickler, AndReq] = Protocol(
+          new Pickler[AndReq] {
+
+            override def pickle(obj: AndReq)(implicit state: PickleState): Unit = {
+              state.pickle(obj.reqRes.key)
+              state.pickle(obj.req)(obj.reqRes.protocolReq.codec)
+            }
+
+            override def unpickle(implicit state: UnpickleState): AndReq = {
+              val key = state.unpickle[Int]
+              byKey(key) match {
+                case Some(p) =>
+                  val req = state.unpickle(p.protocolReq.codec)
+                  p.AndReq(req)
+                case None =>
+                  val msg = s"Can't unpickle request: unknown key ($key)"
+                  throw new RuntimeException(msg)
+              }
+            }
+          }
+        )
+      }
+    }
+
+  }
+}
