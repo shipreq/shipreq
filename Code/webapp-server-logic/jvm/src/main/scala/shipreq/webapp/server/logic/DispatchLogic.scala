@@ -14,7 +14,7 @@ import shipreq.base.ops.Trace
 import shipreq.base.util._
 import shipreq.webapp.base.{AssetManifest, Urls}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol2.{BinaryJvm, MemberProtocols, Protocol}
+import shipreq.webapp.base.protocol2._
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.util.ResourceHint
 import shipreq.webapp.client.public.PublicSpaProtocols
@@ -511,7 +511,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
       anonO(PublicSpaProtocols.register2     )("register2"     , publicSpa.ajaxRegister2     )(useNewToken)
       anon (PublicSpaProtocols.resetPassword1)("resetPassword1", publicSpa.ajaxResetPassword1)
       anon (PublicSpaProtocols.resetPassword2)("resetPassword2", publicSpa.ajaxResetPassword2)
-      auth (MemberProtocols.createProject    )("createProject" , homeSpa.ajaxCreateProject)
+      auth (HomeSpaProtocols  .createProject )("createProject" , homeSpa  .ajaxCreateProject )
 //      register (MemberProtocols.projectNameSet       )("projectNameSet"       , )
 //      register (MemberProtocols.fieldMandatorinessMod)("fieldMandatorinessMod", )
 //      register (MemberProtocols.reqTypeImplicationMod)("reqTypeImplicationMod", )
