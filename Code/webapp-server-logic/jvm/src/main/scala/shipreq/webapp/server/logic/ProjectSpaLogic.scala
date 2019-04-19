@@ -29,10 +29,14 @@ trait ProjectSpaLogic[F[_]] {
 object ProjectSpaLogic extends StrictLogging {
 
   final case class WebSocketStatic(user: User, projectId: ProjectId)
+  object WebSocketStatic {
+    implicit def univEq: UnivEq[WebSocketStatic] = UnivEq.derive
+  }
 
   final case class WebSocketState()
   object WebSocketState {
     val empty = apply()
+    implicit def univEq: UnivEq[WebSocketState] = UnivEq.derive
   }
 
   sealed trait ConnectRejection
@@ -42,11 +46,13 @@ object ProjectSpaLogic extends StrictLogging {
     case object InvalidProjectId extends ConnectRejection
     case object ProjectNotFound  extends ConnectRejection
     case object AccessDenied     extends ConnectRejection
+    implicit def univEq: UnivEq[ConnectRejection] = UnivEq.derive
   }
 
   sealed trait MsgError
   object MsgError {
     case object DecodingFailure extends MsgError
+    implicit def univEq: UnivEq[MsgError] = UnivEq.derive
   }
 
 //  final case class Req[R <: ReqRes](req: R#RequestType, state: WebSocketState, user: User)
