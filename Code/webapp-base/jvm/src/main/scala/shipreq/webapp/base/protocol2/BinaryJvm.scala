@@ -6,8 +6,11 @@ import shipreq.base.util.BinaryData
 
 object BinaryJvm {
 
+  def unsafeDecode(b: BinaryData, p: Protocol[Pickler]): p.Type =
+    UnpickleImpl(p.codec).fromBytes(b.toByteBuffer)
+
   def attemptDecode(b: BinaryData, p: Protocol[Pickler]): Try[p.Type] =
-    Try(UnpickleImpl(p.codec).fromBytes(b.toByteBuffer))
+    Try(unsafeDecode(b, p))
 
   def encode(p: Protocol[Pickler])(v: p.Type): BinaryData =
     BinaryData.unsafeFromByteBuffer(PickleImpl.intoBytes(v)(implicitly, p.codec))

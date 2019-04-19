@@ -1,9 +1,15 @@
 package shipreq.webapp.server.logic
 
+import com.typesafe.scalalogging.StrictLogging
 import japgolly.univeq._
-import scalaz.{Monad, \/, ~>}
-import shipreq.base.util.{BinaryData, Monads}
-import shipreq.webapp.base.data.ProjectId
+import scala.util.{Failure, Success}
+import scalaz.{-\/, Monad, \/, \/-, ~>}
+import scalaz.syntax.monad._
+import shipreq.base.util.{BinaryData, ErrorMsg, Monads}
+import shipreq.webapp.base.data.{Obfuscated, Project, ProjectId}
+import shipreq.webapp.base.event.{ApplyEvent, EventOrd, VerifiedEvent}
+import shipreq.webapp.base.protocol2.ProjectSpaProtocols.{InitAppData, WsReqRes}
+import shipreq.webapp.base.protocol2.{BinaryJvm, ProjectSpaProtocols, WebSocketServerHelper}
 import shipreq.webapp.base.user.User
 
 trait ProjectSpaLogic[F[_]] {
@@ -17,10 +23,17 @@ trait ProjectSpaLogic[F[_]] {
 
   def onMessage(static: WebSocketStatic)
                (state : WebSocketState,
-                msg   : BinaryData): F[(BinaryData, Option[WebSocketState])]
+                msg   : BinaryData): F[MsgError \/ (BinaryData, Option[WebSocketState])]
 }
 
-object ProjectSpaLogic {
+object ProjectSpaLogic extends StrictLogging {
+
+  final case class WebSocketStatic(user: User, projectId: ProjectId)
+
+  final case class WebSocketState()
+  object WebSocketState {
+    val empty = apply()
+  }
 
   sealed trait ConnectRejection
   object ConnectRejection {
@@ -31,17 +44,13 @@ object ProjectSpaLogic {
     case object AccessDenied     extends ConnectRejection
   }
 
-  final case class WebSocketStatic(user: User, projectId: ProjectId)
-
-  final case class WebSocketState()
-  object WebSocketState {
-    val empty = apply()
+  sealed trait MsgError
+  object MsgError {
+    case object DecodingFailure extends MsgError
   }
 
 //  final case class Req[R <: ReqRes](req: R#RequestType, state: WebSocketState, user: User)
 //  final case class Res[R <: ReqRes](res: R#ResponseType, stateUpdate: Option[WebSocketState])
-
-
 
   def apply[D[_], F[_]](implicit
                         D: Monad[D],
@@ -50,7 +59,10 @@ object ProjectSpaLogic {
                         runDB: D ~> F,
                         security: Security.Algebra[F]): ProjectSpaLogic[F] = {
 
-    val OnConnect = Monads.FDisj[F, ConnectRejection]
+    val webSocketHelper = WebSocketServerHelper(ProjectSpaProtocols.WebSocket(Obfuscated(null)))
+
+    val OnConnect  = Monads.FDisj[F, ConnectRejection]
+    val OnMsgError = Monads.FDisj[F, MsgError]
 
     new ProjectSpaLogic[F] { self =>
 
@@ -78,18 +90,78 @@ object ProjectSpaLogic {
       override def onMessage(static: WebSocketStatic)
                             (state : WebSocketState,
                              msg   : BinaryData) = {
-        ???
+        val M = OnMsgError
+
+        val main: M.Result[(BinaryData, Option[WebSocketState])] =
+          for {
+            (reqId, req)  <- M.lift(parseMsg(msg))
+            (res, state2) <- M.rightF(req.reqRes.fold(msgFold)((req.req, static)))
+          } yield {
+            val protocolAndRes = req.reqRes.protocolRes.andValue(res)
+            val fullRes        = \/-((reqId, protocolAndRes))
+            val resBin         = BinaryJvm.encode(webSocketHelper.protocolSC)(fullRes)
+            (resBin, state2)
+          }
+
+        main.value
       }
 
-//      override val onRequest = ReqRes.Fold[Req, FRes](
-//        onInitApp               = onInitApp,
-//        onProjectNameSet        = ???,
-//        onFieldMandatorinessMod = ???,
-//        onReqTypeImplicationMod = ???,
-//        onCreateContent         = ???,
-//        onUpdateContent         = ???,
-//        onUpdateSavedViews      = ???,
-//      )
+      private def parseMsg(msg: BinaryData) = {
+        BinaryJvm.attemptDecode(msg, webSocketHelper.protocolCS) match {
+          case Success(r) => \/-(r)
+          case Failure(_) => -\/(MsgError.DecodingFailure)
+        }
+      }
+
+      private type MsgFnIn[I] = (I, WebSocketStatic)
+      private type MsgFnOut[O] = F[(O, Option[WebSocketState])]
+      private type MsgFn[I, O] = (I, WebSocketStatic) => MsgFnOut[O]
+      private type MsgFoldIn[R <: WsReqRes] = MsgFnIn[R#RequestType]
+      private type MsgFoldOut[R <: WsReqRes] = MsgFnOut[R#ResponseType]
+
+      private val msgFold = WsReqRes.Fold[MsgFoldIn, MsgFoldOut](
+        onInitApp               = onInitApp.tupled,
+        onProjectNameSet        = _ => ???,
+        onFieldMandatorinessMod = _ => ???,
+        onReqTypeImplicationMod = _ => ???,
+        onCreateContent         = _ => ???,
+        onUpdateContent         = _ => ???,
+        onUpdateSavedViews      = _ => ???,
+      )
+
+      // final case class LoadedState(project: Project, projectMetaData: ProjectMetaData, nextOrd: EventOrd) {
+      // final case class InitAppData(project: Project, projectMetaData: ProjectMetaData, latestEventOrd: EventOrd)
+      private def onInitApp: MsgFn[Unit, ErrorMsg \/ InitAppData] = (_, static) => {
+        val pid = static.projectId
+
+        def buildProject(load: VerifiedEvent.Seq): ErrorMsg \/ (Project, EventOrd) =
+          if (load.isEmpty) {
+            val ord = EventOrd(1) // Nice to reserve 0 for ApplyTemplate.
+            \/-((Project.empty, ord))
+          } else
+            ApplyEvent.trusted.applyVerified(load)(Project.empty) match {
+              case \/-(p) => \/-((p, load.lastKey.ord))
+              case -\/(e) =>
+                logger.error(s"Failed to apply events [${load.head.ord},${load.last.ord}] on project #${pid.value}: $e")
+                -\/(ErrorMsg(s"${Server.ErrorMsgs.ShouldNeverHappen.value}\n\nEvent application failure.\n$e"))
+            }
+
+        def load: F[ErrorMsg \/ InitAppData] =
+          runDB(
+            db.inDbTransaction(for {
+              pl <- db.getAllProjectEvents(pid)
+              md <- db.getProjectMetaData(pid) // only really need createdAt and lastUpdatedAt
+            } yield (pl, md))
+          ).map { case (pl, md) =>
+            // Build outside of DB transaction
+            buildProject(pl).map(b => InitAppData(b._1, md.get, b._2))
+          }
+
+        for {
+          result <- load
+        } yield (result, None)
+      }
+
     }
   }
 }

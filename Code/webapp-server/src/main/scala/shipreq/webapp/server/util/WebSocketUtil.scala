@@ -1,5 +1,6 @@
 package shipreq.webapp.server.util
 
+import javax.websocket.CloseReason.CloseCode
 import javax.websocket.server._
 import scala.collection.JavaConverters._
 import shipreq.webapp.server.logic.Cookie
@@ -52,4 +53,13 @@ object WebSocketUtil {
 //    req.getParameterMap.get(name).asScala.headOption.getOrElse {
 //      throw new IllegalStateException(s"WebSocket PathParam '$name' not found. uri=${req.getRequestURI}")
 //    }
+
+  class CustomCloseCode(code: Int) extends CloseCode {
+    override final def getCode = code
+  }
+
+  object CustomCloseCode {
+    def apply(code: Int): CustomCloseCode =
+      new CustomCloseCode(code)
+  }
 }

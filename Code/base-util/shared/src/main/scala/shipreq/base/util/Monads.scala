@@ -29,11 +29,17 @@ object Monads {
       val unit: Result[Unit] =
         new FDisj(F.pure(\/-(())))
 
+      def apply[A](x: F[E \/ A]): Result[A] =
+        new FDisj(x)
+
       def lift[A](x: E \/ A): Result[A] =
         new FDisj(F.pure(x))
 
       def fail[A](e: E): Result[A] =
         lift(-\/(e))
+
+      def rightF[A](f: F[A]): Result[A] =
+        new FDisj(F.map(f)(\/-(_)))
 
       def ensure(cond: Boolean, e: => E): Result[Unit] =
         if (cond) unit else fail(e)

@@ -15,7 +15,7 @@ object StaticLookupFn {
     if (as.isEmpty)
       _ => None
     else {
-      val len = as.toIterator.map(_._1).max
+      val len = as.toIterator.map(_._1).max + 1
       val array = Array.fill[Option[A]](len)(None)
       for ((i, a) <- as) {
         assert(i >= 0, s"Indices can't be negative. Found: $i")

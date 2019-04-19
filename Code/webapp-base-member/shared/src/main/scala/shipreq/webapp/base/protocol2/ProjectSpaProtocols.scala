@@ -50,7 +50,7 @@ object ProjectSpaProtocols {
 
   sealed trait WsReqRes extends Protocol.RequestResponse[Pickler] { self =>
     protected val protocolReq: Protocol.Of[Pickler, RequestType]
-    protected val protocolRes: Protocol.Of[Pickler, ResponseType]
+    val protocolRes: Protocol.Of[Pickler, ResponseType]
     protected val key: Int
 
     final type AndReq = WsReqRes.AndReq { val reqRes: self.type }
@@ -75,7 +75,7 @@ object ProjectSpaProtocols {
       override final type RequestType = Req
       override final type ResponseType = Res
       override final protected val protocolReq = Protocol(implicitly)
-      override final protected val protocolRes = Protocol(implicitly)
+      override final val protocolRes = Protocol(implicitly)
     }
 
     type EventResult = ErrorMsg \/ VerifiedEvent.Seq

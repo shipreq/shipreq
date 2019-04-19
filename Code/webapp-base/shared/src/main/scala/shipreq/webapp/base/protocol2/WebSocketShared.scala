@@ -11,14 +11,20 @@ object WebSocketShared {
   implicit val picklerReqId: Pickler[ReqId] =
     intPickler.xmap(ReqId)(_.value)
 
-  /** Client to Server */
-  def protocolCS[Req: Pickler]: Pickler[(ReqId, Req)] =
+  // ===================================================================================================================
+  // Client to Server
+
+  type ClientToServer[Req] = (ReqId, Req)
+
+  def protocolCS[Req: Pickler]: Pickler[ClientToServer[Req]] =
     Tuple2Pickler
 
-  /** Server to Client */
+  // ===================================================================================================================
+  // Server to Client
+
   type ServerToClient[Push] = Push \/ (ReqId, Protocol.AndValue[Pickler])
 
-  def protocolSC[Push: Pickler](requestUnpickler: ReqId => Protocol[Pickler]): Pickler[ServerToClient[Push]] =
+  def protocolSC[Push: Pickler](responseUnpickler: ReqId => Protocol[Pickler]): Pickler[ServerToClient[Push]] =
     new Pickler[ServerToClient[Push]] {
 
       override def pickle(obj: ServerToClient[Push])(implicit state: PickleState): Unit =
@@ -37,7 +43,7 @@ object WebSocketShared {
           -\/(state.unpickle[Push])
         else {
           val reqId = ReqId((header >> 1).toInt)
-          val protocol = requestUnpickler(reqId)
+          val protocol = responseUnpickler(reqId)
           val pav: Protocol.AndValue[Pickler] =
             if (protocol eq null)
               null

@@ -10,7 +10,7 @@ import scala.util.{Failure, Success, Try}
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.JsExt._
 import shipreq.base.util.Url
-import shipreq.webapp.base.protocol2.WebSocketShared.{ReqId, ServerToClient}
+import shipreq.webapp.base.protocol2.WebSocketShared.{ClientToServer, ReqId, ServerToClient}
 
 final class WebSocketClient[
     Req,
@@ -18,7 +18,7 @@ final class WebSocketClient[
     Push](
     ws: WebSocket,
 //    createWS: CallbackTo[WebSocket],
-    protocolCS: Pickler[(ReqId, Req)],
+    protocolCS: Pickler[ClientToServer[Req]],
     mkProtocolSC: (ReqId => Protocol[Pickler]) => Pickler[ServerToClient[Push]],
     recvPush    : Push => Callback) {
 
