@@ -25,8 +25,11 @@ object ProjectSpaWebSocket extends StrictLogging {
   val stateL  = UserPropsLens.atKey[WebSocketState ]("Y")
 
   final class Connector extends ServerEndpointConfig.Configurator {
+    private[this] val pathPrefix = Urls.ProjectSpaWebSocket.Base.length + 1
+
     override def modifyHandshake(cfg: ServerEndpointConfig, req: HandshakeRequest, res: HandshakeResponse): Unit = {
-      val projectIdParam = WebSocketUtil.pathParam(req, Urls.ProjectSpaWebSocket.ParamProjectId)
+      val path           = req.getRequestURI.getPath
+      val projectIdParam = path.substring(pathPrefix)
       val projectId      = Urls.ProjectSpaWebSocket.parseProjectId(projectIdParam)
       val cookieLookup   = WebSocketUtil.cookieLookupFnOverHandshakeRequest(req)
 
