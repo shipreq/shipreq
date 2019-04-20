@@ -153,7 +153,7 @@ DataInvariants ==
   /\ \A e \in redis.events :
     /\ \* No gaps in Redis events
        IF redis.ver > 0
-       THEN (e - 1) \in (redis.events \union {redis.ver})
+       THEN (e - 1) \in (redis.events \union {redis.ver}) \* all events proceed snapshot
        ELSE (e - 1) \in (redis.events) \/ e = Min[redis.events]
 
 MCAllowAct == db.ver < MCVerLimit
@@ -166,15 +166,32 @@ ApplyEvents[ver \in Nat, es \in SUBSET Nat] ==
      THEN ApplyEvents[n, es \ {n}]
      ELSE <<ver,es>>
 
-RedisWriteSnapshot(ver, OnOk, OnFail) ==
-  IF ver > RedisTotalVer
-  THEN
-    /\ redis' = [ver    |-> ver,
-                 events |-> IF ver + 1 \in redis.events THEN {e \in redis.events : e > ver} ELSE {}]
-    /\ OnOk
-  ELSE \* Redis has a more recent state than this proc
-    /\ UNCHANGED redis
-    /\ OnFail
+RedisWriteSnapshot(ver, eventsToPublish, OnOk, OnFail) ==
+  /\ IF ver > redis.ver
+     THEN
+       /\ redis' = [ver    |-> ver,
+                    events |-> {e \in redis.events : e > ver}]
+       /\ OnOk
+     ELSE
+       \* Redis has a more recent state than this proc
+       /\ UNCHANGED redis
+       /\ OnFail
+  /\ pub' = pub \union (OnlineUsers \X eventsToPublish)
+
+RedisWriteEvents(eventsToCache, eventsToCacheAndPublish, OnOk, OnFail) ==
+  LET events     == eventsToCache \union eventsToCacheAndPublish
+      newEvents  == {e \in events : e > RedisTotalVer}
+      fail       == /\ OnFail
+                    /\ UNCHANGED redis
+      apply      == /\ OnOk
+                    /\ redis' = [redis EXCEPT !.events = @ \union newEvents]
+  IN /\ IF newEvents = {} THEN
+          fail
+        ELSE IF Min[newEvents] > RedisTotalVer + 1 THEN
+          fail \* Gaps in redis.events prohibited
+        ELSE
+          apply
+     /\ pub' = pub \union (OnlineUsers \X eventsToCacheAndPublish)
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -208,8 +225,8 @@ Load_ReadDbFull == \E p \in procsL :
 Load_WriteRedis == \E p \in procsL :
   /\ p.status = "WriteRedis"
   /\ procsL' = Replace(procsL, p, [p EXCEPT !.status = "Respond", !.respondVer = p.dbVer])
-  /\ RedisWriteSnapshot(p.dbVer, TRUE, TRUE)
-  /\ UNCHANGED << db, procsR, procsU, procsS, pub, userState >>
+  /\ RedisWriteSnapshot(p.dbVer, {}, TRUE, TRUE)
+  /\ UNCHANGED << db, procsR, procsU, procsS, userState >>
 
 Load_Respond == \E p \in procsL :
   /\ p.status = "Respond"
@@ -289,15 +306,10 @@ Update_WriteRedis1 == \E p \in procsU :
          WriteEvents ==
            LET firstEvent == p.redisVer + 1
                tryEvents  == firstEvent .. p.ver
-               newEvents  == {e \in tryEvents : e > RedisTotalVer}
-           IN IF redis.ver = 0 \/ firstEvent > RedisTotalVer + 1 \* Is there a missing event? Would this create a gap?
-              THEN /\ UNCHANGED redis
-                   /\ Retry
-              ELSE /\ redis' = [redis EXCEPT !.events = @ \union newEvents]
-                   /\ Continue
-     IN \/ RedisWriteSnapshot(p.ver, Continue, Retry)
+           IN RedisWriteEvents(tryEvents, {}, Continue, Retry)
+     IN \/ RedisWriteSnapshot(p.ver, {}, Continue, Retry)
         \/ WriteEvents
-  /\ UNCHANGED << db, pub, userState, procsL, procsR, procsS >>
+  /\ UNCHANGED << db, userState, procsL, procsR, procsS >>
 
 Update_WriteDb == \E p \in procsU :
   /\ p.status = "WriteDb"
@@ -314,18 +326,11 @@ Update_WriteDb == \E p \in procsU :
         /\ UNCHANGED db
   /\ UNCHANGED << redis, procsL, pub, userState, procsR, procsS >>
 
+
 Update_WriteRedis2 == \E p \in procsU :
   /\ p.status = "WriteRedis2"
-  /\ pub' = pub \union { <<p.user, p.ver>> }                \* Proc does this
-                \union { <<u, p.ver>> : u \in OnlineUsers } \* Redis does this
-  /\ \/ \* Send a snapshot to Redis
-        IF p.ver > RedisTotalVer
-        THEN redis' = [ver |-> p.ver, events |-> {}]
-        ELSE UNCHANGED redis
-     \/ \* Send an event to Redis
-        IF p.ver = RedisPartialVer + 1
-        THEN redis' = [redis EXCEPT !.events = @ \union {p.ver}]
-        ELSE UNCHANGED redis
+  /\ \/ RedisWriteSnapshot(p.ver, {p.ver}, TRUE, TRUE)
+     \/ RedisWriteEvents({}, {p.ver}, TRUE, TRUE)
   /\ procsU' = Replace(procsU, p, [p EXCEPT !.status = "Respond"])
   /\ UNCHANGED << db, procsL, procsS, procsR, userState >>
 

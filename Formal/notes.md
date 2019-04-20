@@ -104,3 +104,17 @@ Another example error:
   * User #1 loses the WebSocket so they reconnect, get the latest version and are fine
   * They ragequit and never connect again
 * User #2 never receives the change because it wasn't published to the topic
+
+
+LATER
+==============================================================================================================================
+
+* `Spec => Impl` is fucking amazing! I'm not ready to use real Redis yet, I just want to change the server to use WebSockets
+  and speak the new protocol. Knowing that `Spec => Impl` means that I can just come up with the Redis interface/algebra now
+  and have a dud instance for a while (or a simple in-memory one!!!!) and know
+  * that everything will work and be correct
+  * that I wont have to do a big refactor later when I add Redis - just provide a different algebra impl
+* When writing the algebra Scala, I had to go back to the spec and make some changes that reflect my code.
+  This is great because each time I refactored the spec to mimic the logical code definition, I could check it
+  again in seconds and know that my consolidations/refactoring (that make a lot of sense from the code POV),
+  still result in a correct spec.
