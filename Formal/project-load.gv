@@ -13,7 +13,8 @@ digraph G {
 
   node [style=filled fillcolor="#bbee77"]
 
-  Start      -> ReadDbVer
+  Start      -> Subscribe
+  Subscribe  -> ReadDbVer
   ReadDbVer  -> ReadRedis
   ReadRedis  -> Respond [label="redis = db"]
   ReadRedis  -> ReadDbFull [label="redis < db"]
@@ -22,7 +23,9 @@ digraph G {
 
   {
     edge[color="#ccccff" style=dashed dir=none]
-    ReadDbVer,ReadDbFull -> DB
-    WriteRedis           -> Redis
+    ReadDbVer  -> DB
+    ReadDbFull -> DB
+    WriteRedis -> Redis
+    Subscribe  -> Redis
   }
 }
