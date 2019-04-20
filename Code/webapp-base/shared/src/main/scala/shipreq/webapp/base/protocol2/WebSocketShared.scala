@@ -1,15 +1,18 @@
 package shipreq.webapp.base.protocol2
 
 import boopickle.{PickleState, Pickler, UnpickleState}
+import japgolly.univeq.UnivEq
 import scalaz.{-\/, \/, \/-}
-import shipreq.webapp.base.protocol.BinCodecGeneric.{intPickler, Tuple2Pickler}
+import shipreq.webapp.base.protocol.BinCodecGeneric.{Tuple2Pickler, intPickler}
 
 object WebSocketShared {
 
   final case class ReqId(value: Int)
 
-  implicit val picklerReqId: Pickler[ReqId] =
-    intPickler.xmap(ReqId)(_.value)
+  object ReqId {
+    implicit def univEq: UnivEq[ReqId] = UnivEq.derive
+    implicit val pickler: Pickler[ReqId] = intPickler.xmap(apply)(_.value)
+  }
 
   // ===================================================================================================================
   // Client to Server
