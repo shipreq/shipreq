@@ -52,6 +52,7 @@ object Global {
     implicit val server        = metrics.injectServer(trace.injectServer(ServerInterpreter))
     implicit val ops           = new OpsEndpointInterpreter()
     implicit val security      = new SecurityInterpreter[Fx]
+    implicit val redis         = new Redis.InMemory[Fx]
 
     Global(
       config   = config,

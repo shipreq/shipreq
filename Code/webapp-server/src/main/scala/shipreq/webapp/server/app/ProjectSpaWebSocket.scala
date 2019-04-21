@@ -23,7 +23,7 @@ object ProjectSpaWebSocket extends StrictLogging {
   def projectSpaLogic = Global.logic.projectSpa
 
   val staticL           = UserPropsLens.atKey[WebSocketStatic]("X")
-  val stateL            = UserPropsLens.atKey[WebSocketState]("Y")
+  val stateL            = UserPropsLens.atKey[WebSocketState[Fx]]("Y")
   val connectRejectionL = UserPropsLens.atKey[ConnectRejection]("Z")
 
   final class Connector extends ServerEndpointConfig.Configurator {
@@ -65,9 +65,19 @@ final class ProjectSpaWebSocket extends StrictLogging {
 
   @OnOpen
   def onOpen(s: Session): Unit = {
-    for (r <- Option(connectRejectionL.get(s.getUserProperties))) {
-      logger.warn(s"Rejecting WebSocket connection: $r")
-      close(s, CloseCodes.CANNOT_ACCEPT, r.toString)
+    Option(connectRejectionL.get(s.getUserProperties)) match {
+      case Some(r) =>
+        logger.warn(s"Rejecting WebSocket connection: $r")
+        close(s, CloseCodes.CANNOT_ACCEPT, r.toString)
+
+      case None =>
+        val userProps = s.getUserProperties
+        val static    = staticL.get(userProps)
+        val state     = stateL.get(userProps)
+        val remote    = s.getBasicRemote
+        val pushFn    = (b: BinaryData) => Fx(remote.sendBinary(b.toByteBuffer))
+        val state2    = projectSpaLogic.onOpen(static, state, pushFn).unsafeRun()
+        stateL.set(userProps, state2)
     }
   }
 
@@ -77,10 +87,10 @@ final class ProjectSpaWebSocket extends StrictLogging {
       logger.debug("Received keep-alive")
     } else {
       val userProps = s.getUserProperties
-      val remote    = s.getBasicRemote
       val static    = staticL.get(userProps)
       val setState  = stateL.set(userProps, _)
       val state     = stateL.get(userProps)
+      val remote    = s.getBasicRemote
       val binIn     = BinaryData.unsafeFromArray(messageBytes)
       try {
         projectSpaLogic.onMessage(static)(state, binIn).unsafeRun() match {
@@ -108,8 +118,11 @@ final class ProjectSpaWebSocket extends StrictLogging {
 //    s.close(CloseReason.CloseCodes.PROTOCOL_ERROR)
 //  }
 
-//  @OnClose
-//  def onWebSocketClose(s: Session, reason: CloseReason): Unit = {
-//    println("Socket Closed: " + reason)
-//  }
+  @OnClose
+  def onWebSocketClose(s: Session, reason: CloseReason): Unit = {
+    // TODO Logging
+    // println("Socket Closed: " + reason)
+    val state = stateL.get(s.getUserProperties)
+    projectSpaLogic.onClose(state).unsafeRun()
+  }
 }

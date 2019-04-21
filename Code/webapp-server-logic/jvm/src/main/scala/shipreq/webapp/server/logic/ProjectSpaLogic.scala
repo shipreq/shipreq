@@ -16,15 +16,18 @@ import shipreq.webapp.base.user.User
 trait ProjectSpaLogic[F[_]] {
   import ProjectSpaLogic._
 
-  def onConnect(cookies: Cookie.LookupFn,
-                projectId: ProjectId.Public): F[ConnectRejection \/ (WebSocketStatic, WebSocketState)]
+  def onConnect(cookies  : Cookie.LookupFn,
+                projectId: ProjectId.Public): F[ConnectRejection \/ (WebSocketStatic, WebSocketState[F])]
 
-//  final type FRes[R <: ReqRes] = F[Res[R]]
-//  val onRequest: ReqRes.Fold[Req, FRes]
+  def onOpen(static: WebSocketStatic,
+             state: WebSocketState[F],
+             push : BinaryData => F[Unit]): F[WebSocketState[F]]
 
   def onMessage(static: WebSocketStatic)
-               (state : WebSocketState,
-                msg   : BinaryData): F[MsgError \/ (BinaryData, Option[WebSocketState])]
+               (state : WebSocketState[F],
+                msg   : BinaryData): F[MsgError \/ (BinaryData, Option[WebSocketState[F]])]
+
+  def onClose(state : WebSocketState[F]): F[Unit]
 }
 
 object ProjectSpaLogic extends StrictLogging {
@@ -34,10 +37,9 @@ object ProjectSpaLogic extends StrictLogging {
     implicit def univEq: UnivEq[WebSocketStatic] = UnivEq.derive
   }
 
-  final case class WebSocketState()
+  final case class WebSocketState[F[_]](sub: Option[Redis.Subscription[F]])
   object WebSocketState {
-    val empty = apply()
-    implicit def univEq: UnivEq[WebSocketState] = UnivEq.derive
+    def empty[F[_]] = apply[F](None)
   }
 
   sealed trait ConnectRejection
@@ -71,14 +73,18 @@ object ProjectSpaLogic extends StrictLogging {
     val OnConnect  = Monads.FDisj[F, ConnectRejection]
     val OnMsgError = Monads.FDisj[F, MsgError]
 
+    val fUnit = F.pure(())
+
     new ProjectSpaLogic[F] { self =>
 
-      override def onConnect(cookies: Cookie.LookupFn,
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      override def onConnect(cookies  : Cookie.LookupFn,
                              projectId: ProjectId.Public) = {
         val C = OnConnect
         import ConnectRejection._
 
-        val main: C.Result[(WebSocketStatic, WebSocketState)] =
+        val main: C.Result[(WebSocketStatic, WebSocketState[F])] =
           for {
             pid     <- C.lift(Obfuscators.projectId.deobfuscate(projectId).leftMap(_ => InvalidProjectId))
             session <- C.optionF(security.sessionRestore(cookies), NoSession)
@@ -87,22 +93,48 @@ object ProjectSpaLogic extends StrictLogging {
             _       <- C.ensure(user.id ==* p.userId, AccessDenied)
           } yield {
             val static = WebSocketStatic(user, pid)
-            val state  = WebSocketState.empty
+            val state  = WebSocketState.empty[F]
             (static, state)
           }
 
         security.protect(main.value)
       }
 
+      override def onOpen(static: WebSocketStatic,
+                          state: WebSocketState[F],
+                          push : BinaryData => F[Unit]) =
+        state.sub match {
+          case None =>
+            for {
+              sub <- redis.subscribe(static.projectId, pushEvent(push, _))
+            } yield WebSocketState(Some(sub))
+          case Some(_) =>
+            F.pure(state)
+        }
+
+      override def onClose(state : WebSocketState[F]) =
+        state.sub match {
+          case Some(sub) => sub.unsubscribe
+          case None      => fUnit
+        }
+
+      private def pushEvent(push: BinaryData => F[Unit], e: VerifiedEvent): F[Unit] =
+        pushEvents(push, VerifiedEvent.NonEmptySeq.one(e))
+
+      private def pushEvents(push: BinaryData => F[Unit], es: VerifiedEvent.NonEmptySeq): F[Unit] = {
+        val msgBin = BinaryJvm.encode(webSocketHelper.protocolSC)(-\/(es))
+        push(msgBin)
+      }
+
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       // Message responding
 
       override def onMessage(static: WebSocketStatic)
-                            (state : WebSocketState,
+                            (state : WebSocketState[F],
                              msg   : BinaryData) = {
         val M = OnMsgError
 
-        val main: M.Result[(BinaryData, Option[WebSocketState])] =
+        val main: M.Result[(BinaryData, Option[WebSocketState[F]])] =
           for {
             (reqId, req)  <- M.lift(parseMsg(msg))
             (res, state2) <- M.rightF(req.reqRes.fold(msgFold)((req.req, static)))
@@ -124,7 +156,7 @@ object ProjectSpaLogic extends StrictLogging {
       }
 
       private type MsgFnIn[I] = (I, WebSocketStatic)
-      private type MsgFnOut[O] = F[(O, Option[WebSocketState])]
+      private type MsgFnOut[O] = F[(O, Option[WebSocketState[F]])]
       private type MsgFn[I, O] = (I, WebSocketStatic) => MsgFnOut[O]
       private type MsgFoldIn[R <: WsReqRes] = MsgFnIn[R#RequestType]
       private type MsgFoldOut[R <: WsReqRes] = MsgFnOut[R#ResponseType]
