@@ -2,8 +2,7 @@ package shipreq.webapp.base.event
 
 import japgolly.univeq._
 
-/**
-  * Event ordinal.
+/** Event ordinal.
   *
   * The order of an event in an event stream.
   */
@@ -30,8 +29,11 @@ object EventOrd {
 
   def first = apply(1)
 
-  final case class Latest(value: Int) extends AnyVal
+  final case class Latest(value: Int) {
+    def asEventOrd = EventOrd(value)
+  }
 
-  implicit def latestExtendsEventOrd(l: Latest): EventOrd = new EventOrd(l.value)
+  @inline implicit def latestExtendsEventOrd(l: Latest): EventOrd = l.asEventOrd
+
   implicit def univEqLatest: UnivEq[Latest] = UnivEq.derive
 }

@@ -15,6 +15,15 @@ final case class ProjectAndOrd(project: Project, ord: Option[EventOrd.Latest]) {
   @inline def < (x: ProjectAndOrd) = x > this
   @inline def <=(x: ProjectAndOrd) = !this.>(x)
   @inline def >=(x: ProjectAndOrd) = !this.<(x)
+
+  def max(p: ProjectAndOrd): ProjectAndOrd =
+    if (this > p) this else p
+
+  def max(o: Option[ProjectAndOrd]): ProjectAndOrd =
+    o.fold(this)(max)
+
+  def nextOrd: EventOrd =
+    ord.fold(EventOrd.first)(_.asEventOrd + 1)
 }
 
 object ProjectAndOrd {

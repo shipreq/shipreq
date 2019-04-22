@@ -48,6 +48,17 @@ object Redis {
         case None    => isEmpty
       }
 
+    def filterComplete: ProjectCache =
+      if (isComplete) this else ProjectCache.empty
+
+    def >(x: Option[EventOrd.Latest]): Boolean =
+      (ord, x) match {
+        case (Some(a), Some(b)) => a > b
+        case (Some(_), None   ) => true
+        case (None   , Some(_))
+           | (None   , None   ) => false
+      }
+
     def build(pid: ProjectId) =
       snapshot match {
         case Some(ss) => ApplyEvents.append(pid, ss.toProjectAndOrd, events)
@@ -68,6 +79,7 @@ object Redis {
   final case class Subscription[F[_]](unsubscribe: F[Unit])
 
   trait ProjectAlgebra[F[_]] {
+    protected def F: Monad[F]
 
     /** [TLA+] Used by:
       *          - Load_Subscribe
@@ -90,11 +102,19 @@ object Redis {
       *
       * @param publishOnly Events to publish to the project's topic, but not save.
       *                    These events are published unconditionally, even if the cache isn't updated.
-      * @return Whether the cache was updated. (Stale data is rejected.)
+      * @return Whether the write was accepted (stale data is rejected), or there was nothing to write.
       */
     def writeSnapshot(id         : ProjectId,
                       snapshot   : ProjectSnapshot,
                       publishOnly: VerifiedEvent.Seq): F[Boolean]
+
+    final def writeSnapshot(id         : ProjectId,
+                            snapshot   : ProjectAndOrd,
+                            publishOnly: VerifiedEvent.Seq): F[Boolean] =
+      snapshot.ord match {
+        case Some(ord) => writeSnapshot(id, ProjectSnapshot(snapshot.project, ord), publishOnly)
+        case None      => fTrue
+      }
 
     /** [TLA+] Used by:
       *          - RedisWriteEvents
@@ -105,11 +125,13 @@ object Redis {
       * @param cacheOnly       Events to save, and not publish.
       * @param cacheAndPublish Events to save, and publish to the project's topic.
       *                        These events are published unconditionally, even if the cache isn't updated.
-      * @return Whether the cache was updated. (Stale data is rejected.)
+      * @return Whether the write was accepted (stale data is rejected), or there was nothing to write.
       */
     def writeEvents(id             : ProjectId,
                     cacheOnly      : VerifiedEvent.Seq,
                     cacheAndPublish: VerifiedEvent.Seq): F[Boolean]
+
+    protected final val fTrue = F pure true
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -133,8 +155,10 @@ object Redis {
     }
   }
 
-  final class InMemory[F[_]](implicit F: Monad[F] with BindRec[F]) extends ProjectAlgebra[F] {
+  final class InMemory[F[_]](implicit FF: Monad[F] with BindRec[F]) extends ProjectAlgebra[F] {
     import InMemory.State
+
+    override protected def F = FF
 
     private[this] val globalState  = new ConcurrentHashMap[ProjectId, State[F]]()
     private[this] val emptyState   = State[F](ProjectCache.empty, Nil, Nil)

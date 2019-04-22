@@ -1,6 +1,6 @@
 package shipreq.webapp.server.logic
 
-import scalaz.{Monad, ~>}
+import scalaz.{BindRec, Monad, ~>}
 import shipreq.base.ops.Trace
 import shipreq.taskman.api.TaskmanApi
 import shipreq.webapp.server.ServerConfig
@@ -17,8 +17,7 @@ object ServerLogic {
 
   def create[D[_] : Monad
                   : DB.Algebra,
-             F[_] : Monad
-                  : MetricsLogic
+             F[_] : MetricsLogic
                   : ProjectServer.StoreAlgebra
                   : Redis.ProjectAlgebra
                   : Security.Algebra
@@ -26,8 +25,9 @@ object ServerLogic {
                   : TaskmanApi
                   : Trace.Algebra]
             (b: ProjectServer.BroadcastTo)
-            (implicit runDB: D ~> F, config: ServerConfig)
-            : ServerLogic[F] =
+            (implicit F: Monad[F] with BindRec[F],
+             runDB: D ~> F,
+             config: ServerConfig): ServerLogic[F] =
     ServerLogic(
       PublicSpaLogic [D, F],
       HomeSpaLogic   [D, F],

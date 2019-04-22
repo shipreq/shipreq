@@ -3,15 +3,18 @@ package shipreq.webapp.server.logic
 import com.typesafe.scalalogging.StrictLogging
 import japgolly.univeq._
 import scala.util.{Failure, Success}
-import scalaz.{-\/, Monad, \/, \/-, ~>}
 import scalaz.syntax.monad._
-import shipreq.base.util.{BinaryData, ErrorMsg, Monads}
+import scalaz.{-\/, BindRec, Monad, \/, \/-, ~>}
+import shipreq.base.ops.Trace
+import shipreq.base.util.{BinaryData, ErrorMsg, Monads, PotentialChange}
 import shipreq.webapp.base.data.{Obfuscated, Project, ProjectId}
-import shipreq.webapp.base.event.{ApplyEvent, EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.base.event.{ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.protocol2.ProjectSpaProtocols.WsReqRes.EventResult
 import shipreq.webapp.base.protocol2.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.base.protocol2.{BinaryJvm, ProjectSpaProtocols, WebSocketServerHelper}
 import shipreq.webapp.base.user.User
+
+// TODO Logging, timing, tracing, metrics
 
 trait ProjectSpaLogic[F[_]] {
   import ProjectSpaLogic._
@@ -61,11 +64,12 @@ object ProjectSpaLogic extends StrictLogging {
 
   def apply[D[_], F[_]](implicit
                         D       : Monad[D],
-                        F       : Monad[F],
+                        F       : Monad[F] with BindRec[F],
                         redis   : Redis.ProjectAlgebra[F],
                         db      : DB.ForProjectSpa[D],
                         runDB   : D ~> F,
-                        security: Security.Algebra[F]): ProjectSpaLogic[F] = {
+                        security: Security.Algebra[F],
+                        trace   : Trace.Algebra[F]): ProjectSpaLogic[F] = {
 
     val webSocketHelper = WebSocketServerHelper(ProjectSpaProtocols.WebSocket(Obfuscated(null)))
 
@@ -161,13 +165,22 @@ object ProjectSpaLogic extends StrictLogging {
 
       private val msgFold = WsReqRes.Fold[MsgFoldIn, MsgFoldOut](
         onInitApp               = onInitApp.tupled,
-        onProjectNameSet        = onProjectNameSet.tupled,
-        onFieldMandatorinessMod = _ => ???,
-        onReqTypeImplicationMod = _ => ???,
-        onCreateContent         = _ => ???,
-        onUpdateContent         = _ => ???,
-        onUpdateSavedViews      = _ => ???,
+        onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn),
+        onFieldMandatorinessMod = updateProjectI(MakeEvent.fieldMandatorinessMod),
+        onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod),
+        onCreateContent         = updateProject(MakeEvent.createContent),
+        onUpdateContent         = updateProject(MakeEvent.updateContent),
+        onUpdateSavedViews      = updateProject(MakeEvent.updateSavedViews),
       )
+
+      private def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result): MsgFnIn[I] => MsgFnOut[EventResult] = input => {
+        val i = input._1
+        val pid = input._2.projectId
+        ProjectUpdater[D, F](pid, mkEvent(i, _))
+      }
+
+      private def updateProjectI[I](mkEvent: I => MakeEvent.Result): MsgFnIn[I] => MsgFnOut[EventResult] =
+        updateProject((i, _) => mkEvent(i))
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       // InitApp
@@ -192,13 +205,7 @@ object ProjectSpaLogic extends StrictLogging {
 
           def writeRedis(i: InitAppData): F[Boolean] =
             // TODO Maybe write events instead of snapshot
-            i.project.ord match {
-              case Some(l) =>
-                redis.writeSnapshot(pid, Redis.ProjectSnapshot(i.project.project, l), VerifiedEvent.Seq.empty)
-              case None =>
-                // Don't try to write an empty project to the cache
-                F pure true
-            }
+            redis.writeSnapshot(pid, i.project, VerifiedEvent.Seq.empty)
 
             for {
               result <- readDb(c.nonEmptyCompleteBuild(pid) getOrElse ProjectAndOrd.empty)
@@ -220,10 +227,100 @@ object ProjectSpaLogic extends StrictLogging {
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      private def onProjectNameSet: MsgFn[String, EventResult] = (newName, static) => {
-        ???
+    } // new ProjectSpaLogic
+  }
+
+  private object ProjectUpdater {
+
+    type Result = ErrorMsg \/ VerifiedEvent.Seq
+
+    def apply[D[_], F[_]](pid: ProjectId,
+                          mkEvent: Project => MakeEvent.Result)
+                         (implicit
+                          D       : Monad[D],
+                          F       : Monad[F] with BindRec[F],
+                          redis   : Redis.ProjectAlgebra[F],
+                          db      : DB.ForProjectSpa[D],
+                          runDB   : D ~> F,
+                          security: Security.Algebra[F],
+                          trace   : Trace.Algebra[F]): F[Result] = {
+
+      def loop(s: State): F[State \/ Result] = {
+        import Status._
+        s.status match {
+
+          case ReadRedis =>
+            for {
+              r0 <- redis.read(pid)
+            } yield {
+              val r = r0.filterComplete
+              r.build(pid) match {
+                case \/-(p) => -\/(s.copy(local = p, redis = r, status = if (r > s.local.ord) WriteDb else ReadDb))
+                case -\/(e) => \/-(-\/(e))
+              }
+            }
+
+          case ReadDb =>
+            val p1 = s.local max s.redis.nonEmptyCompleteBuild(pid)
+            for {
+              newEvents <- runDB(db.getProjectEvents(pid, DB.EventFilter.given(p1.ord)))
+            } yield
+              ApplyEvents.append(pid, p1, newEvents) match {
+                case \/-(p2) => -\/(s.copy(local = p2, status = WriteRedis1))
+                case -\/(e)  => \/-(-\/(e))
+              }
+
+          case WriteRedis1 =>
+            for {
+              // TODO Maybe write events instead of snapshot
+              ok <- redis.writeSnapshot(pid, s.local, VerifiedEvent.Seq.empty)
+            } yield -\/(s.copy(status = if (ok) WriteDb else ReadRedis))
+
+          case WriteDb =>
+            mkEvent(s.local.project).flatMap(ApplyNewEvent(_, s.local.project)) match {
+              case PotentialChange.Success(updated) =>
+                val saveCmd = DB.SaveProjectEventCmd(s.local.nextOrd, updated.event, updated.hashRecs)
+                runDB(db.saveProjectEvent(pid, saveCmd)) map {
+                  case \/-(ve) =>
+                    -\/(s.copy(status = WriteRedis2(VerifiedEvent.Seq.one(ve))))
+                  case -\/(_) =>
+                    -\/(s.copy(status = ReadRedis))
+                }
+
+              case PotentialChange.Unchanged =>
+                F pure \/-(\/-(VerifiedEvent.Seq.empty))
+
+              case PotentialChange.Failure(e) =>
+                F pure \/-(-\/(ErrorMsg(e)))
+            }
+
+          case WriteRedis2(newEvents) =>
+            for {
+              // TODO Maybe write snapshot instead of events
+              ok <- redis.writeEvents(pid, VerifiedEvent.Seq.empty, newEvents)
+            } yield \/-(\/-(newEvents))
+        }
       }
 
-    } // new ProjectSpaLogic
+      F.tailrecM(loop)(initialState)
+    }
+
+    final case class State(local : ProjectAndOrd,
+                           redis : Redis.ProjectCache,
+                           status: Status)
+
+    val initialState = State(
+      local  = ProjectAndOrd.empty,
+      redis  = Redis.ProjectCache.empty,
+      status = Status.ReadRedis)
+
+    sealed trait Status
+    object Status {
+      case object ReadRedis                                      extends Status
+      case object ReadDb                                         extends Status
+      case object WriteRedis1                                    extends Status
+      case object WriteDb                                        extends Status
+      final case class WriteRedis2(newEvents: VerifiedEvent.Seq) extends Status
+    }
   }
 }
