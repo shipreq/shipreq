@@ -8,8 +8,16 @@ import shipreq.webapp.base.event.{ApplyEvent, EventOrd, VerifiedEvent}
 
 object ApplyEvents extends StrictLogging {
 
+  val emptyStartingPoint: (Project, Option[EventOrd.Latest]) =
+    (Project.empty, None)
+
   def create(pid: ProjectId, events: VerifiedEvent.Seq): ErrorMsg \/ (Project, Option[EventOrd.Latest]) =
-    append(pid, Project.empty, None, events)
+    append(pid, emptyStartingPoint, events)
+
+  @inline def append(pid: ProjectId,
+                     startingPoint: (Project, Option[EventOrd.Latest]),
+                     events: VerifiedEvent.Seq): ErrorMsg \/ (Project, Option[EventOrd.Latest]) =
+    append(pid, startingPoint._1, startingPoint._2, events)
 
   def append(pid: ProjectId,
              p: Project,

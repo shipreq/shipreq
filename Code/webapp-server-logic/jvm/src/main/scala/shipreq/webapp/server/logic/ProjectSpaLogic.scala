@@ -177,33 +177,34 @@ object ProjectSpaLogic extends StrictLogging {
 
         type Result = ErrorMsg \/ InitAppData
 
-        def readDbFull: F[Result] =
-          runDB(
-            db.inDbTransaction(for {
-              md <- db.projectSpaInitApp(pid)
-              es <- db.getAllProjectEvents(pid)
-            } yield (es, md))
-          ).map { case (es, md) =>
-            // Build outside of DB transaction
-            ApplyEvents.create(pid, es).map(r => InitAppData(r._1, r._2, md.lastUpdatedOrCreatedAt))
-          }
+        def ignoreCache(c: Redis.ProjectCache): F[Result] = {
 
-        def writeRedis(i: InitAppData): F[Boolean] =
-          // TODO Maybe write events instead of snapshot
-          i.latestEventOrd match {
-            case Some(l) =>
-              redis.writeSnapshot(pid, Redis.ProjectSnapshot(i.project, l), VerifiedEvent.Seq.empty)
-            case None =>
-              // Don't try to write an empty project to the cache
-              F pure true
-          }
+          def readDb(startingPoint: (Project, Option[EventOrd.Latest])) =
+            runDB(
+              db.inDbTransaction(for {
+                ia <- db.projectSpaInitApp(pid)
+                es <- db.getProjectEvents(pid, DB.EventFilter.given(startingPoint._2))
+              } yield (es, ia))
+            ).map { case (es, ia) =>
+              // Build outside of DB transaction
+              ApplyEvents.append(pid, startingPoint, es).map(r => InitAppData(r._1, r._2, ia.lastUpdatedOrCreatedAt))
+            }
 
-        def ignoreCache: F[Result] =
-          // TODO This could be smarter by using the cache and reading only the remainder from the DB
-          for {
-            result <- readDbFull
-            _      <- result.fold[F[_]](_ => fUnit, writeRedis)
-          } yield result
+          def writeRedis(i: InitAppData): F[Boolean] =
+            // TODO Maybe write events instead of snapshot
+            i.latestEventOrd match {
+              case Some(l) =>
+                redis.writeSnapshot(pid, Redis.ProjectSnapshot(i.project, l), VerifiedEvent.Seq.empty)
+              case None =>
+                // Don't try to write an empty project to the cache
+                F pure true
+            }
+
+            for {
+              result <- readDb(c.nonEmptyCompleteBuild(pid) getOrElse ApplyEvents.emptyStartingPoint)
+              _      <- result.fold[F[_]](_ => fUnit, writeRedis)
+            } yield result
+        }
 
         def useCache(c: Redis.ProjectCache, md: DB.ProjectSpaInitApp): F[Result] = {
           val result = c.build(pid).map(r => InitAppData(r._1, r._2, md.lastUpdatedOrCreatedAt))
@@ -212,8 +213,8 @@ object ProjectSpaLogic extends StrictLogging {
 
         for {
           cache <- redis.read(pid)
-          md    <- runDB(db.projectSpaInitApp(pid))
-          r     <- if (cache.isCompleteTo(md.latestOrd)) useCache(cache, md) else ignoreCache
+          ia    <- runDB(db.projectSpaInitApp(pid))
+          r     <- if (cache.isCompleteTo(ia.latestOrd)) useCache(cache, ia) else ignoreCache(cache)
         } yield r
       }
 

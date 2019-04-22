@@ -51,6 +51,12 @@ object Redis {
         case Some(ss) => ApplyEvents.append(pid, ss.value, Some(ss.ord), events)
         case None     => ApplyEvents.append(pid, Project.empty, None, events)
       }
+
+    def nonEmptyCompleteBuild(pid: ProjectId): Option[(Project, Option[EventOrd.Latest])] =
+      if (nonEmpty && isComplete)
+        build(pid).toOption
+      else
+        None
   }
 
   object ProjectCache {
