@@ -1,5 +1,6 @@
 package shipreq.webapp.server.logic
 
+import japgolly.univeq._
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.JavaConverters._
@@ -27,6 +28,23 @@ object Redis {
 
     @inline def isEmpty = ord.isEmpty
     @inline def nonEmpty = !isEmpty
+
+    def isComplete: Boolean =
+      (snapshot, events.headOption) match {
+        case (Some(_), None)    => true
+        case (Some(s), Some(e)) => e.ord.immediatelyFollows(s.ord)
+        case (None   , Some(e)) => e.ord ==* EventOrd.first
+        case (None   , None)    => true
+      }
+
+    def isCompleteTo(latestOrd: EventOrd.Latest): Boolean =
+      ord.exists(_ ==* latestOrd) && isComplete
+
+    def isCompleteTo(latestOrd: Option[EventOrd.Latest]): Boolean =
+      latestOrd match {
+        case Some(l) => isCompleteTo(l)
+        case None    => isEmpty
+      }
   }
 
   object ProjectCache {

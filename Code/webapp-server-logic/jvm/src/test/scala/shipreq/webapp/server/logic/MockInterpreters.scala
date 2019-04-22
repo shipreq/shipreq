@@ -229,11 +229,10 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     pid
   }
 
-  override def getProjectSpa1(id: ProjectId) = Name[DB.ProjectSpaData1] {
+  override def projectSpaInitApp(id: ProjectId) = Name[DB.ProjectSpaInitApp] {
     val p = projects.need(id)
-    DB.ProjectSpaData1(
+    DB.ProjectSpaInitApp(
       p.createdAt,
-      p.events.headOption.map(_.ord),
       p.events.lastOption.map(_.ord.asLatest),
       p.lastUpdatedAt)
   }

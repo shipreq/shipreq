@@ -56,11 +56,11 @@ object ProjectSpaLogicTest extends TestSuite {
       for (e <- verifiedEvents)
         db.saveProjectEvent(id)(e.ord, e.event.asInstanceOf[ActiveEvent], e.hashRecs).value.foreach(throw _)
 
-      val data1                = db.getProjectSpa1(id).value
+      val data1                = db.projectSpaInitApp(id).value
 
       lazy val instance        = applyVerifiedEventSuccessfully(Project.empty, verifiedEvents.toList: _*)
 
-      lazy val initAppData     = InitAppData(instance, verifiedEvents.last.ord.asLatest, data1.lastUpdatedOrCreatedAt)
+      lazy val initAppData     = InitAppData(instance, Some(verifiedEvents.last.ord.asLatest), data1.lastUpdatedOrCreatedAt)
 
       lazy val static          = WebSocketStatic(user2.toUser, id)
 

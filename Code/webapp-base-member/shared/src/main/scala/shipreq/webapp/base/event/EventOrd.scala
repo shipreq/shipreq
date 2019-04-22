@@ -19,8 +19,8 @@ final case class EventOrd(value: Int) extends AnyVal {
   def <=(o: EventOrd): Boolean = value <= o.value
   def >=(o: EventOrd): Boolean = value >= o.value
 
-  def immediatelyFollows(o: EventOrd): Boolean =
-    (o.value + 1) ==* this.value
+  def immediatelyFollows(prev: EventOrd): Boolean =
+    (prev.value + 1) ==* this.value
 
   def asLatest = EventOrd.Latest(value)
 }

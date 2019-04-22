@@ -168,14 +168,14 @@ object DB {
     // TODO Remove these
     def getProjectHeader   (id: ProjectId): F[Option[ProjectHeader]]
     def getProjectMetaData (id: ProjectId): F[Option[ProjectMetaData]]
+
+    def projectSpaInitApp  (id: ProjectId): F[ProjectSpaInitApp]
     def getAllProjectEvents(id: ProjectId): F[VerifiedEvent.Seq]
-    def getProjectSpa1     (id: ProjectId): F[ProjectSpaData1]
   }
 
-  final case class ProjectSpaData1(createdAt    : Instant,
-                                   firstOrd     : Option[EventOrd],
-                                   latestOrd    : Option[EventOrd.Latest],
-                                   lastUpdatedAt: Option[Instant]) {
+  final case class ProjectSpaInitApp(createdAt    : Instant,
+                                     latestOrd    : Option[EventOrd.Latest],
+                                     lastUpdatedAt: Option[Instant]) {
     val lastUpdatedOrCreatedAt = lastUpdatedAt.getOrElse(createdAt)
   }
 
