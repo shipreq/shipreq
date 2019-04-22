@@ -37,7 +37,7 @@ object DispatchLogicTest extends TestSuite {
   }
 
   object Tester extends MockInterpreters {
-    implicit val trace = TraceLogic.off[Name, TestRequest, TestResponse]
+    implicit val traceLogic = TraceLogic.off[Name, TestRequest, TestResponse]
 
     val dispatcher = new DispatchLogic[Name, TestRequest, TestResponse](
       _.toAbstract,

@@ -5,7 +5,6 @@ import utest._
 import shipreq.base.ops.Trace
 import shipreq.base.util.Direction
 import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.protocol.CreateContentCmd
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.user._
@@ -13,7 +12,6 @@ import shipreq.webapp.base.user._
 object ProjectServerTest extends TestSuite {
 
   class Tester extends MockInterpreters {
-    implicit val trace = Trace.Algebra.off[Name]
     val logic = ProjectServer[Name, Name](ProjectServer.BroadcastTo.All)
   }
 

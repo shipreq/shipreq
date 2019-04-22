@@ -7,6 +7,7 @@ import java.time.{Duration, Instant}
 import java.util.concurrent.ConcurrentHashMap
 import scalaz.{-\/, Name, NaturalTransformation, \/, \/-, ~>}
 import scalaz.syntax.monad._
+import shipreq.base.ops.Trace
 import shipreq.base.util._
 import shipreq.taskman.api.{Msg, MsgId, MsgStatus, TaskmanApi}
 import shipreq.webapp.base.data._
@@ -508,6 +509,7 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
   implicit val taskman        = new MockTaskman
   implicit val nameToName     = NaturalTransformation.refl[Name]
   implicit val metrics        = MetricsLogic.const(Name(()))
+  implicit val trace          = Trace.Algebra.off[Name]
   implicit val redis          = new Redis.InMemory[Name]
   implicit val publicSpa      = PublicSpaLogic[Name, Name]
   implicit val homeSpa        = HomeSpaLogic[Name, Name]
