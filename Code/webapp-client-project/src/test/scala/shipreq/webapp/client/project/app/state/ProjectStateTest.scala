@@ -36,9 +36,9 @@ object ProjectStateTest extends TestSuite {
 
     val genTest: Gen[(ProjectState, Vector[VerifiedEvent], Project, ProjectState)] =
       for {
-        initialOrd        ← Gen.chooseInt(100).map(EventOrd(_))
+        initialOrd        ← Gen.chooseInt(100).map(i => EventOrd(i + 1))
         initialEventCount ← Gen.chooseInt(100)
-        initialState      = ProjectState.init(p1, looseProjectMetaData(p1, eventCount = initialEventCount), initialOrd)
+        initialState      = ProjectState.init(p1, looseProjectMetaData(p1, totalEventCount = initialEventCount), initialOrd)
         ((p2, _), ves)    ← RandomEventStream.verifiedEvents(140).run((p1, initialOrd + 1))
         batches           ← Gen_batches(ves, 0 to 7)
                               .pair.map(x => x._1 ++ x._2) // duplicate all events (in different batches) to test idempotency
@@ -54,7 +54,8 @@ object ProjectStateTest extends TestSuite {
 
     val (s1, ves, p2, s2) = genTest.sample()
 
-    assertEq("Event count", s2.projectMetaData.eventCount, s1.projectMetaData.eventCount + ves.length)
+    assertEq("Total event count", s2.projectMetaData.totalEventCount, s1.projectMetaData.totalEventCount + ves.length)
+    assertEq("Init event count", s2.projectMetaData.initEventCount, s1.projectMetaData.initEventCount)
     assertEq("Latest EventOrd", s2.latestEventOrd, s1.latestEventOrd + ves.length)
     assertEq("Future events", s2.futureEvents.keySet.toList, Nil)
     s2.projectMetaData.assertInSyncWith(p2)

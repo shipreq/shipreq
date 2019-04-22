@@ -23,7 +23,7 @@ object LiveTest extends TestSuite {
   val prepare = onceUnit {
     LiveTestUtils.init()
     userFixture.setup.unsafeRun()
-    pid = Some(xa ! dbAlgebra.createEmptyProject(user1.id))
+    pid = Some(xa ! dbAlgebra.createEmptyProject(user1.id, 0))
   }
 
   implicit def temp[I](c: shipreq.webapp.base.protocol2.ClientSideProc[I]): ClientSideProc[I] =

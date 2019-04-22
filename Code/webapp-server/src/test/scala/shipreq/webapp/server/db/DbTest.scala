@@ -230,7 +230,7 @@ object DbTest extends TestSuite {
         // implicit val settings = DefaultSettings.propSettings.setSampleSize(20000).setGenSize(4).setDebug
         implicit val settings = DefaultSettings.propSettings.setSampleSize(320).setGenSize(16)
 
-        val ordCounter = new AtomicInteger()
+        val ordCounter = new AtomicInteger(0)
 
         val prop = Prop.equal[(ActiveEvent, HashRecs)]("load . save = id")(
           i => TestDb().runNow { xa =>

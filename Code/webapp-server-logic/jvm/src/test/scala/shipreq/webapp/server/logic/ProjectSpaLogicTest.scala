@@ -41,7 +41,7 @@ object ProjectSpaLogicTest extends TestSuite {
 
     object p1 {
 
-      val id = db.createEmptyProject(user2.id).value
+      val id = db.createEmptyProject(user2.id, 2).value
 
       val events = List[Event](
         ProjectTemplateApply(ProjectTemplate.V2),

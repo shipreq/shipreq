@@ -42,6 +42,7 @@ object MockDb {
 
   final case class ProjectEntry(projectId    : ProjectId,
                                 userId       : UserId,
+                                initEvents   : Int,
                                 events       : VerifiedEvent.Seq,
                                 createdAt    : Instant,
                                 lastUpdatedAt: Option[Instant]) {
@@ -50,12 +51,13 @@ object MockDb {
       ApplyEvent.trusted.applyVerified(events)(Project.empty).needRight
 
     lazy val projectMetaData: ProjectMetaData =
-      ProjectMetaData(id            = Obfuscators.projectId.obfuscate(projectId),
-                      name          = project.name,
-                      eventCount    = events.size,
-                      reqCount      = project.content.reqs.size,
-                      createdAt     = createdAt,
-                      lastUpdatedAt = lastUpdatedAt)
+      ProjectMetaData(id              = Obfuscators.projectId.obfuscate(projectId),
+                      name            = project.name,
+                      initEventCount  = initEvents,
+                      totalEventCount = events.size,
+                      reqCount        = project.content.reqs.size,
+                      createdAt       = createdAt,
+                      lastUpdatedAt   = lastUpdatedAt)
 
     def projectLoad: VerifiedEvent.Seq =
       events
@@ -210,9 +212,10 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     IMap.empty(_.projectId)
 
   def addProject(projectId: ProjectId, userId: UserId)(events: Event*): Unit = {
+    val initEvents = events.size
     val ves = verifyEvents(Project.empty)(events: _*)
     val now = Instant.now()
-    val mde = MockDb.ProjectEntry(projectId, userId, ves, now, Some(now))
+    val mde = MockDb.ProjectEntry(projectId, userId, initEvents, ves, now, Some(now))
     projects = projects.add(mde)
   }
 
@@ -220,7 +223,7 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     projects.get(id).map(_.userId)
   }
 
-  override def createEmptyProject(id: UserId) = Name[ProjectId] {
+  override def createEmptyProject(id: UserId, initEvents: Int) = Name[ProjectId] {
     val pid = ProjectId(1 + projects.underlyingMap.keysIterator.map(_.value).foldLeft(0L)(_ max _))
     addProject(pid, id)()
     pid

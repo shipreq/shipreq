@@ -1224,12 +1224,13 @@ object RandomData {
     for {
       id            <- projectIdPublic
       name          <- projectName
-      eventCount    <- Gen.chooseInt(30000)
-      reqCount      <- Gen.chooseInt(eventCount min 2000)
+      initEvents    <- Gen.chooseInt(3)
+      totalEvents   <- Gen.chooseInt(30000)
+      reqCount      <- Gen.chooseInt(totalEvents min 2000)
       createdAt     <- instantPast
       lastUpdatedAt <- instantPast.option.map(_.filter(_ isAfter createdAt))
     } yield
-      ProjectMetaData(id, name, eventCount, reqCount, createdAt, lastUpdatedAt)
+      ProjectMetaData(id, name, initEvents.min(totalEvents), totalEvents, reqCount, createdAt, lastUpdatedAt)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object reqtableData {
@@ -2079,7 +2080,7 @@ object RandomData {
     }
 
     val eventOrd: Gen[EventOrd] =
-      Gen.chooseInt(100000).map(EventOrd(_))
+      Gen.chooseInt(100000).map(i => EventOrd(i + 1))
 
     val hashScheme: Gen[HashScheme] =
       Gen.chooseNE(HashSchemes.schemes)

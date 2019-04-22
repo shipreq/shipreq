@@ -8,6 +8,9 @@ import japgolly.univeq._
   * The order of an event in an event stream.
   */
 final case class EventOrd(value: Int) extends AnyVal {
+
+  def next: EventOrd = EventOrd(value + 1)
+
   def +(n: Int): EventOrd = EventOrd(value + n)
   def -(n: Int): EventOrd = EventOrd(value - n)
 
@@ -24,6 +27,8 @@ final case class EventOrd(value: Int) extends AnyVal {
 
 object EventOrd {
   implicit def univEq: UnivEq[EventOrd] = UnivEq.derive
+
+  def first = apply(1)
 
   final case class Latest(value: Int) extends AnyVal
 

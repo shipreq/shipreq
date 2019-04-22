@@ -281,10 +281,10 @@ object DbInterpreter {
     import EventSqlHelpers._
 
     private[db] final val createEmptyProjectSql =
-      Query[UserId, ProjectId]("INSERT INTO project(usr_id) VALUES(?) RETURNING id")
+      Query[(UserId, Int), ProjectId]("INSERT INTO project(usr_id, init_events) VALUES(?,?) RETURNING id")
 
-    override final def createEmptyProject(id: UserId): ConnectionIO[ProjectId] =
-       createEmptyProjectSql.toQuery0(id).unique
+    override final def createEmptyProject(id: UserId, initEvents: Int): ConnectionIO[ProjectId] =
+       createEmptyProjectSql.toQuery0(id, initEvents).unique
 
     private final def sqlProjectMetaData(projectCond: String, extraCols: String = ""): String = {
 
@@ -297,7 +297,7 @@ object DbInterpreter {
       s"""
         WITH
           ps AS (
-            SELECT id, created_at
+            SELECT id, init_events, created_at
             $extraColSuffix
             FROM project
             $projectCond
@@ -305,11 +305,11 @@ object DbInterpreter {
           es AS (
             SELECT
               project_id,
-              count(*) events,
+              max(event.ord) events,
               count(*) FILTER (WHERE type_id IN (${reqCreationTypeIds mkString ","})) reqs,
               max(event.created_at) last_updated_at
             FROM event
-            WHERE project_id IN (select id FROM ps) AND ord > 1
+            WHERE project_id IN (select id FROM ps)
             GROUP BY project_id
           ),
           ns AS (
@@ -323,6 +323,7 @@ object DbInterpreter {
         SELECT
           ps.id,
           COALESCE(ns.name,''),
+          ps.init_events,
           COALESCE(es.events,0),
           COALESCE(es.reqs,0),
           ps.created_at,

@@ -24,16 +24,20 @@ object HomeSpaLogic {
   def createProject[D[_]](userId: UserId,
                           name: Project.Name,
                           now: Instant)
-                         (implicit db: DB.ForHomeSpa[D], D: Monad[D]): D[ProjectMetaData] =
+                         (implicit db: DB.ForHomeSpa[D], D: Monad[D]): D[ProjectMetaData] = {
+
+    val e1 = DB.SaveProjectEventCmd(EventOrd.first, InitProject.event, InitProject.hashRecs)
+    val u2 = ApplyNewEvent.mustApply(ProjectNameSet(name), InitProject.project)
+    val e2 = DB.SaveProjectEventCmd(e1.ord.next, u2.event, u2.hashRecs)
+    val ecount = 2
+    val events = e1 :: e2 :: Nil
+
     db.inDbTransaction(
       for {
-        pid ← db.createEmptyProject(userId)
-        e1  = ApplyNewEvent.mustApply(ProjectNameSet(name), InitProject.project)
-        _   ← db.saveProjectEvents(pid)(
-                DB.SaveProjectEventCmd(EventOrd(0), InitProject.event, InitProject.hashRecs) ::
-                DB.SaveProjectEventCmd(EventOrd(1), e1.event, e1.hashRecs) ::
-                Nil)
-      } yield ProjectMetaData(Obfuscators.projectId.obfuscate(pid), name, 0, 0, now, None))
+        pid ← db.createEmptyProject(userId, ecount)
+        _   ← db.saveProjectEvents(pid)(events)
+      } yield ProjectMetaData(Obfuscators.projectId.obfuscate(pid), name, ecount, ecount, 0, now, None))
+  }
 
   def apply[D[_], F[_]](implicit db: DB.ForHomeSpa[D],
                         runDB: D ~> F,

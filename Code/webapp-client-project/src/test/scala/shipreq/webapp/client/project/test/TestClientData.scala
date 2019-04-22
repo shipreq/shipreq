@@ -30,5 +30,5 @@ object TestClientData {
 
   def apply(p: Project): TestClientData =
     new TestClientData(ProjectState.init(
-      p, looseProjectMetaData(p, eventCount = 201), EventOrd(200)))
+      p, looseProjectMetaData(p, totalEventCount = 201), EventOrd(200)))
 }

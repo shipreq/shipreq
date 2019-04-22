@@ -22,25 +22,26 @@ object WebappTestUtil extends WebappTestEquality with WebappTestUtil
 
 trait WebappTestUtil extends BaseTestUtil {
 
-  def looseProjectMetaData(p: Project, eventCount: Int = 123): ProjectMetaData =
+  def looseProjectMetaData(p: Project, totalEventCount: Int = 123, initEventCount: Int = 2): ProjectMetaData =
     ProjectMetaData(
       Obfuscated("t3sT"),
       p.name,
-      eventCount,
+      initEventCount.min(totalEventCount),
+      totalEventCount,
       p.content.reqs.size,
       Instant.now().minus(28, DAYS),
       Some(Instant.now().minus(1, DAYS)))
 
-  def verifyEvent(p: Project, e: Event, o: EventOrd = EventOrd(-1)): VerifiedEvent =
+  def verifyEvent(p: Project, e: Event, o: EventOrd = EventOrd.first): VerifiedEvent =
     _verifyEvent(p, e, o)._2
 
-  def _verifyEvent(p: Project, e: Event, o: EventOrd = EventOrd(-1)): (Project, VerifiedEvent) = {
+  def _verifyEvent(p: Project, e: Event, o: EventOrd = EventOrd.first): (Project, VerifiedEvent) = {
     val p2 = ApplyEvent.untrusted.apply1(e)(p).fold(err => sys error s"Failed to apply event $e: $err", identity)
     val hrs = HashSchemes.latest.changes(p, p2)
     (p2, VerifiedEvent(o, e, hrs))
   }
 
-  def verifyEvents(p0: Project, firstOrd: EventOrd = EventOrd(1))(es: Event*): VerifiedEvent.Seq = {
+  def verifyEvents(p0: Project, firstOrd: EventOrd = EventOrd.first)(es: Event*): VerifiedEvent.Seq = {
     var p = p0
     VerifiedEvent.Seq.empty ++ es.iterator.zipWithIndex.map { case (e, i) =>
       val (p2, ve) = _verifyEvent(p, e, firstOrd + i)

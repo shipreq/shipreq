@@ -160,7 +160,7 @@ object DB {
   }
 
   trait ForHomeSpa[F[_]] extends Base[F] with SaveProjectEvent[F] {
-    def createEmptyProject          (id: UserId): F[ProjectId]
+    def createEmptyProject(id: UserId, initEvents: Int): F[ProjectId]
     def getAllProjectMetaDataForUser(id: UserId): F[List[ProjectMetaData]]
   }
 

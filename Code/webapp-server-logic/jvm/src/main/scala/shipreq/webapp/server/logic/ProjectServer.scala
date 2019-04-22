@@ -118,8 +118,7 @@ object ProjectServer extends HasLogger {
 
   def buildProject(load: VerifiedEvent.Seq): BuildError \/ (Project, EventOrd) =
     if (load.isEmpty) {
-      val ord = EventOrd(1) // Nice to reserve 0 for ApplyTemplate.
-      \/-((Project.empty, ord))
+      \/-((Project.empty, EventOrd.first))
     } else
       ApplyEvent.trusted.applyVerified(load)(Project.empty) match {
         case \/-(p) => \/-((p, load.lastKey.ord + 1))

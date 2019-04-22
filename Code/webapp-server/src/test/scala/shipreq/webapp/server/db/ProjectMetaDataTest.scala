@@ -17,15 +17,17 @@ object ProjectMetaDataTest extends TestSuite {
       import dbu.xa
 
       val uid = dbu.newUserId()
+      val initEvents = RandomEventStream.InitialEventCount
+      val idxToOrd = initEvents + 1
 
       // Do this twice to ensure that other projects' events don't interfere
       for (_ <- 1 to 2) {
-        val pid = dbu.newProjectId(uid)
+        val pid = dbu.newProjectId(uid, initEvents)
 
         def writeEvent(ve: VerifiedEvent, idx: Int): Unit =
           ve.event match {
             case ae: ActiveEvent =>
-              xa ! dbAlgebra.saveProjectEvent(pid)(EventOrd(idx), ae, ve.hashRecs)
+              xa ! dbAlgebra.saveProjectEvent(pid)(EventOrd(idx + idxToOrd), ae, ve.hashRecs)
             case x =>
               fail("Can't create non-active event: " + x)
           }
@@ -38,15 +40,17 @@ object ProjectMetaDataTest extends TestSuite {
 
         for (idx <- ves2.indices) {
           val ve = ves2(idx)
-          val seq = idx + ves1.length
-          writeEvent(ve, seq)
+          val idx2 = idx + ves1.length
+          writeEvent(ve, idx2)
           p = applyEventSuccessfully(p, ve.event)
 
           val md = xa ! dbAlgebra.getProjectMetaData(pid) getOrElse
             fail(s"ProjectMetaData not found for $pid.")
 
-          val e = (seq + 1 - RandomEventStream.InitialEventCount) max 0
-          assert(md.eventCount ==* e)
+          val expectTotal = idx2 + idxToOrd
+          val expectNonInit = expectTotal - initEvents
+          assert(md.totalEventCount ==* expectTotal)
+          assert(md.nonInitEventCount ==* expectNonInit)
           md.assertInSyncWith(p)
         }
       }
