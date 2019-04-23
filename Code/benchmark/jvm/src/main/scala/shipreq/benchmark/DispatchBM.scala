@@ -110,7 +110,7 @@ object DispatchBM {
     googleAnalyticsTrackingId  = None,
     taskmanSchema              = "test_taskman",
     initTaskmanOnBoot          = false,
-    initTaskmanRetry           = RetryCriteria(2 hours, Some(666)),
+    initTaskmanRetry           = Retries.none,
     jaegerTracingConfig        = None,
     prometheus                 = ServerConfig.Prometheus.default.copy(enabled = false),
     security = ServerConfig.Security(

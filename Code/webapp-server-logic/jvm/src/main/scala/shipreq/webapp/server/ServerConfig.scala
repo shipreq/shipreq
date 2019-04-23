@@ -25,7 +25,7 @@ final case class ServerConfig(baseUrl: Url.Absolute.Base,
                               taskmanSchema: String,
 
                               initTaskmanOnBoot: Boolean,
-                              initTaskmanRetry: RetryCriteria,
+                              initTaskmanRetry: Retries,
 
                               jaegerTracingConfig: Option[Configuration],
                               prometheus: ServerConfig.Prometheus,
@@ -136,7 +136,7 @@ object ServerConfig {
       ConfigDef.get        [String  ]("googleAnalytics.trackingId") |@|
       ConfigDef.need       [String  ]("taskman.schema") |@|
       ConfigDef.getOrUse   [Boolean ]("taskman.init", true) |@|
-      RetryCriteria.config.withPrefix("taskman.init.retry.") |@|
+      RetriesJvm.config.withPrefix("taskman.init.retry.") |@|
       JaegerTracingConfig.main       ("webapp") |@|
       Prometheus.config.withPrefix   ("prometheus.") |@|
       Security.config.withPrefix     ("security.")

@@ -7,7 +7,7 @@ import javax.mail.Session
 import scalaz.{-\/, \/, \/-}
 import scalaz.syntax.applicative._
 import shipreq.base.util.JavaTimeHelpers._
-import shipreq.base.util.RetryCriteria
+import shipreq.base.util.{Retries, RetriesJvm}
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.CfgKeys
 import shipreq.taskman.server.business._
@@ -103,7 +103,7 @@ object TaskmanConfig extends HasLogger {
     * @param healthFile A file that will be touched very regularly so that the health of the system is externally
     *                   observable.
     */
-  case class Taskman(remoteCfgRetry: RetryCriteria,
+  case class Taskman(remoteCfgRetry: Retries,
                      queueSize     : Int,
                      trustPeriod   : AssignmentTrustPeriod,
                      pollEvery     : Duration,
@@ -111,7 +111,7 @@ object TaskmanConfig extends HasLogger {
                      healthFile    : Option[String])
 
   def taskman: ConfigDef[Taskman] =
-    (RetryCriteria.config.withPrefix("remoteCfg.retry.")
+    (RetriesJvm.config.withPrefix("remoteCfg.retry.")
       |@| ConfigDef.need[Int]("queueSize").ensure(_ >= 1, "Must be ≥ 1.")
       |@| ConfigDef.need[Duration]("trustPeriod").ensure(!_.isShorterThan(10 seconds), "Must be at least 10 seconds.")
       |@| ConfigDef.need[Duration]("poll.every").ensure(!_.isShorterThan(50 millis), "Must be at least 50 ms.")
