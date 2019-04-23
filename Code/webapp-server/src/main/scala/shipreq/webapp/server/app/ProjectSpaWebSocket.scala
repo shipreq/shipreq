@@ -12,7 +12,6 @@ import shipreq.webapp.server.util.WebSocketUtil
 import shipreq.webapp.server.util.WebSocketUtil.UserPropsLens
 import CloseReason.{CloseCode, CloseCodes}
 
-// TODO Verify Origin header
 // TODO Restrict payload size (?)
 // TODO Configure timeouts
 // TODO Add tracing
@@ -86,6 +85,7 @@ final class ProjectSpaWebSocket extends StrictLogging {
     if (messageBytes.length == 0) {
       logger.debug("Received keep-alive")
     } else {
+      def msgDesc   = messageBytes.mkString("[", ",", "]")
       val userProps = s.getUserProperties
       val static    = staticL.get(userProps)
       val remote    = s.getBasicRemote
@@ -97,27 +97,26 @@ final class ProjectSpaWebSocket extends StrictLogging {
             remote.sendBinary(binOut.toByteBuffer)
 
           case -\/(MsgError.DecodingFailure) =>
-            logger.warn(s"Error parsing message: ${messageBytes.mkString("[", ",", "]")}")
+            logger.warn(s"Failed to decode message: $msgDesc")
             close(s, CloseCodes.PROTOCOL_ERROR, "Error parsing message")
         }
 
       } catch {
         case t: Throwable =>
-          logger.error("Error processing message.", t)
+          logger.error(s"Error occurred processing message: $msgDesc.", t)
           close(s, CustomCloseCodes.UnhandledException, "Runtime exception occurred")
       }
     }
   }
 
-//  @OnError
-//  def onWebSocketError(s: Session, cause: Throwable): Unit = {
-//     cause.printStackTrace(System.err)
-//    s.close(CloseReason.CloseCodes.PROTOCOL_ERROR)
-//  }
+  @OnError
+  def onError(s: Session, cause: Throwable): Unit = {
+    logger.error("Error occurred.", cause)
+    close(s, CustomCloseCodes.UnhandledException, "Runtime exception occurred")
+  }
 
   @OnClose
-  def onWebSocketClose(s: Session, reason: CloseReason): Unit = {
-    // TODO Logging
+  def onClose(s: Session, reason: CloseReason): Unit = {
     // println("Socket Closed: " + reason)
     val state = stateL.get(s.getUserProperties)
     projectSpaLogic.onClose(state).unsafeRun()
