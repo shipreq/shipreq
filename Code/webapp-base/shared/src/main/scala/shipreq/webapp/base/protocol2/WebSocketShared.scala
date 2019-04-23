@@ -1,8 +1,10 @@
 package shipreq.webapp.base.protocol2
 
 import boopickle.{PickleState, Pickler, UnpickleState}
+import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.univeq.UnivEq
 import scalaz.{-\/, \/, \/-}
+import shipreq.base.util.StaticLookupFn
 import shipreq.webapp.base.protocol.BinCodecGeneric.{Tuple2Pickler, intPickler}
 
 object WebSocketShared {
@@ -12,6 +14,17 @@ object WebSocketShared {
   object ReqId {
     implicit def univEq: UnivEq[ReqId] = UnivEq.derive
     implicit val pickler: Pickler[ReqId] = intPickler.xmap(apply)(_.value)
+  }
+
+  sealed abstract class ReadyState(final val jsValue: Int)
+  object ReadyState {
+    case object Connecting extends ReadyState(0)
+    case object Open       extends ReadyState(1)
+    case object Closing    extends ReadyState(2)
+    case object Closed     extends ReadyState(3)
+
+    val values = AdtMacros.adtValues[ReadyState]
+    val byJsValue = StaticLookupFn.unsafeArrayBy(values.whole)(_.jsValue)
   }
 
   // ===================================================================================================================

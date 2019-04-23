@@ -120,6 +120,12 @@ object Url {
 
       def /[A](r: Relative.Param1[A]): Absolute.Param1[A] =
         Absolute.Param1(this / r.prefix, r.suffix)
+
+      def forWebSocket: Base =
+        if (value.matches("^https?:.*"))
+          new Base("ws" + value.drop(4))
+        else
+          this
     }
 
     object Base {

@@ -26,4 +26,19 @@ object StaticLookupFn {
       i => if (i >= 0 && i < len) array(i) else None
     }
 
+  def unsafeArrayBy[A >: Null: ClassTag](as: Traversable[A])(key: A => Int): Int => A =
+    unsafeArray(as.map(a => (key(a), a)))
+
+  def unsafeArray[A >: Null: ClassTag](as: Traversable[(Int, A)]): Int => A = {
+    val len = as.toIterator.map(_._1).max + 1
+    val array = Array.fill[A](len)(null)
+    for ((i, a) <- as) {
+      assert(i >= 0, s"Indices can't be negative. Found: $i")
+      val a2 = array(i)
+      assert(null == a2, s"Duplicates for index $i: $a and $a2")
+      array(i) = a
+    }
+    array.apply
+  }
+
 }

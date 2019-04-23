@@ -2,101 +2,207 @@ package shipreq.webapp.base.protocol2
 
 import boopickle._
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
-import org.scalajs.dom.{CloseEvent, Event, MessageEvent, WebSocket}
-import org.scalajs.dom.console
+import java.time.Duration
+import org.scalajs.dom._
 import scala.scalajs.js
+import scala.scalajs.js.timers._
 import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.util.{Failure, Success, Try}
-import scalaz.{-\/, \/, \/-}
+import scalaz.{-\/, \/-}
 import shipreq.base.util.JsExt._
-import shipreq.base.util.Url
-import shipreq.webapp.base.protocol2.WebSocketShared.{ClientToServer, ReqId, ServerToClient}
+import shipreq.base.util.{Retries, Url}
+import shipreq.webapp.base.protocol2.WebSocketShared._
 
 final class WebSocketClient[
     Req,
     ReqRes <: Protocol.RequestResponse[Pickler] { type PreparedRequestType = Req },
     Push](
-    ws: WebSocket,
-//    createWS: CallbackTo[WebSocket],
-    protocolCS: Pickler[ClientToServer[Req]],
-    mkProtocolSC: (ReqId => Protocol[Pickler]) => Pickler[ServerToClient[Push]],
-    recvPush    : Push => Callback) {
+    createWS          : CallbackTo[WebSocket],
+    openImmediately   : Boolean,
+    connectionRetries : Retries,
+    onReadyStateChange: ReadyState => WebSocketClient[Req, ReqRes, Push] => Callback,
+    protocolCS        : Pickler[ClientToServer[Req]],
+    mkProtocolSC      : (ReqId => Protocol[Pickler]) => Pickler[ServerToClient[Push]],
+    recvPush          : Push => Callback) { self =>
 
-//  private var wsInstance = Option.empty[WebSocket]
+  import WebSocketClient._
 
-  private val requestManager: WebSocketClient.RequestManager[ReqId, Protocol.AndValue[Pickler], Protocol[Pickler]] =
-    WebSocketClient.RequestManager.arrayStore
+  private val requestManager: RequestManager[ReqId, Protocol.AndValue[Pickler], Protocol[Pickler]] =
+    RequestManager.arrayStore
 
   private val protocolSC: Pickler[ServerToClient[Push]] =
     mkProtocolSC(requestManager.getState(_).orNull)
 
-//  private def reconnect(): Unit =
-//    createWS.attempt.async.toCallback.runNow()
+  private case class State(instance      : Option[Instance],
+                           retries       : Retries,
+                           scheduled     : Option[SetTimeoutHandle],
+                           prevReadyState: Option[ReadyState])
 
-  ws.binaryType = "arraybuffer"
-  ws.onopen = onopen _
-  ws.onclose = onclose _
-  ws.onmessage = onmessage _
-  ws.onerror = onerror _
+  private var state = State(None, connectionRetries, None, None)
 
-  /* 0	CONNECTING	Socket has been created. The connection is not yet open.
-     1	OPEN	The connection is open and ready to communicate.
-     2	CLOSING	The connection is in the process of closing.
-     3	CLOSED	The connection is closed or couldn't be opened. */
+  private var queueOldestToNewest = Vector.empty[ArrayBuffer]
 
-  def onopen(e: Event): Unit = {
-    console.log(s"[${ws.readyState}] onopen: ", e)
+  private val connect: Callback =
+    Callback {
+      state.instance.map(_.readyState()) match {
+
+        case None | Some(ReadyState.Closed) =>
+          state.scheduled.foreach(clearTimeout)
+          val i = unsafeNewInstance()
+          state = state.copy(instance = i, scheduled = None)
+          if (i.isDefined)
+            state = state.copy(retries = connectionRetries)
+          else
+            unsafeScheduleReconnect()
+
+        case Some(r) =>
+          console.warn(s"Ignoring connect with WS in readyState $r")
+      }
+    }
+
+  if (openImmediately)
+    connect.runNow()
+
+  private def unsafeNewInstance(): Option[Instance] = {
+    // console.info("Connecting to server...")
+    createWS.map(new Instance(_)).attempt.runNow().toOption
   }
 
-  /** The error handler is executed when a connection with a websocket
-    * has been closed with prejudice (some data couldn't be sent for example).
-    */
-  def onerror(e: Event): Unit = {
-    // Display error message
-    val msg: String =
-      e.asInstanceOf[js.Dynamic]
-        .message.asInstanceOf[js.UndefOr[String]]
-        .fold(s"Error occurred!")("Error occurred: " + _)
-    console.log(s"[${ws.readyState}] onerror: ", e)
+  private def unsafeScheduleReconnect(): Unit =
+    state.retries.pop match {
+      case Some((retry, nextRetries)) =>
+        val h = setTimeout(retry.toMillis) {
+          // This bit here is Schedule in websocket_client.tla
+          val i = unsafeNewInstance()
+          state = state.copy(instance = i, scheduled = None)
+          if (i.isEmpty)
+            unsafeScheduleReconnect()
+        }
+        state = state.copy(retries = nextRetries, scheduled = Some(h))
+
+      case None =>
+        state = state.copy(scheduled = None)
+    }
+
+  private class Instance(val ws: WebSocket) {
+    ws.binaryType = "arraybuffer"
+    ws.onopen     = onOpen _
+    ws.onclose    = onClose _
+    ws.onmessage  = onMessage _
+    ws.onerror    = onError _
+
+    private var opened = false
+
+    def readyState(): ReadyState =
+      ReadyState.byJsValue(ws.readyState)
+
+    def isOpen(): Boolean =
+      ws.readyState == WebSocket.OPEN
+
+    private def runReadyStateChange(): Unit = {
+      val r = readyState()
+      if (!state.prevReadyState.contains(r)) {
+        state = state.copy(prevReadyState = Some(r))
+        onReadyStateChange(r)(self).runNow()
+      }
+    }
+
+    private def onOpen(e: Event): Unit = {
+      opened = true
+      state = state.copy(retries = connectionRetries) // reset retry counter
+      runReadyStateChange()
+      processQueue()
+    }
+
+    def processQueue(): Unit = {
+      while (queueOldestToNewest.nonEmpty) {
+        val h = queueOldestToNewest.head
+        ws.send(h)
+        queueOldestToNewest = queueOldestToNewest.tail
+      }
+    }
+
+    private def onMessage(e: MessageEvent): Unit = {
+      // console.log(s"[${ws.readyState}] onmessage: ", e.data.asInstanceOf[ArrayBuffer])
+      val handler: Callback =
+        CallbackTo(BinaryJs.decodeFromArrayBufferUnsafe(e.data)(protocolSC)).attemptTry.flatMap {
+          case Success(\/-((id, res))) => requestManager.complete(id, Success(res)) // TODO what about Failure??
+          case Success(-\/(push))      => recvPush(push)
+          case Failure(err)            => Callback(onException(err))
+        }
+      handler.runNow()
+    }
+
+    private def onException(e: Throwable): Unit = {
+      val desc = s"WebSocket exception occurred. ${e.getMessage}"
+      console.error(desc)
+      e.printStackTrace()
+      ws.close(4001, desc.take(123)) // [MDN] reason must be no longer than 123 bytes of UTF-8 text (not characters)
+    }
+
+    private def onError(e: Event): Unit = {
+      val message = e.asInstanceOf[js.Dynamic].message.asInstanceOf[js.UndefOr[String]]
+      val desc = s"WebSocket error occurred.${message.fold("")(" " + _)}"
+      //console.error(desc, e)
+      ws.close(4000, desc.take(123)) // [MDN] reason must be no longer than 123 bytes of UTF-8 text (not characters)
+    }
+
+    private def onClose(e: CloseEvent): Unit = {
+      runReadyStateChange()
+      failQueued(if (opened) errorClosed else errorFailed)
+      unsafeScheduleReconnect()
+    }
   }
 
-  /** The WebSocket.onclose property is an EventHandler that is called when the WebSocket
-    * connection's readyState changes to CLOSED. It is called with a CloseEvent.
-    */
-  def onclose(e: CloseEvent): Unit = {
-    console.log(s"[${ws.readyState}] onclose: ", e)
+  private val processQueue: Callback =
+    Callback {
+      for (i <- state.instance)
+        if (i.isOpen())
+          i.processQueue()
+    }
+
+  private def failQueued(error: Throwable): Callback = {
+    requestManager.completeAll(Failure(error))
+      .map(_.foreach(_.printStackTrace()))
   }
 
-  /** Useful for preventing server-side timeout and keeping the connection alive */
-  val sendNothing: Callback = {
+  /** If a connection is open, Send an empty message to  Useful for preventing server-side timeout and keeping the connection alive */
+  val keepAlive: Callback = {
     val ab = new ArrayBuffer(0)
     Callback {
-      ws.send(ab)
+      for (i <- state.instance)
+        if (i.isOpen())
+          i.ws.send(ab)
     }
   }
 
   def send(p: ReqRes)(request: p.RequestType): CallbackTo[AsyncCallback[p.ResponseType]] = {
-    val prep = p.prepareSend(request)
-    requestManager.newRequest(prep.response).flatMap { case (reqId, callback) =>
-      // TODO unregister on err below
-      CallbackTo {
-        val msgValue  = (reqId, prep.request)
-        val msgAB     = BinaryJs.encodeToArrayBuffer(msgValue)(protocolCS)
-        ws.send(msgAB)
-        callback.map(_.unsafeForceType[p.ResponseType].value)
+    type R = CallbackTo[AsyncCallback[p.ResponseType]]
+
+    def addToQueue: R = {
+      val prep = p.prepareSend(request)
+      requestManager.newRequest(prep.response).flatMap { case (reqId, callback) =>
+        CallbackTo {
+          val msgValue = (reqId, prep.request)
+          val msgAB    = BinaryJs.encodeToArrayBuffer(msgValue)(protocolCS)
+          queueOldestToNewest :+= msgAB
+          callback.map(_.unsafeForceType[p.ResponseType].value)
+        }
       }
     }
-  }
 
-  def onmessage(e: MessageEvent): Unit = {
-//    console.log(s"[${ws.readyState}] onmessage: ", e.data.asInstanceOf[ArrayBuffer])
-    val handler: Callback =
-      CallbackTo(BinaryJs.decodeFromArrayBufferUnsafe(e.data)(protocolSC)).flatMap {
-        case \/-((id, res)) => requestManager.complete(id, Success(res)) // TODO what about Failure??
-        case -\/(push)      => recvPush(push)
+    def rejectImmediately(error: Throwable): R =
+      CallbackTo.pure(AsyncCallback.throwException(error))
+
+    CallbackTo.byName {
+      state.instance.map(_.readyState()) match {
+        case None
+           | Some(ReadyState.Connecting) => addToQueue
+        case Some(ReadyState.Open)       => addToQueue <* processQueue
+        case Some(ReadyState.Closing)    => rejectImmediately(errorClosing)
+        case Some(ReadyState.Closed)     => addToQueue <* connect
       }
-    // TODO handle errors how?
-    handler.runNow()
+    }
   }
 }
 
@@ -104,16 +210,37 @@ final class WebSocketClient[
 
 object WebSocketClient {
 
-  def apply(urlBase: Url.Absolute.Base,
-            protocol: Protocol.WebSocket.ClientReqServerPush[Pickler])
-           (recvPush: protocol.Push => Callback): WebSocketClient[protocol.Req, protocol.ReqRes, protocol.Push] = {
+  def apply(urlBase           : Url.Absolute.Base,
+            protocol          : Protocol.WebSocket.ClientReqServerPush[Pickler])
+           (onServerPush      : protocol.Push => Callback,
+            onReadyStateChange: ReadyState => WebSocketClient[protocol.Req, protocol.ReqRes, protocol.Push] => Callback,
+           ): WebSocketClient[protocol.Req, protocol.ReqRes, protocol.Push] = {
     import WebSocketShared._
     implicit def picklerReq: Pickler[protocol.Req] = protocol.req.codec
     implicit def picklerPush: Pickler[protocol.Push] = protocol.push.codec
-    val url = (urlBase / protocol.url).absoluteUrl
-    val ws = new WebSocket(url)
-    new WebSocketClient(ws, protocolCS, protocolSC(_), recvPush)
+
+    val url      = (urlBase.forWebSocket / protocol.url).absoluteUrl
+    val createWS = CallbackTo(new WebSocket(url))
+
+    new WebSocketClient(
+      createWS,
+      true,
+      retries,
+      onReadyStateChange,
+      protocolCS,
+      protocolSC(_),
+      onServerPush)
   }
+
+  private[this] val retries =
+    Retries.exponentially(Duration.ofMillis(1000)).takeWhile(_.getSeconds < 6) ++
+      Retries.continually(Duration.ofSeconds(8))
+
+  // ===================================================================================================================
+
+  val errorClosing = js.JavaScriptException("Connection is closing.")
+  val errorClosed  = js.JavaScriptException("Connection is closed.")
+  val errorFailed  = js.JavaScriptException("Failed to connect to server.")
 
   // ===================================================================================================================
 
@@ -185,61 +312,4 @@ object WebSocketClient {
     def arrayStore[A, S]: RequestManager[ReqId, A, S] =
       new ArrayStore[A, S]
   }
-
-  // ===================================================================================================================
-
-  /*
-  def start: Callback = {
-  socket.binaryType = 'arraybuffer';
-
-
-    // This will establish the connection and return the WebSocket
-    def connect = CallbackTo[WebSocket] {
-
-      // Get direct access so WebSockets API can modify state directly
-      // (for access outside of a normal DOM/React callback).
-      // This means that calls like .setState will now return Unit instead of Callback.
-      val direct = $.withEffectsImpure
-
-      // These are message-receiving events from the WebSocket "thread".
-
-      def onopen(e: Event): Unit = {
-        // Indicate the connection is open
-        direct.modState(_.log("Connected."))
-      }
-
-      def onmessage(e: MessageEvent): Unit = {
-        // Echo message received
-        direct.modState(_.log(s"Echo: ${e.data.toString}"))
-      }
-
-      def onerror(e: Event): Unit = {
-        // Display error message
-        val msg: String =
-          e.asInstanceOf[js.Dynamic]
-            .message.asInstanceOf[js.UndefOr[String]]
-            .fold(s"Error occurred!")("Error occurred: " + _)
-        direct.modState(_.log(msg))
-      }
-
-      def onclose(e: CloseEvent): Unit = {
-        // Close the connection
-        direct.modState(_.copy(ws = None).log(s"""Closed. Reason = "${e.reason}""""))
-      }
-
-      // Create WebSocket and setup listeners
-      val ws = new WebSocket(url)
-      ws.onopen = onopen _
-      ws.onclose = onclose _
-      ws.onmessage = onmessage _
-      ws.onerror = onerror _
-      ws
-    }
-
-    // Here use attempt to catch any exceptions in connect
-    connect.attempt.flatMap {
-      case Right(ws)   => $.modState(_.log(s"Connecting to $url ...").copy(ws = Some(ws)))
-      case Left(error) => $.modState(_.log(s"Error connecting: ${error.getMessage}"))
-    }
-   */
 }
