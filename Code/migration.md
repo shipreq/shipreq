@@ -15,16 +15,27 @@ MIGRATION
 * [x] HomeSpa
   * [x] Use JWT & new SSPs
 * [ ] ProjectSpa
-  * [ ] Capabilities:
+  * [x] Capabilities:
     * [x] Establish WebSocket
-    * [ ] Re-establish WebSocket on loss
+    * [x] Re-establish WebSocket on loss
     * [x] Generic req/respond over WebSocket (eg. (ReqId, Req) => | => (ReqId, Resp))
     * [x] Server push (and typed protocol)
     * [x] Typed WS protocol combining req/resp & push/recv
-  * [ ] New ProjectSpa logic - implement TLA spec (minus caching)
+  * [ ] New ProjectSpa logic using TLA spec
+    * [x] load
+    * [x] update
+    * [x] Redis algebra
+    * [ ] reload
+    * [ ] sync
+  * [ ] New client logic
+    * [ ] load (initAppData) on inital WS connection
+    * [ ] reload
+    * [ ] sync
+    * [ ] keepalive
   * [ ] Replace:
     * [ ] Use JWT
     * [ ] Use WebSocket
+    * [ ] ClientState or whatever - new one with ProjectAndOrd + future event logic
     * [ ] Project AJAX over WS
     * [ ] Push events over WS
 * [ ] only use Lift stateless dispatch
@@ -35,11 +46,13 @@ MIGRATION
   * [x] webapp-logic: Security (v1)
   * [ ] webapp-logic: Server.Session
   * [ ] Remove comets
-  * [ ] Remove Promse logic (probably)
+  * [x] Remove Promse logic (probably)
 
-* [ ] Implement protocol & caching according to TLA+ spec
-  * [ ] Add async typeclass and/or support to Fx
-  * [ ] Add Redis
-  * [ ] Redis pub/sub
+* [ ] Redis
+  * [ ] Add async typeclass and/or support to Fx (?)
+  * [ ] Add Redis to project & env
+  * [ ] LUA scripts
+  * [ ] Real algebra impl
+  * [ ] Real pub/sub
 
 * Add a correlation ID to JWTs?
