@@ -18,7 +18,6 @@ object ServerLogic {
   def create[D[_] : Monad
                   : DB.Algebra,
              F[_] : MetricsLogic
-                  : ProjectServer.StoreAlgebra
                   : Redis.ProjectAlgebra
                   : Security.Algebra
                   : Server.Algebra

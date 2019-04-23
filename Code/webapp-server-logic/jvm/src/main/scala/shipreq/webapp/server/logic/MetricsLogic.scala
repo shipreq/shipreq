@@ -2,8 +2,6 @@ package shipreq.webapp.server.logic
 
 import scalaz.Monad
 import scalaz.syntax.bind._
-import shipreq.base.util.FreeOption
-import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.user.User
 
 trait MetricsLogic[F[_]] {
@@ -29,27 +27,6 @@ trait MetricsLogic[F[_]] {
         orig.registerServerSideProc(name, i =>
           setServerSideProcName(name) >> f(i))
     }
-
-  def injectProjectStore(orig: ProjectServer.StoreAlgebra[F])(implicit F: Monad[F]): ProjectServer.StoreAlgebra[F] =
-    new ProjectServer.StoreAlgebra[F] {
-      import ProjectServer._
-      import Store.Register.Node
-
-      override val storeKeyCount =
-        orig.storeKeyCount
-
-      val updateMetrics =
-        storeKeyCount.flatMap(setActiveProjectCount)
-
-      override def storeGet(key: ProjectId) =
-        orig.storeGet(key)
-
-      override def storeMod(key: ProjectId)(f: FreeOption[Node[State, OnChange[F]]] => FreeOption[Node[State, OnChange[F]]]) =
-        orig.storeMod(key)(f) <* updateMetrics
-
-      override def storeModSet(key: ProjectId)(f: FreeOption[Node[State, OnChange[F]]] => Node[State, OnChange[F]]) =
-        orig.storeModSet(key)(f) <* updateMetrics
-    }
 }
 
 object MetricsLogic {
@@ -65,6 +42,5 @@ object MetricsLogic {
       override def securityEvent        (x: Security.Event, y: Security.Result)                  = f
       override def setActiveProjectCount(x: Int)                                                 = f
       override def injectServer         (x: Server.Algebra[F])(implicit F: Monad[F])             = x
-      override def injectProjectStore   (x: ProjectServer.StoreAlgebra[F])(implicit F: Monad[F]) = x
     }
 }

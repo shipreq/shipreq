@@ -501,8 +501,6 @@ object MockInterpreters {
 
 class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerConfig]) {
   implicit val config         = modCfg(MockInterpreters.config)
-  implicit val storeMap       = new ConcurrentHashMap(): ProjectServer.StoreMap[Name, ConcurrentHashMap]
-  implicit val store          = Store.Algebra.concurrentHashMap(storeMap): ProjectServer.StoreAlgebra[Name]
   implicit val svr            = new MockServer
   implicit val db             = new MockDb(svr.now)
   implicit val security       = new MockSecurity(db)
