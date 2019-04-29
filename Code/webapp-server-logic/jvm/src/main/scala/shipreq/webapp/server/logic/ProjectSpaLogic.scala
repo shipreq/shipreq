@@ -172,6 +172,8 @@ object ProjectSpaLogic extends StrictLogging {
         onCreateContent         = updateProject(MakeEvent.createContent),
         onUpdateContent         = updateProject(MakeEvent.updateContent),
         onUpdateSavedViews      = updateProject(MakeEvent.updateSavedViews),
+        onCustomIssueTypeCrud   = updateProject(MakeEvent.customIssueTypeCrud),
+        onCustomReqTypeCrud     = updateProject(MakeEvent.customReqTypeCrud),
       )
 
       private def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result): MsgFnIn[I] => MsgFnOut[EventResult] = input => {

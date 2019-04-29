@@ -110,6 +110,14 @@ object ProjectSpaProtocols {
       override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onUpdateSavedViews(r)
     }
 
+    case object CustomIssueTypeCrud extends Base[CrudAction[CustomIssueTypeId, (HashRefKey, Option[String])], EventResult](7) {
+      override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onCustomIssueTypeCrud(r)
+    }
+
+    case object CustomReqTypeCrud extends Base[CrudAction[CustomReqTypeId, (ReqType.Mnemonic, String, ImplicationRequired)], EventResult](8) {
+      override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onCustomReqTypeCrud(r)
+    }
+
     val values = AdtMacros.adtValues[WsReqRes]
     val byKey = StaticLookupFn.arrayBy(values.whole)(_.key)
 
@@ -121,6 +129,8 @@ object ProjectSpaProtocols {
         onCreateContent        : F[CreateContent        .type] => G[CreateContent        .type],
         onUpdateContent        : F[UpdateContent        .type] => G[UpdateContent        .type],
         onUpdateSavedViews     : F[UpdateSavedViews     .type] => G[UpdateSavedViews     .type],
+        onCustomIssueTypeCrud  : F[CustomIssueTypeCrud  .type] => G[CustomIssueTypeCrud  .type],
+        onCustomReqTypeCrud    : F[CustomReqTypeCrud    .type] => G[CustomReqTypeCrud    .type],
         ) { self =>
       def compose[H[_ <: WsReqRes]](h: Fold[G, H]): Fold[F, H] =
         Fold(
@@ -131,6 +141,8 @@ object ProjectSpaProtocols {
           onCreateContent         = f => h.onCreateContent        (self.onCreateContent        (f)),
           onUpdateContent         = f => h.onUpdateContent        (self.onUpdateContent        (f)),
           onUpdateSavedViews      = f => h.onUpdateSavedViews     (self.onUpdateSavedViews     (f)),
+          onCustomIssueTypeCrud   = f => h.onCustomIssueTypeCrud  (self.onCustomIssueTypeCrud  (f)),
+          onCustomReqTypeCrud     = f => h.onCustomReqTypeCrud    (self.onCustomReqTypeCrud    (f)),
         )
     }
 
