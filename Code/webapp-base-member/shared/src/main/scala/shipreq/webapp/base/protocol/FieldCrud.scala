@@ -50,9 +50,9 @@ object FieldCrud {
     final case class Delete      (id: FieldId)                          extends CfgAction
     final case class Restore     (id: FieldId)                          extends CfgAction
 
-    implicit def equality: UnivEq[CfgAction] = UnivEq.derive
+    implicit def univEq: UnivEq[CfgAction] = UnivEq.derive
 
-    implicit val pickleFieldProtocolCfgAction: Pickler[CfgAction] = {
+    implicit val pickler: Pickler[CfgAction] = {
       implicit val pCreate       = pickleCaseClass[Create]
       implicit val pUpdateValues = pickleCaseClass[UpdateValues]
       implicit val pUpdateOrder  = pickleCaseClass[UpdateOrder]
@@ -64,5 +64,6 @@ object FieldCrud {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  @deprecated
   val Protocol = ServerSideProc.Protocol.toEvents[CfgAction]("FieldCrud")
 }

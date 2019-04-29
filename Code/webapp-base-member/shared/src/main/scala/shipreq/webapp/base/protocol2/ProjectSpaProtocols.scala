@@ -118,6 +118,14 @@ object ProjectSpaProtocols {
       override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onCustomReqTypeCrud(r)
     }
 
+    case object FieldMod extends Base[FieldCrud.CfgAction, EventResult](9) {
+      override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onFieldMod(r)
+    }
+
+    case object TagMod extends Base[TagCrud.Action, EventResult](10) {
+      override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onTagMod(r)
+    }
+
     val values = AdtMacros.adtValues[WsReqRes]
     val byKey = StaticLookupFn.arrayBy(values.whole)(_.key)
 
@@ -131,6 +139,8 @@ object ProjectSpaProtocols {
         onReqTypeImplicationMod: F[ReqTypeImplicationMod.type] => G[ReqTypeImplicationMod.type],
         onCustomIssueTypeCrud  : F[CustomIssueTypeCrud  .type] => G[CustomIssueTypeCrud  .type],
         onCustomReqTypeCrud    : F[CustomReqTypeCrud    .type] => G[CustomReqTypeCrud    .type],
+        onFieldMod             : F[FieldMod             .type] => G[FieldMod             .type],
+        onTagMod               : F[TagMod               .type] => G[TagMod               .type],
         ) { self =>
       def compose[H[_ <: WsReqRes]](h: Fold[G, H]): Fold[F, H] =
         Fold(
@@ -143,6 +153,8 @@ object ProjectSpaProtocols {
           onReqTypeImplicationMod = f => h.onReqTypeImplicationMod(self.onReqTypeImplicationMod(f)),
           onCustomIssueTypeCrud   = f => h.onCustomIssueTypeCrud  (self.onCustomIssueTypeCrud  (f)),
           onCustomReqTypeCrud     = f => h.onCustomReqTypeCrud    (self.onCustomReqTypeCrud    (f)),
+          onFieldMod              = f => h.onFieldMod             (self.onFieldMod             (f)),
+          onTagMod                = f => h.onTagMod               (self.onTagMod               (f)),
         )
     }
 
