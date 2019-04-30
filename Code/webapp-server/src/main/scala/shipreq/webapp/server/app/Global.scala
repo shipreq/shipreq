@@ -1,6 +1,7 @@
 package shipreq.webapp.server.app
 
 import doobie.imports.ConnectionIO
+import java.util.concurrent.{Executors, TimeUnit}
 import shipreq.base.db.DbAccess
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.TaskmanApi
@@ -51,7 +52,7 @@ object Global {
     implicit val server        = trace.injectServer(ServerInterpreter)
     implicit val ops           = new OpsEndpointInterpreter()
     implicit val security      = new SecurityInterpreter[Fx]
-    implicit val redis         = new Redis.InMemory[Fx]
+    implicit val redis         = useInMemoryRedis()
 
     Global(
       config   = config,
@@ -63,4 +64,18 @@ object Global {
       taskman  = taskman,
       trace    = trace)
     }
+
+  private def useInMemoryRedis() = {
+    val redis          = new Redis.InMemory[Fx]
+    val threadGroup    = new ThreadGroup("RedisInMemory")
+    val timer          = Executors.newSingleThreadScheduledExecutor(new Thread(threadGroup, _, "RedisInMemory"))
+    val task: Runnable = () => redis.publishAll.unsafeRun()
+    val everyMs        = 1000
+
+    timer.scheduleAtFixedRate(task, everyMs, everyMs, TimeUnit.MILLISECONDS)
+
+    Runtime.getRuntime.addShutdownHook(new Thread(threadGroup, task, "RedisInMemory-shutdown"))
+
+    redis
+  }
 }

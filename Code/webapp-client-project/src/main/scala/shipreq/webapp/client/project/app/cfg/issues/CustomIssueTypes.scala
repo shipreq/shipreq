@@ -18,7 +18,7 @@ import shipreq.webapp.base.ui.AutosizeTextarea
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.cfg.shared._
-import shipreq.webapp.client.project.app.state.{ChangeListener, ClientData}
+import shipreq.webapp.client.project.app.state.{ChangeListener, Global}
 import shipreq.webapp.client.project.lib.DataReusability._
 import DataImplicits._
 import shipreq.base.util.ErrorMsg
@@ -28,7 +28,7 @@ import shipreq.webapp.base.protocol.ServerSideProcInvoker
 private[issues] object CustomIssueTypes {
 
   final case class Props(remote    : ServerSideProcInvoker[CustomIssueTypeCrud.RequestType, ErrorMsg, VerifiedEvent.Seq],
-                         clientData: ClientData,
+                         global: Global,
                          filterDead: StateSnapshot[FilterDead],
                          usageShow : Usage.Show) {
     @inline def component = Component(this)
@@ -44,18 +44,18 @@ private[issues] object CustomIssueTypes {
     ScalaComponent.builder[Props]("Cfg: User-Defined Issue Types")
       .initialStateFromProps(initialState)
       .renderBackend[Backend]
-      .configure(changeListener.install(_.clientData))
+      .configure(changeListener.install(_.global))
       .configure(AutosizeTextarea.applyToChildren("textarea"))
       .build
 
   private def initialState(p: Props): S =
     State(
       newRowStore.initState,
-      savedRowStore.initStateIM(p.clientData.project().config.customIssueTypes))
+      savedRowStore.initStateIM(p.global.unsafeProject().config.customIssueTypes))
 
-  private def validatorState(k: Option[CustomIssueTypeId], cd: CallbackTo[ClientData]): S => V.State = {
+  private def validatorState(k: Option[CustomIssueTypeId], g: CallbackTo[Global]): S => V.State = {
     val tagData: Px[List[(Option[TagId], HashRefKey)]] =
-      Px.callback(cd.map(_.project().config.tags)).withReuse.autoRefresh
+      Px.callback(g.map(_.unsafeProject().config.tags)).withReuse.autoRefresh
         .map(_.valuesIterator.map(t => t.tag.keyO.map(k => (t.tag.id.some, k))).filterDefined.toList)
 
     val tags: VH.SubState[TagId] =
@@ -70,7 +70,7 @@ private[issues] object CustomIssueTypes {
   }
 
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
-    val project    = Px.props($).map(_.clientData.project()).withReuse.manualRefresh
+    val project    = Px.props($).map(_.global.unsafeProject()).withReuse.manualRefresh
     val filterDead = Px.props($).map(_.filterDead.value).withReuse.manualRefresh
     val usageShow  = Px.props($).map(_.usageShow).withReuse.manualRefresh
 
@@ -79,7 +79,7 @@ private[issues] object CustomIssueTypes {
 
     val supp = TypicalSupp(storesAndState)(crudIO.value(), $)
 
-    def valState(k: Option[CustomIssueTypeId]) = validatorState(k, $.props.map(_.clientData))
+    def valState(k: Option[CustomIssueTypeId]) = validatorState(k, $.props.map(_.global))
 
     val rowE = {
       val keyE  = Editors.textInputEditor.applyStatefulValidator(V.key.unnamedFn)

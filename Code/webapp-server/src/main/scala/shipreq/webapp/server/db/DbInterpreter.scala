@@ -349,6 +349,12 @@ object DbInterpreter {
     override final def getAllProjectMetaDataForUser(id: UserId): ConnectionIO[List[ProjectMetaData]] =
       getAllProjectMetaDataForUserSql.toQuery0(id).list
 
+    private[db] final val getProjectMetaDataSql =
+      Query[ProjectId, ProjectMetaData](sqlProjectMetaData("WHERE id=?"))
+
+    override final def getProjectMetaData(id: ProjectId): ConnectionIO[Option[ProjectMetaData]] =
+      getProjectMetaDataSql.toQuery0(id).option
+
     private[db] final val projectSpaInitPageSql: Query[ProjectId, Project.Name] = {
       val sql =
         s"""
@@ -363,21 +369,6 @@ object DbInterpreter {
 
     override def projectSpaInitPage(id: ProjectId): ConnectionIO[Project.Name] =
       projectSpaInitPageSql.toQuery0(id).option.map(_.filterNot(_ eq null).getOrElse(""))
-
-    private[db] final val projectSpaInitAppSql: Query[(ProjectId, ProjectId), (Instant, Option[EventOrd.Latest], Option[Instant])] = {
-      val sql =
-        """
-          |SELECT
-          |  (SELECT created_at FROM project WHERE id = ?) c,
-          |  MAX(ord) l,
-          |  MAX(created_at) u
-          |FROM event WHERE project_id = ?
-        """.stripMargin.sql
-      Query(sql)
-    }
-
-    override final def projectSpaInitApp(id: ProjectId): ConnectionIO[DB.ProjectSpaInitApp] =
-      projectSpaInitAppSql.toQuery0((id, id)).unique.map(x => DB.ProjectSpaInitApp(x._1, x._2, x._3))
 
     private[db] final val sqlSelectEvents: EventFilter => ProjectId => Query0[(EventOrd, Event)] = {
       type O = (EventOrd, Event)

@@ -225,19 +225,17 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     pid
   }
 
-  override def projectSpaInitApp(id: ProjectId) = Name[DB.ProjectSpaInitApp] {
-    val p = projects.need(id)
-    DB.ProjectSpaInitApp(
-      p.createdAt,
-      p.events.lastOption.map(_.ord.asLatest),
-      p.lastUpdatedAt)
-  }
-
   override def getAllProjectMetaDataForUser(id: UserId) = Name[List[ProjectMetaData]] {
     projects.valuesIterator
       .filter(_.userId ==* id)
       .map(_.projectMetaData)
       .toList
+  }
+
+  var loadProjectMetaDataLog = Vector.empty[ProjectId]
+  override def getProjectMetaData(id: ProjectId) = Name[Option[ProjectMetaData]] {
+    loadProjectMetaDataLog :+= id
+    projects.get(id).map(_.projectMetaData)
   }
 
   override def projectSpaInitPage(id: ProjectId) = Name[Project.Name] {

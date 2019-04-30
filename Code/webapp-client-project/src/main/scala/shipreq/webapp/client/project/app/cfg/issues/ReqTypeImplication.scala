@@ -10,7 +10,7 @@ import shipreq.webapp.base.data.On
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes.ReqTypeImplicationMod
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
-import shipreq.webapp.client.project.app.state.{ChangeListener, ClientData}
+import shipreq.webapp.client.project.app.state.{ChangeListener, Global}
 import shipreq.webapp.client.project.app.cfg.shared._
 import DataImplicits._
 import ReqType.Mnemonic
@@ -18,7 +18,7 @@ import ReqType.Mnemonic
 private[issues] object ReqTypeImplication {
 
   final case class Props(remote: ServerSideProcInvoker[ReqTypeImplicationMod.RequestType, ErrorMsg, VerifiedEvent.Seq],
-                         clientData: ClientData) {
+                         global: Global) {
     @inline def component = Component(this)
   }
 
@@ -32,11 +32,11 @@ private[issues] object ReqTypeImplication {
   val Component = ScalaComponent.builder[Props]("ReqTypeImplication")
     .initialStateFromProps(initialState)
     .renderBackend[Backend]
-    .configure(changeListener.install(_.clientData))
+    .configure(changeListener.install(_.global))
     .build
 
   private def initialState(p: Props): S =
-    rowStore.initStateIM(p.clientData.project().config.reqTypes.custom)
+    rowStore.initStateIM(p.global.unsafeProject().config.reqTypes.custom)
 
   private def label(r: ReqType): String =
     s"${r.mnemonic.value}: ${r.name}"

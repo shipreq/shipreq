@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.state
 
-import japgolly.scalajs.react.{Callback, CallbackTo}
+import japgolly.scalajs.react.{Callback, CallbackTo, Reusability}
 import japgolly.scalajs.react.extra.{Broadcaster, Px}
 import scala.util.Success
 import scalaz.\/-
@@ -49,6 +49,9 @@ final class Global(wsClientBuilder: WebSocketClient.WithoutCallbacks[WsReqRes, P
 
   val pxProject: Px[Project] =
     _pxProject
+
+  def unsafeProject(): Project =
+    pxProject.value()
 
   val wsClient: WebSocketClient[WsReqRes] =
     wsClientBuilder.build(onPush, _ => onWebSocketReadyStateChange)
@@ -114,4 +117,5 @@ object Global {
     final case class Active(projectState: ProjectState) extends State
   }
 
+  implicit def reusability: Reusability[Global] = Reusability.always
 }

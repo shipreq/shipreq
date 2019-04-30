@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.{BaseUrl, Router}
-import org.scalajs.dom
+import org.scalajs.dom.window.location
 import scala.scalajs.js.annotation.JSExportTopLevel
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{ErrorMsg, Url}
@@ -26,14 +26,10 @@ object Main extends ClientSideProcImpl(ProjectSpaProtocols.EntryPoint) {
     BaseStyles.addToDocument()
     Style.addToDocument()
 
-    val baseUrl   = determineBaseUrl(dom.window.location.href)
-    val protocol  = ProjectSpaProtocols.WebSocket(i.projectId)
-    val wsUrlBase = Url.Absolute.Base(baseUrl.value).forWebSocket
-    val wsClient  = WebSocketClient(wsUrlBase, protocol)
-
     def onLoad(g: Global, ia: InitAppData): Callback =
       Callback {
         val root    = new LoadedRoot(i, g)
+        val baseUrl = determineBaseUrl(location.href)
         val router  = Router(baseUrl, Routes.routerConfig(root))
         router().renderIntoDOM(`#root`)
       }
@@ -45,6 +41,9 @@ object Main extends ClientSideProcImpl(ProjectSpaProtocols.EntryPoint) {
         LoadFailedPage.Component(lf).renderIntoDOM(`#root`)
       }
 
+    val protocol  = ProjectSpaProtocols.WebSocket(i.projectId)
+    val wsUrlBase = Url.Absolute.Base(location.protocol + "//" + location.host).forWebSocket
+    val wsClient  = WebSocketClient(wsUrlBase, protocol)
     new Global(wsClient, onLoad, onFailure)
   }
 }

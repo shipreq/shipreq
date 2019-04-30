@@ -161,7 +161,7 @@ object DB {
 
   trait ForProjectSpa[F[_]] extends Base[F] with SaveProjectEvent[F] {
     def projectSpaInitPage(id: ProjectId): F[Project.Name]
-    def projectSpaInitApp(id: ProjectId): F[ProjectSpaInitApp]
+    def getProjectMetaData(id: ProjectId): F[Option[ProjectMetaData]]
     def getProjectEvents(id: ProjectId, f: EventFilter): F[VerifiedEvent.Seq]
 
     final def getProjectEvents(id: ProjectId): F[VerifiedEvent.Seq] = getProjectEvents(id, EventFilter.IncludeAll)
@@ -178,12 +178,6 @@ object DB {
         case Some(ord) => ExcludeUpTo(ord)
         case None      => IncludeAll
       }
-  }
-
-  final case class ProjectSpaInitApp(createdAt    : Instant,
-                                     latestOrd    : Option[EventOrd.Latest],
-                                     lastUpdatedAt: Option[Instant]) {
-    val lastUpdatedOrCreatedAt = lastUpdatedAt.getOrElse(createdAt)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

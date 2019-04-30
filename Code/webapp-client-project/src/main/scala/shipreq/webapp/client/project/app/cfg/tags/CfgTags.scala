@@ -22,7 +22,7 @@ import shipreq.webapp.base.ui.{AutosizeTextarea, BaseStyles}
 import shipreq.webapp.base.ui.semantic.Table
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.project.app.cfg.shared._
-import shipreq.webapp.client.project.app.state.{ChangeListener, ClientData}
+import shipreq.webapp.client.project.app.state.{ChangeListener, Global}
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.lib.DND
 import shipreq.webapp.client.project.widgets.FilterDeadButton
@@ -33,7 +33,7 @@ import shipreq.webapp.base.event.VerifiedEvent
 
 object CfgTags {
   case class Props(remote    : ServerSideProcInvoker[TagCrud.Action, ErrorMsg, VerifiedEvent.Seq],
-                   clientData: ClientData,
+                   global: Global,
                    filterDead: StateSnapshot[FilterDead]) {
     def component = MainTable.Component(this)
   }
@@ -98,7 +98,7 @@ private[tags] object MainTable {
   def initialState(p: Props): S = {
     val tgs = Seq.newBuilder[TagGroup]
     val ats = Seq.newBuilder[ApplicableTag]
-    val tagtree = p.clientData.project().config.tags
+    val tagtree = p.global.unsafeProject().config.tags
     tagtree.values.foreach(_.tag match {
       case t: TagGroup      => tgs += t
       case t: ApplicableTag => ats += t
@@ -157,7 +157,7 @@ private[tags] object MainTable {
     ScalaComponent.builder[Props]("Cfg: Tags")
       .initialStateFromProps(initialState)
       .renderBackend[Backend]
-      .configure(changeListener.install(_.clientData))
+      .configure(changeListener.install(_.global))
       .configure(AutosizeTextarea.applyToChildren("textarea"))
       .build
 
@@ -175,9 +175,9 @@ private[tags] object MainTable {
   def getTag(id: Id): S => Option[Tag] =
     s => eachTypesStores.foldLeft(none[Tag])(_ orElse _.s.getO(id)(s).map(_.p))
 
-  def validatorState(s: S, cd: CallbackTo[ClientData], k: Option[Id]): V.State = {
+  def validatorState(s: S, g: CallbackTo[Global], k: Option[Id]): V.State = {
     val customIssueTypeData: Px[List[(Option[CustomIssueTypeId], HashRefKey)]] =
-      Px.callback(cd.map(_.project().config.customIssueTypes)).withReuse(Reusability.byRef).autoRefresh
+      Px.callback(g.map(_.unsafeProject().config.customIssueTypes)).withReuse(Reusability.byRef).autoRefresh
         .map(_.valuesIterator.map(i => (i.id.some, i.key)).toList)
 
     val customIssueTypes: VH.SubState[CustomIssueTypeId] =
@@ -191,7 +191,7 @@ private[tags] object MainTable {
     val crudIO = Px.props($).withReuse.autoRefresh.map(p => CrudActionIO(p.remote))
 
     def validatorState(k: Option[Id]): S => V.State =
-      s => MainTable.validatorState(s, $.props.map(_.clientData), k)
+      s => MainTable.validatorState(s, $.props.map(_.global), k)
 
     def newTagControlProps(state: State) = NewTagControl.props(
       state.newSel,

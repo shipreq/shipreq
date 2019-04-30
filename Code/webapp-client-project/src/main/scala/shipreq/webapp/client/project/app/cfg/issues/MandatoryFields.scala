@@ -10,7 +10,7 @@ import shipreq.webapp.base.data.On
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes.FieldMandatorinessMod
-import shipreq.webapp.client.project.app.state.{ChangeListener, ClientData}
+import shipreq.webapp.client.project.app.state.{ChangeListener, Global}
 import shipreq.webapp.client.project.app.cfg.shared._
 import shipreq.webapp.client.project.lib.DataReusability._
 import DataImplicits._
@@ -18,7 +18,7 @@ import DataImplicits._
 private[issues] object MandatoryFields {
 
   final case class Props(remote: ServerSideProcInvoker[FieldMandatorinessMod.RequestType, ErrorMsg, VerifiedEvent.Seq],
-                         clientData: ClientData) {
+                         global: Global) {
     @inline def component = Component(this)
   }
 
@@ -33,16 +33,16 @@ private[issues] object MandatoryFields {
   val Component = ScalaComponent.builder[Props]("MandatoryFields")
     .initialStateFromProps(initialState)
     .renderBackend[Backend]
-    .configure(changeListener.install(_.clientData))
-    .configure(ChangeListener.refreshWhenFieldNamesChange.install(_.clientData))
+    .configure(changeListener.install(_.global))
+    .configure(ChangeListener.refreshWhenFieldNamesChange.install(_.global))
     .build
 
   private def initialState(p: Props) =
-    rowStore.initStateIM(p.clientData.project().config.fields.customFields)
+    rowStore.initStateIM(p.global.unsafeProject().config.fields.customFields)
 
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
 
-    private val pxProject = Px.props($).map(_.clientData.project()).withReuse.autoRefresh
+    private val pxProject = Px.props($).map(_.global.unsafeProject()).withReuse.autoRefresh
     private val labelFn   = pxProject map Field.nameFromProject
 
     private def save(id: CustomFieldId): CallbackTo[ST] =
@@ -82,6 +82,6 @@ private[issues] object MandatoryFields {
     def render(p: Props, s: S): VdomElement =
       <.section(
         <.h5("Mandatory Fields"),
-        renderRows(p.clientData.project(), s))
+        renderRows(p.global.unsafeProject(), s))
   }
 }

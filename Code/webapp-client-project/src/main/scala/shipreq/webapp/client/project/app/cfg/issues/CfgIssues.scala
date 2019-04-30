@@ -12,14 +12,14 @@ import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.cfg.shared.Usage
-import shipreq.webapp.client.project.app.state.ClientData
+import shipreq.webapp.client.project.app.state.Global
 
 object CfgIssues {
 
   final case class Props(a         : ServerSideProcInvoker[CustomIssueTypeCrud.RequestType, ErrorMsg, VerifiedEvent.Seq],
                          b         : ServerSideProcInvoker[ReqTypeImplicationMod.RequestType, ErrorMsg, VerifiedEvent.Seq],
                          c         : ServerSideProcInvoker[FieldMandatorinessMod.RequestType, ErrorMsg, VerifiedEvent.Seq],
-                         cd        : ClientData,
+                         g         : Global,
                          filterDead: StateSnapshot[FilterDead],
                          usageShow : Usage.Show) {
     @inline def component = Component(this)
@@ -33,12 +33,12 @@ object CfgIssues {
         <.div(BaseStyles.containerLarge, Style.cfg.issues,
 
           <.h4("User-Defined Issue Types"),
-          CustomIssueTypes.Props(a, cd, filterDead, usageShow).component,
+          CustomIssueTypes.Props(a, g, filterDead, usageShow).component,
 
           <.h4("Other Causes of Issues", ^.marginTop := "3em"),
           <.div(^.cls := "other", ^.display.flex, ^.justifyContent.spaceAround,
-            <.div(ReqTypeImplication.Props(b, cd).component),
-            <.div(MandatoryFields.Props(c, cd).component)))
+            <.div(ReqTypeImplication.Props(b, g).component),
+            <.div(MandatoryFields.Props(c, g).component)))
       }
       .build
 }

@@ -50,11 +50,11 @@ object SqlTest extends TestSuite {
       val pid = ProjectId(123)
       'createEmptyProjectSql           - test(db.createEmptyProjectSql)
       'getAllProjectMetaDataForUserSql - test(db.getAllProjectMetaDataForUserSql)
+      'getProjectMetaDataSql           - test(db.getProjectMetaDataSql)
       'sqlSelectEventsAll              - test(db.sqlSelectEvents(DB.EventFilter.IncludeAll)(pid))
       'sqlSelectEventsExcludeUpTo      - test(db.sqlSelectEvents(DB.EventFilter.ExcludeUpTo(EventOrd(2)))(pid))
       'sqlSelectAllEventHashes         - test(db.sqlSelectAllEventHashes)
       'projectSpaInitPageSql           - test(db.projectSpaInitPageSql)
-      'projectSpaInitAppSql            - test(db.projectSpaInitAppSql)
     }
 
     'ops {

@@ -32,6 +32,7 @@ object LoadedRoot {
 final class LoadedRoot(initPageData: InitPageData, global: Global) {
 
   val pxProject = global.pxProject
+  def unsafeProject() = global.unsafeProject()
 
   final class Backend($: BackendScope[Props, State]) extends OnUnmount {
     import global.{cbProjectMetaData, wsClient}
@@ -192,31 +193,31 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
         case Page.Index =>
           val lookup = ReqLookupPrompt.Props(
             StateSnapshot.zoomL(State.reqLookup)(s).setStateVia($),
-            Allow when _.lookup(pxProject.value()).isRight,
+            Allow when _.lookup(unsafeProject()).isRight,
             e => routerCtl.set(Page.ReqDetail(e)))
 
           val index = ProjectIndex.Props(lookup, routerCtl)
 
           val pname = ProjectItem.WithEditableName.Props(
-            cd.projectMetaData(),
+            cbProjectMetaData.runNow(),
             StateSnapshot.zoomL(State.projectName)(s).setStateVia($),
             setProjectNameIO)
 
           ProjectHome.Props(pname, index).render
 
         case Page.CfgFields =>
-          cfg.fields.CfgFields.Props(sspFieldMod, cd, filterDeadSS).component
+          cfg.fields.CfgFields.Props(sspFieldMod, global, filterDeadSS).component
 
         case Page.CfgIssues =>
           cfg.issues.CfgIssues.Props(
-            sspCustomIssueTypeCrud, sspReqTypeImplicationMod, sspFieldMandatorinessMod, cd, filterDeadSS, usageShow)
+            sspCustomIssueTypeCrud, sspReqTypeImplicationMod, sspFieldMandatorinessMod, global, filterDeadSS, usageShow)
             .component
 
         case Page.CfgReqTypes =>
-          cfg.reqtypes.CfgReqTypes.Props(sspCustomReqTypeCrud, cd, filterDeadSS, usageShow).component
+          cfg.reqtypes.CfgReqTypes.Props(sspCustomReqTypeCrud, global, filterDeadSS, usageShow).component
 
         case Page.CfgTags =>
-          cfg.tags.CfgTags.Props(sspTagMod, cd, filterDeadSS).component
+          cfg.tags.CfgTags.Props(sspTagMod, global, filterDeadSS).component
 
         case Page.ReqTable =>
           val rowAsync = editAsyncState
@@ -241,7 +242,7 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
           reqDetail(props)
 
         case Page.ImpGraph =>
-          val p = pxProject.value()
+          val p = unsafeProject()
           val g = ImplicationGraph.Props(
             None, s.filterDead,
             p.content.implications, p.content.reqs, p.config.reqTypes,

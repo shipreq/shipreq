@@ -24,7 +24,7 @@ import shipreq.webapp.base.ui.semantic.Table
 import shipreq.webapp.base.UiText
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.cfg.shared.{FieldSet => _, _}
-import shipreq.webapp.client.project.app.state.{ChangeListener, ClientData}
+import shipreq.webapp.client.project.app.state.{ChangeListener, Global}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.DND
 import shipreq.webapp.client.project.widgets._
@@ -33,7 +33,7 @@ import UiText.FieldNames
 
 object CfgFields {
   final case class Props(remote    : ServerSideProcInvoker[FieldCrud.CfgAction, ErrorMsg, VerifiedEvent.Seq],
-                         clientData: ClientData,
+                         global    : Global,
                          filterDead: StateSnapshot[FilterDead]) {
 
     def component = MainTable.Component(this)
@@ -106,7 +106,7 @@ private[fields] object MainTable {
     val textFields = Seq.newBuilder[CustomField.Text]
     val implFields = Seq.newBuilder[CustomField.Implication]
     val tagFields  = Seq.newBuilder[CustomField.Tag]
-    val fs         = p.clientData.project().config.fields
+    val fs         = p.global.unsafeProject().config.fields
     fs.customFields.values.foreach {
       case f: CustomField.Text        => textFields += f
       case f: CustomField.Implication => implFields += f
@@ -143,14 +143,14 @@ private[fields] object MainTable {
     ScalaComponent.builder[Props]("Cfg: Fields")
       .initialStateFromProps(initialState)
       .renderBackend[Backend]
-      .configure(customFieldChangeListener.install(_.clientData))
+      .configure(customFieldChangeListener.install(_.global))
       .configure(
         ChangeListener.refreshWhen(c =>
           c.fieldOrder
           || c.staticFields // TODO should this trigger a clearAppReqTypesEditorState(i)?
           || c.customReqTypes.nonEmpty // Refreshes AppReqTypesEditor and reqTypeSelector
           || c.tags.nonEmpty)          // Refreshes tagSelector
-          .install(_.clientData)
+          .install(_.global)
       )
       .build
 
@@ -169,9 +169,9 @@ private[fields] object MainTable {
   // ===================================================================================================================
   final class Backend(val $: BackendScope[Props, S]) extends OnUnmount {
 
-    val projectPx = Px.props($).map(_.clientData.project()).withReuse.autoRefresh
+    val projectPx = Px.props($).map(_.global.unsafeProject()).withReuse.autoRefresh
     val projectBackend = projectPx.map(new ProjectBackend(this, _))
-    val protocol = Px.props($).withReuse.autoRefresh.map(p => ProtocolBackend(p.remote, p.clientData))
+    val protocol = Px.props($).withReuse.autoRefresh.map(p => ProtocolBackend(p.remote))
 
     val nameE      = Editors.textInputEditor.applyStatefulValidator(V.name.unnamedFn)
     val refkeyE    = Editors.textInputEditor.applyStatefulValidator(V.key.unnamedFn)
@@ -195,14 +195,11 @@ private[fields] object MainTable {
   }
 
   // ===================================================================================================================
-  case class ProtocolBackend(remote: ServerSideProcInvoker[FieldCrud.CfgAction, ErrorMsg, VerifiedEvent.Seq], cd: ClientData) {
+  final case class ProtocolBackend(remote: ServerSideProcInvoker[FieldCrud.CfgAction, ErrorMsg, VerifiedEvent.Seq]) {
     import FieldCrud._
 
     private def call(a: CfgAction): (TCB.Success, TCB.Failure) => Callback =
-      (s, f) => remote(
-        a,
-        cd.applyEventSeqCB(_) >> s,
-        _ => f)
+      (s, f) => remote(a, _ => s, _ => f)
 
     def createIO(v: Values) =
       call(CfgAction.Create(v))

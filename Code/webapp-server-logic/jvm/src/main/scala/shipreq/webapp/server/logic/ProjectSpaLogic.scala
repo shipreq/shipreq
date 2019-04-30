@@ -7,7 +7,7 @@ import scalaz.syntax.monad._
 import scalaz.{-\/, BindRec, Monad, \/, \/-, ~>}
 import shipreq.base.ops.Trace
 import shipreq.base.util._
-import shipreq.webapp.base.data.{Obfuscated, Project, ProjectId}
+import shipreq.webapp.base.data.{Obfuscated, Project, ProjectId, ProjectMetaData}
 import shipreq.webapp.base.event.{ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes.EventResult
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, InitPageData, WsReqRes}
@@ -85,10 +85,13 @@ object ProjectSpaLogic extends StrictLogging {
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      override def initPage(projectId: ProjectId, username: Username): F[InitPageData] =
+      override def initPage(pid: ProjectId, username: Username): F[InitPageData] =
         for {
-          name <- runDB(db.projectSpaInitPage(projectId))
-        } yield InitPageData(username, name)
+          name <- runDB(db.projectSpaInitPage(pid))
+        } yield {
+          val pidPub = Obfuscators.projectId.obfuscate(pid)
+          InitPageData(username, pidPub, name)
+        }
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -209,12 +212,15 @@ object ProjectSpaLogic extends StrictLogging {
           def readDb(p: ProjectAndOrd) =
             runDB(
               db.inDbTransaction(for {
-                ia <- db.projectSpaInitApp(pid)
+                md <- db.getProjectMetaData(pid)
                 es <- db.getProjectEvents(pid, DB.EventFilter.given(p.ord))
-              } yield (es, ia))
-            ).map { case (es, ia) =>
-              // Build outside of DB transaction
-              ApplyEvents.append(pid, p, es).map(InitAppData(_, ia.lastUpdatedOrCreatedAt))
+              } yield (es, md))
+            ).map {
+              case (es, Some(md)) =>
+                // Build outside of DB transaction
+                ApplyEvents.append(pid, p, es).map(InitAppData(_, md))
+              case (_, None) =>
+                -\/(ErrorMsg("Project not found."))
             }
 
           def writeRedis(i: InitAppData): F[Boolean] =
@@ -227,15 +233,18 @@ object ProjectSpaLogic extends StrictLogging {
             } yield result
         }
 
-        def useCache(c: Redis.ProjectCache, md: DB.ProjectSpaInitApp): F[Result] = {
-          val result = c.build(pid).map(InitAppData(_, md.lastUpdatedOrCreatedAt))
+        def useCache(c: Redis.ProjectCache, md: ProjectMetaData): F[Result] = {
+          val result = c.build(pid).map(InitAppData(_, md))
           F pure result
         }
 
         for {
           cache <- redis.read(pid)
-          ia    <- runDB(db.projectSpaInitApp(pid))
-          r     <- if (cache.isCompleteTo(ia.latestOrd)) useCache(cache, ia) else ignoreCache(cache)
+          mdOpt <- runDB(db.getProjectMetaData(pid))
+          r     <- mdOpt match {
+                     case Some(md) => if (cache.isCompleteTo(md.latestOrd)) useCache(cache, md) else ignoreCache(cache)
+                     case None     => F pure -\/(ErrorMsg("Project not found."))
+                   }
         } yield r
       }
 

@@ -21,7 +21,7 @@ import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.cfg.shared._
-import shipreq.webapp.client.project.app.state.{ChangeListener, ClientData}
+import shipreq.webapp.client.project.app.state.{ChangeListener, Global}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.Widgets
 import DataImplicits._
@@ -29,7 +29,7 @@ import DataImplicits._
 object CfgReqTypes {
 
   case class Props(remote    : ServerSideProcInvoker[CustomReqTypeCrud.RequestType, ErrorMsg, VerifiedEvent.Seq],
-                   clientData: ClientData,
+                   global    : Global,
                    filterDead: StateSnapshot[FilterDead],
                    usageShow : Usage.Show) {
     def component = Component(this)
@@ -45,17 +45,17 @@ object CfgReqTypes {
     ScalaComponent.builder[Props]("Cfg: Req Types")
       .initialStateFromProps(initialState)
       .renderBackend[Backend]
-      .configure(changeListener.install(_.clientData))
+      .configure(changeListener.install(_.global))
       .build
 
   private def initialState(p: Props): S =
     State(
       newRowStore.initState,
-      savedRowStore.initStateIM(p.clientData.project().config.reqTypes.custom))
+      savedRowStore.initStateIM(p.global.unsafeProject().config.reqTypes.custom))
 
   // ===================================================================================================================
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
-    val project    = Px.props($).map(_.clientData.project()).withReuse.manualRefresh
+    val project    = Px.props($).map(_.global.unsafeProject()).withReuse.manualRefresh
     val filterDead = Px.props($).map(_.filterDead.value).withReuse.manualRefresh
     val usageShow  = Px.props($).map(_.usageShow).withReuse.manualRefresh
 

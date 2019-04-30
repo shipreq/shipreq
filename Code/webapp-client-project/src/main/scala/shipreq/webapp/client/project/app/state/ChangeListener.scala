@@ -8,8 +8,8 @@ import shipreq.webapp.client.project.app.cfg.shared.SavedRowStore
 object ChangeListener {
 
   class Updater[S](val h: Changes => S => S) extends AnyVal {
-    def install[P, C <: Children, B <: OnUnmount, U <: UpdateSnapshot](cd: P => ClientData): ScalaComponent.Config[P, C, S, B, U, U] =
-      Listenable.listen[P, C, S, B, U, Changes](cd, $ => changes =>
+    def install[P, C <: Children, B <: OnUnmount, U <: UpdateSnapshot](global: P => Global): ScalaComponent.Config[P, C, S, B, U, U] =
+      Listenable.listen[P, C, S, B, U, Changes](global, $ => changes =>
         $.modState(h(changes)))
   }
 
@@ -33,8 +33,8 @@ object ChangeListener {
   // ===================================================================================================================
 
   class Refresher(val refresh: Changes => Boolean) extends AnyVal {
-    def install[P, C <: Children, S, B <: OnUnmount, U <: UpdateSnapshot](cd: P => ClientData): ScalaComponent.Config[P, C, S, B, U, U] =
-      Listenable.listen[P, C, S, B, U, Changes](cd, $ => changes =>
+    def install[P, C <: Children, S, B <: OnUnmount, U <: UpdateSnapshot](global: P => Global): ScalaComponent.Config[P, C, S, B, U, U] =
+      Listenable.listen[P, C, S, B, U, Changes](global, $ => changes =>
         if (refresh(changes))
           $.forceUpdate
         else
