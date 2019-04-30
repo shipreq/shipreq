@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.MutableArray
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -23,10 +22,9 @@ import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.protocol.{SavedViewCmd, ServerSideProcInvoker, UpdateContentCmd}
-import shipreq.webapp.base.text.{PlainText, TextSearch}
+import shipreq.webapp.base.text.TextSearch
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.ui.semantic.{Icon, Message}
-import shipreq.webapp.client.project.app.state.ClientData
 import shipreq.webapp.client.project.app.Style.reqtable.{page => *}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.widgets.{FilterDeadButton, ProjectWidgets}
@@ -43,7 +41,7 @@ object ReqTablePage {
       .build
 
   final case class StaticProps(stateAccess     : StateAccessPure[State],
-                               cd              : ClientData,
+                               pxProject       : Px[Project],
                                pxTextSearch    : Px[TextSearch],
                                pxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
                                reqDetailRC     : RouterCtl[ExternalPubid],
@@ -128,7 +126,6 @@ object ReqTablePage {
 
   final class Backend(sp: StaticProps, $: BackendScope[Props, Unit]) {
     import sp._
-    import cd.pxProject
 
     val setNewStuff : SetFn[NewStuff.State] = Reusable.fn.state(stateAccess zoomStateL State.newStuff).setStateFn
     val setSelection: SetFn[RowSelection  ] = Reusable.fn.state(stateAccess zoomStateL State.selection).setStateFn

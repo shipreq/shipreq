@@ -23,23 +23,30 @@ trait WebSocketClient[ReqRes <: Protocol.RequestResponse[Pickler]] {
 
 object WebSocketClient {
 
-  def apply(urlBase           : Url.Absolute.Base,
-            protocol          : Protocol.WebSocket.ClientReqServerPush[Pickler])
-           (onServerPush      : protocol.Push => Callback,
-            onReadyStateChange: ReadyState => WebSocketClient[protocol.ReqRes] => Callback,
-           ): WebSocketClient[protocol.ReqRes] = {
+  trait WithoutCallbacks[ReqRes <: Protocol.RequestResponse[Pickler], Push] {
+    def build(onServerPush: Push => Callback,
+              onReadyStateChange: WebSocketClient[ReqRes] => ReadyState => Callback): WebSocketClient[ReqRes]
+  }
 
-    val url      = (urlBase.forWebSocket / protocol.url).absoluteUrl
+  def apply(urlBase: Url.Absolute.Base,
+            p      : Protocol.WebSocket.ClientReqServerPush[Pickler],
+           ): WithoutCallbacks[p.ReqRes, p.Push] = {
+
+    val url      = (urlBase.forWebSocket / p.url).absoluteUrl
     val createWS = CallbackTo(new WebSocket(url))
 
-    new Impl(
-      createWS,
-      true,
-      retries,
-      onReadyStateChange,
-      protocolCS(protocol.req.codec),
-      protocolSC(_)(protocol.push.codec),
-      onServerPush)
+    new WithoutCallbacks[p.ReqRes, p.Push] {
+      override def build(onServerPush: p.Push => Callback,
+                         onReadyStateChange: WebSocketClient[p.ReqRes] => ReadyState => Callback) =
+        new Impl(
+          createWS,
+          true,
+          retries,
+          onReadyStateChange,
+          protocolCS(p.req.codec),
+          protocolSC(_)(p.push.codec),
+          onServerPush)
+    }
   }
 
   private[this] val retries =
@@ -55,7 +62,7 @@ object WebSocketClient {
       createWS          : CallbackTo[WebSocket],
       openImmediately   : Boolean,
       connectionRetries : Retries,
-      onReadyStateChange: ReadyState => WebSocketClient[ReqRes] => Callback,
+      onReadyStateChange: WebSocketClient[ReqRes] => ReadyState => Callback,
       protocolCS        : Pickler[ClientToServer[Req]],
       mkProtocolSC      : (ReqId => Protocol[Pickler]) => Pickler[ServerToClient[Push]],
       recvPush          : Push => Callback) extends WebSocketClient[ReqRes] { self =>
@@ -117,6 +124,8 @@ object WebSocketClient {
           state = state.copy(scheduled = None)
       }
 
+    private val onReadyStateChange2 = onReadyStateChange(this)
+
     private class Instance(val ws: WebSocket) {
       ws.binaryType = "arraybuffer"
       ws.onopen     = onOpen _
@@ -136,7 +145,7 @@ object WebSocketClient {
         val r = readyState()
         if (!state.prevReadyState.contains(r)) {
           state = state.copy(prevReadyState = Some(r))
-          onReadyStateChange(r)(self).runNow()
+          onReadyStateChange2(r).runNow()
         }
       }
 

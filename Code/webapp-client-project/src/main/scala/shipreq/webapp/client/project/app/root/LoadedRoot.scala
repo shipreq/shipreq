@@ -7,11 +7,10 @@ import japgolly.scalajs.react.vdom.VdomElement
 import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{FilterDead, ReqId}
-import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.InitPageData
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitPageData, WsReqRes}
 import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.base.ui.ProjectItem
 import shipreq.webapp.client.project.app.state._
@@ -30,46 +29,54 @@ object LoadedRoot {
   case class Props(page: Page, routerCtl: RouterCtl)
 }
 
-final class LoadedRoot(initPageData: InitPageData,  val cd: ClientData) {
+final class LoadedRoot(initPageData: InitPageData, global: Global) {
+
+  val cbProject = global.cbProject
 
   final class Backend($: BackendScope[Props, State]) extends OnUnmount {
-    import cd.pxProject
+    import global.{cbProjectMetaData, pxProject, wsClient}
+
+    private val sspInitApp               = wsClient.invoker(WsReqRes.InitApp              ).mergeFailure
+    private val sspCreateContent         = wsClient.invoker(WsReqRes.CreateContent        ).mergeFailure
+    private val sspUpdateContent         = wsClient.invoker(WsReqRes.UpdateContent        ).mergeFailure
+    private val sspProjectNameSet        = wsClient.invoker(WsReqRes.ProjectNameSet       ).mergeFailure
+    private val sspUpdateSavedViews      = wsClient.invoker(WsReqRes.UpdateSavedViews     ).mergeFailure
+    private val sspFieldMandatorinessMod = wsClient.invoker(WsReqRes.FieldMandatorinessMod).mergeFailure
+    private val sspReqTypeImplicationMod = wsClient.invoker(WsReqRes.ReqTypeImplicationMod).mergeFailure
+    private val sspCustomIssueTypeCrud   = wsClient.invoker(WsReqRes.CustomIssueTypeCrud  ).mergeFailure
+    private val sspCustomReqTypeCrud     = wsClient.invoker(WsReqRes.CustomReqTypeCrud    ).mergeFailure
+    private val sspFieldMod              = wsClient.invoker(WsReqRes.FieldMod             ).mergeFailure
+    private val sspTagMod                = wsClient.invoker(WsReqRes.TagMod               ).mergeFailure
 
     // This never changes
-    val routerCtl = $.props.runNow().routerCtl
-    val reqDetailRC = routerCtl.contramap(Page.ReqDetail.apply)
+    private val routerCtl = $.props.runNow().routerCtl
+    private val reqDetailRC = routerCtl.contramap(Page.ReqDetail.apply)
 
-    val setFilterDead: Reusable[SetStateFnPure[FilterDead]] =
+    private val setFilterDead: Reusable[SetStateFnPure[FilterDead]] =
       Reusable.fn.state($ zoomStateL State.filterDead).setStateFn
 
-    val pxPlainText =
+    private val pxPlainText =
       pxProject.map(PlainText.ForProject.noCtx)
 
-    val pxTextSearch =
+    private val pxTextSearch =
       Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
 
-    val pxProjectWidgets =
+    private val pxProjectWidgets =
       Reusable byRef Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
 
-    val pxCreateEditability =
+    private val pxCreateEditability =
       pxProject.map(p => CreateFeature.Editability(p.config))
 
-    val pxEditEditability =
+    private val pxEditEditability =
       pxProject.map(EditorFeature.Editability.apply)
 
-    val updateIO: ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, VerifiedEvent.Seq] =
-      cd.serverSideProcToEvents(cp, initPageData.updateContent)
-
-    val savedViewIO: ServerSideProcInvoker[SavedViewCmd, ErrorMsg, VerifiedEvent.Seq] =
-      cd.serverSideProcToEvents(cp, initPageData.updateSavedViews)
-
-    val previewW: PreviewFeature.Write.Composite[PreviewId] =
+    private val previewW: PreviewFeature.Write.Composite[PreviewId] =
       PreviewFeature.Write.Composite($ zoomStateL State.preview)
 
-    val createAsyncW: AsyncFeature.Write.D1[CreateFeature.RowKey, ErrorMsg] =
+    private val createAsyncW: AsyncFeature.Write.D1[CreateFeature.RowKey, ErrorMsg] =
       AsyncFeature.Write.D1.init($ zoomStateL State.createAsync)
 
-    val createW: CreateFeature.Write.ForProject =
+    private val createW: CreateFeature.Write.ForProject =
       CreateFeature.Write.ForProject(
         CreateFeature.Static(
           previewW.mapId(PreviewId.ToCreate),
@@ -78,42 +85,42 @@ final class LoadedRoot(initPageData: InitPageData,  val cd: ClientData) {
           pxTextSearch),
         $ zoomStateL State.create,
         createAsyncW,
-        cd.serverSideProcToEvents(cp, initPageData.createContent))
+        sspCreateContent)
 
-    val editAsyncW: AsyncFeature.Write.D2[EditorFeature.RowKey, AsyncKey, ErrorMsg] =
+    private val editAsyncW: AsyncFeature.Write.D2[EditorFeature.RowKey, AsyncKey, ErrorMsg] =
       AsyncFeature.Write.D2.init($ zoomStateL State.editAsync)
 
-    val editW: EditorFeature.Write.ForProject =
+    private val editW: EditorFeature.Write.ForProject =
       EditorFeature.Write.ForProject(
         EditorFeature.Static(
           previewW.mapId(PreviewId.ToEditor),
           pxProject,
           pxPlainText,
           pxTextSearch,
-          updateIO),
+          sspUpdateContent),
         $ zoomStateL State.edit,
         editAsyncW.mapKey1(AsyncKey.ToEditor))
 
-    val rowAsyncW: AsyncFeature.Write.D1[EditorFeature.RowKey, ErrorMsg] =
+    private val rowAsyncW: AsyncFeature.Write.D1[EditorFeature.RowKey, ErrorMsg] =
       editAsyncW.withKey1(AsyncKey.WholeReq)
 
-    val savedViewAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
+    private val savedViewAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.savedViewAsync)
 
-    val reqTable = ReqTablePage(
+    private val reqTable = ReqTablePage(
       ReqTablePage.StaticProps(
         $ zoomStateL State.reqTable,
-        cd,
+        pxProject,
         pxTextSearch, pxProjectWidgets,
         reqDetailRC,
-        updateIO,
-        savedViewIO,
+        sspUpdateContent,
+        sspUpdateSavedViews,
         rowAsyncW.mapKey(reqtable.Row.SourceId.ToEditorRow.reverse),
         savedViewAsyncW))
 
-    val pxReqDetailId = Px[Option[ReqId]](None).withReuse.manualUpdate
+    private val pxReqDetailId = Px[Option[ReqId]](None).withReuse.manualUpdate
 
-    val pxReqDetailReqProps: Px[Option[State => ReqDetail.ReqProps]] =
+    private val pxReqDetailReqProps: Px[Option[State => ReqDetail.ReqProps]] =
       for {
         editability <- pxEditEditability
         reqDetailId <- pxReqDetailId
@@ -139,11 +146,10 @@ final class LoadedRoot(initPageData: InitPageData,  val cd: ClientData) {
 
     def ww = WebWorkerClient.Instance
 
-    val reqDetail = ReqDetail(ReqDetail.StaticProps(
-      updateIO, reqDetailRC, ww, initPageData.updateContent,
-      pxProject, pxTextSearch, pxProjectWidgets))
+    private val reqDetail = ReqDetail(ReqDetail.StaticProps(
+      sspUpdateContent, reqDetailRC, ww, pxProject, pxTextSearch, pxProjectWidgets))
 
-    val reqDetailSetState: Reusable[SetStateFnPure[ReqDetail.State]] =
+    private val reqDetailSetState: Reusable[SetStateFnPure[ReqDetail.State]] =
       Reusable.fn.state($ zoomStateL State.reqDetail).setStateFn
 
     def setReqTableView(fd: FilterDead, filter: Filter.Valid): Callback =
@@ -153,7 +159,7 @@ final class LoadedRoot(initPageData: InitPageData,  val cd: ClientData) {
         _ ← $.modState(State.reqTable.modify(f) compose State.filterDead.set(fd))
       } yield ()
 
-    val usageShow =
+    private val usageShow =
       Usage.Show((filterDead, filter) =>
         routerCtl
           .onSet(setReqTableView(filterDead, filter()) >> _)
@@ -164,12 +170,11 @@ final class LoadedRoot(initPageData: InitPageData,  val cd: ClientData) {
         Reusable.fn((s: AsyncFeature.State.D0[ErrorMsg]) =>
           $.modState(State.projectName.modify(ProjectItem.WithEditableName.State setAsync s))))
 
-    val setProjectNameIO: String => Callback = {
-      val proc = cd.serverSideProcToEvents(cp, initPageData.projectNameSet)
+    private val setProjectNameIO: String => Callback = {
       newName => {
         def close = $.modState(State.projectName set None)
-        def save = projectNameAF((s, f) => proc(newName, _ => s >> close, f))
-        cd.projectCB >>= (p => if (p.name ==* newName) close else save)
+        def save = projectNameAF((s, f) => sspProjectNameSet(newName, _ => s >> close, f))
+        cbProject >>= (p => if (p.name ==* newName) close else save)
       }
     }
 
@@ -187,7 +192,7 @@ final class LoadedRoot(initPageData: InitPageData,  val cd: ClientData) {
         case Page.Index =>
           val lookup = ReqLookupPrompt.Props(
             StateSnapshot.zoomL(State.reqLookup)(s).setStateVia($),
-            Allow when _.lookup(cd.project()).isRight,
+            Allow when _.lookup(cbProject.runNow()).isRight,
             e => routerCtl.set(Page.ReqDetail(e)))
 
           val index = ProjectIndex.Props(lookup, routerCtl)
@@ -200,18 +205,18 @@ final class LoadedRoot(initPageData: InitPageData,  val cd: ClientData) {
           ProjectHome.Props(pname, index).render
 
         case Page.CfgFields =>
-          cfg.fields.CfgFields.Props(cp, initPageData.fieldCrud, cd, filterDeadSS).component
+          cfg.fields.CfgFields.Props(sspFieldMod, cd, filterDeadSS).component
 
         case Page.CfgIssues =>
           cfg.issues.CfgIssues.Props(
-            cp, initPageData.issueTypeCrud, initPageData.reqTypeImpMod, initPageData.fieldMandMod, cd, filterDeadSS, usageShow)
+            sspCustomIssueTypeCrud, sspReqTypeImplicationMod, sspFieldMandatorinessMod, cd, filterDeadSS, usageShow)
             .component
 
         case Page.CfgReqTypes =>
-          cfg.reqtypes.CfgReqTypes.Props(cp, initPageData.reqTypeCrud, cd, filterDeadSS, usageShow).component
+          cfg.reqtypes.CfgReqTypes.Props(sspCustomReqTypeCrud, cd, filterDeadSS, usageShow).component
 
         case Page.CfgTags =>
-          cfg.tags.CfgTags.Props(cp, initPageData.tagCrud, cd, filterDeadSS).component
+          cfg.tags.CfgTags.Props(sspTagMod, cd, filterDeadSS).component
 
         case Page.ReqTable =>
           val rowAsync = editAsyncState
@@ -236,7 +241,7 @@ final class LoadedRoot(initPageData: InitPageData,  val cd: ClientData) {
           reqDetail(props)
 
         case Page.ImpGraph =>
-          val p = cd.project()
+          val p = cbProject.runNow()
           val g = ImplicationGraph.Props(
             None, s.filterDead,
             p.content.implications, p.content.reqs, p.config.reqTypes,
@@ -246,7 +251,7 @@ final class LoadedRoot(initPageData: InitPageData,  val cd: ClientData) {
           ImplicationGraphPage.Props(g, setFilterDead).render
       }
 
-      Layout.Props(initPageData.username, cd.projectMetaData(), routerCtl, p.page, content).render
+      Layout.Props(initPageData.username, cbProjectMetaData.runNow(), routerCtl, p.page, content).render
     }
 
     def onProjectChange(c: Changes): Callback = // TODO I don't like this
@@ -254,8 +259,8 @@ final class LoadedRoot(initPageData: InitPageData,  val cd: ClientData) {
   }
 
   val Component = ScalaComponent.builder[Props]("LoadedRoot")
-    .initialState(State.init(cd))
+    .initialState(State.init)
     .renderBackend[Backend]
-    .configure(Listenable.listen(_ => cd, _.backend.onProjectChange))
+    .configure(Listenable.listen(_ => global, _.backend.onProjectChange))
     .build
 }

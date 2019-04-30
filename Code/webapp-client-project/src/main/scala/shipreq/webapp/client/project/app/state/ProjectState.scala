@@ -59,6 +59,9 @@ final case class ProjectState(projectAndOrd  : ProjectAndOrd,
         }
       }
   }
+
+  def addEventsSimple(events: VerifiedEvent.Seq): ProjectState =
+    addEvents(events).fold(this)(_._1)
 }
 
 object ProjectState {

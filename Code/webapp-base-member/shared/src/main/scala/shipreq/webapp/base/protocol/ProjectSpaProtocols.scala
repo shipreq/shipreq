@@ -40,7 +40,8 @@ object ProjectSpaProtocols {
   }
 
   object WebSocket {
-    private[WebSocket] val pushProtocol = Protocol[Pickler, VerifiedEvent.NonEmptySeq](implicitly)
+    type Push = VerifiedEvent.NonEmptySeq
+    private[WebSocket] val pushProtocol = Protocol[Pickler, Push](implicitly)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

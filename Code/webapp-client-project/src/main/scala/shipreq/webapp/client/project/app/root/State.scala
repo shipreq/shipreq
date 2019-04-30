@@ -97,7 +97,7 @@ case class State(projectName   : ProjectItem.WithEditableName.State,
                  reqDetail     : ReqDetail.State)
 
 object State {
-  def init(cd: ClientData): State =
+  def init: State =
     State(
       ProjectItem.WithEditableName.State.init,
       "",
