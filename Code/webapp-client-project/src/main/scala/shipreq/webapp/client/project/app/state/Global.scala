@@ -33,20 +33,19 @@ final class Global(wsClientBuilder: WebSocketClient.WithoutCallbacks[WsReqRes, P
     _pxProject.refresh()
   }
 
-  val cbProject: CallbackTo[Project] =
-    CallbackTo(unsafeState match {
-      case State.Active(s)  => s.project
-      case _: State.Loading => Project.empty
-    })
-
   val cbProjectMetaData: CallbackTo[ProjectMetaData] =
     CallbackTo(unsafeState match {
       case State.Active(s)  => s.projectMetaData
       case _: State.Loading => null // TODO Safe because I know I don't access this before initial load
     })
 
-  private val _pxProject: Px.ThunkM[Project] =
-    Px(cbProject.runNow()).withReuse.manualRefresh
+  private val _pxProject: Px.ThunkM[Project] = {
+    def f() = unsafeState match {
+      case State.Active(s)  => s.project
+      case _: State.Loading => Project.empty
+    }
+    Px(f()).withReuse.manualRefresh
+  }
 
   val pxProject: Px[Project] =
     _pxProject

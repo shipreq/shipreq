@@ -31,10 +31,10 @@ object LoadedRoot {
 
 final class LoadedRoot(initPageData: InitPageData, global: Global) {
 
-  val cbProject = global.cbProject
+  val pxProject = global.pxProject
 
   final class Backend($: BackendScope[Props, State]) extends OnUnmount {
-    import global.{cbProjectMetaData, pxProject, wsClient}
+    import global.{cbProjectMetaData, wsClient}
 
     private val sspInitApp               = wsClient.invoker(WsReqRes.InitApp              ).mergeFailure
     private val sspCreateContent         = wsClient.invoker(WsReqRes.CreateContent        ).mergeFailure
@@ -174,7 +174,7 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
       newName => {
         def close = $.modState(State.projectName set None)
         def save = projectNameAF((s, f) => sspProjectNameSet(newName, _ => s >> close, f))
-        cbProject >>= (p => if (p.name ==* newName) close else save)
+        pxProject.toCallback >>= (p => if (p.name ==* newName) close else save)
       }
     }
 
@@ -192,7 +192,7 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
         case Page.Index =>
           val lookup = ReqLookupPrompt.Props(
             StateSnapshot.zoomL(State.reqLookup)(s).setStateVia($),
-            Allow when _.lookup(cbProject.runNow()).isRight,
+            Allow when _.lookup(pxProject.value()).isRight,
             e => routerCtl.set(Page.ReqDetail(e)))
 
           val index = ProjectIndex.Props(lookup, routerCtl)
@@ -241,7 +241,7 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
           reqDetail(props)
 
         case Page.ImpGraph =>
-          val p = cbProject.runNow()
+          val p = pxProject.value()
           val g = ImplicationGraph.Props(
             None, s.filterDead,
             p.content.implications, p.content.reqs, p.config.reqTypes,

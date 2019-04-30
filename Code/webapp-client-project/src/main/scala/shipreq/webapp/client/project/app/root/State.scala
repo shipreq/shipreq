@@ -7,7 +7,6 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{FilterDead, HideDead}
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.ui.ProjectItem
-import shipreq.webapp.client.project.app.state.ClientData
 import shipreq.webapp.client.project.app.{reqdetail, reqtable}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
