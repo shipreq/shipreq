@@ -2,16 +2,6 @@ package shipreq.webapp.server.logic
 
 import japgolly.univeq.UnivEq
 import java.util.Base64
-import shipreq.webapp.base.data._
-import shipreq.webapp.base.user._
-
-/**
-  * @param userId The only user with access to the project.
-  *               This will change in Phase 3 when collaborative features are added.
-  */
-final case class ProjectHeader(userId: UserId, name: Project.Name)
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 final case class PasswordHash(value: String) extends AnyVal
 object PasswordHash {

@@ -6,19 +6,15 @@ import scalaz.\/
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.event.VerifiedEvent
-import shipreq.webapp.base.protocol.{ProjectSpaProtocols, ServerSideProc}
-import shipreq.webapp.base.protocol.{ClientProtocol, ServerSideProcInvoker}
+import shipreq.webapp.base.protocol.{ProjectSpaProtocols, ServerSideProcInvoker}
 
 class ClientData(initialState: ProjectState) extends Broadcaster[Changes] {
 
   protected val mutableState = new ProjectState.Mutable(initialState)
 
   // Broadcast changes
-  mutableState.addListener((ves, ps1, ps2) =>
-    VerifiedEvent.NonEmptySeq.maybe(ves) match {
-      case Some(ne) => broadcast(Changes(ne, ps1.project, ps2.project))
-      case None     => Callback.empty // Events queued but not applied
-    })
+  mutableState.addListener(c =>
+    broadcast(Changes(c.events, c.oldState.project, c.newState.project)))
 
   // Old API
   final def project()                               : Project             = mutableState.pxProject.value()
@@ -27,11 +23,10 @@ class ClientData(initialState: ProjectState) extends Broadcaster[Changes] {
   final val projectCB                               : CallbackTo[Project] = pxProject.toCallback
   final def applyEventSeqCB(ves: VerifiedEvent.Seq) : Callback            = mutableState.applyEventSeqCB(ves)
 
-  final def serverSideProcToEvents[I](cp: ClientProtocol,
-                                      proc: ServerSideProc[I, ErrorMsg \/ VerifiedEvent.Seq]): ServerSideProcInvoker[I, ErrorMsg, VerifiedEvent.Seq] =
-    cp(proc)
-      .mergeFailure
-      .onSuccess((ves, s) => s << mutableState.applyEventSeqCB(ves))
+//  final def serverSideProcToEvents[I](proc: ServerSideProc[I, ErrorMsg \/ VerifiedEvent.Seq]): ServerSideProcInvoker[I, ErrorMsg, VerifiedEvent.Seq] =
+//    cp(proc)
+//      .mergeFailure
+//      .onSuccess((ves, s) => s << mutableState.applyEventSeqCB(ves))
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -40,16 +35,16 @@ object ClientData {
 
   @inline implicit def reusability = Reusability.byRef[ClientData]
 
-  def initAsync(cp          : ClientProtocol,
-                remoteInit  : ProjectSpaProtocols.InitAsync.Instance)
-               (onSuccess   : ClientData => Callback,
-                onFailure   : ErrorMsg => Callback): Callback =
-    cp(remoteInit).mergeFailure.apply(
-      (),
-      i => {
-        val s = ProjectState.init(i.project, i.projectMetaData, i.latestEventOrd)
-        def cd = new ClientData(s)
-        onSuccess(cd)
-      },
-      onFailure)
+//  def initAsync(cp          : ClientProtocol,
+//                initAppData : ProjectSpaProtocols.InitAppData)
+//               (onSuccess   : ClientData => Callback,
+//                onFailure   : ErrorMsg => Callback): Callback =
+//    cp(remoteInit).mergeFailure.apply(
+//      (),
+//      i => {
+//        val s = ProjectState.init(initAppData.project, initAppData.projectMetaData)
+//        def cd = new ClientData(s)
+//        onSuccess(cd)
+//      },
+//      onFailure)
 }

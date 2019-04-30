@@ -1,42 +1,38 @@
 package shipreq.webapp.client.project.app.cfg.tags
 
-import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.ScalazReact._
-import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import monocle.std.option.some
 import nyaya.prop.CycleDetector
 import nyaya.util.Multimap
-import scala.annotation.tailrec
 import scala.language.reflectiveCalls
 import scalacss.ScalaCssReact._
 import scalajs.js.{UndefOr, undefined}
 import scalaz.\&/
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.MMTree
+import shipreq.base.util.{ErrorMsg, MMTree}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{TagId => Id, _}
 import shipreq.webapp.base.data.DataValidators.{hashRefKey => VH, tag => V}
-import shipreq.webapp.base.protocol.{ClientProtocol, TagCrud}
+import shipreq.webapp.base.protocol.{ServerSideProcInvoker, TagCrud}
 import shipreq.webapp.base.ui.{AutosizeTextarea, BaseStyles}
 import shipreq.webapp.base.ui.semantic.Table
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.project.app.cfg.shared._
 import shipreq.webapp.client.project.app.state.{ChangeListener, ClientData}
 import shipreq.webapp.client.project.app.Style
-import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.DND
-import shipreq.webapp.client.project.widgets.{Checkbox, FilterDeadButton}
+import shipreq.webapp.client.project.widgets.FilterDeadButton
 import DataImplicits._
 import FlatTag.FilterPolicy
 import TagInTree.Relations
+import shipreq.webapp.base.event.VerifiedEvent
 
 object CfgTags {
-  case class Props(cp        : ClientProtocol,
-                   remote    : TagCrud.Protocol.Instance,
+  case class Props(remote    : ServerSideProcInvoker[TagCrud.Action, ErrorMsg, VerifiedEvent.Seq],
                    clientData: ClientData,
                    filterDead: StateSnapshot[FilterDead]) {
     def component = MainTable.Component(this)
@@ -192,8 +188,7 @@ private[tags] object MainTable {
 
   // ===================================================================================================================
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
-    val crudIO = Px.props($).withReuse.autoRefresh.map(p =>
-      CrudActionIO(Tag, TagCrud.Protocol)(p.cp, p.remote, p.clientData))
+    val crudIO = Px.props($).withReuse.autoRefresh.map(p => CrudActionIO(p.remote))
 
     def validatorState(k: Option[Id]): S => V.State =
       s => MainTable.validatorState(s, $.props.map(_.clientData), k)
@@ -417,7 +412,7 @@ private[tags] object MainTable {
 
     import DetailPane.{Rel, Rels, AddRel, AddRels, AddSelected}
 
-    type UpdateIO = (Tag, TagCrud.Protocol.Value, TCB.Success, TCB.Failure) => Callback
+    type UpdateIO = (Tag, TagCrud.Value, TCB.Success, TCB.Failure) => Callback
     type SelUpdate = Option[Id] => Callback
 
     def removeChild(child: Id): Relations => Relations =

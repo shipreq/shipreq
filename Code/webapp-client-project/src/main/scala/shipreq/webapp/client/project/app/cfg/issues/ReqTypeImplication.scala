@@ -1,20 +1,25 @@
 package shipreq.webapp.client.project.app.cfg.issues
 
-import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.OnUnmount
-import shipreq.webapp.base.data._, DataImplicits._
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.ReqTypeImplicationMod
+import shipreq.base.util.ErrorMsg
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.On
-import shipreq.webapp.base.protocol.ClientProtocol
-import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
+import shipreq.webapp.base.event.VerifiedEvent
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes.ReqTypeImplicationMod
+import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.client.project.app.state.{ChangeListener, ClientData}
 import shipreq.webapp.client.project.app.cfg.shared._
+import DataImplicits._
 import ReqType.Mnemonic
 
 private[issues] object ReqTypeImplication {
 
-  final case class Props(cp: ClientProtocol, remote: ReqTypeImplicationMod.Instance, clientData: ClientData) {
+  final case class Props(remote: ServerSideProcInvoker[ReqTypeImplicationMod.RequestType, ErrorMsg, VerifiedEvent.Seq],
+                         clientData: ClientData) {
     @inline def component = Component(this)
-    def proc = clientData.serverSideProcToEvents(cp, remote)
   }
 
   val rowStore = SavedRowStore.data[CustomReqType](_.imp)
@@ -40,7 +45,7 @@ private[issues] object ReqTypeImplication {
 
     def save(id: CustomReqTypeId): CallbackTo[ST] =
       $.props.map(p =>
-        Persistence.simpleAsyncUpdate(rowStore)(p.proc, $ runState _, id))
+        Persistence.simpleAsyncUpdate(rowStore)(p.remote, $ runState _, id))
 
     val genEditor =
       Editors.checkboxEditor.imap(On <=> ImplicationRequired)

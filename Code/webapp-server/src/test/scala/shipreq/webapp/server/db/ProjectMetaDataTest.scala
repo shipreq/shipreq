@@ -3,7 +3,7 @@ package shipreq.webapp.server.db
 import utest._
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.{ActiveEvent, EventOrd, RandomEventStream, VerifiedEvent}
-import shipreq.webapp.server.logic.DB
+import shipreq.webapp.server.logic.{DB, Obfuscators}
 import shipreq.webapp.server.test.{DbUtil, PrepareEnv}
 import shipreq.webapp.server.test.WebappServerTestUtil._
 
@@ -24,6 +24,7 @@ object ProjectMetaDataTest extends TestSuite {
       // Do this twice to ensure that other projects' events don't interfere
       for (_ <- 1 to 2) {
         val pid = dbu.newProjectId(uid, initEvents)
+        val pidPub = Obfuscators.projectId.obfuscate(pid)
 
         def writeEvent(ve: VerifiedEvent, idx: Int): Unit =
           ve.event match {
@@ -46,8 +47,8 @@ object ProjectMetaDataTest extends TestSuite {
           writeEvent(ve, idx2)
           p = applyEventSuccessfully(p, ve.event)
 
-          val md = xa ! dbAlgebra.getProjectMetaData(pid) getOrElse
-            fail(s"ProjectMetaData not found for $pid.")
+          val md = (xa ! dbAlgebra.getAllProjectMetaDataForUser(uid)).find(_.id == pidPub).getOrElse(
+            fail(s"ProjectMetaData not found for $pid."))
 
           val expectTotal = idx2 + idxToOrd
           val expectNonInit = expectTotal - initEvents

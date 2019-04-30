@@ -32,11 +32,9 @@ object Redis {
     @inline def nonEmpty = !isEmpty
 
     def isComplete: Boolean =
-      (snapshot, events.headOption) match {
-        case (Some(_), None)    => true
-        case (Some(s), Some(e)) => e.ord.immediatelyFollows(s.ord)
-        case (None   , Some(e)) => e.ord ==* EventOrd.first
-        case (None   , None)    => true
+      events.headOption match {
+        case Some(e) => e.ord.immediatelyFollows(snapshot.map(_.ord.asEventOrd))
+        case None    => true
       }
 
     def isCompleteTo(latestOrd: EventOrd.Latest): Boolean =

@@ -18,12 +18,6 @@ object EndpointTest extends TestSuite {
 
   override def tests = Tests {
 
-    'comet {
-      test(Endpoint.Comet, "/L/comet/11301008944/F86889457609DUVAIE/F86889457707YSS5WS")
-      test(Endpoint.Comet, "/L/comet/19408492454/F1135978930148PZUM0K/F1135978930205BEI53F")
-      test(Endpoint.Comet, "/L/comet/74023020932/F4523182542865TGETZ/F452318254343CO0NGV")
-    }
-
     'liftJsStatic {
       test(Endpoint.LiftJsStatic, "/l/lift.js")
     }

@@ -12,8 +12,7 @@ import monocle._
 import monocle.function.Field1.first
 import monocle.function.Field2.second
 import scala.annotation.tailrec
-import scala.collection.immutable.ListSet
-import scalaz.{Need, -\/, \/-}
+import scalaz.{-\/, Need, \/-}
 import scalaz.std.list._
 import scalaz.std.option.{none => _, _}
 import scalaz.std.set._
@@ -25,22 +24,22 @@ import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.ApplyEvent.LogicVer
+import shipreq.webapp.base.event.ProjectAndOrd
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Grammar, GrammarSpec, Text}
 import shipreq.webapp.base.util.{GenericData, PreProcessor}
 import shipreq.webapp.base.user._
-import DataImplicits._
-import Field.ApplicableReqTypes
-import MTrie.Ops
-import Optics.Implicits._
-import ReqType.Mnemonic
-import TestOptics.{customReqTypesLive => _, _}
-import WebappBaseGen._
 
 // TODO RandomData is inaccurate in that CorrectionParts aren't applied.
 
 object RandomData {
+  import DataImplicits._
+  import Field.ApplicableReqTypes
+  import MTrie.Ops
+  import Optics.Implicits._
+  import ReqType.Mnemonic
+  import TestOptics.{customReqTypesLive => _, _}
+  import WebappBaseGen._
 
   /*
   def genmodL[A, B](l: Lens[A, B])(g: B => Gen[B])(a: A): Gen[A] =
@@ -1208,6 +1207,12 @@ object RandomData {
       p               ← genProject(cfg, reqsWithoutText, reqCodes, reqTags, reqImps)
     } yield p
 
+  lazy val projectAndOrd: Gen[ProjectAndOrd] =
+    for {
+      o <- events.eventOrd.map(_.asLatest).option
+      p <- project
+    } yield ProjectAndOrd(p, o)
+
   def projectIdPublic: Gen[ProjectId.Public] =
     obfuscated
 
@@ -1413,40 +1418,22 @@ object RandomData {
   // ===================================================================================================================
   object routines {
     import shipreq.webapp.base.protocol._
-    import ServerSideProc.Protocol._
     import RandomData.protocol._
 
-    val remoteFnId: Gen[ServerSideProcId] =
-      Gen.alphaNumeric.string(4).map(ServerSideProcId.apply)
-
-    def remoteFn[I, O](f: ServerSideProc.Protocol[I, O]): Gen[ServerSideProc[I, O]] =
-      remoteFnId.map(ServerSideProc(_, f))
-
-    def projectSpaInitAsyncData: Gen[ProjectSpaProtocols.InitAsyncData] =
+    def projectSpaInitAppData: Gen[ProjectSpaProtocols.InitAppData] =
       for {
-        a <- project
+        a <- projectAndOrd
         b <- projectMetaData
-        c <- events.eventOrd
-      } yield ProjectSpaProtocols.InitAsyncData(a, b, c)
+      } yield ProjectSpaProtocols.InitAppData(a, b)
 
-    val projectSpa: Gen[ProjectSpaProtocols.InitData] =
+    val projectSpaInitPageData: Gen[ProjectSpaProtocols.InitPageData] =
       for {
         u <- username
-        a <- projectName
-        b <- remoteFn(ProjectSpaProtocols.InitAsync)
-        c <- remoteFn(ProjectSpaProtocols.CustomIssueTypeCrud)
-        d <- remoteFn(ProjectSpaProtocols.CustomReqTypeCrud)
-        e <- remoteFn(ProjectSpaProtocols.ReqTypeImplicationMod)
-        f <- remoteFn(ProjectSpaProtocols.FieldMandatorinessMod)
-        g <- remoteFn(FieldCrud.Protocol)
-        h <- remoteFn(TagCrud.Protocol)
-        i <- remoteFn(ProjectSpaProtocols.CreateContent)
-        j <- remoteFn(ProjectSpaProtocols.UpdateContent)
-        k <- remoteFn(ProjectSpaProtocols.UpdateSavedViews)
-        l <- remoteFn(ProjectSpaProtocols.ProjectNameSet)
-      } yield ProjectSpaProtocols.InitData(u, a, b, c, d, e, f, g, h, i, j, k, l)
+        i <- projectIdPublic
+        n <- projectName
+      } yield ProjectSpaProtocols.InitPageData(u, i, n)
 
-    class CrudActionGens[I, V](c: CrudProtocol[I, V])(idG: Gen[I], vG: Gen[V]) {
+    class CrudActionGens[I, V](idG: Gen[I], vG: Gen[V]) {
       lazy val create  = vG.map(CrudAction.Create[I, V])
       lazy val update  = Gen.apply2(CrudAction.Update[I, V])(idG, vG)
       lazy val delete  = idG map CrudAction.Delete[I, V]
@@ -1454,16 +1441,16 @@ object RandomData {
       lazy val any     = Gen.chooseGen[CrudAction[I, V]](create, update, delete, restore)
     }
 
-    val customIssueTypeCrud = new CrudActionGens(ProjectSpaProtocols.CustomIssueTypeCrud)(
+    val customIssueTypeCrud = new CrudActionGens(
       RandomData.customIssueTypeId,
       Gen.tuple2(hashRefKey, optionalLargeText))
 
-    val customReqTypeCrud = new CrudActionGens(ProjectSpaProtocols.CustomReqTypeCrud)(
+    val customReqTypeCrud = new CrudActionGens(
       RandomData.customReqTypeId,
       Gen.tuple3(reqTypeMnemonic, customReqTypeName, implicationRequired))
 
     val tagCrud =
-      new CrudActionGens(TagCrud.Protocol)(RandomData.tagId, tagCrudInput)
+      new CrudActionGens(RandomData.tagId, tagCrudInput)
   }
 
   // ===================================================================================================================

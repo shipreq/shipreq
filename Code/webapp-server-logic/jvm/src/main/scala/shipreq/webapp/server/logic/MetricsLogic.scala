@@ -1,7 +1,5 @@
 package shipreq.webapp.server.logic
 
-import scalaz.Monad
-import scalaz.syntax.bind._
 import shipreq.webapp.base.user.User
 
 trait MetricsLogic[F[_]] {
@@ -20,13 +18,6 @@ trait MetricsLogic[F[_]] {
   def securityEvent(event: Security.Event, result: Security.Result): F[Unit]
 
   def setActiveProjectCount(n: Int): F[Unit]
-
-  def injectServer(orig: Server.Algebra[F])(implicit F: Monad[F]): Server.Algebra[F] =
-    new Server.Delegate(orig) {
-      override val registerServerSideProc = (name, f) =>
-        orig.registerServerSideProc(name, i =>
-          setServerSideProcName(name) >> f(i))
-    }
 }
 
 object MetricsLogic {
@@ -41,6 +32,5 @@ object MetricsLogic {
       override def logout               (x: SessionId)                                           = f
       override def securityEvent        (x: Security.Event, y: Security.Result)                  = f
       override def setActiveProjectCount(x: Int)                                                 = f
-      override def injectServer         (x: Server.Algebra[F])(implicit F: Monad[F])             = x
     }
 }

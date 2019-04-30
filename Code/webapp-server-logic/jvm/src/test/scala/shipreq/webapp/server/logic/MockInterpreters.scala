@@ -1,21 +1,16 @@
 package shipreq.webapp.server.logic
 
-import boopickle.{PickleImpl, UnpickleImpl}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import java.nio.ByteBuffer
 import java.time.{Duration, Instant}
-import java.util.concurrent.ConcurrentHashMap
-import scalaz.{-\/, Name, NaturalTransformation, \/, \/-, ~>}
 import scalaz.syntax.monad._
+import scalaz.{-\/, Name, NaturalTransformation, \/, \/-}
 import shipreq.base.ops.Trace
 import shipreq.base.util._
 import shipreq.taskman.api.{Msg, MsgId, MsgStatus, TaskmanApi}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.user._
-import shipreq.webapp.base.hash.HashRecs
-import shipreq.webapp.base.protocol.{ServerSideProc, ServerSideProcId}
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerConfig
 
 object MockDb {
@@ -245,16 +240,8 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
       .toList
   }
 
-  var loadProjectHeaderLog = Vector.empty[ProjectId]
-  override def getProjectHeader(id: ProjectId) = Name[Option[ProjectHeader]] {
-    loadProjectHeaderLog :+= id
-    projects.get(id).map(e => ProjectHeader(e.userId, e.project.name))
-  }
-
-  var loadProjectMetaDataLog = Vector.empty[ProjectId]
-  override def getProjectMetaData(id: ProjectId) = Name[Option[ProjectMetaData]] {
-    loadProjectMetaDataLog :+= id
-    projects.get(id).map(_.projectMetaData)
+  override def projectSpaInitPage(id: ProjectId) = Name[Project.Name] {
+    projects.get(id).fold("")(_.project.name)
   }
 
   var loadProjectLog = Vector.empty[ProjectId]
@@ -312,24 +299,6 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
 
 final class MockServer extends Server.Algebra[Name] {
   private var prevFn = 0
-  private var fns: Map[String, ByteBuffer => Name[Server.ProtocolError \/ ByteBuffer]] =
-    UnivEq.emptyMap
-
-  override val registerServerSideProc = (fnName, localFn) => Name {
-    prevFn += 1
-    val key = prevFn.toString
-    fns = fns.updated(key, localFn)
-    ServerSideProcId(key)
-  }
-
-  def run[I, O](p: ServerSideProc[I, O])(i: I): O = {
-    import p.protocol._
-    val f = fns(p.id.value)
-    f(PickleImpl.intoBytes(i)).value match {
-      case \/-(b) => UnpickleImpl[O].fromBytes(b)
-      case -\/(e) => sys error s"ProtocolError: $e"
-    }
-  }
 
   var clock = Instant.now()
   override val now = Name(clock)
@@ -476,7 +445,6 @@ final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name]
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 object MockInterpreters {
-  import JavaTimeHelpers._
 
   val config = ServerConfig(
     baseUrl                    = Url.Absolute.Base("https://test.shipreq.com"),

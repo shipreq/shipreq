@@ -13,8 +13,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataValidators.{customIssueType => V, hashRefKey => VH}
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.util.TextMod
-import shipreq.webapp.base.protocol.ClientProtocol
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.CustomIssueTypeCrud
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes.CustomIssueTypeCrud
 import shipreq.webapp.base.ui.AutosizeTextarea
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.project.app.Style
@@ -22,11 +21,13 @@ import shipreq.webapp.client.project.app.cfg.shared._
 import shipreq.webapp.client.project.app.state.{ChangeListener, ClientData}
 import shipreq.webapp.client.project.lib.DataReusability._
 import DataImplicits._
+import shipreq.base.util.ErrorMsg
+import shipreq.webapp.base.event.VerifiedEvent
+import shipreq.webapp.base.protocol.ServerSideProcInvoker
 
 private[issues] object CustomIssueTypes {
 
-  final case class Props(cp        : ClientProtocol,
-                         remote    : CustomIssueTypeCrud.Instance,
+  final case class Props(remote    : ServerSideProcInvoker[CustomIssueTypeCrud.RequestType, ErrorMsg, VerifiedEvent.Seq],
                          clientData: ClientData,
                          filterDead: StateSnapshot[FilterDead],
                          usageShow : Usage.Show) {
@@ -74,8 +75,7 @@ private[issues] object CustomIssueTypes {
     val usageShow  = Px.props($).map(_.usageShow).withReuse.manualRefresh
 
     val crudIO =
-      Px.props($).withReuse.autoRefresh.map(p =>
-        CrudActionIO(CustomIssueType, CustomIssueTypeCrud)(p.cp, p.remote, p.clientData))
+      Px.props($).withReuse.autoRefresh.map(p => CrudActionIO(p.remote))
 
     val supp = TypicalSupp(storesAndState)(crudIO.value(), $)
 

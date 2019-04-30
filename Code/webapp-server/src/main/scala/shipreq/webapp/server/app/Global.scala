@@ -48,7 +48,7 @@ object Global {
     implicit val dbAlgebra     = new DbInterpreter()
     implicit val dbForSecurity = DB.ForSecurity.trans(DbInterpreter.ForSecurity)(runDB)
     implicit val dbForOps      = DB.ForOps.trans(new DbInterpreter.ForOps(dbAccess.databaseName))(runDB)
-    implicit val server        = metrics.injectServer(trace.injectServer(ServerInterpreter))
+    implicit val server        = trace.injectServer(ServerInterpreter)
     implicit val ops           = new OpsEndpointInterpreter()
     implicit val security      = new SecurityInterpreter[Fx]
     implicit val redis         = new Redis.InMemory[Fx]
@@ -56,7 +56,7 @@ object Global {
     Global(
       config   = config,
       db       = dbAccess,
-      logic    = ServerLogic.create[ConnectionIO, Fx](ProjectServer.BroadcastTo.All),
+      logic    = ServerLogic.create[ConnectionIO, Fx],
       metrics  = metrics,
       ops      = ops,
       security = security,

@@ -1,7 +1,7 @@
 package shipreq.webapp.base.test
 
 import boopickle.Pickler
-import japgolly.scalajs.react.{AsyncCallback, Callback}
+import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import org.scalajs.dom.console
 import scala.util.{Failure, Success, Try}
 import scalaz.{-\/, \/, \/-}
@@ -65,8 +65,7 @@ class TestAjaxClient(autoRespondArg: Boolean) extends AjaxClient.Binary {
       case r if r.ajax eq p => f(r.force(p))
     }
 
-  override def apply(p: Protocol.Ajax[Pickler])
-                    (req: p.protocol.RequestType): AsyncCallback[p.protocol.ResponseType] = {
+  override def apply(p: Protocol.Ajax[Pickler])(req: p.protocol.RequestType) = CallbackTo {
 
     var callbacks: List[Try[p.protocol.ResponseType] => Callback] =
       Nil

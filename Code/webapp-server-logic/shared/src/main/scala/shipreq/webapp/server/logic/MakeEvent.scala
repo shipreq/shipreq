@@ -9,6 +9,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes.{ProjectNameSet => _, _}
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.GenericDataMacros._
 import DataImplicits._
@@ -16,7 +17,7 @@ import ScalaExt._
 import PotentialChange._
 
 /**
- * Translates [[ServerSideProc]] inputs into [[ActiveEvent]]s.
+ * Translates commands inputs into [[ActiveEvent]]s.
  */
 object MakeEvent {
 
@@ -39,17 +40,15 @@ object MakeEvent {
 
   // ===================================================================================================================
 
-  import ProjectSpaProtocols.{ProjectNameSet => ProjectNameSetFn, _} // TODO do this properly
-
-  def projectNameSetFn(name: ProjectNameSetFn.Input): Result =
+  def projectNameSetFn(name: String): Result =
     ProjectNameSet(name)
 
-  def reqTypeImplicationMod(input: ReqTypeImplicationMod.Input): Result = {
+  def reqTypeImplicationMod(input: ReqTypeImplicationMod.RequestType): Result = {
     val (id, imp) = input
     CustomReqTypeUpdate(id, CustomReqTypeGD.Imp(imp))
   }
 
-  def fieldMandatorinessMod(input: FieldMandatorinessMod.Input): Result = {
+  def fieldMandatorinessMod(input: FieldMandatorinessMod.RequestType): Result = {
     val m = input._2
     input._1 match {
       case id: CustomField.Text       .Id => FieldCustomTextUpdate(id, CustomTextFieldGD.Mandatory(m))
@@ -58,7 +57,7 @@ object MakeEvent {
     }
   }
 
-  def customIssueTypeCrud(a: CustomIssueTypeCrud.Action, project: Project): Result =
+  def customIssueTypeCrud(a: CustomIssueTypeCrud.RequestType, project: Project): Result =
     a match {
 
       case CrudAction.Create(vs) =>
@@ -81,7 +80,7 @@ object MakeEvent {
         CustomIssueTypeRestore(id)
     }
 
-  def customReqTypeCrud(a: CustomReqTypeCrud.Action, project: Project): Result =
+  def customReqTypeCrud(a: CustomReqTypeCrud.RequestType, project: Project): Result =
     a match {
 
       case CrudAction.Create(vs) =>
@@ -106,7 +105,7 @@ object MakeEvent {
         CustomReqTypeRestore(id)
     }
 
-  def fieldCrud(a: FieldCrud.Protocol.Input, project: Project): Result = {
+  def fieldCrud(a: FieldMod.RequestType, project: Project): Result = {
     import FieldCrud._
     def nextId = project.idCeilings.customField + 1
     a match {
@@ -168,7 +167,7 @@ object MakeEvent {
   }
 
   // TODO tagCrud protocol is crap. Redo it.
-  def tagCrud(a: TagCrud.Protocol.Action, project: Project): Result = {
+  def tagCrud(a: TagMod.RequestType, project: Project): Result = {
     import TagCrud.{TagGroupValues, ApplicableTagValues}
     def nextId = project.idCeilings.tag + 1
     a match {

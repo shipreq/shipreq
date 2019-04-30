@@ -10,15 +10,17 @@ import shipreq.base.util._
 import shipreq.webapp.base.data.{Obfuscated, Project, ProjectId}
 import shipreq.webapp.base.event.{ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes.EventResult
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, WsReqRes}
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, InitPageData, WsReqRes}
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.base.user.User
+import shipreq.webapp.base.user.{User, Username}
 
 // TODO Logging, timing, tracing, metrics
 // TODO Stop using ErrorMsg everywhere - do that conversion right at the end
 
 trait ProjectSpaLogic[F[_]] {
   import ProjectSpaLogic._
+
+  def initPage(projectId: ProjectId, username: Username): F[InitPageData]
 
   def onConnect(cookies  : Cookie.LookupFn,
                 projectId: ProjectId.Public): F[ConnectRejection \/ (WebSocketStatic, WebSocketState[F])]
@@ -83,6 +85,13 @@ object ProjectSpaLogic extends StrictLogging {
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+      override def initPage(projectId: ProjectId, username: Username): F[InitPageData] =
+        for {
+          name <- runDB(db.projectSpaInitPage(projectId))
+        } yield InitPageData(username, name)
+
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
       override def onConnect(cookies  : Cookie.LookupFn,
                              projectId: ProjectId.Public) = {
         val C = OnConnect
@@ -93,8 +102,8 @@ object ProjectSpaLogic extends StrictLogging {
             pid     <- C.lift(Obfuscators.projectId.deobfuscate(projectId).leftMap(_ => InvalidProjectId))
             session <- C.optionF(security.sessionRestore(cookies), NoSession)
             user    <- C.option(session.authenticatedUser, AnonymousSession)
-            p       <- C.optionF(runDB(db.getProjectHeader(pid)), ProjectNotFound)
-            _       <- C.ensure(user.id ==* p.userId, AccessDenied)
+            owner   <- C.optionF(security.db.getProjectOwner(pid), ProjectNotFound)
+            _       <- C.ensure(user.id ==* owner, AccessDenied)
           } yield {
             val static = WebSocketStatic(user, pid)
             val state  = WebSocketState.empty[F]

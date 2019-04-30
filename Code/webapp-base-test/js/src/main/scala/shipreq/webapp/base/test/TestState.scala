@@ -18,8 +18,8 @@ object TestState
       "." + self.className.value
   }
 
-  implicit val displayTestReq: Display[TestClientProtocol.Req] =
-    Display(i => s"${i.proc.protocol}: ${i.input}")
+//  implicit val displayTestReq: Display[TestClientProtocol.Req] =
+//    Display(i => s"${i.proc.protocol}: ${i.input}")
 
   override implicit def testStateErrorHandler: ErrorHandler[String] =
     ErrorHandler.toStringWithStackTrace("shipreq|scalajs.dom".r.pattern)

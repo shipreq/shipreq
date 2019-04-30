@@ -11,7 +11,6 @@ import shipreq.webapp.base.text.{Grammar, ProjectText, Text}
 import Field.ApplicableReqTypes
 import ScalaExt._
 import VectorTree.{Location, ParentLocation, PartialLocation}
-import shipreq.webapp.base.protocol.ServerSideProcId
 
 case class MakeEmpty[+A](empty: A) extends AnyVal
 
@@ -204,6 +203,4 @@ object UnsafeTypes extends UnsafeTypesMedPriority {
     implicit def autoNes[A, B: UnivEq](a: A)(implicit ev: A => B): NonEmptySet[B] =
       NonEmptySet one a
   }
-
-  implicit def autoServerSideProcId(s: String): ServerSideProcId = ServerSideProcId(s)
 }

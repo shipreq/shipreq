@@ -2,13 +2,11 @@ package shipreq.webapp.base.protocol
 
 import boopickle.{PickleState, Pickler, UnpickleState}
 import japgolly.microlibs.adt_macros.AdtMacros
-import java.time.Instant
 import scalaz.\/
 import shipreq.base.util.{ErrorMsg, StaticLookupFn}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.user._
-import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.Urls
 import BoopickleMacros._
 import BinCodecGeneric._
@@ -22,7 +20,9 @@ import BinCodecEvents._
   */
 object ProjectSpaProtocols {
 
-  final case class InitPageData(username: Username, projectName: Project.Name)
+  final case class InitPageData(username: Username,
+                                projectId: ProjectId.Public,
+                                projectName: Project.Name)
 
   implicit val picklerInitPageData = pickleCaseClass[InitPageData]
 
@@ -45,8 +45,8 @@ object ProjectSpaProtocols {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final case class InitAppData(project      : ProjectAndOrd,
-                               lastUpdatedAt: Instant)
+  final case class InitAppData(project        : ProjectAndOrd,
+                               projectMetaData: ProjectMetaData)
 
   implicit val picklerInitAppData = pickleCaseClass[InitAppData]
 

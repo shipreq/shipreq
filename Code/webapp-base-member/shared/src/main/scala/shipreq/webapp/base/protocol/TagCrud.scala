@@ -24,7 +24,8 @@ object TagCrud {
   implicit def applicableTagValueEquality: UnivEq[ApplicableTagValues] = UnivEq.derive
   implicit def equalValues               : UnivEq[Values]              = UnivEq.derive
 
-  type Action = CrudAction[TagId, Values \&/ TagInTree.Relations]
+  type Value = Values \&/ TagInTree.Relations
+  type Action = CrudAction[TagId, Value]
 
   implicit val picklerTagPovRelations    : Pickler[TagInTree.Relations] = pickleCaseClass
   implicit val picklerTagGroupValues     : Pickler[TagGroupValues]      = pickleCaseClass

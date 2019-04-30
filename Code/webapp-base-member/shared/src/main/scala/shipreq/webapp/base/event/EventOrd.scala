@@ -21,6 +21,15 @@ final case class EventOrd(value: Int) extends AnyVal {
   def immediatelyFollows(prev: EventOrd): Boolean =
     (prev.value + 1) ==* this.value
 
+  def immediatelyFollows(prev: Option[EventOrd]): Boolean =
+    prev match {
+      case Some(p) => immediatelyFollows(p)
+      case None    => this ==* EventOrd.first
+    }
+
+  def immediatelyFollowsLatest(prev: Option[EventOrd.Latest]): Boolean =
+    immediatelyFollows(prev.map(_.asEventOrd))
+
   def asLatest = EventOrd.Latest(value)
 }
 

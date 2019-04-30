@@ -8,7 +8,6 @@ import shipreq.webapp.server.logic.DispatchLogic
 sealed abstract class Endpoint(final val `type`: String, final val name: String)
 object Endpoint {
 
-  case object      Comet                                          extends Endpoint("comet", "comet")
   case object      LiftJsStatic                                   extends Endpoint("asset", "lift-js-static")
   case object      LiftJsDynamic                                  extends Endpoint("asset", "lift-js-dynamic")
   case object      LiftAjax                                       extends Endpoint("ajax", "lift-ajax")
@@ -22,7 +21,6 @@ object Endpoint {
 
   private[this] val liftAjaxPrefix      = s"/${WebappConfig.liftPath1}/ajax/"
   private[this] val liftJsDynamicPrefix = s"/${WebappConfig.liftPath1}/page/"
-  private[this] val cometPrefix         = s"/${WebappConfig.liftPath1}/comet/"
   private[this] val liftRegex           = "^/[lL]/.*".r.pattern
   private[this] val assetRegex          = "^/.+/[^/.]*\\.([^/]+)$".r
   private[this] val opsPrefix           = DispatchLogic.opsRoot.relativeUrlNoTailSlash + "/"
@@ -65,8 +63,6 @@ object Endpoint {
           FreeOption(LiftJsDynamic)
         else if (path startsWith liftAjaxPrefix)
           FreeOption(LiftAjax)
-        else if (path startsWith cometPrefix)
-          FreeOption(Comet)
         else if (liftRegex.matcher(path).matches)
           FreeOption.empty
         else path match {

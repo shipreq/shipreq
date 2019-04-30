@@ -4,11 +4,10 @@ import japgolly.microlibs.utils.ConciseIntSetFormat
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import japgolly.scalajs.react.extra.Px
 import java.time.Instant
-import org.scalajs.dom.console
 import scala.annotation.tailrec
 import scalaz.{-\/, \/-}
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
-import shipreq.webapp.base.event.{ApplyEvent, EventOrd, VerifiedEvent}
+import shipreq.webapp.base.event.{ApplyEvent, EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.data.TCB
 import shipreq.webapp.client.project.lib.DataReusability.reusabilityProject
 
@@ -20,26 +19,54 @@ import shipreq.webapp.client.project.lib.DataReusability.reusabilityProject
   *
   * @param futureEvents Events that been received but not applied yet.
   */
-final case class ProjectState(project        : Project,
+final case class ProjectState(projectAndOrd  : ProjectAndOrd,
                               projectMetaData: ProjectMetaData,
-                              latestEventOrd : EventOrd,
                               futureEvents   : VerifiedEvent.Seq) {
 
-  assert(futureEvents.forall(_.ord > latestEventOrd))
+  def project = projectAndOrd.project
+  def ord = projectAndOrd.ord
 
-  def addFutureEvents(es: Iterator[VerifiedEvent]): ProjectState =
-    copy(futureEvents = futureEvents ++ es.dropWhile(_.ord <= latestEventOrd))
+  override def toString = s"ProjectState($descState)"
 
-  def futureEventRange: String =
-    "[" + ConciseIntSetFormat(futureEvents.iterator.map(_.ord.value).toSet) + "]"
+  def descState = s"ord = $ord, future = $futureEventRange"
+
+  def futureEventRange = "[" + ConciseIntSetFormat(futureEvents.iterator.map(_.ord.value).toSet) + "]"
+
+  assert(
+    ord match {
+      case Some(o) => futureEvents.forall(_.ord > o)
+      case None    => true
+    }, s"Error: old events found in futureEvents. $descState")
+
+  assert(
+    !futureEvents.iterator.map(_.ord).contains(projectAndOrd.nextOrd),
+    s"Error: applicable event found in futureEvents. $descState")
+
+  def addEvents(events: VerifiedEvent.Seq): Option[(ProjectState, VerifiedEvent.NonEmptySeq)] = {
+    val newEvents = ord.fold(events)(o => events.filter(_.ord > o))
+    val pendingEvents = futureEvents ++ newEvents
+    ProjectState.removeConsecutive(pendingEvents, _.immediatelyFollowsLatest(ord))
+      .map { case (ves, remainingFutureEvents) =>
+        ApplyEvent.trusted.applyVerified(ves)(project) match {
+          case \/-(p2) =>
+            val pao2 = ProjectAndOrd(p2, Some(ves.lastKey.ord.asLatest))
+            val md2  = projectMetaData.applyEvents(ves, Instant.now())
+            val s2   = ProjectState(pao2, md2, remainingFutureEvents)
+            (s2, ves)
+          case -\/(err) =>
+            // TODO Do more when VerifiedEvent application fails
+            throw new RuntimeException(s"Update failed. $err")
+        }
+      }
+  }
 }
 
 object ProjectState {
 
-  def init(p: Project, md: ProjectMetaData, o: EventOrd): ProjectState =
-    ProjectState(p, md, o, VerifiedEvent.Seq.empty)
+  def init(p: ProjectAndOrd, md: ProjectMetaData): ProjectState =
+    ProjectState(p, md, VerifiedEvent.Seq.empty)
 
-  def removeConsecutive(events: VerifiedEvent.Seq, headFilter: EventOrd => Boolean): Option[(VerifiedEvent.NonEmptySeq, VerifiedEvent.Seq)] =
+  private[ProjectState] def removeConsecutive(events: VerifiedEvent.Seq, headFilter: EventOrd => Boolean): Option[(VerifiedEvent.NonEmptySeq, VerifiedEvent.Seq)] =
     events.headOption
       .filter(ve => headFilter(ve.ord))
       .map { ve1 =>
@@ -55,23 +82,13 @@ object ProjectState {
         (VerifiedEvent.NonEmptySeq(ve1, ves), remainder)
       }
 
-  def applyFutureEvents(s: ProjectState): Option[(VerifiedEvent.NonEmptySeq, ProjectState)] =
-    removeConsecutive(s.futureEvents, _.immediatelyFollows(s.latestEventOrd))
-      .map { case ((ves, futureEvents2)) =>
-        ApplyEvent.trusted.applyVerified(ves)(s.project) match {
-          case \/-(p2) =>
-            val md2 = s.projectMetaData.applyEvents(ves, Instant.now())
-            val s2 = ProjectState(p2, md2, ves.lastKey.ord, futureEvents2)
-            (ves, s2)
-          case -\/(err) =>
-            // TODO Do more when VerifiedEvent application fails
-            throw new RuntimeException(s"Update failed. $err")
-        }
-      }
-
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  type Listener = (VerifiedEvent.Seq, ProjectState, ProjectState) => Callback
+  final case class Change(oldState: ProjectState,
+                          newState: ProjectState,
+                          events  : VerifiedEvent.NonEmptySeq)
+
+  type Listener = Change => Callback
 
   final class Mutable(initState: ProjectState) {
 
@@ -96,24 +113,25 @@ object ProjectState {
     def addListener(l: Listener): Unit =
       _listeners ::= l
 
-    private def setState(ves: VerifiedEvent.Seq, s2: ProjectState): Callback =
+    private def updateState(s2: ProjectState, newEvents: VerifiedEvent.NonEmptySeq): Callback =
       Callback {
 //        if (s2.futureEvents.nonEmpty)
 //          console.warn(s"Not all events applied: stuck at #${s2.latestEventOrd.value} pending ${s2.futureEventRange}")
         val s1 = _state
         _state = s2
         _pxProject.refresh()
-        for (l <- _listeners)
-          l(ves, s1, s2).runNow()
+        if (_listeners.nonEmpty) {
+          val c = Change(oldState = s1, newState = s2, events = newEvents)
+          _listeners.foreach(_(c).runNow())
+        }
       }
 
     def applyEventSeqCB(ves: VerifiedEvent.Seq): Callback =
       Callback.unless(ves.isEmpty)(
         stateCB.flatMap { s1 =>
-          val s2 = s1.addFutureEvents(ves.iterator)
-          applyFutureEvents(s2) match {
-            case Some((ves3, s3)) => setState(ves3, s3)
-            case None             => setState(VerifiedEvent.Seq.empty, s2)
+          s1.addEvents(ves) match {
+            case Some((s2, ves2)) => updateState(s2, ves2)
+            case None             => Callback.empty
           }
         }
       )

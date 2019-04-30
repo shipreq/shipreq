@@ -1,10 +1,11 @@
 package shipreq.webapp.base.protocol
 
-import japgolly.scalajs.react.{Callback, Reusability}
+import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo, Reusability}
 import org.scalajs.dom.ext.AjaxException
 import scalaz.\/
 import shipreq.base.util.{ErrorMsg, Identity}
 
+// TODO Use AsyncCallback in ServerSideProcInvoker
 final case class ServerSideProcInvoker[I, F, O](fn: (I, O => Callback, F => Callback) => Callback) extends AnyVal {
 
   @inline def apply(input    : I,
@@ -31,6 +32,18 @@ final case class ServerSideProcInvoker[I, F, O](fn: (I, O => Callback, F => Call
 }
 
 object ServerSideProcInvoker {
+
+  def viaAsyncCallback[I, O](f: I => CallbackTo[AsyncCallback[O]]): ServerSideProcInvoker[I, ErrorMsg, O] =
+    new ServerSideProcInvoker[I, ErrorMsg, O](
+      (req, onOK, onKO) => f(req).attempt.flatMap {
+        case Right(async) =>
+          async.attempt.flatMap {
+            case Right(res) => onOK(res).asAsyncCallback
+            case Left(err) => onKO(throwableToErrorMsg(err)).asAsyncCallback
+          }.toCallback
+        case Left(err) => onKO(throwableToErrorMsg(err))
+      }
+    )
 
   /** Working around Scalac crappy type inference as usual */
   trait MergeFailure[F, O] {

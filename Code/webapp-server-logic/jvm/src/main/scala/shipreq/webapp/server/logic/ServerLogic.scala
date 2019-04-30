@@ -10,7 +10,6 @@ import shipreq.webapp.server.ServerConfig
   */
 final case class ServerLogic[F[_]](publicSpa    : PublicSpaLogic [F],
                                    homeSpa      : HomeSpaLogic   [F],
-                                   projectServer: ProjectServer  [F],
                                    projectSpa   : ProjectSpaLogic[F])
 
 object ServerLogic {
@@ -23,13 +22,11 @@ object ServerLogic {
                   : Server.Algebra
                   : TaskmanApi
                   : Trace.Algebra]
-            (b: ProjectServer.BroadcastTo)
             (implicit F: Monad[F] with BindRec[F],
              runDB: D ~> F,
              config: ServerConfig): ServerLogic[F] =
     ServerLogic(
       PublicSpaLogic [D, F],
       HomeSpaLogic   [D, F],
-      ProjectServer  [D, F](b),
       ProjectSpaLogic[D, F])
 }

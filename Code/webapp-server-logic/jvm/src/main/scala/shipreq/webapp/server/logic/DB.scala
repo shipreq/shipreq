@@ -160,11 +160,8 @@ object DB {
   }
 
   trait ForProjectSpa[F[_]] extends Base[F] with SaveProjectEvent[F] {
-    // TODO Remove these
-    def getProjectHeader   (id: ProjectId): F[Option[ProjectHeader]]
-    def getProjectMetaData (id: ProjectId): F[Option[ProjectMetaData]]
-
-    def projectSpaInitApp  (id: ProjectId): F[ProjectSpaInitApp]
+    def projectSpaInitPage(id: ProjectId): F[Project.Name]
+    def projectSpaInitApp(id: ProjectId): F[ProjectSpaInitApp]
     def getProjectEvents(id: ProjectId, f: EventFilter): F[VerifiedEvent.Seq]
 
     final def getProjectEvents(id: ProjectId): F[VerifiedEvent.Seq] = getProjectEvents(id, EventFilter.IncludeAll)

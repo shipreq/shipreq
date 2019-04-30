@@ -182,9 +182,9 @@ object PrometheusMetrics extends HasLogger {
 
         // Duration in the context of a comet (which is a long-poll) is how long after the user loads the page until
         // the server decides it needs to push something to them.
-        if (endpoint != Endpoint.Comet) {
+//        if (endpoint != Endpoint.Comet) { // TODO What about WebSockets?
           HttpDuration.apply.observe(durationSec)
-        }
+//        }
 
         if (req.getContentLengthLong > 0)
           HttpIO(CommDir.Recv).inc(req.getContentLengthLong)

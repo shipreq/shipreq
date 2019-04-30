@@ -3,16 +3,16 @@ package shipreq.webapp.client.project.app.root
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-
 import japgolly.scalajs.react.vdom.VdomElement
-import shipreq.base.util.{Allow, ErrorMsg, Intersection}
+import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{FilterDead, ReqId}
 import shipreq.webapp.base.event.VerifiedEvent
-import shipreq.webapp.base.filter.Filter
-import shipreq.webapp.base.protocol.{ClientProtocol, ProjectSpaProtocols, SavedViewCmd, ServerSideProcInvoker, UpdateContentCmd}
-import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.base.feature._
+import shipreq.webapp.base.filter.Filter
+import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.InitPageData
+import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.base.ui.ProjectItem
 import shipreq.webapp.client.project.app.state._
 import shipreq.webapp.client.project.app._
@@ -23,14 +23,14 @@ import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.{ImplicationGraph, ProjectWidgets}
 import AsyncFeature.Implicits._
-import Routes.{Page, RouterCtl}
 import LoadedRoot._
+import Routes.{Page, RouterCtl}
 
 object LoadedRoot {
   case class Props(page: Page, routerCtl: RouterCtl)
 }
 
-final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtocol, val cd: ClientData) {
+final class LoadedRoot(initPageData: InitPageData,  val cd: ClientData) {
 
   final class Backend($: BackendScope[Props, State]) extends OnUnmount {
     import cd.pxProject
@@ -58,10 +58,10 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
       pxProject.map(EditorFeature.Editability.apply)
 
     val updateIO: ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, VerifiedEvent.Seq] =
-      cd.serverSideProcToEvents(cp, initData.updateContent)
+      cd.serverSideProcToEvents(cp, initPageData.updateContent)
 
     val savedViewIO: ServerSideProcInvoker[SavedViewCmd, ErrorMsg, VerifiedEvent.Seq] =
-      cd.serverSideProcToEvents(cp, initData.updateSavedViews)
+      cd.serverSideProcToEvents(cp, initPageData.updateSavedViews)
 
     val previewW: PreviewFeature.Write.Composite[PreviewId] =
       PreviewFeature.Write.Composite($ zoomStateL State.preview)
@@ -78,7 +78,7 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
           pxTextSearch),
         $ zoomStateL State.create,
         createAsyncW,
-        cd.serverSideProcToEvents(cp, initData.createContent))
+        cd.serverSideProcToEvents(cp, initPageData.createContent))
 
     val editAsyncW: AsyncFeature.Write.D2[EditorFeature.RowKey, AsyncKey, ErrorMsg] =
       AsyncFeature.Write.D2.init($ zoomStateL State.editAsync)
@@ -140,7 +140,7 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
     def ww = WebWorkerClient.Instance
 
     val reqDetail = ReqDetail(ReqDetail.StaticProps(
-      updateIO, reqDetailRC, ww, initData.updateContent,
+      updateIO, reqDetailRC, ww, initPageData.updateContent,
       pxProject, pxTextSearch, pxProjectWidgets))
 
     val reqDetailSetState: Reusable[SetStateFnPure[ReqDetail.State]] =
@@ -165,7 +165,7 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
           $.modState(State.projectName.modify(ProjectItem.WithEditableName.State setAsync s))))
 
     val setProjectNameIO: String => Callback = {
-      val proc = cd.serverSideProcToEvents(cp, initData.projectNameSet)
+      val proc = cd.serverSideProcToEvents(cp, initPageData.projectNameSet)
       newName => {
         def close = $.modState(State.projectName set None)
         def save = projectNameAF((s, f) => proc(newName, _ => s >> close, f))
@@ -200,18 +200,18 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
           ProjectHome.Props(pname, index).render
 
         case Page.CfgFields =>
-          cfg.fields.CfgFields.Props(cp, initData.fieldCrud, cd, filterDeadSS).component
+          cfg.fields.CfgFields.Props(cp, initPageData.fieldCrud, cd, filterDeadSS).component
 
         case Page.CfgIssues =>
           cfg.issues.CfgIssues.Props(
-            cp, initData.issueTypeCrud, initData.reqTypeImpMod, initData.fieldMandMod, cd, filterDeadSS, usageShow)
+            cp, initPageData.issueTypeCrud, initPageData.reqTypeImpMod, initPageData.fieldMandMod, cd, filterDeadSS, usageShow)
             .component
 
         case Page.CfgReqTypes =>
-          cfg.reqtypes.CfgReqTypes.Props(cp, initData.reqTypeCrud, cd, filterDeadSS, usageShow).component
+          cfg.reqtypes.CfgReqTypes.Props(cp, initPageData.reqTypeCrud, cd, filterDeadSS, usageShow).component
 
         case Page.CfgTags =>
-          cfg.tags.CfgTags.Props(cp, initData.tagCrud, cd, filterDeadSS).component
+          cfg.tags.CfgTags.Props(cp, initPageData.tagCrud, cd, filterDeadSS).component
 
         case Page.ReqTable =>
           val rowAsync = editAsyncState
@@ -246,7 +246,7 @@ final class LoadedRoot(initData: ProjectSpaProtocols.InitData, cp: ClientProtoco
           ImplicationGraphPage.Props(g, setFilterDead).render
       }
 
-      Layout.Props(initData.username, cd.projectMetaData(), routerCtl, p.page, content).render
+      Layout.Props(initPageData.username, cd.projectMetaData(), routerCtl, p.page, content).render
     }
 
     def onProjectChange(c: Changes): Callback = // TODO I don't like this
