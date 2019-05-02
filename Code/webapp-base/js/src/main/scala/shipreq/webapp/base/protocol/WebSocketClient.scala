@@ -18,6 +18,7 @@ trait WebSocketClient[ReqRes <: Protocol.RequestResponse[Pickler]] {
   val keepAlive: Callback
   def send(p: ReqRes)(request: p.RequestType): CallbackTo[AsyncCallback[p.ResponseType]]
   def invoker(p: ReqRes): ServerSideProcInvoker[p.RequestType, ErrorMsg, p.ResponseType]
+  val close: Callback
 }
 
 // =====================================================================================================================
@@ -138,6 +139,11 @@ object WebSocketClient {
 
       private var opened = false
 
+      // Sometimes (like when the security policy blocks the connection), the WebSocket starts in a closed state
+      // without sending an onClose event. Catch that here so that the normal retry process kicks in.
+      if (ws.readyState == WebSocket.CLOSED)
+        onClosed()
+
       def readyState(): ReadyState =
         ReadyState.byJsValue(ws.readyState)
 
@@ -193,6 +199,10 @@ object WebSocketClient {
       }
 
       private def onClose(e: CloseEvent): Unit = {
+        onClosed()
+      }
+
+      private def onClosed(): Unit = {
         runReadyStateChange()
         failQueued(if (opened) errorClosed else errorFailed)
         unsafeScheduleReconnect()
@@ -210,6 +220,14 @@ object WebSocketClient {
       requestManager.completeAll(Failure(error))
         .map(_.foreach(_.printStackTrace()))
     }
+
+    override val close: Callback =
+      Callback {
+        state = state.copy(retries = Retries.none)
+        for (i <- state.instance)
+          if (i.isOpen())
+            i.ws.close()
+      }
 
     /** If a connection is open, Send an empty message to  Useful for preventing server-side timeout and keeping the connection alive */
     override val keepAlive: Callback = {

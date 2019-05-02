@@ -74,12 +74,20 @@ ConnectNow ==
         /\ ws' = None
         /\ scheduleReconnect
 
+Close ==
+  /\ retry' = FALSE
+  /\ IF ws = Open
+     THEN ws' = Closing
+     ELSE UNCHANGED ws
+  /\ UNCHANGED scheduled
+
 Next ==
   \/ WS_Open
   \/ WS_Closing
   \/ WS_Closed
   \/ Schedule
   \/ ConnectNow
+  \/ Close
 
 ------------------------------------------------------------------------------------------------------------------------
 

@@ -2,8 +2,8 @@ package shipreq.webapp.client.project.app.state
 
 import japgolly.scalajs.react.{Callback, CallbackTo, Reusability}
 import japgolly.scalajs.react.extra.{Broadcaster, Px}
-import scala.util.Success
-import scalaz.\/-
+import scala.util.{Failure, Success}
+import scalaz.{-\/, \/-}
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.event.VerifiedEvent
@@ -80,23 +80,30 @@ final class Global(wsClientBuilder: WebSocketClient.WithoutCallbacks[WsReqRes, P
 
   private def load: Callback =
     for {
-      a <- wsClient.send(WsReqRes.InitApp)(())
-      _ <- a.completeWith {
-        case Success(\/-(i)) => Callback {
-          unsafeState match {
-            case State.Loading(es) =>
-              val s = ProjectState.init(i.project, i.projectMetaData).addEventsSimple(es)
-              unsafeSetState(State.Active(s))
-              onFirstLoad(this, i).runNow()
+      _  <- LoggerJs(l => l.info("WebSocket opened. Requesting InitApp...") >> l.time("initApp"))
+      a1 <- wsClient.send(WsReqRes.InitApp)(())
+      a2  = a1 <* LoggerJs.async(_.timeEnd("initApp"))
+      _  <- a2.completeWith {
 
-            case State.Active(_) =>
-              // TODO ?
-          }
-        }
-        case x => Callback {
-          println("FAILURE: " + x) // TODO Think about how to handle this....
-        }
-      }
+              case Success(\/-(i)) => Callback {
+                unsafeState match {
+                  case State.Loading(es) =>
+                    val s = ProjectState.init(i.project, i.projectMetaData).addEventsSimple(es)
+                    unsafeSetState(State.Active(s))
+                    onFirstLoad(this, i).runNow()
+                  case _: State.Active =>
+                    LoggerJs.runNow(_.warn("InitApp response received but already State.Active"))
+                }
+              }
+
+              case Success(-\/(errMsg)) =>
+                onInitFailure(errMsg) >> wsClient.close
+
+              case Failure(err) =>
+                for {
+                  _ <- LoggerJs(_.warn(s"Connection failure: ${err.getMessage}"))
+                } yield ()
+            }
     } yield ()
 
   private def onPush(recvEvents: VerifiedEvent.NonEmptySeq): Callback = Callback {
