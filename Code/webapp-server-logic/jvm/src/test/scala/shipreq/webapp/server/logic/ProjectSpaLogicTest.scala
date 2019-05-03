@@ -88,7 +88,7 @@ object ProjectSpaLogicTest extends TestSuite {
   private val pushProtocol = {
     val p = ProjectSpaProtocols.WebSocket(Obfuscated(null))
     implicit def picklerPush: Pickler[ProjectSpaProtocols.WebSocket#Push] = p.push.codec
-    Protocol(WebSocketShared.protocolSC(_ => ???))
+    WebSocketShared.protocolSC(_ => ???)
   }
 
   private def wsHelper(reqId: ReqId, responseType: WsReqRes) = {
@@ -97,8 +97,8 @@ object ProjectSpaLogicTest extends TestSuite {
     implicit def picklerPush: Pickler[p.Push] = p.push.codec
     val responseUnpickler: ReqId => Protocol[Pickler] = i => if (i.value == reqId.value) responseType.protocolRes else ???
     new WebSocketServerHelper[p.Req, p.Push](
-      Protocol(WebSocketShared.protocolCS),
-      Protocol(WebSocketShared.protocolSC(responseUnpickler)))
+      WebSocketShared.protocolCS,
+      WebSocketShared.protocolSC(responseUnpickler))
   }
 
   private def sendMsg(msg: WsReqRes.AndReq, static: WebSocketStatic)(implicit t: Tester): MsgError \/ msg.reqRes.ResponseType = {
