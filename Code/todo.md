@@ -122,4 +122,7 @@ Phase 2B
   * Binary{Js,Jvm}
   * StaticLookupFn
   * LoggerJs
-  * {,Fake}WebSocket
+  * {,Fake}WebSocket (?)
+  * SetDiff
+  * PotentialChange
+  * IsoBool + Validity, Enabled, etc (?)
