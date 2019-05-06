@@ -43,7 +43,7 @@ object DispatchLogicTest extends TestSuite {
       _.toAbstract,
       (req, res) => Name(TestResponse(res.cmd, res.cookies, patchCookies(req.cookies, res.cookies))))
 
-    val statefulDispatcher = dispatcher.statefulDispatcher(devMode = false, testMode = false)
+    val statefulDispatcher = dispatcher.statefulDispatcher(testMode = false)
 
     db.users ::= user2
     db.users ::= user3

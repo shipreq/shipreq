@@ -172,7 +172,7 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
     def hasHtmlFileExtension(r: LiftReq): Boolean =
       r.request.uri endsWith ".html"
 
-    val dispatch = logic.statefulDispatcher(devMode = Props.devMode, testMode = Props.testMode)
+    val dispatch = logic.statefulDispatcher(testMode = Props.testMode)
 
     {
       case r if (r.request ne null) && noFileExtension(r) && !isLiftRequest(r) => () => dispatch(r).unsafeRun()

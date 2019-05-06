@@ -190,26 +190,6 @@ object DispatchLogic {
 
   /** FOR UNIT-TESTS ONLY */
   val unitTestLoginUrl = Url.Relative("/c8c8f430-93b2-43fe-a072-11f9a1ab52a0")
-
-  /** DEV-MODE ONLY */
-  val quickDevUrl = Url.Relative("/xx")
-  final case class QuickDev(user: Username \/ EmailAddr,
-                            pass: PlainTextPassword,
-                            goto: Url.Relative)
-  object QuickDev {
-    import japgolly.clearconfig._
-
-    def config =
-      ( ConfigDef.need[String]("USER").map(Username.orEmail) |@|
-        ConfigDef.need[String]("PASS").map(PlainTextPassword(_)) |@|
-        ConfigDef.get [String]("GOTO").map(_.fold(Urls.memberHome)(Url.Relative(_)))
-      )(apply).withPrefix("SHIPREQ_DEV_")
-
-    def get(): Option[QuickDev] = {
-      import FxModule._
-      config.run(Props.sources).unsafeRun().toDisjunction.toOption
-    }
-  }
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -649,17 +629,6 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Other
 
-  /** DEV-MODE ONLY */
-  private val quickDev: Option[Request ?=> F[RealRes]] =
-    QuickDev.get().map(q =>
-      get(quickDevUrl,
-        security.attemptLogin(q.user, q.pass).flatMap {
-          case None    => F pure Response(ResponseCmd.Redirect(Urls.login), Cookie.Update.empty)
-          case Some(u) => security.sessionPersist(Security.SessionToken(Some(u))).map(Response(ResponseCmd.Redirect(q.goto), _))
-        }
-      )
-    )
-
   /** FOR UNIT-TESTS ONLY */
   private val unitTestLogin: Request ?=> F[RealRes] =
     whenUrlIs(unitTestLoginUrl){ implicit req =>
@@ -681,9 +650,8 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   /** Stateful routes (i.e. using a session) */
-  def statefulDispatcher(devMode: Boolean, testMode: Boolean): RealReq => F[RealRes] =
+  def statefulDispatcher(testMode: Boolean): RealReq => F[RealRes] =
     ( Main.routes
-    | Option.when(devMode)(quickDev).flatten
     | Option.when(testMode)(unitTestLogin)
     ).withFallback(Main.fallback)
       .compose(readRealReq)
