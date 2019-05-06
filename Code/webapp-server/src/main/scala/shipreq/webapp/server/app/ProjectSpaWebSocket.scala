@@ -15,7 +15,6 @@ import CloseReason.{CloseCode, CloseCodes}
 // TODO Restrict payload size (?)
 // TODO Configure timeouts
 // TODO Add tracing
-// TODO Info logging for messages (like other requests)
 
 object ProjectSpaWebSocket extends StrictLogging {
 
@@ -64,6 +63,7 @@ final class ProjectSpaWebSocket extends StrictLogging {
 
   @OnOpen
   def onOpen(s: Session): Unit = {
+    val startMs   = System.currentTimeMillis()
     Option(connectRejectionL.get(s.getUserProperties)) match {
       case Some(r) =>
         logger.warn(s"Rejecting WebSocket connection: $r")
@@ -78,6 +78,8 @@ final class ProjectSpaWebSocket extends StrictLogging {
         val state2    = projectSpaLogic.onOpen(static, state, pushFn).unsafeRun()
         stateL.set(userProps, state2)
     }
+    val durMs = System.currentTimeMillis() - startMs
+    logger.debug(s"WebSocket ${s.getRequestURI.getPath} open completed $durMs ms")
   }
 
   @OnMessage
@@ -85,6 +87,7 @@ final class ProjectSpaWebSocket extends StrictLogging {
     if (messageBytes.length == 0) {
       logger.debug("Received keep-alive")
     } else {
+      val startMs   = System.currentTimeMillis()
       def msgDesc   = messageBytes.mkString("[", ",", "]")
       val userProps = s.getUserProperties
       val static    = staticL.get(userProps)
@@ -100,6 +103,8 @@ final class ProjectSpaWebSocket extends StrictLogging {
             logger.warn(s"Failed to decode message: $msgDesc")
             close(s, CloseCodes.PROTOCOL_ERROR, "Error parsing message")
         }
+        val durMs = System.currentTimeMillis() - startMs
+        logger.info(s"WebSocket ${s.getRequestURI.getPath} responded to request in $durMs ms")
 
       } catch {
         case t: Throwable =>
