@@ -57,7 +57,8 @@ MIGRATION
   * [ ] WebSocket connection
   * [ ] WebSocket req/res
   * [ ] WebSocket push
-
+* [x] Ensure WebSockets work from Docker container
+* [x] Ensure WebSockets reconnect after server bounce
 
 * [ ] Redis
   * [ ] Add async typeclass and/or support to Fx (?)
@@ -65,5 +66,6 @@ MIGRATION
   * [ ] LUA scripts
   * [ ] Real algebra impl
   * [ ] Real pub/sub
+  * [ ] Determine when to send events vs snapshot
 
-* Add a correlation ID to JWTs?
+* Add a correlation ID to JWTs / logs / traces
