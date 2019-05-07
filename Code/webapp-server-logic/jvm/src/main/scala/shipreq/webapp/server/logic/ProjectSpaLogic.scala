@@ -15,7 +15,6 @@ import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.user.{User, Username}
 
 // TODO Logging, timing, tracing, metrics
-// TODO Stop using ErrorMsg everywhere - do that conversion right at the end
 
 trait ProjectSpaLogic[F[_]] {
   import ProjectSpaLogic._
@@ -207,6 +206,8 @@ object ProjectSpaLogic extends StrictLogging {
 
         type Result = ErrorMsg \/ InitAppData
 
+        def projectNotFound = -\/(ErrorMsg("Project not found."))
+
         def ignoreCache(c: Redis.ProjectCache): F[Result] = {
 
           def readDb(p: ProjectAndOrd) =
@@ -220,7 +221,7 @@ object ProjectSpaLogic extends StrictLogging {
                 // Build outside of DB transaction
                 ApplyEvents.append(pid, p, es).map(InitAppData(_, md))
               case (_, None) =>
-                -\/(ErrorMsg("Project not found."))
+                projectNotFound
             }
 
           def writeRedis(i: InitAppData): F[Boolean] =
@@ -243,7 +244,7 @@ object ProjectSpaLogic extends StrictLogging {
           mdOpt <- runDB(db.getProjectMetaData(pid))
           r     <- mdOpt match {
                      case Some(md) => if (cache.isCompleteTo(md.latestOrd)) useCache(cache, md) else ignoreCache(cache)
-                     case None     => F pure -\/(ErrorMsg("Project not found."))
+                     case None     => F pure projectNotFound
                    }
         } yield r
       }

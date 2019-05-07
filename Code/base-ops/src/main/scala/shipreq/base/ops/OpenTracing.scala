@@ -20,8 +20,8 @@ object OpenTracing {
       private def withSpanActivated[A](span: Span, closeSpan: Boolean, f: Fx[A]): Fx[A] =
         Fx(unsafeWithSpanActivated(span, closeSpan)(f.unsafeRun()))
 
-      private def unsafeWithSpanActivated[A](span: Span, closeSpan: Boolean)(body: => A): A = {
-        val scope = tracer.scopeManager().activate(span, closeSpan)
+      private def unsafeWithSpanActivated[A](span: Span, finishSpanOnClose: Boolean)(body: => A): A = {
+        val scope = tracer.scopeManager().activate(span)
         try
           body
         catch {
@@ -29,8 +29,11 @@ object OpenTracing {
             setError(span, t)
             throw t
         }
-        finally
+        finally {
+          if (finishSpanOnClose)
+            span.finish()
           scope.close()
+        }
       }
 
       private def setError(span: Span, err: Throwable): Unit = {

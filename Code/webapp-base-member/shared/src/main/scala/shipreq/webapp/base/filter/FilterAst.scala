@@ -48,8 +48,7 @@ object FilterAst {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   implicit def univEqAst[A: UnivEq, B: UnivEq, C: UnivEq, D: UnivEq, E: UnivEq]: UnivEq[FilterAst[A, B, C, D, E]] =
-    UnivEq.force
-    // UnivEq.deriveDebug[FilterAst[A, B, C, D, E]] // TODO should work
+    UnivEq.derive
 
   type Fixed[A, B, C, D] = Fix[λ[F => FilterAst[A, B, C, D, F]]]
 
