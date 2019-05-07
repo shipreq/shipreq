@@ -40,27 +40,24 @@ class Boot {
     runMode foreach setRunMode
     logger.info(s"RunMode = ${Props.mode}")
 
-    val tracer = cfg.server.traceAlgebraFx
-    tracer.newSpan("Boot")(span => Fx {
-      def trace[A](name: String)(a: => A): A =
-        tracer.newSubSpan(name, span)(_ => Fx(a)).unsafeRun()
+    import cfg.server.traceAlgebraFx.{newSpanImpure => trace}
+    trace("Boot") { _ =>
 
       // Create services
       implicit val serverConfig = cfg.server
-      implicit val dbAccess = trace("initDatabase")(initDatabase(cfg))
-      trace("configureLift")(configureLift())
-      Global.Instance = trace("Global")(Global.default)
+      implicit val dbAccess = trace("initDatabase")(_ => initDatabase(cfg))
+      trace("configureLift")(_ => configureLift())
+      Global.Instance = trace("Global")(_ => Global.default)
 
       // Prepare services
-      trace("preloadTemplates")(preloadTemplates())
-      trace("initOps")(initOps(Global.Instance))
-      trace("initRoutes")(initRoutes(Global.Instance))
-      trace("initTaskman")(initTaskman(Global.Instance))
+      trace("preloadTemplates")(_ => preloadTemplates())
+      trace("initOps")(_ => initOps(Global.Instance))
+      trace("initRoutes")(_ => initRoutes(Global.Instance))
+      trace("initTaskman")(_ => initTaskman(Global.Instance))
 
       // Start services
-      trace("initPrometheus")(initPrometheus(cfg.server.prometheus))
-
-    }).unsafeRun()
+      trace("initPrometheus")(_ => initPrometheus(cfg.server.prometheus))
+    }
   }
 
   def readConfig(): (BootConfig, Option[RunModes.Value]) = {

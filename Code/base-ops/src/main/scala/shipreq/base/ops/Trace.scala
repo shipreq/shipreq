@@ -14,8 +14,12 @@ object Trace {
     type Span
 
     def newSpan[A](name: String)(f: Span => F[A]): F[A]
+    def newSpanImpure[A](name: String)(f: Span => A): A
+
     def newSubSpan[A](name: String, parent: Span)(f: Span => F[A]): F[A]
+
     def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): F[Unit]
+    def rename(newName: String)(implicit span: Span): F[Unit]
 
     protected def _propagateCtx[A]: F[F[A] => F[A]]
     private[this] final val _propagateCtxInstance = _propagateCtx[Any]
@@ -32,12 +36,18 @@ object Trace {
           outer.newSpan(name)(ospan =>
             inner.newSpan(name)(ispan =>
               f((ospan, ispan))))
+        override def newSpanImpure[A](name: String)(f: Span => A): A =
+          outer.newSpanImpure(name)(ospan =>
+            inner.newSpanImpure(name)(ispan =>
+              f((ospan, ispan))))
         override def newSubSpan[A](name: String, parent: Span)(f: Span => F[A]): F[A] =
           outer.newSubSpan(name, parent._1)(ospan =>
             inner.newSubSpan(name, parent._2)(ispan =>
               f((ospan, ispan))))
         override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): F[Unit] =
           outer.addAttrs(attrs)(span._1) >> inner.addAttrs(attrs)(span._2)
+        override def rename(newName: String)(implicit span: Span): F[Unit] =
+          outer.rename(newName)(span._1) >> inner.rename(newName)(span._2)
         override def _propagateCtx[A]: F[F[A] => F[A]] = {
           val o = outer.propagateCtx[A]
           val i = inner.propagateCtx[A]
@@ -65,8 +75,10 @@ object Trace {
         val fUnit = F.point(())
         override type Span                                              = Unit
         override def newSpan[A](n: String)(f: Span => F[A])             = f(())
+        override def newSpanImpure[A](n: String)(f: Span => A)          = f(())
         override def newSubSpan[A](n: String, p: Span)(f: Span => F[A]) = f(())
         override def addAttrs(a: List[Trace.Attr])(implicit span: Span) = fUnit
+        override def rename(newName: String)(implicit span: Span)       = fUnit
         override def compose(a: Algebra[F])(implicit F: Monad[F])       = a
         override def _propagateCtx[A]                                   = F point Identity.apply
         override def sqlTracer(spanName: String)                        = None
@@ -76,12 +88,13 @@ object Trace {
       new Algebra[F] {
         val fUnit = F.point(())
         override type Span                                              = Unit
-        override def newSpan[A](n: String)(f: Span => F[A])             = this(n, f)
-        override def newSubSpan[A](n: String, p: Span)(f: Span => F[A]) = this(n, f)
+        override def newSubSpan[A](n: String, p: Span)(f: Span => F[A]) = newSpan(n)(f)
         override def addAttrs(a: List[Trace.Attr])(implicit span: Span) = fUnit
+        override def rename(newName: String)(implicit span: Span)       = fUnit
         override def _propagateCtx[A]                                   = F point Identity.apply
         override def sqlTracer(spanName: String)                        = None
-        private def apply[A](name: String, f: Span => F[A]) =
+
+        override def newSpan[A](name: String)(f: Span => F[A]) =
           for {
             start <- F point System.nanoTime()
             _     <- F point println(s"Starting $name …")
@@ -89,6 +102,15 @@ object Trace {
             end   <- F point System.nanoTime()
             _     <- F point printf("Finished %s in %,3d ns\n", name, end - start)
           } yield a
+
+        override def newSpanImpure[A](name: String)(f: Span => A) = {
+          val start = System.nanoTime()
+          println(s"Starting $name …")
+          val a = f(())
+          val end = System.nanoTime()
+          printf("Finished %s in %,3d ns\n", name, end - start)
+          a
+        }
       }
   }
 
