@@ -40,20 +40,27 @@ class Boot {
     runMode foreach setRunMode
     logger.info(s"RunMode = ${Props.mode}")
 
-    // Create services
-    implicit val serverConfig = cfg.server
-    implicit val dbAccess = initDatabase(cfg)
-    configureLift()
-    Global.Instance = Global.default
+    val tracer = cfg.server.traceAlgebraFx
+    tracer.newSpan("Boot")(span => Fx {
+      def trace[A](name: String)(a: => A): A =
+        tracer.newSubSpan(name, span)(_ => Fx(a)).unsafeRun()
 
-    // Prepare services
-    preloadTemplates()
-    initOps(Global.Instance)
-    initRoutes(Global.Instance)
-    initTaskman(Global.Instance)
+      // Create services
+      implicit val serverConfig = cfg.server
+      implicit val dbAccess = trace("initDatabase")(initDatabase(cfg))
+      trace("configureLift")(configureLift())
+      Global.Instance = trace("Global")(Global.default)
 
-    // Start services
-    initPrometheus(cfg.server.prometheus)
+      // Prepare services
+      trace("preloadTemplates")(preloadTemplates())
+      trace("initOps")(initOps(Global.Instance))
+      trace("initRoutes")(initRoutes(Global.Instance))
+      trace("initTaskman")(initTaskman(Global.Instance))
+
+      // Start services
+      trace("initPrometheus")(initPrometheus(cfg.server.prometheus))
+
+    }).unsafeRun()
   }
 
   def readConfig(): (BootConfig, Option[RunModes.Value]) = {
