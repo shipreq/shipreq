@@ -47,11 +47,11 @@ MIGRATION
   * [ ] webapp-logic: Server.Session
   * [x] Remove comets
   * [x] Remove Promse logic (probably)
-* [ ] Fix tracing
+* [x] Fix tracing
   * [x] AJAX / SSP
-  * [ ] WebSocket connection
-  * [ ] WebSocket req/res
-  * [ ] WebSocket push
+  * [x] WebSocket connection
+  * [x] WebSocket req/res
+  * [x] WebSocket push
 * [ ] Fix metrics
   * [x] AJAX / SSP
   * [ ] WebSocket connection

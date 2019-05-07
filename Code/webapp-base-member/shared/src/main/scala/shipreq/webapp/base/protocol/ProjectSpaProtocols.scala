@@ -55,6 +55,7 @@ object ProjectSpaProtocols {
     protected val protocolReq: Protocol.Of[Pickler, RequestType]
     val protocolRes: Protocol.Of[Pickler, ResponseType]
     protected val key: Int
+    final val name = getClass.getName.replaceFirst("""^.*\$(.+?)\$?$""", "$1")
 
     final type AndReq = WsReqRes.AndReq { val reqRes: self.type }
     final def AndReq(r: RequestType): AndReq =

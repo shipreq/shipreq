@@ -14,7 +14,7 @@ import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, InitPageDa
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.user.{User, Username}
 
-// TODO Logging, timing, tracing, metrics
+// TODO metrics
 
 trait ProjectSpaLogic[F[_]] {
   import ProjectSpaLogic._
@@ -25,21 +25,21 @@ trait ProjectSpaLogic[F[_]] {
                 projectId: ProjectId.Public): F[ConnectRejection \/ (WebSocketStatic, WebSocketState[F])]
 
   def onOpen(static: WebSocketStatic,
-             state: WebSocketState[F],
-             push : BinaryData => F[Unit]): F[WebSocketState[F]]
+             state : WebSocketState[F],
+             push  : BinaryData => F[Unit]): F[WebSocketState[F]]
 
-  def onMessage(static: WebSocketStatic,
-                msg   : BinaryData): F[MsgError \/ BinaryData]
+  def onMessage(static : WebSocketStatic,
+                msg    : BinaryData,
+                respond: BinaryData => F[Throwable \/ Unit],
+                onError: MsgError => F[Unit]): F[Unit]
 
-  def onClose(state : WebSocketState[F]): F[Unit]
+  def onClose(static: WebSocketStatic,
+              state : WebSocketState[F]): F[Unit]
 }
 
 object ProjectSpaLogic extends StrictLogging {
 
-  final case class WebSocketStatic(user: User, projectId: ProjectId)
-  object WebSocketStatic {
-    implicit def univEq: UnivEq[WebSocketStatic] = UnivEq.derive
-  }
+  final case class WebSocketStatic(user: User, projectId: ProjectId, span: Any)
 
   final case class WebSocketState[F[_]](sub: Option[Redis.Subscription[F]])
   object WebSocketState {
@@ -59,7 +59,7 @@ object ProjectSpaLogic extends StrictLogging {
   sealed trait MsgError
   object MsgError {
     case object DecodingFailure extends MsgError
-    implicit def univEq: UnivEq[MsgError] = UnivEq.derive
+    final case class RespondError(err: Throwable) extends MsgError
   }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -71,14 +71,19 @@ object ProjectSpaLogic extends StrictLogging {
                         db      : DB.ForProjectSpa[D],
                         runDB   : D ~> F,
                         security: Security.Algebra[F],
+                        svr     : Server.Time[F],
                         trace   : Trace.Algebra[F]): ProjectSpaLogic[F] = {
-
     val webSocketHelper = WebSocketServerHelper(ProjectSpaProtocols.WebSocket(Obfuscated(null)))
 
     val OnConnect  = Monads.FDisj[F, ConnectRejection]
     val OnMsgError = Monads.FDisj[F, MsgError]
 
     val fUnit = F.pure(())
+
+    import trace.Span
+
+    def getSpan(static: WebSocketStatic): Span =
+      static.span.asInstanceOf[Span]
 
     new ProjectSpaLogic[F] { self =>
 
@@ -99,67 +104,100 @@ object ProjectSpaLogic extends StrictLogging {
         val C = OnConnect
         import ConnectRejection._
 
-        val main: C.Result[(WebSocketStatic, WebSocketState[F])] =
+        def main(span: Span): C.Result[(WebSocketStatic, WebSocketState[F])] =
           for {
             pid     <- C.lift(Obfuscators.projectId.deobfuscate(projectId).leftMap(_ => InvalidProjectId))
             session <- C.optionF(security.sessionRestore(cookies), NoSession)
             user    <- C.option(session.authenticatedUser, AnonymousSession)
+            _       <- C.rightF(trace.addAttrs(Trace.Attr.ShipReqUserId(user.id.value) ::
+                                               Trace.Attr.ShipReqProjectId(pid.value) :: Nil)(span))
             owner   <- C.optionF(security.db.getProjectOwner(pid), ProjectNotFound)
             _       <- C.ensure(user.id ==* owner, AccessDenied)
           } yield {
-            val static = WebSocketStatic(user, pid)
+            val static = WebSocketStatic(user, pid, span)
             val state  = WebSocketState.empty[F]
             (static, state)
           }
 
-        security.protect(main.value)
+        trace.newSpan("WebSocket")(span =>
+          trace.newSubSpan("onConnect", span)(_ =>
+            security.protect(
+              main(span).value)))
       }
 
       override def onOpen(static: WebSocketStatic,
                           state: WebSocketState[F],
-                          push : BinaryData => F[Unit]) =
-        state.sub match {
-          case None =>
-            for {
-              sub <- redis.subscribe(static.projectId, pushEvent(push, _))
-            } yield WebSocketState(Some(sub))
-          case Some(_) =>
-            F.pure(state)
-        }
-
-      override def onClose(state : WebSocketState[F]) =
-        state.sub match {
-          case Some(sub) => sub.unsubscribe
-          case None      => fUnit
-        }
-
-      private def pushEvent(push: BinaryData => F[Unit], e: VerifiedEvent): F[Unit] =
-        pushEvents(push, VerifiedEvent.NonEmptySeq.one(e))
-
-      private def pushEvents(push: BinaryData => F[Unit], es: VerifiedEvent.NonEmptySeq): F[Unit] = {
-        val msgBin = BinaryJvm.encode(webSocketHelper.protocolSC)(-\/(es))
-        push(msgBin)
+                          push : BinaryData => F[Unit]) = {
+        val span = getSpan(static)
+        val main: F[WebSocketState[F]] =
+          state.sub match {
+            case None =>
+              for {
+                sub <- redis.subscribe(static.projectId, pushEvent(span, push, _))
+              } yield WebSocketState(Some(sub))
+            case Some(_) =>
+              F.pure(state)
+          }
+        trace.newSubSpan("onOpen", span)(_ => main)
       }
+
+      override def onClose(static: WebSocketStatic,
+                           state : WebSocketState[F]) =
+        trace.newSubSpan("onClose", getSpan(static))(_ =>
+          state.sub match {
+            case Some(sub) => sub.unsubscribe
+            case None      => fUnit
+          }
+        )
+
+      private def pushEvent(span: Span, push: BinaryData => F[Unit], e: VerifiedEvent): F[Unit] =
+        pushEvents(span, push, VerifiedEvent.NonEmptySeq.one(e))
+
+      private def pushEvents(span: Span, push: BinaryData => F[Unit], es: VerifiedEvent.NonEmptySeq): F[Unit] =
+        trace.newSubSpan("push", span) { _ =>
+          val msgBin = BinaryJvm.encode(webSocketHelper.protocolSC)(-\/(es))
+          push(msgBin)
+        }
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       // Message responding
 
-      override def onMessage(static: WebSocketStatic,
-                             msg   : BinaryData) = {
+      override def onMessage(static : WebSocketStatic,
+                             msg    : BinaryData,
+                             respond: BinaryData => F[Throwable \/ Unit],
+                             onError: MsgError => F[Unit]): F[Unit] = {
         val M = OnMsgError
 
-        val main: M.Result[BinaryData] =
-          for {
-            (reqId, req)  <- M.lift(parseMsg(msg))
-             res          <- M.rightF(msgFold(req.reqRes)((req.req, static)))
-          } yield {
-            val protocolAndRes = req.reqRes.protocolRes.andValue(res)
-            val fullRes        = \/-((reqId, protocolAndRes))
-            val resBin         = BinaryJvm.encode(webSocketHelper.protocolSC)(fullRes)
-            resBin
-          }
+        val span = getSpan(static)
 
-        main.value
+        def main(implicit span: Span): M.Result[Unit] =
+          for {
+            (reqId, req)   ← M.lift(parseMsg(msg))
+            _              ← M.rightF(trace.rename("onMessage: " + req.reqRes.name))
+            res            ← M.rightF(msgFold(req.reqRes)((req.req, static)))
+            protocolAndRes = req.reqRes.protocolRes.andValue(res)
+            fullRes        = \/-((reqId, protocolAndRes))
+            resBin         = BinaryJvm.encode(webSocketHelper.protocolSC)(fullRes)
+            _              ← M(respond(resBin).map(_.leftMap[MsgError](MsgError.RespondError)))
+          } yield ()
+
+        val handleError: MsgError \/ Unit => F[Unit] = {
+          case \/-(_) =>
+            fUnit
+
+          case -\/(m @ MsgError.DecodingFailure) =>
+            F.point(logger.warn(s"Failed to decode message: ${msg.describe(1000)}")) >> onError(m)
+
+          case -\/(m @ MsgError.RespondError(err)) =>
+            F.point(logger.error(s"Error sending response.", err)) >> onError(m)
+        }
+
+        for {
+          (_, dur) ← svr.measureDuration(trace.newSubSpan("onMessage", span)(main(_).value.flatMap(handleError)))
+          durMs    = dur.toMillis
+          pid      = static.projectId.value
+          _        ← F.point(logger.info(s"WebSocket for project #$pid processed request in $durMs ms"))
+        } yield ()
       }
 
       private def parseMsg(msg: BinaryData) = {
@@ -211,6 +249,7 @@ object ProjectSpaLogic extends StrictLogging {
         def ignoreCache(c: Redis.ProjectCache): F[Result] = {
 
           def readDb(p: ProjectAndOrd) =
+          trace.newSpan("readDb")(_ =>
             runDB(
               db.inDbTransaction(for {
                 md <- db.getProjectMetaData(pid)
@@ -219,14 +258,17 @@ object ProjectSpaLogic extends StrictLogging {
             ).map {
               case (es, Some(md)) =>
                 // Build outside of DB transaction
-                ApplyEvents.append(pid, p, es).map(InitAppData(_, md))
+                trace.newSpanImpure("ApplyEvents")(_ =>
+                  ApplyEvents.append(pid, p, es).map(InitAppData(_, md)))
               case (_, None) =>
                 projectNotFound
             }
+          )
 
           def writeRedis(i: InitAppData): F[Boolean] =
-            // TODO Maybe write events instead of snapshot
-            redis.writeSnapshot(pid, i.project, VerifiedEvent.Seq.empty)
+            trace.newSpan("writeRedis")(_ =>
+              // TODO Maybe write events instead of snapshot
+              redis.writeSnapshot(pid, i.project, VerifiedEvent.Seq.empty))
 
             for {
               result <- readDb(c.nonEmptyCompleteBuild(pid) getOrElse ProjectAndOrd.empty)
@@ -234,10 +276,11 @@ object ProjectSpaLogic extends StrictLogging {
             } yield result
         }
 
-        def useCache(c: Redis.ProjectCache, md: ProjectMetaData): F[Result] = {
-          val result = c.build(pid).map(InitAppData(_, md))
-          F pure result
-        }
+        def useCache(c: Redis.ProjectCache, md: ProjectMetaData): F[Result] =
+          trace.newSpan("useCache") { _ =>
+            val result = c.build(pid).map(InitAppData(_, md))
+            F pure result
+          }
 
         for {
           cache <- redis.read(pid)
@@ -271,7 +314,7 @@ object ProjectSpaLogic extends StrictLogging {
 
       def loop(s: State): F[State \/ Result] = {
         import Status._
-        s.status match {
+        val main: F[State \/ Result] = s.status match {
 
           case ReadRedis =>
             for {
@@ -324,6 +367,8 @@ object ProjectSpaLogic extends StrictLogging {
               ok <- redis.writeEvents(pid, VerifiedEvent.Seq.empty, newEvents)
             } yield \/-(\/-(newEvents))
         }
+
+        trace.newSpan(s.status.name)(_ => main)
       }
 
       F.tailrecM(loop)(initialState)
@@ -338,13 +383,13 @@ object ProjectSpaLogic extends StrictLogging {
       redis  = Redis.ProjectCache.empty,
       status = Status.ReadRedis)
 
-    sealed trait Status
+    sealed abstract class Status(final val name: String)
     object Status {
-      case object ReadRedis                                      extends Status
-      case object ReadDb                                         extends Status
-      case object WriteRedis1                                    extends Status
-      case object WriteDb                                        extends Status
-      final case class WriteRedis2(newEvents: VerifiedEvent.Seq) extends Status
+      case object ReadRedis                                      extends Status("ReadRedis")
+      case object ReadDb                                         extends Status("ReadDb")
+      case object WriteRedis1                                    extends Status("WriteRedis1")
+      case object WriteDb                                        extends Status("WriteDb")
+      final case class WriteRedis2(newEvents: VerifiedEvent.Seq) extends Status("WriteRedis2")
     }
   }
 }

@@ -18,6 +18,9 @@ import shipreq.webapp.server.logic.Security.SessionToken
 
 object ProjectSpaLogicTest extends TestSuite {
 
+  private implicit def univEqMsgError: UnivEq[MsgError] = UnivEq.force
+  private implicit def univEqStatic: UnivEq[WebSocketStatic] = UnivEq.force
+
   private type WebSocketState = ProjectSpaLogic.WebSocketState[Name]
   private val  WebSocketState = ProjectSpaLogic.WebSocketState
   private val emptyState      = ProjectSpaLogic.WebSocketState.empty[Name]
@@ -68,7 +71,7 @@ object ProjectSpaLogicTest extends TestSuite {
       lazy val instance        = applyVerifiedEventSuccessfully(Project.empty, verifiedEvents.toList: _*)
       lazy val projectAndOrd   = ProjectAndOrd(instance, Some(verifiedEvents.last.ord.asLatest))
       lazy val initAppData     = InitAppData(projectAndOrd, data1)
-      lazy val static          = WebSocketStatic(user2.toUser, id)
+      lazy val static          = WebSocketStatic(user2.toUser, id, ())
 
       lazy val eventsA         = events.take(1)
       lazy val verifiedEventsA = verifiedEvents.take(1)
@@ -106,7 +109,8 @@ object ProjectSpaLogicTest extends TestSuite {
     val reqId = ReqId(7)
     val h = wsHelper(reqId, msg.reqRes)
     val msgBin = BinaryJvm.encode(h.protocolCS)((reqId, msg))
-    val resp = projectSpa.onMessage(static, msgBin).value
+    var resp: MsgError \/ BinaryData = null
+    projectSpa.onMessage(static, msgBin, a => Name{resp = \/-(a); \/-(())}, a => Name{resp = -\/(a)}).value
     resp match {
       case \/-(b) =>
         BinaryJvm.decodeUnsafe(b, h.protocolSC) match {
@@ -187,6 +191,11 @@ object ProjectSpaLogicTest extends TestSuite {
   }
 
   override def tests = Tests {
+
+    'msgName - {
+      val n = WsReqRes.InitApp.name
+      assertEq(n, "InitApp")
+    }
 
     'connect {
       implicit val t = new Tester; import t._
