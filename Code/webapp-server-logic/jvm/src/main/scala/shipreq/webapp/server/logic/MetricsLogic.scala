@@ -24,7 +24,7 @@ trait MetricsLogic[F[_]] {
                              bytesIn : Long,
                              bytesOut: Long,
                              duration: Duration,
-                             ok      : Boolean): F[Unit]
+                             success : Boolean): F[Unit]
 
   def projectSpaWebSocketPush(bytesOut: Long): F[Unit]
 }

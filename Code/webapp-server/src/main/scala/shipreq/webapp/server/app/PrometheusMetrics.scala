@@ -55,7 +55,6 @@ object PrometheusMetrics extends HasLogger {
     final val Method     = "method"
     final val MsgType    = "msg_type"
     final val Name       = "name"
-    final val Ok         = "ok"
     final val Success    = "success"
     final val StatusCode = "status_code"
     final val Type       = "type"
@@ -156,14 +155,14 @@ object PrometheusMetrics extends HasLogger {
     final class WebSocketMessageDuration private[Metrics] {
       private[this] val m =
         Histogram.build(prefix + "ws_message_duration_seconds", "Duration of WebSocket requests in seconds")
-          .labelNames(Label.Name, Label.MsgType, Label.Ok)
+          .labelNames(Label.Name, Label.MsgType, Label.Success)
           .buckets(
             0.001, 0.003, 0.005, 0.010, 0.025, 0.050, 0.075,
             0.100, 0.200, 0.300, 0.500, 0.750,
             1, 2, 4, 8)
           .register()
-      def apply(ok: Boolean)(implicit name: WebSocketName, msgType: MsgType) =
-        m.labels(name.value, msgType.value, yesOrNo(ok))
+      def apply(success: Boolean)(implicit name: WebSocketName, msgType: MsgType) =
+        m.labels(name.value, msgType.value, yesOrNo(success))
     }
 
     final class WebSocketPushes private[Metrics] {
@@ -178,10 +177,10 @@ object PrometheusMetrics extends HasLogger {
     final class WebSocketIO private[Metrics] {
       private[this] val m =
         Counter.build(prefix + "ws_bytes_total", "WebSocket traffic in bytes")
-          .labelNames(Label.Dir, Label.Name, Label.Type, Label.MsgType, Label.Ok)
+          .labelNames(Label.Dir, Label.Name, Label.Type, Label.MsgType, Label.Success)
           .register()
-      def msg(dir: CommDir, ok: Boolean)(implicit name: WebSocketName, msgType: MsgType) =
-        m.labels(dir, name.value, "msg", msgType.value, yesOrNo(ok))
+      def msg(dir: CommDir, success: Boolean)(implicit name: WebSocketName, msgType: MsgType) =
+        m.labels(dir, name.value, "msg", msgType.value, yesOrNo(success))
       def push(implicit name: WebSocketName) =
         m.labels(CommDir.Send, name.value, "push", "", yesOrNo(true))
     }
@@ -329,12 +328,12 @@ final class PrometheusMetrics extends MetricsLogic[Fx] {
                                       bytesIn : Long,
                                       bytesOut: Long,
                                       duration: Duration,
-                                      ok      : Boolean): Fx[Unit] =
+                                      success : Boolean): Fx[Unit] =
     Fx {
       implicit val msgTypeT = MsgType(msgType)
-      WebSocketMessageDuration(ok).observe(duration)
-      WebSocketIO.msg(CommDir.Recv, ok).inc(bytesIn)
-      WebSocketIO.msg(CommDir.Send, ok).inc(bytesOut)
+      WebSocketMessageDuration(success).observe(duration)
+      WebSocketIO.msg(CommDir.Recv, success).inc(bytesIn)
+      WebSocketIO.msg(CommDir.Send, success).inc(bytesOut)
     }
 
   private[this] val projectSpaPushes = WebSocketPushes.apply
