@@ -10,8 +10,7 @@ import shipreq.base.util.FreeOption
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.base.user.User
-import shipreq.webapp.server.ServerConfig
-import shipreq.webapp.server.logic.{DispatchLogic, MetricsLogic, Security, SessionId}
+import shipreq.webapp.server.logic.{MetricsLogic, Security, SessionId}
 import shipreq.webapp.server.util.CommDir
 
 object PrometheusMetrics extends HasLogger {
@@ -62,9 +61,20 @@ object PrometheusMetrics extends HasLogger {
   // Metrics
 
   private[PrometheusMetrics] object Metrics {
+
+    val LoginsActive       = new LoginsActive
+    val HttpDuration       = new HttpDuration
+    val HttpIO             = new HttpIO
+    val HttpRequests       = new HttpRequests
+    val HttpSessionsActive = mkHttpSessionsActive
+    val HttpSessionsTotal  = mkHttpSessionsTotal
+    val ProjectsActive     = mkProjectsActive
+    val SecureEventsTotal  = new SecureEventsTotal
+
+    // -----------------------------------------------------------------------------------------------------------------
+
     private val prefix = "shipreq_webapp_"
 
-    val HttpRequests = new HttpRequests
     final class HttpRequests private[Metrics] {
       private[this] val m =
         Counter.build(prefix + "http_requests_total", "Total HTTP requests received")
@@ -74,7 +84,6 @@ object PrometheusMetrics extends HasLogger {
         m.labels(method.value, endpoint.name, statusCode.value, endpoint.`type`)
     }
 
-    val HttpDuration = new HttpDuration
     final class HttpDuration private[Metrics] {
       private[this] val m =
         Histogram.build(prefix + "http_response_duration_seconds", "Duration of HTTP request in seconds")
@@ -89,7 +98,6 @@ object PrometheusMetrics extends HasLogger {
         m.labels(method.value, endpoint.name, statusCode.value, endpoint.`type`)
     }
 
-    val HttpIO = new HttpIO
     final class HttpIO private[Metrics] {
       private[this] val m =
         Counter.build(prefix + "http_bytes_total", "Size of HTTP content in bytes")
@@ -99,15 +107,12 @@ object PrometheusMetrics extends HasLogger {
         m.labels(dir, method.value, endpoint.name, statusCode.value, endpoint.`type`)
     }
 
-    val HttpSessionsActive =
-      Gauge.build(prefix + "http_sessions_active", "HTTP sessions currently active")
-        .register()
+    private def mkHttpSessionsActive =
+      Gauge.build(prefix + "http_sessions_active", "HTTP sessions currently active").register()
 
-    val HttpSessionsTotal =
-      Counter.build(prefix + "http_sessions_total", "Total HTTP sessions created")
-        .register()
+    private def mkHttpSessionsTotal =
+      Counter.build(prefix + "http_sessions_total", "Total HTTP sessions created").register()
 
-    val LoginsActive = new LoginsActive
     final class LoginsActive private[Metrics] {
       private[this] val m =
         Gauge.build(prefix + "logins_active", "Logged-in sessions currently active")
@@ -117,7 +122,6 @@ object PrometheusMetrics extends HasLogger {
         m.labels(yesOrNo(unique))
     }
 
-    val SecureEventsTotal = new SecureEventsTotal
     final class SecureEventsTotal private[Metrics] {
       private[this] val m =
         Counter.build(prefix + "secure_events_total", "Total security-sensitive events that occurred")
@@ -136,7 +140,7 @@ object PrometheusMetrics extends HasLogger {
         m.labels(name(event), yesOrNo(result.isSuccess))
     }
 
-    val ProjectsActive =
+    private def mkProjectsActive =
       Gauge.build(prefix + "projects_active", "Projects currently being served").register()
   }
 
