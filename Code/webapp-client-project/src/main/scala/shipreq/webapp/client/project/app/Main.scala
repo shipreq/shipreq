@@ -5,6 +5,7 @@ import japgolly.scalajs.react.extra.router.{BaseUrl, Router}
 import java.time.Duration
 import org.scalajs.dom.window.location
 import scala.scalajs.js.annotation.JSExportTopLevel
+import scala.scalajs.js.timers.RawTimers
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{ErrorMsg, Retries, Url}
 import shipreq.webapp.base.CssSettings._
@@ -42,6 +43,7 @@ object Main extends ClientSideProcImpl(ProjectSpaProtocols.EntryPoint) {
     val wsClient  = WebSocketClient(wsUrlBase, protocol, wsRetries)
     val global    = Global(wsClient, onLoad, onFailure, LoggerJs.on)
     global.wsClient.connect.runNow()
+    RawTimers.setInterval(global.wsClient.keepAlive.toJsFn, 20000)
   }
 
   def determineBaseUrl(url: String) = {
