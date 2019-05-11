@@ -59,7 +59,3 @@ object Cookie {
   implicit def univEqCookie: UnivEq[Cookie] = UnivEq.derive
   implicit def univEqUpdate: UnivEq[Update] = UnivEq.derive
 }
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-final case class SessionId(value: String)

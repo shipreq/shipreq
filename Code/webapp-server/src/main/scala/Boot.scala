@@ -51,7 +51,6 @@ class Boot {
 
       // Prepare services
       trace("preloadTemplates")(_ => preloadTemplates())
-      trace("initOps")(_ => initOps(Global.Instance))
       trace("initRoutes")(_ => initRoutes(Global.Instance))
       trace("initTaskman")(_ => initTaskman(Global.Instance))
 
@@ -189,19 +188,6 @@ class Boot {
     HomeSpa
     ProjectSpa
     PublicSpa
-  }
-
-  def initOps(g: Global): Unit = {
-    val m = g.metrics
-
-    val sessionStart: (LiftSession, Req) => Unit =
-      (s, _) => m.sessionStart(ServerInterpreter.getSessionId(s)).unsafeRun()
-
-    val sessionEnd: LiftSession => Unit =
-      s => m.sessionEnd(ServerInterpreter.getSessionId(s)).unsafeRun()
-
-    LiftSession.afterSessionCreate ::= sessionStart
-    LiftSession.onShutdownSession ::= sessionEnd
   }
 
   def initRoutes(g: Global): Unit = {

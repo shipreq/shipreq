@@ -172,7 +172,6 @@ object DispatchBM {
 
     implicit val svrSession: Server.Session[F] = new Server.Session[F] {
       override val clientIP: F[Option[IP]] = F.pure(None)
-      override val sessionId: F[Option[SessionId]] = F.pure(None)
     }
 
     implicit val svrTime: Server.Time[F] = new Server.Time[F] {

@@ -3,16 +3,12 @@ package shipreq.webapp.server.app
 import io.prometheus.client.{Counter, Gauge, Histogram, SimpleTimer}
 import japgolly.microlibs.stdlib_ext.ParseLong
 import java.time.Duration
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicLong
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
-import scala.collection.JavaConverters._
 import shipreq.base.util.FreeOption
 import shipreq.base.util.FxModule._
 import shipreq.base.util.JavaTimeHelpers._
 import shipreq.base.util.log.HasLogger
-import shipreq.webapp.base.user.User
-import shipreq.webapp.server.logic.{MetricsLogic, Security, SessionId}
+import shipreq.webapp.server.logic.{MetricsLogic, Security}
 import shipreq.webapp.server.util.CommDir
 
 object PrometheusMetrics extends HasLogger {
@@ -77,13 +73,9 @@ object PrometheusMetrics extends HasLogger {
 
   private[PrometheusMetrics] object Metrics {
 
-    val LoginsActive             = new LoginsActive
     val HttpDuration             = new HttpDuration
     val HttpIO                   = new HttpIO
-    val HttpSessionsActive       = mkHttpSessionsActive
-    val HttpSessionsTotal        = mkHttpSessionsTotal
     val OpenWebSockets           = new OpenWebSockets
-    val ProjectsActive           = mkProjectsActive
     val ProjectSpaStepDuration   = new ProjectSpaStepDuration
     val SecureEventsTotal        = new SecureEventsTotal
     val WebSocketEventDuration   = new WebSocketEventDuration
@@ -326,69 +318,14 @@ final class PrometheusMetrics extends MetricsLogic[Fx] {
   private[this] val endpointVar =
     PrometheusMetrics.Unsafe.endpointVar
 
-  private[this] val sessions =
-    new ConcurrentHashMap[SessionId, Option[User]]
-
-  private[this] val sessionsActive =
-    new AtomicLong(0)
-
   override def setHttpName(name: String): Fx[Unit] =
     Fx(endpointVar.set(Endpoint.Page(name)))
 
   override def setServerSideProcName(name: String): Fx[Unit] =
     Fx(endpointVar.set(Endpoint.ServerSideProc(name)))
 
-  // Replace this in future with more variables and prop-test to ensure the larger set of vars don't go out of sync
-  private def updateActiveLogins(): Unit = {
-    val seen = scala.collection.mutable.LongMap.empty[Unit]
-    var total, unique = 0
-    sessions.values().asScala.foreach {
-      case Some(u) =>
-        total += 1
-        val id = u.id.value
-        if (!seen.contains(id)) {
-          seen.update(id, ())
-          unique += 1
-        }
-      case None =>
-    }
-    LoginsActive(unique = true).set(unique)
-    LoginsActive(unique = false).set(total)
-  }
-
-  override def sessionStart(id: SessionId): Fx[Unit] =
-    Fx {
-      sessions.put(id, None)
-      HttpSessionsTotal.inc()
-      HttpSessionsActive.set(sessionsActive.incrementAndGet())
-    }
-
-  override def sessionEnd(id: SessionId): Fx[Unit] =
-    Fx {
-      val oldUser = sessions.remove(id)
-      HttpSessionsActive.set(sessionsActive.decrementAndGet())
-      if (oldUser.isDefined)
-        updateActiveLogins()
-    }
-
-  override def login(sessionId: SessionId, user: User): Fx[Unit] =
-    Fx {
-      sessions.put(sessionId, Some(user))
-      sessions.put(sessionId, Some(user))
-      updateActiveLogins()
-    }
-
-  override def logout(sessionId: SessionId): Fx[Unit] =
-    Fx {
-      sessions.computeIfPresent(sessionId, (_, _) => None)
-      updateActiveLogins()
-    }
-
   override def securityEvent(event: Security.Event, result: Security.Result): Fx[Unit] =
     Fx(SecureEventsTotal(event, result).inc())
-
-  override def setActiveProjectCount(n: Int): Fx[Unit] =
-    Fx(ProjectsActive.set(n))
 
   private[this] implicit val projectSpa = WebSocketName("project_spa")
   private[this] val projectSpaOpen    = OpenWebSockets.apply

@@ -338,9 +338,6 @@ final class MockServer extends Server.Algebra[Name] {
 
   var nextClientIP = Option.empty[IP]
   override val clientIP = Name(nextClientIP)
-
-  var nextSessionId = Option.empty[SessionId]
-  override val sessionId = Name(nextSessionId)
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

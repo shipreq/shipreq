@@ -18,7 +18,6 @@ object Server {
 
   trait Session[F[_]] {
     val clientIP: F[Option[IP]]
-    val sessionId: F[Option[SessionId]]
   }
 
   trait Algebra[F[_]]
@@ -32,7 +31,6 @@ object Server {
     override def measureDuration[A](fa: F[A])   = underlying.measureDuration(fa)
     override def measureDuration_[A](fa: F[A])  = underlying.measureDuration_(fa)
     override val clientIP                       = underlying.clientIP
-    override val sessionId                      = underlying.sessionId
     override val now                            = underlying.now
   }
 

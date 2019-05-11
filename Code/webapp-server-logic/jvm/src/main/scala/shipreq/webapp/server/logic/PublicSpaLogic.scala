@@ -96,15 +96,10 @@ object PublicSpaLogic extends HasLogger {
 
           case Some(user) =>
             // Login succeeded
-            val logToDB = svr.clientIP.flatMap(ip => svr.fork(security.db.logLoginSuccess(user.id, ip)))
-            val log = F.point(logger.info(s"User #${user.id.value} logged in."))
-            val updateMetrics: F[Unit] =
-              metrics.securityEvent(Security.Event.Login, Security.Result.Success) >>
-                svr.sessionId.flatMap {
-                  case Some(s) => metrics.login(s, user)
-                  case None    => F.point(logger.warn("Login succeeded but session unavailable."))
-                }
-            val token = Security.SessionToken(Some(user))
+            val logToDB       = svr.clientIP.flatMap(ip => svr.fork(security.db.logLoginSuccess(user.id, ip)))
+            val log           = F.point(logger.info(s"User #${user.id.value} logged in."))
+            val updateMetrics = metrics.securityEvent(Security.Event.Login, Security.Result.Success)
+            val token         = Security.SessionToken(Some(user))
             log >> logToDB >> updateMetrics >| (Allow, Some(token))
 
           case None =>
