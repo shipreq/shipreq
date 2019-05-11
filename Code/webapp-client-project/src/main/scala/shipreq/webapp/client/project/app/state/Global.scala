@@ -18,10 +18,6 @@ import shipreq.webapp.client.project.app.state.Global.State
 abstract class Global(onFirstLoad: (Global, InitAppData) => Callback,
                       onInitFailure: ErrorMsg => Callback) extends Broadcaster[Changes] {
 
-  // TODO keep alive
-  // TODO reload
-  // TODO sync
-
   protected val logger = LoggerJs.on
 
   private var _state: State =

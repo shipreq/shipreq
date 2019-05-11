@@ -117,9 +117,19 @@ Phase 2B
 
 * Project SPA will try to re-establish a WebSocket connection ad-nauseum after JWT has expired
 
-* Benchmark ZIO to back Fx - UpdateContent seems to be crazy slow with current Fx
+* Only use Lift stateless dispatch
+* Add a correlation ID to JWTs / logs / traces
+* Redis
+  * Add async typeclass and/or support to Fx (?)
+  * Add Redis to project & env
+  * LUA scripts
+  * Real algebra impl
+  * Real pub/sub
+  * Determine when to send events vs snapshot
 
 * Add cache completion checks back into spec (filterComplete/isCompleteTo/etc)
+
+* Benchmark ZIO to back Fx - UpdateContent seems to be crazy slow with current Fx
 
 * Move into microlibs:
   * BinaryData
