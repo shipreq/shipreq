@@ -76,29 +76,23 @@ object PrometheusMetrics extends HasLogger {
     val LoginsActive             = new LoginsActive
     val HttpDuration             = new HttpDuration
     val HttpIO                   = new HttpIO
-    val HttpRequests             = new HttpRequests
     val HttpSessionsActive       = mkHttpSessionsActive
     val HttpSessionsTotal        = mkHttpSessionsTotal
     val ProjectsActive           = mkProjectsActive
     val SecureEventsTotal        = new SecureEventsTotal
-    val WebSocketMessages        = new WebSocketMessages
     val WebSocketMessageDuration = new WebSocketMessageDuration
     val WebSocketPushes          = new WebSocketPushes
     val WebSocketIO              = new WebSocketIO
+
+    // The following counters are omitted because they are provided by histogram counts
+    //
+    // http_requests_total  ← http_response_duration_seconds_count
+    // ws_messages_total    ← ws_message_duration_seconds_count
 
     // -----------------------------------------------------------------------------------------------------------------
 
     // Don't make this a val because of init order
     private def prefix = "shipreq_webapp_"
-
-    final class HttpRequests private[Metrics] {
-      private[this] val m =
-        Counter.build(prefix + "http_requests_total", "Total HTTP requests received")
-          .labelNames(Label.Method, Label.Name, Label.StatusCode, Label.Type)
-          .register()
-      def apply(implicit method: HttpMethod, endpoint: Endpoint, statusCode: StatusCode) =
-        m.labels(method.value, endpoint.name, statusCode.value, endpoint.`type`)
-    }
 
     final class HttpDuration private[Metrics] {
       private[this] val m =
@@ -159,10 +153,14 @@ object PrometheusMetrics extends HasLogger {
     private def mkProjectsActive =
       Gauge.build(prefix + "projects_active", "Projects currently being served").register()
 
-    final class WebSocketMessages private[Metrics] {
+    final class WebSocketMessageDuration private[Metrics] {
       private[this] val m =
-        Counter.build(prefix + "ws_messages_total", "Total WebSocket messages received")
+        Histogram.build(prefix + "ws_message_duration_seconds", "Duration of WebSocket requests in seconds")
           .labelNames(Label.Name, Label.MsgType, Label.Ok)
+          .buckets(
+            0.001, 0.003, 0.005, 0.010, 0.025, 0.050, 0.075,
+            0.100, 0.200, 0.300, 0.500, 0.750,
+            1, 2, 4, 8)
           .register()
       def apply(ok: Boolean)(implicit name: WebSocketName, msgType: MsgType) =
         m.labels(name.value, msgType.value, yesOrNo(ok))
@@ -175,19 +173,6 @@ object PrometheusMetrics extends HasLogger {
           .register()
       def apply(implicit name: WebSocketName) =
         m.labels(name.value)
-    }
-
-    final class WebSocketMessageDuration private[Metrics] {
-      private[this] val m =
-        Histogram.build(prefix + "ws_message_duration_seconds", "Duration of WebSocket requests in seconds")
-          .labelNames(Label.Name, Label.MsgType, Label.Ok)
-          .buckets(
-            0.001, 0.003, 0.005, 0.010, 0.025, 0.050, 0.075,
-            0.100, 0.200, 0.300, 0.500, 0.750,
-            1, 2, 4, 8)
-          .register()
-      def apply(ok: Boolean)(implicit name: WebSocketName, msgType: MsgType) =
-        m.labels(name.value, msgType.value, yesOrNo(ok))
     }
 
     final class WebSocketIO private[Metrics] {
@@ -239,8 +224,6 @@ object PrometheusMetrics extends HasLogger {
         }
 
         // printf(s"--- %-60s ---> %s\n", path, endpoint.toString)
-
-        HttpRequests.apply.inc()
 
         HttpDuration.apply.observe(durationSec)
 
@@ -349,7 +332,6 @@ final class PrometheusMetrics extends MetricsLogic[Fx] {
                                       ok      : Boolean): Fx[Unit] =
     Fx {
       implicit val msgTypeT = MsgType(msgType)
-      WebSocketMessages(ok).inc()
       WebSocketMessageDuration(ok).observe(duration)
       WebSocketIO.msg(CommDir.Recv, ok).inc(bytesIn)
       WebSocketIO.msg(CommDir.Send, ok).inc(bytesOut)
