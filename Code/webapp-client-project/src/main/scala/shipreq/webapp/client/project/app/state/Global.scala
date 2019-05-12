@@ -57,7 +57,7 @@ abstract class Global(onFirstLoad: (Global, InitAppData) => Callback,
       case ReadyState.Open =>
         unsafeState match {
           case _: State.Loading => load
-          case _: State.Active  => logger(_.debug("ReadyState became Open while State.Active"))
+          case s: State.Active  => reconnect(s.projectState)
         }
 
       case ReadyState.Closed =>
@@ -80,25 +80,34 @@ abstract class Global(onFirstLoad: (Global, InitAppData) => Callback,
       a2  = a1 <* logger.async(_.timeEnd("initApp"))
       _  <- a2.completeWith {
 
-        case Success(\/-(i)) => Callback {
-          unsafeState match {
-            case State.Loading(es) =>
-              val s = ProjectState.init(i.project, i.projectMetaData).addEventsSimple(es)
-              unsafeSetState(State.Active(s))
-              onFirstLoad(this, i).runNow()
-            case _: State.Active =>
-              logger.runNow(_.warn("InitApp response received but already State.Active"))
-          }
-        }
+              case Success(\/-(i)) => Callback {
+                unsafeState match {
+                  case State.Loading(es) =>
+                    val s = ProjectState.init(i.project, i.projectMetaData).addEventsSimple(es)
+                    unsafeSetState(State.Active(s))
+                    onFirstLoad(this, i).runNow()
+                  case _: State.Active =>
+                    logger.runNow(_.warn("InitApp response received but already State.Active"))
+                }
+              }
 
-        case Success(-\/(errMsg)) =>
-          onInitFailure(errMsg) >> wsClient.close
+              case Success(-\/(errMsg)) =>
+                onInitFailure(errMsg) >> wsClient.close
 
-        case Failure(err) =>
-          for {
-            _ <- logger(_.warn(s"Connection failure: ${err.getMessage}"))
-          } yield ()
-      }
+              case Failure(err) =>
+                logger(_.warn(s"Connection failure: ${err.getMessage}"))
+            }
+    } yield ()
+
+  protected def reconnect(ps: ProjectState): Callback =
+    for {
+      _  <- logger(l => l.info("WebSocket re-established. Requesting Reconnect...") >> l.time("reconnect"))
+      a1 <- wsClient.send(WsReqRes.Reconnect)(ps.ord)
+      a2  = a1 <* logger.async(_.timeEnd("reconnect"))
+      _  <- a2.completeWith {
+              case Success(ves) => addEvents(ves)
+              case Failure(err) => logger(_.warn(s"Connection failure: ${err.getMessage}"))
+            }
     } yield ()
 
   final def addEvents(recvEvents: VerifiedEvent.Seq): Callback =

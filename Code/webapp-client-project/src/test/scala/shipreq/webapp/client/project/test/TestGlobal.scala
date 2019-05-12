@@ -137,18 +137,8 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
   def failLast(): Unit =
     _reqs.last.fail()
 
-//  def addAutoResponse(f: Req => Option[Response]): this.type = {
-//    val old = _autoRespondLogic
-//    setAutoResponse(r => f(r).orElse(old(r)))
-//  }
-//
-//  def setAutoResponse(f: Req => Option[Response]): this.type = {
-//    _autoRespondLogic = f
-//    this
-//  }
-
-//  def enableAutoEventResponse(): this.type =
-//    addAutoResponse(autoEventResponse)
+  override def reconnect(ps: ProjectState): Callback =
+    Callback.empty
 
   private def autoEventResponse: TestGlobal#Req => Option[TestGlobal#Response] = {
     type MsgFnIn   [I]              = I
