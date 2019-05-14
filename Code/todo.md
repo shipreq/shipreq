@@ -127,8 +127,6 @@ Phase 2B
   * Real pub/sub
   * Determine when to send events vs snapshot
 
-* Add cache completion checks back into spec (filterComplete/isCompleteTo/etc)
-
 * Benchmark ZIO to back Fx - UpdateContent seems to be crazy slow with current Fx
 
 * Move into microlibs:

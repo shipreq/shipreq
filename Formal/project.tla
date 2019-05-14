@@ -123,8 +123,13 @@ IsUserInUse(u) ==
   \/ \E p \in pub    : p[1]   = u
   \/ u \in sub
 
-RedisPartialVer == IF redis.events = {} THEN redis.ver ELSE Max[redis.events]
-RedisTotalVer   == IF redis.ver    = 0  THEN 0         ELSE RedisPartialVer
+RedisTotalVer ==
+  LET IsComplete ==
+        \/ redis.events = {}
+        \/ redis.ver + 1 = Min[redis.events]
+      Ver ==
+        IF redis.events = {} THEN redis.ver ELSE Max[redis.events]
+  IN IF IsComplete THEN Ver ELSE 0
 
 ------------------------------------------------------------------------------------------------------------------------
 
