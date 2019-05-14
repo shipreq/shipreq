@@ -185,6 +185,7 @@ object WebappBuild {
       .configureJs(Common.jsSettings(NeedDom)) // TODO NeedDom isn't true but required cos webappBaseTest loads in Sizzle
       .dependsOn(webappBaseMember)
       .dependsOn(baseTest % Test, webappBaseTest % Test)
+      .depsForJvm(scaffeine)
       .depsForBoth(testScope(μTest ++ Nyaya.test))
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -249,7 +250,7 @@ object WebappBuild {
         javaOptions                  += s"-Dshipreq.assets=${(baseDirectory.value / Frontend.serve).absolutePath}",
         unmanagedResourceDirectories += baseDirectory.value / Frontend.serve,
         unmanagedResourceDirectories += baseDirectory.value / "src/main/webapp",
-        parallelExecution            := false) // Due to UserFixture+Oshiro and LiveTest
+        parallelExecution            := false) // Due to UserFixture and LiveTest
       ): _*)
 
     def consoleCmds = "def initLift() = {val b = new bootstrap.liftweb.Boot; b.configureLift; b}"
@@ -258,7 +259,7 @@ object WebappBuild {
       .enablePlugins(DockerPlugin)
       .configs(DockerDeps)
       .configure(Common.dockerBaseSettings("webapp"))
-      .deps(LibJetty.dist % DockerDeps)
+      .deps(LibJetty.distTarGz % DockerDeps)
       .settings(
         cleanFiles += baseDirectory.value / "target",
         classpathTypes in DockerDeps += "tar.gz", // for jetty-distribution
@@ -290,8 +291,9 @@ object WebappBuild {
       .enablePlugins(JettyPlugin, WarPlugin, DockerPlugin)
       .dependsOn(baseDb, baseOps, taskmanApi, webappServerLogicJvm, webappGenJvm)
       .deps(
-        Scalaz.core ++ Lift.webkit ++ Shiro.all ++ commonsLang ++ Nyaya.gen ++ Logback.withPlugins ++
-        Prometheus.client ++ Prometheus.hotspot ++ Prometheus.servlet ++ LibJetty.servletApi ++
+        Scalaz.core ++ Lift.webkit ++ SLF4J.jcl ++ commonsLang ++ Nyaya.gen ++ Logback.withPlugins ++ JJWT.all ++
+        Prometheus.client ++ Prometheus.hotspot ++ Prometheus.servlet ++
+        providedScope(LibJetty.javaxServletApi ++ LibJetty.javaxWebsocketApi) ++
         testScope(μTest ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
         (LibJetty.webapp % Test))
       .configure(
@@ -304,9 +306,10 @@ object WebappBuild {
         dockerSettings)
       .settings(
         scalacOptions -= "-Xcheckinit", // TODO https://github.com/scala/bug/issues/10437
-        containerLibs in Jetty := LibJetty.runner(JVM).map(_.intransitive()), // Specify Jetty version
+        containerLibs in Jetty := LibJetty.devRun(JVM),
         javaOptions in Jetty += "-Xmx1g",
         javaOptions in Jetty += "-XX:+UseG1GC", // Default in Java 9, may as well use it now
+        // javaOptions in Jetty += "-agentpath:/opt/jprofiler10/bin/linux-x64/libjprofilerti.so=port=8849,nowait",
         initialCommands += consoleCmds,
         fullClasspath in console in Compile += file("src/main/webapp")) // So templates can be loaded from console
   }

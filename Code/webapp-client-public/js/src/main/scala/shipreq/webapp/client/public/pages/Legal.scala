@@ -37,7 +37,6 @@ object Legal {
   }
 
   import Dsl._
-  import Common.a_toNewWindow
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -104,9 +103,9 @@ object Legal {
         "Google Analytics uses cookies to collect information about which pages you visit, how long you are on the site, how you got there (for example from a search engine, a link, an advertisement etc.) and what you select. Information collected by the cookies (including your IP address) is transmitted to and stored by Google on servers in the United States.",
         TagMod(
           "By using this website, you consent to the processing of data about you by Google in the manner described in ",
-          a_toNewWindow("//www.google.com/policies/privacy/")("Google's Privacy Policy"),
+          <.a.toNewWindow("//www.google.com/policies/privacy/")("Google's Privacy Policy"),
           " and for the purposes set out above. You can ",
-          a_toNewWindow("//tools.google.com/dlpage/gaoptout")("opt out of Google Analytics"),
+          <.a.toNewWindow("//tools.google.com/dlpage/gaoptout")("opt out of Google Analytics"),
           " if you disable or refuse the cookie, or use the opt-out service provided by Google."
         )
       ),
@@ -125,7 +124,7 @@ object Legal {
 
       footer(
         lastUpdated("2014-01-15", "15 January, 2014"),
-        <.div(*.generatedBy, "Privacy policy originally created by ", a_toNewWindow("http://www.generateprivacypolicy.com")("Generate Privacy Policy"), ".")
+        <.div(*.generatedBy, "Privacy policy originally created by ", <.a.toNewWindow("http://www.generateprivacypolicy.com")("Generate Privacy Policy"), ".")
       )
     )
   ).build

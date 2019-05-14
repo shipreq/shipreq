@@ -4,6 +4,7 @@ import java.time.Instant
 import utest._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.FieldStaticRemove
+import shipreq.webapp.server.logic.DB.SaveProjectEventCmd
 import shipreq.webapp.server.logic.{HomeSpaLogic, Obfuscators}
 import shipreq.webapp.server.test.WebappServerTestUtil._
 import shipreq.webapp.server.test._
@@ -24,6 +25,7 @@ object HomeSpaTest extends TestSuite {
 
           // Create
           val pi = xa ! HomeSpaLogic.createProject(uid, name, Instant.now())
+          val initEvents = 2
 
           val pid = Obfuscators.projectId.deobfuscate(pi.id).toOption.get
           def events() = (xa ! db.getAllProjectEvents(pid)).toVector
@@ -31,7 +33,9 @@ object HomeSpaTest extends TestSuite {
 
           // Immediate result
           assertEq("Immediate name", pi.name, name)
-          assertEq("Immediate eventCount", pi.eventCount, 0)
+          assertEq("Immediate.initEventCount", pi.initEventCount, initEvents)
+          assertEq("Immediate.totalEventCount", pi.totalEventCount, initEvents)
+          assertEq("Immediate.nonInitEventCount", pi.nonInitEventCount, 0)
           assertEq("Immediate reqCount", pi.reqCount, 0)
 
           // Reloaded result
@@ -41,7 +45,7 @@ object HomeSpaTest extends TestSuite {
           assertFields(pi, a)
             .assertEq(_.id)
             .assertEq("Reloaded name", _.name)
-            .assertEq("Reloaded eventCount", _.eventCount)
+            .assertEq("Reloaded.nonInitEventCount", _.nonInitEventCount)
             .assertEq("Reloaded reqCount", _.reqCount)
           assertEq("Event count", events().length, 2)
 
@@ -50,9 +54,10 @@ object HomeSpaTest extends TestSuite {
           val p = loadProject()
           val e = FieldStaticRemove(StaticField.StepGraph)
           val ve = verifyEvent(p, e)
-          xa ! db.saveProjectEvent(pid)(nextOrd, e, ve.hashRecs)
+          val cmd = SaveProjectEventCmd(nextOrd, e, ve.hashRecs)
+          xa ! db.saveProjectEvent(pid, cmd)
           val a2 = (xa ! db.getAllProjectMetaDataForUser(uid)).head
-          assertEq("Next eventCount", a2.eventCount, a.eventCount + 1)
+          assertEq("Next.nonInitEventCount", a2.nonInitEventCount, a.nonInitEventCount + 1)
           loadProject()
         }
 

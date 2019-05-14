@@ -21,6 +21,9 @@ object VerifiedEvent {
   object Seq {
     val empty: Seq =
       TreeSet.empty
+
+    def one(e: VerifiedEvent): Seq =
+      empty + e
   }
 
   final case class NonEmptySeq(head: VerifiedEvent, tail: Seq) {

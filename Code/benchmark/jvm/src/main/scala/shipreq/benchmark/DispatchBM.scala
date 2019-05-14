@@ -11,7 +11,7 @@ import scalaz.effect.IO
 import scalaz.Free.Trampoline
 import scalaz.std.function.function0Instance
 import scalaz.syntax.monad._
-import scalaz.{Monad, Name, \/, \/-}
+import scalaz.{Monad, Name, Need, \/, \/-}
 import shipreq.base.util._
 import shipreq.taskman.api.MsgId
 import shipreq.webapp.base.Urls
@@ -92,7 +92,7 @@ class DispatchBM {
 
   def test[F[_]](i: Interpreters[F])(f: Interpreters[F] => Request[Request[Unit]] => F[Response]): Any = {
     val d = f(i)
-    DispatchRequests.map(r => i.run(d(Request(r.method, r.path, r.param, r))))
+    DispatchRequests.map(r => i.run(d(Request(r.method, r.path, noBody, r.param, r.cookie, r))))
   }
 
   @Benchmark def trampoline1 = test(DispatchBM.trampoline)(_.dispatcher1)
@@ -106,19 +106,27 @@ object DispatchBM {
 
   implicit val config = ServerConfig(
     baseUrl                    = Url.Absolute.Base("https://test.shipreq.com"),
-    attackFrustrationDelay     = 1 hours,
-    securityTokenLength        = 8,
-    registrationTokenLifespan  = 7 days,
-    passwordResetTokenLifespan = 4 days,
     publicRegistration         = Allow,
     googleAnalyticsTrackingId  = None,
     taskmanSchema              = "test_taskman",
-    prometheus                 = ServerConfig.Prometheus.default.copy(enabled = false),
-    jaegerTracingConfig        = None,
     initTaskmanOnBoot          = false,
-    initTaskmanRetry           = RetryCriteria(2 hours, Some(666)))
+    initTaskmanRetry           = Retries.none,
+    jaegerTracingConfig        = None,
+    prometheus                 = ServerConfig.Prometheus.default.copy(enabled = false),
+    security = ServerConfig.Security(
+      attackFrustrationDelay     = 1 hours,
+      jwtCookieSecure            = false,
+      jwtLifespan                = 24 hours,
+      jwtSecret                  = new ServerConfig.Security.JwtSecret("x"*64),
+      jwtSecretPrevious          = None,
+      passwordSaltLength         = 64,
+      securityTokenLength        = 8,
+      registrationTokenLifespan  = 7 days,
+      passwordResetTokenLifespan = 4 days))
 
-  val user = User(UserId(1), Username("asds"), EmailAddr("x@x.com"), Set.empty)
+  val noBody: Need[Option[BinaryData]] = scalaz.Value(None)
+
+  val user = User(UserId(1), Username("asds"), Set.empty)
   val ps = PasswordAndSalt(PasswordHash("wdsef34r"), Salt("32165498bdef"))
 
   final class Interpreters[F[_]](val run: F[_] => Any)(implicit val F: Monad[F]) {
@@ -138,24 +146,32 @@ object DispatchBM {
     }
 
     implicit object security extends Security.Algebra[F] {
-      var loginSuccess = true
-      var loggedIn = Option.empty[User]
-
       override val db                                 = self.db
       val delay                                       = F.point(())
       override def protect[A](vulnerable: F[A])       = delay >> vulnerable
       override def hashPassword(p: PlainTextPassword) = F point ps
-      override val isAuthenticated                    = F.point(loggedIn.isDefined)
-      override val authenticatedUser                  = F.point(loggedIn)
-      override val logout                             = F.point{loggedIn = None}
+      private val loggedInToken                       = Some(Security.SessionToken(Some(user)))
+      private val anonToken                           = Some(Security.SessionToken.anonymous)
+      private val cookieName                          = Cookie.Name("S")
 
-      override def attemptLogin(u: \/[Username, EmailAddr], p: PlainTextPassword) =
-        F.point { loggedIn = Option.when(loginSuccess)(user); loggedIn }
+      override def attemptLogin(u: Username \/ EmailAddr, p: PlainTextPassword) = F.point {
+        Option.when(u.fold(_ == user.username, _ => ???))(user)
+      }
+      override def sessionRestore(cookies: Cookie.LookupFn) = F.point {
+        cookies(cookieName) flatMap {
+          case "1" => loggedInToken
+          case _   => anonToken
+        }
+      }
+      override def sessionPersist(token: Security.SessionToken) = F.point {
+        val value = if (token.authenticatedUser.isEmpty) "" else "1"
+        val cookie = Cookie(cookieName, value, None, None, None)
+        Cookie.Update.add(cookie)
+      }
     }
 
     implicit val svrSession: Server.Session[F] = new Server.Session[F] {
       override val clientIP: F[Option[IP]] = F.pure(None)
-      override val sessionId: F[Option[SessionId]] = F.pure(None)
     }
 
     implicit val svrTime: Server.Time[F] = new Server.Time[F] {
@@ -166,6 +182,12 @@ object DispatchBM {
           a     <- f
           end   <- now
         } yield (a, Duration.between(start, end))
+      override def measureDuration_[A](f: F[A]): F[Duration] =
+        for {
+          start <- now
+          _     <- f
+          end   <- now
+        } yield Duration.between(start, end)
     }
 
     implicit val metrics: MetricsLogic[F] =
@@ -174,8 +196,19 @@ object DispatchBM {
     implicit val trace: TraceLogic[F, Request[Unit], Response] =
       TraceLogic.off
 
-    implicit val publicApi: PublicSpaLogic.ForApi[F] =
-      _ => F.pure(\/-(MsgId(1000)))
+    implicit object publicSpa extends PublicSpaLogic[F] {
+      override def apiRegister1(emailAddr: String) = F.pure(\/-(MsgId(1000)))
+      override val ajaxLandingPage    = _ => ???
+      override val ajaxLogin          = _ => ???
+      override val ajaxRegister1      = _ => ???
+      override val ajaxRegister2      = _ => ???
+      override val ajaxResetPassword1 = _ => ???
+      override val ajaxResetPassword2 = _ => ???
+    }
+
+    implicit object homeSpa extends HomeSpaLogic.Ajax[F] {
+      override val ajaxCreateProject = (_, _) => ???
+    }
 
     implicit object ops extends OpsEndpoints[F] {
       override def dbStats                           = F.pure(null)
@@ -185,7 +218,7 @@ object DispatchBM {
     }
 
     val dispatchLogic = new DispatchLogic[F, Request[Unit], Response](
-      r => Request(r.method, r.path, r.param, r), (_, r) => F.point(r))
+      r => Request(r.method, r.path, noBody, r.param, r.cookie, r), (_, r) => F.point(r))
 
     val dispatcher1 = dispatchLogic.Main.routes.withFallback(dispatchLogic.Main.fallback)
 //    val dispatcher2 = dispatchLogic.Main.cacheUsualPaths(dispatcher1)
@@ -197,11 +230,12 @@ object DispatchBM {
     import Method._
     implicit def autoXID(p: ProjectId): ProjectId.Public = Obfuscators.projectId.obfuscate(p)
     val param: String => Option[String] = _ => None
+    val cookie: Cookie.Name => Option[String] = _ => None
     val token = SecurityToken("MnVC8cvPX9b1jiCpyxoYLk4RqQ8idHlV4lf7OHzIQctHLgw6C")
     val b = List.newBuilder[Request[Unit]]
-    b ++= Urls.PublicSpaRoute.static.whole.toList.map(r => Request(Get, r.url, param, ()))
-    b ++= Urls.MemberRoute.static.whole.toList.map(r => Request(Get, r.url, param, ()))
-    b ++= Urls.PublicSpaRoute.needsToken.whole.toList.map(r => Request(Get, r.url(token), param, ()))
+    b ++= Urls.PublicSpaRoute.static.whole.toList.map(r => Request(Get, r.url, noBody, param, cookie, ()))
+    b ++= Urls.MemberRoute.static.whole.toList.map(r => Request(Get, r.url, noBody, param, cookie, ()))
+    b ++= Urls.PublicSpaRoute.needsToken.whole.toList.map(r => Request(Get, r.url(token), noBody, param, cookie, ()))
 //    b ++= (1 to 10).map(i => Request(Get, Urls.project(ProjectId(i)), param))
     val rs = b.result()
     List.fill(10)(rs).flatten

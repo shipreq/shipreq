@@ -12,7 +12,7 @@ object ProjectMetaDataTest extends TestSuite {
     'applyEvent {
       val (_, vesInit, ves) = RandomEventStream.entireEventStream(100).samples().next()
       var p = applyVerifiedEventSuccessfully(Project.empty, vesInit: _*)
-      var md = looseProjectMetaData(p, eventCount = vesInit.length)
+      var md = looseProjectMetaData(p, totalEventCount = vesInit.length)
       val now = Instant.now()
       for (ve <- ves) {
         p = applyEventSuccessfully(p, ve.event)

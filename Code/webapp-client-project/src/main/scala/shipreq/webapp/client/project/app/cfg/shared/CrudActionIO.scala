@@ -3,27 +3,18 @@ package shipreq.webapp.client.project.app.cfg.shared
 import japgolly.scalajs.react.Callback
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.client.project.app.state.ClientData
 import shipreq.webapp.base.data.TCB
-import shipreq.webapp.base.protocol.ClientProtocol
 import DataImplicits._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.event.VerifiedEvent
-
-object CrudActionIO {
-  def apply[O, D, I, U](o: O, rd: CrudProtocol[I, U])
-                       (cp: ClientProtocol, remote: rd.Instance, clientData: ClientData)
-                       (implicit O: ObjDataId[O, D, I]) =
-    new CrudActionIO[D, I, U](clientData.serverSideProcToEvents(cp, remote))
-}
 
 /**
  * @tparam D Data type.
  * @tparam I Data ID.
  * @tparam U Updated data values.
  */
-final class CrudActionIO[D, I, U](proc: ServerSideProcInvoker[CrudAction[I, U], ErrorMsg, VerifiedEvent.Seq])
-                                 (implicit I: DataIdAux[D, I]) {
+final case class CrudActionIO[D, I, U](proc: ServerSideProcInvoker[CrudAction[I, U], ErrorMsg, VerifiedEvent.Seq])
+                                      (implicit I: DataIdAux[D, I]) {
 
   private def crudIO(s: TCB.Success, f: TCB.Failure, a: CrudAction[I, U]): Callback =
     proc(a, _ => s, _ => f)

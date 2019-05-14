@@ -123,7 +123,7 @@ services:
 
   # You wouldn't do this in prod - it uses in-memory storage
   jaeger:
-    image: jaegertracing/all-in-one:1.10.0
+    image: jaegertracing/all-in-one:1.11.0
     container_name: shipreq_dev_jaeger
     ports:
       - $PORT_JAEGER_HTTP:16686

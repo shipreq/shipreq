@@ -42,7 +42,7 @@ class ProjectHomeObs($: DomZipperJs) {
 
 object ProjectHomeTestDsl {
 
-  val * = Dsl[MockServer, ProjectHomeObs, Project]
+  val * = Dsl[TestGlobal, ProjectHomeObs, Project]
 
   val invariants: *.Invariants =
     *.focus("Req count").obsAndState(_.reqCount, _.content.reqs.size).assert.equal &
@@ -86,7 +86,7 @@ object ProjectHomeTestDsl {
     editValue.assert(text)
 
   val serverDontAutoRespond =
-    *.action("Prevent server auto-responding")(_.ref.autoRespond = false)
+    *.action("Prevent server auto-responding")(_.ref.disableAutoResponse())
 
   val serverAutoRespondToLast =
     *.action("Server responds")(_.ref.autoRespondToLast())

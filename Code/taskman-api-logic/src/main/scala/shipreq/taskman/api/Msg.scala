@@ -3,7 +3,7 @@ package shipreq.taskman.api
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq.UnivEq
-import shipreq.base.util.Util
+import shipreq.base.util.{StaticLookupFn, Util}
 
 /**
  * A datum that can be sent to the Taskman server and meaningfully processed.
@@ -66,27 +66,14 @@ object MsgType {
 
   val values = AdtMacros.adtValues[MsgType].whole.toList
 
-  private[this] val byId: Map[Short, MsgType] = {
-    val groups = values.groupBy(_.id)
-    val dupGroups = groups.filterNot(_._2.size == 1)
-    if (dupGroups.nonEmpty)
-      throw new ExceptionInInitializerError(s"${classOf[MsgType].getSimpleName} with duplicate IDs found: $dupGroups")
-    groups.mapValuesNow(_.head)
-  }
+  private[this] val byId: Map[Short, MsgType] =
+    StaticLookupFn.mapBy(values)(_.id)
 
-  private[this] val byMsgClass: Map[Class[_ <: Msg], MsgType] = {
-    val groups = values.groupBy(_.msgClass)
-    val dupGroups = groups.filterNot(_._2.size == 1)
-    if (dupGroups.nonEmpty)
-      throw new ExceptionInInitializerError(s"${classOf[MsgType].getSimpleName} with duplicate ${classOf[Msg].getSimpleName} classes found: $dupGroups")
-    groups.mapValuesNow(_.head)
-  }
+  private[this] val byMsgClass: Map[Class[_ <: Msg], MsgType] =
+    StaticLookupFn.mapBy(values)(_.msgClass)(UnivEq.force)
 
   private[this] val byMsgClassName: Map[String, MsgType] =
     byMsgClass.toList.map(_.map1(_.getSimpleName)).toMap
-
-  assert(byId.size == byMsgClass.size)
-  assert(byId.size == byMsgClassName.size)
 
   @inline def lookup(id: Short)   : Option[MsgType] = byId get id
   @inline def lookup(name: String): Option[MsgType] = byMsgClassName get name

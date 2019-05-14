@@ -5,10 +5,9 @@ import japgolly.scalajs.react.ScalazReact._
 import scalaz.{Name, Need}
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.event.VerifiedEvent
-import shipreq.webapp.base.protocol.{ClientProtocol, ServerSideProc, ServerSideProcInvoker}
+import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.validation._
 import shipreq.webapp.base.data.TCB
-import shipreq.webapp.client.project.app.state.ClientData
 
 object Persistence {
 

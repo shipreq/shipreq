@@ -18,7 +18,6 @@ import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.app._
 import shipreq.webapp.server.lib.Taskman
-import shipreq.webapp.server.security.AppSecurityRealm
 
 @Lenses
 final case class BootConfig(db: DbConfig, server: ServerConfig, report: ConfigReport)
@@ -41,21 +40,23 @@ class Boot {
     runMode foreach setRunMode
     logger.info(s"RunMode = ${Props.mode}")
 
-    // Create services
-    implicit val serverConfig = cfg.server
-    implicit val dbAccess = initDatabase(cfg)
-    initShiro()
-    configureLift()
-    Global.Instance = Global.default
+    import cfg.server.traceAlgebraFx.{newSpanImpure => trace}
+    trace("Boot") { _ =>
 
-    // Prepare services
-    preloadTemplates()
-    initOps(Global.Instance)
-    initRoutes(Global.Instance)
-    initTaskman(Global.Instance)
+      // Create services
+      implicit val serverConfig = cfg.server
+      implicit val dbAccess = trace("initDatabase")(_ => initDatabase(cfg))
+      trace("configureLift")(_ => configureLift())
+      Global.Instance = trace("Global")(_ => Global.default)
 
-    // Start services
-    initPrometheus(cfg.server.prometheus)
+      // Prepare services
+      trace("preloadTemplates")(_ => preloadTemplates())
+      trace("initRoutes")(_ => initRoutes(Global.Instance))
+      trace("initTaskman")(_ => initTaskman(Global.Instance))
+
+      // Start services
+      trace("initPrometheus")(_ => initPrometheus(cfg.server.prometheus))
+    }
   }
 
   def readConfig(): (BootConfig, Option[RunModes.Value]) = {
@@ -151,9 +152,6 @@ class Boot {
     HttpStatusHandler.init()
   }
 
-  def initShiro(): Unit =
-    AppSecurityRealm.init()
-
   def initDatabase(cfg: BootConfig): DbAccess = {
     val dbCfg = cfg.db
 
@@ -190,19 +188,6 @@ class Boot {
     HomeSpa
     ProjectSpa
     PublicSpa
-  }
-
-  def initOps(g: Global): Unit = {
-    val m = g.metrics
-
-    val sessionStart: (LiftSession, Req) => Unit =
-      (s, _) => m.sessionStart(ServerInterpreter.getSessionId(s)).unsafeRun()
-
-    val sessionEnd: LiftSession => Unit =
-      s => m.sessionEnd(ServerInterpreter.getSessionId(s)).unsafeRun()
-
-    LiftSession.afterSessionCreate ::= sessionStart
-    LiftSession.onShutdownSession ::= sessionEnd
   }
 
   def initRoutes(g: Global): Unit = {

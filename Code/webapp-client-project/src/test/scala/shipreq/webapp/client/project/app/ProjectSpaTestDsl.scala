@@ -8,10 +8,12 @@ import monocle.macros.Lenses
 import scala.util.{Failure, Success, Try}
 import teststate.run.Report.AssertionSettings
 import shipreq.base.util.Debug._
-import shipreq.webapp.base.data.{ExternalPubid, Project}
+import shipreq.webapp.base.data.{ExternalPubid, Obfuscated, Project, ProjectId}
 import shipreq.webapp.base.event.Event
-import shipreq.webapp.base.test.{MockRemotes, SampleProject5}
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.InitPageData
+import shipreq.webapp.base.test.SampleProject5
 import shipreq.webapp.base.test._
+import shipreq.webapp.base.user.Username
 import shipreq.webapp.client.project.app.cfg.reqtypes.{CfgReqTypesObs, CfgReqTypesDsl => CRT}
 import shipreq.webapp.client.project.app.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
 import shipreq.webapp.client.project.app.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
@@ -37,7 +39,7 @@ object ProjectSpaTestDsl {
       component = ReactTestUtils.modifyProps(c, component)(f)
   }
 
-  case class Ref(cd: TestClientData, svr: MockServer, tester: ComponentTester[Props, State, _]) {
+  case class Ref(global: TestGlobal, tester: ComponentTester[Props, State, _]) {
     def observe(): Obs = {
       val $ = tester.component.domZipper
       val nav = new NavObs($(">nav"))
@@ -45,13 +47,13 @@ object ProjectSpaTestDsl {
 
       val empty: Obs = {
         val e = Left("Chosen page is: " + nav.page)
-        Obs(cd.project(), nav, e, e, e, e)
+        Obs(global.unsafeProject(), nav, e, e, e, e)
       }
 
       nav.page match {
         case Page.Index        => empty.copy(home        = Try(new ProjectHomeObs(inner)))
         case Page.CfgReqTypes  => empty.copy(cfgReqTypes = Try(new CfgReqTypesObs(inner)))
-        case Page.ReqTable     => empty.copy(reqTable    = Try(new ReqTableObs(svr, inner)))
+        case Page.ReqTable     => empty.copy(reqTable    = Try(new ReqTableObs(global, inner)))
         case Page.ReqDetail(_) => empty.copy(reqDetail   = Try(new ReqDetailObs(inner)))
         case _                 => empty
       }
@@ -104,7 +106,7 @@ object ProjectSpaTestDsl {
 
   implicit lazy val transformPH =
     PH.*.transformer
-      .mapR[Ref](_.svr)
+      .mapR[Ref](_.global)
       .pmapO[Obs](_.home)
       .mapS(TestState.project.get)((a, b) => TestState.project.set(b)(a)) // TODO Add Monocle support
 
@@ -116,7 +118,7 @@ object ProjectSpaTestDsl {
 
   implicit lazy val transformRT =
     RT.*.transformer
-      .mapR[Ref](r => RT.Ref(r.tester.component zoomStateL State.reqTable, r.svr))
+      .mapR[Ref](r => RT.Ref(r.tester.component zoomStateL State.reqTable, r.global))
       .pmapO[Obs](_.reqTable)
       .mapS(TestState.project.get)((a, b) => TestState.project.set(b)(a)) // TODO Add Monocle support
 
@@ -159,7 +161,7 @@ object ProjectSpaTestDsl {
     applyEvents(e.mkString("Apply events: ", ", ", "."), e: _*)
 
   def applyEvents(name: => String, es: Event*): *.Actions =
-    *.action(name)(_.ref.cd.applyTestEventsCB(es: _*).runNow())
+    *.action(name)(_.ref.global.applyTestEventsCB(es: _*).runNow())
       .updateStateBy(i => i.state.copy(project = i.obs.project))
 
   def liftProjectHomeTests(p: PH.*.Plan): *.Plan = p.lift
@@ -176,18 +178,19 @@ object ProjectSpaTestDsl {
               page   : Page,
               project: Project  = SampleProject5.project,
               rd     : RD.State = RD.unspecifiedState): Unit = {
-    val cd   = TestClientData(project)
-    val svr  = MockServer(cd)
-    val spa  = new LoadedRoot(MockRemotes.projectSpa(project), svr, cd)
-    val rc   = MockRouterCtl[Page]()
-    val init = TestState(page, cd.project(), rd)
+
+    val global       = TestGlobal(project)
+    val initPageData = InitPageData(Username("testuser"), Obfuscated("xyz"), project.name)
+    val spa          = new LoadedRoot(initPageData, global)
+    val rc           = MockRouterCtl[Page]()
+    val init         = TestState(page, global.unsafeProject(), rd)
 
     ReactTestUtils.withRenderedIntoBody(spa.Component(Props(init.page, rc))) { m =>
       val tester = new ComponentTester(spa.Component)(m)
       val report = Plan(action, invariants)
                      .test(Observer(_.observe()))
                      .withInitialState(init)
-                     .withRefByName(Ref(cd, svr, tester))
+                     .withRefByName(Ref(global, tester))
                      .run()
       assertTestState(report)
 //      assertTestState(r, println(s"${"=" * 120}\n${htmlScrub run tester.component.getDOMNode.map(_.asElement).outerHTML}\n"))

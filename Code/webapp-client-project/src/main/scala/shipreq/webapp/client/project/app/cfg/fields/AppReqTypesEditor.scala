@@ -8,7 +8,7 @@ import monocle.Lens
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{IMap, Optics}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.lib.Logger
+import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.cfg.shared.{FieldSet => _, _}
 import shipreq.webapp.client.project.widgets.ISubsetEditor
@@ -62,7 +62,7 @@ class AppReqTypesEditor(customReqTypes: TraversableOnce[CustomReqType]) {
       val (id, value) = ei.data
 
       def cbh(cb: ei.CBH): Callback =
-        ei.editable.fold(Logger(_ log s"Can't interpret ApplicableReqTypesEditor callback."))(_(cb))
+        ei.editable.fold(LoggerJs(_ log s"Can't interpret ApplicableReqTypesEditor callback."))(_(cb))
 
       val mode: M =
         id match {

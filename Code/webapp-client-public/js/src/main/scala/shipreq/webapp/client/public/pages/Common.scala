@@ -47,17 +47,4 @@ private[pages] object Common {
       }
     }
 
-  // TODO Delete after upgrade to scalajs-react 1.1.0
-  def a_toNewWindow(href: String,
-                    noopener: Boolean = true,
-                    noreferrer: Boolean = false) = {
-    val a = <.a(^.target.blank, ^.href := href)
-    (noopener, noreferrer) match {
-      case (true, false) => a(^.rel := "noopener")
-      case (true, true) => a(^.rel := "noopener noreferrer")
-      case (false, true) => a(^.rel := "noreferrer")
-      case (false, false) => a
-    }
-  }
-
 }

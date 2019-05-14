@@ -62,7 +62,7 @@ object RandomEventStream {
       liftGE(RandomData.events.genProjectTemplateApply),
       liftPGE(ApplicableEventGen(_).genProjectNameSet),
     ).sequenceU
-      .run((Project.empty, EventOrd(0)))
+      .run((Project.empty, EventOrd.first))
 
   val verifiedEvent: ProjectDepGen[VerifiedEvent] =
     StateGen(ApplicableEventGen(_).verifiedEvent)

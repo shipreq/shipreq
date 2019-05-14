@@ -1,24 +1,27 @@
 package shipreq.webapp.base.protocol
 
+import boopickle.Pickler
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.user._
+import shipreq.webapp.base.Urls
 import BoopickleMacros._
 import BinCodecGeneric._
-import BinCodecMemberData._
 import BinCodecUser._
+import BinCodecMemberData._
 
 /**
   * Protocols for the Home SPA / webapp-client-home module.
   */
 object HomeSpaProtocols {
 
-  val CreateProject = ServerSideProc.Protocol[String, ProjectMetaData]("Home.CreateProject")
+  private def ajax[Req: Pickler, Res: Pickler](path: String): Protocol.Ajax.Simple[Pickler, Req, Res] =
+    Protocol.Ajax.Simple(Urls.ajaxRoot / "h" / path, Protocol(implicitly), Protocol(implicitly))
 
-  import CreateProject.{pickleInstance => _i1}
+  val createProject = ajax[String, ProjectMetaData]("p")
 
-  final case class InitData(username     : Username,
-                            projects     : List[ProjectMetaData],
-                            createProject: CreateProject.Instance)
+  final case class InitData(username: Username,
+                            projects: List[ProjectMetaData])
 
   implicit val picklerInitData = pickleCaseClass[InitData]
 

@@ -23,8 +23,8 @@ object SqlHelpers {
     Composite.generic
 
   implicit val doobieCompositeUser: Composite[User] =
-    Composite[(UserId, Username, EmailAddr, Option[String])]
-      .readOnly(r => User(r._1, r._2, r._3, userRoles(r._4)))
+    Composite[(UserId, Username, Option[String])]
+      .readOnly(r => User(r._1, r._2, userRoles(r._3)))
 
   def userRoles(r: Option[String]): Set[String] =
     r match {
@@ -33,12 +33,13 @@ object SqlHelpers {
     }
 
   implicit val doobieCompositeProjectMetaData: Composite[ProjectMetaData] =
-    Composite[(ProjectId, String, Int, Int, Instant, Option[Instant])].readOnly {
-      case(id, name, evCount, reqCount, createdAt, lastUpdatedAt) =>
+    Composite[(ProjectId, String, Int, Int, Int, Instant, Option[Instant])].readOnly {
+      case(id, name, initEvents, eventMaxOrd, reqCount, createdAt, lastUpdatedAt) =>
         ProjectMetaData(
           Obfuscators.projectId.obfuscate(id),
           name unNull "",
-          evCount,
+          initEvents,
+          eventMaxOrd,
           reqCount,
           createdAt,
           lastUpdatedAt)

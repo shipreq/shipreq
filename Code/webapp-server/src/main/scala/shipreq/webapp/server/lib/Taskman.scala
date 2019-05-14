@@ -16,14 +16,11 @@ object Taskman {
       K.homeUrl  -> g.config.baseUrl.value,
       K.loginUrl -> (g.config.baseUrl / Urls.login).absoluteUrl)
 
-  def webappErrorOccurred(e: Throwable, url: Option[String], suppInfo: String): WebappErrorOccurred =
-    WebappErrorOccurred(
-      Global.security.authenticatedUser.unsafeRun().map(_.id.toTaskman),
-      url,
-      ArticulateError(e).hint(suppInfo).show)
-
-  def submitAsync(w: WebappErrorOccurred): Fx[Unit] =
-    Fx.unit // TODO
+//  def webappErrorOccurred(e: Throwable, url: Option[String], suppInfo: String): WebappErrorOccurred =
+//    WebappErrorOccurred(
+//      Global.security.authenticatedUser.unsafeRun().map(_.id.toTaskman),
+//      url,
+//      ArticulateError(e).hint(suppInfo).show)
 
 //  private object AsyncActor extends SpecializedLiftActor[Msg] {
 //    override protected def messageHandler = {

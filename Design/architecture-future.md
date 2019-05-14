@@ -102,34 +102,6 @@ TARGET STATE
     * Later in cluster node which supports online up/down scaling of shards and/or replicas
   * Algorithm for snapshot/event caching detailed in `Format/project.tla`
 
-MIGRATION
-=========
-* PublicSpa
-  * Read JWT from request
-  * Add JWT to response (or at least update expiry time)
-  * New SSPs
-    * New defns, new types, new codecs
-    * Server-side JWT check
-    * Client side AJAX (compare with Lift's. Add features? Auto retry maybe?)
-  * Use Lift stateless dispatch
-* HomeSpa
-  * use new AJAX procs
-  * use Lift stateless dispatch
-* ProjectSpa
-  * Establish WebSocket
-  * Re-establist WebSocket on loss
-  * Generic req/respond over WebSocket (eg. (ReqId, Req) => | => (ReqId, Resp))
-  * Project AJAX over WS
-  * Push events over WS
-    * Add Redis
-    * Redis pub/sub
-    * Remove comets
-  * use Lift stateless dispatch
-* Remove
-  * Old SSP
-  * Shiro
-* Implement protocol & caching according to TLA+ spec
-
 
 REJECTED / FUTURE IDEAS
 =======================

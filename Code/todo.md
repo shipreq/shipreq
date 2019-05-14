@@ -97,6 +97,8 @@ Phase 2B
 
 * Cell copy-and-paste on Req{Table,Detail}
 
+* Bug: Project SPA, edit cell, kill server, commit, expect failure, esc, open editor, previous failure still exists; should have been cleared on Esc
+
 * Issues prototype: add collapse/expand by issue{type,} columns
 
 * Allow system to add new field/columns in future without breaking existing projects.
@@ -111,4 +113,31 @@ Phase 2B
   Could add to test-state... But then how to make it account for tiny differents like moment.js "updated x sec ago" things?
   Any free tool?
 
-* Benchmark ZIO to back Fx
+* Upgrade to Postgres 11
+
+* Project SPA will try to re-establish a WebSocket connection ad-nauseum after JWT has expired
+
+* Only use Lift stateless dispatch
+* Add a correlation ID to JWTs / logs / traces
+* Redis
+  * Add async typeclass and/or support to Fx (?)
+  * Add Redis to project & env
+  * LUA scripts
+  * Real algebra impl
+  * Real pub/sub
+  * Determine when to send events vs snapshot
+
+* Add cache completion checks back into spec (filterComplete/isCompleteTo/etc)
+
+* Benchmark ZIO to back Fx - UpdateContent seems to be crazy slow with current Fx
+
+* Move into microlibs:
+  * BinaryData
+  * Binary{Js,Jvm}
+  * StaticLookupFn
+  * LoggerJs
+  * {,Fake}WebSocket (?)
+  * SetDiff
+  * PotentialChange
+  * IsoBool + Validity, Enabled, etc (?)
+  * JavaTimeHelpersTest

@@ -11,17 +11,8 @@ object OpenTracing {
 
       override type Span = io.opentracing.Span
 
-      private def withNewSpan[A](createSpan: => Span)(f: Span => Fx[A]): Fx[A] =
-        Fx {
-          val span = createSpan
-          unsafeWithSpanActivated(span, true)(f(span).unsafeRun())
-        }
-
-      private def withSpanActivated[A](span: Span, closeSpan: Boolean, f: Fx[A]): Fx[A] =
-        Fx(unsafeWithSpanActivated(span, closeSpan)(f.unsafeRun()))
-
-      private def unsafeWithSpanActivated[A](span: Span, closeSpan: Boolean)(body: => A): A = {
-        val scope = tracer.scopeManager().activate(span, closeSpan)
+      private def unsafeWithSpanActivated[A](span: Span, finishSpanOnClose: Boolean)(body: => A): A = {
+        val scope = tracer.scopeManager().activate(span)
         try
           body
         catch {
@@ -29,8 +20,11 @@ object OpenTracing {
             setError(span, t)
             throw t
         }
-        finally
+        finally {
+          if (finishSpanOnClose)
+            span.finish()
           scope.close()
+        }
       }
 
       private def setError(span: Span, err: Throwable): Unit = {
@@ -41,11 +35,22 @@ object OpenTracing {
         span.setTag("stack", err.stackTraceAsString)
       }
 
+      override def newSpanImpure[A](name: String)(f: Span => A): A = {
+        val span = tracer.buildSpan(name).start()
+        unsafeWithSpanActivated(span, true)(f(span))
+      }
+
       override def newSpan[A](name: String)(f: Span => Fx[A]): Fx[A] =
-        withNewSpan(tracer.buildSpan(name).start())(f)
+        Fx {
+          val span = tracer.buildSpan(name).start()
+          unsafeWithSpanActivated(span, true)(f(span).unsafeRun())
+        }
 
       override def newSubSpan[A](name: String, parent: Span)(f: Span => Fx[A]): Fx[A] =
-        withNewSpan(tracer.buildSpan(name).asChildOf(parent).start())(f)
+        Fx {
+          val span = tracer.buildSpan(name).asChildOf(parent).start()
+          unsafeWithSpanActivated(span, true)(f(span).unsafeRun())
+        }
 
       override def _propagateCtx[A]: Fx[Fx[A] => Fx[A]] =
         Fx((f: Fx[A]) => {
@@ -53,7 +58,7 @@ object OpenTracing {
           if (span eq null)
             f
           else
-            withSpanActivated(span, false, f)
+            Fx(unsafeWithSpanActivated(span, false)(f.unsafeRun()))
         })
 
       private[this] val attrInterpretter = Trace.Attr.interpret[Span, Unit](
@@ -74,6 +79,9 @@ object OpenTracing {
 
       override def addAttrs(attrs: List[Trace.Attr])(implicit span: Span): Fx[Unit] =
         Fx(attrs.foreach(attrInterpretter(span, _)))
+
+      override def rename(newName: String)(implicit span: Span) =
+        Fx(span.setOperationName(newName))
 
       override def sqlTracer(spanName: String) =
         Some(new SqlTracer {

@@ -60,8 +60,9 @@ data GroupD = GroupD { gname :: Group, modstats :: [(Module, Stats)] } deriving 
 
 data Stat = Stat { files :: Int, loc :: Int } deriving (Show, Eq)
 emptyStat = Stat 0 0
+instance Semigroup Stat where
+  a <> b = Stat (files a + files b) (loc a + loc b)
 instance Monoid Stat where
-  mappend a b = Stat (files a + files b) (loc a + loc b)
   mempty = emptyStat
 
 isEmpty     :: Stat -> Bool

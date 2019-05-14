@@ -6,31 +6,21 @@ import scala.annotation.tailrec
 import teststate.data.Id
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.ServerSideProc
-import shipreq.webapp.base.test.TestClientProtocol
+import shipreq.webapp.base.test.TestAjaxClient
 import shipreq.webapp.base.test.TestState._
-import shipreq.webapp.base.test.UnsafeTypes.autoServerSideProcId
 import shipreq.webapp.client.public.spa.{Page, PublicSpa}
 
 object PublicSpaTestUtil {
 
-  val initData = PublicSpaProtocols.InitData(
-    publicRegistration = Allow,
-    loggedInUser       = None,
-    landingPage        = ServerSideProc("landingPage"   , PublicSpaProtocols.LandingPage.Fn),
-    register1          = ServerSideProc("register1"     , PublicSpaProtocols.Register.Fn1),
-    register2          = ServerSideProc("register2"     , PublicSpaProtocols.Register.Fn2),
-    login              = ServerSideProc("login"         , PublicSpaProtocols.Login.Fn),
-    resetPassword1     = ServerSideProc("resetPassword1", PublicSpaProtocols.ResetPassword.Fn1),
-    resetPassword2     = ServerSideProc("resetPassword2", PublicSpaProtocols.ResetPassword.Fn2))
+  val initData = PublicSpaProtocols.InitData(Allow, None)
 
   class ForTestState {
-    val cp       = new TestClientProtocol(false)
+    val ajax     = new TestAjaxClient(false)
     val rc       = MockRouterCtl[Page]()
     var initData = PublicSpaTestUtil.initData
 
     def render[A](initPage: Page)(f: DomZipperJs => A): A = {
-      val spa = new PublicSpa(initData, cp)
+      val spa = new PublicSpa(initData, ajax)
       ReactTestUtils.withRenderedIntoDocument(spa.Component(PublicSpa.Props(initPage, rc))) { m =>
         f(m.domZipper)
       }

@@ -160,12 +160,6 @@ dockerfile in docker := {
     // Download required libs
     workDir(base)
 
-    runRaw(
-      """
-        |bin/jetty --approve-all-licenses --add-to-start=http,http2,webapp,gzip,resources,deploy,client 2>&1 &&
-        |bin/jetty --add-to-start=server,websocket 2>&1
-      """.stripMargin.trim.replaceAll("\n\\s*", " "))
-
     expose(
       8080, // HTTP
       8443) // HTTPS

@@ -52,12 +52,12 @@ object ReqTableObs {
  *
  * Inspects actual DOM to derive values.
  */
-final class ReqTableObs(cp: TestClientProtocol, $: DomZipperJs) {
+final class ReqTableObs(global: TestGlobal, $: DomZipperJs) {
   import ReqTableObs._
 
   val activeElement = document.activeElement
 
-  val svrReqs = cp.reqs
+  val svrReqs = global.reqs()
 
   def findOne[A: UnivEq, B](a: A, bs: Iterable[B])(f: B => A): B =
     bs.iterator.filter(f(_) ==* a).toList match {

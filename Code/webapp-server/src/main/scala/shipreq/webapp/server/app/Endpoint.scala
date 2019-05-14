@@ -1,16 +1,13 @@
 package shipreq.webapp.server.app
 
 import japgolly.univeq.UnivEq
-import scala.collection.JavaConverters._
-import shipreq.webapp.base.AssetManifest
+import shipreq.webapp.base.{AssetManifest, WebappConfig}
 import shipreq.base.util.FreeOption
-import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.server.logic.DispatchLogic
 
 sealed abstract class Endpoint(final val `type`: String, final val name: String)
 object Endpoint {
 
-  case object      Comet                                          extends Endpoint("comet", "comet")
   case object      LiftJsStatic                                   extends Endpoint("asset", "lift-js-static")
   case object      LiftJsDynamic                                  extends Endpoint("asset", "lift-js-dynamic")
   case object      LiftAjax                                       extends Endpoint("ajax", "lift-ajax")
@@ -24,13 +21,17 @@ object Endpoint {
 
   private[this] val liftAjaxPrefix      = s"/${WebappConfig.liftPath1}/ajax/"
   private[this] val liftJsDynamicPrefix = s"/${WebappConfig.liftPath1}/page/"
-  private[this] val cometPrefix         = s"/${WebappConfig.liftPath1}/comet/"
   private[this] val liftRegex           = "^/[lL]/.*".r.pattern
   private[this] val assetRegex          = "^/.+/[^/.]*\\.([^/]+)$".r
   private[this] val opsPrefix           = DispatchLogic.opsRoot.relativeUrlNoTailSlash + "/"
   private[this] val isSlash             = (_: Char) == '/'
 
-  def resolver(metricsPath: String): (String, FreeOption[Endpoint]) => FreeOption[Endpoint] = {
+  type Resolver = (String, FreeOption[Endpoint]) => FreeOption[Endpoint]
+
+  // Note this is only meant to resolve generic requests.
+  // Specific requests that DispatchLogic handles correctly set the Endpoint directly via MetricsLogic which results in
+  // the FreeOption[Endpoint] param to Resolver being set.
+  def resolver(metricsPath: String): Resolver = {
     val exactMatches = new java.util.HashMap[String, Endpoint]
     exactMatches.put(metricsPath                          , Metrics)
     exactMatches.put(s"/${WebappConfig.liftPath2}/lift.js", LiftJsStatic)
@@ -47,34 +48,36 @@ object Endpoint {
     exactMatches.put(AssetManifest.semanticCss            , AssetSpecific("css", "semantic"))
     exactMatches.put(AssetManifest.shipreqBannerSvg       , AssetGeneric("svg"))
 
-    (path, provided) =>
-      if (provided.nonEmpty) {
-        if (path startsWith opsPrefix)
-          provided.getOrNull match {
-            case Page(n) => FreeOption(OpsPage(n.dropWhile(isSlash)))
-            case _       => provided
-          }
-        else
-          provided
-      } else {
-        val exact = FreeOption(exactMatches.get(path))
-        if (exact.nonEmpty)
-          exact
-        else if (path startsWith liftJsDynamicPrefix)
-          FreeOption(LiftJsDynamic)
-        else if (path startsWith liftAjaxPrefix)
-          FreeOption(LiftAjax)
-        else if (path startsWith cometPrefix)
-          FreeOption(Comet)
-        else if (liftRegex.matcher(path).matches)
-          FreeOption.empty
-        else path match {
-          case assetRegex(ext) =>
-            FreeOption(AssetGeneric(ext))
-          case _ =>
+    (path, provided) => {
+      val result =
+        if (provided.nonEmpty) {
+          if (path startsWith opsPrefix)
+            provided.getOrNull match {
+              case Page(n) => FreeOption(OpsPage(n.dropWhile(isSlash)))
+              case _       => provided
+            }
+          else
+            provided
+        } else {
+          val exact = FreeOption(exactMatches.get(path))
+          if (exact.nonEmpty)
+            exact
+          else if (path startsWith liftJsDynamicPrefix)
+            FreeOption(LiftJsDynamic)
+          else if (path startsWith liftAjaxPrefix)
+            FreeOption(LiftAjax)
+          else if (liftRegex.matcher(path).matches)
             FreeOption.empty
+          else path match {
+            case assetRegex(ext) =>
+              FreeOption(AssetGeneric(ext))
+            case _ =>
+              FreeOption.empty
+          }
         }
-      }
+      //println(s"[ENDPOINT] $path $provided --> $result")
+      result
+    }
   }
 
   implicit def univEq: UnivEq[Endpoint] = UnivEq.derive

@@ -80,6 +80,13 @@ object FxModule {
         end   <- Fx.now
       } yield (a, Duration.between(start, end))
 
+    def measureDuration_ : Fx[Duration] =
+      for {
+        start <- Fx.now
+        _     <- fx
+        end   <- Fx.now
+      } yield Duration.between(start, end)
+
     /**
       * @param inspect Inspect the result for failure/success
       * @param continue Int arg            = number of attempts thus far (i.e. ≥ 1)

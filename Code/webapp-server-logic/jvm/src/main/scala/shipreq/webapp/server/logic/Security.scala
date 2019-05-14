@@ -1,5 +1,7 @@
 package shipreq.webapp.server.logic
 
+import com.typesafe.scalalogging.StrictLogging
+import japgolly.univeq.UnivEq
 import scalaz.\/
 import shipreq.webapp.base.user._
 
@@ -21,16 +23,26 @@ object Security {
     final def protectFn[A, B](vulnerable: A => F[B]): A => F[B] =
       a => protect(vulnerable(a))
 
-    def attemptLogin(user: Username \/ EmailAddr, password: PlainTextPassword): F[Option[User]]
-
     def hashPassword(p: PlainTextPassword): F[PasswordAndSalt]
 
-    val isAuthenticated: F[Boolean]
+    def attemptLogin(user: Username \/ EmailAddr, password: PlainTextPassword): F[Option[User]]
 
-    val authenticatedUser: F[Option[User]]
+    def sessionRestore(cookies: Cookie.LookupFn): F[Option[SessionToken]]
 
-    val logout: F[Unit]
+    def sessionPersist(token: SessionToken): F[Cookie.Update]
   }
+
+  // ===================================================================================================================
+
+  final case class SessionToken(authenticatedUser: Option[User])
+
+  object SessionToken extends StrictLogging {
+    val anonymous = apply(None)
+
+    implicit def univEq: UnivEq[SessionToken] = UnivEq.derive
+  }
+
+  // ===================================================================================================================
 
   sealed trait Event
   object Event {

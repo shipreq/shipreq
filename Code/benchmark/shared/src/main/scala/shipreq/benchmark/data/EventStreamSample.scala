@@ -12,7 +12,7 @@ object EventStreamSample {
 //    println()
 //  }
 
-  def sample = RandomEventStream.verifiedEvents(200).run((Project.empty, EventOrd(0))).withSeed(0).sample
+  def sample = RandomEventStream.verifiedEvents(200).run((Project.empty, EventOrd.first)).withSeed(0).sample
 
   val ((p, _), ves) = sample
 

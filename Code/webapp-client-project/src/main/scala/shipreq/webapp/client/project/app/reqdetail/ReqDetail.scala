@@ -10,16 +10,14 @@ import japgolly.univeq._
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
-import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{UseCaseStepCreate, VerifiedEvent}
-import shipreq.webapp.base.protocol.{ProjectSpaProtocols, UpdateContentCmd}
-import shipreq.webapp.base.text._
-import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}
-import shipreq.webapp.base.protocol.ServerSideProcInvoker
-import shipreq.webapp.base.ui.BaseStyles
+import shipreq.webapp.base.protocol.{ServerSideProcInvoker, UpdateContentCmd}
+import shipreq.webapp.base.text._
 import shipreq.webapp.base.ui.semantic.{Header, Icon, Message}
+import shipreq.webapp.base.ui.BaseStyles
+import shipreq.webapp.base.UiText
 import shipreq.webapp.client.project.app.Style.{reqdetail => *}
 import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.feature._
@@ -39,7 +37,6 @@ object ReqDetail {
   final case class StaticProps(updateIO             : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, VerifiedEvent.Seq],
                                reqDetailRC          : RouterCtl[ExternalPubid],
                                webWorker            : WebWorkerClient,
-                               updateContentFn      : ProjectSpaProtocols.UpdateContent.Instance,
                                pxProject            : Px[Project],
                                pxTextSearch         : Px[TextSearch],
                                pxProjectWidgetsNoCtx: Px[ProjectWidgets.NoCtx])

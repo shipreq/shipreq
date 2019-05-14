@@ -1,21 +1,16 @@
 package shipreq.webapp.server.logic
 
-import boopickle.{PickleImpl, UnpickleImpl}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import java.nio.ByteBuffer
 import java.time.{Duration, Instant}
-import java.util.concurrent.ConcurrentHashMap
-import scala.collection.immutable.SortedMap
-import scalaz.{-\/, Name, NaturalTransformation, \/, \/-, ~>}
 import scalaz.syntax.monad._
+import scalaz.{-\/, Name, NaturalTransformation, \/, \/-}
+import shipreq.base.ops.Trace
 import shipreq.base.util._
 import shipreq.taskman.api.{Msg, MsgId, MsgStatus, TaskmanApi}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.user._
-import shipreq.webapp.base.hash.HashRecs
-import shipreq.webapp.base.protocol.{ServerSideProc, ServerSideProcId}
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerConfig
 
 object MockDb {
@@ -29,10 +24,13 @@ object MockDb {
       -\/(username) :: \/-(emailAddr) :: Nil
 
     def toUser: User =
-      User(id, username, emailAddr, Set.empty)
+      User(id, username, Set.empty)
 
     def toUserAndPassword: (User, PasswordAndSalt) =
       (toUser, ps)
+
+    def token: Security.SessionToken =
+      Security.SessionToken(Some(toUser))
   }
   object UserEntry {
     implicit def univEq: UnivEq[UserEntry] = UnivEq.derive
@@ -40,6 +38,7 @@ object MockDb {
 
   final case class ProjectEntry(projectId    : ProjectId,
                                 userId       : UserId,
+                                initEvents   : Int,
                                 events       : VerifiedEvent.Seq,
                                 createdAt    : Instant,
                                 lastUpdatedAt: Option[Instant]) {
@@ -48,12 +47,13 @@ object MockDb {
       ApplyEvent.trusted.applyVerified(events)(Project.empty).needRight
 
     lazy val projectMetaData: ProjectMetaData =
-      ProjectMetaData(id            = Obfuscators.projectId.obfuscate(projectId),
-                      name          = project.name,
-                      eventCount    = events.size,
-                      reqCount      = project.content.reqs.size,
-                      createdAt     = createdAt,
-                      lastUpdatedAt = lastUpdatedAt)
+      ProjectMetaData(id              = Obfuscators.projectId.obfuscate(projectId),
+                      name            = project.name,
+                      initEventCount  = initEvents,
+                      totalEventCount = events.size,
+                      reqCount        = project.content.reqs.size,
+                      createdAt       = createdAt,
+                      lastUpdatedAt   = lastUpdatedAt)
 
     def projectLoad: VerifiedEvent.Seq =
       events
@@ -208,9 +208,10 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     IMap.empty(_.projectId)
 
   def addProject(projectId: ProjectId, userId: UserId)(events: Event*): Unit = {
+    val initEvents = events.size
     val ves = verifyEvents(Project.empty)(events: _*)
     val now = Instant.now()
-    val mde = MockDb.ProjectEntry(projectId, userId, ves, now, Some(now))
+    val mde = MockDb.ProjectEntry(projectId, userId, initEvents, ves, now, Some(now))
     projects = projects.add(mde)
   }
 
@@ -218,7 +219,7 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     projects.get(id).map(_.userId)
   }
 
-  override def createEmptyProject(id: UserId) = Name[ProjectId] {
+  override def createEmptyProject(id: UserId, initEvents: Int) = Name[ProjectId] {
     val pid = ProjectId(1 + projects.underlyingMap.keysIterator.map(_.value).foldLeft(0L)(_ max _))
     addProject(pid, id)()
     pid
@@ -231,43 +232,45 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
       .toList
   }
 
-  var loadProjectHeaderLog = Vector.empty[ProjectId]
-  override def getProjectHeader(id: ProjectId) = Name[Option[ProjectHeader]] {
-    loadProjectHeaderLog :+= id
-    projects.get(id).map(e => ProjectHeader(e.userId, e.project.name))
-  }
-
   var loadProjectMetaDataLog = Vector.empty[ProjectId]
   override def getProjectMetaData(id: ProjectId) = Name[Option[ProjectMetaData]] {
     loadProjectMetaDataLog :+= id
     projects.get(id).map(_.projectMetaData)
   }
 
-  var loadProjectLog = Vector.empty[ProjectId]
-  override def getAllProjectEvents(id: ProjectId) = Name[VerifiedEvent.Seq] {
-    loadProjectLog :+= id
-    projects.need(id).projectLoad
+  override def projectSpaInitPage(id: ProjectId) = Name[Project.Name] {
+    projects.get(id).fold("")(_.project.name)
   }
 
-  private def _saveProjectEvent(id: ProjectId)(ord: EventOrd, e: ActiveEvent, hrs: HashRecs) = Name[Option[Throwable]] {
+  var loadProjectLog = Vector.empty[ProjectId]
+  override def getProjectEvents(id: ProjectId, f: DB.EventFilter) = Name[VerifiedEvent.Seq] {
+    loadProjectLog :+= id
+    val r = projects.need(id).projectLoad
+    f match {
+      case DB.EventFilter.IncludeAll     => r
+      case DB.EventFilter.ExcludeUpTo(o) => r.filter(_.ord > o)
+      case DB.EventFilter.Set(o)         => r.filter(x => o.contains(x.ord))
+    }
+  }
+
+  override def saveProjectEvents(id: ProjectId, cmds: Traversable[DB.SaveProjectEventCmd]) = Name[Throwable \/ VerifiedEvent.Seq] {
+    import scalaz.syntax.traverse._
+    cmds.toList.traverse(saveProjectEvent(id, _).value).map(VerifiedEvent.Seq.empty ++ _)
+  }
+
+  override def saveProjectEvent(id: ProjectId, cmd: DB.SaveProjectEventCmd) = Name[Throwable \/ VerifiedEvent] {
     val entry = projects.need(id)
     def update(events: VerifiedEvent.Seq): Unit =
       projects = projects + entry.copy(events = events, lastUpdatedAt = Some(Instant.now()))
-    val ve = verifyEvent(entry.project, e, ord)
+    val ve = verifyEvent(entry.project, cmd.event, cmd.ord)
     if (entry.events.isEmpty) {
       update(VerifiedEvent.Seq.empty + ve)
-      None
-    } else if (ord.immediatelyFollows(entry.events.lastKey.ord)) {
+      \/-(ve)
+    } else if (cmd.ord.immediatelyFollows(entry.events.lastKey.ord)) {
       update(entry.events + ve)
-      None
+      \/-(ve)
     } else
-      Some(new RuntimeException(s"$ord doesn't follow ${entry.events.lastKey.ord}"))
-  }
-
-  override def saveProjectEvents(id: ProjectId)(cmds: Traversable[DB.SaveProjectEventCmd]) = Name[Option[Throwable]] {
-    cmds.toIterator
-      .map(c => _saveProjectEvent(id)(c.ord, c.event, c.hashes).value)
-      .foldLeft[Option[Throwable]](None)(_ orElse _)
+      -\/(new RuntimeException(s"${cmd.ord} doesn't follow ${entry.events.lastKey.ord}"))
   }
 
   override def inDbTransaction[A](f: Name[A]) = f
@@ -294,26 +297,6 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 final class MockServer extends Server.Algebra[Name] {
-  private var prevFn = 0
-  private var fns: Map[String, ByteBuffer => Name[Server.ProtocolError \/ ByteBuffer]] =
-    UnivEq.emptyMap
-
-  override val registerServerSideProc = (fnName, localFn) => Name {
-    prevFn += 1
-    val key = prevFn.toString
-    fns = fns.updated(key, localFn)
-    ServerSideProcId(key)
-  }
-
-  def run[I, O](p: ServerSideProc[I, O])(i: I): O = {
-    import p.protocol._
-    val f = fns(p.id.value)
-    f(PickleImpl.intoBytes(i)).value match {
-      case \/-(b) => UnpickleImpl[O].fromBytes(b)
-      case -\/(e) => sys error s"ProtocolError: $e"
-    }
-  }
-
   var clock = Instant.now()
   override val now = Name(clock)
 
@@ -323,6 +306,9 @@ final class MockServer extends Server.Algebra[Name] {
       a     <- f
       end   <- now
     } yield (a, Duration.between(start, end))
+
+  override def measureDuration_[A](f: Name[A]) =
+    measureDuration(f).map(_._2)
 
   private def durationBorder(duration: Duration, tolerance: Duration = Duration.ofSeconds(2)): Validity => Duration = {
     case Valid   => duration minus tolerance
@@ -353,9 +339,6 @@ final class MockServer extends Server.Algebra[Name] {
 
   var nextClientIP = Option.empty[IP]
   override val clientIP = Name(nextClientIP)
-
-  var nextSessionId = Option.empty[SessionId]
-  override val sessionId = Name(nextSessionId)
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -405,6 +388,7 @@ final class MockTaskman extends TaskmanApi[Name] {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name] {
+  import Security.SessionToken
 
   var protectedActions = 0
   override def protect[A](vulnerable: Name[A]): Name[A] =
@@ -413,10 +397,10 @@ final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name]
       a
     }
 
-  var loggedIn = Option.empty[MockDb.UserEntry]
   override def attemptLogin(u: Username \/ EmailAddr, p: PlainTextPassword) = Name[Option[User]] {
-    loggedIn = db.getUser(u).filter(e => e.ps ==* mkPasswordAndSalt(p, e.ps.salt))
-    loggedIn.map(_.toUser)
+    db.getUser(u)
+      .filter(e => e.ps ==* mkPasswordAndSalt(p, e.ps.salt))
+      .map(_.toUser)
   }
 
   var prevSalt = 0
@@ -428,42 +412,71 @@ final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name]
   def mkPasswordAndSalt(p: PlainTextPassword, salt: Salt): PasswordAndSalt =
     PasswordAndSalt(PasswordHash(s"${salt.base64}:${p.value}"), salt)
 
-  override val isAuthenticated   = Name(loggedIn.isDefined)
-  override val authenticatedUser = Name(loggedIn.map(_.toUser))
-  override val logout            = Name{loggedIn = None}
+  val cookieName = Cookie.Name("MockSecurity")
+
+  override def sessionPersist(token: SessionToken) = Name[Cookie.Update] {
+    val header = System.nanoTime().toString + ":"
+    val body = token.authenticatedUser match {
+      case None    => ""
+      case Some(u) => s"${u.id.value} ${u.username.value}"
+    }
+    val cookie = Cookie(cookieName, header + body, None, None, None)
+    Cookie.Update.add(cookie)
+  }
+
+  override def sessionRestore(cookies: Cookie.LookupFn) = Name[Option[SessionToken]] {
+    cookies(cookieName) map { cookieValue =>
+        if (cookieValue.endsWith(":"))
+          SessionToken.anonymous
+        else {
+          val body     = cookieValue.dropWhile(_ != ':').drop(1).split(' ')
+          val userId   = UserId(body(0).toInt)
+          val username = Username(body(1))
+          val user     = User(userId, username, Set.empty)
+          SessionToken(Some(user))
+        }
+    }
+  }
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 object MockInterpreters {
-  import JavaTimeHelpers._
 
   val config = ServerConfig(
     baseUrl                    = Url.Absolute.Base("https://test.shipreq.com"),
-    attackFrustrationDelay     = 1 hours,
-    securityTokenLength        = 8,
-    registrationTokenLifespan  = 7 days,
-    passwordResetTokenLifespan = 4 days,
     publicRegistration         = Allow,
     googleAnalyticsTrackingId  = None,
     taskmanSchema              = "test_taskman",
+    initTaskmanOnBoot          = false,
+    initTaskmanRetry           = Retries.none,
     jaegerTracingConfig        = None,
     prometheus                 = ServerConfig.Prometheus.default,
-    initTaskmanOnBoot          = false,
-    initTaskmanRetry           = RetryCriteria(2 hours, Some(666)))
+    security = ServerConfig.Security(
+      attackFrustrationDelay     = 1 hours,
+      jwtCookieSecure            = false,
+      jwtLifespan                = 24 hours,
+      jwtSecret                  = new ServerConfig.Security.JwtSecret("x"*64),
+      jwtSecretPrevious          = None,
+      passwordSaltLength         = 64,
+      securityTokenLength        = 8,
+      registrationTokenLifespan  = 7 days,
+      passwordResetTokenLifespan = 4 days))
 }
 
 class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerConfig]) {
-  implicit val config     = modCfg(MockInterpreters.config)
-  implicit val storeMap   = new ConcurrentHashMap(): ProjectServer.StoreMap[Name, ConcurrentHashMap]
-  implicit val store      = Store.Algebra.concurrentHashMap(storeMap): ProjectServer.StoreAlgebra[Name]
-  implicit val svr        = new MockServer
-  implicit val db         = new MockDb(svr.now)
-  implicit val security   = new MockSecurity(db)
-  implicit val taskman    = new MockTaskman
-  implicit val nameToName = NaturalTransformation.refl[Name]
-  implicit val metrics    = MetricsLogic.const(Name(()))
-  implicit val publicApi  = PublicSpaLogic[Name, Name]: PublicSpaLogic.ForApi[Name]
+  implicit val config         = modCfg(MockInterpreters.config)
+  implicit val svr            = new MockServer
+  implicit val db             = new MockDb(svr.now)
+  implicit val security       = new MockSecurity(db)
+  implicit val taskman        = new MockTaskman
+  implicit val nameToName     = NaturalTransformation.refl[Name]
+  implicit val metrics        = MetricsLogic.const(Name(()))
+  implicit val trace          = Trace.Algebra.off[Name]
+  implicit val redis          = new Redis.InMemory[Name]
+  implicit val publicSpa      = PublicSpaLogic[Name, Name]
+  implicit val homeSpa        = HomeSpaLogic[Name, Name]
+  implicit val projectSpa     = ProjectSpaLogic[Name, Name]
 
   implicit object ops extends OpsEndpoints.Base[Name] {
     override val randomToken = Name("blah")
@@ -492,8 +505,8 @@ class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerCon
     assertNoChange("Protected actions", security.protectedActions)(a)
 
   def forwardTimeToEndOfConfirmationWindow(v: Validity): Unit =
-    svr.forwardTimeToEndOfWindow(config.registrationTokenLifespan, v)
+    svr.forwardTimeToEndOfWindow(config.security.registrationTokenLifespan, v)
 
   def forwardTimeToEndOfPasswordResetWindow(v: Validity): Unit =
-    svr.forwardTimeToEndOfWindow(config.passwordResetTokenLifespan, v)
+    svr.forwardTimeToEndOfWindow(config.security.passwordResetTokenLifespan, v)
 }

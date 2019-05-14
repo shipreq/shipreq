@@ -11,10 +11,9 @@ import shipreq.base.util.MMTree
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.protocol.{TagCrud, ServerSideProc}, TagCrud._
+import shipreq.webapp.base.protocol.TagCrud._
 import shipreq.webapp.base.test.{SampleProject => S}, S.Values._
 import shipreq.webapp.base.test.UnsafeTypes._
-import shipreq.webapp.base.test.TestClientProtocol
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.test._
 import DataImplicits._
@@ -37,16 +36,14 @@ object CfgTagsTest extends TestSuite {
     Sizzle("td.name", ReactDOM.findDOMNode(c.raw).get.asElement).toVector.map(nameCellToText(_, ""))
 
   class FakeUpdateIO {
-    var reqs = Vector.empty[(Tag, TagCrud.Protocol.Value)]
+    var reqs = Vector.empty[(Tag, Value)]
     val u: MainTable.DetailPaneFns.UpdateIO = (t, v, _, _) => Callback { reqs :+= ((t, v)) }
   }
 
-  val remote = ServerSideProc("x", TagCrud.Protocol)
   class Tester {
     lazy val filterDead = ReactTestVar[FilterDead](HideDead)
-    lazy val clientData = TestClientData(S.project)
-    lazy val cp         = new TestClientProtocol(true)
-    lazy val props      = CfgTags.Props(cp, remote, clientData, filterDead.stateSnapshotWithReuse())
+    lazy val g          = TestGlobal(S.project)
+    lazy val props      = CfgTags.Props(g.sspTagMod, g, filterDead.stateSnapshotWithReuse())
     lazy val re         = MainTable.Component(props)
     lazy val c          = ReactTestUtils.renderIntoDocument(re)
   }
@@ -61,7 +58,7 @@ object CfgTagsTest extends TestSuite {
                 Name("Blah"),
                 Parents(Map(1.TG -> priMed.some)),
                 Children(Vector(10.TG))))
-      clientData.applyTestEventsCB(e).runNow()
+      g.applyTestEventsCB(e).runNow()
 
       assertEq(nameAsTextTree(c).mkString("\n"),
         """

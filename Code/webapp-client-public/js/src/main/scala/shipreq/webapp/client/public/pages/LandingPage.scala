@@ -64,12 +64,12 @@ object LandingPage {
     val fieldName = Form.TextField.highLevel(
       State.req ^|-> Request.Untyped.name,
       Request.validatorName,
-      m => Input.Text.icon(Icon.User.tag, <.input.text(^.placeholder := Request.labelName, m)))
+      m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoComplete.name, ^.placeholder := Request.labelName, m)))
 
     val fieldEmail = Form.TextField.highLevel(
       State.req ^|-> Request.Untyped.email,
       Request.validatorEmail,
-      m => Input.Text.icon(Icon.Mail.tag, <.input.text(^.placeholder := Request.labelEmail, m)))
+      m => Input.Text.icon(Icon.Mail.tag, <.input.email(^.autoComplete.email, ^.placeholder := Request.labelEmail, m)))
 
     val fieldMsg = Form.TextField.highLevel(
       State.req ^|-> Request.Untyped.msg,
@@ -116,7 +116,7 @@ object LandingPage {
         fields = fields.map(_.disable)
 
       <.div(*.formCont,
-        <.div(*.form, Form(fields)))
+        <.form(*.form, Form(fields)))
     }
 
     def render(p: Props): VdomElement =

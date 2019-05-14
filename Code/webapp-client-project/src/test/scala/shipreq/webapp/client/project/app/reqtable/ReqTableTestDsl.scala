@@ -18,7 +18,7 @@ import TestState._
 
 object ReqTableTestDsl {
 
-  case class Ref($: StateAccessImpure[ReqTablePage.State], svr: MockServer)
+  case class Ref($: StateAccessImpure[ReqTablePage.State], global: TestGlobal)
 
   val * = Dsl[Ref, ReqTableObs, Project]
 
@@ -303,13 +303,13 @@ object ReqTableTestDsl {
 
   val logTable = *.print(_.obs.table.entireContent)
 
-  val svrDisableAutoRespond = *.action("Disable auto-respond.")(_.ref.svr.autoRespond = false)
+  val svrDisableAutoRespond = *.action("Disable auto-respond.")(_.ref.global.disableAutoResponse())
 
-  val svrAutoRespondToLast = *.action("Server responds.")(_.ref.svr.autoRespondToLast())
+  val svrAutoRespondToLast = *.action("Server responds.")(_.ref.global.autoRespondToLast())
 
-  val svrFailLast = *.action("Fail last server request.")(_.ref.svr.failLast())
+  val svrFailLast = *.action("Fail last server request.")(_.ref.global.failLast())
 
-  val svrAssertLastTwoReqsEqual = svrLastTwoReqs.map(_.input).assert.equal(Equal.by_==, implicitly)
+  val svrAssertLastTwoReqsEqual = svrLastTwoReqs.map(_.req).assert.equal(Equal.by_==, implicitly)
 
   def setFocus(f: ReqTableObs => html.Element): *.Actions =
     *.action("Set focus")(i => f(i.obs).focus()) +>

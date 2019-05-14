@@ -2,6 +2,7 @@ package shipreq.webapp.base.user
 
 import japgolly.univeq.UnivEq
 import scalaz.{-\/, \/, \/-}
+import shipreq.webapp.base.data.Obfuscated
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 final case class PlainTextPassword(value: String) {
@@ -28,6 +29,9 @@ object EmailAddr {
 final case class UserId(value: Long)
 object UserId {
   implicit def univEq: UnivEq[UserId] = UnivEq.derive
+
+  /** The real UserId is never directly exposed to users. Publicly it has a different ID. */
+  type Public = Obfuscated[UserId]
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -48,7 +52,6 @@ object Username {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 final case class User(id      : UserId,
                       username: Username,
-                      email   : EmailAddr,
                       roles   : Set[String]) {
 
   // I hope it's obvious that this is a temporarily measure.. phase 3!

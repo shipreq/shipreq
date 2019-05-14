@@ -13,21 +13,22 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataValidators.{customIssueType => V, hashRefKey => VH}
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.util.TextMod
-import shipreq.webapp.base.protocol.ClientProtocol
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.CustomIssueTypeCrud
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes.CustomIssueTypeCrud
 import shipreq.webapp.base.ui.AutosizeTextarea
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.cfg.shared._
-import shipreq.webapp.client.project.app.state.{ChangeListener, ClientData}
+import shipreq.webapp.client.project.app.state.{ChangeListener, Global}
 import shipreq.webapp.client.project.lib.DataReusability._
 import DataImplicits._
+import shipreq.base.util.ErrorMsg
+import shipreq.webapp.base.event.VerifiedEvent
+import shipreq.webapp.base.protocol.ServerSideProcInvoker
 
 private[issues] object CustomIssueTypes {
 
-  final case class Props(cp        : ClientProtocol,
-                         remote    : CustomIssueTypeCrud.Instance,
-                         clientData: ClientData,
+  final case class Props(remote    : ServerSideProcInvoker[CustomIssueTypeCrud.RequestType, ErrorMsg, VerifiedEvent.Seq],
+                         global    : Global,
                          filterDead: StateSnapshot[FilterDead],
                          usageShow : Usage.Show) {
     @inline def component = Component(this)
@@ -37,24 +38,24 @@ private[issues] object CustomIssueTypes {
   val fields = FieldSet2[CustomIssueType](_.key.value, _.desc getOrElse "")(("", ""))
   val storesAndState = TypicalStoresAndState(fields).keyedBy[CustomIssueTypeId]
   import storesAndState._
-  val changeListener = ChangeListener.store(savedRowStoreS)(_.customIssueTypes, _.config.customIssueTypes.get)
+  private val changeListener = ChangeListener.store(savedRowStoreS)(_.customIssueTypes, _.config.customIssueTypes.get)
 
   val Component =
     ScalaComponent.builder[Props]("Cfg: User-Defined Issue Types")
       .initialStateFromProps(initialState)
       .renderBackend[Backend]
-      .configure(changeListener.install(_.clientData))
+      .configure(changeListener.install(_.global))
       .configure(AutosizeTextarea.applyToChildren("textarea"))
       .build
 
   private def initialState(p: Props): S =
     State(
       newRowStore.initState,
-      savedRowStore.initStateIM(p.clientData.project().config.customIssueTypes))
+      savedRowStore.initStateIM(p.global.unsafeProject().config.customIssueTypes))
 
-  private def validatorState(k: Option[CustomIssueTypeId], cd: CallbackTo[ClientData]): S => V.State = {
+  private def validatorState(k: Option[CustomIssueTypeId], g: CallbackTo[Global]): S => V.State = {
     val tagData: Px[List[(Option[TagId], HashRefKey)]] =
-      Px.callback(cd.map(_.project().config.tags)).withReuse.autoRefresh
+      Px.callback(g.map(_.unsafeProject().config.tags)).withReuse.autoRefresh
         .map(_.valuesIterator.map(t => t.tag.keyO.map(k => (t.tag.id.some, k))).filterDefined.toList)
 
     val tags: VH.SubState[TagId] =
@@ -69,19 +70,18 @@ private[issues] object CustomIssueTypes {
   }
 
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
-    val project    = Px.props($).map(_.clientData.project()).withReuse.manualRefresh
-    val filterDead = Px.props($).map(_.filterDead.value).withReuse.manualRefresh
-    val usageShow  = Px.props($).map(_.usageShow).withReuse.manualRefresh
+    private val project    = Px.props($).map(_.global.unsafeProject()).withReuse.manualRefresh
+    private val filterDead = Px.props($).map(_.filterDead.value).withReuse.manualRefresh
+    private val usageShow  = Px.props($).map(_.usageShow).withReuse.manualRefresh
 
-    val crudIO =
-      Px.props($).withReuse.autoRefresh.map(p =>
-        CrudActionIO(CustomIssueType, CustomIssueTypeCrud)(p.cp, p.remote, p.clientData))
+    private val crudIO =
+      Px.props($).withReuse.autoRefresh.map(p => CrudActionIO(p.remote))
 
-    val supp = TypicalSupp(storesAndState)(crudIO.value(), $)
+    private val supp = TypicalSupp(storesAndState)(crudIO.value(), $)
 
-    def valState(k: Option[CustomIssueTypeId]) = validatorState(k, $.props.map(_.clientData))
+    private def valState(k: Option[CustomIssueTypeId]) = validatorState(k, $.props.map(_.global))
 
-    val rowE = {
+    private val rowE = {
       val keyE  = Editors.textInputEditor.applyStatefulValidator(V.key.unnamedFn)
       val descE = Editors.textareaEditor.applyStatefulValidator(V.desc.unnamedFn)
       val e = Editor.merge2S(fields, keyE, descE).tupleI.zoomU[S]
@@ -99,12 +99,12 @@ private[issues] object CustomIssueTypes {
       supp.addEditorFeatures2(e)(saveFn, _._1.customIssues.subject)
     }
 
-    val usageFn = Usage((_: CustomIssueType).id)(
+    private val usageFn = Usage((_: CustomIssueType).id)(
       _.atomScan.issueCounts,
       Filter.Valid.issue,
       project, filterDead, usageShow)
 
-    val cfgTable = {
+    private val cfgTable = {
       def rowRenderer =
         new CfgTable.RowRenderer[CustomIssueType, rowE.View, (TagMod, TagMod, Option[Usage.View])] {
           override def newRow = {
@@ -134,7 +134,7 @@ private[issues] object CustomIssueTypes {
           $)
     }
 
-    val table = {
+    private val table = {
       val headerRow = CfgTable.header(List(FieldNames.hashRefKey, FieldNames.desc, FieldNames.usage))
       () => cfgTable.justTheTable(headerRow, Stream.empty)
     }

@@ -50,7 +50,7 @@ object Url {
       else if (next.isRoot)
         this
       else
-        new Relative(relativeUrlNoHeadSlash + "/" + next.relativeUrlNoHeadSlash)
+        new Relative(relativeUrlNoHeadOrTailSlash + "/" + next.relativeUrlNoHeadSlash)
     }
   }
 
@@ -72,6 +72,36 @@ object Url {
       def apply(a: A): Relative =
         new Relative(prefixNoHeadSlash + suffix(a))
     }
+
+    final class MutableMap[A] {
+      private val lock = new AnyRef
+      private var m = Map.empty[String, A]
+
+      def +=(a: (Url.Relative, A)) =
+        addAll(a :: Nil)
+
+      def add(url: Url.Relative, a: A): this.type =
+        addAll((url, a) :: Nil)
+
+      @inline def ++=(as: TraversableOnce[(Url.Relative, A)]) =
+        addAll(as)
+
+      def addAll(as: TraversableOnce[(Url.Relative, A)]): this.type =
+        lock.synchronized {
+          for ((u, a) <- as) {
+            val k = u.relativeUrlNoHeadSlash
+            m.get(k) match {
+              case None    => m = m.updated(k, a)
+              case Some(v) => throw new IllegalStateException(s"Duplicate values at Url.Relative(${u.relativeUrl}): $v & $a")
+            }
+          }
+          this
+        }
+
+      def toMapNoHeadSlash: Map[String, A] =
+        lock.synchronized(m)
+    }
+
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -90,6 +120,12 @@ object Url {
 
       def /[A](r: Relative.Param1[A]): Absolute.Param1[A] =
         Absolute.Param1(this / r.prefix, r.suffix)
+
+      def forWebSocket: Base =
+        if (value.matches("^https?:.*"))
+          new Base("ws" + value.drop(4))
+        else
+          this
     }
 
     object Base {
