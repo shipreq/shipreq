@@ -14,7 +14,7 @@ import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data.SecurityToken
 import shipreq.webapp.base.user._
 import shipreq.webapp.client.public.PublicSpaProtocols
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.ServerLogicConfig
 import WebappTaskmanConverters._
 import Implicits._
 
@@ -65,7 +65,7 @@ object PublicSpaLogic extends HasLogger {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  def apply[D[_], F[_]](implicit config  : ServerConfig,
+  def apply[D[_], F[_]](implicit config  : ServerLogicConfig,
                                  db      : DB.ForPublicSpa[D],
                                  runDB   : D ~> F,
                                  metrics : MetricsLogic[F],

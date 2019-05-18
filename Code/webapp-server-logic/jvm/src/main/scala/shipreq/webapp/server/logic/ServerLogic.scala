@@ -3,7 +3,7 @@ package shipreq.webapp.server.logic
 import scalaz.{BindRec, Monad, ~>}
 import shipreq.base.ops.Trace
 import shipreq.taskman.api.TaskmanApi
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.ServerLogicConfig
 
 /**
   * All server logic.
@@ -24,7 +24,7 @@ object ServerLogic {
                   : Trace.Algebra]
             (implicit F: Monad[F] with BindRec[F],
              runDB: D ~> F,
-             config: ServerConfig): ServerLogic[F] =
+             config: ServerLogicConfig): ServerLogic[F] =
     ServerLogic(
       PublicSpaLogic [D, F],
       HomeSpaLogic   [D, F],

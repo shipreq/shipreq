@@ -18,7 +18,7 @@ import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.util.ResourceHint
 import shipreq.webapp.client.public.PublicSpaProtocols
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.ServerLogicConfig
 
 /** Usage:
   *
@@ -197,7 +197,7 @@ object DispatchLogic {
 final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => DispatchLogic.Request[RealReq],
                                                   makeRealRes: (RealReq, DispatchLogic.Response) => F[RealRes])
                                                  (implicit F: Monad[F],
-                                                  config    : ServerConfig,
+                                                  config    : ServerLogicConfig,
                                                   db        : DB.SecurityTokenReadOnly[F],
                                                   metrics   : MetricsLogic[F],
                                                   ops       : OpsEndpoints[F],

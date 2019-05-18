@@ -11,7 +11,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.user._
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.ServerLogicConfig
 
 object MockDb {
   final case class UserEntry(id           : UserId,
@@ -443,7 +443,7 @@ final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name]
 
 object MockInterpreters {
 
-  val config = ServerConfig(
+  val config = ServerLogicConfig(
     baseUrl                    = Url.Absolute.Base("https://test.shipreq.com"),
     publicRegistration         = Allow,
     googleAnalyticsTrackingId  = None,
@@ -451,12 +451,12 @@ object MockInterpreters {
     initTaskmanOnBoot          = false,
     initTaskmanRetry           = Retries.none,
     jaegerTracingConfig        = None,
-    prometheus                 = ServerConfig.Prometheus.default,
-    security = ServerConfig.Security(
+    prometheus                 = ServerLogicConfig.Prometheus.default,
+    security = ServerLogicConfig.Security(
       attackFrustrationDelay     = 1 hours,
       jwtCookieSecure            = false,
       jwtLifespan                = 24 hours,
-      jwtSecret                  = new ServerConfig.Security.JwtSecret("x"*64),
+      jwtSecret                  = new ServerLogicConfig.Security.JwtSecret("x"*64),
       jwtSecretPrevious          = None,
       passwordSaltLength         = 64,
       securityTokenLength        = 8,
@@ -464,7 +464,7 @@ object MockInterpreters {
       passwordResetTokenLifespan = 4 days))
 }
 
-class MockInterpreters(modCfg: ServerConfig => ServerConfig = Identity[ServerConfig]) {
+class MockInterpreters(modCfg: ServerLogicConfig => ServerLogicConfig = Identity[ServerLogicConfig]) {
   implicit val config         = modCfg(MockInterpreters.config)
   implicit val svr            = new MockServer
   implicit val db             = new MockDb(svr.now)

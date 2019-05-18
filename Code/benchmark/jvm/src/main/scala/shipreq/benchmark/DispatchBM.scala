@@ -17,7 +17,7 @@ import shipreq.taskman.api.MsgId
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data.{ProjectId, SecurityToken}
 import shipreq.webapp.base.user._
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.logic._
 import DispatchLogic._
 
@@ -104,7 +104,7 @@ class DispatchBM {
 object DispatchBM {
   import JavaTimeHelpers._
 
-  implicit val config = ServerConfig(
+  implicit val config = ServerLogicConfig(
     baseUrl                    = Url.Absolute.Base("https://test.shipreq.com"),
     publicRegistration         = Allow,
     googleAnalyticsTrackingId  = None,
@@ -112,12 +112,12 @@ object DispatchBM {
     initTaskmanOnBoot          = false,
     initTaskmanRetry           = Retries.none,
     jaegerTracingConfig        = None,
-    prometheus                 = ServerConfig.Prometheus.default.copy(enabled = false),
-    security = ServerConfig.Security(
+    prometheus                 = ServerLogicConfig.Prometheus.default.copy(enabled = false),
+    security = ServerLogicConfig.Security(
       attackFrustrationDelay     = 1 hours,
       jwtCookieSecure            = false,
       jwtLifespan                = 24 hours,
-      jwtSecret                  = new ServerConfig.Security.JwtSecret("x"*64),
+      jwtSecret                  = new ServerLogicConfig.Security.JwtSecret("x"*64),
       jwtSecretPrevious          = None,
       passwordSaltLength         = 64,
       securityTokenLength        = 8,

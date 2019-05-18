@@ -16,7 +16,7 @@ import scalaz.{-\/, Monad, \/, \/-}
 import shipreq.base.ops.Trace
 import shipreq.webapp.base.data.Obfuscated
 import shipreq.webapp.base.user._
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.logic.Cookie.LookupFn
 import shipreq.webapp.server.logic.Security.SessionToken
 import shipreq.webapp.server.logic._
@@ -26,7 +26,7 @@ object SecurityInterpreter {
 }
 
 final class SecurityInterpreter[F[_]](implicit F: Monad[F],
-                                      config : ServerConfig.Security,
+                                      config : ServerLogicConfig.Security,
                                       secDb  : DB.ForSecurity[F],
                                       trace  : Trace.Algebra[F]) extends Security.Algebra[F] with StrictLogging {
   import SecurityInterpreter._

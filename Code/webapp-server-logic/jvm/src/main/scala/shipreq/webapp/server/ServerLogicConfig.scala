@@ -12,31 +12,31 @@ import shipreq.base.util.FxModule._
 import shipreq.webapp.server.logic.DispatchLogic
 
 @Lenses
-final case class ServerConfig(baseUrl: Url.Absolute.Base,
+final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,
 
-                              /** Whether or not public registrations are allowed.
-                                * (Registration tokens already issued will still be accepted.)
-                                */
-                              publicRegistration: Permission,
+                                   /** Whether or not public registrations are allowed.
+                                     * (Registration tokens already issued will still be accepted.)
+                                     */
+                                   publicRegistration: Permission,
 
-                              googleAnalyticsTrackingId: Option[String],
+                                   googleAnalyticsTrackingId: Option[String],
 
-                              /** The DB schema in which the Taskman interfaces reside. */
-                              taskmanSchema: String,
+                                   /** The DB schema in which the Taskman interfaces reside. */
+                                   taskmanSchema: String,
 
-                              initTaskmanOnBoot: Boolean,
-                              initTaskmanRetry: Retries,
+                                   initTaskmanOnBoot: Boolean,
+                                   initTaskmanRetry: Retries,
 
-                              jaegerTracingConfig: Option[Configuration],
-                              prometheus: ServerConfig.Prometheus,
-                              security: ServerConfig.Security) {
+                                   jaegerTracingConfig: Option[Configuration],
+                                   prometheus: ServerLogicConfig.Prometheus,
+                                   security: ServerLogicConfig.Security) {
 
   lazy val traceAlgebraFx: Trace.Algebra[Fx] =
     Trace.Algebra(
       jaegerTracingConfig.map(c => OpenTracing.algebraFx(c.getTracer)).toList)
 }
 
-object ServerConfig {
+object ServerLogicConfig {
 
   @Lenses
   final case class Security(/** A short amount of time, unnoticeable to humans, to sleep in order to
@@ -129,7 +129,7 @@ object ServerConfig {
     ) (apply)
   }
 
-  def config: ConfigDef[ServerConfig] =
+  def config: ConfigDef[ServerLogicConfig] =
     JaegerTracingConfig.external *>
     ( ConfigDef.need       [String  ]("url").map(Url.Absolute.Base.apply) |@|
       ConfigDef.getOrUse   [Boolean ]("feature.publicRegistration", true).map(Allow.when) |@|

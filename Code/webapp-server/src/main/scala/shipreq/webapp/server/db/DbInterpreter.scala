@@ -17,13 +17,13 @@ import shipreq.webapp.base.event.ApplyEvent.LogicVer
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash._
 import shipreq.webapp.base.user._
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.db.DbInterpreter._
 import shipreq.webapp.server.db.SqlHelpers._
 import shipreq.webapp.server.logic.DB.EventFilter
 import shipreq.webapp.server.logic._
 
-final class DbInterpreter(implicit config: ServerConfig.Security)
+final class DbInterpreter(implicit config: ServerLogicConfig.Security)
     extends DB.Algebra[ConnectionIO]
        with ForPublicSpa
        with ForMembers

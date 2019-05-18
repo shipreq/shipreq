@@ -6,12 +6,12 @@ import shipreq.base.db.DbAccess
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.TaskmanApi
 import shipreq.taskman.api.impl.TaskmanApiImpl
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.db.DbInterpreter
 import shipreq.webapp.server.logic._
 import shipreq.webapp.server.security.SecurityInterpreter
 
-final case class Global(config  : ServerConfig,
+final case class Global(config  : ServerLogicConfig,
                         db      : DbAccess,
                         logic   : ServerLogic[Fx],
                         metrics : MetricsLogic[Fx],
@@ -30,7 +30,7 @@ object Global {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  def default(implicit dbAccess: DbAccess, config: ServerConfig): Global = {
+  def default(implicit dbAccess: DbAccess, config: ServerLogicConfig): Global = {
     assert(dbAccess ne null, "DbAccess is null, sir.")
     import TraceInterpreter.Implicits._
 

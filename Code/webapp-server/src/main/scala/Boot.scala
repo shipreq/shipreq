@@ -15,12 +15,12 @@ import shipreq.base.ops.{JdbcLogging, JdbcMetrics, SqlTracer}
 import shipreq.base.util.FxModule._
 import shipreq.base.util.{Props => ShipReqProps}
 import shipreq.webapp.base.WebappConfig
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.app._
 import shipreq.webapp.server.lib.Taskman
 
 @Lenses
-final case class BootConfig(db: DbConfig, server: ServerConfig, report: ConfigReport)
+final case class BootConfig(db: DbConfig, server: ServerLogicConfig, report: ConfigReport)
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -67,7 +67,7 @@ class Boot {
         case None    => Some(None)
       }
 
-    val plan = (DbConfig.config |@| ServerConfig.config |@| cfgRunMode).tupled.withReport
+    val plan = (DbConfig.config |@| ServerLogicConfig.config |@| cfgRunMode).tupled.withReport
       .map { case ((db, svr, runMode), report) =>
         val cfg = BootConfig(db, svr, report)
         (cfg, runMode)
@@ -195,7 +195,7 @@ class Boot {
     new LiftDispatcher(g).init()
   }
 
-  def initPrometheus(cfg: ServerConfig.Prometheus): Unit =
+  def initPrometheus(cfg: ServerLogicConfig.Prometheus): Unit =
     if (cfg.enabled) {
       if (cfg.hotspot)
         io.prometheus.client.hotspot.DefaultExports.initialize()
