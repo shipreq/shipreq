@@ -14,7 +14,7 @@ object TestDb extends shipreq.base.test.db.TestDb {
 
   def useInLift(): Unit = {
     val g1 = PrepareEnv.global()
-    val g2 = Global.default(TestDb.dbAccess, g1.config)
+    val g2 = Global.default(TestDb.dbAccess, None, g1.config)
     val g3 = Global.modify(_.copy(
       db       = g2.db,
       logic    = g2.logic,

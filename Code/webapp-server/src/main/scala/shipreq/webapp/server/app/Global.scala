@@ -2,12 +2,14 @@ package shipreq.webapp.server.app
 
 import doobie.imports.ConnectionIO
 import java.util.concurrent.{Executors, TimeUnit}
+import org.redisson.api.RedissonClient
 import shipreq.base.db.DbAccess
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.TaskmanApi
 import shipreq.taskman.api.impl.TaskmanApiImpl
 import shipreq.webapp.server.db.DbInterpreter
 import shipreq.webapp.server.logic._
+import shipreq.webapp.server.redis.{RedisSchema, RedisViaRedisson}
 import shipreq.webapp.server.security.SecurityInterpreter
 
 final case class Global(config  : ServerConfig,
@@ -29,7 +31,10 @@ object Global {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  def default(implicit dbAccess: DbAccess, config: ServerConfig): Global = {
+  def default(dbAccess   : DbAccess,
+              redisClient: Option[RedissonClient],
+              config     : ServerConfig): Global = {
+
     assert(dbAccess ne null, "DbAccess is null, sir.")
     import TraceInterpreter.Implicits._
 
@@ -42,6 +47,12 @@ object Global {
       else
         MetricsLogic.const(Fx.unit)
 
+    implicit val redis: Redis.ProjectAlgebra[Fx] =
+      redisClient match {
+        case Some(c) => new RedisViaRedisson(c, RedisSchema.default)
+        case None    => useInMemoryRedis()
+      }
+
     implicit val traceAlgebra  = config.server.traceAlgebraFx
     implicit val trace         = new TraceLogic: TraceInterpreter.ForLift[Fx]
     implicit val runDB         = trace.injectDb(dbAccess.fx.trans)
@@ -52,7 +63,6 @@ object Global {
     implicit val server        = trace.injectServer(ServerInterpreter)
     implicit val ops           = new OpsEndpointInterpreter()
     implicit val security      = new SecurityInterpreter[Fx]
-    implicit val redis         = useInMemoryRedis()
 
     Global(
       config   = config,
@@ -71,11 +81,8 @@ object Global {
     val timer          = Executors.newSingleThreadScheduledExecutor(new Thread(threadGroup, _, "RedisInMemory"))
     val task: Runnable = () => redis.publishAll.unsafeRun()
     val everyMs        = 1000
-
     timer.scheduleAtFixedRate(task, everyMs, everyMs, TimeUnit.MILLISECONDS)
-
     Runtime.getRuntime.addShutdownHook(new Thread(threadGroup, task, "RedisInMemory-shutdown"))
-
     redis
   }
 }

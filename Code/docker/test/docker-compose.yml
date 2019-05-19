@@ -12,4 +12,15 @@ services:
       - POSTGRES_PASSWORD=sqt
     logging:
       driver: none
-    mem_limit: 400m
+    mem_limit: 100m
+
+  redis:
+    image: bitnami/redis:5.0.5
+    container_name: shipreq_test_redis
+    ports:
+      - "13079:6379"
+    environment:
+      - REDIS_PASSWORD=sqt
+    logging:
+      driver: none
+    mem_limit: 100m

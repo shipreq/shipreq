@@ -182,7 +182,7 @@ object Dependencies {
   val scalajsJavaTime  = jsOnly("org.scala-js"                          %% "scalajs-java-time" % "0.2.5")
 
   val boopickle   = jvmAndJs("io.suzaku",                        "boopickle", "1.3.0")
-  val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",      "1.2.2")
+  val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",      "1.3.0")
   val parboiled   = jvmAndJs("org.parboiled",                    "parboiled", "2.1.6")
   val shapeless   = jvmAndJs("com.chuusai",                      "shapeless", "2.3.3")
   val μPickle     = jvmAndJs("com.github.japgolly.fork.upickle", "upickle",   "custom-7")
@@ -196,6 +196,7 @@ object Dependencies {
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
   val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "0.35.4")
   val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.5")
+  val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.10.7")
   val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "2.6.0")
   val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.13.5")
   val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.2")

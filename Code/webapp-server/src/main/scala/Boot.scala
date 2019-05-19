@@ -8,6 +8,7 @@ import net.liftweb.common.Logger
 import net.liftweb.http._
 import net.liftweb.util._
 import net.liftweb.util.Props.RunModes
+import org.redisson.Redisson
 import scalaz.syntax.applicative._
 import shipreq.base.db.DbAccess
 import shipreq.base.ops.{JdbcLogging, JdbcMetrics, SqlTracer}
@@ -41,8 +42,9 @@ class Boot {
 
       // Create services
       val dbAccess = trace("initDatabase")(_ => initDatabase(cfg))
+      val redisClient = cfg.redis.map(c => trace("initRedis")(_ => Redisson.create(c.instance)))
       trace("configureLift")(_ => configureLift())
-      Global.Instance = trace("Global")(_ => Global.default(dbAccess, cfg))
+      Global.Instance = trace("Global")(_ => Global.default(dbAccess, redisClient, cfg))
 
       // Prepare services
       trace("preloadTemplates")(_ => preloadTemplates())

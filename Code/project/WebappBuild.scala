@@ -292,7 +292,7 @@ object WebappBuild {
       .dependsOn(baseDb, baseOps, taskmanApi, webappServerLogicJvm, webappGenJvm)
       .deps(
         Scalaz.core ++ Lift.webkit ++ SLF4J.jcl ++ commonsLang ++ Nyaya.gen ++ Logback.withPlugins ++ JJWT.all ++
-        Prometheus.client ++ Prometheus.hotspot ++ Prometheus.servlet ++
+        Prometheus.client ++ Prometheus.hotspot ++ Prometheus.servlet ++ redisson ++
         providedScope(LibJetty.javaxServletApi ++ LibJetty.javaxWebsocketApi) ++
         testScope(μTest ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
         (LibJetty.webapp % Test))
