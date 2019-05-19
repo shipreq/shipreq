@@ -15,6 +15,17 @@ services:
     cpus: 1
     mem_limit: 400m
 
+  redis:
+    image: bitnami/redis:5.0.5
+    container_name: shipreq_dev_redis
+    ports:
+      - $PORT_REDIS:6379
+    environment:
+      - REDIS_PASSWORD=sqd
+    logging:
+      driver: none
+    mem_limit: 200m
+
   taskman:
     image: shipreq/taskman
     container_name: shipreq_dev_taskman
@@ -36,6 +47,7 @@ services:
     container_name: shipreq_dev_webapp
     links:
       - postgres
+      - redis
       - logstash
       - jaeger
     ports:
@@ -49,6 +61,8 @@ services:
       - db.database=shipreq_dev
       - db.username=dev
       - db.password=sqd
+      - redis.password=sqd
+      - redis.url=redis://redis:6379
       - run.mode=staging
       - shipreq.url=https://localhost:$PORT_SHIPREQ_WEBAPP_HTTPS
       - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
