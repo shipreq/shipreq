@@ -1,6 +1,7 @@
 package shipreq.webapp.base.event
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.microlibs.utils.ConciseIntSetFormat
 import scala.collection.immutable.TreeSet
 import shipreq.webapp.base.hash.HashRecs
 
@@ -27,6 +28,12 @@ object VerifiedEvent {
   }
 
   final case class NonEmptySeq(head: VerifiedEvent, tail: Seq) {
+    override def toString =
+      s"VerifiedEvent.NonEmptySeq($describeEvents)"
+
+    def describeEvents: String =
+      ConciseIntSetFormat(values.toIterator.map(_.ord.value).toSet)
+
     def values: Seq =
       tail + head
   }

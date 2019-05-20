@@ -19,21 +19,20 @@ final class RedisViaRedisson(client: RedissonClient, schema: RedisSchema) extend
 
   override protected def F = fxInstance
 
-  // TODO Not a Seq?
-  private val protocolEvent: Protocol.Of[Pickler, VerifiedEvent] =
-    Protocol(BinCodecEvents.pickleVerifiedEvent)
+  private val protocolEvent: Protocol.Of[Pickler, VerifiedEvent.NonEmptySeq] =
+    Protocol(BinCodecEvents.pickleVerifiedEventNES)
 
   private val byteArrayClass = classOf[Array[Byte]]
 
-  override def subscribe(id: ProjectId, listener: VerifiedEvent => Fx[Unit]) = {
+  override def subscribe(id: ProjectId, listener: VerifiedEvent.NonEmptySeq => Fx[Unit]) = {
     val topicName = schema.topic(id)
 
     val msgListener: MessageListener[Array[Byte]] = (_, msg) => {
       val bin = BinaryData.unsafeFromArray(msg)
       BinaryJvm.decode(bin, protocolEvent) match {
-        case Success(ve) =>
-          logger.debug(s"Received topic msg: project #${id.value}, event #${ve.ord.value}")
-          listener(ve).unsafeRun()
+        case Success(ves) =>
+          logger.debug(s"Received topic msg: project #${id.value}, events ${ves.describeEvents}")
+          listener(ves).unsafeRun()
         case Failure(e) =>
           logger.warn(s"Failed to decode topic $topicName msg: $bin", e)
       }
@@ -58,10 +57,19 @@ final class RedisViaRedisson(client: RedissonClient, schema: RedisSchema) extend
   }
 
   override def writeSnapshot(id: ProjectId, snapshot: ProjectSnapshot, publishOnly: VerifiedEvent.Seq) = Fx[Boolean] {
+    publishEvents(id, publishOnly).unsafeRun()
     true // TODO
   }
 
   override def writeEvents(id: ProjectId, cacheOnly: VerifiedEvent.Seq, cacheAndPublish: VerifiedEvent.Seq) = Fx[Boolean] {
+    publishEvents(id, cacheAndPublish).unsafeRun()
     true // TODO
+  }
+
+  override def publishEvents(id: ProjectId, events: VerifiedEvent.NonEmptySeq) = Fx[Unit] {
+    val topicName = schema.topic(id)
+    val topicRef = client.getTopic(topicName, ByteArrayCodec.INSTANCE)
+    val bin = BinaryJvm.encode(protocolEvent)(events)
+    topicRef.publish(bin.unsafeArray)
   }
 }

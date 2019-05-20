@@ -156,7 +156,7 @@ object ProjectSpaLogic extends StrictLogging {
           state.sub match {
             case None =>
               for {
-                sub <- redis.subscribe(static.projectId, pushEvent(span, push, _))
+                sub <- redis.subscribe(static.projectId, pushEvents(span, push, _))
               } yield WebSocketState(Some(sub))
             case Some(_) =>
               F.pure(state)
@@ -189,9 +189,6 @@ object ProjectSpaLogic extends StrictLogging {
             main
         }
       }
-
-      private def pushEvent(span: Span, push: BinaryData => F[Unit], e: VerifiedEvent): F[Unit] =
-        pushEvents(span, push, VerifiedEvent.NonEmptySeq.one(e))
 
       private def pushEvents(span: Span, push: BinaryData => F[Unit], es: VerifiedEvent.NonEmptySeq): F[Unit] =
         trace.newSubSpan("push", span) { _ =>
@@ -362,7 +359,7 @@ object ProjectSpaLogic extends StrictLogging {
 
         val redisSubscribe: F[OptionState] =
           in.state.sub match {
-            case None    => redis.subscribe(pid, pushEvent(span, in.push, _)).map(s => Some(WebSocketState(Some(s))))
+            case None    => redis.subscribe(pid, pushEvents(span, in.push, _)).map(s => Some(WebSocketState(Some(s))))
             case Some(_) => F.pure(None)
           }
 
