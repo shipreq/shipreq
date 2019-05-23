@@ -1,5 +1,7 @@
 package shipreq.benchmark
 
+import cats.effect.IO
+import scalaz.zio.UIO
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import java.util.concurrent.TimeUnit
@@ -7,7 +9,6 @@ import org.openjdk.jmh.annotations._
 import monix.eval.Coeval
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Await, Future}
-import scalaz.effect.IO
 import scalaz.Free.Trampoline
 import scalaz.std.function.function0Instance
 import scalaz.syntax.monad._
@@ -80,22 +81,23 @@ import DispatchLogic._
 class DispatchBM {
   import DispatchBM._
 
-//  def test[F[_]](i: Interpreters[F]): Any =
-//    DispatchRequests.map(r => i.run(i.dispatcher(r)))
-//
-//  @Benchmark def coeval     = test(DispatchBM.coeval)
-//  @Benchmark def io         = test(DispatchBM.io)
-//  @Benchmark def fn0        = test(DispatchBM.fn0)
-////@Benchmark def future     = test(DispatchBM.future)
-//  @Benchmark def name       = test(DispatchBM.name)
-//  @Benchmark def trampoline = test(DispatchBM.trampoline)
-
-  def test[F[_]](i: Interpreters[F])(f: Interpreters[F] => Request[Request[Unit]] => F[Response]): Any = {
+  def testF[F[_]](i: Interpreters[F])(f: Interpreters[F] => Request[Request[Unit]] => F[Response]): Any = {
     val d = f(i)
     DispatchRequests.map(r => i.run(d(Request(r.method, r.path, noBody, r.param, r.cookie, r))))
   }
 
-  @Benchmark def trampoline1 = test(DispatchBM.trampoline)(_.dispatcher1)
+  def test[F[_]](i: Interpreters[F]): Any =
+    testF(i)(_.dispatcher1)
+
+  @Benchmark def catsIO     = test(DispatchBM.catsIO)
+  @Benchmark def coeval     = test(DispatchBM.coeval)
+  @Benchmark def fn0        = test(DispatchBM.fn0)
+//@Benchmark def future     = test(DispatchBM.future)
+  @Benchmark def name       = test(DispatchBM.name)
+  @Benchmark def trampoline = test(DispatchBM.trampoline)
+  @Benchmark def zio        = test(DispatchBM.zio)
+
+//  @Benchmark def trampoline1 = testF(DispatchBM.trampoline)(_.dispatcher1)
 //  @Benchmark def trampoline2 = test(DispatchBM.trampoline)(_.dispatcher2)
 }
 
@@ -241,23 +243,38 @@ object DispatchBM {
     List.fill(10)(rs).flatten
   }
 
+  implicit val monadCatsIO: Monad[IO] = new Monad[IO] {
+    override def point[A](a: => A): IO[A] = IO(a)
+    override def bind[A, B](fa: IO[A])(f: A => IO[B]): IO[B] = fa flatMap f
+    override def map[A, B](fa: IO[A])(f: A => B): IO[B] = fa map f
+  }
+
   implicit val monadCoeval: Monad[Coeval] = new Monad[Coeval] {
     override def point[A](a: => A): Coeval[A] = Coeval(a)
-    override def bind[A, B](fa: Coeval[A])(f: (A) => Coeval[B]): Coeval[B] = fa flatMap f
-    override def map[A, B](fa: Coeval[A])(f: (A) => B): Coeval[B] = fa map f
+    override def bind[A, B](fa: Coeval[A])(f: A => Coeval[B]): Coeval[B] = fa flatMap f
+    override def map[A, B](fa: Coeval[A])(f: A => B): Coeval[B] = fa map f
   }
 
   implicit val monadFuture: Monad[Future] = new Monad[Future] {
     import scala.concurrent.ExecutionContext.Implicits.global
     override def point[A](a: => A): Future[A] = Future(a)
-    override def bind[A, B](fa: Future[A])(f: (A) => Future[B]): Future[B] = fa flatMap f
-    override def map[A, B](fa: Future[A])(f: (A) => B): Future[B] = fa map f
+    override def bind[A, B](fa: Future[A])(f: A => Future[B]): Future[B] = fa flatMap f
+    override def map[A, B](fa: Future[A])(f: A => B): Future[B] = fa map f
   }
 
+  implicit val monadZIO: Monad[UIO] = new Monad[UIO] {
+    override def point[A](a: => A): UIO[A] = UIO(a)
+    override def bind[A, B](fa: UIO[A])(f: A => UIO[B]): UIO[B] = fa flatMap f
+    override def map[A, B](fa: UIO[A])(f: A => B): UIO[B] = fa map f
+  }
+
+  val zioRuntime = new scalaz.zio.DefaultRuntime {}
+
+  val catsIO     = new Interpreters[IO        ](_.unsafeRunSync())
   val coeval     = new Interpreters[Coeval    ](_.apply())
-  val io         = new Interpreters[IO        ](_.unsafePerformIO())
   val fn0        = new Interpreters[Function0 ](_.apply())
   val future     = new Interpreters[Future    ](Await.result(_, FiniteDuration(5, "min")))
   val name       = new Interpreters[Name      ](_.value)
   val trampoline = new Interpreters[Trampoline](_.run)
+  val zio        = new Interpreters[UIO       ](zioRuntime.unsafeRun(_))
 }
