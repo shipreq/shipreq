@@ -70,7 +70,7 @@ object Trace {
       else
         algebras.reduce(_ compose _)
 
-    def off[F[_]](implicit F: Monad[F]): Algebra[F] =
+    def off[F[_]](implicit F: Monad[F]): Algebra[F] { type Span = Unit } =
       new Algebra[F] {
         val fUnit = F.point(())
         override type Span                                              = Unit

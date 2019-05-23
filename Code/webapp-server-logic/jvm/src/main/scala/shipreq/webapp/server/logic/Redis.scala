@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
 import scalaz.{BindRec, Monad}
 import scalaz.syntax.monad._
+import shipreq.base.ops.Trace
 import shipreq.webapp.base.data.{Project, ProjectId}
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 
@@ -148,6 +149,37 @@ object Redis {
     protected final val fTrue = F.pure(true)
     protected final val fUnit = F.pure(())
   }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  def traced[F[_]](underlying: ProjectAlgebra[F], trace: Trace.Algebra[F])(implicit monadF: Monad[F]): ProjectAlgebra[F] =
+    new ProjectAlgebra[F] {
+      override protected def F = monadF
+
+      private def traced[A](name: String, id: ProjectId, f: F[A]): F[A] =
+        trace.newSpan("Redis: " + name) { span =>
+          val addAttrs = trace.addAttrs(Trace.Attr.ShipReqProjectId(id) :: Nil)(span)
+          F.bind(addAttrs)(_ => f)
+        }
+
+      override def subscribe(id: ProjectId, listener: VerifiedEvent => F[Unit]): F[Subscription[F]] =
+        traced("subscribe", id, underlying.subscribe(id, listener))
+
+      override def read(id: ProjectId): F[ProjectCache] =
+        traced("read", id, underlying.read(id))
+
+      override def readEvents(id: ProjectId, beyond: Option[EventOrd.Latest]): F[VerifiedEvent.Seq] =
+        traced("readEvents", id, underlying.readEvents(id, beyond))
+
+      override def writeSnapshot(id: ProjectId, snapshot: ProjectSnapshot, publishOnly: VerifiedEvent.Seq): F[Boolean] =
+        traced("writeSnapshot", id, underlying.writeSnapshot(id, snapshot, publishOnly))
+
+      override def writeEvents(id: ProjectId, cacheOnly: VerifiedEvent.Seq, cacheAndPublish: VerifiedEvent.Seq): F[Boolean] =
+        traced("writeEvents", id, underlying.writeEvents(id, cacheOnly, cacheAndPublish))
+
+      override def publishEvents(id: ProjectId, events: VerifiedEvent.NonEmptySeq): F[Unit] =
+        traced("publishEvents", id, underlying.publishEvents(id, events))
+    }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

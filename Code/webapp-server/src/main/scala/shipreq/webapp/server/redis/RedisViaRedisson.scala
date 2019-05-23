@@ -20,7 +20,7 @@ import shipreq.webapp.base.protocol.{BinaryJvm, Protocol}
 import shipreq.webapp.server.logic.Redis
 import shipreq.webapp.server.logic.Redis.ProjectSnapshot
 
-// TODO logging, tracing, metrics
+// TODO logging, metrics
 
 object RedisViaRedisson {
 

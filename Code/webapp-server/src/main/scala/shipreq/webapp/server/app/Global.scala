@@ -47,14 +47,8 @@ object Global {
       else
         MetricsLogic.const(Fx.unit)
 
-    implicit val redis: Redis.ProjectAlgebra[Fx] =
-      redisClient match {
-        case Some(c) => new RedisViaRedisson(c, RedisSchema.default)
-        case None    => useInMemoryRedis()
-      }
-
     implicit val traceAlgebra  = config.server.traceAlgebraFx
-    implicit val trace         = new TraceLogic: TraceInterpreter.ForLift[Fx]
+    implicit val trace         = TraceLogic.on: TraceInterpreter.ForLift[Fx]
     implicit val runDB         = trace.injectDb(dbAccess.fx.trans)
     implicit val taskman       = TaskmanApi.addLogging(TaskmanApiImpl(Some(config.server.taskmanSchema)).trans(runDB))
     implicit val dbAlgebra     = new DbInterpreter()
@@ -63,6 +57,12 @@ object Global {
     implicit val server        = trace.injectServer(ServerInterpreter)
     implicit val ops           = new OpsEndpointInterpreter()
     implicit val security      = new SecurityInterpreter[Fx]
+
+    implicit val redis: Redis.ProjectAlgebra[Fx] =
+      redisClient match {
+        case Some(c) => trace.injectRedis(new RedisViaRedisson(c, RedisSchema.default))
+        case None    => useInMemoryRedis()
+      }
 
     Global(
       config   = config,
