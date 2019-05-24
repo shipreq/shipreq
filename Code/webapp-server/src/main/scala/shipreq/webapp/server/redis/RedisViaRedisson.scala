@@ -120,7 +120,7 @@ final class RedisViaRedisson(client: RedissonClient, schema: RedisSchema) extend
 
   private val shaRead = deployScript(Lua.read)
 
-  override def read(id: ProjectId) =
+  override protected def _read(id: ProjectId) =
     fxWithFallback("read", ProjectCache.empty) {
 
       // Call Redis

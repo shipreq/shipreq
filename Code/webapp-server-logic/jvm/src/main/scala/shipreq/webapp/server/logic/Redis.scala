@@ -31,9 +31,7 @@ object Redis extends StrictLogging {
 
     /** [TLA+] This is RedisTotalVer */
     val ord: Option[EventOrd.Latest] =
-      if (!isComplete)
-        None
-      else if (events.nonEmpty)
+      if (events.nonEmpty)
         Some(events.last.ord.asLatest)
       else
         snapshot.map(_.ord)
@@ -41,14 +39,8 @@ object Redis extends StrictLogging {
     @inline def isEmpty = ord.isEmpty
     @inline def nonEmpty = !isEmpty
 
-    def isComplete: Boolean =
-      events.headOption match {
-        case Some(e) => e.ord.immediatelyFollows(snapshot.map(_.ord.asEventOrd))
-        case None    => true
-      }
-
     def isCompleteTo(latestOrd: EventOrd.Latest): Boolean =
-      ord.exists(_ ==* latestOrd) && isComplete
+      ord.exists(_ ==* latestOrd)
 
     def isCompleteTo(latestOrd: Option[EventOrd.Latest]): Boolean =
       latestOrd match {
@@ -56,17 +48,14 @@ object Redis extends StrictLogging {
         case None    => isEmpty
       }
 
-    def filterComplete: ProjectCache =
-      if (isComplete) this else ProjectCache.empty
-
     def build[F[_]](pid: ProjectId)(implicit ae: ApplyEventLogic[F]) =
       snapshot match {
         case Some(ss) => ae.append(pid, ss.toProjectAndOrd, events)
         case None     => ae.create(pid, events)
       }
 
-    def nonEmptyCompleteBuild[F[_]](pid: ProjectId)(implicit ae: ApplyEventLogic[F]): F[Option[ProjectAndOrd]] =
-      if (nonEmpty && isComplete)
+    def buildNonEmpty[F[_]](pid: ProjectId)(implicit ae: ApplyEventLogic[F]): F[Option[ProjectAndOrd]] =
+      if (nonEmpty)
         ae.F.map(build(pid))(_.toOption)
       else
         ae.F.point(None)
@@ -91,8 +80,24 @@ object Redis extends StrictLogging {
     /** [TLA+] Used by:
       *          - Load_ReadRedis
       *          - Update_ReadRedis
+      *
+      * @return Result is always complete. No gap due to an evicted snapshot.
       */
-    def read(id: ProjectId): F[ProjectCache]
+    final def read(id: ProjectId): F[ProjectCache] =
+      F.map(_read(id)) { r =>
+        val isComplete: Boolean =
+          r.events.headOption match {
+            case Some(e) => e.ord.immediatelyFollows(r.snapshot.map(_.ord.asEventOrd))
+            case None    => true
+          }
+        if (isComplete) r else ProjectCache.empty
+      }
+
+    /** [TLA+] Used by:
+      *          - Load_ReadRedis
+      *          - Update_ReadRedis
+      */
+    protected def _read(id: ProjectId): F[ProjectCache]
 
     /** Read events only.
       *
@@ -170,7 +175,7 @@ object Redis extends StrictLogging {
       override def subscribe(id: ProjectId, listener: VerifiedEvent => F[Unit]): F[Subscription[F]] =
         traced("subscribe", id, underlying.subscribe(id, listener))
 
-      override def read(id: ProjectId): F[ProjectCache] =
+      override protected def _read(id: ProjectId): F[ProjectCache] =
         traced("read", id, underlying.read(id))
 
       override def readEvents(id: ProjectId, beyond: Option[EventOrd.Latest]): F[VerifiedEvent.Seq] =
@@ -202,7 +207,7 @@ object Redis extends StrictLogging {
       override def subscribe(id: ProjectId, listener: VerifiedEvent => F[Unit]): F[Subscription[F]] =
         wrap("subscribe", id, underlying.subscribe(id, listener))
 
-      override def read(id: ProjectId): F[ProjectCache] =
+      override protected def _read(id: ProjectId): F[ProjectCache] =
         wrap("read", id, underlying.read(id))
 
       override def readEvents(id: ProjectId, beyond: Option[EventOrd.Latest]): F[VerifiedEvent.Seq] =
@@ -298,7 +303,7 @@ object Redis extends StrictLogging {
     private def readCacheNow(id: ProjectId) =
       globalCache.getIfPresent(id).getOrElse(ProjectCache.empty)
 
-    override def read(id: ProjectId) = F.point {
+    override protected def _read(id: ProjectId) = F.point {
       readCacheNow(id)
     }
 
@@ -317,34 +322,34 @@ object Redis extends StrictLogging {
         false
     } <* publishEvents(id, publishOnly)
 
-    override def writeEvents(id: ProjectId, cacheOnly: VerifiedEvent.Seq, cacheAndPublish: VerifiedEvent.Seq) = F.point {
-      writeCounter.getAndIncrement()
-      val cache = readCacheNow(id)
-      val newEvents = cache.ord match {
-        case Some(o) => VerifiedEvent.Seq.empty ++ (cacheOnly.iterator ++ cacheAndPublish).filter(_.ord > o)
-        case None    => cacheOnly ++ cacheAndPublish
-      }
-      if (newEvents.isEmpty || cache.ord.exists(newEvents.min.ord.value > _.value + 1))
-        false
-      else {
-        val it = newEvents.iterator
-        val first = it.next()
-        var events2 = cache.events + first
-        @tailrec def go(prev: Int): Unit =
-          if (it.hasNext) {
-            val e = it.next()
-            val o = e.ord.value
-            if (o == prev + 1) {
-              events2 += e
-              go(o)
+    override def writeEvents(id: ProjectId, cacheOnly: VerifiedEvent.Seq, cacheAndPublish: VerifiedEvent.Seq) =
+      read(id).map { cache =>
+        writeCounter.getAndIncrement()
+        val newEvents = cache.ord match {
+          case Some(o) => VerifiedEvent.Seq.empty ++ (cacheOnly.iterator ++ cacheAndPublish).filter(_.ord > o)
+          case None    => cacheOnly ++ cacheAndPublish
+        }
+        if (newEvents.isEmpty || cache.ord.exists(newEvents.min.ord.value > _.value + 1))
+          false
+        else {
+          val it = newEvents.iterator
+          val first = it.next()
+          var events2 = cache.events + first
+          @tailrec def go(prev: Int): Unit =
+            if (it.hasNext) {
+              val e = it.next()
+              val o = e.ord.value
+              if (o == prev + 1) {
+                events2 += e
+                go(o)
+              }
             }
-          }
-        go(first.ord.value)
-        val cache2 = cache.copy(events = events2)
-        globalCache.put(id, cache2)
-        true
-      }
-    } <* publishEvents(id, cacheAndPublish)
+          go(first.ord.value)
+          val cache2 = cache.copy(events = events2)
+          globalCache.put(id, cache2)
+          true
+        }
+      } <* publishEvents(id, cacheAndPublish)
 
     override def publishEvents(id: ProjectId, events: VerifiedEvent.NonEmptySeq) = F.point {
       val pubSubs = readPubSubsNow(id)

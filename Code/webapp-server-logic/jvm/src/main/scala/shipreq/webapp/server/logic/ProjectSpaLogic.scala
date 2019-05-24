@@ -361,7 +361,7 @@ object ProjectSpaLogic extends StrictLogging {
             )
 
           for {
-            cacheb <- c.nonEmptyCompleteBuild(pid)
+            cacheb <- c.buildNonEmpty(pid)
             result <- readDb(cacheb getOrElse ProjectAndOrd.empty)
             _      <- result.fold[F[_]](_ => fUnit, writeRedis)
           } yield result
@@ -486,14 +486,13 @@ object ProjectSpaLogic extends StrictLogging {
       def loop(s: State): F[State \/ Result] = {
         import Status._
 
-        if (gas > 0) gas -= 1 else throw new IllegalStateException("Infinite loop!")
+        if (gas > 0) gas -= 1 else throw new IllegalStateException(s"Infinite loop! state=$s")
 
         val main: F[State \/ Result] = s.status match {
 
           case ReadRedis =>
             for {
-              r0    ← redis.read(pid)
-              r     = r0.filterComplete
+              r     ← redis.read(pid)
               built ← r.build(pid)
             } yield built match {
               case \/-(p) => -\/(s.copy(local = p, redis = r, status = if (r.ord > s.local.ord) WriteDb else ReadDb))
@@ -502,7 +501,7 @@ object ProjectSpaLogic extends StrictLogging {
 
           case ReadDb =>
             for {
-              cacheBuilt ← s.redis.nonEmptyCompleteBuild(pid)
+              cacheBuilt ← s.redis.buildNonEmpty(pid)
               p1         = s.local max cacheBuilt
               newEvents  ← runDB(db.getProjectEvents(pid, DB.EventFilter.given(p1.ord)))
               built      ← apEvent.append(pid, p1, newEvents)
