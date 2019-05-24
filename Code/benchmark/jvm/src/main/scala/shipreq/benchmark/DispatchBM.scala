@@ -150,6 +150,7 @@ object DispatchBM {
   implicit val config = ServerLogicConfig(
     baseUrl                    = Url.Absolute.Base("https://test.shipreq.com"),
     publicRegistration         = Allow,
+    applyEventThresholdMs      = 1000,
     googleAnalyticsTrackingId  = None,
     taskmanSchema              = "test_taskman",
     initTaskmanOnBoot          = false,

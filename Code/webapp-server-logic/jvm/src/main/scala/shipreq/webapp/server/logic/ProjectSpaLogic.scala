@@ -76,6 +76,7 @@ object ProjectSpaLogic extends StrictLogging {
   def apply[D[_], F[_]](implicit
                         D       : Monad[D],
                         F       : Monad[F] with BindRec[F],
+                        apEvent : ApplyEventLogic[F],
                         db      : DB.ForProjectSpa[D],
                         metrics : MetricsLogic[F],
                         redis   : Redis.ProjectAlgebra[F],
@@ -308,18 +309,17 @@ object ProjectSpaLogic extends StrictLogging {
 
           def readDb(p: ProjectAndOrd) =
             step("readDb")(
-              runDB(
-                db.inDbTransaction(for {
-                  md <- db.getProjectMetaData(pid)
-                  es <- db.getProjectEvents(pid, DB.EventFilter.given(p.ord))
-                } yield (es, md))
-              ).map {
-                case (es, Some(md)) =>
-                  // Build outside of DB transaction
-                  trace.newSpanImpure("ApplyEvents")(_ =>
-                    ApplyEvents.append(pid, p, es).map(InitAppData(_, md)))
-                case (_, None) =>
-                  projectNotFound
+              for {
+                (es, mdo) <- runDB(
+                               db.inDbTransaction(for {
+                                 md <- db.getProjectMetaData(pid)
+                                 es <- db.getProjectEvents(pid, DB.EventFilter.given(p.ord))
+                               } yield (es, md))
+                             )
+                buildResult <- apEvent.append(pid, p, es)
+              } yield mdo match {
+                case Some(md) => buildResult.map(InitAppData(_, md))
+                case None     => projectNotFound
               }
             )
 
@@ -330,14 +330,17 @@ object ProjectSpaLogic extends StrictLogging {
             )
 
           for {
-            result <- readDb(c.nonEmptyCompleteBuild(pid) getOrElse ProjectAndOrd.empty)
+            cacheb <- c.nonEmptyCompleteBuild(pid)
+            result <- readDb(cacheb getOrElse ProjectAndOrd.empty)
             _      <- result.fold[F[_]](_ => fUnit, writeRedis)
           } yield result
         }
 
         def useCache(c: Redis.ProjectCache, md: ProjectMetaData): F[Result] =
           step("useCache") {
-            F point c.build(pid).map(InitAppData(_, md))
+            for {
+              r <- c.build(pid)
+            } yield r.map(InitAppData(_, md))
           }
 
         for {
@@ -434,6 +437,7 @@ object ProjectSpaLogic extends StrictLogging {
   private final class ProjectUpdater[D[_], F[_]](implicit
                                                  D       : Monad[D],
                                                  F       : Monad[F] with BindRec[F],
+                                                 apEvent : ApplyEventLogic[F],
                                                  db      : DB.ForProjectSpa[D],
                                                  metrics : MetricsLogic[F],
                                                  redis   : Redis.ProjectAlgebra[F],
@@ -452,24 +456,24 @@ object ProjectSpaLogic extends StrictLogging {
 
           case ReadRedis =>
             for {
-              r0 <- redis.read(pid)
-            } yield {
-              val r = r0.filterComplete
-              r.build(pid) match {
-                case \/-(p) => -\/(s.copy(local = p, redis = r, status = if (r.ord > s.local.ord) WriteDb else ReadDb))
-                case -\/(e) => \/-(-\/(e))
-              }
+              r0    ← redis.read(pid)
+              r     = r0.filterComplete
+              built ← r.build(pid)
+            } yield built match {
+              case \/-(p) => -\/(s.copy(local = p, redis = r, status = if (r.ord > s.local.ord) WriteDb else ReadDb))
+              case -\/(e) => \/-(-\/(e))
             }
 
           case ReadDb =>
-            val p1 = s.local max s.redis.nonEmptyCompleteBuild(pid)
             for {
-              newEvents <- runDB(db.getProjectEvents(pid, DB.EventFilter.given(p1.ord)))
-            } yield
-              ApplyEvents.append(pid, p1, newEvents) match {
-                case \/-(p2) => -\/(s.copy(local = p2, status = WriteRedis1))
-                case -\/(e)  => \/-(-\/(e))
-              }
+              cacheBuilt ← s.redis.nonEmptyCompleteBuild(pid)
+              p1         = s.local max cacheBuilt
+              newEvents  ← runDB(db.getProjectEvents(pid, DB.EventFilter.given(p1.ord)))
+              built      ← apEvent.append(pid, p1, newEvents)
+            } yield built match {
+              case \/-(p2) => -\/(s.copy(local = p2, status = WriteRedis1))
+              case -\/(e)  => \/-(-\/(e))
+            }
 
           case WriteRedis1 =>
             for {

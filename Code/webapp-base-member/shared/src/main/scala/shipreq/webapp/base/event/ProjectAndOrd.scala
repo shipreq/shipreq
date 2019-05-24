@@ -24,6 +24,9 @@ final case class ProjectAndOrd(project: Project, ord: Option[EventOrd.Latest]) {
 
   def nextOrd: EventOrd =
     ord.fold(EventOrd.first)(_.asEventOrd + 1)
+
+  def ordAsInt: Int =
+    ord.fold(0)(_.value)
 }
 
 object ProjectAndOrd {

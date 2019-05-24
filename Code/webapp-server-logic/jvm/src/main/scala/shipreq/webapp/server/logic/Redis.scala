@@ -57,17 +57,17 @@ object Redis extends StrictLogging {
     def filterComplete: ProjectCache =
       if (isComplete) this else ProjectCache.empty
 
-    def build(pid: ProjectId) =
+    def build[F[_]](pid: ProjectId)(implicit ae: ApplyEventLogic[F]) =
       snapshot match {
-        case Some(ss) => ApplyEvents.append(pid, ss.toProjectAndOrd, events)
-        case None     => ApplyEvents.create(pid, events)
+        case Some(ss) => ae.append(pid, ss.toProjectAndOrd, events)
+        case None     => ae.create(pid, events)
       }
 
-    def nonEmptyCompleteBuild(pid: ProjectId): Option[ProjectAndOrd] =
+    def nonEmptyCompleteBuild[F[_]](pid: ProjectId)(implicit ae: ApplyEventLogic[F]): F[Option[ProjectAndOrd]] =
       if (nonEmpty && isComplete)
-        build(pid).toOption
+        ae.F.map(build(pid))(_.toOption)
       else
-        None
+        ae.F.point(None)
   }
 
   object ProjectCache {

@@ -74,6 +74,8 @@ object PrometheusMetrics extends HasLogger {
 
   private[PrometheusMetrics] object Metrics {
 
+    val EventApplicationCount    = new EventApplicationCount
+    val EventApplicationDuration = new EventApplicationDuration
     val HttpDuration             = new HttpDuration
     val HttpIO                   = new HttpIO
     val OpenWebSockets           = new OpenWebSockets
@@ -226,7 +228,7 @@ object PrometheusMetrics extends HasLogger {
 
     final class RedisDuration private[Metrics] {
       private[this] val m =
-        Histogram.build(prefix + "redis_duration_seconds", "Duration of Redis call (including {,de}serialisation)")
+        Histogram.build(prefix + "redis_duration_seconds", "Duration of Redis call (including {,de}serialisation) in seconds")
           .labelNames(Label.Op)
           .buckets(
             0.001, 0.003, 0.005, 0.010, 0.020, 0.030, 0.050, 0.075,
@@ -235,6 +237,30 @@ object PrometheusMetrics extends HasLogger {
           .register()
       def apply(name: String) =
         m.labels(name)
+    }
+
+    final class EventApplicationCount private[Metrics] {
+      private[this] val m =
+        Counter.build(prefix + "eventap_events_total", "Number of events that were applied")
+          .labelNames(Label.Method)
+          .register()
+      private[this] val trusted   = m.labels("trusted")
+      private[this] def untrusted = m.labels("untrusted")
+      def apply(trusted: Boolean) = if (trusted) this.trusted else untrusted
+    }
+
+    final class EventApplicationDuration private[Metrics] {
+      private[this] val m =
+        Histogram.build(prefix + "eventap_duration_seconds", "Time to apply events to a project in seconds")
+          .labelNames(Label.Method)
+          .buckets(
+            0.001, 0.003, 0.005, 0.010, 0.020, 0.030, 0.050, 0.075,
+            0.100, 0.150, 0.200, 0.300, 0.500, 0.750,
+            1, 2)
+          .register()
+      private[this] val trusted   = m.labels("trusted")
+      private[this] def untrusted = m.labels("untrusted")
+      def apply(trusted: Boolean) = if (trusted) this.trusted else untrusted
     }
   }
 
@@ -377,4 +403,10 @@ final class PrometheusMetrics extends MetricsLogic[Fx] {
 
   override def redis(opName: String, dur: Duration): Fx[Unit] =
     Fx(RedisDuration(opName).observe(dur.asSeconds))
+
+  override def appliedEvents(eventCount: Int, dur: Duration, trusted: Boolean) =
+    Fx {
+      EventApplicationCount(trusted = trusted).inc(eventCount)
+      EventApplicationDuration(trusted = trusted).observe(dur.asSeconds)
+    }
 }

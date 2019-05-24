@@ -19,6 +19,8 @@ final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,
                                      */
                                    publicRegistration: Permission,
 
+                                   applyEventThresholdMs: Int,
+
                                    googleAnalyticsTrackingId: Option[String],
 
                                    /** The DB schema in which the Taskman interfaces reside. */
@@ -133,6 +135,7 @@ object ServerLogicConfig {
     JaegerTracingConfig.external *>
     ( ConfigDef.need       [String  ]("url").map(Url.Absolute.Base.apply) |@|
       ConfigDef.getOrUse   [Boolean ]("feature.publicRegistration", true).map(Allow.when) |@|
+      ConfigDef.getOrUse   [Int     ]("applyEvent.thresholdMs", 300).ensure_>=(0).ensure_<(1000) |@|
       ConfigDef.get        [String  ]("googleAnalytics.trackingId") |@|
       ConfigDef.need       [String  ]("taskman.schema") |@|
       ConfigDef.getOrUse   [Boolean ]("taskman.init", true) |@|

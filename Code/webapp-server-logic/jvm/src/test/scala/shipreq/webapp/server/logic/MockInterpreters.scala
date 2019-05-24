@@ -446,6 +446,7 @@ object MockInterpreters {
   val config = ServerLogicConfig(
     baseUrl                    = Url.Absolute.Base("https://test.shipreq.com"),
     publicRegistration         = Allow,
+    applyEventThresholdMs      = 1000,
     googleAnalyticsTrackingId  = None,
     taskmanSchema              = "test_taskman",
     initTaskmanOnBoot          = false,
@@ -471,6 +472,7 @@ class MockInterpreters(modCfg: ServerLogicConfig => ServerLogicConfig = Identity
   implicit val security       = new MockSecurity(db)
   implicit val taskman        = new MockTaskman
   implicit val nameToName     = NaturalTransformation.refl[Name]
+  implicit val apEvent        = ApplyEventLogic.trusted[Name]
   implicit val metrics        = MetricsLogic.const(Name(()))
   implicit val trace          = Trace.Algebra.off[Name]
   implicit val redis          = new Redis.InMemory[Name]

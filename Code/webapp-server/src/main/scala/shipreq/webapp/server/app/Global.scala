@@ -58,6 +58,13 @@ object Global {
     implicit val ops           = new OpsEndpointInterpreter()
     implicit val security      = new SecurityInterpreter[Fx]
 
+    implicit val apEvents = {
+      var a = ApplyEventLogic.trusted[Fx]
+      a = ApplyEventLogic.withMetricsAndLogging(a, config.server.applyEventThresholdMs)
+      a = ApplyEventLogic.traced(a, traceAlgebra)
+      a
+    }
+
     implicit val redis: Redis.ProjectAlgebra[Fx] =
       redisClient match {
         case Some(c) =>

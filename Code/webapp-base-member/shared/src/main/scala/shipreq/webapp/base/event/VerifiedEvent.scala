@@ -49,6 +49,9 @@ object VerifiedEvent {
       NonEmptySeq(ve, Seq.empty)
 
     def maybe(s: Seq): Option[NonEmptySeq] =
-      Option.when(s.nonEmpty)(apply(s.head, s.tail))
+      Option.when(s.nonEmpty)(force(s))
+
+    def force(s: Seq): NonEmptySeq =
+      apply(s.head, s.tail)
   }
 }
