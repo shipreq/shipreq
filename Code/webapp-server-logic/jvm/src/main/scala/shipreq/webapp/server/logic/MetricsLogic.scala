@@ -2,7 +2,7 @@ package shipreq.webapp.server.logic
 
 import java.time.Duration
 
-trait MetricsLogic[F[_]] {
+trait MetricsLogic[F[_]] extends MetricsLogic.ForRedis[F] {
 
   // {HttpRequests, HttpIO, HttpDuration} done directly in webapp-server
   // Here we just set the names
@@ -27,6 +27,10 @@ trait MetricsLogic[F[_]] {
 
 object MetricsLogic {
 
+  trait ForRedis[F[_]] {
+    def redis(opName: String, duration: Duration): F[Unit]
+  }
+
   def const[F[_]](f: F[Unit]): MetricsLogic[F] =
     new MetricsLogic[F] {
       override def setHttpName                 (x: String)                                            = f
@@ -38,5 +42,6 @@ object MetricsLogic {
       override def projectSpaWebSocketOpened   (a: Duration)                                          = f
       override def projectSpaWebSocketClosed   (a: Duration, b: Duration)                             = f
       override def projectSpaWebSocketStep[A]  (a: String, b: String)(c: F[A])                        = c
+      override def redis                       (a: String, d: Duration)                               = f
     }
 }

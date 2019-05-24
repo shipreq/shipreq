@@ -1,13 +1,16 @@
 package shipreq.webapp.server.logic
 
+import com.typesafe.scalalogging.StrictLogging
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
+import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
 import scalaz.{BindRec, Monad}
 import scalaz.syntax.monad._
 import shipreq.base.ops.Trace
+import shipreq.base.util.JavaTimeHelpers._
 import shipreq.webapp.base.data.{Project, ProjectId}
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 
@@ -15,7 +18,7 @@ import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
   * Because our architecture relies on Redis for both caching and pub/sub.
   * I don't know of any other service apart from Redis that can satisfactorily, and atomically, fulfil both roles.
   */
-object Redis {
+object Redis extends StrictLogging {
 
   final case class ProjectSnapshot(project: Project, ord: EventOrd.Latest) {
     override def toString = s"ProjectSnapshot(${ord.value})"
@@ -180,6 +183,55 @@ object Redis {
       override def publishEvents(id: ProjectId, events: VerifiedEvent.NonEmptySeq): F[Unit] =
         traced("publishEvents", id, underlying.publishEvents(id, events))
     }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  def timed[F[_]](underlying: ProjectAlgebra[F], report: (String, ProjectId, Duration) => F[Unit])
+                 (implicit monadF: Monad[F], svr: Server.Time[F]): ProjectAlgebra[F] =
+    new ProjectAlgebra[F] {
+      override protected def F = monadF
+
+      private def wrap[A](name: String, id: ProjectId, f: F[A]): F[A] =
+        for {
+          (a, dur) <- svr.measureDuration(f)
+          _        <- report(name, id, dur)
+        } yield a
+
+      override def subscribe(id: ProjectId, listener: VerifiedEvent => F[Unit]): F[Subscription[F]] =
+        wrap("subscribe", id, underlying.subscribe(id, listener))
+
+      override def read(id: ProjectId): F[ProjectCache] =
+        wrap("read", id, underlying.read(id))
+
+      override def readEvents(id: ProjectId, beyond: Option[EventOrd.Latest]): F[VerifiedEvent.Seq] =
+        wrap("readEvents", id, underlying.readEvents(id, beyond))
+
+      override def writeSnapshot(id: ProjectId, snapshot: ProjectSnapshot, publishOnly: VerifiedEvent.Seq): F[Boolean] =
+        wrap("writeSnapshot", id, underlying.writeSnapshot(id, snapshot, publishOnly))
+
+      override def writeEvents(id: ProjectId, cacheOnly: VerifiedEvent.Seq, cacheAndPublish: VerifiedEvent.Seq): F[Boolean] =
+        wrap("writeEvents", id, underlying.writeEvents(id, cacheOnly, cacheAndPublish))
+
+      override def publishEvents(id: ProjectId, events: VerifiedEvent.NonEmptySeq): F[Unit] =
+        wrap("publishEvents", id, underlying.publishEvents(id, events))
+    }
+
+  def withMetricsAndLogging[F[_]](underlying: ProjectAlgebra[F], metrics: MetricsLogic.ForRedis[F])
+                                 (implicit monadF: Monad[F], svr: Server.Time[F]): ProjectAlgebra[F] = {
+
+    var report: (String, ProjectId, Duration) => F[Unit] =
+      (op, _, dur) => metrics.redis(op, dur)
+
+    logger.whenInfoEnabled {
+      report = (op, id, dur) => {
+        val log = monadF.point(logger.info(s"Redis $op for project #${id.value} completed in ${dur.conciseDesc}."))
+        val write = metrics.redis(op, dur)
+        write *> log
+      }
+    }
+
+    timed(underlying, report)
+  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

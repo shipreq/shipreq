@@ -60,8 +60,13 @@ object Global {
 
     implicit val redis: Redis.ProjectAlgebra[Fx] =
       redisClient match {
-        case Some(c) => trace.injectRedis(new RedisViaRedisson(c, RedisSchema.default))
-        case None    => useInMemoryRedis()
+        case Some(c) =>
+          var r: Redis.ProjectAlgebra[Fx] = new RedisViaRedisson(c, RedisSchema.default)
+          r = Redis.withMetricsAndLogging(r, metrics)
+          r = trace.injectRedis(r)
+          r
+        case None =>
+          useInMemoryRedis()
       }
 
     Global(

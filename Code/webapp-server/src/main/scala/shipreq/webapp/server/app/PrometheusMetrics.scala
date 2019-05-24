@@ -53,6 +53,7 @@ object PrometheusMetrics extends HasLogger {
     final val Method     = "method"
     final val MsgType    = "msg_type"
     final val Name       = "name"
+    final val Op         = "op"
     final val Process    = "process"
     final val Result     = "result"
     final val Step       = "step"
@@ -77,6 +78,7 @@ object PrometheusMetrics extends HasLogger {
     val HttpIO                   = new HttpIO
     val OpenWebSockets           = new OpenWebSockets
     val ProjectSpaStepDuration   = new ProjectSpaStepDuration
+    val RedisDuration            = new RedisDuration
     val SecureEventsTotal        = new SecureEventsTotal
     val WebSocketEventDuration   = new WebSocketEventDuration
     val WebSocketIO              = new WebSocketIO
@@ -117,12 +119,6 @@ object PrometheusMetrics extends HasLogger {
         m.labels(dir, method.value, endpoint.name, statusCode.value, endpoint.`type`)
     }
 
-    private def mkHttpSessionsActive =
-      Gauge.build(prefix + "http_sessions_active", "HTTP sessions currently active").register()
-
-    private def mkHttpSessionsTotal =
-      Counter.build(prefix + "http_sessions_total", "Total HTTP sessions created").register()
-
     final class LoginsActive private[Metrics] {
       private[this] val m =
         Gauge.build(prefix + "logins_active", "Logged-in sessions currently active")
@@ -149,9 +145,6 @@ object PrometheusMetrics extends HasLogger {
       def apply(event: Security.Event, result: Security.Result) =
         m.labels(name(event), yesOrNo(result.isSuccess))
     }
-
-    private def mkProjectsActive =
-      Gauge.build(prefix + "projects_active", "Projects currently being served").register()
 
     final class OpenWebSockets private[Metrics] {
       private[this] val m =
@@ -231,6 +224,18 @@ object PrometheusMetrics extends HasLogger {
         m.labels(process, step)
     }
 
+    final class RedisDuration private[Metrics] {
+      private[this] val m =
+        Histogram.build(prefix + "redis_duration_seconds", "Duration of Redis call (including {,de}serialisation)")
+          .labelNames(Label.Op)
+          .buckets(
+            0.001, 0.003, 0.005, 0.010, 0.020, 0.030, 0.050, 0.075,
+            0.100, 0.150, 0.200, 0.300, 0.500, 0.750,
+            1, 2)
+          .register()
+      def apply(name: String) =
+        m.labels(name)
+    }
   }
 
   private[PrometheusMetrics] object Unsafe {
@@ -369,4 +374,7 @@ final class PrometheusMetrics extends MetricsLogic[Fx] {
 
   override def projectSpaWebSocketStep[A](process: String, step: String)(f: Fx[A]) =
     time(ProjectSpaStepDuration(process, step), f)
+
+  override def redis(opName: String, dur: Duration): Fx[Unit] =
+    Fx(RedisDuration(opName).observe(dur.asSeconds))
 }
