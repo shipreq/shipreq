@@ -77,7 +77,7 @@ object ApplyEventLogic extends StrictLogging {
         _          ← metrics.appliedEvents(eventCount, dur, trust = trust)
       } yield {
         if (dur.getSeconds == 0 && dur.getNano < warnIfDurExceedsNs)
-          logger.debug(s"Applied $eventCount events to project #${pid.value} v${pao1.ordAsInt} in ${dur.conciseDesc}")
+          logger.info(s"Applied $eventCount events to project #${pid.value} v${pao1.ordAsInt} in ${dur.conciseDesc}")
         else
           logger.warn(s"Applied $eventCount events to project #${pid.value} v${pao1.ordAsInt} in ${dur.conciseDesc}")
         res
