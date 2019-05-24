@@ -51,7 +51,11 @@ object WebSocketClientTest extends TestSuite {
         _ => _=> Callback.empty,
         LoggerJs.off)
 
-    def ws() = webSockets.last
+    client.connect.runNow()
+
+    def ws(): FakeWebSocket =
+      webSockets.lastOption.getOrElse(sys.error("webSockets is empty"))
+
     def latestMsg() = webSockets.reverseIterator.flatMap(_.sent().reverseIterator).next()
 
     def send(req: ReqMsg): AsyncCallback[ResMsg] =
