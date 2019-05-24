@@ -27,13 +27,6 @@ object Dependencies {
     val macroDef = reflect ++ library ++ (compiler % Provided)
   }
 
-  object Scalaz {
-    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.27")
-    val core       = mm("scalaz-core")
-    val effect     = mm("scalaz-effect") ++ core
-    val concurrent = mm("scalaz-concurrent") ++ effect
-  }
-
   object Monocle {
     private val mm = MultiModule.jvmAndJs("com.github.julien-truffaut", "1.5.0")
     val core   = mm("monocle-core")
@@ -54,9 +47,9 @@ object Dependencies {
 
   object Nyaya {
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.nyaya", "0.8.1")
-    val util = mm("nyaya-util") ++ Scalaz.core
-    val prop = mm("nyaya-prop") ++ Scalaz.core
-    val gen  = mm("nyaya-gen")  ++ Scalaz.core
+    val util = mm("nyaya-util") ++ scalaz
+    val prop = mm("nyaya-prop") ++ scalaz
+    val gen  = mm("nyaya-gen")  ++ scalaz
     val test = mm("nyaya-test")
   }
 
@@ -65,8 +58,8 @@ object Dependencies {
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.test-state", Ver)
     private val js = MultiModule.js("com.github.japgolly.test-state", Ver)
     val core            = mm("core")
-    val scalaz          = mm("ext-scalaz") ++ core ++ Scalaz.core
-    val nyaya           = mm("ext-nyaya") ++ scalaz ++ Nyaya.gen ++ Nyaya.test
+    val scalaz          = mm("ext-scalaz") ++ core ++ Dependencies.scalaz
+    val nyaya           = mm("ext-nyaya") ++ Dependencies.scalaz ++ Nyaya.gen ++ Nyaya.test
     val scalajsReact    = js("ext-scalajs-react")
     val domZipperSizzle = js("dom-zipper-sizzle")
   }
@@ -74,17 +67,17 @@ object Dependencies {
   object UnivEq {
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.0.6")
     val univeq = mm("univeq")
-    val scalaz = mm("univeq-scalaz") ++ univeq ++ Scalaz.core
+    val scalaz = mm("univeq-scalaz") ++ univeq ++ Dependencies.scalaz
   }
 
   object React {
     private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "1.4.2")
     val core    = mm("core")
     val test    = mm("test")
-    val scalaz  = mm("ext-scalaz72") ++ Scalaz.effect
+    val scalaz  = mm("ext-scalaz72").exclude("org.scalaz", "scalaz-concurrent").exclude("org.scalaz", "scalaz-effect")
     val monocle = mm("ext-monocle") ++ Monocle.core
     val extra   = mm("extra")
-    val most    = core ++ scalaz ++ monocle ++ extra
+    val most    = core ++ monocle ++ extra
   }
 
   object ScalaCSS {
@@ -181,12 +174,13 @@ object Dependencies {
   val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "0.9.7")
   val scalajsJavaTime  = jsOnly("org.scala-js"                          %% "scalajs-java-time" % "0.2.5")
 
-  val boopickle   = jvmAndJs("io.suzaku",                        "boopickle", "1.3.0")
-  val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",      "1.3.0")
-  val parboiled   = jvmAndJs("org.parboiled",                    "parboiled", "2.1.6")
-  val shapeless   = jvmAndJs("com.chuusai",                      "shapeless", "2.3.3")
-  val μPickle     = jvmAndJs("com.github.japgolly.fork.upickle", "upickle",   "custom-7")
-  val μTest       = jvmAndJs("com.lihaoyi",                      "utest",     "0.6.7")
+  val boopickle   = jvmAndJs("io.suzaku",                        "boopickle",   "1.3.0")
+  val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",        "1.3.0")
+  val parboiled   = jvmAndJs("org.parboiled",                    "parboiled",   "2.1.6")
+  val scalaz      = jvmAndJs("org.scalaz",                       "scalaz-core", "7.2.27")
+  val shapeless   = jvmAndJs("com.chuusai",                      "shapeless",   "2.3.3")
+  val μPickle     = jvmAndJs("com.github.japgolly.fork.upickle", "upickle",     "custom-7")
+  val μTest       = jvmAndJs("com.lihaoyi",                      "utest",       "0.6.7")
 
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsLang  = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.9")
