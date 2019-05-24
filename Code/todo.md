@@ -121,8 +121,6 @@ Phase 2B
 * Add a correlation ID to JWTs / logs / traces
 * WebSockets don't recover from lost Redis connections
 
-* Benchmark ZIO to back Fx - UpdateContent seems to be crazy slow with current Fx
-
 * Move into microlibs:
   * BinaryData
   * Binary{Js,Jvm}
