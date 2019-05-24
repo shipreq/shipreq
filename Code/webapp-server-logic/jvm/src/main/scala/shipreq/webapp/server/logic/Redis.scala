@@ -31,7 +31,9 @@ object Redis extends StrictLogging {
 
     /** [TLA+] This is RedisTotalVer */
     val ord: Option[EventOrd.Latest] =
-      if (events.nonEmpty)
+      if (!isComplete)
+        None
+      else if (events.nonEmpty)
         Some(events.last.ord.asLatest)
       else
         snapshot.map(_.ord)
@@ -363,5 +365,11 @@ object Redis extends StrictLogging {
     /** Simulates Redis publishing events to listeners */
     val publishAll: F[Unit] =
       fUnit.whileM_(publishOne)
+
+    def unsafeEvictSnapshot(id: ProjectId): Unit = {
+      val c1 = readCacheNow(id)
+      val c2 = c1.copy(snapshot = None)
+      globalCache.put(id, c2)
+    }
   }
 }

@@ -19,18 +19,24 @@ object RedisViaRedissonTest extends TestSuite {
       val redis  = new RedisViaRedisson(client, schema)
       val inmem  = new Redis.InMemory[Fx]
 
+      val evictSS = () => {
+        inmem.unsafeEvictSnapshot(id)
+        client.getKeys.delete(schema.snapshot(id))
+        ()
+      }
+
       val await = () => {
         inmem.publishAll.unsafeRun()
         Thread.sleep(5) // Don't remove else published messages can leak into next test
       }
 
       'left - {
-        val t = new RedisLaws.Tester[Fx](id, redis, id, inmem, await)
+        val t = new RedisLaws.Tester[Fx](id, redis, id, inmem, evictSS, await)
         t.testAllLaws(reps)
       }
 
       'right - {
-        val t = new RedisLaws.Tester[Fx](id, inmem, id, redis, await)
+        val t = new RedisLaws.Tester[Fx](id, inmem, id, redis, evictSS, await)
         t.testAllLaws(reps)
       }
 

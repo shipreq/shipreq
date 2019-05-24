@@ -45,6 +45,25 @@ trait ProjectSpaLogic[F[_]] {
 
 object ProjectSpaLogic extends StrictLogging {
 
+  final case class Config(eventSnapshotCacheRatio: Int,
+                          writeSnapshots: Boolean,
+                          writeEvents: Boolean) {
+    assert(writeSnapshots || writeEvents, "Can't disable both snapshot & event writing.")
+  }
+
+  object Config {
+    import japgolly.clearconfig._
+    import scalaz.syntax.applicative._
+
+    def default = Config(50, true, true) // see calculations.ods
+
+    def defn: ConfigDef[Config] =
+      ( ConfigDef.getOrUse("eventSnapshotCacheRatio", default.eventSnapshotCacheRatio) |@|
+        ConfigDef.getOrUse("writeSnapshots", default.writeSnapshots) |@|
+        ConfigDef.getOrUse("writeEvents", default.writeEvents)
+      )(apply)
+  }
+
   final case class WebSocketStatic(user       : User,
                                    projectId  : ProjectId,
                                    span       : Any,
@@ -73,7 +92,8 @@ object ProjectSpaLogic extends StrictLogging {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  def apply[D[_], F[_]](implicit
+  def apply[D[_], F[_]](config: Config)
+                       (implicit
                         D       : Monad[D],
                         F       : Monad[F] with BindRec[F],
                         apEvent : ApplyEventLogic[F],
@@ -285,7 +305,16 @@ object ProjectSpaLogic extends StrictLogging {
         onTagMod                = updateProject (MakeEvent.tagCrud),
       )
 
-      private val projectUpdater = new ProjectUpdater[D, F]
+      private val writeSnapshotInsteadOfEvents: Int => Boolean =
+        (config.writeSnapshots, config.writeEvents) match {
+          case (true , false) => _ => true
+          case (false, true ) => _ => false
+          case _ =>
+            val eventSnapshotCacheRatio = config.eventSnapshotCacheRatio
+            _ % eventSnapshotCacheRatio == 0
+        }
+
+      private val projectUpdater = new ProjectUpdater[D, F](writeSnapshotInsteadOfEvents)
 
       private def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result): MsgFn[I, EventResult] =
         in => projectUpdater(in.static.projectId, mkEvent(in.input, _)).map(MsgFnOut(_, None))
@@ -325,7 +354,9 @@ object ProjectSpaLogic extends StrictLogging {
 
           def writeRedis(i: InitAppData): F[Boolean] =
             step("writeRedis")(
-              // TODO Maybe write events instead of snapshot
+              // Maybe write events instead of snapshot here...
+              // But really it's going to be such low % that writing events in (TLA+) Load would be worth the logic.
+              // The snapshot/event writing decision is much more relevant in (TLA+) Update.
               redis.writeSnapshot(pid, i.project, VerifiedEvent.Seq.empty)
             )
 
@@ -397,7 +428,7 @@ object ProjectSpaLogic extends StrictLogging {
         for {
           newState ← redisSubscribe
           mdOpt    ← runDB(db.getProjectMetaData(pid))
-          md       = mdOpt.get // TODO Handle reconnection attempt after project deleted
+          md       = mdOpt.get // This will fail during connection usage after project deleted
           dbLatest = md.latestOrd
           events   ← if (dbLatest > userOrd) loadEvents(dbLatest) else F.pure(VerifiedEvent.Seq.empty)
         } yield MsgFnOut(events, newState)
@@ -434,7 +465,8 @@ object ProjectSpaLogic extends StrictLogging {
     def bytesOut: Long    = if (ok) len else 0
   }
 
-  private final class ProjectUpdater[D[_], F[_]](implicit
+  private final class ProjectUpdater[D[_], F[_]](writeSnapshot: Int => Boolean)
+                                                (implicit
                                                  D       : Monad[D],
                                                  F       : Monad[F] with BindRec[F],
                                                  apEvent : ApplyEventLogic[F],
@@ -449,9 +481,13 @@ object ProjectSpaLogic extends StrictLogging {
     type Result = ErrorMsg \/ VerifiedEvent.Seq
 
     def apply(pid: ProjectId, mkEvent: Project => MakeEvent.Result): F[Result] = {
+      var gas = 200
 
       def loop(s: State): F[State \/ Result] = {
         import Status._
+
+        if (gas > 0) gas -= 1 else throw new IllegalStateException("Infinite loop!")
+
         val main: F[State \/ Result] = s.status match {
 
           case ReadRedis =>
@@ -471,14 +507,18 @@ object ProjectSpaLogic extends StrictLogging {
               newEvents  ← runDB(db.getProjectEvents(pid, DB.EventFilter.given(p1.ord)))
               built      ← apEvent.append(pid, p1, newEvents)
             } yield built match {
-              case \/-(p2) => -\/(s.copy(local = p2, status = WriteRedis1))
+              case \/-(p2) => -\/(s.copy(local = p2, status = WriteRedis1(newEvents)))
               case -\/(e)  => \/-(-\/(e))
             }
 
-          case WriteRedis1 =>
+          case WriteRedis1(newEvents) =>
+            val writeRedis: F[Boolean] =
+              if (writeSnapshot(s.local.ordAsInt))
+                redis.writeSnapshot(pid, s.local, VerifiedEvent.Seq.empty)
+              else
+                redis.writeEvents(pid, newEvents, VerifiedEvent.Seq.empty)
             for {
-              // TODO Maybe write events instead of snapshot
-              ok <- redis.writeSnapshot(pid, s.local, VerifiedEvent.Seq.empty)
+              ok <- writeRedis
             } yield -\/(s.copy(status = if (ok) WriteDb else ReadRedis))
 
           case WriteDb =>
@@ -487,7 +527,8 @@ object ProjectSpaLogic extends StrictLogging {
                 val saveCmd = DB.SaveProjectEventCmd(s.local.nextOrd, updated.event, updated.hashRecs)
                 runDB(db.saveProjectEvent(pid, saveCmd)) map {
                   case \/-(ve) =>
-                    -\/(s.copy(status = WriteRedis2(VerifiedEvent.Seq.one(ve))))
+                    val nextStatus = WriteRedis2(updated.project, ve)
+                    -\/(s.copy(status = nextStatus))
                   case -\/(_) =>
                     -\/(s.copy(status = ReadRedis))
                 }
@@ -499,10 +540,16 @@ object ProjectSpaLogic extends StrictLogging {
                 F pure \/-(-\/(ErrorMsg(e)))
             }
 
-          case WriteRedis2(newEvents) =>
+          case WriteRedis2(newProject, newEvent) =>
+            val newEvents = VerifiedEvent.Seq.one(newEvent)
+            val writeRedis: F[Boolean] =
+              if (writeSnapshot(newEvent.ord.value)) {
+                val ss = Redis.ProjectSnapshot(newProject, newEvent.ord.asLatest)
+                redis.writeSnapshot(pid, ss, newEvents)
+              } else
+                redis.writeEvents(pid, VerifiedEvent.Seq.empty, newEvents)
             for {
-              // TODO Maybe write snapshot instead of events
-              _ <- redis.writeEvents(pid, VerifiedEvent.Seq.empty, newEvents)
+              _ <- writeRedis
             } yield \/-(\/-(newEvents))
         }
 
@@ -528,11 +575,11 @@ object ProjectSpaLogic extends StrictLogging {
 
     sealed abstract class Status(final val name: String)
     object Status {
-      case object ReadRedis                                      extends Status("ReadRedis")
-      case object ReadDb                                         extends Status("ReadDb")
-      case object WriteRedis1                                    extends Status("WriteRedis1")
-      case object WriteDb                                        extends Status("WriteDb")
-      final case class WriteRedis2(newEvents: VerifiedEvent.Seq) extends Status("WriteRedis2")
+      case object ReadRedis                                                      extends Status("ReadRedis")
+      case object ReadDb                                                         extends Status("ReadDb")
+      case object WriteDb                                                        extends Status("WriteDb")
+      final case class WriteRedis1(newEvents: VerifiedEvent.Seq)                 extends Status("WriteRedis1")
+      final case class WriteRedis2(newProject: Project, newEvent: VerifiedEvent) extends Status("WriteRedis2")
     }
   }
 }

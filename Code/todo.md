@@ -119,9 +119,7 @@ Phase 2B
 
 * Only use Lift stateless dispatch
 * Add a correlation ID to JWTs / logs / traces
-* Redis
-  * Add async typeclass and/or support to Fx (?)
-  * Determine when to send events vs snapshot
+* WebSockets don't recover from lost Redis connections
 
 * Benchmark ZIO to back Fx - UpdateContent seems to be crazy slow with current Fx
 

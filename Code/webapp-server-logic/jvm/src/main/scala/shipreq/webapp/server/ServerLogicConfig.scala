@@ -9,7 +9,7 @@ import scalaz.syntax.applicative._
 import shipreq.base.ops._
 import shipreq.base.util._
 import shipreq.base.util.FxModule._
-import shipreq.webapp.server.logic.DispatchLogic
+import shipreq.webapp.server.logic.{DispatchLogic, ProjectSpaLogic}
 
 @Lenses
 final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,
@@ -29,9 +29,10 @@ final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,
                                    initTaskmanOnBoot: Boolean,
                                    initTaskmanRetry: Retries,
 
-                                   jaegerTracingConfig: Option[Configuration],
+                                   projectSpa: ProjectSpaLogic.Config,
                                    prometheus: ServerLogicConfig.Prometheus,
-                                   security: ServerLogicConfig.Security) {
+                                   security: ServerLogicConfig.Security,
+                                   jaegerTracingConfig: Option[Configuration]) {
 
   lazy val traceAlgebraFx: Trace.Algebra[Fx] =
     Trace.Algebra(
@@ -133,17 +134,18 @@ object ServerLogicConfig {
 
   def config: ConfigDef[ServerLogicConfig] =
     JaegerTracingConfig.external *>
-    ( ConfigDef.need       [String  ]("url").map(Url.Absolute.Base.apply) |@|
-      ConfigDef.getOrUse   [Boolean ]("feature.publicRegistration", true).map(Allow.when) |@|
-      ConfigDef.getOrUse   [Int     ]("applyEvent.thresholdMs", 300).ensure_>=(0).ensure_<(1000) |@|
-      ConfigDef.get        [String  ]("googleAnalytics.trackingId") |@|
-      ConfigDef.need       [String  ]("taskman.schema") |@|
-      ConfigDef.getOrUse   [Boolean ]("taskman.init", true) |@|
-      RetriesJvm.config.withPrefix("taskman.init.retry.") |@|
-      JaegerTracingConfig.main       ("webapp") |@|
-      Prometheus.config.withPrefix   ("prometheus.") |@|
-      Security.config.withPrefix     ("security.")
-    ) (apply)
+    ( ConfigDef.need       [String  ]       ("url").map(Url.Absolute.Base.apply) |@|
+      ConfigDef.getOrUse   [Boolean ]       ("feature.publicRegistration", true).map(Allow.when) |@|
+      ConfigDef.getOrUse   [Int     ]       ("applyEvent.thresholdMs", 200).ensure_>=(0).ensure_<(1000) |@|
+      ConfigDef.get        [String  ]       ("googleAnalytics.trackingId") |@|
+      ConfigDef.need       [String  ]       ("taskman.schema") |@|
+      ConfigDef.getOrUse   [Boolean ]       ("taskman.init", true) |@|
+      RetriesJvm.config.withPrefix          ("taskman.init.retry.") |@|
+      ProjectSpaLogic.Config.defn.withPrefix("projectSpa.") |@|
+      Prometheus.config.withPrefix          ("prometheus.") |@|
+      Security.config.withPrefix            ("security.") |@|
+      JaegerTracingConfig.main              ("webapp")
+  ) (apply)
       .withPrefix("shipreq.")
 
 }

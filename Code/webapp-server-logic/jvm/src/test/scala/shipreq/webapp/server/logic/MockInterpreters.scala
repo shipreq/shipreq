@@ -453,6 +453,7 @@ object MockInterpreters {
     initTaskmanRetry           = Retries.none,
     jaegerTracingConfig        = None,
     prometheus                 = ServerLogicConfig.Prometheus.default,
+    projectSpa                 = ProjectSpaLogic.Config.default.copy(2),
     security = ServerLogicConfig.Security(
       attackFrustrationDelay     = 1 hours,
       jwtCookieSecure            = false,
@@ -478,7 +479,7 @@ class MockInterpreters(modCfg: ServerLogicConfig => ServerLogicConfig = Identity
   implicit val redis          = new Redis.InMemory[Name]
   implicit val publicSpa      = PublicSpaLogic[Name, Name]
   implicit val homeSpa        = HomeSpaLogic[Name, Name]
-  implicit val projectSpa     = ProjectSpaLogic[Name, Name]
+  implicit val projectSpa     = ProjectSpaLogic[Name, Name](config.projectSpa)
 
   implicit object ops extends OpsEndpoints.Base[Name] {
     override val randomToken = Name("blah")

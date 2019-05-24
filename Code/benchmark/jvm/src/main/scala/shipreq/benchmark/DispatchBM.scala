@@ -157,6 +157,7 @@ object DispatchBM {
     initTaskmanRetry           = Retries.none,
     jaegerTracingConfig        = None,
     prometheus                 = ServerLogicConfig.Prometheus.default.copy(enabled = false),
+    projectSpa                 = ProjectSpaLogic.Config.default,
     security = ServerLogicConfig.Security(
       attackFrustrationDelay     = 1 hours,
       jwtCookieSecure            = false,

@@ -29,5 +29,5 @@ object ServerLogic {
     ServerLogic(
       PublicSpaLogic [D, F],
       HomeSpaLogic   [D, F],
-      ProjectSpaLogic[D, F])
+      ProjectSpaLogic[D, F](config.projectSpa))
 }

@@ -17,13 +17,26 @@ import shipreq.webapp.server.logic.ProjectSpaLogic.{WebSocketState => _, _}
 import shipreq.webapp.server.logic.Redis.ProjectSnapshot
 import shipreq.webapp.server.logic.Security.SessionToken
 
-object ProjectSpaLogicTest extends TestSuite {
+object ProjectSpaLogicTestS extends ProjectSpaLogicTest(Config.default.copy(writeEvents = false))
+object ProjectSpaLogicTestE extends ProjectSpaLogicTest(Config.default.copy(writeSnapshots = false))
+
+object ProjectSpaLogicTest {
+  private sealed trait CacheState
+  private object CacheState {
+    final case class Empty     (desc: String) extends CacheState
+    final case class UpToDate  (desc: String) extends CacheState
+    final case class Stale     (desc: String) extends CacheState
+    final case class Incomplete(desc: String) extends CacheState
+  }
+}
+
+abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
+  import ProjectSpaLogicTest._
 
   private implicit def univEqMsgError: UnivEq[MsgError] = UnivEq.force
   private implicit def univEqStatic: UnivEq[WebSocketStatic] = UnivEq.force
 
   private type WebSocketState = ProjectSpaLogic.WebSocketState[Name]
-  private val  WebSocketState = ProjectSpaLogic.WebSocketState
   private val emptyState      = ProjectSpaLogic.WebSocketState.empty[Name]
   private val subscribedState = ProjectSpaLogic.WebSocketState[Name](Some(null))
 
@@ -35,7 +48,7 @@ object ProjectSpaLogicTest extends TestSuite {
   private val cmdNewUC = CreateContentCmd.CreateUseCase(Set.empty, Map.empty, Direction.Values.both(Set.empty), Set.empty, Vector.empty)
   private val newUC = WsReqRes.CreateContent.AndReq(cmdNewUC)
 
-  private class Tester extends MockInterpreters {
+  private class Tester extends MockInterpreters(_.copy(projectSpa = cfg)) {
     def broadcastAll(): Unit =
       redis.publishAll.value
 
@@ -152,14 +165,6 @@ object ProjectSpaLogicTest extends TestSuite {
       val push = value.swap.needRight
       f(push)
     }
-
-  private sealed trait CacheState
-  private object CacheState {
-    final case class Empty     (desc: String) extends CacheState
-    final case class UpToDate  (desc: String)  extends CacheState
-    final case class Stale     (desc: String) extends CacheState
-    final case class Incomplete(desc: String) extends CacheState
-  }
 
   private def withAllCacheConfig(run: Tester => CacheState => Unit): Unit = {
     import CacheState._

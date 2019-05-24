@@ -274,6 +274,7 @@ object RedisLaws {
 
   final class Tester[F[_]: Monad: SyncEffect](id1: ProjectId, redis1: ProjectAlgebra[F],
                                               id2: ProjectId, redis2: ProjectAlgebra[F],
+                                              evictSnapshot: () => Unit,
                                               publish: () => Unit) {
 
     private val listener1 = new Listener(id1, redis1)
@@ -291,20 +292,27 @@ object RedisLaws {
       // Run
       val o1 = test.lhs.unsafeRun()
       val o2 = test.rhs.unsafeRun()
-      val s1 = redis1.read(id1).unsafeRun()
-      val s2 = redis2.read(id2).unsafeRun()
       publish()
+
+      // Test state
+      assertState(test.name)
 
       // Test laws
       def p1 = listener1.get().iterator.map(_.ord).toSet
       def p2 = listener2.get().iterator.map(_.ord).toSet
-      assertEq(s"${test.name} -> result",      actual = o1, expect = o2)(test.eq)
-      assertEq(s"${test.name} -> redis state", actual = s1, expect = s2)
+      assertEq(s"${test.name} -> result", actual = o1, expect = o2)(test.eq)
       try
         utest.eventually(p1 === p2)
       catch {
         case _: Throwable => assertEq(s"${test.name} -> published", actual = p1, expect = p2)
       }
+    }
+
+    def assertState(name: String): Unit = {
+      // Test state
+      val s1 = redis1.read(id1).unsafeRun()
+      val s2 = redis2.read(id2).unsafeRun()
+      assertEq(s"$name -> redis state", actual = s1, expect = s2)
 
       // Test invariants
       val s = s1
@@ -316,15 +324,24 @@ object RedisLaws {
         assertEq("first event",
           actual = s.events.min.ord.value,
           expect = s.snapshot.get.ord.value + 1)
+
     }
     
     private val allTestGens =
       mkTestGens(id1, redis1, id2, redis2)
 
-    private def allTestsIterator(gens: Int => Gens, reps: Int, seed: Option[Long]): Iterator[Test[F]] = {
+    private def allTestsIterator(gens            : Int => Gens,
+                                 reps            : Int,
+                                 seed            : Option[Long],
+                                 genEvictSnapshot: Gen[Boolean]): Iterator[Test[F]] = {
       val genCtx = GenCtx(GenSize.Default, ThreadNumber(0))
       seed.foreach(genCtx.setSeed)
+      val itEvictSnapshot = genEvictSnapshot.samplesUsing(genCtx)
       1.to(reps).iterator.flatMap { i =>
+        if (i != 1 && itEvictSnapshot.next()) {
+          evictSnapshot()
+          assertState("evictSnapshot")
+        }
         val gs = gens(i)
         val tests = allTestGens.map(_ (gs).samplesUsing(genCtx).next())
         Gen.shuffle(tests).samplesUsing(genCtx).next()
@@ -334,10 +351,12 @@ object RedisLaws {
     def testAllLaws(reps : Int          = 100,
                     gens : Int => Gens  = Gens.apply,
                     seed : Option[Long] = None,
+                    evict: Double       = 0.1,
                     debug: Boolean      = false): String = {
-      val startTime = System.nanoTime()
-      val tests     = allTestsIterator(gens, reps, seed).toArray
-      val lawCount  = allTestGens.size
+      val genEvictSS = Gen.chooseDouble(0, 1).map(_ < evict)
+      val startTime  = System.nanoTime()
+      val tests      = allTestsIterator(gens, reps, seed, genEvictSS).toArray
+      val lawCount   = allTestGens.size
       if (debug) println(s"Testing $lawCount Redis laws, $reps times each = ${tests.length} tests")
       for (i <- tests.indices) {
         val t = tests(i)
