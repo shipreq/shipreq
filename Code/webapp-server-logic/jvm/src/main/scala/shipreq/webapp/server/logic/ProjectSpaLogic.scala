@@ -55,7 +55,7 @@ object ProjectSpaLogic extends StrictLogging {
     import japgolly.clearconfig._
     import scalaz.syntax.applicative._
 
-    def default = Config(50, true, true) // see calculations.ods
+    def default = Config(100, true, true) // see calculations.ods
 
     def defn: ConfigDef[Config] =
       ( ConfigDef.getOrUse("eventSnapshotCacheRatio", default.eventSnapshotCacheRatio) |@|
