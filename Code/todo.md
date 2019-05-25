@@ -113,8 +113,6 @@ Phase 2B
   Could add to test-state... But then how to make it account for tiny differents like moment.js "updated x sec ago" things?
   Any free tool?
 
-* Upgrade to Postgres 11
-
 * Project SPA will try to re-establish a WebSocket connection ad-nauseum after JWT has expired
 
 * Only use Lift stateless dispatch

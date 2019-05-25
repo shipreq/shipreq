@@ -185,7 +185,7 @@ object Dependencies {
   val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "1.3.0")
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsLang  = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.9")
-  val flyway       = jvmOnly("com.googlecode.flyway"       % "flyway-core"           % "2.3.1")
+  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.0.0-beta")
   val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.3.1")
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.11")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")

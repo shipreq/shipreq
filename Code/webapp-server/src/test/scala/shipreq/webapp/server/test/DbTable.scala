@@ -37,7 +37,7 @@ object DbTable {
   def validate(schema: String): ConnectionIO[Unit] =
     Query0[String](s"select tablename from pg_tables where schemaname = '$schema'")
       .list.map { actualList =>
-      val actual = actualList.toSet - "schema_version"
+      val actual = actualList.toSet - "flyway_schema_history"
       val got = All.whole.map(_.name)
       if (got ==* actual)
         ()
