@@ -4,8 +4,7 @@ import utest._
 import japgolly.microlibs.testutil.TestUtil._
 import shipreq.base.util.univeq._
 import shipreq.base.util.FreeOption
-import shipreq.webapp.base.{AssetManifest, WebappConfig}
-import shipreq.webapp.client.public.PublicSpaProtocols
+import shipreq.webapp.base.AssetManifest
 
 object EndpointTest extends TestSuite {
 
@@ -17,17 +16,8 @@ object EndpointTest extends TestSuite {
 
   override def tests = Tests {
 
-    'liftJsStatic {
-      test(Endpoint.LiftJsStatic, "/l/lift.js")
-    }
-
-    'liftJsDynamic {
-      test(Endpoint.LiftJsDynamic, "/L/page/F1135978930133VYITVK.js")
-      test(Endpoint.LiftJsDynamic, "/L/page/F1958527133110FJNA.js")
-    }
-
-    'liftAjax {
-      test(Endpoint.LiftAjax, "/L/ajax/F765233147536NT4IDN/")
+    'securityPolicy {
+      test(Endpoint.AssetSecurityPolicy, "/L/content-security-policy-report")
     }
 
     'page {
@@ -67,8 +57,6 @@ object EndpointTest extends TestSuite {
         assertEq(path, endpoint(path, FreeOption.empty).toOption, None)
 
       'noAssetPath - test("/blah.js")
-      'unknownLift1 - test(s"/${WebappConfig.liftPath1}/blah.js")
-      'unknownLift2 - test(s"/${WebappConfig.liftPath2}/blah.js")
     }
 
   }

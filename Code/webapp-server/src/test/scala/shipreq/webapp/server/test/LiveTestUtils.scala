@@ -1,10 +1,12 @@
 package shipreq.webapp.server.test
 
 import boopickle.Pickler
+import net.liftweb.http.LiftRules
 import net.liftweb.http.testing._
 import org.apache.commons.httpclient.{HttpClient, HttpMethodBase}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.FxModule._
+import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.logic.{Cookie, Security}
@@ -95,6 +97,9 @@ object LiveTestUtils {
         .filter(_ contains "JSESSIONID")
         .map(v => ("Cookie", v.takeWhile(_ != ';')))
 
+  private def assertNotContains(src: String, frag: String): Unit =
+    assert(!src.contains(frag), s"'$frag' found in '$src'")
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   final class LiveTestHttpResponse(private val resp: HttpResponse) extends AnyVal {
@@ -126,9 +131,19 @@ object LiveTestUtils {
     def assertBodyContains(s: String) = tap(_ => assertContains(bodyString, s))
     def assertBodyTitle(s: String) = tap2(_.bodyTitle)(assertEq(_, s))
 
+    def assertStatelessLift = {
+      val b = bodyString
+      assertNotContains(b, s"/${LiftRules.resourceServerPath}/")
+      assertNotContains(b, s"/${WebappConfig.liftCtxPath}/")
+      assertNotContains(b, "lift.js")
+      assertNotContains(b, "/lift/")
+      this
+    }
+
     def assertSpa(spaJs: String, spaEP: ClientSideProc[_]) = this
         .assertOk
         .assertContentTypeHtml
+        .assertStatelessLift
         .assertBodyContains(spaJs)
         .assertBodyContains(spaEP.objectAndMethod + "(")
 

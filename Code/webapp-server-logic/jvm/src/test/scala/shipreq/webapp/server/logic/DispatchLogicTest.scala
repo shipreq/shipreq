@@ -43,7 +43,7 @@ object DispatchLogicTest extends TestSuite {
       _.toAbstract,
       (req, res) => Name(TestResponse(res.cmd, res.cookies, patchCookies(req.cookies, res.cookies))))
 
-    val statefulDispatcher = dispatcher.statefulDispatcher(testMode = false)
+    val routeDispatcher = dispatcher.all(testMode = false)
 
     db.users ::= user2
     db.users ::= user3
@@ -72,11 +72,7 @@ object DispatchLogicTest extends TestSuite {
       else
         cookies
     val req = TestRequest(method, url, body, params, cookies2)
-    val d = if (dispatcher.statelessCandidate(url))
-      dispatcher.statelessDispatcher
-    else
-      statefulDispatcher
-    (req, d(req).value)
+    (req, routeDispatcher(req).value)
   }
 
   def runAjax(p      : Protocol.Ajax[Pickler])

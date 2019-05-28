@@ -89,10 +89,7 @@ class Boot {
     LiftRules.funcNameGenerator = S.generateFuncName _
 
     // Customise URL paths for built-in resources & AJAX requests
-    LiftRules.liftContextRelativePath = WebappConfig.liftPath1
-
-    // Customise URL paths for lift.js
-    LiftRules.resourceServerPath = WebappConfig.liftPath2
+    LiftRules.liftContextRelativePath = WebappConfig.liftCtxPath
 
     // Disable built-in request logging
     LiftRules.logServiceRequestTiming = false

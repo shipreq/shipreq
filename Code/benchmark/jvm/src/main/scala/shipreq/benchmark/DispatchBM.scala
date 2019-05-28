@@ -89,7 +89,7 @@ import DispatchLogic._
   * --------------------------------------------------------------------------------------------------------------------
   *
   * > sbt -DMODE=release
-  * root> benchmark-jvm/jmh:run -prof gc DispatchBM
+  * > benchmark-jvm/jmh:run -prof gc DispatchBM
   *
   * [info] # Run complete. Total time: 00:20:09
   * [info]
@@ -128,7 +128,7 @@ class DispatchBM {
   }
 
   def test[F[_]](i: Interpreters[F]): Any =
-    testF(i)(_.dispatcher1)
+    testF(i)(_.dispatcher)
 
   @Benchmark def catsIO     = test(DispatchBM.catsIO)
   @Benchmark def coeval     = test(DispatchBM.coeval)
@@ -137,9 +137,6 @@ class DispatchBM {
   @Benchmark def name       = test(DispatchBM.name)
   @Benchmark def trampoline = test(DispatchBM.trampoline)
   @Benchmark def zio        = test(DispatchBM.zio)
-
-//  @Benchmark def trampoline1 = testF(DispatchBM.trampoline)(_.dispatcher1)
-//  @Benchmark def trampoline2 = test(DispatchBM.trampoline)(_.dispatcher2)
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -265,8 +262,7 @@ object DispatchBM {
     val dispatchLogic = new DispatchLogic[F, Request[Unit], Response](
       r => Request(r.method, r.path, noBody, r.param, r.cookie, r), (_, r) => F.point(r))
 
-    val dispatcher1 = dispatchLogic.Main.routes.withFallback(dispatchLogic.Main.fallback)
-//    val dispatcher2 = dispatchLogic.Main.cacheUsualPaths(dispatcher1)
+    val dispatcher = dispatchLogic.allLogic(testMode = false)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

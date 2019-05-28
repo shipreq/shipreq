@@ -656,21 +656,15 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  /** Stateful routes (i.e. using a session) */
-  def statefulDispatcher(testMode: Boolean): RealReq => F[RealRes] =
+  def allLogic(testMode: Boolean): Request => F[RealRes] =
     ( Main.routes
+    | Ajax.routes
+    | Ops.routes
     | Option.when(testMode)(unitTestLogin)
     ).withFallback(Main.fallback)
-      .compose(readRealReq)
 
-  /** Stateless routes (i.e. using a session) */
-  val statelessDispatcher: RealReq => F[RealRes] =
-    ( Ajax.routes
-    | Ops.routes
-    ).withFallback(Main.fallback)
+  def all(testMode: Boolean): RealReq => F[RealRes] =
+    allLogic(testMode = testMode)
       .compose(readRealReq)
-
-  def statelessCandidate(u: Url.Relative): Boolean =
-    Ajax.candidate(u) || Ops.candidate(u)
 
 }

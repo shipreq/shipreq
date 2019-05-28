@@ -2,7 +2,7 @@ package shipreq.webapp.server.app
 
 import com.typesafe.scalalogging.StrictLogging
 import java.nio.charset.Charset
-import net.liftweb.common.{Box, Empty, Failure => BoxFailure, Full}
+import net.liftweb.common.{Box, Empty, Full, Failure => BoxFailure}
 import net.liftweb.http.provider.HTTPCookie
 import net.liftweb.http.{Req => LiftReq, _}
 import net.liftweb.util.Props
@@ -43,14 +43,30 @@ object LiftDispatcher {
 
   def redirectWithCookies(uri: String): RedirectResponse =
     RedirectResponse(uri, S.responseCookies: _*)
+
+  final case class Template(name: String) {
+    private val templateSrc = Templates(name :: Nil).openOrThrowException(s"Template not found: $name")
+
+    def render(req: LiftReq): Box[LiftResponse] =
+      // This is taken from LiftSession#processTemplate
+      for {
+        s <- S.session
+      } yield {
+        val xml1: NodeSeq = s.processSurroundAndInclude(PageName.get, templateSrc)
+        val xml2: NodeSeq = StatelessLiftMerge(s).merge(xml1, req)
+        LiftRules.convertResponse((xml2, 200),
+          S.getResponseHeaders(LiftRules.defaultHeaders((xml2, req))),
+          S.responseCookies,
+          req)
+      }
+  }
 }
 
 final class LiftDispatcher(global: Global) extends StrictLogging {
   import LiftDispatcher._
 
   def init(): Unit = {
-    LiftRules.dispatch.append(statefulDispatchPF)
-    LiftRules.statelessDispatch.prepend(statelessDispatchPF)
+    LiftRules.statelessDispatch.prepend(mainDispatchPF)
     LiftRules.statelessDispatch.prepend(removeWwwSubdomainPF)
   }
 
@@ -85,13 +101,9 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
   }
 
   val makeResponse: (LiftReq, DispatchLogic.Response) => Fx[Box[LiftResponse]] = {
-    type Template = Box[NodeSeq]
-    val templatePublic : Template = Templates("public" :: Nil)
-    val templateHome   : Template = Templates("members-home" :: Nil)
-    val templateProject: Template = Templates("members-project" :: Nil)
-
-    def render(req: LiftReq, t: Template): Box[LiftResponse] =
-      S.session.flatMap(_.processTemplate(t, req, req.path, 200))
+    val templatePublic  = Template("public")
+    val templateHome    = Template("members-home")
+    val templateProject = Template("members-project")
 
     val setHeader: ((String, String)) => Unit =
       x => S.setHeader(x._1, x._2)
@@ -124,9 +136,9 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
 
       val respond: Fx[Box[LiftResponse]] =
         response.cmd match {
-          case ServePublicSpa(ou)     => Fx{ ou.foreach(UserVar.set); render(req, templatePublic) }
-          case ServeHomeSpa(u)        => Fx{ UserVar.set(u); render(req, templateHome) }
-          case ProjectSpa.Serve(u, p) => Fx{ UserVar.set(u); ProjectIdVar.set(p); render(req, templateProject) }
+          case ServePublicSpa(ou)     => Fx{ ou.foreach(UserVar.set); templatePublic.render(req) }
+          case ServeHomeSpa(u)        => Fx{ UserVar.set(u); templateHome.render(req) }
+          case ProjectSpa.Serve(u, p) => Fx{ UserVar.set(u); ProjectIdVar.set(p); templateProject.render(req) }
           case ProjectSpa.NotOwner
              | ProjectSpa.InvalidId   => Fx(Full(RedirectResponse(Urls.memberHome.relativeUrl)))
           case Redirect(to)           => Fx(Full(redirectWithCookies(to.relativeUrl)))
@@ -137,7 +149,9 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
           // NOTE: Do NOT use Fx.pure here. These lift responses need to be created after headers/cookies are set
         }
 
-      setHeaders.flatMap(_ => respond)
+      S.statelessInit(req) {
+        setHeaders.flatMap(_ => respond)
+      }
     }
   }
 
@@ -157,12 +171,12 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  val statefulDispatchPF: LiftRules.DispatchPF = {
+  val mainDispatchPF: LiftRules.DispatchPF = {
 
     /** Is a request by/to Lift (eg. Ajax, Comet) */
     def isLiftRequest(r: LiftReq): Boolean = {
       val pp = r.path.partPath // path separated by slashes
-      pp.nonEmpty && pp.head == WebappConfig.liftPath1
+      pp.nonEmpty && pp.head == WebappConfig.liftCtxPath
     }
 
     def noFileExtension(r: LiftReq): Boolean =
@@ -172,21 +186,11 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
     def hasHtmlFileExtension(r: LiftReq): Boolean =
       r.request.uri endsWith ".html"
 
-    val dispatch = logic.statefulDispatcher(testMode = Props.testMode)
+    val dispatch = logic.all(testMode = Props.testMode)
 
     {
       case r if (r.request ne null) && noFileExtension(r) && !isLiftRequest(r) => () => dispatch(r).unsafeRun()
       case r if (r.request ne null) && hasHtmlFileExtension(r)                 => () => Full(r.createNotFound)
-    }
-  }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  val statelessDispatchPF: LiftRules.DispatchPF = {
-    val dispatch = logic.statelessDispatcher
-
-    {
-      case r if (r.request ne null) && logic.statelessCandidate(liftReqUrl(r)) => () => dispatch(r).unsafeRun()
     }
   }
 

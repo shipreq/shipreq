@@ -9,11 +9,11 @@ object WebappConfig {
 
   val supportEmailAddress = EmailAddr("contact@shipreq.com")
 
-  /** The URL path under which AJAX requests are serviced. */
-  final val liftPath1 = "L" // TODO DELETE
-
-  /** The URL path under which lift.js is served */
-  final val liftPath2 = "l" // TODO DELETE
+  /** The URL path under which AJAX requests are serviced.
+    *
+    * Currently only used for content-security-policy-report
+    */
+  final val liftCtxPath = "L"
 
   /** Passwords' min & max lengths. */
   val passwordLength = 8 to 255

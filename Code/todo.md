@@ -114,7 +114,6 @@ Phase 2B
 
 * Project SPA will try to re-establish a WebSocket connection ad-nauseum after JWT has expired
 
-* Only use Lift stateless dispatch
 * Add a correlation ID to JWTs / logs / traces
 * WebSockets don't recover from lost Redis connections
 
