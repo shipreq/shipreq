@@ -43,7 +43,7 @@ object ProjectItem {
   private def renderStats(p: ProjectMetaData) =
     StatisticGroup.Props(
       statGroupStyle,
-      stat(Icon.Write, p.eventCount, "change") ::
+      stat(Icon.Write, p.nonInitEventCount, "change") ::
         stat(Icon.Cubes, p.reqCount, "req") :: Nil
     ).render
 

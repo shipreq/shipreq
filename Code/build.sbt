@@ -3,6 +3,10 @@ startYear := Some(2013)
 
 logLevel in Global in update := Level.Warn
 
+// Allow ctrl-c to kill forked tasks without killing SBT
+cancelable in Global := true
+
+
 val root                  = ShipReqBuild.root
 val js                    = ShipReqBuild.js
 

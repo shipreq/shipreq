@@ -1,11 +1,11 @@
 package shipreq.webapp.base.protocol
 
-import japgolly.scalajs.react.Callback
-import japgolly.scalajs.react.Reusability
+import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo, Reusability}
 import org.scalajs.dom.ext.AjaxException
-import scalaz.{-\/, \/, \/-}
+import scalaz.\/
 import shipreq.base.util.{ErrorMsg, Identity}
 
+// TODO Use AsyncCallback in ServerSideProcInvoker
 final case class ServerSideProcInvoker[I, F, O](fn: (I, O => Callback, F => Callback) => Callback) extends AnyVal {
 
   @inline def apply(input    : I,
@@ -33,6 +33,18 @@ final case class ServerSideProcInvoker[I, F, O](fn: (I, O => Callback, F => Call
 
 object ServerSideProcInvoker {
 
+  def viaAsyncCallback[I, O](f: I => CallbackTo[AsyncCallback[O]]): ServerSideProcInvoker[I, ErrorMsg, O] =
+    new ServerSideProcInvoker[I, ErrorMsg, O](
+      (req, onOK, onKO) => f(req).attempt.flatMap {
+        case Right(async) =>
+          async.attempt.flatMap {
+            case Right(res) => onOK(res).asAsyncCallback
+            case Left(err) => onKO(throwableToErrorMsg(err)).asAsyncCallback
+          }.toCallback
+        case Left(err) => onKO(throwableToErrorMsg(err))
+      }
+    )
+
   /** Working around Scalac crappy type inference as usual */
   trait MergeFailure[F, O] {
     type A
@@ -45,32 +57,6 @@ object ServerSideProcInvoker {
         override def apply[I] = Identity.apply
       }
   }
-
-//  def apply[I, O](cp: CPproc: ServerSideProc[I, O]): ServerSideProcInvoker[I, Throwable, O] =
-//    new ServerSideProcInvoker((i, s, f) => cp.call(proc)(i, _.fold(f(_).cb, s(_).cb)))
-
-//  final class ForClientProtocol(cp: ClientProtocol) {
-//
-//    def apply[I, O](proc: ServerSideProc[I, O]): ServerSideProcInvoker[I, ErrorMsg, O] =
-//      applyT(proc).mapThrowableToErrorMsg
-//
-//    def fallible[I, O](proc: ServerSideProc[I, ErrorMsg \/ O]): ServerSideProcInvoker[I, ErrorMsg, O] =
-//      fallibleT(proc).mapLeftThrowableIntoErrorMsg
-//
-//
-//    private def fallibleT[I, F, O](proc: ServerSideProc[I, F \/ O]): ServerSideProcInvoker[I, Throwable \/ F, O] =
-//      new ServerSideProcInvoker((i, s, f) => callFallible(proc)(i, s, f))
-//
-//    private def callFallible[I, F, O](proc     : ServerSideProc[I, F \/ O])
-//                                     (input    : I,
-//                                      onSuccess: O => TCB.Success,
-//                                      onFailure: Throwable \/ F => TCB.Failure): Callback =
-//      cp.call(proc)(input, {
-//        case \/-(\/-(o)) => onSuccess(o)
-//        case \/-(-\/(f)) => onFailure(\/-(f))
-//        case e@ -\/(_)   => onFailure(e)
-//      })
-//  }
 
   implicit def reusability[I, F, O]: Reusability[ServerSideProcInvoker[I, F, O]] =
     Reusability((a, b) => a.fn eq b.fn)

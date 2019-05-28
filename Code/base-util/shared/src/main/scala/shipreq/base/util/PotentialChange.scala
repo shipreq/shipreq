@@ -121,7 +121,7 @@ object PotentialChange {
   final case class Failure[+E](failure: E) extends PotentialChange[E, Nothing]
 
   implicit def univEq[E: UnivEq, A: UnivEq]: UnivEq[PotentialChange[E, A]] =
-    UnivEq.force // TODO UnivEq.derive doesn't handle
+    UnivEq.derive
 
   import scalaz.{\/, \/-, -\/}
 

@@ -32,17 +32,12 @@ Backlog
 * Warn when closing page and there are open, dirty editors
 * Add KB shortcut to move colums in ReqTable
 
-### DevOps
-* Create db rollback plan
-
 ### Tech
-* Stop using scalaz.std.anything which brings in too much other stuff;
-  use custom instances that have the minimum typeclasses needed.
 * Remove ScalaCheck. Use Nyaya.
 * Use fast boopickle codecs for webworkers: https://github.com/ochrons/boopickle#codecs
 * Test env: Use different DBs for each module
 * Switch to semantic-react
-* Remove jQuery - lift and semantic UI blocking this
+* Remove jQuery - Lift and Semantic UI blocking this
 * Remove unused styles
 * Change ScalaCSS to generate Scala.JS without the runtime/JS-size overhead
 * webapp-base{,-member} packages are shit. Reorg!
@@ -51,7 +46,6 @@ Backlog
 * Add laws for webapp-server-logic and test in webapp-server
 * Rename webapp-client-{home ⇒ member} now that its ambiguous in regards to the public pages
 * Make webtamp hash filenames of urls in Semantic CSS (`icons.*`)
-* Add DB indicies (don't look at code! metrics dashboard should indicate)
 * SSL shouldn't be in Docker - resolve TODO in WebappBuild.scala
 * Hide Tags/Imps columns when guaranteed to be empty & useless.
   (i.e. all possible tags/imps are allocated to columns)
@@ -62,13 +56,18 @@ Backlog
 * Prevent -- (not not) in the FilterParser? Or allow /\-+/ and auto-correct on blur?
 * Firefox: ctrl-home space doesn't work properly
 * Firefox: UC step graph doesn't shrink
+* Tracing
+  * Add user id tag to sub-spans. Only on top-level atm
+  * Add tracing to Taskman
+  * Naming convention for code top-levels {Security delay, MakeEvent, UpdateProject}. Prefix with "Fn: " or something?
 
 ------------------------------------------------------------------------------------------------------------------------
-Phase 2
-=======
+Phase 2B
+========
 
-### Social
-* Co-founder criteria
+### Business
+* Potential angel clients
+  * Research BA consultencies
 
 ### Deployment
 * Automate ShipReq releases
@@ -79,24 +78,28 @@ Phase 2
 * Process
   * Do more with errors (client & server), eg. ClientData.{init,applyEvents}
   * Add React component error handling and possibly report to server
+* Review & audit state of devops -- metrics/tracing -- now vs goal
 * Metrics
   * Metrics endpoint needs secret key
   * Add ThreadLocal security-delay flag and affect metrics
+  * Add metrics for logs @ logLevel (webapp & taskman)
   * Taskman metrics
   * Business metrics (see metrics.md)
-* Tracing
-  * Add user id tag to sub-spans. Only on top-level atm
-  * Add tracing to Taskman
-  * Naming convention for code top-levels {Security delay, MakeEvent, UpdateProject}. Prefix with "Fn: " or something?
+* Data backups
 
 ### New Features
 * Issues
-* Send feedback (with screenshot). Add link beside @username in top bar
+* Send Feedback / Report Issue (with screenshot). Add link beside @username in top bar
 * User profile page
 
 ### Other
+
 * Cell copy-and-paste on Req{Table,Detail}
+
+* Bug: Project SPA, edit cell, kill server, commit, expect failure, esc, open editor, previous failure still exists; should have been cleared on Esc
+
 * Issues prototype: add collapse/expand by issue{type,} columns
+
 * Allow system to add new field/columns in future without breaking existing projects.
   eg. User adds a "Last Updated" custom field, later ShipReq provides an auto-populated
   column with the same name. System needs a way to rename user's field without
@@ -104,3 +107,23 @@ Phase 2
   Maybe a dynamic approach that compares versions, or maybe a migration task
   that adds a new event to everyone's projects to do the rename once when the
   new version is deployed.
+
+* Automate visual testing so changes to styling (mostly Semantic UI upgrades) can be verified.
+  Could add to test-state... But then how to make it account for tiny differents like moment.js "updated x sec ago" things?
+  Any free tool?
+
+* Project SPA will try to re-establish a WebSocket connection ad-nauseum after JWT has expired
+
+* Add a correlation ID to JWTs / logs / traces
+* WebSockets don't recover from lost Redis connections
+
+* Move into microlibs:
+  * BinaryData
+  * Binary{Js,Jvm}
+  * StaticLookupFn
+  * LoggerJs
+  * {,Fake}WebSocket (?)
+  * SetDiff
+  * PotentialChange
+  * IsoBool + Validity, Enabled, etc (?)
+  * JavaTimeHelpersTest

@@ -1,5 +1,7 @@
 package shipreq.benchmark
 
+import cats.effect.IO
+import scalaz.zio.UIO
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import java.util.concurrent.TimeUnit
@@ -7,17 +9,16 @@ import org.openjdk.jmh.annotations._
 import monix.eval.Coeval
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Await, Future}
-import scalaz.effect.IO
 import scalaz.Free.Trampoline
 import scalaz.std.function.function0Instance
 import scalaz.syntax.monad._
-import scalaz.{Monad, Name, \/, \/-}
+import scalaz.{Monad, Name, Need, \/, \/-}
 import shipreq.base.util._
 import shipreq.taskman.api.MsgId
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data.{ProjectId, SecurityToken}
 import shipreq.webapp.base.user._
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.logic._
 import shipreq.webapp.ssr.SsrInterpreter
 import DispatchLogic._
@@ -26,29 +27,70 @@ import DispatchLogic._
   * > sbt
   * > benchmark-jvm/jmh:run -wi 10 -i 10 -f 2 -prof gc DispatchBM
   *
-  * [info] Benchmark                                                 Mode  Cnt       Score      Error   Units
-  * [info] DispatchBM.trampoline1                                   thrpt   20  106079.139 ± 1666.218   ops/s
-  * [info] DispatchBM.trampoline1:·gc.alloc.rate                    thrpt   20    1096.726 ±   21.104  MB/sec
-  * [info] DispatchBM.trampoline1:·gc.alloc.rate.norm               thrpt   20   16264.016 ±   71.273    B/op
-  * [info] DispatchBM.trampoline1:·gc.churn.PS_Eden_Space           thrpt   20    1117.146 ±  175.057  MB/sec
-  * [info] DispatchBM.trampoline1:·gc.churn.PS_Eden_Space.norm      thrpt   20   16575.028 ± 2624.602    B/op
-  * [info] DispatchBM.trampoline1:·gc.churn.PS_Survivor_Space       thrpt   20       0.061 ±    0.028  MB/sec
-  * [info] DispatchBM.trampoline1:·gc.churn.PS_Survivor_Space.norm  thrpt   20       0.911 ±    0.423    B/op
-  * [info] DispatchBM.trampoline1:·gc.count                         thrpt   20      46.000             counts
-  * [info] DispatchBM.trampoline1:·gc.time                          thrpt   20      38.000                 ms
-  * [info] DispatchBM.trampoline2                                   thrpt   20  148806.597 ± 1762.087   ops/s
-  * [info] DispatchBM.trampoline2:·gc.alloc.rate                    thrpt   20    1368.225 ±   43.565  MB/sec
-  * [info] DispatchBM.trampoline2:·gc.alloc.rate.norm               thrpt   20   14464.011 ±  392.002    B/op
-  * [info] DispatchBM.trampoline2:·gc.churn.PS_Eden_Space           thrpt   20    1394.017 ±  139.084  MB/sec
-  * [info] DispatchBM.trampoline2:·gc.churn.PS_Eden_Space.norm      thrpt   20   14735.675 ± 1445.064    B/op
-  * [info] DispatchBM.trampoline2:·gc.churn.PS_Survivor_Space       thrpt   20       0.074 ±    0.028  MB/sec
-  * [info] DispatchBM.trampoline2:·gc.churn.PS_Survivor_Space.norm  thrpt   20       0.783 ±    0.298    B/op
-  * [info] DispatchBM.trampoline2:·gc.count                         thrpt   20      98.000             counts
-  * [info] DispatchBM.trampoline2:·gc.time                          thrpt   20      79.000                 ms
-  * [success] Total time: 124 s, completed 16/07/2017 7:18:46 PM
+  * [info] Benchmark                                               Mode  Cnt       Score     Error   Units
+  *
+  * [info] DispatchBM.catsIO                                       avgt   20      23.809 ±   0.125   us/op
+  * [info] DispatchBM.coeval                                       avgt   20      23.966 ±   0.044   us/op
+  * [info] DispatchBM.fn0                                          avgt   20      19.853 ±   0.029   us/op
+  * [info] DispatchBM.name                                         avgt   20      22.485 ±   0.118   us/op
+  * [info] DispatchBM.trampoline                                   avgt   20      23.785 ±   0.500   us/op
+  * [info] DispatchBM.zio                                          avgt   20      81.125 ±   0.300   us/op
+  *
+  * [info] DispatchBM.catsIO:·gc.alloc.rate                        avgt   20    2738.391 ±  14.444  MB/sec
+  * [info] DispatchBM.catsIO:·gc.alloc.rate.norm                   avgt   20   71784.004 ±   0.008    B/op
+  * [info] DispatchBM.catsIO:·gc.churn.PS_Eden_Space               avgt   20    2738.271 ±  17.323  MB/sec
+  * [info] DispatchBM.catsIO:·gc.churn.PS_Eden_Space.norm          avgt   20   71780.873 ± 250.948    B/op
+  * [info] DispatchBM.catsIO:·gc.churn.PS_Survivor_Space           avgt   20       0.115 ±   0.017  MB/sec
+  * [info] DispatchBM.catsIO:·gc.churn.PS_Survivor_Space.norm      avgt   20       3.019 ±   0.437    B/op
+  * [info] DispatchBM.catsIO:·gc.count                             avgt   20    2564.000            counts
+  * [info] DispatchBM.catsIO:·gc.time                              avgt   20    1720.000                ms
+  * [info] DispatchBM.coeval:·gc.alloc.rate                        avgt   20    2744.635 ±   6.216  MB/sec
+  * [info] DispatchBM.coeval:·gc.alloc.rate.norm                   avgt   20   72424.004 ±  71.273    B/op
+  * [info] DispatchBM.coeval:·gc.churn.PS_Eden_Space               avgt   20    2744.888 ±  11.194  MB/sec
+  * [info] DispatchBM.coeval:·gc.churn.PS_Eden_Space.norm          avgt   20   72430.699 ± 259.425    B/op
+  * [info] DispatchBM.coeval:·gc.churn.PS_Survivor_Space           avgt   20       0.138 ±   0.025  MB/sec
+  * [info] DispatchBM.coeval:·gc.churn.PS_Survivor_Space.norm      avgt   20       3.647 ±   0.651    B/op
+  * [info] DispatchBM.coeval:·gc.count                             avgt   20    2652.000            counts
+  * [info] DispatchBM.coeval:·gc.time                              avgt   20    1732.000                ms
+  * [info] DispatchBM.fn0:·gc.alloc.rate                           avgt   20    2632.519 ±   3.904  MB/sec
+  * [info] DispatchBM.fn0:·gc.alloc.rate.norm                      avgt   20   57544.003 ±   0.006    B/op
+  * [info] DispatchBM.fn0:·gc.churn.PS_Eden_Space                  avgt   20    2632.722 ±   9.870  MB/sec
+  * [info] DispatchBM.fn0:·gc.churn.PS_Eden_Space.norm             avgt   20   57548.386 ± 185.780    B/op
+  * [info] DispatchBM.fn0:·gc.churn.PS_Survivor_Space              avgt   20       0.139 ±   0.020  MB/sec
+  * [info] DispatchBM.fn0:·gc.churn.PS_Survivor_Space.norm         avgt   20       3.038 ±   0.439    B/op
+  * [info] DispatchBM.fn0:·gc.count                                avgt   20    2560.000            counts
+  * [info] DispatchBM.fn0:·gc.time                                 avgt   20    1720.000                ms
+  * [info] DispatchBM.name:·gc.alloc.rate                          avgt   20    2750.999 ±  14.403  MB/sec
+  * [info] DispatchBM.name:·gc.alloc.rate.norm                     avgt   20   68104.004 ±   0.007    B/op
+  * [info] DispatchBM.name:·gc.churn.PS_Eden_Space                 avgt   20    2750.918 ±  16.699  MB/sec
+  * [info] DispatchBM.name:·gc.churn.PS_Eden_Space.norm            avgt   20   68101.786 ± 145.504    B/op
+  * [info] DispatchBM.name:·gc.churn.PS_Survivor_Space             avgt   20       0.134 ±   0.018  MB/sec
+  * [info] DispatchBM.name:·gc.churn.PS_Survivor_Space.norm        avgt   20       3.317 ±   0.451    B/op
+  * [info] DispatchBM.name:·gc.count                               avgt   20    2577.000            counts
+  * [info] DispatchBM.name:·gc.time                                avgt   20    1733.000                ms
+  * [info] DispatchBM.trampoline:·gc.alloc.rate                    avgt   20    2847.702 ±  47.695  MB/sec
+  * [info] DispatchBM.trampoline:·gc.alloc.rate.norm               avgt   20   74544.004 ± 320.729    B/op
+  * [info] DispatchBM.trampoline:·gc.churn.PS_Eden_Space           avgt   20    2847.855 ±  47.197  MB/sec
+  * [info] DispatchBM.trampoline:·gc.churn.PS_Eden_Space.norm      avgt   20   74548.852 ± 412.175    B/op
+  * [info] DispatchBM.trampoline:·gc.churn.PS_Survivor_Space       avgt   20       0.121 ±   0.018  MB/sec
+  * [info] DispatchBM.trampoline:·gc.churn.PS_Survivor_Space.norm  avgt   20       3.169 ±   0.478    B/op
+  * [info] DispatchBM.trampoline:·gc.count                         avgt   20    2497.000            counts
+  * [info] DispatchBM.trampoline:·gc.time                          avgt   20    1719.000                ms
+  * [info] DispatchBM.zio:·gc.alloc.rate                           avgt   20    1881.123 ±   4.929  MB/sec
+  * [info] DispatchBM.zio:·gc.alloc.rate.norm                      avgt   20  168024.013 ± 213.820    B/op
+  * [info] DispatchBM.zio:·gc.churn.PS_Eden_Space                  avgt   20    1881.512 ±   8.124  MB/sec
+  * [info] DispatchBM.zio:·gc.churn.PS_Eden_Space.norm             avgt   20  168059.337 ± 723.357    B/op
+  * [info] DispatchBM.zio:·gc.churn.PS_Survivor_Space              avgt   20       0.097 ±   0.024  MB/sec
+  * [info] DispatchBM.zio:·gc.churn.PS_Survivor_Space.norm         avgt   20       8.662 ±   2.110    B/op
+  * [info] DispatchBM.zio:·gc.count                                avgt   20    2365.000            counts
+  * [info] DispatchBM.zio:·gc.time                                 avgt   20    1708.000                ms
+  *
+  * [success] Total time: 2530 s, completed 24/05/2019 9:49:43 AM
+  *
+  * --------------------------------------------------------------------------------------------------------------------
   *
   * > sbt -DMODE=release
-  * root> benchmark-jvm/jmh:run -prof gc DispatchBM
+  * > benchmark-jvm/jmh:run -prof gc DispatchBM
   *
   * [info] # Run complete. Total time: 00:20:09
   * [info]
@@ -81,23 +123,21 @@ import DispatchLogic._
 class DispatchBM {
   import DispatchBM._
 
-//  def test[F[_]](i: Interpreters[F]): Any =
-//    DispatchRequests.map(r => i.run(i.dispatcher(r)))
-//
-//  @Benchmark def coeval     = test(DispatchBM.coeval)
-//  @Benchmark def io         = test(DispatchBM.io)
-//  @Benchmark def fn0        = test(DispatchBM.fn0)
-////@Benchmark def future     = test(DispatchBM.future)
-//  @Benchmark def name       = test(DispatchBM.name)
-//  @Benchmark def trampoline = test(DispatchBM.trampoline)
-
-  def test[F[_]](i: Interpreters[F])(f: Interpreters[F] => Request[Request[Unit]] => F[Response]): Any = {
+  def testF[F[_]](i: Interpreters[F])(f: Interpreters[F] => Request[Request[Unit]] => F[Response]): Any = {
     val d = f(i)
-    DispatchRequests.map(r => i.run(d(Request(r.method, r.path, r.param, r))))
+    DispatchRequests.map(r => i.run(d(Request(r.method, r.path, noBody, r.param, r.cookie, r))))
   }
 
-  @Benchmark def trampoline1 = test(DispatchBM.trampoline)(_.dispatcher1)
-//  @Benchmark def trampoline2 = test(DispatchBM.trampoline)(_.dispatcher2)
+  def test[F[_]](i: Interpreters[F]): Any =
+    testF(i)(_.dispatcher)
+
+  @Benchmark def catsIO     = test(DispatchBM.catsIO)
+  @Benchmark def coeval     = test(DispatchBM.coeval)
+  @Benchmark def fn0        = test(DispatchBM.fn0)
+//@Benchmark def future     = test(DispatchBM.future)
+  @Benchmark def name       = test(DispatchBM.name)
+  @Benchmark def trampoline = test(DispatchBM.trampoline)
+  @Benchmark def zio        = test(DispatchBM.zio)
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -105,22 +145,32 @@ class DispatchBM {
 object DispatchBM {
   import JavaTimeHelpers._
 
-  implicit val config = ServerConfig(
+  implicit val config = ServerLogicConfig(
     baseUrl                    = Url.Absolute.Base("https://test.shipreq.com"),
-    attackFrustrationDelay     = 1 hours,
-    securityTokenLength        = 8,
-    registrationTokenLifespan  = 7 days,
-    passwordResetTokenLifespan = 4 days,
     publicRegistration         = Allow,
+    applyEventThresholdMs      = 1000,
     googleAnalyticsTrackingId  = None,
     taskmanSchema              = "test_taskman",
-    prometheus                 = ServerConfig.Prometheus.default.copy(enabled = false),
-    ssr                        = SsrInterpreter.Config.default.copy(enabled = false),
-    kamonConfFile              = None,
     initTaskmanOnBoot          = false,
-    initTaskmanRetry           = RetryCriteria(2 hours, Some(666)))
+    initTaskmanRetry           = Retries.none,
+    jaegerTracingConfig        = None,
+    prometheus                 = ServerLogicConfig.Prometheus.default.copy(enabled = false),
+    projectSpa                 = ProjectSpaLogic.Config.default,
+    ssr                        = SsrInterpreter.Config.default.copy(enabled = false),
+    security = ServerLogicConfig.Security(
+      attackFrustrationDelay     = 1 hours,
+      jwtCookieSecure            = false,
+      jwtLifespan                = 24 hours,
+      jwtSecret                  = new ServerLogicConfig.Security.JwtSecret("x"*64),
+      jwtSecretPrevious          = None,
+      passwordSaltLength         = 64,
+      securityTokenLength        = 8,
+      registrationTokenLifespan  = 7 days,
+      passwordResetTokenLifespan = 4 days))
 
-  val user = User(UserId(1), Username("asds"), EmailAddr("x@x.com"), Set.empty)
+  val noBody: Need[Option[BinaryData]] = scalaz.Value(None)
+
+  val user = User(UserId(1), Username("asds"), Set.empty)
   val ps = PasswordAndSalt(PasswordHash("wdsef34r"), Salt("32165498bdef"))
 
   final class Interpreters[F[_]](val run: F[_] => Any)(implicit val F: Monad[F]) {
@@ -140,24 +190,32 @@ object DispatchBM {
     }
 
     implicit object security extends Security.Algebra[F] {
-      var loginSuccess = true
-      var loggedIn = Option.empty[User]
-
       override val db                                 = self.db
       val delay                                       = F.point(())
       override def protect[A](vulnerable: F[A])       = delay >> vulnerable
       override def hashPassword(p: PlainTextPassword) = F point ps
-      override val isAuthenticated                    = F.point(loggedIn.isDefined)
-      override val authenticatedUser                  = F.point(loggedIn)
-      override val logout                             = F.point{loggedIn = None}
+      private val loggedInToken                       = Some(Security.SessionToken(Some(user)))
+      private val anonToken                           = Some(Security.SessionToken.anonymous)
+      private val cookieName                          = Cookie.Name("S")
 
-      override def attemptLogin(u: \/[Username, EmailAddr], p: PlainTextPassword) =
-        F.point { loggedIn = Option.when(loginSuccess)(user); loggedIn }
+      override def attemptLogin(u: Username \/ EmailAddr, p: PlainTextPassword) = F.point {
+        Option.when(u.fold(_ == user.username, _ => ???))(user)
+      }
+      override def sessionRestore(cookies: Cookie.LookupFn) = F.point {
+        cookies(cookieName) flatMap {
+          case "1" => loggedInToken
+          case _   => anonToken
+        }
+      }
+      override def sessionPersist(token: Security.SessionToken) = F.point {
+        val value = if (token.authenticatedUser.isEmpty) "" else "1"
+        val cookie = Cookie(cookieName, value, None, None, None)
+        Cookie.Update.add(cookie)
+      }
     }
 
     implicit val svrSession: Server.Session[F] = new Server.Session[F] {
       override val clientIP: F[Option[IP]] = F.pure(None)
-      override val sessionId: F[Option[SessionId]] = F.pure(None)
     }
 
     implicit val svrTime: Server.Time[F] = new Server.Time[F] {
@@ -168,6 +226,12 @@ object DispatchBM {
           a     <- f
           end   <- now
         } yield (a, Duration.between(start, end))
+      override def measureDuration_[A](f: F[A]): F[Duration] =
+        for {
+          start <- now
+          _     <- f
+          end   <- now
+        } yield Duration.between(start, end)
     }
 
     implicit val metrics: MetricsLogic[F] =
@@ -176,8 +240,19 @@ object DispatchBM {
     implicit val trace: TraceLogic[F, Request[Unit], Response] =
       TraceLogic.off
 
-    implicit val publicApi: PublicSpaLogic.ForApi[F] =
-      _ => F.pure(\/-(MsgId(1000)))
+    implicit object publicSpa extends PublicSpaLogic[F] {
+      override def apiRegister1(emailAddr: String) = F.pure(\/-(MsgId(1000)))
+      override val ajaxLandingPage    = _ => ???
+      override val ajaxLogin          = _ => ???
+      override val ajaxRegister1      = _ => ???
+      override val ajaxRegister2      = _ => ???
+      override val ajaxResetPassword1 = _ => ???
+      override val ajaxResetPassword2 = _ => ???
+    }
+
+    implicit object homeSpa extends HomeSpaLogic.Ajax[F] {
+      override val ajaxCreateProject = (_, _) => ???
+    }
 
     implicit object ops extends OpsEndpoints[F] {
       override def dbStats                           = F.pure(null)
@@ -187,10 +262,9 @@ object DispatchBM {
     }
 
     val dispatchLogic = new DispatchLogic[F, Request[Unit], Response](
-      r => Request(r.method, r.path, r.param, r), (_, r) => F.point(r))
+      r => Request(r.method, r.path, noBody, r.param, r.cookie, r), (_, r) => F.point(r))
 
-    val dispatcher1 = dispatchLogic.Main.routes.withFallback(dispatchLogic.Main.fallback)
-//    val dispatcher2 = dispatchLogic.Main.cacheUsualPaths(dispatcher1)
+    val dispatcher = dispatchLogic.allLogic(testMode = false)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -199,33 +273,49 @@ object DispatchBM {
     import Method._
     implicit def autoXID(p: ProjectId): ProjectId.Public = Obfuscators.projectId.obfuscate(p)
     val param: String => Option[String] = _ => None
+    val cookie: Cookie.Name => Option[String] = _ => None
     val token = SecurityToken("MnVC8cvPX9b1jiCpyxoYLk4RqQ8idHlV4lf7OHzIQctHLgw6C")
     val b = List.newBuilder[Request[Unit]]
-    b ++= Urls.PublicSpaRoute.static.whole.toList.map(r => Request(Get, r.url, param, ()))
-    b ++= Urls.MemberRoute.static.whole.toList.map(r => Request(Get, r.url, param, ()))
-    b ++= Urls.PublicSpaRoute.needsToken.whole.toList.map(r => Request(Get, r.url(token), param, ()))
+    b ++= Urls.PublicSpaRoute.static.whole.toList.map(r => Request(Get, r.url, noBody, param, cookie, ()))
+    b ++= Urls.MemberRoute.static.whole.toList.map(r => Request(Get, r.url, noBody, param, cookie, ()))
+    b ++= Urls.PublicSpaRoute.needsToken.whole.toList.map(r => Request(Get, r.url(token), noBody, param, cookie, ()))
 //    b ++= (1 to 10).map(i => Request(Get, Urls.project(ProjectId(i)), param))
     val rs = b.result()
     List.fill(10)(rs).flatten
   }
 
+  implicit val monadCatsIO: Monad[IO] = new Monad[IO] {
+    override def point[A](a: => A): IO[A] = IO(a)
+    override def bind[A, B](fa: IO[A])(f: A => IO[B]): IO[B] = fa flatMap f
+    override def map[A, B](fa: IO[A])(f: A => B): IO[B] = fa map f
+  }
+
   implicit val monadCoeval: Monad[Coeval] = new Monad[Coeval] {
     override def point[A](a: => A): Coeval[A] = Coeval(a)
-    override def bind[A, B](fa: Coeval[A])(f: (A) => Coeval[B]): Coeval[B] = fa flatMap f
-    override def map[A, B](fa: Coeval[A])(f: (A) => B): Coeval[B] = fa map f
+    override def bind[A, B](fa: Coeval[A])(f: A => Coeval[B]): Coeval[B] = fa flatMap f
+    override def map[A, B](fa: Coeval[A])(f: A => B): Coeval[B] = fa map f
   }
 
   implicit val monadFuture: Monad[Future] = new Monad[Future] {
     import scala.concurrent.ExecutionContext.Implicits.global
     override def point[A](a: => A): Future[A] = Future(a)
-    override def bind[A, B](fa: Future[A])(f: (A) => Future[B]): Future[B] = fa flatMap f
-    override def map[A, B](fa: Future[A])(f: (A) => B): Future[B] = fa map f
+    override def bind[A, B](fa: Future[A])(f: A => Future[B]): Future[B] = fa flatMap f
+    override def map[A, B](fa: Future[A])(f: A => B): Future[B] = fa map f
   }
 
+  implicit val monadZIO: Monad[UIO] = new Monad[UIO] {
+    override def point[A](a: => A): UIO[A] = UIO(a)
+    override def bind[A, B](fa: UIO[A])(f: A => UIO[B]): UIO[B] = fa flatMap f
+    override def map[A, B](fa: UIO[A])(f: A => B): UIO[B] = fa map f
+  }
+
+  val zioRuntime = new scalaz.zio.DefaultRuntime {}
+
+  val catsIO     = new Interpreters[IO        ](_.unsafeRunSync())
   val coeval     = new Interpreters[Coeval    ](_.apply())
-  val io         = new Interpreters[IO        ](_.unsafePerformIO())
   val fn0        = new Interpreters[Function0 ](_.apply())
   val future     = new Interpreters[Future    ](Await.result(_, FiniteDuration(5, "min")))
   val name       = new Interpreters[Name      ](_.value)
   val trampoline = new Interpreters[Trampoline](_.run)
+  val zio        = new Interpreters[UIO       ](zioRuntime.unsafeRun(_))
 }

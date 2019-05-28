@@ -6,10 +6,6 @@
 .*.swp
 .*.swo
 .*.swn
-.metadata
-.idea
-.tern-project
-.metals
 
 # git worktree
 *.wt

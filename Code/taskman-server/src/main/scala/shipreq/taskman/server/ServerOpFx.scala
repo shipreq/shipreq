@@ -185,7 +185,7 @@ object ServerOpFx {
     new ConfigSource[Fx](
       new ConfigSourceName(dbAccess.desc),
       dbAccess.fx.trans(Dao.cfgGetAll)
-        .attempt
+        .attemptFx
         .map(_.bimap(_.toString, kvs => ConfigStore.ofMap[Fx](kvs.toMap))))
 }
 

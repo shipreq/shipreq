@@ -11,7 +11,7 @@ import shipreq.webapp.server.app.Global
 object Analytics extends DispatchSnippet {
 
   override val dispatch: DispatchIt =
-    Global.config.googleAnalyticsTrackingId match {
+    Global.config.server.googleAnalyticsTrackingId match {
 
       case None =>
         val remove: NodeSeq => NodeSeq = Function const Group(Nil)

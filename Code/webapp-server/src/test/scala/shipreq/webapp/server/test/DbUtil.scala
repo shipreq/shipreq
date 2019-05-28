@@ -26,8 +26,8 @@ final case class DbUtil(xa: SingleConnectionXA) {
   private def randomStr: String =
     DbUtil.Random.nextString(32)
 
-  def newProjectId(userId: UserId = getOrCreateUserId()): ProjectId =
-    xa ! dbAlgebra.createEmptyProject(userId)
+  def newProjectId(userId: UserId = getOrCreateUserId(), initEvents: Int = 0): ProjectId =
+    xa ! dbAlgebra.createEmptyProject(userId, initEvents)
 
   def getOrCreateUserId(): UserId =
     (xa ! Query0[UserId]("select id from usr where username is not null").option) getOrElse newUserId()

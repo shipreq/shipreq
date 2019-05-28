@@ -14,7 +14,7 @@ object LockUtils {
     mutex.fold(a)(inMutex(_)(a))
 
   def inMutexFx[A](lock: Lock)(fx: Fx[A]): Fx[A] =
-    Fx(lock.lockInterruptibly()).bracket_(
+    Fx(lock.lockInterruptibly()).bracketFx_(
       use = fx,
       release = Fx(lock.unlock()))
 

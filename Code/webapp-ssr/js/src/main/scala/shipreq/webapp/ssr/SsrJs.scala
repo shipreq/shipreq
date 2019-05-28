@@ -4,14 +4,16 @@ import japgolly.scalagraal.Pickled
 import japgolly.scalajs.react.ReactDOMServer
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportTopLevel
-import shipreq.webapp.base.protocol.ClientProtocol
+import shipreq.webapp.base.protocol.AjaxClient
 import shipreq.webapp.client.public.PublicSpaProtocols.{InitData => PublicInitData}
 import shipreq.webapp.client.public.{Main => PublicMain}
 import shipreq.webapp.client.project.app.root.LoadingPage
+import shipreq.webapp.client.public.spa.PublicSpa
 
 object SsrJs {
 
-  private val cp = ClientProtocol.Noop
+  private val ajaxNoop: AjaxClient.Binary =
+    AjaxClient.noop
 
   @JSExportTopLevel(SsrManifest.SetUrl)
   def setUrl(url: String): Unit =
@@ -35,7 +37,8 @@ object SsrJs {
 
   @JSExportTopLevel(SsrManifest.Public)
   def public(i: Pickled[PublicInitData]): String = {
-    val component = PublicMain.component(i.value, cp)
+    val spa       = new PublicSpa(i.value, ajaxNoop)
+    val component = PublicMain.component(i.value, spa)
     ReactDOMServer.renderToString(component)
   }
 

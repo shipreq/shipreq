@@ -10,10 +10,9 @@ import teststate.domzipper.sizzle.Sizzle
 import utest._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.protocol.{FieldCrud, ServerSideProc}
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes
 import shipreq.webapp.base.test.{SampleProject => S}
 import shipreq.webapp.base.test.UnsafeTypes._
-import shipreq.webapp.base.test.TestClientProtocol
 import shipreq.webapp.base.test.TestState.htmlScrub
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.test.TestUtil._
@@ -23,12 +22,10 @@ import MainTable.State
 object CfgFieldsTest extends TestSuite {
   PrepareEnv()
 
-  val remote = ServerSideProc("x", FieldCrud.Protocol)
   class Tester {
     lazy val fd    = ReactTestVar[FilterDead](HideDead)
-    lazy val cd    = TestClientData(S.project)
-    lazy val cp    = new TestClientProtocol(true)
-    lazy val props = new CfgFields.Props(cp, remote, cd, fd.stateSnapshotWithReuse())
+    lazy val g     = TestGlobal(S.project).disableAutoResponse()
+    lazy val props = CfgFields.Props(g.sspFieldMod, g, fd.stateSnapshotWithReuse())
     lazy val re    = MainTable.Component(props)
     lazy val c     = ReactTestUtils.renderIntoDocument(re)
 
@@ -66,11 +63,11 @@ object CfgFieldsTest extends TestSuite {
       sole(Sizzle(".key :text", newRow)))
 
     // Server communication
-    cp.assertReqsSent(1)
-    cp.respondToLast(remote) {
+    g.assertReqsSent(1)
+    g.respondToLast(WsReqRes.FieldMod) {
       import CustomTextFieldGD._
       val e = FieldCustomTextCreate(666, nev(Name("blahh"), Key("blahh"), Mandatory(true), ReqTypes(allReqTypes)))
-      \/-(cd.verifyEventsCB(e).runNow())
+      \/-(g.verifyEventsCB(e).runNow())
     }
     assert(getNewRow.isEmpty)
 
@@ -82,9 +79,9 @@ object CfgFieldsTest extends TestSuite {
         .filter(Sizzle(":text", _).toArray.exists(_.domCast[Input].value == "blahh"))
         .flatMap(Sizzle("button:contains('Delete')", _).toArray[Element])
         .toJSArray)
-    cp.assertReqsSent(2)
-    cp.respondToLast(remote)(
-      \/-(cd.verifyEventsCB(FieldCustomDelete(666.CFText)).runNow()))
+    g.assertReqsSent(2)
+    g.respondToLast(WsReqRes.FieldMod)(
+      \/-(g.verifyEventsCB(FieldCustomDelete(666.CFText)).runNow()))
 
     assertEq(htmlScrub run html, htmlScrub run initialView)
   }

@@ -18,7 +18,7 @@ final case class Http[I, O](prep: (I, HttpClient, HttpLogger) => Fx[Request],
   def run(i: I)(implicit client: HttpClient, log: HttpLogger): Fx[O] =
     log.result(
       prep(i, client, log).flatMap(req =>
-        Fx(client.newCall(req).execute()).bracket(
+        Fx(client.newCall(req).execute()).bracketFx(
           release = resp => Fx(resp.close()),
           use = resp =>
             Fx(resp.body.string())
@@ -155,30 +155,30 @@ object Http {
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 object HttpLogger {
-  def apply(log: Logger, modContent: String => String = Identity.apply): HttpLogger =
-    new HttpLogger(log, modContent)
+  def apply(logger: Logger, modContent: String => String = Identity.apply): HttpLogger =
+    new HttpLogger(logger, modContent)
 }
 
-final class HttpLogger(log: Logger, modContent: String => String) {
-  private[this] val debugEnabled = log.underlying.isDebugEnabled
+final class HttpLogger(logger: Logger, modContent: String => String) {
+  private[this] val debugEnabled = logger.underlying.isDebugEnabled
 
   val request: (Request, () => String) => Fx[Unit] =
     (req, body) => Fx {
       def url = req.url.url.toExternalForm
-      log.debug(s"HTTP request: ${req.method} $url ← ${modContent(body())}")
+      logger.debug(s"HTTP request: ${req.method} $url ← ${modContent(body())}")
     }
 
   val response: (Request, Response, String) => Fx[Unit] =
     (req, resp, body) => Fx {
       def url = req.url.url.toExternalForm
       def dur = resp.receivedResponseAtMillis() - resp.sentRequestAtMillis()
-      log.info(s"HTTP ${req.method} $url responded with ${resp.code} ${resp.message} in $dur ms")
-      log.debug(s"HTTP response body: ${modContent(body)}")
+      logger.info(s"HTTP ${req.method} $url responded with ${resp.code} ${resp.message} in $dur ms")
+      logger.debug(s"HTTP response body: ${modContent(body)}")
     }
 
   def result[A](fx: Fx[A]): Fx[A] =
     if (debugEnabled)
-      fx.attemptArticulateError.flatMap(r => Fx(log.debug(s"HTTP result: ${modContent(r.toString)}")) >> Fx.lift(r))
+      fx.attemptArticulateError.flatMap(r => Fx(logger.debug(s"HTTP result: ${modContent(r.toString)}")) >> Fx.lift(r))
     else
       fx
 }

@@ -14,12 +14,12 @@ import shipreq.webapp.base.user.Username
 
 object LoginTester {
 
-  val * = Dsl[TestClientProtocol, Obs, Unit]
+  val * = Dsl[TestAjaxClient, Obs, Unit]
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final class Obs(val $: DomZipperJs, cp: TestClientProtocol) {
-    val reqsSent = cp.reqs
+  final class Obs(val $: DomZipperJs, ajax: TestAjaxClient) {
+    val reqsSent = ajax.reqs
 
     val form: Option[FormObs] =
       $.collect01(".ui.form").doms.map(_ => new FormObs($))
@@ -73,14 +73,14 @@ object LoginTester {
       .addCheck(loginEnabled.assert(Enabled).before)
 
   def serverLoginResponse(p: Permission): *.Actions =
-    *.action(s"Server responds to login: $p")(_.ref.respondToLastP(PublicSpaProtocols.Login.Fn)(p)) <+ reqsSent.assert.not.equal(0)
+    *.action(s"Server responds to login: $p")(_.ref.respondToLast(PublicSpaProtocols.login)(p)) <+ reqsSent.assert.not.equal(0)
 
   def clickForgotPwd: *.Actions =
     *.action("Click 'Forgot password'")(Simulate click _.obs.form.get.forgotPwd)
       .addCheck(forgotPwdEnabled.assert(Enabled).before)
 
   def serverForgotPwdResponse: *.Actions =
-    *.action("Server responds to forgot-pwd")(_.ref.respondToLastP(PublicSpaProtocols.ResetPassword.Fn1)(())) <+ reqsSent.assert.not.equal(0)
+    *.action("Server responds to forgot-pwd")(_.ref.respondToLast(PublicSpaProtocols.resetPassword1)(())) <+ reqsSent.assert.not.equal(0)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -98,8 +98,8 @@ object LoginTest extends TestSuite {
     val t = new PublicSpaTestUtil.ForTestState
     if (loggedInUser)
       t.initData = t.initData.copy(loggedInUser = Some(Username("dude")))
-    import t.cp
-    t(Page.Login)(h => plan.test(Observer.watch(new Obs(h, cp))).stateless.withRef(cp).run())
+    import t.ajax
+    t(Page.Login)(h => plan.test(Observer.watch(new Obs(h, ajax))).stateless.withRef(ajax).run())
   }
 
   // Can't test window.location.href because relative URLs are rejected by PhantomJS

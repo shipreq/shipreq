@@ -14,12 +14,12 @@ import PublicSpaTestUtil._
 
 object LandingPageTester {
 
-  val * = Dsl[TestClientProtocol, Obs, Unit]
+  val * = Dsl[TestAjaxClient, Obs, Unit]
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final class Obs($: DomZipperJs, cp: TestClientProtocol) {
-    val reqsSent = cp.reqs
+  final class Obs($: DomZipperJs, ajax: TestAjaxClient) {
+    val reqsSent = ajax.reqs
 
     private val form              = $(".ui.form")
     private def field(i: Int)     = form(">.field", i of 5)
@@ -90,9 +90,9 @@ object LandingPageTest extends TestSuite {
 
   def test(plan: *.Plan): Unit = {
     val t = new ForTestState
-    import t.cp
-    cp.addAutoResponse(PublicSpaProtocols.LandingPage.Fn)(_.onResponse(\/-(\/-(()))))
-    t(Page.Home)(h => plan.test(Observer.watch(new Obs(h, cp))).stateless.withRef(cp).run())
+    import t.ajax
+    ajax.addAutoResponse(PublicSpaProtocols.landingPage)(_.onResponse(\/-(\/-(()))))
+    t(Page.Home)(h => plan.test(Observer.watch(new Obs(h, ajax))).stateless.withRef(ajax).run())
   }
 
   override def tests = Tests {

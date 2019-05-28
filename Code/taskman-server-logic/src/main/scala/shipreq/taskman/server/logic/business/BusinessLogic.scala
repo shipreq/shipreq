@@ -3,7 +3,6 @@ package shipreq.taskman.server.logic.business
 import scalaz.{-\/, \/-, ~>}
 import scalaz.old.NonEmptyList
 import scalaz.syntax.bind._
-import scalaz.syntax.catchable._
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
@@ -81,9 +80,9 @@ final class BusinessLogic[F[_]](emails        : Emails,
 
     def tryDesc(id: UserId): Fx[String] =
       get(id).attempt.map {
-        case \/-(u)                  => u.toString
-        case -\/(e: ArticulateError) => e.getMessage
-        case -\/(e)                  => s"Error occurred looking up user #$id: ${e.getMessage}"
+        case Right(u)                 => u.toString
+        case Left(e: ArticulateError) => e.getMessage
+        case Left(e)                  => s"Error occurred looking up user #$id: ${e.getMessage}"
       }
 
     def subscription(u: ShipReqUser) =

@@ -1,11 +1,11 @@
 package shipreq.webapp.server.test
 
-import bootstrap.liftweb.BootConfig
 import java.time.Duration
+import org.redisson.Redisson
 import shipreq.base.test.BaseTestUtil.onceUnit
-import shipreq.base.util.FxModule.Fx
-import shipreq.webapp.server.ServerConfig
-import shipreq.webapp.server.app.Global
+import shipreq.base.util.FxModule._
+import shipreq.webapp.server.ServerLogicConfig
+import shipreq.webapp.server.app.{Global, ServerConfig}
 import shipreq.webapp.server.db.DbInterpreter
 import shipreq.webapp.server.logic.{MetricsLogic, TraceLogic}
 import shipreq.webapp.ssr.SsrAlgebra
@@ -14,15 +14,16 @@ object PrepareEnv {
   private val boot = new bootstrap.liftweb.Boot
 
   private val cfg = {
-    var (appConfig, runMode) = boot.readConfig()
+    var (appConfig, runMode, configReport) = boot.readConfig()
     runMode foreach boot.setRunMode
-    appConfig = (BootConfig.server ^|-> ServerConfig.attackFrustrationDelay).set(Duration.ZERO)(appConfig)
-    // println("webapp-server test config:\n" + appConfig.report.reportUsed)
+    val attackDelayL = ServerConfig.server ^|-> ServerLogicConfig.security ^|-> ServerLogicConfig.Security.attackFrustrationDelay
+    appConfig = attackDelayL.set(Duration.ZERO)(appConfig)
+    // println("webapp-server test config:\n" + configReport.reportUsed)
     appConfig
   }
 
   Global.Instance = Global(
-    config   = cfg.server,
+    config   = cfg,
     db       = null,
     logic    = null,
     metrics  = MetricsLogic.const(Fx.unit),
@@ -34,13 +35,8 @@ object PrepareEnv {
 
   def global() = Global.Instance
 
-  val shiro: () => Unit = onceUnit {
-    boot.initShiro()
-  }
-
   val lift: () => Unit = onceUnit {
     // if (!LiftRules.doneBoot) {
-    shiro()
     boot.configureLift()
   }
 
@@ -55,11 +51,16 @@ object PrepareEnv {
   }
 
   lazy val dbAlgebra =
-    new DbInterpreter()(global().config)
+    new DbInterpreter()(global().config.server.security)
 
   lazy val security = {
-    PrepareEnv.shiro()
     db()
     global().security
   }
+
+  lazy val redissonClient =
+    global().config.redis match {
+      case Some(r) => Redisson.create(r.instance)
+      case None    => sys.error("Redis test config not specified.")
+    }
 }

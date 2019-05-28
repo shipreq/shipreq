@@ -1,7 +1,7 @@
 package shipreq.webapp.server.logic
 
+import japgolly.microlibs.nonempty.NonEmptySet
 import java.time.Instant
-import scala.collection.immutable.SortedMap
 import scalaz.{\/, ~>}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ActiveEvent, EventOrd, VerifiedEvent}
@@ -151,24 +151,35 @@ object DB {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trait SaveProjectEvent[F[_]] {
-    def saveProjectEvents(id: ProjectId)(cmds: Traversable[SaveProjectEventCmd]): F[Option[Throwable]]
-
-    final def saveProjectEvent(id    : ProjectId)
-                              (ord   : EventOrd,
-                               event : ActiveEvent,
-                               hashes: HashRecs): F[Option[Throwable]] =
-      saveProjectEvents(id)(SaveProjectEventCmd(ord, event, hashes) :: Nil)
+    def saveProjectEvent(id: ProjectId, cmd: SaveProjectEventCmd): F[Throwable \/ VerifiedEvent]
+    def saveProjectEvents(id: ProjectId, cmds: Traversable[SaveProjectEventCmd]): F[Throwable \/ VerifiedEvent.Seq]
   }
 
   trait ForHomeSpa[F[_]] extends Base[F] with SaveProjectEvent[F] {
-    def createEmptyProject          (id: UserId): F[ProjectId]
+    def createEmptyProject(id: UserId, initEvents: Int): F[ProjectId]
     def getAllProjectMetaDataForUser(id: UserId): F[List[ProjectMetaData]]
   }
 
   trait ForProjectSpa[F[_]] extends Base[F] with SaveProjectEvent[F] {
-    def getProjectHeader   (id: ProjectId): F[Option[ProjectHeader]]
-    def getProjectMetaData (id: ProjectId): F[Option[ProjectMetaData]]
-    def getAllProjectEvents(id: ProjectId): F[VerifiedEvent.Seq]
+    def projectSpaInitPage(id: ProjectId): F[Project.Name]
+    def getProjectMetaData(id: ProjectId): F[Option[ProjectMetaData]]
+    def getProjectEvents(id: ProjectId, f: EventFilter): F[VerifiedEvent.Seq]
+
+    final def getProjectEvents(id: ProjectId): F[VerifiedEvent.Seq] = getProjectEvents(id, EventFilter.IncludeAll)
+    final def getAllProjectEvents(id: ProjectId): F[VerifiedEvent.Seq] = getProjectEvents(id, EventFilter.IncludeAll)
+  }
+
+  sealed trait EventFilter
+  object EventFilter {
+    case object IncludeAll extends EventFilter
+    final case class ExcludeUpTo(ord: EventOrd) extends EventFilter
+    final case class Set(ords: NonEmptySet[EventOrd]) extends EventFilter
+
+    def given(alreadyGot: Option[EventOrd.Latest]): EventFilter =
+      alreadyGot match {
+        case Some(ord) => ExcludeUpTo(ord)
+        case None      => IncludeAll
+      }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

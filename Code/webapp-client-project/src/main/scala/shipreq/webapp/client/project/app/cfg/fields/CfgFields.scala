@@ -3,9 +3,9 @@ package shipreq.webapp.client.project.app.cfg.fields
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
-import vdom.html_<^._
-import ScalazReact._
-import MonocleReact._
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.ScalazReact._
+import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import scala.language.reflectiveCalls
@@ -17,24 +17,23 @@ import shipreq.base.util.univeq._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataValidators.{field => V}
-import shipreq.webapp.base.protocol.{ClientProtocol, FieldCrud, ServerSideProcInvoker}
+import shipreq.webapp.base.protocol.{FieldCrud, ServerSideProcInvoker}
+import shipreq.webapp.base.event.VerifiedEvent
+import shipreq.webapp.base.ui.BaseStyles
+import shipreq.webapp.base.ui.semantic.Table
 import shipreq.webapp.base.UiText
-import UiText.FieldNames
-import shipreq.webapp.base.data._
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.cfg.shared.{FieldSet => _, _}
-import shipreq.webapp.client.project.app.state.{ChangeListener, ClientData}
+import shipreq.webapp.client.project.app.state.{ChangeListener, Global}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.DND
 import shipreq.webapp.client.project.widgets._
 import Field.ApplicableReqTypes
-import shipreq.webapp.base.ui.BaseStyles
-import shipreq.webapp.base.ui.semantic.Table
+import UiText.FieldNames
 
 object CfgFields {
-  final case class Props(cp        : ClientProtocol,
-                         remote    : FieldCrud.Protocol.Instance,
-                         clientData: ClientData,
+  final case class Props(remote    : ServerSideProcInvoker[FieldCrud.CfgAction, ErrorMsg, VerifiedEvent.Seq],
+                         global    : Global,
                          filterDead: StateSnapshot[FilterDead]) {
 
     def component = MainTable.Component(this)
@@ -107,7 +106,7 @@ private[fields] object MainTable {
     val textFields = Seq.newBuilder[CustomField.Text]
     val implFields = Seq.newBuilder[CustomField.Implication]
     val tagFields  = Seq.newBuilder[CustomField.Tag]
-    val fs         = p.clientData.project().config.fields
+    val fs         = p.global.unsafeProject().config.fields
     fs.customFields.values.foreach {
       case f: CustomField.Text        => textFields += f
       case f: CustomField.Implication => implFields += f
@@ -144,14 +143,14 @@ private[fields] object MainTable {
     ScalaComponent.builder[Props]("Cfg: Fields")
       .initialStateFromProps(initialState)
       .renderBackend[Backend]
-      .configure(customFieldChangeListener.install(_.clientData))
+      .configure(customFieldChangeListener.install(_.global))
       .configure(
         ChangeListener.refreshWhen(c =>
           c.fieldOrder
           || c.staticFields // TODO should this trigger a clearAppReqTypesEditorState(i)?
           || c.customReqTypes.nonEmpty // Refreshes AppReqTypesEditor and reqTypeSelector
           || c.tags.nonEmpty)          // Refreshes tagSelector
-          .install(_.clientData)
+          .install(_.global)
       )
       .build
 
@@ -170,9 +169,9 @@ private[fields] object MainTable {
   // ===================================================================================================================
   final class Backend(val $: BackendScope[Props, S]) extends OnUnmount {
 
-    val projectPx = Px.props($).map(_.clientData.project()).withReuse.autoRefresh
+    val projectPx = Px.props($).map(_.global.unsafeProject()).withReuse.autoRefresh
     val projectBackend = projectPx.map(new ProjectBackend(this, _))
-    val protocol = Px.props($).withReuse.autoRefresh.map(p => ProtocolBackend(p.cp, p.remote, p.clientData))
+    val protocol = Px.props($).withReuse.autoRefresh.map(p => ProtocolBackend(p.remote))
 
     val nameE      = Editors.textInputEditor.applyStatefulValidator(V.name.unnamedFn)
     val refkeyE    = Editors.textInputEditor.applyStatefulValidator(V.key.unnamedFn)
@@ -196,16 +195,11 @@ private[fields] object MainTable {
   }
 
   // ===================================================================================================================
-  case class ProtocolBackend(cp: ClientProtocol, remote: FieldCrud.Protocol.Instance, cd: ClientData) {
+  final case class ProtocolBackend(remote: ServerSideProcInvoker[FieldCrud.CfgAction, ErrorMsg, VerifiedEvent.Seq]) {
     import FieldCrud._
 
-    def proc = cp(remote).mergeFailure
-
     private def call(a: CfgAction): (TCB.Success, TCB.Failure) => Callback =
-      (s, f) => proc(
-        a,
-        cd.applyEventSeqCB(_) >> s,
-        _ => f)
+      (s, f) => remote(a, _ => s, _ => f)
 
     def createIO(v: Values) =
       call(CfgAction.Create(v))

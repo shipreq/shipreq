@@ -4,24 +4,20 @@ import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
 import japgolly.clearconfig._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
-import monocle.macros.Lenses
 import net.liftweb.common.Logger
 import net.liftweb.http._
 import net.liftweb.util._
 import net.liftweb.util.Props.RunModes
+import org.redisson.Redisson
 import scalaz.syntax.applicative._
-import shipreq.base.db.{DbAccess, DbConfig}
+import shipreq.base.db.DbAccess
 import shipreq.base.ops.{JdbcLogging, JdbcMetrics, SqlTracer}
 import shipreq.base.util.FxModule._
 import shipreq.base.util.{Props => ShipReqProps}
 import shipreq.webapp.base.WebappConfig
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.app._
 import shipreq.webapp.server.lib.Taskman
-import shipreq.webapp.server.security.AppSecurityRealm
-
-@Lenses
-final case class BootConfig(db: DbConfig, server: ServerConfig, report: ConfigReport)
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -36,33 +32,34 @@ class Boot {
 
   def boot(): Unit = {
     // Read config
-    val (cfg, runMode) = readConfig()
-    logger.info(cfg.report.full)
+    val (cfg, runMode, cfgReport) = readConfig()
+    logger.info(cfgReport.full)
     runMode foreach setRunMode
     logger.info(s"RunMode = ${Props.mode}")
 
-    // Create services
-    implicit val serverConfig = cfg.server
-    implicit val dbAccess = initDatabase(cfg)
-    initShiro()
-    configureLift()
-    Global.Instance = Global.default
+    import cfg.server.traceAlgebraFx.{newSpanImpure => trace}
+    trace("Boot") { _ =>
 
-    // Prepare services
-    preloadTemplates()
-    initOps(Global.Instance)
-    initRoutes(Global.Instance)
-    initTaskman(Global.Instance)
+      // Create services
+      val dbAccess = trace("initDatabase")(_ => initDatabase(cfg))
+      val redisClient = cfg.redis.map(c => trace("initRedis")(_ => Redisson.create(c.instance)))
+      trace("configureLift")(_ => configureLift())
+      Global.Instance = trace("Global")(_ => Global.default(dbAccess, redisClient, cfg))
 
-    // Start services
-    cfg.server.kamonConfFile.foreach(initKamon) // keep this after initTaskman() - don't want that SQL traced
-    initPrometheus(cfg.server.prometheus)
+      // Prepare services
+      trace("preloadTemplates")(_ => preloadTemplates())
+      trace("initRoutes")(_ => initRoutes(Global.Instance))
+      trace("initTaskman")(_ => initTaskman(Global.Instance))
+
+      // Start services
+      trace("initPrometheus")(_ => initPrometheus(cfg.server.prometheus))
+    }
 
     // Warmup
     Global.Instance.ssr.warmup.unsafeRun()
   }
 
-  def readConfig(): (BootConfig, Option[RunModes.Value]) = {
+  def readConfig(): (ServerConfig, Option[RunModes.Value], ConfigReport) = {
 
     val cfgRunMode: ConfigDef[Option[RunModes.Value]] =
       ConfigDef.get[String]("shipreq.lift.runMode").mapOption {
@@ -70,13 +67,13 @@ class Boot {
         case None    => Some(None)
       }
 
-    val plan = (DbConfig.config |@| ServerConfig.config |@| cfgRunMode).tupled.withReport
-      .map { case ((db, svr, runMode), report) =>
-        val cfg = BootConfig(db, svr, report)
-        (cfg, runMode)
-      }
-
-    plan.run(ShipReqProps.sources).unsafeRun().getOrDie()
+    (ServerConfig.config |@| cfgRunMode)
+      .tupled
+      .withReport
+      .map { case ((svr, runMode), report) => (svr, runMode, report) }
+      .run(ShipReqProps.sources)
+      .unsafeRun()
+      .getOrDie()
   }
 
   def setRunMode(runMode: RunModes.Value): Unit = {
@@ -95,10 +92,7 @@ class Boot {
     LiftRules.funcNameGenerator = S.generateFuncName _
 
     // Customise URL paths for built-in resources & AJAX requests
-    LiftRules.liftContextRelativePath = WebappConfig.liftPath1
-
-    // Customise URL paths for lift.js
-    LiftRules.resourceServerPath = WebappConfig.liftPath2
+    LiftRules.liftContextRelativePath = WebappConfig.liftCtxPath
 
     // Disable built-in request logging
     LiftRules.logServiceRequestTiming = false
@@ -155,10 +149,7 @@ class Boot {
     HttpStatusHandler.init()
   }
 
-  def initShiro(): Unit =
-    AppSecurityRealm.init()
-
-  def initDatabase(cfg: BootConfig): DbAccess = {
+  def initDatabase(cfg: ServerConfig): DbAccess = {
     val dbCfg = cfg.db
 
     // Hikari
@@ -181,9 +172,9 @@ class Boot {
   }
 
   def initTaskman(g: Global): Unit =
-    if (g.config.initTaskmanOnBoot)
+    if (g.config.server.initTaskmanOnBoot)
       Taskman.updateCfg(g)
-        .retryOnException((n, t) => g.config.initTaskmanRetry(n).map(d => Fx {
+        .retryOnException((n, t) => g.config.server.initTaskmanRetry(n).map(d => Fx {
           logger.warn(s"Taskman initialisation error occurred. Retrying...\n${t.getMessage}")
           Thread sleep d.toMillis
         }))
@@ -196,38 +187,12 @@ class Boot {
     PublicSpa
   }
 
-  def initOps(g: Global): Unit = {
-    val m = g.metrics
-
-    val sessionStart: (LiftSession, Req) => Unit =
-      (s, _) => m.sessionStart(ServerInterpreter.getSessionId(s)).unsafeRun()
-
-    val sessionEnd: LiftSession => Unit =
-      s => m.sessionEnd(ServerInterpreter.getSessionId(s)).unsafeRun()
-
-    LiftSession.afterSessionCreate ::= sessionStart
-    LiftSession.onShutdownSession ::= sessionEnd
-  }
-
   def initRoutes(g: Global): Unit = {
     // (Must be done after Global is ready)
     new LiftDispatcher(g).init()
   }
 
-  def initKamon(confName: String): Unit = {
-    import com.typesafe.config.ConfigFactory
-    import kamon.Kamon
-    val file = new java.io.File(confName)
-    val config =
-      if (file.exists())
-        ConfigFactory.parseFile(file)
-      else
-        ConfigFactory.load(confName)
-    Kamon.reconfigure(config)
-    Kamon.loadReportersFromConfig()
-  }
-
-  def initPrometheus(cfg: ServerConfig.Prometheus): Unit =
+  def initPrometheus(cfg: ServerLogicConfig.Prometheus): Unit =
     if (cfg.enabled) {
       if (cfg.hotspot)
         io.prometheus.client.hotspot.DefaultExports.initialize()

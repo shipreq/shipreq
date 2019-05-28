@@ -2,34 +2,34 @@ package shipreq.webapp.client.project.app.cfg.reqtypes
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._
-import vdom.html_<^._
-import ScalazReact._
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra._
 import scala.language.reflectiveCalls
 import scalacss.ScalaCssReact._
 import scalaz.std.string.stringInstance
 import scalaz.std.tuple._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.UiText.FieldNames
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
-import DataImplicits._
 import shipreq.webapp.base.data.DataValidators.{reqType => V}
-import shipreq.webapp.base.data.On
+import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.filter.Filter
-import shipreq.webapp.base.protocol.ClientProtocol
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.CustomReqTypeCrud
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes.CustomReqTypeCrud
+import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.BaseStyles
+import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.cfg.shared._
-import shipreq.webapp.client.project.app.state.{ChangeListener, ClientData}
+import shipreq.webapp.client.project.app.state.{ChangeListener, Global}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.Widgets
+import DataImplicits._
 
 object CfgReqTypes {
 
-  case class Props(cp        : ClientProtocol,
-                   remote    : CustomReqTypeCrud.Instance,
-                   clientData: ClientData,
+  case class Props(remote    : ServerSideProcInvoker[CustomReqTypeCrud.RequestType, ErrorMsg, VerifiedEvent.Seq],
+                   global    : Global,
                    filterDead: StateSnapshot[FilterDead],
                    usageShow : Usage.Show) {
     def component = Component(this)
@@ -45,21 +45,21 @@ object CfgReqTypes {
     ScalaComponent.builder[Props]("Cfg: Req Types")
       .initialStateFromProps(initialState)
       .renderBackend[Backend]
-      .configure(changeListener.install(_.clientData))
+      .configure(changeListener.install(_.global))
       .build
 
   private def initialState(p: Props): S =
     State(
       newRowStore.initState,
-      savedRowStore.initStateIM(p.clientData.project().config.reqTypes.custom))
+      savedRowStore.initStateIM(p.global.unsafeProject().config.reqTypes.custom))
 
   // ===================================================================================================================
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
-    val project    = Px.props($).map(_.clientData.project()).withReuse.manualRefresh
+    val project    = Px.props($).map(_.global.unsafeProject()).withReuse.manualRefresh
     val filterDead = Px.props($).map(_.filterDead.value).withReuse.manualRefresh
     val usageShow  = Px.props($).map(_.usageShow).withReuse.manualRefresh
 
-    val crudIO = Px.props($).withReuse.autoRefresh.map(p => CrudActionIO(CustomReqType, CustomReqTypeCrud)(p.cp, p.remote, p.clientData))
+    val crudIO = Px.props($).withReuse.autoRefresh.map(p => CrudActionIO(p.remote))
     val supp = TypicalSupp(storesAndState)(crudIO.value(), $)
 
     val onWhenImplicationRequired = On <=> ImplicationRequired

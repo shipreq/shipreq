@@ -1,10 +1,10 @@
 package shipreq.webapp.server.test
 
+import java.io.File
 import net.liftweb.common.Logger
 import net.liftweb.util.TimeHelpers._
 import org.eclipse.jetty.server._
 import org.eclipse.jetty.webapp.WebAppContext
-import java.io.File
 import org.apache.commons.io.FileUtils
 import shipreq.webapp.base.AssetManifest
 
@@ -76,6 +76,7 @@ class Jetty(val port: Int) extends Logger {
     val context = new WebAppContext
     context.setContextPath("/")
     context.setWar(tmpWarDir.getAbsolutePath)
+    context.setThrowUnavailableOnStartupException(true)
     svr.setHandler(context)
 
     context.setServer(svr)

@@ -1,12 +1,16 @@
 package shipreq.webapp.server.test
 
+import boopickle.Pickler
+import net.liftweb.http.LiftRules
 import net.liftweb.http.testing._
 import org.apache.commons.httpclient.{HttpClient, HttpMethodBase}
 import shipreq.base.test.BaseTestUtil._
-import shipreq.webapp.base.protocol.ClientSideProc
+import shipreq.base.util.FxModule._
+import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.protocol._
 import shipreq.webapp.server.app.Global
-import shipreq.webapp.server.db.DbInterpreter
-import shipreq.webapp.server.logic.DispatchLogic
+import shipreq.webapp.server.logic.{Cookie, Security}
+import shipreq.webapp.server.security.SecurityInterpreter
 
 /**
  * A test case that requires connectivity to a running Jetty instance.
@@ -16,7 +20,6 @@ object LiveTestUtils {
   private def jetty = TestJetty
 
   val init: () => Unit = onceUnit {
-    PrepareEnv.shiro()
     PrepareEnv.db()
     PrepareEnv.routes()
     jetty.start()
@@ -56,32 +59,46 @@ object LiveTestUtils {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   def get(url    : String,
+          token  : Option[Security.SessionToken] = None,
           headers: List[(String, String)] = Nil,
-          params : List[(String, String)] = Nil): HttpResponse =
-    testKit.get(url, testKit.theHttpClient, headers, params: _*).asInstanceOf[HttpResponse]
+          params : List[(String, String)] = Nil): HttpResponse = {
+    val h2 = token.map(tokenCookie).toList
+    testKit.get(url, testKit.theHttpClient, h2 ::: headers, params: _*).asInstanceOf[HttpResponse]
+  }
 
   def post(url    : String,
+           token  : Option[Security.SessionToken] = None,
            headers: List[(String, String)] = Nil,
-           params : List[(String, String)] = Nil): HttpResponse =
-    testKit.post(url, testKit.theHttpClient, headers, params: _*).asInstanceOf[HttpResponse]
+           params : List[(String, String)] = Nil): HttpResponse = {
+    val h2 = token.map(tokenCookie).toList
+    testKit.post(url, testKit.theHttpClient, h2 ::: headers, params: _*).asInstanceOf[HttpResponse]
+  }
 
-  def login(u: UserFixture.TestUser): HttpResponse =
-    login(u, true)
+  def ajaxPost(p: Protocol.Ajax[Pickler])
+              (req: p.protocol.RequestType,
+               token  : Security.SessionToken = Security.SessionToken.anonymous,
+               headers: List[(String, String)] = Nil): HttpResponse = {
+    val h2 = tokenCookie(token)
+    val prep = p.protocol.prepareSend(req)
+    val body = BinaryJvm.encode(p.prepReq)(prep.request).toNewArray
+    testKit.post(p.url.relativeUrl, testKit.theHttpClient, h2 :: headers, body, "application/octet-stream")
+      .asInstanceOf[HttpResponse]
+  }
 
-  def login(id: String, password: String): HttpResponse =
-    login(id, password, true)
-
-  def login(u: UserFixture.TestUser, expectSuccess: Boolean): HttpResponse =
-    login(u.email.value, u.password.value, expectSuccess)
-
-  def login(id: String, password: String, expectSuccess: Boolean): HttpResponse =
-    post(DispatchLogic.unitTestLoginUrl.relativeUrl, params = List("user" -> id, "pass" -> password))
-      .assertStatus(if (expectSuccess) 200 else 401)
+  private def tokenCookie(t: Security.SessionToken): (String, String) = {
+    Global.security.sessionPersist(t).unsafeRun() match {
+      case Cookie.Update(c :: Nil, Nil) => ("Cookie", s"${c.name.value}=${c.value}")
+      case c => sys.error("Got: " + c)
+    }
+  }
 
   def retainSession(r: HttpResponse): List[(String, String)] =
       r.headers.getOrElse("Set-Cookie", Nil)
         .filter(_ contains "JSESSIONID")
         .map(v => ("Cookie", v.takeWhile(_ != ';')))
+
+  private def assertNotContains(src: String, frag: String): Unit =
+    assert(!src.contains(frag), s"'$frag' found in '$src'")
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -114,11 +131,32 @@ object LiveTestUtils {
     def assertBodyContains(s: String) = tap(_ => assertContains(bodyString, s))
     def assertBodyTitle(s: String) = tap2(_.bodyTitle)(assertEq(_, s))
 
+    def assertStatelessLift = {
+      val b = bodyString
+      assertNotContains(b, s"/${LiftRules.resourceServerPath}/")
+      assertNotContains(b, s"/${WebappConfig.liftCtxPath}/")
+      assertNotContains(b, "lift.js")
+      assertNotContains(b, "/lift/")
+      this
+    }
+
     def assertSpa(spaJs: String, spaEP: ClientSideProc[_]) = this
         .assertOk
         .assertContentTypeHtml
+        .assertStatelessLift
         .assertBodyContains(spaJs)
         .assertBodyContains(spaEP.objectAndMethod + "(")
+
+    def assertJwt(expect: Option[Security.SessionToken]) = {
+      val prefix = SecurityInterpreter.cookieName.value + "="
+      val cookieValue = resp.headers.getOrElse("Set-Cookie", Nil).find(_.startsWith(prefix)).map(_.drop(prefix.length))
+      val actual = cookieValue.flatMap { v =>
+        val m = Map(SecurityInterpreter.cookieName -> v.takeWhile(_ != ';'))
+        Global.security.sessionRestore(m.get).unsafeRun()
+      }
+      assertEq(actual, expect)
+      this
+    }
   }
 
   implicit def toLiveTestHttpResponse(a: HttpResponse): LiveTestHttpResponse =

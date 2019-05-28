@@ -68,6 +68,9 @@ trait SnippetHelpers extends StaticSnippetHelpers with HasLogger {
     user
   }
 
+  final def currentUserOption(): Option[User] =
+    Option(LiftDispatcher.UserVar.is)
+
   final def request_!(): Req =
     S.request.openOrThrowException("How can a snippet not have a request")
 

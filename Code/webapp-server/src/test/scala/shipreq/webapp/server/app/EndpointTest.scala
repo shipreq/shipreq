@@ -4,7 +4,7 @@ import utest._
 import japgolly.microlibs.testutil.TestUtil._
 import shipreq.base.util.univeq._
 import shipreq.base.util.FreeOption
-import shipreq.webapp.base.{AssetManifest, WebappConfig}
+import shipreq.webapp.base.AssetManifest
 
 object EndpointTest extends TestSuite {
 
@@ -16,23 +16,8 @@ object EndpointTest extends TestSuite {
 
   override def tests = Tests {
 
-    'comet {
-      test(Endpoint.Comet, "/L/comet/11301008944/F86889457609DUVAIE/F86889457707YSS5WS")
-      test(Endpoint.Comet, "/L/comet/19408492454/F1135978930148PZUM0K/F1135978930205BEI53F")
-      test(Endpoint.Comet, "/L/comet/74023020932/F4523182542865TGETZ/F452318254343CO0NGV")
-    }
-
-    'liftJsStatic {
-      test(Endpoint.LiftJsStatic, "/l/lift.js")
-    }
-
-    'liftJsDynamic {
-      test(Endpoint.LiftJsDynamic, "/L/page/F1135978930133VYITVK.js")
-      test(Endpoint.LiftJsDynamic, "/L/page/F1958527133110FJNA.js")
-    }
-
-    'liftAjax {
-      test(Endpoint.LiftAjax, "/L/ajax/F765233147536NT4IDN/")
+    'securityPolicy {
+      test(Endpoint.AssetSecurityPolicy, "/L/content-security-policy-report")
     }
 
     'page {
@@ -58,12 +43,12 @@ object EndpointTest extends TestSuite {
     'semanticCss           - test(Endpoint.AssetSpecific("css", "semantic"),         AssetManifest.semanticCss)
 
     'genericAssets {
-      'css   - test(Endpoint.AssetGeneric("css"),    "/x/x.css")
-      'svg   - test(Endpoint.AssetGeneric("svg"),    "/x/x.svg")
+      'css   - test(Endpoint.AssetGeneric("css"),    "/blah/x.css")
+      'svg   - test(Endpoint.AssetGeneric("svg"),    "/blah/x.svg")
       'svg   - test(Endpoint.AssetGeneric("svg"),    "/assets/shipreq-banner.svg")
-      'woff2 - test(Endpoint.AssetGeneric("woff2"),  "/x/x.woff2")
+      'woff2 - test(Endpoint.AssetGeneric("woff2"),  "/blah/x.woff2")
       'woff2 - test(Endpoint.AssetGeneric("woff2"),  "/assets/icons.woff2")
-      'jsMap - test(Endpoint.AssetGeneric("js.map"), "/x/x.js.map")
+      'jsMap - test(Endpoint.AssetGeneric("js.map"), "/blah/x.js.map")
       'jsMap - test(Endpoint.AssetGeneric("js.map"), "/j/webapp-client-public-fastopt.js.map")
     }
 
@@ -72,8 +57,6 @@ object EndpointTest extends TestSuite {
         assertEq(path, endpoint(path, FreeOption.empty).toOption, None)
 
       'noAssetPath - test("/blah.js")
-      'unknownLift1 - test(s"/${WebappConfig.liftPath1}/blah.js")
-      'unknownLift2 - test(s"/${WebappConfig.liftPath2}/blah.js")
     }
 
   }

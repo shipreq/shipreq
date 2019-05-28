@@ -80,7 +80,7 @@ object DockerEnv {
     val devEnvStart = taskKey[Unit]("Starts up the dev environment.")
     val devEnvStop = taskKey[Unit]("Stops the dev environment.")
 
-    private val env = envRef("dev")("postgres", "jaeger", "prometheus", "elasticsearch", "logstash")
+    private val env = envRef("dev")("postgres", "redis", "elasticsearch", "logstash")
 
     val commands: Project => Project =
       _.settings(
@@ -94,13 +94,16 @@ object DockerEnv {
       if (releaseMode) "production" else "development"
 
     def javaOptions(serviceName: String, baseDirectory: File): List[String] = {
-      val envRoot = this.envRoot(baseDirectory)
+      val envRoot      = this.envRoot(baseDirectory)
+      val postgresPort = envFileValue(envRoot, "PORT_POSTGRES")
+      val jaegerPort   = envFileValue(envRoot, "PORT_JAEGER_COLLECTOR")
+      val redisPort    = envFileValue(envRoot, "PORT_REDIS")
       Options(DockerEnv.javaOptionsFromDockerComposeEnv(serviceName, envRoot))
-        .add("db.host", "localhost")
-        .add("db.port", envFileValue(envRoot, "PORT_POSTGRES"))
-        .add("JAEGER_HOST", "localhost")
-        .add("JAEGER_PORT", envFileValue(envRoot, "PORT_JAEGER_COLLECTOR"))
-        .add("run.mode", runMode)
+        .add("JAEGER_ENDPOINT", s"http://localhost:$jaegerPort/api/traces")
+        .add("db.host"        , "localhost")
+        .add("db.port"        , postgresPort)
+        .add("redis.url"      , s"redis://localhost:$redisPort")
+        .add("run.mode"       , runMode)
         .value
     }
 

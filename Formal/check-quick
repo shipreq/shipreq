@@ -1,0 +1,73 @@
+#!/bin/bash
+
+tmp=/tmp/$(date +%Y%m%d-%H%M%S)-$$
+
+tlc="tlc-colour -difftrace"
+
+most='
+SPECIFICATION Spec
+
+INVARIANTS TypeInvariants
+           DataInvariants
+           FinalInvariants
+
+CONSTRAINT MCContinue
+
+SYMMETRY MCSymmetry
+'
+
+tests=(
+
+# Everything enabled: multiple users
+'CONSTANTS User                  = {u1,u2}
+           Request               = {r1}
+           MCVerLimit            = 3
+           MCAllowSyncRequests   = TRUE
+           MCAllowUserDisconnect = TRUE
+           MCAllowUserReconnect  = TRUE
+           MCAllowWebappDeath    = TRUE
+'
+
+# Everything enabled: multiple requests
+'CONSTANTS User                  = {u1}
+           Request               = {r1,r2}
+           MCVerLimit            = 3
+           MCAllowSyncRequests   = TRUE
+           MCAllowUserDisconnect = TRUE
+           MCAllowUserReconnect  = TRUE
+           MCAllowWebappDeath    = TRUE
+'
+
+# User reconnect without sync (and without webapp death which requires sync)
+'CONSTANTS User                  = {u1,u2}
+           Request               = {r1}
+           MCVerLimit            = 3
+           MCAllowSyncRequests   = FALSE
+           MCAllowUserDisconnect = TRUE
+           MCAllowUserReconnect  = TRUE
+           MCAllowWebappDeath    = FALSE
+'
+
+# Multiple users & requests (disconnect off because too slow)
+'CONSTANTS User                  = {u1,u2}
+           Request               = {r1,r2}
+           MCVerLimit            = 3
+           MCAllowSyncRequests   = TRUE
+           MCAllowUserDisconnect = FALSE
+           MCAllowUserReconnect  = FALSE
+           MCAllowWebappDeath    = TRUE
+'
+)
+
+clear
+i=0
+n="${#tests[@]}"
+for t in "${tests[@]}"; do
+  i=$((i+1))
+  echo -e "\e[46m[$i/$n] =======================================================================================================================\e[0m"
+
+  echo "$most" > $tmp.cfg
+  echo "$t" >> $tmp.cfg
+  $tlc -config $tmp.cfg project #| egrep -v '^(Parsing file /|Semantic processing of).*$'
+
+done

@@ -1,12 +1,14 @@
 package shipreq.webapp.server.db
 
 import doobie.imports._
+import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.univeq._
 import java.time.Instant
 import nyaya.gen.Gen
 import org.postgresql.util.PSQLException
 import scala.collection.immutable.TreeSet
 import scalaz.syntax.applicative._
+import scalaz.syntax.catchable._
 import scalaz.{-\/, Free, \/, \/-}
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.SqlHelpers._
@@ -15,12 +17,13 @@ import shipreq.webapp.base.event.ApplyEvent.LogicVer
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash._
 import shipreq.webapp.base.user._
-import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.db.DbInterpreter._
 import shipreq.webapp.server.db.SqlHelpers._
+import shipreq.webapp.server.logic.DB.EventFilter
 import shipreq.webapp.server.logic._
 
-final class DbInterpreter(implicit config: ServerConfig)
+final class DbInterpreter(implicit config: ServerLogicConfig.Security)
     extends DB.Algebra[ConnectionIO]
        with ForPublicSpa
        with ForMembers
@@ -56,16 +59,16 @@ object DbInterpreter {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object ForSecurity extends DB.ForSecurity[ConnectionIO] {
-    private final def colsUserAndPasswordInfo = "id,username,email,roles,password,password_salt"
-    private final type UserAndPasswordInfo = (UserId, Option[Username], EmailAddr, Option[String], Option[PasswordHash], Option[Salt])
+    private final def colsUserAndPasswordInfo = "id,username,roles,password,password_salt"
+    private final type UserAndPasswordInfo = (UserId, Option[Username], Option[String], Option[PasswordHash], Option[Salt])
     private final val parseUserAndPasswordInfo: UserAndPasswordInfo => Option[(User, PasswordAndSalt)] = {
-      case (id, ou, e, or, op, os) =>
+      case (id, ou, or, op, os) =>
         for {
           u <- ou
           p <- op
           s <- os
           r = or.fold(Set.empty[String])(_.split(',').toSet)
-        } yield (User(id, u, e, r), PasswordAndSalt(p, s))
+        } yield (User(id, u, r), PasswordAndSalt(p, s))
     }
 
     private[db] final val getUserAndPasswordByEmailSql =
@@ -261,7 +264,7 @@ object DbInterpreter {
     private[db] final val insertEventHashSql =
       Update[(ProjectId, EventOrd, HashRecRow)](s"INSERT INTO event_hash(project_id,ord,$sqlHashRecRow) VALUES(?,?,${sqlHashRecRow_?})")
 
-    override final def saveProjectEvents(id: ProjectId)(cmds: Traversable[SaveProjectEventCmd]): ConnectionIO[Option[Throwable]] = {
+    override final def saveProjectEvents(id: ProjectId, cmds: Traversable[SaveProjectEventCmd]) = {
       val addEvents = insertEventSql.executeBatch(
         cmds.toIterator.map(c => (id, c.ord, c.event)))
 
@@ -272,8 +275,14 @@ object DbInterpreter {
           (scope, hash)          <- schemeHashes.iterator
         } yield (id, cmd.ord, (scope, LogicVer.SoleInstance, scheme, hash)))
 
-      (addEvents *> addHashes).inTransaction.attemptVoid
+      def result: VerifiedEvent.Seq =
+        VerifiedEvent.Seq.empty ++ cmds.toIterator.map(c => VerifiedEvent(c.ord, c.event, c.hashes))
+
+      (addEvents *> addHashes).inTransaction.attempt.map(_.map(_ => result))
     }
+
+    override final def saveProjectEvent(id: ProjectId, cmd: SaveProjectEventCmd) =
+      saveProjectEvents(id, cmd :: Nil).map(_.map(_.head))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -281,10 +290,10 @@ object DbInterpreter {
     import EventSqlHelpers._
 
     private[db] final val createEmptyProjectSql =
-      Query[UserId, ProjectId]("INSERT INTO project(usr_id) VALUES(?) RETURNING id")
+      Query[(UserId, Int), ProjectId]("INSERT INTO project(usr_id, init_events) VALUES(?,?) RETURNING id")
 
-    override final def createEmptyProject(id: UserId): ConnectionIO[ProjectId] =
-       createEmptyProjectSql.toQuery0(id).unique
+    override final def createEmptyProject(id: UserId, initEvents: Int): ConnectionIO[ProjectId] =
+       createEmptyProjectSql.toQuery0(id, initEvents).unique
 
     private final def sqlProjectMetaData(projectCond: String, extraCols: String = ""): String = {
 
@@ -297,7 +306,7 @@ object DbInterpreter {
       s"""
         WITH
           ps AS (
-            SELECT id, created_at
+            SELECT id, init_events, created_at
             $extraColSuffix
             FROM project
             $projectCond
@@ -305,11 +314,11 @@ object DbInterpreter {
           es AS (
             SELECT
               project_id,
-              count(*) events,
+              max(event.ord) events,
               count(*) FILTER (WHERE type_id IN (${reqCreationTypeIds mkString ","})) reqs,
               max(event.created_at) last_updated_at
             FROM event
-            WHERE project_id IN (select id FROM ps) AND ord > 1
+            WHERE project_id IN (select id FROM ps)
             GROUP BY project_id
           ),
           ns AS (
@@ -323,6 +332,7 @@ object DbInterpreter {
         SELECT
           ps.id,
           COALESCE(ns.name,''),
+          ps.init_events,
           COALESCE(es.events,0),
           COALESCE(es.reqs,0),
           ps.created_at,
@@ -346,29 +356,41 @@ object DbInterpreter {
     override final def getProjectMetaData(id: ProjectId): ConnectionIO[Option[ProjectMetaData]] =
       getProjectMetaDataSql.toQuery0(id).option
 
-    private[db] final val getProjectHeaderSql: Query[(ProjectId, ProjectId), ProjectHeader] = {
+    private[db] final val projectSpaInitPageSql: Query[ProjectId, Project.Name] = {
       val sql =
         s"""
-           |SELECT
-           |  usr_id,
-           |  COALESCE(
-           |    (SELECT (e.data#>>'{}')::varchar
-           |      FROM event e
-           |      WHERE project_id=? AND type_id=$eventTypeIdForProjectNameSet
-           |      ORDER BY ord DESC
-           |      LIMIT 1),
-           |    '') "name"
-           |FROM project
-           |WHERE id=?
+           |SELECT (e.data#>>'{}')::varchar
+           |FROM event e
+           |WHERE project_id=? AND type_id=$eventTypeIdForProjectNameSet
+           |ORDER BY ord DESC
+           |LIMIT 1
         """.stripMargin.sql
       Query(sql)
     }
 
-    override final def getProjectHeader(id: ProjectId): ConnectionIO[Option[ProjectHeader]] =
-      getProjectHeaderSql.toQuery0((id, id)).option
+    override def projectSpaInitPage(id: ProjectId): ConnectionIO[Project.Name] =
+      projectSpaInitPageSql.toQuery0(id).option.map(_.filterNot(_ eq null).getOrElse(""))
 
-    private[db] final val sqlSelectAllEvents =
-      Query[ProjectId, (EventOrd, Event)](s"SELECT ord,$eventE FROM event WHERE project_id=?")
+    private[db] object SqlSelectEvents {
+      type Out = (EventOrd, Event)
+      private val allSql = s"SELECT ord,$eventE FROM event WHERE project_id=?"
+      val all = Query[ProjectId, Out](allSql)
+      val after = Query[(ProjectId,EventOrd), Out](s"$allSql AND ord>?")
+
+      private val setPrefix = s"$allSql AND ord IN ("
+
+      def setQuery(ords: Seq[EventOrd]): Query[ProjectId, Out] =
+        Query(ords.iterator.map(_.value).mkString(setPrefix, ",", ")"))
+
+      def set(pid: ProjectId, ords: NonEmptySet[EventOrd]): ConnectionIO[List[Out]] =
+        selectByNonEmptySet(ords)(setQuery(_).toQuery0(pid))
+    }
+
+    private[db] final val selectEvents: EventFilter => ProjectId => ConnectionIO[List[SqlSelectEvents.Out]] = {
+      case EventFilter.IncludeAll     => SqlSelectEvents.all.toQuery0(_).list
+      case EventFilter.ExcludeUpTo(o) => p => SqlSelectEvents.after.toQuery0((p, o)).list
+      case EventFilter.Set(ords)      => p => SqlSelectEvents.set(p, ords)
+    }
 
     private[db] final val sqlSelectAllEventHashes =
       Query[ProjectId, (EventOrd, HashRecRow)](s"SELECT ord,$sqlHashRecRow FROM event_hash WHERE project_id=?")
@@ -400,9 +422,9 @@ object DbInterpreter {
     }
 
     /** @return Events in order from lowest to highest ord. */
-    override final def getAllProjectEvents(p: ProjectId): ConnectionIO[VerifiedEvent.Seq] = {
+    override final def getProjectEvents(p: ProjectId, f: EventFilter): ConnectionIO[VerifiedEvent.Seq] = {
       (for {
-        events <- sqlSelectAllEvents.toQuery0(p).list
+        events <- selectEvents(f)(p)
         hashes <- sqlSelectAllEventHashes.toQuery0(p).list
       } yield {
 
@@ -420,7 +442,7 @@ object DbInterpreter {
           result += VerifiedEvent(ord, tmp.e, tmp.result())
         result.result()
 
-        // TODO Improve getAllProjectEvents. Currently server time = O(e.log(e) + e + h.H)
+        // TODO Improve getProjectEvents. Currently server time = O(e.log(e) + e + h.H)
         // Ideas: Server (currently) much more constrained in resources than DB.
         // Maybe: have DB sort both queries by ord then traverse both at once | server time ~ O(e.log(e) + h.H)
         // Maybe: do it all in DB and return hash recs as array               | server time ~ O(e.log(e) + h.H)

@@ -3,8 +3,7 @@ package shipreq.webapp.client.home
 import scala.scalajs.js.annotation.JSExportTopLevel
 import shipreq.webapp.base.CssSettings._
 import scalacss.ScalaCssReact._
-import shipreq.webapp.base.protocol.HomeSpaProtocols
-import shipreq.webapp.base.protocol.{ClientSideProcImpl, ClientProtocol}
+import shipreq.webapp.base.protocol.{AjaxClient, ClientSideProcImpl, HomeSpaProtocols}
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.client.home.ui.{Home, Styles}
 
@@ -16,7 +15,7 @@ object Main extends ClientSideProcImpl(HomeSpaProtocols.EntryPoint) {
     BaseStyles.addToDocument()
     Styles.addToDocument()
 
-    Home.Props(i, ClientProtocol.Default).render.renderIntoDOM(`#root`)
+    Home.Props(i, AjaxClient.Binary).render.renderIntoDOM(`#root`)
   }
 }
 

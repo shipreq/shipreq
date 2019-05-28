@@ -2,10 +2,11 @@ package shipreq.base.db
 
 import doobie.free.connection.{ConnectionIO => _, _}
 import doobie.imports._
+import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.univeq._
 import java.sql.SQLException
-import scalaz._, Scalaz._
 import java.time.{Duration, Instant}
+import scalaz._, Scalaz._
 
 object DoobieHelpers {
 
@@ -94,4 +95,11 @@ object DoobieHelpers {
       }
   }
 
+  def selectByNonEmptySet[A, B](as: NonEmptySet[A], groupSize: Int = 100)
+                               (f: Seq[A] => Query0[B]): ConnectionIO[List[B]] =
+    as
+      .iterator
+      .grouped(groupSize)
+      .map(f(_).list)
+      .reduce(Apply[ConnectionIO].apply2(_, _)((x, y) => y ::: x))
 }

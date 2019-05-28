@@ -4,9 +4,11 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
 import japgolly.univeq.UnivEq
 import java.net.URL
+import scala.annotation.tailrec
 import scalaz.Order
 import scalaz.std.anyVal.intInstance
 import scala.collection.GenTraversable
+import scala.collection.generic.CanBuildFrom
 import scala.collection.immutable.TreeMap
 import scala.util.Try
 import ScalaExt.StringBuilderExt
@@ -165,4 +167,36 @@ object Util {
     }
     b.result()
   }
+
+  def partitionBetween[F[x] <: Traversable[x], A](as: F[A])(split: (A, A) => Boolean)
+                                                 (implicit cbf: CanBuildFrom[Nothing, A, F[A]]): (F[A], F[A]) =
+    if (as.isEmpty)
+      (as, as)
+    else {
+      val b1, b2 = cbf()
+      val it = as.toIterator
+      @tailrec def go(prev: A): Unit =
+        if (it.hasNext) {
+          val a = it.next()
+          if (split(prev, a)) {
+            b2 += a
+            b2 ++= it
+          } else {
+            b1 += a
+            go(a)
+          }
+        }
+
+      val first = it.next()
+      b1 += first
+      go(first)
+      (b1.result(), b2.result())
+    }
+
+  def partitionConsecutive[F[x] <: Traversable[x], A](as: F[A])(implicit cbf: CanBuildFrom[Nothing, A, F[A]], n: Numeric[A]): (F[A], F[A]) =
+    partitionConsecutiveBy(as)(identity)
+
+  def partitionConsecutiveBy[F[x] <: Traversable[x], A, B](as: F[A])(f: A => B)
+                                                          (implicit cbf: CanBuildFrom[Nothing, A, F[A]], n: Numeric[B]): (F[A], F[A]) =
+    partitionBetween(as)((a, b) => !n.equiv(n.plus(f(a), n.one), f(b)))
 }

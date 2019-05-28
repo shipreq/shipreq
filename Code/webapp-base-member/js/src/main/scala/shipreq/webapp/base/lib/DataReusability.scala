@@ -1,7 +1,7 @@
 package shipreq.webapp.base.lib
 
-import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react._
+import scalaz.Equal
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
@@ -14,6 +14,9 @@ import shipreq.webapp.base.jsfacade.MomentJs
 object DataReusability extends DataReusability
 
 abstract class DataReusability extends BaseReusability {
+
+  final def reusabilityByRefOrEqual[A <: AnyRef](implicit e: Equal[A]): Reusability[A] =
+    Reusability.byRef || Reusability(e.equal)
 
   implicit def freeOption[A >: Null : Reusability]: Reusability[FreeOption[A]] =
     Reusability((x, y) =>
@@ -74,7 +77,7 @@ abstract class DataReusability extends BaseReusability {
     Reusability.byRef
 
   implicit def reusabilityCustomFields: Reusability[FieldSet.CustomFields] =
-    Reusability.byRefOrEqual
+    reusabilityByRefOrEqual
 
   implicit def reusabilityExternalPubid: Reusability[ExternalPubid] =
     Reusability.byRefOrUnivEq

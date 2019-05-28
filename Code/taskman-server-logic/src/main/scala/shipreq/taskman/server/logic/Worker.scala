@@ -2,9 +2,9 @@ package shipreq.taskman.server.logic
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
+import scalaz.std.either._
 import scalaz.std.list.listInstance
 import scalaz.syntax.bind._
-import scalaz.syntax.catchable._
 import scalaz.syntax.foldable._
 import scalaz.{-\/, \/, \/-, ~>}
 import shipreq.base.util.ArticulateError
@@ -67,7 +67,7 @@ object Worker extends HasLogger {
       for {
         ea <- reportFailure.attempt
         eb <- emailArchive.attempt
-      } yield (ea *> eb).valueOr(throw _)
+      } yield (ea *> eb).swap.foreach(throw _)
     }
 
     private val indent = "  "

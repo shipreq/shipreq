@@ -3,10 +3,8 @@ package shipreq.base.test.db
 import doobie.free.connection.{ConnectionOp, rollback, setAutoCommit, setSavepoint}
 import doobie.imports._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import java.io.{PrintWriter, StringWriter}
 import java.sql.Connection
 import scalaz.syntax.apply._
-import scalaz.syntax.catchable._
 import scalaz.{-\/, Catchable, Free, Monad, \/, \/-}
 import shipreq.base.db.DbAccess
 import shipreq.base.db.DbAccess.AbstractTransactor
@@ -73,8 +71,8 @@ final case class SingleConnectionXA(realConn: Connection) extends Transactor[Fx]
 
   def ![A](c: ConnectionIO[A]): A =
     c.transact(this).attempt.unsafeRun() match {
-      case \/-(a) => a
-      case -\/(t) =>
+      case Right(a) => a
+      case Left(t) =>
         val stackTrace = t.stackTraceAsStringWithLineMod {
           case s if s contains "shipreq" => Console.BOLD + Console.MAGENTA + s + Console.RESET
         }

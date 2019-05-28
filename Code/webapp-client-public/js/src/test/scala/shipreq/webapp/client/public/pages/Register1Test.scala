@@ -14,12 +14,12 @@ import PublicSpaTestUtil.semanticUiDisabled
 
 object Register1Tester {
 
-  val * = Dsl[TestClientProtocol, Obs, Unit]
+  val * = Dsl[TestAjaxClient, Obs, Unit]
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final class Obs($: DomZipperJs, cp: TestClientProtocol) {
-    val reqsSent = cp.reqs
+  final class Obs($: DomZipperJs, ajax: TestAjaxClient) {
+    val reqsSent = ajax.reqs
 
     val form: Option[FormObs] =
       $.collect01(".ui.form").doms.map(_ => new FormObs($))
@@ -52,7 +52,7 @@ object Register1Tester {
       .addCheck(submitEnabled.assert(Enabled).before)
 
   def serverResponse: *.Actions =
-    *.action("Server response")(_.ref.respondToLastP(PublicSpaProtocols.Register.Fn1)(\/-(()))) <+ reqsSent.assert.not.equal(0)
+    *.action("Server response")(_.ref.respondToLast(PublicSpaProtocols.register1)(\/-(()))) <+ reqsSent.assert.not.equal(0)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -70,8 +70,8 @@ object Register1Test extends TestSuite {
   def testPlan(plan: *.Plan, publicRegistration: Permission = Allow): Unit = {
     val t = new PublicSpaTestUtil.ForTestState
     t.initData = t.initData.copy(publicRegistration = publicRegistration)
-    import t.cp
-    t(Page.Register1)(h => plan.test(Observer.watch(new Obs(h, cp))).stateless.withRef(cp).run())
+    import t.ajax
+    t(Page.Register1)(h => plan.test(Observer.watch(new Obs(h, ajax))).stateless.withRef(ajax).run())
   }
 
   def success: *.Actions = (

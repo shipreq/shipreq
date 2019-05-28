@@ -6,7 +6,6 @@ import java.time.Instant
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.protocol.ServerSideProc
 
 object BaseReusability extends BaseReusability {
 
@@ -53,9 +52,6 @@ abstract class BaseReusability {
 
   implicit def reusabilityNonEmptySet[A: Reusability]: Reusability[NonEmptySet[A]] =
     Reusability.byRef || Reusability.by(_.whole)
-
-  implicit def reusabilityServerSideProc[I, O]: Reusability[ServerSideProc[I, O]] =
-    Reusability.by(_.id.value)
 
   //implicit def reusabilityValidation[S, I, C, V]: Reusability[Validator[S, I, C, V]] =
   //  Reusability.byRef

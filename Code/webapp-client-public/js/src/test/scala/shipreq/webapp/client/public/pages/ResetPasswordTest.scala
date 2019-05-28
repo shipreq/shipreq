@@ -15,12 +15,12 @@ import PublicSpaProtocols.ResetPassword.Response
 
 object ResetPasswordTester {
 
-  val * = Dsl[TestClientProtocol, Obs, Unit]
+  val * = Dsl[TestAjaxClient, Obs, Unit]
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final class Obs($: DomZipperJs, cp: TestClientProtocol) {
-    val reqsSent = cp.reqs
+  final class Obs($: DomZipperJs, ajax: TestAjaxClient) {
+    val reqsSent = ajax.reqs
 
     val form: Option[FormObs] =
       $.collect01(".ui.form").doms.map(_ => new FormObs($))
@@ -69,7 +69,7 @@ object ResetPasswordTester {
       .addCheck(submitEnabled.assert(Enabled).before)
 
   def serverResponse(r: Response): *.Actions =
-    *.action(s"Server response: $r")(_.ref.respondToLastP(PublicSpaProtocols.ResetPassword.Fn2)(\/-(r))) <+ reqsSent.assert.not.equal(0)
+    *.action(s"Server response: $r")(_.ref.respondToLast(PublicSpaProtocols.resetPassword2)(\/-(r))) <+ reqsSent.assert.not.equal(0)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -86,8 +86,8 @@ object ResetPasswordTest extends TestSuite {
 
   def test(plan: *.Plan): Unit = {
     val t = new PublicSpaTestUtil.ForTestState
-    import t.cp
-    t(page)(h => plan.test(Observer.watch(new Obs(h, cp))).stateless.withRef(cp).run())
+    import t.ajax
+    t(page)(h => plan.test(Observer.watch(new Obs(h, ajax))).stateless.withRef(ajax).run())
   }
 
   val page = Page.Token(Urls.PublicSpaRoute.ResetPassword, SecurityToken("abcd1234"))

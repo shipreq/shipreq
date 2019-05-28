@@ -78,7 +78,7 @@ object Register2 {
 
     private def tosName = "terms of service"
 
-    private val tosLabel = TagMod("I agree to the ", Common.a_toNewWindow(Urls.termsOfService.relativeUrl)(tosName))
+    private val tosLabel = TagMod("I agree to the ", <.a.toNewWindow(Urls.termsOfService.relativeUrl)(tosName))
 
     private val tosValidator: Composite.Stateless[Agreement, Agreement, Agree.type] =
       Simple.Auditor[Simple.Invalidity, Agreement, Agree.type] {
@@ -91,13 +91,13 @@ object Register2 {
     private val fieldPersonName = Form.TextField.highLevel(
       State.personName,
       UserValidators.personName.unnamed,
-      m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoFocus := true, m)),
+      m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoComplete.name, ^.autoFocus := true, m)),
       Some(CommmonUiText.userPersonName))
 
     private val fieldPassword1 = Form.TextField.highLevel(
       State.password1,
       UserValidators.password.unnamed,
-      m => Input.Text.icon(Icon.Lock.tag, <.input.password(m)),
+      m => Input.Text.icon(Icon.Lock.tag, <.input.password(^.autoComplete.newPassword, m)),
       Some(CommmonUiText.password))
 
     private def renderForm(p: Props, s: State): VdomElement = {
@@ -122,13 +122,13 @@ object Register2 {
       val fieldUsername = Form.TextField.highLevel(
         State.username,
         usernameValidator.unnamed,
-        m => Input.Text.icon(Icon.User.tag, <.input.text(m)),
+        m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoComplete.username, m)),
         Some(CommmonUiText.username))
 
       val fieldPassword2 = Form.TextField.highLevel(
         State.password2,
         UserValidators.password2(s.password1),
-        m => Input.Text.icon(Icon.Lock.tag, <.input.password(m)),
+        m => Input.Text.icon(Icon.Lock.tag, <.input.password(^.autoComplete.newPassword, m)),
         Some("Confirm password"))
 
       val submitCB: Option[Callback] = {
@@ -176,7 +176,7 @@ object Register2 {
       if (s.formEnabled is Disabled)
         fields = fields.map(_.disable)
 
-      <.div(*.part1, Form(fields))
+      <.form(*.part1, Form(fields))
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

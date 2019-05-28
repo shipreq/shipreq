@@ -176,13 +176,13 @@ object Login {
     private val refUser = Ref[html.Input]
     private val fieldUser = Form.TextField.unvalidated(
       State.user,
-      m => Input.Text.icon(Icon.User.tag, <.input.text(m, submitOnEnter).withRef(refUser)),
+      m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoComplete.usernameEmail, m, submitOnEnter).withRef(refUser)),
       Some(CommmonUiText.usernameOrEmail))
 
     private val refPassword = Ref[html.Input]
     private val fieldPassword = Form.TextField.unvalidated(
       State.password,
-      m => Input.Text.icon(Icon.Lock.tag, <.input.password(m, submitOnEnter).withRef(refPassword)),
+      m => Input.Text.icon(Icon.Lock.tag, <.input.password(^.autoComplete.currentPassword, m, submitOnEnter).withRef(refPassword)),
       Some(
         <.div(*.passwordLabel,
           <.div(CommmonUiText.password),
@@ -222,7 +222,7 @@ object Login {
       errorMsg.foreach(e => array += e(^.key := "e"))
       array += Form(fields)(^.key := "f")
 
-      <.div(*.part1, array)
+      <.form(*.part1, array)
     }
 
     private def renderPostPasswordReset(u: Username \/ EmailAddr): VdomElement =

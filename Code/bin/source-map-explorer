@@ -1,0 +1,12 @@
+#!/bin/bash
+bin="$(dirname "$0")"
+code="$(cd "$bin/.." && pwd)"
+
+exec source-map-explorer \
+  --replace='(/(shared|js))?/src/main/scala/' --with=/ \
+  --replace=japgolly/scalajs/react/'(extra/)?' --with= \
+  --replace='/scala-js/scala-js/' --with=/scala-js/ \
+  --replace='/scala/scala/' --with=/scala/ \
+  --replace='/src/library/scala/|//' --with=/ \
+  --replace="$code/" --with=shipreq/ \
+  "$@"

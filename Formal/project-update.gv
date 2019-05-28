@@ -1,0 +1,37 @@
+digraph G {
+
+  node [style=filled fillcolor="#e6e6e6"]
+
+  Start
+  {
+    rank=max
+    Done [fillcolor="#bbee77"]
+    node [fillcolor="#ddddff"]
+    DB
+    Redis
+  }
+
+  node [style=filled fillcolor="#bbee77"]
+
+  Start       -> ReadRedis
+  ReadRedis   -> ReadDB [label="redis ≤ local\n(cache-miss)"]
+  ReadDB      -> WriteRedis1
+  WriteRedis1 -> ReadRedis [color=red label="stale" fontcolor="#aa0000"]
+  WriteRedis1 -> WriteDB
+  ReadRedis   -> WriteDB [label="redis > local\n(cache-hit)"]
+  WriteDB     -> ReadRedis [color=red label="stale" fontcolor="#aa0000"]
+  WriteDB     -> Done [color=red constraint=false label="Invalid\nrequest" fontcolor="#aa0000"]
+  WriteDB     -> WriteRedis2
+  WriteRedis2 -> Done
+
+  WriteDB     [label="WriteDB\n(new event)"]
+  WriteRedis2 [label="WriteRedis2\n(+broadcast event)"]
+
+  {
+    edge[color="#ccccff" style=dashed dir=none]
+    ReadRedis -> Redis
+    ReadDB -> DB
+    WriteRedis1,WriteRedis2 -> Redis
+    WriteDB -> DB
+  }
+}

@@ -57,12 +57,12 @@ object ShipReqBuild {
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoDom))
       .depsForBoth(
-        UnivEq.scalaz ++ Scalaz.core ++ Nyaya.prop ++ Monocle.core ++
+        UnivEq.scalaz ++ scalaz ++ Nyaya.prop ++ Monocle.core ++
         Microlibs.adtMacros ++ Microlibs.nonempty ++ Microlibs.recursion ++
         Microlibs.scalazExt ++ Microlibs.stdlibExt ++ Microlibs.utils ++
         testScope(μTest ++ Nyaya.test ++ Microlibs.testUtil))
       .depsForJvm(
-        SLF4J.api ++ Logback.core ++ scalaLogging ++ clearConfig)
+        SLF4J.api ++ Logback.core ++ scalaLogging ++ clearConfig ++ catsEffect)
 
   lazy val baseOps =
     project("base-ops")
@@ -70,7 +70,7 @@ object ShipReqBuild {
         Common.jvmSettings,
         Common.macroModuleSettings)
       .dependsOn(baseUtilJvm)
-      .deps(Kamon.core ++ Kamon.jaeger ++ Prometheus.client)
+      .deps(jaegerClient ++ Prometheus.client)
 
   lazy val baseDb =
     project("base-db")
@@ -119,7 +119,10 @@ object ShipReqBuild {
       _.enablePlugins(SbtJmh)
         .dependsOn(webappServer)
         .configure(Common.jvmSettings)
-        .settings(libraryDependencies += "io.monix" %% "monix-eval" % "2.3.3")
+        .settings(libraryDependencies ++= Seq(
+          "io.monix"   %% "monix-eval" % "3.0.0-RC2",
+          "org.scalaz" %% "scalaz-zio" % "1.0-RC4"))
+        .deps(JJWT.all)
     }
 
     def jsSettings: Project => Project = {

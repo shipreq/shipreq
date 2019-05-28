@@ -21,7 +21,7 @@ final class BusinessOpFx(sendMailFx   : BusinessOp.SendEmail => Fx[Unit],
     applyTimed(op)
 
   def applyTimed[A](op: BusinessOp[A]): Fx[A] =
-    applyUntimed(op).attempt.measureDuration.flatMap { case (result, dur) =>
+    applyUntimed(op).attemptFx.measureDuration.flatMap { case (result, dur) =>
       logCompletion(op, result, dur).flatMap(_ => Fx.lift(result))
     }
 

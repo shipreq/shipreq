@@ -63,7 +63,6 @@ emptyStat = Stat 0 0
 instance Semigroup Stat where
   a <> b = Stat (files a + files b) (loc a + loc b)
 instance Monoid Stat where
-  mappend a b = Stat (files a + files b) (loc a + loc b)
   mempty = emptyStat
 
 isEmpty     :: Stat -> Bool

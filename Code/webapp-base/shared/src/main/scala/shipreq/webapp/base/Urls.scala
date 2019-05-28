@@ -54,10 +54,22 @@ object Urls {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  def publicHome     = PublicSpaRoute.Home.url
-  def login          = PublicSpaRoute.Login.url
-  def termsOfService = PublicSpaRoute.TermsOfService.url
-  def memberHome     = MemberRoute.Home.url
-  def project        = MemberRoute.Project.url
-  def logout         = MemberRoute.Logout.url
+  object ProjectSpaWebSocket {
+    final val ParamProjectId = "p"
+    final val Base           = "/w/p"
+    final val ServerEndpoint = Base + "/{" + ParamProjectId + "}"
+    val url                  = Url.Relative(ProjectSpaWebSocket.Base).thenParam[ProjectId.Public](_.value)
+    val parseProjectId       = Obfuscated.apply: String => ProjectId.Public
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  val ajaxRoot = Url.Relative("/x")
+
+  def publicHome          = PublicSpaRoute.Home.url
+  def login               = PublicSpaRoute.Login.url
+  def termsOfService      = PublicSpaRoute.TermsOfService.url
+  def memberHome          = MemberRoute.Home.url
+  def project             = MemberRoute.Project.url
+  def logout              = MemberRoute.Logout.url
 }

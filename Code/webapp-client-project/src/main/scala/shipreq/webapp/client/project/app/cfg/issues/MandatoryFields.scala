@@ -1,21 +1,25 @@
 package shipreq.webapp.client.project.app.cfg.issues
 
-import japgolly.scalajs.react._, vdom.html_<^._, ScalazReact._
-import japgolly.scalajs.react.extra.{Px, OnUnmount}
-import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.data._, DataImplicits._
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.FieldMandatorinessMod
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.ScalazReact._
+import japgolly.scalajs.react.extra.{OnUnmount, Px}
+import shipreq.webapp.base.data._
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.On
-import shipreq.webapp.base.protocol.ClientProtocol
-import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
+import shipreq.webapp.base.event.VerifiedEvent
+import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes.FieldMandatorinessMod
+import shipreq.webapp.client.project.app.state.{ChangeListener, Global}
 import shipreq.webapp.client.project.app.cfg.shared._
 import shipreq.webapp.client.project.lib.DataReusability._
+import DataImplicits._
 
 private[issues] object MandatoryFields {
 
-  final case class Props(cp: ClientProtocol, remote: FieldMandatorinessMod.Instance, clientData: ClientData) {
+  final case class Props(remote: ServerSideProcInvoker[FieldMandatorinessMod.RequestType, ErrorMsg, VerifiedEvent.Seq],
+                         global: Global) {
     @inline def component = Component(this)
-    def proc = clientData.serverSideProcToEvents(cp, remote)
   }
 
   private val rowStore = SavedRowStore.data[CustomField](_.mandatory)
@@ -29,21 +33,21 @@ private[issues] object MandatoryFields {
   val Component = ScalaComponent.builder[Props]("MandatoryFields")
     .initialStateFromProps(initialState)
     .renderBackend[Backend]
-    .configure(changeListener.install(_.clientData))
-    .configure(ChangeListener.refreshWhenFieldNamesChange.install(_.clientData))
+    .configure(changeListener.install(_.global))
+    .configure(ChangeListener.refreshWhenFieldNamesChange.install(_.global))
     .build
 
   private def initialState(p: Props) =
-    rowStore.initStateIM(p.clientData.project().config.fields.customFields)
+    rowStore.initStateIM(p.global.unsafeProject().config.fields.customFields)
 
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
 
-    private val pxProject = Px.props($).map(_.clientData.project()).withReuse.autoRefresh
+    private val pxProject = Px.props($).map(_.global.unsafeProject()).withReuse.autoRefresh
     private val labelFn   = pxProject map Field.nameFromProject
 
     private def save(id: CustomFieldId): CallbackTo[ST] =
       $.props.map(p =>
-        Persistence.simpleAsyncUpdate(rowStore)(p.proc, $ runState _, id))
+        Persistence.simpleAsyncUpdate(rowStore)(p.remote, $ runState _, id))
 
     private val genEditor =
       Editors.checkboxEditor.imap(On <=> Mandatory)
@@ -78,6 +82,6 @@ private[issues] object MandatoryFields {
     def render(p: Props, s: S): VdomElement =
       <.section(
         <.h5("Mandatory Fields"),
-        renderRows(p.clientData.project(), s))
+        renderRows(p.global.unsafeProject(), s))
   }
 }

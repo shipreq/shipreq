@@ -66,10 +66,10 @@ object TaskmanBuild {
     def runWithDockerDev: Project => Project =
       _.configure(DockerEnv.dev.commands)
       .settings(
-        fork          in (Compile, run)  := true,
-        fullClasspath in Runtime         += DockerEnv.dev.resDir("taskman", baseDirectory.value),
-        javaOptions   in (Compile, run) ++= DockerEnv.dev.javaOptions("taskman", baseDirectory.value),
-        runner        in (Compile, run)  := (runner in (Compile, run)).dependsOn(DockerEnv.dev.devEnvStart).value)
+        fork                in (Compile, run)  := true,
+        fullClasspathAsJars in Runtime         += DockerEnv.dev.resDir("taskman", baseDirectory.value),
+        javaOptions         in (Compile, run) ++= DockerEnv.dev.javaOptions("taskman", baseDirectory.value),
+        runner              in (Compile, run)  := (runner in (Compile, run)).dependsOn(DockerEnv.dev.devEnvStart).value)
 
     project("taskman-server")
       .enablePlugins(JavaAppPackaging, DockerPlugin)

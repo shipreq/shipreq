@@ -62,7 +62,7 @@ object Register1 {
     private val fieldEmail = Form.TextField.highLevel(
       State.email,
       UserValidators.emailAddr.unnamed,
-      m => Input.Text.icon(Icon.Mail.tag, <.input.email(m, ^.autoFocus := true, submitOnEnter)),
+      m => Input.Text.icon(Icon.Mail.tag, <.input.email(m, ^.autoComplete.email, ^.autoFocus := true, submitOnEnter)),
       Some(CommmonUiText.emailAddr))(
       ValidationUX.Off)
 
@@ -72,7 +72,7 @@ object Register1 {
       val submitButton =
         Common.submitButton("Register", submitCB(p))
 
-      <.div(*.part1,
+      <.form(*.part1,
         Form(
           fieldEmail(p.state).setEnabled(s.formEnabled),
           Form.NotAField(<.div(*.submitCont, submitButton))))

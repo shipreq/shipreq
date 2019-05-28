@@ -70,18 +70,10 @@ object SsrInterpreter {
 
   def samplePublicInitData: PublicInitData = {
     import shipreq.base.util.Allow
-    import shipreq.webapp.base.protocol.{ServerSideProc, ServerSideProcId}
     import shipreq.webapp.client.public.PublicSpaProtocols._
-    val sspId = ServerSideProcId("X" * 24)
     PublicInitData(
       publicRegistration = Allow,
-      loggedInUser = None,
-      landingPage = ServerSideProc(sspId, LandingPage.Fn),
-      register1 = ServerSideProc(sspId, Register.Fn1),
-      register2 = ServerSideProc(sspId, Register.Fn2),
-      login = ServerSideProc(sspId, Login.Fn),
-      resetPassword1 = ServerSideProc(sspId, ResetPassword.Fn1),
-      resetPassword2 = ServerSideProc(sspId, ResetPassword.Fn2))
+      loggedInUser = None)
   }
 
 }

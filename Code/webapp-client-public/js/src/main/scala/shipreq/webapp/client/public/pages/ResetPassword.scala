@@ -66,7 +66,7 @@ object ResetPassword {
     val fieldPassword1 = Form.TextField.highLevel(
       State.password1,
       UserValidators.password.unnamed,
-      m => Input.Text.icon(Icon.Lock.tag, <.input.password(m, ^.autoFocus := true, submitOnEnter)),
+      m => Input.Text.icon(Icon.Lock.tag, <.input.password(m, ^.autoComplete.newPassword, ^.autoFocus := true, submitOnEnter)),
       Some("New password"))(ValidationUX.Full)
 
     def renderForm(p: Props, s: State): VdomElement = {
@@ -74,7 +74,7 @@ object ResetPassword {
       val fieldPassword2 = Form.TextField.highLevel(
         State.password2,
         UserValidators.password2(s.password1),
-        m => Input.Text.icon(Icon.Lock.tag, <.input.password(m, submitOnEnter)),
+        m => Input.Text.icon(Icon.Lock.tag, <.input.password(m, ^.autoComplete.newPassword, submitOnEnter)),
         Some("Confirm new password"))(ValidationUX.Highlight)
 
       val submitButton =
@@ -90,7 +90,7 @@ object ResetPassword {
 
       fields :+= Form.NotAField(<.div(*.submitCont, submitButton))
 
-      <.div(*.part1, Form(fields))
+      <.form(*.part1, Form(fields))
     }
 
     def renderResponse(r: P.Response): VdomElement =
