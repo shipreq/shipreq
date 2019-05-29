@@ -241,3 +241,82 @@ Percentage of the requests served within a certain time (ms)
   99%   2174
  100%   2265 (longest request)
 
+====================================================================================================
+prod / sbt / graal-19 + SSR x4
+
+Server Software:        Jetty(9.4.18.v20190429)
+Server Hostname:        localhost
+Server Port:            8080
+
+Document Path:          /
+Document Length:        4277 bytes
+
+Concurrency Level:      4
+Time taken for tests:   30.005 seconds
+Complete requests:      1500
+Failed requests:        1433
+   (Connect: 0, Receive: 0, Length: 1433, Exceptions: 0)
+Total transferred:      4338844 bytes
+HTML transferred:       2643844 bytes
+Requests per second:    49.99 [#/sec] (mean)
+Time per request:       80.012 [ms] (mean)
+Time per request:       20.003 [ms] (mean, across all concurrent requests)
+Transfer rate:          141.22 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.4      0      11
+Processing:    47   79  29.1     71     492
+Waiting:       47   79  29.0     71     489
+Total:         47   79  29.1     71     492
+
+Percentage of the requests served within a certain time (ms)
+  50%     71
+  66%     74
+  75%     77
+  80%     80
+  90%     90
+  95%    110
+  98%    149
+  99%    220
+ 100%    492 (longest request)
+
+====================================================================================================
+prod / sbt / graal-19 + SSR x2
+
+Server Software:        Jetty(9.4.18.v20190429)
+Server Hostname:        localhost
+Server Port:            8080
+
+Document Path:          /
+Document Length:        4277 bytes
+
+Concurrency Level:      4
+Time taken for tests:   30.012 seconds
+Complete requests:      2735
+Failed requests:        69
+   (Connect: 0, Receive: 0, Length: 69, Exceptions: 0)
+Total transferred:      14606537 bytes
+HTML transferred:       11515987 bytes
+Requests per second:    91.13 [#/sec] (mean)
+Time per request:       43.893 [ms] (mean)
+Time per request:       10.973 [ms] (mean, across all concurrent requests)
+Transfer rate:          475.28 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.1      0       2
+Processing:    26   43  18.6     40     429
+Waiting:       26   43  18.6     40     428
+Total:         26   43  18.6     40     429
+
+Percentage of the requests served within a certain time (ms)
+  50%     40
+  66%     45
+  75%     48
+  80%     49
+  90%     57
+  95%     68
+  98%     87
+  99%    102
+ 100%    429 (longest request)

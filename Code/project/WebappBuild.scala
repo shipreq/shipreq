@@ -317,7 +317,8 @@ object WebappBuild {
         scalacOptions -= "-Xcheckinit", // TODO https://github.com/scala/bug/issues/10437
         containerLibs in Jetty := LibJetty.devRun(JVM),
         javaOptions in Jetty ++= List(
-          "-XX:+BootstrapJVMCI",
+          "-XX:+UseJVMCINativeLibrary",
+          // "-XX:+BootstrapJVMCI",
           //"-XX:-TieredCompilation",
           //"-XX:+EagerJVMCI",
           // "-agentpath:/opt/jprofiler10/bin/linux-x64/libjprofilerti.so=port=8849,nowait",

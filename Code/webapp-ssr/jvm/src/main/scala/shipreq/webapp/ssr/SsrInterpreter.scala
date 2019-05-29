@@ -89,7 +89,7 @@ final class SsrInterpreter(ctx: ContextPool, cfg: SsrInterpreter.Config) extends
     val warmupFutures =
       Warmup.pool(ctx)(20, expr, s => {
         logger.info(s"SSR $s")
-        s.lastEvalAverage(10).millis < 34 || s.totalWarmupTime.seconds > 30
+        s.lastEvalAverage(10).millis < 10 || s.totalWarmupTime.seconds > 50
       })
 
     Await.result(warmupFutures.done, 60 seconds)
