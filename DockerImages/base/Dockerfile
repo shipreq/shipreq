@@ -1,9 +1,10 @@
 # Most of this copied from
 # - https://github.com/frol/docker-alpine-glibc/blob/master/Dockerfile
-# - https://github.com/anapsix/docker-alpine-java/blob/master/8/192b12/jdk/unlimited/Dockerfile
+# - https://github.com/anapsix/docker-alpine-java/blob/master/8/202b08/jdk/unlimited/Dockerfile
 # - https://github.com/oracle/docker-images/blob/master/GraalVM/CE/1.0.0-rc9/Dockerfile
+# - https://github.com/rayyildiz/docker-graalvm/blob/master/Dockerfile
 
-FROM alpine:3.8
+FROM alpine:3.9
 
 ARG GRAAL_VERSION
 
@@ -29,7 +30,7 @@ RUN apk --no-cache upgrade \
 #    2) ca-certificates installed above
 #    3) I want to keep both around
 RUN ALPINE_GLIBC_BASE_URL="https://github.com/sgerrand/alpine-pkg-glibc/releases/download" && \
-    ALPINE_GLIBC_PACKAGE_VERSION="2.28-r0" && \
+    ALPINE_GLIBC_PACKAGE_VERSION="2.29-r0" && \
     ALPINE_GLIBC_BASE_PACKAGE_FILENAME="glibc-$ALPINE_GLIBC_PACKAGE_VERSION.apk" && \
     ALPINE_GLIBC_BIN_PACKAGE_FILENAME="glibc-bin-$ALPINE_GLIBC_PACKAGE_VERSION.apk" && \
     ALPINE_GLIBC_I18N_PACKAGE_FILENAME="glibc-i18n-$ALPINE_GLIBC_PACKAGE_VERSION.apk" && \
@@ -66,11 +67,10 @@ RUN ALPINE_GLIBC_BASE_URL="https://github.com/sgerrand/alpine-pkg-glibc/releases
 #=======#
 
 # Most deletions taken from docker-alpine-java
-RUN mkdir /opt \
- && cd /opt \
- && wget https://github.com/oracle/graal/releases/download/vm-$GRAAL_VERSION/graalvm-ce-$GRAAL_VERSION-linux-amd64.tar.gz \
- && tar xzf graalvm-ce-$GRAAL_VERSION-linux-amd64.tar.gz \
- && rm graalvm-ce-$GRAAL_VERSION-linux-amd64.tar.gz /root/.wget-hsts \
+RUN cd /opt \
+ && wget https://github.com/oracle/graal/releases/download/vm-${GRAAL_VERSION}/graalvm-ce-linux-amd64-${GRAAL_VERSION}.tar.gz \
+ && tar xzf graalvm-ce-linux-amd64-${GRAAL_VERSION}.tar.gz \
+ && rm graalvm-ce-linux-amd64-${GRAAL_VERSION}.tar.gz /root/.wget-hsts \
  && ln -s graalvm-ce-${GRAAL_VERSION} graal \
  && cd graal \
  && rm -rf *src.zip \

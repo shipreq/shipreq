@@ -3,7 +3,7 @@ cd "$(dirname "$0")" || exit 1
 
 set -e
 
-GRAAL_VERSION=1.0.0-rc9
+GRAAL_VERSION=19.0.0
 
 IMAGE_NAME=shipreq/base
 IMAGE_VER=1
@@ -14,4 +14,5 @@ exec docker build \
   -t "$IMAGE_NAME:${IMAGE_VER}${IMAGE_TAG_SUFFIX}" \
   -t "$IMAGE_NAME:latest${IMAGE_TAG_SUFFIX}" \
   -t "$IMAGE_NAME:latest" \
+  "$@" \
   .
