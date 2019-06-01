@@ -87,7 +87,7 @@ object ReqTableTestDsl {
 
   final case class CellEditor(loc: ReqTableObs => ReqTableObs.CellLoc) {
 
-    private def editorCss      = EditableSel
+    private def editorCss = EditableSel
 
     val cell        = *.focus("Subject cell").value(s => s.obs.table.cell(loc(s.obs)))
     val cellText    = cell.map(_.innerText)                          rename "Cell innerText"

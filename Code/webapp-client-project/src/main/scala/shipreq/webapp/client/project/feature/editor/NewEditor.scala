@@ -161,8 +161,10 @@ object NewEditor {
     final class InternalCtx[A, C](val ctx: Ctx[A, C]) {
       import ctx._
 
-      def abort(hooks: Hooks): Callback =
-        stateAccess.setState(None, hooks.onClose)
+      def abort(hooks: Hooks): Callback = {
+        val clearAsyncStatus = asyncFeature((s, _) => s)
+        stateAccess.setState(None, clearAsyncStatus >> hooks.onClose)
+      }
 
       def commit(cmd: UpdateContentCmd, hooks: Hooks): Callback =
         asyncFeature((s, f) => saveIO(cmd, _ => s >> abort(hooks), f))

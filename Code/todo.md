@@ -96,8 +96,6 @@ Phase 2B
 
 * Cell copy-and-paste on Req{Table,Detail}
 
-* Bug: Project SPA, edit cell, kill server, commit, expect failure, esc, open editor, previous failure still exists; should have been cleared on Esc
-
 * Issues prototype: add collapse/expand by issue{type,} columns
 
 * Allow system to add new field/columns in future without breaking existing projects.
