@@ -1,7 +1,8 @@
 package shipreq.base.test
 
+import BaseTestUtil._
 import scala.reflect.ClassTag
-import scalaz.{Applicative, Name, ~>}
+import scalaz.{Applicative, Equal, Name, ~>}
 
 trait OpTypeProvider[Op[_]] {
   def apply[A]: Op[A] => ClassTag[_]
@@ -31,11 +32,8 @@ trait MockOpTransformerResults[Op[_]] {
   def opTypeProvider: OpTypeProvider[Op]
   def opClassTag[A](o: Op[A]) = opTypeProvider.apply(o).asInstanceOf[ClassTag[Op[A]]]
 
-  def assertOpTypes(expected: ClassTag[_ <: Op[_]]*): Unit = {
-    val actual = allOpTypes
-    val expect = expected.toVector
-    assert(actual == expect)
-  }
+  def assertOpTypes(expected: ClassTag[_ <: Op[_]]*): Unit =
+    assertSeq(allOpTypes, expected)(Equal.equalA, implicitly)
 
   private def CT[A](implicit m: ClassTag[A]) = m
 

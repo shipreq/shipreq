@@ -1,12 +1,12 @@
 package shipreq.webapp.server.redis
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Duration
 import nyaya.gen._
 import scalaz.{Applicative, Equal, Monad, Semigroup}
 import scalaz.syntax.monad._
 import shipreq.base.test.SyncEffect
 import shipreq.base.test.SyncEffect.Ops._
-import shipreq.base.util.JavaTimeHelpers._
 import shipreq.base.util.Util
 import shipreq.webapp.base.data.{Project, ProjectId}
 import shipreq.webapp.base.event._
@@ -280,9 +280,8 @@ object RedisLaws {
     private val listener1 = new Listener(id1, redis1)
     private val listener2 = new Listener(id2, redis2)
 
-    import scala.concurrent.duration.DurationInt
-    private implicit val retryMax = utest.asserts.RetryMax(5000.millis)
-    private implicit val retryInterval = utest.asserts.RetryInterval(5.millis)
+    private implicit val retryMax = utest.asserts.RetryMax(5000.millis.asFiniteDuration)
+    private implicit val retryInterval = utest.asserts.RetryInterval(5.millis.asFiniteDuration)
 
     def assertTest(test: Test[F]): Unit = {
       // Prepare
@@ -300,7 +299,7 @@ object RedisLaws {
       // Test laws
       def p1 = listener1.get().iterator.map(_.ord).toSet
       def p2 = listener2.get().iterator.map(_.ord).toSet
-      assertEq(s"${test.name} -> result", actual = o1, expect = o2)(test.eq)
+      assertEq(s"${test.name} -> result", actual = o1, expect = o2)(test.eq, implicitly)
       try
         utest.eventually(p1 === p2)
       catch {

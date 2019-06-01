@@ -6,7 +6,6 @@ import java.time.Duration
 import javax.mail.Session
 import scalaz.{-\/, \/, \/-}
 import scalaz.syntax.applicative._
-import shipreq.base.util.JavaTimeHelpers._
 import shipreq.base.util.{Retries, RetriesJvm}
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.CfgKeys

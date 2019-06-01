@@ -3,9 +3,10 @@ package shipreq.webapp.base.protocol
 import boopickle.{PickleState, Pickler, UnpickleState}
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptySet
+import japgolly.microlibs.utils.StaticLookupFn
 import japgolly.univeq.UnivEq
 import scalaz.\/
-import shipreq.base.util.{ErrorMsg, StaticLookupFn}
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.user._
@@ -140,7 +141,7 @@ object ProjectSpaProtocols {
 
     implicit def univEq: UnivEq[WsReqRes] = UnivEq.derive
     val values = AdtMacros.adtValues[WsReqRes]
-    val byKey = StaticLookupFn.arrayBy(values.whole)(_.key)
+    val byKey = StaticLookupFn.useArrayBy(values.whole)(_.key).toOption
 
     final case class Fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](
         onInitApp              : F[InitApp              .type] => G[InitApp              .type],

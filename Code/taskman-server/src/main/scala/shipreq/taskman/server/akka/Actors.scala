@@ -1,11 +1,11 @@
 package shipreq.taskman.server.akka
 
 import akka.actor.{Actor, ActorRef, Props}
+import japgolly.microlibs.stdlib_ext.StdlibExt.DurationExt
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import org.apache.commons.io.FileUtils
 import scala.concurrent.duration._
-import shipreq.base.util.JavaTimeHelpers.DurationExt
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Priority
@@ -63,7 +63,7 @@ class ManagerActor(ctx: TaskmanCtx, source: ActorRef) extends Actor with HasLogg
   import context.dispatcher
 
   val mdc = TaskmanLogging.mdc("manager")
-  val poller = context.system.scheduler.schedule(0 millis, ctx.config.taskman.pollEvery.toScala, self, PollSource)
+  val poller = context.system.scheduler.schedule(0 millis, ctx.config.taskman.pollEvery.asFiniteDuration, self, PollSource)
 
   var workers: Set[ActorRef] = Set.empty
   var queue = M.empty

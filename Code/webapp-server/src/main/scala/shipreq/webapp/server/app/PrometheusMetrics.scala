@@ -1,12 +1,12 @@
 package shipreq.webapp.server.app
 
 import io.prometheus.client.{Counter, Gauge, Histogram, SimpleTimer}
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.stdlib_ext.ParseLong
 import java.time.Duration
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import shipreq.base.util.FreeOption
 import shipreq.base.util.FxModule._
-import shipreq.base.util.JavaTimeHelpers._
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.base.event.{Trust, Trusted}
 import shipreq.webapp.server.logic.{MetricsLogic, Security}

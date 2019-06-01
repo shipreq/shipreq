@@ -10,7 +10,6 @@ import scala.annotation.tailrec
 import scalaz.{BindRec, Monad}
 import scalaz.syntax.monad._
 import shipreq.base.ops.Trace
-import shipreq.base.util.JavaTimeHelpers._
 import shipreq.webapp.base.data.{Project, ProjectId}
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 

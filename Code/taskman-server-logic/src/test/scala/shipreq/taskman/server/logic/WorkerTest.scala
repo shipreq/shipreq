@@ -70,7 +70,7 @@ object WorkerTest extends TestSuite {
       "Worker crashes (retry and notify support)" - {
         val (r, s) = test(assignWorkerAllow, fpRetrySupport, mpCrash)
         "Result"                       - assertResultS[WorkerFailed](r)
-        "Fails job & notifies support" - s.assertOpTypes3[GetMsgAssignWorker, UpdateMsgAbort, NotifySupportWorkerFailed]
+        "Fails job & notifies support" - s.assertOpTypes3[GetMsgAssignWorker, NotifySupportWorkerFailed, UpdateMsgAbort]
       }
 
       "Taskman crashes pre-work" - {

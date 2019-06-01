@@ -1,6 +1,7 @@
 package shipreq.webapp.server.logic
 
 import com.typesafe.scalalogging.StrictLogging
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.univeq._
 import java.time.{Duration, Instant}
@@ -9,7 +10,6 @@ import scalaz.syntax.monad._
 import scalaz.{-\/, BindRec, Monad, \/, \/-, ~>}
 import shipreq.base.ops.Trace
 import shipreq.base.util._
-import shipreq.base.util.JavaTimeHelpers._
 import shipreq.webapp.base.data.{Obfuscated, Project, ProjectId, ProjectMetaData}
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.event.EventOrd.Implicits._

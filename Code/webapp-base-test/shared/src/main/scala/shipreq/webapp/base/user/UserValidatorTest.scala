@@ -102,7 +102,7 @@ object UserValidatorTest extends TestSuite {
       * - assertEq(v.validity(("blahblah", ("qweqwe123", "qweqwe123"))), Invalid)
       * - assertEq(v.validity(("blahblah8", ("qweqwe12", "qweqwe123"))), Invalid)
       * - assertEq(v.validity(("blahblah8", ("qweqwe123", ""))), Invalid)
-      * - assertEq(v(("blahblah8", ("qweqwe123", "qweqwe123"))), \/-("qweqwe123"))(Equal.equalA)
+      * - assertEq(v(("blahblah8", ("qweqwe123", "qweqwe123"))), \/-("qweqwe123"))(Equal.equalA, implicitly)
     }
 
     'username {

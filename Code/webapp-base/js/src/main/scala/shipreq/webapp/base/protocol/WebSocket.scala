@@ -1,11 +1,12 @@
 package shipreq.webapp.base.protocol
 
 import japgolly.microlibs.adt_macros.AdtMacros
+import japgolly.microlibs.utils.StaticLookupFn
 import org.scalajs.dom.raw
 import org.scalajs.dom.raw.{Blob, CloseEvent, Event, MessageEvent}
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
-import shipreq.base.util.{StaticLookupFn, VarJs}
+import shipreq.base.util.VarJs
 
 trait WebSocket {
   import WebSocket._
@@ -40,7 +41,7 @@ object WebSocket {
     case object Closed     extends ReadyState(3)
 
     val values = AdtMacros.adtValues[ReadyState]
-    val byJsValue = StaticLookupFn.unsafeArrayBy(values.whole)(_.jsValue)
+    val byJsValue = StaticLookupFn.useArrayBy(values.whole)(_.jsValue).total
   }
 
   sealed abstract class BinaryType(final val jsValue: String)
@@ -49,7 +50,7 @@ object WebSocket {
     case object ArrayBuffer extends BinaryType("arraybuffer")
 
     val values = AdtMacros.adtValues[BinaryType]
-    val byJsValue = StaticLookupFn.mapBy(values.whole)(_.jsValue).apply _
+    val byJsValue = StaticLookupFn.useMapBy(values.whole)(_.jsValue).total
   }
 
   // ===================================================================================================================

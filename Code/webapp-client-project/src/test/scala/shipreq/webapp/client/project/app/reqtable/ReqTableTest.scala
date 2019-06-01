@@ -237,6 +237,23 @@ object ReqTableTest extends TestSuite {
       editChangeCommit >> fail >> retry >> fail >> retry >> saveSucceeds)
   }
 
+  def testFailureClearedOnEsc = {
+    val ce = cellEditor(pubid = "MF-6", col = "Title")
+    import ce._
+    val origValue = "Incompletions"
+    Plan.action(
+      svrDisableAutoRespond
+        >> startEdit
+        +> editorValue.assert(origValue)
+        >> enterValue("boop")
+        >> commit +> svrReqs.assert.increment
+        >> svrFailLast +> assertState(Failed)
+        >> abortEdit
+        >> startEdit // This is the key point of the test - it asserts the previous server failure is cleared
+        +> editorValue.assert(origValue)
+    )
+  }
+
   val nopMod = ("No change.", (s: String) => s)
 
   def testNopEdits(pubid: String, col: String): *.Plan =
@@ -300,21 +317,22 @@ object ReqTableTest extends TestSuite {
   override def tests = Tests {
     'initialState - runTest(*.emptyPlan)
 
-    'filter       - runTest(Plan action testFilter named "testFilter")
+    'filter - runTest(Plan action testFilter named "testFilter")
 
     'dead {
-      'cols        - runTest(Plan action testDeadColumns named "testDeadColumns")
-      // 'toggle      - runTest(testDeadToggleInvariants) TODO Should dead col stay on but hidden when ShowDead→HideDead?
+      'cols - runTest(Plan action testDeadColumns named "testDeadColumns")
+      // 'toggle - runTest(testDeadToggleInvariants) TODO Should dead col stay on but hidden when ShowDead→HideDead?
       'notEditable - runTest(testDeadNotEditable named "testDeadNotEditable")
     }
 
     'editor {
-      'impSrc  - runTest(testImplicationSrcColumnEditor    named "testImplicationSrcColumnEditor"   )
-      'impTgt  - runTest(testImplicationTgtColumnEditor    named "testImplicationTgtColumnEditor"   )
-      'impCol  - runTest(testCustomImplicationColumnEditor named "testCustomImplicationColumnEditor")
-      'tags    - runTest(testTagsColumnEditor              named "testTagsColumnEditor"             )
-      'tagCol  - runTest(testCustomTagColumnEditor         named "testCustomTagColumnEditor"        )
-      'titleIO - runTest(testEditorTitleIO                 named "testEditorTitleIO"                )
+      'impSrc    - runTest(testImplicationSrcColumnEditor    named "testImplicationSrcColumnEditor"   )
+      'impTgt    - runTest(testImplicationTgtColumnEditor    named "testImplicationTgtColumnEditor"   )
+      'impCol    - runTest(testCustomImplicationColumnEditor named "testCustomImplicationColumnEditor")
+      'tags      - runTest(testTagsColumnEditor              named "testTagsColumnEditor"             )
+      'tagCol    - runTest(testCustomTagColumnEditor         named "testCustomTagColumnEditor"        )
+      'titleIO   - runTest(testEditorTitleIO                 named "testEditorTitleIO"                )
+      'failClear - runTest(testFailureClearedOnEsc           named "testFailureClearedOnEsc"          )
 
       'nop {
         // RCG title

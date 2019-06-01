@@ -9,7 +9,6 @@ import java.time.{Duration, Instant}
 import scala.util.{Failure, Success}
 import scalaz.{-\/, \/-}
 import shipreq.base.util.ErrorMsg
-import shipreq.base.util.JavaTimeHelpers._
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.event.{EventOrd, VerifiedEvent}
 import shipreq.webapp.base.lib.DataReusability._

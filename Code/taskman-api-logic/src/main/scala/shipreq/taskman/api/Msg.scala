@@ -2,8 +2,9 @@ package shipreq.taskman.api
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.microlibs.utils.StaticLookupFn
 import japgolly.univeq.UnivEq
-import shipreq.base.util.{StaticLookupFn, Util}
+import shipreq.base.util.Util
 
 /**
  * A datum that can be sent to the Taskman server and meaningfully processed.
@@ -64,22 +65,13 @@ object MsgType {
   case object SyncToMailingList       extends MsgType(300, classOf[Msg.SyncToMailingList])
   case object WebappErrorOccurred     extends MsgType(500, classOf[Msg.WebappErrorOccurred])
 
-  val values = AdtMacros.adtValues[MsgType].whole.toList
+  val values         = AdtMacros.adtValues[MsgType].whole.toList
+  val byId           = StaticLookupFn.useMapBy(values)(_.id).toOption
+  val byMsgClass     = StaticLookupFn.useMapBy(values)(_.msgClass: Class[_ <: Msg])(UnivEq.force).total // TODO Fix UnivEq.force
+  val byMsgClassName = StaticLookupFn.useMapBy(values)(_.msgClass.getSimpleName).toOption
 
-  private[this] val byId: Map[Short, MsgType] =
-    StaticLookupFn.mapBy(values)(_.id)
-
-  private[this] val byMsgClass: Map[Class[_ <: Msg], MsgType] =
-    StaticLookupFn.mapBy(values)(_.msgClass)(UnivEq.force)
-
-  private[this] val byMsgClassName: Map[String, MsgType] =
-    byMsgClass.toList.map(_.map1(_.getSimpleName)).toMap
-
-  @inline def lookup(id: Short)   : Option[MsgType] = byId get id
-  @inline def lookup(name: String): Option[MsgType] = byMsgClassName get name
-
-  @inline def lookup_!(id: Short)       : MsgType = byId(id)
-  @inline def lookup_!(name: String)    : MsgType = byMsgClassName(name)
-  @inline def lookup(c: Class[_ <: Msg]): MsgType = byMsgClass(c)
-  @inline def lookup(d: Msg)            : MsgType = byMsgClass(d.getClass)
+  @inline def lookup(id: Short)         : Option[MsgType] = byId(id)
+  @inline def lookup(name: String)      : Option[MsgType] = byMsgClassName(name)
+  @inline def lookup(c: Class[_ <: Msg]): MsgType         = byMsgClass(c)
+  @inline def lookup(d: Msg)            : MsgType         = byMsgClass(d.getClass)
 }

@@ -203,7 +203,6 @@ class BoopickleMacroImpls(val c: Context) extends MacroUtils {
     var cases        = Vector.empty[CaseDef]
 
     var index = 0
-    val picklerType =
     for (t <- types) {
       val t2 = fixAdtTypeForCaseDef(t)
       val fp = TermName(c.freshName())
