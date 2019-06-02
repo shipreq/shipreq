@@ -5,7 +5,7 @@ import japgolly.clearconfig.ConfigDef
 import japgolly.scalagraal._
 import japgolly.scalagraal.GraalJs._
 import japgolly.scalagraal.GraalBoopickle._
-import scala.concurrent.{Await, TimeoutException}
+import scala.concurrent.{Await, Future, TimeoutException}
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
 import scalaz.syntax.applicative._
@@ -78,7 +78,7 @@ object SsrInterpreter {
 
 }
 
-final class SsrInterpreter(ctx: ContextPool, cfg: SsrInterpreter.Config) extends SsrAlgebra[Fx] with StrictLogging {
+final class SsrInterpreter(ctx: ContextPool[Future], cfg: SsrInterpreter.Config) extends SsrAlgebra[Fx] with StrictLogging {
 
   override def warmup = Fx {
     logger.info("Warming up SSR....")
