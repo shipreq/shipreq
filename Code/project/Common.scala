@@ -101,7 +101,7 @@ object Common {
       scalaVersion                := Dependencies.Scala.version,
       javacOptions               ++= javacFlags,
       scalacOptions              ++= scalacFlags,
-      testFrameworks              += new TestFramework("utest.runner.Framework"),
+      testFrameworks              := List(new TestFramework("utest.runner.Framework")),
     //cancelable in Global        := true, // Allows ctrl-c to kill apps started with run without exiting SBT
       minForcegcInterval          := 3.minutes,
       triggeredMessage            := Watched.clearWhenTriggered,
