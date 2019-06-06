@@ -27,7 +27,7 @@ object RedisViaRedissonTest extends TestSuite {
 
       val await = () => {
         inmem.publishAll.unsafeRun()
-        Thread.sleep(5) // Don't remove else published messages can leak into next test
+        Thread.sleep(10) // Don't remove else published messages can leak into next test
       }
 
       'left - {

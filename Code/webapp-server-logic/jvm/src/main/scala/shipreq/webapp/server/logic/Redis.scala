@@ -371,11 +371,13 @@ object Redis extends StrictLogging {
 
     /** Simulates Redis publishing events to listeners */
     val publishAll: F[Unit] = {
-      type T = scalaz.\/[Unit, Unit]
-      val done: T = scalaz.\/-(())
-      val more: T = scalaz.-\/(())
-      val p = _publishOne(more, F.pure(done))
-      FF.tailrecM[Unit, Unit](_ => p)(())
+      type T       = scalaz.\/[Unit, Unit]
+      val stop : T = scalaz.\/-(())
+      val again: T = scalaz.-\/(())
+      val stopF    = F.pure(stop)
+      val pub1     = _publishOne(again, stopF)
+      def unsafe   = FF.tailrecM[Unit, Unit](_ => pub1)(())
+      stopF.flatMap(_ => unsafe)
     }
 
     def unsafeEvictSnapshot(id: ProjectId): Unit = {
