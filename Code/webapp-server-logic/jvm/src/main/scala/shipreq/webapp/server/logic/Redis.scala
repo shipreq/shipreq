@@ -360,15 +360,23 @@ object Redis extends StrictLogging {
 
     def writeCount() = writeCounter.get()
 
-    val publishOne: F[Boolean] =
+    private def _publishOne[A](ok: A, ko: F[A]): F[A] =
       F.point(globalQueue.unsafeDequeue()).flatMap {
-        case Some((p, e)) => p.pub(e) >| true
-        case None         => F.pure(false)
+        case Some((p, e)) => p.pub(e) >| ok
+        case None         => ko
       }
 
+    val publishOne: F[Boolean] =
+      _publishOne(true, F.pure(false))
+
     /** Simulates Redis publishing events to listeners */
-    val publishAll: F[Unit] =
-      fUnit.whileM_(publishOne)
+    val publishAll: F[Unit] = {
+      type T = scalaz.\/[Unit, Unit]
+      val done: T = scalaz.\/-(())
+      val more: T = scalaz.-\/(())
+      val p = _publishOne(more, F.pure(done))
+      FF.tailrecM[Unit, Unit](_ => p)(())
+    }
 
     def unsafeEvictSnapshot(id: ProjectId): Unit = {
       val c1 = readCacheNow(id)
