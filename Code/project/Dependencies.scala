@@ -11,7 +11,7 @@ object Dependencies {
   }
 
   object Graal {
-    val ver = "1.0.0-rc9"
+    val ver = "19.0.0"
   }
 
   object Docker {
