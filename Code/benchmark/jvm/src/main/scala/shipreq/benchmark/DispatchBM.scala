@@ -20,7 +20,6 @@ import shipreq.webapp.base.data.{ProjectId, SecurityToken}
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.logic._
-import shipreq.webapp.ssr.SsrConfig
 import DispatchLogic._
 
 /**
@@ -155,7 +154,7 @@ object DispatchBM {
     jaegerTracingConfig        = None,
     prometheus                 = ServerLogicConfig.Prometheus.default.copy(enabled = false),
     projectSpa                 = ProjectSpaLogic.Config.default,
-    ssr                        = SsrConfig(enabled = false),
+    ssr                        = ServerLogicConfig.SsrConfig(enabled = false),
     security = ServerLogicConfig.Security(
       attackFrustrationDelay     = 1 hours,
       jwtCookieSecure            = false,

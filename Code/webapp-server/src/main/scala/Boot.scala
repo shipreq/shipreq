@@ -20,6 +20,8 @@ import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.app._
 import shipreq.webapp.server.lib.Taskman
+import shipreq.webapp.server.logic.{MinimalSsr, TraceLogic}
+import shipreq.webapp.ssr.SsrOff
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -223,7 +225,16 @@ class Boot {
     }
 
   def initSsr(cfg: ServerLogicConfig) = {
-    val ssr = cfg.ssr.instance[Fx]
+    val ssr =
+    if (cfg.ssr.enabled) {
+      // Duplicating Global :S
+      import TraceInterpreter.Implicits._
+      implicit val traceAlgebra = cfg.traceAlgebraFx
+      implicit val trace        = TraceLogic.on: TraceInterpreter.ForLift[Fx]
+      implicit val server       = trace.injectServer(ServerInterpreter)
+      new MinimalSsr[Fx]
+    } else
+      new SsrOff[Fx]
     ssr.prepare(cfg.baseUrl, cfg.publicRegistration)
   }
 }

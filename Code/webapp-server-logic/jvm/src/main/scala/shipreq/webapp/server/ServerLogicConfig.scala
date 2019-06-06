@@ -9,8 +9,7 @@ import scalaz.syntax.applicative._
 import shipreq.base.ops._
 import shipreq.base.util._
 import shipreq.base.util.FxModule._
-import shipreq.webapp.server.logic.{DispatchLogic, ProjectSpaLogic}
-import shipreq.webapp.ssr.SsrConfig
+import shipreq.webapp.server.logic.{DispatchLogic, ProjectSpaLogic, Server}
 
 @Lenses
 final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,
@@ -33,7 +32,7 @@ final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,
                                    projectSpa: ProjectSpaLogic.Config,
                                    prometheus: ServerLogicConfig.Prometheus,
                                    security: ServerLogicConfig.Security,
-                                   ssr: SsrConfig,
+                                   ssr: ServerLogicConfig.SsrConfig,
                                    jaegerTracingConfig: Option[Configuration]) {
 
   lazy val traceAlgebraFx: Trace.Algebra[Fx] =
@@ -136,6 +135,13 @@ object ServerLogicConfig {
         ConfigDef.getOrUse[Boolean]("jdbc"    , default.jdbc) |@|
         ConfigDef.getOrUse[String ]("path"    , default.path).map(_.replaceFirst("^/*", "/"))
     ) (apply)
+  }
+
+  final case class SsrConfig(enabled: Boolean)
+
+  object SsrConfig {
+    def config: ConfigDef[SsrConfig] =
+      ConfigDef.getOrUse("enabled", true).map(apply)
   }
 
   def config: ConfigDef[ServerLogicConfig] =

@@ -1,11 +1,13 @@
-package shipreq.webapp.ssr
+package shipreq.webapp.server.logic
 
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.{Allow, Url}
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.user.Username
+import shipreq.webapp.ssr._
 import utest._
+import shipreq.base.ops.Trace
 
 object SsrTest extends TestSuite {
   import SsrAlgebra._
@@ -22,8 +24,11 @@ object SsrTest extends TestSuite {
 
   private val baseUrl = Url.Absolute.Base("https://shipreq.com")
 
-  private lazy val ssr =
-    new SsrMinimal[Fx]().prepare(baseUrl, Allow).unsafeRun()
+  private lazy val ssr = {
+    implicit val trace = Trace.Algebra.off[Fx]
+    implicit val svr = new MockServer[Fx]
+    new MinimalSsr[Fx]().prepare(baseUrl, Allow).unsafeRun()
+  }
 
   override def tests = Tests {
 
