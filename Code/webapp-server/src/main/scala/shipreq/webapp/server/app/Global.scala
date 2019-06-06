@@ -50,45 +50,84 @@ object Global {
       else
         MetricsLogic.const(Fx.unit)
 
-    implicit val traceAlgebra  = config.server.traceAlgebraFx
-    implicit val trace         = TraceLogic.on: TraceInterpreter.ForLift[Fx]
-    implicit val runDB         = trace.injectDb(dbAccess.fx.trans)
-    implicit val taskman       = TaskmanApi.addLogging(TaskmanApiImpl(Some(config.server.taskmanSchema)).trans(runDB))
-    implicit val dbAlgebra     = new DbInterpreter()
-    implicit val dbForSecurity = DB.ForSecurity.trans(DbInterpreter.ForSecurity)(runDB)
-    implicit val dbForOps      = DB.ForOps.trans(new DbInterpreter.ForOps(dbAccess.databaseName))(runDB)
-    implicit val server        = trace.injectServer(ServerInterpreter)
-    implicit val ops           = new OpsEndpointInterpreter()
-    implicit val security      = new SecurityInterpreter[Fx]
+    implicit val traceAlgebra =
+      config.server.traceAlgebraFx
 
-    implicit val apEvents = {
-      var a = ApplyEventLogic.trusted[Fx]
-      a = ApplyEventLogic.withMetricsAndLogging(a, config.server.applyEventThresholdMs)
-      a = ApplyEventLogic.traced(a, traceAlgebra)
-      a
-    }
+    def t[A](name: String)(a: => A): A =
+      traceAlgebra.newSpanImpure("Global:" + name)(_ => a)
 
-    implicit val redis: Redis.ProjectAlgebra[Fx] =
-      redisClient match {
-        case Some(c) =>
-          var r: Redis.ProjectAlgebra[Fx] = new RedisViaRedisson(c, RedisSchema.default)
-          r = Redis.withMetricsAndLogging(r, metrics)
-          r = trace.injectRedis(r)
-          r
-        case None =>
-          useInMemoryRedis()
+    t("default") {
+
+      implicit val trace = t("trace") {
+        TraceLogic.on: TraceInterpreter.ForLift[Fx]
       }
 
-    Global(
-      config   = config,
-      db       = dbAccess,
-      logic    = ServerLogic.create[ConnectionIO, Fx],
-      metrics  = metrics,
-      ops      = ops,
-      security = security,
-      ssr      = ssr,
-      taskman  = taskman,
-      trace    = trace)
+      implicit val runDB = t("runDB") {
+        trace.injectDb(dbAccess.fx.trans)
+      }
+
+      implicit val taskman = t("taskman") {
+        TaskmanApi.addLogging(TaskmanApiImpl(Some(config.server.taskmanSchema)).trans(runDB))
+      }
+
+      implicit val dbAlgebra = t("dbAlgebra") {
+        new DbInterpreter()
+      }
+
+      implicit val dbForSecurity = t("dbForSecurity") {
+        DB.ForSecurity.trans(DbInterpreter.ForSecurity)(runDB)
+      }
+
+      implicit val dbForOps = t("dbForOps") {
+        DB.ForOps.trans(new DbInterpreter.ForOps(dbAccess.databaseName))(runDB)
+      }
+
+      implicit val server = t("server") {
+        trace.injectServer(ServerInterpreter)
+      }
+
+      implicit val ops = t("ops") {
+        new OpsEndpointInterpreter()
+      }
+
+      implicit val security = t("security") {
+        new SecurityInterpreter[Fx]
+      }
+
+      implicit val apEvents = t("apEvents") {
+        var a = ApplyEventLogic.trusted[Fx]
+        a = ApplyEventLogic.withMetricsAndLogging(a, config.server.applyEventThresholdMs)
+        a = ApplyEventLogic.traced(a, traceAlgebra)
+        a
+      }
+
+      implicit val redis: Redis.ProjectAlgebra[Fx] = t("redis") {
+        redisClient match {
+          case Some(c) =>
+            var r: Redis.ProjectAlgebra[Fx] = new RedisViaRedisson(c, RedisSchema.default)
+            r = Redis.withMetricsAndLogging(r, metrics)
+            r = trace.injectRedis(r)
+            r
+          case None =>
+            useInMemoryRedis()
+        }
+      }
+
+      val logic = t("logic") {
+        ServerLogic.create[ConnectionIO, Fx]
+      }
+
+      Global(
+        config   = config,
+        db       = dbAccess,
+        logic    = logic,
+        metrics  = metrics,
+        ops      = ops,
+        security = security,
+        ssr      = ssr,
+        taskman  = taskman,
+        trace    = trace)
+      }
     }
 
   private def useInMemoryRedis() = {

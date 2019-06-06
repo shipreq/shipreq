@@ -41,15 +41,17 @@ class Boot {
     runMode foreach setRunMode
     logger.info(s"RunMode = ${Props.mode}")
 
-    import cfg.server.traceAlgebraFx.{newSpanImpure => trace, newSubSpan}
-    trace("Boot") { span =>
+    cfg.server.traceAlgebraFx.newSpanImpure("Boot") { span =>
 
       val timeout     = 2.minutes.asFiniteDuration
       val es          = Executors.newFixedThreadPool(3)
       implicit val ec = ExecutionContext.fromExecutorService(es)
 
+      def trace[A](name: String)(a: => A): A =
+        cfg.server.traceAlgebraFx.newSpanImpure("Boot:" + name)(_ => a)
+
       def submit[A](name: String)(f: => Fx[A]) = Future[A] {
-        newSubSpan(name, span)(_ => f).unsafeRun()
+        cfg.server.traceAlgebraFx.newSubSpan("Boot:" + name, span)(_ => f).unsafeRun()
       }
 
       try {
@@ -61,8 +63,8 @@ class Boot {
         val dbAccess    = Await.result(dbAccessF, timeout)
         val redisClient = redisF.map(Await.result(_, timeout))
         val ssr         = Await.result(ssrF, timeout)
-        trace("configureLift")(_ => configureLift())
-        Global.Instance = trace("Global")(_ => Global.default(dbAccess, redisClient, ssr, cfg))
+        trace("configureLift")(configureLift())
+        Global.Instance = Global.default(dbAccess, redisClient, ssr, cfg)
 
         // Start services
         val f1 = submit("preloadTemplates")(Fx(preloadTemplates()))
@@ -72,7 +74,7 @@ class Boot {
         // Initialise Taskman
         // If the DB is fresh, this will wait until Taskman starts up and creates its DB schema
         // Because that could take a while, do it synchronously instead of async with the timeout
-        trace("initTaskman")(_ => initTaskman(Global.Instance))
+        trace("initTaskman")(initTaskman(Global.Instance))
 
         // Wait for tasks to complete
         Await.result(Future.sequence(List(f1, f2, f3)), timeout)
