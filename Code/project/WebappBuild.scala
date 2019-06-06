@@ -41,11 +41,13 @@ object WebappBuild {
     project("webapp")
       .configure(Common.jvmSettings)
       .aggregate(
-        webappMacroJvm, webappBaseJvm, webappBaseMemberJvm, webappServerLogicJvm, webappBaseTestJvm, webappGenJvm,
-        webappMacroJs , webappBaseJs , webappBaseMemberJs , webappServerLogicJs , webappBaseTestJs , webappGenJs ,
+        webappMacroJvm, webappBaseJvm, webappBaseMemberJvm, webappServerLogicJvm, webappBaseTestJvm,
+        webappMacroJs , webappBaseJs , webappBaseMemberJs , webappServerLogicJs , webappBaseTestJs ,
         webappClientPublicJvm, webappClientPublicJs,
+        webappClientLoaders,
         webappClientHome,
         webappClientWwApi, webappClientWw, webappClientProject,
+        webappSsrJvm, webappSsrJs,
         webappServer)
       .settings(
         jsSizesFast := jsSizesTask(Stage.FastOpt).value,
@@ -126,10 +128,16 @@ object WebappBuild {
       .configureBoth(useMacroParadise)
       .jsSettings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
 
+  lazy val webappClientLoaders =
+    project("webapp-client-loaders")
+      .enablePlugins(ScalaJSPlugin)
+      .configure(Common.jsSettings(NoTests))
+      .dependsOn(webappBaseMemberJs)
+
   lazy val webappClientHome =
     project("webapp-client-home")
       .configure(clientSpa)
-      .dependsOn(webappBaseMemberJs)
+      .dependsOn(webappClientLoaders)
       .depsForJs(ScalaCSS.react)
       .settings(jsEnv in Test := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv) // phantomjs crashes
 
@@ -157,22 +165,30 @@ object WebappBuild {
   lazy val webappClientProject =
     project("webapp-client-project")
       .configure(clientSpa)
-      .dependsOn(webappClientWwApi)
+      .dependsOn(webappClientWwApi, webappClientLoaders)
       .depsForJs(ScalaCSS.react ++ scalajsDom ++ μPickle ++ shapeless ++ Nyaya.prop ++ parboiled ++ React.scalaz)
 
-  lazy val webappGenJvm = webappGen.jvm
-  lazy val webappGenJs  = webappGen.js
-  lazy val webappGen =
-    crossProject("webapp-gen")
-      .configureJvm(Common.jvmSettings, _.dependsOn(webappBaseMemberJvm)).depsForJvm(Lift.webkit)
-      .configureJs(
-        Common.jsSettings(NeedDom),
-        _.dependsOn(webappClientProject)
-          .settings(
-            scalaJSUseMainModuleInitializer := true,
-            jsDependencies += ProvidedJS / "webapp-gen-deps.js"))
-      .depsForBoth(testScope(μTest))
-      .dependsOn(webappBaseTest % Test)
+  lazy val webappSsr =
+    crossProject("webapp-ssr")
+      .configureJvm(Common.jvmSettings)
+      .configureJs(Common.jsSettings(NoTests))
+      .dependsOn(webappBaseMember, webappClientPublic, baseTest % Test)
+      .depsForBoth(ScalaGraal.extBoopickle ++ testScope(μTest))
+
+  lazy val webappSsrJvm = webappSsr.jvm
+    .deps(ScalaGraal.util ++ ScalaGraal.extPrometheus ++ scalaXml)
+    .settings(unmanagedResources in Compile += Def.taskDyn {
+      val stage = (scalaJSStage in Compile in webappSsrJs).value
+      val task = stageKeys(stage)
+      Def.task((task in Compile in webappSsrJs).value.data)
+    }.value)
+
+  lazy val webappSsrJs = webappSsr.js
+    .dependsOn(webappClientLoaders)
+    .settings(
+      emitSourceMaps := false,
+      artifactPath in (Compile, fastOptJS) := (crossTarget.value / "webapp-ssr.js"),
+      artifactPath in (Compile, fullOptJS) := (crossTarget.value / "webapp-ssr.js"))
 
   lazy val webappServerLogicJvm = webappServerLogic.jvm
   lazy val webappServerLogicJs  = webappServerLogic.js
@@ -180,7 +196,7 @@ object WebappBuild {
     crossProject("webapp-server-logic")
       .configureJvm(
         Common.jvmSettings,
-        _.dependsOn(taskmanApiLogic, webappClientPublicJvm),
+        _.dependsOn(taskmanApiLogic, webappClientPublicJvm, webappSsrJvm),
         useMacroParadise)
       .configureJs(Common.jsSettings(NeedDom)) // TODO NeedDom isn't true but required cos webappBaseTest loads in Sizzle
       .dependsOn(webappBaseMember)
@@ -289,9 +305,9 @@ object WebappBuild {
 
     def definition: Project => Project = _
       .enablePlugins(JettyPlugin, WarPlugin, DockerPlugin)
-      .dependsOn(baseDb, baseOps, taskmanApi, webappServerLogicJvm, webappGenJvm)
+      .dependsOn(baseDb, baseOps, taskmanApi, webappServerLogicJvm)
       .deps(
-        scalaz ++ Lift.webkit ++ SLF4J.jcl ++ commonsLang ++ Nyaya.gen ++ Logback.withPlugins ++ JJWT.all ++
+        scalaz ++ Lift.webkit ++  scalaXml ++ SLF4J.jcl ++ commonsLang ++ Nyaya.gen ++ Logback.withPlugins ++ JJWT.all ++
         Prometheus.client ++ Prometheus.hotspot ++ Prometheus.servlet ++ redisson ++
         providedScope(LibJetty.javaxServletApi ++ LibJetty.javaxWebsocketApi) ++
         testScope(μTest ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
@@ -307,9 +323,14 @@ object WebappBuild {
       .settings(
         scalacOptions -= "-Xcheckinit", // TODO https://github.com/scala/bug/issues/10437
         containerLibs in Jetty := LibJetty.devRun(JVM),
-        javaOptions in Jetty += "-Xmx1g",
-        javaOptions in Jetty += "-XX:+UseG1GC", // Default in Java 9, may as well use it now
-        // javaOptions in Jetty += "-agentpath:/opt/jprofiler10/bin/linux-x64/libjprofilerti.so=port=8849,nowait",
+        javaOptions in Jetty ++= List(
+          "-XX:+UseJVMCINativeLibrary",
+          // "-XX:+BootstrapJVMCI",
+          //"-XX:-TieredCompilation",
+          //"-XX:+EagerJVMCI",
+          // "-agentpath:/opt/jprofiler10/bin/linux-x64/libjprofilerti.so=port=8849,nowait",
+          "-Xmx1g",
+          "-XX:+UseG1GC"), // TODO use everywhere then including tests | Default in Java 9, may as well use it now
         initialCommands += consoleCmds,
         fullClasspath in console in Compile += file("src/main/webapp")) // So templates can be loaded from console
   }

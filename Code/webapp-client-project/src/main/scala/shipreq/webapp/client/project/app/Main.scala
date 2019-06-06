@@ -13,6 +13,7 @@ import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, InitPageData}
 import shipreq.webapp.base.protocol.{ClientSideProcImpl, ProjectSpaProtocols, WebSocketClient}
 import shipreq.webapp.base.ui.BaseStyles
+import shipreq.webapp.client.loaders.ProjectSpaLoader
 import shipreq.webapp.client.project.app.root._
 import shipreq.webapp.client.project.app.state.Global
 
@@ -33,7 +34,7 @@ object Main extends ClientSideProcImpl(ProjectSpaProtocols.EntryPoint) {
 
     def onFailure(error: ErrorMsg): Callback =
       Callback {
-        val lp = LoadingPage.Props(i.username, i.projectName)
+        val lp = ProjectSpaLoader.Props(i.username, i.projectName)
         val lf = LoadFailedPage.Props(lp, error)
         LoadFailedPage.Component(lf).renderIntoDOM(`#root`)
       }

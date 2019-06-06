@@ -1,6 +1,12 @@
-<div data-lift="surround?with=spa;eat">
-  <require asset="webappClientHome" />
-  <div data-lift="HomeSpa"></div>
+<div data-lift="surround?with=blank?at=main?eat">
+
+  <div id="root" style="height:100%">
+    <require asset="webappClientHome" />
+    <div data-lift="HomeSpa"></div>
+  </div>
+
   <link data-lift="head" rel="prefetch" href="webtamp://manifest/webappClientProjectJs" >
+
   <div data-lift="Analytics.singleRoute"></div>
+
 </div>

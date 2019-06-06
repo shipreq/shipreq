@@ -64,8 +64,9 @@ The version of SBT plugins are in `project/plugins.sbt`.
 Development
 ===========
 
-1. Build docker images by running `docker` from SBT.
-2. Start up the dev environment by `bin/env dev up`.
+1. Build the docker base image: `docker/base-image/build`
+2. Build docker images by running `docker` from SBT.
+3. Start up the dev environment by `bin/env dev up`.
 
 ### Testing
 

@@ -34,14 +34,19 @@ subgraph cluster_base {
   }
 
   subgraph cluster_webapp {
+    // Internal library modules used only used by top-level modules
     node[fillcolor="#ffffff"]
     webappMacro [label="webapp-macro\n(JVM & JS)"]
     webappBase [label="webapp-base\n(JVM & JS)"]
     webappBaseMember [label="webapp-base-member\n(JVM & JS)"]
     webappServerLogic [label="webapp-server-logic\n(JVM & JS)"]
     webappClientWwApi [label="webapp-client-ww-api\n(JS)"]
-    webappGen [label="webapp-gen\n(JVM & JS)"]
+    webappClientLoaders [label="webapp-client-loaders\n(JS)"]
+    webappSsrShared [label="webapp-ssr\n(JVM & JS)"]
+    webappSsrJvm [label="webapp-ssr\n(JVM)"]
+    webappSsrJs [label="webapp-ssr\n(JS)"]
 
+    // Top-level modules - this all correspond to some kind of deliverable
     node[fillcolor="#00ccff"]
     webappClientPublic [label="webapp-client-public\n(JVM & JS)"]
     webappClientHome [label="webapp-client-home\n(JS)"]
@@ -87,23 +92,25 @@ taskmanServer -> taskmanServerLogic,taskmanApi,taskmanDb
 
 webappMacro -> baseUtil
 webappBase -> webappMacro
-webappServerLogic -> webappBase,taskmanApiLogic,webappClientPublic
+webappServerLogic -> taskmanApiLogic,webappClientPublic,webappSsrJvm
 webappServerLogic -> webappBaseTest [color="#111111" style=dashed label="test"]
 webappBaseMember -> webappBase
 webappBaseTest -> baseTest,webappBaseMember [color="#111111"]
-webappClientHome -> webappBaseMember
+webappClientLoaders -> webappBaseMember
+webappClientHome -> webappClientLoaders
 webappClientHome -> webappBaseTest [color="#111111" style=dashed label="test"]
 webappClientPublic -> webappBase
 webappClientPublic -> webappBaseTest [color="#111111" style=dashed label="test"]
 webappClientWwApi -> webappBaseMember
 webappClientWw -> webappClientWwApi
 webappClientWw -> webappBaseTest [color="#111111" style=dashed label="test"]
-webappClientProject -> webappClientWwApi
+webappClientProject -> webappClientWwApi,webappClientLoaders
 webappClientProject -> webappBaseTest [color="#111111" style=dashed label="test"]
-webappGen -> webappBaseMember
-webappGen -> webappClientProject [color="#111111" style=dashed label="run"]
-webappGen -> webappBaseTest [color="#111111" style=dashed label="test"]
-webappServer -> taskmanApi,webappServerLogic,webappGen
+webappSsrShared -> webappBaseMember,webappClientPublic
+webappSsrJvm,webappSsrJs -> webappSsrShared
+webappSsrJs -> webappClientLoaders
+webappSsrJvm -> webappSsrJs [color="#111111" style=dashed label="JS"]
+webappServer -> taskmanApi,webappServerLogic
 // webappServer -> baseDb // transitive through taskman-api
 webappServer -> webappClientPublic,webappClientHome,webappClientProject,webappClientWw [style=dashed]
 

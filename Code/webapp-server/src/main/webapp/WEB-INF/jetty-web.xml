@@ -10,4 +10,7 @@
      There's no way to configure it programmatically if Jetty is loading ShipReq as an external webapp.
      This is the only way.
 -->
+  <Call name="addSystemClass">
+    <Arg>org.graalvm.</Arg>
+  </Call>
 </Configure>

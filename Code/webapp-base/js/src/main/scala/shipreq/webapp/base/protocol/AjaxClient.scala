@@ -2,7 +2,7 @@ package shipreq.webapp.base.protocol
 
 import boopickle._
 import japgolly.scalajs.react.extra.Ajax
-import japgolly.scalajs.react.{AsyncCallback, CallbackTo}
+import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import org.scalajs.dom.ext.AjaxException
 import scala.scalajs.js.typedarray.ArrayBuffer
 import shipreq.base.util.ErrorMsg
@@ -47,4 +47,9 @@ object AjaxClient {
         }
     }
 
+  def noop[F[_]]: AjaxClient[F] =
+    new AjaxClient[F] {
+      override def apply(p: Protocol.Ajax[F])(req: p.protocol.RequestType) =
+        CallbackTo(AsyncCallback[p.protocol.ResponseType](_ => Callback.empty))
+    }
 }

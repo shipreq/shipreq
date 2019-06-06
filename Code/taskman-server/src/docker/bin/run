@@ -21,6 +21,11 @@ java_opt=(
   # Default in Java 9, may as well use it now
   -XX:+UseG1GC
 
+  # Use Graal's JIT
+  -Dgraal.ShowConfiguration=verbose
+  -Dgraal.MitigateSpeculativeExecutionAttacks=None
+  -XX:+EagerJVMCI
+
   # Useful for diagnostics
   -XX:+PrintFlagsFinal
   -XX:+UnlockDiagnosticVMOptions

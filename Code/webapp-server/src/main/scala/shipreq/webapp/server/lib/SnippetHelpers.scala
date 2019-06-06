@@ -3,11 +3,13 @@ package shipreq.webapp.server.lib
 import net.liftweb.http._
 import net.liftweb.json.{NoTypeHints, Serialization, Serializer}
 import scala.xml.NodeSeq
+import shipreq.base.util.Url
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.app.LiftDispatcher
 import shipreq.webapp.server.util.HttpResponses.ShouldNeverHappenResponse
 
+// TODO Move SnippetHelpers into .snippet
 object SnippetHelpers extends StaticSnippetHelpers {
 
   lazy val NodeSeqJsonSerializer: Serializer[NodeSeq] = new Serializer[NodeSeq] {
@@ -25,6 +27,14 @@ object SnippetHelpers extends StaticSnippetHelpers {
  * Snippet helpers without Misc, Global and implicit vals/defs.
  */
 trait StaticSnippetHelpers extends HasLogger {
+
+  /** This removes the outer-most tag that contained the data-lift directive.
+    *
+    * Eg. <div data-lift=X>A</div> would normally transform to <div>B</div>,
+    * where as with this it will be just B.
+    */
+  final val removeSnippetTag: NodeSeq => NodeSeq =
+    _.head.child
 
   def respondImmediately(response: LiftResponse): Nothing =
     throw ResponseShortcutException.shortcutResponse(response)
@@ -59,6 +69,24 @@ trait SnippetHelpers extends StaticSnippetHelpers with HasLogger {
 
   final def currentUserOption(): Option[User] =
     Option(LiftDispatcher.UserVar.is)
+
+  final def request_!(): Req =
+    S.request.openOrThrowException("How can a snippet not have a request")
+
+  final def requestUrl(req: Req = request_!()): Url.Relative =
+    Url.Relative(req.request.uri)
+
+//  final def requestUrl(req: Req = request_!()): Url.Absolute =
+//    Url.Absolute {
+//      var u = req.request.url
+//      if (req.uri == "/" && u.last == '/')
+//        u = u.dropRight(1)
+//      req.request.queryString match {
+//        case Full(q) => u = u + "?" + q
+//        case _       => ()
+//      }
+//      u
+//    }
 }
 
 /** A stateless snippet with only one rendering method. */

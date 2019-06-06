@@ -9,7 +9,7 @@ import scalaz.syntax.applicative._
 import shipreq.base.ops._
 import shipreq.base.util._
 import shipreq.base.util.FxModule._
-import shipreq.webapp.server.logic.{DispatchLogic, ProjectSpaLogic}
+import shipreq.webapp.server.logic.{DispatchLogic, ProjectSpaLogic, Server}
 
 @Lenses
 final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,
@@ -32,6 +32,7 @@ final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,
                                    projectSpa: ProjectSpaLogic.Config,
                                    prometheus: ServerLogicConfig.Prometheus,
                                    security: ServerLogicConfig.Security,
+                                   ssr: ServerLogicConfig.SsrConfig,
                                    jaegerTracingConfig: Option[Configuration]) {
 
   lazy val traceAlgebraFx: Trace.Algebra[Fx] =
@@ -136,6 +137,13 @@ object ServerLogicConfig {
     ) (apply)
   }
 
+  final case class SsrConfig(enabled: Boolean)
+
+  object SsrConfig {
+    def config: ConfigDef[SsrConfig] =
+      ConfigDef.getOrUse("enabled", true).map(apply)
+  }
+
   def config: ConfigDef[ServerLogicConfig] =
     JaegerTracingConfig.external *>
     ( ConfigDef.need       [String  ]       ("url").map(Url.Absolute.Base.apply) |@|
@@ -148,6 +156,7 @@ object ServerLogicConfig {
       ProjectSpaLogic.Config.defn.withPrefix("projectSpa.") |@|
       Prometheus.config.withPrefix          ("prometheus.") |@|
       Security.config.withPrefix            ("security.") |@|
+      SsrConfig.config.withPrefix           ("ssr.") |@|
       JaegerTracingConfig.main              ("webapp")
   ) (apply)
       .withPrefix("shipreq.")

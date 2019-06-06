@@ -39,7 +39,7 @@ object ShipReqBuild {
         webappClientWwApi,
         webappClientWw,
         webappClientProject,
-        webappGenJs,
+        webappSsrJs,
         webappServerLogicJs)
 
   // ===================================================================================================================

@@ -1,0 +1,18 @@
+#!/bin/bash
+cd "$(dirname "$0")" || exit 1
+
+set -e
+
+GRAAL_VERSION=19.0.0
+
+IMAGE_NAME=shipreq/base
+IMAGE_VER=1
+IMAGE_TAG_SUFFIX="-graal-$GRAAL_VERSION"
+
+exec docker build \
+  --build-arg GRAAL_VERSION="$GRAAL_VERSION" \
+  -t "$IMAGE_NAME:${IMAGE_VER}${IMAGE_TAG_SUFFIX}" \
+  -t "$IMAGE_NAME:latest${IMAGE_TAG_SUFFIX}" \
+  -t "$IMAGE_NAME:latest" \
+  "$@" \
+  .

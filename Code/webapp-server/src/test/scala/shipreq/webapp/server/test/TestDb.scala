@@ -3,6 +3,7 @@ package shipreq.webapp.server.test
 import shipreq.base.util.FxModule._
 import shipreq.base.test.db.SingleConnectionXA
 import shipreq.webapp.server.app.Global
+import shipreq.webapp.ssr.SsrOff
 
 object TestDb extends shipreq.base.test.db.TestDb {
 
@@ -14,11 +15,12 @@ object TestDb extends shipreq.base.test.db.TestDb {
 
   def useInLift(): Unit = {
     val g1 = PrepareEnv.global()
-    val g2 = Global.default(TestDb.dbAccess, None, g1.config)
+    val g2 = Global.default(TestDb.dbAccess, None, SsrOff.prepared, g1.config)
     val g3 = Global.modify(_.copy(
       db       = g2.db,
       logic    = g2.logic,
       ops      = g2.ops,
+      ssr      = g2.ssr,
       security = g2.security,
       taskman  = g2.taskman))
     g3

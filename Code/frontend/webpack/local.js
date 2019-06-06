@@ -13,14 +13,6 @@ const config = {
   entry: {
 
     // Projects access this via symlink in src/test/resources
-    'webapp-gen-deps': [
-      'airbnb-js-shims',
-      'expose-loader?React!react',
-      'expose-loader?ReactDOM!react-dom',
-      'expose-loader?ReactDOMServer!react-dom/server',
-    ],
-
-    // Projects access this via symlink in src/test/resources
     'webapp-base-test': [
       'airbnb-js-shims',
       'expose-loader?React!react',
@@ -42,6 +34,14 @@ const config = {
       'expose-loader?TextCompleteTA!textcomplete/lib/textarea',
       'expose-loader?$!expose-loader?jQuery!jquery', // for Semantic UI -- must precede it! order in this array matters
       './semantic/dist/semantic.min', //.js
+    ],
+
+    // webappSsrJvm accesses this via symlink in src/main/resources
+    'webapp-ssr-deps': [
+      'expose-loader?React!react',
+      'expose-loader?ReactDOMServer!react-dom/server',
+      // 'expose-loader?React!react/umd/react.production.min.js',
+      // 'expose-loader?ReactDOMServer!react-dom/umd/react-dom-server.browser.production.min.js',
     ],
   },
 

@@ -1,0 +1,12 @@
+#!/bin/bash
+exec "$(dirname "$0")"/dev \
+  "$@" \
+  elasticsearch \
+  grafana \
+  jaeger \
+  kibana \
+  logstash \
+  portal \
+  postgres \
+  prometheus \
+  redis

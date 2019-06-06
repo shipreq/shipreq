@@ -3,8 +3,9 @@ package shipreq.webapp.server.logic
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import scalaz.syntax.monad._
-import scalaz.{-\/, Name, NaturalTransformation, \/, \/-}
+import scalaz.{-\/, Monad, Name, NaturalTransformation, \/, \/-}
 import shipreq.base.ops.Trace
+import shipreq.base.test.SyncEffect
 import shipreq.base.util._
 import shipreq.taskman.api.{Msg, MsgId, MsgStatus, TaskmanApi}
 import shipreq.webapp.base.data._
@@ -296,18 +297,18 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-final class MockServer extends Server.Algebra[Name] {
+final class MockServer[F[_]]()(implicit F: Monad[F], se: SyncEffect[F]) extends Server.Algebra[F] {
   var clock = Instant.now()
-  override val now = Name(clock)
+  override val now = F.point(clock)
 
-  override def measureDuration[A](f: Name[A]): Name[(A, Duration)] =
+  override def measureDuration[A](f: F[A]): F[(A, Duration)] =
     for {
       start <- now
       a     <- f
       end   <- now
     } yield (a, Duration.between(start, end))
 
-  override def measureDuration_[A](f: Name[A]) =
+  override def measureDuration_[A](f: F[A]) =
     measureDuration(f).map(_._2)
 
   private def durationBorder(duration: Duration, tolerance: Duration = Duration.ofSeconds(2)): Validity => Duration = {
@@ -319,26 +320,26 @@ final class MockServer extends Server.Algebra[Name] {
     clock = clock plus durationBorder(w)(v)
 
   var onDelay = List.empty[() => Unit]
-  override def delay[A](f: Name[A], d: Duration) = Name[A] {
+  override def delay[A](f: F[A], d: Duration) = F.point[A] {
     clock = clock plus d
     onDelay match {
       case Nil    => ()
       case h :: t => onDelay = t; h()
     }
-    f.value
+    se.unsafeRun(f)
   }
 
-  var forked = Vector.empty[Name[Any]]
-  override def fork[A](f: Name[A]) = Name[Unit] {
+  var forked = Vector.empty[F[_]]
+  override def fork[A](f: F[A]) = F.point[Unit] {
     forked :+= f
   }
   def runForked(): Unit = {
-    forked.foreach(_.value)
+    forked.foreach(se.unsafeRun(_))
     forked = Vector.empty
   }
 
   var nextClientIP = Option.empty[IP]
-  override val clientIP = Name(nextClientIP)
+  override val clientIP = F.point(nextClientIP)
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -449,6 +450,7 @@ object MockInterpreters {
     applyEventThresholdMs      = 1000,
     googleAnalyticsTrackingId  = None,
     taskmanSchema              = "test_taskman",
+    ssr                        = ServerLogicConfig.SsrConfig(false),
     initTaskmanOnBoot          = false,
     initTaskmanRetry           = Retries.none,
     jaegerTracingConfig        = None,
@@ -468,7 +470,7 @@ object MockInterpreters {
 
 class MockInterpreters(modCfg: ServerLogicConfig => ServerLogicConfig = Identity[ServerLogicConfig]) {
   implicit val config         = modCfg(MockInterpreters.config)
-  implicit val svr            = new MockServer
+  implicit val svr            = new MockServer[Name]
   implicit val db             = new MockDb(svr.now)
   implicit val security       = new MockSecurity(db)
   implicit val taskman        = new MockTaskman

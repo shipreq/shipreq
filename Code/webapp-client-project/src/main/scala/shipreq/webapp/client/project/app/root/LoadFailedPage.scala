@@ -4,10 +4,11 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.ui.semantic.{Icon, Message}
+import shipreq.webapp.client.loaders.ProjectSpaLoader
 
 object LoadFailedPage {
 
-  final case class Props(lp: LoadingPage.Props, error: ErrorMsg)
+  final case class Props(lp: ProjectSpaLoader.Props, error: ErrorMsg)
 
   def render(p: Props): VdomElement = {
     val msg = Message(
@@ -16,7 +17,7 @@ object LoadFailedPage {
       "Error loading project",
       TagMod(^.whiteSpace.`pre-wrap`, p.error.value))
 
-    LoadingPage.layout(p.lp)(
+    ProjectSpaLoader.layout(p.lp)(
       <.div(^.paddingTop := "4rem", msg))
   }
 

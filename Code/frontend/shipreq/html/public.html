@@ -1,5 +1,11 @@
-<div data-lift="surround?with=spa;eat">
-  <require asset="webappClientPublic" />
-  <div data-lift="PublicSpa"></div>
+<div data-lift="surround?with=blank?at=main?eat">
+
+  <div data-lift="PublicSpa">
+    <div id="root" style="height:100%"></div>
+    <require asset="webappClientPublic" />
+    <div id="init-js"></div>
+  </div>
+
   <div data-lift="Analytics.multiRoute"></div>
+
 </div>

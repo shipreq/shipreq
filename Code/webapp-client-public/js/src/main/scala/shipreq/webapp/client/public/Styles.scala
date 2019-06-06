@@ -10,28 +10,32 @@ object Styles {
   private class CssBuilder {
     final type CSS = String
 
-    private var i = 0
+    private var open = true
     private var css: CSS = ""
 
-    private def ensurePreInstall() = assert(i >= 0, "CSS already installed.")
+    private def ensurePreInstall() = assert(open, "CSS already installed.")
 
-    def add(f: String => CSS): String = {
+    def add(cssStr: CSS): Unit = {
       ensurePreInstall()
-      val cn = "s_____q_" + i
-      css += f(cn)
-      i += 1
-      cn
+      css += cssStr
     }
 
-    def addClass(f: String => CSS): TagMod =
-      className := add(n => f("." + n))
+    def add(key: Int, f: String => CSS): String = {
+      val className = "s___x" + key + "x"
+      assert(!css.contains(className))
+      add(f(className))
+      className
+    }
+
+    def addClass(key: Int, f: String => CSS): TagMod =
+      className := add(key, className => f("." + className))
 
     def addToDocument(): Unit = {
       import org.scalajs.dom.document
       import org.scalajs.dom.raw.HTMLStyleElement
 
       ensurePreInstall()
-      i = -1
+      open = false
 
       def createStyleElement(styleStr: String): HTMLStyleElement = {
         val e = document.createElement("style").asInstanceOf[HTMLStyleElement]
@@ -59,7 +63,7 @@ object Styles {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object layout {
 
-    cssBuilder.add(_ => "body {background:#fbfcfd}")
+    cssBuilder.add("body {background:#fbfcfd}")
 
     val cont = TagMod(
       display.flex,
@@ -130,7 +134,7 @@ object Styles {
 
     // TODO Fix the serif in the LandingPage tagline. Chrome/Firefox diffs
     val tagline: TagMod =
-      cssBuilder.addClass(c =>
+      cssBuilder.addClass(1, c =>
         s"""
            |$c {
            |  margin-top: 0.6rem;
@@ -147,18 +151,18 @@ object Styles {
       marginTop := "5em")
 
     val yap1 = TagMod(
-      color := "hsl(209, 100%, 15%)", // "Ship" in ShipReq with lower L%
+      color := "hsl(209,100%,15%)", // "Ship" in ShipReq with lower L%
       fontSize := "1.6em",
       lineHeight := "1.3em")
 
     val yap2 = TagMod(
-      color := "hsl(207, 100%, 5%)", // "Req" in ShipReq with lower L%
+      color := "hsl(207,100%,5%)", // "Req" in ShipReq with lower L%
       fontSize := "1.15em",
       marginTop := "3em",
       lineHeight := "1.5em")
 
     val pointAtForm: TagMod =
-      cssBuilder.addClass(c =>
+      cssBuilder.addClass(2, c =>
         s"""$c {
            |  -webkit-transform: rotate(360deg);
            |  border-style: dashed;
@@ -184,12 +188,12 @@ object Styles {
     val form = TagMod(
       background := "#e5edf3",
       border := "solid 1px #c0d6e9",
-      boxShadow := "0 2px 4px 0 rgba(192, 214, 233, .15), 0 2px 10px 0 rgba(192, 214, 233, .25)",
+      boxShadow := "0 2px 4px 0 rgba(192,214,233,.15), 0 2px 10px 0 rgba(192,214,233,.25)",
       borderRadius := ".28571429rem",
       padding := "1em")
 
     val yap =
-      cssBuilder.addClass(c =>
+      cssBuilder.addClass(3, c =>
         s"""
            |$c { flex:1; padding:2.5em; }
            |@media screen and (max-width: 75ex) { $c { font-size: 2.0vw; padding:2em;}}
@@ -239,7 +243,7 @@ object Styles {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object legal {
     val cont: TagMod =
-      cssBuilder.addClass(c =>
+      cssBuilder.addClass(4, c =>
         s"""
            |$c {
            |  max-width:144ex;

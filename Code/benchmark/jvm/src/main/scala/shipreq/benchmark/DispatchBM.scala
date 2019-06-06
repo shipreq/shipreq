@@ -154,6 +154,7 @@ object DispatchBM {
     jaegerTracingConfig        = None,
     prometheus                 = ServerLogicConfig.Prometheus.default.copy(enabled = false),
     projectSpa                 = ProjectSpaLogic.Config.default,
+    ssr                        = ServerLogicConfig.SsrConfig(enabled = false),
     security = ServerLogicConfig.Security(
       attackFrustrationDelay     = 1 hours,
       jwtCookieSecure            = false,

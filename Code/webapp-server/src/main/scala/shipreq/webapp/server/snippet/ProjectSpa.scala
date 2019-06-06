@@ -4,10 +4,11 @@ import net.liftweb.util.Helpers._
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.protocol.ProjectSpaProtocols
-import shipreq.webapp.gen.transform.ProjectSpaLoader
 import shipreq.webapp.server.app.{Global, LiftDispatcher}
 import shipreq.webapp.server.lib.SingleOpStatelessSnippet
 import shipreq.webapp.server.protocol._
+import shipreq.webapp.ssr.Html
+import shipreq.webapp.ssr.SsrSharedData.ProjectSpaLoaderData
 
 object ProjectSpa extends SingleOpStatelessSnippet {
 
@@ -24,6 +25,9 @@ object ProjectSpa extends SingleOpStatelessSnippet {
 
   val EntryPoint = ClientSideProcInvoker(ProjectSpaProtocols.EntryPoint, ResourceBundle)
 
+  private[this] val ssrFallback = Html(
+    """<div style="margin-top:33vh;text-align:center;font-size:150%;color:#333;">loading ...</div>""")
+
   override def render = {
     val projectId = LiftDispatcher.ProjectIdVar.is
     assert(projectId != null, "Project SPA snippet invoked without a ProjectId")
@@ -35,9 +39,14 @@ object ProjectSpa extends SingleOpStatelessSnippet {
     val init: ProjectSpaProtocols.InitPageData =
       logic.initPage(projectId, user.username).unsafeRun()
 
-    "*" #> (
-      ProjectSpaLoader.xml(user.username, init.projectName) :+
-        EntryPoint.invokeOnLoadHtml(init))
-    // ClientFn.ProjectSpa.htmlToLoadJsAndRun(Assets.ProjectSpa)(initData(user.username, p)))
+    val loaderData =
+      ProjectSpaLoaderData(user.username, init.projectName)
+
+    val loaderHtml =
+      Global.ssr.projectSpaLoader(loaderData).unsafeRun()
+        .getOrElse(ssrFallback)
+        .xml
+
+    "*" #> (loaderHtml :+ EntryPoint.invokeOnLoadHtml(init))
   }
 }

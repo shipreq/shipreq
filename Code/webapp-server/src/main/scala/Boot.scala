@@ -4,11 +4,13 @@ import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
 import japgolly.clearconfig._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
+import java.util.concurrent.Executors
 import net.liftweb.common.Logger
 import net.liftweb.http._
 import net.liftweb.util._
 import net.liftweb.util.Props.RunModes
 import org.redisson.Redisson
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scalaz.syntax.applicative._
 import shipreq.base.db.DbAccess
 import shipreq.base.ops.{JdbcLogging, JdbcMetrics, SqlTracer}
@@ -18,6 +20,8 @@ import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.app._
 import shipreq.webapp.server.lib.Taskman
+import shipreq.webapp.server.logic.{MinimalSsr, TraceLogic}
+import shipreq.webapp.ssr.SsrOff
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -37,22 +41,46 @@ class Boot {
     runMode foreach setRunMode
     logger.info(s"RunMode = ${Props.mode}")
 
-    import cfg.server.traceAlgebraFx.{newSpanImpure => trace}
-    trace("Boot") { _ =>
+    cfg.server.traceAlgebraFx.newSpanImpure("Boot") { span =>
 
-      // Create services
-      val dbAccess = trace("initDatabase")(_ => initDatabase(cfg))
-      val redisClient = cfg.redis.map(c => trace("initRedis")(_ => Redisson.create(c.instance)))
-      trace("configureLift")(_ => configureLift())
-      Global.Instance = trace("Global")(_ => Global.default(dbAccess, redisClient, cfg))
+      val timeout     = 2.minutes.asFiniteDuration
+      val es          = Executors.newFixedThreadPool(3)
+      implicit val ec = ExecutionContext.fromExecutorService(es)
 
-      // Prepare services
-      trace("preloadTemplates")(_ => preloadTemplates())
-      trace("initRoutes")(_ => initRoutes(Global.Instance))
-      trace("initTaskman")(_ => initTaskman(Global.Instance))
+      def trace[A](name: String)(a: => A): A =
+        cfg.server.traceAlgebraFx.newSpanImpure("Boot:" + name)(_ => a)
 
-      // Start services
-      trace("initPrometheus")(_ => initPrometheus(cfg.server.prometheus))
+      def submit[A](name: String)(f: => Fx[A]) = Future[A] {
+        cfg.server.traceAlgebraFx.newSubSpan("Boot:" + name, span)(_ => f).unsafeRun()
+      }
+
+      try {
+
+        // Create services
+        val dbAccessF   = submit("initDatabase")(Fx(initDatabase(cfg)))
+        val redisF      = cfg.redis.map(c => submit("initRedis")(Fx(Redisson.create(c.instance))))
+        val ssrF        = submit("initSsr")(initSsr(cfg.server))
+        val dbAccess    = Await.result(dbAccessF, timeout)
+        val redisClient = redisF.map(Await.result(_, timeout))
+        val ssr         = Await.result(ssrF, timeout)
+        trace("configureLift")(configureLift())
+        Global.Instance = Global.default(dbAccess, redisClient, ssr, cfg)
+
+        // Start services
+        val f1 = submit("preloadTemplates")(Fx(preloadTemplates()))
+        val f2 = submit("initRoutes")(Fx(initRoutes(Global.Instance)))
+        val f3 = submit("initPrometheus")(Fx(initPrometheus(cfg.server.prometheus)))
+
+        // Initialise Taskman
+        // If the DB is fresh, this will wait until Taskman starts up and creates its DB schema
+        // Because that could take a while, do it synchronously instead of async with the timeout
+        trace("initTaskman")(initTaskman(Global.Instance))
+
+        // Wait for tasks to complete
+        Await.result(Future.sequence(List(f1, f2, f3)), timeout)
+
+      } finally
+        es.shutdown()
     }
   }
 
@@ -197,4 +225,18 @@ class Boot {
       // - initDatabase()
       // - AppServletFilter
     }
+
+  def initSsr(cfg: ServerLogicConfig) = {
+    val ssr =
+    if (cfg.ssr.enabled) {
+      // Duplicating Global :S
+      import TraceInterpreter.Implicits._
+      implicit val traceAlgebra = cfg.traceAlgebraFx
+      implicit val trace        = TraceLogic.on: TraceInterpreter.ForLift[Fx]
+      implicit val server       = trace.injectServer(ServerInterpreter)
+      new MinimalSsr[Fx]
+    } else
+      new SsrOff[Fx]
+    ssr.prepare(cfg.baseUrl, cfg.publicRegistration)
+  }
 }

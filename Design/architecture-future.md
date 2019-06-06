@@ -4,8 +4,6 @@
     * mailing list ~~~ system accounts ~~~ ownership/perms wrt relation to data
     * groups/org etc for phase 3
   * Encryption
-  * Fast SSR (caching or node)
-    * Maybe just on / path
 
 
 CURRENT STATE

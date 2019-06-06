@@ -101,7 +101,7 @@ object Common {
       scalaVersion                := Dependencies.Scala.version,
       javacOptions               ++= javacFlags,
       scalacOptions              ++= scalacFlags,
-      testFrameworks              += new TestFramework("utest.runner.Framework"),
+      testFrameworks              := List(new TestFramework("utest.runner.Framework")),
     //cancelable in Global        := true, // Allows ctrl-c to kill apps started with run without exiting SBT
       minForcegcInterval          := 3.minutes,
       triggeredMessage            := Watched.clearWhenTriggered,
@@ -248,8 +248,8 @@ object Common {
 
   def dockerBaseEnv = Def.task(
     List[(String, String)](
-      "VERSION" -> version.value,
-      "BUILD_MODE" -> (if (releaseMode) "release" else "dev")))
+      "SHIPREQ_VERSION"    -> version.value,
+      "SHIPREQ_BUILD_MODE" -> (if (releaseMode) "release" else "dev")))
 
   lazy val releaseMode: Boolean = {
     val mode = System.getProperty("MODE", "").trim
