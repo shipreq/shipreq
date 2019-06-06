@@ -22,8 +22,9 @@ java_opt=(
   -XX:+UseG1GC
 
   # Use Graal's JIT
-  -XX:+EnableJVMCI
-  -XX:+UseJVMCICompiler
+  -Dgraal.ShowConfiguration=verbose
+  -Dgraal.MitigateSpeculativeExecutionAttacks=None
+  -XX:+EagerJVMCI
 
   # Useful for diagnostics
   -XX:+PrintFlagsFinal
