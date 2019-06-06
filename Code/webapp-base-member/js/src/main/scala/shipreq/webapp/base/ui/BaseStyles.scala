@@ -1,7 +1,6 @@
 package shipreq.webapp.base.ui
 
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.scalajs.react.vdom.html_<^.{^ => ^^, _}
 import japgolly.univeq._
 import shipreq.base.util.Validity
 import shipreq.webapp.base.CssSettings._
@@ -9,6 +8,12 @@ import shipreq.webapp.base.ui.semantic.{Colour, Label}
 
 object BaseStyles extends StyleSheet.Inline {
   import dsl._
+
+  @inline def containerLarge = InlineBaseStyles.containerLarge
+  @inline def containerFull  = InlineBaseStyles.containerFull
+  @inline def layout         = InlineBaseStyles.layout
+
+  val pageMargin = InlineBaseStyles.pageMarginRem.rem
 
   sealed abstract class EditorState extends Product with Serializable
   object EditorState {
@@ -216,38 +221,4 @@ object BaseStyles extends StyleSheet.Inline {
   val cancelButton = style(
     (background := "#fff").important,
     borderColor(c"#27292a").important)
-
-  def pageMargin = 1 rem
-  def pageMarginStr = "1rem"
-
-  val containerLarge = TagMod(
-    ^^.marginLeft.auto,
-    ^^.marginRight.auto,
-    ^^.maxWidth := s"calc(723px + $pageMarginStr + $pageMarginStr)")
-
-  def containerFull = EmptyVdom
-
-  object layout {
-    val root = TagMod(
-      ^^.display.flex,
-      ^^.flexDirection.column,
-      ^^.alignItems.stretch,
-      ^^.minHeight := "100%")
-
-    val navMenu = TagMod(
-      ^^.borderRadius := "0")
-
-    val navBreadcrumbDivider = TagMod(
-      ^^.color       := "#ddd",
-      ^^.marginLeft  := "0.8em",
-      ^^.marginRight := "0.8em")
-
-    val main = TagMod(
-      ^^.flex         := "1",
-      ^^.marginTop    := pageMarginStr,
-      ^^.marginBottom := pageMarginStr,
-      ^^.padding      := s"0 $pageMarginStr",
-      ^^.width        := "100%")
-  }
-  layout // eager eval
 }

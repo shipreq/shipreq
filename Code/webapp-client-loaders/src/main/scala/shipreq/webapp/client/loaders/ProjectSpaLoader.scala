@@ -1,11 +1,10 @@
 package shipreq.webapp.client.loaders
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.Reusable
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.data.Project
-import shipreq.webapp.base.ui.semantic.{Breadcrumb, UsesSemanticUiManually}
 import shipreq.webapp.base.ui._
+import shipreq.webapp.base.ui.semantic.Breadcrumb
 import shipreq.webapp.base.user.Username
 
 object ProjectSpaLoader {
@@ -14,32 +13,16 @@ object ProjectSpaLoader {
     @inline def render: VdomElement = Component(this)
   }
 
-  def layout(p: Props)(content: VdomElement): VdomElement = {
-
+  def layout(p: Props)(content: VdomNode): VdomElement = {
     val navBar = MemberNavBar.Props(
       p.username,
       Reusable.never(MemberNavBar.MemberHome :: Breadcrumb.Item.Div(p.projectName) :: Nil))
 
-    def mainContent(m: TagMod): VdomElement =
-      <.div(m, BaseStyles.containerLarge,
-
-        // ↓ Nope ↓ - It uses BaseStyles which aren't loaded until JS loads meaning webapp-ssr can't use this.
-        // ProjectItem.Component(p.project),
-
-        content)
-
-    MemberLayout.Props(navBar, mainContent).render
+    Loader.render(navBar)(content)
   }
 
-  @UsesSemanticUiManually
-  def render(p: Props): VdomElement =
-    layout(p)(
-      <.div(
-        ^.cls := "ui segment basic",
-        ^.height := "20rem",
-        <.div(
-          ^.cls := "ui text loader large active",
-          "Loading...")))
+  private def render(p: Props): VdomElement =
+    layout(p)(Loader.loading)
 
   val Component = ScalaFnComponent[Props](render)
 }

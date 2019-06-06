@@ -23,6 +23,12 @@ object SsrJs {
     ReactDOMServer.renderToString(component)
   }
 
+  @JSExportTopLevel(SsrJsFunctionManifest.HomeSpaLoader)
+  def homeSpaLoader(i: Pickled[HomeSpaLoaderData]): String = {
+    val component = HomeSpaLoader.Props(i.value.username).render
+    ReactDOMServer.renderToStaticMarkup(component)
+  }
+
   @JSExportTopLevel(SsrJsFunctionManifest.ProjectSpaLoader)
   def projectSpaLoader(i: Pickled[ProjectSpaLoaderData]): String = {
     val component = ProjectSpaLoader.Props(i.value.username, i.value.projectName).render

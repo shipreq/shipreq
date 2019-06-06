@@ -5,6 +5,7 @@ package shipreq.webapp.ssr
   */
 object SsrJsFunctionManifest {
   final val Public           = "public"
+  final val HomeSpaLoader    = "homeSpaLoader"
   final val ProjectSpaLoader = "projectSpaLoader"
 }
 
@@ -17,6 +18,9 @@ object SsrSharedData {
 
   type PublicInitData = shipreq.webapp.client.public.PublicSpaProtocols.InitData
   val  PublicInitData = shipreq.webapp.client.public.PublicSpaProtocols.InitData
+
+  final case class HomeSpaLoaderData(username: Username)
+  implicit val picklerHomeSpaLoaderData = pickleCaseClass[HomeSpaLoaderData]
 
   final case class ProjectSpaLoaderData(username: Username, projectName: Project.Name)
   implicit val picklerProjectSpaLoaderData = pickleCaseClass[ProjectSpaLoaderData]

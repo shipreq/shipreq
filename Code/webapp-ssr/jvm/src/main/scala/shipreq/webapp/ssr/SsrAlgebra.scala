@@ -16,9 +16,11 @@ object SsrAlgebra {
 
   type Output                 = Option[Html]
   type Public[F[_]]           = (Url.Relative, Option[Username]) => F[Output]
+  type HomeSpaLoader[F[_]]    = HomeSpaLoaderData => F[Output]
   type ProjectSpaLoader[F[_]] = ProjectSpaLoaderData => F[Output]
 
   final case class Prepared[F[_]](public: Public[F],
+                                  homeSpaLoader: HomeSpaLoader[F],
                                   projectSpaLoader: ProjectSpaLoader[F])
 
 }

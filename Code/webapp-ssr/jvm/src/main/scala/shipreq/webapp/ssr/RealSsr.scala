@@ -18,9 +18,11 @@ object RealSsr {
   val renderPublic: PublicInitData => Expr[String] =
     Expr.compileFnCall1[PublicInitData](SsrJsFunctionManifest.Public)(_.asString)
 
+  val renderHomeSpaLoader: HomeSpaLoaderData => Expr[String] =
+    Expr.compileFnCall1[HomeSpaLoaderData](SsrJsFunctionManifest.HomeSpaLoader)(_.asString)
+
   val renderProjectSpaLoader: ProjectSpaLoaderData => Expr[String] =
     Expr.compileFnCall1[ProjectSpaLoaderData](SsrJsFunctionManifest.ProjectSpaLoader)(_.asString)
-
 
   def withNewCtx[F[_], A](f: ContextSync => A)(implicit F: Applicative[F]): F[A] =
     F.point {

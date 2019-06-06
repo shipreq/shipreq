@@ -61,10 +61,21 @@ object SsrTest extends TestSuite {
       }
     }
 
+    'home - {
+      'loader - {
+        val html = getHtml(ssr.homeSpaLoader(HomeSpaLoaderData(Username("gori"))))
+        assertNotContains(html, "Loading...")
+        assertContains(html, "Projects")
+        assertContains(html, "@gori")
+        ()
+      }
+    }
+
     'project - {
       'loader - {
         val html = getHtml(ssr.projectSpaLoader(ProjectSpaLoaderData(Username("gori"), "Stuff")))
         assertContains(html, "Loading...")
+        assertContains(html, "Projects")
         assertContains(html, "Stuff")
         assertContains(html, "@gori")
         ()
