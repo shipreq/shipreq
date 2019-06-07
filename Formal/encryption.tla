@@ -78,8 +78,7 @@ Client                  Server
 
 EXTENDS Sequences, TLC
 
-CONSTANTS None,
-          Data,
+CONSTANTS Data,
           Keys,
           Secrets,
           Users
@@ -94,18 +93,9 @@ VARIABLES serverSeen,    \* Keys & secrets the server has ever had unencrypted a
 
 vars == << serverSeen, userSeen, dbData, dbKey, dbSecret, dbSecretE, dbOldSecrets >>
 
-NoContent == dbData = None
-HasContent == dbData /= None
+UsersWithoutKeyKey == {u \in Users : dbKey.key \notin userSeen[u]}
 
-UsersWithoutKeyKey ==
-  IF NoContent
-  THEN Users
-  ELSE {u \in Users : dbKey.key \notin userSeen[u]}
-
-UsersWithKeyKey ==
-  IF NoContent
-  THEN {}
-  ELSE {u \in Users : dbKey.key \in userSeen[u]}
+UsersWithKeyKey == {u \in Users : dbKey.key \in userSeen[u]}
 
 IsEncryptedBy(e, key) == e.key = key
 
@@ -114,22 +104,16 @@ IsEncryptedBy(e, key) == e.key = key
 TypeInvariants ==
   /\ serverSeen   \in SUBSET (Keys \union Secrets)
   /\ userSeen     \in [Users -> SUBSET (Keys \union Secrets)]
-  /\ dbData       \in {None} \union [encrypted: {Data},  key: Keys] \* This is a blob which if decrypted with .key, would produce .encrypted
-  /\ dbKey        \in {None} \union [encrypted: Keys,    key: Keys] \* This is a blob which if decrypted with .key, would produce .encrypted
-  /\ dbSecretE    \in {None} \union [encrypted: Secrets, key: Keys]
-  /\ dbSecret     \in {None} \union Secrets
-  /\ dbOldSecrets \in {None} \union SUBSET Secrets
+  /\ dbData       \in [encrypted: {Data},  key: Keys] \* This is a blob which if decrypted with .key, would produce .encrypted
+  /\ dbKey        \in [encrypted: Keys,    key: Keys] \* This is a blob which if decrypted with .key, would produce .encrypted
+  /\ dbSecretE    \in [encrypted: Secrets, key: Keys]
+  /\ dbSecret     \in Secrets
+  /\ dbOldSecrets \in SUBSET Secrets
 
 ValueInvariants ==
-  /\ IF NoContent THEN
-       /\ dbKey = None
-       /\ dbSecret = None
-       /\ dbSecretE = None
-       /\ dbOldSecrets = {}
-     ELSE
-       /\ dbData.key = dbKey.encrypted   \* keyKey unlocks dataKey
-       /\ dbKey.key = dbSecretE.key      \* dataKey & secretE encrypted by same key
-       /\ dbSecretE.encrypted = dbSecret \* dbSecret & dbSecretE are the same secret
+  /\ dbData.key = dbKey.encrypted   \* keyKey unlocks dataKey
+  /\ dbKey.key = dbSecretE.key      \* dataKey & secretE encrypted by same key
+  /\ dbSecretE.encrypted = dbSecret \* dbSecret & dbSecretE are the same secret
   /\ PrintT([serverSeen |-> serverSeen, userSeen |-> userSeen, dbData |-> dbData, dbKey |-> dbKey, dbSecret |-> dbSecret, dbSecretE |-> dbSecretE, dbOldSecrets |-> dbOldSecrets]) \* debug
 
 SanityChecksT ==
@@ -141,11 +125,9 @@ SanityChecks == [][SanityChecksT]_<<vars>>
 SafeFromServer ==
   LET CanDecryptData == dbData.key \in serverSeen
       CanDecryptKey  == dbKey.key \in serverSeen
-      Safe           == ~(CanDecryptData \/ CanDecryptKey)
-  IN HasContent => Safe
+  IN ~(CanDecryptData \/ CanDecryptKey)
 
 SafeFromUsersWithoutKeyKey ==
-  /\ HasContent
   /\ \A u \in UsersWithoutKeyKey :
     /\ TRUE \* TODO: Depends on the protocol.
 
@@ -161,37 +143,21 @@ ServerSees(s)  == serverSeen' = serverSeen \union s
 -----------------------------------------------------------------------------------------------------------------------
 
 Init ==
-  /\ serverSeen   = {}
-  /\ userSeen     = [u \in Users |-> {}]
-  /\ dbData       = None
-  /\ dbKey        = None
-  /\ dbSecret     = None
-  /\ dbSecretE    = None
-  /\ dbOldSecrets = {}
-
-NewProject ==
-  /\ NoContent
-  /\ \E u \in Users:
-    LET secret  == CHOOSE s \in Secrets : TRUE
-        dataKey == CHOOSE k \in Keys : TRUE
-        keyKey  == CHOOSE k \in Keys : k /= dataKey
-    IN
-      /\ ServerSees({secret})
-      /\ dbSecret'  = secret
-      /\ dbData'    = [encrypted |-> Data,    key |-> dataKey]
-      /\ dbKey'     = [encrypted |-> dataKey, key |-> keyKey]
-      /\ dbSecretE' = [encrypted |-> secret,  key |-> keyKey]
-      /\ UserSees(u, {dataKey, keyKey, secret})
-      /\ UNCHANGED << dbOldSecrets >>
-
-\*ReadKey(k) ==
-\*  /\ k \in user
-\*  /\ key.key = k
-\*  /\ user' = user \union {key.value}
-\*  
+  LET u       == CHOOSE u \in Users : TRUE
+      secret  == CHOOSE s \in Secrets : TRUE
+      dataKey == CHOOSE k \in Keys : TRUE
+      keyKey  == CHOOSE k \in Keys : k /= dataKey
+  IN
+    /\ dbSecret     = secret
+    /\ serverSeen   = {secret}
+    /\ dbData       = [encrypted |-> Data,    key |-> dataKey]
+    /\ dbKey        = [encrypted |-> dataKey, key |-> keyKey]
+    /\ dbSecretE    = [encrypted |-> secret,  key |-> keyKey]
+    /\ userSeen     = [i \in Users |-> IF i = u THEN {dataKey, keyKey, secret} ELSE {}]
+    /\ dbOldSecrets = {}
 
 Next ==
-  \/ NewProject
+  \/ FALSE
   
 -----------------------------------------------------------------------------------------------------------------------
 
