@@ -83,57 +83,44 @@ CONSTANTS Data,
           Secrets,
           Users
           
-VARIABLES serverSeen,    \* Keys & secrets the server has ever had unencrypted access to
-          userSeen,      \* Keys & secrets each user has ever had unencrypted access to
-          dbData,        \* User data (project content) encrypted with dataKey
-          dbKey,         \* dataKey encrypted with keyKey
-          dbSecret,      \* secret (unencrypted)
-          dbSecretE,     \* secret encrypted with keyKey
-          dbOldSecrets   \* Previously used secrets (unencrypted)
+VARIABLES serverSeen,  \* Keys & secrets the server has ever had unencrypted access to
+          userSeen,    \* Keys & secrets each user has ever had unencrypted access to
 
-vars == << serverSeen, userSeen, dbData, dbKey, dbSecret, dbSecretE, dbOldSecrets >>
+          \* Server-side state:
+          data,        \* User data (project content) encrypted with dataKey
+          key,         \* dataKey encrypted with keyKey
+          secret,      \* secret (unencrypted)
+          secretE,     \* secret encrypted with keyKey
+          oldSecrets   \* Previously used secrets (unencrypted)
 
-UsersWithoutKeyKey == {u \in Users : dbKey.key \notin userSeen[u]}
+vars == << serverSeen, userSeen, data, key, secret, secretE, oldSecrets >>
 
-UsersWithKeyKey == {u \in Users : dbKey.key \in userSeen[u]}
-
-IsEncryptedBy(e, key) == e.key = key
+UsersWithoutKeyKey == {u \in Users : key.key \notin userSeen[u]}
+UsersWithKeyKey    == {u \in Users : key.key \in userSeen[u]}
 
 -----------------------------------------------------------------------------------------------------------------------
 
 TypeInvariants ==
-  /\ serverSeen   \in SUBSET (Keys \union Secrets)
-  /\ userSeen     \in [Users -> SUBSET (Keys \union Secrets)]
-  /\ dbData       \in [encrypted: {Data},  key: Keys] \* This is a blob which if decrypted with .key, would produce .encrypted
-  /\ dbKey        \in [encrypted: Keys,    key: Keys] \* This is a blob which if decrypted with .key, would produce .encrypted
-  /\ dbSecretE    \in [encrypted: Secrets, key: Keys]
-  /\ dbSecret     \in Secrets
-  /\ dbOldSecrets \in SUBSET Secrets
+  /\ serverSeen \in SUBSET (Keys \union Secrets)
+  /\ userSeen   \in [Users -> SUBSET (Keys \union Secrets)]
+  /\ data       \in [encrypted: {Data},  key: Keys] \* This is a blob which if decrypted with .key, would produce .encrypted
+  /\ key        \in [encrypted: Keys,    key: Keys] \* This is a blob which if decrypted with .key, would produce .encrypted
+  /\ secretE    \in [encrypted: Secrets, key: Keys]
+  /\ secret     \in Secrets
+  /\ oldSecrets \in SUBSET Secrets
 
 ValueInvariants ==
-  /\ dbData.key = dbKey.encrypted   \* keyKey unlocks dataKey
-  /\ dbKey.key = dbSecretE.key      \* dataKey & secretE encrypted by same key
-  /\ dbSecretE.encrypted = dbSecret \* dbSecret & dbSecretE are the same secret
-  /\ PrintT([serverSeen |-> serverSeen, userSeen |-> userSeen, dbData |-> dbData, dbKey |-> dbKey, dbSecret |-> dbSecret, dbSecretE |-> dbSecretE, dbOldSecrets |-> dbOldSecrets]) \* debug
+  /\ key.encrypted = data.key   \* keyKey unlocks dataKey
+  /\ secretE.key = key.key      \* secretE encrypted by keyKey
+  /\ secretE.encrypted = secret \* secret & secretE are the same secret
+  \* debug
+  /\ PrintT([serverSeen |-> serverSeen, userSeen |-> userSeen, data |-> data, key |-> key, secret |-> secret, secretE |-> secretE, oldSecrets |-> oldSecrets])
 
 SanityChecksT ==
   /\ serverSeen \subseteq serverSeen'
   /\ \A u \in Users : userSeen[u] \subseteq userSeen'[u]
 
 SanityChecks == [][SanityChecksT]_<<vars>>
-  
-SafeFromServer ==
-  LET CanDecryptData == dbData.key \in serverSeen
-      CanDecryptKey  == dbKey.key \in serverSeen
-  IN ~(CanDecryptData \/ CanDecryptKey)
-
-SafeFromUsersWithoutKeyKey ==
-  /\ \A u \in UsersWithoutKeyKey :
-    /\ TRUE \* TODO: Depends on the protocol.
-
-OpenToUsersWithKeyKey ==
-  /\ \A u \in UsersWithKeyKey :
-    /\ TRUE \* TODO: Depends on the protocol.
 
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -144,25 +131,59 @@ ServerSees(s)  == serverSeen' = serverSeen \union s
 
 Init ==
   LET u       == CHOOSE u \in Users : TRUE
-      secret  == CHOOSE s \in Secrets : TRUE
-      dataKey == CHOOSE k \in Keys : TRUE
-      keyKey  == CHOOSE k \in Keys : k /= dataKey
+      dataKey == CHOOSE k \in Keys  : TRUE
+      keyKey  == CHOOSE k \in Keys  : k /= dataKey
   IN
-    /\ dbSecret     = secret
-    /\ serverSeen   = {secret}
-    /\ dbData       = [encrypted |-> Data,    key |-> dataKey]
-    /\ dbKey        = [encrypted |-> dataKey, key |-> keyKey]
-    /\ dbSecretE    = [encrypted |-> secret,  key |-> keyKey]
-    /\ userSeen     = [i \in Users |-> IF i = u THEN {dataKey, keyKey, secret} ELSE {}]
-    /\ dbOldSecrets = {}
+    /\ secret     = CHOOSE s \in Secrets : TRUE
+    /\ serverSeen = {secret}
+    /\ data       = [encrypted |-> Data,    key |-> dataKey]
+    /\ key        = [encrypted |-> dataKey, key |-> keyKey]
+    /\ secretE    = [encrypted |-> secret,  key |-> keyKey]
+    /\ userSeen   = [i \in Users |-> IF i = u THEN {dataKey, keyKey, secret} ELSE {}]
+    /\ oldSecrets = {}
+
+ReadProjectU(u) ==
+  /\ \/ key.key \in userSeen[u]
+     \/ secret \in userSeen[u] /\ data.key \in userSeen[u]
+  /\ UserSees(u, {data.key, secret})
+  /\ UNCHANGED << serverSeen, data, key, secret, secretE, oldSecrets >>
+
+ReadProject ==
+  \E u \in Users : ReadProjectU(u)
+
+\* Users can share secrets between themselves offline
+\* In terms of keyKeys, that's expected and recommended.
+\* In terms of secrets & dataKeys, those are hacking attempts.
+UsersShareSecrets ==
+  \E u1 \in Users :
+  \E s  \in userSeen[u1] :
+  \E u2 \in Users :
+    /\ u1 /= u2
+    /\ s \notin userSeen[u2]
+    /\ UserSees(u2, {s})
+    /\ UNCHANGED << serverSeen, data, key, secret, secretE, oldSecrets >>
 
 Next ==
-  \/ FALSE
+  \/ ReadProject
+  \/ UsersShareSecrets
   
 -----------------------------------------------------------------------------------------------------------------------
 
+SafeFromServer ==
+  LET CanDecryptData == data.key \in serverSeen
+      CanDecryptKey  == key.key \in serverSeen
+  IN ~(CanDecryptData \/ CanDecryptKey)
+
+SafeFromUsersWithoutKeyKey ==
+  /\ \A u \in UsersWithoutKeyKey :
+    /\ ~ENABLED(ReadProjectU(u))
+
+OpenToUsersWithKeyKey ==
+  /\ \A u \in UsersWithKeyKey :
+    /\ ENABLED(ReadProjectU(u))
+
 \* The only TLA+ operator that can produce a non-symmetric expression when applied to a symmetric expression is CHOOSE
-\* MCSymmetry == Permutations(Keys) \union Permutations(Users)
+\* MCSymmetry == nope
 
 Spec == Init /\ [][Next]_<<vars>>
 
