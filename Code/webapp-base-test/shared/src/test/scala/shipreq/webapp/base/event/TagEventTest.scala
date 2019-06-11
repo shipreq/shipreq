@@ -160,7 +160,7 @@ abstract class SharedTagEventTests extends TestSuite {
 
       def testTagFieldLiveness(imp: Live, exp: Live)(es: Event*): Unit = {
         val p = _assertPass(es: _*)
-        val f = p.config.customField(createTagField1.id)
+        val f = p.config.fields.custom(createTagField1.id)
         assertEq("live", imp, f live p.config)
         assertEq("liveExplicitly", exp, f.liveExplicitly)
       }

@@ -38,7 +38,7 @@ object ImplicationEditor {
       Lookup(AutoComplete.Project.reqItems(p, pt), UnivEq.emptyMap)
 
     def forCustomColumn(p: Project, l: Lookup, fid: CustomField.Implication.Id): Lookup = {
-      val f = p.config.customField(fid)
+      val f = p.config.fields.custom(fid)
       l.outlaw(_.reqType.reqTypeId !=* f.reqTypeId, i => Invalidity(i.pubidStr + " is not applicable in this column"))
     }
   }

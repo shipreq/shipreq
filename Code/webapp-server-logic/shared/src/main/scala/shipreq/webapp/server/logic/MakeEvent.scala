@@ -126,19 +126,19 @@ object MakeEvent {
         FieldCustomImpCreate(id, gdAllValues(CustomImpFieldGD, "vs"))
 
       case CfgAction.UpdateValues(id: CustomField.Text.Id, vs: TextFieldValues) =>
-        project.config.customFieldAttempt(id) toMakeEventResult { cur =>
+        project.config.fields.customAttempt(id) toMakeEventResult { cur =>
           val vs2 = gdUnequalValues(CustomTextFieldGD, cur, "vs")
           eventIfNonEmpty(vs2)(FieldCustomTextUpdate(id, _))
         }
 
       case CfgAction.UpdateValues(id: CustomField.Tag.Id, vs: TagFieldValues) =>
-        project.config.customFieldAttempt(id) toMakeEventResult { cur =>
+        project.config.fields.customAttempt(id) toMakeEventResult { cur =>
           val vs2 = gdUnequalValues(CustomTagFieldGD, cur, "vs")
           eventIfNonEmpty(vs2)(FieldCustomTagUpdate(id, _))
         }
 
       case CfgAction.UpdateValues(id: CustomField.Implication.Id, vs: ImplicationFieldValues) =>
-        project.config.customFieldAttempt(id) toMakeEventResult { cur =>
+        project.config.fields.customAttempt(id) toMakeEventResult { cur =>
           val vs2 = gdUnequalValues(CustomImpFieldGD, cur, "vs")
           eventIfNonEmpty(vs2)(FieldCustomImpUpdate(id, _))
         }

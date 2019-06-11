@@ -147,7 +147,7 @@ trait ApplyConfigEvent {
 
     private def hardDelete(id: CustomReqTypeId): SE[Unit] = {
       def deleteImpFields: SE[Unit] =
-        SE.get(_.config.customImpFields.filter(_.reqTypeId ==* id))
+        SE.get(_.config.fields.customImpFields.filter(_.reqTypeId ==* id))
           .flatMap(SE.foldMapRun(_)(f => FieldEvents.hardDelete(f.id)))
 
       def removeFromReqTypeApplicability: SE[Unit] =

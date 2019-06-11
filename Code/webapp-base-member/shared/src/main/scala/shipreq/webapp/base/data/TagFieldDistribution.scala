@@ -42,13 +42,13 @@ object TagFieldDistribution {
 
     override val inField =
       Memo { (fid: CustomField.Tag.Id) =>
-        val field = p.customField(fid)
+        val field = p.fields.custom(fid)
         val tag = tagTree.need(field.tagId)
         tag.transitiveChildren.toIterator.filterSubType[ApplicableTagId].toSet
       }
 
     override lazy val usedInFields = {
-      val tagIds = p.customTagFields filter tagFieldFilter map (_.id)
+      val tagIds = p.fields.customTagFields filter tagFieldFilter map (_.id)
       tagIds.foldLeft(Set.empty[ApplicableTagId])(_ | inField(_))
     }
 

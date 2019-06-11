@@ -7,10 +7,12 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle._
 import monocle.macros.{GenLens, Lenses}
 import scala.collection.immutable.ListSet
-import scalaz.Equal
+import scalaz.{-\/, Equal, \/}
+import scalaz.std.option.toRight
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.base.util.ScalaExt._
+import shipreq.webapp.base.util.Must._
 import shipreq.webapp.base.WebappConfig
 import TaggedTypes.{TaggedInt, TaggedString}
 import IndexLabel._
@@ -497,6 +499,34 @@ final case class FieldSet(customFields: FieldSet.CustomFields,
 
   def staticFieldSet: ListSet[StaticField] =
     staticFieldIterator.to
+
+  val applicability: Applicability.Default =
+    Applicability(get(_) match {
+      case Some(f) => f.applicable
+      case None    => Applicable.never
+    })
+
+  def custom[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): D = {
+    val f = customFields.need(id)
+    d.unapplyData(f) mustExistElse s"$id associated with wrong type: $f"
+  }
+
+  def customAttempt[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): String \/ D =
+    customFields.get(id) match {
+      case Some(f) =>
+        toRight(d unapplyData f)(s"$id associated with wrong type: $f")
+      case None =>
+        -\/(s"$id not found.")
+    }
+
+  lazy val customImpFields: List[CustomField.Implication] =
+    customFields.valuesIterator.filterSubType[CustomField.Implication].toList
+
+  lazy val customTagFields: List[CustomField.Tag] =
+    customFields.valuesIterator.filterSubType[CustomField.Tag].toList
+
+  lazy val customTextFields: List[CustomField.Text] =
+    customFields.valuesIterator.filterSubType[CustomField.Text].toList
 }
 
 object FieldSet {

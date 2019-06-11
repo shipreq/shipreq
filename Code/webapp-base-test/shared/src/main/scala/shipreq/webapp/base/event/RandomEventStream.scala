@@ -250,13 +250,13 @@ final class ApplicableEventGen(curState: State) {
     tryGenChooseLiveDead(l => cfg.fields.customFields.valuesIterator.filter(_.live(cfg) is l).map(_.id))
 
   val customFieldImpId: Live => Option[Gen[CustomField.Implication.Id]] =
-    tryGenChooseLiveDead(l => cfg.customImpFields.filter(_.live(cfg) is l).map(_.id))
+    tryGenChooseLiveDead(l => cfg.fields.customImpFields.filter(_.live(cfg) is l).map(_.id))
 
   val customFieldTagId: Live => Option[Gen[CustomField.Tag.Id]] =
-    tryGenChooseLiveDead(l => cfg.customTagFields.filter(_.live(cfg) is l).map(_.id))
+    tryGenChooseLiveDead(l => cfg.fields.customTagFields.filter(_.live(cfg) is l).map(_.id))
 
   val customFieldTextId: Live => Option[Gen[CustomField.Text.Id]] =
-    tryGenChooseLiveDead(l => cfg.customTextFields.filter(_.live(cfg) is l).map(_.id))
+    tryGenChooseLiveDead(l => cfg.fields.customTextFields.filter(_.live(cfg) is l).map(_.id))
 
   lazy val customTextFieldTextAtom: Gen[Text.CustomTextField.Atom] =
     TextGen.customTextFieldAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingCustomIssueTypeId, existingApplicableTagId)
@@ -340,7 +340,7 @@ final class ApplicableEventGen(curState: State) {
     import gd._
 
     private def reqTypesUsedInFields: Set[ReqTypeId] =
-      cfg.customImpFields.map(_.reqTypeId).toSet
+      cfg.fields.customImpFields.map(_.reqTypeId).toSet
 
     private def liveReqTypes: Iterator[ReqTypeId] =
       StaticReqType.values.iterator.map(_.reqTypeId) ++

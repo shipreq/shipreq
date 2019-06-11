@@ -38,7 +38,7 @@ trait ApplyContentEvent {
 
     def ensureLiveTextFieldId(id: CustomField.Text.Id): SE[Unit] =
       whenUntrusted(
-        SE.getE(_.config.customFieldAttempt(id)) >>= ensureLiveTextField)
+        SE.getE(_.config.fields.customAttempt(id)) >>= ensureLiveTextField)
 
     def ensureLiveTextField(cf: CustomField.Text): SE[Unit] =
       SE.feed(p => ensureLive(cf live p.config)(show(cf)))
