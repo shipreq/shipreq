@@ -55,7 +55,7 @@ private[issues] object CustomIssueTypes {
 
   private def validatorState(k: Option[CustomIssueTypeId], g: CallbackTo[Global]): S => V.State = {
     val tagData: Px[List[(Option[TagId], HashRefKey)]] =
-      Px.callback(g.map(_.unsafeProject().config.tags)).withReuse.autoRefresh
+      Px.callback(g.map(_.unsafeProject().config.tags.tree)).withReuse.autoRefresh
         .map(_.valuesIterator.map(t => t.tag.keyO.map(k => (t.tag.id.some, k))).filterDefined.toList)
 
     val tags: VH.SubState[TagId] =

@@ -229,7 +229,7 @@ private[fields] object MainTable {
     val fieldOrder = project.config.fields.order
 
     val appReqTypesEditor = new AppReqTypesEditor(project.config.reqTypes.custom.values)
-    val tagSelector       = SelectOneStartNone.tag(project.config.tags)
+    val tagSelector       = SelectOneStartNone.tag(project.config.tags.tree)
     val reqTypeSelector   = SelectOneStartNone.reqType(project.config.reqTypes.all.whole)
 
     val reqtypesE = appReqTypesEditor.editor($ zoomStateL State.appReqTypeStates)
@@ -264,7 +264,7 @@ private[fields] object MainTable {
         // Add custom field types
         val allowNewCustomFieldType: CustomFieldType => Boolean = {
           case CustomFieldType.Text        => false // Already added as proof of non-emptyness
-          case CustomFieldType.Tag         => project.config.tags.values.toStream
+          case CustomFieldType.Tag         => project.config.tags.tree.values.toStream
                                                 .filter(TagInTree.filterLive)
                                                 .exists(t => !s.tagFieldTagIds.contains(t.id))
           case CustomFieldType.Implication => project.config.reqTypes.all.whole
@@ -524,7 +524,7 @@ private[fields] object MainTable {
       override def renderDead(s: S, dragHandle: VdomTag, rs: RowStatus, f: CustomField.Tag, restoreButton: TagMod): VdomTag =
         renderRow(rs)(
           dragHandle = dragHandle,
-          name       = f.name(project.config.tags),
+          name       = f.name(project.config.tags.tree),
           refkey     = unusedField,
           mandatory  = staticMandatoryCheckbox(f.mandatory),
           reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),

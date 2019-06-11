@@ -218,10 +218,10 @@ object Sorter {
       p.config.reqTypes.order
 
     lazy val tagByNameOrder: TagOrder =
-      DataLogic.tagOrderByName(p.config.tags)
+      DataLogic.tagOrderByName(p.config.tags.tree)
 
     lazy val tagByPosOrder: TagOrder =
-      DataLogic.tagOrderByPos(p.config.tags)
+      DataLogic.tagOrderByPos(p.config.tags.tree)
   }
 
   def pubidNormaliser(setup: Setup): Pubid => (Int, Int) =

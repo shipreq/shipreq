@@ -138,6 +138,7 @@ object BinCodecMemberData {
   implicit lazy val pickleTag          : Pickler[Tag          ] = pickleADT
   implicit lazy val pickleTagInTree    : Pickler[TagInTree    ] = pickleCaseClass
   implicit lazy val pickleTagTree      : Pickler[TagTree      ] = pickleIMap(TagTree.empty)
+  implicit lazy val pickleTags         : Pickler[Tags         ] = pickleCaseClass
 
   implicit lazy val pickleApplReqTypes     : Pickler[Field.ApplicableReqTypes             ] = pickleISubset
   implicit lazy val pickleCustomFieldTypeIM: Pickler[CustomFieldType.Implication.type     ] = pickleObject

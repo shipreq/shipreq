@@ -35,7 +35,7 @@ object TagFieldDistribution {
   final class TagIds(p: ProjectConfig, tagFieldFilter: CustomField.Tag => Boolean) extends TagFieldDistribution[Set[ApplicableTagId]] {
     // Traversing the tag tree for used columns is better than calculating the full
     // transitive closure at O(V²) space and O(V²+VE) time.
-    private[this] implicit val tagTree = p.tags
+    private[this] implicit val tagTree = p.tags.tree
 
     override lazy val all =
       tagTree.valuesIterator.map(_.tag.id).filterSubType[ApplicableTagId].toSet
@@ -56,7 +56,7 @@ object TagFieldDistribution {
       all -- usedInFields
 
     lazy val tags: TagFieldDistribution[Set[ApplicableTag]] =
-      map(_ map p.atag)
+      map(_ map p.tags.atag)
   }
 
   // ===================================================================================================================

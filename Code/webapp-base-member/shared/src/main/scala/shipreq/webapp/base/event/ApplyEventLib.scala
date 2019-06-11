@@ -99,7 +99,7 @@ private[event] object ApplyEventLib {
     whenUntrusted(
       for {
         p <- SE.get
-        t <- imapNeed(p.config.tags)(id)
+        t <- imapNeed(p.config.tags.tree)(id)
         _ <- ensureLive(t.tag.live)(show(id))
       } yield ())
 

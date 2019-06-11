@@ -99,7 +99,7 @@ case class Changes(ves: VerifiedEvent.NonEmptySeq, p1: Project, p2: Project) {
 
   val tags: Set[TagId] =
     if (_tagsChanged)
-      compareMaps(_.config.tags)(_.keySet)((_,m,i) => m need i)
+      compareMaps(_.config.tags.tree)(_.keySet)((_, m, i) => m need i)
     else
       emptySet
 

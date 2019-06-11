@@ -102,7 +102,7 @@ object SampleProject {
       reqtable.SavedViews.empty,
       _))
 
-  lazy val tagTree = project.config.tags.mapValues(_.children)
+  lazy val tagTree = project.config.tags.tree.mapValues(_.children)
 
   // lazy val tagTreeB = BiMultimap(Multimap(tagTree.mapValues(_.toSet)))
 }

@@ -17,7 +17,7 @@ object HashScope {
   case object CfgIssueTypes   extends WithProjectAccess(_.config.customIssueTypes)
   case object CfgReqTypes     extends WithProjectAccess(_.config.reqTypes)
   case object CfgFields       extends WithProjectAccess(_.config.fields)
-  case object CfgTags         extends WithProjectAccess(_.config.tags)
+  case object CfgTags         extends WithProjectAccess(_.config.tags.tree)
   case object GenericReqs     extends WithProjectAccess(_.content.reqs.genericReqs)
   case object UseCases        extends WithProjectAccess(_.content.reqs.useCases)
   case object PubidRegister   extends WithProjectAccess(_.content.reqs.pubids)

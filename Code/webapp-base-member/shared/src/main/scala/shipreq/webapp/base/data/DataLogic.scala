@@ -46,7 +46,7 @@ object DataLogic {
 
     fd match {
       case HideDead =>
-        val deadTags = p.config.deadATagIds
+        val deadTags = p.config.tags.deadATagIds
         Memo { id =>
           val inText = tagsInText(id).live
           val liveTags = (reqTags(id) | inText) &~ deadTags // Dead tags on live reqs are ignored unless in text

@@ -18,8 +18,8 @@ object ProjectConfig {
     val cit = emptyDataMap(CustomIssueType)
     val rt  = ReqTypes.empty
     val fs  = FieldSet(emptyDataMap(CustomField), StaticField.values.whole)
-    val tt  = TagTree.empty
-    ProjectConfig(cit, rt, fs, tt)
+    val ts  = Tags.empty
+    ProjectConfig(cit, rt, fs, ts)
   }
 }
 
@@ -27,34 +27,13 @@ object ProjectConfig {
 final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
                                reqTypes        : ReqTypes,
                                fields          : FieldSet,
-                               tags            : TagTree) {
+                               tags            : Tags) {
 
   val applicability: Applicability.Default =
     Applicability(fields.get(_) match {
       case Some(f) => f.applicable
       case None    => Applicable.never
     })
-
-  def atagValidate(id: ApplicableTagId): Option[String] =
-    tags.get(id) match {
-      case Some(tit) => tit.tag match {
-        case _: ApplicableTag => None
-        case t: TagGroup      => Some(s"$t is not an ApplicableTag.")
-      }
-      case None               => Some(s"$id not found.")
-    }
-
-  def atag(id: ApplicableTagId): ApplicableTag =
-    tags.need(id).tag match {
-      case a: ApplicableTag => a
-      case t: TagGroup      => mustNotHappen(s"$t is not an ApplicableTag.")
-    }
-
-  def atagIterator: Iterator[ApplicableTag] =
-    tags.valuesIterator.map(_.tag).filterSubType[ApplicableTag]
-
-  lazy val deadATagIds: Set[ApplicableTagId] =
-    atagIterator.filter(_.live is Dead).map(_.id).toSet
 
   def customField[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): D = {
     val f = fields.customFields.need(id)
@@ -95,13 +74,12 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
 
   /** Keys are lowercase */
   lazy val hashRefLookupM: Map[String, HashRefTarget] =
-    ( atagIterator                   .map(t => (t.key.value.toLowerCase, -\/(t))) ++
+    ( tags.atagIterator()            .map(t => (t.key.value.toLowerCase, -\/(t))) ++
       customIssueTypes.valuesIterator.map(t => (t.key.value.toLowerCase, \/-(t)))
     ).toMap
 
   def hashRefLookup(key: String): Option[HashRefTarget] =
     hashRefLookupM.get(key.toLowerCase)
 
-  def live(id: TagId    ): Live = tags.need(id).tag.live
   def live(id: ReqTypeId): Live = reqTypes.need(id).live
 }

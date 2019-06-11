@@ -69,8 +69,8 @@ object GenerateProject {
     val reqTypeIds      = StaticReqType.values ++ reqtypes.keys
     val reqTypeIdSet    = reqTypeIds.whole.toSet
     val fields          = sample($.fieldSet2(reqTypeIdSet, tags.keySet, reqtypes.keySet), Size.CfgFields)
-    val cfg             = ProjectConfig(issues, ReqTypes(reqtypes), fields, tags)
-    val atagIds         = cfg.tags.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
+    val cfg             = ProjectConfig(issues, ReqTypes(reqtypes), fields, Tags(tags))
+    val atagIds         = cfg.tags.tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
     val reqsWithoutText = firstSample($.reqsWithoutText(cfg, genericReqCount, useCaseCount), 20)
     val reqIdSet        = reqsWithoutText.idIterator.toSet
     val reqIdG          = Gen tryGenChoose reqIdSet.toIndexedSeq

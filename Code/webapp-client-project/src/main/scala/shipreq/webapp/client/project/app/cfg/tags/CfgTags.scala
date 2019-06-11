@@ -98,7 +98,7 @@ private[tags] object MainTable {
   def initialState(p: Props): S = {
     val tgs = Seq.newBuilder[TagGroup]
     val ats = Seq.newBuilder[ApplicableTag]
-    val tagtree = p.global.unsafeProject().config.tags
+    val tagtree = p.global.unsafeProject().config.tags.tree
     tagtree.values.foreach(_.tag match {
       case t: TagGroup      => tgs += t
       case t: ApplicableTag => ats += t
@@ -128,7 +128,7 @@ private[tags] object MainTable {
   case class PovTag(tag: Tag, rels: TagInTree.Relations)
 
   def povTagLookup(p: Project): Id => Option[PovTag] = {
-    val tt = p.config.tags
+    val tt = p.config.tags.tree
     val tree = tt.mapValues(_.children)
     id => tt.get(id).map(v => PovTag(v.tag, MMTree.Relations.derive(v.tag.id, tree)))
   }

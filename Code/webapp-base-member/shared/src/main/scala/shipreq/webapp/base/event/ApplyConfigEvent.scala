@@ -166,7 +166,7 @@ trait ApplyConfigEvent {
     type Children = TagInTree.Children
     type Parents  = TagInTree.Parents
 
-    val imap = IMapStore(Project.tags)
+    val imap = IMapStore(Project.tagTree)
 
     val validateName = validateA(V.tag.name.stateless)
     val validateDesc = validateO(V.tag.desc.stateless)
@@ -175,7 +175,7 @@ trait ApplyConfigEvent {
     val updateIdCeiling = updateIdCeilingFn(IdCeilings.tag)
 
     def debugPrintTagTree(name: String): SE[Unit] =
-      SE.get(_.config.tags).map(tt =>
+      SE.get(_.config.tags.tree).map(tt =>
         println(s"\n$name\n${TagTree prettyPrint tt}\n"))
 
     def ensureParentsValid(id: TagId, p: Parents, tt: TagTree): SE[Unit] =
@@ -189,7 +189,7 @@ trait ApplyConfigEvent {
 
     def create(tit: TagInTree, parents: Option[Parents]): SE[Unit] =
       imap.create(tit) >>
-      parents.fold(SE.nop)(p => lensMod(Project.tags)(updateParents(_, tit.id, p))) >>
+      parents.fold(SE.nop)(p => lensMod(Project.tagTree)(updateParents(_, tit.id, p))) >>
       updateIdCeiling(tit.id)
 
     def applyDelete(e: TagDelete): SE[Unit] =
@@ -229,7 +229,7 @@ trait ApplyConfigEvent {
           modifyChildren(subj.children, id, subjLive, tt2)
         }
 
-      lensMod(Project.tags)(go(rootId, _))
+      lensMod(Project.tagTree)(go(rootId, _))
     }
   }
 
@@ -263,7 +263,7 @@ trait ApplyConfigEvent {
     }
 
     protected final def update(id: TagId, f: UpdateVars => Unit): SE[Unit] =
-      lensMod(Project.tags)(tt =>
+      lensMod(Project.tagTree)(tt =>
         imapNeed(tt)(id) >>= { tit =>
           val vars = new UpdateVars(id, tt, tit)
           f(vars)

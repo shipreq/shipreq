@@ -117,7 +117,7 @@ object Field {
   }
 
   def nameFromProject(p: Project): Field => String =
-    name(p.config.reqTypes, p.config.tags)
+    name(p.config.reqTypes, p.config.tags.tree)
 
   def nameByIdFromProject(p: Project): FieldId => String = {
     val fieldToName = nameFromProject(p)
@@ -379,7 +379,7 @@ object CustomField {
       tags.need(tagId).tag.name
 
     override def live(cfg: ProjectConfig) =
-      liveExplicitly & cfg.live(tagId)
+      liveExplicitly & cfg.tags.live(tagId)
   }
   object Tag {
     final case class Id(value: Int) extends CustomFieldId  {
@@ -458,7 +458,7 @@ object CustomField {
     case f: Implication => f.name(reqTypes)
   }
 
-  def nameP(p: Project) = name(p.config.reqTypes, p.config.tags)
+  def nameP(p: Project) = name(p.config.reqTypes, p.config.tags.tree)
 
   implicit def equalImplication: UnivEq[Implication] = UnivEq.derive
   implicit def equalTag        : UnivEq[Tag]         = UnivEq.derive

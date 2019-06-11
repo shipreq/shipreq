@@ -184,7 +184,7 @@ object ShowSize {
       })
 
   implicit def projectConfig: ShowSize[ProjectConfig] =
-    ShowSize.data4("Project config", _.customIssueTypes, _.reqTypes.custom, _.fields, _.tags)
+    ShowSize.data4("Project config", _.customIssueTypes, _.reqTypes.custom, _.fields, _.tags.tree)
 
   def projectContent: ShowSize[ProjectContent] =
     ShowSize.data5("Project content", _.reqs, _.reqCodes, _.reqText, _.reqTags, _.implications)

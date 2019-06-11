@@ -37,6 +37,8 @@ trait UnsafeTypesLowPriority {
 
 trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
 
+  implicit def autoTagsFromTree(t: TagTree) = Tags(t)
+
   implicit def autoMnemonic   (s: String) = ReqType.Mnemonic(s)
   implicit def autoHashRefKey (s: String) = HashRefKey(s)
   implicit def autoFieldRefKey(s: String) = FieldRefKey(s)

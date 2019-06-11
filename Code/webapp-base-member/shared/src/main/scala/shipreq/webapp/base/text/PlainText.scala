@@ -154,7 +154,7 @@ object PlainText {
       G.reflinkSurround(useCaseStepLabelById(id))
 
     private def tagRef(id: ApplicableTagId): String = {
-      val t = p.config.atag(id)
+      val t = p.config.tags.atag(id)
       hashtag(t.key)
     }
 

@@ -515,13 +515,13 @@ object DataProp {
         customIssueTypes.all.contramap[P](_.customIssueTypes)
       ∧   customReqTypes.all.contramap[P](_.reqTypes)
       ∧           fields.all.contramap[P](_.fields)
-      ∧             tags.all.contramap[P](_.tags)
+      ∧             tags.all.contramap[P](_.tags.tree)
     ) rename "constituents"
 
     def uniqueHashRefKeys =
       Prop.distinctI[P, String]("HashRefKey", p => (
           p.customIssueTypes.valuesIterator.map(_.key) ++
-          p.tags.valuesIterator.map(_.tag.keyO).filterDefined
+          p.tags.tree.valuesIterator.map(_.tag.keyO).filterDefined
         ).map(_.value.toLowerCase))
 
     def validRefs = {
@@ -529,7 +529,7 @@ object DataProp {
 
       def mkRefs(p: ProjectConfig): Refs = Refs(
         p.reqTypes.all.whole.map(_.reqTypeId)(collection.breakOut),
-        p.tags.keySet)
+        p.tags.tree.keySet)
 
       def whitelist[A](refs: TR => Set[A])(name: String, test: P => TraversableOnce[A]) =
         // Two steps here results in better failure messages
@@ -653,7 +653,7 @@ object DataProp {
         p.content.reqCodes.idSet,
         p.content.reqs.useCases.stepIterator.map(_.id).toSet,
         p.config.reqTypes.all.whole.map(_.reqTypeId)(collection.breakOut),
-        p.config.tags.keySet)
+        p.config.tags.tree.keySet)
 
       def whitelist[A](refs: TR => Set[A])(name: String, test: P => TraversableOnce[A]): Prop[TR] =
         // Two steps here results in better failure messages

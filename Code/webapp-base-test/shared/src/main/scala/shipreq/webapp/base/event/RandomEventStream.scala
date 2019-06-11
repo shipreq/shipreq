@@ -181,16 +181,16 @@ final class ApplicableEventGen(curState: State) {
     IncCounter genInt p.idCeilings.reqtableView map SavedView.Id
 
   val tagId: Live => Option[Gen[TagId]] =
-    tryGenChooseLiveDead(l => p.config.tags.valuesIterator.map(_.tag).filter(_.live is l).map(_.id))
+    tryGenChooseLiveDead(l => p.config.tags.tree.valuesIterator.map(_.tag).filter(_.live is l).map(_.id))
 
   val tagGroupId: Live => Option[Gen[TagGroupId]] =
-    tryGenChooseLiveDead(l => p.config.tags.valuesIterator.map(_.tag).filterSubType[TagGroup].filter(_.live is l).map(_.id))
+    tryGenChooseLiveDead(l => p.config.tags.tree.valuesIterator.map(_.tag).filterSubType[TagGroup].filter(_.live is l).map(_.id))
 
   val applicableTagId: Live => Option[Gen[ApplicableTagId]] =
-    tryGenChooseLiveDead(l => p.config.tags.valuesIterator.map(_.tag).filterSubType[ApplicableTag].filter(_.live is l).map(_.id))
+    tryGenChooseLiveDead(l => p.config.tags.tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag].filter(_.live is l).map(_.id))
 
   lazy val existingApplicableTagId: Option[Gen[ApplicableTagId]] =
-    Gen.tryGenChoose(p.config.tags.keysIterator.filterSubType[ApplicableTagId])
+    Gen.tryGenChoose(p.config.tags.tree.keysIterator.filterSubType[ApplicableTagId])
 
   def tagChildren: Gen[TagInTree.Children] =
     tagId(Live) match {

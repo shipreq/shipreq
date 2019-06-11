@@ -2,6 +2,7 @@ package shipreq.webapp.base.data
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop.CycleDetector
 import monocle.Lens
 import monocle.macros.{GenLens, Lenses}
@@ -9,6 +10,7 @@ import scala.annotation.tailrec
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.base.util.TaggedTypes.TaggedInt
+import shipreq.webapp.base.util.Must._
 
 sealed trait TagId extends TaggedInt
 final case class TagGroupId     (value: Int) extends TagId with TaggedInt
@@ -197,4 +199,39 @@ object TagInTree {
       else
         transitiveChildren(queue.tail append focus.lookupChildren, seen + id)
     }
+}
+
+// =====================================================================================================================
+
+object Tags {
+  val empty = apply(TagTree.empty)
+  implicit def univEq: UnivEq[Tags] = UnivEq.derive
+}
+
+@Lenses
+final case class Tags(tree: TagTree) {
+
+  def atagValidate(id: ApplicableTagId): Option[String] =
+    tree.get(id) match {
+      case Some(tit) => tit.tag match {
+        case _: ApplicableTag => None
+        case t: TagGroup      => Some(s"$t is not an ApplicableTag.")
+      }
+      case None               => Some(s"$id not found.")
+    }
+
+  def atag(id: ApplicableTagId): ApplicableTag =
+    tree.need(id).tag match {
+      case a: ApplicableTag => a
+      case t: TagGroup      => mustNotHappen(s"$t is not an ApplicableTag.")
+    }
+
+  def atagIterator(): Iterator[ApplicableTag] =
+    tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag]
+
+  lazy val deadATagIds: Set[ApplicableTagId] =
+    atagIterator().filter(_.live is Dead).map(_.id).toSet
+
+  def live(id: TagId): Live =
+    tree.need(id).tag.live
 }

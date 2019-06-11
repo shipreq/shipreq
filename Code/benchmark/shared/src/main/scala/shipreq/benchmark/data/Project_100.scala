@@ -764,7 +764,7 @@ object Project_100 {
           customIssueTypes,
           ReqTypes(customReqTypes),
           fieldSet,
-          tagTree),
+          Tags(tagTree)),
         ProjectContent(
           Requirements(reqsById, UseCases.empty, pubidRegister),
           ReqCodes(reqCodeTrie),

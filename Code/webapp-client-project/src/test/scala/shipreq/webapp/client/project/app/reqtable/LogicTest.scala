@@ -48,7 +48,7 @@ object LogicTestUtil {
   }
 
   def applicableTag(p: Project): ApplicableTagId => ApplicableTag =
-    id => p.config.tags.get(id).map(_.tag) match {
+    id => p.config.tags.tree.get(id).map(_.tag) match {
       case Some(t: ApplicableTag) => t
       case x => sys.error(s"Not an ApplicableTag: $x")
     }

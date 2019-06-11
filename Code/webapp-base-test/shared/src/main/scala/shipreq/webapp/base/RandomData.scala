@@ -1147,7 +1147,7 @@ object RandomData {
       reqTypeIds     = StaticReqType.values ++ reqtypes.keys
       reqTypeIdSet   = reqTypeIds.whole.toSet
       fields         ← fieldSet(reqTypeIdSet, tags.keySet, reqtypes.keySet)
-    } yield ProjectConfig(issues, ReqTypes(reqtypes), fields, tags)
+    } yield ProjectConfig(issues, ReqTypes(reqtypes), fields, Tags(tags))
 
   def genProject(cfg            : ProjectConfig,
                  reqsWithoutText: Requirements,
@@ -1158,7 +1158,7 @@ object RandomData {
     val cissueIdG      = Gen tryGenChoose cissueIds.toSeq
     val activeCodeIds  = reqCodes1.trie.allValues.flatMap(_.activeId.toStream)
     val activeCodeIdG  = Gen tryGenChoose activeCodeIds
-    val atagIds        = cfg.tags.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
+    val atagIds        = cfg.tags.tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
     val atagIdG        = Gen.tryGenChoose(atagIds.toSeq)
     val textColIds     = cfg.fields.customFields.valuesIterator.filterSubType[CustomField.Text].map(_.id).toSet
     val reqIdSet       = reqsWithoutText.idIterator.toSet
@@ -1192,7 +1192,7 @@ object RandomData {
   lazy val project: Gen[Project] =
     for {
       cfg             ← projectConfig
-      atagIds         = cfg.tags.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
+      atagIds         = cfg.tags.tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
       reqCount        ← Gen.chooseSize
       ucCount         ← Gen.chooseSize map (_ >> 1)
       reqsWithoutText ← reqsWithoutText(cfg, reqCount, ucCount)
@@ -1638,7 +1638,7 @@ object RandomData {
 
       def forProject(p: Project): Gen[Valid] = {
         val gy: Option[Gen[ReqTypeId]]         = Gen tryGenChoose p.config.reqTypes.all.whole.map(_.reqTypeId)
-        val gt: Option[Gen[ApplicableTagId]]   = Gen tryGenChoose p.config.atagIterator.map(_.id)
+        val gt: Option[Gen[ApplicableTagId]]   = Gen tryGenChoose p.config.tags.atagIterator.map(_.id)
         val gi: Option[Gen[CustomIssueTypeId]] = Gen tryGenChoose p.config.customIssueTypes.keys.toVector
         gen(flatGens(gy, gt, gi))
       }

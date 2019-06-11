@@ -104,7 +104,7 @@ trait ApplyContentEvent {
     def validateTags(tagIds: => Iterable[ApplicableTagId]): SE[Unit] =
       whenUntrusted(
         SE.testO(p =>
-        tagIds.toStream.map(p.config.atagValidate).find(_.isDefined) match {
+        tagIds.iterator.map(p.config.tags.atagValidate).find(_.isDefined) match {
           case Some(None) | None => None
           case Some(Some(err))   => Some(err)
         }

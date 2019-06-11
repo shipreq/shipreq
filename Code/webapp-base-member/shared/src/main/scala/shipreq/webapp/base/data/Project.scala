@@ -1,6 +1,5 @@
 package shipreq.webapp.base.data
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.utils.Memo
@@ -19,8 +18,8 @@ object Project {
   val customIssueTypes    : Lens[Project, CustomIssueTypeIMap  ] = config  ^|-> ProjectConfig.customIssueTypes
   val reqTypes            : Lens[Project, ReqTypes             ] = config  ^|-> ProjectConfig.reqTypes
   val fields              : Lens[Project, FieldSet             ] = config  ^|-> ProjectConfig.fields
-  val tags                : Lens[Project, TagTree              ] = config  ^|-> ProjectConfig.tags
-  val customFields        : Lens[Project, FieldSet.CustomFields] = fields ^|-> FieldSet.customFields
+  val tagTree             : Lens[Project, TagTree              ] = config  ^|-> ProjectConfig.tags ^|-> Tags.tree
+  val customFields        : Lens[Project, FieldSet.CustomFields] = fields  ^|-> FieldSet.customFields
   val reqs                : Lens[Project, Requirements         ] = content ^|-> ProjectContent.reqs
   val reqCodes            : Lens[Project, ReqCodes             ] = content ^|-> ProjectContent.reqCodes
   val reqText             : Lens[Project, ReqData.Text         ] = content ^|-> ProjectContent.reqText

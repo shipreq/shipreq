@@ -147,7 +147,7 @@ object ApplyEventTestFns {
     assert(cfg.reqTypes.custom.size <= customReqTypes, "Σ CustomReqTypes")
     assert(cfg.fields.customFields.size <= customFields, "Σ CustomFields")
     assertEq("Σ CustomIssueTypes", cfg.customIssueTypes.size, customIssueTypes)
-    assertEq("Σ Tags", tags, cfg.tags.size)
+    assertEq("Σ Tags", tags, cfg.tags.tree.size)
     assertEq("Σ Generic Reqs", genericReqs, p.content.reqs.genericReqs.size)
     assertEq("Σ Use Cases", useCases, p.content.reqs.useCases.imap.size)
     assertEq("Σ Reqs", genericReqs + useCases, p.content.reqs.size)
