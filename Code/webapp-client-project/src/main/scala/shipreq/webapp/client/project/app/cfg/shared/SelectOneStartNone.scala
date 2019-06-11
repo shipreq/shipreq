@@ -3,7 +3,6 @@ package shipreq.webapp.client.project.app.cfg.shared
 import scalaz.Equal
 import scalaz.std.option._
 import japgolly.microlibs.nonempty.NonEmptyVector
-
 import shipreq.webapp.base.data.Enabled
 import shipreq.webapp.client.project.widgets.SelectOne
 import SelectOne.{Props, Choice}
@@ -49,10 +48,8 @@ object SelectOneStartNone {
     new SelectOneStartNone(opts)
   }
 
-  def tag(tt: TagTree): SelectOneStartNone[TagId] = {
-    import FlatTag._
-    val flat = flatten(tt)(Tag.filterLive, FilterPolicy.OmitAnythingWithBadParent)
-    val opts = flat.map(f => Choice(f.id, f.indentedName, Enabled))
+  def tag(tags: Tags): SelectOneStartNone[TagId] = {
+    val opts = tags.flatRowsLive.map(f => Choice(f.id, f.indentedName, Enabled))
     new SelectOneStartNone(opts)
   }
 }

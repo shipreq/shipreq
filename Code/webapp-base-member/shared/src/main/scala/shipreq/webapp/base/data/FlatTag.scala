@@ -35,9 +35,18 @@ object FlatTag {
 
   sealed trait FilterPolicy
   object FilterPolicy {
-    case object OmitNothing               extends FilterPolicy
-    case object OmitBadBranches           extends FilterPolicy
+
+    case object OmitNothing extends FilterPolicy
+
+    /** Omit subtrees consisting solely of bad nodes.
+      *
+      * Bad nodes with good children are retained.
+      */
+    case object OmitBadBranches extends FilterPolicy
+
+    /** Omit subtrees with bad roots, even if the subtree contains good nodes. */
     case object OmitAnythingWithBadParent extends FilterPolicy
+
     implicit def equality: UnivEq[FilterPolicy] = UnivEq.derive
   }
 
@@ -46,11 +55,8 @@ object FlatTag {
   val indentation =
     Memo.int("\u00A0\u00A0" * _)
 
-  def flatten(tt: TagTree) =
-    flatRows(TagTree.topLevelIds(tt), tt.get(_).get) _
-
   def flatRows(topLvlIds: Set[TagId], lookup: TagId => TagInTree)
-              (filter: Tag => Boolean, policy: FilterPolicy): Vector[FlatTag] = {
+              (isGood: Tag => Boolean, policy: FilterPolicy): Vector[FlatTag] = {
     import Status._
     import FilterPolicy._
 
@@ -58,7 +64,7 @@ object FlatTag {
     val omitNothing               = policy ==* OmitNothing
 
     def go(r: Vector[FlatTag], t: TagInTree, depth: Int, parentPath: Vector[TagId]): Vector[FlatTag] =
-      if (filter(t.tag)) {
+      if (isGood(t.tag)) {
         var result = r :+ FlatTag(t.tag, depth, parentPath, Good)
         // Append children directly
         if (t.children.nonEmpty) {
@@ -77,7 +83,7 @@ object FlatTag {
           val nextPP = parentPath :+ t.id
           cs = t.children.foldLeft(cs)((q, id) => go(q, lookup(id), nextDepth, nextPP))
         }
-        val goodKids = cs.exists(_.status == Good)
+        val goodKids = cs.exists(_.status ==* Good)
 
         def result(s: Status) = (r :+ FlatTag(t.tag, depth, parentPath, s)) ++ cs
         if (goodKids)

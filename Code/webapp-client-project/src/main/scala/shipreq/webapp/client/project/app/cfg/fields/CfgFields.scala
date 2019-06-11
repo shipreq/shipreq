@@ -229,7 +229,7 @@ private[fields] object MainTable {
     val fieldOrder = project.config.fields.order
 
     val appReqTypesEditor = new AppReqTypesEditor(project.config.reqTypes.custom.values)
-    val tagSelector       = SelectOneStartNone.tag(project.config.tags.tree)
+    val tagSelector       = SelectOneStartNone.tag(project.config.tags)
     val reqTypeSelector   = SelectOneStartNone.reqType(project.config.reqTypes.all.whole)
 
     val reqtypesE = appReqTypesEditor.editor($ zoomStateL State.appReqTypeStates)

@@ -95,7 +95,7 @@ object ViewReq {
       val tagDist         = DataLogic.tagFieldDist(project.config, filterDead, _ => true)
       val tagLookup       = DataLogic.tagLookup(project, filterDead)
       val tagOrderByName  = DataLogic.tagOrderByName(project.config.tags.tree)
-      val tagOrderByPos   = DataLogic.tagOrderByPos(project.config.tags.tree)
+      val tagOrderByPos   = DataLogic.tagOrderByPos(project.config.tags)
       val generalTagSet   = DataLogic.generalTags(tagDist, tagLookup)(req.id)
       val generalTags     = MutableArray(generalTagSet).sortBy(tagOrderByName.apply).to[Vector]
 

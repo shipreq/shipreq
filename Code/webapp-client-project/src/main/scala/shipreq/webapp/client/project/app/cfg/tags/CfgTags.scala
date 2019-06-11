@@ -73,6 +73,9 @@ private[tags] object MainTable {
 
     lazy val tagTree: TagTree =
       tagStream.foldLeft(TagTree.empty)((q, t) => q add TagInTree(t, tree(t.id)))
+
+    lazy val tags: Tags =
+      Tags(tagTree)
   }
 
   object State {
@@ -230,7 +233,7 @@ private[tags] object MainTable {
 
     def rows(fd: FilterDead, s: State): TagMod = {
       val renderers = (tg_renderer.all(s) #::: at_renderer.all(s)).foldLeft(UnivEq.emptyMap[Id, F])(_ + _)
-      val flatTree  = FlatTag.flatten(s.tagTree)(fd.filterFnBy[Tag](_.live), FilterPolicy.OmitAnythingWithBadParent)
+      val flatTree  = s.tags.flatRows(fd)
       val results   = VdomArray.empty()
 
       // New row
@@ -470,7 +473,7 @@ private[tags] object MainTable {
     def addRels(s: S, subj: Tag, updateIO: UpdateIO, sel: Option[Id], selUpdate: SelUpdate,
                 mod: Id => Relations => Relations, relAlreadyExists: (Relations, Id) => Boolean): AddRels = {
       val filter = addRelFilter(s, subj, mod, relAlreadyExists)
-      val rels = FlatTag.flatten(s.tagTree)(filter, FilterPolicy.OmitNothing)
+      val rels = s.tags.flatRows(filter, FilterPolicy.OmitNothing)
         .filter(_.tag.live is Live)
         .map(row => AddRel(row,
             if (row.status ==* FlatTag.Status.Good) row.id.some else None))

@@ -82,8 +82,8 @@ object DataLogic {
       .iterator
       .mapToOrder
 
-  def tagOrderByPos(tags: TagTree): TagOrder =
-    FlatTag.flatten(tags)(_ => true, FlatTag.FilterPolicy.OmitNothing)
+  def tagOrderByPos(tags: Tags): TagOrder =
+    tags.flatRowsUnfiltered
       .iterator
       .map(_.id)
       .filterSubType[ApplicableTagId]

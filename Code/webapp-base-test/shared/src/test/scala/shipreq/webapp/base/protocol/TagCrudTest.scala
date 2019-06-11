@@ -21,6 +21,9 @@ import Relations.derive
 
 object TagCrudTest extends TestSuite {
 
+  private def flatten(tt: TagTree)(isGood: Tag => Boolean, policy: FilterPolicy): Vector[FlatTag] =
+    Tags(tt).flatRows(isGood, policy)
+
   case class TagProps(tt0: TagTree, povRels: TagInTree.Relations, t: Tag) {
     val E = EvalOver(this)
     val tt = tt0.add(TagInTree(t, Vector.empty))

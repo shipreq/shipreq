@@ -125,7 +125,7 @@ object TagTree {
       "  ")
   }
 
-  def topLevelIds(tt: TagTree): Set[TagId] = {
+  private[data] def topLevelIds(tt: TagTree): Set[TagId] = {
     val allChildren = tt.values.foldLeft(UnivEq.emptySet[TagId])((q, t) => t.children.foldLeft(q)(_ + _))
     tt.keySet -- allChildren
   }
@@ -210,6 +210,7 @@ object Tags {
 
 @Lenses
 final case class Tags(tree: TagTree) {
+  import FlatTag.FilterPolicy
 
   def atagValidate(id: ApplicableTagId): Option[String] =
     tree.get(id) match {
@@ -232,6 +233,25 @@ final case class Tags(tree: TagTree) {
   lazy val deadATagIds: Set[ApplicableTagId] =
     atagIterator().filter(_.live is Dead).map(_.id).toSet
 
+  def flatRows(isGood: Tag => Boolean, policy: FilterPolicy): Vector[FlatTag] =
+    FlatTag.flatRows(topLevelIds, tree.get(_).get)(isGood, policy)
+
+  def flatRows(fd: FilterDead): Vector[FlatTag] =
+    fd match {
+      case HideDead => flatRowsLive
+      case ShowDead => flatRowsUnfiltered
+    }
+
+  lazy val flatRowsLive =
+    flatRows(Tag.filterLive, FilterPolicy.OmitAnythingWithBadParent)
+
+  lazy val flatRowsUnfiltered =
+    flatRows(_ => true, FlatTag.FilterPolicy.OmitNothing)
+
   def live(id: TagId): Live =
     tree.need(id).tag.live
+
+  lazy val topLevelIds: Set[TagId] =
+    TagTree.topLevelIds(tree)
+
 }
