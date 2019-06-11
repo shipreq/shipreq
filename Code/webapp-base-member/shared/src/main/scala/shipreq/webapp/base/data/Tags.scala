@@ -7,6 +7,7 @@ import nyaya.prop.CycleDetector
 import monocle.Lens
 import monocle.macros.{GenLens, Lenses}
 import scala.annotation.tailrec
+import scala.collection.mutable
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.base.util.TaggedTypes.TaggedInt
@@ -118,10 +119,18 @@ object TagTree {
   def prettyPrint(tt: TagTree): String = {
     def lookup(id: TagId) = tt.underlyingMap(id)
     val rootIds = tt.values.foldLeft(tt.keySet)(_ -- _.children)
-    val roots = MutableArray(rootIds.iterator.map(lookup)).sortBy(_.tag.name).array
+    val roots = MutableArray(rootIds.iterator.map(lookup)).sortBy(_.tag.name).iterator.toArray // TODO .array should work
     "TagTree\n" +
     nyaya.util.Util.asciiTree(roots)(_.children.map(lookup),
-      t => s"${t.tag.name} (${t.id.value})${if (t.tag.live ==* Dead) " DEAD" else ""}",
+      t => {
+        val id = t.id.value
+        val isDead = t.tag.live is Dead
+        val isMutex = t.tag match {
+          case t: TagGroup      => t.mutexChildren is MutexChildren
+          case _: ApplicableTag => false
+        }
+        s"${t.tag.name} (#$id)${if (isDead) " [DEAD]" else ""}${if (isMutex) " [MUTEX]" else ""}"
+      },
       "  ")
   }
 
@@ -233,6 +242,43 @@ final case class Tags(tree: TagTree) {
   lazy val deadATagIds: Set[ApplicableTagId] =
     atagIterator().filter(_.live is Dead).map(_.id).toSet
 
+  lazy val exclusiveGroups: ApplicableTagId => Set[TagGroupId] = {
+    val results = mutable.HashMap.empty[ApplicableTagId, Set[TagGroupId]]
+
+    val get: ApplicableTagId => Set[TagGroupId] =
+      results.get(_) match {
+        case Some(ids) => ids
+        case None      => Set.empty
+      }
+
+    def goDown(id: TagId, exclusiveParents: Set[TagGroupId]): Unit = {
+      val t = tree.need(id)
+      if (t.tag.live is Live) {
+
+        val nextExclusiveParents: Set[TagGroupId] =
+          t.tag match {
+
+            case a: ApplicableTag =>
+              if (exclusiveParents.nonEmpty)
+                results.update(a.id, exclusiveParents ++ get(a.id))
+              exclusiveParents
+
+            case g: TagGroup =>
+              g.mutexChildren match {
+                case MutexChildren     => exclusiveParents + g.id
+                case MutexChildren.Not => exclusiveParents
+              }
+          }
+
+        t.children.foreach(goDown(_, nextExclusiveParents))
+      }
+    }
+
+    topLevelIds.foreach(goDown(_, Set.empty))
+
+    get
+  }
+
   def flatRows(isGood: Tag => Boolean, policy: FilterPolicy): Vector[FlatTag] =
     FlatTag.flatRows(topLevelIds, tree.get(_).get)(isGood, policy)
 
@@ -250,6 +296,9 @@ final case class Tags(tree: TagTree) {
 
   def live(id: TagId): Live =
     tree.need(id).tag.live
+
+  def prettyPrint: String =
+    TagTree.prettyPrint(tree)
 
   lazy val topLevelIds: Set[TagId] =
     TagTree.topLevelIds(tree)

@@ -107,6 +107,9 @@ final case class Project(name         : Project.Name,
       content.reqs.idIterator,
       TransitiveClosure.Filter terminalSet deadReqIds)
 
+  def liveReqIterator(): Iterator[Req] =
+    content.reqs.reqIterator.filter(_.live(config.reqTypes) is Live)
+
   def reqtableViewIterator: Iterator[reqtable.SavedView] =
     reqtableViews.fold[Iterator[reqtable.SavedView]](Iterator.empty)(_.iterator)
 

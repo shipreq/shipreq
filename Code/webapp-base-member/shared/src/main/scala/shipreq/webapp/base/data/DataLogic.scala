@@ -107,9 +107,9 @@ object DataLogic {
       id => srcs.iterator.filter(_._2 contains id).map(_._1).toSet
     }
 
-  case class ImpRequiredResult(goodImpGraph: Implications.BiDir,
-                               badIds      : Set[ReqId],
-                               badImpGraph : Implications.BiDir)
+  final case class ImpRequiredResult(goodImpGraph: Implications.BiDir,
+                                     badIds      : Set[ReqId],
+                                     badImpGraph : Implications.BiDir)
 
   def requiringImplication(reqTypes: ReqTypes,
                            imps    : Implications.BiDir,

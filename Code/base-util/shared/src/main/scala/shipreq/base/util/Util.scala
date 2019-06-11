@@ -199,4 +199,21 @@ object Util {
   def partitionConsecutiveBy[F[x] <: Traversable[x], A, B](as: F[A])(f: A => B)
                                                           (implicit cbf: CanBuildFrom[Nothing, A, F[A]], n: Numeric[B]): (F[A], F[A]) =
     partitionBetween(as)((a, b) => !n.equiv(n.plus(f(a), n.one), f(b)))
+
+  def uniqueDupsNested[A, B: UnivEq](as: TraversableOnce[A])(bs: A => TraversableOnce[B]): Set[B] = {
+    var uniq = Set.empty[B]
+    var dups = Set.empty[B]
+    for {
+      a <- as
+      b <- bs(a)
+    }
+      if (!uniq.contains(b))
+        // first sighting
+        uniq += b
+      else if (!dups.contains(b)) {
+        // second sighting
+        dups += b
+      }
+    dups
+  }
 }

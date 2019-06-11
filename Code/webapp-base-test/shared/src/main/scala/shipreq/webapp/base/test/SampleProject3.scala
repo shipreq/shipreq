@@ -24,7 +24,7 @@ object SampleProject3 {
   object Values extends Values
   import Values._
 
-  lazy val project = {
+  lazy val project: Project = {
     import SampleProject.Values._
     val List(p1,p3,p5) = List[ApplicableTagId](4,3,2)
     val (p2,p4) = (p3,p5)
