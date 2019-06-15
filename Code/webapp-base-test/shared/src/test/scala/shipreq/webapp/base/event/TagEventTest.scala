@@ -8,6 +8,7 @@ import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import ApplyEventTestFns._
 import DataImplicits._
+import Event._
 import NoInitialEvents._
 
 abstract class SharedTagEventTests extends TestSuite {

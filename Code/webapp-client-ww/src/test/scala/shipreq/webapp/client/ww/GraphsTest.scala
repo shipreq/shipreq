@@ -7,6 +7,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.ProjectText
+import Event._
 import GraphViz.DOT
 import WebappTestUtil._
 

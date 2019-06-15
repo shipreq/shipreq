@@ -6,6 +6,7 @@ import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.test._
+import Event._
 import WebappTestUtil._
 
 /**

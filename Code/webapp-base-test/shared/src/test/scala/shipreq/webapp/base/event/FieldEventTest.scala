@@ -7,6 +7,7 @@ import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import ApplyEventTestFns._
 import CustomFieldEventTestHelpers._
+import Event._
 
 object CustomFieldEventTestHelpers {
   val onlyUC = onlyReqTypes(StaticReqType.UseCase)

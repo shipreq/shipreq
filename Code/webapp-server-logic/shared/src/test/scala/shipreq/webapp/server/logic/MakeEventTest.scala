@@ -11,6 +11,7 @@ import shipreq.webapp.base.test.SampleProject
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.text.Text
 import AutoNES._
+import Event._
 import SampleProject.Values._
 
 object MakeEventTest extends TestSuite {

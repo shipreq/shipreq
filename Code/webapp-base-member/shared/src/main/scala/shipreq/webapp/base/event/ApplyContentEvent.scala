@@ -13,6 +13,7 @@ import shipreq.webapp.base.text.{Grammar, Text}
 import shipreq.webapp.base.validation.Implicits._
 import ApplyEventLib._
 import DataImplicits._
+import Event._
 import MTrie.Ops
 import SE.{SE, monadSE}
 

@@ -13,6 +13,7 @@ import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes.{ProjectNameSet
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.GenericDataMacros._
 import DataImplicits._
+import Event._
 import ScalaExt._
 import PotentialChange._
 

@@ -2,6 +2,7 @@ package shipreq.webapp.base.event
 
 import utest._
 import ApplyEventTestFns._
+import Event._
 import NoInitialEvents._
 
 object TemplateTest extends TestSuite {

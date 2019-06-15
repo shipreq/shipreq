@@ -1656,6 +1656,7 @@ object RandomData {
   object events {
     import shipreq.webapp.base.event._
     import shipreq.webapp.base.hash._
+    import Event._
 
     val tagChildren: Gen[TagInTree.Children] =
       tagId.vector

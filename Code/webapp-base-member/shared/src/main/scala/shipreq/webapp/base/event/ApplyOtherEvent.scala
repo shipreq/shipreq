@@ -3,6 +3,7 @@ package shipreq.webapp.base.event
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{DataValidators => V, _}
 import ApplyEventLib._, SE.SE
+import Event._
 
 trait ApplyOtherEvent {
   this: ApplyEvent =>

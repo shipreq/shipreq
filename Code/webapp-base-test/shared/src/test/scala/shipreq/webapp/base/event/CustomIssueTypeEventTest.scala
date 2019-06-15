@@ -7,6 +7,7 @@ import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import ApplyEventTestFns._
 import CustomIssueTypeGD._
+import Event._
 import NoInitialEvents._
 
 trait CustomIssueTypeEvents {

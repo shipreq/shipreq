@@ -10,6 +10,7 @@ import shipreq.webapp.base.test.UnsafeTypes
 import shipreq.webapp.base.text.Text.{UseCaseTitle =>  UCT, UseCaseStep => UCST}
 import ApplyEventTestFns._
 import ContentEventTestHelp._
+import Event._
 import StaticField.{NormalAltStepTree => NCAC, ExceptionStepTree => EC}
 import UnsafeTypes._
 import UnsafeTypes.AutoNES._

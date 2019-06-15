@@ -38,7 +38,7 @@ final case class ProjectMetaData(id             : ProjectId.Public,
     var newReqCount = reqCount
     ve.event match {
       case e if Event.reqCreationEventFilter(e) => newReqCount += 1
-      case ProjectNameSet(n)                    => newName = n
+      case e: Event.ProjectNameSet              => newName = e.name
       case _                                    => ()
     }
     copy(

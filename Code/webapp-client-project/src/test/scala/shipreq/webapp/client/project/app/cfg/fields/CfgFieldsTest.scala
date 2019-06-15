@@ -66,7 +66,7 @@ object CfgFieldsTest extends TestSuite {
     g.assertReqsSent(1)
     g.respondToLast(WsReqRes.FieldMod) {
       import CustomTextFieldGD._
-      val e = FieldCustomTextCreate(666, nev(Name("blahh"), Key("blahh"), Mandatory(true), ReqTypes(allReqTypes)))
+      val e = Event.FieldCustomTextCreate(666, nev(Name("blahh"), Key("blahh"), Mandatory(true), ReqTypes(allReqTypes)))
       \/-(g.verifyEventsCB(e).runNow())
     }
     assert(getNewRow.isEmpty)
@@ -81,7 +81,7 @@ object CfgFieldsTest extends TestSuite {
         .toJSArray)
     g.assertReqsSent(2)
     g.respondToLast(WsReqRes.FieldMod)(
-      \/-(g.verifyEventsCB(FieldCustomDelete(666.CFText)).runNow()))
+      \/-(g.verifyEventsCB(Event.FieldCustomDelete(666.CFText)).runNow()))
 
     assertEq(htmlScrub run html, htmlScrub run initialView)
   }

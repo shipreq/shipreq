@@ -7,6 +7,7 @@ import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.HomeSpaProtocols
 import shipreq.webapp.base.user._
+import Event._
 
 trait HomeSpaLogic[F[_]] extends HomeSpaLogic.Ajax[F] {
   def initData(user: User): F[HomeSpaProtocols.InitData]

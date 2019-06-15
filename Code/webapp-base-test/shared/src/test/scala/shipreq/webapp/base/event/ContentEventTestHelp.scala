@@ -6,9 +6,10 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
-import ApplyEventTestFns._
 import shipreq.webapp.base.text.{Text => T}
+import ApplyEventTestFns._
 import ContentEventTestHelp.CustomTextMap
+import Event._
 
 case class DetachedGenericReq(req       : GenericReq,
                               customText: CustomTextMap,

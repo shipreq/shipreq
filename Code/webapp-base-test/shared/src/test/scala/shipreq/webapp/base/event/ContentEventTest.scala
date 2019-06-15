@@ -10,10 +10,11 @@ import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.text.Text
 import ApplyEventTestFns._
+import AutoNES._
+import ContentEventTestHelp._
+import Event._
 import MTrie.Ops
 import Text.{GenericReqTitle => GRT, CustomTextField => CTF, InlineIssueDesc => IID, CodeGroupTitle}
-import ContentEventTestHelp._
-import AutoNES._
 
 // TODO Test atom validity in all events that accept text
 

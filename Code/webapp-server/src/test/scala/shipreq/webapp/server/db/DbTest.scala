@@ -15,6 +15,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
+import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.hash._
 import shipreq.webapp.base.text.Text

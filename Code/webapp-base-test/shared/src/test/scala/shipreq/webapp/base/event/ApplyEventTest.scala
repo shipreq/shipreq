@@ -10,6 +10,7 @@ import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.ApplyEvent.LogicVer
 import shipreq.webapp.base.hash._
+import Event._
 
 object ApplyEventTest extends TestSuite {
 

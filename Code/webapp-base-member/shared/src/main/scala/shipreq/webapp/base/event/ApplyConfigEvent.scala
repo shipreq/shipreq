@@ -8,6 +8,7 @@ import shipreq.webapp.base.data.{DataValidators => V, _}
 import shipreq.webapp.base.util.GenericData
 import ApplyEventLib._, SE.SE
 import DataImplicits._
+import Event._
 
 trait ApplyConfigEvent {
   this: ApplyEvent =>

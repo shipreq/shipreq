@@ -9,6 +9,7 @@ import ApplyEventTestFns._
 import AutoNES._
 import CustomReqTypeGD._
 import DataImplicits._
+import Event._
 import NoInitialEvents._
 
 trait CustomReqTypeEvents {

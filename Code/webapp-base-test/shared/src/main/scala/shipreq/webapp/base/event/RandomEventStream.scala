@@ -21,6 +21,7 @@ import shipreq.webapp.base.test.DataTestExt._
 import shipreq.webapp.base.test.WebappBaseGen._
 import shipreq.webapp.base.text.Text
 import ApplicableEventGen.ObserveFn
+import Event._
 import RandomData.{fieldRefKey, filter, filterDead, hashRefKey, implicationRequired, mandatory, mutexChildren}
 import RandomData.{TextGen, TextGenExt, reqCode, reqTypeMnemonic, unicodeString1}
 import ScalaExt._

@@ -3,10 +3,11 @@ package shipreq.webapp.base.test
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.text._
-import UnsafeTypes._
+import Event._
 import SampleProject4.Values.uc1
 import SampleProject5.{project => project0}
 import StaticField.{NormalAltStepTree => NA, ExceptionStepTree => E}
+import UnsafeTypes._
 
 /**
  * Builds on SampleProject #5 to add:

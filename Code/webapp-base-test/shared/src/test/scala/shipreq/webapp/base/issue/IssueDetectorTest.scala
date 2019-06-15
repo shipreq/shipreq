@@ -9,6 +9,7 @@ import shipreq.webapp.base.test.SampleProject3
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
 import utest._
+import Event._
 
 object IssueDetectorTest extends TestSuite {
 

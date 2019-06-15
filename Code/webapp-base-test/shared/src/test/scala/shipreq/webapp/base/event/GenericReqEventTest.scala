@@ -10,6 +10,7 @@ import shipreq.webapp.base.text.Text.{GenericReqTitle => GRT}
 import ApplyEventTestFns._
 import AutoNES._
 import ContentEventTestHelp._
+import Event._
 
 object GenericReqEventTest extends TestSuite {
   import GenericReqGD._

@@ -11,7 +11,7 @@ import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.{UseCaseStepCreate, VerifiedEvent}
+import shipreq.webapp.base.event.{Event, VerifiedEvent}
 import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}
 import shipreq.webapp.base.protocol.{ServerSideProcInvoker, UpdateContentCmd}
 import shipreq.webapp.base.text._
@@ -155,7 +155,7 @@ object ReqDetail {
 
         val startEditor: Callback =
           ves.iterator.map(_.event).collect {
-            case e: UseCaseStepCreate => startUseCaseStepEditor(e.id).delayMs(50).toCallback
+            case e: Event.UseCaseStepCreate => startUseCaseStepEditor(e.id).delayMs(50).toCallback
           }.nextOption().getOrEmpty
 
         onSuccess >> startEditor

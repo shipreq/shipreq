@@ -6,6 +6,7 @@ import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.WebappTestUtil._
 import ApplyEventTestFns._
+import Event._
 
 object ApplyEventTestFns {
 

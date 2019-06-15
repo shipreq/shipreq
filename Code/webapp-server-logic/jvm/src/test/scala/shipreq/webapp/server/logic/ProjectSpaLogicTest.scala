@@ -69,9 +69,9 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       val id = db.createEmptyProject(user2.id, 2).value
 
       val events = List[Event](
-        ProjectTemplateApply(ProjectTemplate.V2),
-        ProjectNameSet("hell"),
-        ProjectNameSet("hello"),
+        Event.ProjectTemplateApply(ProjectTemplate.V2),
+        Event.ProjectNameSet("hell"),
+        Event.ProjectNameSet("hello"),
       )
 
       val verifiedEvents = verifyEvents(Project.empty)(events: _*)

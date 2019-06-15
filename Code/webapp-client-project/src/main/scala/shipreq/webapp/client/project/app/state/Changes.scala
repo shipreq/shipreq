@@ -5,6 +5,7 @@ import scalaz.syntax.equal._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
+import Event._
 import UnivEq.emptySet
 
 case class Changes(ves: VerifiedEvent.NonEmptySeq, p1: Project, p2: Project) {

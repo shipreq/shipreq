@@ -3,7 +3,7 @@ package shipreq.webapp.server.snippet
 import java.time.Instant
 import utest._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.FieldStaticRemove
+import shipreq.webapp.base.event.Event.FieldStaticRemove
 import shipreq.webapp.server.logic.DB.SaveProjectEventCmd
 import shipreq.webapp.server.logic.{HomeSpaLogic, Obfuscators}
 import shipreq.webapp.server.test.WebappServerTestUtil._

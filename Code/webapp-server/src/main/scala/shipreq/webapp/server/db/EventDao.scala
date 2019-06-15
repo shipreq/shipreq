@@ -11,6 +11,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash._
 import ApplyEvent.LogicVer
+import Event._
 import TaggedTypes.JsonStr
 
 object EventDbCodecs {

@@ -8,6 +8,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.hash._
 import shipreq.webapp.base.util.GenericDataMacros._
+import Event._
 import Field.ApplicableReqTypes
 
 /**

@@ -176,7 +176,8 @@ final class ApplyEvent(implicit val trust: Trust)
       msg getOrElse s"Error occurred: $e"
     }
 
-  private def apply1Unsafe(event: Event): SE[Unit] =
+  private def apply1Unsafe(event: Event): SE[Unit] = {
+    import Event._
     event match {
       case e: ApplicableTagCreate    => ApplicableTagEvents    applyCreate                e
       case e: ApplicableTagUpdate    => ApplicableTagEvents    applyUpdate                e
@@ -230,6 +231,7 @@ final class ApplyEvent(implicit val trust: Trust)
       case e: UseCaseTitleSet        => UseCaseEvents          applyTitleSet              e
       case e: ProjectTemplateApply   => safely(applyAllUnsafe(e.template.events))
     }
+  }
 
   private def apply1Safe(event: Event): SE[Unit] =
     safely(apply1Unsafe(event))

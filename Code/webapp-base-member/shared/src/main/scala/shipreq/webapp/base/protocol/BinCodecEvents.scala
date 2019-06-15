@@ -13,6 +13,7 @@ import BinCodecMemberData._
 import ReqTableDataPicklers._
 import AtomPicklers.instances._
 import ApplyEvent.LogicVer
+import Event._
 
 object BinCodecEvents {
 

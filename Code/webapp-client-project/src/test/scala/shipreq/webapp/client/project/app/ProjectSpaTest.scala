@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app
 
 import utest._
-import shipreq.webapp.base.event.FieldCustomDelete
+import shipreq.webapp.base.event.Event.FieldCustomDelete
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.cfg.reqtypes.{CfgReqTypesDsl => CRT}

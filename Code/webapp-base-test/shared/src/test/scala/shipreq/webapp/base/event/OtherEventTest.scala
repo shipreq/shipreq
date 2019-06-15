@@ -9,6 +9,7 @@ import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.filter._
 import ApplyEventTestFns._
 import ContentEventTestHelp.{assertBadIdsRejected, fr, at1, issueType1}
+import Event._
 import FilterAst.Attr
 import SortCriterion.SyntaxHelpers._
 import SortMethod.{Asc, AscThenBlanks, BlanksThenDesc, Desc}

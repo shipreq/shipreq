@@ -5,7 +5,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.base.util.ErrorMsg
-import shipreq.webapp.base.event.{Event, SavedViewCreate, VerifiedEvent}
+import shipreq.webapp.base.event.{Event, VerifiedEvent}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol.{SavedViewCmd, ServerSideProcInvoker}
 import shipreq.webapp.base.ui.semantic.Dropdown.JsOptionsOps
@@ -109,7 +109,7 @@ object SavedViewsUI {
             promptThenRun(
               prompt    = CallbackTo.prompt("Enter a name for this view"),
               validate  = cmdFn.value.map(_.andThen(_.map(Some(_)).toEither)),
-              onSuccess = runActionOnSuccess { case e: SavedViewCreate => Action.Select(e.id) }))
+              onSuccess = runActionOnSuccess { case e: Event.SavedViewCreate => Action.Select(e.id) }))
 
         case MenuAction.Replace(name, cmdCB) =>
           item(Icon.Save, s"Replace ${name.value}",

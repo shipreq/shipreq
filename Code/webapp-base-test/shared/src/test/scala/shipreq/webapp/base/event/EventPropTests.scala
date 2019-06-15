@@ -11,6 +11,7 @@ import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.DataTestExt._
 import utest._
+import Event._
 
 object EventPropTests extends TestSuite {
 
