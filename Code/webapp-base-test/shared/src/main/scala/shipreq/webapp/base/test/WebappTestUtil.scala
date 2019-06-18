@@ -88,12 +88,4 @@ trait WebappTestUtil extends BaseTestUtil {
     assertSeq(name, norm(actual), norm(expect))
   }
 
-  def onFail[A](body: => A)(f: => Any): A = // TODO Move into microlibs
-    try
-      body
-    catch {
-      case t: java.lang.AssertionError =>
-        f
-        throw t
-    }
 }

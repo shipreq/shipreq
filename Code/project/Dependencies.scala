@@ -36,7 +36,7 @@ object Dependencies {
   }
 
   object Microlibs {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "1.20")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "1.21")
     val adtMacros  = mm("adt-macros")
     val macroUtils = mm("macro-utils")
     val nonempty   = mm("nonempty")
@@ -79,7 +79,7 @@ object Dependencies {
   }
 
   object UnivEq {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.0.7")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.0.8")
     val univeq = mm("univeq")
     val scalaz = mm("univeq-scalaz") ++ univeq ++ Dependencies.scalaz
   }
