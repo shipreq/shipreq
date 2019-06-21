@@ -2,6 +2,7 @@ package shipreq.webapp.base.issue
 
 import japgolly.microlibs.nonempty.{NonEmpty, NonEmptySet}
 import japgolly.microlibs.stdlib_ext.MutableArray
+import nyaya.util.Multimap
 import scala.reflect.ClassTag
 import sourcecode.Line
 import shipreq.base.util.SetDiff
@@ -57,7 +58,7 @@ object IssueDetectorTest extends TestSuite {
     project
   }
 
-  // ===================================================================================================================
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   private object ConflictingTagTests {
     private implicit val filter = IssueFilter[Issue.ConflictingTags]
@@ -85,11 +86,34 @@ object IssueDetectorTest extends TestSuite {
       updateReqTags(1101)()(4),
       TagDelete(P3.priTG),
     ))()
+
+    // TODO What about tags in text?
   }
 
-  // ===================================================================================================================
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  private object UninhabitableTagFieldsTests {
+  private object EmptyCodeGroupTests {
+    private implicit val filter = IssueFilter[Issue.EmptyCodeGroup]
+
+    private def demoId         = p3.content.reqCodes("demo").get.activeId.get
+    private def demoWhateverId = p3.content.reqCodes("demo.whatever").get.activeId.get
+
+    def ko() = assertIssues(applyEventsSuccessfully(p3,
+      ReqCodesPatch(P3.frs(1), Set(demoWhateverId), Set.empty, Multimap.empty),
+    ))(Issue.EmptyCodeGroup("demo"))
+
+    def deadChild() = assertIssues(applyEventsSuccessfully(p3,
+      ReqsDelete(NonEmptySet.one(P3.frs(1)), Set.empty, Vector.empty),
+    ))(Issue.EmptyCodeGroup("demo"))
+
+    def deadCodeGroup() = assertIssues(applyEventsSuccessfully(p3,
+      ReqsDelete(NonEmptySet.one(P3.frs(1)), Set(demoId), Vector.empty),
+    ))()
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private object UninhabitableTagFieldTests {
     private implicit val filter = IssueFilter[Issue.UninhabitableTagField]
 
     def ko() = assertIssues(applyEventsSuccessfully(p3,
@@ -102,7 +126,7 @@ object IssueDetectorTest extends TestSuite {
     ))()
   }
 
-  // ===================================================================================================================
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 //  debugTags(p3)
 
@@ -122,8 +146,15 @@ object IssueDetectorTest extends TestSuite {
       'deadTagGroup - deadTagGroup()
     }
 
-    'UninhabitableTagFields {
-      import UninhabitableTagFieldsTests._
+    'EmptyCodeGroup {
+      import EmptyCodeGroupTests._
+      'ko            - ko()
+      'deadChild     - deadChild()
+      'deadCodeGroup - deadCodeGroup()
+    }
+
+    'UninhabitableTagField {
+      import UninhabitableTagFieldTests._
       'ko        - ko()
       'deadField - deadField()
     }

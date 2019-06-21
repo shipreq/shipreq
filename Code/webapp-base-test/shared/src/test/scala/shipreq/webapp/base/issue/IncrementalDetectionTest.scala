@@ -4,7 +4,7 @@ import nyaya.gen.Gen
 import scala.annotation.tailrec
 import utest._
 import shipreq.webapp.base.data.Project
-import shipreq.webapp.base.event.{RandomEventStream, VerifiedEvent}
+import shipreq.webapp.base.event.{EventSeqSummary, RandomEventStream, VerifiedEvent}
 import shipreq.webapp.base.test.WebappTestUtil._
 
 object IncrementalDetectionTest extends TestSuite {
@@ -26,6 +26,12 @@ object IncrementalDetectionTest extends TestSuite {
             actual = it2.issues.vector.map(_.issue),
             expect = expect.issues.vector.map(_.issue))
         } {
+          println(EventSeqSummary(es.iterator.map(_.event)))
+//          println("Actual:")
+//          it2.issues.vector.map(_.issue).map("  - " + _).foreach(println)
+//          println("Expect:")
+//          expect.issues.vector.map(_.issue).map("  - " + _).foreach(println)
+//          println(p2.config.tags.prettyPrint)
           for (i <- 0 until taken2) {
             val e = ves(i)
             printf("%2d: %s\n", i, e.event.toString.take(160).replace('\n', ' '))
@@ -51,7 +57,7 @@ object IncrementalDetectionTest extends TestSuite {
         }
       }
 
-      * - test()
+      * - test(0)
       * - test()
       * - test()
       * - test()

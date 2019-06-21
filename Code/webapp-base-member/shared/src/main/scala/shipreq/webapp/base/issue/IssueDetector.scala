@@ -18,9 +18,9 @@ object IssueDetector {
   final case class Init(action : Action,
                         project: Project)
 
-  final case class Increment(init           : Init,
-                             eventSummary   : EventSeqSummary,
-                             dirtyAllContent: () => Unit)
+  final case class Increment(init         : Init,
+                             eventSummary : EventSeqSummary,
+                             invalidateAll: () => Unit)
 
   /** Reference equality is the default, and it's desired. */
   implicit def univEq: UnivEq[IssueDetector] = UnivEq.force

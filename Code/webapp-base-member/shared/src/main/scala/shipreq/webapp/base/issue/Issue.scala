@@ -40,9 +40,9 @@ object Issue {
   //      -> ...
   // eg. An issue tag appears in text, I want a LocationOf[AstLoc]
 
-  final case class ConflictingTags(reqId: ReqId, tagGroupId: TagGroupId) extends Issue(C.ConflictingTags)
-
-  final case class UninhabitableTagField(fieldId: CustomField.Tag.Id) extends Issue(C.UninhabitableTagField)
+  final case class ConflictingTags      (reqId: ReqId, tagGroupId: TagGroupId) extends Issue(C.ConflictingTags)
+  final case class EmptyCodeGroup       (code: ReqCode.Value)                  extends Issue(C.EmptyCodeGroup)
+  final case class UninhabitableTagField(fieldId: CustomField.Tag.Id)          extends Issue(C.UninhabitableTagField)
 
   implicit def univEq: UnivEq[Issue] = UnivEq.derive
 }

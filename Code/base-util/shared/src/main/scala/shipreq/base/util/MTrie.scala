@@ -17,6 +17,8 @@ object MTrie {
   sealed abstract class Node[K, V] {
     def fold[A](b: Branch[K, V] => A, t: Value[K, V] => A): A
     def exists(b: Branch[K, V] => Boolean, v: Value[K, V] => Boolean): Boolean
+    def valueIterator(): Iterator[V]
+    def valueIteratorExcludingSelf(): Iterator[V]
 
     final def existsV(f: V => Boolean): Boolean = {
       val g = (v: Value[K, V]) => f(v.value)
@@ -36,11 +38,22 @@ object MTrie {
 
     override def exists(b: Branch[K, V] => Boolean, v: Value[K, V] => Boolean) =
       b(this) || next.values.exists(_.exists(b, v))
+
+    override def valueIterator() =
+      value match {
+        case None    => valueIteratorExcludingSelf()
+        case Some(v) => v.valueIterator() ++ valueIteratorExcludingSelf()
+      }
+
+    override def valueIteratorExcludingSelf() =
+      next.valuesIterator.flatMap(_.valueIterator())
   }
 
   final case class Value[K, V](value: V) extends Node[K, V] {
     override def fold[A](b: Branch[K, V] => A, t: Value[K, V] => A) = t(this)
     override def exists(b: Branch[K, V] => Boolean, v: Value[K, V] => Boolean) = v(this)
+    override def valueIterator() = Iterator.single(value)
+    override def valueIteratorExcludingSelf() = Iterator.empty
   }
 
   // ===================================================================================================================

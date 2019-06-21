@@ -251,6 +251,7 @@ final case class ReqCodes(trie: ReqCode.Trie) {
     private val _idList         = List.newBuilder[ReqCodeId]
     private val _idSet          = Set.newBuilder[ReqCodeId]
     private val _groups         = List.newBuilder[CodeGroup]
+    private val _liveGroups     = List.newBuilder[LiveCodeGroup]
     private val _reqCodesById   = Map.newBuilder[ReqCodeId, Value]
     var _activeReqCodesByReqId: Multimap[ReqId, Set, Value] = UnivEq.emptySetMultimap
     var _inactiveIdsByReqId: Multimap[ReqId, Set, ReqCodeId] = UnivEq.emptySetMultimap
@@ -267,13 +268,14 @@ final case class ReqCodes(trie: ReqCode.Trie) {
 
       data match {
         case d: ActiveReq   => _activeReqCodesByReqId = _activeReqCodesByReqId.add(d.reqId, code)
-        case d: ActiveGroup => _groups += d.group
+        case d: ActiveGroup => _liveGroups += d.group; _groups += d.group
         case _: Inactive    => ()
       }
 
       data.deadGroup.map(_groups += _)
     }
 
+    val liveGroups            = _liveGroups.result()
     val groups                = _groups.result()
     val reqCodesById          = _reqCodesById.result()
     val idList                = _idList.result()
@@ -281,6 +283,9 @@ final case class ReqCodes(trie: ReqCode.Trie) {
     val activeReqCodesByReqId = _activeReqCodesByReqId
     val inactiveIdsByReqId    = _inactiveIdsByReqId
   }
+
+  def liveGroups: List[LiveCodeGroup] =
+    scan.liveGroups
 
   /** All groups, dead and live. */
   def groups: List[CodeGroup] =

@@ -84,6 +84,7 @@ trait WebappTestUtil extends BaseTestUtil {
     assertIssueSet("", actual, expect)
 
   def assertIssueSet(name: => String, actual: Seq[Issue], expect: Seq[Issue])(implicit l: Line): Unit = {
+    assertSet(name, actual.toSet, expect.toSet) // TODO use assertSeqIgnoreOrder
     def norm(i: Seq[Issue]) = MutableArray(i).sortBySchwartzian(_.toString).to[Vector]
     assertSeq(name, norm(actual), norm(expect))
   }

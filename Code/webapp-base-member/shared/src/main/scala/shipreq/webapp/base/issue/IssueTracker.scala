@@ -56,13 +56,14 @@ object IssueTracker {
     val reqs     = newProject.content.reqs
     val reqTypes = newProject.config.reqTypes
 
-    @inline def isDead (id: ReqId) = reqs.need(id).live(reqTypes) is Dead
-    @inline def isDirty(id: ReqId) = essp.reqs.contains(id)
-    def isDeadOrDirty  (id: ReqId) = isDirty(id) || isDead(id)
+    @inline def isReqDead (id: ReqId) = reqs.need(id).live(reqTypes) is Dead
+    @inline def isReqDirty(id: ReqId) = essp.reqs.contains(id)
+    def isReqDeadOrDirty  (id: ReqId) = isReqDirty(id) || isReqDead(id)
 
-    val invalidateByDefault: Issue => Boolean = {
-      case i: Issue.ConflictingTags       => isDeadOrDirty(i.reqId)
-      case i: Issue.UninhabitableTagField => false
+    val autoInvalidate: Issue => Boolean = {
+      case i: Issue.ConflictingTags       => isReqDeadOrDirty(i.reqId)
+      case _: Issue.EmptyCodeGroup
+         | _: Issue.UninhabitableTagField => false
     }
 
     val tstateM             = tstate.resume()
@@ -71,9 +72,9 @@ object IssueTracker {
 
     // Run and prepare detectors
     for (d <- detectors) {
-      val dstate   = dstatesM(d)
-      val dirtyFns = new MutableDirtyFns
-      var dirtyAll = false
+      val dstate        = dstatesM(d)
+      val dirtyFns      = new MutableDirtyFns
+      var invalidateAll = false
 
       val action = IssueDetector.Action(
         add                 = i => dstate.issues += tstateM.assignId(i),
@@ -82,17 +83,17 @@ object IssueTracker {
       val init = IssueDetector.Init(action, newProject)
 
       val increment = IssueDetector.Increment(
-        init            = init,
-        eventSummary    = ess,
-        dirtyAllContent = () => dirtyAll = true)
+        init          = init,
+        eventSummary  = ess,
+        invalidateAll = () => invalidateAll = true)
 
       d.increment(increment)
 
-      if (dirtyAll) {
+      if (invalidateAll) {
         dstate.invalidateAll()
         withAllContentDirty += dirtyFns
       } else {
-        dstate.invalidate(invalidateByDefault)
+        dstate.invalidate(autoInvalidate)
         tstateM.dirtyFns += dirtyFns
       }
     }
