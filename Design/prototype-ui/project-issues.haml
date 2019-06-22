@@ -35,6 +35,7 @@
       .pubid {white-space:nowrap}
       td.fedit.issue-blank {min-width:40ex}
       .issue-issuetag ,
+      .issue-tagRef ,
       .issue-liveRef_deadreq ,
       .issue-liveRef_deadUC_deadStep ,
       .issue-liveRef_deadUC_liveStep ,
@@ -297,17 +298,22 @@
         %tbody
 
           %tr
-            %td.itype(rowspan=9) Bad data
-            %td.issue(rowspan=2) Conflicting Priority tags
-            %td.id %a(href="project-reqdetail.html") FR-14
-            %td.title Admin must be able to connect 100 fax machines simultaneously.
+            %td.itype(rowspan=10) Bad data
+            %td.issue(rowspan=3) Conflicting Priority tags
+            %td.id(rowspan=2) %a(href="project-reqdetail.html") FR-14
+            %td.title(rowspan=2) Admin must be able to connect 100 fax machines simultaneously.
             %td.fname Tags
             %td.fedit.can-edit
               .ui.label.basic.bad-tag.is-tag critical
-              .ui.label.basic.bad-tag.is-tag urgent
               .ui.label.blue.is-tag wip
-            %td.actions
-            %td.pri.na
+            %td.actions.na(rowspan=2)
+            %td.pri(rowspan=2)
+              .ui.label.basic.bad-tag.is-tag urgent
+              .ui.label.basic.bad-tag.is-tag critical
+ 
+          %tr
+            %td.fname Detail
+            %td.fedit.can-edit This is <span class="issue-tagRef">#urgent</span>!
 
           %tr
             %td.id %a(href="project-reqdetail.html") UC-5
