@@ -197,7 +197,7 @@ private[reqtable] object Logic {
     val filterDeadRCG = fd.filterFn.contramap[CodeGroup](_.live)
     val filterDead    = CompiledFilter(filterDeadReq, filterDeadRCG)
     val tagFieldDist  = DataLogic.tagFieldDist(p.config, fd, view isVisible Column.CustomField(_))
-    val tagLookup     = DataLogic.tagLookup(p, fd)
+    val tagLookup     = p.dataLogic.tagLookup(fd)
     val issueLookup   = DataLogic.issueLookup(p, fd)
     val applicability = Column.applicabilityForReq(p.config.applicability)
     val expandImps    = Direction.memo(dir => expanderC[Pubid](view, Column.Implications(dir)))

@@ -30,10 +30,10 @@ object IssueDetectors {
 
     private def reqCheckFn(i: Init): Req => Unit = {
       val exclusiveGroups = i.project.config.tags.exclusiveGroups
-      val content         = i.project.content
+      val tagLookup       = i.project.dataLogic.tagLookup(HideDead)
       req => {
         val reqId     = req.id
-        val tagIds    = content.reqTags(reqId)
+        val tagIds    = tagLookup(reqId).other
         val conflicts = Util.uniqueDupsNested(tagIds)(exclusiveGroups)
         for (g <- conflicts)
           i.action.add(Issue.ConflictingTags(reqId, g))

@@ -13,6 +13,7 @@ import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
 import utest._
 import Event._
+import shipreq.webapp.base.text.Text
 
 object IssueDetectorTest extends TestSuite {
 
@@ -87,7 +88,17 @@ object IssueDetectorTest extends TestSuite {
       TagDelete(P3.priTG),
     ))()
 
-    // TODO What about tags in text?
+    def tagInText() = {
+      import Text.GenericReqTitle.TagRef
+      assertIssues(applyEventsSuccessfully(p3,
+        GenericReqTitleSet(1002, Vector(TagRef(P3.priHigh), TagRef(P3.priLow))), // no tags
+        GenericReqTitleSet(1103, Vector(TagRef(P3.priLow))), // + highPri in tags
+        GenericReqTitleSet(1104, Vector(TagRef(P3.priMed))), // + priMed in tags
+      ))(
+        Issue.ConflictingTags(1002, P3.priTG),
+        Issue.ConflictingTags(1103, P3.priTG),
+      )
+    }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -144,6 +155,7 @@ object IssueDetectorTest extends TestSuite {
       'ko           - ko()
       'deadTag      - deadTag()
       'deadTagGroup - deadTagGroup()
+      'tagInText    - tagInText()
     }
 
     'EmptyCodeGroup {

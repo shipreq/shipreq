@@ -93,7 +93,7 @@ object ViewReq {
       val impFilter       = DataLogic.impValueFilter(project.config, filterDead)
       val customImpLookup = DataLogic.customFieldImps(project, impFilter)
       val tagDist         = DataLogic.tagFieldDist(project.config, filterDead, _ => true)
-      val tagLookup       = DataLogic.tagLookup(project, filterDead)
+      val tagLookup       = project.dataLogic.tagLookup(filterDead)
       val tagOrderByName  = DataLogic.tagOrderByName(project.config.tags.tree)
       val tagOrderByPos   = DataLogic.tagOrderByPos(project.config.tags)
       val generalTagSet   = DataLogic.generalTags(tagDist, tagLookup)(req.id)

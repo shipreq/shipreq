@@ -30,6 +30,9 @@ object ProjectContent {
   implicit lazy val equality: Equal[ProjectContent] = ScalazMacros.deriveEqual
 }
 
+/** @param reqTags Directly applied tags. This includes all tag columns, but not tags in text.
+  *                Use Project#dataLogic to consider tags from all sources.
+  */
 @Lenses
 final case class ProjectContent(reqs           : Requirements,
                                 reqCodes       : ReqCodes,

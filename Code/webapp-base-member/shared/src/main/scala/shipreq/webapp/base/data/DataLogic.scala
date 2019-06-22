@@ -4,12 +4,36 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
 import scala.annotation.tailrec
-import shipreq.base.util.Util
 import shipreq.base.util.Digraph.BiDir
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.text.Atom
 import DataImplicits._
+
+final class DataLogic(p: Project) {
+  import DataLogic._
+
+  val tagLookup: FilterDead => TagLookup = {
+    val reqTags = p.content.reqTags
+    def tagsInText = p.atomScan.tagRefs
+    FilterDead.memoLazy {
+
+      case HideDead =>
+        val deadTags = p.config.tags.deadATagIds
+        Memo { id =>
+          val inText = tagsInText(id).live
+          val liveTags = (reqTags(id) | inText) &~ deadTags // Dead tags on live reqs are ignored unless in text
+          ReqTags(liveTags, deadTagsInLiveText = inText & deadTags)
+        }
+
+      case ShowDead =>
+        // [deadTagsInLiveText = Set.empty] is technically wrong but when (FilterDead == ShowDead) putting everything
+        // in `other` is more efficient and achieves the same result (confirmed in LogicTest.filterDead.tagComprehensive)
+        Memo(id => ReqTags(reqTags(id) | tagsInText(id).all, deadTagsInLiveText = Set.empty))
+    }
+  }
+
+}
 
 object DataLogic {
 
@@ -39,26 +63,6 @@ object DataLogic {
   }
 
   type TagLookup = ReqId => ReqTags
-
-  def tagLookup(p: Project, fd: FilterDead): TagLookup = {
-    val reqTags = p.content.reqTags
-    val tagsInText = p.atomScan.tagRefs
-
-    fd match {
-      case HideDead =>
-        val deadTags = p.config.tags.deadATagIds
-        Memo { id =>
-          val inText = tagsInText(id).live
-          val liveTags = (reqTags(id) | inText) &~ deadTags // Dead tags on live reqs are ignored unless in text
-          ReqTags(liveTags, deadTagsInLiveText = inText & deadTags)
-        }
-
-      case ShowDead =>
-        // [deadTagsInLiveText = Set.empty] is technically wrong but when (FilterDead == ShowDead) putting everything
-        // in `other` is more efficient and achieves the same result (confirmed in LogicTest.filterDead.tagComprehensive)
-        Memo(id => ReqTags(reqTags(id) | tagsInText(id).all, deadTagsInLiveText = Set.empty))
-    }
-  }
 
   def generalTags(dist: TagFieldDistribution.TagIds, lookup: TagLookup): ReqId => Set[ApplicableTagId] = {
     val tagsUsedInFields = dist.usedInFields

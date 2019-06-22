@@ -85,6 +85,8 @@ final case class Project(name         : Project.Name,
 
   lazy val atomScan = AtomScan(this)
 
+  lazy val dataLogic = new DataLogic(this)
+
   /**
    * Transitive closure of implications going source → target.
    *
