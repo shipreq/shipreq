@@ -184,12 +184,12 @@ object UseCase {
   implicit def equality: UnivEq[UseCase] = UnivEq.derive
 }
 
-case class UseCaseStepId(value: Int) extends SubReqId
+final case class UseCaseStepId(value: Int) extends SubReqId
 
 @Lenses
-case class UseCaseStep(id             : UseCaseStepId,
-                       titleExplicitly: Text.UseCaseStep.OptionalText,
-                       liveExplicitly : Live) {
+final case class UseCaseStep(id             : UseCaseStepId,
+                             titleExplicitly: Text.UseCaseStep.OptionalText,
+                             liveExplicitly : Live) {
 
   def usesUseCaseTitle(enclosingUC: UseCase): Boolean =
     titleExplicitly.isEmpty && enclosingUC.rootStepId ==* id
