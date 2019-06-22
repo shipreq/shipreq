@@ -34,13 +34,27 @@
       #reqtable .id {white-space:nowrap}
       .pubid {white-space:nowrap}
       td.fedit.issue-blank {min-width:40ex}
-      .issue-blank {background:#fdd /*hsl(0, 90%, 80%)*/}
       .issue-issuetag ,
       .issue-liveRef_deadreq ,
       .issue-liveRef_deadUC_deadStep ,
       .issue-liveRef_deadUC_liveStep ,
       .issue-liveRef_liveUC_deadStep {color:#c00; background:#fee}
       .issue-deadtag, .issue-deadissuetag {color:#c00; background:#fee; text-decoration: line-through;}
+
+      .issue-blank {
+        xbackground:#fdd /*hsl(0, 90%, 80%)*/;
+      }
+      .issue-blank::after {
+        content:'blank';
+        /* font-style: italic; */
+        color:#c00;
+        background:#fee;
+        text-align: center;
+        display: block;
+        height: 100%;
+        width: 12ex;
+        border-radius: 0.3ex;
+      }
 
       .ui.label.basic.bad-tag {
         color:#c00!important;
