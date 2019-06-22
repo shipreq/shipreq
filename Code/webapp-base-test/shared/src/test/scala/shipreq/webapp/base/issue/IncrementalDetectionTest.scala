@@ -32,10 +32,11 @@ object IncrementalDetectionTest extends TestSuite {
 //          println("Expect:")
 //          expect.issues.vector.map(_.issue).map("  - " + _).foreach(println)
 //          println(p2.config.tags.prettyPrint)
-          for (i <- 0 until taken2) {
+          for (i <- taken until taken2) {
             val e = ves(i)
-            printf("%2d: %s\n", i, e.event.toString.take(160).replace('\n', ' '))
+            printf("%2d: %s\n", i, e.event.toString.replaceAll("[^ -z]+", " ").take(180))
           }
+          println()
         }
 
         go(it2, remainingEvents.drop(windowSize), taken2)
@@ -63,6 +64,5 @@ object IncrementalDetectionTest extends TestSuite {
       * - test()
       * - test()
     }
-
   }
 }

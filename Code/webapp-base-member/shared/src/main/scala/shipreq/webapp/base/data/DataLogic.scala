@@ -3,6 +3,7 @@ package shipreq.webapp.base.data
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
+import nyaya.util.Multimap
 import scala.annotation.tailrec
 import shipreq.base.util.Digraph.BiDir
 import shipreq.base.util.ScalaExt._
@@ -14,22 +15,48 @@ final class DataLogic(p: Project) {
   import DataLogic._
 
   val tagLookup: FilterDead => TagLookup = {
-    val reqTags = p.content.reqTags
-    def tagsInText = p.atomScan.tagRefs
+    val reqTags                 = p.content.reqTags
+    def tagsInText              = p.atomScan.tagRefs
+    val emptyOther              = Multimap.empty[ApplicableTagId, List, ReqTagLoc]
+    val emptyDeadTagsInLiveText = Multimap.empty[ApplicableTagId, List, ReqTextLoc]
+
     FilterDead.memoLazy {
 
       case HideDead =>
         val deadTags = p.config.tags.deadATagIds
-        Memo { id =>
-          val inText = tagsInText(id).live
-          val liveTags = (reqTags(id) | inText) &~ deadTags // Dead tags on live reqs are ignored unless in text
-          ReqTags(liveTags, deadTagsInLiveText = inText & deadTags)
+
+        // Dead tags on live reqs are ignored unless in text
+        Memo { reqId =>
+          var other              = emptyOther
+          var deadTagsInLiveText = emptyDeadTagsInLiveText
+
+          for (t <- reqTags(reqId))
+            if (!deadTags.contains(t))
+              other = other.add(t, ReqTagLoc.Tags)
+
+          for ((t, loc) <- tagsInText(reqId).live)
+            if (deadTags.contains(t))
+              deadTagsInLiveText = deadTagsInLiveText.add(t, loc)
+            else
+              other = other.add(t, loc)
+
+          ReqTags(other, deadTagsInLiveText)
         }
 
       case ShowDead =>
         // [deadTagsInLiveText = Set.empty] is technically wrong but when (FilterDead == ShowDead) putting everything
         // in `other` is more efficient and achieves the same result (confirmed in LogicTest.filterDead.tagComprehensive)
-        Memo(id => ReqTags(reqTags(id) | tagsInText(id).all, deadTagsInLiveText = Set.empty))
+        Memo { reqId =>
+          var other = emptyOther
+
+          for (t <- reqTags(reqId))
+            other = other.add(t, ReqTagLoc.Tags)
+
+          for ((t, loc) <- tagsInText(reqId).all)
+            other = other.add(t, loc)
+
+          ReqTags(other, emptyDeadTagsInLiveText)
+        }
     }
   }
 
@@ -54,12 +81,15 @@ object DataLogic {
   /**
     * Set of tags associated with a requirement.
     */
-  final case class ReqTags(other: Set[ApplicableTagId], deadTagsInLiveText: Set[ApplicableTagId]) {
-    def all: Set[ApplicableTagId] =
-      other | deadTagsInLiveText
+  final case class ReqTags(other             : Multimap[ApplicableTagId, List, ReqTagLoc],
+                           deadTagsInLiveText: Multimap[ApplicableTagId, List, ReqTextLoc]) {
 
-    def exists(f: Set[ApplicableTagId] => Boolean): Boolean =
-      f(other) || f(deadTagsInLiveText)
+    // Computing eagerly because this is for a single req. Reqs never have a huge number of tags.
+    val all: Set[ApplicableTagId] =
+      other.keySet | deadTagsInLiveText.keySet
+
+    @inline def exists(f: Set[ApplicableTagId] => Boolean): Boolean =
+      f(all)
   }
 
   type TagLookup = ReqId => ReqTags

@@ -693,7 +693,7 @@ object DataProp {
       ∧ validReqIds    ("Atoms: ReqRefs",             _.atomScan.reqRefs)
       ∧ validReqCodeIds("Atoms: CodeRefs",            _.atomScan.codeRefs)
       ∧ validUCStepIds ("Atoms: UseCaseStepRefs",     _.atomScan.useCaseStepRefs)
-      ∧ validTagIds    ("Atoms: TagRefs",             _.atomScan.tagRefs.all.all)
+      ∧ validTagIds    ("Atoms: TagRefs",             _.atomScan.tagRefs.all.all.iterator.map(_._1)) // TODO check ._2
       ∧ validIssueTypes("Atoms: Issues",              _.atomScan.issues.all.all.map(_.typ))
       ∧ validReqIds    ("DeletionReason reqIds",      _.content.deletionReasons.reqApplication.keys)
       ∧ validUCStepIds ("UseCase step flow",          _.content.reqs.useCases.stepFlow.memberIterator)

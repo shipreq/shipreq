@@ -1,5 +1,6 @@
 package shipreq.webapp.base.issue
 
+import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.univeq.UnivEq
 import shipreq.webapp.base.data._
 
@@ -34,15 +35,13 @@ sealed abstract class Issue(final val cls: IssueClass)
 object Issue {
   import shipreq.webapp.base.issue.{IssueClass => C}
 
-  // TODO Need concept of a position/location in a Req that points to a data-type
-  // r: reqId
-  //   -> f: r.field
-  //      -> ...
-  // eg. An issue tag appears in text, I want a LocationOf[AstLoc]
+  final case class ConflictingTags(reqId     : ReqId,
+                                   tagGroupId: TagGroupId,
+                                   locs      : NonEmptySet[ReqTagLoc]) extends Issue(C.ConflictingTags)
 
-  final case class ConflictingTags      (reqId: ReqId, tagGroupId: TagGroupId) extends Issue(C.ConflictingTags)
-  final case class EmptyCodeGroup       (code: ReqCode.Value)                  extends Issue(C.EmptyCodeGroup)
-  final case class UninhabitableTagField(fieldId: CustomField.Tag.Id)          extends Issue(C.UninhabitableTagField)
+  final case class EmptyCodeGroup(code: ReqCode.Value) extends Issue(C.EmptyCodeGroup)
+
+  final case class UninhabitableTagField(fieldId: CustomField.Tag.Id) extends Issue(C.UninhabitableTagField)
 
   implicit def univEq: UnivEq[Issue] = UnivEq.derive
 }

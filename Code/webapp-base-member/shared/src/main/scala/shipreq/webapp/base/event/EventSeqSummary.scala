@@ -37,8 +37,15 @@ final case class EventSeqSummary(
        |  genericReqs       = ${showInts(genericReqs)(_.value)},
        |  useCasesExclSteps = ${showInts(useCasesExclSteps)(_.value)},
        |  useCaseSteps      = ${showInts(useCaseSteps)(_.value)},
-       |  reqCodesChanged   = $reqCodesChanged)
+       |  reqCodesChanged   = $reqCodesChanged){
+       |  customTextFields  = $customTextFields,
+       |  tagsChanged       = $tagsChanged}
      """.stripMargin
+
+  val customTextFields: Set[CustomField.Text.Id] =
+    customFieldTypes.collect {
+      case f: CustomField.Text.Id => f
+    }
 
   lazy val customReqTypes: Set[CustomReqTypeId] =
     customReqTypesCU ++ customReqTypesDR

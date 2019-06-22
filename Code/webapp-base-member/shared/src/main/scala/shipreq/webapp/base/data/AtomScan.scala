@@ -10,7 +10,7 @@ import AtomScan.IssueLoc
  *
  * @param codeRefs ReqCodes referenced in anything anywhere (including text in dead custom-text fields).
  */
-final class AtomScan(val tagRefs        : LiveDeadStatMap[ReqId, Set[ApplicableTagId]],
+final class AtomScan(val tagRefs        : LiveDeadStatMap[ReqId, Set[(ApplicableTagId, ReqTextLoc)]],
                      val issues         : LiveDeadStatMap[IssueLoc, Vector[AnyIssue]],
                      val reqRefs        : Set[ReqId],
                      val codeRefs       : Set[ReqCodeId],
@@ -28,16 +28,17 @@ object AtomScan {
   final case class InRCG(id: ReqCodeId) extends IssueLoc
   implicit def issueLocEq: UnivEq[IssueLoc] = UnivEq.derive
 
-  private implicit val tagSetMonoid = scalazMonoidSet[ApplicableTagId]
+  private implicit val tagSetMonoid = scalazMonoidSet[(ApplicableTagId, ReqTextLoc)]
 
   def apply(p: Project): AtomScan = {
-    val tagRefs         = new LiveDeadStatMap.Builder[ReqId, Set[ApplicableTagId]]
+    val tagRefs         = new LiveDeadStatMap.Builder[ReqId, Set[(ApplicableTagId, ReqTextLoc)]]
     val issues          = new LiveDeadStatMap.Builder[IssueLoc, Vector[AnyIssue]]
     val reqRefs         = UnivEq.setBuilder[ReqId]
     val codeRefs        = UnivEq.setBuilder[ReqCodeId]
     val useCaseStepRefs = UnivEq.setBuilder[UseCaseStepId]
 
     def scan(live     : Live,
+             loc      : ReqTextLoc,
              reqId    : ReqId     = null,
              reqCodeId: ReqCodeId = null)
             (text     : TraversableOnce[AnyAtom]): Unit = {
@@ -65,7 +66,7 @@ object AtomScan {
             go(a.desc)
 
           case a: TagRef#TagRef =>
-            if (reqId ne null) tagRefs(reqId).mod(live)(_ + a.value)
+            if (reqId ne null) tagRefs(reqId).mod(live)(_ + ((a.value, loc)))
 
           case a: ListMarkup#UnorderedList =>
             a.items foreach go
@@ -79,11 +80,12 @@ object AtomScan {
     p.content.reqs.reqIterator.foreach {
 
       case r: GenericReq =>
-        scan(r.live(rts), reqId = r.id)(r.title)
+        scan(r.live(rts), ReqTextLoc.Title, reqId = r.id)(r.title)
 
       case uc: UseCase =>
-        scan(uc.liveUC, reqId = uc.id)(uc.title)
-        scan(uc.liveUC, reqId = uc.id)(uc.stepIterator.flatMap(_.titleExplicitly))
+        scan(uc.liveUC, ReqTextLoc.Title, reqId = uc.id)(uc.title)
+        for (s <- uc.stepIterator)
+          scan(uc.liveUC, ReqTextLoc.UseCaseStep(s.id), reqId = uc.id)(s.titleExplicitly)
     }
 
     // Parse custom-text-field text
@@ -94,12 +96,14 @@ object AtomScan {
       live              = Live when (liveTextFields contains tf)
       (id, txt)         ← textByReqId
     } {
-      scan(live, reqId = id)(txt.whole)
+      scan(live, ReqTextLoc.CustomTextField(tf), reqId = id)(txt.whole)
     }
 
     // Parse ReqCode groups
-    for (g <- p.content.reqCodes.groups)
-      scan(g.live, reqCodeId = g.id)(g.title)
+    for (g <- p.content.reqCodes.groups) {
+      @inline def loc: ReqTextLoc = null // Tags are not allowed in CodeGroupTitle
+      scan(g.live, loc, reqCodeId = g.id)(g.title)
+    }
 
     new AtomScan(tagRefs.result(), issues.result(), reqRefs.result(), codeRefs.result(), useCaseStepRefs.result())
   }

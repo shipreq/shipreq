@@ -72,10 +72,10 @@ object IssueDetectorTest extends TestSuite {
       updateReqTags(1119)()(2, 3),
       ReqsDelete(NonEmptySet(1119), Set.empty, Vector.empty),
     ))(
-      Issue.ConflictingTags(1101, 1),
-      Issue.ConflictingTags(1104, 1),
-      Issue.ConflictingTags(1104, 20),
-      Issue.ConflictingTags(1107, 20),
+      Issue.ConflictingTags(1101, 1, NonEmptySet(ReqTagLoc.Tags)),
+      Issue.ConflictingTags(1104, 1, NonEmptySet(ReqTagLoc.Tags)),
+      Issue.ConflictingTags(1104, 20, NonEmptySet(ReqTagLoc.Tags)),
+      Issue.ConflictingTags(1107, 20, NonEmptySet(ReqTagLoc.Tags)),
     )
 
     def deadTag() = assertIssues(applyEventsSuccessfully(p3,
@@ -95,8 +95,8 @@ object IssueDetectorTest extends TestSuite {
         GenericReqTitleSet(1103, Vector(TagRef(P3.priLow))), // + highPri in tags
         GenericReqTitleSet(1104, Vector(TagRef(P3.priMed))), // + priMed in tags
       ))(
-        Issue.ConflictingTags(1002, P3.priTG),
-        Issue.ConflictingTags(1103, P3.priTG),
+        Issue.ConflictingTags(1002, P3.priTG, NonEmptySet(ReqTextLoc.Title)),
+        Issue.ConflictingTags(1103, P3.priTG, NonEmptySet(ReqTagLoc.Tags, ReqTextLoc.Title)),
       )
     }
   }

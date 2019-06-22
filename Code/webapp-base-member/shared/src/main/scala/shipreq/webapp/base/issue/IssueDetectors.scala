@@ -1,6 +1,7 @@
 package shipreq.webapp.base.issue
 
 import japgolly.microlibs.adt_macros.AdtMacros
+import japgolly.microlibs.nonempty.NonEmptySet
 import shipreq.base.util.Util
 import shipreq.webapp.base.data._
 
@@ -23,7 +24,7 @@ object IssueDetectors {
       i.action.foreachDirtyLiveReq(() => reqCheckFn(i))
 
     override def increment(i: Increment): Unit = {
-      if (i.eventSummary.tagsChanged)
+      if (i.eventSummary.tagsChanged || i.eventSummary.customTextFields.nonEmpty)
         i.invalidateAll()
       init(i.init)
     }
@@ -34,9 +35,15 @@ object IssueDetectors {
       req => {
         val reqId     = req.id
         val tagIds    = tagLookup(reqId).other
-        val conflicts = Util.uniqueDupsNested(tagIds)(exclusiveGroups)
-        for (g <- conflicts)
-          i.action.add(Issue.ConflictingTags(reqId, g))
+        val conflicts = Util.uniqueDupsNested(tagIds.keyIterator)(exclusiveGroups)
+        for (g <- conflicts) {
+          val locs: Set[ReqTagLoc] =
+            tagIds.iterator
+              .filter(x => exclusiveGroups(x._1).contains(g))
+              .flatMap(_._2)
+              .toSet
+          i.action.add(Issue.ConflictingTags(reqId, g, NonEmptySet force locs))
+        }
       }
     }
   }
