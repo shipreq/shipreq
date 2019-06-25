@@ -2,14 +2,11 @@ package shipreq.utils
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen._
-import nyaya.test._
 import scala.annotation.tailrec
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.ShowSize
 import shipreq.webapp.base.{RandomData => $}
-import shipreq.utils.lib._
 import DataImplicits._
-import ShowSrcDataImp._
 
 object GenerateProject {
 
@@ -85,12 +82,15 @@ object GenerateProject {
     val p               = sample($.genProject(cfg, reqsWithoutText, reqCodes, reqTags, reqImps), Size.Reqs)
 
     val objName = s"Project_${Size.Reqs}"
-    val code    = ShowSrc.generateObject("shipreq.benchmark", objName, "project")(p)
+//    val code    = ShowSrc.generateObject("shipreq.benchmark", objName, "project")(p)
     val fout    = s"/tmp/$objName.scala"
+//
+    println(s"This used to create $fout but turned out to be a terrible idea.")
+    println("TODO: Save this generated project as binary or JSON or something.")
 
-    println()
-    println(s"Writing ${"%,d" format code.length} bytes to $fout ...")
-    writeFile(fout, code)
+//    println()
+//    println(s"Writing ${"%,d" format code.length} bytes to $fout ...")
+//    writeFile(fout, code)
     println("Done.")
   }
 
