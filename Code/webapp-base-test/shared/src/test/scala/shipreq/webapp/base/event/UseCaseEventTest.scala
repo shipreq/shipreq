@@ -94,10 +94,10 @@ object UseCaseEventTest extends TestSuite {
       }
 
       'reqCodes {
-        val rcs = NonEmptySet[ReqCode.IdAndValue](7 -> "a.b.c", 8 -> "d")
+        val rcs = NonEmptySet[ApReqCodeId.AndValue](7 -> "a.b.c", 8 -> "d")
         val p = _assertPass(emptyUC1.copy(vs = nev(Codes(rcs))))
         assertUC(p, 1)(UC1, reqCodes = rcs.whole.map(_.value))
-        assertEq(p.content.reqCodes.reqCodesById, rcs.whole.map(_.toTupleIV).toMap)
+        assertEq(p.content.reqCodes.apReqCodesById, rcs.whole.map(_.toTupleIV).toMap)
       }
 
       def customText: Event.NonEmptyCustomTextMap = NonEmpty.force(Map(cf1 -> "1", cf2 -> "2"))

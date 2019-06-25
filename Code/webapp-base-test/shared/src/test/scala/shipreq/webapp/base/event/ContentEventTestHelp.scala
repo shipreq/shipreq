@@ -64,25 +64,25 @@ object ContentEventTestHelp {
       p.content.reqs.useCases.imap need id
   }
 
-  def createRCG(id: ReqCodeId, code: ReqCode.Value, title: T.CodeGroupTitle.OptionalText = ∅) = {
+  def createRCG(id: ReqCodeGroupId, code: ReqCode.Value, title: T.CodeGroupTitle.OptionalText = ∅) = {
     import CodeGroupGD._
     CodeGroupCreate(id, nev(Code(code), Title(title)))
   }
 
-  def updateRCGCode(id: ReqCodeId, code: ReqCode.Value) = {
+  def updateRCGCode(id: ReqCodeGroupId, code: ReqCode.Value) = {
     import CodeGroupGD._
     CodeGroupUpdate(id, nev(Code(code)))
   }
 
-  def delRCG(id: ReqCodeId): CodeGroupsDelete =
+  def delRCG(id: ReqCodeGroupId): CodeGroupsDelete =
     CodeGroupsDelete(NonEmptySet(id))
 
-  def restoreRCG(id: ReqCodeId): ContentRestore =
+  def restoreRCG(id: ReqCodeGroupId): ContentRestore =
     ContentRestore(∅, Set(id))
 
   def createGR(id     : GenericReqId,
                rt     : CustomReqTypeId                = mf,
-               codes  : Set[ReqCode.IdAndValue]        = ∅,
+               codes  : Set[ApReqCodeId.AndValue]        = ∅,
                title  : T.GenericReqTitle.OptionalText = ∅,
                impSrcs: Set[ReqId]                     = ∅,
                impTgts: Set[ReqId]                     = ∅) = {
@@ -97,7 +97,7 @@ object ContentEventTestHelp {
 
   def createUC(id     : UseCaseId,
                stepId : UseCaseStepId,
-               codes  : Set[ReqCode.IdAndValue]     = ∅,
+               codes  : Set[ApReqCodeId.AndValue]     = ∅,
                title  : T.UseCaseTitle.OptionalText = ∅,
                impSrcs: Set[ReqId]                  = ∅,
                impTgts: Set[ReqId]                  = ∅) = {
@@ -122,18 +122,18 @@ object ContentEventTestHelp {
   def restoreUC(id: UseCaseId): ContentRestore =
     ContentRestore(Set(id), ∅)
 
-  val patchRcAdd0 = Multimap.empty[ReqCode.Value, Set, ReqCodeId]
+  val patchRcAdd0 = Multimap.empty[ReqCode.Value, Set, ApReqCodeId]
 
   def patchCodes(id     : ReqId,
-                 remove : Set[ReqCodeId]                          = Set.empty,
-                 restore: Set[ReqCodeId]                          = Set.empty,
-                 add    : Multimap[ReqCode.Value, Set, ReqCodeId] = patchRcAdd0) =
+                 remove : Set[ApReqCodeId]                          = Set.empty,
+                 restore: Set[ApReqCodeId]                          = Set.empty,
+                 add    : Multimap[ReqCode.Value, Set, ApReqCodeId] = patchRcAdd0) =
     ReqCodesPatch(id, remove = remove, restore = restore, add)
 
   case class PatchReqCodeB(id: ReqId) extends AnyVal {
-    def apply(remove : Set[ReqCodeId]                          = Set.empty,
-              restore: Set[ReqCodeId]                          = Set.empty,
-              add    : Multimap[ReqCode.Value, Set, ReqCodeId] = patchRcAdd0) =
+    def apply(remove : Set[ApReqCodeId]                          = Set.empty,
+              restore: Set[ApReqCodeId]                          = Set.empty,
+              add    : Multimap[ReqCode.Value, Set, ApReqCodeId] = patchRcAdd0) =
       ReqCodesPatch(id, remove = remove, restore = restore, add)
   }
 

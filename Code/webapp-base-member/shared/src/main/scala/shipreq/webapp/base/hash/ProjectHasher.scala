@@ -29,6 +29,8 @@ object ProjectHasher {
   protected implicit val hashUseCaseId                = hashTaggedType[UseCaseId]
   protected implicit val hashDeletionReasonId         = hashTaggedType[DeletionReasonId]
   protected implicit val hashGenericReqId             = hashTaggedType[GenericReqId]
+  protected implicit val hashApReqCodeId              = hashTaggedType[ApReqCodeId]
+  protected implicit val hashReqCodeGroupId           = hashTaggedType[ReqCodeGroupId]
   protected implicit val hashReqCodeId                = hashTaggedType[ReqCodeId]
   protected implicit val hashCustomReqTypeId          = hashTaggedType[CustomReqTypeId]
   protected implicit val hashCustomIssueTypeId        = hashTaggedType[CustomIssueTypeId]

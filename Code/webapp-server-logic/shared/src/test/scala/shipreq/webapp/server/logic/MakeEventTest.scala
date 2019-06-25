@@ -65,20 +65,20 @@ object MakeEventTest extends TestSuite {
       // Vacant code
       val cmd1 = Cmd("some.code", ∅)
       val e1 = apply(cmd1)
-      assertEq(e1.id, ReqCodeId(1))
+      assertEq(e1.id, ReqCodeGroupId(1))
 
       // Code in use
       assertMakeEventFails(_.createContent(cmd1, _))
 
       // Vacant code. Reference first code
-      val cmd2 = Cmd("some", Vector(Text.CodeGroupTitle.CodeRef(1)))
+      val cmd2 = Cmd("some", Vector(Text.CodeGroupTitle.CodeRef(ReqCodeGroupId(1))))
       val e2 = apply(cmd2)
-      assertEq(e2.id, ReqCodeId(2))
+      assertEq(e2.id, ReqCodeGroupId(2))
 
       // Vacant code
       val cmd3 = Cmd("some.code.child", ∅)
       val e3 = apply(cmd3)
-      assertEq(e3.id, ReqCodeId(3))
+      assertEq(e3.id, ReqCodeGroupId(3))
 
       // Should reuse ID on restore
       assertApplies(CodeGroupsDelete(e1.id))

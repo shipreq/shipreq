@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.feature.deletion
 
-import nyaya.prop.Prop
 import nyaya.test.DefaultSettings
 import nyaya.test.PropTest._
 import utest._
@@ -20,13 +19,13 @@ object DeletionLogicTestData {
   import SampleProject.Values._
 
   private var _selectedReqIds = Set.empty[ReqId]
-  private var _selectedRCGs = Set.empty[ReqCodeId]
+  private var _selectedRCGs = Set.empty[ReqCodeGroupId]
 
   private var _expectInitialReqs = Set.empty[ReqId]
-  private var _expectInitialRCGs = Set.empty[ReqCodeId]
+  private var _expectInitialRCGs = Set.empty[ReqCodeGroupId]
 
   private var _expectUnselectedReqs = Set.empty[ReqId]
-  private var _expectDeletableRCGs = IMap.empty[ReqCodeId, GroupRow](_.id)
+  private var _expectDeletableRCGs = IMap.empty[ReqCodeGroupId, GroupRow](_.id)
 
   private implicit class GReqExt(private val x: GReq) {
     private val id = x.id.getOrElse(sys error s"$x needs an id.")
@@ -80,7 +79,7 @@ object DeletionLogicTestData {
       _expectDeletableRCGs = _expectDeletableRCGs.modOrPut(id, row =>
         row.copy(
           subReqs = pairs(req, GenericReqId).map(_ map2 fixCode),
-          subGroups = pairs(rcg, ReqCodeId).map(_ map2 fixCode))
+          subGroups = pairs(rcg, ReqCodeGroupId).map(_ map2 fixCode))
         , sys error s"$id not found")
       x
     }
@@ -98,10 +97,10 @@ object DeletionLogicTestData {
     a + d1 + d2
   }
 
-  private def rcg___(id: ReqCodeId, code: ReqCode.Value)(f: EndoFn[RCGroup]): Composite = {
+  private def rcg___(id: ReqCodeGroupId, code: ReqCode.Value)(f: EndoFn[RCGroup]): Composite = {
     val a = f(RCGroup(id = id, code = code))
-    val d1 = DeadReqCode(code :+ dead, id = ReqCodeId(id.value + 10000))
-    val d2 = DeadReqCode(dead +: code, id = ReqCodeId(id.value + 20000))
+    val d1 = DeadReqCode(code :+ dead, id = ReqCodeGroupId(id.value + 10000))
+    val d2 = DeadReqCode(dead +: code, id = ReqCodeGroupId(id.value + 20000))
     a + d1 + d2
   }
 

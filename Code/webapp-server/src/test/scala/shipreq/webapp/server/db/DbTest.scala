@@ -295,7 +295,7 @@ object DbTest extends TestSuite {
           testRW(GenericReqCreate(123, 1469773577, ImpSrcs(NonEmptySet(GenericReqId(2074289209)))),
             100, 123, 'g', """{"T":1469773577,">":2074289209}""")
 
-          testRW(GenericReqCreate(123, 1469773577, Codes(ReqCode.IdAndValue(7, "yay"))),
+          testRW(GenericReqCreate(123, 1469773577, Codes(ApReqCodeId.AndValue(7, "yay"))),
             100, 123, 'g', """{"T":1469773577,"c":{"yay":7}}""")
         }
 
@@ -329,7 +329,7 @@ object DbTest extends TestSuite {
         }
 
         'ReqCodesPatch {
-          val mm = UnivEq.emptySetMultimap[ReqCode.Value, ReqCodeId]
+          val mm = UnivEq.emptySetMultimap[ReqCode.Value, ApReqCodeId]
           testRW(ReqCodesPatch(666, Set(3), Set(1095731751, 1055755379), mm),
             20, 666, 'g', """{"-":3,"^":[1095731751,1055755379]}""")
 
@@ -351,7 +351,7 @@ object DbTest extends TestSuite {
         //'repositionField        - demo(RandomData.events.repositionField       )
 
         'ReqFieldCustomTextSet {
-          testRW(ReqFieldCustomTextSet(2345, CustomField.Text.Id(123), Text.CustomTextField.demo(9, 8, 5, 7, 6)),
+          testRW(ReqFieldCustomTextSet(2345, CustomField.Text.Id(123), Text.CustomTextField.demo(9, 8, 10, 5, 7, 6)),
           21, 2345, 'g',
             """
               │{"f":123,"t":[
@@ -362,9 +362,10 @@ object DbTest extends TestSuite {
               │["Req: ",{"r":9}],
               │["UC Step Req: ",{"u":5}],
               │["Code: ",{"c":8}],
+              │["Code Group: ",{"C":10}],
               │["Tag: ",{"t":7}],
               │["Issue(∅): ",{"i":6}],
-              │["Issue(∃): ",{"i":6,"?":["Need to finish ",{"r":9},", ",{"u":5}," and ",{"c":8}]}],
+              │["Issue(∃): ",{"i":6,"?":["Need to finish ",{"r":9},", ",{"u":5},", ",{"c":8}," and ",{"C":10}]}],
               │["Issue(∃): ",{"i":6,"?":["Ask ",{"@":"bob@gmail.com"}," about ",{"=":"e=mc^2"}]}],
               │[],
               │["Math: ",{"=":"f(x) = {x+1 \\over x - 1} + 9\\pi^2"}],

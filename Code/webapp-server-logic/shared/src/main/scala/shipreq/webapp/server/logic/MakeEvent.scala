@@ -256,30 +256,31 @@ object MakeEvent {
     }
   }
 
-  private def reqCodeIdCounter(project: Project): () => ReqCodeId = {
-    var i = project.idCeilings.reqCode
-    () => {
-      i += 1
-      ReqCodeId(i)
-    }
+  private final class ReqCodeIdCounter(project: Project) {
+    private var i = project.idCeilings.reqCode
+    val ap    = () => {i += 1; ApReqCodeId   (i)}
+    val group = () => {i += 1; ReqCodeGroupId(i)}
   }
+
+  private def reqCodeIdCounter(project: Project) =
+    new ReqCodeIdCounter(project)
 
   def createContent(cmd: CreateContentCmd, project: Project): Result = {
     val nextCodeId = reqCodeIdCounter(project)
     cmd match {
       case CreateContentCmd.CreateCodeGroup(code, title) =>
-        def makeEvent(id: ReqCodeId) =
+        def makeEvent(id: ReqCodeGroupId) =
           Success(CodeGroupCreate(id, gdAllValues(CodeGroupGD, "")))
 
         project.content.reqCodes.get(code) match {
-          case None => makeEvent(nextCodeId())
+          case None => makeEvent(nextCodeId.group())
           case Some(d) =>
             if (d.isActive)
               Failure("Code in use.")
             else
               d.deadGroup match {
                 case Some(dg) => makeEvent(dg.id)
-                case None     => makeEvent(nextCodeId())
+                case None     => makeEvent(nextCodeId.group())
               }
         }
 
@@ -287,7 +288,7 @@ object MakeEvent {
         var vs = GenericReqGD.emptyValues
         for (cs <- NonEmptySet.option(i.codes)) {
           // If a code is in use, ApplyEvent will catch it
-          val v = cs.map(c => ReqCode.IdAndValue(nextCodeId(), c))
+          val v = cs.map(c => ApReqCodeId.AndValue(nextCodeId.ap(), c))
           vs += GenericReqGD.Codes(v)
         }
         for (v <- NonEmpty(i.customText))                vs += GenericReqGD.CustomText(v)
@@ -302,7 +303,7 @@ object MakeEvent {
         var vs = UseCaseGD.emptyValues
         for (cs <- NonEmptySet.option(i.codes)) {
           // If a code is in use, ApplyEvent will catch it
-          val v = cs.map(c => ReqCode.IdAndValue(nextCodeId(), c))
+          val v = cs.map(c => ApReqCodeId.AndValue(nextCodeId.ap(), c))
           vs += UseCaseGD.Codes(v)
         }
         for (v <- NonEmpty(i.customText))                vs += UseCaseGD.CustomText(v)
@@ -336,11 +337,11 @@ object MakeEvent {
       case UpdateContentCmd.PatchImplications(id, dir, v) =>
         ReqImplicationsPatch(id, dir, v)
 
-      case UpdateContentCmd.PatchReqCodes(reqId, cs) => {
-        var remove : Set[ReqCodeId]                          = UnivEq.emptySet
-        var restore: Set[ReqCodeId]                          = UnivEq.emptySet
-        var add    : Multimap[ReqCode.Value, Set, ReqCodeId] = UnivEq.emptySetMultimap
-        var r      : Option[Result]                          = None
+      case UpdateContentCmd.PatchReqCodes(reqId, cs) =>
+        var remove : Set[ApReqCodeId]                          = UnivEq.emptySet
+        var restore: Set[ApReqCodeId]                          = UnivEq.emptySet
+        var add    : Multimap[ReqCode.Value, Set, ApReqCodeId] = UnivEq.emptySetMultimap
+        var r      : Option[Result]                            = None
 
         def fail(err: String): Unit =
           r = Some(Failure(err))
@@ -361,14 +362,13 @@ object MakeEvent {
                 Failure(s"Code in use: ${PlainText reqCode c}.")
 
               case od => od.flatMap(_.reqInactive(reqId).ifNonEmpty(_.min)) match {
-                case None    => add = add.add(c, nextCodeId())
+                case None    => add = add.add(c, nextCodeId.ap())
                 case Some(i) => restore += i
               }
             }
         }
 
         r getOrElse ReqCodesPatch(reqId, remove, restore, add)
-      }
 
       case UpdateContentCmd.SetGenericReqType(id, v) =>
         GenericReqTypeSet(id, v)

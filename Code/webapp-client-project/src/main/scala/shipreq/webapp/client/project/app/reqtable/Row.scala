@@ -156,7 +156,7 @@ object Row {
           reqId.value.toString + (' ' + instanceId).toChar.toString
     }
 
-    final case class ForCodeGroup(value: ReqCodeId) extends Id {
+    final case class ForCodeGroup(value: ReqCodeGroupId) extends Id {
       override def key =
         "C" + value.value
     }
@@ -176,7 +176,7 @@ object Row {
 
   object SourceId {
     final case class ForReq(reqId: ReqId) extends SourceId
-    final case class ForCodeGroup(value: ReqCodeId) extends SourceId
+    final case class ForCodeGroup(value: ReqCodeGroupId) extends SourceId
 
     implicit def equalityR  : UnivEq[ForReq]        = UnivEq.derive
     implicit def equalityG  : UnivEq[ForCodeGroup]  = UnivEq.derive

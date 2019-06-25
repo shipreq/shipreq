@@ -28,7 +28,8 @@ object BinCodecMemberData {
   implicit lazy val pickleUseCaseId                = pickleTaggedI(UseCaseId                 ).reuseByUnivEq
   implicit lazy val pickleUseCaseStepId            = pickleTaggedI(UseCaseStepId             ).reuseByUnivEq
   implicit lazy val pickleGenericReqId             = pickleTaggedI(GenericReqId              ).reuseByUnivEq
-  implicit lazy val pickleReqCodeId                = pickleTaggedI(ReqCodeId                 ).reuseByUnivEq
+  implicit lazy val pickleApReqCodeId              = pickleTaggedI(ApReqCodeId.apply         ).reuseByUnivEq
+  implicit lazy val pickleReqCodeGroupId           = pickleTaggedI(ReqCodeGroupId            ).reuseByUnivEq
   implicit lazy val pickleCustomReqTypeId          = pickleTaggedI(CustomReqTypeId           ).reuseByUnivEq
   implicit lazy val pickleCustomIssueTypeId        = pickleTaggedI(CustomIssueTypeId         ).reuseByUnivEq
   implicit lazy val pickleApplicableTagId          = pickleTaggedI(ApplicableTagId           ).reuseByUnivEq
@@ -46,6 +47,7 @@ object BinCodecMemberData {
   implicit lazy val pickleReqId        : Pickler[ReqId        ] = pickleADT
   implicit lazy val pickleSubReqId     : Pickler[SubReqId     ] = pickleADT
   implicit lazy val pickleReqOrSubReqId: Pickler[ReqOrSubReqId] = pickleADT
+  implicit lazy val pickleReqCodeId    : Pickler[ReqCodeId    ] = pickleADT
 
   implicit lazy val pickleImplications: Pickler[Implications] = pickleCaseClass
 
@@ -98,15 +100,15 @@ object BinCodecMemberData {
   implicit lazy val pickleProjectTextContextNone: Pickler[ProjectText.Context.None] = pickleCaseClass
   implicit lazy val pickleProjectTextContext    : Pickler[ProjectText.Context     ] = pickleADT
 
-  implicit lazy val pickleReqDataText       : Pickler[ReqData.Text       ] = pickleMap
-  implicit lazy val pickleReqCodeNode       : Pickler[ReqCode.Node       ] = pickleCaseClass // xmap[String] already reuses
-  implicit lazy val pickleLiveCodeGroup     : Pickler[LiveCodeGroup      ] = pickleCaseClass
-  implicit lazy val pickleDeadCodeGroup     : Pickler[DeadCodeGroup      ] = pickleCaseClass
-  implicit lazy val pickleCodeGroup         : Pickler[CodeGroup          ] = pickleADT
-  implicit lazy val pickleReqCodeData       : Pickler[ReqCode.Data       ] = derivePickler
-  implicit lazy val pickleReqCodeIdAndValue : Pickler[ReqCode.IdAndValue ] = pickleCaseClass
-  implicit lazy val pickleReqCodeTrie       : Pickler[ReqCode.Trie       ] = pickleTrie
-  implicit lazy val pickleReqCodes          : Pickler[ReqCodes           ] = pickleCaseClass
+  implicit lazy val pickleReqDataText        : Pickler[ReqData.Text        ] = pickleMap
+  implicit lazy val pickleReqCodeNode        : Pickler[ReqCode.Node        ] = pickleCaseClass // xmap[String] already reuses
+  implicit lazy val pickleLiveCodeGroup      : Pickler[LiveCodeGroup       ] = pickleCaseClass
+  implicit lazy val pickleDeadCodeGroup      : Pickler[DeadCodeGroup       ] = pickleCaseClass
+  implicit lazy val pickleCodeGroup          : Pickler[CodeGroup           ] = pickleADT
+  implicit lazy val pickleReqCodeData        : Pickler[ReqCode.Data        ] = derivePickler
+  implicit lazy val pickleApReqCodeIdAndValue: Pickler[ApReqCodeId.AndValue] = pickleCaseClass
+  implicit lazy val pickleReqCodeTrie        : Pickler[ReqCode.Trie        ] = pickleTrie
+  implicit lazy val pickleReqCodes           : Pickler[ReqCodes            ] = pickleCaseClass
 
   implicit lazy val pickleStaticReqTypeUC: Pickler[StaticReqType.UseCase.type] = pickleObject
   implicit lazy val pickleStaticReqType  : Pickler[StaticReqType             ] = pickleADT

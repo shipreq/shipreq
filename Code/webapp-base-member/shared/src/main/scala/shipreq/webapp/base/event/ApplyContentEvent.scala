@@ -148,7 +148,7 @@ trait ApplyContentEvent {
         .map { case (fid, value) => setCustomTextValue(id, fid, value.whole) }
         .reduce(_ >> _)
 
-    def setReqCodes(id: ReqId, v: NonEmptySet[ReqCode.IdAndValue]): SE[Unit] =
+    def setReqCodes(id: ReqId, v: NonEmptySet[ApReqCodeId.AndValue]): SE[Unit] =
       ReqCodeLogic.addAllToReq(v.whole, id, addToActive = true)
 
     def setReqTags(id: ReqId, v: NonEmptySet[ApplicableTagId]): SE[Unit] =
@@ -479,7 +479,7 @@ trait ApplyContentEvent {
     def ensureActiveReqIs(reqId: ReqId): ActiveReq => SE[Unit] =
       whenUntrusted(a => SE.test(a.reqId ==* reqId, s"Expected ReqCode target to be $reqId, found: ${a.reqId}."))
 
-    def ensureRefToReqExists(v: Value, d: Data, rc: ReqCodeId)(reqId: ReqId): SE[Unit] =
+    def ensureRefToReqExists(v: Value, d: Data, rc: ApReqCodeId)(reqId: ReqId): SE[Unit] =
       whenUntrusted(
         SE.test(d.reqInactive(reqId) contains rc, s"Ref to ${show(reqId)} not found in ${show(v)}."))
 
@@ -496,15 +496,22 @@ trait ApplyContentEvent {
       optionGet(d.deadGroup, s"Expected to find dead group at ${show(v)}.")
 
     def needCode(id: ReqCodeId): SE[Value] =
-      SE(p => optionGetR(p, p.content.reqCodes.reqCodesById get id, s"${show(id)} not found."))
+      SE(p => optionGetR(p, p.content.reqCodes.getReqCode(id), s"${show(id)} not found."))
 
-    def needCodes[A](ids: TraversableOnce[ReqCodeId], f: (ReqCodeId, Value) => A): SE[Vector[A]] = {
+    def needApCodes[A](ids: Traversable[ApReqCodeId], f: (ApReqCodeId, Value) => A): SE[Vector[A]] =
+      needCodes(ids)(_.content.reqCodes.apReqCodesById.get, f)
+
+    def needCodeGroups[A](ids: Traversable[ReqCodeGroupId], f: (ReqCodeGroupId, Value) => A): SE[Vector[A]] =
+      needCodes(ids)(_.content.reqCodes.reqCodeGroupsById.get, f)
+
+    def needCodes[I <: ReqCodeId, A](ids: Traversable[I])
+                                    (getFn: Project => I => Option[Value], f: (I, Value) => A): SE[Vector[A]] = {
       SE { p =>
-        val m = p.content.reqCodes.reqCodesById
+        val get = getFn(p)
         val found = Vector.newBuilder[A]
-        var missing = Vector.empty[ReqCodeId]
+        var missing = Vector.empty[I]
         for (id <- ids)
-          m.get(id) match {
+          get(id) match {
             case Some(v) => found += f(id, v)
             case None    => missing :+= id
           }
@@ -524,7 +531,7 @@ trait ApplyContentEvent {
     }
 
     /** Command to add a ReqCode to a requirement. */
-    case class AddReq(code: Value, codeValidated: Validated, id: ReqCodeId, reqId: ReqId, addToActive: Boolean)
+    case class AddReq(code: Value, codeValidated: Validated, id: ApReqCodeId, reqId: ReqId, addToActive: Boolean)
 
     implicit object ReqAdder extends Adder[AddReq] {
       override def reqCodeId(a: AddReq) = a.id
@@ -588,7 +595,7 @@ trait ApplyContentEvent {
       updateIdCeiling(IdCeilings.maxOfF(as)(adder.reqCodeId(_).value)) >>
         foldMapBind(t, as)(a => adder(_, a))
 
-    def addAllToReq(vs: Iterable[IdAndValue], reqId: ReqId, addToActive: Boolean): SE[Unit] =
+    def addAllToReq(vs: Iterable[ApReqCodeId.AndValue], reqId: ReqId, addToActive: Boolean): SE[Unit] =
       addAll(vs map (iv =>
         AddReq(iv.value, Unvalidated, iv.id, reqId, addToActive)))
 
@@ -621,8 +628,8 @@ trait ApplyContentEvent {
         } yield inactivateReq(t, v, a, remember(a.id))
       )
 
-    def inactivateReqsByIdT(t: Trie, ids: TraversableOnce[ReqCodeId], remember: ReqCodeId => Boolean, validateTarget: ActiveReq => SE[Unit]): SE[Trie] =
-      needCodes(ids, (_, v) => v) >>= (vs =>
+    def inactivateReqsByIdT(t: Trie, ids: Traversable[ApReqCodeId], remember: ReqCodeId => Boolean, validateTarget: ActiveReq => SE[Unit]): SE[Trie] =
+      needApCodes(ids, (_, v) => v) >>= (vs =>
         inactivateReqsByCodeT(t, vs, remember, validateTarget))
 
     def inactivateBelongingToReqs(reqIds: Set[ReqId]): SE[Unit] =
@@ -646,8 +653,8 @@ trait ApplyContentEvent {
       putInactive(trie, code, d2)
     }
 
-    def inactivateGroupsByIdT(t: Trie, ids: TraversableOnce[ReqCodeId], remember: Boolean): SE[Trie] =
-      needCodes(ids, (_, v) => v) >>= (vs =>
+    def inactivateGroupsByIdT(t: Trie, ids: Traversable[ReqCodeGroupId], remember: Boolean): SE[Trie] =
+      needCodeGroups(ids, (_, v) => v) >>= (vs =>
         inactivateGroupsByCodeT(t, vs, remember))
 
     def inactivateGroupsByCodeT(t: Trie, codes: Iterable[Value], remember: Boolean): SE[Trie] =
@@ -694,7 +701,7 @@ trait ApplyContentEvent {
      * If the ReqCode is already active with another ID, then it has been usurped while it was inactive.
      * Usurped ReqCodes are renamed to avoid conflict before being restored.
      */
-    def restoreCodeToReqT(trie: Trie, reqId: ReqId, id: ReqCodeId, code: Value): SE[Trie] =
+    def restoreCodeToReqT(trie: Trie, reqId: ReqId, id: ApReqCodeId, code: Value): SE[Trie] =
       for {
         d <- needData(trie, code)
         _ <- ensureRefToReqExists(code, d, id)(reqId)
@@ -720,13 +727,13 @@ trait ApplyContentEvent {
      *
      * If more than one id refers to the same ReqCode, then only the id with the smallest value is activated.
      */
-    def restoreToReqByIdsT(t0: Trie, reqId: ReqId, ids: Iterable[ReqCodeId]): SE[Trie] = {
+    def restoreToReqByIdsT(t0: Trie, reqId: ReqId, ids: Iterable[ApReqCodeId]): SE[Trie] = {
       // Sort IDs here because only the first ID/reqcode is restored and we want determinism
       var idsSorted = ids.toVector
       if (idsSorted.length > 1)
         idsSorted = idsSorted.sorted
 
-      needCodes(idsSorted, IdAndValue) >>= { ivs =>
+      needApCodes(idsSorted, ApReqCodeId.AndValue) >>= { ivs =>
         var valuesSeen = Set.empty[Value]
         foldMapBind(t0, ivs)(iv => t =>
           if (valuesSeen contains iv.value)
@@ -772,23 +779,23 @@ trait ApplyContentEvent {
           SE fail s"Group at ${show(code)} is already live."
       }
 
-    def restoreGroupsByIdT(t0: Trie, ids: Iterable[ReqCodeId]): SE[Trie] =
-      needCodes(ids, IdAndValue) >>= (ivs =>
+    def restoreGroupsByIdT(t0: Trie, ids: Iterable[ReqCodeGroupId]): SE[Trie] =
+      needCodeGroups(ids, (_, _)) >>= (ivs =>
         foldMapBind(t0, ivs)(iv => t =>
-          restoreGroupAtCodeT(t, iv.id, iv.value)))
+          restoreGroupAtCodeT(t, iv._1, iv._2)))
 
-    private def addCodesToReq(target: ReqId, mm: Multimap[ReqCode.Value, Set, ReqCodeId]): Vector[AddReq] = {
+    private def addCodesToReq(target: ReqId, mm: Multimap[ReqCode.Value, Set, ApReqCodeId]): Vector[AddReq] = {
       // Result order is important here
       val r = Vector.newBuilder[AddReq]
       mm.m.foreach { x =>
         val v    = x._1
         val ids1 = x._2
-        if (ids1.size == 1)
+        if (ids1.size == 1) // TODO Scala 2.13 - use isSize or whatever
           r += AddReq(v, Unvalidated, ids1.head, target, true)
         else {
           // Sort IDs here because only the first ID becomes the ActiveReq.id and we want determinism
           val ids2 = ids1.toArray
-          java.util.Arrays.sort(ids2, implicitly[Ordering[ReqCodeId]])
+          java.util.Arrays.sort(ids2, implicitly[Ordering[ApReqCodeId]])
           var first = true
           for (id <- ids2) {
             r += AddReq(v, Unvalidated, id, target, first)
@@ -803,7 +810,7 @@ trait ApplyContentEvent {
       for {
         p    ← SE.get
         refd = p.atomScan.codeRefs
-        keep = e.add.values.foldLeft(refd)(_ &~_)
+        keep = e.add.values.foldLeft(refd)(_ -- _)
         t0   = p.content.reqCodes.trie
         t1   ← inactivateReqsByIdT(t0, e.remove, keep.contains, ensureActiveReqIs(e.id))
         t2   ← restoreToReqByIdsT(t1, e.id, e.restore)

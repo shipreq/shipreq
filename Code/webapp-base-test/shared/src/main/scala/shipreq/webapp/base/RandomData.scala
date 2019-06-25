@@ -1003,22 +1003,42 @@ object RandomData {
     val value: Gen[Value] =
       node.nev(1 to Grammar.reqCode.maxNodes)
 
-    val id =
-      RandomData.id map ReqCodeId
+    val apId =
+      RandomData.id map ApReqCodeId.apply
+
+    val groupId =
+      RandomData.id map ReqCodeGroupId
+
+    val id: Gen[ReqCodeId] =
+      Gen.chooseGen(apId, groupId)
 
     val distinctIds =
-      Distinct.fint.xmap(ReqCodeId)(_.value).distinct
+      Distinct.fint.xmap(ApReqCodeId.apply)(_.value).distinct
 
     val distinctReqCodeTrie = {
+      val reqIdIso: Iso[ReqCodeGroupId, ApReqCodeId] =
+        Iso[ReqCodeGroupId, ApReqCodeId](a => ApReqCodeId(a.value))(a => ReqCodeGroupId(a.value))
+
+      val reqCodeDataActiveId = Optional[Data, ApReqCodeId]({
+        case d: ActiveReq   => Some(d.id)
+        case d: ActiveGroup => Some(ApReqCodeId(d.id.value))
+        case d: Inactive    => None
+      })(n => {
+        case d: ActiveReq   => d.copy(id = n)
+        case d: ActiveGroup => reqCodeActiveGroupId.set(ReqCodeGroupId(n.value))(d)
+        case d: Inactive    => d
+      })
+
+
       val ids1      = distinctIds at reqCodeDataActiveId
-      val ids2      = distinctIds at reqCodeDataDeadGroupId
-      val ids3      = distinctIds.lift[Set].liftMultimapValues[ReqId, Set, ReqCodeId, ReqCodeId] at reqCodeDataReqInactive
+      val ids2      = distinctIds at reqCodeDataDeadGroupId.composeIso(reqIdIso)
+      val ids3      = distinctIds.lift[Set].liftMultimapValues[ReqId, Set, ApReqCodeId, ApReqCodeId] at reqCodeDataReqInactive
       val id        = ids1 + ids2 + ids3
       val idsInTrie = id traversal reqCodeTrieValueTraversal
       idsInTrie
     }
 
-    val smallIdSet = id.set(0 to 3)
+    val smallApIdSet = apId.set(0 to 3)
 
     val gEmptyReqInactive: Gen[ReqInactive] =
       Gen pure emptyReqInactive
@@ -1032,15 +1052,15 @@ object RandomData {
       ss.gen flatMap { sz =>
         val gReqInactive: Gen[ReqInactive] =
           ogReqId match {
-            case Some(g) => g.mapTo(smallIdSet)(0 to sz).map(Multimap(_))
+            case Some(g) => g.mapTo(smallApIdSet)(0 to sz).map(Multimap(_))
             case None    => gEmptyReqInactive
           }
 
         val gLiveCodeGroup: Gen[LiveCodeGroup] =
-          Gen.apply2(LiveCodeGroup.apply)(id, gGroupText)
+          Gen.apply2(LiveCodeGroup.apply)(groupId, gGroupText)
 
         val gDeadCodeGroup: Gen[DeadCodeGroup] =
-          Gen.apply2(DeadCodeGroup.apply)(id, gGroupText)
+          Gen.apply2(DeadCodeGroup.apply)(groupId, gGroupText)
 
         val gDeadGroup: Gen[DeadGroup] =
           gDeadCodeGroup.option
@@ -1059,7 +1079,7 @@ object RandomData {
 
         val gActiveReq: Option[Gen[ActiveReq]] =
           ogLiveReqId map (gReqId =>
-            Gen.apply4(ActiveReq.apply)(id, gReqId, gDeadGroup, gReqInactive))
+            Gen.apply4(ActiveReq.apply)(apId, gReqId, gDeadGroup, gReqInactive))
 
         gActiveReq match {
           case None    => Gen.chooseGen(gInactive, gActiveGroup)
@@ -1667,8 +1687,8 @@ object RandomData {
     val anyApplicableReqTypes: Gen[ApplicableReqTypes] =
       customReqTypeId.set flatMap applicableReqTypes
 
-    val reqCodeIdAndValue: Gen[ReqCode.IdAndValue] =
-      Gen.apply2(ReqCode.IdAndValue)(reqCode.id, reqCode.value)
+    val reqCodeIdAndValue: Gen[ApReqCodeId.AndValue] =
+      Gen.apply2(ApReqCodeId.AndValue)(reqCode.apId, reqCode.value)
 
     val fieldId: Gen[FieldId] =
       Gen.chooseGen(staticField, customFieldId)
@@ -1866,7 +1886,7 @@ object RandomData {
       Gen.apply3(GenericReqCreate)(genericReqId, customReqTypeId, genericReqGD.values)
 
     val genCodeGroupCreate: Gen[CodeGroupCreate] =
-      Gen.apply2(CodeGroupCreate)(reqCode.id, codeGroupGD.nonEmptyValues)
+      Gen.apply2(CodeGroupCreate)(reqCode.groupId, codeGroupGD.nonEmptyValues)
 
     val genTagGroupCreate: Gen[TagGroupCreate] =
       Gen.apply2(TagGroupCreate)(tagGroupId, tagGroupGD.nonEmptyValues)
@@ -1893,10 +1913,10 @@ object RandomData {
       customReqTypeId map CustomReqTypeRestore
 
     val genCodeGroupsDelete: Gen[CodeGroupsDelete] =
-      reqCode.id.nes map CodeGroupsDelete
+      reqCode.groupId.nes map CodeGroupsDelete
 
     val genReqsDelete: Gen[ReqsDelete] =
-      Gen.apply3(ReqsDelete)(reqId.nes, reqCode.id.set, deletionReason)
+      Gen.apply3(ReqsDelete)(reqId.nes, reqCode.groupId.set, deletionReason)
 
     val genFieldStaticRemove: Gen[FieldStaticRemove] =
       staticField map FieldStaticRemove
@@ -1917,7 +1937,7 @@ object RandomData {
       Gen.apply3(ReqImplicationsPatch)(reqId, dir, genNonEmptySetDiff(reqId))
 
     val genReqCodesPatch: Gen[ReqCodesPatch] = {
-      val codes = reqCode.id.set
+      val codes = reqCode.apId.set(0 to 3)
       for {
         id      ← reqId
         add     ← codes.mapBy(reqCode.value).map(Multimap(_)) // TODO Could have same ID with different codes
@@ -1934,7 +1954,7 @@ object RandomData {
       Gen.apply2(FieldReposition)(fieldId, fieldId.option)
 
     val genContentRestore: Gen[ContentRestore] =
-      Gen.apply2(ContentRestore)(reqId.set, reqCode.id.set)
+      Gen.apply2(ContentRestore)(reqId.set, reqCode.groupId.set(0 to 3))
 
     val genReqFieldCustomTextSet: Gen[ReqFieldCustomTextSet] =
       Gen.apply3(ReqFieldCustomTextSet)(reqId, customFieldTextId, customTextField)
@@ -1973,7 +1993,7 @@ object RandomData {
       Gen.apply2(FieldCustomTextUpdate)(customFieldTextId, customTextFieldGD.nonEmptyValues)
 
     val genCodeGroupUpdate: Gen[CodeGroupUpdate] =
-      Gen.apply2(CodeGroupUpdate)(reqCode.id, codeGroupGD.nonEmptyValues)
+      Gen.apply2(CodeGroupUpdate)(reqCode.groupId, codeGroupGD.nonEmptyValues)
 
     val genTagGroupUpdate: Gen[TagGroupUpdate] =
       Gen.apply2(TagGroupUpdate)(tagGroupId, tagGroupGD.nonEmptyValues)

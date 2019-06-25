@@ -149,9 +149,9 @@ object OtherEventTest extends TestSuite {
           'sortBadCFTag   - assertFail("resolve")(SV1.modSort(_.copy(init = Vector(badColTag / AscThenBlanks))))
           'sortBadCFTxt   - assertFail("resolve")(SV1.modSort(_.copy(init = Vector(badColTxt / AscThenBlanks))))
           'sortInvis      - assertFail("visible")(SV1.modSort(_.copy(init = Vector(ColCF1 / BlanksThenDesc))))
-          'filterBadRT    - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.createFR))
-          'filterBadTag   - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.createAT1))
-          'filterBadIssue - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.createIssueType1))
+          'filterBadRT    - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.createFR), implicitly)
+          'filterBadTag   - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.createAT1), implicitly)
+          'filterBadIssue - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.createIssueType1), implicitly)
 
           // Note: mandatory columns may increase in future in which case they will just be tacked on the SavedViews
           // without them at runtime. Not going to bother adding a mandatory check cos it will invalidate past events in
@@ -179,8 +179,8 @@ object OtherEventTest extends TestSuite {
           'notFound       - assertFail("not found")(SavedViewUpdate(SV2.id, SV2.values))
           'nameEmpty      - assertFail("blank")    (SavedViewUpdate(SV1.id, ValueForName("")))
           'nameNoAZ       - assertFail("letter")   (SavedViewUpdate(SV1.id, ValueForName("123")))
-          'nameUniqCS     - assertFail("in use")   (SavedViewUpdate(SV1.id, ValueForName(SV2.name)))(initialEvents add SV2)
-          'nameUniqCI     - assertFail("in use")   (SavedViewUpdate(SV1.id, ValueForName(SV2.name.value.toUpperCase)))(initialEvents add SV2)
+          'nameUniqCS     - assertFail("in use")   (SavedViewUpdate(SV1.id, ValueForName(SV2.name)))(initialEvents add SV2, implicitly)
+          'nameUniqCI     - assertFail("in use")   (SavedViewUpdate(SV1.id, ValueForName(SV2.name.value.toUpperCase)))(initialEvents add SV2, implicitly)
           'nameReserved   - assertFail("reserved") (SavedViewUpdate(SV1.id, ValueForName("UNSAVED VIEW")))
           'colsDup        - assertFail("dup")      (SavedViewUpdate(SV1.id, SV1.vmodCols(_ :+ Column.Pubid)))
           'colsBadCFImp   - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV1.vmodCols(_ :+ badColImp)))
@@ -191,9 +191,9 @@ object OtherEventTest extends TestSuite {
           'sortBadCFTag   - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV1.vmodSort(_.copy(init = Vector(badColTag / AscThenBlanks)))))
           'sortBadCFTxt   - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV1.vmodSort(_.copy(init = Vector(badColTxt / AscThenBlanks)))))
           'sortInvis      - assertFail("visible")  (SavedViewUpdate(SV1.id, SV1.vmodSort(_.copy(init = Vector(ColCF1 / BlanksThenDesc)))))
-          'filterBadRT    - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.createFR))
-          'filterBadTag   - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.createAT1))
-          'filterBadIssue - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.createIssueType1))
+          'filterBadRT    - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.createFR), implicitly)
+          'filterBadTag   - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.createAT1), implicitly)
+          'filterBadIssue - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.createIssueType1), implicitly)
         }
       }
 
@@ -207,7 +207,7 @@ object OtherEventTest extends TestSuite {
         "321_1"   - test(SV3, SV2, SV1)(SV1.id)(SavedViews(SV1) + SV2 + SV3)
         "312_2"   - test(SV3, SV1, SV2)(SV2.id)(SavedViews(SV2) + SV1 + SV3)
         'empty    - assertFail("not found")(SavedViewDefaultSet(SV1.id))
-        'notFound - assertFail("not found")(SavedViewDefaultSet(SV1.id))(initialEvents.add(SV3, SV2))
+        'notFound - assertFail("not found")(SavedViewDefaultSet(SV1.id))(initialEvents.add(SV3, SV2), implicitly)
       }
 
       'delete {
@@ -222,7 +222,7 @@ object OtherEventTest extends TestSuite {
         'default3b   - test(SavedViewUpdate(SV3.id, ValueForName("A")))(SV1.id)(SV3.copy(name = "A"), SV2)
         'nonDefault2 - test()(SV2.id)(SV1, SV3)
         'nonDefault3 - test()(SV3.id)(SV1, SV2)
-        'empty       - assertFail("not found")(SavedViewDelete(SV1.id))(SVIE)
+        'empty       - assertFail("not found")(SavedViewDelete(SV1.id))(SVIE, implicitly)
         'notFound    - assertFail("not found")(SavedViewDelete(SV1.id), SavedViewDelete(SV1.id))
       }
     }

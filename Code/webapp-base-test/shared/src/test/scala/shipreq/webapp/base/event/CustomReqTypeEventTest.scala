@@ -121,7 +121,7 @@ object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
         val t     = new EventTester
         t.makeName = (i, e) => s"#$i: $e"
         val reqId = GenericReqId(8)
-        val rc    = ReqCode.IdAndValue(9, "oh.good")
+        val rc    = ApReqCodeId.AndValue(9, "oh.good")
         def test(grLiveImp: Live)(e: Event): Unit =
           t(e) { name =>
             val r = t.p.content.reqs.genericReqs.need(reqId)

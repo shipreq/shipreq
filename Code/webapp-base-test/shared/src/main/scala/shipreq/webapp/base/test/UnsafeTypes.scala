@@ -55,7 +55,9 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
   implicit def autoReqCodeSetFromSet[C <% ReqCode.Value](cs: Set[C]): ReqCode.CodeSet =
     cs.foldLeft(ReqCode.CodeSet.empty)(_.put(_, ()))
 
-  implicit def autoReqCodeId        (i: Int) = ReqCodeId(i)
+  implicit def autoReqCodeGroupId   (i: Int) = ReqCodeGroupId(i)
+  implicit def autoApReqCodeId      (i: Int) = ApReqCodeId(i)
+//  implicit def autoReqCodeId        (i: Int) = ReqCodeId(i)
   implicit def autoReqTypePos       (i: Int) = ReqTypePos(i)
   implicit def autoGenericReqId     (i: Int) = GenericReqId(i)
 //  implicit def autoUseCaseId        (i: Int) = UseCaseId(i)
@@ -69,7 +71,9 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
   implicit def autoApplicableTagId  (i: Int) = ApplicableTagId(i)
   implicit def autoDeletionReasonId (i: Int) = DeletionReasonId(i)
 
-  implicit def autoReqCodeIdO        (i: Int): Option[ReqCodeId]                  = Some(i)
+  implicit def autoReqCodeGroupIdO   (i: Int): Option[ReqCodeGroupId]             = Some(i)
+  implicit def autoApReqCodeIdO      (i: Int): Option[ApReqCodeId]                = Some(i)
+//  implicit def autoReqCodeIdO        (i: Int): Option[ReqCodeId]                  = Some(i)
   implicit def autoReqTypePosO       (i: Int): Option[ReqTypePos]                 = Some(i)
   implicit def autoGenericReqIdO     (i: Int): Option[GenericReqId]               = Some(i)
 //  implicit def autoUseCaseIdO        (i: Int): Option[UseCaseId]                  = Some(i)
@@ -87,7 +91,7 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
 
   implicit def autoUseCaseStepIdPair(p: (Int, Int)): (UseCaseStepId, UseCaseStepId) = p.mapEach(UseCaseStepId)
 
-  implicit def autoReqCodeIdS(i: Int): Set[ReqCodeId] = Set(i)
+  implicit def autoReqCodeGroupIdS(i: Int): Set[ReqCodeGroupId] = Set(i)
 
   implicit def tagTreeTree(t: TagTree) = t.mapValues(_.children)
 
@@ -163,18 +167,21 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
 //        .map(s => IndexLabel.NumericFrom0.parse(s).get)
 //        .toVector
 
-  implicit def autoReqCodeIdAndValue(t: (Int, String)) = ReqCode.IdAndValue(t._1, t._2)
+  implicit def autoReqCodeIdAndValue(t: (Int, String)) =
+    ApReqCodeId.AndValue(t._1, t._2)
 
-  implicit def setLikePatchAdd1(s: Set[(Int, String)]): Multimap[ReqCode.Value, Set, ReqCodeId] =
+  implicit def setLikePatchAdd1(s: Set[(Int, String)]): Multimap[ReqCode.Value, Set, ApReqCodeId] =
     setLikePatchAdd(s map autoReqCodeIdAndValue)
 
-  implicit def setLikePatchAdd(s: Set[ReqCode.IdAndValue]): Multimap[ReqCode.Value, Set, ReqCodeId] =
+  implicit def setLikePatchAdd(s: Set[ApReqCodeId.AndValue]): Multimap[ReqCode.Value, Set, ApReqCodeId] =
     Multimap(s.toList.map(iv => iv.value -> Set(iv.id)).toMap)
 }
 
 object UnsafeTypes extends UnsafeTypesMedPriority {
 
   implicit class UnsafeIntExt(val a: Int) extends AnyVal {
+    def ARC    = ApReqCodeId(a)
+    def RCG    = ReqCodeGroupId(a)
     def AT     = ApplicableTagId(a)
     def TG     = TagGroupId(a)
     def CFText = CustomField.Text.Id(a)

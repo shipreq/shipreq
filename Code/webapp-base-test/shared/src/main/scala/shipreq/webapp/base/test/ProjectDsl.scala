@@ -35,19 +35,24 @@ object ProjectDslInternals {
 
     def newMaxReqCodeId = _newMaxReqCodeId
 
-    def nextReqCodeId() = {
+    def nextReqCodeGroupId() = {
       _newMaxReqCodeId += 1
-      ReqCodeId(newMaxReqCodeId)
+      ReqCodeGroupId(newMaxReqCodeId)
     }
 
-    def newActiveGroup(id: Option[ReqCodeId], t: Text.CodeGroupTitle.OptionalText) =
+    def nextApReqCodeId() = {
+      _newMaxReqCodeId += 1
+      ApReqCodeId(newMaxReqCodeId)
+    }
+
+    def newActiveGroup(id: Option[ReqCodeGroupId], t: Text.CodeGroupTitle.OptionalText) =
       ReqCode.ActiveGroup(
-        LiveCodeGroup(id getOrElse nextReqCodeId(), t),
+        LiveCodeGroup(id getOrElse nextReqCodeGroupId(), t),
         ReqCode.emptyReqInactive)
 
-    def assignReqCodeToReq(t: ReqCode.Trie, c: ReqCode.Value, id: Option[ReqCodeId], reqId: ReqId, reqLive: Live): ReqCode.Trie = {
+    def assignReqCodeToReq(t: ReqCode.Trie, c: ReqCode.Value, id: Option[ApReqCodeId], reqId: ReqId, reqLive: Live): ReqCode.Trie = {
       import ReqCode._
-      def rcid() = id getOrElse nextReqCodeId()
+      def rcid() = id getOrElse nextApReqCodeId()
       reqLive match {
         case Live => t.modify(c)(e => ActiveReq(rcid(), reqId, e.flatMap(_.deadGroup), e.fold(emptyReqInactive)(_.reqInactive)))
         case Dead => t.modify(c)(_.getOrElse(Data.empty).modReqInactive(_.add(reqId, rcid())))
@@ -174,7 +179,7 @@ object ProjectDsl {
   }
 
   case class RCGroup(code : ReqCode.Value,
-                     id   : Option[ReqCodeId] = None,
+                     id   : Option[ReqCodeGroupId] = None,
                      title: Text.CodeGroupTitle.OptionalText = Vector.empty) extends ToState {
     def state: Mod[LiveCodeGroup] =
       State[ProjectState, LiveCodeGroup]{ p =>
@@ -194,19 +199,22 @@ object ProjectDsl {
                          id      : Option[ReqCodeId] = None,
                          oldReqId: Option[ReqId] = None,
                          title   : String = "dead group") extends ToState {
-    def state: Mod[ReqCodeId] =
-      State[ProjectState, ReqCodeId]{ p =>
+    def state: Mod[Unit] =
+      State[ProjectState, Unit]{ p =>
         import UnsafeTypes._
-        val id = this.id getOrElse p.nextReqCodeId()
         val t = p.reqCodeTrie.modify(code) { o =>
           val d = o.getOrElse(ReqCode.Data.empty)
           oldReqId match {
-            case None    => TestOptics.reqCodeDataDeadGroup.set(Some(DeadCodeGroup(id, title)))(d)
-            case Some(r) => TestOptics.reqCodeDataReqInactive.modify(_.add(r, id))(d)
+            case None =>
+              val id = this.id.fold(p.nextReqCodeGroupId())(_.asInstanceOf[ReqCodeGroupId])
+              TestOptics.reqCodeDataDeadGroup.set(Some(DeadCodeGroup(id, title)))(d)
+            case Some(r) =>
+              val id = this.id.fold(p.nextApReqCodeId())(_.asInstanceOf[ApReqCodeId])
+              TestOptics.reqCodeDataReqInactive.modify(_.add(r, id))(d)
           }
         }
         val p2 = p.copy(reqCodeTrie = t, maxReqCodeId = p.newMaxReqCodeId)
-        (p2, id)
+        (p2, ())
       }
   }
 

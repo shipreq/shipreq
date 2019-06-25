@@ -15,7 +15,7 @@ object DeletionRestorationLogic {
                         actionableReqs  : ActionableReqs,
                         actionableGroups: ActionableGroups,
                         initialReqs     : Set[ReqId],
-                        initialGroups   : Set[ReqCodeId]) {
+                        initialGroups   : Set[ReqCodeGroupId]) {
 
     val optionalReqIds: Set[ReqId] =
       actionableReqs.iterator.filter(_.indent !=* 0).map(_.req.id).toSet
@@ -30,10 +30,10 @@ object DeletionRestorationLogic {
   final case class GroupRow(group    : LiveCodeGroup,
                             codeStr  : String,
                             subReqs  : Set[(ReqId, String)],
-                            subGroups: Set[(ReqCodeId, String)]) {
+                            subGroups: Set[(ReqCodeGroupId, String)]) {
     @inline def id = group.id
 
-    def liveSubs(r: ReqId => Live, g: ReqCodeId => Live): Iterator[String] =
+    def liveSubs(r: ReqId => Live, g: ReqCodeGroupId => Live): Iterator[String] =
       subReqs  .iterator.filter(t => r(t._1) is Live).map(_._2) ++
       subGroups.iterator.filter(t => g(t._1) is Live).map(_._2)
   }
@@ -55,7 +55,7 @@ object DeletionRestorationLogic {
 
   def forReqsAndCodeGroups__TEST_ONLY(project               : Project,
                                       directlySelectedReqs  : NonEmptySet[ReqId],
-                                      directlySelectedGroups: Set[ReqCodeId]): Data = {
+                                      directlySelectedGroups: Set[ReqCodeGroupId]): Data = {
 
     val directlySelectedCodeGroups: Set[ReqCode.Value] =
       directlySelectedGroups.map(project.content.reqCodes.reqCode)
@@ -124,7 +124,7 @@ object DeletionRestorationLogic {
 
       // Means we don't know yet whether the deletion should be cascaded by default to this item
       class CascadePending(val req: Req, val imp: Vector[Req], var pending: Boolean)
-      var cascadePending =
+      def cascadePending =
         actionableReqs.iterator
           .filter(_.indent != 0)
           .map(r => new CascadePending(r.req, r.impliedBy, true))
@@ -249,7 +249,7 @@ object DeletionRestorationLogic {
 
       def makeRcgRow(c: Code, g: LiveCodeGroup): GroupRow = {
         var subReqs = Set.newBuilder[(ReqId, String)]
-        var subGrps = Set.newBuilder[(ReqCodeId, String)]
+        var subGrps = Set.newBuilder[(ReqCodeGroupId, String)]
         def subCodeStr(c2: Code) = "." + PlainText.reqCode(c2)
 
         p.content.reqCodes.trie.dropPath(c).foreachPathAndValue {
@@ -268,11 +268,11 @@ object DeletionRestorationLogic {
     }
 
     def initiallySelected(p              : Project,
-                          directSelGroups: Set[ReqCodeId],
+                          directSelGroups: Set[ReqCodeGroupId],
                           actionableGroups: ActionableGroups,
-                          selectedReqs   : Iterable[ReqId]): Set[ReqCodeId] = {
+                          selectedReqs   : Iterable[ReqId]): Set[ReqCodeGroupId] = {
 
-      val indirectGroupIds: Set[ReqCodeId] =
+      val indirectGroupIds: Set[ReqCodeGroupId] =
         actionableGroups.iterator
           .map(_.id)
           .filterNot(directSelGroups.contains)
@@ -284,7 +284,7 @@ object DeletionRestorationLogic {
       val postDeletionTrie: Trie =
         p.content.reqCodes.trie @-- codesOfSelectedReqs
 
-      val select: Set[ReqCodeId] =
+      val select: Set[ReqCodeGroupId] =
         indirectGroupIds.filter(id => isUselessLookingDown(postDeletionTrie, p.content.reqCodes.reqCode(id)))
 
       directSelGroups | select

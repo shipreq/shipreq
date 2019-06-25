@@ -330,7 +330,7 @@ object NewEditor {
         override type Args   = Unit
         override type Change = RCE.Output
 
-        def apply(id: ReqCodeId): InitFn = ictx => args => {
+        def apply(id: ReqCodeGroupId): InitFn = ictx => args => {
           import ictx._
 
           val initialValueCB: CallbackOption[ReqCode.Value] =
@@ -562,7 +562,7 @@ object NewEditor {
       }
 
       object CodeGroupTitle extends Base(RichTextEditor.CodeGroupTitle) {
-        def apply(id: ReqCodeId, pid: PreviewId): InitFn = start(
+        def apply(id: ReqCodeGroupId, pid: PreviewId): InitFn = start(
           UpdateContentCmd.SetCodeGroupTitle(id, _),
           getCodeGroup(id).map(_.title).widen,
           pid)

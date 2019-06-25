@@ -106,8 +106,8 @@ object IssueDetectorTest extends TestSuite {
   private object EmptyCodeGroupTests {
     private implicit val filter = IssueFilter[Issue.EmptyCodeGroup]
 
-    private def demoId         = p3.content.reqCodes("demo").get.activeId.get
-    private def demoWhateverId = p3.content.reqCodes("demo.whatever").get.activeId.get
+    private def demoId         = p3.content.reqCodes("demo").get.activeId.get.value.RCG
+    private def demoWhateverId = p3.content.reqCodes("demo.whatever").get.activeId.get.value.ARC
 
     def ko() = assertIssues(applyEventsSuccessfully(p3,
       ReqCodesPatch(P3.frs(1), Set(demoWhateverId), Set.empty, Multimap.empty),

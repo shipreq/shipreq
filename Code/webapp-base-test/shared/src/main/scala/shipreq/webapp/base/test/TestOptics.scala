@@ -25,24 +25,14 @@ object TestOptics {
 
   private val reqCodeDataDeadGroupSome = reqCodeDataDeadGroup ^<-? atSome
 
-  val reqCodeDataDeadGroupId: Optional[Data, ReqCodeId] =
+  val reqCodeDataDeadGroupId: Optional[Data, ReqCodeGroupId] =
     reqCodeDataDeadGroupSome ^|-> DeadCodeGroup.id
 
-  private val reqCodeActiveGroupId: Lens[ActiveGroup, ReqCodeId] =
+  val reqCodeActiveGroupId: Lens[ActiveGroup, ReqCodeGroupId] =
     ActiveGroup.group ^|-> LiveCodeGroup.id
 
   private val reqCodeActiveGroupTitle: Lens[ActiveGroup, Text.CodeGroupTitle.OptionalText] =
     ActiveGroup.group ^|-> LiveCodeGroup.title
-
-  val reqCodeDataActiveId = Optional[Data, ReqCodeId]({
-    case d: ActiveReq   => Some(d.id)
-    case d: ActiveGroup => Some(d.id)
-    case d: Inactive    => None
-  })(n => {
-    case d: ActiveReq   => d.copy(id = n)
-    case d: ActiveGroup => reqCodeActiveGroupId.set(n)(d)
-    case d: Inactive    => d
-  })
 
   val reqCodeDataReqInactive = Lens[Data, ReqInactive](_.reqInactive)(n => {
     case d: ActiveReq   => d.copy(reqInactive = n)

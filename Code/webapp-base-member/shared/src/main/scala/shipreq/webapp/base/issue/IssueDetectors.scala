@@ -88,7 +88,7 @@ object IssueDetectors {
     override def init(i: Init): Unit = {
       val reqCodes = i.project.content.reqCodes
       for (g <- reqCodes.liveGroups) {
-        val code    = reqCodes.reqCodesById(g.id)
+        val code    = reqCodes.reqCodeGroupsById(g.id)
         val subtree = reqCodes.trie.getNode(code).get
         val empty   = subtree.valueIterator().forall(isEmpty)
         if (empty)

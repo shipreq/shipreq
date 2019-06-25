@@ -106,7 +106,7 @@ val gens = List(
     | */
   """.stripMargin.trim +
   Gen("GenericReqGD")(
-    "Codes"      -> "NonEmptySet[ReqCode.IdAndValue]",
+    "Codes"      -> "NonEmptySet[ApReqCodeId.AndValue]",
     "CustomText" -> "Event.NonEmptyCustomTextMap",
     "ImpSrcs"    -> "NonEmptySet[ReqId]",
     "ImpTgts"    -> "NonEmptySet[ReqId]",
@@ -121,7 +121,7 @@ val gens = List(
     | */
   """.stripMargin.trim +
   Gen("UseCaseGD")(
-    "Codes"      -> "NonEmptySet[ReqCode.IdAndValue]",
+    "Codes"      -> "NonEmptySet[ApReqCodeId.AndValue]",
     "CustomText" -> "Event.NonEmptyCustomTextMap",
     "ImpSrcs"    -> "NonEmptySet[ReqId]",
     "ImpTgts"    -> "NonEmptySet[ReqId]",

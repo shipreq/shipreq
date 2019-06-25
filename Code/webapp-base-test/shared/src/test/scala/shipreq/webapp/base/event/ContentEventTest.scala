@@ -93,12 +93,15 @@ object ContentEventTest extends TestSuite {
     }
 
   val createRefToCode3 = GenericReqCreate(500, mf, nev(
-    Title(NonEmptyVector(GRT.Literal("Ref to #3: "), GRT.CodeRef(3)))))
+    Title(NonEmptyVector(GRT.Literal("Ref to #3: "), GRT.CodeRef(3.ARC)))))
+
+  val createRefToCodeGroup3 = GenericReqCreate(500, mf, nev(
+    Title(NonEmptyVector(GRT.Literal("Ref to #3: "), GRT.CodeRef(3.RCG)))))
 
   // As above but hides the ref in an IssueDesc
-  val createRefToCode3I = GenericReqCreate(500, mf, nev(
+  val createRefToCodeGroup3I = GenericReqCreate(500, mf, nev(
     Title(NonEmptyVector(GRT.Issue(issueType1, Vector(
-      IID.Literal("Ref to #3: "), IID.CodeRef(3)))))))
+      IID.Literal("Ref to #3: "), IID.CodeRef(3.RCG)))))))
 
   val delA              = delGR(reqA)
   val delB              = delGR(reqB)
@@ -144,7 +147,7 @@ object ContentEventTest extends TestSuite {
       'badCode    - assertFail("code")     (createRCG(1, "a"), updateRCGCode(1, "!!"))
       'codeInCaps - assertFail("code")     (createRCG(1, "a"), updateRCGCode(1, "NO"))
       'idNotFound - assertFail("not found")(updateRCGCode(666, "new"))
-      'idIsReq    - assertFail("group")    (createGR(1, codes = Set(1 -> "a")), updateRCGCode(1, "b"))
+      'idIsReq    - assertFail("not found")(createGR(1, codes = Set(1 -> "a")), updateRCGCode(1, "b"))
 
       'tgtCodeInUseByReq -
         assertFail("in use")(createRCG(1, "old"), createGR(2, codes = Set(3 -> "new")), updateRCGCode(1, "new"))
@@ -172,7 +175,7 @@ object ContentEventTest extends TestSuite {
       'removeDeadOwn     - assertFail("")(createGR(1, codes = Set(3 -> "x")), removeCode3From1, removeCode3From1)
 
       'restoreNotFound      - assertFail("")(emptyGR1,                                     restoreCode3From1)
-      'restoreLiveOwn       - assertFail("")(createGR(1, codes = Set(3 -> "x")),         restoreCode3From1)
+      'restoreLiveOwn       - assertFail("")(createGR(1, codes = Set(3 -> "x")),           restoreCode3From1)
       'restoreLiveOtherReqs - assertFail("")(emptyGR1, createGR(2, codes = Set(3 -> "x")), restoreCode3From1)
       'restoreLiveGrps      - assertFail("")(emptyGR1, createRCG(3, "x"),                  restoreCode3From1)
 
@@ -180,7 +183,7 @@ object ContentEventTest extends TestSuite {
         assertFail("")(emptyGR1, createGR(2, codes = Set(3 -> "x")), createRefToCode3, patchCodes(2, remove = Set(3)), restoreCode3From1)
 
       'restoreDeadGrps -
-        assertFail("")(emptyGR1, createRCG3, createRefToCode3, delRCG3, restoreCode3From1)
+        assertFail("")(emptyGR1, createRCG3, createRefToCodeGroup3, delRCG3, restoreCode3From1)
 
       // fail when same ID in remove/restore
       // fail when same ID in add/restore
@@ -196,7 +199,7 @@ object ContentEventTest extends TestSuite {
         test(createRCG(3, "a.b.c"))("a.b.c: AD[#3Grp]")
 
         // 1.2: Create a CodeRef to #3
-        test(createRefToCode3I)("a.b.c: AD[#3Grp]")
+        test(createRefToCodeGroup3I)("a.b.c: AD[#3Grp]")
 
         // 1.3: Rename 1→1'
         test(updateRCGCode(3, "a.x"))("a.x: AD[#3Grp]")
@@ -227,7 +230,7 @@ object ContentEventTest extends TestSuite {
 
         // 2.1: Create RCᵣ ref
         val createA = GenericReqCreate(reqA, mf, nev(
-          Title(NonEmptyVector(GRT.Literal("Ref to self: "), GRT.CodeRef(1))),
+          Title(NonEmptyVector(GRT.Literal("Ref to self: "), GRT.CodeRef(1.ARC))),
           Codes(1 -> "a.b.c")))
         test(createA)("a.b.c: AD[#1Req(#a)]")
 
@@ -323,7 +326,7 @@ object ContentEventTest extends TestSuite {
 
         // 3a.2: Create refs to it
         val refs = GenericReqCreate(500, mf, nev(
-          Title(NonEmptyVector(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3), GRT.CodeRef(1)))))
+          Title(NonEmptyVector(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3.ARC), GRT.CodeRef(1.ARC)))))
         test(refs)("one: AD[#1Req(#a)]", "three: AD[#3Req(#a)]")
 
         // 3a.3: Delete req a
@@ -364,7 +367,7 @@ object ContentEventTest extends TestSuite {
 
         // 3b.2: Create refs to it
         val refs = GenericReqCreate(500, mf, nev(
-          Title(NonEmptyVector(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3), GRT.CodeRef(1)))))
+          Title(NonEmptyVector(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3.ARC), GRT.CodeRef(1.ARC)))))
         test(refs)("one: AD[#1Req(#a)]", "three: AD[#3Req(#a)]")
 
         // 3b.3: Merge refs
@@ -394,7 +397,7 @@ object ContentEventTest extends TestSuite {
 
         // 4.2: Create refs to some of it
         val refsA = GenericReqCreate(500, mf, nev(
-          Title(NonEmptyVector(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3), GRT.CodeRef(1)))))
+          Title(NonEmptyVector(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3.ARC), GRT.CodeRef(1.ARC)))))
         test(refsA)("one: AD[#1Req(#a)]", "three: AD[#3Req(#a)]", "other: AD[#2Req(#a)]")
 
         // 4.3: Merge refs
@@ -418,7 +421,7 @@ object ContentEventTest extends TestSuite {
 
         // 4.8: Create refs to some of B
         val refsB = GenericReqCreate(501, mf, nev(
-          Title(NonEmptyVector(GRT.Literal("Refs to #4 and #5: "), GRT.CodeRef(4), GRT.CodeRef(5)))))
+          Title(NonEmptyVector(GRT.Literal("Refs to #4 and #5: "), GRT.CodeRef(4.ARC), GRT.CodeRef(5.ARC)))))
         test(refsB)(
           "aaa: RR[#1Req(#a)]", "aaa: RR[#3Req(#a)]", "other: RR[#2Req(#a)]",
           "aaa: AD[#4Req(#b)]", "bbb: AD[#5Req(#b)]", "other: AD[#6Req(#b)]")
@@ -590,7 +593,7 @@ object ContentEventTest extends TestSuite {
           assertEq(d, ReqCode.Data.empty.copy(deadGroup = Some(DeadCodeGroup(1, ∅))))
         }
         'emptyTitleWithRefs - {
-          val p = _assertPass(emptyGR1, createRCG(3, "qwe.zxc"), createRefToCode3, delRCG3)
+          val p = _assertPass(emptyGR1, createRCG(3, "qwe.zxc"), createRefToCodeGroup3, delRCG3)
           val d = assertSoleReqCode(p, "qwe.zxc")
           assertEq(d, ReqCode.Data.empty.copy(deadGroup = Some(DeadCodeGroup(3, ∅))))
         }

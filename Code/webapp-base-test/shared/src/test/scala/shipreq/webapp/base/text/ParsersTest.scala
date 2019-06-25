@@ -180,9 +180,9 @@ object ParsersTest extends TestSuite {
   @inline def LI[A <: AnyAtom](as: A*) = as.toVector
   @inline def L(s: String) = T.Literal(s)
 
-  val reqCode_co2      = ReqCodeId(9)
-  val reqCode_co1      = ReqCodeId(10)
-  val reqCode_hereiam3 = ReqCodeId(11)
+  val reqCode_co2      = ApReqCodeId(9)
+  val reqCode_co1      = ApReqCodeId(10)
+  val reqCode_hereiam3 = ApReqCodeId(11)
 
   def propEmailAddress = parserProp("EmailAddress",
     (_: T.EmailAddress).value, T.parserI(P, None))(_.emailAddress.run())

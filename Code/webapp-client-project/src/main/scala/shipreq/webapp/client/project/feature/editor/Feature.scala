@@ -113,7 +113,7 @@ object Feature {
        private def forRow(r: RowKey)(e: Reusable[Editability.ForFields[r.FieldKey]]): ForFields[r.FieldKey] =
          ForFields(state.getOrElse(r, UnivEq.emptyMap), e, async(r))
 
-      def forCodeGroup(id: ReqCodeId): ForCodeGroup =
+      def forCodeGroup(id: ReqCodeGroupId): ForCodeGroup =
         forRow(RowKey.CodeGroup(id))(Reusable implicitly editability.forCodeGroups(id))
 
       def forGenericReq(id: GenericReqId): ForGenericReq =
@@ -224,7 +224,7 @@ object Feature {
         reuseKey.map(_ => instanceForRow(row))
       }
 
-      def forCodeGroup(id: ReqCodeId): ForCodeGroup =
+      def forCodeGroup(id: ReqCodeGroupId): ForCodeGroup =
         forRow(RowKey.CodeGroup(id))
 
       def forGenericReq(id: GenericReqId): ForGenericReq =
@@ -320,7 +320,7 @@ object Feature {
 
     final case class ForProject(read: Read.ForProject, write: Write.ForProject) {
 
-      def forCodeGroup(id: ReqCodeId): ForCodeGroup =
+      def forCodeGroup(id: ReqCodeGroupId): ForCodeGroup =
         ForFields(read.forCodeGroup(id), write.forCodeGroup(id))
 
       def forGenericReq(id: GenericReqId): ForGenericReq =

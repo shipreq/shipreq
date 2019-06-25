@@ -10,10 +10,24 @@ import scalaz.std.string.stringInstance
 import shipreq.base.util._
 import shipreq.base.util.TaggedTypes._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.text.Text, Text.Equality._
+import shipreq.webapp.base.text.Text
+import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.util.Must._
 
-final case class ReqCodeId(value: Int) extends TaggedInt
+sealed trait ReqCodeId extends TaggedInt
+
+final case class ReqCodeGroupId(value: Int) extends ReqCodeId
+
+/** Id of a req-code that can be applied to a subject (as opposed to req-code groups). */
+final case class ApReqCodeId(value: Int) extends ReqCodeId
+
+object ApReqCodeId {
+  final case class AndValue(id: ApReqCodeId, value: ReqCode.Value) {
+    def toTupleIV: (ApReqCodeId, ReqCode.Value) = (id, value)
+    def toTupleVI: (ReqCode.Value, ApReqCodeId) = (value, id)
+  }
+  implicit def univEqAndValue: UnivEq[AndValue] = UnivEq.derive
+}
 
 /**
  * ReqCodes: A hierarchy of semantic IDs
@@ -22,14 +36,6 @@ final case class ReqCodeId(value: Int) extends TaggedInt
  * [[ReqCodes]] is a bundle of all req-codes in a project.
  */
 object ReqCode {
-
-  final case class IdAndValue(id: ReqCodeId, value: Value) {
-    @inline def toTupleIV: (ReqCodeId, Value) =
-      (id, value)
-    @inline def toTupleVI: (Value, ReqCodeId) =
-      (value, id)
-  }
-  implicit def idAndValueEquality: UnivEq[IdAndValue] = UnivEq.derive
 
   /**
    * A textual ID that refers to a requirement.
@@ -98,16 +104,15 @@ object ReqCode {
       applyFn(value)
   }
 
-  /**
-   * Inactive associations to a ReqCode by reqs.
-   *
-   * When a req is dead, all its ReqCodes move into this.
-   *
-   * When a req is live, it can also contain IDs referenced in rich text that have been renamed such that they now share
-   * a ReqCode (i.e. Give a req two codes [a] & [b], create refs to both, change req's codes to just [c], [c] gets [a]'s
-   * ID actively and [b]'s ID inactively here).
-   */
-  type ReqInactive = Multimap[ReqId, Set, ReqCodeId]
+  /** Inactive associations to a ReqCode by reqs.
+    *
+    * When a req is dead, all its ReqCodes move into this.
+    *
+    * When a req is live, it can also contain IDs referenced in rich text that have been renamed such that they now share
+    * a ReqCode (i.e. Give a req two codes [a] & [b], create refs to both, change req's codes to just [c], [c] gets [a]'s
+    * ID actively and [b]'s ID inactively here).
+    */
+  type ReqInactive = Multimap[ReqId, Set, ApReqCodeId]
   def emptyReqInactive: ReqInactive = UnivEq.emptySetMultimap
 
   /**
@@ -136,8 +141,8 @@ object ReqCode {
     /** Active & inactive */
     def ids: List[ReqCodeId]
 
-    protected final def _inactiveIds: List[ReqCodeId] = {
-      val a = reqInactive.m.valuesIterator.flatMap(_.iterator).toList
+    protected final def _deadIds: List[ReqCodeId] = {
+      val a: List[ReqCodeId] = reqInactive.m.valuesIterator.flatMap(_.iterator).toList
       deadGroup.fold(a)(_.id :: a)
     }
   }
@@ -147,17 +152,17 @@ object ReqCode {
     override def nonEmpty = deadGroup.nonEmpty || reqInactive.nonEmpty
     override def isActive = false
     override def activeId = None
-    override def ids      = _inactiveIds
+    override def ids      = _deadIds
     override def modReqInactive(f: ReqInactive => ReqInactive) =
       copy(reqInactive = f(reqInactive))
   }
 
   @Lenses
-  final case class ActiveReq(id: ReqCodeId, reqId: ReqId, deadGroup: DeadGroup, reqInactive: ReqInactive) extends Data {
+  final case class ActiveReq(id: ApReqCodeId, reqId: ReqId, deadGroup: DeadGroup, reqInactive: ReqInactive) extends Data {
     override def nonEmpty = true
     override def isActive = true
     override def activeId = Some(id)
-    override def ids      = id :: _inactiveIds
+    override def ids      = id :: _deadIds
     override def modReqInactive(f: ReqInactive => ReqInactive) =
       copy(reqInactive = f(reqInactive))
   }
@@ -169,7 +174,7 @@ object ReqCode {
     override def isActive  = true
     override def activeId  = Some(id)
     override def deadGroup = None
-    override def ids       = id :: _inactiveIds
+    override def ids       = id :: _deadIds
     override def modReqInactive(f: ReqInactive => ReqInactive) =
       copy(reqInactive = f(reqInactive))
   }
@@ -196,7 +201,7 @@ object ReqCode {
  * Previously called "Semantic Header Row" or "SHR" in the requirements.
  */
 sealed abstract class CodeGroup {
-  val id: ReqCodeId
+  val id: ReqCodeGroupId
   val title: Text.CodeGroupTitle.OptionalText
   def live: Live
 
@@ -205,12 +210,12 @@ sealed abstract class CodeGroup {
 }
 
 @Lenses
-final case class LiveCodeGroup(id: ReqCodeId, title: Text.CodeGroupTitle.OptionalText) extends CodeGroup {
+final case class LiveCodeGroup(id: ReqCodeGroupId, title: Text.CodeGroupTitle.OptionalText) extends CodeGroup {
   override def live = Live
 }
 
 @Lenses
-final case class DeadCodeGroup(id: ReqCodeId, title: Text.CodeGroupTitle.OptionalText) extends CodeGroup {
+final case class DeadCodeGroup(id: ReqCodeGroupId, title: Text.CodeGroupTitle.OptionalText) extends CodeGroup {
   override def live = Dead
 }
 
@@ -228,6 +233,8 @@ final case class ReqCodes(trie: ReqCode.Trie) {
   import ReqCode._
   import MTrie.Ops
 
+  private lazy val scan = new ReqCodes.Scan(trie)
+
   def apply(code: Value): Data =
     get(code) mustExistElse s"No node at reqcode ${code.whole mkString "."}."
 
@@ -237,52 +244,20 @@ final case class ReqCodes(trie: ReqCode.Trie) {
   def get(code: Value): Option[Data] =
     trie.lookup(code)
 
+  def getReqCode(id: ReqCodeId): Option[Value] =
+    id match {
+      case i: ApReqCodeId    => apReqCodesById.get(i)
+      case i: ReqCodeGroupId => reqCodeGroupsById.get(i)
+    }
+
+  def reqCode(id: ReqCodeId): Value =
+    getReqCode(id) mustExistElse s"No req code associated with $id."
+
   def getById(id: ReqCodeId): Option[Data] =
-    reqCodesById.get(id).flatMap(get)
+    getReqCode(id).flatMap(get)
 
   def lookup(id: ReqCodeId): Data =
     apply(reqCode(id))
-
-  def reqCode(id: ReqCodeId): Value =
-    reqCodesById get id mustExistElse s"No req code associated with $id."
-
-  private lazy val scan = new Scan
-  private class Scan {
-    private val _idList         = List.newBuilder[ReqCodeId]
-    private val _idSet          = Set.newBuilder[ReqCodeId]
-    private val _groups         = List.newBuilder[CodeGroup]
-    private val _liveGroups     = List.newBuilder[LiveCodeGroup]
-    private val _reqCodesById   = Map.newBuilder[ReqCodeId, Value]
-    var _activeReqCodesByReqId: Multimap[ReqId, Set, Value] = UnivEq.emptySetMultimap
-    var _inactiveIdsByReqId: Multimap[ReqId, Set, ReqCodeId] = UnivEq.emptySetMultimap
-
-    trie.foreachPathAndValue { (code, data) =>
-
-      for (id <- data.ids) {
-        _idList += id
-        _idSet += id
-        _reqCodesById += ((id, code))
-      }
-
-      _inactiveIdsByReqId ++= data.reqInactive.m
-
-      data match {
-        case d: ActiveReq   => _activeReqCodesByReqId = _activeReqCodesByReqId.add(d.reqId, code)
-        case d: ActiveGroup => _liveGroups += d.group; _groups += d.group
-        case _: Inactive    => ()
-      }
-
-      data.deadGroup.map(_groups += _)
-    }
-
-    val liveGroups            = _liveGroups.result()
-    val groups                = _groups.result()
-    val reqCodesById          = _reqCodesById.result()
-    val idList                = _idList.result()
-    val idSet                 = _idSet.result()
-    val activeReqCodesByReqId = _activeReqCodesByReqId
-    val inactiveIdsByReqId    = _inactiveIdsByReqId
-  }
 
   def liveGroups: List[LiveCodeGroup] =
     scan.liveGroups
@@ -291,21 +266,23 @@ final case class ReqCodes(trie: ReqCode.Trie) {
   def groups: List[CodeGroup] =
     scan.groups
 
-  def reqCodesById: Map[ReqCodeId, Value] =
-    scan.reqCodesById
+  def apReqCodesById: Map[ApReqCodeId, Value] =
+    scan.apReqCodesById
+
+  def reqCodeGroupsById: Map[ReqCodeGroupId, Value] =
+    scan.reqCodeGroupsById
 
   def activeReqCodesByReqId: Multimap[ReqId, Set, Value] =
     scan.activeReqCodesByReqId
 
   /** Unlike the active case, the same code can have multiple inactive IDs. */
-  def inactiveIdsByReqId: Multimap[ReqId, Set, ReqCodeId] =
+  def inactiveIdsByReqId: Multimap[ReqId, Set, ApReqCodeId] =
     scan.inactiveIdsByReqId
 
-  /**
-   * Active and inactive [[ReqCodeId]]s alike.
-   *
-   * This is needed in addition to [[idSet]] so that [[DataProp]] can detect duplicate IDs.
-   */
+  /** Active and inactive [[ReqCodeId]]s alike.
+    *
+    * This is needed in addition to [[idSet]] so that [[DataProp]] can detect duplicate IDs.
+    */
   def idList: List[ReqCodeId] =
     scan.idList
 
@@ -317,4 +294,48 @@ final case class ReqCodes(trie: ReqCode.Trie) {
 object ReqCodes {
   implicit lazy val equality: Equal[ReqCodes] = ScalazMacros.deriveEqual
   def empty: ReqCodes = ReqCodes(Map.empty)
+
+  private[ReqCodes] final class Scan(trie: ReqCode.Trie) {
+    import ReqCode._
+
+    private var _idList                = List.empty[ReqCodeId]
+    private var _groups                = List.empty[CodeGroup]
+    private var _liveGroups            = List.empty[LiveCodeGroup]
+    private var _idSet                 = Set.empty[ReqCodeId]
+    private var _apReqCodesById        = Map.empty[ApReqCodeId, Value]
+    private var _reqCodeGroupsById     = Map.empty[ReqCodeGroupId, Value]
+    private var _activeReqCodesByReqId = UnivEq.emptySetMultimap[ReqId, Value]
+    private var _inactiveIdsByReqId    = UnivEq.emptySetMultimap[ReqId, ApReqCodeId]
+
+    trie.foreachPathAndValue { (code, data) =>
+
+      for (id <- data.ids) {
+        _idList ::= id
+        _idSet += id
+        id match {
+          case i: ApReqCodeId    => _apReqCodesById    = _apReqCodesById   .updated(i, code)
+          case i: ReqCodeGroupId => _reqCodeGroupsById = _reqCodeGroupsById.updated(i, code)
+        }
+      }
+
+      _inactiveIdsByReqId ++= data.reqInactive.m
+
+      data match {
+        case d: ActiveReq   => _activeReqCodesByReqId = _activeReqCodesByReqId.add(d.reqId, code)
+        case d: ActiveGroup => _liveGroups ::= d.group; _groups ::= d.group
+        case _: Inactive    => ()
+      }
+
+      data.deadGroup.foreach(_groups ::= _)
+    }
+
+    val activeReqCodesByReqId = _activeReqCodesByReqId
+    val apReqCodesById        = _apReqCodesById
+    val groups                = _groups
+    val inactiveIdsByReqId    = _inactiveIdsByReqId
+    val liveGroups            = _liveGroups
+    val idList                = _idList
+    val idSet                 = _idSet
+    val reqCodeGroupsById     = _reqCodeGroupsById
+  }
 }

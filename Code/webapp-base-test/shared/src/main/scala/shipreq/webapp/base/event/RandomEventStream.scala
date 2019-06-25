@@ -147,8 +147,11 @@ final class ApplicableEventGen(curState: State) {
   val nextGenericReqId: Gen[GenericReqId] =
     nextReqId map GenericReqId
 
-  val nextReqCodeId: Gen[ReqCodeId] =
-    IncCounter genInt p.idCeilings.reqCode map ReqCodeId
+  val nextReqCodeIdA: Gen[ApReqCodeId] =
+    IncCounter genInt p.idCeilings.reqCode map ApReqCodeId.apply
+
+  val nextReqCodeIdG: Gen[ReqCodeGroupId] =
+    IncCounter genInt p.idCeilings.reqCode map ReqCodeGroupId
 
   val nextCustomIssueTypeId: Gen[CustomIssueTypeId] =
     IncCounter genInt p.idCeilings.customIssueType map CustomIssueTypeId
@@ -243,7 +246,7 @@ final class ApplicableEventGen(curState: State) {
   lazy val existingReqCodeId: Option[Gen[ReqCodeId]] =
     Gen.tryGenChoose(p.content.reqCodes.idList)
 
-  val codeGroupId: Live => Option[Gen[ReqCodeId]] =
+  val codeGroupId: Live => Option[Gen[ReqCodeGroupId]] =
     tryGenChooseLiveDead(l => p.content.reqCodes.groups.iterator.filter(_.live is l).map(_.id).toVector)
 
   lazy val existingCustomIssueTypeId: Option[Gen[CustomIssueTypeId]] =
@@ -273,8 +276,8 @@ final class ApplicableEventGen(curState: State) {
   def customTextFieldText1: Gen[Text.CustomTextField.NonEmptyText] =
     customTextFieldTextAtom.text1(Text.CustomTextField)
 
-  lazy val newReqCodeIdAndValue: Gen[ReqCode.IdAndValue] =
-    Gen.apply2(ReqCode.IdAndValue)(nextReqCodeId, reqCode.value)
+  lazy val newReqCodeIdAndValue: Gen[ApReqCodeId.AndValue] =
+    Gen.apply2(ApReqCodeId.AndValue)(nextReqCodeIdA, reqCode.value)
 
   def codeGroupTitle: Gen[Text.CodeGroupTitle.OptionalText] =
     TextGen.codeGroupTitleAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingCustomIssueTypeId).text
@@ -509,7 +512,7 @@ final class ApplicableEventGen(curState: State) {
       Gen.apply3(GenericReqCreate)(nextGenericReqId, reqTypeId, createGenericReqGD.values)
 
   def genCodeGroupCreate: Gen[CodeGroupCreate] =
-    Gen.apply2(CodeGroupCreate)(nextReqCodeId, codeGroupGD.allValues)
+    Gen.apply2(CodeGroupCreate)(nextReqCodeIdG, codeGroupGD.allValues)
 
   def genTagGroupCreate: Gen[TagGroupCreate] =
     Gen.apply2(TagGroupCreate)(nextTagGroupId, tagGroupGD.allValues)
@@ -583,12 +586,12 @@ final class ApplicableEventGen(curState: State) {
         inactiveValues = p.content.reqCodes.inactiveIdsByReqId(reqId)
         restore        ← Gen.tryGenChoose(inactiveValues.toVector).setE(0 to 2)
         activeValues   = p.content.reqCodes.activeReqCodesByReqId(reqId)
-        activeIds      = activeValues.map(p.content.reqCodes(_).activeId.get)
+        activeIds      = activeValues.iterator.map(p.content.reqCodes(_).activeId.get).collect {case i: ApReqCodeId => i}.toSet
         remove         ← Gen.tryGenChoose(activeIds.toVector).setE(0 to 2)
         renameIds      ← Gen.tryGenChoose(remove.toVector).setE(0 to 2)
         addMin         = if (remove.nonEmpty || restore.nonEmpty) 0 else 1
-        addIds         ← nextReqCodeId.list(addMin to 2)
-        add            ← Gen sequence (addIds ++ renameIds).map(id => reqCode.value.strengthR(Set.empty[ReqCodeId] + id))
+        addIds         ← nextReqCodeIdA.list(addMin to 2)
+        add            ← Gen sequence (addIds ++ renameIds).map(id => reqCode.value.strengthR(Set.empty[ApReqCodeId] + id))
       } yield
         ReqCodesPatch(reqId, remove, restore, Multimap(add.toMap))
     )

@@ -25,17 +25,17 @@ object UpdateContentCmd {
   case class PatchImplications   (id: ReqId, dir: Direction, patch: SetDiff.NE[ReqId]) extends UpdateContentCmd
   case class PatchReqCodes       (id: ReqId, patch: SetDiff.NE[ReqCode.Value])         extends UpdateContentCmd
 
-  case class SetGenericReqType(id: GenericReqId, value: CustomReqTypeId) extends UpdateContentCmd
-  case class SetCodeGroupCode (id: ReqCodeId,    value: ReqCode.Value)   extends UpdateContentCmd
+  case class SetGenericReqType(id: GenericReqId,   value: CustomReqTypeId) extends UpdateContentCmd
+  case class SetCodeGroupCode (id: ReqCodeGroupId, value: ReqCode.Value)   extends UpdateContentCmd
 
-  case class SetCodeGroupTitle (id: ReqCodeId,                              value: Text.CodeGroupTitle .OptionalText) extends UpdateContentCmd
+  case class SetCodeGroupTitle (id: ReqCodeGroupId,                         value: Text.CodeGroupTitle .OptionalText) extends UpdateContentCmd
   case class SetCustomTextField(id: ReqId,        fid: CustomField.Text.Id, value: Text.CustomTextField.OptionalText) extends UpdateContentCmd
   case class SetGenericReqTitle(id: GenericReqId,                           value: Text.GenericReqTitle.OptionalText) extends UpdateContentCmd
   case class SetUseCaseTitle   (id: UseCaseId,                              value: Text.UseCaseTitle   .OptionalText) extends UpdateContentCmd
 
-  case class DeleteReqs      (reqs: NonEmptySet[ReqId], codeGroups: Set[ReqCodeId], reason: Text.DeletionReason.OptionalText) extends UpdateContentCmd
-  case class DeleteCodeGroups(ids: NonEmptySet[ReqCodeId])                                                                    extends UpdateContentCmd
-  case class RestoreContent  (reqs: Set[ReqId], codeGroups: Set[ReqCodeId])                                                   extends UpdateContentCmd
+  case class DeleteReqs      (reqs: NonEmptySet[ReqId], codeGroups: Set[ReqCodeGroupId], reason: Text.DeletionReason.OptionalText) extends UpdateContentCmd
+  case class DeleteCodeGroups(ids: NonEmptySet[ReqCodeGroupId])                                                                    extends UpdateContentCmd
+  case class RestoreContent  (reqs: Set[ReqId], codeGroups: Set[ReqCodeGroupId])                                                   extends UpdateContentCmd
 
   sealed abstract class ForUseCaseStep extends UpdateContentCmd
 

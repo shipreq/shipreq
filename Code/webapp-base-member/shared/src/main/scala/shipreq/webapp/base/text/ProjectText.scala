@@ -80,9 +80,14 @@ object ProjectText {
           d.deadGroup match {
             case Some(g) if g.id ==* id => DeadGroup(code, g)
             case _                      =>
-              d.reqInactive.m.find(_._2 contains id) match {
-                case Some((reqId, _)) => findAlt(reqId, code) getOrElse ReqWithoutActiveCode(code, reqId)
-                case None             => mustNotHappen(s"$id not found in $code: $d")
+              def fail = mustNotHappen(s"$id not found in $code: $d")
+              id match {
+                case i: ApReqCodeId =>
+                  d.reqInactive.m.find(_._2 contains i) match {
+                    case Some((reqId, _)) => findAlt(reqId, code) getOrElse ReqWithoutActiveCode(code, reqId)
+                    case None             => fail
+                  }
+                case _: ReqCodeGroupId => fail
               }
           }
       }

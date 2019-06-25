@@ -155,7 +155,7 @@ object SelectionCtrls {
           ActionInfo(affects, action)
         }
 
-      private def io(codeGroups: NonEmptySet[ReqCodeId]): Callback = {
+      private def io(codeGroups: NonEmptySet[ReqCodeGroupId]): Callback = {
         val cmd = UpdateContentCmd.DeleteCodeGroups(codeGroups)
         val sourceIds: List[Row.SourceId] = cmd.ids.whole.map(Row.SourceId.ForCodeGroup)(collection.breakOut)
         runCmd(cmd, sourceIds)
@@ -170,7 +170,7 @@ object SelectionCtrls {
           ActionInfo(affects, action)
         }
 
-      private def io(codeGroups: NonEmptySet[ReqCodeId]): Callback = {
+      private def io(codeGroups: NonEmptySet[ReqCodeGroupId]): Callback = {
         val cmd = UpdateContentCmd.RestoreContent(Set.empty, codeGroups.whole)
         val sourceIds: List[Row.SourceId] = cmd.codeGroups.map(Row.SourceId.ForCodeGroup)(collection.breakOut)
         runCmd(cmd, sourceIds)

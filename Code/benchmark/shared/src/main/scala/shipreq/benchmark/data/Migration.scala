@@ -18,10 +18,10 @@ object Migration {
                   reqInactive: ReqCode.ReqInactive): ReqCode.Data = {
     def dg: ReqCode.DeadGroup =
       if (oldGroups.isEmpty) None else
-      lastGroup.map(o => DeadCodeGroup(oldGroups.head, o.title))
+      lastGroup.map(o => DeadCodeGroup(ReqCodeGroupId(oldGroups.head.value), o.title))
     active match {
-      case Some(OldActiveData(id, \/-(reqId))) => ReqCode.ActiveReq(id, reqId, dg, reqInactive)
-      case Some(OldActiveData(id, -\/(g))) => ReqCode.ActiveGroup(LiveCodeGroup(id, g.title), reqInactive)
+      case Some(OldActiveData(id, \/-(reqId))) => ReqCode.ActiveReq(ApReqCodeId(id.value), reqId, dg, reqInactive)
+      case Some(OldActiveData(id, -\/(g))) => ReqCode.ActiveGroup(LiveCodeGroup(ReqCodeGroupId(id.value), g.title), reqInactive)
       case None => ReqCode.Inactive(dg, reqInactive)
     }
   }

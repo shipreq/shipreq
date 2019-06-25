@@ -13,7 +13,7 @@ sealed abstract class RowKey {
 
 object RowKey {
 
-  final case class CodeGroup(id: ReqCodeId) extends RowKey {
+  final case class CodeGroup(id: ReqCodeGroupId) extends RowKey {
     override type FieldKey = FieldKey.ForCodeGroup
     override def fold[F[_ <: AnyFieldKey]](f: Fold[F]): F[FieldKey] = f.codeGroup(this)
   }

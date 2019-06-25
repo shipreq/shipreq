@@ -200,9 +200,9 @@ object Event {
   // =====================================================================================================================
   // Content: ReqCode groups
 
-  final case class CodeGroupCreate(id: ReqCodeId, vs: CodeGroupGD.NonEmptyValues) extends ActiveEvent
-  final case class CodeGroupUpdate(id: ReqCodeId, vs: CodeGroupGD.NonEmptyValues) extends ActiveEvent
-  final case class CodeGroupsDelete(ids: NonEmptySet[ReqCodeId]) extends ActiveEvent
+  final case class CodeGroupCreate(id: ReqCodeGroupId, vs: CodeGroupGD.NonEmptyValues) extends ActiveEvent
+  final case class CodeGroupUpdate(id: ReqCodeGroupId, vs: CodeGroupGD.NonEmptyValues) extends ActiveEvent
+  final case class CodeGroupsDelete(ids: NonEmptySet[ReqCodeGroupId]) extends ActiveEvent
 
   // =====================================================================================================================
   // Content: Shared
@@ -219,9 +219,9 @@ object Event {
    *            only one becomes active and the rest go into `reqInactive`.
    */
   final case class ReqCodesPatch(id     : ReqId,
-                                 remove : Set[ReqCodeId],
-                                 restore: Set[ReqCodeId],
-                                 add    : Multimap[ReqCode.Value, Set, ReqCodeId]) extends ActiveEvent
+                                 remove : Set[ApReqCodeId],
+                                 restore: Set[ApReqCodeId],
+                                 add    : Multimap[ReqCode.Value, Set, ApReqCodeId]) extends ActiveEvent
 
   final case class ReqTagsPatch(id   : ReqId,
                                 patch: SetDiff.NE[ApplicableTagId]) extends ActiveEvent
@@ -235,12 +235,11 @@ object Event {
                                          value: CustomTextField.OptionalText) extends ActiveEvent
 
   final case class ReqsDelete(reqs      : NonEmptySet[ReqId],
-                              codeGroups: Set[ReqCodeId],
+                              codeGroups: Set[ReqCodeGroupId],
                               reason    : DeletionReason.OptionalText) extends ActiveEvent
 
-  // TODO Would it be better to have a CodeGroupId which is a subtype of ReqCodeId?
   final case class ContentRestore(reqs      : Set[ReqId],
-                                  codeGroups: Set[ReqCodeId]) extends ActiveEvent
+                                  codeGroups: Set[ReqCodeGroupId]) extends ActiveEvent
 
   // =====================================================================================================================
   // Saved Views

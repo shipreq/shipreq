@@ -409,9 +409,9 @@ object GenericReqGD extends GenericData {
   sealed abstract class Value extends ValueBase
 
   case object Codes extends Attr {
-    override type Data = NonEmptySet[ReqCode.IdAndValue]
+    override type Data = NonEmptySet[ApReqCodeId.AndValue]
     override def apply(data: Data) = ValueForCodes(data)
-    val dataEquality: Equal[Data] = implicitly[Equal[NonEmptySet[ReqCode.IdAndValue]]]
+    val dataEquality: Equal[Data] = implicitly[Equal[NonEmptySet[ApReqCodeId.AndValue]]]
   }
   final case class ValueForCodes(value: Codes.Data) extends Value {
     override val attr: Codes.type = Codes
@@ -667,9 +667,9 @@ object UseCaseGD extends GenericData {
   sealed abstract class Value extends ValueBase
 
   case object Codes extends Attr {
-    override type Data = NonEmptySet[ReqCode.IdAndValue]
+    override type Data = NonEmptySet[ApReqCodeId.AndValue]
     override def apply(data: Data) = ValueForCodes(data)
-    val dataEquality: Equal[Data] = implicitly[Equal[NonEmptySet[ReqCode.IdAndValue]]]
+    val dataEquality: Equal[Data] = implicitly[Equal[NonEmptySet[ApReqCodeId.AndValue]]]
   }
   final case class ValueForCodes(value: Codes.Data) extends Value {
     override val attr: Codes.type = Codes
