@@ -40,7 +40,7 @@ object ProjectStateTest extends TestSuite {
         latestOrd1        = Option.when(totalEvents1 > 0)(EventOrd.Latest(totalEvents1))
         pao1              = ProjectAndOrd(p1, latestOrd1)
         s1                = ProjectState.init(pao1, looseProjectMetaData(p1, totalEventCount = totalEvents1, initEventCount = initEventCount))
-        ((p2, _), ves)    ← RandomEventStream.verifiedEvents(140).run((p1, pao1.nextOrd))
+        ((p2, _), ves)    ← RandomEventStream.verifiedEvents(80).run((p1, pao1.nextOrd))
         batches           ← Gen_batches(ves, 0 to 7)
                               .pair.map(x => x._1 ++ x._2) // duplicate all events (in different batches) to test idempotency
                               .shuffle // shuffle to test commutivity
