@@ -30,7 +30,7 @@ object Atom {
       case _: NewLine         # BlankLine      => BlankLine
       case _: ReqRef          # ReqRef         => ReqRef
       case _: ReqRef          # CodeRef        => CodeRef
-      case _: UseCaseStepRef  # UseCaseStepRef => UseCaseStepRef
+      case _: ReqRef          # UseCaseStepRef => UseCaseStepRef
       case _: Issue           # Issue          => Issue
       case _: PlainTextMarkup # WebAddress     => WebAddress
       case _: PlainTextMarkup # EmailAddress   => EmailAddress
@@ -138,10 +138,8 @@ object Atom {
     case class CodeRef(value: ReqCodeId) extends Atom {
       override final def isPlain = false
     }
-  }
 
-  /** Reference to a UC step, like "UC-4.0.1.a". */
-  trait UseCaseStepRef extends Base {
+    /** Reference to a UC step, like "UC-4.0.1.a". */
     case class UseCaseStepRef(value: UseCaseStepId) extends Atom {
       override final def isPlain = false
     }
@@ -168,6 +166,5 @@ object Atom {
   trait ReqTitle extends SingleLine
     with Issue
     with ReqRef
-    with UseCaseStepRef
     with TagRef
 }

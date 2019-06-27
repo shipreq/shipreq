@@ -450,7 +450,7 @@ object DataProp {
       case a: ListMarkup      # UnorderedList  => anyTextV(a.items.whole)
       case _: ReqRef          # ReqRef         => nop
       case _: ReqRef          # CodeRef        => nop
-      case _: UseCaseStepRef  # UseCaseStepRef => nop
+      case _: ReqRef          # UseCaseStepRef => nop
       case a: Issue           # Issue          => anyText(a.desc)
       case _: TagRef          # TagRef         => nop
     } rename "AnyAtom"

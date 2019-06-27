@@ -114,7 +114,7 @@ object PlainText {
             case a: NewLine         # BlankLine      => newline
             case a: ReqRef          # ReqRef         => reqRef(a.value)
             case a: ReqRef          # CodeRef        => codeRef(a.value)
-            case a: UseCaseStepRef  # UseCaseStepRef => useCaseStepRef(a.value)
+            case a: ReqRef          # UseCaseStepRef => useCaseStepRef(a.value)
             case a: Issue           # Issue          => issue(a.typ, a.desc.asOption.map(text(_, live)))
             case a: PlainTextMarkup # WebAddress     => a.value
             case a: PlainTextMarkup # EmailAddress   => a.value

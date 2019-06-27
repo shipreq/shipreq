@@ -60,7 +60,7 @@ object AtomScan {
           case a: ReqRef#CodeRef =>
             codeRefs += a.value
 
-          case a: UseCaseStepRef#UseCaseStepRef =>
+          case a: ReqRef#UseCaseStepRef =>
             useCaseStepRefs += a.value
 
           case a: Issue#Issue =>

@@ -21,7 +21,7 @@ trait AtomTC[TC[_]] {
   def mathTeX       [T <: Atom.PlainTextMarkup](t: T): TC[t.MathTeX       ]
   def reqRef        [T <: Atom.ReqRef         ](t: T): TC[t.ReqRef        ]
   def codeRef       [T <: Atom.ReqRef         ](t: T): TC[t.CodeRef       ]
-  def useCaseStepRef[T <: Atom.UseCaseStepRef ](t: T): TC[t.UseCaseStepRef]
+  def useCaseStepRef[T <: Atom.ReqRef         ](t: T): TC[t.UseCaseStepRef]
   def tagRef        [T <: Atom.TagRef         ](t: T): TC[t.TagRef        ]
 
   def issue        [T <: Atom.Issue     ](t: T)(implicit x: TC[Text.InlineIssueDesc.OptionalText]): TC[t.Issue]

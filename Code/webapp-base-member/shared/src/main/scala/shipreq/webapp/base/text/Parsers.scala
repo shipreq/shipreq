@@ -127,7 +127,7 @@ object Parsers {
        rule((BOI | (OWS ~ NL)) ~ listItem(listToken).+ ~ OWSNL ~ popSeqToNEV[t.ListItem] ~> t.UnorderedList)
   }
 
-  trait ReqRef extends Base {
+  trait ReqRef extends Base with UseCaseStepLabel {
     override type T <: Atom.ReqRef
 
     import G.reflinkSurround.parsing.{prefix, suffix}
@@ -149,8 +149,13 @@ object Parsers {
       NonEmptyVector.maybe(ss.toVector, None: Option[ReqCodeId])(code =>
         project.content.reqCodes.get(code).flatMap(_.activeId))
 
+    override def reqs = project.content.reqs
+
+    def useCaseStepRef: Rule1[t.Atom] =
+      rule(prefix ~ OWS ~ useCaseStepLabel ~ suffix ~> t.UseCaseStepRef)
+
     def reqRef: Rule1[t.Atom] =
-      rule(codeRef | pubidRef)
+      rule(useCaseStepRef | codeRef | pubidRef)
   }
 
   trait TagRef extends Base {
@@ -234,17 +239,6 @@ object Parsers {
           id ← field.useCaseSteps.get(uc).partialLocSteps.getOption(pl)
         } yield id
       }
-  }
-
-  trait UseCaseStepRef extends Base with UseCaseStepLabel {
-    override type T <: Atom.UseCaseStepRef
-
-    import G.reflinkSurround.parsing.{prefix, suffix}
-
-    override def reqs = project.content.reqs
-
-    def useCaseStepRef: Rule1[t.Atom] =
-      rule(prefix ~ OWS ~ useCaseStepLabel ~ suffix ~> t.UseCaseStepRef)
   }
 
   trait Issue extends Base {

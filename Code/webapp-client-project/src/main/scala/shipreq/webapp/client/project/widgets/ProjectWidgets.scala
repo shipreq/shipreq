@@ -106,7 +106,7 @@ final class ProjectWidgets[Ctx <: ProjectText.Context](project      : Project,
         case a: ListMarkup      # UnorderedList  => <.ul(*.ul, a.items.whole.toTagMod(row => <.li(row toTagMod atom)))
         case a: ReqRef          # ReqRef         => reqRefInValidText(a.value)
         case a: ReqRef          # CodeRef        => codeRef(a.value)
-        case a: UseCaseStepRef  # UseCaseStepRef => useCaseStepRefById(a.value)
+        case a: ReqRef          # UseCaseStepRef => useCaseStepRefById(a.value)
         case a: Issue           # Issue          => issue(a.typ, a.desc, live)
       }
       atom

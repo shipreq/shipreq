@@ -408,7 +408,7 @@ object EventDbCodecs {
         case Js.Obj((CODEGROUPREF, v)) => t.CodeRef(readJs[ReqCodeGroupId](v))
       })
 
-    override def useCaseStepRef[T <: UseCaseStepRef](t: T): ReadWriter[t.UseCaseStepRef] = ReadWriter(
+    override def useCaseStepRef[T <: ReqRef](t: T): ReadWriter[t.UseCaseStepRef] = ReadWriter(
       a => strkeyW(UCSTEPREF, a.value),
       { case Js.Obj((UCSTEPREF, v)) => t.UseCaseStepRef(readJs[UseCaseStepId](v)) })
 

@@ -508,7 +508,7 @@ object RandomData {
       result
     }
 
-    def useCaseStepRef(u: Gen[UseCaseStepId])(implicit t: UseCaseStepRef): Gen[t.Atom] =
+    def useCaseStepRef(u: Gen[UseCaseStepId])(implicit t: ReqRef): Gen[t.Atom] =
       u map t.UseCaseStepRef
 
     def tagRef(g: Gen[ApplicableTagId])(implicit t: TagRef): Gen[t.TagRef] =
@@ -532,7 +532,7 @@ object RandomData {
       case _: Literal         # Literal
          | _: ReqRef          # ReqRef
          | _: ReqRef          # CodeRef
-         | _: UseCaseStepRef  # UseCaseStepRef
+         | _: ReqRef          # UseCaseStepRef
          | _: Issue           # Issue
          | _: PlainTextMarkup # WebAddress
          | _: PlainTextMarkup # EmailAddress
