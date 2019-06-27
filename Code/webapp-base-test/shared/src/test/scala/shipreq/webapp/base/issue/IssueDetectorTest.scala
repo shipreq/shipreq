@@ -20,8 +20,8 @@ object IssueDetectorTest extends TestSuite {
   import SampleProject3.{Values => P3, project => p3}
   import SampleProject6.{Values => P6, project => p6}
 
-  private def demoId         = p3.content.reqCodes("demo").get.activeId.get.value.RCG
-  private def demoWhateverId = p3.content.reqCodes("demo.whatever").get.activeId.get.value.ARC
+  private lazy val demoId         = p3.content.reqCodes("demo").get.activeId.get.value.RCG
+  private lazy val demoWhateverId = p3.content.reqCodes("demo.whatever").get.activeId.get.value.ARC
 
   private case class IssueFilter(ok: Issue => Boolean)
   private object IssueFilter {
@@ -111,6 +111,35 @@ object IssueDetectorTest extends TestSuite {
         Issue.ConflictingTags(1103, P3.priTG, NonEmptySet(ReqTagLoc.Tags, ReqTextLoc.Title)),
       )
     }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private object DeadRefTests {
+    private implicit val filter = IssueFilter.collect {
+      case i: Issue.DeadRefInRcg => i
+      case i: Issue.DeadRefInReq => i
+    }
+
+    def issueDesc() = test(p3)(
+      ReqsDelete(NonEmptySet(P3.frs(2), P3.mfs(26)), Set.empty, Vector.empty),
+    )()
+
+    def inRcg() = test(p3)(
+      CodeGroupUpdate(demoId, CodeGroupGD.ValueForTitle(Vector(T.CodeGroupTitle.ReqRef(P3.frs(2))))),
+      ReqsDelete(NonEmptySet.one(P3.frs(2)), Set.empty, Vector.empty),
+    )(
+      Issue.DeadRefInRcg(demoId, ContentRef.ReqRef(P3.frs(2)))
+    )
+
+    def toRcg() = test(p3)(
+      ContentEventTestHelp.createRCG(987, "haha.boop"),
+      GenericReqTitleSet(1001, Vector(T.GenericReqTitle.CodeRef(987.RCG))),
+      GenericReqTitleSet(1002, Vector(T.GenericReqTitle.CodeRef(demoId))),
+      CodeGroupsDelete(NonEmptySet.one(demoId)),
+    )(
+      Issue.DeadRefInReq(1002, ReqTextLoc.Title, ContentRef.CodeRef(demoId)),
+    )
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -226,11 +255,15 @@ object IssueDetectorTest extends TestSuite {
       implicit val filter = IssueFilter.any
 
       'p3 - assertIssues(p3)(
+        Issue.DeadRefInReq(P3.frs(2), ReqTextLoc.Title, ContentRef.ReqRef(P3.mfs(28))),
         Issue.IssueTagInReq(P3.frs(1), ReqTextLoc.Title, T.GenericReqTitle.Issue(1, Vector.empty)),
         Issue.IssueTagInReq(P3.frs(2), ReqTextLoc.Title, T.GenericReqTitle.Issue(2, SampleProject3.inlineIssueDesc)),
       )
 
       'p6 - assertIssues(p6)(
+        Issue.DeadRefInReq(P6.frs(2), ReqTextLoc.Title, ContentRef.ReqRef(P6.mfs(28))),
+        Issue.DeadRefInReq(P6.uc1, ReqTextLoc.Title, ContentRef.UseCaseStepRef(16)),
+        Issue.DeadRefInReq(P6.uc1, ReqTextLoc.Title, ContentRef.UseCaseStepRef(17)),
         Issue.IssueTagInReq(P6.frs(1), ReqTextLoc.Title, T.GenericReqTitle.Issue(1, Vector.empty)),
         Issue.IssueTagInReq(P6.frs(2), ReqTextLoc.Title, T.GenericReqTitle.Issue(2, SampleProject3.inlineIssueDesc)),
       )
@@ -242,6 +275,13 @@ object IssueDetectorTest extends TestSuite {
       'deadTag      - deadTag()
       'deadTagGroup - deadTagGroup()
       'tagInText    - tagInText()
+    }
+
+    'DeadRef {
+      import DeadRefTests._
+      'issueDesc - issueDesc()
+      'inRcg     - inRcg()
+      'toRcg     - toRcg()
     }
 
     'DeadTag {

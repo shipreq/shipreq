@@ -23,8 +23,9 @@ final case class EventSeqSummary(
     genericReqs       : Set[GenericReqId],
     useCasesExclSteps : Set[UseCaseId],
     useCaseSteps      : Set[UseCaseStepId],
-    reqCodeGroups     : Set[ReqCodeGroupId],
-    apReqCodesChanged : Boolean,
+    reqCodeGroupsCU   : Set[ReqCodeGroupId],
+    reqCodeGroupsDR   : Set[ReqCodeGroupId],
+    contentLiveDeps   : Boolean,
     ) {
 
   private def showStrs(f: Set[_]): String =
@@ -50,8 +51,9 @@ final case class EventSeqSummary(
        |  genericReqs        = ${showInts(genericReqs)(_.value)},
        |  useCasesExclSteps  = ${showInts(useCasesExclSteps)(_.value)},
        |  useCaseSteps       = ${showInts(useCaseSteps)(_.value)},
-       |  reqCodeGroups      = ${showInts(reqCodeGroups)(_.value)},
-       |  apReqCodesChanged  = $apReqCodesChanged){
+       |  reqCodeGroupsCU    = ${showInts(reqCodeGroupsCU)(_.value)},
+       |  reqCodeGroupsDR    = ${showInts(reqCodeGroupsDR)(_.value)},
+       |  contentLiveDeps    = $contentLiveDeps){
        |  customTextFields   = $customTextFields,
        |  tagsChanged        = $tagsChanged}
      """.stripMargin
@@ -87,6 +89,9 @@ final case class EventSeqSummary(
 
   val fieldNamesChanged: Boolean =
     tagsChanged || customFieldTypes.nonEmpty || customReqTypesCU.nonEmpty
+
+  lazy val reqCodeGroups: Set[ReqCodeGroupId] =
+    reqCodeGroupsCU ++ reqCodeGroupsDR
 
   lazy val reqsExclUseCaseSteps: Set[ReqId] =
     genericReqs ++ useCasesExclSteps
@@ -139,17 +144,13 @@ object EventSeqSummary {
     private var genericReqs        = UnivEq.emptySet[GenericReqId]
     private var useCasesExclSteps  = UnivEq.emptySet[UseCaseId]
     private var useCaseSteps       = UnivEq.emptySet[UseCaseStepId]
-    private var reqCodeGroupIds    = UnivEq.emptySet[ReqCodeGroupId]
-    private var apReqCodes         = false
+    private var reqCodeGroupsCU    = UnivEq.emptySet[ReqCodeGroupId]
+    private var reqCodeGroupsDR    = UnivEq.emptySet[ReqCodeGroupId]
+    private var contentLiveDeps    = false
 
     private val addReq: ReqId => Unit = {
       case i: GenericReqId => genericReqs       += i
       case i: UseCaseId    => useCasesExclSteps += i
-    }
-
-    private val tagCU: TagId => Unit = {
-      case i: TagGroupId      => tagGroupsCU      += i
-      case i: ApplicableTagId => applicableTagsCU += i
     }
 
     private val tagDR: TagId => Unit = {
@@ -164,51 +165,34 @@ object EventSeqSummary {
 
       case e: Event.ContentRestore =>
         e.reqs.foreach(addReq)
-        reqCodeGroupIds ++= e.codeGroups
+        reqCodeGroupsDR ++= e.codeGroups
 
       case e: Event.ReqsDelete =>
         e.reqs.foreach(addReq)
-        reqCodeGroupIds ++= e.codeGroups
-
-      case e: Event.ReqCodesPatch =>
-        addReq(e.id)
-        apReqCodes = true
+        reqCodeGroupsDR ++= e.codeGroups
 
       case e: Event.ReqImplicationsPatch =>
         addReq(e.id)
         e.patch.added.foreach(addReq)
         e.patch.removed.foreach(addReq)
 
-      case e: Event.ReqTagsPatch =>
-        addReq(e.id)
-        // applicableTags ++= e.patch.added
-        // applicableTags ++= e.patch.removed
-
-      case e: Event.GenericReqCreate =>
-        genericReqs += e.id
-        if (e.vs.get(GenericReqGD.Codes).isDefined) apReqCodes = true
-
-      case e: Event.UseCaseCreate =>
-        useCasesExclSteps += e.id
-        if (e.vs.get(UseCaseGD.Codes).isDefined) apReqCodes = true
-
       case e: Event.CustomReqTypeDelete =>
         customReqTypesDR += e.id
-        apReqCodes = true // because reqs' Life/Dead can change
+        contentLiveDeps = true
 
       case e: Event.CustomReqTypeRestore =>
         customReqTypesDR += e.id
-        apReqCodes = true // because reqs' Life/Dead can change
+        contentLiveDeps = true
 
       case e: Event.GenericReqTypeSet =>
         genericReqs += e.id
-        apReqCodes = true // because reqs' Life/Dead can change
+        contentLiveDeps = true
 
       case e: Event.ApplicableTagCreate    => applicableTagsCU += e.id
       case e: Event.ApplicableTagUpdate    => applicableTagsCU += e.id
-      case e: Event.CodeGroupCreate        => reqCodeGroupIds += e.id
-      case e: Event.CodeGroupsDelete       => reqCodeGroupIds ++= e.ids.whole
-      case e: Event.CodeGroupUpdate        => reqCodeGroupIds += e.id
+      case e: Event.CodeGroupCreate        => reqCodeGroupsCU += e.id
+      case e: Event.CodeGroupsDelete       => reqCodeGroupsDR ++= e.ids.whole
+      case e: Event.CodeGroupUpdate        => reqCodeGroupsCU += e.id
       case e: Event.CustomIssueTypeCreate  => customIssueTypesCU += e.id
       case e: Event.CustomIssueTypeDelete  => customIssueTypesDR += e.id
       case e: Event.CustomIssueTypeRestore => customIssueTypesDR += e.id
@@ -225,13 +209,17 @@ object EventSeqSummary {
       case e: Event.FieldCustomTextUpdate  => customFieldTypesCU += e.id
       case e: Event.FieldStaticAdd         => staticFields += e.f
       case e: Event.FieldStaticRemove      => staticFields += e.f
+      case e: Event.GenericReqCreate       => genericReqs += e.id
       case e: Event.GenericReqTitleSet     => genericReqs += e.id
       case e: Event.ProjectTemplateApply   => this ++= e.template.events
+      case e: Event.ReqCodesPatch          => addReq(e.id)
       case e: Event.ReqFieldCustomTextSet  => addReq(e.id)
+      case e: Event.ReqTagsPatch           => addReq(e.id)
       case e: Event.TagDelete              => tagDR(e.id)
       case e: Event.TagGroupCreate         => tagGroupsCU += e.id
       case e: Event.TagGroupUpdate         => tagGroupsCU += e.id
       case e: Event.TagRestore             => tagDR(e.id)
+      case e: Event.UseCaseCreate          => useCasesExclSteps += e.id
       case e: Event.UseCaseStepCreate      => useCaseSteps += e.id
       case e: Event.UseCaseStepDelete      => useCaseSteps += e.id
       case e: Event.UseCaseStepRestore     => useCaseSteps += e.id
@@ -264,8 +252,9 @@ object EventSeqSummary {
         genericReqs        = genericReqs,
         useCasesExclSteps  = useCasesExclSteps,
         useCaseSteps       = useCaseSteps,
-        reqCodeGroups      = reqCodeGroupIds,
-        apReqCodesChanged  = apReqCodes,
+        reqCodeGroupsCU    = reqCodeGroupsCU,
+        reqCodeGroupsDR    = reqCodeGroupsDR,
+        contentLiveDeps    = contentLiveDeps,
       )
   }
 

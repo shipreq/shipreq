@@ -4,6 +4,7 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptySet
 import shipreq.base.util.Util
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.Atom
 
 object IssueDetectors {
   import IssueDetector.{Increment, Init}
@@ -52,11 +53,39 @@ object IssueDetectors {
 
   case object DeadReference extends Instance {
 
-    override def init(i: Init): Unit =
-      ()
+    override def init(i: Init): Unit = {
+      i.action.foreachDirtyLiveReq(() => detectInReqs(i))
+      i.action.foreachDirtyLiveRcg(() => detectInRcgs(i))
+    }
 
-    override def increment(i: Increment): Unit =
-      ()
+    override def increment(i: Increment): Unit = {
+//  TODO    if (i.eventSummary.contentLiveDeps || i.eventSummary.reqCodeGroupsDR.nonEmpty)
+      i.invalidateAll()
+      init(i.init)
+    }
+
+    private def detectInReqs(i: Init): Req => Unit = {
+      val refsInReqs = i.project.atomScan.contentRefsInReqs
+      req =>
+        for (a <- refsInReqs(req.id).live)
+          if (!isRefLive(a.value, i.project))
+            i.action.add(Issue.DeadRefInReq(req.id, a.loc, ContentRef.fromAtom(a.value)))
+    }
+
+    private def detectInRcgs(i: Init): LiveCodeGroup => Unit = {
+      val refsInRcgs = i.project.atomScan.contentRefsInRcgs
+      rcg =>
+        for (a <- refsInRcgs(rcg.id).live)
+          if (!isRefLive(a, i.project))
+            i.action.add(Issue.DeadRefInRcg(rcg.id, ContentRef.fromAtom(a)))
+    }
+
+    private def isRefLive(a: Atom.AnyContentRef, p: Project): Boolean =
+      a match {
+        case r: Atom.ContentRef # ReqRef         => p.content.reqs.need(r.value).live(p.config.reqTypes).is(Live)
+        case r: Atom.ContentRef # CodeRef        => p.content.reqCodes.needById(r.value).isActive
+        case r: Atom.ContentRef # UseCaseStepRef => p.content.reqs.useCases.focusStep(r.value).live.is(Live)
+      }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -41,20 +41,49 @@ object Issue {
                                    tagGroupId: TagGroupId,
                                    locs      : NonEmptySet[ReqTagLoc]) extends Issue(C.ConflictingTags)
 
+  final case class DeadIssueTagInRcg(rcgId: ReqCodeGroupId,
+                                     issue: Text.CodeGroupTitle.Issue) extends Issue(C.DeadIssueTag)
 
-  final case class DeadIssueTagInRcg(rcgId: ReqCodeGroupId, issue: Text.CodeGroupTitle.Issue) extends Issue(C.DeadIssueTag)
+  final case class DeadIssueTagInReq(reqId: ReqId,
+                                     loc  : ReqTextLoc,
+                                     issue: Atom.AnyIssue) extends Issue(C.DeadIssueTag)
 
-  final case class DeadIssueTagInReq(reqId: ReqId, loc: ReqTextLoc, issue: Atom.AnyIssue) extends Issue(C.DeadIssueTag)
+  final case class DeadRefInRcg(rcgId: ReqCodeGroupId,
+                                ref  : ContentRef) extends Issue(C.DeadReference)
 
-  final case class DeadTag(reqId: ReqId, loc: ReqTextLoc, tagId: ApplicableTagId) extends Issue(C.DeadIssueTag)
+  final case class DeadRefInReq(reqId: ReqId,
+                                loc  : ReqTextLoc,
+                                ref  : ContentRef) extends Issue(C.DeadReference)
+
+  final case class DeadTag(reqId: ReqId,
+                           loc  : ReqTextLoc,
+                           tagId: ApplicableTagId) extends Issue(C.DeadIssueTag)
 
   final case class EmptyCodeGroup(rcgId: ReqCodeGroupId) extends Issue(C.EmptyCodeGroup)
 
-  final case class IssueTagInRcg(rcgId: ReqCodeGroupId, issue: Text.CodeGroupTitle.Issue) extends Issue(C.IssueTag)
+  final case class IssueTagInRcg(rcgId: ReqCodeGroupId,
+                                 issue: Text.CodeGroupTitle.Issue) extends Issue(C.IssueTag)
 
-  final case class IssueTagInReq(reqId: ReqId, loc: ReqTextLoc, issue: Atom.AnyIssue) extends Issue(C.IssueTag)
+  final case class IssueTagInReq(reqId: ReqId,
+                                 loc  : ReqTextLoc,
+                                 issue: Atom.AnyIssue) extends Issue(C.IssueTag)
 
   final case class UninhabitableTagField(fieldId: CustomField.Tag.Id) extends Issue(C.UninhabitableTagField)
 
   implicit def univEq: UnivEq[Issue] = UnivEq.derive
+}
+
+sealed trait ContentRef
+object ContentRef {
+  final case class ReqRef        (value: ReqId)        extends ContentRef
+  final case class CodeRef       (value: ReqCodeId)    extends ContentRef
+  final case class UseCaseStepRef(value: UseCaseStepId)extends ContentRef
+
+  val fromAtom: Atom.AnyAtom => ContentRef = {
+    case a: Atom.ContentRef # ReqRef         => ReqRef        (a.value)
+    case a: Atom.ContentRef # CodeRef        => CodeRef       (a.value)
+    case a: Atom.ContentRef # UseCaseStepRef => UseCaseStepRef(a.value)
+  }
+
+  implicit def univEq: UnivEq[ContentRef] = UnivEq.derive
 }

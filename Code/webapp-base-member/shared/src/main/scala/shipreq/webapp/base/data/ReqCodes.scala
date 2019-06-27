@@ -256,6 +256,9 @@ final case class ReqCodes(trie: ReqCode.Trie) {
   def getById(id: ReqCodeId): Option[Data] =
     getReqCode(id).flatMap(get)
 
+  def needById(id: ReqCodeId): Data =
+    getById(id) mustExistElse s"No reqcode with id #${id.value}."
+
   def lookup(id: ReqCodeId): Data =
     apply(reqCode(id))
 

@@ -12,12 +12,15 @@ import shipreq.webapp.base.text.Text
   * @param issuesInReqs  Live/Dead refers to the requirement context; not the life-state of the issue itself.
   * @param codeRefs ReqCodes referenced in anything anywhere (including text in dead custom-text fields).
   */
-final class AtomScan(val tagRefs        : LiveDeadStatMap[ReqId, Set[ReqTextLoc.And[ApplicableTagId]]],
-                     val issuesInReqs   : LiveDeadStatMap[ReqId, Vector[ReqTextLoc.And[AnyIssue]]],
-                     val issuesInRcgs   : LiveDeadStatMap[ReqCodeId, Vector[Text.CodeGroupTitle.Issue]],
-                     val reqRefs        : Set[ReqId],
-                     val codeRefs       : Set[ReqCodeId],
-                     val useCaseStepRefs: Set[UseCaseStepId]) {
+final class AtomScan(val tagRefs          : LiveDeadStatMap[ReqId, Set[ReqTextLoc.And[ApplicableTagId]]],
+                     val issuesInReqs     : LiveDeadStatMap[ReqId, Vector[ReqTextLoc.And[AnyIssue]]],
+                     val issuesInRcgs     : LiveDeadStatMap[ReqCodeId, Vector[Text.CodeGroupTitle.Issue]],
+                     val contentRefsInReqs: LiveDeadStatMap[ReqId, Vector[ReqTextLoc.And[AnyContentRef]]],
+                     val contentRefsInRcgs: LiveDeadStatMap[ReqCodeId, Vector[AnyContentRef]],
+                     val reqRefs          : Set[ReqId],
+                     val codeRefs         : Set[ReqCodeId],
+                     val useCaseStepRefs  : Set[UseCaseStepId]
+                    ) {
 
   lazy val issueCounts: LiveDeadStatMap[CustomIssueTypeId, Int] = {
     val r = new LiveDeadStatMap.Builder[CustomIssueTypeId, Int]
@@ -33,12 +36,14 @@ object AtomScan {
   private implicit val tagSetMonoid = scalazMonoidSet[ReqTextLoc.And[ApplicableTagId]]
 
   def apply(p: Project): AtomScan = {
-    val tagRefs         = new LiveDeadStatMap.Builder[ReqId, Set[ReqTextLoc.And[ApplicableTagId]]]
-    val issuesInReqs    = new LiveDeadStatMap.Builder[ReqId, Vector[ReqTextLoc.And[AnyIssue]]]
-    val issuesInRCGs    = new LiveDeadStatMap.Builder[ReqCodeId, Vector[Text.CodeGroupTitle.Issue]]
-    val reqRefs         = UnivEq.setBuilder[ReqId]
-    val codeRefs        = UnivEq.setBuilder[ReqCodeId]
-    val useCaseStepRefs = UnivEq.setBuilder[UseCaseStepId]
+    val tagRefs           = new LiveDeadStatMap.Builder[ReqId, Set[ReqTextLoc.And[ApplicableTagId]]]
+    val issuesInReqs      = new LiveDeadStatMap.Builder[ReqId, Vector[ReqTextLoc.And[AnyIssue]]]
+    val issuesInRcgs      = new LiveDeadStatMap.Builder[ReqCodeId, Vector[Text.CodeGroupTitle.Issue]]
+    val contentRefsInReqs = new LiveDeadStatMap.Builder[ReqId, Vector[ReqTextLoc.And[AnyContentRef]]]
+    val contentRefsInRcgs = new LiveDeadStatMap.Builder[ReqCodeId, Vector[AnyContentRef]]
+    val reqRefs           = UnivEq.setBuilder[ReqId]
+    val codeRefs          = UnivEq.setBuilder[ReqCodeId]
+    val useCaseStepRefs   = UnivEq.setBuilder[UseCaseStepId]
 
     def scan(live     : Live,
              loc      : ReqTextLoc,
@@ -55,17 +60,23 @@ object AtomScan {
              | _: NewLine         # BlankLine => ()
 
           case a: ContentRef#ReqRef =>
+            if (reqId     ne null) contentRefsInReqs(reqId).mod(live)(_ :+ ReqTextLoc.And(loc, a))
+            if (reqCodeId ne null) contentRefsInRcgs(reqCodeId).mod(live)(_ :+ a)
             reqRefs += a.value
 
           case a: ContentRef#CodeRef =>
+            if (reqId     ne null) contentRefsInReqs(reqId).mod(live)(_ :+ ReqTextLoc.And(loc, a))
+            if (reqCodeId ne null) contentRefsInRcgs(reqCodeId).mod(live)(_ :+ a)
             codeRefs += a.value
 
           case a: ContentRef#UseCaseStepRef =>
+            if (reqId     ne null) contentRefsInReqs(reqId).mod(live)(_ :+ ReqTextLoc.And(loc, a))
+            if (reqCodeId ne null) contentRefsInRcgs(reqCodeId).mod(live)(_ :+ a)
             useCaseStepRefs += a.value
 
           case a: Issue#Issue =>
             if (reqId     ne null) issuesInReqs(reqId).mod(live)(_ :+ ReqTextLoc.And(loc, a))
-            if (reqCodeId ne null) issuesInRCGs(reqCodeId).mod(live)(_ :+ a.asInstanceOf[Text.CodeGroupTitle.Issue]) // TODO prove
+            if (reqCodeId ne null) issuesInRcgs(reqCodeId).mod(live)(_ :+ a.asInstanceOf[Text.CodeGroupTitle.Issue]) // TODO prove
             go(a.desc)
 
           case a: TagRef#TagRef =>
@@ -111,7 +122,9 @@ object AtomScan {
     new AtomScan(
       tagRefs.result(),
       issuesInReqs.result(),
-      issuesInRCGs.result(),
+      issuesInRcgs.result(),
+      contentRefsInReqs.result(),
+      contentRefsInRcgs.result(),
       reqRefs.result(),
       codeRefs.result(),
       useCaseStepRefs.result())
