@@ -64,10 +64,24 @@ object IssueDetectors {
   case object DeadTag extends Instance {
 
     override def init(i: Init): Unit =
-      ()
+      i.action.foreachDirtyLiveReq(() => detectInReqs(i))
 
-    override def increment(i: Increment): Unit =
-      ()
+    override def increment(i: Increment): Unit = {
+      if (i.eventSummary.tagsDR || i.eventSummary.customFieldTypesDR.nonEmpty)
+        i.invalidateAll()
+      init(i.init)
+    }
+
+    private def detectInReqs(i: Init): Req => Unit = {
+      val tagRefs = i.project.atomScan.tagRefs
+      req => {
+        for (a <- tagRefs(req.id).live) {
+          val t = i.project.config.tags.atag(a.value)
+          if (t.live.is(Dead))
+            i.action.add(Issue.DeadTag(req.id, a.loc, a.value))
+        }
+      }
+    }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

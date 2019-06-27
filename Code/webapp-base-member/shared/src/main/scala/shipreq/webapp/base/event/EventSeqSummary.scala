@@ -4,6 +4,10 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.univeq._
 import shipreq.webapp.base.data._
 
+/** Summary of a sequence of events.
+  *
+  * Where there are CU and DR suffixes, CU = created/updated, DR = deleted/restored.
+  */
 final case class EventSeqSummary(
     customIssueTypesCU: Set[CustomIssueTypeId],
     customIssueTypesDR: Set[CustomIssueTypeId],
@@ -11,8 +15,10 @@ final case class EventSeqSummary(
     customFieldTypesDR: Set[CustomFieldId],
     customReqTypesCU  : Set[CustomReqTypeId],
     customReqTypesDR  : Set[CustomReqTypeId],
-    tagGroups         : Set[TagGroupId],
-    applicableTags    : Set[ApplicableTagId],
+    tagGroupsCU       : Set[TagGroupId],
+    tagGroupsDR       : Set[TagGroupId],
+    applicableTagsCU  : Set[ApplicableTagId],
+    applicableTagsDR  : Set[ApplicableTagId],
     staticFields      : Set[StaticField],
     genericReqs       : Set[GenericReqId],
     useCasesExclSteps : Set[UseCaseId],
@@ -36,8 +42,10 @@ final case class EventSeqSummary(
        |  customFieldTypesDR = ${showInts(customFieldTypesDR)(_.value)},
        |  customReqTypesCU   = ${showInts(customReqTypesCU)(_.value)},
        |  customReqTypesDR   = ${showInts(customReqTypesDR)(_.value)},
-       |  tagGroups          = ${showInts(tagGroups)(_.value)},
-       |  applicableTags     = ${showInts(applicableTags)(_.value)},
+       |  tagGroupsCU        = ${showInts(tagGroupsCU)(_.value)},
+       |  tagGroupsDR        = ${showInts(tagGroupsDR)(_.value)},
+       |  applicableTagsCU   = ${showInts(applicableTagsCU)(_.value)},
+       |  applicableTagsDR   = ${showInts(applicableTagsDR)(_.value)},
        |  staticFields       = ${showStrs(staticFields)},
        |  genericReqs        = ${showInts(genericReqs)(_.value)},
        |  useCasesExclSteps  = ${showInts(useCasesExclSteps)(_.value)},
@@ -59,14 +67,26 @@ final case class EventSeqSummary(
   lazy val customReqTypes: Set[CustomReqTypeId] =
     customReqTypesCU ++ customReqTypesDR
 
-  val tagsChanged: Boolean =
-    applicableTags.nonEmpty || tagGroups.nonEmpty
+  lazy val tagGroups: Set[TagGroupId] =
+    tagGroupsCU ++ tagGroupsDR
 
-  val fieldNamesChanged: Boolean =
-    tagsChanged || customFieldTypes.nonEmpty || customReqTypesCU.nonEmpty
+  lazy val applicableTags: Set[ApplicableTagId] =
+    applicableTagsCU ++ applicableTagsDR
 
   lazy val tags: Set[TagId] =
     applicableTags ++ tagGroups
+
+  val tagsCU: Boolean =
+    applicableTagsCU.nonEmpty || tagGroupsCU.nonEmpty
+
+  val tagsDR: Boolean =
+    applicableTagsDR.nonEmpty || tagGroupsDR.nonEmpty
+
+  val tagsChanged: Boolean =
+    tagsCU || tagsDR
+
+  val fieldNamesChanged: Boolean =
+    tagsChanged || customFieldTypes.nonEmpty || customReqTypesCU.nonEmpty
 
   lazy val reqsExclUseCaseSteps: Set[ReqId] =
     genericReqs ++ useCasesExclSteps
@@ -111,8 +131,10 @@ object EventSeqSummary {
     private var customFieldTypesDR = UnivEq.emptySet[CustomFieldId]
     private var customReqTypesCU   = UnivEq.emptySet[CustomReqTypeId]
     private var customReqTypesDR   = UnivEq.emptySet[CustomReqTypeId]
-    private var tagGroups          = UnivEq.emptySet[TagGroupId]
-    private var applicableTags     = UnivEq.emptySet[ApplicableTagId]
+    private var tagGroupsCU        = UnivEq.emptySet[TagGroupId]
+    private var tagGroupsDR        = UnivEq.emptySet[TagGroupId]
+    private var applicableTagsCU   = UnivEq.emptySet[ApplicableTagId]
+    private var applicableTagsDR   = UnivEq.emptySet[ApplicableTagId]
     private var staticFields       = UnivEq.emptySet[StaticField]
     private var genericReqs        = UnivEq.emptySet[GenericReqId]
     private var useCasesExclSteps  = UnivEq.emptySet[UseCaseId]
@@ -125,9 +147,14 @@ object EventSeqSummary {
       case i: UseCaseId    => useCasesExclSteps += i
     }
 
-    private val addTag: TagId => Unit = {
-      case i: TagGroupId      => tagGroups      += i
-      case i: ApplicableTagId => applicableTags += i
+    private val tagCU: TagId => Unit = {
+      case i: TagGroupId      => tagGroupsCU      += i
+      case i: ApplicableTagId => applicableTagsCU += i
+    }
+
+    private val tagDR: TagId => Unit = {
+      case i: TagGroupId      => tagGroupsDR      += i
+      case i: ApplicableTagId => applicableTagsDR += i
     }
 
     def ++=(events: TraversableOnce[Event]): Unit =
@@ -154,8 +181,8 @@ object EventSeqSummary {
 
       case e: Event.ReqTagsPatch =>
         addReq(e.id)
-        applicableTags ++= e.patch.added
-        applicableTags ++= e.patch.removed
+        // applicableTags ++= e.patch.added
+        // applicableTags ++= e.patch.removed
 
       case e: Event.GenericReqCreate =>
         genericReqs += e.id
@@ -177,8 +204,8 @@ object EventSeqSummary {
         genericReqs += e.id
         apReqCodes = true // because reqs' Life/Dead can change
 
-      case e: Event.ApplicableTagCreate    => applicableTags += e.id
-      case e: Event.ApplicableTagUpdate    => applicableTags += e.id
+      case e: Event.ApplicableTagCreate    => applicableTagsCU += e.id
+      case e: Event.ApplicableTagUpdate    => applicableTagsCU += e.id
       case e: Event.CodeGroupCreate        => reqCodeGroupIds += e.id
       case e: Event.CodeGroupsDelete       => reqCodeGroupIds ++= e.ids.whole
       case e: Event.CodeGroupUpdate        => reqCodeGroupIds += e.id
@@ -201,10 +228,10 @@ object EventSeqSummary {
       case e: Event.GenericReqTitleSet     => genericReqs += e.id
       case e: Event.ProjectTemplateApply   => this ++= e.template.events
       case e: Event.ReqFieldCustomTextSet  => addReq(e.id)
-      case e: Event.TagDelete              => addTag(e.id)
-      case e: Event.TagGroupCreate         => tagGroups += e.id
-      case e: Event.TagGroupUpdate         => tagGroups += e.id
-      case e: Event.TagRestore             => addTag(e.id)
+      case e: Event.TagDelete              => tagDR(e.id)
+      case e: Event.TagGroupCreate         => tagGroupsCU += e.id
+      case e: Event.TagGroupUpdate         => tagGroupsCU += e.id
+      case e: Event.TagRestore             => tagDR(e.id)
       case e: Event.UseCaseStepCreate      => useCaseSteps += e.id
       case e: Event.UseCaseStepDelete      => useCaseSteps += e.id
       case e: Event.UseCaseStepRestore     => useCaseSteps += e.id
@@ -229,8 +256,10 @@ object EventSeqSummary {
         customFieldTypesDR = customFieldTypesDR,
         customReqTypesCU   = customReqTypesCU,
         customReqTypesDR   = customReqTypesDR,
-        tagGroups          = tagGroups,
-        applicableTags     = applicableTags,
+        tagGroupsCU        = tagGroupsCU,
+        tagGroupsDR        = tagGroupsDR,
+        applicableTagsCU   = applicableTagsCU,
+        applicableTagsDR   = applicableTagsDR,
         staticFields       = staticFields,
         genericReqs        = genericReqs,
         useCasesExclSteps  = useCasesExclSteps,

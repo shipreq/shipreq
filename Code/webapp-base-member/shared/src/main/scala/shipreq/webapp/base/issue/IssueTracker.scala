@@ -80,6 +80,7 @@ object IssueTracker {
       case i: Issue.ConflictingTags       => isReqDeadOrDirty(i.reqId)
       case i: Issue.DeadIssueTagInRcg     => isReqCodeGroupDeadOrDirty(i.rcgId)
       case i: Issue.DeadIssueTagInReq     => isReqDeadOrDirty(i.reqId)
+      case i: Issue.DeadTag               => isReqDeadOrDirty(i.reqId)
       case i: Issue.EmptyCodeGroup        => isReqCodeGroupDeadOrDirty(i.rcgId)
       case i: Issue.IssueTagInRcg         => isReqCodeGroupDeadOrDirty(i.rcgId)
       case i: Issue.IssueTagInReq         => isReqDeadOrDirty(i.reqId)

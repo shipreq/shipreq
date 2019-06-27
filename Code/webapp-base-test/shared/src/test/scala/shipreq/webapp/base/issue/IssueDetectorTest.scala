@@ -115,6 +115,23 @@ object IssueDetectorTest extends TestSuite {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  private object DeadTagTests {
+    private implicit val filter = IssueFilter[Issue.DeadTag]
+
+    import T.GenericReqTitle.TagRef
+
+    def ko() = test(p3)(
+      Event.GenericReqTitleSet(P3.frs(1), Vector(TagRef(P3.priHigh), TagRef(P3.priMed), TagRef(P3.priLow))),
+      TagDelete(P3.priHigh),
+      TagDelete(P3.priLow),
+    )(
+      Issue.DeadTag(P3.frs(1), ReqTextLoc.Title, P3.priHigh),
+      Issue.DeadTag(P3.frs(1), ReqTextLoc.Title, P3.priLow),
+    )
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   private object EmptyCodeGroupTests {
     private implicit val filter = IssueFilter[Issue.EmptyCodeGroup]
 
@@ -225,6 +242,11 @@ object IssueDetectorTest extends TestSuite {
       'deadTag      - deadTag()
       'deadTagGroup - deadTagGroup()
       'tagInText    - tagInText()
+    }
+
+    'DeadTag {
+      import DeadTagTests._
+      'ko - ko()
     }
 
     'EmptyCodeGroup {

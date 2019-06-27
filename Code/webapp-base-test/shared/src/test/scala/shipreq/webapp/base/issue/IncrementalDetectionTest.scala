@@ -58,7 +58,12 @@ object IncrementalDetectionTest extends TestSuite {
         }
       }
 
-      * - test(0)
+      * - test()
+      * - test()
+      * - test()
+      * - test()
+      * - test()
+      * - test()
       * - test()
       * - test()
       * - test()

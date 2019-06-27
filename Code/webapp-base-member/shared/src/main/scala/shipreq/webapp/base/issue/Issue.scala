@@ -46,6 +46,8 @@ object Issue {
 
   final case class DeadIssueTagInReq(reqId: ReqId, loc: ReqTextLoc, issue: Atom.AnyIssue) extends Issue(C.DeadIssueTag)
 
+  final case class DeadTag(reqId: ReqId, loc: ReqTextLoc, tagId: ApplicableTagId) extends Issue(C.DeadIssueTag)
+
   final case class EmptyCodeGroup(rcgId: ReqCodeGroupId) extends Issue(C.EmptyCodeGroup)
 
   final case class IssueTagInRcg(rcgId: ReqCodeGroupId, issue: Text.CodeGroupTitle.Issue) extends Issue(C.IssueTag)
