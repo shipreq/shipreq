@@ -79,7 +79,7 @@ object ContentRef {
   final case class CodeRef       (value: ReqCodeId)    extends ContentRef
   final case class UseCaseStepRef(value: UseCaseStepId)extends ContentRef
 
-  val fromAtom: Atom.AnyAtom => ContentRef = {
+  val fromAtom: Atom.AnyContentRef => ContentRef = {
     case a: Atom.ContentRef # ReqRef         => ReqRef        (a.value)
     case a: Atom.ContentRef # CodeRef        => CodeRef       (a.value)
     case a: Atom.ContentRef # UseCaseStepRef => UseCaseStepRef(a.value)
