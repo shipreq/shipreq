@@ -107,12 +107,12 @@ object Event {
   case e: Event.UseCaseTitleSet        => ???
   */
 
-  // =====================================================================================================================
+  // ===================================================================================================================
   // Cosmetic. No impact on content (or config).
 
   final case class ProjectNameSet(name: String) extends ActiveEvent
 
-  // =====================================================================================================================
+  // ===================================================================================================================
   // Config: Templates
 
   /**
@@ -120,7 +120,7 @@ object Event {
    */
   final case class ProjectTemplateApply(template: ProjectTemplate) extends ActiveEvent
 
-  // =====================================================================================================================
+  // ===================================================================================================================
   // Config: Custom issue types
 
   final case class CustomIssueTypeCreate (id: CustomIssueTypeId, vs: CustomIssueTypeGD.NonEmptyValues) extends ActiveEvent
@@ -128,7 +128,7 @@ object Event {
   final case class CustomIssueTypeDelete (id: CustomIssueTypeId)                                       extends ActiveEvent
   final case class CustomIssueTypeRestore(id: CustomIssueTypeId)                                       extends ActiveEvent
 
-  // =====================================================================================================================
+  // ===================================================================================================================
   // Config: Custom req types
 
   final case class CustomReqTypeCreate (id: CustomReqTypeId, vs: CustomReqTypeGD.NonEmptyValues) extends ActiveEvent
@@ -136,7 +136,7 @@ object Event {
   final case class CustomReqTypeDelete (id: CustomReqTypeId)                                     extends ActiveEvent
   final case class CustomReqTypeRestore(id: CustomReqTypeId)                                     extends ActiveEvent
 
-  // =====================================================================================================================
+  // ===================================================================================================================
   // Config: Tags
 
   // TODO Should there be a RepositionTag event?
@@ -149,7 +149,7 @@ object Event {
   final case class ApplicableTagCreate(id: ApplicableTagId, vs: ApplicableTagGD.NonEmptyValues) extends ActiveEvent
   final case class ApplicableTagUpdate(id: ApplicableTagId, vs: ApplicableTagGD.NonEmptyValues) extends ActiveEvent
 
-  // =====================================================================================================================
+  // ===================================================================================================================
   // Config: Fields
 
   final case class FieldReposition(id: FieldId, newPos: RelPos[FieldId]) extends ActiveEvent
@@ -169,14 +169,14 @@ object Event {
   final case class FieldCustomImpCreate(id: CustomField.Implication.Id, vs: CustomImpFieldGD.NonEmptyValues) extends ActiveEvent
   final case class FieldCustomImpUpdate(id: CustomField.Implication.Id, vs: CustomImpFieldGD.NonEmptyValues) extends ActiveEvent
 
-  // =====================================================================================================================
+  // ===================================================================================================================
   // Content: Generic requirements
 
   final case class GenericReqCreate  (id: GenericReqId, rt: CustomReqTypeId, vs: GenericReqGD.Values) extends ActiveEvent
   final case class GenericReqTypeSet (id: GenericReqId, value: CustomReqTypeId)                       extends ActiveEvent
   final case class GenericReqTitleSet(id: GenericReqId, value: GenericReqTitle.OptionalText)          extends ActiveEvent
 
-  // =====================================================================================================================
+  // ===================================================================================================================
   // Content: Use cases
 
   /**
@@ -197,14 +197,14 @@ object Event {
   final case class UseCaseStepDelete    (id: UseCaseStepId)                                   extends ActiveEvent
   final case class UseCaseStepRestore   (id: UseCaseStepId)                                   extends ActiveEvent
 
-  // =====================================================================================================================
+  // ===================================================================================================================
   // Content: ReqCode groups
 
   final case class CodeGroupCreate(id: ReqCodeGroupId, vs: CodeGroupGD.NonEmptyValues) extends ActiveEvent
   final case class CodeGroupUpdate(id: ReqCodeGroupId, vs: CodeGroupGD.NonEmptyValues) extends ActiveEvent
   final case class CodeGroupsDelete(ids: NonEmptySet[ReqCodeGroupId]) extends ActiveEvent
 
-  // =====================================================================================================================
+  // ===================================================================================================================
   // Content: Shared
 
   /**
@@ -241,7 +241,7 @@ object Event {
   final case class ContentRestore(reqs      : Set[ReqId],
                                   codeGroups: Set[ReqCodeGroupId]) extends ActiveEvent
 
-  // =====================================================================================================================
+  // ===================================================================================================================
   // Saved Views
 
   final case class SavedViewCreate(id        : SavedView.Id,
