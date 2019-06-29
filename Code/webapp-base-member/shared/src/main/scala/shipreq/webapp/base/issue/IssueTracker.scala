@@ -72,19 +72,20 @@ object IssueTracker {
     @inline def isReqDirty(id: ReqId) = essp.reqs.contains(id)
     def isReqDeadOrDirty  (id: ReqId) = isReqDirty(id) || isReqDead(id)
 
-    @inline def isReqCodeGroupDead (id: ReqCodeGroupId) = !liveGroupIds.contains(id)
-    @inline def isReqCodeGroupDirty(id: ReqCodeGroupId) = essp.reqCodeGroups.all.contains(id)
-    def isReqCodeGroupDeadOrDirty  (id: ReqCodeGroupId) = isReqCodeGroupDirty(id) || isReqCodeGroupDead(id)
+    @inline def isRcgDead (id: ReqCodeGroupId) = !liveGroupIds.contains(id)
+    @inline def isRcgDirty(id: ReqCodeGroupId) = essp.reqCodeGroups.all.contains(id)
+    def isRcgDeadOrDirty  (id: ReqCodeGroupId) = isRcgDirty(id) || isRcgDead(id)
 
     val autoInvalidate: Issue => Boolean = {
+      case i: Issue.BlankTitle            => isReqDeadOrDirty(i.reqId) // wider than necessary
       case i: Issue.ConflictingTags       => isReqDeadOrDirty(i.reqId)
-      case i: Issue.DeadIssueTagInRcg     => isReqCodeGroupDeadOrDirty(i.rcgId)
+      case i: Issue.DeadIssueTagInRcg     => isRcgDeadOrDirty(i.rcgId)
       case i: Issue.DeadIssueTagInReq     => isReqDeadOrDirty(i.reqId)
-      case i: Issue.DeadRefInRcg          => isReqCodeGroupDeadOrDirty(i.rcgId)
+      case i: Issue.DeadRefInRcg          => isRcgDeadOrDirty(i.rcgId)
       case i: Issue.DeadRefInReq          => isReqDeadOrDirty(i.reqId)
       case i: Issue.DeadTag               => isReqDeadOrDirty(i.reqId)
-      case i: Issue.EmptyCodeGroup        => isReqCodeGroupDeadOrDirty(i.rcgId)
-      case i: Issue.IssueTagInRcg         => isReqCodeGroupDeadOrDirty(i.rcgId)
+      case i: Issue.EmptyCodeGroup        => isRcgDeadOrDirty(i.rcgId)
+      case i: Issue.IssueTagInRcg         => isRcgDeadOrDirty(i.rcgId)
       case i: Issue.IssueTagInReq         => isReqDeadOrDirty(i.reqId)
       case _: Issue.UninhabitableTagField => false
     }

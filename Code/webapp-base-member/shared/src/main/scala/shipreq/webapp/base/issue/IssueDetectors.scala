@@ -19,6 +19,22 @@ object IssueDetectors {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  case object BlankTitle extends Instance {
+
+    override def init(i: Init): Unit =
+      i.action.foreachDirtyLiveReq(() => detectInReqs(i))
+
+    override def increment(i: Increment): Unit =
+      init(i.init)
+
+    private def detectInReqs(i: Init): Req => Unit =
+      req =>
+        if (req.title.isEmpty)
+          i.action.add(Issue.BlankTitle(req.id))
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   case object ConflictingTags extends Instance {
 
     override def init(i: Init): Unit =
@@ -147,17 +163,6 @@ object IssueDetectors {
       case _: ReqCode.ActiveGroup
          | _: ReqCode.Inactive    => true
     }
-  }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  case object EmptyField extends Instance {
-
-    override def init(i: Init): Unit =
-      ()
-
-    override def increment(i: Increment): Unit =
-      ()
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

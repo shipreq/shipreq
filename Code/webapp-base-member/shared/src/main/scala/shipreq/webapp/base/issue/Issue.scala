@@ -20,12 +20,15 @@ sealed abstract class IssueClass(final val category: IssueCategory)
 object IssueClass {
   import shipreq.webapp.base.issue.{IssueCategory => C}
 
+  case object BlankCustomField      extends IssueClass(C.MissingData)
+  case object BlankTitle            extends IssueClass(C.MissingData)
+  case object BlankUseCaseStep      extends IssueClass(C.MissingData)
   case object ConflictingTags       extends IssueClass(C.BadData)
   case object DeadIssueTag          extends IssueClass(C.BadData)
   case object DeadReference         extends IssueClass(C.BadData)
   case object DeadTag               extends IssueClass(C.BadData)
   case object EmptyCodeGroup        extends IssueClass(C.Futility)
-  case object EmptyField            extends IssueClass(C.MissingData)
+  case object ImplicationRequired   extends IssueClass(C.MissingData)
   case object IssueTag              extends IssueClass(C.UserDefined)
   case object LooseIssue            extends IssueClass(C.UserDefined)
   case object UninhabitableTagField extends IssueClass(C.Futility)
@@ -36,6 +39,8 @@ object IssueClass {
 sealed abstract class Issue(final val cls: IssueClass)
 object Issue {
   import shipreq.webapp.base.issue.{IssueClass => C}
+
+  final case class BlankTitle(reqId: ReqId) extends Issue(C.BlankTitle)
 
   final case class ConflictingTags(reqId     : ReqId,
                                    tagGroupId: TagGroupId,

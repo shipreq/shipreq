@@ -26,11 +26,15 @@ object IssueDetectorTest extends TestSuite {
   private case class IssueFilter(ok: Issue => Boolean)
   private object IssueFilter {
     def any = apply(_ => true)
+
     def apply[I <: Issue](implicit ct: ClassTag[I]): IssueFilter =
       new IssueFilter(ct.unapply(_).isDefined)
 
     def collect(f: PartialFunction[Issue, Any]): IssueFilter =
       new IssueFilter(f.isDefinedAt)
+
+    def apply(ic: IssueClass): IssueFilter =
+      new IssueFilter(_.cls ==* ic)
   }
 
   private def updateReqTags(id: ReqId)(del: ApplicableTagId*)(add: ApplicableTagId*): ReqTagsPatch =
@@ -73,16 +77,30 @@ object IssueDetectorTest extends TestSuite {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  private object BlankTests {
+    private implicit val filter = IssueFilter(IssueClass.BlankTitle)
+
+    def title() = test(p6)(
+      Event.GenericReqTitleSet(P6.frs(1), ∅),
+      Event.UseCaseTitleSet(P6.uc1, ∅),
+    )(
+      Issue.BlankTitle(P6.frs(1)),
+      Issue.BlankTitle(P6.uc1),
+    )
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   private object ConflictingTagTests {
     private implicit val filter = IssueFilter[Issue.ConflictingTags]
 
     def ko() = test(p3)(
       updateTagGroup(20, MutexChildren),
-      ContentRestore(Set(1119), Set.empty),
+      ContentRestore(Set(1119), ∅),
       updateReqTags(1101)()(4),
       updateReqTags(1104)()(2, 24, 25),
       updateReqTags(1119)()(2, 3),
-      ReqsDelete(NonEmptySet(1119), Set.empty, Vector.empty),
+      ReqsDelete(NonEmptySet(1119), ∅, ∅),
     )(
       Issue.ConflictingTags(1101, 1, NonEmptySet(ReqTagLoc.Tags)),
       Issue.ConflictingTags(1104, 1, NonEmptySet(ReqTagLoc.Tags)),
@@ -122,12 +140,12 @@ object IssueDetectorTest extends TestSuite {
     }
 
     def issueDesc() = test(p3)(
-      ReqsDelete(NonEmptySet(P3.frs(2), P3.mfs(26)), Set.empty, Vector.empty),
+      ReqsDelete(NonEmptySet(P3.frs(2), P3.mfs(26)), ∅, ∅),
     )()
 
     def inRcg() = test(p3)(
       CodeGroupUpdate(demoId, CodeGroupGD.ValueForTitle(Vector(T.CodeGroupTitle.ReqRef(P3.frs(2))))),
-      ReqsDelete(NonEmptySet.one(P3.frs(2)), Set.empty, Vector.empty),
+      ReqsDelete(NonEmptySet.one(P3.frs(2)), ∅, ∅),
     )(
       Issue.DeadRefInRcg(demoId, ContentRef.ReqRef(P3.frs(2)))
     )
@@ -165,15 +183,15 @@ object IssueDetectorTest extends TestSuite {
     private implicit val filter = IssueFilter[Issue.EmptyCodeGroup]
 
     def ko() = test(p3)(
-      ReqCodesPatch(P3.frs(1), Set(demoWhateverId), Set.empty, Multimap.empty),
+      ReqCodesPatch(P3.frs(1), Set(demoWhateverId), ∅, Multimap.empty),
     )(Issue.EmptyCodeGroup(demoId))
 
     def deadChild() = test(p3)(
-      ReqsDelete(NonEmptySet.one(P3.frs(1)), Set.empty, Vector.empty),
+      ReqsDelete(NonEmptySet.one(P3.frs(1)), ∅, ∅),
     )(Issue.EmptyCodeGroup(demoId))
 
     def deadCodeGroup() = test(p3)(
-      ReqsDelete(NonEmptySet.one(P3.frs(1)), Set(demoId), Vector.empty),
+      ReqsDelete(NonEmptySet.one(P3.frs(1)), Set(demoId), ∅),
     )()
   }
 
@@ -187,20 +205,20 @@ object IssueDetectorTest extends TestSuite {
       case i: Issue.DeadIssueTagInReq => i
     }
 
-    private val delFRs = ReqsDelete(NonEmptySet(P3.frs(1), P3.frs(2)), Set.empty, Vector.empty)
+    private val delFRs = ReqsDelete(NonEmptySet(P3.frs(1), P3.frs(2)), ∅, ∅)
 
     def rcg() = test(p3)(
       delFRs,
-      CodeGroupUpdate(demoId, CodeGroupGD.ValueForTitle(Vector(T.CodeGroupTitle.Issue(1, Vector.empty)))),
+      CodeGroupUpdate(demoId, CodeGroupGD.ValueForTitle(Vector(T.CodeGroupTitle.Issue(1, ∅)))),
     )(
-      Issue.IssueTagInRcg(demoId, T.CodeGroupTitle.Issue(1, Vector.empty)),
+      Issue.IssueTagInRcg(demoId, T.CodeGroupTitle.Issue(1, ∅)),
     )
 
     def deadIssue() = test(p3)(
       CustomIssueTypeDelete(1),
       CustomIssueTypeDelete(2),
     )(
-      Issue.DeadIssueTagInReq(P3.frs(1), ReqTextLoc.Title, T.GenericReqTitle.Issue(1, Vector.empty)),
+      Issue.DeadIssueTagInReq(P3.frs(1), ReqTextLoc.Title, T.GenericReqTitle.Issue(1, ∅)),
       Issue.DeadIssueTagInReq(P3.frs(2), ReqTextLoc.Title, T.GenericReqTitle.Issue(2, SampleProject3.inlineIssueDesc)),
     )
 
@@ -208,22 +226,22 @@ object IssueDetectorTest extends TestSuite {
 
     def txtField() = test(p3)(
       delFRs,
-      ReqFieldCustomTextSet(P3.mfs(3), P3.descField, Vector(T.CustomTextField.Issue(1, Vector.empty))),
+      ReqFieldCustomTextSet(P3.mfs(3), P3.descField, Vector(T.CustomTextField.Issue(1, ∅))),
     )(
-      Issue.IssueTagInReq(P3.mfs(3), ReqTextLoc.CustomTextField(P3.descField), T.CustomTextField.Issue(1, Vector.empty)),
+      Issue.IssueTagInReq(P3.mfs(3), ReqTextLoc.CustomTextField(P3.descField), T.CustomTextField.Issue(1, ∅)),
     )
 
     def ucs() = test(p6)(
       delFRs,
-      UseCaseStepUpdate(13, UseCaseStepGD.ValueForTitle(Vector(T.UseCaseStep.Issue(1, Vector.empty)))),
+      UseCaseStepUpdate(13, UseCaseStepGD.ValueForTitle(Vector(T.UseCaseStep.Issue(1, ∅)))),
     )(
-      Issue.IssueTagInReq(P6.uc1, ReqTextLoc.UseCaseStep(13), T.UseCaseStep.Issue(1, Vector.empty)),
+      Issue.IssueTagInReq(P6.uc1, ReqTextLoc.UseCaseStep(13), T.UseCaseStep.Issue(1, ∅)),
     )
 
     def deadCtx() = test(p6)(
-      UseCaseStepUpdate(13, UseCaseStepGD.ValueForTitle(Vector(T.UseCaseStep.Issue(1, Vector.empty)))),
-      ReqFieldCustomTextSet(P3.mfs(3), P3.descField, Vector(T.CustomTextField.Issue(1, Vector.empty))),
-      ReqsDelete(NonEmptySet(P3.frs(1), P3.frs(2), P6.uc1), Set.empty, Vector.empty),
+      UseCaseStepUpdate(13, UseCaseStepGD.ValueForTitle(Vector(T.UseCaseStep.Issue(1, ∅)))),
+      ReqFieldCustomTextSet(P3.mfs(3), P3.descField, Vector(T.CustomTextField.Issue(1, ∅))),
+      ReqsDelete(NonEmptySet(P3.frs(1), P3.frs(2), P6.uc1), ∅, ∅),
       FieldCustomDelete(P3.descField),
     )()
   }
@@ -256,7 +274,7 @@ object IssueDetectorTest extends TestSuite {
 
       'p3 - assertIssues(p3)(
         Issue.DeadRefInReq(P3.frs(2), ReqTextLoc.Title, ContentRef.ReqRef(P3.mfs(28))),
-        Issue.IssueTagInReq(P3.frs(1), ReqTextLoc.Title, T.GenericReqTitle.Issue(1, Vector.empty)),
+        Issue.IssueTagInReq(P3.frs(1), ReqTextLoc.Title, T.GenericReqTitle.Issue(1, ∅)),
         Issue.IssueTagInReq(P3.frs(2), ReqTextLoc.Title, T.GenericReqTitle.Issue(2, SampleProject3.inlineIssueDesc)),
       )
 
@@ -264,9 +282,14 @@ object IssueDetectorTest extends TestSuite {
         Issue.DeadRefInReq(P6.frs(2), ReqTextLoc.Title, ContentRef.ReqRef(P6.mfs(28))),
         Issue.DeadRefInReq(P6.uc1, ReqTextLoc.Title, ContentRef.UseCaseStepRef(16)),
         Issue.DeadRefInReq(P6.uc1, ReqTextLoc.Title, ContentRef.UseCaseStepRef(17)),
-        Issue.IssueTagInReq(P6.frs(1), ReqTextLoc.Title, T.GenericReqTitle.Issue(1, Vector.empty)),
+        Issue.IssueTagInReq(P6.frs(1), ReqTextLoc.Title, T.GenericReqTitle.Issue(1, ∅)),
         Issue.IssueTagInReq(P6.frs(2), ReqTextLoc.Title, T.GenericReqTitle.Issue(2, SampleProject3.inlineIssueDesc)),
       )
+    }
+
+    'Blank {
+      import BlankTests._
+      'title - title()
     }
 
     'ConflictingTag {
