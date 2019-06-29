@@ -431,21 +431,23 @@
 
           %tr
             %td.itype(rowspan=6) Missing data
-            %td.issue(rowspan=6) Blank field
+            %td.issue Implication required for req type: UC
             %td.id(rowspan=2) %a(href="project-reqdetail.html") UC-1
             %td.title(rowspan=2) User logs in via smartphone
-            %td.fname Detail
-            %td.fedit.can-edit.issue-blank
-            %td.actions
-            %td.pri .ui.label.blue.is-tag high
-
-          %tr
             %td.fix-left-border.fname Implied By
             %td.fedit.can-edit.issue-blank
             %td.actions
             %td.pri .ui.label.blue.is-tag high
 
           %tr
+            %td.issue Mandatory field is blank: Detail
+            %td.fname Detail
+            %td.fedit.can-edit.issue-blank
+            %td.actions
+            %td.pri .ui.label.blue.is-tag high
+
+          %tr
+            %td.issue Mandatory field is blank: Major Feature
             %td.id %a(href="project-reqdetail.html") UC-4
             %td.title User logs in via fax
             %td.fname Major Feature
@@ -454,6 +456,7 @@
             %td.pri .ui.label.blue.is-tag urgent
 
           %tr
+            %td.issue Mandatory field is blank: Priority
             %td.id %a(href="project-reqdetail.html") UC-8
             %td.title User logs in via shouting
             %td.fname Priority
@@ -462,6 +465,7 @@
             %td.pri.issue-blank
 
           %tr
+            %td.issue Title is blank
             %td.id %a(href="project-reqdetail.html") UC-9
             %td.title.can-edit.issue-blank
             %td.fname Title
@@ -470,6 +474,7 @@
             %td.pri .ui.label.blue.is-tag critical
 
           %tr
+            %td.issue Use case step is blank
             %td.id %a(href="project-reqdetail.html") UC-13
             %td.title User logs in via fax
             %td.fname Step 4.E.1
