@@ -10,8 +10,9 @@ import StaticField.{NormalAltStepTree => NA, ExceptionStepTree => E}
 import UnsafeTypes._
 
 /**
- * Builds on SampleProject #5 to add:
- *   - UC-2: live UC with some dead steps
+ * Builds on SampleProject #5 to:
+ *   - Add some dead steps to UC-1
+ *   - Change UC-1 title to include refs to live & dead steps
  */
 object SampleProject6 {
 
