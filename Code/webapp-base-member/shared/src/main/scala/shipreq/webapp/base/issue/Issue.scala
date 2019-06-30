@@ -42,6 +42,8 @@ object Issue {
 
   final case class BlankTitle(reqId: ReqId) extends Issue(C.BlankTitle)
 
+  final case class BlankUseCaseStep(stepId: UseCaseStepId) extends Issue(C.BlankUseCaseStep)
+
   final case class ConflictingTags(reqId     : ReqId,
                                    tagGroupId: TagGroupId,
                                    locs      : NonEmptySet[ReqTagLoc]) extends Issue(C.ConflictingTags)

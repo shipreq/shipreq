@@ -18,6 +18,7 @@ import Event._
 object IssueDetectorTest extends TestSuite {
 
   import SampleProject3.{Values => P3, project => p3}
+  import SampleProject4.{Values => P4, project => p4}
   import SampleProject6.{Values => P6, project => p6}
 
   private lazy val demoId         = p3.content.reqCodes("demo").get.activeId.get.value.RCG
@@ -35,6 +36,9 @@ object IssueDetectorTest extends TestSuite {
 
     def apply(ic: IssueClass): IssueFilter =
       new IssueFilter(_.cls ==* ic)
+
+    def apply(ic: IssueCategory): IssueFilter =
+      new IssueFilter(_.cls.category ==* ic)
   }
 
   private def updateReqTags(id: ReqId)(del: ApplicableTagId*)(add: ApplicableTagId*): ReqTagsPatch =
@@ -78,14 +82,33 @@ object IssueDetectorTest extends TestSuite {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   private object BlankTests {
-    private implicit val filter = IssueFilter(IssueClass.BlankTitle)
+    private implicit val filter = IssueFilter(IssueCategory.MissingData)
 
-    def title() = test(p6)(
+    def title() = test(p4)(
       Event.GenericReqTitleSet(P6.frs(1), ∅),
       Event.UseCaseTitleSet(P6.uc1, ∅),
     )(
       Issue.BlankTitle(P6.frs(1)),
       Issue.BlankTitle(P6.uc1),
+    )
+
+    def ucs() = test(p4)(
+      Event.UseCaseStepUpdate(10, UseCaseStepGD.ValueForTitle(∅)), // UC-n.0 -- no issue, uses UC title
+      Event.UseCaseStepUpdate(11, UseCaseStepGD.ValueForTitle(∅)), // UC-n.0.1
+      Event.UseCaseStepUpdate(14, UseCaseStepGD.ValueForTitle(∅)), // UC-n.1
+      Event.UseCaseStepUpdate(13, UseCaseStepGD.ValueForTitle(∅)), // UC-n.0.3 -- dead step
+      Event.UseCaseStepDelete(13),
+    )(
+      Issue.BlankUseCaseStep(11),
+      Issue.BlankUseCaseStep(14),
+    )
+
+    def emptyStepAndTitle() = test(p4)(
+      Event.UseCaseTitleSet(P6.uc1, ∅),
+      Event.UseCaseStepUpdate(10, UseCaseStepGD.ValueForTitle(∅)),
+    )(
+      Issue.BlankTitle(P6.uc1),
+      // don't report both the step and title title
     )
   }
 
@@ -278,7 +301,15 @@ object IssueDetectorTest extends TestSuite {
         Issue.IssueTagInReq(P3.frs(2), ReqTextLoc.Title, T.GenericReqTitle.Issue(2, SampleProject3.inlineIssueDesc)),
       )
 
+      'p4 - assertIssues(p4)(
+        Issue.DeadRefInReq(P6.frs(2), ReqTextLoc.Title, ContentRef.ReqRef(P6.mfs(28))),
+        Issue.IssueTagInReq(P6.frs(1), ReqTextLoc.Title, T.GenericReqTitle.Issue(1, ∅)),
+        Issue.IssueTagInReq(P6.frs(2), ReqTextLoc.Title, T.GenericReqTitle.Issue(2, SampleProject3.inlineIssueDesc)),
+      )
+
       'p6 - assertIssues(p6)(
+        Issue.BlankUseCaseStep(UseCaseStepId(18)),
+        Issue.BlankUseCaseStep(UseCaseStepId(19)),
         Issue.DeadRefInReq(P6.frs(2), ReqTextLoc.Title, ContentRef.ReqRef(P6.mfs(28))),
         Issue.DeadRefInReq(P6.uc1, ReqTextLoc.Title, ContentRef.UseCaseStepRef(16)),
         Issue.DeadRefInReq(P6.uc1, ReqTextLoc.Title, ContentRef.UseCaseStepRef(17)),
@@ -289,7 +320,9 @@ object IssueDetectorTest extends TestSuite {
 
     'Blank {
       import BlankTests._
-      'title - title()
+      'title             - title()
+      'ucs               - ucs()
+      'emptyStepAndTitle - emptyStepAndTitle()
     }
 
     'ConflictingTag {

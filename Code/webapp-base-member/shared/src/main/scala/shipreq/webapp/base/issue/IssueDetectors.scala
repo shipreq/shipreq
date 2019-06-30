@@ -14,14 +14,19 @@ object IssueDetectors {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   case object BlankTitle extends Instance {
-
     override val detect = ctx =>
-      ctx.foreachLiveReq(() => detectInReqs(ctx))
-
-    private def detectInReqs(ctx: Ctx): Req => Unit =
-      req =>
+      ctx.foreachLiveReq(() => req =>
         if (req.title.isEmpty)
-          ctx.add(Issue.BlankTitle(req.id))
+          ctx.add(Issue.BlankTitle(req.id)))
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  case object BlankUseCaseStep extends Instance {
+    override val detect = ctx =>
+      ctx.foreachLiveUcs(() => f =>
+        if (f.step.titleExplicitly.isEmpty && !f.usesUseCaseTitle)
+          ctx.add(Issue.BlankUseCaseStep(f.id)))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

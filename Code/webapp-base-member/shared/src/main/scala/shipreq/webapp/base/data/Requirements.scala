@@ -1,7 +1,7 @@
 package shipreq.webapp.base.data
 
 import japgolly.microlibs.scalaz_ext.ScalazMacros
-import japgolly.microlibs.utils.BiMap
+import japgolly.microlibs.utils.{BiMap, Memo}
 import monocle.{Iso, Traversal}
 import monocle.macros.Lenses
 import nyaya.util.Multimap
@@ -258,13 +258,13 @@ object UseCaseStep {
     lazy val loc: VectorTree.Location =
       ucSteps.stepLocs.forward(id)
 
-    lazy val ploc: VectorTree.PartialLocation =
+    val ploc: VectorTree.PartialLocation =
       ucSteps.stepPartialLocs.get(id)
 
-    lazy val step: UseCaseStep =
-      ucSteps.tree.needAtLocation(loc)
+    val step: UseCaseStep =
+      useCases.needStep(id)
 
-    lazy val live: Live =
+    val live: Live =
       UseCaseStep.live(uc, ploc)
 
     def title: UseCaseStep.Title =
@@ -272,6 +272,9 @@ object UseCaseStep {
 
     def titleA: Text.AnyOptional =
       step.titleA(uc)
+
+    def usesUseCaseTitle: Boolean =
+      step.usesUseCaseTitle(uc)
 
     val canShift: LeftRight => Permission = {
       lazy val canShiftRight = field.canShiftRight(loc, ucSteps.locValidity, ucSteps.tree.maxDepthTree);
@@ -346,10 +349,14 @@ final case class UseCases(imap: UseCaseIMap, stepIndex: UseCases.StepIndex, step
   def stepIterator: Iterator[UseCaseStep] =
     imap.valuesIterator.flatMap(_.stepIterator)
 
-  // This might be a good candidate for caching...
-  // On the other hand, caching could end up being a waste of client memory for no noticeable gain...
-  def focusStep(id: UseCaseStepId): UseCaseStep.Focus =
-    new UseCaseStep.Focus(this, id)
+  def focusStepIterator(): Iterator[UseCaseStep.Focus] =
+    stepIndex.keysIterator.map(focusStep)
+
+  def liveStepIterator(): Iterator[UseCaseStep.Focus] =
+    focusStepIterator().filter(_.live is Live)
+
+  val focusStep: UseCaseStepId => UseCaseStep.Focus =
+    Memo(new UseCaseStep.Focus(this, _))
 
   def needStep(id: UseCaseStepId): UseCaseStep =
     stepIndex(id).need(imap).need(id)
