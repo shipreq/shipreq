@@ -93,7 +93,7 @@ object HashSchemeStabilityTest extends TestSuite {
       )
 
       'P3 - assertHashes(h, P3,
-        0x3e1ac0cb ~ CfgFields,
+        0xab6a202d ~ CfgFields,
         0x25b0e4e6 ~ CfgIssueTypes,
         0x36b43113 ~ CfgReqTypes,
         0x7e949e3c ~ CfgTags,
@@ -110,7 +110,7 @@ object HashSchemeStabilityTest extends TestSuite {
       )
 
       'P4 - assertHashes(h, P4,
-        0x3e1ac0cb ~ CfgFields,
+        0xab6a202d ~ CfgFields,
         0x25b0e4e6 ~ CfgIssueTypes,
         0x36b43113 ~ CfgReqTypes,
         0x7e949e3c ~ CfgTags,

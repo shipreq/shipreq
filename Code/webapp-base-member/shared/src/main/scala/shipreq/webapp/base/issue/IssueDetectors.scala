@@ -4,12 +4,67 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptySet
 import shipreq.base.util.Util
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.Atom
+import shipreq.webapp.base.text.{Atom, Text}
 
 object IssueDetectors {
   import IssueDetector.Ctx
 
   sealed trait Instance extends IssueDetector
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  case object BlankCustomField extends Instance {
+
+    override val detect = ctx => {
+
+      // Find fields
+      val fields = new CustomField.MutableLists
+      val cfg = ctx.project.config
+      for (f <- ctx.project.config.fields.customFields.valuesIterator)
+        if (f.mandatory.is(Mandatory) && f.live(cfg).is(Live))
+          fields += f
+
+      // Check imps
+      run(ctx, fields.imp) {
+        val byField = ctx.project.dataLogic.customFieldImps(HideDead)
+        f => {
+          val imps = byField(f.id)
+          imps(_).isEmpty
+        }
+      }
+
+      // Check tags
+      run(ctx, fields.tag) {
+        val tagLookup = ctx.project.dataLogic.tagLookup(HideDead)
+        val dist = ctx.project.config.liveTagFieldDistribution
+        f => {
+          val tags = DataLogic.customFieldTags(dist, tagLookup, f.id)
+          tags(_).isEmpty
+        }
+      }
+
+      // Check text
+      run(ctx, fields.text) { f =>
+        val textMap = ctx.project.content.reqTextFor(f.id)
+        !textMap.contains(_)
+      }
+    }
+
+    private def run[F <: CustomField, A](ctx: Ctx, fields: List[F])
+                                        (prepare: => (F => ReqId => Boolean)): Unit =
+      if (fields.nonEmpty)
+        ctx.foreachLiveReq(() => {
+          val p = prepare
+          val as = fields.map(f => f -> p(f))
+          req => {
+            val reqId     = req.id
+            val reqTypeId = req.reqTypeId
+            for ((field, hasIssue) <- as)
+              if (field.reqTypes.contains(reqTypeId) && hasIssue(reqId))
+                ctx.add(Issue.BlankCustomField(reqId, field.id))
+          }
+        })
+  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

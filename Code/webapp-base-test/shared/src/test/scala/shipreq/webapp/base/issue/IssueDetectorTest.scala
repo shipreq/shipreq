@@ -4,7 +4,7 @@ import japgolly.microlibs.nonempty.{NonEmpty, NonEmptySet}
 import nyaya.util.Multimap
 import scala.reflect.ClassTag
 import sourcecode.Line
-import shipreq.base.util.SetDiff
+import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test._
@@ -72,7 +72,9 @@ object IssueDetectorTest extends TestSuite {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   private object BlankTests {
-    private implicit val filter = IssueFilter(IssueCategory.MissingData)
+    private implicit val filter = IssueFilter.collect {
+      case _: Issue.BlankTitle | _: Issue.BlankUseCaseStep => ()
+    }
 
     def title() = test(p4)(
       Event.GenericReqTitleSet(P6.frs(1), ∅),
@@ -99,6 +101,57 @@ object IssueDetectorTest extends TestSuite {
     )(
       Issue.BlankTitle(P6.uc1),
       // don't report both the step and title title
+    )
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private object BlankCustomFieldTests {
+    private implicit val filter = IssueFilter(IssueClass.BlankCustomField)
+
+    import P4._
+
+    def notAllReqTypes() = test(p4)(
+      Event.FieldCustomRestore(reporterField), // only applies to DD & UC
+    )(
+      Issue.BlankCustomField(frs(1), priField),
+      Issue.BlankCustomField(frs(2), priField),
+      Issue.BlankCustomField(uc1, priField),
+      Issue.BlankCustomField(uc1, reporterField),
+    )
+
+    private def makeMfMandatoryForFrAndUc = {
+      val I = CustomImpFieldGD
+      val frAndUc = onlyReqTypes(fr, StaticReqType.UseCase)
+      Event.FieldCustomImpUpdate(mfField, I.nev(I.ValueForMandatory(Mandatory), I.ValueForReqTypes(frAndUc)))
+    }
+
+    // fr1 <- mf12,19
+    // fr2 <-
+    // uc1 <- fr1
+    def imps1() = test(p4)(
+      makeMfMandatoryForFrAndUc,
+      Event.ReqImplicationsPatch(frs(2), Backwards, nesd[ReqId](mfs(1), mfs(13), mfs(22), frs(1))()),
+      Event.ReqImplicationsPatch(uc1, Backwards, nesd[ReqId]()(frs(1))),
+    )(
+      Issue.BlankCustomField(frs(1), priField),
+      Issue.BlankCustomField(frs(2), priField),
+      Issue.BlankCustomField(uc1, priField),
+      Issue.BlankCustomField(frs(2), mfField),
+    )
+
+    // fr1 <- mf12,19
+    // fr2 <- fr1 [fr2 is DEAD]
+    // uc1 <- fr2 [fr2 is DEAD]
+    def imps2() = test(p4)(
+      makeMfMandatoryForFrAndUc,
+      Event.ReqImplicationsPatch(frs(2), Backwards, nesd[ReqId](mfs(1), mfs(13), mfs(22))(frs(1))),
+      Event.ReqImplicationsPatch(uc1, Backwards, nesd[ReqId]()(frs(2))),
+      Event.ReqsDelete(NonEmptySet(frs(2)), ∅, ∅),
+    )(
+      Issue.BlankCustomField(frs(1), priField),
+      Issue.BlankCustomField(uc1, priField),
+      Issue.BlankCustomField(uc1, mfField),
     )
   }
 
@@ -286,18 +339,26 @@ object IssueDetectorTest extends TestSuite {
       implicit val filter = IssueFilter.any
 
       'p3 - assertIssues(p3)(
+        Issue.BlankCustomField(P3.frs(1), P3.priField),
+        Issue.BlankCustomField(P3.frs(2), P3.priField),
         Issue.DeadRefInReq(P3.frs(2), ReqTextLoc.Title, ContentRef.ReqRef(P3.mfs(28))),
         Issue.IssueTagInReq(P3.frs(1), ReqTextLoc.Title, T.GenericReqTitle.Issue(1, ∅)),
         Issue.IssueTagInReq(P3.frs(2), ReqTextLoc.Title, T.GenericReqTitle.Issue(2, SampleProject3.inlineIssueDesc)),
       )
 
       'p4 - assertIssues(p4)(
-        Issue.DeadRefInReq(P6.frs(2), ReqTextLoc.Title, ContentRef.ReqRef(P6.mfs(28))),
-        Issue.IssueTagInReq(P6.frs(1), ReqTextLoc.Title, T.GenericReqTitle.Issue(1, ∅)),
-        Issue.IssueTagInReq(P6.frs(2), ReqTextLoc.Title, T.GenericReqTitle.Issue(2, SampleProject3.inlineIssueDesc)),
+        Issue.BlankCustomField(P4.frs(1), P4.priField),
+        Issue.BlankCustomField(P4.frs(2), P4.priField),
+        Issue.BlankCustomField(P4.uc1, P4.priField),
+        Issue.DeadRefInReq(P4.frs(2), ReqTextLoc.Title, ContentRef.ReqRef(P4.mfs(28))),
+        Issue.IssueTagInReq(P4.frs(1), ReqTextLoc.Title, T.GenericReqTitle.Issue(1, ∅)),
+        Issue.IssueTagInReq(P4.frs(2), ReqTextLoc.Title, T.GenericReqTitle.Issue(2, SampleProject3.inlineIssueDesc)),
       )
 
       'p6 - assertIssues(p6)(
+        Issue.BlankCustomField(P6.frs(1), P6.priField),
+        Issue.BlankCustomField(P6.frs(2), P6.priField),
+        Issue.BlankCustomField(P6.uc1, P6.priField),
         Issue.BlankUseCaseStep(UseCaseStepId(18)),
         Issue.BlankUseCaseStep(UseCaseStepId(19)),
         Issue.DeadRefInReq(P6.frs(2), ReqTextLoc.Title, ContentRef.ReqRef(P6.mfs(28))),
@@ -313,6 +374,13 @@ object IssueDetectorTest extends TestSuite {
       'title             - title()
       'ucs               - ucs()
       'emptyStepAndTitle - emptyStepAndTitle()
+    }
+
+    'BlankCustomField {
+      import BlankCustomFieldTests._
+      'notAllReqTypes - notAllReqTypes()
+      'imps1          - imps1()
+      'imps2          - imps2()
     }
 
     'ConflictingTag {

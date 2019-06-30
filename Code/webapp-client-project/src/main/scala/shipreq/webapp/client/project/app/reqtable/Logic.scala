@@ -80,16 +80,11 @@ private[reqtable] object Logic {
   private def expanderC[A](view: View, c: Column.SortInconclusive): Expander[A] =
     expander(view isVisible c, view isOrderedI c)
 
-  private def impColValueFn(p: Project, fd: FilterDead): CustomField.Implication.Id => ReqId => Set[Pubid] = {
-    val filter = DataLogic.impValueFilter(p.config, fd)
-    DataLogic.customFieldImps(p, filter)
-  }
-
   private def impColValueExpander(view: View,
                                   fd  : FilterDead,
                                   p   : Project,
                                   ap  : Applicability[Column, ReqTypeId]): Req => Map[CustomField.Implication.Id, Expanded[Pubid]] =
-    customFieldExpander(view: View, ap, impColValueFn(p, fd))
+    customFieldExpander(view: View, ap, p.dataLogic.customFieldImps(fd))
 
   private def tagFieldValueExpander(view        : View,
                                     ap          : Applicability[Column, ReqTypeId],

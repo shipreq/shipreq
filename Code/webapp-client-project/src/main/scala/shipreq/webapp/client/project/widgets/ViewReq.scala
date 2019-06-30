@@ -90,8 +90,8 @@ object ViewReq {
     def fromProject(id: ReqId, project: Project, filterDead: FilterDead): Data = {
       val req             = project.content.reqs.need(id)
       val pubidSortKeyFn  = DataLogic.pubidSortKeyFn(project.config)
-      val impFilter       = DataLogic.impValueFilter(project.config, filterDead)
-      val customImpLookup = DataLogic.customFieldImps(project, impFilter)
+      val impFilter       = project.config.reqFilter(filterDead)
+      val customImpLookup = project.dataLogic.customFieldImps(filterDead)
       val tagDist         = DataLogic.tagFieldDist(project.config, filterDead, _ => true)
       val tagLookup       = project.dataLogic.tagLookup(filterDead)
       val tagOrderByName  = DataLogic.tagOrderByName(project.config.tags.tree)

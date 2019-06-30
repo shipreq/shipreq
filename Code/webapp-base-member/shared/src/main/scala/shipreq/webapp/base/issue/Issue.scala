@@ -40,6 +40,9 @@ sealed abstract class Issue(final val cls: IssueClass)
 object Issue {
   import shipreq.webapp.base.issue.{IssueClass => C}
 
+  final case class BlankCustomField(reqId: ReqId,
+                                    fieldId: CustomFieldId) extends Issue(C.BlankCustomField)
+
   final case class BlankTitle(reqId: ReqId) extends Issue(C.BlankTitle)
 
   final case class BlankUseCaseStep(stepId: UseCaseStepId) extends Issue(C.BlankUseCaseStep)

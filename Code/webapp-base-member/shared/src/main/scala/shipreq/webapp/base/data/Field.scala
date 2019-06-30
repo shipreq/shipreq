@@ -429,7 +429,7 @@ object CustomField {
     def dir = Backwards
   }
 
-  // -------------------------------------------------------------------------------------------------------------------
+  // ===================================================================================================================
 
   val independentName = Optional[CustomField, String](_.independentName)(n => {
     case Text(a, _, b, c, d, e) => Text(a, n, b, c, d, e)
@@ -473,6 +473,21 @@ object CustomField {
   implicit def equalTag        : UnivEq[Tag]         = UnivEq.derive
   implicit def equalText       : UnivEq[Text]        = UnivEq.derive
   implicit def equality        : UnivEq[CustomField] = UnivEq.derive
+
+  final class MutableLists {
+    var imp  = List.empty[CustomField.Implication]
+    var tag  = List.empty[CustomField.Tag]
+    var text = List.empty[CustomField.Text]
+
+    def isEmpty = imp.isEmpty && tag.isEmpty && text.isEmpty
+
+    def +=(cf: CustomField): Unit =
+      cf match {
+        case f: CustomField.Text        => text ::= f
+        case f: CustomField.Tag         => tag  ::= f
+        case f: CustomField.Implication => imp  ::= f
+      }
+  }
 }
 
 object FieldId {
@@ -526,14 +541,20 @@ final case class FieldSet(customFields: FieldSet.CustomFields,
         -\/(s"$id not found.")
     }
 
-  lazy val customImpFields: List[CustomField.Implication] =
-    customFields.valuesIterator.filterSubType[CustomField.Implication].toList
+  private lazy val splitFields = {
+    val f = new CustomField.MutableLists
+    customFields.valuesIterator.foreach(f.+=)
+    f
+  }
 
-  lazy val customTagFields: List[CustomField.Tag] =
-    customFields.valuesIterator.filterSubType[CustomField.Tag].toList
+  def customImpFields: List[CustomField.Implication] =
+    splitFields.imp
 
-  lazy val customTextFields: List[CustomField.Text] =
-    customFields.valuesIterator.filterSubType[CustomField.Text].toList
+  def customTagFields: List[CustomField.Tag] =
+    splitFields.tag
+
+  def customTextFields: List[CustomField.Text] =
+    splitFields.text
 }
 
 object FieldSet {

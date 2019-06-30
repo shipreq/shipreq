@@ -58,4 +58,6 @@ final case class ProjectContent(reqs           : Requirements,
     ShowSize.Node.sum("TextAtoms", counted: _*)
   }
 
+  def reqTextFor(id: CustomField.Text.Id): Map[ReqId, Text.CustomTextField.NonEmptyText] =
+    reqText.getOrElse(id, Map.empty)
 }

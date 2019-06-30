@@ -60,6 +60,20 @@ final class DataLogic(p: Project) {
     }
   }
 
+  val customFieldImps: FilterDead => CustomField.Implication.Id => ReqId => Set[Pubid] =
+    FilterDead.memoLazy { fd =>
+      val filter = p.config.reqFilter(fd)
+      Memo { fid =>
+        // (source of implication for this column) → (all it transitively implies)
+        val f = p.config.fields.custom(fid)
+        val srcs: List[(Pubid, Set[ReqId])] =
+          p.content.reqs.reqsByType(f.reqTypeId).iterator
+            .filter(filter)
+            .map(r => (r.pubid, p.implicationSrcToTgtTC(r.id)))
+            .toList
+        id => srcs.iterator.filter(_._2 contains id).map(_._1).toSet
+      }
+    }
 }
 
 object DataLogic {
@@ -125,21 +139,6 @@ object DataLogic {
 
   // ===================================================================================================================
   // Implications
-
-  def impValueFilter(pc: ProjectConfig, fd: FilterDead): Req => Boolean =
-    fd.filterFnBy((_: Req).live(pc.reqTypes))
-
-  def customFieldImps(p: Project, filter: Req => Boolean): CustomField.Implication.Id => ReqId => Set[Pubid] =
-    Memo { fid =>
-      // (source of implication for this column) → (all it transitively implies)
-      val f = p.config.fields.custom(fid)
-      val srcs: List[(Pubid, Set[ReqId])] =
-        p.content.reqs.reqsByType(f.reqTypeId).iterator
-          .filter(filter)
-          .map(r => (r.pubid, p.implicationSrcToTgtTC(r.id)))
-          .toList
-      id => srcs.iterator.filter(_._2 contains id).map(_._1).toSet
-    }
 
   final case class ImpRequiredResult(goodImpGraph: Implications.BiDir,
                                      badIds      : Set[ReqId],

@@ -53,4 +53,8 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
 
   def live(id: ReqTypeId): Live =
     reqTypes.need(id).live
+
+  def reqFilter(fd: FilterDead): Req => Boolean =
+    fd.filterFnBy((_: Req).live(reqTypes))
+
 }
