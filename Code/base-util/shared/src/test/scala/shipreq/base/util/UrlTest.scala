@@ -1,7 +1,6 @@
 package shipreq.base.util
 
 import japgolly.microlibs.testutil.TestUtil._
-import shipreq.base.util.univeq._
 import utest._
 
 object UrlTest extends TestSuite {

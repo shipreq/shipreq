@@ -2,7 +2,6 @@ package shipreq.base.util
 
 import utest._
 import japgolly.microlibs.testutil.TestUtil._
-import japgolly.univeq.UnivEqScalaz._
 
 object UtilTest extends TestSuite {
 
