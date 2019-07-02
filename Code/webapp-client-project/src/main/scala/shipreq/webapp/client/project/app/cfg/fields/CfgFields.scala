@@ -122,7 +122,7 @@ private[fields] object MainTable {
   }
 
   val customFieldChangeListener = ChangeListener.oneByOne[S, CustomFieldId, CustomField](
-      _.customFieldTypes, _.config.fields.customFields.get)(
+      _.allCustomFieldTypes, _.config.fields.customFields.get)(
       (s, i) => {
         val s2 = customFieldStores.foldLeft(s)((t, f) => f.s.remove(i)(t))
         clearAppReqTypesEditorState(i)(s2)
@@ -146,10 +146,10 @@ private[fields] object MainTable {
       .configure(customFieldChangeListener.install(_.global))
       .configure(
         ChangeListener.refreshWhen(c =>
-          c.fieldOrder
-          || c.staticFields // TODO should this trigger a clearAppReqTypesEditorState(i)?
-          || c.customReqTypes.nonEmpty // Refreshes AppReqTypesEditor and reqTypeSelector
-          || c.tags.nonEmpty)          // Refreshes tagSelector
+          c.fieldReposition
+          || c.staticFields.hasAny   // TODO should this trigger a clearAppReqTypesEditorState(i)?
+          || c.customReqTypes.hasAny // Refreshes AppReqTypesEditor and reqTypeSelector
+          || c.hasTags)              // Refreshes tagSelector
           .install(_.global)
       )
       .build

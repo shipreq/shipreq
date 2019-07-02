@@ -27,7 +27,7 @@ private[issues] object ReqTypeImplication {
   val  ST = ReactS.FixCB[S]
   type ST = ST.T[Unit]
 
-  val changeListener = ChangeListener.store(rowStore)(_.customReqTypes, _.config.reqTypes.custom.get)
+  val changeListener = ChangeListener.store(rowStore)(_.customReqTypes.all, _.config.reqTypes.custom.get)
 
   val Component = ScalaComponent.builder[Props]("ReqTypeImplication")
     .initialStateFromProps(initialState)

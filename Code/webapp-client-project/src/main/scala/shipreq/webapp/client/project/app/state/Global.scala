@@ -10,7 +10,7 @@ import scala.util.{Failure, Success}
 import scalaz.{-\/, \/-}
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
-import shipreq.webapp.base.event.{EventOrd, VerifiedEvent}
+import shipreq.webapp.base.event.{EventOrd, EventSeqSummary, VerifiedEvent}
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.WebSocket.Push
@@ -20,7 +20,7 @@ import shipreq.webapp.base.protocol._
 import shipreq.webapp.client.project.app.state.Global.State
 
 abstract class Global(onFirstLoad: (Global, InitAppData) => Callback,
-                      onInitFailure: ErrorMsg => Callback) extends Broadcaster[Changes] {
+                      onInitFailure: ErrorMsg => Callback) extends Broadcaster[EventSeqSummary.WithProject] {
 
   protected val logger = LoggerJs.on
 
@@ -137,8 +137,8 @@ abstract class Global(onFirstLoad: (Global, InitAppData) => Callback,
 
             // Broadcast changes
             for (ves <- VerifiedEvent.NonEmptySeq.maybe(appliedEvents)) {
-              val changes = Changes(ves, s1.projectState.project, ps2.project)
-              broadcast(changes).runNow()
+              val ess = EventSeqSummary(ves.iterator.map(_.event)).withProject(ps2.project)
+              broadcast(ess).runNow()
             }
           }
 

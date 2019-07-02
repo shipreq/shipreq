@@ -38,7 +38,7 @@ private[issues] object CustomIssueTypes {
   val fields = FieldSet2[CustomIssueType](_.key.value, _.desc getOrElse "")(("", ""))
   val storesAndState = TypicalStoresAndState(fields).keyedBy[CustomIssueTypeId]
   import storesAndState._
-  private val changeListener = ChangeListener.store(savedRowStoreS)(_.customIssueTypes, _.config.customIssueTypes.get)
+  private val changeListener = ChangeListener.store(savedRowStoreS)(_.customIssueTypes.all, _.config.customIssueTypes.get)
 
   val Component =
     ScalaComponent.builder[Props]("Cfg: User-Defined Issue Types")
@@ -96,7 +96,8 @@ private[issues] object CustomIssueTypes {
           $ runState _)
         ).extract
 
-      supp.addEditorFeatures2(e)(saveFn, _._1.customIssues.subject)
+      e.applyRowUpdateAndRevert(savedRowStoreS, newRowStoreS)(_._1.customIssues.subject)
+        .applyOnEditFinishedK(saveFn)(_._1.customIssues.subject)
     }
 
     private val usageFn = Usage((_: CustomIssueType).id)(

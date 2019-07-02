@@ -7,6 +7,7 @@ import japgolly.scalajs.react.vdom.VdomElement
 import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{FilterDead, ReqId}
+import shipreq.webapp.base.event.EventSeqSummary
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol._
@@ -254,7 +255,7 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
       Layout.Props(initPageData.username, cbProjectMetaData.runNow(), routerCtl, p.page, content).render
     }
 
-    def onProjectChange(c: Changes): Callback = // TODO I don't like this
+    def onProjectChange(c: EventSeqSummary.WithProject): Callback = // TODO I don't like this
       $.forceUpdate
   }
 

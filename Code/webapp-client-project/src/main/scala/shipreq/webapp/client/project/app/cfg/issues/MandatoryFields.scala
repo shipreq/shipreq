@@ -28,7 +28,7 @@ private[issues] object MandatoryFields {
   private val  ST = ReactS.FixCB[S]
   private type ST = ST.T[Unit]
 
-  private val changeListener = ChangeListener.store(rowStore)(_.customFieldTypes, _.config.fields.customFields.get)
+  private val changeListener = ChangeListener.store(rowStore)(_.allCustomFieldTypes, _.config.fields.customFields.get)
 
   val Component = ScalaComponent.builder[Props]("MandatoryFields")
     .initialStateFromProps(initialState)

@@ -136,7 +136,7 @@ private[tags] object MainTable {
     id => tt.get(id).map(v => PovTag(v.tag, MMTree.Relations.derive(v.tag.id, tree)))
   }
 
-  val changeListener = ChangeListener.oneByOne[S, Id, PovTag](_.tags, povTagLookup)(
+  val changeListener = ChangeListener.oneByOne[S, Id, PovTag](_.allTags, povTagLookup)(
     (s, i) => {
       val f1 = State.tree.modify(_ delkv i)
       val f2 = eachTypesStores.foldLeft(f1)(_ compose _.s.remove(i))

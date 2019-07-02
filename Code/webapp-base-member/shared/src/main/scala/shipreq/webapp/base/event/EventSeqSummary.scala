@@ -24,6 +24,7 @@ final case class EventSeqSummary(
     useCaseSteps        : EventSeqSummary.CUDR[UseCaseStepId],
     apReqCodes          : Boolean,
     contentLiveDeps     : Boolean,
+    fieldReposition     : Boolean,
     ) {
 
   override def toString =
@@ -42,8 +43,9 @@ final case class EventSeqSummary(
        |  useCasesExclSteps    = ${useCasesExclSteps   .show(_.value)}
        |  useCaseSteps         = ${useCaseSteps        .show(_.value)}
        |  apReqCodes           = $apReqCodes
-       |  contentLiveDeps      = $contentLiveDeps ){
-       |  hasTags              = $hasTags }
+       |  contentLiveDeps      = $contentLiveDeps
+       |  fieldReposition      = $fieldReposition
+       |  hasTags              = $hasTags)
      """.stripMargin
 
   val hasTagsCU: Boolean =
@@ -54,6 +56,12 @@ final case class EventSeqSummary(
 
   val hasTags: Boolean =
     hasTagsCU || hasTagsDR
+
+  lazy val allTags: Set[TagId] =
+    mergeSets(applicableTags.all, tagGroups.all)
+
+  lazy val allCustomFieldTypes: Set[CustomFieldId] =
+    mergeSets(customFieldTextTypes.all, customFieldTagTypes.all, customFieldImpTypes.all)
 
   val fieldNamesChanged: Boolean =
     hasTags || customReqTypes.hasCU ||
@@ -173,6 +181,7 @@ object EventSeqSummary {
     private[this] val useCaseSteps         = new CUDR.Mutable[UseCaseStepId]
     private var apReqCodes                 = false
     private var contentLiveDeps            = false
+    private var fieldReposition            = false
 
     import CUDR.Field._
 
@@ -245,6 +254,7 @@ object EventSeqSummary {
       case e: Event.FieldCustomTagUpdate   => customFieldTagTypes.updated += e.id
       case e: Event.FieldCustomTextCreate  => customFieldTextTypes.created += e.id
       case e: Event.FieldCustomTextUpdate  => customFieldTextTypes.updated += e.id
+      case e: Event.FieldReposition        => fieldReposition = true
       case e: Event.FieldStaticAdd         => staticFields.created += e.f
       case e: Event.FieldStaticRemove      => staticFields.deleted += e.f
       case e: Event.GenericReqCreate       => genericReqs.created += e.id
@@ -265,8 +275,7 @@ object EventSeqSummary {
       case e: Event.UseCaseStepUpdate      => useCaseSteps.updated += e.id
       case e: Event.UseCaseTitleSet        => useCasesExclSteps.updated += e.id
 
-      case _: Event.FieldReposition
-         | _: Event.ProjectNameSet
+      case _: Event.ProjectNameSet
          | _: Event.SavedViewCreate
          | _: Event.SavedViewDefaultSet
          | _: Event.SavedViewDelete
@@ -289,6 +298,7 @@ object EventSeqSummary {
         useCaseSteps         = useCaseSteps        .result(),
         apReqCodes           = apReqCodes,
         contentLiveDeps      = contentLiveDeps,
+        fieldReposition      = fieldReposition,
       )
   }
 

@@ -39,7 +39,7 @@ object CfgReqTypes {
   val fields = FieldSet3[CustomReqType](_.mnemonic.value, _.name, _.imp)(("", "", ImplicationRequired.Not))
   val storesAndState = TypicalStoresAndState(fields).keyedBy[CustomReqTypeId]
   import storesAndState._
-  val changeListener = ChangeListener.store(savedRowStoreS)(_.customReqTypes, _.config.reqTypes.custom.get)
+  val changeListener = ChangeListener.store(savedRowStoreS)(_.customReqTypes.all, _.config.reqTypes.custom.get)
 
   val Component =
     ScalaComponent.builder[Props]("Cfg: Req Types")
@@ -89,7 +89,8 @@ object CfgReqTypes {
           supp.realise)
       ).extract
 
-      supp.addEditorFeatures2(e)(saveFn, _._1.subject)
+    e.applyRowUpdateAndRevert(savedRowStoreS, newRowStoreS)(_._1.subject)
+      .applyOnEditFinishedK(saveFn)(_._1.subject)
     }
 
     def checkbox(i: ImplicationRequired) =
