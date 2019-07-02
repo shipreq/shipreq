@@ -34,6 +34,7 @@
       #reqtable .id {white-space:nowrap}
       .pubid {white-space:nowrap}
       td.fedit.issue-blank {min-width:40ex}
+      tr.issue-loose .loose-body,
       .issue-issuetag ,
       .issue-tagRef ,
       .issue-liveRef_deadreq ,
@@ -208,12 +209,12 @@
           #new-closed
             %button.ui.button.orange
               %i.icon.plus
-              New loose issue
+              New issue
           #new-open{style: "display:flex"}
             %div
               %button.ui.button.orange.disabled
                 %i.icon.plus
-                New loose issue
+                New issue
             %div(style="flex:1; padding-left:1ex")
               %textarea.texteditor
                 Remove Bob's reqs? (eg. [fr3] and [fr18])
@@ -502,15 +503,16 @@
             %td.pri .ui.label.blue.is-tag urgent
 
           %tr.issue-loose
-            %td.issue Loose
+            %td.issue Manual
             %td.id.na
             %td.title.na
             %td.fname.na
-            %td.fedit.can-edit Revise all Major Features
+            %td.fedit.can-edit
+              %span.loose-body Revise all Major Features
             %td.actions
               .ui.button.resolve
-                %i.icon.remove.circle
-                Close issue
+                %i.icon.trash.circle
+                Delete issue
             %td.pri.na
 
   :javascript
