@@ -8,6 +8,7 @@ import japgolly.univeq._
 import scala.scalajs.js
 import scalacss.ScalaCssReact._
 import shipreq.base.util.Intersection
+import shipreq.webapp.base.issue.IssueCount
 import shipreq.webapp.base.ui.semantic.{Colour, Dropdown, Header, Icon, JQuery, UsesSemanticUiManually}
 import shipreq.webapp.client.project.app.Style.{home => *}
 import Routes.{Page, RouterCtl}
@@ -29,13 +30,14 @@ object ProjectIndex {
                                    val page: Page,
                                    subtitle: String) extends Item(title, icon, subtitle)
 
-    case object ReqTable    extends WithPage("Req Table"        , Icon.Cubes         , Page.ReqTable   , "View and edit all reqs.")
-    case object ReqDetail   extends Item    ("Req Lookup"       , Icon.Cube          ,                   "View and edit a single req.")
-    case object ImpGraph    extends WithPage("Implication Graph", Icon.ShareAlternate, Page.ImpGraph   , "View project-wide implication.")
-    case object CfgFields   extends WithPage("Fields"           , Icon.ListLayout    , Page.CfgFields  , "Configure fields that each type of req has.")
-    case object CfgIssues   extends WithPage("Issues"           , Icon.WarningSign   , Page.CfgIssues  , "Configure types and causes of issues.")
-    case object CfgReqTypes extends WithPage("Req Types"        , Icon.Inbox         , Page.CfgReqTypes, "Configure types of reqs.")
-    case object CfgTags     extends WithPage("Tags"             , Icon.Tags          , Page.CfgTags    , "Configure attributes for content and organisation.")
+    case object ReqTable    extends WithPage("Req Table"   , Icon.Cubes         , Page.ReqTable   , "View and edit all reqs.")
+    case object ReqDetail   extends Item    ("Req Lookup"  , Icon.Cube          ,                   "View and edit a single req.")
+    case object Issues      extends WithPage("Issues"      , Icon.WarningSign   , Page.Issues     , "View and resolve outstanding issues.")
+    case object ImpGraph    extends WithPage("Implications", Icon.ShareAlternate, Page.ImpGraph   , "View project-wide implication.")
+    case object CfgFields   extends WithPage("Fields"      , Icon.ListLayout    , Page.CfgFields  , "Configure fields that each type of req has.")
+    case object CfgIssues   extends WithPage("Issues"      , Icon.WarningSign   , Page.CfgIssues  , "Configure types and causes of issues.")
+    case object CfgReqTypes extends WithPage("Req Types"   , Icon.Inbox         , Page.CfgReqTypes, "Configure types of reqs.")
+    case object CfgTags     extends WithPage("Tags"        , Icon.Tags          , Page.CfgTags    , "Configure attributes for content and organisation.")
 
     implicit def univEq: UnivEq[Item] = UnivEq.derive
 
@@ -46,6 +48,7 @@ object ProjectIndex {
       } {
         case Page.ReqTable     => Some(ReqTable)
         case Page.ImpGraph     => Some(ImpGraph)
+        case Page.Issues       => Some(Issues)
         case Page.CfgFields    => Some(CfgFields)
         case Page.CfgIssues    => Some(CfgIssues)
         case Page.CfgReqTypes  => Some(CfgReqTypes)
@@ -65,7 +68,7 @@ object ProjectIndex {
 
     case object Content extends Category(
       "Content", Icon.FileTextOutline, Colour.Blue, Colour.Default,
-      NonEmptyVector(ReqTable, ReqDetail, ImpGraph))
+      NonEmptyVector(ReqTable, ReqDetail, Issues, ImpGraph))
 
     case object Configuration extends Category(
       "Configuration", Icon.Setting, Colour.Yellow, Colour.Grey,
@@ -90,7 +93,9 @@ object ProjectIndex {
       )
     ).toList
 
-  case class Props(reqLookup: ReqLookupPrompt.Props, rc: RouterCtl) {
+  final case class Props(issueCount: IssueCount,
+                         reqLookup : ReqLookupPrompt.Props,
+                         rc        : RouterCtl) {
     @inline def render = Component(this)
   }
 
@@ -114,20 +119,27 @@ object ProjectIndex {
 
       val icon = item.icon.withColour(cat.iconColour).tag(*.cardIcon)
 
+      def renderWithPage(i: Item.WithPage, content: VdomTag) =
+        base(
+          *.linkCard,
+          p.rc.setOnLinkClick(i.page),
+          iconCont(icon),
+          content)
+
       val contentTag =
         <.div(^.cls := "content",
           <.div(^.cls := "header", item.title),
           <.div(^.cls := "description", item.subtitle))
 
       item match {
-        case i: Item.WithPage =>
-          base(
-            *.linkCard,
-            p.rc.setOnLinkClick(i.page),
-            iconCont(icon),
-            contentTag)
+        case i@ Item.Issues if p.issueCount.value > 0 =>
+          val countTag = <.div(^.cls := "floating ui red circular label", p.issueCount.value)
+          renderWithPage(i, contentTag(countTag))
 
-        case i@Item.ReqDetail =>
+        case i: Item.WithPage =>
+          renderWithPage(i, contentTag)
+
+        case Item.ReqDetail =>
           base(
             iconCont(^.cls := ("blurring " + dimIt),
               <.div(^.cls := "ui inverted dimmer",
@@ -145,7 +157,7 @@ object ProjectIndex {
     def renderCategory(p: Props, cat: Category): TagMod = {
       val header = Header(headerStyle, cat.icon, cat.title)
 
-      val cards = <.div(^.cls := "ui cards three", *.cardsCont,
+      val cards = <.div(^.cls := "ui cards four", *.cardsCont,
         cat.items.whole.toTagMod(renderCard(p, cat, _)))
 
       TagMod(header, cards)

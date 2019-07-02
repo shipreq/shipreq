@@ -246,10 +246,8 @@
     37 [keep  ] a
     43 [keep  ] a:hover
     67 [keep  ] ::-webkit-selection
-    64 [keep  ] ::-moz-selection
     59 [keep  ] ::selection
    113 [keep  ] input::-webkit-selection,textarea::-webkit-selection
-   107 [keep  ] input::-moz-selection,textarea::-moz-selection
     97 [keep  ] input::selection,textarea::selection
     60 [keep  ] body ::-webkit-scrollbar
     73 [keep  ] body ::-webkit-scrollbar-track
@@ -425,10 +423,10 @@
     31 [keep  ] .ui.fluid.button
     27 [keep  ] .ui.two.buttons
     34 [keep  ] .ui.two.buttons>.button
-    29 [keep  ] .ui.three.buttons
-    40 [keep  ] .ui.three.buttons>.button
-    28 [remove] .ui.four.buttons
-    35 [remove] .ui.four.buttons>.button
+    29 [remove] .ui.three.buttons
+    40 [remove] .ui.three.buttons>.button
+    28 [keep  ] .ui.four.buttons
+    35 [keep  ] .ui.four.buttons>.button
     28 [remove] .ui.five.buttons
     35 [remove] .ui.five.buttons>.button
     27 [remove] .ui.six.buttons
@@ -2217,7 +2215,7 @@
     66 [keep  ] .ui.inverted.dimmer .ui.loader:before
     82 [keep  ] .ui.inverted.dimmer .ui.loader:after
     95 [keep  ] .ui.text.loader
-   151 [keep  ] .ui.indeterminate.loader:after
+   115 [keep  ] .ui.indeterminate.loader:after
     51 [keep  ] .ui.loader.active,.ui.loader.visible
     51 [keep  ] .ui.loader.disabled,.ui.loader.hidden
     97 [remove] .ui.inverted.dimmer .ui.mini.loader,.ui.mini.loader
@@ -2398,8 +2396,8 @@
    102 [keep  ] .ui.form .field .ui.input,.ui.form .fields .field .ui.input,.ui.form .wide.field .ui.input
    129 [keep  ] .ui.form .inline.field:not(.wide) .ui.input,.ui.form .inline.fields .field:not(.wide) .ui.input
     83 [keep  ] .ui.form .field .ui.input input,.ui.form .fields .field .ui.input input
-   265 [remove] .ui.form .eight.fields .ui.input input, .ui.form .five.fields .ui.input input, .ui.form .four.fields .ui.input input, .ui.form .nine.fields .ui.input input, .ui.form .seven.fields .ui.input input, .ui.form .six.fields .ui.input input, .ui.form .ten.fields .ui.input input
-   173 [keep  ] .ui.form .three.fields .ui.input input, .ui.form .two.fields .ui.input input, .ui.form .wide.field .ui.input input
+   266 [remove] .ui.form .eight.fields .ui.input input, .ui.form .five.fields .ui.input input, .ui.form .nine.fields .ui.input input, .ui.form .seven.fields .ui.input input, .ui.form .six.fields .ui.input input, .ui.form .ten.fields .ui.input input, .ui.form .three.fields .ui.input input
+   172 [keep  ] .ui.form .four.fields .ui.input input, .ui.form .two.fields .ui.input input, .ui.form .wide.field .ui.input input
     89 [keep  ] .ui.form .error.message,.ui.form .success.message,.ui.form .warning.message
     43 [keep  ] .ui.form .message:first-child
    134 [keep  ] .ui.form .field .prompt.label
@@ -2472,8 +2470,8 @@
    112 [keep  ] .ui.form .fields>.field
     93 [keep  ] .ui.form .fields>.field:first-child
     67 [keep  ] .ui.form .two.fields>.field,.ui.form .two.fields>.fields
-    80 [keep  ] .ui.form .three.fields>.field,.ui.form .three.fields>.fields
-    69 [remove] .ui.form .four.fields>.field,.ui.form .four.fields>.fields
+    80 [remove] .ui.form .three.fields>.field,.ui.form .three.fields>.fields
+    69 [keep  ] .ui.form .four.fields>.field,.ui.form .four.fields>.fields
     69 [remove] .ui.form .five.fields>.field,.ui.form .five.fields>.fields
     76 [remove] .ui.form .six.fields>.field,.ui.form .six.fields>.fields
     80 [remove] .ui.form .seven.fields>.field,.ui.form .seven.fields>.fields
@@ -2485,8 +2483,8 @@
     78 [keep  ] .ui.form .fields .wide.field
     47 [keep  ] .ui.form .one.wide.field
     47 [keep  ] .ui.form .two.wide.field
-    50 [keep  ] .ui.form .three.wide.field
-    46 [remove] .ui.form .four.wide.field
+    50 [remove] .ui.form .three.wide.field
+    46 [keep  ] .ui.form .four.wide.field
     49 [remove] .ui.form .five.wide.field
     47 [remove] .ui.form .six.wide.field
     50 [remove] .ui.form .seven.wide.field
@@ -2783,8 +2781,8 @@
     47 [keep  ] .ui.attached.item.menu
     51 [keep  ] .ui.item.menu .item:last-child:before
     34 [keep  ] .ui.menu.two.item .item
-    40 [keep  ] .ui.menu.three.item .item
-    35 [remove] .ui.menu.four.item .item
+    40 [remove] .ui.menu.three.item .item
+    35 [keep  ] .ui.menu.four.item .item
     35 [remove] .ui.menu.five.item .item
     38 [remove] .ui.menu.six.item .item
     40 [remove] .ui.menu.seven.item .item
@@ -3048,8 +3046,8 @@
     81 [remove] .ui.inverted.black.table
     35 [keep  ] .ui.one.column.table td
     34 [keep  ] .ui.two.column.table td
-    45 [keep  ] .ui.three.column.table td
-    35 [remove] .ui.four.column.table td
+    45 [remove] .ui.three.column.table td
+    35 [keep  ] .ui.four.column.table td
     35 [remove] .ui.five.column.table td
     43 [remove] .ui.six.column.table td
     45 [remove] .ui.seven.column.table td
@@ -3064,8 +3062,8 @@
     40 [remove] .ui.sixteen.column.table td
     56 [keep  ] .ui.table td.one.wide,.ui.table th.one.wide
     56 [keep  ] .ui.table td.two.wide,.ui.table th.two.wide
-    61 [keep  ] .ui.table td.three.wide,.ui.table th.three.wide
-    56 [remove] .ui.table td.four.wide,.ui.table th.four.wide
+    61 [remove] .ui.table td.three.wide,.ui.table th.three.wide
+    56 [keep  ] .ui.table td.four.wide,.ui.table th.four.wide
     59 [remove] .ui.table td.five.wide,.ui.table th.five.wide
     56 [remove] .ui.table td.six.wide,.ui.table th.six.wide
     61 [remove] .ui.table td.seven.wide,.ui.table th.seven.wide
@@ -3212,10 +3210,10 @@
     31 [keep  ] .ui.one.cards>.card
     49 [keep  ] .ui.two.cards
     75 [keep  ] .ui.two.cards>.card
-    51 [keep  ] .ui.three.cards
-    86 [keep  ] .ui.three.cards>.card
-    54 [remove] .ui.four.cards
-    82 [remove] .ui.four.cards>.card
+    51 [remove] .ui.three.cards
+    86 [remove] .ui.three.cards>.card
+    54 [keep  ] .ui.four.cards
+    82 [keep  ] .ui.four.cards>.card
     54 [remove] .ui.five.cards
     82 [remove] .ui.five.cards>.card
     53 [remove] .ui.six.cards
@@ -3230,10 +3228,10 @@
     77 [remove] .ui.ten.cards>.card
     52 [keep  ] @media only screen and (max-width:767px) .ui.two.doubling.cards
     69 [keep  ] @media only screen and (max-width:767px) .ui.two.doubling.cards>.card
-    60 [keep  ] @media only screen and (max-width:767px) .ui.three.doubling.cards
-    86 [keep  ] @media only screen and (max-width:767px) .ui.three.doubling.cards>.card
-    59 [remove] @media only screen and (max-width:767px) .ui.four.doubling.cards
-    85 [remove] @media only screen and (max-width:767px) .ui.four.doubling.cards>.card
+    60 [remove] @media only screen and (max-width:767px) .ui.three.doubling.cards
+    86 [remove] @media only screen and (max-width:767px) .ui.three.doubling.cards>.card
+    59 [keep  ] @media only screen and (max-width:767px) .ui.four.doubling.cards
+    85 [keep  ] @media only screen and (max-width:767px) .ui.four.doubling.cards>.card
     59 [remove] @media only screen and (max-width:767px) .ui.five.doubling.cards
     85 [remove] @media only screen and (max-width:767px) .ui.five.doubling.cards>.card
     58 [remove] @media only screen and (max-width:767px) .ui.six.doubling.cards
@@ -3248,10 +3246,10 @@
     93 [remove] @media only screen and (max-width:767px) .ui.ten.doubling.cards>.card
     52 [keep  ] @media only screen and (min-width:768px) and (max-width:991px) .ui.two.doubling.cards
     69 [keep  ] @media only screen and (min-width:768px) and (max-width:991px) .ui.two.doubling.cards>.card
-    60 [keep  ] @media only screen and (min-width:768px) and (max-width:991px) .ui.three.doubling.cards
-    86 [keep  ] @media only screen and (min-width:768px) and (max-width:991px) .ui.three.doubling.cards>.card
-    59 [remove] @media only screen and (min-width:768px) and (max-width:991px) .ui.four.doubling.cards
-    85 [remove] @media only screen and (min-width:768px) and (max-width:991px) .ui.four.doubling.cards>.card
+    60 [remove] @media only screen and (min-width:768px) and (max-width:991px) .ui.three.doubling.cards
+    86 [remove] @media only screen and (min-width:768px) and (max-width:991px) .ui.three.doubling.cards>.card
+    59 [keep  ] @media only screen and (min-width:768px) and (max-width:991px) .ui.four.doubling.cards
+    85 [keep  ] @media only screen and (min-width:768px) and (max-width:991px) .ui.four.doubling.cards>.card
     59 [remove] @media only screen and (min-width:768px) and (max-width:991px) .ui.five.doubling.cards
     94 [remove] @media only screen and (min-width:768px) and (max-width:991px) .ui.five.doubling.cards>.card
     58 [remove] @media only screen and (min-width:768px) and (max-width:991px) .ui.six.doubling.cards
@@ -3298,10 +3296,10 @@
     68 [remove] .ui.six.statistics .statistic
     36 [remove] .ui.five.statistics
     60 [remove] .ui.five.statistics .statistic
-    36 [remove] .ui.four.statistics
-    60 [remove] .ui.four.statistics .statistic
-    37 [keep  ] .ui.three.statistics
-    70 [keep  ] .ui.three.statistics .statistic
+    36 [keep  ] .ui.four.statistics
+    60 [keep  ] .ui.four.statistics .statistic
+    37 [remove] .ui.three.statistics
+    70 [remove] .ui.three.statistics .statistic
     35 [keep  ] .ui.two.statistics
     59 [keep  ] .ui.two.statistics .statistic
     35 [keep  ] .ui.one.statistics

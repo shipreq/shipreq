@@ -195,7 +195,7 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
             Allow when _.lookup(unsafeProject()).isRight,
             e => routerCtl.set(Page.ReqDetail(e)))
 
-          val index = ProjectIndex.Props(lookup, routerCtl)
+          val index = ProjectIndex.Props(shipreq.webapp.base.issue.IssueCount(123), lookup, routerCtl)
 
           val pname = ProjectItem.WithEditableName.Props(
             cbProjectMetaData.runNow(),

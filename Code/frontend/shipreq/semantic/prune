@@ -44,8 +44,8 @@ const unusedClasses = [
   // 'secondary', IN USE - reqtable/ViewsMenu.scala
 
   // 'two',       IN USE - .ui.form .two.fields
-  // 'three',     IN USE - .ui.cards.three
-  'four',
+  'three',
+  // 'four',      IN USE - .ui.cards.four
   'five',
   'six',
   'seven',

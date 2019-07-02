@@ -79,7 +79,7 @@ object BaseStyles extends StyleSheet.Inline {
 
     val itemHeaderRW = style(
       itemHeaderRO,
-      color(c"#d00").important)
+      color(c"#1e70bf").important)
 
     val itemHeaderEditCont = style(
       width(100 %%),

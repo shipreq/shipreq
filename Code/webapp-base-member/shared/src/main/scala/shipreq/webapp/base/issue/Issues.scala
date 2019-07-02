@@ -2,6 +2,8 @@ package shipreq.webapp.base.issue
 
 import japgolly.univeq.UnivEq
 
+final case class IssueCount(value: Int) extends AnyVal
+
 final case class IssueId(value: Int)
 object IssueId {
   implicit def univEq: UnivEq[IssueId] = UnivEq.derive
@@ -13,5 +15,5 @@ object IssueWithId {
 }
 
 final case class Issues(vector: Vector[IssueWithId]) {
-  def count = vector.length
+  def count = IssueCount(vector.length)
 }

@@ -28,6 +28,7 @@ object Routes {
     case object CfgReqTypes extends Page
     case object CfgTags     extends Page
     case object ImpGraph    extends Page
+    case object Issues      extends Page
     case object Index       extends Page
     case object ReqTable    extends Page
 
@@ -47,6 +48,7 @@ object Routes {
       case Index        => Nil
       case ReqTable     => "ReqTable" :: Nil
       case ReqDetail(p) => PlainText.pubid(p) :: Nil
+      case Issues       => "Issues" :: Nil
       case ImpGraph     => ProjectIndex.Item.ImpGraph.title :: Nil
       case CfgFields    => "Config " + ProjectIndex.Item.CfgFields  .title :: Nil
       case CfgIssues    => "Config " + ProjectIndex.Item.CfgIssues  .title :: Nil
@@ -88,6 +90,7 @@ object Routes {
 
       ( staticPage(dsl.root       , Page.Index      )
       | staticPage(reqTablePath   , Page.ReqTable   )
+      | staticPage("#issues"      , Page.Issues     )
       | staticPage("#impgraph"    , Page.ImpGraph   )
       | staticPage("#cfg/fields"  , Page.CfgFields  )
       | staticPage("#cfg/issues"  , Page.CfgIssues  )
@@ -107,6 +110,7 @@ object Routes {
         case Page.Index        => root
         case Page.ReqTable     => root / "reqTable"
         case Page.ReqDetail(_) => root / "reqDetail"
+        case Page.Issues       => root / "issues"
         case Page.ImpGraph     => root / "impGraph"
         case Page.CfgFields    => root / "cfg/fields"
         case Page.CfgIssues    => root / "cfg/issues"
