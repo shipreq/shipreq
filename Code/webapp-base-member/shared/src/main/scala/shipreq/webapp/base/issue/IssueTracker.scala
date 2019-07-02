@@ -13,11 +13,11 @@ final class IssueTracker(val issues : Issues,
 object IssueTracker {
 
   def apply(project: Project): IssueTracker = {
-    val tstateM = new MutableTrackerState(1)
+    val tstateM = new MutableTrackerState
 
     val ctx = IssueDetector.Ctx(
       project        = project,
-      add            = i => tstateM.issues += tstateM.assignId(i),
+      add            = i => tstateM.issues += i,
       foreachLiveReq = tstateM.dirtyFns.liveReq.add,
       foreachLiveRcg = tstateM.dirtyFns.liveRcg.add,
       foreachLiveUcs = tstateM.dirtyFns.liveUcs.add)
@@ -44,21 +44,9 @@ object IssueTracker {
   private def fuseReduce[A](fs: TraversableOnce[() => A => Unit]): A => Unit =
     fs.toIterator.map(_()).reduce((x, y) => a => { x(a); y(a) })
 
-  private final class MutableTrackerState(firstId: Int) {
-    private var _nextId = firstId
-
-    def nextId(): IssueId = {
-      val id = IssueId(_nextId)
-      _nextId += 1
-      id
-    }
-
-    def assignId(i: Issue): IssueWithId =
-      IssueWithId(nextId(), i)
-
+  private final class MutableTrackerState {
     val dirtyFns = new MutableDirtyFns
-
-    val issues = Vector.newBuilder[IssueWithId]
+    val issues = Vector.newBuilder[Issue]
   }
 
   private final class MutableDirtyFnsA[A] {

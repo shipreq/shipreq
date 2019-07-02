@@ -52,7 +52,7 @@ object IssueDetectorTest extends TestSuite {
 
   private def assertIssuesWithFilter(project: Project, filter: Issue => Boolean)(expected: Issue*)(implicit l: Line): Unit = {
     val it = IssueTracker(project)
-    def actual = it.issues.vector.iterator.map(_.issue).filter(filter)
+    def actual = it.issues.vector.iterator.filter(filter)
     assertSeqIgnoreOrder("assertIssues", actual, expect = expected)
   }
 
