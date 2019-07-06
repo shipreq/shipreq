@@ -22,6 +22,9 @@ object SummaryUI {
     val delete   = apply(Icon.TrashOutline , "deleted")
     val filter   = apply(Icon.Filter       , "excluded by the filter")
     val selected = apply(Icon.CheckmarkBox , "selected")
+    val config   = apply(Icon.Setting      , "configuration")
+    val issue    = apply(Icon.WarningSign  , "issue")
+    val loose    = apply(Icon.Keyboard     , UiText.Issues.loose)
     def reappearances(title: String) = apply(Icon.Copy, title)
   }
 

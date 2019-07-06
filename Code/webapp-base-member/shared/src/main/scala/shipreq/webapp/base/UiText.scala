@@ -110,4 +110,9 @@ object UiText {
     case LeftRight.Left  => "Unindent"
     case LeftRight.Right => "Indent"
   }
+
+  object Issues {
+    final val loose = "manual"
+    final val Loose = "Manual"
+  }
 }
