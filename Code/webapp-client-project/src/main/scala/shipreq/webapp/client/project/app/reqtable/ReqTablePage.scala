@@ -131,14 +131,15 @@ object ReqTablePage {
     val setSelection: SetFn[RowSelection  ] = Reusable.fn.state(stateAccess zoomStateL State.selection).setStateFn
     val setModal    : SetFn[Modal.State   ] = Reusable.fn.state(stateAccess zoomStateL State.modal).setStateFn
 
-    // TODO Externalise this manualRefresh - actually...move into sjsreact
-    private var manualRefresh = List.empty[Px.ThunkM[_]]
+    // TODO Use Px.ManualCollection -- https://github.com/japgolly/scalajs-react/pull/456
+
+    private val manualPxs = Px.ManualCollection()
+
     private def pxProps[A: Reusability](f: Props => A): Px.ThunkM[A] = {
       val px = Px.props($).map(f).withReuse.manualRefresh
-      manualRefresh ::= px
+      manualPxs.add(px)
       px
     }
-    private val refreshPx = Callback(Px.refresh(manualRefresh: _*))
 
     val pxViewState        : Px[SavedViewLogic.State] = pxProps(_.state.view)
     val pxFilterDeadFalback: Px[FilterDead]           = pxProps(_.filterDead.value)
@@ -314,7 +315,7 @@ object ReqTablePage {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     def render(p: Props): VdomElement = {
-      refreshPx.runNow()
+      manualPxs.refresh()
       p.state.modal renderOrElse renderMain(p)
     }
 
@@ -426,7 +427,7 @@ object ReqTablePage {
     /** Synchronises the State of this page with external Props that affect it. */
     private val syncViewColumns: Callback =
       for {
-        _ <- refreshPx
+        _ <- manualPxs.refreshCB
         c <- pxColumnPlusAll.toCallback
         f = State.manualView.modify(_ filterColumns c.containsColumn)
         _ <- stateAccess modState f
