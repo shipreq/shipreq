@@ -91,8 +91,8 @@ object IssueDetectorTest extends TestSuite {
       Event.UseCaseStepUpdate(13, UseCaseStepGD.ValueForTitle(∅)), // UC-n.0.3 -- dead step
       Event.UseCaseStepDelete(13),
     )(
-      Issue.BlankUseCaseStep(11),
-      Issue.BlankUseCaseStep(14),
+      Issue.BlankUseCaseStep(P4.uc1, 11),
+      Issue.BlankUseCaseStep(P4.uc1, 14),
     )
 
     def emptyStepAndTitle() = test(p4)(
@@ -375,8 +375,8 @@ object IssueDetectorTest extends TestSuite {
         Issue.BlankCustomField(P6.frs(1), P6.priField),
         Issue.BlankCustomField(P6.frs(2), P6.priField),
         Issue.BlankCustomField(P6.uc1, P6.priField),
-        Issue.BlankUseCaseStep(UseCaseStepId(18)),
-        Issue.BlankUseCaseStep(UseCaseStepId(19)),
+        Issue.BlankUseCaseStep(P6.uc1, UseCaseStepId(18)),
+        Issue.BlankUseCaseStep(P6.uc1, UseCaseStepId(19)),
         Issue.DeadRefInReq(P6.frs(2), ReqTextLoc.Title, ContentRef.ReqRef(P6.mfs(28))),
         Issue.DeadRefInReq(P6.uc1, ReqTextLoc.Title, ContentRef.UseCaseStepRef(16)),
         Issue.DeadRefInReq(P6.uc1, ReqTextLoc.Title, ContentRef.UseCaseStepRef(17)),

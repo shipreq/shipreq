@@ -81,7 +81,7 @@ object IssueDetectors {
     override val detect = ctx =>
       ctx.foreachLiveUcs(() => f =>
         if (f.step.titleExplicitly.isEmpty && !f.usesUseCaseTitle)
-          ctx.add(Issue.BlankUseCaseStep(f.id)))
+          ctx.add(Issue.BlankUseCaseStep(f.useCaseId, f.id)))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
