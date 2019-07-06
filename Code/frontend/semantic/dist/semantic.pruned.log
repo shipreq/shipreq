@@ -1055,7 +1055,7 @@
     39 [remove] i.icon.settings:before
     39 [remove] i.icon.comments:before
     39 [remove] i.icon.external:before
-    37 [remove] i.icon.trophy:before
+    37 [keep  ] i.icon.trophy:before
     38 [remove] i.icon.payment:before
     35 [remove] i.icon.feed:before
     44 [remove] i.icon.alarm.outline:before
@@ -1391,7 +1391,7 @@
     38 [remove] i.icon.desktop:before
     37 [remove] i.icon.laptop:before
     35 [remove] i.icon.game:before
-    39 [remove] i.icon.keyboard:before
+    39 [keep  ] i.icon.keyboard:before
     35 [remove] i.icon.plug:before
     36 [keep  ] i.icon.trash:before
     43 [remove] i.icon.file.outline:before

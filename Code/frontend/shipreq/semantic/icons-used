@@ -18,6 +18,7 @@
 .help.circle
 .inbox
 .info.circle
+.keyboard
 .list.layout
 .lock
 .mail
@@ -33,6 +34,7 @@
 .tags
 .trash
 .trash.outline
+.trophy
 .undo
 .unhide
 .user
