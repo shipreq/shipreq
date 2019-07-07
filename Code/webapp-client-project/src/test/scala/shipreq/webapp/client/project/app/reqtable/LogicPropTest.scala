@@ -14,6 +14,7 @@ import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.data.reqtable.{SortCriterion => SC, Column => C}
+import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.text.{Atom, PlainText, Text, TextSearch, ProjectText}
 import shipreq.webapp.client.project.test.ClientTestSettings._
 import SortMethod._

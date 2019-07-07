@@ -25,6 +25,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.ProjectAndOrd
+import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Grammar, GrammarSpec, Text}
 import shipreq.webapp.base.util.{GenericData, PreProcessor}

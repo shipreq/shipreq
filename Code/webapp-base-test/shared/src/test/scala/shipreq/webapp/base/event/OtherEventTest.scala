@@ -7,6 +7,7 @@ import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.filter._
+import shipreq.webapp.base.sort.SortMethod
 import ApplyEventTestFns._
 import ContentEventTestHelp.{assertBadIdsRejected, fr, at1, issueType1}
 import Event._

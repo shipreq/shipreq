@@ -1,4 +1,4 @@
-package shipreq.webapp.base.data.reqtable
+package shipreq.webapp.base.sort
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.Util

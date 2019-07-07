@@ -7,6 +7,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.{Filter, FilterAst, IntensionalReqSet}
 import shipreq.webapp.base.filter.Filter.Implicits._
+import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.text.{AtomTC, ProjectText}
 import DataImplicits._
 import BinCodecGeneric._

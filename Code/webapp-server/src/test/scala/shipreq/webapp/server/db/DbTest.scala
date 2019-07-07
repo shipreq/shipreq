@@ -18,6 +18,7 @@ import shipreq.webapp.base.event._
 import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.hash._
+import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.app.Global

@@ -12,6 +12,7 @@ import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.event.SavedViewGD
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol.{SavedViewCmd => Cmd}
+import shipreq.webapp.base.sort.SortMethod
 import SavedViewLogic._
 import SortCriterion.SyntaxHelpers._
 import SortMethod.{Asc, AscThenBlanks, BlanksThenDesc, Desc}

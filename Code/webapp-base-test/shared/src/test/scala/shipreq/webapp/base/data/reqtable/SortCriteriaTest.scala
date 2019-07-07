@@ -5,6 +5,7 @@ import nyaya.test._
 import nyaya.test.PropTest._
 import utest._
 import shipreq.webapp.base.RandomData
+import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.test.WebappTestUtil._
 import SortCriterion._
 import SortMethod._

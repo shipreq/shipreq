@@ -22,6 +22,7 @@ object EventDbCodecs {
   import shipreq.webapp.base.data._
   import shipreq.webapp.base.data.reqtable.SavedView
   import shipreq.webapp.base.protocol.MPickleMacros._
+  import shipreq.webapp.base.sort.SortMethod
   import shipreq.webapp.base.text.{AtomTC, Text}
   import shipreq.webapp.base.util.GenericDataMacros._
   import EventDbMacros._

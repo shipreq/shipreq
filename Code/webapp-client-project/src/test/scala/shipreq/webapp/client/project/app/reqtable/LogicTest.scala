@@ -13,6 +13,7 @@ import shipreq.webapp.base.event.{Event => E}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.data.reqtable.{Column => C, SortCriterion => SC}
+import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.text.{PlainText, ProjectText, Text, TextSearch}
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.util.ReqCodeTreeItem

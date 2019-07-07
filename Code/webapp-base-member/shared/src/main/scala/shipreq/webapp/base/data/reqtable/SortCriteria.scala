@@ -5,6 +5,7 @@ import scala.annotation.tailrec
 import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.sort.SortMethod
 
 /** A combination of [[Column]] and [[SortMethod]], which is a single criterion in [[SortCriteria]].
   *

@@ -10,10 +10,11 @@ import scalaz.std.option.optionInstance
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
-import shipreq.webapp.base.data.reqtable.{Column => C, SortCriterion => SC, SortMethod => SM}
+import shipreq.webapp.base.data.reqtable.{Column => C, SortCriterion => SC}
+import shipreq.webapp.base.sort.SortMethod.{Asc, AscThenBlanks, BlanksThenAsc}
+import shipreq.webapp.base.sort.{SortMethod => SM}
 import shipreq.webapp.base.text.PlainText
 import shipreq.base.util.{Applicable, NotApplicable}
-import SM.{Asc, AscThenBlanks, BlanksThenAsc}
 
 trait Sorter {
   type T
