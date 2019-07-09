@@ -49,7 +49,7 @@ object ImplicationEditor {
   def initialValue(p: Project, dir: Direction, id: ReqId): Vector[Pubid] =
     MutableArray(p.content.implications(dir)(id))
       .map(p.content.reqs.need(_).pubid)
-      .sortBySchwartzian(DataLogic.pubidSortKeyFn(p.config))
+      .sortBySchwartzian(p.dataLogic.pubidSortKeyFn)
       .to[Vector]
 
   def initialValueAndText(initial: Option[(ReqId, Traversable[Pubid])], p: Project, l: Lookup): (Set[ReqId], String) = {

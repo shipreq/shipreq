@@ -60,6 +60,29 @@ final class DataLogic(p: Project) {
     }
   }
 
+  /** Note: If you want to filter dead tags, use DataLogic.tagFieldDist(...) */
+  val tagFieldDist: FilterDead => TagFieldDistribution.TagIds =
+    FilterDead.memoLazy(DataLogic.tagFieldDist(p.config, _, _ => true))
+
+  lazy val tagOrderByName: TagOrder =
+    p.config.tags.tree
+      .valuesIterator
+      .map(_.tag)
+      .filterSubType[ApplicableTag]
+      .|>(MutableArray.apply)
+      .sortBySchwartzian(_.key.value |> normaliseStringForSorting)
+      .map(_.id)
+      .iterator
+      .mapToOrder
+
+  lazy val tagOrderByPos: TagOrder =
+    p.config.tags
+      .flatRowsUnfiltered
+      .iterator
+      .map(_.id)
+      .filterSubType[ApplicableTagId]
+      .mapToOrder
+
   val customFieldImps: FilterDead => CustomField.Implication.Id => ReqId => Set[Pubid] =
     FilterDead.memoLazy { fd =>
       val filter = p.config.reqFilter(fd)
@@ -74,7 +97,14 @@ final class DataLogic(p: Project) {
         id => srcs.iterator.filter(_._2 contains id).map(_._1).toSet
       }
     }
+
+  val pubidSortKeyFn: Pubid => (Int, Int) = {
+    val reqTypeOrder = p.config.reqTypes.order
+    i => (reqTypeOrder(i.reqTypeId), i.pos.value)
+  }
 }
+
+// █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 object DataLogic {
 
@@ -106,6 +136,8 @@ object DataLogic {
       f(all)
   }
 
+  type TagOrder = Map[ApplicableTagId, Int]
+
   type TagLookup = ReqId => ReqTags
 
   def generalTags(dist: TagFieldDistribution.TagIds, lookup: TagLookup): ReqId => Set[ApplicableTagId] = {
@@ -120,22 +152,6 @@ object DataLogic {
 
   val normaliseStringForSorting: EndoFn[String] =
     _.toLowerCase
-
-  type TagOrder = Map[ApplicableTagId, Int]
-
-  def tagOrderByName(tags: TagTree): TagOrder =
-    MutableArray(tags.valuesIterator.map(_.tag).filterSubType[ApplicableTag])
-      .sortBySchwartzian(_.key.value |> normaliseStringForSorting)
-      .map(_.id)
-      .iterator
-      .mapToOrder
-
-  def tagOrderByPos(tags: Tags): TagOrder =
-    tags.flatRowsUnfiltered
-      .iterator
-      .map(_.id)
-      .filterSubType[ApplicableTagId]
-      .mapToOrder
 
   // ===================================================================================================================
   // Implications
@@ -222,8 +238,4 @@ object DataLogic {
 //  def lookupCustomField[I <: CustomFieldId, D <: CustomField, O](pc: ProjectConfig, f: D => O)(implicit d: DataIdAux[D, I]): I => O =
 //    id => f(pc.customField(id))
 
-  def pubidSortKeyFn(pc: ProjectConfig): Pubid => (Int, Int) = {
-    val reqTypeOrder = pc.reqTypes.order
-    p => (reqTypeOrder(p.reqTypeId), p.pos.value)
-  }
 }

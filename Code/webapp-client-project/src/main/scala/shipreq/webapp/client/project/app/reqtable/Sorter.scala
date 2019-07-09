@@ -32,16 +32,10 @@ object Sorter {
 
     @inline def reqTypesToMnemonicOrder =
       p.config.reqTypes.order
-
-    lazy val tagByNameOrder: TagOrder =
-      DataLogic.tagOrderByName(p.config.tags.tree)
-
-    lazy val tagByPosOrder: TagOrder =
-      DataLogic.tagOrderByPos(p.config.tags)
   }
 
   private def pubidNormaliser(setup: Setup): Pubid => (Int, Int) =
-    DataLogic.pubidSortKeyFn(setup.p.config)
+    setup.p.dataLogic.pubidSortKeyFn
 
   // CodeGroups are only displayed when sorting by code.
   // CodeGroups cannot have a blank code.
@@ -143,12 +137,12 @@ object Sorter {
     case c: C.CustomField =>
       c.id match {
         case id: CustomField.Text       .Id => customTextFieldSorter(id, c)
-        case id: CustomField.Tag        .Id => tagSorter(Row.cfTags ^|-? index(id), _.tagByPosOrder)
+        case id: CustomField.Tag        .Id => tagSorter(Row.cfTags ^|-? index(id), _.p.dataLogic.tagOrderByPos)
         case id: CustomField.Implication.Id => pubidVectorSorter(Row.cfImps ^|-? index(id))
       }
     case C.Title                            => titleSorter
     case C.Code                             => reqCodeSorter
-    case C.Tags                             => tagSorter(Row.tags, _.tagByNameOrder)
+    case C.Tags                             => tagSorter(Row.tags, _.p.dataLogic.tagOrderByName)
     case C.Implications(dir)                => pubidVectorSorter(Row.implications(dir))
     case C.DeletionReason                   => deletionReasonSorter
   }

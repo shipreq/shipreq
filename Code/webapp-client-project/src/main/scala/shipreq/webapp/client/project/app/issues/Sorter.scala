@@ -14,13 +14,10 @@ object Sorter {
 
   final class Setup(val p: Project)
 
-  private def pubidNormaliser(setup: Setup): Pubid => (Int, Int) =
-    DataLogic.pubidSortKeyFn(setup.p.config)
-
   val pubidSorter = sorter[(Int, Int)](
     prep =
       setup => {
-        val n = pubidNormaliser(setup)
+        val n = setup.p.dataLogic.pubidSortKeyFn
         val `n/a` = (-1, -1)
         ;{
           case r: Row.ForReq    => n(r.req.pubid)
