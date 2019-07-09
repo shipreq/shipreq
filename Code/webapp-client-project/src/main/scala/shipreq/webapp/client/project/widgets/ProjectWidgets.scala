@@ -45,6 +45,9 @@ object ProjectWidgets {
 
   private[ProjectWidgets] object Internal {
 
+    val blankButMandatory: VdomTag =
+      <.div(*.blankButMandatory, "blank")
+
     val deadValidity: Validity => Live => (Live, Validity) =
       Validity.memo(validityWhenDead =>
         Live.memo {
@@ -92,6 +95,9 @@ final class ProjectWidgets[Ctx <: ProjectText.Context](project      : Project,
 
   override def text(text: AnyOptional, live: Live): VdomTag =
     <.span(text map textByLive(live): _*)
+
+  override protected def whenBlankButMandatory =
+    blankButMandatory
 
   private val textByLive: Live => Atom.AnyAtom => TagMod =
     Live.memo { live =>

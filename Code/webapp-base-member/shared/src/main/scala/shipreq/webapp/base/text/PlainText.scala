@@ -102,6 +102,8 @@ object PlainText {
     override def text(text: Text.AnyOptional, live: Live): String =
       nestedText("", outOfListNewline, live, text)
 
+    override protected def whenBlankButMandatory = ""
+
     private def nestedText(acc: String, newline: String, live: Live, atoms: Vector[AnyAtom]): String = {
       @tailrec def go(acc: String, atoms: Vector[AnyAtom]): String =
         if (atoms.isEmpty)

@@ -660,6 +660,13 @@ object Style extends StyleSheet.Inline {
 
     val ul = style(paddingLeft(2.4 ex))
 
+    val blankButMandatory = style(
+      errorRedOnRed,
+      textAlign.center,
+      height(100 %%),
+      width(11 ex),
+      borderRadius(0.3 ex))
+
     private def tagBase(live: Live) = mixin(
       mixinIf(live is Dead)(&.not(_.hover)(textDecoration := ^.lineThrough)),
       hoverShowsInfo)

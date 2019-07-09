@@ -103,6 +103,7 @@ abstract class ProjectText[Ctx <: Context, Out](project: Project, final val ctx:
   // Abstract
 
   def text(text: Text.AnyOptional, live: Live): Out
+  protected def whenBlankButMandatory: Out
 
   def useCaseStepTextAndFlow(step: UseCaseStepFlowText.TextAndFlow[Text.AnyOptional, Set[UseCaseStepId]],
                              live: Live): Out
@@ -150,10 +151,16 @@ abstract class ProjectText[Ctx <: Context, Out](project: Project, final val ctx:
   final def text(text: Text.AnyNonEmpty, live: Live): Out =
     this.text(text.whole, live)
 
+  final private def mandatoryText(text: Text.AnyOptional, live: Live): Out =
+    if (text.isEmpty && live.is(Live))
+      whenBlankButMandatory
+    else
+      this.text(text, live)
+
   final val reqTitle: Req => Out =
     memoByReqId {
-      case gr: GenericReq => text(gr.title, gr live cfg.reqTypes)
-      case uc: UseCase    => text(uc.title, uc.liveUC)
+      case gr: GenericReq => mandatoryText(gr.title, gr live cfg.reqTypes)
+      case uc: UseCase    => mandatoryText(uc.title, uc.liveUC)
     }
 
   final def reqTitleById(id: ReqId): Out =
