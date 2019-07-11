@@ -84,11 +84,13 @@ object IssueDetectorTest extends TestSuite {
       IssueLite.BlankTitle(P6.uc1),
     )
 
-    def ucs() = test(p4)(
-      Event.UseCaseStepUpdate(10, UseCaseStepGD.ValueForTitle(∅)), // UC-n.0 -- no issue, uses UC title
-      Event.UseCaseStepUpdate(11, UseCaseStepGD.ValueForTitle(∅)), // UC-n.0.1
-      Event.UseCaseStepUpdate(14, UseCaseStepGD.ValueForTitle(∅)), // UC-n.1
-      Event.UseCaseStepUpdate(13, UseCaseStepGD.ValueForTitle(∅)), // UC-n.0.3 -- dead step
+    def ucSteps() = test(p4)(
+      Event.UseCaseStepUpdate(10, UseCaseStepGD.ValueForTitle(∅)), // 0 -- no issue, uses UC title
+      Event.UseCaseStepUpdate(11, UseCaseStepGD.ValueForTitle(∅)), // 0.1 (<= 0.3 dead)
+      Event.UseCaseStepUpdate(12, UseCaseStepGD.ValueForTitle(∅)), // 0.2 <= 1.1
+      Event.UseCaseStepUpdate(13, UseCaseStepGD.ValueForTitle(∅)), // 0.3 => 0.1 -- dead step
+      Event.UseCaseStepUpdate(14, UseCaseStepGD.ValueForTitle(∅)), // 1
+      Event.UseCaseStepUpdate(15, UseCaseStepGD.ValueForTitle(∅)), // 1.1 => 0.2
       Event.UseCaseStepDelete(13),
     )(
       IssueLite.BlankUseCaseStep(11),
@@ -388,7 +390,7 @@ object IssueDetectorTest extends TestSuite {
     'Blank {
       import BlankTests._
       'title             - title()
-      'ucs               - ucs()
+      'ucSteps           - ucSteps()
       'emptyStepAndTitle - emptyStepAndTitle()
     }
 

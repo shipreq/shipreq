@@ -207,7 +207,7 @@ final case class UseCaseStep(id             : UseCaseStepId,
       titleExplicitly
 
   @deprecated("Use UseCaseStep.live or UseCaseStep.Focus#live.", "")
-  def live = ()
+  def live(a: Nothing): Nothing = a
 
   /** Doesn't take live-state of enclosing use-case into consideration. */
   def liveIgnoringUC(enclosingTree: UseCaseSteps): Live =
@@ -286,6 +286,15 @@ object UseCaseStep {
 
     def flow(d: Direction): Set[UseCaseStepId] =
       useCases.stepFlow(d)(id)
+
+    def flow(d: Direction, fd: FilterDead): Set[UseCaseStepId] =
+      fd match {
+        case HideDead => liveFlow(d)
+        case ShowDead => flow(d)
+      }
+
+    def liveFlow(d: Direction): Set[UseCaseStepId] =
+      flow(d).filter(id => UseCaseStep.live(uc, ucSteps.stepPartialLocs.get(id)) is Live)
   }
 }
 

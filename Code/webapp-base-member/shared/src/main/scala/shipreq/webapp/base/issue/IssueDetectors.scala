@@ -2,7 +2,7 @@ package shipreq.webapp.base.issue
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptySet
-import shipreq.base.util.{Backwards, Util}
+import shipreq.base.util.{Backwards, Forwards, Util}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Atom
 
@@ -74,7 +74,12 @@ object IssueDetectors {
   case object BlankUseCaseStep extends Instance {
     override val detect = ctx =>
       ctx.foreachLiveUcs(() => f =>
-        if (f.step.titleExplicitly.isEmpty && !f.usesUseCaseTitle)
+        if (
+          f.step.titleExplicitly.isEmpty
+          && !f.usesUseCaseTitle
+          && f.liveFlow(Forwards).isEmpty
+          && f.liveFlow(Backwards).isEmpty
+        )
           ctx.add(Issue.BlankUseCaseStep(f)))
   }
 
