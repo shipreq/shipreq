@@ -23,8 +23,13 @@ final case class ViewReq(data           : Data,
   def codes: VdomElement =
     <.div(pw.reqCodes(data.codes))
 
-  def imps(dir: Direction): VdomElement =
-    pw.implicationList(data.generalImps(dir))
+  def imps(dir: Direction): VdomElement = {
+    val imps = data.generalImps(dir)
+    if (imps.isEmpty && data.impsAreMandatory && dir.is(Backwards))
+      ProjectWidgets.blankButMandatory
+    else
+      pw.implicationList(imps)
+  }
 
   def imps(id: CustomField.Implication.Id): VdomElement = {
     val imps = data.customImps(id)
@@ -89,14 +94,15 @@ final case class ViewReq(data           : Data,
 
 object ViewReq {
 
-  final case class Data(req            : Req,
-                        codes          : Traversable[ReqCode.Value],
-                        generalTags    : Vector[ApplicableTagId],
-                        customTags     : CustomField.Tag.Id => Vector[ApplicableTagId],
-                        generalImps    : Direction => Vector[Pubid],
-                        customImps     : CustomField.Implication.Id => Vector[Pubid],
-                        pastPubids     : SortedSet[ExternalPubid],
-                        mandatoryFields: CustomField.Lists) {
+  final case class Data(req             : Req,
+                        codes           : Traversable[ReqCode.Value],
+                        generalTags     : Vector[ApplicableTagId],
+                        customTags      : CustomField.Tag.Id => Vector[ApplicableTagId],
+                        generalImps     : Direction => Vector[Pubid],
+                        customImps      : CustomField.Implication.Id => Vector[Pubid],
+                        pastPubids      : SortedSet[ExternalPubid],
+                        impsAreMandatory: Boolean,
+                        mandatoryFields : CustomField.Lists) {
 
     def apply(pw: ProjectWidgets.AnyCtx): ViewReq =
       ViewReq(this, pw, true)
@@ -146,9 +152,6 @@ object ViewReq {
               .filter(impFilter)
               .map(_.pubid)))
 
-      val customImps: CustomField.Implication.Id => Vector[Pubid] =
-        fid => sortPubids(customImpLookup(fid)(id))
-
       val pastPubids: SortedSet[ExternalPubid] = {
         val b = SortedSet.newBuilder[ExternalPubid]
         b ++= req.pubid.pastExternals(project)
@@ -160,14 +163,15 @@ object ViewReq {
       }
 
       Data(
-        req,
-        codes,
-        generalTags,
-        customTags,
-        generalImps,
-        customImps,
-        pastPubids,
-        project.config.mandatoryLiveCustomFields)
+        req              = req,
+        codes            = codes,
+        generalTags      = generalTags,
+        customTags       = customTags,
+        generalImps      = generalImps,
+        customImps       = fid => sortPubids(customImpLookup(fid)(id)),
+        pastPubids       = pastPubids,
+        impsAreMandatory = project.config.reqTypes.idsRequiringImplication.contains(req.reqTypeId),
+        mandatoryFields  = project.config.mandatoryLiveCustomFields)
     }
 
   }

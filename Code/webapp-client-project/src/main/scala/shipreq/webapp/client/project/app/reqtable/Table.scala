@@ -319,14 +319,15 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
       val (cfg, pw, pubidFmt) = vi
 
       val viewReq = ViewReq.Data(
-        row.req,
-        row.exp.reqCodes,
-        row.mv.tags,
-        row.exp.cfTags.getOrElse(_, Vector.empty),
-        row.exp.implications.apply,
-        row.exp.cfImps.getOrElse(_, Vector.empty),
-        SortedSet.empty[ExternalPubid], // ReqTable doesn't display pastPubids
-        cfg.mandatoryLiveCustomFields,
+        req              = row.req,
+        codes            = row.exp.reqCodes,
+        generalTags      = row.mv.tags,
+        customTags       = row.exp.cfTags.getOrElse(_, Vector.empty),
+        generalImps      = row.exp.implications.apply,
+        customImps       = row.exp.cfImps.getOrElse(_, Vector.empty),
+        pastPubids       = SortedSet.empty[ExternalPubid], // ReqTable doesn't display pastPubids
+        impsAreMandatory = cfg.reqTypes.idsRequiringImplication.contains(row.req.reqTypeId),
+        mandatoryFields  = cfg.mandatoryLiveCustomFields,
       ).apply(pw)
 
       def renderCodes: VdomElement =
