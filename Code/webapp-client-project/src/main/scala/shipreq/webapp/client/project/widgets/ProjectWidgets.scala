@@ -263,22 +263,17 @@ final class ProjectWidgets[Ctx <: ProjectText.Context](project      : Project,
             render(flowElements).toIterator.map(t => t: TagMod).intersperse(sepComma))))
     }
 
-    val flowsMaybe: Option[TagMod] =
+    val flowsMaybe: Option[VdomElement] =
       UseCaseStepFlowText.DefaultArrowOrder.map(flowClause) match {
         case (None   , None   ) => None
         case (Some(f), None   ) => Some(f)
         case (None   , Some(f)) => Some(f)
-        case (Some(a), Some(b)) => Some(TagMod(a, b))
+        case (Some(a), Some(b)) => Some(<.div(*.useCaseStepTextAndFlow_flow, a, b))
       }
 
-    flowsMaybe match {
-      case None =>
-        stepText
-      case Some(flows) =>
-        <.div(*.useCaseStepTextAndFlow_cont,
-          <.div(*.useCaseStepTextAndFlow_text, stepText),
-          <.div(*.useCaseStepTextAndFlow_flow, flows))
-    }
+    <.div(*.useCaseStepTextAndFlow_cont(l),
+      <.div(*.useCaseStepTextAndFlow_text, stepText),
+      flowsMaybe)
   }
 
   override protected val useCaseFlowElement: UseCaseStep.Focus => VdomTag =

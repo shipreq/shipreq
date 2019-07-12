@@ -78,6 +78,11 @@ object Style extends StyleSheet.Inline {
     deadMixin,
     hasError)
 
+  private val deadFilledCell = style(
+    opacity(0.7),
+    // This ↓ needs to be kept in sync with detailTableKey which uses .04 but .06 is required when opacity=0.7
+    backgroundColor(rgba(0, 0, 0, .06)))
+
   val svgGraph = style(
     unsafeChild("svg")(
       maxWidth(100 %%)))
@@ -557,13 +562,13 @@ object Style extends StyleSheet.Inline {
       textAlign.left,
       wordWrap.breakWord,
       // whiteSpace.nowrap,
-      backgroundColor(rgba(0, 0, 0, .04)),
-      mixinIf(live is Dead)(textDecoration := "line-through")))
+      mixinIf(live is Live)(backgroundColor(rgba(0, 0, 0, .04))),
+      mixinIf(live is Dead)(deadFilledCell, textDecoration := "line-through")))
 
     val detailTableValue = styleF(D.live)(live => styleS(
       detailTableCell,
       width(100 %%),
-      mixinIf(live is Dead)(backgroundColor(rgba(0, 0, 0, .04)))))
+      mixinIf(live is Dead)(deadFilledCell)))
 
     val generalImpsCont = style(
       width(100 %%))
@@ -731,7 +736,10 @@ object Style extends StyleSheet.Inline {
     val reqCodeTreeCode = style(reqCodeTreePre)
     val reqCodeFlat = style(reqCodePre, display.block, overflowY.hidden)
 
-    val useCaseStepTextAndFlow_cont = style(display.flex)
+    val useCaseStepTextAndFlow_cont = styleF(D.live)(l => styleS(
+      display.flex,
+      mixinIf(l is Dead)(deadFilledCell)))
+
     val useCaseStepTextAndFlow_text = style()
     val useCaseStepTextAndFlow_flow = style()
 
