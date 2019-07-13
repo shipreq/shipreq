@@ -696,7 +696,9 @@ object Style extends StyleSheet.Inline {
       hoverShowsInfo,
       mixinIf(a is Dead)(deadAndNotError)))
 
-    val issue = style(hasError)
+    val issue = styleF(D.live)(l => styleS(
+      hasError,
+      mixinIf(l is Dead)(textDecoration := ^.lineThrough)))
 
     val erroneousUseCaseStepRef = style(hasError)
 
@@ -816,7 +818,7 @@ object Style extends StyleSheet.Inline {
     reqtable.savedViews.activeItem,
     reqdetail.detailTable,
     reqdetail.useCaseStep.container,
-    widgets.issue,
+    widgets.issueDesc,
     widgets.reqTypeSelector.dropdown)
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()
 //  ConsoleIO(_.info(s"Styles: ${Style.register.styles.length}")).unsafePerformIO()

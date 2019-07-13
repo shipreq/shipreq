@@ -41,6 +41,4 @@ functionality
   * inline editing
   * KB navigation
 * ProjectWidgets
-  * blank custom fields
   * conflicting tags
-  * dead issue tags need linethrough

@@ -216,14 +216,14 @@ final class ProjectWidgets[Ctx <: ProjectText.Context](project      : Project,
     memo { id =>
       val issueType = cfg.customIssueType(id)
       <.span(
-        *.issue,
+        *.issue(issueType.live),
         G.hashRefKey.prefix ~ issueType.key.value)
     }
 
   private def issueWithDesc(id: CustomIssueTypeId, desc: Text.InlineIssueDesc.NonEmptyText, liveText: Live): VdomElement = {
     val issueType = project.config.customIssueType(id)
     <.span(
-      *.issue,
+      *.issue(issueType.live),
       G.hashRefKey.prefix ~ issueType.key.value ~ issueDescSurroundPrefix,
       text(desc, liveText)(*.issueDesc),
       issueDescSurroundSuffix)
