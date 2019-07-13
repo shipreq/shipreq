@@ -62,7 +62,7 @@ object TableRow {
             null
 
           case Column.FieldName =>
-            "TODO" // TODO ==========================
+            row.fieldKeyOption.fold("")(_.toString)
 
           case Column.FieldEditor =>
             "TODO" // TODO ==========================

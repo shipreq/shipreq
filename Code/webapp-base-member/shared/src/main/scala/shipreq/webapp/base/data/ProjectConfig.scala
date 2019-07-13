@@ -1,6 +1,7 @@
 package shipreq.webapp.base.data
 
 import japgolly.microlibs.scalaz_ext.ScalazMacros
+import japgolly.microlibs.utils.Memo
 import monocle.macros.Lenses
 import scalaz.{-\/, Equal, \/-}
 import shipreq.base.util.univeq._
@@ -33,7 +34,7 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
   lazy val liveCustomTextFields =
     fields.customTextFields.filter(_.live(this) is Live)
 
-  lazy val liveTagFieldDistribution =
+  lazy val liveTagFieldDistribution: TagFieldDistribution.TagIds =
     TagFieldDistribution(this, _.live(this) is Live)
 
   def deadTagFieldDistribution(deadTagFilter: CustomField.Tag.Id => Boolean): TagFieldDistribution.TagIds =
@@ -65,4 +66,23 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
     m.result()
   }
 
+  val mostRelevantLiveFieldForTag: TagId => Option[CustomField.Tag] =
+    Memo { tagId =>
+      type R = Option[CustomField.Tag]
+
+      implicit val tree = tags.tree
+
+      def liveTagFields = fields.customTagFields.iterator.filter(_.live(this).is(Live))
+
+      val direct: R = liveTagFields.find(_.tagId ==* tagId)
+
+      def soleParent: R = {
+        liveTagFields.filter(f => tree.need(f.tagId).transitiveChildren.contains(f.tagId)).take(2).toList match {
+          case f :: Nil => Some(f)
+          case _        => None
+        }
+      }
+
+      direct.orElse(soleParent)
+    }
 }

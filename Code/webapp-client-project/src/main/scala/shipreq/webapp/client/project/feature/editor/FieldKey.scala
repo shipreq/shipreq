@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.feature.editor
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.Reusability
 import scala.reflect.ClassTag
-import scalaz.~~>
+import scalaz.{-\/, \/-, ~~>}
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
@@ -40,7 +40,7 @@ object FieldKey {
 
   sealed trait ForCodeGroup extends FieldKey {
     override final type Args = Unit
-    def foldCG[F[_, _]](f: FoldForCodeGroup[F]): F[Args, Change];
+    def foldCG[F[_, _]](f: FoldForCodeGroup[F]): F[Args, Change]
   }
 
   sealed trait ForGenericReq extends ForSomeReq {
@@ -100,6 +100,7 @@ object FieldKey {
     override type Change = UseCaseStepGD.NonEmptyValues
     def foldUCS[F[_, _]](f: FoldForUseCaseSteps[F]): F[Args, Change] = f.step(this)
   }
+
   object UseCaseStep {
     /**
       * @param shiftRunner   so users can shift the step left/right via keyboard shortcuts.
@@ -122,6 +123,22 @@ object FieldKey {
 
   implicit val reusability: Reusability[FieldKey] =
     Reusability.byUnivEq
+
+  def customField(id: CustomFieldId): FieldKey =
+    id match {
+      case i: CustomField.Text.Id        => CustomTextField(i)
+      case i: CustomField.Tag.Id         => Tags(Some(i))
+      case i: CustomField.Implication.Id => Implications(-\/(i))
+    }
+
+  def impliedBy = Implications(\/-(Backwards))
+
+  def reqTextLoc(reqId: ReqId, loc: ReqTextLoc): FieldKey =
+    loc match {
+      case ReqTextLoc.Title                    => reqTitle(reqId)
+      case ReqTextLoc.CustomTextField(fieldId) => CustomTextField(fieldId)
+      case ReqTextLoc.UseCaseStep(stepId)      => UseCaseStep(stepId)
+    }
 
   def reqTitle(id: ReqId): ForSomeReq =
     id match {

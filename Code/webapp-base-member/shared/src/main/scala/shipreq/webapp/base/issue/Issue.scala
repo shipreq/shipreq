@@ -56,19 +56,19 @@ object Issue {
                                    tagGroupId: TagGroupId,
                                    locs      : NonEmptySet[ReqTagLoc]) extends Issue(C.ConflictingTags)
 
-  final case class DeadIssueTagInRcg(rcg: LiveCodeGroup,
+  final case class DeadIssueTagInRcg(rcg  : LiveCodeGroup,
                                      issue: Text.CodeGroupTitle.Issue) extends Issue(C.DeadIssueTag)
 
-  final case class DeadIssueTagInReq(req: Req,
+  final case class DeadIssueTagInReq(req  : Req,
                                      loc  : ReqTextLoc,
                                      issue: Atom.AnyIssue) extends Issue(C.DeadIssueTag)
 
   final case class DeadRefInRcg(rcg: LiveCodeGroup,
-                                ref  : ContentRef) extends Issue(C.DeadReference)
+                                ref: ContentRef) extends Issue(C.DeadReference)
 
   final case class DeadRefInReq(req: Req,
-                                loc  : ReqTextLoc,
-                                ref  : ContentRef) extends Issue(C.DeadReference)
+                                loc: ReqTextLoc,
+                                ref: ContentRef) extends Issue(C.DeadReference)
 
   final case class DeadTag(req: Req,
                            loc: ReqTextLoc,
@@ -78,10 +78,10 @@ object Issue {
 
   final case class ImplicationRequired(req: Req) extends Issue(C.ImplicationRequired)
 
-  final case class IssueTagInRcg(rcg: LiveCodeGroup,
+  final case class IssueTagInRcg(rcg  : LiveCodeGroup,
                                  issue: Text.CodeGroupTitle.Issue) extends Issue(C.IssueTag)
 
-  final case class IssueTagInReq(req: Req,
+  final case class IssueTagInReq(req  : Req,
                                  loc  : ReqTextLoc,
                                  issue: Atom.AnyIssue) extends Issue(C.IssueTag)
 
