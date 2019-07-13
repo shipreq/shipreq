@@ -9,6 +9,12 @@ object ConsolidatedSeq {
     def apply[A](doConsolidate: Candidate[A] => Boolean): Dsl[A] =
       new Dsl(doConsolidate)
 
+    def cmp[A](doConsolidate: (A, A) => Boolean): Dsl[A] =
+      apply(c => doConsolidate(c.prev, c.cur))
+
+    def consolidateByRef[A <: AnyRef] =
+      apply[A](c => c.prev eq c.cur)
+
     def consolidateByUnivEq[A: UnivEq] =
       apply[A](c => c.prev == c.cur)
 
@@ -16,6 +22,9 @@ object ConsolidatedSeq {
       def apply[B](groupHead    : Group[A] => B,
                    groupTail    : Group[A] => Option[B] = (_: Any) => None): Logic[A, B] =
         new Logic(doConsolidate, groupHead, groupTail)
+
+      def contramap[B](f: B => A): Dsl[B] =
+        new Dsl(c => doConsolidate(c.map(f)))
     }
   }
 

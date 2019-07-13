@@ -5,6 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+import scalaz.{-\/, \/-}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.sort.FusedSorters
 import shipreq.webapp.base.ui.semantic
@@ -49,6 +50,25 @@ object Table {
       val rows            = sortFn(p.issues.vector.iterator.map(toRow)).iterator.toVector
       val csIssueCategory = TableRow.consolidateIssueCategories(rows.iterator.map(_.issueCategoryDesc))
       val csIssueClass    = TableRow.consolidateIssueClasses   (rows.iterator.map(_.issueClassDesc))
+
+      private def iterateByGroup[A, B](f: Row => A)(g: (Int, A) => B): Iterator[B] =
+        rows.indices.iterator.map { i =>
+          val group = csIssueClass.group(i)
+          val value = f(rows(i))
+          g(group, value)
+        }
+
+      val csIds = TableRow.Id.consolidate(iterateByGroup({
+        case i: Row.ForReq    => Some(\/-(i.req.id))
+        case i: Row.ForRcg    => Some(-\/(i.code))
+        case _: Row.ForConfig => None
+      })(TableRow.Id.apply))
+
+      val csTitles = TableRow.consolidateTitle(iterateByGroup({
+        case i: Row.ForReq    => i.req.title
+        case i: Row.ForRcg    => i.rcg.title
+        case _: Row.ForConfig => Vector.empty
+      })((_, _)))
     }
   }
 
@@ -77,7 +97,10 @@ object Table {
           p.pw,
           pubidFormat,
           issueCategory = csIssueCategory(rowIdx),
-          issueClass    = csIssueClass(rowIdx))
+          issueClass    = csIssueClass(rowIdx),
+          idBase        = csIds(rowIdx),
+          titleBase     = csTitles(rowIdx),
+        )
 
         val key = rowIdx // TODO choose better row key
         TableRow.Component.withKey(key)(rowProps)

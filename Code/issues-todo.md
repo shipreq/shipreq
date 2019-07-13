@@ -40,7 +40,5 @@ functionality
   * filter
   * inline editing
   * KB navigation
-  * consolidate ID column
-  * consolidate Title column
 * ProjectWidgets
   * conflicting tags
