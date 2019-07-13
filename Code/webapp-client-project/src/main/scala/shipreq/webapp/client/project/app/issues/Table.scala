@@ -16,77 +16,81 @@ import shipreq.webapp.client.project.widgets.ProjectWidgets
 
 object Table {
 
-  final case class Props(project: Project,
-                         pw: ProjectWidgets.NoCtx,
-                         fieldNames: FieldId ~=> String) {
-    @inline def render: VdomElement = Component(this)
+  final case class StaticProps(pxProject       : Px[Project],
+                               pxProjectWidgets: Px[ProjectWidgets.NoCtx],
+                               pxFieldNameFn   : Px[FieldId ~=> String]) {
+
+    val pxPubidFormat = pxProjectWidgets.map(_.PubidFormat(Plain, _ => *.pubidColumnValue, titleFn = _ => None))
+    val pxRenderPrep  = pxProject.map(new RenderPrep(_))
+
+    val component = ScalaComponent.builder[Props]("Table")
+      .backend(new Backend(this, _))
+      .renderBackend
+      .configure(shouldComponentUpdate)
+      .build
   }
 
-  //implicit val reusabilityProps: Reusability[Props] =
-  //  Reusability.caseClass
+  final case class Props()
 
-  private object Internal {
+  implicit val reusabilityProps: Reusability[Props] =
+    Reusability.derive
 
-    val columns: NonEmptyVector[Column] =
-      NonEmptyVector(
-        Column.IssueCategory,
-        Column.IssueClass,
-        Column.Id,
-        Column.Title,
-        Column.FieldName,
-        Column.FieldEditor,
-        Column.Actions,
-      )
-
-    private val sorter = FusedSorters(
-      Sorter.issueCategorySorter,
-      Sorter.issueClassSorter,
-      Sorter.idSorter
-      // TODO LooseIssueText | Field
+  private val columns: NonEmptyVector[Column] =
+    NonEmptyVector(
+      Column.IssueCategory,
+      Column.IssueClass,
+      Column.Id,
+      Column.Title,
+      Column.FieldName,
+      Column.FieldEditor,
+      Column.Actions,
     )
 
-    final class RenderPrep(p: Project) {
-      private val sortFn  = sorter.result(new Sorter.Setup(p))
-      private val toRow   = Row.fromIssue(p)
-      val rows            = sortFn(p.issues.vector.iterator.map(toRow)).iterator.toVector
-      val csIssueCategory = TableRow.consolidateIssueCategories(rows.iterator.map(_.issueCategoryDesc))
-      val csIssueClass    = TableRow.consolidateIssueClasses   (rows.iterator.map(_.issueClassDesc))
+  private val sorter = FusedSorters(
+    Sorter.issueCategorySorter,
+    Sorter.issueClassSorter,
+    Sorter.idSorter
+    // TODO LooseIssueText | FieldDesc
+  )
 
-      private def groupedRows[A, B](groups: ConsolidatedSeq[Any], f: Row => A)(g: (Int, A) => B): Iterator[B] =
-        rows.indices.iterator.map { i =>
-          val group = groups.group(i)
-          val value = f(rows(i))
-          g(group, value)
-        }
+  final class RenderPrep(p: Project) {
+    private val sortFn  = sorter.result(new Sorter.Setup(p))
+    private val toRow   = Row.fromIssue(p)
+    val rows            = sortFn(p.issues.vector.iterator.map(toRow)).iterator.toVector
+    val csIssueCategory = TableRow.consolidateIssueCategories(rows.iterator.map(_.issueCategoryDesc))
+    val csIssueClass    = TableRow.consolidateIssueClasses   (rows.iterator.map(_.issueClassDesc))
 
-      val csIds = TableRow.Id.consolidate(groupedRows(csIssueClass, {
-        case i: Row.ForReq    => Some(\/-(i.req.id))
-        case i: Row.ForRcg    => Some(-\/(i.code))
-        case _: Row.ForConfig => None
-      })(TableRow.Id.apply))
+    private def groupedRows[A, B](groups: ConsolidatedSeq[Any], f: Row => A)(g: (Int, A) => B): Iterator[B] =
+      rows.indices.iterator.map { i =>
+        val group = groups.group(i)
+        val value = f(rows(i))
+        g(group, value)
+      }
 
-      val csTitles = TableRow.consolidateTitle(groupedRows(csIds, {
-        case i: Row.ForReq    => i.req.title
-        case i: Row.ForRcg    => i.rcg.title
-        case _: Row.ForConfig => Vector.empty
-      })((_, _)))
-    }
+    val csIds = TableRow.Id.consolidate(groupedRows(csIssueClass, {
+      case i: Row.ForReq    => Some(\/-(i.req.id))
+      case i: Row.ForRcg    => Some(-\/(i.code))
+      case _: Row.ForConfig => None
+    })(TableRow.Id.apply))
+
+    val csTitles = TableRow.consolidateTitle(groupedRows(csIds, {
+      case i: Row.ForReq    => i.req.title
+      case i: Row.ForRcg    => i.rcg.title
+      case _: Row.ForConfig => Vector.empty
+    })((_, _)))
   }
 
-  final class Backend($: BackendScope[Props, Unit]) {
-    import Internal._
-
-    private val pxProject        = Px.props($).map(_.project).withReuse.autoRefresh
-    private val pxProjectWidgets = Px.props($).map(_.pw).withReuse.autoRefresh
-    private val pxPubidFormat    = pxProjectWidgets.map(_.PubidFormat(Plain, _ => *.pubidColumnValue, titleFn = _ => None))
-    private val pxRenderPrep     = pxProject.map(new RenderPrep(_))
+  final class Backend(static: StaticProps, $: BackendScope[Props, Unit]) {
+    import static.{component => _, _}
 
     def render(p: Props): VdomElement = {
+      val fieldNames = pxFieldNameFn.value()
       val pubidFormat = pxPubidFormat.value()
+      val pw = pxProjectWidgets.value()
       val rp = pxRenderPrep.value()
       import rp._
 
-      val header = TableHeader.Props(columns, p.fieldNames).render
+      val header = TableHeader.Props(columns, fieldNames).render
 
       val body = rows.indices.toVdomArray { rowIdx =>
 
@@ -95,7 +99,7 @@ object Table {
         val rowProps = TableRow.Props(
           row,
           columns,
-          p.pw,
+          pw,
           pubidFormat,
           issueCategory = csIssueCategory(rowIdx),
           issueClass    = csIssueClass(rowIdx),
@@ -113,9 +117,4 @@ object Table {
         <.tbody(body))
     }
   }
-
-  val Component = ScalaComponent.builder[Props]("Table")
-    .renderBackend[Backend]
-    //.configure(Reusability.shouldComponentUpdate)
-    .build
 }

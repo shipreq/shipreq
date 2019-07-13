@@ -4,15 +4,14 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 import shipreq.webapp.base.lib.DataReusability._
 
 object IssuesPage {
 
-  final case class StaticProps(pxProject: Px[Project],
-                               pxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
+  final case class StaticProps(pxProject       : Px[Project],
+                               pxProjectWidgets: Px[ProjectWidgets.NoCtx]) {
 
     val pxConfig      = pxProject.map(_.config).withReuse
     val pxFieldNameFn = pxConfig.map(cfg => Reusable.byRef(Field.nameByIdFromProjectConfig(cfg)))
@@ -20,10 +19,10 @@ object IssuesPage {
     val component = ScalaComponent.builder[Props]("IssuesPage")
       .backend(new Backend(this, _))
       .renderBackend
-      //.configure(Reusability.shouldComponentUpdate)
+      .configure(shouldComponentUpdate)
       .build
 
-    @inline def render(p: Props): VdomElement = component(p)
+    val table = Table.StaticProps(pxProject, pxProjectWidgets, pxFieldNameFn)
   }
 
   /*
@@ -38,11 +37,11 @@ object IssuesPage {
 
   final case class Props(editor: EditorFeature.ReadWrite.ForProject)
 
-  //implicit val reusabilityProps: Reusability[Props] =
-  //  Reusability.caseClass
+  implicit val reusabilityProps: Reusability[Props] =
+    Reusability.derive
 
   final class Backend(static: StaticProps, $: BackendScope[Props, Unit]) {
-    import static.{component => _, render => _, _}
+    import static.{component => _, _}
 
     def render(p: Props): VdomElement = {
       val project = pxProject.value()
@@ -60,14 +59,12 @@ object IssuesPage {
 
     private def renderContent(p: Project) = {
       val issues = p.issues
-      val pw = pxProjectWidgets.value()
-      val fieldNameFn = pxFieldNameFn.value()
 
       <.div(
         NewIssue.render,
         Summary.Props(issues.stats, 0).render,
         // TODO Table config row (sort | filter | cols)
-        Table.Props(p, pw, fieldNameFn).render)
+        table.component(Table.Props()))
     }
   }
 }

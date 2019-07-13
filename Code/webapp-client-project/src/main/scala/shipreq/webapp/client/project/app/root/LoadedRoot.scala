@@ -116,7 +116,8 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
       ReqTablePage.StaticProps(
         $ zoomStateL State.reqTable,
         pxProject,
-        pxTextSearch, pxProjectWidgets,
+        pxTextSearch,
+        pxProjectWidgets,
         reqDetailRC,
         sspUpdateContent,
         sspUpdateSavedViews,
@@ -211,7 +212,7 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
 
         case Page.Issues =>
           val p = issues.IssuesPage.Props(editRW)
-          issuesPage.render(p)
+          issuesPage.component(p)
 
         case Page.CfgFields =>
           cfg.fields.CfgFields.Props(sspFieldMod, global, filterDeadSS).component
