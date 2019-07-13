@@ -87,14 +87,15 @@ const unusedTransitions = [
 ];
 
 const manualRemovals = [
+  s => /\.ribbon/  .test(s),
   s => /\.inverted/.test(s) && !/\.(?:dimmer|segment|menu)/.test(s),
-  s => /\.compact/.test(s) && !/\.(?:table)/.test(s),
-  s => /\.black/.test(s) && !/\.(?:button)/.test(s),
-  s => /\.blue/.test(s) && !/\.(?:button|card)/.test(s),
-  s => /\.green/.test(s) && !/\.(?:button)/.test(s),
-  s => /\.grey/.test(s) && !/\.(?:icon)/.test(s),
-  s => /\.red/.test(s) && !/\.(?:label|button|icon)/.test(s),
-  s => /\.yellow/.test(s) && !/\.(?:card|icon)/.test(s),
+  s => /\.compact/ .test(s) && !/\.(?:table)/              .test(s),
+  s => /\.black/   .test(s) && !/\.(?:button)/             .test(s),
+  s => /\.blue/    .test(s) && !/\.(?:label|button|card)/  .test(s),
+  s => /\.green/   .test(s) && !/\.(?:button)/             .test(s),
+  s => /\.grey/    .test(s) && !/\.(?:icon)/               .test(s),
+  s => /\.red/     .test(s) && !/\.(?:label|button|icon)/  .test(s),
+  s => /\.yellow/  .test(s) && !/\.(?:card|icon)/          .test(s),
 ];
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████

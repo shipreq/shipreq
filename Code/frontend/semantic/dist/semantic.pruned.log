@@ -2055,16 +2055,16 @@
     46 [keep  ] .ui.left.corner.label .icon
     49 [keep  ] .ui.segment>.ui.corner.label
     55 [keep  ] .ui.segment>.ui.left.corner.label
-   196 [keep  ] .ui.ribbon.label
-   224 [keep  ] .ui.ribbon.label:after
-   114 [keep  ] .ui.ribbon.label
+   196 [remove] .ui.ribbon.label
+   224 [remove] .ui.ribbon.label:after
+   114 [remove] .ui.ribbon.label
    116 [keep  ] .ui[class*="right ribbon"].label
    157 [keep  ] .ui[class*="right ribbon"].label
    155 [keep  ] .ui[class*="right ribbon"].label:after
-    81 [keep  ] .ui.card .image>.ribbon.label,.ui.image>.ribbon.label
-    86 [keep  ] .ui.card .image>.ui.ribbon.label,.ui.image>.ui.ribbon.label
+    81 [remove] .ui.card .image>.ribbon.label,.ui.image>.ribbon.label
+    86 [remove] .ui.card .image>.ui.ribbon.label,.ui.image>.ui.ribbon.label
    146 [keep  ] .ui.card .image>.ui[class*="right ribbon"].label,.ui.image>.ui[class*="right ribbon"].label
-    62 [keep  ] .ui.table td>.ui.ribbon.label
+    62 [remove] .ui.table td>.ui.ribbon.label
    104 [keep  ] .ui.table td>.ui[class*="right ribbon"].label
    165 [keep  ] .ui.attached.label,.ui[class*="top attached"].label
     98 [keep  ] .ui[class*="bottom attached"].label
@@ -2084,7 +2084,7 @@
    123 [keep  ] .ui.red.label,.ui.red.labels .label
    136 [keep  ] .ui.red.labels .label:hover,a.ui.red.label:hover
     87 [keep  ] .ui.red.corner.label,.ui.red.corner.label:hover
-    52 [keep  ] .ui.red.ribbon.label
+    52 [remove] .ui.red.ribbon.label
    107 [keep  ] .ui.basic.red.label
    149 [keep  ] .ui.basic.red.labels a.label:hover,a.ui.basic.red.label:hover
    129 [remove] .ui.orange.label,.ui.orange.labels .label
@@ -2117,12 +2117,12 @@
     53 [remove] .ui.teal.ribbon.label
    108 [remove] .ui.basic.teal.label
    151 [remove] .ui.basic.teal.labels a.label:hover,a.ui.basic.teal.label:hover
-   125 [remove] .ui.blue.label,.ui.blue.labels .label
-   138 [remove] .ui.blue.labels .label:hover,a.ui.blue.label:hover
-    89 [remove] .ui.blue.corner.label,.ui.blue.corner.label:hover
+   125 [keep  ] .ui.blue.label,.ui.blue.labels .label
+   138 [keep  ] .ui.blue.labels .label:hover,a.ui.blue.label:hover
+    89 [keep  ] .ui.blue.corner.label,.ui.blue.corner.label:hover
     53 [remove] .ui.blue.ribbon.label
-   108 [remove] .ui.basic.blue.label
-   151 [remove] .ui.basic.blue.labels a.label:hover,a.ui.basic.blue.label:hover
+   108 [keep  ] .ui.basic.blue.label
+   151 [keep  ] .ui.basic.blue.labels a.label:hover,a.ui.basic.blue.label:hover
    129 [remove] .ui.violet.label,.ui.violet.labels .label
    142 [remove] .ui.violet.labels .label:hover,a.ui.violet.label:hover
     93 [remove] .ui.violet.corner.label,.ui.violet.corner.label:hover
