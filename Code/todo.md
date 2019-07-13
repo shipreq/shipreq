@@ -97,6 +97,8 @@ Phase 2B
 
 ### Other
 
+* Flow syntax missing from use case step help
+
 * Stop generating codecs from macros
 
 * Cell copy-and-paste on Req{Table,Detail}
