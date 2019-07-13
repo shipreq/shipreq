@@ -264,6 +264,9 @@ object UseCaseStep {
     val step: UseCaseStep =
       useCases.needStep(id)
 
+    def label(fmt: UseCaseStepLabelFmt): String =
+      field.stepLabel(uc.pubid.pos, ploc, fmt)
+
     val live: Live =
       UseCaseStep.live(uc, ploc)
 

@@ -16,7 +16,7 @@ import shipreq.webapp.client.project.widgets.ProjectWidgets
 object Table {
 
   final case class Props(project: Project,
-                         pw: ProjectWidgets.AnyCtx,
+                         pw: ProjectWidgets.NoCtx,
                          fieldNames: FieldId ~=> String) {
     @inline def render: VdomElement = Component(this)
   }

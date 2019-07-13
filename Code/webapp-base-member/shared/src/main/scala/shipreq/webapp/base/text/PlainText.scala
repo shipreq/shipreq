@@ -166,14 +166,13 @@ object PlainText {
     }
 
     def useCaseStepLabel(focus: UseCaseStep.Focus): String = {
-      import focus._
       val fmt = gctx match {
      // case ProjectText.Context.Req(i: UseCaseId) if i ==* uc.id => UseCaseStepLabelFmt.    `.m` // looks too confusing
         case ProjectText.Context.Req(_: UseCaseId)                => UseCaseStepLabelFmt.   `N.m`
         case ProjectText.Context.None
            | ProjectText.Context.Req(_: GenericReqId)             => UseCaseStepLabelFmt.`UC-N.m`
       }
-      field.stepLabel(uc.pubid.pos, ploc, fmt)
+      focus.label(fmt)
     }
 
     private def useCaseStepLabelById(id: UseCaseStepId): String =

@@ -20,8 +20,8 @@ object TableRow {
 
   final case class Props(row          : Row,
                          columns      : NonEmptyVector[Column],
-                         pw           : ProjectWidgets.AnyCtx,
-                         pubidFormat  : ProjectWidgets.AnyCtx#PubidFormat,
+                         pw           : ProjectWidgets.NoCtx,
+                         pubidFormat  : ProjectWidgets.NoCtx#PubidFormat,
                          issueCategory: Option[Reusable[TD]],
                          issueClass   : Option[Reusable[TD]],
                          idBase       : Option[Reusable[TD]],
@@ -86,7 +86,7 @@ object TableRow {
           p.issueClass.foreach(cells += _.value)
 
         case Column.FieldName =>
-          addTD(row.fieldKeyOption.fold("")(_.toString))
+          addTD(row.fieldOption.fold(na)(_.desc))
 
         case Column.FieldEditor =>
           addTD("TODO") // TODO ==========================
