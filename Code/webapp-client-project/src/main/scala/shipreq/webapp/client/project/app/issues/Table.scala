@@ -11,17 +11,18 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.sort.FusedSorters
 import shipreq.webapp.base.ui.semantic
 import shipreq.webapp.client.project.app.Style.{issues => *}
-import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.feature.RenderFeature
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 
 object Table {
 
   final case class StaticProps(pxProject       : Px[Project],
+                               pxRenderFeature : Px[RenderFeature.NoCtx.ForProject],
                                pxProjectWidgets: Px[ProjectWidgets.NoCtx],
                                pxFieldNameFn   : Px[FieldId ~=> String]) {
 
     val pxPubidFormat = pxProjectWidgets.map(_.PubidFormat(Plain, _ => *.pubidColumnValue, titleFn = _ => None))
-    val pxRenderPrep  = pxProject.map(new RenderPrep(_))
+    val pxRenderPrep  = Px.apply2(pxProject, pxRenderFeature)(new RenderPrep(_, _))
 
     val component = ScalaComponent.builder[Props]("Table")
       .backend(new Backend(this, _))
@@ -53,9 +54,9 @@ object Table {
     // TODO LooseIssueText | FieldDesc
   )
 
-  final class RenderPrep(p: Project) {
+  final class RenderPrep(p: Project, rf: RenderFeature.NoCtx.ForProject) {
     private val sortFn  = sorter.result(new Sorter.Setup(p))
-    private val toRow   = Row.fromIssue(p)
+    private val toRow   = Row.fromIssue(p, rf)
     val rows            = sortFn(p.issues.vector.iterator.map(toRow)).iterator.toVector
     val csIssueCategory = TableRow.consolidateIssueCategories(rows.iterator.map(_.issueCategoryDesc))
     val csIssueClass    = TableRow.consolidateIssueClasses   (rows.iterator.map(_.issueClassDesc))
@@ -86,7 +87,6 @@ object Table {
     def render(p: Props): VdomElement = {
       val fieldNames = pxFieldNameFn.value()
       val pubidFormat = pxPubidFormat.value()
-      val pw = pxProjectWidgets.value()
       val rp = pxRenderPrep.value()
       import rp._
 
@@ -99,7 +99,6 @@ object Table {
         val rowProps = TableRow.Props(
           row,
           columns,
-          pw,
           pubidFormat,
           issueCategory = csIssueCategory(rowIdx),
           issueClass    = csIssueClass(rowIdx),

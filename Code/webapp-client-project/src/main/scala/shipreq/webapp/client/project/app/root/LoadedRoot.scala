@@ -21,7 +21,7 @@ import shipreq.webapp.client.project.app.reqtable.ReqTablePage
 import shipreq.webapp.client.project.app.cfg.shared.Usage
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.widgets.{ImplicationGraph, ProjectWidgets}
+import shipreq.webapp.client.project.widgets.{ImplicationGraph, ProjectWidgets, ViewReqCache, ViewReqDataCache}
 import AsyncFeature.Implicits._
 import LoadedRoot._
 import Routes.{Page, RouterCtl}
@@ -64,6 +64,15 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
 
     private val pxProjectWidgets =
       Reusable byRef Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
+
+    private val pxViewReqDataCache =
+      pxProject.map(ViewReqDataCache.apply)
+
+    private val pxViewReqCache =
+      Px.apply2(pxViewReqDataCache, pxProjectWidgets)(ViewReqCache.apply)
+
+    private val pxRenderFeature =
+      Px.apply3(pxProject, pxViewReqCache, pxProjectWidgets)(RenderFeature.prepare)
 
     private val pxCreateEditability =
       pxProject.map(p => CreateFeature.Editability(p.config))
@@ -110,6 +119,7 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
 
     private val issuesPage = issues.IssuesPage.StaticProps(
       pxProject,
+      pxRenderFeature,
       pxProjectWidgets)
 
     private val reqTable = ReqTablePage(

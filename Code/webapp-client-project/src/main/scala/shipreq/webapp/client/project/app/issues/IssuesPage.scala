@@ -4,13 +4,14 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.project.feature.EditorFeature
+import shipreq.webapp.client.project.feature.{EditorFeature, RenderFeature}
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 import shipreq.webapp.base.lib.DataReusability._
 
 object IssuesPage {
 
   final case class StaticProps(pxProject       : Px[Project],
+                               pxRenderFeature : Px[FilterDead => RenderFeature.NoCtx.ForProject],
                                pxProjectWidgets: Px[ProjectWidgets.NoCtx]) {
 
     val pxConfig      = pxProject.map(_.config).withReuse
@@ -22,7 +23,11 @@ object IssuesPage {
       .configure(shouldComponentUpdate)
       .build
 
-    val table = Table.StaticProps(pxProject, pxProjectWidgets, pxFieldNameFn)
+    val table = Table.StaticProps(
+      pxProject,
+      pxRenderFeature.map(_(HideDead)),
+      pxProjectWidgets,
+      pxFieldNameFn)
   }
 
   /*

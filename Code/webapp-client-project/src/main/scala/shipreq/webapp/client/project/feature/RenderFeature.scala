@@ -15,6 +15,11 @@ object RenderFeature {
   type FieldKey = editor.FieldKey
   val  FieldKey = editor.FieldKey
 
+  def prepare[Ctx <: PCtx](project     : Project,
+                           viewReqCache: ViewReqCache[Ctx],
+                           pw          : ProjectWidgets[Ctx]): FilterDead => ForProject[Ctx] =
+    FilterDead.memo(ForProject(project, _, viewReqCache, pw))
+
   final case class ForProject[Ctx <: PCtx](private[RenderFeature] project     : Project,
                                            private[RenderFeature] filterDead  : FilterDead,
                                            private[RenderFeature] viewReqCache: ViewReqCache[Ctx],
@@ -41,13 +46,13 @@ object RenderFeature {
     }
 
     def forGenericReq(id: GenericReqId): ForGenericReq[Ctx] =
-      forData1[ReqId, FieldKey.ForGenericReq](id)(viewReq(id).editable)
+      forReq(id)
 
-    def forReq(id: ReqId): ForUseCase[Ctx] =
+    def forReq(id: ReqId): ForReq[Ctx] =
       forData1[ReqId, FieldKey.ForSomeReq](id)(viewReq(id).editable)
 
     def forUseCase(id: UseCaseId): ForUseCase[Ctx] =
-      forData1[ReqId, FieldKey.ForUseCase](id)(viewReq(id).editable)
+      forReq(id)
 
     val forUseCaseSteps: ForUseCaseSteps[Ctx] =
       forData0[FieldKey.UseCaseStep](fk => {

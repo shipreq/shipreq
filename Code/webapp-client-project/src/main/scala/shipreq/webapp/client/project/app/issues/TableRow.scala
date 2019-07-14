@@ -12,6 +12,7 @@ import shipreq.webapp.base.data.{ReqCode, ReqId}
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.client.project.app.Style.{issues => *}
+import shipreq.webapp.client.project.feature.editor.FieldKey
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 
@@ -20,7 +21,6 @@ object TableRow {
 
   final case class Props(row          : Row,
                          columns      : NonEmptyVector[Column],
-                         pw           : ProjectWidgets.NoCtx,
                          pubidFormat  : ProjectWidgets.NoCtx#PubidFormat,
                          issueCategory: Option[Reusable[TD]],
                          issueClass   : Option[Reusable[TD]],
@@ -70,7 +70,7 @@ object TableRow {
   val consolidateTitle = consolidateText(renderGroupBase(Column.Title))
 
   private def render(p: Props): VdomElement = {
-    import p.{row, pw, pubidFormat}
+    import p.{row, pubidFormat}
 
     val cells = VdomArray.empty()
 
@@ -98,7 +98,7 @@ object TableRow {
           for (base <- p.idBase) {
             val c = row match {
               case r: Row.ForReq    => pubidFormat(r.req)
-              case r: Row.ForRcg    => pw.reqCode(r.code)
+              case r: Row.ForRcg    => r.renderer(FieldKey.Code)
               case _: Row.ForConfig => na
             }
             cells += base(c)
@@ -107,9 +107,10 @@ object TableRow {
         case Column.Title =>
           for (base <- p.titleBase) {
             val c = row match {
-              case r: Row.ForReq    => r.viewReq(pw).title
-              case r: Row.ForRcg    => pw.codeGroupTitle(r.rcg)
-              case _: Row.ForConfig => na
+              case r: Row.ForGenericReq => r.renderer(FieldKey.GenericReqTitle)
+              case r: Row.ForUseCase    => r.renderer(FieldKey.UseCaseTitle)
+              case r: Row.ForRcg        => r.renderer(FieldKey.CodeGroupTitle)
+              case _: Row.ForConfig     => na
             }
             cells += base(c)
           }

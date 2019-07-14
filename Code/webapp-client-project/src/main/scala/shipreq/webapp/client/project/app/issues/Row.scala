@@ -4,7 +4,7 @@ import japgolly.scalajs.react.Reusability
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.issue._
 import shipreq.webapp.base.UiText.{Issues => UI}
-import shipreq.webapp.client.project.widgets.ViewReq
+import shipreq.webapp.client.project.feature.RenderFeature
 
 sealed trait Row {
   val issue: Issue
@@ -16,16 +16,24 @@ sealed trait Row {
 }
 
 object Row {
-  final case class ForConfig(issue         : Issue,
-                             issueClassDesc: String) extends Row {
-    override def fieldOption = None
+
+  sealed trait ForReq extends Row {
+    val req: Req
   }
 
-  final case class ForReq(issue         : Issue,
-                          issueClassDesc: String,
-                          req           : Req,
-                          field         : IssueField,
-                          viewReq       : ViewReq.Data) extends Row {
+  final case class ForGenericReq(issue         : Issue,
+                                 issueClassDesc: String,
+                                 req           : GenericReq,
+                                 field         : IssueField,
+                                 renderer      : RenderFeature.NoCtx.ForGenericReq) extends ForReq {
+    override val fieldOption = Some(field)
+  }
+
+  final case class ForUseCase(issue         : Issue,
+                              issueClassDesc: String,
+                              req           : UseCase,
+                              field         : IssueField,
+                              renderer      : RenderFeature.NoCtx.ForUseCase) extends ForReq {
     override val fieldOption = Some(field)
   }
 
@@ -33,23 +41,32 @@ object Row {
                           issueClassDesc: String,
                           rcg           : LiveCodeGroup,
                           fieldOption   : Option[IssueField],
-                          code          : ReqCode.Value) extends Row
+                          code          : ReqCode.Value,
+                          renderer      : RenderFeature.NoCtx.ForCodeGroup) extends Row
+
+  final case class ForConfig(issue         : Issue,
+                             issueClassDesc: String) extends Row {
+    override def fieldOption = None
+  }
 
   implicit def reusability: Reusability[Row] =
     Reusability.byRef
 
-  def fromIssue(p: Project): Issue => Row = {
+  def  fromIssue(p: Project, rf: RenderFeature.NoCtx.ForProject): Issue => Row = {
     implicit val cfg = p.config
     val customFieldName = CustomField.nameP(p)
 
-    def forReq(i: Issue, desc: String, r: Req, fk: IssueField) =
-      ForReq(i, desc, r, fk, ViewReq.Data.fromProject(r, p, HideDead))
+    def forReq(i: Issue, desc: String, req: Req, fk: IssueField) =
+      req match {
+        case r: GenericReq => ForGenericReq(i, desc, r, fk, rf.forGenericReq(r.id))
+        case r: UseCase    => ForUseCase   (i, desc, r, fk, rf.forUseCase   (r.id))
+      }
 
     def forReqAndLoc(i: Issue, desc: String, r: Req, loc: ReqTextLoc) =
       forReq(i, desc, r, IssueField.reqTextLoc(r.id, loc, p))
 
     def forRcg(i: Issue, desc: String, g: LiveCodeGroup, fk: Option[IssueField]) =
-      ForRcg(i, desc, g, fk, p.content.reqCodes.reqCode(g.id))
+      ForRcg(i, desc, g, fk, p.content.reqCodes.reqCode(g.id), rf.forCodeGroup(g))
 
     {
       case i: Issue.BlankCustomField =>
