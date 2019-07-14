@@ -42,3 +42,4 @@ functionality
   * KB navigation
 * ProjectWidgets
   * conflicting tags
+* Resolve TODOs in new code
