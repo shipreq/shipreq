@@ -72,9 +72,9 @@ object SelectionCtrls {
         if (remaining contains id) {
           remaining -= id
           row match {
-            case Row.ForReq(r, Live, _, _, _) =>
+            case Row.ForReq(r, Live, _, _, _, _) =>
               delRq :+= r
-            case Row.ForReq(r, Dead, _, _, _) =>
+            case Row.ForReq(r, Dead, _, _, _, _) =>
               if (r.allowLiveChange(reqTypes) is Allow)
                 resRq :+= r
             case r: Row.ForCodeGroup =>

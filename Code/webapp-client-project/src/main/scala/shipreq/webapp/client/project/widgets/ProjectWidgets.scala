@@ -348,17 +348,22 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
       <.span(s"${rt.mnemonic.value}: ${rt.name}")
     }
 
-  private val tagPlain: ApplicableTagId => VdomElement =
-    memo { id =>
-      val tag = project.config.tags.atag(id)
-      tagWithoutStyle(Plain, tag)(*.tag(tag.live))
+  private val tagPlain: Validity => ApplicableTagId => VdomElement =
+    Validity.memo { validity =>
+      memo { id =>
+        val tag = project.config.tags.atag(id)
+        tagWithoutStyle(Plain, tag)(*.tag((tag.live, validity)))
+      }
     }
 
-  def tagList(ids: Vector[ApplicableTagId], live: Live, mandatory: Mandatory): VdomElement =
+  def tagList(ids      : Vector[ApplicableTagId],
+              live     : Live,
+              mandatory: Mandatory,
+              validity : ApplicableTagId => Validity): VdomElement =
     if (ids.isEmpty && live.is(Live) && mandatory.is(Mandatory))
       whenBlankButMandatory
     else
-      renderVector(ids, sepSpace)(tagPlain)
+      renderVector(ids, sepSpace)(id => tagPlain(validity(id))(id))
 
   def useCaseStepTextAndMaybeInvalidFlow[C[x] <: Traversable[x]](s: UseCaseStepFlowText.TextAndFlow[AnyOptional, C[String \/ UseCaseStepId]],
                                                                  l: Live): VdomTag = {

@@ -328,6 +328,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
         codes            = row.exp.reqCodes,
         generalTags      = row.mv.tags,
         customTags       = row.exp.cfTags.getOrElse(_, Vector.empty),
+        conflictingTags  = row.conflictingTags,
         generalImps      = row.exp.implications.apply,
         customImps       = row.exp.cfImps.getOrElse(_, Vector.empty),
         pastPubids       = SortedSet.empty[ExternalPubid], // ReqTable doesn't display pastPubids

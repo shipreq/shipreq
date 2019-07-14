@@ -47,8 +47,8 @@ object Style extends StyleSheet.Inline {
   private val hasErrorBackground =
     backgroundColor(c"#fee")
 
-  private val hasErrorColor = style(
-    color(c"#c00"))
+  private val hasErrorColor =
+    color(c"#c00")
 
   private val errorRedOnRed = mixin(
     hasErrorColor,
@@ -693,15 +693,18 @@ object Style extends StyleSheet.Inline {
       mixinIf(live is Dead)(&.not(_.hover)(textDecoration := ^.lineThrough)),
       hoverShowsInfo)
 
-    private def tagLabelColour(live: Live) = live match {
-      case Live => "blue"
-      case Dead => "grey"
+    private val tagLabelColour: ((Live, Validity)) => String = {
+      case (Live, Valid  ) => "blue"
+      case (Live, Invalid) => ""
+      case (Dead, _      ) => "grey"
     }
 
-    val tag = styleF(D.live)(live => styleS(
-      tagBase(live),
+    @UsesSemanticUiManually
+    val tag = styleF(D.`live * validity`)(lv => styleS(
+      tagBase(lv._1),
       padding(4 px, 6 px).important,
-      addClassName(s"ui label ${tagLabelColour(live)}")))
+      mixinIf(lv._2 is Invalid)(hasErrorBackground.important, hasErrorColor.important),
+      addClassName(s"ui label ${tagLabelColour(lv)}")))
 
     val tagInText = styleF(D.`live * validity`){ case (l, v) => styleS(
       tagBase(l),

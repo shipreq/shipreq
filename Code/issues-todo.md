@@ -39,6 +39,4 @@ functionality
   * custom sorting
   * filter
   * KB navigation
-* ProjectWidgets
-  * conflicting tags
 * Resolve TODOs in new code

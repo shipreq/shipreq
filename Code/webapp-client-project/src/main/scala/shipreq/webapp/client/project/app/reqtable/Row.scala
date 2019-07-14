@@ -112,7 +112,12 @@ object Row {
    * @param instanceId An arbitrary number that, coupled with `req.id` serves to uniquely identify a row.
    *                   Reason is that the same GenericReq can appear in multiple rows.
    */
-  final case class ForReq(req: Req, live: Live, exp: Expansion, mv: MultiValues, instanceId: Int) extends Row {
+  final case class ForReq(req            : Req,
+                          live           : Live,
+                          conflictingTags: Set[ApplicableTagId],
+                          exp            : Expansion,
+                          mv             : MultiValues,
+                          instanceId     : Int) extends Row {
     override val id       = Row.Id.ForReq(req.id, instanceId)
     override def sourceId = Row.SourceId.ForReq(req.id)
     override def toString = s"$id\n$req\n$exp\n$mv\n"
@@ -206,7 +211,7 @@ object Row {
     case r: ForReq       => Some(r.exp)
     case _: ForCodeGroup => None
   }(nv => {
-    case ForReq(r, l, _, m, i) => ForReq(r, l, nv, m, i)
+    case ForReq(r, l, c, _, m, i) => ForReq(r, l, c, nv, m, i)
     case r: ForCodeGroup       => r
   })
 
@@ -214,7 +219,7 @@ object Row {
     case r: ForReq       => Some(r.mv)
     case _: ForCodeGroup => None
   }(nv => {
-    case ForReq(r, l, e, _, i) => ForReq(r, l, e, nv, i)
+    case ForReq(r, l, c, e, _, i) => ForReq(r, l, c, e, nv, i)
     case r: ForCodeGroup       => r
   })
 
@@ -222,7 +227,7 @@ object Row {
     case r: ForReq       => r.exp.reqCodes
     case r: ForCodeGroup => Vector1(r.reqCode)
   }(nv => {
-    case ForReq(r, l, e, m, i)             => ForReq(r, l, e.copyReqCodes(nv), m, i)
+    case ForReq(r, l, c, e, m, i)             => ForReq(r, l, c, e.copyReqCodes(nv), m, i)
     case r: ForCodeGroup if nv.length == 1 => r.copy(reqCode = nv.head)
     case r: ForCodeGroup if nv.length != 1 => assert(false, s"Can't apply $nv to $r") ;r
   })
@@ -232,7 +237,7 @@ object Row {
     case r: ForReq       => r.exp.reqCodeTree
     case r: ForCodeGroup => r.reqCodeTreeItem.toVector
   }(nv => {
-    case ForReq(r, l, e, m, i) => ForReq(r, l, e.copyReqCodeTree(nv), m, i)
+    case ForReq(r, l, c, e, m, i) => ForReq(r, l, c, e.copyReqCodeTree(nv), m, i)
     case r: ForCodeGroup => nv.length match {
       case 1 => r.copy(reqCodeTreeItem = Some(nv.head))
       case 0 => r.copy(reqCodeTreeItem = None)

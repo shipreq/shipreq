@@ -44,13 +44,16 @@ final case class ViewReq(data           : Data,
   def pastPubids: VdomElement =
     pw pastPubids data.pastPubids
 
+  private val tagValidity: ApplicableTagId => Validity =
+    Invalid when data.conflictingTags.contains(_)
+
   def tags: VdomElement =
-    pw.tagList(data.generalTags, data.live, Mandatory.Not)
+    pw.tagList(data.generalTags, data.live, Mandatory.Not, tagValidity)
 
   def tags(id: CustomField.Tag.Id): VdomElement = {
     val tags      = data.customTags(id)
     val mandatory = Mandatory.when(data.mandatoryFields.contains(id))
-    pw.tagList(tags, data.live, mandatory)
+    pw.tagList(tags, data.live, mandatory, tagValidity)
   }
 
   def tags(id: Option[CustomField.Tag.Id]): VdomElement =
@@ -93,6 +96,7 @@ object ViewReq {
                         codes           : Traversable[ReqCode.Value],
                         generalTags     : Vector[ApplicableTagId],
                         customTags      : CustomField.Tag.Id => Vector[ApplicableTagId],
+                        conflictingTags : Set[ApplicableTagId],
                         generalImps     : Direction => Vector[Pubid],
                         customImps      : CustomField.Implication.Id => Vector[Pubid],
                         pastPubids      : SortedSet[ExternalPubid],
@@ -165,6 +169,7 @@ object ViewReq {
         codes            = codes,
         generalTags      = generalTags,
         customTags       = customTags,
+        conflictingTags  = project.conflictingTagsPerReq(id),
         generalImps      = generalImps,
         customImps       = fid => sortPubids(customImpLookup(fid)(id)),
         pastPubids       = pastPubids,

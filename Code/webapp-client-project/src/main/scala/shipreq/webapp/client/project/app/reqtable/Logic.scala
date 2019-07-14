@@ -264,7 +264,7 @@ private[reqtable] object Logic {
           // Build
           val mv = multiValuesFn(id)
           exps.foreachWithIndex((exp, i) =>
-            output += Row.ForReq(r, live, exp, mv, i))
+            output += Row.ForReq(r, live, p.conflictingTagsPerReq(id), exp, mv, i))
 
           seeExpandedCodes(codes)
         }
@@ -336,7 +336,13 @@ private[reqtable] object Logic {
     mergeAdjacent(rows)((x, y) =>
       (x, y) match {
         case (a: Row.ForReq, b: Row.ForReq) if a.req.id ==* b.req.id =>
-          Some(Row.ForReq(a.req, a.live, a.exp |+| b.exp, a.mv |+| b.mv, a.instanceId min b.instanceId)) // TODO resort
+          Some(Row.ForReq(
+            req             = a.req,
+            live            = a.live,
+            conflictingTags = a.conflictingTags,
+            exp             = a.exp |+| b.exp,
+            mv              = a.mv |+| b.mv,
+            instanceId      = a.instanceId min b.instanceId)) // TODO resort
         case _ =>
           None
       }
