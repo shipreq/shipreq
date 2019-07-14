@@ -99,6 +99,8 @@ Phase 2B
 
 * Flow syntax missing from use case step help
 
+* Hard-delete UC steps with no text, flow, or refs
+
 * Stop generating codecs from macros
 
 * Cell copy-and-paste on Req{Table,Detail}
