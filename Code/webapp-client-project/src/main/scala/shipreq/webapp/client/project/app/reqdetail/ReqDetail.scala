@@ -38,6 +38,7 @@ object ReqDetail {
                                reqDetailRC          : RouterCtl[ExternalPubid],
                                webWorker            : WebWorkerClient,
                                pxProject            : Px[Project],
+                               pxViewReqDataCache   : Px[ViewReqDataCache],
                                pxTextSearch         : Px[TextSearch],
                                pxProjectWidgetsNoCtx: Px[ProjectWidgets.NoCtx]) {
     val pxProjectConfig = pxProject.map(_.config).withReuse
@@ -62,10 +63,11 @@ object ReqDetail {
    *
    * Cached by its inputs.
    */
-  final class Data(sp        : StaticProps,
-               val project   : Project,
-               val req       : Req,
-                   upstreamFD: FilterDead) {
+  final class Data(sp              : StaticProps,
+               val project         : Project,
+               val req             : Req,
+                   viewReqDataCache: ViewReqDataCache,
+                   upstreamFD      : FilterDead) {
 
     val pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]] =
       Reusable.byRef(
@@ -91,7 +93,7 @@ object ReqDetail {
     val pubidText = PlainText.pubid(req.pubid, project)
 
     val viewData: ViewReq.Data =
-      ViewReq.Data.fromProject(req.id, project, filterDead)
+      viewReqDataCache(filterDead)(req.id)
 
     val useCaseData: Option[UseCaseData] =
       req match {
@@ -132,9 +134,10 @@ object ReqDetail {
       for {
         p <- pxProject
         e <- pxExtPubid
+        v <- pxViewReqDataCache
         f <- pxUpstreamFD
       } yield
-        e.lookup(p).map(new Data(SP, p, _, f))
+        e.lookup(p).map(new Data(SP, p, _, v, f))
 
     val cbData: CallbackOption[Data] =
       Callback(refreshPx()).toCBO >> pxData.toCallback.map(_.toOption).asCBO

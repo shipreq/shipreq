@@ -163,7 +163,13 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
     def ww = WebWorkerClient.Instance
 
     private val reqDetail = ReqDetail(ReqDetail.StaticProps(
-      sspUpdateContent, reqDetailRC, ww, pxProject, pxTextSearch, pxProjectWidgets))
+      sspUpdateContent,
+      reqDetailRC,
+      ww,
+      pxProject,
+      pxViewReqDataCache,
+      pxTextSearch,
+      pxProjectWidgets))
 
     private val reqDetailSetState: Reusable[SetStateFnPure[ReqDetail.State]] =
       Reusable.fn.state($ zoomStateL State.reqDetail).setStateFn
