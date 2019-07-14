@@ -99,7 +99,7 @@ final class ProjectSpaWebSocket extends StrictLogging {
   @OnMessage
   def onMessage(s: Session, messageBytes: Array[Byte]): Unit = {
     if (messageBytes.length == 0) {
-      logger.debug("Received keep-alive")
+      logger.trace("Received keep-alive")
     } else {
       val userProps = s.getUserProperties
       val static    = staticL.get(userProps)
