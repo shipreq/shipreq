@@ -3,8 +3,10 @@ package shipreq.webapp.client.project.app.issues
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
+import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.issue.Issues
+import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.feature.{EditorFeature, RenderFeature}
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 import shipreq.webapp.base.lib.DataReusability._
@@ -61,14 +63,14 @@ object IssuesPage {
     private def renderEmpty =
       <.div(
         NewIssue.render,
-        EmptyBody.render)
+        <.div(*.emptyCont, EmptyBody.render))
 
     private def renderContent(p: Props, issues: Issues) = {
-      <.div(
-        NewIssue.render,
-        Summary.Props(issues.stats, 0).render,
+      <.div(*.pageCont,
+        <.div(*.pageNew, NewIssue.render),
+        <.div(*.pageSummary, Summary.Props(issues.stats, 0).render),
         // TODO Table config row (sort | filter | cols)
-        table.component(Table.Props(p.editor)))
+        <.div(*.pageTable, table.component(Table.Props(p.editor))))
     }
   }
 }

@@ -636,6 +636,22 @@ object Style extends StyleSheet.Inline {
   // ===================================================================================================================
   object issues {
 
+    private def gapSize = 1 rem
+
+    val pageCont = style(
+      display.grid,
+      gridTemplateAreas(
+        "n s",
+        "t t"),
+      gridTemplateColumns := "1fr auto",
+      gap(gapSize))
+
+    val pageNew     = style(gridArea := "n")
+    val pageSummary = style(gridArea := "s")
+    val pageTable   = style(gridArea := "t")
+
+    val emptyCont = style(marginTop(gapSize))
+
     def table       = generic.table
     def tableHeader = generic.tableHeaderBase
     def tableData   = generic.tableDataBase
