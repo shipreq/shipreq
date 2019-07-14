@@ -13,7 +13,6 @@ import shipreq.webapp.base.data.{HideDead, ReqCode, ReqId}
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.client.project.app.Style.{issues => *}
-import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.feature.editor.FieldKey
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
@@ -23,8 +22,7 @@ object TableRow {
 
   final case class Props(row             : Row,
                          columns         : NonEmptyVector[Column],
-                         editor          : EditorFeature.ReadWrite.ForProject,
-                         pxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
+                         editor          : Option[Reusable[TagMod]],
                          pubidFormat     : ProjectWidgets.NoCtx#PubidFormat,
                          issueCategory   : Option[Reusable[TD]],
                          issueClass      : Option[Reusable[TD]],
@@ -93,35 +91,7 @@ object TableRow {
           addTD(row.fieldOption.fold(na)(_.desc))
 
         case Column.FieldEditor =>
-          addTD(row match {
-
-            case r: Row.ForGenericReq =>
-              p.editor
-                .forGenericReq(r.req.id)(r.field.key, p.pxProjectWidgets, HideDead)
-                .themedRenderOr(())(r.renderer(r.field.key))
-
-            case r: Row.ForUseCase =>
-              p.editor
-                .forUseCase(r.req.id)(r.field.key, p.pxProjectWidgets, HideDead)
-                .themedRenderOr(())(r.renderer(r.field.key))
-
-            case r: Row.ForUseCaseStep =>
-              p.editor
-                .forUseCaseSteps(r.field.key, p.pxProjectWidgets, HideDead)
-                .themedRenderOr(FieldKey.UseCaseStep.Args.empty)(r.renderer(r.field.key))
-
-            case r: Row.ForRcg =>
-              r.fieldOption match {
-                case None => na
-                case Some(f) =>
-                  p.editor
-                    .forCodeGroup(r.rcg.id)(f.key, p.pxProjectWidgets, HideDead)
-                    .themedRenderOr(())(r.renderer(f.key))
-              }
-
-            case _: Row.ForConfig =>
-              na
-          })
+          addTD(p.editor.fold(na)(_.value))
 
         case Column.Actions =>
           addTD("TODO") // TODO ==========================

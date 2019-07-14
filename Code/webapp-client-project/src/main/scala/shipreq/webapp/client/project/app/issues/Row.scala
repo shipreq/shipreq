@@ -1,11 +1,15 @@
 package shipreq.webapp.client.project.app.issues
 
-import japgolly.scalajs.react.Reusability
+import japgolly.scalajs.react.extra.Px
+import japgolly.scalajs.react.{Reusability, Reusable}
+import japgolly.scalajs.react.vdom.TagMod
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.issue._
 import shipreq.webapp.base.UiText.{Issues => UI}
 import shipreq.webapp.client.project.feature.RenderFeature
-import shipreq.webapp.client.project.feature.editor.FieldKey
+import shipreq.webapp.client.project.feature.EditorFeature
+import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
+import shipreq.webapp.client.project.widgets.ProjectWidgets
 
 sealed trait Row {
   val issue: Issue
@@ -13,7 +17,9 @@ sealed trait Row {
   def fieldOption: Option[IssueField[FieldKey]]
   // val actions: List[Action]
 
-  def issueCategoryDesc = UI.category(issue.category)
+  val editor: (EditorFeature.ReadWrite.ForProject, Reusable[Px[ProjectWidgets.NoCtx]]) => Option[Reusable[TagMod]]
+
+  final def issueCategoryDesc = UI.category(issue.category)
 }
 
 object Row {
@@ -28,6 +34,11 @@ object Row {
                                  field         : IssueField[FieldKey.ForGenericReq],
                                  renderer      : RenderFeature.NoCtx.ForGenericReq) extends ForReq {
     override val fieldOption = Some(field)
+
+    override val editor = (e, pw) => {
+      val e2 = e.forGenericReq(req.id)(field.key, pw, HideDead)
+      Some(Reusable.implicitly(e2).map(_.themedRenderOr(())(renderer(field.key))))
+    }
   }
 
   final case class ForUseCase(issue         : Issue,
@@ -36,6 +47,11 @@ object Row {
                               field         : IssueField[FieldKey.ForUseCase],
                               renderer      : RenderFeature.NoCtx.ForUseCase) extends ForReq {
     override val fieldOption = Some(field)
+
+    override val editor = (e, pw) => {
+      val e2 = e.forUseCase(req.id)(field.key, pw, HideDead)
+      Some(Reusable.implicitly(e2).map(_.themedRenderOr(())(renderer(field.key))))
+    }
   }
 
   final case class ForUseCaseStep(issue         : Issue,
@@ -45,6 +61,11 @@ object Row {
                                   ucRenderer    : RenderFeature.NoCtx.ForUseCase,
                                   renderer      : RenderFeature.NoCtx.ForUseCaseSteps) extends ForReq {
     override val fieldOption = Some(field)
+
+    override val editor = (e, pw) => {
+      val e2 = e.forUseCaseSteps(field.key, pw, HideDead)
+      Some(Reusable.implicitly(e2).map(_.themedRenderOr(FieldKey.UseCaseStep.Args.empty)(renderer(field.key))))
+    }
   }
 
   final case class ForRcg(issue         : Issue,
@@ -52,11 +73,19 @@ object Row {
                           rcg           : LiveCodeGroup,
                           fieldOption   : Option[IssueField[FieldKey.ForCodeGroup]],
                           code          : ReqCode.Value,
-                          renderer      : RenderFeature.NoCtx.ForCodeGroup) extends Row
+                          renderer      : RenderFeature.NoCtx.ForCodeGroup) extends Row {
+
+    override val editor = (e, pw) =>
+      fieldOption.map { f =>
+        val e2 = e.forCodeGroup(rcg.id)(f.key, pw, HideDead)
+        Reusable.implicitly(e2).map(_.themedRenderOr(())(renderer(f.key)))
+      }
+  }
 
   final case class ForConfig(issue         : Issue,
                              issueClassDesc: String) extends Row {
     override def fieldOption = None
+    override val editor = (_, _) => None
   }
 
   // ===================================================================================================================
@@ -105,6 +134,8 @@ object Row {
 
     def forUcs(i: Issue, desc: String, f: UseCaseStep.Focus): ForUseCaseStep =
       ForUseCaseStep(i, desc, f.uc, IssueField.useCaseStep(f), rf.forUseCase(f.uc.id), rf.forUseCaseSteps)
+
+    // -----------------------------------------------------------------------------------------------------------------
 
     {
       case i: Issue.BlankCustomField =>

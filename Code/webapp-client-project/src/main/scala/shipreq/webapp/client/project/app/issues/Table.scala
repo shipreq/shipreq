@@ -100,8 +100,7 @@ object Table {
         val rowProps = TableRow.Props(
           row,
           columns,
-          p.editor,
-          reusablePxPW,
+          row.editor(p.editor, reusablePxPW),
           pubidFormat,
           issueCategory = csIssueCategory(rowIdx),
           issueClass    = csIssueClass(rowIdx),
