@@ -89,7 +89,13 @@ object TableRow {
           addTD(row.fieldOption.fold(na)(_.desc))
 
         case Column.FieldEditor =>
-          addTD("TODO") // TODO ==========================
+          addTD(row match {
+            case r: Row.ForGenericReq  => r.renderer(r.field.key)
+            case r: Row.ForUseCase     => r.renderer(r.field.key)
+            case r: Row.ForUseCaseStep => r.renderer(r.field.key)
+            case r: Row.ForRcg         => r.fieldOption.fold(na)(f => r.renderer(f.key))
+            case _: Row.ForConfig      => na
+          })
 
         case Column.Actions =>
           addTD("TODO") // TODO ==========================
@@ -107,10 +113,11 @@ object TableRow {
         case Column.Title =>
           for (base <- p.titleBase) {
             val c = row match {
-              case r: Row.ForGenericReq => r.renderer(FieldKey.GenericReqTitle)
-              case r: Row.ForUseCase    => r.renderer(FieldKey.UseCaseTitle)
-              case r: Row.ForRcg        => r.renderer(FieldKey.CodeGroupTitle)
-              case _: Row.ForConfig     => na
+              case r: Row.ForGenericReq  => r.renderer(FieldKey.GenericReqTitle)
+              case r: Row.ForUseCase     => r.renderer(FieldKey.UseCaseTitle)
+              case r: Row.ForUseCaseStep => r.ucRenderer(FieldKey.UseCaseTitle)
+              case r: Row.ForRcg         => r.renderer(FieldKey.CodeGroupTitle)
+              case _: Row.ForConfig      => na
             }
             cells += base(c)
           }

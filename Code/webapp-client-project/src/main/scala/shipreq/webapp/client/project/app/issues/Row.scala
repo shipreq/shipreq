@@ -5,11 +5,12 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.issue._
 import shipreq.webapp.base.UiText.{Issues => UI}
 import shipreq.webapp.client.project.feature.RenderFeature
+import shipreq.webapp.client.project.feature.editor.FieldKey
 
 sealed trait Row {
   val issue: Issue
   val issueClassDesc: String
-  def fieldOption: Option[IssueField]
+  def fieldOption: Option[IssueField[FieldKey]]
   // val actions: List[Action]
 
   def issueCategoryDesc = UI.category(issue.category)
@@ -24,7 +25,7 @@ object Row {
   final case class ForGenericReq(issue         : Issue,
                                  issueClassDesc: String,
                                  req           : GenericReq,
-                                 field         : IssueField,
+                                 field         : IssueField[FieldKey.ForGenericReq],
                                  renderer      : RenderFeature.NoCtx.ForGenericReq) extends ForReq {
     override val fieldOption = Some(field)
   }
@@ -32,15 +33,24 @@ object Row {
   final case class ForUseCase(issue         : Issue,
                               issueClassDesc: String,
                               req           : UseCase,
-                              field         : IssueField,
+                              field         : IssueField[FieldKey.ForUseCase],
                               renderer      : RenderFeature.NoCtx.ForUseCase) extends ForReq {
+    override val fieldOption = Some(field)
+  }
+
+  final case class ForUseCaseStep(issue         : Issue,
+                                  issueClassDesc: String,
+                                  req           : UseCase,
+                                  field         : IssueField[FieldKey.UseCaseStep],
+                                  ucRenderer    : RenderFeature.NoCtx.ForUseCase,
+                                  renderer      : RenderFeature.NoCtx.ForUseCaseSteps) extends ForReq {
     override val fieldOption = Some(field)
   }
 
   final case class ForRcg(issue         : Issue,
                           issueClassDesc: String,
                           rcg           : LiveCodeGroup,
-                          fieldOption   : Option[IssueField],
+                          fieldOption   : Option[IssueField[FieldKey.ForCodeGroup]],
                           code          : ReqCode.Value,
                           renderer      : RenderFeature.NoCtx.ForCodeGroup) extends Row
 
@@ -49,41 +59,69 @@ object Row {
     override def fieldOption = None
   }
 
+  // ===================================================================================================================
+
   implicit def reusability: Reusability[Row] =
     Reusability.byRef
 
-  def  fromIssue(p: Project, rf: RenderFeature.NoCtx.ForProject): Issue => Row = {
+  def fromIssue(p: Project, rf: RenderFeature.NoCtx.ForProject): Issue => Row = {
     implicit val cfg = p.config
     val customFieldName = CustomField.nameP(p)
 
-    def forReq(i: Issue, desc: String, req: Req, fk: IssueField) =
+    def forReqA(i: Issue, desc: String, req: Req, fk: IssueField[FieldKey.ForAllReqs]): ForReq =
       req match {
-        case r: GenericReq => ForGenericReq(i, desc, r, fk, rf.forGenericReq(r.id))
-        case r: UseCase    => ForUseCase   (i, desc, r, fk, rf.forUseCase   (r.id))
+        case r: GenericReq => forGR(i, desc, r, fk)
+        case r: UseCase    => forUC(i, desc, r, fk)
       }
 
-    def forReqAndLoc(i: Issue, desc: String, r: Req, loc: ReqTextLoc) =
-      forReq(i, desc, r, IssueField.reqTextLoc(r.id, loc, p))
+    def forReqF(i: Issue, desc: String, req: Req)(fkGR: IssueField[FieldKey.ForGenericReq],
+                                                 fkUC: IssueField[FieldKey.ForUseCase]): ForReq =
+      req match {
+        case r: GenericReq => forGR(i, desc, r, fkGR)
+        case r: UseCase    => forUC(i, desc, r, fkUC)
+      }
 
-    def forRcg(i: Issue, desc: String, g: LiveCodeGroup, fk: Option[IssueField]) =
+    def forReqTitle(i: Issue, desc: String, req: Req): ForReq =
+      forReqF(i, desc, req)(IssueField.GenericReqTitle, IssueField.UseCaseTitle)
+
+    def forGR(i: Issue, desc: String, req: GenericReq, fk: IssueField[FieldKey.ForGenericReq]) =
+      ForGenericReq(i, desc, req, fk, rf.forGenericReq(req.id))
+
+    def forUC(i: Issue, desc: String, req: UseCase, fk: IssueField[FieldKey.ForUseCase]) =
+      ForUseCase(i, desc, req, fk, rf.forUseCase(req.id))
+
+    def forReqAndLoc(i: Issue, desc: String, r: Req, loc: ReqTextLoc): Row =
+      loc match {
+        case ReqTextLoc.Title                    => forReqTitle(i, desc, r)
+        case ReqTextLoc.CustomTextField(fieldId) => forReqA(i, desc, r, IssueField.customField(fieldId))
+        case ReqTextLoc.UseCaseStep(stepId)      => forUcsI(i, desc, stepId)
+      }
+
+    def forRcg(i: Issue, desc: String, g: LiveCodeGroup, fk: Option[IssueField[FieldKey.ForCodeGroup]]) =
       ForRcg(i, desc, g, fk, p.content.reqCodes.reqCode(g.id), rf.forCodeGroup(g))
+
+    def forUcsI(i: Issue, desc: String, id: UseCaseStepId): ForUseCaseStep =
+      forUcs(i, desc, p.content.reqs.useCases.focusStep(id))
+
+    def forUcs(i: Issue, desc: String, f: UseCaseStep.Focus): ForUseCaseStep =
+      ForUseCaseStep(i, desc, f.uc, IssueField.useCaseStep(f), rf.forUseCase(f.uc.id), rf.forUseCaseSteps)
 
     {
       case i: Issue.BlankCustomField =>
         val desc = UI.descBlankCustomField(customFieldName(i.field))
-        forReq(i, desc, i.req, IssueField.customField(i.field.id))
+        forReqA(i, desc, i.req, IssueField.customField(i.field.id))
 
       case i: Issue.BlankTitle =>
-        forReq(i, UI.descBlankTitle, i.req, IssueField.reqTitle(i.req.id))
+        forReqTitle(i, UI.descBlankTitle, i.req)
 
       case i: Issue.BlankUseCaseStep =>
-        forReq(i, UI.descBlankUseCaseStep, i.step.uc, IssueField.useCaseStep(i.step))
+        forUcs(i, UI.descBlankUseCaseStep, i.step)
 
       case i: Issue.ConflictingTags =>
         val tag   = cfg.tags.needTagGroup(i.tagGroupId)
         val desc  = UI.descConflictingTags(tag.name)
         val field = cfg.mostRelevantLiveFieldForTag(i.tagGroupId).map(_.id)
-        forReq(i, desc, i.req, IssueField.tags(field))
+        forReqA(i, desc, i.req, IssueField.tags(field))
 
       case i: Issue.DeadIssueTagInRcg =>
         val it   = cfg.customIssueType(i.issue.typ)
@@ -111,7 +149,7 @@ object Row {
       case i: Issue.ImplicationRequired =>
         val reqType = cfg.reqTypes.need(i.req.reqTypeId)
         val desc = UI.descImplicationRequired(reqType.mnemonic)
-        forReq(i, desc, i.req, IssueField.impliedBy)
+        forReqA(i, desc, i.req, IssueField.impliedBy)
 
       case i: Issue.IssueTagInRcg =>
         val it   = cfg.customIssueType(i.issue.typ)
