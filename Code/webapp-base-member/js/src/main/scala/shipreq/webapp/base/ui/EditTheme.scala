@@ -11,7 +11,6 @@ import shipreq.webapp.base.ui.{BaseStyles => *}
 
 object EditTheme {
 
-  // This probably shouldn't be exposed
   private[this] val editableInline: TagMod =
     TagMod(
       *.inlineEdit,
