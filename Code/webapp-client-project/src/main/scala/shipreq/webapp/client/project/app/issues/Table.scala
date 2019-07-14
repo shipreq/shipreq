@@ -11,7 +11,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.sort.FusedSorters
 import shipreq.webapp.base.ui.semantic
 import shipreq.webapp.client.project.app.Style.{issues => *}
-import shipreq.webapp.client.project.feature.RenderFeature
+import shipreq.webapp.client.project.feature.{EditorFeature, RenderFeature}
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 
 object Table {
@@ -21,6 +21,7 @@ object Table {
                                pxProjectWidgets: Px[ProjectWidgets.NoCtx],
                                pxFieldNameFn   : Px[FieldId ~=> String]) {
 
+    val reusablePxPW  = Reusable.byRef(pxProjectWidgets)
     val pxPubidFormat = pxProjectWidgets.map(_.PubidFormat(Plain, _ => *.pubidColumnValue, titleFn = _ => None))
     val pxRenderPrep  = Px.apply2(pxProject, pxRenderFeature)(new RenderPrep(_, _))
 
@@ -31,7 +32,7 @@ object Table {
       .build
   }
 
-  final case class Props()
+  final case class Props(editor: EditorFeature.ReadWrite.ForProject)
 
   implicit val reusabilityProps: Reusability[Props] =
     Reusability.derive
@@ -99,6 +100,8 @@ object Table {
         val rowProps = TableRow.Props(
           row,
           columns,
+          p.editor,
+          reusablePxPW,
           pubidFormat,
           issueCategory = csIssueCategory(rowIdx),
           issueClass    = csIssueClass(rowIdx),

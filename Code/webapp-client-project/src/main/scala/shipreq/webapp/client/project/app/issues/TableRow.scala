@@ -2,16 +2,18 @@ package shipreq.webapp.client.project.app.issues
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import scalaz.\/
 import shipreq.base.util.ConsolidatedSeq
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data.{ReqCode, ReqId}
+import shipreq.webapp.base.data.{HideDead, ReqCode, ReqId}
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.client.project.app.Style.{issues => *}
+import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.feature.editor.FieldKey
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
@@ -19,13 +21,15 @@ import shipreq.webapp.client.project.widgets.ProjectWidgets
 object TableRow {
   type TD = VdomTagOf[html.TableCell]
 
-  final case class Props(row          : Row,
-                         columns      : NonEmptyVector[Column],
-                         pubidFormat  : ProjectWidgets.NoCtx#PubidFormat,
-                         issueCategory: Option[Reusable[TD]],
-                         issueClass   : Option[Reusable[TD]],
-                         idBase       : Option[Reusable[TD]],
-                         titleBase    : Option[Reusable[TD]],
+  final case class Props(row             : Row,
+                         columns         : NonEmptyVector[Column],
+                         editor          : EditorFeature.ReadWrite.ForProject,
+                         pxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
+                         pubidFormat     : ProjectWidgets.NoCtx#PubidFormat,
+                         issueCategory   : Option[Reusable[TD]],
+                         issueClass      : Option[Reusable[TD]],
+                         idBase          : Option[Reusable[TD]],
+                         titleBase       : Option[Reusable[TD]],
                         )
 
   implicit val reusabilityProps: Reusability[Props] =
@@ -90,11 +94,33 @@ object TableRow {
 
         case Column.FieldEditor =>
           addTD(row match {
-            case r: Row.ForGenericReq  => r.renderer(r.field.key)
-            case r: Row.ForUseCase     => r.renderer(r.field.key)
-            case r: Row.ForUseCaseStep => r.renderer(r.field.key)
-            case r: Row.ForRcg         => r.fieldOption.fold(na)(f => r.renderer(f.key))
-            case _: Row.ForConfig      => na
+
+            case r: Row.ForGenericReq =>
+              p.editor
+                .forGenericReq(r.req.id)(r.field.key, p.pxProjectWidgets, HideDead)
+                .themedRenderOr(())(r.renderer(r.field.key))
+
+            case r: Row.ForUseCase =>
+              p.editor
+                .forUseCase(r.req.id)(r.field.key, p.pxProjectWidgets, HideDead)
+                .themedRenderOr(())(r.renderer(r.field.key))
+
+            case r: Row.ForUseCaseStep =>
+              p.editor
+                .forUseCaseSteps(r.field.key, p.pxProjectWidgets, HideDead)
+                .themedRenderOr(FieldKey.UseCaseStep.Args.empty)(r.renderer(r.field.key))
+
+            case r: Row.ForRcg =>
+              r.fieldOption match {
+                case None => na
+                case Some(f) =>
+                  p.editor
+                    .forCodeGroup(r.rcg.id)(f.key, p.pxProjectWidgets, HideDead)
+                    .themedRenderOr(())(r.renderer(f.key))
+              }
+
+            case _: Row.ForConfig =>
+              na
           })
 
         case Column.Actions =>

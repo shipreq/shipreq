@@ -38,7 +38,6 @@ functionality
   * dynamic columns
   * custom sorting
   * filter
-  * inline editing
   * KB navigation
 * ProjectWidgets
   * conflicting tags

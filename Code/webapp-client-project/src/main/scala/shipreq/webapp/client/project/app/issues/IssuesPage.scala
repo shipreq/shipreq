@@ -4,6 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.client.project.feature.{EditorFeature, RenderFeature}
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 import shipreq.webapp.base.lib.DataReusability._
@@ -54,7 +55,7 @@ object IssuesPage {
       if (issues.isEmpty)
         renderEmpty
       else
-        renderContent(project)
+        renderContent(p, issues)
     }
 
     private def renderEmpty =
@@ -62,14 +63,12 @@ object IssuesPage {
         NewIssue.render,
         EmptyBody.render)
 
-    private def renderContent(p: Project) = {
-      val issues = p.issues
-
+    private def renderContent(p: Props, issues: Issues) = {
       <.div(
         NewIssue.render,
         Summary.Props(issues.stats, 0).render,
         // TODO Table config row (sort | filter | cols)
-        table.component(Table.Props()))
+        table.component(Table.Props(p.editor)))
     }
   }
 }

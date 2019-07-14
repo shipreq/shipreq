@@ -653,17 +653,19 @@ object NewEditor {
             step           <- stepFocusCB
           } yield {
 
-            val shiftRunner: AsyncFeature.Runner.D0O[LeftRight, Any] =
-              args.shiftRunner.mapRunOption(run =>
-                Reusable.never(d =>
-                  step.canShift(d).option(
-                    run(UpdateContentCmd.ShiftUseCaseStep(step.id, d)))))
+            val shiftRunner: Option[AsyncFeature.Runner.D0O[LeftRight, Any]] =
+              args.shiftRunner.map(
+                _.mapRunOption(run =>
+                  Reusable.never(d =>
+                    step.canShift(d).option(
+                      run(UpdateContentCmd.ShiftUseCaseStep(step.id, d))))))
 
-            val addStepRunner: AsyncFeature.Runner.D0O[Unit, Any] =
-              args.addStepRunner.mapRunOption(run =>
-                Reusable.never(_ =>
-                  step.field.canInsertAfter(step.loc).option(
-                    run(UpdateContentCmd.AddUseCaseStep(step.useCaseId, step.field, step.loc.asParentLoc)))))
+            val addStepRunner: Option[AsyncFeature.Runner.D0O[Unit, Any]] =
+              args.addStepRunner.map(
+                _.mapRunOption(run =>
+                  Reusable.never(_ =>
+                    step.field.canInsertAfter(step.loc).option(
+                      run(UpdateContentCmd.AddUseCaseStep(step.useCaseId, step.field, step.loc.asParentLoc))))))
 
             UseCaseStepEditor.Props(
               project        = project,

@@ -106,8 +106,11 @@ object FieldKey {
       * @param shiftRunner   so users can shift the step left/right via keyboard shortcuts.
       * @param addStepRunner so users can add a new step via keyboard shortcuts.
       */
-    final case class Args(shiftRunner  : AsyncFeature.Runner.D0[UpdateContentCmd.ForUseCaseStep, Any],
-                          addStepRunner: AsyncFeature.Runner.D0[UpdateContentCmd.AddUseCaseStep, Any])
+    final case class Args(shiftRunner  : Option[AsyncFeature.Runner.D0[UpdateContentCmd.ForUseCaseStep, Any]],
+                          addStepRunner: Option[AsyncFeature.Runner.D0[UpdateContentCmd.AddUseCaseStep, Any]])
+    object Args {
+      val empty = Args(None, None)
+    }
   }
 
   case object UseCaseTitle extends ForUseCase {

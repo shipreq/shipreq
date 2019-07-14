@@ -47,8 +47,8 @@ object UseCaseStepEditor {
                          asyncStatus    : Option[EditorStatus.Async],
                          abort          : Callback,
                          commit         : CommitFn,
-                         shiftRunner    : AsyncFeature.Runner.D0O[LeftRight, Any],
-                         addStepRunner  : AsyncFeature.Runner.D0O[Unit, Any],
+                         shiftRunner    : Option[AsyncFeature.Runner.D0O[LeftRight, Any]],
+                         addStepRunner  : Option[AsyncFeature.Runner.D0O[Unit, Any]],
                          preview        : PreviewFeature.ReadWrite.Single,
                          preEditValue   : Option[InitialValue]) {
 
@@ -103,7 +103,7 @@ object UseCaseStepEditor {
     val saveAndAdd: Option[Callback] =
       for {
         c <- status.getCommit
-        a <- addStepRunner.runOption(())
+        a <- addStepRunner.flatMap(_.runOption(()))
       } yield c >> a
 
     def render: VdomElement = Component(this)
@@ -142,7 +142,7 @@ object UseCaseStepEditor {
 
       def shiftStepKeyHandler(d: LeftRight): KeyHandler =
         shiftKeyCriterion(d).handle(
-          $.props.flatMap(_.shiftRunner.runOrDoNothing(d)))
+          $.props.flatMap(_.shiftRunner.fold(Callback.empty)(_.runOrDoNothing(d))))
 
       val keys = (
         LeftRight.mapReduce(shiftStepKeyHandler)(_ + _)
@@ -181,7 +181,7 @@ object UseCaseStepEditor {
       // Shift left/right clauses
       for {
         d  <- rightLeft
-        cb <- p.shiftRunner.runOption(d)
+        cb <- p.shiftRunner.flatMap(_.runOption(d))
       } clauses ::=
         Instructions.Clause.keyToAction(shiftKeyCriterion(d).desc)(UiText.useCaseStepShift(d).toLowerCase, cb)
 

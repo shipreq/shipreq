@@ -409,8 +409,8 @@ object ReqDetail {
           val editor = props.editorUCS(UseCaseStep(id), data.pxProjectWidgets, data.filterDead)
 
           def editorArgs = UseCaseStep.Args(
-            cmdRunner(Cell.UseCaseStepCtrls(id)),
-            addCmdRunner(Cell.AddUseCaseStep(id)))
+            Some(cmdRunner(Cell.UseCaseStepCtrls(id))),
+            Some(addCmdRunner(Cell.AddUseCaseStep(id))))
 
           EditableCell.Props(
             args.base,
