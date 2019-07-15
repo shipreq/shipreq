@@ -60,8 +60,7 @@ Backlog
 * Make webtamp hash filenames of urls in Semantic CSS (`icons.*`)
 * SSL shouldn't be in Docker - resolve TODO in WebappBuild.scala
 * Automate visual testing so changes to styling (mostly Semantic UI upgrades) can be verified.
-  Could add to test-state... But then how to make it account for tiny differents like moment.js "updated x sec ago" things?
-  Any free tool?
+  Use BackstopJS. Will require a read-only test user with a pre-configured project
 
 
 ------------------------------------------------------------------------------------------------------------------------
