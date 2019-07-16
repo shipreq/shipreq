@@ -632,7 +632,7 @@ object ContentEventTest extends TestSuite {
 
             // RCGs don't get reasons
             def rcg(c: ReqCode.Value): R =
-              p.content.reqCodes(c) match {
+              p.content.reqCodes.need(c) match {
                 case _: ReqCode.ActiveGroup     => live
                 case d if d.deadGroup.isDefined => dead
                 case _                          => none

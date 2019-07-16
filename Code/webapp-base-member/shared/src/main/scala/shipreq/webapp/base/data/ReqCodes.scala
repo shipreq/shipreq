@@ -235,14 +235,14 @@ final case class ReqCodes(trie: ReqCode.Trie) {
 
   private lazy val scan = new ReqCodes.Scan(trie)
 
-  def apply(code: Value): Data =
-    get(code) mustExistElse s"No node at reqcode ${code.whole mkString "."}."
-
   def isEmpty: Boolean =
     trie.isEmpty
 
   def get(code: Value): Option[Data] =
     trie.lookup(code)
+
+  def need(code: Value): Data =
+    get(code) mustExistElse s"No node at reqcode ${code.whole mkString "."}."
 
   def getReqCode(id: ReqCodeId): Option[Value] =
     id match {
@@ -258,9 +258,6 @@ final case class ReqCodes(trie: ReqCode.Trie) {
 
   def needById(id: ReqCodeId): Data =
     getById(id) mustExistElse s"No reqcode with id #${id.value}."
-
-  def lookup(id: ReqCodeId): Data =
-    apply(reqCode(id))
 
   def liveGroup(id: ReqCodeGroupId): Option[LiveCodeGroup] =
     scan.liveGroupsById.get(id)

@@ -112,8 +112,8 @@ object GenericReqEventTest extends TestSuite {
       'groupDead     - assertFail("is not an ActiveGroup.")(delRCG2, ReqsDelete(5, 2, ∅))
       'ok {
         val p = _assertPass(ReqsDelete(5, 2, ∅))
-        assertEq("RC#1", p.content.reqCodes(RCG1_code).isActive, true)
-        assertEq("RC#2", p.content.reqCodes(RCG2_code).isActive, false)
+        assertEq("RC#1", p.content.reqCodes.need(RCG1_code).isActive, true)
+        assertEq("RC#2", p.content.reqCodes.need(RCG2_code).isActive, false)
         assertEq("GR #1", p.content.reqs.genericReqs.need(1).liveExplicitly, Live)
         assertEq("GR #5", p.content.reqs.genericReqs.need(5).liveExplicitly, Dead)
       }

@@ -73,7 +73,7 @@ object ProjectText {
       }
 
       val code = rc.reqCode(id)
-      rc(code) match {
+      rc.need(code) match {
         case d: ActiveReq   if d.id ==* id => ActiveCodeToReq(code, d.reqId)
         case d: ActiveGroup if d.id ==* id => ActiveCodeToGroup(code, d.group)
         case d =>

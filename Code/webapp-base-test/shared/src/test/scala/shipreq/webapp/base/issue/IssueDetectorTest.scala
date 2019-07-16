@@ -19,8 +19,8 @@ object IssueDetectorTest extends TestSuite {
   import SampleProject4.{Values => P4, project => p4}
   import SampleProject6.{Values => P6, project => p6}
 
-  private lazy val demoId         = p3.content.reqCodes("demo").get.activeId.get.value.RCG
-  private lazy val demoWhateverId = p3.content.reqCodes("demo.whatever").get.activeId.get.value.ARC
+  private lazy val demoId         = p3.content.reqCodes.need("demo").activeId.get.value.RCG
+  private lazy val demoWhateverId = p3.content.reqCodes.need("demo.whatever").activeId.get.value.ARC
 
   private case class IssueFilter(ok: Issue => Boolean)
   private object IssueFilter {
