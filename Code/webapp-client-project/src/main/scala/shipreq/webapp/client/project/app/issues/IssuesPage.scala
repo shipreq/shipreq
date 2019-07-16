@@ -4,7 +4,9 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
 import scalacss.ScalaCssReact._
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.feature.{EditorFeature, RenderFeature}
@@ -15,7 +17,8 @@ object IssuesPage {
 
   final case class StaticProps(pxProject       : Px[Project],
                                pxRenderFeature : Px[FilterDead => RenderFeature.NoCtx.ForProject],
-                               pxProjectWidgets: Px[ProjectWidgets.NoCtx]) {
+                               pxProjectWidgets: Px[ProjectWidgets.NoCtx],
+                               cmdInvoker      : Action.Cmd ~=> Callback) {
 
     val pxConfig      = pxProject.map(_.config).withReuse
     val pxFieldNameFn = pxConfig.map(cfg => Reusable.byRef(Field.nameByIdFromProjectConfig(cfg)))
@@ -30,7 +33,8 @@ object IssuesPage {
       pxProject,
       pxRenderFeature.map(_(HideDead)),
       pxProjectWidgets,
-      pxFieldNameFn)
+      pxFieldNameFn,
+      cmdInvoker)
   }
 
   /*
@@ -43,7 +47,8 @@ object IssuesPage {
     - column
    */
 
-  final case class Props(editor: EditorFeature.ReadWrite.ForProject)
+  final case class Props(editor  : EditorFeature.ReadWrite.ForProject,
+                         cmdAsync: AsyncFeature.Read.D1[Action.Cmd, ErrorMsg])
 
   implicit val reusabilityProps: Reusability[Props] =
     Reusability.derive
@@ -70,7 +75,7 @@ object IssuesPage {
         <.div(*.pageNew, NewIssue.render),
         <.div(*.pageSummary, Summary.Props(issues.stats, 0).render),
         // TODO Table config row (sort | filter | cols)
-        <.div(*.pageTable, table.component(Table.Props(p.editor))))
+        <.div(*.pageTable, table.component(Table.Props(p.editor, p.cmdAsync))))
     }
   }
 }

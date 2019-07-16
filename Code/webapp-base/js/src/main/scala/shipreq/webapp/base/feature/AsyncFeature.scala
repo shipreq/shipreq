@@ -6,6 +6,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.univeq.UnivEq
 import scala.reflect.ClassTag
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Intersection, Optics}
 import shipreq.webapp.base.lib.BaseReusability._
 
@@ -25,7 +26,10 @@ import shipreq.webapp.base.lib.BaseReusability._
   * Add `State.Dₙ` to the top-most component's state.
   * Initialise it with `State.initDₙ`.
   * In the component backend, add `val asyncFeature = Write.Dₙ.init(…)`.
-  * In the render method, pass `asyncFeature` and/or `asyncFeature.toProps(state)` to children.
+  * In the render method, pass one of the following to children:
+  *   - `state.toRead` for read-access
+  *   - `asyncFeature` for write-access
+  *   - `asyncFeature.toProps(state)` for read/write-access
   *
   * Usage: Components
   * =================
@@ -123,6 +127,9 @@ object AsyncFeature {
       def mapKey[J](j: Intersection[K, J]): D1[J, F]
       def iterator: Iterator[(K, Status[F])]
       def keySet: Set[K]
+
+      final def either[K2, FF >: F](that: D1[K2, FF]): D1[K \/ K2, FF] =
+        D1.either(this, that)
     }
 
     object D1 {
@@ -153,6 +160,28 @@ object AsyncFeature {
               state.keysIterator.map(i.getOption).filterDefined.toSet
             )(_.subst(state.keySet))
       }
+
+      private[D1] def either[K1, K2, F](d1: D1[K1, F], d2: D1[K2, F]): D1[K1 \/ K2, F] =
+        new D1[K1 \/ K2, F] {
+          override def isEmpty: Boolean =
+            d1.isEmpty && d2.isEmpty
+
+          override def apply(key: K1 \/ K2): D0[F] =
+            key.fold(d1.apply, d2.apply)
+
+          override def mapKey[J](j: Intersection[K1 \/ K2, J]): D1[J, F] =
+            D1.mapped(iterator.toMap, j)
+
+          override def iterator: Iterator[(K1 \/ K2, Status[F])] =
+            d1.iterator.map(_.map1(-\/(_))) ++ d2.iterator.map(_.map1(\/-(_)))
+
+          override def keySet: Set[K1 \/ K2] = {
+            val s = Set.newBuilder[K1 \/ K2]
+            s ++= d1.keySet.iterator.map(-\/(_))
+            s ++= d2.keySet.iterator.map(\/-(_))
+            s.result()
+          }
+        }
 
       implicit def reusability[K, F]: Reusability[D1[K, F]] =
         Reusability.byRef || Reusability.when(_.isEmpty)

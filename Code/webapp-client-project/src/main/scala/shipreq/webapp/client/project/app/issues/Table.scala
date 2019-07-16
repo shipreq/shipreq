@@ -6,8 +6,9 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-}
-import shipreq.base.util.ConsolidatedSeq
+import shipreq.base.util.{ConsolidatedSeq, ErrorMsg}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.sort.FusedSorters
 import shipreq.webapp.base.ui.semantic
 import shipreq.webapp.client.project.app.Style.{issues => *}
@@ -19,7 +20,8 @@ object Table {
   final case class StaticProps(pxProject       : Px[Project],
                                pxRenderFeature : Px[RenderFeature.NoCtx.ForProject],
                                pxProjectWidgets: Px[ProjectWidgets.NoCtx],
-                               pxFieldNameFn   : Px[FieldId ~=> String]) {
+                               pxFieldNameFn   : Px[FieldId ~=> String],
+                               cmdInvoker      : Action.Cmd ~=> Callback) {
 
     val reusablePxPW  = Reusable.byRef(pxProjectWidgets)
     val pxPubidFormat = pxProjectWidgets.map(_.PubidFormat(Plain, _ => *.pubidColumnValue, titleFn = _ => None))
@@ -32,7 +34,8 @@ object Table {
       .build
   }
 
-  final case class Props(editor: EditorFeature.ReadWrite.ForProject)
+  final case class Props(editor  : EditorFeature.ReadWrite.ForProject,
+                         cmdAsync: AsyncFeature.Read.D1[Action.Cmd, ErrorMsg])
 
   implicit val reusabilityProps: Reusability[Props] =
     Reusability.derive
@@ -102,6 +105,8 @@ object Table {
           columns,
           row.editor(p.editor, reusablePxPW),
           pubidFormat,
+          cmdInvoker,
+          p.cmdAsync,
           issueCategory = csIssueCategory(rowIdx),
           issueClass    = csIssueClass(rowIdx),
           idBase        = csIds(rowIdx),

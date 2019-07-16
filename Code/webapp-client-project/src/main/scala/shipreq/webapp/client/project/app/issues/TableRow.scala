@@ -2,16 +2,17 @@ package shipreq.webapp.client.project.app.issues
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import scalaz.\/
-import shipreq.base.util.ConsolidatedSeq
+import shipreq.base.util.{ConsolidatedSeq, ErrorMsg}
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data.{HideDead, ReqCode, ReqId}
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.text.Text.Equality._
+import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.feature.editor.FieldKey
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -24,6 +25,8 @@ object TableRow {
                          columns         : NonEmptyVector[Column],
                          editor          : Option[Reusable[TagMod]],
                          pubidFormat     : ProjectWidgets.NoCtx#PubidFormat,
+                         cmdInvoker      : Action.Cmd ~=> Callback,
+                         cmdAsync        : AsyncFeature.Read.D1[Action.Cmd, ErrorMsg],
                          issueCategory   : Option[Reusable[TD]],
                          issueClass      : Option[Reusable[TD]],
                          idBase          : Option[Reusable[TD]],
@@ -99,7 +102,14 @@ object TableRow {
               na
             else
               row.actions.mkTagMod(<.br) { a =>
-                a.button //(^.onClick --> )
+                import AsyncFeature.Status._
+                val async = p.cmdAsync(a.cmd)
+                def ok = a.button(Enabled)(^.onClick --> p.cmdInvoker(a.cmd))
+                async match {
+                  case None                    => ok
+                  case Some(InProgress)        => a.button(Disabled)
+                  case Some(Failed(err, _, _)) => TagMod(ok, <.br, BaseStyles.errorPointingUp(err.value))
+                }
               }
           )
 

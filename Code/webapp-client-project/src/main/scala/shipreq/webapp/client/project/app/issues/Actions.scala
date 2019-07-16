@@ -13,9 +13,13 @@ import shipreq.webapp.base.ui.semantic.{Button, Icon}
 import shipreq.webapp.client.project.app.Style.{issues => *}
 
 final case class Action(icon: Icon, label: String, cmd: Action.Cmd) {
-  lazy val button =
-    Button(tipe = Button.Type.IconAndText(icon, label))
-      .tag(*.actionButton)
+  val button =
+    Enabled.memo { enabled =>
+      Button(
+        tipe = Button.Type.IconAndText(icon, label),
+        state = if (enabled is Enabled) Button.State.Active else Button.State.Disabled,
+      ).tag(*.actionButton)
+    }
 }
 
 object Action {

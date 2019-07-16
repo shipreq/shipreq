@@ -11,6 +11,7 @@ import shipreq.webapp.client.project.app.{reqdetail, reqtable}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import reqdetail.ReqDetail
+import shipreq.webapp.base.protocol.{UpdateConfigCmd, UpdateContentCmd}
 
 sealed trait PreviewId
 object PreviewId {
@@ -83,17 +84,21 @@ object AsyncKey {
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 @Lenses
-case class State(projectName   : ProjectItem.WithEditableName.State,
-                 reqLookup     : String,
-                 create        : CreateFeature.State.ForProject,
-                 createAsync   : AsyncFeature.State.D1[CreateFeature.RowKey, CreateFeature.AsyncError],
-                 edit          : EditorFeature.State.ForProject,
-                 editAsync     : AsyncFeature.State.D2[EditorFeature.RowKey, AsyncKey, EditorFeature.AsyncError],
-                 savedViewAsync: AsyncFeature.State.D0[EditorFeature.AsyncError],
-                 preview       : PreviewFeature.State[PreviewId],
-                 filterDead    : FilterDead,
-                 reqTable      : reqtable.ReqTablePage.State,
-                 reqDetail     : ReqDetail.State)
+case class State(projectName          : ProjectItem.WithEditableName.State,
+                 reqLookup            : String,
+                 create               : CreateFeature.State.ForProject,
+                 createAsync          : AsyncFeature.State.D1[CreateFeature.RowKey, CreateFeature.AsyncError],
+                 edit                 : EditorFeature.State.ForProject,
+                 editAsync            : AsyncFeature.State.D2[EditorFeature.RowKey, AsyncKey, EditorFeature.AsyncError],
+                 savedViewAsync       : AsyncFeature.State.D0[EditorFeature.AsyncError],
+                 preview              : PreviewFeature.State[PreviewId],
+                 filterDead           : FilterDead,
+                 reqTable             : reqtable.ReqTablePage.State,
+                 reqDetail            : ReqDetail.State,
+                 updateConfigCmdAsync : AsyncFeature.State.D1[UpdateConfigCmd, ErrorMsg],
+                 updateContentCmdAsync: AsyncFeature.State.D1[UpdateContentCmd, ErrorMsg],
+                )
+
 
 object State {
   def init: State =
@@ -108,5 +113,8 @@ object State {
       PreviewFeature.State.init,
       HideDead,
       reqtable.ReqTablePage.State.init,
-      ReqDetail.initState)
+      ReqDetail.initState,
+      AsyncFeature.State.initD1,
+      AsyncFeature.State.initD1,
+    )
 }

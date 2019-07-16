@@ -4,6 +4,7 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.VdomElement
+import scalaz.{\/, -\/, \/-}
 import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{FilterDead, ReqId}
@@ -114,10 +115,29 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
     private val savedViewAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.savedViewAsync)
 
+    private val updateConfigCmdAsyncW: AsyncFeature.Write.D1[UpdateConfigCmd, ErrorMsg] =
+      AsyncFeature.Write.D1.init($ zoomStateL State.updateConfigCmdAsync)
+
+    private val updateContentCmdAsyncW: AsyncFeature.Write.D1[UpdateContentCmd, ErrorMsg] =
+      AsyncFeature.Write.D1.init($ zoomStateL State.updateContentCmdAsync)
+
+    private val updateConfigCmdInvoker: UpdateConfigCmd ~=> Callback =
+      Reusable.fn(cmd => updateConfigCmdAsyncW(cmd)((s, f) => sspUpdateConfig(cmd, _ => s, f)))
+
+    private val updateContentCmdInvoker: UpdateContentCmd ~=> Callback =
+      Reusable.fn(cmd => updateContentCmdAsyncW(cmd)((s, f) => sspUpdateContent(cmd, _ => s, f)))
+
+    private val updateConfigOrContentCmdInvoker: (UpdateConfigCmd \/ UpdateContentCmd) ~=> Callback =
+      Reusable.fn {
+        case -\/(cmd) => updateConfigCmdInvoker(cmd)
+        case \/-(cmd) => updateContentCmdInvoker(cmd)
+      }
+
     private val issuesPage = issues.IssuesPage.StaticProps(
       pxProject,
       pxRenderFeature,
-      pxProjectWidgets)
+      pxProjectWidgets,
+      updateConfigOrContentCmdInvoker)
 
     private val reqTable = ReqTablePage(
       ReqTablePage.StaticProps(
@@ -224,7 +244,8 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
           ProjectHome.Props(pname, index).render
 
         case Page.Issues =>
-          val p = issues.IssuesPage.Props(editRW)
+          val cmdAsync = s.updateConfigCmdAsync.toRead either s.updateContentCmdAsync.toRead
+          val p = issues.IssuesPage.Props(editRW, cmdAsync)
           issuesPage.component(p)
 
         case Page.CfgFields =>
