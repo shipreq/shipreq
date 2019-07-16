@@ -5,15 +5,12 @@ import vdom.html_<^._
 import japgolly.univeq.UnivEq
 import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.webapp.base.data.{Dead, Live}
-import shipreq.webapp.base.protocol.CrudAction
 import shipreq.webapp.client.project.widgets.LifeButton
 
 // This now disgusts me.
 
 sealed abstract class DeletionAction {
   def targetState: Live
-
-  def crudAction[Id, V](id: Id): CrudAction[Id, V]
 }
 object DeletionAction {
   def values = NonEmptyVector[DeletionAction](Delete, Restore)
@@ -25,7 +22,6 @@ object DeletionAction {
  */
 case object Delete extends DeletionAction {
   override def targetState = Dead
-  override def crudAction[Id, V](id: Id) = CrudAction.Delete[Id, V](id)
 }
 
 /**
@@ -33,7 +29,6 @@ case object Delete extends DeletionAction {
  */
 case object Restore extends DeletionAction {
   override def targetState = Live
-  override def crudAction[Id, V](id: Id) = CrudAction.Restore[Id, V](id)
 }
 
 object Deletion {

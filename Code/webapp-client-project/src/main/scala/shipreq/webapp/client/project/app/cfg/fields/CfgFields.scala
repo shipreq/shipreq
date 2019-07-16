@@ -17,7 +17,7 @@ import shipreq.base.util.univeq._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataValidators.{field => V}
-import shipreq.webapp.base.protocol.{FieldCrud, ServerSideProcInvoker}
+import shipreq.webapp.base.protocol.{ServerSideProcInvoker, UpdateConfigCmd}
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.ui.semantic.Table
@@ -32,7 +32,7 @@ import Field.ApplicableReqTypes
 import UiText.FieldNames
 
 object CfgFields {
-  final case class Props(remote    : ServerSideProcInvoker[FieldCrud.CfgAction, ErrorMsg, VerifiedEvent.Seq],
+  final case class Props(remote    : ServerSideProcInvoker[UpdateConfigCmd.ToModifyFields, ErrorMsg, VerifiedEvent.Seq],
                          global    : Global,
                          filterDead: StateSnapshot[FilterDead]) {
 
@@ -195,25 +195,42 @@ private[fields] object MainTable {
   }
 
   // ===================================================================================================================
-  final case class ProtocolBackend(remote: ServerSideProcInvoker[FieldCrud.CfgAction, ErrorMsg, VerifiedEvent.Seq]) {
-    import FieldCrud._
+  final case class ProtocolBackend(remote: ServerSideProcInvoker[UpdateConfigCmd.ToModifyFields, ErrorMsg, VerifiedEvent.Seq]) {
+    import UpdateConfigCmd._
 
-    private def call(a: CfgAction): (TCB.Success, TCB.Failure) => Callback =
-      (s, f) => remote(a, _ => s, _ => f)
+    type T = (TCB.Success, TCB.Failure) => Callback
 
-    def createIO(v: Values) =
-      call(CfgAction.Create(v))
+    private def call(cmd: UpdateConfigCmd.ToModifyFields): T =
+      (s, f) => remote(cmd, _ => s, _ => f)
 
-    def updateValuesIO(i: CustomFieldId, v: Values) =
-      call(CfgAction.UpdateValues(i, v))
+    def createIO(v: CustomFieldValues): T =
+      call(CustomFieldCreate(v))
 
-    def updateOrderIO(i: FieldId, p: Position) =
-      call(CfgAction.UpdateOrder(i, p))
+    def updateTagValuesIO(i: CustomFieldId, v: TagFieldValues): T =
+      i match {
+        case id: CustomField.Tag.Id => call(UpdateConfigCmd.CustomFieldUpdateTag(id, v))
+        case _ => assert(false, s"$i is not a CustomField.Tag.Id"); (_, _) => Callback.empty
+      }
 
-    def deleteIO(i: FieldId, a: DeletionAction) =
+    def updateTextValuesIO(i: CustomFieldId, v: TextFieldValues): T =
+      i match {
+        case id: CustomField.Text.Id => call(UpdateConfigCmd.CustomFieldUpdateText(id, v))
+        case _ => assert(false, s"$i is not a CustomField.Text.Id"); (_, _) => Callback.empty
+      }
+
+    def updateImpValuesIO(i: CustomFieldId, v: ImpFieldValues): T =
+      i match {
+        case id: CustomField.Implication.Id => call(UpdateConfigCmd.CustomFieldUpdateImp(id, v))
+        case _ => assert(false, s"$i is not a CustomField.Implication.Id"); (_, _) => Callback.empty
+      }
+
+    def updateOrderIO(i: FieldId, p: RelPos[FieldId]): T =
+      call(UpdateConfigCmd.FieldUpdateOrder(i, p))
+
+    def deleteIO(i: FieldId, a: DeletionAction): T =
       call(a match {
-        case Delete  => CfgAction.Delete(i)
-        case Restore => CfgAction.Restore(i)
+        case Delete  => UpdateConfigCmd.FieldDelete(i)
+        case Restore => UpdateConfigCmd.FieldRestore(i)
       })
 
     // TODO staticDeletion doesn't handle failure (or lock row)
@@ -429,12 +446,12 @@ private[fields] object MainTable {
 
     val text_editor = {
       @inline def stores = text_storesS
-      val toValues  = FieldCrud.TextFieldValues.apply _
+      val toValues  = UpdateConfigCmd.TextFieldValues.apply _
       val toValuesT = toValues.tupled
       val validator = V.textField.andThen(_ mapValid toValuesT)
       val saveFn    =
         protocol.map(p =>
-          Persistence.asyncSaveNS2(validator, stores, p.createIO)(p.updateValuesIO,
+          Persistence.asyncSaveNS2(validator, stores, p.createIO)(p.updateTextValuesIO,
           SaveNeed.cmpToExtract(t => toValues(t.name, t.key, t.mandatory, t.reqTypes)),
           _.id, validatorState, $ runState _)
         ).extract
@@ -483,12 +500,12 @@ private[fields] object MainTable {
     val tag_editor = {
       @inline def stores = tag_storesS
       val tagSelE   = tagSelector.editor.applyStatefulValidator(V.tagField.tagId.unnamedFn)
-      val toValues  = FieldCrud.TagFieldValues.apply _
+      val toValues  = UpdateConfigCmd.TagFieldValues.apply _
       val toValuesT = toValues.tupled
       val validator = V.tagField.all.andThen(_ mapValid toValuesT)
       val saveFn    =
         protocol.map(p =>
-          Persistence.asyncSaveNS2(validator, stores, p.createIO)(p.updateValuesIO,
+          Persistence.asyncSaveNS2(validator, stores, p.createIO)(p.updateTagValuesIO,
           SaveNeed.cmpToExtract(t => toValues(t.tagId, t.mandatory, t.reqTypes)),
           _.id, validatorState, $ runState _)
         ).extract
@@ -537,12 +554,12 @@ private[fields] object MainTable {
     val impl_editor = {
       @inline def stores = impl_storesS
       val reqTypeSelE = reqTypeSelector.editor.applyStatefulValidator(V.implField.reqTypeId.unnamedFn)
-      val toValues    = FieldCrud.ImplicationFieldValues.apply _
+      val toValues    = UpdateConfigCmd.ImpFieldValues.apply _
       val toValuesT   = toValues.tupled
       val validator   = V.implField.all.andThen(_ mapValid toValuesT)
       val saveFn      =
         protocol.map(p =>
-          Persistence.asyncSaveNS2(validator, stores, p.createIO)(p.updateValuesIO,
+          Persistence.asyncSaveNS2(validator, stores, p.createIO)(p.updateImpValuesIO,
           SaveNeed.cmpToExtract(t => toValues(t.reqTypeId, t.mandatory, t.reqTypes)),
           _.id, validatorState, $ runState _)
         ).extract

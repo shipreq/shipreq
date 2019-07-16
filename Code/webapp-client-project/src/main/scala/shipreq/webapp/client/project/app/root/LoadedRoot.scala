@@ -38,16 +38,13 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
   final class Backend($: BackendScope[Props, State]) extends OnUnmount {
     import global.{cbProjectMetaData, wsClient}
 
+    private val sspUpdateConfig          = global.sspUpdateConfig
     private val sspCreateContent         = global.sspCreateContent
     private val sspUpdateContent         = global.sspUpdateContent
     private val sspProjectNameSet        = global.sspProjectNameSet
     private val sspUpdateSavedViews      = global.sspUpdateSavedViews
     private val sspFieldMandatorinessMod = global.sspFieldMandatorinessMod
     private val sspReqTypeImplicationMod = global.sspReqTypeImplicationMod
-    private val sspCustomIssueTypeCrud   = global.sspCustomIssueTypeCrud
-    private val sspCustomReqTypeCrud     = global.sspCustomReqTypeCrud
-    private val sspFieldMod              = global.sspFieldMod
-    private val sspTagMod                = global.sspTagMod
 
     // This never changes
     private val routerCtl = $.props.runNow().routerCtl
@@ -231,18 +228,18 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
           issuesPage.component(p)
 
         case Page.CfgFields =>
-          cfg.fields.CfgFields.Props(sspFieldMod, global, filterDeadSS).component
+          cfg.fields.CfgFields.Props(sspUpdateConfig, global, filterDeadSS).component
 
         case Page.CfgIssues =>
           cfg.issues.CfgIssues.Props(
-            sspCustomIssueTypeCrud, sspReqTypeImplicationMod, sspFieldMandatorinessMod, global, filterDeadSS, usageShow)
+            sspUpdateConfig, sspReqTypeImplicationMod, sspFieldMandatorinessMod, global, filterDeadSS, usageShow)
             .component
 
         case Page.CfgReqTypes =>
-          cfg.reqtypes.CfgReqTypes.Props(sspCustomReqTypeCrud, global, filterDeadSS, usageShow).component
+          cfg.reqtypes.CfgReqTypes.Props(sspUpdateConfig, global, filterDeadSS, usageShow).component
 
         case Page.CfgTags =>
-          cfg.tags.CfgTags.Props(sspTagMod, global, filterDeadSS).component
+          cfg.tags.CfgTags.Props(sspUpdateConfig, global, filterDeadSS).component
 
         case Page.ReqTable =>
           val rowAsync = editAsyncState

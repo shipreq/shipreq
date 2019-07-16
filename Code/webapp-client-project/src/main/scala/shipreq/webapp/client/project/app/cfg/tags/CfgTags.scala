@@ -18,7 +18,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{TagId => Id, _}
 import shipreq.webapp.base.data.DataValidators.{hashRefKey => VH, tag => V}
 import shipreq.webapp.base.event.VerifiedEvent
-import shipreq.webapp.base.protocol.{ServerSideProcInvoker, TagCrud}
+import shipreq.webapp.base.protocol.{ServerSideProcInvoker, UpdateConfigCmd}
 import shipreq.webapp.base.ui.{AutosizeTextarea, BaseStyles}
 import shipreq.webapp.base.ui.semantic.Table
 import shipreq.webapp.base.UiText.FieldNames
@@ -32,7 +32,7 @@ import FlatTag.FilterPolicy
 import TagInTree.Relations
 
 object CfgTags {
-  case class Props(remote    : ServerSideProcInvoker[TagCrud.Action, ErrorMsg, VerifiedEvent.Seq],
+  case class Props(remote    : ServerSideProcInvoker[UpdateConfigCmd.ToModifyTags, ErrorMsg, VerifiedEvent.Seq],
                    global    : Global,
                    filterDead: StateSnapshot[FilterDead]) {
     def component = MainTable.Component(this)
@@ -191,7 +191,19 @@ private[tags] object MainTable {
 
   // ===================================================================================================================
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
-    val crudIO = Px.props($).withReuse.autoRefresh.map(p => CrudActionIO(p.remote))
+    private val pxRemote = Px.props($).withReuse.autoRefresh.map(_.remote)
+
+    private val createIO: Px[(UpdateConfigCmd.TagData, TCB.Success, TCB.Failure) => Callback] =
+      pxRemote.map(p => (data, s, f) => p(UpdateConfigCmd.TagCreate(data), _ => s, _ => f))
+
+    private val updateIO: Px[(Tag, UpdateConfigCmd.TagData, TCB.Success, TCB.Failure) => Callback] =
+      pxRemote.map(p => (tag, data, s, f) => p(UpdateConfigCmd.TagUpdate(tag.id, data), _ => s, _ => f))
+
+    private val deleteIO: Px[(Id, DeletionAction, TCB.Success, TCB.Failure) => Callback] =
+      pxRemote.map(p => (tagId, d, s, f) => d match {
+        case Delete  => p(UpdateConfigCmd.TagDelete(tagId), _ => s, _ => f)
+        case Restore => p(UpdateConfigCmd.TagRestore(tagId), _ => s, _ => f)
+      })
 
     def validatorState(k: Option[Id]): S => V.State =
       s => MainTable.validatorState(s, $.props.map(_.global), k)
@@ -261,7 +273,7 @@ private[tags] object MainTable {
           <.tbody(rows(fd, s))),
 
         DetailPaneFns.render(
-          s, crudIO.value().updateIO,
+          s, updateIO.value(),
           parentSel = $ modState State.detailRowSelParent.set(_),
           childSel  = $ modState State.detailRowSelChild.set(_)))
     }
@@ -281,8 +293,8 @@ private[tags] object MainTable {
 
       val editable = editor.editableByRowStatus($)
 
-      val deletion = crudIO.map(c =>
-        Persistence.asyncDeletionS(stores.s)(c._deleteIO, $ runState _))
+      val deletion = deleteIO.map(d =>
+        Persistence.asyncDeletionS(stores.s)((tagId, da) => d(tagId, da, _, _), $ runState _))
 
       def ei(s: S, r: stores.s.Row): editor.Input = {
         val a = (validatorState(r.p.id.some)(s), r.i)
@@ -339,12 +351,15 @@ private[tags] object MainTable {
 
     val tg_editor = {
       @inline def stores = tg_storesS
-      val toValues  = TagCrud.TagGroupValues.apply _
+      val toValues  = UpdateConfigCmd.TagGroupValues.apply _
       val toValuesT = (toValues andThenA \&/.This.apply).tupled
       val saveFn    =
-        crudIO.map(c =>
-          Persistence.asyncSaveNS(V.tagGroup.andThen(_ mapValid toValuesT), stores, c.createIO)(
-            c.updateIO,
+        (for {
+          createIO <- this.createIO
+          updateIO <- this.updateIO
+        } yield
+          Persistence.asyncSaveNS(V.tagGroup.andThen(_ mapValid toValuesT), stores, createIO)(
+            updateIO,
             (t,u) => SaveNeed.equal(u.onlyThis.get, toValues(t.name, t.mutexChildren, t.desc)),
             validatorState,
             $ runState _)
@@ -376,11 +391,14 @@ private[tags] object MainTable {
 
     val at_editor = {
       @inline def stores = at_storesS
-      val toValues  = TagCrud.ApplicableTagValues.apply _
+      val toValues  = UpdateConfigCmd.ApplicableTagValues.apply _
       val toValuesT = (toValues andThenA \&/.This.apply).tupled
       val saveFn    =
-        crudIO.map(c =>
-          Persistence.asyncSaveNS(V.applicableTag.andThen(_ mapValid toValuesT), stores, c.createIO)(c.updateIO,
+        (for {
+          createIO <- this.createIO
+          updateIO <- this.updateIO
+        } yield
+          Persistence.asyncSaveNS(V.applicableTag.andThen(_ mapValid toValuesT), stores, createIO)(updateIO,
           (t,u) => SaveNeed.equal(u.onlyThis.get, toValues(t.name, t.key, t.desc)),
           validatorState, $ runState _)
         ).extract
@@ -415,7 +433,7 @@ private[tags] object MainTable {
 
     import DetailPane.{Rel, Rels, AddRel, AddRels, AddSelected}
 
-    type UpdateIO = (Tag, TagCrud.Value, TCB.Success, TCB.Failure) => Callback
+    type UpdateIO = (Tag, UpdateConfigCmd.TagData, TCB.Success, TCB.Failure) => Callback
     type SelUpdate = Option[Id] => Callback
 
     def removeChild(child: Id): Relations => Relations =

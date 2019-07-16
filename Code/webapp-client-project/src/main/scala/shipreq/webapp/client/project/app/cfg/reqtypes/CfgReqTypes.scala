@@ -15,8 +15,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataValidators.{reqType => V}
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.filter.Filter
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes.CustomReqTypeCrud
-import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.protocol.{ServerSideProcInvoker, UpdateConfigCmd}
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.project.app.Style
@@ -28,7 +27,7 @@ import DataImplicits._
 
 object CfgReqTypes {
 
-  case class Props(remote    : ServerSideProcInvoker[CustomReqTypeCrud.RequestType, ErrorMsg, VerifiedEvent.Seq],
+  case class Props(remote    : ServerSideProcInvoker[UpdateConfigCmd.ToModifyCustomReqTypes, ErrorMsg, VerifiedEvent.Seq],
                    global    : Global,
                    filterDead: StateSnapshot[FilterDead],
                    usageShow : Usage.Show) {
@@ -55,22 +54,28 @@ object CfgReqTypes {
 
   // ===================================================================================================================
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
-    val project    = Px.props($).map(_.global.unsafeProject()).withReuse.manualRefresh
-    val filterDead = Px.props($).map(_.filterDead.value).withReuse.manualRefresh
-    val usageShow  = Px.props($).map(_.usageShow).withReuse.manualRefresh
+    private val project    = Px.props($).map(_.global.unsafeProject()).withReuse.manualRefresh
+    private val filterDead = Px.props($).map(_.filterDead.value).withReuse.manualRefresh
+    private val usageShow  = Px.props($).map(_.usageShow).withReuse.manualRefresh
 
-    val crudIO = Px.props($).withReuse.autoRefresh.map(p => CrudActionIO(p.remote))
-    val supp = TypicalSupp(storesAndState)(crudIO.value(), $)
+    private val crudIO = Px.props($).withReuse.autoRefresh.map(p => CrudActionIO(p.remote)(
+      create  = UpdateConfigCmd.CustomReqTypeCreate,
+      update  = UpdateConfigCmd.CustomReqTypeUpdate,
+      delete  = UpdateConfigCmd.CustomReqTypeDelete,
+      restore = UpdateConfigCmd.CustomReqTypeRestore,
+    ).contramapValues(UpdateConfigCmd.CustomReqTypeValues.tupled))
 
-    val onWhenImplicationRequired = On <=> ImplicationRequired
+    private val supp = TypicalSupp(storesAndState)(crudIO.value(), $)
 
-    def validatorState(k: Option[CustomReqTypeId]): V.State =
+    private val onWhenImplicationRequired = On <=> ImplicationRequired
+
+    private def validatorState(k: Option[CustomReqTypeId]): V.State =
       validatorState(k, $.state.runNow())
 
-    def validatorState(k: Option[CustomReqTypeId], s: => S): V.State =
+    private def validatorState(k: Option[CustomReqTypeId], s: => S): V.State =
       V.State(k, () => savedRowStoreS.getAllP(s))
 
-    val rowE = {
+    private val rowE = {
       val mnemonicE = Editors.textInputEditor.applyStatefulValidator(V.mnemonic.unnamedFn)
       val nameE     = Editors.textInputEditor.applyStatefulValidator(V.name.unnamedFn)
       val impE      = Editors.checkboxEditor.imap(onWhenImplicationRequired).strengthL[V.State]
@@ -93,15 +98,15 @@ object CfgReqTypes {
       .applyOnEditFinishedK(saveFn)(_._1.subject)
     }
 
-    def checkbox(i: ImplicationRequired) =
+    private def checkbox(i: ImplicationRequired) =
       Widgets.checkbox(onWhenImplicationRequired from i)
 
-    val usageFn = Usage((_: ReqType).reqTypeId)(
+    private val usageFn = Usage((_: ReqType).reqTypeId)(
       _.reqTypeCount,
       Filter.Valid.reqType,
       project, filterDead, usageShow)
 
-    val cfgTable = {
+    private val cfgTable = {
       val rowRenderer =
         new CfgTable.RowRenderer[CustomReqType, rowE.View, (TagMod, Set[ReqType.Mnemonic], TagMod, TagMod, Option[Usage.View])] {
           override def newRow = {
@@ -143,7 +148,7 @@ object CfgReqTypes {
         $)
     }
 
-    val table = {
+    private val table = {
       val headerRow = CfgTable.header(List[TagMod](
         FieldNames.mnemonic,
         FieldNames.name,

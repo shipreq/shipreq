@@ -16,7 +16,7 @@ import shipreq.webapp.client.project.app.state.Global
 
 object CfgIssues {
 
-  final case class Props(a         : ServerSideProcInvoker[CustomIssueTypeCrud.RequestType, ErrorMsg, VerifiedEvent.Seq],
+  final case class Props(a         : ServerSideProcInvoker[UpdateConfigCmd.ToModifyCustomIssueTypes, ErrorMsg, VerifiedEvent.Seq],
                          b         : ServerSideProcInvoker[ReqTypeImplicationMod.RequestType, ErrorMsg, VerifiedEvent.Seq],
                          c         : ServerSideProcInvoker[FieldMandatorinessMod.RequestType, ErrorMsg, VerifiedEvent.Seq],
                          g         : Global,

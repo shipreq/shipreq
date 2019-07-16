@@ -58,122 +58,108 @@ object MakeEvent {
     }
   }
 
-  def customIssueTypeCrud(a: CustomIssueTypeCrud.RequestType, project: Project): Result =
-    a match {
+  def updateConfig(cmd: UpdateConfigCmd, project: Project): Result = {
+    def nextId = project.idCeilings.customField + 1
 
-      case CrudAction.Create(vs) =>
+    cmd match {
+
+      case UpdateConfigCmd.CustomIssueTypeCreate(vs) =>
         val id = CustomIssueTypeId(project.idCeilings.customIssueType + 1)
-        val (key, desc) = vs
+        import vs._
         val values = gdAllValues(CustomIssueTypeGD , "")
         CustomIssueTypeCreate(id, values)
 
-      case CrudAction.Update(id, vs) =>
+      case UpdateConfigCmd.CustomIssueTypeUpdate(id, vs) =>
         project.config.customIssueTypes.attempt(id) toMakeEventResult { cur =>
-          val (key, desc) = vs
+          import vs._
           val vs2 = gdUnequalValues(CustomIssueTypeGD, cur, "")
           eventIfNonEmpty(vs2)(CustomIssueTypeUpdate(id, _))
         }
 
-      case CrudAction.Delete(id) =>
+      case UpdateConfigCmd.CustomIssueTypeDelete(id) =>
         CustomIssueTypeDelete(id)
 
-      case CrudAction.Restore(id) =>
+      case UpdateConfigCmd.CustomIssueTypeRestore(id) =>
         CustomIssueTypeRestore(id)
-    }
 
-  def customReqTypeCrud(a: CustomReqTypeCrud.RequestType, project: Project): Result =
-    a match {
-
-      case CrudAction.Create(vs) =>
+      case UpdateConfigCmd.CustomReqTypeCreate(vs) =>
         val id = CustomReqTypeId(project.idCeilings.customReqType + 1)
-        val (mnemonic, name, imp) = vs
+        import vs._
         val values = gdAllValues(CustomReqTypeGD , "")
         CustomReqTypeCreate(id, values)
 
-      case CrudAction.Update(id, vs) =>
+      case UpdateConfigCmd.CustomReqTypeUpdate(id, vs) =>
         project.config.reqTypes.need(id) match {
           case cur: CustomReqType =>
-            val (mnemonic, name, imp) = vs
+            import vs._
             val vs2 = gdUnequalValues(CustomReqTypeGD, cur, "")
             eventIfNonEmpty(vs2)(CustomReqTypeUpdate(id, _))
           case f => Failure(s"$f must be a CustomReqType.")
         }
 
-      case CrudAction.Delete(id) =>
+      case UpdateConfigCmd.CustomReqTypeDelete(id) =>
         CustomReqTypeDelete(id)
 
-      case CrudAction.Restore(id) =>
+      case UpdateConfigCmd.CustomReqTypeRestore(id) =>
         CustomReqTypeRestore(id)
-    }
 
-  def fieldCrud(a: FieldMod.RequestType, project: Project): Result = {
-    import FieldCrud._
-    def nextId = project.idCeilings.customField + 1
-    a match {
-
-      case CfgAction.UpdateOrder(id, pos) =>
+      case UpdateConfigCmd.FieldUpdateOrder(id, pos) =>
         FieldReposition(id, pos)
 
-      case CfgAction.Create(vs: TextFieldValues) =>
+      case UpdateConfigCmd.CustomFieldCreate(vs: UpdateConfigCmd.TextFieldValues) =>
         val id = CustomField.Text.Id(nextId)
         FieldCustomTextCreate(id, gdAllValues(CustomTextFieldGD, "vs"))
 
-      case CfgAction.Create(vs: TagFieldValues) =>
+      case UpdateConfigCmd.CustomFieldCreate(vs: UpdateConfigCmd.TagFieldValues) =>
         val id = CustomField.Tag.Id(nextId)
         FieldCustomTagCreate(id, gdAllValues(CustomTagFieldGD, "vs"))
 
-      case CfgAction.Create(vs: ImplicationFieldValues) =>
+      case UpdateConfigCmd.CustomFieldCreate(vs: UpdateConfigCmd.ImpFieldValues) =>
         val id = CustomField.Implication.Id(nextId)
         FieldCustomImpCreate(id, gdAllValues(CustomImpFieldGD, "vs"))
 
-      case CfgAction.UpdateValues(id: CustomField.Text.Id, vs: TextFieldValues) =>
+      case UpdateConfigCmd.CustomFieldUpdateText(id, vs) =>
         project.config.fields.customAttempt(id) toMakeEventResult { cur =>
           val vs2 = gdUnequalValues(CustomTextFieldGD, cur, "vs")
           eventIfNonEmpty(vs2)(FieldCustomTextUpdate(id, _))
         }
 
-      case CfgAction.UpdateValues(id: CustomField.Tag.Id, vs: TagFieldValues) =>
+      case UpdateConfigCmd.CustomFieldUpdateTag(id, vs) =>
         project.config.fields.customAttempt(id) toMakeEventResult { cur =>
           val vs2 = gdUnequalValues(CustomTagFieldGD, cur, "vs")
           eventIfNonEmpty(vs2)(FieldCustomTagUpdate(id, _))
         }
 
-      case CfgAction.UpdateValues(id: CustomField.Implication.Id, vs: ImplicationFieldValues) =>
+      case UpdateConfigCmd.CustomFieldUpdateImp(id, vs) =>
         project.config.fields.customAttempt(id) toMakeEventResult { cur =>
           val vs2 = gdUnequalValues(CustomImpFieldGD, cur, "vs")
           eventIfNonEmpty(vs2)(FieldCustomImpUpdate(id, _))
         }
 
-      case CfgAction.Delete(f: StaticField) =>
+      case UpdateConfigCmd.FieldDelete(f: StaticField) =>
         FieldStaticRemove(f)
 
-      case CfgAction.Restore(f: StaticField) =>
+      case UpdateConfigCmd.FieldRestore(f: StaticField) =>
         FieldStaticAdd(f)
 
-      case CfgAction.Delete(id: CustomFieldId) =>
+      case UpdateConfigCmd.FieldDelete(id: CustomFieldId) =>
         FieldCustomDelete(id)
 
-      case CfgAction.Restore(id: CustomFieldId) =>
+      case UpdateConfigCmd.FieldRestore(id: CustomFieldId) =>
         FieldCustomRestore(id)
 
-      case CfgAction.UpdateValues(_: CustomField.Text.Id,        _: TagFieldValues)
-         | CfgAction.UpdateValues(_: CustomField.Text.Id,        _: ImplicationFieldValues)
-         | CfgAction.UpdateValues(_: CustomField.Tag.Id,         _: TextFieldValues)
-         | CfgAction.UpdateValues(_: CustomField.Tag.Id,         _: ImplicationFieldValues)
-         | CfgAction.UpdateValues(_: CustomField.Implication.Id, _: TextFieldValues)
-         | CfgAction.UpdateValues(_: CustomField.Implication.Id, _: TagFieldValues)
-         =>
-        Failure(s"Invalid id/value combination: $a")
+      case t: UpdateConfigCmd.ToModifyTags =>
+        tagCrud(t, project)
     }
   }
 
   // TODO tagCrud protocol is crap. Redo it.
-  def tagCrud(a: TagMod.RequestType, project: Project): Result = {
-    import TagCrud.{TagGroupValues, ApplicableTagValues}
+  private def tagCrud(cmd: UpdateConfigCmd.ToModifyTags, project: Project): Result = {
+    import UpdateConfigCmd.{TagGroupValues, ApplicableTagValues}
     def nextId = project.idCeilings.tag + 1
-    a match {
+    cmd match {
 
-      case CrudAction.Create(vs) =>
+      case UpdateConfigCmd.TagCreate(vs) =>
         val rels = vs.b getOrElse TagInTree.noRelations
         import rels._
 
@@ -191,7 +177,7 @@ object MakeEvent {
           case None => Failure("Values required.")
         }
 
-      case CrudAction.Update(tagId, vs) =>
+      case UpdateConfigCmd.TagUpdate(tagId, vs) =>
         project.config.tags.tree.get(tagId) match {
           case Some(tit) =>
 
@@ -248,10 +234,10 @@ object MakeEvent {
           case None => Failure(s"$tagId not found.")
         }
 
-      case CrudAction.Delete(id) =>
+      case UpdateConfigCmd.TagDelete(id) =>
         TagDelete(id)
 
-      case CrudAction.Restore(id) =>
+      case UpdateConfigCmd.TagRestore(id) =>
         TagRestore(id)
     }
   }

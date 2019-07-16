@@ -18,7 +18,7 @@ object CustomIssueTypesTest extends TestSuite {
   override def tests = Tests {
     val fd    = ReactTestVar[FilterDead](HideDead)
     val g     = TestGlobal(SampleProject.project)
-    val props = CustomIssueTypes.Props(g.sspCustomIssueTypeCrud, g, fd.stateSnapshotWithReuse(), Usage.Show((_, _) => <.a))
+    val props = CustomIssueTypes.Props(g.sspUpdateConfig, g, fd.stateSnapshotWithReuse(), Usage.Show((_, _) => <.a))
     val re    = props.component
     val c     = ReactTestUtils.renderIntoDocument(re)
 

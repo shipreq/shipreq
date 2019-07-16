@@ -13,7 +13,6 @@ import shipreq.webapp.base.test.{SampleProject => S, TagId_T}
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import DataImplicits._
-import TagCrud._
 import FlatTag._
 import FilterPolicy._
 import MMTree.Relations

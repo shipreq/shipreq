@@ -99,44 +99,32 @@ object ProjectSpaProtocols {
       override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onSync(r)
     }
 
-    case object CreateContent extends Base[CreateContentCmd, EventResult](3) {
+    case object UpdateConfig extends Base[UpdateConfigCmd, EventResult](3) {
+      override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onUpdateConfig(r)
+    }
+
+    case object CreateContent extends Base[CreateContentCmd, EventResult](4) {
       override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onCreateContent(r)
     }
 
-    case object UpdateContent extends Base[UpdateContentCmd, EventResult](4) {
+    case object UpdateContent extends Base[UpdateContentCmd, EventResult](5) {
       override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onUpdateContent(r)
     }
 
-    case object ProjectNameSet extends Base[String, EventResult](5) {
+    case object ProjectNameSet extends Base[String, EventResult](6) {
       override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onProjectNameSet(r)
     }
 
-    case object UpdateSavedViews extends Base[SavedViewCmd, EventResult](6) {
+    case object UpdateSavedViews extends Base[SavedViewCmd, EventResult](7) {
       override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onUpdateSavedViews(r)
     }
 
-    case object FieldMandatorinessMod extends Base[(CustomFieldId, Mandatory), EventResult](7) {
+    case object FieldMandatorinessMod extends Base[(CustomFieldId, Mandatory), EventResult](8) {
       override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onFieldMandatorinessMod(r)
     }
 
-    case object ReqTypeImplicationMod extends Base[(CustomReqTypeId, ImplicationRequired), EventResult](8) {
+    case object ReqTypeImplicationMod extends Base[(CustomReqTypeId, ImplicationRequired), EventResult](9) {
       override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onReqTypeImplicationMod(r)
-    }
-
-    case object CustomIssueTypeCrud extends Base[CrudAction[CustomIssueTypeId, (HashRefKey, Option[String])], EventResult](9) {
-      override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onCustomIssueTypeCrud(r)
-    }
-
-    case object CustomReqTypeCrud extends Base[CrudAction[CustomReqTypeId, (ReqType.Mnemonic, String, ImplicationRequired)], EventResult](10) {
-      override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onCustomReqTypeCrud(r)
-    }
-
-    case object FieldMod extends Base[FieldCrud.CfgAction, EventResult](11) {
-      override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onFieldMod(r)
-    }
-
-    case object TagMod extends Base[TagCrud.Action, EventResult](12) {
-      override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onTagMod(r)
     }
 
     implicit def univEq: UnivEq[WsReqRes] = UnivEq.derive
@@ -147,16 +135,13 @@ object ProjectSpaProtocols {
         onInitApp              : F[InitApp              .type] => G[InitApp              .type],
         onReconnect            : F[Reconnect            .type] => G[Reconnect            .type],
         onSync                 : F[Sync                 .type] => G[Sync                 .type],
+        onUpdateConfig         : F[UpdateConfig         .type] => G[UpdateConfig         .type],
         onCreateContent        : F[CreateContent        .type] => G[CreateContent        .type],
         onUpdateContent        : F[UpdateContent        .type] => G[UpdateContent        .type],
         onProjectNameSet       : F[ProjectNameSet       .type] => G[ProjectNameSet       .type],
         onUpdateSavedViews     : F[UpdateSavedViews     .type] => G[UpdateSavedViews     .type],
         onFieldMandatorinessMod: F[FieldMandatorinessMod.type] => G[FieldMandatorinessMod.type],
         onReqTypeImplicationMod: F[ReqTypeImplicationMod.type] => G[ReqTypeImplicationMod.type],
-        onCustomIssueTypeCrud  : F[CustomIssueTypeCrud  .type] => G[CustomIssueTypeCrud  .type],
-        onCustomReqTypeCrud    : F[CustomReqTypeCrud    .type] => G[CustomReqTypeCrud    .type],
-        onFieldMod             : F[FieldMod             .type] => G[FieldMod             .type],
-        onTagMod               : F[TagMod               .type] => G[TagMod               .type],
         ) { self =>
       @inline def apply(r: WsReqRes)(f: F[r.type]) = r.fold(this)(f)
       def compose[H[_ <: WsReqRes]](h: Fold[G, H]): Fold[F, H] =
@@ -164,16 +149,13 @@ object ProjectSpaProtocols {
           onInitApp               = f => h.onInitApp              (self.onInitApp              (f)),
           onReconnect             = f => h.onReconnect            (self.onReconnect            (f)),
           onSync                  = f => h.onSync                 (self.onSync                 (f)),
+          onUpdateConfig          = f => h.onUpdateConfig         (self.onUpdateConfig         (f)),
           onCreateContent         = f => h.onCreateContent        (self.onCreateContent        (f)),
           onUpdateContent         = f => h.onUpdateContent        (self.onUpdateContent        (f)),
           onProjectNameSet        = f => h.onProjectNameSet       (self.onProjectNameSet       (f)),
           onUpdateSavedViews      = f => h.onUpdateSavedViews     (self.onUpdateSavedViews     (f)),
           onFieldMandatorinessMod = f => h.onFieldMandatorinessMod(self.onFieldMandatorinessMod(f)),
           onReqTypeImplicationMod = f => h.onReqTypeImplicationMod(self.onReqTypeImplicationMod(f)),
-          onCustomIssueTypeCrud   = f => h.onCustomIssueTypeCrud  (self.onCustomIssueTypeCrud  (f)),
-          onCustomReqTypeCrud     = f => h.onCustomReqTypeCrud    (self.onCustomReqTypeCrud    (f)),
-          onFieldMod              = f => h.onFieldMod             (self.onFieldMod             (f)),
-          onTagMod                = f => h.onTagMod               (self.onTagMod               (f)),
         )
     }
 

@@ -1404,36 +1404,36 @@ object RandomData {
     val applicableReqTypes: Gen[ApplicableReqTypes] =
       genISubset(reqTypeId.nes)
 
-    val fieldPosition: Gen[FieldCrud.Position] =
+    val fieldPosition =
       fieldId.option
 
     val textFieldValues =
-      Gen.apply4(FieldCrud.TextFieldValues.apply)(shortText1, fieldRefKey, mandatory, applicableReqTypes)
+      Gen.apply4(UpdateConfigCmd.TextFieldValues.apply)(shortText1, fieldRefKey, mandatory, applicableReqTypes)
 
-    val fieldValues: Gen[FieldCrud.Values] =
+    val customFieldValues: Gen[UpdateConfigCmd.CustomFieldValues] =
       Gen.chooseGen(textFieldValues)
 
-    object fieldCfgAction {
-      import FieldCrud.CfgAction, CfgAction._
-      val create      : Gen[Create]       = fieldValues map Create
-      val updateValues: Gen[UpdateValues] = Gen.apply2(UpdateValues)(customFieldId, fieldValues)
-      val updateOrder : Gen[UpdateOrder]  = Gen.apply2(UpdateOrder)(fieldId, fieldPosition)
-      val delete      : Gen[Delete]       = fieldId map Delete
-      val restore     : Gen[Restore]      = fieldId map Restore
-      val any         : Gen[CfgAction]    = Gen.chooseGen(create, updateValues, updateOrder, delete)
-    }
+//    object updateConfigCmd {
+//      import UpdateConfigCmd._
+//      val create      : Gen[CustomFieldCreate]       = customFieldValues map Create
+//      val updateValues: Gen[CustomFieldUpdateValues] = Gen.apply2(UpdateValues)(customFieldId, customFieldValues)
+//      val updateOrder : Gen[CustomFieldUpdateOrder]  = Gen.apply2(UpdateOrder)(fieldId, fieldPosition)
+//      val delete      : Gen[CustomFieldDelete]       = fieldId map Delete
+//      val restore     : Gen[CustomFieldRestore]      = fieldId map Restore
+//      val any         : Gen[UpdateConfigCmd]    = Gen.chooseGen(create, updateValues, updateOrder, delete)
+//    }
 
-    def tagProtocolValues: Tag => TagCrud.Values = {
-      case TagGroup(_, n, d, mc, _)     => TagCrud.TagGroupValues(n, mc, d)
-      case ApplicableTag(_, n, d, k, _) => TagCrud.ApplicableTagValues(n, k, d)
-    }
-
-    val tagCrudInput =
-      tagAndRels.flatMap(t => {
-        val a = Gen pure tagProtocolValues(t._1)
-        val b = Gen pure t._2
-        a \&/ b
-      })
+//    def tagProtocolValues: Tag => TagCrud.Values = {
+//      case TagGroup(_, n, d, mc, _)     => TagCrud.TagGroupValues(n, mc, d)
+//      case ApplicableTag(_, n, d, k, _) => TagCrud.ApplicableTagValues(n, k, d)
+//    }
+//
+//    val tagCrudInput =
+//      tagAndRels.flatMap(t => {
+//        val a = Gen pure tagProtocolValues(t._1)
+//        val b = Gen pure t._2
+//        a \&/ b
+//      })
   }
 
   // ===================================================================================================================
@@ -1454,24 +1454,24 @@ object RandomData {
         n <- projectName
       } yield ProjectSpaProtocols.InitPageData(u, i, n)
 
-    class CrudActionGens[I, V](idG: Gen[I], vG: Gen[V]) {
-      lazy val create  = vG.map(CrudAction.Create[I, V])
-      lazy val update  = Gen.apply2(CrudAction.Update[I, V])(idG, vG)
-      lazy val delete  = idG map CrudAction.Delete[I, V]
-      lazy val restore = idG map CrudAction.Restore[I, V]
-      lazy val any     = Gen.chooseGen[CrudAction[I, V]](create, update, delete, restore)
-    }
+//    class CrudActionGens[I, V](idG: Gen[I], vG: Gen[V]) {
+//      lazy val create  = vG.map(CrudAction.Create[I, V])
+//      lazy val update  = Gen.apply2(CrudAction.Update[I, V])(idG, vG)
+//      lazy val delete  = idG map CrudAction.Delete[I, V]
+//      lazy val restore = idG map CrudAction.Restore[I, V]
+//      lazy val any     = Gen.chooseGen[CrudAction[I, V]](create, update, delete, restore)
+//    }
 
-    val customIssueTypeCrud = new CrudActionGens(
-      RandomData.customIssueTypeId,
-      Gen.tuple2(hashRefKey, optionalLargeText))
+//    val customIssueTypeCrud = new CrudActionGens(
+//      RandomData.customIssueTypeId,
+//      Gen.tuple2(hashRefKey, optionalLargeText))
 
-    val customReqTypeCrud = new CrudActionGens(
-      RandomData.customReqTypeId,
-      Gen.tuple3(reqTypeMnemonic, customReqTypeName, implicationRequired))
+//    val customReqTypeCrud = new CrudActionGens(
+//      RandomData.customReqTypeId,
+//      Gen.tuple3(reqTypeMnemonic, customReqTypeName, implicationRequired))
 
-    val tagCrud =
-      new CrudActionGens(RandomData.tagId, tagCrudInput)
+//    val tagCrud =
+//      new CrudActionGens(RandomData.tagId, tagCrudInput)
   }
 
   // ===================================================================================================================

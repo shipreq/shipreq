@@ -6,7 +6,7 @@ import scalaz.\/
 import shipreq.base.util.{ErrorMsg, Identity}
 
 // TODO Use AsyncCallback in ServerSideProcInvoker
-final case class ServerSideProcInvoker[I, F, O](fn: (I, O => Callback, F => Callback) => Callback) extends AnyVal {
+final case class ServerSideProcInvoker[-I, F, O](fn: (I, O => Callback, F => Callback) => Callback) extends AnyVal {
 
   @inline def apply(input    : I,
                     onSuccess: O => Callback,

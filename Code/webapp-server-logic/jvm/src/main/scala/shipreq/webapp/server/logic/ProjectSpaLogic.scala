@@ -293,16 +293,13 @@ object ProjectSpaLogic extends StrictLogging {
         onInitApp               = onInitApp,
         onReconnect             = onReconnect,
         onSync                  = onSync,
+        onUpdateConfig          = updateProject (MakeEvent.updateConfig),
         onCreateContent         = updateProject (MakeEvent.createContent),
         onUpdateContent         = updateProject (MakeEvent.updateContent),
         onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn),
         onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews),
         onFieldMandatorinessMod = updateProjectI(MakeEvent.fieldMandatorinessMod),
         onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod),
-        onCustomIssueTypeCrud   = updateProject (MakeEvent.customIssueTypeCrud),
-        onCustomReqTypeCrud     = updateProject (MakeEvent.customReqTypeCrud),
-        onFieldMod              = updateProject (MakeEvent.fieldCrud),
-        onTagMod                = updateProject (MakeEvent.tagCrud),
       )
 
       private val writeSnapshotInsteadOfEvents: Int => Boolean =

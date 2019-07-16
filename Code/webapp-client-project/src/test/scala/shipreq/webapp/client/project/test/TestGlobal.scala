@@ -63,16 +63,13 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
         onInitApp               = _ => ???,
         onReconnect             = _ => ???,
         onSync                  = _ => ???,
+        onUpdateConfig          = failLeft,
         onCreateContent         = failLeft,
         onUpdateContent         = failLeft,
         onProjectNameSet        = failLeft,
         onUpdateSavedViews      = failLeft,
         onFieldMandatorinessMod = failLeft,
         onReqTypeImplicationMod = failLeft,
-        onCustomIssueTypeCrud   = failLeft,
-        onCustomReqTypeCrud     = failLeft,
-        onFieldMod              = failLeft,
-        onTagMod                = failLeft,
       )
       def reqReq = req.req
       val res = msgFold(req.reqRes)(reqReq)
@@ -196,16 +193,13 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
       onInitApp               = _ => None,
       onReconnect             = _ => None,
       onSync                  = _ => None,
+      onUpdateConfig          = updateProject (MakeEvent.updateConfig),
       onCreateContent         = updateProject (MakeEvent.createContent),
       onUpdateContent         = updateProject (MakeEvent.updateContent),
       onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn),
       onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews),
       onFieldMandatorinessMod = updateProjectI(MakeEvent.fieldMandatorinessMod),
       onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod),
-      onCustomIssueTypeCrud   = updateProject (MakeEvent.customIssueTypeCrud),
-      onCustomReqTypeCrud     = updateProject (MakeEvent.customReqTypeCrud),
-      onFieldMod              = updateProject (MakeEvent.fieldCrud),
-      onTagMod                = updateProject (MakeEvent.tagCrud),
     )
 
     testReq => {

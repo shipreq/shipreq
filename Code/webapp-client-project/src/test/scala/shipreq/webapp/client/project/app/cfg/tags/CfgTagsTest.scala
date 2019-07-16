@@ -11,7 +11,7 @@ import shipreq.base.util.MMTree
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.protocol.TagCrud._
+import shipreq.webapp.base.protocol.UpdateConfigCmd._
 import shipreq.webapp.base.test.{SampleProject => S}, S.Values._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -36,14 +36,14 @@ object CfgTagsTest extends TestSuite {
     Sizzle("td.name", ReactDOM.findDOMNode(c.raw).get.asElement).toVector.map(nameCellToText(_, ""))
 
   class FakeUpdateIO {
-    var reqs = Vector.empty[(Tag, Value)]
+    var reqs = Vector.empty[(Tag, TagData)]
     val u: MainTable.DetailPaneFns.UpdateIO = (t, v, _, _) => Callback { reqs :+= ((t, v)) }
   }
 
   class Tester {
     lazy val filterDead = ReactTestVar[FilterDead](HideDead)
     lazy val g          = TestGlobal(S.project)
-    lazy val props      = CfgTags.Props(g.sspTagMod, g, filterDead.stateSnapshotWithReuse())
+    lazy val props      = CfgTags.Props(g.sspUpdateConfig, g, filterDead.stateSnapshotWithReuse())
     lazy val re         = MainTable.Component(props)
     lazy val c          = ReactTestUtils.renderIntoDocument(re)
   }

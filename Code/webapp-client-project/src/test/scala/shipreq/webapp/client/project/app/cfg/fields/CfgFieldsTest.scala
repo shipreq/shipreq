@@ -25,7 +25,7 @@ object CfgFieldsTest extends TestSuite {
   class Tester {
     lazy val fd    = ReactTestVar[FilterDead](HideDead)
     lazy val g     = TestGlobal(S.project).disableAutoResponse()
-    lazy val props = CfgFields.Props(g.sspFieldMod, g, fd.stateSnapshotWithReuse())
+    lazy val props = CfgFields.Props(g.sspUpdateConfig, g, fd.stateSnapshotWithReuse())
     lazy val re    = MainTable.Component(props)
     lazy val c     = ReactTestUtils.renderIntoDocument(re)
 
@@ -64,7 +64,7 @@ object CfgFieldsTest extends TestSuite {
 
     // Server communication
     g.assertReqsSent(1)
-    g.respondToLast(WsReqRes.FieldMod) {
+    g.respondToLast(WsReqRes.UpdateConfig) {
       import CustomTextFieldGD._
       val e = Event.FieldCustomTextCreate(666, nev(Name("blahh"), Key("blahh"), Mandatory(true), ReqTypes(allReqTypes)))
       \/-(g.verifyEventsCB(e).runNow())
@@ -80,7 +80,7 @@ object CfgFieldsTest extends TestSuite {
         .flatMap(Sizzle("button:contains('Delete')", _).toArray[Element])
         .toJSArray)
     g.assertReqsSent(2)
-    g.respondToLast(WsReqRes.FieldMod)(
+    g.respondToLast(WsReqRes.UpdateConfig)(
       \/-(g.verifyEventsCB(Event.FieldCustomDelete(666.CFText)).runNow()))
 
     assertEq(htmlScrub run html, htmlScrub run initialView)

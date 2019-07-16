@@ -190,16 +190,13 @@ abstract class Global(onFirstLoad: (Global, InitAppData) => Callback,
     } yield ()
   }
 
+  final lazy val sspUpdateConfig          = sspToEvents(WsReqRes.UpdateConfig)
   final lazy val sspCreateContent         = sspToEvents(WsReqRes.CreateContent)
   final lazy val sspUpdateContent         = sspToEvents(WsReqRes.UpdateContent)
   final lazy val sspProjectNameSet        = sspToEvents(WsReqRes.ProjectNameSet)
   final lazy val sspUpdateSavedViews      = sspToEvents(WsReqRes.UpdateSavedViews)
   final lazy val sspFieldMandatorinessMod = sspToEvents(WsReqRes.FieldMandatorinessMod)
   final lazy val sspReqTypeImplicationMod = sspToEvents(WsReqRes.ReqTypeImplicationMod)
-  final lazy val sspCustomIssueTypeCrud   = sspToEvents(WsReqRes.CustomIssueTypeCrud)
-  final lazy val sspCustomReqTypeCrud     = sspToEvents(WsReqRes.CustomReqTypeCrud)
-  final lazy val sspFieldMod              = sspToEvents(WsReqRes.FieldMod)
-  final lazy val sspTagMod                = sspToEvents(WsReqRes.TagMod)
 }
 
 object Global {
