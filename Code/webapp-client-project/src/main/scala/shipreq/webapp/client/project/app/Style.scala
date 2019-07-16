@@ -671,6 +671,13 @@ object Style extends StyleSheet.Inline {
 
     val na = style(
       color(c"#666"))
+
+    val actionButton = style(
+      textAlign.left.important,
+      whiteSpace.nowrap.important,
+      color(c"#fff").important,
+      (background := "#2f9d3e").important,
+      padding(0.4 em, 0.8 em).important)
   }
 
   // ===================================================================================================================

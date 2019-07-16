@@ -94,7 +94,14 @@ object TableRow {
           addTD(p.editor.fold(na)(_.value))
 
         case Column.Actions =>
-          addTD("TODO") // TODO ==========================
+          addTD(
+            if (row.actions.isEmpty)
+              na
+            else
+              row.actions.mkTagMod(<.br) { a =>
+                a.button //(^.onClick --> )
+              }
+          )
 
         case Column.Id =>
           for (base <- p.idBase) {
