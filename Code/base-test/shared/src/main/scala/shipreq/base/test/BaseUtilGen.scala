@@ -1,6 +1,7 @@
 package shipreq.base.test
 
 import japgolly.microlibs.nonempty._
+import java.util.concurrent.atomic.AtomicInteger
 import nyaya.gen._
 import nyaya.prop.CycleDetector
 import nyaya.util.Multimap
@@ -76,10 +77,9 @@ object BaseUtilGen {
   }
 
   def counter(start: Int = 1): Gen[Int] = {
-    var i = start - 1
+    val i = new AtomicInteger(start)
     Gen { _ =>
-      i += 1
-      i
+      i.getAndIncrement()
     }
   }
 

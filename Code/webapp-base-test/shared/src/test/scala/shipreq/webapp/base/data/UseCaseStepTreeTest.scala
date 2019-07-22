@@ -27,7 +27,7 @@ object UseCaseStepTreeTest extends TestSuite {
     genUseCaseStepId.map(UseCaseStep(_, Vector.empty, Live))
 
   def genUseCaseSteps(f: UCF): Gen[UseCaseSteps] =
-    RandomData.useCaseSteps(genUseCaseStep, f)(0 to 4)
+    RandomData.useCaseSteps(genUseCaseStep, f)(0 to 3)
 
   val genUseCase: Gen[UseCase] =
     for {
@@ -79,9 +79,12 @@ object UseCaseStepTreeTest extends TestSuite {
       tree(SF.NormalAltStepTree) & tree(SF.ExceptionStepTree)
   }
 
-  val prop = Prop.eval[Project](new Tester(_).all)
+  val prop = Prop.eval[Project](new Tester(_).all) // & DataProp.project.allIncludingConfig.rename("Input is valid")
 
   override def tests = Tests {
-    "UseCaseStepTree.canXxx" - genProject.mustSatisfy(prop)(defaultPropSettings.setSampleSize(10 `JVM|JS` 3))
+    "UseCaseStepTree.canXxx" - {
+      genProject.mustSatisfy(prop)(defaultPropSettings.setSampleSize(10 `JVM|JS` 3))
+      // genProject.bugHunt(0, samplesPerSeed = 24)(prop)(defaultPropSettings.setSampleSize(1))
+    }
   }
 }
