@@ -34,6 +34,8 @@ functionality
   * add loose issue editor to EditorFeature
   * add async feature for it
 * UI: table
+  * id should be editable
+  * title should be editable
   * dynamic columns
   * custom sorting
   * filter
