@@ -318,7 +318,7 @@ object ReqDetail {
         }
 
         def nonDirectlyEditorNavParent(t: TagMod): VdomElement =
-          cellBase(^.onKeyDown ==> TableNavigationFeature.Keys.handler, t)
+          cellBase(TableNavigationFeature.onKeyDown, t)
 
         def useCaseStepsCell(f: UseCaseData => UseCaseStepTree.StepData): VdomElement = {
           val d = data.useCaseData.get

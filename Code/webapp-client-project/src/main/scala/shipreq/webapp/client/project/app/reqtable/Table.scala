@@ -150,7 +150,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
         val selectionCell =
           <.th(
             *.selectionColumnHeader,
-            ^.onKeyDown ==> TableNavigationFeature.Keys.handler,
+            TableNavigationFeature.onKeyDown,
             p.selection.total.checkboxAndOnClick) // TODO *.selectionCheckbox
 
         val cols =
@@ -260,7 +260,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
       def renderNormal = {
         val selCell =
           selBase(
-            ^.onKeyDown ==> TableNavigationFeature.Keys.handler,
+            TableNavigationFeature.onKeyDown,
             sel.onClick,
             sel.checkbox(*.selectionCheckbox, ^.tabIndex := -1))
 

@@ -9,7 +9,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   *   1. Create a normal vdom table
   *   2. For th/td cells that can have focus and be reachable by keyboard
   *     i. Add `^.tabIndex := -1`
-  *     i. Either add `^.onKeyDown ==> TableNavigationFeature.Keys.handler`,
+  *     i. Either add `TableNavigationFeature.onKeyDown`,
   *        or use `EditorNavParent`,
   *        or something like `^.onKeyDown ==> (e => TableNavigationFeature.Keys(e) | myOtherKeys(e))`.
   *        Composition of key handlers is a downstream responsibility.
@@ -25,13 +25,6 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 object TableNavigationFeature {
 
-  /** Annotate nested tables with this to have them count as sub-cell content */
-  val nestedTable: TagMod =
-    VdomAttr(tablenav.Attrs.NestedTable) := 1
-
-  val newRow: TagMod =
-    VdomAttr(tablenav.Attrs.NewRow) := 1
-
   val Keys = tablenav.TableNavKeys
 
   type Zipper = tablenav.TableCellZipper
@@ -42,4 +35,14 @@ object TableNavigationFeature {
 
   type Axis = tablenav.Axis
   val  Axis = tablenav.Axis
+
+  /** Annotate nested tables with this to have them count as sub-cell content */
+  val nestedTable: TagMod =
+    VdomAttr(tablenav.Attrs.NestedTable) := 1
+
+  val newRow: TagMod =
+    VdomAttr(tablenav.Attrs.NewRow) := 1
+
+  val onKeyDown: TagMod =
+    ^.onKeyDown ==> Keys.handler
 }
