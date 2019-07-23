@@ -34,9 +34,12 @@ functionality
   * add loose issue editor to EditorFeature
   * add async feature for it
 * UI: table
-  * table
   * dynamic columns
   * custom sorting
   * filter
   * KB navigation
+* filter changes
+  * issue category
+  * issue class
+  * issue presence
 * Resolve TODOs in new code
