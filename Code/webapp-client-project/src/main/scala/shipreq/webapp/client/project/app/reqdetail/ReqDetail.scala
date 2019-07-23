@@ -22,6 +22,7 @@ import shipreq.webapp.client.project.app.Style.{reqdetail => *}
 import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.lib.EditorNavParent
 import shipreq.webapp.client.project.widgets._
 import ExternalPubid.LookupFailure
 import ProjectWidgets.emptySpan
@@ -312,16 +313,16 @@ object ReqDetail {
 
         def editableCell(key: FieldKey.ForSomeReq): VdomElement = {
           val editor = reqEditor(key, data.pxProjectWidgets, data.filterDead)
-          EditableCell.Props(cellBase, editor, () => view.editable(key))
+          EditorNavParent.Props(cellBase, editor, view.editable(key))
             .render
         }
 
-        def nonDirectlyEditableCell(t: TagMod): VdomElement =
+        def nonDirectlyEditorNavParent(t: TagMod): VdomElement =
           cellBase(^.onKeyDown ==> TableNavigationFeature.Keys.handler, t)
 
         def useCaseStepsCell(f: UseCaseData => UseCaseStepTree.StepData): VdomElement = {
           val d = data.useCaseData.get
-          nonDirectlyEditableCell(renderStepTree(d, f(d)))
+          nonDirectlyEditorNavParent(renderStepTree(d, f(d)))
         }
 
         row match {
@@ -344,19 +345,19 @@ object ReqDetail {
             editableCell(FieldKey.Tags(None))
 
           case Row.DeletionReason =>
-            nonDirectlyEditableCell(view.deletionReason getOrElse emptySpan)
+            nonDirectlyEditorNavParent(view.deletionReason getOrElse emptySpan)
 
           case Row.PastPubids =>
-            nonDirectlyEditableCell(view.pastPubids)
+            nonDirectlyEditorNavParent(view.pastPubids)
 
           case Row.Implications =>
             def renderHalf(dir: Direction) = {
               val key = FieldKey.Implications(\/-(dir))
               val editor = reqEditor(key, data.pxProjectWidgets, data.filterDead)
-              EditableCell.Props(impRowSubBase, editor, () => view.editable(key))
+              EditorNavParent.Props(impRowSubBase, editor, view.editable(key))
                 .render
             }
-            nonDirectlyEditableCell(
+            nonDirectlyEditorNavParent(
               <.table(
                 TableNavigationFeature.nestedTable,
                 *.generalImpsCont,
@@ -367,7 +368,7 @@ object ReqDetail {
                     renderHalf(Forwards)))))
 
           case Row.ImplicationGraph =>
-            nonDirectlyEditableCell(
+            nonDirectlyEditorNavParent(
               ImplicationGraph.Props(
                 Some(req.id), data.filterDead,
                 project.content.implications, project.content.reqs, project.config.reqTypes,
@@ -387,10 +388,10 @@ object ReqDetail {
 
           case Row.StepGraph =>
             val ucId = data.useCaseData.get.uc.id
-            nonDirectlyEditableCell(UseCaseStepFlowGraph.Props(ucId, project, pw.ctx, webWorker).render)
+            nonDirectlyEditorNavParent(UseCaseStepFlowGraph.Props(ucId, project, pw.ctx, webWorker).render)
 
           case Row.Life =>
-            nonDirectlyEditableCell(
+            nonDirectlyEditorNavParent(
               data.live match {
                 case Live =>
                   LifeButton.Delete withStatusOnLeft delete(req.id)
@@ -415,11 +416,11 @@ object ReqDetail {
             Some(cmdRunner(Cell.UseCaseStepCtrls(id))),
             Some(addCmdRunner(Cell.AddUseCaseStep(id))))
 
-          EditableCell.Props(
+          EditorNavParent.Props(
             args.base,
             editor,
             editorArgs,
-            () => pw.useCaseStepTextAndFlow(args.textAndFlow(), args.live))
+            pw.useCaseStepTextAndFlow(args.textAndFlow(), args.live))
             .render
         }
 

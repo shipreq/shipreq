@@ -1,0 +1,87 @@
+package shipreq.webapp.client.project.lib
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
+import shipreq.webapp.base.feature.TableNavigationFeature
+import shipreq.webapp.base.lib.DomUtil
+import shipreq.webapp.client.project.feature.EditorFeature
+
+/** This is a wrapper for a (potentially-closed) editor that ensures that when the editor is closes, focus returns to
+  * the parent vdom.
+  *
+  * It integrates the [[EditorFeature]] and the [[TableNavigationFeature]]
+  *
+  * This is effectively a hack so that `$.getDOMNode.map(_.asElement)` provides access to the parent vdom, which is
+  * needed to to refocus it when the editor closes.
+  */
+object EditorNavParent {
+
+  trait Props {
+    type A
+
+    val parent    : VdomTag
+    val editor    : EditorFeature.ReadWrite.ForEditor[A, Any]
+    val editorArgs: A
+    val view      : () => TagMod
+
+    @inline final def render: VdomElement =
+      Component(this)
+
+    @inline final def renderWithKey(k: Key): VdomElement =
+      Component.withKey(k)(this)
+  }
+
+  object Props {
+
+    /**
+      * @param parent Container vdom without any [[TableNavigationFeature]] integration.
+      */
+    @inline def apply(parent: VdomTag,
+                      editor: EditorFeature.ReadWrite.ForEditor[Unit, Any],
+                      view  : => TagMod): Props =
+      apply(parent, editor, (), view)
+
+    /**
+      * @param parent Container vdom without any [[TableNavigationFeature]] integration.
+      */
+    def apply[A](parent    : VdomTag,
+                 editor    : EditorFeature.ReadWrite.ForEditor[A, Any],
+                 editorArgs: A,
+                 view      : => TagMod): Props = {
+      type _A         = A
+      val _parent     = parent
+      val _editor     = editor
+      val _editorArgs = editorArgs
+      val _view       = () => view
+      new Props {
+        override type A         = _A
+        override val parent     = _parent
+        override val editorArgs = _editorArgs
+        override val editor     = _editor
+        override val view       = _view
+      }
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private def render($: ScalaComponent.Lifecycle.RenderScope[Props, Unit, Unit], p: Props): VdomElement = {
+
+    // This is the main point of this component
+    val editorOnClose: Callback =
+      $.mountedPure.getDOMNode.map(_.toHtml).asCBO.flatMapCB(DomUtil.focusParentOnChildClose)
+
+    val editor =
+      p.editor.onClose(editorOnClose)
+
+    val onKeyDown: ReactKeyboardEventFromHtml => Callback =
+      e => TableNavigationFeature.Keys(e) | EditorFeature.Keys(editor)(e)
+
+    p.parent(
+      ^.onKeyDown ==> onKeyDown,
+      editor.themedRenderOr(p.editorArgs)(p.view()))
+  }
+
+  val Component = ScalaComponent.builder[Props]("EditorNavParent")
+    .renderP(render)
+    .build
+}
