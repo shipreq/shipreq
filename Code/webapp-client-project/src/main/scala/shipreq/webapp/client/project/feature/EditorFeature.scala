@@ -3,19 +3,19 @@ package shipreq.webapp.client.project.feature
 /** Provides the ability for users to edit the project.
   *
   * Everything here is available for various data scopes:
-  * - for the whole project
-  * - for rows (eg. a single Req, see [[EditorFeature.RowKey]])
-  * - for fields (eg. the title of UC-3, see [[EditorFeature.FieldKey]])
+  *   - for the whole project
+  *   - for rows (eg. a single Req, see [[EditorFeature.RowKey]])
+  *   - for fields (eg. the title of UC-3, see [[EditorFeature.FieldKey]])
   *
   * The feature is also sliced into various usage/lifecycle scopes:
-  * - [[EditorFeature.Read]] - Read-only access to state. Can render existing editors.
-  * - [[EditorFeature.Write]] - Write-only access. Requires that state be supplied to use. Can start new editors.
-  * - [[EditorFeature.ReadWrite]] - Read/write access. The main DSL.
+  *   - [[EditorFeature.Read]] - Read-only access to state. Can render existing editors.
+  *   - [[EditorFeature.Write]] - Write-only access. Requires that state be supplied to use. Can start new editors.
+  *   - [[EditorFeature.ReadWrite]] - Read/write access. The main DSL.
   *
   * Editor IO and asynchronicity granularity is per-row per-field.
   *
-  * Usage: Top-Most Component
-  * =========================
+  *
+  * == Usage: Top-Most Component ==
   *
   * Add [[EditorFeature.State.ForProject]] to the top-most component's state.
   *
@@ -27,14 +27,18 @@ package shipreq.webapp.client.project.feature
   * In the render method, combine `editorFeature` and state to create a [[EditorFeature.ReadWrite.ForProject]] and pass it
   * to children.
   *
-  * Usage: Components
-  * =================
   *
-  * Request an instance of `EditorFeature.Props.ForXxx` in component props.
+  * == Usage: Components ==
+  *
+  * Request an instance of `EditorFeature.Props.For{Read,Write,ReadWrite}` in component props.
   *
   * Supply row and field keys until arriving at [[EditorFeature.ReadWrite.ForEditor]]. Then:
-  * - use `.renderOr()` to render the editor or a read-only view if the editor is closed.
-  * - wire up `.startEdit()` to whatever event handler can start editing.
+  *   - use `.renderOr()` to render the editor or a read-only view if the editor is closed.
+  *   - wire up `.startEdit()` to whatever event handler can start editing.
+  *
+  * Add `^.onKeyDown ==> EditorFeature.Keys(editor)` to the editor's parent vdom
+  * (although realistically it will always be composed with [[shipreq.webapp.base.feature.TableNavigationFeature]];
+  * read the instructions there to how to compose and use).
   */
 object EditorFeature {
 
