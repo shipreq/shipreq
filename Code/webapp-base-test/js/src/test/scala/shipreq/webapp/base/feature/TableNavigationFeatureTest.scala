@@ -6,6 +6,7 @@ import japgolly.scalajs.react.test.ReactTestUtils
 import org.scalajs.dom.html
 import scalaz.{Equal, \/-}
 import scalaz.syntax.traverse._
+import sourcecode.Line
 import utest._
 import shipreq.webapp.base.lib.DomUtil._
 import shipreq.base.test.BaseTestUtil._
@@ -20,24 +21,24 @@ object TableNavigationFeatureTest extends TestSuite {
 
   def MovesBuilder(): MovesBuilder = new MovesBuilder
   class MovesBuilder {
-    private var moves = List.newBuilder[TablePos]
-    private var subMoves = List.newBuilder[TablePos]
+    private var moves = List.newBuilder[VirtualLoc]
+    private var subMoves = List.newBuilder[VirtualLoc]
 
-    private var batchMoves = List.newBuilder[List[TablePos]]
-    private var batchSubMoves = List.newBuilder[List[TablePos]]
+    private var batchMoves = List.newBuilder[List[VirtualLoc]]
+    private var batchSubMoves = List.newBuilder[List[VirtualLoc]]
 
-    def general(p: TablePos): this.type = {
+    def general(p: VirtualLoc): this.type = {
       moves += p
       subMoves += p
       this
     }
 
-    def movOnly(p: TablePos): this.type = {
+    def movOnly(p: VirtualLoc): this.type = {
       moves += p
       this
     }
 
-    def subOnly(p: TablePos): this.type = {
+    def subOnly(p: VirtualLoc): this.type = {
       subMoves += p
       this
     }
@@ -53,10 +54,10 @@ object TableNavigationFeatureTest extends TestSuite {
     def result(): TestMoves = {
       newBatch()
 
-      val moveTests: List[List[TablePos]] =
+      val moveTests: List[List[VirtualLoc]] =
         batchMoves.result()
 
-      val subTests: List[List[TablePos]] =
+      val subTests: List[List[VirtualLoc]] =
         batchSubMoves.result()
           .flatten
           .groupBy(_.copy(sub = None))
@@ -73,7 +74,7 @@ object TableNavigationFeatureTest extends TestSuite {
     }
   }
 
-  case class TestMoves(moveTests: List[List[TablePos]], subTests: List[List[TablePos]]) {
+  case class TestMoves(moveTests: List[List[VirtualLoc]], subTests: List[List[VirtualLoc]]) {
     def ++(t: TestMoves): TestMoves =
       TestMoves(moveTests ::: t.moveTests, subTests ::: t.subTests)
     def reverse: TestMoves =
@@ -87,50 +88,50 @@ object TableNavigationFeatureTest extends TestSuite {
     */
   object LR {
     final class Backend($: BackendScope[Unit, Unit]) {
-      implicit def renderTablePos(p: TablePos): TagMod = p.toString
+      implicit def renderVirtualLoc(p: VirtualLoc): TagMod = p.toString
       def render: VdomElement =
         <.table(
           <.tbody(
             <.tr(
-              <.th(TablePos(0, 0, 0, None)),
-              <.td(TablePos(0, 0, 1, None), focusable),
-              <.td(TablePos(0, 0, 2, None), focusable),
-              <.td(TablePos(0, 0, 3, None), focusable),
+              <.th(VirtualLoc(0, 0, 0, None)),
+              <.td(VirtualLoc(0, 0, 1, None), focusable),
+              <.td(VirtualLoc(0, 0, 2, None), focusable),
+              <.td(VirtualLoc(0, 0, 3, None), focusable),
             ),
             <.tr(
-              <.th(TablePos(0, 1, 0, None), focusable),
-              <.td(TablePos(0, 1, 1, None), focusable),
-              <.td(TablePos(0, 1, 2, None)),
-              <.td(TablePos(0, 1, 3, None), focusable),
+              <.th(VirtualLoc(0, 1, 0, None), focusable),
+              <.td(VirtualLoc(0, 1, 1, None), focusable),
+              <.td(VirtualLoc(0, 1, 2, None)),
+              <.td(VirtualLoc(0, 1, 3, None), focusable),
             ),
             <.tr(
-              <.th(TablePos(0, 2, 0, None)),
-              <.td(TablePos(0, 2, 1, None), focusable),
-              <.td(TablePos(0, 2, 2, None)),
+              <.th(VirtualLoc(0, 2, 0, None)),
+              <.td(VirtualLoc(0, 2, 1, None), focusable),
+              <.td(VirtualLoc(0, 2, 2, None)),
             ),
             <.tr(
-              <.th(TablePos(0, 3, 0, None), focusable),
+              <.th(VirtualLoc(0, 3, 0, None), focusable),
             ),
             <.tr(
-              <.th(TablePos(0, 4, 0, None), focusable, <.span(<.span)),
-              <.th(TablePos(0, 4, 1, None)),
-              <.td(TablePos(0, 4, 2, None), <.input.checkbox),
-              <.td(TablePos(0, 4, 3, None), <.input.text, focusable),
-              <.td(TablePos(0, 4, 4, None), <.input.text),
-              <.td(TablePos(0, 4, 5, None), <.input.checkbox, <.input.checkbox),
-              <.td(TablePos(0, 4, 6, None), focusable, <.input.checkbox),  // ignore cell focusability cos of sub-movable
-              <.td(TablePos(0, 4, 7, None), focusable, <.span(<.input.checkbox), <.input.checkbox), // ignore cell focusability cos of sub-movables
+              <.th(VirtualLoc(0, 4, 0, None), focusable, <.span(<.span)),
+              <.th(VirtualLoc(0, 4, 1, None)),
+              <.td(VirtualLoc(0, 4, 2, None), <.input.checkbox),
+              <.td(VirtualLoc(0, 4, 3, None), <.input.text, focusable),
+              <.td(VirtualLoc(0, 4, 4, None), <.input.text),
+              <.td(VirtualLoc(0, 4, 5, None), <.input.checkbox, <.input.checkbox),
+              <.td(VirtualLoc(0, 4, 6, None), focusable, <.input.checkbox),  // ignore cell focusability cos of sub-movable
+              <.td(VirtualLoc(0, 4, 7, None), focusable, <.span(<.input.checkbox), <.input.checkbox), // ignore cell focusability cos of sub-movables
             ),
             <.tr(
-              <.td(TablePos(0, 5, 0, None), <.div(focusable), <.div, <.div(focusable)), // ReqDetail implications --
-              <.td(TablePos(0, 5, 1, None), <.input.text,     <.div, <.div(focusable)), // ReqDetail implications *-
-              <.td(TablePos(0, 5, 2, None), <.div(focusable), <.div, <.input.text),     // ReqDetail implications -*
-              <.td(TablePos(0, 5, 3, None), <.textarea,       <.div, <.textarea),       // ReqDetail implications **
+              <.td(VirtualLoc(0, 5, 0, None), <.div(focusable), <.div, <.div(focusable)), // ReqDetail implications --
+              <.td(VirtualLoc(0, 5, 1, None), <.input.text,     <.div, <.div(focusable)), // ReqDetail implications *-
+              <.td(VirtualLoc(0, 5, 2, None), <.div(focusable), <.div, <.input.text),     // ReqDetail implications -*
+              <.td(VirtualLoc(0, 5, 3, None), <.textarea,       <.div, <.textarea),       // ReqDetail implications **
             ),
             <.tr(
-              <.td(TablePos(0, 6, 0, None), focusable, <.div(focusable), <.div, <.div(focusable)), // ignore cell focusability cos of sub-movable
-              <.td(TablePos(0, 6, 1, None), focusable, <.div(focusable), <.div, <.div(focusable)), // ignore cell focusability cos of sub-movable
-              <.td(TablePos(0, 6, 2, None), <.table(TableNavigationFeature.nestedTable, <.tbody(<.tr(<.td(<.div(focusable)), <.td(<.div(focusable)))))), // nested table
+              <.td(VirtualLoc(0, 6, 0, None), focusable, <.div(focusable), <.div, <.div(focusable)), // ignore cell focusability cos of sub-movable
+              <.td(VirtualLoc(0, 6, 1, None), focusable, <.div(focusable), <.div, <.div(focusable)), // ignore cell focusability cos of sub-movable
+              <.td(VirtualLoc(0, 6, 2, None), <.table(TableNavigationFeature.nestedTable, <.tbody(<.tr(<.td(<.div(focusable)), <.td(<.div(focusable)))))), // nested table
             ),
           )
         )
@@ -141,75 +142,75 @@ object TableNavigationFeatureTest extends TestSuite {
       .build
 
     val rightMoves = MovesBuilder()
-      .general(TablePos(0, 0, 3, None))
-      .general(TablePos(0, 0, 1, None))
-      .general(TablePos(0, 0, 2, None))
-      .general(TablePos(0, 0, 3, None))
+      .general(VirtualLoc(0, 0, 3, None))
+      .general(VirtualLoc(0, 0, 1, None))
+      .general(VirtualLoc(0, 0, 2, None))
+      .general(VirtualLoc(0, 0, 3, None))
       .newBatch()
-      .general(TablePos(0, 1, 0, None))
-      .general(TablePos(0, 1, 1, None))
-      .general(TablePos(0, 1, 3, None))
-      .general(TablePos(0, 1, 0, None))
+      .general(VirtualLoc(0, 1, 0, None))
+      .general(VirtualLoc(0, 1, 1, None))
+      .general(VirtualLoc(0, 1, 3, None))
+      .general(VirtualLoc(0, 1, 0, None))
       .newBatch()
-      .general(TablePos(0, 2, 1, None))
-      .general(TablePos(0, 2, 1, None))
+      .general(VirtualLoc(0, 2, 1, None))
+      .general(VirtualLoc(0, 2, 1, None))
       .newBatch()
-      .general(TablePos(0, 3, 0, None))
-      .general(TablePos(0, 3, 0, None))
+      .general(VirtualLoc(0, 3, 0, None))
+      .general(VirtualLoc(0, 3, 0, None))
       .newBatch()
-      .general(TablePos(0, 4, 0, None))
-      .general(TablePos(0, 4, 2, Some(PosXY(0, 0))))
-      .general(TablePos(0, 4, 3, None))
-      .subOnly(TablePos(0, 4, 3, Some(PosXY(0, 0))))
-      .subOnly(TablePos(0, 4, 4, Some(PosXY(0, 0))))
-      .general(TablePos(0, 4, 5, Some(PosXY(0, 0))))
-      .general(TablePos(0, 4, 5, Some(PosXY(1, 0))))
-//      .general(TablePos(0, 4, 6, None)) // no, cos it has sub-movables
-      .general(TablePos(0, 4, 6, Some(PosXY(0, 0))))
-//      .general(TablePos(0, 4, 7, None)) // no, cos it has sub-movables
-      .general(TablePos(0, 4, 7, Some(PosXY(0, 0))))
-      .general(TablePos(0, 4, 7, Some(PosXY(1, 0))))
-      .general(TablePos(0, 4, 0, None))
+      .general(VirtualLoc(0, 4, 0, None))
+      .general(VirtualLoc(0, 4, 2, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 4, 3, None))
+      .subOnly(VirtualLoc(0, 4, 3, Some(PosXY(0, 0))))
+      .subOnly(VirtualLoc(0, 4, 4, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 4, 5, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 4, 5, Some(PosXY(1, 0))))
+//      .general(VirtualLoc(0, 4, 6, None)) // no, cos it has sub-movables
+      .general(VirtualLoc(0, 4, 6, Some(PosXY(0, 0))))
+//      .general(VirtualLoc(0, 4, 7, None)) // no, cos it has sub-movables
+      .general(VirtualLoc(0, 4, 7, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 4, 7, Some(PosXY(1, 0))))
+      .general(VirtualLoc(0, 4, 0, None))
       .newBatch()
-      .general(TablePos(0, 5, 0, Some(PosXY(0, 0))))
-      .general(TablePos(0, 5, 0, Some(PosXY(1, 0))))
-      .subOnly(TablePos(0, 5, 1, Some(PosXY(0, 0))))
-      .general(TablePos(0, 5, 1, Some(PosXY(1, 0))))
-      .general(TablePos(0, 5, 2, Some(PosXY(0, 0))))
-      .subOnly(TablePos(0, 5, 2, Some(PosXY(1, 0))))
-      .subOnly(TablePos(0, 5, 3, Some(PosXY(0, 0))))
-      .subOnly(TablePos(0, 5, 3, Some(PosXY(1, 0))))
-      .general(TablePos(0, 5, 0, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 5, 0, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 5, 0, Some(PosXY(1, 0))))
+      .subOnly(VirtualLoc(0, 5, 1, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 5, 1, Some(PosXY(1, 0))))
+      .general(VirtualLoc(0, 5, 2, Some(PosXY(0, 0))))
+      .subOnly(VirtualLoc(0, 5, 2, Some(PosXY(1, 0))))
+      .subOnly(VirtualLoc(0, 5, 3, Some(PosXY(0, 0))))
+      .subOnly(VirtualLoc(0, 5, 3, Some(PosXY(1, 0))))
+      .general(VirtualLoc(0, 5, 0, Some(PosXY(0, 0))))
       .result()
 
     private val downShared = MovesBuilder()
-      .general(TablePos(0, 0, 1, None))
-      .general(TablePos(0, 1, 1, None))
-      .general(TablePos(0, 2, 1, None))
+      .general(VirtualLoc(0, 0, 1, None))
+      .general(VirtualLoc(0, 1, 1, None))
+      .general(VirtualLoc(0, 2, 1, None))
       .newBatch()
-      .general(TablePos(0, 5, 2, Some(PosXY(0, 0))))
-      .general(TablePos(0, 6, 2, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 5, 2, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 6, 2, Some(PosXY(0, 0))))
       .result()
 
     val downMoves = downShared ++ MovesBuilder()
-      .general(TablePos(0, 1, 0, None))
-      .general(TablePos(0, 2, 1, None)) // 0 not available
-      .general(TablePos(0, 3, 0, None)) // 1 not available
-      .general(TablePos(0, 4, 0, None))
-      .general(TablePos(0, 5, 0, Some(PosXY(0, 0))))
-      .general(TablePos(0, 6, 0, Some(PosXY(0, 0))))
-      .general(TablePos(0, 0, 1, None))
-      .general(TablePos(0, 1, 1, None))
+      .general(VirtualLoc(0, 1, 0, None))
+      .general(VirtualLoc(0, 2, 1, None)) // 0 not available
+      .general(VirtualLoc(0, 3, 0, None)) // 1 not available
+      .general(VirtualLoc(0, 4, 0, None))
+      .general(VirtualLoc(0, 5, 0, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 6, 0, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 0, 1, None))
+      .general(VirtualLoc(0, 1, 1, None))
       .result()
 
     val upMoves = downShared.reverse ++ MovesBuilder()
-      .general(TablePos(0, 1, 1, None))
-      .general(TablePos(0, 0, 1, None))
-      .general(TablePos(0, 6, 1, Some(PosXY(0, 0)))) // not PosXY cos it has sub-movables
-      .general(TablePos(0, 5, 1, Some(PosXY(1, 0))))
-      .general(TablePos(0, 4, 0, None)) // or .general(TablePos(0, 4, 2, Some(PosXY(0, 0))))
-      .general(TablePos(0, 3, 0, None))
-      .general(TablePos(0, 2, 1, None)) // 0 not available
+      .general(VirtualLoc(0, 1, 1, None))
+      .general(VirtualLoc(0, 0, 1, None))
+      .general(VirtualLoc(0, 6, 1, Some(PosXY(0, 0)))) // not PosXY cos it has sub-movables
+      .general(VirtualLoc(0, 5, 1, Some(PosXY(1, 0))))
+      .general(VirtualLoc(0, 4, 0, None)) // or .general(VirtualLoc(0, 4, 2, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 3, 0, None))
+      .general(VirtualLoc(0, 2, 1, None)) // 0 not available
       .result()
   }
 
@@ -219,35 +220,35 @@ object TableNavigationFeatureTest extends TestSuite {
   object TD {
     final class Backend($: BackendScope[Unit, Unit]) {
       val subRow = <.div(focusable, TableNavigationFeature.newRow)
-      implicit def renderTablePos(p: TablePos): TagMod = p.toString
+      implicit def renderVirtualLoc(p: VirtualLoc): TagMod = p.toString
       def render: VdomElement =
         <.table(
           <.thead(
             <.tr(
-              <.th(TablePos(0, 0, 0, None), <.input.checkbox),
-              <.th(TablePos(0, 0, 1, None), focusable),
-              <.th(TablePos(0, 0, 2, None), focusable),
-              <.th(TablePos(0, 0, 3, None)),
-              <.th(TablePos(0, 0, 4, None), focusable),
-              <.th(TablePos(0, 0, 5, None), focusable),
+              <.th(VirtualLoc(0, 0, 0, None), <.input.checkbox),
+              <.th(VirtualLoc(0, 0, 1, None), focusable),
+              <.th(VirtualLoc(0, 0, 2, None), focusable),
+              <.th(VirtualLoc(0, 0, 3, None)),
+              <.th(VirtualLoc(0, 0, 4, None), focusable),
+              <.th(VirtualLoc(0, 0, 5, None), focusable),
             ),
           ),
           <.tbody(
             <.tr(
-              <.td(TablePos(1, 0, 0, None), <.input.checkbox),
-              <.td(TablePos(1, 0, 1, None), focusable),
-              <.td(TablePos(1, 0, 2, None), focusable),
-              <.td(TablePos(1, 0, 3, None), focusable),
-              <.td(TablePos(1, 0, 4, None)),
-              <.td(TablePos(1, 0, 5, None), focusable, subRow, subRow, subRow), // 0x[0,2]
+              <.td(VirtualLoc(1, 0, 0, None), <.input.checkbox),
+              <.td(VirtualLoc(1, 0, 1, None), focusable),
+              <.td(VirtualLoc(1, 0, 2, None), focusable),
+              <.td(VirtualLoc(1, 0, 3, None), focusable),
+              <.td(VirtualLoc(1, 0, 4, None)),
+              <.td(VirtualLoc(1, 0, 5, None), focusable, subRow, subRow, subRow), // 0x[0,2]
             ),
             <.tr(
-              <.td(TablePos(1, 1, 0, None), <.input.checkbox),
-              <.td(TablePos(1, 1, 1, None), focusable),
-              <.td(TablePos(1, 1, 2, None), focusable),
-              <.td(TablePos(1, 1, 3, None), focusable),
-              <.td(TablePos(1, 1, 4, None)),
-              <.td(TablePos(1, 1, 5, None), focusable, subRow, <.div(focusable), subRow, <.div(focusable)), // [01]x[01]
+              <.td(VirtualLoc(1, 1, 0, None), <.input.checkbox),
+              <.td(VirtualLoc(1, 1, 1, None), focusable),
+              <.td(VirtualLoc(1, 1, 2, None), focusable),
+              <.td(VirtualLoc(1, 1, 3, None), focusable),
+              <.td(VirtualLoc(1, 1, 4, None)),
+              <.td(VirtualLoc(1, 1, 5, None), focusable, subRow, <.div(focusable), subRow, <.div(focusable)), // [01]x[01]
             ),
           )
         )
@@ -258,52 +259,206 @@ object TableNavigationFeatureTest extends TestSuite {
       .build
 
     val rightMoves = MovesBuilder()
-      .general(TablePos(0, 0, 0, Some(PosXY(0, 0))))
-      .general(TablePos(0, 0, 1, None))
-      .general(TablePos(0, 0, 2, None))
-      .general(TablePos(0, 0, 4, None))
-      .general(TablePos(0, 0, 5, None))
-      .general(TablePos(0, 0, 0, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 0, 0, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 0, 1, None))
+      .general(VirtualLoc(0, 0, 2, None))
+      .general(VirtualLoc(0, 0, 4, None))
+      .general(VirtualLoc(0, 0, 5, None))
+      .general(VirtualLoc(0, 0, 0, Some(PosXY(0, 0))))
       .newBatch()
-      .general(TablePos(1, 0, 0, Some(PosXY(0, 0))))
-      .general(TablePos(1, 0, 1, None))
-      .general(TablePos(1, 0, 2, None))
-      .general(TablePos(1, 0, 3, None))
-      .movOnly(TablePos(1, 0, 5, Some(PosXY(0, 0))))
-      .general(TablePos(1, 0, 0, Some(PosXY(0, 0))))
+      .general(VirtualLoc(1, 0, 0, Some(PosXY(0, 0))))
+      .general(VirtualLoc(1, 0, 1, None))
+      .general(VirtualLoc(1, 0, 2, None))
+      .general(VirtualLoc(1, 0, 3, None))
+      .movOnly(VirtualLoc(1, 0, 5, Some(PosXY(0, 0))))
+      .general(VirtualLoc(1, 0, 0, Some(PosXY(0, 0))))
       .newBatch()
-      .general(TablePos(1, 1, 0, Some(PosXY(0, 0))))
-      .general(TablePos(1, 1, 1, None))
-      .general(TablePos(1, 1, 2, None))
-      .general(TablePos(1, 1, 3, None))
-      .movOnly(TablePos(1, 1, 5, Some(PosXY(0, 0))))
-      .movOnly(TablePos(1, 1, 5, Some(PosXY(1, 0))))
+      .general(VirtualLoc(1, 1, 0, Some(PosXY(0, 0))))
+      .general(VirtualLoc(1, 1, 1, None))
+      .general(VirtualLoc(1, 1, 2, None))
+      .general(VirtualLoc(1, 1, 3, None))
+      .movOnly(VirtualLoc(1, 1, 5, Some(PosXY(0, 0))))
+      .movOnly(VirtualLoc(1, 1, 5, Some(PosXY(1, 0))))
       .newBatch()
-      .movOnly(TablePos(1, 1, 5, Some(PosXY(0, 1))))
-      .movOnly(TablePos(1, 1, 5, Some(PosXY(1, 1))))
+      .movOnly(VirtualLoc(1, 1, 5, Some(PosXY(0, 1))))
+      .movOnly(VirtualLoc(1, 1, 5, Some(PosXY(1, 1))))
       .result()
 
     val downMoves = MovesBuilder()
-      .general(TablePos(0, 0, 0, Some(PosXY(0, 0))))
-      .general(TablePos(1, 0, 0, Some(PosXY(0, 0))))
-      .general(TablePos(1, 1, 0, Some(PosXY(0, 0))))
-      .general(TablePos(0, 0, 0, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 0, 0, Some(PosXY(0, 0))))
+      .general(VirtualLoc(1, 0, 0, Some(PosXY(0, 0))))
+      .general(VirtualLoc(1, 1, 0, Some(PosXY(0, 0))))
+      .general(VirtualLoc(0, 0, 0, Some(PosXY(0, 0))))
       .newBatch()
-      .general(TablePos(0, 0, 1, None))
-      .general(TablePos(1, 0, 1, None))
-      .general(TablePos(1, 1, 1, None))
-      .general(TablePos(0, 0, 1, None))
+      .general(VirtualLoc(0, 0, 1, None))
+      .general(VirtualLoc(1, 0, 1, None))
+      .general(VirtualLoc(1, 1, 1, None))
+      .general(VirtualLoc(0, 0, 1, None))
       .newBatch()
-      .general(TablePos(1, 0, 5, Some(PosXY(0, 0))))
-      .general(TablePos(1, 0, 5, Some(PosXY(0, 1))))
-      .general(TablePos(1, 0, 5, Some(PosXY(0, 2))))
-      .general(TablePos(1, 1, 5, Some(PosXY(0, 0))))
-      .general(TablePos(1, 1, 5, Some(PosXY(0, 1))))
-      .general(TablePos(0, 0, 5, None))
-      .general(TablePos(1, 0, 5, Some(PosXY(0, 0))))
+      .general(VirtualLoc(1, 0, 5, Some(PosXY(0, 0))))
+      .general(VirtualLoc(1, 0, 5, Some(PosXY(0, 1))))
+      .general(VirtualLoc(1, 0, 5, Some(PosXY(0, 2))))
+      .general(VirtualLoc(1, 1, 5, Some(PosXY(0, 0))))
+      .general(VirtualLoc(1, 1, 5, Some(PosXY(0, 1))))
+      .general(VirtualLoc(0, 0, 5, None))
+      .general(VirtualLoc(1, 0, 5, Some(PosXY(0, 0))))
       .newBatch()
-      .general(TablePos(1, 1, 5, Some(PosXY(1, 0))))
-      .general(TablePos(1, 1, 5, Some(PosXY(1, 1))))
+      .general(VirtualLoc(1, 1, 5, Some(PosXY(1, 0))))
+      .general(VirtualLoc(1, 1, 5, Some(PosXY(1, 1))))
+      .result()
+  }
+
+  /** {{{
+    * +--+--+
+    * |▛▜|  |0:21
+    * +██+--+
+    * |██|  |1:-1
+    * +--+--+
+    * |▛▜|▛▜|2:32
+    * +██+██+
+    * |██|██|3:--
+    * +██+--+
+    * |██|▛▜|4:-2
+    * +--+██+
+    * |  |██|5:1-
+    * +--+--+
+    * |  |▛▜|6:-3
+    * +--+██+
+    * |▛▜|██|7:2-
+    * +██+██+
+    * |██|██|8:--
+    * +--+--+
+    * }}}
+    */
+  object RowSpans {
+    final class Backend($: BackendScope[Unit, Unit]) {
+      private def rs(row: Int, col: Int, span: Int) = <.td(
+        focusable,
+        (^.rowSpan := span).unless(span == 1),
+        VirtualLoc(0, row, col, None).toString)
+      def render: VdomElement =
+        <.table(
+          <.tbody(
+            <.tr(rs(0, 0, 2), rs(0, 1, 1), rs(0, 2, 1)),
+            <.tr(             rs(1, 1, 1), rs(1, 2, 1)),
+            <.tr(rs(2, 0, 3), rs(2, 1, 2), rs(2, 2, 1)),
+            <.tr(                          rs(3, 2, 1)),
+            <.tr(             rs(4, 1, 2), rs(4, 2, 1)),
+            <.tr(rs(5, 0, 1),              rs(5, 2, 1)),
+            <.tr(rs(6, 0, 1), rs(6, 1, 3), rs(6, 2, 1)),
+            <.tr(rs(7, 0, 2),              rs(7, 2, 1)),
+            <.tr(                          rs(8, 2, 1)),
+          )
+        )
+    }
+
+    val Component = ScalaComponent.builder[Unit]("RowSpan")
+      .renderBackend[Backend]
+      .build
+
+    val rightMoves = MovesBuilder()
+      .general(VirtualLoc(0, 0, 0, None))
+      .general(VirtualLoc(0, 0, 1, None))
+      .general(VirtualLoc(0, 0, 2, None))
+      .general(VirtualLoc(0, 0, 0, None))
+      .newBatch()
+      .general(VirtualLoc(0, 1, 1, None))
+      .general(VirtualLoc(0, 1, 2, None))
+      .general(VirtualLoc(0, 0, 0, None))
+      .newBatch()
+      .general(VirtualLoc(0, 2, 0, None))
+      .general(VirtualLoc(0, 2, 1, None))
+      .general(VirtualLoc(0, 2, 2, None))
+      .general(VirtualLoc(0, 2, 0, None))
+      .newBatch()
+      .general(VirtualLoc(0, 3, 2, None))
+      .general(VirtualLoc(0, 2, 0, None))
+      .newBatch()
+      .general(VirtualLoc(0, 4, 1, None))
+      .general(VirtualLoc(0, 4, 2, None))
+      .general(VirtualLoc(0, 2, 0, None))
+      .newBatch()
+      .general(VirtualLoc(0, 5, 2, None))
+      .general(VirtualLoc(0, 5, 0, None))
+      .general(VirtualLoc(0, 4, 1, None))
+      .newBatch()
+      .general(VirtualLoc(0, 6, 0, None))
+      .general(VirtualLoc(0, 6, 1, None))
+      .general(VirtualLoc(0, 6, 2, None))
+      .general(VirtualLoc(0, 6, 0, None))
+      .newBatch()
+      .general(VirtualLoc(0, 7, 2, None))
+      .general(VirtualLoc(0, 7, 0, None))
+      .general(VirtualLoc(0, 6, 1, None))
+      .newBatch()
+      .general(VirtualLoc(0, 8, 2, None))
+      .general(VirtualLoc(0, 7, 0, None))
+      .result()
+
+    val leftMoves = MovesBuilder()
+      .general(VirtualLoc(0, 0, 2, None))
+      .general(VirtualLoc(0, 0, 1, None))
+      .general(VirtualLoc(0, 0, 0, None))
+      .general(VirtualLoc(0, 0, 2, None))
+      .newBatch()
+      .general(VirtualLoc(0, 1, 2, None))
+      .general(VirtualLoc(0, 1, 1, None))
+      .general(VirtualLoc(0, 0, 0, None))
+      .newBatch()
+      .general(VirtualLoc(0, 2, 2, None))
+      .general(VirtualLoc(0, 2, 1, None))
+      .general(VirtualLoc(0, 2, 0, None))
+      .general(VirtualLoc(0, 2, 2, None))
+      .newBatch()
+      .general(VirtualLoc(0, 3, 2, None))
+      .general(VirtualLoc(0, 2, 1, None))
+      .newBatch()
+      .general(VirtualLoc(0, 4, 2, None))
+      .general(VirtualLoc(0, 4, 1, None))
+      .general(VirtualLoc(0, 2, 0, None))
+      .newBatch()
+      .general(VirtualLoc(0, 5, 0, None))
+      .general(VirtualLoc(0, 5, 2, None))
+      .general(VirtualLoc(0, 4, 1, None))
+      .newBatch()
+      .general(VirtualLoc(0, 6, 2, None))
+      .general(VirtualLoc(0, 6, 1, None))
+      .general(VirtualLoc(0, 6, 0, None))
+      .general(VirtualLoc(0, 6, 2, None))
+      .newBatch()
+      .general(VirtualLoc(0, 7, 0, None))
+      .general(VirtualLoc(0, 7, 2, None))
+      .general(VirtualLoc(0, 6, 1, None))
+      .newBatch()
+      .general(VirtualLoc(0, 8, 2, None))
+      .general(VirtualLoc(0, 6, 1, None))
+      .result()
+
+    val downMoves = MovesBuilder()
+      .general(VirtualLoc(0, 0, 0, None))
+      .general(VirtualLoc(0, 2, 0, None))
+      .general(VirtualLoc(0, 5, 0, None))
+      .general(VirtualLoc(0, 6, 0, None))
+      .general(VirtualLoc(0, 7, 0, None))
+      .general(VirtualLoc(0, 0, 0, None))
+      .newBatch()
+      .general(VirtualLoc(0, 0, 1, None))
+      .general(VirtualLoc(0, 1, 1, None))
+      .general(VirtualLoc(0, 2, 1, None))
+      .general(VirtualLoc(0, 4, 1, None))
+      .general(VirtualLoc(0, 6, 1, None))
+      .general(VirtualLoc(0, 0, 1, None))
+      .newBatch()
+      .general(VirtualLoc(0, 0, 2, None))
+      .general(VirtualLoc(0, 1, 2, None))
+      .general(VirtualLoc(0, 2, 2, None))
+      .general(VirtualLoc(0, 3, 2, None))
+      .general(VirtualLoc(0, 4, 2, None))
+      .general(VirtualLoc(0, 5, 2, None))
+      .general(VirtualLoc(0, 6, 2, None))
+      .general(VirtualLoc(0, 7, 2, None))
+      .general(VirtualLoc(0, 8, 2, None))
+      .general(VirtualLoc(0, 0, 2, None))
       .result()
   }
 
@@ -319,12 +474,17 @@ object TableNavigationFeatureTest extends TestSuite {
     TD.Component().renderIntoDOM(root).getDOMNode.asMounted().domCast[html.Table]
   }
 
-  val changeDir: Direction => List[TablePos] => List[TablePos] = {
+  lazy val rowSpans: html.Table = {
+    val root = ReactTestUtils.newBodyElement()
+    RowSpans.Component().renderIntoDOM(root).getDOMNode.asMounted().domCast[html.Table]
+  }
+
+  val changeDir: Direction => List[VirtualLoc] => List[VirtualLoc] = {
     case Forwards  => identity
     case Backwards => _.reverse
   }
 
-  def testCellLabels(table: html.Table): Unit = {
+  def testCellLabels(table: html.Table)(implicit l: Line): Unit = {
     def text(e: html.Element): String =
       ReactTestUtils.removeReactInternals(e.innerHTML).replaceFirst("\\).+", ")")
 
@@ -332,14 +492,14 @@ object TableNavigationFeatureTest extends TestSuite {
     assert(cells.nonEmpty)
     for (c <- cells) {
       val z = TableCellZipper(c)
-      val pos = z.focusPos.needRight
+      val pos = z.focusVLoc.needRight
       val tableRoot = z.root.needRight
-      assertEq(pos.toString, text(c))
+      assertEq("focusPos", pos.toString, text(c))
       assert(tableRoot == table)
 
       val z2 = z.goto(pos).needRight
-      val pos2 = z2.focusPos.needRight
-      assertEq(pos2.toString, text(c))
+      val pos2 = z2.focusVLoc.needRight
+      assertEq("goto(focusPos).focusVLoc", pos2.toString, expect = text(c))
       assertEq(pos2, pos)
     }
   }
@@ -347,33 +507,33 @@ object TableNavigationFeatureTest extends TestSuite {
   def init(table: html.Table): TableCellZipper =
     TableCellZipper(table.querySelectorAll("td,th").iterator.focusable.next())
 
-  def needGoto(z: TableCellZipper, pos: TablePos): TableCellZipper = {
+  def needGoto(z: TableCellZipper, pos: VirtualLoc)(implicit l: Line): TableCellZipper = {
     val z2 = z.goto(pos).needRight
-    assertEq(s"goto($pos).focusPos", z2.focusPos, \/-(pos))
+    assertEq(s"goto($pos).focusVLoc", z2.focusVLoc, \/-(pos))
     z2
   }
 
-  def testMoves(table: html.Table, axis: Axis, movement: Movement, moves: TestMoves, movesDir: Direction): Unit = {
+  def testMoves(table: html.Table, axis: Axis, movement: Movement, moves: TestMoves, movesDir: Direction)(implicit l: Line): Unit = {
     val z = init(table)
     moves.moveTests.foreach { ms =>
       testMoves2(z, axis, movement, changeDir(movesDir)(ms))
     }
   }
 
-  def testMoves2(z: TableCellZipper, axis: Axis, movement: Movement, moves: List[TablePos]): Unit =
+  def testMoves2(z: TableCellZipper, axis: Axis, movement: Movement, moves: List[VirtualLoc])(implicit l: Line): Unit =
     for ((from, to) <- moves zip moves.tail)
       testMove(z, axis, movement, from, to)
 
-  def testMove(z: TableCellZipper, axis: Axis, movement: Movement, from: TablePos, to: TablePos): Unit = {
+  def testMove(z: TableCellZipper, axis: Axis, movement: Movement, from: VirtualLoc, to: VirtualLoc)(implicit l: Line): Unit = {
     val z2 = needGoto(z, from)
-    val actual = z2.move(axis, movement).flatMap(_.focusPos)
-    assertEq(s"$axis $movement: $from --> $to", actual, \/-(to))
+    val actual = z2.move(axis, movement).flatMap(_.focusVLoc)
+    assertEq(s"$movement along $axis from $from", actual, \/-(to))
   }
 
   def testSubMoves(table: html.Table, movement: Movement, moves: TestMoves, movesDir: Direction): Unit = {
     val z = init(table)
 
-    def testData: Iterator[List[TablePos]] =
+    def testData: Iterator[List[VirtualLoc]] =
       moves.subTests.iterator.map(changeDir(movesDir))
 
     for (ps <- testData)
@@ -388,10 +548,10 @@ object TableNavigationFeatureTest extends TestSuite {
         testSubMoves2(z, movement, ps.last :: ps)
   }
 
-  def testSubMoves2(z: TableCellZipper, movement: Movement, moves: List[TablePos]): Unit =
+  def testSubMoves2(z: TableCellZipper, movement: Movement, moves: List[VirtualLoc]): Unit =
     for ((from, to) <- moves zip moves.tail) {
       val z2 = needGoto(z, from)
-      val actual = z2.subMove(movement).flatMap(_.traverse(_.focusPos))
+      val actual = z2.subMove(movement).flatMap(_.traverse(_.focusVLoc))
       assertEq(s"subMove $movement: $from --> $to", actual, \/-(Some(to)))
     }
 
@@ -422,11 +582,21 @@ object TableNavigationFeatureTest extends TestSuite {
 
       'fromOuter {
         val z = init(t)
-        'up     - testMove(z, UpDown, Prev, TablePos(1, 1, 5, None), TablePos(1, 0, 5, Some(PosXY(0, 2))))
-        'down   - testMove(z, UpDown, Next, TablePos(1, 1, 5, None), TablePos(1, 1, 5, Some(PosXY(0, 0))))
-        'top    - testMove(z, UpDown, Head, TablePos(1, 1, 5, None), TablePos(0, 0, 5, None))
-        'bottom - testMove(z, UpDown, Last, TablePos(1, 1, 5, None), TablePos(1, 1, 5, Some(PosXY(0, 1))))
+        'up     - testMove(z, UpDown, Prev, VirtualLoc(1, 1, 5, None), VirtualLoc(1, 0, 5, Some(PosXY(0, 2))))
+        'down   - testMove(z, UpDown, Next, VirtualLoc(1, 1, 5, None), VirtualLoc(1, 1, 5, Some(PosXY(0, 0))))
+        'top    - testMove(z, UpDown, Head, VirtualLoc(1, 1, 5, None), VirtualLoc(0, 0, 5, None))
+        'bottom - testMove(z, UpDown, Last, VirtualLoc(1, 1, 5, None), VirtualLoc(1, 1, 5, Some(PosXY(0, 1))))
       }
+    }
+
+    'rowSpans {
+      def t = rowSpans
+      def T = RowSpans
+      'posDetection   - testCellLabels(t)
+      'moveRight      - testMoves(t, LeftRight, Next, T.rightMoves, Forwards)
+      'moveLeft       - testMoves(t, LeftRight, Prev, T.leftMoves , Forwards)
+      'moveDown       - testMoves(t, UpDown   , Next, T.downMoves , Forwards)
+      'moveUp         - testMoves(t, UpDown   , Prev, T.downMoves , Backwards)
     }
 
   }

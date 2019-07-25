@@ -59,8 +59,11 @@ object DomUtil {
     def last: Element =
       c(c.length - 1)
 
+    def indices: scala.Range =
+      0 until c.length
+
     def iterator: Iterator[Element] =
-      (0 until c.length).iterator.map(c.apply)
+      indices.iterator.map(c.apply)
 
     def deepIteratorDepthFirst: Iterator[Element] =
       iterator.flatMap(e => Iterator.single(e) ++ e.children.deepIteratorDepthFirst)

@@ -3,7 +3,6 @@ package shipreq.webapp.base.feature.tablenav
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.scalajs.react.ReactExt_DomNode
 import japgolly.univeq._
 import nyaya.util.Multimap
 import org.scalajs.dom.html
@@ -35,12 +34,15 @@ final case class TableCellZipper(focus: html.Element) {
   import Logic._
 
   private lazy val rootAndPos =
-    findRootAndPos(parentsAndIndices(focus), false, focus)
+    findRootAndPos(parentsAndIndices(focus), focus)
 
-  def root: F[html.Table] =
+  private def virtualTable: F[VirtualTable] =
     rootAndPos.map(_._1)
 
-  def focusPos: F[TablePos] =
+  def root: F[html.Table] =
+    virtualTable.map(_.root)
+
+  def focusVLoc: F[VirtualLoc] =
     rootAndPos.map(_._2)
 
   def move(a: Axis, om: Option[Movement]): F[TableCellZipper] =
@@ -58,43 +60,49 @@ final case class TableCellZipper(focus: html.Element) {
   private def moveUpDown(m: Movement): F[TableCellZipper] = {
     type Sub = (html.Element, Option[PosXY])
 
-    def virtualRows(table: html.Table, pos: TablePos): Iterator[(html.TableRow, NonEmptyVector[Sub])] =
-      rowIterator(table)
-        .filter(_.children.nonEmpty)
-        .flatMap { r =>
+    def virtualRows(vt: VirtualTable, focusLoc: VirtualLoc): Iterator[(Int, Int, NonEmptyVector[Sub])] =
+      (0 until vt.sections).iterator
+        .flatMap(section => (0 until vt.virtualRows(section)).iterator.map((section, _)))
+        .flatMap { case (section, row) =>
 
-          def cellIndices = {
-            val first = pos.cell.min(r.children.length - 1)
-            (first to 0 by -1).iterator ++ (first + 1 until r.children.length)
+          def cells: Iterator[html.Element] = {
+            val len   = vt.virtualCols(section, row)
+            val first = focusLoc.col.min(len - 1)
+            val it    = (first to 0 by -1).iterator ++ (first + 1 until len)
+            if (vt.isRoot(section, VirtualPos(row, first)))
+              it
+                .map(col => VirtualLoc(section, VirtualPos(row, col), None))
+                .map(loc => vt.cellAt(loc).toOption)
+                .filterDefined
+            else
+              Iterator.empty
           }
 
           //                       cell     rows     subcells
           def tableCellsInReverse: Iterator[Iterator[NonEmptyVector[Sub]]] =
-            cellIndices
-              .flatMap(r.children(_).domToHtml.toList)
-              .map { cell =>
-                var mm0 = Option.empty[Sub]
-                var mm = Multimap.empty[Int, Vector, Sub]
-                cellContentsIterator(cell, true)
-                  .foreach(i => if (allowMove(i._1))
-                    i._2 match {
-                      case None => mm0 = Some(i)
-                      case Some(xy) => mm = mm.add(xy.y, i)
-                    }
-                  )
-                if (mm.isEmpty)
-                  mm0 match {
-                    case Some(s) => Iterator single NonEmptyVector.one(s)
-                    case None    => Iterator.empty
+            cells.map { cell =>
+              var mm0 = Option.empty[Sub]
+              var mm = Multimap.empty[Int, Vector, Sub]
+              cellContentsIterator(cell, true)
+                .foreach(i => if (allowMove(i._1))
+                  i._2 match {
+                    case None     => mm0 = Some(i)
+                    case Some(xy) => mm = mm.add(xy.y, i)
                   }
-                else
-                  MutableArray(mm.keys).sort.iterator.map(NonEmptyVector force mm(_))
-              }
+                )
+              if (mm.isEmpty)
+                mm0 match {
+                  case Some(s) => Iterator single NonEmptyVector.one(s)
+                  case None    => Iterator.empty
+                }
+              else
+                MutableArray(mm.keys).sort.iterator.map(NonEmptyVector force mm(_))
+            }
 
           tableCellsInReverse
             .filter(_.nonEmpty) // remove empty cells
             .take(1)
-            .flatMap(_.map(subCells => (r, subCells)))
+            .flatMap(_.map((section, row, _)))
         }
 
     def focusClosestX[A](candidates: NonEmptyVector[Sub]): TableCellZipper = {
@@ -104,24 +112,23 @@ final case class TableCellZipper(focus: html.Element) {
     }
 
     for {
-      pos       ← focusPos
-      table     ← root
-      tbody     ← table.child(pos.body)
-      tr        ← tbody.child(pos.row)
-      rows      ← needNev(virtualRows(table, pos), "no rows")
-      rowSubIdx = rows.whole.indexWhere(x => (x._1 eq tr) && x._2.exists(_._1 eq focus))
-      rowIdx    ← indexWhereF(rows.whole)(_._1 eq tr, "Focus row not found")
+      vt        ← virtualTable
+      curLoc    ← focusVLoc
+      rows      ← needNev(virtualRows(vt, curLoc), "no rows")
+      isCur     = (x: (Int, Int, Any)) => (x._1 == curLoc.section) && (x._2 == curLoc.row)
+      rowSubIdx = rows.whole.indexWhere(x => isCur(x) && x._3.exists(_._1 eq focus))
+      rowIdx    ← indexWhereF(rows.whole)(isCur, "Focus row not found")
     } yield {
 
       def move(rowIdx: Int): TableCellZipper = {
-        val newRow = m.moveNev(rows, rowIdx)._2
-        pos.sub match {
+        val target = m.moveNev(rows, rowIdx)._3
+        curLoc.sub match {
           case None =>
-            TableCellZipper(newRow.head._1)
+            TableCellZipper(target.head._1)
           case Some(xy) =>
-            newRow.find(_._2.exists(_.x ==* xy.x)) match {
+            target.find(_._2.exists(_.x ==* xy.x)) match {
               case Some((sub, _)) => TableCellZipper(sub)
-              case None           => focusClosestX(newRow)
+              case None           => focusClosestX(target)
             }
         }
       }
@@ -129,20 +136,20 @@ final case class TableCellZipper(focus: html.Element) {
       if (rowSubIdx >= 0)
         move(rowSubIdx)
       else m match {
-        case Movement.Next => TableCellZipper(rows.unsafeApply(rowIdx)._2.head._1)
+        case Movement.Next => TableCellZipper(rows.unsafeApply(rowIdx)._3.head._1)
         case _             => move(rowIdx)
       }
     }
   }
 
   private def moveLeftRight(m: Movement): F[TableCellZipper] = {
-    def candidates(tr: html.TableRow, pos: TablePos): Vector[RowContent] = {
-      val list = rowContentsIterator(tr).filter(_._1 |> allowMove).toList
+    def candidates(vt: VirtualTable, focusLoc: VirtualLoc): Vector[RowContent] = {
+      val list = rowContentsIterator(vt, focusLoc).filter(_._1 |> allowMove).toList
 
       // Determine appropriate sub-rows per cell
       val yPerCell: Map[Int, Int] =
         list.groupBy(_._2._1).mapValuesNow(
-          pos.sub match {
+          focusLoc.sub match {
 
             case None =>
               vs =>
@@ -153,7 +160,7 @@ final case class TableCellZipper(focus: html.Element) {
 
             case Some(xy) =>
               vs =>
-                if (vs.head._2._1 ==* pos.cell)
+                if (vs.head._2._1 ==* focusLoc.col)
                   xy.y // Stay on current sub-row in current cell
                 else
                 // Choose same sub-row in other cells, or the bottom if there are less
@@ -171,9 +178,9 @@ final case class TableCellZipper(focus: html.Element) {
     }
 
     for {
-      pos        ← focusPos
-      tr         ← rowAtPos(pos)
-      rowResults ← needNev(candidates(tr, pos), "no LR candidates")
+      vt   ← virtualTable
+      vloc ← focusVLoc
+      rowResults ← needNev(candidates(vt, vloc), "no LR candidates")
       indexF     = findFocusIndexA(rowResults.whole)(_._1)
       target     ← m.moveNevF(rowResults, indexF)
     } yield TableCellZipper(target._1)
@@ -201,18 +208,19 @@ final case class TableCellZipper(focus: html.Element) {
     }
 
     for {
-      pos                ← focusPos
-      tr                 ← rowAtPos(pos)
-      cellRes1           ← needNev(rowContentsIterator(tr).filter(_._2._1 ==* pos.cell), "empty cell")
+      vt                 ← virtualTable
+      vloc               ← focusVLoc
+      cellRes1           ← needNev(rowContentsIterator(vt, vloc).filter(_._2._1 ==* vloc.col), "empty cell")
       (cellRes2, indexF) = excludeOuter(cellRes1)
       result             ← Option.when(cellRes2.length > 1)(leftRight.moveNevF(cellRes2, indexF)).sequence
     } yield result.map(t => TableCellZipper(t._1))
   }
 
-  def goto(pos: TablePos): F[TableCellZipper] =
+  def goto(loc: VirtualLoc): F[TableCellZipper] =
     for {
-      td     <- cellAtPos(pos)
-      result <- pos.sub match {
+      vt     <- virtualTable
+      td     <- vt.cellAt(loc)
+      result <- loc.sub match {
         case None    => \/-(TableCellZipper(td))
         case Some(s) =>
           cellContentsIterator(td, false).find(_._2.exists(_ ==* s)) match {
@@ -223,20 +231,6 @@ final case class TableCellZipper(focus: html.Element) {
     } yield result
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  private def rowAtPos(pos: TablePos): F[html.TableRow] =
-    for {
-      table <- root
-      tbody <- table.child(pos.body)
-      tr    <- tbody.child(pos.row)
-    } yield tr.domCast[html.TableRow]
-
-  /** Ignores sub-pos */
-  private def cellAtPos(pos: TablePos): F[html.TableCell] =
-    for {
-      tr <- rowAtPos(pos)
-      td <- tr.child(pos.cell)
-    } yield td.domCast[html.TableCell]
 
   private def findFocusIndex(as: IndexedSeq[html.Element]): F[Int] =
     findFocusIndexA(as)(Identity.apply)

@@ -8,7 +8,6 @@ import org.scalajs.dom.{ClientRect, html}
 import scala.annotation.tailrec
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Deny, Permission}
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.lib.DomUtil._
 
 object Attrs {
@@ -51,13 +50,15 @@ private[tablenav] object Logic {
   }
 
   @tailrec
-  def findRootAndPos(parentStream: ParentStream, sub: Boolean, focus: html.Element): F[(html.Table, TablePos)] =
+  def findRootAndPos(parentStream: ParentStream, focus: html.Element, expectSubPos: Boolean = false): F[(VirtualTable, VirtualLoc)] =
     parentStream.map(t => if (t._1.hasAttribute(Attrs.NestedTable)) "" else t._1.tagName) match {
 
       case ("TD" | "TH") #:: "TR" #:: ("TBODY" | "THEAD") #:: "TABLE" #:: _ =>
+
         val (td #:: tr #:: tbody #:: table #:: _) = parentStream
+
         val subAttempt: String \/ Option[PosXY] =
-          if (sub)
+          if (expectSubPos)
             cellContentsIterator(td._1, false).find(_._1 eq focus) match {
               case Some((_, subPos)) => \/-(subPos)
               case None              =>
@@ -72,11 +73,18 @@ private[tablenav] object Logic {
           else
             \/-(None)
 
-        subAttempt.map(sub =>
-          (table._1.domCast[html.Table], TablePos(tbody._2, tr._2, td._2, sub)))
+        subAttempt.map { sub =>
+          val tableDom = table._1.domCast[html.Table]
+          val vt       = VirtualTable(tableDom)
+          val section  = tbody._2
+          val rpos     = RealPos(tr._2, td._2)
+          val vpos     = vt.virtualPos(section, rpos)
+          val vloc     = VirtualLoc(section, vpos, sub)
+          (vt, vloc)
+        }
 
       case _ #:: _ =>
-        findRootAndPos(parentStream.tail, true, focus)
+        findRootAndPos(parentStream.tail, focus, expectSubPos = true)
 
       case Stream.Empty =>
         -\/("Unable to determine table structure")
@@ -93,11 +101,15 @@ private[tablenav] object Logic {
 
   type RowContent = (html.Element, (Int, Option[PosXY]))
 
-  def rowContentsIterator(tr: html.Element): Iterator[RowContent] =
-    (0 until tr.children.length).iterator.flatMap { i =>
-      val h = tr.children(i).domAsHtml
-      cellContentsIterator(h, true).map(_.map2(s => (i, s)))
-    }
+  def rowContentsIterator(vt: VirtualTable, focusLoc: VirtualLoc): Iterator[RowContent] =
+    (0 until vt.virtualCols(focusLoc)).iterator
+      .map(focusLoc.withCol)
+      .map(l => vt.cellAt(l).toOption.map((_, l)))
+      .filterDefined
+      .flatMap { case (cell, loc) =>
+        cellContentsIterator(cell, includeSelf = true)
+          .map { case (dom, sub) => (dom, (loc.col, sub)) }
+      }
 
   def cellContentsIterator(cell: html.Element, includeSelf: Boolean): Iterator[(html.Element, Option[PosXY])] = {
     var x = -1
