@@ -4,10 +4,10 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.VdomElement
-import scalaz.{\/, -\/, \/-}
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data.{FilterDead, ReqId}
+import shipreq.webapp.base.data.{FilterDead, HideDead, ReqId}
 import shipreq.webapp.base.event.EventSeqSummary
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.filter.Filter
@@ -78,6 +78,16 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
     private val pxEditEditability =
       pxProject.map(EditorFeature.Editability.apply)
 
+    private val pxFilterCompilerFromFilterDead: Px[FilterDead => Filter.Valid.Compiler] =
+      for {
+        p  <- pxProject
+        pt <- pxPlainText
+        ts <- pxTextSearch
+      } yield FilterDead.memoLazy(Filter.Valid.compiler(p, pt, ts, _))
+
+    private val pxFilterCompilerHideDead: Px[Filter.Valid.Compiler] =
+      pxFilterCompilerFromFilterDead.map(_(HideDead))
+
     private val previewW: PreviewFeature.Write.Composite[PreviewId] =
       PreviewFeature.Write.Composite($ zoomStateL State.preview)
 
@@ -137,6 +147,7 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
       pxProject,
       pxRenderFeature,
       pxProjectWidgets,
+      pxFilterCompilerHideDead,
       updateConfigOrContentCmdInvoker)
 
     private val issuesPageSS =
@@ -148,6 +159,7 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
         pxProject,
         pxTextSearch,
         pxProjectWidgets,
+        pxFilterCompilerFromFilterDead,
         reqDetailRC,
         sspUpdateContent,
         sspUpdateSavedViews,

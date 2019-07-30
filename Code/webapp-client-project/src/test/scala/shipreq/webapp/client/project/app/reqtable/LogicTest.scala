@@ -13,6 +13,7 @@ import shipreq.webapp.base.event.{Event => E}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.data.reqtable.{Column => C, SortCriterion => SC}
+import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.text.{PlainText, ProjectText, Text, TextSearch}
 import shipreq.webapp.base.test._
@@ -103,7 +104,8 @@ object LogicTest extends TestSuite {
   }
 
   private def gatherSortConsolidate(p: Project, v: View, pt: PlainText.ForProject.NoCtx, ts: TextSearch): Vector[Row] = {
-    def r1: Array       [Row] = Logic.gather(p, v, pt, ts)
+    val fc                    = Filter.Valid.compiler(p, pt, ts, v.filterDead)
+    def r1: Array       [Row] = Logic.gather(p, v, pt, ts, fc)
     def r2: MutableArray[Row] = Logic.sorter(p, v, pt)(r1)
     val r3: Vector      [Row] = Logic.consolidateAdjacentDups(r2.iterator)
     r3

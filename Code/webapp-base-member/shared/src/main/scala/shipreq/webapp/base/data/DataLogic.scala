@@ -14,6 +14,9 @@ import DataImplicits._
 final class DataLogic(p: Project) {
   import DataLogic._
 
+  val issueLookup: FilterDead => IssueLookup =
+    FilterDead.memoLazy(new IssueLookup(p, _))
+
   val tagLookup: FilterDead => TagLookup = {
     val reqTags                 = p.content.reqTags
     def tagsInText              = p.atomScan.tagRefs
@@ -215,7 +218,7 @@ object DataLogic {
   // ===================================================================================================================
   // Issues
 
-  final class IssueLookup(p: Project, fd: FilterDead) {
+  final class IssueLookup private[DataLogic] (p: Project, fd: FilterDead) {
 
     type Issues = Vector[Atom.AnyIssue]
 
@@ -228,9 +231,6 @@ object DataLogic {
     def forReqCode(id: ReqCodeId): Issues =
       getRcgIssues(p.atomScan.issuesInRcgs(id))
   }
-
-  def issueLookup(p: Project, fd: FilterDead): IssueLookup =
-    new IssueLookup(p, fd)
 
   // ===================================================================================================================
   // Misc

@@ -40,15 +40,16 @@ object ReqTablePage {
       .componentWillReceiveProps($ => $.backend.onPropsChange($.currentProps, $.nextProps))
       .build
 
-  final case class StaticProps(stateAccess     : StateAccessPure[State],
-                               pxProject       : Px[Project],
-                               pxTextSearch    : Px[TextSearch],
-                               pxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
-                               reqDetailRC     : RouterCtl[ExternalPubid],
-                               updateIO        : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any],
-                               savedViewIO     : ServerSideProcInvoker[SavedViewCmd, ErrorMsg, VerifiedEvent.Seq],
-                               rowAsyncW       : AsyncFeature.Write.D1[Row.SourceId, ErrorMsg],
-                               savedViewAsyncW : AsyncFeature.Write.D0[ErrorMsg])
+  final case class StaticProps(stateAccess           : StateAccessPure[State],
+                               pxProject             : Px[Project],
+                               pxTextSearch          : Px[TextSearch],
+                               pxProjectWidgets      : Reusable[Px[ProjectWidgets.NoCtx]],
+                               pxFilterCompilerFromFD: Px[FilterDead => Filter.Valid.Compiler],
+                               reqDetailRC           : RouterCtl[ExternalPubid],
+                               updateIO              : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any],
+                               savedViewIO           : ServerSideProcInvoker[SavedViewCmd, ErrorMsg, VerifiedEvent.Seq],
+                               rowAsyncW             : AsyncFeature.Write.D1[Row.SourceId, ErrorMsg],
+                               savedViewAsyncW       : AsyncFeature.Write.D0[ErrorMsg])
 
   final case class Props(create        : CreateFeature.ReadWrite.ForProject,
                          editor        : EditorFeature.ReadWrite.ForProject,
@@ -199,7 +200,8 @@ object ReqTablePage {
         v  <- pxActiveView
         pw <- pxProjectWidgets
         ts <- pxTextSearch
-      } yield Logic.rowsForTable(p, v, pw.plainText, ts)
+        fc <- pxFilterCompilerFromFD
+      } yield Logic.rowsForTable(p, v, pw.plainText, ts, fc(v.filterDead))
 
     val pxRowIdsWithWholeRowAsync: Px[Set[Row.SourceId]] =
       pxProps(_.rowAsync.keySet)

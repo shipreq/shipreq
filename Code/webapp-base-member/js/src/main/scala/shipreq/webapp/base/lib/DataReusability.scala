@@ -7,6 +7,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.filter.Filter.Implicits._
+import shipreq.webapp.base.issue.{Issue, Issues}
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.text.{Atom, PlainText, ProjectText, TextSearch}
 import shipreq.webapp.base.text.Text.Equality._
@@ -101,5 +102,11 @@ abstract class DataReusability extends BaseReusability {
 
   implicit def reusabilityTextAndFlow[T: Reusability, S: Reusability]: Reusability[TextAndFlow[T, S]] =
     Reusability.derive
+
+  implicit lazy val reusabilityIssue: Reusability[Issue] =
+    Reusability.byRef
+
+  implicit lazy val reusabilityIssues: Reusability[Issues] =
+    Reusability.byRef || Reusability.derive
 }
 

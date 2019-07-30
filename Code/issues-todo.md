@@ -38,7 +38,6 @@ functionality
   * title should be editable
   * dynamic columns
   * custom sorting
-  * filter
 * filter changes
   * issue category
   * issue class

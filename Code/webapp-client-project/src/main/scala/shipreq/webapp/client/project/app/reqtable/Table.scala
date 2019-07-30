@@ -18,7 +18,7 @@ import shipreq.webapp.base.ui.{EditTheme, semantic}
 import shipreq.webapp.base.ui.semantic.{Icon, Message}
 import shipreq.webapp.client.project.app.Style.reqtable.{table => *}
 import shipreq.webapp.client.project.feature.{EditorFeature, Selection}
-import shipreq.webapp.client.project.widgets.{DragToReorder, ProjectWidgets, ViewReq}
+import shipreq.webapp.client.project.widgets.{DragToReorder, NoFilterResults, ProjectWidgets, ViewReq}
 import shipreq.webapp.client.project.lib.DataReusability._
 import EditorFeature.FieldKey
 
@@ -69,7 +69,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
               p.modifyView.map(f => c => f.modState(_ orderByColumn c.column))))
 
         def renderMsg(msg: VdomTag): VdomTag =
-          <.tr(<.td(*.noContent, ^.colSpan := p.cols.length + 1, msg))
+          NoFilterResults.asTableRow(p.cols.length + 1)
 
         def renderRows(rows: Vector[Row]): VdomArray = {
           val applicability = pxApplicability.value()
@@ -110,7 +110,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
         val body: TagMod =
           p.mode match {
             case Mode.Normal(rows) => renderRows(rows)
-            case m@Mode.FilteredOut => renderMsg(m.render)
+            case Mode.FilteredOut  => renderMsg(NoFilterResults.render)
           }
 
         semantic.Table.celledCompactUnstackable(
@@ -451,14 +451,7 @@ object Table {
 
     final case class Normal(rows: Vector[Row]) extends Mode
 
-    case object FilteredOut extends Mode {
-      def render: VdomTag =
-        Message(
-          Message.Style(Message.Type.Info),
-          Icon.Filter,
-          "No filter results.",
-          "None of the project content matches the specified filter criteria.")
-    }
+    case object FilteredOut extends Mode
 
     implicit val reusability: Reusability[Mode] =
       Reusability.derive

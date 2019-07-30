@@ -95,6 +95,9 @@ object Style extends StyleSheet.Inline {
   val layout = style(
     unsafeRoot(".ui.button")(marginRight(`0`).important))
 
+  val noFilterResultsCont = style(
+    padding(2 em).important)
+
   object generic {
     val table = style(
       margin(`0`).important)
@@ -322,9 +325,6 @@ object Style extends StyleSheet.Inline {
       val `N/A` = style(
         color(c"#666"),
         margin.horizontal(auto))
-
-      val noContent = style(
-        padding(2 em).important)
     }
 
     object filterEditor {

@@ -10,11 +10,13 @@ import shipreq.base.util.{ConsolidatedSeq, ErrorMsg}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.issue.Issues
+import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.sort.FusedSorters
 import shipreq.webapp.base.ui.semantic
 import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.feature.{EditorFeature, RenderFeature}
-import shipreq.webapp.client.project.widgets.ProjectWidgets
+import shipreq.webapp.client.project.widgets.{NoFilterResults, ProjectWidgets}
 
 object Table {
 
@@ -26,7 +28,6 @@ object Table {
 
     val reusablePxPW  = Reusable.byRef(pxProjectWidgets)
     val pxPubidFormat = pxProjectWidgets.map(_.PubidFormat(Plain, _ => *.pubidColumnValue, titleFn = _ => None))
-    val pxRenderPrep  = Px.apply2(pxProject, pxRenderFeature)(new RenderPrep(_, _))
 
     val component = ScalaComponent.builder[Props]("Table")
       .backend(new Backend(this, _))
@@ -35,7 +36,8 @@ object Table {
       .build
   }
 
-  final case class Props(editor  : EditorFeature.ReadWrite.ForProject,
+  final case class Props(issues  : Issues,
+                         editor  : EditorFeature.ReadWrite.ForProject,
                          cmdAsync: AsyncFeature.Read.D1[Action.Cmd, ErrorMsg])
 
   implicit val reusabilityProps: Reusability[Props] =
@@ -59,10 +61,10 @@ object Table {
     // TODO LooseIssueText | FieldDesc
   )
 
-  final class RenderPrep(p: Project, rf: RenderFeature.NoCtx.ForProject) {
+  final class RenderPrep(p: Project, issues: Issues, rf: RenderFeature.NoCtx.ForProject) {
     private val sortFn  = sorter.result(new Sorter.Setup(p))
     private val toRow   = Row.fromIssue(p, rf)
-    val rows            = sortFn(p.issues.vector.iterator.map(toRow)).iterator.toVector
+    val rows            = sortFn(issues.vector.iterator.map(toRow)).iterator.toVector
     val csIssueCategory = TableRow.consolidateIssueCategories(rows.iterator.map(_.issueCategoryDesc))
     val csIssueClass    = TableRow.consolidateIssueClasses   (rows.iterator.map(_.issueClassDesc))
 
@@ -89,6 +91,9 @@ object Table {
   final class Backend(static: StaticProps, $: BackendScope[Props, Unit]) {
     import static.{component => _, _}
 
+    private val pxIssues     = Px.props($).map(_.issues).withReuse.autoRefresh
+    private val pxRenderPrep = Px.apply3(pxProject, pxIssues, pxRenderFeature)(new RenderPrep(_, _, _))
+
     def render(p: Props): VdomElement = {
       val fieldNames = pxFieldNameFn.value()
       val pubidFormat = pxPubidFormat.value()
@@ -97,26 +102,30 @@ object Table {
 
       val header = TableHeader.Props(columns, fieldNames).render
 
-      val body = rows.indices.toVdomArray { rowIdx =>
+      val body =
+        if (rows.isEmpty)
+          NoFilterResults.asTableRow(columns.length)
+        else
+          rows.indices.toVdomArray { rowIdx =>
 
-        val row = rows(rowIdx)
+            val row = rows(rowIdx)
 
-        val rowProps = TableRow.Props(
-          row,
-          columns,
-          row.editor(p.editor, reusablePxPW),
-          pubidFormat,
-          cmdInvoker,
-          p.cmdAsync.filterHolistic(cmd => row.actions.exists(_.cmd ==* cmd)), // for better Reusability
-          issueCategory = csIssueCategory(rowIdx),
-          issueClass    = csIssueClass(rowIdx),
-          idBase        = csIds(rowIdx),
-          titleBase     = csTitles(rowIdx),
-        )
+            val rowProps = TableRow.Props(
+              row,
+              columns,
+              row.editor(p.editor, reusablePxPW),
+              pubidFormat,
+              cmdInvoker,
+              p.cmdAsync.filterHolistic(cmd => row.actions.exists(_.cmd ==* cmd)), // for better Reusability
+              issueCategory = csIssueCategory(rowIdx),
+              issueClass    = csIssueClass(rowIdx),
+              idBase        = csIds(rowIdx),
+              titleBase     = csTitles(rowIdx),
+            )
 
-        val key = rowIdx // TODO choose better row key
-        TableRow.Component.withKey(key)(rowProps)
-      }
+            val key = rowIdx // TODO choose better row key
+            TableRow.Component.withKey(key)(rowProps)
+          }
 
       semantic.Table.celledCompactUnstackable(
         *.table,

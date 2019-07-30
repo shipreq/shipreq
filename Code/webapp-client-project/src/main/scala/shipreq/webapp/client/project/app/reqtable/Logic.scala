@@ -175,10 +175,11 @@ private[reqtable] object Logic {
    * Performs expansion.
    * Does not perform any sorting.
    */
-  def gather[C[_]](p   : Project,
-                   view: View,
-                   pt  : PlainText.ForProject.NoCtx,
-                   ts  : TextSearch)
+  def gather[C[_]](p             : Project,
+                   view          : View,
+                   pt            : PlainText.ForProject.NoCtx,
+                   ts            : TextSearch,
+                   filterCompiler: Filter.Valid.Compiler)
                   (implicit cbf: CanBuildFrom[Nothing, Row, C[Row]]): C[Row] = {
 
     // NOTES:
@@ -194,7 +195,6 @@ private[reqtable] object Logic {
     val filterDead    = CompiledFilter(filterDeadReq, filterDeadRCG)
     val tagFieldDist  = DataLogic.tagFieldDist(p.config, fd, view isVisible Column.CustomField(_))
     val tagLookup     = p.dataLogic.tagLookup(fd)
-    val issueLookup   = DataLogic.issueLookup(p, fd)
     val applicability = Column.applicabilityForReq(p.config.applicability)
     val expandImps    = Direction.memo(dir => expanderC[Pubid](view, Column.Implications(dir)))
     val expandCodes   = expanderC[ReqCode.Value](view, Column.Code)
@@ -227,7 +227,7 @@ private[reqtable] object Logic {
         pubid(id).fold(q)(q + _))
 
     val opOpFilter: Option[CompiledFilter] =
-      view.filter.map(Filter.Valid.compiler(p, pt, ts, issueLookup, tagLookup))
+      view.filter.map(filterCompiler)
 
     /**
      * Full = the cumulative result off all factors that would contribute to potentially filter content.
@@ -467,9 +467,10 @@ private[reqtable] object Logic {
   def rowsForTable(p : Project,
                    v : View,
                    pt: PlainText.ForProject.NoCtx,
-                   ts: TextSearch): Vector[Row] = {
+                   ts: TextSearch,
+                   fc: Filter.Valid.Compiler): Vector[Row] = {
 
-    def r1: Array       [Row] = gather(p, v, pt, ts)
+    def r1: Array       [Row] = gather(p, v, pt, ts, fc)
     def r2: MutableArray[Row] = sorter(p, v, pt)(r1)
     val r3: Vector      [Row] = consolidateAdjacentDups(r2.iterator)
     val r4: Vector      [Row] = if (v.viewReqCodesAsTree) addReqCodeTreeToRows(r3) else r3

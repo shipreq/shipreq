@@ -7,7 +7,7 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
-import shipreq.webapp.base.filter.Filter
+import shipreq.webapp.base.filter.{CompiledFilter, Filter}
 import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.feature.{EditorFeature, RenderFeature}
@@ -19,6 +19,7 @@ object IssuesPage {
   final case class StaticProps(pxProject       : Px[Project],
                                pxRenderFeature : Px[FilterDead => RenderFeature.NoCtx.ForProject],
                                pxProjectWidgets: Px[ProjectWidgets.NoCtx],
+                               pxFilterCompiler: Px[Filter.Valid.Compiler],
                                cmdInvoker      : Action.Cmd ~=> Callback) {
 
     val pxConfig      = pxProject.map(_.config).withReuse
@@ -61,6 +62,21 @@ object IssuesPage {
   final class Backend(static: StaticProps, $: BackendScope[Props, Unit]) {
     import static.{component => _, _}
 
+    private val pxFilterValid: Px[Option[Filter.Valid]] =
+      Px.props($).map(_.state.value.filterValue).withReuse.autoRefresh
+
+    private val pxFilterCompiled: Px[Option[CompiledFilter]] =
+      for {
+        c <- pxFilterCompiler
+        f <- pxFilterValid
+      } yield f.map(c)
+
+    private val pxFilteredIssues: Px[Issues] =
+      for {
+        p <- pxProject
+        f <- pxFilterCompiled
+      } yield f.fold(p.issues)(p.issues.filter)
+
     private val filterUpdateFn: FilterEditor.UpdateFn =
       (newState, newValue) =>
         $.props.flatMap(_.state.modState(_.copy(
@@ -73,24 +89,26 @@ object IssuesPage {
       if (issues.isEmpty)
         renderEmpty
       else
-        renderContent(p, issues, project)
+        renderContent(p, pxFilteredIssues.value(), project)
     }
 
     private def renderEmpty =
       <.div(
         NewIssue.render,
-        <.div(*.emptyCont, EmptyBody.render))
+        <.div(*.emptyCont, NoContent.render))
 
     private def renderContent(p: Props, issues: Issues, project: Project) = {
+      val filteredOut = project.issues.vector.length - issues.vector.length
+
       <.div(
         <.div(*.pageRow1,
           <.div(*.pageNew, NewIssue.render),
-          <.div(Summary.Props(issues.stats, 0).render)),
+          <.div(Summary.Props(issues.stats, filteredOut).render)),
         <.div(*.pageRow2,
-          // TODO Table config row (sort | filter | cols)
+          // TODO Table config row (sort | cols)
           <.div(*.pageSort),
           <.div(FilterEditor.Props(p.state.value.filterEditor, project, filterUpdateFn).render)),
-        table.component(Table.Props(p.editor, p.cmdAsync)))
+        table.component(Table.Props(issues, p.editor, p.cmdAsync)))
     }
   }
 }

@@ -5,7 +5,7 @@ import nyaya.gen.Gen
 import nyaya.prop._
 import nyaya.test._
 import nyaya.util.Multimap
-import scalaz.{\/, \/-, -\/, Equal}
+import scalaz.{-\/, Equal, \/, \/-}
 import scalaz.std.AllInstances._
 import utest._
 import shipreq.base.util.univeq._
@@ -13,14 +13,15 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
-import shipreq.webapp.base.data.reqtable.{SortCriterion => SC, Column => C}
+import shipreq.webapp.base.data.reqtable.{Column => C, SortCriterion => SC}
 import shipreq.webapp.base.sort.SortMethod
-import shipreq.webapp.base.sort.Sorter.{BlanksFirst, BlanksLast, BlankPlacement, Dir, FlipDir, KeepDir}
+import shipreq.webapp.base.sort.Sorter.{BlankPlacement, BlanksFirst, BlanksLast, Dir, FlipDir, KeepDir}
 import shipreq.webapp.base.text.{Atom, PlainText, Text, TextSearch}
 import shipreq.webapp.client.project.test.ClientTestSettings._
 import LogicTestUtil._
 import SortMethod._
 import Text.Equality._
+import shipreq.webapp.base.filter.Filter
 
 object LogicPropTest extends TestSuite {
   val nop = Eval.pass()
@@ -36,15 +37,16 @@ object LogicPropTest extends TestSuite {
       else
         _ => true
 
-    val plainText   = PlainText.ForProject.noCtx(p)
-    val textSearch  = TextSearch(p, plainText)
-    val gathered    = Logic.gather[Vector](p, v, plainText, textSearch)
-    val gatheredG   = gathered.iterator.filterSubType[Row.ForReq].toList
-    val rowReqCodes = gathered.flatMap(codesInRow)
-    val rowGReqIds  = gatheredG.map(_.req.id).toSet
-    val srcGReqIds  = p.content.reqs.idIterator.filterSubType[GenericReqId].filter(expectVisible).toSet
-    val finalRows   = Logic.rowsForTable(p, v, plainText, textSearch)
-    val tableStats  = Logic.stats(p, finalRows)
+    val plainText      = PlainText.ForProject.noCtx(p)
+    val textSearch     = TextSearch(p, plainText)
+    val filterCompiler = Filter.Valid.compiler(p, plainText, textSearch, fd)
+    val gathered       = Logic.gather[Vector](p, v, plainText, textSearch, filterCompiler)
+    val gatheredG      = gathered.iterator.filterSubType[Row.ForReq].toList
+    val rowReqCodes    = gathered.flatMap(codesInRow)
+    val rowGReqIds     = gatheredG.map(_.req.id).toSet
+    val srcGReqIds     = p.content.reqs.idIterator.filterSubType[GenericReqId].filter(expectVisible).toSet
+    val finalRows      = Logic.rowsForTable(p, v, plainText, textSearch, filterCompiler)
+    val tableStats     = Logic.stats(p, finalRows)
 
     val expectedVisibleReqCodes = {
       val b = Set.newBuilder[ReqCode.Value]
@@ -142,7 +144,7 @@ object LogicPropTest extends TestSuite {
       if (v isVisible c)
         gathered
       else
-        Logic.gather(p, View(columnState(p, c), sc, fd, v.filter), plainText, textSearch)
+        Logic.gather(p, View(columnState(p, c), sc, fd, v.filter), plainText, textSearch, filterCompiler)
 
     def sortCriAndGather(c: SC.Inconclusive) =
       sortCri(c).mapStrengthR(gatherOn(c.column, _))

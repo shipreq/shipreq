@@ -6,6 +6,7 @@ import scalaz.{-\/, Traverse, \/, \/-}
 import shipreq.base.util.Identity
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data
+import shipreq.webapp.base.data.FilterDead
 import shipreq.webapp.base.text.{PlainText, TextSearch}
 
 object Filter {
@@ -95,13 +96,17 @@ object Filter {
     def compiler(p          : data.Project,
                  projectText: PlainText.ForProject.NoCtx,
                  textSearch : TextSearch,
-                 issueLookup: data.DataLogic.IssueLookup,
-                 tagLookup  : data.DataLogic.TagLookup): Compiler = {
+                 filterDead : FilterDead): Compiler = {
       val extensional = FilterAlgebra.makeExtensional(p)
-      val compile = FilterAlgebra.compile(p, projectText, textSearch, issueLookup, tagLookup)
+      val compile = FilterAlgebra.compile(
+        p,
+        projectText,
+        textSearch,
+        p.dataLogic.issueLookup(filterDead),
+        p.dataLogic.tagLookup(filterDead))
       v => Recursion.cata(compile)(Recursion.cata(extensional)(v))
     }
-   }
+  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
