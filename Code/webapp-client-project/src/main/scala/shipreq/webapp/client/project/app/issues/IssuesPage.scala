@@ -7,10 +7,11 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.feature.{EditorFeature, RenderFeature}
-import shipreq.webapp.client.project.widgets.ProjectWidgets
+import shipreq.webapp.client.project.widgets.{FilterEditor, ProjectWidgets}
 import shipreq.webapp.base.lib.DataReusability._
 
 object IssuesPage {
@@ -37,24 +38,34 @@ object IssuesPage {
       cmdInvoker)
   }
 
-  /*
-  state:
-  - new editor
-  - editor states (shared)
-  - table view
-    - sort
-    - filter
-    - column
-   */
-
-  final case class Props(editor  : EditorFeature.ReadWrite.ForProject,
+  final case class Props(state   : StateSnapshot[State],
+                         editor  : EditorFeature.ReadWrite.ForProject,
                          cmdAsync: AsyncFeature.Read.D1[Action.Cmd, ErrorMsg])
 
   implicit val reusabilityProps: Reusability[Props] =
     Reusability.derive
 
+  final case class State(filterEditor: FilterEditor.State,
+                         filterValue: Option[Filter.Valid])
+
+  object State {
+    def init = apply(
+      filterEditor = FilterEditor.State.init,
+      filterValue = None,
+    )
+
+    implicit val reusability: Reusability[State] =
+      Reusability.byRef || Reusability.derive
+  }
+
   final class Backend(static: StaticProps, $: BackendScope[Props, Unit]) {
     import static.{component => _, _}
+
+    private val filterUpdateFn: FilterEditor.UpdateFn =
+      (newState, newValue) =>
+        $.props.flatMap(_.state.modState(_.copy(
+          filterEditor = newState,
+          filterValue = newValue)))
 
     def render(p: Props): VdomElement = {
       val project = pxProject.value()
@@ -62,7 +73,7 @@ object IssuesPage {
       if (issues.isEmpty)
         renderEmpty
       else
-        renderContent(p, issues)
+        renderContent(p, issues, project)
     }
 
     private def renderEmpty =
@@ -70,12 +81,16 @@ object IssuesPage {
         NewIssue.render,
         <.div(*.emptyCont, EmptyBody.render))
 
-    private def renderContent(p: Props, issues: Issues) = {
-      <.div(*.pageCont,
-        <.div(*.pageNew, NewIssue.render),
-        <.div(*.pageSummary, Summary.Props(issues.stats, 0).render),
-        // TODO Table config row (sort | filter | cols)
-        <.div(*.pageTable, table.component(Table.Props(p.editor, p.cmdAsync))))
+    private def renderContent(p: Props, issues: Issues, project: Project) = {
+      <.div(
+        <.div(*.pageRow1,
+          <.div(*.pageNew, NewIssue.render),
+          <.div(Summary.Props(issues.stats, 0).render)),
+        <.div(*.pageRow2,
+          // TODO Table config row (sort | filter | cols)
+          <.div(*.pageSort),
+          <.div(FilterEditor.Props(p.state.value.filterEditor, project, filterUpdateFn).render)),
+        table.component(Table.Props(p.editor, p.cmdAsync)))
     }
   }
 }

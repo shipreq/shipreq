@@ -5,6 +5,8 @@ import scalaz.Equal
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.filter.Filter
+import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.text.{Atom, PlainText, ProjectText, TextSearch}
 import shipreq.webapp.base.text.Text.Equality._
@@ -75,6 +77,9 @@ abstract class DataReusability extends BaseReusability {
 
   implicit def reusabilityCustomFields: Reusability[FieldSet.CustomFields] =
     reusabilityByRefOrEqual
+
+  implicit def reusabilityFilterValid: Reusability[Filter.Valid] =
+    Reusability.byUnivEq
 
   implicit def reusabilityExternalPubid: Reusability[ExternalPubid] =
     Reusability.byRefOrUnivEq

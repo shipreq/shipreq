@@ -139,6 +139,9 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
       pxProjectWidgets,
       updateConfigOrContentCmdInvoker)
 
+    private val issuesPageSS =
+      StateSnapshot.withReuse.zoomL(State.issuesPage).prepareVia($)
+
     private val reqTable = ReqTablePage(
       ReqTablePage.StaticProps(
         $ zoomStateL State.reqTable,
@@ -244,8 +247,9 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
           ProjectHome.Props(pname, index).render
 
         case Page.Issues =>
+          val state = issuesPageSS(s)
           val cmdAsync = s.updateConfigCmdAsync.toRead either s.updateContentCmdAsync.toRead
-          val p = issues.IssuesPage.Props(editRW, cmdAsync)
+          val p = issues.IssuesPage.Props(state, editRW, cmdAsync)
           issuesPage.component(p)
 
         case Page.CfgFields =>

@@ -638,17 +638,11 @@ object Style extends StyleSheet.Inline {
 
     private def gapSize = 1 rem
 
-    val pageCont = style(
-      display.grid,
-      gridTemplateAreas(
-        "n s",
-        "t t"),
-      gridTemplateColumns := "1fr auto",
-      gap(gapSize))
+    val pageRow1 = style(display.flex)
+    val pageNew  = style(flexGrow(1))
 
-    val pageNew     = style(gridArea := "n")
-    val pageSummary = style(gridArea := "s")
-    val pageTable   = style(gridArea := "t")
+    val pageRow2 = style(margin.vertical(gapSize), display.flex)
+    def pageSort = pageNew
 
     val emptyCont = style(marginTop(gapSize))
 

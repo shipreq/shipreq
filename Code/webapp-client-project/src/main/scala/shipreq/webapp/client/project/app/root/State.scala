@@ -6,12 +6,13 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{FilterDead, HideDead}
 import shipreq.webapp.base.feature._
+import shipreq.webapp.base.protocol.{UpdateConfigCmd, UpdateContentCmd}
 import shipreq.webapp.base.ui.ProjectItem
 import shipreq.webapp.client.project.app.{reqdetail, reqtable}
+import shipreq.webapp.client.project.app.issues.IssuesPage
+import shipreq.webapp.client.project.app.reqdetail.ReqDetail
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
-import reqdetail.ReqDetail
-import shipreq.webapp.base.protocol.{UpdateConfigCmd, UpdateContentCmd}
 
 sealed trait PreviewId
 object PreviewId {
@@ -95,6 +96,7 @@ case class State(projectName          : ProjectItem.WithEditableName.State,
                  filterDead           : FilterDead,
                  reqTable             : reqtable.ReqTablePage.State,
                  reqDetail            : ReqDetail.State,
+                 issuesPage           : IssuesPage.State,
                  updateConfigCmdAsync : AsyncFeature.State.D1[UpdateConfigCmd, ErrorMsg],
                  updateContentCmdAsync: AsyncFeature.State.D1[UpdateContentCmd, ErrorMsg],
                 )
@@ -114,6 +116,7 @@ object State {
       HideDead,
       reqtable.ReqTablePage.State.init,
       ReqDetail.initState,
+      IssuesPage.State.init,
       AsyncFeature.State.initD1,
       AsyncFeature.State.initD1,
     )
