@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.reqtable
+package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -13,7 +13,6 @@ import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui.semantic.{Button, Icon, Input}
 import shipreq.webapp.client.project.app.Style.reqtable.{filterEditor => *}
-import shipreq.webapp.client.project.widgets.FilterHelp
 
 /** Widget that allows users to edit the current filter.
   *
@@ -139,7 +138,7 @@ object FilterEditor {
 
   val Component = ScalaComponent.builder[Props]("FilterEditor")
     .renderBackend[Backend]
-    .configure(shouldComponentUpdate)
+    .configure(Reusability.shouldComponentUpdate)
     .configure(AutoComplete.install(autoCompletableInput))
     .build
 }

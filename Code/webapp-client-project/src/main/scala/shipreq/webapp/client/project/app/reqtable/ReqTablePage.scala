@@ -27,7 +27,7 @@ import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.ui.semantic.{Icon, Message}
 import shipreq.webapp.client.project.app.Style.reqtable.{page => *}
 import shipreq.webapp.client.project.feature._
-import shipreq.webapp.client.project.widgets.{FilterDeadButton, ProjectWidgets}
+import shipreq.webapp.client.project.widgets.{FilterDeadButton, FilterEditor, ProjectWidgets}
 
 object ReqTablePage {
 
