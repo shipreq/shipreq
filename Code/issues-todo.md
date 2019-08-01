@@ -50,8 +50,6 @@ functionality
 Filter
 ======
 
-* Change {has,no}:issue to look at actual issues, not just #issue tags
-
 * Add `issue:cat`
 	* issue:badData
 	* issue:futility

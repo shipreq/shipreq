@@ -1,10 +1,14 @@
 package shipreq.webapp.base.issue
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.univeq.UnivEq
+import shipreq.webapp.base.data.{ReqCodeGroupId, ReqId}
 import shipreq.webapp.base.filter.CompiledFilter
 
 final case class IssueCount(value: Int) extends AnyVal
 
 final case class Issues(vector: Vector[Issue]) {
+  import Issues._
 
   @inline def isEmpty = vector.isEmpty
 
@@ -29,4 +33,55 @@ final case class Issues(vector: Vector[Issue]) {
       case i: Issue.IssueTagInReq         => f.req(i.req)
       case _: Issue.UninhabitableTagField => false
     })
+
+  lazy val bySource: BySource = {
+    var byReq  = UnivEq.emptyMap[ReqId, ForSource]
+    var byRcg  = UnivEq.emptyMap[ReqCodeGroupId, ForSource]
+    var config = ForSource.empty
+
+    def addReq(i: Issue, id: ReqId         ): Unit = byReq = byReq.initAndModifyValue(id, ForSource.empty, _.add(i))
+    def addRcg(i: Issue, id: ReqCodeGroupId): Unit = byRcg = byRcg.initAndModifyValue(id, ForSource.empty, _.add(i))
+
+    vector.foreach {
+      case i: Issue.BlankCustomField      => addReq(i, i.req.id)
+      case i: Issue.BlankTitle            => addReq(i, i.req.id)
+      case i: Issue.BlankUseCaseStep      => addReq(i, i.step.useCaseId)
+      case i: Issue.ConflictingTags       => addReq(i, i.req.id)
+      case i: Issue.DeadIssueTagInRcg     => addRcg(i, i.rcg.id)
+      case i: Issue.DeadIssueTagInReq     => addReq(i, i.req.id)
+      case i: Issue.DeadRefInRcg          => addRcg(i, i.rcg.id)
+      case i: Issue.DeadRefInReq          => addReq(i, i.req.id)
+      case i: Issue.DeadTag               => addReq(i, i.req.id)
+      case i: Issue.EmptyCodeGroup        => addRcg(i, i.rcg.id)
+      case i: Issue.ImplicationRequired   => addReq(i, i.req.id)
+      case i: Issue.IssueTagInRcg         => addRcg(i, i.rcg.id)
+      case i: Issue.IssueTagInReq         => addReq(i, i.req.id)
+      case i: Issue.UninhabitableTagField => config = config.add(i)
+    }
+
+    BySource(byReq, byRcg, config)
+  }
+}
+
+object Issues {
+
+  final case class BySource(byReq : Map[ReqId, ForSource],
+                            byRcg : Map[ReqCodeGroupId, ForSource],
+                            config: ForSource) {
+
+    def apply(id: ReqId): ForSource =
+      byReq.getOrElse(id, ForSource.empty)
+
+    def apply(id: ReqCodeGroupId): ForSource =
+      byRcg.getOrElse(id, ForSource.empty)
+  }
+
+  final case class ForSource(issues: List[Issue], categories: Set[IssueCategory]) {
+    def add(i: Issue): ForSource =
+      ForSource(i :: issues, categories + i.category)
+  }
+  object ForSource {
+    val empty = apply(Nil, Set.empty)
+  }
+
 }

@@ -12,6 +12,7 @@ import shipreq.webapp.base.data.DataLogic.{IssueLookup, TagLookup}
 import shipreq.webapp.base.text.{Atom, Grammar, PlainText, TextSearch}
 import Filter._
 import FilterAst._
+import shipreq.webapp.base.issue.Issues
 
 /** Algebras:
   *
@@ -201,6 +202,7 @@ object FilterAlgebra {
     // - Squash Not(Not(x)) => x
 
     import shipreq.webapp.base.data.{ReqType => _, _}
+    lazy val issuesBySource = p.issues.bySource
 
     def make(req      : Req       => Boolean = null,
              codeGroup: CodeGroup => Boolean = null) =
@@ -211,7 +213,12 @@ object FilterAlgebra {
     def byTag(f: Set[ApplicableTagId] => Boolean) =
       make(req = r => tagLookup(r.id) exists f)
 
-    def byIssueType(f: Vector[Atom.AnyIssue] => Boolean) =
+    def byIssue(f: Issues.ForSource => Boolean) =
+      make(
+        r => f(issuesBySource(r.id)),
+        g => f(issuesBySource(g.id)))
+
+    def byCustomIssueType(f: Vector[Atom.AnyIssue] => Boolean) =
       make(
         r => f(issueLookup.forReq(r.id)),
         g => f(issueLookup.forReqCode(g.id)))
@@ -247,9 +254,9 @@ object FilterAlgebra {
       case ImpliesAnyOf  (reqs)          => byImplication(reqs, p.implicationTgtToSrcTC)
       case ImpliedByAnyOf(reqs)          => byImplication(reqs, p.implicationSrcToTgtTC)
       case ReqType       (rt)            => make(req = _.reqTypeId ==* rt)
-      case Presence      (Attr.AnyIssue) => byIssueType(_.nonEmpty)
+      case Presence      (Attr.AnyIssue) => byIssue(_.issues.nonEmpty)
       case Presence      (Attr.AnyTag)   => byTag(_.nonEmpty)
-      case HashRef       (-\/(issue))    => byIssueType(_.exists(_.typ ==* issue))
+      case HashRef       (-\/(issue))    => byCustomIssueType(_.exists(_.typ ==* issue))
       case HashRef       (\/-(tag))      => byTag(_ contains tag)
       case Regex         (regex)         => byRegex(regex)
       case AllOf         (fs)            => fs.reduce(_ && _)

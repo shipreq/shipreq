@@ -77,6 +77,8 @@ object LogicTest extends TestSuite {
   import LogicTestUtil._
 
   private      def P3  = SampleProject3.project
+  private      def P4  = SampleProject4.project
+  private      def P6  = SampleProject6.project
   private      def PD  = SampleProject.project
   private lazy val PA  = TestOptics.customReqTypesLive.set(Live)(PD)
   private      val sep = "  "
@@ -876,11 +878,13 @@ object LogicTest extends TestSuite {
     testFilter(P3, F.regex(r))("FR-2  MF-3  MF-21", "") // FR-2 because of …#TBD …
   }
 
-  def testFilterPresence(): Unit = {
+  def testFilterAnyIssue(): Unit = {
     testFilter(P3, F.presence(AnyIssue))("FR-1  FR-2", "")
+    testFilter(P4, F.presence(AnyIssue))("FR-1  FR-2  UC-1", "")
+    testFilter(P6, F.presence(AnyIssue))("FR-1  FR-2  UC-1  UC-2", "")
   }
 
-  def testFilterLack(): Unit = {
+  def testFilterAnyTag(): Unit = {
     testFilter(P3, F.not(F.presence(AnyTag)))("FR-1  FR-2", dead = "CO-2")
   }
 
@@ -1101,8 +1105,8 @@ object LogicTest extends TestSuite {
     'filter {
       'text           - testFilterText()
       'textPattern    - testFilterTextPattern()
-      'presence       - testFilterPresence()
-      'lack           - testFilterLack()
+      'anyIssue       - testFilterAnyIssue()
+      'anyTag         - testFilterAnyTag()
       'tag            - testFilterTag()
       'customIssue    - testFilterCustomIssue()
       'reqType        - testFilterReqType()
