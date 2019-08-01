@@ -604,18 +604,17 @@ object DataProp {
           }.toSet)
 
       private val validFilter: FAlgebra[Filter.ValidF, Refs] = {
-        case FilterAst.Reqs          (reqs)          => validFilterReqSetRefs(reqs)
-        case FilterAst.ImpliesAnyOf  (reqs)          => validFilterReqSetRefs(reqs)
-        case FilterAst.ImpliedByAnyOf(reqs)          => validFilterReqSetRefs(reqs)
-        case FilterAst.ReqType       (rt)            => Refs.empty addReqTypeId rt
-        case FilterAst.HashRef       (-\/(issue))    => Refs.empty addCustomIssueTypeId issue
-        case FilterAst.HashRef       (\/-(tag))      => Refs.empty addTagId tag
-        case FilterAst.AllOf         (fs)            => fs.reduce(_ ++ _)
-        case FilterAst.AnyOf         (f, fs)         => f ++ fs.reduce(_ ++ _)
-        case FilterAst.Not           (f)             => f
+        case FilterAst.Reqs          (reqs)           => validFilterReqSetRefs(reqs)
+        case FilterAst.ImpliesAnyOf  (reqs)           => validFilterReqSetRefs(reqs)
+        case FilterAst.ImpliedByAnyOf(reqs)           => validFilterReqSetRefs(reqs)
+        case FilterAst.ReqType       (rt)             => Refs.empty addReqTypeId rt
+        case FilterAst.HashRef       (-\/(issue))     => Refs.empty addCustomIssueTypeId issue
+        case FilterAst.HashRef       (\/-(tag))       => Refs.empty addTagId tag
+        case FilterAst.AllOf         (fs)             => fs.reduce(_ ++ _)
+        case FilterAst.AnyOf         (f, fs)          => f ++ fs.reduce(_ ++ _)
+        case FilterAst.Not           (f)              => f
         case _: FilterAst.Text
            | _: FilterAst.Regex
-           | _: FilterAst.Lack[Filter.Valid.Attr]
            | _: FilterAst.Presence[Filter.Valid.Attr] => Refs.empty
       }
 

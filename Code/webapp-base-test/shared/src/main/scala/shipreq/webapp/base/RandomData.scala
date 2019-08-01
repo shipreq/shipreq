@@ -1561,10 +1561,9 @@ object RandomData {
       val implies    = reqSpecs       .map(FilterAst.ImpliesAnyOf(_))
       val impliedBy  = reqSpecs       .map(FilterAst.ImpliedByAnyOf(_))
       val presence   = attr           .map(FilterAst.Presence(_))
-      val lack       = attr           .map(FilterAst.Lack(_))
 
       private val flatGens: NonEmptyVector[Gen[PotentialF[Nothing]]] =
-        NonEmptyVector(quotedText, simpleText, regex, reqs, reqType, hashRef, implies, impliedBy, presence, lack)
+        NonEmptyVector(quotedText, simpleText, regex, reqs, reqType, hashRef, implies, impliedBy, presence)
 
       private val flatGen: Gen[PotentialF[Nothing]] =
         Gen.chooseGenNE(flatGens)
@@ -1614,7 +1613,6 @@ object RandomData {
         Gen.choose[Attr](Attr.AnyIssue, Attr.AnyTag)
 
       val presence = attr.map(FilterAst.Presence(_))
-      val lack = attr.map(FilterAst.Lack(_))
 
       def reqs       (g: Gen[Valid.ReqType])    : Gen[ValidF[Nothing]] = someOfType(g).map(s => FilterAst.Reqs(NonEmptyVector.one(s)))
       def implies    (g: Gen[Valid.ReqSet])     : Gen[ValidF[Nothing]] = g.map(FilterAst.ImpliesAnyOf(_))
@@ -1629,7 +1627,7 @@ object RandomData {
                    gt: Option[Gen[ApplicableTagId]],
                    gi: Option[Gen[CustomIssueTypeId]]): FlatGens = {
         val greqs = gy.map(reqSpecs)
-        NonEmptyVector[Gen[ValidF[Nothing]]](quotedText, simpleText, regex, presence, lack) ++
+        NonEmptyVector[Gen[ValidF[Nothing]]](quotedText, simpleText, regex, presence) ++
           gy.map(reqType) ++
           gt.map(tag) ++
           gi.map(customIssue) ++

@@ -56,7 +56,6 @@ object FilterAlgebra {
       case ImpliedByAnyOf(reqs)              => "impliedBy:" ~ fmtReqs(reqs, ',')
       case Reqs          (reqs)              => fmtReqs(reqs, ' ')
       case Presence      (attr)              => "has:" ~ attr
-      case Lack          (attr)              => "no:" ~ attr
       case Not           (clause)            => '-' ~ clause.atom
       case AllOf         (clauses)           => composite("(", clauses.iterator.map(_.atom).mkString(" "),  ")")
       case AnyOf         (c, cs)             => composite("(", (c +: cs).iterator.map(_.atom).mkString(" | "),  ")")
@@ -111,7 +110,6 @@ object FilterAlgebra {
       case ImpliesAnyOf   (reqs)   => byReqSet(reqs, ImpliesAnyOf.apply)
       case ImpliedByAnyOf (reqs)   => byReqSet(reqs, ImpliedByAnyOf.apply)
       case Reqs           (reqs)   => byReqSet(reqs, Reqs.apply)
-      case Lack           (attr)   => byAttr(attr, Lack.apply)
       case Presence       (attr)   => byAttr(attr, Presence.apply)
       case Regex          (regex)  => byRegex(regex)
       case ReqType        (mn)     => lookupReqType(mn).map(rt => Valid(ReqType(rt.reqTypeId)))
@@ -136,7 +134,6 @@ object FilterAlgebra {
     {
       case HashRef       (\/-(id)) => Potential(HashRef       (cfg.tags.atag(id).key))
       case HashRef       (-\/(id)) => Potential(HashRef       (cfg.customIssueType(id).key))
-      case Lack          (attr)    => Potential(Lack          (attr.name))
       case Presence      (attr)    => Potential(Presence      (attr.name))
       case ImpliesAnyOf  (reqs)    => Potential(ImpliesAnyOf  (convReqSet(reqs)))
       case ImpliedByAnyOf(reqs)    => Potential(ImpliedByAnyOf(convReqSet(reqs)))
@@ -175,7 +172,6 @@ object FilterAlgebra {
       case c: Regex                   => Extensional(c)
       case c: Text                    => Extensional(c)
       case c: HashRef [Valid.HashTag] => Extensional(c)
-      case c: Lack    [Valid.Attr]    => Extensional(c)
       case c: Presence[Valid.Attr]    => Extensional(c)
       case c: ReqType [Valid.ReqType] => Extensional(c)
       case c: Not     [Extensional]   => Extensional(c)
@@ -193,11 +189,10 @@ object FilterAlgebra {
               tagLookup  : TagLookup): FAlgebra[ExtensionalF, CompiledFilter] = {
 
     // Possible optimisations:
-    // - overlap between has Tag & Presence/Lack(AnyTag)
-    // - overlap between has Issue & Presence/Lack(AnyIssue)
+    // - overlap between has Tag & Presence(AnyTag)
+    // - overlap between has Issue & Presence(AnyIssue)
     // - overlap between WholeType & SomeOfType
     // - cycle in ImpliesAnyOf & ImpliedByAnyOf is impossible to satisfy
-    // - lack & presence of α
     // - AnyOf with 2 contradictions = always pass
     // - AllOf with 2 contradictions = always fail
     // - AnyOf stops when match found, AllOf stops when non-match found. DeMorgan to the faster case.
@@ -256,7 +251,6 @@ object FilterAlgebra {
       case Presence      (Attr.AnyTag)   => byTag(_.nonEmpty)
       case HashRef       (-\/(issue))    => byIssueType(_.exists(_.typ ==* issue))
       case HashRef       (\/-(tag))      => byTag(_ contains tag)
-      case Lack          (a)             => !alg(Presence(a))
       case Regex         (regex)         => byRegex(regex)
       case AllOf         (fs)            => fs.reduce(_ && _)
       case AnyOf         (f, fs)         => f || fs.reduce(_ || _)

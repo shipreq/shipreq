@@ -172,7 +172,6 @@ object ProjectHasher {
     implicit val hashValidAttrT         : HashFn[FilterAst.Attr.AnyTag   .type          ] = hashConstClass("T")
     implicit val hashValidAttr          : HashFn[FilterAst.Attr                         ] = hashADT
     implicit val hashValidPresence      : HashFn[FilterAst.Presence      [Valid.Attr]   ] = hashCaseClass
-    implicit val hashValidLack          : HashFn[FilterAst.Lack          [Valid.Attr]   ] = hashCaseClass
     implicit val hashValidReqs          : HashFn[FilterAst.Reqs          [Valid.ReqSet] ] = hashCaseClass
     implicit val hashValidReqType       : HashFn[FilterAst.ReqType       [Valid.ReqType]] = hashCaseClass
     implicit val hashValidHashRef       : HashFn[FilterAst.HashRef       [Valid.HashTag]] = hashCaseClass

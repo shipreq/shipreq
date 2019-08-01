@@ -77,7 +77,6 @@ object Filter {
         case c: FilterAst.Regex                   => regex(c)
         case c: FilterAst.HashRef       [HashTag] => hashRef(c.value)
         case c: FilterAst.Presence      [Attr]    => attr(c.attr)
-        case c: FilterAst.Lack          [Attr]    => attr(c.attr)
         case c: FilterAst.ReqType       [ReqType] => reqType(c.reqType)
         case c: FilterAst.ImpliesAnyOf  [ReqSet]  => reqSet(c.reqs)
         case c: FilterAst.ImpliedByAnyOf[ReqSet]  => reqSet(c.reqs)

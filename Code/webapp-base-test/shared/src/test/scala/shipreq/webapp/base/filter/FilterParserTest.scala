@@ -176,11 +176,6 @@ object FilterParserTest extends TestSuite {
       'simple - test("has:stuff", presence("stuff"))
     }
 
-    'lack {
-      'empty  - testFail("no:")
-      'simple - test("no:stuff", lack("stuff"))
-    }
-
     'unknownKeys {
       'empty        - testFail(":")
       'typoLack     - testFail("noo:stuff")
@@ -224,7 +219,6 @@ object FilterParserTest extends TestSuite {
       'implies    - test("-implies:XYZ",    not(impliesAnyOf  (WholeType("XYZ"))))
       'impliedBy  - test("-impliedBy:B-12", not(impliedByAnyOf(SomeOfType("B", NES(12)))))
       'presence   - test("-has:face",       not(presence      ("face")))
-      'lack       - test("-no:hair",        not(lack          ("hair")))
       'allOf      - test("-(my god)",       not(allOf         (text("my"), text("god"))))
       'anyOf      - test("-(my|god)",       not(anyOf         (text("my"), text("god"))))
       'not        - test("--whip",          text("whip"))

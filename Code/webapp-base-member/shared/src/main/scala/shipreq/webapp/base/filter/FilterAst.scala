@@ -12,7 +12,6 @@ object FilterAst {
   final case class Text             (text: String, quoteChar: Option[Char]) extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing]
   final case class Regex            (text: String)                          extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing]
   final case class Presence      [A](attr: A)                               extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing]
-  final case class Lack          [A](attr: A)                               extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing]
   final case class HashRef       [A](value: A)                              extends FilterAst[Nothing, A      , Nothing, Nothing, Nothing]
   final case class ImpliesAnyOf  [A](reqs: A)                               extends FilterAst[Nothing, Nothing, A      , Nothing, Nothing]
   final case class ImpliedByAnyOf[A](reqs: A)                               extends FilterAst[Nothing, Nothing, A      , Nothing, Nothing]
@@ -60,7 +59,6 @@ object FilterAst {
         case c: Text                    => c
         case c: Regex                   => c
         case c: Presence      [Attr]    => c
-        case c: Lack          [Attr]    => c
         case c: HashRef       [HashTag] => c
         case c: ImpliesAnyOf  [ReqSet]  => c
         case c: ImpliedByAnyOf[ReqSet]  => c
@@ -75,7 +73,6 @@ object FilterAst {
         case c: Text                    => G pure c
         case c: Regex                   => G pure c
         case c: Presence      [Attr]    => G pure c
-        case c: Lack          [Attr]    => G pure c
         case c: HashRef       [HashTag] => G pure c
         case c: ImpliesAnyOf  [ReqSet]  => G pure c
         case c: ImpliedByAnyOf[ReqSet]  => G pure c
@@ -102,7 +99,6 @@ object FilterAst {
     def text          (text: String, quoteChar: Option[Char]): Fix[F] = Fix[F](Text          (text, quoteChar))
     def regex         (text: String)                         : Fix[F] = Fix[F](Regex         (text))
     def presence      (attr: Attr)                           : Fix[F] = Fix[F](Presence      (attr))
-    def lack          (attr: Attr)                           : Fix[F] = Fix[F](Lack          (attr))
     def hashRef       (value: HashTag)                       : Fix[F] = Fix[F](HashRef       (value))
     def impliesAnyOf  (reqs: ReqSet)                         : Fix[F] = Fix[F](ImpliesAnyOf  (reqs))
     def impliedByAnyOf(reqs: ReqSet)                         : Fix[F] = Fix[F](ImpliedByAnyOf(reqs))

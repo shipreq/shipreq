@@ -29,10 +29,11 @@ object FilterHelp {
         <.a(^.href := "http://www.regular-expressions.info/", "regular expressions"),
         " to filter requirement text. Unlike above, this is case-sensitive unless you specify the case-insensitivity flag: ",
         code("(?i)")
-      )("/.*next[ -]*day.*/", "/(?i).*next[ -]*day.*/")),
+      )("/.*next[ -]*day.*/", "/(?i).*next[ -]*day.*/"),
+    ),
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    Group("Reqs & Types")(
+    Group("Requirements & Types")(
 
       Example(
         "To filter by the type of requirements, enter the type's mnemonic (in upper-case)."
@@ -47,13 +48,14 @@ object FilterHelp {
       Example(
         "To specify a number of specific requirements of the same type, surround the numbers with braces ", code("{…}"),
         " and separate by commas. You can also use a dash for an inclusive range."
-      )("FR-{1,3,5,7}", "FR-{10-20}")),
+      )("FR-{1,3,5,7}", "FR-{10-20}"),
+    ),
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     Group("Issues & Tags")(
 
       Example(
-        "To find requirements that have a certain issue or tag, enter ", code("#"), " followed by the issue or tag."
+        "To find requirements that have a certain user-defined issue or tag, enter ", code("#"), " followed by the issue or tag."
       )("#draft"),
 
       Example(
@@ -64,11 +66,7 @@ object FilterHelp {
           <.li(code("tags"))),
         // "As above, this is case-insensitive, so it doesn't matter whether text is upper-case or lower-case."
       )("has:issues", "has:tags"),
-
-      Example(
-        "Like above, you can also search for requirements that ", <.em("don't"),
-        " have any issues or tags by changing ", code("has"), " to ", code("no"), "."
-      )("no:issues", "no:tags")),
+    ),
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     Group("Implication")(
@@ -98,7 +96,8 @@ object FilterHelp {
         <.br, "For example, ",
         code("impliedBy:MF-{1,2}"), " will match anything implied by either MF-1 or MF-2 where as ",
         code("impliedBy:MF-1 impliedBy:MF-2"), " will match anything implied by ", <.em("both"), " MF-1 and MF-2."
-      )("impliedBy:MF-1 impliedBy:MF-2")),
+      )("impliedBy:MF-1 impliedBy:MF-2"),
+    ),
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     Group("Negation & Multiple Filters")(
@@ -106,7 +105,7 @@ object FilterHelp {
       Example(
         "To negate a clause, prefix it with a minus ", code("-"), ".", <.br,
         "This works for anything, including text searches."
-      )("-dividend", "-'next day'", "-#draft", "-impliedBy:MF", "-(#v1.0 #released)"),
+      )("-dividend", "-'next day'", "-#draft", "-has:issue", "-impliedBy:MF", "-(#v1.0 #released)"),
 
       Example(
         "To combine multiple filters so that they ", <.em("all"),
@@ -124,7 +123,8 @@ object FilterHelp {
           <.li("requirements tagged with v1.0 and v1.1")),
           "Like above, you can also wrap them in parenthesis ", code("(…)"),
           " and treat it as a single filter (which allows you to do things like negate the whole thing).",
-      )("MF | FR | UC", "has:issues | #bug", "(#v1.0 | #v1.1)")),
+      )("MF | FR | UC", "has:issues | #bug", "(#v1.0 | #v1.1)"),
+    ),
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     Group("Examples")(

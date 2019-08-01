@@ -232,7 +232,6 @@ object BinCodecMemberData {
     implicit val pickleValidText          : Pickler[FilterAst.Text                         ] = pickleCaseClass
     implicit val pickleValidRegex         : Pickler[FilterAst.Regex                        ] = pickleCaseClass
     implicit val pickleValidPresence      : Pickler[FilterAst.Presence      [Valid.Attr]   ] = pickleCaseClass
-    implicit val pickleValidLack          : Pickler[FilterAst.Lack          [Valid.Attr]   ] = pickleCaseClass
     implicit val pickleValidReqs          : Pickler[FilterAst.Reqs          [Valid.ReqSet] ] = pickleCaseClass
     implicit val pickleValidReqType       : Pickler[FilterAst.ReqType       [Valid.ReqType]] = pickleCaseClass
     implicit val pickleValidHashRef       : Pickler[FilterAst.HashRef       [Valid.HashTag]] = pickleCaseClass

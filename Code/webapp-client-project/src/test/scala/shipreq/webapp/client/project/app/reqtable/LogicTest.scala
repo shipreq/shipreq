@@ -881,7 +881,7 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterLack(): Unit = {
-    testFilter(P3, F.lack(AnyTag))("FR-1  FR-2", dead = "CO-2")
+    testFilter(P3, F.not(F.presence(AnyTag)))("FR-1  FR-2", dead = "CO-2")
   }
 
   def testFilterTag(): Unit = {

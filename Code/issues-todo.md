@@ -54,8 +54,6 @@ Filter
 
 * Change {has,no}:issue to look at actual issues, not just #issue tags
 
-* Remove `no:` in place of `-has:`
-
 * Add `issue:cat`
 	* issue:badData
 	* issue:futility

@@ -151,9 +151,6 @@ private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
   private def presence: Rule1[Potential] =
     rule("has:" ~!~ attr ~> ((i: String) => Potential.presence(i)))
 
-  private def lack: Rule1[Potential] =
-    rule("no:" ~!~ attr ~> ((i: String) => Potential.lack(i)))
-
   /** implies:MF or impliedBy:FR,CC-1 */
   private def implication: Rule1[Potential] =
     rule("implie" ~ (
@@ -161,7 +158,7 @@ private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
       ) ~ ':' ~!~ reqSpecs ~ end ~> mkImplication)
 
   private def positive: Rule1[Potential] =
-    rule(anyOf | allOf | quotedText | regex | hashRef | presence | lack | implication | reqs | reqType | simpleText)
+    rule(anyOf | allOf | quotedText | regex | hashRef | presence | implication | reqs | reqType | simpleText)
 
   private def negative: Rule1[Potential] =
     rule('-' ~!~ (('-' ~!~ expr) | (expr ~> ((f: Potential) => Potential.not(f)))))

@@ -590,7 +590,6 @@ object EventDbCodecs {
       implicit val pickleValidText          : ReadWriter[FilterAst.Text                         ] = caseClassAsArray('text, 'quoteChar)
       implicit val pickleValidRegex         : ReadWriter[FilterAst.Regex                        ] = caseClass1
       implicit val pickleValidPresence      : ReadWriter[FilterAst.Presence      [Valid.Attr]   ] = caseClass1
-      implicit val pickleValidLack          : ReadWriter[FilterAst.Lack          [Valid.Attr]   ] = caseClass1
       implicit val pickleValidReqs          : ReadWriter[FilterAst.Reqs          [Valid.ReqSet] ] = caseClass1
       implicit val pickleValidReqType       : ReadWriter[FilterAst.ReqType       [Valid.ReqType]] = caseClass1
       implicit val pickleValidHashRef       : ReadWriter[FilterAst.HashRef       [Valid.HashTag]] = caseClass1
@@ -603,7 +602,6 @@ object EventDbCodecs {
         case _: Text                          => "x"
         case _: Regex                         => "/"
         case _: Presence      [Valid.Attr]    => "1"
-        case _: Lack          [Valid.Attr]    => "0"
         case _: Reqs          [Valid.ReqSet]  => "r"
         case _: ReqType       [Valid.ReqType] => "T"
         case _: HashRef       [Valid.HashTag] => "#"
