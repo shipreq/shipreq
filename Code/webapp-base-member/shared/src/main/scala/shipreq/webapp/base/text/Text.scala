@@ -67,7 +67,7 @@ object Text {
         with P.TagRef {
 
       def hashToken =                         rule(hashRef ~ (tagRef | issueRef))
-      val token = () =>                       rule(hashToken | reqRef | singleLine)
+      val token = () =>                       rule(hashToken | contentRef | singleLine)
       override protected def issueInnerDesc = rule(runSubParser(InlineIssueDesc.parserI(project, currentUseCase)(_).inline))
     }
 
@@ -100,7 +100,7 @@ object Text {
         with P.ContentRef {
 
       def hashToken =                         rule(hashRef ~ issueRef)
-      override val token = () =>              rule(hashToken | reqRef | singleLine)
+      override val token = () =>              rule(hashToken | contentRef | singleLine)
       override protected def issueInnerDesc = rule(runSubParser(InlineIssueDesc.parserI(project, currentUseCase)(_).inline))
     }
 
@@ -120,7 +120,7 @@ object Text {
         with P.ContentRef {
 
       import Grammar.issueDescSurround.{parsing => G}
-      val token     = () =>             rule(reqRef | singleLine)
+      val token     = () =>             rule(contentRef | singleLine)
       val inlineEnd = () =>             rule(OWS ~ G.suffix)
       def inline: Rule1[NonEmptyText] = rule(G.prefix ~ OWS ~ textUntil(token, inlineEnd) ~ popNEV)
     }
@@ -159,7 +159,7 @@ object Text {
         with P.TagRef {
 
       def hashToken =                                 rule(hashRef ~ (tagRef | issueRef))
-      override protected val additionalTokens = () => rule(hashToken | reqRef)
+      override protected val additionalTokens = () => rule(hashToken | contentRef)
       override protected def issueInnerDesc =         rule(runSubParser(InlineIssueDesc.parserI(project, currentUseCase)(_).inline))
     }
 
@@ -214,7 +214,7 @@ object Text {
         with P.TagRef {
 
       def hashToken =                         rule(hashRef ~ (tagRef | issueRef))
-      override val token = () =>              rule(hashToken | reqRef | singleLine)
+      override val token = () =>              rule(hashToken | contentRef | singleLine)
       override protected def issueInnerDesc = rule(runSubParser(InlineIssueDesc.parserI(project, currentUseCase)(_).inline))
     }
 
@@ -236,7 +236,7 @@ object Text {
         with P.TagRef {
 
       def hashToken =                                 rule(hashRef ~ tagRef)
-      override protected val additionalTokens = () => rule(hashToken | reqRef)
+      override protected val additionalTokens = () => rule(hashToken | contentRef)
     }
 
     override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) = new Parser(p, currentUseCase, i)

@@ -133,7 +133,7 @@ object Parsers {
     import G.reflinkSurround.parsing.{prefix, suffix}
     import ReqCode._
 
-    def pubidRef: Rule1[t.ReqRef] = rule(
+    def reqRef: Rule1[t.ReqRef] = rule(
       prefix ~ OWS ~ reqTypeMnemonicCI ~ OWS ~ ('-' ~ OWS).? ~ reqTypePos ~ OWS ~ suffix
         ~> lookupReq ~ popOptional[ReqId] ~> t.ReqRef)
 
@@ -154,8 +154,8 @@ object Parsers {
     def useCaseStepRef: Rule1[t.Atom] =
       rule(prefix ~ OWS ~ useCaseStepLabel ~ suffix ~> t.UseCaseStepRef)
 
-    def reqRef: Rule1[t.Atom] =
-      rule(useCaseStepRef | codeRef | pubidRef)
+    def contentRef: Rule1[t.Atom] =
+      rule(useCaseStepRef | codeRef | reqRef)
   }
 
   trait TagRef extends Base {
