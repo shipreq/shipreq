@@ -3,27 +3,32 @@ package shipreq.webapp.base.filter
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.recursion.Fix
-import scalaz.{Applicative, Traverse, Traverse1}
+import japgolly.microlibs.utils.StaticLookupFn
+import scalaz.{Applicative, Traverse, Traverse1, \/}
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.data.On
+import shipreq.webapp.base.issue.IssueCategory
 
-sealed trait FilterAst[+Attr, +HashTag, +ReqSet, +ReqType, +F]
+sealed trait FilterAst[+Attr, +IssueCat, +HashTag, +ReqSet, +ReqType, +F]
 
 object FilterAst {
-  final case class Text             (text: String, quoteChar: Option[Char]) extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing]
-  final case class Regex            (text: String)                          extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing]
-  final case class Presence      [A](attr: A)                               extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing]
-  final case class HashRef       [A](value: A)                              extends FilterAst[Nothing, A      , Nothing, Nothing, Nothing]
-  final case class ImpliesAnyOf  [A](reqs: A)                               extends FilterAst[Nothing, Nothing, A      , Nothing, Nothing]
-  final case class ImpliedByAnyOf[A](reqs: A)                               extends FilterAst[Nothing, Nothing, A      , Nothing, Nothing]
-  final case class Reqs          [A](reqs: A)                               extends FilterAst[Nothing, Nothing, A      , Nothing, Nothing]
-  final case class ReqType       [A](reqType: A)                            extends FilterAst[Nothing, Nothing, Nothing, A      , Nothing]
-  final case class Not           [A](clause: A)                             extends FilterAst[Nothing, Nothing, Nothing, Nothing, A      ]
-  final case class AllOf         [A](clauses: NonEmptyVector[A])            extends FilterAst[Nothing, Nothing, Nothing, Nothing, A      ]
-  final case class AnyOf         [A](head: A, tail: NonEmptyVector[A])      extends FilterAst[Nothing, Nothing, Nothing, Nothing, A      ]
+  final case class Text             (text: String, quoteChar: Option[Char]) extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
+  final case class Regex            (text: String)                          extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
+  final case class Presence      [A](attr: A)                               extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing, Nothing]
+  final case class HasIssue      [A](on: On, criteria: NonEmptyVector[A])   extends FilterAst[Nothing, A      , Nothing, Nothing, Nothing, Nothing]
+  final case class HashRef       [A](value: A)                              extends FilterAst[Nothing, Nothing, A      , Nothing, Nothing, Nothing]
+  final case class ImpliesAnyOf  [A](reqs: A)                               extends FilterAst[Nothing, Nothing, Nothing, A      , Nothing, Nothing]
+  final case class ImpliedByAnyOf[A](reqs: A)                               extends FilterAst[Nothing, Nothing, Nothing, A      , Nothing, Nothing]
+  final case class Reqs          [A](reqs: A)                               extends FilterAst[Nothing, Nothing, Nothing, A      , Nothing, Nothing]
+  final case class ReqType       [A](reqType: A)                            extends FilterAst[Nothing, Nothing, Nothing, Nothing, A      , Nothing]
+  final case class Not           [A](clause: A)                             extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, A      ]
+  final case class AllOf         [A](clauses: NonEmptyVector[A])            extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, A      ]
+  final case class AnyOf         [A](head: A, tail: NonEmptyVector[A])      extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, A      ]
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   sealed abstract class Attr(val name: String, val additionalNames: String*)
+
   object Attr {
     case object AnyIssue extends Attr("issue")
     case object AnyTag   extends Attr("tag")
@@ -44,43 +49,57 @@ object FilterAst {
       names.get(n.toLowerCase)
   }
 
+  val issueCategoryToStr: IssueCategory => String = {
+    case IssueCategory.BadData     => "bad"
+    case IssueCategory.Futility    => "futile"
+    case IssueCategory.MissingData => "missing"
+    case IssueCategory.UserDefined => "userdef"
+  }
+
+  val issueCategoryFromStr: String => String \/ IssueCategory =
+    StaticLookupFn.useMapBy(IssueCategory.values.whole)(issueCategoryToStr)
+      .toEitherWithHelp(issueCategoryToStr)((k, h) => s"Unknown issue type: '$k'. Known: $h.")
+      .andThen(\/.fromEither)
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  type Fixed[A, B, C, D] = Fix[λ[F => FilterAst[A, B, C, D, F]]]
+  type Fixed[A, B, C, D, E] = Fix[λ[F => FilterAst[A, B, C, D, E, F]]]
 
-  def univEqFix[A: UnivEq, B: UnivEq, C: UnivEq, D: UnivEq]: UnivEq[Fixed[A, B, C, D]] =
-    UnivEq.deriveFix[Fix, λ[F => FilterAst[A, B, C, D, F]]]
+  def univEqFix[A: UnivEq, B: UnivEq, C: UnivEq, D: UnivEq, E: UnivEq]: UnivEq[Fixed[A, B, C, D, E]] =
+    UnivEq.deriveFix[Fix, λ[F => FilterAst[A, B, C, D, E, F]]]
 
-  def traverse[Attr, HashTag, ReqSet, RT]: Traverse[FilterAst[Attr, HashTag, ReqSet, RT, ?]] =
-    new Traverse[FilterAst[Attr, HashTag, ReqSet, RT, ?]] {
-      type F[A] = FilterAst[Attr, HashTag, ReqSet, RT, A]
+  def traverse[Attr, IssueCat, HashTag, ReqSet, RT]: Traverse[FilterAst[Attr, IssueCat, HashTag, ReqSet, RT, ?]] =
+    new Traverse[FilterAst[Attr, IssueCat, HashTag, ReqSet, RT, ?]] {
+      type F[A] = FilterAst[Attr, IssueCat, HashTag, ReqSet, RT, A]
 
       override def map[A, B](fa: F[A])(f: A => B): F[B] = fa match {
-        case c: Text                    => c
-        case c: Regex                   => c
-        case c: Presence      [Attr]    => c
-        case c: HashRef       [HashTag] => c
-        case c: ImpliesAnyOf  [ReqSet]  => c
-        case c: ImpliedByAnyOf[ReqSet]  => c
-        case c: Reqs          [ReqSet]  => c
-        case c: ReqType       [RT]      => c
-        case c: Not           [A]       => Not  (f(c.clause))
-        case c: AllOf         [A]       => AllOf(c.clauses map f)
-        case c: AnyOf         [A]       => AnyOf(f(c.head), c.tail map f)
+        case c: Text                     => c
+        case c: Regex                    => c
+        case c: Presence      [Attr]     => c
+        case c: HasIssue      [IssueCat] => c
+        case c: HashRef       [HashTag]  => c
+        case c: ImpliesAnyOf  [ReqSet]   => c
+        case c: ImpliedByAnyOf[ReqSet]   => c
+        case c: Reqs          [ReqSet]   => c
+        case c: ReqType       [RT]       => c
+        case c: Not           [A]        => Not  (f(c.clause))
+        case c: AllOf         [A]        => AllOf(c.clauses map f)
+        case c: AnyOf         [A]        => AnyOf(f(c.head), c.tail map f)
       }
 
       override def traverseImpl[G[_], A, B](fa: F[A])(f: A => G[B])(implicit G: Applicative[G]): G[F[B]] = fa match {
-        case c: Text                    => G pure c
-        case c: Regex                   => G pure c
-        case c: Presence      [Attr]    => G pure c
-        case c: HashRef       [HashTag] => G pure c
-        case c: ImpliesAnyOf  [ReqSet]  => G pure c
-        case c: ImpliedByAnyOf[ReqSet]  => G pure c
-        case c: Reqs          [ReqSet]  => G pure c
-        case c: ReqType       [RT]      => G pure c
-        case c: Not           [A]       => G.map(f(c.clause))(Not(_))
-        case c: AllOf         [A]       => G.map(Traverse1[NonEmptyVector].traverse1(c.clauses)(f))(AllOf(_))
-        case c: AnyOf         [A]       => G.apply2(f(c.head), Traverse1[NonEmptyVector].traverse1(c.tail)(f))(AnyOf(_, _))
+        case c: Text                     => G pure c
+        case c: Regex                    => G pure c
+        case c: Presence      [Attr]     => G pure c
+        case c: HasIssue      [IssueCat] => G pure c
+        case c: HashRef       [HashTag]  => G pure c
+        case c: ImpliesAnyOf  [ReqSet]   => G pure c
+        case c: ImpliedByAnyOf[ReqSet]   => G pure c
+        case c: Reqs          [ReqSet]   => G pure c
+        case c: ReqType       [RT]       => G pure c
+        case c: Not           [A]        => G.map(f(c.clause))(Not(_))
+        case c: AllOf         [A]        => G.map(Traverse1[NonEmptyVector].traverse1(c.clauses)(f))(AllOf(_))
+        case c: AnyOf         [A]        => G.apply2(f(c.head), Traverse1[NonEmptyVector].traverse1(c.tail)(f))(AnyOf(_, _))
       }
     }
 
@@ -88,10 +107,11 @@ object FilterAst {
 
   trait Dsl {
     type Attr
+    type IssueCat
     type HashTag
     type ReqSet
     type ReqType
-    final type F[A] = FilterAst[Attr, HashTag, ReqSet, ReqType, A]
+    final type F[A] = FilterAst[Attr, IssueCat, HashTag, ReqSet, ReqType, A]
 
     def apply         (f: F[Fix[F]])                         : Fix[F] = Fix[F](f)
     def text          (text: String)                         : Fix[F] = Fix[F](Text          (text, None))
@@ -99,6 +119,8 @@ object FilterAst {
     def text          (text: String, quoteChar: Option[Char]): Fix[F] = Fix[F](Text          (text, quoteChar))
     def regex         (text: String)                         : Fix[F] = Fix[F](Regex         (text))
     def presence      (attr: Attr)                           : Fix[F] = Fix[F](Presence      (attr))
+    def hasIssue      (on: On, h: IssueCat, t: IssueCat*)    : Fix[F] = Fix[F](HasIssue      (on, NonEmptyVector(h, t.toVector)))
+    def hasIssue      (on: On, c: NonEmptyVector[IssueCat])  : Fix[F] = Fix[F](HasIssue      (on, c))
     def hashRef       (value: HashTag)                       : Fix[F] = Fix[F](HashRef       (value))
     def impliesAnyOf  (reqs: ReqSet)                         : Fix[F] = Fix[F](ImpliesAnyOf  (reqs))
     def impliedByAnyOf(reqs: ReqSet)                         : Fix[F] = Fix[F](ImpliedByAnyOf(reqs))

@@ -12,10 +12,6 @@ reuse (or not)
       * Column
       * SortMethod
       * SortCriterion
-* filter
-  * AST - don't modify - should be a global language with global capabilities
-  * what about text-filtering against loose issue bodies?
-  * FilterEditor
 * column selector
   * ColumnSelector
 
@@ -38,34 +34,4 @@ functionality
   * title should be editable
   * dynamic columns
   * custom sorting
-* filter changes
-  * issue category
-  * issue class
-  * issue presence
 * Resolve TODOs in new code
-
-
-
-
-Filter
-======
-
-* Add `issue:cat`
-	* issue:badData
-	* issue:futility
-	* issue:missingData
-	* issue:userDefined
-
-* (DOUBT IT) add `issue:cls(:arg)`
-	* issue:blankCustomField
-	* issue:blankTitle
-	* issue:blankUseCaseStep
-	* issue:conflictingTags:"Version 1.0"
-	* issue:deadIssueTag
-	* issue:deadReference
-	* issue:deadTag
-	* issue:emptyCodeGroup
-	* issue:implicationRequired:UC
-	* issue:issueTag
-	* issue:looseIssue
-	* issue:uninhabitableTagField

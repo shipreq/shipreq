@@ -10,6 +10,7 @@ import shipreq.base.util.{Invalid, Valid, Validity}
 import shipreq.webapp.base.data.{Contextualise, Project, ProjectConfig, ShowDead}
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.feature.AutoCompleteFeature._
+import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui.semantic.{Button, Icon, Input}
 import shipreq.webapp.client.project.app.Style.reqtable.{filterEditor => *}
@@ -55,6 +56,15 @@ object FilterEditor {
       .replace("$1" + _ + " ")
       .result()
 
+  private val autoCompleteHasIssue: AutoComplete.Strategy = {
+    val values = IssueCategory.values.toStream.map(FilterAst.issueCategoryToStr)
+    AutoComplete.Strategy.builder
+      .regex("""\b(has:issue:-?(?:[a-z]+?,)*)([a-z]*)$""", index = 2)
+      .search(AutoComplete.Utils caseInsensitiveStartsWith values)
+      .replace("$1" + _ + " ")
+      .result()
+  }
+
   private val correctInput: String => String = {
     val newlines = """\s*[\n\r]\s*""".r
     s => newlines.replaceAllIn(s, " ").trim
@@ -80,7 +90,7 @@ object FilterEditor {
     val pxAutoComplete: Px[AutoComplete.Strategies] =
       pxProject.map { p =>
         val hashtags = AutoComplete.Project.hashtag(p, ShowDead, issues = true, tags = true)(Contextualise)
-        hashtags :+ autoCompletePresenceLackAttr :+ autoCompleteKeywords
+        hashtags :+ autoCompletePresenceLackAttr :+ autoCompleteHasIssue :+ autoCompleteKeywords
       }
 
     private val helpButton: VdomTag =

@@ -2,8 +2,25 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react.vdom.html_<^._
 import HelpModal._
+import shipreq.webapp.base.UiText
+import shipreq.webapp.base.filter.FilterAst
+import shipreq.webapp.base.issue.IssueCategory
 
 object FilterHelp {
+
+  private def issueCatBadData     = FilterAst.issueCategoryToStr(IssueCategory.BadData)
+  private def issueCatMissingData = FilterAst.issueCategoryToStr(IssueCategory.MissingData)
+  private def issueCatFutility    = FilterAst.issueCategoryToStr(IssueCategory.Futility)
+  private def issueCatUserDef     = FilterAst.issueCategoryToStr(IssueCategory.UserDefined)
+
+  private val issueCatLIs =
+    IssueCategory.values
+      .sortBy(FilterAst.issueCategoryToStr)
+      .iterator
+      .toTagMod(c =>
+        <.li(
+          code(FilterAst.issueCategoryToStr(c)),
+          " for issues of type: ", UiText.Issues.category(c).toLowerCase()))
 
   val modal = HelpModal("Filter Help", Groups(
 
@@ -30,6 +47,7 @@ object FilterHelp {
         " to filter requirement text. Unlike above, this is case-sensitive unless you specify the case-insensitivity flag: ",
         code("(?i)")
       )("/.*next[ -]*day.*/", "/(?i).*next[ -]*day.*/"),
+
     ),
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -49,23 +67,39 @@ object FilterHelp {
         "To specify a number of specific requirements of the same type, surround the numbers with braces ", code("{…}"),
         " and separate by commas. You can also use a dash for an inclusive range."
       )("FR-{1,3,5,7}", "FR-{10-20}"),
+
     ),
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     Group("Issues & Tags")(
 
       Example(
-        "To find requirements that have a certain user-defined issue or tag, enter ", code("#"), " followed by the issue or tag."
+        "To find requirements that have a certain user-defined issue or tag, enter ", code("#"),
+        " followed by the issue or tag."
       )("#draft"),
 
       Example(
-        "You can also filter by whether a requirement has any issues or any tags by specifying ", code("has:"),
+        "To find requirements that simply have any tag, or have any kind of issue, enter ", code("has:"),
         " followed by either:",
-        <.ol(
+        <.ul(
           <.li(code("issue")),
           <.li(code("tag"))),
         // "As above, this is case-insensitive, so it doesn't matter whether text is upper-case or lower-case."
       )("has:issue", "has:tag"),
+
+      Example(
+        "You can also search for requirements that have specific types of issues using ", code("has:issue:"),
+        " and then some of the following separated by a comma (with no spaces in between):",
+        <.ul(issueCatLIs),
+        <.br,
+        "Similarly by using ", code("has:issue:-"), " you can find requirements that have issues ", <.em("other than"),
+        " the types specified."
+      )(
+        s"has:issue:$issueCatBadData",
+        s"has:issue:$issueCatBadData,$issueCatUserDef",
+        s"has:issue:-$issueCatMissingData",
+      ),
+
     ),
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -97,6 +131,7 @@ object FilterHelp {
         code("impliedBy:MF-{1,2}"), " will match anything implied by either MF-1 or MF-2 where as ",
         code("impliedBy:MF-1 impliedBy:MF-2"), " will match anything implied by ", <.em("both"), " MF-1 and MF-2."
       )("impliedBy:MF-1 impliedBy:MF-2"),
+
     ),
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -124,6 +159,7 @@ object FilterHelp {
           "Like above, you can also wrap them in parenthesis ", code("(…)"),
           " and treat it as a single filter (which allows you to do things like negate the whole thing).",
       )("MF | FR | UC", "has:issue | #bug", "(#v1.0 | #v1.1)"),
+
     ),
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -137,5 +173,8 @@ object FilterHelp {
           <.li("do not have both ", code("#business_ok"), " and ", code("#ops_ok"), " tags")),
         "In more natural language:", <.br,
         <.em("all functional requirements and use cases released without business and/or ops acceptance.")
-      )("#released (FR | UC) -(#business_ok #ops_ok)"))))
+      )("#released (FR | UC) -(#business_ok #ops_ok)"),
+
+    )
+  ))
 }

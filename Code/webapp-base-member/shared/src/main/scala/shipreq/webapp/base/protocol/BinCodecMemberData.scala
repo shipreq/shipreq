@@ -13,6 +13,7 @@ import DataImplicits._
 import BinCodecGeneric._
 import BinCodecBaseData._
 import BoopickleMacros._
+import shipreq.webapp.base.issue.IssueCategory
 
 object BinCodecMemberData {
 
@@ -20,6 +21,7 @@ object BinCodecMemberData {
     pickleIMap(d.emptyIMap)
 
   implicit lazy val pickleLive         : Pickler[Live               ] = pickleBool(Live)
+  implicit lazy val pickleOn           : Pickler[On                 ] = pickleBool(On)
   implicit lazy val pickleImplRequired : Pickler[ImplicationRequired] = pickleBool(ImplicationRequired)
   implicit lazy val pickleMandatory    : Pickler[Mandatory          ] = pickleBool(Mandatory)
   implicit lazy val pickleDeletable    : Pickler[Deletable          ] = pickleBool(Deletable)
@@ -172,6 +174,8 @@ object BinCodecMemberData {
   implicit lazy val pickleDeletionReasonIdO = optionPickler(pickleTaggedI(DeletionReasonId)).reuseByUnivEq
   implicit lazy val pickleDeletionReasons   = pickleCaseClass[DeletionReasons]
 
+  implicit lazy val pickleIssueCategory: Pickler[IssueCategory] = derivePickler
+
   object ReqTableDataPicklers {
     import reqtable._
 
@@ -221,26 +225,27 @@ object BinCodecMemberData {
 
   implicit val pickleValidFilter: Pickler[Filter.Valid] = {
     import Filter._
-    implicit val pickleNonEmptyVectorUnit : Pickler[NonEmptyVector[Unit]                   ] = implicitly[Pickler[Int]].xmap(NonEmptyVector force Vector.fill(_)(()))(_.length)
-    implicit val pickleNonEmptySetInt     : Pickler[NonEmptySet[Int]                       ] = pickleNES
-    implicit def pickleIRSetS [A: Pickler]: Pickler[IntensionalReqSet.SomeOfType[A]        ] = pickleCaseClass
-    implicit def pickleIRSetW [A: Pickler]: Pickler[IntensionalReqSet.WholeType [A]        ] = pickleCaseClass
-    implicit def pickleIRSet  [A: Pickler]: Pickler[IntensionalReqSet           [A]        ] = pickleADT
-    implicit val pickleValidReqSubset     : Pickler[Valid.ReqSubset                        ] = pickleADT
-    implicit val pickleValidReqSet        : Pickler[Valid.ReqSet                           ] = pickleNEV
-    implicit val pickleValidAttr          : Pickler[FilterAst.Attr                         ] = derivePickler
-    implicit val pickleValidText          : Pickler[FilterAst.Text                         ] = pickleCaseClass
-    implicit val pickleValidRegex         : Pickler[FilterAst.Regex                        ] = pickleCaseClass
-    implicit val pickleValidPresence      : Pickler[FilterAst.Presence      [Valid.Attr]   ] = pickleCaseClass
-    implicit val pickleValidReqs          : Pickler[FilterAst.Reqs          [Valid.ReqSet] ] = pickleCaseClass
-    implicit val pickleValidReqType       : Pickler[FilterAst.ReqType       [Valid.ReqType]] = pickleCaseClass
-    implicit val pickleValidHashRef       : Pickler[FilterAst.HashRef       [Valid.HashTag]] = pickleCaseClass
-    implicit val pickleValidImpliesAnyOf  : Pickler[FilterAst.ImpliesAnyOf  [Valid.ReqSet] ] = pickleCaseClass
-    implicit val pickleValidImpliedByAnyOf: Pickler[FilterAst.ImpliedByAnyOf[Valid.ReqSet] ] = pickleCaseClass
-    implicit val pickleValidAllOf         : Pickler[FilterAst.AllOf         [Unit]         ] = pickleCaseClass
-    implicit val pickleValidAnyOf         : Pickler[FilterAst.AnyOf         [Unit]         ] = pickleCaseClass
-    implicit val pickleValidNot           : Pickler[FilterAst.Not           [Unit]         ] = pickleCaseClass
-    implicit val pickleValidF             : Pickler[ValidF                  [Unit]         ] = pickleADT
+    implicit val pickleNonEmptyVectorUnit : Pickler[NonEmptyVector[Unit]                    ] = implicitly[Pickler[Int]].xmap(NonEmptyVector force Vector.fill(_)(()))(_.length)
+    implicit val pickleNonEmptySetInt     : Pickler[NonEmptySet[Int]                        ] = pickleNES
+    implicit def pickleIRSetS [A: Pickler]: Pickler[IntensionalReqSet.SomeOfType[A]         ] = pickleCaseClass
+    implicit def pickleIRSetW [A: Pickler]: Pickler[IntensionalReqSet.WholeType [A]         ] = pickleCaseClass
+    implicit def pickleIRSet  [A: Pickler]: Pickler[IntensionalReqSet           [A]         ] = pickleADT
+    implicit val pickleValidReqSubset     : Pickler[Valid.ReqSubset                         ] = pickleADT
+    implicit val pickleValidReqSet        : Pickler[Valid.ReqSet                            ] = pickleNEV
+    implicit val pickleValidAttr          : Pickler[FilterAst.Attr                          ] = derivePickler
+    implicit val pickleValidText          : Pickler[FilterAst.Text                          ] = pickleCaseClass
+    implicit val pickleValidRegex         : Pickler[FilterAst.Regex                         ] = pickleCaseClass
+    implicit val pickleValidPresence      : Pickler[FilterAst.Presence      [Valid.Attr]    ] = pickleCaseClass
+    implicit val pickleValidHasIssue      : Pickler[FilterAst.HasIssue      [Valid.IssueCat]] = pickleCaseClass
+    implicit val pickleValidReqs          : Pickler[FilterAst.Reqs          [Valid.ReqSet]  ] = pickleCaseClass
+    implicit val pickleValidReqType       : Pickler[FilterAst.ReqType       [Valid.ReqType] ] = pickleCaseClass
+    implicit val pickleValidHashRef       : Pickler[FilterAst.HashRef       [Valid.HashTag] ] = pickleCaseClass
+    implicit val pickleValidImpliesAnyOf  : Pickler[FilterAst.ImpliesAnyOf  [Valid.ReqSet]  ] = pickleCaseClass
+    implicit val pickleValidImpliedByAnyOf: Pickler[FilterAst.ImpliedByAnyOf[Valid.ReqSet]  ] = pickleCaseClass
+    implicit val pickleValidAllOf         : Pickler[FilterAst.AllOf         [Unit]          ] = pickleCaseClass
+    implicit val pickleValidAnyOf         : Pickler[FilterAst.AnyOf         [Unit]          ] = pickleCaseClass
+    implicit val pickleValidNot           : Pickler[FilterAst.Not           [Unit]          ] = pickleCaseClass
+    implicit val pickleValidF             : Pickler[ValidF                  [Unit]          ] = pickleADT
     pickleFix[ValidF]
   }
 

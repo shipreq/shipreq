@@ -4,7 +4,7 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.recursion._
 import scala.annotation.tailrec
-import scalaz.{-\/, Functor, \/, \/-}
+import scalaz.{-\/, Functor, Isomorphism, \/, \/-}
 import scalaz.Isomorphism.<=>
 import shipreq.base.util._
 import shipreq.base.util.univeq._
@@ -21,6 +21,7 @@ object EventDbCodecs {
   import upickle.BaseCodecs.{CharRW, StringRW}
   import shipreq.webapp.base.data._
   import shipreq.webapp.base.data.reqtable.SavedView
+  import shipreq.webapp.base.issue.IssueCategory
   import shipreq.webapp.base.protocol.MPickleMacros._
   import shipreq.webapp.base.sort.SortMethod
   import shipreq.webapp.base.text.{AtomTC, Text}
@@ -178,6 +179,7 @@ object EventDbCodecs {
     ReadWriter[Js.Value](Identity.apply, { case j => j })
 
   implicit val pickleLive          = boolCase(Live)
+  implicit val pickleOn            = boolCase(On)
   implicit val pickleImplRequired  = boolCase(ImplicationRequired)
   implicit val pickleMandatory     = boolCase(Mandatory)
   implicit val pickleDeletable     = boolCase(Deletable)
@@ -337,6 +339,13 @@ object EventDbCodecs {
 
   implicit val pickleApplicableReqTypes: ReadWriter[Field.ApplicableReqTypes] =
     pickleISubsetNice
+
+  implicit val pickleIssueCategory: ReadWriter[IssueCategory] = pickleAdtOS {
+    case IssueCategory.BadData     => "b"
+    case IssueCategory.Futility    => "f"
+    case IssueCategory.MissingData => "m"
+    case IssueCategory.UserDefined => "u"
+  }
 
   // TODO Performance can be improved, probably significantly
   object TextCodecs extends AtomTC[ReadWriter] {
@@ -584,32 +593,37 @@ object EventDbCodecs {
         case _: IntensionalReqSet.WholeType [A] => "w"
       }
 
-      implicit val pickleValidHashTag       : ReadWriter[Valid.HashTag                          ] = pickleDisj
-      implicit val pickleValidReqSubset     : ReadWriter[Valid.ReqSubset                        ] = pickleIRSet[ReqTypeId]
-      implicit val pickleValidReqSet        : ReadWriter[Valid.ReqSet                           ] = pickleValidReqSubset.nev
-      implicit val pickleValidText          : ReadWriter[FilterAst.Text                         ] = caseClassAsArray('text, 'quoteChar)
-      implicit val pickleValidRegex         : ReadWriter[FilterAst.Regex                        ] = caseClass1
-      implicit val pickleValidPresence      : ReadWriter[FilterAst.Presence      [Valid.Attr]   ] = caseClass1
-      implicit val pickleValidReqs          : ReadWriter[FilterAst.Reqs          [Valid.ReqSet] ] = caseClass1
-      implicit val pickleValidReqType       : ReadWriter[FilterAst.ReqType       [Valid.ReqType]] = caseClass1
-      implicit val pickleValidHashRef       : ReadWriter[FilterAst.HashRef       [Valid.HashTag]] = caseClass1
-      implicit val pickleValidImpliesAnyOf  : ReadWriter[FilterAst.ImpliesAnyOf  [Valid.ReqSet] ] = caseClass1
-      implicit val pickleValidImpliedByAnyOf: ReadWriter[FilterAst.ImpliedByAnyOf[Valid.ReqSet] ] = caseClass1
-      implicit val pickleValidAllOf         : ReadWriter[FilterAst.AllOf         [Js.Value]     ] = caseClass1
-      implicit val pickleValidAnyOf         : ReadWriter[FilterAst.AnyOf         [Js.Value]     ] = pickleNonEmptyVectorJs.xmap(x => FilterAst.AnyOf(x.head, NonEmptyVector force x.tail))(x => x.head +: x.tail)
-      implicit val pickleValidNot           : ReadWriter[FilterAst.Not           [Js.Value]     ] = caseClass1
-      implicit val pickleValidF             : ReadWriter[ValidF                  [Js.Value]     ] = pickleAdtOS {
-        case _: Text                          => "x"
-        case _: Regex                         => "/"
-        case _: Presence      [Valid.Attr]    => "1"
-        case _: Reqs          [Valid.ReqSet]  => "r"
-        case _: ReqType       [Valid.ReqType] => "T"
-        case _: HashRef       [Valid.HashTag] => "#"
-        case _: ImpliesAnyOf  [Valid.ReqSet]  => ">"
-        case _: ImpliedByAnyOf[Valid.ReqSet]  => "<"
-        case _: AllOf         [Js.Value]      => "&"
-        case _: AnyOf         [Js.Value]      => "|"
-        case _: Not           [Js.Value]      => "!"
+      implicit val pickleIssueCatNEV: ReadWriter[NonEmptyVector[IssueCategory]] =
+        pickleIssueCategory.nev
+
+      implicit val pickleValidHashTag       : ReadWriter[Valid.HashTag                           ] = pickleDisj
+      implicit val pickleValidReqSubset     : ReadWriter[Valid.ReqSubset                         ] = pickleIRSet[ReqTypeId]
+      implicit val pickleValidReqSet        : ReadWriter[Valid.ReqSet                            ] = pickleValidReqSubset.nev
+      implicit val pickleValidText          : ReadWriter[FilterAst.Text                          ] = caseClassAsArray('text, 'quoteChar)
+      implicit val pickleValidRegex         : ReadWriter[FilterAst.Regex                         ] = caseClass1
+      implicit val pickleValidPresence      : ReadWriter[FilterAst.Presence      [Valid.Attr]    ] = caseClass1
+      implicit val pickleValidHasIssue      : ReadWriter[FilterAst.HasIssue      [Valid.IssueCat]] = caseClassAsArray('on, 'criteria)
+      implicit val pickleValidReqs          : ReadWriter[FilterAst.Reqs          [Valid.ReqSet]  ] = caseClass1
+      implicit val pickleValidReqType       : ReadWriter[FilterAst.ReqType       [Valid.ReqType] ] = caseClass1
+      implicit val pickleValidHashRef       : ReadWriter[FilterAst.HashRef       [Valid.HashTag] ] = caseClass1
+      implicit val pickleValidImpliesAnyOf  : ReadWriter[FilterAst.ImpliesAnyOf  [Valid.ReqSet]  ] = caseClass1
+      implicit val pickleValidImpliedByAnyOf: ReadWriter[FilterAst.ImpliedByAnyOf[Valid.ReqSet]  ] = caseClass1
+      implicit val pickleValidAllOf         : ReadWriter[FilterAst.AllOf         [Js.Value]      ] = caseClass1
+      implicit val pickleValidAnyOf         : ReadWriter[FilterAst.AnyOf         [Js.Value]      ] = pickleNonEmptyVectorJs.xmap(x => FilterAst.AnyOf(x.head, NonEmptyVector force x.tail))(x => x.head +: x.tail)
+      implicit val pickleValidNot           : ReadWriter[FilterAst.Not           [Js.Value]      ] = caseClass1
+      implicit val pickleValidF             : ReadWriter[ValidF                  [Js.Value]      ] = pickleAdtOS {
+        case _: Text                           => "x"
+        case _: Regex                          => "/"
+        case _: Presence      [Valid.Attr]     => "1"
+        case _: HasIssue      [Valid.IssueCat] => "I"
+        case _: Reqs          [Valid.ReqSet]   => "r"
+        case _: ReqType       [Valid.ReqType]  => "T"
+        case _: HashRef       [Valid.HashTag]  => "#"
+        case _: ImpliesAnyOf  [Valid.ReqSet]   => ">"
+        case _: ImpliedByAnyOf[Valid.ReqSet]   => "<"
+        case _: AllOf         [Js.Value]       => "&"
+        case _: AnyOf         [Js.Value]       => "|"
+        case _: Not           [Js.Value]       => "!"
       }
       pickleFix[ValidF]
     }

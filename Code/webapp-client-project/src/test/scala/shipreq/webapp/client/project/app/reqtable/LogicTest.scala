@@ -6,6 +6,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Optional
 import scala.annotation.tailrec
 import scalaz.Equal
+import sourcecode.Line
 import utest._
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
@@ -13,9 +14,10 @@ import shipreq.webapp.base.event.{Event => E}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.data.reqtable.{Column => C, SortCriterion => SC}
+import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.sort.SortMethod
-import shipreq.webapp.base.text.{PlainText, ProjectText, Text, TextSearch}
+import shipreq.webapp.base.text.{PlainText, Text, TextSearch}
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.util.ReqCodeTreeItem
 import SortMethod._
@@ -98,7 +100,7 @@ object LogicTest extends TestSuite {
     }
 
   implicit def autoSomeFilter(f: F): Filter = Some(f)
-  private def testFilter(p: Project, f: Filter)(live: String, dead: String): Unit = {
+  private def testFilter(p: Project, f: Filter)(live: String, dead: String)(implicit l: Line): Unit = {
     val fmt = rowToPubid(p)
     val d = if (dead.isEmpty) live else sortPubidsInString(s"$live  $dead")
     testUnsorted(p, C.Pubid, f, HideDead, fmt)(live)
@@ -115,10 +117,10 @@ object LogicTest extends TestSuite {
 
   private def defaultOrder = View.default.order
 
-  private def testUnsorted[A: Equal](p: Project, c: C, f: Filter, fd: FilterDead, extract: Rows => A)(expect: A): Unit =
+  private def testUnsorted[A: Equal](p: Project, c: C, f: Filter, fd: FilterDead, extract: Rows => A)(expect: A)(implicit l: Line): Unit =
     testUnsorted2(p, NonEmptyVector one c, f, fd, extract)(expect)
 
-  private def testUnsorted2[A: Equal](p: Project, cs: NonEmptyVector[C], f: Filter, fd: FilterDead, extract: Rows => A)(expect: A): Unit = {
+  private def testUnsorted2[A: Equal](p: Project, cs: NonEmptyVector[C], f: Filter, fd: FilterDead, extract: Rows => A)(expect: A)(implicit l: Line): Unit = {
     val v = View(columnState(p, cs), defaultOrder.copy(init = Vector.empty), fd, f)
     val pc = pcache(p)
     import pc.{pt, ts}
@@ -1051,6 +1053,38 @@ object LogicTest extends TestSuite {
     test(p, ShowDead)
   }
 
+  def testFilterHasIssueOn1(): Unit = {
+    import IssueCategory._
+    testFilter(P6, F.hasIssue(On, BadData    ))("FR-2  UC-1", "")
+    testFilter(P6, F.hasIssue(On, MissingData))("FR-1  FR-2  UC-1  UC-2", "")
+    testFilter(P6, F.hasIssue(On, Futility   ))("", "")
+    testFilter(P6, F.hasIssue(On, UserDefined))("FR-1  FR-2", "")
+  }
+
+  def testFilterHasIssueOn2(): Unit = {
+    import IssueCategory._
+    testFilter(P6, F.hasIssue(On, BadData, BadData    ))("FR-2  UC-1", "")
+    testFilter(P6, F.hasIssue(On, BadData, MissingData))("FR-2  UC-1", "")
+    testFilter(P6, F.hasIssue(On, BadData, Futility   ))("", "")
+    testFilter(P6, F.hasIssue(On, BadData, UserDefined))("FR-2", "")
+  }
+
+  def testFilterHasIssueOff1(): Unit = {
+    import IssueCategory._
+    testFilter(P6, F.hasIssue(Off, BadData    ))("FR-1  FR-2  UC-1  UC-2", "")
+    testFilter(P6, F.hasIssue(Off, MissingData))("FR-1  FR-2  UC-1", "")
+    testFilter(P6, F.hasIssue(Off, Futility   ))("FR-1  FR-2  UC-1  UC-2", "")
+    testFilter(P6, F.hasIssue(Off, UserDefined))("FR-1  FR-2  UC-1  UC-2", "")
+  }
+
+  def testFilterHasIssueOff2(): Unit = {
+    import IssueCategory._
+    testFilter(P6, F.hasIssue(Off, MissingData, BadData    ))("FR-1  FR-2", "")
+    testFilter(P6, F.hasIssue(Off, MissingData, MissingData))("FR-1  FR-2  UC-1", "")
+    testFilter(P6, F.hasIssue(Off, MissingData, Futility   ))("FR-1  FR-2  UC-1", "")
+    testFilter(P6, F.hasIssue(Off, MissingData, UserDefined))("FR-2  UC-1", "")
+  }
+
   // ===================================================================================================================
 
   // NOTE: The Tags column is *not* expanded. Only custom tag columns are.
@@ -1103,19 +1137,23 @@ object LogicTest extends TestSuite {
       }
     }
     'filter {
-      'text           - testFilterText()
-      'textPattern    - testFilterTextPattern()
-      'anyIssue       - testFilterAnyIssue()
-      'anyTag         - testFilterAnyTag()
-      'tag            - testFilterTag()
-      'customIssue    - testFilterCustomIssue()
-      'reqType        - testFilterReqType()
-      'impliesAnyOf   - testFilterImplies()
-      'impliedByAnyOf - testFilterImpliedBy()
-      'implyNothing   - testFilterImplyNothing()
-      'allOf          - testFilterAll()
-      'anyOf          - testFilterAny()
-      'not            - testFilterNot()
+      'text             - testFilterText()
+      'textPattern      - testFilterTextPattern()
+      'anyIssue         - testFilterAnyIssue()
+      'anyTag           - testFilterAnyTag()
+      'hasIssueOn1      - testFilterHasIssueOn1()
+      'hasIssueOn2      - testFilterHasIssueOn2()
+      'hasIssueOff1     - testFilterHasIssueOff1()
+      'hasIssueOff2     - testFilterHasIssueOff2()
+      'tag              - testFilterTag()
+      'customIssue      - testFilterCustomIssue()
+      'reqType          - testFilterReqType()
+      'impliesAnyOf     - testFilterImplies()
+      'impliedByAnyOf   - testFilterImpliedBy()
+      'implyNothing     - testFilterImplyNothing()
+      'allOf            - testFilterAll()
+      'anyOf            - testFilterAny()
+      'not              - testFilterNot()
     }
     'codeGroupsWithFilter {
       'hideDead - testCodeGroupWhenFilteredAndHideDead()

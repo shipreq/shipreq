@@ -25,6 +25,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.ProjectAndOrd
+import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Grammar, GrammarSpec, Text}
@@ -158,6 +159,9 @@ object RandomData {
   val live =
     Gen.choose[Live](Live, Live, Live, Dead)
 
+  val on =
+    Gen.boolean.map(On.when)
+
 //  val liveUsually =
 //    Gen.int.map(i => if ((i & 7) == 0) Dead else Live)
 
@@ -251,6 +255,9 @@ object RandomData {
     genCustomReqTypes(customReqType.list)
 
   val staticReqTypeIdSet = StaticReqType.values.toNES[ReqTypeId]
+
+  lazy val issueCategory: Gen[IssueCategory] =
+    Gen.chooseNE(IssueCategory.values)
 
   // -------------------------------------------------------------------------------------------------------------------
   // Tags
@@ -1525,7 +1532,7 @@ object RandomData {
     val regex =
       unicodeString1.map(s => FilterAst.Regex(fixRegex(s)))
 
-    def fixRoot[A, B, C, D](f: FilterAst.Fixed[A, B, C, D]): FilterAst.Fixed[A, B, C, D] =
+    def fixRoot[A, B, C, D, E](f: FilterAst.Fixed[A, B, C, D, E]): FilterAst.Fixed[A, B, C, D, E] =
       f.unfix match {
         case FilterAst.AllOf(a) if a.tail.isEmpty => a.head
         case _ => f
@@ -1553,7 +1560,16 @@ object RandomData {
         reqsSpec.nev(0 to 5)
 
       val attr: Gen[String] =
-        charPred(FilterParser.attrChar).string1
+        Gen.chooseGen(
+          Gen.alpha.string1(1 to 4),
+          valid.attr.map(_.name))
+
+      val hasIssue = {
+        val ic = Gen.chooseGen(
+          Gen.alpha.string1(1 to 4),
+          issueCategory.map(FilterAst.issueCategoryToStr))
+        Gen.lift2(on, ic.nev(1 to 3))(FilterAst.HasIssue(_, _))
+      }
 
       val reqType    = reqTypeMnemonic.map(FilterAst.ReqType(_))
       val hashRef    = hashRefKey     .map(FilterAst.HashRef(_))
@@ -1563,7 +1579,7 @@ object RandomData {
       val presence   = attr           .map(FilterAst.Presence(_))
 
       private val flatGens: NonEmptyVector[Gen[PotentialF[Nothing]]] =
-        NonEmptyVector(quotedText, simpleText, regex, reqs, reqType, hashRef, implies, impliedBy, presence)
+        NonEmptyVector(quotedText, simpleText, regex, reqs, reqType, hashRef, implies, impliedBy, presence, hasIssue)
 
       private val flatGen: Gen[PotentialF[Nothing]] =
         Gen.chooseGenNE(flatGens)
@@ -1610,7 +1626,10 @@ object RandomData {
         reqsSpec(g).nev(0 to 5)
 
       val attr: Gen[Attr] =
-        Gen.choose[Attr](Attr.AnyIssue, Attr.AnyTag)
+        Gen.chooseNE(Attr.values)
+
+      val hasIssue =
+        Gen.lift2(on, issueCategory.nev(1 to 3))(FilterAst.HasIssue(_, _))
 
       val presence = attr.map(FilterAst.Presence(_))
 
@@ -1627,7 +1646,7 @@ object RandomData {
                    gt: Option[Gen[ApplicableTagId]],
                    gi: Option[Gen[CustomIssueTypeId]]): FlatGens = {
         val greqs = gy.map(reqSpecs)
-        NonEmptyVector[Gen[ValidF[Nothing]]](quotedText, simpleText, regex, presence) ++
+        NonEmptyVector[Gen[ValidF[Nothing]]](quotedText, simpleText, regex, presence, hasIssue) ++
           gy.map(reqType) ++
           gt.map(tag) ++
           gi.map(customIssue) ++

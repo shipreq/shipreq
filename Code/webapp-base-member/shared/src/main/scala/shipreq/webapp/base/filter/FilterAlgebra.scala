@@ -5,14 +5,14 @@ import japgolly.microlibs.recursion._
 import japgolly.microlibs.utils.ConciseIntSetFormat
 import japgolly.univeq._
 import java.util.regex.Pattern
-import scalaz.{-\/, Functor, Traverse, Traverse1, \/, \/-}
+import scalaz.{-\/, Functor, Traverse, \/, \/-}
+import scalaz.syntax.traverse1._
 import shipreq.base.util.{OptionalBoolFn, TransitiveClosure}
 import shipreq.webapp.base.data
+import shipreq.webapp.base.data.On
 import shipreq.webapp.base.data.DataLogic.{IssueLookup, TagLookup}
-import shipreq.webapp.base.text.{Atom, Grammar, PlainText, TextSearch}
-import Filter._
-import FilterAst._
 import shipreq.webapp.base.issue.Issues
+import shipreq.webapp.base.text.{Atom, Grammar, PlainText, TextSearch}
 
 /** Algebras:
   *
@@ -23,6 +23,8 @@ import shipreq.webapp.base.issue.Issues
   * compile        : FAlgebra [             ExtensionalF, CompiledFilter         ]
   */
 object FilterAlgebra {
+  import Filter._
+  import FilterAst._
 
   val unparse: FAlgebra[PotentialF, AtomOrComposite[String]] = {
     import shipreq.base.util.SafeStringOps._
@@ -53,6 +55,7 @@ object FilterAlgebra {
       case Regex         (text)              => '/' ~ text.replace("/", "\\/") ~ '/'
       case ReqType       (value)             => value.value
       case HashRef       (text)              => Grammar.hashRefKey.prefix ~ text.value
+      case HasIssue      (on, criteria)      => "has:issue:" ~ (if (on is On) "" else "-") ~ criteria.mkString(",")
       case ImpliesAnyOf  (reqs)              => "implies:" ~ fmtReqs(reqs, ',')
       case ImpliedByAnyOf(reqs)              => "impliedBy:" ~ fmtReqs(reqs, ',')
       case Reqs          (reqs)              => fmtReqs(reqs, ' ')
@@ -93,7 +96,7 @@ object FilterAlgebra {
       Traverse[IntensionalReqSet].traverse(_)(lookupReqType(_).map(_.reqTypeId))
 
     def byReqSet(reqs: Potential.ReqSet, f: Valid.ReqSet => ValidF[Nothing]): R =
-      Traverse1[NonEmptyVector].traverse1(reqs)(lookupReqSubset).map(nev => Valid(f(nev)))
+      reqs.traverse1(lookupReqSubset).map(nev => Valid(f(nev)))
 
     def byRegex(regex: String): R =
       try {
@@ -107,17 +110,18 @@ object FilterAlgebra {
 
     // explicit types here because IntelliJ is a piece of shit
     val alg: PotentialF[Valid] => String \/ Valid = {
-      case HashRef        (key)    => byHashTag(key)
-      case ImpliesAnyOf   (reqs)   => byReqSet(reqs, ImpliesAnyOf.apply)
-      case ImpliedByAnyOf (reqs)   => byReqSet(reqs, ImpliedByAnyOf.apply)
-      case Reqs           (reqs)   => byReqSet(reqs, Reqs.apply)
-      case Presence       (attr)   => byAttr(attr, Presence.apply)
-      case Regex          (regex)  => byRegex(regex)
-      case ReqType        (mn)     => lookupReqType(mn).map(rt => Valid(ReqType(rt.reqTypeId)))
-      case c: Text                 => \/-(Valid(c))
-      case c: Not  [Valid]         => \/-(Valid(c))
-      case c: AllOf[Valid]         => \/-(Valid(c))
-      case c: AnyOf[Valid]         => \/-(Valid(c))
+      case HashRef       (key)   => byHashTag(key)
+      case ImpliesAnyOf  (reqs)  => byReqSet(reqs, ImpliesAnyOf.apply)
+      case ImpliedByAnyOf(reqs)  => byReqSet(reqs, ImpliedByAnyOf.apply)
+      case Reqs          (reqs)  => byReqSet(reqs, Reqs.apply)
+      case Presence      (attr)  => byAttr(attr, Presence.apply)
+      case HasIssue      (on, c) => c.traverse1(FilterAst.issueCategoryFromStr).map(Valid.hasIssue(on, _))
+      case Regex         (regex) => byRegex(regex)
+      case ReqType       (mn)    => lookupReqType(mn).map(rt => Valid(ReqType(rt.reqTypeId)))
+      case c: Text               => \/-(Valid(c))
+      case c: Not  [Valid]       => \/-(Valid(c))
+      case c: AllOf[Valid]       => \/-(Valid(c))
+      case c: AnyOf[Valid]       => \/-(Valid(c))
     }
 
     alg
@@ -140,6 +144,7 @@ object FilterAlgebra {
       case ImpliedByAnyOf(reqs)    => Potential(ImpliedByAnyOf(convReqSet(reqs)))
       case Reqs          (reqs)    => Potential(Reqs          (convReqSet(reqs)))
       case ReqType       (id)      => Potential(ReqType       (convReqType(id)))
+      case HasIssue      (on, c)   => Potential(HasIssue      (on, c.map(FilterAst.issueCategoryToStr)))
       case c: Regex                => Potential(c)
       case c: Text                 => Potential(c)
       case c: Not  [Potential]     => Potential(c)
@@ -167,17 +172,18 @@ object FilterAlgebra {
       ss.reduceMapLeft1(lookupReqSubset)(_ ++ _)
 
     {
-      case ImpliesAnyOf  (reqs)       => Extensional(ImpliesAnyOf  (lookupReqSet(reqs)))
-      case ImpliedByAnyOf(reqs)       => Extensional(ImpliedByAnyOf(lookupReqSet(reqs)))
-      case Reqs          (reqs)       => Extensional(Reqs          (lookupReqSet(reqs)))
-      case c: Regex                   => Extensional(c)
-      case c: Text                    => Extensional(c)
-      case c: HashRef [Valid.HashTag] => Extensional(c)
-      case c: Presence[Valid.Attr]    => Extensional(c)
-      case c: ReqType [Valid.ReqType] => Extensional(c)
-      case c: Not     [Extensional]   => Extensional(c)
-      case c: AllOf   [Extensional]   => Extensional(c)
-      case c: AnyOf   [Extensional]   => Extensional(c)
+      case ImpliesAnyOf  (reqs)        => Extensional(ImpliesAnyOf  (lookupReqSet(reqs)))
+      case ImpliedByAnyOf(reqs)        => Extensional(ImpliedByAnyOf(lookupReqSet(reqs)))
+      case Reqs          (reqs)        => Extensional(Reqs          (lookupReqSet(reqs)))
+      case c: Regex                    => Extensional(c)
+      case c: Text                     => Extensional(c)
+      case c: HashRef [Valid.HashTag]  => Extensional(c)
+      case c: Presence[Valid.Attr]     => Extensional(c)
+      case c: HasIssue[Valid.IssueCat] => Extensional(c)
+      case c: ReqType [Valid.ReqType]  => Extensional(c)
+      case c: Not     [Extensional]    => Extensional(c)
+      case c: AllOf   [Extensional]    => Extensional(c)
+      case c: AnyOf   [Extensional]    => Extensional(c)
     }
   }
 
@@ -262,7 +268,12 @@ object FilterAlgebra {
       case AllOf         (fs)            => fs.reduce(_ && _)
       case AnyOf         (f, fs)         => f || fs.reduce(_ || _)
       case Not           (f)             => !f
+      case HasIssue      (On, cs)        => byIssue(i => i.issues.nonEmpty && cs.forall(i.categories.contains))
+      case HasIssue      (Off, cs)       =>
+        val categories = cs.whole.toSet
+        byIssue(i => i.issues.nonEmpty && i.categories.exists(!categories.contains(_)))
     }
     alg
   }
+  // TODO also auto-complete
 }

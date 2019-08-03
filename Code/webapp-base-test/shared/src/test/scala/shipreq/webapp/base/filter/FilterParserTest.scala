@@ -11,7 +11,7 @@ import utest._
 import shipreq.base.util.Debug._
 import shipreq.base.util._
 import shipreq.webapp.base.{RandomData => $}
-import shipreq.webapp.base.data.{ExternalPubid, HashRefKey, ReqTypePos}
+import shipreq.webapp.base.data.{ExternalPubid, HashRefKey, Off, On, ReqTypePos}
 import shipreq.webapp.base.data.ReqType.Mnemonic
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.filter.Filter.{Potential, PotentialF}
@@ -174,6 +174,17 @@ object FilterParserTest extends TestSuite {
     'presence {
       'empty  - testFail("has:")
       'simple - test("has:stuff", presence("stuff"))
+    }
+
+    'hasIssue {
+      'on1  - test("has:issue:x"       , hasIssue(On, "x"))
+      'on2  - test("has:issue:abC,DeF" , hasIssue(On, "abC", "DeF"))
+      'off1 - test("has:issue:-x"      , hasIssue(Off, "x"))
+      'off2 - test("has:issue:-abC,DeF", hasIssue(Off, "abC", "DeF"))
+      'on0  - testFail("has:issue:")
+      'off0 - testFail("has:issue:-")
+      'onC  - testFail("has:issue:x,")
+      'offC - testFail("has:issue:-x,")
     }
 
     'unknownKeys {

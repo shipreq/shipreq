@@ -615,6 +615,7 @@ object DataProp {
         case FilterAst.Not           (f)              => f
         case _: FilterAst.Text
            | _: FilterAst.Regex
+           | _: FilterAst.HasIssue[Filter.Valid.IssueCat]
            | _: FilterAst.Presence[Filter.Valid.Attr] => Refs.empty
       }
 

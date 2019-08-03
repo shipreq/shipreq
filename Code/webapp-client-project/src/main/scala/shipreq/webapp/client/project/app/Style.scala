@@ -813,6 +813,8 @@ object Style extends StyleSheet.Inline {
       addClassNames(descCls))
 
     val exampleDescCode = style(
+      padding(0.1 em, 0.5 ex),
+      margin.vertical(0.5 ex),
       fontFamily :=! "monospace", // TODO :=! ???
       backgroundColor(c"#fff"))
 
