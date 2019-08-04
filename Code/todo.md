@@ -100,7 +100,17 @@ Phase 2B
 
 * Hard-delete UC steps with no text, flow, or refs
 
-* Stop generating codecs from macros
+* Forward-compatible dev enablement
+  * Stop generating codecs from macros
+  * BooPickle usage revision
+    * separate into huge library, and top-level instances actually used in protocols
+    * add a version field to all top-level codecs (Maybe? What about forwards-compatibility?)
+    * test evolution, ensure possible
+  * Delete the concept of Event/Project hashing
+  * (Consider) simplifying the event table and codec-code to just event-type-id (for stats) and json
+  * (Consider) store (and update) the latest project name in the header table
+  * (Consider) using Circe instead of JsPickle -- (Cats + Scalaz on the frontend is a problem)
+
 
 * Cell copy-and-paste on Req{Table,Detail}
 
