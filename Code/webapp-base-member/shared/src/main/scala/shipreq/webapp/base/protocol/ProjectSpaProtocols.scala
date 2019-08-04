@@ -119,11 +119,15 @@ object ProjectSpaProtocols {
       override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onUpdateSavedViews(r)
     }
 
-    case object FieldMandatorinessMod extends Base[(CustomFieldId, Mandatory), EventResult](8) {
+    case object UpdateManualIssues extends Base[ManualIssueCmd, EventResult](8) {
+      override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onUpdateManualIssues(r)
+    }
+
+    case object FieldMandatorinessMod extends Base[(CustomFieldId, Mandatory), EventResult](9) {
       override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onFieldMandatorinessMod(r)
     }
 
-    case object ReqTypeImplicationMod extends Base[(CustomReqTypeId, ImplicationRequired), EventResult](9) {
+    case object ReqTypeImplicationMod extends Base[(CustomReqTypeId, ImplicationRequired), EventResult](10) {
       override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onReqTypeImplicationMod(r)
     }
 
@@ -140,6 +144,7 @@ object ProjectSpaProtocols {
         onUpdateContent        : F[UpdateContent        .type] => G[UpdateContent        .type],
         onProjectNameSet       : F[ProjectNameSet       .type] => G[ProjectNameSet       .type],
         onUpdateSavedViews     : F[UpdateSavedViews     .type] => G[UpdateSavedViews     .type],
+        onUpdateManualIssues   : F[UpdateManualIssues   .type] => G[UpdateManualIssues   .type],
         onFieldMandatorinessMod: F[FieldMandatorinessMod.type] => G[FieldMandatorinessMod.type],
         onReqTypeImplicationMod: F[ReqTypeImplicationMod.type] => G[ReqTypeImplicationMod.type],
         ) { self =>
@@ -154,6 +159,7 @@ object ProjectSpaProtocols {
           onUpdateContent         = f => h.onUpdateContent        (self.onUpdateContent        (f)),
           onProjectNameSet        = f => h.onProjectNameSet       (self.onProjectNameSet       (f)),
           onUpdateSavedViews      = f => h.onUpdateSavedViews     (self.onUpdateSavedViews     (f)),
+          onUpdateManualIssues    = f => h.onUpdateManualIssues   (self.onUpdateManualIssues   (f)),
           onFieldMandatorinessMod = f => h.onFieldMandatorinessMod(self.onFieldMandatorinessMod(f)),
           onReqTypeImplicationMod = f => h.onReqTypeImplicationMod(self.onReqTypeImplicationMod(f)),
         )

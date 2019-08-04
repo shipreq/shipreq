@@ -12,7 +12,7 @@ import shipreq.webapp.base.event.EventSeqSummary
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitPageData, WsReqRes}
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.InitPageData
 import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.base.ui.ProjectItem
 import shipreq.webapp.client.project.app.state._
@@ -37,13 +37,14 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
   def unsafeProject() = global.unsafeProject()
 
   final class Backend($: BackendScope[Props, State]) extends OnUnmount {
-    import global.{cbProjectMetaData, wsClient}
+    import global.cbProjectMetaData
 
     private val sspUpdateConfig          = global.sspUpdateConfig
     private val sspCreateContent         = global.sspCreateContent
     private val sspUpdateContent         = global.sspUpdateContent
     private val sspProjectNameSet        = global.sspProjectNameSet
     private val sspUpdateSavedViews      = global.sspUpdateSavedViews
+    private val sspUpdateManualIssues    = global.sspUpdateManualIssues
     private val sspFieldMandatorinessMod = global.sspFieldMandatorinessMod
     private val sspReqTypeImplicationMod = global.sspReqTypeImplicationMod
 

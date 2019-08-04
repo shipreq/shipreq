@@ -412,4 +412,11 @@ object MakeEvent {
         SavedViewDelete(id)
     }
   }
+
+  def updateManualIssues(cmd: ManualIssueCmd, p: Project): Result =
+    cmd match {
+      case ManualIssueCmd.Create(txt)     => ManualIssueCreate(p.manualIssues.nextId, txt)
+      case ManualIssueCmd.Update(id, txt) => ManualIssueUpdate(id, txt)
+      case ManualIssueCmd.Delete(id)      => ManualIssueDelete(id)
+    }
 }

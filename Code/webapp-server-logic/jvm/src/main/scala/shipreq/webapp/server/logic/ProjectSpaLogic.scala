@@ -298,6 +298,7 @@ object ProjectSpaLogic extends StrictLogging {
         onUpdateContent         = updateProject (MakeEvent.updateContent),
         onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn),
         onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews),
+        onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues),
         onFieldMandatorinessMod = updateProjectI(MakeEvent.fieldMandatorinessMod),
         onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod),
       )
