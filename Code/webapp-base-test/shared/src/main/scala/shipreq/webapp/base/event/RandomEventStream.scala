@@ -462,6 +462,19 @@ final class ApplicableEventGen(curState: State) {
     }
   }
 
+  lazy val savedViewId: Option[Gen[SavedView.Id]] =
+    Gen.tryGenChoose(p.reqtableViewIterator.map(_.id))
+
+  lazy val savedViewIdNonDefault: Option[Gen[SavedView.Id]] =
+    p.reqtableViews.flatMap(svs => Gen.tryGenChoose(svs.nonDefault.keys))
+
+  lazy val manualIssueId: Option[Gen[ManualIssueId]] =
+    Gen.tryGenChoose(p.manualIssues.imap.keysIterator)
+
+  def manualIssueText: Gen[Text.ManualIssue.NonEmptyText] =
+    TextGen.manualIssueAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingApplicableTagId)
+      .text1(Text.ManualIssue)
+
   // -------------------------------------------------------------------------------------------------------------------
 
   def genFieldStaticAdd: Option[Gen[FieldStaticAdd]] =
@@ -749,12 +762,6 @@ final class ApplicableEventGen(curState: State) {
       } yield UseCaseStepUpdate(step.id, vs)
     )
 
-  lazy val savedViewId: Option[Gen[SavedView.Id]] =
-    Gen.tryGenChoose(p.reqtableViewIterator.map(_.id))
-
-  lazy val savedViewIdNonDefault: Option[Gen[SavedView.Id]] =
-    p.reqtableViews.flatMap(svs => Gen.tryGenChoose(svs.nonDefault.keys))
-
   def genProjectNameSet: Gen[ProjectNameSet] =
     RandomData.projectName.map(Some(_).filter(_ !=* p.name)).optionGet map ProjectNameSet
 
@@ -775,6 +782,15 @@ final class ApplicableEventGen(curState: State) {
 
   def genSavedViewDelete: Option[Gen[SavedViewDelete]] =
     savedViewId.map(_ map SavedViewDelete)
+
+  def genManualIssueCreate: Gen[ManualIssueCreate] =
+    manualIssueText.map(ManualIssueCreate(p.manualIssues.nextId, _))
+
+  def genManualIssueUpdate: Option[Gen[ManualIssueUpdate]] =
+    manualIssueId.map(Gen.apply2(ManualIssueUpdate)(_, manualIssueText))
+
+  def genManualIssueDelete: Option[Gen[ManualIssueDelete]] =
+    manualIssueId.map(_ map ManualIssueDelete)
 
   val possibleEventGens: NonEmptyVector[Option[Gen[Event]]] =
     valuesForAdt[Event, Option[Gen[Event]]] {
@@ -803,6 +819,9 @@ final class ApplicableEventGen(curState: State) {
       case _: GenericReqCreate       => genGenericReqCreate
       case _: GenericReqTitleSet     => genGenericReqTitleSet
       case _: GenericReqTypeSet      => genGenericReqTypeSet
+      case _: ManualIssueCreate      => genManualIssueCreate
+      case _: ManualIssueDelete      => genManualIssueDelete
+      case _: ManualIssueUpdate      => genManualIssueUpdate
       case _: ProjectNameSet         => genProjectNameSet
       case _: ProjectTemplateApply   => genProjectTemplateApply
       case _: CodeGroupCreate        => genCodeGroupCreate

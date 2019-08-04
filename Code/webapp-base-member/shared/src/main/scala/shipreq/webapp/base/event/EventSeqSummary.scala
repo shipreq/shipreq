@@ -276,6 +276,9 @@ object EventSeqSummary {
       case e: Event.UseCaseTitleSet        => useCasesExclSteps.updated += e.id
 
       case _: Event.ProjectNameSet
+         | _: Event.ManualIssueCreate
+         | _: Event.ManualIssueDelete
+         | _: Event.ManualIssueUpdate
          | _: Event.SavedViewCreate
          | _: Event.SavedViewDefaultSet
          | _: Event.SavedViewDelete

@@ -57,6 +57,9 @@ object BinCodecEvents {
   implicit val pickleGenericReqCreate      : Pickler[GenericReqCreate      ] = pickleCaseClass
   implicit val pickleGenericReqTitleSet    : Pickler[GenericReqTitleSet    ] = pickleCaseClass
   implicit val pickleGenericReqTypeSet     : Pickler[GenericReqTypeSet     ] = pickleCaseClass
+  implicit val pickleManualIssueCreate     : Pickler[ManualIssueCreate     ] = pickleCaseClass
+  implicit val pickleManualIssueDelete     : Pickler[ManualIssueDelete     ] = pickleCaseClass
+  implicit val pickleManualIssueUpdate     : Pickler[ManualIssueUpdate     ] = pickleCaseClass
   implicit val pickleProjectNameSet        : Pickler[ProjectNameSet        ] = pickleCaseClass
   implicit val pickleProjectTemplateApply  : Pickler[ProjectTemplateApply  ] = pickleCaseClass
   implicit val pickleCodeGroupCreate       : Pickler[CodeGroupCreate       ] = pickleCaseClass

@@ -82,6 +82,9 @@ object Event {
   case e: Event.GenericReqCreate       => ???
   case e: Event.GenericReqTitleSet     => ???
   case e: Event.GenericReqTypeSet      => ???
+  case e: Event.ManualIssueCreate      => ???
+  case e: Event.ManualIssueDelete      => ???
+  case e: Event.ManualIssueUpdate      => ???
   case e: Event.ProjectNameSet         => ???
   case e: Event.ProjectTemplateApply   => ???
   case e: Event.ReqCodesPatch          => ???
@@ -240,6 +243,17 @@ object Event {
 
   final case class ContentRestore(reqs      : Set[ReqId],
                                   codeGroups: Set[ReqCodeGroupId]) extends ActiveEvent
+
+  // ===================================================================================================================
+  // Manual issues
+
+  final case class ManualIssueCreate(id  : ManualIssueId,
+                                     text: Text.ManualIssue.NonEmptyText) extends ActiveEvent
+
+  final case class ManualIssueUpdate(id  : ManualIssueId,
+                                     text: Text.ManualIssue.NonEmptyText) extends ActiveEvent
+
+  final case class ManualIssueDelete(id: ManualIssueId) extends ActiveEvent
 
   // ===================================================================================================================
   // Saved Views

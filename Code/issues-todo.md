@@ -18,9 +18,6 @@ reuse (or not)
 functionality
 =============
 
-* loose issues
-  * events
-  * event ap & testing
 * UI: new
   * add loose issue editor to CreateFeature
   * add loose issue editor to EditorFeature

@@ -21,11 +21,14 @@ object ManualIssue {
 final case class ManualIssues(imap  : ManualIssue.IMap,
                               nextId: ManualIssueId) {
 
-  def add(txt: Text.ManualIssue.NonEmptyText) = {
+  def add(txt: Text.ManualIssue.NonEmptyText): ManualIssues = {
     val mi  = ManualIssue(nextId, txt)
     val mis = ManualIssues(imap + mi, ManualIssueId(nextId.value + 1))
     mis
   }
+
+  def modIMap(f: ManualIssue.IMap => ManualIssue.IMap): ManualIssues =
+    ManualIssues(f(imap), nextId)
 }
 
 object ManualIssues {

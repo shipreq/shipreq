@@ -181,6 +181,9 @@ final class ApplyEvent(implicit val trust: Trust)
     event match {
       case e: ApplicableTagCreate    => ApplicableTagEvents    applyCreate                e
       case e: ApplicableTagUpdate    => ApplicableTagEvents    applyUpdate                e
+      case e: CodeGroupCreate        => CodeGroupEvents        applyCreate                e
+      case e: CodeGroupsDelete       => CodeGroupEvents        applyDelete                e
+      case e: CodeGroupUpdate        => CodeGroupEvents        applyUpdate                e
       case e: ContentRestore         => ContentCommon          applyRestoreContent        e
       case e: CustomIssueTypeCreate  => CustomIssueTypeEvents  applyCreate                e
       case e: CustomIssueTypeDelete  => CustomIssueTypeEvents  applyDelete                e
@@ -204,10 +207,10 @@ final class ApplyEvent(implicit val trust: Trust)
       case e: GenericReqCreate       => GenericReqEvents       applyGenericReqCreate      e
       case e: GenericReqTitleSet     => GenericReqEvents       applyGenericReqTitleSet    e
       case e: GenericReqTypeSet      => GenericReqEvents       applyGenericReqTypeSet     e
+      case e: ManualIssueCreate      => ManualIssueEvents      applyCreate                e
+      case e: ManualIssueDelete      => ManualIssueEvents      applyDelete                e
+      case e: ManualIssueUpdate      => ManualIssueEvents      applyUpdate                e
       case e: ProjectNameSet         => OtherEvents            applyProjectNameSet        e
-      case e: CodeGroupCreate        => CodeGroupEvents        applyCreate                e
-      case e: CodeGroupsDelete       => CodeGroupEvents        applyDelete                e
-      case e: CodeGroupUpdate        => CodeGroupEvents        applyUpdate                e
       case e: ReqCodesPatch          => ReqCodeLogic           applyReqCodesPatch         e
       case e: ReqFieldCustomTextSet  => ContentCommon          applyReqFieldCustomTextSet e
       case e: ReqImplicationsPatch   => ContentCommon          applyReqImplicationsPatch  e

@@ -68,6 +68,7 @@ object ApplyEventTestFns {
     var useCases         = 0
     var genericReqs      = 0
     var delReasons       = 0
+    var manualIssues     = 0
     var savedViews       = 0
 
     es foreach {
@@ -108,6 +109,9 @@ object ApplyEventTestFns {
       case _: SavedViewCreate => savedViews += 1
       case _: SavedViewDelete => savedViews -= 1
 
+      case _: ManualIssueCreate => manualIssues += 1
+      case _: ManualIssueDelete => manualIssues -= 1
+
       case _: ApplicableTagUpdate
          | _: CustomIssueTypeDelete
          | _: CustomIssueTypeRestore
@@ -125,6 +129,7 @@ object ApplyEventTestFns {
          | _: FieldStaticRemove
          | _: GenericReqTitleSet
          | _: GenericReqTypeSet
+         | _: ManualIssueUpdate
          | _: ProjectNameSet
          | _: CodeGroupUpdate
          | _: ReqCodesPatch
@@ -155,6 +160,7 @@ object ApplyEventTestFns {
     assertEq("Σ Reqs", genericReqs + useCases, p.content.reqs.size)
     assertEq("Σ CodeGroups (active)", activeRCGs, p.content.reqCodes.groups.count(_.live is Live))
     assertEq("Σ DeletionReasons", delReasons, p.content.deletionReasons.reasons.size)
+    assertEq("Σ ManualIssues", manualIssues, p.manualIssues.imap.size)
     validateIdCeilings(p)
   }
 

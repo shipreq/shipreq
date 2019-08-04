@@ -35,6 +35,9 @@ trait EventEquality {
   implicit val equalGenericReqCreate      : Equal[GenericReqCreate      ] = ScalazMacros.deriveEqual
   implicit val equalGenericReqTitleSet    : Equal[GenericReqTitleSet    ] = ScalazMacros.deriveEqual
   implicit val equalGenericReqTypeSet     : Equal[GenericReqTypeSet     ] = ScalazMacros.deriveEqual
+  implicit val equalManualIssueCreate     : Equal[ManualIssueCreate     ] = ScalazMacros.deriveEqual
+  implicit val equalManualIssueDelete     : Equal[ManualIssueDelete     ] = ScalazMacros.deriveEqual
+  implicit val equalManualIssueUpdate     : Equal[ManualIssueUpdate     ] = ScalazMacros.deriveEqual
   implicit val equalProjectNameSet        : Equal[ProjectNameSet        ] = ScalazMacros.deriveEqual
   implicit val equalProjectTemplateApply  : Equal[ProjectTemplateApply  ] = ScalazMacros.deriveEqual
   implicit val equalCodeGroupCreate       : Equal[CodeGroupCreate       ] = ScalazMacros.deriveEqual

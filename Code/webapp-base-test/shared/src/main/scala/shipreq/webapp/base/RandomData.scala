@@ -1757,6 +1757,9 @@ object RandomData {
     val stepFlowSetDiff =
       genNonEmptySetDiff(useCaseStepId)
 
+    val manualIssueText: Gen[Text.ManualIssue.NonEmptyText] =
+      TextGen.manualIssueAtom(r, u, c, a).text1(Text.ManualIssue)
+
     val deletionReason: Gen[Text.DeletionReason.OptionalText] =
       TextGen.deletionReasonAtom(r, u, c, a).text
 
@@ -2061,6 +2064,12 @@ object RandomData {
     val genProjectNameSet: Gen[ProjectNameSet] =
       projectName map ProjectNameSet
 
+    val manualIssueId = id map ManualIssueId
+
+    val genManualIssueCreate = Gen.apply2(ManualIssueCreate)(manualIssueId, manualIssueText)
+    val genManualIssueUpdate = Gen.apply2(ManualIssueUpdate)(manualIssueId, manualIssueText)
+    val genManualIssueDelete = manualIssueId.map(ManualIssueDelete)
+
     val activeEventGens: NonEmptyVector[Gen[ActiveEvent]] =
       valuesForAdt[ActiveEvent, Gen[ActiveEvent]] {
         case _: ApplicableTagCreate    => genApplicableTagCreate
@@ -2088,6 +2097,9 @@ object RandomData {
         case _: GenericReqCreate       => genGenericReqCreate
         case _: GenericReqTitleSet     => genGenericReqTitleSet
         case _: GenericReqTypeSet      => genGenericReqTypeSet
+        case _: ManualIssueCreate      => genManualIssueCreate
+        case _: ManualIssueDelete      => genManualIssueDelete
+        case _: ManualIssueUpdate      => genManualIssueUpdate
         case _: ProjectNameSet         => genProjectNameSet
         case _: ProjectTemplateApply   => genProjectTemplateApply
         case _: CodeGroupCreate        => genCodeGroupCreate

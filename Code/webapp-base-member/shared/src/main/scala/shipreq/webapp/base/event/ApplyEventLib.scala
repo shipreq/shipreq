@@ -132,6 +132,7 @@ private[event] object ApplyEventLib {
   def show(v: UseCaseId       ): String = s"Use case #${v.value}"
   def show(v: UseCaseStepId   ): String = s"Use case step #${v.value}"
   def show(v: SavedView.Id    ): String = s"Saved view #${v.value}"
+  def show(v: ManualIssueId   ): String = s"Manual issue #${v.value}"
 
   def showLoc(v: VectorTree.Location): String = v.whole.mkString("loc ", ":", "")
 

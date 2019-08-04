@@ -759,6 +759,8 @@ object EventDbCodecs {
   implicit val idTypeCustomFieldImplicationId = DbCodec.monoId('i', CustomField.Implication.Id)
   implicit val idTypeCustomFieldId            = DbCodec.polyId[CustomFieldId]
 
+  implicit val idTypeManualIssueId            = DbCodec.monoId(noDataIdType, ManualIssueId)
+
   implicit val idTypeSavedViewId              = DbCodec.monoId(noDataIdType, SavedView.Id)
 
   implicit val idTypeStaticField: DbCodec.MonoId[StaticField] =
@@ -811,6 +813,9 @@ object EventDbCodecs {
   implicit val dbCodecGenericReqCreate      : DbCodec[GenericReqCreate      ] = dbCodecIdGdAnd('vs, 'rt -> "T")
   implicit val dbCodecGenericReqTitleSet    : DbCodec[GenericReqTitleSet    ] = dbCodec2
   implicit val dbCodecGenericReqTypeSet     : DbCodec[GenericReqTypeSet     ] = dbCodec2
+  implicit val dbCodecManualIssueCreate     : DbCodec[ManualIssueCreate     ] = dbCodec2
+  implicit val dbCodecManualIssueDelete     : DbCodec[ManualIssueDelete     ] = dbCodecIdOnly
+  implicit val dbCodecManualIssueUpdate     : DbCodec[ManualIssueUpdate     ] = dbCodec2
   implicit val dbCodecProjectNameSet        : DbCodec[ProjectNameSet        ] = dbCodecDataOnly
   implicit val dbCodecProjectTemplateApply  : DbCodec[ProjectTemplateApply  ] = dbCodecDataOnly
   implicit val dbCodecCodeGroupCreate       : DbCodec[CodeGroupCreate       ] = dbCodec2
@@ -923,6 +928,14 @@ object EventDbCodecs {
     case _: FieldCustomTagUpdate   => 1133
     case _: FieldCustomTextCreate  => 1134
     case _: FieldCustomTextUpdate  => 1135
+
+    // =====================================
+    // Other: Manual Issues
+    // =====================================
+
+    case _: ManualIssueCreate      => 2110
+    case _: ManualIssueUpdate      => 2111
+    case _: ManualIssueDelete      => 2112
 
     // =====================================
     // Other: Shared Views

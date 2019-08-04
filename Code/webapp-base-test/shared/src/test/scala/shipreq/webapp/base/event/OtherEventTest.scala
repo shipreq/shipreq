@@ -1,6 +1,7 @@
 package shipreq.webapp.base.event
 
 import japgolly.microlibs.nonempty.NonEmptyVector
+import sourcecode.Line
 import utest._
 import shipreq.base.util.Forwards
 import shipreq.webapp.base.test.WebappTestUtil._
@@ -8,24 +9,25 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.sort.SortMethod
-import ApplyEventTestFns._
-import ContentEventTestHelp.{assertBadIdsRejected, fr, at1, issueType1}
-import Event._
-import FilterAst.Attr
-import SortCriterion.SyntaxHelpers._
-import SortMethod.{Asc, AscThenBlanks, BlanksThenDesc, Desc}
+import shipreq.webapp.base.text.Text
 
 object OtherEventTest extends TestSuite {
+  import ApplyEventTestFns._
+  import ContentEventTestHelp.{assertBadIdsRejected, fr, at1, issueType1}
+  import Event._
+  import FilterAst.Attr
+  import SortCriterion.SyntaxHelpers._
+  import SortMethod.{Asc, AscThenBlanks, BlanksThenDesc, Desc}
 
-  val SVIE = InitialEvents(
+  private val SVIE = InitialEvents(
     ContentEventTestHelp.createCTF1,
     ContentEventTestHelp.createFR,
     ContentEventTestHelp.createAT1,
     ContentEventTestHelp.createIssueType1)
 
-  val ColCF1 = Column.CustomField(ContentEventTestHelp.cf1)
+  private val ColCF1 = Column.CustomField(ContentEventTestHelp.cf1)
 
-  val SV1 = SavedView(
+  private val SV1 = SavedView(
     SavedView.Id(1),
     SavedView.Name("View1"),
     View(
@@ -34,7 +36,7 @@ object OtherEventTest extends TestSuite {
       order      = SortCriteria.byPubidOnly,
       filter     = None))
 
-  val SV2 = SavedView(
+  private val SV2 = SavedView(
     SavedView.Id(2),
     SavedView.Name("II"),
     View(
@@ -57,7 +59,7 @@ object OtherEventTest extends TestSuite {
           reqType(StaticReqType.UseCase))
       }))
 
-  val SV3 = SavedView(
+  private val SV3 = SavedView(
     SavedView.Id(3),
     SavedView.Name("Three!"),
     View(
@@ -66,14 +68,14 @@ object OtherEventTest extends TestSuite {
       order      = SortCriteria(Vector(Column.Title / AscThenBlanks), Column.Pubid / Asc),
       filter     = None))
 
-  val badColImp = Column.CustomField(CustomField.Implication.Id(5000))
-  val badColTag = Column.CustomField(CustomField.Tag.Id(5000))
-  val badColTxt = Column.CustomField(CustomField.Text.Id(5000))
+  private val badColImp = Column.CustomField(CustomField.Implication.Id(5000))
+  private val badColTag = Column.CustomField(CustomField.Tag.Id(5000))
+  private val badColTxt = Column.CustomField(CustomField.Text.Id(5000))
 
-  implicit def autoSavedViewId(i: Int) = SavedView.Id(i)
-  implicit def autoSavedViewName(s: String) = SavedView.Name(s)
+  private implicit def autoSavedViewId(i: Int) = SavedView.Id(i)
+  private implicit def autoSavedViewName(s: String) = SavedView.Name(s)
 
-  implicit def autoCreateSV(sv: SavedView): SavedViewCreate =
+  private implicit def autoCreateSV(sv: SavedView): SavedViewCreate =
     SavedViewCreate(
       id         = sv.id,
       name       = sv.name,
@@ -82,7 +84,7 @@ object OtherEventTest extends TestSuite {
       order      = sv.view.order,
       filter     = sv.view.filter)
 
-  implicit final class SavedViewTestExt(private val self: SavedView) extends AnyVal {
+  private implicit final class SavedViewTestExt(private val self: SavedView) extends AnyVal {
     type Mod[A] = A => A
     def modCols(f: Mod[NonEmptyVector[Column]]): SavedView = SavedView.columns.modify(f)(self)
     def modSort(f: Mod[SortCriteria]          ): SavedView = SavedView.order.modify(f)(self)
@@ -101,8 +103,14 @@ object OtherEventTest extends TestSuite {
       SavedViewGD.nev(SavedViewGD.ValueForName(self.name), valuesWithoutName.value.values.toList: _*)
   }
 
+  private implicit def autoManualIssueId(i: Int) = ManualIssueId(i)
+
+  private implicit def autoManualIssueText(s: String): Text.ManualIssue.NonEmptyText =
+    NonEmptyVector(Text.ManualIssue.Literal(s))
 
   override def tests = Tests {
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     'ProjectNameSet {
       import NoInitialEvents._
@@ -116,6 +124,8 @@ object OtherEventTest extends TestSuite {
         assertFail("preprocess")(ProjectNameSet("   as   "))
       }
     }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     'SavedView {
       import SavedViewGD._
@@ -225,6 +235,43 @@ object OtherEventTest extends TestSuite {
         'nonDefault3 - test()(SV3.id)(SV1, SV2)
         'empty       - assertFail("not found")(SavedViewDelete(SV1.id))(SVIE, implicitly)
         'notFound    - assertFail("not found")(SavedViewDelete(SV1.id), SavedViewDelete(SV1.id))
+      }
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    'ManualIssue {
+
+      def test(evs: Event*)(expect: (Int, String)*)(nextId: ManualIssueId)
+              (implicit ie: InitialEvents, l: Line): Unit = {
+        val p    = _assertPass(evs: _*)
+        val imap = ManualIssue.emptyIMap ++ expect.map{ case (i, t) => ManualIssue(i, t) }
+        val e    = ManualIssues(imap, nextId)
+        assertEq(p.manualIssues, e)
+      }
+
+      'create {
+        import NoInitialEvents._
+        'one    - test(ManualIssueCreate(1, "x"))(1 -> "x")(2)
+        'two    - test(ManualIssueCreate(1, "x"), ManualIssueCreate(2, "z"))(1 -> "x", 2 -> "z")(3)
+        'idGap  - test(ManualIssueCreate(2, "x"), ManualIssueCreate(4, "z"))(2 -> "x", 4 -> "z")(5)
+        'exists - assertFail("exists")(ManualIssueCreate(1, "x"), ManualIssueCreate(1, "x"))
+      }
+
+      'update {
+        implicit def initialEvents = InitialEvents(ManualIssueCreate(1, "one"), ManualIssueCreate(2, "two"))
+        'one      - test(ManualIssueUpdate(1, "x"))(1 -> "x", 2 -> "two")(3)
+        'two      - test(ManualIssueUpdate(2, "a"))(1 -> "one", 2 -> "a")(3)
+        'twice    - test(ManualIssueUpdate(1, "x"), ManualIssueUpdate(1, "y"))(1 -> "y", 2 -> "two")(3)
+        'notFound - assertFail("not found")(ManualIssueUpdate(3, "x"))
+      }
+
+      'delete {
+        implicit def initialEvents = InitialEvents(ManualIssueCreate(1, "one"), ManualIssueCreate(2, "two"))
+        'one      - test(ManualIssueDelete(1))(2 -> "two")(3)
+        'two      - test(ManualIssueDelete(2))(1 -> "one")(3)
+        'both     - test(ManualIssueDelete(1), ManualIssueDelete(2))()(3)
+        'notFound - assertFail("not found")(ManualIssueDelete(3))
       }
     }
 
