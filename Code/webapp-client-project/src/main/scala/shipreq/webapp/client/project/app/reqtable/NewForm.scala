@@ -140,7 +140,7 @@ sealed trait NewForm {
         Some(o)
       else {
         val e = es.next()
-        e.value.value(CreateFeature.EditorArgs.empty) match {
+        e.value.value() match {
           case \/-(v) => go(e.withValue[FieldValue](v) :: o)
           case -\/(_) => None // Invalidity found -- abort everything
         }

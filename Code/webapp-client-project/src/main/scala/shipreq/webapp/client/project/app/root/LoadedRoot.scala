@@ -263,9 +263,10 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
           ProjectHome.Props(pname, index).render
 
         case Page.Issues =>
-          val state = issuesPageSS(s)
+          val state    = issuesPageSS(s)
+          val creator  = createRW(CreateFeature.RowKey.ManualIssue)
           val cmdAsync = s.updateConfigCmdAsync.toRead either s.updateContentCmdAsync.toRead
-          val p = issues.IssuesPage.Props(state, editRW, cmdAsync)
+          val p = issues.IssuesPage.Props(state, creator, editRW, cmdAsync)
           issuesPage.component(p)
 
         case Page.CfgFields =>

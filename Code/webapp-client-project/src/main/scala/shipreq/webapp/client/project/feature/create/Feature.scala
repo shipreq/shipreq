@@ -71,14 +71,14 @@ object Feature {
 
     /** An instance of this implies that Editability has already established.
       */
-    final case class ForEditor[-A, +V](editor: Editor[A, V], async: AsyncState) {
+    final class ForEditor[-A, +V](val editor: Editor[A, V], val async: AsyncState, emptyArgs: A) {
       /** impure */
       def render(args: A): VdomElement =
         editor.render(async, args)()
 
       /** impure */
-      def value(args: A): Editor.Value[V] =
-        editor.value(args)
+      def value(): Editor.Value[V] =
+        editor.value(emptyArgs)
     }
 
     final case class ForFields[-FK <: FieldKey](_state     : State.ForFields,
@@ -89,7 +89,7 @@ object Feature {
 
       def apply(f: FK)(newEditor: => Editor[f.Args, f.Value]): Permission.DeniedOr[ForEditor[f.Args, f.Value]] =
         editability(f)(
-          ForEditor(state.get(f).getOrElse(newEditor), async))
+          new ForEditor(state.get(f).getOrElse(newEditor), async, NewEditorArgs.empty))
     }
 
     final case class ForProject(state      : State.ForProject,
@@ -149,6 +149,9 @@ object Feature {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object ReadWrite {
     type ForEditor[-A, +V] = Read.ForEditor[A, V]
+
+    type ForManualIssueR = ForRow[FieldKey.ManualIssue.type, ManualIssueCmd]
+    type ForManualIssueE = ForEditor[FieldKey.ManualIssue.Args, FieldKey.ManualIssue.Value]
 
     final case class ForRow[-FK <: FieldKey, -Cmd](read: Read.ForFields[FK], write: Write.ForRow[FK, Cmd]) {
       def apply(f: FK): Permission.DeniedOr[ForEditor[f.Args, f.Value]] =

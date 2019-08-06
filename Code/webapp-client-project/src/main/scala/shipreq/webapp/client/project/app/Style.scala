@@ -639,12 +639,15 @@ object Style extends StyleSheet.Inline {
     private def gapSize = 1 rem
 
     val pageRow1 = style(display.flex)
-    val pageNew  = style(flexGrow(1))
+    val pageNew  = style(flexGrow(1), marginRight(gapSize))
 
     val pageRow2 = style(margin.vertical(gapSize), display.flex)
     def pageSort = pageNew
 
     val emptyCont = style(marginTop(gapSize))
+
+    val newIssueCont = style(display.flex)
+    val newIssueForm = style(flexGrow(1), marginLeft(1.5 ex))
 
     def table       = generic.table
     def tableHeader = generic.tableHeaderBase

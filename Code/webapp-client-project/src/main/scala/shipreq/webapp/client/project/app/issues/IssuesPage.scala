@@ -3,16 +3,18 @@ package shipreq.webapp.client.project.app.issues
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.MonocleReact._
+import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.filter.{CompiledFilter, Filter}
 import shipreq.webapp.base.issue.Issues
-import shipreq.webapp.client.project.app.Style.{issues => *}
-import shipreq.webapp.client.project.feature.{EditorFeature, RenderFeature}
-import shipreq.webapp.client.project.widgets.{FilterEditor, ProjectWidgets}
 import shipreq.webapp.base.lib.DataReusability._
+import shipreq.webapp.client.project.app.Style.{issues => *}
+import shipreq.webapp.client.project.feature.{CreateFeature, EditorFeature, RenderFeature}
+import shipreq.webapp.client.project.widgets.{FilterEditor, ProjectWidgets}
 
 object IssuesPage {
 
@@ -28,7 +30,6 @@ object IssuesPage {
     val component = ScalaComponent.builder[Props]("IssuesPage")
       .backend(new Backend(this, _))
       .renderBackend
-      .configure(shouldComponentUpdate)
       .build
 
     val table = Table.StaticProps(
@@ -40,19 +41,20 @@ object IssuesPage {
   }
 
   final case class Props(state   : StateSnapshot[State],
+                         creator : CreateFeature.ReadWrite.ForManualIssueR,
                          editor  : EditorFeature.ReadWrite.ForProject,
                          cmdAsync: AsyncFeature.Read.D1[Action.Cmd, ErrorMsg])
 
-  implicit val reusabilityProps: Reusability[Props] =
-    Reusability.derive
-
-  final case class State(filterEditor: FilterEditor.State,
-                         filterValue: Option[Filter.Valid])
+  @Lenses
+  final case class State(newIssue    : NewIssue.State,
+                         filterEditor: FilterEditor.State,
+                         filterValue : Option[Filter.Valid])
 
   object State {
     def init = apply(
+      newIssue     = NewIssue.State.init,
       filterEditor = FilterEditor.State.init,
-      filterValue = None,
+      filterValue  = None,
     )
 
     implicit val reusability: Reusability[State] =
@@ -87,14 +89,19 @@ object IssuesPage {
       val project = pxProject.value()
       val issues = project.issues
       if (issues.isEmpty)
-        renderEmpty
+        renderEmpty(p)
       else
         renderContent(p, pxFilteredIssues.value(), project)
     }
 
-    private def renderEmpty =
+    private def renderNew(p: Props) =
+      p.creator(CreateFeature.FieldKey.ManualIssue)
+        .toOption
+        .map(NewIssue.Props(p.state.zoomStateL(State.newIssue), p.creator, _).render)
+
+    private def renderEmpty(p: Props) =
       <.div(
-        NewIssue.render,
+        renderNew(p),
         <.div(*.emptyCont, NoContent.render))
 
     private def renderContent(p: Props, issues: Issues, project: Project) = {
@@ -102,10 +109,9 @@ object IssuesPage {
 
       <.div(
         <.div(*.pageRow1,
-          <.div(*.pageNew, NewIssue.render),
+          <.div(*.pageNew, renderNew(p)),
           <.div(Summary.Props(issues.stats, filteredOut).render)),
         <.div(*.pageRow2,
-          // TODO Table config row (sort | cols)
           <.div(*.pageSort),
           <.div(FilterEditor.Props(p.state.value.filterEditor, project, filterUpdateFn).render)),
         table.component(Table.Props(issues, p.editor, p.cmdAsync)))

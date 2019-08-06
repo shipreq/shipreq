@@ -18,10 +18,8 @@ reuse (or not)
 functionality
 =============
 
-* UI: new
-  * add loose issue editor to CreateFeature
-  * add loose issue editor to EditorFeature
-  * add async feature for it
+* include manual issues in Issues
+* manual issues shoulds be editable
 * UI: table
   * id should be editable
   * title should be editable
