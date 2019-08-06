@@ -125,8 +125,7 @@ object Table {
               titleBase     = csTitles(rowIdx),
             )
 
-            val key = rowIdx // TODO choose better row key
-            TableRow.Component.withKey(key)(rowProps)
+            TableRow.Component.withKey(row.key)(rowProps)
           }
 
       semantic.Table.celledCompactUnstackable(

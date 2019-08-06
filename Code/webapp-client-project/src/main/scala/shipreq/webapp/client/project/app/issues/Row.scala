@@ -1,12 +1,10 @@
 package shipreq.webapp.client.project.app.issues
 
 import japgolly.scalajs.react.extra.Px
-import japgolly.scalajs.react.{Reusability, Reusable}
-import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{Key, Reusability, Reusable}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.issue._
 import shipreq.webapp.base.UiText.{Issues => UI}
-import shipreq.webapp.base.feature.TableNavigationFeature
 import shipreq.webapp.client.project.feature.RenderFeature
 import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
@@ -22,6 +20,7 @@ sealed trait Row {
   val editor: (EditorFeature.ReadWrite.ForProject, Reusable[Px[ProjectWidgets.NoCtx]]) => Option[Reusable[EditorNavParent.Props]]
 
   final def issueCategoryDesc = UI.category(issue.category)
+  final val key: Key = issue.hashCode
 }
 
 object Row {
