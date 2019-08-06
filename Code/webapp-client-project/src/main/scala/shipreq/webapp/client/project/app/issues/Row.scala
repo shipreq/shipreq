@@ -83,6 +83,15 @@ object Row {
     override val editor = (_, _) => None
   }
 
+  final case class ForManualIssue(issue   : Issue.ManualIssue,
+                                  actions : List[Action],
+                                  renderer: RenderFeature.NoCtx.ForManualIssue) extends Row {
+    val field = IssueField.manual(issue.issue)
+    override val issueClassDesc = UI.descManualIssue
+    override def fieldOption = Some(field)
+    override val editor = (e, pw) => Some(renderEditable(field.key)(renderer, e.forManualIssues, (), pw))
+  }
+
   // ===================================================================================================================
 
   implicit def reusability: Reusability[Row] =
@@ -235,6 +244,9 @@ object Row {
         val fieldName = i.field.name(cfg.tags.tree)
         val desc = UI.descUninhabitableTagField(fieldName)
         forConfig(i, desc)
+
+      case i: Issue.ManualIssue =>
+        ForManualIssue(i, actionBuilder(i), rf.forManualIssue)
     }
   }
 }

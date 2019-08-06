@@ -32,6 +32,7 @@ final case class Issues(vector: Vector[Issue]) {
       case i: Issue.IssueTagInRcg         => f.codeGroup(i.rcg)
       case i: Issue.IssueTagInReq         => f.req(i.req)
       case _: Issue.UninhabitableTagField => false
+      case _: Issue.ManualIssue           => false // TODO I'd expect text-based filters to apply to manual issue text
     })
 
   lazy val bySource: BySource = {
@@ -57,6 +58,7 @@ final case class Issues(vector: Vector[Issue]) {
       case i: Issue.IssueTagInRcg         => addRcg(i, i.rcg.id)
       case i: Issue.IssueTagInReq         => addReq(i, i.req.id)
       case i: Issue.UninhabitableTagField => config = config.add(i)
+      case _: Issue.ManualIssue           => ()
     }
 
     BySource(byReq, byRcg, config)

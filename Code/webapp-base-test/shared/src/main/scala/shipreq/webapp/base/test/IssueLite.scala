@@ -2,7 +2,7 @@ package shipreq.webapp.base.test
 
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.univeq.UnivEq
-import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.{ManualIssue => ManualIssueInstance, _}
 import shipreq.webapp.base.issue._
 import shipreq.webapp.base.text.{Atom, Text}
 import shipreq.webapp.base.text.Text.Equality._
@@ -53,6 +53,8 @@ object IssueLite {
 
   final case class UninhabitableTagField(fieldId: CustomField.Tag.Id) extends IssueLite(C.UninhabitableTagField)
 
+  final case class ManualIssue(issue: ManualIssueInstance) extends IssueLite(C.ManualIssue)
+
   implicit def univEq: UnivEq[IssueLite] = UnivEq.derive
 
   val fromIssue: Issue => IssueLite = {
@@ -69,6 +71,7 @@ object IssueLite {
     case Issue.ImplicationRequired  (req                  ) => ImplicationRequired  (req.id)
     case Issue.IssueTagInRcg        (rcg, issue           ) => IssueTagInRcg        (rcg.id, issue)
     case Issue.IssueTagInReq        (req, loc, issue      ) => IssueTagInReq        (req.id, loc, issue)
+    case Issue.ManualIssue          (issue                ) => ManualIssue          (issue)
     case Issue.UninhabitableTagField(field                ) => UninhabitableTagField(field.id)
   }
 }

@@ -46,7 +46,7 @@ object Summary {
       b.add(")")
     }
     b.addUnlessZero(s.inRcg, SummaryIcon.rcgs)
-    b.addUnlessZero(s.loose, SummaryIcon.loose)
+    b.addUnlessZero(s.manual, SummaryIcon.loose)
 
     <.div(b.prefixWithShowing(s.total, "issue"))
   }

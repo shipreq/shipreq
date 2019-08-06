@@ -8,7 +8,7 @@ final case class IssueStats(total     : Int,
                             inConfig  : Int,
                             inReq     : Int,
                             inRcg     : Int,
-                            loose     : Int,
+                            manual    : Int,
                             reqsUnique: Int) {
 
   val reqReappearances = inReq - reqsUnique
@@ -22,7 +22,7 @@ object IssueStats {
     var inConfig   = 0
     var inReq      = 0
     var inRcg      = 0
-    var loose      = 0
+    var manual     = 0
     var reqsUnique = 0
     var reqsSeen   = Set.empty[ReqId]
 
@@ -55,6 +55,7 @@ object IssueStats {
       case i: Issue.IssueTagInRcg         => addInRcg(i.rcg)
       case i: Issue.IssueTagInReq         => addInReq(i.req.id)
       case i: Issue.UninhabitableTagField => addInConfig()
+      case _: Issue.ManualIssue           => manual += 1
     }
 
     IssueStats(
@@ -62,7 +63,7 @@ object IssueStats {
       inConfig   = inConfig,
       inReq      = inReq,
       inRcg      = inRcg,
-      loose     = loose,
+      manual     = manual,
       reqsUnique = reqsUnique)
   }
 
@@ -77,9 +78,9 @@ object IssueStats {
     positiveI("inConfig"        , _.inConfig        ) &
     positiveI("inReq"           , _.inReq           ) &
     positiveI("inRcg"           , _.inRcg           ) &
-    positiveI("loose"           , _.loose           ) &
+    positiveI("manual"          , _.manual          ) &
     positiveI("reqsUnique"      , _.reqsUnique      ) &
     positiveI("reqReappearances", _.reqReappearances) &
-    Prop.test("total", i => i.total == (i.inConfig + i.inReq + i.inRcg + i.loose))
+    Prop.test("total", i => i.total == (i.inConfig + i.inReq + i.inRcg + i.manual))
   }
 }

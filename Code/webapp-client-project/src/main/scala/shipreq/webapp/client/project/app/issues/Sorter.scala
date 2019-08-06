@@ -21,9 +21,10 @@ object Sorter {
         val n = setup.p.dataLogic.pubidSortKeyFn
         val `n/a` = (-1, -1)
         ;{
-          case r: Row.ForReq    => n(r.req.pubid)
+          case r: Row.ForReq         => n(r.req.pubid)
           case _: Row.ForRcg
-             | _: Row.ForConfig => `n/a`
+             | _: Row.ForConfig
+             | _: Row.ForManualIssue => `n/a`
         }
       },
     sort = SortFn.intPair
@@ -31,9 +32,10 @@ object Sorter {
 
   private val reqCodeIdSorter: Sorter = {
     val o = Optional[Row, Vector[ReqCode.Value]]({
-      case r: Row.ForRcg    => Some(Vector1(r.code))
+      case r: Row.ForRcg         => Some(Vector1(r.code))
       case _: Row.ForReq
-         | _: Row.ForConfig => None
+         | _: Row.ForConfig
+         | _: Row.ForManualIssue => None
     })(c => {
       case r: Row.ForRcg if c.length == 1 => r.copy(code = c.head)
       case r                              => r
@@ -43,9 +45,10 @@ object Sorter {
 
   val idSorter: Sorter =
     pubidSorter.overrideWith(reqCodeIdSorter) {
-      case _: Row.ForRcg    => true
+      case _: Row.ForRcg         => true
       case _: Row.ForReq
-         | _: Row.ForConfig => false
+         | _: Row.ForConfig
+         | _: Row.ForManualIssue => false
     }
 
   val issueCategorySorter: Sorter = {

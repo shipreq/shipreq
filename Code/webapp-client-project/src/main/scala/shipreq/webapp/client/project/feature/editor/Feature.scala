@@ -105,6 +105,7 @@ object Feature {
     type ForReq          = ForFields[FieldKey.ForSomeReq   ]
     type ForUseCase      = ForFields[FieldKey.ForUseCase   ]
     type ForUseCaseSteps = ForFields[FieldKey.UseCaseStep  ]
+    type ForManualIssues = ForFields[FieldKey.ManualIssue  ]
 
     final case class ForProject(state      : State.ForProject,
                                 editability: Editability.ForProject,
@@ -127,6 +128,9 @@ object Feature {
 
       lazy val forUseCaseSteps: ForUseCaseSteps =
         forRow(RowKey.UseCaseSteps)(Reusable implicitly editability.forUseCaseSteps)
+
+      lazy val forManualIssues: ForManualIssues =
+        forRow(RowKey.ManualIssues)(Editability.forManualIssues)
     }
 
              val reusabilityForEditorAny   : Reusability[ForAnyEditor   ] = Reusability.derive
@@ -189,6 +193,7 @@ object Feature {
     type ForReq          = ForFields[FieldKey.ForSomeReq   ]
     type ForUseCase      = ForFields[FieldKey.ForUseCase   ]
     type ForUseCaseSteps = ForFields[FieldKey.UseCaseStep  ]
+    type ForManualIssues = ForFields[FieldKey.ManualIssue  ]
 
     /** Create only one instance; reusability is byRef */
     final case class ForProject(static      : NewEditor.Static,
@@ -239,6 +244,9 @@ object Feature {
 
       lazy val forUseCaseSteps: ForUseCaseSteps =
         forRow(RowKey.UseCaseSteps)
+
+      lazy val forManualIssues: ForManualIssues =
+        forRow(RowKey.ManualIssues)
 
       @inline def toReadWrite(r: Read.ForProject): ReadWrite.ForProject =
         ReadWrite.ForProject(r, this)
@@ -327,6 +335,7 @@ object Feature {
     type ForReq          = ForFields[FieldKey.ForSomeReq   ]
     type ForUseCase      = ForFields[FieldKey.ForUseCase   ]
     type ForUseCaseSteps = ForFields[FieldKey.UseCaseStep  ]
+    type ForManualIssues = ForFields[FieldKey.ManualIssue  ]
 
     final case class ForProject(read: Read.ForProject, write: Write.ForProject) {
 
@@ -344,6 +353,9 @@ object Feature {
 
       lazy val forUseCaseSteps: ForUseCaseSteps =
         ForFields(read.forUseCaseSteps, write.forUseCaseSteps)
+
+      lazy val forManualIssues: ForManualIssues =
+        ForFields(read.forManualIssues, write.forManualIssues)
 
       def asyncFeature = write.async
       def asyncState = read.async

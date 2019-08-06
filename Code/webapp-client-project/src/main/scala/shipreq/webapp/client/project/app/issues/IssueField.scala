@@ -6,15 +6,15 @@ import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
 
-final case class IssueField[+FK <: FieldKey](key: FK, desc: String)
+final case class IssueField[+FK <: FieldKey](key: FK, desc: Option[String])
 
 object IssueField {
   import DataImplicits._
 
-  val CodeGroupTitle  = IssueField(FieldKey.CodeGroupTitle , ColumnNames.title)
-  val GenericReqTitle = IssueField(FieldKey.GenericReqTitle, ColumnNames.title)
-  val UseCaseTitle    = IssueField(FieldKey.UseCaseTitle   , ColumnNames.title)
-  val Tags            = IssueField(FieldKey.Tags(None)     , ColumnNames.tags)
+  val CodeGroupTitle  = IssueField(FieldKey.CodeGroupTitle , Some(ColumnNames.title))
+  val GenericReqTitle = IssueField(FieldKey.GenericReqTitle, Some(ColumnNames.title))
+  val UseCaseTitle    = IssueField(FieldKey.UseCaseTitle   , Some(ColumnNames.title))
+  val Tags            = IssueField(FieldKey.Tags(None)     , Some(ColumnNames.tags))
 
   def customField(id: CustomFieldId)(implicit cfg: ProjectConfig): IssueField[FieldKey.ForAllReqs] =
     customField(cfg.fields.customFields.need(id))
@@ -36,16 +36,16 @@ object IssueField {
     customField(cfg.fields.custom(id))
 
   def customField(f: CustomField.Text): IssueField[FieldKey.CustomTextField] =
-    IssueField(FieldKey.CustomTextField(f. id), f.name)
+    IssueField(FieldKey.CustomTextField(f. id), Some(f.name))
 
   def customField(f: CustomField.Tag)(implicit cfg: ProjectConfig): IssueField[FieldKey.Tags] =
-    IssueField(FieldKey.Tags(Some(f.id)), f.name(cfg.tags.tree))
+    IssueField(FieldKey.Tags(Some(f.id)), Some(f.name(cfg.tags.tree)))
 
   def customField(f: CustomField.Implication)(implicit cfg: ProjectConfig): IssueField[FieldKey.Implications] =
-    IssueField(FieldKey.Implications(-\/(f.id)), f.name(cfg.reqTypes))
+    IssueField(FieldKey.Implications(-\/(f.id)), Some(f.name(cfg.reqTypes)))
 
   val implications: Direction => IssueField[FieldKey.Implications] =
-    Direction.memo(d => IssueField(FieldKey.Implications(\/-(d)), ColumnNames.implications(d)))
+    Direction.memo(d => IssueField(FieldKey.Implications(\/-(d)), Some(ColumnNames.implications(d))))
 
   def impliedBy = implications(Backwards)
 
@@ -63,6 +63,9 @@ object IssueField {
   def useCaseStep(focus: UseCaseStep.Focus): IssueField[FieldKey.UseCaseStep] = {
     val label = focus.field.stepLabel(focus.uc.pubid.pos, focus.ploc, UseCaseStepLabelFmt.`N.m`)
     val desc  = "UC step " + label
-    IssueField(FieldKey.UseCaseStep(focus.id), desc)
+    IssueField(FieldKey.UseCaseStep(focus.id), Some(desc))
   }
+
+  def manual(issue: ManualIssue): IssueField[FieldKey.ManualIssue] =
+    IssueField(FieldKey.ManualIssue(issue.id), None)
 }

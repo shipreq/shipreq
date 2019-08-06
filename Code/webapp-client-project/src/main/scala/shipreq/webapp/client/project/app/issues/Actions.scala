@@ -7,7 +7,7 @@ import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Allow, Deny}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.issue.{ContentRef, Issue}
-import shipreq.webapp.base.protocol.{UpdateConfigCmd, UpdateContentCmd}
+import shipreq.webapp.base.protocol.{ManualIssueCmd, UpdateConfigCmd, UpdateContentCmd}
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.ui.semantic.{Button, Icon}
 import shipreq.webapp.client.project.app.Style.{issues => *}
@@ -23,7 +23,7 @@ final case class Action(icon: Icon, label: String, cmd: Action.Cmd) {
 }
 
 object Action {
-  type Cmd = UpdateConfigCmd \/ UpdateContentCmd
+  type Cmd = ManualIssueCmd \/ UpdateConfigCmd \/ UpdateContentCmd
 }
 
 object Actions {
@@ -33,8 +33,9 @@ object Actions {
     type Actions = List[Action]
 
     private implicit def singleActionAsList(a: Action): Actions = a :: Nil
-    private implicit def cmdFromUpdateConfig(a: UpdateConfigCmd): Cmd = -\/(a)
+    private implicit def cmdFromUpdateConfig(a: UpdateConfigCmd): Cmd = -\/(\/-(a))
     private implicit def cmdFromUpdateContent(a: UpdateContentCmd): Cmd = \/-(a)
+    private implicit def cmdFromManualIssueCmd(a: ManualIssueCmd): Cmd = -\/(-\/(a))
 
     private def delete(subject: String, cmd: Cmd): Action =
       Action(Icon.Trash, "Delete " + subject, cmd)
@@ -133,7 +134,7 @@ object Actions {
       case i: Issue.DeadTag               => restoreTag(i.tag)
       case i: Issue.EmptyCodeGroup        => deleteReqCodeGroup(i.rcg)
       case i: Issue.UninhabitableTagField => deleteField(i.field)
-
+      case i: Issue.ManualIssue           => delete("issue", ManualIssueCmd.Delete(i.issue.id))
     }
   }
 }

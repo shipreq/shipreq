@@ -157,6 +157,9 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
   final def text(text: Text.AnyNonEmpty, live: Live): Out =
     _text(text.whole, live)
 
+  final def manualIssue(text: Text.ManualIssue.NonEmptyText): Out =
+    _text(text.whole, Live)
+
   final val reqTitle: Req => Out =
     memoByReqId {
       case gr: GenericReq => text(gr.title, gr live cfg.reqTypes, Mandatory)

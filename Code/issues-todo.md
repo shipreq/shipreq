@@ -18,8 +18,6 @@ reuse (or not)
 functionality
 =============
 
-* include manual issues in Issues
-* manual issues shoulds be editable
 * UI: table
   * id should be editable
   * title should be editable

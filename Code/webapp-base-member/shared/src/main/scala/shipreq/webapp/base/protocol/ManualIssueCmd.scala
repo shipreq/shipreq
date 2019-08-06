@@ -1,8 +1,10 @@
 package shipreq.webapp.base.protocol
 
 import boopickle.Pickler
+import japgolly.univeq.UnivEq
 import shipreq.webapp.base.data.ManualIssueId
 import shipreq.webapp.base.text.Text
+import shipreq.webapp.base.text.Text.Equality._
 
 sealed trait ManualIssueCmd
 
@@ -18,4 +20,6 @@ object ManualIssueCmd {
   final case class Delete(id: ManualIssueId) extends ManualIssueCmd
 
   implicit val pickler: Pickler[ManualIssueCmd] = derivePickler
+
+  implicit def univEq: UnivEq[ManualIssueCmd] = UnivEq.derive
 }

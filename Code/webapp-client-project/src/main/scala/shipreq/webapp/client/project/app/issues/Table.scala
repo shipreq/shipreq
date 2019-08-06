@@ -76,15 +76,17 @@ object Table {
       }
 
     val csIds = TableRow.Id.consolidate(groupedRows(csIssueClass, {
-      case i: Row.ForReq    => Some(\/-(i.req.id))
-      case i: Row.ForRcg    => Some(-\/(i.code))
-      case _: Row.ForConfig => None
+      case i: Row.ForReq         => Some(\/-(i.req.id))
+      case i: Row.ForRcg         => Some(-\/(i.code))
+      case _: Row.ForConfig
+         | _: Row.ForManualIssue => None
     })(TableRow.Id.apply))
 
     val csTitles = TableRow.consolidateTitle(groupedRows(csIds, {
-      case i: Row.ForReq    => i.req.title
-      case i: Row.ForRcg    => i.rcg.title
-      case _: Row.ForConfig => Vector.empty
+      case i: Row.ForReq         => i.req.title
+      case i: Row.ForRcg         => i.rcg.title
+      case _: Row.ForConfig      => Vector.empty
+      case i: Row.ForManualIssue => Vector.empty // Don't consolidate manual issue titles
     })((_, _)))
   }
 

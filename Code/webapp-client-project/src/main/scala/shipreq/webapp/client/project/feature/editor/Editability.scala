@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.feature.editor
 
-import japgolly.scalajs.react.Reusability
+import japgolly.scalajs.react.{Reusability, Reusable}
 import scalaz.{-\/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -24,6 +24,9 @@ object Editability {
     val forCodeGroups = ForCodeGroups(reqCodes)
     val forUseCaseSteps = ForUseCaseSteps(reqs.useCases)
   }
+
+  val forManualIssues: Reusable[ForFields[FieldKey.ManualIssue]] =
+    Reusable.byRef(_ => Allow)
 
   final case class ForReqs(cfg: ProjectConfig, reqs: Requirements) {
 

@@ -135,16 +135,23 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
     private val updateContentCmdAsyncW: AsyncFeature.Write.D1[UpdateContentCmd, ErrorMsg] =
       AsyncFeature.Write.D1.init($ zoomStateL State.updateContentCmdAsync)
 
+    private val manualIssueCmdAsyncW: AsyncFeature.Write.D1[ManualIssueCmd, ErrorMsg] =
+      AsyncFeature.Write.D1.init($ zoomStateL State.manualIssueCmdAsync)
+
     private val updateConfigCmdInvoker: UpdateConfigCmd ~=> Callback =
       Reusable.fn(cmd => updateConfigCmdAsyncW(cmd)((s, f) => sspUpdateConfig(cmd, _ => s, f)))
 
     private val updateContentCmdInvoker: UpdateContentCmd ~=> Callback =
       Reusable.fn(cmd => updateContentCmdAsyncW(cmd)((s, f) => sspUpdateContent(cmd, _ => s, f)))
 
-    private val updateConfigOrContentCmdInvoker: (UpdateConfigCmd \/ UpdateContentCmd) ~=> Callback =
+    private val manualIssueCmdInvoker: ManualIssueCmd ~=> Callback =
+      Reusable.fn(cmd => manualIssueCmdAsyncW(cmd)((s, f) => sspUpdateManualIssues(cmd, _ => s, f)))
+
+    private val updateConfigOrContentCmdInvoker: issues.Action.Cmd ~=> Callback =
       Reusable.fn {
-        case -\/(cmd) => updateConfigCmdInvoker(cmd)
-        case \/-(cmd) => updateContentCmdInvoker(cmd)
+        case \/-(cmd)      => updateContentCmdInvoker(cmd)
+        case -\/(-\/(cmd)) => manualIssueCmdInvoker(cmd)
+        case -\/(\/-(cmd)) => updateConfigCmdInvoker(cmd)
       }
 
     private val issuesPage = issues.IssuesPage.StaticProps(
@@ -265,7 +272,9 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
         case Page.Issues =>
           val state    = issuesPageSS(s)
           val creator  = createRW(CreateFeature.RowKey.ManualIssue)
-          val cmdAsync = s.updateConfigCmdAsync.toRead either s.updateContentCmdAsync.toRead
+          val cmdAsync = s.manualIssueCmdAsync.toRead
+                           .either(s.updateConfigCmdAsync.toRead)
+                           .either(s.updateContentCmdAsync.toRead)
           val p = issues.IssuesPage.Props(state, creator, editRW, cmdAsync)
           issuesPage.component(p)
 

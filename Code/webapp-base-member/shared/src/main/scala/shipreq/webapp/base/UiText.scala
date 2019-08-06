@@ -142,5 +142,6 @@ object UiText {
      def descImplicationRequired  (reqType: Mnemonic): String = "Implication required for req type: " + reqType.value
      def descIssueTag             (tag: HashRefKey) : String = PlainText.hashtag(tag)
      def descUninhabitableTagField(field: String)   : String = field + " field has no tags"
+     def descManualIssue                            : String = "Manual"
   }
 }

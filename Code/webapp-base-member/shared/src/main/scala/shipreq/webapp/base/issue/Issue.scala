@@ -3,7 +3,7 @@ package shipreq.webapp.base.issue
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.univeq.UnivEq
-import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.{ManualIssue => ManualIssueInstance, _}
 import shipreq.webapp.base.text.{Atom, Text}
 
 sealed trait IssueCategory
@@ -31,7 +31,7 @@ object IssueClass {
   case object EmptyCodeGroup        extends IssueClass(C.Futility)
   case object ImplicationRequired   extends IssueClass(C.MissingData)
   case object IssueTag              extends IssueClass(C.UserDefined)
-  //case object LooseIssue            extends IssueClass(C.UserDefined)
+  case object ManualIssue           extends IssueClass(C.UserDefined)
   case object UninhabitableTagField extends IssueClass(C.Futility)
 
   implicit def univEq: UnivEq[IssueClass] = UnivEq.derive
@@ -84,6 +84,8 @@ object Issue {
   final case class IssueTagInReq(req  : Req,
                                  loc  : ReqTextLoc,
                                  issue: Atom.AnyIssue) extends Issue(C.IssueTag)
+
+  final case class ManualIssue(issue: ManualIssueInstance) extends Issue(C.ManualIssue)
 
   final case class UninhabitableTagField(field: CustomField.Tag) extends Issue(C.UninhabitableTagField)
 }

@@ -15,6 +15,8 @@ object IssueTracker {
   def apply(project: Project): IssueTracker = {
     val tstateM = new MutableTrackerState
 
+    tstateM.issues ++= project.manualIssues.imap.valuesIterator.map(Issue.ManualIssue)
+
     val ctx = IssueDetector.Ctx(
       project        = project,
       add            = i => tstateM.issues += i,

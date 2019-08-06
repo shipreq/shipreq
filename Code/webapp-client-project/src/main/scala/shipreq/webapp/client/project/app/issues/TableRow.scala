@@ -70,9 +70,10 @@ object TableRow {
         case Column.Id =>
           for (base <- p.idBase) {
             val c = row match {
-              case r: Row.ForReq    => pubidFormat(r.req)
-              case r: Row.ForRcg    => r.renderer(FieldKey.Code)
-              case _: Row.ForConfig => na
+              case r: Row.ForReq         => pubidFormat(r.req)
+              case r: Row.ForRcg         => r.renderer(FieldKey.Code)
+              case _: Row.ForConfig      => na
+              case _: Row.ForManualIssue => na
             }
             cells += base(c)
           }
@@ -84,13 +85,14 @@ object TableRow {
               case r: Row.ForUseCase     => r.renderer(FieldKey.UseCaseTitle)
               case r: Row.ForUseCaseStep => r.ucRenderer(FieldKey.UseCaseTitle)
               case r: Row.ForRcg         => r.renderer(FieldKey.CodeGroupTitle)
+              case r: Row.ForManualIssue => na // This appears in Field Editor
               case _: Row.ForConfig      => na
             }
             cells += base(c)
           }
 
         case Column.FieldName =>
-          addTD(row.fieldOption.fold(na)(_.desc))
+          addTD(row.fieldOption.flatMap(_.desc).fold(na)(d => d))
 
         case Column.FieldEditor =>
           p.editor match {
