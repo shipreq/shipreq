@@ -44,8 +44,8 @@ object DeletionForm {
     private val setReqSel = Reusable.fn.state($ zoomStateL State.selectedReqs).set
     private val setReason = Reusable.fn.state($ zoomStateL State.reason).setStateFn
 
-    private def reasonEditorProps(p: Props, s: State): RichTextEditor.DeletionReason.Props =
-      RichTextEditor.DeletionReason.Props(
+    private def reasonEditorProps(p: Props, s: State): RichTextEditor.DeletionReason.Optional =
+      RichTextEditor.DeletionReason.Optional(
         project          = p.data.project,
         plainTextNoCtx   = p.widgets.plainText,
         textSearch       = p.textSearch,

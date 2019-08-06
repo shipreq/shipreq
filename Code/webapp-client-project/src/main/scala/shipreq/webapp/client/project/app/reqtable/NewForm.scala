@@ -113,7 +113,7 @@ sealed trait NewForm {
 
   sealed case class Props(input        : Input,
                           activeColumns: NonEmptyVector[ColumnPlus],
-                          createFeature: CreateFeature.ReadWrite.ForRow[FK],
+                          createFeature: CreateFeature.ReadWrite.ForRow[FK, CreateContentCmd],
                           cancel       : Callback) {
 
     val editableCols: NonEmptyVector[(ColumnPlus, Editor)] =

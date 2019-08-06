@@ -33,6 +33,11 @@ object RowKey {
     override def fold[F[_ <: AnyFieldKey]](f: Fold[F]): F[FieldKey] = f.useCaseSteps()
   }
 
+  case object ManualIssues extends RowKey {
+    override type FieldKey = FieldKey.ManualIssue
+    override def fold[F[_ <: AnyFieldKey]](f: Fold[F]): F[FieldKey] = f.manualIssues()
+  }
+
   @inline implicit def equality: UnivEq[RowKey] =
     UnivEq.derive
 
@@ -46,7 +51,9 @@ object RowKey {
   case class Fold[F[_ <: FieldKey]](codeGroup   : CodeGroup  => F[CodeGroup   #FieldKey],
                                     genericReq  : GenericReq => F[GenericReq  #FieldKey],
                                     useCase     : UseCase    => F[UseCase     #FieldKey],
-                                    useCaseSteps: ()         => F[UseCaseSteps.FieldKey]) {
+                                    useCaseSteps: ()         => F[UseCaseSteps.FieldKey],
+                                    manualIssues: ()         => F[ManualIssues.FieldKey],
+                                    ) {
     @inline def apply(r: RowKey): F[r.FieldKey] = r.fold(this)
   }
 }

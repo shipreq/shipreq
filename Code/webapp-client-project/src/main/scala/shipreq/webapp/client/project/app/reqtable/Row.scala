@@ -195,7 +195,8 @@ object Row {
       case RowKey.GenericReq  (id) => Some(ForReq      (id))
       case RowKey.UseCase     (id) => Some(ForReq      (id))
       case RowKey.CodeGroup   (id) => Some(ForCodeGroup(id))
-      case RowKey.UseCaseSteps     => None
+      case RowKey.ManualIssues
+         | RowKey.UseCaseSteps     => None
     }
   }
 

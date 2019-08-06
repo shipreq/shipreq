@@ -71,6 +71,9 @@ object Atom {
     @inline final def empty: OptionalText =
       Vector.empty
 
+    def toOptional(o: Option[NonEmptyText]): OptionalText =
+      NonEmptyIso.get(o)
+
     final val NonEmptyIso: Iso[Option[NonEmptyText], OptionalText] =
       Iso[Option[NonEmptyText], OptionalText](_.fold(Vector.empty[Atom])(_.whole))(NonEmptyVector.option)
 

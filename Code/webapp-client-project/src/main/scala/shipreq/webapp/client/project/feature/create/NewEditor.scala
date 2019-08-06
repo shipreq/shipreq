@@ -96,10 +96,15 @@ object NewEditor {
         f => EditTags(f.field),
         f => EditRichText.UseCaseTitle(PreviewId(r, f)))
 
+      def prepareMI(r: RowKey.ManualIssue.type) = FieldKey.FoldForManualIssue[LogicPerField](
+        f => EditRichTextNonEmpty.ManualIssue(PreviewId(r, f)))
+
       RowKey.Fold[ForFields](
-        codeGroup    = prepareCG(_).map(logicToPerField),
-        genericReq   = prepareGR(_).map(logicToPerField),
-        useCase      = prepareUC(_).map(logicToPerField))
+        codeGroup   = prepareCG(_).map(logicToPerField),
+        genericReq  = prepareGR(_).map(logicToPerField),
+        useCase     = prepareUC(_).map(logicToPerField),
+        manualIssue = prepareMI(_).map(logicToPerField),
+      )
     }
 
     final class InternalCtx[A, V](val ctx: Ctx[A, V]) {
@@ -290,7 +295,7 @@ object NewEditor {
           _.startWithStateSnapshot("")(new State(_, pid))
 
         private class State(ss: StateSnapshot[String], pid: PreviewId) extends EditorImpl {
-          override type Props = editor.Props
+          override type Props = editor.Optional
           override def renderImpl = _.render
           override def valueImpl = _.parseResult
           override val props = (args, asyncState) =>
@@ -300,7 +305,7 @@ object NewEditor {
               plainTextNoCtx <- pxPlainTextNoCtx.toCallback
               textSearch     <- pxTextSearch.toCallback
               projectWidgets <- pxProjectWidgets.toCallback
-            } yield editor.Props(
+            } yield editor.Optional(
               project          = project,
               plainTextNoCtx   = plainTextNoCtx,
               textSearch       = textSearch,
@@ -321,6 +326,50 @@ object NewEditor {
       object CustomTextField extends Base(RichTextEditor.CustomTextField)
       object GenericReqTitle extends Base(RichTextEditor.GenericReqTitle)
       object UseCaseTitle    extends Base(RichTextEditor.UseCaseTitle)
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    object EditRichTextNonEmpty {
+      import shipreq.webapp.base.text._
+      import shipreq.webapp.client.project.widgets.RichTextEditor
+
+      abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) extends ForValueType {
+        val T: editor.text.type = editor.text
+
+        override type Value = T.NonEmptyText
+
+        def apply(pid: PreviewId): InitFn =
+          _.startWithStateSnapshot("")(new State(_, pid))
+
+        private class State(ss: StateSnapshot[String], pid: PreviewId) extends EditorImpl {
+          override type Props = editor.NonEmpty
+          override def renderImpl = _.render
+          override def valueImpl = _.parseResult
+          override val props = (args, asyncState) =>
+            for {
+              previewRW      <- previewW.toReadWriteCB
+              project        <- pxProject.toCallback
+              plainTextNoCtx <- pxPlainTextNoCtx.toCallback
+              textSearch     <- pxTextSearch.toCallback
+              projectWidgets <- pxProjectWidgets.toCallback
+            } yield editor.NonEmpty(
+              project          = project,
+              plainTextNoCtx   = plainTextNoCtx,
+              textSearch       = textSearch,
+              projectWidgets   = projectWidgets,
+              edit             = ss,
+              asyncStatus      = EditorStatus.async(asyncState),
+              abort            = args.abort,
+              commitFn         = args.commitFn,
+              commitVerb       = args.commitVerb,
+              preview          = previewRW(pid),
+              preEditValue     = None,
+              extraKbShortcuts = args.extraKbShortcuts,
+              showInstructions = ShowInstructions)
+        }
+      }
+
+      object ManualIssue extends Base(RichTextEditor.ManualIssue)
     }
 
   }

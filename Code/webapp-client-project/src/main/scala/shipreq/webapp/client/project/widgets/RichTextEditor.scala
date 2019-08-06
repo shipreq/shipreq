@@ -18,21 +18,37 @@ import shipreq.webapp.client.project.widgets.RichTextEditor.hardcodedLive
 
 sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, final val text: TextType) {
 
-  type CommitFn    = text.OptionalText ~=> Callback
+  sealed trait Props {
+    val project         : Project
+    val plainTextNoCtx  : PlainText.ForProject.NoCtx
+    val textSearch      : TextSearch
+    val projectWidgets  : ProjectWidgets.AnyCtx
+    val edit            : StateSnapshot[String]
+    val asyncStatus     : Option[EditorStatus.Async]
+    val abort           : Option[Callback]
+    val commitVerb      : String
+    val preview         : PreviewFeature.ReadWrite.Single
+    val extraKbShortcuts: KeyboardTheme.Shortcuts
+    val showInstructions: Boolean
+    val status          : EditorStatus
+    val wantPreview     : Boolean
+  }
 
-  case class Props(project         : Project,
-                   plainTextNoCtx  : PlainText.ForProject.NoCtx,
-                   textSearch      : TextSearch,
-                   projectWidgets  : ProjectWidgets.AnyCtx,
-                   edit            : StateSnapshot[String],
-                   asyncStatus     : Option[EditorStatus.Async],
-                   abort           : Option[Callback],
-                   commitFn        : Option[CommitFn],
-                   commitVerb      : String,
-                   preview         : PreviewFeature.ReadWrite.Single,
-                   preEditValue    : Option[text.OptionalText],
-                   extraKbShortcuts: KeyboardTheme.Shortcuts,
-                   showInstructions: Boolean) {
+  // ===================================================================================================================
+
+  case class Optional(project         : Project,
+                      plainTextNoCtx  : PlainText.ForProject.NoCtx,
+                      textSearch      : TextSearch,
+                      projectWidgets  : ProjectWidgets.AnyCtx,
+                      edit            : StateSnapshot[String],
+                      asyncStatus     : Option[EditorStatus.Async],
+                      abort           : Option[Callback],
+                      commitFn        : Option[Optional.CommitFn],
+                      commitVerb      : String,
+                      preview         : PreviewFeature.ReadWrite.Single,
+                      preEditValue    : Option[text.OptionalText],
+                      extraKbShortcuts: KeyboardTheme.Shortcuts,
+                      showInstructions: Boolean) extends Props {
 
     val ucNum       = projectWidgets.ctx.ucNum(project)
     val richText    = text.parse(project, ucNum)(edit.value)
@@ -44,6 +60,43 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
     def render: VdomElement = Component(this)
   }
+
+  object Optional {
+    type CommitFn = text.OptionalText ~=> Callback
+  }
+
+  // ===================================================================================================================
+
+  case class NonEmpty(project         : Project,
+                      plainTextNoCtx  : PlainText.ForProject.NoCtx,
+                      textSearch      : TextSearch,
+                      projectWidgets  : ProjectWidgets.AnyCtx,
+                      edit            : StateSnapshot[String],
+                      asyncStatus     : Option[EditorStatus.Async],
+                      abort           : Option[Callback],
+                      commitFn        : Option[NonEmpty.CommitFn],
+                      commitVerb      : String,
+                      preview         : PreviewFeature.ReadWrite.Single,
+                      preEditValue    : Option[text.NonEmptyText],
+                      extraKbShortcuts: KeyboardTheme.Shortcuts,
+                      showInstructions: Boolean) extends Props {
+
+    val ucNum       = projectWidgets.ctx.ucNum(project)
+    val richTextO   = text.parseNonEmpty(project, ucNum)(edit.value)
+    val parseResult = DataValidators.genericRichTextNonEmpty(text, plainTextNoCtx).audit(richTextO)
+    val validated   = PotentialChange.fromDisjunction(parseResult).ignoreOption(preEditValue)
+    def commit      = (t: text.NonEmptyText) => commitFn.map(_ apply t)
+    val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
+    val wantPreview = richTextO.exists(Text isRich _.whole)
+
+    def render: VdomElement = Component(this)
+  }
+
+  object NonEmpty {
+    type CommitFn = text.NonEmptyText ~=> Callback
+  }
+
+  // ===================================================================================================================
 
 //  implicit val reusabilityProps: Reusability[Props] =
 //    Reusability.never // TODO Reusability.derive
@@ -97,7 +150,10 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
             help = Some(RichTextEditorHelp.modal.show)))
 
       def richText: VdomTag =
-        p.projectWidgets.text(p.richText, hardcodedLive, Mandatory.Not)
+        p match {
+          case p2: Optional => p.projectWidgets.text(p2.richText, hardcodedLive, Mandatory.Not)
+          case p2: NonEmpty => p.projectWidgets.text(text.toOptional(p2.richTextO), hardcodedLive, Mandatory)
+        }
 
       def preview: VdomNode =
         EditTheme.renderPreview(p.preview, p.wantPreview, richText)
@@ -146,4 +202,6 @@ object RichTextEditor {
   object CustomTextField extends RichTextEditor("CTF", Text.CustomTextField)
 
   object DeletionReason extends RichTextEditor("DR", Text.DeletionReason)
+
+  object ManualIssue extends RichTextEditor("MI", Text.ManualIssue)
 }

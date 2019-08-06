@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.feature.editor
 
-import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.Reusability
 import scala.reflect.ClassTag
 import scalaz.{-\/, \/-, ~~>}
@@ -118,6 +117,12 @@ object FieldKey {
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.title(this)
   }
 
+  final case class ManualIssue(id: ManualIssueId) extends FieldKey {
+    override type Args = Unit
+    override type Change = Text.ManualIssue.NonEmptyText
+    def foldMI[F[_, _]](f: FoldForManualIssues[F]): F[Args, Change] = f.text(this)
+  }
+
   @inline implicit def equalityForSomeReq: UnivEq[ForSomeReq] =
     UnivEq.derive
 
@@ -206,6 +211,12 @@ object FieldKey {
     override def apply(f: UseCaseStep): F[f.Args, f.Change] = f.foldUCS(this)
     override def map[G[_, _]](t: F ~~> G): FoldForUseCaseSteps[G] =
       FoldForUseCaseSteps(f => t(step(f)))
+  }
+
+  case class FoldForManualIssues[F[_, _]](text: ManualIssue => F[ManualIssue#Args, ManualIssue#Change]) extends Fold[ManualIssue, F] {
+    override def apply(f: ManualIssue): F[f.Args, f.Change] = f.foldMI(this)
+    override def map[G[_, _]](t: F ~~> G): FoldForManualIssues[G] =
+      FoldForManualIssues(f => t(text(f)))
   }
 
   final class Type[F <: FieldKey](implicit ct: ClassTag[F]) {

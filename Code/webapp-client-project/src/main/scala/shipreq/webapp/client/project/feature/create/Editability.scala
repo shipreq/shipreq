@@ -20,10 +20,12 @@ object Editability {
 
   final case class ForProject(cfg: ProjectConfig) {
     def apply(r: RowKey): ForFields[r.FieldKey] =
-      r.fold(RowKey.Fold(
+      r.foldF(RowKey.Fold(
         _ => ForCodeGroup,
         x => forGenericReq(x.reqTypeId),
-        _ => forUseCase))
+        _ => forUseCase,
+        _ => ForManualIssue,
+      ))
 
     def forGenericReq(reqTypeId: CustomReqTypeId): ForFields[FieldKey.ForGenericReq] =
       ForFields.via(
@@ -40,6 +42,9 @@ object Editability {
     ForFields.via(
       EE.ForCodeGroup(Allow),
       FieldKey.editorFieldCG.reverseGet)
+
+  val ForManualIssue: ForFields[FieldKey.ForManualIssue] =
+    _ => Allow
 
   /*
   final case class ForFields[-FK <: FieldKey](fn: Reusable[FK => Permission]) {

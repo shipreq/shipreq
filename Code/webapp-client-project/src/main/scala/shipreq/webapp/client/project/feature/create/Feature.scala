@@ -6,8 +6,8 @@ import japgolly.scalajs.react.MonocleReact._
 import scalaz.\/
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.protocol.{CreateContentCmd, ServerSideProcInvoker}
 import shipreq.webapp.base.feature._
+import shipreq.webapp.base.protocol.{CreateContentCmd, ManualIssueCmd, ServerSideProcInvoker}
 
 /** Nothing here has `Reusability` because:
   *
@@ -103,10 +103,10 @@ object Feature {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object Write {
 
-    final case class ForRow[-FK <: FieldKey](rowAccess : StateAccessPure[State.ForFields],
-                                             rowEditors: NewEditor.ForFields[FK],
-                                             async     : AsyncFeature.Write.D0[AsyncError],
-                                             createIO  : ServerSideProcInvoker[CreateContentCmd, ErrorMsg, Any]) {
+    final case class ForRow[-FK <: FieldKey, -Cmd](rowAccess : StateAccessPure[State.ForFields],
+                                                   rowEditors: NewEditor.ForFields[FK],
+                                                   async     : AsyncFeature.Write.D0[AsyncError],
+                                                   ssp       : ServerSideProcInvoker[Cmd, ErrorMsg, Any]) {
       def startEditor(field: FK): Editor[field.Args, field.Value] = {
         val stateAccess: StateAccessPure[State.ForEditor[Nothing, Any]] = rowAccess zoomStateL Optics.mapValue(field)
         val ctx = NewEditor.Ctx[field.Args, field.Value](field.cast2(stateAccess))
@@ -114,20 +114,32 @@ object Feature {
       }
 
       /** Initiates a call to the server to create content for this row. */
-      def create(cmd: CreateContentCmd, onSuccess: Callback = Callback.empty): Callback =
-        async((s, f) => createIO(cmd, _ => s >> onSuccess, f))
+      def create(cmd: Cmd, onSuccess: Callback = Callback.empty): Callback =
+        async((s, f) => ssp(cmd, _ => s >> onSuccess, f))
     }
 
-    final case class ForProject(static     : NewEditor.Static,
-                                stateAccess: StateAccessPure[State.ForProject],
-                                async      : AsyncFeature.Write.D1[RowKey, AsyncError],
-                                createIO   : ServerSideProcInvoker[CreateContentCmd, ErrorMsg, Any]) {
-      def apply(row: RowKey): ForRow[row.FieldKey] =
-        ForRow[row.FieldKey](
+    final case class ForProject(static              : NewEditor.Static,
+                                stateAccess         : StateAccessPure[State.ForProject],
+                                async               : AsyncFeature.Write.D1[RowKey, AsyncError],
+                                sspCreateContent    : ServerSideProcInvoker[CreateContentCmd, ErrorMsg, Any],
+                                sspCreateManualIssue: ServerSideProcInvoker[ManualIssueCmd, ErrorMsg, Any],
+                               ) {
+
+      private type SSP[-A] = ServerSideProcInvoker[A, ErrorMsg, Any]
+
+      private val foldCmd = RowKey.FoldCmd[SSP](
+        codeGroup   = _ => sspCreateContent,
+        genericReq  = _ => sspCreateContent,
+        useCase     = _ => sspCreateContent,
+        manualIssue = _ => sspCreateManualIssue,
+      )
+
+      def apply(row: RowKey): ForRow[row.FieldKey, row.Cmd] =
+        ForRow[row.FieldKey, row.Cmd](
           stateAccess zoomStateL Optics.innerMap(row),
           NewEditor.forRow(static, row),
           async(row),
-          createIO)
+          foldCmd(row))
 
       @inline def toReadWrite(r: Read.ForProject): ReadWrite.ForProject =
         ReadWrite.ForProject(r, this)
@@ -138,17 +150,17 @@ object Feature {
   object ReadWrite {
     type ForEditor[-A, +V] = Read.ForEditor[A, V]
 
-    final case class ForRow[-FK <: FieldKey](read: Read.ForFields[FK], write: Write.ForRow[FK]) {
+    final case class ForRow[-FK <: FieldKey, -Cmd](read: Read.ForFields[FK], write: Write.ForRow[FK, Cmd]) {
       def apply(f: FK): Permission.DeniedOr[ForEditor[f.Args, f.Value]] =
         read(f)(write.startEditor(f))
 
       /** Initiates a call to the server to create content for this row. */
-      def create(cmd: CreateContentCmd, onSuccess: Callback = Callback.empty): Callback =
+      def create(cmd: Cmd, onSuccess: Callback = Callback.empty): Callback =
         write.create(cmd, onSuccess)
     }
 
     final case class ForProject(read: Read.ForProject, write: Write.ForProject) {
-      def apply(r: RowKey): ForRow[r.FieldKey] =
+      def apply(r: RowKey): ForRow[r.FieldKey, r.Cmd] =
         ForRow(read(r), write(r))
     }
   }

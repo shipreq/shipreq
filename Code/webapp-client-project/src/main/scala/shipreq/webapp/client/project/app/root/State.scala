@@ -67,7 +67,8 @@ object AsyncKey {
       case f: EditorFeature.FieldKey.ForSomeReq  => Some(reqdetail.Cell.ReqField(f))
       case f: EditorFeature.FieldKey.UseCaseStep => Some(reqdetail.Cell.UseCaseStep(f.id))
       case EditorFeature.FieldKey.Code
-         | EditorFeature.FieldKey.CodeGroupTitle => None
+         | EditorFeature.FieldKey.CodeGroupTitle
+         | EditorFeature.FieldKey.ManualIssue(_) => None
     }
     case UseCaseStepCtrls  (id) => Some(reqdetail.Cell.UseCaseStepCtrls  (id))
     case AddUseCaseStep    (id) => Some(reqdetail.Cell.AddUseCaseStep    (id))

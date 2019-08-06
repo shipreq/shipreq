@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import shipreq.base.util._
@@ -62,21 +61,21 @@ final class NewStuff(state        : State,
         val cancel: Callback =
           setState.setState(State.Closed(Some(s)))
 
-        val props: NewForm#Props =
-          s match {
+        s match {
 
-            case r@RowKey.CodeGroup =>
-              NewForm.ForCodeGroup.Props((), activeColumns, create(r), cancel)
+          case r@RowKey.CodeGroup =>
+            Some(NewForm.ForCodeGroup.Props((), activeColumns, create(r), cancel).render)
 
-            case r: RowKey.GenericReq =>
-              val rt = reqTypes.custom.need(r.reqTypeId)
-              NewForm.ForGenericReq.Props(rt, activeColumns, create(r), cancel)
+          case r: RowKey.GenericReq =>
+            val rt = reqTypes.custom.need(r.reqTypeId)
+            Some(NewForm.ForGenericReq.Props(rt, activeColumns, create(r), cancel).render)
 
-            case r@RowKey.UseCase =>
-              NewForm.ForUseCase.Props((), activeColumns, create(r), cancel)
+          case r@RowKey.UseCase =>
+            Some(NewForm.ForUseCase.Props((), activeColumns, create(r), cancel).render)
+
+          case RowKey.ManualIssue =>
+            None
         }
-
-        Some(props.render)
 
       case _ =>
         None

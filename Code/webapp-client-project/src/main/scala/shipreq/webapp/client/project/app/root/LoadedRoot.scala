@@ -104,7 +104,8 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
           pxTextSearch),
         $ zoomStateL State.create,
         createAsyncW,
-        sspCreateContent)
+        sspCreateContent,
+        sspUpdateManualIssues)
 
     private val editAsyncW: AsyncFeature.Write.D2[EditorFeature.RowKey, AsyncKey, ErrorMsg] =
       AsyncFeature.Write.D2.init($ zoomStateL State.editAsync)
@@ -116,7 +117,9 @@ final class LoadedRoot(initPageData: InitPageData, global: Global) {
           pxProject,
           pxPlainText,
           pxTextSearch,
-          sspUpdateContent),
+          sspUpdateContent,
+          sspUpdateManualIssues,
+        ),
         $ zoomStateL State.edit,
         editAsyncW.mapKey1(AsyncKey.ToEditor))
 

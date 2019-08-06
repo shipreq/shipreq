@@ -30,9 +30,10 @@ sealed trait FieldKey {
 
 object FieldKey {
 
-  sealed trait ForCodeGroup  extends FieldKey   { def foldCG[F[_, _]](f: FoldForCodeGroup [F]): F[Args, Value] }
-  sealed trait ForGenericReq extends ForSomeReq { def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Value] }
-  sealed trait ForUseCase    extends ForSomeReq { def foldUC[F[_, _]](f: FoldForUseCase   [F]): F[Args, Value] }
+  sealed trait ForCodeGroup   extends FieldKey   { def foldCG[F[_, _]](f: FoldForCodeGroup  [F]): F[Args, Value] }
+  sealed trait ForGenericReq  extends ForSomeReq { def foldGR[F[_, _]](f: FoldForGenericReq [F]): F[Args, Value] }
+  sealed trait ForUseCase     extends ForSomeReq { def foldUC[F[_, _]](f: FoldForUseCase    [F]): F[Args, Value] }
+  sealed trait ForManualIssue extends FieldKey   { def foldMI[F[_, _]](f: FoldForManualIssue[F]): F[Args, Value] }
 
   /** Fields apply to one or more type of reqs */
   sealed trait ForSomeReq extends FieldKey
@@ -83,6 +84,11 @@ object FieldKey {
   case object UseCaseTitle extends ForUseCase {
     override type Value = Text.UseCaseTitle.OptionalText
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Value] = f.title(this)
+  }
+
+  case object ManualIssue extends ForManualIssue {
+    override type Value = Text.ManualIssue.NonEmptyText
+    override def foldMI[F[_, _]](f: FoldForManualIssue[F]): F[Args, Value] = f.text(this)
   }
 
   @inline implicit def equalityForSomeReq: UnivEq[ForSomeReq] =
@@ -140,6 +146,13 @@ object FieldKey {
         implications    = f => t(implications   (f)),
         tags            = f => t(tags           (f)),
         title           = f => t(title          (f)))
+  }
+
+  case class FoldForManualIssue[F[_, _]](text: ManualIssue.type => F[ManualIssue.Args, ManualIssue.Value]) extends Fold[ForManualIssue, F] {
+    override def apply(f: ForManualIssue): F[f.Args, f.Value] = f.foldMI(this)
+    override def map[G[_, _]](t: F ~~> G): FoldForManualIssue[G] =
+      FoldForManualIssue(
+        text = f => t(text(f)))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
