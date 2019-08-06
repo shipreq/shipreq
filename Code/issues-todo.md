@@ -1,8 +1,3 @@
-terminology
-===========
-
-* issue tag/type vs issue category/type
-
 reuse (or not)
 ==============
 
@@ -23,4 +18,4 @@ functionality
   * title should be editable
   * dynamic columns
   * custom sorting
-* Resolve TODOs in new code
+* Add integration test

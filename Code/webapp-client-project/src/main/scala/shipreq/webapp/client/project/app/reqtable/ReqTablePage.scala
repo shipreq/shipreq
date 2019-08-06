@@ -132,8 +132,6 @@ object ReqTablePage {
     val setSelection: SetFn[RowSelection  ] = Reusable.fn.state(stateAccess zoomStateL State.selection).setStateFn
     val setModal    : SetFn[Modal.State   ] = Reusable.fn.state(stateAccess zoomStateL State.modal).setStateFn
 
-    // TODO Use Px.ManualCollection -- https://github.com/japgolly/scalajs-react/pull/456
-
     private val manualPxs = Px.ManualCollection()
 
     private def pxProps[A: Reusability](f: Props => A): Px.ThunkM[A] = {
