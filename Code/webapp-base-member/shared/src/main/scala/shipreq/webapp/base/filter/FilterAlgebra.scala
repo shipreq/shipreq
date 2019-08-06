@@ -230,7 +230,11 @@ object FilterAlgebra {
       )
 
     def byTag(f: Set[ApplicableTagId] => Boolean) =
-      reqOnly(r => tagLookup(r.id) exists f)
+      make(
+        req         = r => tagLookup(r.id) exists f,
+        codeGroup   = ignore,
+        manualIssue = i => f(i.tags),
+      )
 
     def byIssue(f: Issues.ForSource => Boolean) =
       make(

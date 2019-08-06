@@ -7,7 +7,13 @@ import shipreq.webapp.base.text.Text.Equality._
 
 final case class ManualIssueId(value: Int) extends TaggedInt
 
-final case class ManualIssue(id: ManualIssueId, text: Text.ManualIssue.NonEmptyText)
+final case class ManualIssue(id: ManualIssueId, text: Text.ManualIssue.NonEmptyText) {
+
+  lazy val tags: Set[ApplicableTagId] =
+    text.iterator.collect {
+      case t: Text.ManualIssue.TagRef => t.value
+    }.toSet
+}
 
 object ManualIssue {
   type IMap = shipreq.base.util.IMap[ManualIssueId, ManualIssue]
@@ -17,6 +23,8 @@ object ManualIssue {
 
   implicit def univEq: UnivEq[ManualIssue] = UnivEq.derive
 }
+
+// =====================================================================================================================
 
 final case class ManualIssues(imap  : ManualIssue.IMap,
                               nextId: ManualIssueId) {
