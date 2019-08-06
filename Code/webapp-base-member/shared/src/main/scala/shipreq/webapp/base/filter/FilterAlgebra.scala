@@ -210,35 +210,54 @@ object FilterAlgebra {
     import shipreq.webapp.base.data.{ReqType => _, _}
     lazy val issuesBySource = p.issues.bySource
 
-    def make(req      : Req       => Boolean = null,
-             codeGroup: CodeGroup => Boolean = null) =
+    def ignore: Any => Boolean = null
+    def fail: Any => Boolean = _ => false
+
+    def make(req        : Req         => Boolean,
+             codeGroup  : CodeGroup   => Boolean,
+             manualIssue: ManualIssue => Boolean) =
       CompiledFilter(
-        req       = OptionalBoolFn(Option(req)),
-        codeGroup = OptionalBoolFn(Option(codeGroup)))
+        req         = OptionalBoolFn(Option(req)),
+        codeGroup   = OptionalBoolFn(Option(codeGroup)),
+        manualIssue = OptionalBoolFn(Option(manualIssue)),
+      )
+
+    def reqOnly(f: Req => Boolean) =
+      make(
+        req         = f,
+        codeGroup   = ignore,
+        manualIssue = fail,
+      )
 
     def byTag(f: Set[ApplicableTagId] => Boolean) =
-      make(req = r => tagLookup(r.id) exists f)
+      reqOnly(r => tagLookup(r.id) exists f)
 
     def byIssue(f: Issues.ForSource => Boolean) =
       make(
-        r => f(issuesBySource(r.id)),
-        g => f(issuesBySource(g.id)))
+        req         = r => f(issuesBySource(r.id)),
+        codeGroup   = g => f(issuesBySource(g.id)),
+        manualIssue = fail,
+      )
 
     def byCustomIssueType(f: Vector[Atom.AnyIssue] => Boolean) =
       make(
-        r => f(issueLookup.forReq(r.id)),
-        g => f(issueLookup.forReqCode(g.id)))
+        req         = r => f(issueLookup.forReq(r.id)),
+        codeGroup   = g => f(issueLookup.forReqCode(g.id)),
+        manualIssue = fail,
+      )
 
     def byImplication(reqs: Extensional.ReqSet, tc: TransitiveClosure[ReqId]) = {
       val whitelist = reqs.foldLeft(UnivEq.emptySet[ReqId])(_ ++ tc(_))
-      make(req = whitelist contains _.id)
+      reqOnly(whitelist contains _.id)
     }
 
     def byText(substr: String) = {
-      val (fa, fb) = textSearch.ignoreCaseSingleSpaces.searchFilter(substr)
+      val searchFilter = textSearch.ignoreCaseSingleSpaces.searchFilter(substr)
       CompiledFilter(
-        req       = fa.contramap((_: Req).id),
-        codeGroup = fb.contramap((_: CodeGroup).id))
+        req         = searchFilter.req        .contramap(_.id),
+        codeGroup   = searchFilter.codeGroup  .contramap(_.id),
+        manualIssue = searchFilter.manualIssue.contramap(_.id),
+      )
     }
 
     def byRegex(regex: String) = {
@@ -250,16 +269,18 @@ object FilterAlgebra {
           def custom = p.config.liveCustomTextFields.exists(f => projectText.customTextField(f.id)(r) exists m)
           title || custom
         },
-        g => m(projectText codeGroupTitle g))
+        g => m(projectText codeGroupTitle g),
+        i => m(projectText.manualIssue(i.text))
+      )
     }
 
     var alg: ExtensionalF[CompiledFilter] => CompiledFilter = null
     alg = {
       case Text          (substr, _)     => byText(substr)
-      case Reqs          (reqs)          => make(req = r => reqs.contains(r.id))
+      case Reqs          (reqs)          => reqOnly(r => reqs.contains(r.id))
       case ImpliesAnyOf  (reqs)          => byImplication(reqs, p.implicationTgtToSrcTC)
       case ImpliedByAnyOf(reqs)          => byImplication(reqs, p.implicationSrcToTgtTC)
-      case ReqType       (rt)            => make(req = _.reqTypeId ==* rt)
+      case ReqType       (rt)            => reqOnly(_.reqTypeId ==* rt)
       case Presence      (Attr.AnyIssue) => byIssue(_.issues.nonEmpty)
       case Presence      (Attr.AnyTag)   => byTag(_.nonEmpty)
       case HashRef       (-\/(issue))    => byCustomIssueType(_.exists(_.typ ==* issue))

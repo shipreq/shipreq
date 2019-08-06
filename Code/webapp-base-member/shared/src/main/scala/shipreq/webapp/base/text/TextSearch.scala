@@ -157,37 +157,54 @@ object TextSearch {
 
   @inline private implicit def autoNeedValue[A](n: Need[A]): A = n.value
 
-  final case class IndexEntryFilter(req      : OptionalBoolFn[IndexEntryR],
-                                    codeGroup: OptionalBoolFn[IndexEntryG]) {
+  final case class IndexEntryFilter(req        : OptionalBoolFn[IndexEntryR],
+                                    codeGroup  : OptionalBoolFn[IndexEntryG],
+                                    manualIssue: OptionalBoolFn[IndexEntryM],
+                                   ) {
 
     def &&(that: IndexEntryFilter): IndexEntryFilter =
       IndexEntryFilter(
         req && that.req,
-        codeGroup && that.codeGroup)
+        codeGroup && that.codeGroup,
+        manualIssue && that.manualIssue,
+      )
   }
 
-  @inline private def IEF(req      : IndexEntryR => Boolean = null,
-                          codeGroup: IndexEntryG => Boolean = null): IndexEntryFilter =
+  private def IEF(req        : IndexEntryR => Boolean = null,
+                  codeGroup  : IndexEntryG => Boolean = null,
+                  manualIssue: IndexEntryM => Boolean = null): IndexEntryFilter =
     IndexEntryFilter(
       OptionalBoolFn(Option(req)),
-      OptionalBoolFn(Option(codeGroup)))
+      OptionalBoolFn(Option(codeGroup)),
+      OptionalBoolFn(Option(manualIssue)),
+    )
 
   private type SearchFn = BoyerMooreHorspool => IndexEntryFilter
 
   private val searchAll: SearchFn =
-    a => IEF(e => a.search(e.title) || a.search(e.textFields), _.title |> a.search)
+    a => IEF(
+      e => a.search(e.title) || a.search(e.textFields),
+      _.title |> a.search,
+      _.title |> a.search,
+    )
 
   private val searchTitles: SearchFn =
-    a => IEF(_.title |> a.search, _.title |> a.search)
+    a => IEF(
+      _.title |> a.search,
+      _.title |> a.search,
+      _.title |> a.search,
+    )
 
   // Indexes
 
   final case class IndexEntryG(group: CodeGroup, title: Normalised)
   final case class IndexEntryR(req: Req, title: Normalised, textFields: Need[Normalised])
+  final case class IndexEntryM(issue: ManualIssue, title: Normalised)
 
   final class Index private[TextSearch](norm    : Normaliser,
-                                        indexR  : IMap[ReqId,     IndexEntryR],
-                                        indexG  : IMap[ReqCodeId, IndexEntryG],
+                                        indexR  : IMap[ReqId,         IndexEntryR],
+                                        indexG  : IMap[ReqCodeId,     IndexEntryG],
+                                        indexM  : IMap[ManualIssueId, IndexEntryM],
                                         filter  : Option[IndexEntryFilter],
                                         searchFn: SearchFn) {
 
@@ -195,7 +212,7 @@ object TextSearch {
       filter.fold(f)(_ && f)
 
     private def withNewFilter(f: IndexEntryFilter): Index =
-      new Index(norm, indexR, indexG, Some(newFilter(f)), searchFn)
+      new Index(norm, indexR, indexG, indexM, Some(newFilter(f)), searchFn)
 
     def filterReq(f: Req => Boolean): Index =
       withNewFilter(IEF(_.req |> f))
@@ -204,7 +221,7 @@ object TextSearch {
       filterReq(ids contains _.id)
 
     def titlesOnly: Index =
-      new Index(norm, indexR, indexG, filter, searchTitles)
+      new Index(norm, indexR, indexG, indexM, filter, searchTitles)
 
     private def search[A](substr: String, s: IndexEntryFilter => A)(matchEverything: => A): A =
       if (substr.isEmpty)
@@ -215,11 +232,19 @@ object TextSearch {
         s(f)
       }
 
-    def searchFilter(substr: String): (OptionalBoolFn[ReqId], OptionalBoolFn[ReqCodeId]) =
-      search(substr, i => (
-        i.req      .map[ReqId]    (f => indexR.get(_) exists f),
-        i.codeGroup.map[ReqCodeId](f => indexG.get(_) exists f)))(
-        (OptionalBoolFn.empty, OptionalBoolFn.empty))
+    case class SearchFilter(req        : OptionalBoolFn[ReqId],
+                            codeGroup  : OptionalBoolFn[ReqCodeId],
+                            manualIssue: OptionalBoolFn[ManualIssueId])
+    object SearchFilter {
+      val empty = apply(OptionalBoolFn.empty, OptionalBoolFn.empty, OptionalBoolFn.empty)
+    }
+
+    def searchFilter(substr: String): SearchFilter =
+      search(substr, i => SearchFilter(
+        req         = i.req        .map[ReqId]        (f => indexR.get(_) exists f),
+        codeGroup   = i.codeGroup  .map[ReqCodeId]    (f => indexG.get(_) exists f),
+        manualIssue = i.manualIssue.map[ManualIssueId](f => indexM.get(_) exists f),
+      ))(SearchFilter.empty)
 
     def searchAll(substr: String): Stream[Req] = {
       // whitespace.split(substr).filter(_.nonEmpty)
@@ -255,10 +280,19 @@ final class TextSearch(project: Project,  plainText: PlainText.ForProject.NoCtx)
       project.content.reqCodes.groups.iterator map each
     }
 
-    val indexR = IMap.empty[ReqId,     IndexEntryR](_.req.id)   ++ indexValuesR
-    val indexG = IMap.empty[ReqCodeId, IndexEntryG](_.group.id) ++ indexValuesG
+    def indexValuesM: Iterator[IndexEntryM] = {
+      def each(i: ManualIssue): IndexEntryM = {
+        val title = norm(plainText.manualIssue(i.text))
+        IndexEntryM(i, title)
+      }
+      project.manualIssues.imap.valuesIterator map each
+    }
 
-    new Index(norm, indexR, indexG, None, searchAll)
+    val indexR = IMap.empty[ReqId,         IndexEntryR](_.req.id)   ++ indexValuesR
+    val indexG = IMap.empty[ReqCodeId,     IndexEntryG](_.group.id) ++ indexValuesG
+    val indexM = IMap.empty[ManualIssueId, IndexEntryM](_.issue.id) ++ indexValuesM
+
+    new Index(norm, indexR, indexG, indexM, None, searchAll)
   }
 
   val ignoreCaseSingleSpaces = index(Normaliser.ignoreCaseSingleSpaces)
