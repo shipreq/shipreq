@@ -2,6 +2,7 @@ package shipreq.webapp.base.test
 
 import japgolly.microlibs.testutil.TestUtil
 import scalacss.internal.StyleA
+import teststate.domzipper.ErrorHandler.Id
 import teststate.run.Report.AssertionSettings
 import shipreq.base.util.DebugImplicits
 
@@ -12,6 +13,8 @@ object TestState
     with teststate.ExtScalaJsReact
     with teststate.ExtScalaz
     with DebugImplicits {
+
+  type DomZipperTo[A] = DomZipperJsF[Id, A]
 
   implicit class StyleAExt(private val self: StyleA) extends AnyVal {
     def selector: String =

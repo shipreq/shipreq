@@ -8,13 +8,14 @@ import monocle.macros.Lenses
 import scala.util.{Failure, Success, Try}
 import teststate.run.Report.AssertionSettings
 import shipreq.base.util.Debug._
-import shipreq.webapp.base.data.{ExternalPubid, Obfuscated, Project, ProjectId}
+import shipreq.webapp.base.data.{ExternalPubid, Obfuscated, Project}
 import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.InitPageData
 import shipreq.webapp.base.test.SampleProject5
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.client.project.app.cfg.reqtypes.{CfgReqTypesObs, CfgReqTypesDsl => CRT}
+import shipreq.webapp.client.project.app.issues.{IssuesPageObs, IssuesPageTestDsl => IP}
 import shipreq.webapp.client.project.app.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
 import shipreq.webapp.client.project.app.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
 import shipreq.webapp.client.project.app.root.{ProjectHomeTestDsl => PH, _}
@@ -42,12 +43,12 @@ object ProjectSpaTestDsl {
   case class Ref(global: TestGlobal, tester: ComponentTester[Props, State, _]) {
     def observe(): Obs = {
       val $ = tester.component.domZipper
-      val nav = new NavObs($(">nav"))
       val inner = $(">div")(">div,>main")
+      val nav = new NavObs($(">nav"), inner)
 
       val empty: Obs = {
         val e = Left("Chosen page is: " + nav.page)
-        Obs(global.unsafeProject(), nav, e, e, e, e)
+        Obs(global.unsafeProject(), nav, e, e, e, e, e)
       }
 
       nav.page match {
@@ -55,12 +56,13 @@ object ProjectSpaTestDsl {
         case Page.CfgReqTypes  => empty.copy(cfgReqTypes = Try(new CfgReqTypesObs(inner)))
         case Page.ReqTable     => empty.copy(reqTable    = Try(new ReqTableObs(global, inner)))
         case Page.ReqDetail(_) => empty.copy(reqDetail   = Try(new ReqDetailObs(inner)))
+        case Page.Issues       => empty.copy(issues      = Try(new IssuesPageObs(inner)))
         case _                 => empty
       }
     }
   }
 
-  class NavObs(nav: DomZipperJs) {
+  class NavObs(nav: DomZipperJs, inner: DomZipperJs) {
     val breadcrumbs = nav(".ui.breadcrumb").collect0n(".section")
     // println(nav.innerHTML)
 
@@ -82,10 +84,10 @@ object ProjectSpaTestDsl {
         case Some("Req Table") => Page.ReqTable
         case Some("Content")   => Page.ReqDetail(ExternalPubid.parse(breadcrumbs.zippers.last.innerText.trim).get)
         case Some("Fields")    => Page.CfgFields
-        case Some("Issues")    => Page.CfgIssues
         case Some("Req Types") => Page.CfgReqTypes
         case Some("Tags")      => Page.CfgTags
         case None              => Page.Index
+        case Some("Issues")    => if (inner.exists(Style.issues.newIssueCont.selector)) Page.Issues else Page.CfgIssues
         case Some(n)           => sys error s"Unknown page: $n"
       }
   }
@@ -94,6 +96,7 @@ object ProjectSpaTestDsl {
                  nav        : NavObs,
                  home       : Maybe[ProjectHomeObs],
                  cfgReqTypes: Maybe[CfgReqTypesObs],
+                 issues     : Maybe[IssuesPageObs],
                  reqTable   : Maybe[ReqTableObs],
                  reqDetail  : Maybe[ReqDetailObs])
 
@@ -128,15 +131,23 @@ object ProjectSpaTestDsl {
       .pmapO[Obs](_.reqDetail)
       .mapS[TestState](s => RD.TestState(s.project, s.detailState))((s, d) => TestState(s.page, d.project, d.state))
 
+  implicit lazy val transformIP =
+    IP.*.transformer
+      .mapR[Ref](_ => ())
+      .pmapO[Obs](_.issues)
+      .mapS[TestState](_ => ())((s, _) => s)
+
   private lazy val invariantsPH = PH.invariants.lift
   private lazy val invariantsRT = RT.invariants.lift
   private lazy val invariantsRD = RD.invariants.lift
+  private lazy val invariantsIP = IP.invariants.lift
 
   private val pageInvariants: *.Invariants =
     *.chooseInvariant("Page invariants")(_.state.page match {
       case Page.Index        => invariantsPH
       case Page.ReqTable     => invariantsRT
       case Page.ReqDetail(_) => invariantsRD
+      case Page.Issues       => invariantsIP
       case _                 => *.emptyInvariant
     })
 
@@ -167,6 +178,7 @@ object ProjectSpaTestDsl {
   def liftProjectHomeTests(p: PH.*.Plan): *.Plan = p.lift
   def liftReqTableTests   (p: RT.*.Plan): *.Plan = p.lift
   def liftReqDetailTests  (p: RD.*.Plan): *.Plan = p.lift
+  def liftIssuePageTests  (p: IP.*.Plan): *.Plan = p.lift
 
   def testReqTable(action: RT.*.Actions): *.Actions =
     liftReqTableTests(Plan.action(action)).asAction("Test ReqTable")

@@ -11,7 +11,7 @@ import Logic.HtmlElementExtX
 
 // NOTE: This only handles rowSpans atm because it's all I need and simpler to handle in isolation
 
-private[tablenav] trait VirtualTable {
+trait VirtualTable {
 
   val root: html.Table
   def sectionCount: Int
@@ -54,7 +54,7 @@ private[tablenav] trait VirtualTable {
     virtualColCount(loc.section, loc.row)
 }
 
-private[tablenav] object VirtualTable {
+object VirtualTable {
 
   def apply(t: html.Table)(implicit ts: TableStyle): VirtualTable =
     if (ts.hasRowSpans)
