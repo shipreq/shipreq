@@ -17,6 +17,8 @@ object IssuesPageTestDsl {
 
   val ids = *.focus("IDs").collection(_.obs.columnTexts(Column.Id))
 
+  val filterValue = *.focus("Filter value").value(_.obs.filter.value)
+
   val editorCount =
     *.focus("Editor count").value(_.obs.editables.length)
 
@@ -51,4 +53,7 @@ object IssuesPageTestDsl {
 
   object newForm extends OptionalEditorDsl.ForFormWithButton(_.newForm.editor, "new manual issue", _.newForm.button())
 
+  def setFilter(v: String): *.Actions =
+    *.action("Set filter to: " + v)(SimEvent.Change(v) simulate _.obs.filter.dom())
+      .addCheck(filterValue.assert.equal(v).after)
 }

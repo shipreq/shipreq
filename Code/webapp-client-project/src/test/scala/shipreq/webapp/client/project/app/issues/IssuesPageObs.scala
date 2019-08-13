@@ -71,6 +71,17 @@ final class IssuesPageObs($: DomZipperJs) {
 
   // ===================================================================================================================
 
+  val filter = new Filter
+  final class Filter {
+    private val root = $(Style.issues.pageRow2.selector).child("div", 2 of 2)
+
+    private val f = root("input:text")
+    val dom   = f.prepare(_.domAs[html.Input])
+    val value = f.value
+  }
+
+  // ===================================================================================================================
+
   val newForm = new NewForm
   final class NewForm {
     private val root = $(Style.issues.newIssueCont.selector)

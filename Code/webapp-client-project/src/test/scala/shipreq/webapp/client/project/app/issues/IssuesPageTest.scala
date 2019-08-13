@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.app.issues
 
 import utest._
+import utest.framework.TestPath
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.test.SampleProject6
 import shipreq.webapp.base.test.TestState._
@@ -13,31 +14,19 @@ object IssuesPageTest extends TestSuite {
 
   PrepareEnv()
 
-  private def runActions(project: Project)(a: *.Actions): Unit =
+  private def runActions(project: Project)(a: *.Actions)(implicit tp: TestPath): Unit =
     runPlan(project)(Plan.action(a))
 
-  private def runPlan(project: Project)(p: *.Plan): Unit = {
+  private def runPlan(project: Project)(p: *.Plan)(implicit tp: TestPath): Unit = {
     import ProjectSpaTestDsl._
 
+    val name = p.name.fold(tp.value.mkString("Test: ", ".", ""))(_.value)
+
     ProjectSpaTestDsl.runTest(
-      liftIssuePageTests(p).asAction(p.name.fold("Test")(_.value)),
+      liftIssuePageTests(p).asAction(name),
       page = Page.Issues,
       project = project)
   }
-
-  // TODO filters
-
-  // IssueLite.DeadRefInReq(P6.frs(2), ReqTextLoc.Title, ContentRef.ReqRef(P6.mfs(28))),
-  // IssueLite.DeadRefInReq(P6.uc1, ReqTextLoc.Title, ContentRef.UseCaseStepRef(16)),
-  // IssueLite.DeadRefInReq(P6.uc1, ReqTextLoc.Title, ContentRef.UseCaseStepRef(17)),
-  // IssueLite.BlankCustomField(P6.frs(1), P6.priField),
-  // IssueLite.BlankCustomField(P6.frs(2), P6.priField),
-  // IssueLite.BlankCustomField(P6.uc1, P6.priField),
-  // IssueLite.BlankCustomField(P6.uc2, P6.priField),
-  // IssueLite.BlankUseCaseStep(UseCaseStepId(18)),
-  // IssueLite.BlankUseCaseStep(UseCaseStepId(19)),
-  // IssueLite.IssueTagInReq(P6.frs(2), ReqTextLoc.Title, T.GenericReqTitle.Issue(2, SampleProject3.inlineIssueDesc)),
-  // IssueLite.IssueTagInReq(P6.frs(1), ReqTextLoc.Title, T.GenericReqTitle.Issue(1, ∅)),
 
   override def tests = Tests {
 
@@ -309,6 +298,45 @@ object IssuesPageTest extends TestSuite {
         Some("FR-1"),
         Some("–"))
       +> row(11).col(Column.FieldEditor).text.assert.equal("blah")
+    )
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    'filter - runActions(SampleProject6.project)(
+
+      newForm.edit("omfgomfg #wip")
+
+      >> setFilter("UC-1")
+      +> rowCount.assert.equal(5)
+      +> issueCategories.assert.equal(
+        Some("Bad data (2)"),
+        None,
+        Some("Missing data (3)"),
+        None,
+        None)
+      +> issueClasses.assert.equal(
+        Some("Reference to deleted data (2)"),
+        None,
+        Some("Mandatory field is blank: Priority"),
+        Some("Use case step is blank (2)"),
+        None)
+      +> ids.assert.equal(
+        Some("UC-1"),
+        None,
+        Some("UC-1"),
+        Some("UC-1"),
+        None)
+
+      >> setFilter("omfgomfg")
+      +> rowCount.assert.equal(1)
+      +> issueCategories.assert.equal(Some("User-defined"))
+      +> issueClasses.assert.equal(Some("Manual"))
+      +> ids.assert.equal(Some("–"))
+
+      >> setFilter("#wip")
+      +> rowCount.assert.equal(1)
+      +> issueCategories.assert.equal(Some("User-defined"))
+      +> issueClasses.assert.equal(Some("Manual"))
+      +> ids.assert.equal(Some("–"))
     )
 
   }
