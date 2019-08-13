@@ -1,12 +1,10 @@
 package shipreq.webapp.base.event
 
 import japgolly.microlibs.nonempty._
-import scalaz.{-\/, \/-}
 import shipreq.base.util.ISubset
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.Filter
-import shipreq.webapp.base.hash._
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.util.GenericDataMacros._
 import Event._
@@ -18,12 +16,6 @@ import Field.ApplicableReqTypes
  */
 sealed trait ProjectTemplate {
   def events: Vector[Event]
-
-  val hashRecs: HashRecs =
-    ApplyEvent.untrusted(events)(Project.empty) match {
-      case -\/(err) => sys.error(s"Invalid ProjectTemplate: $this. Failed with: $err")
-      case \/-(p2)  => HashSchemes.latest.changes(Project.empty, p2)
-    }
 }
 
 object ProjectTemplate {

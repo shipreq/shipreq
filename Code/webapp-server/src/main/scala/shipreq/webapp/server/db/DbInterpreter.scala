@@ -13,9 +13,7 @@ import scalaz.{-\/, Free, \/, \/-}
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.SqlHelpers._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.ApplyEvent.LogicVer
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.hash._
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.db.DbInterpreter._
@@ -261,24 +259,14 @@ object DbInterpreter {
     private[db] final val insertEventSql =
       Update[(ProjectId, EventOrd, ActiveEvent)](s"INSERT INTO event(project_id,ord,$eventE) VALUES(?,?,${eventE_?})")
 
-    private[db] final val insertEventHashSql =
-      Update[(ProjectId, EventOrd, HashRecRow)](s"INSERT INTO event_hash(project_id,ord,$sqlHashRecRow) VALUES(?,?,${sqlHashRecRow_?})")
-
     override final def saveProjectEvents(id: ProjectId, cmds: Traversable[SaveProjectEventCmd]) = {
       val addEvents = insertEventSql.executeBatch(
         cmds.toIterator.map(c => (id, c.ord, c.event)))
 
-      val addHashes = insertEventHashSql.executeBatch(
-        for {
-          cmd                    <- cmds.toIterator
-          (scheme, schemeHashes) <- cmd.hashes.iterator
-          (scope, hash)          <- schemeHashes.iterator
-        } yield (id, cmd.ord, (scope, LogicVer.SoleInstance, scheme, hash)))
-
       def result: VerifiedEvent.Seq =
-        VerifiedEvent.Seq.empty ++ cmds.toIterator.map(c => VerifiedEvent(c.ord, c.event, c.hashes))
+        VerifiedEvent.Seq.empty ++ cmds.toIterator.map(c => VerifiedEvent(c.ord, c.event))
 
-      (addEvents *> addHashes).inTransaction.attempt.map(_.map(_ => result))
+      addEvents.inTransaction.attempt.map(_.map(_ => result))
     }
 
     override final def saveProjectEvent(id: ProjectId, cmd: SaveProjectEventCmd) =
@@ -372,9 +360,12 @@ object DbInterpreter {
       projectSpaInitPageSql.toQuery0(id).option.map(_.filterNot(_ eq null).getOrElse(""))
 
     private[db] object SqlSelectEvents {
-      type Out = (EventOrd, Event)
+      type Out = VerifiedEvent
+
       private val allSql = s"SELECT ord,$eventE FROM event WHERE project_id=?"
+
       val all = Query[ProjectId, Out](allSql)
+
       val after = Query[(ProjectId,EventOrd), Out](s"$allSql AND ord>?")
 
       private val setPrefix = s"$allSql AND ord IN ("
@@ -382,73 +373,20 @@ object DbInterpreter {
       def setQuery(ords: Seq[EventOrd]): Query[ProjectId, Out] =
         Query(ords.iterator.map(_.value).mkString(setPrefix, ",", ")"))
 
-      def set(pid: ProjectId, ords: NonEmptySet[EventOrd]): ConnectionIO[List[Out]] =
-        selectByNonEmptySet(ords)(setQuery(_).toQuery0(pid))
+      def set(pid: ProjectId, ords: NonEmptySet[EventOrd]): ConnectionIO[VerifiedEvent.Seq] =
+        selectByNonEmptySet(ords)(setQuery(_).toQuery0(pid).list)
+          .map(bbs => VerifiedEvent.Seq.empty ++ bbs.toIterator.flatten)
     }
 
-    private[db] final val selectEvents: EventFilter => ProjectId => ConnectionIO[List[SqlSelectEvents.Out]] = {
-      case EventFilter.IncludeAll     => SqlSelectEvents.all.toQuery0(_).list
-      case EventFilter.ExcludeUpTo(o) => p => SqlSelectEvents.after.toQuery0((p, o)).list
+    private[db] final val selectEvents: EventFilter => ProjectId => ConnectionIO[VerifiedEvent.Seq] = {
+      case EventFilter.IncludeAll     => SqlSelectEvents.all.toQuery0(_).to[TreeSet]
+      case EventFilter.ExcludeUpTo(o) => p => SqlSelectEvents.after.toQuery0((p, o)).to[TreeSet]
       case EventFilter.Set(ords)      => p => SqlSelectEvents.set(p, ords)
     }
 
-    private[db] final val sqlSelectAllEventHashes =
-      Query[ProjectId, (EventOrd, HashRecRow)](s"SELECT ord,$sqlHashRecRow FROM event_hash WHERE project_id=?")
-
-    private final class TmpForGetAllProjectEvents(val e: Event) {
-      private val recsByScheme =
-        Array.fill(HashSchemes.schemes.length)(Map.empty: HashRecsForScheme)
-
-      def add(r: HashRecRow): Unit = {
-        val i = r._3.id.index
-        assert(r._2 ==* LogicVer.SoleInstance)
-        val n = recsByScheme(i).updated(r._1, r._4)
-        recsByScheme.update(i, n)
-      }
-
-      def result(): HashRecs = {
-        var hashRecs = HashRecs.empty
-        var i = recsByScheme.length
-        while (i > 0) {
-          i -= 1
-          val r = recsByScheme(i)
-          if (r.nonEmpty) {
-            val id = HashSchemeId(index = i)
-            hashRecs = hashRecs.updated(HashSchemes.unsafeGet(id), r)
-          }
-        }
-        hashRecs
-      }
-    }
-
     /** @return Events in order from lowest to highest ord. */
-    override final def getProjectEvents(p: ProjectId, f: EventFilter): ConnectionIO[VerifiedEvent.Seq] = {
-      (for {
-        events <- selectEvents(f)(p)
-        hashes <- sqlSelectAllEventHashes.toQuery0(p).list
-      } yield {
-
-        // Create: EventOrd -> (Event, HashRec.Collection)
-        // mutable.HashMap.get/put is effectively constant
-        // immutable.ListSet.add = linear O(H) where H is hashes per event by (HashScope,LogicVer,HashScheme)
-        // time = O(e + h.H)
-        val map = collection.mutable.HashMap.empty[EventOrd, TmpForGetAllProjectEvents]
-        for (t <- events) map.put(t._1, new TmpForGetAllProjectEvents(t._2))
-        for (t <- hashes) map(t._1).add(t._2)
-
-        // time = O(e log e)
-        val result = TreeSet.newBuilder[VerifiedEvent]
-        for ((ord, tmp) <- map)
-          result += VerifiedEvent(ord, tmp.e, tmp.result())
-        result.result()
-
-        // TODO Improve getProjectEvents. Currently server time = O(e.log(e) + e + h.H)
-        // Ideas: Server (currently) much more constrained in resources than DB.
-        // Maybe: have DB sort both queries by ord then traverse both at once | server time ~ O(e.log(e) + h.H)
-        // Maybe: do it all in DB and return hash recs as array               | server time ~ O(e.log(e) + h.H)
-
-      }).inTransaction
-    }
+    override final def getProjectEvents(p: ProjectId, f: EventFilter): ConnectionIO[VerifiedEvent.Seq] =
+      selectEvents(f)(p)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

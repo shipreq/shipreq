@@ -186,7 +186,7 @@ object StateEither {
     @inline def getE     [A](f: S => E \/ A)                  : SE[A]       = StateEither getE f
     @inline def retOption[A](o: Option[A], e: => E)           : SE[A]       = StateEither.retOption(o, e)
 
-    def foldMapRun[A](as: Iterable[A])(f: A => SE[Unit]): SE[Unit] =
+    def foldMapRun[A](as: TraversableOnce[A])(f: A => SE[Unit]): SE[Unit] =
       // as.foldLeft(nop)(_ >> f(_))
       Util.mapReduce(as, nop)(f, _ >> _)
 

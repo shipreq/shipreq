@@ -3,13 +3,11 @@ package shipreq.webapp.base.event
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.ConciseIntSetFormat
 import scala.collection.immutable.TreeSet
-import shipreq.webapp.base.hash.HashRecs
 
 /**
- * A verified event is an event that has been validated by the server, proven applicable, and retains hashes expected
- * of the Project after application.
+ * A verified event is an event that has been validated by the server, and proven applicable.
  */
-final case class VerifiedEvent(ord: EventOrd, event: Event, hashRecs: HashRecs) {
+final case class VerifiedEvent(ord: EventOrd, event: Event) {
   override def toString = s"VerifiedEvent(${ord.value}, $event)"
 }
 

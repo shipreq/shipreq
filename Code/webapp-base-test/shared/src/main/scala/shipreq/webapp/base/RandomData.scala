@@ -1697,7 +1697,7 @@ object RandomData {
 
       def forProject(p: Project): Gen[Valid] = {
         val gy: Option[Gen[ReqTypeId]]         = Gen tryGenChoose p.config.reqTypes.all.whole.map(_.reqTypeId)
-        val gt: Option[Gen[ApplicableTagId]]   = Gen tryGenChoose p.config.tags.atagIterator.map(_.id)
+        val gt: Option[Gen[ApplicableTagId]]   = Gen tryGenChoose p.config.tags.atagIterator().map(_.id)
         val gi: Option[Gen[CustomIssueTypeId]] = Gen tryGenChoose p.config.customIssueTypes.keys.toVector
         gen(flatGens(gy, gt, gi))
       }
@@ -1714,7 +1714,6 @@ object RandomData {
   // ===================================================================================================================
   object events {
     import shipreq.webapp.base.event._
-    import shipreq.webapp.base.hash._
     import Event._
 
     val tagChildren: Gen[TagInTree.Children] =
@@ -2141,19 +2140,7 @@ object RandomData {
     val eventOrd: Gen[EventOrd] =
       Gen.chooseInt(100000).map(i => EventOrd(i + 1))
 
-    val hashScheme: Gen[HashScheme] =
-      Gen.chooseNE(HashSchemes.schemes)
-
-    val hash: Gen[Int] =
-      Gen.int
-
-    val hashScope: Gen[HashScope] =
-      Gen.chooseNE(HashScope.all)
-
-    val hashRecs: Gen[HashRecs] =
-      hash.option.mapBy(hashScope)(1 to 4).mapBy(hashScheme)(1 to HashSchemes.schemes.length)
-
     val verifiedEvent: Gen[VerifiedEvent] =
-      Gen.apply3(VerifiedEvent.apply)(eventOrd, event, hashRecs)
+      Gen.apply2(VerifiedEvent.apply)(eventOrd, event)
   }
 }

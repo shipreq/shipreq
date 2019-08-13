@@ -521,7 +521,7 @@ object ProjectSpaLogic extends StrictLogging {
           case WriteDb =>
             mkEvent(s.local.project).flatMap(ApplyNewEvent(_, s.local.project)) match {
               case PotentialChange.Success(updated) =>
-                val saveCmd = DB.SaveProjectEventCmd(s.local.nextOrd, updated.event, updated.hashRecs)
+                val saveCmd = DB.SaveProjectEventCmd(s.local.nextOrd, updated.event)
                 runDB(db.saveProjectEvent(pid, saveCmd)) map {
                   case \/-(ve) =>
                     val nextStatus = WriteRedis2(updated.project, ve)

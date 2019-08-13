@@ -8,14 +8,9 @@ import scalaz.{-\/, \/-}
 import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.ApplyEvent.LogicVer
-import shipreq.webapp.base.hash._
 import Event._
 
 object ApplyEventTest extends TestSuite {
-
-  val OldLogicVer = LogicVer(33)
-  val LogicVers = OldLogicVer +: LogicVer.all
 
   def verifyEvent(p1: Project, e1: Event) = {
     val p2 = ApplyEvent.untrusted.apply1(e1)(p1) match {
@@ -23,9 +18,7 @@ object ApplyEventTest extends TestSuite {
       case -\/(x) => fail(s"Init failed: $x")
     }
 
-    val hrs = HashSchemes.latest.changes(p1, p2)
-    assert(hrs.nonEmpty)
-    val ve = VerifiedEvent(EventOrd.first, e1, hrs)
+    val ve = VerifiedEvent(EventOrd.first, e1)
 
     (p2, ve)
   }
@@ -89,7 +82,6 @@ object ApplyEventTest extends TestSuite {
         // Now the generation begins...
 
         while (lvs.nonEmpty || hss.nonEmpty) {
-          // TODO should also wipe some hashrecs to demonstrate manual intervention
 
           if (ctx.nextBit())
             addEvent()
@@ -176,19 +168,6 @@ object ApplyEventTest extends TestSuite {
           case \/-(p) => assertEq(p, p2)
           case -\/(e) => fail(s"applyVerified failed: $e")
         }
-      }
-
-      'fail {
-        import Data1._
-        val vef = ve.copy(hashRecs = ve.hashRecs.mapValuesNow(_.mapValuesNow(_.map(_ + 1))))
-        assertApplicationFailure(vef, p1)
-      }
-
-      'checkUnspecifiedScopes {
-        import Data1._
-        val (_, ve) = verifyEvent(Project.empty, ProjectTemplateApply(ProjectTemplate.default))
-        val vef = ve.copy(hashRecs = ve.hashRecs.mapValuesNow(_.drop(1)))
-        assertApplicationFailure(vef, Project.empty)
       }
 
       // 'prop - simulateStream()

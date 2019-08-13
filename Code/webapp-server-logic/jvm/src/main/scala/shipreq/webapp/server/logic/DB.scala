@@ -5,7 +5,6 @@ import java.time.Instant
 import scalaz.{\/, ~>}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ActiveEvent, EventOrd, VerifiedEvent}
-import shipreq.webapp.base.hash.HashRecs
 import shipreq.webapp.base.user._
 
 /**
@@ -61,10 +60,7 @@ object DB {
     final case class TokenExists(reg: UserRegistration.Complete, token: SecurityToken, tokenSentAt: Instant) extends PasswordResetState
   }
 
-  final case class SaveProjectEventCmd(ord: EventOrd, event: ActiveEvent, hashes: HashRecs) {
-    assert(hashes.nonEmpty, s"At least one hash is required: $this")
-    assert(hashes.forall(_._2.nonEmpty), s"Empty hash set found: $this")
-  }
+  final case class SaveProjectEventCmd(ord: EventOrd, event: ActiveEvent)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

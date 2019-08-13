@@ -113,11 +113,11 @@ object Util {
   def nextElement[A: UnivEq](as: Vector[A])(a: A): A =
     as((as.indexOf(a) + 1) % as.length)
 
-  def mapReduce[A, B](as: Iterable[A], whenEmpty: => B)(map: A => B, reduce: (B, B) => B): B =
+  def mapReduce[A, B](as: TraversableOnce[A], whenEmpty: => B)(map: A => B, reduce: (B, B) => B): B =
     mapReduceB(as, whenEmpty)(map, map)(reduce)
 
-  def mapReduceB[A, B, C](as: Iterable[A], whenEmpty: => C)(mapFirst: A => C, map: A => B)(reduce: (C, B) => C): C = {
-    val it = as.iterator
+  def mapReduceB[A, B, C](as: TraversableOnce[A], whenEmpty: => C)(mapFirst: A => C, map: A => B)(reduce: (C, B) => C): C = {
+    val it = as.toIterator
     if (it.hasNext) {
       var r = mapFirst(it.next())
       while (it.hasNext)

@@ -1,26 +1,25 @@
 package shipreq.webapp.server.logic
 
 import scalaz.{-\/, \/-}
+import scalaz.syntax.equal._
 import shipreq.base.util.PotentialChange
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.hash.{HashRecs, HashSchemes}
 import PotentialChange._
 
 object ApplyNewEvent {
 
-  final case class Updated(project: Project, event: ActiveEvent, hashRecs: HashRecs)
+  final case class Updated(project: Project, event: ActiveEvent)
 
   type Result = PotentialChange[String, Updated]
 
   def apply(e: ActiveEvent, p1: Project): Result =
     ApplyEvent.untrusted.apply1(e)(p1) match {
       case \/-(p2) =>
-        val hrs = HashSchemes.latest.changes(p1, p2)
-        if (hrs.isEmpty)
+        if (p1 === p2)
           Unchanged
         else
-          Success(Updated(p2, e, hrs))
+          Success(Updated(p2, e))
       case -\/(err) =>
         Failure(err)
     }

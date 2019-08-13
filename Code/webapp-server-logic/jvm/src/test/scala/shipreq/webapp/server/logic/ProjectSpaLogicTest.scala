@@ -79,7 +79,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       val latestOrd = verifiedEvents.last.ord.asLatest
 
       for (e <- verifiedEvents)
-        db.saveProjectEvent(id, DB.SaveProjectEventCmd(e.ord, e.event.asInstanceOf[ActiveEvent], e.hashRecs)).value
+        db.saveProjectEvent(id, DB.SaveProjectEventCmd(e.ord, e.event.asInstanceOf[ActiveEvent])).value
           .leftMap(throw _)
 
       val data1                = db.getProjectMetaData(id).value.get

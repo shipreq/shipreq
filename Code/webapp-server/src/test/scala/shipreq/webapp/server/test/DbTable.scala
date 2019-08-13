@@ -17,7 +17,6 @@ sealed abstract class DbTable(val name: String) {
 
 object DbTable {
   case object Event       extends DbTable("event")
-  case object EventHash   extends DbTable("event_hash")
   case object Project     extends DbTable("project")
   case object Usr         extends DbTable("usr")
   case object UsrLoginLog extends DbTable("usr_login_log")

@@ -96,10 +96,9 @@ object DoobieHelpers {
   }
 
   def selectByNonEmptySet[A, B](as: NonEmptySet[A], groupSize: Int = 100)
-                               (f: Seq[A] => Query0[B]): ConnectionIO[List[B]] =
-    as
-      .iterator
-      .grouped(groupSize)
-      .map(f(_).list)
-      .reduce(Apply[ConnectionIO].apply2(_, _)((x, y) => y ::: x))
+                               (f: Seq[A] => ConnectionIO[B]): ConnectionIO[List[B]] = {
+    val it = as.iterator.grouped(groupSize).map(f)
+    val h = it.next().map(_ :: Nil)
+    it.foldLeft(h)(Apply[ConnectionIO].apply2(_, _)((bs, b) => b :: bs))
+  }
 }

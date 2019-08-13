@@ -11,7 +11,6 @@ import shipreq.base.util.Util
 import shipreq.webapp.base.data.{Project, ProjectId}
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.event.EventOrd.Implicits._
-import shipreq.webapp.base.hash.HashRecs
 import shipreq.webapp.server.logic.Redis._
 import shipreq.webapp.server.test.WebappServerTestUtil._
 
@@ -247,7 +246,7 @@ object RedisLaws {
           def events =
             (0 until size).iterator.map { i =>
               val ord = start + i
-              VerifiedEvent(ord, Event.ProjectNameSet(ord.value.toString), HashRecs.empty)
+              VerifiedEvent(ord, Event.ProjectNameSet(ord.value.toString))
             }
           VerifiedEvent.Seq.empty ++ events
         }

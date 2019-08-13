@@ -54,7 +54,7 @@ object HomeSpaTest extends TestSuite {
           val p = loadProject()
           val e = FieldStaticRemove(StaticField.StepGraph)
           val ve = verifyEvent(p, e)
-          val cmd = SaveProjectEventCmd(nextOrd, e, ve.hashRecs)
+          val cmd = SaveProjectEventCmd(nextOrd, e)
           xa ! db.saveProjectEvent(pid, cmd)
           val a2 = (xa ! db.getAllProjectMetaDataForUser(uid)).head
           assertEq("Next.nonInitEventCount", a2.nonInitEventCount, a.nonInitEventCount + 1)

@@ -1,16 +1,13 @@
 package shipreq.webapp.server.db
 
-import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.recursion._
 import scala.annotation.tailrec
-import scalaz.{-\/, Functor, Isomorphism, \/, \/-}
+import scalaz.{-\/, Functor, \/, \/-}
 import scalaz.Isomorphism.<=>
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.hash._
-import ApplyEvent.LogicVer
 import Event._
 import TaggedTypes.JsonStr
 
@@ -963,41 +960,6 @@ object EventSqlHelpers {
 
   implicit val doobieMetaEventOrd: Meta[EventOrd] =
     doobieMetaCaseClass[EventOrd]
-
-  implicit val doobieMetaHashScheme: Meta[HashScheme] =
-    doobieMetaChar.xmap(HashSchemes unsafeGet HashSchemeId.fromChar(_), _.id.asChar)
-
-  private val (hashScopeToChar, charToHashScope, _, _) =
-    AdtMacros.adtIso[HashScope, Char] {
-      case HashScope.CfgIssueTypes   => 'I'
-      case HashScope.CfgReqTypes     => 'R'
-      case HashScope.CfgFields       => 'F'
-      case HashScope.CfgTags         => 'T'
-      case HashScope.DeletionReasons => 'd'
-      case HashScope.GenericReqs     => 'g'
-      case HashScope.ImplicationData => 'i'
-      case HashScope.ManualIssues    => 'm'
-      case HashScope.ProjectName     => 'n'
-      case HashScope.PubidRegister   => 'p'
-      case HashScope.ReqCodes        => 'c'
-      case HashScope.SavedViews      => 'v'
-      case HashScope.TagData         => 't'
-      case HashScope.TextFieldData   => 'x'
-      case HashScope.UseCases        => 'u'
-    }
-
-  implicit val doobieMetaHashScope: Meta[HashScope] =
-    doobieMetaChar.xmap(charToHashScope, hashScopeToChar)
-
-  implicit val doobieMetaLogicVer: Meta[LogicVer] =
-    doobieMetaChar.xmap(c => {
-      assert(c ==* LogicVer.SoleInstance.value)
-      LogicVer.SoleInstance
-    }, _.value)
-
-  type HashRecRow = (HashScope, LogicVer, HashScheme, Option[Int])
-  final val sqlHashRecRow = "scope,logic_ver,hash_scheme,hash"
-  final val sqlHashRecRow_? = "?,?,?,?"
 
   private type MsgJson = JsonStr[Any]
   private implicit val doobieMetaMsgJson: Meta[MsgJson] = jsonStr

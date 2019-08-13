@@ -29,7 +29,7 @@ object ProjectMetaDataTest extends TestSuite {
         def writeEvent(ve: VerifiedEvent, idx: Int): Unit =
           ve.event match {
             case ae: ActiveEvent =>
-              val cmd = DB.SaveProjectEventCmd(EventOrd(idx + idxToOrd), ae, ve.hashRecs)
+              val cmd = DB.SaveProjectEventCmd(EventOrd(idx + idxToOrd), ae)
               xa ! dbAlgebra.saveProjectEvent(pid, cmd)
             case x =>
               fail("Can't create non-active event: " + x)

@@ -8,6 +8,7 @@ import nyaya.prop.LogicPropExt
 import nyaya.util.Multimap
 import scalaz.{-\/, BindRec, \/-}
 import scalaz.std.vector.vectorInstance
+import scalaz.syntax.equal._
 import scalaz.syntax.traverse._
 import shipreq.base.test.BaseUtilGen._
 import shipreq.base.test.IncCounter
@@ -16,7 +17,6 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable.SavedView
-import shipreq.webapp.base.hash._
 import shipreq.webapp.base.test.DataTestExt._
 import shipreq.webapp.base.test.WebappBaseGen._
 import shipreq.webapp.base.text.Text
@@ -45,13 +45,8 @@ object RandomEventStream {
     StateGen(s =>
       eventGen(s).map(e =>
         ApplyEvent.untrusted.apply1(e)(s._1) match {
-          case \/-(p2) =>
-            val hrs = HashSchemes.latest.changes(s._1, p2)
-            if (hrs.isEmpty)
-              None
-            else
-              Some(((p2, s._2 + 1), VerifiedEvent(s._2, e, hrs)))
-          case -\/(_) => None
+          case \/-(p2) => Some(((p2, s._2 + 1), VerifiedEvent(s._2, e)))
+          case -\/(_)  => None
         }
       ).optionGetLimit(40)
     )
@@ -869,7 +864,7 @@ final class ApplicableEventGen(curState: State) {
     BindRec[Gen].tailrecM((s: S) =>
       eventGen.map { e =>
         var r = ApplyEvent.untrusted.apply1(e)(p)
-        r foreach { p2 => if (HashSchemes.latest.changes(p, p2).isEmpty) r = -\/("No change") }
+        r foreach { p2 => if (p === p2) r = -\/("No change") }
         val s2 = observe(s, e, r)
         r.bimap(_ => s2, p2 => ((s2, p2), e))
       }

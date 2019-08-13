@@ -17,6 +17,4 @@ object EventStreamSample {
   val ((p, _), ves) = sample
 
   assert(ves.toString == sample._2.toString)
-
-  val optimal = ApplyEvent.eventBatcher.optimal(ves)
 }

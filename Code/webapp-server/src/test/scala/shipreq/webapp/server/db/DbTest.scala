@@ -17,7 +17,6 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.filter.Filter
-import shipreq.webapp.base.hash._
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.user._
@@ -235,25 +234,25 @@ object DbTest extends TestSuite {
 
         val ordCounter = new AtomicInteger(0)
 
-        val prop = Prop.equal[(ActiveEvent, HashRecs)]("load . save = id")(
-          i => TestDb().runNow { xa =>
+        val prop = Prop.equal[ActiveEvent]("load . save = id")(
+          ae => TestDb().runNow { xa =>
             val dbu = DbUtil(xa)
             val pid = dbu.newProjectId()
             val ord = EventOrd(ordCounter.incrementAndGet())
-            val cmd = SaveProjectEventCmd(ord, i._1, i._2)
+            val cmd = SaveProjectEventCmd(ord, ae)
             xa ! db.saveProjectEvent(pid, cmd)
             val loaded =
-              dbu.debugSelectOnError(s"select * from event e, event_hash eh where e.project_id=eh.project_id and e.ord=eh.ord and e.ord = ${ord.value}") {
+              dbu.debugSelectOnError(s"select * from event where ord = ${ord.value}") {
                 (xa ! db.getAllProjectEvents(pid)).toVector.filter(_.ord ==* ord).map(r => r.event match {
-                  case ae: ActiveEvent => (ae, r.hashRecs)
-                  case e               => sys error s"Not an ActiveEvent: $e"
+                  case e: ActiveEvent => e
+                  case e              => sys error s"Not an ActiveEvent: $e"
                 })
               }
             loaded
           },
-          Vector1(_))
+          Vector1)
 
-        val rnd = RandomData.events.activeEvent *** RandomData.events.hashRecs
+        val rnd = RandomData.events.activeEvent
 
         prop.mustBeSatisfiedBy(rnd)
       }

@@ -11,7 +11,6 @@ object Main {
     val body = document getElementById "body"
 
     BenchmarkGUI.renderMenu(body, baseUrl = BASEURL)(
-      Hashing.suite,
       Serialisation.suite)
   }
 }

@@ -171,9 +171,9 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
         val er = mkEvent(input, p1)
         ApplyNewEvent(er, p1) match {
 
-          case PotentialChange.Success(ApplyNewEvent.Updated(_, event, hrs)) =>
+          case PotentialChange.Success(ApplyNewEvent.Updated(_, event)) =>
             nextEventOrd
-              .map(o => VerifiedEvent.Seq.empty + VerifiedEvent(o, event, hrs))
+              .map(o => VerifiedEvent.Seq.empty + VerifiedEvent(o, event))
               .flatTap(addEvents)
               .map(\/-(_))
 

@@ -115,7 +115,6 @@ object LiveTest extends TestSuite {
     }
 
     'teardown {
-      xa ! DbTable.EventHash.truncate
       xa ! DbTable.Event.truncate
       xa ! DbTable.Project.truncate
       userFixture.teardown.unsafeRun()

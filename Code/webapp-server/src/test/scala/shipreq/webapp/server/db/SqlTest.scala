@@ -4,7 +4,6 @@ import utest._
 import shipreq.base.test.db.SqlTester.test
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.event.EventOrd
-import shipreq.webapp.server.logic.DB
 import shipreq.webapp.server.test.PrepareEnv
 
 object SqlTest extends TestSuite {
@@ -42,8 +41,7 @@ object SqlTest extends TestSuite {
     }
 
     'saveProjectEvent {
-      'insertEventSql     - test(db.insertEventSql)
-      'insertEventHashSql - test(db.insertEventHashSql)
+      'insertEventSql - test(db.insertEventSql)
     }
 
     'members {
@@ -57,7 +55,6 @@ object SqlTest extends TestSuite {
       'sqlSelectEventsExcludeUpTo      - test(db.SqlSelectEvents.after.toQuery0((pid, o2)))
       'sqlSelectEventsSet              - test(db.SqlSelectEvents.setQuery(Seq(o2)).toQuery0(pid))
       'sqlSelectEventsSet              - test(db.SqlSelectEvents.setQuery(Seq(o2, o3)).toQuery0(pid))
-      'sqlSelectAllEventHashes         - test(db.sqlSelectAllEventHashes)
       'projectSpaInitPageSql           - test(db.projectSpaInitPageSql)
     }
 

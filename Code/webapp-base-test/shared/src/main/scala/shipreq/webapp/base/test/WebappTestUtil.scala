@@ -10,8 +10,6 @@ import sourcecode.Line
 import shipreq.base.test._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.hash.HashSchemes
-import shipreq.webapp.base.issue.Issue
 import shipreq.webapp.base.text.Text
 
 trait WebappTestEquality
@@ -44,8 +42,7 @@ trait WebappTestUtil extends BaseTestUtil {
 
   def _verifyEvent(p: Project, e: Event, o: EventOrd = EventOrd.first): (Project, VerifiedEvent) = {
     val p2 = ApplyEvent.untrusted.apply1(e)(p).fold(err => sys error s"Failed to apply event $e: $err", identity)
-    val hrs = HashSchemes.latest.changes(p, p2)
-    (p2, VerifiedEvent(o, e, hrs))
+    (p2, VerifiedEvent(o, e))
   }
 
   def verifyEvents(p0: Project, firstOrd: EventOrd = EventOrd.first)(es: Event*): VerifiedEvent.Seq = {

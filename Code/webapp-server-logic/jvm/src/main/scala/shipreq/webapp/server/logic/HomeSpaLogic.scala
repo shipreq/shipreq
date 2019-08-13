@@ -2,7 +2,7 @@ package shipreq.webapp.server.logic
 
 import java.time.Instant
 import scalaz.syntax.monad._
-import scalaz.{Monad, \/-, ~>}
+import scalaz.{Monad, ~>}
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.HomeSpaProtocols
@@ -27,9 +27,9 @@ object HomeSpaLogic {
                           now: Instant)
                          (implicit db: DB.ForHomeSpa[D], D: Monad[D]): D[ProjectMetaData] = {
 
-    val e1 = DB.SaveProjectEventCmd(EventOrd.first, InitProject.event, InitProject.hashRecs)
+    val e1 = DB.SaveProjectEventCmd(EventOrd.first, InitProject.event)
     val u2 = ApplyNewEvent.mustApply(ProjectNameSet(name), InitProject.project)
-    val e2 = DB.SaveProjectEventCmd(e1.ord.next, u2.event, u2.hashRecs)
+    val e2 = DB.SaveProjectEventCmd(e1.ord.next, u2.event)
     val ecount = 2
     val events = e1 :: e2 :: Nil
 

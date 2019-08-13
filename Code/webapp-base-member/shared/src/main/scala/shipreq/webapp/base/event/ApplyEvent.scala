@@ -1,20 +1,14 @@
 package shipreq.webapp.base.event
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import nyaya.prop.LogicPropExt
-import scala.collection.mutable
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.Identity
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{DataProp, Project}
-import shipreq.webapp.base.hash._
-import shipreq.webapp.base.feature.hash.HashLogic
 import ApplyEventLib._, SE.SE
-import ApplyEvent.{Events, Result, eventBatcher}
+import ApplyEvent.{Events, Result}
 
 object ApplyEvent {
   type Result = String \/ Project
-  type Events = Iterable[Event]
+  type Events = TraversableOnce[Event]
 
   /**
    * Applies trusted events (i.e. events that have been verified previously and usually stored in the DB already).
@@ -25,37 +19,6 @@ object ApplyEvent {
    * Applies untrusted events (i.e. new events created in response to a user request).
    */
   val untrusted = new ApplyEvent()(Untrusted)
-
-  val eventBatcher: ProjectHashModule.Batcher[VerifiedEvent, VerifiedEvent] =
-    ProjectHashModule.Batcher(Identity.apply, _.hashRecs)
-
-  case class LogicVer(value: Char) extends AnyVal {
-    def isCurrent: Boolean =
-      value ==* LogicVer.Current.value
-  }
-
-  object LogicVer {
-
-    // When this first changes.
-    //   1) Update BinCodecEvents & make it stop using ConstPickler.
-    //   2) Update RandomData.
-    val all: NonEmptyVector[LogicVer] =
-      NonEmptyVector one LogicVer('1')
-
-    /**
-     * When logic changes in a way that breaks backwards-compatibility this value must be changed to a new value.
-     *
-     * Doing so allows logic bugfixes or improvements to be made here without breaking the ability to load and apply
-     * events created previously. Application logic can use this value to identify and ignore data integrity checks where
-     * discrepancy is expected and desired.
-     */
-    val Current: LogicVer = all.last
-
-    assert(all.length == 1, "If you're gonna actually use multiple logicVer, then remove LogicVer.SoleInstance")
-    def SoleInstance = Current
-
-    implicit def equality: UnivEq[LogicVer] = UnivEq.derive
-  }
 }
 
 final class ApplyEvent(implicit val trust: Trust)
@@ -64,10 +27,10 @@ final class ApplyEvent(implicit val trust: Trust)
        with ApplyOtherEvent {
 
   def apply(events: Events)(p: Project): Result =
-    applyAllSafe(events) exec p
+    applyAllSafely(events) exec p
 
   def apply1(event: Event)(p: Project): Result =
-    apply1Safe(event) exec p
+    applyOneSafely(event) exec p
 
   private val validateDataProps: SE[Unit] =
     whenUntrusted {
@@ -84,99 +47,22 @@ final class ApplyEvent(implicit val trust: Trust)
   def applyVerified(ves: TraversableOnce[VerifiedEvent])(p: Project): Result =
     if (ves.isEmpty)
       \/-(p)
-    else {
-      val verifiedEvents: IndexedSeq[VerifiedEvent] =
-        ves match {
-          case x: VerifiedEvent.Seq =>
-            val b = new mutable.ArrayBuilder.ofRef[VerifiedEvent]
-            b.sizeHint(x.lastKey.ord.value - x.firstKey.ord.value + 1)
-            b ++= x
-            b.result()
-          case x: IndexedSeq[VerifiedEvent] =>
-            x
-          case x =>
-            x.toArray[VerifiedEvent]
-        }
-
-      // debug(verifiedEvents, p)
-
-      val plan: SE[Unit] =
-        applyEventBatches(eventBatcher optimal verifiedEvents)
-          .improveFailure(applyEventBatches(eventBatcher oneByOne verifiedEvents)) {
-            case (_, -\/(e)) => e
-            case (e, \/-(_)) => s"Batch application failed but incremental application passed (!)\n$e"
-          }
-
-      plan.exec(p)
-    }
-
-  private def applyEventBatches(batches: eventBatcher.Batches): SE[Unit] =
-    SE.foldMapRun(batches)(applyEventBatch)
-
-  private val applyEventBatch: eventBatcher.Batch => SE[Unit] = eb => {
-    def showEvents: String =
-      eb.elements.map(e => s"* #${e.ord.value}: ${e.event}").mkString("Events:\n", "\n", "")
-
-    val applyEvents =
-      applyAllSafe(eb.elements.map(_.event))
-        .leftMap(_ + "\n\n" + showEvents)
-
-    def validateHashes(p1: Project) =
-      SE.testO { p2 =>
-        val errs = HashLogic.validate(eb.recs, before = p1, current = p2)
-        if (errs.isEmpty)
-          None
-        else Some {
-          val each = errs.map("* " + _.msg).mkString("\n")
-          s"Hash Discrepancy:\n$each\n\n$showEvents"
-        }
-      }
-
-    SE.get.flatMap(applyEvents >> validateHashes(_))
-  }
-
-  /*
-  private def debug(ves: Iterable[VerifiedEvent], p0: Project): Unit = {
-    println("=" * 120)
-
-    def printHashRecs(hrs: TraversableOnce[HashRec]): Unit = {
-      for (r <- hrs) println("  - " + r)
-      println()
-    }
-
-    def printProjectHashes(p: Project): Unit = {
-      println("Hashes:")
-      printHashRecs(HashRec(p))
-    }
-
-    val it = ves.iterator
-
-    @tailrec
-    def go(p: Project): Unit =
-      if (it.hasNext) {
-        val ve = it.next()
-        println("Applying event: " + ve.event)
-        printHashRecs(ve.hashRecs)
-        apply1(ve.event)(p) match {
-          case \/-(p2) => printProjectHashes(p2); go(p2)
-          case -\/(e) => println(e)
-        }
-      }
-
-    go(p0)
-  }
-  */
+    else
+      applyAllSafely(ves.toIterator.map(_.event)).exec(p)
 
   private def safely(apply: SE[Unit]): SE[Unit] =
     (apply >> validateDataProps) attempt onError
 
-  private val onError: Throwable => String =
-    e => {
-      val msg = Option(e.getMessage).filter(_.nonEmpty)
-      msg getOrElse s"Error occurred: $e"
-    }
+  private def applyAllSafely(events: Events): SE[Unit] =
+    safely(applyAllUnsafely(events))
 
-  private def apply1Unsafe(event: Event): SE[Unit] = {
+  private def applyAllUnsafely(events: Events): SE[Unit] =
+    SE.foldMapRun(events)(applyOneUnsafely)
+
+  private def applyOneSafely(event: Event): SE[Unit] =
+    safely(applyOneUnsafely(event))
+
+  private def applyOneUnsafely(event: Event): SE[Unit] = {
     import Event._
     event match {
       case e: ApplicableTagCreate    => ApplicableTagEvents    applyCreate                e
@@ -232,16 +118,14 @@ final class ApplyEvent(implicit val trust: Trust)
       case e: UseCaseStepShiftRight  => UseCaseEvents          applyStepShiftRight        e
       case e: UseCaseStepUpdate      => UseCaseEvents          applyStepUpdate            e
       case e: UseCaseTitleSet        => UseCaseEvents          applyTitleSet              e
-      case e: ProjectTemplateApply   => safely(applyAllUnsafe(e.template.events))
+      case e: ProjectTemplateApply   => safely(applyAllUnsafely(e.template.events))
     }
   }
 
-  private def apply1Safe(event: Event): SE[Unit] =
-    safely(apply1Unsafe(event))
+  private val onError: Throwable => String =
+    e => {
+      val msg = Option(e.getMessage).filter(_.nonEmpty)
+      msg getOrElse s"Error occurred: $e"
+    }
 
-  private def applyAllUnsafe(events: Events): SE[Unit] =
-    SE.foldMapRun(events)(apply1Unsafe)
-
-  private def applyAllSafe(events: Events): SE[Unit] =
-    safely(applyAllUnsafe(events))
 }
