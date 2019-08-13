@@ -1,0 +1,33 @@
+#!/bin/bash
+cd "$(dirname "$0")" || exit 1
+
+[ $# -ne 1 ] && echo "Usage: $0 <env>" && exit 1
+env="$1"
+
+out=/tmp/shipreq-data-"$env"-$(date +%Y%m%d-%H%M%S).sql
+
+cmd=(pg_dump)
+
+case "$env" in
+  dev)
+    echo "Password: sqd"
+    cmd+=(-h localhost -p 14032 -U dev -d shipreq_dev)
+    ;;
+  *)
+    echo "Unrecognised env: $env"
+    exit 1
+    ;;
+esac
+
+
+cmd+=(
+  --quote-all-identifiers
+  --data-only
+  --exclude-table='*.schema_version'
+  --exclude-table='*.*flyway*'
+  -f "$out"
+)
+
+echo "> ${cmd[@]}"
+"${cmd[@]}"
+wc "$out"
