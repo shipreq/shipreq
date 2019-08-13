@@ -43,6 +43,11 @@ Backlog
 * Firefox: UC step graph doesn't shrink
 * Prevent -- (not not) in the FilterParser? Or allow /\-+/ and auto-correct on blur?
 * Filter doesn't allow req-code filtering
+* Issues page: allow custom sorting
+* Issues page: allow custom columns
+* Issues page: allow issue cat/cls filtering
+* Issues page: allow editing of ID cells
+* Issues page: allow editing of Title cells
 
 ### Tech
 * Remove ScalaCheck. Use Nyaya.
