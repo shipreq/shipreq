@@ -6,7 +6,6 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
-import monix.eval.Coeval
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Await, Future}
 import scalaz.Free.Trampoline
@@ -131,7 +130,6 @@ class DispatchBM {
     testF(i)(_.dispatcher)
 
   @Benchmark def catsIO     = test(DispatchBM.catsIO)
-  @Benchmark def coeval     = test(DispatchBM.coeval)
   @Benchmark def fn0        = test(DispatchBM.fn0)
 //@Benchmark def future     = test(DispatchBM.future)
   @Benchmark def name       = test(DispatchBM.name)
@@ -288,12 +286,6 @@ object DispatchBM {
     override def map[A, B](fa: IO[A])(f: A => B): IO[B] = fa map f
   }
 
-  implicit val monadCoeval: Monad[Coeval] = new Monad[Coeval] {
-    override def point[A](a: => A): Coeval[A] = Coeval(a)
-    override def bind[A, B](fa: Coeval[A])(f: A => Coeval[B]): Coeval[B] = fa flatMap f
-    override def map[A, B](fa: Coeval[A])(f: A => B): Coeval[B] = fa map f
-  }
-
   implicit val monadFuture: Monad[Future] = new Monad[Future] {
     import scala.concurrent.ExecutionContext.Implicits.global
     override def point[A](a: => A): Future[A] = Future(a)
@@ -310,7 +302,6 @@ object DispatchBM {
   val zioRuntime = new scalaz.zio.DefaultRuntime {}
 
   val catsIO     = new Interpreters[IO        ](_.unsafeRunSync())
-  val coeval     = new Interpreters[Coeval    ](_.apply())
   val fn0        = new Interpreters[Function0 ](_.apply())
   val future     = new Interpreters[Future    ](Await.result(_, FiniteDuration(5, "min")))
   val name       = new Interpreters[Name      ](_.value)
