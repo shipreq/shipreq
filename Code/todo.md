@@ -129,3 +129,5 @@ Phase 2B
 * Project SPA will try to re-establish a WebSocket connection ad-nauseum after JWT has expired
 
 * WebSockets don't recover from lost Redis connections
+
+* Document the build & release process

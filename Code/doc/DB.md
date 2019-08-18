@@ -24,25 +24,33 @@ psql -h localhost -p 14032 -U dev -f $f shipreq_dev
 # Enter password 'sqd'
 ```
 
+
 Backup & restore of data only
 =============================
-
-#### Common
-
-```sh
-f=/tmp/shipreq-data.sql
-```
 
 #### Backup
 
 ```sh
-pg_dump -h localhost -p 14032 -U dev -d shipreq_dev --quote-all-identifiers --data-only --exclude-table='*.schema_version' --exclude-table='*.*flyway*' -f $f
-# Enter password 'sqd'
+db-dump-data dev
 ```
 
 #### Restore
 
 ```sh
-psql -h localhost -p 14032 -U dev -f $f shipreq_dev
+psql -h localhost -p 14032 -U dev -f /tmp/xxxxxxxxxx.sql shipreq_dev
 # Enter password 'sqd'
 ```
+
+
+Copying Docker Database
+=======================
+
+Make sure docker images are up.
+
+    docker ps
+
+Find the DB image volume location on source and dest machines:
+
+    docker inspect shipreq_dev_postgres | jq '.[0].Mounts[0].Source' | perl -pe 's/^"|\/_data"$//g'
+
+Simply replace the contents of one with the other.
