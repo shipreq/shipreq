@@ -102,7 +102,7 @@ object ShipReqBuild {
     project("utils")
       .configure(Common.jvmSettings)
       .deps(
-        commonsLang ++ Nyaya.test ++
+        commonsText ++ Nyaya.test ++
         testScope(twitterEval))
       .dependsOn(webappBaseTestJvm)
       .settings(

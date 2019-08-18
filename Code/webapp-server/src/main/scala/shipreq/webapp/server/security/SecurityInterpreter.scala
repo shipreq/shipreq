@@ -8,7 +8,7 @@ import japgolly.univeq._
 import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
-import net.logstash.logback.encoder.org.apache.commons.lang.StringEscapeUtils // TODO
+import org.apache.commons.text.StringEscapeUtils
 import scala.concurrent.blocking
 import scala.util.{Failure, Success, Try}
 import scalaz.syntax.monad._
