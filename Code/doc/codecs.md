@@ -3,7 +3,7 @@ Where are codecs used?
 
 * Server <--> Client
   * Platforms: JVM, JS
-  * Interface: Ajax, WebSocket
+  * Interface: Ajax, WebSocket, inline JS on load
   * Goals: should be fast & small
 
 * Client <--> WebWorkers
@@ -132,3 +132,63 @@ Integrity
     * Between Server and Staff: definately not, structural is plenty
     * Between Taskman and 3PS: not possible
   * **Conclusion:** normal JSON (with normal implicit structural integrity is plenty)
+
+
+Binary Implementation
+=====================
+
+### Decisions
+
+* Should multiple versions of codecs compose into a single version-aware instance
+  * Perfect for reading!
+  * Perfect for writing if we always write the latest version... do we ever plan to write a previous major version?...no
+  * **Answer:** yes
+
+* Should `{Public,Home}SpaProtocols` be versioned, or should each sub-request?
+  * (+) SPA: maybe a bit less code?
+  * (+) Req: Ajax endpoints more sharable/reusable.
+  * **Answer:** Each request.
+
+* Should `ProjectSpaProtocol` (the WebSockets protocol) be versioned, or should each sub-request & sub-data-type?
+  * (+) SPA: Version compatibility can be determined on WebSocket connection
+  * (+) SPA: It logically is a single protocol with a single (albeit complex) codec
+  * (+) SPA: Less code for the codecs (presumably)
+  * (+) SPA: Simpler code - no need to distinguish between top-level versioned and unversioned dependents
+  * **Answer:** SPA-level version.
+
+* Should Redis use the WebSocket protocol or have its own?
+  * (+) use: less code
+  * (+) own: more future-proof / might want to do things differently for Redis
+  * (+) own: easy to add types that WSP doesn't use
+  * (+) own: easier to understand change/impact; avoids minor version bumps that are irrelevant
+  * **Answer:** own
+
+* Where should protocols live? How should they be organised?
+
+  `v1.Shared {a;b;c(←b);...}`
+  `v2.Shared {b;c(←b)}` (or maybe copy-paste all of v1 and update)
+  Specific {
+    private v1 = {import v1.Shared.{a,b}; xxx}
+    v = {v1}
+  }
+
+  (-) `.ajax.<Endpoint>`? Too many. Importing is shit.
+  (+) `AjaxEndpoints {...}`
+
+### Generic supplimentation
+
+* Server <--> Client: Inline JS on load
+  * no need for magic numbers
+  * no need for version (because webapp instances serves both link to JS and bindata in same request; can't be out-of-sync)
+
+* Server <--> Client: Ajax
+  * each request and response should include magic numbers
+  * each request and response should include version
+
+* Server <--> Client: WebSocket
+  * each request and response should include magic numbers
+  * version specified on connection
+
+* Server <--> Client: Redis
+  * data should include magic numbers
+  * data should include version

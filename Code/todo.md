@@ -127,6 +127,7 @@ Phase 2B
     * Remove BooPickle macro utils
     * Add & use versions
     * Add & use magic numbers
+    * Add stability tests for each codec
   * Protocol failure handling
     * Server > Client : Client to reload page
     * Server < Client : Server to reject
