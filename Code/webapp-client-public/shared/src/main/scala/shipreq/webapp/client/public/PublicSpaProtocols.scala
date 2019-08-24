@@ -18,7 +18,7 @@ import shipreq.webapp.base.Urls
 /**
   * Protocols for the Public SPA / webapp-client-public module.
   */
-object PublicSpaProtocols2 {
+object PublicSpaProtocols {
   
   type Ajax[Req, Res] = Protocol.Ajax.Simple[SafePickler, Req, Res]
 

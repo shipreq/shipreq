@@ -9,7 +9,7 @@ import shipreq.webapp.base.Urls
 /**
   * Protocols for the Home SPA / webapp-client-home module.
   */
-object HomeSpaProtocols2 {
+object HomeSpaProtocols {
 
   type Ajax[Req, Res] = Protocol.Ajax.Simple[SafePickler, Req, Res]
 
