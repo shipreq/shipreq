@@ -138,3 +138,4 @@ Phase 2B
     * store (and update) the latest project name in the header table
   * Taskman
     * Use Circe
+  * Revise all paths
