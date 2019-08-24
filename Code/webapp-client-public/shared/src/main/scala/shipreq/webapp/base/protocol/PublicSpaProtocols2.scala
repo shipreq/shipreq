@@ -1,4 +1,4 @@
-package shipreq.webapp.client.public
+package shipreq.webapp.base.protocol
 
 import boopickle.DefaultBasic._
 import japgolly.univeq.UnivEq
@@ -6,7 +6,6 @@ import monocle.macros.{GenIso, Lenses}
 import scalaz.\/
 import shipreq.base.util._
 import shipreq.webapp.base.data.SecurityToken
-import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary._
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
 import shipreq.webapp.base.util.TextMod
@@ -19,7 +18,7 @@ import shipreq.webapp.base.Urls
   * Protocols for the Public SPA / webapp-client-public module.
   */
 object PublicSpaProtocols2 {
-  
+
   type Ajax[Req, Res] = Protocol.Ajax.Simple[SafePickler, Req, Res]
 
   private def defAjax[Req: SafePickler, Res: SafePickler](path: String): Ajax[Req, Res] =
@@ -192,7 +191,7 @@ object PublicSpaProtocols2 {
               case 3 => Result.UsernameTaken
             }
         }
-      
+
       val picklerResponse: Pickler[Response] =
         pickleDisj
 
