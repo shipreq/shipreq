@@ -33,4 +33,6 @@ object Version {
           x.minor.value - y.minor.value
       }
     }
+
+  val v10 = fromInts(1, 0)
 }
