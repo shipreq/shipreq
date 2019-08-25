@@ -20,12 +20,12 @@ import Implicits._
 
 trait PublicSpaLogic[F[_]] {
 
-  val ajaxLandingPage   : PublicSpaProtocols.landingPage   .ServerSideFn [F]
-  val ajaxLogin         : PublicSpaProtocols.login         .ServerSideFnO[F, Option[Security.SessionToken]]
-  val ajaxRegister1     : PublicSpaProtocols.register1     .ServerSideFn [F]
-  val ajaxRegister2     : PublicSpaProtocols.register2     .ServerSideFnO[F, Option[Security.SessionToken]]
-  val ajaxResetPassword1: PublicSpaProtocols.resetPassword1.ServerSideFn [F]
-  val ajaxResetPassword2: PublicSpaProtocols.resetPassword2.ServerSideFn [F]
+  val ajaxLandingPage   : PublicSpaProtocols.LandingPage   .ajax.ServerSideFn [F]
+  val ajaxLogin         : PublicSpaProtocols.Login         .ajax.ServerSideFnO[F, Option[Security.SessionToken]]
+  val ajaxRegister1     : PublicSpaProtocols.Register1     .ajax.ServerSideFn [F]
+  val ajaxRegister2     : PublicSpaProtocols.Register2     .ajax.ServerSideFnO[F, Option[Security.SessionToken]]
+  val ajaxResetPassword1: PublicSpaProtocols.ResetPassword1.ajax.ServerSideFn [F]
+  val ajaxResetPassword2: PublicSpaProtocols.ResetPassword2.ajax.ServerSideFn [F]
 
   /** Ignores publicRegistration setting.
     * Lacks security protection.
@@ -189,34 +189,34 @@ object PublicSpaLogic extends HasLogger {
           } yield result.map(_._1)
         }
 
-        val register1: PublicSpaProtocols.register1.ServerSideFn[F] =
+        val register1: PublicSpaProtocols.Register1.ajax.ServerSideFn[F] =
           registrationProc(Security.Event.Register1, i =>
             register1(i.value).map(_.void))
 
-        val register2: PublicSpaProtocols.register2.ServerSideFnO[F, Option[Security.SessionToken]] = {
+        val register2: PublicSpaProtocols.Register2.ajax.ServerSideFnO[F, Option[Security.SessionToken]] = {
           type T = Option[Security.SessionToken]
-          import PublicSpaProtocols.Register.{Request, Response}
-          val stack = MonadEE[F, ErrorMsg, Response]
+          import PublicSpaProtocols.Register2.{Request, Result}
+          val stack = MonadEE[F, ErrorMsg, Result]
           import stack._
 
-          val body: Request => F[ErrorMsg \/ (Response, T)] =
-            registrationProc[Request, (Response, T)](Security.Event.Register2, unvalidatedReq => {
+          val body: Request => F[ErrorMsg \/ (Result, T)] =
+            registrationProc[Request, (Result, T)](Security.Event.Register2, unvalidatedReq => {
 
-              unvalidatedReq.validate.onValid[F, (Response, T)](req =>
+              unvalidatedReq.validate.onValid[F, (Result, T)](req =>
                 MDC(MdcSecurityToken, req.token.value) {
 
                   val validateToken: Stack[Unit] =
                     getTokenStatus(req.token).mapToStack {
                       case SecurityToken.Status.Valid   => rightUnit
-                      case SecurityToken.Status.Invalid => -\/(\/-(Response.TokenInvalid))
-                      case SecurityToken.Status.Expired => -\/(\/-(Response.TokenExpired))
+                      case SecurityToken.Status.Invalid => -\/(\/-(Result.TokenInvalid))
+                      case SecurityToken.Status.Expired => -\/(\/-(Result.TokenExpired))
                     }
 
                   def register(ps: PasswordAndSalt): Stack[UserId] =
                     runDB(db.completeUserRegistration(req.token, req.personName, req.username, ps, req.newsletter)).mapToStack {
                       case DB.UserRegistrationResult.Success(i)    => \/-(i)
-                      case DB.UserRegistrationResult.TokenNotFound => -\/(\/-(Response.TokenInvalid))
-                      case DB.UserRegistrationResult.UsernameTaken => -\/(\/-(Response.UsernameTaken))
+                      case DB.UserRegistrationResult.TokenNotFound => -\/(\/-(Result.TokenInvalid))
+                      case DB.UserRegistrationResult.UsernameTaken => -\/(\/-(Result.UsernameTaken))
                     }
 
                   val login: Stack[Option[Security.SessionToken]] =
@@ -234,11 +234,11 @@ object PublicSpaLogic extends HasLogger {
                       t  <- login
                     } yield t
 
-                  def logAndMap(i: StackLeft \/ Option[Security.SessionToken]): F[(ErrorMsg \/ (Response, Option[Security.SessionToken]), Security.Result)] =
+                  def logAndMap(i: StackLeft \/ Option[Security.SessionToken]): F[(ErrorMsg \/ (Result, Option[Security.SessionToken]), Security.Result)] =
                     F.point(i match {
                       case \/-(t) =>
                         logger.info(s"${req.username.with_@} completed user registration.")
-                        (\/-((Response.Success, t)), Security.Result.Success)
+                        (\/-((Result.Success, t)), Security.Result.Success)
                       case -\/(\/-(f)) =>
                         logger.warn(s"${req.username.with_@} failed to complete user registration: $f")
                         (\/-((f, None)), Security.Result.Failure)
@@ -275,7 +275,7 @@ object PublicSpaLogic extends HasLogger {
 
         private val absUrlRegister2 = config.baseUrl / Urls.PublicSpaRoute.ResetPassword.url
 
-        val resetPassword1: PublicSpaProtocols.resetPassword1.ServerSideFn[F] =
+        val resetPassword1: PublicSpaProtocols.ResetPassword1.ajax.ServerSideFn[F] =
           security.protectFn { user =>
 
             def resetInDb(now: Instant): D[(Option[Msg], Security.Result)] = {
@@ -319,34 +319,34 @@ object PublicSpaLogic extends HasLogger {
             } yield ()
           }
 
-        val resetPassword2: PublicSpaProtocols.resetPassword2.ServerSideFn[F] =
+        val resetPassword2: PublicSpaProtocols.ResetPassword2.ajax.ServerSideFn[F] =
           security.protectFn(req =>
             MDC(MdcSecurityToken, req.token.value)(
               UserValidators.password.named(req.newPassword.value).onValid { newPassword =>
 
-                import PublicSpaProtocols.ResetPassword.Response
-                val stack = MonadEE[F, ErrorMsg, Response]
+                import PublicSpaProtocols.ResetPassword2.Result
+                val stack = MonadEE[F, ErrorMsg, Result]
                 import stack._
 
                 val validateToken: Stack[Unit] =
                   getTokenStatus(req.token).mapToStack {
                     case SecurityToken.Status.Valid   => rightUnit
-                    case SecurityToken.Status.Invalid => -\/(\/-(Response.TokenInvalid))
-                    case SecurityToken.Status.Expired => -\/(\/-(Response.TokenExpired))
+                    case SecurityToken.Status.Invalid => -\/(\/-(Result.TokenInvalid))
+                    case SecurityToken.Status.Expired => -\/(\/-(Result.TokenExpired))
                   }
 
-                val main: Stack[Response.Success.type] =
+                val main: Stack[Result.Success.type] =
                   for {
                     _  <- validateToken
                     ps <- security.hashPassword(newPassword).toStack
                     u  <- runDB(db.updateUserPassword(req.token, ps)).toStack
-                    id <- (u \/> (Response.TokenInvalid: Response)).toStack
+                    id <- (u \/> (Result.TokenInvalid: Result)).toStack
                   } yield {
                     logger.info(s"Password reset for user #${id.value}.")
-                    Response.Success
+                    Result.Success
                   }
 
-                def logAndMap(i: StackLeft \/ Response.Success.type): F[(ErrorMsg \/ Response, Security.Result)] =
+                def logAndMap(i: StackLeft \/ Result.Success.type): F[(ErrorMsg \/ Result, Security.Result)] =
                   F.point(i match {
                     case r@ \/-(_) =>
                       (r, Security.Result.Success)

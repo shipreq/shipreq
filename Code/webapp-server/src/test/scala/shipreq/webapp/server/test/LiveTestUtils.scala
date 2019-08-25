@@ -1,6 +1,5 @@
 package shipreq.webapp.server.test
 
-import boopickle.Pickler
 import net.liftweb.http.LiftRules
 import net.liftweb.http.testing._
 import org.apache.commons.httpclient.{HttpClient, HttpMethodBase}
@@ -8,6 +7,7 @@ import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.logic.{Cookie, Security}
 import shipreq.webapp.server.security.SecurityInterpreter
@@ -74,13 +74,13 @@ object LiveTestUtils {
     testKit.post(url, testKit.theHttpClient, h2 ::: headers, params: _*).asInstanceOf[HttpResponse]
   }
 
-  def ajaxPost(p: Protocol.Ajax[Pickler])
+  def ajaxPost(p: Protocol.Ajax[SafePickler])
               (req: p.protocol.RequestType,
                token  : Security.SessionToken = Security.SessionToken.anonymous,
                headers: List[(String, String)] = Nil): HttpResponse = {
     val h2 = tokenCookie(token)
     val prep = p.protocol.prepareSend(req)
-    val body = BinaryJvm.encode(p.prepReq)(prep.request).toNewArray
+    val body = p.prepReq.codec.encode(prep.request).toNewArray
     testKit.post(p.url.relativeUrl, testKit.theHttpClient, h2 :: headers, body, "application/octet-stream")
       .asInstanceOf[HttpResponse]
   }

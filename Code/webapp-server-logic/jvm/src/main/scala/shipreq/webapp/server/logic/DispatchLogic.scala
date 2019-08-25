@@ -1,6 +1,5 @@
 package shipreq.webapp.server.logic
 
-import boopickle.Pickler
 import com.typesafe.scalalogging.StrictLogging
 import japgolly.microlibs.utils.Utils
 import japgolly.microlibs.nonempty.NonEmptySet
@@ -15,6 +14,8 @@ import shipreq.base.util._
 import shipreq.webapp.base.{AssetManifest, Urls}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.protocol.binary.SafePickler
+import shipreq.webapp.base.protocol.binary.SafePickler.DecodingFailure
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.util.ResourceHint
 import shipreq.webapp.client.public.PublicSpaProtocols
@@ -133,7 +134,14 @@ object DispatchLogic {
 
   object StatusCode {
     final val OK         = 200
+
+    /** The server cannot or will not process the request due to an apparent client error
+      * (e.g., malformed request syntax, size too large). */
     final val BadRequest = 400
+
+    /** The server either does not recognize the request method, or it lacks the ability to fulfil the request.
+      * Usually this implies future availability (e.g., a new feature of a web-service API). */
+    final val NotImplemented = 501
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -417,7 +425,13 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
   object Ajax extends StrictLogging {
 
     private val authRequired =
-      F pure Response(ResponseCmd.StatusOnly.Forbidden, Cookie.Update.empty)
+      F pure ResponseCmd.StatusOnly.Forbidden.withoutCookieUpdate
+
+    private val badRequest =
+      ResponseCmd.StatusOnly.BadRequest.withoutCookieUpdate
+
+    private def versionFailure(text: String) =
+      Response(ResponseCmd.Text(StatusCode.NotImplemented, text), Cookie.Update.empty)
 
     private case class Route(handler: Handler, name: String)
 
@@ -426,19 +440,52 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
     private[this] val routeMap: Map[String, Route] = {
       val mutableRouteMap = new Url.Relative.MutableMap[Route]
 
-      def _register[A](p: Protocol.Ajax[Pickler], name: String)
+      def _register[A](p: Protocol.Ajax[SafePickler], name: String)
                       (f: (Security.SessionToken, p.protocol.PreparedRequestType) => F[Response]): Unit = {
         assert(p.url.underlying startsWith Urls.ajaxRoot.underlying, s"${p.url} must start with ${Urls.ajaxRoot}")
 
+        val serverVer = p.prepReq.codec.version
+
+        // [/x/pub/lp : landingPage v1.0] Failed to decode ajax binary body.
+        val logPrefix = s"[${p.url.relativeUrlNoTailSlash} : $name ${serverVer.verStr}] "
+
+        import Version.ordering.mkOrderingOps
+
+        def respondCVO(clientVer: Option[Version], r: => Response): Response =
+          clientVer.fold(r)(respondCV(_, r))
+
+        def respondCV(clientVer: Version, r: => Response): Response =
+          if (clientVer > serverVer)
+            versionFailure(s"Failed to parse protocol ${clientVer.verStr}. This server is still on ${serverVer.verStr}. We're probably in the middle of an upgrade. Please try again.")
+          else
+            r
+
         val h: Handler = (token, reqBin, span) => {
           val main: F[Response] =
-            BinaryJvm.decode(reqBin, p.prepReq) match {
-              case Success(req) =>
+            p.prepReq.codec.decode(reqBin) match {
+              case \/-(req) =>
                 f(token, req)
-              case Failure(t) =>
+              case -\/(err) =>
                 F.point {
-                  logger.warn("Failed to decode ajax binary body.", t)
-                  ResponseCmd.StatusOnly.BadRequest.withoutCookieUpdate
+                  err match {
+
+                    case DecodingFailure.UnsupportedMajorVer(clientVer) =>
+                      logger.warn(s"${logPrefix}Unsupported major version: ${clientVer.verStr}")
+                      def serverAheadOfClient = versionFailure(s"Failed to parse protocol ${clientVer.verStr}. This server is on ${serverVer.verStr}.")
+                      respondCV(clientVer, serverAheadOfClient)
+
+                    case DecodingFailure.MagicNumberMismatch(client, server, clientVer) =>
+                      logger.warn(s"${logPrefix}Magic-number mismatch: received ${client.hex}, expected ${server.hex}. (ClientVer:${clientVer.fold("?")(_.verNum)})")
+                      respondCVO(clientVer, badRequest)
+
+                    case DecodingFailure.InvalidVersion(major, minor) =>
+                      logger.warn(s"${logPrefix}Invalid version: $major.$minor)")
+                      badRequest
+
+                    case DecodingFailure.ExceptionOccurred(e, clientVer) =>
+                      logger.warn(s"${logPrefix}Failed to decode request. (ClientVer:${clientVer.fold("?")(_.verNum)})", e)
+                      respondCVO(clientVer, badRequest)
+                  }
                 }
             }
 
@@ -455,12 +502,13 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
         mutableRouteMap += (p.url -> Route(h, name))
       }
 
-      def responseCmd(p: Protocol.Ajax[Pickler])(req: p.protocol.PreparedRequestType, out: p.protocol.ResponseType) = {
-        val outBin = BinaryJvm.encode(p.responseProtocol(req))(out)
+      def responseCmd(p: Protocol.Ajax[SafePickler])(req: p.protocol.PreparedRequestType, out: p.protocol.ResponseType) = {
+        val respCodec = p.responseProtocol(req).codec
+        val outBin = respCodec.encode(out)
         ResponseCmd.Binary(StatusCode.OK, outBin)
       }
 
-      def anon(p: Protocol.Ajax[Pickler])(name: String, f: p.ServerSideFn[F]): Unit =
+      def anon(p: Protocol.Ajax[SafePickler])(name: String, f: p.ServerSideFn[F]): Unit =
         _register(p, name)((token, req) =>
           for {
             out   <- f(req)
@@ -469,7 +517,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
           } yield Response(resCmd, cu)
         )
 
-      def anonO[A](p: Protocol.Ajax[Pickler])
+      def anonO[A](p: Protocol.Ajax[SafePickler])
                       (name: String, f: p.ServerSideFnO[F, A])
                       (g: (Security.SessionToken, ResponseCmd, A) => F[Response]): Unit =
         _register(p, name)((token, req) =>
@@ -480,7 +528,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
           } yield res
         )
 
-      def auth(p: Protocol.Ajax[Pickler])(name: String, f: p.ServerSideFnI[F, User]): Unit =
+      def auth(p: Protocol.Ajax[SafePickler])(name: String, f: p.ServerSideFnI[F, User]): Unit =
         _register(p, name)((token, req) =>
           token.authenticatedUser match {
             case Some(user) =>
@@ -495,13 +543,13 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
         )
 
       // Register endpoints
-      anon (PublicSpaProtocols.landingPage   )("landingPage"   , publicSpa.ajaxLandingPage   )
-      anonO(PublicSpaProtocols.login         )("login"         , publicSpa.ajaxLogin         )(useNewToken)
-      anon (PublicSpaProtocols.register1     )("register1"     , publicSpa.ajaxRegister1     )
-      anonO(PublicSpaProtocols.register2     )("register2"     , publicSpa.ajaxRegister2     )(useNewToken)
-      anon (PublicSpaProtocols.resetPassword1)("resetPassword1", publicSpa.ajaxResetPassword1)
-      anon (PublicSpaProtocols.resetPassword2)("resetPassword2", publicSpa.ajaxResetPassword2)
-      auth (HomeSpaProtocols  .createProject )("createProject" , homeSpa  .ajaxCreateProject )
+      anon (PublicSpaProtocols.LandingPage   .ajax)("landingPage"   , publicSpa.ajaxLandingPage   )
+      anonO(PublicSpaProtocols.Login         .ajax)("login"         , publicSpa.ajaxLogin         )(useNewToken)
+      anon (PublicSpaProtocols.Register1     .ajax)("register1"     , publicSpa.ajaxRegister1     )
+      anonO(PublicSpaProtocols.Register2     .ajax)("register2"     , publicSpa.ajaxRegister2     )(useNewToken)
+      anon (PublicSpaProtocols.ResetPassword1.ajax)("resetPassword1", publicSpa.ajaxResetPassword1)
+      anon (PublicSpaProtocols.ResetPassword2.ajax)("resetPassword2", publicSpa.ajaxResetPassword2)
+      auth (HomeSpaProtocols  .CreateProject .ajax)("createProject" , homeSpa  .ajaxCreateProject )
 
       mutableRouteMap.toMapNoHeadSlash
     }

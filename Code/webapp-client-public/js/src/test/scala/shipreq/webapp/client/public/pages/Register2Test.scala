@@ -7,10 +7,10 @@ import utest._
 import shipreq.base.util._
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.test.TestState._
+import shipreq.webapp.base.test.TestState.{Result => _, _}
 import shipreq.webapp.base.test._
 import shipreq.webapp.client.public.PublicSpaProtocols
-import shipreq.webapp.client.public.PublicSpaProtocols.Register._
+import shipreq.webapp.client.public.PublicSpaProtocols.Register2._
 import shipreq.webapp.client.public.PublicSpaTestUtil._
 import shipreq.webapp.client.public.spa._
 
@@ -74,8 +74,8 @@ object Register2Tester {
       submitEnabled.assert(Disabled).after &
       reqsSent.assert.increment
 
-  def serverResponse(r: Response): *.Actions =
-    *.action(s"Server responds with $r")(_.ref.respondToLast(PublicSpaProtocols.register2)(\/-(r))) <+ reqsSent.assert.not.equal(0)
+  def serverResponse(r: Result): *.Actions =
+    *.action(s"Server responds with $r")(_.ref.respondToLast(PublicSpaProtocols.Register2.ajax)(\/-(r))) <+ reqsSent.assert.not.equal(0)
 
   private val pwd = "qqqqqq123QWE"
 
@@ -88,7 +88,7 @@ object Register2Tester {
     .group("Enter valid details")
 
   def respondUsernameTaken: *.Actions = (
-    serverResponse(Response.UsernameTaken)
+    serverResponse(Result.UsernameTaken)
       +> username.validity.assert(Invalid)
       +> username.failure.assert(Some("Already in use.")))
 
@@ -132,7 +132,7 @@ object Register2Test extends TestSuite {
   def success: *.Actions = (
     clickSubmit
       +> queriesServer
-      >> serverResponse(Response.Success)
+      >> serverResponse(Result.Success)
       +> message.assert(Some("Welcome to ShipReq!")))
 
   override def tests = Tests {

@@ -9,7 +9,7 @@ import shipreq.base.util.Url
 import shipreq.webapp.base.Urls.PublicSpaRoute
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.client.public.PublicSpaProtocols
+import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
 import shipreq.webapp.client.public.pages._
 
 object PublicSpa {
@@ -29,7 +29,7 @@ object PublicSpa {
   }
 }
 
-final class PublicSpa(val initData: PublicSpaProtocols.InitData, ajax: AjaxClient.Binary) {
+final class PublicSpa(val initData: PublicSpaEntryPoint.InitData, ajax: AjaxClient.Binary) {
   import PublicSpa._
 
   val Component = ScalaComponent.builder[Props]("Root")
@@ -39,12 +39,12 @@ final class PublicSpa(val initData: PublicSpaProtocols.InitData, ajax: AjaxClien
 
   final class Backend($: BackendScope[Props, State]) {
 
-    val sspLandingPage    = ajax.invoker(PublicSpaProtocols.landingPage).mergeFailure
-    val sspLogin          = ajax.invoker(PublicSpaProtocols.login)
-    val sspResetPassword1 = ajax.invoker(PublicSpaProtocols.resetPassword1)
-    val sspResetPassword2 = ajax.invoker(PublicSpaProtocols.resetPassword2).mergeFailure
-    val sspRegister1      = ajax.invoker(PublicSpaProtocols.register1).mergeFailure
-    val sspRegister2      = ajax.invoker(PublicSpaProtocols.register2).mergeFailure
+    val sspLandingPage    = ajax.invoker(PublicSpaProtocols.LandingPage.ajax).mergeFailure
+    val sspLogin          = ajax.invoker(PublicSpaProtocols.Login.ajax)
+    val sspResetPassword1 = ajax.invoker(PublicSpaProtocols.ResetPassword1.ajax)
+    val sspResetPassword2 = ajax.invoker(PublicSpaProtocols.ResetPassword2.ajax).mergeFailure
+    val sspRegister1      = ajax.invoker(PublicSpaProtocols.Register1.ajax).mergeFailure
+    val sspRegister2      = ajax.invoker(PublicSpaProtocols.Register2.ajax).mergeFailure
 
     val awLandingPage = AsyncFeature.Write.D0.init($.zoomStateL(State.landingPage ^|-> LandingPage.State.async))
     val awLogin       = AsyncFeature.Write.D0.init($.zoomStateL(State.login       ^|-> Login      .State.async))

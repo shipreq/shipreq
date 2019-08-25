@@ -11,7 +11,7 @@ import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.public._
 import shipreq.webapp.client.public.spa._
 import shipreq.webapp.base.Urls
-import PublicSpaProtocols.ResetPassword.Response
+import PublicSpaProtocols.ResetPassword2.Result
 
 object ResetPasswordTester {
 
@@ -68,8 +68,8 @@ object ResetPasswordTester {
     *.action("Click submit")(Simulate click _.obs.form.get.submit)
       .addCheck(submitEnabled.assert(Enabled).before)
 
-  def serverResponse(r: Response): *.Actions =
-    *.action(s"Server response: $r")(_.ref.respondToLast(PublicSpaProtocols.resetPassword2)(\/-(r))) <+ reqsSent.assert.not.equal(0)
+  def serverResponse(r: Result): *.Actions =
+    *.action(s"Server response: $r")(_.ref.respondToLast(PublicSpaProtocols.ResetPassword2.ajax)(\/-(r))) <+ reqsSent.assert.not.equal(0)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -97,7 +97,7 @@ object ResetPasswordTest extends TestSuite {
       +> assertForm(Disabled)
       +> submitEnabled.assert(Disabled)
       +> reqsSent.assert.increment
-      >> serverResponse(Response.Success)
+      >> serverResponse(Result.Success)
       +> message.assert(Some("Changed Password")))
 
   val p1 = "abcdEFGH1234"

@@ -3,7 +3,9 @@ package shipreq.webapp.base.protocol
 import japgolly.univeq._
 
 final case class Version(major: Version.Major, minor: Version.Minor) {
-  override def toString: String = s"v${major.value}.${minor.value}"
+  override def toString = verStr
+  def verNum = s"${major.value}.${minor.value}"
+  def verStr = "v" + verNum
 }
 
 object Version {

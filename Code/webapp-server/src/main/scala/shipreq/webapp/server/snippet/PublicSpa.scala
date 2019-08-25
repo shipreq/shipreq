@@ -3,18 +3,18 @@ package shipreq.webapp.server.snippet
 import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
 import shipreq.base.util.FxModule._
-import shipreq.webapp.client.public.PublicSpaProtocols
+import shipreq.webapp.client.public.PublicSpaEntryPoint
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.lib.SnippetHelpers
 import shipreq.webapp.server.protocol._
 
 object PublicSpa extends SnippetHelpers {
 
-  val EntryPoint = ClientSideProcInvoker(PublicSpaProtocols.EntryPoint)
+  val EntryPoint = ClientSideProcInvoker(PublicSpaEntryPoint.proc)
 
   def render = {
     val user = currentUserOption()
-    val initData = PublicSpaProtocols.InitData(Global.config.server.publicRegistration, user.map(_.username))
+    val initData = PublicSpaEntryPoint.InitData(Global.config.server.publicRegistration, user.map(_.username))
 
     val fx: Fx[NodeSeq => NodeSeq] =
       for {

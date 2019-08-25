@@ -13,13 +13,13 @@ import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.semantic.{Form, Icon, Input, Message}
 import shipreq.webapp.base.user.{PlainTextPassword, UserValidators}
-import shipreq.webapp.client.public.PublicSpaProtocols.{ResetPassword => P}
+import shipreq.webapp.client.public.PublicSpaProtocols.{ResetPassword2 => P}
 import shipreq.webapp.client.public.Styles.{resetPassword => *}
 
 object ResetPassword {
 
   final case class Props(token: SecurityToken,
-                         resetPassword: ServerSideProcInvoker[P.Request, ErrorMsg, P.Response]) {
+                         resetPassword: ServerSideProcInvoker[P.Request, ErrorMsg, P.Result]) {
     @inline def render: VdomElement = Component(this)
   }
 
@@ -27,7 +27,7 @@ object ResetPassword {
   final case class State(password1: String,
                          password2: String,
                          async    : AsyncFeature.State.D0[ErrorMsg],
-                         response : Option[P.Response]) {
+                         response : Option[P.Result]) {
 
     val formEnabled: Enabled =
       Disabled when AsyncFeature.isInProgress(async)
@@ -93,11 +93,11 @@ object ResetPassword {
       <.form(*.part1, Form(fields))
     }
 
-    def renderResponse(r: P.Response): VdomElement =
+    def renderResponse(r: P.Result): VdomElement =
       r match {
-        case P.Response.TokenExpired => Common.renderTokenExpired
-        case P.Response.TokenInvalid => Common.renderTokenInvalid
-        case P.Response.Success =>
+        case P.Result.TokenExpired => Common.renderTokenExpired
+        case P.Result.TokenInvalid => Common.renderTokenInvalid
+        case P.Result.Success =>
           <.div(*.part2,
             Message(
               Message.Style(Message.Type.Success),

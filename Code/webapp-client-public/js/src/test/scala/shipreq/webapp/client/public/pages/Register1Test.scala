@@ -52,7 +52,7 @@ object Register1Tester {
       .addCheck(submitEnabled.assert(Enabled).before)
 
   def serverResponse: *.Actions =
-    *.action("Server response")(_.ref.respondToLast(PublicSpaProtocols.register1)(\/-(()))) <+ reqsSent.assert.not.equal(0)
+    *.action("Server response")(_.ref.respondToLast(PublicSpaProtocols.Register1.ajax)(\/-(()))) <+ reqsSent.assert.not.equal(0)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████

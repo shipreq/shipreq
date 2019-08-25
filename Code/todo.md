@@ -138,4 +138,6 @@ Phase 2B
     * store (and update) the latest project name in the header table
   * Taskman
     * Use Circe
-  * Revise all paths
+  * Cleanup
+    * Revise all ajax paths
+    * Revise/remove `BinaryJs` , `BinaryShared`, `ProtocolTest` etc

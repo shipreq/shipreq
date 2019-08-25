@@ -1,24 +1,25 @@
 package shipreq.webapp.base.test
 
-import boopickle.Pickler
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import org.scalajs.dom.console
 import scala.util.{Failure, Success, Try}
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.test.BaseTestUtil._
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.protocol.binary.SafePickler
 
 object TestAjaxClient {
 
   trait Req {
-    val ajax      : Protocol.Ajax[Pickler]
+    val ajax      : Protocol.Ajax[SafePickler]
     val input     : ajax.protocol.RequestType
-    val onResponse: Throwable \/ ajax.protocol.ResponseType => Callback
+    val onResponse: Throwable \/ SafePickler.Result[ajax.protocol.ResponseType] => Callback
 
     override def toString =
       "Req[%08X]:%s(%s)".format(##, ajax.url, input)
 
-    def force(p2: Protocol.Ajax[Pickler]) = {
+    def force(p2: Protocol.Ajax[SafePickler]) = {
       assert(ajax eq p2)
       this.asInstanceOf[ReqOf[p2.type]]
     }
@@ -34,7 +35,7 @@ object TestAjaxClient {
         sys error "Request has already been responded to."
   }
 
-  type ReqOf[P <: Protocol.Ajax[Pickler]] = Req {val ajax: P}
+  type ReqOf[P <: Protocol.Ajax[SafePickler]] = Req {val ajax: P}
 }
 
 class TestAjaxClient(autoRespondArg: Boolean) extends AjaxClient.Binary {
@@ -60,17 +61,25 @@ class TestAjaxClient(autoRespondArg: Boolean) extends AjaxClient.Binary {
   def addAutoResponsePF(f: PartialFunction[Req, Callback]): Unit =
     autoResponsePFs :+= f
 
-  def addAutoResponse(p: Protocol.Ajax[Pickler])(f: ReqOf[p.type] => Callback): Unit =
+  def addAutoResponse(p: Protocol.Ajax[SafePickler])(f: ReqOf[p.type] => Callback): Unit =
     addAutoResponsePF {
       case r if r.ajax eq p => f(r.force(p))
     }
 
-  override def apply(p: Protocol.Ajax[Pickler])(req: p.protocol.RequestType) = CallbackTo {
+  override def invoker(p: Protocol.Ajax[SafePickler]): ServerSideProcInvoker[p.protocol.RequestType, ErrorMsg, p.protocol.ResponseType] =
+    ServerSideProcInvoker.viaAsyncCallback { (req: p.protocol.RequestType) =>
+      apply(p)(req).map(_.map { result =>
+        val resCodec = p.protocol.prepareSend(req).response.codec
+        AjaxClient.BinaryImpl.Result(result, resCodec.version).errMsgOrSuccess
+      })
+    }.mergeFailure
 
-    var callbacks: List[Try[p.protocol.ResponseType] => Callback] =
+  def apply(p: Protocol.Ajax[SafePickler])(req: p.protocol.RequestType) = CallbackTo[AsyncCallback[SafePickler.Result[p.protocol.ResponseType]]] {
+
+    var callbacks: List[Try[SafePickler.Result[p.protocol.ResponseType]] => Callback] =
       Nil
 
-    var result: Try[p.protocol.ResponseType] =
+    var result: Try[SafePickler.Result[p.protocol.ResponseType]] =
       null
 
     def reactNow(): Unit = {
@@ -92,20 +101,22 @@ class TestAjaxClient(autoRespondArg: Boolean) extends AjaxClient.Binary {
         autoRespondToLast()
     }
 
-    AsyncCallback[p.protocol.ResponseType](f =>
+    AsyncCallback[SafePickler.Result[p.protocol.ResponseType]](f =>
       Callback {
         callbacks ::= f
         newReq()
       })
   }
 
-
   def assertReqsSent(count: Int): Unit =
     assertEq("AJAX requests", reqs.size, count)
 
   def last = reqs.last
 
-  def respondToLast(p: Protocol.Ajax[Pickler])(o: p.protocol.ResponseType): Unit =
+  def respondToLast(p: Protocol.Ajax[SafePickler])(o: p.protocol.ResponseType): Unit =
+    respondToLast2(p)(\/-(o))
+
+  def respondToLast2(p: Protocol.Ajax[SafePickler])(o: SafePickler.Result[p.protocol.ResponseType]): Unit =
     last.force(p).onResponse(\/-(o)).runNow()
 
   def autoRespondToLast(): Unit = {

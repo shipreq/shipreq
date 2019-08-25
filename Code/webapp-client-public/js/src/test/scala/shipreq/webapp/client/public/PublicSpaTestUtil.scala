@@ -12,7 +12,7 @@ import shipreq.webapp.client.public.spa.{Page, PublicSpa}
 
 object PublicSpaTestUtil {
 
-  val initData = PublicSpaProtocols.InitData(Allow, None)
+  val initData = PublicSpaEntryPoint.InitData(Allow, None)
 
   class ForTestState {
     val ajax     = new TestAjaxClient(false)

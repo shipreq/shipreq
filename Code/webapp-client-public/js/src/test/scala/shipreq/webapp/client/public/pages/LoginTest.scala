@@ -73,14 +73,14 @@ object LoginTester {
       .addCheck(loginEnabled.assert(Enabled).before)
 
   def serverLoginResponse(p: Permission): *.Actions =
-    *.action(s"Server responds to login: $p")(_.ref.respondToLast(PublicSpaProtocols.login)(p)) <+ reqsSent.assert.not.equal(0)
+    *.action(s"Server responds to login: $p")(_.ref.respondToLast(PublicSpaProtocols.Login.ajax)(p)) <+ reqsSent.assert.not.equal(0)
 
   def clickForgotPwd: *.Actions =
     *.action("Click 'Forgot password'")(Simulate click _.obs.form.get.forgotPwd)
       .addCheck(forgotPwdEnabled.assert(Enabled).before)
 
   def serverForgotPwdResponse: *.Actions =
-    *.action("Server responds to forgot-pwd")(_.ref.respondToLast(PublicSpaProtocols.resetPassword1)(())) <+ reqsSent.assert.not.equal(0)
+    *.action("Server responds to forgot-pwd")(_.ref.respondToLast(PublicSpaProtocols.ResetPassword1.ajax)(())) <+ reqsSent.assert.not.equal(0)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████

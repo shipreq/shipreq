@@ -60,6 +60,13 @@ final class BinaryData(private[BinaryData] val bytes: Array[Byte], val length: I
   /** unsafe in that the result is mutable */
   def unsafeByteBuffer: ByteBuffer =
     ByteBuffer.wrap(bytes, 0, length)
+
+  def hex: String =
+    bytes
+      .iterator
+      .take(length)
+      .map(b => "%02X".format(b & 0xff))
+      .mkString
 }
 
 object BinaryData {
@@ -85,6 +92,20 @@ object BinaryData {
       bb.get(a)
       unsafeFromArray(a)
     }
+
+  def fromHex(hex: String): BinaryData = {
+    assert((hex.length & 1) == 0, "Hex strings must have an even length.")
+    var i = hex.length >> 1
+    val bytes = new Array[Byte](i)
+    while (i > 0) {
+      i -= 1
+      val si = i << 1
+      val byteStr = hex.substring(si, si + 2)
+      val byte = java.lang.Integer.parseUnsignedInt(byteStr, 16).byteValue()
+      bytes(i) = byte
+    }
+    unsafeFromArray(bytes)
+  }
 
   /** unsafe because the array could be modified later and affect the underlying array we use here */
   def unsafeFromArray(a: Array[Byte]): BinaryData =

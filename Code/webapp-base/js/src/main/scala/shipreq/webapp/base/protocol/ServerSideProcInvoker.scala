@@ -66,8 +66,9 @@ object ServerSideProcInvoker {
 
   def throwableToErrorMsg(t: Throwable): ErrorMsg =
     t match {
-      case e: AjaxException if e.isTimeout => ErrorMsg("Server didn't respond. Please check your internet connectivity.")
-      case AjaxException(_)                => ErrorMsg("Error contacting server. Please try again.")
+      case e: AjaxException if e.isTimeout     => ErrorMsg("Server didn't respond. Please check your internet connectivity.")
+      case AjaxException(x) if x.status == 501 => ErrorMsg("Failed to find a compatible server. Please try again, or try reloading the page.")
+      case AjaxException(_)                    => ErrorMsg("Error contacting server. Please try again.")
       case tt =>
         Option(tt.getMessage).filter(_.nonEmpty) match {
           case Some(m) => ErrorMsg("Error occurred: " + m)

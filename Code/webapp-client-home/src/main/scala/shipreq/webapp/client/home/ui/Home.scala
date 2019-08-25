@@ -9,17 +9,17 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{DataValidators, ProjectMetaData}
 import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus}
-import shipreq.webapp.base.protocol.{AjaxClient, HomeSpaProtocols, ServerSideProcInvoker}
+import shipreq.webapp.base.protocol.{AjaxClient, HomeSpaEntryPoint, HomeSpaProtocols, ServerSideProcInvoker}
 import shipreq.webapp.base.ui._
 import shipreq.webapp.base.ui.semantic.{Breadcrumb, Colour, Icon, Message}
 import shipreq.webapp.base.{ClientConfig, WebappConfig}
 
 object Home {
-  final case class Props(data: HomeSpaProtocols.InitData, ajax: AjaxClient.Binary) {
+  final case class Props(data: HomeSpaEntryPoint.InitData, ajax: AjaxClient.Binary) {
     @inline def render = Component(this)
 
     def createProjectIO: ServerSideProcInvoker[String, ErrorMsg, ProjectMetaData] =
-      ajax.invoker(HomeSpaProtocols.createProject)
+      ajax.invoker(HomeSpaProtocols.CreateProject.ajax)
   }
 
   @Lenses

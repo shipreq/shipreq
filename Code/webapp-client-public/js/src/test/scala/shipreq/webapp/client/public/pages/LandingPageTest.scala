@@ -91,7 +91,7 @@ object LandingPageTest extends TestSuite {
   def test(plan: *.Plan): Unit = {
     val t = new ForTestState
     import t.ajax
-    ajax.addAutoResponse(PublicSpaProtocols.landingPage)(_.onResponse(\/-(\/-(()))))
+    ajax.addAutoResponse(PublicSpaProtocols.LandingPage.ajax)(_.onResponse(\/-(\/-(\/-(())))))
     t(Page.Home)(h => plan.test(Observer.watch(new Obs(h, ajax))).stateless.withRef(ajax).run())
   }
 

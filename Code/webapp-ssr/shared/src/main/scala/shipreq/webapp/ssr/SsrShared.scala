@@ -16,8 +16,8 @@ object SsrSharedData {
   import shipreq.webapp.base.protocol.BinCodecUser._
   import shipreq.webapp.base.protocol.BoopickleMacros.pickleCaseClass
 
-  type PublicInitData = shipreq.webapp.client.public.PublicSpaProtocols.InitData
-  val  PublicInitData = shipreq.webapp.client.public.PublicSpaProtocols.InitData
+  type PublicInitData = shipreq.webapp.client.public.PublicSpaEntryPoint.InitData
+  val  PublicInitData = shipreq.webapp.client.public.PublicSpaEntryPoint.InitData
 
   final case class HomeSpaLoaderData(username: Username)
   implicit val picklerHomeSpaLoaderData = pickleCaseClass[HomeSpaLoaderData]

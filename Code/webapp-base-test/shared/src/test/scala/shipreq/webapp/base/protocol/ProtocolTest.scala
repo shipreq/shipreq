@@ -79,10 +79,6 @@ object ProtocolTest extends TestSuite {
 
   override def tests = Tests {
 
-    // TODO Test PublicSpaProtocols
-    // TODO Test HomeSpaProtocols
-    // TODO Test ProjectSpaProtocols
-
 //    'ServerSideProcs {
 //      type CrudFn[I] = ServerSideProc.Protocol[I, ErrorMsg \/ VerifiedEvent.Seq]
 //

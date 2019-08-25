@@ -20,13 +20,13 @@ import shipreq.webapp.base.validation.Implicits._
 import shipreq.webapp.base.validation.{Composite, Simple}
 import shipreq.webapp.base.{CommmonUiText, Urls, WebappConfig}
 import shipreq.webapp.client.public.Prefetch
-import shipreq.webapp.client.public.PublicSpaProtocols.Register.{Request, Response}
+import shipreq.webapp.client.public.PublicSpaProtocols.Register2.{Request, Result}
 import shipreq.webapp.client.public.Styles.{register2 => *}
 
 object Register2 {
 
   final case class Props(token : SecurityToken,
-                         submit: ServerSideProcInvoker[Request, ErrorMsg, Response]) {
+                         submit: ServerSideProcInvoker[Request, ErrorMsg, Result]) {
     @inline def render: VdomElement = Component(this)
   }
 
@@ -40,7 +40,7 @@ object Register2 {
                          vux           : ValidationUX,
                          async         : AsyncFeature.State.D0[ErrorMsg],
                          takenUsernames: Set[Username],
-                         response      : Option[Response.Terminal]) {
+                         response      : Option[Result.Terminal]) {
 
     val formEnabled: Enabled =
       Disabled when AsyncFeature.isInProgress(async)
@@ -71,9 +71,9 @@ object Register2 {
     private def showValidationFailures =
       State.vux set ValidationUX.Full
 
-    private def onResponse(req: Request): Response => Callback = {
-      case r: Response.Terminal   => $.modState(_.copy(response = Some(r)))
-      case Response.UsernameTaken => $.modState(showValidationFailures compose State.takenUsernames.modify(_ + req.username))
+    private def onResult(req: Request): Result => Callback = {
+      case r: Result.Terminal   => $.modState(_.copy(response = Some(r)))
+      case Result.UsernameTaken => $.modState(showValidationFailures compose State.takenUsernames.modify(_ + req.username))
     }
 
     private def tosName = "terms of service"
@@ -136,7 +136,7 @@ object Register2 {
           validator((s.personName, s.username, (s.password1, s.password2), s.tos)).map(req =>
             asyncW((s, f) => p.submit(
               req,
-              res => s << onResponse(req)(res),
+              res => s << onResult(req)(res),
               e => f(e) >> Callback.alert(e.value))))
 
         Common.validationOffUntilFirstSubmit(
@@ -181,11 +181,11 @@ object Register2 {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    private def renderResponse(r: Response.Terminal): VdomElement =
+    private def renderResult(r: Result.Terminal): VdomElement =
       r match {
-        case Response.TokenExpired => Common.renderTokenExpired
-        case Response.TokenInvalid => Common.renderTokenInvalid
-        case Response.Success =>
+        case Result.TokenExpired => Common.renderTokenExpired
+        case Result.TokenInvalid => Common.renderTokenInvalid
+        case Result.Success =>
           <.div(*.part2,
             Message(
               Message.Style(Message.Type.Success),
@@ -198,7 +198,7 @@ object Register2 {
       }
 
     def render(p: Props, s: State): VdomElement =
-      s.response.fold(renderForm(p, s))(renderResponse)
+      s.response.fold(renderForm(p, s))(renderResult)
   }
 
   val Component = ScalaComponent.builder[Props]("Register2")

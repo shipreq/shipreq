@@ -65,19 +65,24 @@ object RandomData {
     else
       v
 
-  val unicodeChar: Gen[Char] = {
-    val a = new Array[Char](1)
-    val chars = (0 to 65535)
-      .iterator
-      .map(_.toChar)
-      .filter { c =>
-        a(0) = c
-        PreProcessor.fixCharMultiLine(a, 0)
-        a(0) ==* c
-      }
-      .toVector
-    Gen.choose_!(chars)
-  }
+  private def disableUnicode = false
+
+  val unicodeChar: Gen[Char] =
+    if (disableUnicode)
+      Gen.ascii
+    else {
+      val a = new Array[Char](1)
+      val chars = (0 to 65535)
+        .iterator
+        .map(_.toChar)
+        .filter { c =>
+          a(0) = c
+          PreProcessor.fixCharMultiLine(a, 0)
+          a(0) ==* c
+        }
+        .toVector
+      Gen.choose_!(chars)
+    }
 
   val unicodeString : Gen[String] = unicodeChar.string
   val unicodeString1: Gen[String] = unicodeChar.string1
@@ -192,6 +197,21 @@ object RandomData {
       c <- Gen.chooseChar('a', 'b' to 'z', '0' to '9')
     } yield Username(a + b + c)
   }
+
+  lazy val errorMsg: Gen[ErrorMsg] =
+    Gen.ascii.string(1 to 6).map(ErrorMsg.apply)
+
+  lazy val emailAddr: Gen[EmailAddr] =
+    Gen.ascii.string(0 to 6).map(EmailAddr.apply)
+
+  lazy val plainTextPassword: Gen[PlainTextPassword] =
+    unicodeString.map(PlainTextPassword.apply)
+
+  lazy val personName: Gen[PersonName] =
+    unicodeString1.map(PersonName.apply)
+
+  lazy val securityToken: Gen[SecurityToken] =
+    Gen.ascii.string(1 to 6).map(SecurityToken.apply)
 
   // -------------------------------------------------------------------------------------------------------------------
   // Custom issue types

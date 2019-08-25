@@ -43,7 +43,7 @@ final case class SafePickler[A](header : Option[MagicNumber],
         picklerHeader.foreach(_.unpickle)
         val v = picklerVersion.unpickle
         if (v.major !=* version.major)
-          throw DecodingFailure.UnsupportedMajorVer(actual = v, supported = version.major)
+          throw DecodingFailure.UnsupportedMajorVer(actual = v)
         try {
           val a = body.unpickle
           picklerFooter.foreach(_.unpickle)
@@ -75,47 +75,34 @@ object SafePickler {
   type Result[+A] = DecodingFailure \/ A
 
   sealed trait DecodingFailure {
-    val dataVer: Option[Version]
+    val upstreamVer: Option[Version]
   }
 
   object DecodingFailure {
 
-    final case class UnsupportedMajorVer(actual   : Version,
-                                         supported: Version.Major) extends RuntimeException with DecodingFailure {
-      override val dataVer = Some(actual)
+    final case class UnsupportedMajorVer(actual: Version) extends RuntimeException with DecodingFailure {
+      override val upstreamVer = Some(actual)
     }
 
-    final case class MagicNumberMismatch(actual  : Int,
-                                         expected: MagicNumber,
-                                         dataVer : Option[Version]) extends RuntimeException with DecodingFailure
+    final case class MagicNumberMismatch(actual     : MagicNumber,
+                                         expected   : MagicNumber,
+                                         upstreamVer: Option[Version]) extends RuntimeException with DecodingFailure
 
     final case class InvalidVersion(major: Int,
                                     minor: Int) extends RuntimeException with DecodingFailure {
-      override val dataVer = None
+      override val upstreamVer = None
     }
 
-    final case class DecoderException(exception: Throwable,
-                                      dataVer  : Option[Version]) extends DecodingFailure
+    final case class ExceptionOccurred(exception  : Throwable,
+                                       upstreamVer: Option[Version]) extends DecodingFailure
 
-    final case class UnknownException(exception: Throwable,
-                                      dataVer  : Option[Version]) extends DecodingFailure
-
-    def fromException(err: Throwable, dataVer: Option[Version]): Result[Nothing] =
+    def fromException(err: Throwable, upstreamVer: Option[Version]): Result[Nothing] =
       err match {
-        case MagicNumberMismatch(a, b, None) => -\/(MagicNumberMismatch(a, b, dataVer))
-
-        case e: DecodingFailure => -\/(e)
-
-        case e @ (_: IllegalArgumentException
-                | _: IndexOutOfBoundsException
-                | _: CharacterCodingException
-                | _: StackOverflowError
-          ) => -\/(DecodingFailure.DecoderException(e, dataVer))
-
-        case NonFatal(e) =>
-          -\/(DecodingFailure.UnknownException(e, dataVer))
-
-        case e => throw e
+        case MagicNumberMismatch(a, b, None) => -\/(MagicNumberMismatch(a, b, upstreamVer))
+        case e: DecodingFailure              => -\/(e)
+        case e: StackOverflowError           => -\/(DecodingFailure.ExceptionOccurred(e, upstreamVer))
+        case NonFatal(e)                     => -\/(DecodingFailure.ExceptionOccurred(e, upstreamVer))
+        case e                               => throw e
       }
   }
 
@@ -153,7 +140,7 @@ object SafePickler {
       override def unpickle(implicit state: UnpickleState): Unit = {
         val found = state.dec.readRawInt
         if (found != real.value)
-          throw DecodingFailure.MagicNumberMismatch(actual = found, expected = real, dataVer = None)
+          throw DecodingFailure.MagicNumberMismatch(actual = MagicNumber(found), expected = real, upstreamVer = None)
       }
     }
 
@@ -166,4 +153,7 @@ object SafePickler {
   }
 }
 
-final case class MagicNumber(value: Int)
+final case class MagicNumber(value: Int) {
+  override def toString = s"MagicNumber(0x$hex)"
+  def hex = "%08X".format(value)
+}

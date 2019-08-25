@@ -7,7 +7,7 @@ import shipreq.base.util.FxModule._
 import shipreq.webapp.base.{AssetManifest, Urls, WebappConfig}
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.client.public.PublicSpaProtocols
+import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
 import shipreq.webapp.server.logic.{Obfuscators, Security}
 import shipreq.webapp.server.test.LiveTestUtils._
 import shipreq.webapp.server.test._
@@ -35,13 +35,13 @@ object LiveTest extends TestSuite {
 
     'root {
       get("/")
-        .assertSpa(AssetManifest.webappClientPublicJs, PublicSpaProtocols.EntryPoint)
+        .assertSpa(AssetManifest.webappClientPublicJs, PublicSpaEntryPoint.proc)
         .assertBodyTitle(WebappConfig.makePageTitle())
       ()
     }
 
     'loginAjax {
-      ajaxPost(PublicSpaProtocols.login)(PublicSpaProtocols.Login.Request(-\/(user1.username), user1.password))
+      ajaxPost(PublicSpaProtocols.Login.ajax)(PublicSpaProtocols.Login.Request(-\/(user1.username), user1.password))
         .assertOk
         .assertContentType("application/octet-stream")
         .assertJwt(Some(user1.toToken))
@@ -73,7 +73,7 @@ object LiveTest extends TestSuite {
 
     'membersHome {
       get(Urls.memberHome.relativeUrl, user1)
-        .assertSpa(AssetManifest.webappClientHomeJs, HomeSpaProtocols.EntryPoint)
+        .assertSpa(AssetManifest.webappClientHomeJs, HomeSpaEntryPoint.proc)
         .assertBodyTitle(WebappConfig.makePageTitle())
       ()
     }

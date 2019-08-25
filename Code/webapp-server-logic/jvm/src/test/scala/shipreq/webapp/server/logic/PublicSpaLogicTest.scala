@@ -7,18 +7,18 @@ import shipreq.taskman.api.Msg
 import shipreq.webapp.base.data.SecurityToken
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.user._
-import shipreq.webapp.client.public.PublicSpaProtocols
+import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
 
 object PublicSpaLogicTest extends TestSuite {
 
   class Tester(publicRegistration: Permission = Allow) extends MockInterpreters(_.copy(publicRegistration = publicRegistration)) {
-    val initData = PublicSpaProtocols.InitData(Allow, None)
+    val initData = PublicSpaEntryPoint.InitData(Allow, None)
 
-    def runLogin(i: PublicSpaProtocols.login.Req) = assertProtected(publicSpa.ajaxLogin(i).value)
-    def runRegister1(i: PublicSpaProtocols.register1.Req) = assertProtected(publicSpa.ajaxRegister1(i).value)
-    def runRegister2(i: PublicSpaProtocols.register2.Req) = assertProtected(publicSpa.ajaxRegister2(i).value)
-    def runResetPassword1(i: PublicSpaProtocols.resetPassword1.Req) = assertProtected(publicSpa.ajaxResetPassword1(i).value)
-    def runResetPassword2(i: PublicSpaProtocols.resetPassword2.Req) = assertProtected(publicSpa.ajaxResetPassword2(i).value)
+    def runLogin(i: PublicSpaProtocols.Login.ajax.Req) = assertProtected(publicSpa.ajaxLogin(i).value)
+    def runRegister1(i: PublicSpaProtocols.Register1.ajax.Req) = assertProtected(publicSpa.ajaxRegister1(i).value)
+    def runRegister2(i: PublicSpaProtocols.Register2.ajax.Req) = assertProtected(publicSpa.ajaxRegister2(i).value)
+    def runResetPassword1(i: PublicSpaProtocols.ResetPassword1.ajax.Req) = assertProtected(publicSpa.ajaxResetPassword1(i).value)
+    def runResetPassword2(i: PublicSpaProtocols.ResetPassword2.ajax.Req) = assertProtected(publicSpa.ajaxResetPassword2(i).value)
 
     db.users ::= user2
   }
@@ -99,7 +99,7 @@ object PublicSpaLogicTest extends TestSuite {
     }
 
     'register2 {
-      import PublicSpaProtocols.Register._
+      import PublicSpaProtocols.Register2._
       val t = new Tester(); import t._
 
       // Mock user (pending)
@@ -120,7 +120,7 @@ object PublicSpaLogicTest extends TestSuite {
             }
           )
         val u = db.getUser(-\/(req.username)).getOrElse(sys error "User not found")
-        assertEq(r, (\/-(Response.Success), Some(u.token)))
+        assertEq(r, (\/-(Result.Success), Some(u.token)))
         taskman.assertLastSubmitted { case r: Msg.RegistrationCompleted => () }
       }
 
@@ -144,7 +144,7 @@ object PublicSpaLogicTest extends TestSuite {
         assertFailure(req.copy(password = PlainTextPassword("abc"))).needLeft
 
       "reject a taken username" -
-        assertEq(assertFailure(req.copy(username = user2.username)), \/-(Response.UsernameTaken))
+        assertEq(assertFailure(req.copy(username = user2.username)), \/-(Result.UsernameTaken))
 
       'registrationsOff {
         val t = new Tester(Deny); import t._
@@ -219,7 +219,7 @@ object PublicSpaLogicTest extends TestSuite {
     }
 
     'resetPassword2 {
-      import PublicSpaProtocols.ResetPassword._
+      import PublicSpaProtocols.ResetPassword2._
       implicit val t = new Tester(); import t._
       val i = \/-(user2.emailAddr)
       runResetPassword1(i)
@@ -228,7 +228,7 @@ object PublicSpaLogicTest extends TestSuite {
 
       "update the password when valid" - {
         assertEq(security.attemptLogin(i, p2).value, None)
-        assertEq(runResetPassword2(Request(token, p2)), \/-(Response.Success))
+        assertEq(runResetPassword2(Request(token, p2)), \/-(Result.Success))
         assertEq(security.attemptLogin(i, p2).value.isDefined, true)
       }
 
@@ -236,11 +236,11 @@ object PublicSpaLogicTest extends TestSuite {
         runResetPassword2(Request(token, PlainTextPassword("x"))).needLeft
 
       "reject invalid tokens" -
-        assertEq(runResetPassword2(Request(SecurityToken("xxxx"), p2)), \/-(Response.TokenInvalid))
+        assertEq(runResetPassword2(Request(SecurityToken("xxxx"), p2)), \/-(Result.TokenInvalid))
 
       "reject expired tokens" - {
         forwardTimeToEndOfPasswordResetWindow(Invalid)
-        assertEq(runResetPassword2(Request(token, p2)), \/-(Response.TokenExpired))
+        assertEq(runResetPassword2(Request(token, p2)), \/-(Result.TokenExpired))
       }
     }
 

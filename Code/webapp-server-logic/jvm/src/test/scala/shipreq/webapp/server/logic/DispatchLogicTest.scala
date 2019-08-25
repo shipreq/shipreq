@@ -1,6 +1,5 @@
 package shipreq.webapp.server.logic
 
-import boopickle.Pickler
 import scalaz.{-\/, Name, Need, \/-}
 import upickle.Js
 import utest._
@@ -8,7 +7,8 @@ import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.{BinaryData, Invalid, Url}
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.{BinaryJvm, Protocol}
+import shipreq.webapp.base.protocol.binary.SafePickler
+import shipreq.webapp.base.protocol.Protocol
 import shipreq.webapp.base.user.{EmailAddr, PersonName}
 import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.server.logic.DispatchLogic.Method._
@@ -75,12 +75,12 @@ object DispatchLogicTest extends TestSuite {
     (req, routeDispatcher(req).value)
   }
 
-  def runAjax(p      : Protocol.Ajax[Pickler])
+  def runAjax(p      : Protocol.Ajax[SafePickler])
              (req    : p.prepReq.Type,
               method : Method                   = Post,
               cookies: Map[Cookie.Name, String] = Map.empty)
              (implicit token: Security.SessionToken = null) = {
-    val bin = BinaryJvm.encode(p.prepReq)(req)
+    val bin = p.prepReq.codec.encode(req)
     run(p.url, method, Some(bin), Map.empty, cookies)(token)
   }
 
@@ -140,7 +140,7 @@ object DispatchLogicTest extends TestSuite {
       'logIn - {
         val u = user2
         val req = PublicSpaProtocols.Login.Request(-\/(u.username), user2password)
-        val res = runAjax(PublicSpaProtocols.login)(req)(Security.SessionToken.anonymous)._2
+        val res = runAjax(PublicSpaProtocols.Login.ajax)(req)(Security.SessionToken.anonymous)._2
         val tok = security.sessionRestore(res.cookies.get).value
         assertEq(tok, Some(user2.token))
       }
@@ -228,7 +228,7 @@ object DispatchLogicTest extends TestSuite {
           Some("yo"),
           true)
 
-        val (req, res) = runAjax(PublicSpaProtocols.landingPage)(lpReq)(token.orNull)
+        val (req, res) = runAjax(PublicSpaProtocols.LandingPage.ajax)(lpReq)(token.orNull)
 
         expectFailure match {
           case Some(c) => assertEq(res.cmd, ResponseCmd.StatusOnly(c))

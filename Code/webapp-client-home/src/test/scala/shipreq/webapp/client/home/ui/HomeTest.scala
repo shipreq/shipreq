@@ -7,7 +7,7 @@ import monocle.macros.Lenses
 import org.scalajs.dom.html
 import utest._
 import shipreq.webapp.base.data.ProjectMetaData
-import shipreq.webapp.base.protocol.HomeSpaProtocols
+import shipreq.webapp.base.protocol.{HomeSpaEntryPoint, HomeSpaProtocols}
 import shipreq.webapp.base.test.TestAjaxClient
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.ui.BaseStyles
@@ -90,7 +90,7 @@ object HomeTestDsl {
     *.action("Simulate AJAX error")(_.ref.failLast())
 
   def ajaxCreatedProject(p: ProjectMetaData) =
-    *.action("Simulate project-creation AJAX")(_.ref.respondToLast(HomeSpaProtocols.createProject)(p))
+    *.action("Simulate project-creation AJAX")(_.ref.respondToLast(HomeSpaProtocols.CreateProject.ajax)(p))
       .updateState(State.projects.modify(_ :+ p.name) compose clearCP)
 }
 
@@ -103,7 +103,7 @@ object HomeTest extends TestSuite {
 
   def run(ps: List[ProjectMetaData])(plan: *.Plan): Report[String] = {
     val cp = new TestAjaxClient(false)
-    val init = HomeSpaProtocols.InitData(Username("thatguy"), ps)
+    val init = HomeSpaEntryPoint.InitData(Username("thatguy"), ps)
     val props = Home.Props(init, cp)
     ReactTestUtils.withRenderedIntoDocument(props.render)(c =>
       plan

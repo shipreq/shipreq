@@ -1,10 +1,10 @@
 package shipreq.webapp.client.public
 
 import boopickle.DefaultBasic._
-import japgolly.univeq.UnivEq
 import monocle.macros.{GenIso, Lenses}
 import scalaz.\/
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.SecurityToken
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary._
@@ -19,7 +19,7 @@ import shipreq.webapp.base.Urls
   * Protocols for the Public SPA / webapp-client-public module.
   */
 object PublicSpaProtocols {
-  
+
   type Ajax[Req, Res] = Protocol.Ajax.Simple[SafePickler, Req, Res]
 
   private def defAjax[Req: SafePickler, Res: SafePickler](path: String): Ajax[Req, Res] =
@@ -42,6 +42,8 @@ object PublicSpaProtocols {
       def validatorName  = UserValidators.personName.unnamed
       def validatorEmail = UserValidators.emailAddr.unnamed
       def validatorMsg   = CommonValidation.optionalLargeText.mapCorrector(_ prependLive TextMod.maxTwoConsecutiveNewLines.run)
+
+      implicit def univEq: UnivEq[Request] = UnivEq.derive
 
       @Lenses
       final case class Untyped(name      : String,
@@ -130,6 +132,8 @@ object PublicSpaProtocols {
     }
 
     object Request {
+      implicit def univEq: UnivEq[Request] = UnivEq.derive
+
       // Only used on server-side - Request has less than the registration form
       lazy val validator: Composite.Validator[(SecurityToken, String, String, String, Boolean), _, Request] =
         Composite.Validator.id[SecurityToken]
@@ -192,7 +196,7 @@ object PublicSpaProtocols {
               case 3 => Result.UsernameTaken
             }
         }
-      
+
       val picklerResponse: Pickler[Response] =
         pickleDisj
 
@@ -227,6 +231,8 @@ object PublicSpaProtocols {
           .tuple(UserValidators.password.named)
           .imapInput(GenIso.fields[Untyped])
           .mapValid((Request.apply _).tupled)
+
+      implicit def univEq: UnivEq[Request] = UnivEq.derive
     }
 
     type Response = Permission
@@ -284,6 +290,8 @@ object PublicSpaProtocols {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object ResetPassword2 {
     final case class Request(token: SecurityToken, newPassword: PlainTextPassword)
+
+    implicit def univEqRequest: UnivEq[Request] = UnivEq.derive
 
     sealed trait Result
     object Result {
