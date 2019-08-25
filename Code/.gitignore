@@ -1,7 +1,6 @@
 .cache
 .bloop
-.idea
-.idea_modules
+.idea*
 .metals
 .target
 project/sjsincoptbench.sbt
