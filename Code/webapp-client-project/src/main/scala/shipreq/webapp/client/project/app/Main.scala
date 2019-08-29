@@ -10,17 +10,17 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.{ErrorMsg, Retries, Url}
 import shipreq.webapp.base.CssSettings._
 import shipreq.webapp.base.lib.LoggerJs
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, InitPageData}
-import shipreq.webapp.base.protocol.{ClientSideProcImpl, ProjectSpaProtocols, WebSocketClient}
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.InitAppData
+import shipreq.webapp.base.protocol.{ClientSideProcImpl, ProjectSpaEntryPoint, ProjectSpaProtocols, WebSocketClient}
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.client.loaders.ProjectSpaLoader
 import shipreq.webapp.client.project.app.root._
 import shipreq.webapp.client.project.app.state.Global
 
-@JSExportTopLevel(ProjectSpaProtocols.EntryPointName)
-object Main extends ClientSideProcImpl(ProjectSpaProtocols.EntryPoint) {
+@JSExportTopLevel(ProjectSpaEntryPoint.Name)
+object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
 
-  override def run(i: InitPageData): Unit = {
+  override def run(i: ProjectSpaEntryPoint.InitData): Unit = {
     BaseStyles.addToDocument()
     Style.addToDocument()
 

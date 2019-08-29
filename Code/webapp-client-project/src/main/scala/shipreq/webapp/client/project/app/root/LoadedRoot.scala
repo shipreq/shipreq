@@ -12,7 +12,6 @@ import shipreq.webapp.base.event.EventSeqSummary
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.InitPageData
 import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.base.ui.ProjectItem
 import shipreq.webapp.client.project.app.state._
@@ -31,7 +30,7 @@ object LoadedRoot {
   case class Props(page: Page, routerCtl: RouterCtl)
 }
 
-final class LoadedRoot(initPageData: InitPageData, global: Global) {
+final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Global) {
 
   val pxProject = global.pxProject
   def unsafeProject() = global.unsafeProject()

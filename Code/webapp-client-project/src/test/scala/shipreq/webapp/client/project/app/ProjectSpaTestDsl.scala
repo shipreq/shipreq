@@ -10,7 +10,7 @@ import teststate.run.Report.AssertionSettings
 import shipreq.base.util.Debug._
 import shipreq.webapp.base.data.{ExternalPubid, Obfuscated, Project}
 import shipreq.webapp.base.event.Event
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.InitPageData
+import shipreq.webapp.base.protocol.ProjectSpaEntryPoint
 import shipreq.webapp.base.test.SampleProject5
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.user.Username
@@ -192,7 +192,7 @@ object ProjectSpaTestDsl {
               rd     : RD.State = RD.unspecifiedState): Unit = {
 
     val global       = TestGlobal(project)
-    val initPageData = InitPageData(Username("testuser"), Obfuscated("xyz"), project.name)
+    val initPageData = ProjectSpaEntryPoint.InitData(Username("testuser"), Obfuscated("xyz"), project.name)
     val spa          = new LoadedRoot(initPageData, global)
     val rc           = MockRouterCtl[Page]()
     val init         = TestState(page, global.unsafeProject(), rd)

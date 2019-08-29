@@ -3,7 +3,7 @@ package shipreq.webapp.server.snippet
 import net.liftweb.util.Helpers._
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.AssetManifest
-import shipreq.webapp.base.protocol.ProjectSpaProtocols
+import shipreq.webapp.base.protocol.ProjectSpaEntryPoint
 import shipreq.webapp.server.app.{Global, LiftDispatcher}
 import shipreq.webapp.server.lib.SingleOpStatelessSnippet
 import shipreq.webapp.server.protocol._
@@ -23,7 +23,7 @@ object ProjectSpa extends SingleOpStatelessSnippet {
       LoadJs.Resource(AssetManifest.katexCss),
       LoadJs.Resource(AssetManifest.katexJs))
 
-  val EntryPoint = ClientSideProcInvoker(ProjectSpaProtocols.EntryPoint, ResourceBundle)
+  val EntryPoint = ClientSideProcInvoker(ProjectSpaEntryPoint.proc, ResourceBundle)
 
   private[this] val ssrFallback = Html(
     """<div style="margin-top:33vh;text-align:center;font-size:150%;color:#333;">loading ...</div>""")
@@ -36,7 +36,7 @@ object ProjectSpa extends SingleOpStatelessSnippet {
 
     val logic = Global.logic.projectSpa
 
-    val init: ProjectSpaProtocols.InitPageData =
+    val init: ProjectSpaEntryPoint.InitData =
       logic.initPage(projectId, user.username).unsafeRun()
 
     val loaderData =

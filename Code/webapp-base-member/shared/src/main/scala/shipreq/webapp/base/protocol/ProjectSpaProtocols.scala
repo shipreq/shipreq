@@ -23,17 +23,6 @@ import BinCodecEvents._
   */
 object ProjectSpaProtocols {
 
-  final case class InitPageData(username: Username,
-                                projectId: ProjectId.Public,
-                                projectName: Project.Name)
-
-  implicit val picklerInitPageData = pickleCaseClass[InitPageData]
-
-  final val EntryPointName = "P"
-  val EntryPoint = ClientSideProc[InitPageData](EntryPointName)
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
   final case class WebSocket(projectId: ProjectId.Public) extends Protocol.WebSocket.ClientReqServerPush[Pickler] {
     override val  url    = Urls.ProjectSpaWebSocket.url(projectId)
     override type ReqId  = WebSocketShared.ReqId

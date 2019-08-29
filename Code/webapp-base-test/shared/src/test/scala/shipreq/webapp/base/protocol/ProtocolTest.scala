@@ -20,9 +20,6 @@ import $.TextGenExt
 
 object ProtocolTest extends TestSuite {
 
-  implicit val equalProjectSpaInitPageData: Equal[ProjectSpaProtocols.InitPageData] =
-    ScalazMacros.deriveEqual
-
   implicit val equalProjectSpaInitAppData: Equal[ProjectSpaProtocols.InitAppData] =
     ScalazMacros.deriveEqual
 
@@ -94,13 +91,6 @@ object ProtocolTest extends TestSuite {
 //      'TagCrud             - testCrud(TagCrud.Protocol                       )($.routines.tagCrud.any)
 //      'FieldCrud           - testCrud(FieldCrud.Protocol                     )($.protocol.fieldCfgAction.any)
 //    }
-
-    'ClientSideProcs {
-      def test[I: Equal](ep: ClientSideProc[I], name: String)(g: Gen[I]): Unit =
-        kitCF(ep, name).propI mustBeSatisfiedBy g
-
-      'ProjectSpa - test(ProjectSpaProtocols.EntryPoint, "ProjectSpa")($.routines.projectSpaInitPageData)
-    }
 
     'Codecs {
       import BinCodecMemberData._

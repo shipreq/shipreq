@@ -14,14 +14,14 @@ import shipreq.webapp.base.data.{Obfuscated, Project, ProjectId, ProjectMetaData
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.event.EventOrd.Implicits._
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes.EventResult
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, InitPageData, WsReqRes}
+import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.user.{User, Username}
 
 trait ProjectSpaLogic[F[_]] {
   import ProjectSpaLogic._
 
-  def initPage(projectId: ProjectId, username: Username): F[InitPageData]
+  def initPage(projectId: ProjectId, username: Username): F[ProjectSpaEntryPoint.InitData]
 
   def onConnect(cookies  : Cookie.LookupFn,
                 projectId: ProjectId.Public): F[ConnectRejection \/ (WebSocketStatic, WebSocketState[F])]
@@ -120,12 +120,12 @@ object ProjectSpaLogic extends StrictLogging {
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      override def initPage(pid: ProjectId, username: Username): F[InitPageData] =
+      override def initPage(pid: ProjectId, username: Username): F[ProjectSpaEntryPoint.InitData] =
         for {
           name <- runDB(db.projectSpaInitPage(pid))
         } yield {
           val pidPub = Obfuscators.projectId.obfuscate(pid)
-          InitPageData(username, pidPub, name)
+          ProjectSpaEntryPoint.InitData(username, pidPub, name)
         }
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

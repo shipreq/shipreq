@@ -1495,12 +1495,12 @@ object RandomData {
         b <- projectMetaData
       } yield ProjectSpaProtocols.InitAppData(a, b)
 
-    val projectSpaInitPageData: Gen[ProjectSpaProtocols.InitPageData] =
+    val projectSpaInitPageData: Gen[ProjectSpaEntryPoint.InitData] =
       for {
         u <- username
         i <- projectIdPublic
         n <- projectName
-      } yield ProjectSpaProtocols.InitPageData(u, i, n)
+      } yield ProjectSpaEntryPoint.InitData(u, i, n)
 
 //    class CrudActionGens[I, V](idG: Gen[I], vG: Gen[V]) {
 //      lazy val create  = vG.map(CrudAction.Create[I, V])

@@ -81,7 +81,7 @@ object LiveTest extends TestSuite {
     'projectSpa {
       val p = Obfuscators.projectId.obfuscate(pid.get)
       get(Urls.project(p).relativeUrl, user1)
-        .assertSpa(AssetManifest.webappClientProjectJs, ProjectSpaProtocols.EntryPoint)
+        .assertSpa(AssetManifest.webappClientProjectJs, ProjectSpaEntryPoint.proc)
       ()
     }
 
