@@ -12,23 +12,21 @@ import shipreq.webapp.base.text.Text
 object Events {
   import boopickle.DefaultBasic._
   import BaseData._
-  import BaseMemberData2._
-  import BaseMemberData2.AtomPicklers.instances._
-  import BaseMemberData2.ReqTableDataPicklers._
+  import BaseMemberData1._
+  import BaseMemberData1.AtomPicklers.instances._
+  import BaseMemberData1.ReqTableDataPicklers._
 
-  implicit val picklerEventNonEmptyCustomTextMap: Pickler[Event.NonEmptyCustomTextMap] = pickleNonEmptyMono
-  implicit val picklerNonEmptySetApplicableTagId: Pickler[NonEmptySet[ApplicableTagId]] = pickleNES
-  implicit val picklerNonEmptySetReqCodeGroupId: Pickler[NonEmptySet[ReqCodeGroupId]] = pickleNES
+  implicit val picklerEventNonEmptyCustomTextMap    : Pickler[Event.NonEmptyCustomTextMap      ] = pickleNonEmptyMono
+  implicit val picklerNonEmptySetApplicableTagId    : Pickler[NonEmptySet[ApplicableTagId]     ] = pickleNES
+  implicit val picklerNonEmptySetReqCodeGroupId     : Pickler[NonEmptySet[ReqCodeGroupId]      ] = pickleNES
   implicit val picklerNonEmptySetApReqCodeIdAndValue: Pickler[NonEmptySet[ApReqCodeId.AndValue]] = pickleNES
-  implicit val picklerNonEmptySetReqId: Pickler[NonEmptySet[ReqId]] = pickleNES
-
-  implicit val picklerSetDiffUseCaseStepId: Pickler[SetDiff[UseCaseStepId]] = pickleSetDiff
-  implicit val picklerSetDiffApplicableTagId: Pickler[SetDiff[ApplicableTagId]] = pickleSetDiff
-  implicit val picklerSetDiffReqId: Pickler[SetDiff[ReqId]] = pickleSetDiff
-
-  implicit val picklerSetDiffNEUseCaseStepId: Pickler[SetDiff.NE[UseCaseStepId]] = pickleNonEmptyMono
-  implicit val picklerSetDiffNEApplicableTagId: Pickler[SetDiff.NE[ApplicableTagId]] = pickleNonEmptyMono
-  implicit val picklerSetDiffNEReqId: Pickler[SetDiff.NE[ReqId]] = pickleNonEmptyMono
+  implicit val picklerNonEmptySetReqId              : Pickler[NonEmptySet[ReqId]               ] = pickleNES
+  implicit val picklerSetDiffUseCaseStepId          : Pickler[SetDiff[UseCaseStepId]           ] = pickleSetDiff
+  implicit val picklerSetDiffApplicableTagId        : Pickler[SetDiff[ApplicableTagId]         ] = pickleSetDiff
+  implicit val picklerSetDiffReqId                  : Pickler[SetDiff[ReqId]                   ] = pickleSetDiff
+  implicit val picklerSetDiffNEUseCaseStepId        : Pickler[SetDiff.NE[UseCaseStepId]        ] = pickleNonEmptyMono
+  implicit val picklerSetDiffNEApplicableTagId      : Pickler[SetDiff.NE[ApplicableTagId]      ] = pickleNonEmptyMono
+  implicit val picklerSetDiffNEReqId                : Pickler[SetDiff.NE[ReqId]                ] = pickleNonEmptyMono
 
   implicit val picklerProjectTemplate: Pickler[ProjectTemplate] =
     new Pickler[ProjectTemplate] {
