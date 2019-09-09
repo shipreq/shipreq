@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
 import boopickle.PickleImpl
-import shipreq.webapp.base.protocol.BinCodecMemberData
+import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2.picklerProject
 
 object SizeCompare {
 
@@ -46,7 +46,6 @@ object SizeCompare {
 //    val j100  = bench("json P100",  upickle.Fns write data.project_100)
 //    val j1000 = bench("json P1000", upickle.Fns write data.project_1000)
 
-    implicit val projectBinCodec = BinCodecMemberData.pickleProject
     val b100  = bench("bin P100", PickleImpl intoBytes data.project_100)
 //    val b1000 = bench("bin P1000", PickleImpl intoBytes data.project_1000)
 

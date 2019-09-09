@@ -1,9 +1,9 @@
 package shipreq.benchmark
 
-import boopickle.{PickleImpl, UnpickleImpl, Pickler}
+import boopickle.{PickleImpl, UnpickleImpl}
 import japgolly.scalajs.benchmark._, gui._
 import shipreq.webapp.base.data.Project
-import shipreq.webapp.base.protocol.BinCodecMemberData
+import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2.picklerProject
 
 /*
 object JsonSerialisation extends BenchmarkSuite("JsonSerialisation") {
@@ -37,7 +37,6 @@ object JsonDeserialisation extends BenchmarkSuite("JsonDeserialisation") {
 */
 
 object Serialisation {
-  implicit val projectCodec = BinCodecMemberData.pickleProject
 
   val deserBM = projectBM.map(PickleImpl intoBytes _)
 
