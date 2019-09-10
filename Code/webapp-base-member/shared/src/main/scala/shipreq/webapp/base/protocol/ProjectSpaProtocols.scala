@@ -1,6 +1,6 @@
 package shipreq.webapp.base.protocol
 
-import boopickle.{PickleState, Pickler, UnpickleState}
+import boopickle.DefaultBasic._
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.utils.StaticLookupFn
@@ -9,14 +9,7 @@ import scalaz.\/
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
-import shipreq.webapp.base.user._
 import shipreq.webapp.base.Urls
-import BoopickleMacros._
-import BinCodecGeneric._
-import BinCodecBaseData._
-import BinCodecMemberData._
-import BinCodecUser._
-import BinCodecEvents._
 
 /**
   * Protocols for the Project SPA / webapp-client-project module.
@@ -32,16 +25,60 @@ object ProjectSpaProtocols {
   }
 
   object WebSocket {
+    import shipreq.webapp.base.protocol.binary.v1.PostEvents.picklerVerifiedEventNonEmptySeq
     type Push = VerifiedEvent.NonEmptySeq
     private[WebSocket] val pushProtocol = Protocol[Pickler, Push](implicitly)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  private object Codecs {
+    import shipreq.webapp.base.protocol.binary.v1.BaseData._
+    import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
+    import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2._
+    import shipreq.webapp.base.protocol.binary.v1.PostEvents._
+
+    implicit val picklerInitAppData: Pickler[InitAppData] =
+      new Pickler[InitAppData] {
+        override def pickle(a: InitAppData)(implicit state: PickleState): Unit = {
+          state.pickle(a.project)
+          state.pickle(a.projectMetaData)
+        }
+        override def unpickle(implicit state: UnpickleState): InitAppData = {
+          val project         = state.unpickle[ProjectAndOrd]
+          val projectMetaData = state.unpickle[ProjectMetaData]
+          InitAppData(project, projectMetaData)
+        }
+      }
+
+    implicit val picklerInitAppRes: Pickler[ErrorMsg \/ InitAppData] =
+      pickleDisj
+
+    implicit def picklerVerifiedEventSeq: Pickler[VerifiedEvent.Seq] =
+      shipreq.webapp.base.protocol.binary.v1.PostEvents.picklerVerifiedEventSeq
+
+    implicit val picklerOptionEventOrdLatest: Pickler[Option[EventOrd.Latest]] =
+      optionPickler
+
+    implicit val picklerNonEmptySetEventOrd: Pickler[NonEmptySet[EventOrd]] =
+      pickleNES
+
+    implicit val picklerFieldMandatorinessModReq: Pickler[(CustomFieldId, Mandatory)] =
+      Tuple2Pickler
+
+    implicit val picklerReqTypeImplicationModReq: Pickler[(CustomReqTypeId, ImplicationRequired)] =
+      Tuple2Pickler
+
+    implicit val picklerEventResult: Pickler[WsReqRes.EventResult] =
+      pickleDisj
+  }
+
+  import Codecs._
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   final case class InitAppData(project        : ProjectAndOrd,
                                projectMetaData: ProjectMetaData)
-
-  implicit val picklerInitAppData = pickleCaseClass[InitAppData]
 
   sealed trait WsReqRes extends Protocol.RequestResponse[Pickler] { self =>
     protected val protocolReq: Protocol.Of[Pickler, RequestType]
