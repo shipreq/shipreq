@@ -5,6 +5,7 @@ import japgolly.scalajs.react.ReactDOM
 import japgolly.scalajs.react.vdom.VdomElement
 import org.scalajs.dom
 import scala.scalajs.js.annotation.JSExport
+import shipreq.base.util.BinaryJs
 
 abstract class ClientSideProcImpl[Input](proc: ClientSideProc[Input]) {
 

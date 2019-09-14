@@ -77,8 +77,7 @@ object AjaxClient {
             // Success
             val ab       = xhr.response.asInstanceOf[ArrayBuffer]
             val resCodec = prep.response.codec
-            val bb       = BinaryJs.arrayBufferToByteBuffer(ab)
-            val bin      = BinaryData.unsafeFromByteBuffer(bb)
+            val bin      = BinaryData.unsafeFromArrayBuffer(ab)
             val res      = resCodec.decode(bin)
             Result(res, resCodec.version)
           } else

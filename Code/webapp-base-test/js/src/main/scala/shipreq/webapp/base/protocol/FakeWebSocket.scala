@@ -6,7 +6,7 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal
 import scala.scalajs.js.typedarray
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
-import shipreq.base.util.{BinaryData, VarJs}
+import shipreq.base.util.{BinaryData, BinaryJs, VarJs}
 import shipreq.webapp.base.protocol.WebSocket._
 
 final class FakeWebSocket(override val url: String, initialState: ReadyState = ReadyState.Connecting) extends WebSocket {
