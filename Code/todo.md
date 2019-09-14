@@ -119,25 +119,23 @@ Phase 2B
 
 * WebSockets don't recover from lost Redis connections
 
+* Get off G-suite (?)
+
 * Document the build & release process
 
 * Codec revision
-  * Binary codecs
-    * Replace - use Mr. Boilerplate, no macros
-    * Remove BooPickle macro utils
-    * Add & use versions
-    * Add & use magic numbers
-    * Add stability tests for each codec
-  * Protocol failure handling
-    * Server > Client : Client to reload page
-    * Server < Client : Server to reject
-    * Server < Redis  : Server to reject
-    * Server < DB     : Server to reject
   * DB
     * (Consider) simplifying the event table and codec-code to just event-type-id (for stats) and json
     * store (and update) the latest project name in the header table
+    * handle inability to decode
   * Taskman
     * Use Circe
   * Cleanup
     * Revise all ajax paths
-    * Revise/remove `BinaryJs` , `BinaryShared`, `ProtocolTest` etc
+  * Add Circe codecs
+  * Testing
+    * Finish `ProjectSpaProtocolsTest`
+    * Test codecs in `WebSocketShared`
+    * round-trip tests of event codecs
+    * add proper RedisProtocol tests after adding circe codecs (hardcode event data using JSON instead of Scala)
+  * benchmark circe vs boopickle in both jvm & js
