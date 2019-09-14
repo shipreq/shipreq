@@ -36,7 +36,7 @@ abstract class ManualSubmitBase extends HasLogger {
   private val typeAndDataRegex = """^\s*(\S+?)\s*(\{.*\})\s*$""".r.pattern
 
   def parseA(args: Array[String]): ParseResult =
-    ((Ok(Nil): ParseResult) /: args.toList)(parse)
+    args.toList.foldLeft(Ok(Nil): ParseResult)(parse)
 
   val parse: (ParseResult, String) => ParseResult = {
     case (Help, _) | (_, "-h") | (_, "--help") => Help

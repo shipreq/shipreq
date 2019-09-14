@@ -28,7 +28,7 @@ object TestHelpers {
     def mod(f: Heap[MsgHeader] => Heap[MsgHeader]) = JobQueue(f(j.q))
     def -(a: MsgHeader) = j.mod(_.filter(_ != a))
     def +(a: MsgHeader) = j.mod(_ insert a)
-    def ++(as: Seq[MsgHeader]) = j.mod(i => (i /: as)((q,a) => q + a))
+    def ++(as: Seq[MsgHeader]) = j.mod(i => as.foldLeft(i)(_ + _))
   }
 
   final def endoMod[A](f: A => Unit) = Endo[A](a => {f(a); a})

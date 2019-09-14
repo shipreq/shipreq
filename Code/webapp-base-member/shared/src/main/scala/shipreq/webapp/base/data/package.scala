@@ -18,7 +18,7 @@ package object data {
       (id(d), d)
 
     final def mapById(ds: Traversable[D])(implicit ev: UnivEq[I]): Map[I, D] =
-      (UnivEq.emptyMap[I, D] /: ds)(_ + pairWithId(_))
+      ds.foldLeft(UnivEq.emptyMap[I, D])(_ + pairWithId(_))
 
     final def emptyIMap(implicit ev: UnivEq[I]) =
       IMap.empty(id)

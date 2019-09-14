@@ -62,7 +62,7 @@ object TagCrudTest extends TestSuite {
       tt          <- RandomData.tagTree
       (tag, rels) <- RandomData.tagAndRels
     } yield {
-      val tt2 = (tt /: rels.allReferencedIds)((q, id) =>
+      val tt2 = rels.allReferencedIds.foldLeft(tt)((q, id) =>
         q.modOrPut(id, identity, TagInTree(TagId_T.setId(tag, id), Vector.empty)))
       TagProps(tt2, rels, tag)
     }
