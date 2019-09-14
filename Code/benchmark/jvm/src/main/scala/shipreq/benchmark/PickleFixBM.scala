@@ -1,13 +1,12 @@
 package shipreq.benchmark
 
-import boopickle._
 import japgolly.microlibs.recursion._
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import scalaz.Functor
-import shipreq.webapp.base.protocol.BoopickleMacros._
 
-object PickleFixBM extends BasicImplicitPicklers {
+object PickleFixBM {
+  import boopickle.DefaultBasic._
 
   object FixpointPickler1 {
     def pickleFix[F[_]: Functor](implicit p: Pickler[F[Unit]]): Pickler[Fix[F]] =
@@ -87,10 +86,40 @@ object PickleFixBM extends BasicImplicitPicklers {
   def neg(f: Calc): Calc = calc(Neg(f))
   def add(f: Calc, fs: Calc*): Calc = calc(Add(f, fs.toVector))
 
-  private implicit val pc1: Pickler[Num[Unit]] = pickleCaseClass
-  private implicit val pc2: Pickler[Neg[Unit]] = pickleCaseClass
-  private implicit val pc3: Pickler[Add[Unit]] = pickleCaseClass
-  private implicit val pcf: Pickler[CalcF[Unit]] = pickleADT
+  private implicit val picklerNum: Pickler[Num[Unit]] =
+    transformPickler(Num.apply[Unit])(_.n)
+
+  private implicit val picklerNeg: Pickler[Neg[Unit]] =
+    transformPickler(Neg.apply[Unit])(_.f)
+
+  private implicit val picklerAdd: Pickler[Add[Unit]] =
+    new Pickler[Add[Unit]] {
+      override def pickle(a: Add[Unit])(implicit state: PickleState): Unit = {
+        state.pickle(a.f)
+        state.pickle(a.fs)
+      }
+      override def unpickle(implicit state: UnpickleState): Add[Unit] = {
+        val f  = state.unpickle[Unit]
+        val fs = state.unpickle[Vector[Unit]]
+        Add(f, fs)
+      }
+    }
+
+  private implicit val picklerCalcF: Pickler[CalcF[Unit]] =
+    new Pickler[CalcF[Unit]] {
+      override def pickle(a: CalcF[Unit])(implicit state: PickleState): Unit =
+        a match {
+          case b: Add[Unit] => state.enc.writeByte(0); state.pickle(b)
+          case b: Neg[Unit] => state.enc.writeByte(1); state.pickle(b)
+          case b: Num[Unit] => state.enc.writeByte(2); state.pickle(b)
+        }
+      override def unpickle(implicit state: UnpickleState): CalcF[Unit] =
+        state.dec.readByte match {
+          case 0 => state.unpickle[Add[Unit]]
+          case 1 => state.unpickle[Neg[Unit]]
+          case 2 => state.unpickle[Num[Unit]]
+        }
+    }
 
   val p1: Pickler[Calc] = FixpointPickler1.pickleFix
   val p2: Pickler[Calc] = FixpointPickler2.pickleFix
@@ -110,6 +139,7 @@ object PickleFixBM extends BasicImplicitPicklers {
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
 class PickleFixBM {
+  import boopickle.PickleImpl
   import PickleFixBM.{Calc, gen, Spec}
 
   @Param(Array("2", "6"))
