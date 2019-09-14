@@ -51,22 +51,30 @@ object RandomEventStream {
       ).optionGetLimit(40)
     )
 
+  private def keepProject[A](g: ProjectDepGen[A]): ProjectDepGen[(A, Project)] =
+    StateGen(s => g.run(s).map(x => (x._1, (x._2, x._1._1))))
+
+  private val emptyState: State =
+    (Project.empty, EventOrd.first)
+
   val InitialEventCount = 2
 
-  lazy val initialEvents: Gen[(State, Vector[VerifiedEvent])] =
+  private lazy val initialEventGens: Vector[ProjectDepGen[VerifiedEvent]] =
     Vector(
       liftGE(RandomData.events.genProjectTemplateApply),
       liftPGE(ApplicableEventGen(_).genProjectNameSet),
-    ).sequenceU
-      .run((Project.empty, EventOrd.first))
+    )
+
+  lazy val initialEvents: Gen[(State, Vector[VerifiedEvent])] =
+    initialEventGens.sequence.run(emptyState)
 
   val verifiedEvent: ProjectDepGen[VerifiedEvent] =
     StateGen(ApplicableEventGen(_).verifiedEvent)
 
   def verifiedEvents(implicit ss: SizeSpec): ProjectDepGen[Vector[VerifiedEvent]] =
-    StateGen(p =>
+    StateGen(state =>
       ss.gen.flatMap(size =>
-        Vector.fill(size)(verifiedEvent).sequenceU.run(p)))
+        Vector.fill(size)(verifiedEvent).sequence.run(state)))
 
   def entireEventStream(implicit ss: SizeSpec): Gen[(State, Vector[VerifiedEvent], Vector[VerifiedEvent])] =
     for {
@@ -78,6 +86,18 @@ object RandomEventStream {
     for {
       (_, e1, e2) <- entireEventStream(ss)
     } yield e1 ++ e2
+
+  def eventStreamWithProjects(implicit ss: SizeSpec): Gen[Vector[(VerifiedEvent, Project)]] = {
+    StateGen { (state: State) =>
+      ss.gen.flatMap { size =>
+        def steps() = initialEventGens.iterator.map(keepProject) ++ Iterator.fill(size)(keepProject(verifiedEvent))
+        steps().toVector.sequence.run(state)
+      }
+    }.eval(emptyState)
+  }
+
+  lazy val sampleEventStreamWithProjects: Vector[(VerifiedEvent, Project)] =
+    eventStreamWithProjects(100).sample()
 
 //  def applicableEventS[S](observe: ObserveFn[S]): StateGen[(S, Project), Event] =
 //    StateGen(sp =>

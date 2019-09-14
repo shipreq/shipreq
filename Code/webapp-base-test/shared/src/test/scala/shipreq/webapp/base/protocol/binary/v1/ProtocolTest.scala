@@ -4,7 +4,9 @@ import nyaya.gen.Gen
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.{RandomData => R}
 import shipreq.webapp.base.RandomData.TextGenExt
-import shipreq.webapp.base.test.BinaryTestUtil.{propTestRoundTripP => test}
+import shipreq.webapp.base.event.EventEquality._
+import shipreq.webapp.base.event.RandomEventStream
+import shipreq.webapp.base.test.BinaryTestUtil._
 import shipreq.webapp.base.text.Text._
 import shipreq.webapp.base.text.Text.Equality._
 import utest._
@@ -22,9 +24,11 @@ object ProtocolTest extends TestSuite {
 
   override def tests = Tests {
 
-    'savedViews - test(R.project.flatMap(R.reqtableData.nonEmptySavedViewsForProject))
+    'savedViews - propTestRoundTripP(R.project.flatMap(R.reqtableData.nonEmptySavedViewsForProject))
 
-    'project - test(R.project)
+    'event - assertRoundTripsP(RandomEventStream.sampleEventStreamWithProjects.map(_._1))
+
+    'project - assertRoundTripsP(RandomEventStream.sampleEventStreamWithProjects.map(_._2))
 
     'text - {
       def gr = R.reqId
@@ -32,10 +36,10 @@ object ProtocolTest extends TestSuite {
       def gc = R.reqCode.id
       def gi = R.customIssueTypeId
       def ga = R.applicableTagId
-      'CodeGroupTitle  - test(R.TextGen.codeGroupTitleAtom (gr, gu, gc, gi    ).text)
-      'GenericReqTitle - test(R.TextGen.genericReqTitleAtom(gr, gu, gc, gi, ga).text)
-      'InlineIssueDesc - test(R.TextGen.inlineIssueDescAtom(gr, gu, gc        ).text)
-      'CustomTextField - test(R.TextGen.customTextFieldAtom(gr, gu, gc, gi, ga).text1(CustomTextField))
+      'CodeGroupTitle  - propTestRoundTripP(R.TextGen.codeGroupTitleAtom (gr, gu, gc, gi    ).text)
+      'GenericReqTitle - propTestRoundTripP(R.TextGen.genericReqTitleAtom(gr, gu, gc, gi, ga).text)
+      'InlineIssueDesc - propTestRoundTripP(R.TextGen.inlineIssueDescAtom(gr, gu, gc        ).text)
+      'CustomTextField - propTestRoundTripP(R.TextGen.customTextFieldAtom(gr, gu, gc, gi, ga).text1(CustomTextField))
     }
 
   }

@@ -13,6 +13,9 @@ object BinaryTestUtil {
 
   private val propTestSize = 33
 
+  // ===================================================================================================================
+  // SafePickler testing
+
   // Not true but good enough for now
   implicit def univEqSafePicklerDecoderFailure: UnivEq[SafePickler.DecodingFailure] = UnivEq.force
 
@@ -46,6 +49,9 @@ object BinaryTestUtil {
     fail(s"Copy and paste this:\n\n  $test\n\n")
   }
 
+  // ===================================================================================================================
+  // Pickler testing
+
   def assertRoundTripP[A](a: A)(implicit p: Pickler[A], e: Equal[A], l: Line): Unit = {
     val sp = p.asV10
     assertDecodeOk(sp)(sp.encode(a), a)
@@ -54,5 +60,15 @@ object BinaryTestUtil {
   def propTestRoundTripP[A](g: Gen[A])(implicit p: Pickler[A], e: Equal[A], l: Line): Unit = {
     val sp = p.asV10
     g.samples().take(propTestSize).foreach(assertRoundTrip(sp)(_))
+  }
+
+  def assertRoundTripsP[A](as: Traversable[A])(implicit p: Pickler[A], e: Equal[A], l: Line): Unit = {
+    val sp = p.asV10
+    var i = 0
+    for (a <- as) {
+      i += 1
+      val bin = sp.encode(a)
+      assertEq(s"[$i/${as.size}]", sp.decode(bin), \/-(a))
+    }
   }
 }
