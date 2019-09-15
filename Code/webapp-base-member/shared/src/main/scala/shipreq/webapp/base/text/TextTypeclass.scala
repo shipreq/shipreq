@@ -12,7 +12,7 @@ trait AtomTC[TC[_]] {
   def vec[A](implicit a: TC[A]): TC[Vector[A]]
   def nev[A](as: TC[Vector[A]])(implicit a: TC[A]): TC[NonEmptyVector[A]]
 
-  def sum[T <: Atom.Base](t: T)(f: t.Atom => TC[t.Atom], index: t.Atom => Int, all: Vector[TC[t.Atom]]): TC[t.Atom]
+  def sum[T <: Atom.Base](t: T)(get: Atom.Type => TC[t.Atom], all: List[TC[t.Atom]]): TC[t.Atom]
 
   def blankLine     [T <: Atom.NewLine        ](t: T): TC[t.BlankLine     ]
   def literal       [T <: Atom.Literal        ](t: T): TC[t.Literal       ]

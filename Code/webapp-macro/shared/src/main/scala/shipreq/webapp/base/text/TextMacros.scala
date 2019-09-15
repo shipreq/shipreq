@@ -37,8 +37,7 @@ class TextMacroImpls(val c: Context) extends WhiteboxMacroUtils {
     var allVals     = Vector.empty[TermName]
     var valDefs     = Vector.empty[ValDef]
     var lazyValDefs = Vector.empty[ValDef]
-    var casesA      = Vector.empty[CaseDef]
-    var casesI      = Vector.empty[CaseDef]
+    var cases       = Vector.empty[CaseDef]
     var needLI      = false
 
     def mkLazy(v: ValDef): ValDef = {
@@ -47,7 +46,6 @@ class TextMacroImpls(val c: Context) extends WhiteboxMacroUtils {
       ValDef(m2, a, b, c)
     }
 
-    var index = 0
     for (t <- atomTypeNames) {
       val nStr = lowerCaseHead(t.toString)
       val nTerm = TermName(nStr)
@@ -70,24 +68,27 @@ class TextMacroImpls(val c: Context) extends WhiteboxMacroUtils {
       else
         valDefs :+= valDef
 
-      casesA :+= cq"_: t.${t.toTypeName} => $nTerm"
-      casesI :+= cq"_: t.${t.toTypeName} => $index"
-      index += 1
+      cases :+= cq"Atom.Type.${t.toTermName} => $nTerm"
+    }
+
+    cases :+= {
+      val errMsg = Literal(Constant(s"Text.${tType.typeSymbol.name} doesn't support atom type: "))
+      cq"""t => throw new java.lang.IllegalArgumentException($errMsg + t)"""
     }
 
     val valMods = if (lazyValDefs.isEmpty) Modifiers() else Modifiers(Flag.LAZY)
 
     val li = if (!needLI) EmptyTree else
-      q"lazy val li: TC[japgolly.microlibs.nonempty.NonEmptyVector[t.ListItem]] = a.lazily(a.nev(a vec vec)(vec))"
+      q"lazy val li: TC[japgolly.microlibs.nonempty.NonEmptyVector[t.ListItem]] = a.lazily(a.nev(a.vec(vec))(vec))"
 
     val impl = q""" {
+      import _root_.shipreq.webapp.base.text.Atom.Type
       val t = $tTerm
       ..$valDefs
       ..$lazyValDefs
-      $valMods val all = Vector[TC[t.Atom]](..$allVals)
-      $valMods val chooseA: t.Atom => TC[t.Atom] = {case ..$casesA}
-      $valMods val chooseI: t.Atom => Int = {case ..$casesI}
-      $valMods val atom = a.sum(t)(chooseA, chooseI, all)
+      $valMods val get: Atom.Type => TC[t.Atom] = {case ..$cases}
+      $valMods val all: List[TC[t.Atom]] = ${allVals.foldRight(q"Nil": Tree)((v, l) => q"$v :: $l")}
+      $valMods val atom = a.sum(t)(get, all)
       $valMods val vec  = a.vec(atom)
       $li
       val nev = a.nev(vec)(atom)

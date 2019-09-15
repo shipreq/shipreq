@@ -42,16 +42,48 @@ object BaseMemberData1 {
 
     override def nev[A](as: Pickler[Vector[A]])(implicit a: Pickler[A]) = pickleNEV
 
-    override def sum[T <: Atom.Base](t: T)(f: t.Atom => Pickler[t.Atom], index: t.Atom => Int, all: Vector[Pickler[t.Atom]]): Pickler[t.Atom] =
+    override def sum[T <: Atom.Base](t: T)(get: Atom.Type => Pickler[t.Atom], all: List[Pickler[t.Atom]]): Pickler[t.Atom] =
       new Pickler[t.Atom] {
+        private[this] final val KeyLiteral        = 'l'
+        private[this] final val KeyBlankLine      = '0'
+        private[this] final val KeyReqRef         = 'r'
+        private[this] final val KeyCodeRef        = 'c'
+        private[this] final val KeyUseCaseStepRef = 'u'
+        private[this] final val KeyIssue          = 'i'
+        private[this] final val KeyWebAddress     = '/'
+        private[this] final val KeyEmailAddress   = '@'
+        private[this] final val KeyMathTeX        = '='
+        private[this] final val KeyTagRef         = 't'
+        private[this] final val KeyUnorderedList  = '*'
         override def pickle(a: t.Atom)(implicit state: PickleState): Unit = {
-          val i = index(a)
-          state.enc.writeInt(i)
-          all(i).pickle(a)
+          Atom.Type.of(a) match {
+            case t@ Type.Literal        => state.enc.writeByte(KeyLiteral       ); get(t).pickle(a)
+            case t@ Type.BlankLine      => state.enc.writeByte(KeyBlankLine     ); get(t).pickle(a)
+            case t@ Type.ReqRef         => state.enc.writeByte(KeyReqRef        ); get(t).pickle(a)
+            case t@ Type.CodeRef        => state.enc.writeByte(KeyCodeRef       ); get(t).pickle(a)
+            case t@ Type.UseCaseStepRef => state.enc.writeByte(KeyUseCaseStepRef); get(t).pickle(a)
+            case t@ Type.Issue          => state.enc.writeByte(KeyIssue         ); get(t).pickle(a)
+            case t@ Type.WebAddress     => state.enc.writeByte(KeyWebAddress    ); get(t).pickle(a)
+            case t@ Type.EmailAddress   => state.enc.writeByte(KeyEmailAddress  ); get(t).pickle(a)
+            case t@ Type.MathTeX        => state.enc.writeByte(KeyMathTeX       ); get(t).pickle(a)
+            case t@ Type.TagRef         => state.enc.writeByte(KeyTagRef        ); get(t).pickle(a)
+            case t@ Type.UnorderedList  => state.enc.writeByte(KeyUnorderedList ); get(t).pickle(a)
+          }
         }
         override def unpickle(implicit state: UnpickleState): t.Atom = {
-          val i = state.dec.readInt
-          all(i).unpickle
+          state.dec.readByte match {
+            case KeyLiteral        => get(Type.Literal       ).unpickle
+            case KeyBlankLine      => get(Type.BlankLine     ).unpickle
+            case KeyReqRef         => get(Type.ReqRef        ).unpickle
+            case KeyCodeRef        => get(Type.CodeRef       ).unpickle
+            case KeyUseCaseStepRef => get(Type.UseCaseStepRef).unpickle
+            case KeyIssue          => get(Type.Issue         ).unpickle
+            case KeyWebAddress     => get(Type.WebAddress    ).unpickle
+            case KeyEmailAddress   => get(Type.EmailAddress  ).unpickle
+            case KeyMathTeX        => get(Type.MathTeX       ).unpickle
+            case KeyTagRef         => get(Type.TagRef        ).unpickle
+            case KeyUnorderedList  => get(Type.UnorderedList ).unpickle
+          }
         }
       }
 

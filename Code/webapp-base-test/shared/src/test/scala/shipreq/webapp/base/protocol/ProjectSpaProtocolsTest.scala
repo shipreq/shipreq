@@ -161,7 +161,7 @@ object ProjectSpaProtocolsTest extends TestSuite {
       "v1.0" - {
 
         "GenericReqTitleSet" - {
-          val bin    = BinaryData.fromHex("010083E81A0009010804626C616800060CF606")
+          val bin    = BinaryData.fromHex("010083E81A0009016C04626C616800060CF606")
           val expect = Event.GenericReqTitleSet(9, "blah").verified(1000)
           assertDecodeOk(codec)(bin, expect)
         }

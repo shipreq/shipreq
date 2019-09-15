@@ -376,9 +376,9 @@ object EventDbCodecs {
     private[this] final val UCSTEPREF    = "u"
     private[this] final val TAGREF       = "t"
 
-    override def sum[T <: Atom.Base](t: T)(f: t.Atom => ReadWriter[t.Atom], i: t.Atom => Int, all: Vector[ReadWriter[t.Atom]]): ReadWriter[t.Atom] = {
+    override def sum[T <: Atom.Base](t: T)(get: Atom.Type => ReadWriter[t.Atom], all: List[ReadWriter[t.Atom]]): ReadWriter[t.Atom] = {
       val readPF = all.map(_.read).reduce(_ orElse _)
-      ReadWriter[t.Atom](a => f(a).write(a), readPF)
+      ReadWriter[t.Atom](a => get(Atom.Type.of(a)).write(a), readPF)
     }
 
     override def blankLine[T <: NewLine](t: T): ReadWriter[t.BlankLine] = ReadWriter(
