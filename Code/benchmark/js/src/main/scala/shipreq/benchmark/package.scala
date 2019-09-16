@@ -11,7 +11,7 @@ package object benchmark {
     * Builder for a benchmark that accepts a project.
     */
   val projectBM = Benchmark.setup[Unit, Project](_ =>
-    data.project_100)
+    SampleData.project_100)
 
   def BASEURL = BaseUrl(dom.window.location.href.takeWhile(_ != '?'))
 }
