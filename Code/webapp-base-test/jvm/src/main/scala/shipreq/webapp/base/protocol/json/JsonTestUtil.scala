@@ -23,6 +23,15 @@ object JsonTestUtil {
   def assertRoundTrip[A: Decoder: Encoder: Equal](a: A)(implicit l: Line): Unit =
     assertDecodeOk(a.asJson, a)
 
+  def assertRoundTrips[A: Decoder: Encoder: Equal](as: Traversable[A])(implicit l: Line): Unit = {
+    var i = 0
+    for (a <- as) {
+      i += 1
+      val json = a.asJson
+      assertEq(s"[$i/${as.size}]", json.as[A], Right(a))
+    }
+  }
+
   def propTestRoundTrip[A: Decoder: Encoder: Equal](g: Gen[A])(implicit l: Line): Unit =
     g.samples().take(propTestSize).foreach(assertRoundTrip(_))
 

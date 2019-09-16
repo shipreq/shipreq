@@ -11,7 +11,7 @@ import shipreq.webapp.base.text.Text._
 import shipreq.webapp.base.text.Text.Equality._
 import utest._
 
-object ProtocolTest extends TestSuite {
+object BinaryProtocolTest extends TestSuite {
   import BaseData._
   import BaseMemberData1._
   import BaseMemberData2._
@@ -26,10 +26,6 @@ object ProtocolTest extends TestSuite {
 
     'savedViews - propTestRoundTripP(R.project.flatMap(R.reqtableData.nonEmptySavedViewsForProject))
 
-    'event - assertRoundTripsP(RandomEventStream.sampleEventStreamWithProjects.map(_._1))
-
-    'project - assertRoundTripsP(RandomEventStream.sampleEventStreamWithProjects.map(_._2))
-
     'text - {
       def gr = R.reqId
       def gu = R.useCaseStepId
@@ -41,6 +37,10 @@ object ProtocolTest extends TestSuite {
       'InlineIssueDesc - propTestRoundTripP(R.TextGen.inlineIssueDescAtom(gr, gu, gc        ).text)
       'CustomTextField - propTestRoundTripP(R.TextGen.customTextFieldAtom(gr, gu, gc, gi, ga).text1(CustomTextField))
     }
+
+    'event - assertRoundTripsP(RandomEventStream.sampleEventStreamWithProjects.map(_._1))
+
+    'project - assertRoundTripsP(RandomEventStream.sampleEventStreamWithProjects.map(_._2))
 
   }
 }
