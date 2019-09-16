@@ -7,6 +7,19 @@ import org.openjdk.jmh.annotations._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.event.Event
 
+/*
+ read: b = j x 3.71
+write: b = j x 2.15
+
+golly-xps:
+[info] Benchmark                    (format)   Mode  Cnt    Score   Error  Units
+[info] SerialisationEventsBM.read       json  thrpt    6  127.757 ± 0.278  ops/s
+[info] SerialisationEventsBM.read     binary  thrpt    6  473.928 ± 0.366  ops/s
+[info] SerialisationEventsBM.write      json  thrpt    6  144.176 ± 0.527  ops/s
+[info] SerialisationEventsBM.write    binary  thrpt    6  310.128 ± 1.701  ops/s
+[success] Total time: 488 s, completed 16/09/2019 2:01:31 PM
+ */
+
 object SerialisationEventsBM {
   import boopickle.DefaultBasic._
   import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
