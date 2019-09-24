@@ -136,7 +136,7 @@ object Dependencies {
   }
 
   object Circe {
-    private val mm = MultiModule.scala("io.circe", "0.12.1")
+    private val mm = MultiModule.jvmAndJs("io.circe", "0.12.1")
     val core    = mm("circe-core")
     val parser  = mm("circe-parser")
     val testing = mm("circe-testing")
