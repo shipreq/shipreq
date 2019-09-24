@@ -1,6 +1,8 @@
 package shipreq.webapp.server.logic
 
 import com.typesafe.scalalogging.StrictLogging
+import io.circe._
+import io.circe.syntax._
 import japgolly.microlibs.utils.Utils
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.ParseLong
@@ -11,6 +13,7 @@ import scalaz.{-\/, Monad, Need, \/, \/-}
 import scalaz.syntax.monad._
 import shipreq.base.ops.Trace
 import shipreq.base.util._
+import shipreq.base.util.JsonUtil.univEqJson
 import shipreq.webapp.base.{AssetManifest, Urls}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol._
@@ -116,24 +119,21 @@ object DispatchLogic {
 
     final case class Text(status: Int, body: String) extends ResponseCmd
 
-    final case class Json(status: Int, bodyJs: upickle.Js.Value) extends ResponseCmd {
+    final case class Json(status: Int, bodyJs: io.circe.Json) extends ResponseCmd {
       val body: String =
-        upickle.json.write(bodyJs)
+        bodyJs.noSpaces
     }
 
     final case class Binary(status: Int, body: BinaryData) extends ResponseCmd
 
-    implicit def univEq: UnivEq[ResponseCmd] = {
-      implicit def a: UnivEq[upickle.Js.Value] = UnivEq.force
-      UnivEq.derive
-    }
+    implicit def univEq: UnivEq[ResponseCmd] = UnivEq.derive
 
     val redirectToPublicHome = Redirect(Urls.publicHome)
     val redirectToMemberHome = Redirect(Urls.memberHome)
   }
 
   object StatusCode {
-    final val OK         = 200
+    final val OK = 200
 
     /** The server cannot or will not process the request due to an apparent client error
       * (e.g., malformed request syntax, size too large). */
@@ -595,7 +595,6 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
   // Ops & Diagnostics
 
   object Ops {
-    import upickle.Js
     import shipreq.taskman.api.MsgId
 
     private def response(cmd: ResponseCmd): Response =
@@ -621,8 +620,8 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
         case -\/(e) => response(ResponseCmd.Text(StatusCode.BadRequest, e.value))
       }
 
-    private def jsonResponse(r: OpsEndpoints.HasJsValue): Response =
-      response(ResponseCmd.Json(StatusCode.OK, r.toJsValue))
+    private def jsonResponse(r: OpsEndpoints.HasJson): Response =
+      response(ResponseCmd.Json(StatusCode.OK, r.toJson))
 
     /** Return a static 200.
       * Useful to test that the web-server is up and serving requests.
@@ -640,7 +639,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
       endpoint(Post, Url.Relative("register1"))(req =>
         parseParams(req.param("email"))(email =>
           whenValid(publicSpa.apiRegister1(email))(id =>
-            response(ResponseCmd.Json(StatusCode.OK, Js.Obj("taskId" -> Js.Num(id.value)))))))
+            response(ResponseCmd.Json(StatusCode.OK, Json.obj("taskId" -> id.value.asJson))))))
 
     private val statsDb: Request ?=> F[RealRes] =
       endpoint(Post, Url.Relative("stats/db"))(

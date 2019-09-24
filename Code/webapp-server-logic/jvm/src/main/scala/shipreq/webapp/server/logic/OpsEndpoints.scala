@@ -1,7 +1,9 @@
 package shipreq.webapp.server.logic
 
+import io.circe._
+import io.circe.syntax._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
-import upickle.Js
 import scalaz.{Monad, \/, \/-}
 import scalaz.syntax.monad._
 import shipreq.base.util.ErrorMsg
@@ -77,59 +79,56 @@ object OpsEndpoints extends HasLogger {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  private def jsBool(b: Boolean): Js.Value =
-    if (b) Js.True else  Js.False
+  private implicit val encoderDuration: Encoder[Duration] =
+    Encoder.encodeString.contramap(_.conciseDesc)
 
-  private def jsDuration(d: Duration): Js.Value =
-    Js.Num(d.toMillis.toDouble / 1000 + d.getNano.toDouble / 1000000000)
+  private implicit val encoderInstant: Encoder[Instant] =
+    Encoder.encodeString.contramap(_.toStringIso8601)
 
-  private def jsInstant(i: Instant): Js.Value =
-    Js.Str(i.toStringIso8601)
-
-  trait HasJsValue {
-    def toJsValue: Js.Value
+  trait HasJson {
+    def toJson: Json
   }
 
-  final case class MsgStatusResult(id: MsgId, status: String, archived: Boolean) extends HasJsValue {
-    def toJsValue: Js.Value =
-      Js.Obj(
-        "id" -> Js.Num(id.value),
-        "status" -> Js.Str(status),
-        "archived" -> jsBool(archived))
+  final case class MsgStatusResult(id: MsgId, status: String, archived: Boolean) extends HasJson {
+    def toJson: Json =
+      Json.obj(
+        "id"       -> id.value.asJson,
+        "status"   -> status.asJson,
+        "archived" -> archived.asJson)
   }
 
-  final case class SendMailResult(id: MsgId, time: Duration, token: String) extends HasJsValue {
-    def toJsValue: Js.Value =
-      Js.Obj(
-        "id" -> Js.Num(id.value),
-        "token" -> Js.Str(token),
-        "time" -> jsDuration(time))
+  final case class SendMailResult(id: MsgId, time: Duration, token: String) extends HasJson {
+    def toJson: Json =
+      Json.obj(
+        "id"    -> id.value.asJson,
+        "token" -> token.asJson,
+        "time"  -> time.asJson)
   }
 
-  final case class UserStats(stats: DB.ForOps.UserStats) extends HasJsValue {
-    def toJsValue: Js.Value =
-      Js.Obj(
-        "registered" -> Js.Num(stats.registered),
-        "pending"    -> Js.Num(stats.pendingRegistration),
-        "total"      -> Js.Num(stats.total))
+  final case class UserStats(stats: DB.ForOps.UserStats) extends HasJson {
+    def toJson: Json =
+      Json.obj(
+        "registered" -> stats.registered.asJson,
+        "pending"    -> stats.pendingRegistration.asJson,
+        "total"      -> stats.total.asJson)
   }
 
   final case class DbStats(now       : Instant,
                            latency1  : Duration,
                            latency2  : Duration,
                            tableStats: List[DB.ForOps.TableStat],
-                           dbSize    : Long) extends HasJsValue {
+                           dbSize    : Long) extends HasJson {
     import DB.ForOps.TableStat
-    def toJsValue: Js.Value = {
+    def toJson: Json = {
       val tables = {
-        val fields = List.newBuilder[(String, Js.Value)]
+        val fields = List.newBuilder[(String, Json)]
         def add(t: TableStat): Unit =
           fields +=
-            t.name -> Js.Obj(
-              "size" -> Js.Obj(
-                "table"   -> Js.Num(t.tableSize),
-                "indexes" -> Js.Num(t.indexesSize),
-                "total"   -> Js.Num(t.totalSize)))
+            t.name -> Json.obj(
+              "size" -> Json.obj(
+                "table"   -> t.tableSize.asJson,
+                "indexes" -> t.indexesSize.asJson,
+                "total"   -> t.totalSize.asJson))
         var tableSize = 0L
         var indexesSize = 0L
         for (t <- tableStats) {
@@ -138,14 +137,14 @@ object OpsEndpoints extends HasLogger {
           add(t)
         }
         add(TableStat("TOTAL", tableSize = tableSize, indexesSize = indexesSize))
-        Js.Obj(fields.result(): _*)
+        Json.obj(fields.result(): _*)
       }
 
-      Js.Obj(
-        "now"     -> jsInstant(now),
-        "latency" -> Js.Arr(jsDuration(latency1), jsDuration(latency2)),
+      Json.obj(
+        "now"     -> now.asJson,
+        "latency" -> Json.arr(latency1.asJson, latency2.asJson),
         "tables"  -> tables,
-        "dbSize"  -> Js.Num(dbSize))
+        "dbSize"  -> dbSize.asJson)
     }
   }
 }
