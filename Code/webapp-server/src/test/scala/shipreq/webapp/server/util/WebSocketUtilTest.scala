@@ -1,7 +1,7 @@
 package shipreq.webapp.server.util
 
-import shipreq.webapp.server.logic.Cookie
 import shipreq.base.test.BaseTestUtil._
+import shipreq.webapp.server.logic.dispatch.Cookie
 import utest._
 
 object WebSocketUtilTest extends TestSuite {

@@ -4,6 +4,7 @@ import com.typesafe.scalalogging.StrictLogging
 import japgolly.univeq.UnivEq
 import scalaz.\/
 import shipreq.webapp.base.user._
+import shipreq.webapp.server.logic.dispatch.Cookie
 
 object Security {
 

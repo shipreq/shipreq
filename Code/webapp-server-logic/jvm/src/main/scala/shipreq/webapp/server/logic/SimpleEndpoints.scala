@@ -2,6 +2,7 @@ package shipreq.webapp.server.logic
 
 import scalaz.Monad
 import shipreq.base.util.log.HasLogger
+import shipreq.webapp.server.logic.dispatch.Cookie
 
 object SimpleEndpoints extends HasLogger {
 

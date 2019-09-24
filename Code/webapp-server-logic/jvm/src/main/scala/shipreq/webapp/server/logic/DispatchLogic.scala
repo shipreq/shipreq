@@ -8,20 +8,18 @@ import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.ParseLong
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
-import scala.util.{Failure, Success}
 import scalaz.{-\/, Monad, Need, \/, \/-}
 import scalaz.syntax.monad._
 import shipreq.base.ops.Trace
 import shipreq.base.util._
-import shipreq.base.util.JsonUtil.univEqJson
 import shipreq.webapp.base.{AssetManifest, Urls}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.binary.SafePickler.DecodingFailure
 import shipreq.webapp.base.user._
-import shipreq.webapp.base.util.ResourceHint
 import shipreq.webapp.client.public.PublicSpaProtocols
+import shipreq.webapp.server.logic.dispatch.{Request => _, _}
 import shipreq.webapp.server.ServerLogicConfig
 
 /** Usage:
@@ -33,119 +31,6 @@ import shipreq.webapp.server.ServerLogicConfig
   */
 object DispatchLogic {
 
-  /** A request to the server.
-    *
-    * @param path Does *NOT* include query params
-    */
-  final case class Request[+Real](method: Method,
-                                  path  : Url.Relative,
-                                  body  : Need[Option[BinaryData]],
-                                  param : String => Option[String],
-                                  cookie: Cookie.LookupFn,
-                                  real  : Real)
-
-  sealed abstract class Method
-  object Method {
-    case object Get   extends Method
-    case object Post  extends Method
-    case object Other extends Method
-    implicit def univEq: UnivEq[Method] = UnivEq.derive
-  }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  final case class Response(cmd: ResponseCmd, cookies: Cookie.Update)
-
-  sealed trait ResponseCmd {
-    def headers: ResponseCmd.Headers = Nil
-  }
-
-  object ResponseCmd {
-
-    type Header = (String, String)
-    type Headers = List[Header]
-
-    implicit class ResourceHintExt(private val rh: ResourceHint) extends AnyVal {
-      def headerValue: String = {
-        val g = rh.generic
-        var h = s"<${g.href}>; rel=${g.rel}"
-        g.as.foreach(as => h = s"$h; as=$as")
-        g.`type`.foreach(t => h = h + "; type=\"" + t + "\"")
-        g.crossorigin match {
-          case Some("anonymous") => h = h + "; crossorigin"
-          case Some(v)           => h = h + "; crossorigin=\"" + v + "\""
-          case None              => ()
-        }
-        if (g.relativeHref) h = h + "; nopush"
-        h
-      }
-    }
-
-    final case class ServePublicSpa(user: Option[User]) extends ResponseCmd
-
-    final case class ServeHomeSpa(user: User) extends ResponseCmd
-
-    object ProjectSpa {
-      final case class Serve(user: User, projectId: ProjectId) extends ResponseCmd
-      case object NotOwner extends ResponseCmd
-      case object InvalidId extends ResponseCmd
-    }
-
-    final case class Redirect(dest: Url.Relative) extends ResponseCmd
-
-    /** Respond with a HTTP status only; no content */
-    final case class StatusOnly(status: Int) extends ResponseCmd {
-      val withoutCookieUpdate = Response(this, Cookie.Update.empty)
-    }
-
-    object StatusOnly {
-
-      val OK = apply(200)
-
-      /** The server cannot or will not process the request due to an apparent client error
-        * (e.g., malformed request syntax, size too large). */
-      val BadRequest = apply(400)
-
-      /** The request was valid, but the server is refusing action.
-        * The user might not have the necessary permissions for a resource, or may need an account of some sort. */
-      val Forbidden = apply(403)
-
-      /** The requested resource could not be found but may be available in the future. */
-      val NotFound = apply(404)
-
-      /** Indicates the HTTP method (GET, POST etc) wasn't allowed */
-      val MethodNotAllowed = apply(405)
-    }
-
-    final case class Text(status: Int, body: String) extends ResponseCmd
-
-    final case class Json(status: Int, bodyJs: io.circe.Json) extends ResponseCmd {
-      val body: String =
-        bodyJs.noSpaces
-    }
-
-    final case class Binary(status: Int, body: BinaryData) extends ResponseCmd
-
-    implicit def univEq: UnivEq[ResponseCmd] = UnivEq.derive
-
-    val redirectToPublicHome = Redirect(Urls.publicHome)
-    val redirectToMemberHome = Redirect(Urls.memberHome)
-  }
-
-  object StatusCode {
-    final val OK = 200
-
-    /** The server cannot or will not process the request due to an apparent client error
-      * (e.g., malformed request syntax, size too large). */
-    final val BadRequest = 400
-
-    /** The server either does not recognize the request method, or it lacks the ability to fulfil the request.
-      * Usually this implies future availability (e.g., a new feature of a web-service API). */
-    final val NotImplemented = 501
-  }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
   @inline private[this] def isSepChar(c: Char): Boolean =
     c == '/' || c == '#'
 
@@ -155,7 +40,7 @@ object DispatchLogic {
     * /home/…
     * /home#…
     */
-  def spaTest(au: Url.Relative): Request[Any] => Boolean = {
+  def spaTest(au: Url.Relative): dispatch.Request[Any] => Boolean = {
     val a = au.relativeUrlNoHeadSlash
     val aLen = a.length
     req => {
@@ -169,7 +54,7 @@ object DispatchLogic {
     }
   }
 
-  def spaTest1(au: Url.Relative.Param1[_]): Request[Any] => Option[String] = {
+  def spaTest1(au: Url.Relative.Param1[_]): dispatch.Request[Any] => Option[String] = {
     val prefix = au.prefixNoHeadSlash
     val prefixLen = prefix.length
     req => {
@@ -202,8 +87,8 @@ object DispatchLogic {
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => DispatchLogic.Request[RealReq],
-                                                  makeRealRes: (RealReq, DispatchLogic.Response) => F[RealRes])
+final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispatch.Request[RealReq],
+                                                  makeRealRes: (RealReq, dispatch.Response) => F[RealRes])
                                                  (implicit F: Monad[F],
                                                   config    : ServerLogicConfig,
                                                   db        : DB.SecurityTokenReadOnly[F],
@@ -216,10 +101,10 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => Dispat
                                                   svr       : Server.Time[F],
                                                   tracer    : TraceLogic[F, RealReq, RealRes]) {
 
-  import DispatchLogic.{Request => _, _}
-  import DispatchLogic.Method._
+  import DispatchLogic._
+  import Method._
 
-  private type Request = DispatchLogic.Request[RealReq]
+  private type Request = dispatch.Request[RealReq]
 
   @inline private def makeReal(r: Response)(implicit req: Request): F[RealRes] =
     makeRealRes(req.real, r)

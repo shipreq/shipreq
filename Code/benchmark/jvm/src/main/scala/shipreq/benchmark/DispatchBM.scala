@@ -19,7 +19,7 @@ import shipreq.webapp.base.data.{ProjectId, SecurityToken}
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.logic._
-import DispatchLogic._
+import shipreq.webapp.server.logic.dispatch._
 
 /**
   * > sbt

@@ -13,6 +13,7 @@ import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerLogicConfig
+import shipreq.webapp.server.logic.dispatch.Cookie
 
 object MockDb {
   final case class UserEntry(id           : UserId,

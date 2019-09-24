@@ -17,7 +17,7 @@ import shipreq.base.ops.Trace
 import shipreq.webapp.base.data.Obfuscated
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerLogicConfig
-import shipreq.webapp.server.logic.Cookie.LookupFn
+import shipreq.webapp.server.logic.dispatch.Cookie
 import shipreq.webapp.server.logic.Security.SessionToken
 import shipreq.webapp.server.logic._
 
@@ -147,7 +147,7 @@ final class SecurityInterpreter[F[_]](implicit F: Monad[F],
         }
     }
 
-  override def sessionRestore(cookies: LookupFn): F[Option[SessionToken]] =
+  override def sessionRestore(cookies: Cookie.LookupFn): F[Option[SessionToken]] =
     cookies(cookieName) match {
       case Some(jws) =>
         F.point {

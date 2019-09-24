@@ -9,7 +9,8 @@ import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.server.app.Global
-import shipreq.webapp.server.logic.{Cookie, Security}
+import shipreq.webapp.server.logic.Security
+import shipreq.webapp.server.logic.dispatch.Cookie
 import shipreq.webapp.server.security.SecurityInterpreter
 
 /**

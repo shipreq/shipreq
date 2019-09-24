@@ -17,6 +17,7 @@ import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.user.{User, Username}
+import shipreq.webapp.server.logic.dispatch.Cookie
 
 trait ProjectSpaLogic[F[_]] {
   import ProjectSpaLogic._

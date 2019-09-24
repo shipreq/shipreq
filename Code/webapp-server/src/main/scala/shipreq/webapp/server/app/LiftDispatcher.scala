@@ -14,7 +14,8 @@ import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.user.User
 import shipreq.webapp.base.{Urls, WebappConfig}
 import shipreq.webapp.server.db.DbInterpreter
-import shipreq.webapp.server.logic.{Cookie, DB, DispatchLogic}
+import shipreq.webapp.server.logic.{DB, DispatchLogic, dispatch}
+import shipreq.webapp.server.logic.dispatch.Cookie
 
 object LiftDispatcher {
   object ProjectIdVar extends RequestVar[ProjectId](null)
@@ -81,11 +82,11 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
   private def liftReqUrl(r: LiftReq): Url.Relative =
     Url.Relative(r.request.uri)
 
-  def parseReq(r: LiftReq): DispatchLogic.Request[LiftReq] = {
-    val method: DispatchLogic.Method =
-      if (r.get_?)       DispatchLogic.Method.Get
-      else if (r.post_?) DispatchLogic.Method.Post
-      else               DispatchLogic.Method.Other
+  def parseReq(r: LiftReq): dispatch.Request[LiftReq] = {
+    val method: dispatch.Method =
+      if (r.get_?)       dispatch.Method.Get
+      else if (r.post_?) dispatch.Method.Post
+      else               dispatch.Method.Other
 
     val url = liftReqUrl(r)
 
@@ -97,10 +98,10 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
       }
     }
 
-    DispatchLogic.Request(method, url, body, paramFn, cookieFn, r)
+    dispatch.Request(method, url, body, paramFn, cookieFn, r)
   }
 
-  val makeResponse: (LiftReq, DispatchLogic.Response) => Fx[Box[LiftResponse]] = {
+  val makeResponse: (LiftReq, dispatch.Response) => Fx[Box[LiftResponse]] = {
     val templatePublic  = Template("public")
     val templateHome    = Template("members-home")
     val templateProject = Template("members-project")
@@ -125,7 +126,7 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
       }
 
     (req, response) => {
-      import DispatchLogic.ResponseCmd._
+      import shipreq.webapp.server.logic.dispatch.ResponseCmd._
 
       val setHeaders: Fx[Unit] =
         Fx {

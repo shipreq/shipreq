@@ -12,7 +12,8 @@ import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.Protocol
 import shipreq.webapp.base.user.{EmailAddr, PersonName}
 import shipreq.webapp.client.public.PublicSpaProtocols
-import shipreq.webapp.server.logic.DispatchLogic.Method._
+import shipreq.webapp.server.logic.dispatch._
+import shipreq.webapp.server.logic.dispatch.Method._
 import shipreq.webapp.server.logic.DispatchLogic._
 
 object DispatchLogicTest extends TestSuite {

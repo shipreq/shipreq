@@ -3,7 +3,7 @@ package shipreq.webapp.server.util
 import javax.websocket.CloseReason.CloseCode
 import javax.websocket.server._
 import scala.collection.JavaConverters._
-import shipreq.webapp.server.logic.Cookie
+import shipreq.webapp.server.logic.dispatch.Cookie
 
 object WebSocketUtil {
 

@@ -1,6 +1,5 @@
 package shipreq.webapp.server.logic
 
-import boopickle.Pickler
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import scalaz.{-\/, Equal, Name, \/, \/-}
@@ -17,6 +16,7 @@ import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.server.logic.ProjectSpaLogic.{WebSocketState => _, _}
 import shipreq.webapp.server.logic.Redis.ProjectSnapshot
 import shipreq.webapp.server.logic.Security.SessionToken
+import shipreq.webapp.server.logic.dispatch.Cookie
 
 object ProjectSpaLogicTestS extends ProjectSpaLogicTest(Config.default.copy(writeEvents = false))
 object ProjectSpaLogicTestE extends ProjectSpaLogicTest(Config.default.copy(writeSnapshots = false))
