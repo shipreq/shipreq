@@ -2,7 +2,7 @@ version: '2.4'
 services:
 
   postgres:
-    image: postgres:11.3
+    image: postgres:11.5
     container_name: shipreq_dev_postgres
     ports:
       - $PORT_POSTGRES:5432

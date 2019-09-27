@@ -2,7 +2,7 @@ version: '2.4'
 services:
 
   postgres:
-    image: postgres:11.3
+    image: postgres:11.5
     container_name: shipreq_test_postgres
     ports:
       - "13032:5432"
