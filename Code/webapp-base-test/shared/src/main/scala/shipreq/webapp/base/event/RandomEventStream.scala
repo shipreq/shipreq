@@ -3,6 +3,7 @@ package shipreq.webapp.base.event
 import japgolly.microlibs.adt_macros.AdtMacros._
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import java.time.Instant
 import nyaya.gen._
 import nyaya.prop.LogicPropExt
 import nyaya.util.Multimap
@@ -45,7 +46,7 @@ object RandomEventStream {
     StateGen(s =>
       eventGen(s).map(e =>
         ApplyEvent.untrusted.apply1(e)(s._1) match {
-          case \/-(p2) => Some(((p2, s._2 + 1), VerifiedEvent(s._2, e)))
+          case \/-(p2) => Some(((p2, s._2 + 1), VerifiedEvent(s._2, e, Instant.now())))
           case -\/(_)  => None
         }
       ).optionGetLimit(maxAttempts)

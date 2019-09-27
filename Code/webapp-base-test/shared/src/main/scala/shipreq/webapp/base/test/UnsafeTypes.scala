@@ -3,7 +3,6 @@ package shipreq.webapp.base.test
 import japgolly.microlibs.nonempty._
 import java.time._
 import nyaya.util.Multimap
-import scala.collection.generic.CanBuildFrom
 import shipreq.base.util._
 import shipreq.base.util.univeq.UnivEq
 import shipreq.webapp.base.data._
@@ -228,8 +227,8 @@ object UnsafeTypes extends UnsafeTypesMedPriority {
   }
 
   implicit class UnsafeEventExt(private val self: Event) extends AnyVal {
-    def verified(ord: EventOrd): VerifiedEvent =
-      VerifiedEvent(ord, self)
+    def verified(ord: EventOrd, at: Instant = Instant.now()): VerifiedEvent =
+      VerifiedEvent(ord, self, at)
   }
 
   object AutoNES {

@@ -1,6 +1,7 @@
 package shipreq.webapp.server.logic
 
 import japgolly.microlibs.scalaz_ext.ScalazMacros
+import java.time.Instant
 import nyaya.gen.Gen
 import scalaz.{Equal, \/-}
 import shipreq.webapp.base.{RandomData => R}
@@ -50,8 +51,8 @@ object RedisProtocolTest extends TestSuite {
 
       "v1.0" - {
         'ManualIssueCreate - {
-          val bin    = BinaryData.fromHex("010081F41C7B016C046F6D6667")
-          val expect = VerifiedEvent(500, Event.ManualIssueCreate(123, "omfg"))
+          val bin    = BinaryData.fromHex("010081F41C7B016C046F6D6667E0E57B8D5D00E66307")
+          val expect = VerifiedEvent(500, Event.ManualIssueCreate(123, "omfg"), Instant.ofEpochSecond(1569553381, 123987456))
           assertDecodeOk(codec)(bin, expect)
         }
       }

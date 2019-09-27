@@ -44,7 +44,7 @@ trait WebappTestUtil extends BaseTestUtil {
 
   def _verifyEvent(p: Project, e: Event, o: EventOrd = EventOrd.first): (Project, VerifiedEvent) = {
     val p2 = ApplyEvent.untrusted.apply1(e)(p).fold(err => sys error s"Failed to apply event $e: $err", identity)
-    (p2, VerifiedEvent(o, e))
+    (p2, VerifiedEvent(o, e, Instant.now()))
   }
 
   def verifyEvents(p0: Project, firstOrd: EventOrd = EventOrd.first)(es: Event*): VerifiedEvent.Seq = {

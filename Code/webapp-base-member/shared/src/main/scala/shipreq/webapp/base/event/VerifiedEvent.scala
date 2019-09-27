@@ -2,13 +2,17 @@ package shipreq.webapp.base.event
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.ConciseIntSetFormat
+import java.time.Instant
 import scala.collection.immutable.TreeSet
 
 /**
  * A verified event is an event that has been validated by the server, and proven applicable.
  */
-final case class VerifiedEvent(ord: EventOrd, event: Event) {
-  override def toString = s"VerifiedEvent(${ord.value}, $event)"
+final case class VerifiedEvent(ord      : EventOrd,
+                               event    : Event,
+                               createdAt: Instant) {
+
+  override def toString = s"VerifiedEvent(${ord.value}, $event, $createdAt)"
 }
 
 object VerifiedEvent {

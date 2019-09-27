@@ -1,13 +1,14 @@
 package shipreq.webapp.base.protocol.binary.v1
 
 import boopickle.DefaultBasic._
+import java.time.Instant
 import scalaz.\/
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event._
 
 object PostEvents {
-  import BaseData.{pickleDisj, picklerErrorMsg}
+  import BaseData.{pickleDisj, picklerErrorMsg, picklerInstant}
   import BaseMemberData2.picklerProject
   import Events._
 
@@ -22,11 +23,13 @@ object PostEvents {
       override def pickle(a: VerifiedEvent)(implicit state: PickleState): Unit = {
         state.pickle(a.ord)
         state.pickle(a.event)
+        state.pickle(a.createdAt)
       }
       override def unpickle(implicit state: UnpickleState): VerifiedEvent = {
-        val ord   = state.unpickle[EventOrd]
-        val event = state.unpickle[Event]
-        VerifiedEvent(ord, event)
+        val ord       = state.unpickle[EventOrd]
+        val event     = state.unpickle[Event]
+        val createdAt = state.unpickle[Instant]
+        VerifiedEvent(ord, event, createdAt)
       }
     }
 

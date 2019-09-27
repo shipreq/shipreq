@@ -263,8 +263,11 @@ object DbInterpreter {
       val addEvents = insertEventSql.executeBatch(
         cmds.toIterator.map(c => (id, c.ord, c.event)))
 
+      // Really we should be returning the real timestamps from the events once they're saved but it's fine for now
+      val now = Instant.now()
+
       def result: VerifiedEvent.Seq =
-        VerifiedEvent.Seq.empty ++ cmds.toIterator.map(c => VerifiedEvent(c.ord, c.event))
+        VerifiedEvent.Seq.empty ++ cmds.toIterator.map(c => VerifiedEvent(c.ord, c.event, now))
 
       addEvents.inTransaction.attempt.map(_.map(_ => result))
     }
@@ -369,7 +372,7 @@ object DbInterpreter {
 
     type Out = VerifiedEvent
 
-    private val allSql = s"SELECT ord,${EventSqlHelpers.eventE} FROM event WHERE project_id=?"
+    private val allSql = s"SELECT ord,${EventSqlHelpers.eventE},created_at FROM event WHERE project_id=?"
 
     val all = Query[ProjectId, Out](allSql)
 

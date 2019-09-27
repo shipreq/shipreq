@@ -173,7 +173,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
 
           case PotentialChange.Success(ApplyNewEvent.Updated(_, event)) =>
             nextEventOrd
-              .map(o => VerifiedEvent.Seq.empty + VerifiedEvent(o, event))
+              .map(o => VerifiedEvent.Seq.empty + VerifiedEvent(o, event, Instant.now()))
               .flatTap(addEvents)
               .map(\/-(_))
 

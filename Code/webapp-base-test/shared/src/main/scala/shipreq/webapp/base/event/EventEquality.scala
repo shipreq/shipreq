@@ -1,6 +1,7 @@
 package shipreq.webapp.base.event
 
 import japgolly.microlibs.scalaz_ext.ScalazMacros
+import java.time.Instant
 import scalaz.Equal
 import scalaz.std.list.listEqual
 import shipreq.base.util.univeq._
@@ -71,4 +72,11 @@ trait EventEquality {
   implicit val equalVerifiedEvent   : Equal[VerifiedEvent            ] = ScalazMacros.deriveEqual
   implicit val equalVerifiedEventSeq: Equal[VerifiedEvent.Seq        ] = Equal.equalBy(_.toList)
   implicit val equalVerifiedEventNES: Equal[VerifiedEvent.NonEmptySeq] = Equal.equalBy(_.values.toList)
+
+  object IgnoreEqualityOfVerifiedEventTimestamps {
+    private implicit val equalInstant: Equal[Instant] = Equal.equal((_, _ ) => true)
+    implicit val equalVerifiedEvent   : Equal[VerifiedEvent            ] = ScalazMacros.deriveEqual
+    implicit val equalVerifiedEventSeq: Equal[VerifiedEvent.Seq        ] = Equal.equalBy(_.toList)
+    implicit val equalVerifiedEventNES: Equal[VerifiedEvent.NonEmptySeq] = Equal.equalBy(_.values.toList)
+  }
 }

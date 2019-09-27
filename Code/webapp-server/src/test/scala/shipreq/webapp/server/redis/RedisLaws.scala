@@ -1,7 +1,7 @@
 package shipreq.webapp.server.redis
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import java.time.Duration
+import java.time.{Duration, Instant}
 import nyaya.gen._
 import scalaz.{Applicative, Equal, Monad, Semigroup}
 import scalaz.syntax.monad._
@@ -244,10 +244,11 @@ object RedisLaws {
           empty <- Gen.chooseInt(8)
           size  <- if (empty == 0) genZero else chooseInt(limit - start.value)
         } yield {
+          val startTime = Instant.now()
           def events =
             (0 until size).iterator.map { i =>
               val ord = start + i
-              VerifiedEvent(ord, Event.ProjectNameSet(ord.value.toString))
+              VerifiedEvent(ord, Event.ProjectNameSet(ord.value.toString), startTime.plusSeconds(i))
             }
           VerifiedEvent.Seq.empty ++ events
         }

@@ -337,6 +337,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       'stale - {
         def test(c: CacheState, expectFullDbReads: Int)(implicit t: Tester): Unit = {
           import t._
+          import IgnoreEqualityOfVerifiedEventTimestamps._
           assertDifference(s"[$c] db reads", db.loadProjectLog.length)(expectFullDbReads) {
             val (\/-(events), newState) = sendMsg(WsReqRes.Reconnect.AndReq(Some(p1.latestOrdA)), p1.static, emptyState)
             assertEq(events, p1.verifiedEventsBC)

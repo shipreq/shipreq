@@ -2161,6 +2161,6 @@ object RandomData {
       Gen.chooseInt(100000).map(i => EventOrd(i + 1))
 
     val verifiedEvent: Gen[VerifiedEvent] =
-      Gen.apply2(VerifiedEvent.apply)(eventOrd, event)
+      Gen.apply3(VerifiedEvent.apply)(eventOrd, event, instantPast)
   }
 }

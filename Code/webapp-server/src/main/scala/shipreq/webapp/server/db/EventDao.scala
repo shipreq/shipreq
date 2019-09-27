@@ -2,6 +2,7 @@ package shipreq.webapp.server.db
 
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.recursion._
+import java.time.Instant
 import scala.annotation.tailrec
 import scalaz.{-\/, Functor, \/, \/-}
 import scalaz.Isomorphism.<=>

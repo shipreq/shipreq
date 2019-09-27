@@ -19,9 +19,9 @@ object PostEvents {
     Encoder[Int].contramap(_.value)
 
   implicit val decoderVerifiedEvent: Decoder[VerifiedEvent] =
-    Decoder.forProduct2("#", "event")(VerifiedEvent.apply)
+    Decoder.forProduct3("#", "event", "createdAt")(VerifiedEvent.apply)
 
   implicit val encoderVerifiedEvent: Encoder[VerifiedEvent] =
-    Encoder.forProduct2("#", "event")(a => (a.ord, a.event))
+    Encoder.forProduct3("#", "event", "createdAt")(a => (a.ord, a.event, a.createdAt))
 
 }

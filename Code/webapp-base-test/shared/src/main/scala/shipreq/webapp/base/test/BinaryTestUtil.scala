@@ -20,16 +20,20 @@ object BinaryTestUtil {
   implicit def equalSafePicklerDecoderFailure: Equal[SafePickler.DecodingFailure] =
     Equal.equalA
 
-  def assertDecode[A: Equal](p: SafePickler[A])(bin: BinaryData, expect: SafePickler.Result[A])(implicit l: Line): Unit = {
+  def assertDecodeVia[A, B: Equal](p: SafePickler[A])(bin: BinaryData, expect: SafePickler.Result[B])
+                                  (f: A => B, g: B => A)(implicit l: Line): Unit = {
     def info = {
       val descBin: BinaryData => String = _.describe(4096).filter(_ != ',')
       expect match {
-        case \/-(a) => s"Subject:    ${descBin(bin)}\n        Re-encoded: ${descBin(p.encode(a))}"
+        case \/-(a) => s"Subject:    ${descBin(bin)}\n        Re-encoded: ${descBin(p.encode(g(a)))}"
         case -\/(_) => descBin(bin)
       }
     }
-    assertEq(info, p.decode(bin), expect)
+    assertEq(info, p.decode(bin).map(f), expect)
   }
+
+  def assertDecode[A: Equal](p: SafePickler[A])(bin: BinaryData, expect: SafePickler.Result[A])(implicit l: Line): Unit =
+    assertDecodeVia[A, A](p)(bin, expect)(identity, identity)
 
   def assertDecodeOk[A: Equal](p: SafePickler[A])(bin: BinaryData, expect: A)(implicit l: Line): Unit =
     assertDecode(p)(bin, \/-(expect))

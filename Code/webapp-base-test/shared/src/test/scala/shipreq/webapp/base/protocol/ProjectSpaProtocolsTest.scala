@@ -2,6 +2,7 @@ package shipreq.webapp.base.protocol
 
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.scalaz_ext.ScalazMacros
+import java.time.Instant
 import scalaz.\&/
 import scalaz.{-\/, Equal, \/, \/-}
 import sourcecode.Line
@@ -39,11 +40,10 @@ object ProjectSpaProtocolsTest extends TestSuite {
 
   private def assertResponse(res: WsReqRes)(bin: BinaryData, expect: WebSocket.Push \/ (ReqId, res.ResponseType))(implicit l: Line, eq: Equal[res.ResponseType]) = {
     val codecSC = WebSocketShared.protocolSC(_ => res.protocolRes)(webSocket.push.codec).codec
-    val actual = codecSC.decode(bin)
-      .map(_.map { case (reqId, protocolAndValue) => (reqId, protocolAndValue.value.asInstanceOf[res.ResponseType]) })
-    def actualBin =
-      codecSC.encode(expect.map { case (reqId, v) => (reqId, res.protocolRes.andValue(v)) })
-    assertEq(s"Actual hex: ${actualBin.hex}", actual, \/-(expect))
+    assertDecodeVia(codecSC)(bin, \/-(expect))(
+      _.map { case (reqId, protocolAndValue) => (reqId, protocolAndValue.value.asInstanceOf[res.ResponseType]) },
+      _.map { case (reqId, v) => (reqId, res.protocolRes.andValue(v)) }
+    )
   }
 
   override def tests = Tests {
@@ -133,8 +133,8 @@ object ProjectSpaProtocolsTest extends TestSuite {
 
       "resp" - {
         "v1.0" - {
-          val bin    = BinaryData.fromHex("0100240100000182F209000301440208796F20796F20796F7786DA86")
-          val expect = \/-((ReqId(18),\/-(verifiedEventsFromJson("""{"#":754,"event":{"CustomIssueTypeUpdate":{"id":3,"values":[{"desc":"yo yo yo"}]}}}"""))))
+          val bin    = BinaryData.fromHex("0100240100000182F209000301440208796F20796F20796FE0CBA98D5D40BFD7327786DA86")
+          val expect = \/-((ReqId(18),\/-(verifiedEventsFromJson("""{"#":754,"event":{"CustomIssueTypeUpdate":{"id":3,"values":[{"desc":"yo yo yo"}]}}, "createdAt":"2019-09-27T06:18:51.853Z"}"""))))
           assertResponse(UpdateConfig)(bin, expect)
         }
       }
@@ -164,8 +164,8 @@ object ProjectSpaProtocolsTest extends TestSuite {
 
       "resp" - {
         "v1.0" - {
-          val bin    = BinaryData.fromHex("01000C0100000182E61900200001033E0167000E2301000954026C07556D6D2E2E2E20690001007786DA86")
-          val expect = \/-((ReqId(6),\/-(verifiedEventsFromJson("""{"#":742,"event":{"GenericReqCreate":{"reqId":32,"reqTypeId":1,"values":[{"impSrcs":[{"gr":14}]},{"tags":[9]},{"title":[{"lit":"Umm... "},{"issue":{"desc":[],"type":1}}]}]}}}"""))))
+          val bin    = BinaryData.fromHex("01000C0100000182E61900200001033E0167000E2301000954026C07556D6D2E2E2E2069000100E0CBA98D5D40BFD7327786DA86")
+          val expect = \/-((ReqId(6),\/-(verifiedEventsFromJson("""{"#":742,"event":{"GenericReqCreate":{"reqId":32,"reqTypeId":1,"values":[{"impSrcs":[{"gr":14}]},{"tags":[9]},{"title":[{"lit":"Umm... "},{"issue":{"desc":[],"type":1}}]}]}}, "createdAt":"2019-09-27T06:18:51.853Z"}"""))))
           assertResponse(CreateContent)(bin, expect)
         }
       }
@@ -186,8 +186,8 @@ object ProjectSpaProtocolsTest extends TestSuite {
 
       "resp" - {
         "v1.0" - {
-          val bin    = BinaryData.fromHex("0100040100000182E31A0006016C185068A40361727274202D20686520657869737473206E6F77217786DA86")
-          val expect = \/-((ReqId(2),\/-(verifiedEventsFromJson("""{"#":739,"event":{"GenericReqTitleSet":{"id":6,"value":[{"lit":"Phäarrt - he exists now!"}]}}}"""))))
+          val bin    = BinaryData.fromHex("0100040100000182E31A0006016C185068A40361727274202D20686520657869737473206E6F7721E0CBA98D5D40BFD7327786DA86")
+          val expect = \/-((ReqId(2),\/-(verifiedEventsFromJson("""{"#":739,"event":{"GenericReqTitleSet":{"id":6,"value":[{"lit":"Phäarrt - he exists now!"}]}}, "createdAt":"2019-09-27T06:18:51.853Z"}"""))))
           assertResponse(UpdateContent)(bin, expect)
         }
       }
@@ -205,8 +205,8 @@ object ProjectSpaProtocolsTest extends TestSuite {
 
       "resp" - {
         "v1.0" - {
-          val bin    = BinaryData.fromHex("0100080100000182E51F0B4D722E20436F6E74656E747786DA86")
-          val expect = \/-((ReqId(4),\/-(verifiedEventsFromJson("""{"#":741,"event":{"ProjectNameSet":"Mr. Content"}}"""))))
+          val bin    = BinaryData.fromHex("0100080100000182E51F0B4D722E20436F6E74656E74E0CBA98D5D40BFD7327786DA86")
+          val expect = \/-((ReqId(4),\/-(verifiedEventsFromJson("""{"#":741,"event":{"ProjectNameSet":"Mr. Content"}, "createdAt":"2019-09-27T06:18:51.853Z"}"""))))
           assertResponse(ProjectNameSet)(bin, expect)
         }
       }
@@ -241,13 +241,13 @@ object ProjectSpaProtocolsTest extends TestSuite {
       "resp" - {
         "v1.0" - {
           "rename" - {
-            val bin    = BinaryData.fromHex("0100100100000182E82916014E094973737565546573747786DA86")
-            val expect = \/-((ReqId(8),\/-(verifiedEventsFromJson("""{"#":744,"event":{"SavedViewUpdate":{"id":22,"values":[{"name":"IssueTest"}]}}}"""))))
+            val bin    = BinaryData.fromHex("0100100100000182E82916014E09497373756554657374E0CBA98D5D40BFD7327786DA86")
+            val expect = \/-((ReqId(8),\/-(verifiedEventsFromJson("""{"#":744,"event":{"SavedViewUpdate":{"id":22,"values":[{"name":"IssueTest"}]}}, "createdAt":"2019-09-27T06:18:51.853Z"}"""))))
             assertResponse(UpdateSavedViews)(bin, expect)
           }
           "create" - {
-            val bin    = BinaryData.fromHex("0100120100000182E926170564656C6D6509040706017400040301017400030300016900070178000100000000017786DA86")
-            val expect = \/-((ReqId(9),\/-(verifiedEventsFromJson("""{"#":745,"event":{"SavedViewCreate":{"columns":["pubid","title","tags",{"custom":{"tag":4}},{"imps":"->"},{"custom":{"tag":3}},{"imps":"<-"},{"custom":{"imp":7}},{"custom":{"text":1}}],"filter":null,"filterDead":"hide","id":23,"name":"delme","order":{"init":[],"last":{"column":"pubid","method":"asc"}}}}}"""))))
+            val bin    = BinaryData.fromHex("0100120100000182E926170564656C6D650904070601740004030101740003030001690007017800010000000001E0CBA98D5D40BFD7327786DA86")
+            val expect = \/-((ReqId(9),\/-(verifiedEventsFromJson("""{"#":745,"event":{"SavedViewCreate":{"columns":["pubid","title","tags",{"custom":{"tag":4}},{"imps":"->"},{"custom":{"tag":3}},{"imps":"<-"},{"custom":{"imp":7}},{"custom":{"text":1}}],"filter":null,"filterDead":"hide","id":23,"name":"delme","order":{"init":[],"last":{"column":"pubid","method":"asc"}}}}, "createdAt":"2019-09-27T06:18:51.853Z"}"""))))
             assertResponse(UpdateSavedViews)(bin, expect)
           }
           "delete" - {
@@ -281,13 +281,13 @@ object ProjectSpaProtocolsTest extends TestSuite {
       "resp" - {
         "v1.0" - {
           "create" - {
-            val bin    = BinaryData.fromHex("0100160100000182EB1C07026C0461736420726700017786DA86")
-            val expect = \/-((ReqId(11),\/-(verifiedEventsFromJson("""{"#":747,"event":{"ManualIssueCreate":{"id":7,"text":[{"lit":"asd "},{"req":{"gr":1}}]}}}"""))))
+            val bin    = BinaryData.fromHex("0100160100000182EB1C07026C046173642072670001E0CBA98D5D40BFD7327786DA86")
+            val expect = \/-((ReqId(11),\/-(verifiedEventsFromJson("""{"#":747,"event":{"ManualIssueCreate":{"id":7,"text":[{"lit":"asd "},{"req":{"gr":1}}]}}, "createdAt":"2019-09-27T06:18:51.853Z"}"""))))
             assertResponse(UpdateManualIssues)(bin, expect)
           }
           "delete" - {
-            val bin    = BinaryData.fromHex("01001A0100000182ED1D077786DA86")
-            val expect = \/-((ReqId(13),\/-(verifiedEventsFromJson("""{"#":749,"event":{"ManualIssueDelete":7}}"""))))
+            val bin    = BinaryData.fromHex("01001A0100000182ED1D07E0CBA98D5D40BFD7327786DA86")
+            val expect = \/-((ReqId(13),\/-(verifiedEventsFromJson("""{"#":749,"event":{"ManualIssueDelete":7}, "createdAt":"2019-09-27T06:18:51.853Z"}"""))))
             assertResponse(UpdateManualIssues)(bin, expect)
           }
         }
@@ -306,8 +306,8 @@ object ProjectSpaProtocolsTest extends TestSuite {
 
       "resp" - {
         "v1.0" - {
-          val bin    = BinaryData.fromHex("01001C0100000182EE130004014D017786DA86")
-          val expect = \/-((ReqId(14),\/-(verifiedEventsFromJson("""{"#":750,"event":{"FieldCustomTagUpdate":{"id":4,"values":[{"mandatory":true}]}}}"""))))
+          val bin    = BinaryData.fromHex("01001C0100000182EE130004014D01E0CBA98D5D40BFD7327786DA86")
+          val expect = \/-((ReqId(14),\/-(verifiedEventsFromJson("""{"#":750,"event":{"FieldCustomTagUpdate":{"id":4,"values":[{"mandatory":true}]}}, "createdAt":"2019-09-27T06:18:51.853Z"}"""))))
           assertResponse(FieldMandatorinessMod)(bin, expect)
         }
       }
@@ -325,8 +325,8 @@ object ProjectSpaProtocolsTest extends TestSuite {
 
       "resp" - {
         "v1.0" - {
-          val bin    = BinaryData.fromHex("0100200100000182F00D00010149017786DA86")
-          val expect = \/-((ReqId(16),\/-(verifiedEventsFromJson("""{"#":752,"event":{"CustomReqTypeUpdate":{"id":1,"values":[{"imp":true}]}}}"""))))
+          val bin    = BinaryData.fromHex("0100200100000182F00D0001014901E0CBA98D5D40BFD7327786DA86")
+          val expect = \/-((ReqId(16),\/-(verifiedEventsFromJson("""{"#":752,"event":{"CustomReqTypeUpdate":{"id":1,"values":[{"imp":true}]}}, "createdAt":"2019-09-27T06:18:51.853Z"}"""))))
           assertResponse(ReqTypeImplicationMod)(bin, expect)
         }
       }
@@ -339,14 +339,14 @@ object ProjectSpaProtocolsTest extends TestSuite {
       "v1.0" - {
 
         "GenericReqTitleSet" - {
-          val bin    = BinaryData.fromHex("010083E81A0009016C04626C616800060CF606")
-          val expect = Event.GenericReqTitleSet(9, "blah").verified(1000)
+          val bin    = BinaryData.fromHex("010083E81A0009016C04626C6168E0B0318F5D00A9622600060CF606")
+          val expect = Event.GenericReqTitleSet(9, "blah").verified(1000, Instant.parse("2019-09-28T10:10:56.644Z"))
           assertDecodeOk(codec)(bin, expect)
         }
 
         "ReqTagsPatch" - {
-          val bin    = BinaryData.fromHex("0100816224670016020004004601001300060CF606")
-          val expect = Event.ReqTagsPatch(22, nesd[ApplicableTagId](4, 70)(19)).verified(354)
+          val bin    = BinaryData.fromHex("01008162246700160200040046010013E0B0318F5D00A9622600060CF606")
+          val expect = Event.ReqTagsPatch(22, nesd[ApplicableTagId](4, 70)(19)).verified(354, Instant.parse("2019-09-28T10:10:56.644Z"))
           assertDecodeOk(codec)(bin, expect)
         }
 

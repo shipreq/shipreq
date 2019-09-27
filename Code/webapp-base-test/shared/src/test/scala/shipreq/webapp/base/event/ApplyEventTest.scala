@@ -1,6 +1,7 @@
 package shipreq.webapp.base.event
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import java.time.Instant
 import nyaya.gen._
 import nyaya.prop._
 import nyaya.test.PropTest._
@@ -18,7 +19,7 @@ object ApplyEventTest extends TestSuite {
       case -\/(x) => fail(s"Init failed: $x")
     }
 
-    val ve = VerifiedEvent(EventOrd.first, e1)
+    val ve = VerifiedEvent(EventOrd.first, e1, Instant.now())
 
     (p2, ve)
   }

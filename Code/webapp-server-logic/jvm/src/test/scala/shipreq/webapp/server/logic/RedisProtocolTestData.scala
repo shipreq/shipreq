@@ -5,6 +5,7 @@ import io.circe.parser._
 import io.circe.syntax._
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import java.time.Instant
 import java.util.concurrent.Executors
 import nyaya.gen.{Gen, GenCtx, GenSize, ThreadNumber}
 import scala.annotation.tailrec
@@ -149,19 +150,20 @@ object RedisProtocolTestData {
 
   def makeRows(es: List[Event]): List[Row] = {
     println("Creating rows...")
-    type S = (Option[Redis.ProjectSnapshot], List[Row])
-    val zero: S = (None, Nil)
+    type S = (Option[Redis.ProjectSnapshot], Instant, List[Row])
+    val zero: S = (None, Instant.parse("2019-09-27T03:10:41.423Z"), Nil)
     val result: S =
       es.foldLeft(zero) { (prev, e) =>
-        val ord = prev._1.fold(EventOrd.first)(x => EventOrd(x.ord.value) + 1)
-        val ve  = VerifiedEvent(ord, e)
-        val p1  = prev._1.fold(Project.empty)(_.project)
-        val p2  = applyVerifiedEventSuccessfully(p1, ve)
-        val ps  = Redis.ProjectSnapshot(p2, ord.asLatest)
-        val row = makeRow(ve, ps)
-        (Some(ps), row :: prev._2)
+        val ord  = prev._1.fold(EventOrd.first)(x => EventOrd(x.ord.value) + 1)
+        val time = prev._2.plusNanos(e.##.abs)
+        val ve   = VerifiedEvent(ord, e, time)
+        val p1   = prev._1.fold(Project.empty)(_.project)
+        val p2   = applyVerifiedEventSuccessfully(p1, ve)
+        val ps   = Redis.ProjectSnapshot(p2, ord.asLatest)
+        val row  = makeRow(ve, ps)
+        (Some(ps), time, row :: prev._3)
       }
-    result._2.reverse
+    result._3.reverse
   }
 
   def makeRow(ve: VerifiedEvent, ps: Redis.ProjectSnapshot): Row =
