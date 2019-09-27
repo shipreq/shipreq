@@ -324,7 +324,19 @@ object BaseData {
     pickleDisj
 
   implicit lazy val picklerInstant: Pickler[Instant] =
-    transformPickler(Instant.ofEpochMilli)(_.toEpochMilli)
+    new Pickler[Instant] {
+      // EpochSecond is stored as a packed long (typically 5 bytes instead of 8 raw)
+      // Nano is stored as a raw int (4 bytes instead of typically 5 packed, P(27%) 4 packed)
+      override def pickle(i: Instant)(implicit state: PickleState): Unit = {
+        state.enc.writeLong(i.getEpochSecond)
+        state.enc.writeRawInt(i.getNano)
+      }
+      override def unpickle(implicit state: UnpickleState): Instant = {
+        val epochSecond = state.dec.readLong
+        val nano        = state.dec.readRawInt
+        Instant.ofEpochSecond(epochSecond, nano)
+      }
+    }
 
   implicit lazy val picklerNonEmptyVectorInt: Pickler[NonEmptyVector[Int]] =
     pickleNEV

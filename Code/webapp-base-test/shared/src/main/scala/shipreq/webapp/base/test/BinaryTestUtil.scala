@@ -2,7 +2,7 @@ package shipreq.webapp.base.test
 
 import boopickle.Pickler
 import nyaya.gen.Gen
-import scalaz.{Equal, \/-}
+import scalaz.{-\/, Equal, \/-}
 import sourcecode.Line
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
@@ -20,8 +20,16 @@ object BinaryTestUtil {
   implicit def equalSafePicklerDecoderFailure: Equal[SafePickler.DecodingFailure] =
     Equal.equalA
 
-  def assertDecode[A: Equal](p: SafePickler[A])(bin: BinaryData, expect: SafePickler.Result[A])(implicit l: Line): Unit =
-    assertEq(bin.describe(100).filter(_ != ','), p.decode(bin), expect)
+  def assertDecode[A: Equal](p: SafePickler[A])(bin: BinaryData, expect: SafePickler.Result[A])(implicit l: Line): Unit = {
+    def info = {
+      val descBin: BinaryData => String = _.describe(4096).filter(_ != ',')
+      expect match {
+        case \/-(a) => s"Subject:    ${descBin(bin)}\n        Re-encoded: ${descBin(p.encode(a))}"
+        case -\/(_) => descBin(bin)
+      }
+    }
+    assertEq(info, p.decode(bin), expect)
+  }
 
   def assertDecodeOk[A: Equal](p: SafePickler[A])(bin: BinaryData, expect: A)(implicit l: Line): Unit =
     assertDecode(p)(bin, \/-(expect))
