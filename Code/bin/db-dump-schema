@@ -1,0 +1,40 @@
+#!/bin/bash
+
+[ $# -gt 1 ] && echo "Usage: $0 [<env>]" && exit 1
+
+output=sql/db-schema.sql
+args=()
+env=test
+[ -n "$1" ] && env="$1"
+
+case "$env" in
+  test)
+    echo "Password: sqt"
+    args+=(-h localhost -p 13032 -U test -d shipreq_test)
+    ;;
+  dev)
+    echo "Password: sqd"
+    args+=(-h localhost -p 14032 -U dev -d shipreq_dev)
+    ;;
+  *)
+    echo "Unrecognised env: $env"
+    exit 1
+    ;;
+esac
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+pg_dump \
+  "${args[@]}" \
+  --exclude-table=flyway_schema_history \
+  --schema-only \
+  --no-owner \
+  --no-tablespaces \
+  --no-acl \
+  | grep -v '^--' \
+  | sed -e 's/public\.//g' \
+  | cat -s \
+  > $output
+
+echo "Successfully generated: $(pwd)/$output"
