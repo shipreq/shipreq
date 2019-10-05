@@ -154,13 +154,13 @@ object Dependencies {
   }
 
   object OkHttp {
-    private val mm = MultiModule.java("com.squareup.okhttp3", "3.14.3")
+    private val mm = MultiModule.java("com.squareup.okhttp3", "3.14.4")
     val core = mm("okhttp")
     // val urlConnection = mm("okhttp-urlconnection") ++ core
   }
 
   object LibJetty {
-    private def ver = "9.4.20.v20190813"
+    private def ver = "9.4.21.v20190926"
     private val mm = MultiModule.java("org.eclipse.jetty", ver)
     private val ws = MultiModule.java("org.eclipse.jetty.websocket", ver)
 
@@ -180,7 +180,7 @@ object Dependencies {
   }
 
   object Prometheus {
-    private val mm = MultiModule.java("io.prometheus", "0.6.0")
+    private val mm = MultiModule.java("io.prometheus", "0.7.0")
     val client     = mm("simpleclient")
     val hotspot    = mm("simpleclient_hotspot")
     val httpserver = mm("simpleclient_httpserver")
@@ -207,9 +207,9 @@ object Dependencies {
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
   val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.0.0")
   val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.8")
-  val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.11.3")
+  val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.11.4")
   val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "3.1.0")
-  val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.14.1")
+  val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.14.2")
   val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.2")
   val scalaXml     = jvmOnly("org.scala-lang.modules"     %% "scala-xml"             % "1.2.0")
   val twitterEval  = jvmOnly("com.twitter"                %% "util-eval"             % "6.43.0")
@@ -220,7 +220,7 @@ object Dependencies {
   val macroParadise = compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
   val useMacroParadise = (_: Project).settings(addCompilerPlugin(macroParadise))
 
-  val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
+  val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
   val useKindProjector = (_: Project).settings(addCompilerPlugin(kindProjector))
 
 //  import sbt.Keys._
