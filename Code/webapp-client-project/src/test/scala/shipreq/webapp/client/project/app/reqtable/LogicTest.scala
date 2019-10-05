@@ -35,7 +35,7 @@ object LogicTestUtil {
   // Don't use optics here
     r match {
       case r: Row.ForReq       => r.mv.tags
-      case r: Row.ForCodeGroup => Vector.empty
+      case _: Row.ForCodeGroup => Vector.empty
     }
 
   def pubidExtract(p: Project)(pid: Pubid): (String, Int) =

@@ -501,7 +501,7 @@ private[v1] object BaseMemberData1 {
 
   implicit lazy val encoderReqTypeId: Encoder[ReqTypeId] = Encoder.instance {
     case a: CustomReqTypeId       => Json.obj("c"  -> a.asJson)
-    case a: StaticReqType.UseCase => Json.fromString("uc")
+    case _: StaticReqType.UseCase => Json.fromString("uc")
   }
 
   implicit lazy val codecReqTypeMnemonic: JsonCodec[ReqType.Mnemonic] =

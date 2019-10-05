@@ -107,30 +107,36 @@ object MakeEvent {
         FieldReposition(id, pos)
 
       case UpdateConfigCmd.CustomFieldCreate(vs: UpdateConfigCmd.TextFieldValues) =>
+        val _ = vs // used by macros
         val id = CustomField.Text.Id(nextId)
         FieldCustomTextCreate(id, gdAllValues(CustomTextFieldGD, "vs"))
 
       case UpdateConfigCmd.CustomFieldCreate(vs: UpdateConfigCmd.TagFieldValues) =>
+        val _ = vs // used by macros
         val id = CustomField.Tag.Id(nextId)
         FieldCustomTagCreate(id, gdAllValues(CustomTagFieldGD, "vs"))
 
       case UpdateConfigCmd.CustomFieldCreate(vs: UpdateConfigCmd.ImpFieldValues) =>
+        val _ = vs // used by macros
         val id = CustomField.Implication.Id(nextId)
         FieldCustomImpCreate(id, gdAllValues(CustomImpFieldGD, "vs"))
 
       case UpdateConfigCmd.CustomFieldUpdateText(id, vs) =>
+        val _ = vs // used by macros
         project.config.fields.customAttempt(id) toMakeEventResult { cur =>
           val vs2 = gdUnequalValues(CustomTextFieldGD, cur, "vs")
           eventIfNonEmpty(vs2)(FieldCustomTextUpdate(id, _))
         }
 
       case UpdateConfigCmd.CustomFieldUpdateTag(id, vs) =>
+        val _ = vs // used by macros
         project.config.fields.customAttempt(id) toMakeEventResult { cur =>
           val vs2 = gdUnequalValues(CustomTagFieldGD, cur, "vs")
           eventIfNonEmpty(vs2)(FieldCustomTagUpdate(id, _))
         }
 
       case UpdateConfigCmd.CustomFieldUpdateImp(id, vs) =>
+        val _ = vs // used by macros
         project.config.fields.customAttempt(id) toMakeEventResult { cur =>
           val vs2 = gdUnequalValues(CustomImpFieldGD, cur, "vs")
           eventIfNonEmpty(vs2)(FieldCustomImpUpdate(id, _))
@@ -255,6 +261,8 @@ object MakeEvent {
     val nextCodeId = reqCodeIdCounter(project)
     cmd match {
       case CreateContentCmd.CreateCodeGroup(code, title) =>
+        val _ = title // used by macros
+
         def makeEvent(id: ReqCodeGroupId) =
           Success(CodeGroupCreate(id, gdAllValues(CodeGroupGD, "")))
 

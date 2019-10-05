@@ -104,7 +104,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
       import Atom._
       lazy val atom: AnyAtom => TagMod = {
         case a: Literal         # Literal        => <.span(a.value)
-        case a: NewLine         # BlankLine      => <.div(*.blankLine)
+        case _: NewLine         # BlankLine      => <.div(*.blankLine)
         case a: TagRef          # TagRef         => tagInText(live)(a.value)
         case a: PlainTextMarkup # WebAddress     => <.a(^.href := a.value, a.value)
         case a: PlainTextMarkup # EmailAddress   => <.a(^.href := "mailto:" ~ a.value, a.value)

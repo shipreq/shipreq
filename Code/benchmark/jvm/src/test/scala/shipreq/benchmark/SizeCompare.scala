@@ -12,9 +12,9 @@ object SizeCompare {
   implicit def dataFromNData(n: NData) = n.data
 
   case class Data(bytes: Array[Byte]) {
-    
+
     val size = bytes.length
-    
+
     val gzipSize: Long = {
       val bs = new ByteArrayOutputStream()
       val gs = new GZIPOutputStream(bs)

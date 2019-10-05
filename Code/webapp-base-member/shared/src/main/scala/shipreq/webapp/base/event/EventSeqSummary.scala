@@ -203,7 +203,7 @@ object EventSeqSummary {
 
     def ++=(events: TraversableOnce[Event]): Unit =
       events.foreach(+=)
-    
+
     val += : Event => Unit = {
 
       case e: Event.ContentRestore =>
@@ -254,7 +254,7 @@ object EventSeqSummary {
       case e: Event.FieldCustomTagUpdate   => customFieldTagTypes.updated += e.id
       case e: Event.FieldCustomTextCreate  => customFieldTextTypes.created += e.id
       case e: Event.FieldCustomTextUpdate  => customFieldTextTypes.updated += e.id
-      case e: Event.FieldReposition        => fieldReposition = true
+      case _: Event.FieldReposition        => fieldReposition = true
       case e: Event.FieldStaticAdd         => staticFields.created += e.f
       case e: Event.FieldStaticRemove      => staticFields.deleted += e.f
       case e: Event.GenericReqCreate       => genericReqs.created += e.id
@@ -284,7 +284,7 @@ object EventSeqSummary {
          | _: Event.SavedViewDelete
          | _: Event.SavedViewUpdate        => ()
     }
-    
+
     def result(): EventSeqSummary =
       EventSeqSummary(
         customIssueTypes     = customIssueTypes    .result(),

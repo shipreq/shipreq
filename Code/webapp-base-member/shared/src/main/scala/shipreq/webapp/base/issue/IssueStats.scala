@@ -54,7 +54,7 @@ object IssueStats {
       case i: Issue.ImplicationRequired   => addInReq(i.req.id)
       case i: Issue.IssueTagInRcg         => addInRcg(i.rcg)
       case i: Issue.IssueTagInReq         => addInReq(i.req.id)
-      case i: Issue.UninhabitableTagField => addInConfig()
+      case _: Issue.UninhabitableTagField => addInConfig()
       case _: Issue.ManualIssue           => manual += 1
     }
 

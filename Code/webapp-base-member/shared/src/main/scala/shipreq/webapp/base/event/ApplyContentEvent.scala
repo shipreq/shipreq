@@ -188,7 +188,7 @@ trait ApplyContentEvent {
           case ^.ValueForImpSrcs   (v) => setReqImpSrcs        (id, v)
           case ^.ValueForImpTgts   (v) => setReqImpTgts        (id, v)
           case ^.ValueForTags      (v) => setReqTags           (id, v)
-          case ^.ValueForTitle     (v) => SE.nop // Handled below
+          case ^.ValueForTitle     (_) => SE.nop // Handled below
         }
 
       @inline def emptyTitle: Text.GenericReqTitle.OptionalText =
@@ -295,7 +295,7 @@ trait ApplyContentEvent {
           case ^.ValueForImpSrcs   (v) => setReqImpSrcs        (id, v)
           case ^.ValueForImpTgts   (v) => setReqImpTgts        (id, v)
           case ^.ValueForTags      (v) => setReqTags           (id, v)
-          case ^.ValueForTitle     (v) => SE.nop // Handled below
+          case ^.ValueForTitle     (_) => SE.nop // Handled below
         }
 
       def postAdd(pr: PubidRegister, ucId: UseCaseId, stepId: UseCaseStepId): SE[Unit] =

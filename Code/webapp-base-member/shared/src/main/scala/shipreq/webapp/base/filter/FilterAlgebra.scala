@@ -105,7 +105,7 @@ object FilterAlgebra {
       } catch {
         // PatternSyntaxException not available in Scala.JS
         // case e: PatternSyntaxException => error(e.getDescription)
-        case e: Throwable => -\/(s"Invalid regex: /$regex/")
+        case _: Throwable => -\/(s"Invalid regex: /$regex/")
       }
 
     // explicit types here because IntelliJ is a piece of shit

@@ -178,8 +178,8 @@ object ReqTypeId {
     override def order(a: ReqTypeId, b: ReqTypeId) = (a, b) match {
         case (x: CustomReqTypeId, y: CustomReqTypeId) => Order[CustomReqTypeId].order(x, y)
         case (x: StaticReqType  , y: StaticReqType  ) => StaticReqType.order(x, y)
-        case (x: StaticReqType  , y: CustomReqTypeId) => scalaz.Ordering.LT
-        case (x: CustomReqTypeId, y: StaticReqType  ) => scalaz.Ordering.GT
+        case (_: StaticReqType  , _: CustomReqTypeId) => scalaz.Ordering.LT
+        case (_: CustomReqTypeId, _: StaticReqType  ) => scalaz.Ordering.GT
       }
   }
 }

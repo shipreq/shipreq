@@ -47,7 +47,7 @@ object Sorter {
         val `n/a` = (-1, -1)
         ;{
           case r: Row.ForReq       => n(r.req.pubid)
-          case r: Row.ForCodeGroup => `n/a`
+          case _: Row.ForCodeGroup => `n/a`
         }
       },
     sort = SortFn.intPair
@@ -68,7 +68,7 @@ object Sorter {
   val reqTypeSorter = sorter[Int](
     prep = setup => {
       case r: Row.ForReq       => setup.reqTypesToMnemonicOrder(r.req.pubid.reqTypeId)
-      case r: Row.ForCodeGroup => -1
+      case _: Row.ForCodeGroup => -1
     },
     sort = SortFn.int
   )
@@ -104,7 +104,7 @@ object Sorter {
   def customTextFieldSorter(id: CustomField.Text.Id, c: Column): SorterForSMCB =
     textSorter(c, p => {
       case r: Row.ForReq       => p.customTextField(id)(r.req) getOrElse ""
-      case r: Row.ForCodeGroup => ""
+      case _: Row.ForCodeGroup => ""
     })
 
   val titleSorter: SorterForSMCB =

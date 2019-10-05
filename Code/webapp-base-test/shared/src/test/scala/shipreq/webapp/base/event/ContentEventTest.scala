@@ -43,7 +43,7 @@ object ContentEventTest extends TestSuite {
         def add(typ: String, id: ReqCodeId, tgt: AnyRef) = {
           val t = Option(tgt) match {
             case Some(x: ReqId)        => s"Req(#${x.value.toChar.toString})"
-            case Some(g: CodeGroup) => "Grp"
+            case Some(_: CodeGroup) => "Grp"
             case None                  => ""
             case Some(_)               => ???
           }

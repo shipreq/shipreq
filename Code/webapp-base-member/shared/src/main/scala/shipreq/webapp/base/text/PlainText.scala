@@ -113,7 +113,7 @@ object PlainText {
           import Atom._
           val cur = atoms.head match {
             case a: Literal         # Literal        => a.value
-            case a: NewLine         # BlankLine      => newline
+            case _: NewLine         # BlankLine      => newline
             case a: ContentRef      # ReqRef         => reqRef(a.value)
             case a: ContentRef      # CodeRef        => codeRef(a.value)
             case a: ContentRef      # UseCaseStepRef => useCaseStepRef(a.value)

@@ -202,8 +202,8 @@ object LogicPropTest extends TestSuite {
       val sorted = Logic.sorter(p, newTableSettingsForSort(sc), plainText)(gathered).to[Vector]
       val na     = ("", -1)
       val pubids = sorted.map {
-        case r: Row.ForReq          => pubidExtract(p)(r.req.pubid)
-        case r: Row.ForCodeGroup => na
+        case r: Row.ForReq       => pubidExtract(p)(r.req.pubid)
+        case _: Row.ForCodeGroup => na
       }
       E_sorted("Pubids", pubids, dir)
     }
@@ -248,9 +248,9 @@ object LogicPropTest extends TestSuite {
       case C.DeletionReason  => nop
       case C.CustomField(id) =>
         id match {
-          case i: CustomField.Implication.Id => nop
-          case i: CustomField.Tag        .Id => nop
-          case i: CustomField.Text       .Id => nop
+          case _: CustomField.Implication.Id => nop
+          case _: CustomField.Tag        .Id => nop
+          case _: CustomField.Text       .Id => nop
         }
     }
 

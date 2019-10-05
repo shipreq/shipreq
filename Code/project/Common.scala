@@ -43,6 +43,7 @@ object Common {
     "-Ywarn-inaccessible",
     "-Ywarn-infer-any",
     "-Ywarn-unused:implicits",
+    "-Ywarn-unused:patvars",
     "-Ywarn-unused:privates"
   )
     // "-Xstrict-inference", // Don't infer known-unsound types
@@ -50,7 +51,6 @@ object Common {
     // "-Ywarn-unused-import"
     // "-Ywarn-unused:explicits",
     // "-Ywarn-unused:locals",
-    // "-Ywarn-unused:patvars",
 
   def scalacTestFlags = Seq("-language:reflectiveCalls")
 

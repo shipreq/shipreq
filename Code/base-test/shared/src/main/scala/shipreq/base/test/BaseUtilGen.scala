@@ -158,7 +158,7 @@ object BaseUtilGen {
         case None =>
           // println(s"No cycles after $i attempts @ size ${m.keyCount}→${m.valueCount}")
           m
-        case Some((a, b)) =>
+        case Some((_, b)) =>
           // println(s"Found cycle #$i [$a→$b] in ${m.m}")
           // preventCycles(m.del(a, b).del(b, a), i + 1) // better but slowwwwww
           go(m - b /*, i + 1*/)

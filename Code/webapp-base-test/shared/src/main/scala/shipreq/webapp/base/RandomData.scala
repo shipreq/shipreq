@@ -639,30 +639,30 @@ object RandomData {
           case (x: Lit             , y: UL              ) => i :+ x.map(noWhitespaceRight) :+ y
 
           case (x: Blank           , y: Lit             ) => i :+ x :+ y.map(noWhitespaceLeft)
-          case (x: Blank           , _: Blank           ) => drop
-          case (x: Blank           , _: UL              ) => drop
+          case (_: Blank           , _: Blank           ) => drop
+          case (_: Blank           , _: UL              ) => drop
 
           case (x: PTM#EmailAddress, y: Lit             ) => i :+ x :+ y.map(" " + _)
-          case (x: PTM#EmailAddress, _: PTM#EmailAddress) => drop
-          case (x: PTM#EmailAddress, _: PTM#WebAddress  ) => drop
+          case (_: PTM#EmailAddress, _: PTM#EmailAddress) => drop
+          case (_: PTM#EmailAddress, _: PTM#WebAddress  ) => drop
 
           case (x: PTM#WebAddress  , y: Lit             ) => i :+ x :+ y.map(" " + _)
-          case (x: PTM#WebAddress  , _: PTM#EmailAddress) => drop
-          case (x: PTM#WebAddress  , _: PTM#WebAddress  ) => drop
-          case (x: PTM#WebAddress  , _: Issue#Issue     ) => drop
-          case (x: PTM#WebAddress  , _: TagRef#TagRef   ) => drop
+          case (_: PTM#WebAddress  , _: PTM#EmailAddress) => drop
+          case (_: PTM#WebAddress  , _: PTM#WebAddress  ) => drop
+          case (_: PTM#WebAddress  , _: Issue#Issue     ) => drop
+          case (_: PTM#WebAddress  , _: TagRef#TagRef   ) => drop
 
           case (x: TagRef#TagRef   , y: Lit             ) => i :+ x :+ y.map(" " + _)
-          case (x: TagRef#TagRef   , _: PTM#EmailAddress) => drop
-          case (x: TagRef#TagRef   , _: PTM#WebAddress  ) => drop
+          case (_: TagRef#TagRef   , _: PTM#EmailAddress) => drop
+          case (_: TagRef#TagRef   , _: PTM#WebAddress  ) => drop
 
           case (x: Issue#Issue     , y: Lit             ) if x.desc.isEmpty => i :+ x :+ y.map(" i" + _)
           case (x: Issue#Issue     , _: PTM#EmailAddress) if x.desc.isEmpty => drop
           case (x: Issue#Issue     , _: PTM#WebAddress  ) if x.desc.isEmpty => drop
 
           case (x: UL              , y: Lit             ) => i :+ x :+ y.map(noWhitespaceLeft)
-          case (x: UL              , _: Blank           ) => drop
-          case (x: UL              , y: UL              ) => drop //.copy(items = x.items ++ y.items)
+          case (_: UL              , _: Blank           ) => drop
+          case (_: UL              , _: UL              ) => drop //.copy(items = x.items ++ y.items)
 
           case _ => q :+ a
         }
@@ -982,7 +982,7 @@ object RandomData {
   @tailrec def preventImplicationCycles(m: ImplicationsUM): ImplicationsUM =
     Implications.cycleDetector.findCycle(m) match {
       case None         => m
-      case Some((a, b)) => preventImplicationCycles(m - b)
+      case Some((_, b)) => preventImplicationCycles(m - b)
     }
 
   val MaxImplicationPairs: SizeSpec = 0 to (100 `JVM|JS` 40)
@@ -1062,7 +1062,7 @@ object RandomData {
       val reqCodeDataActiveId = Optional[Data, ApReqCodeId]({
         case d: ActiveReq   => Some(d.id)
         case d: ActiveGroup => Some(ApReqCodeId(d.id.value))
-        case d: Inactive    => None
+        case _: Inactive    => None
       })(n => {
         case d: ActiveReq   => d.copy(id = n)
         case d: ActiveGroup => reqCodeActiveGroupId.set(ReqCodeGroupId(n.value))(d)
@@ -1141,8 +1141,8 @@ object RandomData {
 
       val vecOfGens = src.cataV(Vector.empty[G])((q, code, data) =>
         reqCodeDataGroupTitle.getOption(data) match {
-          case Some(txt) => q :+ gt.map[F](txt => _.put(code, reqCodeDataGroupTitle.set(txt)(data)))
-          case None      => q
+          case Some(_) => q :+ gt.map[F](txt => _.put(code, reqCodeDataGroupTitle.set(txt)(data)))
+          case None    => q
         }
       )
 

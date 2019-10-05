@@ -66,7 +66,7 @@ object UseCaseStepFlowTextTest extends TestSuite {
     def noConsecutiveText =
       E.atom("No consecutive text",
         (parsed.foldLeft[Boolean \/ String](-\/(false)) {
-          case (-\/(true ), Elem.Text(t)) => \/-("Found next to text: '$t'")
+          case (-\/(true ), Elem.Text(t)) => \/-(s"Found next to text: '$t'")
           case (-\/(false), Elem.Text(_)) => -\/(true)
           case (-\/(_)    , _           ) => -\/(false)
           case (r@ \/-(_) , _           ) => r

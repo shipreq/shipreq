@@ -85,7 +85,7 @@ object TableRow {
               case r: Row.ForUseCase     => r.renderer(FieldKey.UseCaseTitle)
               case r: Row.ForUseCaseStep => r.ucRenderer(FieldKey.UseCaseTitle)
               case r: Row.ForRcg         => r.renderer(FieldKey.CodeGroupTitle)
-              case r: Row.ForManualIssue => na // This appears in Field Editor
+              case _: Row.ForManualIssue => na // This appears in Field Editor
               case _: Row.ForConfig      => na
             }
             cells += base(c)

@@ -205,7 +205,7 @@ object Row {
   def applicability(a: Applicability.Default): Applicability[Column, Row] =
     Column.applicabilityForReq(a).mapDataFn[Column, Row]((col, forReq) => {
       case r: Row.ForReq       => forReq(r.req.reqTypeId)
-      case r: Row.ForCodeGroup => Column.applicabilityForCodeGroup((), col)
+      case _: Row.ForCodeGroup => Column.applicabilityForCodeGroup((), col)
     }).memoiseByField
 
   val expansion = Optional[Row, Expansion] {

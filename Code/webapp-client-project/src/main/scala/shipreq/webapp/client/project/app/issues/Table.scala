@@ -92,7 +92,7 @@ object Table {
       case i: Row.ForReq         => i.req.title
       case i: Row.ForRcg         => i.rcg.title
       case _: Row.ForConfig      => Vector.empty
-      case i: Row.ForManualIssue => Vector.empty // Don't consolidate manual issue titles
+      case _: Row.ForManualIssue => Vector.empty // Don't consolidate manual issue titles
     })((_, _)))
   }
 
