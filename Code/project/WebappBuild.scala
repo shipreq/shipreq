@@ -321,7 +321,7 @@ object WebappBuild {
         connectToDockerDevEnv,
         dockerSettings)
       .settings(
-        scalacOptions -= "-Xcheckinit", // TODO https://github.com/scala/bug/issues/10437
+        scalacOptions -= "-Yno-generic-signatures", // Without this, snippets break. LiveTest confirms.
         containerLibs in Jetty := LibJetty.devRun(JVM),
         javaOptions in Jetty ++= List(
           "-XX:+UseJVMCINativeLibrary",
