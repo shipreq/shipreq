@@ -2,11 +2,8 @@ package shipreq.taskman.server.business
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
-import okhttp3.Response
-import org.json4s.JsonDSL._
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
-import scalaz.syntax.std.option._
+import io.circe._
+import io.circe.syntax._
 import scalaz.{-\/, \/, \/-, ~>}
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
@@ -24,114 +21,158 @@ object MailChimp {
     * @param dc MailChimp data center
     */
   final case class Props(dc        : String,
-                         key       : String,
+                         key       : ApiKey,
                          masterList: String)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Protocol
 
-  val i0 = JInt(0)
-  val i1 = JInt(1)
-  @inline def boolAsInt(b: Boolean) = if (b) i1 else i0
+  private[this] val i0 = 0.asJson
+  private[this] val i1 = 1.asJson
+  @inline private def boolAsInt(b: Boolean) = if (b) i1 else i0
 
-  def subscribeOptions(sendConfEmail: Boolean, updExisting: Boolean) =
-    ("double_optin" -> sendConfEmail) ~
-    ("update_existing" -> updExisting) ~
-    ("send_welcome" -> false)
+  private def subscribeOptions(sendConfEmail: Boolean, updExisting: Boolean): List[(String, Json)] =
+    ("double_optin" -> sendConfEmail.asJson) ::
+    ("update_existing" -> updExisting.asJson) ::
+    ("send_welcome" -> false.asJson) ::
+    Nil
 
-  val batchSubscribeStatic = subscribeOptions(false, true)
+  private val batchSubscribeStatic = subscribeOptions(false, true)
 
-  def buildReqSubscription(s: Subscription) =
-    ("email" ->
-      ("email" -> s.addr.value)) ~
-    ("merge_vars" ->
-      ("NAME" -> s.name) ~
-      ("NEWSLETTER" -> boolAsInt(s.newsletter)) ~
-      ("ACCT" -> s.status.remoteValue))
+  private def buildReqSubscription(s: Subscription): List[(String, Json)] = {
+    val email = JsonObject(
+      "email" -> s.addr.value.asJson,
+    )
+
+    val mergeVars = JsonObject(
+      "NAME"       -> s.name.asJson,
+      "NEWSLETTER" -> boolAsInt(s.newsletter),
+      "ACCT"       -> s.status.remoteValue.asJson,
+    )
+
+    ("email" -> Json.fromJsonObject(email)) ::
+    ("merge_vars" -> Json.fromJsonObject(mergeVars)) ::
+      Nil
+  }
+
+  final case class ApiKey(value: String)
 
   object Endpoints {
     def apply(props: Props): Endpoints =
       new Endpoints(s"https://${props.dc}.api.mailchimp.com/2.0", props.key)
   }
 
-  final class Endpoints(urlPrefix: String, apiKey: String) {
-    private val apiKeyJson = render("apikey" -> apiKey)
+  final class Endpoints(urlPrefix: String, apiKey: ApiKey) {
 
-    private def endpoint(path: String): Http[JObject, JValue \/ JValue] =
+    private def endpoint[I, O](path: String)
+                              (ko: Json => Fx[O])
+                              (implicit encoderI: Encoder.AsObject[I],
+                               decoderO: Decoder[O]): Http[I, O] = {
+      val apiKeyJson = apiKey.value.asJson
+
+      val encoder: Encoder[I] =
+        Encoder.instance { i =>
+          Json.fromJsonObject(encoderI.encodeObject(i).add("apikey", apiKeyJson))
+        }
+
+      val decoder: Decoder[ArticulateError \/ O] =
+        Decoder.instance { c =>
+          ApiFailure.Partial.decoderOption(c).flatMap {
+            case None    => decoderO(c).map(\/-(_))
+            case Some(f) => Right(-\/(f))
+          }
+        }
+
       Post(s"$urlPrefix/$path.json")
-        .jsonRequest
-        .contramap[JObject](apiKeyJson merge _)
-        .jsonResponse
+        .requestAsJson(encoder)
+        .responseAsJsonOrJson(decoder)
         .and(_.flatMap {
-          case x@ \/-(j) => Fx.lift(ApiFailure.Partial.extract(j) <\/ x)
-          case x         => Fx pure x
+          case \/-(\/-(o)) => Fx.pure(o)
+          case \/-(-\/(e)) => Fx.fail(e)
+          case -\/(j)      => ko(j)
         })
+    }
 
     object lists {
 
-      val list: Http[GetListId, Option[ListId]] =
-        endpoint("lists/list")
-          .contramap[GetListId](i =>
-            "filters" ->
-              ("list_name" -> i.name) ~
-              ("exact" -> true))
-          .parseJsonResponse(
-            ok = parseResponseForGetListId,
-            ko = ApiFailure.Total.handle)
+      val list: Http[GetListId, Option[ListId]] = {
+        implicit val enc = Encoder.AsObject.instance[GetListId](i =>
+          JsonObject(
+            "filters" -> Json.obj(
+              ("list_name" -> i.name.asJson),
+              ("exact" -> true.asJson))))
 
-      val batchSubscribe: Http[BatchSubscribe, Unit] =
-        endpoint("lists/batch-subscribe")
-          .contramap[BatchSubscribe](i =>
-            ("id" -> i.listId.value) ~
-            ("batch" -> i.subs.list.map(buildReqSubscription)) ~
-            batchSubscribeStatic)
-          .parseJsonResponse(
-            ok = _ => \/-(()),
-            ko = ApiFailure.Total.handle)
+        implicit val dec = decoderGetListIdResponse
 
-      val subscribe: Http[Subscribe, SubscribeResult] =
-        endpoint("lists/subscribe")
-          .contramap[Subscribe](i =>
-            ("id" -> i.listId.value) ~
-            buildReqSubscription(i.sub) ~
-            subscribeOptions(i.sendConfEmail, false))
-          .parseJsonResponse(
-            ok = _ => \/-(Ok),
-            ko = parseErrorForSubscribe)
+        endpoint("lists/list")(ApiFailure.Total.handle)
+      }
 
-      val updateMember: Http[UpdateMember, UpdateMemberResult] =
-        endpoint("lists/update-member")
-          .contramap[UpdateMember](i =>
-            ("id" -> i.listId.value) ~
-            buildReqSubscription(i.sub))
-          .parseJsonResponse(
-            ok = _ => \/-(Ok),
-            ko = ApiFailure.Total.recoverOrHandle(f =>
-              Option.when(f.name ==* "Email_NotExists" || f.name ==* "List_NotSubscribed")(NotSubscribed)))
+      val batchSubscribe: Http[BatchSubscribe, Unit] = {
+        implicit val enc = Encoder.AsObject.instance[BatchSubscribe](i =>
+          JsonObject.fromIterable(
+            ("id" -> i.listId.value.asJson) ::
+              ("batch" -> Json.arr(i.subs.list.map(s => Json.obj(buildReqSubscription(s): _*)): _*)) ::
+              batchSubscribeStatic))
+
+        endpoint("lists/batch-subscribe")(ApiFailure.Total.handle)
+      }
+
+      val subscribe: Http[Subscribe, SubscribeResult] = {
+        implicit val enc = Encoder.AsObject.instance[Subscribe](i =>
+          JsonObject.fromIterable(
+            ("id" -> i.listId.value.asJson) ::
+              subscribeOptions(i.sendConfEmail, false) :::
+              buildReqSubscription(i.sub)))
+
+        implicit val dec = Decoder.const[SubscribeResult](Ok)
+
+        endpoint("lists/subscribe")(parseErrorForSubscribe)
+      }
+
+      val updateMember: Http[UpdateMember, UpdateMemberResult] = {
+        implicit val enc = Encoder.AsObject.instance[UpdateMember](i =>
+          JsonObject.fromIterable(
+            ("id" -> i.listId.value.asJson) ::
+              buildReqSubscription(i.sub)))
+
+        implicit val dec = Decoder.const[UpdateMemberResult](Ok)
+
+        endpoint("lists/update-member")(
+          ApiFailure.Total.recoverOrHandle(f =>
+            Option.when(f.name ==* "Email_NotExists" || f.name ==* "List_NotSubscribed")(NotSubscribed)))
+      }
 
     }
-
   }
 
-  def parseResponseForGetListId(j: JValue): ArticulateError \/ Option[ListId] =
-    ArticulateError.attempt {
-      val JInt(total) = j \ "total"
-      total.toInt match {
-        case 0 => None
-        case 1 =>
-          val JString(id) = (j \ "data") (0) \ "id"
-          Some(ListId(id))
+  private[business] val decoderGetListIdResponse: Decoder[Option[ListId]] =
+    Decoder.instance { c =>
+      val cTotal = c.downField("total")
+      cTotal.as[Int].flatMap {
+        case 0 => Right(None)
+        case 1 => c.downField("data").downArray.downField("id").as[String].map(s => Some(ListId(s)))
+        case _ => Left(DecodingFailure("Expected 0 or 1", cTotal.history))
       }
     }
 
-  def parseErrorForSubscribe: (Response, JValue) => Fx[SubscribeResult] =
+  private[business] val parseErrorForSubscribe: Json => Fx[SubscribeResult] =
     ApiFailure.Total.recoverOrHandle(f => Option.when(f.name ==* "List_AlreadySubscribed")(AlreadySubscribed))
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Error handling
 
-  object ApiFailure {
+  private[business] object ApiFailure {
 
+    /** Sample:
+      * {{{
+      *   {
+      *     "status": "error",
+      *     "code": 553,
+      *     "name": "Invalid_PagingLimit",
+      *     "error": "Page Limit Number must be greater than or equal to 0"
+      *   }
+      * }}}
+      */
     final case class Total(code: Int, name: String, msg: String) {
       def toArticulateError: ArticulateError =
         ArticulateError("MailChimp API Failure")
@@ -141,31 +182,52 @@ object MailChimp {
     }
 
     object Total {
-      def parse(j: JValue): ArticulateError \/ Total =
-        ArticulateError.safe(
-          j \ "status"match {
-            case JString("error") =>
-              val JInt(code)    = j \ "code"
-              val JString(name) = j \ "name"
-              val JString(msg)  = j \ "error"
-              \/-(Total(code.toInt, name, msg))
-            case _ => -\/(ArticulateError("Not an error."))
-          }
-        )
 
-      def recoverOrHandle[O](tryRecover: Total => Option[O])(resp: Response, j: JValue): Fx[O] =
-        ApiFailure.Total.parse(j) match {
-          case \/-(f) => tryRecover(f) match {
-            case Some(o) => Fx pure o
-            case None    => Fx fail f.toArticulateError
-          }
-          case -\/(_) => Http.genericResponseErrorHandler[O](resp, j)
+      implicit def univEq: UnivEq[Total] = UnivEq.derive
+
+      implicit val decoder: Decoder[Total] =
+        Decoder.instance { c =>
+          for {
+            code  <- c.get[Int]("code")
+            name  <- c.get[String]("name")
+            error <- c.get[String]("error")
+          } yield Total(code, name, error)
         }
 
-      def handle[O](resp: Response, j: JValue): Fx[O] =
-        recoverOrHandle[O](_ => None)(resp, j)
+      val decoderOption: Decoder[Option[Total]] =
+        Decoder.instance { c =>
+          if (c.downField("status").as[String].contains("error"))
+            c.as[Total].map(Some(_))
+          else
+            Right(None)
+        }
+
+      def recoverOrHandle[O](tryRecover: Total => Option[O])(j: Json): Fx[O] =
+        decoderOption.decodeJson(j) match {
+          case Right(Some(t)) =>
+            tryRecover(t) match {
+              case Some(o) => Fx pure o
+              case None    => Fx fail t.toArticulateError
+            }
+          case Right(None) => Fx.fail(ArticulateError("Not an error.").hint(s"Response = ${j.noSpaces}"))
+          case Left(e)     => Fx.fail(ArticulateError(e).hint(s"Response = ${j.noSpaces}"))
+        }
+
+      def handle[O]: Json => Fx[O] =
+        recoverOrHandle[O](_ => None)(_)
     }
 
+    /** Sample:
+      * {{{
+      *   {
+      *     "code": 250,
+      *     "error": "ACCT must be provided - Value must be one of: Never, Active (not Activ)",
+      *     "email": {
+      *       "email": "great@yay.com"
+      *     }
+      *   }
+      * }}}
+      */
     final case class Partial(code: Int, msg: String, email: Option[EmailAddr]) {
       def fullMsg: String = {
         val emailPrefix = email.fold("")(e => s"$e: ")
@@ -174,39 +236,37 @@ object MailChimp {
     }
 
     object Partial {
+
+      implicit def univEq: UnivEq[Partial] = UnivEq.derive
+
       def toArticulateError(h: Partial, t: List[Partial]): ArticulateError =
         ArticulateError(s"${t.size + 1} partial MailChimp API failure(s) occurred.")
           .hint(h.fullMsg, t.map(_.fullMsg): _*)
 
-      def parse(j: JValue): ArticulateError \/ List[Partial] =
-        ArticulateError.safe {
-          j \ "errors" match {
+      implicit val decoder: Decoder[Partial] = {
+        implicit val decoderEmailAddr: Decoder[EmailAddr] = Decoder.forProduct1("email")(EmailAddr.apply)
+        Decoder.instance { c =>
+          for {
+            code  <- c.get[Int]("code")
+            error <- c.get[String]("error")
+            email <- c.get[Option[EmailAddr]]("email")
+          } yield Partial(code, error, email)
+        }
+      }
 
-            case JNothing =>
-              \/-(Nil)
-
-            case JArray(errors) =>
-              \/-(errors.map { e =>
-                val JInt(code) = e \ "code"
-                val JString(msg) = e \ "error"
-                val opEmail = (e \ "email").toOption.map { i =>
-                  val JString(email) = i \ "email"
-                  EmailAddr(email)
-                }
-                Partial(code.toInt, msg, opEmail)
-              })
-
-            case x =>
-              -\/(ArticulateError(s"Unable to parse 'errors': $x"))
-          }
+      val decoderErrors: Decoder[List[Partial]] =
+        Decoder.instance { c =>
+          val errors = c.downField("errors")
+          if (errors.succeeded)
+            errors.as[List[Partial]]
+          else
+            Right(Nil)
         }
 
-      /** Detects partial failures in a successful result and if present, returns a \/-(ArticulateError(…)) */
-      def extract(j: JValue): Option[ArticulateError] =
-        parse(j) match {
-          case \/-(Nil)    => None
-          case \/-(h :: t) => Some(toArticulateError(h, t))
-          case -\/(e)      => Some(e)
+      val decoderOption: Decoder[Option[ArticulateError]] =
+        decoderErrors.map {
+          case Nil    => None
+          case h :: t => Some(toArticulateError(h, t))
         }
     }
   }
@@ -216,7 +276,7 @@ object MailChimp {
 
 final class MailChimp(props: Props)(implicit httpClient: HttpClient) extends (MailingList.API ~> Fx) with HasLogger {
   private implicit val httpLogger: HttpLogger =
-    HttpLogger(logger, _.replace(props.key, "<KEY>"))
+    HttpLogger(logger, _.replace(props.key.value, "<KEY>"))
 
   private val endpoints: Endpoints =
     Endpoints(props)

@@ -12,7 +12,7 @@ CREATE SEQUENCE msgq_seq START WITH 1000;
 CREATE TABLE msgq (
   id               BIGINT       PRIMARY KEY DEFAULT NEXTVAL('msgq_seq')
   ,type            INT2         NOT NULL
-  ,data            JSONB        NULL
+  ,data            JSONB        NOT NULL
   ,priority        INT2         NOT NULL
   ,priority_base   INT2         NOT NULL
   ,node            INT4         NULL
@@ -27,7 +27,7 @@ CREATE TABLE msgq (
 CREATE TABLE msg_history (
   id               BIGINT       PRIMARY KEY
   ,type            INT2         NOT NULL
-  ,data            JSONB        NULL
+  ,data            JSONB        NOT NULL
   ,result          "char"       NOT NULL CHECK(result='s' OR result='f') -- Success/Failure
   ,failure_count   INT2         NOT NULL CHECK(failure_count >= 0)
   ,created_at      TIMESTAMPTZ  NOT NULL
@@ -36,17 +36,16 @@ CREATE TABLE msg_history (
 
 
 CREATE FUNCTION create_msg_v01(IN type INT2, IN data JSONB, IN pri INT2)
-RETURNS void AS $$
-DECLARE n TIMESTAMPTZ;
-BEGIN
-  SELECT now() INTO n;
+RETURNS msgq.id%TYPE AS $$
   INSERT INTO msgq(type, data, priority_base, priority, created_at, updated_at, effective_from)
-    VALUES($1, $2, $3, $3, n, n, n);
-END $$ LANGUAGE plpgsql;
+  VALUES($1, $2, $3, $3, now(), now(), now())
+  RETURNING id
+$$ LANGUAGE SQL
+SET search_path FROM CURRENT;
 
 
 /*
-select create_msg_v01(1::int2, NULL::jsonb, 50::int2);
-select create_msg_v01(1::int2, NULL::jsonb, 60::int2);
+select create_msg_v01(1::int2, '{}'::jsonb, 50::int2);
+select create_msg_v01(1::int2, '{}'::jsonb, 60::int2);
 select * from msg;
 */

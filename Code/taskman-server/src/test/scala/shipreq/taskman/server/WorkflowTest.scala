@@ -21,7 +21,7 @@ object WorkflowTest extends TestSuite {
 
     // assign node -> cant(assign node)
     val q = run(assignNode)
-    assert(q.size == 1)
+    q.size ==> 1
     runApi(_.queryMsgStatus(q.head.id)) ==> Some(MsgStatus.NodeAssigned)
     run(assignNode) ==> Nil
 

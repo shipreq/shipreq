@@ -13,7 +13,6 @@ import scalaz.syntax.applicative._
 import scalaz.{-\/, Free, \/, \/-}
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.DoobieMeta._
-import shipreq.base.db.DoobieMetaCirce._
 import shipreq.base.db.SqlHelpers._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._

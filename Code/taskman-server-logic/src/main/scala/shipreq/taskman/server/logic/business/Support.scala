@@ -1,11 +1,15 @@
 package shipreq.taskman.server.logic.business
 
+import japgolly.univeq.UnivEq
+
 object Support {
 
   // ===================================================================================================================
   // Data
 
   final case class TicketId(value: Long)
+
+  implicit def univEq: UnivEq[TicketId] = UnivEq.derive
 
   sealed trait Priority
   object Priority {

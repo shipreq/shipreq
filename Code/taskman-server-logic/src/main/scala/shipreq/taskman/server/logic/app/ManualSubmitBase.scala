@@ -1,11 +1,11 @@
 package shipreq.taskman.server.logic.app
 
+import io.circe.parser._
+import io.circe.syntax._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scalaz.std.list._
-import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.ArticulateError
+import shipreq.base.util.JsonUtil
 import shipreq.base.util.FxModule._
-import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.{MsgType => T, _}
 
@@ -14,9 +14,7 @@ import shipreq.taskman.api.{MsgType => T, _}
  */
 abstract class ManualSubmitBase extends HasLogger {
 
-  def serialise  : Msg => JsonStr[Msg]
-  def deserialise: (T, JsonStr[Msg]) => ArticulateError \/ Msg
-  def runner     : (TaskmanApi[Fx] => Fx[Unit]) => Fx[Unit]
+  def runner: (TaskmanApi[Fx] => Fx[Unit]) => Fx[Unit]
 
   def main(args: Array[String]): Unit =
     parseA(args) match {
@@ -33,8 +31,6 @@ abstract class ManualSubmitBase extends HasLogger {
   case class Ok(msgs: List[Msg]) extends ParseResult
   case object Help extends ParseResult
 
-  private val typeAndDataRegex = """^\s*(\S+?)\s*(\{.*\})\s*$""".r.pattern
-
   def parseA(args: Array[String]): ParseResult =
     args.toList.foldLeft(Ok(Nil): ParseResult)(parse)
 
@@ -44,21 +40,9 @@ abstract class ManualSubmitBase extends HasLogger {
     case (e@ParseError(_), _) => e
 
     case (Ok(msgs), arg) =>
-      val m = typeAndDataRegex matcher arg
-      if (!m.matches)
-        ParseError(s"Unable to parse: $arg")
-      else {
-        val msgTypeName = m group 1
-        T.lookup(msgTypeName) match {
-          case None =>
-            ParseError(s"Unable to parse msg type: $msgTypeName")
-          case Some(msgType) =>
-            val msgData = JsonStr[Msg](m group 2)
-            deserialise(msgType, msgData) match {
-              case -\/(e) => ParseError(e.show)
-              case \/-(m) => Ok(m :: msgs)
-            }
-        }
+      decode(arg)(MsgJson.decoderMsg) match {
+        case Right(msg) => Ok(msg :: msgs)
+        case Left(e)    => ParseError(s"Unable to parse msg: ${JsonUtil.errorMsg(e)}")
       }
   }
 
@@ -74,31 +58,7 @@ abstract class ManualSubmitBase extends HasLogger {
     """.stripMargin
 
   def exampleMsgs: String =
-    T.values.map(t => {
-      val m = exampleFor(t)
-      val name = m.getClass.getSimpleName
-      val json = serialise(m).value.replace("\n", "").replace(",", ", ")
-      s"  $name$json"
-    }).sorted.mkString("\n")
-
-  def exampleFor(t: T): Msg = {
-    import Msg._
-    val ea = EmailAddr("yoar.mum@gmail.com")
-    val url = "http://hello"
-    val uid = UserId(8000)
-    t match {
-      case T.DummyMsg                => DummyMsg("hello", failureMsg = Some("nope"))
-      case T.ReRegistrationAttempted => ReRegistrationAttempted(ea)
-      case T.RegistrationRequested   => RegistrationRequested(ea, url)
-      case T.RegistrationCompleted   => RegistrationCompleted(uid)
-      case T.PasswordResetRequested  => PasswordResetRequested(ea, url)
-      case T.UserUpdated             => UserUpdated(uid)
-      case T.SendDiagEmail           => SendDiagEmail(ea, "test", "hello")
-      case T.LandingPageHit          => LandingPageHit(ea, "Iskaral Pust", Some("No mule can match wits with me."), false)
-      case T.SyncToMailingList       => SyncToMailingList(Some("id < 100"))
-      case T.WebappErrorOccurred     => WebappErrorOccurred(Some(uid), Some("/login"), "blah")
-    }
-  }
+    T.values.map(Msg.sample(_).asJson(MsgJson.encoderMsg).noSpaces).sorted.mkString("\n")
 
   // -------------------------------------------------------------------------------------------------------------------
   // Submission

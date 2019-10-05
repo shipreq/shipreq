@@ -24,7 +24,7 @@
     <logger name="shipreq" level="DEBUG" />
 
 	<root level="DEBUG">
-		<!--<appender-ref ref="STDOUT" />-->
-		<appender-ref ref="FILE.LOG" />
+		<!--<appender-ref ref="STDOUT"/>-->
+		<!--<appender-ref ref="FILE.LOG"/>-->
 	</root>
 </configuration>

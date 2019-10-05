@@ -2,11 +2,11 @@ package shipreq.base.db
 
 import doobie.enum.jdbctype
 import doobie.imports._
+import io.circe.Json
+import io.circe.parser.parse
 import java.time.{Duration, Instant, OffsetDateTime, ZoneId}
 import doobie.free.{preparedstatement => PS, resultset => RS}
 import org.postgresql.util.{PGInterval, PGobject}
-import scala.reflect.runtime.universe.TypeTag
-import shipreq.base.util.TaggedTypes.JsonStr
 
 object DoobieMeta {
 
@@ -20,10 +20,16 @@ object DoobieMeta {
   val doobieMetaPgJsonb: Meta[PGobject] =
     Meta.other[PGobject]("jsonb")
 
-  def doobieMetaJsonStr[A: TypeTag]: Meta[JsonStr[A]] =
-    doobieMetaPgJsonb.xmap[JsonStr[A]](
-      o => JsonStr(if (o == null) null else o.getValue),
-      j => pgObject("jsonb", j.value))
+  private def strToJson(s: String): Json =
+    parse(s) match {
+      case Right(j) => j
+      case Left(e)  => throw e
+    }
+
+  implicit val doobieMetaJson: Meta[Json] =
+    doobieMetaPgJsonb.xmap[Json](
+      o => strToJson(o.getValue),
+      j => pgObject("jsonb", j.noSpaces))
 
   implicit val doobieMetaDuration: Meta[Duration] =
     Meta.other[PGInterval]("interval").nxmap(
@@ -47,23 +53,5 @@ object DoobieMeta {
 
   implicit val doobieMetaInstant: Meta[Instant] =
     doobieMetaOffsetDateTime.nxmap(_.toInstant, OffsetDateTime.ofInstant(_, UTC))
-
-}
-
-object DoobieMetaCirce {
-  import io.circe.Json
-  import io.circe.parser.parse
-  import DoobieMeta._
-
-  private def strToJson(s: String): Json =
-    parse(s) match {
-      case Right(j) => j
-      case Left(e)  => throw e
-    }
-
-  implicit val doobieMetaJson: Meta[Json] =
-    doobieMetaPgJsonb.xmap[Json](
-      o => strToJson(o.getValue),
-      j => pgObject("jsonb", j.noSpaces))
 
 }

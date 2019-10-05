@@ -1,5 +1,6 @@
 package shipreq.taskman.server.business
 
+import io.circe.Json
 import scala.runtime.AbstractFunction1
 import scalaz.\/-
 import scalaz.syntax.bind._
@@ -18,15 +19,15 @@ object MailGun {
     val send: Http[SendEmail, Unit] =
       Post(s"https://api.mailgun.net/v3/$domain/messages")
         .authWith(Credential.basic("api", apiKey))
-        .formRequest[SendEmail](i =>
+        .requestAsForm[SendEmail](i =>
           "from" -> i.envelope.from.addr.value ::
           "subject" -> i.content.subject ::
           "text" -> i.content.body ::
           i.envelope.cc.map("cc" -> _.addr.value) :::
           i.envelope.bcc.map("bcc" -> _.addr.value) :::
           i.envelope.to.list.map("to" -> _.addr.value))
-      .jsonResponse
-      .parseJsonResponse(_ => \/-(()))
+      .responseAsJson[Json]
+      .map(_ => \/-(()))
   }
 }
 

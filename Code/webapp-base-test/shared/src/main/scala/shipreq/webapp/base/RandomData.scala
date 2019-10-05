@@ -1300,8 +1300,8 @@ object RandomData {
       name          <- projectName
       eventsInit    <- Gen.chooseInt(3)
       eventsTotal   <- Gen.chooseInt(30000)
-      reqsTotal     <- Gen.chooseInt(eventsTotal min 2000)
-      reqsLive      <- Gen.chooseInt(reqsTotal)
+      reqsTotal     <- if (eventsTotal == 0) Gen.pure(0) else Gen.chooseInt(eventsTotal min 2000)
+      reqsLive      <- if (reqsTotal == 0) Gen.pure(0) else Gen.chooseInt(reqsTotal)
       createdAt     <- instantPast
       lastUpdatedAt <- instantPast.option.map(_.filter(_ isAfter createdAt))
     } yield

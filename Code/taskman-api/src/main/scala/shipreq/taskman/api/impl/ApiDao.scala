@@ -1,43 +1,26 @@
 package shipreq.taskman.api.impl
 
 import doobie.imports._
-import shipreq.base.db.DoobieHelpers._
-import shipreq.base.db.DoobieMeta._
 import shipreq.taskman.api._
-import Serialisation.Ser
 
 private[api] class ApiDao(prefix: String) {
+  import DoobieMeta._
 
-  private implicit val doobieMetaMsg   = doobieMetaJsonStr[Msg]
-  private implicit val doobieMetaMsgId = meta1(MsgId.apply)(_.value)
-
-  private implicit val doobieMetaMsgStatus: Meta[MsgStatus] =
-    Meta[String].readOnly {
-      case "unassigned"    => MsgStatus.Unassigned
-      case "node_assigned" => MsgStatus.NodeAssigned
-      case "working"       => MsgStatus.Working
-      case "complete"      => MsgStatus.Complete
-      case "aborted"       => MsgStatus.Aborted
-    }
-
-  private[impl] val CreateMsg = Query[(Short, Option[Ser], Short), MsgId](
-    s"select ${prefix}create_msg_v01(?::INT2, ?::JSONB, ?::INT2)")
+  private[impl] val createMsgQuery: Query[(Msg, Priority), MsgId] =
+    Query(s"select ${prefix}create_msg_v01(?::INT2, ?::JSONB, ?::INT2)")
 
   def createMsg(m: Msg): ConnectionIO[MsgId] =
-    createMsg(MsgType lookup m, Serialisation serialise m, Priority of m)
+    createMsgQuery.toQuery0((m, Priority.of(m))).unique
 
-  def createMsg(m: MsgType, taskData: Ser, p: Priority): ConnectionIO[MsgId] =
-    CreateMsg.toQuery0(m.id.toShort, Some(taskData), p.value).unique
-
-  private[impl] val CfgPut = Query[(String, String), Unit](
-    s"select ${prefix}cfg_update(?::VARCHAR, ?::TEXT)")
+  private[impl] val cfgPutQuery: Query[(String, String), Unit] =
+    Query(s"select ${prefix}cfg_update(?::VARCHAR, ?::TEXT)")
 
   def cfgPut(k: String, v: String): ConnectionIO[Unit] =
-    CfgPut.toQuery0((k, v)).unique
+    cfgPutQuery.toQuery0((k, v)).unique
 
-  private[impl] val QueryMsgStatus = Query[MsgId, Option[MsgStatus]](
-    s"select ${prefix}query_msg_status_v01(?)")
+  private[impl] val queryMsgStatusQuery: Query[MsgId, Option[MsgStatus]] =
+    Query(s"select ${prefix}query_msg_status_v01(?)")
 
   def queryMsgStatus(id: MsgId): ConnectionIO[Option[MsgStatus]] =
-    QueryMsgStatus.toQuery0(id).unique
+    queryMsgStatusQuery.toQuery0(id).unique
 }

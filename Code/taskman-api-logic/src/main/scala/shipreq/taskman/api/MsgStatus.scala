@@ -1,5 +1,7 @@
 package shipreq.taskman.api
 
+import japgolly.univeq.UnivEq
+
 sealed trait MsgStatus {
   def isArchived: Boolean
 }
@@ -17,4 +19,6 @@ object MsgStatus {
   }
   case object Complete extends Archived
   case object Aborted extends Archived
+
+  implicit def univEq: UnivEq[MsgStatus] = UnivEq.derive
 }

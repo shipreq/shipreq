@@ -1,44 +1,10 @@
 package shipreq.taskman.api
 
 import org.scalacheck.{Gen, Arbitrary}
-import scala.reflect.runtime.{universe => ru}
 import shipreq.taskman.api.{MsgType => T}
 import shipreq.taskman.api.{Msg => M}
 
 object TestHelpers {
-
-  def sealedDescendants[Root: ru.TypeTag]: Option[Set[ru.Symbol]] = {
-    import ru._
-    val symbol = typeOf[Root].typeSymbol
-    val internal = symbol.asInstanceOf[scala.reflect.internal.Symbols#Symbol]
-    if (internal.isSealed)
-      Some(internal.sealedDescendants.map(_.asInstanceOf[Symbol]) - symbol)
-    else None
-  }
-
-  class SealedDescendants[Root : ru.TypeTag] {
-
-    val classes_ : Set[Class[_]] = {
-      val m = ru.runtimeMirror(getClass.getClassLoader)
-      sealedDescendants[Root].get.toList.map(s => m.runtimeClass(s.asClass)).toSet
-    }
-
-    val classes: Set[Class[_ <: Root]] =
-      classes_.asInstanceOf[Set[Class[_ <: Root]]]
-
-    val shortNames: List[String] =
-      classes_.toList.map(_.getSimpleName)
-
-    val fullNames: Set[String] =
-      classes_.map(_.getCanonicalName)
-
-    def size = fullNames.size
-  }
-
-  val allMsgs     = new SealedDescendants[Msg]
-  val allMsgTypes = new SealedDescendants[MsgType]
-
-  // ===================================================================================================================
 
   import Arbitrary._
 
@@ -47,11 +13,9 @@ object TestHelpers {
   def genUserIdO: Gen[Option[UserId]] = Gen.option(genUserId)
 
   implicit def arbMsg: Arbitrary[Msg] =
-    Arbitrary { Gen.oneOf(allMsgs.classes.toSeq) flatMap genMsg }
+    Arbitrary(Gen.oneOf(MsgType.values.whole).flatMap(genMsgForType))
 
-  def genMsg(c: Class[_ <: Msg]): Gen[Msg] = genMsg(MsgType.lookup(c))
-
-  def genMsg(m: MsgType): Gen[Msg] = m match {
+  def genMsgForType(m: MsgType): Gen[Msg] = m match {
 
     case T.RegistrationRequested =>
       for(email <- genEmail; url <- arbitrary[String])

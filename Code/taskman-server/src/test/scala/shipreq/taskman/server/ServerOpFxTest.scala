@@ -5,12 +5,11 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import scala.util.Random
 import shipreq.base.db.DoobieMeta._
+import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.db.TestDb
-import shipreq.base.util.TaggedTypes.JsonStr
-import shipreq.taskman.api.impl.Serialisation
 import shipreq.taskman.api._
+import shipreq.taskman.api.impl.DoobieMeta._
 import shipreq.taskman.server.logic.{MsgDetail, MsgHeader, NodeId, WorkerId}
-import scalaz.std.vector._
 import scalaz.syntax.applicative._
 import scalaz.syntax.traverse._
 import utest._
@@ -28,8 +27,8 @@ object ServerOpFxTest extends TestSuite {
   private object GetMsgsAssignNode {
 
     val insertQ = Query[(Short, Priority, Priority, Option[Int], Option[Short], Duration, Duration, Duration), MsgId](
-      "INSERT INTO msgq(type, priority, priority_base, node, worker, created_at, updated_at, effective_from)" +
-        "VALUES(?, ?, ?, ?, ?, now()+?, now()+?, now()+?) RETURNING id")
+      "INSERT INTO msgq(type, data, priority, priority_base, node, worker, created_at, updated_at, effective_from)" +
+        "VALUES(?, '{}', ?, ?, ?, ?, now()+?, now()+?, now()+?) RETURNING id")
 
     def insert(node: Boolean = false,
                worker: Boolean = false,
@@ -117,7 +116,7 @@ object ServerOpFxTest extends TestSuite {
 
       val insertQ = Query[(Option[NodeId], Option[WorkerId], Duration, Duration, Duration), MsgId](
         "INSERT INTO msgq(type, data, node, worker, updated_at, created_at, effective_from, priority, priority_base)" +
-          s"VALUES(0, NULL, ?, ?, now()-?, now()-?, now()-?, 5,5) RETURNING id")
+          s"VALUES(0, '{}', ?, ?, now()-?, now()-?, now()-?, 5,5) RETURNING id")
 
       def getUpdatedAt(id: MsgId) =
         sql"select updated_at from msgq where id=$id".query[Instant].unique
@@ -139,7 +138,7 @@ object ServerOpFxTest extends TestSuite {
 
         "update timestamp" - {
           val (a, b) = TestDb.runNow(insert.flatMap(timestampBeforeAfter))
-          assert(a != b)
+          assertNotEq(a, b)
         }
       }
 
@@ -152,7 +151,7 @@ object ServerOpFxTest extends TestSuite {
         }
         "not update timestamp" - {
           val (a, b) = TestDb.runNow(insert.flatMap(timestampBeforeAfter))
-          assert(a == b)
+          assertEq(a, b)
         }
       }
     }
@@ -177,7 +176,7 @@ object ServerOpFxTest extends TestSuite {
             a <- dao.getMsgsAssignNode(n, limit, 8 hours, Some((Priority(9), queuedAlready)))
           } yield (a.map(idAndPri), e))
 
-        assert(actual.sortBy(_.toString) == expect.sortBy(_.toString))
+        assertSeq(actual.sortBy(_.toString), expect.sortBy(_.toString))
       }
 
       "when in-memory queue is empty" - {
@@ -229,13 +228,13 @@ object ServerOpFxTest extends TestSuite {
 
     "getMsgAssignWorker" - {
 
-      val insertQ = Query[(Short, JsonStr[Msg], Option[NodeId], Option[WorkerId], Duration, Duration, Duration), MsgId](
+      val insertQ = Query[(Msg, Option[NodeId], Option[WorkerId], Duration, Duration, Duration), MsgId](
         "INSERT INTO msgq(type, data, node, worker, created_at, updated_at, effective_from, priority, priority_base)" +
           "VALUES(?, ?, ?, ?, now()-?, now()-?, now()-?, 5,5) RETURNING id")
 
       def insert(node: Option[NodeId] = None, worker: Option[WorkerId] = None, msg: Msg = defaultMsg) = {
         val d: Duration = 2.days
-        insertQ.toQuery0((MsgType.lookup(msg).id, Serialisation.serialise(msg), node, worker, d, d, d)).unique
+        insertQ.toQuery0((msg, node, worker, d, d, d)).unique
       }
 
       def insertAssignedToOwnNode = insert(node = Some(n))
@@ -245,20 +244,19 @@ object ServerOpFxTest extends TestSuite {
 
       "not assign if msg has been picked up by another node" - {
         val r = TestDb.runNow(insert(node = Some(NodeId(6789))).flatMap(test))
-        assert(r == None)
+        assertEq(r, None)
       }
 
       "not assign if msg has been picked up by another worker" - {
         val r = TestDb.runNow(insert(node = Some(n), worker = Some(WorkerId(6789))).flatMap(test))
-        assert(r == None)
+        assertEq(r, None)
       }
 
       "deserialise the msg" - {
         val r = TestDb.runNow(insertAssignedToOwnNode.flatMap(test))
-        assert(r match {
-          case Some(MsgDetail(_, msg, _)) if msg == defaultMsg => true
-          case _ => false
-        })
+        assertMatch(r) {
+          case Some(MsgDetail(_, msg, _)) if msg == defaultMsg => ()
+        }
       }
 
       "assign when unassigned" - {
@@ -268,7 +266,7 @@ object ServerOpFxTest extends TestSuite {
             t1 <- test(id)
             t2 <- test(id)
           } yield (t1.isDefined, t2.isDefined))
-        assert(result == (true, false))
+        assertEq(result, (true, false))
       }
     }
 

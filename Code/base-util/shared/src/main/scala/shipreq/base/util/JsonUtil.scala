@@ -40,7 +40,13 @@ object JsonUtil {
     )
   }
 
-  def errorMsg(f: DecodingFailure): String =
+  def decodingFailureMsg(f: DecodingFailure): String =
     s"Failed to decode JSON at ${CursorOp.opsToPath(f.history)}: ${f.message}"
+
+  def errorMsg(e: Error): String =
+    e match {
+      case f: ParsingFailure => s"Failed to parse JSON: ${f.message}"
+      case f: DecodingFailure => decodingFailureMsg(f)
+    }
 
 }

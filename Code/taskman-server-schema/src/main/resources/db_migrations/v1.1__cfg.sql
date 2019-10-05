@@ -13,7 +13,8 @@ BEGIN
     UPDATE cfg SET v = $2 WHERE k = $1;
   END;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path FROM CURRENT;
 
 /*
 select cfg_update('hehe', 'no'); select * from cfg order by 1;

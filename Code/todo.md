@@ -123,6 +123,4 @@ Phase 2B
 
 * Document the build & release process
 
-* Standardise on Circe
-  * Use Circe in Taskman
-  * Remove Json4s
+* ArticulateError.hints should be a map and then translated to structuredargs or similar

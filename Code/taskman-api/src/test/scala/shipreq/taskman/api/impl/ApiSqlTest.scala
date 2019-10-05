@@ -11,9 +11,9 @@ object ApiSqlTest extends TestSuite {
 
   override def tests = Tests {
 
-    "CreateMsg" - test(CreateMsg)
+    "CreateMsg" - test(createMsgQuery)
     //  "CfgPut" - test(CfgPut)
-    "QueryMsgStatus" - test(QueryMsgStatus)
+    "QueryMsgStatus" - test(queryMsgStatusQuery)
 
   }
 }

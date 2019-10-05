@@ -1,5 +1,6 @@
 package shipreq.taskman.server.logic
 
+import japgolly.univeq.UnivEq
 import java.time.{Duration, Instant}
 import shipreq.base.util.ArticulateError
 import shipreq.taskman.api.{Msg, MsgId, Priority}
@@ -17,6 +18,10 @@ final case class MsgHeader(id: MsgId, priority: Priority, created: Instant) {
   override def hashCode: Int = (id.value ^ (id.value >>> 32)).toInt
 }
 
+object MsgHeader {
+  implicit def univEq: UnivEq[MsgHeader] = UnivEq.derive
+}
+
 final case class MsgDetail(hdr: MsgHeader, msg: Msg, failureCount: Int) {
   assert(failureCount >= 0, s"Failure count = $failureCount")
 
@@ -25,6 +30,10 @@ final case class MsgDetail(hdr: MsgHeader, msg: Msg, failureCount: Int) {
 
   override lazy val toString =
     s"MsgDetail($hdr, ${msg.toString.replace("\n", "\\n")}, $failureCount)"
+}
+
+object MsgDetail {
+  implicit def univEq: UnivEq[MsgDetail] = UnivEq.derive
 }
 
 final case class AssignmentTrustPeriod(value: Duration) extends AnyVal

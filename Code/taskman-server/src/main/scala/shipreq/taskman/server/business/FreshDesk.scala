@@ -2,8 +2,8 @@ package shipreq.taskman.server.business
 
 import japgolly.clearconfig._
 import japgolly.univeq._
-import org.json4s.JsonDSL._
-import org.json4s._
+import io.circe._
+import io.circe.syntax._
 import scalaz.{\/, ~>}
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
@@ -26,9 +26,7 @@ object FreshDesk {
 
   final case class UnverifiedTicketOrg(groupName: String, ticketType: String)
 
-  final case class TicketOrg(group: Group, ticketType: String) {
-    val json = ("group_id" -> group.id) ~ ("ticket_type" -> ticketType)
-  }
+  final case class TicketOrg(group: Group, ticketType: String)
 
   final case class Group(id: Long, name: String)
 
@@ -39,7 +37,7 @@ object FreshDesk {
         "Expected TicketOrg format: <groupName> / <ticketType>")
   }
 
-  sealed abstract class Source(val value: Int) { val json = JInt(value) }
+  sealed abstract class Source(val value: Int)
   object Source {
     case object Email    extends Source(1)
     case object Portal   extends Source(2)
@@ -50,7 +48,7 @@ object FreshDesk {
     case object Chat     extends Source(7)
   }
 
-  sealed abstract class Status(val value: Int) { val json = JInt(value) }
+  sealed abstract class Status(val value: Int)
   object Status {
     case object Open     extends Status(2)
     case object Pending  extends Status(3)
@@ -74,17 +72,55 @@ object FreshDesk {
                              priority: Priority,
                              org     : TicketOrg,
                              status  : Status = Status.Open,
-                             source  : Source = Source.Portal) {
-    def json: JValue =
-      "helpdesk_ticket" -> (
-        ("email" -> email) ~
-        ("subject" -> subject) ~
-        ("description" -> desc) ~
-        ("priority" -> priorityCode(priority)) ~
-        org.json ~
-        ("status" -> status.json) ~
-        ("source" -> source.json))
-  }
+                             source  : Source = Source.Portal)
+
+  implicit val encoderNewTicket: Encoder[NewTicket] =
+    Encoder.instance(t =>
+      Json.obj(
+        "helpdesk_ticket" -> Json.obj(
+          "email"       -> t.email.asJson,
+          "subject"     -> t.subject.asJson,
+          "description" -> t.desc.asJson,
+          "priority"    -> priorityCode(t.priority).asJson,
+          "group_id"    -> t.org.group.id.asJson,
+          "ticket_type" -> t.org.ticketType.asJson,
+          "status"      -> t.status.value.asJson,
+          "source"      -> t.source.value.asJson,
+        )
+      )
+    )
+
+  /** Sample:
+    * {{{
+    *     {
+    *       "group": {
+    *         "assign_time": null,
+    *         "business_calendar_id": null,
+    *         "created_at": "2014-04-30T08:05:51+09:00",
+    *         "description": "Product Management group",
+    *         "escalate_to": null,
+    *         "id": 1000123401,
+    *         "name": "Product Management",
+    *         "ticket_assign_type": 0,
+    *         "updated_at": "2014-04-30T08:05:51+09:00",
+    *         "agents": []
+    *       }
+    *     }
+    * }}}
+    */
+  implicit val decoderGroup: Decoder[Group] =
+    Decoder.instance { c =>
+      val g = c.downField("group")
+      for {
+        id   <- g.get[Long]("id")
+        name <- g.get[String]("name")
+      } yield Group(id, name)
+    }
+
+  val decoderTicketResponse: Decoder[TicketId] =
+    Decoder.instance { c =>
+      c.downField("helpdesk_ticket").downField("display_id").as[Long].map(TicketId.apply)
+    }
 
   final class Endpoints(urlPrefix: String, key: String) {
     private val creds = Credential.basic(key, "X")
@@ -93,31 +129,14 @@ object FreshDesk {
       Get(s"$urlPrefix/groups.json")
         .authWith(creds)
         .noRequest
-        .jsonResponse
-        .parseJsonResponse(parseGroups)
+        .responseAsJson[List[Group]]
 
     val createTicket: Http[NewTicket, TicketId] =
       Post(s"$urlPrefix/helpdesk/tickets.json")
         .authWith(creds)
-        .jsonRequest
-        .jsonResponse
-        .contramap[NewTicket](_.json)
-        .parseJsonResponse(parseTicketResponse)
+        .requestAsJson[NewTicket]
+        .responseAsJson(decoderTicketResponse)
   }
-
-  def parseGroups(j: JValue): ArticulateError \/ List[Group] =
-    ArticulateError.attempt(
-      (j \\ "group").children.map { g =>
-        val JString(name) = g \ "name"
-        val JInt(id) = g \ "id"
-        Group(id.toLong, name)
-      })
-
-  def parseTicketResponse(j: JValue): ArticulateError \/ TicketId =
-    ArticulateError.attempt {
-      val JInt(id) = j \ "helpdesk_ticket" \ "display_id"
-      TicketId(id.toLong)
-    }
 
   def getGroup(groups: List[Group], n: String): ArticulateError \/ Group =
     ArticulateError.fromOption(groups.find(_.name ==* n), s"FreshDesk group not found: $n")

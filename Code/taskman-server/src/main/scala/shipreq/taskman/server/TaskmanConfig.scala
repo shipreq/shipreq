@@ -71,7 +71,7 @@ object TaskmanConfig extends HasLogger {
 
   def mailchimp: ConfigDef[MailChimp.Props] =
     (ConfigDef.need[String]("dc")
-      |@| ConfigDef.need[String]("key").secret
+      |@| ConfigDef.need[String]("key").secret.map(MailChimp.ApiKey)
       |@| ConfigDef.need[String]("masterList")
       ) (MailChimp.Props)
       .withPrefix("mailchimp.")

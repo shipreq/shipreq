@@ -6,6 +6,7 @@ import io.circe.syntax._
 import nyaya.gen.Gen
 import scalaz.Equal
 import scalaz.std.either._
+import shipreq.base.util.JsonUtil
 import sourcecode.Line
 import BaseTestUtil._
 
@@ -15,8 +16,25 @@ object JsonTestUtil {
 
   implicit def equalDecodingFailure: Equal[DecodingFailure] = Equal.equalA
 
+  implicit final class JsonUtilExtString(private val self: String) extends AnyVal {
+    def toJsonOrThrow: Json =
+      parse(self) match {
+        case Right(j) => j
+        case Left(e)  => throw new RuntimeException(JsonUtil.errorMsg(e))
+      }
+  }
+
+  def decodeOrThrow[A: Decoder](s: String): A =
+    decode[A](s) match {
+      case Right(a) => a
+      case Left(e)  => throw new RuntimeException(JsonUtil.errorMsg(e))
+    }
+
   def assertDecode[A: Decoder: Equal](json: Json, expect: Decoder.Result[A])(implicit l: Line): Unit =
     assertEq(json.noSpacesSortKeys.take(180), json.as[A], expect)
+
+  def assertDecodeOk[A: Decoder: Equal](json: String, expect: A)(implicit l: Line): Unit =
+    assertDecodeOk(json.toJsonOrThrow, expect)
 
   def assertDecodeOk[A: Decoder: Equal](json: Json, expect: A)(implicit l: Line): Unit =
     assertDecode(json, Right(expect))
@@ -39,4 +57,23 @@ object JsonTestUtil {
   def loadJsonResFile[A: Decoder](filename: String): A =
     decode[A](readResourceFile(filename)).needRight
 
+  def decoderTester[A: Equal](d: Decoder[A]): JsonDecoderTest[A] =
+    new JsonDecoderTest()(d, implicitly)
+}
+
+// =====================================================================================================================
+
+final class JsonDecoderTest[A: Decoder: Equal] {
+
+  def decodeOrThrow(s: String): A =
+    JsonTestUtil.decodeOrThrow(s)
+
+  def assertDecode(json: Json, expect: Decoder.Result[A])(implicit l: Line): Unit =
+    JsonTestUtil.assertDecode(json, expect)
+
+  def assertDecodeOk(json: String, expect: A)(implicit l: Line): Unit =
+    JsonTestUtil.assertDecodeOk(json, expect)
+
+  def assertDecodeOk(json: Json, expect: A)(implicit l: Line): Unit =
+    JsonTestUtil.assertDecodeOk(json, expect)
 }

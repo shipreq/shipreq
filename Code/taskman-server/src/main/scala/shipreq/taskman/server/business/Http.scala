@@ -4,10 +4,11 @@ import com.typesafe.scalalogging.Logger
 import japgolly.univeq._
 import java.nio.charset.Charset
 import okhttp3._
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
-import scalaz.syntax.bind._
+import io.circe._
+import io.circe.parser._
+import io.circe.syntax._
 import scalaz.{-\/, \/, \/-}
+import scalaz.syntax.bind._
 import shipreq.base.util.{ArticulateError, Identity}
 import shipreq.base.util.FxModule._
 import Http._
@@ -27,6 +28,9 @@ final case class Http[I, O](prep: (I, HttpClient, HttpLogger) => Fx[Request],
 
   def contramap[A](f: A => I): Http[A, O] =
     Http((a, c, l) => prep(f(a), c, l), recv)
+
+  def map[A](f: O => A): Http[I, A] =
+    Http(prep, recv(_, _).map(f))
 
   def and[A](f: Fx[O] => Fx[A]): Http[I, A] =
     Http(prep, (r, s) => f(recv(r, s)))
@@ -105,15 +109,16 @@ object Http {
         } yield req,
         (_, _) => Fx.unit)
 
-    def jsonRequest: Http[JValue, Unit] =
-      request[JValue]((b, i) => Fx {
-        val str = compact(i)
+    def requestAsJson[A: Encoder]: Http[A, Unit] =
+      request[A]((b, a) => Fx {
+        val json = a.asJson
+        val str  = json.noSpaces
         val body = RequestBody.create(MediaTypeJson, str.getBytes(DefaultCharset))
-        val req = b.method(http.method.value, body).build
+        val req  = b.method(http.method.value, body).build
         (req, () => str)
       })
 
-    def formRequest[I](formData: I => TraversableOnce[(String, String)]): Http[I, Unit] =
+    def requestAsForm[I](formData: I => TraversableOnce[(String, String)]): Http[I, Unit] =
       request[I]((reqBuilder, i) => Fx {
         val bodyBuilder = new FormBody.Builder()
         formData(i).foreach(x => bodyBuilder.add(x._1, x._2))
@@ -126,27 +131,48 @@ object Http {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   implicit class HttpExt1[I](private val http: Http[I, Unit]) extends AnyVal {
-    def jsonResponse: Http[I, JValue \/ JValue] =
-      http.copy(recv = (resp, body) => Fx {
-        val json = parse(body)
-        if (resp.code ==* 200) \/-(json) else -\/(json)
+
+    def responseAsJson[A: Decoder]: Http[I, A] =
+      http.copy(recv = (r, body) =>
+        if (isStatusSuccessful(r.code))
+          decode[A](body) match {
+            case Right(a) => Fx.pure(a)
+            case Left(e)  => Fx.fail(ArticulateError(e).hint(s"Response = $body", s"StatusCode = ${r.code}"))
+          }
+        else
+          genericResponseErrorHandler[A](r, body)
+      )
+
+    def responseAsStatusCodeAndJson: Http[I, (Int, Json)] =
+      http.copy(recv = (r, body) =>
+        parse(body) match {
+          case Right(json) => Fx.pure((r.code, json))
+          case Left(e)     => Fx.fail(ArticulateError(e).hint(s"Response = $body", s"StatusCode = ${r.code}"))
+        }
+      )
+
+    def responseAsJsonOrJson[A: Decoder]: Http[I, Json \/ A] =
+      responseAsStatusCodeAndJson.and(_.flatMap {
+        case (code, json) =>
+          if (isStatusSuccessful(code))
+            Decoder[A].decodeJson(json) match {
+              case Right(a) => Fx.pure(\/-(a))
+              case Left(e)  => Fx.fail(ArticulateError(e).hint(s"Response = ${json.noSpaces}", s"StatusCode = ${code}"))
+            }
+          else
+            Fx.pure(-\/(json))
       })
   }
 
-  implicit class HttpExt2[I](private val http: Http[I, JValue \/ JValue]) extends AnyVal {
-    def parseJsonResponse[O](ok: JValue => ArticulateError \/ O,
-                             ko: (Response, JValue) => Fx[O] = genericResponseErrorHandler[O](_, _)): Http[I, O] =
-      http.and((r, fx) => fx.flatMap {
-        case \/-(j) => Fx.lift(ok(j)).mapArticulateError(_.hint(s"Response = $j"))
-        case -\/(j) => ko(r, j).mapArticulateError(_.hint(s"Response = $j", s"Code = ${r.code}"))
-      })
-  }
+  /** Generic HTTP code validation */
+  private def isStatusSuccessful(status: Int): Boolean =
+    (status >= 200 && status < 300) || status == 304
 
   def genericResponseErrorHandler[A](r: Response, response: Any): Fx[A] = {
     val respString: String =
       response match {
-        case j: JValue => compact(j)
-        case a         => a.toString
+        case j: Json => j.noSpaces
+        case a       => a.toString
       }
     Fx.fail(ArticulateError(s"Unexpected HTTP response: ${r.code} ${r.message}. Response: $respString"))
   }

@@ -2,6 +2,7 @@ package shipreq.taskman.api.impl
 
 import doobie.imports._
 import utest._
+import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.db.TestDb
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.{EmailAddr, Msg, MsgId, MsgStatus}
@@ -18,7 +19,7 @@ object ApiOpTest extends TestSuite with ApiImplTestHelpers {
             c <- Query0[Int]("select count(1) from msgq").unique.transact(xa)
           } yield c
         }.unsafeRun()
-        assert(r == 1)
+        assertEq(r, 1)
       }
     }
 
@@ -26,7 +27,7 @@ object ApiOpTest extends TestSuite with ApiImplTestHelpers {
 
       "When msg doesn't exist" - {
         val r = run(_.queryMsgStatus(MsgId(123456)))
-        assert(r == None)
+        assertEq(r, None)
       }
 
       "On new msg" - {
@@ -36,7 +37,7 @@ object ApiOpTest extends TestSuite with ApiImplTestHelpers {
             s <- api.queryMsgStatus(id)
           } yield s
         )
-        assert(r == Some(MsgStatus.Unassigned))
+        assertEq(r, Some(MsgStatus.Unassigned))
       }
     }
 

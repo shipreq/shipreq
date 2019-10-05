@@ -18,18 +18,18 @@ object TaskmanBuild {
   lazy val taskmanApiLogic =
     project("taskman-api-logic")
       .configure(Common.jvmSettings)
-      .deps(testScope(μTest ++ scalaCheck ++ Scala.reflect ++ Microlibs.testUtil))
+      .deps(Circe.main ++ testScope(μTest ++ scalaCheck ++ Scala.reflect ++ Microlibs.testUtil))
       .dependsOn(baseUtilJvm)
+      .dependsOn(baseTestJvm % Test)
 
   lazy val taskmanApi =
     project("taskman-api")
       .configure(Common.jvmSettings, DockerEnv.test.required)
-      .deps(
-        Json4s.jackson ++
-        testScope(μTest ++ scalaCheck ++ Scala.reflect))
+      .deps(testScope(μTest ++ scalaCheck ++ Scala.reflect))
       .dependsOn(taskmanApiLogic, baseDb)
       .dependsOn(taskmanServerSchema % Test)
       .dependsOn(baseTestJvm % Test)
+      .settings(parallelExecution in Test := false)
 
   lazy val taskmanServerLogic =
     project("taskman-server-logic")
@@ -55,13 +55,6 @@ object TaskmanBuild {
   lazy val taskmanServer: Project = {
     import TaskmanServer._
 
-    def consoleCmds =
-      """
-        |import org.json4s._
-        |import org.json4s.jackson.JsonMethods._
-        |import org.json4s.JsonDSL._
-      """.stripMargin
-
     // Integrate run/runMain with the Docker dev env
     def runWithDockerDev: Project => Project =
       _.configure(DockerEnv.dev.commands)
@@ -82,7 +75,6 @@ object TaskmanBuild {
       .configure(Common.dockerBaseSettings("taskman"))
       .configure(runWithDockerDev)
       .settings(
-        initialCommands += consoleCmds,
         mainClass := Some(serverClass),
         javaOptions in(Compile, run) += "-XX:+UseG1GC", // Default in Java 9, may as well use it now
 

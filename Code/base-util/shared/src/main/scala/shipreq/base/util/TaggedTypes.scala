@@ -67,8 +67,4 @@ object TaggedTypes {
   implicit def autoUnboxTaggedLong  [T <: TaggedType {type U = Long}]  (t: T): Long   = t.value
   implicit def autoUnboxTaggedInt   [T <: TaggedType {type U = Int}]   (t: T): Int    = t.value
   implicit def autoUnboxTaggedShort [T <: TaggedType {type U = Short}] (t: T): Short  = t.value
-
-  // -------------------------------------------------------------------------------------------------------------------
-
-  final case class JsonStr[R](value: String) extends TaggedString
 }

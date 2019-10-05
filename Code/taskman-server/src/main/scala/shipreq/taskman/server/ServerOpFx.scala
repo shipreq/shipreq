@@ -6,9 +6,7 @@ import java.time.Duration
 import scalaz.~>
 import shipreq.base.db.DbAccess
 import shipreq.base.util.FxModule._
-import shipreq.base.util.TaggedTypes.JsonStr
-import shipreq.taskman.api.{Msg, MsgId, Priority}
-import shipreq.taskman.api.impl.Serialisation
+import shipreq.taskman.api._
 import shipreq.taskman.server.logic._
 
 object ServerOpFx {
@@ -36,15 +34,16 @@ object ServerOpFx {
     import shipreq.base.db.DoobieHelpers._
     import shipreq.base.db.DoobieMeta._
     import shipreq.base.db.SqlHelpers._
+    import shipreq.taskman.api.impl.DoobieMeta._
 
-    implicit val doobieMetaWorkerId = meta1(WorkerId.apply)(_.value)
-    implicit val doobieMetaNodeId   = meta1(NodeId.apply)(_.value)
-    implicit val doobieMetaMsgId    = meta1(MsgId.apply)(_.value)
-    implicit val doobieMetaPriority = meta1(Priority.apply)(_.value)
-    implicit val doobieMetaMsg      = doobieMetaJsonStr[Msg]
+    implicit val doobieMetaWorkerId: Meta[WorkerId] =
+      meta1(WorkerId.apply)(_.value)
 
+    implicit val doobieMetaNodeId: Meta[NodeId] =
+      meta1(NodeId.apply)(_.value)
 
-    implicit val doobieCompositeMsgHeader: Composite[MsgHeader] = Composite.generic
+    implicit val doobieCompositeMsgHeader: Composite[MsgHeader] =
+      composite3(MsgHeader.apply)(h => (h.id, h.priority, h.created))
 
     implicit val doobieCompositeArchiveIntent: Composite[ArchiveIntent] =
       Composite[(String, Int)].writeOnly(x => (x.resultFlagS, x.failureCountInc))
@@ -96,7 +95,7 @@ object ServerOpFx {
       ${getMsgsAssignNode_upd("select ctid from b")}
     """.sql)
 
-    val getMsgAssignWorkerQ = Query[(WorkerId, MsgId, NodeId), (Short, JsonStr[Msg], Short)]("""
+    val getMsgAssignWorkerQ = Query[(WorkerId, MsgId, NodeId), (Msg, Short)]("""
       update msgq
       set worker = ?, updated_at = clock_timestamp()
       where id = ? and node = ? and worker is null
@@ -137,7 +136,10 @@ object ServerOpFx {
   object Dao {
     import Sql._
 
-    def getMsgsAssignNode(node: NodeId, limit: Int, assignmentTrustPeriod: Duration, queued: Option[(Priority, Int)]): ConnectionIO[List[MsgHeader]] =
+    def getMsgsAssignNode(node                 : NodeId,
+                          limit                : Int,
+                          assignmentTrustPeriod: Duration,
+                          queued               : Option[(Priority, Int)]): ConnectionIO[List[MsgHeader]] =
       queued match {
         case None =>
           // Empty mem-queue
@@ -155,9 +157,7 @@ object ServerOpFx {
 
     def getMsgAssignWorker(node: NodeId, worker: WorkerId, hdr: MsgHeader): ConnectionIO[Option[MsgDetail]] =
       getMsgAssignWorkerQ.toQuery0(worker, hdr.id, node).option.map(_ map {
-        case (msgType, msgData, failureCount) =>
-          Serialisation.deserialise(msgType, msgData)
-            .fold(throw _, MsgDetail(hdr, _, failureCount))
+        case (msg, failureCount) => MsgDetail(hdr, msg, failureCount)
       })
 
     def reassignWorker(n: NodeId, w: WorkerId, m: MsgId): ConnectionIO[Boolean] =

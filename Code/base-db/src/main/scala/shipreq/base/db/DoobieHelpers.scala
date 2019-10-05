@@ -121,6 +121,9 @@ object DoobieHelpers {
   def meta1[A: Meta, B: TypeTag](f: A => B)(g: B => A): Meta[B] =
     Meta[A].xmap(f, g)
 
+  def composite3[Z, A, B, C](f: (A, B, C) => Z)(g: Z => (A, B, C))(implicit c: Composite[(A, B, C)]): Composite[Z] =
+    c.xmap(f.tupled, g)
+
   def selectByNonEmptySet[A, B](as: NonEmptySet[A], groupSize: Int = 100)
                                (f: Seq[A] => ConnectionIO[B]): ConnectionIO[List[B]] = {
     val it = as.iterator.grouped(groupSize).map(f)

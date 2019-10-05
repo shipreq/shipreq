@@ -11,6 +11,8 @@ object MailingList {
 
   final case class ListId(value: String)
 
+  implicit def univEqListId: UnivEq[ListId] = UnivEq.derive
+
   sealed abstract class AccountStatus(final val remoteValue: String)
   object AccountStatus {
 

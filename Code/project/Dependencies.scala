@@ -100,11 +100,6 @@ object Dependencies {
     val react = mm("ext-react") ++ core
   }
 
-  object Json4s {
-    private val mm = MultiModule.scala("org.json4s", "3.6.7")
-    val jackson = mm("json4s-jackson") ++ Scala.all
-  }
-
   object SLF4J {
     private val mm = MultiModule.java("org.slf4j", "1.7.28")
     val api = mm("slf4j-api")

@@ -14,7 +14,7 @@ final class ArticulateError(val cause: String \&/ Throwable,
                             val tags : Set[ArticulateError.Tag],
                             val hints: SortedSet[String])
     extends RuntimeException(
-      ArticulateError.getMessage(cause),
+      ArticulateError.show(cause, tags, hints),
       cause.b.orNull) {
 
   if (cause.b.isDefined)
@@ -56,31 +56,8 @@ final class ArticulateError(val cause: String \&/ Throwable,
   override def toString: String =
     s"ArticulateError($cause, $tags, $hints)"
 
-  lazy val show: String = {
-    def showItems(items: TraversableOnce[String]): String = {
-      val lead = "* "
-      items.mkString(lead, "\n" + lead, "")
-    }
-
-    var sections = Vector.empty[String]
-
-    def addSection(title: String, value: String): Unit =
-      sections :+= s"$title:\n${value.trim}"
-
-    for (m <- cause.a)
-      addSection("Error", m)
-
-    for (t <- cause.b)
-      addSection("Underlying Exception", t.stackTraceAsString.replace("\t", "  "))
-
-    if (tags.nonEmpty)
-      addSection("Tags", showItems(MutableArray(tags.toIterator.map(_.toString)).sort.iterator))
-
-    if (hints.nonEmpty)
-      addSection("Hints", showItems(hints))
-
-    sections.mkString("\n\n")
-  }
+  def show: String =
+    ArticulateError.show(cause, tags, hints)
 }
 
 object ArticulateError {
@@ -129,6 +106,34 @@ object ArticulateError {
 //      case \&/.Both(m, e) => merge(m, e.getMessage)
 //    }
     cause.a.orElse(cause.b.map(_.getMessage)).orNull
+  }
+
+  private[ArticulateError] def show(cause: String \&/ Throwable,
+                                    tags : Set[ArticulateError.Tag],
+                                    hints: SortedSet[String]): String = {
+    def showItems(items: TraversableOnce[String]): String = {
+      val lead = "* "
+      items.mkString(lead, "\n" + lead, "")
+    }
+
+    var sections = Vector.empty[String]
+
+    def addSection(title: String, value: String): Unit =
+      sections :+= s"$title:\n${value.trim}"
+
+    for (m <- cause.a)
+      addSection("Error", m)
+
+    for (t <- cause.b)
+      addSection("Underlying Exception", t.stackTraceAsString.replace("\t", "  "))
+
+    if (hints.nonEmpty)
+      addSection("Hints", showItems(hints))
+
+    if (tags.nonEmpty)
+      addSection("Tags", showItems(MutableArray(tags.toIterator.map(_.toString)).sort.iterator))
+
+    sections.mkString("\n\n")
   }
 
   trait Tag

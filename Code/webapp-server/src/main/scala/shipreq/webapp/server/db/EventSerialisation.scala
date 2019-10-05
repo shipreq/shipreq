@@ -81,7 +81,7 @@ object EventSerialisation {
     def parse[A <: Event](implicit d: Decoder[A]): Decoded =
       d.decodeJson(json) match {
         case Right(a) => \/-(a)
-        case Left(f)  => fail(JsonUtil.errorMsg(f))
+        case Left(f)  => fail(JsonUtil.decodingFailureMsg(f))
       }
 
     typeId match {
