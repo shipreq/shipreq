@@ -20,7 +20,7 @@ object DND { // TODO Remove? DragToReorder makes this redundant?
     move(from, to, as)(e.equal)
 
   def move[A, B](from: A, to: A, bs: Vector[B])(equal: (A, B) => Boolean): Vector[B] = {
-    var tmp = bs.companion.newBuilder[B]
+    val tmp = bs.companion.newBuilder[B]
     var putLater = -1
     var fromB: Option[B] = None
     var i = 0

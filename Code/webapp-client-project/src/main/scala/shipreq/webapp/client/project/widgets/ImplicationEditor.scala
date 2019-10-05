@@ -174,8 +174,6 @@ object ImplicationEditor {
     }
   }
 
-  private implicit def reusabilityValidationFn: Reusability[ValidationFn] = Reusability.byRef
-
   implicit val reusabilityLookup: Reusability[Lookup] =
     Reusability.byRef[Lookup] || Reusability.byUnivEq
 

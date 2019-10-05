@@ -91,7 +91,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
   private var _fakeWS = Vector.empty[FakeWebSocket]
 
   private var _autoRespond = true
-  private var _autoRespondLogic: Req => Option[Response] = autoEventResponse
+  private val _autoRespondLogic: Req => Option[Response] = autoEventResponse
 
   override val wsClient: WebSocketClient[WsReqRes] = {
     val newWS = CallbackTo {

@@ -281,8 +281,8 @@ object RedisLaws {
     private val listener1 = new Listener(id1, redis1)
     private val listener2 = new Listener(id2, redis2)
 
-    private implicit val retryMax = utest.asserts.RetryMax(5000.millis.asFiniteDuration)
-    private implicit val retryInterval = utest.asserts.RetryInterval(5.millis.asFiniteDuration)
+    protected implicit val retryMax = utest.asserts.RetryMax(5000.millis.asFiniteDuration)
+    protected implicit val retryInterval = utest.asserts.RetryInterval(5.millis.asFiniteDuration)
 
     def assertTest(test: Test[F]): Unit = {
       // Prepare

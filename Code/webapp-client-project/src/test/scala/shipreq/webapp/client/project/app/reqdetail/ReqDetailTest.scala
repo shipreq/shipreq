@@ -32,7 +32,7 @@ object ReqDetailTest extends TestSuite {
   private def testError(ep: ExternalPubid, error: String): Unit =
     runTest(ep, true)(Plan invariants checkErrorReason(error))
 
-  private def test(ep: ExternalPubid, project: Project = defaultProject)(test: *.Plan = *.emptyPlan): Unit =
+  private def test(ep: ExternalPubid, project: Project = defaultProject)(test: *.Plan): Unit =
     runTest(ep, false, project)(test)
 
   // yeah i'm being lazy

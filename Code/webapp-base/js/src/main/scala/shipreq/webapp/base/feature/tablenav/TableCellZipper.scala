@@ -232,9 +232,6 @@ final class TableCellZipper(val focus: html.Element)(implicit tableStyle: TableS
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  private def findFocusIndex(as: IndexedSeq[html.Element]): F[Int] =
-    findFocusIndexA(as)(Identity.apply)
-
   private def findFocusIndexA[A](as: IndexedSeq[A])(element: A => html.Element): F[Int] =
     indexWhereF(as)(element(_) eq focus, s"Focus not found: ${focus.outerHTML.take(255)}")
 }

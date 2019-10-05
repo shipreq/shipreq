@@ -1348,7 +1348,7 @@ object RandomData {
     def columnC: Gen[Column.SortConclusive] =
       Gen pure Column.Pubid
 
-    private def `change ↖columnCon↖ if more conclusive criteria added`: Column.SortConclusive => Unit = {
+    protected def `change ↖columnCon↖ if more conclusive criteria added`: Column.SortConclusive => Unit = {
       case Column.Pubid => ()
     }
 

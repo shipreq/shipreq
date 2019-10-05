@@ -24,8 +24,8 @@ object TableNavigationFeatureTest extends TestSuite {
     private var moves = List.newBuilder[VirtualLoc]
     private var subMoves = List.newBuilder[VirtualLoc]
 
-    private var batchMoves = List.newBuilder[List[VirtualLoc]]
-    private var batchSubMoves = List.newBuilder[List[VirtualLoc]]
+    private val batchMoves = List.newBuilder[List[VirtualLoc]]
+    private val batchSubMoves = List.newBuilder[List[VirtualLoc]]
 
     def general(p: VirtualLoc): this.type = {
       moves += p

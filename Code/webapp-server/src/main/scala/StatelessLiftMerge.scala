@@ -54,7 +54,7 @@ final case class StatelessLiftMerge(self: LiftSession) extends AnyVal {
 //  }
 
 //  // Gather all page-specific JS into one JsCmd.
-  private[this] def assemblePageSpecificJavaScript(eventJs: JsCmd): JsCmd = {
+//  private[this] def assemblePageSpecificJavaScript(eventJs: JsCmd): JsCmd = {
 //    val allJs =
 //      LiftRules.javaScriptSettings.vend().map { settingsFn =>
 //        LiftJavaScript.initCmd(settingsFn(this))
@@ -63,15 +63,15 @@ final case class StatelessLiftMerge(self: LiftSession) extends AnyVal {
 //      List(eventJs)
 //
 //    allJs.foldLeft(js.JsCmds.Noop)(_ & _)
-    eventJs
-  }
+//    eventJs
+//  }
 
-  private def pageScopedScriptFileWith(cmd: JsCmd): Elem = {
+//  private def pageScopedScriptFileWith(cmd: JsCmd): Elem = {
 //    pageScript(Full(JavaScriptResponse(cmd, Nil, Nil, 200)))
 //
 //    <script type="text/javascript" src={scriptUrl(s"page/${RenderVersion.get}.js")}></script>
-    <span style="display:none"></span> // TODO
-  }
+//    <span style="display:none"></span>
+//  }
 
   /**
    * Manages the merge phase of the rendering pipeline

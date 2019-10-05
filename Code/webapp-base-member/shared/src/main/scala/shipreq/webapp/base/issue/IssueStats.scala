@@ -38,7 +38,7 @@ object IssueStats {
       inRcg += 1
 
     @inline def addInConfig(): Unit =
-      inRcg += 1
+      inConfig += 1
 
     is.vector.foreach {
       case i: Issue.BlankCustomField      => addInReq(i.req.id)

@@ -100,8 +100,6 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
     }
   }
 
-  @inline private implicit def impTextEditor = textEditor.asImplicit
-
   // lazy else there'll be a FieldNotInitialised error via .configure → impTextEditor → textEditor
   lazy val Component =
     ScalaComponent.builder[Props]("ReqCodeEditor")

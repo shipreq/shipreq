@@ -170,7 +170,7 @@ object TextSearch {
       )
   }
 
-  private def IEF(req        : IndexEntryR => Boolean = null,
+  private def IEF(req        : IndexEntryR => Boolean,
                   codeGroup  : IndexEntryG => Boolean = null,
                   manualIssue: IndexEntryM => Boolean = null): IndexEntryFilter =
     IndexEntryFilter(

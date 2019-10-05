@@ -10,7 +10,6 @@ object FilterHelp {
 
   private def issueCatBadData     = FilterAst.issueCategoryToStr(IssueCategory.BadData)
   private def issueCatMissingData = FilterAst.issueCategoryToStr(IssueCategory.MissingData)
-  private def issueCatFutility    = FilterAst.issueCategoryToStr(IssueCategory.Futility)
   private def issueCatUserDef     = FilterAst.issueCategoryToStr(IssueCategory.UserDefined)
 
   private val issueCatLIs =

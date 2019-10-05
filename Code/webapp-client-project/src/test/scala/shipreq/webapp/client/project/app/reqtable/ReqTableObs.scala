@@ -168,8 +168,8 @@ final class ReqTableObs(global: TestGlobal, $: DomZipperJs) {
 
     import Table.Shared.CellState
 
-    private def cell(s: CellState): String =
-      s"td.${Style.reqtable.table.dataCell(s).className.value}"
+//    private def cell(s: CellState): String =
+//      s"td.${Style.reqtable.table.dataCell(s).className.value}"
 
 //    private def cell(s: Status, focus: Boolean): String =  {
 //      var r = "td." + Style.reqtable.cell(s).className.value

@@ -28,7 +28,7 @@ final case class Retries(waitTimes: Stream[Duration]) {
 }
 
 object Retries {
-  private def expStream(d: Duration, factor: Double = 2): Stream[Duration] =
+  private def expStream(d: Duration, factor: Double): Stream[Duration] =
     d #:: expStream((d.toMillis * factor).millis, factor)
 
   def exponentially(d: Duration, factor: Double = 2): Retries =

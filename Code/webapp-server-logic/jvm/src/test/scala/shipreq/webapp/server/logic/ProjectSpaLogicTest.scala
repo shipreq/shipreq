@@ -41,7 +41,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
   private val emptyState      = ProjectSpaLogic.WebSocketState.empty[Name]
   private val subscribedState = ProjectSpaLogic.WebSocketState[Name](Some(null))
 
-  private implicit val equalSub: Equal[Redis.Subscription[Name]] = Equal.equal((_, _) => true)
+  protected implicit val equalSub: Equal[Redis.Subscription[Name]] = Equal.equal((_, _) => true)
   private implicit val equalState = ScalazMacros.deriveEqual[WebSocketState]
   private implicit val eqInitAppData = ScalazMacros.deriveEqual[InitAppData]
 

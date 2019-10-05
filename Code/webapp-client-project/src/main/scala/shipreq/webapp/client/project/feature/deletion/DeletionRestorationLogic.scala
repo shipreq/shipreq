@@ -97,7 +97,7 @@ object DeletionRestorationLogic {
         a
       }
 
-      var reqRows = Vector.newBuilder[ReqRow]
+      val reqRows = Vector.newBuilder[ReqRow]
 
       def go(reqIds: TraversableOnce[ReqId], level: Int): Unit =
         for (r <- lookupAll(reqIds))
@@ -225,7 +225,7 @@ object DeletionRestorationLogic {
 
       // By "externally" I mean external to this fn/logic. All actionable if this fn did nothing.
       val externallyActionable: List[Code] = {
-        var b = Set.newBuilder[Code]
+        val b = Set.newBuilder[Code]
         b ++= actionableReqs.iterator.flatMap(r => p.content.reqCodes.activeReqCodesByReqId(r.req.id).iterator)
         b ++= directSelRcgCodes
         b.result().toList
@@ -250,8 +250,8 @@ object DeletionRestorationLogic {
       // Done. Build results.
 
       def makeRcgRow(c: Code, g: LiveCodeGroup): GroupRow = {
-        var subReqs = Set.newBuilder[(ReqId, String)]
-        var subGrps = Set.newBuilder[(ReqCodeGroupId, String)]
+        val subReqs = Set.newBuilder[(ReqId, String)]
+        val subGrps = Set.newBuilder[(ReqCodeGroupId, String)]
         def subCodeStr(c2: Code) = "." + PlainText.reqCode(c2)
 
         p.content.reqCodes.trie.dropPath(c).foreachPathAndValue {

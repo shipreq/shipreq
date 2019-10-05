@@ -77,12 +77,12 @@ object Tmp extends MainTemplate {
       println(s"$RED$BOLD✘$RESET $RED$name$RESET ($RED$actual$RESET) ≠ $expect")
   }
 
-  private def testFreshDesk(ctx: TaskmanCtx): Fx[Unit] =
+  protected def testFreshDesk(ctx: TaskmanCtx): Fx[Unit] =
     ctx.freshdesk(Support.API.ReportFailure("Manual test", "Hi. This is a test", Support.Priority.Low))
       .unsafeTap(r => println(s"Raised ticket: $r"))
       .void
 
-  private def testMailChimp(ctx: TaskmanCtx): Fx[Unit] = {
+  protected def testMailChimp(ctx: TaskmanCtx): Fx[Unit] = {
     import MailingList._
 
     val listId = ctx.mailingListId
@@ -109,7 +109,7 @@ object Tmp extends MainTemplate {
     }
   }
 
-  private def testSendMail(ctx: TaskmanCtx): Fx[Unit] = Fx {
+  protected def testSendMail(ctx: TaskmanCtx): Fx[Unit] = Fx {
     println("Mail Config: " + ctx.config.mail)
     val op = ctx.emails.sendToUser(
       Email.Addr(EmailAddr("japgolly+test@gmail.com")),

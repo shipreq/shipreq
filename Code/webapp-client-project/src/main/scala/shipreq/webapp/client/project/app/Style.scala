@@ -37,13 +37,6 @@ object Style extends StyleSheet.Inline {
   private def monospace =
     fontFamily :=! "monospace"
 
-  /** Drag'n'drop handle Ξ */
-  private val dragHnd = style(
-    color(c"#000"))
-
-  /** An empty style */
-  private val empty = style()
-
   private val hasErrorBackground =
     backgroundColor(c"#fee")
 

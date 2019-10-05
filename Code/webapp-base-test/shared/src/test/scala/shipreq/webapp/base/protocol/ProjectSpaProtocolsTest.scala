@@ -32,7 +32,7 @@ object ProjectSpaProtocolsTest extends TestSuite {
   private val codecCS   = WebSocketShared.protocolCS(webSocket.req.codec).codec
 
   private implicit def univEqWsReq: UnivEq[WsReqRes.AndReq] = UnivEq.force
-  private implicit val equalProjectAndOrd: Equal[ProjectAndOrd] = ScalazMacros.deriveEqual
+  protected implicit val equalProjectAndOrd: Equal[ProjectAndOrd] = ScalazMacros.deriveEqual
   private implicit val equalInitAppData: Equal[InitAppData] = ScalazMacros.deriveEqual
 
   private def assertRequest(bin: BinaryData, expect: codecCS.Data)(implicit l: Line) =
