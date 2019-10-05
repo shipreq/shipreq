@@ -97,7 +97,6 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
                                                   publicSpa : PublicSpaLogic[F],
                                                   homeSpa   : HomeSpaLogic.Ajax[F],
                                                   security  : Security.Algebra[F],
-                                                  svrS      : Server.Session[F],
                                                   svr       : Server.Time[F],
                                                   tracer    : TraceLogic[F, RealReq, RealRes]) {
 

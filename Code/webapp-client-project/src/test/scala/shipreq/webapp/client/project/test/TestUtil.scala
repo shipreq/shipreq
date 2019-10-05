@@ -57,8 +57,10 @@ object TestUtil extends WebappTestUtil with WebappTestEquality {
         case n => fail(s"Expected an array with one element, found $n: ${a.mkString("[",",","]")}")
     }
 
-    def soleDom[N <: A]()(implicit ev: A <:< org.scalajs.dom.Element): N =
+    def soleDom[N <: A]()(implicit ev: A <:< org.scalajs.dom.Element): N = {
+      val _ = ev
       sole().asInstanceOf[N]
+    }
   }
 
   implicit def autodomnode(c: GenericComponent.MountedRaw) =

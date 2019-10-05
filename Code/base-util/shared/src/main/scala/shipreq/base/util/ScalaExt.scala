@@ -76,8 +76,10 @@ object ScalaExt extends PlatformExt {
   }
 
   implicit class StreamExt[A](private val s: Stream[A]) extends AnyVal {
-    @inline def distinctSafe(implicit ev: UnivEq[A]): Stream[A] =
+    @inline def distinctSafe(implicit ev: UnivEq[A]): Stream[A] = {
+      val _ = ev
       s.distinct
+    }
   }
   implicit class StreamOExt[A](private val s: Stream[Option[A]]) extends AnyVal {
     def somes: Stream[A] =

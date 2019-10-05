@@ -21,9 +21,16 @@ object BaseData {
   // Extension classes
 
   implicit final class AnyRefPicklerExt[A <: AnyRef](private val p: Pickler[A]) extends AnyVal {
-    def reuseByUnivEq(implicit ev: UnivEq[A]) = new PickleWithReuse[A](p, true)
-    def reuseByRef                            = new PickleWithReuse[A](p, false)
-    def imap[B](iso: Iso[A, B]): Pickler[B]   = p.xmap(iso.get)(iso.reverseGet)
+    def reuseByUnivEq(implicit ev: UnivEq[A]) = {
+      val _ = ev
+      new PickleWithReuse[A](p, true)
+    }
+
+    def reuseByRef =
+      new PickleWithReuse[A](p, false)
+
+    def imap[B](iso: Iso[A, B]): Pickler[B] =
+      p.xmap(iso.get)(iso.reverseGet)
   }
 
   final class PickleWithReuse[A <: AnyRef](p: Pickler[A], byUnivEq: Boolean) extends Pickler[A] {

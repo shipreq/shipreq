@@ -41,13 +41,13 @@ object Common {
     "-Ypartial-unification",
     "-Ypatmat-exhaust-depth", "off",
     "-Ywarn-inaccessible",
-    "-Ywarn-infer-any"
+    "-Ywarn-infer-any",
+    "-Ywarn-unused:implicits"
   )
     // "-Xstrict-inference", // Don't infer known-unsound types
     // "-Ywarn-self-implicit",
     // "-Ywarn-unused-import"
     // "-Ywarn-unused:explicits",
-    // "-Ywarn-unused:implicits",
     // "-Ywarn-unused:locals",
     // "-Ywarn-unused:patvars",
     // "-Ywarn-unused:privates"

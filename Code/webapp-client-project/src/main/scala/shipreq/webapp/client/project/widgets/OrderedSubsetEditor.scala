@@ -49,8 +49,10 @@ final class OrderedSubsetEditor[A: Equal] {
       State(all.map(a => (a, isOn(a))))
     }
 
-    implicit def univEqState(implicit ev: UnivEq[A]): UnivEq[State] =
+    implicit def univEqState(implicit ev: UnivEq[A]): UnivEq[State] = {
+      val _ = ev
       UnivEq.derive
+    }
   }
 
   case class Props(state    : State,

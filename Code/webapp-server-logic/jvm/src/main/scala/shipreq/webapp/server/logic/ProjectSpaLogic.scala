@@ -555,14 +555,12 @@ object ProjectSpaLogic extends StrictLogging {
 
   private final class ProjectUpdater[D[_], F[_]](writeSnapshot: Int => Boolean)
                                                 (implicit
-                                                 D       : Monad[D],
                                                  F       : Monad[F] with BindRec[F],
                                                  apEvent : ApplyEventLogic[F],
                                                  db      : DB.ForProjectSpa[D],
                                                  metrics : MetricsLogic[F],
                                                  redis   : Redis.ProjectAlgebra[F],
                                                  runDB   : D ~> F,
-                                                 security: Security.Algebra[F],
                                                  trace   : Trace.Algebra[F]) {
     import ProjectUpdater._
 

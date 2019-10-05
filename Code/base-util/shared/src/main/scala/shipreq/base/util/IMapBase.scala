@@ -14,8 +14,10 @@ object IMapBaseV {
   def equality[K: Order, V: Equal, M <: IMapBaseV[K, _, V, M]]: Equal[M] =
     Equal.equalBy(_.underlyingMap)
 
-  def univEq[K, VI, VO, I <: IMapBaseV[K, VI, VO, I]](implicit u: UnivEq[Map[K, VO]]): UnivEq[I] =
+  def univEq[K, VI, VO, I <: IMapBaseV[K, VI, VO, I]](implicit u: UnivEq[Map[K, VO]]): UnivEq[I] = {
+    val _ = u
     UnivEq.force
+  }
 }
 
 abstract class IMapBaseV[K: UnivEq, VI, VO, This_ <: IMapBaseV[K, VI, VO, This_]] private[util] (m: Map[K, VO]) extends Subtractable[K, This_] {

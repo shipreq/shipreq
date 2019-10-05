@@ -10,7 +10,7 @@ import shipreq.base.util.Identity
 
 object Trace {
 
-  abstract class Algebra[F[_]](implicit F: Monad[F]) { outer =>
+  abstract class Algebra[F[_]] { outer =>
     type Span
 
     def newSpan[A](name: String)(f: Span => F[A]): F[A]

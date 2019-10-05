@@ -407,7 +407,7 @@ object Generic {
     def andThenAuditor[EE >: E, A](a: Auditor[EE, V, A]): Validator[EE, I, C, A] =
       mapAuditor(_.andThen(a))
 
-    def andThen[EE >: E, C2, V2](next: Validator[EE, V, C2, V2])(implicit E: Semigroup[EE]): Validator[EE, I, C, V2] =
+    def andThen[EE >: E, C2, V2](next: Validator[EE, V, C2, V2]): Validator[EE, I, C, V2] =
       mapAuditor(_.andThen(next.toAuditor[EE]))
 
     def toAuditor[EE >: E]: Auditor[EE, I, V] =

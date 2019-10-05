@@ -47,6 +47,8 @@ object ISubset {
   final case class Only[A](values: NonEmptySet[A]) extends ISubset[A]
   final case class Not [A](values: NonEmptySet[A]) extends ISubset[A]
 
-  @inline implicit def univEquality[A](implicit v: UnivEq[NonEmptySet[A]]): UnivEq[ISubset[A]] =
+  @inline implicit def univEquality[A](implicit v: UnivEq[NonEmptySet[A]]): UnivEq[ISubset[A]] = {
+    val _ = v
     UnivEq.derive
+  }
 }

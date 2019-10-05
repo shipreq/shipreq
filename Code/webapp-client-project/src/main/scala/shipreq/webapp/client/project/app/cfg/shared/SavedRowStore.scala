@@ -26,7 +26,10 @@ object SavedRowStore {
 
   def data[P] = new BD[P]
   @inline final class BD[P] {
-    @inline def apply[K, I](pi: P => I)(implicit D: DataIdAux[P, K], ev: UnivEq[K]): SavedRowStore[SS[K, P, I], K, P, I] = SavedRowStore(pi)
+    @inline def apply[K, I](pi: P => I)(implicit D: DataIdAux[P, K], ev: UnivEq[K]): SavedRowStore[SS[K, P, I], K, P, I] = {
+      val _ = D // used to type-infer K
+      SavedRowStore(pi)
+    }
   }
 
   def fields[P, I](f: FieldSet[P, I]) = new BF(f)

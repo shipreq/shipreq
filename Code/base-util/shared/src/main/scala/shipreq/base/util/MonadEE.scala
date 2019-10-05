@@ -13,20 +13,11 @@ import MonadEE._
   * 2. Import contents. `import stack._`
   * 3. Use `.toStack`, `.mapToStack`, etc. then `.unstackFailure` when done.
   */
-final class MonadEE[M[_], E, F]()(implicit M: Monad[M]) extends Types[M, E, F] {
-
-//  implicit val stackMonad: Monad[Stack] = new Monad[Stack] {
-//    override def point[A]   (a: => A)                        = Instance(M.point(\/-(a)))
-//    override def bind [A, B](fa: Stack[A])(f: A => Stack[B]) = fa.flatMap(f)
-//    override def map  [A, B](fa: Stack[A])(f: A => B)        = fa.map(f)
-//  }
-
+final class MonadEE[M[_], E, F]() extends Types[M, E, F] {
   implicit def toStackExt_MA[A](m: M[A])    : StackExt_MA[M, E, F, A] = new StackExt_MA(m)
   implicit def toStackExt_EA[A](m: E \/ A)  : StackExt_EA[M, E, F, A] = new StackExt_EA(m)
   implicit def toStackExt_FA[A](m: F \/ A)  : StackExt_FA[M, E, F, A] = new StackExt_FA(m)
   implicit def toStackExt_SA[A](m: Stack[A]): StackExt_SA[M, E, F, A] = new StackExt_SA(m.underlying)
-
-//  @inline implicit def autoStack[A](m: M[(E \/ F) \/ A]): Stack[A] = Instance(m)
 }
 
 object MonadEE {
