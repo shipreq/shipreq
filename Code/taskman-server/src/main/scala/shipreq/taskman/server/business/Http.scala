@@ -7,6 +7,8 @@ import okhttp3._
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
+import java.time.Duration
 import scalaz.{-\/, \/, \/-}
 import scalaz.syntax.bind._
 import shipreq.base.util.{ArticulateError, Identity}
@@ -197,8 +199,8 @@ final class HttpLogger(logger: Logger, modContent: String => String) {
   val response: (Request, Response, String) => Fx[Unit] =
     (req, resp, body) => Fx {
       def url = req.url.url.toExternalForm
-      def dur = resp.receivedResponseAtMillis() - resp.sentRequestAtMillis()
-      logger.info(s"HTTP ${req.method} $url responded with ${resp.code} ${resp.message} in $dur ms")
+      def dur = Duration.ofMillis(resp.receivedResponseAtMillis() - resp.sentRequestAtMillis())
+      logger.info(s"HTTP ${req.method} $url responded with ${resp.code} ${resp.message} in ${dur.conciseDesc}")
       logger.debug(s"HTTP response body: ${modContent(body)}")
     }
 

@@ -2,6 +2,7 @@ package shipreq.taskman.server.business
 
 import doobie.imports._
 import java.time.Duration
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scalaz.{-\/, \/, \/-, ~>}
 import scalaz.syntax.catchable._
 import shipreq.base.util.FxModule._
@@ -27,8 +28,8 @@ final class BusinessOpFx(sendMailFx   : BusinessOp.SendEmail => Fx[Unit],
 
   def logCompletion[A](op: BusinessOp[A], res: Throwable \/ A, dur: Duration): Fx[Unit] =
     Fx(res match {
-      case \/-(_) => logger.info(s"${simpleName(op)} completed in ${dur.toMillis}ms.")
-      case -\/(e) => logger.error(s"${simpleName(op)} failed after ${dur.toMillis}ms with [${e.getMessage}]. Op: $op")
+      case \/-(_) => logger.info(s"${simpleName(op)} completed in ${dur.conciseDesc}.")
+      case -\/(e) => logger.error(s"${simpleName(op)} failed after ${dur.conciseDesc} with [${e.getMessage}]. Op: $op")
     })
 
   def applyUntimed[A](bop: BusinessOp[A]): Fx[A] =
