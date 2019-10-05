@@ -18,6 +18,8 @@ case object NeedDom extends JsTestType
 
 object Common {
 
+  private val availableProcessors = java.lang.Runtime.getRuntime.availableProcessors()
+
   def targetJdk = "1." + Dependencies.Java.major
 
   def scalacFlags = Seq(
@@ -30,7 +32,7 @@ object Common {
     "-Ypartial-unification",
     "-Ypatmat-exhaust-depth", "off",
     "-Ywarn-inaccessible",
-    "-Ybackend-parallelism", "8",
+    "-Ybackend-parallelism", availableProcessors.min(16).toString,
     "-Ycache-plugin-class-loader:last-modified",
     "-Ycache-macro-class-loader:last-modified",
     "-feature", "-language:postfixOps", "-language:implicitConversions", "-language:higherKinds", "-language:existentials")
