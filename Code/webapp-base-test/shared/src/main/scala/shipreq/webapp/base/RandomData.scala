@@ -504,9 +504,9 @@ object RandomData {
 
     private[this] def multiLine(t: MultiLine, depth: Int)(g: Name[Gen[t.Atom]]): NonEmptyVector[Gen.Freq[t.Atom]] = {
       var gs = singleLineGens(t).map(g => (9, g))
-      gs :+= (9, blankLine(t))
+      gs :+= ((9, blankLine(t)))
       if (depth < DepthIncrease.length)
-        gs :+= (DepthIncrease(depth), unorderedList(t)(g))
+        gs :+= ((DepthIncrease(depth), unorderedList(t)(g)))
       gs
     }
 

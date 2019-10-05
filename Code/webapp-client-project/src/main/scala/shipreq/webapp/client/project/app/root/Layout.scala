@@ -58,7 +58,7 @@ object Layout {
 
   private def render(p: Props): VdomElement =
     MemberLayout.Props(
-      MemberNavBar.Props(p.username, navBarLeft(p.page, p.project, p.rc)),
+      MemberNavBar.Props(p.username, navBarLeft((p.page, p.project, p.rc))),
       <.div(
         _,
         Style.layout,

@@ -55,10 +55,12 @@ object LiftDispatcher {
       } yield {
         val xml1: NodeSeq = s.processSurroundAndInclude(PageName.get, templateSrc)
         val xml2: NodeSeq = StatelessLiftMerge(s).merge(xml1, req)
-        LiftRules.convertResponse((xml2, 200),
+        LiftRules.convertResponse((
+          (xml2, 200),
           S.getResponseHeaders(LiftRules.defaultHeaders((xml2, req))),
           S.responseCookies,
-          req)
+          req
+        ))
       }
   }
 }

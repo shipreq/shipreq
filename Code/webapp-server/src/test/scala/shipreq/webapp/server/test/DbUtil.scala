@@ -36,7 +36,7 @@ final case class DbUtil(xa: SingleConnectionXA) {
   def newUserId(): UserId =
     xa ! Query[(String, String), UserId](
       "INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at) VALUES(?,?,0,0,NOW(),NOW(),NOW()) RETURNING id"
-    ).toQuery0(randomStr, randomStr).unique
+    ).toQuery0((randomStr, randomStr)).unique
 
   def deleteUser(u: UserId): Unit =
     xa ! sql"DELETE FROM usr WHERE id=$u".update.execute

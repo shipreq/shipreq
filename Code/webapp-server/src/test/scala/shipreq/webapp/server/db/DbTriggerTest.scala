@@ -34,11 +34,11 @@ object DbTriggerTest extends TestSuite {
 
       def insert(userId: Long, name: String, newsletter: Boolean)(implicit xa: SingleConnectionXA) =
         xa ! Update[(Long, String, Boolean)]("insert into usrd values(?,?,?)")
-          .toUpdate0(userId, name, newsletter).run
+          .toUpdate0((userId, name, newsletter)).run
 
       def update(userId: Long, name: String, newsletter: Boolean)(implicit xa: SingleConnectionXA) =
         xa ! Update[(String, Boolean, Long)]("update usrd set name=?, newsletter=? where usr_id=?")
-          .toUpdate0(name, newsletter, userId).run
+          .toUpdate0((name, newsletter, userId)).run
 
       def read(userId: Long)(implicit xa: SingleConnectionXA) =
         xa ! Query0[(String,Boolean)](s"select name, newsletter from usrd where usr_id=$userId").unique

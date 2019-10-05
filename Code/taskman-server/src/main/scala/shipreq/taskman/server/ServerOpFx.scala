@@ -143,31 +143,31 @@ object ServerOpFx {
       queued match {
         case None =>
           // Empty mem-queue
-          getMsgsAssignNodeZ.toQuery0(node, assignmentTrustPeriod, limit).list
+          getMsgsAssignNodeZ.toQuery0((node, assignmentTrustPeriod, limit)).list
 
         case Some((memPri, memSize)) =>
           val freeSlots = limit - memSize
           if (freeSlots > 0)
             // Partial mem-queue
-            getMsgsAssignNodeP.toQuery0(assignmentTrustPeriod, limit, freeSlots, memPri, node).list
+            getMsgsAssignNodeP.toQuery0((assignmentTrustPeriod, limit, freeSlots, memPri, node)).list
           else
             // Full mem-queue
-            getMsgsAssignNodeF.toQuery0(node, assignmentTrustPeriod, memPri, limit).list
+            getMsgsAssignNodeF.toQuery0((node, assignmentTrustPeriod, memPri, limit)).list
       }
 
     def getMsgAssignWorker(node: NodeId, worker: WorkerId, hdr: MsgHeader): ConnectionIO[Option[MsgDetail]] =
-      getMsgAssignWorkerQ.toQuery0(worker, hdr.id, node).option.map(_ map {
+      getMsgAssignWorkerQ.toQuery0((worker, hdr.id, node)).option.map(_ map {
         case (msg, failureCount) => MsgDetail(hdr, msg, failureCount)
       })
 
     def reassignWorker(n: NodeId, w: WorkerId, m: MsgId): ConnectionIO[Boolean] =
-      reassignWorkerQ.toQuery0(n, w, m).option.map(_ getOrElse false)
+      reassignWorkerQ.toQuery0((n, w, m)).option.map(_ getOrElse false)
 
     def failAndRetry(n: NodeId, w: WorkerId, m: MsgId, delay: Duration): ConnectionIO[Unit] =
-      failAndRetryQ.toQuery0(delay, n, w, m).unique.map(_ => ())
+      failAndRetryQ.toQuery0((delay, n, w, m)).unique.map(_ => ())
 
     def archiveMsg(n: NodeId, w: WorkerId, m: MsgId, status: ArchiveIntent): ConnectionIO[Unit] =
-      archiveMsgQ.toQuery0(n, w, m, status).unique.map(_ => ())
+      archiveMsgQ.toQuery0((n, w, m, status)).unique.map(_ => ())
 
     def getNextNodeId: ConnectionIO[NodeId] =
       getNextNodeIdQ.unique

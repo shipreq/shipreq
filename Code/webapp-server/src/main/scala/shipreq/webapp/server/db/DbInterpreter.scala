@@ -148,13 +148,13 @@ object DbInterpreter {
       Update[(EmailAddr, SecurityToken)]("INSERT INTO usr(email, confirmation_token, confirmation_sent_at) VALUES(?,?,NOW())")
 
     override final def createUserPlaceholder(e: EmailAddr): ConnectionIO[SecurityToken] =
-      tokenAttempt(createUserPlaceholderSql.toUpdate0(e, _).execute)
+      tokenAttempt(t => createUserPlaceholderSql.toUpdate0((e, t)).execute)
 
     private[db] final val updateUserRegistrationTokenSql =
       Update[(SecurityToken, UserId)]("UPDATE usr SET confirmation_token = ?, confirmation_sent_at = NOW() WHERE id=?")
 
     override final def updateUserRegistrationToken(id: UserId): ConnectionIO[SecurityToken] =
-      tokenAttempt(updateUserRegistrationTokenSql.toUpdate0(_, id).execute)
+      tokenAttempt(t => updateUserRegistrationTokenSql.toUpdate0((t, id)).execute)
 
     private[db] final val sqlRegisterUser =
       Query[(Username, PasswordAndSalt, SecurityToken), UserId](
@@ -175,9 +175,9 @@ object DbInterpreter {
                                                 newsletter: Boolean): ConnectionIO[UserRegistrationResult] = {
       import UserRegistrationResult._
       val plan: ConnectionIO[UserRegistrationResult] =
-        sqlRegisterUser.toQuery0(username, ps, token).option.attemptSql flatMap {
+        sqlRegisterUser.toQuery0((username, ps, token)).option.attemptSql flatMap {
           case \/-(Some(id)) =>
-            sqlInsertUsrd.toUpdate0(id, name, newsletter).run.map(_ => Success(id))
+            sqlInsertUsrd.toUpdate0((id, name, newsletter)).run.map(_ => Success(id))
 
           case \/-(None) =>
             Free pure TokenNotFound
@@ -229,7 +229,7 @@ object DbInterpreter {
       Update[(SecurityToken, UserId)]("UPDATE usr SET reset_password_token = ?, reset_password_sent_at = NOW(), reset_password_req_count = reset_password_req_count + 1 WHERE id=?")
 
     override final def createResetPasswordToken(id: UserId): ConnectionIO[SecurityToken] =
-      tokenAttempt(createResetPasswordTokenSql.toUpdate0(_, id).execute)
+      tokenAttempt(t => createResetPasswordTokenSql.toUpdate0((t, id)).execute)
 
     private[db] final val updateResetPasswordTokenOnReissueSql =
       Update[UserId]("UPDATE usr SET reset_password_sent_at = NOW(), reset_password_req_count = reset_password_req_count + 1 WHERE id=?")
@@ -249,7 +249,7 @@ object DbInterpreter {
 
     /** This also clears the token */
     override final def updateUserPassword(token: SecurityToken, ps: PasswordAndSalt): ConnectionIO[Option[UserId]] =
-      updateUserPasswordSql.toQuery0(ps, token).option
+      updateUserPasswordSql.toQuery0((ps, token)).option
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

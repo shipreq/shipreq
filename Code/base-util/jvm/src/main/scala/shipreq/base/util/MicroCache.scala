@@ -67,7 +67,7 @@ class CacheVar[T](val policy: CachePolicy[T]) {
 
   def set(value: T): Unit =
     lock.synchronized {
-      state = Some(Some(value), policy.write(value))
+      state = Some((Some(value), policy.write(value)))
     }
 }
 object CacheVar {
@@ -96,7 +96,7 @@ class CacheFn[T](f: => T)(val policy: CachePolicy[T]) {
   def refresh(): T =
     lock.synchronized {
       val value = f
-      state = Some(value, policy.write(value))
+      state = Some((value, policy.write(value)))
       value
     }
 }

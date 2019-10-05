@@ -193,7 +193,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
         val tag = project.config.tags.atag(id)
         val liveTag = tag.live
         val valid = Invalid.when(liveText.is(Live) && liveTag.is(Dead))
-        tagWithoutStyle(Contextualise, tag)(*.tagInText(liveTag, valid))
+        tagWithoutStyle(Contextualise, tag)(*.tagInText((liveTag, valid)))
       }
     }
 

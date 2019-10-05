@@ -31,15 +31,26 @@ object Common {
     "-language:postfixOps",
     "-target:jvm-" + targetJdk,
     "-unchecked",
+    "-Xlint:infer-any",
     "-Xsource:2.13",
     "-Ybackend-parallelism", availableProcessors.min(16).toString,
     "-Ycache-macro-class-loader:last-modified",
     "-Ycache-plugin-class-loader:last-modified",
+    "-Yno-adapted-args",
+    "-Yno-generic-signatures",
     "-Ypartial-unification",
     "-Ypatmat-exhaust-depth", "off",
-    "-Ywarn-inaccessible")
+    "-Ywarn-inaccessible",
+    "-Ywarn-infer-any"
+  )
     // "-Xstrict-inference", // Don't infer known-unsound types
-    // "-Yno-generic-signatures", // Stuffs up json4s
+    // "-Ywarn-self-implicit",
+    // "-Ywarn-unused-import"
+    // "-Ywarn-unused:explicits",
+    // "-Ywarn-unused:implicits",
+    // "-Ywarn-unused:locals",
+    // "-Ywarn-unused:patvars",
+    // "-Ywarn-unused:privates"
 
   def scalacTestFlags = Seq("-language:reflectiveCalls")
 

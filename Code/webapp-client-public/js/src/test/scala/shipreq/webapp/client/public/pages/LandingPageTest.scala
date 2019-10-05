@@ -41,15 +41,15 @@ object LandingPageTester {
   val submitEnabled = *.focus("Submit button").value(_.obs.submitEnabled)
 
   def initialState: *.Points =
-    name.tv.assert("", Valid) & email.tv.assert("", Valid)
+    name.tv.assert(("", Valid)) & email.tv.assert(("", Valid))
 
   def clickSubmit: *.Actions =
     *.action("Click submit")(Simulate click _.obs.submit)
       .addCheck(submitEnabled.assert(Enabled).before)
 
   def enterValidDetails: *.Actions = (
-    name.set("Bob") +> name.tv.assert("Bob", Valid)
-      >> email.set("bob@qwe.com") +> email.tv.assert("bob@qwe.com", Valid))
+    name.set("Bob") +> name.tv.assert(("Bob", Valid))
+      >> email.set("bob@qwe.com") +> email.tv.assert(("bob@qwe.com", Valid)))
 
   def submitSuccessfully: *.Actions = (
     clickSubmit
@@ -80,8 +80,8 @@ object LandingPageTest extends TestSuite {
 
   def invalidity: *.Actions = (
     initialState
-      +> clickSubmit +> submitEnabled.assert(Disabled) +> name.tv.assert("", Invalid) +> email.tv.assert("", Invalid)
-      >> email.set("bob") +> email.tv.assert("bob", Invalid)
+      +> clickSubmit +> submitEnabled.assert(Disabled) +> name.tv.assert(("", Invalid)) +> email.tv.assert(("", Invalid))
+      >> email.set("bob") +> email.tv.assert(("bob", Invalid))
       >> enterValidDetails +> reqsSent.assert(0)
       >> submitSuccessfully)
 

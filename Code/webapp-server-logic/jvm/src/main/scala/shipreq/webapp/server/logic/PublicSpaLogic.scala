@@ -100,7 +100,7 @@ object PublicSpaLogic extends HasLogger {
             val log           = F.point(logger.info(s"User #${user.id.value} logged in."))
             val updateMetrics = metrics.securityEvent(Security.Event.Login, Security.Result.Success)
             val token         = Security.SessionToken(Some(user))
-            log >> logToDB >> updateMetrics >| (Allow, Some(token))
+            log >> logToDB >> updateMetrics >| ((Allow, Some(token)))
 
           case None =>
             // User not found, or password didn't match

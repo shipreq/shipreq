@@ -160,7 +160,7 @@ object LogicPropTest extends TestSuite {
     /** @return error \/ (blank, non-blank) */
     def separateBlanks[A](expectBlanksFirst: Boolean, asi: Iterable[A])(isBlank: A => Boolean): String \/ (List[A], List[A]) = asi.toList match {
       case Nil =>
-        \/-(Nil, Nil)
+        \/-((Nil, Nil))
       case as@ (h :: t) =>
         val firstBlockBlank = isBlank(h)
         val b1Cond: A => Boolean = if (firstBlockBlank) isBlank else !isBlank(_)
@@ -173,13 +173,13 @@ object LogicPropTest extends TestSuite {
         }
         def fail(e: String) = -\/(s"$e: $show")
         if (block2.isEmpty)
-          if (firstBlockBlank) \/-(block1, Nil) else \/-(Nil, block1)
+          if (firstBlockBlank) \/-((block1, Nil)) else \/-((Nil, block1))
         else if (block2 exists b1Cond)
           fail("Blank and non-blanks not separated")
         else if (expectBlanksFirst != firstBlockBlank)
           fail(s"Blocks in wrong order")
         else
-          \/-(b, nb)
+          \/-((b, nb))
     }
 
     def E_bnbBlocks[A](name: String, bp: BlankPlacement, as: Iterable[A])(isBlank: A => Boolean, f: (List[A], List[A]) => EvalL): EvalL = {

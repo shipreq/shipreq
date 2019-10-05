@@ -70,7 +70,7 @@ object DbTest extends TestSuite {
         val l = LocalDateTime.of(2084, 5, 2, 18, 30, 8)
         val i = l.toInstant(ZoneOffset.of("+11:00"))
         val r = "yay"
-        xa ! Update[(Instant, String, Long)]("UPDATE usr SET confirmed_at=?, roles=? WHERE id=?").toUpdate0(i, r, u.value).run
+        xa ! Update[(Instant, String, Long)]("UPDATE usr SET confirmed_at=?, roles=? WHERE id=?").toUpdate0((i, r, u.value)).run
         val s1 = xa ! Query0[String](s"select to_iso8601_str(confirmed_at) from usr where id=${u.value: Long}").unique
         assertEq(s1, "2084-05-02T07:30:08Z")
         val (ar, ai) = xa ! Query0[(String, Instant)](s"select roles, confirmed_at from usr where id=${u.value: Long}").unique
@@ -83,7 +83,7 @@ object DbTest extends TestSuite {
         val l = LocalDateTime.of(2030, 9, 7, 20, 20, 4)
         val i = l.toInstant(ZoneOffset.of("+15:00"))
         xa ! Update[(Option[Instant], Option[Instant], Long)]("UPDATE usr SET reset_password_sent_at=?, confirmed_at=? WHERE id=?")
-          .toUpdate0(None, Some(i), u.value).run
+          .toUpdate0((None, Some(i), u.value)).run
         val s1 = xa ! Query0[Option[String]](s"select to_iso8601_str(confirmed_at) from usr where id=${u.value: Long}").unique
         assertEq(s1, Some("2030-09-07T05:20:04Z"))
         val s2 = xa ! Query0[Option[String]](s"select to_iso8601_str(reset_password_sent_at) from usr where id=${u.value: Long}").unique

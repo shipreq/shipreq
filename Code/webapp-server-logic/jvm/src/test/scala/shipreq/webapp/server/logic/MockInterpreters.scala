@@ -355,7 +355,7 @@ final class MockTaskman extends TaskmanApi[Name] {
   override def submitMsg(m: Msg) = Name[MsgId] {
     prevMsgId += 1
     val id = MsgId(prevMsgId)
-    msgs :+= (id, m)
+    msgs :+= ((id, m))
     id
   }
 

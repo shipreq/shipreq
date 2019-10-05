@@ -80,10 +80,10 @@ object Register2Tester {
   private val pwd = "qqqqqq123QWE"
 
   def enterValidDetails: *.Actions = (
-    name.set("Ol' Bob") +> name.tv.assert("Ol' Bob", Valid)
-      >> username.set("bob100") +> username.tv.assert("bob100", Valid)
-      >> password1.set(pwd) +> password1.tv.assert(pwd, Valid)
-      >> password2.set(pwd) +> password2.tv.assert(pwd, Valid)
+    name.set("Ol' Bob") +> name.tv.assert(("Ol' Bob", Valid))
+      >> username.set("bob100") +> username.tv.assert(("bob100", Valid))
+      >> password1.set(pwd) +> password1.tv.assert((pwd, Valid))
+      >> password2.set(pwd) +> password2.tv.assert((pwd, Valid))
       >> tos.check +> tos.validity.assert(Valid))
     .group("Enter valid details")
 

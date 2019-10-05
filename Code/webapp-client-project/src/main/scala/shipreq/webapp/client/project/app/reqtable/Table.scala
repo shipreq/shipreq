@@ -163,7 +163,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
               case _                     => c.live
             }
             <.th(
-              *.columnHeader(live, i.status),
+              *.columnHeader((live, i.status)),
               i.mod,
               ^.tabIndex   := -1,
               ^.onKeyDown ==> dataColKeyDown(c),
