@@ -7,5 +7,4 @@
 .*.swo
 .*.swn
 
-# git worktree
-*.wt
+.metals
