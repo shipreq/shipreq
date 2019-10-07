@@ -3,7 +3,7 @@ cd "$(dirname "$0")" || exit 1
 
 set -e
 
-GRAAL_VERSION=19.0.0
+GRAAL_VERSION=19.2.0.1
 
 IMAGE_NAME=shipreq/base
 IMAGE_VER=1
