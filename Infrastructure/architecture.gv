@@ -8,6 +8,7 @@ digraph {
     label="AWS" style=filled fillcolor="#eeffee"
     dns_shipreq [label="DNS:\nshipreq.com"]
     ebs_prometheus [label="EBS:\nPrometheus"]
+    ebs_grafana [label="EBS:\nGrafana"]
 
     subgraph cluster_VPC {
       label="VPC" fillcolor=white
@@ -89,6 +90,7 @@ digraph {
   edge [color=green]
   docker_filebeat -> es
   docker_prometheus -> ebs_prometheus
+  docker_grafana -> ebs_grafana
   docker_webapp -> docker_prometheus [dir=back]
   docker_grafana -> docker_prometheus
 }
