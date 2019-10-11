@@ -217,7 +217,10 @@ object Common {
       scalaJSStage := FullOptStage,
       scalaJSOptimizerOptions ~= (_
         .withBatchMode(true)
-        .withCheckScalaJSIR(true)))
+        .withCheckScalaJSIR(true)),
+      // More than 1 running instance of Google Closure exponentially increases time & mem-usage
+      Global / concurrentRestrictions += Tags.limit(ScalaJSTags.Link, 1)
+    )
 
   lazy val testModuleSettings = (p: Project) => settingsMin(p)
     .settings(scalacOptions ++= scalacTestFlags)
