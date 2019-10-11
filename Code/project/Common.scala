@@ -209,7 +209,7 @@ object Common {
         .withAsInstanceOfs(CheckedBehavior.Unchecked)))
 
   private def jsDevSettings: Project => Project =
-    _.settings(emitSourceMaps := true)
+    _.settings(emitSourceMaps := false)
 
   private def jsProdSettings: Project => Project =
     _.settings(
