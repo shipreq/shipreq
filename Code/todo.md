@@ -122,3 +122,7 @@ Phase 2B
 * Get off G-suite (?)
 
 * Document the build & release process
+
+* Default project template has an issue: Version field has no tags
+
+* Taskamn error in taskman-error.txt
