@@ -12,7 +12,7 @@ phases:
       - >
         /bin/bash -c '
           set -o pipefail;
-          sbt test | strip-ansi
+          bin/release | strip-ansi
         '
     finally:
       - find /root/.cache/coursier /root/.ivy2 /root/.sbt -name '*.lock' -type f -exec rm -fv {} +
