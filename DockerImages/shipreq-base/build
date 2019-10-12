@@ -6,25 +6,35 @@ set -e
 GRAAL_VERSION=19.2.0.1
 IMAGE_TAG_SUFFIX="-graal-$GRAAL_VERSION"
 
-args=( --build-arg GRAAL_VERSION="$GRAAL_VERSION" )
+args=(--build-arg GRAAL_VERSION="$GRAAL_VERSION")
+tags=()
 
 if [ -n "$CODEBUILD_RESOLVED_SOURCE_VERSION" ]; then
   [ -z "$IMAGE_URL" ] && echo "IMAGE_URL not specified." && exit 2
-  args+=(
-    --cache-from "$IMAGE_URL:latest"
-    -t "$IMAGE_URL:git-$CODEBUILD_RESOLVED_SOURCE_VERSION"
-    -t "$IMAGE_URL:latest${IMAGE_TAG_SUFFIX}"
-    -t "$IMAGE_URL:latest"
+  args+=(--cache-from "$IMAGE_URL:latest")
+  tags+=(
+    "$IMAGE_URL:git-$CODEBUILD_RESOLVED_SOURCE_VERSION"
+    "$IMAGE_URL:latest${IMAGE_TAG_SUFFIX}"
+    "$IMAGE_URL:latest"
   )
 else
   IMAGE_NAME=shipreq/base
-  args+=(
-    -t "$IMAGE_NAME:latest${IMAGE_TAG_SUFFIX}"
-    -t "$IMAGE_NAME:latest"
+  tags+=(
+    "$IMAGE_NAME:latest${IMAGE_TAG_SUFFIX}"
+    "$IMAGE_NAME:latest"
   )
 fi
 
-args+=( "$@" )
-
-echo "> docker build ${args[@]} ."
-exec docker build ${args[@]} .
+if [ "$1" != --push ]; then
+  for t in ${tags[@]}; do
+    args+=(-t "$t")
+  done
+  args+=( "$@" )
+  echo "> docker build ${args[@]} ."
+  exec docker build ${args[@]} .
+else
+  for t in ${tags[@]}; do
+    echo "> docker push $t"
+    docker push "$t"
+  done
+fi

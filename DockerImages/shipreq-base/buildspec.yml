@@ -15,5 +15,4 @@ phases:
       - ./build
   post_build:
     commands:
-      - docker push $IMAGE_URL:git-$CODEBUILD_RESOLVED_SOURCE_VERSION
-      - docker push $IMAGE_URL:latest
+      - ./build --push
