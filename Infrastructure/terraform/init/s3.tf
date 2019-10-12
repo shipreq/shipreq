@@ -11,7 +11,8 @@ resource "aws_s3_bucket" "terraform_state" {
   }
 
   tags = {
-    "createdBy" = "terraform"
-    "env"       = "n/a"
+    createdBy = "terraform"
+    env       = "n/a"
+    terraform = "init"
   }
 }

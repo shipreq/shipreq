@@ -15,7 +15,8 @@ terraform {
 
 locals {
   default_tags = {
-    "createdBy" = "terraform"
-    "env"       = "n/a"
+    createdBy = "terraform"
+    env       = "n/a"
+    terraform = "global"
   }
 }
