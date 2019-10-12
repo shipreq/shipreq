@@ -94,6 +94,9 @@ RUN mkdir /tmp/scala \
 # Local env #
 #############
 
+# Needed for ECR login
+RUN pacman -Syu --noconfirm --needed aws-cli
+
 COPY strip-ansi /bin
 COPY .bashrc /root/.bashrc
 
