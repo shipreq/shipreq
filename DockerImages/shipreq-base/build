@@ -4,15 +4,27 @@ cd "$(dirname "$0")" || exit 1
 set -e
 
 GRAAL_VERSION=19.2.0.1
-
-IMAGE_NAME=shipreq/base
-IMAGE_VER=1
 IMAGE_TAG_SUFFIX="-graal-$GRAAL_VERSION"
 
-exec docker build \
-  --build-arg GRAAL_VERSION="$GRAAL_VERSION" \
-  -t "$IMAGE_NAME:${IMAGE_VER}${IMAGE_TAG_SUFFIX}" \
-  -t "$IMAGE_NAME:latest${IMAGE_TAG_SUFFIX}" \
-  -t "$IMAGE_NAME:latest" \
-  "$@" \
-  .
+args=( --build-arg GRAAL_VERSION="$GRAAL_VERSION" )
+
+if [ -n "$CODEBUILD_RESOLVED_SOURCE_VERSION" ]; then
+  [ -z "$IMAGE_URL" ] && echo "IMAGE_URL not specified." && exit 2
+  args+=(
+    --cache-from "$IMAGE_URL:latest"
+    -t "$IMAGE_URL:git-$CODEBUILD_RESOLVED_SOURCE_VERSION"
+    -t "$IMAGE_URL:latest${IMAGE_TAG_SUFFIX}"
+    -t "$IMAGE_URL:latest"
+  )
+else
+  IMAGE_NAME=shipreq/base
+  args+=(
+    -t "$IMAGE_NAME:latest${IMAGE_TAG_SUFFIX}"
+    -t "$IMAGE_NAME:latest"
+  )
+fi
+
+args+=( "$@" )
+
+echo "> docker build ${args[@]} ."
+exec docker build ${args[@]} .

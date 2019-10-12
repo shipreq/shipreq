@@ -12,12 +12,7 @@ phases:
       - docker pull $IMAGE_URL:latest || true
   build:
     commands:
-      - >
-        docker build
-        --cache-from $IMAGE_URL:latest
-        -t $IMAGE_URL:git-$CODEBUILD_RESOLVED_SOURCE_VERSION
-        -t $IMAGE_URL:latest
-        .
+      - ./build
   post_build:
     commands:
       - docker push $IMAGE_URL:git-$CODEBUILD_RESOLVED_SOURCE_VERSION
