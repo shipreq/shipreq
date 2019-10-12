@@ -4,15 +4,17 @@ phases:
   pre_build:
     commands:
       - cd Code
+      - bin/env test up -d
   build:
     commands:
       - >
-        /bin/bash -c 'set -o pipefail;
-        sbt
-        test
-        | strip-ansi'
+        /bin/bash -c '
+          set -o pipefail;
+          sbt test | strip-ansi
+        '
     finally:
       - find /root/.cache/coursier /root/.ivy2 /root/.sbt -name '*.lock' -type f -exec rm -fv {} +
+      - bin/env test down
 
 cache:
   paths:
