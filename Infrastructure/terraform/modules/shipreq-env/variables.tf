@@ -18,8 +18,15 @@ variable "availability_zone" {
 }
 
 variable "bastion_public_key" {
-  description = "Generate using: ssh-keygen -t rsa -b 4096 -f bastion_rsa -C bastion"
-  type        = string
+  type = string
+}
+
+variable "nat_public_key" {
+  type = string
+}
+
+variable "ops_public_key" {
+  type = string
 }
 
 variable "ops_instance_type" {

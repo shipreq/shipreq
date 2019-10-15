@@ -1,0 +1,18 @@
+#!/bin/bash
+cd "$(dirname "$0")" || exit 1
+
+set -e
+
+pwd="$(pwd)"
+env=${pwd##*/}
+
+targets=(
+  bastion
+  nat
+  ops
+)
+
+for f in "${targets[@]}"; do
+  ssh-keygen -t rsa -b 4096 -N '' -f key-$f.rsa -C "shipreq-$env-$f"
+  echo
+done

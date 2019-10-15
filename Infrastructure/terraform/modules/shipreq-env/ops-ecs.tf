@@ -2,6 +2,11 @@ locals {
   ops_tags = merge(local.default_tags, { Name = "${var.env} ops" })
 }
 
+resource "aws_key_pair" "ops" {
+  key_name   = "${var.env}-ops"
+  public_key = var.ops_public_key
+}
+
 resource "aws_ecs_cluster" "ops" {
   name = "${var.env}-ops"
   tags = local.ops_tags
@@ -26,10 +31,8 @@ resource "aws_launch_template" "ops" {
   image_id               = data.aws_ssm_parameter.ami-ecs.value
   instance_type          = var.ops_instance_type
   vpc_security_group_ids = [aws_security_group.ops.id]
+  key_name               = aws_key_pair.ops.key_name
   tags                   = local.ops_tags
-
-  # key_name = aws_key_pair.bastion.key_name
-  # monitoring
 
   iam_instance_profile {
     arn = aws_iam_instance_profile.ops-ecs.arn

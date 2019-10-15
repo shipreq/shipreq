@@ -2,6 +2,11 @@ locals {
   bastion_tags = merge(local.default_tags, { Name = "${var.env} bastion" })
 }
 
+resource "aws_key_pair" "bastion" {
+  key_name   = "${var.env}-bastion"
+  public_key = var.bastion_public_key
+}
+
 resource "aws_eip" "bastion" {
   vpc        = true
   instance   = aws_instance.bastion.id
@@ -16,8 +21,8 @@ resource "aws_security_group" "bastion" {
 
   ingress {
     protocol    = "tcp"
-    from_port   = 22
-    to_port     = 22
+    from_port   = 36017
+    to_port     = 36017
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -43,9 +48,4 @@ resource "aws_instance" "bastion" {
   })
 
   lifecycle { create_before_destroy = true }
-}
-
-resource "aws_key_pair" "bastion" {
-  key_name   = "${var.env}-bastion"
-  public_key = var.bastion_public_key
 }

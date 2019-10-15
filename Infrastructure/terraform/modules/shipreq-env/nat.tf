@@ -2,6 +2,11 @@ locals {
   nat_tags = merge(local.default_tags, { Name = "${var.env} nat" })
 }
 
+resource "aws_key_pair" "nat" {
+  key_name   = "${var.env}-nat"
+  public_key = var.nat_public_key
+}
+
 resource "aws_instance" "nat" {
   ami                         = data.aws_ami.nat.id
   availability_zone           = var.availability_zone
@@ -10,10 +15,8 @@ resource "aws_instance" "nat" {
   vpc_security_group_ids      = [aws_security_group.nat.id]
   associate_public_ip_address = true
   source_dest_check           = false
+  key_name                    = aws_key_pair.nat.key_name
   tags                        = local.nat_tags
-
-  # For temporary debugging only
-  key_name = aws_key_pair.bastion.key_name
 
   lifecycle { create_before_destroy = true }
 }

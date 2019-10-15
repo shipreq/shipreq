@@ -14,8 +14,15 @@ for f in ~{root,ec2-user}/.bashrc; do
 EOB
 done
 
+cat >> /etc/ssh/sshd_config << 'EOB'
+  Port 22
+  Port 36017
+EOB
+
 # Echo commands before running them
 set -x
+
+systemctl restart sshd
 
 yum -y update
 yum -y install htop tree
