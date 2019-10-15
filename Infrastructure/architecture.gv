@@ -2,7 +2,7 @@ digraph {
   node [style=filled fillcolor="#ffee44"]
   graph [ranksep=1.5]
 
-  internet [label=Internet]
+  internet [label=Internet fillcolor="#aa1111" fontcolor=white]
 
   subgraph cluster_AWS {
     label="AWS" style=filled fillcolor="#eeffee"
@@ -16,84 +16,52 @@ digraph {
 
       subgraph cluster_public {
         label="Public subnet" fillcolor="#999999"
-        subnet_public [shape=point fillcolor=blue width=.12]
-        elb_webapp [label="ELB:\nWebapp"]
-        nat [label="ASG:\nNAT"]
-
-        subgraph cluster_sg_bastion {
-          label="SG: Bastion" fillcolor=white
-          sg_bastion [shape=point fillcolor=blue width=.12]
-          bastion [label="EC2:\nBastion &\ndevops portal"]
-        }
+        elb_webapp [label="ALB:\nWebapp"]
+        nat [label="EC2:\nNAT"]
+        bastion [label="EC2:\nBastion &\ndevops portal" color=red]
       }
 
       subgraph cluster_private_app {
-        label="Private app subnet" fillcolor="#cccccc"
+        label="Private app subnet" fillcolor="#dddddd"
         subnet_private_app [shape=point fillcolor=blue width=.12]
+        rds [label="RDS"]
+        redis [label="Redis"]
 
-        subgraph cluster_sg_rds {
-          label="SG: RDS" fillcolor=white
-          sg_rds [shape=point fillcolor=blue width=.12]
-          rds [label="RDS"]
-        }
-
-        subgraph cluster_sg_redis {
-          label="SG: Redis" fillcolor=white
-          sg_redis [shape=point fillcolor=blue width=.12]
-          redis [label="Redis"]
-        }
-
-        subgraph cluster_sg_app {
-          label="SG: App" fillcolor=white
-          sg_app [shape=point fillcolor=blue width=.12]
-
-          subgraph cluster_ecs2_app {
-            label="App ECS Cluster / AGS / EC2s" fillcolor="#ffeeee"
-            docker_filebeat [label="Docker:\nFilebeat"]
-            docker_webapp [label="Docker:\nWebapp"]
-            docker_taskman [label="Docker:\nTaskman"]
-          }
+        subgraph cluster_ecs2_app {
+          label="App ECS Cluster / AGS / EC2s" fillcolor="#ffeeee"
+          docker_filebeat [label="Docker:\nFilebeat"]
+          docker_webapp [label="Docker:\nWebapp"]
+          docker_taskman [label="Docker:\nTaskman"]
         }
       }
 
       subgraph cluster_private_ops {
-        label="Private ops subnet" fillcolor="#cccccc"
+        label="Private ops subnet" fillcolor="#dddddd"
         subnet_private_ops [shape=point fillcolor=blue width=.12]
+        es [label="ElasticSearch\n& Kibana"]
 
-        subgraph cluster_sg_es {
-          label="SG: ES" fillcolor=white
-          sg_es [shape=point fillcolor=blue width=.12]
-          es [label="ElasticSearch\n& Kibana"]
-        }
-
-        subgraph cluster_sg_ops {
-          label="SG: Ops" fillcolor=white
-          sg_ops [shape=point fillcolor=blue width=.12]
-
-          subgraph cluster_ecs2_ops {
-            label="Ops ECS Cluster / ASG / EC2s" fillcolor="#ffeeee"
-            docker_prometheus [label="Docker:\nPrometheus"]
-            docker_grafana [label="Docker:\nGrafana"]
-          }
+        subgraph cluster_ecs2_ops {
+          label="Ops ECS Cluster / ASG / EC2s" fillcolor="#ffeeee"
+          docker_prometheus [label="Docker:\nPrometheus"]
+          docker_grafana [label="Docker:\nGrafana"]
         }
       }
     }
   }
 
+  subnet_private_app -> es,docker_taskman [style=invis]
+  subnet_private_ops -> es,docker_grafana [style=invis]
+
   edge [color=red]
   internet -> dns_shipreq -> elb_webapp
-  internet -> nat [dir=back]
-  internet -> eip_bastion -> bastion -> es,docker_prometheus,docker_grafana
+  internet -> eip_bastion -> bastion
   elb_webapp -> docker_webapp
-  nat -> subnet_private_app [dir=back]
+  bastion -> subnet_private_app,subnet_private_ops
 
   edge [color=blue]
-  subnet_public -> subnet_private_app [dir=both]
-  subnet_public -> subnet_private_ops
-  subnet_private_app -> subnet_private_ops [dir=both]
-  sg_app -> sg_rds,sg_redis,sg_es
-  sg_bastion -> sg_app,sg_rds,sg_redis,sg_es
-  sg_ops -> sg_app
+  internet -> nat [dir=back]
+  nat -> subnet_private_app [dir=back]
+  nat -> subnet_private_ops [dir=back]
 
   edge [color=green]
   docker_filebeat -> es
@@ -101,4 +69,6 @@ digraph {
   docker_grafana -> ebs_grafana
   docker_webapp -> docker_prometheus [dir=back]
   docker_grafana -> docker_prometheus
+  docker_webapp -> redis,rds
+  docker_taskman -> redis,rds
 }
