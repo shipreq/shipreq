@@ -45,10 +45,10 @@ resource "aws_route_table" "private-app" {
   vpc_id = aws_vpc.main.id
   tags   = merge(local.default_tags, { Name = "${var.env}-private-app" })
 
-  # route {
-  #   cidr_block = "0.0.0.0/0"
-  #   gateway_id = NAT
-  # }
+  route {
+    cidr_block  = "0.0.0.0/0"
+    instance_id = aws_instance.nat.id
+  }
 }
 
 resource "aws_route_table_association" "private-app" {
@@ -68,6 +68,11 @@ resource "aws_subnet" "private-ops" {
 resource "aws_route_table" "private-ops" {
   vpc_id = aws_vpc.main.id
   tags   = merge(local.default_tags, { Name = "${var.env}-private-ops" })
+
+  route {
+    cidr_block  = "0.0.0.0/0"
+    instance_id = aws_instance.nat.id
+  }
 }
 
 resource "aws_route_table_association" "private-ops" {

@@ -28,8 +28,12 @@ resource "aws_launch_template" "ops" {
   vpc_security_group_ids = [aws_security_group.ops.id]
   tags                   = local.ops_tags
 
-  # key_name
+  # key_name = aws_key_pair.bastion.key_name
   # monitoring
+
+  iam_instance_profile {
+    arn = aws_iam_instance_profile.ops-ecs.arn
+  }
 
   user_data = replace(
     base64encode(trimspace(templatefile("${path.module}/ops-ec2-init.sh", {
@@ -58,4 +62,50 @@ resource "aws_security_group" "ops" {
     to_port         = 22
     security_groups = [aws_security_group.bastion.id]
   }
+
+  egress {
+    protocol    = "tcp"
+    from_port   = 80
+    to_port     = 80
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    protocol    = "tcp"
+    from_port   = 443
+    to_port     = 443
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_iam_role" "ops-ecs" {
+  name = "ops_ecs_instance_role"
+  path = "/${var.env}/"
+  tags = local.ops_tags
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2008-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": ["ec2.amazonaws.com"]
+      },
+      "Effect": "Allow"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_instance_profile" "ops-ecs" {
+  name = "ops_ecs_instance_profile"
+  role = aws_iam_role.ops-ecs.name
+  path = aws_iam_role.ops-ecs.path
+}
+
+resource "aws_iam_role_policy_attachment" "ops-ecs-ec2" {
+  role       = aws_iam_role.ops-ecs.id
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }

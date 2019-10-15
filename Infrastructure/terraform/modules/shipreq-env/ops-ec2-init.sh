@@ -1,4 +1,5 @@
 #!/bin/bash
-cat <<'EOF' >> /etc/ecs/ecs.config
+
+cat <<'EOB' >> /etc/ecs/ecs.config
 ECS_CLUSTER=${cluster}
-EOF
+EOB
