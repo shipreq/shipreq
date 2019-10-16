@@ -72,25 +72,16 @@ services:
     cpus: 2
     mem_limit: 1856m # 2.25*1024 - 448 for Taskman
 
-  portal:
-    image: nginx:1
-    container_name: shipreq_dev_portal
-    ports:
-      - $PORT_PORTAL_HTTP:80
-    volumes:
-      - ./portal.html:/usr/share/nginx/html/index.html:ro
-    cpus: 0.1
-    mem_limit: 10m
-
   prometheus:
     image: prom/prometheus:v2.13.0
     container_name: shipreq_dev_prometheus
-    ports:
-      - $PORT_PROMETHEUS_HTTP:9090
     extra_hosts:
      - parent-host:$DOCKER0
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.external-url=http://prometheus:9090/prometheus/
     cpus: 2
     mem_limit: 100m
 
@@ -99,12 +90,12 @@ services:
     container_name: shipreq_dev_grafana
     links:
       - prometheus
-    ports:
-      - $PORT_GRAFANA_HTTP:3000
     volumes:
       - ./grafana/:/etc/grafana/provisioning/
     environment:
       - GF_SERVER_ENABLE_GZIP=true
+      - GF_SERVER_DOMAIN=grafana.whatever.com # needed to reverse-proxy
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/grafana/
     cpus: 2
     mem_limit: 100m
 
@@ -122,7 +113,7 @@ services:
     links:
       - elasticsearch
     ports:
-      - $PORT_KIBANA_HTTP:5601
+      - $PORT_KIBANA:5601
     logging:
       driver: none
     mem_limit: 200m
@@ -147,5 +138,16 @@ services:
       - $PORT_JAEGER_COLLECTOR:14268
     mem_limit: 200m
 
-# Can't get docker to send logs to logstash
-# Doesn't work: (https://github.com/moby/moby/issues/20370)
+  portal:
+    image: nginx:1
+    container_name: shipreq_dev_portal
+    ports:
+      - $PORT_PORTAL:80
+    volumes:
+      - ./portal.html:/usr/share/nginx/html/index.html:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    links:
+      - prometheus
+      - grafana
+    cpus: 0.1
+    mem_limit: 400m
