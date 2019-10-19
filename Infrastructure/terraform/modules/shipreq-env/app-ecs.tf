@@ -1,5 +1,5 @@
 locals {
-  app_tags = merge(local.default_tags, { Name = "${var.name} app cluster" })
+  app_tags = merge(local.default_tags, { Name = "${var.env}-app-cluster" })
 }
 
 resource "aws_key_pair" "app" {

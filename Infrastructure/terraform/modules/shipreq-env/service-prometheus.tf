@@ -1,5 +1,5 @@
 locals {
-  prometheus_tags = merge(local.default_tags, { Name = "${var.env} prometheus" })
+  prometheus_tags = merge(local.default_tags, { Name = "${var.env}-prometheus" })
 }
 
 resource "aws_service_discovery_service" "prometheus" {
