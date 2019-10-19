@@ -1,5 +1,5 @@
 locals {
-  ops_tags = merge(local.default_tags, { Name = "${var.env} ops" })
+  ops_tags = merge(local.default_tags, { Name = "${var.env}-ops-cluster" })
 }
 
 resource "aws_key_pair" "ops" {

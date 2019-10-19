@@ -1,5 +1,5 @@
 locals {
-  bastion_tags = merge(local.default_tags, { Name = "${var.env} bastion" })
+  bastion_tags = merge(local.default_tags, { Name = "${var.env}-bastion" })
 }
 
 resource "aws_key_pair" "bastion" {

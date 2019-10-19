@@ -1,5 +1,5 @@
 locals {
-  nat_tags = merge(local.default_tags, { Name = "${var.env} nat" })
+  nat_tags = merge(local.default_tags, { Name = "${var.env}-nat" })
 }
 
 resource "aws_key_pair" "nat" {
