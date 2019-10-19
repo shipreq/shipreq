@@ -12,8 +12,11 @@ locals {
 
   internal_domain    = "${var.env}.internal"
   internal_sd_domain = "${var.env}.sd.internal"
-  nat_domain         = "nat.${local.internal_domain}"
-  redis_domain       = "redis.${local.internal_domain}"
+
+  nat_domain = "nat.${local.internal_domain}"
+
+  redis_domain  = "redis.${local.internal_domain}"
+  redis_version = "5.0.5"
 
   prometheus_subdomain = "prometheus"
   prometheus_port      = 9090

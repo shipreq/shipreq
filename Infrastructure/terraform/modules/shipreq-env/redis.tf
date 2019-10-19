@@ -8,7 +8,7 @@ resource "aws_elasticache_cluster" "redis" {
   node_type            = "cache.t2.micro"
   num_cache_nodes      = 1 # must be 1 unless replication_group_id is provided
   parameter_group_name = aws_elasticache_parameter_group.redis.name
-  engine_version       = "5.0.5"
+  engine_version       = local.redis_version
   port                 = 6379
   availability_zone    = var.availability_zone
   subnet_group_name    = aws_elasticache_subnet_group.redis.name
@@ -18,7 +18,7 @@ resource "aws_elasticache_cluster" "redis" {
 
 resource "aws_elasticache_parameter_group" "redis" {
   name   = "${var.env}-redis-params"
-  family = "redis5.0"
+  family = "redis${regex("^\\d+\\.\\d+", local.redis_version)}"
 
   parameter {
     name  = "maxmemory-policy"

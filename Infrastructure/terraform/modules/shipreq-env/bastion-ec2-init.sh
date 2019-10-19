@@ -46,12 +46,12 @@ cat >> /usr/bin/redis-cli << 'EOB'
 #!/bin/bash
 args=("$@")
 [ $# -eq 0 ] && args=(-h ${REDIS_HOST} -p 6379)
-exec sudo docker run --rm -it bitnami/redis:5.0.5 redis-cli "$${args[@]}"
+exec sudo docker run --rm -it bitnami/redis:${REDIS_VER} redis-cli "$${args[@]}"
 EOB
 
 chmod 755 /usr/bin/redis-cli
 
-docker pull bitnami/redis:5.0.5
+docker pull bitnami/redis:${REDIS_VER}
 
 ####################################################################################################
 # Start portal
