@@ -112,8 +112,7 @@ resource "aws_security_group" "prometheus" {
 }
 
 resource "aws_iam_role" "prometheus-task" {
-  name = "ops_prometheus_task_role"
-  path = "/${var.env}/"
+  name = "${var.env}_ops_prometheus_task_role"
 
   assume_role_policy = <<EOB
 {

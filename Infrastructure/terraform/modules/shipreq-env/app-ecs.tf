@@ -88,8 +88,7 @@ resource "aws_security_group" "app" {
 }
 
 resource "aws_iam_role" "app-ecs" {
-  name = "app_ecs_instance_role"
-  path = "/${var.env}/"
+  name = "${var.env}_app_ecs_instance_role"
   tags = local.app_tags
 
   assume_role_policy = <<EOB

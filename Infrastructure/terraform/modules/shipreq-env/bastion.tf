@@ -62,14 +62,12 @@ resource "aws_instance" "bastion" {
 }
 
 resource "aws_iam_instance_profile" "bastion" {
-  name = "bastion_instance_profile"
-  path = "/${var.env}/"
+  name = "${var.env}_bastion_instance_profile"
   role = aws_iam_role.bastion.name
 }
 
 resource "aws_iam_role" "bastion" {
-  name = "bastion_instance_role"
-  path = "/${var.env}/"
+  name = "${var.env}_bastion_instance_role"
   tags = local.bastion_tags
 
   assume_role_policy = <<EOB
@@ -94,8 +92,7 @@ resource "aws_iam_role_policy_attachment" "bastion" {
 }
 
 resource "aws_iam_policy" "bastion" {
-  name = "bastion_policy"
-  path = "/${var.env}/"
+  name = "${var.env}_bastion_policy"
 
   policy = <<EOB
 {
