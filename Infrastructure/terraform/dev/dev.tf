@@ -1,5 +1,5 @@
 provider "aws" {
-  region  = "us-east-2"
+  region  = "ap-southeast-2"
   version = "~> 2.32"
 }
 
@@ -14,7 +14,7 @@ module "shipreq" {
   env                  = "dev"
   name                 = "Dev"
   vpc_ip_prefix        = "10.0"
-  availability_zone    = "us-east-2b"
+  availability_zone    = "ap-southeast-2b"
   bastion_public_key   = file("key-bastion.rsa.pub")
   nat_public_key       = file("key-nat.rsa.pub")
   app_public_key       = file("key-app.rsa.pub")
