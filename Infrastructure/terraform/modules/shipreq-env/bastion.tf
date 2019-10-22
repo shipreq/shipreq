@@ -46,8 +46,10 @@ resource "aws_instance" "bastion" {
   volume_tags            = local.bastion_tags
 
   user_data = templatefile("${path.module}/bastion-ec2-init.sh", {
+    DNS_TTL        = "${local.dns_stable_ttl / 2}s"
     ENV            = var.env
     ENV_NAME       = var.name
+    KIBANA_URL     = local.es_url
     PROMETHEUS_URL = local.prometheus_url
     PORTAL_IMAGE   = data.aws_ecr_repository.shipreq_ops_portal.repository_url
     REDIS_HOST     = local.redis_domain

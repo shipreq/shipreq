@@ -67,13 +67,13 @@ docker run \
   -d \
   --restart unless-stopped \
   -p 8000:80 \
-  -e DNS_TTL=10s \
+  -e DNS_TTL=${DNS_TTL} \
   -e SHIPREQ_ENV=${ENV_NAME} \
   -e SHIPREQ_URL=TODO \
   -e SHIPREQ_URL_HTTP=TODO \
   -e PROMETHEUS_URL=${PROMETHEUS_URL} \
   -e GRAFANA_URL=TODO \
-  -e KIBANA_URL=TODO \
+  -e KIBANA_URL=${KIBANA_URL} \
   -e JAEGER_URL= \
   --name portal \
   ${PORTAL_IMAGE}

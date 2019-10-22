@@ -65,3 +65,22 @@ variable "enable_redis" {
   type    = bool
   default = true
 }
+
+variable "enable_elasticsearch" {
+  type    = bool
+  default = true
+}
+
+variable "elasticsearch_instance_type" {
+  type = string
+}
+
+variable "elasticsearch_volume_type" {
+  type    = string
+  default = "gp2"
+}
+
+variable "elasticsearch_volume_size" {
+  description = "Min:10GB, Max:35GB"
+  type        = number
+}
