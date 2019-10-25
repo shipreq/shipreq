@@ -32,6 +32,8 @@ dockerfile in docker := {
 
     from(Docker.baseImage)
 
+    env("NAME" -> "shipreq/taskman")
+
     workDir(root)
 
     jarTiers.foreach(copy(_, lib))

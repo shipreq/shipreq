@@ -139,7 +139,10 @@ dockerfile in docker := {
 
     from(Docker.baseImage)
 
-    env("JETTY_HOME" -> jettyHome, "JETTY_BASE" -> base)
+    env(
+      "NAME"       -> "shipreq/webapp",
+      "JETTY_BASE" -> base,
+      "JETTY_HOME" -> jettyHome)
 
     copy(tmpJetty, s"$jettyHome/")
 
