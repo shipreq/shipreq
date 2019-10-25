@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -e
+
+if [ -z "$IMPORT_VOL" ]; then
+  echo "IMPORT_VOL not set - nothing to import"
+else
+  echo "Importing from volume: $IMPORT_VOL"
+  cp -rv "$IMPORT_VOL/." .
+fi
+
+if [ -z "$IMPORT_S3" ]; then
+  echo "IMPORT_S3 not set - nothing to import"
+else
+  echo "Importing from S3: $IMPORT_S3"
+  aws s3 sync "$IMPORT_S3" .
+fi

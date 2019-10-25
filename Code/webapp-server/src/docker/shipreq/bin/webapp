@@ -1,22 +1,24 @@
 #!/bin/bash
 
-[ -e "$JETTY_BASE/conf"     ] && cp -Lr "$JETTY_BASE/conf/."     "$JETTY_BASE/resources/."
-[ -e "$JETTY_BASE/secrets1" ] && cp -Lr "$JETTY_BASE/secrets1/." "$JETTY_BASE/resources/."
-[ -e "$JETTY_BASE/secrets2" ] && cp -Lr "$JETTY_BASE/secrets2/." "$JETTY_BASE/resources/."
+set -e
 
-declare -a args=()
+cmd=("$JETTY_BASE/bin/jetty")
 
 i="$(printenv run.mode)"
-[ -n "$i" ] && args+=("-Drun.mode=$i")
-[ -n "$RUN_MODE" ] && args+=("-Drun.mode=$RUN_MODE")
+[ -n "$i" ] && cmd+=("-Drun.mode=$i")
+[ -n "$RUN_MODE" ] && cmd+=("-Drun.mode=$RUN_MODE")
 
 [ -z "$EXTERNAL_PORT_SSL" ] \
   && echo "Environment variable not specified: EXTERNAL_PORT_SSL" \
   && echo "This must be the SSL port as seen from outside Docker." \
   && exit 3
-args+=("-Djetty.httpConfig.securePort=$EXTERNAL_PORT_SSL")
+cmd+=("-Djetty.httpConfig.securePort=$EXTERNAL_PORT_SSL")
 
-args+=("$@")
+cmd+=("$@")
 
-"$JETTY_BASE/bin/jetty" "${args[@]}" --list-config | grep -iv password
-exec "$JETTY_BASE/bin/jetty" "${args[@]}"
+# This is a little util in shipreq/base that imports files from an external
+# source depending on config. For example, SSL passwords.
+import .
+
+"${cmd[@]}" --list-config | grep -iv password
+exec "${cmd[@]}"

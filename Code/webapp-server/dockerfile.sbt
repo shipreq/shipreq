@@ -32,13 +32,6 @@ dockerfile in docker := {
        |  && rm -rv */*{jaas,jsp}[.-]* lib/apache-jsp demo-base
      """.stripMargin.trim.replaceAll("\n\\s+", " "))
 
-  // Prepare SSL
-  // TODO What's the point of encrypting ssl-passwords.ini if it just goes into every Docker image?
-  val tmpSsl = prepareTmpDir("ssl")
-  val srcSsl = srcDocker / "ssl"
-  IO.copyFile(srcSsl / "keystore", tmpSsl / "etc/keystore", true)
-  IO.copyFile(srcSsl / "ssl-passwords.ini", tmpSsl / "start.d/ssl-passwords.ini", true)
-
   // Prepare exploded WAR
   val tmpWar = prepareTmpDir("war")
   val warTiers = {
@@ -153,12 +146,9 @@ dockerfile in docker := {
 
     warStages.foreach(copy(_, s"$warExplode/"))
 
-    copy(tmpSsl, s"$base/")
-
     // This has to come before the 'Download required libs' step
     copy(srcDocker / "shipreq", s"$base/")
 
-    // Download required libs
     workDir(base)
 
     expose(
