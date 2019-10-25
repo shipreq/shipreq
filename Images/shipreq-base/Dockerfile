@@ -6,12 +6,13 @@ ARG GRAAL_VERSION
 # System #
 #========#
 
-ENV LANGUAGE en_AU:en
-ENV LANG     en_AU.UTF-8
-ENV LC_ALL   en_AU.UTF-8
+ENV LANGUAGE=en_AU:en \
+    LANG=en_AU.UTF-8 \
+    LC_ALL=en_AU.UTF-8
 
 RUN yum update -y \
  && yum install -y \
+      awscli \
       htop \
       less \
       procps \
@@ -53,8 +54,8 @@ RUN cd /opt \
 RUN cd /opt/graal \
  && sed -i 's/#networkaddress.cache.ttl=-1/networkaddress.cache.ttl=10/' jre/lib/security/java.security
 
-ENV JAVA_HOME /opt/graal
-ENV PATH      ${PATH}:/opt/graal/bin
+ENV JAVA_HOME=/opt/graal \
+    PATH=${PATH}:/opt/graal/bin
 
 #=============#
 # Environment #

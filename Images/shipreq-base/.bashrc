@@ -1,4 +1,4 @@
-export PS1='\n\[\e[95m[shipreq/base]\e[0m \[\e[32m\]\u@\h: \[\e[33m\]\w\[\e[0m\]\n> '
+export PS1='\n\[\e[95m[${NAME:-shipreq/base}]\e[0m \[\e[32m\]\u@\h: \[\e[33m\]\w\[\e[0m\]\n> '
 export BASH=/bin/bash
 export SHELL=$BASH
 
