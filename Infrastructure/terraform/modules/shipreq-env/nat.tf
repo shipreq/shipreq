@@ -39,13 +39,10 @@ resource "aws_security_group" "nat" {
   }
 
   ingress {
-    protocol  = -1
-    from_port = 0
-    to_port   = 0
-    cidr_blocks = [
-      aws_subnet.private-app.cidr_block,
-      aws_subnet.private-ops.cidr_block
-    ]
+    protocol    = -1
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = [aws_subnet.private.cidr_block]
   }
 
   egress {

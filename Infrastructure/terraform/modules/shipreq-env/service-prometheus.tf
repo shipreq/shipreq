@@ -33,7 +33,7 @@ resource "aws_ecs_service" "prometheus" {
   }
 
   network_configuration {
-    subnets         = [aws_subnet.private-ops.id]
+    subnets         = [aws_subnet.private.id]
     security_groups = [aws_security_group.prometheus.id]
   }
 
@@ -101,13 +101,10 @@ resource "aws_security_group" "prometheus" {
   }
 
   egress {
-    protocol  = "tcp"
-    from_port = 0
-    to_port   = 0
-    cidr_blocks = [
-      aws_subnet.private-app.cidr_block,
-      aws_subnet.private-ops.cidr_block
-    ]
+    protocol    = "tcp"
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = [aws_subnet.private.cidr_block]
   }
 }
 

@@ -22,7 +22,7 @@ resource "aws_service_discovery_private_dns_namespace" "internal" {
 
 resource "aws_subnet" "public" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "${var.vpc_ip_prefix}.0.0/24"
+  cidr_block        = "${var.vpc_ip_prefix}.0.0/24" # 10.0.0.*
   availability_zone = var.availability_zone
   tags              = merge(local.default_tags, { Name = "${var.env}-public" })
 }
@@ -49,16 +49,16 @@ resource "aws_route_table_association" "public" {
 
 // ================================================================================================
 
-resource "aws_subnet" "private-app" {
+resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "${var.vpc_ip_prefix}.1.0/24"
+  cidr_block        = "${var.vpc_ip_prefix}.4.0/24" # 10.0.4.* (not using 10.0.1.* cos might use it later for multi-AZ)
   availability_zone = var.availability_zone
-  tags              = merge(local.default_tags, { Name = "${var.env}-private-app" })
+  tags              = merge(local.default_tags, { Name = "${var.env}-private" })
 }
 
-resource "aws_route_table" "private-app" {
+resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
-  tags   = merge(local.default_tags, { Name = "${var.env}-private-app" })
+  tags   = merge(local.default_tags, { Name = "${var.env}-private" })
 
   route {
     cidr_block  = "0.0.0.0/0"
@@ -66,31 +66,7 @@ resource "aws_route_table" "private-app" {
   }
 }
 
-resource "aws_route_table_association" "private-app" {
-  subnet_id      = aws_subnet.private-app.id
-  route_table_id = aws_route_table.private-app.id
-}
-
-// ================================================================================================
-
-resource "aws_subnet" "private-ops" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "${var.vpc_ip_prefix}.2.0/24"
-  availability_zone = var.availability_zone
-  tags              = merge(local.default_tags, { Name = "${var.env}-private-ops" })
-}
-
-resource "aws_route_table" "private-ops" {
-  vpc_id = aws_vpc.main.id
-  tags   = merge(local.default_tags, { Name = "${var.env}-private-ops" })
-
-  route {
-    cidr_block  = "0.0.0.0/0"
-    instance_id = aws_instance.nat.id
-  }
-}
-
-resource "aws_route_table_association" "private-ops" {
-  subnet_id      = aws_subnet.private-ops.id
-  route_table_id = aws_route_table.private-ops.id
+resource "aws_route_table_association" "private" {
+  subnet_id      = aws_subnet.private.id
+  route_table_id = aws_route_table.private.id
 }

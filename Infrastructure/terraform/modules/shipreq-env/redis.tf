@@ -30,7 +30,7 @@ resource "aws_elasticache_parameter_group" "redis" {
 
 resource "aws_elasticache_subnet_group" "redis" {
   name       = "${var.env}-redis"
-  subnet_ids = [aws_subnet.private-app.id]
+  subnet_ids = [aws_subnet.private.id]
 }
 
 resource "aws_security_group" "redis" {

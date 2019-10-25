@@ -10,7 +10,7 @@ resource "aws_elasticsearch_domain" "es" {
   tags                  = local.es_tags
 
   vpc_options {
-    subnet_ids         = [aws_subnet.private-ops.id]
+    subnet_ids         = [aws_subnet.private.id]
     security_group_ids = [aws_security_group.es.id]
   }
 

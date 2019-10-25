@@ -17,7 +17,7 @@ resource "aws_autoscaling_group" "app" {
   min_size            = var.app_cluster_size
   max_size            = var.app_cluster_size
   desired_capacity    = var.app_cluster_size
-  vpc_zone_identifier = [aws_subnet.private-app.id]
+  vpc_zone_identifier = [aws_subnet.private.id]
   tags                = [for k, v in local.app_tags : { key = k, value = v, propagate_at_launch = true }]
 
   launch_template {
