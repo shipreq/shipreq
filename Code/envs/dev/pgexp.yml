@@ -1,0 +1,6 @@
+blah:
+  query: "select count(1) as user_count from usr"
+  metrics:
+    - user_count:
+        usage: "GAUGE"
+        description: "Number of users mate!"

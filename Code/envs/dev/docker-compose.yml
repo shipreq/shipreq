@@ -7,9 +7,9 @@ services:
     ports:
       - $PORT_POSTGRES:5432
     environment:
-      - POSTGRES_DB=shipreq_dev
-      - POSTGRES_USER=dev
-      - POSTGRES_PASSWORD=sqd
+      - POSTGRES_DB=$POSTGRES_DB
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
     logging:
       driver: none
     cpus: 1
@@ -36,9 +36,9 @@ services:
       - ./taskman:/taskman/conf:ro
     environment:
       - db.host=postgres
-      - db.database=shipreq_dev
-      - db.username=dev
-      - db.password=sqd
+      - db.database=$POSTGRES_DB
+      - db.username=$POSTGRES_USER
+      - db.password=$POSTGRES_PASSWORD
     cpus: 2
     mem_limit: 448m
 
@@ -57,9 +57,9 @@ services:
       - ./webapp:/mnt/import:ro
     environment:
       - db.host=postgres
-      - db.database=shipreq_dev
-      - db.username=dev
-      - db.password=sqd
+      - db.database=$POSTGRES_DB
+      - db.username=$POSTGRES_USER
+      - db.password=$POSTGRES_PASSWORD
       - redis.password=sqd
       - redis.url=redis://redis:6379
       - run.mode=staging
@@ -76,6 +76,8 @@ services:
   prometheus:
     image: prom/prometheus:v2.13.0
     container_name: shipreq_dev_prometheus
+    links:
+      - pgexp
     extra_hosts:
      - parent-host:$DOCKER0
     volumes:
@@ -158,3 +160,18 @@ services:
       - GRAFANA_URL=http://grafana:3000
     cpus: 0.1
     mem_limit: 400m
+
+  pgexp:
+    image: wrouesnel/postgres_exporter
+    container_name: shipreq_dev_pgexp
+    ports:
+      - 9187:9187
+    links:
+      - postgres
+    volumes:
+      - ./pgexp.yml:/shipreq-pgexp.yml:ro
+    environment:
+      - DATA_SOURCE_NAME=postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres:5432/$POSTGRES_DB?sslmode=disable
+      - PG_EXPORTER_DISABLE_DEFAULT_METRICS=true
+      - PG_EXPORTER_DISABLE_SETTINGS_METRICS=true
+      - PG_EXPORTER_EXTEND_QUERY_PATH=/shipreq-pgexp.yml
