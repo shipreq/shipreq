@@ -76,7 +76,7 @@ object Common {
       case null | "" => identity
       case envValue =>
         val newTarget = envValue.replaceFirst("/*$", "/")
-        val codePathRegex = "^.+/Code/".r
+        val codePathRegex = "^.+/[cC]ode/".r
         println(s"[info] Redirecting targets to $newTarget")
         oldTarget => {
           val a = oldTarget.getAbsolutePath

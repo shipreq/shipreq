@@ -4,7 +4,12 @@ cd "$(dirname "$(readlink -e "$0")")"/.. || exit 1
 avail_mods="taskman webapp"
 [ $# -eq 0 ] && defargs="$avail_mods"
 
-sbt=(sbt -DMODE=release)
+sbt=(
+  sbt
+  -DMODE=release
+  -Dsbt.server.autostart=false
+)
+
 taskman=0
 webapp=0
 sbt_test=()
