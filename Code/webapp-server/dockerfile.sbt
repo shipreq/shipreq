@@ -6,7 +6,7 @@ dockerfile in docker := {
   val jettyHome = "/jetty"
   val base      = "/shipreq"
   val srcDocker = sourceDirectory.value / "docker"
-  val tmp       = baseDirectory.value / "target/docker" // Docker requires this be under baseDirectory
+  val tmp       = target.value / "docker-prep" // must be distinct from (target in docker)
   val wsjar     = "webapp-server.jar"
   val webXml    = "WEB-INF/web.xml"
 
