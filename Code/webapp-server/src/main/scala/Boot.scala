@@ -37,7 +37,7 @@ class Boot {
   def boot(): Unit = {
     // Read config
     val (cfg, runMode, cfgReport) = readConfig()
-    logger.info(cfgReport.full)
+    logger.info(s"Config report:\n${cfgReport.full}")
     runMode foreach setRunMode
     logger.info(s"RunMode = ${Props.mode}")
 

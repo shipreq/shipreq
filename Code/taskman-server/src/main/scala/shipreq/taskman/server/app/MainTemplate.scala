@@ -14,7 +14,7 @@ private[app] trait MainTemplate extends HasLogger {
     for {
       tmp          <- DbConfig.config.withReport.run(Props.sources).map(_.getOrDie)
       (cfg, report) = tmp
-      _            <- Fx(logger.info(report.full))
+      _            <- Fx(logger.info(s"Config report:\n${report.full}"))
       dbAccess     <- DbAccess.fromCfg(cfg)
       a            <- dbAccess.setupRunShutdown(f(dbAccess))
     } yield a
