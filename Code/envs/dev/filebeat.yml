@@ -20,7 +20,7 @@ filebeat.autodiscover:
         # - add_docker_metadata: ~
 
 output.elasticsearch:
-  hosts: ["elasticsearch:9200"]
+  hosts: '${ES_HOSTS}'
   index: "filebeat-%{+yyyy.MM.dd}"
   compression_level: 3
 
