@@ -1,4 +1,8 @@
 version: '2.4'
+
+volumes:
+  data-prometheus:
+
 services:
 
   postgres:
@@ -71,23 +75,130 @@ services:
     cpus: 2
     mem_limit: 1856m # 2.25*1024 - 448 for Taskman
 
-  prometheus:
-    image: prom/prometheus:v2.13.0
-    container_name: shipreq_dev_prometheus
+  ##################################################################################################
+  # DevOps: Metrics
+
+  node-exporter:
+    image: prom/node-exporter:v0.18.1
+    container_name: shipreq_dev_nodeexp
+    # network_mode: host
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    command:
+      - '--path.rootfs=/rootfs'
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+      # Disable on-by-default collectors
+      #- --no-collector.arp          # Exposes ARP statistics from /proc/net/arp. 	Linux
+      #- --no-collector.bcache       # Exposes bcache statistics from /sys/fs/bcache/. 	Linux
+      - --no-collector.bonding      # Exposes the number of configured and active slaves of Linux bonding interfaces. 	Linux
+      #- --no-collector.boottime     # Exposes system boot time derived from the kern.boottime sysctl. 	Darwin, Dragonfly, FreeBSD, NetBSD, OpenBSD, Solaris
+      #- --no-collector.conntrack    # Shows conntrack statistics (does nothing if no /proc/sys/net/netfilter/ present). 	Linux
+      #- --no-collector.cpu          # Exposes CPU statistics 	Darwin, Dragonfly, FreeBSD, Linux, Solaris
+      #- --no-collector.cpufreq      # Exposes CPU frequency statistics 	Linux, Solaris
+      #- --no-collector.diskstats    # Exposes disk I/O statistics. 	Darwin, Linux, OpenBSD
+      - --no-collector.edac         # Exposes error detection and correction statistics. 	Linux
+      - --no-collector.entropy      # Exposes available entropy. 	Linux
+      #- --no-collector.exec         # Exposes execution statistics. 	Dragonfly, FreeBSD
+      #- --no-collector.filefd       # Exposes file descriptor statistics from /proc/sys/fs/file-nr. 	Linux
+      #- --no-collector.filesystem   # Exposes filesystem statistics, such as disk space used. 	Darwin, Dragonfly, FreeBSD, Linux, OpenBSD
+      #- --no-collector.hwmon        # Expose hardware monitoring and sensor data from /sys/class/hwmon/. 	Linux
+      - --no-collector.infiniband   # Exposes network statistics specific to InfiniBand and Intel OmniPath configurations. 	Linux
+      - --no-collector.ipvs         # Exposes IPVS status from /proc/net/ip_vs and stats from /proc/net/ip_vs_stats. 	Linux
+      #- --no-collector.loadavg      # Exposes load average. 	Darwin, Dragonfly, FreeBSD, Linux, NetBSD, OpenBSD, Solaris
+      #- --no-collector.mdadm        # Exposes statistics about devices in /proc/mdstat (does nothing if no /proc/mdstat present). 	Linux
+      #- --no-collector.meminfo      # Exposes memory statistics. 	Darwin, Dragonfly, FreeBSD, Linux, OpenBSD
+      #- --no-collector.netclass     # Exposes network interface info from /sys/class/net/ 	Linux
+      #- --no-collector.netdev       # Exposes network interface statistics such as bytes transferred. 	Darwin, Dragonfly, FreeBSD, Linux, OpenBSD
+      #- --no-collector.netstat      # Exposes network statistics from /proc/net/netstat. This is the same information as netstat -s. 	Linux
+      - --no-collector.nfs          # Exposes NFS client statistics from /proc/net/rpc/nfs. This is the same information as nfsstat -c. 	Linux
+      - --no-collector.nfsd         # Exposes NFS kernel server statistics from /proc/net/rpc/nfsd. This is the same information as nfsstat -s. 	Linux
+      #- --no-collector.pressure     # Exposes pressure stall statistics from /proc/pressure/. 	Linux (kernel 4.20+ and/or CONFIG_PSI)
+      #- --no-collector.schedstat    # Exposes task scheduler statistics from /proc/schedstat. 	Linux
+      #- --no-collector.sockstat     # Exposes various statistics from /proc/net/sockstat. 	Linux
+      #- --no-collector.stat         # Exposes various statistics from /proc/stat. This includes boot time, forks and interrupts. 	Linux
+      #- --no-collector.textfile     # Exposes statistics read from local disk. The --collector.textfile.directory flag must be set. 	any
+      #- --no-collector.thermal_zone # Exposes thermal zone & cooling device statistics from /sys/class/thermal. 	Linux
+      #- --no-collector.time         # Exposes the current system time. 	any
+      #- --no-collector.timex        # Exposes selected adjtimex(2) system call stats. 	Linux
+      #- --no-collector.uname        # Exposes system information as provided by the uname system call. 	Darwin, FreeBSD, Linux, OpenBSD
+      #- --no-collector.vmstat       # Exposes statistics from /proc/vmstat. 	Linux
+      - --no-collector.xfs          # Exposes XFS runtime statistics. 	Linux (kernel 4.4+)
+      - --no-collector.zfs          # Exposes ZFS performance statistics. 	Linux, Solaris
+      # Enable off-by-default collectors
+      #- --collector.buddyinfo    # Exposes statistics of memory fragments as reported by /proc/buddyinfo. 	Linux
+      #- --collector.devstat      # Exposes device statistics 	Dragonfly, FreeBSD
+      #- --collector.drbd         # Exposes Distributed Replicated Block Device statistics (to version 8.4) 	Linux
+      #- --collector.interrupts   # Exposes detailed interrupts statistics. 	Linux, OpenBSD
+      #- --collector.ksmd         # Exposes kernel and system statistics from /sys/kernel/mm/ksm. 	Linux
+      #- --collector.logind       # Exposes session counts from logind. 	Linux
+      #- --collector.meminfo_numa # Exposes memory statistics from /proc/meminfo_numa. 	Linux
+      #- --collector.mountstats   # Exposes filesystem statistics from /proc/self/mountstats. Exposes detailed NFS client statistics. 	Linux
+      #- --collector.ntp          # Exposes local NTP daemon health to check time 	any
+      #- --collector.perf         # Exposes perf based metrics (Warning: Metrics are dependent on kernel configuration and settings). 	Linux
+      #- --collector.processes    # Exposes aggregate process statistics from /proc. 	Linux
+      #- --collector.qdisc        # Exposes queuing discipline statistics 	Linux
+      #- --collector.runit        # Exposes service status from runit. 	any
+      #- --collector.supervisord  # Exposes service status from supervisord. 	any
+      #- --collector.systemd      # Exposes service and system status from systemd. 	Linux
+      #- --collector.tcpstat      # Exposes TCP connection status information from /proc/net/tcp and /proc/net/tcp6. (Warning: the current version has potential performance issues in high load situations.) 	Linux
+      #- --collector.wifi         # Exposes WiFi device and station statistics. 	Linux
+    mem_limit: 100m
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/google_containers/cadvisor:v0.34.0
+    container_name: shipreq_dev_cadvisor
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /dev/disk/:/dev/disk:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run:/var/run:ro
+    command:
+      - --docker_only
+      # - --docker_env_metadata_whitelist=
+      - --url_base_prefix=/cadvisor
+    mem_limit: 160m
+    restart: unless-stopped
+
+  pgexp:
+    image: wrouesnel/postgres_exporter
+    container_name: shipreq_dev_pgexp
     links:
-      - pgexp
+      - postgres
+    volumes:
+      - ./pgexp.yml:/shipreq-pgexp.yml:ro
+    environment:
+      - DATA_SOURCE_NAME=postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres:5432/$POSTGRES_DB?sslmode=disable
+      - PG_EXPORTER_DISABLE_DEFAULT_METRICS=true
+      - PG_EXPORTER_DISABLE_SETTINGS_METRICS=true
+      - PG_EXPORTER_EXTEND_QUERY_PATH=/shipreq-pgexp.yml
+
+  prometheus:
+    image: prom/prometheus:v2.13.1
+    container_name: shipreq_dev_prometheus
+    user: root
     extra_hosts:
      - parent-host:$DOCKER0
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - data-prometheus:/data
     command:
       - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/data/
+      - --storage.tsdb.retention.time=730d
       - --web.external-url=http://prometheus:9090/prometheus/
     cpus: 2
-    mem_limit: 100m
+    mem_limit: 200m
 
   grafana:
-    image: grafana/grafana:6.4.2
+    image: grafana/grafana:6.4.3
     container_name: shipreq_dev_grafana
     links:
       - prometheus
@@ -97,7 +208,28 @@ services:
       - GF_SERVER_ENABLE_GZIP=true
       - GF_SERVER_DOMAIN=grafana.whatever.com # needed to reverse-proxy
       - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
     cpus: 2
+    mem_limit: 100m
+
+  ##################################################################################################
+  # DevOps: Logging
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat-oss:7.4.1
+    container_name: shipreq_dev_filebeat
+    user: root
+    links:
+      - elasticsearch
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - ES_HOSTS=elasticsearch:9200
+    command:
+      - -e
+      - -strict.perms=false
     mem_limit: 100m
 
   # sudo sysctl -w vm.max_map_count=262144
@@ -118,22 +250,26 @@ services:
       - SERVER_REWRITEBASEPATH=true
     mem_limit: 1g
 
-  filebeat:
-    image: docker.elastic.co/beats/filebeat-oss:7.4.1
-    container_name: shipreq_dev_filebeat
-    user: root
-    links:
-      - elasticsearch
-    volumes:
-      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+  ##################################################################################################
+  # DevOps: Other
+
+  portal:
+    image: shipreq/ops/portal
+    container_name: shipreq_dev_portal
+    ports:
+      - $PORT_PORTAL:80
     environment:
-      - ES_HOSTS=elasticsearch:9200
-    command:
-      - -e
-      - -strict.perms=false
-    mem_limit: 100m
+      - CADVISOR_URL=http://cadvisor:8080
+      - DNS_TTL=10s
+      - GRAFANA_URL=http://grafana:3000
+      - JAEGER_URL=http://localhost:$PORT_JAEGER_HTTP
+      - KIBANA_URL=http://kibana:5601
+      - PROMETHEUS_URL=http://prometheus:9090
+      - SHIPREQ_ENV=dev
+      - SHIPREQ_URL_HTTP=http://shipreq.com:$PORT_SHIPREQ_WEBAPP_HTTP
+      - SHIPREQ_URL=https://shipreq.com:$PORT_SHIPREQ_WEBAPP_HTTPS
+    cpus: 0.1
+    mem_limit: 400m
 
   # You wouldn't do this in prod - it uses in-memory storage
   jaeger:
@@ -143,39 +279,3 @@ services:
       - $PORT_JAEGER_HTTP:16686
       - $PORT_JAEGER_COLLECTOR:14268
     mem_limit: 200m
-
-  portal:
-    image: shipreq/ops/portal
-    container_name: shipreq_dev_portal
-    ports:
-      - $PORT_PORTAL:80
-    links:
-      - prometheus
-      - grafana
-      - kibana
-    environment:
-      - SHIPREQ_ENV=dev
-      - SHIPREQ_URL=https://shipreq.com:$PORT_SHIPREQ_WEBAPP_HTTPS
-      - SHIPREQ_URL_HTTP=http://shipreq.com:$PORT_SHIPREQ_WEBAPP_HTTP
-      - JAEGER_URL=http://localhost:$PORT_JAEGER_HTTP
-      - KIBANA_URL=http://kibana:5601
-      - DNS_TTL=10s
-      - PROMETHEUS_URL=http://prometheus:9090
-      - GRAFANA_URL=http://grafana:3000
-    cpus: 0.1
-    mem_limit: 400m
-
-  pgexp:
-    image: wrouesnel/postgres_exporter
-    container_name: shipreq_dev_pgexp
-    ports:
-      - 9187:9187
-    links:
-      - postgres
-    volumes:
-      - ./pgexp.yml:/shipreq-pgexp.yml:ro
-    environment:
-      - DATA_SOURCE_NAME=postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres:5432/$POSTGRES_DB?sslmode=disable
-      - PG_EXPORTER_DISABLE_DEFAULT_METRICS=true
-      - PG_EXPORTER_DISABLE_SETTINGS_METRICS=true
-      - PG_EXPORTER_EXTEND_QUERY_PATH=/shipreq-pgexp.yml

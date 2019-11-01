@@ -4,12 +4,15 @@ set -euo pipefail
 cd /root
 
 # Remove trailing slashes
-PROMETHEUS_URL=${PROMETHEUS_URL%/}
+CADVISOR_URL=${CADVISOR_URL%/}
 GRAFANA_URL=${GRAFANA_URL%/}
+KIBANA_URL=${KIBANA_URL%/}
+PROMETHEUS_URL=${PROMETHEUS_URL%/}
 
 export DNS_IP="$(cat /etc/resolv.conf | egrep ' *nameserver ' | head -1 | sed 's/\s*\S\S*\s*//; s/\s.*//')"
 
 vars=(
+  CADVISOR_URL
   DNS_IP
   DNS_TTL
   GRAFANA_URL

@@ -5,9 +5,15 @@
 <title>ShipReq Portal: ${SHIPREQ_ENV}</title>
 <style>
     body {
-        width: 35em;
+        width: 32em;
         margin: 0 auto;
         font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+    h1 {
+      margin-bottom: 2em;
+    }
+    body > ul > li {
+      margin-bottom: 1em;
     }
     li {
       line-height: 170%;
@@ -19,13 +25,44 @@
 <h1>ShipReq Portal: ${SHIPREQ_ENV}</h1>
 
 <ul>
-  <li><a href="$SHIPREQ_URL">ShipReq</a></li>
-  <li><a href="$SHIPREQ_URL_HTTP">ShipReq (HTTP)</a></li>
-  <li><a href="/_plugin/kibana/">Kibana</a></li>
-  <li><a href="/prometheus/">Prometheus</a></li>
-  <li><a href="/grafana/">Grafana</a></li>
-  <li><a href="$JAEGER_URL">Jaeger</a></li>
+
+  <li>
+    App
+    <ul>
+      <li><a href="$SHIPREQ_URL">ShipReq</a></li>
+      <li><a href="$SHIPREQ_URL_HTTP">ShipReq (HTTP)</a></li>
+    </ul>
+  </li>
+
+  <li>
+    Logging
+    <ul>
+      <li><a href="/_plugin/kibana/">Kibana</a></li>
+    </ul>
+  </li>
+
+  <li>
+    Metrics
+    <ul>
+      <li><a href="/cadvisor/">cAdvisor</a></li>
+      <li><a href="/prometheus/">Prometheus</a></li>
+      <li><a href="/grafana/">Grafana</a></li>
+    </ul>
+  </li>
+
+  <li id=tracing>
+    Tracing
+    <ul>
+      <li><a href="$JAEGER_URL">Jaeger</a></li>
+    </ul>
+  </li>
+
 </ul>
+
+<script>
+  if (!"$JAEGER_URL")
+    document.getElementById("tracing").remove();
+</script>
 
 </body>
 </html>
