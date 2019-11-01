@@ -15,6 +15,7 @@ module "shipreq" {
   name                                      = "Dev"
   vpc_ip_prefix                             = "10.0"
   availability_zone                         = "ap-southeast-2b"
+  availability_zone_2                       = "ap-southeast-2c"
   bastion_public_key                        = file("key-bastion.rsa.pub")
   nat_public_key                            = file("key-nat.rsa.pub")
   app_public_key                            = file("key-app.rsa.pub")
@@ -30,6 +31,10 @@ module "shipreq" {
   elasticsearch_volume_size                 = 10
   shipreq_webapp_keystore_filename          = "../../../Secrets/ssl/keystore"
   shipreq_webapp_ssl_passwords_ini_filename = "../../../Secrets/ssl/ssl-passwords.ini"
+  postgres_instance_type                    = "db.t3.micro"
+  postgres_root_password                    = "dev-1234"
+  postgres_deletion_protection              = false
+  postgres_backup_retention_period          = 0
 }
 
 output "bastion_host" {

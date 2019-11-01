@@ -39,6 +39,15 @@ EOB
 systemctl restart sshd
 
 ####################################################################################################
+# Postgres
+
+amazon-linux-extras install -y postgresql11
+cat >> ~ec2-user/.bashrc << 'EOB'
+  alias postgres='psql -h ${POSTGRES_DOMAIN} postgres'
+EOB
+
+
+####################################################################################################
 # Docker
 
 amazon-linux-extras install -y docker

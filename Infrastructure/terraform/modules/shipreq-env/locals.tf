@@ -26,4 +26,5 @@ locals {
   prometheus_host      = "${local.prometheus_subdomain}.${local.internal_sd_domain}"
   prometheus_url       = "http://${local.prometheus_host}:${local.prometheus_port}"
 
+  postgres_domain = "postgres.${local.internal_domain}"
 }

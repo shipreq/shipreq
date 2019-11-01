@@ -24,6 +24,11 @@ variable "availability_zone" {
   type = string
 }
 
+variable "availability_zone_2" {
+  description = "Secondary AZ required for RDS"
+  type        = string
+}
+
 variable "bastion_public_key" {
   type = string
 }
@@ -93,4 +98,27 @@ variable "shipreq_webapp_keystore_filename" {
 variable "shipreq_webapp_ssl_passwords_ini_filename" {
   description = "Path to the ssl-passwords.ini"
   type        = string
+}
+
+variable "postgres_instance_type" {
+  description = "EC2 instance type for Postgres"
+  type        = string
+}
+
+variable "postgres_root_password" {
+  type = string
+}
+
+variable "postgres_deletion_protection" {
+  type = bool
+}
+
+variable "postgres_backup_retention_period" {
+  type = number
+}
+
+variable "postgres_final_snapshot" {
+  description = "The name of the final snapshot when the DB instance is deleted"
+  type        = string
+  default     = ""
 }
