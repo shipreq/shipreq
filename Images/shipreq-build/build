@@ -3,8 +3,4 @@ cd "$(dirname "$0")" || exit 1
 
 set -e
 
-IMAGE_NAME=shipreq/build
-
-exec docker build \
-  -t "$IMAGE_NAME:latest" \
-  .
+exec docker build -t shipreq/build:latest .

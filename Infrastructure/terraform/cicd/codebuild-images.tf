@@ -1,7 +1,7 @@
-resource "aws_codebuild_project" "shipreq_build" {
-  name         = "shipreq_build"
-  description  = "Docker image: shipreq/build"
-  service_role = aws_iam_role.shipreq_build.arn
+resource "aws_codebuild_project" "images" {
+  name         = "images"
+  description  = "All docker images built from Dockerfiles"
+  service_role = aws_iam_role.images.arn
   tags         = local.default_tags
 
   environment {
@@ -11,7 +11,17 @@ resource "aws_codebuild_project" "shipreq_build" {
     privileged_mode = true
 
     environment_variable {
-      name  = "IMAGE_URL"
+      name  = "OPS_PORTAL_URL"
+      value = data.aws_ecr_repository.shipreq_ops_portal.repository_url
+    }
+
+    environment_variable {
+      name  = "SHIPREQ_BASE_URL"
+      value = data.aws_ecr_repository.shipreq_base.repository_url
+    }
+
+    environment_variable {
+      name  = "SHIPREQ_BUILD_URL"
       value = aws_ecr_repository.shipreq_build.repository_url
     }
   }
@@ -20,7 +30,7 @@ resource "aws_codebuild_project" "shipreq_build" {
     type            = "CODECOMMIT"
     location        = aws_codecommit_repository.shipreq.clone_url_http
     git_clone_depth = 1
-    buildspec       = "Images/shipreq-build/buildspec.yml"
+    buildspec       = "Images/all/buildspec.yml"
   }
 
   artifacts {
@@ -28,31 +38,8 @@ resource "aws_codebuild_project" "shipreq_build" {
   }
 }
 
-resource "aws_cloudwatch_log_group" "shipreq_build" {
-  name = "/aws/codebuild/shipreq_build"
-  tags = local.default_tags
-}
-
-resource "aws_iam_role" "shipreq_build" {
-  name = "codebuild-shipreq_build"
-  tags = local.default_tags
-
-  assume_role_policy = <<EOB
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": { "Service": "codebuild.amazonaws.com" },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-EOB
-}
-
-resource "aws_iam_role_policy" "shipreq_build" {
-  role = aws_iam_role.shipreq_build.name
+resource "aws_iam_role_policy" "images" {
+  role = aws_iam_role.images.name
 
   policy = <<EOB
 {
@@ -61,8 +48,8 @@ resource "aws_iam_role_policy" "shipreq_build" {
     {
       "Effect": "Allow",
       "Resource": [
-        "${aws_cloudwatch_log_group.shipreq_build.arn}",
-        "${aws_cloudwatch_log_group.shipreq_build.arn}/*"
+        "${aws_cloudwatch_log_group.images.arn}",
+        "${aws_cloudwatch_log_group.images.arn}/*"
       ],
       "Action": [
         "logs:CreateLogStream",
@@ -71,7 +58,11 @@ resource "aws_iam_role_policy" "shipreq_build" {
     },
     {
       "Effect": "Allow",
-      "Resource": [ "${aws_ecr_repository.shipreq_build.arn}" ],
+      "Resource": [
+        "${data.aws_ecr_repository.shipreq_ops_portal.arn}",
+        "${data.aws_ecr_repository.shipreq_base.arn}",
+        "${aws_ecr_repository.shipreq_build.arn}"
+      ],
       "Action": [
         "ecr:BatchCheckLayerAvailability",
         "ecr:BatchGetImage",
@@ -95,4 +86,27 @@ resource "aws_iam_role_policy" "shipreq_build" {
   ]
 }
 EOB
+}
+
+resource "aws_iam_role" "images" {
+  name = "codebuild-images"
+  tags = local.default_tags
+
+  assume_role_policy = <<EOB
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "Service": "codebuild.amazonaws.com" },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOB
+}
+
+resource "aws_cloudwatch_log_group" "images" {
+  name = "/aws/codebuild/images"
+  tags = local.default_tags
 }

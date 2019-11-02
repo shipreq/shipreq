@@ -1,7 +1,5 @@
 FROM amazonlinux:2
 
-ARG GRAAL_VERSION
-
 #========#
 # System #
 #========#
@@ -29,6 +27,8 @@ RUN yum update -y \
 #=======#
 # Graal #
 #=======#
+
+ENV GRAAL_VERSION=19.2.1
 
 # Most deletions taken from docker-alpine-java
 RUN cd /opt \
