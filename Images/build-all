@@ -21,7 +21,7 @@ for arg in "$@"; do
 done
 
 # Prepare globals
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")"
 images_root_dir="$(pwd)"
 git_sha="$(git rev-parse --verify HEAD)"
 echo "images_root_dir = $images_root_dir"

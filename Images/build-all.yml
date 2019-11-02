@@ -10,4 +10,4 @@ phases:
       - $(aws ecr get-login --no-include-email --region $AWS_REGION)
   build:
     commands:
-      - Images/all/build
+      - Images/build-all

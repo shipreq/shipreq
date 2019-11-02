@@ -13,4 +13,4 @@ export            OPS_PORTAL_URL="shipreq/ops/portal"
 export          SHIPREQ_BASE_URL="shipreq/base"
 export         SHIPREQ_BUILD_URL="shipreq/build"
 
-exec ./build --no-push
+exec ./build-all --no-push

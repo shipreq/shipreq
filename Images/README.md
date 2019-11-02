@@ -1,8 +1,17 @@
-Contents
+Building
 ========
 
-* `all` - Not actually an image, but scripts and CodeBuild YML to (efficiently) build all images in this directory.
-          Tags images based on both Git SHA and src content.
+This is built on AWS. Trigger it via:
+
+    aws codebuild start-build --project-name images
+
+You can also do a local build by running:
+
+    ./build-all-local
+
+
+Contents
+========
 
 * `ops-portal` - Web server that serves a portal for ops staff, and reverse-proxied access to ops services.
 
@@ -13,6 +22,10 @@ Contents
 
 Strategy
 ========
+
+* All Images are tagged with `git-<sha>`
+
+* Images under this directory are tagged with a source content hash: `src-<md5>`
 
 * In Production (and therefore all non-prod envs too), task definitions will only refer to docker images in internal
   ECRs for the following reasons:
