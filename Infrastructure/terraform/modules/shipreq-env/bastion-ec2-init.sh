@@ -68,21 +68,30 @@ chmod 755 /usr/bin/redis-cli
 docker pull bitnami/redis:${REDIS_VER}
 
 ####################################################################################################
-# Start portal
+# Portal
 
 $(aws ecr get-login --no-include-email --region ap-southeast-2)
 
+cat > /usr/bin/portal-run << 'EOB'
+#!/bin/bash
+docker pull ${PORTAL_IMAGE}
 docker run \
   -d \
   --restart unless-stopped \
   -p 8000:80 \
+  -e CADVISOR_URL=TODO \
   -e DNS_TTL=${DNS_TTL} \
-  -e SHIPREQ_ENV=${ENV_NAME} \
-  -e SHIPREQ_URL=TODO \
-  -e SHIPREQ_URL_HTTP=TODO \
-  -e PROMETHEUS_URL=${PROMETHEUS_URL} \
   -e GRAFANA_URL=TODO \
-  -e KIBANA_URL=${KIBANA_URL} \
   -e JAEGER_URL= \
+  -e KIBANA_URL=${KIBANA_URL} \
+  -e PROMETHEUS_URL=${PROMETHEUS_URL} \
+  -e SHIPREQ_ENV=${ENV_NAME} \
+  -e SHIPREQ_URL_HTTP=TODO \
+  -e SHIPREQ_URL=TODO \
   --name portal \
   ${PORTAL_IMAGE}
+EOB
+
+chmod 700 /usr/bin/portal-run
+
+/usr/bin/portal-run
