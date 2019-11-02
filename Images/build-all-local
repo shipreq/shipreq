@@ -3,9 +3,9 @@ cd "$(dirname "$0")" || exit 1
 
 export PULL_REPO=930801536115.dkr.ecr.ap-southeast-2.amazonaws.com
 
-# export          OPS_CADVISOR_URL="shipreq/ops/cadvisor"
+export          OPS_CADVISOR_URL="shipreq/ops/cadvisor"
 export           OPS_GRAFANA_URL="shipreq/ops/grafana"
-# export     OPS_NODE_EXPORTER_URL="shipreq/ops/node_exporter"
+export     OPS_NODE_EXPORTER_URL="shipreq/ops/node_exporter"
 export            OPS_PORTAL_URL="shipreq/ops/portal"
 # export OPS_POSTGRES_EXPORTER_URL="shipreq/ops/postgres_exporter"
 # export    OPS_PROMETHEUS_BIZ_URL="shipreq/ops/prometheus-biz"
