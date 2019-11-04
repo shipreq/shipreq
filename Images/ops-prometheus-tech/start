@@ -1,0 +1,17 @@
+#!/bin/sh
+
+cat /root/prometheus.yml.tempalte | sed "
+  s/\${SCRAPE_INTERVAL}/${SCRAPE_INTERVAL}/;
+" > /etc/prometheus/prometheus.yml
+
+echo "----------------------------------------------------------------------------"
+cat /etc/prometheus/prometheus.yml
+echo "----------------------------------------------------------------------------"
+
+CMD=/bin/prometheus
+CMD="$CMD --config.file=/etc/prometheus/prometheus.yml"
+CMD="$CMD --storage.tsdb.path=/data/"
+CMD="$CMD --web.external-url=http://prometheus:9090/prometheus/tech/"
+
+echo "> $CMD $@"
+exec $CMD "$@"

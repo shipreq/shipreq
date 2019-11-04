@@ -1,0 +1,9 @@
+global:
+  scrape_interval: ${SCRAPE_INTERVAL}
+
+scrape_configs:
+
+  - job_name: 'prometheus-tech'
+    metrics_path: '/prometheus/tech/metrics'
+    static_configs:
+      - targets: ['localhost:9090']

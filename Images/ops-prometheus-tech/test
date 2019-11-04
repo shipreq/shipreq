@@ -1,0 +1,22 @@
+#!/bin/bash
+set -euo pipefail
+cd "$(dirname "$0")"
+
+docker build -t shipreq/ops/prometheus-tech .
+
+vol=/tmp/ops-prometheus-tech.vol
+mkdir -p $vol
+
+cmd=(
+  docker run
+  --rm
+  -v $vol:/data
+  -e SCRAPE_INTERVAL=15s
+  -p 9090:9090
+  shipreq/ops/prometheus-tech
+  --storage.tsdb.retention.time=2y
+)
+
+echo "> ${cmd[@]}"
+echo
+exec "${cmd[@]}"
