@@ -42,7 +42,6 @@ digraph {
           label="RDS" fillcolor=lightskyblue1 style="filled,rounded"
           node [fillcolor="#fff8f0"]
           rds_shipreq [label="shipreq"]
-          rds_taskman [label="taskman"]
           rds_grafana [label="grafana"]
         }
 
@@ -63,7 +62,7 @@ digraph {
   subnet_private -> docker_webapp,docker_taskman [style=invis]
   // docker_webapp,docker_taskman -> docker_filebeatA,docker_nodeexpA,docker_cadvisorA [style=invis]
   docker_prometheus_busi,docker_prometheus_tech -> docker_filebeatO,docker_nodeexpO,docker_cadvisorO [style=invis]
-  // rds_shipreq,rds_taskman -> rds_grafana [style=invis]
+  // rds_shipreq -> rds_grafana [style=invis]
 
   edge [color=red]
   internet -> dns_shipreq -> elb_webapp
@@ -71,6 +70,8 @@ digraph {
   elb_webapp -> docker_webapp
   bastion -> subnet_private
   subnet_private -> es,docker_grafana,docker_prometheus_tech,docker_prometheus_busi [style=dashed]
+  subnet_private -> docker_cadvisorO [style=dashed]
+  // subnet_private -> docker_cadvisorA [style=dashed constraint=false]
 
   edge [color=blue]
   internet -> nat [dir=back]
@@ -78,8 +79,8 @@ digraph {
 
   edge [color=green]
   rds_grafana -> docker_grafana [dir=back]
-  docker_webapp -> redis,rds_shipreq,rds_taskman,s3_webapp
-  docker_taskman -> rds_taskman
+  docker_webapp -> redis,rds_shipreq,s3_webapp
+  docker_taskman -> rds_shipreq
   docker_prometheus_tech -> ebs_prometheus_tech
   docker_prometheus_busi -> ebs_prometheus_busi
   docker_grafana -> docker_prometheus_tech,docker_prometheus_busi
@@ -88,5 +89,5 @@ digraph {
   docker_filebeatA -> es
   es -> docker_filebeatO [dir=back]
   docker_webapp,docker_taskman,docker_nodeexpA,docker_nodeexpO,docker_cadvisorA,docker_cadvisorO -> docker_prometheus_tech [dir=back]
-  rds_shipreq,rds_taskman -> docker_db_metrics -> docker_prometheus_busi [dir=back]
+  rds_shipreq -> docker_db_metrics -> docker_prometheus_busi [dir=back]
 }
