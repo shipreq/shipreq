@@ -193,7 +193,7 @@ services:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/data/
       - --storage.tsdb.retention.time=730d
-      - --web.external-url=http://prometheus:9090/prometheus/
+      - --web.external-url=http://prometheus:9090/prometheus/tech/
     cpus: 2
     mem_limit: 200m
 
@@ -203,7 +203,7 @@ services:
     links:
       - prometheus
     environment:
-      - PROMETHEUS_TECH_URL=http://prometheus:9090/prometheus
+      - PROMETHEUS_TECH_URL=http://prometheus:9090/prometheus/tech
       - PROMETHEUS_BIZ_URL=http://todo
     cpus: 2
     mem_limit: 100m
@@ -260,7 +260,8 @@ services:
       - GRAFANA_URL=http://grafana:3000
       - JAEGER_URL=http://localhost:$PORT_JAEGER_HTTP
       - KIBANA_URL=http://kibana:5601
-      - PROMETHEUS_URL=http://prometheus:9090
+      - PROMETHEUS_TECH_URL=http://prometheus:9090
+      - PROMETHEUS_BIZ_URL=http://todo
       - SHIPREQ_ENV=dev
       - SHIPREQ_URL_HTTP=http://shipreq.com:$PORT_SHIPREQ_WEBAPP_HTTP
       - SHIPREQ_URL=https://shipreq.com:$PORT_SHIPREQ_WEBAPP_HTTPS

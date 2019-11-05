@@ -12,8 +12,8 @@ scrape_configs:
     static_configs:
       - targets: ['cadvisor:8080']
 
-  - job_name: 'prometheus'
-    metrics_path: '/prometheus/metrics'
+  - job_name: 'prometheus-tech'
+    metrics_path: '/prometheus/tech/metrics'
     static_configs:
       - targets: ['localhost:9090']
 

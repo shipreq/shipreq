@@ -11,7 +11,8 @@ docker run --rm \
   -e GRAFANA_URL=http://grafana:3000 \
   -e JAEGER_URL= \
   -e KIBANA_URL=http://kibana:5601 \
-  -e PROMETHEUS_URL=http://prometheus:9090/ \
+  -e PROMETHEUS_TECH_URL=http://tech.prometheus:9090/ \
+  -e PROMETHEUS_BIZ_URL=http://biz.prometheus:9091/ \
   -e SHIPREQ_ENV=test \
   -e SHIPREQ_URL_HTTP=http://shipreq.localhost \
   -e SHIPREQ_URL=https://shipreq.localhost \
