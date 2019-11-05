@@ -34,4 +34,5 @@ cat <<'EOB' >> /etc/ecs/ecs.config
 ECS_CLUSTER=${cluster}
 EOB
 
-${install_prometheus_ebs}
+${install_prometheus_tech_ebs}
+${install_prometheus_biz_ebs}

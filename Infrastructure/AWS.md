@@ -32,6 +32,15 @@ activated the `env` tags for cost allocation.
 4. Save
 5. Repeat for other regions
 
+### Enable AWSVPC trunking
+
+1. Log in to AWS
+2. ECS -> Account Settings
+3. In the _AWSVPC Trunking_ section, tick the box
+4. Save
+5. Repeat for other regions
+
+
 User / Local Env Setup
 ======================
 

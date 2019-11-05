@@ -122,3 +122,28 @@ variable "postgres_final_snapshot" {
   type        = string
   default     = ""
 }
+
+variable "ops_images_tag" {
+  description = "The docker tag for all ops images. Eg. `git-<sha>` or `latest`"
+  type        = string
+}
+
+variable "prometheus_tech_ebs_size" {
+  description = "The size in GB of EBS volumes per Prometheus (tech) task"
+  type        = number
+}
+
+variable "prometheus_biz_ebs_size" {
+  description = "The size in GB of EBS volumes per Prometheus (biz) task"
+  type        = number
+}
+
+variable "prometheus_tech_retention" {
+  description = "Either 'size=xxx' or 'time=xxx'. See https://prometheus.io/docs/prometheus/latest/storage/"
+  type        = string
+}
+
+variable "prometheus_biz_retention" {
+  description = "Either 'size=xxx' or 'time=xxx'. See https://prometheus.io/docs/prometheus/latest/storage/"
+  type        = string
+}

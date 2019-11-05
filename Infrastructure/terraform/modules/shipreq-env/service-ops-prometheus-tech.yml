@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 30s
+
+scrape_configs:
+
+  - job_name: 'prometheus-tech'
+    metrics_path: '/prometheus/tech/metrics'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # - job_name: 'prometheus-biz'
+  #   metrics_path: '/prometheus/biz/metrics'
+  #   static_configs:
+  #     - targets: ['localhost:9090']
+
+  # - job_name: 'node-exporter'
+  #   static_configs:
+  #     - targets: ['node-exporter:9100']
+
+  # - job_name: 'cadvisor'
+  #   metrics_path: '/cadvisor/metrics'
+  #   static_configs:
+  #     - targets: ['cadvisor:8080']
+
+  # - job_name: 'webapp-dev'
+  #   metrics_path: '/ops/metrics'
+  #   static_configs:
+  #     - targets: ['webapp:8080']

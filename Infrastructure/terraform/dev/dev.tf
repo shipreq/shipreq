@@ -35,6 +35,11 @@ module "shipreq" {
   postgres_root_password                    = "dev-1234"
   postgres_deletion_protection              = false
   postgres_backup_retention_period          = 0
+  ops_images_tag                            = "latest"
+  prometheus_tech_ebs_size                  = 4
+  prometheus_tech_retention                 = "time=12w"
+  prometheus_biz_ebs_size                   = 1
+  prometheus_biz_retention                  = "time=10y"
 }
 
 output "bastion_host" {
