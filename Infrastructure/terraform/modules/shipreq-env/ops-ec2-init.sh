@@ -36,3 +36,4 @@ EOB
 
 ${install_prometheus_tech_ebs}
 ${install_prometheus_biz_ebs}
+${ec2_service_discovery}

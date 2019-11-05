@@ -10,23 +10,11 @@ resource "aws_ecs_service" "prometheus_tech" {
   propagate_tags  = "SERVICE"
   tags            = local.prometheus_tech_tags
 
-  # Service discovery requires an ENI per service but there's a small ENI/instanceType limit that we exceed.
-  # Therefore, prometheus-tech will register itself on behalf of the entire ops cluster
-  service_registries {
-    registry_arn = aws_service_discovery_service.ops.arn
-  }
-
-  network_configuration {
-    subnets         = [aws_subnet.private.id]
-    security_groups = [aws_security_group.prometheus_tech.id]
-  }
-
   # TODO health check
 }
 
 resource "aws_ecs_task_definition" "prometheus_tech" {
   family        = "${var.env}-ops-prometheus-tech"
-  network_mode  = "awsvpc"
   task_role_arn = aws_iam_role.prometheus_tech_task.arn
   tags          = local.prometheus_tech_tags
 
@@ -87,26 +75,6 @@ module "ecs_ebs_prometheus_tech" {
       count             = 1
     }
   ]
-}
-
-resource "aws_security_group" "prometheus_tech" {
-  name   = "sg_${var.env}_ops_prometheus_tech"
-  vpc_id = aws_vpc.main.id
-  tags   = local.prometheus_tech_tags
-
-  ingress {
-    protocol        = "tcp"
-    from_port       = local.prometheus_tech_port
-    to_port         = local.prometheus_tech_port
-    security_groups = [aws_security_group.bastion.id]
-  }
-
-  egress {
-    protocol    = "tcp"
-    from_port   = 0
-    to_port     = 0
-    cidr_blocks = [aws_subnet.private.cidr_block]
-  }
 }
 
 resource "aws_iam_role" "prometheus_tech_task" {

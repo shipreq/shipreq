@@ -50,6 +50,7 @@ resource "aws_launch_template" "ops" {
     cluster                     = aws_ecs_cluster.ops.name
     install_prometheus_tech_ebs = module.ecs_ebs_prometheus_tech.user_data
     install_prometheus_biz_ebs  = module.ecs_ebs_prometheus_biz.user_data
+    ec2_service_discovery       = module.ops_ec2_sd.user_data
   })))
 
   tag_specifications {
@@ -120,20 +121,14 @@ resource "aws_iam_role_policy_attachment" "ops-ecs-ec2" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
 
-resource "aws_service_discovery_service" "ops" {
-  name = local.ops_subdomain
+# Service discovery requires an ENI per service but there's a small ENI/instanceType limit that we exceed.
+# Therefore, we use EC2 service discovery.
+module "ops_ec2_sd" {
+  source = "../ec2-sd"
 
-  dns_config {
-    namespace_id   = aws_service_discovery_private_dns_namespace.internal.id
-    routing_policy = "MULTIVALUE"
-
-    dns_records {
-      ttl  = 30
-      type = "A"
-    }
-  }
-
-  health_check_custom_config {
-    failure_threshold = 1
-  }
+  ec2_name_tag    = local.ops_tags.Name
+  ec2_role_name   = aws_iam_role.ops-ecs.name
+  name            = "${var.env}-ops"
+  sd_name         = local.ops_subdomain
+  sd_namespace_id = aws_service_discovery_private_dns_namespace.internal.id
 }

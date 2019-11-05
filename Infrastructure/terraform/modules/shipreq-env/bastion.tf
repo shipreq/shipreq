@@ -91,8 +91,8 @@ EOB
 }
 
 resource "aws_iam_role_policy_attachment" "bastion" {
-  role       = "${aws_iam_role.bastion.name}"
-  policy_arn = "${aws_iam_policy.bastion.arn}"
+  role       = aws_iam_role.bastion.name
+  policy_arn = aws_iam_policy.bastion.arn
 }
 
 resource "aws_iam_policy" "bastion" {

@@ -21,8 +21,6 @@ locals {
   redis_domain  = "redis.${local.internal_domain}"
   redis_version = "5.0.5"
 
-  # Service discovery requires an ENI per service but there's a small ENI/instanceType limit that we exceed.
-  # Therefore, prometheus-tech will register itself on behalf of the entire ops cluster
   ops_subdomain = "ops"
   ops_host      = "${local.ops_subdomain}.${local.internal_sd_domain}"
 

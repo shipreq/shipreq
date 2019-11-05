@@ -87,7 +87,7 @@ resource "aws_iam_role" "prometheus_biz_task" {
       {
           "Action": "sts:AssumeRole",
           "Principal": {
-             "Service": "ecs-tasks.amazonaws.com"
+            "Service": "ecs-tasks.amazonaws.com"
           },
           "Effect": "Allow",
           "Sid": ""
