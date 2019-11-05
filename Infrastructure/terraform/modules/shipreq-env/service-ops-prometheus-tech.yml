@@ -1,5 +1,5 @@
 global:
-  scrape_interval: 30s
+  scrape_interval: ${PROMETHEUS_TECH_SCRAPE_INTERVAL}
 
 scrape_configs:
 

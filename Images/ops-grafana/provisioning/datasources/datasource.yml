@@ -8,6 +8,8 @@ datasources:
   url: ${PROMETHEUS_TECH_URL}
   basicAuth: false
   isDefault: true
+  jsonData:
+    timeInterval: '${PROMETHEUS_TECH_SCRAPE_INTERVAL}'
 
 - name: Prometheus (biz)
   type: prometheus
@@ -15,3 +17,5 @@ datasources:
   url: ${PROMETHEUS_BIZ_URL}
   basicAuth: false
   isDefault: false
+  jsonData:
+    timeInterval: '${PROMETHEUS_BIZ_SCRAPE_INTERVAL}'

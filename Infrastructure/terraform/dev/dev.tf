@@ -38,8 +38,10 @@ module "shipreq" {
   ops_images_tag                            = "latest"
   prometheus_tech_ebs_size                  = 4
   prometheus_tech_retention                 = "time=12w"
+  prometheus_tech_scrape_interval           = "30s"
   prometheus_biz_ebs_size                   = 1
   prometheus_biz_retention                  = "time=10y"
+  prometheus_biz_scrape_interval            = "2m"
 }
 
 output "bastion_host" {

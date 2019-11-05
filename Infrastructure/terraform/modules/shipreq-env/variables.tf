@@ -147,3 +147,11 @@ variable "prometheus_biz_retention" {
   description = "Either 'size=xxx' or 'time=xxx'. See https://prometheus.io/docs/prometheus/latest/storage/"
   type        = string
 }
+
+variable "prometheus_tech_scrape_interval" {
+  type = string
+}
+
+variable "prometheus_biz_scrape_interval" {
+  type = string
+}
