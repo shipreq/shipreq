@@ -7,3 +7,5 @@ VOLUME /data
 ENTRYPOINT ["/root/start"]
 CMD []
 COPY ./start /root/start
+
+EXPOSE 9091

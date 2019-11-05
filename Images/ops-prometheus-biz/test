@@ -14,7 +14,7 @@ scrape_configs:
   - job_name: 'prometheus-biz'
     metrics_path: '/prometheus/biz/metrics'
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ['localhost:9091']
 "
 
 cmd=(
@@ -22,7 +22,7 @@ cmd=(
   --rm
   -v $vol:/data
   -e CONFIG="$CONFIG"
-  -p 9091:9090
+  -p 9091:9091
   shipreq/ops/prometheus-biz
   --storage.tsdb.retention.time=2y
 )
