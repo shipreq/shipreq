@@ -64,7 +64,7 @@ function build_and_deploy {
   fi
 
   image_exists=yes
-  x="$(docker inspect "${image_by_md5}" || true)"
+  x="$(docker inspect "${pull_repo_prefix}${image_by_md5}" || true)"
   [ "$x" = '[]' ] && image_exists=no
   echo "image_exists = $image_exists"
 
@@ -79,8 +79,8 @@ function build_and_deploy {
       .
   else
     echo "No need to build. Retagging..."
-    runcmd docker tag "${image_by_md5}" "${image_by_git}"
-    runcmd docker tag "${image_by_md5}" "${image_latest}"
+    runcmd docker tag "${pull_repo_prefix}${image_by_md5}" "${image_by_git}"
+    runcmd docker tag "${pull_repo_prefix}${image_by_md5}" "${image_latest}"
   fi
 
   if [ $push = yes ]; then
