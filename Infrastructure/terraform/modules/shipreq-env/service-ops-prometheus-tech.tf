@@ -1,5 +1,12 @@
 locals {
   prometheus_tech_tags = merge(local.default_tags, { Name = "${var.env}-prometheus-tech" })
+
+  config_yml = templatefile("${path.module}/service-ops-prometheus-tech.yml", {
+    PROMETHEUS_TECH_HOST = local.prometheus_tech_host
+    PROMETHEUS_TECH_PORT = local.prometheus_tech_port
+    PROMETHEUS_BIZ_HOST  = local.prometheus_biz_host
+    PROMETHEUS_BIZ_PORT  = local.prometheus_biz_port
+  })
 }
 
 resource "aws_ecs_service" "prometheus_tech" {
@@ -34,7 +41,7 @@ resource "aws_ecs_task_definition" "prometheus_tech" {
     "environment": [
       {
         "name": "CONFIG",
-        "value": ${jsonencode(templatefile("${path.module}/service-ops-prometheus-tech.yml", {}))}
+        "value": ${jsonencode(local.config_yml)}
       }
     ],
     "command": [

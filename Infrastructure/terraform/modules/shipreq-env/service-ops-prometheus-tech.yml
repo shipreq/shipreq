@@ -5,13 +5,17 @@ scrape_configs:
 
   - job_name: 'prometheus-tech'
     metrics_path: '/prometheus/tech/metrics'
-    static_configs:
-      - targets: ['localhost:9090']
+    dns_sd_configs:
+      - names: [ '${PROMETHEUS_TECH_HOST}' ]
+        type: 'A'
+        port: ${PROMETHEUS_TECH_PORT}
 
-  # - job_name: 'prometheus-biz'
-  #   metrics_path: '/prometheus/biz/metrics'
-  #   static_configs:
-  #     - targets: ['localhost:9090']
+  - job_name: 'prometheus-biz'
+    metrics_path: '/prometheus/biz/metrics'
+    dns_sd_configs:
+      - names: [ '${PROMETHEUS_BIZ_HOST}' ]
+        type: 'A'
+        port: ${PROMETHEUS_BIZ_PORT}
 
   # - job_name: 'node-exporter'
   #   static_configs:
