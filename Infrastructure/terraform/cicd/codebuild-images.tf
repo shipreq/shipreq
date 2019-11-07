@@ -10,19 +10,15 @@ resource "aws_codebuild_project" "images" {
     image           = "aws/codebuild/amazonlinux2-x86_64-standard:1.0-1.13.0" # aws codebuild list-curated-environment-images
     privileged_mode = true
 
+
     environment_variable {
-      name  = "SHIPREQ_BUILD_URL"
-      value = aws_ecr_repository.shipreq_build.repository_url
+      name  = "OPS_CADVISOR_URL"
+      value = data.aws_ecr_repository.cadvisor.repository_url
     }
 
     environment_variable {
-      name  = "SHIPREQ_BASE_URL"
-      value = data.aws_ecr_repository.shipreq_base.repository_url
-    }
-
-    environment_variable {
-      name  = "OPS_PORTAL_URL"
-      value = data.aws_ecr_repository.ops_portal.repository_url
+      name  = "OPS_FILEBEAT_URL"
+      value = data.aws_ecr_repository.filebeat.repository_url
     }
 
     environment_variable {
@@ -31,23 +27,13 @@ resource "aws_codebuild_project" "images" {
     }
 
     environment_variable {
-      name  = "OPS_PROMETHEUS_TECH_URL"
-      value = data.aws_ecr_repository.prometheus-tech.repository_url
-    }
-
-    environment_variable {
-      name  = "OPS_PROMETHEUS_BIZ_URL"
-      value = data.aws_ecr_repository.prometheus-biz.repository_url
-    }
-
-    environment_variable {
       name  = "OPS_NODE_EXPORTER_URL"
       value = data.aws_ecr_repository.node_exporter.repository_url
     }
 
     environment_variable {
-      name  = "OPS_CADVISOR_URL"
-      value = data.aws_ecr_repository.cadvisor.repository_url
+      name  = "OPS_PORTAL_URL"
+      value = data.aws_ecr_repository.ops_portal.repository_url
     }
 
     environment_variable {
@@ -56,8 +42,23 @@ resource "aws_codebuild_project" "images" {
     }
 
     environment_variable {
-      name  = "OPS_FILEBEAT_URL"
-      value = data.aws_ecr_repository.filebeat.repository_url
+      name  = "OPS_PROMETHEUS_BIZ_URL"
+      value = data.aws_ecr_repository.prometheus-biz.repository_url
+    }
+
+    environment_variable {
+      name  = "OPS_PROMETHEUS_TECH_URL"
+      value = data.aws_ecr_repository.prometheus-tech.repository_url
+    }
+
+    environment_variable {
+      name  = "SHIPREQ_BASE_URL"
+      value = data.aws_ecr_repository.shipreq_base.repository_url
+    }
+
+    environment_variable {
+      name  = "SHIPREQ_BUILD_URL"
+      value = aws_ecr_repository.shipreq_build.repository_url
     }
   }
 
@@ -95,15 +96,15 @@ resource "aws_iam_role_policy" "images" {
       "Effect": "Allow",
       "Resource": [
         "${aws_ecr_repository.shipreq_build.arn}",
-        "${data.aws_ecr_repository.shipreq_base.arn}",
-        "${data.aws_ecr_repository.ops_portal.arn}",
-        "${data.aws_ecr_repository.grafana.arn}",
-        "${data.aws_ecr_repository.prometheus-tech.arn}",
-        "${data.aws_ecr_repository.prometheus-biz.arn}",
-        "${data.aws_ecr_repository.node_exporter.arn}",
         "${data.aws_ecr_repository.cadvisor.arn}",
         "${data.aws_ecr_repository.filebeat.arn}",
-        "${data.aws_ecr_repository.postgres_exporter.arn}"
+        "${data.aws_ecr_repository.grafana.arn}",
+        "${data.aws_ecr_repository.node_exporter.arn}",
+        "${data.aws_ecr_repository.ops_portal.arn}",
+        "${data.aws_ecr_repository.postgres_exporter.arn}",
+        "${data.aws_ecr_repository.prometheus-biz.arn}",
+        "${data.aws_ecr_repository.prometheus-tech.arn}",
+        "${data.aws_ecr_repository.shipreq_base.arn}"
       ],
       "Action": [
         "ecr:BatchCheckLayerAvailability",
