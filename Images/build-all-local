@@ -3,6 +3,7 @@ cd "$(dirname "$0")" || exit 1
 
 export PULL_REPO=930801536115.dkr.ecr.ap-southeast-2.amazonaws.com
 
+export          OPS_FILEBEAT_URL="shipreq/ops/filebeat"
 export          OPS_CADVISOR_URL="shipreq/ops/cadvisor"
 export           OPS_GRAFANA_URL="shipreq/ops/grafana"
 export     OPS_NODE_EXPORTER_URL="shipreq/ops/node_exporter"

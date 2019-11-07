@@ -39,3 +39,7 @@ data "aws_ecr_repository" "cadvisor" {
 data "aws_ecr_repository" "postgres_exporter" {
   name = "shipreq/ops/postgres_exporter"
 }
+
+data "aws_ecr_repository" "filebeat" {
+  name = "shipreq/ops/filebeat"
+}

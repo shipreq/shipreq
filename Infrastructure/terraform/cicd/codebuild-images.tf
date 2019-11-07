@@ -54,6 +54,11 @@ resource "aws_codebuild_project" "images" {
       name  = "OPS_POSTGRES_EXPORTER_URL"
       value = data.aws_ecr_repository.postgres_exporter.repository_url
     }
+
+    environment_variable {
+      name  = "OPS_FILEBEAT_URL"
+      value = data.aws_ecr_repository.filebeat.repository_url
+    }
   }
 
   source {
@@ -97,6 +102,7 @@ resource "aws_iam_role_policy" "images" {
         "${data.aws_ecr_repository.prometheus-biz.arn}",
         "${data.aws_ecr_repository.node_exporter.arn}",
         "${data.aws_ecr_repository.cadvisor.arn}",
+        "${data.aws_ecr_repository.filebeat.arn}",
         "${data.aws_ecr_repository.postgres_exporter.arn}"
       ],
       "Action": [

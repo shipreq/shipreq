@@ -47,3 +47,8 @@ resource "aws_ecr_repository" "postgres_exporter" {
   name = "shipreq/ops/postgres_exporter"
   tags = local.default_tags
 }
+
+resource "aws_ecr_repository" "filebeat" {
+  name = "shipreq/ops/filebeat"
+  tags = local.default_tags
+}
