@@ -180,9 +180,9 @@ services:
       - PG_EXPORTER_DISABLE_SETTINGS_METRICS=true
       - PG_EXPORTER_EXTEND_QUERY_PATH=/shipreq-pgexp.yml
 
-  prometheus:
+  prometheus-tech:
     image: prom/prometheus:v2.13.1
-    container_name: shipreq_dev_prometheus
+    container_name: shipreq_dev_prometheus-tech
     user: root
     extra_hosts:
      - parent-host:$DOCKER0
@@ -193,7 +193,7 @@ services:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/data/
       - --storage.tsdb.retention.time=730d
-      - --web.external-url=http://prometheus:9090/prometheus/tech/
+      - --web.external-url=http://prometheus-tech:9090/prometheus/tech/
     cpus: 2
     mem_limit: 200m
 
@@ -201,9 +201,9 @@ services:
     image: shipreq/ops/grafana
     container_name: shipreq_dev_grafana
     links:
-      - prometheus
+      - prometheus-tech
     environment:
-      - PROMETHEUS_TECH_URL=http://prometheus:9090/prometheus/tech
+      - PROMETHEUS_TECH_URL=http://prometheus-tech:9090/prometheus/tech
       - PROMETHEUS_BIZ_URL=http://todo
       - PROMETHEUS_TECH_SCRAPE_INTERVAL=5s
       - PROMETHEUS_BIZ_SCRAPE_INTERVAL=2m
@@ -214,22 +214,20 @@ services:
   # DevOps: Logging
 
   filebeat:
-    image: docker.elastic.co/beats/filebeat-oss:7.4.1
+    image: shipreq/ops/filebeat
     container_name: shipreq_dev_filebeat
-    user: root
     links:
       - elasticsearch
     volumes:
-      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - ES_HOSTS=elasticsearch:9200
-    command:
-      - -e
-      - -strict.perms=false
-      # - -d
-      # - "processors"
+    # command:
+    #   - -e
+    #   - -strict.perms=false
+    #   - -d
+    #   - "processors"
     mem_limit: 100m
 
   # sudo sysctl -w vm.max_map_count=262144
@@ -264,7 +262,7 @@ services:
       - GRAFANA_URL=http://grafana:3000
       - JAEGER_URL=http://localhost:$PORT_JAEGER_HTTP
       - KIBANA_URL=http://kibana:5601
-      - PROMETHEUS_TECH_URL=http://prometheus:9090
+      - PROMETHEUS_TECH_URL=http://prometheus-tech:9090
       - PROMETHEUS_BIZ_URL=http://todo
       - SHIPREQ_ENV=dev
       - SHIPREQ_URL_HTTP=http://shipreq.com:$PORT_SHIPREQ_WEBAPP_HTTP

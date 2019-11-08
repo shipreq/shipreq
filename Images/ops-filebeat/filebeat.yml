@@ -9,8 +9,8 @@ filebeat.autodiscover:
   - type: docker
     templates:
     - condition:
-        regexp:
-          docker.container.name: 'shipreq_dev_webapp'
+        contains:
+          docker.container.name: webapp
       config:
       - type: container
         paths:
@@ -32,8 +32,8 @@ filebeat.autodiscover:
   - type: docker
     templates:
     - condition:
-        regexp:
-          docker.container.name: 'shipreq_dev_taskman'
+        contains:
+          docker.container.name: taskman
       config:
       - type: container
         paths:
@@ -52,11 +52,12 @@ filebeat.autodiscover:
 
   ######################################################################################################################
   # Prometheus
+
   - type: docker
     templates:
     - condition:
-        regexp:
-          docker.container.name: 'shipreq_dev_prometheus'
+        contains:
+          docker.container.name: prometheus-tech
       config:
       - type: container
         paths:
@@ -66,7 +67,31 @@ filebeat.autodiscover:
         - add_fields:
             target: ''
             fields:
-              '@service': 'ops/prometheus'
+              '@service': 'ops/prometheus-tech'
+        - rename:
+            fields:
+             - from: message
+               to: original_message
+        - dissect:
+            tokenizer: "level=%{level} ts=%{?ts} caller=%{logger_name} %{?other}msg=\"%{message}\""
+            field: original_message
+            target_prefix: ''
+
+  - type: docker
+    templates:
+    - condition:
+        contains:
+          docker.container.name: prometheus-biz
+      config:
+      - type: container
+        paths:
+          - /var/lib/docker/containers/${data.docker.container.id}/*-json.log
+        encoding: utf-8
+        processors:
+        - add_fields:
+            target: ''
+            fields:
+              '@service': 'ops/prometheus-biz'
         - rename:
             fields:
              - from: message
@@ -81,8 +106,8 @@ filebeat.autodiscover:
   - type: docker
     templates:
     - condition:
-        regexp:
-          docker.container.name: 'shipreq_dev_node_exporter'
+        contains:
+          docker.container.name: node_exporter
       config:
       - type: container
         paths:
@@ -107,8 +132,8 @@ filebeat.autodiscover:
   - type: docker
     templates:
     - condition:
-        regexp:
-          docker.container.name: 'shipreq_dev_postgres_exporter'
+        contains:
+          docker.container.name: postgres_exporter
       config:
       - type: container
         paths:
@@ -133,8 +158,8 @@ filebeat.autodiscover:
   - type: docker
     templates:
     - condition:
-        regexp:
-          docker.container.name: 'shipreq_dev_cadvisor'
+        contains:
+          docker.container.name: cadvisor
       config:
       - type: container
         paths:
@@ -159,8 +184,8 @@ filebeat.autodiscover:
   - type: docker
     templates:
     - condition:
-        regexp:
-          docker.container.name: 'shipreq_dev_grafana'
+        contains:
+          docker.container.name: grafana
       config:
       - type: container
         paths:
@@ -183,7 +208,7 @@ filebeat.autodiscover:
 output.elasticsearch:
   hosts: '${ES_HOSTS}'
   index: "filebeat-%{+yyyy.MM.dd}"
-  compression_level: 3
+  compression_level: ${COMPRESSION_LEVEL:3}
 
 # This alone doesn't actually create the index in ElasticSearch (or at least in Kibana)
 # but it's required because output.elasticsearch.index is specified above
