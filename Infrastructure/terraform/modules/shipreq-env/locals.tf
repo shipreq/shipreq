@@ -15,8 +15,9 @@ locals {
 
   nat_domain = "nat.${local.internal_domain}"
 
-  es_domain = "es.${local.internal_domain}"
-  es_url    = "https://${local.es_domain}"
+  es_domain        = "es.${local.internal_domain}"
+  es_url           = "https://${local.es_domain}"
+  es_url_with_port = "${local.es_url}:443"
 
   redis_domain  = "redis.${local.internal_domain}"
   redis_version = "5.0.5"

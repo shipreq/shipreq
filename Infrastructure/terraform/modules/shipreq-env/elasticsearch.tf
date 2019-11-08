@@ -72,6 +72,14 @@ resource "aws_security_group" "es" {
     security_groups = [aws_security_group.bastion.id]
     description     = "Bastion access"
   }
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = 443
+    to_port     = 443
+    cidr_blocks = [aws_subnet.private.cidr_block]
+    description = "Access from private subnet"
+  }
 }
 
 resource "aws_route53_record" "es" {
