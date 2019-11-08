@@ -11,13 +11,36 @@ filebeat.autodiscover:
       config:
       - type: container
         paths:
-          - /var/lib/docker/containers/${data.docker.container.id}/*.log
+          - /var/lib/docker/containers/${data.docker.container.id}/*-json.log
         encoding: utf-8
         json.keys_under_root: true
         json.add_error_key: true
         json.message_key: message
         # processors:
         # - add_docker_metadata: ~
+  - type: docker
+    templates:
+    - condition:
+        regexp:
+          docker.container.name: 'shipreq_dev_prometheus'
+      config:
+      - type: container
+        paths:
+          - /var/lib/docker/containers/${data.docker.container.id}/*-json.log
+        encoding: utf-8
+        processors:
+        - add_fields:
+            target: ''
+            fields:
+              '@service': 'ops/prometheus'
+        - rename:
+            fields:
+             - from: message
+               to: original_message
+        - dissect:
+            tokenizer: "level=%{level} ts=%{?ts} caller=%{logger_name} msg=\"%{message}\""
+            field: original_message
+            target_prefix: ''
 
 output.elasticsearch:
   hosts: '${ES_HOSTS}'

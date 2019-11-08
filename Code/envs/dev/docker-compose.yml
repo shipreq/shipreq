@@ -228,6 +228,8 @@ services:
     command:
       - -e
       - -strict.perms=false
+      # - -d
+      # - "processors"
     mem_limit: 100m
 
   # sudo sysctl -w vm.max_map_count=262144
