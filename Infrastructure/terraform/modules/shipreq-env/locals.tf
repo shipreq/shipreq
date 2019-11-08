@@ -63,12 +63,14 @@ locals {
   prometheus_tech_port     = 9090
   prometheus_tech_host     = local.ops_host
   prometheus_tech_root_url = "http://${local.prometheus_tech_host}:${local.prometheus_tech_port}"
-  prometheus_tech_url      = "${local.prometheus_tech_root_url}/prometheus/tech/"
+  prometheus_tech_path     = "/prometheus/tech"
+  prometheus_tech_url      = "${local.prometheus_tech_root_url}${local.prometheus_tech_path}/"
 
   prometheus_biz_port     = 9091
   prometheus_biz_host     = local.ops_host
   prometheus_biz_root_url = "http://${local.prometheus_biz_host}:${local.prometheus_biz_port}"
-  prometheus_biz_url      = "${local.prometheus_biz_root_url}/prometheus/biz/"
+  prometheus_biz_path     = "/prometheus/biz"
+  prometheus_biz_url      = "${local.prometheus_biz_root_url}${local.prometheus_biz_path}/"
 
   ops_cadvisor_host     = local.ops_host
   ops_cadvisor_port     = 8080
@@ -76,5 +78,6 @@ locals {
 
   grafana_port     = 3000
   grafana_host     = local.ops_host
+  grafana_path     = "/grafana"
   grafana_root_url = "http://${local.grafana_host}:${local.grafana_port}"
 }

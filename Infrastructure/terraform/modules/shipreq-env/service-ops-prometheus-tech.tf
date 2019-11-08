@@ -64,7 +64,17 @@ resource "aws_ecs_task_definition" "prometheus_tech" {
       }
     ],
     "cpu": ${local.ops_cluster_cpu.prometheus_tech},
-    "memoryReservation": ${local.ops_cluster_mem_res.prometheus_tech}
+    "memoryReservation": ${local.ops_cluster_mem_res.prometheus_tech},
+    "healthCheck": {
+      "command": [
+        "CMD-SHELL",
+        "wget -qO - localhost:9090${local.prometheus_tech_path}/-/healthy || exit 1"
+      ],
+      "startPeriod": 60,
+      "interval": 60,
+      "timeout": 10,
+      "retries": 2
+    }
   }
 ]
 EOB

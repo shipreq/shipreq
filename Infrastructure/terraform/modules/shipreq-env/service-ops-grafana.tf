@@ -52,7 +52,17 @@ resource "aws_ecs_task_definition" "grafana" {
       }
     ],
     "cpu": ${local.ops_cluster_cpu.grafana},
-    "memoryReservation": ${local.ops_cluster_mem_res.grafana}
+    "memoryReservation": ${local.ops_cluster_mem_res.grafana},
+    "healthCheck": {
+      "command": [
+        "CMD-SHELL",
+        "curl -f http://localhost:3000${local.grafana_path}/api/health || exit 1"
+      ],
+      "startPeriod": 60,
+      "interval": 60,
+      "timeout": 10,
+      "retries": 2
+    }
   }
 ]
 EOB
