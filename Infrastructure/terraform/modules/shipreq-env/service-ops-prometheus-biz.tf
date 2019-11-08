@@ -1,5 +1,8 @@
 locals {
   prometheus_biz_tags = merge(local.default_tags, { Name = "${var.env}-prometheus-biz" })
+
+  prometheus_biz_config_yml = templatefile("${path.module}/service-ops-prometheus-biz.yml", {
+  })
 }
 
 resource "aws_ecs_service" "prometheus_biz" {
@@ -14,9 +17,8 @@ resource "aws_ecs_service" "prometheus_biz" {
 }
 
 resource "aws_ecs_task_definition" "prometheus_biz" {
-  family        = "${var.env}-ops-prometheus-biz"
-  task_role_arn = aws_iam_role.prometheus_biz_task.arn
-  tags          = local.prometheus_biz_tags
+  family = "${var.env}-ops-prometheus-biz"
+  tags   = local.prometheus_biz_tags
 
   volume {
     name      = "data"
@@ -34,7 +36,7 @@ resource "aws_ecs_task_definition" "prometheus_biz" {
     "environment": [
       {
         "name": "CONFIG",
-        "value": ${jsonencode(templatefile("${path.module}/service-ops-prometheus-biz.yml", {}))}
+        "value": ${jsonencode(local.prometheus_biz_config_yml)}
       }
     ],
     "command": [
@@ -42,8 +44,8 @@ resource "aws_ecs_task_definition" "prometheus_biz" {
     ],
     "mountPoints": [
       {
-        "containerPath": "/data",
         "sourceVolume": "data",
+        "containerPath": "/data",
         "readOnly": false
       }
     ],
@@ -75,24 +77,4 @@ module "ecs_ebs_prometheus_biz" {
       count             = 1
     }
   ]
-}
-
-resource "aws_iam_role" "prometheus_biz_task" {
-  name = "${var.env}_ops_prometheus_biz_task_role"
-
-  assume_role_policy = <<EOB
-{
-  "Version": "2012-10-17",
-  "Statement": [
-      {
-          "Action": "sts:AssumeRole",
-          "Principal": {
-            "Service": "ecs-tasks.amazonaws.com"
-          },
-          "Effect": "Allow",
-          "Sid": ""
-      }
-  ]
-}
-EOB
 }

@@ -1,7 +1,7 @@
 locals {
   prometheus_tech_tags = merge(local.default_tags, { Name = "${var.env}-prometheus-tech" })
 
-  config_yml = templatefile("${path.module}/service-ops-prometheus-tech.yml", {
+  prometheus_tech_config_yml = templatefile("${path.module}/service-ops-prometheus-tech.yml", {
     PROMETHEUS_TECH_HOST            = local.prometheus_tech_host
     PROMETHEUS_TECH_PORT            = local.prometheus_tech_port
     PROMETHEUS_TECH_SCRAPE_INTERVAL = var.prometheus_tech_scrape_interval
@@ -22,9 +22,8 @@ resource "aws_ecs_service" "prometheus_tech" {
 }
 
 resource "aws_ecs_task_definition" "prometheus_tech" {
-  family        = "${var.env}-ops-prometheus-tech"
-  task_role_arn = aws_iam_role.prometheus_tech_task.arn
-  tags          = local.prometheus_tech_tags
+  family = "${var.env}-ops-prometheus-tech"
+  tags   = local.prometheus_tech_tags
 
   volume {
     name      = "data"
@@ -42,7 +41,7 @@ resource "aws_ecs_task_definition" "prometheus_tech" {
     "environment": [
       {
         "name": "CONFIG",
-        "value": ${jsonencode(local.config_yml)}
+        "value": ${jsonencode(local.prometheus_tech_config_yml)}
       }
     ],
     "command": [
@@ -50,8 +49,8 @@ resource "aws_ecs_task_definition" "prometheus_tech" {
     ],
     "mountPoints": [
       {
-        "containerPath": "/data",
         "sourceVolume": "data",
+        "containerPath": "/data",
         "readOnly": false
       }
     ],
@@ -83,24 +82,4 @@ module "ecs_ebs_prometheus_tech" {
       count             = 1
     }
   ]
-}
-
-resource "aws_iam_role" "prometheus_tech_task" {
-  name = "${var.env}_ops_prometheus_tech_task_role"
-
-  assume_role_policy = <<EOB
-{
-  "Version": "2012-10-17",
-  "Statement": [
-      {
-          "Action": "sts:AssumeRole",
-          "Principal": {
-            "Service": "ecs-tasks.amazonaws.com"
-          },
-          "Effect": "Allow",
-          "Sid": ""
-      }
-  ]
-}
-EOB
 }
