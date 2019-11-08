@@ -3,11 +3,14 @@
 
 filebeat.autodiscover:
   providers:
+
+  ######################################################################################################################
+  # Shipreq: webapp
   - type: docker
     templates:
     - condition:
         regexp:
-          docker.container.name: 'shipreq_dev_(webapp|taskman)'
+          docker.container.name: 'shipreq_dev_webapp'
       config:
       - type: container
         paths:
@@ -18,6 +21,37 @@ filebeat.autodiscover:
         json.message_key: message
         # processors:
         # - add_docker_metadata: ~
+        processors:
+        - add_fields:
+            target: ''
+            fields:
+              '@service': 'shipreq/webapp' # Ensure that non-JSON lines are tagged too
+
+  ######################################################################################################################
+  # Shipreq: taskman
+  - type: docker
+    templates:
+    - condition:
+        regexp:
+          docker.container.name: 'shipreq_dev_taskman'
+      config:
+      - type: container
+        paths:
+          - /var/lib/docker/containers/${data.docker.container.id}/*-json.log
+        encoding: utf-8
+        json.keys_under_root: true
+        json.add_error_key: true
+        json.message_key: message
+        # processors:
+        # - add_docker_metadata: ~
+        processors:
+        - add_fields:
+            target: ''
+            fields:
+              '@service': 'shipreq/taskman' # Ensure that non-JSON lines are tagged too
+
+  ######################################################################################################################
+  # Prometheus
   - type: docker
     templates:
     - condition:
@@ -38,7 +72,111 @@ filebeat.autodiscover:
              - from: message
                to: original_message
         - dissect:
-            tokenizer: "level=%{level} ts=%{?ts} caller=%{logger_name} msg=\"%{message}\""
+            tokenizer: "level=%{level} ts=%{?ts} caller=%{logger_name} %{?other}msg=\"%{message}\""
+            field: original_message
+            target_prefix: ''
+
+  ######################################################################################################################
+  # node_exporter
+  - type: docker
+    templates:
+    - condition:
+        regexp:
+          docker.container.name: 'shipreq_dev_nodeexp'
+      config:
+      - type: container
+        paths:
+          - /var/lib/docker/containers/${data.docker.container.id}/*-json.log
+        encoding: utf-8
+        processors:
+        - add_fields:
+            target: ''
+            fields:
+              '@service': 'ops/node_exporter'
+        - rename:
+            fields:
+             - from: message
+               to: original_message
+        - dissect:
+            tokenizer: "time=\"%{?time}\" level=%{level} msg=\"%{message}\" source=\"%{logger_name}\"%{?other}"
+            field: original_message
+            target_prefix: ''
+
+  ######################################################################################################################
+  # postgres_exporter
+  - type: docker
+    templates:
+    - condition:
+        regexp:
+          docker.container.name: 'shipreq_dev_pgexp'
+      config:
+      - type: container
+        paths:
+          - /var/lib/docker/containers/${data.docker.container.id}/*-json.log
+        encoding: utf-8
+        processors:
+        - add_fields:
+            target: ''
+            fields:
+              '@service': 'ops/postgres_exporter'
+        - rename:
+            fields:
+             - from: message
+               to: original_message
+        - dissect:
+            tokenizer: "time=\"%{?time}\" level=%{level} msg=\"%{message}\" source=\"%{logger_name}\"%{?other}"
+            field: original_message
+            target_prefix: ''
+
+  ######################################################################################################################
+  # cadvisor
+  - type: docker
+    templates:
+    - condition:
+        regexp:
+          docker.container.name: 'shipreq_dev_cadvisor'
+      config:
+      - type: container
+        paths:
+          - /var/lib/docker/containers/${data.docker.container.id}/*-json.log
+        encoding: utf-8
+        processors:
+        - add_fields:
+            target: ''
+            fields:
+              '@service': 'ops/cadvisor'
+        - rename:
+            fields:
+             - from: message
+               to: original_message
+        - dissect:
+            tokenizer: "%{?crap}       %{?n} %{logger_name}] %{message}"
+            field: original_message
+            target_prefix: ''
+
+  ######################################################################################################################
+  # grafana
+  - type: docker
+    templates:
+    - condition:
+        regexp:
+          docker.container.name: 'shipreq_dev_grafana'
+      config:
+      - type: container
+        paths:
+          - /var/lib/docker/containers/${data.docker.container.id}/*-json.log
+        encoding: utf-8
+        processors:
+        - add_fields:
+            target: ''
+            fields:
+              '@service': 'ops/grafana'
+        - rename:
+            fields:
+             - from: message
+               to: original_message
+        - dissect:
+            tokenizer: "t=%{?t} lvl=%{level} msg=\"%{message}\""
             field: original_message
             target_prefix: ''
 
