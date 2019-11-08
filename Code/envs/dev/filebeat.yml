@@ -82,7 +82,7 @@ filebeat.autodiscover:
     templates:
     - condition:
         regexp:
-          docker.container.name: 'shipreq_dev_nodeexp'
+          docker.container.name: 'shipreq_dev_node_exporter'
       config:
       - type: container
         paths:
@@ -108,7 +108,7 @@ filebeat.autodiscover:
     templates:
     - condition:
         regexp:
-          docker.container.name: 'shipreq_dev_pgexp'
+          docker.container.name: 'shipreq_dev_postgres_exporter'
       config:
       - type: container
         paths:

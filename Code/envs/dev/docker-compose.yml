@@ -78,9 +78,9 @@ services:
   ##################################################################################################
   # DevOps: Metrics
 
-  node-exporter:
+  node_exporter:
     image: prom/node-exporter:v0.18.1
-    container_name: shipreq_dev_nodeexp
+    container_name: shipreq_dev_node_exporter
     # network_mode: host
     privileged: true
     volumes:
@@ -167,9 +167,9 @@ services:
     mem_limit: 160m
     restart: unless-stopped
 
-  pgexp:
+  postgres_exporter:
     image: wrouesnel/postgres_exporter
-    container_name: shipreq_dev_pgexp
+    container_name: shipreq_dev_postgres_exporter
     links:
       - postgres
     volumes:
