@@ -208,7 +208,8 @@ filebeat.autodiscover:
 output.elasticsearch:
   hosts: '${ES_HOSTS}'
   index: "filebeat-%{+yyyy.MM.dd}"
-  compression_level: ${COMPRESSION_LEVEL:3}
+  compression_level: ${ES_COMPRESSION_LEVEL:3}
+  ssl.verification_mode: ${ES_SSL_VERIFICATION_MODE:full}
 
 # This alone doesn't actually create the index in ElasticSearch (or at least in Kibana)
 # but it's required because output.elasticsearch.index is specified above
