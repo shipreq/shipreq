@@ -47,7 +47,7 @@ resource "aws_ecs_task_definition" "grafana" {
     "portMappings": [
       {
         "protocol": "tcp",
-        "hostPort": ${local.grafana_port},
+        "hostPort": ${local.ops_cluster_ports.grafana},
         "containerPort": 3000
       }
     ],

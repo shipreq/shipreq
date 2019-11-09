@@ -52,7 +52,7 @@ resource "aws_ecs_task_definition" "prometheus_biz" {
     "portMappings": [
       {
         "protocol": "tcp",
-        "hostPort": ${local.prometheus_biz_port},
+        "hostPort": ${local.ops_cluster_ports.prometheus_biz},
         "containerPort": 9091
       }
     ],

@@ -3,13 +3,13 @@ locals {
 
   prometheus_tech_config_yml = templatefile("${path.module}/service-ops-prometheus-tech.yml", {
     PROMETHEUS_TECH_HOST            = local.prometheus_tech_host
-    PROMETHEUS_TECH_PORT            = local.prometheus_tech_port
+    PROMETHEUS_TECH_PORT            = local.ops_cluster_ports.prometheus_tech
     PROMETHEUS_TECH_SCRAPE_INTERVAL = var.prometheus_tech_scrape_interval
     PROMETHEUS_BIZ_HOST             = local.prometheus_biz_host
-    PROMETHEUS_BIZ_PORT             = local.prometheus_biz_port
+    PROMETHEUS_BIZ_PORT             = local.ops_cluster_ports.prometheus_biz
     OPS_HOST                        = local.ops_host
-    OPS_CADVISOR_PORT               = local.ops_cadvisor_port
-    OPS_NODE_EXPORTER_PORT          = local.ops_node_exporter_port
+    OPS_CADVISOR_PORT               = local.ops_cluster_ports.cadvisor
+    OPS_NODE_EXPORTER_PORT          = local.ops_cluster_ports.node_exporter
   })
 }
 
@@ -60,7 +60,7 @@ resource "aws_ecs_task_definition" "prometheus_tech" {
     "portMappings": [
       {
         "protocol": "tcp",
-        "hostPort": ${local.prometheus_tech_port},
+        "hostPort": ${local.ops_cluster_ports.prometheus_tech},
         "containerPort": 9090
       }
     ],

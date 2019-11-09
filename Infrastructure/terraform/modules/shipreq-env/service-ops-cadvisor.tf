@@ -53,7 +53,7 @@ resource "aws_ecs_task_definition" "cadvisor" {
     "portMappings": [
       {
         "protocol": "tcp",
-        "hostPort": ${local.ops_cadvisor_port},
+        "hostPort": ${local.ops_cluster_ports.cadvisor},
         "containerPort": 8080
       }
     ],

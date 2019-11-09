@@ -52,6 +52,15 @@ locals {
     prometheus_tech   = 128
   }
 
+  ops_cluster_ports = {
+    cadvisor          = 8080
+    grafana           = 3000
+    node_exporter     = 9100
+    postgres_exporter = 9187
+    prometheus_biz    = 9091
+    prometheus_tech   = 9090
+  }
+
   ops_device = {
     prometheus_tech = "/dev/xvdf"
     prometheus_biz  = "/dev/xvdg"
@@ -60,27 +69,20 @@ locals {
   ops_subdomain = "ops"
   ops_host      = "${local.ops_subdomain}.${local.internal_sd_domain}"
 
-  prometheus_tech_port     = 9090
+  ops_cadvisor_path     = "/cadvisor"
+  ops_cadvisor_root_url = "http://${local.ops_host}:${local.ops_cluster_ports.cadvisor}"
+
   prometheus_tech_host     = local.ops_host
-  prometheus_tech_root_url = "http://${local.prometheus_tech_host}:${local.prometheus_tech_port}"
+  prometheus_tech_root_url = "http://${local.prometheus_tech_host}:${local.ops_cluster_ports.prometheus_tech}"
   prometheus_tech_path     = "/prometheus/tech"
   prometheus_tech_url      = "${local.prometheus_tech_root_url}${local.prometheus_tech_path}/"
 
-  prometheus_biz_port     = 9091
   prometheus_biz_host     = local.ops_host
-  prometheus_biz_root_url = "http://${local.prometheus_biz_host}:${local.prometheus_biz_port}"
+  prometheus_biz_root_url = "http://${local.prometheus_biz_host}:${local.ops_cluster_ports.prometheus_biz}"
   prometheus_biz_path     = "/prometheus/biz"
   prometheus_biz_url      = "${local.prometheus_biz_root_url}${local.prometheus_biz_path}/"
 
-  ops_cadvisor_host     = local.ops_host
-  ops_cadvisor_port     = 8080
-  ops_cadvisor_path     = "/cadvisor"
-  ops_cadvisor_root_url = "http://${local.ops_cadvisor_host}:${local.ops_cadvisor_port}"
-
-  ops_node_exporter_port = 9100
-
-  grafana_port     = 3000
   grafana_host     = local.ops_host
   grafana_path     = "/grafana"
-  grafana_root_url = "http://${local.grafana_host}:${local.grafana_port}"
+  grafana_root_url = "http://${local.grafana_host}:${local.ops_cluster_ports.grafana}"
 }
