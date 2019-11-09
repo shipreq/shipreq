@@ -17,14 +17,16 @@ scrape_configs:
         type: 'A'
         port: ${PROMETHEUS_BIZ_PORT}
 
-  # - job_name: 'node-exporter'
-  #   static_configs:
-  #     - targets: ['node-exporter:9100']
+  - job_name: 'node-exporter'
+    dns_sd_configs:
+      - names: [ '${OPS_HOST}' ]
+        type: 'A'
+        port: ${OPS_NODE_EXPORTER_PORT}
 
   - job_name: 'cadvisor'
     metrics_path: '/cadvisor/metrics'
     dns_sd_configs:
-      - names: [ '${OPS_CADVISOR_HOST}' ]
+      - names: [ '${OPS_HOST}' ]
         type: 'A'
         port: ${OPS_CADVISOR_PORT}
 
