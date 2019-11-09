@@ -222,7 +222,7 @@ filebeat.inputs:
          - from: message
            to: original_message
     - dissect:
-        tokenizer: "%{timestamp} %{host} %{logger_name}: %{message}"
+        tokenizer: "%{timestamp->} %{+timestamp} %{+timestamp} %{hostname} %{logger_name}: %{message}"
         field: original_message
         target_prefix: ''
     - if:
@@ -240,9 +240,10 @@ filebeat.inputs:
     - timestamp:
         field: timestamp
         layouts:
-          - '2006-01-02T15:04:05.999-07:00'
+          - 'Jan  2 15:04:05'
         test:
-          - '2019-11-09T21:36:42.690637+00:00'
+          - 'Nov  9 22:59:18'
+          - 'Nov 19 22:59:18'
     - drop_fields:
         fields: [timestamp, logger_name2]
         ignore_missing: true
