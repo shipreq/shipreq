@@ -1,53 +1,39 @@
 * Bastion
   * Stop using a shared key - key should be per user
   * Use AWS Session Manager instead of opening an SSH port
-  * Collect logs
+  * Log logins
+  * Log commands (?)
+  * Log portal (?)
   * Healthcheck & recovery
-
-* Portal
-  * logs
 
 * NAT
   * Collect logs
   * Healthcheck & recovery
 
-* Ops EC2
-  * Collect logs
-
-* Prometheus
-  * Healthcheck & recovery
-  * custom image
-  * custom image CI
-  * logs
-  * configure retention period & storage onto EBS
-
+* Cluster EC2s
+  * Collect logs (?)
 
 ====================================================================================================
 
-* For each new resource/service consider:
-  * Healthcheck & recovery
-  * custom image
-  * custom image CI
-  * logs
-  * EBS
+* Bastion
+  * node_exporter (?)
+  * cadvisor (?)
+  * filebeat (?)
 
-* RDS
+* App
+  * ALB
+  * ShipReq
+  * Taskman
+  * filebeat
+  * cadvisor
+  * node_exporter
 
-* RDS initialisation
-  Seems the only way is RDS event subscription + SNS + lambda
-
-* FileBeat
-* EC2 metrics; node_exporter?
-
-* App ALB
-* ShipReq
-* Taskman
-
-* Grafana
-* Storage
+* Ops
+  * node_exporter
+  * postgres_exporter
 
 * Alerting
 
 * DR
   * Postgres
-  * Prometheus
+  * EBS
