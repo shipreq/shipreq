@@ -71,6 +71,20 @@ resource "aws_instance" "bastion" {
   lifecycle { create_before_destroy = true }
 }
 
+resource "aws_cloudwatch_metric_alarm" "bastion-recovery" {
+  alarm_name          = "${var.env}-bastion-recovery"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "StatusCheckFailed_System"
+  namespace           = "AWS/EC2"
+  period              = 60
+  statistic           = "Minimum"
+  threshold           = 0
+  alarm_actions       = ["arn:aws:automate:${local.region}:ec2:recover"]
+  dimensions          = { InstanceId = "${aws_instance.bastion.id}" }
+  tags                = local.bastion_tags
+}
+
 resource "aws_iam_instance_profile" "bastion" {
   name = "${var.env}_bastion_instance_profile"
   role = aws_iam_role.bastion.name

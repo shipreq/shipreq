@@ -26,6 +26,20 @@ resource "aws_instance" "nat" {
   lifecycle { create_before_destroy = true }
 }
 
+resource "aws_cloudwatch_metric_alarm" "nat-recovery" {
+  alarm_name          = "${var.env}-nat-recovery"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "StatusCheckFailed_System"
+  namespace           = "AWS/EC2"
+  period              = 60
+  statistic           = "Minimum"
+  threshold           = 0
+  alarm_actions       = ["arn:aws:automate:${local.region}:ec2:recover"]
+  dimensions          = { InstanceId = "${aws_instance.nat.id}" }
+  tags                = local.nat_tags
+}
+
 resource "aws_security_group" "nat" {
   name   = "sg_${var.env}_nat"
   vpc_id = aws_vpc.main.id

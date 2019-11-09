@@ -7,6 +7,8 @@ locals {
     Name      = var.name
   }
 
+  region = regex("^[a-z]+-[a-z]+-\\d+", var.availability_zone)
+
   # TTL for DNS entries pointed at targets I expect to change rarely/never
   dns_stable_ttl = 120
 
