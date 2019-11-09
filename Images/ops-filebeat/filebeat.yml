@@ -205,6 +205,49 @@ filebeat.autodiscover:
             field: original_message
             target_prefix: ''
 
+  ######################################################################################################################
+  # syslog/secure
+
+filebeat.inputs:
+  - type: log
+    paths:
+      - /host/var/log/secure
+    processors:
+    - add_fields:
+        target: ''
+        fields:
+          '@service': 'syslog/secure'
+    - rename:
+        fields:
+         - from: message
+           to: original_message
+    - dissect:
+        tokenizer: "%{timestamp} %{host} %{logger_name}: %{message}"
+        field: original_message
+        target_prefix: ''
+    - if:
+        contains:
+          logger_name: '['
+      then:
+        - rename:
+            fields:
+            - from: logger_name
+              to: logger_name2
+        - dissect:
+            tokenizer: "%{logger_name}[%{pid}]"
+            field: logger_name2
+            target_prefix: ''
+    - timestamp:
+        field: timestamp
+        layouts:
+          - '2006-01-02T15:04:05.999-07:00'
+        test:
+          - '2019-11-09T21:36:42.690637+00:00'
+    - drop_fields:
+        fields: [timestamp, logger_name2]
+        ignore_missing: true
+
+########################################################################################################################
 output.elasticsearch:
   hosts: '${ES_HOSTS}'
   index: "filebeat-%{+yyyy.MM.dd}"
