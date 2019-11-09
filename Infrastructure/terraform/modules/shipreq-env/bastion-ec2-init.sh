@@ -31,6 +31,9 @@ yum -y install htop nc tree
 ####################################################################################################
 # SSH
 
+# sed -i -e 's/^ *\$ActionFileDefaultTemplate .*/$ActionFileDefaultTemplate RSYSLOG_FileFormat/' /etc/rsyslog.conf
+# service rsyslog restart
+
 cat >> /etc/ssh/sshd_config << 'EOB'
   Port 22
   Port 36017
@@ -39,40 +42,42 @@ EOB
 systemctl restart sshd
 
 ####################################################################################################
-# Postgres
-
-amazon-linux-extras install -y postgresql11
-cat >> ~ec2-user/.bashrc << 'EOB'
-  alias postgres='psql -h ${POSTGRES_DOMAIN} postgres'
-EOB
-
-
-####################################################################################################
 # Docker
 
 amazon-linux-extras install -y docker
 systemctl start docker
 
-####################################################################################################
-# redis-cli
+$(aws ecr get-login --no-include-email --region ap-southeast-2)
 
-cat >> /usr/bin/redis-cli << 'EOB'
+####################################################################################################
+# Filebeat
+
+filebeat=/usr/bin/start-filebeat
+
+cat > $filebeat << 'EOB'
 #!/bin/bash
-args=("$@")
-[ $# -eq 0 ] && args=(-h ${REDIS_HOST} -p 6379)
-exec sudo docker run --rm -it bitnami/redis:${REDIS_VER} redis-cli "$${args[@]}"
+docker pull ${FILEBEAT_IMAGE}
+docker run \
+  -d \
+  --restart unless-stopped \
+  -v /var/log:/host/var/log:ro \
+  -v /var/lib/docker/containers:/var/lib/docker/containers:ro \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -e ES_HOSTS='${ES_HOSTS}' \
+  --name filebeat \
+  ${FILEBEAT_IMAGE}
 EOB
 
-chmod 755 /usr/bin/redis-cli
+chmod 700 $filebeat
 
-docker pull bitnami/redis:${REDIS_VER}
+$filebeat
 
 ####################################################################################################
 # Portal
 
-$(aws ecr get-login --no-include-email --region ap-southeast-2)
+portal=/usr/bin/start-portal
 
-cat > /usr/bin/portal-run << 'EOB'
+cat > $portal << 'EOB'
 #!/bin/bash
 docker pull ${PORTAL_IMAGE}
 docker run \
@@ -93,6 +98,28 @@ docker run \
   ${PORTAL_IMAGE}
 EOB
 
-chmod 700 /usr/bin/portal-run
+chmod 700 $portal
 
-/usr/bin/portal-run
+$portal
+
+####################################################################################################
+# Postgres
+
+amazon-linux-extras install -y postgresql11
+cat >> ~ec2-user/.bashrc << 'EOB'
+  alias postgres='psql -h ${POSTGRES_DOMAIN} postgres'
+EOB
+
+####################################################################################################
+# redis-cli
+
+cat >> /usr/bin/redis-cli << 'EOB'
+#!/bin/bash
+args=("$@")
+[ $# -eq 0 ] && args=(-h ${REDIS_HOST} -p 6379)
+exec sudo docker run --rm -it bitnami/redis:${REDIS_VER} redis-cli "$${args[@]}"
+EOB
+
+chmod 700 /usr/bin/redis-cli
+
+docker pull bitnami/redis:${REDIS_VER}

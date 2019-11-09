@@ -24,10 +24,6 @@ resource "aws_ecs_task_definition" "filebeat" {
       {
         "name": "ES_HOSTS",
         "value": "${local.es_root_url_with_port}"
-      },
-      {
-        "name": "ES_SSL_VERIFICATION_MODE",
-        "value": "none"
       }
     ],
     "mountPoints": [
@@ -39,6 +35,11 @@ resource "aws_ecs_task_definition" "filebeat" {
       {
         "sourceVolume": "docker_sock",
         "containerPath": "/var/run/docker.sock",
+        "readOnly": true
+      },
+      {
+        "sourceVolume": "host_var_log",
+        "containerPath": "/host/var/log",
         "readOnly": true
       }
     ],
@@ -57,5 +58,10 @@ EOB
   volume {
     name      = "docker_sock"
     host_path = "/var/run/docker.sock"
+  }
+
+  volume {
+    name      = "host_var_log"
+    host_path = "/var/log"
   }
 }

@@ -217,13 +217,14 @@ services:
     volumes:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/log:/host/var/log:ro
     environment:
       - ES_HOSTS=elasticsearch:9200
-    # command:
-    #   - -e
-    #   - -strict.perms=false
-    #   - -d
-    #   - "processors"
+    command:
+      - -e
+      - -strict.perms=false
+      - -d
+      - "processors"
     mem_limit: 100m
 
   # sudo sysctl -w vm.max_map_count=262144

@@ -1,12 +1,10 @@
 * Bastion
   * Stop using a shared key - key should be per user
   * Use AWS Session Manager instead of opening an SSH port
-  * Log logins
   * Log commands (?)
   * Log portal (?)
   * node_exporter (?)
   * cadvisor (?)
-  * filebeat (?)
 
 * NAT
   * Collect logs / filebeat (?)

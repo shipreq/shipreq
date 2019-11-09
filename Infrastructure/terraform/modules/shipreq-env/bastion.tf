@@ -52,16 +52,18 @@ resource "aws_instance" "bastion" {
     DNS_TTL             = "${local.dns_stable_ttl / 2}s"
     ENV                 = var.env
     ENV_NAME            = var.name
+    ES_HOSTS            = local.es_root_url_with_port
+    FILEBEAT_IMAGE      = data.aws_ecr_repository.filebeat.repository_url
     GRAFANA_URL         = local.grafana_root_url
     KIBANA_URL          = local.es_root_url
     PORTAL_IMAGE        = data.aws_ecr_repository.shipreq_ops_portal.repository_url
     POSTGRES_DOMAIN     = local.postgres_domain
-    PROMETHEUS_TECH_URL = local.prometheus_tech_root_url
     PROMETHEUS_BIZ_URL  = local.prometheus_biz_root_url
+    PROMETHEUS_TECH_URL = local.prometheus_tech_root_url
     REDIS_HOST          = local.redis_domain
     REDIS_VER           = local.redis_version
-    SHIPREQ_URL_HTTP    = "TODO"
     SHIPREQ_URL         = "TODO"
+    SHIPREQ_URL_HTTP    = "TODO"
   })
 
   root_block_device {
@@ -124,7 +126,10 @@ resource "aws_iam_policy" "bastion" {
   "Statement": [
     {
       "Effect": "Allow",
-      "Resource": [ "${data.aws_ecr_repository.shipreq_ops_portal.arn}" ],
+      "Resource": [
+        "${data.aws_ecr_repository.filebeat.arn}",
+        "${data.aws_ecr_repository.shipreq_ops_portal.arn}"
+      ],
       "Action": [
         "ecr:BatchCheckLayerAvailability",
         "ecr:GetDownloadUrlForLayer",
