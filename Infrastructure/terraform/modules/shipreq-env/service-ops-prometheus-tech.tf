@@ -2,17 +2,20 @@ locals {
   prometheus_tech_tags = merge(local.default_tags, { Name = "${var.env}-prometheus-tech" })
 
   prometheus_tech_config_yml = templatefile("${path.module}/service-ops-prometheus-tech.yml", {
-    APP_HOST                        = local.app_host
     APP_CADVISOR_PORT               = local.app_cluster_ports.cadvisor
+    APP_HOST                        = local.app_host
     APP_NODE_EXPORTER_PORT          = local.app_cluster_ports.node_exporter
+    CADVISOR_PATH                   = local.cadvisor_path
+    OPS_CADVISOR_PORT               = local.ops_cluster_ports.cadvisor
+    OPS_HOST                        = local.ops_host
+    OPS_NODE_EXPORTER_PORT          = local.ops_cluster_ports.node_exporter
+    PROMETHEUS_BIZ_HOST             = local.prometheus_biz_host
+    PROMETHEUS_BIZ_PATH             = local.prometheus_biz_path
+    PROMETHEUS_BIZ_PORT             = local.ops_cluster_ports.prometheus_biz
     PROMETHEUS_TECH_HOST            = local.prometheus_tech_host
+    PROMETHEUS_TECH_PATH            = local.prometheus_tech_path
     PROMETHEUS_TECH_PORT            = local.ops_cluster_ports.prometheus_tech
     PROMETHEUS_TECH_SCRAPE_INTERVAL = var.prometheus_tech_scrape_interval
-    PROMETHEUS_BIZ_HOST             = local.prometheus_biz_host
-    PROMETHEUS_BIZ_PORT             = local.ops_cluster_ports.prometheus_biz
-    OPS_HOST                        = local.ops_host
-    OPS_CADVISOR_PORT               = local.ops_cluster_ports.cadvisor
-    OPS_NODE_EXPORTER_PORT          = local.ops_cluster_ports.node_exporter
   })
 }
 

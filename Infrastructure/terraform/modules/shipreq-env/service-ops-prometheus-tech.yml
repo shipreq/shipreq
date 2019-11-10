@@ -13,21 +13,21 @@ scrape_configs:
         port: ${OPS_NODE_EXPORTER_PORT}
 
   - job_name: 'cadvisor-ops'
-    metrics_path: '/cadvisor/metrics'
+    metrics_path: '${CADVISOR_PATH}/metrics'
     dns_sd_configs:
       - names: [ '${OPS_HOST}' ]
         type: 'A'
         port: ${OPS_CADVISOR_PORT}
 
   - job_name: 'prometheus-tech'
-    metrics_path: '/prometheus/tech/metrics'
+    metrics_path: '${PROMETHEUS_TECH_PATH}/metrics'
     dns_sd_configs:
       - names: [ '${PROMETHEUS_TECH_HOST}' ]
         type: 'A'
         port: ${PROMETHEUS_TECH_PORT}
 
   - job_name: 'prometheus-biz'
-    metrics_path: '/prometheus/biz/metrics'
+    metrics_path: '${PROMETHEUS_BIZ_PATH}/metrics'
     dns_sd_configs:
       - names: [ '${PROMETHEUS_BIZ_HOST}' ]
         type: 'A'
@@ -43,7 +43,7 @@ scrape_configs:
         port: ${APP_NODE_EXPORTER_PORT}
 
   - job_name: 'cadvisor-app'
-    metrics_path: '/cadvisor/metrics'
+    metrics_path: '${CADVISOR_PATH}/metrics'
     dns_sd_configs:
       - names: [ '${APP_HOST}' ]
         type: 'A'
