@@ -1,5 +1,6 @@
 variable "name_prefix" { type = string }
 variable "cluster_id" { type = string }
+variable "cluster_log_name" { type = string }
 variable "default_tags" { type = map }
 
 variable "cadvisor_cpu" { type = number }

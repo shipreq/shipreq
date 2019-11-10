@@ -19,13 +19,11 @@ filebeat.autodiscover:
         json.keys_under_root: true
         json.add_error_key: true
         json.message_key: message
-        # processors:
-        # - add_docker_metadata: ~
         processors:
         - add_fields:
             target: ''
             fields:
-              '@service': 'shipreq/webapp' # Ensure that non-JSON lines are tagged too
+              '@service': 'shipreq/webapp'
 
   ######################################################################################################################
   # Shipreq: taskman
@@ -42,13 +40,11 @@ filebeat.autodiscover:
         json.keys_under_root: true
         json.add_error_key: true
         json.message_key: message
-        # processors:
-        # - add_docker_metadata: ~
         processors:
         - add_fields:
             target: ''
             fields:
-              '@service': 'shipreq/taskman' # Ensure that non-JSON lines are tagged too
+              '@service': 'shipreq/taskman'
 
   ######################################################################################################################
   # Prometheus
@@ -249,6 +245,15 @@ filebeat.inputs:
         ignore_missing: true
 
 ########################################################################################################################
+
+processors:
+- add_fields:
+    target: ''
+    fields:
+      '@cluster': '${CLUSTER}'
+      'aws.instance_id': '${AWS_INSTANCE_ID}'
+      'aws.instance_ip': '${AWS_INSTANCE_IP}'
+
 output.elasticsearch:
   hosts: '${ES_HOSTS}'
   index: "filebeat-%{+yyyy.MM.dd}"

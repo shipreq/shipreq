@@ -75,6 +75,7 @@ docker run \
   -v /var/log:/host/var/log:ro \
   -v /var/lib/docker/containers:/var/lib/docker/containers:ro \
   -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -e CLUSTER=bastion \
   -e ES_HOSTS='${ES_HOSTS}' \
   --name filebeat \
   ${FILEBEAT_IMAGE}

@@ -219,6 +219,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/log:/host/var/log:ro
     environment:
+      - AWS_INSTANCE_ID=i-local
+      - AWS_INSTANCE_IP=127.0.0.1
+      - CLUSTER=local
       - ES_HOSTS=elasticsearch:9200
     command:
       - -e

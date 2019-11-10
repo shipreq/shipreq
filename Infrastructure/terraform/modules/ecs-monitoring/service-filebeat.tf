@@ -22,6 +22,10 @@ resource "aws_ecs_task_definition" "filebeat" {
     "image": "${var.filebeat_image}",
     "environment": [
       {
+        "name": "CLUSTER",
+        "value": "${var.cluster_log_name}"
+      },
+      {
         "name": "ES_HOSTS",
         "value": "${var.filebeat_es_hosts}"
       }

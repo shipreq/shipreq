@@ -1,9 +1,10 @@
 module "app_ecs_monitoring" {
   source = "../ecs-monitoring"
 
-  name_prefix  = "${var.env}-app"
-  cluster_id   = aws_ecs_cluster.app.id
-  default_tags = local.default_tags
+  name_prefix      = "${var.env}-app"
+  cluster_id       = aws_ecs_cluster.app.id
+  cluster_log_name = "app"
+  default_tags     = local.default_tags
 
   cadvisor_cpu     = local.app_cluster_cpu.cadvisor
   cadvisor_image   = "${data.aws_ecr_repository.cadvisor.repository_url}:${var.ops_images_tag}"
