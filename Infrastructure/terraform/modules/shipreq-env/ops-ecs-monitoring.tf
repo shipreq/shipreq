@@ -8,7 +8,7 @@ module "ops_ecs_monitoring" {
   cadvisor_cpu     = local.ops_cluster_cpu.cadvisor
   cadvisor_image   = "${data.aws_ecr_repository.cadvisor.repository_url}:${var.ops_images_tag}"
   cadvisor_mem_res = local.ops_cluster_mem_res.cadvisor
-  cadvisor_path    = local.ops_cadvisor_path
+  cadvisor_path    = local.cadvisor_path
   cadvisor_port    = local.ops_cluster_ports.cadvisor
 
   filebeat_cpu      = local.ops_cluster_cpu.filebeat

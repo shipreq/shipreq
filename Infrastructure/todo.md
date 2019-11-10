@@ -19,9 +19,6 @@
   * ALB
   * ShipReq
   * Taskman
-  * filebeat
-  * cadvisor
-  * node_exporter
 
 * Ops
   * postgres_exporter

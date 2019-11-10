@@ -26,6 +26,42 @@ locals {
 
   postgres_domain = "postgres.${local.internal_domain}"
 
+  cadvisor_path = "/cadvisor"
+
+  # =================================================================================================================================================
+  # App cluster
+
+  # CPU shares for everything in the App cluster
+  #
+  # NOTE: Linux containers share unallocated CPU units with other containers on the container instance with the same ratio as their allocated amount.
+  #       Therefore, these are ratios and not total shares.
+  #
+  # This only matters when CPU is maxed out, in which I've prioritised metric-collection over user response-time.
+  # If the services are slow I want to be able to look at the metrics to figure out what needs more resources.
+  app_cluster_cpu = {
+    cadvisor      = 9
+    filebeat      = 9
+    node_exporter = 9
+  }
+
+  # Memory reservation for everything in the App cluster
+  app_cluster_mem_res = {
+    cadvisor      = 48
+    filebeat      = 32
+    node_exporter = 24
+  }
+
+  app_cluster_ports = {
+    cadvisor      = 8080
+    node_exporter = 9100
+  }
+
+  app_subdomain = "app"
+  app_host      = "${local.app_subdomain}.${local.internal_sd_domain}"
+
+  # =================================================================================================================================================
+  # Ops cluster
+
   # CPU shares for everything in the Ops cluster
   #
   # NOTE: Linux containers share unallocated CPU units with other containers on the container instance with the same ratio as their allocated amount.
@@ -78,7 +114,6 @@ locals {
   ops_subdomain = "ops"
   ops_host      = "${local.ops_subdomain}.${local.internal_sd_domain}"
 
-  ops_cadvisor_path     = "/cadvisor"
   ops_cadvisor_root_url = "http://${local.ops_host}:${local.ops_cluster_ports.cadvisor}"
 
   prometheus_tech_host     = local.ops_host

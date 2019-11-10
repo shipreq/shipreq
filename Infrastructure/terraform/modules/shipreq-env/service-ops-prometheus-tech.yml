@@ -3,6 +3,22 @@ global:
 
 scrape_configs:
 
+  ##########################################################################
+  # Ops cluster
+
+  - job_name: 'node_exporter-ops'
+    dns_sd_configs:
+      - names: [ '${OPS_HOST}' ]
+        type: 'A'
+        port: ${OPS_NODE_EXPORTER_PORT}
+
+  - job_name: 'cadvisor-ops'
+    metrics_path: '/cadvisor/metrics'
+    dns_sd_configs:
+      - names: [ '${OPS_HOST}' ]
+        type: 'A'
+        port: ${OPS_CADVISOR_PORT}
+
   - job_name: 'prometheus-tech'
     metrics_path: '/prometheus/tech/metrics'
     dns_sd_configs:
@@ -17,18 +33,21 @@ scrape_configs:
         type: 'A'
         port: ${PROMETHEUS_BIZ_PORT}
 
-  - job_name: 'node-exporter'
-    dns_sd_configs:
-      - names: [ '${OPS_HOST}' ]
-        type: 'A'
-        port: ${OPS_NODE_EXPORTER_PORT}
+  ##########################################################################
+  # App cluster
 
-  - job_name: 'cadvisor'
+  - job_name: 'node_exporter-app'
+    dns_sd_configs:
+      - names: [ '${APP_HOST}' ]
+        type: 'A'
+        port: ${APP_NODE_EXPORTER_PORT}
+
+  - job_name: 'cadvisor-app'
     metrics_path: '/cadvisor/metrics'
     dns_sd_configs:
-      - names: [ '${OPS_HOST}' ]
+      - names: [ '${APP_HOST}' ]
         type: 'A'
-        port: ${OPS_CADVISOR_PORT}
+        port: ${APP_CADVISOR_PORT}
 
   # - job_name: 'webapp-dev'
   #   metrics_path: '/ops/metrics'

@@ -93,6 +93,22 @@ resource "aws_security_group" "ops" {
   }
 
   egress {
+    protocol    = "tcp"
+    from_port   = local.app_cluster_ports.cadvisor
+    to_port     = local.app_cluster_ports.cadvisor
+    cidr_blocks = [aws_subnet.private.cidr_block]
+    description = "Metrics: cadvisor"
+  }
+
+  egress {
+    protocol    = "tcp"
+    from_port   = local.app_cluster_ports.node_exporter
+    to_port     = local.app_cluster_ports.node_exporter
+    cidr_blocks = [aws_subnet.private.cidr_block]
+    description = "Metrics: node_exporter"
+  }
+
+  egress {
     protocol        = "tcp"
     from_port       = 5432
     to_port         = 5432

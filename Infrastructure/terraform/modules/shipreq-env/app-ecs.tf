@@ -47,7 +47,8 @@ resource "aws_launch_template" "app" {
   }
 
   user_data = base64encode(trimspace(templatefile("${path.module}/app-ec2-init.sh", {
-    cluster = aws_ecs_cluster.app.name
+    cluster               = aws_ecs_cluster.app.name
+    ec2_service_discovery = module.app_ec2_sd.user_data
   })))
 
   tag_specifications {
@@ -71,6 +72,22 @@ resource "aws_security_group" "app" {
     to_port         = 22
     security_groups = [aws_security_group.bastion.id]
     description     = "Bastion can SSH in"
+  }
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = local.app_cluster_ports.cadvisor
+    to_port     = local.app_cluster_ports.cadvisor
+    cidr_blocks = [aws_subnet.private.cidr_block]
+    description = "Metrics: cadvisor"
+  }
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = local.app_cluster_ports.node_exporter
+    to_port     = local.app_cluster_ports.node_exporter
+    cidr_blocks = [aws_subnet.private.cidr_block]
+    description = "Metrics: node_exporter"
   }
 
   egress {
@@ -119,4 +136,16 @@ resource "aws_iam_instance_profile" "app-ecs" {
 resource "aws_iam_role_policy_attachment" "app-ecs-ec2" {
   role       = aws_iam_role.app-ecs.id
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+}
+
+# Service discovery requires an ENI per service but there's a small ENI/instanceType limit that we exceed.
+# Therefore, we use EC2 service discovery.
+module "app_ec2_sd" {
+  source = "../ec2-sd"
+
+  ec2_name_tag    = local.app_tags.Name
+  ec2_role_name   = aws_iam_role.app-ecs.name
+  name            = "${var.env}-app"
+  sd_name         = local.app_subdomain
+  sd_namespace_id = aws_service_discovery_private_dns_namespace.internal.id
 }
