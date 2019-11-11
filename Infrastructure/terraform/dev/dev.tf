@@ -20,9 +20,9 @@ module "shipreq" {
   nat_public_key                            = file("key-nat.rsa.pub")
   app_public_key                            = file("key-app.rsa.pub")
   app_instance_type                         = "t3a.medium"
-  app_cluster_size                          = 0
+  app_cluster_size                          = 1
   ops_public_key                            = file("key-ops.rsa.pub")
-  ops_instance_type                         = "t3a.nano"
+  ops_instance_type                         = "t3a.micro"
   ecs_root_volume_type                      = "standard" # Save money
   enable_redis                              = false
   enable_elasticsearch                      = true
