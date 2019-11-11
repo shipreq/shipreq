@@ -5,7 +5,7 @@ locals {
   mount_sh = "\"/usr/bin/mount-${var.name}\""
 
   ######################################################################################################################
-  user_data = <<EOB
+  user_data1 = <<EOB
 
 yum -y install awscli
 aws configure set default.region "$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/[a-z]*$//')"
@@ -22,8 +22,9 @@ chmod 755 ${local.mount_sh}
 
 echo '${var.cron_schedule} root ${local.mount_sh}' > "/etc/cron.d/mount-${var.name}"
 
-${local.mount_sh}
-
 EOB
 ########################################################################################################################
+
+user_data2 = local.mount_sh
+
 }
