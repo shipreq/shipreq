@@ -13,6 +13,10 @@
 * Cluster EC2s
   * Collect logs (?)
 
+* Healthcheck: node_exporter
+
+* Healthcheck: filebeat
+
 ====================================================================================================
 
 * App
