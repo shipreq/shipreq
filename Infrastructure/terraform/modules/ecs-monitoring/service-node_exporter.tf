@@ -111,17 +111,7 @@ resource "aws_ecs_task_definition" "node_exporter" {
     ],
     "cpu": ${var.node_exporter_cpu},
     "memoryReservation": ${var.node_exporter_mem_res},
-    "memory": 92,
-    "healthCheck": {
-      "command": [
-        "CMD-SHELL",
-        "wget -qO - http://localhost:9100/metrics | fgrep -q '\"} ' || exit 1"
-      ],
-      "startPeriod": ${local.healthcheck.startPeriod},
-      "interval": ${local.healthcheck.interval},
-      "timeout": ${local.healthcheck.timeout},
-      "retries": ${local.healthcheck.retries}
-    }
+    "memory": 92
   }
 ]
 EOB
