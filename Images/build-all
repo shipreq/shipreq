@@ -71,6 +71,8 @@ function build_and_deploy {
   if [ $image_exists = no ]; then
     echo "Building..."
     runcmd docker build \
+      --cache-from "${image_by_md5}" \
+      --cache-from "${image_latest}" \
       --cache-from "${pull_repo_prefix}${image_by_md5}" \
       --cache-from "${pull_repo_prefix}${image_latest}" \
       -t "${image_by_md5}" \
