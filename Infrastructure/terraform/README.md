@@ -43,20 +43,3 @@ Env Details
   * 2 private DNSs only accessible from within the VPC:
     * `<env>.internal` - manually managed
     * `<env>.sd.internal` - managed by service discovery
-
-
-Problems
-========
-
-If you get an error like this when running Terraform:
-
-    module.shipreq.aws_service_discovery_service.prometheus: Destroying... [id=srv-vguuopieeeayrdco]
-
-    Error: ResourceInUse: Service contains registered instances; delete the instances before deleting the service
-    	status code: 400, request id: 092e9d0b-03d1-4bf5-b4fe-b4c031894c22
-
-To workaround:
-
-    terraform destroy -target=module.shipreq.aws_ecs_service.prometheus
-
-Issue: https://github.com/terraform-providers/terraform-provider-aws/issues/4853
