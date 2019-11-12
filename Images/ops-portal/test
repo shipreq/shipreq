@@ -14,6 +14,5 @@ docker run --rm \
   -e PROMETHEUS_TECH_URL=http://tech.prometheus:9090/ \
   -e PROMETHEUS_BIZ_URL=http://biz.prometheus:9091/ \
   -e SHIPREQ_ENV=test \
-  -e SHIPREQ_URL_HTTP=http://shipreq.localhost \
-  -e SHIPREQ_URL=https://shipreq.localhost \
+  -e SHIPREQ_URL=http://shipreq.localhost \
   shipreq/ops/portal

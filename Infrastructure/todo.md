@@ -19,16 +19,20 @@
 
 ====================================================================================================
 
-* App
-  * ALB
-  * ShipReq
-  * Taskman
+* ShipReq
+* Taskman
 
-* Ops
-  * postgres_exporter
+* ALB
+  * Cert
+  * Allow HTTP for /robots.txt
+  * Allow HTTP for /ops/metrics
+  * Allow HTTP for /ops/ok
+
+* postgres_exporter
 
 * Alerting
 
 * DR
   * Postgres
   * EBS
+

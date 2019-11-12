@@ -8,12 +8,6 @@ i="$(printenv run.mode)"
 [ -n "$i" ] && cmd+=("-Drun.mode=$i")
 [ -n "$RUN_MODE" ] && cmd+=("-Drun.mode=$RUN_MODE")
 
-[ -z "$EXTERNAL_PORT_SSL" ] \
-  && echo "Environment variable not specified: EXTERNAL_PORT_SSL" \
-  && echo "This must be the SSL port as seen from outside Docker." \
-  && exit 3
-cmd+=("-Djetty.httpConfig.securePort=$EXTERNAL_PORT_SSL")
-
 cmd+=("$@")
 
 # This is a little util in shipreq/base that imports files from an external

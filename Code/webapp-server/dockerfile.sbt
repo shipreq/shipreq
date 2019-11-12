@@ -105,11 +105,6 @@ dockerfile in docker := {
       execInBash(s"$compressable | parallel --no-notice $compGz")
       execInBash(s"$compressable | parallel --no-notice $compBr")
 
-      // Redirect HTTP to HTTPS
-      val stagedWebXml = stage / webXml
-      if (stagedWebXml.exists())
-        execInBash("""sed -i '/transport-guarantee.*HTTPS/s/NONE/CONFIDENTIAL/' """ + stagedWebXml.getAbsolutePath)
-
       // Jetty's WebAppClassLoader doesn't seem to access resources in lib jars which prevents FlyWay from
       // finding the db migrations
       if (batch.exists(_._2 endsWith s"/$wsjar"))
@@ -151,9 +146,7 @@ dockerfile in docker := {
 
     workDir(base)
 
-    expose(
-      8080, // HTTP
-      8443) // HTTPS
+    expose(8080)
 
     env(Docker.envVars.value: _*)
 

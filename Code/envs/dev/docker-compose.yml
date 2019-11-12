@@ -53,8 +53,7 @@ services:
       - redis
       - jaeger
     ports:
-      - $PORT_SHIPREQ_WEBAPP_HTTP:8080
-      - $PORT_SHIPREQ_WEBAPP_HTTPS:8443
+      - $PORT_SHIPREQ_WEBAPP:8080
     volumes:
       - ./webapp:/mnt/import:ro
     environment:
@@ -65,12 +64,11 @@ services:
       - redis.password=sqd
       - redis.url=redis://redis:6379
       - run.mode=staging
-      - shipreq.url=https://shipreq.com:$PORT_SHIPREQ_WEBAPP_HTTPS
+      - shipreq.url=http://localhost:$PORT_SHIPREQ_WEBAPP
       - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
       - JAEGER_REPORTER_FLUSH_INTERVAL=2000
       - JAEGER_SAMPLER_TYPE=const
       - JAEGER_SAMPLER_PARAM=1
-      - EXTERNAL_PORT_SSL=$PORT_SHIPREQ_WEBAPP_HTTPS
       - IMPORT_VOL=/mnt/import
     cpus: 2
     mem_limit: 1856m # 2.25*1024 - 448 for Taskman
@@ -263,8 +261,7 @@ services:
       - PROMETHEUS_TECH_URL=http://prometheus-tech:9090
       - PROMETHEUS_BIZ_URL=http://todo
       - SHIPREQ_ENV=dev
-      - SHIPREQ_URL_HTTP=http://shipreq.com:$PORT_SHIPREQ_WEBAPP_HTTP
-      - SHIPREQ_URL=https://shipreq.com:$PORT_SHIPREQ_WEBAPP_HTTPS
+      - SHIPREQ_URL=http://localhost:$PORT_SHIPREQ_WEBAPP
     cpus: 0.1
     mem_limit: 400m
 
