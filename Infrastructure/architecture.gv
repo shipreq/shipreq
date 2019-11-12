@@ -6,11 +6,14 @@ digraph {
 
   subgraph cluster_AWS {
     label="AWS" style=filled fillcolor="#eeffdd"
-    dns_shipreq [label="DNS:\nshipreq.com"]
+    { rank=same
+      dns_shipreq [label="DNS:\nshipreq.com"]
+      acm_ssl [label="ACM:\nSSL cert"]
+    }
     ebs_prometheus_tech [label="EBS:\nPrometheus\n(tech)" fillcolor=lightskyblue1]
     ebs_prometheus_busi [label="EBS:\nPrometheus\n(business)" fillcolor=lightskyblue1]
     eip_bastion [label="EIP:\nBastion"]
-    s3_webapp [label="S3:\nwebapp\nconfig\n& ssl"]
+    s3_shipreq [label="S3:\nshipreq\nconfig\nfiles"fillcolor=lightskyblue1]
 
     subgraph cluster_VPC {
       label="VPC" fillcolor=white
@@ -18,7 +21,7 @@ digraph {
 
       subgraph cluster_public {
         label="Public subnet" fillcolor="#999999"
-        elb_webapp [label="ALB:\nWebapp" color=red]
+        alb_webapp [label="ALB:\nWebapp" color=red]
         nat [label="EC2:\nNAT"]
 
         subgraph cluster_bastion {
@@ -36,7 +39,7 @@ digraph {
         subnet_private_in [shape=point fillcolor=red width=.12]
         subnet_private_out [shape=point fillcolor=blue width=.12]
         redis [label="\nRedis\n\n"]
-        es [label="ElasticSearch\n& Kibana" color=red]
+        es [label="ElasticSearch\n& Kibana" color=red fillcolor=lightskyblue1]
 
         subgraph cluster_ecs2_app {
           label="App ECS Cluster / AGS / EC2s" fillcolor="#ffeeee"
@@ -68,7 +71,7 @@ digraph {
     }
   }
 
-  // subnet_private_in -> elb_webapp [style=invis]
+  // subnet_private_in -> alb_webapp [style=invis]
   // subnet_private_in -> docker_webapp,docker_taskman [style=invis]
   subnet_private_in -> docker_filebeatA [style=invis]
   // docker_webapp,docker_taskman -> docker_filebeatA,docker_nodeexpA,docker_cadvisorA [style=invis]
@@ -76,9 +79,9 @@ digraph {
   // rds_shipreq -> rds_grafana [style=invis]
 
   edge [color=red]
-  internet -> dns_shipreq -> elb_webapp
+  internet -> dns_shipreq -> alb_webapp
   internet -> eip_bastion -> bastion
-  elb_webapp -> docker_webapp
+  alb_webapp -> docker_webapp
   bastion -> subnet_private_in
   docker_portal -> subnet_private_in -> es,docker_grafana,docker_prometheus_tech,docker_prometheus_busi [style=dashed]
   // subnet_private_in -> docker_cadvisorO [style=dashed]
@@ -89,9 +92,13 @@ digraph {
   nat -> subnet_private_out [dir=back]
 
   edge [color=green]
+  dns_shipreq -> acm_ssl [minlen=2]
+  acm_ssl -> alb_webapp [dir=back]
   rds_grafana -> docker_grafana [dir=back]
-  docker_webapp -> redis,rds_shipreq,s3_webapp
+  docker_webapp -> redis,rds_shipreq
   docker_taskman -> rds_shipreq
+  s3_shipreq:se -> docker_taskman [dir=back]
+  s3_shipreq:e -> docker_webapp [dir=back]
   docker_prometheus_tech -> ebs_prometheus_tech
   docker_prometheus_busi -> ebs_prometheus_busi
   docker_grafana -> docker_prometheus_tech,docker_prometheus_busi
