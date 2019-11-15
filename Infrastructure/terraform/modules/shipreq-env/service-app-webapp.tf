@@ -3,6 +3,24 @@ locals {
   s3_config_folder_webapp = "webapp"
 }
 
+resource "aws_service_discovery_service" "webapp" {
+  name = local.shipreq_webapp_sd_subdomain
+
+  dns_config {
+    namespace_id   = aws_service_discovery_private_dns_namespace.internal.id
+    routing_policy = "MULTIVALUE"
+
+    dns_records {
+      ttl  = 30
+      type = "SRV"
+    }
+  }
+
+  health_check_custom_config {
+    failure_threshold = 2
+  }
+}
+
 resource "aws_ecs_service" "shipreq_webapp" {
   name                = "${var.env}-shipreq-webapp"
   cluster             = aws_ecs_cluster.app.id
@@ -10,6 +28,12 @@ resource "aws_ecs_service" "shipreq_webapp" {
   scheduling_strategy = "DAEMON"
   propagate_tags      = "SERVICE"
   tags                = local.shipreq_webapp_tags
+
+  service_registries {
+    registry_arn   = aws_service_discovery_service.webapp.arn
+    container_name = "${var.env}-shipreq-webapp"
+    container_port = 8080
+  }
 }
 
 resource "aws_ecs_task_definition" "shipreq_webapp" {
@@ -59,7 +83,7 @@ resource "aws_ecs_task_definition" "shipreq_webapp" {
     "portMappings": [
       {
         "protocol": "tcp",
-        "hostPort": ${local.app_cluster_ports.shipreq_webapp},
+        "hostPort": 0,
         "containerPort": 8080
       }
     ],

@@ -59,13 +59,15 @@ locals {
   }
 
   app_cluster_ports = {
-    cadvisor       = 9080
-    node_exporter  = 9100
-    shipreq_webapp = 8080
+    cadvisor      = 9080
+    node_exporter = 9100
   }
 
   app_subdomain = "app"
   app_host      = "${local.app_subdomain}.${local.internal_sd_domain}"
+
+  shipreq_webapp_sd_subdomain = "webapp"
+  shipreq_webapp_sd_domain    = "${local.shipreq_webapp_sd_subdomain}.${local.internal_sd_domain}"
 
   # =================================================================================================================================================
   # Ops cluster

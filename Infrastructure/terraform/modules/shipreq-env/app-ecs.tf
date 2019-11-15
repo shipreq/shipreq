@@ -92,10 +92,10 @@ resource "aws_security_group" "app" {
 
   ingress {
     protocol    = "tcp"
-    from_port   = local.app_cluster_ports.shipreq_webapp
-    to_port     = local.app_cluster_ports.shipreq_webapp
+    from_port   = 32768
+    to_port     = 65535
     cidr_blocks = [aws_subnet.private.cidr_block]
-    description = "Metrics: shipreq/webapp"
+    description = "Containers with dynamic ports"
   }
 
   egress {

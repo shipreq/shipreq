@@ -61,6 +61,5 @@ ${CADVISOR_RELABEL}
   - job_name: 'shipreq-webapp'
     metrics_path: '/ops/metrics'
     dns_sd_configs:
-      - names: [ '${APP_HOST}' ]
-        type: 'A'
-        port: ${APP_SHIPREQ_WEBAPP_PORT}
+      - names: [ '${SHIPREQ_WEBAPP_SD_DOMAIN}' ]
+        type: 'SRV'
