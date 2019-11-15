@@ -17,6 +17,11 @@ resource "aws_codebuild_project" "images" {
     }
 
     environment_variable {
+      name  = "OPS_ECS_EXPORTER_URL"
+      value = data.aws_ecr_repository.ecs_exporter.repository_url
+    }
+
+    environment_variable {
       name  = "OPS_FILEBEAT_URL"
       value = data.aws_ecr_repository.filebeat.repository_url
     }
@@ -97,6 +102,7 @@ resource "aws_iam_role_policy" "images" {
       "Resource": [
         "${aws_ecr_repository.shipreq_build.arn}",
         "${data.aws_ecr_repository.cadvisor.arn}",
+        "${data.aws_ecr_repository.ecs_exporter.arn}",
         "${data.aws_ecr_repository.filebeat.arn}",
         "${data.aws_ecr_repository.grafana.arn}",
         "${data.aws_ecr_repository.node_exporter.arn}",

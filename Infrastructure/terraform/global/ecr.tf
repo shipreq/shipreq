@@ -52,3 +52,8 @@ resource "aws_ecr_repository" "filebeat" {
   name = "shipreq/ops/filebeat"
   tags = local.default_tags
 }
+
+resource "aws_ecr_repository" "ecs_exporter" {
+  name = "shipreq/ops/ecs_exporter"
+  tags = local.default_tags
+}

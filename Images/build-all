@@ -97,6 +97,7 @@ function build_and_deploy {
 }
 
 build_and_deploy  ops-cadvisor           "${OPS_CADVISOR_URL}"
+build_and_deploy  ops-ecs_exporter       "${OPS_ECS_EXPORTER_URL}"
 build_and_deploy  ops-filebeat           "${OPS_FILEBEAT_URL}"
 build_and_deploy  ops-grafana            "${OPS_GRAFANA_URL}"
 build_and_deploy  ops-node_exporter      "${OPS_NODE_EXPORTER_URL}"

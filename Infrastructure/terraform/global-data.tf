@@ -11,6 +11,7 @@ data "aws_iam_policy" "s3_tmp_rw" {
 }
 
 data "aws_ecr_repository" "cadvisor" { name = "shipreq/ops/cadvisor" }
+data "aws_ecr_repository" "ecs_exporter" { name = "shipreq/ops/ecs_exporter" }
 data "aws_ecr_repository" "filebeat" { name = "shipreq/ops/filebeat" }
 data "aws_ecr_repository" "grafana" { name = "shipreq/ops/grafana" }
 data "aws_ecr_repository" "node_exporter" { name = "shipreq/ops/node_exporter" }

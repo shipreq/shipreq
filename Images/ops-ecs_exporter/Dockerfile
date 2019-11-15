@@ -1,0 +1,1 @@
+FROM slok/ecs-exporter
