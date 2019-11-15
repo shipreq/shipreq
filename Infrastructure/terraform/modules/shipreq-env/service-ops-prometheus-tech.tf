@@ -7,6 +7,7 @@ locals {
     APP_NODE_EXPORTER_PORT          = local.app_cluster_ports.node_exporter
     APP_SHIPREQ_WEBAPP_PORT         = local.app_cluster_ports.shipreq_webapp
     CADVISOR_PATH                   = local.cadvisor_path
+    CADVISOR_RELABEL                = chomp(replace(local.prometheus_tech_config_yml_cadvisor_relabel, "/\n+/", "\n"))
     ECS_EXPORTER_PORT               = local.ops_cluster_ports.ecs_exporter
     ECS_EXPORTER_SCRAPE_INTERVAL    = "${max(60, var.prometheus_tech_scrape_interval_sec)}s"
     OPS_CADVISOR_PORT               = local.ops_cluster_ports.cadvisor
@@ -20,6 +21,29 @@ locals {
     PROMETHEUS_TECH_PORT            = local.ops_cluster_ports.prometheus_tech
     PROMETHEUS_TECH_SCRAPE_INTERVAL = "${var.prometheus_tech_scrape_interval_sec}s"
   })
+
+  prometheus_tech_config_yml_cadvisor_relabel = <<EOB
+    metric_relabel_configs:
+
+    # Drop metrics
+    - source_labels: [__name__]
+      regex: 'container_tasks_state'
+      action: drop
+
+    # Rename ECS attributes
+    - source_labels: ['container_label_com_amazonaws_ecs_cluster']
+      target_label: ecs_cluster
+    - source_labels: ['container_label_com_amazonaws_ecs_container_name']
+      target_label: ecs_name
+    - source_labels: ['container_label_com_amazonaws_ecs_task_definition_family']
+      target_label: ecs_taskdef_name
+    - source_labels: ['container_label_com_amazonaws_ecs_task_definition_version']
+      target_label: ecs_taskdef_ver
+
+    # Drop labels
+    - regex: 'container_label_.*'
+      action: labeldrop
+EOB
 }
 
 resource "aws_ecs_service" "prometheus_tech" {
