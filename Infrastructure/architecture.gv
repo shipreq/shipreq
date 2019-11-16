@@ -30,7 +30,7 @@ digraph {
           bastion [shape=point fillcolor=red width=.12]
           bastion_out [shape=point fillcolor=blue width=.12]
           docker_portal [label="Docker:\nOps Portal"]
-          docker_filebeatB [label="Docker:\nFilebeat" fillcolor="#eecc99"]
+          docker_filebeatB [label="Docker:\nfilebeat" fillcolor="#eecc99"]
         }
       }
 
@@ -41,11 +41,11 @@ digraph {
         redis [label="\nRedis\n\n"]
         es [label="ElasticSearch\n& Kibana" color=red fillcolor=lightskyblue1]
 
-        subgraph cluster_ecs2_app {
+        subgraph cluster_app {
           label="App ECS Cluster / AGS / EC2s" fillcolor="#ffeeee"
-          docker_filebeatA [label="Docker:\nFilebeat" fillcolor="#eecc99"]
-          docker_nodeexpA [label="Docker:\nNodeExporter" fillcolor="#eecc99"]
-          docker_cadvisorA [label="Docker:\ncAdvisor" fillcolor="#eecc99"]
+          docker_filebeatA [label="Docker:\nfilebeat" fillcolor="#eecc99"]
+          docker_nodeexpA [label="Docker:\nnode_exporter" fillcolor="#eecc99"]
+          docker_cadvisorA [label="Docker:\ncadvisor" fillcolor="#eecc99"]
           docker_webapp [label="Docker:\nWebapp" color=red]
           docker_taskman [label="Docker:\nTaskman"]
         }
@@ -57,11 +57,12 @@ digraph {
           rds_grafana [label="grafana"]
         }
 
-        subgraph cluster_ecs2_ops {
+        subgraph cluster_ops {
           label="Ops ECS Cluster / ASG / EC2s" fillcolor="#ffeeee"
-          docker_filebeatO [label="Docker:\nFilebeat" fillcolor="#eecc99"]
-          docker_nodeexpO [label="Docker:\nNodeExporter" fillcolor="#eecc99"]
-          docker_cadvisorO [label="Docker:\ncAdvisor" fillcolor="#eecc99"]
+          docker_filebeatO [label="Docker:\nfilebeat" fillcolor="#eecc99"]
+          docker_nodeexpO [label="Docker:\nnode_exporter" fillcolor="#eecc99"]
+          docker_cadvisorO [label="Docker:\ncadvisor" fillcolor="#eecc99"]
+          docker_ecs_exporter [label="Docker:\necs_exporter" fillcolor="#eecc99"]
           docker_db_metrics  [label="Docker:\npostgres_exporter"]
           docker_prometheus_tech [label="Docker:\nPrometheus\n(tech)" color=red]
           docker_prometheus_busi [label="Docker:\nPrometheus\n(business)" color=red]
@@ -106,6 +107,6 @@ digraph {
   edge [color="#888888" style=dashed]
   docker_filebeatA,docker_filebeatB -> es
   es -> docker_filebeatO [dir=back]
-  docker_webapp,docker_taskman,docker_nodeexpA,docker_nodeexpO,docker_cadvisorA,docker_cadvisorO -> docker_prometheus_tech [dir=back]
+  docker_webapp,docker_taskman,docker_nodeexpA,docker_nodeexpO,docker_cadvisorA,docker_cadvisorO,docker_ecs_exporter -> docker_prometheus_tech [dir=back]
   rds_shipreq -> docker_db_metrics -> docker_prometheus_busi [dir=back]
 }
