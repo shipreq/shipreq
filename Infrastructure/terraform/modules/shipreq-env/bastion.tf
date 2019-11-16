@@ -62,8 +62,7 @@ resource "aws_instance" "bastion" {
     PROMETHEUS_TECH_URL = local.prometheus_tech_root_url
     REDIS_HOST          = local.redis_domain
     REDIS_VER           = local.redis_version
-    SHIPREQ_URL         = "TODO"
-    SHIPREQ_URL_HTTP    = "TODO"
+    SHIPREQ_URL         = local.shipreq_url
   })
 
   root_block_device {
