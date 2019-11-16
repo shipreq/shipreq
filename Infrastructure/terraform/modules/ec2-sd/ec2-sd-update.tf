@@ -19,7 +19,7 @@ chmod 755 ${local.update_sh_path}
 
 echo '${var.cron_schedule} root ${local.update_sh_path}' > "/etc/cron.d/ec2-sd-update"
 
-${local.update_sh_path}
+${local.update_sh_path} || true
 
 EOB
 ########################################################################################################################

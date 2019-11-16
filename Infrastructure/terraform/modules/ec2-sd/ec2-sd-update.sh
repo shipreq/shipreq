@@ -37,16 +37,21 @@ records="$(
 )"
 
 while read -r rec; do
+  echo "Found record: [$rec]"
   id="$${rec%$'\t'*}"
   ip="$${rec#*$'\t'}"
-  echo "Checking record: $id = $ip"
-  if [[ "$ipstr" == *",$ip,"* ]]; then
-    echo "  ok"
+  if [ -z "$id" -o -z "$ip" ]; then
+    echo "Ignoring result: [$rec]"
   else
-    echo "  IP is stale. Removing record..."
-    aws servicediscovery deregister-instance \
-      --service-id "$serviceId" \
-      --instance-id "$id"
+    echo "Checking record: id=$id, ip=$ip"
+    if [[ "$ipstr" == *",$ip,"* ]]; then
+      echo "  ok"
+    else
+      echo "  IP is stale. Removing record..."
+      aws servicediscovery deregister-instance \
+        --service-id "$serviceId" \
+        --instance-id "$id"
+    fi
   fi
 done <<< "$records"
 
