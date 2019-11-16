@@ -19,6 +19,8 @@
 
 * Healthcheck: taskman (what's `taskman.healthFile` for?)
 
+* A public `<env>.shipreq.com` record is probably a bad idea
+
 ====================================================================================================
 
 * ALB
@@ -34,3 +36,5 @@
 * DR
   * Postgres
   * EBS
+
+* Updating webapp task def breaks UX; ALB serves 503s for a while

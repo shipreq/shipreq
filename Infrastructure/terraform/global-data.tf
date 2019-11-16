@@ -2,6 +2,11 @@
 
 data "aws_caller_identity" "default" {}
 
+data "aws_route53_zone" "shipreq" {
+  name         = "shipreq.com."
+  private_zone = false
+}
+
 data "aws_s3_bucket" "tmp" {
   bucket = "shipreq-tmp"
 }

@@ -1,6 +1,7 @@
 locals {
-  shipreq_webapp_tags     = merge(local.default_tags, { Name = "${var.env}-shipreq-webapp" })
-  s3_config_webapp_folder = "webapp"
+  shipreq_webapp_tags           = merge(local.default_tags, { Name = "${var.env}-shipreq-webapp" })
+  shipreq_webapp_container_name = "${var.env}-shipreq-webapp"
+  s3_config_webapp_folder       = "webapp"
 
   s3_config_webapp_content_hash = md5(join(":", [
     var.shipreq_webapp_properties,
@@ -34,9 +35,15 @@ resource "aws_ecs_service" "shipreq_webapp" {
   propagate_tags      = "SERVICE"
   tags                = local.shipreq_webapp_tags
 
+  load_balancer {
+    target_group_arn = aws_lb_target_group.webapp.arn
+    container_name   = local.shipreq_webapp_container_name
+    container_port   = 8080
+  }
+
   service_registries {
     registry_arn   = aws_service_discovery_service.webapp.arn
-    container_name = "${var.env}-shipreq-webapp"
+    container_name = local.shipreq_webapp_container_name
     container_port = 8080
   }
 
@@ -55,7 +62,7 @@ resource "aws_ecs_task_definition" "shipreq_webapp" {
   container_definitions = <<EOB
 [
   {
-    "name": "${var.env}-shipreq-webapp",
+    "name": "${local.shipreq_webapp_container_name}",
     "image": "${data.aws_ecr_repository.webapp.repository_url}:${var.shipreq_images_tag}",
     "environment": [
       {

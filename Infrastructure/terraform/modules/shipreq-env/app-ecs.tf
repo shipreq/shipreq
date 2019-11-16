@@ -94,7 +94,7 @@ resource "aws_security_group" "app" {
     protocol    = "tcp"
     from_port   = 32768
     to_port     = 65535
-    cidr_blocks = [aws_subnet.private.cidr_block]
+    cidr_blocks = [aws_subnet.public.cidr_block, aws_subnet.private.cidr_block]
     description = "Containers with dynamic ports"
   }
 

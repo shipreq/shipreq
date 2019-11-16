@@ -94,7 +94,7 @@ variable "postgres_root_password" {
   type = string
 }
 
-variable "postgres_deletion_protection" {
+variable "deletion_protection" {
   type = bool
 }
 

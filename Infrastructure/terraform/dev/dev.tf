@@ -30,8 +30,8 @@ module "shipreq" {
   elasticsearch_volume_size           = 10
   postgres_instance_type              = "db.t3.micro"
   postgres_root_password              = "dev-1234"
-  postgres_deletion_protection        = false
   postgres_backup_retention_period    = 0
+  deletion_protection                 = false
   ops_images_tag                      = "latest"
   prometheus_tech_ebs_size            = 4
   prometheus_tech_retention           = "time=12w"
@@ -54,6 +54,10 @@ module "shipreq" {
 
 output "bastion_host" {
   value = module.shipreq.bastion_host
+}
+
+output "public_endpoint" {
+  value = module.shipreq.public_endpoint
 }
 
 ####################################################################################################

@@ -24,7 +24,7 @@ resource "aws_db_instance" "postgres" {
   maintenance_window          = "Sat:18:00-Sat:18:59" # in AEDT: Sunday 5am-6am
   backup_retention_period     = var.postgres_backup_retention_period
   backup_window               = "17:00-17:59" # 4am-5am
-  deletion_protection         = var.postgres_deletion_protection
+  deletion_protection         = var.deletion_protection
   skip_final_snapshot         = var.postgres_final_snapshot == ""
   final_snapshot_identifier   = (var.postgres_final_snapshot == "") ? null : var.postgres_final_snapshot
   copy_tags_to_snapshot       = false

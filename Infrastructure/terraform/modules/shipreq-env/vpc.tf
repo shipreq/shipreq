@@ -27,6 +27,14 @@ resource "aws_subnet" "public" {
   tags              = merge(local.default_tags, { Name = "${var.env}-public" })
 }
 
+# Required for ALB
+resource "aws_subnet" "public_2" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "${var.vpc_ip_prefix}.1.0/24" # 10.0.1.*
+  availability_zone = var.availability_zone_2
+  tags              = merge(local.default_tags, { Name = "${var.env}-public-2" })
+}
+
 resource "aws_internet_gateway" "public" {
   vpc_id = aws_vpc.main.id
   tags   = local.default_tags
@@ -47,16 +55,21 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
+resource "aws_route_table_association" "public_2" {
+  subnet_id      = aws_subnet.public_2.id
+  route_table_id = aws_route_table.public.id
+}
+
 // ================================================================================================
 
 resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "${var.vpc_ip_prefix}.4.0/24" # 10.0.4.* (not using 10.0.1.* cos might use it later for multi-AZ)
+  cidr_block        = "${var.vpc_ip_prefix}.4.0/24" # 10.0.4.*
   availability_zone = var.availability_zone
   tags              = merge(local.default_tags, { Name = "${var.env}-private" })
 }
 
-# This is required for RDS
+# Required for RDS
 resource "aws_subnet" "private_2" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "${var.vpc_ip_prefix}.5.0/24" # 10.0.5.*
