@@ -28,12 +28,13 @@ resource "aws_service_discovery_service" "webapp" {
 }
 
 resource "aws_ecs_service" "shipreq_webapp" {
-  name                = "${var.env}-shipreq-webapp"
-  cluster             = aws_ecs_cluster.app.id
-  task_definition     = aws_ecs_task_definition.shipreq_webapp.arn
-  scheduling_strategy = "DAEMON"
-  propagate_tags      = "SERVICE"
-  tags                = local.shipreq_webapp_tags
+  name                               = "${var.env}-shipreq-webapp"
+  cluster                            = aws_ecs_cluster.app.id
+  task_definition                    = aws_ecs_task_definition.shipreq_webapp.arn
+  scheduling_strategy                = "DAEMON"
+  propagate_tags                     = "SERVICE"
+  deployment_minimum_healthy_percent = local.min_healthy_percent
+  tags                               = local.shipreq_webapp_tags
 
   load_balancer {
     target_group_arn = aws_lb_target_group.webapp.arn

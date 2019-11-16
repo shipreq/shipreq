@@ -20,8 +20,6 @@
 
 * A public `<env>.shipreq.com` record is probably a bad idea
 
-* Updating webapp task def breaks UX; ALB serves 503s for a while
-
 * ALB: Access logs -> S3 & Kibana
 
 ====================================================================================================

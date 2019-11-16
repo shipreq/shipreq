@@ -9,6 +9,8 @@ locals {
 
   region = regex("^[a-z]+-[a-z]+-\\d+", var.availability_zone)
 
+  min_healthy_percent = var.app_cluster_size > 1 ? 50 : 0
+
   shipreq_domain = var.env == "prod" ? "shipreq.com" : "${var.env}.shipreq.com"
   shipreq_url    = "https://${local.shipreq_domain}"
 
