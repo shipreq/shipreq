@@ -71,6 +71,7 @@ final class SourceActor(ctx: TaskmanCtx) extends Actor with HasLogger {
   override def receive = mdc.impureWrapPF {
     case RequestForWork(qs) =>
       val (s2, msgs) = source.poll(qs).run(state).unsafeRun()
+      logger.debug(s"Looking for work. Found ${msgs.size} jobs")
       state = s2
       if (msgs.nonEmpty)
         sender() ! IncomingWork(msgs)
@@ -100,18 +101,22 @@ final class ManagerActor(ctx: TaskmanCtx, source: ActorRef) extends Actor with H
     case PollSource =>
       source ! RequestForWork(queue.status)
 
-    case RegisterWorker =>
-      workers += sender()
-
     case IncomingWork(work) =>
-      logger.debug(s"Received ${work.size} new msg(s)")
       queue = M.add(work).exec(queue)
+      logger.info(s"Received ${work.size} new job(s). Queue size is now ${queue.size}")
       workers.foreach(_ ! WorkAvailable)
 
     case RequestForWork =>
       val (q2, wo) = M.pop.run(queue)
-      wo.foreach(sender() ! _)
+      for (job <- wo) {
+        sender() ! job
+        logger.debug(s"Assigned job to worker. Queue size is now ${q2.size}")
+      }
       queue = q2
+
+    case RegisterWorker =>
+      logger.info(s"Registered worker. Worker count is now ${workers.size}")
+      workers += sender()
   }
 }
 

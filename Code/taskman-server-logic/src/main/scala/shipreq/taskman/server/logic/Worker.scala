@@ -172,9 +172,10 @@ final class Worker[F[_]](msgProcessor : MsgProcessor[F])
     clock >>= (handleTaskFailure(m, e, _))
 
   private def handleTaskFailure(m: MsgDetail, e: ArticulateError, now: Instant): Fx[WorkResult[F]] = {
-    val f = failurePolicy(FailureCtx(node, worker, m, e, now))
+    val f                = failurePolicy(FailureCtx(node, worker, m, e, now))
     val addOps: Fx[Unit] = f.additionalOps.traverse_(serverOpFx)
-    serverOpFx(f.reaction) >> addOps >> Fx.pure(WorkerFailed(m, e, f.reaction))
+    val log              = Fx(logger.warn(s"Task failure on $m", e))
+    log >> serverOpFx(f.reaction) >> addOps >> Fx.pure(WorkerFailed(m, e, f.reaction))
   }
 
   private def assign(mh: MsgHeader): Fx[WorkResult[F]] =
@@ -184,14 +185,17 @@ final class Worker[F[_]](msgProcessor : MsgProcessor[F])
     }
 
   private def logWorkStart(md: MsgDetail): Fx[Unit] =
-    Fx(logger.debug(s"Starting work: $md"))
+    Fx(logger.info(s"Starting work: $md"))
 
   private def performWork(m: MsgDetail)(assignedSince: Instant): Fx[WorkResult[F]] =
     Fx.safe(msgProcessor(m)).attemptArticulateError flatMap taskEnd(m, assignedSince)
 
   private def taskEnd(m: MsgDetail, assignedSince: Instant): ArticulateError \/ ProcessorResult[F] => Fx[WorkResult[F]] = {
     case \/-(ProcessorResult.Complete) =>
-      serverOpFx(UpdateMsgSuccess(node, worker, m)).map(_ => Completed(m))
+      for {
+        _ <- Fx(logger.info(s"Successfully completed work #${m.id.value}"))
+        _ <- serverOpFx(UpdateMsgSuccess(node, worker, m))
+      } yield Completed(m)
 
     case \/-(ProcessorResult.Schedule(scheduler, work)) =>
       scheduler(wrapAsync(m, assignedSince)(work))
@@ -204,29 +208,34 @@ final class Worker[F[_]](msgProcessor : MsgProcessor[F])
 
   private def logWorkResult(task: Fx[WorkResult[F]]): Fx[WorkResult[F]] =
     for {
-      x <- task.measureDuration
-      (r, dur) = x
-      _ <- logWorkResult(r, dur)
+      (r, dur) <- task.measureDuration
+      _        <- logWorkResult(r, dur)
     } yield r
 
   private def logWorkResult(r: WorkResult[F], dur: Duration): Fx[Unit] =
     Fx(r match {
       case CouldntAssign(m) =>
-        logger.debug(s"Couldn't assign: $m")
+        logger.info(s"Couldn't assign: $m")
+
       case CouldntReassign(m) =>
         logger.warn(s"Couldn't reassign: $m")
+
       case Completed(m) =>
         logger.info(s"Successfully completed in ${dur.toMillis}ms: $m")
+
       case Scheduled(_, m) =>
-        logger.debug(s"Scheduled to run asynchronously: $m")
+        logger.info(s"Scheduled to run asynchronously: $m")
+
       case WorkerFailed(_, e, f) =>
         // f contains m so no need to print separately
         if (e is Deliberate)
           logger.warn(s"Worker deliberately failed: ${e.getMessage} // $f")
         else
           logger.error(s"Worker failed after ${dur.toMillis}ms: $f", e)
+
       case TaskmanFailed(e, Some(m)) =>
         logger.error(s"Taskman error occurred processing $m", e)
+
       case TaskmanFailed(e, None) =>
         logger.error("Taskman error occurred! (no msg)", e)
     })

@@ -5,6 +5,9 @@ import scalaz.{Heap, State}
 object Manager {
 
   final case class JobQueue(q: Heap[MsgHeader]) {
+    def size: Int =
+      q.size
+
     lazy val status: Source.QueueStatus =
       q.minimumO.map(m => (m.priority, q.size))
   }
