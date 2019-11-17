@@ -12,6 +12,9 @@ cmd+=("$@")
 # source depending on config. For example, SSL passwords.
 import-files || exit 1
 
+mkdir -p resources
+[ ! -e resources/logback.xml ] && cp webapps/ROOT/WEB-INF/classes/logback.xml resources/logback.xml
+
 "${cmd[@]}" --list-config | grep -iv password
 
 exec "${cmd[@]}"

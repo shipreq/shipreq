@@ -175,17 +175,27 @@ variable "shipreq_webapp_properties" {
   type        = string
 }
 
-variable "shipreq_webapp_logback_xml" {
-  description = "Content of webapp's logback.xml"
-  type        = string
-}
-
 variable "shipreq_taskman_properties" {
   description = "Content of taskman's shipreq.properties"
   type        = string
 }
 
-variable "shipreq_taskman_logback_xml" {
-  description = "Content of taskman's logback.xml"
-  type        = string
+variable "shipreq_webapp_log_level_root" {
+  type    = string
+  default = "INFO"
+}
+
+variable "shipreq_webapp_log_level_shipreq" {
+  type    = string
+  default = "INFO"
+}
+
+variable "shipreq_taskman_log_level_root" {
+  type    = string
+  default = "INFO"
+}
+
+variable "shipreq_taskman_log_level_shipreq" {
+  type    = string
+  default = "INFO"
 }

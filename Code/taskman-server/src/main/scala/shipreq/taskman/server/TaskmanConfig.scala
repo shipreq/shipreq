@@ -25,12 +25,17 @@ final case class TaskmanConfig(mail      : TaskmanConfig.Mail,
 object TaskmanConfig extends HasLogger {
 
   def config: ConfigDef[TaskmanConfig] =
-    (mail |@| mailchimp |@| freshdesk |@| prometheus |@| shipreq |@| taskman) (apply)
+    logVars *> (mail |@| mailchimp |@| freshdesk |@| prometheus |@| shipreq |@| taskman) (apply)
 
   def mailTokens: ConfigDef[Email.TokenValues] =
     (ConfigDef.need[String](CfgKeys.Webapp.appName)
       |@| ConfigDef.need[String](CfgKeys.Webapp.loginUrl)
       ) (Email.TokenValues)
+
+  val logVars =
+    ConfigDef.getOrUse[String]("LOG_APPENDER", "JSON") <* ConfigDef.external(
+      "LOG_LEVEL_ROOT",
+      "LOG_LEVEL_SHIPREQ")
 
   // TODO Put props and parsers in Business classes
 

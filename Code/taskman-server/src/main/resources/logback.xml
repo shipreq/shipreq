@@ -8,9 +8,6 @@
     <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
       <pattern>%d{HH:mm:ss.SSS} %-5level [%-34logger{34}] {%-10X{who}} %msg%n</pattern>
     </encoder>
-    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-      <level>DEBUG</level>
-    </filter>
   </appender>
 
   <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
@@ -21,9 +18,10 @@
 
   <logger name="akka.event.EventStream" level="WARN" />
   <logger name="akka.event.slf4j" level="WARN" />
-  <logger name="shipreq" level="DEBUG" />
 
-  <root level="INFO">
-    <appender-ref ref="JSON" />
+  <logger name="shipreq" level="${LOG_LEVEL_SHIPREQ}" />
+
+  <root level="${LOG_LEVEL_ROOT}">
+    <appender-ref ref="${LOG_APPENDER:-JSON}" />
   </root>
 </configuration>

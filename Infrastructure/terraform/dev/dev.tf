@@ -47,9 +47,7 @@ module "shipreq" {
   shipreq_db_password                 = "dev"
   shipreq_images_tag                  = "latest"
   shipreq_webapp_properties           = file("webapp.properties")
-  shipreq_webapp_logback_xml          = file("webapp-logback.xml")
   shipreq_taskman_properties          = file("taskman.properties")
-  shipreq_taskman_logback_xml         = file("taskman-logback.xml")
 }
 
 output "bastion_host" {

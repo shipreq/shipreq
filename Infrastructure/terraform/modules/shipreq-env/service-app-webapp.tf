@@ -5,7 +5,6 @@ locals {
 
   s3_config_webapp_content_hash = md5(join(":", [
     var.shipreq_webapp_properties,
-    var.shipreq_webapp_logback_xml,
   ]))
 }
 
@@ -57,7 +56,6 @@ resource "aws_ecs_service" "shipreq_webapp" {
   # Ensure that S3 is updated before we allow tasks to start
   depends_on = [
     aws_s3_bucket_object.webapp_properties,
-    aws_s3_bucket_object.webapp_logback,
   ]
 }
 
@@ -79,6 +77,14 @@ resource "aws_ecs_task_definition" "shipreq_webapp" {
       {
         "name": "IMPORT_S3",
         "value": "s3://${aws_s3_bucket.config.bucket}/${local.s3_config_webapp_folder}"
+      },
+      {
+        "name": "LOG_LEVEL_ROOT",
+        "value": "${var.shipreq_webapp_log_level_root}"
+      },
+      {
+        "name": "LOG_LEVEL_SHIPREQ",
+        "value": "${var.shipreq_webapp_log_level_shipreq}"
       },
       {
         "name": "db.host",
@@ -137,12 +143,6 @@ resource "aws_s3_bucket_object" "webapp_properties" {
   bucket  = aws_s3_bucket.config.bucket
   key     = "${local.s3_config_webapp_folder}/resources/shipreq.properties"
   content = var.shipreq_webapp_properties
-}
-
-resource "aws_s3_bucket_object" "webapp_logback" {
-  bucket  = aws_s3_bucket.config.bucket
-  key     = "${local.s3_config_webapp_folder}/resources/logback.xml"
-  content = var.shipreq_webapp_logback_xml
 }
 
 resource "aws_iam_role" "shipreq_webapp" {
