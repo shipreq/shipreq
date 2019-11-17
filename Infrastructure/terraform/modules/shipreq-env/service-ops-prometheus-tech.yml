@@ -58,6 +58,12 @@ ${CADVISOR_RELABEL}
         port: ${APP_CADVISOR_PORT}
 ${CADVISOR_RELABEL}
 
+  - job_name: 'shipreq-taskman'
+    dns_sd_configs:
+      - names: [ '${APP_HOST}' ]
+        type: 'A'
+        port: ${SHIPREQ_TASKMAN_PORT}
+
   - job_name: 'shipreq-webapp'
     metrics_path: '/ops/metrics'
     dns_sd_configs:

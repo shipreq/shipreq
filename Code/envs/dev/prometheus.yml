@@ -22,10 +22,18 @@ scrape_configs:
     static_configs:
       - targets: ['webapp:8080']
 
+  - job_name: 'taskman-dev'
+    static_configs:
+      - targets: ['taskman:9031']
+
   - job_name: 'webapp-local'
     metrics_path: '/ops/metrics'
     static_configs:
       - targets: ['parent-host:8080']
+
+  - job_name: 'taskman-local'
+    static_configs:
+      - targets: ['parent-host:9031']
 
   - job_name: 'postgres_exporter'
     static_configs:

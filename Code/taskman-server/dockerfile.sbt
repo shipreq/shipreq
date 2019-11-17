@@ -36,6 +36,8 @@ dockerfile in docker := {
 
     workDir(root)
 
+    expose(9031)
+
     jarTiers.foreach(copy(_, lib))
 
     copy(sourceDirectory.value / "docker", s"$root/")

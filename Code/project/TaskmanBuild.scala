@@ -69,6 +69,7 @@ object TaskmanBuild {
       .configure(Common.jvmSettings, DockerEnv.test.required)
       .deps(
         Akka.actor ++ javaMail ++ OkHttp.core ++ httpCore ++ commonsIo ++ Logback.withPlugins ++
+        Prometheus.client ++ Prometheus.hotspot ++ Prometheus.httpserver ++
         testScope(Akka.testkit ++ μTest))
       .dependsOn(taskmanServerLogic, taskmanServerSchema, taskmanApi)
       .dependsOn(baseTestJvm % Test)

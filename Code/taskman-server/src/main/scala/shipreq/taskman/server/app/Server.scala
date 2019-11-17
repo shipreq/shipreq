@@ -7,7 +7,7 @@ import scala.concurrent.duration.Duration
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.server.akka._
-import shipreq.taskman.server.TaskmanCtx
+import shipreq.taskman.server.{TaskmanConfig, TaskmanCtx}
 
 /**
  * Taskman, the Server.
@@ -17,9 +17,10 @@ object Server extends MainTemplate {
 
   def main(args: Array[String]): Unit =
     try {
-      withTaskmanCtx(ctx =>
+      withTaskmanCtx { ctx =>
+        startPrometheus(ctx.config.prometheus)
         Fx(run(ctx)(s => Await.result(s.system.whenTerminated, Duration.Inf)))
-      ).unsafeRun()
+      }.unsafeRun()
     } catch {
       case t: Throwable =>
         logger.error("Uncaught exception. Exiting...", t)
@@ -34,7 +35,7 @@ object Server extends MainTemplate {
     f(s)
   }
 
-  final class System(ctx: TaskmanCtx) extends HasLogger {
+  private final class System(ctx: TaskmanCtx) extends HasLogger {
     val system = ActorSystem("Taskman")
     val source = system.actorOf(SourceActor.props(ctx), "source")
     val manager = system.actorOf(ManagerActor.props(ctx, source), "manager")
@@ -45,6 +46,16 @@ object Server extends MainTemplate {
       system.terminate()
     }
   }
+
+  private def startPrometheus(cfg: TaskmanConfig.Prometheus): Unit =
+    if (cfg.enabled) {
+      import io.prometheus.client.exporter._
+
+      if (cfg.hotspot)
+        io.prometheus.client.hotspot.DefaultExports.initialize()
+
+      new HTTPServer(9031)
+    }
 }
 
 //  class Terminator(app: ActorRef) extends Actor with ActorLogging {

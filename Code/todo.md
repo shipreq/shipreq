@@ -132,8 +132,6 @@ Phase 2B
 
 * Add userId to events
 
-* Taskman JVM metrics
-
 * Taskman - missing logging when job fails (?)
   Logs show the following in a cycle:
   1. Received 1 new msg(s)

@@ -15,16 +15,17 @@ import shipreq.taskman.server.business.FreshDesk.ConfigValueParsers._
 import shipreq.taskman.server.logic._
 import shipreq.taskman.server.logic.business._
 
-final case class TaskmanConfig(mail     : TaskmanConfig.Mail,
-                               mailchimp: MailChimp.Props,
-                               freshdesk: FreshDesk.Props,
-                               shipreq  : TaskmanConfig.ShipReq,
-                               taskman  : TaskmanConfig.Taskman)
+final case class TaskmanConfig(mail      : TaskmanConfig.Mail,
+                               mailchimp : MailChimp.Props,
+                               freshdesk : FreshDesk.Props,
+                               prometheus: TaskmanConfig.Prometheus,
+                               shipreq   : TaskmanConfig.ShipReq,
+                               taskman   : TaskmanConfig.Taskman)
 
 object TaskmanConfig extends HasLogger {
 
   def config: ConfigDef[TaskmanConfig] =
-    (mail |@| mailchimp |@| freshdesk |@| shipreq |@| taskman) (apply)
+    (mail |@| mailchimp |@| freshdesk |@| prometheus |@| shipreq |@| taskman) (apply)
 
   def mailTokens: ConfigDef[Email.TokenValues] =
     (ConfigDef.need[String](CfgKeys.Webapp.appName)
@@ -35,10 +36,10 @@ object TaskmanConfig extends HasLogger {
 
   // ===================================================================================================================
 
-  case class Mail(publicFrom    : Email.Addr,
-                  archiveAddrs  : List[Email.Addr],
-                  mechanism     : TaskmanConfig.JavaMail \/ MailGun.Props,
-                  concurrencyMax: Int) {
+  final case class Mail(publicFrom    : Email.Addr,
+                        archiveAddrs  : List[Email.Addr],
+                        mechanism     : TaskmanConfig.JavaMail \/ MailGun.Props,
+                        concurrencyMax: Int) {
     def envelopeProps = Email.EnvelopeProps(publicFrom, archiveAddrs)
   }
 
@@ -56,7 +57,7 @@ object TaskmanConfig extends HasLogger {
       case _          => -\/("Legal values are [JavaMail, MailGun].")
     }
 
-  case class JavaMail(sessionFn: () => Session)
+  final case class JavaMail(sessionFn: () => Session)
 
   def javaMail: ConfigDef[JavaMail] =
     JavaMailConfig.sessionFn.map(JavaMail.apply)
@@ -89,7 +90,23 @@ object TaskmanConfig extends HasLogger {
 
   // ===================================================================================================================
 
-  case class ShipReq(schema: Option[String])
+  final case class Prometheus(enabled: Boolean,
+                              hotspot: Boolean)
+  object Prometheus {
+    val default = apply(
+      enabled = true,
+      hotspot = true)
+  }
+
+  def prometheus: ConfigDef[Prometheus] =
+    ( ConfigDef.getOrUse[Boolean]("enabled", Prometheus.default.enabled) |@|
+      ConfigDef.getOrUse[Boolean]("hotspot", Prometheus.default.hotspot)
+    ) (Prometheus.apply)
+      .withPrefix("prometheus.")
+
+  // ===================================================================================================================
+
+  final case class ShipReq(schema: Option[String])
 
   def shipreq: ConfigDef[ShipReq] =
     ConfigDef.get[String]("schema")
@@ -102,12 +119,12 @@ object TaskmanConfig extends HasLogger {
     * @param healthFile A file that will be touched very regularly so that the health of the system is externally
     *                   observable.
     */
-  case class Taskman(remoteCfgRetry: Retries,
-                     queueSize     : Int,
-                     trustPeriod   : AssignmentTrustPeriod,
-                     pollEvery     : Duration,
-                     pollGap       : Duration,
-                     healthFile    : Option[String])
+  final case class Taskman(remoteCfgRetry: Retries,
+                           queueSize     : Int,
+                           trustPeriod   : AssignmentTrustPeriod,
+                           pollEvery     : Duration,
+                           pollGap       : Duration,
+                           healthFile    : Option[String])
 
   def taskman: ConfigDef[Taskman] =
     (RetriesJvm.config.withPrefix("remoteCfg.retry.")

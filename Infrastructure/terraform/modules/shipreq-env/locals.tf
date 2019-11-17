@@ -61,8 +61,9 @@ locals {
   }
 
   app_cluster_ports = {
-    cadvisor      = 9080
-    node_exporter = 9100
+    cadvisor        = 9080
+    node_exporter   = 9100
+    shipreq_taskman = 9031
   }
 
   app_subdomain = "app"

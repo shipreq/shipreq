@@ -64,6 +64,13 @@ resource "aws_ecs_task_definition" "shipreq_taskman" {
         "value": "${local.shipreq_taskman_healthcheck_file}"
       }
     ],
+    "portMappings": [
+      {
+        "protocol": "tcp",
+        "hostPort": ${local.app_cluster_ports.shipreq_taskman},
+        "containerPort": 9031
+      }
+    ],
     "cpu": ${local.app_cluster_cpu.shipreq_taskman},
     "memoryReservation": ${local.app_cluster_mem_res.shipreq_taskman},
     "memory": 512,

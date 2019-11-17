@@ -19,6 +19,7 @@ locals {
     PROMETHEUS_TECH_PATH            = local.prometheus_tech_path
     PROMETHEUS_TECH_PORT            = local.ops_cluster_ports.prometheus_tech
     PROMETHEUS_TECH_SCRAPE_INTERVAL = "${var.prometheus_tech_scrape_interval_sec}s"
+    SHIPREQ_TASKMAN_PORT            = local.app_cluster_ports.shipreq_taskman
     SHIPREQ_WEBAPP_SD_DOMAIN        = local.shipreq_webapp_sd_domain
   })
 
