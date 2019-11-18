@@ -151,3 +151,12 @@ resource "aws_iam_role_policy_attachment" "bastion-s3-tmp" {
   role       = aws_iam_role.bastion.name
   policy_arn = data.aws_iam_policy.s3_tmp_rw.arn
 }
+
+resource "aws_route53_record" "bastion" {
+  count   = local.bastion_domain == null ? 0 : 1
+  zone_id = local.bastion_zone_id
+  name    = local.bastion_domain
+  type    = "A"
+  ttl     = 20
+  records = [aws_eip.bastion.public_ip]
+}

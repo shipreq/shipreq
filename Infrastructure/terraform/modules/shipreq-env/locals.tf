@@ -15,6 +15,9 @@ locals {
   shipreq_domain  = var.env == "prod" ? "shipreq.com" : "${var.env}.shipwreck.space"
   shipreq_url     = "https://${local.shipreq_domain}"
 
+  bastion_zone_id = var.env == "prod" ? null : data.aws_route53_zone.shipwreck.zone_id
+  bastion_domain  = var.env == "prod" ? null : "b.${var.env}.shipwreck.space"
+
   # TTL for DNS entries pointed at targets I expect to change rarely/never
   dns_stable_ttl = 120
 
