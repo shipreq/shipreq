@@ -1,34 +1,32 @@
 Intents
 =======
 
-* What's the health of the system been like?
+* Has everything been healthy?
   * THEME: history, trends, configurable time range
+  * {node,container} uptime
+  * {node,container} count / bounces
+  * {node,container} cpu maxed?
+  * {node,container} mem maxed? (swapping, paging, ctx switching?)
+  * node network connectivity (other forms of health?)
+  * free space
+  * free fds
 
-* What's the health of the system right now?
+* Is everything healthy now?
   * THEME: Single values, gauges: current/capacity, minimal history where necessary
-  * {nodes,containers} quantity up
-  * {nodes,containers} uptime
-  * {nodes,containers} cpu: load avg vs capacity
-  * {nodes,containers} mem: used vs capacity
-  * {nodes,containers} mem: thrashing/swapping (?)
-  * {nodes,containers} fds: used vs capacity (?)
+  * {node,container} quantity up vs expected
+  * {node,container} uptime
+  * {node,container} cpu: load avg vs capacity
+  * {node,container} mem: used vs capacity
+  * {node,container} mem: thrashing/swapping (?)
+  * {node,container} fds: used vs capacity (?)
   * disk space: used vs capacity
   * network: ... up? errors? although if currently down, then no metrics available until back online
   * logs: {warn,error} rate (maybe over 1/5/15 like load?)
 
-* What's the health of the system going to be? Is there any preemptive action to take?
+* Is everything going to stay healthy? Is there any preemptive action to take?
   * THEME: trend/capacity
-  * disk space: trend vs capacity
+  * Disk space: free vs trend
+  * Memory: free vs trend
+  * CPU: capacity vs trend
 
-
-
-* Can we forecast?
-  * https://developer.bring.com/blog/forecasted-alerts-with-grafana-and-influxdb/
-
-
-Queries
-=======
-
-* Node counts
-  * `sum (node_exporter_build_info)`
-  * `sum by (job) (node_exporter_build_info)`
+* What's happening with/in Node/Container/X
