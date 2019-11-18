@@ -6,7 +6,6 @@ Backlog
 * Show past IDs in ReqTable
 * Group req types in filter from ALL to ANY.
 * Say "no implications" in imp graph
-* Create and use HomeSpaLoader (maybe - might have a negative effect)
 
 ### Nice UI
 * Cfg Fields
@@ -52,7 +51,6 @@ Backlog
 
 ### Tech
 * Remove ScalaCheck. Use Nyaya.
-* Use fast boopickle codecs for webworkers: https://github.com/ochrons/boopickle#codecs
 * Test env: Use different DBs for each module
 * Switch to semantic-react
 * Remove jQuery - Semantic UI blocking this
@@ -72,15 +70,6 @@ Backlog
 Phase 2B
 ========
 
-### Business
-* Potential angel clients
-  * Research BA consultancies
-
-### Deployment
-* Automate ShipReq releases
-* Automate deployment of DevOps services (Prometheus etc)
-* Automate config of DevOps services (dashboards, alerts, etc)
-
 ### Ops
 * Data backups
 * Failure
@@ -93,7 +82,6 @@ Phase 2B
   * Add a correlation ID to JWTs / logs / traces
 
 ### New Features
-* Issues
 * Send Feedback / Report Issue (with screenshot). Add link beside @username in top bar
 * User profile page
 
@@ -128,9 +116,3 @@ Phase 2B
 * Add LogFields and lock down types
 
 * Add userId to events
-
-* Taskman - missing logging when job fails (?)
-  Logs show the following in a cycle:
-  1. Received 1 new msg(s)
-  2. Starting work: MsgDetail(MsgHeader(MsgId(1000),Priority(100),2019-11-16T03:36:54.460739Z), RegistrationRequested(EmailAddr(japgolly@gmail.com),https://dev.shipreq.com/register/GbIrmFT4xe9924vSpCj6vyy7m6NnGOtl933xpPyhHfRhR3inX), 0)
-  3. Scheduled to run asynchronously: MsgDetail(MsgHeader(MsgId(1000),Priority(100),2019-11-16T03:36:54.460739Z), RegistrationRequested(EmailAddr(japgolly@gmail.com),https://dev.shipreq.com/register/GbIrmFT4xe9924vSpCj6vyy7m6NnGOtl933xpPyhHfRhR3inX), 0)
