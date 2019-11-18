@@ -109,7 +109,24 @@ resource "aws_lb_listener_rule" "webapp-https-robots" {
     fixed_response {
       content_type = "text/plain"
       message_body = local.robots_txt
-      status_code  = "200"
+      status_code  = 200
+    }
+  }
+}
+
+# https://shipreq.com/ops/*
+resource "aws_lb_listener_rule" "webapp-https-ops" {
+  count        = var.block_public_ops_calls ? 1 : 0
+  listener_arn = aws_lb_listener.webapp-https.arn
+  condition {
+    field  = "path-pattern"
+    values = ["/ops/*"]
+  }
+  action {
+    type = "fixed-response"
+    fixed_response {
+      content_type = "text/plain"
+      status_code  = 404
     }
   }
 }
