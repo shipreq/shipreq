@@ -1,0 +1,13 @@
+#!/bin/bash
+
+$(aws ecr get-login --no-include-email) || exit 1
+
+for app in webapp taskman; do
+  echo
+
+  l=shipreq/$app:latest
+  r=930801536115.dkr.ecr.ap-southeast-2.amazonaws.com/shipreq/$app:latest
+
+  docker tag $l $r && docker push $r
+
+done
