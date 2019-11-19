@@ -48,6 +48,8 @@ module "shipreq" {
   shipreq_images_tag                  = "latest"
   shipreq_webapp_properties           = file("webapp.properties")
   shipreq_taskman_properties          = file("taskman.properties")
+  google_analytics_tracking_id        = "UA-105581783-2"
+  freshdesk_domain                    = "yoarmum"
 }
 
 output "bastion_host" {

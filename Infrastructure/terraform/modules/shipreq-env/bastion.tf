@@ -54,6 +54,8 @@ resource "aws_instance" "bastion" {
     ENV_NAME            = var.name
     ES_HOSTS            = local.es_root_url_with_port
     FILEBEAT_IMAGE      = data.aws_ecr_repository.filebeat.repository_url
+    FRESHDESK_DOMAIN    = var.freshdesk_domain
+    GA_TRACKING_ID      = var.google_analytics_tracking_id
     GRAFANA_URL         = local.grafana_root_url
     KIBANA_URL          = local.es_root_url
     PORTAL_IMAGE        = data.aws_ecr_repository.ops_portal.repository_url

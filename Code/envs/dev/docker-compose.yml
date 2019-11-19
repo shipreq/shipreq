@@ -259,12 +259,14 @@ services:
     environment:
       - CADVISOR_URL=http://cadvisor:8080
       - DNS_TTL=10s
+      - FRESHDESK_DOMAIN=yoarmum
+      - GA_TRACKING_ID=UA-105581783-2
       - GRAFANA_URL=http://grafana:3000
       - JAEGER_URL=http://localhost:$PORT_JAEGER_HTTP
       - KIBANA_URL=http://kibana:5601
-      - PROMETHEUS_TECH_URL=http://prometheus-tech:9090
       - PROMETHEUS_BIZ_URL=http://todo
-      - SHIPREQ_ENV=dev
+      - PROMETHEUS_TECH_URL=http://prometheus-tech:9090
+      - SHIPREQ_ENV=local-dev
       - SHIPREQ_URL=http://localhost:$PORT_SHIPREQ_WEBAPP
     cpus: 0.1
     mem_limit: 400m

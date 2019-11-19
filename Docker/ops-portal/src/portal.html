@@ -57,11 +57,22 @@
     </ul>
   </li>
 
+  <li id=tracing>
+    External Services
+    <ul>
+      <li><a href="https://${FRESHDESK_DOMAIN}.freshdesk.com">FreshDesk</a></li>
+      <li><a href="https://admin.google.com/shipreq.com">G-Suite</a></li>
+      <li><a href="https://login.mailchimp.com">MailChimp</a></li>
+      <li><a href="https://login.mailgun.com">MailGun</a></li>
+      <li><a href="https://analytics.google.com" id=ga>Google Analytics</a> (trackingId: ${GA_TRACKING_ID})</li>
+    </ul>
+  </li>
+
 </ul>
 
 <script>
-  if (!"$JAEGER_URL")
-    document.getElementById("tracing").remove();
+  if (!"$JAEGER_URL") document.getElementById("tracing").remove();
+  if (!"$GA_TRACKING_ID") document.getElementById("ga").remove();
 </script>
 
 </body>

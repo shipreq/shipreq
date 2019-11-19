@@ -205,3 +205,11 @@ variable "block_public_ops_calls" {
   type        = bool
   default     = true
 }
+
+variable "google_analytics_tracking_id" {
+  type = string
+}
+
+variable "freshdesk_domain" {
+  type = string
+}

@@ -66,6 +66,10 @@ resource "aws_ecs_task_definition" "shipreq_taskman" {
         "value": "${var.shipreq_db_password}"
       },
       {
+        "name": "freshdesk.domain",
+        "value": "${var.freshdesk_domain}"
+      },
+      {
         "name": "taskman.healthFile",
         "value": "${local.shipreq_taskman_healthcheck_file}"
       }

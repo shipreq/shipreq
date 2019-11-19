@@ -8,11 +8,13 @@ docker run --rm \
   -it \
   -e CADVISOR_URL=http://cadvisor:8080 \
   -e DNS_TTL=10s \
+  -e FRESHDESK_DOMAIN=yoarmum \
+  -e GA_TRACKING_ID=UA-105581783-2 \
   -e GRAFANA_URL=http://grafana:3000 \
   -e JAEGER_URL= \
   -e KIBANA_URL=http://kibana:5601 \
-  -e PROMETHEUS_TECH_URL=http://tech.prometheus:9090/ \
   -e PROMETHEUS_BIZ_URL=http://biz.prometheus:9091/ \
+  -e PROMETHEUS_TECH_URL=http://tech.prometheus:9090/ \
   -e SHIPREQ_ENV=test \
   -e SHIPREQ_URL=http://shipreq.localhost \
   shipreq/ops/portal
