@@ -5,6 +5,7 @@
   * Log portal (?)
   * node_exporter (?)
   * cadvisor (?)
+  * add IP to SG, add lambda to auto purge SG
 
 * NAT
   * Collect logs / filebeat (?)
