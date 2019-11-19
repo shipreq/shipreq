@@ -105,12 +105,8 @@ Phase 2B
 
 * WebSockets don't recover from lost Redis connections
 
-* Get off G-suite (?)
-
 * Document the build & release process
 
 * Default project template has an issue: Version field has no tags
-
-* Add LogFields and lock down types
 
 * Add userId to events
