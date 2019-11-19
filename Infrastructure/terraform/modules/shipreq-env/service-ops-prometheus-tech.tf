@@ -2,17 +2,13 @@ locals {
   prometheus_tech_tags = merge(local.default_tags, { Name = "${var.env}-prometheus-tech" })
 
   prometheus_tech_config_yml = templatefile("${path.module}/service-ops-prometheus-tech.yml", {
-    APP_CADVISOR_PORT               = local.ports.app.cadvisor
     APP_HOST                        = local.app_host
-    APP_NODE_EXPORTER_PORT          = local.ports.app.node_exporter
     CADVISOR_PATH                   = local.cadvisor_path
-    CADVISOR_RELABEL                = chomp(replace(local.prometheus_tech_config_yml_cadvisor_relabel, "/\n+/", "\n"))
+    CADVISOR_PORT                   = local.ports.cadvisor
     ECS_EXPORTER_PORT               = local.ports.ops.ecs_exporter
     ECS_EXPORTER_SCRAPE_INTERVAL    = "${max(60, var.prometheus_tech_scrape_interval_sec)}s"
-    NODE_EXPORTER_RELABEL           = chomp(replace(local.prometheus_tech_config_yml_node_exporter_relabel, "/\n+/", "\n"))
-    OPS_CADVISOR_PORT               = local.ports.ops.cadvisor
+    NODE_EXPORTER_PORT              = local.ports.node_exporter
     OPS_HOST                        = local.ops_host
-    OPS_NODE_EXPORTER_PORT          = local.ports.ops.node_exporter
     PROMETHEUS_BIZ_HOST             = local.prometheus_biz_host
     PROMETHEUS_BIZ_PATH             = local.prometheus_biz_path
     PROMETHEUS_BIZ_PORT             = local.ports.ops.prometheus_biz
@@ -23,45 +19,6 @@ locals {
     SHIPREQ_TASKMAN_PORT            = local.ports.app.shipreq_taskman
     SHIPREQ_WEBAPP_SD_DOMAIN        = local.shipreq_webapp_sd_domain
   })
-
-  prometheus_tech_config_yml_node_exporter_relabel = <<EOB
-    relabel_configs:
-
-      # Remove port from instance
-      - source_labels: [__address__]
-        regex: "([^:]+):\\d+"
-        target_label: instance
-EOB
-
-  prometheus_tech_config_yml_cadvisor_relabel = <<EOB
-    relabel_configs:
-
-      # Remove port from instance
-      - source_labels: [__address__]
-        regex: "([^:]+):\\d+"
-        target_label: instance
-
-    metric_relabel_configs:
-
-    # Drop metrics
-    - source_labels: [__name__]
-      regex: 'container_tasks_state'
-      action: drop
-
-    # Rename ECS attributes
-    - source_labels: ['container_label_com_amazonaws_ecs_cluster']
-      target_label: ecs_cluster
-    - source_labels: ['container_label_com_amazonaws_ecs_container_name']
-      target_label: ecs_name
-    - source_labels: ['container_label_com_amazonaws_ecs_task_definition_family']
-      target_label: ecs_taskdef_name
-    - source_labels: ['container_label_com_amazonaws_ecs_task_definition_version']
-      target_label: ecs_taskdef_ver
-
-    # Drop labels
-    - regex: 'container_label_.*'
-      action: labeldrop
-EOB
 }
 
 resource "aws_ecs_service" "prometheus_tech" {

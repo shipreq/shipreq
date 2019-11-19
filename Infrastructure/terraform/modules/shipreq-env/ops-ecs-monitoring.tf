@@ -10,7 +10,7 @@ module "ops_ecs_monitoring" {
   cadvisor_image   = "${data.aws_ecr_repository.cadvisor.repository_url}:${var.ops_images_tag}"
   cadvisor_mem_res = local.ops_cluster_mem_res.cadvisor
   cadvisor_path    = local.cadvisor_path
-  cadvisor_port    = local.ports.ops.cadvisor
+  cadvisor_port    = local.ports.cadvisor
 
   filebeat_cpu      = local.ops_cluster_cpu.filebeat
   filebeat_es_hosts = local.es_root_url_with_port
@@ -20,5 +20,5 @@ module "ops_ecs_monitoring" {
   node_exporter_cpu     = local.ops_cluster_cpu.node_exporter
   node_exporter_image   = "${data.aws_ecr_repository.node_exporter.repository_url}:${var.ops_images_tag}"
   node_exporter_mem_res = local.ops_cluster_mem_res.node_exporter
-  node_exporter_port    = local.ports.ops.node_exporter
+  node_exporter_port    = local.ports.node_exporter
 }

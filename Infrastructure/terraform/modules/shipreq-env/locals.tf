@@ -38,16 +38,16 @@ locals {
   cadvisor_path = "/cadvisor"
 
   ports = {
+    cadvisor      = 9080
+    node_exporter = 9100
+
     app = {
-      cadvisor        = 9080
-      node_exporter   = 9100
       shipreq_taskman = 9031
     }
+
     ops = {
-      cadvisor          = 8080
       ecs_exporter      = 9222
       grafana           = 3000
-      node_exporter     = 9100
       postgres_exporter = 9187
       prometheus_biz    = 9091
       prometheus_tech   = 9090
@@ -135,7 +135,7 @@ locals {
   ops_subdomain = "ops"
   ops_host      = "${local.ops_subdomain}.${local.internal_sd_domain}"
 
-  ops_cadvisor_root_url = "http://${local.ops_host}:${local.ports.ops.cadvisor}"
+  ops_cadvisor_root_url = "http://${local.ops_host}:${local.ports.cadvisor}"
 
   prometheus_tech_host     = local.ops_host
   prometheus_tech_root_url = "http://${local.prometheus_tech_host}:${local.ports.ops.prometheus_tech}"

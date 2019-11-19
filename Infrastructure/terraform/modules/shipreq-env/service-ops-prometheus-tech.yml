@@ -4,22 +4,50 @@ global:
 scrape_configs:
 
   ##########################################################################
-  # Ops cluster
+  # Common daemons
 
-  - job_name: 'node_exporter-ops'
+  - job_name: 'node_exporter'
     dns_sd_configs:
-      - names: [ '${OPS_HOST}' ]
+      - names: [ '${APP_HOST}', '${OPS_HOST}' ]
         type: 'A'
-        port: ${OPS_NODE_EXPORTER_PORT}
-${NODE_EXPORTER_RELABEL}
+        port: ${NODE_EXPORTER_PORT}
+    relabel_configs:
+      # Remove port from instance
+      - source_labels: [__address__]
+        regex: "([^:]+):\\d+"
+        target_label: instance
 
-  - job_name: 'cadvisor-ops'
+  - job_name: 'cadvisor'
     metrics_path: '${CADVISOR_PATH}/metrics'
     dns_sd_configs:
-      - names: [ '${OPS_HOST}' ]
+      - names: [ '${APP_HOST}', '${OPS_HOST}' ]
         type: 'A'
-        port: ${OPS_CADVISOR_PORT}
-${CADVISOR_RELABEL}
+        port: ${CADVISOR_PORT}
+    relabel_configs:
+      # Remove port from instance
+      - source_labels: [__address__]
+        regex: "([^:]+):\\d+"
+        target_label: instance
+    metric_relabel_configs:
+    # Drop metrics
+    - source_labels: [__name__]
+      regex: 'container_tasks_state'
+      action: drop
+    # Rename ECS attributes
+    - source_labels: ['container_label_com_amazonaws_ecs_cluster']
+      target_label: ecs_cluster
+    - source_labels: ['container_label_com_amazonaws_ecs_container_name']
+      target_label: ecs_name
+    - source_labels: ['container_label_com_amazonaws_ecs_task_definition_family']
+      target_label: ecs_taskdef_name
+    - source_labels: ['container_label_com_amazonaws_ecs_task_definition_version']
+      target_label: ecs_taskdef_ver
+    # Drop labels
+    - regex: 'container_label_.*'
+      action: labeldrop
+
+  ##########################################################################
+  # Ops cluster
 
   - job_name: 'ecs_exporter'
     scrape_interval: ${ECS_EXPORTER_SCRAPE_INTERVAL}
@@ -44,21 +72,6 @@ ${CADVISOR_RELABEL}
 
   ##########################################################################
   # App cluster
-
-  - job_name: 'node_exporter-app'
-    dns_sd_configs:
-      - names: [ '${APP_HOST}' ]
-        type: 'A'
-        port: ${APP_NODE_EXPORTER_PORT}
-${NODE_EXPORTER_RELABEL}
-
-  - job_name: 'cadvisor-app'
-    metrics_path: '${CADVISOR_PATH}/metrics'
-    dns_sd_configs:
-      - names: [ '${APP_HOST}' ]
-        type: 'A'
-        port: ${APP_CADVISOR_PORT}
-${CADVISOR_RELABEL}
 
   - job_name: 'shipreq-taskman'
     dns_sd_configs:

@@ -96,16 +96,16 @@ resource "aws_security_group" "ops" {
 
   egress {
     protocol    = "tcp"
-    from_port   = local.ports.app.cadvisor
-    to_port     = local.ports.app.cadvisor
+    from_port   = local.ports.cadvisor
+    to_port     = local.ports.cadvisor
     cidr_blocks = [aws_subnet.private.cidr_block]
     description = "Metrics: cadvisor"
   }
 
   egress {
     protocol    = "tcp"
-    from_port   = local.ports.app.node_exporter
-    to_port     = local.ports.app.node_exporter
+    from_port   = local.ports.node_exporter
+    to_port     = local.ports.node_exporter
     cidr_blocks = [aws_subnet.private.cidr_block]
     description = "Metrics: node_exporter"
   }
