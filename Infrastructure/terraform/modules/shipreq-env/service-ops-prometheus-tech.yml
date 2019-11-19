@@ -11,6 +11,7 @@ scrape_configs:
       - names: [ '${OPS_HOST}' ]
         type: 'A'
         port: ${OPS_NODE_EXPORTER_PORT}
+${NODE_EXPORTER_RELABEL}
 
   - job_name: 'cadvisor-ops'
     metrics_path: '${CADVISOR_PATH}/metrics'
@@ -49,6 +50,7 @@ ${CADVISOR_RELABEL}
       - names: [ '${APP_HOST}' ]
         type: 'A'
         port: ${APP_NODE_EXPORTER_PORT}
+${NODE_EXPORTER_RELABEL}
 
   - job_name: 'cadvisor-app'
     metrics_path: '${CADVISOR_PATH}/metrics'

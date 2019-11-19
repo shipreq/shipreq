@@ -9,6 +9,7 @@ locals {
     CADVISOR_RELABEL                = chomp(replace(local.prometheus_tech_config_yml_cadvisor_relabel, "/\n+/", "\n"))
     ECS_EXPORTER_PORT               = local.ops_cluster_ports.ecs_exporter
     ECS_EXPORTER_SCRAPE_INTERVAL    = "${max(60, var.prometheus_tech_scrape_interval_sec)}s"
+    NODE_EXPORTER_RELABEL           = chomp(replace(local.prometheus_tech_config_yml_node_exporter_relabel, "/\n+/", "\n"))
     OPS_CADVISOR_PORT               = local.ops_cluster_ports.cadvisor
     OPS_HOST                        = local.ops_host
     OPS_NODE_EXPORTER_PORT          = local.ops_cluster_ports.node_exporter
@@ -23,7 +24,23 @@ locals {
     SHIPREQ_WEBAPP_SD_DOMAIN        = local.shipreq_webapp_sd_domain
   })
 
+  prometheus_tech_config_yml_node_exporter_relabel = <<EOB
+    relabel_configs:
+
+      # Remove port from instance
+      - source_labels: [__address__]
+        regex: "([^:]+):\\d+"
+        target_label: instance
+EOB
+
   prometheus_tech_config_yml_cadvisor_relabel = <<EOB
+    relabel_configs:
+
+      # Remove port from instance
+      - source_labels: [__address__]
+        regex: "([^:]+):\\d+"
+        target_label: instance
+
     metric_relabel_configs:
 
     # Drop metrics

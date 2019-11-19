@@ -6,11 +6,19 @@ scrape_configs:
   - job_name: 'node_exporter'
     static_configs:
       - targets: ['node_exporter:9100']
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: "([^:]+):\\d+"
+        target_label: instance
 
   - job_name: 'cadvisor'
     metrics_path: '/cadvisor/metrics'
     static_configs:
       - targets: ['cadvisor:8080']
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: "([^:]+):\\d+"
+        target_label: instance
 
   - job_name: 'prometheus-tech'
     metrics_path: '/prometheus/tech/metrics'
