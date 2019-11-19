@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1574135063004,
+  "iteration": 1574145291534,
   "links": [],
   "panels": [
     {
@@ -697,7 +697,7 @@
           "refId": "C"
         },
         {
-          "expr": "1 - ((node_memory_MemFree_bytes + node_memory_Cached_bytes + node_memory_Buffers_bytes) / node_memory_MemTotal_bytes)",
+          "expr": "1 - ((node_memory_MemFree_bytes + node_memory_Cached_bytes + node_memory_Buffers_bytes + node_memory_SReclaimable_bytes) / node_memory_MemTotal_bytes)",
           "format": "table",
           "instant": true,
           "legendFormat": "mem",
@@ -1074,6 +1074,22 @@
           "unit": "s"
         },
         {
+          "alias": "Mem Used",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "Value #D",
+          "thresholds": [],
+          "type": "number",
+          "unit": "decbytes"
+        },
+        {
           "alias": "",
           "colorMode": null,
           "colors": [
@@ -1097,10 +1113,10 @@
           "refId": "A"
         },
         {
-          "expr": "(sum(container_memory_working_set_bytes{ecs_name=~\".+\"}) by (instance, ecs_name))\n/\n# Below we use the container memory hard-limit if set, else (container.memUsed + node.memUsable)\n(\n  ((sum(container_spec_memory_limit_bytes{ecs_name=~\".+\"}) by (instance, ecs_name)) > 0)\n  or (\n    (\n      ((sum(container_spec_memory_limit_bytes{ecs_name=~\".+\"}) by (instance, ecs_name)) == 0) +\n      (sum(container_memory_working_set_bytes{ecs_name=~\".+\"}) by (instance, ecs_name))\n    ) + on(instance) group_left node_memory_MemFree_bytes\n  )\n)",
+          "expr": "(sum(container_memory_working_set_bytes{ecs_name=~\".+\"}) by (instance, ecs_name))\n/\n# Below we use the container memory hard-limit if set, else (container.memUsed + node.memUsable)\n(\n  ((sum(container_spec_memory_limit_bytes{ecs_name=~\".+\"}) by (instance, ecs_name)) > 0)\n  or (\n    (\n      ((sum(container_spec_memory_limit_bytes{ecs_name=~\".+\"}) by (instance, ecs_name)) == 0) +\n      (sum(container_memory_working_set_bytes{ecs_name=~\".+\"}) by (instance, ecs_name))\n    ) + on(instance) group_left () (\n      node_memory_MemFree_bytes + node_memory_Cached_bytes + node_memory_Buffers_bytes + node_memory_SReclaimable_bytes\n    )\n  )\n)",
           "format": "table",
           "instant": true,
-          "legendFormat": "mem",
+          "legendFormat": "mem %",
           "refId": "B"
         },
         {
@@ -1109,6 +1125,13 @@
           "instant": true,
           "legendFormat": "uptime",
           "refId": "C"
+        },
+        {
+          "expr": "(sum(container_memory_working_set_bytes{ecs_name=~\".+\"}) by (instance, ecs_name))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "mem",
+          "refId": "D"
         }
       ],
       "timeFrom": null,
@@ -1169,5 +1192,5 @@
   "timezone": "",
   "title": "HealthNow",
   "uid": "x2ZR6gxZz",
-  "version": 15
+  "version": 16
 }
