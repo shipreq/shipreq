@@ -115,8 +115,8 @@ final class ManagerActor(ctx: TaskmanCtx, source: ActorRef) extends Actor with H
       queue = q2
 
     case RegisterWorker =>
-      logger.info(s"Registered worker. Worker count is now ${workers.size}")
       workers += sender()
+      logger.info(s"Registered worker. Worker count is now ${workers.size}")
   }
 }
 
