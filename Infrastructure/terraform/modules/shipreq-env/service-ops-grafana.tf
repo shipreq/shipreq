@@ -3,12 +3,13 @@ locals {
 }
 
 resource "aws_ecs_service" "grafana" {
-  name            = "${var.env}-ops-grafana"
-  cluster         = aws_ecs_cluster.ops.id
-  task_definition = aws_ecs_task_definition.grafana.arn
-  desired_count   = 1
-  propagate_tags  = "SERVICE"
-  tags            = local.grafana_tags
+  name                               = "${var.env}-ops-grafana"
+  cluster                            = aws_ecs_cluster.ops.id
+  task_definition                    = aws_ecs_task_definition.grafana.arn
+  desired_count                      = 1
+  propagate_tags                     = "SERVICE"
+  deployment_minimum_healthy_percent = 0 # Because port is fixed, les ECS bring down old and spin up new
+  tags                               = local.grafana_tags
 }
 
 resource "aws_ecs_task_definition" "grafana" {

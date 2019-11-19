@@ -65,12 +65,13 @@ EOB
 }
 
 resource "aws_ecs_service" "prometheus_tech" {
-  name            = "${var.env}-ops-prometheus-tech"
-  cluster         = aws_ecs_cluster.ops.id
-  task_definition = aws_ecs_task_definition.prometheus_tech.arn
-  desired_count   = 1
-  propagate_tags  = "SERVICE"
-  tags            = local.prometheus_tech_tags
+  name                               = "${var.env}-ops-prometheus-tech"
+  cluster                            = aws_ecs_cluster.ops.id
+  task_definition                    = aws_ecs_task_definition.prometheus_tech.arn
+  desired_count                      = 1
+  propagate_tags                     = "SERVICE"
+  deployment_minimum_healthy_percent = 0 # Because port is fixed, les ECS bring down old and spin up new
+  tags                               = local.prometheus_tech_tags
 }
 
 resource "aws_ecs_task_definition" "prometheus_tech" {
