@@ -1,0 +1,11 @@
+#!/bin/bash
+cd "$(dirname "$0")" || exit 1
+
+[ $# -ne 1 ] && echo "Usage: $0 <name>" && exit 1
+
+set -eo pipefail
+
+ls -1rt ~/Downloads/"$1"-*.json | tail -1 | xargs -I{} cp -v {} ./"$1".json
+echo
+git add "$1".json
+git status .
