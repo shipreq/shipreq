@@ -23,3 +23,5 @@
 * DR
   * Postgres
   * EBS
+
+* Separate account for prod
