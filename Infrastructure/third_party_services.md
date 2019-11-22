@@ -24,7 +24,7 @@ Creating {news,notice}@shipreq.com
 1. Create new group: notice
 1. Add alias: news
 2. Edit group
-3. Permissions > Posting permisson > Post : enbable public
+3. Permissions > Posting permisson > Post : enable public
 4. Permissions > Posting permisson > Post As The Group : set to All
 5. Permissions > Posting permisson > Reply To Author : set to Public
 

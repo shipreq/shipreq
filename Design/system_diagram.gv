@@ -17,18 +17,13 @@ digraph G {
     gandi_dns [label="shipreq.com\nName Servers"]
   }
 
-  subgraph cluster_gcp {
+  subgraph cluster_aws {
     fillcolor="#ccddcc"
-    label="Google Cloud Platform"
-    cloud_dns [label="Cloud DNS"]
-    cloud_sql [label="Cloud SQL\nPostgres"]
-    subgraph cluster_gke {
-      fillcolor="#aabbaa"
-      label="GKE Cluster"
-      webapp  [fillcolor="#FF00FF" label="webapp"]
-      taskman [fillcolor="#FACA11" label="taskman"]
-      cloudsqlproxy [label="cloudsql-proxy"]
-    }
+    label="AWS"
+    route53 [label="Route53"]
+    rds     [label="RDS\nPostgres"]
+    webapp  [fillcolor="#FF00FF" label="webapp"]
+    taskman [fillcolor="#FACA11" label="taskman"]
   }
 
   subgraph cluster_gsuite {
@@ -76,30 +71,31 @@ digraph G {
 
   // -----------------------------------------------------------------------------------------------
 
-  cloud_dns      -> gsuite_mail [label="MX & DKIM"]
-  cloud_dns      -> mg_mx       [label="MX & DKIM"]
-  cloud_dns      -> fd_dkim     [label="DKIM"]
-  cloud_dns      -> webapp      [label="A:<ip>"]
-  cloud_dns:n    -> cloud_dns:n [label="CNAME:www " dir=back]
-  cloudsqlproxy  -> cloud_sql
+  ga_api -> fd_dkim [style=invis]
+
+  route53        -> gsuite_mail [label="MX & DKIM"]
+  route53        -> mg_mx       [label="MX & DKIM"]
+  route53        -> fd_dkim     [label="DKIM"]
+  route53        -> webapp      [label="A:<ip>"]
+  route53:n      -> route53:n [label="CNAME:www " dir=back]
   fd_web         -> fd_mail
   fd_web         -> gsuite_groups [label="bcc:archive@"]
   fd_web         -> staff_mail
-  gandi_dns      -> cloud_dns
-  gsuite_route:e -> fd_mail [constraint=false]
+  gandi_dns      -> route53
+  gsuite_route:e -> fd_mail
   gsuite_web     -> gsuite_mail,gsuite_groups,gsuite_route
   mc_web         -> gsuite_groups [style=dashed label="from:notice@\lfrom:news@\l"]
-  taskman        -> cloudsqlproxy
-  webapp         -> cloudsqlproxy
+  taskman        -> rds
+  webapp         -> rds
 
   edge[color="#FACA11" penwidth=2]
-  taskman        -> fd_api [constraint=false]
+  taskman        -> fd_api
   taskman        -> gsuite_groups [label="bcc:archive@"]
-  taskman        -> mg_api [constraint=false]
-  taskman        -> mc_api
+  taskman        -> mg_api
+  mc_api         -> taskman       [dir=back]
 
   edge[color="#FF00FF" penwidth=2]
   webapp         -> gsuite_route  [label="mailto:contact@"]
-  webapp         -> ga_acct,ga_api [constraint=false]
+  ga_acct,ga_api -> webapp        [dir=back]
 
 }

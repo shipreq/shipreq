@@ -23,9 +23,9 @@ worker
 subgraph cluster_world {
 label="Outside world" style=filled fillcolor="#eeeeee"
 node[fillcolor="#ffbbbb"]
-smtp [label="SMTP"]
+mail [label="SMTP or\nMailGun API"]
 mc [label="MailChimp\nAPI"]
-crm [label="Insightly\nAPI"]
+fd [label="FreshDesk\nAPI"]
 }
 
 webapp [fillcolor="#bbddff"]
@@ -36,7 +36,7 @@ webapp [fillcolor="#bbddff"]
 { edge [dir=both arrowhead=vee arrowtail=box]
 webapp -> workq_sp -> workq
 manager -> worker
-worker -> smtp,crm
+worker -> mail,fd
 }
 
 // B pulls

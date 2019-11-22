@@ -8,9 +8,9 @@ label="Taskman dist gets everything visible.\n(A→B means B knows about A)"
 subgraph cluster_abs {
   label="Abstraction & logic. 100% pure FP." style=filled fillcolor="#eeeeee" fontcolor="#007000" node[fillcolor="#bbffbb"]
   dbv [label="ShipReq\ndata interface"]
-  smtp [label="SMTP\ninterface"]
+  mail [label="Mail\ninterface"]
   mc [label="MailChimp\ninterface"]
-  crm [label="Insightly\ninterface"]
+  support [label="Support\ninterface"]
   actors
   bl [label="Business logic"]
   tl [label="Taskman\nprocessing logic"]
@@ -20,10 +20,11 @@ subgraph cluster_real {
   label="Real implementations. Wiring." style=filled fillcolor="#eeeeee" fontcolor=red node[fillcolor="#ffbbbb"]
   _dbv [label="ShipReq\nViews"]
   _smtp [label="SMTP"]
+  _mg [label="MailGun"]
   _mc [label="MailChimp\nAPI"]
-  _crm [label="Insightly\nAPI"]
+  _fd [label="FreshDesk\nAPI"]
   akka
-  http [label="HTTP/WS/REST\nclient"]
+  http [label="HTTP\nclient"]
 }
 
 subgraph cluster_public {
@@ -39,20 +40,20 @@ subgraph cluster_public {
   subgraph cluster_realp {
     label="Real implementations for API" style=filled fillcolor="#eeeeee" fontcolor=red node[fillcolor="#ffbbbb"]
     _tsl [label="Taskman\nsubmission impl"]
-    json4s
-    postgres [label="Slick\nBoneCP\nPostgreSQL"]
+    circe
+    postgres [label="Doobie\nHikariCP\nPostgreSQL"]
   }
 }
 
 
 dbv -> _dbv
-smtp -> _smtp
+mail -> _smtp,_mg
 mc -> _mc
-crm -> _crm
+support -> _fd
 actors -> akka
 
 tl -> actors [dir=back]
-bl -> dbv,smtp,mc,crm,actors [dir=back]
+bl -> support,dbv,mail,mc,actors [dir=back]
 tl -> bl [minlen=2 constraint=false]
 
 tsl -> _tsl
@@ -62,8 +63,8 @@ tla,bla -> bl
 tla -> tsl
 tsl -> tl
 
-_mc,_crm -> http
+_mc,_mg,_fd -> http
 _tsl,_dbv -> postgres [dir=back]
-_tsl -> json4s [dir=back]
+_tsl -> circe [dir=back]
 
 }

@@ -1,7 +1,7 @@
 digraph G {
   //compound=true
   labelloc=t
-  label="ShipReq System Diagram: Emails & Comms\n(arrows denote flow of data from one component to another)\n(ignores which component instigates the data transfer)\n(red = comm from user, blue = comm to user)\n"
+  label="ShipReq System Diagram: Emails & Comms\n\n(arrows denote flow of data from one component to another)\n(ignores which component instigates the data transfer)\n(red = comm from user, blue = comm to user)\n\n"
   style=filled fillcolor="#e2ffe2"
   node [style=filled fillcolor="#55cc55"]
   edge [arrowhead=vee arrowtail=vee minlen=2]
@@ -39,9 +39,9 @@ digraph G {
     gsuite_web   [label="Web interface" shape=tab fillcolor=burlywood]
   }
 
-  subgraph cluster_gcp {
+  subgraph cluster_aws {
     fillcolor="#ebebeb"
-    label="Google Cloud Platform"
+    label="AWS"
     cloud_sql [label="PostgreSQL"]
     webapp  [fillcolor="#ffff99" label="webapp"]
     taskman [fillcolor="#ffff99" label="taskman"]
