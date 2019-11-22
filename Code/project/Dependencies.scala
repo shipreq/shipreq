@@ -97,7 +97,7 @@ object Dependencies {
   }
 
   object SLF4J {
-    private val mm = MultiModule.java("org.slf4j", "1.7.28")
+    private val mm = MultiModule.java("org.slf4j", "1.7.29")
     val api = mm("slf4j-api")
     val jcl = mm("jcl-over-slf4j")
   }
@@ -155,7 +155,7 @@ object Dependencies {
   }
 
   object LibJetty {
-    private def ver = "9.4.22.v20191022"
+    private def ver = "9.4.24.v20191120"
     private val mm = MultiModule.java("org.eclipse.jetty", ver)
     private val ws = MultiModule.java("org.eclipse.jetty.websocket", ver)
 
@@ -197,7 +197,7 @@ object Dependencies {
   val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.0.0")
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.8")
-  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.0.7")
+  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.0.8")
   val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.1")
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.12")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
