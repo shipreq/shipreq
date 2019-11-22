@@ -15,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 1,
-  "iteration": 1574145291534,
+  "id": 4,
+  "iteration": 1574221767268,
   "links": [],
   "panels": [
     {
@@ -360,9 +360,9 @@
       "datasource": null,
       "fontSize": "100%",
       "gridPos": {
-        "h": 12,
+        "h": 13,
         "w": 7,
-        "x": 15,
+        "x": 17,
         "y": 0
       },
       "id": 6,
@@ -492,10 +492,189 @@
       "datasource": null,
       "fontSize": "100%",
       "gridPos": {
-        "h": 5,
+        "h": 4,
         "w": 12,
         "x": 0,
         "y": 3
+      },
+      "id": 8,
+      "options": {},
+      "pageSize": null,
+      "showHeader": true,
+      "sort": {
+        "col": 1,
+        "desc": false
+      },
+      "styles": [
+        {
+          "alias": "Cluster",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "link": false,
+          "mappingType": 1,
+          "pattern": "cluster",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
+        },
+        {
+          "alias": "Nodes",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "Value #A",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "alias": "Services",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "Value #B",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "alias": "Containers Up",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "Value #C",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "alias": "Containers Desired",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "Value #D",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "alias": "Containers Up (%)",
+          "colorMode": "value",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "Value #E",
+          "thresholds": [
+            ".6",
+            "1"
+          ],
+          "type": "number",
+          "unit": "percentunit"
+        },
+        {
+          "alias": "",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "hidden",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "expr": "sum by (cluster) (ecs_container_instances)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "nodes",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (cluster) (ecs_services)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "services",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(label_replace(count(container_start_time_seconds{ecs_name=~\".+\"}) by (ecs_cluster), \"cluster\", \"$1\", \"ecs_cluster\", \"(.*)\") or (ecs_service_desired_tasks * 0)) by (cluster)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "c up",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(ecs_service_desired_tasks) by (cluster)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "c desired",
+          "refId": "D"
+        },
+        {
+          "expr": "(sum(label_replace(count(container_start_time_seconds{ecs_name=~\".+\"}) by (ecs_cluster), \"cluster\", \"$1\", \"ecs_cluster\", \"(.*)\") or (ecs_service_desired_tasks * 0) or label_replace(count(container_start_time_seconds{ecs_name=~\".+\"}), \"cluster\", \"total\", \"\", \"\")) by (cluster)) / on (cluster) (sum(ecs_service_desired_tasks) by (cluster))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "intervalFactor": 1,
+          "legendFormat": "c up %",
+          "refId": "E"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Clusters",
+      "transform": "table",
+      "type": "table"
+    },
+    {
+      "columns": [],
+      "datasource": null,
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 7
       },
       "id": 21,
       "options": {},
@@ -736,10 +915,10 @@
       "datasource": null,
       "fontSize": "100%",
       "gridPos": {
-        "h": 6,
+        "h": 4,
         "w": 7,
         "x": 0,
-        "y": 8
+        "y": 12
       },
       "id": 25,
       "options": {},
@@ -818,7 +997,7 @@
       ],
       "targets": [
         {
-          "expr": "1 - node_filesystem_free_bytes{fstype!=\"tmpfs\"} / node_filesystem_size_bytes",
+          "expr": "1 - node_filesystem_free_bytes{fstype!~\"tmpfs|efivarfs\"} / node_filesystem_size_bytes",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -835,143 +1014,10 @@
       "datasource": null,
       "fontSize": "100%",
       "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 11,
-        "y": 8
-      },
-      "id": 8,
-      "options": {},
-      "pageSize": null,
-      "showHeader": true,
-      "sort": {
-        "col": 1,
-        "desc": false
-      },
-      "styles": [
-        {
-          "alias": "Cluster",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "link": false,
-          "mappingType": 1,
-          "pattern": "cluster",
-          "thresholds": [],
-          "type": "string",
-          "unit": "short"
-        },
-        {
-          "alias": "Up",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 0,
-          "mappingType": 1,
-          "pattern": "Value #A",
-          "thresholds": [],
-          "type": "number",
-          "unit": "short"
-        },
-        {
-          "alias": "Desired",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 0,
-          "mappingType": 1,
-          "pattern": "Value #B",
-          "thresholds": [],
-          "type": "number",
-          "unit": "short"
-        },
-        {
-          "alias": "Up (%)",
-          "colorMode": "value",
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 0,
-          "mappingType": 1,
-          "pattern": "Value #C",
-          "thresholds": [
-            ".6",
-            "1"
-          ],
-          "type": "number",
-          "unit": "percentunit"
-        },
-        {
-          "alias": "",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "decimals": 2,
-          "pattern": "/.*/",
-          "thresholds": [],
-          "type": "hidden",
-          "unit": "short"
-        }
-      ],
-      "targets": [
-        {
-          "expr": "sum(label_replace(count(container_start_time_seconds{ecs_name=~\".+\"}) by (ecs_cluster), \"cluster\", \"$1\", \"ecs_cluster\", \"(.*)\") or (ecs_service_desired_tasks * 0)) by (cluster)",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "up",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(ecs_service_desired_tasks) by (cluster)",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "desired",
-          "refId": "B"
-        },
-        {
-          "expr": "(sum(label_replace(count(container_start_time_seconds{ecs_name=~\".+\"}) by (ecs_cluster), \"cluster\", \"$1\", \"ecs_cluster\", \"(.*)\") or (ecs_service_desired_tasks * 0) or label_replace(count(container_start_time_seconds{ecs_name=~\".+\"}), \"cluster\", \"total\", \"\", \"\")) by (cluster)) / on (cluster) (sum(ecs_service_desired_tasks) by (cluster))",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "intervalFactor": 1,
-          "legendFormat": "up %",
-          "refId": "C"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Containers / Cluster",
-      "transform": "table",
-      "type": "table"
-    },
-    {
-      "columns": [],
-      "datasource": null,
-      "fontSize": "100%",
-      "gridPos": {
-        "h": 16,
+        "h": 13,
         "w": 12,
-        "x": 10,
-        "y": 12
+        "x": 12,
+        "y": 13
       },
       "id": 23,
       "options": {},
@@ -1037,6 +1083,22 @@
         },
         {
           "alias": "Mem Used",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "Value #B",
+          "thresholds": [],
+          "type": "number",
+          "unit": "decbytes"
+        },
+        {
+          "alias": "Mem Used",
           "colorMode": "cell",
           "colors": [
             "rgba(50, 172, 45, 0.97)",
@@ -1046,7 +1108,7 @@
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 1,
           "mappingType": 1,
-          "pattern": "Value #B",
+          "pattern": "Value #C",
           "thresholds": [
             ".9",
             ".95"
@@ -1065,29 +1127,13 @@
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 0,
           "mappingType": 1,
-          "pattern": "Value #C",
+          "pattern": "Value #D",
           "thresholds": [
             "300",
             "3000"
           ],
           "type": "number",
           "unit": "s"
-        },
-        {
-          "alias": "Mem Used",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 2,
-          "mappingType": 1,
-          "pattern": "Value #D",
-          "thresholds": [],
-          "type": "number",
-          "unit": "decbytes"
         },
         {
           "alias": "",
@@ -1106,37 +1152,167 @@
       ],
       "targets": [
         {
-          "expr": "sum by (instance, ecs_name) (irate(container_cpu_cfs_throttled_seconds_total{ecs_name=~\".+\"}[$interval]) or (container_memory_working_set_bytes{ecs_name=~\".+\"} * 0))",
+          "expr": "sum by (id, instance, ecs_name) (irate(container_cpu_cfs_throttled_seconds_total{ecs_name=~\".+\"}[$interval]) or (container_memory_working_set_bytes{ecs_name=~\".+\"} * 0))",
           "format": "table",
           "instant": true,
           "legendFormat": "cpu",
           "refId": "A"
         },
         {
-          "expr": "(sum(container_memory_working_set_bytes{ecs_name=~\".+\"}) by (instance, ecs_name))\n/\n# Below we use the container memory hard-limit if set, else (container.memUsed + node.memUsable)\n(\n  ((sum(container_spec_memory_limit_bytes{ecs_name=~\".+\"}) by (instance, ecs_name)) > 0)\n  or (\n    (\n      ((sum(container_spec_memory_limit_bytes{ecs_name=~\".+\"}) by (instance, ecs_name)) == 0) +\n      (sum(container_memory_working_set_bytes{ecs_name=~\".+\"}) by (instance, ecs_name))\n    ) + on(instance) group_left () (\n      node_memory_MemFree_bytes + node_memory_Cached_bytes + node_memory_Buffers_bytes + node_memory_SReclaimable_bytes\n    )\n  )\n)",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "mem %",
-          "refId": "B"
-        },
-        {
-          "expr": "time() - max by (instance, ecs_name) (container_start_time_seconds{ecs_name=~\".+\"})",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "uptime",
-          "refId": "C"
-        },
-        {
-          "expr": "(sum(container_memory_working_set_bytes{ecs_name=~\".+\"}) by (instance, ecs_name))",
+          "expr": "sum by (id, instance, ecs_name) (container_memory_working_set_bytes{ecs_name=~\".+\"})",
           "format": "table",
           "instant": true,
           "legendFormat": "mem",
+          "refId": "B"
+        },
+        {
+          "expr": "(sum(container_memory_working_set_bytes{ecs_name=~\".+\"}) by (id, instance, ecs_name))\n/\n# Below we use the container memory hard-limit if set, else (container.memUsed + node.memUsable)\n(\n  ((sum(container_spec_memory_limit_bytes{ecs_name=~\".+\"}) by (id, instance, ecs_name)) > 0)\n  or (\n    (\n      ((sum(container_spec_memory_limit_bytes{ecs_name=~\".+\"}) by (id, instance, ecs_name)) == 0) +\n      (sum(container_memory_working_set_bytes{ecs_name=~\".+\"}) by (id, instance, ecs_name))\n    ) + on(instance) group_left () (\n      node_memory_MemFree_bytes + node_memory_Cached_bytes + node_memory_Buffers_bytes + node_memory_SReclaimable_bytes\n    )\n  )\n)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "mem %",
+          "refId": "C"
+        },
+        {
+          "expr": "time() - max by (id, instance, ecs_name) (container_start_time_seconds{ecs_name=~\".+\"})",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "uptime",
           "refId": "D"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
       "title": "Containers",
+      "transform": "table",
+      "type": "table"
+    },
+    {
+      "columns": [],
+      "datasource": null,
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 3,
+        "w": 7,
+        "x": 0,
+        "y": 16
+      },
+      "id": 29,
+      "options": {},
+      "pageSize": null,
+      "showHeader": true,
+      "sort": {
+        "col": 1,
+        "desc": false
+      },
+      "styles": [
+        {
+          "alias": "",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "job",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
+        },
+        {
+          "alias": "INFO",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "Value #A",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "alias": "WARN",
+          "colorMode": "cell",
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "Value #B",
+          "thresholds": [
+            "20",
+            "100"
+          ],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "alias": "ERROR",
+          "colorMode": "cell",
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "Value #C",
+          "thresholds": [
+            ".1",
+            "1"
+          ],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "alias": "",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "hidden",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "expr": "sum by (job) (logback_appender_total{level=\"info\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (job) (logback_appender_total{level=\"warn\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "B"
+        },
+        {
+          "expr": "sum by (job) (logback_appender_total{level=~\"[ef].+\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "C"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Log Volume",
       "transform": "table",
       "type": "table"
     }
@@ -1191,6 +1367,6 @@
   },
   "timezone": "",
   "title": "HealthNow",
-  "uid": "x2ZR6gxZz",
-  "version": 16
+  "uid": "j8sxC7bZz",
+  "version": 7
 }
