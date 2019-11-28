@@ -7,11 +7,11 @@ import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.{CrossType => _, crossProj
 object Dependencies {
 
   object Java {
-    val major = 8
+    val major = 11
   }
 
   object Graal {
-    val ver = "19.2.0.1"
+    val ver = "19.3.0"
   }
 
   object Scala {

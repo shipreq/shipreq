@@ -20,8 +20,6 @@ object Common {
 
   private val availableProcessors = java.lang.Runtime.getRuntime.availableProcessors()
 
-  def targetJdk = "1." + Dependencies.Java.major
-
   def scalacFlags = Seq(
     "-deprecation",
     "-feature",
@@ -29,7 +27,6 @@ object Common {
     "-language:higherKinds",
     "-language:implicitConversions",
     "-language:postfixOps",
-    "-target:jvm-" + targetJdk,
     "-unchecked",
     "-Xlint:infer-any",
     "-Xsource:2.13",
@@ -68,8 +65,6 @@ object Common {
   val optimisationSettings: Project => Project =
     nonTestCompilerFlags("-Xelide-below", "OFF") compose
     nonTestCompilerFlags(optimisationScalacFlags: _*)
-
-  def javacFlags = Seq("-target", targetJdk, "-source", targetJdk)
 
   val redirectTargetDir: File => File =
     System.getenv(if (releaseMode) "SHIPREQ_RELEASE_TARGET" else "SHIPREQ_TARGET") match {
@@ -119,7 +114,6 @@ object Common {
       updateOptions               := updateOptions.value.withCachedResolution(true),
       aggregate in update         := true,
       scalaVersion                := Dependencies.Scala.version,
-      javacOptions               ++= javacFlags,
       scalacOptions              ++= scalacFlags,
       testFrameworks              := List(new TestFramework("utest.runner.Framework")),
     //cancelable in Global        := true, // Allows ctrl-c to kill apps started with run without exiting SBT

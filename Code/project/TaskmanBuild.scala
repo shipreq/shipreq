@@ -77,7 +77,7 @@ object TaskmanBuild {
       .configure(runWithDockerDev)
       .settings(
         mainClass := Some(serverClass),
-        javaOptions in(Compile, run) += "-XX:+UseG1GC", // Default in Java 9, may as well use it now
+        javaOptions in(Compile, run) += "-XX:+UseG1GC",
 
         // Remove versions from package filenames for Docker layer reuse.
         mappings in Universal :=

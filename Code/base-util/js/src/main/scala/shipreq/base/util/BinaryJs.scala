@@ -46,7 +46,7 @@ trait BinaryJs {
     arrayBufferToBlob(byteBufferToArrayBuffer(bb))
 
   final def byteBufferToInt8Array(bb: ByteBuffer): Int8Array = {
-    val l = bb.limit
+    val l = bb.limit()
     if (bb.hasTypedArray()) {
       val array = bb.typedArray()
       if (l == array.length)

@@ -330,7 +330,7 @@ object WebappBuild {
           //"-XX:+EagerJVMCI",
           // "-agentpath:/opt/jprofiler10/bin/linux-x64/libjprofilerti.so=port=8849,nowait",
           "-Xmx1g",
-          "-XX:+UseG1GC"), // TODO use everywhere then including tests | Default in Java 9, may as well use it now
+          "-XX:+UseG1GC"), // TODO use everywhere then including tests
         initialCommands += consoleCmds,
         fullClasspath in console in Compile += file("src/main/webapp")) // So templates can be loaded from console
   }

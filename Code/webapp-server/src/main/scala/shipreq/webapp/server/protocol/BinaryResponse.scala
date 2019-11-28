@@ -15,7 +15,7 @@ object BinaryResponse {
 
 case class BinaryResponse(bin: BinaryResponse.Binary, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int) extends LiftResponse {
   def toResponse = {
-    val size = bin.limit
+    val size = bin.limit()
     val h = ("Content-Length" -> size.toString) :: ("Content-Type" -> "application/octet-stream") :: headers
     new OutputStreamResponse(_.write(bin.array, 0, size), size, h, cookies, code)
   }
