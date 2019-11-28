@@ -28,31 +28,29 @@ RUN yum update -y \
 # Graal #
 #=======#
 
-ENV GRAAL_VERSION=19.2.1
+ENV GRAAL_VERSION=19.3.0
 
-# Most deletions taken from docker-alpine-java
 RUN cd /opt \
- && wget https://github.com/oracle/graal/releases/download/vm-${GRAAL_VERSION}/graalvm-ce-linux-amd64-${GRAAL_VERSION}.tar.gz \
- && tar xzf graalvm-ce-linux-amd64-${GRAAL_VERSION}.tar.gz \
- && rm graalvm-ce-linux-amd64-${GRAAL_VERSION}.tar.gz \
- && ln -s graalvm-ce-${GRAAL_VERSION} graal \
+ && wget https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-19.3.0/graalvm-ce-java11-linux-amd64-${GRAAL_VERSION}.tar.gz \
+ && tar xzf graalvm-ce-java11-linux-amd64-${GRAAL_VERSION}.tar.gz \
+ && rm graalvm-ce-java11-linux-amd64-${GRAAL_VERSION}.tar.gz \
+ && ln -s graalvm-ce-java11-${GRAAL_VERSION} graal \
  && cd graal \
- && rm -rf *src.zip \
-           {,jre/}bin/polyglot \
-           {bin,jre/bin,jre/languages/js/bin}/js \
-           {bin,jre/bin,jre/languages/js/bin}/node \
-           {bin,jre/bin,jre/languages/js/bin}/npm \
-           bin/gu \
-           jre/languages/js/npm/doc \
-           jre/languages/llvm \
-           jre/lib/ext/nashorn.jar \
-           jre/tools/chromeinspector \
-           lib/installer \
-           lib/visualvm \
-           sample
+ && rm -rf \
+      {bin,languages/js/bin}/js \
+      {bin,languages/js/bin}/node \
+      {bin,languages/js/bin}/npm \
+      {bin,lib}/polyglot \
+      bin/gu \
+      languages/js/npm/doc \
+      languages/llvm \
+      lib/installer \
+      lib/src.zip \
+      lib/visualvm \
+      tools/chromeinspector
 
 RUN cd /opt/graal \
- && sed -i 's/#networkaddress.cache.ttl=-1/networkaddress.cache.ttl=10/' jre/lib/security/java.security
+ && sed -i 's/#networkaddress.cache.ttl=-1/networkaddress.cache.ttl=30/' conf/security/java.security
 
 ENV JAVA_HOME=/opt/graal \
     PATH=${PATH}:/opt/graal/bin

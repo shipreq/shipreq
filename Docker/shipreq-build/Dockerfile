@@ -45,12 +45,12 @@ RUN pacman -Sy --noconfirm --needed \
 #########
 
 RUN cd /tmp \
- && git clone https://aur.archlinux.org/graal-bin.git \
- && cd graal-bin \
- && git checkout 29fbb5d5951b6a77123968742b2a23bb4349b1a9 2>/dev/null \
+ && git clone https://aur.archlinux.org/jdk11-graalvm-bin.git \
+ && cd jdk11-graalvm-bin \
+ && git checkout 24af891d7edba14302f1b271acb5a92c3045a00d 2>/dev/null \
  && makepkg -sri --noconfirm \
  && cd /tmp \
- && rm -rf graal-bin
+ && rm -rf jdk11-graalvm-bin
 
 ########
 # Node #
@@ -85,7 +85,7 @@ RUN cd /usr/local/bin \
 RUN mkdir /tmp/scala \
  && cd /tmp/scala \
  && mkdir project \
- && echo 'sbt.version=1.3.3' > project/build.properties \
+ && echo 'sbt.version=1.3.4' > project/build.properties \
  && echo 'scalaVersion := "2.12.10"' > build.sbt \
  && echo 'object M{}' > M.scala \
  && sbt test \
