@@ -202,6 +202,24 @@ filebeat.autodiscover:
             target_prefix: ''
 
   ######################################################################################################################
+  # nat
+  - type: docker
+    templates:
+    - condition:
+        contains:
+          docker.container.name: nat
+      config:
+      - type: container
+        paths:
+          - /var/lib/docker/containers/${data.docker.container.id}/*-json.log
+        encoding: utf-8
+        processors:
+        - add_fields:
+            target: ''
+            fields:
+              '@service': 'nat'
+
+  ######################################################################################################################
   # syslog/secure
 
 filebeat.inputs:
