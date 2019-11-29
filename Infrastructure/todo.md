@@ -23,4 +23,6 @@
   * Postgres
   * EBS
 
-* Separate account for prod
+* Separate account for prod or non-prod (?)
+
+* Refactor Terraform
