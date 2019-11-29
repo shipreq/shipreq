@@ -3,5 +3,6 @@
 .freshdesk.com
 .mailchimp.com
 .mailgun.net
+.security.ubuntu.com
 .shipreq.com
 smtp.gmail.com
