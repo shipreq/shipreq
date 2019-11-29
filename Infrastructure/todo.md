@@ -8,7 +8,6 @@
   * add IP to SG, add lambda to auto purge SG
 
 * NAT
-  * Collect logs / filebeat (?)
   * node_exporter (?)
 
 * Cluster EC2s

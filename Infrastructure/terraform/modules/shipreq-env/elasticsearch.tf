@@ -74,6 +74,14 @@ resource "aws_security_group" "es" {
   }
 
   ingress {
+    protocol        = "tcp"
+    from_port       = 443
+    to_port         = 443
+    security_groups = [aws_security_group.nat.id]
+    description     = "NAT access"
+  }
+
+  ingress {
     protocol    = "tcp"
     from_port   = 443
     to_port     = 443

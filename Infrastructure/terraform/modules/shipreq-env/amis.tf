@@ -7,12 +7,12 @@ data "aws_ssm_parameter" "ami-ecs" {
   name = "/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id"
 }
 
-# aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amzn*-ami-vpc-nat*' 'Name=state,Values=available' --query 'reverse(sort_by(Images, &CreationDate))[:1].ImageId' --output text
-data "aws_ami" "nat" {
+# aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amzn2-ami-hvm-*-x86_64-gp2' 'Name=state,Values=available' --query 'reverse(sort_by(Images, &CreationDate))[:1].ImageId' --output text
+data "aws_ami" "amazonlinux2" {
   most_recent = true
   owners      = ["amazon"]
   filter {
     name   = "name"
-    values = ["amzn*-ami-vpc-nat*"]
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
   }
 }
