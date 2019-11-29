@@ -21,10 +21,12 @@ resource "aws_instance" "nat" {
   volume_tags                 = local.nat_tags
 
   user_data = trimspace(templatefile("${path.module}/nat-ec2-init.sh", {
-    ENV            = var.env
-    ES_HOSTS       = local.es_root_url_with_port
-    FILEBEAT_IMAGE = data.aws_ecr_repository.filebeat.repository_url
-    NAT_IMAGE      = data.aws_ecr_repository.nat.repository_url
+    ENV                  = var.env
+    ES_HOSTS             = local.es_root_url_with_port
+    FILEBEAT_IMAGE       = "${data.aws_ecr_repository.filebeat.repository_url}:${var.ops_images_tag}"
+    NAT_IMAGE            = "${data.aws_ecr_repository.nat.repository_url}:${var.nat_image_tag}"
+    SQUID_EXPORTER_IMAGE = "${data.aws_ecr_repository.squid_exporter.repository_url}:${var.ops_images_tag}"
+    SQUID_EXPORTER_PORT  = local.ports.nat.squid_exporter
   }))
 
   root_block_device {
@@ -84,7 +86,8 @@ resource "aws_iam_policy" "nat" {
       "Effect": "Allow",
       "Resource": [
         "${data.aws_ecr_repository.filebeat.arn}",
-        "${data.aws_ecr_repository.nat.arn}"
+        "${data.aws_ecr_repository.nat.arn}",
+        "${data.aws_ecr_repository.squid_exporter.arn}"
       ],
       "Action": [
         "ecr:BatchCheckLayerAvailability",

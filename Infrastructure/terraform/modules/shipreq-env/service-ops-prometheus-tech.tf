@@ -7,6 +7,7 @@ locals {
     CADVISOR_PORT                   = local.ports.cadvisor
     ECS_EXPORTER_PORT               = local.ports.ops.ecs_exporter
     ECS_EXPORTER_SCRAPE_INTERVAL    = "${max(60, var.prometheus_tech_scrape_interval_sec)}s"
+    NAT_HOST                        = local.nat_domain
     NODE_EXPORTER_PORT              = local.ports.node_exporter
     OPS_HOST                        = local.ops_host
     PROMETHEUS_BIZ_HOST             = local.prometheus_biz_host
@@ -18,6 +19,7 @@ locals {
     PROMETHEUS_TECH_SCRAPE_INTERVAL = "${var.prometheus_tech_scrape_interval_sec}s"
     SHIPREQ_TASKMAN_PORT            = local.ports.app.shipreq_taskman
     SHIPREQ_WEBAPP_SD_DOMAIN        = local.shipreq_webapp_sd_domain
+    SQUID_EXPORTER_PORT             = local.ports.nat.squid_exporter
   })
 }
 

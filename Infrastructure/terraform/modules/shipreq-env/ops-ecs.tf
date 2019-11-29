@@ -111,6 +111,14 @@ resource "aws_security_group" "ops" {
   }
 
   egress {
+    protocol        = "tcp"
+    from_port       = local.ports.nat.squid_exporter
+    to_port         = local.ports.nat.squid_exporter
+    security_groups = [aws_security_group.nat.id]
+    description     = "Metrics: squid_exporter"
+  }
+
+  egress {
     protocol    = "tcp"
     from_port   = local.ports.app.shipreq_taskman
     to_port     = local.ports.app.shipreq_taskman

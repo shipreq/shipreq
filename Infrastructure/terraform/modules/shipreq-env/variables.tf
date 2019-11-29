@@ -108,6 +108,11 @@ variable "postgres_final_snapshot" {
   default     = ""
 }
 
+variable "nat_image_tag" {
+  description = "The docker tag for the nat image. Eg. `git-<sha>` or `latest`"
+  type        = string
+}
+
 variable "ops_images_tag" {
   description = "The docker tag for all ops images. Eg. `git-<sha>` or `latest`"
   type        = string

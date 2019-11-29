@@ -32,6 +32,7 @@ module "shipreq" {
   postgres_root_password              = "dev-1234"
   postgres_backup_retention_period    = 0
   deletion_protection                 = false
+  nat_image_tag                       = "latest"
   ops_images_tag                      = "latest"
   prometheus_tech_ebs_size            = 4
   prometheus_tech_retention           = "time=12w"

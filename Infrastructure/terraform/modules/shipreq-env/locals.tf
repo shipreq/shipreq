@@ -45,6 +45,10 @@ locals {
       shipreq_taskman = 9031
     }
 
+    nat = {
+      squid_exporter = 9301
+    }
+
     ops = {
       ecs_exporter      = 9222
       grafana           = 3000

@@ -47,6 +47,13 @@ scrape_configs:
       action: labeldrop
 
   ##########################################################################
+  # NAT
+
+  - job_name: 'squid_exporter'
+    static_configs:
+      - targets: ['${NAT_HOST}:${SQUID_EXPORTER_PORT}']
+
+  ##########################################################################
   # Ops cluster
 
   - job_name: 'ecs_exporter'

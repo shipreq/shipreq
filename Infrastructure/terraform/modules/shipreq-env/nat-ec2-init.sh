@@ -88,3 +88,24 @@ EOB
 chmod 700 $filebeat
 
 $filebeat
+
+####################################################################################################
+# squid_exporter
+
+squid_exporter=/usr/bin/start-squid_exporter
+
+cat > $squid_exporter << 'EOB'
+#!/bin/bash
+docker pull ${SQUID_EXPORTER_IMAGE}
+docker run \
+  -d \
+  --restart unless-stopped \
+  --network host \
+  --name squid_exporter \
+  ${SQUID_EXPORTER_IMAGE} \
+  -listen "0.0.0.0:${SQUID_EXPORTER_PORT}"
+EOB
+
+chmod 700 $squid_exporter
+
+$squid_exporter
