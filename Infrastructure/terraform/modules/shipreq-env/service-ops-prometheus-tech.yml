@@ -56,12 +56,6 @@ scrape_configs:
         type: 'A'
         port: ${ECS_EXPORTER_PORT}
 
-  - job_name: 'squid_exporter'
-    dns_sd_configs:
-      - names: [ '${OPS_HOST}' ]
-        type: 'A'
-        port: ${SQUID_EXPORTER_PORT}
-
   - job_name: 'prometheus-tech'
     metrics_path: '${PROMETHEUS_TECH_PATH}/metrics'
     dns_sd_configs:

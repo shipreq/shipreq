@@ -41,10 +41,6 @@ locals {
     cadvisor      = 9080
     node_exporter = 9100
 
-    nat = {
-      squid = 3128
-    }
-
     app = {
       shipreq_taskman = 9031
     }
@@ -55,7 +51,6 @@ locals {
       postgres_exporter = 9187
       prometheus_biz    = 9091
       prometheus_tech   = 9090
-      squid_exporter    = 9301
     }
   }
 
@@ -111,7 +106,6 @@ locals {
     postgres_exporter = 9
     prometheus_biz    = 5
     prometheus_tech   = 5
-    squid_exporter    = 1
   }
 
   # Memory reservation for everything in the Ops cluster
@@ -124,7 +118,6 @@ locals {
     postgres_exporter = 16
     prometheus_biz    = 64
     prometheus_tech   = 128
-    squid_exporter    = 8
   }
 
   ops_device = {

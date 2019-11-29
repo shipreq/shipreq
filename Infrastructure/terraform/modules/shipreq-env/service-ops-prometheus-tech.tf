@@ -18,7 +18,6 @@ locals {
     PROMETHEUS_TECH_SCRAPE_INTERVAL = "${var.prometheus_tech_scrape_interval_sec}s"
     SHIPREQ_TASKMAN_PORT            = local.ports.app.shipreq_taskman
     SHIPREQ_WEBAPP_SD_DOMAIN        = local.shipreq_webapp_sd_domain
-    SQUID_EXPORTER_PORT             = local.ports.ops.squid_exporter
   })
 }
 
