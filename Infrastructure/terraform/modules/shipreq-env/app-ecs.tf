@@ -24,6 +24,9 @@ resource "aws_autoscaling_group" "app" {
     id      = aws_launch_template.app.id
     version = "$Latest"
   }
+
+  # The EC2s need a working internet connection to startup
+  depends_on = [aws_instance.nat]
 }
 
 resource "aws_launch_template" "app" {
