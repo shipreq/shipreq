@@ -8,7 +8,7 @@ resource "aws_key_pair" "nat" {
 }
 
 resource "aws_instance" "nat" {
-  ami                         = data.aws_ami.amazonlinux2.id
+  ami                         = data.aws_ssm_parameter.ami-ec2.value
   availability_zone           = var.availability_zone
   instance_type               = "t3a.nano"
   subnet_id                   = aws_subnet.public.id
