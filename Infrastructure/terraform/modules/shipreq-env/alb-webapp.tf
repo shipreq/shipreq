@@ -78,6 +78,8 @@ resource "aws_lb_target_group" "webapp" {
     timeout             = 5
     matcher             = "200"
   }
+
+  depends_on = [aws_lb.webapp]
 }
 
 # http://shipreq.com/robots.txt
