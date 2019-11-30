@@ -98,8 +98,22 @@ variable "deletion_protection" {
   type = bool
 }
 
-variable "postgres_backup_retention_period" {
+variable "postgres_backup_retention_days" {
   type = number
+}
+
+variable "prometheus_tech_backup_retention_days" {
+  type = number
+}
+
+variable "prometheus_biz_backup_retention_days" {
+  type = number
+}
+
+variable "postgres_monitoring_interval_sec" {
+  description = "The interval, in seconds, between points when Enhanced Monitoring metrics are collected. Valid Values: 0 (disable), 1, 5, 10, 15, 30, 60."
+  type        = number
+  default     = 0
 }
 
 variable "postgres_final_snapshot" {

@@ -21,16 +21,13 @@ resource "aws_db_instance" "postgres" {
   apply_immediately           = true
   allow_major_version_upgrade = true
   auto_minor_version_upgrade  = true
-  maintenance_window          = "Sat:18:00-Sat:18:59" # in AEDT: Sunday 5am-6am
-  backup_retention_period     = var.postgres_backup_retention_period
-  backup_window               = "17:00-17:59" # 4am-5am
+  maintenance_window          = "Sat:15:00-Sat:17:00" # In Aussie East: Sunday 1am/2am + 2hrs
+  monitoring_interval         = var.postgres_monitoring_interval_sec
   deletion_protection         = var.deletion_protection
   skip_final_snapshot         = var.postgres_final_snapshot == ""
   final_snapshot_identifier   = (var.postgres_final_snapshot == "") ? null : var.postgres_final_snapshot
   copy_tags_to_snapshot       = false
   tags                        = local.postgres_tags
-
-  # monitoring_interval - (Optional) The interval, in seconds, between points when Enhanced Monitoring metrics are collected for the DB instance. To disable collecting Enhanced Monitoring metrics, specify 0. The default is 0. Valid Values: 0, 1, 5, 10, 15, 30, 60.
 }
 
 resource "aws_db_subnet_group" "postgres" {

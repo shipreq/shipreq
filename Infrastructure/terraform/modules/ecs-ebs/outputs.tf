@@ -12,3 +12,13 @@ output "mount_dir" {
   description = "The path on the ECS cluster's EC2s into which EBS volumes are mounted."
   value       = local.mount_dir
 }
+
+output "tag_key" {
+  description = "The tag name/key used to identify all volumes created by this module"
+  value       = "ecs-ebs"
+}
+
+output "tag_value" {
+  description = "The tag value used to identify all volumes created by this module"
+  value       = local.tag_value
+}
