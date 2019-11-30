@@ -6,7 +6,7 @@ volumes:
 services:
 
   postgres:
-    image: postgres:11.5
+    image: shipreq/dev/postgres
     container_name: shipreq_dev_postgres
     ports:
       - $PORT_POSTGRES:5432
