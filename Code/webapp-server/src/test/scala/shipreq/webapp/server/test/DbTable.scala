@@ -16,12 +16,13 @@ sealed abstract class DbTable(val name: String) {
 }
 
 object DbTable {
-  case object Event       extends DbTable("event")
-  case object Project     extends DbTable("project")
-  case object Usr         extends DbTable("usr")
-  case object UsrLoginLog extends DbTable("usr_login_log")
-  case object Usrd        extends DbTable("usrd")
-  case object UsrhName    extends DbTable("usrh_name")
+  case object Event            extends DbTable("event")
+  case object Project          extends DbTable("project")
+  case object Usr              extends DbTable("usr")
+  case object UsrLoginLog      extends DbTable("usr_login_log")
+  case object UsrLoginsPerHour extends DbTable("usr_logins_per_hour")
+  case object Usrd             extends DbTable("usrd")
+  case object UsrhName         extends DbTable("usrh_name")
 
   implicit def univEq: UnivEq[DbTable] = UnivEq.derive
 

@@ -92,7 +92,6 @@ Metrics to collect:
 New functionality:
   - store latest read on project table
   - reads per project per day
-  - logins per user per day
 
 Metrics pending:
   - customer engagement score

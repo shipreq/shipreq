@@ -13,20 +13,45 @@ object DbTriggerTest extends TestSuite {
   override def tests = Tests {
 
     'usr_login_log {
-      def loginCount(userId: UserId)(implicit xa: SingleConnectionXA): Long =
-        xa ! Query0[Long](s"SELECT login_count FROM usr WHERE id = ${userId.value}").unique
-
       def logLogin(u: UserId, ip: Option[IP])(implicit xa: SingleConnectionXA): Unit =
         xa ! DbInterpreter.ForSecurity.logLoginSuccess(u, ip)
 
-      "should update agg view stats by trigger" - TestDb().runNow { implicit xa =>
+      "insert should update usr table" - TestDb().runNow { implicit xa =>
+        def loginCount(userId: UserId)(implicit xa: SingleConnectionXA): Long =
+          xa ! Query0[Long](s"SELECT login_count FROM usr WHERE id = ${userId.value}").unique
+
         val a, b = DbUtil(xa).newUserId()
-        def viewCounts = (loginCount(a), loginCount(b))
-        def assertViewCounts(x: Long, y: Long) = assertEq(viewCounts, (x, y))
-        assertViewCounts(0, 0)
-        logLogin(a, None); assertViewCounts(1, 0)
-        logLogin(a, None); assertViewCounts(2, 0)
-        logLogin(b, None); assertViewCounts(2, 1)
+        def loginCounts = (loginCount(a), loginCount(b))
+        def assertLoginCounts(x: Long, y: Long) = assertEq(loginCounts, (x, y))
+        assertLoginCounts(0, 0)
+        logLogin(a, None); assertLoginCounts(1, 0)
+        logLogin(a, None); assertLoginCounts(2, 0)
+        logLogin(b, None); assertLoginCounts(2, 1)
+      }
+
+      "insert should update usr_logins_per_hour table" - TestDb().runNow { implicit xa =>
+        def test(): Unit = {
+          xa ! DbTable.UsrLoginsPerHour.truncate
+          val a, b = DbUtil(xa).newUserId()
+          def stats = (
+            xa ! DbTable.UsrLoginsPerHour.count,
+            xa ! Query0[Option[Int]](s"SELECT sum(total) FROM usr_logins_per_hour").option.map(_.flatten.getOrElse(0)),
+            xa ! Query0[Option[Int]](s"SELECT hll_cardinality(hll_union_agg(users)) FROM usr_logins_per_hour").option.map(_.flatten.getOrElse(0)),
+          )
+          def assertViewCounts(rows: Int, total: Int, unique: Int) = assertEq(stats, (rows, total, unique))
+          assertViewCounts(0, 0, 0)
+          logLogin(a, None); assertViewCounts(1, 1, 1)
+          logLogin(a, None); assertViewCounts(1, 2, 1)
+          logLogin(b, None); assertViewCounts(1, 3, 2)
+          logLogin(a, None); assertViewCounts(1, 4, 2)
+          logLogin(b, None); assertViewCounts(1, 5, 2)
+        }
+        try test()
+        catch {
+          case _: AssertionError =>
+            // We may have crossed an hour boundary - try one more time
+            test()
+        }
       }
     }
 

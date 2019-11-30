@@ -13,18 +13,27 @@ CREATE TABLE usr_login_log (
 );
 
 ------------------------------------------------------------------------------------------------------------------------
--- Trigger: Update `usr` upon insert to `usr_login_log`.
+-- Trigger: Update on insert to `usr_login_log`.
 
-CREATE OR REPLACE FUNCTION usr_login_stats_update() RETURNS TRIGGER AS $$
+CREATE FUNCTION usr_add_login(
+  arg_id   usr.id           %TYPE,
+  arg_time usr.last_login_at%TYPE,
+  arg_ip   VARCHAR
+) RETURNS void AS $$
 BEGIN
-
-    update usr
-    set login_count   = login_count + 1
-       ,last_login_at = NEW.time
-       ,last_login_ip = coalesce(NEW.ip,'?')
-    where id = NEW.usr_id;
-
-    RETURN NULL;
+  UPDATE usr
+  SET    login_count   = login_count + 1,
+         last_login_at = arg_time,
+         last_login_ip = coalesce(arg_ip,'?')
+  WHERE  id = arg_id;
 END;
 $$ LANGUAGE plpgsql;
-CREATE TRIGGER usr_login_stats_update AFTER INSERT ON usr_login_log FOR EACH ROW EXECUTE PROCEDURE usr_login_stats_update();
+
+CREATE FUNCTION usr_login_log_on_insert() RETURNS TRIGGER AS $$
+BEGIN
+  PERFORM usr_add_login(NEW.usr_id, NEW.time, NEW.ip);
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER usr_login_log_on_insert AFTER INSERT ON usr_login_log FOR EACH ROW EXECUTE PROCEDURE usr_login_log_on_insert();
