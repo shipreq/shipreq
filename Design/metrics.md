@@ -51,7 +51,7 @@ For nearly all of the following, have the ability to show
   - per week
   - per month
 
-Metrics
+Metrics to present
   - landing page reqs
   - users
     - registered vs not
@@ -77,3 +77,24 @@ Metrics
     - project reads
     - unique projects read
     - avg session time per user
+
+Metrics to collect:
+  - shipreq_users_total               {registered=y/n}
+  - shipreq_users_last_login          (histogram/summary)
+  - shipreq_projects_total            {live=y/n}
+  - shipreq_events_total              {project_live=y/n}
+  - shipreq_reqs_total                {project_live=y/n, req_live=y/n}
+  - shipreq_db_table_bytes_total      {table=xxx}
+  - shipreq_project_last_access       {access=r/w} (histogram/summary)
+  - shipreq_daily_logins_total        {unique_usr=y/n}
+  - shipreq_daily_project_reads_total {unique_project=y/n}
+
+New functionality:
+  - store latest read on project table
+  - reads per project per day
+  - logins per user per day
+
+Metrics pending:
+  - customer engagement score
+  - landing page reqs
+  - avg session time per user
