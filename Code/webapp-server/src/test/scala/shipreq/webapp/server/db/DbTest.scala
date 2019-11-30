@@ -204,6 +204,7 @@ object DbTest extends TestSuite {
             eventsInit    = data1.length,
             eventsTotal   = data1.length,
             createdAt     = a.createdAt,
+            accessedAt    = a.accessedAt,
             lastUpdatedAt = None))
 
           var ord = read1.last.ord
@@ -218,6 +219,7 @@ object DbTest extends TestSuite {
             eventsInit    = data1.length,
             eventsTotal   = data.length,
             createdAt     = a.createdAt,
+            accessedAt    = a.lastUpdatedAt.get,
             lastUpdatedAt = Some(a.lastUpdatedAt.get)))
         }
       }

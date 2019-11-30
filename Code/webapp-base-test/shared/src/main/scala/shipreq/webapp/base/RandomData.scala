@@ -1302,7 +1302,9 @@ object RandomData {
       eventsTotal   <- Gen.chooseInt(30000)
       reqsTotal     <- if (eventsTotal == 0) Gen.pure(0) else Gen.chooseInt(eventsTotal min 2000)
       reqsLive      <- if (reqsTotal == 0) Gen.pure(0) else Gen.chooseInt(reqsTotal)
-      createdAt     <- instantPast
+      (t1, t2)      <- instantPast.pair
+      createdAt      = if (t1 isBefore t2) t1 else t2
+      accessedAt     = if (t1 isBefore t2) t2 else t1
       lastUpdatedAt <- instantPast.option.map(_.filter(_ isAfter createdAt))
     } yield
     ProjectMetaData(
@@ -1313,6 +1315,7 @@ object RandomData {
       reqsLive      = reqsLive,
       reqsTotal     = reqsTotal,
       createdAt     = createdAt,
+      accessedAt    = accessedAt,
       lastUpdatedAt = lastUpdatedAt)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

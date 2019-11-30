@@ -43,6 +43,7 @@ object MockDb {
                                 initEvents   : Int,
                                 events       : VerifiedEvent.Seq,
                                 createdAt    : Instant,
+                                accessedAt   : Instant,
                                 lastUpdatedAt: Option[Instant]) {
 
     lazy val project: Project =
@@ -54,6 +55,7 @@ object MockDb {
         eventsInit    = initEvents,
         eventsTotal   = events.size,
         createdAt     = createdAt,
+        accessedAt    = accessedAt,
         lastUpdatedAt = lastUpdatedAt)
 
     def projectLoad: VerifiedEvent.Seq =
@@ -212,7 +214,7 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     val initEvents = events.size
     val ves = verifyEvents(Project.empty)(events: _*)
     val now = Instant.now()
-    val mde = MockDb.ProjectEntry(projectId, userId, initEvents, ves, now, Some(now))
+    val mde = MockDb.ProjectEntry(projectId, userId, initEvents, ves, now, now, Some(now))
     projects = projects.add(mde)
   }
 

@@ -255,20 +255,21 @@ object DbInterpreter {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   private def projectMetaDataQuery[A: Composite](where: String): Query[A, ProjectMetaData] = {
-    type Types = (ProjectId, String, Int, Int, Int, Int, Instant, Instant)
-    val cols = "id, name, events_init, events_total, reqs_live, reqs_total, created_at, updated_at"
+    type Types = (ProjectId, String, Int, Int, Int, Int, Instant, Instant, Instant)
+    val cols = "id, name, events_init, events_total, reqs_live, reqs_total, created_at, accessed_at, updated_at"
     val sql = s"SELECT $cols FROM project WHERE $where"
     Query[A, Types](sql).map {
-      case (id, name, events_init, events_total, reqs_live, reqs_total, created_at, updated_at) =>
+      case (id, name, events_init, events_total, reqs_live, reqs_total, created_at, accessed_at, updated_at) =>
         ProjectMetaData(
-          id              = Obfuscators.projectId.obfuscate(id),
-          name            = name,
-          eventsInit      = events_init,
-          eventsTotal     = events_total,
-          reqsLive        = reqs_live,
-          reqsTotal       = reqs_total,
-          createdAt       = created_at,
-          lastUpdatedAt   = Option.when(events_total > events_init)(updated_at))
+          id            = Obfuscators.projectId.obfuscate(id),
+          name          = name,
+          eventsInit    = events_init,
+          eventsTotal   = events_total,
+          reqsLive      = reqs_live,
+          reqsTotal     = reqs_total,
+          createdAt     = created_at,
+          accessedAt    = accessed_at,
+          lastUpdatedAt = Option.when(events_total > events_init)(updated_at))
     }
   }
 
@@ -355,7 +356,7 @@ object DbInterpreter {
     }
 
     private def updateProjectSql(moreSets: String) =
-      s"UPDATE project SET events_total = events_total + 1, ${moreSets}, updated_at = now() WHERE id=?"
+      s"UPDATE project SET events_total = events_total + 1, ${moreSets}, accessed_at = now(), updated_at = now() WHERE id=?"
 
     val updateProjectN: Update[(String, ProjectId)] =
       Update(updateProjectSql("name=?"))

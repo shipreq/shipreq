@@ -35,6 +35,7 @@ trait WebappTestUtil extends BaseTestUtil {
       eventsInit    = eventsInit.min(eventsTotal),
       eventsTotal   = eventsTotal,
       createdAt     = Instant.now().minus(28, DAYS),
+      accessedAt    = Instant.now().minus(1, DAYS),
       lastUpdatedAt = Some(Instant.now().minus(1, DAYS)))
 
   def verifyEvent(p: Project, e: Event, o: EventOrd = EventOrd.first): VerifiedEvent =

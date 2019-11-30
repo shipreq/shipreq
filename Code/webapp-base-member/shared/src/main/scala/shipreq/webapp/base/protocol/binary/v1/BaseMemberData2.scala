@@ -412,6 +412,7 @@ object BaseMemberData2 {
         state.pickle(a.reqsLive)
         state.pickle(a.reqsTotal)
         state.pickle(a.createdAt)
+        state.pickle(a.accessedAt)
         state.pickle(a.lastUpdatedAt)
       }
       override def unpickle(implicit state: UnpickleState): ProjectMetaData = {
@@ -422,6 +423,7 @@ object BaseMemberData2 {
         val reqsLive      = state.unpickle[Int]
         val reqsTotal     = state.unpickle[Int]
         val createdAt     = state.unpickle[Instant]
+        val accessedAt    = state.unpickle[Instant]
         val lastUpdatedAt = state.unpickle[Option[Instant]]
         ProjectMetaData(
           id            = id           ,
@@ -431,6 +433,7 @@ object BaseMemberData2 {
           reqsLive      = reqsLive     ,
           reqsTotal     = reqsTotal    ,
           createdAt     = createdAt    ,
+          accessedAt    = accessedAt   ,
           lastUpdatedAt = lastUpdatedAt)
       }
     }
