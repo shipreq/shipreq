@@ -60,13 +60,13 @@ object Layout {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   private object Header {
-    val left    = <.div(*.headerSides)
-    val mid     = <.div(*.headerMid)
-    def right   = left
-    val logoImg = <.img(*.headerLogo, ^.src := AssetManifest.shipreqLogoSvg, ^.alt := Page.Home.linkTitle)
-    val links   = List[Page.Static](Page.Login, Page.Register1)
+    private val left    = <.div(*.headerSides)
+    private val mid     = <.div(*.headerMid)
+    private def right   = left
+    private val logoImg = <.img(*.headerLogo, ^.src := AssetManifest.shipreqLogoSvg, ^.alt := Page.Home.linkTitle)
+    private val links   = List[Page.Static](Page.Login, Page.Register1)
 
-    def render(p: Props): VdomElement = {
+    private def render(p: Props): VdomElement = {
       val logo =
         TagMod.unless(p.currentPage ==* Page.Home)(
           p.routerCtl.link(Page.Home)(logoImg))
@@ -84,11 +84,11 @@ object Layout {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   private object Footer {
-    def copyright = <.span(*.footerTxt, WebappConfig.copyrightNotice)
-    val footer    = <.footer(*.footer, copyright, linkSep)
-    val links     = List[Page.Static](Page.TermsOfService, Page.Privacy)
+    private def copyright = <.div(*.copyright, WebappConfig.copyrightNotice)
+    private val footer    = <.footer(*.footer, copyright)
+    private val links     = List[Page.Static](Page.TermsOfService, Page.Privacy)
 
-    def render(p: Props): VdomElement =
+    private def render(p: Props): VdomElement =
       footer(makeNav(p, links))
 
     val Component = ScalaComponent.builder[Props]("Layout.Footer")

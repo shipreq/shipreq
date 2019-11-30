@@ -41,6 +41,6 @@ object WebappConfig {
 
   lazy val copyrightNotice: String = {
     val year = Year.now()
-    s"© 2013-$year Bearded Logic"
+    s"© 2013-$year Bearded Logic. All rights reserved."
   }
 }

@@ -105,6 +105,7 @@ object Styles {
       color := "#d00")
 
     val footer = TagMod(
+      position.relative,
       fontSize := "0.85rem",
       paddingTop := "0.1em",
       paddingBottom := "0.1em",
@@ -112,8 +113,11 @@ object Styles {
       borderTop := "1px solid rgba(34,36,38,.15)",
       textAlign.center)
 
-    val footerTxt =
-      color := "#888"
+    val copyright = TagMod(
+      position.absolute,
+      top := "0",
+      right := "1ex",
+      color := "#a4a4a4")
 
     val main = TagMod(
       flex := "1",
