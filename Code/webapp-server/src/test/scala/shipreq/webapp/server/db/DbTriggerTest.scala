@@ -1,14 +1,24 @@
 package shipreq.webapp.server.db
 
 import doobie.imports._
+import sourcecode.Line
 import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.db.SingleConnectionXA
+import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.logic.IP
 import shipreq.webapp.server.test._
 
 object DbTriggerTest extends TestSuite {
+
+  private def considerHourBoundary[A](a: => A): A =
+    try a
+    catch {
+      case _: AssertionError =>
+        // We may have crossed an hour boundary - try one more time
+        a
+    }
 
   override def tests = Tests {
 
@@ -30,7 +40,7 @@ object DbTriggerTest extends TestSuite {
       }
 
       "insert should update usr_logins_per_hour table" - TestDb().runNow { implicit xa =>
-        def test(): Unit = {
+        considerHourBoundary {
           xa ! DbTable.UsrLoginsPerHour.truncate
           val a, b = DbUtil(xa).newUserId()
           def stats = (
@@ -45,12 +55,6 @@ object DbTriggerTest extends TestSuite {
           logLogin(b, None); assertViewCounts(1, 3, 2)
           logLogin(a, None); assertViewCounts(1, 4, 2)
           logLogin(b, None); assertViewCounts(1, 5, 2)
-        }
-        try test()
-        catch {
-          case _: AssertionError =>
-            // We may have crossed an hour boundary - try one more time
-            test()
         }
       }
     }
@@ -87,5 +91,42 @@ object DbTriggerTest extends TestSuite {
       }
     }
 
+    'project {
+      "should update project_access_per_hour" - TestDb().runNow { implicit xa =>
+
+        val db = new DbInterpreter()(PrepareEnv.global().config.server.security)
+
+        def read(p: ProjectId): Unit =
+          xa ! db.projectSpaInitPage(p)
+
+        def writeTo(p: ProjectId): Unit =
+          assertEq(xa ! DbInterpreter.SaveProjectEventLogic.updateProjectN.toUpdate0(("A", p)).run, 1)
+
+        def stats = (
+          xa ! DbTable.ProjectAccessPerHour.count,
+          xa ! Query0[Option[Int]](s"SELECT sum(total) FROM project_access_per_hour WHERE NOT write").option.map(_.flatten.getOrElse(0)),
+          xa ! Query0[Option[Int]](s"SELECT hll_cardinality(hll_union_agg(projects)) FROM project_access_per_hour WHERE NOT write").option.map(_.flatten.getOrElse(0)),
+          xa ! Query0[Option[Int]](s"SELECT sum(total) FROM project_access_per_hour WHERE write").option.map(_.flatten.getOrElse(0)),
+          xa ! Query0[Option[Int]](s"SELECT hll_cardinality(hll_union_agg(projects)) FROM project_access_per_hour WHERE write").option.map(_.flatten.getOrElse(0)),
+        )
+
+        def assertState(rows: Int)(totalReads: Int, uniqueReads: Int)(totalWrites: Int, uniqueWrites: Int)(implicit l: Line) =
+          assertEq(stats, (rows, totalReads, uniqueReads, totalWrites, uniqueWrites))
+
+        considerHourBoundary {
+          xa ! DbTable.ProjectAccessPerHour.truncate
+          assertState(0)(0, 0)(0, 0)
+          val a = DbUtil(xa).newProjectId()
+          assertState(1)(0, 0)(1, 1)
+          val b = DbUtil(xa).newProjectId()
+          assertState(1)(0, 0)(2, 2)
+          writeTo(a); assertState(1)(0, 0)(3, 2)
+          read(b)   ; assertState(2)(1, 1)(3, 2)
+          read(b)   ; assertState(2)(2, 1)(3, 2)
+          writeTo(b); assertState(2)(2, 1)(4, 2)
+          read(a)   ; assertState(2)(3, 2)(4, 2)
+        }
+      }
+    }
   }
 }

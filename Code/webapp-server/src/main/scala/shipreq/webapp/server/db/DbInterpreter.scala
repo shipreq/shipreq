@@ -430,11 +430,18 @@ object DbInterpreter {
          with GetProjectEvents
          with SaveProjectEvent {
 
+    private val logProjectRead: Update[ProjectId] =
+      Update[ProjectId](s"UPDATE project SET accessed_at=now() WHERE id=?")
+
     private[db] val projectSpaInitPageQuery =
       Query[ProjectId, Project.Name]("SELECT name FROM project WHERE id=?")
 
     override def projectSpaInitPage(id: ProjectId): ConnectionIO[Project.Name] =
-      projectSpaInitPageQuery.toQuery0(id).option.map(_.getOrElse(""))
+      for {
+        _ <- logProjectRead.toUpdate0(id).run
+        o <- projectSpaInitPageQuery.toQuery0(id).option
+      } yield o.getOrElse("")
+
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

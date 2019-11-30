@@ -87,11 +87,7 @@ Metrics to collect:
   - shipreq_db_table_bytes_total      {table=xxx}
   - shipreq_project_last_access       {access=r/w} (histogram/summary)
   - shipreq_daily_logins_total        {unique_usr=y/n}
-  - shipreq_daily_project_reads_total {unique_project=y/n}
-
-New functionality:
-  - store latest read on project table
-  - reads per project per day
+  - shipreq_daily_project_reads_total {unique_project=y/n, access=r/w/rw} -- note rw needed because when unique_project=y, ¬(rw = r+w)
 
 Metrics pending:
   - customer engagement score
