@@ -1,6 +1,245 @@
-blah:
-  query: "select count(1) as user_count from usr"
+# =====================================================================================================================
+# shipreq_users_total
+
+shipreq_users:
+  query: >-
+    select 'n' registered, count(1) total from usr where username is null
+    union all
+    select 'y', count(1) from usr where username is not null
   metrics:
-    - user_count:
-        usage: "GAUGE"
-        description: "Number of users mate!"
+  - registered:
+      usage: LABEL
+  - total:
+      usage: GAUGE
+
+# =====================================================================================================================
+# shipreq_users_last_login_seconds_ago{,_count,_sum}
+
+# -- Test with fake data
+# with t1 as (
+#     select unnest(array[1, 1.5, 2, 5, 10, 10, 10, 10, 10, 100]) t
+# ), t2 as (
+#     select now() - (t || ' days')::interval t from t1
+# ), t3 as (
+#     select extract(epoch from now() - t) t from t2
+# ), ps as (
+#     select unnest(array[.98,.95,.9,.8,.75,.5,.25,0]) p
+# )
+# select p, percentile_cont(1-p) within group (order by t) from t3, ps
+# group by p
+
+shipreq_users_last_login:
+  query: >-
+    with ps as (
+      select unnest(array[.98,.95,.9,.8,.7,.6,.5,.4,.3,.2,.1,0]) p
+    ), ages as (
+      select extract(epoch from now() - last_login_at) t from usr where username is not null
+    )
+    select p quantile, percentile_cont(1-p) within group (order by t) seconds_ago
+    from ages, ps
+    group by p
+  metrics:
+  - quantile:
+      usage: LABEL
+  - seconds_ago:
+      usage: GAUGE
+
+shipreq_users_last_login_seconds:
+  query: select count(1) ago_count from usr where username is not null
+  metrics:
+  - ago_count:
+      usage: GAUGE
+
+shipreq_users_last_login_seconds_ago:
+  query: select sum(extract(epoch from now() - last_login_at)) sum from usr where username is not null
+  metrics:
+  - sum:
+      usage: GAUGE
+
+# =====================================================================================================================
+# shipreq_projects_total
+
+shipreq_projects:
+  query: >-
+    select 'y' live, count(1) total from project
+  metrics:
+  - live:
+      usage: LABEL
+  - total:
+      usage: GAUGE
+
+# =====================================================================================================================
+# shipreq_events_total
+
+shipreq_events:
+  query: >-
+    select 'y' live_project, 'y' initial, sum(events_init) total from project
+    union all
+    select 'y', 'n', sum(events_total - events_init) total from project
+  metrics:
+  - live_project:
+      usage: LABEL
+  - initial:
+      usage: LABEL
+  - total:
+      usage: GAUGE
+
+# =====================================================================================================================
+# shipreq_reqs_total
+
+shipreq_reqs:
+  query: >-
+    select 'y' live_project, 'y' live_req, 'y' live, sum(reqs_live) total from project
+    union all
+    select 'y', 'n', 'n', sum(reqs_total - reqs_live) from project
+  metrics:
+  - live:
+      usage: LABEL
+      description: "live_project && live_req"
+  - live_project:
+      usage: LABEL
+  - live_req:
+      usage: LABEL
+  - total:
+      usage: GAUGE
+
+# =====================================================================================================================
+# shipreq_db_table_bytes_total
+
+shipreq_db_table:
+  query: >-
+    WITH tables as (
+      SELECT
+        table_name,
+        table_type
+      FROM information_schema.tables
+      WHERE table_schema IN ('public','webapp')
+        AND table_name NOT LIKE 'flyway_%'
+        AND NOT(table_type = 'VIEW' AND pg_total_relation_size(table_name) = 0)
+    )
+    SELECT table_name AS table, 'table' AS type, pg_table_size(table_name) AS bytes_total FROM tables
+    UNION ALL
+    SELECT table_name, 'indexes', pg_indexes_size(table_name) FROM tables
+  metrics:
+  - table:
+      usage: LABEL
+  - type:
+      usage: LABEL
+  - bytes_total:
+      usage: GAUGE
+
+# =====================================================================================================================
+# shipreq_project_last_access_seconds_ago{,_count,_sum}
+
+shipreq_project_last_access:
+  query: >-
+    with ps as (
+      select unnest(array[.98,.95,.9,.8,.7,.6,.5,.4,.3,.2,.1,0]) p
+    ), ages as (
+      select extract(epoch from now() - accessed_at) rw,
+             extract(epoch from now() - updated_at) w
+      from project
+    )
+    select p quantile, 'rw' as access, percentile_cont(1-p) within group (order by rw) seconds_ago from ages, ps group by p
+    union all
+    select p, 'w', percentile_cont(1-p) within group (order by w) from ages, ps group by p
+  metrics:
+  - quantile:
+      usage: LABEL
+  - access:
+      usage: LABEL
+  - seconds_ago:
+      usage: GAUGE
+
+shipreq_project_last_access_seconds:
+  query: >-
+    select 'r' as access, count(1) ago_count from project
+    union all
+    select 'w', count(1) from project
+  metrics:
+  - access:
+      usage: LABEL
+  - ago_count:
+      usage: GAUGE
+
+shipreq_project_last_access_seconds_ago:
+  query: >-
+    with data as (
+      select sum(extract(epoch from now() - accessed_at)) r,
+             sum(extract(epoch from now() - updated_at)) w
+      from project
+    )
+    select 'r' as access, r sum from data
+    union all
+    select 'w', w from data
+  metrics:
+  - access:
+      usage: LABEL
+  - sum:
+      usage: GAUGE
+
+# =====================================================================================================================
+# shipreq_daily_logins_total
+
+shipreq_daily_logins:
+  query: >-
+    with utc as (
+     select date_trunc('day', statement_timestamp() at time zone 'AEDT') at time zone 'AEDT' a,
+            (date_trunc('day', statement_timestamp() at time zone 'AEDT') at time zone 'AEDT') + interval '23 hours' b
+    ), range as (
+      select (select a::date from utc) a_date,
+             (select b::date from utc) b_date,
+             (select extract(hour from a) from utc) a_hour,
+             (select extract(hour from b) from utc) b_hour
+    ), results as (
+      select sum(total) total_sum,
+             hll_cardinality(hll_union_agg(users)) user_sum
+      from usr_logins_per_hour
+      where (date = (select a_date from range) AND hour >= (select a_hour from range)) OR
+            (date = (select b_date from range) AND hour <= (select b_hour from range))
+    )
+    select 'n' unique_user, total_sum total from results
+    union all
+    select 'y', user_sum from results
+  metrics:
+  - unique_user:
+      usage: LABEL
+  - total:
+      usage: GAUGE
+
+# =====================================================================================================================
+# shipreq_daily_project_reads_total
+
+shipreq_daily_project_reads:
+  query: >-
+    with utc as (
+     select date_trunc('day', statement_timestamp() at time zone 'AEDT') at time zone 'AEDT' a,
+            (date_trunc('day', statement_timestamp() at time zone 'AEDT') at time zone 'AEDT') + interval '23 hours' b
+    ), range as (
+      select (select a::date from utc) a_date,
+             (select b::date from utc) b_date,
+             (select extract(hour from a) from utc) a_hour,
+             (select extract(hour from b) from utc) b_hour
+    ), results as (
+      select write,
+             sum(total) total_sum,
+             hll_union_agg(projects) projects
+      from project_access_per_hour
+      where (date = (select a_date from range) AND hour >= (select a_hour from range)) OR
+            (date = (select b_date from range) AND hour <= (select b_hour from range))
+      group by write
+    )
+    select case when write then 'w' else 'r' end as access, 'n' unique_project, total_sum total from results
+    union all
+    select case when write then 'w' else 'r' end as access, 'y' unique_project, hll_cardinality(projects) total from results
+    union all
+    select 'rw', 'n', sum(total_sum) from results
+    union all
+    select 'rw', 'y', hll_cardinality(hll_union_agg(projects)) from results
+  metrics:
+  - access:
+      usage: LABEL
+  - unique_project:
+      usage: LABEL
+  - total:
+      usage: GAUGE

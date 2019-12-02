@@ -79,15 +79,15 @@ Metrics to present
     - avg session time per user
 
 Metrics to collect:
-  - shipreq_users_total               {registered=y/n}
-  - shipreq_users_last_login          (histogram/summary)
-  - shipreq_projects_total            {live=y/n}
-  - shipreq_events_total              {project_live=y/n}
-  - shipreq_reqs_total                {project_live=y/n, req_live=y/n}
-  - shipreq_db_table_bytes_total      {table=xxx}
-  - shipreq_project_last_access       {access=r/w} (histogram/summary)
-  - shipreq_daily_logins_total        {unique_usr=y/n}
-  - shipreq_daily_project_reads_total {unique_project=y/n, access=r/w/rw} -- note rw needed because when unique_project=y, ¬(rw = r+w)
+  - shipreq_users_total                     {registered=y/n}
+  - shipreq_users_last_login_seconds_ago    (summary)
+  - shipreq_projects_total                  {live=y/n}
+  - shipreq_events_total                    {live_project=y/n, initial=y/n}
+  - shipreq_reqs_total                      {live_project=y/n, live_req=y/n}
+  - shipreq_db_table_bytes_total            {table=xxx, type=table/indexes}
+  - shipreq_project_last_access_seconds_ago {access=w/rw} (summary)
+  - shipreq_daily_logins_total              {unique_user=y/n}
+  - shipreq_daily_project_reads_total       {unique_project=y/n, access=r/w/rw} -- note rw needed because when unique_project=y, ¬(rw = r+w)
 
 Metrics pending:
   - customer engagement score

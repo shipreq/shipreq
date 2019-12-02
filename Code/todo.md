@@ -106,4 +106,3 @@ Phase 2B
 
 * Default project template has an issue: Version field has no tags
 * Flow syntax missing from use case step help
-* Business metrics: views

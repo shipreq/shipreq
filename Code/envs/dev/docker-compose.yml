@@ -166,6 +166,8 @@ services:
   postgres_exporter:
     image: wrouesnel/postgres_exporter
     container_name: shipreq_dev_postgres_exporter
+    ports:
+      - $PORT_POSTGRES_EXPORTER:9187
     links:
       - postgres
     volumes:
