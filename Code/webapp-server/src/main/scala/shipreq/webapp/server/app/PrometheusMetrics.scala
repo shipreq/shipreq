@@ -122,15 +122,6 @@ object PrometheusMetrics extends HasLogger {
         m.labels(dir, method.value, endpoint.name, statusCode.value, endpoint.`type`)
     }
 
-    final class LoginsActive private[Metrics] {
-      private[this] val m =
-        Gauge.build(prefix + "logins_active", "Logged-in sessions currently active")
-          .labelNames(Label.Unique)
-          .register()
-      def apply(unique: Boolean) =
-        m.labels(yesOrNo(unique))
-    }
-
     final class SecureEventsTotal private[Metrics] {
       private[this] val m =
         Counter.build(prefix + "secure_events_total", "Total security-sensitive events that occurred")
