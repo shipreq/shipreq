@@ -53,11 +53,6 @@ resource "aws_ecs_service" "shipreq_webapp" {
     container_name = local.shipreq_webapp_container_name
     container_port = 8080
   }
-
-  # Ensure that S3 is updated before we allow tasks to start
-  depends_on = [
-    aws_s3_bucket_object.webapp_properties,
-  ]
 }
 
 resource "aws_ecs_task_definition" "shipreq_webapp" {
@@ -72,12 +67,8 @@ resource "aws_ecs_task_definition" "shipreq_webapp" {
     "image": "${data.aws_ecr_repository.webapp.repository_url}:${var.shipreq_images_tag}",
     "environment": [
       {
-        "name": "S3_CONTENT_HASH",
-        "value": "${local.s3_config_webapp_content_hash}"
-      },
-      {
-        "name": "IMPORT_S3",
-        "value": "s3://${aws_s3_bucket.config.bucket}/${local.s3_config_webapp_folder}"
+        "name": "SHIPREQ_INLINE_PROPERTIES",
+        "value": ${jsonencode(trimspace(var.shipreq_webapp_properties))}
       },
       {
         "name": "LOG_LEVEL_ROOT",
@@ -148,12 +139,6 @@ resource "aws_ecs_task_definition" "shipreq_webapp" {
 EOB
 }
 
-resource "aws_s3_bucket_object" "webapp_properties" {
-  bucket  = aws_s3_bucket.config.bucket
-  key     = "${local.s3_config_webapp_folder}/resources/shipreq.properties"
-  content = var.shipreq_webapp_properties
-}
-
 resource "aws_iam_role" "shipreq_webapp" {
   name = "${var.env}_ecs_shipreq_webapp"
   tags = local.shipreq_webapp_tags
@@ -170,9 +155,4 @@ resource "aws_iam_role" "shipreq_webapp" {
   ]
 }
 EOB
-}
-
-resource "aws_iam_role_policy_attachment" "shipreq_webapp_s3_config" {
-  role       = aws_iam_role.shipreq_webapp.name
-  policy_arn = aws_iam_policy.s3_config_ro.arn
 }

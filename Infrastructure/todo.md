@@ -17,8 +17,6 @@
 
 * Alerting
 
-* Remove S3 for shipreq config
-
 * Separate account for prod or non-prod (?)
 
 * Refactor Terraform

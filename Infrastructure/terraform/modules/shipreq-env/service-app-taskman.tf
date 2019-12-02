@@ -15,11 +15,6 @@ resource "aws_ecs_service" "shipreq_taskman" {
   scheduling_strategy = "DAEMON"
   propagate_tags      = "SERVICE"
   tags                = local.shipreq_taskman_tags
-
-  # Ensure that S3 is updated before we allow tasks to start
-  depends_on = [
-    aws_s3_bucket_object.taskman_properties,
-  ]
 }
 
 resource "aws_ecs_task_definition" "shipreq_taskman" {
@@ -34,12 +29,8 @@ resource "aws_ecs_task_definition" "shipreq_taskman" {
     "image": "${data.aws_ecr_repository.taskman.repository_url}:${var.shipreq_images_tag}",
     "environment": [
       {
-        "name": "S3_CONTENT_HASH",
-        "value": "${local.s3_config_taskman_content_hash}"
-      },
-      {
-        "name": "IMPORT_S3",
-        "value": "s3://${aws_s3_bucket.config.bucket}/${local.s3_config_taskman_folder}"
+        "name": "SHIPREQ_INLINE_PROPERTIES",
+        "value": ${jsonencode(trimspace(var.shipreq_taskman_properties))}
       },
       {
         "name": "LOG_LEVEL_ROOT",
@@ -105,12 +96,6 @@ resource "aws_ecs_task_definition" "shipreq_taskman" {
 EOB
 }
 
-resource "aws_s3_bucket_object" "taskman_properties" {
-  bucket  = aws_s3_bucket.config.bucket
-  key     = "${local.s3_config_taskman_folder}/conf/shipreq.properties"
-  content = var.shipreq_taskman_properties
-}
-
 resource "aws_iam_role" "shipreq_taskman" {
   name = "${var.env}_ecs_shipreq_taskman"
   tags = local.shipreq_taskman_tags
@@ -127,9 +112,4 @@ resource "aws_iam_role" "shipreq_taskman" {
   ]
 }
 EOB
-}
-
-resource "aws_iam_role_policy_attachment" "shipreq_taskman_s3_config" {
-  role       = aws_iam_role.shipreq_taskman.name
-  policy_arn = aws_iam_policy.s3_config_ro.arn
 }
