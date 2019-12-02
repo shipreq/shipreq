@@ -11,7 +11,7 @@ resource "aws_ecs_service" "prometheus_biz" {
   task_definition                    = aws_ecs_task_definition.prometheus_biz.arn
   desired_count                      = 1
   propagate_tags                     = "SERVICE"
-  deployment_minimum_healthy_percent = 0 # Because port is fixed, les ECS bring down old and spin up new
+  deployment_minimum_healthy_percent = 0 # Because port is fixed, let ECS bring down old and spin up new
   tags                               = local.prometheus_biz_tags
 }
 
