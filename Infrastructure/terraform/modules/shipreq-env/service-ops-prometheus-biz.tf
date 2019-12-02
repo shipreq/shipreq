@@ -2,6 +2,9 @@ locals {
   prometheus_biz_tags = merge(local.default_tags, { Name = "${var.env}-prometheus-biz" })
 
   prometheus_biz_config_yml = templatefile("${path.module}/service-ops-prometheus-biz.yml", {
+    OPS_HOST                       = local.ops_host
+    POSTGRES_EXPORTER_PORT         = local.ports.ops.postgres_exporter
+    PROMETHEUS_BIZ_SCRAPE_INTERVAL = var.prometheus_biz_scrape_interval
   })
 }
 

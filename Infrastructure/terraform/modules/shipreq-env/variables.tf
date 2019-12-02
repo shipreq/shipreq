@@ -236,3 +236,11 @@ variable "google_analytics_tracking_id" {
 variable "freshdesk_domain" {
   type = string
 }
+
+variable "postgres_exporter_db_username" {
+  type = string
+}
+
+variable "postgres_exporter_db_password" {
+  type = string
+}

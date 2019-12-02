@@ -54,6 +54,8 @@ module "shipreq" {
   shipreq_taskman_properties            = file("taskman.properties")
   google_analytics_tracking_id          = "UA-105581783-2"
   freshdesk_domain                      = "yoarmum"
+  postgres_exporter_db_username         = "postgres_exporter"
+  postgres_exporter_db_password         = "dev-metrics"
 }
 
 output "bastion_host" {

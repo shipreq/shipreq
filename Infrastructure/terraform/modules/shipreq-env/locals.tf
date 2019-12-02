@@ -119,7 +119,7 @@ locals {
     filebeat          = 32
     grafana           = 32
     node_exporter     = 24
-    postgres_exporter = 16
+    postgres_exporter = 8
     prometheus_biz    = 64
     prometheus_tech   = 128
   }
