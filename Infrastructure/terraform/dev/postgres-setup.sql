@@ -1,5 +1,3 @@
-CREATE EXTENSION hll;
-
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 
 --------------------------------------------------------------------------------
@@ -25,6 +23,8 @@ CREATE SCHEMA webapp AUTHORIZATION shipreq;
 CREATE SCHEMA taskman AUTHORIZATION shipreq;
 
 ALTER ROLE shipreq SET search_path TO webapp;
+
+CREATE EXTENSION hll SCHEMA webapp;
 
 CREATE ROLE shipreq_webapp_ro;
 GRANT USAGE ON SCHEMA webapp TO shipreq_webapp_ro;
