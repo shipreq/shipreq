@@ -22,7 +22,7 @@ object Props {
   private def acceptExternalKeyFormat(k: Key): List[Key] =
     k :: k.map(_.toUpperCase.replace('.', '_')) :: Nil
 
-  object InlineProperties {
+  object InlineProperties { // TODO Remove after clear-config v1.4.0 release
     def key = Key("SHIPREQ_INLINE_PROPERTIES")
 
     def apply[F[_]](source: ConfigSource[F])(implicit F: Monad[F]): ConfigSource[F] = {
