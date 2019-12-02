@@ -50,7 +50,21 @@ done
   && echo "2..." && sleep 1 \
   && echo "1..." && sleep 1
 
-# In project name (-p) dashes and underscores and removed automatically
-exec docker-compose \
-  -p shipreq$env \
-  "$@"
+cmd=(
+  # In project name (-p) dashes and underscores and removed automatically
+  docker-compose
+  -p shipreq$env
+)
+
+if [ "$1" = bounce ]; then
+  shift
+  for a in "$@"; do
+    docker rm -f shipreq_${env}_$a
+  done
+
+  "${cmd[@]}" up -d "$@" \
+    && exec docker logs -f shipreq_${env}_$1
+
+else
+  exec "${cmd[@]}" "$@"
+fi
