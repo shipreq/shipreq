@@ -34,7 +34,6 @@ object Events {
   private implicit val codecProjectTemplate: JsonCodec[ProjectTemplate] =
     JsonCodec.enumAdt(AdtMacros.adtIsoSet[ProjectTemplate, Int] {
       case ProjectTemplate.V1 => 1
-      case ProjectTemplate.V2 => 2
     })
 
   private implicit val keyDecoderTagId: KeyDecoder[TagId] =

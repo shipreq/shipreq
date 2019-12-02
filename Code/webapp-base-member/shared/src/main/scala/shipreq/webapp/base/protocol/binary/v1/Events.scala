@@ -31,16 +31,13 @@ object Events {
   implicit val picklerProjectTemplate: Pickler[ProjectTemplate] =
     new Pickler[ProjectTemplate] {
       private[this] final val KeyV1 = 1
-      private[this] final val KeyV2 = 2
       override def pickle(a: ProjectTemplate)(implicit state: PickleState): Unit =
         a match {
           case ProjectTemplate.V1 => state.enc.writeByte(KeyV1)
-          case ProjectTemplate.V2 => state.enc.writeByte(KeyV2)
         }
       override def unpickle(implicit state: UnpickleState): ProjectTemplate =
         state.dec.readByte match {
           case KeyV1 => ProjectTemplate.V1
-          case KeyV2 => ProjectTemplate.V2
         }
     }
 

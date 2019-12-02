@@ -104,5 +104,4 @@ Phase 2B
 
 ### BLOCKERS
 
-* Default project template has an issue: Version field has no tags
 * Flow syntax missing from use case step help

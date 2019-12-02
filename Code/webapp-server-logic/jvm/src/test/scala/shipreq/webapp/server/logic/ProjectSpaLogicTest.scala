@@ -68,7 +68,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
     object p1 {
 
       val events = Vector[Event](
-        Event.ProjectTemplateApply(ProjectTemplate.V2),
+        Event.ProjectTemplateApply(ProjectTemplate.V1),
         Event.ProjectNameSet("hell"),
         Event.ProjectNameSet("hello"),
       )
