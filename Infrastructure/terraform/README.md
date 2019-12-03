@@ -16,6 +16,8 @@ Overview
 
 * `modules/ecs-ebs` - Terraform *module* to allow each EC2 in a cluster, a persistent EBS volume.
 
+* `modules/ecs-monitoring` - Terraform *module* to add a bunch of daemon monitoring containers to an ECS cluster.
+
 * `modules/shipreq-env` - Configurable Terraform *module* to create a ShipReq runtime environment.
                           Depends on `init` and `global`.
 
@@ -28,18 +30,64 @@ Initial Setup
 
 1. Create an AWS account
 2. Have a user account and local env setup ([see](../AWS.md))
-3. Terraform: `init`
-4. Terraform: `global`
-5. Terraform: `cicd`
-6. CodeBuild: `images`
-7. CodeBuild: `shipreq`
+3. Apply Terraform in `init`
+4. Apply Terraform in `global`
+5. Apply Terraform in `cicd`
+6. Build docker images - `aws codebuild start-build --project-name images`
+7. Build ShipReq       - `aws codebuild start-build --project-name shipreq`
 
 
-Env Details
-===========
+Defining a New Environment
+==========================
 
-* One VPC per env
-  * 2 subnets: public, private
-  * 2 private DNSs only accessible from within the VPC:
-    * `<env>.internal` - manually managed
-    * `<env>.sd.internal` - managed by service discovery
+1. Make a directory for your new environment, and enter it. (eg. `mkdir qa; cd qa`)
+2. Generate SSH keys - `../gen-keys`
+3. Create property files `webapp.properties` and `taskman.properties`
+4. Copy the Terraform from another env and modify it. (eg. `cp ../dev/dev.tf qa.tf`)
+
+
+Deploying a New Environment
+===========================
+
+Ideally this would just be a simple `terraform apply` but unfortunately it's not.
+
+1. Setup infrastructure
+  1. `terraform init`
+  2. `terraform apply`
+
+2. Initialise DB
+  1. Configure local machine for bastion access (instructions below)
+  2. `ssh shipreq-bastion-${env}`
+  3. `postgres root` and enter root password from `${env}.tf`
+  4. Locally run `../shipreq-db-setup-sql.sh` and paste the output into `psql`
+
+
+Configure local machine for bastion access
+==========================================
+
+Add to `~/.ssh/config`:
+
+```
+Match Host shipreq-bastion-xxxxxx
+  Hostname xxx.xxx.xxx.xxx
+  User ec2-user
+  Port 36017
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+  ForwardAgent yes
+  ServerAliveInterval 58
+  ServerAliveCountMax 2
+```
+
+replacing `xxx.xxx.xxx.xxx` with the real Bastion address or IP that Terraform spits out.
+
+Then once per session, before attempting to connect, run:
+
+    ssh-add *.rsa
+
+
+Viewing the Ops Portal
+======================
+
+1. Run `ssh -NL 10000:localhost:8000 shipreq-bastion-${env}` to create a tunnel.
+2. Open http://localhost:10000/
