@@ -1,0 +1,1 @@
+curl http://localhost:32773/ops/register1 -X POST -F secret=Hooquail2aehiey1viemiefaayengeiGhuch8Eishee3OHu4aiKieth3lieshaid -F email=japgolly@gmail.com
