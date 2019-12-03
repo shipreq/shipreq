@@ -59,10 +59,10 @@ module "shipreq" {
   prometheus_biz_backup_retention_days  = 7
   prometheus_biz_data_retention         = "time=10y"
   prometheus_biz_ebs_size               = 1
-  prometheus_biz_scrape_interval        = "2m"
+  prometheus_biz_scrape_interval        = "5m"
   prometheus_tech_backup_retention_days = 7
-  prometheus_tech_data_retention        = "time=12w"
-  prometheus_tech_ebs_size              = 4
+  prometheus_tech_data_retention        = "time=8w"
+  prometheus_tech_ebs_size              = 3
   prometheus_tech_scrape_interval_sec   = 30
   shipreq_db_name                       = "shipreq"
   shipreq_db_password                   = "dev"
