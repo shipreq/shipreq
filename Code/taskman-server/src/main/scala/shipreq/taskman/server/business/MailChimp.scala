@@ -240,7 +240,7 @@ object MailChimp {
       */
     final case class Partial(code: Int, msg: String, email: Option[EmailAddr]) {
       def fullMsg: String = {
-        val emailPrefix = email.fold("")(e => s"$e: ")
+        val emailPrefix = email.fold("")(e => s"${e.value}: ")
         s"$emailPrefix[$code] $msg"
       }
     }

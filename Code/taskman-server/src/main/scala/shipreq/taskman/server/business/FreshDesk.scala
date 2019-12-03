@@ -131,6 +131,9 @@ object FreshDesk {
         .noRequest
         .responseAsJson[List[Group]]
 
+    /*
+     * curl -v https://${DOMAIN}.freshdesk.com/helpdesk/tickets.json -X POST -d '{"helpdesk_ticket":{"email":"David Barri <japgolly@gmail.com>","subject":"Landing Page Contact","description":"MsgId = 1002\nContact time = 2019-12-03T05:31:24.563353Z\nName = David Barri\nEmail = japgolly@gmail.com\nNewsletter = true\nMessage = \n\nyo","priority":2,"group_id":1000125446,"ticket_type":"Lead","status":2,"source":2}}' -u ${APIKEY}:X -H "Content-Type: application/json"
+     */
     val createTicket: Http[NewTicket, TicketId] =
       Post(s"$urlPrefix/helpdesk/tickets.json")
         .authWith(creds)

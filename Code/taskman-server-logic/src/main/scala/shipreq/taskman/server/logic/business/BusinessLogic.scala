@@ -141,7 +141,7 @@ final class BusinessLogic[F[_]](emails        : Emails,
 
     def createSupportTicket(m: MsgHeader, l: LandingPageHit, c: Email.Content): Fx[Support.TicketId] = {
       import Support._
-      val from = s"${l.name} <${l.email}>"
+      val from = s"${l.name} <${l.email.value}>"
       val p = if (l.msg.isDefined) Priority.Medium else Priority.Low
       run(API.NotifyLandingPage(from, c.subject, c.body, p))
     }

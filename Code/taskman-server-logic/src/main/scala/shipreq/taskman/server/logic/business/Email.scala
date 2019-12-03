@@ -16,7 +16,7 @@ object Email {
 
     override def toString =
       preParsed match {
-        case None    => s"Unparsed($addr)"
+        case None    => s"Unparsed(${addr.value})"
         case Some(p) => s"${p.getClass.getSimpleName}($p)"
       }
 
@@ -120,7 +120,7 @@ final class Emails(ep: EnvelopeProps, tv: TokenValues) {
         _.kv("MsgId", m.id.value)
         ,_.kv("Contact time", m.created)
         ,_.kv("Name", l.name)
-        ,_.kv("Email", l.email)
+        ,_.kv("Email", l.email.value)
         ,_.kv("Newsletter", l.newsletter)
         ,_.kv("Message", l.msg.fold("<no msg>")("\n\n" + _))))
     Email.Content("Landing Page Contact", body)
