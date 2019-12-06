@@ -131,17 +131,17 @@ object UiText {
       case IssueCategory.UserDefined => "User-defined"
     }
 
-     def descBlankCustomField     (field: String)   : String = "Mandatory field is blank: " + field
-     def descBlankTitle                             : String = "Title is blank"
-     def descBlankUseCaseStep                       : String = "Use case step is blank"
-     def descConflictingTags      (tag: String)     : String = "Conflicting " + tag + " tags"
-     def descDeadIssueTag         (tag: HashRefKey) : String = "Deleted issue tag in use: " + PlainText.hashtag(tag)
-     def descDeadRef                                : String = "Reference to deleted data"
-     def descDeadTag              (tag: HashRefKey) : String = "Deleted tag in use: " + PlainText.hashtag(tag)
-     def descEmptyCodeGroup                         : String = "Code group has nothing to group"
-     def descImplicationRequired  (reqType: Mnemonic): String = "Implication required for req type: " + reqType.value
-     def descIssueTag             (tag: HashRefKey) : String = PlainText.hashtag(tag)
-     def descUninhabitableTagField(field: String)   : String = field + " field has no tags"
-     def descManualIssue                            : String = "Manual"
+    def descBlankCustomField     (field: String)    : String = "Mandatory field is blank: " + field
+    def descBlankTitle                              : String = "Title is blank"
+    def descBlankUseCaseStep                        : String = "Use case step is blank"
+    def descConflictingTags      (tag: String)      : String = "Conflicting " + tag + " tags"
+    def descDeadIssueTag         (tag: HashRefKey)  : String = "Deleted issue tag in use: " + PlainText.hashtag(tag)
+    def descDeadRef                                 : String = "Reference to deleted data"
+    def descDeadTag              (tag: HashRefKey)  : String = "Deleted tag in use: " + PlainText.hashtag(tag)
+    def descEmptyCodeGroup                          : String = "Code group has nothing to group"
+    def descImplicationRequired  (reqType: Mnemonic): String = "Implication required for req type: " + reqType.value
+    def descIssueTag             (tag: HashRefKey)  : String = PlainText.hashtag(tag)
+    def descUninhabitableTagField(field: String)    : String = field + " field has no tags"
+    def descManualIssue                             : String = "Manual"
   }
 }
