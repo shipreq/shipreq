@@ -23,8 +23,8 @@ import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.protocol.{SavedViewCmd, ServerSideProcInvoker, UpdateContentCmd}
 import shipreq.webapp.base.text.TextSearch
-import shipreq.webapp.base.ui.BaseStyles
-import shipreq.webapp.base.ui.semantic.{Icon, Message}
+import shipreq.webapp.base.ui.{BaseStyles, NoContentMessage}
+import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.client.project.app.Style.reqtable.{page => *}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.widgets.{FilterDeadButton, FilterEditor, ProjectWidgets}
@@ -322,16 +322,12 @@ object ReqTablePage {
     private val mainBase = <.main(BaseStyles.containerFull)
 
     def renderEmptyProject: VdomTag =
-      Message(
-        Message.Style(Message.Type.Info),
-        Icon.InfoCircle,
+      NoContentMessage(
         "Welcome to your new project!",
         "Create new content using the button above.")
 
     def renderAllContentDead: VdomTag =
-      Message(
-        Message.Style(Message.Type.Warning),
-        Icon.TrashOutline,
+      NoContentMessage.becauseAllDead(
         "No live content.",
         TagMod(
           "Create new content (above) or enable display of dead content (via the ",

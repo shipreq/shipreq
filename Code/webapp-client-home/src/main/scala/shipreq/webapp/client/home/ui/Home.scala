@@ -11,7 +11,7 @@ import shipreq.webapp.base.data.{DataValidators, ProjectMetaData}
 import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus}
 import shipreq.webapp.base.protocol.{AjaxClient, HomeSpaEntryPoint, HomeSpaProtocols, ServerSideProcInvoker}
 import shipreq.webapp.base.ui._
-import shipreq.webapp.base.ui.semantic.{Breadcrumb, Colour, Icon, Message}
+import shipreq.webapp.base.ui.semantic.{Breadcrumb, Colour}
 import shipreq.webapp.base.{ClientConfig, WebappConfig}
 
 object Home {
@@ -113,9 +113,7 @@ object HomeContent {
 
       def noProjectGreeting: VdomTag =
         <.div(Styles.noProjects,
-          Message(
-            Message.Style(Message.Type.Info),
-            Icon.InfoCircle,
+          NoContentMessage(
             s"Welcome to ${WebappConfig.appName}!",
             TagMod(
               "The first thing you'll want to do is create a project to contain all of your requirements.",
