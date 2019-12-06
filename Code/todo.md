@@ -105,4 +105,3 @@ Phase 2B
 ### BLOCKERS
 
 * Flow syntax missing from use case step help
-* Rename Tag.Choice => Exclusive

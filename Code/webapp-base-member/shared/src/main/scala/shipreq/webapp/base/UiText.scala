@@ -54,7 +54,7 @@ object UiText {
     def name                 = "Name"
     def desc                 = "Description"
     def mnemonic             = "Mnemonic"
-    def mutexChildren        = "Choice"
+    def mutexChildren        = "Exclusive"
     def fieldType            = "Type"
     def mandatory            = "Mandatory"
     def applicableReqTypes   = "Req Types"
