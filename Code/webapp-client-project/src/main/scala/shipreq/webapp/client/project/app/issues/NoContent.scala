@@ -10,6 +10,6 @@ object NoContent {
       Message.Style(Message.Type.Info),
       Icon.Trophy,
       "No outstanding issues",
-      "Congratulations!! Keep up the good work.")
+      "Congratulations! Keep up the good work.")
 
 }
