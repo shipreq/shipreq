@@ -1,4 +1,4 @@
-*.rsa        filter=git-crypt diff=git-crypt
-*.pub        filter=git-crypt diff=git-crypt
-*.tf         filter=git-crypt diff=git-crypt
 *.properties filter=git-crypt diff=git-crypt
+*.pub        filter=git-crypt diff=git-crypt
+*.rsa        filter=git-crypt diff=git-crypt
+secret*      filter=git-crypt diff=git-crypt
