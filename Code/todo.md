@@ -104,4 +104,5 @@ Phase 2B
 
 ### BLOCKERS
 
+* `shipreq-db-setup-sql.sh` doesn't grant RO access to future tables
 * Flow syntax missing from use case step help
