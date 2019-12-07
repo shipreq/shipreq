@@ -71,7 +71,6 @@ final class SecurityInterpreter[F[_]](implicit F: Monad[F],
     })
 
   private[this] final val claimUserId = "uid"
-  private[this] final val claimRoles  = "rls"
 
   override def sessionPersist(token: SessionToken): F[Cookie.Update] = F.point {
     val jws: String = {
@@ -84,8 +83,6 @@ final class SecurityInterpreter[F[_]](implicit F: Monad[F],
       for (u <- token.authenticatedUser) {
         b.claim(claimUserId, Obfuscators.userId.obfuscate(u.id).value)
         b.setSubject(u.username.value)
-        if (u.roles.nonEmpty)
-          b.claim(claimRoles, u.roles.mkString(","))
       }
 
       b.signWith(jwtMainKey).compact()
@@ -119,12 +116,7 @@ final class SecurityInterpreter[F[_]](implicit F: Monad[F],
           case \/-(x) => x
           case -\/(e) => fail(s"Failed to deobfuscate user ID ${StringEscapeUtils.escapeJava(userIdOb.value)}: $e")
         }
-        val roles = claims.get(claimRoles) match {
-          case null      => Set.empty[String]
-          case s: String => s.split(',').toSet
-          case x         => fail(s"Failed to parse roles: $x")
-        }
-        val user = User(userId, username, roles)
+        val user = User(userId, username)
         SessionToken(Some(user))
       }
     }

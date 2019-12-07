@@ -10,7 +10,6 @@ import shipreq.base.test.db.{SingleConnectionXA, Usable}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.logic._
-import shipreq.webapp.server.security.Roles
 import shipreq.webapp.server.test.UserFixture._
 import shipreq.webapp.server.test.WebappServerTestUtil._
 
@@ -30,7 +29,6 @@ object UserFixture {
   final case class TestUser(username  : Username,
                             email     : EmailAddr,
                             password  : PlainTextPassword,
-                            roles     : Set[String],
                             name      : PersonName,
                             newsletter: Boolean) {
     var _id: Option[UserId] = None
@@ -38,7 +36,7 @@ object UserFixture {
     val ps = PrepareEnv.global().security.hashPassword(password).unsafeRun()
     def hashedPassword = ps.passwordHash
     def salt = ps.salt
-    def toUserDescriptor = User(id, username, roles)
+    def toUserDescriptor = User(id, username)
     def toToken = Security.SessionToken(Some(toUserDescriptor))
   }
 
@@ -54,16 +52,13 @@ object UserFixture {
 final case class UserFixture(xa: SingleConnectionXA) {
   import PrepareEnv.dbAlgebra
 
-  val user1 = TestUser(Username("golly"), EmailAddr("g@g.com"), PlainTextPassword("hello1234"), Set(Roles.Admin.name), PersonName("User One"), true)
-  val user2 = TestUser(Username("deepti"), EmailAddr("d@d.com"), PlainTextPassword("harvest321"), Set.empty, PersonName("User Two"), false)
+  val user1 = TestUser(Username("golly"), EmailAddr("g@g.com"), PlainTextPassword("hello1234"), PersonName("User One"), true)
+  val user2 = TestUser(Username("deepti"), EmailAddr("d@d.com"), PlainTextPassword("harvest321"), PersonName("User Two"), false)
   val users = List(user1, user2)
 
   val userWithCurrentToken = PendingTestUser(EmailAddr("a@p.com"), "abc123abc123", 5.minutes.ago)
   val userWithExpiredToken = PendingTestUser(EmailAddr("b@p.com"), "poi098poi098", 4.weeks.ago)
   val pendingUsers = List(userWithCurrentToken, userWithExpiredToken)
-
-  private def setRoles(emailAddr: EmailAddr, roles: Set[String]): ConnectionIO[Unit] =
-    sql"UPDATE usr set roles=${Option(roles.mkString(",")).filter(_.nonEmpty)} WHERE email=${emailAddr.value}".update.execute.void
 
   def setup: Fx[Unit] = {
     // Insert mock users (registered)
@@ -72,7 +67,6 @@ final case class UserFixture(xa: SingleConnectionXA) {
         (for {
           token <- dbAlgebra.createUserPlaceholder(u.email)
           res <- dbAlgebra.completeUserRegistration(token, u.name, u.username, u.ps, u.newsletter)
-          _ <- setRoles(u.email, u.roles)
         } yield res match {
           case DB.UserRegistrationResult.Success(id) => u._id = Some(id)
           case x => sys.error(s"User registration failed: $x")

@@ -39,13 +39,7 @@ object DbMeta {
     Composite.generic
 
   implicit val doobieCompositeUser: Composite[User] = {
-    def userRoles(r: Option[String]): Set[String] =
-      r match {
-        case None        => Set.empty
-        case Some(roles) => roles.split(',').toSet
-      }
-    Composite[(UserId, Username, Option[String])]
-      .readOnly(r => User(r._1, r._2, userRoles(r._3)))
+    Composite[(UserId, Username)].readOnly(r => User(r._1, r._2))
   }
 
 }

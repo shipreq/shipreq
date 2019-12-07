@@ -69,13 +69,11 @@ object DbTest extends TestSuite {
         val u = DbUtil(xa).newUserId()
         val l = LocalDateTime.of(2084, 5, 2, 18, 30, 8)
         val i = l.toInstant(ZoneOffset.of("+11:00"))
-        val r = "yay"
-        xa ! Update[(Instant, String, Long)]("UPDATE usr SET confirmed_at=?, roles=? WHERE id=?").toUpdate0((i, r, u.value)).run
+        xa ! Update[(Instant, Long)]("UPDATE usr SET confirmed_at=? WHERE id=?").toUpdate0((i, u.value)).run
         val s1 = xa ! Query0[String](s"select to_iso8601_str(confirmed_at) from usr where id=${u.value: Long}").unique
         assertEq(s1, "2084-05-02T07:30:08Z")
-        val (ar, ai) = xa ! Query0[(String, Instant)](s"select roles, confirmed_at from usr where id=${u.value: Long}").unique
+        val ai = xa ! Query0[Instant](s"select confirmed_at from usr where id=${u.value: Long}").unique
         assertEq(ai, i)
-        assertEq(ar, r)
       }
 
       'writeOption - TestDb().runNow { xa =>

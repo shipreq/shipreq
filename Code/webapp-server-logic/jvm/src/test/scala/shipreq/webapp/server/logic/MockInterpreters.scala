@@ -26,7 +26,7 @@ object MockDb {
       -\/(username) :: \/-(emailAddr) :: Nil
 
     def toUser: User =
-      User(id, username, Set.empty)
+      User(id, username)
 
     def toUserAndPassword: (User, PasswordAndSalt) =
       (toUser, ps)
@@ -434,7 +434,7 @@ final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name]
           val body     = cookieValue.dropWhile(_ != ':').drop(1).split(' ')
           val userId   = UserId(body(0).toInt)
           val username = Username(body(1))
-          val user     = User(userId, username, Set.empty)
+          val user     = User(userId, username)
           SessionToken(Some(user))
         }
     }

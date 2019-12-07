@@ -51,13 +51,7 @@ object Username {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 final case class User(id      : UserId,
-                      username: Username,
-                      roles   : Set[String]) {
-
-  // I hope it's obvious that this is a temporarily measure.. phase 3!
-  def hasRole(role: String): Boolean =
-    roles.contains(role)
-}
+                      username: Username)
 
 object User {
   implicit def univEq: UnivEq[User] = UnivEq.derive
