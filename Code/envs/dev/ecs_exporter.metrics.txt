@@ -1,74 +1,87 @@
 # HELP ecs_clusters The total number of clusters
 # TYPE ecs_clusters gauge
-ecs_clusters{region="ap-southeast-2"} 2
+ecs_clusters{region="ap-southeast-2"} 1
 # HELP ecs_container_instance_active The status of the container instance in ACTIVE state, indicates that the container instance can accept tasks.
 # TYPE ecs_container_instance_active gauge
-ecs_container_instance_active{cluster="dev-app",instance="i-00624633eeb6d459d",region="ap-southeast-2"} 1
-ecs_container_instance_active{cluster="dev-app",instance="i-057f3cdafbf46ba1a",region="ap-southeast-2"} 1
-ecs_container_instance_active{cluster="dev-ops",instance="i-0209d5ce43f1c9842",region="ap-southeast-2"} 1
+ecs_container_instance_active{cluster="local-dev",instance="i-00624633eeb6d459d",region="ap-southeast-2"} 1
 # HELP ecs_container_instance_agent_connected The connected state of the container instance agent
 # TYPE ecs_container_instance_agent_connected gauge
-ecs_container_instance_agent_connected{cluster="dev-app",instance="i-00624633eeb6d459d",region="ap-southeast-2"} 1
-ecs_container_instance_agent_connected{cluster="dev-app",instance="i-057f3cdafbf46ba1a",region="ap-southeast-2"} 1
-ecs_container_instance_agent_connected{cluster="dev-ops",instance="i-0209d5ce43f1c9842",region="ap-southeast-2"} 1
+ecs_container_instance_agent_connected{cluster="local-dev",instance="i-00624633eeb6d459d",region="ap-southeast-2"} 1
 # HELP ecs_container_instance_pending_tasks The number of tasks on the container instance that are in the PENDING status.
 # TYPE ecs_container_instance_pending_tasks gauge
-ecs_container_instance_pending_tasks{cluster="dev-app",instance="i-00624633eeb6d459d",region="ap-southeast-2"} 0
-ecs_container_instance_pending_tasks{cluster="dev-app",instance="i-057f3cdafbf46ba1a",region="ap-southeast-2"} 0
-ecs_container_instance_pending_tasks{cluster="dev-ops",instance="i-0209d5ce43f1c9842",region="ap-southeast-2"} 0
+ecs_container_instance_pending_tasks{cluster="local-dev",instance="i-00624633eeb6d459d",region="ap-southeast-2"} 0
 # HELP ecs_container_instances The total number of container instances
 # TYPE ecs_container_instances gauge
-ecs_container_instances{cluster="dev-app",region="ap-southeast-2"} 2
-ecs_container_instances{cluster="dev-ops",region="ap-southeast-2"} 1
+ecs_container_instances{cluster="local-dev",region="ap-southeast-2"} 3
 # HELP ecs_exporter_build_info A metric with a constant '1' value labeled by version, revision, branch, and goversion from which ecs_exporter was built.
 # TYPE ecs_exporter_build_info gauge
 ecs_exporter_build_info{branch="",goversion="go1.9.7",revision="",version=""} 1
 # HELP ecs_service_desired_tasks The desired number of instantiations of the task definition to keep running regarding a service
 # TYPE ecs_service_desired_tasks gauge
-ecs_service_desired_tasks{cluster="dev-app",region="ap-southeast-2",service="dev-app-cadvisor"} 2
-ecs_service_desired_tasks{cluster="dev-app",region="ap-southeast-2",service="dev-app-filebeat"} 2
-ecs_service_desired_tasks{cluster="dev-app",region="ap-southeast-2",service="dev-app-node_exporter"} 2
-ecs_service_desired_tasks{cluster="dev-app",region="ap-southeast-2",service="dev-shipreq-taskman"} 2
-ecs_service_desired_tasks{cluster="dev-app",region="ap-southeast-2",service="dev-shipreq-webapp"} 2
-ecs_service_desired_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-cadvisor"} 1
-ecs_service_desired_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-ecs_exporter"} 1
-ecs_service_desired_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-filebeat"} 1
-ecs_service_desired_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-grafana"} 1
-ecs_service_desired_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-node_exporter"} 1
-ecs_service_desired_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-prometheus-biz"} 1
-ecs_service_desired_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-prometheus-tech"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="cadvisor"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="filebeat"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="node_exporter"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="taskman"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="webapp"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="cadvisor"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="ecs_exporter"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="filebeat"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="grafana"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="node_exporter"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="prometheus-biz"} 0
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="prometheus-tech"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="postgres_exporter"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="elasticsearch"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="jaeger"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="kibana"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="portal"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="postgres"} 1
+ecs_service_desired_tasks{cluster="local-dev",region="ap-southeast-2",service="redis"} 1
 # HELP ecs_service_pending_tasks The number of tasks in the cluster that are in the PENDING state regarding a service
 # TYPE ecs_service_pending_tasks gauge
-ecs_service_pending_tasks{cluster="dev-app",region="ap-southeast-2",service="dev-app-cadvisor"} 0
-ecs_service_pending_tasks{cluster="dev-app",region="ap-southeast-2",service="dev-app-filebeat"} 0
-ecs_service_pending_tasks{cluster="dev-app",region="ap-southeast-2",service="dev-app-node_exporter"} 0
-ecs_service_pending_tasks{cluster="dev-app",region="ap-southeast-2",service="dev-shipreq-taskman"} 0
-ecs_service_pending_tasks{cluster="dev-app",region="ap-southeast-2",service="dev-shipreq-webapp"} 0
-ecs_service_pending_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-cadvisor"} 0
-ecs_service_pending_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-ecs_exporter"} 0
-ecs_service_pending_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-filebeat"} 0
-ecs_service_pending_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-grafana"} 0
-ecs_service_pending_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-node_exporter"} 0
-ecs_service_pending_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-prometheus-biz"} 0
-ecs_service_pending_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-prometheus-tech"} 0
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="cadvisor"} 0
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="filebeat"} 0
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="node_exporter"} 0
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="taskman"} 0
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="webapp"} 0
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="cadvisor"} 0
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="ecs_exporter"} 0
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="filebeat"} 0
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="grafana"} 0
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="node_exporter"} 0
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="prometheus-biz"} 0
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="prometheus-tech"} 0
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="postgres_exporter"} 0
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="elasticsearch"} 1
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="jaeger"} 1
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="kibana"} 1
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="portal"} 1
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="postgres"} 1
+ecs_service_pending_tasks{cluster="local-dev",region="ap-southeast-2",service="redis"} 1
 # HELP ecs_service_running_tasks The number of tasks in the cluster that are in the RUNNING state regarding a service
 # TYPE ecs_service_running_tasks gauge
-ecs_service_running_tasks{cluster="dev-app",region="ap-southeast-2",service="dev-app-cadvisor"} 2
-ecs_service_running_tasks{cluster="dev-app",region="ap-southeast-2",service="dev-app-filebeat"} 2
-ecs_service_running_tasks{cluster="dev-app",region="ap-southeast-2",service="dev-app-node_exporter"} 2
-ecs_service_running_tasks{cluster="dev-app",region="ap-southeast-2",service="dev-shipreq-taskman"} 0
-ecs_service_running_tasks{cluster="dev-app",region="ap-southeast-2",service="dev-shipreq-webapp"} 2
-ecs_service_running_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-cadvisor"} 1
-ecs_service_running_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-ecs_exporter"} 1
-ecs_service_running_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-filebeat"} 1
-ecs_service_running_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-grafana"} 1
-ecs_service_running_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-node_exporter"} 1
-ecs_service_running_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-prometheus-biz"} 1
-ecs_service_running_tasks{cluster="dev-ops",region="ap-southeast-2",service="dev-ops-prometheus-tech"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="cadvisor"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="filebeat"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="node_exporter"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="taskman"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="webapp"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="cadvisor"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="ecs_exporter"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="filebeat"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="grafana"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="node_exporter"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="prometheus-biz"} 0
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="prometheus-tech"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="postgres_exporter"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="elasticsearch"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="jaeger"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="kibana"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="portal"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="postgres"} 1
+ecs_service_running_tasks{cluster="local-dev",region="ap-southeast-2",service="redis"} 1
 # HELP ecs_services The total number of services
 # TYPE ecs_services gauge
-ecs_services{cluster="dev-app",region="ap-southeast-2"} 5
-ecs_services{cluster="dev-ops",region="ap-southeast-2"} 7
+ecs_services{cluster="local-dev",region="ap-southeast-2"} 20
 # HELP ecs_up Was the last query of ecs successful.
 # TYPE ecs_up gauge
 ecs_up{region="ap-southeast-2"} 1

@@ -8,7 +8,8 @@ scrape_configs:
       - targets: ['node_exporter:9100']
     relabel_configs:
       - source_labels: [__address__]
-        regex: "([^:]+):\\d+"
+        regex: ".*"
+        replacement: '127.0.0.1'
         target_label: instance
 
   - job_name: 'cadvisor'
@@ -17,8 +18,40 @@ scrape_configs:
       - targets: ['cadvisor:8080']
     relabel_configs:
       - source_labels: [__address__]
-        regex: "([^:]+):\\d+"
+        regex: ".*"
+        replacement: '127.0.0.1'
         target_label: instance
+    metric_relabel_configs:
+      # Drop metrics
+      - source_labels: [__name__]
+        regex: 'container_tasks_state'
+        action: drop
+      - source_labels: ['container_label_com_docker_compose_project']
+        regex: 'shipreqdev'
+        action: keep
+      # Fake ECS attributes
+      - source_labels: ['container_label_com_docker_compose_service']
+        target_label: ecs_name
+      - source_labels: ['container_label_com_docker_compose_service']
+        target_label: ecs_taskdef_name
+      - source_labels: ['container_label_com_docker_compose_service']
+        action: replace
+        regex: '.+'
+        replacement: '1'
+        target_label: ecs_taskdef_ver
+      - source_labels: ['container_label_com_docker_compose_service']
+        action: replace
+        regex: '.+'
+        replacement: 'local-dev'
+        target_label: ecs_cluster
+      # Drop labels
+      - regex: 'container_label_.*'
+        action: labeldrop
+
+  - job_name: 'ecs_exporter'
+    # scrape_interval: 1m
+    static_configs:
+      - targets: ['ecs_exporter:80']
 
   - job_name: 'prometheus-tech'
     metrics_path: '/prometheus/tech/metrics'

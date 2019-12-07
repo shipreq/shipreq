@@ -173,6 +173,17 @@ services:
     environment:
       - DATA_SOURCE_NAME=postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres:5432/$POSTGRES_DB?sslmode=disable
 
+  # This locally fakes what you'd get with the real ecs_exporter running in AWS ECS
+  ecs_exporter:
+    image: nginx:1
+    container_name: shipreq_dev_ecs_exporter
+    ports:
+      - $PORT_ECS_EXPORTER:80
+    volumes:
+      - ./ecs_exporter.metrics.txt:/usr/share/nginx/html/metrics:ro
+    cpus: 0.1
+    mem_limit: 10m
+
   prometheus-tech:
     image: prom/prometheus:v2.14.0
     container_name: shipreq_dev_prometheus-tech
