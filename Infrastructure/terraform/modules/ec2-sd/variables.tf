@@ -25,5 +25,5 @@ variable "sd_namespace_id" {
 variable "cron_schedule" {
   description = "Cron schedule upon which stale EC2s should be pruned from service-discovery."
   type        = string
-  default     = "*/3 * * * *"
+  default     = "*/4 * * * *"
 }

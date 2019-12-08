@@ -49,5 +49,5 @@ variable "tags" {
 variable "cron_schedule" {
   description = "Cron schedule upon which drives should be confirmed as attached, and re-attached if not."
   type        = string
-  default     = "*/2 * * * *"
+  default     = "*/30 * * * *"
 }
