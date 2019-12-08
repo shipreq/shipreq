@@ -122,20 +122,18 @@ variable "postgres_final_snapshot" {
   default     = ""
 }
 
-variable "nat_image_tag" {
-  description = "The docker tag for the nat image. Eg. `git-<sha>` or `latest`"
-  type        = string
-}
-
-variable "ops_images_tag" {
-  description = "The docker tag for all ops images. Eg. `git-<sha>` or `latest`"
-  type        = string
-}
-
-variable "shipreq_images_tag" {
-  description = "The docker tag for all shipreq images. Eg. `git-<sha>` or `latest`"
-  type        = string
-}
+variable "cadvisor_image_tag" { type = string }
+variable "ecs_exporter_image_tag" { type = string }
+variable "filebeat_image_tag" { type = string }
+variable "grafana_image_tag" { type = string }
+variable "nat_image_tag" { type = string }
+variable "node_exporter_image_tag" { type = string }
+variable "portal_image_tag" { type = string }
+variable "postgres_exporter_image_tag" { type = string }
+variable "prometheus_biz_image_tag" { type = string }
+variable "prometheus_tech_image_tag" { type = string }
+variable "shipreq_images_tag" { type = string }
+variable "squid_exporter_image_tag" { type = string }
 
 variable "prometheus_tech_ebs_size" {
   description = "The size in GB of EBS volumes per Prometheus (tech) task"

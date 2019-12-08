@@ -46,9 +46,7 @@ module "shipreq" {
   grafana_db_name                       = "grafana"
   grafana_db_password                   = "grafana"
   grafana_db_username                   = "grafana"
-  nat_image_tag                         = "latest"
   nat_public_key                        = file("key-nat.rsa.pub")
-  ops_images_tag                        = "latest"
   ops_instance_type                     = "t3a.micro"
   ops_public_key                        = file("key-ops.rsa.pub")
   postgres_backup_retention_days        = 2
@@ -68,11 +66,23 @@ module "shipreq" {
   shipreq_db_password                   = "dev"
   shipreq_db_taskman_schema             = "taskman"
   shipreq_db_username                   = "shipreq"
-  shipreq_images_tag                    = "latest"
   shipreq_taskman_freshdesk_domain      = "yoarmum"
   shipreq_taskman_properties            = file("taskman.properties")
   shipreq_webapp_google_analytics_id    = "UA-105581783-2"
   shipreq_webapp_properties             = file("webapp.properties")
+
+  cadvisor_image_tag          = "latest"
+  ecs_exporter_image_tag      = "latest"
+  filebeat_image_tag          = "latest"
+  grafana_image_tag           = "latest"
+  nat_image_tag               = "latest"
+  node_exporter_image_tag     = "latest"
+  portal_image_tag            = "latest"
+  postgres_exporter_image_tag = "latest"
+  prometheus_biz_image_tag    = "latest"
+  prometheus_tech_image_tag   = "latest"
+  shipreq_images_tag          = "latest"
+  squid_exporter_image_tag    = "latest"
 
   # enable_db_dependant_services = false
 }

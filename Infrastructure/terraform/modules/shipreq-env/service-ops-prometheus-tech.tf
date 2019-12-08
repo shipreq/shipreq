@@ -46,7 +46,7 @@ resource "aws_ecs_task_definition" "prometheus_tech" {
 [
   {
     "name": "${var.env}-ops-prometheus-tech",
-    "image": "${data.aws_ecr_repository.prometheus-tech.repository_url}:${var.ops_images_tag}",
+    "image": "${data.aws_ecr_repository.prometheus-tech.repository_url}:${var.prometheus_tech_image_tag}",
     "logConfiguration": {
       "logDriver": "json-file"
     },

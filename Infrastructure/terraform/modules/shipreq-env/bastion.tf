@@ -53,12 +53,12 @@ resource "aws_instance" "bastion" {
     ENV                 = var.env
     ENV_NAME            = var.name
     ES_HOSTS            = local.es_root_url_with_port
-    FILEBEAT_IMAGE      = "${data.aws_ecr_repository.filebeat.repository_url}:${var.ops_images_tag}"
+    FILEBEAT_IMAGE      = "${data.aws_ecr_repository.filebeat.repository_url}:${var.filebeat_image_tag}"
     FRESHDESK_DOMAIN    = var.shipreq_taskman_freshdesk_domain
     GA_TRACKING_ID      = var.shipreq_webapp_google_analytics_id
     GRAFANA_URL         = local.grafana_root_url
     KIBANA_URL          = local.es_root_url
-    PORTAL_IMAGE        = "${data.aws_ecr_repository.ops_portal.repository_url}:${var.ops_images_tag}"
+    PORTAL_IMAGE        = "${data.aws_ecr_repository.ops_portal.repository_url}:${var.portal_image_tag}"
     POSTGRES_DOMAIN     = local.postgres_domain
     PROMETHEUS_BIZ_URL  = local.prometheus_biz_root_url
     PROMETHEUS_TECH_URL = local.prometheus_tech_root_url
