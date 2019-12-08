@@ -41,6 +41,8 @@ done
 echo "Volume mounted at $device"
 echo
 
+vol="$(descvols "Name=attachment.instance-id,Values=$instance_id" --query 'Volumes[0].VolumeId')"
+
 ########################################################################################################################
 # Format volume
 
