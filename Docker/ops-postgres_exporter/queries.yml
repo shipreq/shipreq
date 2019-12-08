@@ -35,11 +35,11 @@ shipreq_users_last_login:
     ), ages as (
       select extract(epoch from now() - last_login_at) t from usr where username is not null
     )
-    select p quantile, percentile_cont(1-p) within group (order by t) seconds_ago
+    select (p*100)::smallint as p, percentile_cont(1-p) within group (order by t) seconds_ago
     from ages, ps
     group by p
   metrics:
-  - quantile:
+  - p:
       usage: LABEL
   - seconds_ago:
       usage: GAUGE
@@ -140,11 +140,11 @@ shipreq_project_last_access:
              extract(epoch from now() - updated_at) w
       from project
     )
-    select p quantile, 'rw' as access, percentile_cont(1-p) within group (order by rw) seconds_ago from ages, ps group by p
+    select (p*100)::smallint as p, 'rw' as access, percentile_cont(1-p) within group (order by rw) seconds_ago from ages, ps group by p
     union all
-    select p, 'w', percentile_cont(1-p) within group (order by w) from ages, ps group by p
+    select (p*100)::smallint, 'w', percentile_cont(1-p) within group (order by w) from ages, ps group by p
   metrics:
-  - quantile:
+  - p:
       usage: LABEL
   - access:
       usage: LABEL
