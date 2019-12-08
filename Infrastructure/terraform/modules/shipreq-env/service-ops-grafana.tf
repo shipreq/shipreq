@@ -21,7 +21,7 @@ resource "aws_ecs_task_definition" "grafana" {
 [
   {
     "name": "${var.env}-ops-grafana",
-    "image": "${data.aws_ecr_repository.grafana.repository_url}:${var.grafana_image_tag}",
+    "image": "${data.aws_ecr_repository.grafana.repository_url}:${var.ops_grafana_image_tag}",
     "environment": [
       {
         "name": "GF_DATABASE_URL",

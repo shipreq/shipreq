@@ -21,7 +21,7 @@ resource "aws_ecs_task_definition" "postgres_exporter" {
 [
   {
     "name": "${var.env}-ops-postgres_exporter",
-    "image": "${data.aws_ecr_repository.postgres_exporter.repository_url}:${var.postgres_exporter_image_tag}",
+    "image": "${data.aws_ecr_repository.postgres_exporter.repository_url}:${var.ops_postgres_exporter_image_tag}",
     "environment": [
       {
         "name": "DATA_SOURCE_NAME",

@@ -23,9 +23,9 @@ resource "aws_instance" "nat" {
   user_data = trimspace(templatefile("${path.module}/nat-ec2-init.sh", {
     ENV                  = var.env
     ES_HOSTS             = local.es_root_url_with_port
-    FILEBEAT_IMAGE       = "${data.aws_ecr_repository.filebeat.repository_url}:${var.filebeat_image_tag}"
+    FILEBEAT_IMAGE       = "${data.aws_ecr_repository.filebeat.repository_url}:${var.nat_filebeat_image_tag}"
     NAT_IMAGE            = "${data.aws_ecr_repository.nat.repository_url}:${var.nat_image_tag}"
-    SQUID_EXPORTER_IMAGE = "${data.aws_ecr_repository.squid_exporter.repository_url}:${var.squid_exporter_image_tag}"
+    SQUID_EXPORTER_IMAGE = "${data.aws_ecr_repository.squid_exporter.repository_url}:${var.nat_squid_exporter_image_tag}"
     SQUID_EXPORTER_PORT  = local.ports.nat.squid_exporter
   }))
 

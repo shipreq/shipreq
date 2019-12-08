@@ -122,18 +122,23 @@ variable "postgres_final_snapshot" {
   default     = ""
 }
 
-variable "cadvisor_image_tag" { type = string }
-variable "ecs_exporter_image_tag" { type = string }
-variable "filebeat_image_tag" { type = string }
-variable "grafana_image_tag" { type = string }
+variable "app_cadvisor_image_tag" { type = string }
+variable "app_filebeat_image_tag" { type = string }
+variable "app_node_exporter_image_tag" { type = string }
+variable "app_shipreq_images_tag" { type = string }
+variable "bastion_filebeat_image_tag" { type = string }
+variable "bastion_portal_image_tag" { type = string }
+variable "nat_filebeat_image_tag" { type = string }
 variable "nat_image_tag" { type = string }
-variable "node_exporter_image_tag" { type = string }
-variable "portal_image_tag" { type = string }
-variable "postgres_exporter_image_tag" { type = string }
-variable "prometheus_biz_image_tag" { type = string }
-variable "prometheus_tech_image_tag" { type = string }
-variable "shipreq_images_tag" { type = string }
-variable "squid_exporter_image_tag" { type = string }
+variable "nat_squid_exporter_image_tag" { type = string }
+variable "ops_cadvisor_image_tag" { type = string }
+variable "ops_ecs_exporter_image_tag" { type = string }
+variable "ops_filebeat_image_tag" { type = string }
+variable "ops_grafana_image_tag" { type = string }
+variable "ops_node_exporter_image_tag" { type = string }
+variable "ops_postgres_exporter_image_tag" { type = string }
+variable "ops_prometheus_biz_image_tag" { type = string }
+variable "ops_prometheus_tech_image_tag" { type = string }
 
 variable "prometheus_tech_ebs_size" {
   description = "The size in GB of EBS volumes per Prometheus (tech) task"

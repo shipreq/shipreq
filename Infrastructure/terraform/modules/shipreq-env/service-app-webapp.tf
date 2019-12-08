@@ -65,7 +65,7 @@ resource "aws_ecs_task_definition" "shipreq_webapp" {
 [
   {
     "name": "${local.shipreq_webapp_container_name}",
-    "image": "${data.aws_ecr_repository.webapp.repository_url}:${var.shipreq_images_tag}",
+    "image": "${data.aws_ecr_repository.webapp.repository_url}:${var.app_shipreq_images_tag}",
     "environment": [
       {
         "name": "SHIPREQ_INLINE_PROPERTIES",

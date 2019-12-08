@@ -27,7 +27,7 @@ resource "aws_ecs_task_definition" "shipreq_taskman" {
 [
   {
     "name": "${var.env}-shipreq-taskman",
-    "image": "${data.aws_ecr_repository.taskman.repository_url}:${var.shipreq_images_tag}",
+    "image": "${data.aws_ecr_repository.taskman.repository_url}:${var.app_shipreq_images_tag}",
     "environment": [
       {
         "name": "SHIPREQ_INLINE_PROPERTIES",

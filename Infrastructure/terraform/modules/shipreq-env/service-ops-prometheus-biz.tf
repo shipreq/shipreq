@@ -31,7 +31,7 @@ resource "aws_ecs_task_definition" "prometheus_biz" {
 [
   {
     "name": "${var.env}-ops-prometheus-biz",
-    "image": "${data.aws_ecr_repository.prometheus-biz.repository_url}:${var.prometheus_biz_image_tag}",
+    "image": "${data.aws_ecr_repository.prometheus-biz.repository_url}:${var.ops_prometheus_biz_image_tag}",
     "logConfiguration": {
       "logDriver": "json-file"
     },

@@ -38,47 +38,54 @@ module "shipreq" {
   app_instance_type                     = "t3a.small"
   app_public_key                        = file("key-app.rsa.pub")
   bastion_public_key                    = file("key-bastion.rsa.pub")
-  cadvisor_image_tag                    = local.versions.cadvisor
-  ecs_exporter_image_tag                = local.versions.ecs_exporter
   elasticsearch_instance_type           = "t2.small.elasticsearch"
   elasticsearch_volume_size             = 10
-  filebeat_image_tag                    = local.versions.filebeat
   grafana_db_name                       = "grafana"
   grafana_db_password                   = local.passwords.db.grafana
   grafana_db_username                   = "grafana"
-  grafana_image_tag                     = local.versions.grafana
-  nat_image_tag                         = local.versions.nat
   nat_public_key                        = file("key-nat.rsa.pub")
-  node_exporter_image_tag               = local.versions.node_exporter
   ops_instance_type                     = "t3a.micro"
   ops_public_key                        = file("key-ops.rsa.pub")
-  portal_image_tag                      = local.versions.portal
   postgres_backup_retention_days        = 6 * 7
   postgres_exporter_db_password         = local.passwords.db.postgres_exporter
   postgres_exporter_db_username         = "postgres_exporter"
-  postgres_exporter_image_tag           = local.versions.postgres_exporter
   postgres_instance_type                = "db.t3.micro"
   postgres_root_password                = local.passwords.db.root
   prometheus_biz_backup_retention_days  = 6 * 7
   prometheus_biz_data_retention         = "time=10y"
   prometheus_biz_ebs_size               = 2
-  prometheus_biz_image_tag              = local.versions.prometheus_biz
   prometheus_biz_scrape_interval        = "15m"
   prometheus_tech_backup_retention_days = 6 * 7
   prometheus_tech_data_retention        = "time=53w"
   prometheus_tech_ebs_size              = 20
-  prometheus_tech_image_tag             = local.versions.prometheus_tech
   prometheus_tech_scrape_interval_sec   = 30
   shipreq_db_name                       = "shipreq"
   shipreq_db_password                   = local.passwords.db.shipreq
   shipreq_db_taskman_schema             = "taskman"
   shipreq_db_username                   = "shipreq"
-  shipreq_images_tag                    = local.versions.shipreq
   shipreq_taskman_freshdesk_domain      = "shipreq"
   shipreq_taskman_properties            = file("taskman.properties")
   shipreq_webapp_google_analytics_id    = "UA-105581783-1"
   shipreq_webapp_properties             = file("webapp.properties")
-  squid_exporter_image_tag              = local.versions.squid_exporter
+
+  # Versions
+  app_cadvisor_image_tag          = local.versions.app.cadvisor
+  app_filebeat_image_tag          = local.versions.app.filebeat
+  app_node_exporter_image_tag     = local.versions.app.node_exporter
+  app_shipreq_images_tag          = local.versions.app.shipreq
+  bastion_filebeat_image_tag      = local.versions.bastion.filebeat
+  bastion_portal_image_tag        = local.versions.bastion.portal
+  nat_filebeat_image_tag          = local.versions.nat.filebeat
+  nat_image_tag                   = local.versions.nat.nat
+  nat_squid_exporter_image_tag    = local.versions.nat.squid_exporter
+  ops_cadvisor_image_tag          = local.versions.ops.cadvisor
+  ops_ecs_exporter_image_tag      = local.versions.ops.ecs_exporter
+  ops_filebeat_image_tag          = local.versions.ops.filebeat
+  ops_grafana_image_tag           = local.versions.ops.grafana
+  ops_node_exporter_image_tag     = local.versions.ops.node_exporter
+  ops_postgres_exporter_image_tag = local.versions.ops.postgres_exporter
+  ops_prometheus_biz_image_tag    = local.versions.ops.prometheus_biz
+  ops_prometheus_tech_image_tag   = local.versions.ops.prometheus_tech
 }
 
 output "bastion_host" {
