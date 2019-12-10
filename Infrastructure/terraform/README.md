@@ -59,7 +59,7 @@ Ideally this would just be a simple `terraform apply` but unfortunately it's not
   1. Configure local machine for bastion access (instructions below)
   2. `ssh shipreq-bastion-${env}`
   3. `postgres root` and enter root password from `${env}.tf`
-  4. Locally run `../shipreq-db-setup-sql.sh` and paste the output into `psql`
+  4. Locally run `../shipreq-db-setup-sql` and paste the output into `psql`
 
 
 Configure local machine for bastion access
