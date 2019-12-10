@@ -1,0 +1,67 @@
+#!/bin/bash
+set -euo pipefail
+
+cd "$(dirname "$0")"
+pwd="$(pwd)"
+home="$(cd && pwd)"
+
+function setup_env() {
+  e="$1"
+
+  f="$home/.ssh/shipreq-bastion-$e.sh"
+  echo "Creating $f"
+
+  a="/tmp/$(whoami)-shipreq-bastion-$e-sshagent.sh"
+  s="/tmp/$(whoami)-shipreq-bastion-$e-sshagent.socket"
+
+  cat <<EOB > "$f"
+#!/bin/bash
+set -euo pipefail
+if [ -e "$a" ]; then
+  echo "Reusing agent: $a" >&2
+  eval "\$(< "$a")" >&2
+else
+  echo "Creating agent: $a" >&2
+  ssh-agent > "$a"
+  chmod 600 "$a"
+  eval "\$(< "$a")" >&2
+  ssh-add -D
+  chmod 600 "$pwd/$e"/*.rsa
+  ssh-add "$pwd/$e"/*.rsa
+fi
+rm -f "$s"
+ln -s "\$SSH_AUTH_SOCK" "$s"
+EOB
+
+  chmod 700 "$f"
+
+  if [ ! -e ~/.ssh/config ]; then
+    touch ~/.ssh/config
+    chmod 600 ~/.ssh/config
+  fi
+
+  ok=
+  fgrep -q "shipreq-bastion-$e" ~/.ssh/config && ok=1
+  if [ -z "$ok" ]; then
+    echo "Adding shipreq-bastion-$e to ~/.ssh/config"
+
+    cat <<EOB >> ~/.ssh/config
+
+Match Host shipreq-bastion-$e exec $f
+  IdentityAgent $s
+  Hostname b.$e.shipwreck.space
+  User ec2-user
+  Port 36017
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+  ForwardAgent yes
+  ServerAliveInterval 58
+  ServerAliveCountMax 2
+EOB
+
+  fi
+}
+
+for e in $(ls -1 */key-*.rsa | sed 's!/.*!!' | sort -u); do
+  setup_env "$e"
+done

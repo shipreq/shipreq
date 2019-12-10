@@ -65,25 +65,9 @@ Ideally this would just be a simple `terraform apply` but unfortunately it's not
 Configure local machine for bastion access
 ==========================================
 
-Add to `~/.ssh/config`:
-
-```
-Match Host shipreq-bastion-xxxxxx
-  Hostname xxx.xxx.xxx.xxx
-  User ec2-user
-  Port 36017
-  StrictHostKeyChecking no
-  UserKnownHostsFile /dev/null
-  ForwardAgent yes
-  ServerAliveInterval 58
-  ServerAliveCountMax 2
-```
-
-replacing `xxx.xxx.xxx.xxx` with the real Bastion address or IP that Terraform spits out.
-
-Then once per session, before attempting to connect, run:
-
-    ssh-add *.rsa
+1. Run `./install-ssh`
+2. If the environment is prod, edit `~/.ssh/config` and
+   replace `b.prod.shipwreck.space` with the real Bastion address or IP that Terraform spits out.
 
 
 Viewing the Ops Portal
