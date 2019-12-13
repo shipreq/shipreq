@@ -683,7 +683,9 @@ object Style extends StyleSheet.Inline {
 
     val blankLine = style(display.block, height(1 em))
 
-    val ul = style(paddingLeft(2.4 ex))
+    val ul = style(
+      margin(`0`),
+      paddingLeft(3.2 ex))
 
     val blankButMandatory = style(
       errorRedOnRed,
