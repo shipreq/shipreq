@@ -43,6 +43,7 @@ module "shipreq" {
   grafana_db_name                       = "grafana"
   grafana_db_password                   = local.passwords.db.grafana
   grafana_db_username                   = "grafana"
+  kibana_default_path                   = "app/kibana#/discover?_g=()&_a=(columns:!('@service',level,logger_name,message),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:a99fc580-18bc-11ea-9971-af99325a72b7,key:'@service',negate:!t,params:(query:nat),type:phrase,value:nat),query:(match:('@service':(query:nat,type:phrase))))),index:a99fc580-18bc-11ea-9971-af99325a72b7,interval:auto,query:(language:kuery,query:''),sort:!('@timestamp',desc))"
   nat_public_key                        = file("key-nat.rsa.pub")
   ops_instance_type                     = "t3a.micro"
   ops_public_key                        = file("key-ops.rsa.pub")

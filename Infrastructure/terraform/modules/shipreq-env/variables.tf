@@ -252,3 +252,8 @@ variable "enable_db_dependant_services" {
   type    = bool
   default = true
 }
+
+variable "kibana_default_path" {
+  type    = string
+  default = ""
+}

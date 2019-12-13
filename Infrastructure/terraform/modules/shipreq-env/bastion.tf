@@ -57,6 +57,7 @@ resource "aws_instance" "bastion" {
     FRESHDESK_DOMAIN    = var.shipreq_taskman_freshdesk_domain
     GA_TRACKING_ID      = var.shipreq_webapp_google_analytics_id
     GRAFANA_URL         = local.grafana_root_url
+    KIBANA_DEFAULT_PATH = var.kibana_default_path
     KIBANA_URL          = local.es_root_url
     PORTAL_IMAGE        = "${data.aws_ecr_repository.ops_portal.repository_url}:${var.bastion_portal_image_tag}"
     POSTGRES_DOMAIN     = local.postgres_domain
