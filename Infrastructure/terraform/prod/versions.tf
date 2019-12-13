@@ -10,7 +10,7 @@ locals {
 
     bastion = {
       filebeat = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
-      portal   = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
+      portal   = "git-317bf685eeae06b6dc382493e6e1d6f119c857ee"
     }
 
     nat = {
