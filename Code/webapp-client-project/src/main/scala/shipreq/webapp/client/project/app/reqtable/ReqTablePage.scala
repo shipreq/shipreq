@@ -357,6 +357,14 @@ object ReqTablePage {
         else
           FilterDeadButton.Component(StateSnapshot.withReuse(activeView.filterDead)(setFilterDeadFn))
 
+      val newFormColumns: NonEmptyVector[ColumnPlus] =
+        mode match {
+          case Mode.HasContent
+             | Mode.NoContentCosFilter
+             | Mode.NoContentCosHideDead => activeColumnsPlus
+          case Mode.EmptyProject         => NonEmptyVector.one(ColumnPlus.title)
+        }
+
       val newStuff = new NewStuff(
         p.state.newStuff,
         setNewStuff,
@@ -364,7 +372,7 @@ object ReqTablePage {
         Allow when activeView.viewCodeGroups,
         defaultNewType,
         p.create,
-        activeColumnsPlus)
+        newFormColumns)
 
       val savedViews = SavedViewsUI.Props(
         pxSavedViewsMenu.value(),

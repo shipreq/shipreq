@@ -26,12 +26,15 @@ object ColumnPlus {
   implicit val reusability: Reusability[ColumnPlus] =
     Reusability.byRefOrUnivEq
 
+  val title: ColumnPlus =
+    apply(Column.Title, Live, ColumnNames.title)
+
   def byProject(p: Project): Column => Option[ColumnPlus] = {
     val cfName = CustomField.nameP(p)
     c => c match {
       case Column.Pubid           => Some(apply(c, Live, ColumnNames.pubid))
       case Column.Code            => Some(apply(c, Live, ColumnNames.code))
-      case Column.Title           => Some(apply(c, Live, ColumnNames.title))
+      case Column.Title           => Some(title)
       case Column.ReqType         => Some(apply(c, Live, ColumnNames.reqType))
       case Column.Tags            => Some(apply(c, Live, ColumnNames.tags))
       case Column.Implications(d) => Some(apply(c, Live, ColumnNames.implications(d)))
