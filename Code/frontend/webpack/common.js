@@ -16,6 +16,7 @@ const config = ({ mode }) => ({
       'expose-loader?ReactCollapse!react-collapse',
       'expose-loader?moment!moment',
       'expose-loader?autosize!autosize',
+      'expose-loader?clipboard!clipboard-polyfill',
       'expose-loader?TextComplete!textcomplete/lib/textcomplete',
       'expose-loader?TextCompleteTA!textcomplete/lib/textarea',
     ]),

@@ -5,6 +5,7 @@
   "dependencies": {
     "autosize": "4.0.2",
     "autotrack": "2.4.1",
+    "clipboard-polyfill": "2.8.6",
     "jquery": "2.2.4",
     "katex": "0.8.3",
     "loadjs": "3.5.5",
