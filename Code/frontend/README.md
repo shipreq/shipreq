@@ -1,8 +1,12 @@
 # Setup
 
 1. [Configure Node.JS](https://gist.github.com/japgolly/775314a0cb24e33653b059b8f8540250)
-2. `yarn install`, ctrl-c when it gets stuck on stupid semantic-UI
-3. `yarn install` again and it should complete successfully.
+2. Install Node 11
+    1. Install nvm
+    2. `nvm install 11`
+    3. `nvm use --delete-prefix v11.15.0`
+3. `yarn install`, ctrl-c when it gets stuck on stupid semantic-UI
+4. `yarn install` again and it should complete successfully.
 
 
 # Files
