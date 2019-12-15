@@ -85,7 +85,7 @@ Phase 2B
 
 ### Other
 
-* Cell copy-and-paste on Req{Table,Detail}
+* Copy to clipboard from cells in Req{Table,Detail}
 * Project SPA will try to re-establish a WebSocket connection ad-nauseum after JWT has expired
 * WebSockets don't recover from lost Redis connections
 * Document the build & release process
