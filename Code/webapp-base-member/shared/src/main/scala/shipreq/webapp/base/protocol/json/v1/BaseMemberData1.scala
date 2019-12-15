@@ -54,7 +54,7 @@ private[v1] object BaseMemberData1 {
     private[this] final val KeyIssue          = "issue"
     private[this] final val KeyWebAddress     = "web"
     private[this] final val KeyEmailAddress   = "email"
-    private[this] final val KeyMathTeX        = "math"
+    private[this] final val KeyTeX            = "tex"
     private[this] final val KeyTagRef         = "tag"
     private[this] final val KeyUnorderedList  = "ul"
 
@@ -70,7 +70,7 @@ private[v1] object BaseMemberData1 {
             case t@ Type.Issue          => Json.obj(KeyIssue          -> get(t).encoder(a))
             case t@ Type.WebAddress     => Json.obj(KeyWebAddress     -> get(t).encoder(a))
             case t@ Type.EmailAddress   => Json.obj(KeyEmailAddress   -> get(t).encoder(a))
-            case t@ Type.MathTeX        => Json.obj(KeyMathTeX        -> get(t).encoder(a))
+            case t@ Type.TeX            => Json.obj(KeyTeX            -> get(t).encoder(a))
             case t@ Type.TagRef         => Json.obj(KeyTagRef         -> get(t).encoder(a))
             case t@ Type.UnorderedList  => Json.obj(KeyUnorderedList  -> get(t).encoder(a))
           }
@@ -84,7 +84,7 @@ private[v1] object BaseMemberData1 {
           case (KeyIssue         , c) => get(Type.Issue         ).decoder.tryDecode(c)
           case (KeyWebAddress    , c) => get(Type.WebAddress    ).decoder.tryDecode(c)
           case (KeyEmailAddress  , c) => get(Type.EmailAddress  ).decoder.tryDecode(c)
-          case (KeyMathTeX       , c) => get(Type.MathTeX       ).decoder.tryDecode(c)
+          case (KeyTeX           , c) => get(Type.TeX           ).decoder.tryDecode(c)
           case (KeyTagRef        , c) => get(Type.TagRef        ).decoder.tryDecode(c)
           case (KeyUnorderedList , c) => get(Type.UnorderedList ).decoder.tryDecode(c)
         }
@@ -103,8 +103,8 @@ private[v1] object BaseMemberData1 {
     override def emailAddress[T <: PlainTextMarkup](t: T): JsonCodec[t.EmailAddress] =
       JsonCodec.xmap((i: String) => t.EmailAddress(i))(_.value)
 
-    override def mathTeX[T <: PlainTextMarkup](t: T): JsonCodec[t.MathTeX] =
-      JsonCodec.xmap((i: String) => t.MathTeX(i))(_.value)
+    override def teX[T <: PlainTextMarkup](t: T): JsonCodec[t.TeX] =
+      JsonCodec.xmap((i: String) => t.TeX(i))(_.value)
 
     override def reqRef[T <: ContentRef](t: T): JsonCodec[t.ReqRef] =
       JsonCodec.xmap((i: ReqId) => t.ReqRef(i))(_.value)

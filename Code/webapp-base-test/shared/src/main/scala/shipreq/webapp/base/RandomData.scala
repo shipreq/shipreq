@@ -458,7 +458,7 @@ object RandomData {
             val genCharSL   = Gen.chooseGen(Gen chooseArray_! asciiSL, highChars)
             val genCharML   = Gen.chooseGen(Gen chooseArray_! asciiML, highChars)
     private val literalStr  = genCharSL                       .string(1 to 100)
-    private val mathTexStr  = genCharSL                       .string(1 to  20)
+    private val texStr      = genCharSL                       .string(1 to  20)
     private val webAddressR = charPred(Parsers.webAddressChar).string(1 to  40)
     private val emailL      = charPred(Parsers.emailCharL)    .string(1 to  20)
     private val emailR      = charPred(Parsers.emailCharR)    .string(1 to  14)
@@ -490,11 +490,11 @@ object RandomData {
         r <- emailR.list(2 to 5)
       } yield t.EmailAddress(l + "@" + r.mkString("."))
 
-    def mathTex(implicit t: PlainTextMarkup): Gen[t.MathTeX] =
-      mathTexStr.map(_.replace("</math>", "x") |> noWhitespaceLeft |> noWhitespaceRight |> t.MathTeX)
+    def tex(implicit t: PlainTextMarkup): Gen[t.TeX] =
+      texStr.map(_.replace(s"</${Grammar.texTag}>", "x") |> noWhitespaceLeft |> noWhitespaceRight |> t.TeX)
 
     def plainTextMarkup(implicit t: PlainTextMarkup): Gen[t.Atom] =
-      Gen.chooseGen(webAddress, emailAddress, mathTex)
+      Gen.chooseGen(webAddress, emailAddress, tex)
 
     private[this] def singleLineGens(implicit t: SingleLine): NonEmptyVector[Gen[t.Atom]] =
       NonEmptyVector(literal, plainTextMarkup)
@@ -564,7 +564,7 @@ object RandomData {
          | _: Issue           # Issue
          | _: PlainTextMarkup # WebAddress
          | _: PlainTextMarkup # EmailAddress
-         | _: PlainTextMarkup # MathTeX
+         | _: PlainTextMarkup # TeX
          | _: TagRef          # TagRef        => true
       case _: NewLine         # BlankLine
          | _: ListMarkup      # UnorderedList => false
@@ -582,7 +582,7 @@ object RandomData {
       val reqOrStepRefInside = """(?:[a-zA-Z]+\s*(?:-\s*)?(?:\d+|X)(?:\s*\.\s*(?:\d+|X))*)"""
       val codeNode = """(?:[a-zA-Z0-9][a-zA-Z0-9_]*)"""
       val codeRefInside = s"(?:$codeNode(?:\\.$codeNode)*)"
-      ("""[#@]+|[a-z]://|\*( )|<math>|\[\s*(?:""" + s"$reqOrStepRefInside|$codeRefInside)\\s*\\]").r
+      (s"<${Grammar.texTag}>" + """|[#@]+|[a-z]://|\*( )|\[\s*(?:""" + s"$reqOrStepRefInside|$codeRefInside)\\s*\\]").r
     }
     def removeFromLiterals[L <: Literal#Literal](l: L): L =
       l.map(removeFromLiteralsR.replaceAllIn(_, "*$1"))

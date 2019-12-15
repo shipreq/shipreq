@@ -39,7 +39,7 @@ object ProjectStrategies {
     }
 
     if (text.supportsPTM)
-      s ++= math
+      s ++= tex
 
     s.result()
   }
@@ -282,14 +282,14 @@ object ProjectStrategies {
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // <math>
+  // <tex>
 
-  private val htmllike = List("math")
-
-  lazy val math: Strategies =
+  lazy val tex: Strategies = {
+    val tags = List(Grammar.texTag)
     Strategy.builder
       .regex("""(^|\s)<([a-z]+)$""", index = 2)
-      .search(term => htmllike.filter(_ startsWith term))
+      .search(term => tags.filter(_ startsWith term))
       .replace2(tag => (s"$$1<$tag>", s"</$tag>"))
       .result()
+  }
 }

@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react.vdom.html_<^._
+import shipreq.webapp.base.text.Grammar.texTag
 import HelpModal._
 
 object RichTextEditorHelp {
@@ -25,11 +26,11 @@ object RichTextEditorHelp {
       Example("URLs are detected automatically, and presented as links.")("https://google.com"),
       Example("Emails are detected automatically, and presented as links.")("bob.loblaw@ad-law-firm.com"),
       Example(
-          "Mathematical expressions can be entered in TeX format, by surrounding in ", <.br, code("<math>…</math>"), ".",
+          "Mathematical expressions can be entered in TeX format, by surrounding in ", <.br, code(s"<$texTag>…</$texTag>"), ".",
           <.br, <.br,
           "For more detail, see ",
           <.a(^.target := "_blank", ^.href := "https://khan.github.io/KaTeX/", "KaTeX"), " or ",
           <.a(^.target := "_blank", ^.href := "http://utensil-site.github.io/available-in-katex/", "Symbols and Functions in KaTeX"),
           ".")(
-        "<math>{1 \\over n} + x^2</math>"))))
+        s"<$texTag>{1 \\over n} + x^2</$texTag>"))))
 }

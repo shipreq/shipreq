@@ -139,7 +139,7 @@ object Text {
           Literal(", "), CodeRef(reqCodeIdA),
           Literal(" and "), CodeRef(reqCodeIdG),
         ),
-        NonEmptyVector(Literal("Ask "), EmailAddress("bob@gmail.com"), Literal(" about "), MathTeX("e=mc^2")))
+        NonEmptyVector(Literal("Ask "), EmailAddress("bob@gmail.com"), Literal(" about "), TeX("e=mc^2")))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -184,7 +184,7 @@ object Text {
         Vector(Literal("Issue(∃): "), Issue(issue, desc.whole)))
       uls ++= NonEmptyVector(
         Vector(),
-        Vector(Literal("Math: "), MathTeX("""f(x) = {x+1 \over x - 1} + 9\pi^2""")),
+        Vector(Literal("Math: "), TeX("""f(x) = {x+1 \over x - 1} + 9\pi^2""")),
         Vector(Literal("Email: "), EmailAddress("blah@google.com")),
         Vector(Literal("Web: "), WebAddress("https://shipreq.com"))
       )

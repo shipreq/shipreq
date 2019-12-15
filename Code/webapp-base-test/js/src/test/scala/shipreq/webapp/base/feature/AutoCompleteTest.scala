@@ -349,12 +349,12 @@ object AutoCompleteTest extends TestSuite {
         test("[dea")()
     }
 
-    'math {
+    'tex {
       implicit val ctx = TestCtx(editor(AutoComplete.Project.math))
-      test("<m")("math")
-      testSelect("<math>|</math>")
-      test("before <m|")("math")
-      testSelect("before <math>|</math>")
+      test("<t")(Grammar.texTag)
+      testSelect(s"<${Grammar.texTag}>|</${Grammar.texTag}>")
+      test("before <t|")(Grammar.texTag)
+      testSelect(s"before <${Grammar.texTag}>|</${Grammar.texTag}>")
     }
   }
 }

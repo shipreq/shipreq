@@ -105,11 +105,11 @@ object Parsers {
     def emailAddress =
       rule("mailto:".? ~ capture(emailCharL.+ ~ '@' ~ (emailCharR.+ ~ '.').+ ~ emailCharR.+) ~> t.EmailAddress)
 
-    def mathtex =
-      rule(surround(G.mathTexSurround) ~> (_.trim |> t.MathTeX))
+    def tex =
+      rule(surround(G.texSurround) ~> (_.trim |> t.TeX))
 
     def plainTextMarkup =
-      rule( webAddress | emailAddress | mathtex )
+      rule( webAddress | emailAddress | tex )
   }
 
   trait NewLine extends Base {

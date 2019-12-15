@@ -120,7 +120,7 @@ object PlainText {
             case a: Issue           # Issue          => issue(a.typ, a.desc.asOption.map(text(_, live, Mandatory.Not)))
             case a: PlainTextMarkup # WebAddress     => a.value
             case a: PlainTextMarkup # EmailAddress   => a.value
-            case a: PlainTextMarkup # MathTeX        => G.mathTexSurround(a.value)
+            case a: PlainTextMarkup # TeX            => G.texSurround(a.value)
             case a: TagRef          # TagRef         => tagRef(a.value)
             case a: ListMarkup      # UnorderedList  =>
               val listNL = if (newline eq outOfListNewline) "\n  " else newline ~ "  "

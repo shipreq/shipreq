@@ -71,6 +71,7 @@ object RedisProtocolTestData {
     println(s"Writing to $filename")
     val content = rows.map(prettyPrintJson(_).indent("  ")).mkString("[\n", ",\n", "\n]")
     writeFile(filename, content)
+    printf("File size: %,d\n", content.length)
 
     println("Done")
   }

@@ -31,7 +31,7 @@ object Atom {
     case object Issue          extends Type
     case object WebAddress     extends Type
     case object EmailAddress   extends Type
-    case object MathTeX        extends Type
+    case object TeX            extends Type
     case object TagRef         extends Type
     case object UnorderedList  extends Type
 
@@ -46,7 +46,7 @@ object Atom {
       case _: Issue           # Issue          => Issue
       case _: PlainTextMarkup # WebAddress     => WebAddress
       case _: PlainTextMarkup # EmailAddress   => EmailAddress
-      case _: PlainTextMarkup # MathTeX        => MathTeX
+      case _: PlainTextMarkup # TeX            => TeX
       case _: TagRef          # TagRef         => TagRef
       case _: ListMarkup      # UnorderedList  => UnorderedList
     }
@@ -120,8 +120,8 @@ object Atom {
       override final def isPlain = false
     }
 
-    /** Math in TeX format, like "\frac{22}{7}-\pi" */
-    case class MathTeX(value: String) extends Atom {
+    /** Content in TeX format, like "\frac{22}{7}-\pi" */
+    case class TeX(value: String) extends Atom {
       override final def isPlain = false
     }
   }

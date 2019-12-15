@@ -108,5 +108,7 @@ object Grammar {
 
   val reflinkSurround = Surrounds("[", "]")
 
-  val mathTexSurround = Surrounds("<math>", "</math>")
+  final val texTag = "tex"
+
+  val texSurround = Surrounds("<" + texTag + ">", "</" + texTag + ">")
 }

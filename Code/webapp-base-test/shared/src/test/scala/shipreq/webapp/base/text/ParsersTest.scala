@@ -192,7 +192,7 @@ object ParsersTest extends TestSuite {
     (_: T.WebAddress).value, T.parserI(P, None))(_.webAddress.run())
 
   def propMathTeX = parserProp("MathTeX",
-    (_: T.MathTeX).value |> Grammar.mathTexSurround.display, T.parserI(P, None))(_.mathtex.run())
+    (_: T.TeX).value |> Grammar.texSurround.display, T.parserI(P, None))(_.tex.run())
 
   val whitespaceCombos: Set[String] = {
     val chars = List(' ', '\n', '\r', '\t')
@@ -244,7 +244,7 @@ object ParsersTest extends TestSuite {
           T.TagRef(21), T.TagRef(22), T.Issue(2, V.empty), T.Issue(2, Vector(I.Literal("whatever"))), T.TagRef(2))
 
       'innerBraceInIssueDesc -
-        test("#TBD{ <math>\\frac{22}</math> }")(T.Issue(2, Vector(I.MathTeX("\\frac{22}"))))
+        test(s"#TBD{ <${Grammar.texTag}>\\frac{22}</${Grammar.texTag}> }")(T.Issue(2, Vector(I.TeX("\\frac{22}"))))
 
       'whitespace {
         'empty   - test("    ")()
@@ -324,7 +324,7 @@ object ParsersTest extends TestSuite {
     'small {
       'emailAddress - $.TextGen.emailAddress(T).mustSatisfy(propEmailAddress)
       'webAddress   - $.TextGen.webAddress  (T).mustSatisfy(propWebAddress)
-      'mathtex      - $.TextGen.mathTex     (T).mustSatisfy(propMathTeX)
+      'tex          - $.TextGen.tex         (T).mustSatisfy(propMathTeX)
     }
 
     // The [parse . toString = id] property doesn't hold with dead dead/alternate CodeRefs.

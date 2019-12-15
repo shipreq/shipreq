@@ -56,7 +56,7 @@ object AtomScan {
           case _: Literal         # Literal
              | _: PlainTextMarkup # EmailAddress
              | _: PlainTextMarkup # WebAddress
-             | _: PlainTextMarkup # MathTeX
+             | _: PlainTextMarkup # TeX
              | _: NewLine         # BlankLine => ()
 
           case a: ContentRef#ReqRef =>
@@ -95,7 +95,7 @@ object AtomScan {
           case _: Literal         # Literal
              | _: PlainTextMarkup # EmailAddress
              | _: PlainTextMarkup # WebAddress
-             | _: PlainTextMarkup # MathTeX
+             | _: PlainTextMarkup # TeX
              | _: NewLine         # BlankLine => ()
 
           case a: ContentRef#ReqRef =>

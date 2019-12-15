@@ -18,7 +18,7 @@ trait AtomTC[TC[_]] {
   def literal       [T <: Atom.Literal        ](t: T): TC[t.Literal       ]
   def webAddress    [T <: Atom.PlainTextMarkup](t: T): TC[t.WebAddress    ]
   def emailAddress  [T <: Atom.PlainTextMarkup](t: T): TC[t.EmailAddress  ]
-  def mathTeX       [T <: Atom.PlainTextMarkup](t: T): TC[t.MathTeX       ]
+  def teX           [T <: Atom.PlainTextMarkup](t: T): TC[t.TeX           ]
   def reqRef        [T <: Atom.ContentRef     ](t: T): TC[t.ReqRef        ]
   def codeRef       [T <: Atom.ContentRef     ](t: T): TC[t.CodeRef       ]
   def useCaseStepRef[T <: Atom.ContentRef     ](t: T): TC[t.UseCaseStepRef]

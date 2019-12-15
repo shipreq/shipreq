@@ -39,7 +39,7 @@ object SampleProject3 {
       Vector(
         EmailAddress("japgolly@gmail.com"), Literal(" is on "), WebAddress("https://github.com"),
         Literal(" cos of "), ReqRef(mfs(6)), Literal(" "), Issue(1, Vector.empty),
-        MathTeX("c = \\pm\\sqrt{a^2 + b^2}")
+        TeX("c = \\pm\\sqrt{a^2 + b^2}")
       )
     }
     def fr2Desc = {

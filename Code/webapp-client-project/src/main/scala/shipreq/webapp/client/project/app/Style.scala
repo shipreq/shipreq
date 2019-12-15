@@ -743,8 +743,8 @@ object Style extends StyleSheet.Inline {
 
     def useCaseStepRef = reqRef
 
-    val math = style(margin.horizontal(0.8 ex))
-    val mathFail = style(math, hasError)
+    val katex = style(margin.horizontal(0.8 ex))
+    val katexFail = style(katex, hasError)
 
     // Fucking bootstrap
     private val reqCodePre = mixin(

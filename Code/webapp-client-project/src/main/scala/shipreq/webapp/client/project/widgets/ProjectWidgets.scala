@@ -108,7 +108,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
         case a: TagRef          # TagRef         => tagInText(live)(a.value)
         case a: PlainTextMarkup # WebAddress     => <.a(^.href := a.value, a.value)
         case a: PlainTextMarkup # EmailAddress   => <.a(^.href := "mailto:" ~ a.value, a.value)
-        case a: PlainTextMarkup # MathTeX        => katex(a)
+        case a: PlainTextMarkup # TeX            => katex(a)
         case a: ListMarkup      # UnorderedList  => <.ul(*.ul, a.items.whole.toTagMod(row => <.li(row toTagMod atom)))
         case a: ContentRef      # ReqRef         => reqRef(live)(a.value)
         case a: ContentRef      # CodeRef        => codeRef(live)(a.value)
@@ -239,11 +239,11 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
       issueDescSurroundSuffix)
   }
 
-  private def katex(m: Atom.PlainTextMarkup#MathTeX): VdomTag =
+  private def katex(m: Atom.PlainTextMarkup#TeX): VdomTag =
     try
-      <.span(*.math, ^.dangerouslySetInnerHtml := KaTeX.renderToStringUnsafe(m.value))
+      <.span(*.katex, ^.dangerouslySetInnerHtml := KaTeX.renderToStringUnsafe(m.value))
     catch {
-      case _: Throwable => <.span(*.mathFail, UiText.mathFailed)
+      case _: Throwable => <.span(*.katexFail, UiText.mathFailed)
     }
 
   /** eg. "UC" */

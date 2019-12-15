@@ -428,8 +428,8 @@ object DataProp {
     val emailAddress =
       (nonEmpty ∧ noWS ∧ contains("@")).contramap[PlainTextMarkup#EmailAddress](_.value)
 
-    val mathtex =
-      (nonEmpty ∧ trimmed).contramap[PlainTextMarkup#MathTeX](_.value)
+    val tex =
+      (nonEmpty ∧ trimmed).contramap[PlainTextMarkup#TeX](_.value)
 
     def nonEmptyText: Prop[Text.AnyNonEmpty] = {
       val litval: AnyAtom => String =
@@ -446,7 +446,7 @@ object DataProp {
       case _: NewLine         # BlankLine      => nop
       case a: PlainTextMarkup # WebAddress     => webAddress(a)
       case a: PlainTextMarkup # EmailAddress   => emailAddress(a)
-      case a: PlainTextMarkup # MathTeX        => mathtex(a)
+      case a: PlainTextMarkup # TeX            => tex(a)
       case a: ListMarkup      # UnorderedList  => anyTextV(a.items.whole)
       case _: ContentRef      # ReqRef         => nop
       case _: ContentRef      # CodeRef        => nop

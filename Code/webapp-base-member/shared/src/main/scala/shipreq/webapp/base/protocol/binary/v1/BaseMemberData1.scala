@@ -52,7 +52,7 @@ object BaseMemberData1 {
         private[this] final val KeyIssue          = 'i'
         private[this] final val KeyWebAddress     = '/'
         private[this] final val KeyEmailAddress   = '@'
-        private[this] final val KeyMathTeX        = '='
+        private[this] final val KeyTeX            = 'X'
         private[this] final val KeyTagRef         = 't'
         private[this] final val KeyUnorderedList  = '*'
         override def pickle(a: t.Atom)(implicit state: PickleState): Unit = {
@@ -65,7 +65,7 @@ object BaseMemberData1 {
             case t@ Type.Issue          => state.enc.writeByte(KeyIssue         ); get(t).pickle(a)
             case t@ Type.WebAddress     => state.enc.writeByte(KeyWebAddress    ); get(t).pickle(a)
             case t@ Type.EmailAddress   => state.enc.writeByte(KeyEmailAddress  ); get(t).pickle(a)
-            case t@ Type.MathTeX        => state.enc.writeByte(KeyMathTeX       ); get(t).pickle(a)
+            case t@ Type.TeX            => state.enc.writeByte(KeyTeX           ); get(t).pickle(a)
             case t@ Type.TagRef         => state.enc.writeByte(KeyTagRef        ); get(t).pickle(a)
             case t@ Type.UnorderedList  => state.enc.writeByte(KeyUnorderedList ); get(t).pickle(a)
           }
@@ -80,7 +80,7 @@ object BaseMemberData1 {
             case KeyIssue          => get(Type.Issue         ).unpickle
             case KeyWebAddress     => get(Type.WebAddress    ).unpickle
             case KeyEmailAddress   => get(Type.EmailAddress  ).unpickle
-            case KeyMathTeX        => get(Type.MathTeX       ).unpickle
+            case KeyTeX            => get(Type.TeX           ).unpickle
             case KeyTagRef         => get(Type.TagRef        ).unpickle
             case KeyUnorderedList  => get(Type.UnorderedList ).unpickle
           }
@@ -99,8 +99,8 @@ object BaseMemberData1 {
     override def emailAddress[T <: PlainTextMarkup](t: T): Pickler[t.EmailAddress] =
       transformPickler((i: String) => t.EmailAddress(i))(_.value)
 
-    override def mathTeX[T <: PlainTextMarkup](t: T): Pickler[t.MathTeX] =
-      transformPickler((i: String) => t.MathTeX(i))(_.value)
+    override def teX[T <: PlainTextMarkup](t: T): Pickler[t.TeX] =
+      transformPickler((i: String) => t.TeX(i))(_.value)
 
     override def reqRef[T <: ContentRef](t: T): Pickler[t.ReqRef] =
       transformPickler((i: ReqId) => t.ReqRef(i))(_.value)

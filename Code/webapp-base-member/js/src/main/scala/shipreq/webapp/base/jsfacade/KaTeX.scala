@@ -20,5 +20,5 @@ object KaTeX extends js.Object {
    * @throws RuntimeException if input is invalid
    */
   @JSName("renderToString")
-  def renderToStringUnsafe(math: String): String = js.native
+  def renderToStringUnsafe(tex: String): String = js.native
 }
