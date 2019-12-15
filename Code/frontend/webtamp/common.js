@@ -127,8 +127,6 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
         'vizJs',
       ],
 
-      admin: fromWebpack({ files: 'admin.css' }),
-
       analytics: fromWebpack({ files: 'analytics.js', manifest: CamelCase }),
 
       analyticsConfig: { type: 'local', src: 'shipreq/js', files: 'analytics.js', outputPath: '../scala', outputName: 'AnalyticsConfig.scala' },

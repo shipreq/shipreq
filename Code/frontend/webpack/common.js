@@ -21,8 +21,6 @@ const config = ({ mode }) => ({
       'expose-loader?TextCompleteTA!textcomplete/lib/textarea',
     ]),
 
-    admin: './shipreq/styles/admin.less',
-
     analytics: './shipreq/js/analytics.js',
   },
 
