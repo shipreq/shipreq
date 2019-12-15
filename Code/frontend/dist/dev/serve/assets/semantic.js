@@ -115,7 +115,7 @@ eval("// extracted by mini-css-extract-plugin\n\n//# sourceURL=webpack:///./sema
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-eval("// This is loaded by webpack\n\n// require('../../semantic/dist/semantic.min.css');\n__webpack_require__(/*! ../../semantic/dist/semantic.pruned.min.css */ \"./semantic/dist/semantic.pruned.min.css\");\n\n__webpack_require__(/*! ../styles/semantic-fixes.css */ \"./shipreq/styles/semantic-fixes.css\");\n__webpack_require__(/*! ../styles/semantic-textcomplete.css */ \"./shipreq/styles/semantic-textcomplete.css\");\n\n\n//# sourceURL=webpack:///./shipreq/semantic/require-common.js?");
+eval("// This is loaded by webpack\n\n// require('../../semantic/dist/semantic.min.css');\n__webpack_require__(/*! ../../semantic/dist/semantic.pruned.min.css */ \"./semantic/dist/semantic.pruned.min.css\");\n\n__webpack_require__(/*! ../styles/semantic-fixes.css */ \"./shipreq/styles/semantic-fixes.css\");\n__webpack_require__(/*! ../styles/semantic-textcomplete.css */ \"./shipreq/styles/semantic-textcomplete.css\");\n\n// This has nothing to do with semantic but it's very convenient to include this here in leiu of global styles\n__webpack_require__(/*! ../styles/react-collapse.css */ \"./shipreq/styles/react-collapse.css\");\n\n\n//# sourceURL=webpack:///./shipreq/semantic/require-common.js?");
 
 /***/ }),
 
@@ -127,6 +127,17 @@ eval("// This is loaded by webpack\n\n// require('../../semantic/dist/semantic.m
 /***/ (function(module, exports, __webpack_require__) {
 
 eval("// This is loaded by webpack\n\n__webpack_require__(/*! ../../semantic/dist/semantic */ \"./semantic/dist/semantic.js\");\n__webpack_require__(/*! ./require-common */ \"./shipreq/semantic/require-common.js\");\n\n\n//# sourceURL=webpack:///./shipreq/semantic/require-dev.js?");
+
+/***/ }),
+
+/***/ "./shipreq/styles/react-collapse.css":
+/*!*******************************************!*\
+  !*** ./shipreq/styles/react-collapse.css ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("// extracted by mini-css-extract-plugin\n\n//# sourceURL=webpack:///./shipreq/styles/react-collapse.css?");
 
 /***/ }),
 

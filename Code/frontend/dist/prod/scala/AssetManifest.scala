@@ -5,7 +5,7 @@ object AssetManifest {
 
   final case class CDN(href: String, integrity: Option[String])
 
-  def analyticsJs = "/s/ba682ba618f15d903c27b618fabe437c.js"
+  def analyticsJs = "/s/c8e9bc7c01369fcaae7f32c3adbc62a8.js"
 
   def favicon = "/s/286b75985993da80759cbdc5142de4d3.ico"
 
@@ -14,18 +14,18 @@ object AssetManifest {
     integrity = Some("sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="))
 
   def katexCss = CDN(
-    href = "https://cdn.jsdelivr.net/npm/katex@0.8.3/dist/katex.min.css",
-    integrity = Some("sha256-kAbX9Z5ZMhjo34PRGEMc7RiueevlbmDilvUt1NsZGAI="))
+    href = "https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css",
+    integrity = Some("sha256-V8SV2MO1FUb63Bwht5Wx9x6PVHNa02gv8BgH/uH3ung="))
 
   def katexJs = CDN(
-    href = "https://cdn.jsdelivr.net/npm/katex@0.8.3/dist/katex.min.js",
-    integrity = Some("sha256-Jv5VrSHYxxBmh18hQUviB4OiVzOkDHdO0uY4GtrCMDQ="))
+    href = "https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js",
+    integrity = Some("sha256-F/Xda58SPdcUCr+xhSGz9MA2zQBPb0ASEYKohl8UCHc="))
 
   def loadingSpinSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjMjJjIj48cGF0aCBvcGFjaXR5PSIuMjUiIGQ9Ik0xNiAwYTE2IDE2IDAgMCAwIDAgMzIgMTYgMTYgMCAwIDAgMC0zMm0wIDRhMTIgMTIgMCAwIDEgMCAyNCAxMiAxMiAwIDAgMSAwLTI0Ii8+PHBhdGggZD0iTTE2IDBhMTYgMTYgMCAwIDEgMTYgMTZoLTRBMTIgMTIgMCAwIDAgMTYgNHoiPjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiBmcm9tPSIwIDE2IDE2IiB0bz0iMzYwIDE2IDE2IiBkdXI9IjAuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9wYXRoPjwvc3ZnPg=="
 
-  def loadjs = "/s/6d841ef3b98aa6f28ca432788c6430b0.js"
+  def loadjs = "/s/9e706a6f7bc551ddf626c15cd76c1c25.js"
 
-  def memberLibBundleJs = "/s/fd1f9729a4f014b03ae59fff17027470.js"
+  def memberLibBundleJs = "/s/471a9a2ff06c20a3ae6da7a14e641a50.js"
 
   def reactDomJs = CDN(
     href = "https://cdn.jsdelivr.net/npm/react-dom@16.5.2/umd/react-dom.production.min.js",
@@ -39,7 +39,7 @@ object AssetManifest {
     href = "https://cdn.jsdelivr.net/npm/react@16.5.2/umd/react.production.min.js",
     integrity = Some("sha256-alJnAKUY0Ruhf55K/C+sCyz6zaipGhl1kxuzDW3jtHk="))
 
-  def semanticCss = "/s/300f48850df4f85d7ca8473237615447.css"
+  def semanticCss = "/s/5f14ceedc3338cfaaa7bddf16332f1fc.css"
 
   def semanticCssUrls: List[String] =
     "icons.eot" ::
@@ -50,7 +50,7 @@ object AssetManifest {
     "icons.svg#icons" ::
     Nil
 
-  def semanticJs = "/s/2b49f960234f3d97aba2292ac0c054c6.js"
+  def semanticJs = "/s/2fda4c306eff8c7e7b6e5a737018f4d4.js"
 
   def shipreqBannerSvg = "/s/878536f0a4ad0029794669f88dbf5f35.svg"
 

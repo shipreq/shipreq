@@ -14,12 +14,12 @@ object AssetManifest {
     integrity = Some("sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="))
 
   def katexCss = CDN(
-    href = "https://cdn.jsdelivr.net/npm/katex@0.8.3/dist/katex.min.css",
-    integrity = Some("sha256-kAbX9Z5ZMhjo34PRGEMc7RiueevlbmDilvUt1NsZGAI="))
+    href = "https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css",
+    integrity = Some("sha256-V8SV2MO1FUb63Bwht5Wx9x6PVHNa02gv8BgH/uH3ung="))
 
   def katexJs = CDN(
-    href = "https://cdn.jsdelivr.net/npm/katex@0.8.3/dist/katex.min.js",
-    integrity = Some("sha256-Jv5VrSHYxxBmh18hQUviB4OiVzOkDHdO0uY4GtrCMDQ="))
+    href = "https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js",
+    integrity = Some("sha256-F/Xda58SPdcUCr+xhSGz9MA2zQBPb0ASEYKohl8UCHc="))
 
   def loadingSpinSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjMjJjIj48cGF0aCBvcGFjaXR5PSIuMjUiIGQ9Ik0xNiAwYTE2IDE2IDAgMCAwIDAgMzIgMTYgMTYgMCAwIDAgMC0zMm0wIDRhMTIgMTIgMCAwIDEgMCAyNCAxMiAxMiAwIDAgMSAwLTI0Ii8+PHBhdGggZD0iTTE2IDBhMTYgMTYgMCAwIDEgMTYgMTZoLTRBMTIgMTIgMCAwIDAgMTYgNHoiPjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiBmcm9tPSIwIDE2IDE2IiB0bz0iMzYwIDE2IDE2IiBkdXI9IjAuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9wYXRoPjwvc3ZnPg=="
 
