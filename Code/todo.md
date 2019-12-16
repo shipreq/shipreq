@@ -88,7 +88,6 @@ Phase 2B
 * Copy to clipboard from cells in Req{Table,Detail}
 * Project SPA will try to re-establish a WebSocket connection ad-nauseum after JWT has expired
 * WebSockets don't recover from lost Redis connections
-* Document the build & release process
 * Add an error-catching top-level react component
 * Warn against closing page if editors are open with changes
 * Finish Grafana tech dashboards
