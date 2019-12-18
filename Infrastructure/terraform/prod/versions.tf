@@ -25,7 +25,7 @@ locals {
       filebeat          = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
       grafana           = "git-6cb1f6ba6fa347b9bda12d0c5441e9c29e2627fa"
       node_exporter     = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
-      postgres_exporter = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
+      postgres_exporter = "git-2c211e7109c443dcba236466a5a7029d3de93cee"
       prometheus_biz    = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
       prometheus_tech   = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
     }
