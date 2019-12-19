@@ -7,7 +7,7 @@ import javax.servlet._
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import net.liftweb.http.LiftFilter
 import org.slf4j.MDC
-import shipreq.base.util.log.{HasLogger, LogFields}
+import shipreq.base.util.log.{HasLogger, WebappLogFields}
 import shipreq.webapp.base.Urls
 
 /** Servlet entry-point into ShipReq (as specified in web.xml).
@@ -85,7 +85,7 @@ final class AppServletFilter extends LiftFilter with HasLogger {
       val startMs = System.currentTimeMillis()
 
       val requestId = UUID.randomUUID()
-      LogFields.webapp.request.id.mdcUnsafePut(requestId)
+      WebappLogFields.request.id.mdcUnsafePut(requestId)
 
       // MDC.put("request_remote_addr", req.getRemoteAddr) <-- no point, it's always the ALB
       // MDC.put("request_remote_host", req.getRemoteHost) <-- no point, it's always the ALB
@@ -95,12 +95,12 @@ final class AppServletFilter extends LiftFilter with HasLogger {
           case h: HttpServletRequest =>
             h.getRequestURL match {
               case null => ()
-              case sb   => LogFields.webapp.request.url.mdcUnsafePut(sb.toString)
+              case sb   => WebappLogFields.request.url.mdcUnsafePut(sb.toString)
             }
-            LogFields.webapp.request.uri          .mdcUnsafePut(h.getRequestURI)
-            LogFields.webapp.request.method       .mdcUnsafePut(h.getMethod)
-            LogFields.webapp.request.userAgent    .mdcUnsafePut(h.getHeader("User-Agent"))
-            LogFields.webapp.request.xForwardedFor.mdcUnsafePut(h.getHeader("X-Forwarded-For"))
+            WebappLogFields.request.uri          .mdcUnsafePut(h.getRequestURI)
+            WebappLogFields.request.method       .mdcUnsafePut(h.getMethod)
+            WebappLogFields.request.userAgent    .mdcUnsafePut(h.getHeader("User-Agent"))
+            WebappLogFields.request.xForwardedFor.mdcUnsafePut(h.getHeader("X-Forwarded-For"))
             h
           case _ =>
             null
@@ -111,14 +111,14 @@ final class AppServletFilter extends LiftFilter with HasLogger {
 
         val durMs  = System.currentTimeMillis() - startMs
         val dur    = Duration.ofMillis(durMs)
-        val durLog = LogFields.webapp.response.durMs(dur)
+        val durLog = WebappLogFields.response.durMs(dur)
 
         if ((hreq ne null) && res.isInstanceOf[HttpServletResponse]) {
           val hres = res.asInstanceOf[HttpServletResponse]
           val code = hres.getStatus
           logger.info(s"Served $code ${hreq.getRequestURI} in $durMs ms",
             durLog,
-            LogFields.webapp.response.code(code))
+            WebappLogFields.response.code(code))
 
         } else
           logger.info(s"Served non-HTTP request in $durMs ms", durLog)

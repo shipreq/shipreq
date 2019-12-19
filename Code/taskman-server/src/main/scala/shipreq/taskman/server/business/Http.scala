@@ -15,7 +15,7 @@ import scalaz.{-\/, \/, \/-}
 import scalaz.syntax.bind._
 import shipreq.base.util.{ArticulateError, Identity}
 import shipreq.base.util.FxModule._
-import shipreq.base.util.log.LogFields
+import shipreq.base.util.log.TaskmanLogFields
 import Http._
 
 final case class Http[I, O](prep: (I, HttpClient, HttpLogger) => Fx[Request],
@@ -207,12 +207,12 @@ final class HttpLogger(logger: Logger, modContent: String => String) {
       val dur = Duration.ofMillis(resp.receivedResponseAtMillis() - resp.sentRequestAtMillis())
       logger.info(
         s"HTTP ${req.method} $url responded with ${resp.code} in ${dur.conciseDesc}",
-        LogFields.http.request.body(modContent(requestBody(req))),
-        LogFields.http.request.method(req.method),
-        LogFields.http.request.url(url),
-        LogFields.http.response.body(modContent(respBody)),
-        LogFields.http.response.code(resp.code),
-        LogFields.http.response.durMs(dur),
+        TaskmanLogFields.http.request.body(modContent(requestBody(req))),
+        TaskmanLogFields.http.request.method(req.method),
+        TaskmanLogFields.http.request.url(url),
+        TaskmanLogFields.http.response.body(modContent(respBody)),
+        TaskmanLogFields.http.response.code(resp.code),
+        TaskmanLogFields.http.response.durMs(dur),
       )
     }
 
