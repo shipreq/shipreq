@@ -5,7 +5,7 @@ locals {
       cadvisor      = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
       filebeat      = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
       node_exporter = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
-      shipreq       = "git-37adb99bc9dbe0cb37afde96abcd002237844aa0"
+      shipreq       = "git-18d1efda2d201b7bafad7be5df40e28adf822643"
     }
 
     bastion = {
