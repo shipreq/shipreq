@@ -2,13 +2,13 @@ package shipreq.webapp.server.app
 
 import java.time.{Duration, Instant}
 import net.liftweb.actor.LAScheduler
-import net.liftweb.common._
+import net.liftweb.common.{MDC => _, _}
 import net.liftweb.http.S
 import net.liftweb.http.provider.HTTPRequest
 import scala.concurrent.blocking
 import scalaz.syntax.monad._
 import shipreq.base.util.FxModule._
-import shipreq.base.util.log.HasLogger
+import shipreq.base.util.log.{HasLogger, MDC}
 import shipreq.webapp.server.logic._
 
 object ServerInterpreter extends Server.Algebra[Fx] with HasLogger {
@@ -26,7 +26,10 @@ object ServerInterpreter extends Server.Algebra[Fx] with HasLogger {
     Fx(blocking(Thread.sleep(d.toMillis))) >> f // TODO Thread.sleep lolz
 
   override def fork[A](f: Fx[A]): Fx[Unit] =
-    Fx(LAScheduler.execute(() => f.unsafeRun()))
+    for {
+      f2 <- MDC.preserve(f)
+      _  <- Fx(LAScheduler.execute(() => f2.unsafeRun()))
+    } yield ()
 
   override val clientIP: Fx[Option[IP]] = {
     def fromRequest(req: HTTPRequest): String = {

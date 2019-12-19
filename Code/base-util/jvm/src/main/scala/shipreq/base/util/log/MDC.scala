@@ -3,6 +3,7 @@ package shipreq.base.util.log
 import org.slf4j.{MDC => M}
 import scalaz.Applicative
 import scalaz.syntax.applicative._
+import shipreq.base.util.FxModule._
 
 object MDC {
 
@@ -41,4 +42,25 @@ object MDC {
       M.remove(key2)
     })
 
+  // ===================================================================================================================
+
+  def preserve[A](f: Fx[A]): Fx[Fx[A]] =
+    Fx {
+      val mdcState = M.getCopyOfContextMap
+      if (mdcState eq null)
+        f
+      else
+        Fx {
+          M.setContextMap(mdcState)
+          try
+            f.unsafeRun()
+          finally
+            M.clear()
+        }
+    }
+
+  def preserveUnsafe[A](f: () => A): () => A = {
+    val g = preserve[A](Fx(f())).unsafeRun()
+    () => g.unsafeRun()
+  }
 }
