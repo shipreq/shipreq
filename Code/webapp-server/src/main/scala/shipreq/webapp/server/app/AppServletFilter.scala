@@ -83,31 +83,33 @@ final class AppServletFilter extends LiftFilter with HasLogger {
     doFilterFn = (req, res, chain) => {
 
       val startMs = System.currentTimeMillis()
-
       val requestId = UUID.randomUUID()
-      WebappLogFields.request.id.mdcUnsafePut(requestId)
-
-      // MDC.put("request_remote_addr", req.getRemoteAddr) <-- no point, it's always the ALB
-      // MDC.put("request_remote_host", req.getRemoteHost) <-- no point, it's always the ALB
-
-      val hreq: HttpServletRequest =
-        req match {
-          case h: HttpServletRequest =>
-            h.getRequestURL match {
-              case null => ()
-              case sb   => WebappLogFields.request.url.mdcUnsafePut(sb.toString)
-            }
-            WebappLogFields.request.uri          .mdcUnsafePut(h.getRequestURI)
-            WebappLogFields.request.method       .mdcUnsafePut(h.getMethod)
-            WebappLogFields.request.userAgent    .mdcUnsafePut(h.getHeader("User-Agent"))
-            WebappLogFields.request.xForwardedFor.mdcUnsafePut(h.getHeader("X-Forwarded-For"))
-            h
-          case _ =>
-            null
-        }
 
       try {
+        WebappLogFields.request.id.mdcUnsafePut(requestId)
+
+        // MDC.put("request_remote_addr", req.getRemoteAddr) <-- no point, it's always the ALB
+        // MDC.put("request_remote_host", req.getRemoteHost) <-- no point, it's always the ALB
+
+        val hreq: HttpServletRequest =
+          req match {
+            case h: HttpServletRequest =>
+              h.getRequestURL match {
+                case null => ()
+                case sb   => WebappLogFields.request.url.mdcUnsafePut(sb.toString)
+              }
+              WebappLogFields.request.uri          .mdcUnsafePut(h.getRequestURI)
+              WebappLogFields.request.method       .mdcUnsafePut(h.getMethod)
+              WebappLogFields.request.userAgent    .mdcUnsafePut(h.getHeader("User-Agent"))
+              WebappLogFields.request.xForwardedFor.mdcUnsafePut(h.getHeader("X-Forwarded-For"))
+              h
+            case _ =>
+              null
+          }
+
         real(req, res, chain)
+
+        // -------------------------------------------- Success --------------------------------------------
 
         val durMs  = System.currentTimeMillis() - startMs
         val dur    = Duration.ofMillis(durMs)
@@ -122,8 +124,20 @@ final class AppServletFilter extends LiftFilter with HasLogger {
 
         } else
           logger.info(s"Served non-HTTP request in $durMs ms", durLog)
-      }
-      finally
+
+      } catch {
+        case err: Throwable =>
+
+          // -------------------------------------------- Failure --------------------------------------------
+
+          val durMs  = System.currentTimeMillis() - startMs
+          val dur    = Duration.ofMillis(durMs)
+          val durLog = WebappLogFields.response.durMs(dur)
+
+          logger.error(s"Error serving request: {}", err, durLog)
+          throw err
+
+      } finally
         MDC.clear()
     }
   }
