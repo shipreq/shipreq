@@ -209,7 +209,7 @@ services:
     environment:
       - PROMETHEUS_TECH_URL=http://prometheus-tech:9090/prometheus/tech
       - PROMETHEUS_BIZ_URL=http://todo
-      - PROMETHEUS_TECH_SCRAPE_INTERVAL=5s
+      - PROMETHEUS_TECH_SCRAPE_INTERVAL=20s
       - PROMETHEUS_BIZ_SCRAPE_INTERVAL=2m
     cpus: 2
     mem_limit: 100m
