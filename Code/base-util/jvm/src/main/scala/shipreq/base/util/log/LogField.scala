@@ -80,6 +80,10 @@ object LogField {
     def json[A: Encoder](key: String): LogField[Text.type, A] =
       apply(key).contramap(_.asJson.noSpaces)
 
+    /** Useful because MDC accepts Strings only */
+    def long(key: String): LogField[Text.type, Long] =
+      apply(key).contramap(_.toString)
+
     def uuid(key: String): LogField[Text.type, UUID] =
       apply(key).contramap(_.toString)
   }

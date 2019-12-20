@@ -13,7 +13,7 @@ object TaskmanLogFields {
 
   object work {
     val actorName = LogField.Text          (prefix + "work.actor.name")
-    val taskId    = LogField.Text          (prefix + "work.taskId") // type=text because of MDC
+    val taskId    = LogField.Text.long     (prefix + "work.taskId")
   }
 
   object http {

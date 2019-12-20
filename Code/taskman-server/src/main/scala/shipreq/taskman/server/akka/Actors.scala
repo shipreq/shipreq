@@ -153,7 +153,7 @@ final class WorkerActor(ctx: TaskmanCtx, manager: ActorRef) extends Actor with H
       requestWork()
 
     case m: TaskHeader =>
-      TaskmanLogFields.work.taskId.mdc(m.id.value.toString).impure {
+      TaskmanLogFields.work.taskId.mdc(m.id.value).impure {
         worker.process(m).unsafeRun()
       }
       requestWork()
