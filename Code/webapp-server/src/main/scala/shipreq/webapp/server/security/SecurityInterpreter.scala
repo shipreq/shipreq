@@ -14,6 +14,7 @@ import scala.util.{Failure, Success, Try}
 import scalaz.syntax.monad._
 import scalaz.{-\/, Monad, \/, \/-}
 import shipreq.base.ops.Trace
+import shipreq.base.util.log.WebappLogFields
 import shipreq.webapp.base.data.Obfuscated
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerLogicConfig
@@ -101,7 +102,10 @@ final class SecurityInterpreter[F[_]](implicit F: Monad[F],
   private def _parseAndVerifyJws(jws: String, parser: JwtParser): Try[SessionToken] =
     Try {
       def fail(errMsg: String): Nothing = {
-        // logger.warn(errMsg)
+        // Note: not doing any logging here for two reasons:
+        // 1. This Try is unpacked in sessionRestore() and there is logging there on failure
+        // 2. This may be called twice if config.jwtSecretPrevious is defined, in which case failure the first time
+        //    shouldn't be logged as a problem if the second time succeeds.
         throw new RuntimeException(errMsg)
       }
 
@@ -146,7 +150,7 @@ final class SecurityInterpreter[F[_]](implicit F: Monad[F],
           parseAndVerifyJws(jws) match {
             case Success(t) => Some(t)
             case Failure(t) =>
-              logger.warn("Failed to parse/verify JWT: " + StringEscapeUtils.escapeJava(jws), t)
+              logger.warn("Failed to parse/verify JWT", t, WebappLogFields.jwt.invalid(jws))
               None
           }
         }

@@ -10,6 +10,10 @@ package shipreq.base.util.log
 object WebappLogFields {
   private final val prefix = "shipreq.webapp."
 
+  object jwt {
+    val invalid       = LogField.Text           (prefix + "jwt.invalid")
+  }
+
   object request {
     val id            = LogField.Text.uuid      (prefix + "request.id")
     val method        = LogField.Text           (prefix + "request.method")
