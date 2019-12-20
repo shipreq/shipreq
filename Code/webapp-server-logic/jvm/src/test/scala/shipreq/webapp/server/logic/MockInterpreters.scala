@@ -470,12 +470,8 @@ final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name]
         if (cookieValue.endsWith(":"))
           SessionToken.anonymous()
         else {
-          val body  = cookieValue.dropWhile(_ != ':').drop(1)
-          val token = decodeOrThrow[SessionToken](body)
-          if (token.sessionId.isDefined)
-            token
-          else
-            token.withSession(SessionToken.anonymous())
+          val body = cookieValue.dropWhile(_ != ':').drop(1)
+          decodeOrThrow[SessionToken](body)
         }
     }
   }

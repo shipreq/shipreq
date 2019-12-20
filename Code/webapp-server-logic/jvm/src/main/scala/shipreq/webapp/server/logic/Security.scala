@@ -30,12 +30,17 @@ object Security {
 
     def attemptLogin(user: Username \/ EmailAddr, password: PlainTextPassword): F[Option[User]]
 
-    def sessionRestore(cookies: Cookie.LookupFn): F[Option[SessionToken]]
-
     def sessionPersist(token: SessionToken): F[Cookie.Update]
 
+    /** Does not create any new information (not even a session id). */
+    def sessionRestore(cookies: Cookie.LookupFn): F[Option[SessionToken]]
+
+    /** Generates a new session id if missing. */
     final def sessionRestoreOrCreate(cookies: Cookie.LookupFn): F[SessionToken] =
-      F.map(sessionRestore(cookies))(_.getOrElse(SessionToken.anonymous()))
+      F.map(sessionRestore(cookies)) {
+        case Some(st) => st.createSessionIdIfNone()
+        case None     => SessionToken.anonymous()
+      }
   }
 
   // ===================================================================================================================
@@ -58,14 +63,20 @@ object Security {
 
     def withSession(st: SessionToken): SessionToken =
       copy(sessionId = st.sessionId)
+
+    def createSessionIdIfNone(): SessionToken =
+      if (sessionId.isDefined)
+        this
+      else
+        copy(sessionId = Some(SessionId.random()))
   }
 
   object SessionToken extends StrictLogging {
     def anonymous(): SessionToken =
-      anonymous(SessionId.random())
+      anonymous(Some(SessionId.random()))
 
-    def anonymous(sessionId: SessionId): SessionToken =
-      apply(Some(sessionId), None)
+    def anonymous(sessionId: Option[SessionId]): SessionToken =
+      apply(sessionId, None)
 
     implicit def univEq: UnivEq[SessionToken] = UnivEq.derive
   }

@@ -76,8 +76,10 @@ object SecurityInterpreterTest extends TestSuite {
       val List(s1, s2) = List((), ()).map { _ =>
         sessionPersist(s0)
         val o = sec.sessionRestore(cookieJar).value
-        assert(o.exists(_.sessionId.isDefined))
-        o.get
+        assert(o.exists(_.sessionId.isEmpty))
+        val s = sec.sessionRestoreOrCreate(cookieJar).value
+        assert(s.sessionId.isDefined)
+        s
       }
       assertEq(s1.copy(sessionId = None), s0)
       assertEq(s2.copy(sessionId = None), s0)

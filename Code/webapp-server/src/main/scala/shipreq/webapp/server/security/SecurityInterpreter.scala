@@ -115,7 +115,7 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
       }
 
       val claims    = parser.parseClaimsJws(jws).getBody
-      val sessionId = Option(claims.get(claimSessionId, classOf[String])).fold(SessionId.random())(SessionId.apply)
+      val sessionId = Option(claims.get(claimSessionId, classOf[String])).map(SessionId.apply)
       val subject   = claims.getSubject
       if (subject eq null)
         SessionToken.anonymous(sessionId)
@@ -127,7 +127,7 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
           case -\/(e) => fail(s"Failed to deobfuscate user ID ${StringEscapeUtils.escapeJava(userIdOb.value)}: $e")
         }
         val user = User(userId, username)
-        SessionToken(Some(sessionId), Some(user))
+        SessionToken(sessionId, Some(user))
       }
     }
 
