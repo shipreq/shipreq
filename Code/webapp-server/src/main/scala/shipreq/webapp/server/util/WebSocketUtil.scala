@@ -26,26 +26,8 @@ object WebSocketUtil {
 
   def cookieLookupFnOverHandshakeRequest(req: HandshakeRequest): Cookie.LookupFn =
     req.getHeaders.get("cookie").asScala.headOption match {
-      case Some(cookieStr) => cookieLookupFnOverHeader(cookieStr)
+      case Some(cookieStr) => Cookie.LookupFn.overHeader(cookieStr)
       case None            => _ => None
-    }
-
-  def cookieLookupFnOverHeader(header: String): Cookie.LookupFn =
-    name => {
-      val k = name.value + "="
-
-      val startIdx: Int =
-        if (header.startsWith(k))
-          0
-        else {
-          val i = header.indexOf("; " + k, k.length)
-          if (i > 0) i + 2 else -1
-        }
-
-      if (startIdx < 0)
-        None
-      else
-        Some(header.substring(startIdx + k.length).takeWhile(_ != ';'))
     }
 
   // Doesn't work -- https://github.com/eclipse/jetty.project/issues/3575

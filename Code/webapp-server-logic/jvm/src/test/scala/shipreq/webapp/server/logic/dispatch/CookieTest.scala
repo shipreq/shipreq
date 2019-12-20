@@ -1,16 +1,15 @@
-package shipreq.webapp.server.util
+package shipreq.webapp.server.logic.dispatch
 
 import shipreq.base.test.BaseTestUtil._
-import shipreq.webapp.server.logic.dispatch.Cookie
 import utest._
 
-object WebSocketUtilTest extends TestSuite {
+object CookieTest extends TestSuite {
 
   override def tests = Tests {
 
-    'cookieLookup - {
+    'lookupOverHeader - {
       val headerValue = "_ga=GA1.1.1413438204.1554534657; _gid=GA1.1.2052487085.1555631496; JSESSIONID=node09adphhuh82ewyhdunwyz75880.node0; _gat=1; jwt=eyJhbGciOiJIUzUxMiJ9.eyJleHAiOjE1NTU3MTgxMTksInVpZCI6Inc1R3YiLCJzdWIiOiJnb2xseSJ9.vmPFU_tsCzgC8DCAOPp6NXwqrgRtXoSTtCzLJIyZw5utO13dgaDql2FE1WwZwQiHkSHWnJYBL0VvH2SFZDsHxw"
-      val c = WebSocketUtil.cookieLookupFnOverHeader(headerValue)
+      val c = Cookie.LookupFn.overHeader(headerValue)
 
       def test(name: String, expect: Option[String]): Unit =
         assertEq(c(Cookie.Name(name)), expect)

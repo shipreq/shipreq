@@ -13,6 +13,33 @@ object Cookie {
 
   type LookupFn = Name => Option[String]
 
+  object LookupFn {
+
+    val empty: LookupFn =
+      _ => None
+
+    def overHeader(header: String): Cookie.LookupFn =
+      if (header eq null)
+        empty
+      else
+        name => {
+          val k = name.value + "="
+
+          val startIdx: Int =
+            if (header.startsWith(k))
+              0
+            else {
+              val i = header.indexOf("; " + k, k.length)
+              if (i > 0) i + 2 else -1
+            }
+
+          if (startIdx < 0)
+            None
+          else
+            Some(header.substring(startIdx + k.length).takeWhile(_ != ';'))
+        }
+  }
+
   final case class Update(add: List[Cookie], remove: List[Cookie.Name])
 
   object Update {
