@@ -3,15 +3,6 @@ resource "aws_route53_zone" "shipreq" {
   tags = local.default_tags
 }
 
-# www.shipreq.com -> shipreq.com
-resource "aws_route53_record" "www" {
-  zone_id = aws_route53_zone.shipreq.zone_id
-  name    = "www.shipreq.com."
-  type    = "CNAME"
-  ttl     = "21600"
-  records = ["shipreq.com."]
-}
-
 resource "aws_route53_record" "mx" {
   zone_id = aws_route53_zone.shipreq.zone_id
   name    = "shipreq.com."
