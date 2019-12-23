@@ -70,27 +70,21 @@ Backlog
 Phase 2B
 ========
 
-### Ops
-* Failure
-  * Do more with errors (client & server), eg. ClientData.{init,applyEvents}
-  * Add React component error handling and possibly report to server
-* Metrics
-  * Add ThreadLocal security-delay flag and affect metrics (?)
-  * Taskman metrics
-
 ### New Features
 * Send Feedback / Report Issue (with screenshot). Add link beside @username in top bar
 * User profile page
 
 ### Other
 
+* Update UX prototype with:
+  * link to user profile page
+  * means to report issue or send feedback
+  * show connection status/control
+  * show unsaved changes
+
+* Type to open editor and replace content (enter = just open?)
+
 * Copy to clipboard from cells in Req{Table,Detail}
-* Project SPA will try to re-establish a WebSocket connection ad-nauseum after JWT has expired
-* WebSockets don't recover from lost Redis connections
-* Add an error-catching top-level react component
-* Warn against closing page if editors are open with changes
-* Finish Grafana tech dashboards
-* Business metrics: dashboards
 
 * Allow system to add new field/columns in future without breaking existing projects.
   eg. User adds a "Last Updated" custom field, later ShipReq provides an auto-populated
@@ -99,3 +93,26 @@ Phase 2B
   Maybe a dynamic approach that compares versions, or maybe a migration task
   that adds a new event to everyone's projects to do the rename once when the
   new version is deployed.
+
+* Failure
+  * Do more with errors (client & server), eg. ClientData.{init,applyEvents}
+  * Add React component error handling and possibly report to server
+  * Add an error-catching top-level react component
+
+* Metrics
+  * Taskman metrics
+  * Finish tech dashboards (inc using webapp metrics)
+  * Business metrics: dashboards
+
+* Unsaved changes
+  * Warn against closing page
+  * Display counter
+  * Allow user to see where they are (by PubId is probably enough)
+  * Save to, and load from, localStorage (maybe spec with TLA+ cos merges?)
+
+* WebSockets
+  * Have client handle ConnectRejections, including re-logging in
+  * Check JWT on message
+  * Display a connected icon
+  * Allow users to toggle connection
+  * Recover from lost Redis connections
