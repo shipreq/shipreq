@@ -11,6 +11,6 @@
   "dependencies": {
     "jquery": "^2.1.4",
     "autosize": "^3.0.15",
-    "semantic-ui": "^2.2.10"
+    "semantic-ui": "2.2.13"
   }
 }

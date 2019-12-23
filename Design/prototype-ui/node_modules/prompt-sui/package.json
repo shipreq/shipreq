@@ -1,0 +1,33 @@
+{
+  "name": "prompt-sui",
+  "version": "3.2.1",
+  "description": "Updated fork of gulp-prompt with more recent inquirer.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [
+    "gulpplugin",
+    "prompt"
+  ],
+  "author": "Simon Paitrault <contact@freyskeyd.fr>",
+  "license": "MIT",
+  "dependencies": {
+    "inquirer": "3.2.x",
+    "event-stream": "~3.0.20"
+  },
+  "devDependencies": {
+    "inquirer": "3.2.x",
+    "event-stream": "~3.0.20"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Freyskeyd/gulp-prompt.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Freyskeyd/gulp-prompt/issues"
+  }
+}
