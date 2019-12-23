@@ -16,6 +16,7 @@ import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.logic.dispatch._
 import shipreq.webapp.server.logic.dispatch.Method._
 import shipreq.webapp.server.logic.DispatchLogic._
+import shipreq.webapp.server.logic.Security.SessionRestoreResult
 
 object DispatchLogicTest extends TestSuite {
 
@@ -36,7 +37,11 @@ object DispatchLogicTest extends TestSuite {
                                 cookieUpdate: Cookie.Update,
                                 cookies     : Map[Cookie.Name, String]) {
     def authUser(implicit s: Security.Algebra[Name]) =
-      s.sessionRestore(cookies.get).value.flatMap(_.authenticatedUser)
+      s.sessionRestore(cookies.get).value match {
+        case SessionRestoreResult.Success(t) => t.authenticatedUser
+        case SessionRestoreResult.Expired(_)
+           | SessionRestoreResult.None       => None
+      }
   }
 
   private final case class Tester(mockInterpreters: MockInterpreters) {
@@ -149,7 +154,7 @@ object DispatchLogicTest extends TestSuite {
         val st1 = Security.SessionToken.anonymous()
         val res = runAjax(PublicSpaProtocols.Login.ajax)(req)(st1)._2
         val tok = security.sessionRestore(res.cookies.get).value
-        assertEq(tok, Some(user2.token.withSession(st1)))
+        assertEq(tok, SessionRestoreResult.Success(user2.token.withSession(st1)))
       }
 
       'loggedIn {
@@ -279,7 +284,7 @@ object DispatchLogicTest extends TestSuite {
             val v1 = req.cookies(security.cookieName)
             val v2 = res.cookies(security.cookieName)
             assert(v1 != v2) // JWT expected to change (new expiry)
-            assertEq(security.sessionRestore(res.cookies.get).value, Some(t))
+            assertEq(security.sessionRestore(res.cookies.get).value, SessionRestoreResult.Success(t))
         }
       }
 

@@ -33,13 +33,14 @@ object Security {
     def sessionPersist(token: SessionToken): F[Cookie.Update]
 
     /** Does not create any new information (not even a session id). */
-    def sessionRestore(cookies: Cookie.LookupFn): F[Option[SessionToken]]
+    def sessionRestore(cookies: Cookie.LookupFn): F[SessionRestoreResult]
 
     /** Generates a new session id if missing. */
     final def sessionRestoreOrCreate(cookies: Cookie.LookupFn): F[SessionToken] =
       F.map(sessionRestore(cookies)) {
-        case Some(st) => st.createSessionIdIfNone()
-        case None     => SessionToken.anonymous()
+        case SessionRestoreResult.Success(t) => t.createSessionIdIfNone()
+        case SessionRestoreResult.Expired(t) => SessionToken.anonymous(t.sessionId)
+        case SessionRestoreResult.None       => SessionToken.anonymous()
       }
   }
 
@@ -79,6 +80,17 @@ object Security {
       apply(sessionId, None)
 
     implicit def univEq: UnivEq[SessionToken] = UnivEq.derive
+  }
+
+  sealed trait SessionRestoreResult
+  object SessionRestoreResult {
+    sealed trait NonEmpty extends SessionRestoreResult
+
+    case object None extends SessionRestoreResult
+    final case class Success(token: SessionToken) extends NonEmpty
+    final case class Expired(token: SessionToken) extends NonEmpty
+
+    implicit def univEq: UnivEq[SessionRestoreResult] = UnivEq.derive
   }
 
   // ===================================================================================================================

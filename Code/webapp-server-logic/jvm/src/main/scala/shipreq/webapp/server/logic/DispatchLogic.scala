@@ -184,8 +184,9 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
 
   private def requireSession(fCmd: Security.SessionToken => F[Response])(implicit req: Request): F[Response] =
     security.sessionRestore(req.cookie).flatMap {
-      case Some(s) => fCmd(s.createSessionIdIfNone())
-      case None    => F pure ResponseCmd.StatusOnly.Forbidden.withoutCookieUpdate
+      case Security.SessionRestoreResult.Success(t) => fCmd(t.createSessionIdIfNone())
+      case Security.SessionRestoreResult.None
+         | Security.SessionRestoreResult.Expired(_) => F pure ResponseCmd.StatusOnly.Forbidden.withoutCookieUpdate
     }
 
   private def cmdWhenLoginRequired(implicit req: Request): ResponseCmd =

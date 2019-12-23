@@ -430,7 +430,7 @@ object MockSecurity {
 
 final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name] {
   import MockSecurity.Codecs._
-  import Security.SessionToken
+  import Security._
 
   override val F = Monad[Name]
 
@@ -465,14 +465,18 @@ final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name]
     Cookie.Update.add(cookie)
   }
 
-  override def sessionRestore(cookies: Cookie.LookupFn) = Name[Option[SessionToken]] {
-    cookies(cookieName).map { cookieValue =>
+  override def sessionRestore(cookies: Cookie.LookupFn) = Name[SessionRestoreResult] {
+    cookies(cookieName) match {
+      case Some(cookieValue) =>
         if (cookieValue.endsWith(":"))
-          SessionToken.anonymous()
+          SessionRestoreResult.Success(SessionToken.anonymous(None))
         else {
           val body = cookieValue.dropWhile(_ != ':').drop(1)
-          decodeOrThrow[SessionToken](body)
+          SessionRestoreResult.Success(decodeOrThrow[SessionToken](body))
         }
+
+      case None =>
+        SessionRestoreResult.None
     }
   }
 }

@@ -32,6 +32,9 @@ object Monads {
       def apply[A](x: F[E \/ A]): Result[A] =
         new FDisj(x)
 
+      def pure[A](a: A): Result[A] =
+        lift(\/-(a))
+
       def lift[A](x: E \/ A): Result[A] =
         new FDisj(F.pure(x))
 

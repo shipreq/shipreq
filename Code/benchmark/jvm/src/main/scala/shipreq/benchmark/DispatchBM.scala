@@ -191,17 +191,18 @@ object DispatchBM {
       val delay                                       = F.point(())
       override def protect[A](vulnerable: F[A])       = delay >> vulnerable
       override def hashPassword(p: PlainTextPassword) = F point ps
-      private val loggedInToken                       = Some(Security.SessionToken.anonymous().login(user))
-      private val anonToken                           = Some(Security.SessionToken.anonymous())
+      private val loggedInToken                       = Security.SessionRestoreResult.Success(Security.SessionToken.anonymous().login(user))
+      private val anonToken                           = Security.SessionRestoreResult.Success(Security.SessionToken.anonymous())
       private val cookieName                          = Cookie.Name("S")
 
       override def attemptLogin(u: Username \/ EmailAddr, p: PlainTextPassword) = F.point {
         Option.when(u.fold(_ == user.username, _ => ???))(user)
       }
       override def sessionRestore(cookies: Cookie.LookupFn) = F.point {
-        cookies(cookieName) flatMap {
-          case "1" => loggedInToken
-          case _   => anonToken
+        cookies(cookieName) match {
+          case Some("1") => loggedInToken
+          case Some(_)   => anonToken
+          case None      => Security.SessionRestoreResult.None
         }
       }
       override def sessionPersist(token: Security.SessionToken) = F.point {

@@ -148,12 +148,23 @@ object LiveTestUtils {
         .assertBodyContains(spaJs)
         .assertBodyContains(spaEP.objectAndMethod + "(")
 
-    def assertJwt(expect: Option[Security.SessionToken])(implicit l: sourcecode.Line) = {
+    def assertJwt(expect: Option[Security.SessionToken])(implicit l: sourcecode.Line): LiveTestHttpResponse = {
+      val e = expect match {
+        case Some(t) => Security.SessionRestoreResult.Success(t)
+        case None    => Security.SessionRestoreResult.None
+      }
+      assertJwt(e)
+    }
+
+    def assertJwt(expect: Security.SessionRestoreResult)(implicit l: sourcecode.Line): LiveTestHttpResponse = {
       val prefix = SecurityInterpreter.cookieName.value + "="
       val cookieValue = resp.headers.getOrElse("Set-Cookie", Nil).find(_.startsWith(prefix)).map(_.drop(prefix.length))
-      val actual = cookieValue.flatMap { v =>
-        val m = Map(SecurityInterpreter.cookieName -> v.takeWhile(_ != ';'))
-        Global.security.sessionRestore(m.get).unsafeRun()
+      val actual = cookieValue match {
+        case Some(v) =>
+          val m = Map(SecurityInterpreter.cookieName -> v.takeWhile(_ != ';'))
+          Global.security.sessionRestore(m.get).unsafeRun()
+        case None =>
+          Security.SessionRestoreResult.None
       }
       assertEq(actual, expect)
       this

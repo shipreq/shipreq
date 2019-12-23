@@ -82,6 +82,7 @@ object ProjectSpaLogic extends StrictLogging {
   object ConnectRejection {
     case object NoSession        extends ConnectRejection
     case object AnonymousSession extends ConnectRejection
+    case object ExpiredSession   extends ConnectRejection
     case object InvalidProjectId extends ConnectRejection
     case object ProjectNotFound  extends ConnectRejection
     case object AccessDenied     extends ConnectRejection
@@ -148,10 +149,17 @@ object ProjectSpaLogic extends StrictLogging {
         val C = OnConnect
         import ConnectRejection._
 
+        val parseSessionResult: Security.SessionRestoreResult => C.Result[Security.SessionToken] = {
+          case Security.SessionRestoreResult.Success(t) => C.pure(t)
+          case Security.SessionRestoreResult.Expired(_) => C.fail(ExpiredSession)
+          case Security.SessionRestoreResult.None       => C.fail(NoSession)
+        }
+
         def main(span: Span): C.Result[(WebSocketStatic, WebSocketState[F])] =
           for {
             pid     <- C.lift(Obfuscators.projectId.deobfuscate(projectId).leftMap(_ => InvalidProjectId))
-            session <- C.optionF(security.sessionRestore(cookies), NoSession)
+            ssr     <- C.rightF(security.sessionRestore(cookies))
+            session <- parseSessionResult(ssr)
             user    <- C.option(session.authenticatedUser, AnonymousSession)
             _       <- C.rightF(trace.addAttrs(Trace.Attr.ShipReqUserId(user.id.value) ::
                                                Trace.Attr.ShipReqProjectId(pid.value) :: Nil)(span))
@@ -173,6 +181,7 @@ object ProjectSpaLogic extends StrictLogging {
                              case \/-(_)                => "ok"
                              case -\/(NoSession       ) => "NoSession"
                              case -\/(AnonymousSession) => "AnonymousSession"
+                             case -\/(ExpiredSession  ) => "ExpiredSession"
                              case -\/(InvalidProjectId) => "InvalidProjectId"
                              case -\/(ProjectNotFound ) => "ProjectNotFound"
                              case -\/(AccessDenied    ) => "AccessDenied"
