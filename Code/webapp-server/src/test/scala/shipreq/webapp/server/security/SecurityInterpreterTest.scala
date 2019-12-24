@@ -1,12 +1,13 @@
 package shipreq.webapp.server.security
 
-import java.time.Duration
+import java.time.{Duration, Instant}
 import scalaz.{-\/, Name}
 import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.server.logic.{MockInterpreters, SimpleEndpoints}
 import shipreq.webapp.server.logic.dispatch.Cookie
 import shipreq.webapp.client.public.PublicSpaProtocols.Login
+import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.ServerLogicConfig.Security.JwtSecret
 import shipreq.webapp.server.logic.Security.{SessionRestoreResult, SessionToken}
 
@@ -52,22 +53,31 @@ object SecurityInterpreterTest extends TestSuite {
       sessionPersist(s1)
       assertEq(s1.sessionId.value.length, 36)
       assertEq(s1.authenticatedUser, None)
-      assertEq(sec.sessionRestore(cookieJar).value, SessionRestoreResult.Success(s1))
-      assertEq(sec.sessionRestoreOrCreate(cookieJar).value, s1)
+      assertEq(s1.requestTokenExpiration, None)
+      assertEq(sec.sessionRestore(cookieJar).value.modToken(_.withoutExpiry), SessionRestoreResult.Success(s1))
+      val s1b = sec.sessionRestoreOrCreate(cookieJar).value
+      assertEq(s1b.withoutExpiry, s1)
+      assert(s1b.requestTokenExpiration.isDefined)
 
       val s2 = loginUser2(s1)
       assertEq(s2.sessionId, s1.sessionId)
       assertEq(s2.authenticatedUser, Some(user2.toUser))
+      assertEq(s2.requestTokenExpiration, None)
       sessionPersist(s2)
-      assertEq(sec.sessionRestore(cookieJar).value, SessionRestoreResult.Success(s2))
-      assertEq(sec.sessionRestoreOrCreate(cookieJar).value, s2)
+      assertEq(sec.sessionRestore(cookieJar).value.modToken(_.withoutExpiry), SessionRestoreResult.Success(s2))
+      val s2b = sec.sessionRestoreOrCreate(cookieJar).value
+      assertEq(s2b.withoutExpiry, s2)
+      assert(s2b.requestTokenExpiration.isDefined)
 
       val s3 = s2.logout
       assertEq(s3.sessionId, s2.sessionId)
       assertEq(s3.authenticatedUser, None)
+      assertEq(s3.requestTokenExpiration, None)
       logout()
-      assertEq(sec.sessionRestore(cookieJar).value, SessionRestoreResult.Success(s3))
-      assertEq(sec.sessionRestoreOrCreate(cookieJar).value, s3)
+      assertEq(sec.sessionRestore(cookieJar).value.modToken(_.withoutExpiry), SessionRestoreResult.Success(s3))
+      val s3b = sec.sessionRestoreOrCreate(cookieJar).value
+      assertEq(s3b.withoutExpiry, s3)
+      assert(s3b.requestTokenExpiration.isDefined)
 
       s1.sessionId
     }
@@ -87,24 +97,21 @@ object SecurityInterpreterTest extends TestSuite {
 
       val s = sec.sessionRestoreOrCreate(cookieJar).value
       sessionPersist(s)(sec1)
-      assertEq(sec1.sessionRestore(cookieJar).value, SessionRestoreResult.Success(s))
-      assertEq(sec2.sessionRestore(cookieJar).value, SessionRestoreResult.Success(s))
+      assertEq(sec1.sessionRestore(cookieJar).value.modToken(_.withoutExpiry), SessionRestoreResult.Success(s))
+      assertEq(sec2.sessionRestore(cookieJar).value.modToken(_.withoutExpiry), SessionRestoreResult.Success(s))
 
       sessionPersist(s)(sec2)
-      assertEq(sec2.sessionRestore(cookieJar).value, SessionRestoreResult.Success(s))
-      assertEq(sec1.sessionRestore(cookieJar).value, SessionRestoreResult.None)
+      assertEq(sec2.sessionRestore(cookieJar).value.modToken(_.withoutExpiry), SessionRestoreResult.Success(s))
+      assertEq(sec1.sessionRestore(cookieJar).value.modToken(_.withoutExpiry), SessionRestoreResult.None)
     }
 
     "expired" - {
-      implicit val sec = {
-        implicit def config = mocks.config.security.copy(jwtLifespan = Duration.ofMillis(1))
-        new SecurityInterpreter[Name]
-      }
+      implicit val config = mocks.config.security.copy(jwtLifespan = Duration.ZERO)
+      implicit val sec = new SecurityInterpreter[Name]
 
       val s1 = loginUser2(SessionToken.anonymous())
       sessionPersist(s1)
-      Thread.sleep(4)
-      assertEq(sec.sessionRestore(cookieJar).value, SessionRestoreResult.Expired(s1))
+      assertEq(sec.sessionRestore(cookieJar).value.modToken(_.withoutExpiry), SessionRestoreResult.Expired(s1))
 
       val s2 = sec.sessionRestoreOrCreate(cookieJar).value
       assertEq(s2.sessionId, s1.sessionId)

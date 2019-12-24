@@ -2,8 +2,9 @@ package shipreq.webapp.server.logic
 
 import com.typesafe.scalalogging.StrictLogging
 import japgolly.univeq.UnivEq
+import java.time.Instant
 import java.util.UUID
-import scalaz.{\/, Monad}
+import scalaz.{Monad, \/}
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.logic.dispatch.Cookie
 
@@ -55,7 +56,14 @@ object Security {
     implicit def univEq: UnivEq[SessionId] = UnivEq.derive
   }
 
-  final case class SessionToken(sessionId: SessionId, authenticatedUser: Option[User]) {
+  /**
+    * @param requestTokenExpiration This is the JWT expiry according to the JWT read from the request.
+    *                               Creating a new token in-memory will have this as None.
+    */
+  final case class SessionToken(sessionId             : SessionId,
+                                authenticatedUser     : Option[User],
+                                requestTokenExpiration: Option[Instant]) {
+
     def login(u: User): SessionToken =
       copy(authenticatedUser = Some(u))
 
@@ -64,6 +72,9 @@ object Security {
 
     def withSession(st: SessionToken): SessionToken =
       copy(sessionId = st.sessionId)
+
+    def withoutExpiry: SessionToken =
+      copy(requestTokenExpiration = None)
   }
 
   object SessionToken extends StrictLogging {
@@ -71,12 +82,22 @@ object Security {
       anonymous(SessionId.random())
 
     def anonymous(sessionId: SessionId): SessionToken =
-      apply(sessionId, None)
+      apply(sessionId, None, None)
 
     implicit def univEq: UnivEq[SessionToken] = UnivEq.derive
   }
 
-  sealed trait SessionRestoreResult
+  sealed trait SessionRestoreResult {
+    import SessionRestoreResult._
+
+    final def modToken(f: SessionToken => SessionToken): SessionRestoreResult =
+      this match {
+        case Success(t) => Success(f(t))
+        case Expired(t) => Expired(f(t))
+        case None       => None
+      }
+  }
+
   object SessionRestoreResult {
     sealed trait NonEmpty extends SessionRestoreResult
 

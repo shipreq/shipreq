@@ -116,19 +116,22 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
       val sessionId = SessionId(claims.get(claimSessionId, classOf[String]))
       require(sessionId.value ne null, "Session ID not specified")
 
-      val subject   = claims.getSubject
-      if (subject eq null)
-        SessionToken.anonymous(sessionId)
-      else {
-        val username = Username(subject)
-        val userIdOb = Obfuscated[UserId](claims.get(claimUserId, classOf[String]))
-        val userId   = Obfuscators.userId.deobfuscate(userIdOb) match {
-          case \/-(x) => x
-          case -\/(e) => fail(s"Failed to deobfuscate user ID ${StringEscapeUtils.escapeJava(userIdOb.value)}: $e")
+      val authenticatedUser: Option[User] =
+        claims.getSubject match {
+          case null => None
+          case subject =>
+            val username = Username(subject)
+            val userIdOb = Obfuscated[UserId](claims.get(claimUserId, classOf[String]))
+            val userId   = Obfuscators.userId.deobfuscate(userIdOb) match {
+              case \/-(x) => x
+              case -\/(e) => fail(s"Failed to deobfuscate user ID ${StringEscapeUtils.escapeJava(userIdOb.value)}: $e")
+            }
+            Some(User(userId, username))
         }
-        val user = User(userId, username)
-        SessionToken(sessionId, Some(user))
-      }
+
+      val expiration = claims.getExpiration.toInstant
+
+      SessionToken(sessionId, authenticatedUser, Some(expiration))
     }
 
   private def parseAndVerifyJws(jws: String, parser: JwtParser): Try[SessionRestoreResult.NonEmpty] =

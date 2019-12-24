@@ -166,7 +166,7 @@ object LiveTestUtils {
         case None =>
           Security.SessionRestoreResult.None
       }
-      assertEq(actual, expect)
+      assertEq(actual.modToken(_.withoutExpiry), expect)
       this
     }
   }

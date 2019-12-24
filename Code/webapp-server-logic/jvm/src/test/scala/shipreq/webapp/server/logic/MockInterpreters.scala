@@ -302,8 +302,15 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 final class MockServer[F[_]]()(implicit F: Monad[F], se: SyncEffect[F]) extends Server.Algebra[F] {
-  var clock = Instant.now()
+  @volatile var clock = Instant.now()
+
   override val now = F.point(clock)
+
+  def incTimeMs(ms: Long): Unit =
+    clock = clock.plusMillis(ms)
+
+  def incTimeSec(sec: Long): Unit =
+    clock = clock.plusSeconds(sec)
 
   override def measureDuration[A](f: F[A]): F[(A, Duration)] =
     for {
@@ -421,14 +428,14 @@ object MockSecurity {
       Encoder.forProduct2("id", "username")(a => (a.id, a.username))
 
     implicit val decoderSessionToken: Decoder[SessionToken] =
-      Decoder.forProduct2("sessionId", "authenticatedUser")(SessionToken.apply)
+      Decoder.forProduct3("sessionId", "authenticatedUser", "expiry")(SessionToken.apply)
 
     implicit val encoderSessionToken: Encoder[SessionToken] =
-      Encoder.forProduct2("sessionId", "authenticatedUser")(a => (a.sessionId, a.authenticatedUser))
+      Encoder.forProduct3("sessionId", "authenticatedUser", "expiry")(a => (a.sessionId, a.authenticatedUser, a.requestTokenExpiration))
   }
 }
 
-final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name] {
+final class MockSecurity(override val db: MockDb, now: Name[Instant], cfg: ServerLogicConfig.Security) extends Security.Algebra[Name] {
   import MockSecurity.Codecs._
   import Security._
 
@@ -459,17 +466,16 @@ final class MockSecurity(override val db: MockDb) extends Security.Algebra[Name]
   val cookieName = Cookie.Name("MockSecurity")
 
   override def sessionPersist(token: SessionToken) = Name[Cookie.Update] {
-    val header = System.nanoTime().toString + ":"
-    val body   = token.asJson.noSpaces
-    val cookie = Cookie(cookieName, header + body, None, None, None)
+    val token2 = token.copy(requestTokenExpiration = Some(now.value.plus(cfg.jwtLifespan)))
+    val json   = token2.asJson.noSpaces
+    val cookie = Cookie(cookieName, json, None, None, None)
     Cookie.Update.add(cookie)
   }
 
   override def sessionRestore(cookies: Cookie.LookupFn) = Name[SessionRestoreResult] {
     cookies(cookieName) match {
       case Some(cookieValue) =>
-        val body = cookieValue.dropWhile(_ != ':').drop(1)
-        SessionRestoreResult.Success(decodeOrThrow[SessionToken](body))
+        SessionRestoreResult.Success(decodeOrThrow[SessionToken](cookieValue))
 
       case None =>
         SessionRestoreResult.None
@@ -529,7 +535,7 @@ class MockInterpreters(modCfg         : ServerLogicConfig => ServerLogicConfig =
   implicit val config         = modCfg(MockInterpreters.config)
   implicit val svr            = new MockServer[Name]
   implicit val db             = specificMockDb.getOrElse(new MockDb(svr.now))
-  implicit val security       = new MockSecurity(db)
+  implicit val security       = new MockSecurity(db, svr.now, config.security)
   implicit val taskman        = specificTaskman.getOrElse(new MockTaskman)
   implicit val nameToName     = NaturalTransformation.refl[Name]
   implicit val apEvent        = ApplyEventLogic.trusted[Name]

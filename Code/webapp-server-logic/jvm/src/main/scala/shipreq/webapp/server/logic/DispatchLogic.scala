@@ -591,7 +591,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
           } yield (Username.orEmail(u), PlainTextPassword(p))
         ) { case (u, p) =>
           security.attemptLogin(u, p).flatMap {
-            case Some(u) => security.sessionPersist(Security.SessionToken(Security.SessionId.random(), Some(u))).map(Response(ResponseCmd.StatusOnly.OK, _))
+            case Some(u) => security.sessionPersist(Security.SessionToken.anonymous().login(u)).map(Response(ResponseCmd.StatusOnly.OK, _))
             case None    => F pure ResponseCmd.StatusOnly.Forbidden.withoutCookieUpdate
           }
         }

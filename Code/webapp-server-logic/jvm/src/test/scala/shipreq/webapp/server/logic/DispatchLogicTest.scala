@@ -76,6 +76,7 @@ object DispatchLogicTest extends TestSuite {
         else
           cookies
       val req = TestRequest(method, url, body, params, cookies2)
+      svr.incTimeMs(1)
       (req, routeDispatcher(req).value)
     }
 
@@ -154,7 +155,7 @@ object DispatchLogicTest extends TestSuite {
         val st1 = Security.SessionToken.anonymous()
         val res = runAjax(PublicSpaProtocols.Login.ajax)(req)(st1)._2
         val tok = security.sessionRestore(res.cookies.get).value
-        assertEq(tok, SessionRestoreResult.Success(user2.token.withSession(st1)))
+        assertEq(tok.modToken(_.withoutExpiry), SessionRestoreResult.Success(user2.token.withSession(st1).withoutExpiry))
       }
 
       'loggedIn {
@@ -284,7 +285,8 @@ object DispatchLogicTest extends TestSuite {
             val v1 = req.cookies(security.cookieName)
             val v2 = res.cookies(security.cookieName)
             assert(v1 != v2) // JWT expected to change (new expiry)
-            assertEq(security.sessionRestore(res.cookies.get).value, SessionRestoreResult.Success(t))
+            val r = security.sessionRestore(res.cookies.get).value
+            assertEq(r.modToken(_.withoutExpiry), SessionRestoreResult.Success(t.withoutExpiry))
         }
       }
 
