@@ -3,7 +3,6 @@ package shipreq.webapp.base.protocol
 import org.scalajs.dom.{console, raw}
 import org.scalajs.dom.raw.{Blob, CloseEvent, Event, EventInit, MessageEvent, MessageEventInit}
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSGlobal
 import scala.scalajs.js.typedarray
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
 import shipreq.base.util.{BinaryData, BinaryJs, VarJs}

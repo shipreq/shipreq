@@ -19,10 +19,10 @@ object ProjectSpaWebSocket extends StrictLogging {
 
   final case class LoggingData(path: String)
 
-  val staticL           = UserPropsLens.atKey[WebSocketStatic]("X")
+  val staticL           = UserPropsLens.atKey[WebSocketStatic   ]("X")
   val stateL            = UserPropsLens.atKey[WebSocketState[Fx]]("Y")
-  val connectRejectionL = UserPropsLens.atKey[ConnectRejection]("Z")
-  val loggingDataL      = UserPropsLens.atKey[LoggingData]("L")
+  val connectRejectionL = UserPropsLens.atKey[ConnectRejection  ]("Z")
+  val loggingDataL      = UserPropsLens.atKey[LoggingData       ]("L")
 
   final class Connector extends ServerEndpointConfig.Configurator {
     private[this] val pathPrefix = Urls.ProjectSpaWebSocket.Base.length + 1
