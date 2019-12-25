@@ -78,6 +78,12 @@ Phase 2B
 
 * Type to open editor and replace content (enter = just open?)
 
+* Add to imp graph page:
+  * Saved views
+  * Filter
+  * Content summary
+  * Configure display (eg. id + title, just title, add tags?)
+
 * Copy to clipboard from cells in Req{Table,Detail}
 
 * Allow system to add new field/columns in future without breaking existing projects.
@@ -109,8 +115,14 @@ Phase 2B
   * Save to, and load from, localStorage (maybe spec with TLA+ cos merges?)
 
 * WebSockets
-  * Have client handle ConnectRejections, including re-logging in
-  * Check JWT expiry on message
   * Display a connected icon
-  * Allow users to toggle connection
+    * Allow users to toggle connection
+  * Refactor WebSocketClient.State into an ADT - way too many combinations of stuff atm
+    * Add to WebSocketClient.State, a state indicating unauthorised
+      * Have client handle ConnectRejections, including re-logging in
+  * Ensure that JWT expiry is only increased on login/logout
+  * Refactor Security.SessionToken so that expiry isn't optional on read but ignored on write
+    * Check JWT expiry on message
   * Recover from lost Redis connections
+
+* Change security token to something like confirmation/verification token (inc properties)
