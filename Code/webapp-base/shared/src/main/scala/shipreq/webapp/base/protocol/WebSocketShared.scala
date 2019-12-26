@@ -15,6 +15,16 @@ object WebSocketShared {
     implicit val pickler: Pickler[ReqId] = intPickler.xmap(apply)(_.value)
   }
 
+  final case class CloseCode(value: Int) extends AnyVal
+
+  object CloseCode {
+    /** Runtime exception occurred */
+    val UnhandledException = apply(4500)
+
+    /** Error sending response */
+    val RespondException = apply(4501)
+  }
+
   // ===================================================================================================================
   // Client to Server
 

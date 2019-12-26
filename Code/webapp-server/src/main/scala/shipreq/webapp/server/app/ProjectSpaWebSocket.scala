@@ -7,11 +7,12 @@ import org.slf4j.MDC
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.BinaryData
 import shipreq.base.util.FxModule._
+import shipreq.base.util.log.WebappLogFields
 import shipreq.webapp.base.Urls
+import shipreq.webapp.base.protocol.WebSocketShared.CloseCode
 import shipreq.webapp.server.logic.ProjectSpaLogic._
 import shipreq.webapp.server.util.WebSocketUtil
 import shipreq.webapp.server.util.WebSocketUtil.UserPropsLens
-import shipreq.base.util.log.WebappLogFields
 
 object ProjectSpaWebSocket extends StrictLogging {
 
@@ -47,18 +48,13 @@ object ProjectSpaWebSocket extends StrictLogging {
       }
     }
   }
-
-  object CustomCloseCodes {
-    val UnhandledException = WebSocketUtil.CustomCloseCode(4500)
-    val RespondException   = WebSocketUtil.CustomCloseCode(4501)
-  }
 }
 
 @ServerEndpoint(
   value        = Urls.ProjectSpaWebSocket.ServerEndpoint,
   configurator = classOf[ProjectSpaWebSocket.Connector])
 final class ProjectSpaWebSocket extends StrictLogging {
-  import CloseReason.{CloseCode, CloseCodes}
+  import CloseReason.CloseCodes
   import ProjectSpaWebSocket._
 
   private def unsafeSend(s: Session, b: BinaryData): Unit = {
@@ -68,6 +64,9 @@ final class ProjectSpaWebSocket extends StrictLogging {
   }
 
   private def fxClose(s: Session, code: CloseCode, reasonPhrase: String): Fx[Unit] =
+    fxClose(s, WebSocketUtil.CustomCloseCode(code.value), reasonPhrase)
+
+  private def fxClose(s: Session, code: CloseReason.CloseCode, reasonPhrase: String): Fx[Unit] =
     Fx {
       try {
         if (s.isOpen)
@@ -141,7 +140,7 @@ final class ProjectSpaWebSocket extends StrictLogging {
 
       val fxOnMsgError: MsgError => Fx[Unit] = {
         case _: MsgError.ClientMsgDecodingFailure => fxClose(s, CloseCodes.PROTOCOL_ERROR, "Error parsing message")
-        case _: MsgError.RespondError             => fxClose(s, CustomCloseCodes.RespondException, "Error sending response")
+        case _: MsgError.RespondError             => fxClose(s, CloseCode.RespondException, "Error sending response")
         case _: MsgError.ServerBehindClient
            | _: MsgError.ServerBehindDatabase
            | _: MsgError.ServerBehindRedis        => fxClose(s, CloseCodes.SERVICE_RESTART, "Server is out-of-date")
@@ -172,7 +171,7 @@ final class ProjectSpaWebSocket extends StrictLogging {
   @OnError
   def onError(s: Session, cause: Throwable): Unit = withMdc(s, "error") {
     logger.error("Error occurred.", cause)
-    fxClose(s, CustomCloseCodes.UnhandledException, "Runtime exception occurred").unsafeRun()
+    fxClose(s, CloseCode.UnhandledException, "Runtime exception occurred").unsafeRun()
   }
 
   @OnClose
