@@ -8,27 +8,38 @@ VARIABLES retry,     \* Whether more retries are allowed
 
 vars == << retry, scheduled, ws >>
 
-None       == "None"       \* None: Option[Instance]
-Connecting == "Connecting" \* Some(ws) if ws.readyState = Connecting
-Open       == "Open"       \* Some(ws) if ws.readyState = Open
-Closing    == "Closing"    \* Some(ws) if ws.readyState = Closing
-Closed     == "Closed"     \* Some(ws) if ws.readyState = Closed
+None         == "None"         \* ReadyToConnect
+Connecting   == "Connecting"   \* PossiblyConnected(ws) if ws.readyState = Connecting
+Open         == "Open"         \* PossiblyConnected(ws) if ws.readyState = Open
+Closing      == "Closing"      \* PossiblyConnected(ws) if ws.readyState = Closing
+Closed       == "Closed"       \* PossiblyConnected(ws) if ws.readyState = Closed
+Unauthorised == "Unauthorised" \* Unauthorised
 
 TypeInvariants ==
   /\ retry     \in BOOLEAN
   /\ scheduled \in BOOLEAN
-  /\ ws        \in {None, Connecting, Open, Closing, Closed}
+  /\ ws        \in {None, Connecting, Open, Closing, Closed, Unauthorised}
 \*  /\ PrintT([retry |-> retry, scheduled |-> scheduled, ws |-> ws])
 
 DataInvariants ==
   /\ scheduled => ws \in {None, Closed}
+  /\ ws = Unauthorised => ~retry
 
 Init ==
   /\ retry \in BOOLEAN
   /\ scheduled = FALSE
-  /\ ws \in {None, Connecting}
+  /\ ws = None
 
 ------------------------------------------------------------------------------------------------------------------------
+
+relogin ==
+  /\ Assert(ws = Unauthorised, "Relogin should only be called when Unauthorised")
+  /\ \/ \* Success
+        /\ ws' = None
+        /\ retry' \in BOOLEAN \* reset retry status (counter)
+        /\ UNCHANGED scheduled
+  /\ \/ \* Failure
+        /\ UNCHANGED << ws, retry, scheduled >>
 
 scheduleReconnect(assertNotScheduled) ==
   IF retry
@@ -53,8 +64,13 @@ WS_Closing ==
 
 WS_Closed ==
   /\ ws \in {Connecting, Open, Closing}
-  /\ ws' = Closed
-  /\ scheduleReconnect(TRUE)
+  /\ \/ \* Connection lost, or server closes
+        /\ ws' = Closed
+        /\ scheduleReconnect(TRUE)
+     \/ \* Server closes because JWT (is) expired
+        /\ ws' = Unauthorised
+        /\ retry' = FALSE
+        /\ UNCHANGED scheduled
 
 ScheduledTaskExecutes ==
   /\ scheduled = TRUE
@@ -67,15 +83,18 @@ ScheduledTaskExecutes ==
         /\ scheduleReconnect(FALSE)
 
 ConnectNow ==
-  /\ ws \in {None,Closed}
-  \* clearTimer here
-  /\ \/ \* Connection succeeds
-        /\ ws' = Connecting
-        /\ scheduled' = FALSE
-        /\ retry' \in BOOLEAN \* reset retry status (counter)
-     \/ \* Connection fails
-        /\ ws' = None
-        /\ scheduleReconnect(FALSE) \* because clearTimer above
+  \/ /\ ws \in {None, Closed}
+     \* clearTimer here
+     /\ \/ \* Connection succeeds
+           /\ ws' = Connecting
+           /\ scheduled' = FALSE
+           /\ retry' \in BOOLEAN \* reset retry status (counter)
+        \/ \* Connection fails
+           /\ ws' = None
+           /\ scheduleReconnect(FALSE) \* because clearTimer above
+
+  \/ /\ ws = Unauthorised
+     /\ relogin
 
 Close ==
   /\ retry' = FALSE
