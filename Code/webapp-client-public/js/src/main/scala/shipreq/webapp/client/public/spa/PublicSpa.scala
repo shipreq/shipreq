@@ -39,8 +39,8 @@ final class PublicSpa(val initData: PublicSpaEntryPoint.InitData, ajax: AjaxClie
 
   final class Backend($: BackendScope[Props, State]) {
 
+    val sspLogin          = ajax.invoker(CommonProtocols.Login.ajax)
     val sspLandingPage    = ajax.invoker(PublicSpaProtocols.LandingPage.ajax).mergeFailure
-    val sspLogin          = ajax.invoker(PublicSpaProtocols.Login.ajax)
     val sspResetPassword1 = ajax.invoker(PublicSpaProtocols.ResetPassword1.ajax)
     val sspResetPassword2 = ajax.invoker(PublicSpaProtocols.ResetPassword2.ajax).mergeFailure
     val sspRegister1      = ajax.invoker(PublicSpaProtocols.Register1.ajax).mergeFailure

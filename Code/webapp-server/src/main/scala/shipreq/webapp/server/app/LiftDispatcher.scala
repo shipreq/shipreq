@@ -164,6 +164,7 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
     implicit val trace     = global.trace
     implicit val taskman   = global.taskman
     implicit val security  = global.security
+    implicit val common    = global.logic.common
     implicit val publicSpa = global.logic.publicSpa
     implicit val homeSpa   = global.logic.homeSpa
     implicit val ops       = global.ops

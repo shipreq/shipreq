@@ -94,6 +94,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
                                                   db        : DB.SecurityTokenReadOnly[F],
                                                   metrics   : MetricsLogic[F],
                                                   ops       : OpsEndpoints[F],
+                                                  common    : CommonProtocolLogic[F],
                                                   publicSpa : PublicSpaLogic[F],
                                                   homeSpa   : HomeSpaLogic.Ajax[F],
                                                   security  : Security.Algebra[F],
@@ -431,8 +432,8 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
         )
 
       // Register endpoints
+      anonO(CommonProtocols   .Login         .ajax)("login"         , common   .ajaxLogin         )(useNewToken)
       anon (PublicSpaProtocols.LandingPage   .ajax)("landingPage"   , publicSpa.ajaxLandingPage   )
-      anonO(PublicSpaProtocols.Login         .ajax)("login"         , publicSpa.ajaxLogin         )(useNewToken)
       anon (PublicSpaProtocols.Register1     .ajax)("register1"     , publicSpa.ajaxRegister1     )
       anonO(PublicSpaProtocols.Register2     .ajax)("register2"     , publicSpa.ajaxRegister2     )(useNewToken)
       anon (PublicSpaProtocols.ResetPassword1.ajax)("resetPassword1", publicSpa.ajaxResetPassword1)

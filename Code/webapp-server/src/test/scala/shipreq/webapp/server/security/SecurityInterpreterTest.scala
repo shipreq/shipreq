@@ -1,13 +1,12 @@
 package shipreq.webapp.server.security
 
-import java.time.{Duration, Instant}
+import java.time.Duration
 import scalaz.{-\/, Name}
 import utest._
 import shipreq.base.test.BaseTestUtil._
+import shipreq.webapp.base.protocol.CommonProtocols.Login
 import shipreq.webapp.server.logic.{MockInterpreters, SimpleEndpoints}
 import shipreq.webapp.server.logic.dispatch.Cookie
-import shipreq.webapp.client.public.PublicSpaProtocols.Login
-import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.ServerLogicConfig.Security.JwtSecret
 import shipreq.webapp.server.logic.Security.{SessionRestoreResult, SessionToken}
 
@@ -33,13 +32,13 @@ object SecurityInterpreterTest extends TestSuite {
     val cookieJar = new CookieJar
     val mocks = new MockInterpreters()
     implicit def config = mocks.config.security
-    import mocks.{db, publicSpa, trace, user2, user2password}
+    import mocks.{common, db, trace, user2, user2password}
 
     db.users ::= user2
     implicit val sec = new SecurityInterpreter[Name]
 
     def loginUser2(s: SessionToken): SessionToken =
-      publicSpa.ajaxLogin(s)(Login.Request(-\/(user2.username), user2password)).value._2.get
+      common.ajaxLogin(s)(Login.Request(-\/(user2.username), user2password)).value._2.get
 
     def sessionPersist(s: SessionToken)(implicit sec: SecurityInterpreter[Name]): Unit =
       cookieJar.update(sec.sessionPersist(s).value)

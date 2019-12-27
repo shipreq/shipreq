@@ -25,7 +25,6 @@ trait PublicSpaLogic[F[_]] {
   val ajaxResetPassword1: PublicSpaProtocols.ResetPassword1.ajax.ServerSideFn [F]
   val ajaxResetPassword2: PublicSpaProtocols.ResetPassword2.ajax.ServerSideFn [F]
 
-  val ajaxLogin    : Security.SessionToken => PublicSpaProtocols.Login    .ajax.ServerSideFnO[F, Option[Security.SessionToken]]
   val ajaxRegister2: Security.SessionToken => PublicSpaProtocols.Register2.ajax.ServerSideFnO[F, Option[Security.SessionToken]]
 
   /** Ignores publicRegistration setting.
@@ -67,6 +66,7 @@ object PublicSpaLogic extends HasLogger {
   def apply[D[_], F[_]](implicit config  : ServerLogicConfig,
                                  db      : DB.ForPublicSpa[D],
                                  runDB   : D ~> F,
+                                 common  : CommonProtocolLogic[F],
                                  metrics : MetricsLogic[F],
                                  security: Security.Algebra[F],
                                  svr     : Server.Algebra[F],
@@ -85,43 +85,6 @@ object PublicSpaLogic extends HasLogger {
             newsletter = req.newsletter)
           taskman.submit(msg).map(_ => rightUnit)
         }
-
-      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-      private type LoginResult = (Permission, Option[Security.SessionToken])
-      private[this] val loginFail: F[LoginResult] = {val x = (Deny, None); F pure x}
-
-      private def attemptLogin(id      : Username \/ EmailAddr,
-                               password: PlainTextPassword,
-                               session : Security.SessionToken): F[LoginResult] =
-        security.attemptLogin(id, password).flatMap {
-
-          case Some(user) =>
-            // Login succeeded
-            val logToDB       = svr.clientIP.flatMap(ip => svr.fork(security.db.logLoginSuccess(user.id, ip)))
-            val log           = F.point(logger.info(s"User #${user.id.value} logged in."))
-            val updateMetrics = metrics.securityEvent(Security.Event.Login, Security.Result.Success)
-            val newSession    = session.login(user)
-            val result        = (Allow, Some(newSession)): LoginResult
-            val main          = log >> logToDB >> updateMetrics >| result
-
-            val mdc = WebappLogFields.jwt.userId.mdc(user.id.value) ++
-                      WebappLogFields.jwt.username.mdc(user.username.value) ++
-                      WebappLogFields.jwt.sessionId.mdc(newSession.sessionId.value)
-            mdc.para(main)
-
-          case None =>
-            // User not found, or password didn't match
-            // The inability to distinguish is a security feature
-            val log = F.point(logger.warn(s"Login for ${id.fold(_.with_@, _.value)} with password hash ${password.hashStr} failed."))
-            val updateMetrics = metrics.securityEvent(Security.Event.Login, Security.Result.Failure)
-            log >> updateMetrics >> loginFail
-        }
-
-      override val ajaxLogin =
-        token =>
-          security.protectFn(req =>
-            attemptLogin(req.user, req.password, token))
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -225,7 +188,7 @@ object PublicSpaLogic extends HasLogger {
                     }
 
                   val login: Stack[Option[Security.SessionToken]] =
-                    attemptLogin(-\/(req.username), req.password, session).mapToStack {
+                    common.attemptLoginUnprotected(-\/(req.username), req.password, session).mapToStack {
                       case (Allow, t) => \/-(t)
                       case (Deny, _) => -\/(-\/(ErrorMsg("Registration completed but login failed.")))
                     }

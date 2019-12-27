@@ -11,12 +11,12 @@ import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Disabled, Enabled, TCB}
 import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.protocol.CommonProtocols.Login.Request
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.base.user.{EmailAddr, UserValidators, Username}
 import shipreq.webapp.base.{CommmonUiText, Urls}
 import shipreq.webapp.client.public.Prefetch
-import shipreq.webapp.client.public.PublicSpaProtocols.Login.Request
 import shipreq.webapp.client.public.Styles.{login => *}
 
 object Login {

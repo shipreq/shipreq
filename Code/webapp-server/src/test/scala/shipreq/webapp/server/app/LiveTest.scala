@@ -7,7 +7,7 @@ import shipreq.base.util.FxModule._
 import shipreq.webapp.base.{AssetManifest, Urls, WebappConfig}
 import shipreq.webapp.base.data.{Project, ProjectId}
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
+import shipreq.webapp.client.public.PublicSpaEntryPoint
 import shipreq.webapp.server.logic.{Obfuscators, Security}
 import shipreq.webapp.server.test.LiveTestUtils._
 import shipreq.webapp.server.test._
@@ -42,7 +42,7 @@ object LiveTest extends TestSuite {
 
     'loginAjax {
       val st = Security.SessionToken.anonymous()
-      ajaxPost(PublicSpaProtocols.Login.ajax)(PublicSpaProtocols.Login.Request(-\/(user1.username), user1.password), st)
+      ajaxPost(CommonProtocols.Login.ajax)(CommonProtocols.Login.Request(-\/(user1.username), user1.password), st)
         .assertOk
         .assertContentType("application/octet-stream")
         .assertJwt(Some(user1.toToken().withSession(st)))

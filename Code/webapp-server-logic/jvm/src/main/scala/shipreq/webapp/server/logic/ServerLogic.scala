@@ -8,15 +8,17 @@ import shipreq.webapp.server.ServerLogicConfig
 /**
   * All server logic.
   */
-final case class ServerLogic[F[_]](publicSpa    : PublicSpaLogic [F],
-                                   homeSpa      : HomeSpaLogic   [F],
-                                   projectSpa   : ProjectSpaLogic[F])
+final case class ServerLogic[F[_]](common    : CommonProtocolLogic[F],
+                                   publicSpa : PublicSpaLogic     [F],
+                                   homeSpa   : HomeSpaLogic       [F],
+                                   projectSpa: ProjectSpaLogic    [F])
 
 object ServerLogic {
 
   def create[D[_] : Monad
                   : DB.Algebra,
              F[_] : ApplyEventLogic
+                  : Catchable
                   : MetricsLogic
                   : Redis.ProjectAlgebra
                   : Security.Algebra
@@ -24,11 +26,15 @@ object ServerLogic {
                   : TaskmanApi
                   : Trace.Algebra]
             (implicit F: Monad[F] with BindRec[F],
-             FC: Catchable[F],
              runDB: D ~> F,
-             config: ServerLogicConfig): ServerLogic[F] =
+             config: ServerLogicConfig): ServerLogic[F] = {
+
+    implicit val common = CommonProtocolLogic[F]
+
     ServerLogic(
+      common,
       PublicSpaLogic [D, F],
       HomeSpaLogic   [D, F],
       ProjectSpaLogic[D, F](config.projectSpa))
+  }
 }

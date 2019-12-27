@@ -9,7 +9,7 @@ import shipreq.base.util.{BinaryData, Deny, Identity, Invalid, Url}
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.binary.SafePickler
-import shipreq.webapp.base.protocol.Protocol
+import shipreq.webapp.base.protocol.{CommonProtocols, Protocol}
 import shipreq.webapp.base.user.{EmailAddr, PersonName}
 import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.server.ServerLogicConfig
@@ -151,9 +151,9 @@ object DispatchLogicTest extends TestSuite {
 
       'logIn - {
         val u = user2
-        val req = PublicSpaProtocols.Login.Request(-\/(u.username), user2password)
+        val req = CommonProtocols.Login.Request(-\/(u.username), user2password)
         val st1 = Security.SessionToken.anonymous()
-        val res = runAjax(PublicSpaProtocols.Login.ajax)(req)(st1)._2
+        val res = runAjax(CommonProtocols.Login.ajax)(req)(st1)._2
         val tok = security.sessionRestore(res.cookies.get).value
         assertEq(tok.modToken(_.withoutExpiry), SessionRestoreResult.Success(user2.token.withSession(st1).withoutExpiry))
       }

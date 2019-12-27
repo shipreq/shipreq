@@ -542,6 +542,7 @@ class MockInterpreters(modCfg         : ServerLogicConfig => ServerLogicConfig =
   implicit val metrics        = MetricsLogic.const(Name(()))
   implicit val trace          = Trace.Algebra.off[Name]
   implicit val redis          = specificRedis.getOrElse(new Redis.InMemory[Name])
+  implicit val common         = CommonProtocolLogic[Name]
   implicit val publicSpa      = PublicSpaLogic[Name, Name]
   implicit val homeSpa        = HomeSpaLogic[Name, Name]
   implicit val projectSpa     = ProjectSpaLogic[Name, Name](config.projectSpa)
