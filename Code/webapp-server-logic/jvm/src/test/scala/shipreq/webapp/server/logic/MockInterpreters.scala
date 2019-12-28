@@ -306,6 +306,9 @@ final class MockServer[F[_]]()(implicit F: Monad[F], se: SyncEffect[F]) extends 
 
   override val now = F.point(clock)
 
+  def incTime(d: Duration): Unit =
+    clock = clock.plus(d)
+
   def incTimeMs(ms: Long): Unit =
     clock = clock.plusMillis(ms)
 
@@ -465,8 +468,10 @@ final class MockSecurity(override val db: MockDb, now: Name[Instant], cfg: Serve
 
   val cookieName = Cookie.Name("MockSecurity")
 
+  def expiry() = now.value.plus(cfg.jwtLifespan)
+
   override def sessionPersist(token: SessionToken[Any]) = Name[Cookie.Update] {
-    val token2 = token.copy(expiry = now.value.plus(cfg.jwtLifespan))
+    val token2 = token.copy(expiry = expiry())
     val json   = token2.asJson.noSpaces
     val cookie = Cookie(cookieName, json, None, None, None)
     Cookie.Update.add(cookie)

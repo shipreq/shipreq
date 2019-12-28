@@ -119,7 +119,6 @@ Phase 2B
     * Allow users to toggle connection
   * Have client handle ConnectRejections, including re-logging in
   * Ensure that JWT expiry is only increased on login/logout
-  * Check JWT expiry on message
   * Recover from lost Redis connections
 
 * Change security token to something like confirmation/verification token (inc properties)

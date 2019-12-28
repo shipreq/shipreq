@@ -130,27 +130,31 @@ final class ProjectSpaWebSocket extends StrictLogging {
 
   @OnMessage
   def onMessage(s: Session, messageBytes: Array[Byte]): Unit = withMdc(s, "message") {
+    val userProps = s.getUserProperties
+    val static    = staticL.get(userProps)
+
+    val fxOnMsgError: MsgError => Fx[Unit] = {
+      case MsgError.SessionExpired              => fxClose(s, CloseReasons.unauthorised)
+      case _: MsgError.ClientMsgDecodingFailure => fxClose(s, CloseReasons.errorParsingMessage)
+      case _: MsgError.RespondError             => fxClose(s, CloseReasons.errorSendingResponse)
+      case _: MsgError.ServerBehindClient
+         | _: MsgError.ServerBehindDatabase
+         | _: MsgError.ServerBehindRedis        => fxClose(s, CloseReasons.serverOutOfDate)
+    }
+
     if (messageBytes.length == 0) {
       logger.trace("Received keep-alive")
+      projectSpaLogic.onKeepAlive(static, fxOnMsgError).unsafeRun()
+
     } else {
-      val userProps = s.getUserProperties
-      val static    = staticL.get(userProps)
-      val state     = stateL.get(userProps)
-      val binIn     = BinaryData.unsafeFromArray(messageBytes)
+      val state = stateL.get(userProps)
+      val binIn = BinaryData.unsafeFromArray(messageBytes)
 
       val fxSend: BinaryData => Fx[Throwable \/ Unit] =
         b => Fx {
           unsafeSend(s, b)
           rightUnit
         }
-
-      val fxOnMsgError: MsgError => Fx[Unit] = {
-        case _: MsgError.ClientMsgDecodingFailure => fxClose(s, CloseReasons.errorParsingMessage)
-        case _: MsgError.RespondError             => fxClose(s, CloseReasons.errorSendingResponse)
-        case _: MsgError.ServerBehindClient
-           | _: MsgError.ServerBehindDatabase
-           | _: MsgError.ServerBehindRedis        => fxClose(s, CloseReasons.serverOutOfDate)
-      }
 
       val main = projectSpaLogic.onMessage(
         static          = static,

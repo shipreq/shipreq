@@ -81,7 +81,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
 
       lazy val projectAndOrd   = ProjectAndOrd(instance, Some(verifiedEvents.last.ord.asLatest))
       lazy val initAppData     = InitAppData(projectAndOrd, data1)
-      lazy val static          = WebSocketStatic(user2.toUser, id, SessionId.random(), (), svr.now.value)
+      lazy val static          = WebSocketStatic(user2.toUser, id, SessionId.random(), (), svr.now.value, svr.now.value.plusSeconds(99999))
 
       lazy val eventsA         = events.take(1)
       lazy val verifiedEventsA = verifiedEvents.take(1)
@@ -154,6 +154,13 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
     val r = sendMsg(msg, static, state)._1.needRight
     t.broadcastAll()
     r
+  }
+
+  private def keepAlive(static: WebSocketStatic)(implicit t: Tester): Option[MsgError] = {
+    import t._
+    var result = Option.empty[MsgError]
+    projectSpa.onKeepAlive(static, msg => Name {result = Some(msg)}).value
+    result
   }
 
   private def onPush(f: VerifiedEvent.NonEmptySeq => Unit): BinaryData => Name[Unit] =
@@ -229,7 +236,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       'invalidProjectId - test(user2.token, Obfuscated("!"))(-\/(InvalidProjectId))
       'projectNotFound  - test(user2.token, ProjectId(23432))(-\/(ProjectNotFound))
       'accessDenied     - test(user3.token, p1.id)(-\/(AccessDenied))
-      'ok               - test(user2.token, p1.id)(\/-((p1.static.copy(sessionId = user2.token.sessionId), emptyState)))
+      'ok               - test(user2.token, p1.id)(\/-((p1.static.copy(sessionId = user2.token.sessionId, expiresAt = security.expiry()), emptyState)))
     }
 
     'initApp - {
@@ -255,6 +262,31 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
         case _: CacheState.Stale      => test(1, 1)
         case _: CacheState.Incomplete => test(1, 1)
       }}
+    }
+
+    'expiry {
+      implicit val t = new Tester; import t._
+      val \/-((static, state)) = projectSpa.onConnect(user2.token, p1.id).value
+      def twice(f: => Unit) = {f; f}
+
+      twice {
+        val msgResult = sendMsg(newUC, static, state)._1
+        assert(msgResult.isRight)
+
+        val kaResult = keepAlive(static)
+        assertEq(kaResult, None)
+      }
+
+      svr.incTime(config.security.jwtLifespan)
+      svr.incTimeSec(1)
+
+      twice {
+        val msgResult = sendMsg(newUC, static, state)._1
+        assertEq(msgResult, -\/(MsgError.SessionExpired))
+
+        val kaResult = keepAlive(static)
+        assertEq(kaResult, Some(MsgError.SessionExpired))
+      }
     }
 
     'updateProject - {

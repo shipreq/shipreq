@@ -40,6 +40,9 @@ trait ProjectSpaLogic[F[_]] {
                 onListenerError: ListenerError => F[Unit],
                 onError        : MsgError => F[Unit]): F[Option[WebSocketState[F]]]
 
+  def onKeepAlive(static : WebSocketStatic,
+                  onError: MsgError => F[Unit]): F[Unit]
+
   // Option is used because this is called after onConnect rejection
   // (in which case valid values are never created for the session)
   def onClose(static: Option[WebSocketStatic],
@@ -71,7 +74,8 @@ object ProjectSpaLogic extends StrictLogging {
                                    projectId  : ProjectId,
                                    sessionId  : Security.SessionId,
                                    span       : Any,
-                                   connectedAt: Instant)
+                                   connectedAt: Instant,
+                                   expiresAt  : Instant)
 
   final case class WebSocketState[F[_]](sub: Option[Redis.Subscription[F]])
   object WebSocketState {
@@ -101,6 +105,7 @@ object ProjectSpaLogic extends StrictLogging {
     final case class ServerBehindDatabase(err: DB.ReadProjectEventError) extends MsgError
     final case class ServerBehindRedis(err: SafePickler.DecodingFailure) extends MsgError
     final case class RespondError(err: Throwable) extends MsgError
+    case object SessionExpired extends MsgError
   }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -167,7 +172,13 @@ object ProjectSpaLogic extends StrictLogging {
             _       <- C.ensure(user.id ==* owner, AccessDenied)
             now     <- C.rightF(svr.now)
           } yield {
-            val static = WebSocketStatic(user, pid, session.sessionId, span, now)
+            val static = WebSocketStatic(
+                           user        = user,
+                           projectId   = pid,
+                           sessionId   = session.sessionId,
+                           span        = span,
+                           connectedAt = now,
+                           expiresAt   = session.expiry)
             val state  = WebSocketState.empty[F]
             (static, state)
           }
@@ -260,6 +271,41 @@ object ProjectSpaLogic extends StrictLogging {
 
       type OptionState = Option[WebSocketState[F]]
 
+      private def logError(err: MsgError, descMsg: () => String): F[Unit] =
+        F.point {
+          err match {
+            case MsgError.SessionExpired =>
+              logger.info("Session expired.")
+
+            case MsgError.ClientMsgDecodingFailure(e) =>
+              logger.warn(s"Failed to parse message from client: ${descMsg()}", e)
+
+            case MsgError.ServerBehindDatabase(e) =>
+              logger.warn(s"Server older than DB. Aborting. ClientMsg:[${descMsg()}]", e)
+
+            case MsgError.ServerBehindClient(e) =>
+              logger.warn(s"Server older than client. Aborting. ClientMsg:[${descMsg()}]", e)
+
+            case MsgError.ServerBehindRedis(e) =>
+              logger.warn(s"Server older than cache. Aborting. CacheData:[${descMsg()}]", e)
+
+            case MsgError.RespondError(e) =>
+              logger.error(s"Error sending response.", e)
+          }
+        }
+
+      private def hasExpired[A](static: WebSocketStatic): F[Boolean] =
+        svr.now.map(_.isAfter(static.expiresAt))
+
+      override def onKeepAlive(static: WebSocketStatic, onError: MsgError => F[Unit]): F[Unit] =
+        hasExpired(static).flatMap { expired =>
+          if (expired) {
+            val err = MsgError.SessionExpired
+            logError(err, () => "") >> onError(err)
+          } else
+            fUnit
+        }
+
       override def onMessage(static         : WebSocketStatic,
                              state          : WebSocketState[F],
                              msg            : BinaryData,
@@ -274,53 +320,42 @@ object ProjectSpaLogic extends StrictLogging {
         def body(implicit span: Span): F[MsgResult[F]] = {
 
           def handleError(wsReqRes: FreeOption[WsReqRes], err: MsgError): F[MsgResult[F]] =
-            onError(err) >> F.point {
-              def descMsg = msg.describe(1000)
-              err match {
-                case MsgError.ClientMsgDecodingFailure(e) =>
-                  logger.warn(s"Failed to parse message from client: $descMsg", e)
+            onError(err) >> logError(err, () => msg.describe(1000)) >| new MsgResult(wsReqRes, -1L, None)
 
-                case MsgError.ServerBehindDatabase(e) =>
-                  logger.warn(s"Server older than DB. Aborting. ClientMsg:[$descMsg]", e)
+          val mainResponseLogic: F[MsgResult[F]] =
+            parseClientMsg(msg) match {
+              case \/-((reqId, req)) =>
+                // GenerateUnitTest.req(webSocketHelper, msg)(reqId, req)
+                def respondWith(msgFnOut: MsgFnOut[F, req.reqRes.ResponseType]): F[MsgResult[F]] = {
+                  val protocolAndRes = req.reqRes.protocolRes.andValue(msgFnOut.output)
+                  val fullRes        = \/-((reqId, protocolAndRes))
+                  val resBin         = webSocketHelper.protocolSC.codec.encode(fullRes)
+                  val wsReqRes       = FreeOption(req.reqRes)
+                  // GenerateUnitTest.resp(webSocketHelper, req, fullRes)(resBin)
+                  respond(resBin).flatMap {
+                    case \/-(_) => F.point(new MsgResult(wsReqRes, resBin.length, msgFnOut.newState))
+                    case -\/(e) => handleError(wsReqRes, MsgError.RespondError(e))
+                  }
+                }
+                for {
+                  _           ← trace.rename("onMessage: " + req.reqRes.name)
+                  msgFnIn     = MsgFnIn(req.req, static, state, push, onListenerError)
+                  msgErrOrOut ← msgFold(req.reqRes)(msgFnIn): F[MsgError \/ MsgFnOut[F, req.reqRes.ResponseType]]
+                  result      ← msgErrOrOut match {
+                                     case \/-(msgFnOut) => respondWith(msgFnOut)
+                                     case -\/(e)        => handleError(FreeOption.empty, e)
+                                   }
+                } yield result
 
-                case MsgError.ServerBehindClient(e) =>
-                  logger.warn(s"Server older than client. Aborting. ClientMsg:[$descMsg]", e)
-
-                case MsgError.ServerBehindRedis(e) =>
-                  logger.warn(s"Server older than cache. Aborting. CacheData:[$descMsg]", e)
-
-                case MsgError.RespondError(e) =>
-                  logger.error(s"Error sending response.", e)
-              }
-              new MsgResult(wsReqRes, -1L, None)
+              case -\/(e) =>
+                handleError(FreeOption.empty, e)
             }
 
-          parseClientMsg(msg) match {
-            case \/-((reqId, req)) =>
-              // GenerateUnitTest.req(webSocketHelper, msg)(reqId, req)
-              def respondWith(msgFnOut: MsgFnOut[F, req.reqRes.ResponseType]): F[MsgResult[F]] = {
-                val protocolAndRes = req.reqRes.protocolRes.andValue(msgFnOut.output)
-                val fullRes        = \/-((reqId, protocolAndRes))
-                val resBin         = webSocketHelper.protocolSC.codec.encode(fullRes)
-                val wsReqRes       = FreeOption(req.reqRes)
-                // GenerateUnitTest.resp(webSocketHelper, req, fullRes)(resBin)
-                respond(resBin).flatMap {
-                  case \/-(_) => F.point(new MsgResult(wsReqRes, resBin.length, msgFnOut.newState))
-                  case -\/(e) => handleError(wsReqRes, MsgError.RespondError(e))
-                }
-              }
-              for {
-                _           ← trace.rename("onMessage: " + req.reqRes.name)
-                msgFnIn     = MsgFnIn(req.req, static, state, push, onListenerError)
-                msgErrOrOut ← msgFold(req.reqRes)(msgFnIn): F[MsgError \/ MsgFnOut[F, req.reqRes.ResponseType]]
-                result      ← msgErrOrOut match {
-                                   case \/-(msgFnOut) => respondWith(msgFnOut)
-                                   case -\/(e)        => handleError(FreeOption.empty, e)
-                                 }
-              } yield result
-
-            case -\/(e) =>
-              handleError(FreeOption.empty, e)
+          hasExpired(static).flatMap { expired =>
+            if (expired)
+              handleError(FreeOption.empty, MsgError.SessionExpired)
+            else
+              mainResponseLogic
           }
         }
 
