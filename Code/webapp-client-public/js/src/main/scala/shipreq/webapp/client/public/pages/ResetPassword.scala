@@ -11,6 +11,7 @@ import shipreq.webapp.base.data.{Disabled, Enabled, SecurityToken}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.ui.UiUtil
 import shipreq.webapp.base.ui.semantic.{Form, Icon, Input, Message}
 import shipreq.webapp.base.user.{PlainTextPassword, UserValidators}
 import shipreq.webapp.client.public.PublicSpaProtocols.{ResetPassword2 => P}
@@ -61,7 +62,7 @@ object ResetPassword {
         $.state.flatMap(s =>
           submitCB(p, s).getOrEmpty))
 
-    val submitOnEnter = Common.submitOnEnter(attemptSubmit)
+    val submitOnEnter = UiUtil.submitOnEnter(attemptSubmit)
 
     val fieldPassword1 = Form.TextField.highLevel(
       State.password1,

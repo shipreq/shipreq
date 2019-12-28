@@ -3,8 +3,7 @@ package shipreq.webapp.client.public.pages
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.data.{Disabled, Enabled}
-import shipreq.webapp.base.lib.KeyHandler.Criterion
-import shipreq.webapp.base.lib.{KeyHandlers, ValidationUX}
+import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Message, Size}
 import shipreq.webapp.client.public.Styles.{common => *}
 
@@ -20,17 +19,21 @@ private[pages] object Common {
 
   def renderTokenExpired = renderTokenInvalid
 
-  def submitButton(title: String, submitCB: Option[Callback]) =
+  def submitButton(title: String, submitCB: Option[Callback]) = {
+
+    // Call preventDefault so underlying form onSubmit handlers don't reload the page
+    val onClick: ReactEvent => Callback =
+      _.preventDefaultCB >> submitCB.getOrEmpty
+
     Button(
       state = Button.State.enabledWhen(submitCB.isDefined),
       colour = Colour.Blue,
-      size = Size.Large).tag(
+      size = Size.Large,
+    ).tag(
       *.submitButton,
       title,
-      ^.onClick -->? submitCB)
-
-  def submitOnEnter(submit: Callback): KeyHandlers =
-    Criterion.Enter.handle(submit) + Criterion.CtrlEnter.handle(submit)
+      ^.onClick ==> onClick)
+  }
 
   def validationOffUntilFirstSubmit(formEnabled  : Enabled,
                                     currentVUX   : ValidationUX,

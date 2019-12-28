@@ -13,6 +13,7 @@ import shipreq.webapp.base.data.{Disabled, Enabled, TCB}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol.CommonProtocols.Login.Request
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.ui.UiUtil
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.base.user.{EmailAddr, UserValidators, Username}
 import shipreq.webapp.base.{CommmonUiText, Urls}
@@ -155,7 +156,7 @@ object Login {
     private def onLoginFailure(user: Username \/ EmailAddr): Callback =
       setError("Login failed", s"Invalid ${CommmonUiText.usernameOrEmail(user.isLeft).toLowerCase} or password.")
 
-    private val submitOnEnter = Common.submitOnEnter(attemptLogin)
+    private val submitOnEnter = UiUtil.submitOnEnter(attemptLogin)
 
     private def onForgotPassword: Callback =
       $.props.flatMap(p =>

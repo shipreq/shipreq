@@ -2,8 +2,11 @@ package shipreq.webapp.base.ui
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalaz.\/
+import shipreq.webapp.base.lib.KeyHandler.Criterion
+import shipreq.webapp.base.lib.KeyHandlers
 import shipreq.webapp.base.validation.Simple
 
 object UiUtil {
@@ -18,5 +21,8 @@ object UiUtil {
     else
       <.div(MutableArray(i.whole).sort.iterator.map(render1).intersperse(<.br).toTagMod)
   }
+
+  def submitOnEnter(submit: Callback): KeyHandlers =
+    Criterion.Enter.handle(submit) + Criterion.CtrlEnter.handle(submit)
 
 }
