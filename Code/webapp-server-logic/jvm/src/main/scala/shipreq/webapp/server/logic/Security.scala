@@ -57,12 +57,11 @@ object Security {
   }
 
   /**
-    * @param requestTokenExpiration This is the JWT expiry according to the JWT read from the request.
-    *                               Creating a new token in-memory will have this as None.
+    * @param expiry When the JWT expires. Read from request JWT's, ignored on write.
     */
-  final case class SessionToken[+E](sessionId             : SessionId,
-                                    authenticatedUser     : Option[User],
-                                    requestTokenExpiration: E) {
+  final case class SessionToken[+E](sessionId        : SessionId,
+                                    authenticatedUser: Option[User],
+                                    expiry           : E) {
 
     def login(u: User): SessionToken[E] =
       copy(authenticatedUser = Some(u))
@@ -74,10 +73,10 @@ object Security {
       copy(sessionId = st.sessionId)
 
     def mapExpiry[A](f: E => A): SessionToken[A] =
-      copy(requestTokenExpiration = f(requestTokenExpiration))
+      copy(expiry = f(expiry))
 
     def withoutExpiry: SessionToken[Unit] =
-      copy(requestTokenExpiration = ())
+      copy(expiry = ())
   }
 
   object SessionToken extends StrictLogging {

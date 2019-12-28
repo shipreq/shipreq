@@ -35,7 +35,7 @@ object MockDb {
       (toUser, ps)
 
     val token: Security.SessionToken[Instant] =
-      Security.SessionToken.anonymous().login(toUser).copy(requestTokenExpiration = Instant.now())
+      Security.SessionToken.anonymous().login(toUser).copy(expiry = Instant.now())
   }
   object UserEntry {
     implicit def univEq: UnivEq[UserEntry] = UnivEq.derive
@@ -431,7 +431,7 @@ object MockSecurity {
       Decoder.forProduct3("sessionId", "authenticatedUser", "expiry")(SessionToken.apply[Instant])
 
     implicit val encoderSessionToken: Encoder[SessionToken[Instant]] =
-      Encoder.forProduct3("sessionId", "authenticatedUser", "expiry")(a => (a.sessionId, a.authenticatedUser, a.requestTokenExpiration))
+      Encoder.forProduct3("sessionId", "authenticatedUser", "expiry")(a => (a.sessionId, a.authenticatedUser, a.expiry))
   }
 }
 
@@ -466,7 +466,7 @@ final class MockSecurity(override val db: MockDb, now: Name[Instant], cfg: Serve
   val cookieName = Cookie.Name("MockSecurity")
 
   override def sessionPersist(token: SessionToken[Any]) = Name[Cookie.Update] {
-    val token2 = token.copy(requestTokenExpiration = now.value.plus(cfg.jwtLifespan))
+    val token2 = token.copy(expiry = now.value.plus(cfg.jwtLifespan))
     val json   = token2.asJson.noSpaces
     val cookie = Cookie(cookieName, json, None, None, None)
     Cookie.Update.add(cookie)
@@ -589,10 +589,10 @@ class MockInterpreters(modCfg         : ServerLogicConfig => ServerLogicConfig =
 
   final implicit class MockInterpreterExtSessionToken[E](self: Security.SessionToken[E]) {
     def withExpiryNow(): Security.SessionToken[Instant] =
-      self.copy(requestTokenExpiration = Instant.now())
+      self.copy(expiry = Instant.now())
 
     def withExpirySoon(): Security.SessionToken[Instant] =
-      self.copy(requestTokenExpiration = Instant.now().plusSeconds(3000))
+      self.copy(expiry = Instant.now().plusSeconds(3000))
   }
 
   final implicit class MockInterpreterExtOptionSessionToken[E](self: Option[Security.SessionToken[E]]) {
