@@ -238,10 +238,16 @@ object DispatchBM {
     implicit val trace: TraceLogic[F, Request[Unit], Response] =
       TraceLogic.off
 
+    implicit object common extends CommonProtocolLogic[F] {
+      override def attemptLoginUnprotected(id      : Username \/ EmailAddr,
+                                           password: PlainTextPassword,
+                                           session : Security.SessionToken) = ???
+      override val ajaxLogin = _ => ???
+    }
+
     implicit object publicSpa extends PublicSpaLogic[F] {
       override def apiRegister1(emailAddr: String) = F.pure(\/-(TaskId(1000)))
       override val ajaxLandingPage    = _ => ???
-      override val ajaxLogin          = _ => ???
       override val ajaxRegister1      = _ => ???
       override val ajaxRegister2      = _ => ???
       override val ajaxResetPassword1 = _ => ???
