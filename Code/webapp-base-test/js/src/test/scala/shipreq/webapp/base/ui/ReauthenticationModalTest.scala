@@ -7,9 +7,8 @@ import org.scalajs.dom.{Element, document, html}
 import japgolly.scalajs.react.test._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
-import shipreq.webapp.base.protocol.CommonProtocols.Login
+import shipreq.webapp.base.test.TestReauthorisationModal
 import shipreq.webapp.base.test.TestState._
-import shipreq.webapp.base.ui.semantic.Modal
 import shipreq.webapp.base.user.Username
 import utest._
 
@@ -22,56 +21,37 @@ object ReauthenticationModalTest extends TestSuite {
     final case class Props(login: ReauthenticationModal.AttemptLogin, root: Element)
 
     final class Backend($: BackendScope[Props, Unit]) {
-      var modal: Modal = null
+      var modal: ReauthenticationModal = null
 
       def render(props: Props): VdomElement = {
         modal = ReauthenticationModal(username, props.login, props.root, None)
         <.div(modal.render)
       }
 
+      val onMount =
+        CallbackTo(modal).asAsyncCallback.flatMap(_.run).toCallback
+
       def dom() = $.getDOMNode.runNow().toHtml.get
     }
 
     val Component = ScalaComponent.builder[Props]("")
       .renderBackend[Backend]
-      .componentDidMount(_.backend.modal.show)
+      .componentDidMount(_.backend.onMount)
       .build
 
     // =================================================================================================================
 
-    class Server(initialResponse: Option[ErrorMsg \/ Permission]) {
-
-      var nextResponse: Option[ErrorMsg \/ Permission] =
-        initialResponse
-
-      var attempts: Vector[Login.Request] =
-        Vector.empty
-
-      val proc: ReauthenticationModal.AttemptLogin =
-        p =>
-          AsyncCallback.point[AsyncCallback[ErrorMsg \/ Permission]] {
-            attempts :+= p
-            nextResponse match {
-              case Some(response) => AsyncCallback.pure(response)
-              case None           => AsyncCallback(_ => Callback.empty) // TODO Remove after sjs 1.5.0
-            }
-          }.flatten
-    }
-
-    // =================================================================================================================
-
-    final case class Ref(backend: Backend, server: Server)
+    final case class Ref(backend: Backend, server: TestReauthorisationModal)
 
     val * = Dsl[Ref, Obs, Unit]
 
     def runTest(initialResponse: Option[ErrorMsg \/ Permission])(a: *.Actions) = {
       val a2 = a <+ passwordValue.assert("")
-      val server = new Server(initialResponse)
-
+      val server = TestReauthorisationModal(initialResponse)
       val root = document.createElement("div") // TODO Fix after sjs 1.5.0
       try {
         val m = Component(Props(server.proc, root)).renderIntoDOM(root)
-        Plan.action(passwordValue.assert("") +> a)
+        Plan.action(a2)
           .test(observer)
           .stateless
           .withRef(Ref(m.backend, server))
@@ -84,7 +64,7 @@ object ReauthenticationModalTest extends TestSuite {
 
     // =================================================================================================================
 
-    final class Obs($: DomZipperJs, server: Server) {
+    final class Obs($: DomZipperJs, server: TestReauthorisationModal) {
       import Obs._
 
       private val password = $("input[type=password]")

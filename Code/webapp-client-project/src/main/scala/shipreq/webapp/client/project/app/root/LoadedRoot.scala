@@ -325,7 +325,13 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
           ImplicationGraphPage.Props(g, setFilterDead).render
       }
 
-      Layout.Props(initPageData.username, cbProjectMetaData.runNow(), routerCtl, p.page, content).render
+      Layout.Props(
+        initPageData.username,
+        cbProjectMetaData.runNow(),
+        global.reauthModal,
+        routerCtl,
+        p.page,
+        content).render
     }
 
     def onProjectChange(c: EventSeqSummary.WithProject): Callback = // TODO I don't like this

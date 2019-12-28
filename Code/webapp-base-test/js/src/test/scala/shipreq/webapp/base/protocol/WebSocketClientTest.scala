@@ -6,7 +6,7 @@ import scala.util.Try
 import scalaz.\/-
 import sourcecode.Line
 import utest._
-import shipreq.base.util.{OpResult, Retries, Url}
+import shipreq.base.util._
 import shipreq.base.util.JsExt._
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol.FakeWebSocket.Message
@@ -49,7 +49,7 @@ object WebSocketClientTest extends TestSuite {
     }
 
     var reauthAttempts = 0
-    var reauthResult: OpResult = OpResult.Failure
+    var reauthResult: Permission = Deny
 
     private def onStateChange(s: State): Callback =
       Callback {
@@ -154,7 +154,7 @@ object WebSocketClientTest extends TestSuite {
     'auth - {
       'expiryWithImmediateLogin - {
         val t = new Tester(ReadyState.Open); import t._
-        reauthResult = OpResult.Success
+        reauthResult = Allow
         assertEq(reauthAttempts, 0)
         assertAndClearStateChanges(State.Authorised(ReadyState.Open))
 
@@ -170,7 +170,7 @@ object WebSocketClientTest extends TestSuite {
 
       'expiryWithEventualLogin - {
         val t = new Tester(ReadyState.Open); import t._
-        reauthResult = OpResult.Failure
+        reauthResult = Deny
         assertEq(reauthAttempts, 0)
         assertAndClearStateChanges(State.Authorised(ReadyState.Open))
 
@@ -182,7 +182,7 @@ object WebSocketClientTest extends TestSuite {
         assertEq(reauthAttempts, 2)
         assertAndClearStateChanges()
 
-        reauthResult = OpResult.Success
+        reauthResult = Allow
         client.connect.runNow()
         assertEq(reauthAttempts, 3)
         assertAndClearStateChanges(State.Authorised(ReadyState.Open))

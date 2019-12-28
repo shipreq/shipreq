@@ -18,10 +18,13 @@ import shipreq.webapp.base.protocol.ProjectSpaProtocols.WebSocket.Push
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.base.protocol.WebSocket.ReadyState
 import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.ui.ReauthenticationModal
 import shipreq.webapp.client.project.app.state.Global.State
 
-abstract class Global(onFirstLoad: (Global, InitAppData) => Callback,
+abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
                       onInitFailure: ErrorMsg => Callback) extends Broadcaster[EventSeqSummary.WithProject] {
+
+  val reauthModal: ReauthenticationModal
 
   protected val logger = LoggerJs.on
 
@@ -220,15 +223,19 @@ abstract class Global(onFirstLoad: (Global, InitAppData) => Callback,
 
 object Global {
 
-  def apply(wscBuilder   : WebSocketClient.Builder[WsReqRes, Push],
+  def apply(reauth       : ReauthenticationModal,
+            wscBuilder   : WebSocketClient.Builder[WsReqRes, Push],
             onFirstLoad  : (Global, InitAppData) => Callback,
             onInitFailure: ErrorMsg => Callback,
             logger       : LoggerJs.Dsl): Global =
     new Global(onFirstLoad, onInitFailure) {
+
+      override val reauthModal = reauth
+
       override val wsClient: WebSocketClient[WsReqRes] = {
         logger.runNow(_.debug("Creating WebSocket..."))
         wscBuilder.build(
-          reauthorise   = AsyncCallback.pure(OpResult.Failure),
+          reauthorise   = reauthModal.run,
           onServerPush  = onPush,
           onStateChange = _ => onWebSocketStateChange,
           logger        = logger)

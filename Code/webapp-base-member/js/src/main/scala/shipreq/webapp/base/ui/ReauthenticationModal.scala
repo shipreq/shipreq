@@ -4,9 +4,11 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, document, html, raw}
 import scala.scalajs.js
+import scala.util.Success
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Allow, Deny, ErrorMsg, Permission}
 import shipreq.webapp.base.data.{Disabled, Enabled}
+import shipreq.webapp.base.protocol.{AjaxClient, CommonProtocols}
 import shipreq.webapp.base.protocol.CommonProtocols.Login
 import shipreq.webapp.base.ui.semantic.{Colour, Icon, JQuery, Label, Modal, UsesSemanticUiManually}
 import shipreq.webapp.base.user.{PlainTextPassword, Username}
@@ -15,18 +17,42 @@ import shipreq.webapp.base.user.{PlainTextPassword, Username}
   *
   * On success, this modal simply closes. It's expected that the login attempt will make an AJAX call that will update
   * the JWT on success.
+  *
+  * Usage:
+  *
+  * 1. Add `.render` to the root view.
+  *    It will be hidden.
+  *    It has reusability so as to only evaluate once.
+  *
+  * 2. Call `.run` to display the modal and collect a conclusion.
   */
+final case class ReauthenticationModal(render: VdomElement, run: AsyncCallback[Permission])
+
 @UsesSemanticUiManually
 object ReauthenticationModal {
 
   type AttemptLogin = Login.Request => AsyncCallback[ErrorMsg \/ Permission]
 
+  def apply(username: Username): ReauthenticationModal =
+    apply(username, AjaxClient.Binary)
+
+  def apply(username: Username, ajaxClient: AjaxClient.Binary): ReauthenticationModal = {
+    val sspLogin = ajaxClient.invoker(CommonProtocols.Login.ajax)
+    apply(username, sspLogin(_))
+  }
+
+  def apply(username: Username, attemptLogin: AttemptLogin): ReauthenticationModal =
+    apply(username, attemptLogin, document.body, Some(280))
+
   def apply(username    : Username,
             attemptLogin: AttemptLogin,
-            rootDom     : Element = document.body,
-            delayMs     : Option[Double] = Some(280)): Modal = {
+            rootDom     : Element,
+            delayMs     : Option[Double]): ReauthenticationModal = {
 
     val id = Modal.nextId()
+
+    var onCompletion: Callback = Callback.empty
+    var lastResult: Permission = Deny
 
     def getDom[N <: raw.Node](sel: String): CallbackTo[N] =
       CallbackTo(rootDom.querySelector(s"#$id $sel").domCast[N])
@@ -50,7 +76,8 @@ object ReauthenticationModal {
       }
 
     val resetForm            = passwordClear >> setState(Enabled, None)
-    val modalInitProps       = js.Dynamic.literal(onHidden = resetForm.toJsFn)
+    val onHide               = resetForm >> Callback.byName(onCompletion)
+    val modalInitProps       = js.Dynamic.literal(onHidden = onHide.toJsFn)
     val modalInit            = Callback(JQuery.byId(id).modal(modalInitProps))
     val modalShow            = Callback(JQuery.byId(id).modal("show"))
     val modalHide            = CallbackTo(JQuery(rootDom.querySelector("#" + id)).modal("hide"))
@@ -70,7 +97,7 @@ object ReauthenticationModal {
           case \/-(req) => attemptLogin(req).flatMap {
 
             case \/-(Allow) =>
-              modalHide.asAsyncCallback
+              (Callback { lastResult = Allow } >> modalHide).asAsyncCallback
 
             case \/-(Deny) =>
               setState(Enabled, Some(errorInvalidPassword)).asAsyncCallback
@@ -137,6 +164,24 @@ object ReauthenticationModal {
         .componentDidMountConst(modalInit)
         .build
 
-    new Modal(component(), resetForm >> modalShow)
+    val run: AsyncCallback[Permission] = {
+      val start: CallbackTo[AsyncCallback[Permission]] =
+        for {
+          (p, complete) <- AsyncCallback.promise[Permission]
+          _             <- Callback {
+                             lastResult = Deny
+                             onCompletion = CallbackTo(lastResult).flatMap(p => complete(Success(p)))
+                           }
+          _             <- resetForm
+          _             <- modalShow
+        } yield p
+
+      for {
+        promise <- start.asAsyncCallback
+        result  <- promise
+      } yield result
+    }
+
+    ReauthenticationModal(component(), run)
   }
 }

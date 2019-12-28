@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.app.root
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data.ProjectMetaData
@@ -16,11 +15,12 @@ import Routes.{Page, RouterCtl}
 
 object Layout {
 
-  final case class Props(username: Username,
-                         project : ProjectMetaData,
-                         rc      : RouterCtl,
-                         page    : Page,
-                         content : VdomElement) {
+  final case class Props(username   : Username,
+                         project    : ProjectMetaData,
+                         reauthModal: ReauthenticationModal,
+                         rc         : RouterCtl,
+                         page       : Page,
+                         content    : VdomElement) {
     @inline def render = Component(this)
   }
 
@@ -63,6 +63,7 @@ object Layout {
         _,
         Style.layout,
         FilterHelp.modal.render,
+        p.reauthModal.render,
         RichTextEditorHelp.allRendered,
         p.content))
       .render

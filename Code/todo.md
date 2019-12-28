@@ -117,7 +117,6 @@ Phase 2B
 * WebSockets
   * Display a connected icon
     * Allow users to toggle connection
-  * Have client handle ConnectRejections, including re-logging in
   * Ensure that JWT expiry is only increased on login/logout
   * Recover from lost Redis connections
 

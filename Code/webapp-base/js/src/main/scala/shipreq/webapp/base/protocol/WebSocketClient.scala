@@ -10,7 +10,7 @@ import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.util.{Failure, Success, Try}
 import scalaz.{-\/, \/-}
 import shipreq.base.util.JsExt._
-import shipreq.base.util.{BinaryData, ErrorMsg, OpResult, Retries, Url}
+import shipreq.base.util._
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol.WebSocket.ReadyState
 import shipreq.webapp.base.protocol.WebSocketShared._
@@ -30,7 +30,7 @@ trait WebSocketClient[ReqRes <: Protocol.RequestResponse[SafePickler]] {
 object WebSocketClient {
 
   trait Builder[ReqRes <: Protocol.RequestResponse[SafePickler], Push] {
-    def build(reauthorise  : AsyncCallback[OpResult],
+    def build(reauthorise  : AsyncCallback[Permission],
               onServerPush : Push => Callback,
               onStateChange: WebSocketClient[ReqRes] => State => Callback,
               logger       : LoggerJs.Dsl): WebSocketClient[ReqRes]
@@ -50,7 +50,7 @@ object WebSocketClient {
               p: Protocol.WebSocket.ClientReqServerPush[SafePickler],
               r: Retries): Builder[p.ReqRes, p.Push] =
       new Builder[p.ReqRes, p.Push] {
-        override def build(reauthorise  : AsyncCallback[OpResult],
+        override def build(reauthorise  : AsyncCallback[Permission],
                            onServerPush : p.Push => Callback,
                            onStateChange: WebSocketClient[p.ReqRes] => State => Callback,
                            logger       : LoggerJs.Dsl) =
@@ -87,7 +87,7 @@ object WebSocketClient {
       Push](
       createWS          : CallbackTo[WebSocket],
       connectionRetries : Retries,
-      reauthorise       : AsyncCallback[OpResult],
+      reauthorise       : AsyncCallback[Permission],
       onStateChange     : WebSocketClient[ReqRes] => State => Callback,
       protocolCS        : Protocol.Of[SafePickler, ClientToServer[Req]],
       mkProtocolSC      : (ReqId => Protocol[SafePickler]) => Protocol.Of[SafePickler, ServerToClient[Push]],
@@ -159,12 +159,12 @@ object WebSocketClient {
         Callback.byName { // TODO BUG! https://github.com/japgolly/scalajs-react/issues/604
           reauthorise.attempt.flatMap {
 
-            case Right(OpResult.Success) =>
+            case Right(Allow) =>
               AsyncCallback.point {
                 state = state.copy(authorised = true)
               } >> connect.asAsyncCallback
 
-            case Right(OpResult.Failure) | Left(_) =>
+            case Right(Deny) | Left(_) =>
               AsyncCallback.point {
                 unsafeFailQueued(errorUnauthorised)
               }
