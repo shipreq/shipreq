@@ -18,6 +18,8 @@ const config = {
       'expose-loader?React!react',
       'expose-loader?ReactDOM!react-dom',
       'expose-loader?ReactTestUtils!react-dom/test-utils',
+      'expose-loader?$!expose-loader?jQuery!jquery', // for Semantic UI -- must precede it! order in this array matters
+      './semantic/dist/semantic.min', //.js
     ],
 
     // Projects access this via symlink in src/test/resources
