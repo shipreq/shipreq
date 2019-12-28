@@ -2,11 +2,18 @@ package shipreq.webapp.base.protocol
 
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo, Reusability}
 import org.scalajs.dom.ext.AjaxException
-import scalaz.\/
+import scala.util.Try
+import scalaz.{\/, \/-, -\/}
 import shipreq.base.util.{ErrorMsg, Identity}
 
-// TODO Use AsyncCallback in ServerSideProcInvoker
 final case class ServerSideProcInvoker[-I, F, O](fn: (I, O => Callback, F => Callback) => Callback) extends AnyVal {
+
+  def apply(input: I): AsyncCallback[F \/ O] =
+    for {
+      (promise, complete) <- AsyncCallback.promise[F \/ O].asAsyncCallback
+      _                   <- this(input, o => complete(Try(\/-(o))), f => complete(Try(-\/(f)))).asAsyncCallback
+      result              <- promise
+    } yield result
 
   @inline def apply(input    : I,
                     onSuccess: O => Callback,
@@ -32,6 +39,9 @@ final case class ServerSideProcInvoker[-I, F, O](fn: (I, O => Callback, F => Cal
 }
 
 object ServerSideProcInvoker {
+
+  def const[F, O](result: F \/ O): ServerSideProcInvoker[Any, F, O] =
+    new ServerSideProcInvoker((_, ok, ko) => result.fold(ko, ok))
 
   def viaAsyncCallback[I, O](f: I => CallbackTo[AsyncCallback[O]]): ServerSideProcInvoker[I, ErrorMsg, O] =
     new ServerSideProcInvoker[I, ErrorMsg, O](
