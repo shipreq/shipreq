@@ -29,7 +29,7 @@ object CommonProtocols {
     object Request {
 
       @Lenses
-      final case class Untyped(user: String, password: String) {
+      final case class Untyped(usernameOrEmail: String, password: String) {
         def validate: Composite.Invalidity \/ Request =
           Request.validator(this)
       }

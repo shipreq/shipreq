@@ -57,7 +57,7 @@ object Login {
     def write(s: State) = Callback {
       if (s.rememberMe) {
         localStorage.setItem(KeyRememberMe, ValueTrue)
-        localStorage.setItem(KeyUser, UserValidators.usernameOrEmail.corrector(s.req.user))
+        localStorage.setItem(KeyUser, UserValidators.usernameOrEmail.corrector(s.req.usernameOrEmail))
       } else {
         localStorage.setItem(KeyRememberMe, ValueFalse)
         localStorage.removeItem(KeyUser)
@@ -79,15 +79,15 @@ object Login {
       for (rm <- localStorage.rememberMe) {
         s = State.rememberMe.set(rm)(s)
         if (rm)
-          localStorage.user.foreach(u => s = State.user.set(u)(s))
+          localStorage.user.foreach(u => s = State.usernameOrEmail.set(u)(s))
       }
       s
     }
   }
 
   object State {
-    val user     = req ^|-> Request.Untyped.user
-    val password = req ^|-> Request.Untyped.password
+    val usernameOrEmail = req ^|-> Request.Untyped.usernameOrEmail
+    val password        = req ^|-> Request.Untyped.password
 
     def init: State =
       State(Request.Untyped("", ""), true, None, None, None)
@@ -116,7 +116,7 @@ object Login {
 
     private def focusForm(retries: Int): Callback =
       $.props.flatMap { p =>
-        val ref = if (p.state.value.req.user.isEmpty) refUser else refPassword
+        val ref = if (p.state.value.req.usernameOrEmail.isEmpty) refUser else refPassword
         ref.get.filterNot(_.disabled).asCallback.flatMap {
           case Some(i) => Callback(i.focus())
           case None    => focusForm(retries - 1).delayMs(20).toCallback.when_(retries > 1)
@@ -136,14 +136,14 @@ object Login {
     private val attemptLogin: Callback =
       $.props.flatMap(p =>
         Callback.when(p.formEnabled is Enabled)(
-          Request.validator(p.state.value.req) match {
+          p.state.value.req.validate match {
             case \/-(req) =>
               p.asyncW((s, f) => p.attemptLogin(req, {
                   case Allow => onLoginSuccess // `s <<` is deliberately omitted so the form doesn't re-enable before the redirect completes
                   case Deny  => s << onLoginFailure(req.user)
                 }, handleAsyncError(f)))
             case -\/(_) =>
-              onLoginFailure(Username.orEmail(p.state.value.req.user))
+              onLoginFailure(Username.orEmail(p.state.value.req.usernameOrEmail))
           }
         )
       )
@@ -160,7 +160,7 @@ object Login {
     private def onForgotPassword: Callback =
       $.props.flatMap(p =>
         Callback.when(p.formEnabled is Enabled) {
-          val usernameOrEmailStr = p.state.value.req.user
+          val usernameOrEmailStr = p.state.value.req.usernameOrEmail
           UserValidators.usernameOrEmail(usernameOrEmailStr) match {
             case \/-(u) =>
               p.asyncW((s, f) => p.resetPassword(u,
@@ -175,7 +175,7 @@ object Login {
 
     private val refUser = Ref[html.Input]
     private val fieldUser = Form.TextField.unvalidated(
-      State.user,
+      State.usernameOrEmail,
       m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoComplete.usernameEmail, m, submitOnEnter).withRef(refUser)),
       Some(CommmonUiText.usernameOrEmail))
 
