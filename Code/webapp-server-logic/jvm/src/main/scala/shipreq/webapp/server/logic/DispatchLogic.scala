@@ -321,14 +321,14 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
     private def versionFailure(text: String) =
       Response(ResponseCmd.Text(StatusCode.NotImplemented, text), Cookie.Update.empty)
 
-    private case class Route(handler: Handler, name: String)
+    private case class Route(handler: Handler, name: String, sessionRequired: Boolean)
 
     private type Handler = (Security.SessionToken, BinaryData, tracer.Span) => F[Response]
 
     private[this] val routeMap: Map[String, Route] = {
       val mutableRouteMap = new Url.Relative.MutableMap[Route]
 
-      def _register[A](p: Protocol.Ajax[SafePickler], name: String)
+      def _register[A](p: Protocol.Ajax[SafePickler], name: String, sessionRequired: Boolean)
                       (f: (Security.SessionToken, p.protocol.PreparedRequestType) => F[Response]): Unit = {
         assert(p.url.underlying startsWith Urls.ajaxRoot.underlying, s"${p.url} must start with ${Urls.ajaxRoot}")
 
@@ -387,7 +387,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
           }
         }
 
-        mutableRouteMap += (p.url -> Route(h, name))
+        mutableRouteMap += (p.url -> Route(h, name, sessionRequired))
       }
 
       def responseCmd(p: Protocol.Ajax[SafePickler])(req: p.protocol.PreparedRequestType, out: p.protocol.ResponseType) = {
@@ -396,8 +396,8 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
         ResponseCmd.Binary(StatusCode.OK, outBin)
       }
 
-      def anon(p: Protocol.Ajax[SafePickler])(name: String, f: p.ServerSideFn[F]): Unit =
-        _register(p, name)((token, req) =>
+      def anon(p: Protocol.Ajax[SafePickler])(name: String, sessionRequired: Boolean, f: p.ServerSideFn[F]): Unit =
+        _register(p, name, sessionRequired)((token, req) =>
           for {
             out   <- f(req)
             resCmd = responseCmd(p)(req, out)
@@ -407,9 +407,10 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
 
       def anonO[A](p: Protocol.Ajax[SafePickler])
                   (name: String,
+                   sessionRequired: Boolean,
                    f: Security.SessionToken => p.ServerSideFnO[F, A])
                   (g: (Security.SessionToken, ResponseCmd, A) => F[Response]): Unit =
-        _register(p, name)((token, req) =>
+        _register(p, name, sessionRequired)((token, req) =>
           for {
             (out, a) <- f(token)(req)
             resCmd    = responseCmd(p)(req, out)
@@ -417,8 +418,8 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
           } yield res
         )
 
-      def auth(p: Protocol.Ajax[SafePickler])(name: String, f: p.ServerSideFnI[F, User]): Unit =
-        _register(p, name)((token, req) =>
+      def auth(p: Protocol.Ajax[SafePickler])(name: String, sessionRequired: Boolean, f: p.ServerSideFnI[F, User]): Unit =
+        _register(p, name, sessionRequired)((token, req) =>
           token.authenticatedUser match {
             case Some(user) =>
               for {
@@ -432,13 +433,13 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
         )
 
       // Register endpoints
-      anonO(CommonProtocols   .Login         .ajax)("login"         , common   .ajaxLogin         )(useNewToken)
-      anon (PublicSpaProtocols.LandingPage   .ajax)("landingPage"   , publicSpa.ajaxLandingPage   )
-      anon (PublicSpaProtocols.Register1     .ajax)("register1"     , publicSpa.ajaxRegister1     )
-      anonO(PublicSpaProtocols.Register2     .ajax)("register2"     , publicSpa.ajaxRegister2     )(useNewToken)
-      anon (PublicSpaProtocols.ResetPassword1.ajax)("resetPassword1", publicSpa.ajaxResetPassword1)
-      anon (PublicSpaProtocols.ResetPassword2.ajax)("resetPassword2", publicSpa.ajaxResetPassword2)
-      auth (HomeSpaProtocols  .CreateProject .ajax)("createProject" , homeSpa  .ajaxCreateProject )
+      anonO(CommonProtocols   .Login         .ajax)("login"         , false, common   .ajaxLogin         )(useNewToken)
+      anon (PublicSpaProtocols.LandingPage   .ajax)("landingPage"   , true , publicSpa.ajaxLandingPage   )
+      anon (PublicSpaProtocols.Register1     .ajax)("register1"     , true , publicSpa.ajaxRegister1     )
+      anonO(PublicSpaProtocols.Register2     .ajax)("register2"     , true , publicSpa.ajaxRegister2     )(useNewToken)
+      anon (PublicSpaProtocols.ResetPassword1.ajax)("resetPassword1", true , publicSpa.ajaxResetPassword1)
+      anon (PublicSpaProtocols.ResetPassword2.ajax)("resetPassword2", true , publicSpa.ajaxResetPassword2)
+      auth (HomeSpaProtocols  .CreateProject .ajax)("createProject" , true , homeSpa  .ajaxCreateProject )
 
       mutableRouteMap.toMapNoHeadSlash
     }
@@ -460,8 +461,9 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
         routeMap.get(req.path.relativeUrlNoHeadSlash) match {
           case Some(route) =>
 
-            def respond(span: tracer.Span): F[Response] =
-              requireSession(s =>
+            def respond(span: tracer.Span): F[Response] = {
+
+              def respondWithSession(s: Security.SessionToken) =
                 if (req.method eq Post)
                   req.body.value match {
                     case Some(reqBin) => route.handler(s, reqBin, span)
@@ -469,7 +471,12 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
                   }
                 else
                   F pure ResponseCmd.StatusOnly.MethodNotAllowed.withoutCookieUpdate
-              )
+
+              if (route.sessionRequired)
+                requireSession(respondWithSession)
+              else
+                security.sessionRestoreOrCreate(req.cookie).flatMap(respondWithSession)
+            }
 
             for {
               _ <- metrics.setServerSideProcName(route.name)

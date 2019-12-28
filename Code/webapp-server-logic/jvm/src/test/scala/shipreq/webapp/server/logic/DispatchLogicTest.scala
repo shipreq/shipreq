@@ -150,12 +150,24 @@ object DispatchLogicTest extends TestSuite {
       'nonGet - static.foreach(p => testNonGet(p.url))
 
       'logIn - {
-        val u = user2
-        val req = CommonProtocols.Login.Request(-\/(u.username), user2password)
-        val st1 = Security.SessionToken.anonymous()
-        val res = runAjax(CommonProtocols.Login.ajax)(req)(st1)._2
-        val tok = security.sessionRestore(res.cookies.get).value
-        assertEq(tok.modToken(_.withoutExpiry), SessionRestoreResult.Success(user2.token.withSession(st1).withoutExpiry))
+        'withSession - {
+          val u      = user2
+          val req    = CommonProtocols.Login.Request(-\/(u.username), user2password)
+          val st1    = Security.SessionToken.anonymous()
+          val res    = runAjax(CommonProtocols.Login.ajax)(req)(st1)._2
+          val expect = u.token.withoutExpiry.withSession(st1)
+          val tok    = security.sessionRestore(res.cookies.get).value.modToken(_.withoutExpiry)
+          assertEq(tok, SessionRestoreResult.Success(expect))
+        }
+
+        'withoutSession - {
+          val u      = user2
+          val req    = CommonProtocols.Login.Request(-\/(u.username), user2password)
+          val res    = runAjax(CommonProtocols.Login.ajax)(req)._2
+          val expect = u.token.withoutExpiry
+          val tok    = security.sessionRestore(res.cookies.get).value.modToken(_.withoutExpiry.withSession(expect))
+          assertEq(tok, SessionRestoreResult.Success(expect))
+        }
       }
 
       'loggedIn {
