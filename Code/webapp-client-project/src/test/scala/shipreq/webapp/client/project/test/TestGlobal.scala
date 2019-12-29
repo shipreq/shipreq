@@ -1,10 +1,10 @@
 package shipreq.webapp.client.project.test
 
-import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
+import japgolly.scalajs.react.{Callback, CallbackTo}
 import java.time.{Duration, Instant}
 import scalaz.{-\/, \/-}
 import shipreq.base.util.JsExt._
-import shipreq.base.util.{Allow, ErrorMsg, OpResult, PotentialChange, Retries}
+import shipreq.base.util.{Allow, ErrorMsg, JsTimers, PotentialChange, Retries}
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.lib.LoggerJs
@@ -118,6 +118,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
         reauthorise   = reauthModal.run,
         onServerPush  = onPush,
         onStateChange = _ => onWebSocketStateChange,
+        timers        = JsTimers.real,
         logger        = logger)
   }
 

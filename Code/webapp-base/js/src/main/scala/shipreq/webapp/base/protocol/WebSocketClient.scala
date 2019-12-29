@@ -5,7 +5,7 @@ import japgolly.univeq._
 import org.scalajs.dom.{CloseEvent, Event, MessageEvent, console, window}
 import scala.annotation.elidable
 import scala.scalajs.js
-import scala.scalajs.js.timers._
+import scala.scalajs.js.timers.SetTimeoutHandle
 import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.util.{Failure, Success, Try}
 import scalaz.{-\/, \/-}
@@ -33,6 +33,7 @@ object WebSocketClient {
     def build(reauthorise  : AsyncCallback[Permission],
               onServerPush : Push => Callback,
               onStateChange: WebSocketClient[ReqRes] => State => Callback,
+              timers       : JsTimers,
               logger       : LoggerJs.Dsl): WebSocketClient[ReqRes]
   }
 
@@ -53,6 +54,7 @@ object WebSocketClient {
         override def build(reauthorise  : AsyncCallback[Permission],
                            onServerPush : p.Push => Callback,
                            onStateChange: WebSocketClient[p.ReqRes] => State => Callback,
+                           timers       : JsTimers,
                            logger       : LoggerJs.Dsl) =
           new Impl(
             w,
@@ -62,6 +64,7 @@ object WebSocketClient {
             protocolCS(p.req.codec),
             protocolSC(_)(p.push.codec),
             onServerPush,
+            timers,
             logger)
       }
   }
@@ -92,6 +95,7 @@ object WebSocketClient {
       protocolCS        : Protocol.Of[SafePickler, ClientToServer[Req]],
       mkProtocolSC      : (ReqId => Option[Protocol[SafePickler]]) => Protocol.Of[SafePickler, ServerToClient[Push]],
       recvPush          : Push => Callback,
+      timers            : JsTimers,
       logger            : LoggerJs.Dsl) extends WebSocketClient[ReqRes] { self =>
 
     private val requestManager: RequestManager[ReqId, Protocol.AndValue[SafePickler], Protocol[SafePickler]] =
@@ -146,7 +150,7 @@ object WebSocketClient {
     override lazy val connect: Callback = {
       val attemptConnect: Callback =
         Callback {
-          state.scheduled.foreach(clearTimeout)
+          state.scheduled.foreach(timers.clearTimeout)
           val i = unsafeNewInstance()
           state = state.copy(instance = i, scheduled = None)
           if (i.isDefined)
@@ -197,7 +201,7 @@ object WebSocketClient {
       state.retries.pop match {
         case Some((retry, nextRetries)) =>
           logger.runNow(_.info(s"WebSocketClient: retry connection in ${retry.toMillis} ms..."))
-          val h = setTimeout(retry.toMillis) {
+          val h = timers.setTimeout(retry.toMillis) {
             // This bit here is Schedule in websocket_client.tla
             val i = unsafeNewInstance()
             state = state.copy(instance = i, scheduled = None)
@@ -393,7 +397,7 @@ object WebSocketClient {
         requestManager.newRequest(prep.response).flatMap { case (reqId, callback) =>
           CallbackTo {
             val msgValue = (reqId, prep.request)
-            val msgBin    = protocolCS.codec.encode(msgValue)
+            val msgBin   = protocolCS.codec.encode(msgValue)
             queueOldestToNewest :+= msgBin
             callback.map(_.unsafeForceType[p.ResponseType].value)
           }

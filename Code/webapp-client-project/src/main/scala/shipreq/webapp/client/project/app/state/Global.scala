@@ -9,7 +9,7 @@ import java.time.{Duration, Instant}
 import org.scalajs.dom.window
 import scala.util.{Failure, Success}
 import scalaz.{-\/, \/-}
-import shipreq.base.util.ErrorMsg
+import shipreq.base.util.{ErrorMsg, JsTimers}
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.event.{EventOrd, EventSeqSummary, VerifiedEvent}
 import shipreq.webapp.base.lib.DataReusability._
@@ -271,6 +271,7 @@ object Global {
           reauthorise   = reauthModal.run,
           onServerPush  = onPush,
           onStateChange = _ => onWebSocketStateChange,
+          timers        = JsTimers.real,
           logger        = logger)
       }
     }

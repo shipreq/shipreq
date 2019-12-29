@@ -62,6 +62,7 @@ object WebSocketClientTest extends TestSuite {
         reauthorise   = AsyncCallback.point{reauthAttempts += 1; reauthResult},
         onServerPush  = p => Callback(receivedPushes :+= p),
         onStateChange = _ => onStateChange,
+        timers        = JsTimers.real,
         logger        = LoggerJs.off)
 
     client.connect.runNow()
