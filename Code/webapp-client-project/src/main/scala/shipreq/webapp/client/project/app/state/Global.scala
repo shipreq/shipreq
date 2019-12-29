@@ -3,13 +3,13 @@ package shipreq.webapp.client.project.app.state
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.extra.{Broadcaster, Px}
-import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo, Reusability}
+import japgolly.scalajs.react.{Callback, CallbackTo, Reusability}
 import japgolly.univeq._
 import java.time.{Duration, Instant}
 import org.scalajs.dom.window
 import scala.util.{Failure, Success}
 import scalaz.{-\/, \/-}
-import shipreq.base.util.{ErrorMsg, OpResult}
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.event.{EventOrd, EventSeqSummary, VerifiedEvent}
 import shipreq.webapp.base.lib.DataReusability._
@@ -19,6 +19,7 @@ import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.base.protocol.WebSocket.ReadyState
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.ui.ReauthenticationModal
+import shipreq.webapp.client.project.app.root.ConnectionStatus
 import shipreq.webapp.client.project.app.state.Global.State
 
 abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
@@ -65,7 +66,19 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
   final protected def onWebSocketStateChange(s: WebSocketClient.State): Callback = Callback.lazily {
     import WebSocketClient.State._
 
-    val result: Callback =
+    val updateConnectionStatus: Callback =
+      s match {
+        case Authorised(ReadyState.Open) =>
+          connectedStatusHub(ConnectionStatus.Connected)
+
+        case Authorised(ReadyState.Closed)
+           | Authorised(ReadyState.Connecting)
+           | Authorised(ReadyState.Closing)
+           | Unauthorised =>
+          connectedStatusHub(ConnectionStatus.Disconnected)
+      }
+
+    val action: Callback =
       unsafeState match {
         case _: State.Loading =>
           s match {
@@ -95,9 +108,19 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
                | Unauthorised =>
               Callback.empty
           }
-    }
+      }
 
-    logger(_.info(s"WebSocket State: $s")) >> result
+    logger(_.info(s"WebSocket State: $s")) >> updateConnectionStatus >> action
+  }
+
+  // TODO fix after sjs 1.5.0
+  final object connectedStatusHub extends Broadcaster[ConnectionStatus] {
+    var _connectionStatus: ConnectionStatus = ConnectionStatus.Disconnected
+    private[Global] def apply(c: ConnectionStatus) = {
+      _connectionStatus = c
+      broadcast(c)
+    }
+    def unsafeGet() = _connectionStatus
   }
 
   final private def load: Callback =

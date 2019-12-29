@@ -21,20 +21,19 @@ import BaseStyles.{layout => *}
 object MemberNavBar {
 
   type LeftProps = Reusable[Breadcrumb.Items]
-  type RightProps = Reusable[Dropdown.Items]
+  type RightProps = Reusable[Menu.Items]
+
+  val noRightProps: RightProps = Reusable.byRef(Nil)
 
   final case class Props(username: Username,
                          left    : LeftProps,
-                         right   : RightProps = onlyUsernameOnTheRight) {
+                         right   : RightProps = noRightProps) {
     lazy val leftWithDividers = left.iterator.intersperse(Divider).toList
     @inline def render: VdomElement = Component(this)
   }
 
   implicit val reusabilityProps: Reusability[Props] =
     Reusability.derive
-
-  val onlyUsernameOnTheRight: RightProps =
-    Reusable.byRef(Nil)
 
   private val menuStyle =
     Menu.Style(
@@ -71,13 +70,19 @@ object MemberNavBar {
       val rightDropdown =
         Menu.DropdownType.Simple(
           p.username.with_@,
-          p.right :+ dropdownLogout
+          dropdownLogout :: Nil
         ).toItem
+
+      val leftMenuItems =
+        itemLogo :: leftBreadcrumb :: Nil
+
+      val rightMenuItems =
+        p.right :+ rightDropdown
 
       val menu = Menu.Props(
         menuStyle,
-        itemLogo :: leftBreadcrumb :: Nil,
-        rightDropdown :: Nil,
+        leftMenuItems,
+        rightMenuItems,
         dropdownOptions)
 
       <.nav(menu.render)

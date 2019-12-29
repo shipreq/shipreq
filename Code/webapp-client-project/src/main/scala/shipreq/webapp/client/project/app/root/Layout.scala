@@ -8,21 +8,24 @@ import shipreq.webapp.base.user.Username
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui._
-import shipreq.webapp.base.ui.semantic.Breadcrumb
+import shipreq.webapp.base.ui.semantic.{Breadcrumb, Colour, Icon, Menu}
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.widgets.{FilterHelp, RichTextEditorHelp}
 import Routes.{Page, RouterCtl}
 
 object Layout {
 
-  final case class Props(username   : Username,
-                         project    : ProjectMetaData,
-                         reauthModal: ReauthenticationModal,
-                         rc         : RouterCtl,
-                         page       : Page,
-                         content    : VdomElement) {
+  final case class Props(username        : Username,
+                         project         : ProjectMetaData,
+                         connectionStatus: ConnectionStatus,
+                         reauthModal     : ReauthenticationModal,
+                         rc              : RouterCtl,
+                         page            : Page,
+                         content         : VdomElement) {
     @inline def render = Component(this)
   }
+
+  // -------------------------------------------------------------------------------------------------------------------
 
   private type NavBarLeftInput = (Page, ProjectMetaData, RouterCtl)
 
@@ -56,9 +59,38 @@ object Layout {
       MemberNavBar.MemberHome :: tail
     }
 
-  private def render(p: Props): VdomElement =
+  // -------------------------------------------------------------------------------------------------------------------
+
+  private type NavBarRightInput = ConnectionStatus
+
+  private val reusabilityNavBarRightInput: Reusability[NavBarRightInput] =
+    implicitly[Reusability[NavBarRightInput]]
+
+  private val connectedMenuItem =
+    ConnectionStatus.memo { c =>
+      val icon = c match {
+        case ConnectionStatus.Connected =>
+          Icon.Plug.withColour(Colour.Green).tag(Style.navBar.connected, ^.title := "connected")
+
+        case ConnectionStatus.Disconnected =>
+          Icon.Plug.withColour(Colour.Red).tag(Style.navBar.disconnected, ^.title := "disconnected")
+      }
+
+      Menu.Item(Menu.ItemType.Div(icon))
+    }
+
+  private def navBarRight(input: NavBarRightInput): MemberNavBar.RightProps =
+    Reusable.explicitly(input)(reusabilityNavBarRightInput).map { connectionStatus =>
+      connectedMenuItem(connectionStatus) :: Nil
+    }
+
+  // -------------------------------------------------------------------------------------------------------------------
+
+  private def render(p: Props): VdomElement = {
+    val menuLeft  = navBarLeft((p.page, p.project, p.rc))
+    val menuRight = navBarRight(p.connectionStatus)
     MemberLayout.Props(
-      MemberNavBar.Props(p.username, navBarLeft((p.page, p.project, p.rc))),
+      MemberNavBar.Props(p.username, menuLeft, menuRight),
       <.div(
         _,
         Style.layout,
@@ -67,6 +99,7 @@ object Layout {
         RichTextEditorHelp.allRendered,
         p.content))
       .render
+  }
 
   val Component = ScalaFnComponent(render)
 }

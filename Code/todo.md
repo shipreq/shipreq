@@ -115,8 +115,7 @@ Phase 2B
   * Save to, and load from, localStorage (maybe spec with TLA+ cos merges?)
 
 * WebSockets
-  * Display a connected icon
-    * Allow users to toggle connection
+  * Allow users to toggle connection
   * Ensure that JWT expiry is only increased on login/logout
   * Recover from lost Redis connections
 
