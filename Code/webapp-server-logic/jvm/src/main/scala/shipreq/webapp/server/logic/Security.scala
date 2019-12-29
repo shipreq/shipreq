@@ -43,6 +43,12 @@ object Security {
         case SessionRestoreResult.Expired(t) => SessionToken.anonymous(t.sessionId)
         case SessionRestoreResult.None       => SessionToken.anonymous()
       }
+
+    final def sessionPersistIfNew(token: SessionToken[Option[Instant]]): F[Cookie.Update] =
+      if (token.expiry.isDefined)
+        F.pure(Cookie.Update.empty)
+      else
+        sessionPersist(token)
   }
 
   // ===================================================================================================================

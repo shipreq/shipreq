@@ -116,7 +116,6 @@ Phase 2B
 
 * WebSockets
   * On reconnection, all queue tasks should be resumed automatically
-  * Ensure that JWT expiry is only increased on login/logout
   * Recover from lost Redis connections
 
 * Change security token to something like confirmation/verification token (inc properties)

@@ -11,6 +11,7 @@ import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.logic.Security
+import shipreq.webapp.server.logic.Security.SessionRestoreResult
 import shipreq.webapp.server.logic.dispatch.Cookie
 import shipreq.webapp.server.security.SecurityInterpreter
 
@@ -76,8 +77,8 @@ object LiveTestUtils {
     testKit.post(url, testKit.theHttpClient, h2 ::: headers, params: _*).asInstanceOf[HttpResponse]
   }
 
-  def ajaxPost(p: Protocol.Ajax[SafePickler])
-              (req: p.protocol.RequestType,
+  def ajaxPost(p      : Protocol.Ajax[SafePickler])
+              (req    : p.protocol.RequestType,
                token  : Security.SessionToken[Any] = Security.SessionToken.anonymous(),
                headers: List[(String, String)] = Nil): HttpResponse = {
     val h2 = tokenCookie(token)
@@ -158,18 +159,29 @@ object LiveTestUtils {
     }
 
     def assertJwt(expect: Security.SessionRestoreResult[Any])(implicit l: sourcecode.Line): LiveTestHttpResponse = {
+      val actual = sessionRestore()
+      assertEq(actual.modToken(_.withoutExpiry), expect.modToken(_.withoutExpiry))
+      this
+    }
+
+    def sessionRestore() = {
       val prefix = SecurityInterpreter.cookieName.value + "="
       val cookieValue = resp.headers.getOrElse("Set-Cookie", Nil).find(_.startsWith(prefix)).map(_.drop(prefix.length))
-      val actual = cookieValue match {
+      cookieValue match {
         case Some(v) =>
           val m = Map(SecurityInterpreter.cookieName -> v.takeWhile(_ != ';'))
           Global.security.sessionRestore(m.get).unsafeRun()
         case None =>
           Security.SessionRestoreResult.None
       }
-      assertEq(actual.modToken(_.withoutExpiry), expect.modToken(_.withoutExpiry))
-      this
     }
+
+    def newJwt(): Option[Security.SessionToken[Instant]] =
+      sessionRestore() match {
+        case SessionRestoreResult.Success(t) => Some(t)
+        case SessionRestoreResult.Expired(_) => None
+        case SessionRestoreResult.None       => None
+      }
   }
 
   implicit def toLiveTestHttpResponse(a: HttpResponse): LiveTestHttpResponse =

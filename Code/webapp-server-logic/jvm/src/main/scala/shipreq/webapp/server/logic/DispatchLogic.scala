@@ -178,10 +178,10 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
     routes.embed(r => test(r.path), r => r.copy(path = mod(r.path)))
   }
 
-  private def initOrExtendSession(cmd: Security.SessionToken[Any] => ResponseCmd)(implicit req: Request): F[Response] =
+  private def loadOrInitSession(cmd: Security.SessionToken[Any] => ResponseCmd)(implicit req: Request): F[Response] =
     for {
       s  <- security.sessionRestoreOrCreate(req.cookie)
-      cu <- security.sessionPersist(s)
+      cu <- security.sessionPersistIfNew(s)
     } yield Response(cmd(s), cu)
 
   private def requireSession(fCmd: Security.SessionToken[Instant] => F[Response])(implicit req: Request): F[Response] =
@@ -206,7 +206,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
                       for {
                         _   <- tracer.alg.addAttrs(Trace.Attr.ShipReqUserId(u.id.value) :: Nil)
                         cmd <- f(u)
-                        cu  <- security.sessionPersist(session)
+                        cu  <- security.sessionPersistIfNew(session)
                       } yield Response(cmd, cu)
                     case None =>
                       F pure Response(cmdWhenLoginRequired, Cookie.Update.empty)
@@ -225,7 +225,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
           security.sessionRestoreOrCreate(req.cookie).flatMap { s =>
             if (s.authenticatedUser.isEmpty)
               for {
-                cu <- security.sessionPersist(s)
+                cu <- security.sessionPersistIfNew(s)
               } yield Response(ResponseCmd.ServePublicSpa(s.authenticatedUser), cu)
             else
               F pure Response(ResponseCmd.redirectToMemberHome, Cookie.Update.empty)
@@ -235,7 +235,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
         whenUrlIsAnyOf(R.static.filterNot(_ ==* R.Login).get.map(_.url).toNES) { implicit req =>
           traceUrl(req.path,
             onMethod(Get)(
-              initOrExtendSession(t =>
+              loadOrInitSession(t =>
                 ResponseCmd.ServePublicSpa(t.authenticatedUser))))
         }
 
@@ -254,7 +254,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
                 security.protect(
                   for {
                     status <- getTokenStatus(token)
-                    resp   <- initOrExtendSession(s =>
+                    resp   <- loadOrInitSession(s =>
                                 status match {
                                   case SecurityToken.Status.Valid   => ResponseCmd.ServePublicSpa(s.authenticatedUser)
                                   case SecurityToken.Status.Invalid => ResponseCmd.redirectToPublicHome
@@ -324,13 +324,13 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
 
     private case class Route(handler: Handler, name: String, sessionRequired: Boolean)
 
-    private type Handler = (Security.SessionToken[Any], BinaryData, tracer.Span) => F[Response]
+    private type Handler = (Security.SessionToken[Option[Instant]], BinaryData, tracer.Span) => F[Response]
 
     private[this] val routeMap: Map[String, Route] = {
       val mutableRouteMap = new Url.Relative.MutableMap[Route]
 
       def _register[A](p: Protocol.Ajax[SafePickler], name: String, sessionRequired: Boolean)
-                      (f: (Security.SessionToken[Any], p.protocol.PreparedRequestType) => F[Response]): Unit = {
+                      (f: (Security.SessionToken[Option[Instant]], p.protocol.PreparedRequestType) => F[Response]): Unit = {
         assert(p.url.underlying startsWith Urls.ajaxRoot.underlying, s"${p.url} must start with ${Urls.ajaxRoot}")
 
         val serverVer = p.prepReq.codec.version
@@ -402,7 +402,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
           for {
             out   <- f(req)
             resCmd = responseCmd(p)(req, out)
-            cu    <- security.sessionPersist(token)
+            cu    <- security.sessionPersistIfNew(token)
           } yield Response(resCmd, cu)
         )
 
@@ -426,7 +426,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
               for {
                 out   <- f(user, req)
                 resCmd = responseCmd(p)(req, out)
-                cu    <- security.sessionPersist(token)
+                cu    <- security.sessionPersistIfNew(token)
               } yield Response(resCmd, cu)
             case None =>
               authRequired
@@ -464,7 +464,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
 
             def respond(span: tracer.Span): F[Response] = {
 
-              def respondWithSession(s: Security.SessionToken[Any]) =
+              def respondWithSession(s: Security.SessionToken[Option[Instant]]) =
                 if (req.method eq Post)
                   req.body.value match {
                     case Some(reqBin) => route.handler(s, reqBin, span)
@@ -474,7 +474,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
                   F pure ResponseCmd.StatusOnly.MethodNotAllowed.withoutCookieUpdate
 
               if (route.sessionRequired)
-                requireSession(respondWithSession)
+                requireSession(s => respondWithSession(s.copy(expiry = Some(s.expiry))))
               else
                 security.sessionRestoreOrCreate(req.cookie).flatMap(respondWithSession)
             }
