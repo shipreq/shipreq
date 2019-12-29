@@ -34,8 +34,8 @@ object MockDb {
     def toUserAndPassword: (User, PasswordAndSalt) =
       (toUser, ps)
 
-    val token: Security.SessionToken =
-      Security.SessionToken.anonymous().login(toUser)
+    val token: Security.SessionToken[Instant] =
+      Security.SessionToken.anonymous().login(toUser).copy(expiry = Instant.now())
   }
   object UserEntry {
     implicit def univEq: UnivEq[UserEntry] = UnivEq.derive
@@ -306,6 +306,9 @@ final class MockServer[F[_]]()(implicit F: Monad[F], se: SyncEffect[F]) extends 
 
   override val now = F.point(clock)
 
+  def incTime(d: Duration): Unit =
+    clock = clock.plus(d)
+
   def incTimeMs(ms: Long): Unit =
     clock = clock.plusMillis(ms)
 
@@ -427,11 +430,11 @@ object MockSecurity {
     implicit val encoderUser: Encoder[User] =
       Encoder.forProduct2("id", "username")(a => (a.id, a.username))
 
-    implicit val decoderSessionToken: Decoder[SessionToken] =
-      Decoder.forProduct3("sessionId", "authenticatedUser", "expiry")(SessionToken.apply)
+    implicit val decoderSessionToken: Decoder[SessionToken[Instant]] =
+      Decoder.forProduct3("sessionId", "authenticatedUser", "expiry")(SessionToken.apply[Instant])
 
-    implicit val encoderSessionToken: Encoder[SessionToken] =
-      Encoder.forProduct3("sessionId", "authenticatedUser", "expiry")(a => (a.sessionId, a.authenticatedUser, a.requestTokenExpiration))
+    implicit val encoderSessionToken: Encoder[SessionToken[Instant]] =
+      Encoder.forProduct3("sessionId", "authenticatedUser", "expiry")(a => (a.sessionId, a.authenticatedUser, a.expiry))
   }
 }
 
@@ -465,17 +468,19 @@ final class MockSecurity(override val db: MockDb, now: Name[Instant], cfg: Serve
 
   val cookieName = Cookie.Name("MockSecurity")
 
-  override def sessionPersist(token: SessionToken) = Name[Cookie.Update] {
-    val token2 = token.copy(requestTokenExpiration = Some(now.value.plus(cfg.jwtLifespan)))
+  def expiry() = now.value.plus(cfg.jwtLifespan)
+
+  override def sessionPersist(token: SessionToken[Any]) = Name[Cookie.Update] {
+    val token2 = token.copy(expiry = expiry())
     val json   = token2.asJson.noSpaces
     val cookie = Cookie(cookieName, json, None, None, None)
     Cookie.Update.add(cookie)
   }
 
-  override def sessionRestore(cookies: Cookie.LookupFn) = Name[SessionRestoreResult] {
+  override def sessionRestore(cookies: Cookie.LookupFn) = Name[SessionRestoreResult[Instant]] {
     cookies(cookieName) match {
       case Some(cookieValue) =>
-        SessionRestoreResult.Success(decodeOrThrow[SessionToken](cookieValue))
+        SessionRestoreResult.Success(decodeOrThrow[SessionToken[Instant]](cookieValue))
 
       case None =>
         SessionRestoreResult.None
@@ -542,6 +547,7 @@ class MockInterpreters(modCfg         : ServerLogicConfig => ServerLogicConfig =
   implicit val metrics        = MetricsLogic.const(Name(()))
   implicit val trace          = Trace.Algebra.off[Name]
   implicit val redis          = specificRedis.getOrElse(new Redis.InMemory[Name])
+  implicit val common         = CommonProtocolLogic[Name]
   implicit val publicSpa      = PublicSpaLogic[Name, Name]
   implicit val homeSpa        = HomeSpaLogic[Name, Name]
   implicit val projectSpa     = ProjectSpaLogic[Name, Name](config.projectSpa)
@@ -586,13 +592,24 @@ class MockInterpreters(modCfg         : ServerLogicConfig => ServerLogicConfig =
   def forwardTimeToEndOfPasswordResetWindow(v: Validity): Unit =
     svr.forwardTimeToEndOfWindow(config.security.passwordResetTokenLifespan, v)
 
-  final implicit class MockInterpreterExtOptionSessionToken(self: Option[Security.SessionToken]) {
-    def withSession(from: Option[Security.SessionToken]): Option[Security.SessionToken] =
+  final implicit class MockInterpreterExtSessionToken[E](self: Security.SessionToken[E]) {
+    def withExpiryNow(): Security.SessionToken[Instant] =
+      self.copy(expiry = Instant.now())
+
+    def withExpirySoon(): Security.SessionToken[Instant] =
+      self.copy(expiry = Instant.now().plusSeconds(3000))
+  }
+
+  final implicit class MockInterpreterExtOptionSessionToken[E](self: Option[Security.SessionToken[E]]) {
+    def withSession(from: Option[Security.SessionToken[Any]]): Option[Security.SessionToken[E]] =
       // self.map(_.copy(sessionId = from.flatMap(_.sessionId)))
      (self, from) match {
        case (Some(s), Some(f)) => Some(s.withSession(f))
        case _                  => self
      }
+
+    def withoutExpiry: Option[Security.SessionToken[Unit]] =
+      self.map(_.withoutExpiry)
   }
 
 }

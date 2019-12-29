@@ -1,8 +1,8 @@
 package shipreq.webapp.server.util
 
-import javax.websocket.CloseReason.CloseCode
 import javax.websocket.server._
 import scala.collection.JavaConverters._
+import shipreq.webapp.base.protocol.WebSocketShared
 import shipreq.webapp.server.logic.dispatch.Cookie
 
 object WebSocketUtil {
@@ -36,12 +36,29 @@ object WebSocketUtil {
 //      throw new IllegalStateException(s"WebSocket PathParam '$name' not found. uri=${req.getRequestURI}")
 //    }
 
-  class CustomCloseCode(code: Int) extends CloseCode {
+  object CloseReasons {
+    import WebSocketShared._
+
+    val errorParsingMessage          = CloseReason(CloseCode.protocolError,       CloseReasonPhrase("Error parsing message"))
+    val errorParsingSubscriptionData = CloseReason(CloseCode.unexpectedCondition, CloseReasonPhrase("Error parsing subscription data"))
+    val errorSendingResponse         = CloseReason(CloseCode.respondException,    CloseReasonPhrase("Error sending response"))
+    val invalidRequest               = CloseReason(CloseCode.cannotAccept,        CloseReasonPhrase("Invalid request"))
+    val runtimeExceptionOccurred     = CloseReason(CloseCode.unhandledException,  CloseReasonPhrase("Runtime exception occurred"))
+    val serverOutOfDate              = CloseReason(CloseCode.serviceRestart,      CloseReasonPhrase("Server is out-of-date"))
+    val unauthorised                 = CloseReason(CloseCode.unauthorised,        CloseReasonPhrase("Unauthorised"))
+  }
+
+  class CustomCloseCode(code: Int) extends javax.websocket.CloseReason.CloseCode {
     override final def getCode = code
   }
 
   object CustomCloseCode {
     def apply(code: Int): CustomCloseCode =
       new CustomCloseCode(code)
+  }
+
+  object Implicits {
+    implicit def closeReasonToJavax(r: WebSocketShared.CloseReason): javax.websocket.CloseReason =
+      new javax.websocket.CloseReason(CustomCloseCode(r.code.value), r.phrase.value)
   }
 }

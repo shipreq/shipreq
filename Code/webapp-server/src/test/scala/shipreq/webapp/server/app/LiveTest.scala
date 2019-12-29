@@ -7,6 +7,8 @@ import shipreq.base.util.FxModule._
 import shipreq.webapp.base.{AssetManifest, Urls, WebappConfig}
 import shipreq.webapp.base.data.{Project, ProjectId}
 import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.user.{EmailAddr, PersonName}
+import shipreq.webapp.client.public.PublicSpaProtocols.LandingPage.Request
 import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
 import shipreq.webapp.server.logic.{Obfuscators, Security}
 import shipreq.webapp.server.test.LiveTestUtils._
@@ -27,8 +29,8 @@ object LiveTest extends TestSuite {
   implicit def temp[I](c: shipreq.webapp.base.protocol.ClientSideProc[I]): ClientSideProc[I] =
     ClientSideProc[I](c.objectName)(c.pickler)
 
-  implicit def userToToken(u: UserFixture.TestUser): Option[Security.SessionToken] =
-    Some(Security.SessionToken.anonymous().login(u.toUserDescriptor))
+  implicit def userToToken(u: UserFixture.TestUser): Option[Security.SessionToken[Unit]] =
+    Some(Security.SessionToken.anonymous().login(u.toUserDescriptor).withoutExpiry)
 
   override def tests = Tests {
     prepare()
@@ -42,7 +44,7 @@ object LiveTest extends TestSuite {
 
     'loginAjax {
       val st = Security.SessionToken.anonymous()
-      ajaxPost(PublicSpaProtocols.Login.ajax)(PublicSpaProtocols.Login.Request(-\/(user1.username), user1.password), st)
+      ajaxPost(CommonProtocols.Login.ajax)(CommonProtocols.Login.Request(-\/(user1.username), user1.password), st)
         .assertOk
         .assertContentType("application/octet-stream")
         .assertJwt(Some(user1.toToken().withSession(st)))
@@ -123,6 +125,33 @@ object LiveTest extends TestSuite {
         "templates-hidden/blank.html")
       for (t <- templates)
         get(s"/$t").assertStatus(404)
+    }
+
+    'jwtLifespanExtension {
+      val Some(s1) = get("/").newJwt()
+      assert(s1.authenticatedUser.isEmpty)
+
+      assertEq(get("/", Some(s1)).newJwt(), None)
+
+      val Some(s2) = ajaxPost(CommonProtocols.Login.ajax)(CommonProtocols.Login.Request(-\/(user1.username), user1.password), s1).newJwt()
+      assertEq(s2.withoutExpiry, s1.withoutExpiry.login(user1.toUserDescriptor))
+
+      // GETs shouldn't increase session time
+      assertEq(get(Urls.memberHome.relativeUrl, Some(s2)).newJwt(), None)
+      assertEq(get(AssetManifest.favicon, Some(s2)).newJwt(), None)
+      assertEq(get(Urls.project(Obfuscators.projectId.obfuscate(pid.get)).relativeUrl, Some(s2)).newJwt(), None)
+
+      // Non-login AJAX shouldn't increase session time
+      val lpReq = Request(PersonName("Mike"), EmailAddr("qwe@jasdkf.com"), Some("yo"), true)
+      assertEq(ajaxPost(PublicSpaProtocols.LandingPage.ajax)(lpReq, s2).newJwt(), None)
+
+      val Some(s3) = ajaxPost(CommonProtocols.Login.ajax)(CommonProtocols.Login.Request(-\/(user1.username), user1.password), s2).newJwt()
+      assertEq(s3.withoutExpiry, s2.withoutExpiry)
+
+      val Some(s4) = get(Urls.logout.relativeUrl, Some(s3)).newJwt()
+      assertEq(s4.withoutExpiry, s3.withoutExpiry.logout)
+
+      ()
     }
 
     'teardown {

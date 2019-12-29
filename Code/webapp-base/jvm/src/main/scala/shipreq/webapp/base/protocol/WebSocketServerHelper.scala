@@ -8,7 +8,7 @@ final class WebSocketServerHelper[Req, Push](val protocolCS: Protocol.Of[SafePic
 
 object WebSocketServerHelper {
 
-  private val responseUnpickler: ReqId => Protocol[SafePickler] =
+  private val responseUnpickler: ReqId => Option[Protocol[SafePickler]] =
     _ => sys.error("Server doesn't unpickle responses.")
 
   def apply(p: Protocol.WebSocket.ClientReqServerPush[SafePickler]): WebSocketServerHelper[p.Req, p.Push] = {

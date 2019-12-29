@@ -1,17 +1,19 @@
 package shipreq.webapp.server.app
 
 import com.typesafe.scalalogging.StrictLogging
-import javax.websocket._
+import javax.websocket.{CloseReason => _, _}
 import javax.websocket.server._
 import org.slf4j.MDC
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.BinaryData
 import shipreq.base.util.FxModule._
+import shipreq.base.util.log.WebappLogFields
 import shipreq.webapp.base.Urls
+import shipreq.webapp.base.protocol.WebSocketShared.CloseReason
 import shipreq.webapp.server.logic.ProjectSpaLogic._
 import shipreq.webapp.server.util.WebSocketUtil
-import shipreq.webapp.server.util.WebSocketUtil.UserPropsLens
-import shipreq.base.util.log.WebappLogFields
+import shipreq.webapp.server.util.WebSocketUtil.Implicits._
+import shipreq.webapp.server.util.WebSocketUtil.{CloseReasons, UserPropsLens}
 
 object ProjectSpaWebSocket extends StrictLogging {
 
@@ -47,18 +49,12 @@ object ProjectSpaWebSocket extends StrictLogging {
       }
     }
   }
-
-  object CustomCloseCodes {
-    val UnhandledException = WebSocketUtil.CustomCloseCode(4500)
-    val RespondException   = WebSocketUtil.CustomCloseCode(4501)
-  }
 }
 
 @ServerEndpoint(
   value        = Urls.ProjectSpaWebSocket.ServerEndpoint,
   configurator = classOf[ProjectSpaWebSocket.Connector])
 final class ProjectSpaWebSocket extends StrictLogging {
-  import CloseReason.{CloseCode, CloseCodes}
   import ProjectSpaWebSocket._
 
   private def unsafeSend(s: Session, b: BinaryData): Unit = {
@@ -67,11 +63,11 @@ final class ProjectSpaWebSocket extends StrictLogging {
     s.getAsyncRemote.sendBinary(b.unsafeByteBuffer, onResult)
   }
 
-  private def fxClose(s: Session, code: CloseCode, reasonPhrase: String): Fx[Unit] =
+  private def fxClose(s: Session, reason: CloseReason): Fx[Unit] =
     Fx {
       try {
         if (s.isOpen)
-          s.close(new CloseReason(code, reasonPhrase))
+          s.close(reason)
       } catch {
         case t: Throwable =>
           logger.error("Failed to close session.", t)
@@ -102,11 +98,10 @@ final class ProjectSpaWebSocket extends StrictLogging {
 
   @OnOpen
   def onOpen(s: Session): Unit = withMdc(s, "open") {
+    import ConnectRejection._
+
     val startMs = System.currentTimeMillis()
     Option(connectRejectionL.get(s.getUserProperties)) match {
-      case Some(r) =>
-        logger.warn(s"Rejecting WebSocket connection: $r")
-        fxClose(s, CloseCodes.CANNOT_ACCEPT, r.toString).unsafeRun()
 
       case None =>
         val userProps = s.getUserProperties
@@ -116,7 +111,17 @@ final class ProjectSpaWebSocket extends StrictLogging {
         val fx        = projectSpaLogic.onOpen(static, state, fxPush(s), onError)
         val state2    = fx.unsafeRun()
         stateL.set(userProps, state2)
+
+      case Some(NoSession | ExpiredSession) =>
+        fxClose(s, CloseReasons.unauthorised).unsafeRun()
+
+      case Some(r@ (AnonymousSession | AccessDenied | InvalidProjectId | ProjectNotFound)) =>
+        logger.warn(s"Rejecting WebSocket connection: $r")
+        // For security reasons, don't vary the response in a way that would allow attackers to know when they've
+        // discovered a valid project ID, or an existing project.
+        fxClose(s, CloseReasons.invalidRequest).unsafeRun()
     }
+
     val durMs = System.currentTimeMillis() - startMs
     logger.debug(s"WebSocket ${s.getRequestURI.getPath} open completed $durMs ms")
   }
@@ -125,27 +130,31 @@ final class ProjectSpaWebSocket extends StrictLogging {
 
   @OnMessage
   def onMessage(s: Session, messageBytes: Array[Byte]): Unit = withMdc(s, "message") {
+    val userProps = s.getUserProperties
+    val static    = staticL.get(userProps)
+
+    val fxOnMsgError: MsgError => Fx[Unit] = {
+      case MsgError.SessionExpired              => fxClose(s, CloseReasons.unauthorised)
+      case _: MsgError.ClientMsgDecodingFailure => fxClose(s, CloseReasons.errorParsingMessage)
+      case _: MsgError.RespondError             => fxClose(s, CloseReasons.errorSendingResponse)
+      case _: MsgError.ServerBehindClient
+         | _: MsgError.ServerBehindDatabase
+         | _: MsgError.ServerBehindRedis        => fxClose(s, CloseReasons.serverOutOfDate)
+    }
+
     if (messageBytes.length == 0) {
       logger.trace("Received keep-alive")
+      projectSpaLogic.onKeepAlive(static, fxOnMsgError).unsafeRun()
+
     } else {
-      val userProps = s.getUserProperties
-      val static    = staticL.get(userProps)
-      val state     = stateL.get(userProps)
-      val binIn     = BinaryData.unsafeFromArray(messageBytes)
+      val state = stateL.get(userProps)
+      val binIn = BinaryData.unsafeFromArray(messageBytes)
 
       val fxSend: BinaryData => Fx[Throwable \/ Unit] =
         b => Fx {
           unsafeSend(s, b)
           rightUnit
         }
-
-      val fxOnMsgError: MsgError => Fx[Unit] = {
-        case _: MsgError.ClientMsgDecodingFailure => fxClose(s, CloseCodes.PROTOCOL_ERROR, "Error parsing message")
-        case _: MsgError.RespondError             => fxClose(s, CustomCloseCodes.RespondException, "Error sending response")
-        case _: MsgError.ServerBehindClient
-           | _: MsgError.ServerBehindDatabase
-           | _: MsgError.ServerBehindRedis        => fxClose(s, CloseCodes.SERVICE_RESTART, "Server is out-of-date")
-      }
 
       val main = projectSpaLogic.onMessage(
         static          = static,
@@ -164,19 +173,19 @@ final class ProjectSpaWebSocket extends StrictLogging {
   private def onListenerError(s: Session): ListenerError => Fx[Unit] = {
     case ListenerError.RedisDecodingFailure(e) =>
       if (e.isLocalKnownToBeOutOfDate)
-        fxClose(s, CloseCodes.SERVICE_RESTART, "Server is out-of-date")
+        fxClose(s, CloseReasons.serverOutOfDate)
       else
-        fxClose(s, CloseCodes.UNEXPECTED_CONDITION, "Error parsing subscription data")
+        fxClose(s, CloseReasons.errorParsingSubscriptionData)
   }
 
   @OnError
   def onError(s: Session, cause: Throwable): Unit = withMdc(s, "error") {
     logger.error("Error occurred.", cause)
-    fxClose(s, CustomCloseCodes.UnhandledException, "Runtime exception occurred").unsafeRun()
+    fxClose(s, CloseReasons.runtimeExceptionOccurred).unsafeRun()
   }
 
   @OnClose
-  def onClose(s: Session, reason: CloseReason): Unit = withMdc(s, "close") {
+  def onClose(s: Session, reason: javax.websocket.CloseReason): Unit = withMdc(s, "close") {
     val userProps = s.getUserProperties
     val static    = Option(staticL.get(userProps))
     val state     = Option(stateL.get(userProps))

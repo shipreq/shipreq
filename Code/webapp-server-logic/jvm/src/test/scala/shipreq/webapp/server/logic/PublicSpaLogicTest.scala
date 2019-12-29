@@ -21,7 +21,6 @@ object PublicSpaLogicTest extends TestSuite {
     val initData = PublicSpaEntryPoint.InitData(Allow, None)
     val session = Security.SessionToken.anonymous()
 
-    def runLogin(i: PublicSpaProtocols.Login.ajax.Req) = assertProtected(publicSpa.ajaxLogin(session)(i).value)
     def runRegister1(i: PublicSpaProtocols.Register1.ajax.Req) = assertProtected(publicSpa.ajaxRegister1(i).value)
     def runRegister2(i: PublicSpaProtocols.Register2.ajax.Req) = assertProtected(publicSpa.ajaxRegister2(session)(i).value)
     def runResetPassword1(i: PublicSpaProtocols.ResetPassword1.ajax.Req) = assertProtected(publicSpa.ajaxResetPassword1(i).value)
@@ -40,26 +39,6 @@ object PublicSpaLogicTest extends TestSuite {
   }
 
   override def tests = Tests {
-
-    'login {
-      import PublicSpaProtocols.Login._
-      implicit val t = Tester(); import t._, mockInterpreters._
-
-      def test(usernameOrEmail: Username \/ EmailAddr, password: PlainTextPassword)
-              (expectResp: Permission, expectToken: Option[Security.SessionToken]) =
-        assertDifference("usrLoginLog", db.usrLoginLog.length)(if (expectResp is Allow) 1 else 0) {
-          val r = runLogin(Request(usernameOrEmail, password))
-          assertEq(r, (expectResp, expectToken.withSession(r._2)))
-          svr.runForked()
-        }
-
-      'badAccountU  - test(-\/(Username("nope")), user2password)(Deny, None)
-      'badAccountE  - test(\/-(EmailAddr("w@w.com")), user2password)(Deny, None)
-      'badPasswordU - test(-\/(user2.username), PlainTextPassword("qweoiru1234SDFG"))(Deny, None)
-      'badPasswordE - test(\/-(user2.emailAddr), PlainTextPassword("qweoiru1234SDFG"))(Deny, None)
-      'successU - test(-\/(user2.username), user2password)(Allow, Some(user2.token))
-      'successE - test(\/-(user2.emailAddr), user2password)(Allow, Some(user2.token))
-    }
 
     'register1 {
       implicit val t = Tester(); import t._, mockInterpreters._
@@ -123,7 +102,7 @@ object PublicSpaLogicTest extends TestSuite {
             }
           )
         val u = db.getUser(-\/(req.username)).getOrElse(sys error "User not found")
-        assertEq(r, (\/-(Result.Success), Some(u.token).withSession(r._2)))
+        assertEq(r, (\/-(Result.Success), Some(u.token).withSession(r._2).withoutExpiry))
         taskman.assertLastSubmitted { case _: Task.RegistrationCompleted => () }
       }
 

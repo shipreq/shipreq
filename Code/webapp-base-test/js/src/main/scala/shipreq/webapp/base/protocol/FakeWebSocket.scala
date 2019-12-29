@@ -1,15 +1,18 @@
 package shipreq.webapp.base.protocol
 
 import org.scalajs.dom.{console, raw}
-import org.scalajs.dom.raw.{Blob, CloseEvent, Event, EventInit, MessageEvent, MessageEventInit}
+import org.scalajs.dom.raw.{Blob, CloseEvent, Event, MessageEvent, MessageEventInit}
 import scala.scalajs.js
 import scala.scalajs.js.typedarray
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
 import shipreq.base.util.{BinaryData, BinaryJs, VarJs}
 import shipreq.webapp.base.protocol.WebSocket._
+import shipreq.webapp.base.protocol.WebSocketShared.{CloseCode, CloseReason, CloseReasonPhrase}
 
 final class FakeWebSocket(override val url: String, initialState: ReadyState = ReadyState.Connecting) extends WebSocket {
   import FakeWebSocket._
+
+  override def toString: String = s"FakeWebSocket{readyState=${readyState()}, sent=${_sent.length}, pendingResponse=${_pendingResponse.length}}"
 
   override val binaryType = VarJs.free[BinaryType]                   (BinaryType.Blob)
   override val onOpen     = VarJs.free[js.Function1[Event, _]]       ((_: Event) => ())
@@ -21,11 +24,13 @@ final class FakeWebSocket(override val url: String, initialState: ReadyState = R
   private var _readyState: ReadyState = initialState
   private var _bufferedAmount = 0
   private var _sent = Vector.empty[Message]
+  private var _pendingResponse = Vector.empty[Message]
 
   override def bufferedAmount() = _bufferedAmount
   override def extensions()     = ""
   override def readyState()     = _readyState
-  def sent()                     = _sent
+  def sent()                    = _sent
+  def responsesPending()        = _pendingResponse.nonEmpty
 
   def open(): Unit =
     readyState() match {
@@ -46,25 +51,26 @@ final class FakeWebSocket(override val url: String, initialState: ReadyState = R
         _readyState = ReadyState.Closing
     }
 
-  override def close()                          = close(1005)
-  override def close(code: Int)                 = close(code, "")
-  override def close(code: Int, reason: String) = close(code, reason, true)
+  def close(): Unit =
+    close(CloseCode.noStatusCode)
 
-  def close(code: Int, reason: String, wasClean: Boolean) =
+  def close(code: CloseCode): Unit =
+    close(CloseReason(code, CloseReasonPhrase.empty))
+
+  override def close(reason: CloseReason): Unit =
     readyState() match {
       case ReadyState.Closed     => ()
       case ReadyState.Connecting
          | ReadyState.Open
          | ReadyState.Closing    =>
         _readyState = ReadyState.Closed
-        val p = js.Dynamic.literal(
-          code      = code,
-          reason    = reason,
-          wasClean  = wasClean,
-          isTrusted = true,
-        ).asInstanceOf[EventInit]
-        val e = new Event("close", p).asInstanceOf[CloseEvent]
-        onClose.get()(e)
+        val event = new Event("close").asInstanceOf[CloseEvent]
+        val e = event.asInstanceOf[js.Dynamic]
+        e.code      = reason.code.value
+        e.reason    = reason.phrase.value
+        e.wasClean  = true
+        e.isTrusted = true
+        onClose.get()(event)
     }
 
   override def send(data: String)      = sendMsg(Message.Text(data))
@@ -75,6 +81,8 @@ final class FakeWebSocket(override val url: String, initialState: ReadyState = R
     val b = m.binaryData
     _bufferedAmount += b.length
     _sent :+= m
+    if (m.binaryData.length > 0)
+      _pendingResponse :+= m
     readyState() match {
       case ReadyState.Connecting => throw js.JavaScriptException("WebSocket is not open: readyState 0 (CONNECTING)")
       case ReadyState.Closing
@@ -109,16 +117,24 @@ final class FakeWebSocket(override val url: String, initialState: ReadyState = R
 
   private def recvMsg(m: Any): Unit =
     readyState() match {
-      case ReadyState.Open       =>
+      case ReadyState.Open =>
         val p = js.Dynamic.literal(
           data      = m.asInstanceOf[js.Any],
           isTrusted = true,
         ).asInstanceOf[MessageEventInit]
         val e = new MessageEvent("message", p)
         onMessage.get()(e)
+
       case s => sys.error(s"WebSocket isn't open. ReadyState = $s")
     }
 
+  def respondToNextPending(respondWith: Message => Message): Unit =
+    if (responsesPending()) {
+      val i = _pendingResponse.head
+      _pendingResponse = _pendingResponse.tail
+      val o = respondWith(i)
+      recv(o)
+    }
 }
 
 // =====================================================================================================================

@@ -10,6 +10,7 @@ import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.ui.UiUtil
 import shipreq.webapp.base.ui.semantic.{Form, Icon, Input, Message}
 import shipreq.webapp.base.user.{EmailAddr, UserValidators}
 import shipreq.webapp.client.public.Styles.{register1 => *}
@@ -57,7 +58,7 @@ object Register1 {
     private val attemptSubmit: Callback =
       $.props.flatMap(submitCB(_).getOrEmpty)
 
-    private val submitOnEnter = Common.submitOnEnter(attemptSubmit)
+    private val submitOnEnter = UiUtil.submitOnEnter(attemptSubmit)
 
     private val fieldEmail = Form.TextField.highLevel(
       State.email,

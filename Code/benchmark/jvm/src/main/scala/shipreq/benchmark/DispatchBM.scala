@@ -191,8 +191,8 @@ object DispatchBM {
       val delay                                       = F.point(())
       override def protect[A](vulnerable: F[A])       = delay >> vulnerable
       override def hashPassword(p: PlainTextPassword) = F point ps
-      private val loggedInToken                       = Security.SessionRestoreResult.Success(Security.SessionToken.anonymous().login(user))
-      private val anonToken                           = Security.SessionRestoreResult.Success(Security.SessionToken.anonymous())
+      private val loggedInToken                       = Security.SessionRestoreResult.Success(Security.SessionToken.anonymous().login(user).copy(expiry = Instant.now()))
+      private val anonToken                           = Security.SessionRestoreResult.Success(Security.SessionToken.anonymous().copy(expiry = Instant.now()))
       private val cookieName                          = Cookie.Name("S")
 
       override def attemptLogin(u: Username \/ EmailAddr, p: PlainTextPassword) = F.point {
@@ -205,7 +205,7 @@ object DispatchBM {
           case None      => Security.SessionRestoreResult.None
         }
       }
-      override def sessionPersist(token: Security.SessionToken) = F.point {
+      override def sessionPersist(token: Security.SessionToken[Any]) = F.point {
         val value = if (token.authenticatedUser.isEmpty) "" else "1"
         val cookie = Cookie(cookieName, value, None, None, None)
         Cookie.Update.add(cookie)
@@ -238,10 +238,16 @@ object DispatchBM {
     implicit val trace: TraceLogic[F, Request[Unit], Response] =
       TraceLogic.off
 
+    implicit object common extends CommonProtocolLogic[F] {
+      override def attemptLoginUnprotected(id      : Username \/ EmailAddr,
+                                           password: PlainTextPassword,
+                                           session : Security.SessionToken[Any]) = ???
+      override val ajaxLogin = _ => ???
+    }
+
     implicit object publicSpa extends PublicSpaLogic[F] {
       override def apiRegister1(emailAddr: String) = F.pure(\/-(TaskId(1000)))
       override val ajaxLandingPage    = _ => ???
-      override val ajaxLogin          = _ => ???
       override val ajaxRegister1      = _ => ???
       override val ajaxRegister2      = _ => ???
       override val ajaxResetPassword1 = _ => ???

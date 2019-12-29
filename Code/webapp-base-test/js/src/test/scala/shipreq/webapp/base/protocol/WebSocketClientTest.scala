@@ -1,106 +1,43 @@
 package shipreq.webapp.base.protocol
 
-import boopickle.DefaultBasic._
-import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
+import japgolly.scalajs.react.AsyncCallback
 import scala.util.Try
-import scalaz.\/-
+import sourcecode.Line
 import utest._
-import shipreq.base.util.{Retries, Url}
-import shipreq.base.util.JsExt._
-import shipreq.webapp.base.lib.LoggerJs
-import shipreq.webapp.base.protocol.FakeWebSocket.Message
-import shipreq.webapp.base.protocol.WebSocketShared.ReqId
+import shipreq.base.util._
+import shipreq.webapp.base.protocol.WebSocketShared.CloseCode
 import shipreq.webapp.base.protocol.WebSocket.ReadyState
-import shipreq.webapp.base.protocol.binary.SafePickler
-import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
 import shipreq.webapp.base.test.WebappTestUtil._
 
 object WebSocketClientTest extends TestSuite {
+  import WebSocketClientTester._
+  import WebSocketClient.State
 
-  private final case class ReqMsg(msg: Int)
-  private final case class ResMsg(msg: Int)
-  private final case class PushMsg(msg: String)
-
-  private object P extends  Protocol.WebSocket.ClientReqServerPush[SafePickler] {
-    override type ReqId  = WebSocketShared.ReqId
-    override type ReqRes = Protocol.RequestResponse.Simple[SafePickler, ReqMsg, ResMsg]
-    override val url     = Url.Relative("/x")
-    override val req     = Protocol(transformPickler(ReqMsg.apply)(_.msg).asV10)
-    override val push    = Protocol(transformPickler(PushMsg.apply)(_.msg).asV10)
-    val res              = Protocol(transformPickler(ResMsg.apply)(_.msg).asV10)
-    val ReqRes: ReqRes   = Protocol.RequestResponse.simple(res)
+  private def awaitAsyncCallback[A](a: AsyncCallback[A])(implicit l: Line): Try[A] = {
+    var t = Option.empty[Try[A]]
+    a.attemptTry.tap(r => t = Some(r)).toCallback.runNow()
+    if (t.isEmpty) fail("AsyncCallback isn't complete.")
+    t.get
   }
 
-  private val serverProtocols = WebSocketServerHelper(P)
-
-  private class Tester(initialState: ReadyState = ReadyState.Connecting) {
-    var webSockets = Vector.empty[FakeWebSocket]
-
-    var receivedPushes = Vector.empty[PushMsg]
+  override def tests = Tests {
     var receivedResponses = Vector.empty[ResMsg]
 
-    val newWS = CallbackTo {
-      val f = new FakeWebSocket("fake url", initialState)
-      webSockets :+= f
-      f
-    }
-
-    val client = WebSocketClient(newWS, P, Retries.none)
-      .build(
-        p => Callback(receivedPushes :+= p),
-        _ => _=> Callback.empty,
-        LoggerJs.off)
-
-    client.connect.runNow()
-
-    def ws(): FakeWebSocket =
-      webSockets.lastOption.getOrElse(sys.error("webSockets is empty"))
-
-    def latestMsg() = webSockets.reverseIterator.flatMap(_.sent().reverseIterator).next()
-
-    def send(req: ReqMsg): AsyncCallback[ResMsg] =
-      client.send(P.ReqRes)(req).runNow()
-
-    object server {
-      def parseRequest(msg: Message = latestMsg()) =
-        serverProtocols.protocolCS.codec.decode(msg.binaryData).needRight
-
-      def respondBy(f: ReqMsg => ResMsg) = {
-        val (reqId, reqMsg) = parseRequest()
-        respond(reqId, f(reqMsg))
-      }
-
-      def respond(reqId: ReqId, resMsg: ResMsg) = {
-        val res = \/-((reqId, P.res.andValue(resMsg)))
-        val bd = serverProtocols.protocolSC.codec.encode(res)
-        ws().recv(Message.ArrayBuffer(bd.toArrayBuffer))
-      }
-    }
-
-    def awaitAsyncCallback[A](a: AsyncCallback[A]): Try[A] = {
-      var t = Option.empty[Try[A]]
-      a.attemptTry.tap(r => t = Some(r)).toCallback.runNow()
-      if (t.isEmpty) fail("AsyncCallback isn't complete.")
-      t.get
-    }
-
-    def assertAsyncCallbackAlreadyFailed[A](a: AsyncCallback[A]): Unit = {
+    def assertAsyncCallbackAlreadyFailed[A](a: AsyncCallback[A])(implicit l: Line): Unit = {
       val t = assertNoChange(receivedResponses.length)(awaitAsyncCallback(a))
       assert(t.toEither.isLeft)
     }
 
-    def awaitResponse(a: AsyncCallback[ResMsg]): ResMsg = {
+    def awaitResponse(a: AsyncCallback[ResMsg])(implicit l: Line): ResMsg = {
       assertDifference(receivedResponses.length)(1) {
         a.tap(r => receivedResponses :+= r).toCallback.runNow()
       }
       receivedResponses.last
     }
-  }
-
-  override def tests = Tests {
 
     'ok - {
-      val t = new Tester; import t._
+      val t = WebSocketClientTester(); import t._
+      client.connect.runNow()
       ws().open()
       val ab = send(ReqMsg(3))
       server.respondBy(reqMsg => ResMsg(reqMsg.msg + 100))
@@ -109,26 +46,95 @@ object WebSocketClientTest extends TestSuite {
 
     'failure - {
       'connectingToClosed - {
-        val t = new Tester(); import t._
+        val t = WebSocketClientTester(); import t._
+        client.connect.runNow()
         ws().close()
         val ab = assertNoChange(ws().sent().length)(send(ReqMsg(3)))
         ws().close()
         assertAsyncCallbackAlreadyFailed(ab)
-      }
-
-      'closed - {
-        val t = new Tester(WebSocket.ReadyState.Closed); import t._
-        val ab = assertNoChange(ws().sent().length)(send(ReqMsg(3)))
-        assertAsyncCallbackAlreadyFailed(ab)
+        assertEq(reauthAttempts, 0)
       }
 
       'inFlight - {
-        val t = new Tester; import t._
+        val t = WebSocketClientTester(); import t._
+        client.connect.runNow()
         ws().open()
         val ab = send(ReqMsg(3))
         ws().close()
         assertAsyncCallbackAlreadyFailed(ab)
+        assertEq(reauthAttempts, 0)
       }
+    }
+
+    'auth - {
+      'expiryWithImmediateLogin - {
+        val t = WebSocketClientTester(); import t._
+        client.connect.runNow()
+        ws().open()
+
+        nextReauthResult = () => Allow
+        assertEq(reauthAttempts, 0)
+        assertAndClearStateChanges(State.Authorised(ReadyState.Open))
+
+        ws().close(CloseCode.unauthorised)
+        assertEq(reauthAttempts, 1)
+        assertEq(ws().readyState(), ReadyState.Connecting)
+        ws().open()
+        assertAndClearStateChanges(State.Unauthorised, State.Authorised(ReadyState.Open))
+
+        ws().close()
+        client.connect.runNow()
+        assertEq(ws().readyState(), ReadyState.Connecting)
+        ws().open()
+        assertAndClearStateChanges(State.Authorised(ReadyState.Closed), State.Authorised(ReadyState.Open))
+        assertEq("Shouldn't try to re-authenticate", reauthAttempts, 1)
+      }
+
+      'expiryWithEventualLogin - {
+        val t = WebSocketClientTester(); import t._
+        client.connect.runNow()
+        ws().open()
+
+        nextReauthResult = () => Deny
+        assertEq(reauthAttempts, 0)
+        assertAndClearStateChanges(State.Authorised(ReadyState.Open))
+
+        ws().close(CloseCode.unauthorised)
+        assertEq(reauthAttempts, 1)
+        assertAndClearStateChanges(State.Unauthorised)
+
+        client.connect.runNow()
+        assertEq(reauthAttempts, 2)
+        assertAndClearStateChanges()
+
+        nextReauthResult = () => Allow
+        client.connect.runNow()
+        assertEq(reauthAttempts, 3)
+        assertEq(ws().readyState(), ReadyState.Connecting)
+        ws().open()
+        assertAndClearStateChanges(State.Authorised(ReadyState.Open))
+
+        ws().close()
+        client.connect.runNow()
+        assertEq(ws().readyState(), ReadyState.Connecting)
+        ws().open()
+        assertEq("Shouldn't try to re-authenticate", reauthAttempts, 3)
+        assertAndClearStateChanges(State.Authorised(ReadyState.Closed), State.Authorised(ReadyState.Open))
+      }
+    }
+
+    'bug - {
+      val tester = WebSocketClientTester()
+      import tester._
+
+      client.connect.runNow()
+      ws().close(CloseCode.unauthorised)
+      sendMsg()
+      nextReauthResult = () => Allow
+      sendMsg()
+      ws().open()
+      server.respondToNextPending() // The bug used to be here in that it would try to send the first request even though it had already been failed
+      assertEq(ws().responsesPending(), false)
     }
 
   }

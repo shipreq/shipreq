@@ -3,12 +3,13 @@ package shipreq.webapp.client.project.app.state
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.extra.{Broadcaster, Px}
-import japgolly.scalajs.react.{Callback, CallbackTo, Reusability}
+import japgolly.scalajs.react._
 import japgolly.univeq._
 import java.time.{Duration, Instant}
+import org.scalajs.dom.window
 import scala.util.{Failure, Success}
 import scalaz.{-\/, \/-}
-import shipreq.base.util.ErrorMsg
+import shipreq.base.util.{ErrorMsg, JsTimers}
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.event.{EventOrd, EventSeqSummary, VerifiedEvent}
 import shipreq.webapp.base.lib.DataReusability._
@@ -17,10 +18,14 @@ import shipreq.webapp.base.protocol.ProjectSpaProtocols.WebSocket.Push
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.base.protocol.WebSocket.ReadyState
 import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.ui.ReauthenticationModal
+import shipreq.webapp.client.project.app.root.ConnectionStatus
 import shipreq.webapp.client.project.app.state.Global.State
 
-abstract class Global(onFirstLoad: (Global, InitAppData) => Callback,
+abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
                       onInitFailure: ErrorMsg => Callback) extends Broadcaster[EventSeqSummary.WithProject] {
+
+  val reauthModal: ReauthenticationModal
 
   protected val logger = LoggerJs.on
 
@@ -58,25 +63,64 @@ abstract class Global(onFirstLoad: (Global, InitAppData) => Callback,
 
   val wsClient: WebSocketClient[WsReqRes]
 
-  final protected def onWebSocketReadyStateChange(rs: ReadyState): Callback = Callback.lazily {
-    val result: Callback = rs match {
-      case ReadyState.Open =>
-        unsafeState match {
-          case _: State.Loading => load
-          case s: State.Active  => reconnect(s.projectState)
-        }
+  final protected def onWebSocketStateChange(s: WebSocketClient.State): Callback = Callback.lazily {
+    import WebSocketClient.State._
 
-      case ReadyState.Closed =>
-        unsafeState match {
-          case _: State.Loading => onInitFailure(ErrorMsg("Connection to server failed."))
-          case _: State.Active  => Callback.empty
-        }
+    val updateConnectionStatus: Callback =
+      s match {
+        case Authorised(ReadyState.Open) =>
+          connectedStatusHub(ConnectionStatus.Connected)
 
-      case ReadyState.Connecting
-         | ReadyState.Closing => Callback.empty
+        case Authorised(ReadyState.Closed)
+           | Authorised(ReadyState.Connecting)
+           | Authorised(ReadyState.Closing)
+           | Unauthorised =>
+          connectedStatusHub(ConnectionStatus.Disconnected)
+      }
+
+    val action: Callback =
+      unsafeState match {
+        case _: State.Loading =>
+          s match {
+            case Authorised(ReadyState.Open) =>
+              load
+
+            case Authorised(ReadyState.Closed) =>
+              onInitFailure(ErrorMsg("Connection to server failed."))
+
+            case Unauthorised =>
+              val errMsg = ErrorMsg("Your session has expired. Please login again.")
+              onInitFailure(errMsg) >> Callback(window.location.reload())
+
+            case Authorised(ReadyState.Connecting)
+               | Authorised(ReadyState.Closing) =>
+              Callback.empty
+          }
+
+        case g: State.Active =>
+          s match {
+            case Authorised(ReadyState.Open) =>
+              reconnect(g.projectState)
+
+            case Authorised(ReadyState.Closed)
+               | Authorised(ReadyState.Connecting)
+               | Authorised(ReadyState.Closing)
+               | Unauthorised =>
+              Callback.empty
+          }
+      }
+
+    logger(_.info(s"WebSocket State: $s")) >> updateConnectionStatus >> action
+  }
+
+  // TODO fix after sjs 1.5.0
+  final object connectedStatusHub extends Broadcaster[ConnectionStatus] {
+    var _connectionStatus: ConnectionStatus = ConnectionStatus.Disconnected
+    private[Global] def apply(c: ConnectionStatus) = {
+      _connectionStatus = c
+      broadcast(c)
     }
-
-    logger(_.info(s"WebSocket ReadyState: $rs")) >> result
+    def unsafeGet() = _connectionStatus
   }
 
   final private def load: Callback =
@@ -190,6 +234,16 @@ abstract class Global(onFirstLoad: (Global, InitAppData) => Callback,
     } yield ()
   }
 
+  lazy val setConnectionStatus: ConnectionStatus => Reusable[Callback] = {
+    val connect    = Reusable.callbackByRef(wsClient.connect)
+    val disconnect = Reusable.callbackByRef(wsClient.close)
+
+    {
+      case ConnectionStatus.Connected    => connect
+      case ConnectionStatus.Disconnected => disconnect
+    }
+  }
+
   final lazy val sspUpdateConfig          = sspToEvents(WsReqRes.UpdateConfig)
   final lazy val sspCreateContent         = sspToEvents(WsReqRes.CreateContent)
   final lazy val sspUpdateContent         = sspToEvents(WsReqRes.UpdateContent)
@@ -202,14 +256,23 @@ abstract class Global(onFirstLoad: (Global, InitAppData) => Callback,
 
 object Global {
 
-  def apply(wscBuilder   : WebSocketClient.WithoutCallbacks[WsReqRes, Push],
+  def apply(reauth       : ReauthenticationModal,
+            wscBuilder   : WebSocketClient.Builder[WsReqRes, Push],
             onFirstLoad  : (Global, InitAppData) => Callback,
             onInitFailure: ErrorMsg => Callback,
             logger       : LoggerJs.Dsl): Global =
     new Global(onFirstLoad, onInitFailure) {
+
+      override val reauthModal = reauth
+
       override val wsClient: WebSocketClient[WsReqRes] = {
         logger.runNow(_.debug("Creating WebSocket..."))
-        wscBuilder.build(onPush, _ => onWebSocketReadyStateChange, logger)
+        wscBuilder.build(
+          reauthorise   = reauthModal.run,
+          onServerPush  = onPush,
+          onStateChange = _ => onWebSocketStateChange,
+          timers        = JsTimers.real,
+          logger        = logger)
       }
     }
 

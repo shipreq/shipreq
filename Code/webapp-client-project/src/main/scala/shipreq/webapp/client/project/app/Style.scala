@@ -105,6 +105,11 @@ object Style extends StyleSheet.Inline {
       (borderLeft :=! "1px solid #2224261a").important) // Without this, rowspan break semantic UI table borders
   }
 
+  object navBar {
+    val connected    = style(cursor.pointer, opacity(0.7).important)
+    val disconnected = style(cursor.pointer, opacity(1).important)
+  }
+
   // ===================================================================================================================
   object home {
 
@@ -830,6 +835,7 @@ object Style extends StyleSheet.Inline {
 
   initInnerObjects(
     generic.table,
+    navBar.connected,
     home.cardHeader,
     help.examplesTable,
     impgraphPage.graph,

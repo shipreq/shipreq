@@ -234,4 +234,34 @@ object Util {
     val ord = sorted.iterator.mapToOrder
     Ordering.by(ord.apply)
   }
+
+  /** Returns a prefix of a string such that it's utf-8 encoding doesn't exceed a given number of bytes. */
+  def limitUtf8Bytes(s: String, maxBytes: Int): String = {
+    // Taken from https://stackoverflow.com/a/119586/1846272
+    var b = 0
+    var i = 0
+    while (i < s.length) {
+      val c = s.charAt(i)
+      var skip = 0
+      var more = 0
+      if (c <= 0x007f)
+        more = 1
+      else if (c <= 0x07FF)
+        more = 2
+      else if (c <= 0xd7ff)
+        more = 3
+      else if (c <= 0xDFFF) {
+        // surrogate area, consume next char as well
+        more = 4
+        skip = 1
+      } else
+        more = 3
+      if (b + more > maxBytes)
+        return s.substring(0, i)
+      b += more
+      i += skip
+      i += 1
+    }
+    s
+  }
 }

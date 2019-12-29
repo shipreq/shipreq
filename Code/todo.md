@@ -115,14 +115,7 @@ Phase 2B
   * Save to, and load from, localStorage (maybe spec with TLA+ cos merges?)
 
 * WebSockets
-  * Display a connected icon
-    * Allow users to toggle connection
-  * Refactor WebSocketClient.State into an ADT - way too many combinations of stuff atm
-    * Add to WebSocketClient.State, a state indicating unauthorised
-      * Have client handle ConnectRejections, including re-logging in
-  * Ensure that JWT expiry is only increased on login/logout
-  * Refactor Security.SessionToken so that expiry isn't optional on read but ignored on write
-    * Check JWT expiry on message
+  * On reconnection, all queue tasks should be resumed automatically
   * Recover from lost Redis connections
 
 * Change security token to something like confirmation/verification token (inc properties)

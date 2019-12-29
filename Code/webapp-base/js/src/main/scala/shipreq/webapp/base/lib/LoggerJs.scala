@@ -15,6 +15,7 @@ sealed trait LoggerJs {
   def info      (msg: js.Any, extra: js.Any*)               : Callback
   def warn      (msg: js.Any, extra: js.Any*)               : Callback
   def error     (msg: js.Any, extra: js.Any*)               : Callback
+  def exception (err: Throwable)                            : Callback
   def log       (msg: js.Any, extra: js.Any*)               : Callback
   def assert    (test: Boolean, msg: String, extra: js.Any*): Callback
   def dir       (value: js.Any, extra: js.Any*)             : Callback
@@ -41,19 +42,21 @@ object LoggerJs {
   @elidable(L) private def newInstance: LoggerJs = {
     new LoggerJs {
       val consol2 = console.asInstanceOf[Console2]
-      override def debug     (msg: js.Any, extra: js.Any*)                = Callback(consol2.debug     (msg, extra: _*))
-      override def info      (msg: js.Any, extra: js.Any*)                = Callback(console.info      (msg, extra: _*))
-      override def warn      (msg: js.Any, extra: js.Any*)                = Callback(console.warn      (msg, extra: _*))
-      override def error     (msg: js.Any, extra: js.Any*)                = Callback(console.error     (msg, extra: _*))
-      override def log       (msg: js.Any, extra: js.Any*)                = Callback(console.log       (msg, extra: _*))
-      override def assert    (test: Boolean, msg: String, extra: js.Any*) = Callback(console.assert    (test, msg, extra: _*))
-      override def dir       (value: js.Any, extra: js.Any*)              = Callback(console.dir       (value, extra: _*))
-      override def time      (label: String)                              = Callback(consol2.time      (label))
-      override def timeLog   (label: String)                              = Callback(consol2.timeLog   (label))
-      override def timeEnd   (label: String)                              = Callback(consol2.timeEnd   (label))
-      override def profile   (reportName: UndefOr[String] = undefined)    = Callback(reportName.fold(console.profile())(console.profile))
-      override val profileEnd                                             = Callback(console.profileEnd())
-      override val clear                                                  = Callback(console.clear())
+      private def wrap(f: => Any): Callback = Callback(f).attempt.void
+      override def exception (err: Throwable)                             = wrap(err.printStackTrace(System.err))
+      override def debug     (msg: js.Any, extra: js.Any*)                = wrap(consol2.debug     (msg, extra: _*))
+      override def info      (msg: js.Any, extra: js.Any*)                = wrap(console.info      (msg, extra: _*))
+      override def warn      (msg: js.Any, extra: js.Any*)                = wrap(console.warn      (msg, extra: _*))
+      override def error     (msg: js.Any, extra: js.Any*)                = wrap(console.error     (msg, extra: _*))
+      override def log       (msg: js.Any, extra: js.Any*)                = wrap(console.log       (msg, extra: _*))
+      override def assert    (test: Boolean, msg: String, extra: js.Any*) = wrap(console.assert    (test, msg, extra: _*))
+      override def dir       (value: js.Any, extra: js.Any*)              = wrap(console.dir       (value, extra: _*))
+      override def time      (label: String)                              = wrap(consol2.time      (label))
+      override def timeLog   (label: String)                              = wrap(consol2.timeLog   (label))
+      override def timeEnd   (label: String)                              = wrap(consol2.timeEnd   (label))
+      override def profile   (reportName: UndefOr[String] = undefined)    = wrap(reportName.fold(console.profile())(console.profile))
+      override val profileEnd                                             = wrap(console.profileEnd())
+      override val clear                                                  = wrap(console.clear())
     }
   }
 

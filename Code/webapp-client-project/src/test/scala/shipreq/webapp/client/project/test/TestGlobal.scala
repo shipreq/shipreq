@@ -4,7 +4,7 @@ import japgolly.scalajs.react.{Callback, CallbackTo}
 import java.time.{Duration, Instant}
 import scalaz.{-\/, \/-}
 import shipreq.base.util.JsExt._
-import shipreq.base.util.{ErrorMsg, PotentialChange, Retries}
+import shipreq.base.util.{Allow, ErrorMsg, JsTimers, PotentialChange, Retries}
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.lib.LoggerJs
@@ -13,6 +13,8 @@ import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes
 import shipreq.webapp.base.protocol.WebSocket.ReadyState
 import shipreq.webapp.base.protocol.binary.SafePickler
+import shipreq.webapp.base.test.TestReauthorisationModal
+import shipreq.webapp.base.user.Username
 import shipreq.webapp.client.project.app.state.{Global, ProjectState}
 import shipreq.webapp.server.logic.{ApplyNewEvent, MakeEvent}
 
@@ -22,6 +24,12 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
     case Global.State.Active(a, b) => s"TestGlobal(Active($a, $b))"
     case Global.State.Loading(es)  => s"TestGlobal(Loading(${es.map(_.ord.value).mkString(",")}))"
   }
+
+  val reauth = TestReauthorisationModal(Some(\/-(Allow)))
+
+  val username = Username("nimander")
+
+  override val reauthModal = reauth.modal(username)
 
   override protected val logger = LoggerJs.off
 
@@ -105,8 +113,13 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
       _fakeWS :+= f
       f
     }
-    WebSocketClient(newWS, protocol, Retries.none)
-      .build(onPush, _ => onWebSocketReadyStateChange, logger)
+    WebSocketClient.Builder(newWS, protocol, Retries.none)
+      .build(
+        reauthorise   = reauthModal.run,
+        onServerPush  = onPush,
+        onStateChange = _ => onWebSocketStateChange,
+        timers        = JsTimers.real,
+        logger        = logger)
   }
 
   val nextEventOrd: CallbackTo[EventOrd] =

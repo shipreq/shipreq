@@ -8,6 +8,7 @@ import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.ParseLong
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
+import java.time.Instant
 import scalaz.{-\/, Monad, Need, \/, \/-}
 import scalaz.syntax.monad._
 import shipreq.base.ops.Trace
@@ -94,6 +95,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
                                                   db        : DB.SecurityTokenReadOnly[F],
                                                   metrics   : MetricsLogic[F],
                                                   ops       : OpsEndpoints[F],
+                                                  common    : CommonProtocolLogic[F],
                                                   publicSpa : PublicSpaLogic[F],
                                                   homeSpa   : HomeSpaLogic.Ajax[F],
                                                   security  : Security.Algebra[F],
@@ -176,13 +178,13 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
     routes.embed(r => test(r.path), r => r.copy(path = mod(r.path)))
   }
 
-  private def initOrExtendSession(cmd: Security.SessionToken => ResponseCmd)(implicit req: Request): F[Response] =
+  private def loadOrInitSession(cmd: Security.SessionToken[Any] => ResponseCmd)(implicit req: Request): F[Response] =
     for {
       s  <- security.sessionRestoreOrCreate(req.cookie)
-      cu <- security.sessionPersist(s)
+      cu <- security.sessionPersistIfNew(s)
     } yield Response(cmd(s), cu)
 
-  private def requireSession(fCmd: Security.SessionToken => F[Response])(implicit req: Request): F[Response] =
+  private def requireSession(fCmd: Security.SessionToken[Instant] => F[Response])(implicit req: Request): F[Response] =
     security.sessionRestore(req.cookie).flatMap {
       case Security.SessionRestoreResult.Success(t) => fCmd(t)
       case Security.SessionRestoreResult.None
@@ -204,7 +206,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
                       for {
                         _   <- tracer.alg.addAttrs(Trace.Attr.ShipReqUserId(u.id.value) :: Nil)
                         cmd <- f(u)
-                        cu  <- security.sessionPersist(session)
+                        cu  <- security.sessionPersistIfNew(session)
                       } yield Response(cmd, cu)
                     case None =>
                       F pure Response(cmdWhenLoginRequired, Cookie.Update.empty)
@@ -223,7 +225,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
           security.sessionRestoreOrCreate(req.cookie).flatMap { s =>
             if (s.authenticatedUser.isEmpty)
               for {
-                cu <- security.sessionPersist(s)
+                cu <- security.sessionPersistIfNew(s)
               } yield Response(ResponseCmd.ServePublicSpa(s.authenticatedUser), cu)
             else
               F pure Response(ResponseCmd.redirectToMemberHome, Cookie.Update.empty)
@@ -233,7 +235,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
         whenUrlIsAnyOf(R.static.filterNot(_ ==* R.Login).get.map(_.url).toNES) { implicit req =>
           traceUrl(req.path,
             onMethod(Get)(
-              initOrExtendSession(t =>
+              loadOrInitSession(t =>
                 ResponseCmd.ServePublicSpa(t.authenticatedUser))))
         }
 
@@ -252,7 +254,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
                 security.protect(
                   for {
                     status <- getTokenStatus(token)
-                    resp   <- initOrExtendSession(s =>
+                    resp   <- loadOrInitSession(s =>
                                 status match {
                                   case SecurityToken.Status.Valid   => ResponseCmd.ServePublicSpa(s.authenticatedUser)
                                   case SecurityToken.Status.Invalid => ResponseCmd.redirectToPublicHome
@@ -320,15 +322,15 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
     private def versionFailure(text: String) =
       Response(ResponseCmd.Text(StatusCode.NotImplemented, text), Cookie.Update.empty)
 
-    private case class Route(handler: Handler, name: String)
+    private case class Route(handler: Handler, name: String, sessionRequired: Boolean)
 
-    private type Handler = (Security.SessionToken, BinaryData, tracer.Span) => F[Response]
+    private type Handler = (Security.SessionToken[Option[Instant]], BinaryData, tracer.Span) => F[Response]
 
     private[this] val routeMap: Map[String, Route] = {
       val mutableRouteMap = new Url.Relative.MutableMap[Route]
 
-      def _register[A](p: Protocol.Ajax[SafePickler], name: String)
-                      (f: (Security.SessionToken, p.protocol.PreparedRequestType) => F[Response]): Unit = {
+      def _register[A](p: Protocol.Ajax[SafePickler], name: String, sessionRequired: Boolean)
+                      (f: (Security.SessionToken[Option[Instant]], p.protocol.PreparedRequestType) => F[Response]): Unit = {
         assert(p.url.underlying startsWith Urls.ajaxRoot.underlying, s"${p.url} must start with ${Urls.ajaxRoot}")
 
         val serverVer = p.prepReq.codec.version
@@ -386,7 +388,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
           }
         }
 
-        mutableRouteMap += (p.url -> Route(h, name))
+        mutableRouteMap += (p.url -> Route(h, name, sessionRequired))
       }
 
       def responseCmd(p: Protocol.Ajax[SafePickler])(req: p.protocol.PreparedRequestType, out: p.protocol.ResponseType) = {
@@ -395,20 +397,21 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
         ResponseCmd.Binary(StatusCode.OK, outBin)
       }
 
-      def anon(p: Protocol.Ajax[SafePickler])(name: String, f: p.ServerSideFn[F]): Unit =
-        _register(p, name)((token, req) =>
+      def anon(p: Protocol.Ajax[SafePickler])(name: String, sessionRequired: Boolean, f: p.ServerSideFn[F]): Unit =
+        _register(p, name, sessionRequired)((token, req) =>
           for {
             out   <- f(req)
             resCmd = responseCmd(p)(req, out)
-            cu    <- security.sessionPersist(token)
+            cu    <- security.sessionPersistIfNew(token)
           } yield Response(resCmd, cu)
         )
 
       def anonO[A](p: Protocol.Ajax[SafePickler])
                   (name: String,
-                   f: Security.SessionToken => p.ServerSideFnO[F, A])
-                  (g: (Security.SessionToken, ResponseCmd, A) => F[Response]): Unit =
-        _register(p, name)((token, req) =>
+                   sessionRequired: Boolean,
+                   f: Security.SessionToken[Any] => p.ServerSideFnO[F, A])
+                  (g: (Security.SessionToken[Any], ResponseCmd, A) => F[Response]): Unit =
+        _register(p, name, sessionRequired)((token, req) =>
           for {
             (out, a) <- f(token)(req)
             resCmd    = responseCmd(p)(req, out)
@@ -416,14 +419,14 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
           } yield res
         )
 
-      def auth(p: Protocol.Ajax[SafePickler])(name: String, f: p.ServerSideFnI[F, User]): Unit =
-        _register(p, name)((token, req) =>
+      def auth(p: Protocol.Ajax[SafePickler])(name: String, sessionRequired: Boolean, f: p.ServerSideFnI[F, User]): Unit =
+        _register(p, name, sessionRequired)((token, req) =>
           token.authenticatedUser match {
             case Some(user) =>
               for {
                 out   <- f(user, req)
                 resCmd = responseCmd(p)(req, out)
-                cu    <- security.sessionPersist(token)
+                cu    <- security.sessionPersistIfNew(token)
               } yield Response(resCmd, cu)
             case None =>
               authRequired
@@ -431,20 +434,20 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
         )
 
       // Register endpoints
-      anon (PublicSpaProtocols.LandingPage   .ajax)("landingPage"   , publicSpa.ajaxLandingPage   )
-      anonO(PublicSpaProtocols.Login         .ajax)("login"         , publicSpa.ajaxLogin         )(useNewToken)
-      anon (PublicSpaProtocols.Register1     .ajax)("register1"     , publicSpa.ajaxRegister1     )
-      anonO(PublicSpaProtocols.Register2     .ajax)("register2"     , publicSpa.ajaxRegister2     )(useNewToken)
-      anon (PublicSpaProtocols.ResetPassword1.ajax)("resetPassword1", publicSpa.ajaxResetPassword1)
-      anon (PublicSpaProtocols.ResetPassword2.ajax)("resetPassword2", publicSpa.ajaxResetPassword2)
-      auth (HomeSpaProtocols  .CreateProject .ajax)("createProject" , homeSpa  .ajaxCreateProject )
+      anonO(CommonProtocols   .Login         .ajax)("login"         , false, common   .ajaxLogin         )(useNewToken)
+      anon (PublicSpaProtocols.LandingPage   .ajax)("landingPage"   , true , publicSpa.ajaxLandingPage   )
+      anon (PublicSpaProtocols.Register1     .ajax)("register1"     , true , publicSpa.ajaxRegister1     )
+      anonO(PublicSpaProtocols.Register2     .ajax)("register2"     , true , publicSpa.ajaxRegister2     )(useNewToken)
+      anon (PublicSpaProtocols.ResetPassword1.ajax)("resetPassword1", true , publicSpa.ajaxResetPassword1)
+      anon (PublicSpaProtocols.ResetPassword2.ajax)("resetPassword2", true , publicSpa.ajaxResetPassword2)
+      auth (HomeSpaProtocols  .CreateProject .ajax)("createProject" , true , homeSpa  .ajaxCreateProject )
 
       mutableRouteMap.toMapNoHeadSlash
     }
 
-    private def useNewToken(oldToken: Security.SessionToken,
+    private def useNewToken(oldToken: Security.SessionToken[Any],
                             res: ResponseCmd,
-                            newToken: Option[Security.SessionToken]): F[Response] =
+                            newToken: Option[Security.SessionToken[Unit]]): F[Response] =
       security.sessionPersist(newToken getOrElse oldToken).map(Response(res, _))
 
     private val notFound: Response =
@@ -459,8 +462,9 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
         routeMap.get(req.path.relativeUrlNoHeadSlash) match {
           case Some(route) =>
 
-            def respond(span: tracer.Span): F[Response] =
-              requireSession(s =>
+            def respond(span: tracer.Span): F[Response] = {
+
+              def respondWithSession(s: Security.SessionToken[Option[Instant]]) =
                 if (req.method eq Post)
                   req.body.value match {
                     case Some(reqBin) => route.handler(s, reqBin, span)
@@ -468,7 +472,12 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
                   }
                 else
                   F pure ResponseCmd.StatusOnly.MethodNotAllowed.withoutCookieUpdate
-              )
+
+              if (route.sessionRequired)
+                requireSession(s => respondWithSession(s.copy(expiry = Some(s.expiry))))
+              else
+                security.sessionRestoreOrCreate(req.cookie).flatMap(respondWithSession)
+            }
 
             for {
               _ <- metrics.setServerSideProcName(route.name)

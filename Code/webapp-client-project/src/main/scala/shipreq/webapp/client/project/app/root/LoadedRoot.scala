@@ -325,10 +325,21 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
           ImplicationGraphPage.Props(g, setFilterDead).render
       }
 
-      Layout.Props(initPageData.username, cbProjectMetaData.runNow(), routerCtl, p.page, content).render
+      Layout.Props(
+        initPageData.username,
+        cbProjectMetaData.runNow(),
+        global.connectedStatusHub.unsafeGet(),
+        global.setConnectionStatus,
+        global.reauthModal,
+        routerCtl,
+        p.page,
+        content).render
     }
 
     def onProjectChange(c: EventSeqSummary.WithProject): Callback = // TODO I don't like this
+      $.forceUpdate
+
+    def onConnectionStatusChange(c: ConnectionStatus): Callback =
       $.forceUpdate
   }
 
@@ -336,5 +347,6 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     .initialState(State.init)
     .renderBackend[Backend]
     .configure(Listenable.listen(_ => global, _.backend.onProjectChange))
+    .configure(Listenable.listen(_ => global.connectedStatusHub, _.backend.onConnectionStatusChange))
     .build
 }

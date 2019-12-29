@@ -31,18 +31,24 @@ object Security {
 
     def attemptLogin(user: Username \/ EmailAddr, password: PlainTextPassword): F[Option[User]]
 
-    def sessionPersist(token: SessionToken): F[Cookie.Update]
+    def sessionPersist(token: SessionToken[Any]): F[Cookie.Update]
 
     /** Does not create any new information (not even a session id). */
-    def sessionRestore(cookies: Cookie.LookupFn): F[SessionRestoreResult]
+    def sessionRestore(cookies: Cookie.LookupFn): F[SessionRestoreResult[Instant]]
 
     /** Generates a new session id if missing. */
-    final def sessionRestoreOrCreate(cookies: Cookie.LookupFn): F[SessionToken] =
+    final def sessionRestoreOrCreate(cookies: Cookie.LookupFn): F[SessionToken[Option[Instant]]] =
       F.map(sessionRestore(cookies)) {
-        case SessionRestoreResult.Success(t) => t
+        case SessionRestoreResult.Success(t) => t.copy(expiry = Some(t.expiry))
         case SessionRestoreResult.Expired(t) => SessionToken.anonymous(t.sessionId)
         case SessionRestoreResult.None       => SessionToken.anonymous()
       }
+
+    final def sessionPersistIfNew(token: SessionToken[Option[Instant]]): F[Cookie.Update] =
+      if (token.expiry.isDefined)
+        F.pure(Cookie.Update.empty)
+      else
+        sessionPersist(token)
   }
 
   // ===================================================================================================================
@@ -57,40 +63,39 @@ object Security {
   }
 
   /**
-    * @param requestTokenExpiration This is the JWT expiry according to the JWT read from the request.
-    *                               Creating a new token in-memory will have this as None.
+    * @param expiry When the JWT expires. Read from request JWT's, ignored on write.
     */
-  final case class SessionToken(sessionId             : SessionId,
-                                authenticatedUser     : Option[User],
-                                requestTokenExpiration: Option[Instant]) {
+  final case class SessionToken[+E](sessionId        : SessionId,
+                                    authenticatedUser: Option[User],
+                                    expiry           : E) {
 
-    def login(u: User): SessionToken =
+    def login(u: User): SessionToken[E] =
       copy(authenticatedUser = Some(u))
 
-    def logout: SessionToken =
+    def logout: SessionToken[E] =
       copy(authenticatedUser = None)
 
-    def withSession(st: SessionToken): SessionToken =
+    def withSession(st: SessionToken[Any]): SessionToken[E] =
       copy(sessionId = st.sessionId)
 
-    def withoutExpiry: SessionToken =
-      copy(requestTokenExpiration = None)
+    def withoutExpiry: SessionToken[Unit] =
+      copy(expiry = ())
   }
 
   object SessionToken extends StrictLogging {
-    def anonymous(): SessionToken =
+    def anonymous(): SessionToken[Option[Instant]] =
       anonymous(SessionId.random())
 
-    def anonymous(sessionId: SessionId): SessionToken =
+    def anonymous(sessionId: SessionId): SessionToken[Option[Instant]] =
       apply(sessionId, None, None)
 
-    implicit def univEq: UnivEq[SessionToken] = UnivEq.derive
+    implicit def univEq[E: UnivEq]: UnivEq[SessionToken[E]] = UnivEq.derive
   }
 
-  sealed trait SessionRestoreResult {
+  sealed trait SessionRestoreResult[+E] {
     import SessionRestoreResult._
 
-    final def modToken(f: SessionToken => SessionToken): SessionRestoreResult =
+    final def modToken[F](f: SessionToken[E] => SessionToken[F]): SessionRestoreResult[F] =
       this match {
         case Success(t) => Success(f(t))
         case Expired(t) => Expired(f(t))
@@ -99,13 +104,13 @@ object Security {
   }
 
   object SessionRestoreResult {
-    sealed trait NonEmpty extends SessionRestoreResult
+    sealed trait NonEmpty[+E] extends SessionRestoreResult[E]
 
-    case object None extends SessionRestoreResult
-    final case class Success(token: SessionToken) extends NonEmpty
-    final case class Expired(token: SessionToken) extends NonEmpty
+    case object None extends SessionRestoreResult[Nothing]
+    final case class Success[+E](token: SessionToken[E]) extends NonEmpty[E]
+    final case class Expired[+E](token: SessionToken[E]) extends NonEmpty[E]
 
-    implicit def univEq: UnivEq[SessionRestoreResult] = UnivEq.derive
+    implicit def univEq[E: UnivEq]: UnivEq[SessionRestoreResult[E]] = UnivEq.derive
   }
 
   // ===================================================================================================================

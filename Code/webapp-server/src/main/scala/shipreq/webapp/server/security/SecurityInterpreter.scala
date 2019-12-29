@@ -6,6 +6,7 @@ import io.jsonwebtoken.security.{Keys, SignatureException}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import java.security.SecureRandom
+import java.time.Instant
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 import org.apache.commons.text.StringEscapeUtils
@@ -36,7 +37,7 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
   override val db = secDb
 
   private[this] val fUnit                    = F.point(())
-  private[this] val fNoToken                 = F.pure[SessionRestoreResult](SessionRestoreResult.None)
+  private[this] val fNoToken                 = F.pure[SessionRestoreResult[Instant]](SessionRestoreResult.None)
   private[this] val passwordSecretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512")
   private[this] val jwtMainKey               = Keys.hmacShaKeyFor(config.jwtSecret.bytes)
   private[this] val jwtMainParser            = Jwts.parser().setSigningKey(jwtMainKey)
@@ -75,7 +76,7 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
   private[this] final val claimSessionId = "sid"
   private[this] final val claimUserId    = "uid"
 
-  override def sessionPersist(token: SessionToken): F[Cookie.Update] = F.point {
+  override def sessionPersist(token: SessionToken[Any]): F[Cookie.Update] = F.point {
     val jws: String = {
       val b = Jwts.builder()
 
@@ -103,7 +104,7 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
     Cookie.Update.add(cookie)
   }
 
-  private def parseClaims(claims: Claims): Try[SessionToken] =
+  private def parseClaims(claims: Claims): Try[SessionToken[Instant]] =
     Try {
       def fail(errMsg: String): Nothing = {
         // Note: not doing any logging here for two reasons:
@@ -131,10 +132,10 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
 
       val expiration = claims.getExpiration.toInstant
 
-      SessionToken(sessionId, authenticatedUser, Some(expiration))
+      SessionToken(sessionId, authenticatedUser, expiration)
     }
 
-  private def parseAndVerifyJws(jws: String, parser: JwtParser): Try[SessionRestoreResult.NonEmpty] =
+  private def parseAndVerifyJws(jws: String, parser: JwtParser): Try[SessionRestoreResult.NonEmpty[Instant]] =
     Try(parser.parseClaimsJws(jws).getBody)
       .flatMap(parseClaims)
       .map(SessionRestoreResult.Success.apply)
@@ -143,7 +144,7 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
           parseClaims(e.getClaims).map(SessionRestoreResult.Expired.apply)
       }
 
-  private[this] val parseAndVerifyJws: String => Try[SessionRestoreResult] =
+  private[this] val parseAndVerifyJws: String => Try[SessionRestoreResult[Instant]] =
     config.jwtSecretPrevious match {
       case None =>
         parseAndVerifyJws(_, jwtMainParser)
@@ -160,7 +161,7 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
         }
     }
 
-  override def sessionRestore(cookies: Cookie.LookupFn): F[SessionRestoreResult] =
+  override def sessionRestore(cookies: Cookie.LookupFn): F[SessionRestoreResult[Instant]] =
     cookies(cookieName) match {
 
       case Some(jws) =>

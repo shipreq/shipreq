@@ -2,11 +2,13 @@ package shipreq.webapp.base.protocol
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.utils.StaticLookupFn
+import japgolly.univeq.UnivEq
 import org.scalajs.dom.raw
 import org.scalajs.dom.raw.{Blob, CloseEvent, Event, MessageEvent}
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 import shipreq.base.util.VarJs
+import shipreq.webapp.base.protocol.WebSocketShared.CloseReason
 
 trait WebSocket {
   import WebSocket._
@@ -22,9 +24,7 @@ trait WebSocket {
   def readyState(): ReadyState
   val url: String
 
-  def close(): Unit
-  def close(code: Int): Unit
-  def close(code: Int, reason: String): Unit
+  def close(reason: CloseReason): Unit
 
   def send(data: ArrayBuffer): Unit
   def send(data: Blob): Unit
@@ -40,6 +40,7 @@ object WebSocket {
     case object Closing    extends ReadyState(2)
     case object Closed     extends ReadyState(3)
 
+    implicit def univEq: UnivEq[ReadyState] = UnivEq.derive
     val values = AdtMacros.adtValues[ReadyState]
     val byJsValue = StaticLookupFn.useArrayBy(values.whole)(_.jsValue).total
   }
@@ -76,10 +77,7 @@ object WebSocket {
     override def readyState()     = ReadyState.byJsValue(underlying.readyState)
     override val url              = underlying.url
 
-    override def close()                          = underlying.close()
-    override def close(code: Int)                 = underlying.close(code)
-    override def close(code: Int, reason: String) =
-      underlying.close(code, reason.take(123)) // [MDN] reason must be no longer than 123 bytes of UTF-8 text (not characters)
+    override def close(reason: CloseReason) = underlying.close(reason.code.value, reason.phrase.value)
 
     override def send(data: ArrayBuffer) = underlying.send(data)
     override def send(data: Blob)        = underlying.send(data)

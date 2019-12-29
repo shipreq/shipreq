@@ -13,7 +13,7 @@ trait JQuery extends js.Object {
 
   def dimmer    (options: js.Object                   = js.native): Unit = js.native
   def dropdown  (options: String | Dropdown.JsOptions = js.native): Unit = js.native
-  def modal     (command: String                      = js.native): Unit = js.native
+  def modal     (command: String | js.Object          = js.native): Unit = js.native
   def accordion (command: String                      = js.native): Unit = js.native
   def popup     (options: Popup.Js.Options            = js.native): Unit = js.native
 

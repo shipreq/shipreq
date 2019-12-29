@@ -5,14 +5,15 @@ import org.scalajs.dom.{html, window}
 import utest._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol.CommonProtocols
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.TestState._
+import shipreq.webapp.base.user.Username
 import shipreq.webapp.client.public._
 import shipreq.webapp.client.public.spa._
-import PublicSpaTestUtil.semanticUiDisabled
-import shipreq.webapp.base.user.Username
 
 object LoginTester {
+  import PublicSpaTestUtil.semanticUiDisabled
 
   val * = Dsl[TestAjaxClient, Obs, Unit]
 
@@ -73,7 +74,7 @@ object LoginTester {
       .addCheck(loginEnabled.assert(Enabled).before)
 
   def serverLoginResponse(p: Permission): *.Actions =
-    *.action(s"Server responds to login: $p")(_.ref.respondToLast(PublicSpaProtocols.Login.ajax)(p)) <+ reqsSent.assert.not.equal(0)
+    *.action(s"Server responds to login: $p")(_.ref.respondToLast(CommonProtocols.Login.ajax)(p)) <+ reqsSent.assert.not.equal(0)
 
   def clickForgotPwd: *.Actions =
     *.action("Click 'Forgot password'")(Simulate click _.obs.form.get.forgotPwd)

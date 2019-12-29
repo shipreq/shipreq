@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.app.root
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data.ProjectMetaData
@@ -9,28 +8,34 @@ import shipreq.webapp.base.user.Username
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui._
-import shipreq.webapp.base.ui.semantic.Breadcrumb
+import shipreq.webapp.base.ui.semantic.{Breadcrumb, Colour, Icon, Menu}
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.widgets.{FilterHelp, RichTextEditorHelp}
 import Routes.{Page, RouterCtl}
 
 object Layout {
 
-  final case class Props(username: Username,
-                         project : ProjectMetaData,
-                         rc      : RouterCtl,
-                         page    : Page,
-                         content : VdomElement) {
+  final case class Props(username           : Username,
+                         project            : ProjectMetaData,
+                         connectionStatus   : ConnectionStatus,
+                         setConnectionStatus: ConnectionStatus => Reusable[Callback],
+                         reauthModal        : ReauthenticationModal,
+                         rc                 : RouterCtl,
+                         page               : Page,
+                         content            : VdomElement) {
     @inline def render = Component(this)
   }
 
-  private type NavBarLeftInput = (Page, ProjectMetaData, RouterCtl)
+  // -------------------------------------------------------------------------------------------------------------------
 
-  private val reusabilityNavBarLeftInput: Reusability[NavBarLeftInput] =
-    implicitly[Reusability[NavBarLeftInput]]
+  private final case class NavBarLeftInput(page: Page, project: ProjectMetaData, rc: RouterCtl)
+
+  private implicit val reusabilityNavBarLeftInput: Reusability[NavBarLeftInput] =
+    Reusability.derive
 
   private def navBarLeft(input: NavBarLeftInput): MemberNavBar.LeftProps =
-    Reusable.explicitly(input)(reusabilityNavBarLeftInput).map { case (page, project, rc) =>
+    Reusable.implicitly(input).map { i =>
+      import i._
 
       def index = Breadcrumb.Item.Link(rc.link(Page.Index)(project.name))
 
@@ -56,16 +61,49 @@ object Layout {
       MemberNavBar.MemberHome :: tail
     }
 
-  private def render(p: Props): VdomElement =
+  // -------------------------------------------------------------------------------------------------------------------
+
+  private final case class NavBarRightInput(connectionStatus: ConnectionStatus, toggleConnectionStatus: Reusable[Callback])
+
+  private implicit val reusabilityNavBarRightInput: Reusability[NavBarRightInput] =
+    Reusability.derive
+
+  private val connectedIcon =
+    ConnectionStatus.memo {
+      case ConnectionStatus.Connected =>
+        Icon.Plug.withColour(Colour.Green).tag(Style.navBar.connected, ^.title := "connected")
+
+      case ConnectionStatus.Disconnected =>
+        Icon.Plug.withColour(Colour.Red).tag(Style.navBar.disconnected, ^.title := "disconnected")
+    }
+
+  private def navBarRight(input: NavBarRightInput): MemberNavBar.RightProps =
+    Reusable.implicitly(input).map { i =>
+      import i._
+
+      val connectedMenuItem =
+        Menu.Item(Menu.ItemType.Div(
+          connectedIcon(connectionStatus)(^.onClick --> toggleConnectionStatus)))
+
+      connectedMenuItem :: Nil
+    }
+
+  // -------------------------------------------------------------------------------------------------------------------
+
+  private def render(p: Props): VdomElement = {
+    val menuLeft  = navBarLeft(NavBarLeftInput(p.page, p.project, p.rc))
+    val menuRight = navBarRight(NavBarRightInput(p.connectionStatus, p.setConnectionStatus(!p.connectionStatus)))
     MemberLayout.Props(
-      MemberNavBar.Props(p.username, navBarLeft((p.page, p.project, p.rc))),
+      MemberNavBar.Props(p.username, menuLeft, menuRight),
       <.div(
         _,
         Style.layout,
         FilterHelp.modal.render,
+        p.reauthModal.render,
         RichTextEditorHelp.allRendered,
         p.content))
       .render
+  }
 
   val Component = ScalaFnComponent(render)
 }

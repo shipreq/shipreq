@@ -18,10 +18,14 @@ object Modal {
 
   private var counter = 0
 
-  def apply(header: VdomNode, content: VdomNode): Modal = {
+  def nextId(): String = {
     counter += 1
+    "semuimodal-" + counter
+  }
 
-    val id = "semuimodal-" + counter
+  def apply(header: VdomNode, content: VdomNode): Modal = {
+
+    val id = nextId()
 
     val render: VdomElement =
       <.div(
