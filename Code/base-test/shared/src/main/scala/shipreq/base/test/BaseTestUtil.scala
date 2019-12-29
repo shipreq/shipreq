@@ -6,6 +6,7 @@ import java.nio.file.{Files, Paths}
 import java.time.{Duration, Instant}
 import scalaz.std.string.stringInstance
 import scalaz.{Equal, Order, \/}
+import sourcecode.Line
 import shipreq.base.util.Identity
 import shipreq.base.util.univeq._
 
@@ -20,16 +21,16 @@ object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
   }
 
   final class BaseTestUtilOpsEither[A, B](private val e: Either[A, B]) extends AnyVal {
-    def needLeft: A =
+    def needLeft(implicit l: Line): A =
       e.fold(Identity.apply, e => fail(s"needLeft got Right($e)"))
-    def needRight: B =
+    def needRight(implicit l: Line): B =
       e.fold(e => fail(s"needRight got Left($e)"), Identity.apply)
   }
 
   final class BaseTestUtilOpsDisj[A, B](private val d: A \/ B) extends AnyVal {
-    def needLeft: A =
+    def needLeft(implicit l: Line): A =
       d.fold(Identity.apply, e => fail(s"needLeft got \\/-($e)"))
-    def needRight: B =
+    def needRight(implicit l: Line): B =
       d.fold(e => fail(s"needRight got -\\/($e)"), Identity.apply)
   }
 

@@ -134,7 +134,7 @@ object WebSocketClient {
       scheduled  = None,
       prevState  = None)
 
-    private var queueOldestToNewest = Vector.empty[BinaryData]
+    private var queueOldestToNewest = Vector.empty[(ReqId, BinaryData)]
 
     private val readyStateCB: CallbackTo[Option[ReadyState]] =
       CallbackTo(state.instance.map(_.readyState()))
@@ -266,14 +266,17 @@ object WebSocketClient {
 
       def processQueue(): Unit = {
         while (queueOldestToNewest.nonEmpty) {
-          val h = queueOldestToNewest.head
-          try
-            ws.send(h.unsafeArrayBuffer)
-          catch {
-            case t: Throwable =>
-              logger.runNow(_.warn(s"WebSocket.send($h) failed") << Callback(t.printStackTrace()))
-              throw t
-          }
+          val (reqId, payload) = queueOldestToNewest.head
+
+          if (requestManager.getState(reqId).isDefined)
+            try
+              ws.send(payload.unsafeArrayBuffer)
+            catch {
+              case t: Throwable =>
+                logger.runNow(l => l.exception(t) >> l.warn(s"WebSocket.send($payload) failed"))
+                throw t
+            }
+
           queueOldestToNewest = queueOldestToNewest.tail
         }
       }
@@ -398,7 +401,7 @@ object WebSocketClient {
           CallbackTo {
             val msgValue = (reqId, prep.request)
             val msgBin   = protocolCS.codec.encode(msgValue)
-            queueOldestToNewest :+= msgBin
+            queueOldestToNewest :+= ((reqId, msgBin))
             callback.map(_.unsafeForceType[p.ResponseType].value)
           }
         }

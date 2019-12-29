@@ -74,6 +74,9 @@ final class JsTestTimers extends JsTimers {
       }
     go(runAll())
   }
+
+  def isEmpty = queue.isEmpty
+  @inline def nonEmpty = !isEmpty
 }
 
 object JsTestTimers {

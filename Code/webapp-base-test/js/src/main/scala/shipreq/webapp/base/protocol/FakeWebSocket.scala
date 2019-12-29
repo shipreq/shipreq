@@ -12,6 +12,8 @@ import shipreq.webapp.base.protocol.WebSocketShared.{CloseCode, CloseReason, Clo
 final class FakeWebSocket(override val url: String, initialState: ReadyState = ReadyState.Connecting) extends WebSocket {
   import FakeWebSocket._
 
+  override def toString: String = s"FakeWebSocket{readyState=${readyState()}, sent=${_sent.length}, pendingResponse=${_pendingResponse.length}}"
+
   override val binaryType = VarJs.free[BinaryType]                   (BinaryType.Blob)
   override val onOpen     = VarJs.free[js.Function1[Event, _]]       ((_: Event) => ())
   override val onMessage  = VarJs.free[js.Function1[MessageEvent, _]]((_: MessageEvent) => ())
@@ -22,11 +24,13 @@ final class FakeWebSocket(override val url: String, initialState: ReadyState = R
   private var _readyState: ReadyState = initialState
   private var _bufferedAmount = 0
   private var _sent = Vector.empty[Message]
+  private var _pendingResponse = Vector.empty[Message]
 
   override def bufferedAmount() = _bufferedAmount
   override def extensions()     = ""
   override def readyState()     = _readyState
-  def sent()                     = _sent
+  def sent()                    = _sent
+  def responsesPending()        = _pendingResponse.nonEmpty
 
   def open(): Unit =
     readyState() match {
@@ -77,6 +81,8 @@ final class FakeWebSocket(override val url: String, initialState: ReadyState = R
     val b = m.binaryData
     _bufferedAmount += b.length
     _sent :+= m
+    if (m.binaryData.length > 0)
+      _pendingResponse :+= m
     readyState() match {
       case ReadyState.Connecting => throw js.JavaScriptException("WebSocket is not open: readyState 0 (CONNECTING)")
       case ReadyState.Closing
@@ -111,16 +117,24 @@ final class FakeWebSocket(override val url: String, initialState: ReadyState = R
 
   private def recvMsg(m: Any): Unit =
     readyState() match {
-      case ReadyState.Open       =>
+      case ReadyState.Open =>
         val p = js.Dynamic.literal(
           data      = m.asInstanceOf[js.Any],
           isTrusted = true,
         ).asInstanceOf[MessageEventInit]
         val e = new MessageEvent("message", p)
         onMessage.get()(e)
+
       case s => sys.error(s"WebSocket isn't open. ReadyState = $s")
     }
 
+  def respondToNextPending(respondWith: Message => Message): Unit =
+    if (responsesPending()) {
+      val i = _pendingResponse.head
+      _pendingResponse = _pendingResponse.tail
+      val o = respondWith(i)
+      recv(o)
+    }
 }
 
 // =====================================================================================================================
