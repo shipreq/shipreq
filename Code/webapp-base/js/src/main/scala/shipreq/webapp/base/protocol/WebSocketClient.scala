@@ -270,7 +270,7 @@ object WebSocketClient {
 
           if (requestManager.getState(reqId).isDefined)
             try
-              ws.send(payload.unsafeArrayBuffer)
+              ws.send(payload.toArrayBuffer)
             catch {
               case t: Throwable =>
                 logger.runNow(l => l.exception(t) >> l.warn(s"WebSocket.send($payload) failed"))
