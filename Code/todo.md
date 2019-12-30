@@ -113,9 +113,10 @@ Phase 2B
   * Display counter
   * Allow user to see where they are (by PubId is probably enough)
   * Save to, and load from, localStorage (maybe spec with TLA+ cos merges?)
+  * Provide ability to save all
 
 * WebSockets
-  * On reconnection, all queue tasks should be resumed automatically
+  * Ensure session validity on push
   * Recover from lost Redis connections
 
 * Change security token to something like confirmation/verification token (inc properties)
