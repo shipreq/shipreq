@@ -106,8 +106,6 @@ Phase 2B
 
 * Handle no localStorage available (in login page)
 
-* Don't update JWT expiration on each request - should be loginTime + expiryTime regardless of what the user does
-
 * Unsaved changes
   * Warn against closing page
   * Display counter
