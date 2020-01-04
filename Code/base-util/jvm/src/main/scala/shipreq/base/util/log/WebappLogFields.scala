@@ -11,29 +11,30 @@ object WebappLogFields {
   private final val prefix = "shipreq.webapp."
 
   object jwt {
-    val invalid       = LogField.Text           (prefix + "jwt.invalid")
-    val sessionId     = LogField.Text           (prefix + "jwt.session_id")
-    val userId        = LogField.Text.long      (prefix + "jwt.user_id")
-    val username      = LogField.Text           (prefix + "jwt.username")
+    val invalid           = LogField.Text           (prefix + "jwt.invalid")
+    val sessionId         = LogField.Text           (prefix + "jwt.session_id")
+    val userId            = LogField.Text.long      (prefix + "jwt.user_id")
+    val username          = LogField.Text           (prefix + "jwt.username")
   }
 
   object request {
-    val id            = LogField.Text.uuid      (prefix + "request.id")
-    val method        = LogField.Text           (prefix + "request.method")
-    val securityToken = LogField.Text           (prefix + "request.security_token")
-    val uri           = LogField.Text           (prefix + "request.uri")
-    val url           = LogField.Text           (prefix + "request.url")
-    val userAgent     = LogField.Text           (prefix + "request.user_agent")
-    val xForwardedFor = LogField.Text           (prefix + "request.x_forwarded_for")
+    val id                = LogField.Text.uuid      (prefix + "request.id")
+    val method            = LogField.Text           (prefix + "request.method")
+  //val securityToken     = LogField.Text           (prefix + "request.security_token")
+    val uri               = LogField.Text           (prefix + "request.uri")
+    val url               = LogField.Text           (prefix + "request.url")
+    val userAgent         = LogField.Text           (prefix + "request.user_agent")
+    val verificationToken = LogField.Text           (prefix + "request.verification_token")
+    val xForwardedFor     = LogField.Text           (prefix + "request.x_forwarded_for")
   }
 
   object response {
-    val code          = LogField.Long           (prefix + "response.code")
-    val durMs         = LogField.Long.durationMs(prefix + "response.duration.ms")
+    val code              = LogField.Long           (prefix + "response.code")
+    val durMs             = LogField.Long.durationMs(prefix + "response.duration.ms")
   }
 
   object websocket {
-    val callback      = LogField.Text           (prefix + "websocket.callback")
-    val projectId     = LogField.Text.long      (prefix + "websocket.project_id")
+    val callback          = LogField.Text           (prefix + "websocket.callback")
+    val projectId         = LogField.Text.long      (prefix + "websocket.project_id")
   }
 }

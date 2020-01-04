@@ -25,7 +25,7 @@ import shipreq.webapp.client.public.Styles.{register2 => *}
 
 object Register2 {
 
-  final case class Props(token : SecurityToken,
+  final case class Props(token : VerificationToken,
                          submit: ServerSideProcInvoker[Request, ErrorMsg, Result]) {
     @inline def render: VdomElement = Component(this)
   }

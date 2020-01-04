@@ -210,8 +210,8 @@ object RandomData {
   lazy val personName: Gen[PersonName] =
     unicodeString1.map(PersonName.apply)
 
-  lazy val securityToken: Gen[SecurityToken] =
-    Gen.ascii.string(1 to 6).map(SecurityToken.apply)
+  lazy val verificationToken: Gen[VerificationToken] =
+    Gen.ascii.string(1 to 6).map(VerificationToken.apply)
 
   // -------------------------------------------------------------------------------------------------------------------
   // Custom issue types

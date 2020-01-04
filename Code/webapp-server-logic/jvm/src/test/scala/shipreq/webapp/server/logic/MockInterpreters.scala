@@ -24,7 +24,7 @@ object MockDb {
                              emailAddr    : EmailAddr,
                              ps           : PasswordAndSalt,
                              createdAt    : Instant,
-                             resetPassword: Option[(SecurityToken, Instant)] = None) {
+                             resetPassword: Option[(VerificationToken, Instant)] = None) {
     def pubids: List[Username \/ EmailAddr] =
       -\/(username) :: \/-(emailAddr) :: Nil
 
@@ -86,14 +86,14 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
   }
 
   var prevTokenId = 0
-  private def nextToken(): SecurityToken = {
+  private def nextToken(): VerificationToken = {
     prevTokenId += 1
     prevToken()
   }
 
-  def prevToken(): SecurityToken = {
+  def prevToken(): VerificationToken = {
     assert(prevTokenId > 0)
-    SecurityToken(s"[token-$prevTokenId]")
+    VerificationToken(s"[token-$prevTokenId]")
   }
 
   def assertTokensIssued(expect: Int): Unit =
@@ -124,12 +124,12 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
       t
     }
 
-  def getPendingUserRegistration(t: SecurityToken): Option[(EmailAddr, DB.UserRegistration.Pending)] =
+  def getPendingUserRegistration(t: VerificationToken): Option[(EmailAddr, DB.UserRegistration.Pending)] =
     userPlaceholders.iterator.collect {
       case (ea, p: DB.UserRegistration.Pending) if p.token ==* t => (ea, p)
     }.nextOption()
 
-  override def getUserRegistrationTokenIssueDate(t: SecurityToken) = Name[Option[Instant]] {
+  override def getUserRegistrationTokenIssueDate(t: VerificationToken) = Name[Option[Instant]] {
     getPendingUserRegistration(t).map(_._2.tokenSentAt)
   }
 
@@ -154,7 +154,7 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     r
   }
 
-  override def completeUserRegistration(token: SecurityToken,
+  override def completeUserRegistration(token: VerificationToken,
                                         name: PersonName,
                                         username: Username,
                                         ps: PasswordAndSalt,
@@ -184,7 +184,7 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     }
   }
 
-  override def getResetPasswordTokenIssueDate(t: SecurityToken) = Name[Option[Instant]] {
+  override def getResetPasswordTokenIssueDate(t: VerificationToken) = Name[Option[Instant]] {
     users.collectFirst {
       case MockDb.UserEntry(_, _, _, _, _, Some((t2, i))) if t ==* t2 => i
     }
@@ -203,7 +203,7 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
       ()
     }
 
-  override def updateUserPassword(token: SecurityToken, ps: PasswordAndSalt) = Name[Option[UserId]] {
+  override def updateUserPassword(token: VerificationToken, ps: PasswordAndSalt) = Name[Option[UserId]] {
     users.find(_.resetPassword.exists(_._1 ==* token)).map { u =>
       updateUser(_.id ==* u.id, _.copy(ps = ps, resetPassword = None))
       u.id
@@ -511,7 +511,7 @@ object MockInterpreters {
       jwtSecret                  = new ServerLogicConfig.Security.JwtSecret("x"*64),
       jwtSecretPrevious          = None,
       passwordSaltLength         = 64,
-      securityTokenLength        = 8,
+      verificationTokenLength        = 8,
       registrationTokenLifespan  = 7 days,
       passwordResetTokenLifespan = 4 days))
 

@@ -29,9 +29,9 @@ final class DbInterpreter(implicit config: ServerLogicConfig.Security)
        with ForProjectSpa
        with Base {
 
-  override val tokenGen: () => SecurityToken = {
+  override val tokenGen: () => VerificationToken = {
     val it = Gen.alphaNumeric.samples()
-    val size = config.securityTokenLength
+    val size = config.verificationTokenLength
     () => {
       val sb = new StringBuilder(size)
       var i = size
@@ -39,7 +39,7 @@ final class DbInterpreter(implicit config: ServerLogicConfig.Security)
         i -= 1
         sb.append(it.next())
       }
-      SecurityToken(sb.result())
+      VerificationToken(sb.result())
     }
   }
 }
@@ -96,30 +96,30 @@ object DbInterpreter {
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  object SecurityTokenReadOnly extends SecurityTokenReadOnly
-  trait SecurityTokenReadOnly extends DB.SecurityTokenReadOnly[ConnectionIO] {
+  object VerificationTokenReadOnly extends VerificationTokenReadOnly
+  trait VerificationTokenReadOnly extends DB.VerificationTokenReadOnly[ConnectionIO] {
 
     private[db] final val getUserRegistrationTokenIssueDateSql =
-      Query[SecurityToken, Instant]("SELECT confirmation_sent_at FROM usr WHERE confirmation_token=?")
+      Query[VerificationToken, Instant]("SELECT confirmation_sent_at FROM usr WHERE confirmation_token=?")
 
-    override final def getUserRegistrationTokenIssueDate(t: SecurityToken): ConnectionIO[Option[Instant]] =
+    override final def getUserRegistrationTokenIssueDate(t: VerificationToken): ConnectionIO[Option[Instant]] =
       getUserRegistrationTokenIssueDateSql.toQuery0(t).option
 
     private[db] final val getResetPasswordTokenIssueDateSql =
-      Query[SecurityToken, Option[Instant]]("SELECT reset_password_sent_at FROM usr WHERE reset_password_token=?")
+      Query[VerificationToken, Option[Instant]]("SELECT reset_password_sent_at FROM usr WHERE reset_password_token=?")
 
-    override final def getResetPasswordTokenIssueDate(t: SecurityToken): ConnectionIO[Option[Instant]] =
+    override final def getResetPasswordTokenIssueDate(t: VerificationToken): ConnectionIO[Option[Instant]] =
       getResetPasswordTokenIssueDateSql.toQuery0(t).option.map(_.flatten)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  trait ForPublicSpa extends DB.ForPublicSpa[ConnectionIO] with SecurityTokenReadOnly {
+  trait ForPublicSpa extends DB.ForPublicSpa[ConnectionIO] with VerificationTokenReadOnly {
     import DB.{PasswordResetState, UserRegistration, UserRegistrationResult}
 
-    protected val tokenGen: () => SecurityToken
+    protected val tokenGen: () => VerificationToken
 
     // TODO: TEST tokenAttempt!
-    private final def tokenAttempt(execute: SecurityToken => ConnectionIO[_]): ConnectionIO[SecurityToken] =
+    private final def tokenAttempt(execute: VerificationToken => ConnectionIO[_]): ConnectionIO[VerificationToken] =
       ConnectionIoUnit
         .flatMap { _ =>
           val t = tokenGen()
@@ -130,7 +130,7 @@ object DbInterpreter {
         .map(_ getOrElse sys.error("Failed to acquire token."))
 
     private final def colsRegInfo = "id,confirmation_token,confirmation_sent_at,confirmed_at"
-    private final type RegInfo = (UserId, Option[SecurityToken], Instant, Option[Instant])
+    private final type RegInfo = (UserId, Option[VerificationToken], Instant, Option[Instant])
     private final val parseRegInfo: RegInfo => DB.UserRegistration = {
       case (id, Some(t), i, _)       => DB.UserRegistration.Pending(id, t, i)
       case (id, _      , _, Some(i)) => DB.UserRegistration.Complete(id, i)
@@ -144,19 +144,19 @@ object DbInterpreter {
       getUserRegistrationSql.toQuery0(e).option
 
     private[db] final val createUserPlaceholderSql =
-      Update[(EmailAddr, SecurityToken)]("INSERT INTO usr(email, confirmation_token, confirmation_sent_at) VALUES(?,?,NOW())")
+      Update[(EmailAddr, VerificationToken)]("INSERT INTO usr(email, confirmation_token, confirmation_sent_at) VALUES(?,?,NOW())")
 
-    override final def createUserPlaceholder(e: EmailAddr): ConnectionIO[SecurityToken] =
+    override final def createUserPlaceholder(e: EmailAddr): ConnectionIO[VerificationToken] =
       tokenAttempt(t => createUserPlaceholderSql.toUpdate0((e, t)).execute)
 
     private[db] final val updateUserRegistrationTokenSql =
-      Update[(SecurityToken, UserId)]("UPDATE usr SET confirmation_token = ?, confirmation_sent_at = NOW() WHERE id=?")
+      Update[(VerificationToken, UserId)]("UPDATE usr SET confirmation_token = ?, confirmation_sent_at = NOW() WHERE id=?")
 
-    override final def updateUserRegistrationToken(id: UserId): ConnectionIO[SecurityToken] =
+    override final def updateUserRegistrationToken(id: UserId): ConnectionIO[VerificationToken] =
       tokenAttempt(t => updateUserRegistrationTokenSql.toUpdate0((t, id)).execute)
 
     private[db] final val sqlRegisterUser =
-      Query[(Username, PasswordAndSalt, SecurityToken), UserId](
+      Query[(Username, PasswordAndSalt, VerificationToken), UserId](
         """
           UPDATE usr SET username = ?
             ,password = ?, password_salt = ?, password_changed_at = NOW()
@@ -167,7 +167,7 @@ object DbInterpreter {
     private[db] final val sqlInsertUsrd =
       Update[(UserId, PersonName, Boolean)]("INSERT INTO usrd VALUES(?,?,?)")
 
-    override final def completeUserRegistration(token     : SecurityToken,
+    override final def completeUserRegistration(token     : VerificationToken,
                                                 name      : PersonName,
                                                 username  : Username,
                                                 ps        : PasswordAndSalt,
@@ -191,7 +191,7 @@ object DbInterpreter {
     }
 
     private final def colsResetPasswordInfo = "reset_password_token,reset_password_sent_at"
-    private final type ResetPasswordInfo = (Option[SecurityToken], Option[Instant])
+    private final type ResetPasswordInfo = (Option[VerificationToken], Option[Instant])
     private final def colsPasswordResetStateInfo = s"$colsRegInfo,$colsResetPasswordInfo"
     private final type PasswordResetStateInfo = (RegInfo, ResetPasswordInfo)
     private final val parsePasswordResetState: PasswordResetStateInfo => PasswordResetState = {
@@ -225,9 +225,9 @@ object DbInterpreter {
       }
 
     private[db] final val createResetPasswordTokenSql =
-      Update[(SecurityToken, UserId)]("UPDATE usr SET reset_password_token = ?, reset_password_sent_at = NOW(), reset_password_req_count = reset_password_req_count + 1 WHERE id=?")
+      Update[(VerificationToken, UserId)]("UPDATE usr SET reset_password_token = ?, reset_password_sent_at = NOW(), reset_password_req_count = reset_password_req_count + 1 WHERE id=?")
 
-    override final def createResetPasswordToken(id: UserId): ConnectionIO[SecurityToken] =
+    override final def createResetPasswordToken(id: UserId): ConnectionIO[VerificationToken] =
       tokenAttempt(t => createResetPasswordTokenSql.toUpdate0((t, id)).execute)
 
     private[db] final val updateResetPasswordTokenOnReissueSql =
@@ -238,7 +238,7 @@ object DbInterpreter {
       updateResetPasswordTokenOnReissueSql.toUpdate0(id).execute
 
     private[db] final val updateUserPasswordSql =
-      Query[(PasswordAndSalt, SecurityToken), UserId]("""
+      Query[(PasswordAndSalt, VerificationToken), UserId]("""
         UPDATE usr SET
           password = ?, password_salt = ?, password_changed_at = NOW(),
           reset_password_token = NULL
@@ -247,7 +247,7 @@ object DbInterpreter {
         """.sql)
 
     /** This also clears the token */
-    override final def updateUserPassword(token: SecurityToken, ps: PasswordAndSalt): ConnectionIO[Option[UserId]] =
+    override final def updateUserPassword(token: VerificationToken, ps: PasswordAndSalt): ConnectionIO[Option[UserId]] =
       updateUserPasswordSql.toQuery0((ps, token)).option
   }
 

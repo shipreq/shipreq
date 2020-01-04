@@ -5,7 +5,7 @@ import monocle.macros.{GenIso, Lenses}
 import scalaz.\/
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data.SecurityToken
+import shipreq.webapp.base.data.VerificationToken
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary._
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
@@ -121,7 +121,7 @@ object PublicSpaProtocols {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object Register2 {
-    final case class Request(token     : SecurityToken,
+    final case class Request(token     : VerificationToken,
                              personName: PersonName,
                              username  : Username,
                              password  : PlainTextPassword,
@@ -135,8 +135,8 @@ object PublicSpaProtocols {
       implicit def univEq: UnivEq[Request] = UnivEq.derive
 
       // Only used on server-side - Request has less than the registration form
-      lazy val validator: Composite.Validator[(SecurityToken, String, String, String, Boolean), _, Request] =
-        Composite.Validator.id[SecurityToken]
+      lazy val validator: Composite.Validator[(VerificationToken, String, String, String, Boolean), _, Request] =
+        Composite.Validator.id[VerificationToken]
           .tuple(UserValidators.personName.named)
           .tuple(UserValidators.username.stateless.named)
           .tuple(UserValidators.password.named)
@@ -170,7 +170,7 @@ object PublicSpaProtocols {
             state.pickle(a.newsletter)
           }
           override def unpickle(implicit state: UnpickleState): Request = {
-            val token      = state.unpickle[SecurityToken]
+            val token      = state.unpickle[VerificationToken]
             val personName = state.unpickle[PersonName]
             val username   = state.unpickle[Username]
             val password   = state.unpickle[PlainTextPassword]
@@ -233,7 +233,7 @@ object PublicSpaProtocols {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object ResetPassword2 {
-    final case class Request(token: SecurityToken, newPassword: PlainTextPassword)
+    final case class Request(token: VerificationToken, newPassword: PlainTextPassword)
 
     implicit def univEqRequest: UnivEq[Request] = UnivEq.derive
 
@@ -257,7 +257,7 @@ object PublicSpaProtocols {
             state.pickle(a.newPassword)
           }
           override def unpickle(implicit state: UnpickleState): Request = {
-            val token       = state.unpickle[SecurityToken]
+            val token       = state.unpickle[VerificationToken]
             val newPassword = state.unpickle[PlainTextPassword]
             Request(token, newPassword)
           }

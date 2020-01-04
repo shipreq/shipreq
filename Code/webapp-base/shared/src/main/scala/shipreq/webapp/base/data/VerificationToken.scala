@@ -5,10 +5,10 @@ import japgolly.univeq.UnivEq
 /**
   * Corresponds to either `confirmation_token` or `reset_password_token` in the DB.
   */
-final case class SecurityToken(value: String)
+final case class VerificationToken(value: String)
 
-object SecurityToken {
-  implicit def univEq: UnivEq[SecurityToken] = UnivEq.derive
+object VerificationToken {
+  implicit def univEq: UnivEq[VerificationToken] = UnivEq.derive
 
   sealed trait Status
   object Status {

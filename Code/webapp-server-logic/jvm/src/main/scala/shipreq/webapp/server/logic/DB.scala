@@ -42,7 +42,7 @@ object DB {
   }
 
   object UserRegistration {
-    final case class Pending(id: UserId, token: SecurityToken, tokenSentAt: Instant) extends UserRegistration
+    final case class Pending(id: UserId, token: VerificationToken, tokenSentAt: Instant) extends UserRegistration
     final case class Complete(id: UserId, confirmationAt: Instant) extends UserRegistration
   }
 
@@ -57,7 +57,7 @@ object DB {
   object PasswordResetState {
     final case class UserRegistrationPending(reg: UserRegistration.Pending) extends PasswordResetState
     final case class NoToken(reg: UserRegistration.Complete) extends PasswordResetState
-    final case class TokenExists(reg: UserRegistration.Complete, token: SecurityToken, tokenSentAt: Instant) extends PasswordResetState
+    final case class TokenExists(reg: UserRegistration.Complete, token: VerificationToken, tokenSentAt: Instant) extends PasswordResetState
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -99,46 +99,46 @@ object DB {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  trait SecurityTokenReadOnly[F[_]] {
-    def getUserRegistrationTokenIssueDate(t: SecurityToken): F[Option[Instant]]
-    def getResetPasswordTokenIssueDate   (t: SecurityToken): F[Option[Instant]]
+  trait VerificationTokenReadOnly[F[_]] {
+    def getUserRegistrationTokenIssueDate(t: VerificationToken): F[Option[Instant]]
+    def getResetPasswordTokenIssueDate   (t: VerificationToken): F[Option[Instant]]
   }
 
-  object SecurityTokenReadOnly {
-    def trans[F[_], G[_]](f: SecurityTokenReadOnly[F])(g: F ~> G): SecurityTokenReadOnly[G] =
-      new SecurityTokenReadOnly[G] {
-        override def getUserRegistrationTokenIssueDate(t: SecurityToken) = g(f.getUserRegistrationTokenIssueDate(t))
-        override def getResetPasswordTokenIssueDate   (t: SecurityToken) = g(f.getResetPasswordTokenIssueDate   (t))
+  object VerificationTokenReadOnly {
+    def trans[F[_], G[_]](f: VerificationTokenReadOnly[F])(g: F ~> G): VerificationTokenReadOnly[G] =
+      new VerificationTokenReadOnly[G] {
+        override def getUserRegistrationTokenIssueDate(t: VerificationToken) = g(f.getUserRegistrationTokenIssueDate(t))
+        override def getResetPasswordTokenIssueDate   (t: VerificationToken) = g(f.getResetPasswordTokenIssueDate   (t))
       }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  trait ForUserRegistration[F[_]] extends Base[F] with SecurityTokenReadOnly[F] {
+  trait ForUserRegistration[F[_]] extends Base[F] with VerificationTokenReadOnly[F] {
     def getUserRegistration(e: EmailAddr): F[Option[UserRegistration]]
 
     /** Creates an unconfirmed user account. No username, no password until email confirmed. */
-    def createUserPlaceholder(e: EmailAddr): F[SecurityToken]
+    def createUserPlaceholder(e: EmailAddr): F[VerificationToken]
 
-    def updateUserRegistrationToken(id: UserId): F[SecurityToken]
+    def updateUserRegistrationToken(id: UserId): F[VerificationToken]
 
-    def completeUserRegistration(token     : SecurityToken,
+    def completeUserRegistration(token     : VerificationToken,
                                  name      : PersonName,
                                  username  : Username,
                                  ps        : PasswordAndSalt,
                                  newsletter: Boolean): F[UserRegistrationResult]
   }
 
-  trait ForPasswordReset[F[_]] extends Base[F] with SecurityTokenReadOnly[F] {
+  trait ForPasswordReset[F[_]] extends Base[F] with VerificationTokenReadOnly[F] {
     def getPasswordResetState(u: Username \/ EmailAddr): F[Option[(EmailAddr, PasswordResetState)]]
 
-    def createResetPasswordToken(id: UserId): F[SecurityToken]
+    def createResetPasswordToken(id: UserId): F[VerificationToken]
 
     /** Updates the sent-count and sent-at attributes of an existing reset-password token. */
     def updateResetPasswordTokenOnReissue(id: UserId): F[Unit]
 
     /** This also clears the token */
-    def updateUserPassword(token: SecurityToken, ps: PasswordAndSalt): F[Option[UserId]]
+    def updateUserPassword(token: VerificationToken, ps: PasswordAndSalt): F[Option[UserId]]
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

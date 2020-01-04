@@ -13,7 +13,7 @@ object Urls {
     sealed abstract class Static(val url: Url.Relative) extends PublicSpaRoute
 
     sealed abstract class NeedsToken(val prefix: Url.Relative) extends PublicSpaRoute {
-      val url = prefix.thenParam[SecurityToken](_.value)
+      val url = prefix.thenParam[VerificationToken](_.value)
     }
 
     case object Home           extends Static(Url.Relative("/"))

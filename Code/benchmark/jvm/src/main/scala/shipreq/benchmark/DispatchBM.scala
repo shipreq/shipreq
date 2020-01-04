@@ -15,7 +15,7 @@ import scalaz.{Monad, Name, Need, \/, \/-}
 import shipreq.base.util._
 import shipreq.taskman.api.TaskId
 import shipreq.webapp.base.Urls
-import shipreq.webapp.base.data.{ProjectId, SecurityToken}
+import shipreq.webapp.base.data.{ProjectId, VerificationToken}
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.logic._
@@ -160,7 +160,7 @@ object DispatchBM {
       jwtSecret                  = new ServerLogicConfig.Security.JwtSecret("x"*64),
       jwtSecretPrevious          = None,
       passwordSaltLength         = 64,
-      securityTokenLength        = 8,
+      verificationTokenLength    = 8,
       registrationTokenLifespan  = 7 days,
       passwordResetTokenLifespan = 4 days))
 
@@ -172,13 +172,13 @@ object DispatchBM {
   final class Interpreters[F[_]](val run: F[_] => Any)(implicit val _F: Monad[F]) { self =>
     private val F = _F
 
-    implicit object db extends DB.SecurityTokenReadOnly[F] with DB.ForSecurity[F] {
+    implicit object db extends DB.VerificationTokenReadOnly[F] with DB.ForSecurity[F] {
       var token = Option.empty[Instant]
       var getUserOk = true
       var projectOwner: Option[UserId] = Some(user.id)
 
-      override def getUserRegistrationTokenIssueDate(t: SecurityToken)          = F point token
-      override def getResetPasswordTokenIssueDate   (t: SecurityToken)          = F point token
+      override def getUserRegistrationTokenIssueDate(t: VerificationToken)      = F point token
+      override def getResetPasswordTokenIssueDate   (t: VerificationToken)      = F point token
       override def getUserAndPasswordByEmail        (e: EmailAddr)              = F.point(Option.when(getUserOk)((user, ps)))
       override def getUserAndPasswordByUsername     (u: Username)               = F.point(Option.when(getUserOk)((user, ps)))
       override def logLoginSuccess                  (i: UserId, ip: Option[IP]) = F.point(())
@@ -279,7 +279,7 @@ object DispatchBM {
     implicit def autoXID(p: ProjectId): ProjectId.Public = Obfuscators.projectId.obfuscate(p)
     val param: String => Option[String] = _ => None
     val cookie: Cookie.Name => Option[String] = _ => None
-    val token = SecurityToken("MnVC8cvPX9b1jiCpyxoYLk4RqQ8idHlV4lf7OHzIQctHLgw6C")
+    val token = VerificationToken("MnVC8cvPX9b1jiCpyxoYLk4RqQ8idHlV4lf7OHzIQctHLgw6C")
     val b = List.newBuilder[Request[Unit]]
     b ++= Urls.PublicSpaRoute.static.whole.toList.map(r => Request(Get, r.url, noBody, param, cookie, ()))
     b ++= Urls.MemberRoute.static.whole.toList.map(r => Request(Get, r.url, noBody, param, cookie, ()))

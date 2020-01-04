@@ -20,8 +20,8 @@ object SqlTest extends TestSuite {
       'getProjectOwnerSql              - test(db.getProjectOwnerSql)
     }
 
-    'securityTokenReadOnly {
-      val db = SecurityTokenReadOnly
+    'verificationTokenReadOnly {
+      val db = VerificationTokenReadOnly
       'getUserRegistrationTokenIssueDateSql - test(db.getUserRegistrationTokenIssueDateSql)
       'getResetPasswordTokenIssueDateSql    - test(db.getResetPasswordTokenIssueDateSql)
     }

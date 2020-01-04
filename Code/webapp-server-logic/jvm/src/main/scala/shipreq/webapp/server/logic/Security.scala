@@ -17,7 +17,7 @@ object Security {
 
     /** Protects a vulnerable action from external attacks.
       *
-      * A vulnerable action could be logging in, requesting a password reset, checking the validity of a security token.
+      * A vulnerable action could be logging in, requesting a password reset, checking the validity of a verification token.
       *
       * The method of protection is left to the implementation.
       * It should at the minimum provide rate limiting.

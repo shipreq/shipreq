@@ -26,8 +26,8 @@ object DbMeta {
   implicit val doobieMetaSalt: Meta[Salt] =
     meta1(Salt.apply)(_.base64)
 
-  implicit val doobieMetaSecurityToken: Meta[SecurityToken] =
-    meta1(SecurityToken.apply)(_.value)
+  implicit val doobieMetaVerificationToken: Meta[VerificationToken] =
+    meta1(VerificationToken.apply)(_.value)
 
   implicit val doobieMetaUserId: Meta[UserId] =
     meta1(UserId.apply)(_.value)

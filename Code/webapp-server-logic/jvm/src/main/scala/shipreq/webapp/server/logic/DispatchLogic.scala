@@ -92,7 +92,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
                                                   makeRealRes: (RealReq, dispatch.Response) => F[RealRes])
                                                  (implicit F: Monad[F],
                                                   config    : ServerLogicConfig,
-                                                  db        : DB.SecurityTokenReadOnly[F],
+                                                  db        : DB.VerificationTokenReadOnly[F],
                                                   metrics   : MetricsLogic[F],
                                                   ops       : OpsEndpoints[F],
                                                   common    : CommonProtocolLogic[F],
@@ -239,16 +239,16 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
                 ResponseCmd.ServePublicSpa(t.authenticatedUser))))
         }
 
-      val securityTokenFn: R.NeedsToken => SecurityToken => F[SecurityToken.Status] = {
+      val verificationTokenFn: R.NeedsToken => VerificationToken => F[VerificationToken.Status] = {
         case R.Register2     => PublicSpaLogic.tokenStatusFn(db.getUserRegistrationTokenIssueDate, config.security.registrationTokenLifespan)
         case R.ResetPassword => PublicSpaLogic.tokenStatusFn(db.getResetPasswordTokenIssueDate, config.security.passwordResetTokenLifespan)
       }
 
-      val securityTokenRoutes: Request ?=> F[RealRes] =
+      val verificationTokenRoutes: Request ?=> F[RealRes] =
         R.needsToken.map { r =>
-          val getTokenStatus = securityTokenFn(r)
+          val getTokenStatus = verificationTokenFn(r)
           extract(spaTest1(r.url)) { implicit req => param =>
-            val token = SecurityToken(param)
+            val token = VerificationToken(param)
             traceUrl(r.url.prefix,
               onMethod(Get)(
                 security.protect(
@@ -256,9 +256,9 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
                     status <- getTokenStatus(token)
                     resp   <- loadOrInitSession(s =>
                                 status match {
-                                  case SecurityToken.Status.Valid   => ResponseCmd.ServePublicSpa(s.authenticatedUser)
-                                  case SecurityToken.Status.Invalid => ResponseCmd.redirectToPublicHome
-                                  case SecurityToken.Status.Expired => ResponseCmd.redirectToPublicHome // could be better but good enough
+                                  case VerificationToken.Status.Valid   => ResponseCmd.ServePublicSpa(s.authenticatedUser)
+                                  case VerificationToken.Status.Invalid => ResponseCmd.redirectToPublicHome
+                                  case VerificationToken.Status.Expired => ResponseCmd.redirectToPublicHome // could be better but good enough
                                 }
                               )
                   } yield resp
@@ -266,7 +266,7 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
           }
         }.reduce(_ | _)
 
-      login | staticRoutes | securityTokenRoutes
+      login | staticRoutes | verificationTokenRoutes
     }
 
     val memberHomeSpa: Request ?=> F[RealRes] =

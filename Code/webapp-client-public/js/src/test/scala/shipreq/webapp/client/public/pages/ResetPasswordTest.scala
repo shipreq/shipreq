@@ -90,7 +90,7 @@ object ResetPasswordTest extends TestSuite {
     t(page)(h => plan.test(Observer.watch(new Obs(h, ajax))).stateless.withRef(ajax).run())
   }
 
-  val page = Page.Token(Urls.PublicSpaRoute.ResetPassword, SecurityToken("abcd1234"))
+  val page = Page.Token(Urls.PublicSpaRoute.ResetPassword, VerificationToken("abcd1234"))
 
   def success: *.Actions = (
     clickSubmit

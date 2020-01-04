@@ -7,7 +7,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import shipreq.base.util.ErrorMsg
-import shipreq.webapp.base.data.{Disabled, Enabled, SecurityToken}
+import shipreq.webapp.base.data.{Disabled, Enabled, VerificationToken}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
@@ -19,7 +19,7 @@ import shipreq.webapp.client.public.Styles.{resetPassword => *}
 
 object ResetPassword {
 
-  final case class Props(token: SecurityToken,
+  final case class Props(token: VerificationToken,
                          resetPassword: ServerSideProcInvoker[P.Request, ErrorMsg, P.Result]) {
     @inline def render: VdomElement = Component(this)
   }

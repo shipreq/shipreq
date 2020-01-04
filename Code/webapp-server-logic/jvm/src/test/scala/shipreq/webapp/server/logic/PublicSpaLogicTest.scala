@@ -4,7 +4,7 @@ import scalaz.{-\/, \/, \/-}
 import utest._
 import shipreq.base.util._
 import shipreq.taskman.api.Task
-import shipreq.webapp.base.data.SecurityToken
+import shipreq.webapp.base.data.VerificationToken
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.user._
 import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
@@ -226,7 +226,7 @@ object PublicSpaLogicTest extends TestSuite {
         runResetPassword2(Request(token, PlainTextPassword("x"))).needLeft
 
       "reject invalid tokens" -
-        assertEq(runResetPassword2(Request(SecurityToken("xxxx"), p2)), \/-(Result.TokenInvalid))
+        assertEq(runResetPassword2(Request(VerificationToken("xxxx"), p2)), \/-(Result.TokenInvalid))
 
       "reject expired tokens" - {
         forwardTimeToEndOfPasswordResetWindow(Invalid)

@@ -11,7 +11,7 @@ import shipreq.base.util._
 import shipreq.base.util.log.{HasLogger, WebappLogFields}
 import shipreq.taskman.api.{Task, TaskId, TaskmanApi}
 import shipreq.webapp.base.Urls
-import shipreq.webapp.base.data.SecurityToken
+import shipreq.webapp.base.data.VerificationToken
 import shipreq.webapp.base.user._
 import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.server.ServerLogicConfig
@@ -41,22 +41,22 @@ object PublicSpaLogic extends HasLogger {
     startTime plus timeToLive isBefore now
 
   def tokenStatus[F[_]](ttl: Duration)
-                       (implicit F: Monad[F], svr: Server.Time[F]): Option[Instant] => F[SecurityToken.Status] = {
-    val invalid: F[SecurityToken.Status] =
-      F pure SecurityToken.Status.Invalid
+                       (implicit F: Monad[F], svr: Server.Time[F]): Option[Instant] => F[VerificationToken.Status] = {
+    val invalid: F[VerificationToken.Status] =
+      F pure VerificationToken.Status.Invalid
 
-    val check: Instant => F[SecurityToken.Status] = i =>
+    val check: Instant => F[VerificationToken.Status] = i =>
       for (now <- svr.now) yield
         if (isExpired_?(i, ttl, now))
-          SecurityToken.Status.Expired
+          VerificationToken.Status.Expired
         else
-          SecurityToken.Status.Valid
+          VerificationToken.Status.Valid
 
     _.fold(invalid)(check)
   }
 
-  def tokenStatusFn[F[_] : Monad : Server.Time](issueDate: SecurityToken => F[Option[Instant]],
-                                                ttl: Duration): SecurityToken => F[SecurityToken.Status] = {
+  def tokenStatusFn[F[_] : Monad : Server.Time](issueDate: VerificationToken => F[Option[Instant]],
+                                                ttl: Duration): VerificationToken => F[VerificationToken.Status] = {
     val f = tokenStatus[F](ttl)
     issueDate(_).flatMap(f)
   }
@@ -96,7 +96,7 @@ object PublicSpaLogic extends HasLogger {
 
         private val absUrlRegister2 = config.baseUrl / Urls.PublicSpaRoute.Register2.url
 
-        private val getTokenStatus: SecurityToken => F[SecurityToken.Status] =
+        private val getTokenStatus: VerificationToken => F[VerificationToken.Status] =
           tokenStatusFn(t => runDB(db.getUserRegistrationTokenIssueDate(t)), config.security.registrationTokenLifespan)
 
         def preRegistrationMsg(email: EmailAddr, u: DB.UserRegistration, now: Instant): D[(Task, Security.Result)] =
@@ -110,7 +110,7 @@ object PublicSpaLogic extends HasLogger {
                 D pure onTokenReusable(email, r.token)
           }
 
-        private def onTokenReusable(email: EmailAddr, token: SecurityToken): (Task, Security.Result) =
+        private def onTokenReusable(email: EmailAddr, token: VerificationToken): (Task, Security.Result) =
           registrationRequestedTask(email, token)
 
         private def onTokenExpired(email: EmailAddr, id: UserId): D[(Task, Security.Result)] =
@@ -119,7 +119,7 @@ object PublicSpaLogic extends HasLogger {
         private def onAlreadyRegistered(email: EmailAddr): (Task, Security.Result) =
           (Task.ReRegistrationAttempted(email.toTaskman), Security.Result.Failure)
 
-        private def registrationRequestedTask(email: EmailAddr, token: SecurityToken): (Task, Security.Result) =
+        private def registrationRequestedTask(email: EmailAddr, token: VerificationToken): (Task, Security.Result) =
           (Task.RegistrationRequested(email.toTaskman, absUrlRegister2(token).absoluteUrl), Security.Result.Success)
 
         def register1(emailAddrStr: String): F[ErrorMsg \/ TaskId] = {
@@ -171,13 +171,13 @@ object PublicSpaLogic extends HasLogger {
             security.protectFn { unvalidatedReq =>
 
               unvalidatedReq.validate.onValid[F, (Result, T)] { req =>
-                WebappLogFields.request.securityToken.mdc(req.token.value).para {
+                WebappLogFields.request.verificationToken.mdc(req.token.value).para {
 
                   val validateToken: Stack[Unit] =
                     getTokenStatus(req.token).mapToStack {
-                      case SecurityToken.Status.Valid   => rightUnit
-                      case SecurityToken.Status.Invalid => -\/(\/-(Result.TokenInvalid))
-                      case SecurityToken.Status.Expired => -\/(\/-(Result.TokenExpired))
+                      case VerificationToken.Status.Valid   => rightUnit
+                      case VerificationToken.Status.Invalid => -\/(\/-(Result.TokenInvalid))
+                      case VerificationToken.Status.Expired => -\/(\/-(Result.TokenExpired))
                     }
 
                   def register(ps: PasswordAndSalt): Stack[UserId] =
@@ -238,7 +238,7 @@ object PublicSpaLogic extends HasLogger {
 
       private[this] object ResetPasswordFns {
 
-        private val getTokenStatus: SecurityToken => F[SecurityToken.Status] =
+        private val getTokenStatus: VerificationToken => F[VerificationToken.Status] =
           tokenStatusFn(t => runDB(db.getResetPasswordTokenIssueDate(t)), config.security.passwordResetTokenLifespan)
 
         private val absUrlRegister2 = config.baseUrl / Urls.PublicSpaRoute.ResetPassword.url
@@ -276,7 +276,7 @@ object PublicSpaLogic extends HasLogger {
               )
             }
 
-            def resetMsg(email: EmailAddr, token: SecurityToken): Task =
+            def resetMsg(email: EmailAddr, token: VerificationToken): Task =
               Task.PasswordResetRequested(email.toTaskman, absUrlRegister2(token).absoluteUrl)
 
             for {
@@ -289,7 +289,7 @@ object PublicSpaLogic extends HasLogger {
 
         val resetPassword2: PublicSpaProtocols.ResetPassword2.ajax.ServerSideFn[F] =
           security.protectFn { req =>
-            WebappLogFields.request.securityToken.mdc(req.token.value).para {
+            WebappLogFields.request.verificationToken.mdc(req.token.value).para {
               UserValidators.password.named(req.newPassword.value).onValid { newPassword =>
 
                 import PublicSpaProtocols.ResetPassword2.Result
@@ -298,9 +298,9 @@ object PublicSpaLogic extends HasLogger {
 
                 val validateToken: Stack[Unit] =
                   getTokenStatus(req.token).mapToStack {
-                    case SecurityToken.Status.Valid   => rightUnit
-                    case SecurityToken.Status.Invalid => -\/(\/-(Result.TokenInvalid))
-                    case SecurityToken.Status.Expired => -\/(\/-(Result.TokenExpired))
+                    case VerificationToken.Status.Valid   => rightUnit
+                    case VerificationToken.Status.Invalid => -\/(\/-(Result.TokenInvalid))
+                    case VerificationToken.Status.Expired => -\/(\/-(Result.TokenExpired))
                   }
 
                 val main: Stack[Result.Success.type] =

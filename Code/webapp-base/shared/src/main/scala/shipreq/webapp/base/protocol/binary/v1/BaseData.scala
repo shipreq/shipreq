@@ -357,22 +357,22 @@ object BaseData {
   implicit lazy val picklerPlainTextPassword: Pickler[PlainTextPassword] =
     transformPickler(PlainTextPassword.apply)(_.value)
 
-  implicit lazy val picklerSecurityToken: Pickler[SecurityToken] =
-    transformPickler(SecurityToken.apply)(_.value)
+  implicit lazy val picklerVerificationToken: Pickler[VerificationToken] =
+    transformPickler(VerificationToken.apply)(_.value)
 
-  implicit lazy val picklerSecurityTokenStatus: Pickler[SecurityToken.Status] =
-    new Pickler[SecurityToken.Status] {
-      override def pickle(a: SecurityToken.Status)(implicit state: PickleState): Unit =
+  implicit lazy val picklerVerificationTokenStatus: Pickler[VerificationToken.Status] =
+    new Pickler[VerificationToken.Status] {
+      override def pickle(a: VerificationToken.Status)(implicit state: PickleState): Unit =
         a match {
-          case SecurityToken.Status.Expired => state.enc.writeByte(0)
-          case SecurityToken.Status.Invalid => state.enc.writeByte(1)
-          case SecurityToken.Status.Valid   => state.enc.writeByte(2)
+          case VerificationToken.Status.Expired => state.enc.writeByte(0)
+          case VerificationToken.Status.Invalid => state.enc.writeByte(1)
+          case VerificationToken.Status.Valid   => state.enc.writeByte(2)
         }
-      override def unpickle(implicit state: UnpickleState): SecurityToken.Status =
+      override def unpickle(implicit state: UnpickleState): VerificationToken.Status =
         state.dec.readByte match {
-          case 0 => SecurityToken.Status.Expired
-          case 1 => SecurityToken.Status.Invalid
-          case 2 => SecurityToken.Status.Valid
+          case 0 => VerificationToken.Status.Expired
+          case 1 => VerificationToken.Status.Invalid
+          case 2 => VerificationToken.Status.Valid
         }
     }
 

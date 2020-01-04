@@ -6,7 +6,7 @@ import scalaz.{-\/, \/-}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.{RandomData => R}
-import shipreq.webapp.base.data.SecurityToken
+import shipreq.webapp.base.data.VerificationToken
 import shipreq.webapp.base.test.BinaryTestUtil._
 import shipreq.webapp.base.user.{EmailAddr, PersonName, PlainTextPassword, Username}
 import utest._
@@ -113,7 +113,7 @@ object PublicSpaProtocolsTest extends TestSuite {
 
         'roundTrip - {
           val gen = for {
-              a <- R.securityToken
+              a <- R.verificationToken
               b <- R.personName
               c <- R.username
               d <- R.plainTextPassword
@@ -124,7 +124,7 @@ object PublicSpaProtocolsTest extends TestSuite {
 
         "v1.0" - {
           val bin    = BinaryData.fromHex("184A6C450100052473212B76017A067234656A64390454407B6201381B6074")
-          val expect = Request(SecurityToken("$s!+v"),PersonName("z"),Username("r4ejd9"),PlainTextPassword("T@{b"),true)
+          val expect = Request(VerificationToken("$s!+v"),PersonName("z"),Username("r4ejd9"),PlainTextPassword("T@{b"),true)
           assertDecodeOk(codec)(bin, expect)
         }
       }
@@ -188,13 +188,13 @@ object PublicSpaProtocolsTest extends TestSuite {
         import ajax.req.codec
 
         'roundTrip - {
-          val gen = Gen.apply2(Request)(R.securityToken, R.plainTextPassword)
+          val gen = Gen.apply2(Request)(R.verificationToken, R.plainTextPassword)
           propTestRoundTrip(codec)(gen)
         }
 
         "v1.0" - {
           val bin    = BinaryData.fromHex("EE434A020100054D492747400D7A545B68483D75593928587477826CAE63")
-          val expect = Request(SecurityToken("MI'G@"),PlainTextPassword("zT[hH=uY9(Xtw"))
+          val expect = Request(VerificationToken("MI'G@"),PlainTextPassword("zT[hH=uY9(Xtw"))
           assertDecodeOk(codec)(bin, expect)
         }
       }

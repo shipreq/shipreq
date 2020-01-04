@@ -118,5 +118,3 @@ Phase 2B
 * WebSockets
   * Ensure session validity on push
   * Recover from lost Redis connections
-
-* Change security token to something like confirmation/verification token (inc properties)

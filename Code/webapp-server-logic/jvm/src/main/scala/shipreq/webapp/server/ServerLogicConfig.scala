@@ -67,7 +67,7 @@ object ServerLogicConfig {
                             passwordSaltLength: Int,
 
                             /** Number of characters in tokens used for email & reset-password verification. */
-                            securityTokenLength: Int,
+                            verificationTokenLength: Int,
 
                             /** How long registration tokens are valid for after issuing. */
                             registrationTokenLifespan: Duration,
@@ -109,9 +109,9 @@ object ServerLogicConfig {
         ConfigDef.need    [JwtSecret]("jwt.secret") |@|
         ConfigDef.get     [JwtSecret]("jwt.secret.previous") |@|
         ConfigDef.getOrUse[Int      ]("password.salt", 64) |@|
-        ConfigDef.need    [Int      ]("token.length") |@|
-        ConfigDef.need    [Duration ]("token.lifespan.register") |@|
-        ConfigDef.need    [Duration ]("token.lifespan.resetpw")
+        ConfigDef.need    [Int      ]("verification_token.length") |@|
+        ConfigDef.need    [Duration ]("verification_token.lifespan.register") |@|
+        ConfigDef.need    [Duration ]("verification_token.lifespan.resetpw")
       ) (apply)
   }
 

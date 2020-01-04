@@ -185,7 +185,7 @@ object DispatchLogicTest extends TestSuite {
       'resetPassword2 {
         publicSpa.ajaxResetPassword1(\/-(user2.emailAddr)).value
 
-        'invalid - assertProtected(testRun(ResponseCmd.redirectToPublicHome, ResetPassword.url(SecurityToken("wwwweeeeeeeeeee33333"))))
+        'invalid - assertProtected(testRun(ResponseCmd.redirectToPublicHome, ResetPassword.url(VerificationToken("wwwweeeeeeeeeee33333"))))
         'valid   - assertProtected(testRun(ResponseCmd.ServePublicSpa(None), ResetPassword.url(db.prevToken())))
         'expired {
           forwardTimeToEndOfPasswordResetWindow(Invalid)
@@ -208,7 +208,7 @@ object DispatchLogicTest extends TestSuite {
         publicSpa.ajaxRegister1(newEmail).value.needRight
 
         'enabled {
-          'invalid - assertProtected(testRun(ResponseCmd.redirectToPublicHome, Register2.url(SecurityToken("wwwweeeeeeeeeee66666"))))
+          'invalid - assertProtected(testRun(ResponseCmd.redirectToPublicHome, Register2.url(VerificationToken("wwwweeeeeeeeeee66666"))))
           'valid   - assertProtected(testRun(ResponseCmd.ServePublicSpa(None), Register2.url(db.prevToken())))
           'expired {
             forwardTimeToEndOfConfirmationWindow(Invalid)
@@ -220,7 +220,7 @@ object DispatchLogicTest extends TestSuite {
           val t2 = withConfig(_.copy(publicRegistration = Deny))
           import t2._, mockInterpreters._
 
-          'invalid - assertProtected(testRun(ResponseCmd.redirectToPublicHome, Register2.url(SecurityToken("wwwweeeeeeeeeee66666"))))
+          'invalid - assertProtected(testRun(ResponseCmd.redirectToPublicHome, Register2.url(VerificationToken("wwwweeeeeeeeeee66666"))))
           'valid   - assertProtected(testRun(ResponseCmd.ServePublicSpa(None), Register2.url(db.prevToken())))
           'expired {
             forwardTimeToEndOfConfirmationWindow(Invalid)

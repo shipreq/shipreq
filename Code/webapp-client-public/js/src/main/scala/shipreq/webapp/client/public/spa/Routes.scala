@@ -8,7 +8,7 @@ import shipreq.base.util.Url
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.{AnalyticsConfig, Urls, WebappConfig}
 import shipreq.webapp.base.Urls.PublicSpaRoute
-import shipreq.webapp.base.data.SecurityToken
+import shipreq.webapp.base.data.VerificationToken
 import shipreq.webapp.base.lib.BaseReusability._
 import shipreq.webapp.base.util.GoogleAnalytics
 
@@ -35,7 +35,7 @@ object Page {
       }
   }
 
-  final case class Token(route: PublicSpaRoute.NeedsToken, token: SecurityToken) extends Page {
+  final case class Token(route: PublicSpaRoute.NeedsToken, token: VerificationToken) extends Page {
     override val pageTitle: List[String] =
       route match {
         case PublicSpaRoute.Register2     => "Register"       :: Nil
@@ -101,7 +101,7 @@ object Routes {
 
       val tokenRoutes =
         PublicSpaRoute.needsToken.map { r =>
-          val tokenUrl = remainingPath.xmap(s => Page.Token(r, SecurityToken(s)))(_.token.value)
+          val tokenUrl = remainingPath.xmap(s => Page.Token(r, VerificationToken(s)))(_.token.value)
           dynamicRoute(r.url.prefix.relativeUrl / tokenUrl) {
             case p@ Page.Token(r2, _) if r ==* r2 => p
           } ~> dynRenderR(render(_, _))
@@ -114,7 +114,7 @@ object Routes {
         .verify(
           Page.LoginFrom(Url.Relative("/blah")),
           Page.static.whole ++
-            PublicSpaRoute.needsToken.whole.map(Page.Token(_, SecurityToken("abcd"))): _*)
+            PublicSpaRoute.needsToken.whole.map(Page.Token(_, VerificationToken("abcd"))): _*)
     }
 
     private val trackPage: (Option[Page], Page) => Callback = {
