@@ -97,7 +97,7 @@ object Dependencies {
   }
 
   object SLF4J {
-    private val mm = MultiModule.java("org.slf4j", "1.7.29")
+    private val mm = MultiModule.java("org.slf4j", "1.7.30")
     val api = mm("slf4j-api")
     val jcl = mm("jcl-over-slf4j")
   }
@@ -143,19 +143,19 @@ object Dependencies {
   }
 
   object Akka {
-    private val mm = MultiModule.scala("com.typesafe.akka", "2.5.26")
+    private val mm = MultiModule.scala("com.typesafe.akka", "2.6.1")
     val actor   = mm("akka-actor") ++ mm("akka-slf4j")
     val testkit = mm("akka-testkit")
   }
 
   object OkHttp {
-    private val mm = MultiModule.java("com.squareup.okhttp3", "3.14.4")
+    private val mm = MultiModule.java("com.squareup.okhttp3", "3.14.5")
     val core = mm("okhttp")
     // val urlConnection = mm("okhttp-urlconnection") ++ core
   }
 
   object LibJetty {
-    private def ver = "9.4.24.v20191120"
+    private def ver = "9.4.25.v20191220"
     private val mm = MultiModule.java("org.eclipse.jetty", ver)
     private val ws = MultiModule.java("org.eclipse.jetty.websocket", ver)
 
@@ -190,22 +190,22 @@ object Dependencies {
   val boopickle   = jvmAndJs("io.suzaku",                        "boopickle",   "1.3.1")
   val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",        "1.3.0")
   val parboiled   = jvmAndJs("org.parboiled",                    "parboiled",   "2.1.8")
-  val scalaz      = jvmAndJs("org.scalaz",                       "scalaz-core", "7.2.29")
+  val scalaz      = jvmAndJs("org.scalaz",                       "scalaz-core", "7.2.30")
   val shapeless   = jvmAndJs("com.chuusai",                      "shapeless",   "2.3.3")
   val μTest       = jvmAndJs("com.lihaoyi",                      "utest",       "0.6.7")
 
   val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.0.0")
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.8")
-  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.0.8")
+  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.1.3")
   val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.1")
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.12")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
-  val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.0.0")
-  val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.8")
+  val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.1.0")
+  val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.9")
   val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.11.6")
   val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "3.1.0")
-  val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.14.2")
+  val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.14.3")
   val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.2")
   val scalaXml     = jvmOnly("org.scala-lang.modules"     %% "scala-xml"             % "1.2.0")
   val twitterEval  = jvmOnly("com.twitter"                %% "util-eval"             % "6.43.0")
