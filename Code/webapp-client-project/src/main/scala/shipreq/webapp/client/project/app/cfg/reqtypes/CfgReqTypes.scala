@@ -162,7 +162,7 @@ object CfgReqTypes {
           val norm: cfgTable.RowContent = (r.mnemonic.value, r.oldMnemonics, r.name, imp, usage)
           cfgTable.row("static", RowStatus.Sync, norm, EmptyVdom)(^.key := r.mnemonic.value)
         }
-        StaticReqType.values.toStream.map(r => r.mnemonic -> rr(r))
+        StaticReqType.values.iterator.toStream.map(r => r.mnemonic -> rr(r))
       }
 
       () => cfgTable.justTheTable(headerRow, staticRows)

@@ -22,12 +22,12 @@ class TestReauthorisationModal(initialResponse: Option[ErrorMsg \/ Permission]) 
         attempts :+= p
         nextResponse match {
           case Some(response) => AsyncCallback.pure(response)
-          case None           => AsyncCallback(_ => Callback.empty) // TODO Remove after sjs 1.5.0
+          case None           => AsyncCallback.never
         }
       }.flatten
 
   def modal(username: Username, rootDom: Element = document.body) =
-    ReauthenticationModal(username, proc, rootDom, None)
+    ReauthenticationModal(username, proc, rootDom, 0)
 }
 
 object TestReauthorisationModal {

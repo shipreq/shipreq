@@ -90,6 +90,7 @@ object ColumnSelector {
       NonEmptyVector.force(
         MutableArray.map(p.available.columns.whole)(c => (c, On when activeColumns.contains(c.column)))
           .sortBy(_._1.name)
+          .iterator
           .to[Vector])
 
     val items: NonEmptyVector[ColumnCheckboxes.Item] =

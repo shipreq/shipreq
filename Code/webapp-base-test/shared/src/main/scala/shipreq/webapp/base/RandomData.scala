@@ -412,15 +412,15 @@ object RandomData {
 
   def customFields(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId], art: Gen[ApplicableReqTypes]): Gen[IMap[CustomFieldId, CustomField]] = {
     val cf = for {
-      f1 <- customField(art, false, false).stream
+      f1 <- customField(art, false, false).list
       f2 <- customFieldTagSome(tagIds, art)
       f3 <- customFieldImplicationSome(reqTypeIds, art)
-    } yield f3.toStream #::: f2.toStream #::: f1
+    } yield f3.toList ::: f2.toList ::: f1
     def id   = distinctId(CustomField.IdAccess, CustomFieldId_T)
     def name = Distinct.str.at(CustomField.independentName)
     def key  = Distinct.fstr.xmap(FieldRefKey.apply)(_.value).distinct.at(CustomField.key)
     val dist = (id * name * key).lift[Stream]
-    cf.map(fs => emptyDataMap(CustomField) ++ dist.run(fs))
+    cf.map(fs => emptyDataMap(CustomField) ++ dist.run(fs.toStream))
   }
 
   def fieldSet(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId], r: Set[CustomReqTypeId]): Gen[FieldSet] =
@@ -972,9 +972,9 @@ object RandomData {
     txt mapByKeySubset reqs mapByKeySubset cols
 
   private[this] val emptyATagIdSet = Gen.pure(Set.empty[ApplicableTagId])
-  def reqFieldDataTags(reqs: TraversableOnce[ReqId], tags: Set[ApplicableTagId]): Gen[ReqData.Tags] = {
+  def reqFieldDataTags(reqs: Traversable[ReqId], tags: Set[ApplicableTagId]): Gen[ReqData.Tags] = {
     val rndTags = Gen.chooseGen(Gen.subset(tags), emptyATagIdSet)
-    (rndTags mapByKeySubset reqs).map(Multimap(_))
+    (rndTags mapByKeySubset reqs.toIterable).map(Multimap(_))
 //    subset2(reqs, 1, 0).flatMap(rndTags.mapByEachKey).map(Multimap(_))
   }
 

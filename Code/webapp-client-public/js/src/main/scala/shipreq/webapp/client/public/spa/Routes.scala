@@ -79,7 +79,7 @@ object Routes {
             .xmap(Page.LoginFrom)(_.url)
         val action: Page.LoginFrom => Action = p =>
           if (userIsLoggedIn)
-            redirectToPath(p.url.relativeUrl)(Redirect.Force)
+            redirectToPath(p.url.relativeUrl)(SetRouteVia.WindowLocation)
           else
             renderR(render(p, _))
         dynamicRouteCT(route) ~> action
@@ -93,7 +93,7 @@ object Routes {
           // This logic is mirrored in DispatchLogic
           val action: Action =
             if (userIsLoggedIn && p.route ==* PublicSpaRoute.Login)
-              redirectToPath(Urls.memberHome.relativeUrl)(Redirect.Force)
+              redirectToPath(Urls.memberHome.relativeUrl)(SetRouteVia.WindowLocation)
             else
               renderR(render(p, _))
           staticRoute(route, p) ~> action
@@ -108,7 +108,7 @@ object Routes {
         }.reduce(_ | _)
 
       (removeQuery | removeTrailingSlashes | loginFrom | staticRoutes | tokenRoutes)
-        .notFound(redirectToPage(Page.Home)(Redirect.Replace))
+        .notFound(redirectToPage(Page.Home)(SetRouteVia.HistoryReplace))
         .setTitle(p => WebappConfig.makePageTitle(p.pageTitle: _*))
         .onPostRender(trackPage)
         .verify(

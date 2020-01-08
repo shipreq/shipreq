@@ -100,7 +100,7 @@ private[fields] object MainTable {
       case CustomFieldType.Tag         => tag_storesS
     }
 
-  val customFieldStores = CustomFieldType.values.toStream map storesForType
+  val customFieldStores = CustomFieldType.values.iterator.toStream map storesForType
 
   def initialState(p: Props): S = {
     val textFields = Seq.newBuilder[CustomField.Text]
@@ -611,6 +611,6 @@ private[fields] object MainTable {
         case CustomFieldType.Implication => impl_renderer
       }
 
-    val customFieldRenderers = CustomFieldType.values.toStream map rendererForType
+    val customFieldRenderers = CustomFieldType.values.iterator.toStream map rendererForType
   }
 }

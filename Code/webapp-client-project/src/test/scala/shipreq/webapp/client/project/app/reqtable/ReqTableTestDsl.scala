@@ -28,8 +28,6 @@ object ReqTableTestDsl {
   def apply(action: *.Actions = *.emptyAction): *.Plan =
     Plan(action, invariants)
 
-//  // TODO Move following into Nyaya
-//
 //  import scala.util.Try
 //  def propTrySuccess(name: => String): Prop[Try[Any]] =
 //    Prop.test(name, _.isSuccess)

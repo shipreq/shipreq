@@ -57,6 +57,7 @@ object ReqTypeSelector {
         MutableArray(p.choices.whole)
           .map(rt => Select.Option(key(rt), rt.fullName, rt))
           .sort
+          .iterator
           .to[List]
 
       val select = Select(options, key(p.edit.value))(p.edit setState _.value)(*.dropdown)

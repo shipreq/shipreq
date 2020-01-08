@@ -98,7 +98,7 @@ object Routes {
       | staticPage("#cfg/tags"    , Page.CfgTags    )
       | reqDetailRoute
       | trimSlashes
-      ).notFound(redirectToPage(Page.Index)(Redirect.Replace))
+      ).notFound(redirectToPage(Page.Index)(SetRouteVia.HistoryReplace))
         .setTitle(title)
         .onPostRender(trackPage)
         .verify(Page.sampleValues.head, Page.sampleValues.tail: _*)

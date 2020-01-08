@@ -247,7 +247,7 @@ object Sorter {
         if (i.isEmpty || i.tail.isEmpty)
           None
         else
-          MutableArray(i).sortBySchwartzian(n)(o).to[Vector].some
+          MutableArray(i).sortBySchwartzian(n)(o).iterator.to[Vector].some
       tryModEndo(l)(innerSort)
     })
 

@@ -24,7 +24,7 @@ object ReauthenticationModalTest extends TestSuite {
       var modal: ReauthenticationModal = null
 
       def render(props: Props): VdomElement = {
-        modal = ReauthenticationModal(username, props.login, props.root, None)
+        modal = ReauthenticationModal(username, props.login, props.root, 0)
         <.div(modal.render)
       }
 
@@ -48,8 +48,7 @@ object ReauthenticationModalTest extends TestSuite {
     def runTest(initialResponse: Option[ErrorMsg \/ Permission])(a: *.Actions) = {
       val a2 = a <+ passwordValue.assert("")
       val server = TestReauthorisationModal(initialResponse)
-      val root = document.createElement("div") // TODO Fix after sjs 1.5.0
-      try {
+      ReactTestUtils.withNewDocumentElement { root =>
         val m = Component(Props(server.proc, root)).renderIntoDOM(root)
         Plan.action(a2)
           .test(observer)
@@ -57,8 +56,6 @@ object ReauthenticationModalTest extends TestSuite {
           .withRef(Ref(m.backend, server))
           .run()
           .assert()
-      } finally {
-        try document.removeChild(root) catch { case _: Throwable => ()}
       }
     }
 

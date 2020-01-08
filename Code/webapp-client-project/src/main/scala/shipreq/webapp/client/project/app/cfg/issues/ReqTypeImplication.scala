@@ -73,7 +73,7 @@ private[issues] object ReqTypeImplication {
       })
 
     val staticRows: Rows =
-      StaticReqType.values.toStream.map(s => {
+      StaticReqType.values.iterator.toStream.map(s => {
         val re: VdomElement =
           <.div(^.key := s.mnemonic.value,
             genEditor render EditorI((s.imp, s), "", None))

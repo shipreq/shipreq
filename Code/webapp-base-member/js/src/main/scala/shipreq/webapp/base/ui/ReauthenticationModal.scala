@@ -42,12 +42,12 @@ object ReauthenticationModal {
   }
 
   def apply(username: Username, attemptLogin: AttemptLogin): ReauthenticationModal =
-    apply(username, attemptLogin, document.body, Some(280))
+    apply(username, attemptLogin, document.body, 280)
 
   def apply(username    : Username,
             attemptLogin: AttemptLogin,
             rootDom     : Element,
-            delayMs     : Option[Double]): ReauthenticationModal = {
+            delayMs     : Double): ReauthenticationModal = {
 
     val id = Modal.nextId()
 
@@ -107,8 +107,7 @@ object ReauthenticationModal {
           }
 
           case -\/(_) =>
-            val a = setState(Enabled, Some(errorInvalidPassword)).asAsyncCallback
-            delayMs.fold(a)(a.delayMs) // TODO Remove Option after sjs 1.5.0
+            setState(Enabled, Some(errorInvalidPassword)).delayMs(delayMs)
         }
       }
     }

@@ -306,7 +306,7 @@ object StaticField {
     values.whole.partition(_.deletable is Deletable)
 
   lazy val names: Set[String] =
-    values.toStream.map(_.name).toSet
+    values.iterator.map(_.name).toSet
 
   implicit def equality: UnivEq[StaticField] = UnivEq.derive
 

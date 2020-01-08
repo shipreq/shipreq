@@ -2,32 +2,12 @@ package shipreq.webapp.client.project.app.state
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen.Gen
-import scala.annotation.tailrec
 import utest._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.WebappTestUtil._
 
 object ProjectStateTest extends TestSuite {
-
-  // TODO Move into Nyaya
-  def Gen_batches[A](as: Vector[A], partitionSize: Range.Inclusive, keepRemainder: Boolean = true): Gen[Vector[Vector[A]]] = {
-    val genSize = Gen.chooseInt(partitionSize.min, partitionSize.max)
-    Gen { ctx =>
-      val b = Vector.newBuilder[Vector[A]]
-      @tailrec def go(rem: Vector[A]): Unit =
-        if (rem.isEmpty)
-          ()
-        else if (rem.length >= partitionSize.min) {
-          val n = genSize.run(ctx)
-          b += rem.take(n)
-          go(rem.drop(n))
-        } else if (keepRemainder)
-          b += rem
-      go(as)
-      b.result()
-    }
-  }
 
   override def tests = Tests {
 
@@ -41,7 +21,7 @@ object ProjectStateTest extends TestSuite {
         pao1              = ProjectAndOrd(p1, latestOrd1)
         s1                = ProjectState.init(pao1, looseProjectMetaData(p1, eventsTotal = totalEvents1, eventsInit = initEventCount))
         ((p2, _), ves)    ← RandomEventStream.verifiedEvents(80).run((p1, pao1.nextOrd))
-        batches           ← Gen_batches(ves, 0 to 7)
+        batches           ← Gen.batches(ves, 0 to 7)
                               .pair.map(x => x._1 ++ x._2) // duplicate all events (in different batches) to test idempotency
                               .shuffle // shuffle to test commutivity
       } yield {

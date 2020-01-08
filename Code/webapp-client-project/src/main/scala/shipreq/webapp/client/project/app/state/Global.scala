@@ -113,7 +113,6 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
     logger(_.info(s"WebSocket State: $s")) >> updateConnectionStatus >> action
   }
 
-  // TODO fix after sjs 1.5.0
   final object connectedStatusHub extends Broadcaster[ConnectionStatus] {
     var _connectionStatus: ConnectionStatus = ConnectionStatus.Disconnected
     private[Global] def apply(c: ConnectionStatus) = {

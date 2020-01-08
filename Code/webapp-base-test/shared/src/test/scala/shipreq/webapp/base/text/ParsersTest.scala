@@ -26,7 +26,7 @@ object ParsersTest extends TestSuite {
   def preprocessStr(s: String, lc: LineCardinality): String =
     Parsers.preProcessor(lc)(s).asString
 
-  val counts = Atom.Type.values.toStream.map((_, new AtomicInteger)).toMap
+  val counts = Atom.Type.values.iterator.map((_, new AtomicInteger)).toMap
   def count(as: Iterable[AnyAtom]): Unit =
     as.foreach { a =>
       val t = Atom.Type of a

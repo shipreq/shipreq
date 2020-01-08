@@ -52,12 +52,12 @@ object FilterEditor {
   private val autoCompletePresenceLackAttr: AutoComplete.Strategy =
     AutoComplete.Strategy.builder
       .regex("""\b((?:has|no):)([a-z]*)$""", index = 2)
-      .search(AutoComplete.Utils caseInsensitiveStartsWith FilterAst.Attr.values.toStream.map(_.name))
+      .search(AutoComplete.Utils caseInsensitiveStartsWith FilterAst.Attr.values.iterator.map(_.name).toStream)
       .replace("$1" + _ + " ")
       .result()
 
   private val autoCompleteHasIssue: AutoComplete.Strategy = {
-    val values = IssueCategory.values.toStream.map(FilterAst.issueCategoryToStr)
+    val values = IssueCategory.values.iterator.map(FilterAst.issueCategoryToStr).toStream
     AutoComplete.Strategy.builder
       .regex("""\b(has:issue:-?(?:[a-z]+?,)*)([a-z]*)$""", index = 2)
       .search(AutoComplete.Utils caseInsensitiveStartsWith values)

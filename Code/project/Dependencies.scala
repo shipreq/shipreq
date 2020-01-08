@@ -32,7 +32,7 @@ object Dependencies {
   }
 
   object Microlibs {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "1.22")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "2.0")
     val adtMacros  = mm("adt-macros")
     val macroUtils = mm("macro-utils")
     val nonempty   = mm("nonempty")
@@ -44,7 +44,7 @@ object Dependencies {
   }
 
   object Nyaya {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.nyaya", "0.8.1")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.nyaya", "0.9.0")
     val util = mm("nyaya-util") ++ scalaz
     val prop = mm("nyaya-prop") ++ scalaz
     val gen  = mm("nyaya-gen")  ++ scalaz
@@ -75,17 +75,17 @@ object Dependencies {
   }
 
   object UnivEq {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.0.8")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.1.0")
     val univeq = mm("univeq")
     val scalaz = mm("univeq-scalaz") ++ univeq ++ Dependencies.scalaz
   }
 
   object React {
-    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "1.4.2")
+    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "1.5.0")
     val core    = mm("core")
     val test    = mm("test")
     val scalaz  = mm("ext-scalaz72").exclude("org.scalaz", "scalaz-concurrent").exclude("org.scalaz", "scalaz-effect")
-    val monocle = mm("ext-monocle") ++ Monocle.core
+    val monocle = mm("ext-monocle-scalaz") ++ Monocle.core
     val extra   = mm("extra")
     val most    = core ++ monocle ++ extra
   }

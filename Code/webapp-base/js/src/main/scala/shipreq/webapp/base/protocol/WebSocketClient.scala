@@ -160,21 +160,19 @@ object WebSocketClient {
         }
 
       val reauthoriseAndReconnect: Callback =
-        Callback.byName { // TODO BUG! https://github.com/japgolly/scalajs-react/issues/604
-          reauthorise.attempt.flatMap {
+        reauthorise.attempt.flatMap {
 
-            case Right(Allow) =>
-              AsyncCallback.point {
-                state = state.copy(authorised = true)
-              } >> connect.asAsyncCallback
+          case Right(Allow) =>
+            AsyncCallback.point {
+              state = state.copy(authorised = true)
+            } >> connect.asAsyncCallback
 
-            case Right(Deny) | Left(_) =>
-              AsyncCallback.point {
-                unsafeFailQueued(errorUnauthorised)
-              }
+          case Right(Deny) | Left(_) =>
+            AsyncCallback.point {
+              unsafeFailQueued(errorUnauthorised)
+            }
 
-          }.toCallback
-        }
+        }.toCallback
 
       readyStateCB.flatMap {
         case None | Some(ReadyState.Closed) =>

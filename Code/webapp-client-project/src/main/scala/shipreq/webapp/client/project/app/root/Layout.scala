@@ -30,11 +30,8 @@ object Layout {
 
   private final case class NavBarLeftInput(page: Page, project: ProjectMetaData, rc: RouterCtl)
 
-  private implicit val reusabilityNavBarLeftInput: Reusability[NavBarLeftInput] =
-    Reusability.derive
-
-  private def navBarLeft(input: NavBarLeftInput): MemberNavBar.LeftProps =
-    Reusable.implicitly(input).map { i =>
+  private val navBarLeft: NavBarLeftInput => MemberNavBar.LeftProps =
+    Reusable.fnOutput.explicitly(Reusability.derive[NavBarLeftInput]) { i =>
       import i._
 
       def index = Breadcrumb.Item.Link(rc.link(Page.Index)(project.name))
@@ -65,9 +62,6 @@ object Layout {
 
   private final case class NavBarRightInput(connectionStatus: ConnectionStatus, toggleConnectionStatus: Reusable[Callback])
 
-  private implicit val reusabilityNavBarRightInput: Reusability[NavBarRightInput] =
-    Reusability.derive
-
   private val connectedIcon =
     ConnectionStatus.memo {
       case ConnectionStatus.Connected =>
@@ -77,8 +71,8 @@ object Layout {
         Icon.Plug.withColour(Colour.Red).tag(Style.navBar.disconnected, ^.title := "disconnected")
     }
 
-  private def navBarRight(input: NavBarRightInput): MemberNavBar.RightProps =
-    Reusable.implicitly(input).map { i =>
+  private val navBarRight: NavBarRightInput => MemberNavBar.RightProps =
+    Reusable.fnOutput.explicitly(Reusability.derive[NavBarRightInput]) { i =>
       import i._
 
       val connectedMenuItem =
