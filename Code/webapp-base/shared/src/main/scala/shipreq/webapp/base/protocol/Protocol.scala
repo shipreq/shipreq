@@ -100,7 +100,7 @@ object Protocol {
     def responseProtocol(req: protocol.PreparedRequestType): Protocol.Of[F, protocol.ResponseType]
 
     final type ServerSideFn  [G[_]      ] =     protocol.PreparedRequestType  => G[ protocol.ResponseType]
-    final type ServerSideFnI [G[_], I   ] = (I, protocol.PreparedRequestType) => G[protocol.ResponseType]
+    final type ServerSideFnI [G[_], I   ] = (I, protocol.PreparedRequestType) => G[ protocol.ResponseType]
     final type ServerSideFnO [G[_],    O] =     protocol.PreparedRequestType  => G[(protocol.ResponseType, O)]
     final type ServerSideFnIO[G[_], I, O] = (I, protocol.PreparedRequestType) => G[(protocol.ResponseType, O)]
   }

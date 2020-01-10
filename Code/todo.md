@@ -71,7 +71,6 @@ Phase 2B
 ========
 
 ### New Features
-* Send Feedback / Report Issue (with screenshot). Add link beside @username in top bar
 * User profile page
 
 ### Other

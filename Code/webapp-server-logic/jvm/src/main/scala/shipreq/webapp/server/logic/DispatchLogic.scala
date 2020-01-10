@@ -406,11 +406,13 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
           } yield Response(resCmd, cu)
         )
 
+      type AnonOHandler[-A] = (Security.SessionToken[Any], ResponseCmd, A) => F[Response]
+
       def anonO[A](p: Protocol.Ajax[SafePickler])
                   (name: String,
                    sessionRequired: Boolean,
                    f: Security.SessionToken[Any] => p.ServerSideFnO[F, A])
-                  (g: (Security.SessionToken[Any], ResponseCmd, A) => F[Response]): Unit =
+                  (g: AnonOHandler[A]): Unit =
         _register(p, name, sessionRequired)((token, req) =>
           for {
             (out, a) <- f(token)(req)
@@ -433,8 +435,20 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
           }
         )
 
+      val useNewToken: AnonOHandler[Option[Security.SessionToken[Unit]]] =
+        (oldToken, res, newToken) =>
+          security.sessionPersist(newToken getOrElse oldToken).map(Response(res, _))
+
+      val dynamicAuth: AnonOHandler[Permission] =
+        (_, res, perm) =>
+          perm match {
+            case Allow => F pure Response(res, Cookie.Update.empty)
+            case Deny  => authRequired
+          }
+
       // Register endpoints
       anonO(CommonProtocols   .Login         .ajax)("login"         , false, common   .ajaxLogin         )(useNewToken)
+      anonO(CommonProtocols   .SubmitFeedback.ajax)("feedback"      , false, common   .ajaxSubmitFeedback)(dynamicAuth)
       anon (PublicSpaProtocols.LandingPage   .ajax)("landingPage"   , true , publicSpa.ajaxLandingPage   )
       anon (PublicSpaProtocols.Register1     .ajax)("register1"     , true , publicSpa.ajaxRegister1     )
       anonO(PublicSpaProtocols.Register2     .ajax)("register2"     , true , publicSpa.ajaxRegister2     )(useNewToken)
@@ -444,11 +458,6 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
 
       mutableRouteMap.toMapNoHeadSlash
     }
-
-    private def useNewToken(oldToken: Security.SessionToken[Any],
-                            res: ResponseCmd,
-                            newToken: Option[Security.SessionToken[Unit]]): F[Response] =
-      security.sessionPersist(newToken getOrElse oldToken).map(Response(res, _))
 
     private val notFound: Response =
       Response(ResponseCmd.StatusOnly.NotFound, Cookie.Update.empty)

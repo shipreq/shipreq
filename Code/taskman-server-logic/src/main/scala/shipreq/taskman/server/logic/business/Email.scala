@@ -74,6 +74,9 @@ final class Emails(ep: EnvelopeProps, tv: TokenValues) {
   def diagnosticEmail(subject: String, body: String, task: TaskDetail) =
     Content(s"[DIAG] $subject", s"$body\n\n${"=" * 40}\nTask header: ${task.hdr}\nFailure count: ${task.failureCount}")
 
+  private val separator =
+    "=" * 120
+
   // ---------------------------------------------------------------------------
 
   val archiveEnv: Option[Envelope] =
@@ -124,7 +127,19 @@ final class Emails(ep: EnvelopeProps, tv: TokenValues) {
         ,_.kv("Email", l.email.value)
         ,_.kv("Newsletter", l.newsletter)
         ,_.kv("Message", l.msg.fold("<no msg>")("\n\n" + _))))
-    Email.Content("Landing page contact", body)
+    Email.Content("Landing page contact",
+      s"""
+         |${l.msg.getOrElse("<no msg>")}
+         |
+         |$separator
+         |
+         |TaskId = ${m.id.value}
+         |Contact time = ${m.created}
+         |Name = ${l.name}
+         |Email = ${l.email.value}
+         |Newsletter = ${l.newsletter}
+         |""".stripMargin
+    )
   }
 
   def userFeedback(u: UserFeedbackReceived) = {
@@ -137,11 +152,11 @@ final class Emails(ep: EnvelopeProps, tv: TokenValues) {
 
     Email.Content("User feedback received",
       s"""
-         |$metadata
-         |
-         |Feedback:
-         |
          |${u.feedback}
+         |
+         |$separator
+         |
+         |$metadata
          |""".stripMargin.trim)
   }
 

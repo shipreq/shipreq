@@ -42,5 +42,35 @@ object CommonProtocolLogicTest extends TestSuite {
       'successE - test(\/-(user2.emailAddr), user2password)(Allow, Some(user2.token))
     }
 
+    'feedback {
+      import CommonProtocols.SubmitFeedback._
+      implicit val t = Tester(); import t._
+      import mockInterpreters._
+
+      'noSession - {
+        val req    = Request(UserInput("yo!"), Metadata(None, "a", "b", user2.username))
+        val jwt    = Security.SessionToken.anonymous()
+        val result = common.ajaxSubmitFeedback(jwt)(req).value
+        assertEq(result, ((), Allow))
+        taskman.assertSubmitted(1)
+      }
+
+      'hasSession - {
+        val req    = Request(UserInput("yo!"), Metadata(None, "a", "b", Username("x")))
+        val jwt    = Security.SessionToken.anonymous().login(user2.toUser)
+        val result = common.ajaxSubmitFeedback(jwt)(req).value
+        assertEq(result, ((), Allow))
+        taskman.assertSubmitted(1)
+      }
+
+      'noUser - {
+        val req    = Request(UserInput("yo!"), Metadata(None, "a", "b", Username("i don't exist")))
+        val jwt    = Security.SessionToken.anonymous()
+        val result = common.ajaxSubmitFeedback(jwt)(req).value
+        assertEq(result, ((), Deny))
+        taskman.assertSubmitted(0)
+      }
+    }
+
   }
 }

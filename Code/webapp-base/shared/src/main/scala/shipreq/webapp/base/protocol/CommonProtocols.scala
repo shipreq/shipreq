@@ -96,6 +96,11 @@ object CommonProtocols {
 
     final case class Request(input: UserInput, metadata: Metadata)
 
+    implicit def univEqUserInput      : UnivEq[UserInput      ] = UnivEq.derive
+    implicit def univEqProjectMetadata: UnivEq[ProjectMetadata] = UnivEq.derive
+    implicit def univEqMetadata       : UnivEq[Metadata       ] = UnivEq.derive
+    implicit def univEqRequest        : UnivEq[Request        ] = UnivEq.derive
+
     type Response = Unit
 
     val ajax: Ajax[Request, Response] = {
