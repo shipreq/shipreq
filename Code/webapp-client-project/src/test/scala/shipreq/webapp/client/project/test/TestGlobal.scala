@@ -13,7 +13,7 @@ import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes
 import shipreq.webapp.base.protocol.WebSocket.ReadyState
 import shipreq.webapp.base.protocol.binary.SafePickler
-import shipreq.webapp.base.test.TestReauthorisationModal
+import shipreq.webapp.base.test.TestReauthenticationModal
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.client.project.app.state.{Global, ProjectState}
 import shipreq.webapp.server.logic.{ApplyNewEvent, MakeEvent}
@@ -25,7 +25,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
     case Global.State.Loading(es)  => s"TestGlobal(Loading(${es.map(_.ord.value).mkString(",")}))"
   }
 
-  val reauth = TestReauthorisationModal(Some(\/-(Allow)))
+  val reauth = TestReauthenticationModal(Some(\/-(Allow)))
 
   val username = Username("nimander")
 

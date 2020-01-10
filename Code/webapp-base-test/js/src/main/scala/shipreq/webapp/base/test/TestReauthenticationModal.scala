@@ -8,7 +8,7 @@ import shipreq.webapp.base.protocol.CommonProtocols.Login
 import shipreq.webapp.base.ui.ReauthenticationModal
 import shipreq.webapp.base.user.Username
 
-class TestReauthorisationModal(initialResponse: Option[ErrorMsg \/ Permission]) {
+class TestReauthenticationModal(initialResponse: Option[ErrorMsg \/ Permission]) {
 
   var nextResponse: Option[ErrorMsg \/ Permission] =
     initialResponse
@@ -30,7 +30,7 @@ class TestReauthorisationModal(initialResponse: Option[ErrorMsg \/ Permission]) 
     ReauthenticationModal(username, proc, rootDom, 0)
 }
 
-object TestReauthorisationModal {
-  def apply(initialResponse: Option[ErrorMsg \/ Permission]): TestReauthorisationModal =
-    new TestReauthorisationModal(initialResponse)
+object TestReauthenticationModal {
+  def apply(initialResponse: Option[ErrorMsg \/ Permission]): TestReauthenticationModal =
+    new TestReauthenticationModal(initialResponse)
 }

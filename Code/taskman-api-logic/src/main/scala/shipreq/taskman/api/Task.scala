@@ -24,6 +24,10 @@ object Task {
 
   final case class UserUpdated(userId: UserId) extends Task(TaskType.UserUpdated)
 
+  final case class UserFeedbackReceived(userId  : UserId,
+                                        feedback: String,
+                                        metadata: Map[String, String]) extends Task(TaskType.UserFeedbackReceived)
+
   final case class LandingPageHit(email     : EmailAddr,
                                   name      : String,
                                   msg       : Option[String],
@@ -65,6 +69,7 @@ object Task {
       case TaskType.LandingPageHit          => LandingPageHit(ea, "Iskaral Pust", Some("No mule can match wits with me."), false)
       case TaskType.SyncToMailingList       => SyncToMailingList(Some("id < 100"))
       case TaskType.WebappErrorOccurred     => WebappErrorOccurred(Some(uid), Some("/login"), "blah")
+      case TaskType.UserFeedbackReceived    => UserFeedbackReceived(uid, "Your product sucks!", Map("url" -> "https://shipreq.com/project/abcd", "userAgent" -> "Chrome!"))
     }
   }
 

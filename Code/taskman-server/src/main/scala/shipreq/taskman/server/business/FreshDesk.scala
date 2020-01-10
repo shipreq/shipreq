@@ -8,6 +8,7 @@ import scalaz.{\/, ~>}
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
+import shipreq.taskman.api.EmailAddr
 import shipreq.taskman.server.logic.business.Support
 import shipreq.taskman.server.logic.business.Support.API._
 import shipreq.taskman.server.logic.business.Support._
@@ -18,11 +19,14 @@ object FreshDesk {
 
   final case class Props(domain      : String,
                          key         : String,
-                         taskmanEmail: String,
+                         taskmanEmail: EmailAddr,
                          landingPage : UnverifiedTicketOrg,
-                         failure     : UnverifiedTicketOrg)
+                         failure     : UnverifiedTicketOrg,
+                         userFeedback: UnverifiedTicketOrg)
 
-  final case class VerifiedProps(landingPage: TicketOrg, failure: TicketOrg)
+  final case class VerifiedProps(landingPage : TicketOrg,
+                                 failure     : TicketOrg,
+                                 userFeedback: TicketOrg)
 
   final case class UnverifiedTicketOrg(groupName: String, ticketType: String)
 
@@ -66,7 +70,7 @@ object FreshDesk {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Protocol
 
-  final case class NewTicket(email   : String,
+  final case class NewTicket(email   : EmailAddr,
                              subject : String,
                              desc    : String,
                              priority: Priority,
@@ -78,7 +82,7 @@ object FreshDesk {
     Encoder.instance(t =>
       Json.obj(
         "helpdesk_ticket" -> Json.obj(
-          "email"       -> t.email.asJson,
+          "email"       -> t.email.value.asJson,
           "subject"     -> t.subject.asJson,
           "description" -> t.desc.asJson,
           "priority"    -> priorityCode(t.priority).asJson,
@@ -166,11 +170,15 @@ sealed class FreshDesk0(props: Props)(implicit httpClient: HttpClient) extends H
    */
   def upgrade: Fx[FreshDesk] =
     for {
-      groups      <- endpoints.getGroups.run(())
-      failure     <- Fx lift verifyTicketOrg(groups, props.failure)
-      landingPage <- Fx lift verifyTicketOrg(groups, props.landingPage)
+      groups       <- endpoints.getGroups.run(())
+      failure      <- Fx lift verifyTicketOrg(groups, props.failure)
+      landingPage  <- Fx lift verifyTicketOrg(groups, props.landingPage)
+      userFeedback <- Fx lift verifyTicketOrg(groups, props.userFeedback)
     } yield {
-      val verifiedProps = VerifiedProps(failure = failure, landingPage = landingPage)
+      val verifiedProps = VerifiedProps(
+        failure = failure,
+        landingPage = landingPage,
+        userFeedback = userFeedback)
       new FreshDesk(props, verifiedProps)
     }
 }
@@ -186,10 +194,31 @@ final class FreshDesk(props: Props, val verifiedProps: VerifiedProps)
 
   override def apply[A](api: API[A]): Fx[A] =
     api match {
-      case NotifyLandingPage(email, subject, desc, priority) =>
-        createTicket(NewTicket(email, subject, desc, priority, verifiedProps.landingPage))
+      case a: NotifyLandingPage =>
+        createTicket(NewTicket(
+          email    = a.email,
+          subject  = a.content.subject,
+          desc     = a.content.body,
+          priority = a.priority,
+          org      = verifiedProps.landingPage,
+        ))
 
-      case ReportFailure(subject, desc, priority) =>
-        createTicket(NewTicket(props.taskmanEmail, subject, desc, priority, verifiedProps.failure))
+      case a: RecordUserFeedback =>
+        createTicket(NewTicket(
+          email    = a.from,
+          subject  = a.content.subject,
+          desc     = a.content.body,
+          priority = Priority.Medium,
+          org      = verifiedProps.userFeedback,
+        ))
+
+      case a: ReportFailure =>
+        createTicket(NewTicket(
+          email    = props.taskmanEmail,
+          subject  = a.subject,
+          desc     = a.desc,
+          priority = a.priority,
+          org      = verifiedProps.failure,
+        ))
     }
 }

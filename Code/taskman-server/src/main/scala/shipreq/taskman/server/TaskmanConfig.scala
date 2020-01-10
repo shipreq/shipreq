@@ -8,7 +8,7 @@ import scalaz.{-\/, \/, \/-}
 import scalaz.syntax.applicative._
 import shipreq.base.util.{Retries, RetriesJvm}
 import shipreq.base.util.log.HasLogger
-import shipreq.taskman.api.CfgKeys
+import shipreq.taskman.api.{CfgKeys, EmailAddr}
 import shipreq.taskman.server.business._
 import shipreq.taskman.server.business.JavaMail.ConfigValueParsers._
 import shipreq.taskman.server.business.FreshDesk.ConfigValueParsers._
@@ -36,6 +36,9 @@ object TaskmanConfig extends HasLogger {
     ConfigDef.getOrUse[String]("LOG_APPENDER", "JSON") <* ConfigDef.external(
       "LOG_LEVEL_ROOT",
       "LOG_LEVEL_SHIPREQ")
+
+  private implicit def configValueParserEmailAddr: ConfigValueParser[EmailAddr] =
+    ConfigValueParser.id.map(EmailAddr.apply)
 
   // TODO Put props and parsers in Business classes
 
@@ -88,10 +91,21 @@ object TaskmanConfig extends HasLogger {
   def freshdesk: ConfigDef[FreshDesk.Props] =
     (ConfigDef.need[String]("domain")
       |@| ConfigDef.need[String]("key").secret
-      |@| ConfigDef.need[String]("taskmanEmail")
+      |@| ConfigDef.need[EmailAddr]("taskmanEmail")
       |@| ConfigDef.need[FreshDesk.UnverifiedTicketOrg]("org.landingPage")
       |@| ConfigDef.need[FreshDesk.UnverifiedTicketOrg]("org.failure")
-      ) (FreshDesk.Props)
+      |@| ConfigDef.need[FreshDesk.UnverifiedTicketOrg]("org.userFeedback")
+      ) {
+      case (domain, key, taskmanEmail, landingPage, failure, userFeedback) =>
+        FreshDesk.Props(
+          domain       = domain,
+          key          = key,
+          taskmanEmail = taskmanEmail,
+          landingPage  = landingPage,
+          failure      = failure,
+          userFeedback = userFeedback,
+        )
+    }
       .withPrefix("freshdesk.")
 
   // ===================================================================================================================

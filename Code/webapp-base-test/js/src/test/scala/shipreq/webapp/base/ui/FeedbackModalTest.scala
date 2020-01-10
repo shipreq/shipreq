@@ -7,24 +7,24 @@ import org.scalajs.dom.{Element, document, html}
 import japgolly.scalajs.react.test._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
-import shipreq.webapp.base.test.TestReauthenticationModal
+import shipreq.webapp.base.test.TestFeedbackModal
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.user.Username
 import utest._
 
-object ReauthenticationModalTest extends TestSuite {
+object FeedbackModalTest extends TestSuite {
 
   private object Internal {
 
     val username = Username("aiden")
 
-    final case class Props(login: ReauthenticationModal.AttemptLogin, root: Element)
+    final case class Props(submitFn: FeedbackModal.SubmitFn, root: Element)
 
     final class Backend($: BackendScope[Props, Unit]) {
-      var modal: ReauthenticationModal = null
+      var modal: FeedbackModal = null
 
       def render(props: Props): VdomElement = {
-        modal = ReauthenticationModal(username, props.login, props.root, 0)
+        modal = FeedbackModal(props.submitFn, props.root)
         <.div(modal.render)
       }
 
@@ -41,13 +41,13 @@ object ReauthenticationModalTest extends TestSuite {
 
     // =================================================================================================================
 
-    final case class Ref(backend: Backend, server: TestReauthenticationModal)
+    final case class Ref(backend: Backend, server: TestFeedbackModal)
 
     val * = Dsl[Ref, Obs, Unit]
 
-    def runTest(initialResponse: Option[ErrorMsg \/ Permission])(a: *.Actions) = {
-      val a2 = a <+ passwordValue.assert("")
-      val server = TestReauthenticationModal(initialResponse)
+    def runTest(initialResponse: Option[ErrorMsg \/ Unit])(a: *.Actions) = {
+      val a2 = a <+ feedbackValue.assert("")
+      val server = TestFeedbackModal(initialResponse)
       ReactTestUtils.withNewDocumentElement { root =>
         val m = Component(Props(server.proc, root)).renderIntoDOM(root)
         Plan.action(a2)
@@ -61,24 +61,24 @@ object ReauthenticationModalTest extends TestSuite {
 
     // =================================================================================================================
 
-    final class Obs($: DomZipperJs, server: TestReauthenticationModal) {
+    final class Obs($: DomZipperJs, server: TestFeedbackModal) {
       import Obs._
 
-      private val password = $("input[type=password]")
-      def passwordDom()  = password.domAs[html.Input]
-      val passwordValue  = password.value
-      val passwordEnabled = !passwordDom().readOnly
+      private val feedback = $("textarea")
+      def feedbackDom()   = feedback.domAs[html.TextArea]
+      val feedbackValue   = feedback.value
+      val feedbackEnabled = !feedbackDom().readOnly
 
-      def setPassword(p: String) = {
-        val dom = passwordDom()
+      def setFeedback(p: String) = {
+        val dom = feedbackDom()
         dom.value = p
         SimEvent.Change(p).simulate(dom)
       }
 
       val cancelButton = new Button($("button", 1 of 2))
-      val loginButton  = new Button($("button", 2 of 2))
+      val sendButton   = new Button($("button", 2 of 2))
 
-      private val errorMsgDom = $(".label").domAs[html.Div]
+      private val errorMsgDom = $(".message").domAs[html.Div]
       val errorMsgVisible = errorMsgDom.style.display != "none"
       val errorMsg        = Option.when(errorMsgVisible)(errorMsgDom.textContent.trim)
 
@@ -105,19 +105,19 @@ object ReauthenticationModalTest extends TestSuite {
     // =================================================================================================================
 
     val errorMsg           = *.focus("error message").option(_.obs.errorMsg)
-    val loginButtonEnabled = *.focus("login button enabled").value(_.obs.loginButton.enabled)
-    val passwordEnabled    = *.focus("password enabled").value(_.obs.passwordEnabled)
-    val passwordValue      = *.focus("password").value(_.obs.passwordValue)
+    val sendButtonEnabled  = *.focus("submit button enabled").value(_.obs.sendButton.enabled)
+    val feedbackEnabled    = *.focus("feedback enabled").value(_.obs.feedbackEnabled)
+    val feedbackValue      = *.focus("feedback").value(_.obs.feedbackValue)
     val serverCallCount    = *.focus("server call count").value(_.obs.serverAttempts.length)
-    val serverLastPassword = *.focus("most recently submitted password").option(_.obs.serverAttempts.lastOption.map(_.password.value))
+    val serverLastFeedback = *.focus("most recently submitted feedback").option(_.obs.serverAttempts.lastOption.map(_.feedback.value))
 
     val clickCancel = *.action("Click cancel")(_.obs.cancelButton.click())
-    val clickLogin  = *.action("Click login")(_.obs.loginButton.click())
+    val clickSend   = *.action("Click submit")(_.obs.sendButton.click())
 
-    def enterPassword(p: String) =
-      *.action(s"Enter password: '$p'")(_.obs.setPassword(p)) +> passwordValue.assert(p)
+    def enterFeedback(p: String) =
+      *.action(s"Enter feedback: '$p'")(_.obs.setFeedback(p)) +> feedbackValue.assert(p)
 
-    def setNextServerResponse(r: Option[ErrorMsg \/ Permission]) =
+    def setNextServerResponse(r: Option[ErrorMsg \/ Unit]) =
       *.action(s"Set next server response to $r")(_.ref.server.nextResponse = r)
   }
 
@@ -128,60 +128,58 @@ object ReauthenticationModalTest extends TestSuite {
   // 1. Can't tell if a modal is visible or not
   // 2. Transitions won't run meaning the onHiding callback doesn't get executed
 
-  private val invalidPassword = "Invalid password."
-
   override def tests = Tests {
     import Internal._
 
     'various -
       runTest(Some(-\/(ErrorMsg("servers down!"))))(
-        enterPassword(" omg ")
+        enterFeedback(" \n ")
           +> serverCallCount.assert(0)
           +> errorMsg.assert(None)
-          +> loginButtonEnabled.assert(true)
-          +> passwordEnabled.assert(true)
+          +> sendButtonEnabled.assert(true)
+          +> feedbackEnabled.assert(true)
 
-          >> clickLogin
+          >> clickSend
           +> serverCallCount.assert(0) // validation should prevent this call
-          +> errorMsg.assert(Some(invalidPassword))
-          +> loginButtonEnabled.assert(true)
-          +> passwordEnabled.assert(true)
+          +> errorMsg.assert(Some(FeedbackModal.errorEmptyFeedback.value))
+          +> sendButtonEnabled.assert(true)
+          +> feedbackEnabled.assert(true)
 
-          >> enterPassword(" omgOMFG12345 ")
+          >> enterFeedback(" omgOMFG12345 ")
           +> serverCallCount.assert(0)
           +> errorMsg.assert(None)
-          +> loginButtonEnabled.assert(true)
-          +> passwordEnabled.assert(true)
+          +> sendButtonEnabled.assert(true)
+          +> feedbackEnabled.assert(true)
 
-          >> clickLogin
+          >> clickSend
           +> serverCallCount.assert(1)
           +> errorMsg.assert(Some("servers down!"))
-          +> loginButtonEnabled.assert(true)
-          +> passwordEnabled.assert(true)
+          +> sendButtonEnabled.assert(true)
+          +> feedbackEnabled.assert(true)
 
-          >> setNextServerResponse(Some(\/-(Deny)))
-          >> clickLogin
+          >> setNextServerResponse(Some(-\/(ErrorMsg("Failed to connect"))))
+          >> clickSend
           +> serverCallCount.assert(2)
-          +> errorMsg.assert(Some(invalidPassword))
-          +> loginButtonEnabled.assert(true)
-          +> passwordEnabled.assert(true)
+          +> errorMsg.assert(Some("Failed to connect"))
+          +> sendButtonEnabled.assert(true)
+          +> feedbackEnabled.assert(true)
 
-          >> setNextServerResponse(Some(\/-(Allow)))
-          >> clickLogin
+          >> setNextServerResponse(Some(\/-(())))
+          >> clickSend
           +> serverCallCount.assert(3)
           +> errorMsg.assert(None)
-          +> loginButtonEnabled.assert(false) // login succeeds so modal *would* close triggering a reset on completion
-          +> serverLastPassword.assert(Some(" omgOMFG12345 "))
+          +> sendButtonEnabled.assert(false) // submit succeeds so modal *would* close triggering a reset on completion
+          +> serverLastFeedback.assert(Some("omgOMFG12345"))
       )
 
     'inFlight -
       runTest(None)(
-        enterPassword("qweasdzcQWEASDZXC123!@#")
-          >> clickLogin
+        enterFeedback("qweasdzcQWEASDZXC123!@#")
+          >> clickSend
           +> serverCallCount.assert(1)
-          +> serverLastPassword.assert(Some("qweasdzcQWEASDZXC123!@#"))
-          +> loginButtonEnabled.assert(false)
-          +> passwordEnabled.assert(false)
+          +> serverLastFeedback.assert(Some("qweasdzcQWEASDZXC123!@#"))
+          +> sendButtonEnabled.assert(false)
+          +> feedbackEnabled.assert(false)
           +> errorMsg.assert(None)
       )
 

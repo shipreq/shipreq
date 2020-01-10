@@ -189,6 +189,7 @@ object BopTypeTags extends OpTypeProvider[BusinessOp] {
     case MailingListOp(_: BatchSubscribe) => manifest[MailingListOp[BatchSubscribe]]
     case SupportOp(o) => o match {
       case _: NotifyLandingPage           => manifest[SupportOp[NotifyLandingPage]]
+      case _: RecordUserFeedback          => manifest[SupportOp[RecordUserFeedback]]
       case _: ReportFailure               => manifest[SupportOp[ReportFailure]]
     }
 //    case SupportOp(_: NotifyLandingPage)  => manifest[SupportOp[NotifyLandingPage]]
@@ -199,15 +200,16 @@ object BopTypeTags extends OpTypeProvider[BusinessOp] {
 class MockBops extends MockOpTransformer[BusinessOp, Fx] {
   override def opTypeProvider = BopTypeTags
 
-  val sendEmail            = MockResponse[Throwable \/ Unit](\/-(()))
-  val findShipReqUser      = MockResponse[Option[ShipReqUser]](None)
-  val findShipReqUsers     = MockResponse[List[ShipReqUser]](Nil)
-  val mlGetListId          = MockResponse[Option[ListId]](None)
-  val mlSubscribe          = MockResponse[SubscribeResult](Ok)
-  val mlUpdateMember       = MockResponse[UpdateMemberResult](Ok)
-  val mlBatchSubscribe     = MockResponse[Throwable \/ Unit](\/-(()))
-  val supNotifyLandingPage = MockResponse[TicketId](TicketId(666))
-  val supReportFailure     = MockResponse[Throwable \/ TicketId](\/-(TicketId(200)))
+  val sendEmail             = MockResponse[Throwable \/ Unit](\/-(()))
+  val findShipReqUser       = MockResponse[Option[ShipReqUser]](None)
+  val findShipReqUsers      = MockResponse[List[ShipReqUser]](Nil)
+  val mlGetListId           = MockResponse[Option[ListId]](None)
+  val mlSubscribe           = MockResponse[SubscribeResult](Ok)
+  val mlUpdateMember        = MockResponse[UpdateMemberResult](Ok)
+  val mlBatchSubscribe      = MockResponse[Throwable \/ Unit](\/-(()))
+  val supNotifyLandingPage  = MockResponse[TicketId](TicketId(666))
+  val supRecordUserFeedback = MockResponse[TicketId](TicketId(667))
+  val supReportFailure      = MockResponse[Throwable \/ TicketId](\/-(TicketId(200)))
 
   override def trans[A]: BusinessOp[A] => Fx[A] = {
     case _: SendEmail                     => Fx.lift(sendEmail.pop())
@@ -219,6 +221,7 @@ class MockBops extends MockOpTransformer[BusinessOp, Fx] {
     case MailingListOp(_: BatchSubscribe) => Fx.lift(mlBatchSubscribe.pop())
     case SupportOp(o) => o match {
       case _: NotifyLandingPage           => Fx(supNotifyLandingPage.pop())
+      case _: RecordUserFeedback          => Fx(supRecordUserFeedback.pop())
       case _: ReportFailure               => Fx.lift(supReportFailure.pop())
     }
 //    case SupportOp(_: NotifyLandingPage)  => FxE(supNotifyLandingPage.pop())

@@ -1,6 +1,7 @@
 package shipreq.taskman.server.logic.business
 
 import japgolly.univeq.UnivEq
+import shipreq.taskman.api.EmailAddr
 
 object Support {
 
@@ -26,10 +27,12 @@ object Support {
   object API {
 
     /** Notify support of a landing page hit. */
-    final case class NotifyLandingPage(email   : String,
-                                       subject : String,
-                                       desc    : String,
+    final case class NotifyLandingPage(email   : EmailAddr,
+                                       content : Email.Content,
                                        priority: Priority) extends API[TicketId]
+
+    final case class RecordUserFeedback(from   : EmailAddr,
+                                        content: Email.Content) extends API[TicketId]
 
     final case class ReportFailure(subject : String,
                                    desc    : String,

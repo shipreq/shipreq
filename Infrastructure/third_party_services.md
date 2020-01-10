@@ -101,7 +101,7 @@ https://shipreq.freshdesk.com
       * Notify Agents > Add
     * Requestor Notifications --> All off
 3. Ticket Fields
-    * Type --> [x] Required when closing, RFI|RFC|Incident|Problem|Lead|Other
+    * Type --> [x] Required when closing, RFI|RFC|Incident|Problem|Lead|Other|Feedback
 4. Security
     * SSL --> On
 

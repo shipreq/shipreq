@@ -23,6 +23,9 @@ final case class ServerSideProcInvoker[-I, F, O](fn: (I, O => Callback, F => Cal
   def contramapInput[A](g: A => I): ServerSideProcInvoker[A, F, O] =
     new ServerSideProcInvoker[A, F, O]((a, s, f) => fn(g(a), s, f))
 
+  def contramapInputCB[A, II <: I](g: A => CallbackTo[II]): ServerSideProcInvoker[A, F, O] =
+    new ServerSideProcInvoker[A, F, O]((a, s, f) => g(a).flatMap(fn(_, s, f)))
+
   def mapFailure[A](g: F => A): ServerSideProcInvoker[I, A, O] =
     new ServerSideProcInvoker[I, A, O]((i, s, f) => fn(i, s, f compose g))
 

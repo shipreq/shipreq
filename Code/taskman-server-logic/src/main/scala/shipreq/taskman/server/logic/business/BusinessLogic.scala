@@ -68,9 +68,20 @@ final class BusinessLogic[F[_]](emails        : Emails,
         complete(run(op))
       }
 
+    case task: UserFeedbackReceived =>
+      complete {
+        for {
+          user    <- ActiveUser.get(task.userId)
+          content  = emails.userFeedback(task)
+          _       <- run(Support.API.RecordUserFeedback(user.emailWithName, content))
+        } yield ()
+      }
+
     case d: DummyTask =>
       dummy(md, d)
   }
+
+  // ===================================================================================================================
 
   object ActiveUser {
     import MailingList._
@@ -141,9 +152,9 @@ final class BusinessLogic[F[_]](emails        : Emails,
 
     def createSupportTicket(m: TaskHeader, l: LandingPageHit, c: Email.Content): Fx[Support.TicketId] = {
       import Support._
-      val from = s"${l.name} <${l.email.value}>"
+      val from = EmailAddr(s"${l.name} <${l.email.value}>")
       val p = if (l.msg.isDefined) Priority.Medium else Priority.Low
-      run(API.NotifyLandingPage(from, c.subject, c.body, p))
+      run(API.NotifyLandingPage(from, c, p))
     }
   }
 

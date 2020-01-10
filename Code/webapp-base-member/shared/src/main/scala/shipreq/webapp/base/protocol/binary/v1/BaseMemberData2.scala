@@ -399,9 +399,6 @@ object BaseMemberData2 {
       }
     }
 
-  implicit lazy val picklerProjectIdPublic: Pickler[ProjectId.Public] =
-    pickleObfuscated
-
   implicit lazy val picklerProjectMetaData: Pickler[ProjectMetaData] =
     new Pickler[ProjectMetaData] {
       override def pickle(a: ProjectMetaData)(implicit state: PickleState): Unit = {

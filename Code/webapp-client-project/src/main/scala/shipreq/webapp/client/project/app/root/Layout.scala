@@ -20,6 +20,7 @@ object Layout {
                          connectionStatus   : ConnectionStatus,
                          setConnectionStatus: ConnectionStatus => Reusable[Callback],
                          reauthModal        : ReauthenticationModal,
+                         feedbackModal      : FeedbackModal,
                          rc                 : RouterCtl,
                          page               : Page,
                          content            : VdomElement) {
@@ -87,12 +88,14 @@ object Layout {
   private def render(p: Props): VdomElement = {
     val menuLeft  = navBarLeft(NavBarLeftInput(p.page, p.project, p.rc))
     val menuRight = navBarRight(NavBarRightInput(p.connectionStatus, p.setConnectionStatus(!p.connectionStatus)))
+    val navBar    = MemberNavBar.Props(p.username, Some(p.feedbackModal), menuLeft, menuRight)
     MemberLayout.Props(
-      MemberNavBar.Props(p.username, menuLeft, menuRight),
+      navBar,
       <.div(
         _,
         Style.layout,
         FilterHelp.modal.render,
+        p.feedbackModal.render,
         p.reauthModal.render,
         RichTextEditorHelp.allRendered,
         p.content))

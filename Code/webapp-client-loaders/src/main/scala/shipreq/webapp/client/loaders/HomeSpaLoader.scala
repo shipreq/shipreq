@@ -17,7 +17,10 @@ object HomeSpaLoader {
     Reusable.byRef(Breadcrumb.Item.Div(ClientConfig.BreadcrumbNameMemberHome) :: Nil)
 
   private def render(p: Props): VdomElement = {
-    val navBar = MemberNavBar.Props(p.username, navBarLeft)
+    val navBar = MemberNavBar.Props(
+      username      = p.username,
+      feedbackModal = None,
+      left          = navBarLeft)
     Loader.render(navBar)(EmptyVdom)
   }
 

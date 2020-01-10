@@ -25,9 +25,10 @@ object MemberNavBar {
 
   val noRightProps: RightProps = Reusable.byRef(Nil)
 
-  final case class Props(username: Username,
-                         left    : LeftProps,
-                         right   : RightProps = noRightProps) {
+  final case class Props(username     : Username,
+                         feedbackModal: Option[FeedbackModal],
+                         left         : LeftProps,
+                         right        : RightProps = noRightProps) {
     lazy val leftWithDividers = left.iterator.intersperse(Divider).toList
     @inline def render: VdomElement = Component(this)
   }
@@ -41,7 +42,7 @@ object MemberNavBar {
       tagMod = *.navMenu)
 
   private val dropdownOptions =
-    Dropdown.JsOptions.default
+    Dropdown.JsOptions.readOnly
 
   private val itemLogo =
     Menu.ItemType.Link(
@@ -55,9 +56,12 @@ object MemberNavBar {
   private val breadcrumbStyle =
     Breadcrumb.Style()
 
+  private val preventDefault: ReactEvent => Callback =
+    _.preventDefaultCB
+
   private val dropdownLogout =
     Dropdown.Item.Link(
-      <.a(^.href := Urls.logout.relativeUrl, "Logout"))
+      <.a(^.href := Urls.logout.relativeUrl, ^.onClick ==> preventDefault, "Logout"))
 
   final class Backend($: BackendScope[Props, Unit]) {
 
@@ -67,10 +71,18 @@ object MemberNavBar {
           Breadcrumb.Props(breadcrumbStyle, p.leftWithDividers).render
         ).toItem
 
+      val dropdownSendFeedback = {
+        val root = <.a("Send feedback")
+        p.feedbackModal match {
+          case Some(m) => Dropdown.Item.Link(root(^.onClick ==> preventDefault.andThen(_ >> m.run.toCallback)))
+          case None    => Dropdown.Item.Link(root(^.disabled := true), Dropdown.ItemState.Disabled)
+        }
+      }
+
       val rightDropdown =
         Menu.DropdownType.Simple(
           p.username.with_@,
-          dropdownLogout :: Nil
+          dropdownSendFeedback :: dropdownLogout :: Nil
         ).toItem
 
       val leftMenuItems =

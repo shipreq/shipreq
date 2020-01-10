@@ -74,6 +74,7 @@ object Dropdown {
     var `match` : js.UndefOr[Match   ] = js.undefined
     var delay   : js.UndefOr[Delay   ] = js.undefined
     var onChange: js.UndefOr[OnChange] = js.undefined
+  //var debug   : js.UndefOr[Boolean ] = js.undefined
   }
 
   object JsOptions {
@@ -108,10 +109,19 @@ object Dropdown {
     // Arg = itemValue
     type OnChange = js.Function1[String, Unit]
 
+    /** Allows dropdown item selection. */
     def default: JsOptions =
       new JsOptions {
         // This prevents Semantic UI's JS modifying the DOM when the user clicks an item
         override val action = Dropdown.JsOptions.Action.Hide
+      }
+
+    def readOnly: JsOptions =
+      new JsOptions {
+        // This prevents Semantic UI's JS:
+        //   1. modifying the DOM when the user clicks an item
+        //   2. marking items as selected/active when clicked
+        override val action = Dropdown.JsOptions.Action.nothing
       }
   }
 

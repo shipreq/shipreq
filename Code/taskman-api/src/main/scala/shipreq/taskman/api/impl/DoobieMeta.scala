@@ -19,6 +19,7 @@ object DoobieMeta {
     case TaskType.PasswordResetRequested   => 103
     case TaskType.UserUpdated              => 104
     case TaskType.LandingPageHit           => 200
+    case TaskType.UserFeedbackReceived     => 201
     case TaskType.SyncToMailingList        => 300
     case TaskType.WebappErrorOccurred      => 500
   }

@@ -9,14 +9,16 @@ import shipreq.webapp.base.user.Username
 
 object ProjectSpaLoader {
 
-  final case class Props(username: Username, projectName: Project.Name) {
+  final case class Props(username   : Username,
+                         projectName: Project.Name) {
     @inline def render: VdomElement = Component(this)
   }
 
   def layout(p: Props)(content: VdomNode): VdomElement = {
     val navBar = MemberNavBar.Props(
-      p.username,
-      Reusable.never(MemberNavBar.MemberHome :: Breadcrumb.Item.Div(p.projectName) :: Nil))
+      username      = p.username,
+      feedbackModal = None,
+      left          = Reusable.never(MemberNavBar.MemberHome :: Breadcrumb.Item.Div(p.projectName) :: Nil))
 
     Loader.render(navBar)(content)
   }

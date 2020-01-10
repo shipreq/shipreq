@@ -13,7 +13,7 @@ import shipreq.webapp.base.feature._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.text.{PlainText, TextSearch}
-import shipreq.webapp.base.ui.ProjectItem
+import shipreq.webapp.base.ui.{FeedbackModal, ProjectItem}
 import shipreq.webapp.client.project.app.state._
 import shipreq.webapp.client.project.app._
 import shipreq.webapp.client.project.app.reqdetail.ReqDetail
@@ -46,6 +46,12 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     private val sspUpdateManualIssues    = global.sspUpdateManualIssues
     private val sspFieldMandatorinessMod = global.sspFieldMandatorinessMod
     private val sspReqTypeImplicationMod = global.sspReqTypeImplicationMod
+
+    private val feedbackModal: FeedbackModal = {
+      val projectMetadata = global.feedbackMetadata(initPageData.projectId)
+      val metadata        = CommonProtocolsJs.SubmitFeedback.metadataWithProject(initPageData.username, projectMetadata)
+      FeedbackModal(metadata)
+    }
 
     // This never changes
     private val routerCtl = $.props.runNow().routerCtl
@@ -331,6 +337,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
         global.connectedStatusHub.unsafeGet(),
         global.setConnectionStatus,
         global.reauthModal,
+        feedbackModal,
         routerCtl,
         p.page,
         content).render

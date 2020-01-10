@@ -2,15 +2,14 @@ package shipreq.webapp.base.ui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.dom.{Element, document, html, raw}
-import scala.scalajs.js
-import scala.util.Success
+import org.scalajs.dom.{Element, document, html}
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Allow, Deny, ErrorMsg, Permission}
 import shipreq.webapp.base.data.{Disabled, Enabled}
-import shipreq.webapp.base.protocol.{AjaxClient, CommonProtocols}
+import shipreq.webapp.base.lib.ModalForm
 import shipreq.webapp.base.protocol.CommonProtocols.Login
-import shipreq.webapp.base.ui.semantic.{Colour, Icon, JQuery, Label, Modal, UsesSemanticUiManually}
+import shipreq.webapp.base.protocol.{AjaxClient, CommonProtocols}
+import shipreq.webapp.base.ui.semantic.{Colour, Icon, Label, UsesSemanticUiManually}
 import shipreq.webapp.base.user.{PlainTextPassword, Username}
 
 /** Pops up a modal that asks a user to re-authenticate.
@@ -49,142 +48,73 @@ object ReauthenticationModal {
             rootDom     : Element,
             delayMs     : Double): ReauthenticationModal = {
 
-    val id = Modal.nextId()
+    import ModalForm.SetState
 
-    var onCompletion: Callback = Callback.empty
-    var lastResult: Permission = Deny
-
-    def getDom[N <: raw.Node](sel: String): CallbackTo[N] =
-      CallbackTo(rootDom.querySelector(s"#$id $sel").domCast[N])
-
-    val passwordDom    = getDom[html.Input]("input[type=password]")
-    val passwordGet    = passwordDom.map(i => PlainTextPassword(i.value))
-    val passwordClear  = passwordDom.map(_.value = "")
-    val loginButtonDom = getDom[html.Button](".button.primary")
-    val errorLabelDom  = getDom[html.Div](".label")
-
-    def setState(form: Enabled, error: Option[ErrorMsg], inFlight: Boolean): Callback =
-      for {
-        pd <- passwordDom
-        lb <- loginButtonDom
-        el <- errorLabelDom
-      } yield {
-        for (d <- Option(pd)) {
-          d.readOnly = form.is(Disabled)
-        }
-        for (d <- Option(el)) {
-          d.style.display = if (error.isDefined) null else "none"
-          d.innerHTML = error.fold("")(_.value)
-        }
-        GeneralTheme.nonReact.setStateOfSubmitButton(lb)(form, inFlight = inFlight)
-      }
-
-    val resetForm            = passwordClear >> setState(Enabled, None, inFlight = false)
-    val onHide               = resetForm >> Callback.byName(onCompletion)
-    val modalInitProps       = js.Dynamic.literal(onHidden = onHide.toJsFn)
-    val modalInit            = Callback(JQuery.byId(id).modal(modalInitProps))
-    val modalShow            = Callback(JQuery.byId(id).modal("show"))
-    val modalHide            = CallbackTo(JQuery(rootDom.querySelector("#" + id)).modal("hide"))
     val errorInvalidPassword = ErrorMsg("Invalid password.")
     val errorLabel           = Label.Style(Label.Type.PointingUp, Colour.Red).div
 
-    val submitAsync: Option[ReactEvent] => AsyncCallback[Unit] = {
-      event => {
-        val prepare =
-          for {
-            _ <- event.map(_.preventDefaultCB).getOrEmpty // prevent form submission
-            _ <- setState(Disabled, None, inFlight = true)
-            p <- passwordGet
-          } yield Login.Request.validate(-\/(username), p)
+    object modalForm extends ModalForm[Permission]("ReauthModal", Deny, "Login", rootDom, extraModalClasses = "mini") {
 
-        prepare.asAsyncCallback.flatMap {
-          case \/-(req) => attemptLogin(req).flatMap {
+      val passwordDom    = getDom[html.Input]("input[type=password]")
+      val passwordGet    = passwordDom.map(i => PlainTextPassword(i.value))
+      val loginButtonDom = getDom[html.Button](".button.primary")
+      val errorLabelDom  = getDom[html.Div](".label")
 
-            case \/-(Allow) =>
-              (Callback { lastResult = Allow } >> modalHide).asAsyncCallback
-
-            case \/-(Deny) =>
-              setState(Enabled, Some(errorInvalidPassword), inFlight = false).asAsyncCallback
-
-            case -\/(err) =>
-              setState(Enabled, Some(err), inFlight = false).asAsyncCallback
+      override def setState(s: SetState): Callback =
+        for {
+          pd <- passwordDom
+          lb <- loginButtonDom
+          el <- errorLabelDom
+        } yield {
+          for (d <- Option(pd)) {
+            d.readOnly = s.form.is(Disabled)
           }
-
-          case -\/(_) =>
-            setState(Enabled, Some(errorInvalidPassword), inFlight = false).delayMs(delayMs)
+          for (d <- Option(el)) {
+            d.style.display = if (s.error.isDefined) null else "none"
+            d.innerHTML = s.error.fold("")(_.value)
+          }
+          GeneralTheme.nonReact.setStateOfSubmitButton(lb)(s.form, inFlight = s.inFlight)
         }
-      }
-    }
 
-    val submit: Option[ReactEvent] => Callback =
-      submitAsync(_).toCallback
+      override val clearFormData: Callback =
+        passwordDom.map(_.value = "")
 
-    val header = "Session Expired"
+      override val header: TagMod =
+        "Session Expired"
 
-    val content = TagMod(
-      <.p("You must login again to be able to save changes or receive updates."),
-      <.form(
-        ^.cls := "ui left icon input",
-        ^.display.flex,
-        <.input.text(
-          ^.autoComplete.username,
-          ^.display.none,
-          ^.readOnly := true,
-          ^.value := username.value),
-        <.input.password(
-          ^.autoComplete.currentPassword,
-          ^.autoFocus := true,
-          ^.onChange --> setState(Enabled, None, inFlight = false),
-          GeneralTheme.submitOnEnter(submit(None))
-        ),
-        Icon.Lock.tag),
-      errorLabel
-    )
-
-    val cancelButton =
-      <.button(
-        ^.cls := "ui button",
-        ^.onClick --> modalHide,
-        "Cancel")
-
-    val loginButton =
-      <.button(
-        ^.cls := "ui button primary",
-        ^.onClick ==> (e => submit(Some(e))),
-        "Login")
-
-    val render: VdomElement =
-      <.div(
-        ^.id := id,
-        ^.cls := "ui mini modal",
-        <.div(^.cls := "header", header),
-        <.div(^.cls := "content", content),
-        <.div(^.cls := "actions", cancelButton, loginButton),
+      override val content = TagMod(
+        <.p("You must login again to be able to save changes or receive updates."),
+        <.form(
+          ^.cls := "ui left icon input",
+          ^.display.flex,
+          <.input.text(
+            ^.autoComplete.username,
+            ^.display.none,
+            ^.readOnly := true,
+            ^.value := username.value),
+          <.input.password(
+            ^.autoComplete.currentPassword,
+            ^.autoFocus := true,
+            ^.onChange --> setState(SetState(Enabled, None, inFlight = false)),
+            GeneralTheme.submitOnEnter(submit(None))
+          ),
+          Icon.Lock.tag),
+        errorLabel
       )
 
-    val component =
-      ScalaComponent.builder.static("ReauthModal")(render)
-        .componentDidMountConst(modalInit)
-        .build
-
-    val run: AsyncCallback[Permission] = {
-      val start: CallbackTo[AsyncCallback[Permission]] =
-        for {
-          (p, complete) <- AsyncCallback.promise[Permission]
-          _             <- Callback {
-                             lastResult = Deny
-                             onCompletion = CallbackTo(lastResult).flatMap(p => complete(Success(p)))
-                           }
-          _             <- resetForm
-          _             <- modalShow
-        } yield p
-
-      for {
-        promise <- start.asAsyncCallback
-        result  <- promise
-      } yield result
+      override val justSubmit: AsyncCallback[SetState \/ Permission] =
+        passwordGet.map(Login.Request.validate(-\/(username), _)).asAsyncCallback.flatMap {
+          case \/-(req) =>
+            attemptLogin(req).map {
+              case ok@ \/-(Allow) => ok
+              case \/-(Deny)      => -\/(SetState(Enabled, Some(errorInvalidPassword), inFlight = false))
+              case -\/(err)       => -\/(SetState(Enabled, Some(err), inFlight = false))
+            }
+          case -\/(_) =>
+            AsyncCallback.pure(-\/(SetState(Enabled, Some(errorInvalidPassword), inFlight = false))).delayMs(delayMs)
+        }
     }
 
-    ReauthenticationModal(component(), run)
+    ReauthenticationModal(modalForm.component(), modalForm.run)
   }
 }

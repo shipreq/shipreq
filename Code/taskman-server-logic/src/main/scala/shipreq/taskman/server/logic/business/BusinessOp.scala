@@ -38,4 +38,8 @@ final case class ShipReqUser(id        : UserId,
                              username  : String,
                              email     : EmailAddr,
                              name      : String,
-                             newsletter: Boolean)
+                             newsletter: Boolean) {
+
+  def emailWithName: EmailAddr =
+    EmailAddr(s"$name <${email.value}>")
+}

@@ -9,7 +9,7 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{DataValidators, ProjectMetaData}
 import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus}
-import shipreq.webapp.base.protocol.{AjaxClient, HomeSpaEntryPoint, HomeSpaProtocols, ServerSideProcInvoker}
+import shipreq.webapp.base.protocol.{AjaxClient, CommonProtocolsJs, HomeSpaEntryPoint, HomeSpaProtocols, ServerSideProcInvoker}
 import shipreq.webapp.base.ui._
 import shipreq.webapp.base.ui.semantic.{Breadcrumb, Colour}
 import shipreq.webapp.base.{ClientConfig, WebappConfig}
@@ -20,6 +20,11 @@ object Home {
 
     def createProjectIO: ServerSideProcInvoker[String, ErrorMsg, ProjectMetaData] =
       ajax.invoker(HomeSpaProtocols.CreateProject.ajax)
+
+    val feedbackModal: FeedbackModal = {
+      val metadata = CommonProtocolsJs.SubmitFeedback.metadataWithoutProject(data.username)
+      FeedbackModal(metadata, ajax)
+    }
   }
 
   @Lenses
@@ -51,7 +56,7 @@ object Home {
       Reusable.byRef(Breadcrumb.Item.Div(ClientConfig.BreadcrumbNameMemberHome) :: Nil)
 
     def render(p: Props, s: State): VdomElement = {
-      val navBar = MemberNavBar.Props(p.data.username, navBarLeft)
+      val navBar = MemberNavBar.Props(p.data.username, Some(p.feedbackModal), navBarLeft)
 
       def mainContent(m: TagMod): VdomElement =
         HomeContent.Props(
@@ -62,9 +67,10 @@ object Home {
           m)
           .render
 
-      MemberLayout.Props(navBar, mainContent).render
+      <.div(
+        p.feedbackModal.render,
+        MemberLayout.Props(navBar, mainContent).render)
     }
-
   }
 
   val Component = ScalaComponent.builder[Props]("Home")
@@ -86,7 +92,6 @@ object HomeContent {
   }
 
   final class Backend($: BackendScope[Props, Unit]) {
-
 
     val inputMod: TagMod =
       TagMod(^.placeholder := "New project name", Styles.createProjectInput)

@@ -80,6 +80,12 @@ object TaskJson {
   implicit val encoderTaskWebappErrorOccurred: Encoder[Task.WebappErrorOccurred] =
     Encoder.forProduct3("usr", "url", "report")(a => (a.usr, a.url, a.report))
 
+  implicit val decoderTaskUserFeedbackReceived: Decoder[Task.UserFeedbackReceived] =
+    Decoder.forProduct3("userId", "feedback", "metadata")(Task.UserFeedbackReceived.apply)
+
+  implicit val encoderTaskUserFeedbackReceived: Encoder[Task.UserFeedbackReceived] =
+    Encoder.forProduct3("userId", "feedback", "metadata")(a => (a.userId, a.feedback, a.metadata))
+
   // ===================================================================================================================
 
   val dataDecoder: TaskType => Decoder[_ <: Task] = {
@@ -92,6 +98,7 @@ object TaskJson {
     case TaskType.SendDiagEmail           => decoderTaskSendDiagEmail
     case TaskType.SyncToMailingList       => decoderTaskSyncToMailingList
     case TaskType.UserUpdated             => decoderTaskUserUpdated
+    case TaskType.UserFeedbackReceived    => decoderTaskUserFeedbackReceived
     case TaskType.WebappErrorOccurred     => decoderTaskWebappErrorOccurred
   }
 
@@ -105,6 +112,7 @@ object TaskJson {
     case m: Task.SendDiagEmail           => m.asJson
     case m: Task.SyncToMailingList       => m.asJson
     case m: Task.UserUpdated             => m.asJson
+    case m: Task.UserFeedbackReceived    => m.asJson
     case m: Task.WebappErrorOccurred     => m.asJson
   }
 
@@ -120,6 +128,7 @@ object TaskJson {
     case ("SendDiagEmail"          , c) => c.as[Task.SendDiagEmail]
     case ("SyncToMailingList"      , c) => c.as[Task.SyncToMailingList]
     case ("UserUpdated"            , c) => c.as[Task.UserUpdated]
+    case ("UserFeedbackReceived"   , c) => c.as[Task.UserFeedbackReceived]
     case ("WebappErrorOccurred"    , c) => c.as[Task.WebappErrorOccurred]
   }
 
@@ -133,6 +142,7 @@ object TaskJson {
     case a: Task.SendDiagEmail           => Json.obj("SendDiagEmail"           -> a.asJson)
     case a: Task.SyncToMailingList       => Json.obj("SyncToMailingList"       -> a.asJson)
     case a: Task.UserUpdated             => Json.obj("UserUpdated"             -> a.asJson)
+    case a: Task.UserFeedbackReceived    => Json.obj("UserFeedbackReceived"    -> a.asJson)
     case a: Task.WebappErrorOccurred     => Json.obj("WebappErrorOccurred"     -> a.asJson)
   }
 

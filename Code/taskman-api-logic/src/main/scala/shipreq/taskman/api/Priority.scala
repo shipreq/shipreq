@@ -33,6 +33,7 @@ object Priority {
     case _: RegistrationCompleted
        | _: LandingPageHit
        | _: SyncToMailingList
+       | _: UserFeedbackReceived
        | _: UserUpdated
               => Low
   }

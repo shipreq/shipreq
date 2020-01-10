@@ -44,6 +44,9 @@ object GeneralTheme {
   def submitOnEnter(submit: Callback): KeyHandlers =
     Criterion.Enter.handle(submit) + Criterion.CtrlEnter.handle(submit)
 
+  def submitOnCtrlEnter(submit: Callback): KeyHandlers =
+    Criterion.CtrlEnter.handle(submit).toKeyHandlers
+
   /** When using Semantic UI modals, we have to manually modify DOM rather than using React.
     * Herein lie helpers...
     */

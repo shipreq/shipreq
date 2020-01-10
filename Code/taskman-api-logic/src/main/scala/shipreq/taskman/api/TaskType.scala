@@ -13,6 +13,7 @@ object TaskType {
   case object ReRegistrationAttempted extends TaskType
   case object SendDiagEmail           extends TaskType
   case object SyncToMailingList       extends TaskType
+  case object UserFeedbackReceived    extends TaskType
   case object UserUpdated             extends TaskType
   case object WebappErrorOccurred     extends TaskType
 

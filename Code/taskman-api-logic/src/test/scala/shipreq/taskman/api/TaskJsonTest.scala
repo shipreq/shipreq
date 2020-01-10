@@ -20,6 +20,7 @@ object TaskJsonTest extends TestSuite {
     case TaskType.LandingPageHit          => """{"email":"whatever@gmail.com","msg":"No mule can match wits with me.","name":"Iskaral Pust","newsletter":false}"""
     case TaskType.SyncToMailingList       => """"id < 100""""
     case TaskType.WebappErrorOccurred     => """{"report":"blah","url":"/login","usr":123}"""
+    case TaskType.UserFeedbackReceived    => """{"userId":123,"feedback":"Your product sucks!","metadata":{"url":"https://shipreq.com/project/abcd","userAgent":"Chrome!"}}"""
   }
 
   private def test(t: TaskType): Unit = {
@@ -27,7 +28,8 @@ object TaskJsonTest extends TestSuite {
 
     {
       implicit val dec = TaskJson.dataDecoder(t).map[Task](m => m)
-      val json         = expectedJsonFor(t)
+      val json = expectedJsonFor(t)
+      // println(TaskJson.encodeData(task).noSpaces)
       assertDecodeOk(json, task)
       assertDecodeOk(TaskJson.encodeData(task), task)
     }
@@ -47,5 +49,6 @@ object TaskJsonTest extends TestSuite {
     "LandingPageHit"          - test(TaskType.LandingPageHit)
     "SyncToMailingList"       - test(TaskType.SyncToMailingList)
     "WebappErrorOccurred"     - test(TaskType.WebappErrorOccurred)
+    "UserFeedbackReceived"    - test(TaskType.UserFeedbackReceived)
   }
 }

@@ -10,4 +10,7 @@ object OpResult extends IsoBool.Object[OpResult] {
 
   override def positive = Success
   override def negative = Failure
+
+  def isSuccess: OpResult => Boolean = _ is Success
+  def isFailure: OpResult => Boolean = _ is Failure
 }

@@ -357,6 +357,9 @@ object BaseData {
   implicit lazy val picklerPlainTextPassword: Pickler[PlainTextPassword] =
     transformPickler(PlainTextPassword.apply)(_.value)
 
+  implicit lazy val picklerProjectIdPublic: Pickler[ProjectId.Public] =
+    pickleObfuscated
+
   implicit lazy val picklerVerificationToken: Pickler[VerificationToken] =
     transformPickler(VerificationToken.apply)(_.value)
 

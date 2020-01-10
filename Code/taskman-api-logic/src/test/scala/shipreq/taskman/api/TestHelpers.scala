@@ -18,41 +18,46 @@ object TestHelpers {
   def genTaskForType(m: TaskType): Gen[Task] = m match {
 
     case T.RegistrationRequested =>
-      for(email <- genEmail; url <- arbitrary[String])
-      yield M.RegistrationRequested(email, url)
+      for {
+        email <- genEmail
+        url   <- arbitrary[String]
+      } yield M.RegistrationRequested(email, url)
 
     case T.ReRegistrationAttempted =>
-      for(email <- genEmail)
-      yield M.ReRegistrationAttempted(email)
+      for {
+        email <- genEmail
+      } yield M.ReRegistrationAttempted(email)
 
     case T.RegistrationCompleted =>
-      for (userId <- genUserId) yield
-        M.RegistrationCompleted(userId)
+      for {
+        userId <- genUserId
+      } yield M.RegistrationCompleted(userId)
 
     case T.UserUpdated =>
-      for (userId <- genUserId) yield
-        M.UserUpdated(userId)
+      for {
+        userId <- genUserId
+      } yield M.UserUpdated(userId)
 
     case T.PasswordResetRequested =>
-      for(email <- genEmail; url <- arbitrary[String])
-      yield M.PasswordResetRequested(email, url)
+      for {
+        email <- genEmail
+        url   <- arbitrary[String]
+      } yield M.PasswordResetRequested(email, url)
 
     case T.LandingPageHit =>
       for {
-        email <- genEmail
-        name <- arbitrary[String]
-        msg <- arbitrary[Option[String]]
+        email      <- genEmail
+        name       <- arbitrary[String]
+        msg        <- arbitrary[Option[String]]
         newsletter <- arbitrary[Boolean]
-      } yield
-        M.LandingPageHit(email, name, msg, newsletter)
+      } yield M.LandingPageHit(email, name, msg, newsletter)
 
     case T.WebappErrorOccurred =>
       for {
         usr <- genUserIdO
         url <- arbitrary[Option[String]]
         msg <- arbitrary[String]
-      } yield
-        M.WebappErrorOccurred(usr, url, msg)
+      } yield M.WebappErrorOccurred(usr, url, msg)
 
     case T.DummyTask =>
       for {
@@ -62,21 +67,26 @@ object TestHelpers {
         retryCount       <- arbitrary[Short]
         retryDelaySec    <- arbitrary[Int]
         failureMsg       <- arbitrary[Option[String]]
-      } yield
-        M.DummyTask(desc, async, processingTimeMs, retryCount, retryDelaySec, failureMsg)
+      } yield M.DummyTask(desc, async, processingTimeMs, retryCount, retryDelaySec, failureMsg)
 
     case T.SendDiagEmail =>
       for {
         email   <- genEmail
         subject <- arbitrary[String]
         body    <- arbitrary[String]
-      } yield
-        M.SendDiagEmail(email, subject, body)
+      } yield M.SendDiagEmail(email, subject, body)
 
     case T.SyncToMailingList =>
-      for (sql <- arbitrary[Option[String]]) yield
-        M.SyncToMailingList(sql)
+      for {
+        sql <- arbitrary[Option[String]]
+      } yield M.SyncToMailingList(sql)
 
+    case T.UserFeedbackReceived =>
+      for {
+        userId   <- genUserId
+        feedback <- arbitrary[String]
+        metadata <- arbitrary[Map[String, String]]
+      } yield M.UserFeedbackReceived(userId, feedback, metadata)
   }
 
 //  def genMsgOfEachType: Gen[List[Msg]] =
