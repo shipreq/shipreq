@@ -56,9 +56,12 @@ object MemberNavBar {
   private val breadcrumbStyle =
     Breadcrumb.Style()
 
+  private val preventDefault: ReactEvent => Callback =
+    _.preventDefaultCB
+
   private val dropdownLogout =
     Dropdown.Item.Link(
-      <.a(^.href := Urls.logout.relativeUrl, "Logout"))
+      <.a(^.href := Urls.logout.relativeUrl, ^.onClick ==> preventDefault, "Logout"))
 
   final class Backend($: BackendScope[Props, Unit]) {
 
@@ -71,7 +74,7 @@ object MemberNavBar {
       val dropdownSendFeedback = {
         val root = <.a("Send feedback")
         p.feedbackModal match {
-          case Some(m) => Dropdown.Item.Link(root(^.onClick --> m.run.toCallback))
+          case Some(m) => Dropdown.Item.Link(root(^.onClick ==> preventDefault.andThen(_ >> m.run.toCallback)))
           case None    => Dropdown.Item.Link(root(^.disabled := true), Dropdown.ItemState.Disabled)
         }
       }
