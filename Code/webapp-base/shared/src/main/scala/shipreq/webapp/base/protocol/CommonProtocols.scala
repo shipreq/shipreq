@@ -87,10 +87,12 @@ object CommonProtocols {
                                      ord         : Option[Int],
                                      futureEvents: Set[Int])
 
-    // UserId will be taken from the JWT
+    // Note: username is here rather than deriving from JWT because a user may want to submit after their session
+    // expires on while on a page, in which case the browser deletes the JWT from its cookie jar.
     final case class Metadata(project  : Option[ProjectMetadata],
                               url      : String,
-                              userAgent: String)
+                              userAgent: String,
+                              username : Username)
 
     final case class Request(input: UserInput, metadata: Metadata)
 
@@ -136,13 +138,15 @@ object CommonProtocols {
             state.pickle(a.project)
             state.pickle(a.url)
             state.pickle(a.userAgent)
+            state.pickle(a.username)
           }
           override def unpickle(implicit state: UnpickleState): Metadata = {
             val version   = state.dec.readInt
             val project   = state.unpickle[Option[ProjectMetadata]]
             val url       = state.unpickle[String]
             val userAgent = state.unpickle[String]
-            Metadata(project, url, userAgent)
+            val username  = state.unpickle[Username]
+            Metadata(project, url, userAgent, username)
           }
         }
 

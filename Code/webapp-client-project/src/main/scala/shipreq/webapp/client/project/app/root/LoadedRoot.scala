@@ -49,7 +49,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
 
     private val feedbackModal: FeedbackModal = {
       val projectMetadata = global.feedbackMetadata(initPageData.projectId)
-      val metadata        = CommonProtocolsJs.SubmitFeedback.metadataWithProject(projectMetadata)
+      val metadata        = CommonProtocolsJs.SubmitFeedback.metadataWithProject(initPageData.username, projectMetadata)
       FeedbackModal(metadata)
     }
 
