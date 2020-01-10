@@ -92,9 +92,9 @@ abstract class ModalForm[A](name             : String,
       for {
         (p, complete) <- AsyncCallback.promise[A]
         _             <- Callback {
-          lastResult = initalResult
-          onCompletion = CallbackTo(lastResult).flatMap(p => complete(Success(p)))
-        }
+                           lastResult = initalResult
+                           onCompletion = CallbackTo(lastResult).flatMap(p => complete(Success(p)))
+                         }
         _             <- resetForm
         _             <- modalShow
       } yield p
