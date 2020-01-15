@@ -16,7 +16,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.base.event.UseCaseStepGD
-import shipreq.webapp.base.feature.clipboard.ClipboardInterface
+import shipreq.webapp.base.feature.clipboard.ClipboardCodec
 import shipreq.webapp.base.lib.{KeyHandler, KeyboardTheme}
 import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.base.feature.AutoCompleteFeature._
@@ -116,8 +116,8 @@ object UseCaseStepEditor {
   val liveCorrect: EndoFn[String] =
     RichTextEditor.liveCorrect(Text.UseCaseStep)
 
-  val clipboardInterface: ClipboardInterface[String] =
-    ClipboardInterface.string.correct(liveCorrect)
+  val clipboardCodec: ClipboardCodec[String] =
+    ClipboardCodec.string.correct(liveCorrect)
 
   private def saveAndAddKeyCriterion = KeyHandler.Criterion.AltEnter
 

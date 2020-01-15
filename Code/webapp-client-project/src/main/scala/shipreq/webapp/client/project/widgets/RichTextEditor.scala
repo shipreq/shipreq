@@ -8,7 +8,7 @@ import shipreq.base.util.univeq._
 import shipreq.base.util.{PotentialChange, Validity}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AutoCompleteFeature._
-import shipreq.webapp.base.feature.clipboard.ClipboardInterface
+import shipreq.webapp.base.feature.clipboard.ClipboardCodec
 import shipreq.webapp.base.feature.{EditorStatus, PreviewFeature}
 import shipreq.webapp.base.lib.{KeyHandlers, KeyboardTheme}
 import shipreq.webapp.base.text.Text.Equality._
@@ -108,8 +108,8 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
   val liveCorrect: EndoFn[String] =
     RichTextEditor.liveCorrect(text)
 
-  val clipboardInterface: ClipboardInterface[String] =
-    ClipboardInterface.string.correct(liveCorrect)
+  val clipboardCodec: ClipboardCodec[String] =
+    ClipboardCodec.string.correct(liveCorrect)
 
   final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.EditorBackend {
     private val pxProject    = Px.props($).map(_.project).withReuse.autoRefresh

@@ -12,7 +12,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature._
-import shipreq.webapp.base.feature.clipboard.{ClipboardData, ClipboardInterface}
+import shipreq.webapp.base.feature.clipboard.{ClipboardData, ClipboardCodec}
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.{ManualIssueCmd, ServerSideProcInvoker, UpdateContentCmd}
@@ -118,7 +118,7 @@ object NewEditor {
         changeImpl(props(args, None).runNow())
     }
 
-    def init[FieldArgs, Change, A](oci: Option[ClipboardInterface[A]])
+    def init[FieldArgs, Change, A](oci: Option[ClipboardCodec[A]])
                                   (userInit: Init[FieldArgs, Change]): Init[FieldArgs, Change] =
         oci match {
           case Some(ci) =>
@@ -132,7 +132,7 @@ object NewEditor {
               } yield e
         }
 
-    def init[FieldArgs, Change, A](ci: ClipboardInterface[A])
+    def init[FieldArgs, Change, A](ci: ClipboardCodec[A])
                                   (userInit: Init[FieldArgs, Change]): Init[FieldArgs, Change] =
       args => {
         val unreadableClipboard = args.clipboardData.exists(ci.read(_).isEmpty)
@@ -242,12 +242,12 @@ object NewEditor {
         */
       def startWithStateSnapshotC[S, B: Reusability, E <: Editor[A, C]](initialData: CallbackOption[S],
                                                                         args: CreationArgs,
-                                                                        clipboardInterface: ClipboardInterface[B])
+                                                                        clipboardCodec: ClipboardCodec[B])
                                                                        (initialValue: S => B)
                                                                        (editor: S => StateSnapshot[B] => E): CallbackOption[E] =
         startWithStateSnapshot(
           initialData)(
-          s => clipboardInterface.readOrUse(args.clipboardData, initialValue(s)))(
+          s => clipboardCodec.readOrUse(args.clipboardData, initialValue(s)))(
           editor)
 
       def newEditor(init: => Internal.Init[A, C]): NewEditor =
@@ -342,12 +342,12 @@ object NewEditor {
 
       object Multiple extends ForChangeType {
         import ReqCodeEditor.{Multiple => RCE}
-        import RCE.clipboardInterface
+        import RCE.clipboardCodec
 
         override type Args   = Unit
         override type Change = RCE.Output
 
-        def apply(id: ReqId): InitFn = ictx => Internal.init(Some(clipboardInterface)) { args =>
+        def apply(id: ReqId): InitFn = ictx => Internal.init(Some(clipboardCodec)) { args =>
           import ictx._
 
           val initialValuesCB: CallbackTo[Set[ReqCode.Value]] =
@@ -359,7 +359,7 @@ object NewEditor {
           startWithStateSnapshotC(
             initialValuesCB.toCBO,
             args,
-            clipboardInterface)(
+            clipboardCodec)(
             ReqCodeEditor.Multiple.seqFmt merge _.toVector.map(PlainText.reqCode).sorted)(
             initialValues => new State(_, Some(initialValues), abort, commitFn))
         }
@@ -388,18 +388,18 @@ object NewEditor {
               showInstructions = true)
 
         override def paste(c: ClipboardData): Option[Callback] =
-          clipboardInterface.read(c).map(ss.setState)
+          clipboardCodec.read(c).map(ss.setState)
         }
       }
 
       object Single extends ForChangeType {
         import ReqCodeEditor.{Single => RCE}
-        import RCE.clipboardInterface
+        import RCE.clipboardCodec
 
         override type Args   = Unit
         override type Change = RCE.Output
 
-        def apply(id: ReqCodeGroupId): InitFn = ictx => Internal.init(Some(clipboardInterface)) { args =>
+        def apply(id: ReqCodeGroupId): InitFn = ictx => Internal.init(Some(clipboardCodec)) { args =>
           import ictx._
 
           val initialValueCB: CallbackOption[ReqCode.Value] =
@@ -411,7 +411,7 @@ object NewEditor {
           startWithStateSnapshotC(
             initialValueCB,
             args,
-            clipboardInterface)(
+            clipboardCodec)(
             PlainText.reqCode)(
             i => new State(_, Some(i), abort, commitFn))
         }
@@ -440,7 +440,7 @@ object NewEditor {
               showInstructions = true)
 
           override def paste(c: ClipboardData): Option[Callback] =
-            clipboardInterface.read(c).map(ss.setState)
+            clipboardCodec.read(c).map(ss.setState)
         }
       }
     }
@@ -491,9 +491,9 @@ object NewEditor {
             valFn  <- pxValFn
           } yield valFn(lookup).corrector.live
 
-        val clipboardInterface = ClipboardInterface.string.correct(pxCorrector.value())
+        val clipboardCodec = ClipboardCodec.string.correct(pxCorrector.value())
 
-        Internal.init(Some(clipboardInterface)) { args =>
+        Internal.init(Some(clipboardCodec)) { args =>
 
           val (abort, commitFn) =
             makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchImplications(id, dir, _), args.hooks)
@@ -501,7 +501,7 @@ object NewEditor {
           startWithStateSnapshotC(
             pxInit.toCallback.toCBO,
             args,
-            clipboardInterface)(
+            clipboardCodec)(
             _._2)(
             _ => new State(_, pxLookup, pxValFn, pxCorrector, abort, commitFn))
         }
@@ -548,12 +548,12 @@ object NewEditor {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditTags extends ForChangeType {
       import shipreq.webapp.client.project.widgets.TagEditor
-      import TagEditor.{CommitFn, Lookup, clipboardInterface}
+      import TagEditor.{CommitFn, Lookup, clipboardCodec}
 
       override type Args   = Unit
       override type Change = TagEditor.Output
 
-      def apply(id: ReqId, fid: Option[CustomField.Tag.Id]): InitFn = ictx => Internal.init(Some(clipboardInterface)) { args =>
+      def apply(id: ReqId, fid: Option[CustomField.Tag.Id]): InitFn = ictx => Internal.init(Some(clipboardCodec)) { args =>
         import ictx._
 
         val lookupFn = fid.fold[Project => Lookup](Lookup.notUsedInTagFields)(Lookup.forTagField)
@@ -571,7 +571,7 @@ object NewEditor {
         startWithStateSnapshotC(
           pxInit.toCallback.toCBO,
           args,
-          clipboardInterface)(
+          clipboardCodec)(
           _._2)(
           init => new State(_, Some(init._1), pxLookup, abort, commitFn))
       }
@@ -601,7 +601,7 @@ object NewEditor {
             showInstructions = true)
 
         override def paste(c: ClipboardData): Option[Callback] =
-          clipboardInterface.read(c).map(ss.setState)
+          clipboardCodec.read(c).map(ss.setState)
       }
     }
 
@@ -613,14 +613,14 @@ object NewEditor {
       abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) extends ForChangeType {
         val T: editor.text.type = editor.text
 
-        import editor.clipboardInterface
+        import editor.clipboardCodec
 
         override type Args   = Unit
         override type Change = T.OptionalText
 
         protected def start(cmd           : T.OptionalText => UpdateContentCmd,
                             initialValueCB: CallbackOption[T.OptionalText],
-                            pid           : PreviewId): InitFn = ictx => Internal.init(Some(clipboardInterface)) { args =>
+                            pid           : PreviewId): InitFn = ictx => Internal.init(Some(clipboardCodec)) { args =>
           import ictx._
 
           val (abort, commitFn) =
@@ -638,7 +638,7 @@ object NewEditor {
           startWithStateSnapshotC(
             initCB,
             args,
-            clipboardInterface)(
+            clipboardCodec)(
             _._2)(
             i => new State(_, Some(i._1), args.cbProjectWidgets, pid, abort, commitFn))
         }
@@ -677,7 +677,7 @@ object NewEditor {
               showInstructions = true)
 
           override def paste(c: ClipboardData): Option[Callback] =
-            clipboardInterface.read(c).map(ss.setState)
+            clipboardCodec.read(c).map(ss.setState)
         }
       }
 
@@ -719,14 +719,14 @@ object NewEditor {
                                                   ssp: ServerSideProcInvoker[Cmd, ErrorMsg, Any]) extends ForChangeType {
         val T: editor.text.type = editor.text
 
-        import editor.clipboardInterface
+        import editor.clipboardCodec
 
         override type Args   = Unit
         override type Change = T.NonEmptyText
 
         protected def start(cmd           : T.NonEmptyText => Cmd,
                             initialValueCB: CallbackOption[T.NonEmptyText],
-                            pid           : PreviewId): InitFn = ictx => Internal.init(Some(clipboardInterface)) { args =>
+                            pid           : PreviewId): InitFn = ictx => Internal.init(Some(clipboardCodec)) { args =>
           import ictx._
 
           val (abort, commitFn) =
@@ -744,7 +744,7 @@ object NewEditor {
           startWithStateSnapshotC(
             initCB,
             args,
-            clipboardInterface)(
+            clipboardCodec)(
             _._2)(
             i => new State(_, Some(i._1), args.cbProjectWidgets, pid, abort, commitFn))
         }
@@ -783,7 +783,7 @@ object NewEditor {
               showInstructions = true)
 
           override def paste(c: ClipboardData): Option[Callback] =
-            clipboardInterface.read(c).map(ss.setState)
+            clipboardCodec.read(c).map(ss.setState)
         }
       }
 
@@ -799,13 +799,13 @@ object NewEditor {
     object EditUseCaseStep extends ForChangeType {
       import shipreq.webapp.client.project.widgets.RichTextEditor.hardcodedLive
       import shipreq.webapp.client.project.widgets.UseCaseStepEditor
-      import shipreq.webapp.client.project.widgets.UseCaseStepEditor.clipboardInterface
+      import shipreq.webapp.client.project.widgets.UseCaseStepEditor.clipboardCodec
       import UseCaseStepFlowText.TextAndFlow
 
       override type Args = FieldKey.UseCaseStep.Args
       override type Change = UseCaseStepGD.NonEmptyValues
 
-      def apply(id: UseCaseStepId, pid: PreviewId): InitFn = ictx => Internal.init(Some(clipboardInterface)) { args =>
+      def apply(id: UseCaseStepId, pid: PreviewId): InitFn = ictx => Internal.init(Some(clipboardCodec)) { args =>
         import ictx._
 
         val commitFn: UseCaseStepEditor.CommitFn =
@@ -834,7 +834,7 @@ object NewEditor {
         startWithStateSnapshotC(
           pxInit.toCallback.toCBO,
           args,
-          clipboardInterface)(
+          clipboardCodec)(
           _._2)(
           i => new State(_, Some(i._1), args.cbProjectWidgets, pxStepFocus.toCallback, pid, abort(args.hooks), commitFn))
       }
@@ -890,7 +890,7 @@ object NewEditor {
           }
 
         override def paste(c: ClipboardData): Option[Callback] =
-          clipboardInterface.read(c).map(ss.setState)
+          clipboardCodec.read(c).map(ss.setState)
       }
     }
 
