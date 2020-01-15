@@ -28,6 +28,13 @@ object EditorKeys {
           editor.setPotentialValue(PotentialValue.Emptiness).getOrEmpty.when_(applicableToOpenAndReplace)
       }
 
+    def shiftKeys: CallbackOption[Unit] =
+      CallbackOption.keyCodeSwitch(e, shiftKey = true) {
+
+        case KeyCode.Insert =>
+          paste
+      }
+
     def platformDependantKeys: CallbackOption[Unit] =
       Browser.cmdOrCtrlKeyCodeSwitch(e) {
 
@@ -43,7 +50,7 @@ object EditorKeys {
       } yield ()
 
     def handlers: CallbackOption[Unit] =
-      noModKeys | platformDependantKeys | openEditorAndReplaceContentWithKey
+      noModKeys | shiftKeys | platformDependantKeys | openEditorAndReplaceContentWithKey
 
     (CallbackOption.require(doesEventTargetCell(e)) >> handlers).asEventDefault(e)
   }
