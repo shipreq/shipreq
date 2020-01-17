@@ -79,7 +79,11 @@ object ProjectItem {
     //   Reusability.derive
 
     @Lenses
-    case class EditState(edit: String, async: AsyncFeature.State.D0[ErrorMsg])
+    final case class EditState(edit: String, async: AsyncFeature.State.D0[ErrorMsg]) {
+
+      def corrected: String =
+        DataValidators.projectName.unnamed.corrector.full(edit)
+    }
 
     type State = Option[EditState]
     object State {

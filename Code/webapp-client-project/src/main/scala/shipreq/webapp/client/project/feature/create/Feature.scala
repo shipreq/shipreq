@@ -3,6 +3,8 @@ package shipreq.webapp.client.project.feature.create
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.MonocleReact._
+import monocle.Iso
+import monocle.macros.Lenses
 import scalaz.\/
 import shipreq.base.util._
 import shipreq.base.util.univeq._
@@ -53,16 +55,33 @@ object Feature {
 
   object State {
     type ForEditor[-A, +V] = Option[Editor[A, V]]
-    type ForFields         = Map[FieldKey, Editor[Nothing, Any]]
-    type ForProject        = Map[RowKey, ForFields]
 
-    def initForProject: ForProject =
-      UnivEq.emptyMap
+    final case class ForFields[-FK <: FieldKey](untyped: Map[FieldKey, Editor[Nothing, Any]]) {
+      def isEmpty = untyped.isEmpty
 
-    final case class ForSpecificRow[-FK <: FieldKey](state: ForFields) extends AnyVal {
-      @inline def get(f: FK): ForEditor[f.Args, f.Value] =
-        f.cast2(state.get(f))
+      def apply(f: FK): ForEditor[f.Args, f.Value] =
+        f.cast2(untyped.get(f))
+
+      def -(f: FK): ForFields[FK] =
+        ForFields(untyped - f)
     }
+
+    object ForFields {
+      val untyped = Iso((_: ForFields[FieldKey]).untyped)(apply)
+      val empty = apply(UnivEq.emptyMap)
+    }
+
+    @Lenses
+    final case class ForProject(untyped: Map[RowKey, ForFields[FieldKey]]) {
+      def apply(r: RowKey): ForFields[r.FieldKey] =
+        untyped.get(r) match {
+          case Some(f) => f
+          case None    => ForFields.empty
+        }
+    }
+
+    val initForProject: ForProject =
+      ForProject(UnivEq.emptyMap)
   }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -72,6 +91,7 @@ object Feature {
     /** An instance of this implies that Editability has already established.
       */
     final class ForEditor[-A, +V](val editor: Editor[A, V], val async: AsyncState, emptyArgs: A) {
+
       /** impure */
       def render(args: A): VdomElement =
         editor.render(async, args)()
@@ -81,35 +101,35 @@ object Feature {
         editor.value(emptyArgs)
     }
 
-    final case class ForFields[-FK <: FieldKey](_state     : State.ForFields,
+    final case class ForFields[-FK <: FieldKey](state      : State.ForFields[FK],
                                                 editability: Editability.ForFields[FK],
                                                 async      : AsyncFeature.Read.D0[AsyncError]) {
-      def state: State.ForSpecificRow[FK] =
-        State.ForSpecificRow(_state)
 
       def apply(f: FK)(newEditor: => Editor[f.Args, f.Value]): Permission.DeniedOr[ForEditor[f.Args, f.Value]] =
         editability(f)(
-          new ForEditor(state.get(f).getOrElse(newEditor), async, NewEditorArgs.empty))
+          new ForEditor(state(f).getOrElse(newEditor), async, NewEditorArgs.empty))
     }
 
     final case class ForProject(state      : State.ForProject,
                                 editability: Editability.ForProject,
                                 async      : AsyncFeature.Read.D1[RowKey, AsyncError]) {
       def apply(r: RowKey): ForFields[r.FieldKey] =
-        ForFields(state.getOrElse(r, UnivEq.emptyMap), editability(r), async(r))
+        ForFields(state(r), editability(r), async(r))
     }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object Write {
 
-    final case class ForRow[-FK <: FieldKey, -Cmd](rowAccess : StateAccessPure[State.ForFields],
+    final case class ForRow[-FK <: FieldKey, -Cmd](rowAccess : StateAccessPure[State.ForFields[FieldKey]],
                                                    rowEditors: NewEditor.ForFields[FK],
                                                    async     : AsyncFeature.Write.D0[AsyncError],
                                                    ssp       : ServerSideProcInvoker[Cmd, ErrorMsg, Any]) {
 
       def startEditor(field: FK): Editor[field.Args, field.Value] = {
-        val stateAccess: StateAccessPure[State.ForEditor[Nothing, Any]] = rowAccess zoomStateL Optics.mapValue(field)
+        val stateAccess: StateAccessPure[State.ForEditor[Nothing, Any]] =
+          rowAccess.zoomStateL(State.ForFields.untyped ^|-> Optics.mapValue(field))
+
         val ctx = NewEditor.Ctx[field.Args, field.Value](field.cast2(stateAccess))
         rowEditors(field)(ctx)
       }
@@ -140,7 +160,7 @@ object Feature {
 
       def apply(row: RowKey): ForRow[row.FieldKey, row.Cmd] =
         ForRow[row.FieldKey, row.Cmd](
-          stateAccess zoomStateL Optics.innerMap(row),
+          stateAccess.zoomStateL(State.ForProject.untyped ^|-> Optics.mapValueEmpty(row, State.ForFields.empty)(_.isEmpty)),
           NewEditor.forRow(static, row),
           async(row),
           foldCmd(row))

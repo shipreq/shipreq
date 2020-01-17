@@ -100,10 +100,3 @@ Phase 2B
   * Taskman metrics
   * Finish tech dashboards (inc using webapp metrics)
   * Business metrics: dashboards
-
-* Unsaved changes
-  * Warn against closing page
-  * Display counter
-  * Allow user to see where they are (by PubId is probably enough)
-  * Save to, and load from, localStorage (maybe spec with TLA+ cos merges?)
-  * Provide ability to save all

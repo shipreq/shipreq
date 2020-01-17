@@ -46,6 +46,9 @@ object PlainText {
   def reqCode(c: ReqCode.Value): String =
     ReqCode.Value.toStr(c, G.reqCode.nodeSeparator)
 
+  def reqCodeById(id: ReqCodeGroupId, p: Project): String =
+    reqCode(p.content.reqCodes.reqCode(id))
+
   def hashtag(key: HashRefKey): String =
     G.hashRefKey.prefix ~ key.value
 

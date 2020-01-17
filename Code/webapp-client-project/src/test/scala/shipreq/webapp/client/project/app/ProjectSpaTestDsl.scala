@@ -90,6 +90,9 @@ object ProjectSpaTestDsl {
         case Some("Issues")    => if (inner.exists(Style.issues.newIssueCont.selector)) Page.Issues else Page.CfgIssues
         case Some(n)           => sys error s"Unknown page: $n"
       }
+
+    val unsavedChanges: Int =
+      nav.collect01(".icon.edit").zippers.fold(0)(_.parent("span").innerText.toInt)
   }
 
   case class Obs(project    : Project,
@@ -155,6 +158,8 @@ object ProjectSpaTestDsl {
     pageInvariants.when(i => i.obs.nav.page ==* i.state.page) &
     *.focus("Page").obsAndState(_.nav.page, _.page).assert.equal &
     *.focus("Project name in NavBar").obsAndState(_.nav.projectName, _.project.name).assert.equal
+
+  val unsavedChanges = *.focus("unsaved changes").value(_.obs.nav.unsavedChanges)
 
   def setPage(p: Page): *.Actions = p match {
     case Page.ReqDetail(_) => sys error "Use setPageToReqDetail instead."

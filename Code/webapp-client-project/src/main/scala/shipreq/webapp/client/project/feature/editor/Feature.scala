@@ -23,8 +23,7 @@ object Feature {
     /** impure */
     def render(p: Permission, as: AsyncState, args: Args): Option[VdomElement]
 
-    /** impure */
-    def change(args: Args): Editor.Change[Change]
+    def change[C >: Change]: CallbackTo[Editor.Change[C]]
 
     def setPotentialValue(p: PotentialValue): Option[Callback]
   }

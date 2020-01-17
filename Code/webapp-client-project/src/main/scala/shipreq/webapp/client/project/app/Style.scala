@@ -106,8 +106,18 @@ object Style extends StyleSheet.Inline {
   }
 
   object navBar {
-    val connected    = style(cursor.pointer, opacity(0.7).important)
-    val disconnected = style(cursor.pointer, opacity(1).important)
+    val connected          = style(cursor.pointer, opacity(0.7).important)
+    val disconnected       = style(cursor.pointer, opacity(1).important)
+    val unsavedChangesIcon = style(fontSize(1.25 em), marginTop(0.1 em))
+    val unsavedChangesText = style(fontSize(1.25 em), marginRight(0.5 ex))
+
+    private val unsavedChangesItemS = styleS(
+      color(c"#ffec70").important)
+
+    val unsavedChangesItem = style(
+      unsavedChangesItemS,
+      unsafeExt(s => s".ui.inverted.menu $s.active.item")(unsavedChangesItemS),
+      unsafeExt(s => s".ui.inverted.menu $s.active.item:hover")(unsavedChangesItemS))
   }
 
   // ===================================================================================================================

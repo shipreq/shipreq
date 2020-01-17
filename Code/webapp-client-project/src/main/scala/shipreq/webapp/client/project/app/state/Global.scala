@@ -48,6 +48,9 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
       case _: State.Loading => null // Safe because I know I don't access this before initial load
     })
 
+  final val pxProjectMetaData: Px[ProjectMetaData] =
+    Px.callback(cbProjectMetaData).withReuse.autoRefresh
+
   final private val _pxProject: Px.ThunkM[Project] = {
     def f() = unsafeState match {
       case s: State.Active  => s.projectState.project

@@ -72,9 +72,13 @@
           -#   %i.icon.large.edit
           -#   3 open editors
 
-          .item(style="color:#ffec70" title="2 unsaved changes")
+          .item.ui.dropdown.simple(style="color:#ffec70" title="2 unsaved changes")
             .span(style="margin-right: 0.5ex; font-size:120%; margin-top:1px") 2
             %i.icon.large.edit
+            .menu
+              %a.item{href: "member-account.html"} Account
+              .item Send feedback
+              .item Logout
 
           -# .item#connected1(onclick="$('#connected1 > *').toggle()")
           -#   %i.icon.large.toggle.on.green
