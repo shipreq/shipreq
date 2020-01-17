@@ -4,6 +4,7 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.VdomElement
+import org.scalajs.dom.window
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.base.util.univeq._
@@ -364,11 +365,25 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
 
     def onConnectionStatusChange(c: ConnectionStatus): Callback =
       $.forceUpdate
+
+    val installHooks: Callback =
+      Callback {
+        window.onbeforeunload = event => {
+          val u = pxUnsavedChanges.value()
+          if (u.nonEmpty) {
+            event.preventDefault()
+            event.returnValue = ""
+            ""
+          } else
+            ()
+        }
+      }
   }
 
   val Component = ScalaComponent.builder[Props]("LoadedRoot")
     .initialState(State.init)
     .renderBackend[Backend]
+    .componentDidMount(_.backend.installHooks)
     .configure(Listenable.listen(_ => global, _.backend.onProjectChange))
     .configure(Listenable.listen(_ => global.connectedStatusHub, _.backend.onConnectionStatusChange))
     .build
