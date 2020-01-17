@@ -25,6 +25,9 @@ object UiText {
       self + " " + name.pluralise(self, pluralised)
   }
 
+  def unsavedChanges(i: Int): String =
+    i.unitsOf("unsaved change")
+
   object ColumnNames {
     def reqType          = FieldNames.reqType
     def pubid            = "ID"

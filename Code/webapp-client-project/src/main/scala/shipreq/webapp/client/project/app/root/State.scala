@@ -103,7 +103,6 @@ case class State(projectName          : ProjectItem.WithEditableName.State,
                  manualIssueCmdAsync  : AsyncFeature.State.D1[ManualIssueCmd, ErrorMsg],
                 )
 
-
 object State {
   def init: State =
     State(
@@ -123,4 +122,7 @@ object State {
       AsyncFeature.State.initD1,
       AsyncFeature.State.initD1,
     )
+
+  implicit val reusability: Reusability[State] =
+    Reusability.byRef
 }

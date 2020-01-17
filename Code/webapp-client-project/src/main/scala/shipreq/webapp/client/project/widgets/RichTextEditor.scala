@@ -3,7 +3,6 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.dom.html
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.base.util.{PotentialChange, Validity}

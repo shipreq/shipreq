@@ -103,7 +103,6 @@ Phase 2B
 
 * Unsaved changes
   * Warn against closing page
-  * Display counter
   * Allow user to see where they are (by PubId is probably enough)
   * Save to, and load from, localStorage (maybe spec with TLA+ cos merges?)
   * Provide ability to save all

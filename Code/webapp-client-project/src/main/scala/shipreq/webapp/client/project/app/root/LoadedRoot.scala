@@ -7,7 +7,7 @@ import japgolly.scalajs.react.vdom.VdomElement
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data.{FilterDead, HideDead, ReqId}
+import shipreq.webapp.base.data.{FilterDead, HideDead, Project, ReqId}
 import shipreq.webapp.base.event.EventSeqSummary
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.filter.Filter
@@ -56,6 +56,21 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     // This never changes
     private val routerCtl = $.props.runNow().routerCtl
     private val reqDetailRC = routerCtl.contramap(Page.ReqDetail.apply)
+
+    private val pxState =
+      Px.state($).withReuse.autoRefresh
+
+    private val pxUseCases =
+      pxProject.map(_.content.reqs.useCases).withReuse
+
+    private val pxProjectName: Px[Project.Name] =
+      pxProject.map(_.name).withReuse
+
+    private val pxUnsavedChangesInput: Px[UnsavedChanges.Input] =
+      Px.apply3(pxState, pxProjectName, pxUseCases)(UnsavedChanges.Input.apply)
+
+    private val pxUnsavedChanges: Px[UnsavedChanges] =
+      pxUnsavedChangesInput.map(UnsavedChanges.determine).flatMap(Px.callback(_).withReuse.autoRefresh)
 
     private val setFilterDead: Reusable[SetStateFnPure[FilterDead]] =
       Reusable.fn.state($ zoomStateL State.filterDead).setStateFn
@@ -334,6 +349,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
       Layout.Props(
         initPageData.username,
         cbProjectMetaData.runNow(),
+        pxUnsavedChanges.value(),
         global.connectedStatusHub.unsafeGet(),
         global.setConnectionStatus,
         global.reauthModal,
