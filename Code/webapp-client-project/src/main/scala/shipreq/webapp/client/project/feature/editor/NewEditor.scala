@@ -114,7 +114,7 @@ object NewEditor {
         * In future this might not be possible in which case, we'll need to split Props into two so that Changes can be
         * generated without Args, and this cheaty method should be removed.
         */
-      protected val changeArgs: Args
+      protected def changeArgs: Args
 
       final override def render(p: Permission, as: AsyncState, args: Args): Option[VdomElement] =
         // Looks like this could block async but not so. Can't go from edit → async → notAllowed.
@@ -124,7 +124,7 @@ object NewEditor {
           case Deny  => None
         }
 
-      private[this] val _change = props(changeArgs, None).map(changeImpl)
+      private[this] lazy val _change = props(changeArgs, None).map(changeImpl)
 
       final override def change[C >: Change]: CallbackTo[Editor.Change[C]] =
         _change.widen
@@ -297,7 +297,7 @@ object NewEditor {
 
           override type Props = ReqTypeSelector.Props
           override def renderImpl = _.render
-          override val changeArgs = ()
+          override def changeArgs = ()
           override def changeImpl = _.change
           override val props = (_, asyncState) =>
             for {
@@ -365,7 +365,7 @@ object NewEditor {
 
           override type Props = RCE.Props
           override def renderImpl = _.render
-          override val changeArgs = ()
+          override def changeArgs = ()
           override def changeImpl = _.validated
           override val props = (_, asyncState) =>
             for {
@@ -417,7 +417,7 @@ object NewEditor {
 
           override type Props = RCE.Props
           override def renderImpl = _.render
-          override val changeArgs = ()
+          override def changeArgs = ()
           override def changeImpl = _.validated
           override val props = (_, asyncState) =>
             for {
@@ -513,7 +513,7 @@ object NewEditor {
 
         override type Props = ImplicationEditor.Props
         override def renderImpl = _.render
-        override val changeArgs = ()
+        override def changeArgs = ()
         override def changeImpl = _.validated
         override val props = (_, asyncState) =>
           for {
@@ -581,7 +581,7 @@ object NewEditor {
 
         override type Props = TagEditor.Props
         override def renderImpl = _.render
-        override val changeArgs = ()
+        override def changeArgs = ()
         override def changeImpl = _.validated
         override val props = (_, asyncState) =>
           for {
@@ -649,7 +649,7 @@ object NewEditor {
 
           override type Props = editor.Optional
           override def renderImpl = _.render
-          override val changeArgs = ()
+          override def changeArgs = ()
           override def changeImpl = _.validated
           override val props = (_, asyncState) =>
             for {
@@ -755,7 +755,7 @@ object NewEditor {
 
           override type Props = editor.NonEmpty
           override def renderImpl = _.render
-          override val changeArgs = ()
+          override def changeArgs = ()
           override def changeImpl = _.validated
           override val props = (_, asyncState) =>
             for {
@@ -846,7 +846,7 @@ object NewEditor {
 
         override type Props = UseCaseStepEditor.Props
         override def renderImpl = _.render
-        override val changeArgs = FieldKey.UseCaseStep.Args.empty
+        override def changeArgs = FieldKey.UseCaseStep.Args.empty
         override def changeImpl = _.validatedChanges
         override val props = (args: Args, asyncState) =>
           for {
