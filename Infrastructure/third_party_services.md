@@ -70,21 +70,46 @@ Configure SMTP for Taskman
 ## MailChimp
 
 1. Account Settings -> Verified domains -> add `shipreq.com`.
+
 2. Account Settings -> Extras -> Create API key.
-3. Lists -> Create
-    * Name = Master
-    * From Email = contact@shipreq.com
-    * From Name = ShipReq
+
+3. Audience -> Create
+    * Name       = ShipReq
+    * From Email = notice@shipreq.com
+    * From Name  = ShipReq
     * Remind-how = You are receiving this email because you opted in at our website.
-4. List -> Master -> Settings
-  * List name & defaults
+
+4. Audience -> ShipReq -> Settings
+  * Audience name & defaults
     * Turn off: Send a final welcome email
-  * List fields and *|MERGE|* tags
+  * Publicity settings
+    * Select `No, my campaigns for this list are not public`
+  * Audience fields and *|MERGE|* tags
     * Name           | text     | y | y | NAME
     * Newsletter     | number   | y | n | NEWSLETTER
     * Account Status | dropdown | y | n | ACCT
         Never, Active
   * Required email footer content <- fill in as appropriate
+
+5. Audience -> ShipReq -> contacts -> Manage contacts -> Segments
+  * Create
+    * Account Status is Active
+  * Preview -> Save with name "Active"
+
+6. Audience -> ShipReq -> contacts -> Manage contacts -> Segments
+  * Create
+    * Conditions match = all
+    * Newsletter is 1
+    * Account Status is Active
+  * Preview -> Save with name "Newsletter (Active only)"
+
+7. Audience -> ShipReq -> contacts -> Manage contacts -> Segments
+  * Create
+    * Newsletter is 1
+  * Preview -> Save with name "Newsletter (including non-Active)"
+
+8. Brand -> Content Studio and upload the following:
+  * `Assets/logo-title-1024.png`
 
 
 ## FreshDesk
