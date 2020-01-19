@@ -6,12 +6,12 @@ import shipreq.webapp.base.user.Username
 
 object CommonProtocolsJs {
 
-  object SubmitFeedback {
-    import CommonProtocols.SubmitFeedback._
+  object Metadata {
+    import CommonProtocols.Metadata._
 
-    def metadata(username: Username, p: Option[ProjectMetadata]): CallbackTo[Metadata] =
+    def client(username: Username, p: Option[Project]): CallbackTo[Client] =
       CallbackTo {
-        Metadata(
+        Client(
           project   = p,
           url       = window.location.href,
           userAgent = window.navigator.userAgent,
@@ -19,11 +19,11 @@ object CommonProtocolsJs {
         )
       }
 
-    def metadataWithProject(username: Username, project: CallbackTo[ProjectMetadata]): CallbackTo[Metadata] =
-      project.flatMap(p => metadata(username, Some(p)))
+    def clientWithProject(username: Username, project: CallbackTo[Project]): CallbackTo[Client] =
+      project.flatMap(p => client(username, Some(p)))
 
-    def metadataWithoutProject(username: Username): CallbackTo[Metadata] =
-      metadata(username, None)
+    def clientWithoutProject(username: Username): CallbackTo[Client] =
+      client(username, None)
   }
 
 }

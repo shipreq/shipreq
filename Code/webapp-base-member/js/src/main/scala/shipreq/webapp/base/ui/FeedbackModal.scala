@@ -8,7 +8,7 @@ import shipreq.base.util.{ErrorMsg, OpResult}
 import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.lib.ModalForm
 import shipreq.webapp.base.protocol.AjaxClient
-import shipreq.webapp.base.protocol.CommonProtocols.SubmitFeedback
+import shipreq.webapp.base.protocol.CommonProtocols.{Metadata, SubmitFeedback}
 import shipreq.webapp.base.ui.semantic.UsesSemanticUiManually
 import shipreq.webapp.base.util.TextMod
 
@@ -31,10 +31,10 @@ object FeedbackModal {
 
   private[ui] val errorEmptyFeedback = ErrorMsg("You can't submit nothing as your feedback.")
 
-  def apply(metadata: CallbackTo[SubmitFeedback.Metadata]): FeedbackModal =
+  def apply(metadata: CallbackTo[Metadata.Client]): FeedbackModal =
     apply(metadata, AjaxClient.Binary)
 
-  def apply(metadata: CallbackTo[SubmitFeedback.Metadata], ajaxClient: AjaxClient.Binary): FeedbackModal = {
+  def apply(metadata: CallbackTo[Metadata.Client], ajaxClient: AjaxClient.Binary): FeedbackModal = {
     import SubmitFeedback._
     val f = ajaxClient.invoker(ajax).contramapInputCB((i: UserInput) => metadata.map(Request(i, _)))
     apply(f(_), document.body)

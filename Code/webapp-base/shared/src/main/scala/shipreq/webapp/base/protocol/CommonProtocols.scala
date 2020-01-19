@@ -20,6 +20,64 @@ object CommonProtocols {
     Protocol.Ajax.Simple(Urls.ajaxRoot / path, Protocol(implicitly), Protocol(implicitly))
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Shared data types
+
+  object Metadata {
+
+    // Note: username is here rather than deriving from JWT because a user may want to submit after their session
+    // expires on while on a page, in which case the browser deletes the JWT from its cookie jar.
+    final case class Client(project  : Option[Project],
+                            url      : String,
+                            userAgent: String,
+                            username : Username)
+
+    final case class Project(id          : ProjectId.Public,
+                             ord         : Option[Int],
+                             futureEvents: Set[Int])
+
+    implicit def univEqProject: UnivEq[Project] = UnivEq.derive
+    implicit def univEqClient : UnivEq[Client ] = UnivEq.derive
+
+    import v1.BaseData._
+
+    implicit val picklerProject: Pickler[Project] =
+      new Pickler[Project] {
+        override def pickle(a: Project)(implicit state: PickleState): Unit = {
+          state.enc.writeInt(0) // version
+          state.pickle(a.id)
+          state.pickle(a.ord)
+          state.pickle(a.futureEvents)
+        }
+        override def unpickle(implicit state: UnpickleState): Project = {
+          val version      = state.dec.readInt
+          val id           = state.unpickle[ProjectId.Public]
+          val ord          = state.unpickle[Option[Int]]
+          val futureEvents = state.unpickle[Set[Int]]
+          Project(id, ord, futureEvents)
+        }
+      }
+
+    implicit val picklerClient: Pickler[Client] =
+      new Pickler[Client] {
+        override def pickle(a: Client)(implicit state: PickleState): Unit = {
+          state.enc.writeInt(0) // version
+          state.pickle(a.project)
+          state.pickle(a.url)
+          state.pickle(a.userAgent)
+          state.pickle(a.username)
+        }
+        override def unpickle(implicit state: UnpickleState): Client = {
+          val version   = state.dec.readInt
+          val project   = state.unpickle[Option[Project]]
+          val url       = state.unpickle[String]
+          val userAgent = state.unpickle[String]
+          val username  = state.unpickle[Username]
+          Client(project, url, userAgent, username)
+        }
+      }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object Login {
 
     final case class Request(user: Username \/ EmailAddr, password: PlainTextPassword) {
@@ -83,28 +141,14 @@ object CommonProtocols {
 
     final case class UserInput(feedback: String)
 
-    final case class ProjectMetadata(id          : ProjectId.Public,
-                                     ord         : Option[Int],
-                                     futureEvents: Set[Int])
+    final case class Request(input: UserInput, metadata: Metadata.Client)
 
-    // Note: username is here rather than deriving from JWT because a user may want to submit after their session
-    // expires on while on a page, in which case the browser deletes the JWT from its cookie jar.
-    final case class Metadata(project  : Option[ProjectMetadata],
-                              url      : String,
-                              userAgent: String,
-                              username : Username)
-
-    final case class Request(input: UserInput, metadata: Metadata)
-
-    implicit def univEqUserInput      : UnivEq[UserInput      ] = UnivEq.derive
-    implicit def univEqProjectMetadata: UnivEq[ProjectMetadata] = UnivEq.derive
-    implicit def univEqMetadata       : UnivEq[Metadata       ] = UnivEq.derive
-    implicit def univEqRequest        : UnivEq[Request        ] = UnivEq.derive
+    implicit def univEqUserInput: UnivEq[UserInput] = UnivEq.derive
+    implicit def univEqRequest  : UnivEq[Request  ] = UnivEq.derive
 
     type Response = Unit
 
     val ajax: Ajax[Request, Response] = {
-      import v1.BaseData._
 
       implicit val picklerUserInput: Pickler[UserInput] =
         new Pickler[UserInput] {
@@ -119,42 +163,6 @@ object CommonProtocols {
           }
         }
 
-      implicit val picklerProjectMetadata: Pickler[ProjectMetadata] =
-        new Pickler[ProjectMetadata] {
-          override def pickle(a: ProjectMetadata)(implicit state: PickleState): Unit = {
-            state.enc.writeInt(0) // version
-            state.pickle(a.id)
-            state.pickle(a.ord)
-            state.pickle(a.futureEvents)
-          }
-          override def unpickle(implicit state: UnpickleState): ProjectMetadata = {
-            val version      = state.dec.readInt
-            val id           = state.unpickle[ProjectId.Public]
-            val ord          = state.unpickle[Option[Int]]
-            val futureEvents = state.unpickle[Set[Int]]
-            ProjectMetadata(id, ord, futureEvents)
-          }
-        }
-
-      implicit val picklerMetadata: Pickler[Metadata] =
-        new Pickler[Metadata] {
-          override def pickle(a: Metadata)(implicit state: PickleState): Unit = {
-            state.enc.writeInt(0) // version
-            state.pickle(a.project)
-            state.pickle(a.url)
-            state.pickle(a.userAgent)
-            state.pickle(a.username)
-          }
-          override def unpickle(implicit state: UnpickleState): Metadata = {
-            val version   = state.dec.readInt
-            val project   = state.unpickle[Option[ProjectMetadata]]
-            val url       = state.unpickle[String]
-            val userAgent = state.unpickle[String]
-            val username  = state.unpickle[Username]
-            Metadata(project, url, userAgent, username)
-          }
-        }
-
       implicit val picklerRequest: Pickler[Request] =
         new Pickler[Request] {
           override def pickle(a: Request)(implicit state: PickleState): Unit = {
@@ -163,7 +171,7 @@ object CommonProtocols {
           }
           override def unpickle(implicit state: UnpickleState): Request = {
             val input    = state.unpickle[UserInput]
-            val metadata = state.unpickle[Metadata]
+            val metadata = state.unpickle[Metadata.Client]
             Request(input, metadata)
           }
         }

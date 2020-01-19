@@ -20,6 +20,7 @@ object CommonProtocolLogicTest extends TestSuite {
   }
 
   override def tests = Tests {
+    import CommonProtocols.Metadata
 
     'login {
       import CommonProtocols.Login._
@@ -48,7 +49,7 @@ object CommonProtocolLogicTest extends TestSuite {
       import mockInterpreters._
 
       'noSession - {
-        val req    = Request(UserInput("yo!"), Metadata(None, "a", "b", user2.username))
+        val req    = Request(UserInput("yo!"), Metadata.Client(None, "a", "b", user2.username))
         val jwt    = Security.SessionToken.anonymous()
         val result = common.ajaxSubmitFeedback(jwt)(req).value
         assertEq(result, ((), Allow))
@@ -56,7 +57,7 @@ object CommonProtocolLogicTest extends TestSuite {
       }
 
       'hasSession - {
-        val req    = Request(UserInput("yo!"), Metadata(None, "a", "b", Username("x")))
+        val req    = Request(UserInput("yo!"), Metadata.Client(None, "a", "b", Username("x")))
         val jwt    = Security.SessionToken.anonymous().login(user2.toUser)
         val result = common.ajaxSubmitFeedback(jwt)(req).value
         assertEq(result, ((), Allow))
@@ -64,7 +65,7 @@ object CommonProtocolLogicTest extends TestSuite {
       }
 
       'noUser - {
-        val req    = Request(UserInput("yo!"), Metadata(None, "a", "b", Username("i don't exist")))
+        val req    = Request(UserInput("yo!"), Metadata.Client(None, "a", "b", Username("i don't exist")))
         val jwt    = Security.SessionToken.anonymous()
         val result = common.ajaxSubmitFeedback(jwt)(req).value
         assertEq(result, ((), Deny))

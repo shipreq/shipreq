@@ -22,7 +22,7 @@ object Home {
       ajax.invoker(HomeSpaProtocols.CreateProject.ajax)
 
     val feedbackModal: FeedbackModal = {
-      val metadata = CommonProtocolsJs.SubmitFeedback.metadataWithoutProject(data.username)
+      val metadata = CommonProtocolsJs.Metadata.clientWithoutProject(data.username)
       FeedbackModal(metadata, ajax)
     }
   }
