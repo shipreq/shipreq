@@ -7,7 +7,7 @@ import japgolly.scalajs.react.MonocleReact._
 import monocle.macros.Lenses
 import shipreq.base.util.Url
 import shipreq.webapp.base.Urls.PublicSpaRoute
-import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.feature.{AsyncFeature, ErrorHandlingFeature}
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
 import shipreq.webapp.client.public.pages._
@@ -21,6 +21,9 @@ object PublicSpa {
                          register1  : Register1  .State)
 
   object State {
+
+    val recorder = ErrorHandlingFeature.StateRecorder[State]
+
     def init: State =
       State(
         LandingPage.State.init,
@@ -33,7 +36,7 @@ final class PublicSpa(val initData: PublicSpaEntryPoint.InitData, ajax: AjaxClie
   import PublicSpa._
 
   val Component = ScalaComponent.builder[Props]("Root")
-    .initialState(State.init)
+    .initialState(State.recorder.getOrElse(State.init))
     .renderBackend[Backend]
     .build
 
@@ -51,6 +54,7 @@ final class PublicSpa(val initData: PublicSpaEntryPoint.InitData, ajax: AjaxClie
     val awRegister1   = AsyncFeature.Write.D0.init($.zoomStateL(State.register1   ^|-> Register1  .State.async))
 
     def render(p: Props, s: State): VdomElement = {
+      State.recorder.record(s)
 
       def loginPage(redirectOnLogin: Option[Url.Relative]): VdomElement = {
         val ss = StateSnapshot.zoomL(State.login)(s).setStateVia($)

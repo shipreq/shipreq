@@ -6,7 +6,24 @@ import org.scalajs.dom.window
 import shipreq.webapp.base.protocol.{AjaxClient, CommonProtocols}
 import shipreq.webapp.base.protocol.CommonProtocols.ReportClientError.ErrorInfo
 
+/** Wrap top-level components in this in order to catch React errors.
+ *
+ * Usage:
+ *
+ *     1. Wrap your top-level component in this
+ *     2. Call `ErrorHandlingFeature.enable()`
+ *     3. Create a [[ErrorHandlingFeature.StateRecorder]] for your state (and use it obviously)
+ */
 object ErrorHandlingFeature {
+
+  /** This is required so that we can assume singleton SPAs.
+    * In tests, we load the same SPA multiple times and don't want previous state being restored.
+    */
+  def enable(): Unit = {
+    StateRecorder.enabled = true
+  }
+
+  // ===================================================================================================================
 
   // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
   import scala.scalajs.js
@@ -55,15 +72,14 @@ object ErrorHandlingFeature {
   }
   // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  final case class Props(view  : VdomElement,
-                         submit: ErrorInfo => Callback) {
-
+  private final case class Props(view  : VdomElement,
+                                 submit: ErrorInfo => Callback) {
     @inline def render: VdomElement = Component(this)
   }
 
-  final case class State(errors: Int)
+  private final case class State(errors: Int)
 
-  final class Backend($: BackendScope[Props, State]) {
+  private final class Backend($: BackendScope[Props, State]) {
 
     def render(p: Props): VdomElement =
       p.view
@@ -103,7 +119,7 @@ object ErrorHandlingFeature {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("ErrorHandling")
+  private val Component = ScalaComponent.builder[Props]("ErrorHandling")
     .initialState(State(0))
     .renderBackend[Backend]
     .componentDidCatch($ => $.backend.onError(ReactCaughtError($.error, $.info)))
@@ -121,5 +137,42 @@ object ErrorHandlingFeature {
         .flatMap(ssp(_).toCallback)
 
     Props(view, submit).render
+  }
+
+  // ===================================================================================================================
+
+  /** Because stupid React unmounts components on error, even if they're wrapped in an error boundary like the one above,
+    * re-rendering it means the state is lost.
+    *
+    * Luckily ShipReq is smart in that there's always a single component with all the SPA's state in it which makes this
+    * hacky little workaround feasible.
+    *
+    * Usage:
+    *
+    *     1. Create an instance of this.
+    *     2. Initialise the stateful root component with `yourStateRecorder.getOrElse(State.init)`
+    *     3. Call `yourStateRecorder.record(state)` in said component's render function.
+    */
+  final class StateRecorder[S >: Null] {
+    private var last: S = null
+    private var secondLast: S = null
+
+    def record(s: S): Unit = {
+      secondLast = last
+      last = s
+    }
+
+    def getOrElse(s: => S): S =
+      if (StateRecorder.enabled && secondLast != null)
+        secondLast
+      else
+        s
+  }
+
+  object StateRecorder {
+    private[ErrorHandlingFeature] var enabled = false
+
+    def apply[S >: Null]: StateRecorder[S] =
+      new StateRecorder
   }
 }

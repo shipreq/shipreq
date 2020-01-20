@@ -86,41 +86,44 @@ object AsyncKey {
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 @Lenses
-case class State(projectName          : ProjectItem.WithEditableName.State,
-                 reqLookup            : String,
-                 create               : CreateFeature.State.ForProject,
-                 createAsync          : AsyncFeature.State.D1[CreateFeature.RowKey, CreateFeature.AsyncError],
-                 edit                 : EditorFeature.State.ForProject,
-                 editAsync            : AsyncFeature.State.D2[EditorFeature.RowKey, AsyncKey, EditorFeature.AsyncError],
-                 savedViewAsync       : AsyncFeature.State.D0[EditorFeature.AsyncError],
-                 preview              : PreviewFeature.State[PreviewId],
-                 filterDead           : FilterDead,
-                 reqTable             : reqtable.ReqTablePage.State,
-                 reqDetail            : ReqDetail.State,
-                 issuesPage           : IssuesPage.State,
-                 updateConfigCmdAsync : AsyncFeature.State.D1[UpdateConfigCmd, ErrorMsg],
-                 updateContentCmdAsync: AsyncFeature.State.D1[UpdateContentCmd, ErrorMsg],
-                 manualIssueCmdAsync  : AsyncFeature.State.D1[ManualIssueCmd, ErrorMsg],
-                )
+final case class State(projectName          : ProjectItem.WithEditableName.State,
+                       reqLookup            : String,
+                       create               : CreateFeature.State.ForProject,
+                       createAsync          : AsyncFeature.State.D1[CreateFeature.RowKey, CreateFeature.AsyncError],
+                       edit                 : EditorFeature.State.ForProject,
+                       editAsync            : AsyncFeature.State.D2[EditorFeature.RowKey, AsyncKey, EditorFeature.AsyncError],
+                       savedViewAsync       : AsyncFeature.State.D0[EditorFeature.AsyncError],
+                       preview              : PreviewFeature.State[PreviewId],
+                       filterDead           : FilterDead,
+                       reqTable             : reqtable.ReqTablePage.State,
+                       reqDetail            : ReqDetail.State,
+                       issuesPage           : IssuesPage.State,
+                       updateConfigCmdAsync : AsyncFeature.State.D1[UpdateConfigCmd, ErrorMsg],
+                       updateContentCmdAsync: AsyncFeature.State.D1[UpdateContentCmd, ErrorMsg],
+                       manualIssueCmdAsync  : AsyncFeature.State.D1[ManualIssueCmd, ErrorMsg],
+                      )
 
 object State {
+
+  val recorder = ErrorHandlingFeature.StateRecorder[State]
+
   def init: State =
     State(
-      ProjectItem.WithEditableName.State.init,
-      "",
-      CreateFeature.State.initForProject,
-      AsyncFeature.State.initD1,
-      EditorFeature.State.initForProject,
-      AsyncFeature.State.initD2,
-      AsyncFeature.State.initD0,
-      PreviewFeature.State.init,
-      HideDead,
-      reqtable.ReqTablePage.State.init,
-      ReqDetail.initState,
-      IssuesPage.State.init,
-      AsyncFeature.State.initD1,
-      AsyncFeature.State.initD1,
-      AsyncFeature.State.initD1,
+      projectName           = ProjectItem.WithEditableName.State.init,
+      reqLookup             = "",
+      create                = CreateFeature.State.initForProject,
+      createAsync           = AsyncFeature.State.initD1,
+      edit                  = EditorFeature.State.initForProject,
+      editAsync             = AsyncFeature.State.initD2,
+      savedViewAsync        = AsyncFeature.State.initD0,
+      preview               = PreviewFeature.State.init,
+      filterDead            = HideDead,
+      reqTable              = reqtable.ReqTablePage.State.init,
+      reqDetail             = ReqDetail.initState,
+      issuesPage            = IssuesPage.State.init,
+      updateConfigCmdAsync  = AsyncFeature.State.initD1,
+      updateContentCmdAsync = AsyncFeature.State.initD1,
+      manualIssueCmdAsync   = AsyncFeature.State.initD1,
     )
 
   implicit val reusability: Reusability[State] =

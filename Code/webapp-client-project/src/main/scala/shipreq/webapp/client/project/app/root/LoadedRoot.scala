@@ -353,6 +353,8 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
           ImplicationGraphPage.Props(g, setFilterDead).render
       }
 
+      State.recorder.record(s)
+
       Layout.Props(
         initPageData.username,
         cbProjectMetaData.runNow(),
@@ -387,7 +389,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
   }
 
   val Component = ScalaComponent.builder[Props]("LoadedRoot")
-    .initialState(State.init)
+    .initialState(State.recorder.getOrElse(State.init))
     .renderBackend[Backend]
     .componentDidMount(_.backend.installHooks)
     .configure(Listenable.listen(_ => global, _.backend.onProjectChange))

@@ -11,9 +11,11 @@ import shipreq.webapp.client.public.spa._
 object Main extends ClientSideProcImpl(PublicSpaEntryPoint.proc) {
 
   override def run(i: PublicSpaEntryPoint.InitData): Unit = {
+    ErrorHandlingFeature.enable()
+    Styles.addToDocument()
+
     val spa      = new PublicSpa(i, AjaxClient.Binary)
     val reactApp = component(i, spa)
-    Styles.addToDocument()
     hydrateOrRender(reactApp, `#root`)
   }
 

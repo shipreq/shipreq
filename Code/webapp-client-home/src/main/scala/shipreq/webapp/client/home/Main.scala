@@ -14,6 +14,7 @@ object Main extends ClientSideProcImpl(HomeSpaEntryPoint.proc) {
   override def run(i: HomeSpaEntryPoint.InitData): Unit = {
 
     BaseStyles.addToDocument()
+    ErrorHandlingFeature.enable()
     Styles.addToDocument()
 
     val view     = Home.Props(i, AjaxClient.Binary).render

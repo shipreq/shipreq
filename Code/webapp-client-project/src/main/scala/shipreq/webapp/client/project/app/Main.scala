@@ -24,6 +24,7 @@ object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
 
   override def run(i: InitData): Unit = {
     BaseStyles.addToDocument()
+    ErrorHandlingFeature.enable()
     Style.addToDocument()
 
     val reauth    = ReauthenticationModal(i.username)
