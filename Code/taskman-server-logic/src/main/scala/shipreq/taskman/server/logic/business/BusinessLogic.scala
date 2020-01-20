@@ -71,7 +71,7 @@ final class BusinessLogic[F[_]](emails        : Emails,
       complete {
         for {
           user    <- ActiveUser.get(task.userId)
-          content  = emails.userFeedback(task)
+          content  = emails.userFeedback(task, user)
           _       <- run(Support.API.RecordUserFeedback(user.emailWithName, content))
         } yield ()
       }
@@ -118,7 +118,7 @@ final class BusinessLogic[F[_]](emails        : Emails,
   object LandingPage {
 
     def apply(m: TaskHeader, l: LandingPageHit): MO = {
-      val c = emails.landingPageEmail(m, l)
+      val c = emails.landingPage(m, l)
       val fx = updateMailingListIfNeeded(l.email, l.name, l.newsletter) >> createSupportTicket(m, l, c)
       emails.archive(c) match {
         case None     => complete(fx)
