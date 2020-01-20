@@ -59,6 +59,15 @@ final class BusinessLogic[F[_]](emails        : Emails,
     case SyncToMailingList(cond) =>
       complete(ActiveUser syncToML cond)
 
+    case task: ReportClientError =>
+      complete {
+        for {
+          user    <- Fx.traverseOption(task.userId)(ActiveUser.get)
+          content  = emails.clientError(user, task.nameKey, task.messageKey, task.data)
+          _       <- run(Support.API.ReportFailure(content, Support.Priority.High))
+        } yield ()
+      }
+
     case ReportServerError(userId, url, report) =>
       val usrDescIo = userId.fold(Fx("None"))(ActiveUser.tryDesc)
       usrDescIo.flatMap { usrd =>

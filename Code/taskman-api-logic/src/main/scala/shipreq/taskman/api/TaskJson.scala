@@ -86,6 +86,12 @@ object TaskJson {
   implicit val encoderTaskUserFeedbackReceived: Encoder[Task.UserFeedbackReceived] =
     Encoder.forProduct3("userId", "feedback", "metadata")(a => (a.userId, a.feedback, a.metadata))
 
+  implicit val decoderTaskReportClientError: Decoder[Task.ReportClientError] =
+    Decoder.forProduct4("userId", "nameKey", "messageKey", "data")(Task.ReportClientError.apply)
+
+  implicit val encoderTaskReportClientError: Encoder[Task.ReportClientError] =
+    Encoder.forProduct4("userId", "nameKey", "messageKey", "data")(a => (a.userId, a.nameKey, a.messageKey, a.data))
+
   // ===================================================================================================================
 
   val dataDecoder: TaskType => Decoder[_ <: Task] = {
@@ -94,6 +100,7 @@ object TaskJson {
     case TaskType.PasswordResetRequested  => decoderTaskPasswordResetRequested
     case TaskType.RegistrationCompleted   => decoderTaskRegistrationCompleted
     case TaskType.RegistrationRequested   => decoderTaskRegistrationRequested
+    case TaskType.ReportClientError       => decoderTaskReportClientError
     case TaskType.ReportServerError       => decoderTaskReportServerError
     case TaskType.ReRegistrationAttempted => decoderTaskReRegistrationAttempted
     case TaskType.SendDiagEmail           => decoderTaskSendDiagEmail
@@ -108,6 +115,7 @@ object TaskJson {
     case m: Task.PasswordResetRequested  => m.asJson
     case m: Task.RegistrationCompleted   => m.asJson
     case m: Task.RegistrationRequested   => m.asJson
+    case m: Task.ReportClientError       => m.asJson
     case m: Task.ReportServerError       => m.asJson
     case m: Task.ReRegistrationAttempted => m.asJson
     case m: Task.SendDiagEmail           => m.asJson
@@ -124,6 +132,7 @@ object TaskJson {
     case ("PasswordResetRequested" , c) => c.as[Task.PasswordResetRequested]
     case ("RegistrationCompleted"  , c) => c.as[Task.RegistrationCompleted]
     case ("RegistrationRequested"  , c) => c.as[Task.RegistrationRequested]
+    case ("ReportClientError"      , c) => c.as[Task.ReportClientError]
     case ("ReportServerError"      , c) => c.as[Task.ReportServerError]
     case ("ReRegistrationAttempted", c) => c.as[Task.ReRegistrationAttempted]
     case ("SendDiagEmail"          , c) => c.as[Task.SendDiagEmail]
@@ -138,6 +147,7 @@ object TaskJson {
     case a: Task.PasswordResetRequested  => Json.obj("PasswordResetRequested"  -> a.asJson)
     case a: Task.RegistrationCompleted   => Json.obj("RegistrationCompleted"   -> a.asJson)
     case a: Task.RegistrationRequested   => Json.obj("RegistrationRequested"   -> a.asJson)
+    case a: Task.ReportClientError       => Json.obj("ReportClientError"       -> a.asJson)
     case a: Task.ReportServerError       => Json.obj("ReportServerError"       -> a.asJson)
     case a: Task.ReRegistrationAttempted => Json.obj("ReRegistrationAttempted" -> a.asJson)
     case a: Task.SendDiagEmail           => Json.obj("SendDiagEmail"           -> a.asJson)

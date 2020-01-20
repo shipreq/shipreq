@@ -1,6 +1,7 @@
 package shipreq.taskman.server.logic.business
 
 import japgolly.microlibs.stdlib_ext.MutableArray
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Instant, ZoneId, ZoneOffset}
 import scalaz.{\/, \/-}
 import scalaz.old.NonEmptyList
@@ -92,13 +93,15 @@ object Email {
           .add("user.name", u.name)
           .add("user.username", u.username)
 
-      def addUser(userId: UserId, u: Option[ShipReqUser]): Info =
-        u.fold(addUserId(userId))(addUser(_))
+      def addUser(u: Option[ShipReqUser]): Info =
+        u.fold(this)(addUser(_))
 
-      def format: String =
-        MutableArray(data.iterator.map { case (k, v) => s"$k = $v" })
-          .sort
-          .mkString("\n")
+      def format: String = {
+        val (itMulti, itSingle) = data.iterator.partition(_._2.contains('\n'))
+        val single = MutableArray(itSingle.map { case (k, v) => s"$k = $v" }).sort.mkString("\n")
+        val multi  = MutableArray(itMulti.map { case (k, v) => s"$k =\n${v.indent("  ")}" }).sort.mkString("\n\n")
+        List(single, multi).filter(_.nonEmpty).mkString("\n\n")
+      }
     }
 
     object Info {
@@ -123,6 +126,18 @@ object Email {
           apply((i, k, v) => i
             .add(k + ".utc", v.atOffset(ZoneOffset.UTC).toString)
             .add(k + ".local", v.atZone(ZoneId of "Australia/Melbourne").toString))
+      }
+    }
+
+    def exceptionSubject(title: String, name: Option[String], message: Option[String]): String = {
+      val f = (_: Option[String]).map(_.trim).filter(_.nonEmpty)
+      val name2 = f(name)
+      val message2 = f(message).filterNot(name2.contains)
+      (name2, message2) match {
+        case (None   , None   ) => title
+        case (Some(n), None   ) => s"$title: $n"
+        case (Some(n), Some(m)) => s"$title: $n: $m"
+        case (None   , Some(m)) => s"$title: $m"
       }
     }
   }
@@ -164,6 +179,12 @@ final class Emails(ep: Email.EnvelopeProps, tv: Email.TokenValues) {
     val subj = s"Webapp failure${url.fold("")(" on: " + _)}"
     val desc = s"User: $usrd\n\nURL: $url\n\n$report"
     Content(subj, desc)
+  }
+
+  def clientError(user: Option[ShipReqUser], nameKey: String, messageKey: String, data: Map[String, String]) = {
+    val info    = Info(data).addUser(user)
+    val subject = exceptionSubject("Error occurred in client", data.get(nameKey), data.get(messageKey))
+    Email.Content(subject, info.format)
   }
 
   def workerFailureEmail(t: Instant, td: TaskDetail, e: ArticulateError): Content = {

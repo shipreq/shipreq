@@ -52,6 +52,21 @@ object TestHelpers {
         newsletter <- arbitrary[Boolean]
       } yield M.LandingPageHit(email, name, msg, newsletter)
 
+    case T.ReportClientError =>
+      for {
+        userId    <- genUserIdO
+        nameKey   <- arbitrary[String]
+        nameValue <- arbitrary[Option[String]]
+        msgKey    <- arbitrary[String]
+        msgValue  <- arbitrary[Option[String]]
+        info      <- arbitrary[Map[String, String]]
+      } yield {
+        var data = info
+        for (v <- nameValue) data = data.updated(nameKey, v)
+        for (v <- msgValue) data = data.updated(msgKey, v)
+        M.ReportClientError(userId, nameKey, msgKey, data)
+      }
+
     case T.ReportServerError =>
       for {
         usr <- genUserIdO

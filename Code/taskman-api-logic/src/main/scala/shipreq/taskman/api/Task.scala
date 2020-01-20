@@ -46,6 +46,11 @@ object Task {
 
   final case class SyncToMailingList(sqlCond: Option[String]) extends Task(TaskType.SyncToMailingList)
 
+  final case class ReportClientError(userId    : Option[UserId],
+                                     nameKey   : String,
+                                     messageKey: String,
+                                     data      : Map[String, String]) extends Task(TaskType.ReportClientError)
+
   final case class ReportServerError(userId: Option[UserId],
                                      url   : Option[String],
                                      report: String) extends Task(TaskType.ReportServerError) {
@@ -64,6 +69,7 @@ object Task {
       case TaskType.PasswordResetRequested  => PasswordResetRequested(ea, url)
       case TaskType.RegistrationCompleted   => RegistrationCompleted(uid)
       case TaskType.RegistrationRequested   => RegistrationRequested(ea, url)
+      case TaskType.ReportClientError       => ReportClientError(Some(uid), "error.name", "error.message", Map("error.name" -> "TypeError", "error.message" -> "undefined is not a String", "url" -> "https://shipreq.com/project/abcd", "userAgent" -> "Chrome!"))
       case TaskType.ReportServerError       => ReportServerError(Some(uid), Some("/login"), "blah")
       case TaskType.ReRegistrationAttempted => ReRegistrationAttempted(ea)
       case TaskType.SendDiagEmail           => SendDiagEmail(ea, "test", "hello")

@@ -15,6 +15,7 @@ object TaskJsonTest extends TestSuite {
     case TaskType.PasswordResetRequested  => """{"email":"whatever@gmail.com","resetPasswordUrl":"http://hello.io"}"""
     case TaskType.RegistrationCompleted   => """123"""
     case TaskType.RegistrationRequested   => """{"email":"whatever@gmail.com","verifyEmailUrl":"http://hello.io"}"""
+    case TaskType.ReportClientError       => """{"userId":123,"nameKey":"error.name","messageKey":"error.message","data":{"error.name":"TypeError","error.message":"undefined is not a String","url":"https://shipreq.com/project/abcd","userAgent":"Chrome!"}}"""
     case TaskType.ReportServerError       => """{"report":"blah","url":"/login","userId":123}"""
     case TaskType.ReRegistrationAttempted => """"whatever@gmail.com""""
     case TaskType.SendDiagEmail           => """{"body":"hello","email":"whatever@gmail.com","subject":"test"}"""
@@ -29,9 +30,14 @@ object TaskJsonTest extends TestSuite {
     {
       implicit val dec = TaskJson.dataDecoder(t).map[Task](m => m)
       val json = expectedJsonFor(t)
-      // println(TaskJson.encodeData(task).noSpaces)
-      assertDecodeOk(json, task)
-      assertDecodeOk(TaskJson.encodeData(task), task)
+      try {
+        assertDecodeOk(json, task)
+        assertDecodeOk(TaskJson.encodeData(task), task)
+      } catch {
+        case t: Throwable =>
+          System.err.println(TaskJson.encodeData(task).noSpaces)
+          throw t
+      }
     }
 
     import TaskJson.{decoderTask, encoderTask}
@@ -44,6 +50,7 @@ object TaskJsonTest extends TestSuite {
     "PasswordResetRequested"  - test(TaskType.PasswordResetRequested)
     "RegistrationCompleted"   - test(TaskType.RegistrationCompleted)
     "RegistrationRequested"   - test(TaskType.RegistrationRequested)
+    "ReportClientError"       - test(TaskType.ReportClientError)
     "ReportServerError"       - test(TaskType.ReportServerError)
     "ReRegistrationAttempted" - test(TaskType.ReRegistrationAttempted)
     "SendDiagEmail"           - test(TaskType.SendDiagEmail)
