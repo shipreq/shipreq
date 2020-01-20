@@ -4,6 +4,7 @@ import net.liftweb.http._
 import net.liftweb.util.NamedPF
 import shipreq.base.util.log.HasLogger
 import shipreq.base.util.FxModule._
+import shipreq.webapp.server.lib.Taskman
 
 /**
   * Terrible name, but basically serves generic non-200 responses based on HTTP status.
@@ -38,13 +39,14 @@ object HttpStatusHandler extends HasLogger {
   private val render404 = responseFn(404)
   private val render500 = responseFn(500)
 
-  def on500(req: Req, exception: Throwable): Fx[LiftResponse] =
+  def on500(req: Req, err: Throwable): Fx[LiftResponse] =
     Global.security.protect(Fx[LiftResponse] {
-      val uri = req.request.uri
-      //    val m = Taskman.reportServerError(e, Some(uri), s"Request: $r")
-      //    log.error(e, s"500 Error serving $uri to user ${m.usr}")
-      //    Taskman.submitAsync(m).unsafeRun()
-      logger.error(s"${exception.getClass.getSimpleName} serving $uri", exception)
+
+      logger.error(s"Error serving request: {}", err)
+
+      val task = Taskman.reportServerError(None, err)
+      Global.taskman.submit(task).unsafeRun()
+
       render500(req)
     })
 }
