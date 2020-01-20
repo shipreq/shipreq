@@ -20,6 +20,7 @@ object CommonProtocolLogicTest extends TestSuite {
   }
 
   override def tests = Tests {
+    import CommonProtocols.Metadata
 
     'login {
       import CommonProtocols.Login._
@@ -42,13 +43,68 @@ object CommonProtocolLogicTest extends TestSuite {
       'successE - test(\/-(user2.emailAddr), user2password)(Allow, Some(user2.token))
     }
 
-    'feedback {
+    'reportClientError {
+      import CommonProtocols.ReportClientError._
+      implicit val t = Tester(); import t._
+      import mockInterpreters._
+
+      val err = ErrorInfo("name", "message", "", "asd\ndef", Map("omg.qwe" -> "asdf"))
+
+      def test(req: Request, jwt: Security.SessionToken[Any], expectOk: Boolean): Unit = {
+        val result = common.ajaxReportClientError(jwt)(req).value
+        if (expectOk) {
+          assertEq(result, ((), Allow))
+          taskman.assertSubmitted(1)
+        } else {
+          assertEq(result, ((), Deny))
+          taskman.assertSubmitted(0)
+        }
+      }
+
+      'noUserNoSession - {
+        val req = Request(err, Metadata.Client(None, "a", "b", None))
+        val jwt = Security.SessionToken.anonymous()
+        test(req, jwt, true)
+      }
+
+      'userNoSession - {
+        val req = Request(err, Metadata.Client(None, "a", "b", Some(user2.username)))
+        val jwt = Security.SessionToken.anonymous()
+        test(req, jwt, true)
+      }
+
+      'userWithSession - {
+        val req = Request(err, Metadata.Client(None, "a", "b", Some(Username("x"))))
+        val jwt = Security.SessionToken.anonymous().login(user2.toUser)
+        test(req, jwt, true)
+      }
+
+      'noUserWithSession - {
+        val req = Request(err, Metadata.Client(None, "a", "b", None))
+        val jwt = Security.SessionToken.anonymous().login(user2.toUser)
+        test(req, jwt, true)
+      }
+
+      'badUserNoSession - {
+        val req = Request(err, Metadata.Client(None, "a", "b", Some(Username("i don't exist"))))
+        val jwt = Security.SessionToken.anonymous()
+        test(req, jwt, false)
+      }
+
+      'badUserWithSession - {
+        val req = Request(err, Metadata.Client(None, "a", "b", Some(Username("i don't exist"))))
+        val jwt = Security.SessionToken.anonymous().login(user2.toUser)
+        test(req, jwt, true)
+      }
+    }
+
+    'submitFeedback {
       import CommonProtocols.SubmitFeedback._
       implicit val t = Tester(); import t._
       import mockInterpreters._
 
       'noSession - {
-        val req    = Request(UserInput("yo!"), Metadata(None, "a", "b", user2.username))
+        val req    = Request(UserInput("yo!"), Metadata.Client(None, "a", "b", Some(user2.username)))
         val jwt    = Security.SessionToken.anonymous()
         val result = common.ajaxSubmitFeedback(jwt)(req).value
         assertEq(result, ((), Allow))
@@ -56,15 +112,23 @@ object CommonProtocolLogicTest extends TestSuite {
       }
 
       'hasSession - {
-        val req    = Request(UserInput("yo!"), Metadata(None, "a", "b", Username("x")))
+        val req    = Request(UserInput("yo!"), Metadata.Client(None, "a", "b", Some(Username("x"))))
         val jwt    = Security.SessionToken.anonymous().login(user2.toUser)
         val result = common.ajaxSubmitFeedback(jwt)(req).value
         assertEq(result, ((), Allow))
         taskman.assertSubmitted(1)
       }
 
+      'badUser - {
+        val req    = Request(UserInput("yo!"), Metadata.Client(None, "a", "b", Some(Username("i don't exist"))))
+        val jwt    = Security.SessionToken.anonymous()
+        val result = common.ajaxSubmitFeedback(jwt)(req).value
+        assertEq(result, ((), Deny))
+        taskman.assertSubmitted(0)
+      }
+
       'noUser - {
-        val req    = Request(UserInput("yo!"), Metadata(None, "a", "b", Username("i don't exist")))
+        val req    = Request(UserInput("yo!"), Metadata.Client(None, "a", "b", None))
         val jwt    = Security.SessionToken.anonymous()
         val result = common.ajaxSubmitFeedback(jwt)(req).value
         assertEq(result, ((), Deny))

@@ -3,6 +3,7 @@ package shipreq.base.util
 import cats.effect.IO
 import cats.effect.IO.ioEffect
 import java.time.{Duration, Instant}
+import scala.collection.generic.CanBuildFrom
 import scalaz.{-\/, BindRec, Catchable, Monad, \/, \/-}
 
 /**
@@ -62,6 +63,38 @@ object FxModule {
 
     val now: Fx[Instant] =
       IO(Instant.now())
+
+    def liftTraverse[A, B](f: A => Fx[B]): LiftTraverseDsl[A, B] =
+      new LiftTraverseDsl(f)
+
+    final class LiftTraverseDsl[A, B](private val f: A => Fx[B]) extends AnyVal {
+
+      def id: Fx[A => B] =
+        Fx(f(_).unsafeRun())
+
+      /** Anything traversable by the Scala stdlib definition */
+      def std[T[X] <: TraversableOnce[X]](implicit cbf: CanBuildFrom[T[A], B, T[B]]): Fx[T[A] => T[B]] =
+        Fx { ta =>
+          val r = cbf(ta)
+          ta.toIterator.foreach(a => r += f(a).unsafeRun())
+          r.result()
+        }
+
+      def option: Fx[Option[A] => Option[B]] =
+        Fx(_.map(f(_).unsafeRun()))
+    }
+
+    def traverse[T[X] <: TraversableOnce[X], A, B](ta: => T[A])(f: A => Fx[B])(implicit cbf: CanBuildFrom[T[A], B, T[B]]): Fx[T[B]] =
+      liftTraverse(f).std[T](cbf).map(_(ta))
+
+    def sequence[T[X] <: TraversableOnce[X], A](tca: => T[Fx[A]])(implicit cbf: CanBuildFrom[T[Fx[A]], A, T[A]]): Fx[T[A]] =
+      traverse(tca)(Identity.apply)(cbf)
+
+    def traverseOption[A, B](oa: => Option[A])(f: A => Fx[B]): Fx[Option[B]] =
+      liftTraverse(f).option.map(_(oa))
+
+    def sequenceOption[A](oca: => Option[Fx[A]]): Fx[Option[A]] =
+      traverseOption(oca)(Identity.apply)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

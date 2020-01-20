@@ -10,7 +10,10 @@ import org.slf4j.MDC
 import scala.annotation.tailrec
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.{HasLogger, WebappLogFields}
+import shipreq.taskman.api.{Task, TaskmanApi}
 import shipreq.webapp.base.Urls
+import shipreq.webapp.base.user.UserId
+import shipreq.webapp.server.lib.Taskman
 import shipreq.webapp.server.logic.Security
 import shipreq.webapp.server.logic.dispatch.Cookie
 
@@ -47,7 +50,7 @@ final class AppServletFilter extends LiftFilter with HasLogger {
     }
 
     // Initialise logging
-    installLogging(g.security)
+    installLogging(g.security, g.taskman)
   }
 
   override def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain): Unit =
@@ -81,13 +84,14 @@ final class AppServletFilter extends LiftFilter with HasLogger {
       }
   }
 
-  private def installLogging(security: Security.Algebra[Fx]): Unit = {
+  private def installLogging(security: Security.Algebra[Fx], taskman: TaskmanApi[Fx]): Unit = {
     UUID.randomUUID() // Force initialisation
     val real = doFilterFn
     doFilterFn = (req, res, chain) => {
 
       val startMs = System.currentTimeMillis()
       val requestId = UUID.randomUUID()
+      var userId: UserId = null
 
       try {
         WebappLogFields.request.id.mdcUnsafePut(requestId)
@@ -136,6 +140,7 @@ final class AppServletFilter extends LiftFilter with HasLogger {
                     for (user <- session.authenticatedUser) {
                       WebappLogFields.jwt.username.mdcUnsafePut(user.username.value)
                       WebappLogFields.jwt.userId.mdcUnsafePut(user.id.value)
+                      userId = user.id
                     }
                   case Security.SessionRestoreResult.None =>
                     ()
@@ -177,6 +182,10 @@ final class AppServletFilter extends LiftFilter with HasLogger {
           val durLog = WebappLogFields.response.durMs(dur)
 
           logger.error(s"Error serving request: {}", err, durLog)
+
+          val task = Taskman.reportServerError(Option(userId), err)
+          taskman.submit(task).unsafeRun()
+
           throw err
 
       } finally

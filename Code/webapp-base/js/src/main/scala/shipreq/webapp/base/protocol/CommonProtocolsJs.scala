@@ -2,16 +2,17 @@ package shipreq.webapp.base.protocol
 
 import japgolly.scalajs.react.CallbackTo
 import org.scalajs.dom.window
+import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.user.Username
 
 object CommonProtocolsJs {
 
-  object SubmitFeedback {
-    import CommonProtocols.SubmitFeedback._
+  object Metadata {
+    import CommonProtocols.Metadata._
 
-    def metadata(username: Username, p: Option[ProjectMetadata]): CallbackTo[Metadata] =
+    def client(username: Option[Username], p: Option[Project]): CallbackTo[Client] =
       CallbackTo {
-        Metadata(
+        Client(
           project   = p,
           url       = window.location.href,
           userAgent = window.navigator.userAgent,
@@ -19,11 +20,17 @@ object CommonProtocolsJs {
         )
       }
 
-    def metadataWithProject(username: Username, project: CallbackTo[ProjectMetadata]): CallbackTo[Metadata] =
-      project.flatMap(p => metadata(username, Some(p)))
+    def client(username: Option[Username]): CallbackTo[Client] =
+      client(username, None)
 
-    def metadataWithoutProject(username: Username): CallbackTo[Metadata] =
-      metadata(username, None)
+    def client(username: Username): CallbackTo[Client] =
+      client(Some(username))
+
+    def client(username: Username, project: CallbackTo[Project]): CallbackTo[Client] =
+      project.flatMap(p => client(Some(username), Some(p)))
+
+    def client(username: Username, projectId: ProjectId.Public): CallbackTo[Client] =
+      client(Some(username), Some(Project(projectId, None, Set.empty)))
   }
 
 }

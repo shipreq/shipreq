@@ -215,8 +215,8 @@ final class FreshDesk(props: Props, val verifiedProps: VerifiedProps)
       case a: ReportFailure =>
         createTicket(NewTicket(
           email    = props.taskmanEmail,
-          subject  = a.subject,
-          desc     = a.desc,
+          subject  = a.content.subject,
+          desc     = a.content.body,
           priority = a.priority,
           org      = verifiedProps.failure,
         ))

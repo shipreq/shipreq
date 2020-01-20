@@ -78,7 +78,7 @@ object Tmp extends MainTemplate {
   }
 
   protected def testFreshDesk(ctx: TaskmanCtx): Fx[Unit] =
-    ctx.freshdesk(Support.API.ReportFailure("Manual test", "Hi. This is a test", Support.Priority.Low))
+    ctx.freshdesk(Support.API.ReportFailure(Email.Content("Manual test", "Hi. This is a test"), Support.Priority.Low))
       .unsafeTap(r => println(s"Raised ticket: $r"))
       .void
 

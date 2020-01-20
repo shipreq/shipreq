@@ -447,14 +447,15 @@ final class DispatchLogic[F[_], RealReq, RealRes](readRealReq: RealReq => dispat
           }
 
       // Register endpoints
-      anonO(CommonProtocols   .Login         .ajax)("login"         , false, common   .ajaxLogin         )(useNewToken)
-      anonO(CommonProtocols   .SubmitFeedback.ajax)("feedback"      , false, common   .ajaxSubmitFeedback)(dynamicAuth)
-      anon (PublicSpaProtocols.LandingPage   .ajax)("landingPage"   , true , publicSpa.ajaxLandingPage   )
-      anon (PublicSpaProtocols.Register1     .ajax)("register1"     , true , publicSpa.ajaxRegister1     )
-      anonO(PublicSpaProtocols.Register2     .ajax)("register2"     , true , publicSpa.ajaxRegister2     )(useNewToken)
-      anon (PublicSpaProtocols.ResetPassword1.ajax)("resetPassword1", true , publicSpa.ajaxResetPassword1)
-      anon (PublicSpaProtocols.ResetPassword2.ajax)("resetPassword2", true , publicSpa.ajaxResetPassword2)
-      auth (HomeSpaProtocols  .CreateProject .ajax)("createProject" , true , homeSpa  .ajaxCreateProject )
+      anonO(CommonProtocols   .Login            .ajax)("login"            , false, common   .ajaxLogin            )(useNewToken)
+      anonO(CommonProtocols   .ReportClientError.ajax)("reportClientError", false, common   .ajaxReportClientError)(dynamicAuth)
+      anonO(CommonProtocols   .SubmitFeedback   .ajax)("submitFeedback"   , false, common   .ajaxSubmitFeedback   )(dynamicAuth)
+      anon (PublicSpaProtocols.LandingPage      .ajax)("landingPage"      , true , publicSpa.ajaxLandingPage      )
+      anon (PublicSpaProtocols.Register1        .ajax)("register1"        , true , publicSpa.ajaxRegister1        )
+      anonO(PublicSpaProtocols.Register2        .ajax)("register2"        , true , publicSpa.ajaxRegister2        )(useNewToken)
+      anon (PublicSpaProtocols.ResetPassword1   .ajax)("resetPassword1"   , true , publicSpa.ajaxResetPassword1   )
+      anon (PublicSpaProtocols.ResetPassword2   .ajax)("resetPassword2"   , true , publicSpa.ajaxResetPassword2   )
+      auth (HomeSpaProtocols  .CreateProject    .ajax)("createProject"    , true , homeSpa  .ajaxCreateProject    )
 
       mutableRouteMap.toMapNoHeadSlash
     }

@@ -37,4 +37,5 @@ object Version {
     }
 
   val v10 = fromInts(1, 0)
+  val v11 = fromInts(1, 1)
 }

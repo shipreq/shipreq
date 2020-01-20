@@ -8,8 +8,10 @@ import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.BinaryData
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.WebappLogFields
+import shipreq.taskman.api.TaskmanApi
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.protocol.WebSocketShared.CloseReason
+import shipreq.webapp.server.lib.Taskman
 import shipreq.webapp.server.logic.ProjectSpaLogic._
 import shipreq.webapp.server.util.WebSocketUtil
 import shipreq.webapp.server.util.WebSocketUtil.Implicits._
@@ -25,6 +27,7 @@ object ProjectSpaWebSocket extends StrictLogging {
   val stateL            = UserPropsLens.atKey[WebSocketState[Fx]]("Y")
   val connectRejectionL = UserPropsLens.atKey[ConnectRejection  ]("Z")
   val loggingDataL      = UserPropsLens.atKey[LoggingData       ]("L")
+  val taskmanL          = UserPropsLens.atKey[TaskmanApi[Fx]    ]("T")
 
   final class Connector extends ServerEndpointConfig.Configurator {
     private[this] val pathPrefix = Urls.ProjectSpaWebSocket.Base.length + 1
@@ -37,6 +40,7 @@ object ProjectSpaWebSocket extends StrictLogging {
       val userProps      = cfg.getUserProperties
 
       loggingDataL.set(userProps, LoggingData(path))
+      taskmanL.set(userProps, Global.taskman)
 
       projectSpaLogic.onConnect(cookieLookup, projectId).unsafeRun() match {
 
@@ -187,7 +191,14 @@ final class ProjectSpaWebSocket extends StrictLogging {
   @OnError
   def onError(s: Session, cause: Throwable): Unit = withMdc(s, "error") {
     logger.error("Error occurred.", cause)
+
     fxClose(s, CloseReasons.runtimeExceptionOccurred).unsafeRun()
+
+    val userProps = s.getUserProperties
+    val taskman   = taskmanL.get(userProps)
+    val static    = staticL.get(userProps)
+    val task      = Taskman.reportServerError(Option(static.user.id), cause)
+    taskman.submit(task).unsafeRun()
   }
 
   @OnClose

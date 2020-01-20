@@ -14,7 +14,7 @@ import shipreq.webapp.base.data.{Project, ProjectId, ProjectMetaData}
 import shipreq.webapp.base.event.{EventOrd, EventSeqSummary, VerifiedEvent}
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.lib.LoggerJs
-import shipreq.webapp.base.protocol.CommonProtocols.SubmitFeedback
+import shipreq.webapp.base.protocol.CommonProtocols.{Metadata, SubmitFeedback}
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.WebSocket.Push
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.base.protocol.WebSocket.ReadyState
@@ -65,16 +65,16 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
   final def unsafeProject(): Project =
     pxProject.value()
 
-  def feedbackMetadata(id: ProjectId.Public): CallbackTo[SubmitFeedback.ProjectMetadata] =
+  def projectMetadata(id: ProjectId.Public): CallbackTo[Metadata.Project] =
     CallbackTo(unsafeState match {
       case s: State.Active =>
-        SubmitFeedback.ProjectMetadata(
+        Metadata.Project(
           id           = id,
           ord          = Some(s.projectState.projectAndOrd.ordAsInt),
           futureEvents = s.projectState.futureEvents.iterator.map(_.ord.value).toSet)
 
       case _: State.Loading =>
-        SubmitFeedback.ProjectMetadata(
+        Metadata.Project(
           id           = id,
           ord          = None,
           futureEvents = Set.empty)

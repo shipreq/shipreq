@@ -243,6 +243,7 @@ object DispatchBM {
                                            password: PlainTextPassword,
                                            session : Security.SessionToken[Any]) = ???
       override val ajaxLogin = _ => ???
+      override val ajaxReportClientError = _ => ???
       override val ajaxSubmitFeedback = _ => ???
     }
 

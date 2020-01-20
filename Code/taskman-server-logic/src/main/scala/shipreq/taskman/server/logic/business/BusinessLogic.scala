@@ -59,20 +59,29 @@ final class BusinessLogic[F[_]](emails        : Emails,
     case SyncToMailingList(cond) =>
       complete(ActiveUser syncToML cond)
 
-    case WebappErrorOccurred(usr, url, report) =>
-      val usrDescIo = usr.fold(Fx("None"))(ActiveUser.tryDesc)
-      usrDescIo.flatMap { usrd =>
-        val subj = s"Webapp failure${url.fold("")(" on: " + _)}"
-        val desc = s"User: $usrd\n\nURL: $url\n\n$report"
-        val op = Support.API.ReportFailure(subj, desc, Support.Priority.High)
-        complete(run(op))
+    case task: ReportClientError =>
+      complete {
+        for {
+          user    <- Fx.traverseOption(task.userId)(ActiveUser.get)
+          content  = emails.clientError(user, task.nameKey, task.messageKey, task.data)
+          _       <- run(Support.API.ReportFailure(content, Support.Priority.High))
+        } yield ()
+      }
+
+    case task: ReportServerError =>
+      complete {
+        for {
+          user    <- Fx.traverseOption(task.userId)(ActiveUser.get)
+          content  = emails.serverError(user, task.nameKey, task.messageKey, task.data)
+          _       <- run(Support.API.ReportFailure(content, Support.Priority.High))
+        } yield ()
       }
 
     case task: UserFeedbackReceived =>
       complete {
         for {
           user    <- ActiveUser.get(task.userId)
-          content  = emails.userFeedback(task)
+          content  = emails.userFeedback(task, user)
           _       <- run(Support.API.RecordUserFeedback(user.emailWithName, content))
         } yield ()
       }
@@ -119,7 +128,7 @@ final class BusinessLogic[F[_]](emails        : Emails,
   object LandingPage {
 
     def apply(m: TaskHeader, l: LandingPageHit): MO = {
-      val c = emails.landingPageEmail(m, l)
+      val c = emails.landingPage(m, l)
       val fx = updateMailingListIfNeeded(l.email, l.name, l.newsletter) >> createSupportTicket(m, l, c)
       emails.archive(c) match {
         case None     => complete(fx)

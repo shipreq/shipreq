@@ -191,6 +191,7 @@ object SafePickler {
     implicit class SafePickler_PicklerExt[A](private val self: Pickler[A]) extends AnyVal {
       def asVersion(v: Version): SafePickler[A] = SafePickler(None, None, v, self)
       def asV10 = asVersion(Version.v10)
+      def asV11 = asVersion(Version.v11)
     }
 
   }

@@ -1,8 +1,12 @@
 package shipreq.webapp.server.lib
 
-import shipreq.base.util.ArticulateError
-import shipreq.taskman.api.Task.WebappErrorOccurred
+import japgolly.microlibs.stdlib_ext.StdlibExt._
+import scala.jdk.CollectionConverters._
+import org.slf4j.MDC
+import scala.util.Try
 import shipreq.base.util.FxModule._
+import shipreq.taskman.api.Task
+import shipreq.webapp.base.user.UserId
 import shipreq.webapp.base.{Urls, WebappConfig}
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.logic.WebappTaskmanConverters._
@@ -16,11 +20,56 @@ object Taskman {
       K.homeUrl  -> g.config.server.baseUrl.value,
       K.loginUrl -> (g.config.server.baseUrl / Urls.login).absoluteUrl)
 
-//  def webappErrorOccurred(e: Throwable, url: Option[String], suppInfo: String): WebappErrorOccurred =
-//    WebappErrorOccurred(
-//      Global.security.authenticatedUser.unsafeRun().map(_.id.toTaskman),
-//      url,
-//      ArticulateError(e).hint(suppInfo).show)
+  private final val exceptionPrefix     = "error."
+  private final val exceptionNameSuffix = "name"
+  private final val exceptionMsgSuffix  = "message"
+
+  def reportServerError(userId: Option[UserId], error: Throwable, other: Map[String, String] = Map.empty): Task.ReportServerError = {
+
+    var m = other
+
+    def add(k: String, v: String): Unit =
+      if (v != null)
+        m = m.updated(k, v.trim)
+
+    def addError(prefix: String, t: Throwable): Unit = {
+
+      def add2(k: String)(v: String): Unit =
+        add(prefix + k, v)
+
+      Try(t.getClass.getSimpleName)
+        .filter(_ != null)
+        .orElse(Try(t.getClass.getName))
+        .foreach(add2(exceptionNameSuffix))
+
+      Try(t.getMessage)
+        .filter(_ != null)
+        .foreach(add2(exceptionMsgSuffix))
+
+      add2("stack")(t.stackTraceAsString)
+    }
+
+    // Add main error
+    addError(exceptionPrefix, error)
+
+    // Add root cause
+    var rootCause = error
+    while (rootCause.getCause != null)
+      rootCause = rootCause.getCause
+    if (rootCause ne error)
+      addError("rootCause.", rootCause)
+
+    // Add MDC
+    for ((k, v) <- MDC.getCopyOfContextMap.asScala)
+      add(k, v)
+
+    Task.ReportServerError(
+      userId     = userId.map(_.toTaskman),
+      nameKey    = exceptionPrefix + exceptionNameSuffix,
+      messageKey = exceptionPrefix + exceptionMsgSuffix,
+      data       = m,
+    )
+  }
 
 //  private object AsyncActor extends SpecializedLiftActor[Msg] {
 //    override protected def messageHandler = {
@@ -28,7 +77,7 @@ object Taskman {
 //        try
 //          submitMsg(m).unsafePerformFx()
 //        catch {
-//          case e: Throwable if m.isInstanceOf[WebappErrorOccurred] =>
+//          case e: Throwable if m.isInstanceOf[ReportServerError] =>
 //            log.error(e, s"Error occurred trying to send $m. FUCK.")
 //          case e: Throwable =>
 //            log.error(e, s"Error occurred send $m.")

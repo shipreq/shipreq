@@ -1,7 +1,6 @@
 package shipreq.taskman.api
 
 import japgolly.univeq.UnivEq
-import shipreq.base.util.Util
 
 /**
  * A datum that can be sent to the Taskman server and meaningfully processed.
@@ -46,11 +45,15 @@ object Task {
 
   final case class SyncToMailingList(sqlCond: Option[String]) extends Task(TaskType.SyncToMailingList)
 
-  final case class WebappErrorOccurred(usr   : Option[UserId],
-                                       url   : Option[String],
-                                       report: String) extends Task(TaskType.WebappErrorOccurred) {
-    override def toString = s"WebappErrorOccurred($usr, $url, ${Util.cutoffStr(report, 80)})"
-  }
+  final case class ReportClientError(userId    : Option[UserId],
+                                     nameKey   : String,
+                                     messageKey: String,
+                                     data      : Map[String, String]) extends Task(TaskType.ReportClientError)
+
+  final case class ReportServerError(userId    : Option[UserId],
+                                     nameKey   : String,
+                                     messageKey: String,
+                                     data      : Map[String, String]) extends Task(TaskType.ReportServerError)
 
   implicit def univEq: UnivEq[Task] = UnivEq.derive
 
@@ -60,16 +63,17 @@ object Task {
     val uid = UserId(123)
     taskType match {
       case TaskType.DummyTask               => DummyTask("hello", failureMsg = Some("nope"))
-      case TaskType.ReRegistrationAttempted => ReRegistrationAttempted(ea)
-      case TaskType.RegistrationRequested   => RegistrationRequested(ea, url)
-      case TaskType.RegistrationCompleted   => RegistrationCompleted(uid)
-      case TaskType.PasswordResetRequested  => PasswordResetRequested(ea, url)
-      case TaskType.UserUpdated             => UserUpdated(uid)
-      case TaskType.SendDiagEmail           => SendDiagEmail(ea, "test", "hello")
       case TaskType.LandingPageHit          => LandingPageHit(ea, "Iskaral Pust", Some("No mule can match wits with me."), false)
+      case TaskType.PasswordResetRequested  => PasswordResetRequested(ea, url)
+      case TaskType.RegistrationCompleted   => RegistrationCompleted(uid)
+      case TaskType.RegistrationRequested   => RegistrationRequested(ea, url)
+      case TaskType.ReportClientError       => ReportClientError(Some(uid), "error.name", "error.message", Map("error.name" -> "TypeError", "error.message" -> "undefined is not a String", "url" -> "https://shipreq.com/project/abcd", "userAgent" -> "Chrome!"))
+      case TaskType.ReportServerError       => ReportServerError(Some(uid), "error.name", "error.message", Map("error.name" -> "ArithmeticException", "error.message" -> "/ by zero", "url" -> "https://shipreq.com/project/abcd", "userAgent" -> "Chrome!"))
+      case TaskType.ReRegistrationAttempted => ReRegistrationAttempted(ea)
+      case TaskType.SendDiagEmail           => SendDiagEmail(ea, "test", "hello")
       case TaskType.SyncToMailingList       => SyncToMailingList(Some("id < 100"))
-      case TaskType.WebappErrorOccurred     => WebappErrorOccurred(Some(uid), Some("/login"), "blah")
       case TaskType.UserFeedbackReceived    => UserFeedbackReceived(uid, "Your product sucks!", Map("url" -> "https://shipreq.com/project/abcd", "userAgent" -> "Chrome!"))
+      case TaskType.UserUpdated             => UserUpdated(uid)
     }
   }
 

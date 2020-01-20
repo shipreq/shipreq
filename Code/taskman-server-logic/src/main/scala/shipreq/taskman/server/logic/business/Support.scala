@@ -34,8 +34,7 @@ object Support {
     final case class RecordUserFeedback(from   : EmailAddr,
                                         content: Email.Content) extends API[TicketId]
 
-    final case class ReportFailure(subject : String,
-                                   desc    : String,
+    final case class ReportFailure(content : Email.Content,
                                    priority: Priority) extends API[TicketId]
   }
 }

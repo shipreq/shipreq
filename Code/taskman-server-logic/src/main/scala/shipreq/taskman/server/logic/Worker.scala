@@ -62,7 +62,7 @@ object Worker extends HasLogger {
   final class FailureHandler(emails: Emails)(implicit businessOpFx: BusinessOp ~> Fx) {
 
     def raise(c: Email.Content, p: Support.Priority): Fx[Unit] = {
-      val reportFailure = businessOpFx(BusinessOp.SupportOp(Support.API.ReportFailure(c.subject, c.body, p)))
+      val reportFailure = businessOpFx(BusinessOp.SupportOp(Support.API.ReportFailure(c, p)))
       val emailArchive = emails.archive(c).fold(Fx.unit)(businessOpFx.apply)
       for {
         ea <- reportFailure.attempt

@@ -91,11 +91,6 @@ Phase 2B
   that adds a new event to everyone's projects to do the rename once when the
   new version is deployed.
 
-* Failure
-  * Do more with errors (client & server), eg. ClientData.{init,applyEvents}
-  * Add React component error handling and possibly report to server
-  * Add an error-catching top-level react component
-
 * Metrics
   * Taskman metrics
   * Finish tech dashboards (inc using webapp metrics)

@@ -8,7 +8,7 @@ import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{DataValidators, ProjectMetaData}
-import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus}
+import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus, ErrorHandlingFeature}
 import shipreq.webapp.base.protocol.{AjaxClient, CommonProtocolsJs, HomeSpaEntryPoint, HomeSpaProtocols, ServerSideProcInvoker}
 import shipreq.webapp.base.ui._
 import shipreq.webapp.base.ui.semantic.{Breadcrumb, Colour}
@@ -22,7 +22,7 @@ object Home {
       ajax.invoker(HomeSpaProtocols.CreateProject.ajax)
 
     val feedbackModal: FeedbackModal = {
-      val metadata = CommonProtocolsJs.SubmitFeedback.metadataWithoutProject(data.username)
+      val metadata = CommonProtocolsJs.Metadata.client(data.username)
       FeedbackModal(metadata, ajax)
     }
   }
@@ -31,6 +31,18 @@ object Home {
   final case class State(createProjectText: String,
                          createProjectAAS : AsyncFeature.Read.D0[ErrorMsg],
                          projects         : List[ProjectMetaData])
+
+  object State {
+
+    val recorder = ErrorHandlingFeature.StateRecorder[State]
+
+    def init(projects: List[ProjectMetaData]): State =
+      State(
+        createProjectText = "",
+        createProjectAAS  = AsyncFeature.State.initD0,
+        projects          = projects,
+      )
+  }
 
   final class Backend($: BackendScope[Props, State]) {
 
@@ -56,6 +68,8 @@ object Home {
       Reusable.byRef(Breadcrumb.Item.Div(ClientConfig.BreadcrumbNameMemberHome) :: Nil)
 
     def render(p: Props, s: State): VdomElement = {
+      State.recorder.record(s)
+
       val navBar = MemberNavBar.Props(p.data.username, Some(p.feedbackModal), navBarLeft)
 
       def mainContent(m: TagMod): VdomElement =
@@ -74,7 +88,7 @@ object Home {
   }
 
   val Component = ScalaComponent.builder[Props]("Home")
-    .initialStateFromProps(p => State("", AsyncFeature.State.initD0, p.data.projects))
+    .initialStateFromProps(p => State.recorder.getOrElse(State.init(p.data.projects)))
     .renderBackend[Backend]
     .build
 }

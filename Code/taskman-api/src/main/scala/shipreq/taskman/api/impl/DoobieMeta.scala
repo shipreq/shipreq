@@ -21,7 +21,8 @@ object DoobieMeta {
     case TaskType.LandingPageHit           => 200
     case TaskType.UserFeedbackReceived     => 201
     case TaskType.SyncToMailingList        => 300
-    case TaskType.WebappErrorOccurred      => 500
+    case TaskType.ReportServerError        => 500
+    case TaskType.ReportClientError        => 501
   }
 
   implicit val doobieMetaTaskId: Meta[TaskId] =
