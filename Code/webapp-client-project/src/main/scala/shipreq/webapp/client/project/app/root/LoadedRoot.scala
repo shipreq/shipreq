@@ -49,9 +49,9 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     private val sspReqTypeImplicationMod = global.sspReqTypeImplicationMod
 
     private val feedbackModal: FeedbackModal = {
-      val projectMetadata = global.feedbackMetadata(initPageData.projectId)
-      val metadata        = CommonProtocolsJs.Metadata.clientWithProject(initPageData.username, projectMetadata)
-      FeedbackModal(metadata)
+      val projectMetadata = global.projectMetadata(initPageData.projectId)
+      val clientMetadata  = CommonProtocolsJs.Metadata.client(initPageData.username, projectMetadata)
+      FeedbackModal(clientMetadata)
     }
 
     // This never changes

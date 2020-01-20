@@ -65,7 +65,7 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
   final def unsafeProject(): Project =
     pxProject.value()
 
-  def feedbackMetadata(id: ProjectId.Public): CallbackTo[Metadata.Project] =
+  def projectMetadata(id: ProjectId.Public): CallbackTo[Metadata.Project] =
     CallbackTo(unsafeState match {
       case s: State.Active =>
         Metadata.Project(

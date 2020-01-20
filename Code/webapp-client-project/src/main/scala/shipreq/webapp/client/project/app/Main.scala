@@ -9,10 +9,11 @@ import scala.scalajs.js.timers.RawTimers
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{ErrorMsg, Retries, Url}
 import shipreq.webapp.base.CssSettings._
+import shipreq.webapp.base.feature.ErrorHandlingFeature
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol.ProjectSpaProtocols.InitAppData
 import shipreq.webapp.base.protocol.ProjectSpaEntryPoint.InitData
-import shipreq.webapp.base.protocol.{ClientSideProcImpl, ProjectSpaEntryPoint, ProjectSpaProtocols, WebSocketClient}
+import shipreq.webapp.base.protocol.{ClientSideProcImpl, CommonProtocolsJs, ProjectSpaEntryPoint, ProjectSpaProtocols, WebSocketClient}
 import shipreq.webapp.base.ui.{BaseStyles, ReauthenticationModal}
 import shipreq.webapp.client.loaders.ProjectSpaLoader
 import shipreq.webapp.client.project.app.root._
@@ -42,17 +43,22 @@ object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
 
   private def onLoad(i: InitData)(g: Global, ia: InitAppData): Callback =
     Callback {
-      val root    = new LoadedRoot(i, g)
-      val baseUrl = determineBaseUrl(location.href)
-      val router  = Router(baseUrl, Routes.routerConfig(root))
-      router().renderIntoDOM(`#root`)
+      val root     = new LoadedRoot(i, g)
+      val baseUrl  = determineBaseUrl(location.href)
+      val router   = Router(baseUrl, Routes.routerConfig(root))
+      val metadata = CommonProtocolsJs.Metadata.client(i.username, g.projectMetadata(i.projectId))
+      val reactApp = ErrorHandlingFeature(router(), metadata)
+      reactApp.renderIntoDOM(`#root`)
     }
 
   private def onFailure(i: InitData)(error: ErrorMsg): Callback =
     Callback {
-      val lp = ProjectSpaLoader.Props(i.username, i.projectName)
-      val lf = LoadFailedPage.Props(lp, error)
-      LoadFailedPage.Component(lf).renderIntoDOM(`#root`)
+      val lp       = ProjectSpaLoader.Props(i.username, i.projectName)
+      val lf       = LoadFailedPage.Props(lp, error)
+      val view     = LoadFailedPage.Component(lf)
+      val metadata = CommonProtocolsJs.Metadata.client(i.username, i.projectId)
+      val reactApp = ErrorHandlingFeature(view, metadata)
+      reactApp.renderIntoDOM(`#root`)
     }
 
   def determineBaseUrl(url: String) = {

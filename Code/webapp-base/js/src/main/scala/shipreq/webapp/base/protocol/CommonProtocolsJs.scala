@@ -2,6 +2,7 @@ package shipreq.webapp.base.protocol
 
 import japgolly.scalajs.react.CallbackTo
 import org.scalajs.dom.window
+import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.user.Username
 
 object CommonProtocolsJs {
@@ -19,11 +20,17 @@ object CommonProtocolsJs {
         )
       }
 
-    def clientWithProject(username: Username, project: CallbackTo[Project]): CallbackTo[Client] =
+    def client(username: Option[Username]): CallbackTo[Client] =
+      client(username, None)
+
+    def client(username: Username): CallbackTo[Client] =
+      client(Some(username))
+
+    def client(username: Username, project: CallbackTo[Project]): CallbackTo[Client] =
       project.flatMap(p => client(Some(username), Some(p)))
 
-    def clientWithoutProject(username: Username): CallbackTo[Client] =
-      client(Some(username), None)
+    def client(username: Username, projectId: ProjectId.Public): CallbackTo[Client] =
+      client(Some(username), Some(Project(projectId, None, Set.empty)))
   }
 
 }

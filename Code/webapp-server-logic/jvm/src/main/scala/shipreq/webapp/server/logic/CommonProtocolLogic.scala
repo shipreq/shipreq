@@ -1,5 +1,6 @@
 package shipreq.webapp.server.logic
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.ConciseIntSetFormat
 import scalaz.syntax.monad._
 import scalaz.{-\/, Catchable, Monad, \/, \/-}
@@ -77,9 +78,9 @@ object CommonProtocolLogic extends HasLogger {
           m
         }
 
-      private final val exceptionKey     = "error"
-      private final val exceptionNameKey = exceptionKey + ".name"
-      private final val exceptionMsgKey  = exceptionKey + ".message"
+      private final val exceptionPrefix  = "error."
+      private final val exceptionNameKey = exceptionPrefix + "name"
+      private final val exceptionMsgKey  = exceptionPrefix + "message"
 
       override def attemptLoginUnprotected(id      : Username \/ EmailAddr,
                                            password: PlainTextPassword,
@@ -119,11 +120,11 @@ object CommonProtocolLogic extends HasLogger {
           resolveUser(token, req.metadata.username).flatMap {
             case \/-(userOption) =>
 
-              val data1 = req.error.other
-                .updated(exceptionNameKey, req.error.name)
-                .updated(exceptionMsgKey, req.error.message)
-                .updated(exceptionKey + ".stack", req.error.stack)
-                .updated(exceptionKey + ".componentStack", req.error.componentStack)
+              val data1 = req.error.other.mapKeysNow(exceptionPrefix + _)
+                .updated(exceptionNameKey                  , req.error.name)
+                .updated(exceptionMsgKey                   , req.error.message)
+                .updated(exceptionPrefix + "stack"         , req.error.stack)
+                .updated(exceptionPrefix + "componentStack", req.error.componentStack)
 
               for {
                 data2 <- prepareMetadata(req.metadata)
