@@ -23,7 +23,7 @@ object Priority {
        | _: PasswordResetRequested
               => UserWaiting
 
-    case _: WebappErrorOccurred
+    case _: ReportServerError
               => High
 
     case _: DummyTask

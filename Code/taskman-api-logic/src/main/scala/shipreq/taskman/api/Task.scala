@@ -46,10 +46,10 @@ object Task {
 
   final case class SyncToMailingList(sqlCond: Option[String]) extends Task(TaskType.SyncToMailingList)
 
-  final case class WebappErrorOccurred(usr   : Option[UserId],
-                                       url   : Option[String],
-                                       report: String) extends Task(TaskType.WebappErrorOccurred) {
-    override def toString = s"WebappErrorOccurred($usr, $url, ${Util.cutoffStr(report, 80)})"
+  final case class ReportServerError(usr   : Option[UserId],
+                                     url   : Option[String],
+                                     report: String) extends Task(TaskType.ReportServerError) {
+    override def toString = s"ReportServerError($usr, $url, ${Util.cutoffStr(report, 80)})"
   }
 
   implicit def univEq: UnivEq[Task] = UnivEq.derive
@@ -60,16 +60,16 @@ object Task {
     val uid = UserId(123)
     taskType match {
       case TaskType.DummyTask               => DummyTask("hello", failureMsg = Some("nope"))
-      case TaskType.ReRegistrationAttempted => ReRegistrationAttempted(ea)
-      case TaskType.RegistrationRequested   => RegistrationRequested(ea, url)
-      case TaskType.RegistrationCompleted   => RegistrationCompleted(uid)
-      case TaskType.PasswordResetRequested  => PasswordResetRequested(ea, url)
-      case TaskType.UserUpdated             => UserUpdated(uid)
-      case TaskType.SendDiagEmail           => SendDiagEmail(ea, "test", "hello")
       case TaskType.LandingPageHit          => LandingPageHit(ea, "Iskaral Pust", Some("No mule can match wits with me."), false)
+      case TaskType.PasswordResetRequested  => PasswordResetRequested(ea, url)
+      case TaskType.RegistrationCompleted   => RegistrationCompleted(uid)
+      case TaskType.RegistrationRequested   => RegistrationRequested(ea, url)
+      case TaskType.ReportServerError       => ReportServerError(Some(uid), Some("/login"), "blah")
+      case TaskType.ReRegistrationAttempted => ReRegistrationAttempted(ea)
+      case TaskType.SendDiagEmail           => SendDiagEmail(ea, "test", "hello")
       case TaskType.SyncToMailingList       => SyncToMailingList(Some("id < 100"))
-      case TaskType.WebappErrorOccurred     => WebappErrorOccurred(Some(uid), Some("/login"), "blah")
       case TaskType.UserFeedbackReceived    => UserFeedbackReceived(uid, "Your product sucks!", Map("url" -> "https://shipreq.com/project/abcd", "userAgent" -> "Chrome!"))
+      case TaskType.UserUpdated             => UserUpdated(uid)
     }
   }
 

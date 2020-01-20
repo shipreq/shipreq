@@ -74,10 +74,10 @@ object TaskJson {
   implicit val encoderTaskSyncToMailingList: Encoder[Task.SyncToMailingList] =
     Encoder[Option[String]].contramap(_.sqlCond)
 
-  implicit val decoderTaskWebappErrorOccurred: Decoder[Task.WebappErrorOccurred] =
-    Decoder.forProduct3("usr", "url", "report")(Task.WebappErrorOccurred.apply)
+  implicit val decoderTaskReportServerError: Decoder[Task.ReportServerError] =
+    Decoder.forProduct3("usr", "url", "report")(Task.ReportServerError.apply)
 
-  implicit val encoderTaskWebappErrorOccurred: Encoder[Task.WebappErrorOccurred] =
+  implicit val encoderTaskReportServerError: Encoder[Task.ReportServerError] =
     Encoder.forProduct3("usr", "url", "report")(a => (a.usr, a.url, a.report))
 
   implicit val decoderTaskUserFeedbackReceived: Decoder[Task.UserFeedbackReceived] =
@@ -94,12 +94,12 @@ object TaskJson {
     case TaskType.PasswordResetRequested  => decoderTaskPasswordResetRequested
     case TaskType.RegistrationCompleted   => decoderTaskRegistrationCompleted
     case TaskType.RegistrationRequested   => decoderTaskRegistrationRequested
+    case TaskType.ReportServerError       => decoderTaskReportServerError
     case TaskType.ReRegistrationAttempted => decoderTaskReRegistrationAttempted
     case TaskType.SendDiagEmail           => decoderTaskSendDiagEmail
     case TaskType.SyncToMailingList       => decoderTaskSyncToMailingList
-    case TaskType.UserUpdated             => decoderTaskUserUpdated
     case TaskType.UserFeedbackReceived    => decoderTaskUserFeedbackReceived
-    case TaskType.WebappErrorOccurred     => decoderTaskWebappErrorOccurred
+    case TaskType.UserUpdated             => decoderTaskUserUpdated
   }
 
   val encodeData: Task => Json = {
@@ -108,12 +108,12 @@ object TaskJson {
     case m: Task.PasswordResetRequested  => m.asJson
     case m: Task.RegistrationCompleted   => m.asJson
     case m: Task.RegistrationRequested   => m.asJson
+    case m: Task.ReportServerError       => m.asJson
     case m: Task.ReRegistrationAttempted => m.asJson
     case m: Task.SendDiagEmail           => m.asJson
     case m: Task.SyncToMailingList       => m.asJson
     case m: Task.UserUpdated             => m.asJson
     case m: Task.UserFeedbackReceived    => m.asJson
-    case m: Task.WebappErrorOccurred     => m.asJson
   }
 
   // ===================================================================================================================
@@ -122,28 +122,28 @@ object TaskJson {
     case ("DummyTask"              , c) => c.as[Task.DummyTask]
     case ("LandingPageHit"         , c) => c.as[Task.LandingPageHit]
     case ("PasswordResetRequested" , c) => c.as[Task.PasswordResetRequested]
-    case ("ReRegistrationAttempted", c) => c.as[Task.ReRegistrationAttempted]
     case ("RegistrationCompleted"  , c) => c.as[Task.RegistrationCompleted]
     case ("RegistrationRequested"  , c) => c.as[Task.RegistrationRequested]
+    case ("ReportServerError"      , c) => c.as[Task.ReportServerError]
+    case ("ReRegistrationAttempted", c) => c.as[Task.ReRegistrationAttempted]
     case ("SendDiagEmail"          , c) => c.as[Task.SendDiagEmail]
     case ("SyncToMailingList"      , c) => c.as[Task.SyncToMailingList]
     case ("UserUpdated"            , c) => c.as[Task.UserUpdated]
     case ("UserFeedbackReceived"   , c) => c.as[Task.UserFeedbackReceived]
-    case ("WebappErrorOccurred"    , c) => c.as[Task.WebappErrorOccurred]
   }
 
   implicit val encoderTask: Encoder[Task] = Encoder.instance {
     case a: Task.DummyTask               => Json.obj("DummyTask"               -> a.asJson)
     case a: Task.LandingPageHit          => Json.obj("LandingPageHit"          -> a.asJson)
     case a: Task.PasswordResetRequested  => Json.obj("PasswordResetRequested"  -> a.asJson)
-    case a: Task.ReRegistrationAttempted => Json.obj("ReRegistrationAttempted" -> a.asJson)
     case a: Task.RegistrationCompleted   => Json.obj("RegistrationCompleted"   -> a.asJson)
     case a: Task.RegistrationRequested   => Json.obj("RegistrationRequested"   -> a.asJson)
+    case a: Task.ReportServerError       => Json.obj("ReportServerError"       -> a.asJson)
+    case a: Task.ReRegistrationAttempted => Json.obj("ReRegistrationAttempted" -> a.asJson)
     case a: Task.SendDiagEmail           => Json.obj("SendDiagEmail"           -> a.asJson)
     case a: Task.SyncToMailingList       => Json.obj("SyncToMailingList"       -> a.asJson)
     case a: Task.UserUpdated             => Json.obj("UserUpdated"             -> a.asJson)
     case a: Task.UserFeedbackReceived    => Json.obj("UserFeedbackReceived"    -> a.asJson)
-    case a: Task.WebappErrorOccurred     => Json.obj("WebappErrorOccurred"     -> a.asJson)
   }
 
 }

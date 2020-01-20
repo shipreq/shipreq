@@ -41,7 +41,7 @@ object HttpStatusHandler extends HasLogger {
   def on500(req: Req, exception: Throwable): Fx[LiftResponse] =
     Global.security.protect(Fx[LiftResponse] {
       val uri = req.request.uri
-      //    val m = Taskman.webappErrorOccurred(e, Some(uri), s"Request: $r")
+      //    val m = Taskman.reportServerError(e, Some(uri), s"Request: $r")
       //    log.error(e, s"500 Error serving $uri to user ${m.usr}")
       //    Taskman.submitAsync(m).unsafeRun()
       logger.error(s"${exception.getClass.getSimpleName} serving $uri", exception)

@@ -1,7 +1,7 @@
 package shipreq.webapp.server.lib
 
 import shipreq.base.util.ArticulateError
-import shipreq.taskman.api.Task.WebappErrorOccurred
+import shipreq.taskman.api.Task.ReportServerError
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.{Urls, WebappConfig}
 import shipreq.webapp.server.app.Global
@@ -16,8 +16,8 @@ object Taskman {
       K.homeUrl  -> g.config.server.baseUrl.value,
       K.loginUrl -> (g.config.server.baseUrl / Urls.login).absoluteUrl)
 
-//  def webappErrorOccurred(e: Throwable, url: Option[String], suppInfo: String): WebappErrorOccurred =
-//    WebappErrorOccurred(
+//  def reportServerError(e: Throwable, url: Option[String], suppInfo: String): ReportServerError =
+//    ReportServerError(
 //      Global.security.authenticatedUser.unsafeRun().map(_.id.toTaskman),
 //      url,
 //      ArticulateError(e).hint(suppInfo).show)
@@ -28,7 +28,7 @@ object Taskman {
 //        try
 //          submitMsg(m).unsafePerformFx()
 //        catch {
-//          case e: Throwable if m.isInstanceOf[WebappErrorOccurred] =>
+//          case e: Throwable if m.isInstanceOf[ReportServerError] =>
 //            log.error(e, s"Error occurred trying to send $m. FUCK.")
 //          case e: Throwable =>
 //            log.error(e, s"Error occurred send $m.")

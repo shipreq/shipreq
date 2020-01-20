@@ -52,12 +52,12 @@ object TestHelpers {
         newsletter <- arbitrary[Boolean]
       } yield M.LandingPageHit(email, name, msg, newsletter)
 
-    case T.WebappErrorOccurred =>
+    case T.ReportServerError =>
       for {
         usr <- genUserIdO
         url <- arbitrary[Option[String]]
         msg <- arbitrary[String]
-      } yield M.WebappErrorOccurred(usr, url, msg)
+      } yield M.ReportServerError(usr, url, msg)
 
     case T.DummyTask =>
       for {
