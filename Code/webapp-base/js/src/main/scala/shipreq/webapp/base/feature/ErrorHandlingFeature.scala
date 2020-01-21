@@ -49,7 +49,7 @@ object ErrorHandlingFeature {
              |""".stripMargin.trim)
       }
 
-    def onError(e: ReactCaughtError): Callback = {
+    def onError(e: ReactCaughtError, p: Props, s: State): Callback = {
 
       def errorInfo(s: State): ErrorInfo =
         ErrorInfo(
@@ -64,8 +64,6 @@ object ErrorHandlingFeature {
           ))
 
       for {
-        p <- $.props
-        s <- $.state
         _ <- p.submit(errorInfo(s)).attempt
         _ <- alertUserThatAnErrorOccurred
         _ <- $.modState(s => State(s.errors + 1)) // refreshes screen
@@ -76,7 +74,7 @@ object ErrorHandlingFeature {
   private val Component = ScalaComponent.builder[Props]("ErrorHandling")
     .initialState(State(0))
     .renderBackend[Backend]
-    .componentDidCatch($ => $.backend.onError($.error))
+    .componentDidCatch($ => $.backend.onError($.error, $.props, $.state))
     .build
 
   def apply(view      : VdomElement,
