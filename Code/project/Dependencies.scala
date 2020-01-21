@@ -75,7 +75,7 @@ object Dependencies {
   }
 
   object UnivEq {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.1.0")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.2.0")
     val univeq = mm("univeq")
     val scalaz = mm("univeq-scalaz") ++ univeq ++ Dependencies.scalaz
   }
@@ -149,13 +149,13 @@ object Dependencies {
   }
 
   object OkHttp {
-    private val mm = MultiModule.java("com.squareup.okhttp3", "3.14.5")
+    private val mm = MultiModule.java("com.squareup.okhttp3", "3.14.6")
     val core = mm("okhttp")
     // val urlConnection = mm("okhttp-urlconnection") ++ core
   }
 
   object LibJetty {
-    private def ver = "9.4.24.v20191120"
+    private def ver = "9.4.26.v20200117"
     private val mm = MultiModule.java("org.eclipse.jetty", ver)
     private val ws = MultiModule.java("org.eclipse.jetty.websocket", ver)
 
@@ -197,9 +197,9 @@ object Dependencies {
   val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.0.0")
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.8")
-  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.1.3")
-  val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.1")
-  val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.12")
+  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.1.4")
+  val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.2")
+  val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.13")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
   val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.1.0")
   val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.9")
