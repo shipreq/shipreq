@@ -8,14 +8,11 @@ main="$1"; shift
 cp=conf/:{{cp}}
 
 java_opt=(
-  # This will one day be enabled by default
-  -XX:+UnlockExperimentalVMOptions
-  -XX:+UseCGroupMemoryLimitForHeap
-
-  # All memory in container is for the JVM
-  -XX:MaxRAMFraction=1
+  # Memory usage
+  -XX:MaxRAMPercentage=92.0
 
   # Be specific about the GC we want
+  # Also avoid crash: https://github.com/oracle/graal/issues/1892
   -XX:+UseG1GC
 
   # Use Graal's JIT
@@ -26,7 +23,6 @@ java_opt=(
   # Useful for diagnostics
   -XX:+PrintFlagsFinal
   -XX:+UnlockDiagnosticVMOptions
-  -XX:+PrintActiveCpus
   -XshowSettings:vm
 )
 
