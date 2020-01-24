@@ -23,7 +23,7 @@ shipreq_users:
 # ), t3 as (
 #     select extract(epoch from now() - t) t from t2
 # ), ps as (
-#     select unnest(array[1,.9,.8,.7,.6,.5,.4,.3,.2,.1,.05,0]) p
+#     select unnest(array[1,.9,.7,.5,.3,.1,0]) p
 # )
 # select p, percentile_cont(p) within group (order by t) from t3, ps
 # group by p
@@ -31,7 +31,7 @@ shipreq_users:
 shipreq_users_last_login:
   query: >-
     with ps as (
-      select unnest(array[1,.9,.8,.7,.6,.5,.4,.3,.2,.1,.05,0]) p
+      select unnest(array[1,.9,.7,.5,.3,.1,0]) p
     ), ages as (
       select extract(epoch from now() - last_login_at) t from usr where username is not null
     )
@@ -134,7 +134,7 @@ shipreq_db_table:
 shipreq_project_last_access:
   query: >-
     with ps as (
-      select unnest(array[1,.9,.8,.7,.6,.5,.4,.3,.2,.1,.05,0]) p
+      select unnest(array[1,.9,.7,.5,.3,.1,0]) p
     ), ages as (
       select extract(epoch from now() - accessed_at) rw,
              extract(epoch from now() - updated_at) w
