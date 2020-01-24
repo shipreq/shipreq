@@ -1,0 +1,29 @@
+digraph G {
+
+  {rank=same
+
+  marketerdirect [label="direct search for a marketer"]
+  bizcards [label="new business cards"]
+  demo2 [label="revise demo into v2"]
+  autovidtool [label="create tool to create demo videos (?)"]
+  roshares [label="implement R/O shares"]
+
+  }
+
+  socialmedia [label="Broadcast on social media"]
+  ssr [label="blog: scala-graal / SSR"]
+  avoiddemo [label="avoid need for demoing"]
+  marketer [label="find a marketer"]
+  bizcontacts [label="reach out as entrepreneur\nask for advice, involvement\n(jdg, andy's guy, reddit)"]
+  meetups
+  sharevistoolreqs [label="share reqs for vistool"]
+
+
+  bizcards -> meetups
+  marketerdirect,meetups -> marketer
+  marketer -> ssr,socialmedia
+  avoiddemo -> bizcontacts
+  demo2,marketer -> avoiddemo
+  autovidtool -> avoiddemo [style=dashed]
+  roshares -> sharevistoolreqs
+}
