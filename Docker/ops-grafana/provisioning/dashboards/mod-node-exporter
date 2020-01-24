@@ -1,7 +1,0 @@
-#!/bin/bash
-cd "$(dirname "$0")" || exit 1
-
-perl -pi -e '
-  s/"\$\{DS_PROMETHEUS}"/null/g;
-  s/:\$port//g;
-' node-exporter-full_rev15.json

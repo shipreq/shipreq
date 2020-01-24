@@ -15,10 +15,97 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 4,
-  "iteration": 1574221767268,
+  "id": 5,
+  "iteration": 1579829223501,
   "links": [],
   "panels": [
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorPostfix": false,
+      "colorPrefix": false,
+      "colorValue": true,
+      "colors": [
+        "#A352CC",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": null,
+      "decimals": 1,
+      "format": "s",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 0,
+        "y": 0
+      },
+      "id": 31,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "options": {},
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false,
+        "ymax": null,
+        "ymin": null
+      },
+      "tableColumn": "",
+      "targets": [
+        {
+          "expr": "time() - 1575710173",
+          "instant": false,
+          "refId": "A"
+        }
+      ],
+      "thresholds": "",
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "In Production For",
+      "type": "singlestat",
+      "valueFontSize": "80%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "max"
+    },
     {
       "cacheTimeout": null,
       "colorBackground": false,
@@ -40,7 +127,7 @@
       "gridPos": {
         "h": 3,
         "w": 2,
-        "x": 0,
+        "x": 3,
         "y": 0
       },
       "id": 10,
@@ -124,7 +211,7 @@
       "gridPos": {
         "h": 3,
         "w": 2,
-        "x": 2,
+        "x": 5,
         "y": 0
       },
       "id": 12,
@@ -208,7 +295,7 @@
       "gridPos": {
         "h": 3,
         "w": 2,
-        "x": 4,
+        "x": 7,
         "y": 0
       },
       "id": 26,
@@ -292,7 +379,7 @@
       "gridPos": {
         "h": 3,
         "w": 2,
-        "x": 6,
+        "x": 9,
         "y": 0
       },
       "id": 27,
@@ -360,9 +447,9 @@
       "datasource": null,
       "fontSize": "100%",
       "gridPos": {
-        "h": 13,
-        "w": 7,
-        "x": 17,
+        "h": 16,
+        "w": 6,
+        "x": 18,
         "y": 0
       },
       "id": 6,
@@ -492,8 +579,8 @@
       "datasource": null,
       "fontSize": "100%",
       "gridPos": {
-        "h": 4,
-        "w": 12,
+        "h": 5,
+        "w": 11,
         "x": 0,
         "y": 3
       },
@@ -671,10 +758,10 @@
       "datasource": null,
       "fontSize": "100%",
       "gridPos": {
-        "h": 5,
+        "h": 6,
         "w": 12,
         "x": 0,
-        "y": 7
+        "y": 8
       },
       "id": 21,
       "options": {},
@@ -685,6 +772,22 @@
         "desc": false
       },
       "styles": [
+        {
+          "alias": "Cluster",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "ecs_cluster",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
+        },
         {
           "alias": "Instance",
           "colorMode": null,
@@ -706,26 +809,7 @@
           "valueMaps": []
         },
         {
-          "alias": "CPU load (1m)",
-          "colorMode": "cell",
-          "colors": [
-            "rgba(50, 172, 45, 0.97)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(245, 54, 54, 0.9)"
-          ],
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 1,
-          "mappingType": 1,
-          "pattern": "Value #A",
-          "thresholds": [
-            ".85",
-            "1"
-          ],
-          "type": "number",
-          "unit": "percentunit"
-        },
-        {
-          "alias": "CPU load (5m)",
+          "alias": "CPU (1m)",
           "colorMode": "cell",
           "colors": [
             "rgba(50, 172, 45, 0.97)",
@@ -744,7 +828,7 @@
           "unit": "percentunit"
         },
         {
-          "alias": "CPU load (15m)",
+          "alias": "CPU (5m)",
           "colorMode": "cell",
           "colors": [
             "rgba(50, 172, 45, 0.97)",
@@ -763,7 +847,7 @@
           "unit": "percentunit"
         },
         {
-          "alias": "Mem Used",
+          "alias": "CPU (15m)",
           "colorMode": "cell",
           "colors": [
             "rgba(50, 172, 45, 0.97)",
@@ -776,13 +860,13 @@
           "pattern": "Value #D",
           "thresholds": [
             ".85",
-            ".95"
+            "1"
           ],
           "type": "number",
           "unit": "percentunit"
         },
         {
-          "alias": "FDs Used",
+          "alias": "Mem Used",
           "colorMode": "cell",
           "colors": [
             "rgba(50, 172, 45, 0.97)",
@@ -801,6 +885,25 @@
           "unit": "percentunit"
         },
         {
+          "alias": "FDs Used",
+          "colorMode": "cell",
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 1,
+          "mappingType": 1,
+          "pattern": "Value #F",
+          "thresholds": [
+            ".85",
+            ".95"
+          ],
+          "type": "number",
+          "unit": "percentunit"
+        },
+        {
           "alias": "Network errors",
           "colorMode": "cell",
           "colors": [
@@ -811,7 +914,7 @@
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 0,
           "mappingType": 1,
-          "pattern": "Value #F",
+          "pattern": "Value #G",
           "thresholds": [
             "1",
             "10"
@@ -830,7 +933,7 @@
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 0,
           "mappingType": 1,
-          "pattern": "Value #G",
+          "pattern": "Value #H",
           "thresholds": [
             "180",
             "600"
@@ -855,53 +958,59 @@
       ],
       "targets": [
         {
+          "expr": "count by (ecs_cluster, instance) (container_memory_usage_bytes{ecs_cluster=~\".+\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        },
+        {
           "expr": "node_load1 / on(instance) (count (node_cpu_seconds_total{mode=\"idle\"}) by (instance))",
           "format": "table",
           "instant": true,
           "legendFormat": "cpu1",
-          "refId": "A"
+          "refId": "B"
         },
         {
           "expr": "node_load5 / on(instance) (count (node_cpu_seconds_total{mode=\"idle\"}) by (instance))",
           "format": "table",
           "instant": true,
           "legendFormat": "cpu5",
-          "refId": "B"
+          "refId": "C"
         },
         {
           "expr": "node_load15 / on(instance) (count (node_cpu_seconds_total{mode=\"idle\"}) by (instance))",
           "format": "table",
           "instant": true,
           "legendFormat": "cpu15",
-          "refId": "C"
+          "refId": "D"
         },
         {
           "expr": "1 - ((node_memory_MemFree_bytes + node_memory_Cached_bytes + node_memory_Buffers_bytes + node_memory_SReclaimable_bytes) / node_memory_MemTotal_bytes)",
           "format": "table",
           "instant": true,
           "legendFormat": "mem",
-          "refId": "D"
+          "refId": "E"
         },
         {
           "expr": "node_filefd_allocated / node_filefd_maximum",
           "format": "table",
           "instant": true,
           "legendFormat": "fds",
-          "refId": "E"
+          "refId": "F"
         },
         {
           "expr": "sum(\n  increase(node_network_receive_errs_total[$interval]) +\n  increase(node_network_transmit_errs_total[$interval]) +\n  increase(node_network_receive_drop_total[$interval]) +\n  increase(node_network_transmit_drop_total[$interval])\n) by (instance)",
           "format": "table",
           "instant": true,
           "legendFormat": "net",
-          "refId": "F"
+          "refId": "G"
         },
         {
           "expr": "node_time_seconds - on(instance) node_boot_time_seconds",
           "format": "table",
           "instant": true,
           "legendFormat": "uptime",
-          "refId": "G"
+          "refId": "H"
         }
       ],
       "timeFrom": null,
@@ -915,20 +1024,36 @@
       "datasource": null,
       "fontSize": "100%",
       "gridPos": {
-        "h": 4,
-        "w": 7,
+        "h": 7,
+        "w": 10,
         "x": 0,
-        "y": 12
+        "y": 14
       },
       "id": 25,
       "options": {},
       "pageSize": null,
       "showHeader": true,
       "sort": {
-        "col": 5,
+        "col": 1,
         "desc": false
       },
       "styles": [
+        {
+          "alias": "Cluster",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "ecs_cluster",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
         {
           "alias": "Node",
           "colorMode": null,
@@ -962,7 +1087,23 @@
           "unit": "short"
         },
         {
-          "alias": "",
+          "alias": "Used",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "Value #B",
+          "thresholds": [],
+          "type": "number",
+          "unit": "bytes"
+        },
+        {
+          "alias": "Used",
           "colorMode": "cell",
           "colors": [
             "rgba(50, 172, 45, 0.97)",
@@ -972,13 +1113,29 @@
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
           "decimals": 1,
           "mappingType": 1,
-          "pattern": "Value",
+          "pattern": "Value #D",
           "thresholds": [
             ".85",
             ".95"
           ],
           "type": "number",
           "unit": "percentunit"
+        },
+        {
+          "alias": "Capacity",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 0,
+          "mappingType": 1,
+          "pattern": "Value #C",
+          "thresholds": [],
+          "type": "number",
+          "unit": "bytes"
         },
         {
           "alias": "",
@@ -997,10 +1154,28 @@
       ],
       "targets": [
         {
-          "expr": "1 - node_filesystem_free_bytes{fstype!~\"tmpfs|efivarfs\"} / node_filesystem_size_bytes",
+          "expr": "(count by (instance,mountpoint) (node_filesystem_size_bytes{fstype!~\"tmpfs|efivarfs\"})) * on(instance) group_left(ecs_cluster) (count by (ecs_cluster, instance) (container_memory_usage_bytes{ecs_cluster=~\".+\"}) * 0)",
           "format": "table",
           "instant": true,
           "refId": "A"
+        },
+        {
+          "expr": "node_filesystem_size_bytes{fstype!~\"tmpfs|efivarfs\"} - node_filesystem_free_bytes",
+          "format": "table",
+          "instant": true,
+          "refId": "B"
+        },
+        {
+          "expr": "node_filesystem_size_bytes{fstype!~\"tmpfs|efivarfs\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "C"
+        },
+        {
+          "expr": "1 - node_filesystem_free_bytes{fstype!~\"tmpfs|efivarfs\"} / node_filesystem_size_bytes",
+          "format": "table",
+          "instant": true,
+          "refId": "D"
         }
       ],
       "timeFrom": null,
@@ -1014,10 +1189,10 @@
       "datasource": null,
       "fontSize": "100%",
       "gridPos": {
-        "h": 13,
-        "w": 12,
-        "x": 12,
-        "y": 13
+        "h": 20,
+        "w": 10,
+        "x": 14,
+        "y": 16
       },
       "id": 23,
       "options": {},
@@ -1191,10 +1366,10 @@
       "datasource": null,
       "fontSize": "100%",
       "gridPos": {
-        "h": 3,
-        "w": 7,
+        "h": 4,
+        "w": 8,
         "x": 0,
-        "y": 16
+        "y": 21
       },
       "id": 29,
       "options": {},
@@ -1251,7 +1426,7 @@
           "pattern": "Value #B",
           "thresholds": [
             "20",
-            "100"
+            "50"
           ],
           "type": "number",
           "unit": "short"
@@ -1292,19 +1467,19 @@
       ],
       "targets": [
         {
-          "expr": "sum by (job) (logback_appender_total{level=\"info\"})",
+          "expr": "sum by (job) (increase(logback_appender_total{level=~\"[iI].+\"}[$security_window]))",
           "format": "table",
           "instant": true,
           "refId": "A"
         },
         {
-          "expr": "sum by (job) (logback_appender_total{level=\"warn\"})",
+          "expr": "sum by (job) (increase(logback_appender_total{level=~\"[wW].+\"}[$security_window]))",
           "format": "table",
           "instant": true,
           "refId": "B"
         },
         {
-          "expr": "sum by (job) (logback_appender_total{level=~\"[ef].+\"})",
+          "expr": "sum by (job) (increase(logback_appender_total{level=~\"[eEfF].+\"}[$security_window]))",
           "format": "table",
           "instant": true,
           "refId": "C"
@@ -1312,12 +1487,96 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Log Volume",
+      "title": "Logs",
       "transform": "table",
       "type": "table"
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": true,
+      "colorValue": false,
+      "colors": [
+        "rgba(50, 172, 45, 0.97)",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": null,
+      "format": "none",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 2,
+        "x": 8,
+        "y": 21
+      },
+      "id": 33,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "options": {},
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": false,
+        "ymax": null,
+        "ymin": null
+      },
+      "tableColumn": "",
+      "targets": [
+        {
+          "expr": "sum(increase(shipreq_webapp_secure_events_total[$security_window]) or (0 * cadvisor_version_info))",
+          "refId": "A"
+        }
+      ],
+      "thresholds": "10,100",
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Secure Events",
+      "type": "singlestat",
+      "valueFontSize": "80%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "avg"
     }
   ],
-  "schemaVersion": 20,
+  "refresh": "30s",
+  "schemaVersion": 21,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -1327,6 +1586,7 @@
         "auto_count": 30,
         "auto_min": "10s",
         "current": {
+          "selected": false,
           "text": "1m",
           "value": "1m"
         },
@@ -1344,11 +1604,60 @@
         "refresh": 2,
         "skipUrlSync": false,
         "type": "interval"
+      },
+      {
+        "auto": false,
+        "auto_count": 30,
+        "auto_min": "10s",
+        "current": {
+          "selected": false,
+          "text": "1h",
+          "value": "1h"
+        },
+        "hide": 0,
+        "label": null,
+        "name": "security_window",
+        "options": [
+          {
+            "selected": false,
+            "text": "5m",
+            "value": "5m"
+          },
+          {
+            "selected": false,
+            "text": "15m",
+            "value": "15m"
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m"
+          },
+          {
+            "selected": true,
+            "text": "1h",
+            "value": "1h"
+          },
+          {
+            "selected": false,
+            "text": "2h",
+            "value": "2h"
+          },
+          {
+            "selected": false,
+            "text": "4h",
+            "value": "4h"
+          }
+        ],
+        "query": "5m,15m,30m,1h,2h,4h",
+        "refresh": 2,
+        "skipUrlSync": false,
+        "type": "interval"
       }
     ]
   },
   "time": {
-    "from": "now-1m",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {
@@ -1366,7 +1675,7 @@
     ]
   },
   "timezone": "",
-  "title": "HealthNow",
-  "uid": "j8sxC7bZz",
-  "version": 7
+  "title": "Health Now (managed)",
+  "uid": "bZzj8sxC7",
+  "version": 18
 }

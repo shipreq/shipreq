@@ -38,6 +38,20 @@ Intents
   * Breadth: how many requests, unique users
   * Depth: how many interactions/user
 
+* Wall display: show me everything I need or want to see all the time. Assume I'll never login to Grafana unless I see a problem on the wall.
+  * tech
+    * Services up%
+    * min uptime for {webapp,taskman,others}
+    * min node uptime
+    * log volume of {WARN,ERROR}
+  * biz
+    * last login
+    * last write
+    * users: active
+    * users: pending
+    * projects
+    * events
+    * reqs
 
 
 Business metrics
@@ -93,3 +107,15 @@ Metrics pending:
   - customer engagement score
   - landing page reqs
   - avg session time per user
+
+
+Undisplayed metrics
+===================
+
+* jdbc_duration
+* jvm_*
+* shipreq_webapp_eventap: duration, total
+* shipreq_webapp_project_step_duration
+* shipreq_webapp_redis: duration
+* shipreq_webapp_ws: pushes, session dur
+* shipreq_db_table_bytes_total

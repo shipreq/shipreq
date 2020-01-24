@@ -1,0 +1,25 @@
+#!/bin/bash
+cd "$(dirname "$0")" || exit 1
+#cd "$(dirname "$(readlink -e "$0")")" || exit 1
+#[ $# -ne 1 ] && echo "Usage: $0 <xxx>" && exit 1
+#tmp=/tmp/$(date +%Y%m%d-%H%M%S)-$$
+
+[ $# -eq 0 ] && exec "$0" 'Health Past' 'Health Now' Business Wall
+
+first=y
+for f in "$@"; do
+  [ $first = y ] && first=n || echo
+  echo "Updating: $f"
+
+  src="$(find ~/Downloads -maxdepth 1 -name "$f-*.json" -printf "%T@ %p\n" | sort -n | tail -1 | sed 's/^[^ ]* //' )"
+  echo "  source: $src"
+
+  tgt="provisioning/dashboards/$f.json"
+  echo "  target: $tgt"
+
+  echo
+  cat "$src" \
+    | jq -S '.title = "'"$f (managed)"'"' \
+    > "$tgt"
+
+done
