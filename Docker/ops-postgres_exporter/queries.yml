@@ -3,11 +3,11 @@
 
 shipreq_users:
   query: >-
-    select 'public' owner_type, 'n' registered, count(1) total from usr where username is null
+    select 'public' user_type, 'n' registered, count(1) total from usr where username is null
     union all
     select user_type_by_username(username), 'y', count(1) from usr where username is not null group by user_type_by_username(username)
   metrics:
-  - owner_type:
+  - user_type:
       usage: LABEL
   - registered:
       usage: LABEL
@@ -35,15 +35,15 @@ shipreq_users_last_login:
     with ps as (
       select unnest(array[1,.9,.7,.5,.3,.1,0]) p
     ), ages as (
-      select user_type_by_username(username) owner_type, extract(epoch from now() - last_login_at) t
+      select user_type_by_username(username) user_type, extract(epoch from now() - last_login_at) t
       from usr
       where username is not null
     )
-    select owner_type, (p*100)::smallint as p, percentile_cont(p) within group (order by t) seconds_ago
+    select user_type, (p*100)::smallint as p, percentile_cont(p) within group (order by t) seconds_ago
     from ages, ps
-    group by p, owner_type
+    group by p, user_type
   metrics:
-  - owner_type:
+  - user_type:
       usage: LABEL
   - p:
       usage: LABEL
@@ -52,24 +52,24 @@ shipreq_users_last_login:
 
 shipreq_users_last_login_seconds:
   query: >-
-    select user_type_by_username(username) owner_type, count(1) ago_count
+    select user_type_by_username(username) user_type, count(1) ago_count
     from usr
     where username is not null
     group by user_type_by_username(username)
   metrics:
-  - owner_type:
+  - user_type:
       usage: LABEL
   - ago_count:
       usage: GAUGE
 
 shipreq_users_last_login_seconds_ago:
   query: >-
-    select user_type_by_username(username) owner_type, coalesce(sum(extract(epoch from now() - last_login_at)),0) sum
+    select user_type_by_username(username) user_type, coalesce(sum(extract(epoch from now() - last_login_at)),0) sum
     from usr
     where username is not null
     group by user_type_by_username(username)
   metrics:
-  - owner_type:
+  - user_type:
       usage: LABEL
   - sum:
       usage: GAUGE
