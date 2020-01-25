@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 12,
-  "iteration": 1579829472951,
+  "iteration": 1579933601033,
   "links": [],
   "panels": [
     {
@@ -840,30 +840,30 @@
       "pluginVersion": "6.5.2",
       "targets": [
         {
-          "expr": "avg_over_time(shipreq_users_total{registered=\"n\"}[$__interval])",
+          "expr": "avg_over_time(shipreq_users_total{user_type=\"public\",registered=\"n\"}[$__interval])",
           "hide": false,
           "legendFormat": "pending users",
           "refId": "E"
         },
         {
-          "expr": "avg_over_time(shipreq_users_total{registered=\"y\"}[$__interval])",
+          "expr": "avg_over_time(shipreq_users_total{user_type=\"public\",registered=\"y\"}[$__interval])",
           "legendFormat": "registered users",
           "refId": "D"
         },
         {
-          "expr": "avg_over_time(shipreq_projects_total[$__interval])",
+          "expr": "avg_over_time(shipreq_projects_total{owner_type=\"public\"}[$__interval])",
           "instant": true,
           "legendFormat": "projects",
           "refId": "A"
         },
         {
-          "expr": "avg_over_time(shipreq_events_total{initial=\"n\"}[$__interval])",
+          "expr": "avg_over_time(shipreq_events_total{owner_type=\"public\",initial=\"n\"}[$__interval])",
           "instant": true,
           "legendFormat": "events",
           "refId": "B"
         },
         {
-          "expr": "sum (avg_over_time(shipreq_reqs_total[$__interval]))",
+          "expr": "sum (avg_over_time(shipreq_reqs_total{owner_type=\"public\"}[$__interval]))",
           "instant": true,
           "legendFormat": "reqs",
           "refId": "C"
@@ -939,7 +939,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "max_over_time(shipreq_daily_logins_total{unique_user=\"y\"}[$time_range])",
+          "expr": "max_over_time(shipreq_daily_logins_total{user_type=\"public\",unique_user=\"y\"}[$time_range])",
           "instant": true,
           "refId": "A"
         }
@@ -1109,7 +1109,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "min(avg_over_time(shipreq_users_last_login_seconds_ago[$__interval]))",
+          "expr": "min(avg_over_time(shipreq_users_last_login_seconds_ago{user_type=\"public\"}[$__interval]))",
           "instant": true,
           "refId": "A"
         }
@@ -1194,7 +1194,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "min(avg_over_time(shipreq_project_last_access_seconds_ago{access=\"w\"}[$__interval]))",
+          "expr": "min(avg_over_time(shipreq_project_last_access_seconds_ago{owner_type=\"public\",access=\"w\"}[$__interval]))",
           "instant": true,
           "refId": "A"
         }
@@ -1268,5 +1268,5 @@
   "timezone": "",
   "title": "Wall (managed)",
   "uid": "zfaQ1OsWk",
-  "version": 12
+  "version": 14
 }

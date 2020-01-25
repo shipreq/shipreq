@@ -16,6 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 6,
+  "iteration": 1579929729533,
   "links": [],
   "panels": [
     {
@@ -62,7 +63,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "avg_over_time(shipreq_users_total[$__interval])",
+          "expr": "sum by (registered) (avg_over_time(shipreq_users_total{user_type=~\"$user_type\"}[$__interval]))",
           "legendFormat": "registered={{registered}}",
           "refId": "A"
         }
@@ -153,7 +154,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "avg_over_time(shipreq_projects_total[$__interval])",
+          "expr": "sum(avg_over_time(shipreq_projects_total{owner_type=~\"$user_type\"}[$__interval]))",
           "legendFormat": "total",
           "refId": "A"
         }
@@ -244,13 +245,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "avg_over_time(shipreq_events_total{initial=\"y\"}[$__interval])",
+          "expr": "sum(avg_over_time(shipreq_events_total{owner_type=~\"$user_type\",initial=\"y\"}[$__interval]))",
           "hide": true,
           "legendFormat": "initial",
           "refId": "A"
         },
         {
-          "expr": "avg_over_time(shipreq_events_total{initial=\"n\"}[$__interval])",
+          "expr": "sum(avg_over_time(shipreq_events_total{owner_type=~\"$user_type\",initial=\"n\"}[$__interval]))",
           "hide": false,
           "legendFormat": "user",
           "refId": "B"
@@ -342,18 +343,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum (avg_over_time(shipreq_reqs_total{live=\"n\"}[$__interval]))",
+          "expr": "sum (avg_over_time(shipreq_reqs_total{owner_type=~\"$user_type\",live=\"n\"}[$__interval]))",
           "hide": false,
           "legendFormat": "dead",
           "refId": "B"
         },
         {
-          "expr": "sum (avg_over_time(shipreq_reqs_total{live=\"y\"}[$__interval]))",
+          "expr": "sum (avg_over_time(shipreq_reqs_total{owner_type=~\"$user_type\",live=\"y\"}[$__interval]))",
           "legendFormat": "live",
           "refId": "A"
         },
         {
-          "expr": "sum (avg_over_time(shipreq_reqs_total[$__interval]))",
+          "expr": "sum (avg_over_time(shipreq_reqs_total{owner_type=~\"$user_type\"}[$__interval]))",
           "legendFormat": "total",
           "refId": "C"
         }
@@ -445,12 +446,14 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "max_over_time(shipreq_daily_logins_total{unique_user=\"n\"}[$__interval])",
+          "expr": "max_over_time(shipreq_daily_logins_total{user_type=~\"$user_type\",unique_user=\"n\"}[$__interval])",
+          "hide": false,
           "legendFormat": "total",
           "refId": "A"
         },
         {
-          "expr": "max_over_time(shipreq_daily_logins_total{unique_user=\"y\"}[$__interval])",
+          "expr": "sum(max_over_time(shipreq_daily_logins_total{user_type=~\"$user_type\",unique_user=\"y\"}[$__interval]))",
+          "hide": false,
           "legendFormat": "unique",
           "refId": "B"
         }
@@ -542,12 +545,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "max_over_time(shipreq_daily_project_reads_total{access=\"rw\",unique_project=\"n\"}[$__interval])",
+          "expr": "max_over_time(shipreq_daily_project_reads_total{owner_type=~\"$user_type\",access=\"rw\",unique_project=\"n\"}[$__interval])",
+          "hide": false,
           "legendFormat": "total",
           "refId": "A"
         },
         {
-          "expr": "max_over_time(shipreq_daily_project_reads_total{access=\"rw\",unique_project=\"y\"}[$__interval])",
+          "expr": "sum(max_over_time(shipreq_daily_project_reads_total{owner_type=~\"$user_type\",access=\"rw\",unique_project=\"y\"}[$__interval]))",
           "legendFormat": "unique",
           "refId": "B"
         }
@@ -639,7 +643,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "avg_over_time(shipreq_users_last_login_seconds_ago[$__interval])",
+          "expr": "avg_over_time(shipreq_users_last_login_seconds_ago{user_type=~\"$user_type\"}[$__interval])",
           "legendFormat": "p{{p}}",
           "refId": "B"
         }
@@ -731,7 +735,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "avg_over_time(shipreq_project_last_access_seconds_ago{access=\"rw\"}[$__interval])",
+          "expr": "avg_over_time(shipreq_project_last_access_seconds_ago{owner_type=~\"$user_type\",access=\"rw\"}[$__interval])",
           "legendFormat": "p{{p}}",
           "refId": "B"
         }
@@ -784,7 +788,42 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": false,
+          "tags": [],
+          "text": "public",
+          "value": "public"
+        },
+        "hide": 0,
+        "includeAll": true,
+        "label": null,
+        "multi": false,
+        "name": "user_type",
+        "options": [
+          {
+            "selected": false,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": true,
+            "text": "public",
+            "value": "public"
+          },
+          {
+            "selected": false,
+            "text": "staff",
+            "value": "staff"
+          }
+        ],
+        "query": "public,staff",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
   },
   "time": {
     "from": "now-7d",
@@ -807,5 +846,5 @@
   "timezone": "",
   "title": "Business (managed)",
   "uid": "GvrK4Y-Wk",
-  "version": 15
+  "version": 18
 }
