@@ -10,7 +10,6 @@ Backlog
 * Cfg Fields
 * Cfg Issues
 * Cfg ReqTypes
-* Cfg Tags
 
 ### Data design
 * Extract string table so that project structure can be cached separately from project textual content?
@@ -66,19 +65,19 @@ Backlog
 
 
 ------------------------------------------------------------------------------------------------------------------------
-Phase 2B
+Phase 2C
 ========
 
-### New Features
 * User profile page
 
-### Other
+* Redo tag config screen - prop panel on right
 
 * Add to imp graph page:
   * Saved views
   * Filter
   * Content summary
   * Configure display (eg. id + title, just title, add tags?)
+  * Graph direction: TD / LR
 
 * Copy to clipboard from cells in Req{Table,Detail}
 
@@ -89,3 +88,18 @@ Phase 2B
   Maybe a dynamic approach that compares versions, or maybe a migration task
   that adds a new event to everyone's projects to do the rename once when the
   new version is deployed.
+
+* Two paths...
+
+  1. B2C/OSS
+    * github integration
+    * git integration
+    * anon shares
+    * img graph improvements for next-task/progress tracking
+    * public API
+
+  2. B2B
+    * multi user
+    * audit trail (global)
+    * audit trail (per req)
+    * notifications
