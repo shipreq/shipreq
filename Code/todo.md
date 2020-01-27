@@ -5,7 +5,6 @@ Backlog
 * Keyboard nav for ReqTablePage (not just the table) (?)
 * Show past IDs in ReqTable
 * Group req types in filter from ALL to ANY.
-* Say "no implications" in imp graph
 
 ### Nice UI
 * Cfg Fields
@@ -28,7 +27,6 @@ Backlog
 * Add LastUpdated field to ReqTable/Detail
 * Add Change Count field to ReqTable/Detail (help find most volatile/unstable reqs)
 * Allow refs to custom text fields (e.g. [UC-1.detail])
-* Warn when closing page and there are open, dirty editors
 * Add KB shortcut to move colums in ReqTable
 
 ### User-affecting
