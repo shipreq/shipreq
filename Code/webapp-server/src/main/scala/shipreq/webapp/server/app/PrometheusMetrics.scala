@@ -306,7 +306,7 @@ object PrometheusMetrics extends HasLogger {
             else if (endpoint == Endpoint.Metrics)
               () // /ops/metrics writes directly to output without calculating size - ignore for now
             else
-              logger.warn(s"No Content-Length for request: ${req.getMethod} ${req.getRequestURI} ${resp.getStatus}")
+              logger.info(s"No Content-Length for request: ${req.getMethod} ${req.getRequestURI} ${resp.getStatus}")
           case ParseLong(len) =>
             if (len > 0)
               HttpIO(CommDir.Send).inc(len)
