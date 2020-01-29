@@ -83,6 +83,8 @@ Phase 2C
 
 * Copy to clipboard from cells in Req{Table,Detail}
 
+* Reappearances wrt tags
+
 * Allow system to add new field/columns in future without breaking existing projects.
   eg. User adds a "Last Updated" custom field, later ShipReq provides an auto-populated
   column with the same name. System needs a way to rename user's field without
@@ -124,4 +126,11 @@ Phase 2C
     * global/per req
     * open project at revision x in R/O mode
     * diff between revisions
-  * multi user notification / change tracking
+    * tag/baseline
+  * multi user
+    * notification / change tracking
+    * personal vs global saved views? impact on audit trail.
+      maybe store views as Map[Option[UserId], List[SavedView]], just show "X created a personal saved view" in public audit trail
+    * new filters: {createdBy,updatedBy,containsRefTo} {me,@blah}
+    * refs to users in rich text
+  * Common workflows
