@@ -46,7 +46,7 @@ object LandingPage {
       <.div(
         <.img(*.banner, ^.src := AssetManifest.shipreqBannerSvg, ^.alt := WebappConfig.appName)),
       <.div(*.tagline,
-        "Ship better products with better requirements."))
+        "Ship quality products with quality requirements."))
 
   private val yap = ScalaComponent.static("")(
     <.div(*.yap,
