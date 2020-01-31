@@ -282,9 +282,7 @@ object NewEditor {
 
       val pxCustomReqTypes = ReqTypeSelector.pxCustomReqTypes(pxProject)
 
-      val potentialValueAcceptor = PotentialValueAcceptor.rejectAll
-
-      def apply(id: GenericReqId): InitFn = ictx => Internal.init(potentialValueAcceptor) { ivo => args =>
+      def apply(id: GenericReqId): InitFn = ictx => args => {
         import ictx._, ctx._
 
         case class State(initialValue: Some[RT],
@@ -314,20 +312,32 @@ object NewEditor {
             Some(ClipboardData(PlainText.reqTypeFull(ss.value)))
 
           override def setPotentialValue(p: PotentialValue): Option[Callback] =
-            potentialValueAcceptor.accept(p).map(ss.setState)
+            Some {
+              for {
+                choices <- pxChoices.toCallback
+                pva      = ReqTypeSelector.potentialValueAcceptor(choices.whole)
+                _       <- pva.accept(p).map(ss.setState).getOrEmpty
+              } yield ()
+            }
         }
 
         val (abort, commitFn) =
           makeAbortCommitFn(sspUpdateContent)((t: RT) => UpdateContentCmd.SetGenericReqType(id, t.id), args.hooks)
 
         for {
-          _       <- CallbackOption.require(ivo.isEmpty)
-          req     <- getGenericReq(id)
-          initial <- getCustomReqTypeCB(req.reqTypeId)
-        } yield {
-          val pxChoices = ReqTypeSelector.pxChoices(initial, pxCustomReqTypes)
-          State(Some(initial), initial, pxChoices, abort, commitFn)
-        }
+          req      <- getGenericReq(id)
+          current  <- getCustomReqTypeCB(req.reqTypeId)
+          pxChoices = ReqTypeSelector.pxChoices(current, pxCustomReqTypes)
+          initial  <- args.potentialValue match {
+                        case None     => CallbackOption.pure(current)
+                        case Some(pv) =>
+                          for {
+                            choices <- pxChoices.toCallback.toCBO
+                            pva      = ReqTypeSelector.potentialValueAcceptor(choices.whole)
+                            i       <- CallbackOption.liftOption(pva.accept(pv))
+                          } yield i
+                      }
+        } yield State(Some(current), initial, pxChoices, abort, commitFn)
       }
     }
 
