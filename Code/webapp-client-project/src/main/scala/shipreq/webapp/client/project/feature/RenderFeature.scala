@@ -28,10 +28,10 @@ object RenderFeature {
     private val useCases     = project.content.reqs.useCases
 
     private def forData0[FK <: FieldKey](render: FK => Out) =
-      ForData[Ctx, FK, Out](reusableSelf.withValue(render))
+      ForFields[Ctx, FK, Out](reusableSelf.withValue(render))
 
     private def forData1[A: Reusability : ClassTag, FK <: FieldKey](a: A)(render: FK => Out) =
-      ForData[Ctx, FK, Out](reusableSelf.tuple(Reusable.implicitly(a)).withValue(render))
+      ForFields[Ctx, FK, Out](reusableSelf.tuple(Reusable.implicitly(a)).withValue(render))
 
     def forCodeGroup(rcg: CodeGroup): ForCodeGroup[Ctx, Out] = {
       lazy val code = project.content.reqCodes.reqCode(rcg.id)
@@ -63,20 +63,20 @@ object RenderFeature {
       }
   }
 
-  final case class ForData[Ctx <: PCtx, -FK <: FieldKey, Out](renderFn: FK ~=> Out) {
+  final case class ForFields[Ctx <: PCtx, -FK <: FieldKey, Out](renderFn: FK ~=> Out) {
     @inline def apply(fk: FK): Out = renderFn(fk)
   }
 
-  type ForCodeGroup   [Ctx <: PCtx, Out] = ForData[Ctx, FieldKey.ForCodeGroup , Out]
-  type ForGenericReq  [Ctx <: PCtx, Out] = ForData[Ctx, FieldKey.ForGenericReq, Out]
-  type ForReq         [Ctx <: PCtx, Out] = ForData[Ctx, FieldKey.ForSomeReq   , Out]
-  type ForUseCase     [Ctx <: PCtx, Out] = ForData[Ctx, FieldKey.ForUseCase   , Out]
-  type ForUseCaseSteps[Ctx <: PCtx, Out] = ForData[Ctx, FieldKey.UseCaseStep  , Out]
-  type ForManualIssue [Ctx <: PCtx, Out] = ForData[Ctx, FieldKey.ManualIssue  , Out]
+  type ForCodeGroup   [Ctx <: PCtx, Out] = ForFields[Ctx, FieldKey.ForCodeGroup , Out]
+  type ForGenericReq  [Ctx <: PCtx, Out] = ForFields[Ctx, FieldKey.ForGenericReq, Out]
+  type ForReq         [Ctx <: PCtx, Out] = ForFields[Ctx, FieldKey.ForSomeReq   , Out]
+  type ForUseCase     [Ctx <: PCtx, Out] = ForFields[Ctx, FieldKey.ForUseCase   , Out]
+  type ForUseCaseSteps[Ctx <: PCtx, Out] = ForFields[Ctx, FieldKey.UseCaseStep  , Out]
+  type ForManualIssue [Ctx <: PCtx, Out] = ForFields[Ctx, FieldKey.ManualIssue  , Out]
 
   sealed trait TypeHelpers[Ctx <: PCtx, Out] {
     final type ForProject                = RenderFeature.ForProject     [Ctx, Out]
-    final type ForField[FK <: FieldKey]  = RenderFeature.ForData        [Ctx, FK, Out]
+    final type ForField[FK <: FieldKey]  = RenderFeature.ForFields        [Ctx, FK, Out]
     final type ForCodeGroup              = RenderFeature.ForCodeGroup   [Ctx, Out]
     final type ForGenericReq             = RenderFeature.ForGenericReq  [Ctx, Out]
     final type ForReq                    = RenderFeature.ForReq         [Ctx, Out]
@@ -95,6 +95,6 @@ object RenderFeature {
   implicit def reusabilityForProject[Ctx <: PCtx, Out]: Reusability[ForProject[Ctx, Out]] =
     Reusability.byRef || Reusability.derive
 
-  implicit def reusabilityForData[Ctx <: PCtx, FK <: FieldKey, Out]: Reusability[ForData[Ctx, FK, Out]] =
+  implicit def reusabilityForData[Ctx <: PCtx, FK <: FieldKey, Out]: Reusability[ForFields[Ctx, FK, Out]] =
     Reusability.byRef || Reusability.derive
 }
