@@ -13,7 +13,7 @@ import shipreq.webapp.base.event.EventSeqSummary
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.base.text.{PlainText, TextSearch}
+import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.base.ui.{FeedbackModal, ProjectItem}
 import shipreq.webapp.client.project.app.state._
 import shipreq.webapp.client.project.app._
@@ -94,7 +94,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     private val pxViewReqDataCache =
       pxProject.map(ViewReqDataCache.apply)
 
-    private val pxViewReqCache =
+    private val pxViewReqCache: Px[ViewReqCache.ToVdom[ProjectText.Context.None]] =
       Px.apply2(pxViewReqDataCache, pxProjectWidgets)(ViewReqCache.apply)
 
     private val pxRenderFeature =

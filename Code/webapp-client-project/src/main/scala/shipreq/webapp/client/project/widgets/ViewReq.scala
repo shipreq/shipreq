@@ -2,81 +2,81 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.utils.Memo
-import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.vdom.html_<^.VdomTag
 import scala.collection.immutable.SortedSet
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.base.text.{PlainText, ProjectText}
 import shipreq.webapp.client.project.feature.EditorFeature
 import ViewReq._
 
 /**
   * Easy means to view/render a requirement.
   */
-final case class ViewReq(data           : Data,
-                         pw             : ProjectWidgets.AnyCtx,
-                         fmtReqTypeShort: Boolean) {
+final case class ViewReq[A](data           : Data,
+                            pt             : ProjectText[ProjectText.Context, A],
+                            fmtReqTypeShort: Boolean) {
 
-  def reqType: VdomElement = {
+  def reqType: A = {
     val id = data.req.reqTypeId
     if (fmtReqTypeShort)
-      pw.reqTypeShort(id)
+      pt.reqTypeShort(id)
     else
-      pw.reqTypeFull(id)
+      pt.reqTypeFull(id)
   }
 
-  def codes: VdomElement =
-    <.div(pw.reqCodes(data.codes))
+  def codes: A =
+    pt.reqCodes(data.codes)
 
-  def imps(dir: Direction): VdomElement = {
+  def imps(dir: Direction): A = {
     val imps      = data.generalImps(dir)
     val mandatory = Mandatory.when(data.impsAreMandatory && dir.is(Backwards))
-    pw.implicationList(imps, data.live, mandatory)
+    pt.implicationList(imps, data.live, mandatory)
   }
 
-  def imps(id: CustomField.Implication.Id): VdomElement = {
+  def imps(id: CustomField.Implication.Id): A = {
     val imps      = data.customImps(id)
     val mandatory = Mandatory.when(data.mandatoryFields.contains(id))
-    pw.implicationList(imps, data.live, mandatory)
+    pt.implicationList(imps, data.live, mandatory)
   }
 
-  def imps(scope: ImplicationScope): VdomElement =
+  def imps(scope: ImplicationScope): A =
     scope.fold(imps(_), imps(_))
 
-  def deletionReason: IfApplicable[VdomTag] =
-    pw.deleteReasonForReq(data.req)
+  def deletionReason: IfApplicable[A] =
+    pt.deleteReasonForReq(data.req)
 
-  def pastPubids: VdomElement =
-    pw pastPubids data.pastPubids
+  def pastPubids: A =
+    pt pastPubids data.pastPubids
 
   private val tagValidity: ApplicableTagId => Validity =
     Invalid when data.conflictingTags.contains(_)
 
-  def tags: VdomElement =
-    pw.tagList(data.generalTags, data.live, Mandatory.Not, tagValidity)
+  def tags: A =
+    pt.tagList(data.generalTags, data.live, Mandatory.Not, tagValidity)
 
-  def tags(id: CustomField.Tag.Id): VdomElement = {
+  def tags(id: CustomField.Tag.Id): A = {
     val tags      = data.customTags(id)
     val mandatory = Mandatory.when(data.mandatoryFields.contains(id))
-    pw.tagList(tags, data.live, mandatory, tagValidity)
+    pt.tagList(tags, data.live, mandatory, tagValidity)
   }
 
-  def tags(id: Option[CustomField.Tag.Id]): VdomElement =
+  def tags(id: Option[CustomField.Tag.Id]): A =
     id.fold(tags)(tags(_))
 
-  def text(id: CustomField.Text.Id): VdomElement =
-    pw.customTextField(id, data.req, data.live, Mandatory.when(data.mandatoryFields.contains(id)))
+  def text(id: CustomField.Text.Id): A =
+    pt.customTextField(id, data.req, data.live, Mandatory.when(data.mandatoryFields.contains(id)))
 
-  def title: VdomElement =
-    pw.reqTitle(data.req)
+  def title: A =
+    pt.reqTitle(data.req)
 
-  val customField: CustomFieldId => VdomElement = {
+  val customField: CustomFieldId => A = {
     case id: CustomField.Implication.Id => imps(id)
     case id: CustomField.Tag        .Id => tags(id)
     case id: CustomField.Text       .Id => text(id)
   }
 
-  val editable: EditorFeature.FieldKey.ForSomeReq => VdomElement = {
+  val editable: EditorFeature.FieldKey.ForSomeReq => A = {
     case EditorFeature.FieldKey.CustomTextField(field) => text(field)
     case EditorFeature.FieldKey.Tags           (field) => tags(field)
     case EditorFeature.FieldKey.Implications   (scope) => imps(scope)
@@ -91,6 +91,8 @@ final case class ViewReq(data           : Data,
 
 object ViewReq {
 
+  type ToVdom = ViewReq[VdomTag]
+
   final case class Data(req             : Req,
                         live            : Live,
                         codes           : Traversable[ReqCode.Value],
@@ -103,8 +105,8 @@ object ViewReq {
                         impsAreMandatory: Boolean,
                         mandatoryFields : CustomField.Lists) {
 
-    def apply(pw: ProjectWidgets.AnyCtx): ViewReq =
-      ViewReq(this, pw, true)
+    def apply[A](pt: ProjectText[ProjectText.Context, A]): ViewReq[A] =
+      ViewReq(this, pt, true)
   }
 
   object Data {

@@ -14,13 +14,13 @@ object RenderFeature {
   val  FieldKey = editor.FieldKey
 
   def prepare[Ctx <: PCtx](project     : Project,
-                           viewReqCache: ViewReqCache[Ctx],
+                           viewReqCache: ViewReqCache.ToVdom[Ctx],
                            pw          : ProjectWidgets[Ctx]): FilterDead => ForProject[Ctx] =
     FilterDead.memo(ForProject(project, _, viewReqCache, pw))
 
   final case class ForProject[Ctx <: PCtx](private[RenderFeature] project     : Project,
                                            private[RenderFeature] filterDead  : FilterDead,
-                                           private[RenderFeature] viewReqCache: ViewReqCache[Ctx],
+                                           private[RenderFeature] viewReqCache: ViewReqCache.ToVdom[Ctx],
                                            private[RenderFeature] pw          : ProjectWidgets[Ctx]) {
 
     private val reusableSelf = Reusable.explicitly(this)(reusabilityForProject[Ctx])

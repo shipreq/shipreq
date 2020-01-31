@@ -10,6 +10,9 @@ object DataReusability extends shipreq.webapp.base.lib.DataReusability {
   implicit def reusabilitySvg: Reusability[Svg] =
     Reusability.derive
 
+  implicit def reusabilityProjectText[C <: ProjectText.Context, A]: Reusability[ProjectText[C, A]] =
+    Reusability.byRef
+
   implicit def reusabilityProjectWidgets[C <: ProjectText.Context]: Reusability[ProjectWidgets[C]] =
     Reusability.byRef
 
