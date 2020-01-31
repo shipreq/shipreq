@@ -65,12 +65,7 @@ final case class ViewReq(data           : Data,
     id.fold(tags)(tags(_))
 
   def text(id: CustomField.Text.Id): VdomElement =
-    pw.customTextField(id)(data.req).getOrElse[VdomTag] {
-      if (data.live.is(Live) && data.mandatoryFields.contains(id))
-        ProjectWidgets.blankButMandatory
-      else
-        ProjectWidgets.emptySpan
-    }
+    pw.customTextField(id, data.req, data.live, Mandatory.when(data.mandatoryFields.contains(id)))
 
   def title: VdomElement =
     pw.reqTitle(data.req)

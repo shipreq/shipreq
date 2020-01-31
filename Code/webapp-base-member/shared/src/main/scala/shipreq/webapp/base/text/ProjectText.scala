@@ -115,6 +115,8 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
 
   protected def deletionReasonWhenReqTypeIsDead(rt: ReqType): Out
 
+  protected def emptyText: Out
+
   /** A single element in the set of flow sources/targets.
    *
    * eg. [This in an example step --> 2.0.1, 2.0.4]
@@ -175,7 +177,15 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
     Memo.by((_: CodeGroup).id)(g =>
       text(g.title, g.live, Mandatory.Not))
 
-  final val customTextField: CustomField.Text.Id => Req => Option[Out] =
+  final def customTextField(id: CustomField.Text.Id, req: Req, live: Live, mandatory: Mandatory): Out =
+    customTextFieldOption(id)(req).getOrElse[Out] {
+      if (live.is(Live) && mandatory.is(Mandatory))
+        whenBlankButMandatory
+      else
+        emptyText
+    }
+
+  final val customTextFieldOption: CustomField.Text.Id => Req => Option[Out] =
     Memo { fid =>
       project.content.reqText.get(fid) match {
         case Some(m) =>

@@ -115,6 +115,8 @@ object PlainText {
     override protected def deletionReasonWhenReqTypeIsDead(rt: ReqType): String =
       UiText.ColumnNames.reqType + " " + rt.mnemonic.value + " is deleted."
 
+    override protected def emptyText = ""
+
     override protected val useCaseFlowElement: UseCaseStep.Focus => String =
       useCaseStepLabel
 

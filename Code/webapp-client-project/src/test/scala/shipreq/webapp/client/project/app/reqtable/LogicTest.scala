@@ -189,7 +189,7 @@ object LogicTest extends TestSuite {
     rowToStr(r => f(r).ifelse(_.isEmpty, _z, _ map g(r) mkString ","), _z)
 
   private def rowToCustomText(pt: PlainText.ForProject.NoCtx, id: CustomField.Text.Id): Row => String = {
-    val f = pt.customTextField(id)
+    val f = pt.customTextFieldOption(id)
     rowToStr(r => f(r.req) getOrElse z, _z)
   }
 

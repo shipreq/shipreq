@@ -102,6 +102,9 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
       reqTypeShort(rt.reqTypeId),
       " is deleted.")
 
+  override protected def emptyText =
+    ProjectWidgets.emptySpan
+
   override protected val useCaseFlowElement: UseCaseStep.Focus => VdomTag =
     Memo.by((_: UseCaseStep.Focus).id)(
       mkUseCaseStep((base, ld, label) =>

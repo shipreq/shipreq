@@ -103,7 +103,7 @@ object Sorter {
 
   def customTextFieldSorter(id: CustomField.Text.Id, c: Column): SorterForSMCB =
     textSorter(c, p => {
-      case r: Row.ForReq       => p.customTextField(id)(r.req) getOrElse ""
+      case r: Row.ForReq       => p.customTextFieldOption(id)(r.req) getOrElse ""
       case _: Row.ForCodeGroup => ""
     })
 

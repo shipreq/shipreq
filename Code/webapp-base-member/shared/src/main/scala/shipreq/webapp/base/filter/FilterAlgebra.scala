@@ -270,7 +270,7 @@ object FilterAlgebra {
       make(
         r => {
           def title  = m(projectText reqTitle r)
-          def custom = p.config.liveCustomTextFields.exists(f => projectText.customTextField(f.id)(r) exists m)
+          def custom = p.config.liveCustomTextFields.exists(f => projectText.customTextFieldOption(f.id)(r) exists m)
           title || custom
         },
         g => m(projectText codeGroupTitle g),
