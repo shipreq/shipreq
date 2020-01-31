@@ -17,8 +17,13 @@ final case class ViewReq(data           : Data,
                          pw             : ProjectWidgets.AnyCtx,
                          fmtReqTypeShort: Boolean) {
 
-  def reqType: VdomElement =
-    (if (fmtReqTypeShort) pw.reqTypeShort else pw.reqTypeFull)(data.req.reqTypeId)
+  def reqType: VdomElement = {
+    val id = data.req.reqTypeId
+    if (fmtReqTypeShort)
+      pw.reqTypeShort(id)
+    else
+      pw.reqTypeFull(id)
+  }
 
   def codes: VdomElement =
     <.div(pw.reqCodes(data.codes))

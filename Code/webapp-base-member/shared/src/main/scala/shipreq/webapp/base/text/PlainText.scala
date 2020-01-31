@@ -1,7 +1,9 @@
 package shipreq.webapp.base.text
 
 import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.utils.Memo
 import scala.annotation.tailrec
+import scala.collection.immutable.SortedSet
 import shipreq.base.util._
 import shipreq.base.util.SafeStringOps._
 import shipreq.base.util.univeq._
@@ -28,14 +30,15 @@ object PlainText {
       apply(p, ProjectText.Context.None)
   }
 
-  def reqCodeIndentation(is: NonEmptyVector[ReqCodeTreeItem.Indent]): String = {
-    import ReqCodeTreeItem._
-    val I = "│"
-    is.reduceMapLeft1({
-      case IndentChild    => I
-      case IndentSpace(l) => I ~ (" " * (l - 1))
-    })(_ ~ ' ' ~ _)
-  }
+  val reqCodeIndentation: NonEmptyVector[ReqCodeTreeItem.Indent] => String =
+    Memo { is =>
+      import ReqCodeTreeItem._
+      val I = "│"
+      is.reduceMapLeft1({
+        case IndentChild    => I
+        case IndentSpace(l) => I ~ (" " * (l - 1))
+      })(_ ~ ' ' ~ _)
+    }
 
   def reqCodeTreeItem(ti: ReqCodeTreeItem): String =
     NonEmptyVector.option(ti.indent) match {
@@ -93,11 +96,17 @@ object PlainText {
 
   final class ForProject[+Ctx <: ProjectText.Context](p: Project, ctx: Ctx) extends ProjectText[Ctx, String](p, ctx) {
 
-    def withCtx[Ctx2 <: ProjectText.Context](newCtx: Ctx2): ForProject[Ctx2] =
+    override def withCtx[Ctx2 <: ProjectText.Context](newCtx: Ctx2): ForProject[Ctx2] =
       if (newCtx ==* ctx)
         this.asInstanceOf[ForProject[Ctx2]]
       else
         ForProject(p, newCtx)
+
+    override protected def _implicationList(ids: Vector[Pubid]): String =
+      ids.iterator.map(pubid(_, p)).mkString(", ")
+
+    override protected def _tagList(ids: Vector[ApplicableTagId], validity: ApplicableTagId => Validity): String =
+      ids.iterator.map(p.config.tags.atag(_).key.value).mkString(" ")
 
     override protected def _text(text: Text.AnyOptional, live: Live): String =
       nestedText("", "\n\n", live, text)
@@ -219,6 +228,28 @@ object PlainText {
     // Keep in sync with ProjectWidgets because it's used together for sorting/rendering in ReqTable
     override protected def deletionReasonWhenReqTypeIsDead(rt: ReqType): String =
       UiText.ColumnNames.reqType + " " + rt.mnemonic.value + " is deleted."
-  }
 
+    override def pastPubids(ids: SortedSet[ExternalPubid]): String =
+      ids.iterator.map(pubid(_)).mkString(", ")
+
+    override def reqCode(c: ReqCode.Value): String =
+      PlainText.reqCode(c)
+
+    override def reqCodes(reqCodes: TraversableOnce[ReqCode.Value]): String =
+      reqCodes.toIterator.map(reqCode).mkString("\n")
+
+    override def reqCodeTree(items: Vector[ReqCodeTreeItem]): String =
+      items.toIterator.map(reqCodeTreeItem).mkString("\n")
+
+    override def reqCodeTreeItem(item: ReqCodeTreeItem): String =
+      PlainText.reqCodeTreeItem(item)
+
+    override def reqTypeShort(id: ReqTypeId): String =
+      p.config.reqTypes.need(id).mnemonic.value
+
+    override def reqTypeFull(id: ReqTypeId): String = {
+      val rt = p.config.reqTypes.need(id)
+      s"${rt.mnemonic.value}: ${rt.name}"
+    }
+  }
 }

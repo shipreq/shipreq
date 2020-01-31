@@ -4,11 +4,12 @@ import japgolly.microlibs.utils.Utils
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.utils.Memo
+import scala.collection.immutable.SortedSet
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.Must._
-import ProjectText._
+import shipreq.webapp.base.util.ReqCodeTreeItem
 
 object ProjectText {
 
@@ -97,27 +98,53 @@ object ProjectText {
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
+import ProjectText._
+
 abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx: Ctx) {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Abstract
 
+  protected def _implicationList(ids: Vector[Pubid]): Out
+
+  protected def _tagList(ids: Vector[ApplicableTagId], validity: ApplicableTagId => Validity): Out
+
   protected def _text(text: Text.AnyOptional, live: Live): Out
+
+  protected def deletionReasonWhenNoneGiven: Out
+
+  protected def deletionReasonWhenReqTypeIsDead(rt: ReqType): Out
+
+  /** A single element in the set of flow sources/targets.
+   *
+   * eg. [This in an example step --> 2.0.1, 2.0.4]
+   * could be:                        ↑↑↑↑↑
+   * or:                                     ↑↑↑↑↑
+   */
+  protected val useCaseFlowElement: UseCaseStep.Focus => Out
+
   protected def whenBlankButMandatory: Out
+
+  def pastPubids(ids: SortedSet[ExternalPubid]): Out
+
+  def reqCode(c: ReqCode.Value): Out
+
+  def reqCodes(reqCodes: TraversableOnce[ReqCode.Value]): Out
+
+  def reqCodeTree(items: Vector[ReqCodeTreeItem]): Out
+
+  def reqCodeTreeItem(item: ReqCodeTreeItem): Out
+
+  /** eg. "UC" */
+  def reqTypeShort(id: ReqTypeId): Out
+
+  /** eg. "UC: Use Case" */
+  def reqTypeFull(id: ReqTypeId): Out
 
   def useCaseStepTextAndFlow(step: UseCaseStepFlowText.TextAndFlow[Text.AnyOptional, Set[UseCaseStepId]],
                              live: Live): Out
 
-  /** A single element in the set of flow sources/targets.
-    *
-    * eg. [This in an example step --> 2.0.1, 2.0.4]
-    * could be:                        ↑↑↑↑↑
-    * or:                                     ↑↑↑↑↑
-    */
-  protected val useCaseFlowElement: UseCaseStep.Focus => Out
-
-  protected def deletionReasonWhenNoneGiven: Out
-  protected def deletionReasonWhenReqTypeIsDead(rt: ReqType): Out
+  def withCtx[Ctx2 <: ProjectText.Context](newCtx: Ctx2): ProjectText[Ctx2, Out]
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Derived: protected
@@ -213,6 +240,22 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
   final def deleteReasonForCodeGroup: IfApplicable[Nothing] =
     NotApplicable
 
+  final def implicationList(ids: Vector[Pubid], live: Live, mandatory: Mandatory): Out =
+    if (ids.isEmpty && live.is(Live) && mandatory.is(Mandatory))
+      whenBlankButMandatory
+    else
+      _implicationList(ids)
+
+  final def tagList(ids      : Vector[ApplicableTagId],
+                    live     : Live,
+                    mandatory: Mandatory,
+                    validity : ApplicableTagId => Validity): Out =
+    if (ids.isEmpty && live.is(Live) && mandatory.is(Mandatory))
+      whenBlankButMandatory
+    else
+      _tagList(ids, validity)
+
   final def useCaseStepTextAndFlow(f: UseCaseStep.Focus, fd: FilterDead): Out =
     useCaseStepTextAndFlow(f.textAndFlow(fd), f.live)
+
 }

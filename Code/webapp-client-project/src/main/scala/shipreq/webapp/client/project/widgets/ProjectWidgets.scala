@@ -82,7 +82,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
 
   import ProjectWidgets.Internal._
 
-  def withCtx[Ctx2 <: ProjectText.Context](newCtx: Ctx2): ProjectWidgets[Ctx2] =
+  override def withCtx[Ctx2 <: ProjectText.Context](newCtx: Ctx2): ProjectWidgets[Ctx2] =
     if (newCtx ==* ctx)
       this.asInstanceOf[ProjectWidgets[Ctx2]]
     else
@@ -244,16 +244,6 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
       case _: Throwable => <.span(*.katexFail, UiText.mathFailed)
     }
 
-  /** eg. "UC" */
-  val reqTypeShort: ReqTypeId => VdomTag =
-    Memo { id =>
-      val rt = project.config.reqTypes.need(id)
-      <.span(
-        *.reqTypeShort(rt.live),
-        ^.title := rt.name,
-        rt.mnemonic.value)
-    }
-
   override def useCaseStepTextAndFlow(step: UseCaseStepFlowText.TextAndFlow[AnyOptional, Set[UseCaseStepId]], live: Live): VdomTag =
     makeUseCaseStepTextAndFlow(step, live)(useCaseFlowElementsById(_).iterator)
 
@@ -302,34 +292,25 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
       reqTypeShort(rt.reqTypeId),
       " is deleted.")
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // Public additions not part of ProjectText
-
-  def implicationList(ids: Vector[Pubid], live: Live, mandatory: Mandatory): VdomTag =
-    if (ids.isEmpty && live.is(Live) && mandatory.is(Mandatory))
-      whenBlankButMandatory
-    else
-      PubidFormat.validWhenDead.pubids(ids)
-
-  def pastPubids(ids: SortedSet[ExternalPubid]): VdomTag =
+  override def pastPubids(ids: SortedSet[ExternalPubid]): VdomTag =
     renderSeq(
       ids.toIterator.map(ep => <.span(*.pastPubid, PlainText.pubid(ep))),
       sepComma)
 
-  def reqCode(c: ReqCode.Value): VdomTag =
+  override def reqCode(c: ReqCode.Value): VdomTag =
     <.pre(*.reqCodeFlat, PlainText reqCode c)
 
-  def reqCodes(reqCodes: TraversableOnce[ReqCode.Value]): VdomTag =
+  override def reqCodes(reqCodes: TraversableOnce[ReqCode.Value]): VdomTag =
     <.div(reqCodes toTagMod reqCode)
 
-  def reqCodeTree(items: Vector[ReqCodeTreeItem]): VdomTag =
+  override def reqCodeTree(items: Vector[ReqCodeTreeItem]): VdomTag =
     <.div(items toTagMod reqCodeTreeItem)
 
   private val reqCodeTreeIdentation: NonEmptyVector[ReqCodeTreeItem.Indent] => VdomTag =
     Memo(is =>
-      <.pre(*.reqCodeTreeIndent, PlainText reqCodeIndentation is))
+      <.pre(*.reqCodeTreeIndent, PlainText.reqCodeIndentation(is)))
 
-  def reqCodeTreeItem(item: ReqCodeTreeItem): VdomTag = {
+  override def reqCodeTreeItem(item: ReqCodeTreeItem): VdomTag = {
     val indentation = NonEmptyVector.option(item.indent)
     var code = PlainText.reqCode(item.suffix)
     if (indentation.isDefined)
@@ -339,12 +320,23 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
       <.pre(*.reqCodeTreeCode, code))
   }
 
-  /** eg. "UC: Use Case" */
-  val reqTypeFull: ReqTypeId => VdomTag =
-    id => {
+  override def reqTypeShort(id: ReqTypeId): VdomTag =
+    _reqTypeShort(id)
+
+  val _reqTypeShort: ReqTypeId => VdomTag =
+    Memo { id =>
       val rt = project.config.reqTypes.need(id)
-      <.span(s"${rt.mnemonic.value}: ${rt.name}")
+      <.span(
+        *.reqTypeShort(rt.live),
+        ^.title := rt.name,
+        rt.mnemonic.value)
     }
+
+  override def reqTypeFull(id: ReqTypeId): VdomTag =
+    _reqTypeFull(id)
+
+  val _reqTypeFull: ReqTypeId => VdomTag =
+    id => <.span(plainText.reqTypeFull(id))
 
   private val tagPlain: Validity => ApplicableTagId => VdomTag =
     Validity.memo { validity =>
@@ -354,14 +346,14 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
       }
     }
 
-  def tagList(ids      : Vector[ApplicableTagId],
-              live     : Live,
-              mandatory: Mandatory,
-              validity : ApplicableTagId => Validity): VdomTag =
-    if (ids.isEmpty && live.is(Live) && mandatory.is(Mandatory))
-      whenBlankButMandatory
-    else
-      renderVector(ids, sepSpace)(id => tagPlain(validity(id))(id))
+  override protected def _implicationList(ids: Vector[Pubid]): VdomTag =
+    PubidFormat.validWhenDead.pubids(ids)
+
+  override protected def _tagList(ids: Vector[ApplicableTagId], validity: ApplicableTagId => Validity): VdomTag =
+    renderVector(ids, sepSpace)(id => tagPlain(validity(id))(id))
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Public additions not part of ProjectText
 
   def useCaseStepTextAndMaybeInvalidFlow[C[x] <: Traversable[x]](s: UseCaseStepFlowText.TextAndFlow[AnyOptional, C[String \/ UseCaseStepId]],
                                                                  l: Live): VdomTag = {
