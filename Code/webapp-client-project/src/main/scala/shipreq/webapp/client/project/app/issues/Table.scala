@@ -22,7 +22,7 @@ import shipreq.webapp.client.project.widgets.{NoFilterResults, ProjectWidgets}
 object Table {
 
   final case class StaticProps(pxProject       : Px[Project],
-                               pxRenderFeature : Px[RenderFeature.NoCtx.ForProject],
+                               pxRenderFeature : Px[RenderFeature.ToVdom.NoCtx.ForProject],
                                pxPlainText     : Px[PlainText.ForProject.NoCtx],
                                pxProjectWidgets: Px[ProjectWidgets.NoCtx],
                                pxFieldNameFn   : Px[FieldId ~=> String],
@@ -67,7 +67,7 @@ object Table {
   final class RenderPrep(project      : Project,
                          plainText    : PlainText.ForProject.NoCtx,
                          issues       : Issues,
-                         renderFeature: RenderFeature.NoCtx.ForProject) {
+                         renderFeature: RenderFeature.ToVdom.NoCtx.ForProject) {
     private val sortFn  = sorter.result(new Sorter.Setup(project, plainText))
     private val toRow   = Row.fromIssue(project, renderFeature)
     val rows            = sortFn(issues.vector.iterator.map(toRow)).iterator.toVector

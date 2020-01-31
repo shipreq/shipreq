@@ -20,7 +20,7 @@ import shipreq.webapp.client.project.widgets.{FilterEditor, ProjectWidgets}
 object IssuesPage {
 
   final case class StaticProps(pxProject       : Px[Project],
-                               pxRenderFeature : Px[FilterDead => RenderFeature.NoCtx.ForProject],
+                               pxRenderFeature : Px[FilterDead => RenderFeature.ToVdom.NoCtx.ForProject],
                                pxPlainText     : Px[PlainText.ForProject.NoCtx],
                                pxProjectWidgets: Px[ProjectWidgets.NoCtx],
                                pxFilterCompiler: Px[Filter.Valid.Compiler],

@@ -1,96 +1,100 @@
 package shipreq.webapp.client.project.feature
 
 import japgolly.scalajs.react.{Reusability, Reusable, ~=>}
-import japgolly.scalajs.react.vdom.VdomElement
 import scala.reflect.ClassTag
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.ProjectText
 import shipreq.webapp.base.text.ProjectText.{Context => PCtx}
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.widgets.{ProjectWidgets, ViewReqCache}
+import shipreq.webapp.client.project.widgets.ViewReqCache
 
 object RenderFeature {
 
   type FieldKey = editor.FieldKey
   val  FieldKey = editor.FieldKey
 
-  def prepare[Ctx <: PCtx](project     : Project,
-                           viewReqCache: ViewReqCache.ToVdom[Ctx],
-                           pw          : ProjectWidgets[Ctx]): FilterDead => ForProject[Ctx] =
-    FilterDead.memo(ForProject(project, _, viewReqCache, pw))
+  def prepare[Ctx <: PCtx, Out](project     : Project,
+                                viewReqCache: ViewReqCache[Ctx, Out],
+                                pt          : ProjectText[Ctx, Out]): FilterDead => ForProject[Ctx, Out] =
+    FilterDead.memo(ForProject(project, _, viewReqCache, pt))
 
-  final case class ForProject[Ctx <: PCtx](private[RenderFeature] project     : Project,
-                                           private[RenderFeature] filterDead  : FilterDead,
-                                           private[RenderFeature] viewReqCache: ViewReqCache.ToVdom[Ctx],
-                                           private[RenderFeature] pw          : ProjectWidgets[Ctx]) {
+  final case class ForProject[Ctx <: PCtx, Out](private[RenderFeature] project     : Project,
+                                                private[RenderFeature] filterDead  : FilterDead,
+                                                private[RenderFeature] viewReqCache: ViewReqCache[Ctx, Out],
+                                                private[RenderFeature] pt          : ProjectText[Ctx, Out]) {
 
-    private val reusableSelf = Reusable.explicitly(this)(reusabilityForProject[Ctx])
+    private val reusableSelf = Reusable.explicitly(this)(reusabilityForProject[Ctx, Out])
     private val viewReq      = viewReqCache(filterDead)
     private val useCases     = project.content.reqs.useCases
 
-    private def forData0[FK <: FieldKey](render: FK => VdomElement) =
-      ForData[Ctx, FK](reusableSelf.withValue(render))
+    private def forData0[FK <: FieldKey](render: FK => Out) =
+      ForData[Ctx, FK, Out](reusableSelf.withValue(render))
 
-    private def forData1[A: Reusability : ClassTag, FK <: FieldKey](a: A)(render: FK => VdomElement) =
-      ForData[Ctx, FK](reusableSelf.tuple(Reusable.implicitly(a)).withValue(render))
+    private def forData1[A: Reusability : ClassTag, FK <: FieldKey](a: A)(render: FK => Out) =
+      ForData[Ctx, FK, Out](reusableSelf.tuple(Reusable.implicitly(a)).withValue(render))
 
-    def forCodeGroup(rcg: CodeGroup): ForCodeGroup[Ctx] = {
+    def forCodeGroup(rcg: CodeGroup): ForCodeGroup[Ctx, Out] = {
       lazy val code = project.content.reqCodes.reqCode(rcg.id)
       forData1[ReqCodeGroupId, FieldKey.ForCodeGroup](rcg.id) {
-        case FieldKey.CodeGroupTitle => pw.codeGroupTitle(rcg)
-        case FieldKey.Code           => pw.reqCode(code)
+        case FieldKey.CodeGroupTitle => pt.codeGroupTitle(rcg)
+        case FieldKey.Code           => pt.reqCode(code)
       }
     }
 
-    def forGenericReq(id: GenericReqId): ForGenericReq[Ctx] =
+    def forGenericReq(id: GenericReqId): ForGenericReq[Ctx, Out] =
       forReq(id)
 
-    def forReq(id: ReqId): ForReq[Ctx] =
+    def forReq(id: ReqId): ForReq[Ctx, Out] =
       forData1[ReqId, FieldKey.ForSomeReq](id)(viewReq(id).editable)
 
-    def forUseCase(id: UseCaseId): ForUseCase[Ctx] =
+    def forUseCase(id: UseCaseId): ForUseCase[Ctx, Out] =
       forReq(id)
 
-    val forUseCaseSteps: ForUseCaseSteps[Ctx] =
+    val forUseCaseSteps: ForUseCaseSteps[Ctx, Out] =
       forData0[FieldKey.UseCaseStep](fk => {
         val focus = useCases.focusStep(fk.id)
-        pw.useCaseStepTextAndFlow(focus, filterDead)
+        pt.useCaseStepTextAndFlow(focus, filterDead)
       })
 
-    val forManualIssue: ForManualIssue[Ctx] =
+    val forManualIssue: ForManualIssue[Ctx, Out] =
       forData0[FieldKey.ManualIssue] { fk =>
         val issue = project.manualIssues.imap.need(fk.id)
-        pw.manualIssue(issue.text)
+        pt.manualIssue(issue.text)
       }
   }
 
-  final case class ForData[Ctx <: PCtx, -FK <: FieldKey](renderFn: FK ~=> VdomElement) {
-    @inline def apply(fk: FK): VdomElement = renderFn(fk)
+  final case class ForData[Ctx <: PCtx, -FK <: FieldKey, Out](renderFn: FK ~=> Out) {
+    @inline def apply(fk: FK): Out = renderFn(fk)
   }
 
-  type ForCodeGroup   [Ctx <: PCtx] = ForData[Ctx, FieldKey.ForCodeGroup ]
-  type ForGenericReq  [Ctx <: PCtx] = ForData[Ctx, FieldKey.ForGenericReq]
-  type ForReq         [Ctx <: PCtx] = ForData[Ctx, FieldKey.ForSomeReq   ]
-  type ForUseCase     [Ctx <: PCtx] = ForData[Ctx, FieldKey.ForUseCase   ]
-  type ForUseCaseSteps[Ctx <: PCtx] = ForData[Ctx, FieldKey.UseCaseStep  ]
-  type ForManualIssue [Ctx <: PCtx] = ForData[Ctx, FieldKey.ManualIssue  ]
+  type ForCodeGroup   [Ctx <: PCtx, Out] = ForData[Ctx, FieldKey.ForCodeGroup , Out]
+  type ForGenericReq  [Ctx <: PCtx, Out] = ForData[Ctx, FieldKey.ForGenericReq, Out]
+  type ForReq         [Ctx <: PCtx, Out] = ForData[Ctx, FieldKey.ForSomeReq   , Out]
+  type ForUseCase     [Ctx <: PCtx, Out] = ForData[Ctx, FieldKey.ForUseCase   , Out]
+  type ForUseCaseSteps[Ctx <: PCtx, Out] = ForData[Ctx, FieldKey.UseCaseStep  , Out]
+  type ForManualIssue [Ctx <: PCtx, Out] = ForData[Ctx, FieldKey.ManualIssue  , Out]
 
-  sealed trait TypeHelpers[Ctx <: PCtx] {
-    final type ForProject                = RenderFeature.ForProject     [Ctx]
-    final type ForField[FK <: FieldKey]  = RenderFeature.ForData        [Ctx, FK]
-    final type ForCodeGroup              = RenderFeature.ForCodeGroup   [Ctx]
-    final type ForGenericReq             = RenderFeature.ForGenericReq  [Ctx]
-    final type ForReq                    = RenderFeature.ForReq         [Ctx]
-    final type ForUseCase                = RenderFeature.ForUseCase     [Ctx]
-    final type ForUseCaseSteps           = RenderFeature.ForUseCaseSteps[Ctx]
-    final type ForManualIssue            = RenderFeature.ForManualIssue [Ctx]
+  sealed trait TypeHelpers[Ctx <: PCtx, Out] {
+    final type ForProject                = RenderFeature.ForProject     [Ctx, Out]
+    final type ForField[FK <: FieldKey]  = RenderFeature.ForData        [Ctx, FK, Out]
+    final type ForCodeGroup              = RenderFeature.ForCodeGroup   [Ctx, Out]
+    final type ForGenericReq             = RenderFeature.ForGenericReq  [Ctx, Out]
+    final type ForReq                    = RenderFeature.ForReq         [Ctx, Out]
+    final type ForUseCase                = RenderFeature.ForUseCase     [Ctx, Out]
+    final type ForUseCaseSteps           = RenderFeature.ForUseCaseSteps[Ctx, Out]
+    final type ForManualIssue            = RenderFeature.ForManualIssue [Ctx, Out]
   }
 
-  object AnyCtx extends TypeHelpers[PCtx]
-  object NoCtx extends TypeHelpers[PCtx.None]
+  object ToVdom {
+    import japgolly.scalajs.react.vdom.html_<^.VdomTag
 
-  implicit def reusabilityForProject[Ctx <: PCtx]: Reusability[ForProject[Ctx]] =
+    object AnyCtx extends TypeHelpers[PCtx, VdomTag]
+    object NoCtx extends TypeHelpers[PCtx.None, VdomTag]
+  }
+
+  implicit def reusabilityForProject[Ctx <: PCtx, Out]: Reusability[ForProject[Ctx, Out]] =
     Reusability.byRef || Reusability.derive
 
-  implicit def reusabilityForData[Ctx <: PCtx, FK <: FieldKey]: Reusability[ForData[Ctx, FK]] =
+  implicit def reusabilityForData[Ctx <: PCtx, FK <: FieldKey, Out]: Reusability[ForData[Ctx, FK, Out]] =
     Reusability.byRef || Reusability.derive
 }

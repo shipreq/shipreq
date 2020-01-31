@@ -33,7 +33,7 @@ object Row {
                                  issueClassDesc: String,
                                  req           : GenericReq,
                                  field         : IssueField[FieldKey.ForGenericReq],
-                                 renderer      : RenderFeature.NoCtx.ForGenericReq,
+                                 renderer      : RenderFeature.ToVdom.NoCtx.ForGenericReq,
                                  actions       : List[Action]) extends ForReq {
     override val fieldOption = Some(field)
     override val editor = (e, pw) => Some(renderEditable(field.key)(renderer, e.forGenericReq(req.id), (), pw))
@@ -43,7 +43,7 @@ object Row {
                               issueClassDesc: String,
                               req           : UseCase,
                               field         : IssueField[FieldKey.ForUseCase],
-                              renderer      : RenderFeature.NoCtx.ForUseCase,
+                              renderer      : RenderFeature.ToVdom.NoCtx.ForUseCase,
                               actions       : List[Action]) extends ForReq {
     override val fieldOption = Some(field)
     override val editor = (e, pw) => Some(renderEditable(field.key)(renderer, e.forUseCase(req.id), (), pw))
@@ -53,8 +53,8 @@ object Row {
                                   issueClassDesc: String,
                                   req           : UseCase,
                                   field         : IssueField[FieldKey.UseCaseStep],
-                                  ucRenderer    : RenderFeature.NoCtx.ForUseCase,
-                                  renderer      : RenderFeature.NoCtx.ForUseCaseSteps,
+                                  ucRenderer    : RenderFeature.ToVdom.NoCtx.ForUseCase,
+                                  renderer      : RenderFeature.ToVdom.NoCtx.ForUseCaseSteps,
                                   actions       : List[Action]) extends ForReq {
     override val fieldOption = Some(field)
     override val editor = (e, pw) => Some(
@@ -66,7 +66,7 @@ object Row {
                           rcg           : LiveCodeGroup,
                           fieldOption   : Option[IssueField[FieldKey.ForCodeGroup]],
                           code          : ReqCode.Value,
-                          renderer      : RenderFeature.NoCtx.ForCodeGroup,
+                          renderer      : RenderFeature.ToVdom.NoCtx.ForCodeGroup,
                           actions       : List[Action]) extends Row {
 
     override val editor = (e, pw) =>
@@ -84,7 +84,7 @@ object Row {
 
   final case class ForManualIssue(issue   : Issue.ManualIssue,
                                   actions : List[Action],
-                                  renderer: RenderFeature.NoCtx.ForManualIssue) extends Row {
+                                  renderer: RenderFeature.ToVdom.NoCtx.ForManualIssue) extends Row {
     val field = IssueField.manual(issue.issue)
     override val issueClassDesc = UI.descManualIssue
     override def fieldOption = Some(field)
@@ -97,7 +97,7 @@ object Row {
     Reusability.byRef
 
   private def renderEditable[FK <: FieldKey](fk    : FK)
-                                            (render: RenderFeature.NoCtx.ForField[FK],
+                                            (render: RenderFeature.ToVdom.NoCtx.ForField[FK],
                                              editor: EditorFeature.ReadWrite.ForFields[FK],
                                              args  : fk.Args,
                                              pw    : Reusable[Px[ProjectWidgets.NoCtx]]): Reusable[EditorNavParent.Props] = {
@@ -107,7 +107,7 @@ object Row {
     }
   }
 
-  def fromIssue(p: Project, rf: RenderFeature.NoCtx.ForProject): Issue => Row = {
+  def fromIssue(p: Project, rf: RenderFeature.ToVdom.NoCtx.ForProject): Issue => Row = {
     implicit val cfg = p.config
     val customFieldName = CustomField.nameP(p)
     val actionBuilder = new Actions.Builder(p)
