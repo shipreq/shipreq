@@ -3,10 +3,8 @@ package shipreq.webapp.client.project.feature
 import japgolly.scalajs.react.{Reusability, Reusable, ~=>}
 import japgolly.scalajs.react.vdom.VdomElement
 import scala.reflect.ClassTag
-import shipreq.base.util.Direction
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.ProjectText.{Context => PCtx}
-import shipreq.webapp.base.text.UseCaseStepFlowText.TextAndFlow
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.{ProjectWidgets, ViewReqCache}
 
@@ -57,8 +55,7 @@ object RenderFeature {
     val forUseCaseSteps: ForUseCaseSteps[Ctx] =
       forData0[FieldKey.UseCaseStep](fk => {
         val focus = useCases.focusStep(fk.id)
-        val tf    = TextAndFlow(focus.titleA, Direction.Values(focus.flow(_, filterDead)))
-        pw.useCaseStepTextAndFlow(tf, focus.live)
+        pw.useCaseStepTextAndFlow(focus, filterDead)
       })
 
     val forManualIssue: ForManualIssue[Ctx] =

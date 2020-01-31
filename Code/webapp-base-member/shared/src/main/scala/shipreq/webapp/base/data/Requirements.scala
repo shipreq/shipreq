@@ -9,7 +9,7 @@ import scalaz.{-\/, Equal, \/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.TaggedTypes._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.base.text.{Text, UseCaseStepFlowText}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.util.Must._
 import DataImplicits._
@@ -278,6 +278,9 @@ object UseCaseStep {
 
     def titleA: Text.AnyOptional =
       step.titleA(uc)
+
+    def textAndFlow(fd: FilterDead): UseCaseStepFlowText.TextAndFlow[Text.AnyOptional, Set[UseCaseStepId]] =
+      UseCaseStepFlowText.TextAndFlow(titleA, Direction.Values(flow(_, fd)))
 
     def usesUseCaseTitle: Boolean =
       step.usesUseCaseTitle(uc)

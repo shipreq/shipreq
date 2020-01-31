@@ -212,4 +212,7 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
 
   final def deleteReasonForCodeGroup: IfApplicable[Nothing] =
     NotApplicable
+
+  final def useCaseStepTextAndFlow(f: UseCaseStep.Focus, fd: FilterDead): Out =
+    useCaseStepTextAndFlow(f.textAndFlow(fd), f.live)
 }

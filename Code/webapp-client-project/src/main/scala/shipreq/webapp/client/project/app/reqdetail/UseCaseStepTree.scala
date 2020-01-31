@@ -82,7 +82,7 @@ object UseCaseStepTree {
               stepBodyBase,
               id,
               live,
-              () => TextAndFlow(step.titleA(uc), Direction.Values(focus.flow(_, filterDead)))))
+              () => focus.textAndFlow(filterDead)))
 
         def ctrls: VdomElement =
           uc.liveUC match {
