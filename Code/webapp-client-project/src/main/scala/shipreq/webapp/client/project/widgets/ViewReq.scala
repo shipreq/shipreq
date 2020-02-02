@@ -81,8 +81,7 @@ final case class ViewReq[A](data           : Data,
     case RenderFeature.FieldKey.Tags           (field) => tags(field)
     case RenderFeature.FieldKey.Implications   (scope) => imps(scope)
     case RenderFeature.FieldKey.Codes                  => codes
-    case RenderFeature.FieldKey.GenericReqTitle
-       | RenderFeature.FieldKey.UseCaseTitle           => title
+    case RenderFeature.FieldKey.Title                  => title
     case RenderFeature.FieldKey.ReqType                => reqType
   }
 

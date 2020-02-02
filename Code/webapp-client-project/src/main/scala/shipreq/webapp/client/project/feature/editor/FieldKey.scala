@@ -93,8 +93,8 @@ object FieldKey {
 
   case object GenericReqTitle extends ForGenericReq {
     override type Change = Text.GenericReqTitle.OptionalText
-    override type RenderFieldKey = RenderFeature.FieldKey.GenericReqTitle.type
-    override def forRender = RenderFeature.FieldKey.GenericReqTitle
+    override type RenderFieldKey = RenderFeature.FieldKey.Title.type
+    override def forRender = RenderFeature.FieldKey.Title
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.title(this)
   }
 
@@ -143,8 +143,8 @@ object FieldKey {
 
   case object UseCaseTitle extends ForUseCase {
     override type Change = Text.UseCaseTitle.OptionalText
-    override type RenderFieldKey = RenderFeature.FieldKey.UseCaseTitle.type
-    override def forRender = RenderFeature.FieldKey.UseCaseTitle
+    override type RenderFieldKey = RenderFeature.FieldKey.Title.type
+    override def forRender = RenderFeature.FieldKey.Title
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.title(this)
   }
 

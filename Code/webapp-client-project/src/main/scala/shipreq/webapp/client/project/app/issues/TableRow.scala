@@ -81,9 +81,9 @@ object TableRow {
         case Column.Title =>
           for (base <- p.titleBase) {
             val c = row match {
-              case r: Row.ForGenericReq  => r.renderer(FieldKey.GenericReqTitle)
-              case r: Row.ForUseCase     => r.renderer(FieldKey.UseCaseTitle)
-              case r: Row.ForUseCaseStep => r.ucRenderer(FieldKey.UseCaseTitle)
+              case r: Row.ForGenericReq  => r.renderer(FieldKey.Title)
+              case r: Row.ForUseCase     => r.renderer(FieldKey.Title)
+              case r: Row.ForUseCaseStep => r.ucRenderer(FieldKey.Title)
               case r: Row.ForRcg         => r.renderer(FieldKey.CodeGroupTitle)
               case _: Row.ForManualIssue => na // This appears in Field Editor
               case _: Row.ForConfig      => na

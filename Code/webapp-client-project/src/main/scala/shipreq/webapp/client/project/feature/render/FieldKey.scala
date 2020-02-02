@@ -19,24 +19,22 @@ object FieldKey {
   /** Fields apply to one or more type of reqs */
   sealed trait ForSomeReq extends FieldKey
 
+  sealed trait ForGenericReq extends ForSomeReq
+  sealed trait ForUseCase    extends ForSomeReq
+
   /** Fields apply to all types of reqs */
   sealed trait ForAllReqs extends ForGenericReq with ForUseCase
 
-  sealed trait ForCodeGroup extends FieldKey
-  case object Code           extends ForCodeGroup
-  case object CodeGroupTitle extends ForCodeGroup
-
-  case object Codes extends ForAllReqs
+  case object Codes                                                   extends ForAllReqs
+  case object ReqType                                                 extends ForAllReqs
+  case object Title                                                   extends ForAllReqs
   final case class CustomTextField(field: CustomField.Text.Id)        extends ForAllReqs
   final case class Implications   (scope: ImplicationScope)           extends ForAllReqs
   final case class Tags           (field: Option[CustomField.Tag.Id]) extends ForAllReqs
 
-  sealed trait ForGenericReq extends ForSomeReq
-  case object GenericReqTitle extends ForGenericReq
-  case object ReqType         extends ForGenericReq
-
-  sealed trait ForUseCase extends ForSomeReq
-  case object UseCaseTitle extends ForUseCase
+  sealed trait ForCodeGroup extends FieldKey
+  case object Code           extends ForCodeGroup
+  case object CodeGroupTitle extends ForCodeGroup
 
   final case class UseCaseStep(id: UseCaseStepId) extends FieldKey
 
@@ -64,15 +62,9 @@ object FieldKey {
 
   def reqTextLoc(reqId: ReqId, loc: LocationOf.Text.InReq): FieldKey =
     loc match {
-      case Location.Text.Title                    => reqTitle(reqId)
+      case Location.Text.Title                    => Title
       case Location.Text.CustomTextField(fieldId) => CustomTextField(fieldId)
       case Location.Text.UseCaseStep(stepId)      => UseCaseStep(stepId)
-    }
-
-  def reqTitle(id: ReqId): ForSomeReq =
-    id match {
-      case _: GenericReqId => GenericReqTitle
-      case _: UseCaseId    => UseCaseTitle
     }
 
   // TODO REUSE
