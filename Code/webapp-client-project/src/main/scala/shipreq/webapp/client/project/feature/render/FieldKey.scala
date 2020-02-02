@@ -23,32 +23,26 @@ object FieldKey {
   sealed trait ForAllReqs extends ForGenericReq with ForUseCase
 
   sealed trait ForCodeGroup extends FieldKey
-
-  sealed trait ForGenericReq extends ForSomeReq
-
-  sealed trait ForUseCase extends ForSomeReq
-
-  case object Code extends ForCodeGroup
-
+  case object Code           extends ForCodeGroup
   case object CodeGroupTitle extends ForCodeGroup
 
   case object Codes extends ForAllReqs
+  final case class CustomTextField(field: CustomField.Text.Id)        extends ForAllReqs
+  final case class Implications   (scope: ImplicationScope)           extends ForAllReqs
+  final case class Tags           (field: Option[CustomField.Tag.Id]) extends ForAllReqs
 
-  final case class CustomTextField(field: CustomField.Text.Id) extends ForAllReqs
-
+  sealed trait ForGenericReq extends ForSomeReq
   case object GenericReqTitle extends ForGenericReq
+  case object ReqType         extends ForGenericReq
 
-  final case class Implications(scope: ImplicationScope) extends ForAllReqs
-
-  case object ReqType extends ForGenericReq
-
-  final case class Tags(field: Option[CustomField.Tag.Id]) extends ForAllReqs
+  sealed trait ForUseCase extends ForSomeReq
+  case object UseCaseTitle extends ForUseCase
 
   final case class UseCaseStep(id: UseCaseStepId) extends FieldKey
 
-  case object UseCaseTitle extends ForUseCase
-
   final case class ManualIssue(id: ManualIssueId) extends FieldKey
+
+  // ===================================================================================================================
 
   @inline implicit def equalityForSomeReq: UnivEq[ForSomeReq] =
     UnivEq.derive
