@@ -217,23 +217,16 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
       for {
         editability   <- pxEditEditability
         reqDetailId   <- pxReqDetailId
-        project       <- pxProject
-        vrdc          <- pxViewReqDataCache
       } yield reqDetailId.map { id =>
         val row = EditorFeature.RowKey.req(id)
         val aw  = editAsyncW(row).mapKey(AsyncKey.ToReqDetail)
         val ew  = editW.forReq(id)
-        val ctx = ProjectText.Context.Req(id)
-        val pt  = PlainText.ForProject(project, ctx)
-        val vrc = ViewReqCache(vrdc, pt)
-        val rff = RenderFeature.prepare(project, vrc, pt)
 
         (s: State) => {
           val as = s.editAsync.toRead
           val ar = as(row).mapKey(AsyncKey.ToReqDetail)
           val af = aw.toReadWrite(ar)
-          val rf = rff(s.filterDead)
-          val er = EditorFeature.Read.ForProject(s.edit, rf, editability, as.mapKey1(AsyncKey.ToEditor)).forReq(id)
+          val er = EditorFeature.Read.ForProject(s.edit, editability, as.mapKey1(AsyncKey.ToEditor)).forReq(id)
           val ef = EditorFeature.ReadWrite.ForFields(er, ew)
           ReqDetail.ReqProps(ef, af)
         }
@@ -288,8 +281,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
       lazy val editAsyncState = s.editAsync.toRead
       def createR       = CreateFeature.Read.ForProject(s.create, pxCreateEditability.value(), s.createAsync.toRead)
       def createRW      = createW.toReadWrite(createR)
-      def renderFeature = pxRenderFeatureText.value()(s.filterDead)
-      def editR         = EditorFeature.Read.ForProject(s.edit, renderFeature, pxEditEditability.value(), editAsyncState.mapKey1(AsyncKey.ToEditor))
+      def editR         = EditorFeature.Read.ForProject(s.edit, pxEditEditability.value(), editAsyncState.mapKey1(AsyncKey.ToEditor))
       def editRW        = editW.toReadWrite(editR)
       def filterDeadSS  = StateSnapshot.withReuse(s.filterDead)(setFilterDead)
       // def previewRW = previewW.toReadWrite(s.preview)

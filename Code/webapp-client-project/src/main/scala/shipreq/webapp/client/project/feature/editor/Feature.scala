@@ -11,7 +11,6 @@ import shipreq.webapp.base.feature._
 import shipreq.webapp.base.feature.clipboard.ClipboardData
 import shipreq.webapp.base.text.ProjectText
 import shipreq.webapp.base.ui.EditTheme
-import shipreq.webapp.client.project.feature.RenderFeature
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 
@@ -77,15 +76,11 @@ object Feature {
 
     // Note: editor is package-private here because it's actually read & write, where as this class is read-only
     final case class ForEditor[-A, +C](private[editor] val editor: Option[Editor[A, C]],
-                                       renderText                : Reusable[CallbackTo[Option[String]]],
                                        editability               : Permission,
                                        async                     : AsyncState) {
 
-      def clipboardData: CallbackTo[Option[ClipboardData]] =
-        editor match {
-          case None    => renderText.value.map(_.map(ClipboardData.apply))
-          case Some(e) => CallbackTo.pure(e.clipboardData)
-        }
+      def clipboardData: Option[ClipboardData] =
+        editor.flatMap(_.clipboardData)
 
       def isOpen: Boolean =
         editor.isDefined
@@ -101,11 +96,10 @@ object Feature {
 
     object ForEditor {
       val doNothing: ForEditor[Any, Nothing] =
-        apply(None, Reusable.always(CallbackTo.pure(None)), Deny, None)
+        apply(None, Deny, None)
     }
 
     final case class ForFields[-FK <: FieldKey](_editor    : State.ForFields,
-                                                renderText : RenderFeature.ForFields[ProjectText.Context, FK, Option[String]],
                                                 editability: Reusable[Editability.ForFields[FK]],
                                                 async      : AsyncFeature.Read.D1[FieldKey, AsyncError]) {
 
@@ -115,7 +109,6 @@ object Feature {
       def apply(f: FK): ForEditor[f.Args, f.Change] =
         ForEditor(
           editor.get(f),
-          Reusable.implicitly(renderText).withValue(CallbackTo(renderText(f))),
           editability(f),
           async(f))
     }
@@ -124,7 +117,6 @@ object Feature {
       def widen[W >: FK <: FieldKey](implicit t: FieldKey.Type[FK]): ForFields[W] =
         ForFields[W](
           self._editor,
-          self.renderText.widen(None),
           self.editability.map(_.widen(t)),
           self.async)
     }
@@ -137,27 +129,22 @@ object Feature {
     type ForManualIssues = ForFields[FieldKey.ManualIssue  ]
 
     final case class ForProject(state      : State.ForProject,
-                                renderText : RenderFeature.ForProject[ProjectText.Context, String],
                                 editability: Editability.ForProject,
                                 async      : AsyncFeature.Read.D2[RowKey, FieldKey, AsyncError]) {
 
        private def forRow(r          : RowKey)
-                         (renderText : RenderFeature.ForFields[ProjectText.Context, r.FieldKey, Option[String]],
-                          editability: Reusable[Editability.ForFields[r.FieldKey]]): ForFields[r.FieldKey] =
+                         (editability: Reusable[Editability.ForFields[r.FieldKey]]): ForFields[r.FieldKey] =
          ForFields(
            state.getOrElse(r, UnivEq.emptyMap),
-           renderText,
            editability,
            async(r))
 
       def forCodeGroup(id: ReqCodeGroupId): ForCodeGroup =
         forRow(RowKey.CodeGroup(id))(
-          renderText.forCodeGroupId(id),
           Reusable.implicitly(editability.forCodeGroups(id)))
 
       def forGenericReq(id: GenericReqId): ForGenericReq =
          forRow(RowKey.GenericReq(id))(
-           renderText.forGenericReq(id).some,
            Reusable.implicitly(editability.forReqs(id)))
 
       def forReq(id: ReqId): ForReq =
@@ -165,17 +152,14 @@ object Feature {
 
       def forUseCase(id: UseCaseId): ForUseCase =
         forRow(RowKey.UseCase(id))(
-          renderText.forUseCase(id).some,
           Reusable.implicitly(editability.forReqs(id)))
 
       lazy val forUseCaseSteps: ForUseCaseSteps =
         forRow(RowKey.UseCaseSteps)(
-          renderText.forUseCaseSteps.some,
           Reusable.implicitly(editability.forUseCaseSteps))
 
       lazy val forManualIssues: ForManualIssues =
         forRow(RowKey.ManualIssues)(
-          renderText.forManualIssues.some,
           Editability.forManualIssues)
     }
 

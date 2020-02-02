@@ -15,13 +15,6 @@ object EditorKeys {
     val applicableToOpenAndReplace =
       !(e.altKey || e.ctrlKey || e.metaKey || editor.read.isOpen)
 
-    def copy: Callback =
-      editor
-        .clipboardData
-        .asCBO
-        .flatMap(Clipboard.instance.write(_).toCallback.toCBO)
-        .toCallback
-
     def paste: Callback =
       editor.setPotentialValueAsync(Clipboard.instance.read.map(PotentialValue.Clipboard)).getOrEmpty
 
@@ -42,18 +35,8 @@ object EditorKeys {
           paste
       }
 
-    def ctrlKeys: CallbackOption[Unit] =
-      CallbackOption.keyCodeSwitch(e, ctrlKey = true) {
-
-        case KeyCode.Insert =>
-          copy
-      }
-
     def platformDependantKeys: CallbackOption[Unit] =
       Browser.cmdOrCtrlKeyCodeSwitch(e) {
-
-        case KeyCode.C =>
-          copy
 
         case KeyCode.V =>
           paste
@@ -67,7 +50,7 @@ object EditorKeys {
       } yield ()
 
     def handlers: CallbackOption[Unit] =
-      noModKeys | shiftKeys | ctrlKeys | platformDependantKeys | openEditorAndReplaceContentWithKey
+      noModKeys | shiftKeys | platformDependantKeys | openEditorAndReplaceContentWithKey
 
     (CallbackOption.require(doesEventTargetCell(e)) >> handlers).asEventDefault(e)
   }
