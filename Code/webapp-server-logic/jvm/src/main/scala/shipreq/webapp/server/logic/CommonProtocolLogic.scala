@@ -73,6 +73,7 @@ object CommonProtocolLogic extends HasLogger {
             add("request.ip", ip.value)
           for (p <- metadata.project) {
             add("project.id"          , Obfuscators.projectId.deobfuscate(p.id).fold("ERROR:" + _, _.value.toString))
+            add("project.ord"         , p.ord.fold("?")(_.toString))
             add("project.futureEvents", ConciseIntSetFormat(p.futureEvents))
           }
           m
