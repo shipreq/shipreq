@@ -7,7 +7,7 @@ import scala.collection.immutable.SortedSet
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{PlainText, ProjectText}
-import shipreq.webapp.client.project.feature.EditorFeature
+import shipreq.webapp.client.project.feature.{EditorFeature, RenderFeature}
 import ViewReq._
 
 /**
@@ -76,15 +76,17 @@ final case class ViewReq[A](data           : Data,
     case id: CustomField.Text       .Id => text(id)
   }
 
-  val editable: EditorFeature.FieldKey.ForSomeReq => A = {
-    case EditorFeature.FieldKey.CustomTextField(field) => text(field)
-    case EditorFeature.FieldKey.Tags           (field) => tags(field)
-    case EditorFeature.FieldKey.Implications   (scope) => imps(scope)
-    case EditorFeature.FieldKey.Codes                  => codes
-    case EditorFeature.FieldKey.GenericReqTitle
-       | EditorFeature.FieldKey.UseCaseTitle           => title
-    case EditorFeature.FieldKey.ReqType                => reqType
+  val render: RenderFeature.FieldKey.ForSomeReq => A = {
+    case RenderFeature.FieldKey.CustomTextField(field) => text(field)
+    case RenderFeature.FieldKey.Tags           (field) => tags(field)
+    case RenderFeature.FieldKey.Implications   (scope) => imps(scope)
+    case RenderFeature.FieldKey.Codes                  => codes
+    case RenderFeature.FieldKey.Title                  => title
+    case RenderFeature.FieldKey.ReqType                => reqType
   }
+
+  val editable: EditorFeature.FieldKey.ForSomeReq => A =
+    k => render(k.forRender)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████

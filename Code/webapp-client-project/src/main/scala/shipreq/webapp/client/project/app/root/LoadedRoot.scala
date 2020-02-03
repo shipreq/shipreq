@@ -82,23 +82,29 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     private val setFilterDead: Reusable[SetStateFnPure[FilterDead]] =
       Reusable.fn.state($ zoomStateL State.filterDead).setStateFn
 
-    private val pxPlainText =
+    private val pxPlainText: Px[PlainText.ForProject.NoCtx] =
       pxProject.map(PlainText.ForProject.noCtx)
 
     private val pxTextSearch =
       Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
 
-    private val pxProjectWidgets =
+    private val pxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]] =
       Reusable byRef Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
 
-    private val pxViewReqDataCache =
+    private val pxViewReqDataCache: Px[ViewReqDataCache] =
       pxProject.map(ViewReqDataCache.apply)
 
     private val pxViewReqCache: Px[ViewReqCache.ToVdom[ProjectText.Context.None]] =
       Px.apply2(pxViewReqDataCache, pxProjectWidgets)(ViewReqCache.apply)
 
-    private val pxRenderFeature =
+    private val pxViewReqCacheText: Px[ViewReqCache[ProjectText.Context.None, String]] =
+      Px.apply2(pxViewReqDataCache, pxPlainText)(ViewReqCache.apply)
+
+    private val pxRenderFeature: Px[FilterDead => RenderFeature.ForProject.ToVdom[ProjectText.Context.None]] =
       Px.apply3(pxProject, pxViewReqCache, pxProjectWidgets)(RenderFeature.prepare)
+
+    private val pxRenderFeatureText: Px[FilterDead => RenderFeature.ForProject[ProjectText.Context.None, String]] =
+      Px.apply3(pxProject, pxViewReqCacheText, pxPlainText)(RenderFeature.prepare)
 
     private val pxCreateEditability =
       pxProject.map(p => CreateFeature.Editability(p.config))
@@ -209,18 +215,25 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
 
     private val pxReqDetailReqProps: Px[Option[State => ReqDetail.ReqProps]] =
       for {
-        editability <- pxEditEditability
-        reqDetailId <- pxReqDetailId
+        editability   <- pxEditEditability
+        reqDetailId   <- pxReqDetailId
+        project       <- pxProject
+        vrdc          <- pxViewReqDataCache
       } yield reqDetailId.map { id =>
         val row = EditorFeature.RowKey.req(id)
-        val aw = editAsyncW(row).mapKey(AsyncKey.ToReqDetail)
-        val ew = editW.forReq(id)
+        val aw  = editAsyncW(row).mapKey(AsyncKey.ToReqDetail)
+        val ew  = editW.forReq(id)
+        val ctx = ProjectText.Context.Req(id)
+        val pt  = PlainText.ForProject(project, ctx)
+        val vrc = ViewReqCache(vrdc, pt)
+        val rff = RenderFeature.prepare(project, vrc, pt)
 
         (s: State) => {
           val as = s.editAsync.toRead
           val ar = as(row).mapKey(AsyncKey.ToReqDetail)
           val af = aw.toReadWrite(ar)
-          val er = EditorFeature.Read.ForProject(s.edit, editability, as.mapKey1(AsyncKey.ToEditor)).forReq(id)
+          val rf = rff(s.filterDead)
+          val er = EditorFeature.Read.ForProject(s.edit, rf, editability, as.mapKey1(AsyncKey.ToEditor)).forReq(id)
           val ef = EditorFeature.ReadWrite.ForFields(er, ew)
           ReqDetail.ReqProps(ef, af)
         }
@@ -273,11 +286,12 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
 
     def render(p: Props, s: State): VdomElement = {
       lazy val editAsyncState = s.editAsync.toRead
-      def createR      = CreateFeature.Read.ForProject(s.create, pxCreateEditability.value(), s.createAsync.toRead)
-      def createRW     = createW.toReadWrite(createR)
-      def editR        = EditorFeature.Read.ForProject(s.edit, pxEditEditability.value(), editAsyncState.mapKey1(AsyncKey.ToEditor))
-      def editRW       = editW.toReadWrite(editR)
-      def filterDeadSS = StateSnapshot.withReuse(s.filterDead)(setFilterDead)
+      def createR       = CreateFeature.Read.ForProject(s.create, pxCreateEditability.value(), s.createAsync.toRead)
+      def createRW      = createW.toReadWrite(createR)
+      def renderFeature = pxRenderFeatureText.value()(s.filterDead)
+      def editR         = EditorFeature.Read.ForProject(s.edit, renderFeature, pxEditEditability.value(), editAsyncState.mapKey1(AsyncKey.ToEditor))
+      def editRW        = editW.toReadWrite(editR)
+      def filterDeadSS  = StateSnapshot.withReuse(s.filterDead)(setFilterDead)
       // def previewRW = previewW.toReadWrite(s.preview)
 
       val content: VdomElement = p.page match {

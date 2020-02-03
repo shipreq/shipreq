@@ -21,7 +21,7 @@ object ReqTableTest extends TestSuite {
   PrepareEnv()
 
   def runTest(plan: *.Plan)(implicit path: utest.framework.TestPath): Unit =
-    runTest(plan withInitialState SampleProject3.project)
+    runTest(plan withInitialState SampleProject4.project)
 
   def runTest(p: *.PlanWithInitialState)(implicit path: utest.framework.TestPath): Unit = {
     import ProjectSpaTestDsl._
@@ -312,6 +312,14 @@ object ReqTableTest extends TestSuite {
 //    // confirm new UC exists
 //  )
 
+  def testCopy(pubid: String, col: String)(expect: String) =
+    Plan.action(
+      showAllColumns
+        >> cellEditor(pubid = pubid, col = col).focus
+        >> press(cmdOrCtrl(KB.C))
+        +> clipboardText.assert(expect)
+    )
+
   def testPasteClosedDesc = {
     val cell = cellEditor(pubid = "MF-1", col = "Description")
     val text = "* omfg\n* ahh"
@@ -373,7 +381,7 @@ object ReqTableTest extends TestSuite {
   override def tests = Tests {
     'initialState - runTest(*.emptyPlan)
 
-    'filter - runTest(Plan action testFilter named "testFilter")
+    'filter - runTest(Plan.action(testFilter).named("testFilter").withInitialState(SampleProject3.project))
 
     'dead {
       'cols - runTest(Plan action testDeadColumns named "testDeadColumns")
@@ -410,6 +418,18 @@ object ReqTableTest extends TestSuite {
 //      'useCaseWithMinimalColumns - ???
 //      'codeGroupWithMinimalColumns - ???
 //    }
+
+    'copy - {
+      'title     - runTest(testCopy("MF-1", "Title")("Use Case Editor"))
+      'desc      - runTest(testCopy("UC-1", "Description")("This UC is about eating."))
+      'id        - runTest(testCopy("MF-1", "ID")("MF-1"))
+      'grReqType - runTest(testCopy("MF-1", "Type")("MF"))
+      'ucReqType - runTest(testCopy("UC-1", "Type")("UC"))
+      'imps      - runTest(testCopy("FR-1", "Implies")("CO-2, FR-2"))
+      'tags      - runTest(testCopy("MF-5", "Priority")("pri=high"))
+      'tagsEmpty - runTest(testCopy("MF-2", "Status")(""))
+      'dead      - runTest(testCopy("CO-1", "Title")("Search entities!"))
+    }
 
     'paste - {
       'closedDesc  - runTest(testPasteClosedDesc)

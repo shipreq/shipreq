@@ -27,8 +27,8 @@ object ViewReqDataCache {
 
 // =====================================================================================================================
 
-final case class ViewReqCache[Ctx <: ProjectText.Context, A](dataCache: ViewReqDataCache,
-                                                             private[ViewReqCache] val pt: ProjectText[ProjectText.Context, A]) {
+final case class ViewReqCache[+Ctx <: ProjectText.Context, A](dataCache: ViewReqDataCache,
+                                                              private[ViewReqCache] val pt: ProjectText[Ctx, A]) {
 
   private[this] val cache: FilterDead => ReqId => ViewReq[A] =
     FilterDead.memo { fd =>

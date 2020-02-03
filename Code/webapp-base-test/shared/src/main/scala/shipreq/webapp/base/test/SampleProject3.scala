@@ -34,7 +34,7 @@ object SampleProject3 {
     val List(p1,p3,p5) = List[ApplicableTagId](4,3,2)
     val (p2,p4) = (p3,p5)
 
-    def fr1Desc = {
+    def fr1Title = {
       import T.GenericReqTitle._
       Vector(
         EmailAddress("japgolly@gmail.com"), Literal(" is on "), WebAddress("https://github.com"),
@@ -42,7 +42,7 @@ object SampleProject3 {
         TeX("c = \\pm\\sqrt{a^2 + b^2}")
       )
     }
-    def fr2Desc = {
+    def fr2Title = {
       import T.GenericReqTitle._
       Vector(Issue(2, inlineIssueDesc), Literal(". "), ReqRef(mfs(28)), Literal(" is dead."))
     }
@@ -77,8 +77,8 @@ object SampleProject3 {
     + GReq(reqType = mf, id = mfs(27), title = "External references"                  ).tag(p1).impSrc(frs(2))
     + GReq(reqType = mf, id = mfs(28), title = "Entities", live = Dead                ).tag(p2)
 
-    + GReq(reqType = fr, id = frs(1), title = fr1Desc, codes = Set("uce.sample.1", "uce.sample.1b", "demo.whatever")).impSrc(mfs(12), mfs(19))
-    + GReq(reqType = fr, id = frs(2), title = fr2Desc, codes = Set("uce.sample.2")).impSrc(mfs(1), mfs(13), mfs(22), frs(1))
+    + GReq(reqType = fr, id = frs(1), title = fr1Title, codes = Set("uce.sample.1", "uce.sample.1b", "demo.whatever")).impSrc(mfs(12), mfs(19))
+    + GReq(reqType = fr, id = frs(2), title = fr2Title, codes = Set("uce.sample.2")).impSrc(mfs(1), mfs(13), mfs(22), frs(1))
     + RCGroup("demo", title = Vector(T.CodeGroupTitle.Literal("Demo group header")))
 
     + GReq(reqType = co, id = cos(1), live = Dead, title = "Search entities!").impSrc(mfs(28), mfs(25)).tag(v10, v3x)

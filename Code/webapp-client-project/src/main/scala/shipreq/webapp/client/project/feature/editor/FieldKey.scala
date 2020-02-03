@@ -10,6 +10,7 @@ import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.Text
+import shipreq.webapp.client.project.feature.RenderFeature
 import shipreq.webapp.client.project.lib.DataReusability._
 
 /**
@@ -24,6 +25,10 @@ sealed trait FieldKey {
   /** Description of changes the user has made in the editor */
   type Change
 
+  type RenderFieldKey <: RenderFeature.FieldKey
+
+  def forRender: RenderFieldKey
+
   @inline final def cast2[F[_], G[_, _], A, B](f: F[G[A, B]]) = f.asInstanceOf[F[G[Args, Change]]]
 }
 
@@ -32,64 +37,86 @@ object FieldKey {
   /** Fields apply to one or more type of reqs */
   sealed trait ForSomeReq extends FieldKey {
     override final type Args = Unit
+    override type RenderFieldKey <: RenderFeature.FieldKey.ForSomeReq
   }
 
   /** Fields apply to all types of reqs */
-  sealed trait ForAllReqs extends ForGenericReq with ForUseCase
+  sealed trait ForAllReqs extends ForGenericReq with ForUseCase {
+    override type RenderFieldKey <: RenderFeature.FieldKey.ForAllReqs
+  }
 
   sealed trait ForCodeGroup extends FieldKey {
     override final type Args = Unit
+    override type RenderFieldKey <: RenderFeature.FieldKey.ForCodeGroup
     def foldCG[F[_, _]](f: FoldForCodeGroup[F]): F[Args, Change]
   }
 
   sealed trait ForGenericReq extends ForSomeReq {
+    override type RenderFieldKey <: RenderFeature.FieldKey.ForGenericReq
     def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change]
   }
 
   sealed trait ForUseCase extends ForSomeReq {
+    override type RenderFieldKey <: RenderFeature.FieldKey.ForUseCase
     def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change]
   }
 
   case object Code extends ForCodeGroup {
     override type Change = ReqCode.Value
+    override type RenderFieldKey = RenderFeature.FieldKey.Code.type
+    override def forRender = RenderFeature.FieldKey.Code
     override def foldCG[F[_, _]](f: FoldForCodeGroup[F]): F[Args, Change] = f.code(this)
   }
 
   case object CodeGroupTitle extends ForCodeGroup {
     override type Change = Text.CodeGroupTitle.OptionalText
+    override type RenderFieldKey = RenderFeature.FieldKey.CodeGroupTitle.type
+    override def forRender = RenderFeature.FieldKey.CodeGroupTitle
     override def foldCG[F[_, _]](f: FoldForCodeGroup[F]): F[Args, Change] = f.title(this)
   }
 
   case object Codes extends ForAllReqs {
     override type Change = SetDiff.NE[ReqCode.Value]
+    override type RenderFieldKey = RenderFeature.FieldKey.Codes.type
+    override def forRender = RenderFeature.FieldKey.Codes
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.codes(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.codes(this)
   }
 
   final case class CustomTextField(field: CustomField.Text.Id) extends ForAllReqs {
     override type Change = Text.CustomTextField.OptionalText
+    override type RenderFieldKey = RenderFeature.FieldKey.CustomTextField
+    override def forRender = RenderFeature.FieldKey.CustomTextField(field)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.customTextField(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.customTextField(this)
   }
 
   case object GenericReqTitle extends ForGenericReq {
     override type Change = Text.GenericReqTitle.OptionalText
+    override type RenderFieldKey = RenderFeature.FieldKey.Title.type
+    override def forRender = RenderFeature.FieldKey.Title
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.title(this)
   }
 
   final case class Implications(scope: ImplicationScope) extends ForAllReqs {
     override type Change = SetDiff.NE[ReqId]
+    override type RenderFieldKey = RenderFeature.FieldKey.Implications
+    override def forRender = RenderFeature.FieldKey.Implications(scope)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.implications(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.implications(this)
   }
 
   case object ReqType extends ForGenericReq {
     override type Change = CustomReqType
+    override type RenderFieldKey = RenderFeature.FieldKey.ReqType.type
+    override def forRender = RenderFeature.FieldKey.ReqType
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.reqType(this)
   }
 
   final case class Tags(field: Option[CustomField.Tag.Id]) extends ForAllReqs {
     override type Change = SetDiff.NE[ApplicableTagId]
+    override type RenderFieldKey = RenderFeature.FieldKey.Tags
+    override def forRender = RenderFeature.FieldKey.Tags(field)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.tags(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.tags(this)
   }
@@ -97,6 +124,8 @@ object FieldKey {
   final case class UseCaseStep(id: UseCaseStepId) extends FieldKey {
     override type Args = UseCaseStep.Args
     override type Change = UseCaseStepGD.NonEmptyValues
+    override type RenderFieldKey = RenderFeature.FieldKey.UseCaseStep
+    override def forRender = RenderFeature.FieldKey.UseCaseStep(id)
     def foldUCS[F[_, _]](f: FoldForUseCaseSteps[F]): F[Args, Change] = f.step(this)
   }
 
@@ -114,12 +143,16 @@ object FieldKey {
 
   case object UseCaseTitle extends ForUseCase {
     override type Change = Text.UseCaseTitle.OptionalText
+    override type RenderFieldKey = RenderFeature.FieldKey.Title.type
+    override def forRender = RenderFeature.FieldKey.Title
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.title(this)
   }
 
   final case class ManualIssue(id: ManualIssueId) extends FieldKey {
     override type Args = Unit
     override type Change = Text.ManualIssue.NonEmptyText
+    override type RenderFieldKey = RenderFeature.FieldKey.ManualIssue
+    override def forRender = RenderFeature.FieldKey.ManualIssue(id)
     def foldMI[F[_, _]](f: FoldForManualIssues[F]): F[Args, Change] = f.text(this)
   }
 

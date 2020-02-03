@@ -12,7 +12,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature._
-import shipreq.webapp.base.feature.clipboard.{ClipboardData, ClipboardCodec}
+import shipreq.webapp.base.feature.clipboard.ClipboardData
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.{ManualIssueCmd, ServerSideProcInvoker, UpdateContentCmd}
@@ -282,9 +282,7 @@ object NewEditor {
 
       val pxCustomReqTypes = ReqTypeSelector.pxCustomReqTypes(pxProject)
 
-      val potentialValueAcceptor = PotentialValueAcceptor.rejectAll
-
-      def apply(id: GenericReqId): InitFn = ictx => Internal.init(potentialValueAcceptor) { ivo => args =>
+      def apply(id: GenericReqId): InitFn = ictx => args => {
         import ictx._, ctx._
 
         case class State(initialValue: Some[RT],
@@ -310,21 +308,36 @@ object NewEditor {
               abort        = abort,
               commitFn     = commitFn)
 
+          override def clipboardData: Option[ClipboardData] =
+            Some(ClipboardData(PlainText.reqTypeFull(ss.value)))
+
           override def setPotentialValue(p: PotentialValue): Option[Callback] =
-            potentialValueAcceptor.accept(p).map(ss.setState)
+            Some {
+              for {
+                choices <- pxChoices.toCallback
+                pva      = ReqTypeSelector.potentialValueAcceptor(choices.whole)
+                _       <- pva.accept(p).map(ss.setState).getOrEmpty
+              } yield ()
+            }
         }
 
         val (abort, commitFn) =
           makeAbortCommitFn(sspUpdateContent)((t: RT) => UpdateContentCmd.SetGenericReqType(id, t.id), args.hooks)
 
         for {
-          _       <- CallbackOption.require(ivo.isEmpty)
-          req     <- getGenericReq(id)
-          initial <- getCustomReqTypeCB(req.reqTypeId)
-        } yield {
-          val pxChoices = ReqTypeSelector.pxChoices(initial, pxCustomReqTypes)
-          State(Some(initial), initial, pxChoices, abort, commitFn)
-        }
+          req      <- getGenericReq(id)
+          current  <- getCustomReqTypeCB(req.reqTypeId)
+          pxChoices = ReqTypeSelector.pxChoices(current, pxCustomReqTypes)
+          initial  <- args.potentialValue match {
+                        case None     => CallbackOption.pure(current)
+                        case Some(pv) =>
+                          for {
+                            choices <- pxChoices.toCallback.toCBO
+                            pva      = ReqTypeSelector.potentialValueAcceptor(choices.whole)
+                            i       <- CallbackOption.liftOption(pva.accept(pv))
+                          } yield i
+                      }
+        } yield State(Some(current), initial, pxChoices, abort, commitFn)
       }
     }
 
@@ -382,6 +395,9 @@ object NewEditor {
               extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
               showInstructions = true)
 
+          override def clipboardData: Option[ClipboardData] =
+            Some(ClipboardData(ss.value))
+
           override def setPotentialValue(p: PotentialValue): Option[Callback] =
             potentialValueAcceptor.accept(p).map(ss.setState)
         }
@@ -433,6 +449,9 @@ object NewEditor {
               commitVerb       = commitVerb,
               extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
               showInstructions = true)
+
+          override def clipboardData: Option[ClipboardData] =
+            Some(ClipboardData(ss.value))
 
           override def setPotentialValue(p: PotentialValue): Option[Callback] =
             potentialValueAcceptor.accept(p).map(ss.setState)
@@ -533,6 +552,9 @@ object NewEditor {
             extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
             showInstructions = true)
 
+        override def clipboardData: Option[ClipboardData] =
+          Some(ClipboardData(ss.value))
+
         override def setPotentialValue(p: PotentialValue): Option[Callback] =
           Some {
             for {
@@ -597,6 +619,9 @@ object NewEditor {
             commitVerb       = commitVerb,
             extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
             showInstructions = true)
+
+        override def clipboardData: Option[ClipboardData] =
+          Some(ClipboardData(ss.value))
 
         override def setPotentialValue(p: PotentialValue): Option[Callback] =
           potentialValueAcceptor.accept(p).map(ss.setState)
@@ -673,6 +698,9 @@ object NewEditor {
               preEditValue     = initial,
               extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
               showInstructions = true)
+
+          override def clipboardData: Option[ClipboardData] =
+            Some(ClipboardData(ss.value))
 
           override def setPotentialValue(p: PotentialValue): Option[Callback] =
             potentialValueAcceptor.accept(p).map(ss.setState)
@@ -780,6 +808,9 @@ object NewEditor {
               extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
               showInstructions = true)
 
+          override def clipboardData: Option[ClipboardData] =
+            Some(ClipboardData(ss.value))
+
           override def setPotentialValue(p: PotentialValue): Option[Callback] =
             potentialValueAcceptor.accept(p).map(ss.setState)
         }
@@ -886,6 +917,9 @@ object NewEditor {
               preview        = previewRW(pid),
               preEditValue   = initial)
           }
+
+        override def clipboardData: Option[ClipboardData] =
+          Some(ClipboardData(ss.value))
 
         override def setPotentialValue(p: PotentialValue): Option[Callback] =
           potentialValueAcceptor.accept(p).map(ss.setState)

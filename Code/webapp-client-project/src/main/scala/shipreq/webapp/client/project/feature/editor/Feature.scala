@@ -8,7 +8,10 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature._
+import shipreq.webapp.base.feature.clipboard.ClipboardData
+import shipreq.webapp.base.text.ProjectText
 import shipreq.webapp.base.ui.EditTheme
+import shipreq.webapp.client.project.feature.RenderFeature
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 
@@ -24,6 +27,8 @@ object Feature {
     def render(p: Permission, as: AsyncState, args: Args): Option[VdomElement]
 
     def change[C >: Change]: CallbackTo[Editor.Change[C]]
+
+    def clipboardData: Option[ClipboardData]
 
     def setPotentialValue(p: PotentialValue): Option[Callback]
   }
@@ -72,8 +77,15 @@ object Feature {
 
     // Note: editor is package-private here because it's actually read & write, where as this class is read-only
     final case class ForEditor[-A, +C](private[editor] val editor: Option[Editor[A, C]],
-                                       editability: Permission,
-                                       async: AsyncState) {
+                                       renderText                : Reusable[() => Option[String]],
+                                       editability               : Permission,
+                                       async                     : AsyncState) {
+
+      def clipboardData: Option[ClipboardData] =
+        editor match {
+          case None    => renderText.value().map(ClipboardData.apply)
+          case Some(e) => e.clipboardData
+        }
 
       def isOpen: Boolean =
         editor.isDefined
@@ -89,10 +101,11 @@ object Feature {
 
     object ForEditor {
       val doNothing: ForEditor[Any, Nothing] =
-        apply(None, Deny, None)
+        apply(None, Reusable.always(() => None), Deny, None)
     }
 
     final case class ForFields[-FK <: FieldKey](_editor    : State.ForFields,
+                                                renderText : RenderFeature.ForFields[ProjectText.Context, RenderFeature.FieldKey, Option[String]],
                                                 editability: Reusable[Editability.ForFields[FK]],
                                                 async      : AsyncFeature.Read.D1[FieldKey, AsyncError]) {
 
@@ -100,12 +113,20 @@ object Feature {
         State.ForSpecificRow(_editor)
 
       def apply(f: FK): ForEditor[f.Args, f.Change] =
-        ForEditor(editor.get(f), editability(f), async(f))
+        ForEditor(
+          editor.get(f),
+          Reusable.implicitly(renderText).withValue(() => renderText(f.forRender)),
+          editability(f),
+          async(f))
     }
 
     implicit class ForFieldsInvariantExt[FK <: FieldKey](private val self: ForFields[FK]) extends AnyVal {
       def widen[W >: FK <: FieldKey](implicit t: FieldKey.Type[FK]): ForFields[W] =
-        self.copy(editability = self.editability.map(_.widen(t)))
+        ForFields[W](
+          self._editor,
+          self.renderText,
+          self.editability.map(_.widen(t)),
+          self.async)
     }
 
     type ForCodeGroup    = ForFields[FieldKey.ForCodeGroup ]
@@ -116,29 +137,46 @@ object Feature {
     type ForManualIssues = ForFields[FieldKey.ManualIssue  ]
 
     final case class ForProject(state      : State.ForProject,
+                                renderText : RenderFeature.ForProject[ProjectText.Context, String],
                                 editability: Editability.ForProject,
                                 async      : AsyncFeature.Read.D2[RowKey, FieldKey, AsyncError]) {
 
-       private def forRow(r: RowKey)(e: Reusable[Editability.ForFields[r.FieldKey]]): ForFields[r.FieldKey] =
-         ForFields(state.getOrElse(r, UnivEq.emptyMap), e, async(r))
+       private def forRow(r          : RowKey)
+                         (renderText : RenderFeature.ForFields[ProjectText.Context, RenderFeature.FieldKey, Option[String]],
+                          editability: Reusable[Editability.ForFields[r.FieldKey]]): ForFields[r.FieldKey] =
+         ForFields(
+           state.getOrElse(r, UnivEq.emptyMap),
+           renderText,
+           editability,
+           async(r))
 
       def forCodeGroup(id: ReqCodeGroupId): ForCodeGroup =
-        forRow(RowKey.CodeGroup(id))(Reusable implicitly editability.forCodeGroups(id))
+        forRow(RowKey.CodeGroup(id))(
+          renderText.forCodeGroupId(id).widen(None),
+          Reusable.implicitly(editability.forCodeGroups(id)))
 
       def forGenericReq(id: GenericReqId): ForGenericReq =
-         forRow(RowKey.GenericReq(id))(Reusable implicitly editability.forReqs(id))
+         forRow(RowKey.GenericReq(id))(
+           renderText.forGenericReq(id).some.widen(None),
+           Reusable.implicitly(editability.forReqs(id)))
 
       def forReq(id: ReqId): ForReq =
         id.foldReqId(forGenericReq(_).widen, forUseCase(_).widen)
 
       def forUseCase(id: UseCaseId): ForUseCase =
-        forRow(RowKey.UseCase(id))(Reusable implicitly editability.forReqs(id))
+        forRow(RowKey.UseCase(id))(
+          renderText.forUseCase(id).some.widen(None),
+          Reusable.implicitly(editability.forReqs(id)))
 
       lazy val forUseCaseSteps: ForUseCaseSteps =
-        forRow(RowKey.UseCaseSteps)(Reusable implicitly editability.forUseCaseSteps)
+        forRow(RowKey.UseCaseSteps)(
+          renderText.forUseCaseSteps.some.widen(None),
+          Reusable.implicitly(editability.forUseCaseSteps))
 
       lazy val forManualIssues: ForManualIssues =
-        forRow(RowKey.ManualIssues)(Editability.forManualIssues)
+        forRow(RowKey.ManualIssues)(
+          renderText.forManualIssues.some.widen(None),
+          Editability.forManualIssues)
     }
 
              val reusabilityForEditorAny   : Reusability[ForAnyEditor   ] = Reusability.derive
@@ -275,6 +313,10 @@ object Feature {
                                        write       : Write.ForEditor,
                                        creationArgs: FreeOption[NewEditor.CreationArgs]) {
 
+      def asyncFeature  = write.async
+      def asyncState    = read.async
+      def clipboardData = read.clipboardData
+
       /** impure */
       @inline def render(args: A): Option[VdomElement] =
         read.render(args)
@@ -311,9 +353,6 @@ object Feature {
 
       def withPotentialValue(p: PotentialValue): ForEditor[A, C] =
         copy(creationArgs = creationArgs.map(_.copy(potentialValue = Some(p))))
-
-      def asyncFeature = write.async
-      def asyncState = read.async
 
       val setPotentialValueFnIfAllowed: Option[PotentialValue => Option[Callback]] =
         SetValueDecision(read) match {

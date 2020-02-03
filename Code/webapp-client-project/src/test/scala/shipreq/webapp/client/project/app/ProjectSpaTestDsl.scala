@@ -10,6 +10,7 @@ import teststate.run.Report.AssertionSettings
 import shipreq.base.util.Debug._
 import shipreq.webapp.base.data.{ExternalPubid, Obfuscated, Project}
 import shipreq.webapp.base.event.Event
+import shipreq.webapp.base.feature.clipboard.TestClipboard
 import shipreq.webapp.base.protocol.ProjectSpaEntryPoint
 import shipreq.webapp.base.test.SampleProject5
 import shipreq.webapp.base.test._
@@ -203,6 +204,7 @@ object ProjectSpaTestDsl {
     val init         = TestState(page, global.unsafeProject(), rd)
 
     ReactTestUtils.withRenderedIntoBody(spa.Component(Props(init.page, rc))) { m =>
+      TestClipboard.clear()
       val tester = new ComponentTester(spa.Component)(m)
       val report = Plan(action, invariants)
                      .test(Observer(_.observe()))

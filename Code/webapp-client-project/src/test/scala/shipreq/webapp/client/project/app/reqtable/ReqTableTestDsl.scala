@@ -78,6 +78,8 @@ object ReqTableTestDsl {
 
   val activeElement = *.focus("activeElement").value(_.obs.activeElement)
 
+  val clipboardText = *.focus("clipboardText").value(_.obs.clipboardText)
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   val editorInvalidSel: String =
@@ -90,9 +92,9 @@ object ReqTableTestDsl {
   case object Failed  extends CellState
 
   def cellEditor(pubid: String, col: String): CellEditor =
-    CellEditor(_.table.cellLoc(pubid = pubid, col = col))
+    CellEditor(_.table.cellLoc(pubid = pubid, col = col), s"$pubid: $col")
 
-  final case class CellEditor(loc: ReqTableObs => ReqTableObs.CellLoc) {
+  final case class CellEditor(loc: ReqTableObs => ReqTableObs.CellLoc, locDesc: String) {
 
     private def editorCss = EditableSel
 
@@ -122,7 +124,7 @@ object ReqTableTestDsl {
       _editing.assert(false)
 
     val focus =
-      setFocus(o => o.table.cell(loc(o)).domAsHtml)
+      setFocus(o => o.table.cell(loc(o)).domAsHtml).rename("Focus on " + locDesc)
 
     val tryStartEdit =
       *.action("Start editor.")(Simulate doubleClick cell.run(_).dom)

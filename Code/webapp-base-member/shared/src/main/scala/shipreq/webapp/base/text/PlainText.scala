@@ -80,6 +80,12 @@ object PlainText {
   def pubid(mnemonic: ReqType.Mnemonic, pos: ReqTypePos): String =
     mnemonic.value ~ "-" ~ pos.value
 
+  def reqTypeShort(rt: ReqType): String =
+    rt.mnemonic.value
+
+  def reqTypeFull(rt: ReqType): String =
+    s"${rt.mnemonic.value}: ${rt.name}"
+
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   private implicit def surroundDisplay(s: Surrounds) = s.display
@@ -226,12 +232,10 @@ object PlainText {
       PlainText.reqCodeTreeItem(item)
 
     override def reqTypeShort(id: ReqTypeId): String =
-      p.config.reqTypes.need(id).mnemonic.value
+      PlainText.reqTypeShort(p.config.reqTypes.need(id))
 
-    override def reqTypeFull(id: ReqTypeId): String = {
-      val rt = p.config.reqTypes.need(id)
-      s"${rt.mnemonic.value}: ${rt.name}"
-    }
+    override def reqTypeFull(id: ReqTypeId): String =
+      PlainText.reqTypeFull(p.config.reqTypes.need(id))
 
     override def useCaseStepTextAndFlow(step: UseCaseStepFlowText.TextAndFlow[Text.AnyOptional, Set[UseCaseStepId]],
                                         live: Live): String =

@@ -5,7 +5,7 @@ import org.parboiled2.Parser.DeliveryScheme.Throw
 import org.scalajs.dom.{document, html}
 import shipreq.base.util.{Invalid, Validity}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data._
+import shipreq.webapp.base.feature.clipboard.TestClipboard
 import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.WebappTestUtil._
@@ -56,6 +56,8 @@ final class ReqTableObs(global: TestGlobal, $: DomZipperJs) {
   import ReqTableObs._
 
   val activeElement = document.activeElement
+
+  val clipboardText = TestClipboard.readText()
 
   val svrReqs = global.reqs()
 

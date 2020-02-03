@@ -81,8 +81,6 @@ Phase 2C
   * Configure display (eg. id + title, just title, add tags?)
   * Graph direction: TD / LR
 
-* Copy to clipboard from cells in Req{Table,Detail}
-
 * Reappearances wrt tags
 
 * Allow system to add new field/columns in future without breaking existing projects.

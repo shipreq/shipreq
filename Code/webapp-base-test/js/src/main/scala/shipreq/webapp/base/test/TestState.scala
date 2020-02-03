@@ -37,7 +37,7 @@ object TestState
   def assertTestState(r: Report[String], onFailure: => Unit = ())(implicit as: AssertionSettings, se: DisplayError[String]): Unit =
     r.failureReason match {
       case None =>
-        as.onPass.print(r)
+        // as.onPass.print(r)
       case Some(f) =>
         onFailure
         as.onFail.print(r)

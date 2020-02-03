@@ -9,13 +9,14 @@ import scalaz.\/
 import shipreq.base.util.{ConsolidatedSeq, ErrorMsg}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.feature.clipboard.ClipboardKeys
 import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.feature.EditorFeature
-import shipreq.webapp.client.project.feature.editor.FieldKey
+import shipreq.webapp.client.project.feature.RenderFeature.FieldKey
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.EditorNavParent
 import shipreq.webapp.client.project.widgets.ProjectWidgets
@@ -44,10 +45,14 @@ object TableRow {
 
   private val na = TagMod(*.na, "–")
 
-  private def cellBase(col: Column, addNav: Boolean = true) =
+  private def cellBase(col: Column, addNav: Boolean = true, allowCopy: Boolean = true) = {
+    def keys(e: ReactKeyboardEventFromHtml): CallbackOption[Unit] =
+      tableNavigationFeature.Keys.handlerFn(e).when(addNav) | ClipboardKeys.copy.generic(e).when(allowCopy)
+
     td(
       ^.key := col.key,
-      tableNavigationFeature.onKeyDown.when(addNav))
+      ^.onKeyDown ==> keys)
+  }
 
   private def render(p: Props): VdomElement = {
     import p.{row, pubidFormat}
@@ -56,8 +61,8 @@ object TableRow {
 
     for (col <- p.columns) {
 
-      def addTD(content: TagMod, addNav: Boolean = true) =
-        cells += cellBase(col, addNav)(content)
+      def addTD(content: TagMod, addNav: Boolean = true, allowCopy: Boolean = true) =
+        cells += cellBase(col, addNav = addNav, allowCopy = allowCopy)(content)
 
       col match {
 
@@ -81,9 +86,9 @@ object TableRow {
         case Column.Title =>
           for (base <- p.titleBase) {
             val c = row match {
-              case r: Row.ForGenericReq  => r.renderer(FieldKey.GenericReqTitle)
-              case r: Row.ForUseCase     => r.renderer(FieldKey.UseCaseTitle)
-              case r: Row.ForUseCaseStep => r.ucRenderer(FieldKey.UseCaseTitle)
+              case r: Row.ForGenericReq  => r.renderer(FieldKey.Title)
+              case r: Row.ForUseCase     => r.renderer(FieldKey.Title)
+              case r: Row.ForUseCaseStep => r.ucRenderer(FieldKey.Title)
               case r: Row.ForRcg         => r.renderer(FieldKey.CodeGroupTitle)
               case _: Row.ForManualIssue => na // This appears in Field Editor
               case _: Row.ForConfig      => na
@@ -97,11 +102,11 @@ object TableRow {
         case Column.FieldEditor =>
           p.editor match {
             case Some(props) => cells += props.renderWithKey(col.key)
-            case None        => addTD(na)
+            case None        => addTD(na, allowCopy = false)
           }
 
         case Column.Actions =>
-          addTD(
+          val content =
             if (row.actions.isEmpty)
               na
             else
@@ -115,8 +120,7 @@ object TableRow {
                   case Some(Failed(err, _, _)) => TagMod(ok, <.br, BaseStyles.errorPointingUp(err.value))
                 }
               }
-          )
-
+          addTD(content, allowCopy = false)
       }
     }
 

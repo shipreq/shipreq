@@ -10,9 +10,11 @@ import shipreq.base.util.PotentialChange
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.EditorStatus
+import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.client.project.app.Style.widgets.{reqTypeSelector => *}
+import shipreq.webapp.client.project.feature.editor.{PotentialValue, PotentialValueAcceptor}
 
 object ReqTypeSelector {
 
@@ -84,6 +86,18 @@ object ReqTypeSelector {
     .build
 
   // ===================================================================================================================
+
+  def potentialValueAcceptor(choices: Traversable[RT]): PotentialValueAcceptor[RT] =
+    PotentialValueAcceptor {
+      case PotentialValue.Clipboard(cd) => parseText(choices, cd.text)
+      case PotentialValue.Text(txt)     => parseText(choices, txt)
+      case PotentialValue.Emptiness     => None
+    }
+
+  private def parseText(choices: Traversable[RT], t: String): Option[RT] = {
+    val input = Grammar.reqTypeMnemonic.caseInsensitiveParsePost(t.takeWhile(_ != ':').trim)
+    choices.find(_.mnemonic.value ==* input)
+  }
 
   def pxCustomReqTypes(p: Px[Project]): Px[Set[RT]] =
     p.map(_.config.reqTypes.custom.values.toSet)

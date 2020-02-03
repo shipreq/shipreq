@@ -22,6 +22,9 @@ object Clipboard {
           .getOrElse(AsyncCallback.pure(""))
           .map(Option(_).getOrElse(""))
           .map(ClipboardData.apply)
+
+      override def write(d: ClipboardData): AsyncCallback[Unit] =
+        async(_.writeText(d.text)).getOrElse(AsyncCallback.unit)
     }
   }
 
@@ -37,6 +40,7 @@ object Clipboard {
 
 abstract class Clipboard private[clipboard] {
   def read: AsyncCallback[ClipboardData]
+  def write(d: ClipboardData): AsyncCallback[Unit]
 }
 
 // =====================================================================================================================

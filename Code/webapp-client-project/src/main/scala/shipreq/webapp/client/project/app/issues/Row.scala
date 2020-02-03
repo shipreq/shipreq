@@ -7,14 +7,13 @@ import shipreq.webapp.base.issue._
 import shipreq.webapp.base.UiText.{Issues => UI}
 import shipreq.webapp.client.project.feature.RenderFeature
 import shipreq.webapp.client.project.feature.EditorFeature
-import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
 import shipreq.webapp.client.project.lib.EditorNavParent
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 
 sealed trait Row {
   val issue: Issue
   val issueClassDesc: String
-  def fieldOption: Option[IssueField[FieldKey]]
+  def fieldOption: Option[IssueField[EditorFeature.FieldKey]]
   val actions: List[Action]
 
   val editor: (EditorFeature.ReadWrite.ForProject, Reusable[Px[ProjectWidgets.NoCtx]]) => Option[Reusable[EditorNavParent.Props]]
@@ -32,7 +31,7 @@ object Row {
   final case class ForGenericReq(issue         : Issue,
                                  issueClassDesc: String,
                                  req           : GenericReq,
-                                 field         : IssueField[FieldKey.ForGenericReq],
+                                 field         : IssueField[EditorFeature.FieldKey.ForGenericReq],
                                  renderer      : RenderFeature.ToVdom.NoCtx.ForGenericReq,
                                  actions       : List[Action]) extends ForReq {
     override val fieldOption = Some(field)
@@ -42,7 +41,7 @@ object Row {
   final case class ForUseCase(issue         : Issue,
                               issueClassDesc: String,
                               req           : UseCase,
-                              field         : IssueField[FieldKey.ForUseCase],
+                              field         : IssueField[EditorFeature.FieldKey.ForUseCase],
                               renderer      : RenderFeature.ToVdom.NoCtx.ForUseCase,
                               actions       : List[Action]) extends ForReq {
     override val fieldOption = Some(field)
@@ -52,19 +51,19 @@ object Row {
   final case class ForUseCaseStep(issue         : Issue,
                                   issueClassDesc: String,
                                   req           : UseCase,
-                                  field         : IssueField[FieldKey.UseCaseStep],
+                                  field         : IssueField[EditorFeature.FieldKey.UseCaseStep],
                                   ucRenderer    : RenderFeature.ToVdom.NoCtx.ForUseCase,
                                   renderer      : RenderFeature.ToVdom.NoCtx.ForUseCaseSteps,
                                   actions       : List[Action]) extends ForReq {
     override val fieldOption = Some(field)
     override val editor = (e, pw) => Some(
-      renderEditable(field.key)(renderer, e.forUseCaseSteps, FieldKey.UseCaseStep.Args.empty, pw))
+      renderEditable(field.key)(renderer, e.forUseCaseSteps, EditorFeature.FieldKey.UseCaseStep.Args.empty, pw))
   }
 
   final case class ForRcg(issue         : Issue,
                           issueClassDesc: String,
                           rcg           : LiveCodeGroup,
-                          fieldOption   : Option[IssueField[FieldKey.ForCodeGroup]],
+                          fieldOption   : Option[IssueField[EditorFeature.FieldKey.ForCodeGroup]],
                           code          : ReqCode.Value,
                           renderer      : RenderFeature.ToVdom.NoCtx.ForCodeGroup,
                           actions       : List[Action]) extends Row {
@@ -84,7 +83,7 @@ object Row {
 
   final case class ForManualIssue(issue   : Issue.ManualIssue,
                                   actions : List[Action],
-                                  renderer: RenderFeature.ToVdom.NoCtx.ForManualIssue) extends Row {
+                                  renderer: RenderFeature.ToVdom.NoCtx.ForManualIssues) extends Row {
     val field = IssueField.manual(issue.issue)
     override val issueClassDesc = UI.descManualIssue
     override def fieldOption = Some(field)
@@ -96,14 +95,14 @@ object Row {
   implicit def reusability: Reusability[Row] =
     Reusability.byRef
 
-  private def renderEditable[FK <: FieldKey](fk    : FK)
-                                            (render: RenderFeature.ToVdom.NoCtx.ForField[FK],
-                                             editor: EditorFeature.ReadWrite.ForFields[FK],
-                                             args  : fk.Args,
-                                             pw    : Reusable[Px[ProjectWidgets.NoCtx]]): Reusable[EditorNavParent.Props] = {
+  private def renderEditable[FK <: EditorFeature.FieldKey](fk    : FK)
+                                                          (render: RenderFeature.ToVdom.NoCtx.ForField[fk.RenderFieldKey],
+                                                           editor: EditorFeature.ReadWrite.ForFields[FK],
+                                                           args  : fk.Args,
+                                                           pw    : Reusable[Px[ProjectWidgets.NoCtx]]): Reusable[EditorNavParent.Props] = {
     val e = editor(fk, pw, HideDead)
     Reusable.implicitly(e).map { e =>
-      TableRow.renderEditor(Column.FieldEditor, render(fk), e, args)
+      TableRow.renderEditor(Column.FieldEditor, render(fk.forRender), e, args)
     }
   }
 
@@ -112,14 +111,14 @@ object Row {
     val customFieldName = CustomField.nameP(p)
     val actionBuilder = new Actions.Builder(p)
 
-    def forReqA(i: Issue, desc: String, req: Req, fk: IssueField[FieldKey.ForAllReqs]): ForReq =
+    def forReqA(i: Issue, desc: String, req: Req, fk: IssueField[EditorFeature.FieldKey.ForAllReqs]): ForReq =
       req match {
         case r: GenericReq => forGR(i, desc, r, fk)
         case r: UseCase    => forUC(i, desc, r, fk)
       }
 
-    def forReqF(i: Issue, desc: String, req: Req)(fkGR: IssueField[FieldKey.ForGenericReq],
-                                                 fkUC: IssueField[FieldKey.ForUseCase]): ForReq =
+    def forReqF(i: Issue, desc: String, req: Req)(fkGR: IssueField[EditorFeature.FieldKey.ForGenericReq],
+                                                 fkUC: IssueField[EditorFeature.FieldKey.ForUseCase]): ForReq =
       req match {
         case r: GenericReq => forGR(i, desc, r, fkGR)
         case r: UseCase    => forUC(i, desc, r, fkUC)
@@ -128,7 +127,7 @@ object Row {
     def forReqTitle(i: Issue, desc: String, req: Req): ForReq =
       forReqF(i, desc, req)(IssueField.GenericReqTitle, IssueField.UseCaseTitle)
 
-    def forGR(i: Issue, desc: String, req: GenericReq, fk: IssueField[FieldKey.ForGenericReq]) =
+    def forGR(i: Issue, desc: String, req: GenericReq, fk: IssueField[EditorFeature.FieldKey.ForGenericReq]) =
       ForGenericReq(
         issue          = i,
         issueClassDesc = desc,
@@ -137,7 +136,7 @@ object Row {
         renderer       = rf.forGenericReq(req.id),
         actions        = actionBuilder(i))
 
-    def forUC(i: Issue, desc: String, req: UseCase, fk: IssueField[FieldKey.ForUseCase]) =
+    def forUC(i: Issue, desc: String, req: UseCase, fk: IssueField[EditorFeature.FieldKey.ForUseCase]) =
       ForUseCase(
         issue          = i,
         issueClassDesc = desc,
@@ -153,7 +152,7 @@ object Row {
         case Location.Text.UseCaseStep(stepId)      => forUcsI(i, desc, stepId)
       }
 
-    def forRcg(i: Issue, desc: String, g: LiveCodeGroup, fk: Option[IssueField[FieldKey.ForCodeGroup]]) =
+    def forRcg(i: Issue, desc: String, g: LiveCodeGroup, fk: Option[IssueField[EditorFeature.FieldKey.ForCodeGroup]]) =
       ForRcg(
         issue          = i,
         issueClassDesc = desc,
@@ -245,7 +244,7 @@ object Row {
         forConfig(i, desc)
 
       case i: Issue.ManualIssue =>
-        ForManualIssue(i, actionBuilder(i), rf.forManualIssue)
+        ForManualIssue(i, actionBuilder(i), rf.forManualIssues)
     }
   }
 }

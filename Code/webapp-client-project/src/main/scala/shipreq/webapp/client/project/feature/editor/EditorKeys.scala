@@ -3,9 +3,8 @@ package shipreq.webapp.client.project.feature.editor
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import org.scalajs.dom.ext.KeyCode
-import shipreq.webapp.base.feature.clipboard.Clipboard
+import shipreq.webapp.base.feature.clipboard.ClipboardKeys
 import shipreq.webapp.base.lib.DomUtil._
-import shipreq.webapp.base.util.Browser
 
 object EditorKeys {
   import Feature.ReadWrite
@@ -15,8 +14,11 @@ object EditorKeys {
     val applicableToOpenAndReplace =
       !(e.altKey || e.ctrlKey || e.metaKey || editor.read.isOpen)
 
-    def paste: Callback =
-      editor.setPotentialValueAsync(Clipboard.instance.read.map(PotentialValue.Clipboard)).getOrEmpty
+    def copy: CallbackOption[Unit] =
+      ClipboardKeys.copy.withFallback(e, editor.clipboardData)
+
+    def paste: CallbackOption[Unit] =
+      ClipboardKeys.paste(e)(cd => editor.setPotentialValue(PotentialValue.Clipboard(cd)).getOrEmpty)
 
     def noModKeys: CallbackOption[Unit] =
       CallbackOption.keyCodeSwitch(e) {
@@ -28,20 +30,6 @@ object EditorKeys {
           editor.setPotentialValue(PotentialValue.Emptiness).getOrEmpty.when_(applicableToOpenAndReplace)
       }
 
-    def shiftKeys: CallbackOption[Unit] =
-      CallbackOption.keyCodeSwitch(e, shiftKey = true) {
-
-        case KeyCode.Insert =>
-          paste
-      }
-
-    def platformDependantKeys: CallbackOption[Unit] =
-      Browser.cmdOrCtrlKeyCodeSwitch(e) {
-
-        case KeyCode.V =>
-          paste
-      }
-
     def openEditorAndReplaceContentWithKey: CallbackOption[Unit] =
       for {
         _ <- CallbackOption.require(applicableToOpenAndReplace)
@@ -50,9 +38,9 @@ object EditorKeys {
       } yield ()
 
     def handlers: CallbackOption[Unit] =
-      noModKeys | shiftKeys | platformDependantKeys | openEditorAndReplaceContentWithKey
+      noModKeys | openEditorAndReplaceContentWithKey
 
-    (CallbackOption.require(doesEventTargetCell(e)) >> handlers).asEventDefault(e)
+    asEventDefaultWhenTargetsCell(e)(handlers) | copy | paste
   }
 
   private def focusOrStartEditor(editor: ReadWrite.ForAnyEditor, event: ReactEventFromHtml): CallbackOption[Unit] =

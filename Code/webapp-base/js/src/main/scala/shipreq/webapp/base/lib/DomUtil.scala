@@ -145,6 +145,9 @@ object DomUtil {
     e.target == e.currentTarget ||
       (try e.target.tabIndex < 0 catch { case _: Throwable => false }) // .tabIndex is undefined from tests
 
+  def asEventDefaultWhenTargetsCell(e: ReactEventFromHtml)(handler: CallbackOption[Unit]): CallbackOption[Unit] =
+    (CallbackOption.require(doesEventTargetCell(e)) >> handler).asEventDefault(e)
+
   def focusParentOnChildClose(parent: html.Element): Callback =
     for (focused <- activeHtmlElement) yield
       // If this cell's child is focused, or there is no focus at all, then focus this cell.
