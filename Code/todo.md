@@ -81,11 +81,6 @@ Phase 2C
   * Configure display (eg. id + title, just title, add tags?)
   * Graph direction: TD / LR
 
-* Bug   : Open a UC in ReqDetail, ctrl-C on ReqType, doesn't copy.
-  Reason: RenderFeature uses editor {Row,Field}Keys where as ReqType isn't an editable field for UCs.
-  Idea 1: Move {Row,Field}Keys out of .editor, include r/o fields and have editor feature not open editors for them.
-  Idea 2: Move copy key handlers out of EditorFeature.Keys and use in both EditorNavParent & reqtable.Table
-
 * Reappearances wrt tags
 
 * Allow system to add new field/columns in future without breaking existing projects.

@@ -5,9 +5,17 @@ import shipreq.webapp.base.text.ProjectText
 import shipreq.webapp.base.text.ProjectText.{Context => PCtx}
 import shipreq.webapp.client.project.widgets.ViewReqCache
 
-/** TODO usage
- *
- */
+/** Provides the ability to render for display, parts of a project using row & field keys.
+  *
+  *  == Usage ==
+  *
+  * 1. Call [[.prepare()]] and store it for reuse. In practice, this is going to be inside a `Px` because it's derived
+  *    from dependencies that are all going to be inside `Px`s too.
+  *
+  * 2. Apply the current [[FilterDead]] setting to get a [[RenderFeature.ForProject]]
+  *
+  * 3. Pass the [[RenderFeature.ForProject]] to downstream components for them to use.
+  */
 object RenderFeature {
 
   type FieldKey = render.FieldKey
