@@ -922,8 +922,7 @@ object NewEditor {
               args.addStepRunner.map(
                 _.mapRunOption(run =>
                   Reusable.never(_ =>
-                    step.field.canInsertAfter(step.loc).option(
-                      run(UpdateContentCmd.AddUseCaseStep(step.useCaseId, step.field, step.loc.asParentLoc))))))
+                    UpdateContentCmd.addUseCaseStepAfter(step).map(run))))
 
             UseCaseStepEditor.Props(
               project        = project,

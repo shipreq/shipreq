@@ -416,12 +416,24 @@ object ReqDetail {
             Some(cmdRunner(Cell.UseCaseStepCtrls(id))),
             Some(addCmdRunner(Cell.AddUseCaseStep(id))))
 
+          def addStepAfterSelf: CallbackOption[Unit] =
+            for {
+              _      <- CallbackOption.unless(editor.read.isOpen)
+              step    = project.content.reqs.useCases.focusStep(id)
+              addCmd <- CallbackOption.liftOption(UpdateContentCmd.addUseCaseStepAfter(step))
+              _      <- CallbackOption.liftOptionCallback(addCmdRunner(Cell.AddUseCaseStep(id)).runOption(addCmd))
+            } yield ()
+
+          def onKeyDown(e: ReactKeyboardEventFromHtml): CallbackOption[Unit] =
+            UseCaseStepEditor.saveAndAddKeyCriterion.toCallbackOption(e) >> addStepAfterSelf
+
           EditorNavParent.Props(
             args.base,
             editor,
             editorArgs,
-            pw.useCaseStepTextAndFlow(args.textAndFlow(), args.live))
-            .render
+            pw.useCaseStepTextAndFlow(args.textAndFlow(), args.live),
+            onKeyDown,
+          ).render
         }
 
         UseCaseStepTree.Props(

@@ -286,6 +286,9 @@ object UseCaseStep {
     def usesUseCaseTitle: Boolean =
       step.usesUseCaseTitle(uc)
 
+    val canInsertAfterSelf: Permission =
+      field.canInsertAfter(loc)
+
     val canShift: LeftRight => Permission = {
       lazy val canShiftRight = field.canShiftRight(loc, ucSteps.locValidity, ucSteps.tree.maxDepthTree);
       {

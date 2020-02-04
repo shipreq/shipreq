@@ -71,6 +71,9 @@ object KeyHandler {
                              keyCode  : Int,
                              modKeys  : ModKeys = ModKeys.empty) {
 
+    def toCallbackOption(e: ReactKeyboardEvent): CallbackOption[Unit] =
+      CallbackOption.require(satisfiedBy(e))
+
     def satisfiedBy(e: ReactKeyboardEvent): Boolean =
       (e.keyCode ==* keyCode) &&
       ModKeys.All.forall(k => k.isPressed(e) ==* modKeys.contains(k))

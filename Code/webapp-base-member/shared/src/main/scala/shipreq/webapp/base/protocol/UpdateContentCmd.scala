@@ -1,6 +1,7 @@
 package shipreq.webapp.base.protocol
 
 import japgolly.microlibs.nonempty._
+import shipreq.base.util.VectorTree.LocationOps
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
@@ -38,6 +39,9 @@ object UpdateContentCmd {
   case class DeleteUseCaseStep    (id: UseCaseStepId) extends ForUseCaseStep
   case class RestoreUseCaseStep   (id: UseCaseStepId) extends ForUseCaseStep
   case class UpdateUseCaseStep    (id: UseCaseStepId, vs: UseCaseStepGD.NonEmptyValues) extends ForUseCaseStep
+
+  def addUseCaseStepAfter(step: UseCaseStep.Focus): Option[AddUseCaseStep] =
+    step.canInsertAfterSelf.option(AddUseCaseStep(step.useCaseId, step.field, step.loc.asParentLoc))
 
   def ShiftUseCaseStep(id: UseCaseStepId, dir: LeftRight): ForUseCaseStep =
     dir match {

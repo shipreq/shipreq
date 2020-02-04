@@ -23,6 +23,7 @@ object EditorNavParent {
     val editorArgs: A
     val view      : () => TagMod
     val tableStyle: TableNavigationFeature.TableStyle
+    val onKeyDown : ReactKeyboardEventFromHtml => CallbackOption[Unit]
 
     @inline final def render: VdomElement =
       Component(this)
@@ -32,6 +33,9 @@ object EditorNavParent {
   }
 
   object Props {
+
+    val doNothingOnKeyDown: ReactKeyboardEventFromHtml => CallbackOption[Unit] =
+      Function const CallbackOption.fail
 
     /**
       * @param parent Container vdom without any [[TableNavigationFeature]] integration.
@@ -49,12 +53,25 @@ object EditorNavParent {
                  editor    : EditorFeature.ReadWrite.ForEditor[A, Any],
                  editorArgs: A,
                  view      : => TagMod)
+                (implicit ts: TableNavigationFeature.TableStyle): Props =
+      apply(parent, editor, editorArgs, view, doNothingOnKeyDown)(ts)
+
+    /**
+      * @param parent Container vdom without any [[TableNavigationFeature]] integration.
+      */
+    def apply[A](parent    : VdomTag,
+                 editor    : EditorFeature.ReadWrite.ForEditor[A, Any],
+                 editorArgs: A,
+                 view      : => TagMod,
+                 onKeyDown : ReactKeyboardEventFromHtml => CallbackOption[Unit]
+                )
                 (implicit ts: TableNavigationFeature.TableStyle): Props = {
       type _A         = A
       val _parent     = parent
       val _editor     = editor
       val _editorArgs = editorArgs
       val _view       = () => view
+      val _onKeyDown  = onKeyDown
       new Props {
         override type A         = _A
         override val parent     = _parent
@@ -62,6 +79,7 @@ object EditorNavParent {
         override val editor     = _editor
         override val view       = _view
         override val tableStyle = ts
+        override val onKeyDown  = _onKeyDown
       }
     }
   }
@@ -78,7 +96,7 @@ object EditorNavParent {
       p.editor.onClose(editorOnClose)
 
     val onKeyDown: ReactKeyboardEventFromHtml => Callback =
-      e => TableNavigationFeature(p.tableStyle).Keys(e) | EditorFeature.Keys(editor)(p.editorArgs)(e)
+      e => TableNavigationFeature(p.tableStyle).Keys(e) | EditorFeature.Keys(editor)(p.editorArgs)(e) | p.onKeyDown(e)
 
     p.parent(
       ^.onKeyDown ==> onKeyDown,

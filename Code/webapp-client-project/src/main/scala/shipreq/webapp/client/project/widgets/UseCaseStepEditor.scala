@@ -119,7 +119,7 @@ object UseCaseStepEditor {
   val potentialValueAcceptor: PotentialValueAcceptor[String] =
     PotentialValueAcceptor.correct(liveCorrect)
 
-  private def saveAndAddKeyCriterion = KeyHandler.Criterion.AltEnter
+  def saveAndAddKeyCriterion = KeyHandler.Criterion.AltEnter
 
   private val shiftKeyCriterion: LeftRight.Values[KeyHandler.Criterion] =
     LeftRight.Values { d =>
