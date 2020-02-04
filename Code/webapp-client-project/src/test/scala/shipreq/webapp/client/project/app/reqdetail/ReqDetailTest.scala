@@ -26,8 +26,10 @@ object ReqDetailTest extends TestSuite {
                      (p: *.Plan): Report[String] = {
     import ProjectSpaTestDsl._
 
+    val p2 = p.addInvariants(unsavedChangesInvariant)
+
     ProjectSpaTestDsl.runTest(
-      action     = liftReqDetailTests(p).asAction(s"Req Detail (${PlainText.pubid(ep)})"),
+      action     = liftReqDetailTests(p2).asAction(s"Req Detail (${PlainText.pubid(ep)})"),
       page       = Page.ReqDetail(ep),
       project    = project,
       rd         = State(ep, if (error) Mode.Error else Mode.Details),
@@ -88,6 +90,7 @@ object ReqDetailTest extends TestSuite {
               .toIterator
               .filter(_.matches("^    [^ ] .+"))
               .filterNot(_.contains("] Random "))
+              .filterNot(_.contains("unsavedChanges ≤ editors"))
               .map(_.drop(6))
               .map {
                 case stepAdd       (s   ) => s"""addStep("$s")"""
@@ -233,7 +236,7 @@ object ReqDetailTest extends TestSuite {
 
       'bugs {
 
-        // Turned out the problem was in UnsavedChanges,derive
+        // Turned out the problem was in UnsavedChanges.derive
         'useCaseStepIdNotFound - test("UC-1", SampleProject6.project)(Plan.action(
                                       // 1.0  1.0.1  1.0.2  1.0.2.a  1.0.3                                                          1.1  1.1.1  1.E.1
           addStep("1.0")           >> // 1.0  1.0.1  1.0.2           1.0.3    1.0.3.a  1.0.4                                        1.1  1.1.1  1.E.1
@@ -243,6 +246,19 @@ object ReqDetailTest extends TestSuite {
           shiftStepRight("1.0.6")  >> // 1.0  1.0.1  1.0.2*          1.0.3             1.0.4                        1.0.5  1.0.5.a  1.1  1.1.1  1.E.1
           shiftStepRight("1.0.5")  >> // 1.0  1.0.1  1.0.2*          1.0.3             1.0.4    1.0.4.a  1.0.4.a.i                  1.1  1.1.1  1.E.1
           delStep("1.0.2")            // Delete 1.0.2 -- java.util.NoSuchElementException: key not found: UseCaseStepId(201)
+        ))
+
+
+        'extraUnsavedChanges - test("UC-1", SampleProject6.project)(Plan.action(
+                                                                 // 1.0  1.0.1  1.0.2  1.0.2.a  1.0.3  1.1  1.1.1  1.E.1
+          shiftStepRight("1.1")   +> unsavedChanges.assert(0) >> // 1.0  1.0.1  1.0.2  1.0.2.a  1.0.3  1.0.4  1.0.4.a  1.E.1
+          delStep("1.0.2")        +> unsavedChanges.assert(0) >> // 1.0  1.0.1  1.0.2  1.0.3  1.0.3.a  1.E.1
+          delStep("1.0.3")        +> unsavedChanges.assert(0) >> // 1.0  1.0.1  1.0.2  1.E.1
+          shiftStepRight("1.0.2") +> unsavedChanges.assert(0) >> // 1.0  1.0.1  1.0.1.a  1.E.1
+          openEditor("1.0.1.a")   +> unsavedChanges.assert(0) >> // 1.0  1.0.1  1.0.1.a* 1.E.1
+          openEditor("1.E.1")     +> unsavedChanges.assert(0) >> // 1.0  1.0.1  1.0.1.a* 1.E.1*
+          delStep("1.E.1")        +> unsavedChanges.assert(0) >> // 1.0  1.0.1  1.0.1.a*
+          delStep("1.0.1")        +> unsavedChanges.assert(0)    // unsavedChanges (1) must be ≤ editorCount (0)
         ))
 
       }
@@ -283,6 +299,40 @@ object ReqDetailTest extends TestSuite {
       >> doubleClickFieldValue("Reporter") +> editorCount.assert(2) // dead field
       >> hideDead                          +> editorCount.assert(2)
     , reporterFieldExistence))
+
+    'unsavedDeadChanges - test("UC-1")(Plan.action(
+      filterDead.assert(HideDead)
+        +> editorCount.assert(0)
+        +> unsavedChanges.assert(0)
+
+        +> doubleClickTitle
+        +> editorCount.assert.increaseBy(1)
+        +> unsavedChanges.assert.noChange
+
+        >> doubleClickFieldValue("Notes")
+        +> editorCount.assert.increaseBy(1)
+        +> unsavedChanges.assert.noChange
+
+        >> setTitleEditValue("xxxxxxxxxxx")
+        +> editorCount.assert.noChange
+        +> unsavedChanges.assert.increaseBy(1)
+
+        >> setFieldEditValue("Notes", "zzzzzzzzzzzzzzzzz")
+        +> editorCount.assert.noChange
+        +> unsavedChanges.assert.increaseBy(1)
+
+        >> changeLife.updateState(stateMode set Mode.Delete)
+        >> deleteScreenDelete
+        +> life.assert(Dead)
+        +> editorCount.assert(0)
+        +> unsavedChanges.assert(0)
+
+        >> changeLife.updateState(stateMode set Mode.Restore)
+        >> restoreScreenRestore
+        +> life.assert(Live)
+        +> editorCount.assert(2)
+        +> unsavedChanges.assert(2)
+    ))
 
   }
 }

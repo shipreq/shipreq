@@ -7,6 +7,7 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.{Dead, Live, ShowDead}
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.ui.semantic.Icon
+import shipreq.webapp.client.project.app.ProjectSpaTestDsl.NavObs
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.feature.deletion.{DeletionFormObs, RestorationFormObs}
 import ReqDetailTestDsl.Mode
@@ -29,7 +30,7 @@ object ReqDetailObs {
   val TreeNames = NAE(useCaseStepTreeN, useCaseStepTreeA, useCaseStepTreeE)
 }
 
-final class ReqDetailObs($: DomZipperJs) {
+final class ReqDetailObs($: DomZipperJs, val nav: NavObs) {
 
   private val errorRoot = $.failToOption(".ui.error.message")
 
@@ -47,7 +48,9 @@ final class ReqDetailObs($: DomZipperJs) {
 
     val pubid = headerRow(">*", 1 of 3).innerText.replace(":", "").trim
 
-    val titleDom = headerRow(">*", 2 of 3).domAsHtml
+    private val title = headerRow(">*", 2 of 3)
+    val titleDom = title.domAsHtml
+    val titleEditor = title.collect01("textarea").domsAs[html.TextArea]
 
     val filterDeadButton = headerRow(">*", 3 of 3)("button").domAs[html.Button]
 
@@ -57,10 +60,16 @@ final class ReqDetailObs($: DomZipperJs) {
 
     val table = root(">table")
 
-    val fields: Map[String, DomZipperJs] =
+    val fields: Map[String, Field] =
       table(">tbody").collect1n(">tr")
-        .map(z => z(">th").innerText -> z(">td"))
+        .map(z => z(">th").innerText -> Field(z(">td")))
         .toMap
+
+    case class Field(private[ReqDetailObs] val $: DomZipperJs) {
+      val dom       = $.dom
+      val innerText = $.innerText
+      val editor    = $.collect01("textarea").domsAs[html.TextArea]
+    }
 
     val lifeRow = fields(UiText.Life.field)
 
@@ -75,13 +84,13 @@ final class ReqDetailObs($: DomZipperJs) {
     }
 
     val lifeChangeButton: Option[html.Button] =
-      lifeRow.collect01("button").domsAs[html.Button]
+      lifeRow.$.collect01("button").domsAs[html.Button]
   }
 
   object uc {
     import generic._
 
-    val treeCells = ReqDetailObs.TreeNames.map(fields)
+    private val treeCells = ReqDetailObs.TreeNames.map(fields(_).$)
 
     val stepRows: NAE[Vector[StepRow]] =
       treeCells.map(_.collect0n(">div>div").map(StepRow))

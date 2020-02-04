@@ -67,8 +67,11 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     private val pxProjectName: Px[Project.Name] =
       pxProject.map(_.name).withReuse
 
+    private val pxEditEditability: Px[EditorFeature.Editability.ForProject] =
+      pxProject.map(EditorFeature.Editability.apply)
+
     private val pxUnsavedChangesInput: Px[UnsavedChanges.Input] =
-      Px.apply3(pxState, pxProjectName, pxUseCases)(UnsavedChanges.Input.apply)
+      Px.apply4(pxState, pxEditEditability, pxProjectName, pxUseCases)(UnsavedChanges.Input.apply)
 
     private val pxUnsavedChanges: Px[UnsavedChanges] =
       pxUnsavedChangesInput.map(UnsavedChanges.determine).flatMap(Px.callback(_).withReuse.autoRefresh)
@@ -108,9 +111,6 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
 
     private val pxCreateEditability =
       pxProject.map(p => CreateFeature.Editability(p.config))
-
-    private val pxEditEditability =
-      pxProject.map(EditorFeature.Editability.apply)
 
     private val pxFilterCompilerFromFilterDead: Px[FilterDead => Filter.Valid.Compiler] =
       for {

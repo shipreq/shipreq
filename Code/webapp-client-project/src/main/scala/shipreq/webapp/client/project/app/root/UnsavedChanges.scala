@@ -4,10 +4,13 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react.{CallbackTo, Reusability}
 import japgolly.univeq._
+import scala.util.Try
+import shipreq.base.util._
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.data.{Open, Project, ReqCodeGroupId, ReqId, UseCases}
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.feature.create.NewEditorArgs
 import shipreq.webapp.client.project.lib.DataReusability._
 
@@ -49,6 +52,7 @@ object UnsavedChanges {
   implicit def reusability: Reusability[UnsavedChanges] = Reusability.byRefOrUnivEq
 
   final case class Input(state      : State,
+                         editability: EditorFeature.Editability.ForProject,
                          projectName: Project.Name,
                          useCases   : UseCases)
 
@@ -130,43 +134,62 @@ object UnsavedChanges {
 
     case object Editors extends Type {
       import shipreq.webapp.client.project.feature.EditorFeature
-      import EditorFeature.{Editor, FieldKey, RowKey}
+      import EditorFeature.{Editability, Editor, FieldKey, RowKey}
 
       override def determine(input: Input) =
         CallbackTo {
 
-          val isChanged: Editor[Nothing, Any] => Boolean =
+          def eligible(editor: Editor[Nothing, Any], editability: => Permission): Boolean = {
             // Rarely, but sometimes, ids and their data are hard-deleted.
             // When that happens, the editor state isn't deleted (probably it should be) but the point is, calling
             // .change here can result in stuff like:
             //     java.util.NoSuchElementException: key not found: UseCaseStepId(201)
-            _.change.attempt.runNow() match {
-              case Right(pv) => pv.isChanged
-              case Left(_)   => false
-            }
+            @inline def changed =
+              editor.change.attempt.runNow() match {
+                case Right(pv) => pv.isChanged
+                case Left(_)   => false
+              }
 
-          def countFields(f: EditorFeature.State.ForFields, l: Location) = {
-            var ls = List.empty[Location]
-            for (e <- f.values)
-              if (isChanged(e))
-                ls ::= l
-            ls
+            // This is wrapped in try for the same reasons as above
+            @inline def editable =
+              try
+                editability.is(Allow)
+              catch {
+                case _: Throwable => false
+              }
+
+            editable && changed
+          }
+
+          def countFields(state      : EditorFeature.State.ForFields,
+                          editability: Editability.ForFields[FieldKey],
+                          loc        : Location) = {
+
+            var locs = List.empty[Location]
+
+            for ((field, editor) <- state)
+              if (eligible(editor, editability(field)))
+                locs ::= loc
+
+            locs
           }
 
           input.state.edit.iterator.flatMap {
             case (row, fields) =>
 
+              val editability = input.editability(row)
+
               row match {
-                case RowKey.GenericReq(id) => countFields(fields, Location.Req(id))
-                case RowKey.UseCase(id)    => countFields(fields, Location.Req(id))
-                case RowKey.ManualIssues   => countFields(fields, Location.ManualIssues)
-                case RowKey.CodeGroup(id)  => countFields(fields, Location.ReqCodeGroup(id))
+                case RowKey.GenericReq(id) => countFields(fields, editability, Location.Req(id))
+                case RowKey.UseCase(id)    => countFields(fields, editability, Location.Req(id))
+                case RowKey.ManualIssues   => countFields(fields, editability, Location.ManualIssues)
+                case RowKey.CodeGroup(id)  => countFields(fields, editability, Location.ReqCodeGroup(id))
 
                 case RowKey.UseCaseSteps =>
                   fields.iterator.flatMap {
                     case (field, editor) =>
                       field match {
-                        case FieldKey.UseCaseStep(stepId) if isChanged(editor) =>
+                        case FieldKey.UseCaseStep(stepId) if eligible(editor, editability(field)) =>
                           input.useCases.stepIndex
                             .get(stepId)
                             .map(k => Location.Req(k.useCaseId))

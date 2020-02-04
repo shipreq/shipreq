@@ -5,6 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
+import scala.annotation.elidable
 import scalaz.~~>
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.VectorTree.LocationOps
@@ -291,6 +292,9 @@ object NewEditor {
                          abort       : Some[Callback],
                          commitFn    : Some[RT ~=> Callback]) extends EditorImpl {
 
+          @elidable(elidable.FINER)
+          override def toString = s"EditReqType(${ss.value})"
+
           def ss = StateSnapshot(editValue)(stateAccess.toSetStateFn.contramap(e => copy(editValue = e).some))
 
           override type Props = ReqTypeSelector.Props
@@ -431,6 +435,9 @@ object NewEditor {
                             abort   : Some[Callback],
                             commitFn: Some[RCE.CommitFn]) extends EditorImpl {
 
+          @elidable(elidable.FINER)
+          override def toString = s"EditReqCodes(${ss.value})"
+
           override type Props = RCE.Props
           override def renderImpl = _.render
           override def changeArgs = ()
@@ -527,6 +534,9 @@ object NewEditor {
                           abort      : Some[Callback],
                           commitFn   : Some[CommitFn]) extends EditorImpl {
 
+        @elidable(elidable.FINER)
+        override def toString = s"EditImplications(${ss.value})"
+
         private val pxPotentialValueAcceptor =
           pxCorrector.map(PotentialValueAcceptor.correct)
 
@@ -601,6 +611,9 @@ object NewEditor {
                           abort        : Some[Callback],
                           commitFn     : Some[CommitFn]) extends EditorImpl {
 
+        @elidable(elidable.FINER)
+        override def toString = s"EditTags(${ss.value})"
+
         override type Props = TagEditor.Props
         override def renderImpl = _.render
         override def changeArgs = ()
@@ -671,6 +684,9 @@ object NewEditor {
                             pid             : PreviewId,
                             abort           : Some[Callback],
                             commitFn        : Some[editor.Optional.CommitFn]) extends EditorImpl {
+
+          @elidable(elidable.FINER)
+          override def toString = s"EditRichText(${ss.value})"
 
           override type Props = editor.Optional
           override def renderImpl = _.render
@@ -781,6 +797,9 @@ object NewEditor {
                             abort           : Some[Callback],
                             commitFn        : Some[editor.NonEmpty.CommitFn]) extends EditorImpl {
 
+          @elidable(elidable.FINER)
+          override def toString = s"EditRichTextNonEmpty(${ss.value})"
+
           override type Props = editor.NonEmpty
           override def renderImpl = _.render
           override def changeArgs = ()
@@ -874,6 +893,9 @@ object NewEditor {
                           pid             : PreviewId,
                           abort           : Callback,
                           commitFn        : UseCaseStepEditor.CommitFn) extends EditorImpl {
+
+        @elidable(elidable.FINER)
+        override def toString = s"EditUseCaseStep(${ss.value})"
 
         override type Props = UseCaseStepEditor.Props
         override def renderImpl = _.render

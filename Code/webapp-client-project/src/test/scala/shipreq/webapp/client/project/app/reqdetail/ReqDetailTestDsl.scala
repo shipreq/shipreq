@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.app.reqdetail
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.testutil.TestUtilInternals.quoteStringForDisplay
 import japgolly.scalajs.react.test._
 import monocle.macros.Lenses
@@ -58,6 +59,9 @@ object ReqDetailTestDsl {
 
   def checkErrorReason(e: String) =
     *.focus("Error reason").value(_.obs.error.reason).test(s"contains '$e'")(_ contains e)
+
+  val unsavedChanges =
+    *.focus("unsaved changes").value(_.obs.nav.unsavedChanges)
 
   val allSteps =
     *.focus("All steps").collection(_.obs.uc.stepLabels)
@@ -134,6 +138,15 @@ object ReqDetailTestDsl {
         else
           invariantsGR
     })
+
+  // This isn't part of invariants above cos it's not a universal invariant and I don't want it used by ProjectSpaTest.
+  // This invariant holds in the case of ReqDetailTest tests only because all possible editors as on the same page.
+  val unsavedChangesInvariant: *.Invariants =
+    *.point("unsavedChanges ≤ editors") { x =>
+      val u = unsavedChanges.run(x)
+      val e = editorCount.run(x)
+      Option.unless(u <= e)(s"unsavedChanges ($u) must be ≤ editorCount ($e)")
+    }
 
   private def clickEnabled(b: html.Button): Unit = {
     assert(!b.disabled, "Button is disabled.")
@@ -246,6 +259,14 @@ object ReqDetailTestDsl {
 
   def doubleClickFieldValue(field: String) =
     *.action("Double-click " + field)(Simulate doubleClick _.obs.generic.fields(field).dom)
+
+  def setTitleEditValue(newValue: String): *.Actions =
+    *.action(s"Set title text to ${quoteStringForDisplay(newValue)}")(
+      SimEvent.Change(newValue) simulate _.obs.generic.titleEditor.get)
+
+  def setFieldEditValue(field: String, newValue: String): *.Actions =
+    *.action(s"Set $field to ${quoteStringForDisplay(newValue)}")(
+      SimEvent.Change(newValue) simulate _.obs.generic.fields(field).editor.get)
 
   val randomUseCaseStepAction: *.Actions = {
 

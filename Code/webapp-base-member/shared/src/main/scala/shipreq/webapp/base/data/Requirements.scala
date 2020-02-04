@@ -1,5 +1,6 @@
 package shipreq.webapp.base.data
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.utils.{BiMap, Memo}
 import monocle.{Iso, Traversal}
@@ -382,6 +383,9 @@ final case class UseCases(imap: UseCaseIMap, stepIndex: UseCases.StepIndex, step
 
   val focusStep: UseCaseStepId => UseCaseStep.Focus =
     Memo(new UseCaseStep.Focus(this, _))
+
+  def getFocusStep(id: UseCaseStepId): Option[UseCaseStep.Focus] =
+    Option.when(stepIndex.contains(id))(focusStep(id))
 
   def getStep(id: UseCaseStepId): Option[UseCaseStep] =
     stepIndex.get(id).map(_.need(imap).need(id))

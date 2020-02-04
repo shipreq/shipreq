@@ -56,7 +56,7 @@ object ProjectSpaTestDsl {
         case Page.Index        => empty.copy(home        = Try(new ProjectHomeObs(inner)))
         case Page.CfgReqTypes  => empty.copy(cfgReqTypes = Try(new CfgReqTypesObs(inner)))
         case Page.ReqTable     => empty.copy(reqTable    = Try(new ReqTableObs(global, inner)))
-        case Page.ReqDetail(_) => empty.copy(reqDetail   = Try(new ReqDetailObs(inner)))
+        case Page.ReqDetail(_) => empty.copy(reqDetail   = Try(new ReqDetailObs(inner, nav)))
         case Page.Issues       => empty.copy(issues      = Try(new IssuesPageObs(inner)))
         case _                 => empty
       }

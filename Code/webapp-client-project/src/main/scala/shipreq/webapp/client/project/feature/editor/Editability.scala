@@ -20,9 +20,18 @@ object Editability {
     ForProject(p.config, p.content.reqs, p.content.reqCodes)
 
   final case class ForProject(cfg: ProjectConfig, reqs: Requirements, reqCodes: ReqCodes) {
-    val forReqs = ForReqs(cfg, reqs)
-    val forCodeGroups = ForCodeGroups(reqCodes)
+    val forReqs         = ForReqs(cfg, reqs)
+    val forCodeGroups   = ForCodeGroups(reqCodes)
     val forUseCaseSteps = ForUseCaseSteps(reqs.useCases)
+
+    def apply(row: RowKey): ForFields[FieldKey] =
+      row match {
+        case RowKey.CodeGroup(id)  => forCodeGroups(id).widen
+        case RowKey.GenericReq(id) => forReqs(id).widen
+        case RowKey.UseCase(id)    => forReqs(id).widen
+        case RowKey.UseCaseSteps   => forUseCaseSteps.widen
+        case RowKey.ManualIssues   => forManualIssues.value.widen
+      }
   }
 
   val forManualIssues: Reusable[ForFields[FieldKey.ManualIssue]] =
