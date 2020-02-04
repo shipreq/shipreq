@@ -196,7 +196,22 @@ object ProjectSpaTestDsl {
               page      : Page,
               project   : Project  = SampleProject5.project,
               rd        : RD.State = RD.unspecifiedState,
-              assertPass: Boolean = true): Report[String] = {
+              assertPass: Boolean = true): Unit = {
+    runTestReturnReport(
+      action     = action,
+      page       = page,
+      project    = project,
+      rd         = rd,
+      assertPass = assertPass,
+    )
+    ()
+  }
+
+  def runTestReturnReport(action    : *.Actions,
+                          page      : Page,
+                          project   : Project  = SampleProject5.project,
+                          rd        : RD.State = RD.unspecifiedState,
+                          assertPass: Boolean = true): Report[String] = {
 
     val global       = TestGlobal(project)
     val initPageData = ProjectSpaEntryPoint.InitData(Username("testuser"), Obfuscated("xyz"), project.name)

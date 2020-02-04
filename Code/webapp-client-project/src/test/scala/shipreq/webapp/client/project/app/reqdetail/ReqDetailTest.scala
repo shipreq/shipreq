@@ -28,7 +28,7 @@ object ReqDetailTest extends TestSuite {
 
     val p2 = p.addInvariants(unsavedChangesInvariant)
 
-    ProjectSpaTestDsl.runTest(
+    ProjectSpaTestDsl.runTestReturnReport(
       action     = liftReqDetailTests(p2).asAction(s"Req Detail (${PlainText.pubid(ep)})"),
       page       = Page.ReqDetail(ep),
       project    = project,
