@@ -226,10 +226,10 @@ object ReqDetailTest extends TestSuite {
       ))
 
       // webapp-client-project/testOnly -- shipreq.webapp.client.project.app.reqdetail.ReqDetailTest.uc.propTest
-      'propTest - useCaseStepEditorPropTest(
-                    reps          = 10,
-                    sets          = 100,
-                    stopWhenFound = true)
+//      'propTest - useCaseStepEditorPropTest(
+//                    reps          = 100,
+//                    sets          = 3,
+//                    stopWhenFound = true)
 
       'bugs {
 
