@@ -136,7 +136,14 @@ object UnsavedChanges {
         CallbackTo {
 
           val isChanged: Editor[Nothing, Any] => Boolean =
-            _.change.runNow().isChanged
+            // Rarely, but sometimes, ids and their data are hard-deleted.
+            // When that happens, the editor state isn't deleted (probably it should be) but the point is, calling
+            // .change here can result in stuff like:
+            //     java.util.NoSuchElementException: key not found: UseCaseStepId(201)
+            _.change.attempt.runNow() match {
+              case Right(pv) => pv.isChanged
+              case Left(_)   => false
+            }
 
           def countFields(f: EditorFeature.State.ForFields, l: Location) = {
             var ls = List.empty[Location]

@@ -232,6 +232,19 @@ object ReqDetailTest extends TestSuite {
                     stopWhenFound = true)
 
       'bugs {
+
+        // Turned out the problem was in UnsavedChanges,derive
+        'useCaseStepIdNotFound - test("UC-1", SampleProject6.project)(Plan.action(
+                                      // 1.0  1.0.1  1.0.2  1.0.2.a  1.0.3                                                          1.1  1.1.1  1.E.1
+          addStep("1.0")           >> // 1.0  1.0.1  1.0.2           1.0.3    1.0.3.a  1.0.4                                        1.1  1.1.1  1.E.1
+          shiftStepLeft("1.0.3.a") >> // 1.0  1.0.1  1.0.2           1.0.3             1.0.4                        1.0.5           1.1  1.1.1  1.E.1
+          addStep("1.0")           >> // 1.0  1.0.1  1.0.2           1.0.3             1.0.4                        1.0.5  1.0.6    1.1  1.1.1  1.E.1
+          openEditor("1.0.2")      >> // 1.0  1.0.1  1.0.2*          1.0.3             1.0.4                        1.0.5  1.0.6    1.1  1.1.1  1.E.1
+          shiftStepRight("1.0.6")  >> // 1.0  1.0.1  1.0.2*          1.0.3             1.0.4                        1.0.5  1.0.5.a  1.1  1.1.1  1.E.1
+          shiftStepRight("1.0.5")  >> // 1.0  1.0.1  1.0.2*          1.0.3             1.0.4    1.0.4.a  1.0.4.a.i                  1.1  1.1.1  1.E.1
+          delStep("1.0.2")            // Delete 1.0.2 -- java.util.NoSuchElementException: key not found: UseCaseStepId(201)
+        ))
+
       }
     }
 
