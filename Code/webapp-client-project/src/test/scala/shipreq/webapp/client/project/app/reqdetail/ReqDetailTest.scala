@@ -186,6 +186,11 @@ object ReqDetailTest extends TestSuite {
           +> stepText("1.0.3").assert("Still hungry?→1.0.1")
       ))
 
+      'flowComma - test("UC-1")(Plan.action(
+        editStepText("1.1", "omg --> 1.0.2,1.0.1")
+          +> stepText("1.1").assert("omg→1.0.1, 1.0.2")
+      ))
+
       'dead - test("UC-1")(Plan.action(
         changeLife.updateState(stateMode set Mode.Delete) >> deleteScreenDelete
           +> life.assert(Dead)

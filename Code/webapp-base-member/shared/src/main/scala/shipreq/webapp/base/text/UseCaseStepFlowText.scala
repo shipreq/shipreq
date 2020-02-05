@@ -72,40 +72,40 @@ object UseCaseStepFlowText {
   private final class TextAndFlowParser(val input: ParserInput) extends ParsingUtil {
     import ParsingUtil._
 
-    /** Optional Single-Line WhiteSpace */
-    def OSLWS: Rule0 =
-      rule(SLWS.*)
-
-    def arrowF: Rule1[Forwards.type] =
+    private def arrowF: Rule1[Forwards.type] =
       rule('-' ~ ch('-').+ ~ '>' ~ push(Forwards))
 
-    def arrowB: Rule1[Backwards.type] =
+    private def arrowB: Rule1[Backwards.type] =
       rule("<-" ~ ch('-').+ ~ push(Backwards))
 
-    def arrow: Rule1[Elem.Arrow] =
+    private def arrow: Rule1[Elem.Arrow] =
       rule(
         !lastCharIs(PunctuationOrSymbol) ~
         (arrowF | arrowB) ~
         (&(ch('.')) | !PunctuationOrSymbol)
         ~> Elem.Arrow)
 
-    def step: Rule1[Elem.Step[String]] =
-      rule(capture(oneOrMore(!(ch(EOI) | Whitespace | arrow) ~ ANY)) ~> (Elem.Step(_: String)))
+    private def stepSeperator: Rule0 =
+      rule(SLWS | ',')
 
-    def flowClause: Rule1[Seq[Elem.Flow[String]]] =
+    private def step: Rule1[Elem.Step[String]] =
+      rule(capture(oneOrMore(!(ch(EOI) | stepSeperator | arrow) ~ ANY)) ~> (Elem.Step(_: String)))
+
+    private def flowClause: Rule1[Seq[Elem.Flow[String]]] =
       rule(
-        arrow ~ OSLWS ~ ((arrow | step) ~ OSLWS).*
-        ~> ((a: Elem.Arrow, t: Seq[Elem.Flow[String]]) => a +: t))
+        arrow ~ stepSeperator.* ~ zeroOrMore(step).separatedBy(stepSeperator.+) ~ stepSeperator.*
+        ~> ((a: Elem.Arrow, t: Seq[Elem.Flow[String]]) => a +: t)
+      )
 
     type E = Elem[String, String]
     type ES = Seq[E]
 
-    def line: Rule1[ES] =
-      rule(!EOI ~ capture((!EOI ~ !arrow ~ ANY).*) ~ flowClause.? ~> flattenLine)
+    private def line: Rule1[ES] =
+      rule(!EOI ~ capture((!EOI ~ !arrow ~ ANY).*) ~ flowClause.* ~> flattenLine)
 
-    val flattenLine: (String, Option[Seq[Elem.Flow[String]]]) => ES =
+    private val flattenLine: (String, Seq[Seq[Elem.Flow[String]]]) => ES =
       (t, f) => {
-        var r: ES = f.getOrElse(Nil)
+        var r: ES = f.flatten
         if (t.nonEmpty)
           r = Elem.Text(t) +: r
         r
