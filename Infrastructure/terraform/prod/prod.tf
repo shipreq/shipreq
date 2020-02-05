@@ -48,7 +48,7 @@ module "shipreq" {
   nat_public_key                        = file("key-nat.rsa.pub")
   ops_instance_type                     = "t3a.micro"
   ops_public_key                        = file("key-ops.rsa.pub")
-  postgres_backup_retention_days        = 6 * 7
+  postgres_backup_retention_days        = 2 * 7
   postgres_exporter_db_password         = local.passwords.db.postgres_exporter
   postgres_exporter_db_username         = "postgres_exporter"
   postgres_instance_type                = "db.t3.micro"
@@ -57,7 +57,7 @@ module "shipreq" {
   prometheus_biz_data_retention         = "time=10y"
   prometheus_biz_ebs_size               = 2
   prometheus_biz_scrape_interval        = "15m"
-  prometheus_tech_backup_retention_days = 6 * 7
+  prometheus_tech_backup_retention_days = 4 * 7
   prometheus_tech_data_retention        = "time=53w"
   prometheus_tech_ebs_size              = 20
   prometheus_tech_scrape_interval_sec   = 30
