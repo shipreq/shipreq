@@ -28,9 +28,9 @@ object UseCaseStepFlowTextTest extends TestSuite {
 //    val text = shipreq.webapp.base.RandomData.unicodeChar.list(8)
      val text = Gen.chooseChar(' ', '!' to '\u4000').list(8)
 
-    val whitespace = Gen.chooseChar(' ', "\n\r\t").list(1 to 4)
+    val stepSeparator = Gen.choose(' ', ',').list(1 to 4)
 
-    Gen.chooseGen(arrow, arrowLike, whitespace, text, text)
+    Gen.chooseGen(arrow, arrowLike, stepSeparator, text, text)
       .list(0 to 8)
       .map(llc => Util.quickSB(sb => llc foreach (_ foreach sb.append)))
   }
@@ -98,15 +98,14 @@ object UseCaseStepFlowTextTest extends TestSuite {
 
     'spotCheck {
       import Elem._
-      val input = " let's try -->1<-- 2 -->3  4.\ncool\nand also <--- --> 5 "
+      val input = " let's try -->1<-- 2 -->3  4. <--- --> 5,6 ,, 7"
       val parsed = UseCaseStepFlowText.parse(input).toList
       assertEq(parsed, expect = List(
         Text(" let's try "),
         Arrow(Forwards), Step("1"),
         Arrow(Backwards), Step("2"),
         Arrow(Forwards), Step("3"), Step("4."),
-        Text("\ncool\nand also "),
-        Arrow(Backwards), Arrow(Forwards), Step("5")
+        Arrow(Backwards), Arrow(Forwards), Step("5"), Step("6"), Step("7")
       ))
     }
 
