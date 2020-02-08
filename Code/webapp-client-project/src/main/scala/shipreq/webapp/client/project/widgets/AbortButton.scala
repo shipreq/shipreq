@@ -6,14 +6,18 @@ import scalacss.ScalaCssReact._
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
 
-object CancelButton {
+sealed abstract class AbortButton(label: String) {
 
   val tag =
     Button(
-      tipe = Button.Type.BasicIconAndText(Icon.Remove, "Cancel"),
+      tipe = Button.Type.BasicIconAndText(Icon.Remove, label),
       colour = Colour.Black)
       .tag(BaseStyles.cancelButton)
 
   def apply(onClick: Callback) =
     tag(^.onClick --> onClick)
+
 }
+
+object CancelButton extends AbortButton("Cancel")
+object CloseButton extends AbortButton("Close")

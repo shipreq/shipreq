@@ -18,7 +18,7 @@ import shipreq.webapp.client.project.app.Style.reqtable.{creation => *}
 import shipreq.webapp.client.project.feature.CreateFeature
 import shipreq.webapp.client.project.feature.CreateFeature.FieldKey
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.widgets.CancelButton
+import shipreq.webapp.client.project.widgets.CloseButton
 
 object NewForm {
 
@@ -115,7 +115,7 @@ sealed trait NewForm {
   sealed case class Props(input        : Input,
                           activeColumns: NonEmptyVector[ColumnPlus],
                           createFeature: CreateFeature.ReadWrite.ForRow[FK, CreateContentCmd],
-                          cancel       : Callback) {
+                          close       : Callback) {
 
     val editableCols: NonEmptyVector[(ColumnPlus, Editor)] =
       NonEmptyVector.force( // TODO test with mandatory columns only
@@ -154,8 +154,8 @@ sealed trait NewForm {
 
   final class Backend($: BackendScope[Props, Unit]) {
 
-    private val cancelButton: VdomElement =
-      CancelButton($.props.flatMap(_.cancel))
+    private val closeButton: VdomElement =
+      CloseButton($.props.flatMap(_.close))
 
     def render(p: Props): VdomElement = {
 
@@ -168,11 +168,11 @@ sealed trait NewForm {
         create.map(_(Callback.empty))
 
       val createAndCloseForm: Option[Callback] =
-        create.map(_(p.cancel))
+        create.map(_(p.close))
 
       val renderArgsWithoutAutoFocus =
         CreateFeature.EditorArgs(
-          abort            = Some(p.cancel),
+          abort            = Some(p.close),
           autoFocus        = false,
           commit           = createAndCloseForm,
           commitVerb       = "create and close",
@@ -220,7 +220,7 @@ sealed trait NewForm {
             <.tr(
               <.td(*.formBottomRow,
                 ^.colSpan := p.editableCols.length,
-                cancelButton,
+                closeButton,
                 createButton,
                 createAndCloseButton)))))
     }
