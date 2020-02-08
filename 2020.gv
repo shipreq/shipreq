@@ -9,10 +9,12 @@ digraph G {
   demo2              [fillcolor="#ccffcc" label="revise demo into v2"]
   design_tagcfg      [fillcolor="#ccffcc" label="Design: Tag config screen v2"]
   design_ucsimp      [fillcolor="#ccffcc" label="Design: Implications from UC steps"]
+  feedback           [fillcolor="#ccffcc" label="record feedback from the boys"]
   marketer           [fillcolor="#ccffcc" label="find a marketer"]
   moreworkflows      [fillcolor="#eeeeee" label="Support more common workflows"]
   workflow_ba        [fillcolor="#ffff66" label="Analyse workflow:\ninterviews → reqs done"]
   writer             [fillcolor="#ccffcc" label="Find a copy/tech writer"]
+  grafana            [fillcolor="#ccffcc" label="Upgrade Grafana"]
   }
 
   analyse_anonshares [fillcolor="#eeeeee" label="Analyse: anon shares"]
@@ -29,24 +31,29 @@ digraph G {
   enterinterviews    [fillcolor="#eeeeee" label="enter interviews into ShipReq"]
   help               [fillcolor="#eeeeee" label="get help doc written"]
   impl_anonshares    [fillcolor="#eeeeee" label="Impl: anon shares"]
+  impl_imptree       [fillcolor="#eeeeee" label="Design & Impl:\nReqTable tree by imp"]
   impl_tagcfg        [fillcolor="#eeeeee" label="Impl: Tag config screen v2"]
   impl_ucsimp        [fillcolor="#eeeeee" label="Impl: Implications from UC steps"]
   sharevistoolreqs   [fillcolor="#eeeeee" label="share reqs for\nvisual testing tool"]
   socialmedia        [fillcolor="#eeeeee" label="Broadcast on social media"]
   workflow_ba_dev    [fillcolor="#eeeeee" label="Impl: required changes"]
+  wallmetrics2       [fillcolor="#eeeeee" label="Wall metrics v2\nMake pretty + show my usage"]
 
   // ===================================================================================================================================
 
   analyse_tasktrack, analyse_github, analyse_history, analyse_multiuser -> design -> dev
-  autovidtool                                                           -> avoiddemo [style=dashed]
   avoiddemo                                                             -> bizcontacts
   demo2, marketer                                                       -> avoiddemo
   design_tagcfg                                                         -> impl_tagcfg
   design_ucsimp                                                         -> impl_ucsimp
+  feedback                                                              -> impl_imptree
   marketer                                                              -> blog_infoopt, blog_ssr, socialmedia
   workflow_ba                                                           -> workflow_ba_dev, enterinterviews
-  workflow_ba_dev                                                       -> analyse_anonshares -> impl_anonshares -> sharevistoolreqs [style=dashed]
   workflow_ba_dev                                                       -> analyse_tasktrack, analyse_github, analyse_history, analyse_multiuser
   writer                                                                -> help
+  grafana                                                               -> wallmetrics2
 
+  autovidtool                                                           -> avoiddemo [style=dashed]
+  impl_ucsimp                                                           -> workflow_ba [constraint=false color=red style=dashed]
+  workflow_ba_dev                                                       -> analyse_anonshares -> impl_anonshares -> sharevistoolreqs [style=dashed]
 }

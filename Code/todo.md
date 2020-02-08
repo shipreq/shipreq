@@ -74,6 +74,16 @@ Phase 2C
 
 * Redo tag config screen - prop panel on right
 
+* Might be a good idea to store a description & examples with ReqTypes. (eg. "BR" means xxx + examples)
+  Alternatively this could be on a help page.
+
+* UCS flow: support 1.0.3a
+* UCS flow: support 103a if unambiguous
+* UCS flow: support 3a if unambiguous
+
+* NewForm: s/Cancel/Close/
+* NewForm: change reqtype without closing
+
 * Add to imp graph page:
   * Saved views
   * Filter
