@@ -16,7 +16,7 @@ locals {
     nat = {
       cadvisor       = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
       filebeat       = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
-      nat            = "git-d3fe30d8cced3649a16ecd3fb424861de10e28d0"
+      nat            = "git-2796d7d99922370dbf205ca3b5072cee740499c0"
       node_exporter  = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
       squid_exporter = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
     }
