@@ -565,9 +565,9 @@ object RandomData {
          | _: PlainTextMarkup # WebAddress
          | _: PlainTextMarkup # EmailAddress
          | _: PlainTextMarkup # TeX
-         | _: TagRef          # TagRef        => true
-      case _: NewLine         # BlankLine
-         | _: ListMarkup      # UnorderedList => false
+         | _: TagRef          # TagRef
+         | _: NewLine         # BlankLine     => true
+      case _: ListMarkup      # UnorderedList => false
     }
 
     sealed trait AtomCtx
