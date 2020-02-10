@@ -6,3 +6,4 @@
 .security.ubuntu.com
 .shipreq.com
 smtp.gmail.com
+stats.grafana.org
