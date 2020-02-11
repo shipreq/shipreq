@@ -5,6 +5,7 @@ import org.parboiled2._
 import scala.annotation.elidable
 import scalaz.{\/, \/-}
 import shapeless._
+import shipreq.base.util.Util
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{ReqType, ReqTypePos}
 import shipreq.webapp.base.text.{Grammar => G}
@@ -135,9 +136,12 @@ abstract class ParsingUtil extends Parser {
   def hashRefStr_! : Rule1[String] =
     rule(G.hashRefKey.prefix ~!~ capture(grammarStr(G.hashRefKey)(_.firstChar, _.tailChars, _.length)))
 
+  def unindentBy(spaces: Int): String => String =
+    Util.unindentBy(_ , spaces)
+
   @elidable(elidable.FINE)
   def debugPrintRemainder: Rule0 =
-    rule((capture(ANY.*) ~> ((i: String) => println(s"remainder: [$i]")) ~ "fail") | test(true))
+    rule((capture(ANY.*) ~> ((i: String) => println(s"remainder: [${i.replace("\n", "\\n")}]")) ~ "fail") | test(true))
 
   @elidable(elidable.FINE)
   def debugPrint(s: => Any): Rule0 =

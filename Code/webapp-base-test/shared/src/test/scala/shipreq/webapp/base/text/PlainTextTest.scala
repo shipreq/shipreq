@@ -100,6 +100,49 @@ object PlainTextTest extends TestSuite {
         assertRoundTrip(input)
       }
 
+      'codeBlock {
+        val input =
+          """
+            |```
+            |ok
+            |
+            |
+            |  1
+            |
+            |
+            |cool
+            |```
+            |
+            |hello
+            |
+            |```
+            |* here we go again!
+            |```
+            |
+            |```
+            | and again!
+            |```
+            |""".stripMargin.trim
+        assertRoundTrip(input)
+      }
+
+      'ulWithCodeBlocks {
+        val input =
+          """
+            |* ```
+            |  ok
+            |  ```
+            |
+            |* cool
+            |
+            |  ```
+            |  * good job, me
+            |  ```
+            |
+            |noice
+            |""".stripMargin.trim
+        assertRoundTrip(input)
+      }
     }
   }
 }

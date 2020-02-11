@@ -453,6 +453,7 @@ object DataProp {
       case _: ContentRef      # UseCaseStepRef => nop
       case a: Issue           # Issue          => anyText(a.desc)
       case _: TagRef          # TagRef         => nop
+      case _: CodeBlock       # CodeBlock      => nop
     } rename "AnyAtom"
 
     lazy val anyText: Prop[Text.AnyOptional] =

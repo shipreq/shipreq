@@ -264,4 +264,34 @@ object Util {
     }
     s
   }
+
+  // TODO Move into microlibs
+  def unindentBy(str: String, spaces: Int): String = {
+    if (spaces <= 0)
+      return str
+
+    var smallest = spaces
+
+    val lines =
+      str.linesWithSeparators.map { line =>
+        if (line.stripLineEnd.nonEmpty) {
+          val indent = line.iterator.takeWhile(_ == ' ').size
+          if (indent == 0)
+            return str
+          if (indent < smallest)
+            smallest = indent
+        }
+        line
+      }.toArray
+
+    if (smallest == Int.MaxValue)
+      return str
+
+    lines.iterator.map { line =>
+      if (line.stripLineEnd.nonEmpty)
+        line.drop(smallest)
+      else
+        line
+    }.mkString("")
+  }
 }

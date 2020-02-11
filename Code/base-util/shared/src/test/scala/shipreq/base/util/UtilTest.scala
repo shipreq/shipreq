@@ -17,5 +17,84 @@ object UtilTest extends TestSuite {
       * - test(3, 4, 6)(3, 4)(6)
       * - test(3, 4, 5, 6)(3, 4, 5, 6)()
     }
+
+    'unindent {
+
+      'equal {
+        assertEq(
+          Util.unindentBy(
+            """  omfg
+              |
+              |  good
+              |""".stripMargin,
+            2),
+          """omfg
+            |
+            |good
+            |""".stripMargin,
+        )
+      }
+
+      'oneUnder {
+        assertEq(
+          Util.unindentBy(
+            """  omfg
+              |
+              | good
+              |""".stripMargin,
+            2),
+          """ omfg
+            |
+            |good
+            |""".stripMargin,
+        )
+      }
+
+      'oneOver {
+        assertEq(
+          Util.unindentBy(
+            """  omfg
+              |
+              |   good
+              |""".stripMargin,
+            2),
+          """omfg
+            |
+            | good
+            |""".stripMargin,
+        )
+      }
+
+      'allUnder {
+        assertEq(
+          Util.unindentBy(
+            """ omfg
+              |
+              | good
+              |""".stripMargin,
+            2),
+          """omfg
+            |
+            |good
+            |""".stripMargin,
+        )
+      }
+
+      'allOver {
+        assertEq(
+          Util.unindentBy(
+            """   omfg
+              |
+              |   good
+              |""".stripMargin,
+            2),
+          """ omfg
+            |
+            | good
+            |""".stripMargin,
+        )
+      }
+
+    }
   }
 }

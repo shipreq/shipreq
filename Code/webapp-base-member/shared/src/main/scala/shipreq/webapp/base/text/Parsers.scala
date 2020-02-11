@@ -82,7 +82,29 @@ object Parsers {
 
     final type TokenRule = () => Rule1[t.Atom]
 
-    protected def atomsToVector = (_: Seq[t.Atom]).toVector
+    protected val atomsToVector: Seq[t.Atom] => Vector[t.Atom] = input => {
+      var v = Vector.empty[t.Atom]
+      var lastIsBlank = false
+
+      // Here we ensure that we don't end up with blank lines next to things that don't allow them around themselves.
+      // A lot of this is done by the parsing rules but in the case of blank lines around top-level code blocks,
+      // it was too hard and would require too much fundamental change to all the parsers. It's done here instead now.
+      for (a <- input) {
+        if (a.isBlankLine) {
+          if (v.isEmpty || v.last.allowBlankLineAfter) {
+            v :+= a
+            lastIsBlank = true
+          }
+        } else {
+          if (!a.allowBlankLineBefore && lastIsBlank)
+            v = v.dropRight(1) :+ a
+          else
+            v :+= a
+          lastIsBlank = false
+        }
+      }
+      v
+    }
 
     def literalUntil[O <: HList](stop: () => Rule[HNil, O]): Rule1[t.Literal] =
       rule(capture(oneOrMore( !stop() ~ ANY )) ~> t.Literal)
@@ -121,21 +143,77 @@ object Parsers {
     def blankLine = rule(OWS ~ NL ~ OWSNL ~ push(t.blankLine))
   }
 
-  trait ListMarkup extends Literal {
-    override type T <: Atom.ListMarkup with Atom.Literal with Atom.NewLine
+  trait CodeBlock extends Literal {
+    override type T <: Atom.CodeBlock with Atom.Literal
+
+    private val codeBlockEnd = () => rule(
+      NL ~ OWS ~ "```" ~ OWS ~ &(NL | EOI)
+    )
+
+    def codeBlock: Rule1[t.CodeBlock] =
+      rule(
+        (OWS ~ NL).* // remove pre-block blank lines
+          ~ "```" ~ OWS ~ NL
+          ~ nonGreedyCapture(codeBlockEnd)
+          ~> parseCodeBlockContent
+      )
+
+    def inlineCodeBlock(indentSize: Int): Rule1[t.CodeBlock] = {
+      val unindent = unindentBy(indentSize)
+      rule(
+        OWS
+          ~ "```" ~ OWS ~ NL
+          ~ nonGreedyCapture(codeBlockEnd)
+          ~> unindent
+          ~> parseCodeBlockContent
+      )
+    }
+
+    val parseCodeBlockContent: String => t.CodeBlock = s => {
+      val content =
+        s
+          .linesWithSeparators
+          .map(_.replaceFirst("\\s+$", "")) // right-trim all lines
+          .dropWhile(_.isEmpty)             // remove leading blank lines
+          .toArray
+          .reverseIterator
+          .dropWhile(_.isEmpty)             // remove trailing blank lines
+          .toArray
+          .reverseIterator
+          .mkString("\n")
+      t.CodeBlock(content)
+    }
+  }
+
+  trait ListMarkup extends Literal with CodeBlock {
+    override type T <: Atom.ListMarkup with Atom.Literal with Atom.NewLine with Atom.CodeBlock
 
     private def bullet: Rule0 =
       // See https://en.wikipedia.org/wiki/Bullet_(typography)
       rule("* " | anyOf("•‣⁃⁌⁍∙○◘◦☙❥❧⦾⦿"))
 
-    def listItem(listToken: TokenRule): Rule1[t.ListItem] =
+    private def firstLineCodeBlock =
+      rule(inlineCodeBlock(2) ~> ((x: t.CodeBlock) => Vector(x)))
+
+    def listItem(listToken: TokenRule): Rule1[t.ListItem] = {
+      val tailLines: TokenRule = () => rule(inlineCodeBlock(2) | listToken())
       rule(
-        OWSNL ~ bullet ~ OWS ~ textUntil(listToken, untilEOL)
-          ~ extraLine(listToken).*
-          ~> { (head: Vector[t.Atom], extra: Seq[Vector[t.Atom]]) =>
-            extra.iterator.filter(_.nonEmpty).foldLeft(head)((q, n) => (q :+ t.blankLine) ++ n)
-          }
+        OWSNL
+          ~ bullet ~ OWS
+          ~ (firstLineCodeBlock | textUntil(listToken, untilEOL))
+          ~ extraLine(tailLines).*
+          ~> combineListItemLines
       )
+    }
+
+    private val combineListItemLines: (Vector[t.Atom], Seq[Vector[t.Atom]]) => t.ListItem = (head, tail) => {
+      tail.iterator.filter(_.nonEmpty).foldLeft(head) { (q, n) =>
+        if (q.lastOption.exists(_.allowBlankLineAfter) && n.headOption.exists(_.allowBlankLineBefore))
+          (q :+ t.blankLine) ++ n
+        else
+          q ++ n
+      }
+    }
 
     private def extraLine(listToken: TokenRule): Rule1[Vector[t.Atom]] =
       rule(
@@ -245,13 +323,15 @@ object Parsers {
     def singleLine = plainTextMarkup
   }
 
-  trait MultiLine extends SingleLine with NewLine with ListMarkup {
+  trait MultiLine extends SingleLine with NewLine with ListMarkup with CodeBlock {
     override type T <: Atom.MultiLine
     protected val additionalTokens: TokenRule
+
     final val listToken: TokenRule =
       () => rule(additionalTokens() | singleLine)
+
     final val token: TokenRule =
-      () => rule(unorderedList(listToken) | additionalTokens() | blankLine | singleLine)
+      () => rule(unorderedList(listToken) | codeBlock | additionalTokens() | blankLine | singleLine)
   }
 
   // ===================================================================================================================
