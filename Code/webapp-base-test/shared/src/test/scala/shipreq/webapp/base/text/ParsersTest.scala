@@ -477,6 +477,37 @@ object ParsersTest extends TestSuite {
           T.CodeBlock("asd"),
           T.UnorderedList(NEV(LI())),
         )
+
+        'empty - test(
+          """
+            |```
+            |```
+            |
+            |```
+            |
+            |
+            |
+            |```
+            |
+            |* ```
+            |  ```
+            |
+            |* here
+            |
+            |  ```
+            |
+            |  ```
+            |
+            |  ok
+            |""".stripMargin
+        )(
+          T.CodeBlock(""),
+          T.CodeBlock(""),
+          T.UnorderedList(NEV(
+            LI(T.CodeBlock("")),
+            LI(L("here"), T.CodeBlock(""), L("ok")),
+          )),
+        )
       }
 
       'useCaseStepRef {

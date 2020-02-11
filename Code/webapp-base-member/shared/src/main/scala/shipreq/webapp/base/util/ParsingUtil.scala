@@ -110,6 +110,9 @@ abstract class ParsingUtil extends Parser {
   def nonGreedyCapture(stopAt: () => Rule0): Rule1[String] =
     rule(capture(oneOrMore(!stopAt() ~ ANY)) ~ stopAt())
 
+  def nonGreedyCapture0(stopAt: () => Rule0): Rule1[String] =
+    rule(capture(zeroOrMore(!stopAt() ~ ANY)) ~ stopAt())
+
 //  def surroundedBy(s: () => Rule0): Rule1[String] =
 //    rule(s() ~ nonGreedyCapture(s))
 

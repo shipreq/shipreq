@@ -153,8 +153,8 @@ object Parsers {
     def codeBlock: Rule1[t.CodeBlock] =
       rule(
         (OWS ~ NL).* // remove pre-block blank lines
-          ~ "```" ~ OWS ~ NL
-          ~ nonGreedyCapture(codeBlockEnd)
+          ~ "```" ~ OWS ~ &(NL)
+          ~ nonGreedyCapture0(codeBlockEnd)
           ~> parseCodeBlockContent
       )
 
@@ -162,8 +162,8 @@ object Parsers {
       val unindent = unindentBy(indentSize)
       rule(
         OWS
-          ~ "```" ~ OWS ~ NL
-          ~ nonGreedyCapture(codeBlockEnd)
+          ~ "```" ~ OWS ~ &(NL)
+          ~ nonGreedyCapture0(codeBlockEnd)
           ~> unindent
           ~> parseCodeBlockContent
       )
