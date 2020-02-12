@@ -1,4 +1,17 @@
 #!/bin/bash
+
+# Run via docker if not already
+if [ -z "$SHIPREQ_DEV_NODE" ]; then
+  exec docker run \
+    --rm \
+    --user $(id -u):$(id -g) \
+    -v "$(pwd)":/host:rw \
+    shipreq/dev/node \
+    /host/"$(basename "$0")" \
+    "$@"
+fi
+
+# ====================================================================================================================
 cd "$(dirname "$(readlink -e "$0")")" || exit 1
 
 args="$@"
