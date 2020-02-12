@@ -470,9 +470,13 @@ object RandomData {
     private val codeBlockContent: Gen[String] = {
       val trailingWS = " +$".r
 
-      val potentiallyEmptyLine = genCharSL.string(1 to 10).map(trailingWS.replaceFirstIn(_, ""))
+      val maxLineLen  = 10
+      val maxMidLines = 2
+      val midMaxLen   = (maxLineLen + 1) * maxMidLines
 
-      val potentiallyEmptyLines = potentiallyEmptyLine.list(0 to 2)
+      val potentiallyEmptyLine = genCharSL.string(1 to maxLineLen).map(trailingWS.replaceFirstIn(_, ""))
+
+      val potentiallyEmptyLines = potentiallyEmptyLine.list(0 to maxMidLines)
 
       val nonEmptyLine = potentiallyEmptyLine.map {
         case "" => "x"
@@ -481,19 +485,28 @@ object RandomData {
 
       val genTail = (potentiallyEmptyLines *** nonEmptyLine).option
 
+      val badLine = "^ *``` *$".r.pattern
+
+      def fix(s: String): String =
+        if (badLine.matcher(s).matches)
+          "x" + s
+        else
+          s
+
       for {
         head <- nonEmptyLine
         tail <- genTail
       } yield
         tail match {
           case Some((mid, last)) =>
-            val sb = new StringBuilder(64, head)
-            mid.foreach {l => sb append '\n'; sb ++= l}
+            val sb = new StringBuilder(head.length + midMaxLen + last.length)
+            sb ++= fix(head)
+            mid.foreach {l => sb append '\n'; sb ++= fix(l)}
             sb append '\n'
-            sb ++= last
+            sb ++= fix(last)
             sb.toString
           case None =>
-            head
+            fix(head)
         }
     }
 
