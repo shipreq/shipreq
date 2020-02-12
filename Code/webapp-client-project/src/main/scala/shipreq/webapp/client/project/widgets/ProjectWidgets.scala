@@ -19,6 +19,7 @@ import shipreq.webapp.base.data.{Contextualise, Plain}
 import shipreq.webapp.base.jsfacade.KaTeX
 import shipreq.webapp.base.lib.ClientUtil.{renderSeq, renderVector, sepComma, sepSpace}
 import shipreq.webapp.base.text.Text.AnyOptional
+import shipreq.webapp.base.ui.CodeBlockWithSyntaxHighlighting
 import shipreq.webapp.client.project.app.Style.{widgets => *}
 
 object ProjectWidgets {
@@ -274,7 +275,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
         case a: ContentRef      # CodeRef        => codeRef(live)(a.value)
         case a: ContentRef      # UseCaseStepRef => useCaseStepRefById(a.value)
         case a: Issue           # Issue          => issue(a.typ, a.desc, live)
-        case a: CodeBlock       # CodeBlock      => <.pre(*.codeBlock, a.content)
+        case a: CodeBlock       # CodeBlock      => CodeBlockWithSyntaxHighlighting(None, a.content)
 
         case a: ListMarkup      # UnorderedList  =>
           val style = if (a.itemsContainMultipleLines) *.ulSpacious else *.ulCompact
