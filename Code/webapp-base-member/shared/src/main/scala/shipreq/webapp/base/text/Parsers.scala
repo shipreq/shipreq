@@ -166,11 +166,11 @@ object Parsers {
       val content =
         s
           .linesWithSeparators
-          .map(_.replaceFirst("\\s+$", "")) // right-trim all lines
-          .dropWhile(_.isEmpty)             // remove leading blank lines
+          .map(_.replaceFirst("[ \r\n]+$", "")) // right-trim all lines
+          .dropWhile(_.isEmpty)                 // remove leading blank lines
           .toArray
           .reverseIterator
-          .dropWhile(_.isEmpty)             // remove trailing blank lines
+          .dropWhile(_.isEmpty)                // remove trailing blank lines
           .toArray
           .reverseIterator
           .mkString("\n")

@@ -559,6 +559,14 @@ object ParsersTest extends TestSuite {
           T.CodeBlock("   e\n  e"),
           T.CodeBlock("   f\n  f"),
         )
+
+        'weird - test(
+          "* ```\n  \u00a0\n  ```"
+        )(
+          T.UnorderedList(NEV(
+            LI(T.CodeBlock("\u00a0")),
+          )),
+        )
       }
 
       'useCaseStepRef {
