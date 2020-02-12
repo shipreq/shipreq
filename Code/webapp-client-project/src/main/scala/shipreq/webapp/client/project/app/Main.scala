@@ -5,7 +5,6 @@ import japgolly.scalajs.react.extra.router.{BaseUrl, Router}
 import java.time.Duration
 import org.scalajs.dom.window.location
 import scala.scalajs.js.annotation.JSExportTopLevel
-import scala.scalajs.js.timers.RawTimers
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{ErrorMsg, Retries, Url}
 import shipreq.webapp.base.CssSettings._
@@ -22,6 +21,8 @@ import shipreq.webapp.client.project.app.state.Global
 @JSExportTopLevel(ProjectSpaEntryPoint.Name)
 object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
 
+  private var stopBackground = Callback.empty
+
   override def run(i: InitData): Unit = {
     BaseStyles.addToDocument()
     ErrorHandlingFeature.enable()
@@ -37,8 +38,11 @@ object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
     val syncEvery          = Duration.ofSeconds(30)
     val syncStaleTolerance = Duration.ofSeconds(30)
 
-    RawTimers.setInterval(global.wsClient.keepAlive.toJsFn, keepAliveEvery.toMillis)
-    RawTimers.setInterval(global.requestSyncIfStaleFor(syncStaleTolerance).toJsFn, syncEvery.toMillis)
+    val keepAliveHnd = global.wsClient.keepAlive.setInterval(keepAliveEvery).runNow()
+    val staleSyncHnd = global.requestSyncIfStaleFor(syncStaleTolerance).setInterval(syncEvery).runNow()
+
+    stopBackground = keepAliveHnd.cancel >> staleSyncHnd.cancel >> global.wsClient.close
+
     global.wsClient.connect.runNow()
   }
 
@@ -60,7 +64,7 @@ object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
       val metadata = CommonProtocolsJs.Metadata.client(i.username, i.projectId)
       val reactApp = ErrorHandlingFeature(view, metadata)
       reactApp.renderIntoDOM(`#root`)
-    }
+    } >> stopBackground
 
   def determineBaseUrl(url: String) = {
     val pat = "^([^/#?]+//[^/#?]+/[^/#?]+/[^/#?]+)(?:[/#?].*|$)".r.pattern
