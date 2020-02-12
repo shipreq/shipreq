@@ -51,23 +51,30 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
     outputName: name,
    }, o);
 
+   /**
+    * @param lib      npm package name as in ./node_modules/xxx
+    * @param filename asset filename without any directory info.
+    *                 Use opts.path if to specify the directory from the npm package root.
+    */
   const fromCdnjs = (lib, filename, opts) => {
-    const libC = lib.cdn || lib;
-    const libN = lib.npm || lib;
-    const pathO = opts.path || {};
-    const pathC = addSlash(pathO.cdn || opts.path || '');
-    const pathN = addSlash(pathO.npm || opts.path || 'dist');
+    const libC       = lib.cdn || lib;
+    const libN       = lib.npm || lib;
+    const pathO      = opts.path || {};
+    const optPathStr = typeof(opts.path) === 'string' && opts.path
+    const pathC      = addSlash(pathO.cdn || optPathStr || '');
+    const pathN      = addSlash(pathO.npm || optPathStr || 'dist');
 
-    const name  = libC;
-    const ver   = moduleVer(libN);
-    const path  = `${pathC}${filename}`;
+    const name       = libC;
+    const ver        = moduleVer(libN);
+    const path       = `${pathC}${filename}`;
 
-    const jsdelivr = `https://cdn.jsdelivr.net/npm/${name}@${ver}/${path}`;
-    const unpkg    = `https://unpkg.com/${name}@${ver}/${path}`;
+    const cloudfare = `https://cdnjs.cloudflare.com/ajax/libs/${name}/${ver}/${path}`;
+  //const jsdelivr = `https://cdn.jsdelivr.net/npm/${name}@${ver}/${path}`;
+  //const unpkg    = `https://unpkg.com/${name}@${ver}/${path}`;
 
     return {
       type: 'cdn',
-      url: jsdelivr,
+      url: cloudfare,
       integrity: { files: `node_modules/${libN}/${pathN}${filename}` },
       manifest: opts.manifest,
     };
@@ -165,7 +172,7 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
         'katex',
       ],
 
-      jquery: fromCdnjs('jquery', 'jquery.min.js', {manifest: 'jqueryJs', path: 'dist'}),
+      jquery: fromCdnjs('jquery', 'jquery.min.js', {manifest: 'jqueryJs', path: {npm: 'dist'}}),
 
       react: [
         reactLib('react', 'react', {manifest: 'reactJs'}),
@@ -178,11 +185,17 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
       ],
 
       katex: [
-        fromCdnjs('katex', 'katex.min.js', {manifest: 'katexJs', path: 'dist'}),
-        fromCdnjs('katex', 'katex.min.css', {manifest: 'katexCss', path: 'dist'}),
+        fromCdnjs({npm:'katex', cdn:'KaTeX'}, 'katex.min.js', {manifest: 'katexJs', path: {npm: 'dist'}}),
+        fromCdnjs({npm:'katex', cdn:'KaTeX'}, 'katex.min.css', {manifest: 'katexCss', path: {npm: 'dist'}}),
         // { type: 'local', src: 'node_modules/katex/dist', files: '*.min.{js,css}' },
         // { type: 'local', src: 'node_modules/katex/dist', files: 'fonts/**/*', transitive: true },
         // { type: 'local', src: 'node_modules/katex/dist', files: 'images/**/*', transitive: true },
+      ],
+
+      prismJs: [
+        fromCdnjs({npm:'prismjs', cdn:'prism'}, 'prism-core.min.js', {manifest: 'prismJsCore', path: 'components'}),
+        fromCdnjs({npm:'prismjs', cdn:'prism'}, 'prism-autoloader.min.js', {manifest: 'prismJsAutoloader', path: 'plugins/autoloader'}),
+        fromCdnjs({npm:'prismjs', cdn:'prism'}, 'prism.css', {manifest: 'prismJsCss', path: 'themes'}),
       ],
 
       vizJs: { type: 'local', files: 'vendor/viz.js', manifest: true },

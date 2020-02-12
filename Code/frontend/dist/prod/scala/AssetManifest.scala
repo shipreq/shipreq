@@ -10,15 +10,15 @@ object AssetManifest {
   def favicon = "/s/286b75985993da80759cbdc5142de4d3.ico"
 
   def jqueryJs = CDN(
-    href = "https://cdn.jsdelivr.net/npm/jquery@2.2.4/dist/jquery.min.js",
+    href = "https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js",
     integrity = Some("sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="))
 
   def katexCss = CDN(
-    href = "https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css",
+    href = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css",
     integrity = Some("sha256-V8SV2MO1FUb63Bwht5Wx9x6PVHNa02gv8BgH/uH3ung="))
 
   def katexJs = CDN(
-    href = "https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js",
+    href = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.js",
     integrity = Some("sha256-F/Xda58SPdcUCr+xhSGz9MA2zQBPb0ASEYKohl8UCHc="))
 
   def loadingSpinSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjMjJjIj48cGF0aCBvcGFjaXR5PSIuMjUiIGQ9Ik0xNiAwYTE2IDE2IDAgMCAwIDAgMzIgMTYgMTYgMCAwIDAgMC0zMm0wIDRhMTIgMTIgMCAwIDEgMCAyNCAxMiAxMiAwIDAgMSAwLTI0Ii8+PHBhdGggZD0iTTE2IDBhMTYgMTYgMCAwIDEgMTYgMTZoLTRBMTIgMTIgMCAwIDAgMTYgNHoiPjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiBmcm9tPSIwIDE2IDE2IiB0bz0iMzYwIDE2IDE2IiBkdXI9IjAuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9wYXRoPjwvc3ZnPg=="
@@ -27,16 +27,28 @@ object AssetManifest {
 
   def memberLibBundleJs = "/s/471a9a2ff06c20a3ae6da7a14e641a50.js"
 
+  def prismJsAutoloader = CDN(
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/plugins/autoloader/prism-autoloader.min.js",
+    integrity = Some("sha256-WIuEtgHNTdrDT2obGtHYz/emxxAj04sJBdMhRjDXd8I="))
+
+  def prismJsCore = CDN(
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/components/prism-core.min.js",
+    integrity = Some("sha256-D05OTvzyl8h0SDpcQF6UNo3gl2rKDMmRuqX8ZZ06pNE="))
+
+  def prismJsCss = CDN(
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/themes/prism.css",
+    integrity = Some("sha256-LArq5Cddn4QETLgVbBZppSkBLJbL1dhacPVQF/EPH00="))
+
   def reactDomJs = CDN(
-    href = "https://cdn.jsdelivr.net/npm/react-dom@16.5.2/umd/react-dom.production.min.js",
+    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.5.2/umd/react-dom.production.min.js",
     integrity = Some("sha256-zxLuhMQXy7QBCD8nJT0FQaZN2GBcdEL4zooi/jAmu60="))
 
   def reactDomServerJs = CDN(
-    href = "https://cdn.jsdelivr.net/npm/react-dom@16.5.2/umd/react-dom-server.browser.production.min.js",
+    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.5.2/umd/react-dom-server.browser.production.min.js",
     integrity = Some("sha256-/NDqhnQY7p3A1c28Bg/+4EBXrU6jR90I/epnapti35Y="))
 
   def reactJs = CDN(
-    href = "https://cdn.jsdelivr.net/npm/react@16.5.2/umd/react.production.min.js",
+    href = "https://cdnjs.cloudflare.com/ajax/libs/react/16.5.2/umd/react.production.min.js",
     integrity = Some("sha256-alJnAKUY0Ruhf55K/C+sCyz6zaipGhl1kxuzDW3jtHk="))
 
   def semanticCss = "/s/a61a76f2b8deb3d8cc44d1460c46886e.css"

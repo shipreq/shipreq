@@ -10,6 +10,7 @@
     "katex": "0.11.1",
     "loadjs": "4.2.0",
     "moment": "2.24.0",
+    "prismjs": "1.19.0",
     "react": "16.5.2",
     "react-collapse": "5.0.0",
     "react-dom": "16.5.2",
