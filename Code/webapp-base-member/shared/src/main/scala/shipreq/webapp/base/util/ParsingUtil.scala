@@ -153,17 +153,20 @@ abstract class ParsingUtil extends Parser {
       i -= 1
       // println{val c = charAtRC(i); s"i=$i, found=$found, ch=[${if (c > 32) c else c.toInt}]"}
       charAtRC(i) match {
-        case ' ' => true
         case '\n' | '\r' | StartOfString => false
-        case _ =>
-          found = 0
-          false
+        case _                           => true
       }
     }) {
       found += 1
     }
     found
   }
+
+  val autoUnindent: (Int, String, Int) => String =
+    (startIndent, content, endIndent) => {
+      val indent = startIndent min endIndent
+      Util.unindentBy(content, indent)
+    }
 
   def unindentBy(spaces: Int): String => String =
     Util.unindentBy(_ , spaces)

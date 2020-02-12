@@ -150,34 +150,17 @@ object Parsers {
       NL ~ OWS ~ "```" ~ &(OWS ~ (NL | EOI))
     )
 
-    private val autoUnindent: (Int, String, Int) => String =
-      (startIndent, content, endIndent) => {
-        val indent = startIndent min endIndent
-        Util.unindentBy(content, indent)
-      }
-
     def codeBlock: Rule1[t.CodeBlock] =
       rule(
-        (OWS ~ NL).* // remove pre-block blank lines
-          ~ "```" ~ indentationLevelSoFar(3) ~ OWS ~ &(NL)
+        "```"
+          ~ indentationLevelSoFar(3)
+          ~ OWS ~ &(NL)
           ~ nonGreedyCapture0(codeBlockEnd)
           ~ indentationLevelSoFar(3)
           ~ OWS
           ~> autoUnindent
           ~> parseCodeBlockContent
       )
-
-    def inlineCodeBlock(indentSize: Int): Rule1[t.CodeBlock] = {
-      val unindent = unindentBy(indentSize)
-      rule(
-        OWS
-          ~ "```" ~ OWS ~ &(NL)
-          ~ nonGreedyCapture0(codeBlockEnd)
-          ~ OWS
-          ~> unindent
-          ~> parseCodeBlockContent
-      )
-    }
 
     val parseCodeBlockContent: String => t.CodeBlock = s => {
       val content =
@@ -203,10 +186,10 @@ object Parsers {
       rule("* " | anyOf("•‣⁃⁌⁍∙○◘◦☙❥❧⦾⦿"))
 
     private def firstLineCodeBlock =
-      rule(inlineCodeBlock(2) ~> ((x: t.CodeBlock) => Vector(x)))
+      rule(codeBlock ~> ((x: t.CodeBlock) => Vector(x)))
 
     def listItem(listToken: TokenRule): Rule1[t.ListItem] = {
-      val tailLines: TokenRule = () => rule(inlineCodeBlock(2) | listToken())
+      val tailLines: TokenRule = () => rule(codeBlock | listToken())
       rule(
         OWSNL
           ~ bullet ~ OWS

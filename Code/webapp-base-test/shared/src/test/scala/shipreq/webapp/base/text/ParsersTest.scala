@@ -427,6 +427,12 @@ object ParsersTest extends TestSuite {
             |  great
             |  ```
             |
+            |*  ```
+            |
+            |     hey
+            |
+            |    ```
+            |
             |* cool
             |  ```
             |    good job, me
@@ -445,8 +451,9 @@ object ParsersTest extends TestSuite {
             |""".stripMargin.trim)(
           T.UnorderedList(NEV(
             LI(T.CodeBlock("ok\n\n  great")),
+            LI(T.CodeBlock("  hey")),
             LI(L("cool"), T.CodeBlock("  good job, me")),
-            LI(L("omfg"), T.CodeBlock(" derp"), L("ahh")), // should really be "  derp" cos block indent is 1 but fuck it
+            LI(L("omfg"), T.CodeBlock("  derp"), L("ahh")),
           )),
           L("noice")
         )
