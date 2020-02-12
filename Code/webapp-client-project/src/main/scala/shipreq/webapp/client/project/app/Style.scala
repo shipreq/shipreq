@@ -700,6 +700,17 @@ object Style extends StyleSheet.Inline {
 
     val blankLine = style(display.block, height(blankLineHeight))
 
+    private val codeBlockOuterVGap = .1 em
+
+    val codeBlock = style(
+      backgroundColor(c"#f3f3f3"),
+      borderRadius(0.4 ex),
+      padding(0.3 em, 0.8 ex),
+      margin(0.6 em, `0`),
+      &.firstChild(marginTop(codeBlockOuterVGap)),
+      &.lastChild(marginBottom(codeBlockOuterVGap)),
+    )
+
     private def ul = styleS(paddingLeft(3.2 ex))
 
     val ulCompact = style(

@@ -23,6 +23,7 @@ trait AtomTC[TC[_]] {
   def codeRef       [T <: Atom.ContentRef     ](t: T): TC[t.CodeRef       ]
   def useCaseStepRef[T <: Atom.ContentRef     ](t: T): TC[t.UseCaseStepRef]
   def tagRef        [T <: Atom.TagRef         ](t: T): TC[t.TagRef        ]
+  def codeBlock     [T <: Atom.CodeBlock      ](t: T): TC[t.CodeBlock     ]
 
   def issue        [T <: Atom.Issue     ](t: T)(implicit x: TC[Text.InlineIssueDesc.OptionalText]): TC[t.Issue]
   def unorderedList[T <: Atom.ListMarkup](t: T)(implicit x: TC[NonEmptyVector[t.ListItem]])       : TC[t.UnorderedList]

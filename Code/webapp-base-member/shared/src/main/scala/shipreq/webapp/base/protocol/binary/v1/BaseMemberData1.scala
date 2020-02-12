@@ -55,6 +55,7 @@ object BaseMemberData1 {
         private[this] final val KeyTeX            = 'X'
         private[this] final val KeyTagRef         = 't'
         private[this] final val KeyUnorderedList  = '*'
+        private[this] final val KeyCodeBlock      = '{'
         override def pickle(a: t.Atom)(implicit state: PickleState): Unit = {
           Atom.Type.of(a) match {
             case t@ Type.Literal        => state.enc.writeByte(KeyLiteral       ); get(t).pickle(a)
@@ -68,6 +69,7 @@ object BaseMemberData1 {
             case t@ Type.TeX            => state.enc.writeByte(KeyTeX           ); get(t).pickle(a)
             case t@ Type.TagRef         => state.enc.writeByte(KeyTagRef        ); get(t).pickle(a)
             case t@ Type.UnorderedList  => state.enc.writeByte(KeyUnorderedList ); get(t).pickle(a)
+            case t@ Type.CodeBlock      => state.enc.writeByte(KeyCodeBlock     ); get(t).pickle(a)
           }
         }
         override def unpickle(implicit state: UnpickleState): t.Atom = {
@@ -83,6 +85,7 @@ object BaseMemberData1 {
             case KeyTeX            => get(Type.TeX           ).unpickle
             case KeyTagRef         => get(Type.TagRef        ).unpickle
             case KeyUnorderedList  => get(Type.UnorderedList ).unpickle
+            case KeyCodeBlock      => get(Type.CodeBlock     ).unpickle
           }
         }
       }
@@ -92,6 +95,9 @@ object BaseMemberData1 {
 
     override def literal[T <: Literal](t: T): Pickler[t.Literal] =
       transformPickler((i: String) => t.Literal(i))(_.value)
+
+    override def codeBlock[T <: CodeBlock](t: T): Pickler[t.CodeBlock] =
+      transformPickler((i: String) => t.CodeBlock(i))(_.content)
 
     override def webAddress[T <: PlainTextMarkup](t: T): Pickler[t.WebAddress] =
       transformPickler((i: String) => t.WebAddress(i))(_.value)

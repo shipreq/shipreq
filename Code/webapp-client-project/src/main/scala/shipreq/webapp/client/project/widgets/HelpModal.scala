@@ -24,7 +24,7 @@ object HelpModal {
     Accordion.Item(title, content)
   }
 
-  def Example(desc: TagMod*)(sample1: String, sampleN: String*): Example =
+  def Example(desc: TagMod*)(sample1: VdomNode, sampleN: VdomNode*): Example =
     <.tr(
       exampleDesc(desc: _*),
       exampleSample((sample1 +: sampleN).iterator.map(s => s: TagMod).intersperse(<.br).toTagMod))

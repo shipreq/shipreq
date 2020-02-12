@@ -57,6 +57,7 @@ private[v1] object BaseMemberData1 {
     private[this] final val KeyTeX            = "tex"
     private[this] final val KeyTagRef         = "tag"
     private[this] final val KeyUnorderedList  = "ul"
+    private[this] final val KeyCodeBlock      = "cb"
 
     override def sum[T <: Atom.Base](t: T)(get: Atom.Type => JsonCodec[t.Atom], all: List[JsonCodec[t.Atom]]): JsonCodec[t.Atom] = {
       JsonCodec[t.Atom](
@@ -73,6 +74,7 @@ private[v1] object BaseMemberData1 {
             case t@ Type.TeX            => Json.obj(KeyTeX            -> get(t).encoder(a))
             case t@ Type.TagRef         => Json.obj(KeyTagRef         -> get(t).encoder(a))
             case t@ Type.UnorderedList  => Json.obj(KeyUnorderedList  -> get(t).encoder(a))
+            case t@ Type.CodeBlock      => Json.obj(KeyCodeBlock      -> get(t).encoder(a))
           }
         },
         decodeSumBySoleKey[t.Atom] {
@@ -87,6 +89,7 @@ private[v1] object BaseMemberData1 {
           case (KeyTeX           , c) => get(Type.TeX           ).decoder.tryDecode(c)
           case (KeyTagRef        , c) => get(Type.TagRef        ).decoder.tryDecode(c)
           case (KeyUnorderedList , c) => get(Type.UnorderedList ).decoder.tryDecode(c)
+          case (KeyCodeBlock     , c) => get(Type.CodeBlock     ).decoder.tryDecode(c)
         }
       )
     }
@@ -96,6 +99,11 @@ private[v1] object BaseMemberData1 {
 
     override def literal[T <: Literal](t: T): JsonCodec[t.Literal] =
       JsonCodec.xmap((i: String) => t.Literal(i))(_.value)
+
+    override def codeBlock[T <: CodeBlock](t: T): JsonCodec[t.CodeBlock] =
+      JsonCodec[t.CodeBlock](
+        Encoder.forProduct1[t.CodeBlock, String]("content")(a => (a.content)),
+        Decoder.forProduct1[t.CodeBlock, String]("content")(t.CodeBlock(_)))
 
     override def webAddress[T <: PlainTextMarkup](t: T): JsonCodec[t.WebAddress] =
       JsonCodec.xmap((i: String) => t.WebAddress(i))(_.value)

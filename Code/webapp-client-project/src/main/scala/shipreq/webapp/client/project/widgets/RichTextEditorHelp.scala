@@ -52,6 +52,25 @@ object RichTextEditorHelp {
         "* item 1",
         "* item 2"))
 
+  private val codeBlocks =
+    Group("Code blocks")(
+      Example(
+        "To create a block of monospace text, wrap it between lines of ", code("```"), "."
+      )(
+        <.div(
+          ^.whiteSpace.pre,
+          List(
+            "```",
+            "1",
+            "  2",
+            "    3",
+            "  2",
+            "1",
+            "```",
+          ).mkString("\n")
+        )
+      ))
+
   private val useCaseFlow =
     Group("Use Case flow")(
       Example(
@@ -119,6 +138,7 @@ object RichTextEditorHelp {
       customise(lists, _.supports(TypeGroup.ListMarkup)),
       customise(references, _.supports(TypeGroup.ContentRef)),
       customise(tags, _.supports(TypeGroup.TagRef)),
+      customise(codeBlocks, _.supports(TypeGroup.CodeBlock)),
       customise(other, _.supports(TypeGroup.PlainTextMarkup)),
       customise(useCaseFlow, _ ==* Text.UseCaseStep),
     )
@@ -131,6 +151,8 @@ object RichTextEditorHelp {
 
   val allRendered: TagMod =
     TagMod(lookup.valuesIterator.map(_.render).toList: _*)
+
+  // TODO code block help
 
   def modalFor(text: Text.Generic): Modal =
     lookup(text)

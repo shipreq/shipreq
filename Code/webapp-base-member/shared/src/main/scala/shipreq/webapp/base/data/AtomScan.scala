@@ -57,7 +57,9 @@ object AtomScan {
              | _: PlainTextMarkup # EmailAddress
              | _: PlainTextMarkup # WebAddress
              | _: PlainTextMarkup # TeX
-             | _: NewLine         # BlankLine => ()
+             | _: NewLine         # BlankLine
+             | _: CodeBlock       # CodeBlock
+            => ()
 
           case a: ContentRef#ReqRef =>
             contentRefsInReqs(reqId).mod(live)(_ :+ LocAndValue(loc, a))
@@ -96,7 +98,9 @@ object AtomScan {
              | _: PlainTextMarkup # EmailAddress
              | _: PlainTextMarkup # WebAddress
              | _: PlainTextMarkup # TeX
-             | _: NewLine         # BlankLine => ()
+             | _: NewLine         # BlankLine
+             | _: CodeBlock       # CodeBlock
+            => ()
 
           case a: ContentRef#ReqRef =>
             contentRefsInRcgs(reqCodeId).mod(live)(_ :+ LocAndValue(loc, a))

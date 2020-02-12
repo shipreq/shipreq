@@ -1,5 +1,6 @@
 package shipreq.webapp.base.text
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.utils.Memo
 import scala.annotation.tailrec
@@ -111,7 +112,7 @@ object PlainText {
       ids.iterator.map(p.config.tags.atag(_).key.value).mkString(" ")
 
     override protected def _text(text: Text.AnyOptional, live: Live): String =
-      nestedText("", "\n\n", live, text)
+      nestedText("", "", live, text)
 
     // Keep in sync with ProjectWidgets because it's used together for sorting/rendering in ReqTable
     override protected def deletionReasonWhenNoneGiven: String =
@@ -144,7 +145,7 @@ object PlainText {
       desc.foldLeft(hashtag(it.key))(_ ~ G.issueDescSurround(_))
     }
 
-    private def nestedText(acc: String, newline: String, live: Live, atoms: Vector[AnyAtom]): String = {
+    private def nestedText(acc: String, indent: String, live: Live, atoms: Vector[AnyAtom]): String = {
       @tailrec def go(acc: String, atoms: Vector[AnyAtom]): String =
         if (atoms.isEmpty)
           acc
@@ -153,7 +154,7 @@ object PlainText {
           import Atom._
           val cur = atoms.head match {
             case a: Literal         # Literal        => a.value
-            case _: NewLine         # BlankLine      => newline
+            case _: NewLine         # BlankLine      => "\n\n" ~ indent
             case a: ContentRef      # ReqRef         => reqRef(a.value)
             case a: ContentRef      # CodeRef        => codeRef(a.value)
             case a: ContentRef      # UseCaseStepRef => useCaseStepRef(a.value)
@@ -163,11 +164,12 @@ object PlainText {
             case a: PlainTextMarkup # TeX            => G.texSurround(a.value)
             case a: TagRef          # TagRef         => tagRef(a.value)
 
+            // ---------------------------------------------------------------------------------------------------------
             case a: ListMarkup      # UnorderedList  =>
-              val nextNewline = newline + "  "
+              val nextIndent = indent + "  "
 
               val prefix: String => String =
-                if (a.containsBlankLines)
+                if (a.itemsContainMultipleLines)
                   q =>
                     if (q.isEmpty)
                       (if (acc.isEmpty) bullet else "\n\n" ~ bullet)
@@ -180,10 +182,47 @@ object PlainText {
                     else
                       q ~ "\n" ~ bullet
 
-              val r = a.items.foldLeft("")((q, li) => nestedText(prefix(q), nextNewline, live, li))
+              val r = a.items.foldLeft("")((q, li) => nestedText(prefix(q), nextIndent, live, li))
 
               if (nextAtoms.isEmpty) r else r ~ "\n\n"
+
+            // ---------------------------------------------------------------------------------------------------------
+            case a: CodeBlock # CodeBlock =>
+
+              if (indent.isEmpty) {
+                // top-level
+
+                val head =
+                  if (acc.isEmpty || acc.endsWith("\n\n"))
+                    "" // no top-margin required
+                  else if (acc.endsWith("\n"))
+                    "\n" // shouldn't happen but just in case - ensure our top-margin is only one line
+                  else
+                    "\n\n" // add top-margin of one line
+
+                val tail = if (nextAtoms.isEmpty) "" else "\n\n"
+
+                head ~ "```\n" ~ a.content ~ "\n```" ~ tail
+
+              } else {
+                // we're in a list
+
+                val head =
+                  if (acc == "* " || acc.endsWith("\n* ") || acc.endsWith("\n" ~ indent))
+                    "" // no top-margin or indentation required
+                  else if (acc.endsWith("\n"))
+                    "\n" ~ indent // shouldn't happen but just in case - ensure our top-margin is only one line
+                  else
+                    "\n\n" ~ indent // add top-margin of one line, and indentation
+
+                val tail = if (nextAtoms.isEmpty) "" else "\n\n" ~ indent
+
+                head ~ "```\n" ~ a.content.indent(indent) ~ "\n" ~ indent ~ "```" ~ tail
+              }
+
           }
+          // -----------------------------------------------------------------------------------------------------------
+
           go(acc ~ cur, nextAtoms)
         }
       go(acc, atoms)

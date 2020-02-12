@@ -274,9 +274,10 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
         case a: ContentRef      # CodeRef        => codeRef(live)(a.value)
         case a: ContentRef      # UseCaseStepRef => useCaseStepRefById(a.value)
         case a: Issue           # Issue          => issue(a.typ, a.desc, live)
+        case a: CodeBlock       # CodeBlock      => <.pre(*.codeBlock, a.content)
 
         case a: ListMarkup      # UnorderedList  =>
-          val style = if (a.containsBlankLines) *.ulSpacious else *.ulCompact
+          val style = if (a.itemsContainMultipleLines) *.ulSpacious else *.ulCompact
           <.ul(style, a.items.whole.toTagMod(row => <.li(row toTagMod atom)))
       }
       atom

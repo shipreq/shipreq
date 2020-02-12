@@ -17,6 +17,7 @@ object Atom {
   //     - PlainTextMarkup
   //   - NewLine
   //   - ListMarkup
+  //   - CodeBlock
   // - Issue
   // - ContentRef
   // - TagRef
@@ -30,6 +31,7 @@ object Atom {
     case object NewLine         extends TypeGroup
     case object PlainTextMarkup extends TypeGroup
     case object TagRef          extends TypeGroup
+    case object CodeBlock       extends TypeGroup
 
     val values = AdtMacros.adtValues[TypeGroup]
   }
@@ -47,6 +49,7 @@ object Atom {
     case object TeX            extends Type(TypeGroup.PlainTextMarkup)
     case object TagRef         extends Type(TypeGroup.TagRef)
     case object UnorderedList  extends Type(TypeGroup.ListMarkup)
+    case object CodeBlock      extends Type(TypeGroup.CodeBlock)
 
     val values = AdtMacros.adtValues[Type]
 
@@ -62,6 +65,7 @@ object Atom {
       case _: PlainTextMarkup # TeX            => TeX
       case _: TagRef          # TagRef         => TagRef
       case _: ListMarkup      # UnorderedList  => UnorderedList
+      case _: CodeBlock       # CodeBlock      => CodeBlock
     }
   }
 
@@ -77,7 +81,10 @@ object Atom {
       /** Plain text atom, or rich text atom? */
       def isPlain: Boolean
       @inline final def isRich: Boolean = !isPlain
+      def containsMultipleLines: Boolean
       def isBlankLine = false
+      def allowBlankLineAfter = true
+      @inline final def allowBlankLineBefore = allowBlankLineAfter // so far this holds but it might not always
     }
     final type OptionalText = Vector[Atom]
     final type NonEmptyText = NonEmptyVector[Atom]
@@ -100,6 +107,7 @@ object Atom {
         case TypeGroup.NewLine         => this.isInstanceOf[Atom.NewLine]
         case TypeGroup.PlainTextMarkup => this.isInstanceOf[Atom.PlainTextMarkup]
         case TypeGroup.TagRef          => this.isInstanceOf[Atom.TagRef]
+        case TypeGroup.CodeBlock       => this.isInstanceOf[Atom.CodeBlock]
       }
 
     final def supports(t: Type): Boolean =
@@ -110,6 +118,7 @@ object Atom {
   trait Literal extends Base {
     case class Literal(value: String) extends Atom {
       override final def isPlain = true
+      override final def containsMultipleLines = false
       // For tests
       def map(f: String => String): this.type = Literal(f(value)).asInstanceOf[this.type]
     }
@@ -118,7 +127,9 @@ object Atom {
   trait NewLine extends Base {
     case class BlankLine() extends Atom {
       override final def isPlain = true
-      override def isBlankLine = true
+      override final def isBlankLine = true
+      override final def containsMultipleLines = true
+      override final def allowBlankLineAfter = false
     }
     final val blankLine = BlankLine()
   }
@@ -127,8 +138,9 @@ object Atom {
     final type ListItem = Vector[Atom]
     case class UnorderedList(items: NonEmptyVector[ListItem]) extends Atom {
       override final def isPlain = false
+      override final def containsMultipleLines = (items.length > 1) || items.head.exists(_.containsMultipleLines)
 
-      final val containsBlankLines = items.exists(_.exists(_.isBlankLine))
+      val itemsContainMultipleLines = items.exists(_.exists(_.containsMultipleLines))
 
       // For tests
       def filterAtoms(f: Atom => Boolean): this.type = UnorderedList(items.map(_ filter f)).asInstanceOf[this.type]
@@ -140,16 +152,27 @@ object Atom {
     /** Web address, like "https://www.google.com" */
     case class WebAddress(value: String) extends Atom {
       override final def isPlain = false
+      override final def containsMultipleLines = false
     }
 
     /** Email address, like "bob@hotmail.com" */
     case class EmailAddress(value: String) extends Atom {
       override final def isPlain = false
+      override final def containsMultipleLines = false
     }
 
     /** Content in TeX format, like "\frac{22}{7}-\pi" */
     case class TeX(value: String) extends Atom {
       override final def isPlain = false
+      override final def containsMultipleLines = false
+    }
+  }
+
+  trait CodeBlock extends Base {
+    case class CodeBlock(content: String) extends Atom {
+      override final def isPlain = false
+      override final def containsMultipleLines = true
+      override final def allowBlankLineAfter = false
     }
   }
 
@@ -157,7 +180,7 @@ object Atom {
     val lineCardinality: LineCardinality = T.SingleLine
   }
 
-  trait MultiLine extends SingleLine with NewLine with ListMarkup  {
+  trait MultiLine extends SingleLine with NewLine with ListMarkup with CodeBlock {
     override final val lineCardinality = T.MultiLine
   }
 
@@ -168,6 +191,7 @@ object Atom {
   trait Issue extends Base {
     case class Issue(typ: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText) extends Atom {
       override final def isPlain = false
+      override final def containsMultipleLines = false
     }
   }
 
@@ -177,16 +201,19 @@ object Atom {
     /** Reference to a requirement, like "UC-4". */
     case class ReqRef(value: ReqId) extends self.ContentRef {
       override final def isPlain = false
+      override final def containsMultipleLines = false
     }
 
     /** Reference to a requirement via its [[ReqCode]]. */
     case class CodeRef(value: ReqCodeId) extends self.ContentRef {
       override final def isPlain = false
+      override final def containsMultipleLines = false
     }
 
     /** Reference to a UC step, like "UC-4.0.1.a". */
     case class UseCaseStepRef(value: UseCaseStepId) extends self.ContentRef {
       override final def isPlain = false
+      override final def containsMultipleLines = false
     }
   }
 
@@ -194,6 +221,7 @@ object Atom {
   trait TagRef extends Base {
     case class TagRef(value: ApplicableTagId) extends Atom {
       override final def isPlain = false
+      override final def containsMultipleLines = false
     }
   }
 

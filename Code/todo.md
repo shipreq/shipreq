@@ -77,7 +77,6 @@ Phase 3A
 * Might be a good idea to store a description & examples with ReqTypes. (eg. "BR" means xxx + examples)
   Alternatively this could be on a help page.
 
-* Support code blocks in rich text (wanted to use in FR-5)
 * Support nested lists
 * Support all markdown?
 

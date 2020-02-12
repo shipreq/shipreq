@@ -80,7 +80,7 @@ object ParsersTest extends TestSuite {
 //      }
 
 //      if (a != e) debug(t)
-      E.equal(t.takeRight(200), a, e)
+      E.equal(t.take(2000), a, e)
 //       E.equal(t.takeRight(200), actual, expect)
     }
 
@@ -229,7 +229,7 @@ object ParsersTest extends TestSuite {
 //        assertMultiline(x(parse(p)(text)), x(e))
 
         val text2 = PlainText.ForProject.noCtx(p).text(e, Live, Mandatory.Not)
-        assertEq(s"txt -> parsed -> txt: $text2", parse(p)(text2), e)
+        assertEq(s"txt -> parsed -> txt:\n$text2", parse(p)(text2), e)
       }
 
       def test(text: String)(as: T.Atom*): Unit = {
@@ -383,6 +383,190 @@ object ParsersTest extends TestSuite {
           T.blankLine, L("*B"),
           T.blankLine, L("*C"),
           T.blankLine, L("U"))
+      }
+
+      'codeBlocks - {
+        'flat - test(
+          """
+            |```
+            |
+            |ok
+            |
+            |
+            |  1
+            |
+            |
+            |cool
+            |
+            |```
+            |hello
+            |```
+            |* here we go again!
+            |```
+            |
+            |
+            |hello again
+            |
+            |
+            |```
+            | whee
+            |```
+            |""".stripMargin.trim)(
+          T.CodeBlock("ok\n\n\n  1\n\n\ncool"), // blank lines trimmed
+          L("hello"),
+          T.CodeBlock("* here we go again!"), // blank lines after block removed
+          L("hello again"),
+          T.CodeBlock(" whee"), // blank lines before block removed
+        )
+
+        'inList - test(
+          """
+            |* ```
+            |ok
+            |
+            |  great
+            |  ```
+            |
+            |*  ```
+            |
+            |     hey
+            |
+            |    ```
+            |
+            |* cool
+            |  ```
+            |    good job, me
+            |  ```
+            |* omfg
+            |
+            |
+            |
+            | ```
+            |   derp
+            |
+            | ```
+            |
+            |   ahh
+            |noice
+            |""".stripMargin.trim)(
+          T.UnorderedList(NEV(
+            LI(T.CodeBlock("ok\n\n  great")),
+            LI(T.CodeBlock("  hey")),
+            LI(L("cool"), T.CodeBlock("  good job, me")),
+            LI(L("omfg"), T.CodeBlock("  derp"), L("ahh")),
+          )),
+          L("noice")
+        )
+
+        'inList2 - test(
+          """
+            |* right
+            |
+            | ```
+            | inner
+            | ```
+            |
+            |```
+            |outer
+            |```
+            | done
+            |""".stripMargin.trim)(
+          T.UnorderedList(NEV(
+            LI(L("right"), T.CodeBlock("inner")),
+          )),
+          T.CodeBlock("outer"),
+          L("done")
+        )
+
+        'beforeEmptyList - test(
+          "```\nasd\n```\n* "
+        )(
+          T.CodeBlock("asd"),
+          T.UnorderedList(NEV(LI())),
+        )
+
+        'empty - test(
+          """
+            |```
+            |```
+            |
+            |```
+            |
+            |
+            |
+            |```
+            |
+            |* ```
+            |  ```
+            |
+            |* here
+            |
+            |  ```
+            |
+            |  ```
+            |
+            |  ok
+            |""".stripMargin
+        )(
+          T.CodeBlock(""),
+          T.CodeBlock(""),
+          T.UnorderedList(NEV(
+            LI(T.CodeBlock("")),
+            LI(L("here"), T.CodeBlock(""), L("ok")),
+          )),
+        )
+
+        'indentedRoot - test(
+          """
+            |preventing trim
+            |
+            | !```
+            | !a
+            | ! a
+            | !```
+            |
+            |  !```
+            |  !  b
+            |  !   b
+            |  !```
+            |
+            |! ```
+            |!c
+            |! c
+            |!  ```
+            |
+            |!  ```
+            |!d
+            |! d
+            |! ```
+            |
+            | ! ```
+            | !   e
+            | !  e
+            | !```
+            |
+            | !```
+            | !   f
+            | !  f
+            | ! ```
+            |""".stripMargin.replace("!", "")
+        )(
+          L("preventing trim"),
+          T.CodeBlock("a\n a"),
+          T.CodeBlock("  b\n   b"),
+          T.CodeBlock("c\n c"),
+          T.CodeBlock("d\n d"),
+          T.CodeBlock("   e\n  e"),
+          T.CodeBlock("   f\n  f"),
+        )
+
+        'weird - test(
+          "* ```\n  \u00a0\n  ```"
+        )(
+          T.UnorderedList(NEV(
+            LI(T.CodeBlock("\u00a0")),
+          )),
+        )
       }
 
       'useCaseStepRef {

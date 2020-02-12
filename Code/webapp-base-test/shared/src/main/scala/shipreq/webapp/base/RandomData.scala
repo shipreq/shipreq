@@ -457,14 +457,47 @@ object RandomData {
     private val highChars   = Gen.chooseInt(128, 255).map(_.toChar) // Gen.unicode // TODO Disabled due to PhantomJS-2.1.1-8 crashing
             val genCharSL   = Gen.chooseGen(Gen chooseArray_! asciiSL, highChars)
             val genCharML   = Gen.chooseGen(Gen chooseArray_! asciiML, highChars)
-    private val literalStr  = genCharSL                       .string(1 to 100)
-    private val texStr      = genCharSL                       .string(1 to  20)
-    private val webAddressR = charPred(Parsers.webAddressChar).string(1 to  40)
-    private val emailL      = charPred(Parsers.emailCharL)    .string(1 to  20)
-    private val emailR      = charPred(Parsers.emailCharR)    .string(1 to  14)
+    private val literalStr  = genCharSL                       .string(1 to 24)
+    private val texStr      = genCharSL                       .string(1 to 20)
+    private val webAddressR = charPred(Parsers.webAddressChar).string(1 to 30)
+    private val emailL      = charPred(Parsers.emailCharL)    .string(1 to 20)
+    private val emailR      = charPred(Parsers.emailCharR)    .string(1 to 14)
 
     def literal(implicit t: Literal): Gen[t.Literal] =
       literalStr.map(t.Literal)
+
+    private val codeBlockContent: Gen[String] = {
+      val trailingWS = " +$".r
+
+      val potentiallyEmptyLine = genCharSL.string(1 to 10).map(trailingWS.replaceFirstIn(_, ""))
+
+      val potentiallyEmptyLines = potentiallyEmptyLine.list(0 to 2)
+
+      val nonEmptyLine = potentiallyEmptyLine.map {
+        case "" => "x"
+        case s => s
+      }
+
+      val genTail = (potentiallyEmptyLines *** nonEmptyLine).option
+
+      for {
+        head <- nonEmptyLine
+        tail <- genTail
+      } yield
+        tail match {
+          case Some((mid, last)) =>
+            val sb = new StringBuilder(64, head)
+            mid.foreach {l => sb append '\n'; sb ++= l}
+            sb append '\n'
+            sb ++= last
+            sb.toString
+          case None =>
+            head
+        }
+    }
+
+    def codeBlock(implicit t: CodeBlock): Gen[t.CodeBlock] =
+      codeBlockContent.map(t.CodeBlock)
 
     def blankLine(implicit t: NewLine): Gen[t.BlankLine] =
       Gen.pure(t.blankLine)
@@ -473,7 +506,7 @@ object RandomData {
       Gen.pure(g).flatMap(_.value).vector(MaxTextAtoms)
 
     def listItems(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[NonEmptyVector[t.ListItem]] =
-      listItem(t)(g).nev(0 to 10)
+      listItem(t)(g).nev(0 to 7)
 
     def unorderedList(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[t.UnorderedList] =
       listItems(t)(g) map t.UnorderedList
@@ -505,6 +538,7 @@ object RandomData {
     private[this] def multiLine(t: MultiLine, depth: Int)(g: Name[Gen[t.Atom]]): NonEmptyVector[Gen.Freq[t.Atom]] = {
       var gs = singleLineGens(t).map(g => (9, g))
       gs :+= ((9, blankLine(t)))
+      gs :+= ((4, codeBlock(t)))
       if (depth < DepthIncrease.length)
         gs :+= ((DepthIncrease(depth), unorderedList(t)(g)))
       gs
@@ -565,9 +599,10 @@ object RandomData {
          | _: PlainTextMarkup # WebAddress
          | _: PlainTextMarkup # EmailAddress
          | _: PlainTextMarkup # TeX
-         | _: TagRef          # TagRef        => true
-      case _: NewLine         # BlankLine
-         | _: ListMarkup      # UnorderedList => false
+         | _: TagRef          # TagRef
+         | _: CodeBlock       # CodeBlock
+         | _: NewLine         # BlankLine     => true
+      case _: ListMarkup      # UnorderedList => false
     }
 
     sealed trait AtomCtx
@@ -630,42 +665,47 @@ object RandomData {
         else
           (q.last, a) match {
 
-          case (x: Lit             , y: Lit             ) => i :+ x.map(_ + y.value)
-          case (x: Lit             , y: PTM#EmailAddress) => i :+ x.map(_ + " ") :+ y
-          case (x: Lit             , y: PTM#WebAddress  ) => i :+ x.map(_ + " ") :+ y
-        //case (x: Lit             , y: Issue#Issue     ) => i :+ x.map(_ + " ") :+ y
-        //case (x: Lit             , y: TagRef#Tagref   ) => i :+ x.map(_ + " ") :+ y
-          case (x: Lit             , y: Blank           ) => i :+ x.map(noWhitespaceRight) :+ y
-          case (x: Lit             , y: UL              ) => i :+ x.map(noWhitespaceRight) :+ y
+            case (x: Lit                , y: Lit                ) => i :+ x.map(_ + y.value)
+            case (x: Lit                , y: PTM#EmailAddress   ) => i :+ x.map(_ + " ") :+ y
+            case (x: Lit                , y: PTM#WebAddress     ) => i :+ x.map(_ + " ") :+ y
+          //case (x: Lit                , y: Issue#Issue        ) => i :+ x.map(_ + " ") :+ y
+          //case (x: Lit                , y: TagRef#Tagref      ) => i :+ x.map(_ + " ") :+ y
+            case (x: Lit                , y: Blank              ) => i :+ x.map(noWhitespaceRight) :+ y
+            case (x: Lit                , y: UL                 ) => i :+ x.map(noWhitespaceRight) :+ y
 
-          case (x: Blank           , y: Lit             ) => i :+ x :+ y.map(noWhitespaceLeft)
-          case (_: Blank           , _: Blank           ) => drop
-          case (_: Blank           , _: UL              ) => drop
+            case (x: Blank              , y: Lit                ) => i :+ x :+ y.map(noWhitespaceLeft)
+            case (_: Blank              , _: Blank              ) => drop
+            case (_: Blank              , _: UL                 ) => drop
 
-          case (x: PTM#EmailAddress, y: Lit             ) => i :+ x :+ y.map(" " + _)
-          case (_: PTM#EmailAddress, _: PTM#EmailAddress) => drop
-          case (_: PTM#EmailAddress, _: PTM#WebAddress  ) => drop
+            case (x: PTM#EmailAddress   , y: Lit                ) => i :+ x :+ y.map(" " + _)
+            case (_: PTM#EmailAddress   , _: PTM#EmailAddress   ) => drop
+            case (_: PTM#EmailAddress   , _: PTM#WebAddress     ) => drop
 
-          case (x: PTM#WebAddress  , y: Lit             ) => i :+ x :+ y.map(" " + _)
-          case (_: PTM#WebAddress  , _: PTM#EmailAddress) => drop
-          case (_: PTM#WebAddress  , _: PTM#WebAddress  ) => drop
-          case (_: PTM#WebAddress  , _: Issue#Issue     ) => drop
-          case (_: PTM#WebAddress  , _: TagRef#TagRef   ) => drop
+            case (x: PTM#WebAddress     , y: Lit                ) => i :+ x :+ y.map(" " + _)
+            case (_: PTM#WebAddress     , _: PTM#EmailAddress   ) => drop
+            case (_: PTM#WebAddress     , _: PTM#WebAddress     ) => drop
+            case (_: PTM#WebAddress     , _: Issue#Issue        ) => drop
+            case (_: PTM#WebAddress     , _: TagRef#TagRef      ) => drop
 
-          case (x: TagRef#TagRef   , y: Lit             ) => i :+ x :+ y.map(" " + _)
-          case (_: TagRef#TagRef   , _: PTM#EmailAddress) => drop
-          case (_: TagRef#TagRef   , _: PTM#WebAddress  ) => drop
+            case (x: TagRef#TagRef      , y: Lit                ) => i :+ x :+ y.map(" " + _)
+            case (_: TagRef#TagRef      , _: PTM#EmailAddress   ) => drop
+            case (_: TagRef#TagRef      , _: PTM#WebAddress     ) => drop
 
-          case (x: Issue#Issue     , y: Lit             ) if x.desc.isEmpty => i :+ x :+ y.map(" i" + _)
-          case (x: Issue#Issue     , _: PTM#EmailAddress) if x.desc.isEmpty => drop
-          case (x: Issue#Issue     , _: PTM#WebAddress  ) if x.desc.isEmpty => drop
+            case (_: CodeBlock#CodeBlock, _: Blank              ) => drop
+            case (x: CodeBlock#CodeBlock, y: Lit                ) => i :+ x :+ y.map(noWhitespaceLeft)
+            case (_: Blank              , _: CodeBlock#CodeBlock) => drop
+            case (x: Lit                , y: CodeBlock#CodeBlock) => i :+ x.map(noWhitespaceRight) :+ y
 
-          case (x: UL              , y: Lit             ) => i :+ x :+ y.map(noWhitespaceLeft)
-          case (_: UL              , _: Blank           ) => drop
-          case (_: UL              , _: UL              ) => drop //.copy(items = x.items ++ y.items)
+            case (x: Issue#Issue        , y: Lit                ) if x.desc.isEmpty => i :+ x :+ y.map(" i" + _)
+            case (x: Issue#Issue        , _: PTM#EmailAddress   ) if x.desc.isEmpty => drop
+            case (x: Issue#Issue        , _: PTM#WebAddress     ) if x.desc.isEmpty => drop
 
-          case _ => q :+ a
-        }
+            case (x: UL                 , y: Lit                ) => i :+ x :+ y.map(noWhitespaceLeft)
+            case (_: UL                 , _: Blank              ) => drop
+            case (_: UL                 , _: UL                 ) => drop //.copy(items = x.items ++ y.items)
+
+            case _ => q :+ a
+          }
       })
       .map(fix2) |> trimBlankLines
     }
