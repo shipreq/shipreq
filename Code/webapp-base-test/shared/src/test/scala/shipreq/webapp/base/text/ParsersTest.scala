@@ -520,10 +520,10 @@ object ParsersTest extends TestSuite {
           """
             |preventing trim
             |
-            | !```
-            | !a
-            | ! a
-            | !```
+            | !```  !
+            | !a    !
+            | ! a   !
+            | !```  !
             |
             |  !```
             |  !  b
