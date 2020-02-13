@@ -104,6 +104,7 @@ object BaseStyles extends StyleSheet.Inline {
       transition := "color .1s ease,border-color .1s ease",
       fontSize(1 em),
       lineHeight(1.2857),
+      maxHeight(50 vh),
       // overflow: scroll - autosize avoids this
       resize.none,
       color(state match {
@@ -164,7 +165,10 @@ object BaseStyles extends StyleSheet.Inline {
     (backgroundImage := "repeating-linear-gradient(-225deg,rgba(0,0,0,0),rgba(0,0,0,0)5ex,rgba(137,214,229,.1)5ex,rgba(137,214,229,.1)10ex)").important)
 
   val richTextPreviewBodyInner = style(
-    minHeight(1.4 em))
+    minHeight(1.4 em),
+    maxHeight(33.33333 vh),
+    overflowY.auto,
+  )
 
   private def editorInstructionMarginV = 0.4 em
 
