@@ -77,6 +77,11 @@ resource "aws_codebuild_project" "images" {
     }
 
     environment_variable {
+      name  = "DEV_NODE_URL"
+      value = aws_ecr_repository.shipreq_dev_node.repository_url
+    }
+
+    environment_variable {
       name  = "DEV_POSTGRES_URL"
       value = aws_ecr_repository.shipreq_dev_postgres.repository_url
     }
@@ -118,6 +123,7 @@ resource "aws_iam_role_policy" "images" {
       "Effect": "Allow",
       "Resource": [
         "${aws_ecr_repository.shipreq_dev_build_env.arn}",
+        "${aws_ecr_repository.shipreq_dev_node.arn}",
         "${aws_ecr_repository.shipreq_dev_postgres.arn}",
         "${data.aws_ecr_repository.cadvisor.arn}",
         "${data.aws_ecr_repository.ecs_exporter.arn}",
