@@ -35,6 +35,8 @@ export async function init () {
 
         enableDefaultProxy(app);
 
+        app.get('/ok', (_, res) => res.send('OK'));
+
         app.use((err, _, res, next) => { // Express error handler
             if (res.headersSent) {
                 return next(err);
