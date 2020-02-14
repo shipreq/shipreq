@@ -22,7 +22,11 @@ final case class Global(config      : ServerConfig,
                         ssr         : SsrAlgebra.Prepared[Fx],
                         statRecorder: StatRecorder,
                         taskman     : TaskmanApi[Fx],
-                        trace       : TraceInterpreter.ForLift[Fx])
+                        trace       : TraceInterpreter.ForLift[Fx]) {
+
+  val analyticsProxy: AnalyticsProxy =
+    config.analyticsProxy.build
+}
 
 object Global {
   var Instance: Global = _
