@@ -80,6 +80,8 @@ Phase 3A
 * Support nested lists
 * Support all markdown?
 
+* Reduce biz metrics to 5m
+
 * Investigate changes required to support phone / tablet
 
 * Wall metrics updating every 10 min only
