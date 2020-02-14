@@ -1,3 +1,8 @@
+resource "aws_ecr_repository" "analytics_proxy" {
+  name = "shipreq/analytics_proxy"
+  tags = local.default_tags
+}
+
 resource "aws_ecr_repository" "base" {
   name = "shipreq/base"
   tags = local.default_tags

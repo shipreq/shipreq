@@ -66,6 +66,7 @@ services:
       - redis.password=sqd
       - redis.url=redis://redis:6379
       - run.mode=staging
+      - shipreq.analytics_proxy.url=http://localhost:$PORT_ANALYTICS_PROXY
       - shipreq.url=http://localhost:$PORT_SHIPREQ_WEBAPP
       - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
       - JAEGER_REPORTER_FLUSH_INTERVAL=2000
@@ -76,6 +77,14 @@ services:
       - LOG_LEVEL_SHIPREQ=DEBUG
     cpus: 2
     mem_limit: 1856m # 2.25*1024 - 448 for Taskman
+
+  analytics_proxy:
+    image: shipreq/analytics_proxy
+    container_name: shipreq_dev_analytics_proxy
+    ports:
+      - $PORT_ANALYTICS_PROXY:80
+    cpus: 2
+    mem_limit: 64m
 
   ##################################################################################################
   # DevOps: Metrics

@@ -3,6 +3,7 @@ cd "$(dirname "$0")" || exit 1
 
 export PULL_REPO=930801536115.dkr.ecr.ap-southeast-2.amazonaws.com
 
+export ANALYTICS_PROXY_URL="shipreq/analytics_proxy"
 export DEV_BUILD_ENV_URL="shipreq/dev/build_env"
 export DEV_NODE_URL="shipreq/dev/node"
 export DEV_POSTGRES_URL="shipreq/dev/postgres"

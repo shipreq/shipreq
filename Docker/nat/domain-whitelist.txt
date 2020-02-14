@@ -7,3 +7,4 @@
 .shipreq.com
 smtp.gmail.com
 stats.grafana.org
+www.google-analytics.com

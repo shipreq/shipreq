@@ -47,6 +47,24 @@ filebeat.autodiscover:
               '@service': 'shipreq/taskman'
 
   ######################################################################################################################
+  # Analytics Proxy
+  - type: docker
+    templates:
+    - condition:
+        contains:
+          docker.container.name: analytics_proxy
+      config:
+      - type: container
+        paths:
+          - /var/lib/docker/containers/${data.docker.container.id}/*-json.log
+        encoding: utf-8
+        processors:
+        - add_fields:
+            target: ''
+            fields:
+              '@service': 'shipreq/analytics_proxy'
+
+  ######################################################################################################################
   # Prometheus
 
   - type: docker

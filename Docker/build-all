@@ -96,6 +96,7 @@ function build_and_deploy {
   echo
 }
 
+build_and_deploy  analytics_proxy        "${ANALYTICS_PROXY_URL}"
 build_and_deploy  dev-node               "${DEV_NODE_URL}"
 build_and_deploy  dev-postgres           "${DEV_POSTGRES_URL}"
 build_and_deploy  nat                    "${NAT_URL}"

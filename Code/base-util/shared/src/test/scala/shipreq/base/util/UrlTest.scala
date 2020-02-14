@@ -101,6 +101,13 @@ object UrlTest extends TestSuite {
         "/"  - test(Relative("/"), "/")
         "/x" - test(Relative("/x"), "/x/")
       }
+      'relative {
+        * - assertEq(Url.Absolute("http://qwe.asd/qwe").relativeUrl.relativeUrl, "/qwe")
+        * - assertEq(Url.Absolute("http://qwe.asd:123/qwe").relativeUrl.relativeUrl, "/qwe")
+        * - assertEq(Url.Absolute("http://qwe.asd/qwe/zxc").relativeUrl.relativeUrl, "/qwe/zxc")
+        * - assertEq(Url.Absolute("http://qwe.asd/").relativeUrl.relativeUrl, "/")
+        * - assertEq(Url.Absolute("http://qwe.asd").relativeUrl.relativeUrl, "/")
+      }
     }
 
   }

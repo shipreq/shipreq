@@ -2,6 +2,7 @@ package shipreq.webapp.server.snippet
 
 import net.liftweb.http.DispatchSnippet
 import scala.xml._
+import shipreq.base.util.Url
 import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.server.app.Global
 
@@ -20,6 +21,8 @@ object Analytics extends DispatchSnippet {
 
       case Some(trackingId) =>
 
+        val gaUrl = Global.analyticsProxy.reRoute(Url.Absolute("https://www.google-analytics.com/analytics.js"))
+
         // so that analytics from Scala.JS aren't lost
         val initGA = "window.ga=function(){ga.q.push(arguments)};ga.q=[]"
 
@@ -31,7 +34,7 @@ object Analytics extends DispatchSnippet {
         val initAm = s"ga2.i('$trackingId')"   // SPA Router sends initial pageview
 
         val scriptInit = <script type="text/javascript" data-lift="head">{initErr};{initGA}</script>
-        val scriptGA   = <script type="text/javascript" async="async" src="https://www.google-analytics.com/analytics.js"></script>
+        val scriptGA   = <script type="text/javascript" async="async" src={gaUrl.absoluteUrl}></script>
         val scriptAs   = <script type="text/javascript" async="async" src={AssetManifest.analyticsJs} onload={initAs}></script>
         val scriptAm   = <script type="text/javascript" async="async" src={AssetManifest.analyticsJs} onload={initAm}></script>
 

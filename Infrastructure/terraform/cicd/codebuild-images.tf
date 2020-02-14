@@ -12,6 +12,11 @@ resource "aws_codebuild_project" "images" {
 
 
     environment_variable {
+      name  = "ANALYTICS_PROXY_URL"
+      value = data.aws_ecr_repository.analytics_proxy.repository_url
+    }
+
+    environment_variable {
       name  = "NAT_URL"
       value = data.aws_ecr_repository.nat.repository_url
     }
@@ -125,6 +130,7 @@ resource "aws_iam_role_policy" "images" {
         "${aws_ecr_repository.shipreq_dev_build_env.arn}",
         "${aws_ecr_repository.shipreq_dev_node.arn}",
         "${aws_ecr_repository.shipreq_dev_postgres.arn}",
+        "${data.aws_ecr_repository.analytics_proxy.arn}",
         "${data.aws_ecr_repository.cadvisor.arn}",
         "${data.aws_ecr_repository.ecs_exporter.arn}",
         "${data.aws_ecr_repository.filebeat.arn}",
