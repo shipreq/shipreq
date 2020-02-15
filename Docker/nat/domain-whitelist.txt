@@ -5,6 +5,7 @@
 .mailgun.net
 .security.ubuntu.com
 .shipreq.com
+.statcounter.com
 smtp.gmail.com
 stats.grafana.org
 www.google-analytics.com
