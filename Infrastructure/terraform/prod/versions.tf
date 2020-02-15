@@ -2,7 +2,7 @@ locals {
   versions = {
 
     app = {
-      analytics_proxy = "git-94e85b4c055472829ec63f8f60e9a81efc5346cd"
+      analytics_proxy = "git-56cf0959cb10f95fe6bdaf906ddfe0f18a313191"
       cadvisor        = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
       filebeat        = "git-8fb0c6e319fc6d4eab55bf925286d8054ba1cfac"
       node_exporter   = "git-c0d3aea21afe262461041b5454554ba8dc0129da"
