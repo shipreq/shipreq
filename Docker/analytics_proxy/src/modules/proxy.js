@@ -91,7 +91,7 @@ export function createDefaultProxy (targetDomain, proxyOptionsOverride = {}) {
 
                 unmasked = parsedUrl.path + `${
                     parsedUrl.search ? "&" : "?"
-                }${ 
+                }${
                     config.proxy.ipOverrides[servername].queryParameterName instanceof Array
                         ? config.proxy.ipOverrides[servername].queryParameterName.map(name => `${ name }=${ encodedIp }`).join("&")
                         : `${ config.proxy.ipOverrides[servername].queryParameterName }=${ encodedIp }`

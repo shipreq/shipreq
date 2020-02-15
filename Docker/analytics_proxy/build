@@ -1,15 +1,13 @@
 #!/bin/bash
 cd "$(dirname "$0")" || exit 1
 
-set -eu
-
 name=shipreq/analytics_proxy
 
 docker build -t $name .
 
 case "$1" in
-  bash) docker run --rm -it $name bash ;;
-  run)  docker run --rm -p3000:80 $name ;;
+  bash) exec docker run --rm -it $name bash ;;
+  run)  exec docker run --rm -p3000:80 $name ;;
   *)    ;;
 esac
 
