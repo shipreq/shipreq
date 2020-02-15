@@ -10,13 +10,13 @@ terraform {
 
 provider "aws" {
   region  = "ap-southeast-2"
-  version = "~> 2.39"
+  version = "~> 2.49"
 }
 
 provider "aws" {
   alias   = "ap-southeast-2"
   region  = "ap-southeast-2"
-  version = "~> 2.39"
+  version = "~> 2.49"
 }
 
 module "shipreq" {
@@ -71,6 +71,7 @@ module "shipreq" {
   shipreq_webapp_properties             = file("webapp.properties")
 
   # Versions
+  app_analytics_proxy_image_tag   = local.versions.app.analytics_proxy
   app_cadvisor_image_tag          = local.versions.app.cadvisor
   app_filebeat_image_tag          = local.versions.app.filebeat
   app_node_exporter_image_tag     = local.versions.app.node_exporter

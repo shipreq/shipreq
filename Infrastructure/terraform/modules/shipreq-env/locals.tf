@@ -28,6 +28,10 @@ EOB
   shipreq_domain  = var.env == "prod" ? "shipreq.com" : "${var.env}.shipwreck.space"
   shipreq_url     = "https://${local.shipreq_domain}"
 
+  analytics_proxy_subdomain = "ap"
+  analytics_proxy_domain    = "${local.analytics_proxy_subdomain}.${local.shipreq_domain}"
+  analytics_proxy_url       = "https://${local.analytics_proxy_domain}"
+
   # TTL for DNS entries pointed at targets I expect to change rarely/never
   dns_stable_ttl = 120
 
@@ -94,6 +98,7 @@ EOB
   # App cluster
 
   app_cluster_cpu = {
+    analytics_proxy = 6
     cadvisor        = 3
     filebeat        = 3
     node_exporter   = 3
@@ -102,6 +107,7 @@ EOB
   }
 
   app_cluster_mem_res = {
+    analytics_proxy = 40
     cadvisor        = 48
     filebeat        = 32
     node_exporter   = 24

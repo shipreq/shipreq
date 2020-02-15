@@ -18,6 +18,17 @@ resource "aws_route53_record" "shipreq" {
   }
 }
 
+resource "aws_route53_record" "analytics_proxy" {
+  zone_id = local.shipreq_zone_id
+  name    = local.analytics_proxy_domain
+  type    = "A"
+  alias {
+    name                   = aws_lb.webapp.dns_name
+    zone_id                = aws_lb.webapp.zone_id
+    evaluate_target_health = false
+  }
+}
+
 resource "aws_lb" "webapp" {
   name                       = "${var.env}-shipreq-webapp"
   internal                   = false
@@ -61,33 +72,13 @@ resource "aws_lb_listener" "webapp-https" {
   }
 }
 
-resource "aws_lb_target_group" "webapp" {
-  name                 = "${var.env}-shipreq-webapp"
-  vpc_id               = aws_vpc.main.id
-  target_type          = "instance"
-  port                 = 80
-  protocol             = "HTTP"
-  deregistration_delay = 30
-
-  health_check {
-    path                = "/ops/ok"
-    protocol            = "HTTP"
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    interval            = 15
-    timeout             = 5
-    matcher             = "200"
-  }
-
-  depends_on = [aws_lb.webapp]
-}
-
 # http://shipreq.com/robots.txt
 resource "aws_lb_listener_rule" "webapp-http-robots" {
   listener_arn = aws_lb_listener.webapp-http.arn
   condition {
-    field  = "path-pattern"
-    values = ["/robots.txt"]
+    path_pattern {
+      values = ["/robots.txt"]
+    }
   }
   action {
     type = "fixed-response"
@@ -103,8 +94,9 @@ resource "aws_lb_listener_rule" "webapp-http-robots" {
 resource "aws_lb_listener_rule" "webapp-https-robots" {
   listener_arn = aws_lb_listener.webapp-https.arn
   condition {
-    field  = "path-pattern"
-    values = ["/robots.txt"]
+    path_pattern {
+      values = ["/robots.txt"]
+    }
   }
   action {
     type = "fixed-response"
@@ -121,8 +113,9 @@ resource "aws_lb_listener_rule" "webapp-https-ops" {
   count        = var.shipreq_webapp_allow_ops_routes_publically ? 0 : 1
   listener_arn = aws_lb_listener.webapp-https.arn
   condition {
-    field  = "path-pattern"
-    values = ["/ops/*"]
+    path_pattern {
+      values = ["/ops/*"]
+    }
   }
   action {
     type = "fixed-response"
@@ -131,6 +124,62 @@ resource "aws_lb_listener_rule" "webapp-https-ops" {
       status_code  = 404
     }
   }
+}
+
+# https://shipreq.com/ap/*
+resource "aws_lb_listener_rule" "analytics_proxy" {
+  listener_arn = aws_lb_listener.webapp-https.arn
+  condition {
+    host_header {
+      values = [local.analytics_proxy_domain]
+    }
+  }
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.analytics_proxy.arn
+  }
+}
+
+resource "aws_lb_target_group" "webapp" {
+  name                 = "${var.env}-shipreq-webapp"
+  vpc_id               = aws_vpc.main.id
+  target_type          = "instance"
+  port                 = 80
+  protocol             = "HTTP"
+  deregistration_delay = 30
+
+  health_check {
+    path                = "/ops/ok"
+    protocol            = "HTTP"
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    interval            = 30
+    timeout             = 5
+    matcher             = "200"
+  }
+
+  depends_on = [aws_lb.webapp]
+}
+
+resource "aws_lb_target_group" "analytics_proxy" {
+  name                 = "${var.env}-analytics-proxy"
+  vpc_id               = aws_vpc.main.id
+  target_type          = "instance"
+  port                 = 80
+  protocol             = "HTTP"
+  deregistration_delay = 5
+
+  health_check {
+    path                = "/ok"
+    protocol            = "HTTP"
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    interval            = 30
+    timeout             = 5
+    matcher             = "200"
+  }
+
+  depends_on = [aws_lb.webapp]
 }
 
 resource "aws_security_group" "webapp-alb" {

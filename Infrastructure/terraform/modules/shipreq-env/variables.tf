@@ -127,6 +127,7 @@ variable "postgres_final_snapshot" {
   default     = ""
 }
 
+variable "app_analytics_proxy_image_tag" { type = string }
 variable "app_cadvisor_image_tag" { type = string }
 variable "app_filebeat_image_tag" { type = string }
 variable "app_node_exporter_image_tag" { type = string }
