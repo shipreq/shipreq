@@ -284,7 +284,6 @@ services:
       - KIBANA_URL=http://kibana:5601
       - PROMETHEUS_BIZ_URL=http://todo
       - PROMETHEUS_TECH_URL=http://prometheus-tech:9090
-      - SC_PROJECT_ID=12198830
       - SHIPREQ_ENV=local-dev
       - SHIPREQ_URL=http://localhost:$PORT_SHIPREQ_WEBAPP
     cpus: 0.1

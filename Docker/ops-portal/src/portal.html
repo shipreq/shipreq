@@ -69,7 +69,7 @@
       <li><a href="https://login.mailchimp.com">MailChimp</a></li>
       <li><a href="https://login.mailgun.com">MailGun</a></li>
       <li><a href="https://analytics.google.com" id=ga>Google Analytics</a> (trackingId: ${GA_TRACKING_ID})</li>
-      <li><a href="https://statcounter.com/login/" id=sc>statcounter</a> (projectId: ${SC_PROJECT_ID})</li>
+      <li><a href="https://statcounter.com/login/">statcounter</a>
     </ul>
   </li>
 
@@ -78,7 +78,6 @@
 <script>
   if (!"$JAEGER_URL") document.getElementById("tracing").remove();
   if (!"$GA_TRACKING_ID") document.getElementById("ga").remove();
-  if (!"$SC_PROJECT_ID") document.getElementById("sc").remove();
 </script>
 
 </body>
