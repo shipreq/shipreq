@@ -72,19 +72,39 @@ Phase 3A
 
 * Bulk tag add/remove
 
-* Redo tag config screen - prop panel on right
-
 * Might be a good idea to store a description & examples with ReqTypes. (eg. "BR" means xxx + examples)
   Alternatively this could be on a help page.
 
-* Support nested lists
-* Support all markdown?
+* Markdown
+  * Support nested lists
+  * Support styling (bold, underline, italics, monospace)
 
-* Reduce biz metrics to 5m
+* New form
+  * group instructions into clauses so that newlines aren't inserted in the middle when wrapping is necessary
+  * certically align all columns to the bottom instead of the top
+  * don't hide previews on blur in the NewForm area [FR-10]
+  * display a popup like "Created FR-7" when user creates a new req [FR-11]
+
+* Tags
+  * redo tag config screen
+    * prop panel on right
+    * ability to create child tag in 1-step instead of 2 [FB-4]
+  * add tag colours [FR-8]
+
+* Fields
+  * redo config screen
+  * add default values for tag fields [FR-6]
+  * make properties/values per req-type [FR-12]
+
+* UX
+  * ReqTable -> focus text editor at bottom of screen -> F2 -> preview is off screen --- scrollTo on open
+  * Issues page: open & commit field editor -> row disappears -> no element has focus --- focus on adjacent row
 
 * Investigate changes required to support phone / tablet
 
-* Wall metrics updating every 10 min only
+* Metrics
+  * Reduce biz metrics to 5m
+  * Wall metrics updating every 10 min only
 
 * Add to imp graph page:
   * Saved views
