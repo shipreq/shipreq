@@ -56,6 +56,7 @@ object DeletionForm {
         commitFn         = None,
         commitVerb       = "",
         preview          = PreviewFeature.ReadWrite.Single.alwaysShow,
+        keepPreviewOpen  = false,
         preEditValue     = None,
         extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
         showInstructions = true)

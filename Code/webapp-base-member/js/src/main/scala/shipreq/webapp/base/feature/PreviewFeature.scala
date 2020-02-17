@@ -143,7 +143,7 @@ object PreviewFeature {
     sealed trait Single {
       def onFocus(wantOpen: Boolean): Callback
       def onEdit(wantOpened: Boolean): Callback
-      def onBlur: Callback
+      def onBlur(keepOpen: Boolean): Callback
     }
 
     object Single {
@@ -169,14 +169,14 @@ object PreviewFeature {
             Some(status)
           }
 
-        override def onBlur: Callback =
-          $.setState(None)
+        override def onBlur(keepOpen: Boolean): Callback =
+          $.setState(None).unless_(keepOpen)
       }
 
       lazy val doNothing: Single = new Single {
         override def onFocus(wantOpen: Boolean) = Callback.empty
         override def onEdit (wantOpen: Boolean) = Callback.empty
-        override def onBlur                     = Callback.empty
+        override def onBlur (keepOpen: Boolean) = Callback.empty
       }
     }
 
@@ -209,8 +209,8 @@ object PreviewFeature {
       def onEdit(wantedOpen: Boolean): Callback =
         write.onEdit(wantedOpen)
 
-      def onBlur: Callback =
-        write.onBlur
+      def onBlur(keepOpen: Boolean): Callback =
+        write.onBlur(keepOpen)
 
       def showPreview(wantOpen: => Boolean): Boolean =
         read.showPreview(wantOpen)
