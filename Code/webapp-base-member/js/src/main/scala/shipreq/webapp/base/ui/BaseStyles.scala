@@ -178,14 +178,15 @@ object BaseStyles extends StyleSheet.Inline {
 
     val container = style(
       fontSize(0.75 rem),
-      lineHeight(1 em),
+      lineHeight(1.5 em),
       textColour,
       textAlign.right,
       marginBottom(editorInstructionMarginV))
 
     val clause = style(
-      &.not(_.lastChild)(
-        marginRight(1.1 ex)))
+      display.inlineBlock, // prevent word-wrap in the middle of a clause
+      marginLeft(1 ex),
+    )
 
     private def hoverColour = c"#2185D0"
 
@@ -200,6 +201,7 @@ object BaseStyles extends StyleSheet.Inline {
         textDecoration := "underline"))
 
     val helpIcon = style(
+      marginLeft(0.35 ex).important,
       marginRight(`0`).important,
       cursor.pointer,
       &.hover(color(hoverColour)))

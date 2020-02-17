@@ -101,25 +101,35 @@ object KeyboardTheme {
     }
 
     def apply(clauses: TraversableOnce[Clause], help: Option[Callback]): VdomTag = {
-      val text =
-        TagMod.when(clauses.nonEmpty) {
-          val rendered = Vector.newBuilder[TagMod]
-          val it = clauses.toIterator
-          while (it.hasNext) {
-            val clause = it.next()
-            val suffix = if (it.hasNext) comma else fullStop
-            rendered  += clauseCont(TagMod.Composite(clause.whole.map(renderAtom) :+ suffix))
-          }
-          TagMod.Composite(rendered.result())
-        }
-
       val helpButton =
         help.whenDefined { h =>
           val eh = (e: ReactEvent) => e.stopPropagationCB >> e.preventDefaultCB >> h
           helpIcon(^.onClick ==> eh)
         }
 
-      container(text, helpButton)
+      val content: TagMod =
+        if (clauses.isEmpty)
+          helpButton
+        else {
+          var rendered = Vector.empty[TagMod]
+          val it = clauses.toIterator
+          var last: VdomTag = null
+          while (it.hasNext) {
+            val clause = it.next()
+            val suffix = if (it.hasNext) comma else fullStop
+            last = clauseCont(TagMod.Composite(clause.whole.map(renderAtom) :+ suffix))
+            rendered :+= last
+          }
+
+          // Here we add the help button to the last clause.
+          // The reason is that we don't want word-wrapping to occur between the last clause and the help button
+          // because a lone, tiny help button on its own line looks terrible.
+          rendered = rendered.dropRight(1) :+ last(helpButton)
+
+          TagMod.Composite(rendered)
+        }
+
+      container(content)
     }
 
     def forTextEditor(lc        : LineCardinality,

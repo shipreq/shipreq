@@ -80,7 +80,6 @@ Phase 3A
   * Support styling (bold, underline, italics, monospace)
 
 * New form
-  * group instructions into clauses so that newlines aren't inserted in the middle when wrapping is necessary
   * certically align all columns to the bottom instead of the top
   * don't hide previews on blur in the NewForm area [FR-10]
   * display a popup like "Created FR-7" when user creates a new req [FR-11]
