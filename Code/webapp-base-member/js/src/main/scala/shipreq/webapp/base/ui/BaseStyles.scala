@@ -4,10 +4,16 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.univeq._
 import shipreq.base.util.Validity
 import shipreq.webapp.base.CssSettings._
+import shipreq.webapp.base.data.{Off, On}
 import shipreq.webapp.base.ui.semantic.{Colour, Label}
 
 object BaseStyles extends StyleSheet.Inline {
   import dsl._
+
+  /** Domains */
+  object D {
+    val on = Domain.ofValues[On](On, Off)
+  }
 
   @inline def containerLarge = InlineBaseStyles.containerLarge
   @inline def containerFull  = InlineBaseStyles.containerFull
@@ -32,6 +38,49 @@ object BaseStyles extends StyleSheet.Inline {
     val domain =
       Domain.ofValues(AdtMacros.adtValues[EditorState].whole: _*)
   }
+
+  object toast {
+
+    private final val animationTime = ".5s"
+
+    val row = style(
+      position.absolute,
+      top(12 rem),
+      left(`0`),
+      width(100 %%),
+      display.flex,
+      justifyContent.center,
+    )
+
+    val toast = styleF(D.on)(on => styleS(
+      maxWidth(50 vw),
+      minWidth(10 vw),
+      textAlign.center,
+      padding(1 em, 1.5 em),
+      lineHeight(1.4285 em),
+      background := "#fcfff5",
+      color(c"#2c662d"),
+      borderRadius(.28571429 rem),
+      boxShadow := "0 0 0 1px #a3c293 inset, 0 0 0 0 transparent",
+      transition := s"visibility $animationTime ease, opacity $animationTime ease",
+      on match {
+        case On  => mixin(visibility.visible, opacity(1))
+        case Off => mixin(visibility.hidden, opacity(0))
+      },
+    ))
+
+    val item = styleF(D.on)(on => styleS(
+      transition := s"all $animationTime ease",
+      on match {
+        case On  => mixin(visibility.visible, opacity(1))
+        case Off => mixin(visibility.hidden, opacity(0))
+      },
+      &.not(_.firstChild)(
+        marginTop(0.5 em),
+      ),
+    ))
+  }
+  toast // eager eval
 
   object focus {
     def colour(a: Double) = rgba(163, 51, 200, a)

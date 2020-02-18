@@ -1,15 +1,13 @@
 package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react.vdom.html_<^.{^ => ^^, _}
-import japgolly.univeq._
 import shipreq.webapp.base.CssSettings._
-import scalacss.ScalaCssReact._
 import shipreq.base.util._
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.data.{Dead, Live, StaticField}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.ui.BaseStyles
-import shipreq.webapp.base.ui.semantic.{Colour, Label, UsesSemanticUiManually}
+import shipreq.webapp.base.ui.semantic.UsesSemanticUiManually
 import shipreq.webapp.client.project.widgets._
 
 object Style extends StyleSheet.Inline {
@@ -20,7 +18,8 @@ object Style extends StyleSheet.Inline {
     val live     = Domain.ofValues[Live]    (Live, Dead)
     val validity = Domain.ofValues[Validity](Valid, Invalid)
     val enabled  = Domain.ofValues[Enabled] (Enabled, Disabled)
-    val on       = Domain.ofValues[On]      (On, Off)
+
+    @inline def on = BaseStyles.D.on
 
     val dragStatus = {
       import DragToReorder._

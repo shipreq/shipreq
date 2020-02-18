@@ -1,0 +1,804 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title CardBoard Req Table | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+      h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
+
+      .content.pic {text-align:center; padding-top:2.2em !important}
+      .content.pic > i {font-size:3rem}
+
+      /** workaround for https://github.com/Semantic-Org/Semantic-UI/issues/2978 */
+      .active-hack {font-weight:700!important; box-shadow: none!important;}
+      .active-hack.red {border-color: #DB2828!important; color: #DB2828!important;}
+      .active-hack.orange {border-color: #F2711C!important; color: #F2711C!important;}
+
+      #view-ctrls > div:not(:first-child) {margin-left: 1em}
+      .sort > button {margin-left: 1ex !important}
+      #cols-popup label {white-space: nowrap !important}
+
+      .status i {margin-right:0}
+
+      .sortCriterion:not(i) {cursor:move}
+
+      #reqtable {        margin-bottom: 1rem; }
+      #reqtable > thead > tr > th {padding: 4px}
+      #reqtable > tbody > tr > td {padding: 4px; vertical-align:top}
+      #reqtable a:hover {text-decoration: underline}
+      #reqtable .selcol {width: 24px !important; text-align: center}
+      .is-tag {padding: 4px 6px !important}
+      .tagRef {color:#2185D0!important}
+      .issueRef {color:#db2828!important}
+
+      #reqtable > tbody > tr > td:nth-child(2) {white-space:nowrap}
+
+      .syntax-help .h {font-weight:bold}
+      .syntax-help table {margin-bottom:1em}
+      .syntax-help tr:nth-child(odd)  td.e {background:#fffde8}
+      .syntax-help tr:nth-child(even) td.e {background:#def2fc}
+      .syntax-help tr:nth-child(odd)  td.d {background:#fcf8e3}
+      .syntax-help tr:nth-child(even) td.d {background:#d9edf7}
+      .syntax-help .d {}
+      .syntax-help .d code {background:#fff; font-family: monospace}
+      .syntax-help .e {font-family: monospace; white-space:nowrap; color:#f39}
+
+      .inline-edit:hover {
+        cursor:pointer;
+        outline:dotted 2px #FFA622;
+        background: #fff4e3 !important;
+        }
+      .can-focus:hover {
+      /*
+        xcursor:pointer;
+        xoutline:solid 1px #00b5ad;
+        outline:solid 1px #a333c8;
+      */
+      }
+      .has-focus {
+        xoutline:solid 2px #00b5ad;
+        outline:solid 2px #a333c8;
+        xoutline:solid 2px #6435c9;
+      }
+
+      #reqtableX >tbody >tr:hover > td {background: rgba(0,15,30,.03)}
+
+      .texteditor {
+        width:100%;
+        margin: 0;
+        -webkit-appearance: none;
+        tap-highlight-color: rgba(255,255,255,0);
+        padding: .78571429em 1em;
+        background: #fff;
+        border: 1px solid rgba(34,36,38,.15);
+        outline: 0;
+        color: rgba(0,0,0,.87);
+        border-radius: .28571429rem;
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0) inset;
+        -webkit-transition: color .1s ease,border-color .1s ease;
+        transition: color .1s ease,border-color .1s ease;
+        font-size: 1em;
+        line-height: 1.2857;
+
+        /*overflow: scroll;*/
+        resize: none;
+
+        padding:.3em .4em !important;
+        background: #fff4e3 !important;
+        xborder-color:#FFA622 !important;
+        border-color:rgba(255, 166, 34, .5) !important;
+      }
+
+      .edit-notes {
+        text-align:right;
+          font-size: 0.75rem;
+          line-height: 1em;
+          margin-bottom: 1rem;
+          color: #4c4c4c;
+      }
+
+      .mid-edit {padding:1ex !important}
+      .mid-edit textarea:focus {border-width:2px !important; border-color:rgba(255, 166, 34, 1) !important}
+      .preview-cont {margin:0 !important}
+      .preview-header {padding-top: 0.3em !important; padding-bottom: 0.3em !important; background:#89d6e5!important; color:#0d1516!important}
+      .preview-body {
+        background-clip: border-box !important;
+        background-color: rgba(0, 0, 0, 0)  !important;
+        background-image: repeating-linear-gradient(-225deg,
+          rgba(0, 0, 0, 0),
+          rgba(0, 0, 0, 0)        5ex,
+          rgba(137,214,229, 0.1)  5ex,
+          rgba(137,214,229, 0.1) 10ex) !important;
+        background-origin: padding-box  !important;
+      }
+
+      .ui.dropdown.reqtype {
+        background: #fff4e3 !important;
+        border-color: rgba(255, 166, 34, .5) !important;
+      }
+
+      .reqtype .ui.buttons button:first-child:hover {color:#21BA45}
+      .reqtype .ui.buttons button:last-child:hover {color:#DB2828}
+
+      .blueHover:hover {color:#2185D0!important}
+
+      #toastRow {
+        position: absolute;
+        top: 12rem;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+
+      #toast {
+        max-width: 50vw;
+        min-width: 10vw;
+        text-align: center;
+        padding: 1em 1.5em;
+        line-height: 1.4285em;
+        background: #fcfff5;
+        color: #2c662d;
+        box-shadow: 0 0 0 1px #a3c293 inset, 0 0 0 0 transparent;
+        transition: visibility .12s ease, opacity .12s ease;
+        border-radius: .28571429rem;
+      }
+
+      #toast > div {
+      }
+
+      #toast > div:not(:first-child) {
+        margin-top: 0.5em;
+      }
+
+  %body
+
+    #toastRow
+      #toast
+        .div Created <a href="project-reqdetail.html">FR-7</a>
+        .div Created <a href="project-reqdetail.html">FR-8</a>
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+
+      .item
+        .ui.breadcrumb
+          %a.section{href: "member-home.html"} Projects
+          %i.divider.icon.right.angle
+          %a.section{href: "project-index.html"} CardBoard
+          .ui.dropdown.inline
+            &nbsp;
+            %i.icon.dropdown
+            .menu
+              .item.active CardBoard
+              .item ShipReq
+          %i.divider.icon.right.angle
+          .section // .active
+            .ui.dropdown.inline
+              Req Table
+              &nbsp;
+              %i.icon.dropdown
+              .menu
+                .header Content
+                .item Implication Graph
+                .item.active ReqTable
+                .header Configuration
+                .item Fields
+                .item Issues
+                .item Req Types
+                .item Tags
+
+      .item.ui.right.dropdown.simple
+        @japgolly
+        -# %i.dropdown.icon
+        .menu
+          %a.item{href: "member-account.html"} Account
+          .item Logout
+
+    -# =============================================================================================
+
+    .ui.long.modal.syntax-help#filter-help
+      %i.close.icon
+      .header Filter Help
+      .content
+        -# %table.ui.celled.table.blue
+          %thead
+            %tr
+              %th(colspan=2) Text
+          %tbody
+            %tr
+              %td.d
+                To find requirements that contain a certain word somewhere in its text, just type the word you're looking for.
+                =" This is case-insensitive, so it doesn't matter whether text is upper- or lower-case."
+              %td.e dividend
+            %tr
+              %td.d
+                To search for a phrase or sequence of words, surround the search phrase with one of the following:
+                %ol
+                  %li quotation marks (<code>"</code>)
+                  %li single quotation marks (<code>'</code>)
+                  %li backticks (<code>&#96;</code>)
+                As above, this is case-insensitive, so it doesn't matter whether text is upper- or lower-case.
+              %td.e
+                "end of day"<br>
+                'end of day'<br>
+                `end of day`
+            %tr
+              %td.d
+                You can also use <a href="http://www.regular-expressions.info/">regular expressions</a> to search requirement text.
+                Unlike above, this is case-sensitive unless you specify the case-insensitivity flag: <code>(?i)</code>.
+              %td.e
+                ="/.*end[ -]*of[ -]*day.*/<br>/(?i).*end[ -]*of[ -]*day.*/"
+
+        .ui.styled.accordion.fluid
+          .title.active
+            %i.dropdown.icon
+            Text
+          .content.active
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d
+                    To find requirements that contain a certain word somewhere in its text, just type the word you're looking for.
+                    =" This is case-insensitive, so it doesn't matter whether text is upper- or lower-case."
+                  %td.e dividend
+                %tr
+                  %td.d
+                    To search for a phrase or sequence of words, surround the search phrase with one of the following:
+                    %ol
+                      %li quotation marks (<code>"</code>)
+                      %li single quotation marks (<code>'</code>)
+                      %li backticks (<code>&#96;</code>)
+                    As above, this is case-insensitive, so it doesn't matter whether text is upper- or lower-case.
+                  %td.e
+                    "end of day"<br>
+                    'end of day'<br>
+                    `end of day`
+                %tr
+                  %td.d
+                    You can also use <a href="http://www.regular-expressions.info/">regular expressions</a> to search requirement text.
+                    Unlike above, this is case-sensitive unless you specify the case-insensitivity flag: <code>(?i)</code>.
+                  %td.e
+                    ="/.*end[ -]*of[ -]*day.*/<br>/(?i).*end[ -]*of[ -]*day.*/"
+
+          .title
+            %i.dropdown.icon
+            Issues &amp; Tags
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d
+                    To find requirements that have a certain issue or tag, enter <code>#</code> followed by the issue or tag.
+                  %td.e
+                    ="#draft"
+                %tr
+                  %td.d
+                    You can also filter by whether a requirement has any issues or any tags by specifying <code>has:</code> followed by either:
+                    %ol
+                      %li %code issues
+                      %li %code tags
+                    As above, this is case-insensitive, so it doesn't matter whether text is upper- or lower-case.
+                  %td.e
+                    has:issues<br>
+                    has:tags<br>
+                %tr
+                  %td.d
+                    Like above, you can also search for requirements that <em>don't<em> have any issues or tags by changing <code>has</code> to <code>no</code>.
+                  %td.e
+                    no:issues<br>
+                    no:tags<br>
+
+          .title
+            %i.dropdown.icon
+            Req Type
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d
+                    To filter requirements by a certain req-type, enter the req-type's mnemonic (in upper-case).
+                  %td.e
+                    ="FR"
+
+          .title
+            %i.dropdown.icon
+            Implication
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d
+                    To filter requirements by their implications, start with <code>implies:</code> or <code>impliedBy:</code>, then enter a list of requirements seperated by a comma (with no spaces in between).
+                  %td.e
+                    ="impliedBy:MF-3<br>"
+                    ="implies:CO-3,FR-20"
+                %tr
+                  %td.d
+                    To specify a type of subject (eg. show me everything implied by BR business rules), just enter the req-type.
+                  %td.e
+                    impliedBy:BR
+                %tr
+                  %td.d
+                    To specify a number of subjects of the same type, surround the numbers with braces (<code>{...}</code>) and separate by commas. You can also use a dash for a range.
+                  %td.e
+                    implies:FR-{1,3,5,7}<br>
+                    implies:FR-{10-20}
+                %tr
+                  %td.d
+                    When multiple requirements are specified, the filter matches if a any match.<br>
+                    So <code>impliedBy:MF-{1,2}</code> will match everything that implied by MF-1 and everything implied by MF-2.<br>
+                    To match all instead of any, use multiple terms.
+                    So <code>impliedBy:MF-1 impliedBy:MF-2</code> will match everything that implied by both MF-1 and MF-2.<br>
+                  %td.e
+                    impliedBy:MF-1 impliedBy:MF-2
+                %tr
+                  %td.d
+                    Finally, all of the above abilities can be combined; separate by comma as usual.
+                  %td.e
+                    impliedBy:MF,FR-{1-10,20,30},CO-7
+
+          .title
+            %i.dropdown.icon
+            Negation & Combination
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d
+                    To negate a clause, enter a minus (<code>-</code>) before it.<br>
+                    This works for anything, including text searches.
+                  %td.e
+                    ="-dividend<br>"
+                    ="-#draft<br>"
+                    ="-impliedBy:MF<br>"
+                    ="-(#v1.0 #released)"
+                %tr
+                  %td.d
+                    To specify multiple mandatory criteria, separate them by a space. Every criterion will need to match for a requirement to be allowed by the filter.
+                    Optionally, you can wrap them in parenthesis (<code>(...)</code>) and treat it as a single clause which can then be negated.
+                  %td.e
+                    ="#v1.0 #released<br>"
+                    ="(#v1.0 #released)<br>"
+                %tr
+                  %td.d
+                    While the above requires that all criteria need match, you can also specify that any need match. In order words, at least one criterion will need to match.<br>
+                    To do so, wrap criteria in braces (<code>{...}</code>).<br>
+                    For example, <code>{#v1.0 #v1.1}</code> will match:
+                    %ul
+                      %li requirements tagged with v1.0
+                      %li requirements tagged with v1.1
+                      %li requirements tagged with v1.0 and v1.1
+                  %td.e
+                    {MF FR}<br>
+                    {has:issues #bug}
+
+          .title
+            %i.dropdown.icon
+            Advanced Examples
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d
+                    The example to the right selects all released functional requirements (FR) and use cases (UC), that either:
+                    %ul
+                      %li have open issues but no #bug tag.
+                      %li don't have an implying major feature (MF).
+                  %td.e
+                    ="#released {FR UC}<br>{(has:issues -#bug) -impliedBy:MF}"
+
+    -# =============================================================================================
+
+    .ui.long.modal.syntax-help#richTextEditor-help
+      %i.close.icon
+      .header Rich Text Editor Help
+      .content
+        .ui.styled.accordion.fluid
+          .title.active
+            %i.dropdown.icon
+            References
+          .content.active
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d Requirements can be referenced by putting the ID inside square brackets.
+                  %td.e [FR-3]
+                %tr
+                  %td.d Use case steps can be referenced by putting the use case ID and step number, inside square brackets.
+                  %td.e [UC-2.0.3.a]
+                %tr
+                  %td.d Codes can be referenced by putting the code inside square brackets.
+                  %td.e [backend.backup.times]
+
+          .title
+            %i.dropdown.icon
+            Issues &amp; Tags
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d
+                    Issues can be declared in text by typing a hash (<code>#</code>) followed by the issue.
+                  %td.e
+                    ="#issue"
+                %tr
+                  %td.d Tags can be declared in text by typing a hash (<code>#</code>) followed by the tag.
+                  %td.e
+                    ="#tag"
+
+          .title
+            %i.dropdown.icon
+            Multiline
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d A list of bullet points can be created by starting new lines with an asterix (<code>*</code>) followed by a space.
+                  %td.e
+                    ="* item 1<br>* item 2"
+
+          .title
+            %i.dropdown.icon
+            Other
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d URLs are detected automatically, and presented as links.
+                  %td.e https://google.com
+                %tr
+                  %td.d Emails are detected automatically, and presented as links.
+                  %td.e bob@bobs-office-supplies.com
+                %tr
+                  %td.d
+                    Mathematical expressions can be entered in TeX format, by surrounding in <code>&lt;math&gt;...&lt;/math&gt;</code>.
+                    %br
+                    %br
+                    ="For more detail, see "
+                    %a(href="https://khan.github.io/KaTeX/" target="_blank") KaTeX
+                    =" or "
+                    %a(href="http://utensil-site.github.io/available-in-katex/" target="_blank") Symbols and Functions in KaTeX
+                    .
+                  %td.e
+                    &lt;math&gt;{1 \over n} + x^2&lt;/math&gt;
+
+    -# =============================================================================================
+    %main{style: "margin-top:4rem"}
+
+      .ui.secondary.pointing.menu
+        %a.item.ui.dropdown.onhover{onclick: "alert('This would now set view to Default')"}
+          %i.icon.star.yellow
+          Default
+          .menu
+            .item
+              %i.icon.write
+              Rename...
+            .item
+              %i.icon.save
+              Replace with current
+            .item
+              %i.icon.star
+              Set as default
+            .item
+              %i.icon.trash
+              Delete
+        %a.item(href="project-reqtable-dead.html") High-level
+        %a.item(href="project-reqtable-empty.html") Low-level
+        .item.orange.ui.dropdown.onhover.active-hack
+          Unsaved view
+          -# %button.ui.button.icon{style: "margin-left: 1ex"}
+            %i.icon.save
+          -# %i.icon.dropdown
+          .menu
+            .item Save as...
+
+        .right.menu
+          #omfg2.item{style: "padding-right:0 !important", onclick: '$("#omfg2 > *").toggle()'}
+            %button.ui.button.icon.has-popup{data-content: "Click to show deleted content."}
+              %i.icon.trash.outline.large.grey
+            %button.ui.button.icon.red.has-popup{data-content: "Showing deleted content.", style: "display:none"}
+              %i.icon.trash.outline.large.white
+
+      -# =============================================================================================
+      %section#action-ctrls{style: "display:flex; align-content: center; margin: 2em 0"}
+        %div
+          .ui.labeled.button
+            %a.ui.button.green(href="project-reqtable-new.html")
+              %i.icon.plus
+              New
+            -# .ui.floating.dropdown.labeled.search.button.label
+            .ui.dropdown.label{style: "background-color: #00a632; color: #EEE;"}
+              UC
+              %i.icon.dropdown
+              .menu
+                .item BL: Business Rule
+                .item BR: Business Requirement
+                .item MF: Major Feature
+                .item UC: Use Case
+                .item Code group
+        %div.status{style: "text-align: right; flex-grow: 1"}
+          -# Showing 21 rows: 19 reqs (17 live + 3 dead - 1 filtered) + 2 dups.
+          = "Showing 21 rows: 18"
+          %i.icon.cubes{title: "requirements"}
+          = " (17 - 1"
+          %i.icon.filter{title: "excluded by the filter"}
+          = " + 2"
+          %i.icon.copy{title: "reappearances due to sorting"}
+          = ") + 3"
+          %i.icon.open.folder.outline{title: "code groups"}
+          .
+
+      -# =============================================================================================
+      %section#view-ctrls{style: "display:flex; align-content: center; margin-top: 2em"}
+        .sort
+          Sort:
+          %button.ui.button.right.labeled.icon.tiny.basic.sortCriterion
+            %i.icon.sort.descending
+            Priority
+          %button.ui.button.right.labeled.icon.tiny.basic.sortCriterion
+            %i.icon.sort.ascending
+            ID
+
+        .item.space{style: "flex-grow: 1"}
+
+        .item.filter
+          .ui.left.icon.input.right.action
+            %i.icon.filter
+            %input{type: "text", placeholder: "Filter..."}
+            .ui.button.icon(onclick="$('#filter-help').modal('show')")
+              %i.icon.help.circle
+
+        .item
+          %button.ui.icon.button#cols-button
+            %i.icon.columns
+          .ui.popup#cols-popup
+            %div
+              .ui.checkbox
+                %input{type: "checkbox"}
+                %label Actors
+            %div
+              .ui.checkbox
+                %input{type: "checkbox", checked: "checked"}
+                %label ID
+            %div
+              .ui.checkbox
+                %input{type: "checkbox"}
+                %label Fart
+            %div
+              .ui.checkbox
+                %input{type: "checkbox", checked: "checked"}
+                %label Major Feature
+            %div
+              .ui.checkbox
+                %input{type: "checkbox", checked: "checked"}
+                %label Tags
+
+      -# =============================================================================================
+      %table#reqtable.ui.table.celled.compact.unstackable
+        %thead
+          %tr
+            %th.selcol
+              %input{type: "checkbox"}
+            %th ID
+            %th Title
+            %th Priority
+            %th Major Feature
+            %th Tags
+        %tbody
+
+          %tr
+            %td.selcol.can-focus
+              %input{type: "checkbox"}
+            %td.has-focus
+              %a{href:"project-reqdetail.html"} FR-1
+            %td.inline-edit
+              = "Fix "
+              %span.tagRef focus
+              = " and keyboard nav."
+            %td.inline-edit
+              .ui.label.blue.is-tag should
+            %td.inline-edit
+              %a{href:"#"} MF-7
+            %td.inline-edit
+              .ui.label.blue.is-tag bug
+              .ui.label.blue.is-tag focus
+
+          %tr
+            %td.selcol.can-focus
+              %input{type: "checkbox"}
+            %td.can-focus
+              %a{href:"#"} FR-2
+            %td.inline-edit
+              = "Do more stuff! "
+              %span.issueRef
+                \#TODO
+            %td.inline-edit
+              .ui.label.blue.is-tag must
+            %td.inline-edit
+              %a{href:"#"} MF-7
+              = ", "
+              %a{href:"#"} MF-9
+            %td.inline-edit
+
+          %tr
+            %td.selcol.can-focus
+              %input{type: "checkbox"}
+            %td.can-focus
+              %a{href:"#"} FR-3
+            %td.mid-edit
+              %textarea.texteditor{autofocus: "1"}
+                This, [fr3], is an item being edited.
+              .edit-notes
+                -# enter for new line, ctrl-enter to save, escape to cancel.
+                ctrl-enter to save, escape to cancel.
+                &nbsp;
+                %i.icon.help.circle.blueHover(style="cursor:pointer" onclick="$('#richTextEditor-help').modal('show')")
+              .ui.segments.preview-cont.raised
+                .ui.segment.preview-header.inverted
+                  Preview
+                .ui.segment.preview-body
+                  = "This, "
+                  %a{href:"#"} FR-3
+                  , is an item being edited.
+            %td.inline-edit
+              .ui.label.blue.is-tag must
+            %td.inline-edit
+            %td.inline-edit
+              .ui.label.blue.is-tag bug
+
+          %tr
+            %td.selcol.can-focus
+              %input{type: "checkbox"}
+            %td.can-focus
+              %a{href:"#"} FR-4
+            %td.inline-edit
+              Ummm....?
+            %td.inline-edit
+            %td
+              .texteditor{style:"border-style:dashed!important"}
+                %i.icon.spinner.loading
+                %span{style:"color:#999"} MF-3, MF-6
+            %td.inline-edit
+
+          %tr
+            %td.selcol.can-focus
+              %input{type: "checkbox"}
+            %td.can-focus
+              %a{href:"#"} FR-5
+            %td.inline-edit
+              This just tests the UI for a type change.
+            %td.mod-edit.reqtype
+              %select.ui.dropdown.reqtype
+                %option(value=1) BL: Business Rule
+                %option(value=2) BR: Business Requirement
+                %option(value=3) CO: Constraint
+                %option(value=4) MF: Major Feature
+                %option(value=5 selected=1) FR: Functional Requirement
+                %option(value=6) SI: Solution Idea
+                -# %option(value=5) UC: Use Case
+
+              %div(style="margin-top:0.6ex")
+                .ui.buttons
+                  %button.ui.button.icon.xpositive %i.icon.checkmark
+                  %button.ui.button.icon.xnegative %i.icon.remove
+                -# .ui.buttons
+                  %button.ui.button.positive Update
+                  %button.ui.button.negative Cancel
+            %td.inline-edit
+            %td.inline-edit
+
+          %tr
+            %td.selcol.can-focus
+              %input{type: "checkbox"}
+            %td.can-focus
+              %a{href:"#"} FR-6
+            %td.mid-edit
+              %textarea.texteditor
+                This, [fr5], is an item that experienced ajax failure.
+              .ui.pointing.label.red
+                AJAX failure occurred.
+            %td.mid-edit
+              .ui.input.error
+                %input(type="text" value="must shuld" style="padding: .3em .4em !important")
+              .ui.pointing.label.red
+                Invalid value: shuld
+            %td.mid-edit
+              .ui.multiple.dropdown
+                %input(type="hidden" value="")
+                %i.icon.dropdown
+                %span.text Dropdown.<br>Rejected,<br>at least for now.
+                .menu
+                  .ui.icon.search.input
+                    %i.icon.search
+                    %input(type="text" placeholder="Filter...")
+                  .divider
+                  .scrolling.menu
+                    .item(data-value="1") MF-1: Use Case Editor
+                    .item(data-value="2") MF-2: Anonymous Share
+                    .item(data-value="3") MF-3: Export (Read UCs, PDF, DOC, MD, TXT, XLS)
+                    .item(data-value="4") MF-4: Templates
+                    .item(data-value="5") MF-5: Field Customisation
+                    .item(data-value="6") MF-6: Incompletions
+                    .item(data-value="7") MF-7: Organisation
+                    .item(data-value="8") MF-8: History/Audit
+                    .item(data-value="9") MF-9: Collaboration: authoring
+                    .item(data-value="10") MF-10: Collaboration: stakeholders
+                    .item(data-value="11") MF-11: Collaboration: change mgnt & approval
+                    .item(data-value="12") MF-12: Low-level Requirements (CO, FR, BR, etc.)
+                    .item(data-value="13") MF-13: Requirement Relationships
+                    .item(data-value="14") MF-14: Text-generated Diagrams
+                    .item(data-value="15") MF-15: Matrixes
+                    .item(data-value="16") MF-16: CRUDL Matrix
+                    .item(data-value="17") MF-17: Undo & Auto-save
+                    .item(data-value="18") MF-18: Data dictionary
+                    .item(data-value="19") MF-19: Glossary
+                    .item(data-value="20") MF-20: Generic artifact storage (DOC, PDF, PNG, XLS)
+                    .item(data-value="21") MF-21: Doc authoring (V&S, URD, SRS)
+                    .item(data-value="22") MF-22: High-level Requirements
+                    .item(data-value="23") MF-23: Import external requirements
+                    .item(data-value="24") MF-24: Requirement Lint
+                    .item(data-value="25") MF-25: Search
+                    .item(data-value="26") MF-26: Mass text modification (replace)
+                    .item(data-value="27") MF-27: External references
+                    .item(data-value="28") MF-28: Entities
+            %td.inline-edit
+              .ui.label.blue.is-tag bug
+
+  :javascript
+    $('.ui.multiple.dropdown')
+      .find('.menu > .item > .ui.dropdown, .menu > .item.ui.dropdown, > .ui.dropdown:not(.simple), .inline.dropdown, .icon.buttons .button, .form .dropdown.selection')
+      .dropdown();
+
+    $('.ui.dropdown:not(.onhover)').dropdown();
+    $('.ui.dropdown.onhover').dropdown({on:"hover", delay: { show: 400 }});
+    $('.ui.has-popup').popup({delay: { show: 400, hide: 0 }});
+    $('#cols-button')
+      .popup({
+        inline   : true,
+        hoverable: true,
+        position : 'left center',
+        delay: {
+          show: 200,
+          hide: 300
+        }
+      })
+    ;
+
+    $('.ui.modal').modal();
+    $('.ui.accordion').accordion('open');
+
+    $('.button').click(function (e) {
+      var t = $('#toast')[0];
+      if (t.style.visibility == 'hidden') {
+        // show
+        t.style.visibility = '';
+        t.style.opacity = '1';
+      } else {
+        // hide
+        t.style.visibility = 'hidden';
+        t.style.opacity = '0';
+      }
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    /*
+    setInterval(function(){
+      var i = $('#toast > div')[0]
+      if (i) {
+        i.remove()
+      }
+    }, 1000);
+    */
+
+    // $('.ui.modal').modal('show');
