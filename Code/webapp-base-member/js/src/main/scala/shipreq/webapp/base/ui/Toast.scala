@@ -103,9 +103,7 @@ object Toast {
       apply(Nil)
   }
 
-  private val row   = <.div(*.row)
   private val toast = On.memo(on => <.div(*.toast(on)))
-  private val empty = row(toast(Off))
 
   private def itemBase(b: Bread) =
     <.div(^.key := b.id, b.msg)
@@ -114,31 +112,29 @@ object Toast {
     val s = ss.value
 
     if (s.bread.isEmpty)
-      empty
+      toast(Off)
     else if (s.bread.forall(_.state ==* BreadState.GoingOff))
-      row(
-        toast(Off)(
-          ^.onTransitionEnd --> ss.modState(_.deleteAll(s.bread)),
-          s.bread.toVdomArray(b =>
-            itemBase(b)(*.item(On)))))
+      toast(Off)(
+        ^.onTransitionEnd --> ss.modState(_.deleteAll(s.bread)),
+        s.bread.toVdomArray(b =>
+          itemBase(b)(*.item(On))))
     else
-      row(
-        toast(On)(
-          s.bread.toVdomArray { b =>
-            val on = b.state match {
-              case BreadState.ComingOn => Off
-              case BreadState.On       => On
-              case BreadState.GoingOff => Off
-            }
-            val onTransitionEnd: TagMod =
-              b.state match {
-                case BreadState.ComingOn => TagMod.empty
-                case BreadState.On       => TagMod.empty
-                case BreadState.GoingOff => ^.onTransitionEnd --> ss.modState(_.delete(b))
-              }
-            itemBase(b)(*.item(on), onTransitionEnd)
+      toast(On)(
+        s.bread.toVdomArray { b =>
+          val on = b.state match {
+            case BreadState.ComingOn => Off
+            case BreadState.On       => On
+            case BreadState.GoingOff => Off
           }
-        ))
+          val onTransitionEnd: TagMod =
+            b.state match {
+              case BreadState.ComingOn => TagMod.empty
+              case BreadState.On       => TagMod.empty
+              case BreadState.GoingOff => ^.onTransitionEnd --> ss.modState(_.delete(b))
+            }
+          itemBase(b)(*.item(on), onTransitionEnd)
+        }
+      )
   }
 
   implicit val reusabilityToast     : Reusability[Toast     ] = Reusability.byRef

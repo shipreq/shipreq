@@ -43,18 +43,13 @@ object BaseStyles extends StyleSheet.Inline {
 
     private final val transitionValue = ".36s cubic-bezier(0.4, 0, 0.2, 1)"
 
-    val row = style(
-      position.absolute,
-      top(7 rem),
-      left(`0`),
-      width(100 %%),
-      display.flex,
-      justifyContent.center,
-    )
-
     val toast = styleF(D.on)(on => styleS(
-      maxWidth(50 vw),
+      position.fixed,
+      top(2.3 rem),
+      left(50 %%),
+      transform := "translate(-50%,0)",
       minWidth(10 vw),
+      maxWidth(50 vw),
       textAlign.center,
       padding(1 em, 1.5 em),
       lineHeight(1.4285 em),
