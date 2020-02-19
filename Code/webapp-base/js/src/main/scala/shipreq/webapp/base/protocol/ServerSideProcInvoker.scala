@@ -1,6 +1,6 @@
 package shipreq.webapp.base.protocol
 
-import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo, Reusability}
+import japgolly.scalajs.react._
 import org.scalajs.dom.ext.AjaxException
 import scalaz.{\/, \/-, -\/}
 import shipreq.base.util.{ErrorMsg, Identity}
@@ -11,22 +11,32 @@ final class ServerSideProcInvoker[-I, F, O](private[ServerSideProcInvoker] val r
   def apply(input: I): AsyncCallback[F \/ O] =
     run(input)
 
-  def contramapInput[A](f: A => I): ServerSideProcInvoker[A, F, O] =
+  def contramap[A](f: A => I): ServerSideProcInvoker[A, F, O] =
     new ServerSideProcInvoker[A, F, O](run compose f)
 
-  def contramapInputCB[A, II <: I](f: A => CallbackTo[II]): ServerSideProcInvoker[A, F, O] =
-    new ServerSideProcInvoker[A, F, O](f(_).asAsyncCallback.flatMap(run))
+  def contramapC[A, II <: I](f: A => CallbackTo[II]): ServerSideProcInvoker[A, F, O] =
+    contramapA(f(_).asAsyncCallback)
 
-  def mapFailure[A](f: F => A): ServerSideProcInvoker[I, A, O] =
-    new ServerSideProcInvoker[I, A, O](run(_).map(_.leftMap(f)))
+  def contramapA[A, II <: I](f: A => AsyncCallback[II]): ServerSideProcInvoker[A, F, O] =
+    new ServerSideProcInvoker[A, F, O](f(_).flatMap(run))
 
-  def mapOutput[A](f: O => A): ServerSideProcInvoker[I, F, A] =
+  def map[A](f: O => A): ServerSideProcInvoker[I, F, A] =
     new ServerSideProcInvoker[I, F, A](run(_).map(_.map(f)))
 
-  def flatMapSuccess[A](f: O => CallbackTo[A]): ServerSideProcInvoker[I, F, A] =
-    new ServerSideProcInvoker[I, F, A](run(_).rightFlatMap(f(_).asAsyncCallback))
+  def mapC[A](f: O => CallbackTo[A]): ServerSideProcInvoker[I, F, A] =
+    mapA(f(_).asAsyncCallback)
 
-  // TODO make these methods consistent in name and form
+  def mapA[A](f: O => AsyncCallback[A]): ServerSideProcInvoker[I, F, A] =
+    new ServerSideProcInvoker[I, F, A](run(_).rightFlatMap(f))
+
+  def emap[A](f: F => A): ServerSideProcInvoker[I, A, O] =
+    new ServerSideProcInvoker[I, A, O](run(_).map(_.leftMap(f)))
+
+  def emapC[A](f: F => CallbackTo[A]): ServerSideProcInvoker[I, A, O] =
+    emapA(f(_).asAsyncCallback)
+
+  def emapA[A](f: F => AsyncCallback[A]): ServerSideProcInvoker[I, A, O] =
+    new ServerSideProcInvoker[I, A, O](run(_).leftFlatMap(f))
 
   def mergeFailure(implicit ev: ServerSideProcInvoker.MergeFailure[F, O]): ServerSideProcInvoker[I, F, ev.A] = {
     val run2 = ev.apply(this).run
@@ -36,9 +46,6 @@ final class ServerSideProcInvoker[-I, F, O](private[ServerSideProcInvoker] val r
       case l@ -\/(_)      => l
     })
   }
-
-  def onSuccess(f: O => Callback): ServerSideProcInvoker[I, F, O] =
-    new ServerSideProcInvoker[I, F, O](run(_).rightFlatTapSync(f))
 }
 
 object ServerSideProcInvoker {

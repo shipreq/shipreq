@@ -36,7 +36,7 @@ object FeedbackModal {
 
   def apply(metadata: CallbackTo[Metadata.Client], ajaxClient: AjaxClient.Binary): FeedbackModal = {
     import SubmitFeedback._
-    val f = ajaxClient.invoker(ajax).contramapInputCB((i: UserInput) => metadata.map(Request(i, _)))
+    val f = ajaxClient.invoker(ajax).contramapC((i: UserInput) => metadata.map(Request(i, _)))
     apply(f(_), document.body)
   }
 
