@@ -80,7 +80,8 @@ object ProjectState {
     ProjectState(p, md, VerifiedEvent.Seq.empty)
 
   final case class Update(newState: ProjectState, newlyAppliedEvents: VerifiedEvent.Seq) {
-    def newlyAppliedEventsNE = VerifiedEvent.NonEmptySeq.maybe(newlyAppliedEvents)
+    def isEmpty   = newlyAppliedEvents.isEmpty
+    val newEvents = NewEvents(newlyAppliedEvents, newState.project)
   }
 
   private[ProjectState] def removeConsecutive(events: VerifiedEvent.Seq, headFilter: EventOrd => Boolean): Option[(VerifiedEvent.NonEmptySeq, VerifiedEvent.Seq)] =

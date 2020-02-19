@@ -40,14 +40,14 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
   final class Backend($: BackendScope[Props, State]) extends OnUnmount {
     import global.cbProjectMetaData
 
-    private val sspUpdateConfig          = global.sspUpdateConfig
-    private val sspCreateContent         = global.sspCreateContent
-    private val sspUpdateContent         = global.sspUpdateContent
-    private val sspProjectNameSet        = global.sspProjectNameSet
-    private val sspUpdateSavedViews      = global.sspUpdateSavedViews
-    private val sspUpdateManualIssues    = global.sspUpdateManualIssues
-    private val sspFieldMandatorinessMod = global.sspFieldMandatorinessMod
-    private val sspReqTypeImplicationMod = global.sspReqTypeImplicationMod
+    private val sspUpdateConfig          = global.sspUpdateConfig.mapOutput(_.events)
+    private val sspCreateContent         = global.sspCreateContent.mapOutput(_.events)
+    private val sspUpdateContent         = global.sspUpdateContent.mapOutput(_.events)
+    private val sspProjectNameSet        = global.sspProjectNameSet.mapOutput(_.events)
+    private val sspUpdateSavedViews      = global.sspUpdateSavedViews.mapOutput(_.events)
+    private val sspUpdateManualIssues    = global.sspUpdateManualIssues.mapOutput(_.events)
+    private val sspFieldMandatorinessMod = global.sspFieldMandatorinessMod.mapOutput(_.events)
+    private val sspReqTypeImplicationMod = global.sspReqTypeImplicationMod.mapOutput(_.events)
 
     private val feedbackModal: FeedbackModal = {
       val projectMetadata = global.projectMetadata(initPageData.projectId)

@@ -82,6 +82,12 @@ object EventSeqSummary {
     b.result()
   }
 
+  def empty: EventSeqSummary =
+    apply(Nil)
+
+  def fromVerifiedEvents(events: TraversableOnce[VerifiedEvent]): EventSeqSummary =
+    apply(events.toIterator.map(_.event))
+
   final case class WithProject(summary: EventSeqSummary, project: Project) {
 
     lazy val useCasesChangedBySteps: Set[UseCaseId] = {

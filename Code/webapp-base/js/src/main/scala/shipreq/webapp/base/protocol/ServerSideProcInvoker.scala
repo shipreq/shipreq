@@ -23,6 +23,11 @@ final class ServerSideProcInvoker[-I, F, O](private[ServerSideProcInvoker] val r
   def mapOutput[A](f: O => A): ServerSideProcInvoker[I, F, A] =
     new ServerSideProcInvoker[I, F, A](run(_).map(_.map(f)))
 
+  def flatMapSuccess[A](f: O => CallbackTo[A]): ServerSideProcInvoker[I, F, A] =
+    new ServerSideProcInvoker[I, F, A](run(_).rightFlatMap(f(_).asAsyncCallback))
+
+  // TODO make these methods consistent in name and form
+
   def mergeFailure(implicit ev: ServerSideProcInvoker.MergeFailure[F, O]): ServerSideProcInvoker[I, F, ev.A] = {
     val run2 = ev.apply(this).run
     new ServerSideProcInvoker[I, F, ev.A](run2(_).map {

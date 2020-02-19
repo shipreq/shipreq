@@ -173,51 +173,57 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
       a1 <- wsClient.send(WsReqRes.Reconnect)(ps.ord)
       a2  = a1 <* logger.async(_.timeEnd("reconnect"))
       _  <- a2.completeWith {
-              case Success(ves) => addEvents(ves)
+              case Success(ves) => addEvents(ves).void
               case Failure(err) => logger(_.warn(s"Connection failure: ${err.getMessage}"))
             }
     } yield ()
 
-  final def addEvents(recvEvents: VerifiedEvent.Seq): Callback =
-    Callback.when(recvEvents.nonEmpty)(Callback {
+  final def addEvents(recvEvents: VerifiedEvent.Seq): CallbackTo[NewEvents] =
+    CallbackTo[NewEvents] {
       logger.runNow(_.debug("Adding events: " + recvEvents))
       unsafeState match {
 
         case s1: State.Active =>
-          for (update <- s1.projectState.addEvents(recvEvents)) {
+          s1.projectState.addEvents(recvEvents) match {
 
-            // Update state
-            val similarlyStale = update.newState.ord ==* s1.projectState.ord
-            val staleSince =
-              if (similarlyStale)
-                s1.staleSince.orElse(Some(unsafeNow()))
-              else if (update.newState.futureEvents.nonEmpty)
-                Some(unsafeNow())
-              else
-                None
-            unsafeSetState(State.Active(update.newState, staleSince))
+            case Some(update) =>
 
-            // Broadcast changes
-            for (ves <- update.newlyAppliedEventsNE) {
-              val ess = EventSeqSummary(ves.iterator.map(_.event)).withProject(update.newState.project)
-              broadcast(ess).runNow()
-            }
+              // Update state
+              val similarlyStale = update.newState.ord ==* s1.projectState.ord
+              val staleSince =
+                if (similarlyStale)
+                  s1.staleSince.orElse(Some(unsafeNow()))
+                else if (update.newState.futureEvents.nonEmpty)
+                  Some(unsafeNow())
+                else
+                  None
+              unsafeSetState(State.Active(update.newState, staleSince))
+
+              // Broadcast changes
+              if (!update.isEmpty)
+                broadcast(update.newEvents.summaryWithProject).runNow()
+
+              update.newEvents
+
+            case None =>
+              NewEvents.empty
           }
 
         case State.Loading(es) =>
           unsafeSetState(State.Loading(es ++ recvEvents))
+          NewEvents.empty
       }
-    })
+    }
 
   final protected def onPush(recvEvents: VerifiedEvent.NonEmptySeq): Callback = Callback {
     logger.runNow(_.info("Server pushed: " + recvEvents))
     addEvents(recvEvents.values).runNow()
   }
 
-  private final def sspToEvents(p: WsReqRes {type ResponseType = WsReqRes.EventResult}): ServerSideProcInvoker[p.RequestType, ErrorMsg, VerifiedEvent.Seq] =
+  private final def sspToEvents(p: WsReqRes {type ResponseType = WsReqRes.EventResult}): ServerSideProcInvoker[p.RequestType, ErrorMsg, NewEvents] =
     wsClient.invoker(p)
       .mergeFailure
-      .onSuccess(addEvents)
+      .flatMapSuccess(addEvents)
 
   def requestSyncIfStaleFor(tolerance: Duration): Callback = {
     val missingEvents = CallbackTo[Option[NonEmptySet[EventOrd]]] {
