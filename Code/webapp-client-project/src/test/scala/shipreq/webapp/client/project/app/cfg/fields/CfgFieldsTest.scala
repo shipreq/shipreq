@@ -25,7 +25,7 @@ object CfgFieldsTest extends TestSuite {
   class Tester {
     lazy val fd    = ReactTestVar[FilterDead](HideDead)
     lazy val g     = TestGlobal(S.project).disableAutoResponse()
-    lazy val props = CfgFields.Props(g.sspUpdateConfig, g, fd.stateSnapshotWithReuse())
+    lazy val props = CfgFields.Props(g.sspUpdateConfig.map(_.events), g, fd.stateSnapshotWithReuse())
     lazy val re    = MainTable.Component(props)
     lazy val c     = ReactTestUtils.renderIntoDocument(re)
 

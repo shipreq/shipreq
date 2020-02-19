@@ -43,7 +43,7 @@ object CfgTagsTest extends TestSuite {
   class Tester {
     lazy val filterDead = ReactTestVar[FilterDead](HideDead)
     lazy val g          = TestGlobal(S.project)
-    lazy val props      = CfgTags.Props(g.sspUpdateConfig, g, filterDead.stateSnapshotWithReuse())
+    lazy val props      = CfgTags.Props(g.sspUpdateConfig.map(_.events), g, filterDead.stateSnapshotWithReuse())
     lazy val re         = MainTable.Component(props)
     lazy val c          = ReactTestUtils.renderIntoDocument(re)
   }

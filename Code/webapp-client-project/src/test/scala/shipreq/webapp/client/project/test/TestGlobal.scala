@@ -149,7 +149,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
   }
 
   def applyTestEventsCB(es: Event*): Callback =
-    verifyEventsCB(es: _*).flatMap(addEvents)
+    verifyEventsCB(es: _*).flatMap(addEvents).void
 
   def setAutoRespond(e: Boolean): this.type = {
     _autoRespond = e

@@ -44,7 +44,7 @@ object ProjectSpaTestDsl {
   case class Ref(global: TestGlobal, tester: ComponentTester[Props, State, _]) {
     def observe(): Obs = {
       val $ = tester.component.domZipper
-      val inner = $(">div")(">div,>main")
+      val inner = $(">div")(">div:nth-child(2),>main")
       val nav = new NavObs($(">nav"), inner)
 
       val empty: Obs = {
