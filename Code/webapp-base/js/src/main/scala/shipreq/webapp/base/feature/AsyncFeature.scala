@@ -75,6 +75,11 @@ object AsyncFeature {
   /** Provides two callbacks for you to use in your async logic:
     * one for you to call on async success
     * one for you to call on async failure
+    *
+    * The reason I'm keeping this as is instead of upgrading it all to work with AsyncCallbacks is that on failure we
+    * store a retry Callback. The only way to ensure that retry does exactly the same thing (as opposed to just the
+    * first steps and then this feature not knowing about external map & flatmaps) is that the complete and entire
+    * callback must be passed to this feature.
     */
   type AsyncCall[+F] = (Callback, F => Callback) => Callback
 
