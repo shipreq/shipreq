@@ -79,9 +79,6 @@ Phase 3A
   * Support nested lists
   * Support styling (bold, underline, italics, monospace)
 
-* New form
-  * don't hide previews on blur in the NewForm area [FR-10]
-
 * Tags
   * redo tag config screen
     * prop panel on right
