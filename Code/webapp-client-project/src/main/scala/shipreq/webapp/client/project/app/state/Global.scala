@@ -133,11 +133,17 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
   }
 
   final object connectedStatusHub extends Broadcaster[ConnectionStatus] {
-    var _connectionStatus: ConnectionStatus = ConnectionStatus.Disconnected
-    private[Global] def apply(c: ConnectionStatus) = {
-      _connectionStatus = c
-      broadcast(c)
-    }
+    var _connectionStatus: ConnectionStatus =
+      ConnectionStatus.Disconnected
+
+    private[Global] def apply(c: ConnectionStatus): Callback =
+      Callback {
+        if (_connectionStatus !=* c) {
+          _connectionStatus = c
+          broadcast(c).runNow()
+        }
+      }
+
     def unsafeGet() = _connectionStatus
   }
 

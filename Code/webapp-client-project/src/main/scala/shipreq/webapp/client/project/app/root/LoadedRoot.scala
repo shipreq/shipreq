@@ -2,6 +2,7 @@ package shipreq.webapp.client.project.app.root
 
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.VdomElement
 import org.scalajs.dom.window
@@ -392,8 +393,13 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     def onProjectChange(c: EventSeqSummary.WithProject): Callback = // TODO I don't like this
       $.forceUpdate
 
-    def onConnectionStatusChange(c: ConnectionStatus): Callback =
-      $.forceUpdate
+    def onConnectionStatusChange(c: ConnectionStatus): Callback = {
+      val msg = c match {
+        case ConnectionStatus.Connected    => "Connection established"
+        case ConnectionStatus.Disconnected => "Connection lost"
+      }
+      $.forceUpdate(toast.add(msg))
+    }
 
     val installHooks: Callback =
       Callback {
