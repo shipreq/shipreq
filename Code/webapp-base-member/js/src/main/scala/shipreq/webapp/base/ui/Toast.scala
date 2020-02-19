@@ -35,7 +35,7 @@ object Toast {
   def apply($: StateAccess.Write[CallbackTo, Toast.State]): Toast =
     new Toast($)
 
-  val defaultDuration = Duration.ofSeconds(3)
+  val defaultDuration = Duration.ofSeconds(4)
 
   private[Toast] val keyGen = new KeyGen
 

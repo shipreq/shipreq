@@ -45,7 +45,7 @@ object BaseStyles extends StyleSheet.Inline {
 
     val row = style(
       position.absolute,
-      top(12 rem),
+      top(7 rem),
       left(`0`),
       width(100 %%),
       display.flex,
