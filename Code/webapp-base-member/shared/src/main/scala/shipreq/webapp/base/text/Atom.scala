@@ -44,6 +44,7 @@ object Atom {
     case object EmailAddress   extends Type(TypeGroup.PlainTextMarkup)
     case object Issue          extends Type(TypeGroup.Issue)
     case object Literal        extends Type(TypeGroup.Literal)
+    case object Monospace      extends Type(TypeGroup.PlainTextMarkup)
     case object ReqRef         extends Type(TypeGroup.ContentRef)
     case object TagRef         extends Type(TypeGroup.TagRef)
     case object TeX            extends Type(TypeGroup.PlainTextMarkup)
@@ -63,6 +64,7 @@ object Atom {
       case _: Literal         # Literal        => Literal
       case _: NewLine         # BlankLine      => BlankLine
       case _: PlainTextMarkup # EmailAddress   => EmailAddress
+      case _: PlainTextMarkup # Monospace      => Monospace
       case _: PlainTextMarkup # TeX            => TeX
       case _: PlainTextMarkup # WebAddress     => WebAddress
       case _: TagRef          # TagRef         => TagRef
@@ -163,6 +165,12 @@ object Atom {
 
     /** Content in TeX format, like "\frac{22}{7}-\pi" */
     case class TeX(value: String) extends Atom {
+      override final def isPlain = false
+      override final def containsMultipleLines = false
+    }
+
+    /** Inline monospace block, like `omg_yes("no")` */
+    case class Monospace(value: String) extends Atom {
       override final def isPlain = false
       override final def containsMultipleLines = false
     }

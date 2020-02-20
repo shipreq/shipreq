@@ -264,6 +264,23 @@ object ParsersTest extends TestSuite {
         'tailNL  - whitespaceCombos.foreach(w => test("good" + w)(T.Literal("good")))
       }
 
+      'monospace {
+        @inline def M(s: String) = T.Monospace(s)
+        'easy      - test("`a`")(M("a"))
+        'trim      - test("` abc  `")(M(" abc  "))
+        'blank     - test("` ``  `")(M(" "), M("  "))
+        'consec1   - test("`")(L("`"))
+        'consec2   - test("``")(L("``"))
+        'consec3   - test("```")(L("```"))
+        'consec4   - test("````")(L("````"))
+        'spaced2   - test("` `")(M(" "))
+        'spaced3   - test("` ` `")(M(" "), L(" `"))
+        'spaced4   - test("` ` ` `")(M(" "), L(" "), M(" "))
+        'three     - test("`hi`lo`")(M("hi"), L("lo`"))
+        'multiline - test("`omg\ncool`")(L("`omg"), T.blankLine, L("cool`")) // divergence from markdown
+        'escape    - test("` \\ \\\\ \\` \\\\` `")(M(" \\ \\\\ \\"), L(" \\\\"), M(" ")) // divergence from markdown
+      }
+
       'list {
         'empty - test("* ")(T.UnorderedList(NEV(LI())))
         'empties - test("* \n* ")(T.UnorderedList(NEV(LI(), LI())))

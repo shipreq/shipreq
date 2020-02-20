@@ -52,6 +52,7 @@ private[v1] object BaseMemberData1 {
     private[this] final val KeyEmailAddress   = "email"
     private[this] final val KeyIssue          = "issue"
     private[this] final val KeyLiteral        = "lit"
+    private[this] final val KeyMonospace      = "mono"
     private[this] final val KeyReqRef         = "req"
     private[this] final val KeyTagRef         = "tag"
     private[this] final val KeyTeX            = "tex"
@@ -69,6 +70,7 @@ private[v1] object BaseMemberData1 {
             case t@ Type.CodeRef        => Json.obj(KeyCodeRef        -> get(t).encoder(a))
             case t@ Type.EmailAddress   => Json.obj(KeyEmailAddress   -> get(t).encoder(a))
             case t@ Type.Issue          => Json.obj(KeyIssue          -> get(t).encoder(a))
+            case t@ Type.Monospace      => Json.obj(KeyMonospace      -> get(t).encoder(a))
             case t@ Type.ReqRef         => Json.obj(KeyReqRef         -> get(t).encoder(a))
             case t@ Type.TagRef         => Json.obj(KeyTagRef         -> get(t).encoder(a))
             case t@ Type.TeX            => Json.obj(KeyTeX            -> get(t).encoder(a))
@@ -84,6 +86,7 @@ private[v1] object BaseMemberData1 {
           case (KeyCodeRef       , c) => get(Type.CodeRef       ).decoder.tryDecode(c)
           case (KeyEmailAddress  , c) => get(Type.EmailAddress  ).decoder.tryDecode(c)
           case (KeyIssue         , c) => get(Type.Issue         ).decoder.tryDecode(c)
+          case (KeyMonospace     , c) => get(Type.Monospace     ).decoder.tryDecode(c)
           case (KeyReqRef        , c) => get(Type.ReqRef        ).decoder.tryDecode(c)
           case (KeyTagRef        , c) => get(Type.TagRef        ).decoder.tryDecode(c)
           case (KeyTeX           , c) => get(Type.TeX           ).decoder.tryDecode(c)
@@ -107,6 +110,9 @@ private[v1] object BaseMemberData1 {
 
     override def webAddress[T <: PlainTextMarkup](t: T): JsonCodec[t.WebAddress] =
       JsonCodec.xmap((i: String) => t.WebAddress(i))(_.value)
+
+    override def monospace[T <: PlainTextMarkup](t: T): JsonCodec[t.Monospace] =
+      JsonCodec.xmap((i: String) => t.Monospace(i))(_.value)
 
     override def emailAddress[T <: PlainTextMarkup](t: T): JsonCodec[t.EmailAddress] =
       JsonCodec.xmap((i: String) => t.EmailAddress(i))(_.value)

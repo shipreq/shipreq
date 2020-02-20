@@ -201,6 +201,7 @@ object Text {
         Vector(Literal("Issue(∃): "), Issue(issue, desc.whole)))
       uls ++= NonEmptyVector(
         Vector(),
+        Vector(Literal("Monospace: "), Monospace("""f(x) = {x+1 \over x - 1} + 9\pi^2""")),
         Vector(Literal("Math: "), TeX("""f(x) = {x+1 \over x - 1} + 9\pi^2""")),
         Vector(Literal("Email: "), EmailAddress("blah@google.com")),
         Vector(Literal("Web: "), WebAddress("https://shipreq.com"))

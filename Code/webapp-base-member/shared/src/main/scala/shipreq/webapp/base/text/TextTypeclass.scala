@@ -19,6 +19,7 @@ trait AtomTC[TC[_]] {
   def codeRef       [T <: Atom.ContentRef     ](t: T): TC[t.CodeRef       ]
   def emailAddress  [T <: Atom.PlainTextMarkup](t: T): TC[t.EmailAddress  ]
   def literal       [T <: Atom.Literal        ](t: T): TC[t.Literal       ]
+  def monospace     [T <: Atom.PlainTextMarkup](t: T): TC[t.Monospace     ]
   def reqRef        [T <: Atom.ContentRef     ](t: T): TC[t.ReqRef        ]
   def tagRef        [T <: Atom.TagRef         ](t: T): TC[t.TagRef        ]
   def teX           [T <: Atom.PlainTextMarkup](t: T): TC[t.TeX           ]

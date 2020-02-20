@@ -77,7 +77,7 @@ Phase 3A
 
 * Markdown
   * Support nested lists
-  * Support styling (bold, underline, italics, monospace)
+  * Support styling (bold, underline, italics, strikethrough)
 
 * Tags
   * redo tag config screen

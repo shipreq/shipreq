@@ -456,9 +456,9 @@ object RandomData {
     private val asciiSL     = (32.toChar to 127.toChar).toArray
     private val asciiML     = ('\n' :: '\r' :: asciiSL.toList).toArray
     private val highChars   = Gen.chooseInt(128, 255).map(_.toChar) // Gen.unicode // TODO Disabled due to PhantomJS-2.1.1-8 crashing
-            val genCharSL   = Gen.chooseGen(Gen chooseArray_! asciiSL, highChars)
-            val genCharML   = Gen.chooseGen(Gen chooseArray_! asciiML, highChars)
-    private val literalStr  = genCharSL                       .string(1 to 24)
+            val genCharSL   = Gen.chooseGen(Gen chooseArray_! asciiSL)
+            val genCharML   = Gen.chooseGen(Gen chooseArray_! asciiML)
+    private val literalStr  = genCharSL                       .string(1 to 24).map(_.replace('`', ' '))
     private val texStr      = genCharSL                       .string(1 to 20)
     private val webAddressR = charPred(Parsers.webAddressChar).string(1 to 30)
     private val emailL      = charPred(Parsers.emailCharL)    .string(1 to 20)
@@ -543,8 +543,11 @@ object RandomData {
     def tex(implicit t: PlainTextMarkup): Gen[t.TeX] =
       texStr.map(_.replace(s"</${Grammar.texTag}>", "x") |> noWhitespaceLeft |> noWhitespaceRight |> t.TeX)
 
+    def monospace(implicit t: PlainTextMarkup): Gen[t.Monospace] =
+      genCharSL.string(1 to 4).map(s => t.Monospace(s.replace('`', 'x')))
+
     def plainTextMarkup(implicit t: PlainTextMarkup): Gen[t.Atom] =
-      Gen.chooseGen(webAddress, emailAddress, tex)
+      Gen.chooseGen(webAddress, emailAddress, tex, monospace)
 
     private[this] def singleLineGens(implicit t: SingleLine): NonEmptyVector[Gen[t.Atom]] =
       NonEmptyVector(literal, plainTextMarkup)
@@ -615,6 +618,7 @@ object RandomData {
          | _: Issue           # Issue
          | _: PlainTextMarkup # WebAddress
          | _: PlainTextMarkup # EmailAddress
+         | _: PlainTextMarkup # Monospace
          | _: PlainTextMarkup # TeX
          | _: TagRef          # TagRef
          | _: CodeBlock       # CodeBlock

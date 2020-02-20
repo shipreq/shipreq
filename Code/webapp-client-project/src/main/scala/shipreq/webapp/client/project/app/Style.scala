@@ -716,6 +716,15 @@ object Style extends StyleSheet.Inline {
       unsafeChild(">li")(
         marginBottom(blankLineHeight)))
 
+    val monospace = style(
+      display.inline,
+      padding(.2 em, .4 em),                                                  // matching github
+      borderRadius(3 px),                                                     // matching github
+      background := "#f5f2f0",                                                // matching prism.js
+      fontFamily :=! "Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace", // matching prism.js
+      fontSize(1 em),                                                         // matching prism.js
+    )
+
     val blankButMandatory = style(
       errorRedOnRed,
       textAlign.center,

@@ -50,6 +50,7 @@ object BaseMemberData1 {
         private[this] final val KeyEmailAddress   = '@'
         private[this] final val KeyIssue          = 'i'
         private[this] final val KeyLiteral        = 'l'
+        private[this] final val KeyMonospace      = '`'
         private[this] final val KeyReqRef         = 'r'
         private[this] final val KeyTagRef         = 't'
         private[this] final val KeyTeX            = 'X'
@@ -64,6 +65,7 @@ object BaseMemberData1 {
             case t@ Type.CodeRef        => state.enc.writeByte(KeyCodeRef       ); get(t).pickle(a)
             case t@ Type.EmailAddress   => state.enc.writeByte(KeyEmailAddress  ); get(t).pickle(a)
             case t@ Type.Issue          => state.enc.writeByte(KeyIssue         ); get(t).pickle(a)
+            case t@ Type.Monospace      => state.enc.writeByte(KeyMonospace     ); get(t).pickle(a)
             case t@ Type.ReqRef         => state.enc.writeByte(KeyReqRef        ); get(t).pickle(a)
             case t@ Type.TagRef         => state.enc.writeByte(KeyTagRef        ); get(t).pickle(a)
             case t@ Type.TeX            => state.enc.writeByte(KeyTeX           ); get(t).pickle(a)
@@ -80,6 +82,7 @@ object BaseMemberData1 {
             case KeyCodeRef        => get(Type.CodeRef       ).unpickle
             case KeyEmailAddress   => get(Type.EmailAddress  ).unpickle
             case KeyIssue          => get(Type.Issue         ).unpickle
+            case KeyMonospace      => get(Type.Monospace     ).unpickle
             case KeyReqRef         => get(Type.ReqRef        ).unpickle
             case KeyTagRef         => get(Type.TagRef        ).unpickle
             case KeyTeX            => get(Type.TeX           ).unpickle
@@ -108,6 +111,9 @@ object BaseMemberData1 {
           t.CodeBlock(language, code)
         }
       }
+
+    override def monospace[T <: PlainTextMarkup](t: T): Pickler[t.Monospace] =
+      transformPickler((i: String) => t.Monospace(i))(_.value)
 
     override def webAddress[T <: PlainTextMarkup](t: T): Pickler[t.WebAddress] =
       transformPickler((i: String) => t.WebAddress(i))(_.value)

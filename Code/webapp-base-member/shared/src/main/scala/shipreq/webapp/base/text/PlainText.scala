@@ -159,9 +159,10 @@ object PlainText {
             case a: ContentRef      # CodeRef        => codeRef(a.value)
             case a: ContentRef      # UseCaseStepRef => useCaseStepRef(a.value)
             case a: Issue           # Issue          => issue(a.typ, a.desc.asOption.map(text(_, live, Mandatory.Not)))
-            case a: PlainTextMarkup # WebAddress     => a.value
             case a: PlainTextMarkup # EmailAddress   => a.value
+            case a: PlainTextMarkup # Monospace      => '`' ~ a.value ~ '`'
             case a: PlainTextMarkup # TeX            => G.texSurround(a.value)
+            case a: PlainTextMarkup # WebAddress     => a.value
             case a: TagRef          # TagRef         => tagRef(a.value)
 
             // ---------------------------------------------------------------------------------------------------------

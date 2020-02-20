@@ -1,16 +1,11 @@
 package shipreq.webapp.base.text
 
 import japgolly.microlibs.nonempty.NonEmptyVector
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import org.parboiled2.{CharPredicate => CP, _}
-import scala.annotation.{switch, tailrec}
 import scalaz.{-\/, \/, \/-}
 import shapeless._
-import shipreq.base.util.{Invalid, Util, Valid, Validity}
-import shipreq.base.util.VectorTree.PartialLocation
+import shipreq.base.util.Util
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.univeq._
-import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G}
 import shipreq.webapp.base.util.{ParsingUtil, PreProcessed, PreProcessor}
@@ -45,7 +40,7 @@ object Parsers {
   val emailCharL = CP(emailCharArray)
   val emailCharR = emailCharL -- '.'
 
-  val webAddressChar = CP.Visible -- ('{' :: '}' :: '[' :: ']' :: '<' :: '>' :: Nil)
+  val webAddressChar = CP.Visible -- ('{' :: '}' :: '[' :: ']' :: '<' :: '>' :: '`' :: Nil)
 
   private val useCaseStepTailChar = CP.AlphaNum ++ ' ' ++ '.'
 
@@ -134,8 +129,11 @@ object Parsers {
     def tex =
       rule(surround(G.texSurround) ~> (_.trim |> t.TeX))
 
+    def monospace =
+      rule('`' ~ capture(oneOrMore(!('`' | NL | EOI) ~ ANY)) ~ '`' ~> t.Monospace)
+
     def plainTextMarkup =
-      rule( webAddress | emailAddress | tex )
+      rule( webAddress | emailAddress | tex | monospace )
   }
 
   trait NewLine extends Base {

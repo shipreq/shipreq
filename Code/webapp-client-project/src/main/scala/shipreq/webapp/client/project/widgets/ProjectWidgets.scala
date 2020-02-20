@@ -270,6 +270,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
         case a: TagRef          # TagRef         => tagInText(live)(a.value)
         case a: PlainTextMarkup # WebAddress     => <.a(^.href := a.value, a.value)
         case a: PlainTextMarkup # EmailAddress   => <.a(^.href := "mailto:" ~ a.value, a.value)
+        case a: PlainTextMarkup # Monospace      => <.pre(*.monospace, a.value)
         case a: PlainTextMarkup # TeX            => katex(a)
         case a: ContentRef      # ReqRef         => reqRef(live)(a.value)
         case a: ContentRef      # CodeRef        => codeRef(live)(a.value)

@@ -428,6 +428,9 @@ object DataProp {
     val emailAddress =
       (nonEmpty ∧ noWS ∧ contains("@")).contramap[PlainTextMarkup#EmailAddress](_.value)
 
+    val monospace =
+      (nonEmpty & ~matches(".*[\r\n`].*")).contramap[PlainTextMarkup#Monospace](_.value)
+
     val tex =
       (nonEmpty ∧ trimmed).contramap[PlainTextMarkup#TeX](_.value)
 
@@ -446,6 +449,7 @@ object DataProp {
       case _: NewLine         # BlankLine      => nop
       case a: PlainTextMarkup # WebAddress     => webAddress(a)
       case a: PlainTextMarkup # EmailAddress   => emailAddress(a)
+      case a: PlainTextMarkup # Monospace      => monospace(a)
       case a: PlainTextMarkup # TeX            => tex(a)
       case a: ListMarkup      # UnorderedList  => anyTextV(a.items.whole)
       case _: ContentRef      # ReqRef         => nop

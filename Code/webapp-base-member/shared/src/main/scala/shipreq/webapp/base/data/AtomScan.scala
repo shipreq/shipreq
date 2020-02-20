@@ -54,10 +54,11 @@ object AtomScan {
       def go(as: TraversableOnce[AnyAtom]): Unit =
         as foreach {
           case _: Literal         # Literal
-             | _: PlainTextMarkup # EmailAddress
-             | _: PlainTextMarkup # WebAddress
-             | _: PlainTextMarkup # TeX
              | _: NewLine         # BlankLine
+             | _: PlainTextMarkup # EmailAddress
+             | _: PlainTextMarkup # Monospace
+             | _: PlainTextMarkup # TeX
+             | _: PlainTextMarkup # WebAddress
              | _: CodeBlock       # CodeBlock
             => ()
 
@@ -95,10 +96,11 @@ object AtomScan {
       def go(as: TraversableOnce[AnyAtom]): Unit =
         as foreach {
           case _: Literal         # Literal
-             | _: PlainTextMarkup # EmailAddress
-             | _: PlainTextMarkup # WebAddress
-             | _: PlainTextMarkup # TeX
              | _: NewLine         # BlankLine
+             | _: PlainTextMarkup # EmailAddress
+             | _: PlainTextMarkup # Monospace
+             | _: PlainTextMarkup # TeX
+             | _: PlainTextMarkup # WebAddress
              | _: CodeBlock       # CodeBlock
             => ()
 

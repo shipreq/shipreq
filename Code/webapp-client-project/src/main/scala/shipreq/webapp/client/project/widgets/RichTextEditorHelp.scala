@@ -55,7 +55,7 @@ object RichTextEditorHelp {
   private val codeBlocks =
     Group("Code blocks")(
       Example(
-        "To create a block of monospace text, wrap it between lines of ", code("```"), ".",
+        "To create a block of code, wrap it between lines of ", code("```"), ".",
       )(
         <.div(
           ^.whiteSpace.pre,
@@ -103,6 +103,10 @@ object RichTextEditorHelp {
 
   private val other =
     Group("Other")(
+      Example(
+        "To mark part of a line as monospace or code, wrap it with ", code("`"), ".",
+      )("`like_this`"),
+
       Example(
         "URLs are detected automatically, and presented as links.")(
         "https://google.com"),
