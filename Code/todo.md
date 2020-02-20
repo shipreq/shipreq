@@ -91,7 +91,6 @@ Phase 3A
   * make properties/values per req-type [FR-12]
 
 * UX
-  * ReqTable -> focus text editor at bottom of screen -> F2 -> preview is off screen --- scrollTo on open
   * Issues page: open & commit field editor -> row disappears -> no element has focus --- focus on adjacent row
 
 * Investigate changes required to support phone / tablet

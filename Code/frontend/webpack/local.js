@@ -32,6 +32,7 @@ const config = {
       'expose-loader?ReactCollapse!react-collapse',
       'expose-loader?moment!moment',
       'expose-loader?autosize!autosize',
+      'expose-loader?scrollIntoView!scroll-into-view-if-needed',
       'expose-loader?TextComplete!textcomplete/lib/textcomplete',
       'expose-loader?TextCompleteTA!textcomplete/lib/textarea',
       'expose-loader?$!expose-loader?jQuery!jquery', // for Semantic UI -- must precede it! order in this array matters

@@ -9,7 +9,8 @@ import shipreq.base.util.{PotentialChange, Validity}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{EditorStatus, PreviewFeature}
-import shipreq.webapp.base.lib.{KeyHandlers, KeyboardTheme}
+import shipreq.webapp.base.jsfacade.ScrollIntoViewIfNeeded
+import shipreq.webapp.base.lib.{KeyHandlers, KeyboardTheme, TaskRepeater}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.ui.EditTheme
@@ -119,21 +120,34 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     override val pxAutoComplete =
       Px.apply3(pxProject, pxPlainText, pxTextSearch)(AutoComplete.Project.richText(text))
 
+    private val scrollIntoView: Callback =
+      TaskRepeater.millis(
+        task   = $.getDOMNode.map(_.toHtml).asCBO.flatMap(ScrollIntoViewIfNeeded(_)).toCallback,
+        gap    = 200,
+        window = 500,
+      ).run
+
     private val keyHandlerBase =
       KeyHandlers.base(
         KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort)) +
         KeyboardTheme.commitCO($.props.map(_.status.getCommit), text.lineCardinality))
 
     val textareaConst: TagMod = {
-      val updateState: ReactEventFromTextArea => Callback =
-        e => $.props >>= (p =>
-          p.status.wrapEdit(p.edit.setState(liveCorrect(e.target.value)) >>
+      val onFocus: Callback =
+        $.props.flatMap(p => p.preview.onFocus(p.wantPreview)) >> scrollIntoView
+
+      val onChange: ReactEventFromTextArea => Callback =
+        e => $.props.flatMap(p =>
+          p.status.wrapEdit(p.edit.setStateOption(Some(liveCorrect(e.target.value)), scrollIntoView) >> // TODO https://github.com/japgolly/scalajs-react/issues/653
             p.preview.onEdit(p.wantPreview)))
 
+      val onBlur: Callback =
+        autoCompleteBlur >> $.props.flatMap(_.preview.onBlur)
+
       TagMod(
-        ^.onBlur   --> (autoCompleteBlur >> $.props.flatMap(_.preview.onBlur)),
-        ^.onChange ==> updateState,
-        ^.onFocus  --> $.props.flatMap(p => p.preview.onFocus(p.wantPreview)),
+        ^.onFocus  --> onFocus,
+        ^.onChange ==> onChange,
+        ^.onBlur   --> onBlur,
         RichTextEditor.minRows(text.lineCardinality))
     }
 
@@ -171,7 +185,11 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     }
 
     val onMount: Callback =
-      EditTheme.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback
+      for {
+        _ <- EditTheme.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback
+        p <- $.props
+        _ <- scrollIntoView.when_(p.autoFocus)
+      } yield ()
   }
 
   val Component =
