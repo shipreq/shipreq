@@ -27,10 +27,6 @@
       main > .left > table > tbody > tr:not(.cont) > td:first-child {text-align:center!important; width:1ex}
       main > .left > table > tbody > tr > td {vertical-align:top;}
 
-      #t1 td td:first-child {
-        width:18ex
-      }
-
       #t2 .rule {
         line-height:1.8em
       }
@@ -40,15 +36,9 @@
       #t2 .rule .types::after { content: " — "; }
       #t2 .rule2 .types {margin-right: .7ex}
 
-      #t3 tr.cont > td:first-child {
-        border-left: 1px solid #2224261a;
-      }
-
       #t2 tr { transition: background .1s ease,color .1s ease; }
       #t2 tr.selected { background-color: #869df91f; }
       #t2 td:not(:first-child) {cursor:pointer}
-
-      #t1,#t3 {display: none}
 
       /* .ui.menu .item>img:not(.ui) -- width:2.5em */
       /* .ui.menu .item -- padding-top/bottom: 0.928571em */
@@ -149,86 +139,6 @@
           %div(style="")
             %button.ui.button.icon
               %i.icon.trash.outline.large.grey
-
-        -# ==================================================================================================================================================
-        -# %table.ui.celled.table#t1
-          %thead
-            %tr
-              %th
-              %th Name
-              %th Type
-              %th Detail
-              %th Actions
-          %tbody
-            %tr
-              %td ☰
-              %td Implication Graph
-              %td Implication Graph
-              %td
-                %table.ui.definition.table
-                  %tbody
-                    %tr
-                      %td All
-                      %td Optional
-              %td
-            %tr
-              %td ☰
-              %td Step Graph
-              %td Step Graph
-              %td
-                %table.ui.definition.table
-                  %tbody
-                    %tr
-                      %td UC
-                      %td Optional
-              %td
-            %tr
-              %td ☰
-              %td Detail
-              %td Text
-              %td
-                -# Applicable to: BR, FR, UC
-                -# <br>Mandatory for: FR, UC
-                %table.ui.definition.table
-                  %tbody
-                    %tr
-                      %td BR
-                      %td Optional
-                    %tr
-                      %td FR, UC
-                      %td Mandatory
-              %td
-                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
-            %tr
-              %td ☰
-              %td Major Feature
-              %td Implication
-              %td
-                %table.ui.definition.table
-                  %tbody
-                    %tr
-                      %td Not: MF, OE
-                      %td Optional
-              %td
-                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
-            %tr
-              %td ☰
-              %td Status
-              %td Tag
-              %td
-                %table.ui.definition.table
-                  %tbody
-                    %tr
-                      %td IV
-                      %td Defaults to <div class="ui label yellow is-tag" style="color:#000!important">needs_more_info</div>
-                    %tr
-                      %td FR, UC
-                      %td Defaults to <div class="ui label brown is-tag">needs_analysis</div>
-                    %tr
-                      %td Other
-                      %td Optional
-              %td
-                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
 
 
         -# ==================================================================================================================================================
@@ -343,65 +253,6 @@
               %td
 
 
-        -# ==================================================================================================================================================
-        -# %table.ui.celled.table#t3
-          %thead
-            %tr
-              %th
-              %th Name
-              %th Type
-              %th Req Types
-              %th Detail
-              %th
-          %tbody
-            %tr
-              %td ☰
-              %td Implication Graph
-              %td Implication Graph
-              %td All
-              %td Optional
-              %td
-            %tr
-              %td ☰
-              %td Step Graph
-              %td Step Graph
-              %td UC
-              %td Optional
-              %td
-            %tr
-              %td(rowspan=2) ☰
-              %td(rowspan=2) Detail
-              %td(rowspan=2) Text
-              %td BR
-              %td Optional
-              %td(rowspan=2)
-                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
-            %tr.cont
-              %td FR, UC
-              %td Mandatory
-            %tr
-              %td ☰
-              %td Major Feature
-              %td Implication
-              %td Not: MF, OE
-              %td Optional
-              %td
-                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
-            %tr
-              %td(rowspan=3) ☰
-              %td(rowspan=3) Status
-              %td(rowspan=3) Tag
-              %td IV
-              %td Defaults to <div class="ui label yellow is-tag" style="color:#000!important">needs_more_info</div>
-              %td(rowspan=3)
-                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
-            %tr.cont
-              %td FR, UC
-              %td Defaults to <div class="ui label brown is-tag">needs_analysis</div>
-            %tr.cont
-              %td Other
-              %td Optional
-
       -# ==================================================================================================================================================
       %section.gap1
       %section.gap2
@@ -409,44 +260,6 @@
       %section.right
         %h3(style="color: #4059bf; margin-bottom:2rem")
           Status field editor
-
-        -# Don't let user change the underlying tag here. That %way:
-        -# 1. delete/restore make more sense
-        -# 2. all tags in rules would go to shit
-
-        -# %table
-          %tbody
-            %tr
-              <td><label><input type=checkbox> Not:</label></td>
-              <td><label><input type=checkbox> BR</label></td>
-
-        -# %table.ui.celled.table
-          %thead
-            %tr
-              %th All
-              %th Not:
-              %th BR
-              %th CO
-              %th FE
-              %th FR
-              %th IV
-              %th OE
-              %th SI
-              %th UC
-              %th Settings
-          %tbody
-            %tr
-              <td><input type=checkbox></td>
-              <td><input type=checkbox></td>
-              <td><input type=checkbox></td>
-              <td><input type=checkbox></td>
-              <td><input type=checkbox></td>
-              <td><input type=checkbox></td>
-              <td><input type=checkbox></td>
-              <td><input type=checkbox></td>
-              <td><input type=checkbox></td>
-              <td><input type=checkbox></td>
-              %td OMG! Too wide already. Won't scale.
 
         %table.ui.celled.table.settings
           %thead
@@ -472,26 +285,6 @@
                   %label(style="color:#888") Not
                 .ui.input(style="margin-left:1em")
                   %input(type="text" value="FR, UC")
-              -# %td
-                .ui.radio.checkbox
-                  %input(type="radio" checked="1")
-                  %label Default to
-                  .ui.selection.dropdown(style="margin-left:1.5ex")
-                    %input(type="hidden" value="1")
-                    %i.dropdown.icon
-                    .default.text Select Tag
-                    .menu
-                      .item(data-value="1")
-                        .ui.label.is-tag.brown(style="margin:0") needs_analysis
-                .ui.radio.checkbox
-                  %input(type="radio")
-                  %label Mandatory
-                .ui.radio.checkbox
-                  %input(type="radio")
-                  %label Optional
-                .ui.radio.checkbox
-                  %input(type="radio")
-                  %label Not applicable
               %td
                 %select.ui.dropdown
                   %option Default to...
@@ -512,26 +305,6 @@
                   %label(style="color:#888") Not
                 .ui.input(style="margin-left:1em")
                   %input(type="text" value="IV")
-              -# %td
-                .ui.radio.checkbox
-                  %input(type="radio" checked="1")
-                  %label Default to
-                  .ui.selection.dropdown(style="margin-left:1.5ex")
-                    %input(type="hidden" value="1")
-                    %i.dropdown.icon
-                    .default.text Select Tag
-                    .menu
-                      .item(data-value="1")
-                        .ui.label.is-tag.yellow(style="margin:0;color:#000!important") needs_more_info
-                .ui.radio.checkbox
-                  %input(type="radio")
-                  %label Mandatory
-                .ui.radio.checkbox
-                  %input(type="radio")
-                  %label Optional
-                .ui.radio.checkbox
-                  %input(type="radio")
-                  %label Not applicable
               %td
                 %select.ui.dropdown
                   %option Default to...
@@ -552,26 +325,6 @@
                   %label(style="color:#888") Not
                 .ui.input(style="margin-left:1em")
                   %input(type="text" value="OE, SI")
-              -# %td
-                .ui.radio.checkbox
-                  %input(type="radio")
-                  %label Default to
-                  .ui.selection.dropdown(style="margin-left:1.5ex")
-                    %input(type="hidden")
-                    %i.dropdown.icon
-                    .default.text Select Tag
-                    .menu
-                      .item(data-value="1")
-                        .ui.label.is-tag.yellow(style="margin:0;color:#000!important") needs_more_info
-                .ui.radio.checkbox
-                  %input(type="radio")
-                  %label Mandatory
-                .ui.radio.checkbox
-                  %input(type="radio")
-                  %label Optional
-                .ui.radio.checkbox
-                  %input(type="radio" checked="1")
-                  %label Not applicable
               %td
                 %select.ui.dropdown
                   %option Not applicable
@@ -580,33 +333,6 @@
             %tr
               %td
               %td Other
-              -# %td ☰
-              -# %td
-                .ui.checkbox
-                  %input(type="checkbox")
-                  %label(style="color:#888") Not
-                .ui.input(style="margin-left:1em")
-                  %input(type="text" value="" placeholder="Other")
-              -# %td
-                .ui.radio.checkbox
-                  %input(type="radio")
-                  %label Default to
-                  .ui.selection.dropdown(style="margin-left:1.5ex")
-                    %input(type="hidden")
-                    %i.dropdown.icon
-                    .default.text Select Tag
-                    .menu
-                      .item(data-value="1")
-                        .ui.label.is-tag.yellow(style="margin:0;color:#000!important") needs_more_info
-                .ui.radio.checkbox
-                  %input(type="radio")
-                  %label Mandatory
-                .ui.radio.checkbox
-                  %input(type="radio" checked="1")
-                  %label Optional
-                .ui.radio.checkbox
-                  %input(type="radio")
-                  %label Not applicable
               %td
                 %select.ui.dropdown
                   %option Optional
@@ -657,4 +383,3 @@
 
   :javascript
     $('.ui.dropdown').dropdown();
-    // $('.ui.radio.checkbox').checkbox();

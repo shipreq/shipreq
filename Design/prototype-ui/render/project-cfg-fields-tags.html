@@ -20,10 +20,6 @@ xmain > .left > table + table {margin-top:10rem!important}
 main > .left > table > tbody > tr:not(.cont) > td:first-child {text-align:center!important; width:1ex}
 main > .left > table > tbody > tr > td {vertical-align:top;}
 
-#t1 td td:first-child {
-  width:18ex
-}
-
 #t2 .rule {
   line-height:1.8em
 }
@@ -33,15 +29,9 @@ main > .left > table > tbody > tr > td {vertical-align:top;}
 #t2 .rule .types::after { content: " — "; }
 #t2 .rule2 .types {margin-right: .7ex}
 
-#t3 tr.cont > td:first-child {
-  border-left: 1px solid #2224261a;
-}
-
 #t2 tr { transition: background .1s ease,color .1s ease; }
 #t2 tr.selected { background-color: #869df91f; }
 #t2 td:not(:first-child) {cursor:pointer}
-
-#t1,#t3 {display: none}
 
 /* .ui.menu .item>img:not(.ui) -- width:2.5em */
 /* .ui.menu .item -- padding-top/bottom: 0.928571em */
@@ -82,7 +72,6 @@ x.settings td { background-color: #869df90f; }
 <script type="text/javascript">
 //<![CDATA[
 $('.ui.dropdown').dropdown();
-// $('.ui.radio.checkbox').checkbox();
 //]]>
 </script>
 </html>
