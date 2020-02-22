@@ -1,0 +1,660 @@
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title CardBoard Req Table | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+      .ui.button.basic {background:#fff!important}
+
+      .is-tag {
+        padding: 4px 6px !important;
+        margin-left: .5ex !important;
+      }
+
+      ul.straytags {margin-bottom:0}
+      ul.straytags li:not(:first-child) {margin-top:0.25em}
+
+      xmain > table {margin-bottom:2rem!important;}
+      main > .left > table {margin-top:0!important;}
+      xmain > .left > table + table {margin-top:10rem!important}
+      main > .left > table > tbody > tr:not(.cont) > td:first-child {text-align:center!important; width:1ex}
+      main > .left > table > tbody > tr > td {vertical-align:top;}
+
+      #t1 td td:first-child {
+        width:18ex
+      }
+
+      #t2 .rule {
+        line-height:1.8em
+      }
+      #t2 .rule .types, #t2 .rule2 .types {
+        font-weight: bold;
+      }
+      #t2 .rule .types::after { content: " — "; }
+      #t2 .rule2 .types {margin-right: .7ex}
+
+      #t3 tr.cont > td:first-child {
+        border-left: 1px solid #2224261a;
+      }
+
+      #t2 tr { transition: background .1s ease,color .1s ease; }
+      #t2 tr.selected { background-color: #869df91f; }
+      #t2 td:not(:first-child) {cursor:pointer}
+
+      #t1,#t3 {display: none}
+
+      /* .ui.menu .item>img:not(.ui) -- width:2.5em */
+      /* .ui.menu .item -- padding-top/bottom: 0.928571em */
+      /* body - padding: 1rem */
+      #navX {height:calc(2 * 0.928571em + 2.5em - 1.55em); background:green}
+      #navX {height:2.79rem; margin-bottom:1rem} /* padding is to match body */
+      main {
+        xbackground:#fbb;
+        margin-top: 4rem;
+        min-height: calc(100vh - 2 * (0.928571em + 1rem) - 2.5em);
+        min-height: calc(100vh - 2.79rem - 3rem);
+        min-height: calc(100vh - 6rem);
+        display:grid;
+        grid-template-columns: 1fr 2rem 2rem 1fr;
+      }
+
+      section.gap2 {
+        border-left: solid 1px #e8e8e8;
+      }
+
+      .settings td { vertical-align:top; }
+      .settings td:first-child { text-align:center }
+      .settings .ui.radio.checkbox {
+        display:block !important;
+        margin-bottom:0.5em;
+      }
+      .settings .ui.radio.checkbox label {
+        cursor: pointer !important;
+        display:inline !important;
+      }
+
+      x.settings td { background-color: #869df90f; }
+
+      .reqtyperesults {margin-top:5rem!important; display:none}
+      .reqtyperesults tr > *:first-child { width: 20ex }
+
+  -# ==================================================================================================================================================
+  -# ==================================================================================================================================================
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+
+      .item
+        .ui.breadcrumb
+          %a.section{href: "member-home.html"} Projects
+          %i.divider.icon.right.angle
+          %a.section{href: "project-index.html"} CardBoard
+          .ui.dropdown.inline
+            &nbsp;
+            %i.icon.dropdown
+            .menu
+              .item.active CardBoard
+              .item ShipReq
+          %i.divider.icon.right.angle
+          .section // .active
+            .ui.dropdown.inline
+              Req Table
+              &nbsp;
+              %i.icon.dropdown
+              .menu
+                .header Content
+                .item Implication Graph
+                .item.active ReqTable
+                .header Configuration
+                .item Fields
+                .item Issues
+                .item Req Types
+                .item Tags
+
+      .item.ui.right.dropdown.simple
+        @japgolly
+        -# %i.dropdown.icon
+        .menu
+          %a.item{href: "member-account.html"} Account
+          .item Logout
+
+    %main
+
+      %section.left
+
+        -# %div(style="display:flex; margin-bottom:1em")
+          %div(style="flex-grow:1")
+            %h3 All fields
+          %div(style="")
+            %button.ui.button.icon
+              %i.icon.trash.outline.large.grey
+
+        %div(style="display:flex; margin-bottom:2rem")
+          %div
+            .ui.button.green(onclick="$(this).toggleClass('active')")
+              %i.icon.plus
+              New
+
+          %div(style="flex-grow:1")
+
+          %div(style="")
+            %button.ui.button.icon
+              %i.icon.trash.outline.large.grey
+
+        -# ==================================================================================================================================================
+        -# %table.ui.celled.table#t1
+          %thead
+            %tr
+              %th
+              %th Name
+              %th Type
+              %th Detail
+              %th Actions
+          %tbody
+            %tr
+              %td ☰
+              %td Implication Graph
+              %td Implication Graph
+              %td
+                %table.ui.definition.table
+                  %tbody
+                    %tr
+                      %td All
+                      %td Optional
+              %td
+            %tr
+              %td ☰
+              %td Step Graph
+              %td Step Graph
+              %td
+                %table.ui.definition.table
+                  %tbody
+                    %tr
+                      %td UC
+                      %td Optional
+              %td
+            %tr
+              %td ☰
+              %td Detail
+              %td Text
+              %td
+                -# Applicable to: BR, FR, UC
+                -# <br>Mandatory for: FR, UC
+                %table.ui.definition.table
+                  %tbody
+                    %tr
+                      %td BR
+                      %td Optional
+                    %tr
+                      %td FR, UC
+                      %td Mandatory
+              %td
+                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
+            %tr
+              %td ☰
+              %td Major Feature
+              %td Implication
+              %td
+                %table.ui.definition.table
+                  %tbody
+                    %tr
+                      %td Not: MF, OE
+                      %td Optional
+              %td
+                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
+            %tr
+              %td ☰
+              %td Status
+              %td Tag
+              %td
+                %table.ui.definition.table
+                  %tbody
+                    %tr
+                      %td IV
+                      %td Defaults to <div class="ui label yellow is-tag" style="color:#000!important">needs_more_info</div>
+                    %tr
+                      %td FR, UC
+                      %td Defaults to <div class="ui label brown is-tag">needs_analysis</div>
+                    %tr
+                      %td Other
+                      %td Optional
+              %td
+                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
+
+
+        -# ==================================================================================================================================================
+        %table.ui.celled.table#t2
+          %thead
+            %tr
+              %th
+              %th Name
+              %th Type
+              %th Detail
+              %th
+          %tbody
+            %tr
+              %td ☰
+              %td Implication Graph
+              %td Implication Graph
+              %td
+                .rule
+                  %span.types All
+                  %span.value Visible
+              %td
+            %tr
+              %td ☰
+              %td Normal and Alternate Courses
+              %td Use Case Steps
+              %td
+                .rule2
+                  %span.types UC
+                  %span.value only
+              %td
+            %tr
+              %td ☰
+              %td Exception Courses
+              %td Use Case Steps
+              %td
+                .rule2
+                  %span.types UC
+                  %span.value only
+              %td
+            %tr
+              %td ☰
+              %td Use Case Flow
+              %td Use Case Step Graph
+              %td
+                -# .rule
+                  %span.types UC
+                  %span.value Visible
+                .rule2
+                  %span.types UC
+                  %span.value only
+              %td
+            %tr
+              %td ☰
+              %td Detail
+              %td Text
+              %td
+                .rule
+                  %span.types BR
+                  %span.value Optional
+                .rule
+                  %span.types FR, UC
+                  %span.value Mandatory
+              %td
+                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
+            %tr
+              %td ☰
+              %td Major Feature
+              %td Implication
+              %td
+                .rule
+                  %span.types Not: MF, OE
+                  %span.value Optional
+              %td
+                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
+            %tr.selected
+              %td ☰
+              %td Status
+              %td Tag
+              %td
+                .rule
+                  %span.types FR, UC
+                  %span.value Defaults to <div class="ui label brown is-tag">needs_analysis</div>
+                .rule
+                  %span.types IV
+                  %span.value Defaults to <div class="ui label yellow is-tag" style="color:#000!important">needs_more_info</div>
+                .rule
+                  %span.types OE,SI
+                  %span.value Not applicable
+                .rule
+                  %span.types Other
+                  %span.value Optional
+              %td
+                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
+            %tr
+              %td ☰
+              %td Tags
+              %td Tag
+              %td
+                Displays tags not assigned to a field.
+                -# %ul.straytags
+                  %li .ui.label.is-tag.red migrating
+                  %li .ui.label.is-tag.olive tested
+                  %li .ui.label.is-tag.blue unreleased
+                  %li .ui.label.is-tag.blue v1.0
+                  %li .ui.label.is-tag.blue v1.1
+                %p.straytags
+                  .ui.label.is-tag.red migrating
+                  .ui.label.is-tag.olive tested
+                  .ui.label.is-tag.blue unreleased
+                  .ui.label.is-tag.blue v1.0
+                  .ui.label.is-tag.blue v1.1
+              %td
+
+
+        -# ==================================================================================================================================================
+        -# %table.ui.celled.table#t3
+          %thead
+            %tr
+              %th
+              %th Name
+              %th Type
+              %th Req Types
+              %th Detail
+              %th
+          %tbody
+            %tr
+              %td ☰
+              %td Implication Graph
+              %td Implication Graph
+              %td All
+              %td Optional
+              %td
+            %tr
+              %td ☰
+              %td Step Graph
+              %td Step Graph
+              %td UC
+              %td Optional
+              %td
+            %tr
+              %td(rowspan=2) ☰
+              %td(rowspan=2) Detail
+              %td(rowspan=2) Text
+              %td BR
+              %td Optional
+              %td(rowspan=2)
+                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
+            %tr.cont
+              %td FR, UC
+              %td Mandatory
+            %tr
+              %td ☰
+              %td Major Feature
+              %td Implication
+              %td Not: MF, OE
+              %td Optional
+              %td
+                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
+            %tr
+              %td(rowspan=3) ☰
+              %td(rowspan=3) Status
+              %td(rowspan=3) Tag
+              %td IV
+              %td Defaults to <div class="ui label yellow is-tag" style="color:#000!important">needs_more_info</div>
+              %td(rowspan=3)
+                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
+            %tr.cont
+              %td FR, UC
+              %td Defaults to <div class="ui label brown is-tag">needs_analysis</div>
+            %tr.cont
+              %td Other
+              %td Optional
+
+      -# ==================================================================================================================================================
+      %section.gap1
+      %section.gap2
+
+      %section.right
+        %h3(style="color: #4059bf; margin-bottom:2rem")
+          Status field editor
+
+        -# Don't let user change the underlying tag here. That %way:
+        -# 1. delete/restore make more sense
+        -# 2. all tags in rules would go to shit
+
+        -# %table
+          %tbody
+            %tr
+              <td><label><input type=checkbox> Not:</label></td>
+              <td><label><input type=checkbox> BR</label></td>
+
+        -# %table.ui.celled.table
+          %thead
+            %tr
+              %th All
+              %th Not:
+              %th BR
+              %th CO
+              %th FE
+              %th FR
+              %th IV
+              %th OE
+              %th SI
+              %th UC
+              %th Settings
+          %tbody
+            %tr
+              <td><input type=checkbox></td>
+              <td><input type=checkbox></td>
+              <td><input type=checkbox></td>
+              <td><input type=checkbox></td>
+              <td><input type=checkbox></td>
+              <td><input type=checkbox></td>
+              <td><input type=checkbox></td>
+              <td><input type=checkbox></td>
+              <td><input type=checkbox></td>
+              <td><input type=checkbox></td>
+              %td OMG! Too wide already. Won't scale.
+
+        %table.ui.celled.table.settings
+          %thead
+            %tr
+              %th(style="text-align:center")
+                %button.ui.button.green(style="margin:0!important")
+                  %i.icon.plus(style="margin:0!important")
+                -# .ui.button.green.animated.fade
+                  .visible.content
+                    %i.icon.plus
+                  .hidden.content
+                    New
+              %th Req Types
+              %th Settings
+              %th
+                -# %i.icon.trash
+          %tbody
+            %tr
+              %td ☰
+              %td
+                .ui.checkbox
+                  %input(type="checkbox")
+                  %label(style="color:#888") Not
+                .ui.input(style="margin-left:1em")
+                  %input(type="text" value="FR, UC")
+              -# %td
+                .ui.radio.checkbox
+                  %input(type="radio" checked="1")
+                  %label Default to
+                  .ui.selection.dropdown(style="margin-left:1.5ex")
+                    %input(type="hidden" value="1")
+                    %i.dropdown.icon
+                    .default.text Select Tag
+                    .menu
+                      .item(data-value="1")
+                        .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                .ui.radio.checkbox
+                  %input(type="radio")
+                  %label Mandatory
+                .ui.radio.checkbox
+                  %input(type="radio")
+                  %label Optional
+                .ui.radio.checkbox
+                  %input(type="radio")
+                  %label Not applicable
+              %td
+                %select.ui.dropdown
+                  %option Default to...
+                .ui.selection.dropdown(style="margin-left:1.5ex")
+                  %input(type="hidden" value="1")
+                  %i.dropdown.icon
+                  .default.text Select Tag
+                  .menu
+                    .item(data-value="1")
+                      .ui.label.is-tag.brown(style="margin:0") needs_analysis
+              %td
+                <button class="ui button basic  negative " style="white-space: nowrap"><i class="icon trash" style="margin:0"></i></button>
+            %tr
+              %td ☰
+              %td
+                .ui.checkbox
+                  %input(type="checkbox")
+                  %label(style="color:#888") Not
+                .ui.input(style="margin-left:1em")
+                  %input(type="text" value="IV")
+              -# %td
+                .ui.radio.checkbox
+                  %input(type="radio" checked="1")
+                  %label Default to
+                  .ui.selection.dropdown(style="margin-left:1.5ex")
+                    %input(type="hidden" value="1")
+                    %i.dropdown.icon
+                    .default.text Select Tag
+                    .menu
+                      .item(data-value="1")
+                        .ui.label.is-tag.yellow(style="margin:0;color:#000!important") needs_more_info
+                .ui.radio.checkbox
+                  %input(type="radio")
+                  %label Mandatory
+                .ui.radio.checkbox
+                  %input(type="radio")
+                  %label Optional
+                .ui.radio.checkbox
+                  %input(type="radio")
+                  %label Not applicable
+              %td
+                %select.ui.dropdown
+                  %option Default to...
+                .ui.selection.dropdown(style="margin-left:1.5ex")
+                  %input(type="hidden" value="1")
+                  %i.dropdown.icon
+                  .default.text Select Tag
+                  .menu
+                    .item(data-value="1")
+                      .ui.label.is-tag.yellow(style="margin:0;color:#000!important") needs_more_info
+              %td
+                <button class="ui button basic  negative " style="white-space: nowrap"><i class="icon trash" style="margin:0"></i></button>
+            %tr
+              %td ☰
+              %td
+                .ui.checkbox
+                  %input(type="checkbox")
+                  %label(style="color:#888") Not
+                .ui.input(style="margin-left:1em")
+                  %input(type="text" value="OE, SI")
+              -# %td
+                .ui.radio.checkbox
+                  %input(type="radio")
+                  %label Default to
+                  .ui.selection.dropdown(style="margin-left:1.5ex")
+                    %input(type="hidden")
+                    %i.dropdown.icon
+                    .default.text Select Tag
+                    .menu
+                      .item(data-value="1")
+                        .ui.label.is-tag.yellow(style="margin:0;color:#000!important") needs_more_info
+                .ui.radio.checkbox
+                  %input(type="radio")
+                  %label Mandatory
+                .ui.radio.checkbox
+                  %input(type="radio")
+                  %label Optional
+                .ui.radio.checkbox
+                  %input(type="radio" checked="1")
+                  %label Not applicable
+              %td
+                %select.ui.dropdown
+                  %option Not applicable
+              %td
+                <button class="ui button basic  negative " style="white-space: nowrap"><i class="icon trash" style="margin:0"></i></button>
+            %tr
+              %td
+              %td Other
+              -# %td ☰
+              -# %td
+                .ui.checkbox
+                  %input(type="checkbox")
+                  %label(style="color:#888") Not
+                .ui.input(style="margin-left:1em")
+                  %input(type="text" value="" placeholder="Other")
+              -# %td
+                .ui.radio.checkbox
+                  %input(type="radio")
+                  %label Default to
+                  .ui.selection.dropdown(style="margin-left:1.5ex")
+                    %input(type="hidden")
+                    %i.dropdown.icon
+                    .default.text Select Tag
+                    .menu
+                      .item(data-value="1")
+                        .ui.label.is-tag.yellow(style="margin:0;color:#000!important") needs_more_info
+                .ui.radio.checkbox
+                  %input(type="radio")
+                  %label Mandatory
+                .ui.radio.checkbox
+                  %input(type="radio" checked="1")
+                  %label Optional
+                .ui.radio.checkbox
+                  %input(type="radio")
+                  %label Not applicable
+              %td
+                %select.ui.dropdown
+                  %option Optional
+              %td
+                <button class="ui button basic  negative " style="white-space: nowrap"><i class="icon trash" style="margin:0"></i></button>
+
+        %div(style="text-align:right; margin-top:2rem")
+          %button.ui.button.basic.black(style="margin-right:2ex")
+            %i.icon.remove
+            Cancel
+          %button.ui.button.basic.green(style="border-color: #080 !important; font-weight: bold !important;")
+            %i.icon.plus
+            Update
+
+        %table.ui.celled.table.reqtyperesults
+          %thead
+            %tr
+              %th Req Type
+              %th Result
+          %tbody
+            %tr
+              %td BR
+              %td Optional
+            %tr
+              %td CO
+              %td Optional
+            %tr
+              %td FE
+              %td Optional
+            %tr
+              %td FR
+              %td Defaults to <div class="ui label brown is-tag">needs_analysis</div>
+            %tr
+              %td IV
+              %td Defaults to <div class="ui label yellow is-tag" style="color:#000!important">needs_more_info</div>
+            %tr
+              %td OE
+              %td Not applicable
+            %tr
+              %td SI
+              %td Not applicable
+            %tr
+              %td UC
+              %td Defaults to <div class="ui label brown is-tag">needs_analysis</div>
+            %tr
+              %td New req types
+              %td Optional
+
+  :javascript
+    $('.ui.dropdown').dropdown();
+    // $('.ui.radio.checkbox').checkbox();
