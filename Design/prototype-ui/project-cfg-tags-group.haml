@@ -1,0 +1,431 @@
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title CardBoard Req Table | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+      .ui.button.basic {background:#fff!important}
+
+      .is-tag {
+        padding: 4px 6px !important;
+        margin-left: .5ex !important;
+      }
+
+      main {
+        xbackground:#fbb;
+        margin-top: 4rem;
+        min-height: calc(100vh - 2 * (0.928571em + 1rem) - 2.5em);
+        min-height: calc(100vh - 2.79rem - 3rem);
+        min-height: calc(100vh - 6rem);
+        display:grid;
+        grid-template-columns: 1fr 2rem 2rem 1fr;
+      }
+
+      section.gap2 {
+        border-left: solid 1px #e8e8e8;
+      }
+
+      .tagtree {
+        margin:0;
+        padding-left:0;
+      }
+      #tagtree {
+        margin-top:2.5rem;
+      }
+      .tagtree ol {
+        padding-left:6.5ex;
+      }
+      .tagtree li {
+        list-style-type: none;
+      }
+      .tagtree .drag {
+        display: inline;
+        padding:.5em 1ex 0.5em 2ex;
+        margin-left: -2ex;
+        cursor:grab;
+      }
+      #tagtree > li.group:not(:first-child), #tagtree > li.tag.first_after_group {
+        margin-top: 1.25em;
+        border-top: solid 1px #2224261a;
+      }
+      #tagtree > li:not(:first-child) {
+        margin-top: 1.25em;
+      }
+      #tagtree li.tag:not(:last-child) {
+        border-bottom:solid 1px blue;
+        border-bottom: solid 1px #2224261a;
+      }
+      .tagtree li.tag {
+        padding-top: .5em;
+        padding-bottom: .5em;
+      }
+      .tagtree .group i {
+        margin-right:0.4ex!important;
+      }
+      #tagtree .group > div {
+        font-size: 120%;
+      }
+      .tagtree .group > div {
+        padding:0.4em 0;
+      }
+      #tagtree li.group > div, #tagtree li.tag {
+        cursor:pointer;
+      }
+      #tagtree:not(.has-selection) li.group > div:hover,
+      #tagtree:not(.has-selection) li.tag:hover {
+        background-color: #fffad7 !important;
+      }
+      #tagtree .selected {
+        background-color: #869df91f;
+        border-top:solid 1px #3659e2;
+        border-bottom:solid 1px #3659e2;
+      }
+      #tagtree.has-selection .tag:not(.selected),
+      #tagtree.has-selection .group > div:not(.selected) { opacity:.4 }
+      #tagtree.has-selection .tag:not(.selected),
+      #tagtree.has-selection .group > div:not(.selected) { transition: all .4s }
+      .tagtree li {
+        clear: both;
+      }
+
+      .right-off {
+        overflow: hidden; height: 0; opacity: 0;
+        transition: height 0s .4s, opacity .4s 0s;
+      }
+      .right-on {
+        height: auto; opacity: 1;
+        transition: height 0s 0s, opacity .4s 0s;
+      }
+
+      #family {
+        display:flex;
+        margin-top:1rem;
+      }
+      #family > * {
+        width:50%;
+      }
+      #family > * > * {
+        height:100%;
+      }
+      #family > .parents {
+        padding-right:0.5rem;
+      }
+      #family > .children {
+        xborder-left: solid 1px #e8e8e8;
+        padding-left:0.5rem;
+      }
+      .family {
+        display:flex;
+        flex-direction:column;
+        height:100%;
+      }
+      .family > .h {
+        margin-bottom:1em;
+      }
+      .family > .b {
+        flex-grow:1;
+      }
+      .family ol.tagtree {
+        margin-left:2ex;
+        margin-bottom:1em;
+      }
+      .family .lvl1 {padding-left:3ex}
+      .family .lvl2 {padding-left:6ex}
+      .family .ui.dropdown .menu>.item {
+        padding-top   :0.4em!important;
+        padding-bottom:0.4em!important;
+      }
+
+  -# ==================================================================================================================================================
+  -# ==================================================================================================================================================
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+
+      .item
+        .ui.breadcrumb
+          %a.section{href: "member-home.html"} Projects
+          %i.divider.icon.right.angle
+          %a.section{href: "project-index.html"} CardBoard
+          .ui.dropdown.inline
+            &nbsp;
+            %i.icon.dropdown
+            .menu
+              .item.active CardBoard
+              .item ShipReq
+          %i.divider.icon.right.angle
+          .section // .active
+            .ui.dropdown.inline
+              Req Table
+              &nbsp;
+              %i.icon.dropdown
+              .menu
+                .header Content
+                .item Implication Graph
+                .item.active ReqTable
+                .header Configuration
+                .item Fields
+                .item Issues
+                .item Req Types
+                .item Tags
+
+      .item.ui.right.dropdown.simple
+        @japgolly
+        -# %i.dropdown.icon
+        .menu
+          %a.item{href: "member-account.html"} Account
+          .item Logout
+
+    %main
+
+      %section.left
+
+        %div(style="display:flex; margin-bottom:2rem")
+          %div
+            .ui.labeled.button.disabled#new
+              %a.ui.button.green
+                %i.icon.plus
+                New
+              -# .ui.floating.dropdown.labeled.search.button.label
+              .ui.dropdown.label{style: "background-color: #00a632; color: #EEE;"}
+                Tag group
+                %i.icon.dropdown
+                .menu
+                  .item Tag
+                  .item Tag group
+
+          %div(style="flex-grow:1")
+
+          %div(style="")
+            %button.ui.button.icon
+              %i.icon.trash.outline.large.grey
+
+
+        -# ==================================================================================================================================================
+        %ol#tagtree.has-selection.tagtree
+
+          %li.group
+            %div
+              %i.icon.folder.open.outline
+              Actors
+
+          %li.group
+            %div
+              %i.icon.folder.open.outline
+              Status
+            %ol
+              %li.tag
+                .drag ☰
+                .ui.label.is-tag.yellow(style="margin:0;color:#000!important") needs_more_info
+              %li.tag
+                .drag ☰
+                .ui.label.is-tag.brown(style="margin:0") needs_analysis
+              %li.tag
+                .drag ☰
+                .ui.label.is-tag.blue(style="margin:0") analysed
+              %li.tag
+                .drag ☰
+                .ui.label.is-tag.pink(style="margin:0") ready_for_dev
+              %li.tag
+                .drag ☰
+                .ui.label.is-tag.olive(style="margin:0; color:#000!important") implemented
+
+          %li.group
+            %div.selected#priority
+              %i.icon.folder.open.outline
+              Priority
+            %ol
+              %li.tag
+                .drag ☰
+                .ui.label.is-tag.red(style="margin:0") must
+              %li.tag
+                .drag ☰
+                .ui.label.is-tag.orange(style="margin:0; xcolor:#000!important") should
+              %li.tag
+                .drag ☰
+                .ui.label.is-tag.yellow(style="margin:0; color:#000!important") could
+
+          %li.group
+            %div
+              %i.icon.folder.open.outline
+              Version
+
+            %ol
+              %li.group
+                %div
+                  %i.icon.folder.open.outline
+                  Released
+
+            %ol
+              %li.group
+                %div
+                  %i.icon.folder.open.outline
+                  In Testing
+
+            %ol
+              %li.group
+                %div
+                  %i.icon.folder.open.outline
+                  Unreleased
+                %ol
+                  %li.tag
+                    .drag ☰
+                    .ui.label.is-tag.blue(style="margin:0") v1.0
+                  %li.tag
+                    .drag ☰
+                    .ui.label.is-tag.blue(style="margin:0") v1.1
+
+                %li.tag
+                  .drag ☰
+                  .ui.label.is-tag.blue(style="margin:0") tbd
+
+      -# ==================================================================================================================================================
+      %section.gap1
+      %section.gap2
+
+      %section.right
+
+        .right-off#noeditor(style="display:flex; flex-direction: column; font-size:120%")
+          %div(style="height:calc((100vh - 6rem)/4); xbackground:red")
+          %div(style="text-align:center; font-style:italic; color:#999; line-height: 1.8em")
+            %div This is the tag editor.
+            %div Create a new tag, or select an existing tag to edit it here.
+
+        .right-on#editor
+          %h2(style="color: #3659e2; margin-bottom:2rem") Priority
+
+          .ui.form
+            .field
+              %label Tag group name
+              %input(type="text" value="Priority")
+            .ui.segment
+              .field
+                .ui.checkbox
+                  %input(type="checkbox" checked="1")
+                  %label
+                    Exclusive
+                    %div(style="margin-top:0.5em; opacity:0.55")
+                      When more than one tag within this group is applied to a requirement, it will be reported as an issue.
+            .field
+              %label Description
+              %textarea(rows="2" value="wtf" placeholder="")
+
+          #family
+            .parents
+              .ui.segment
+                .family
+                  %div.h
+                    %h4.ui.header Parents
+                  %div.b
+                  %div.f
+                    .ui.floating.labeled.icon.dropdown.button
+                      %i.icon.plus
+                      %span.text Add parent...
+
+            .children
+              .ui.segment
+                .family
+                  %div.h
+                    %h4.ui.header Children
+                  %div.b
+                    %ol.tagtree
+                      %li.group
+                        %div
+                          %i.icon.folder.open.outline
+                          In Testing
+                          .ui.button.basic.negative(style="white-space: nowrap; float:right") %i.icon.trash(style="margin:0!important")
+                      %li.tag
+                        .drag ☰
+                        .ui.label.is-tag.red(style="margin:0") must
+                        .ui.button.basic.negative(style="white-space: nowrap; float:right") %i.icon.trash(style="margin:0")
+                      %li.tag
+                        .drag ☰
+                        .ui.label.is-tag.orange(style="margin:0; xcolor:#000!important") should
+                        .ui.button.basic.negative(style="white-space: nowrap; float:right") %i.icon.trash(style="margin:0")
+                      %li.tag
+                        .drag ☰
+                        .ui.label.is-tag.yellow(style="margin:0; color:#000!important") could
+                        .ui.button.basic.negative(style="white-space: nowrap; float:right") %i.icon.trash(style="margin:0")
+                  %div.f
+                    .ui.floating.labeled.icon.dropdown.button
+                      %i.icon.plus
+                      %span.text Add child...
+                      .menu
+                        .item
+                          %i.icon.folder.open.outline
+                          Actors
+                        .item
+                          %i.icon.folder.open.outline
+                          Status
+                        .item
+                          %span.lvl1
+                          .ui.label.is-tag.yellow(style="margin:0;color:#000!important") needs_more_info
+                        .item
+                          %span.lvl1
+                          .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                        .item
+                          %span.lvl1
+                          .ui.label.is-tag.blue(style="margin:0") analysed
+                        .item
+                          %span.lvl1
+                          .ui.label.is-tag.pink(style="margin:0") ready_for_dev
+                        .item
+                          %span.lvl1
+                          .ui.label.is-tag.olive(style="margin:0; color:#000!important") implemented
+                        -# .item.disabled
+                          %i.icon.folder.open.outline
+                          Priority
+                        .item.disabled
+                          %i.icon.folder.open.outline
+                          Version
+                        .item
+                          %span.lvl1
+                          %i.icon.folder.open.outline
+                          Released
+                        .item
+                          %span.lvl1
+                          %i.icon.folder.open.outline
+                          Unreleased
+                        .item
+                          %span.lvl2
+                          .ui.label.is-tag.blue(style="margin:0") v1.0
+                        .item
+                          %span.lvl2
+                          .ui.label.is-tag.blue(style="margin:0") v1.1
+                        .item
+                          %span.lvl1
+                          .ui.label.is-tag.blue(style="margin:0") tbd
+
+          %div(style="margin-top:2rem; display:flex")
+            %button.ui.button.negative.basic(style="white-space: nowrap;")
+              %i.icon.trash
+              Delete
+            %div(style="flex-grow:1")
+            %button.ui.button.black.basic(style="margin-right:2em")
+              %i.icon.remove
+              Close
+            -# %button.ui.button.basic.green(style="border-color: #080 !important; font-weight: bold !important;")
+            %button.ui.button.green.disabled
+              %i.icon.plus
+              Update
+
+  :javascript
+    $('.ui.dropdown').dropdown();
+    $('.outline').toggleClass('outline');
+
+    $('#tagtree').click(function() {
+      $('#tagtree').toggleClass('has-selection');
+      $('#priority').toggleClass('selected');
+      $('#noeditor,#editor').toggleClass('right-on');
+      $('#noeditor,#editor').toggleClass('right-off');
+      $('#new').toggleClass('disabled');
+    });
