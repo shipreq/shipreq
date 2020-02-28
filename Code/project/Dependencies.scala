@@ -127,7 +127,7 @@ object Dependencies {
   }
 
   object Circe {
-    private val mm = MultiModule.jvmAndJs("io.circe", "0.12.3")
+    private val mm = MultiModule.jvmAndJs("io.circe", "0.13.0")
     val core    = mm("circe-core")
     val parser  = mm("circe-parser")
     val testing = mm("circe-testing")
@@ -135,7 +135,7 @@ object Dependencies {
   }
 
   object JJWT {
-    private val mm = MultiModule.java("io.jsonwebtoken", "0.10.7")
+    private val mm = MultiModule.java("io.jsonwebtoken", "0.10.8")
     val api     = mm("jjwt-api")
     val impl    = mm("jjwt-impl") % Runtime
     val jackson = mm("jjwt-jackson") % Runtime
@@ -143,13 +143,13 @@ object Dependencies {
   }
 
   object Akka {
-    private val mm = MultiModule.scala("com.typesafe.akka", "2.6.1")
+    private val mm = MultiModule.scala("com.typesafe.akka", "2.6.3")
     val actor   = mm("akka-actor") ++ mm("akka-slf4j")
     val testkit = mm("akka-testkit")
   }
 
   object OkHttp {
-    private val mm = MultiModule.java("com.squareup.okhttp3", "3.14.6")
+    private val mm = MultiModule.java("com.squareup.okhttp3", "3.14.7")
     val core = mm("okhttp")
     // val urlConnection = mm("okhttp-urlconnection") ++ core
   }
@@ -175,7 +175,7 @@ object Dependencies {
   }
 
   object Prometheus {
-    private val mm = MultiModule.java("io.prometheus", "0.8.0")
+    private val mm = MultiModule.java("io.prometheus", "0.8.1")
     val client     = mm("simpleclient")
     val hotspot    = mm("simpleclient_hotspot")
     val httpserver = mm("simpleclient_httpserver")
@@ -194,16 +194,16 @@ object Dependencies {
   val shapeless   = jvmAndJs("com.chuusai",                      "shapeless",   "2.3.3")
   val μTest       = jvmAndJs("com.lihaoyi",                      "utest",       "0.6.7")
 
-  val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.0.0")
+  val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.1.1")
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.8")
-  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.1.4")
+  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.2.4")
   val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.2")
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.13")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
   val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.1.0")
-  val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.9")
-  val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.11.6")
+  val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.10")
+  val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.12.2")
   val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "3.1.0")
   val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.14.3")
   val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.2")
