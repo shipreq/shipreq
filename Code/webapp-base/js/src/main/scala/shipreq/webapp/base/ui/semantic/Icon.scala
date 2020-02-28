@@ -23,7 +23,6 @@ sealed abstract class Icon(val clsName: ClassName) {
   *     3. shipreq/semantic/prune
   *     4. ./build-parallel
   *     5. cd .. && bin/gen-semantic-icons
-  *     6. New icons will be appended to this file. Cut and paste into object. :/
   */
 object Icon {
 
@@ -42,6 +41,8 @@ object Icon {
     override def withColour(c: Colour) = copy(colour = c)
     override def withSize  (s: Size  ) = copy(size   = s)
   }
+
+  // ===== ICONS START =====
 
   // case object Add                               extends Unmodified("add")
   // case object AddCircle                         extends Unmodified("add circle")
@@ -944,6 +945,8 @@ object Icon {
   // case object Zoom                              extends Unmodified("zoom")
   // case object ZoomIn                            extends Unmodified("zoom in")
   // case object ZoomOut                           extends Unmodified("zoom out")
+
+  // ===== ICONS END =====
 
   implicit def univEqU: UnivEq[Unmodified] = UnivEq.derive
   implicit def univEqM: UnivEq[Modified  ] = UnivEq.derive

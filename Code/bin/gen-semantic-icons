@@ -1,11 +1,15 @@
 #!/bin/bash
-cd "$(dirname "$(readlink -e "$0")")/.." || exit 1
+
+set -euo pipefail
+
+cd "$(dirname "$(readlink -e "$0")")/.."
 
 # To camel-case
 x='s/^([^!]*)[ _-]([a-z])/$1\u$2/g;'
 
 d=frontend/shipreq/semantic
 t=./webapp-base/js/src/main/scala/shipreq/webapp/base/ui/semantic/Icon.scala
+tmp=/tmp/icons.scala
 
 [ ! -e $t ] && echo "File not found: $t" && exit 1
 
@@ -16,12 +20,20 @@ used=$(
     | perl -pe 's/\|/\\\|/g'
   )
 
-cat $d/icons-all \
-  | perl -pe 's/\./ /g; s/^ //; s/^(.+)$/$1! extends Unmodified("$1")/' \
-  | perl -pe "$x$x$x$x$x"' s/^(.)/\u$1/; s/^(.+)!/case object $1!/' \
-  | column -t -o ' ' -s ! \
-  | sed -e "/$used/! s!^!// !" \
-  | sed -e "s!^!  !" \
- >> $t
+icons=$(
+  cat $d/icons-all \
+    | perl -pe 's/\./ /g; s/^ //; s/^(.+)$/$1! extends Unmodified("$1")/' \
+    | perl -pe "$x$x$x$x$x"' s/^(.)/\u$1/; s/^(.+)!/case object $1!/' \
+    | column -t -o ' ' -s ! \
+    | sed -e "/$used/! s!^!// !" \
+    | sed -e "s!^!  !" \
+)
 
+sed -n '0,/===== ICONS START =====/p' < $t > $tmp
+echo >> $tmp
+echo "$icons" >> $tmp
+echo >> $tmp
+sed -n '/===== ICONS END =====/,$p' < $t >> $tmp
+
+mv $tmp $t
 echo "Updated: $t"

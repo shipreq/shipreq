@@ -38,6 +38,8 @@ Semantic UI is a special beast...
 
 * Not all of Semantic UI (which is huge) is used. The desired subset is declared in `semantic.json5`.
 
+* To modify the whitelist of icons, see the documentation in `shipreq/webapp/base/ui/semantic/Icon.Scala`
+
 * When upgrading Semantic UI, npm will change the version in `semantic.json`.
   This change must be manually applied to `semantic.json5`.
 
