@@ -256,13 +256,6 @@ object Style extends StyleSheet.Inline {
 
     object creation {
 
-      val buttonOuter = style(
-        marginRight(`0`).important)
-
-      val buttonDropdown = style(
-        color(c"#eee").important,
-        backgroundColor(c"#00a632").important)
-
       val formOuter = style(
         margin(v = pageVGap, h = `0`))
 
@@ -818,6 +811,13 @@ object Style extends StyleSheet.Inline {
       marginLeft(0.5 ex),
       reqRef(i)))
 
+    val dropdownButtonOuter = style(
+      marginRight(`0`).important)
+
+    val dropdownButtonGreenDropdown = style(
+      color(c"#eee").important,
+      backgroundColor(c"#00a632").important)
+
     object reqTypeSelector {
       val dropdown = style(
         backgroundColor(BaseStyles.editor.backgroundColor).important,
@@ -946,7 +946,7 @@ object Style extends StyleSheet.Inline {
     deletionForm.bottomSections,
     issues.rowspanOuter,
     restorationForm.bottomSection,
-    reqtable.creation.buttonDropdown,
+    reqtable.creation.formOuter,
     reqtable.filterEditor.input(Valid),
     reqtable.sortEditor.dragArea,
     reqtable.page.viewCtrls,

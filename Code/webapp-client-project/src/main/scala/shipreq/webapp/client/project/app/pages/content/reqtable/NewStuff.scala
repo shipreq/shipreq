@@ -65,15 +65,15 @@ final class NewStuff(state        : State,
   private val buttonUpdate: Reusable[NewButton.Update] =
     modState.map(f =>
       NewButton.Update(
-        setState = s => f.modState(_.setSelection(s)),
-        create   = s => f.modState(_.toggle(s))))
+        select = s => f.modState(_.setSelection(s)),
+        click  = s => f.modState(_.toggle(s))))
 
   val buttonProps: NewButton.Props =
     state match {
       case State.Open(s) =>
         var b = NewButton.Props(Some(s), reqTypes, allowRCG, defaultType, Some(buttonUpdate))
         // If what we thought was open is no longer acceptable, proceed as if closed
-        if (b.selected.forall(_ !=* s))
+        if (b.dropdownProps.selected.forall(_ !=* s))
           b = b.copy(state = None)
         b
 

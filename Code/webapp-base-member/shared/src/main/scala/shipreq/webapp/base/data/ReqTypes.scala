@@ -130,6 +130,12 @@ final case class ReqTypes(custom: IMap[CustomReqTypeId, CustomReqType]) {
   lazy val all: NonEmptyVector[ReqType] =
     StaticReqType.values ++ custom.valuesIterator
 
+  lazy val allSortedByMnemonic: NonEmptyVector[ReqType] =
+    NonEmptyVector force all.whole.sortBy(_.mnemonic.value)
+
+  lazy val liveSortedByMnemonic: NonEmptyVector[ReqType] =
+    NonEmptyVector force allSortedByMnemonic.whole.filter(_.live is Live) // UC is always live. NEV.force is fine.
+
   lazy val idsRequiringImplication: Set[ReqTypeId] = {
     def customIds = custom.valuesIterator.filter(_.imp is ImplicationRequired).map(_.id).toSet
     Util.mergeSets(StaticReqType.requiringImplication, customIds)
