@@ -14,7 +14,7 @@ import nyaya.gen.Gen
 import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.test._
-import shipreq.webapp.client.project.app.cfg.shared._
+import shipreq.webapp.client.project.app.pages.config_old.shared._
 import RowStatus._
 
 object TestUtil extends WebappTestUtil with WebappTestEquality {

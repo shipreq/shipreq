@@ -4,11 +4,11 @@ import utest._
 import shipreq.webapp.base.event.Event.FieldCustomDelete
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.TestState._
-import shipreq.webapp.client.project.app.cfg.reqtypes.{CfgReqTypesDsl => CRT}
-import shipreq.webapp.client.project.app.reqtable.{ReqTableTestDsl => RT}
-import shipreq.webapp.client.project.app.reqdetail.{ReqDetailTestDsl => RD}
-import shipreq.webapp.client.project.app.root.{ProjectHomeTestDsl => PH}
-import shipreq.webapp.client.project.app.root.Routes.Page
+import shipreq.webapp.client.project.app.pages.config_old.reqtypes.{CfgReqTypesDsl => CRT}
+import shipreq.webapp.client.project.app.pages.content.reqtable.{ReqTableTestDsl => RT}
+import shipreq.webapp.client.project.app.pages.content.reqdetail.{ReqDetailTestDsl => RD}
+import shipreq.webapp.client.project.app.pages.root.{ProjectHomeTestDsl => PH}
+import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.test._
 import SampleProject.Values.priField
 import UnsafeTypes._

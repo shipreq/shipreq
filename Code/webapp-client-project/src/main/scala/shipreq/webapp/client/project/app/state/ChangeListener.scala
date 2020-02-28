@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.{Listenable, OnUnmount}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.EventSeqSummary
-import shipreq.webapp.client.project.app.cfg.shared.SavedRowStore
+import shipreq.webapp.client.project.app.pages.config_old.shared.SavedRowStore
 
 object ChangeListener {
 

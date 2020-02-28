@@ -15,11 +15,11 @@ import shipreq.webapp.base.protocol.ProjectSpaEntryPoint
 import shipreq.webapp.base.test.SampleProject5
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.user.Username
-import shipreq.webapp.client.project.app.cfg.reqtypes.{CfgReqTypesObs, CfgReqTypesDsl => CRT}
-import shipreq.webapp.client.project.app.issues.{IssuesPageObs, IssuesPageTestDsl => IP}
-import shipreq.webapp.client.project.app.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
-import shipreq.webapp.client.project.app.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
-import shipreq.webapp.client.project.app.root.{ProjectHomeTestDsl => PH, _}
+import shipreq.webapp.client.project.app.pages.config_old.reqtypes.{CfgReqTypesObs, CfgReqTypesDsl => CRT}
+import shipreq.webapp.client.project.app.pages.content.issues.{IssuesPageObs, IssuesPageTestDsl => IP}
+import shipreq.webapp.client.project.app.pages.content.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
+import shipreq.webapp.client.project.app.pages.content.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
+import shipreq.webapp.client.project.app.pages.root.{ProjectHomeTestDsl => PH, _}
 import shipreq.webapp.client.project.test._
 import LoadedRoot.Props
 import Routes.Page

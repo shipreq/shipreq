@@ -20,7 +20,7 @@ import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.base.protocol.WebSocket.ReadyState
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.ui.ReauthenticationModal
-import shipreq.webapp.client.project.app.root.ConnectionStatus
+import shipreq.webapp.client.project.app.pages.root.ConnectionStatus
 import shipreq.webapp.client.project.app.state.Global.State
 
 abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
