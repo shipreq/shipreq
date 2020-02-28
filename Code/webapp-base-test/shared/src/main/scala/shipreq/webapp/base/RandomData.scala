@@ -456,8 +456,8 @@ object RandomData {
     private val asciiSL     = (32.toChar to 127.toChar).toArray
     private val asciiML     = ('\n' :: '\r' :: asciiSL.toList).toArray
     private val highChars   = Gen.chooseInt(128, 255).map(_.toChar) // Gen.unicode // TODO Disabled due to PhantomJS-2.1.1-8 crashing
-            val genCharSL   = Gen.chooseGen(Gen chooseArray_! asciiSL)
-            val genCharML   = Gen.chooseGen(Gen chooseArray_! asciiML)
+            val genCharSL   = Gen.chooseGen(Gen chooseArray_! asciiSL, highChars)
+            val genCharML   = Gen.chooseGen(Gen chooseArray_! asciiML, highChars)
     private val literalStr  = genCharSL                       .string(1 to 24).map(_.replace('`', ' '))
     private val texStr      = genCharSL                       .string(1 to 20)
     private val webAddressR = charPred(Parsers.webAddressChar).string(1 to 30)
