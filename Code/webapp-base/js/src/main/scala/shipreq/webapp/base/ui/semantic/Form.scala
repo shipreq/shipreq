@@ -32,7 +32,7 @@ object Form {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   final case class TextField(label  : Option[TagMod],
-                             editor : VdomElement,
+                             editor : VdomNode,
                              error  : ValidationUX.Outcome[VdomElement],
                              enabled: Enabled = Enabled) extends Field {
     def setEnabled(e: Enabled) = copy(enabled = e)
@@ -53,7 +53,7 @@ object Form {
       */
     def highLevel[S](lens : Lens[S, String],
                      vali : Simple.Validator[String, _, _],
-                     input: TagMod => VdomTag = <.input.text(_),
+                     input: TagMod => VdomNode = <.input.text(_),
                      label: Option[TagMod]    = None): ValidationUX => StateSnapshot[S] => TextField =
       vux => ss => {
 
@@ -71,16 +71,74 @@ object Form {
         val error: ValidationUX.Outcome[VdomElement] =
           vux.outcomeD(vali(value)).map(GeneralTheme.renderSimpleInvalidity(_)(validationErr))
 
-        TextField(label, editor, error)
+        apply(label, editor, error)
       }
 
     /** Note: DO NOT use this with Reusability.
       * StateSnapshot + Lens + Reusability = NO!
       */
     def unvalidated[S](lens : Lens[S, String],
-                       input: TagMod => VdomTag = <.input.text(_),
+                       input: TagMod => VdomNode = <.input.text(_),
                        label: Option[TagMod]    = None): StateSnapshot[S] => TextField =
       highLevel(lens, Simple.Validator.id, input, label)(ValidationUX.Off)
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  final case class BooleanSegmentField(label  : VdomNode,
+                                       editor : VdomTag,
+                                       error  : ValidationUX.Outcome[VdomElement],
+                                       enabled: Enabled = Enabled) extends Field {
+    def setEnabled(e: Enabled) = copy(enabled = e)
+    override def render: VdomTag = {
+      val labelTag = <.label(label)
+      val ableness = Field.disabled.unless(enabled is Enabled)
+      val checkbox = <.div(^.cls := "ui checkbox", ableness, editor, labelTag)
+      val field =
+        error match {
+          case ValidationUX.Outcome.Valid            => Field.plain(checkbox)
+          case ValidationUX.Outcome.Invalid(None)    => Field.error(checkbox)
+          case ValidationUX.Outcome.Invalid(Some(e)) => Field.error(checkbox(e))
+        }
+      <.div(^.cls := "ui segment", field)
+    }
+  }
+
+  object BooleanSegmentField {
+    /** Note: DO NOT use this with Reusability.
+     * StateSnapshot + Lens + Reusability = NO!
+     */
+    def highLevel[S](label: VdomNode,
+                     lens : Lens[S, Boolean],
+                     vali : Simple.Validator[Boolean, _, _], // = Simple.Validator.id[Boolean],
+                     input: TagMod => VdomTag = <.input.checkbox(_),
+                    ): ValidationUX => StateSnapshot[S] => BooleanSegmentField =
+      vux => ss => {
+
+        val onChange: ReactEventFromInput => Callback =
+          _.extract(_.target.checked)(v => ss.modState(lens.set(vali.corrector.live(v))))
+
+        val checked: Boolean =
+          lens.get(ss.value)
+
+        val editor =
+          input(TagMod(
+            ^.checked := checked,
+            ^.onChange ==> onChange))
+
+        val error: ValidationUX.Outcome[VdomElement] =
+          vux.outcomeD(vali(checked)).map(GeneralTheme.renderSimpleInvalidity(_)(validationErr))
+
+        apply(label, editor, error)
+      }
+
+    /** Note: DO NOT use this with Reusability.
+     * StateSnapshot + Lens + Reusability = NO!
+     */
+    def unvalidated[S](label: VdomNode,
+                       lens : Lens[S, Boolean],
+                       input: TagMod => VdomTag = <.input.checkbox(_)): StateSnapshot[S] => BooleanSegmentField =
+      highLevel(label, lens, Simple.Validator.id, input)(ValidationUX.Off)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

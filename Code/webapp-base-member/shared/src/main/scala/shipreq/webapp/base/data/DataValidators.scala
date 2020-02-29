@@ -63,6 +63,11 @@ object DataValidators {
         Uniqueness.optionalKeyWithValue(data)(subject)
     }
 
+    object SubState {
+      def customIssueTypeIds(subject: Option[CustomIssueTypeId], customIssueTypes: CustomIssueTypeIMap): SubState[CustomIssueTypeId] =
+        SubState(subject, () => customIssueTypes.valuesIterator.map(t => Some(t.id) -> t.key))
+    }
+
     // DD-18: Hashtag-like refkeys (groupings, incmp) must match this format: /[A-Za-z0-9][A-Za-z0-9_-=.]*/
     val hashRefKey: Composite.Stateful[State, String, String, HashRefKey] =
       G.tailChars.validator
@@ -220,7 +225,10 @@ object DataValidators {
   object tag {
     import hashRefKey.SubState
 
-    final case class State(subject: Option[TagId], allTagData: () => TraversableOnce[Tag], customIssues: SubState[CustomIssueTypeId]) {
+    final case class State(subject     : Option[TagId],
+                           allTagData  : () => TraversableOnce[Tag],
+                           customIssues: SubState[CustomIssueTypeId]) {
+
       def hashRefKeyState: hashRefKey.State =
         hashRefKey.State(
           SubState(subject, () => allTagData().toIterator.filter(_.keyO.isDefined).map(t => (t.id.some, t.keyO.get))),
@@ -231,6 +239,14 @@ object DataValidators {
 
       def nameUniqueness: Invalidator[String] =
         Uniqueness.within(otherTagData.map(_.name))
+    }
+
+    object State {
+      def fromConfig(subject: Option[TagId], c: ProjectConfig): State =
+        State(
+          subject      = subject,
+          allTagData   = () => c.tags.tree.valuesIterator.map(_.tag),
+          customIssues = SubState.customIssueTypeIds(None, c.customIssueTypes))
     }
 
     def name: Composite.Stateful[State, String, String, String] =

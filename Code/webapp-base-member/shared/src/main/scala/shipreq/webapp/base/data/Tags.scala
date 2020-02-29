@@ -6,6 +6,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop.CycleDetector
 import monocle.Lens
 import monocle.macros.{GenLens, Lenses}
+import nyaya.util.Multimap
 import scala.annotation.tailrec
 import scala.collection.mutable
 import shipreq.base.util._
@@ -310,4 +311,21 @@ final case class Tags(tree: TagTree) {
   lazy val topLevelIds: Set[TagId] =
     TagTree.topLevelIds(tree)
 
+  lazy val directChildren: Multimap[TagId, Vector, TagId] =
+    Multimap(tree.mapValues(_.children))
+
+  lazy val directParents: Multimap[TagId, Set, TagGroupId] =
+    Multimap(
+      directChildren.reverseM[Set]
+        .iterator
+        .map(_.map2(_.iterator.filterSubType[TagGroupId].toSet)) // only TagGroups can have children - soft restriction atm
+        .filter(_._2.nonEmpty)
+        .toMap
+    )
+
+//  def relations(subject: TagId): MMTree.Relations[TagId] =
+//    MMTree.Relations(
+//      children = directChildren(subject),
+//      parents = directParents(subject),
+//    )
 }

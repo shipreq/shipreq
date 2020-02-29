@@ -341,9 +341,9 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
 
         case Page.CfgTags =>
           config.tags.TagConfig.Props(
-            tags = project.config.tags,
-            projectWidgets = projectWidgets,
-            state = StateSnapshot.zoomL(State.tagConfig)(s).setStateVia($)
+            project = project.config,
+            pw      = projectWidgets,
+            state   = StateSnapshot.zoomL(State.tagConfig)(s).setStateVia($)
           ).render
 
         case Page.ReqTable =>

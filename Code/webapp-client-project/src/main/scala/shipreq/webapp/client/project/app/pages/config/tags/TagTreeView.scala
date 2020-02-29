@@ -30,8 +30,6 @@ private[tags] object TagTreeView {
   implicit val reusabilityProps: Reusability[Props] =
     Reusability.derive
 
-  private val groupIcon = Icon.FolderOpen.tag(*.tagTreeGroupIcon)
-
   private val dragHandle: Enabled => VdomTag =
     Enabled.memo(e =>
       <.div(*.tagTreeDragHandle(e), "\u2630"))
@@ -69,11 +67,9 @@ private[tags] object TagTreeView {
             lis += <.li(
               *.tagTreeLI(liState),
               ^.key := id.value,
-              <.div(
+              Shared.group(group)(
                 *.tagTreeGroup(rowState(id)),
-                ^.onClick -->? p.select.map(_(id)),
-                groupIcon,
-                group.name),
+                ^.onClick -->? p.select.map(_(id))),
               subtree.whenDefined,
             )
           }

@@ -5,7 +5,8 @@ import japgolly.microlibs.utils.BiMap
 import monocle._
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable.Builder
-import scalaz.{Applicative, Functor}
+import scala.reflect.ClassTag
+import scalaz.{-\/, Applicative, Functor, \/, \/-}
 
 object Optics {
 
@@ -89,4 +90,21 @@ object Optics {
 
   def innerMapValue[A, B, C](a: A, b: B): Lens[Map[A, Map[B, C]], Option[C]] =
     innerMap[A, B, C](a) ^|-> mapValue(b)
+
+  def subtypeLens[C, A <: C: ClassTag](default: => A): Lens[C, A] =
+    Lens[C, A]({
+      case a: A => a
+      case _    => default
+    })(a => _ => a)
+
+  def coproductLens[C, A](attempt: PartialFunction[C, A],
+                          lift   : A => C,
+                          default: => A): Lens[C, A] =
+    Lens[C, A](attempt.applyOrElse(_, (_: C) => default))(a => _ => lift(a))
+
+  def disjunctionLensLeft[L, R](default: => L): Lens[L \/ R, L] =
+    coproductLens[L \/ R, L]({ case -\/(a) => a }, -\/(_), default)
+
+  def disjunctionLensRight[L, R](default: => R): Lens[L \/ R, R] =
+    coproductLens[L \/ R, R]({ case \/-(a) => a }, \/-(_), default)
 }

@@ -8,6 +8,7 @@ import monocle.macros.Lenses
 import scala.reflect.ClassTag
 import shipreq.webapp.base.data._
 import scalacss.ScalaCssReact._
+import scalaz.{-\/, \/, \/-}
 import shipreq.webapp.client.project.app.Style.widgets.{splitScreenCrud => *}
 
 
@@ -63,14 +64,15 @@ object SplitScreenCrud {
     }
   }
 
-  final case class EditorArgs[+Id, S](id   : Option[Id],
-                                      state: StateSnapshot[S],
-                                      close: Callback)
+  final case class EditorArgs[+N, +Id, S](id   : N \/ Id,
+                                          state: StateSnapshot[S],
+                                          close: Callback)
 
-  final case class Props[N, Id, E](newButton: NewArgs[N] => VdomNode,
-                                   list     : ListArgs[Id] => VdomNode,
-                                   editor   : EditorArgs[Id, E] => VdomNode,
-                                   state    : StateSnapshot[State[N, Id, E]])
+  final case class Props[N, Id, E](newButton : NewArgs[N] => VdomNode,
+                                   list      : ListArgs[Id] => VdomNode,
+                                   editor    : EditorArgs[N, Id, E] => VdomNode,
+                                   initEditor: Id => CallbackTo[E],
+                                   state     : StateSnapshot[State[N, Id, E]])
 
   @Lenses
   final case class State[N, Id, E](newState  : N,
@@ -108,9 +110,8 @@ object SplitScreenCrud {
 final class SplitScreenCrud[
     NewState,
     Id         : ClassTag : Reusability,
-    EditorState: ClassTag : Reusability,
+    EditorState,
   ](
-    initEditor: Id => CallbackTo[EditorState],
     rightEmpty: VdomNode,
   ) {
 
@@ -120,13 +121,14 @@ final class SplitScreenCrud[
   type State      = SplitScreenCrud.State[NewState, Id, EditorState]
   type NewArgs    = SplitScreenCrud.NewArgs[NewState]
   type ListArgs   = SplitScreenCrud.ListArgs[Id]
-  type EditorArgs = SplitScreenCrud.EditorArgs[Id, EditorState]
+  type EditorArgs = SplitScreenCrud.EditorArgs[NewState, Id, EditorState]
 
-  @inline def apply(newButton: NewArgs    => VdomNode,
-                    list     : ListArgs   => VdomNode,
-                    editor   : EditorArgs => VdomNode,
-                    state    : StateSnapshot[State]): VdomNode =
-    Component(SplitScreenCrud.Props(newButton, list, editor, state))
+  @inline def apply(newButton : NewArgs    => VdomNode,
+                    list      : ListArgs   => VdomNode,
+                    editor    : EditorArgs => VdomNode,
+                    initEditor: Id => CallbackTo[EditorState],
+                    state     : StateSnapshot[State]): VdomNode =
+    Component(SplitScreenCrud.Props(newButton, list, editor, initEditor, state))
 
   def initState(newState: NewState): State =
     S(newState, HideDead, S.Right.Empty)
@@ -145,10 +147,10 @@ final class SplitScreenCrud[
       Reusable.byRef(
         id =>
           for {
-            editorState <- initEditor(id)
+            p           <- $.props
+            editorState <- p.initEditor(id)
             right        = S.Right.Update(id, editorState)
-            props       <- $.props
-            _           <- props.state.modState(_.copy(right = right))
+            _           <- p.state.modState(_.copy(right = right))
           } yield ()
       )
 
@@ -207,10 +209,10 @@ final class SplitScreenCrud[
             None
 
           case S.Right.Create(es) =>
-            Some(SplitScreenCrud.EditorArgs(None, StateSnapshot.withReuse(es)(setCreateState), closeEditor))
+            Some(SplitScreenCrud.EditorArgs(-\/(s.newState), StateSnapshot(es)(setCreateState), closeEditor))
 
           case S.Right.Update(id, es) =>
-            Some(SplitScreenCrud.EditorArgs(Some(id), StateSnapshot.withReuse(es)(setUpdateState(id)), closeEditor))
+            Some(SplitScreenCrud.EditorArgs(\/-(id), StateSnapshot(es)(setUpdateState(id)), closeEditor))
         }
 
       val left: VdomNode =
@@ -225,7 +227,7 @@ final class SplitScreenCrud[
           case None =>
             React.Fragment(
               renderRightEmpty(On),
-              // TODO lastEditorOff
+              // TODO capture lastEditor - use with .rightOff
             )
 
           case Some(args) =>

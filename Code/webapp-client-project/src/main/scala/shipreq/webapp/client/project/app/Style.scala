@@ -799,6 +799,16 @@ object Style extends StyleSheet.Inline {
       marginLeft(-2 ex),
       mixinIf(e is Enabled)(cursor.grab),
     ))
+
+    val editorTitle = style(
+      color(c"#3659e2"),
+      marginBottom(2 rem),
+    )
+
+    val segmentCheckboxSubtitle = style(
+      marginTop(0.5 em),
+      opacity(0.55),
+    )
   }
 
   // ===================================================================================================================
