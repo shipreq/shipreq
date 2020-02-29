@@ -54,6 +54,7 @@ final case class ApplicableTag(id  : ApplicableTagId,
  * FR-253: BA shall be able to specify that a grouping's children are mutually-exclusive (like an enum or sum-type).
  * FR-254: BA shall be able to track when two or more enum-groupings (FR-253) (or its children) are applied to the same req.
  */
+@deprecated("delete", "")
 sealed trait MutexChildren extends IsoBool[MutexChildren] {
   override final def companion = MutexChildren
 }

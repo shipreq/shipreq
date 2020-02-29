@@ -85,6 +85,10 @@ Phase 3A
     * ability to create child tag in 1-step instead of 2 [FB-4]
   * add tag colours [FR-8]
   * prevent ap-tags having children
+  * remove key from TagGroups, check all Tag fields against UI prototype
+  * restore -deprecation
+  * remove MutexChildren
+  * remove config_old
 
 * Fields
   * redo config screen
