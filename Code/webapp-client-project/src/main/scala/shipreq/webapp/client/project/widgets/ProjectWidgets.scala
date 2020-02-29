@@ -362,6 +362,9 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Public additions not part of ProjectText
 
+  val tag: ApplicableTagId => VdomTag =
+    tagPlain(Valid)
+
   def useCaseStepTextAndMaybeInvalidFlow[C[x] <: Traversable[x]](s: UseCaseStepFlowText.TextAndFlow[AnyOptional, C[String \/ UseCaseStepId]],
                                                                  l: Live): VdomTag = {
     /** eg. "1.p" instead of "1.0" */

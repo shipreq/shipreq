@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react.vdom.html_<^.{^ => ^^, _}
+import japgolly.univeq._
 import shipreq.webapp.base.CssSettings._
 import shipreq.base.util._
 import shipreq.webapp.base.text.Grammar
@@ -32,6 +33,8 @@ object Style extends StyleSheet.Inline {
 
     val ucStepIndent = Domain.ofRange(0 until StaticField.useCaseStepTrees.iterator.map(_.maxDepth).max)
   }
+
+  protected final val animSpeed = ".4s"
 
   private def monospace =
     fontFamily :=! "monospace"
@@ -691,6 +694,113 @@ object Style extends StyleSheet.Inline {
   }
 
   // ===================================================================================================================
+  object tagConfig {
+
+    sealed trait RowState
+    object RowState {
+      case object Disabled extends RowState
+      case object Enabled  extends RowState
+      case object Selected extends RowState
+
+      implicit def univEq: UnivEq[RowState] = UnivEq.derive
+
+      val domain: Domain[RowState] =
+        Domain.ofValues(Disabled, Enabled, Selected)
+    }
+
+    sealed trait LIState {
+      val topLevel: Boolean
+    }
+
+    object LIState {
+      final case class Group(topLevel: Boolean)                                              extends LIState
+      final case class Tag  (rowState: RowState, topLevel: Boolean, firstAfterGroup: Boolean) extends LIState
+
+      implicit def univEq: UnivEq[LIState] = UnivEq.derive
+
+      import Domain.{boolean => B}
+
+      val domain: Domain[LIState] =
+        Domain.ofValues(
+          B.map(Group).iterator.toSeq ++
+          (RowState.domain *** B *** B).map{case ((a, b), c) => Tag(a, b, c)}.iterator.toSeq
+          : _*
+        )
+    }
+
+    val tagTree = style(
+      margin(`0`),
+      paddingLeft(`0`),
+    )
+
+    val tagSubTree = style(
+      paddingLeft(6.5 ex),
+    )
+
+    private val borderColor = Color("#2224261a")
+
+    private val liGapTop = mixin(
+      marginTop(1.25 em),
+      borderTop(solid, 1 px, borderColor),
+    )
+
+    private def tagOrGroup(rowState: RowState) = mixin(
+      transition := s"all $animSpeed",
+      borderTop(solid, 1 px, if (rowState ==* RowState.Selected) c"#3659e2" else c"#fff"),
+      borderBottom(solid, 1 px, if (rowState ==* RowState.Selected) c"#3659e2" else c"#fff").important,
+      rowState match {
+        case RowState.Disabled => styleS(
+          opacity(0.4),
+        )
+        case RowState.Enabled  => styleS(
+          cursor.pointer,
+          &.hover(backgroundColor(c"#fffad7").important),
+        )
+        case RowState.Selected => styleS(
+          backgroundColor(Color("#869df91f")),
+        )
+      }
+    )
+
+    val tagTreeLI = styleF(LIState.domain)(s => styleS(
+      listStyleType := "none",
+      s match {
+
+        case g: LIState.Group =>
+          styleS(
+            mixinIf(g.topLevel)(&.not(_.firstChild)(liGapTop)),
+          )
+
+        case t: LIState.Tag =>
+          styleS(
+            paddingTop(.5 em),
+            paddingBottom(.5 em),
+            tagOrGroup(t.rowState),
+            mixinIf(t.topLevel && t.firstAfterGroup)(liGapTop),
+            &.not(_.lastChild)(borderBottom(solid, 1 px, borderColor))
+          )
+      },
+    ))
+
+    val tagTreeGroup = styleF(RowState.domain)(s => styleS(
+      fontSize(120 %%),
+      padding(0.4 em, `0`),
+      tagOrGroup(s),
+    ))
+
+    val tagTreeGroupIcon = style(
+      marginRight(0.4 ex).important,
+    )
+
+    val tagTreeDragHandle = styleF(D.enabled)(e => styleS(
+      display.inline,
+      padding(.5 em, 1 ex, 0.5 em, 2 ex),
+      marginLeft(-2 ex),
+      mixinIf(e is Enabled)(cursor.grab),
+    ))
+  }
+
+  // ===================================================================================================================
   object widgets {
 
     private val refColour = color(c"#2363A1")
@@ -858,8 +968,6 @@ object Style extends StyleSheet.Inline {
     object splitScreenCrud {
       import splitScreen.maxBodyWidth
 
-      protected final val animSpeed = ".4s"
-
       val emptyRight = style(
         display.flex,
         flexDirection.column,
@@ -954,6 +1062,7 @@ object Style extends StyleSheet.Inline {
     reqtable.savedViews.activeItem,
     reqdetail.detailTable,
     reqdetail.useCaseStep.container,
+    tagConfig.tagTree,
     widgets.issueDesc,
     widgets.reqTypeSelector.dropdown,
     widgets.splitScreen.left,

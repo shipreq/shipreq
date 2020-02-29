@@ -76,6 +76,9 @@ abstract class DataReusability extends BaseReusability {
   implicit def reusabilityTagTree: Reusability[TagTree] =
     Reusability.byRef
 
+  implicit def reusabilityTags: Reusability[Tags] =
+    Reusability.derive
+
   implicit def reusabilityCustomFields: Reusability[FieldSet.CustomFields] =
     reusabilityByRefOrEqual
 

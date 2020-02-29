@@ -45,7 +45,6 @@ section.gap2 {
   cursor:grab;
 }
 #tagtree > li.group:not(:first-child), #tagtree > li.tag.first_after_group {
-  margin-top: 1.25em;
   border-top: solid 1px #2224261a;
 }
 #tagtree > li:not(:first-child) {
@@ -57,8 +56,6 @@ section.gap2 {
 }
 .tagtree li.tag {
   padding-top: .5em;
-}
-#tagtree li.tag {
   padding-bottom: .5em;
 }
 .tagtree .group i {
@@ -66,8 +63,6 @@ section.gap2 {
 }
 #tagtree .group > div {
   font-size: 120%;
-}
-.tagtree .group > div {
   padding:0.4em 0;
 }
 #tagtree li.group > div, #tagtree li.tag {
@@ -83,9 +78,10 @@ section.gap2 {
   border-bottom:solid 1px #3659e2!important;
 }
 #tagtree.has-selection .tag:not(.selected),
-#tagtree.has-selection .group > div:not(.selected) { opacity:.4 }
-#tagtree.has-selection .tag:not(.selected),
-#tagtree.has-selection .group > div:not(.selected) { transition: all .4s }
+#tagtree.has-selection .group > div:not(.selected) {
+  opacity:.4;
+  transition: all .4s;
+}
 .tagtree li {
   clear: both;
 }

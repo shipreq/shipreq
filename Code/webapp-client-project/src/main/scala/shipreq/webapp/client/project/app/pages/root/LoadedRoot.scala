@@ -292,12 +292,14 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
 
     def render(p: Props, s: State): VdomElement = {
       lazy val editAsyncState = s.editAsync.toRead
-      def createR       = CreateFeature.Read.ForProject(s.create, pxCreateEditability.value(), s.createAsync.toRead)
-      def createRW      = createW.toReadWrite(createR)
-      def renderFeature = pxRenderFeatureText.value()(s.filterDead)
-      def editR         = EditorFeature.Read.ForProject(s.edit, renderFeature, pxEditEditability.value(), editAsyncState.mapKey1(AsyncKey.ToEditor))
-      def editRW        = editW.toReadWrite(editR)
-      def filterDeadSS  = StateSnapshot.withReuse(s.filterDead)(setFilterDead)
+      def createR        = CreateFeature.Read.ForProject(s.create, pxCreateEditability.value(), s.createAsync.toRead)
+      def createRW       = createW.toReadWrite(createR)
+      def renderFeature  = pxRenderFeatureText.value()(s.filterDead)
+      def editR          = EditorFeature.Read.ForProject(s.edit, renderFeature, pxEditEditability.value(), editAsyncState.mapKey1(AsyncKey.ToEditor))
+      def editRW         = editW.toReadWrite(editR)
+      def filterDeadSS   = StateSnapshot.withReuse(s.filterDead)(setFilterDead)
+      def project        = unsafeProject()
+      def projectWidgets = pxProjectWidgets.value.value()
       // def previewRW = previewW.toReadWrite(s.preview)
 
       val body: VdomElement = p.page match {
@@ -305,10 +307,10 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
         case Page.Index =>
           val lookup = ReqLookupPrompt.Props(
             StateSnapshot.zoomL(State.reqLookup)(s).setStateVia($),
-            Allow when _.lookup(unsafeProject()).isRight,
+            Allow when _.lookup(project).isRight,
             e => routerCtl.set(Page.ReqDetail(e)))
 
-          val index = ProjectIndex.Props(unsafeProject().issues.count, lookup, routerCtl)
+          val index = ProjectIndex.Props(project.issues.count, lookup, routerCtl)
 
           val pname = ProjectItem.WithEditableName.Props(
             cbProjectMetaData.runNow(),
@@ -339,6 +341,8 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
 
         case Page.CfgTags =>
           config.tags.TagConfig.Props(
+            tags = project.config.tags,
+            projectWidgets = projectWidgets,
             state = StateSnapshot.zoomL(State.tagConfig)(s).setStateVia($)
           ).render
 
@@ -365,7 +369,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
           reqDetail(props)
 
         case Page.ImpGraph =>
-          val p = unsafeProject()
+          val p = project
           val g = ImplicationGraph.Props(
             None, s.filterDead,
             p.content.implications, p.content.reqs, p.config.reqTypes,

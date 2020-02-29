@@ -47,10 +47,20 @@ object SplitScreenCrud {
     final case class Enabled [S](state: StateSnapshot[S]) extends NewArgs[S]
   }
 
-  sealed trait ListArgs[Id]
+  sealed trait ListArgs[Id] {
+    def selection: Option[Id]
+    def enabledSelect: Option[Id ~=> Callback]
+  }
+
   object ListArgs {
-    final case class Disabled[Id](selection: Option[Id])  extends ListArgs[Id]
-    final case class Enabled [Id](select: Id => Callback) extends ListArgs[Id]
+    final case class Disabled[Id](selection: Option[Id]) extends ListArgs[Id] {
+      override def enabledSelect = None
+    }
+
+    final case class Enabled[Id](select: Id ~=> Callback) extends ListArgs[Id] {
+      override def selection = None
+      override def enabledSelect = Some(select)
+    }
   }
 
   final case class EditorArgs[+Id, S](id   : Option[Id],
@@ -131,14 +141,16 @@ final class SplitScreenCrud[
 
   sealed class Backend($: BackendScope[Props, Unit]) {
 
-    private val select: Id => Callback =
-      id =>
-        for {
-          editorState <- initEditor(id)
-          right        = S.Right.Update(id, editorState)
-          props       <- $.props
-          _           <- props.state.modState(_.copy(right = right))
-        } yield ()
+    private val select: Id ~=> Callback =
+      Reusable.byRef(
+        id =>
+          for {
+            editorState <- initEditor(id)
+            right        = S.Right.Update(id, editorState)
+            props       <- $.props
+            _           <- props.state.modState(_.copy(right = right))
+          } yield ()
+      )
 
     private def modEditorState(f: (State, EditorState) => State): StateSnapshot.SetFn[EditorState] =
       (os2, cb) =>
