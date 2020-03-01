@@ -47,6 +47,11 @@ trait IsoBool[B <: IsoBool[B]] extends (Boolean <=> B) with Product with Seriali
   final def isoWhen(b: Boolean): Iso[B, Boolean] =
     if (b) Iso(from)(to) else (!this).isoWhen(true)
 
+  final def isoWhen[A <: IsoBool[A]](a: A): Iso[A, B] =
+    Iso[A, B](
+      i => if (i.is(a)) this else !this)(
+      i => if (i.is(this)) a else !a)
+
   final def whenAllAre(bs: B*): B =
     this when bs.forall(is)
 

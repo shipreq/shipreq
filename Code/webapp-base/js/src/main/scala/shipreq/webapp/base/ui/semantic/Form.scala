@@ -5,7 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import monocle.Lens
+import monocle.{Iso, Lens}
 import shipreq.base.util.{Identity, Validity}
 import shipreq.webapp.base.data.{Disabled, Enabled, On}
 import shipreq.webapp.base.lib.ValidationUX
@@ -64,6 +64,9 @@ object Form {
 
     final def xmap[B](f: A => B)(g: B => A): Field[B] =
       Field.Xmap(this, f, g)
+
+    final def imap[B](i: Iso[A, B]): Field[B] =
+      xmap(i.get)(i.reverseGet)
   }
 
   object Field {
@@ -201,25 +204,30 @@ object Form {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    def boolean(tagMod: TagMod): Field[Boolean] =
-      generic(false, null){ f =>
+    def checkbox(tagMod: TagMod): Field[On] =
+      generic(!On, null) { f =>
         import f._
 
         val onChange: On => Callback =
-          on => {
-            val b = on is On
-            updater(validator.fold(b)(_.corrector.live(b)))
-          }
+          on => updater(validator.fold(on)(_.corrector.live(on)))
 
         val checkbox =
           Input.Checkbox(
-            on = On.when(value),
+            on     = value,
             change = onChange,
-            label = label,
+            label  = label,
           )
 
         TagMod(checkbox, tagMod)
       }
+
+    lazy val checkbox: Field[On] =
+      checkbox(TagMod.empty)
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    def boolean(tagMod: TagMod): Field[Boolean] =
+      checkbox(tagMod).imap(On.isoWhen(true))
 
     lazy val boolean: Field[Boolean] =
       boolean(TagMod.empty)

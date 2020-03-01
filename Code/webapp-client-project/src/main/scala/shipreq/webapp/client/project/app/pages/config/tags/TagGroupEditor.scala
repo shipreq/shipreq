@@ -67,8 +67,8 @@ private[tags] object TagGroupEditor {
 //    implicit val reusability: Reusability[State] =
 //      Reusability.derive
 
-    val exclusive: Lens[State, Boolean] =
-      exclusivity ^<-> Exclusive.isoWhen(true)
+    val exclusive: Lens[State, On] =
+      exclusivity ^<-> On.isoWhen(Exclusive)
   }
 
   private implicit def vux = ValidationUX.Full
@@ -104,7 +104,7 @@ private[tags] object TagGroupEditor {
           .withValidator(DataValidators.tag.name.unnamedFn(vs))
 
       val exclusivityField =
-        Form.Field.boolean
+        Form.Field.checkbox
           .asSegment
           .withLabel(exclusivityLabel)
           .withState(p.state.zoomStateL(State.exclusive))
