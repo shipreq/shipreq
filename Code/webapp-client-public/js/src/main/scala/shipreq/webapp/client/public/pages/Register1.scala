@@ -48,6 +48,8 @@ object Register1 {
       State("", None, false)
   }
 
+  private implicit def validationUX = ValidationUX.Off
+
   final class Backend($: BackendScope[Props, Unit]) {
 
     private def submitCB(p: Props): Option[Callback] =
@@ -67,12 +69,12 @@ object Register1 {
 
     private val submitOnEnter = GeneralTheme.submitOnEnter(attemptSubmit)
 
-    private val fieldEmail = Form.TextField.highLevel(
-      State.email,
-      UserValidators.emailAddr.unnamed,
-      m => Input.Text.icon(Icon.Mail.tag, <.input.email(m, ^.autoComplete.email, ^.autoFocus := true, submitOnEnter)),
-      Some(CommmonUiText.emailAddr))(
-      ValidationUX.Off)
+    private val fieldEmail =
+      Form.Field.text
+        .withLabel(CommmonUiText.emailAddr)
+        .withEditor(m => Input.Text.icon(Icon.Mail.tag, <.input.email(m, ^.autoComplete.email, ^.autoFocus := true, submitOnEnter)))
+        .withValidator(UserValidators.emailAddr.unnamed)
+        .withStateLens(State.email)
 
     private def renderForm(p: Props): VdomElement = {
       val s = p.state.value
@@ -82,8 +84,8 @@ object Register1 {
 
       <.form(*.part1,
         Form(
-          fieldEmail(p.state).setEnabled(s.formEnabled),
-          Form.NotAField(<.div(*.submitCont, submitButton))))
+          fieldEmail(p.state).withEnabled(s.formEnabled),
+          Form.Field.replacement(<.div(*.submitCont, submitButton))))
     }
 
     private def renderSuccess: VdomElement =

@@ -281,6 +281,9 @@ object Generic {
     def id[A]: Auditor[Nothing, A, A] =
       Auditor(\/-(_))
 
+    def fail[A]: Auditor[A, A, A] =
+      Auditor(-\/(_))
+
     def choose[E, C, V](f: C => Auditor[E, C, V]): Auditor[E, C, V] =
       Auditor(c => f(c).audit(c))
 
@@ -431,6 +434,9 @@ object Generic {
   object Validator {
     def id[A]: Validator[Nothing, A, A, A] =
       Validator(Corrector.id, Auditor.id)
+
+    def fail[A]: Validator[A, A, A, A] =
+      Validator(Corrector.id, Auditor.fail)
 
     def choose[E, I, V](f: I => Validator[E, I, I, V]): Validator[E, I, I, V] =
       Validator(Corrector.choose(f.andThen(_.corrector)), Auditor.choose(f.andThen(_.auditor)))

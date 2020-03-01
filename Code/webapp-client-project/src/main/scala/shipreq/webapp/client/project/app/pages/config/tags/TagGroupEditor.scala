@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.app.pages.config.tags
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
@@ -70,7 +71,7 @@ private[tags] object TagGroupEditor {
       exclusivity ^<-> Exclusive.isoWhen(true)
   }
 
-  private def vux = ValidationUX.Full
+  private implicit def vux = ValidationUX.Full
 
   final class Backend($: BackendScope[Props, Unit]) {
 
@@ -97,24 +98,22 @@ private[tags] object TagGroupEditor {
       val vs = DataValidators.tag.State.fromConfig(s.source.map(_.id), p.project)
 
       val nameField =
-        Form.TextField.highLevel(
-          lens  = State.name,
-          vali  = DataValidators.tag.name.unnamedFn(vs),
-          label = Some("Name"),
-        )(vux)(p.state)
+        Form.Field.text
+          .withLabel("Name")
+          .withState(p.state.zoomStateL(State.name))
+          .withValidator(DataValidators.tag.name.unnamedFn(vs))
 
       val exclusivityField =
-        Form.BooleanSegmentField.unvalidated(
-          label = exclusivityLabel,
-          lens  = State.exclusive,
-        )(p.state)
+        Form.Field.booleanSegment
+          .withLabel(exclusivityLabel)
+          .withState(p.state.zoomStateL(State.exclusive))
 
       val descField =
-        AutosizeTextarea.SemanticUiFormField.highLevel(
-          lens  = State.desc,
-          vali  = DataValidators.tag.desc.unnamedFn(vs),
-          label = Some("Description"),
-        )(vux)(p.state)
+        Form.Field.text
+          .withEditor(AutosizeTextarea.editor)
+          .withLabel("Description")
+          .withState(p.state.zoomStateL(State.desc))
+          .withValidator(DataValidators.tag.desc.unnamedFn(vs))
 
       <.div(
         header,

@@ -11,7 +11,7 @@ import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Disabled, Enabled, TCB}
 import shipreq.webapp.base.feature.AsyncFeature
-import shipreq.webapp.base.lib.BrowserStorage
+import shipreq.webapp.base.lib.{BrowserStorage, ValidationUX}
 import shipreq.webapp.base.protocol.CommonProtocols.Login.Request
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.GeneralTheme
@@ -101,6 +101,8 @@ object Login {
   final case class ErrorFlash(title: String, content: String)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private implicit def validationUX = ValidationUX.Off
 
   final class Backend($: BackendScope[Props, Unit]) {
 
@@ -192,21 +194,23 @@ object Login {
       )
 
     private val refUser = Ref[html.Input]
-    private val fieldUser = Form.TextField.unvalidated(
-      State.usernameOrEmail,
-      m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoComplete.usernameEmail, m, submitOnEnter).withRef(refUser)),
-      Some(CommmonUiText.usernameOrEmail))
+    private val fieldUser =
+      Form.Field.text
+        .withLabel(CommmonUiText.usernameOrEmail)
+        .withEditor(m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoComplete.usernameEmail, m, submitOnEnter).withRef(refUser)))
+        .withStateLens(State.usernameOrEmail)
 
     private val refPassword = Ref[html.Input]
-    private val fieldPassword = Form.TextField.unvalidated(
-      State.password,
-      m => Input.Text.icon(Icon.Lock.tag, <.input.password(^.autoComplete.currentPassword, m, submitOnEnter).withRef(refPassword)),
-      Some(
-        <.div(*.passwordLabel,
-          <.div(CommmonUiText.password),
-          <.a(*.forgotPassword, "Forgot password?", ^.onClick --> onForgotPassword))))
+    private val fieldPassword =
+      Form.Field.text
+        .withLabel(
+          <.div(*.passwordLabel,
+            <.div(CommmonUiText.password),
+            <.a(*.forgotPassword, "Forgot password?", ^.onClick --> onForgotPassword)))
+        .withEditor(m => Input.Text.icon(Icon.Lock.tag, <.input.password(^.autoComplete.currentPassword, m, submitOnEnter).withRef(refPassword)))
+        .withStateLens(State.password)
 
-    private val textFields: NonEmptyVector[StateSnapshot[State] => Form.TextField] =
+    private val textFields: NonEmptyVector[StateSnapshot[State] => Form.Field[String]] =
       NonEmptyVector(fieldUser, fieldPassword)
 
     def render(p: Props): VdomElement =
@@ -221,7 +225,7 @@ object Login {
       val errorMsg: Option[VdomTag] =
         s.errorFlash.map(e => Message(Message.Style(Message.Type.Error), Icon.Ban, e.title, e.content))
 
-      var fields = textFields.map[Form.Field](_ (p.state))
+      var fields = textFields.map[Form.Field[_]](_(p.state))
       if (p.formEnabled is Disabled)
         fields = fields.map(_.disable)
 
@@ -233,12 +237,12 @@ object Login {
           <.div(*.rememberMe, Input.Checkbox.fromStateSnapshot(State.rememberMe, p.state, "Remember me")),
           <.div(*.submitCont, submitButton))
 
-      fields :+= Form.NotAField(bottomRow)
+      fields :+= Form.Field.replacement(bottomRow)
 
       // Using an array so that React preserves the form and input focus
       val array = VdomArray.empty()
       errorMsg.foreach(e => array += e(^.key := "e"))
-      array += Form(fields)(^.key := "f")
+      array += Form(fields).apply(^.key := "f")
 
       <.form(*.part1, array)
     }

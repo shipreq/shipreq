@@ -2,6 +2,7 @@ package shipreq.webapp.client.public.pages
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
@@ -64,22 +65,25 @@ object LandingPage {
 
   final class Backend($: BackendScope[Props, Unit]) {
 
-    val fieldName = Form.TextField.highLevel(
-      State.req ^|-> Request.Untyped.name,
-      Request.validatorName,
-      m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoComplete.name, ^.placeholder := Request.labelName, m)))
+    private val fieldName =
+      Form.Field.text
+        .withEditor(m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoComplete.name, ^.placeholder := Request.labelName, m)))
+        .withValidator(Request.validatorName)
+        .withStateLens(Request.Untyped.name)
 
-    val fieldEmail = Form.TextField.highLevel(
-      State.req ^|-> Request.Untyped.email,
-      Request.validatorEmail,
-      m => Input.Text.icon(Icon.Mail.tag, <.input.email(^.autoComplete.email, ^.placeholder := Request.labelEmail, m)))
+    private val fieldEmail =
+      Form.Field.text
+        .withEditor(m => Input.Text.icon(Icon.Mail.tag, <.input.email(^.autoComplete.email, ^.placeholder := Request.labelEmail, m)))
+        .withValidator(Request.validatorEmail)
+        .withStateLens(Request.Untyped.email)
 
-    val fieldMsg = Form.TextField.highLevel(
-      State.req ^|-> Request.Untyped.msg,
-      Request.validatorMsg,
-      <.textarea(^.rows := 12, ^.placeholder := "What would you like to say?")(_))
+    private val fieldMsg =
+      Form.Field.text
+        .withEditor(<.textarea(^.rows := 12, ^.placeholder := "What would you like to say?", _))
+        .withValidator(Request.validatorMsg)
+        .withStateLens(Request.Untyped.msg)
 
-    val textTields: NonEmptyVector[ValidationUX => StateSnapshot[State] => Form.Field] =
+    private val textTields: NonEmptyVector[StateSnapshot[Request.Untyped] => Form.Field[_]] =
       NonEmptyVector(fieldName, fieldEmail, fieldMsg)
 
     def submit(p: Props, r: Request): Callback = {
@@ -114,22 +118,25 @@ object LandingPage {
           p.state.modState(State.vux set ValidationUX.Highlight),
           s.req.validate.toOption.map(submit(p, _)))
 
-      var fields = textTields.map(_(s.vux)(p.state))
+      val reqSS = p.state.zoomStateL(State.req)
 
-      fields :+= Form.BasicField.centered(
-        Input.Checkbox.fromStateSnapshot(
-          State.req ^|-> Request.Untyped.newsletter,
-          p.state,
-          "Subscribe to newsletter"))
+      var fields = textTields.map(_(reqSS))
 
-      fields :+= Form.BasicField.centered(
-        GeneralTheme.submitButton("Express Interest", onSubmit, inFlight = inFlight))
+      fields :+=
+        Form.Field.booleanCentered
+          .withLabel("Subscribe to newsletter")
+          .withState(reqSS zoomStateL Request.Untyped.newsletter)
+
+      fields :+=
+        Form.Field.around(
+          ^.textAlign.center,
+          GeneralTheme.submitButton("Express Interest", onSubmit, inFlight = inFlight))
 
       if (enabled is Disabled)
         fields = fields.map(_.disable)
 
       <.div(*.formCont,
-        <.form(*.form, Form(fields)))
+        <.form(*.form, Form(fields)(s.vux)))
     }
 
     def render(p: Props): VdomElement =

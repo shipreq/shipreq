@@ -47,6 +47,8 @@ object ResetPassword {
       State("", "", None, None)
   }
 
+  private implicit def validationUX = ValidationUX.Full
+
   final class Backend($: BackendScope[Props, State]) {
 
     val asyncW: AsyncFeature.Write.D0[ErrorMsg] =
@@ -71,32 +73,35 @@ object ResetPassword {
 
     val submitOnEnter = GeneralTheme.submitOnEnter(attemptSubmit)
 
-    val fieldPassword1 = Form.TextField.highLevel(
-      State.password1,
-      UserValidators.password.unnamed,
-      m => Input.Text.icon(Icon.Lock.tag, <.input.password(m, ^.autoComplete.newPassword, ^.autoFocus := true, submitOnEnter)),
-      Some("New password"))(ValidationUX.Full)
+    val fieldPassword1 =
+      Form.Field.text
+        .withLabel("New password")
+        .withEditor(m => Input.Text.icon(Icon.Lock.tag, <.input.password(m, ^.autoComplete.newPassword, ^.autoFocus := true, submitOnEnter)))
+        .withValidator(UserValidators.password.unnamed)
+        .withStateLens(State.password1)
 
     def renderForm(p: Props, s: State): VdomElement = {
 
-      val fieldPassword2 = Form.TextField.highLevel(
-        State.password2,
-        UserValidators.password2(s.password1),
-        m => Input.Text.icon(Icon.Lock.tag, <.input.password(m, ^.autoComplete.newPassword, submitOnEnter)),
-        Some("Confirm new password"))(ValidationUX.Highlight)
+      val fieldPassword2 =
+        Form.Field.text
+          .withLabel("Confirm new password")
+          .withEditor(m => Input.Text.icon(Icon.Lock.tag, <.input.password(m, ^.autoComplete.newPassword, submitOnEnter)))
+          .withValidator(UserValidators.password2(s.password1))
+          .withValidationUX(ValidationUX.Highlight)
+          .withStateLens(State.password2)
 
       val submitButton =
         GeneralTheme.submitButton("Change Password", submitCB(p, s), inFlight = s.inFlight)
 
       val ss = StateSnapshot(s).setStateVia($)
 
-      var fields: NonEmptyVector[Form.Field] =
+      var fields: NonEmptyVector[Form.Field[_]] =
         NonEmptyVector(fieldPassword1, fieldPassword2).map(_(ss))
 
       if (s.formEnabled is Disabled)
         fields = fields.map(_.disable)
 
-      fields :+= Form.NotAField(<.div(*.submitCont, submitButton))
+      fields :+= Form.Field.replacement(<.div(*.submitCont, submitButton))
 
       <.form(*.part1, Form(fields))
     }

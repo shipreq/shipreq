@@ -44,13 +44,18 @@ object Input {
 
   object Checkbox {
 
-    def apply(on: On,
+    def apply(on    : On,
               change: On => Callback,
-              label: TagMod): VdomTag = {
+              label : TagMod): VdomTag =
+      apply(on, change, Some(label))
+
+    def apply(on    : On,
+              change: On => Callback,
+              label : Option[TagMod]): VdomTag = {
       val toggle = change(!on)
       <.div(^.cls := "ui checkbox",
         <.input.checkbox(^.checked := on.is(On), ^.onChange --> toggle),
-        <.label(^.cursor.pointer, ^.onClick --> toggle, label))
+        label.whenDefined(<.label(^.cursor.pointer, ^.onClick --> toggle, _)))
     }
 
     /** Note: DO NOT use this with Reusability.
