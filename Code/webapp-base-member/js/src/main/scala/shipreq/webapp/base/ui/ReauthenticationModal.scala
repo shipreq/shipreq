@@ -11,6 +11,7 @@ import shipreq.webapp.base.protocol.CommonProtocols.Login
 import shipreq.webapp.base.protocol.{AjaxClient, CommonProtocols}
 import shipreq.webapp.base.ui.semantic.{Colour, Icon, Label, UsesSemanticUiManually}
 import shipreq.webapp.base.user.{PlainTextPassword, Username}
+import shipreq.webapp.base.util.Accessibility
 
 /** Pops up a modal that asks a user to re-authenticate.
   *
@@ -87,11 +88,7 @@ object ReauthenticationModal {
         <.form(
           ^.cls := "ui left icon input",
           ^.display.flex,
-          <.input.text(
-            ^.autoComplete.username,
-            ^.display.none,
-            ^.readOnly := true,
-            ^.value := username.value),
+          Accessibility.hiddenUsernameField(username),
           <.input.password(
             ^.autoComplete.currentPassword,
             ^.autoFocus := true,
