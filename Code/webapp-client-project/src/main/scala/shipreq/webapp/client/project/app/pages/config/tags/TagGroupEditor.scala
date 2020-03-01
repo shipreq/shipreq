@@ -104,7 +104,8 @@ private[tags] object TagGroupEditor {
           .withValidator(DataValidators.tag.name.unnamedFn(vs))
 
       val exclusivityField =
-        Form.Field.booleanSegment
+        Form.Field.boolean
+          .asSegment
           .withLabel(exclusivityLabel)
           .withState(p.state.zoomStateL(State.exclusive))
 

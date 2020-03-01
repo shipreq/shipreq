@@ -6,7 +6,7 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
-import shipreq.base.util.Validity
+import shipreq.base.util.{Identity, Validity}
 import shipreq.webapp.base.data.{Disabled, Enabled, On}
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.ui.GeneralTheme
@@ -37,6 +37,7 @@ object Form {
     def withValidator   (v: Option[Simple.Validator[A, _, _]]): Field[A]
     def withValidationUX(v: Option[ValidationUX]             ): Field[A]
     def withEnabled     (e: Enabled                          ): Field[A]
+    def withOuterMod    (f: VdomTag => VdomTag               ): Field[A]
 
     def render(implicit vux: ValidationUX): VdomTag
 
@@ -51,6 +52,9 @@ object Form {
 
     @inline final def withValidationUX(v: ValidationUX): Field[A] =
       withValidationUX(Some(v))
+
+    final def asSegment: Field[A] =
+      withOuterMod(<.div(^.cls := "ui segment", _))
 
     final def withState(ss: StateSnapshot[A]): Field[A] =
       withValue(ss.value).withUpdater(ss.setState)
@@ -76,6 +80,7 @@ object Form {
       override final def withValidator   (v: Option[Simple.Validator[A, _, _]]) = this
       override final def withValidationUX(v: Option[ValidationUX]             ) = this
       override final def withEnabled     (e: Enabled                          ) = this
+      override final def withOuterMod    (f: VdomTag => VdomTag               ) = this
     }
 
     private abstract class Delegate[A] extends Field[A] {
@@ -89,6 +94,7 @@ object Form {
       override final def withValidator   (v: Option[Simple.Validator[A, _, _]]) = mod(_.withValidator   (v))
       override final def withValidationUX(v: Option[ValidationUX]             ) = mod(_.withValidationUX(v))
       override final def withEnabled     (e: Enabled                          ) = mod(_.withEnabled     (e))
+      override final def withOuterMod    (f: VdomTag => VdomTag               ) = mod(_.withOuterMod    (f))
     }
 
     private final case class Xmap[A, B](underlying: Field[A], ab: A => B, ba: B => A) extends Field[B] {
@@ -100,6 +106,7 @@ object Form {
       override def withValidator   (v: Option[Simple.Validator[B, _, _]]) = copy(underlying.withValidator   (v.map(_.xmapInput(ba)(ab))))
       override def withValidationUX(v: Option[ValidationUX]             ) = copy(underlying.withValidationUX(v))
       override def withEnabled     (e: Enabled                          ) = copy(underlying.withEnabled     (e))
+      override def withOuterMod    (f: VdomTag => VdomTag               ) = copy(underlying.withOuterMod    (f))
 
       override def render(implicit vux: ValidationUX): VdomTag =
         underlying.render
@@ -113,7 +120,9 @@ object Form {
                                         validity   : Option[Validity],
                                         validator  : Option[Simple.Validator[A, _, _]],
                                         vux        : Option[ValidationUX],
-                                        enabled    : Enabled) extends Field[A] {
+                                        enabled    : Enabled,
+                                        outerMod   : VdomTag => VdomTag,
+                                       ) extends Field[A] {
 
       override def withLabel       (l: TagMod                           ) = copy(label     = Some(l))
       override def withEditor      (e: TagMod => VdomNode               ) = copy(editor    = e)
@@ -123,6 +132,7 @@ object Form {
       override def withValidator   (v: Option[Simple.Validator[A, _, _]]) = copy(validator = v)
       override def withValidationUX(v: Option[ValidationUX]             ) = copy(vux       = v)
       override def withEnabled     (e: Enabled                          ) = copy(enabled   = e)
+      override def withOuterMod    (f: VdomTag => VdomTag               ) = copy(outerMod  = f compose outerMod)
 
       private val ableness = Field.disabled.unless(enabled is Enabled)
 
@@ -143,11 +153,14 @@ object Form {
               }
           }
 
-        error match {
-          case ValidationUX.Outcome.Valid            => Field.plain(ableness, inner)
-          case ValidationUX.Outcome.Invalid(None)    => Field.error(ableness, inner)
-          case ValidationUX.Outcome.Invalid(Some(e)) => Field.error(ableness, inner, e)
-        }
+        val outer =
+          error match {
+            case ValidationUX.Outcome.Valid            => Field.plain(ableness, inner)
+            case ValidationUX.Outcome.Invalid(None)    => Field.error(ableness, inner)
+            case ValidationUX.Outcome.Invalid(Some(e)) => Field.error(ableness, inner, e)
+          }
+
+        outerMod(outer)
       }
     }
 
@@ -155,6 +168,7 @@ object Form {
                            editor     : TagMod => VdomNode)(
                            renderInner: Generic[A] => TagMod): Generic[A] =
       Generic(
+        renderInner = renderInner,
         label       = None,
         editor      = editor,
         value       = value,
@@ -163,7 +177,7 @@ object Form {
         validator   = None,
         vux         = None,
         enabled     = Enabled,
-        renderInner = renderInner
+        outerMod    = Identity.apply,
       )
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -183,27 +197,6 @@ object Form {
             ^.onChange ==> onChange))
 
         TagMod(actualLabel, actualEditor)
-      }
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-    // TODO Use Input.Checkbox ?
-    lazy val booleanSegment: Field[Boolean] =
-      generic(false, <.input.checkbox(_)){ f =>
-        import f._
-
-        val actualLabel = <.label(label.whenDefined)
-
-        val onChange: ReactEventFromInput => Callback =
-          _.extract(_.target.checked)(s => updater(validator.fold(s)(_.corrector.live(s))))
-
-        val actualEditor =
-          editor(TagMod(
-            ^.checked := value,
-            ^.onChange ==> onChange))
-
-        // TODO is it ok that ableness is in the .field instead of below?
-        <.div(^.cls := "ui checkbox", actualEditor, actualLabel)
       }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
