@@ -90,6 +90,7 @@ Phase 3A
   * remove MutexChildren
   * remove config_old
   * remove DND?
+  * revise UpdateConfigCmd
 
 * Fields
   * redo config screen

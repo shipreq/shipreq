@@ -1,6 +1,7 @@
 package shipreq.webapp.server.logic
 
 import japgolly.microlibs.nonempty._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.util.Multimap
 import scalaz.\/
 import scalaz.syntax.equal._
@@ -183,6 +184,17 @@ object MakeEvent {
           case None => Failure("Values required.")
         }
 
+      case UpdateConfigCmd.TagSetApplicableChildrenOrder(tagId, childrenA) =>
+        val existingChildrenA = project.config.tags.directChildren(tagId).iterator.filterSubType[ApplicableTagId].toSet
+        if (existingChildrenA !=* childrenA.toSet)
+          Failure("Tag group contains different children than specified. Please try again.")
+        else {
+          val childrenG = project.config.tags.directTagGroupChildren(tagId)
+          val children: Vector[TagId] = childrenG ++ childrenA
+          val values = TagGroupGD.nev(TagGroupGD.ValueForChildren(children))
+          TagGroupUpdate(tagId, values)
+        }
+
       case UpdateConfigCmd.TagUpdate(tagId, vs) =>
         project.config.tags.tree.get(tagId) match {
           case Some(tit) =>
@@ -192,10 +204,8 @@ object MakeEvent {
             for (rels <- vs.b) {
               if (tit.children !=* rels.children)
                 children = Some(rels.children)
-              // TODO Shouldn't need to rebuild treeStructure
-              val treeStructure = project.config.tags.tree.mapValues(_.children)
-              val ps = MMTree.Relations.deriveParents(tagId, treeStructure)
-              if (ps !=* rels.parents)
+              val existingParents = project.config.tags.parents(tagId)
+              if (existingParents !=* rels.parents)
                 parents = Some(rels.parents)
             }
 

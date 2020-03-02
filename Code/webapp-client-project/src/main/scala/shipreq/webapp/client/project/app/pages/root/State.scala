@@ -104,6 +104,7 @@ final case class State(projectName          : ProjectItem.WithEditableName.State
                        updateContentCmdAsync: AsyncFeature.State.D1[UpdateContentCmd, ErrorMsg],
                        manualIssueCmdAsync  : AsyncFeature.State.D1[ManualIssueCmd, ErrorMsg],
                        tagConfig            : TagConfig.State,
+                       tagConfigAsync       : AsyncFeature.State.D0[ErrorMsg],
                       )
 
 object State {
@@ -129,6 +130,7 @@ object State {
       updateContentCmdAsync = AsyncFeature.State.initD1,
       manualIssueCmdAsync   = AsyncFeature.State.initD1,
       tagConfig             = TagConfig.initState,
+      tagConfigAsync        = AsyncFeature.State.initD0,
     )
 
   implicit val reusability: Reusability[State] =

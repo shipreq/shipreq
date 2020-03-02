@@ -24,6 +24,8 @@ private[tags] object TagTreeView {
                          selected      : Option[TagId],
                          select        : Option[TagId ~=> Callback],
                          projectWidgets: ProjectWidgets.NoCtx,
+                         updateChildren: Reusable[(TagGroupId, Vector[ApplicableTagId]) => Callback],
+                         enabled       : Enabled,
                         ) {
     @inline def render: VdomElement = Component(this)
   }
@@ -39,23 +41,20 @@ private[tags] object TagTreeView {
 
     private val dndPerGroup: TagGroupId => DragToReorderFeature[ApplicableTagId] =
       Memo { groupId =>
-        DragToReorderFeature(
+        DragToReorderFeature[ApplicableTagId](
           getData             = $.props.map(_.tags.directApplicableChildren(groupId)),
-          updateData          = setNewTagOrder(groupId, _),
+          updateData          = tagOrder => $.props.flatMap(_.updateChildren(groupId, tagOrder)),
           updateUI            = $.forceUpdate,
           dragOutsideToRemove = false,
           addKeysToChildren   = false,
         )
       }
 
-    private def setNewTagOrder(groupId: TagGroupId, tagOrder: Vector[ApplicableTagId]): Callback =
-      Callback.alert("" + tagOrder)
-
     def render(p: Props): VdomNode = {
       import p.{tags, projectWidgets}
 
-      val enabled: Enabled =
-        Enabled.when(p.select.isDefined)
+      val selectEnabled: Enabled =
+        p.enabled & Enabled.when(p.select.isDefined)
 
       val dragInProgress: Boolean =
         DragToReorderFeature.dragInProgress()
@@ -65,7 +64,7 @@ private[tags] object TagTreeView {
           *.RowState.Dragging
         else if (p.selected.exists(_ ==* id))
           *.RowState.Selected
-        else if (enabled is Enabled)
+        else if (selectEnabled is Enabled)
           *.RowState.Enabled
         else
           *.RowState.Disabled
@@ -120,7 +119,7 @@ private[tags] object TagTreeView {
             ^.key := id.value,
             ^.onClick -->? p.select.map(_(id)),
             TagMod.when(canDrag)(TagMod(
-              dragHandle(enabled)(item.source),
+              dragHandle(selectEnabled)(item.source),
               item.target,
             )),
             projectWidgets.tag(id),

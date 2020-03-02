@@ -2,6 +2,7 @@ package shipreq.webapp.client.project.app.pages.config.tags
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.extra.StateSnapshot
@@ -9,9 +10,11 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 import monocle.Lens
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.Optics
+import shipreq.base.util.{ErrorMsg, Optics}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.DataReusability._
+import shipreq.webapp.base.protocol.{ServerSideProcInvoker, UpdateConfigCmd}
 import shipreq.webapp.client.project.widgets.{DropdownButton, ProjectWidgets, SplitScreenCrud}
 
 object TagConfig {
@@ -27,8 +30,14 @@ object TagConfig {
   val dropdownButton = new DropdownButton.Types[NewTagType]
 
   final case class Props(project: ProjectConfig,
+                         state  : StateSnapshot[State],
                          pw     : ProjectWidgets.NoCtx,
-                         state  : StateSnapshot[State]) {
+                         ssp    : ServerSideProcInvoker[UpdateConfigCmd.ToModifyTags, ErrorMsg, _],
+                         async  : AsyncFeature.ReadWrite.D0[ErrorMsg],
+                         ) {
+
+    val asyncInProgress = AsyncFeature.isInProgress(async.read)
+
     @inline def render: VdomElement = Component(this)
   }
 
@@ -68,7 +77,16 @@ object TagConfig {
       case _: ApplicableTagId => CallbackTo.pure(-\/(()))
     }
 
-    private def newButtonProps(args: splitScreenCrud.NewArgs): dropdownButton.DBProps =
+    private val updateChildren: Reusable[(TagGroupId, Vector[ApplicableTagId]) => Callback] =
+      Reusable.byRef { (parent, children) =>
+        for {
+          p   ← $.props
+          cmd = UpdateConfigCmd.TagSetApplicableChildrenOrder(parent, children)
+          _   ← p.async.write.onFailureShowAndForget(p.ssp(cmd))
+        } yield ()
+      }
+
+    private def newButtonProps(p: Props, args: splitScreenCrud.NewArgs): dropdownButton.DBProps =
       args match {
 
         case NewArgs.Disabled(sel) =>
@@ -82,12 +100,10 @@ object TagConfig {
           DropdownButton.Props.forNew[NewTagType](
             items    = NewTagType.items,
             selected = Some(ss.value),
-            update   = Some(Reusable.never(dropdownButton.Update( // TODO Reusable.never
+            update   = Option.unless(p.asyncInProgress)(Reusable.never(dropdownButton.Update( // TODO Reusable.never
               click  = _ => Callback.TODO,
               select = ss.setState,
-            ))),
-          )
-
+            ))))
       }
 
     private def renderLeft(p: Props, args: splitScreenCrud.ListArgs): VdomNode =
@@ -100,6 +116,8 @@ object TagConfig {
             selected       = args.selection,
             select         = args.enabledSelect,
             projectWidgets = p.pw,
+            updateChildren = updateChildren,
+            enabled        = Disabled when p.asyncInProgress,
           ).render
 
         case None =>
@@ -140,7 +158,7 @@ object TagConfig {
       val s = p.state.value
 
       splitScreenCrud(
-        newButton  = newButtonProps(_).render,
+        newButton  = newButtonProps(p, _).render,
         list       = renderLeft(p, _),
         editor     = renderEditor(p, _),
         initEditor = initEditor,
