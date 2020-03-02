@@ -59,10 +59,10 @@ object ResetPassword {
         newPassword <- state.validated
         if state.formEnabled is Enabled
       } yield
-        asyncW(
+        asyncW.forgetFailure(
           props.resetPassword(P.Request(props.token, newPassword)).flatTapSync {
             case \/-(res) => $.modState(_.copy(response = Some(res)))
-            case -\/(err) => Callback.alert(err.value)
+            case -\/(err) => GeneralTheme.showErrorMsg(err)
           }
         )
 

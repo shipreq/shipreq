@@ -6,6 +6,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalaz.\/
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.lib.KeyHandler.Criterion
 import shipreq.webapp.base.lib.KeyHandlers
@@ -13,6 +14,9 @@ import shipreq.webapp.base.ui.semantic.{Button, Colour, Size, UsesSemanticUiManu
 import shipreq.webapp.base.validation.Simple
 
 object GeneralTheme {
+
+  def showErrorMsg(e: ErrorMsg): Callback =
+    Callback.alert(e.value)
 
   def renderSimpleInvalidity(d: Simple.Invalidity \/ Any): Option[VdomTag] =
     d.fold(i => Some(renderSimpleInvalidity(i)), _ => None)

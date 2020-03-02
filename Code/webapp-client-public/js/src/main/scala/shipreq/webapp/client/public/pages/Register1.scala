@@ -57,10 +57,10 @@ object Register1 {
         email <- p.state.value.validated
         if p.state.value.formEnabled is Enabled
       } yield
-        p.asyncW(
+        p.asyncW.forgetFailure(
           p.submit(email).flatTapSync {
             case \/-(_) => $.props.flatMap(_.state.modState(_.copy(submitted = true)))
-            case -\/(e) => Callback.alert(e.value)
+            case -\/(e) => GeneralTheme.showErrorMsg(e)
           }
         )
 

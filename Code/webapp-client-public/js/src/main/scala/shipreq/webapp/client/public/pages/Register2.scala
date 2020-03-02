@@ -143,10 +143,10 @@ object Register2 {
       val submitCB: Option[Callback] = {
         def submitIfValid: Composite.Invalidity \/ Callback =
           validator((s.personName, s.username, (s.password1, s.password2), s.tos)).map(req =>
-            asyncW(
+            asyncW.forgetFailure(
               p.submit(req).flatTapSync {
                 case \/-(res) => onResult(req)(res)
-                case -\/(err) => Callback.alert(err.value)
+                case -\/(err) => GeneralTheme.showErrorMsg(err)
               }
             )
           )

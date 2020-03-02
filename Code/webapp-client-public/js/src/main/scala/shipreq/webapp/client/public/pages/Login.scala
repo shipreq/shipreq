@@ -149,7 +149,7 @@ object Login {
         Callback.when(p.formEnabled is Enabled)(
           p.state.value.req.validate match {
             case \/-(req) =>
-              p.asyncW.withOnSuccess(onSuccess =>
+              p.asyncW.onSuccess(onSuccess =>
                 p.attemptLogin(req)
                   .flatTapSync {
                     case \/-(Allow) => onLoginSuccess // onSuccess is deliberately omitted so the form doesn't re-enable before the redirect completes
