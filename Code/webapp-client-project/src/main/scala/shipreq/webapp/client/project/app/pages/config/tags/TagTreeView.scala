@@ -53,7 +53,7 @@ private[tags] object TagTreeView {
     def render(p: Props): VdomNode = {
       import p.{tags, projectWidgets}
 
-      val selectEnabled: Enabled =
+      val modificationEnabled: Enabled =
         p.enabled & Enabled.when(p.select.isDefined)
 
       val dragInProgress: Boolean =
@@ -64,7 +64,7 @@ private[tags] object TagTreeView {
           *.RowState.Dragging
         else if (p.selected.exists(_ ==* id))
           *.RowState.Selected
-        else if (selectEnabled is Enabled)
+        else if (modificationEnabled is Enabled)
           *.RowState.Enabled
         else
           *.RowState.Disabled
@@ -102,8 +102,8 @@ private[tags] object TagTreeView {
 
         // Add tags
         var firstAfterGroup = lis.rawArray.nonEmpty
-        val apTags  = ids.iterator.filterSubType[ApplicableTagId].toArray
-        val canDrag = !topLevel && apTags.length > 1
+        val apTags          = ids.iterator.filterSubType[ApplicableTagId].toArray
+        val canDrag         = !topLevel && apTags.length > 1
 
         dnd.items(apTags).foreach { item =>
           val id = item.data
@@ -118,10 +118,12 @@ private[tags] object TagTreeView {
             *.tagTreeLI((liState, item.status)),
             ^.key := id.value,
             ^.onClick -->? p.select.map(_(id)),
-            TagMod.when(canDrag)(TagMod(
-              dragHandle(selectEnabled)(item.source),
-              item.target,
-            )),
+            TagMod.when(canDrag)(
+              modificationEnabled match {
+                case Enabled  => TagMod(dragHandle(Enabled)(item.source), item.target)
+                case Disabled => dragHandle(Disabled)
+              }
+            ),
             projectWidgets.tag(id),
           )
 
