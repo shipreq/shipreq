@@ -11,16 +11,17 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.DragToReorderFeature.{Status => DragStatus}
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.ui.semantic.UsesSemanticUiManually
-import shipreq.webapp.client.project.widgets._
 
 object Style extends StyleSheet.Inline {
   import dsl._
+  import LeftRight.{Left, Right}
 
   /** Domains */
   object D {
-    val live     = Domain.ofValues[Live]    (Live, Dead)
-    val validity = Domain.ofValues[Validity](Valid, Invalid)
-    val enabled  = Domain.ofValues[Enabled] (Enabled, Disabled)
+    val live      = Domain.ofValues[Live]     (Live, Dead)
+    val validity  = Domain.ofValues[Validity] (Valid, Invalid)
+    val enabled   = Domain.ofValues[Enabled]  (Enabled, Disabled)
+    val leftRight = Domain.ofValues[LeftRight](Left, Right)
 
     @inline def on = BaseStyles.D.on
 
@@ -34,7 +35,8 @@ object Style extends StyleSheet.Inline {
     val ucStepIndent = Domain.ofRange(0 until StaticField.useCaseStepTrees.iterator.map(_.maxDepth).max)
   }
 
-  protected final val animSpeed = ".4s"
+  final val animSpeedMs = 260
+  protected final val animSpeed = animSpeedMs + "ms"
 
   private def monospace =
     fontFamily :=! "monospace"
@@ -757,23 +759,38 @@ object Style extends StyleSheet.Inline {
 
     private val borderColor = Color("#2224261a")
 
-    private val liGapTop = mixin(
+    private def liGapTop(ds: DragStatus) = mixin(
       marginTop(1.25 em),
-      borderTop(solid, 1 px, borderColor),
+      mixinIf(ds ==* DragStatus.Normal)(borderTop(solid, 1 px, borderColor)),
+    )
+
+    private def basicTagLI(s: LIState, ds: DragStatus) = mixin(
+      listStyleType := "none",
+      genericDragStatus(ds),
+      s match {
+        case _: LIState.Group => StyleS.empty
+        case _: LIState.Tag =>
+          styleS(
+            paddingTop(.5 em),
+            paddingBottom(.5 em),
+          )
+      },
+    )
+
+    private def basicTagOrGroup(rowState: RowState, ds: DragStatus) = mixin(
+      transition := s"all $animSpeed",
+      mixinIf(rowState ==* RowState.Disabled && ds ==* DragStatus.Normal)(opacity(0.4)),
     )
 
     private def tagOrGroup(rowState: RowState,
                            dragStatus: DragStatus,
                            bottomBorderColour: ValueT[ValueT.Color] = c"#fff") = mixin(
-      transition := s"all $animSpeed",
-      borderTop(solid, 1 px, if (rowState ==* RowState.Selected) c"#3659e2" else c"#fff"),
+      basicTagOrGroup(rowState, dragStatus),
       mixinIf(dragStatus != DragStatus.DragSource)(
+        borderTop(solid, 1 px, if (rowState ==* RowState.Selected) c"#3659e2" else c"#fff"),
         borderBottom(solid, 1 px, if (rowState ==* RowState.Selected) c"#3659e2" else bottomBorderColour).important,
       ),
       rowState match {
-        case RowState.Disabled => styleS(
-          opacity(0.4),
-        )
         case RowState.Enabled  => styleS(
           cursor.pointer,
           &.hover(backgroundColor(c"#fffad7").important),
@@ -781,43 +798,57 @@ object Style extends StyleSheet.Inline {
         case RowState.Selected => styleS(
           backgroundColor(Color("#869df91f")),
         )
-        case RowState.Dragging =>
+        case RowState.Dragging
+           | RowState.Disabled =>
           StyleS.empty
       }
     )
 
-    val tagTreeLI = styleF(LIState.withDragStatus){ case (s, ds) => styleS(
-      listStyleType := "none",
-      genericDragStatus(ds),
+    val tagTreeLI = styleF(LIState.withDragStatus) { case (s, ds) => styleS(
+      basicTagLI(s, ds),
       s match {
-
         case g: LIState.Group =>
           styleS(
-            mixinIf(g.topLevel)(&.not(_.firstChild)(liGapTop)),
+            mixinIf(g.topLevel)(&.not(_.firstChild)(liGapTop(ds))),
           )
-
         case t: LIState.Tag =>
           styleS(
-            paddingTop(.5 em),
-            paddingBottom(.5 em),
-            mixinIf(t.topLevel && t.firstAfterGroup)(liGapTop),
+            mixinIf(t.topLevel && t.firstAfterGroup)(liGapTop(ds)),
             &.not(_.lastChild)(tagOrGroup(t.rowState, ds, borderColor)),
             &.lastChild(tagOrGroup(t.rowState, ds)),
           )
       },
     )}
 
-    val tagTreeGroup = styleF(RowState.domain)(s => styleS(
-      fontSize(120 %%),
+    val editorRelTagLI = styleF(LIState.withDragStatus) { case (s, ds) => styleS(
+      basicTagLI(s, ds),
+      s match {
+        case t: LIState.Tag   => basicTagOrGroup(t.rowState, ds)
+        case _: LIState.Group => StyleS.empty
+      },
+      clear.both,
+    )}
+
+    private def basicTagGroup = mixin(
       padding(0.4 em, `0`),
+    )
+
+    val editorRelGroup = styleF(RowState.domain)(s => styleS(
+      basicTagGroup,
+      basicTagOrGroup(s, DragStatus.Normal),
+    ))
+
+    val tagTreeGroup = styleF(RowState.domain)(s => styleS(
+      basicTagGroup,
       tagOrGroup(s, DragStatus.Normal),
+      fontSize(120 %%),
     ))
 
     val tagTreeGroupIcon = style(
       marginRight(0.4 ex).important,
     )
 
-    val tagTreeDragHandle = styleF(D.enabled)(e => styleS(
+    val dragHandle = styleF(D.enabled)(e => styleS(
       display.inline,
       padding(.5 em, 1 ex, 0.5 em, 2 ex),
       marginLeft(-2 ex),
@@ -843,6 +874,48 @@ object Style extends StyleSheet.Inline {
     val editorButtonGap = style(
       flexGrow(1),
     )
+
+    val editorRelRow = style(
+      display.flex,
+      marginTop(1 rem),
+    )
+
+    val editorRelOuter = styleF(D.leftRight)(lr => styleS(
+      width(50 %%),
+      lr match {
+        case Left  => styleS(paddingRight(0.5 rem))
+        case Right => styleS(paddingLeft(0.5 rem))
+      },
+    ))
+
+    val editorRelInner = style(
+      display.flex,
+      flexDirection.column,
+      height(100 %%),
+    )
+
+    val editorRelHeader = style(
+      marginBottom(1 em),
+    )
+
+    val editorRelBody = style(
+      flexGrow(1),
+    )
+
+    val editorRelFooter = style(
+      marginTop(2 em),
+    )
+
+    val editorRelDelete = style(
+      margin(-0.5 em, `0`, .5 em, `0`).important,
+      float.right,
+    )
+
+    val editorRelTree = style(
+      margin(t = 0.25 em, r = `0`, b = `0`, l = 2 ex),
+      paddingLeft(`0`),
+    )
+
   }
 
   // ===================================================================================================================

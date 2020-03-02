@@ -7,6 +7,8 @@ import japgolly.univeq.UnivEq
 sealed abstract class Icon(val clsName: ClassName) {
   final val tag = <.i(^.cls := ("icon " + clsName))
 
+  final def tagNoMargin = tag(^.margin := "0")
+
   def loading                   : Icon.Modified
   def withColour(colour: Colour): Icon.Modified
   def withSize  (size  : Size  ): Icon.Modified

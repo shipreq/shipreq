@@ -7,6 +7,8 @@ import org.scalajs.dom.html
 /** http://semantic-ui.com/elements/header.html */
 object Header {
 
+  def h4 = <.h4(^.cls := "ui header")
+
   sealed abstract class Attr(cls: ClassName) extends HasClass(cls)
   object Attr {
     case object Block    extends Attr("block")

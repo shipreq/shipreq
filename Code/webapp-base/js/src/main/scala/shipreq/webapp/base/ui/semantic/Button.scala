@@ -21,6 +21,7 @@ object Button {
     case object Default                                    extends Type(NoClass)
     case object Basic                                      extends Type("basic")
     case class  BasicIconAndText(icon: Icon, text: TagMod) extends Type("basic")
+    case class  BasicIconOnly   (icon: Icon)               extends Type("basic")
     case class  IconAndText     (icon: Icon, text: TagMod) extends Type(NoClass)
     case class  IconOnly        (icon: Icon)               extends Type("icon")
     // implicit def univEq: UnivEq[Type] = UnivEq.derive
@@ -41,13 +42,13 @@ object Button {
     divCls("ui buttons")(bs: _*)
 }
 
-case class Button(attr  : Multiple[Attr] = Multiple.empty,
-                  tipe  : Type           = Type.Default,
-                  state : State          = State.Default,
-                  colour: ColourPlus     = ColourPlus.Default,
-                  size  : Size           = Size.Default) {
+final case class Button(attr  : Multiple[Attr] = Multiple.empty,
+                        tipe  : Type           = Type.Default,
+                        state : State          = State.Default,
+                        colour: ColourPlus     = ColourPlus.Default,
+                        size  : Size           = Size.Default) {
 
-  val tag = {
+  val tag: VdomTagOf[html.Button] = {
     var t = <.button(^.cls := "ui button" <+ attr <+ tipe <+ state <+ colour <+ size)
 
     if (state.disable)
@@ -56,7 +57,8 @@ case class Button(attr  : Multiple[Attr] = Multiple.empty,
     t = tipe match {
       case Type.BasicIconAndText(i, x) => t(i.tag, x, ^.whiteSpace.pre) // whiteSpace.pre keeps icon & text on same line
       case Type.IconAndText     (i, x) => t(i.tag, x)
-      case Type.IconOnly        (i)    => t(i.tag)
+      case Type.IconOnly        (i)    => t(i.tagNoMargin)
+      case Type.BasicIconOnly   (i)    => t(i.tagNoMargin)
       case _                           => t
     }
 

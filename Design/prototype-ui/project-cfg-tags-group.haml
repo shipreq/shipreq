@@ -132,6 +132,7 @@
       }
       .family > .b {
         flex-grow:1;
+        min-height: 2em;
       }
       .family .tagtree {
         margin-left:2ex;
@@ -140,7 +141,7 @@
       }
       .family .tagtree li.tag {
         xmargin-left:2ex;
-        margin-bottom:1em;
+        xmargin-bottom:1em;
       }
       .family .tagtree .button {
         margin:-0.5em 0 .5em 0!important;
@@ -364,11 +365,11 @@
                         %div
                           %i.icon.folder.open.outline
                           In Testing
-                          .ui.button.basic.negative(style="white-space: nowrap; float:right") %i.icon.trash(style="margin:0!important")
+                          %button.ui.button.basic.negative(style="white-space: nowrap; float:right") %i.icon.trash(style="margin:0!important")
                       %li.tag
                         .drag ☰
                         .ui.label.is-tag.red(style="margin:0") must
-                        .ui.button.basic.negative(style="white-space: nowrap; float:right") %i.icon.trash(style="margin:0")
+                        %button.ui.button.basic.negative(style="white-space: nowrap; float:right") %i.icon.trash(style="margin:0")
                       %li.tag
                         .drag ☰
                         .ui.label.is-tag.orange(style="margin:0; xcolor:#000!important") should
@@ -426,6 +427,39 @@
                         .item
                           %span.lvl1
                           .ui.label.is-tag.blue(style="margin:0") tbd
+
+          #family
+            .parents
+              .ui.segment
+                .family
+                  %div.h
+                    %h4.ui.header Parents
+                  %div.b
+                  %div.f
+                    .ui.floating.labeled.icon.dropdown.button
+                      %i.icon.plus
+                      %span.text Add parent...
+
+            .children
+              .ui.segment
+                .family
+                  %div.h
+                    %h4.ui.header Children
+                  %div.b
+                    -# %ol.tagtree
+                      -# %li.group
+                        %div
+                          %i.icon.folder.open.outline
+                          In Testing
+                          .ui.button.basic.negative(style="white-space: nowrap; float:right") %i.icon.trash(style="margin:0!important")
+                      %li.tag
+                        .drag ☰
+                        .ui.label.is-tag.yellow(style="margin:0; color:#000!important") could
+                        .ui.button.basic.negative(style="white-space: nowrap; float:right") %i.icon.trash(style="margin:0")
+                  %div.f
+                    .ui.floating.labeled.icon.dropdown.button
+                      %i.icon.plus
+                      %span.text Add child...
 
           %div(style="margin-top:2rem; display:flex")
             %button.ui.button.negative.basic(style="white-space: nowrap;")

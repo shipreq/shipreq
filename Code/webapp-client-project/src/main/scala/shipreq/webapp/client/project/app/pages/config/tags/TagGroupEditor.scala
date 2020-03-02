@@ -33,8 +33,8 @@ private[tags] object TagGroupEditor {
                          name       : String,
                          exclusivity: Exclusivity,
                          desc       : String,
-                         parents    : Set[TagGroupId],
-                         children   : Vector[TagId],
+                         parents    : TagRelationshipEditor.State,
+                         children   : TagRelationshipEditor.State,
                         )
 
   object State {
@@ -50,8 +50,8 @@ private[tags] object TagGroupEditor {
         name        = t.name,
         exclusivity = Exclusive.when(t.mutexChildren is MutexChildren),
         desc        = t.desc.getOrElse(""),
-        parents     = tags.directParents(t.id),
-        children    = tags.directChildren(t.id),
+        parents     = TagRelationshipEditor.State.parents(t.id, tags),
+        children    = TagRelationshipEditor.State.children(t.id, tags),
       )
 
     def initNew: State =
@@ -60,8 +60,8 @@ private[tags] object TagGroupEditor {
         name        = "",
         exclusivity = Exclusive,
         desc        = "",
-        parents     = Set.empty,
-        children    = Vector.empty,
+        parents     = TagRelationshipEditor.State.empty,
+        children    = TagRelationshipEditor.State.empty,
       )
 
 //    implicit val reusability: Reusability[State] =
@@ -82,6 +82,15 @@ private[tags] object TagGroupEditor {
           *.segmentCheckboxSubtitle,
           "When more than one tag within this group is applied to a requirement, it will be reported as an issue.")
       )
+
+    private def tagRelationships(p: Props, children: Boolean) =
+      TagRelationshipEditor.Props(
+        tags     = p.project.tags,
+        pw       = p.pw,
+        state    = p.state.zoomStateL(if (children) State.children else State.parents),
+        children = children,
+        enabled  = Enabled,
+      ).render
 
     def render(p: Props): VdomNode = {
       val s = p.state.value
@@ -116,9 +125,13 @@ private[tags] object TagGroupEditor {
           .withState(p.state.zoomStateL(State.desc))
           .withValidator(DataValidators.tag.desc.unnamedFn(vs))
 
+      val parents  = tagRelationships(p, children = false)
+      val children = tagRelationships(p, children = true)
+
       <.div(
         header,
         Form(nameField, exclusivityField, descField),
+        <.div(*.editorRelRow, parents, children)
       )
     }
   }

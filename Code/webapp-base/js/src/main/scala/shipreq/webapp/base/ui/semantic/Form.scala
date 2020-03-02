@@ -54,7 +54,7 @@ object Form {
       withValidationUX(Some(v))
 
     final def asSegment: Field[A] =
-      withOuterMod(<.div(^.cls := "ui segment", _))
+      withOuterMod(Segment.tag(_))
 
     final def withState(ss: StateSnapshot[A]): Field[A] =
       withValue(ss.value).withUpdater(ss.setState)

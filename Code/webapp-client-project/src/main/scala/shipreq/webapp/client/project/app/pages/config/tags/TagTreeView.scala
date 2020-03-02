@@ -33,10 +33,6 @@ private[tags] object TagTreeView {
   implicit val reusabilityProps: Reusability[Props] =
     Reusability.derive
 
-  private val dragHandle: Enabled => VdomTag =
-    Enabled.memo(e =>
-      DragToReorderFeature.dragHandle(*.tagTreeDragHandle(e)))
-
   final class Backend($: BackendScope[Props, Unit]) {
 
     private val dndPerGroup: TagGroupId => DragToReorderFeature[ApplicableTagId] =
@@ -79,7 +75,7 @@ private[tags] object TagTreeView {
             case None     => DragToReorderFeature.off
           }
 
-        // Add tag groups
+        // Tag groups
         MutableArray(ids.iterator.filterSubType[TagGroupId])
           .map(tags.needTagGroup)
           .sortBy(_.name)
@@ -93,14 +89,16 @@ private[tags] object TagTreeView {
             lis += <.li(
               *.tagTreeLI((liState, DragToReorderFeature.Status.Normal)),
               ^.key := id.value,
-              Shared.group(group)(
+              <.div(
                 *.tagTreeGroup(rowState(id)),
-                ^.onClick -->? p.select.map(_(id))),
+                Shared.group(group),
+                ^.onClick -->? p.select.map(_(id)),
+              ),
               subtree.whenDefined,
             )
           }
 
-        // Add tags
+        // Applicable tags
         var firstAfterGroup = lis.rawArray.nonEmpty
         val apTags          = ids.iterator.filterSubType[ApplicableTagId].toArray
         val canDrag         = !topLevel && apTags.length > 1
@@ -118,12 +116,7 @@ private[tags] object TagTreeView {
             *.tagTreeLI((liState, item.status)),
             ^.key := id.value,
             ^.onClick -->? p.select.map(_(id)),
-            TagMod.when(canDrag)(
-              modificationEnabled match {
-                case Enabled  => TagMod(dragHandle(Enabled)(item.source), item.target)
-                case Disabled => dragHandle(Disabled)
-              }
-            ),
+            TagMod.when(canDrag)(Shared.dragHandle(item, modificationEnabled)),
             projectWidgets.tag(id),
           )
 
