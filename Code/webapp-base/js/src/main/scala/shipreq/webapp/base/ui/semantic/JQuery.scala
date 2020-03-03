@@ -10,6 +10,7 @@ import scala.scalajs.js.|
 trait JQuery extends js.Object {
 
   def find(sel: String): JQuery = js.native
+  def toggleClass(cls: String): JQuery = js.native
 
   def dimmer    (options: js.Object                   = js.native): Unit = js.native
   def dropdown  (options: String | Dropdown.JsOptions = js.native): Unit = js.native
