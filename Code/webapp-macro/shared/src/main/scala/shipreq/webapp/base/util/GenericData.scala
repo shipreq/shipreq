@@ -5,7 +5,7 @@ import shipreq.base.util.univeq._
 import scalaz.{Equal, Order}
 import shipreq.base.util.IMap
 
-abstract class GenericData {
+abstract class GenericData { self =>
 
   // This really just so that Intellij doesn't highlight EVERYTHING red.
   protected def defAttr[D]: Attr {type Data = D; def apply(d: D): ValueFor[this.type]} = ???
@@ -70,5 +70,38 @@ abstract class GenericData {
   implicit def autoValues(v: Value): Values =
     emptyValues + v
 
+  final def valueBuilder(): GenericData.ValueBuilder { val gd: self.type } =
+    new GenericData.ValueBuilder {
+      override val gd: self.type = self
+      override protected var _values = gd.emptyValues
+    }
+
   case class ValueTypeClasses[T[_]](value: T[Value], values: T[Values], nev: T[NonEmptyValues])
+}
+
+object GenericData {
+
+  sealed trait ValueBuilder {
+    val gd: GenericData
+
+    protected var _values: gd.Values
+
+    def values(): gd.Values =
+      _values
+
+    def nev(): Option[gd.NonEmptyValues] =
+      NonEmpty(_values)
+
+    def add[A](a: gd.Attr)(v: a.Data): Unit =
+      _values += a(v)
+
+    def addIfChanged[A](a: gd.Attr)(oldValue: a.Data, newValue: a.Data)(implicit e: Equal[a.Data]): Unit =
+      if (!e.equal(oldValue, newValue))
+        _values += a(newValue)
+
+    def addIfChangedOption[A](a: gd.Attr)(oldValue: Option[a.Data], newValue: a.Data)(implicit e: Equal[a.Data]): Unit =
+      if (oldValue.forall(!e.equal(_, newValue)))
+        _values += a(newValue)
+  }
+
 }

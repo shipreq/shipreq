@@ -10,11 +10,13 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 import monocle.Lens
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.{ErrorMsg, Optics}
+import shipreq.base.util.{ErrorMsg, Optics, PotentialChange}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.protocol.{ServerSideProcInvoker, UpdateConfigCmd}
+import shipreq.webapp.base.ui.GeneralTheme
+import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.widgets.{ButtonAndDropdown, ProjectWidgets, SplitScreenCrud}
 
 object TagConfig {
@@ -32,7 +34,7 @@ object TagConfig {
   final case class Props(project: ProjectConfig,
                          state  : StateSnapshot[State],
                          pw     : ProjectWidgets.NoCtx,
-                         ssp    : ServerSideProcInvoker[UpdateConfigCmd.ToModifyTags, ErrorMsg, _],
+                         ssp    : ServerSideProcInvoker[UpdateConfigCmd.ToModifyTags, ErrorMsg, NewEvents],
                          async  : AsyncFeature.ReadWrite.D0[ErrorMsg],
                          ) {
 
@@ -86,6 +88,16 @@ object TagConfig {
         } yield ()
       }
 
+    private def submitCmdAndCloseOnSuccess(p: Props,
+                                           cmd: UpdateConfigCmd.ToModifyTags,
+                                           close: Callback): Callback =
+      p.async.write.forgetFailure(
+        p.ssp(cmd).flatTap {
+          case \/-(_) => close.asAsyncCallback
+          case -\/(e) => GeneralTheme.showErrorMsg(e).asAsyncCallback
+        }
+      )
+
     private def newButtonProps(p: Props, args: splitScreenCrud.NewArgs): dropdownButton.DBProps =
       args match {
 
@@ -135,6 +147,12 @@ object TagConfig {
           case -\/(NewTagType.Tag)      => -\/(Option.empty[ApplicableTagId])
         }
 
+      val potentialSave: PotentialChange[Any, Callback] =
+        args.state.value match {
+          case \/-(s)  => s.updateCmd(p.project).map(submitCmdAndCloseOnSuccess(p, _, args.close))
+          case -\/(()) => PotentialChange.Unchanged
+        }
+
       val editor: VdomNode =
         subject match {
           case \/-(group) =>
@@ -150,9 +168,29 @@ object TagConfig {
             <.div("todo: ", a.toString)
         }
 
+      val buttons: VdomNode =
+        subject match {
+          case \/-(Some(tagGroupId)) =>
+            EditorButtons.Props.Update(
+              abort = args.close,
+              delete = submitCmdAndCloseOnSuccess(p, UpdateConfigCmd.TagDelete(tagGroupId), args.close),
+              update = potentialSave,
+            ).render
+
+          case \/-(None)
+             | -\/(None) =>
+            EditorButtons.Props.Create(
+              abort = args.close,
+              create = None,
+            ).render
+
+          case _ =>
+            <.button("Close", ^.onClick --> args.close)
+        }
+
       <.div(
         editor,
-        <.button("Close", ^.onClick --> args.close)
+        buttons,
       )
     }
 

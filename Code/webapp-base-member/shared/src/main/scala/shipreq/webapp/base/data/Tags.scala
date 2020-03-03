@@ -341,6 +341,12 @@ final case class Tags(tree: TagTree) {
   def parents(subject: TagId): MMTree.Parents[TagId] =
     MMTree.Relations.deriveParents(subject, directChildren.m)
 
+  def parentsOption(subject: Option[TagId]): MMTree.Parents[TagId] =
+    subject match {
+      case Some(s) => parents(s)
+      case None    => Map.empty
+    }
+
   def relations(subject: TagId): MMTree.Relations[TagId] =
     MMTree.Relations(
       children = directChildren(subject),

@@ -42,7 +42,8 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     import global.cbProjectMetaData
 
     private val sspCreateContent         = global.sspCreateContent
-    private val sspUpdateConfig          = global.sspUpdateConfig.map(_.events)
+    private val sspUpdateConfig          = global.sspUpdateConfig
+    private val sspUpdateConfigE         = global.sspUpdateConfig.map(_.events)
     private val sspUpdateContent         = global.sspUpdateContent.map(_.events)
     private val sspProjectNameSet        = global.sspProjectNameSet.map(_.events)
     private val sspUpdateSavedViews      = global.sspUpdateSavedViews.map(_.events)
@@ -180,7 +181,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
       AsyncFeature.Write.D1.init($ zoomStateL State.manualIssueCmdAsync)
 
     private val updateConfigCmdInvoker: UpdateConfigCmd ~=> Callback =
-      Reusable.fn(cmd => updateConfigCmdAsyncW(cmd)(sspUpdateConfig(cmd)))
+      Reusable.fn(cmd => updateConfigCmdAsyncW(cmd)(sspUpdateConfigE(cmd)))
 
     private val updateContentCmdInvoker: UpdateContentCmd ~=> Callback =
       Reusable.fn(cmd => updateContentCmdAsyncW(cmd)(sspUpdateContent(cmd)))
@@ -336,11 +337,11 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
 
         case Page.CfgIssues =>
           config_old.issues.CfgIssues.Props(
-            sspUpdateConfig, sspReqTypeImplicationMod, sspFieldMandatorinessMod, global, filterDeadSS, usageShow)
+            sspUpdateConfigE, sspReqTypeImplicationMod, sspFieldMandatorinessMod, global, filterDeadSS, usageShow)
             .component
 
         case Page.CfgReqTypes =>
-          config_old.reqtypes.CfgReqTypes.Props(sspUpdateConfig, global, filterDeadSS, usageShow).component
+          config_old.reqtypes.CfgReqTypes.Props(sspUpdateConfigE, global, filterDeadSS, usageShow).component
 
         case Page.CfgTags =>
           config.tags.TagConfig.Props(

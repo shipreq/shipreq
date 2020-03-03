@@ -8,8 +8,11 @@ import monocle.macros.Lenses
 import monocle.Lens
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.TagGroupGD
 import shipreq.webapp.base.lib.ValidationUX
+import shipreq.webapp.base.protocol.UpdateConfigCmd
 import shipreq.webapp.base.ui.AutosizeTextarea
 import shipreq.webapp.base.ui.semantic.Form
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
@@ -28,20 +31,58 @@ private[tags] object TagGroupEditor {
     val virtualSubjectId: TagGroupId =
       subject.getOrElse(TagGroupId(-1))
 
+    val validatorState: DataValidators.tag.State =
+      state.value.validatorState(project)
+
     @inline def render: VdomElement = Component(this)
   }
 
   //implicit val reusabilityProps: Reusability[Props] =
   //  Reusability.derive
 
+  final case class Source(group: TagGroup, rels: TagInTree.Relations)
+
   @Lenses
-  final case class State(source     : Option[TagGroup],
+  final case class State(source     : Option[Source],
                          name       : String,
                          exclusivity: Exclusivity,
                          desc       : String,
                          parents    : TagRelationshipEditor.State,
                          children   : TagRelationshipEditor.State,
-                        )
+                        ) {
+
+    def validatorState(p: ProjectConfig): DataValidators.tag.State =
+      DataValidators.tag.State.fromConfig(source.map(_.group.id), p)
+
+    def updateCmd(p: ProjectConfig): PotentialChange[Unit, UpdateConfigCmd.ToModifyTags] =
+      updateCmd(validatorState(p), buildNewRels(source.map(_.group.id), p.tags, parents, children))
+
+    def updateCmd(vs: DataValidators.tag.State,
+                  rels: TagInTree.Relations): PotentialChange[Unit, UpdateConfigCmd.ToModifyTags] = {
+
+      val validated =
+        DataValidators.tag.tagGroup(vs)(
+        (name, MutexChildren.when(exclusivity is Exclusive), desc))
+
+      PotentialChange
+        .fromDisjunction(validated.leftMap(_ => ()))
+        .flatMap { case (name, mutexChildren, desc) =>
+          val b = TagGroupGD.valueBuilder()
+          b.addIfChangedOption(TagGroupGD.Name         )(source.map(_.group.name         ), name)
+          b.addIfChangedOption(TagGroupGD.MutexChildren)(source.map(_.group.mutexChildren), mutexChildren)
+          b.addIfChangedOption(TagGroupGD.Desc         )(source.map(_.group.desc         ), desc)
+          b.addIfChangedOption(TagGroupGD.Parents      )(source.map(_.rels.parents       ), rels.parents)
+          b.addIfChangedOption(TagGroupGD.Children     )(source.map(_.rels.children      ), rels.children)
+
+          PotentialChange.fromOption(b.nev()).map { newValues =>
+            source match {
+              case Some(s) => UpdateConfigCmd.TagGroupUpdate(s.group.id, newValues)
+              case None    => UpdateConfigCmd.TagGroupCreate(newValues)
+            }
+          }
+        }
+    }
+  }
 
   object State {
     def init(id: Option[TagGroupId], tags: Tags): State =
@@ -52,7 +93,7 @@ private[tags] object TagGroupEditor {
 
     def init(t: TagGroup, tags: Tags): State =
       State(
-        source      = Some(t),
+        source      = Some(Source(t, tags.relations(t.id))),
         name        = t.name,
         exclusivity = Exclusive.when(t.mutexChildren is MutexChildren),
         desc        = t.desc.getOrElse(""),
@@ -80,12 +121,26 @@ private[tags] object TagGroupEditor {
     val childrenR = Reusable.byRef(children)
   }
 
+  private def buildNewRels(sourceId   : Option[TagGroupId],
+                           tags       : Tags,
+                           parents    : TagRelationshipEditor.State,
+                           children   : TagRelationshipEditor.State,
+                          ): TagInTree.Relations = {
+    val oldParents = tags.parentsOption(sourceId)
+    MMTree.Relations(
+      parents  = parents.all.toIterator.map(id => id -> oldParents.get(id).flatten).toMap,
+      children = children.groups.toVector ++ children.tags,
+    )
+  }
+
+  // ===================================================================================================================
+
   private implicit def vux = ValidationUX.Full
 
   final class Backend($: BackendScope[Props, Unit]) {
 
-    private val pxSubject: Px[TagGroupId] =
-      Px.props($).map(_.virtualSubjectId).withReuse.autoRefresh
+    private val pxSourceId: Px[Option[TagGroupId]] =
+      Px.props($).map(_.subject).withReuse.autoRefresh
 
     private val pxTags: Px[Tags] =
       Px.props($).map(_.project.tags).withReuse.autoRefresh
@@ -96,28 +151,17 @@ private[tags] object TagGroupEditor {
     private val pxParents: Px[TagRelationshipEditor.State] =
       Px.props($).map(_.state.value.parents).withReuse.autoRefresh
 
-    private val pxNewRelations: Px[TagInTree.Relations] =
+    private val pxHypotheticalTags: Px[Tags] =
       for {
-        subject  <- pxSubject
+        sourceId <- pxSourceId
         tags     <- pxTags
         parents  <- pxParents
         children <- pxChildren
       } yield {
-        val oldParents = tags.parents(subject)
-        MMTree.Relations(
-          parents  = parents.all.toIterator.map(id => id -> oldParents.get(id).flatten).toMap,
-          children = children.groups.toVector ++ children.tags,
-        )
-      }
-
-    private val pxHypotheticalTags: Px[Tags] =
-      for {
-        subject  <- pxSubject
-        tags     <- pxTags
-        newRels  <- pxNewRelations
-      } yield {
-        val newTagTree = MMTree.ApplyRelations.trustedApply1(tags.tree, subject, newRels)
-        // println("===================================================================\n" + Tags(newTagTree).prettyPrint)
+        val virtualId  = sourceId.getOrElse(TagGroupId(-1))
+        val newRels    = buildNewRels(sourceId, tags, parents, children)
+        val newTagTree = MMTree.ApplyRelations.trustedApply1(tags.tree, virtualId, newRels)
+        // println(("="*60) + "\n" + Tags(newTagTree).prettyPrint)
         Tags(newTagTree)
       }
 
@@ -146,18 +190,16 @@ private[tags] object TagGroupEditor {
         <.h2(
           *.editorTitle,
           s.source match {
-            case Some(g) => Shared.group(g)
-            case None    => "New tag group"
+            case Some(src) => Shared.group(src.group)
+            case None      => "New tag group"
           },
         )
-
-      val vs = DataValidators.tag.State.fromConfig(s.source.map(_.id), p.project)
 
       val nameField =
         Form.Field.text
           .withLabel("Name")
           .withState(p.state.zoomStateL(State.name))
-          .withValidator(DataValidators.tag.name.unnamedFn(vs))
+          .withValidator(DataValidators.tag.name.unnamedFn(p.validatorState))
 
       val exclusivityField =
         Form.Field.checkbox
@@ -170,7 +212,7 @@ private[tags] object TagGroupEditor {
           .withEditor(AutosizeTextarea.editor)
           .withLabel("Description")
           .withState(p.state.zoomStateL(State.desc))
-          .withValidator(DataValidators.tag.desc.unnamedFn(vs))
+          .withValidator(DataValidators.tag.desc.unnamedFn(p.validatorState))
 
       val hypotheticalTags = pxHypotheticalTags.value()
       val parents          = tagRelationships(p, hypotheticalTags, children = false)

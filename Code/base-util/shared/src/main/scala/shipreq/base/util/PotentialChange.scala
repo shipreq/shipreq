@@ -106,7 +106,7 @@ sealed abstract class PotentialChange[+E, +A] {
 
 object PotentialChange {
 
-  sealed abstract class NonFailure[+A] extends PotentialChange[Nothing, A] {
+  sealed trait NonFailure[+A] extends PotentialChange[Nothing, A] {
     final def foldNonFailure[B](changed: A => B, unchanged: => B): B =
       this match {
         case Success(a) => changed(a)
@@ -114,11 +114,13 @@ object PotentialChange {
       }
   }
 
-  final case class Success[+A](update: A) extends NonFailure[A]
+  sealed trait Changed[+E, +A] extends PotentialChange[E, A]
 
   case object Unchanged extends NonFailure[Nothing]
 
-  final case class Failure[+E](failure: E) extends PotentialChange[E, Nothing]
+  final case class Success[+A](update: A) extends NonFailure[A] with Changed[Nothing, A]
+
+  final case class Failure[+E](failure: E) extends Changed[E, Nothing]
 
   implicit def univEq[E: UnivEq, A: UnivEq]: UnivEq[PotentialChange[E, A]] =
     UnivEq.derive

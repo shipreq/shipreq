@@ -868,7 +868,7 @@ object Style extends StyleSheet.Inline {
     val editorButtons = style(
       marginTop(2 rem),
       display.flex,
-      unsafeChild("button:not(:last-child)")(marginRight(2 em)),
+      unsafeChild("button:not(:last-child)")(marginRight(2 em).important),
     )
 
     val editorButtonGap = style(

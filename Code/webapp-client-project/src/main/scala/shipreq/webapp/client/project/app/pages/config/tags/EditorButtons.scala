@@ -3,6 +3,7 @@ package shipreq.webapp.client.project.app.pages.config.tags
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+import shipreq.base.util.PotentialChange
 import shipreq.webapp.base.ui.semantic.{Button, Colour, ColourPlus, Icon}
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
 
@@ -11,28 +12,6 @@ import shipreq.webapp.client.project.app.Style.{tagConfig => *}
   * Eg. | [Delete]                      [ Cancel ] [ Update ] |
   */
 object EditorButtons {
-
-  sealed trait UpdateState {
-    def hasChange: Boolean
-    def updateProc: Option[Callback] = None
-  }
-
-  object UpdateState {
-
-    case object Unchanged extends UpdateState {
-      final override def hasChange = false
-    }
-
-    sealed trait Changed extends UpdateState {
-      final override def hasChange = true
-    }
-
-    final case class ValidChange(update: Callback) extends Changed {
-      override def updateProc = Some(update)
-    }
-
-    case object InvalidChange extends Changed
-  }
 
   sealed trait Props {
     @inline final def render: VdomElement = Component(this)
@@ -45,7 +24,7 @@ object EditorButtons {
 
     final case class Update(abort : Callback,
                             delete: Callback,
-                            update: UpdateState) extends Props
+                            update: PotentialChange[Any, Callback]) extends Props
 
     final case class Restore(abort  : Callback,
                              restore: Callback) extends Props
@@ -95,19 +74,19 @@ object EditorButtons {
           cancelButton.onClick(abort),
           createButton.onClickWhenDefined(create))
 
-      case Props.Update(abort, delete, UpdateState.Unchanged) =>
+      case Props.Update(abort, delete, PotentialChange.Unchanged) =>
         outer(
           deleteButton.onClick(delete),
           gap,
           closeButton.onClick(abort),
           updateButton.disabled)
 
-      case Props.Update(abort, delete, u: UpdateState.Changed) =>
+      case Props.Update(abort, delete, u: PotentialChange.Changed[Any, Callback]) =>
         outer(
           deleteButton.onClick(delete),
           gap,
           cancelButton.onClick(abort),
-          updateButton.onClickWhenDefined(u.updateProc))
+          updateButton.onClickWhenDefined(u.getUpdate))
 
       case Props.Restore(abort, restore) =>
         outer(
