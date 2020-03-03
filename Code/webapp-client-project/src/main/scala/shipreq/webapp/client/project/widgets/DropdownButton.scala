@@ -28,7 +28,7 @@ object DropdownButton {
     Reusability.byRef
 
   private val disabled =
-    ^.disabled := true
+    TagMod(^.cls := "disabled", ^.disabled := true)
 
   private val itemDiv =
     <.div(^.cls := "item")
