@@ -15,7 +15,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.protocol.{ServerSideProcInvoker, UpdateConfigCmd}
-import shipreq.webapp.client.project.widgets.{DropdownButton, ProjectWidgets, SplitScreenCrud}
+import shipreq.webapp.client.project.widgets.{ButtonAndDropdown, ProjectWidgets, SplitScreenCrud}
 
 object TagConfig {
 
@@ -27,7 +27,7 @@ object TagConfig {
     rightEmpty = SplitScreenCrud.emptyEditorMessage("tag"),
   )
 
-  val dropdownButton = new DropdownButton.Types[NewTagType]
+  val dropdownButton = new ButtonAndDropdown.Types[NewTagType]
 
   final case class Props(project: ProjectConfig,
                          state  : StateSnapshot[State],
@@ -43,7 +43,7 @@ object TagConfig {
 
   sealed abstract class NewTagType(final val label: String) {
     final val item: dropdownButton.Item =
-      DropdownButton.Item(label, this, label)
+      ButtonAndDropdown.Item(label, this, label)
   }
 
   object NewTagType {
@@ -90,14 +90,14 @@ object TagConfig {
       args match {
 
         case NewArgs.Disabled(sel) =>
-          DropdownButton.Props.forNew[NewTagType](
+          ButtonAndDropdown.Props.forNew[NewTagType](
             items    = NewTagType.items,
             selected = Some(sel),
             update   = None,
           )
 
         case NewArgs.Enabled(ss) =>
-          DropdownButton.Props.forNew[NewTagType](
+          ButtonAndDropdown.Props.forNew[NewTagType](
             items    = NewTagType.items,
             selected = Some(ss.value),
             update   = Option.unless(p.asyncInProgress)(Reusable.never(dropdownButton.Update( // TODO Reusable.never

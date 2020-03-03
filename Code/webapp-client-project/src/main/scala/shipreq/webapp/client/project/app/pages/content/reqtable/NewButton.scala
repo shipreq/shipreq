@@ -7,9 +7,9 @@ import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.ReqTypes
 import shipreq.webapp.client.project.feature.CreateFeature.RowKey
-import shipreq.webapp.client.project.widgets.DropdownButton
+import shipreq.webapp.client.project.widgets.ButtonAndDropdown
 
-object NewButton extends DropdownButton.Types[RowKey] {
+object NewButton extends ButtonAndDropdown.Types[RowKey] {
 
   type State = Option[RowKey]
 
@@ -40,7 +40,7 @@ object NewButton extends DropdownButton.Types[RowKey] {
     }
 
     val dropdownProps: DBProps =
-      DropdownButton.Props.forNew(
+      ButtonAndDropdown.Props.forNew(
        items       = items,
        selected    = state,
        update      = update,

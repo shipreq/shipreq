@@ -14,17 +14,17 @@ import shipreq.webapp.base.ui.semantic._
   *
   * Eg. [ New | Tag ↓ ]
   */
-object DropdownButton {
+object ButtonAndDropdown {
 
   class Types[A] {
-    final type Item    = DropdownButton.Item[A]
-    final type Update  = DropdownButton.Update[A]
-    final type DBProps = DropdownButton.Props.Of[A]
+    final type Item    = ButtonAndDropdown.Item[A]
+    final type Update  = ButtonAndDropdown.Update[A]
+    final type DBProps = ButtonAndDropdown.Props.Of[A]
 
-    @inline final def Item = DropdownButton.Item
+    @inline final def Item = ButtonAndDropdown.Item
 
     @inline final def Update(click: A => Callback, select: A => Callback): Update =
-      DropdownButton.Update(click = click, select = select)
+      ButtonAndDropdown.Update(click = click, select = select)
   }
 
   final case class Item[+A](key             : String,
