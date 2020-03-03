@@ -1,8 +1,6 @@
 package shipreq.webapp.client.project.app.pages.config.tags
 
-import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
-import japgolly.microlibs.stdlib_ext.MutableArray
-import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -66,42 +64,37 @@ private[tags] object TagTreeView {
         else
           *.RowState.Disabled
 
-      def renderTags(ids: NonEmptyVector[TagId], parent: Option[TagGroupId]): VdomTagOf[html.OList] = {
-        val topLevel = parent.isEmpty
+      def renderTags(it: RecursiveTagIterator): VdomTagOf[html.OList] = {
+        val topLevel = it.parent.isEmpty
         val lis = VdomArray.empty()
 
         val dnd: DragToReorderFeature[ApplicableTagId] =
-          parent match {
-            case Some(id) => dndPerGroup(id)
-            case None     => DragToReorderFeature.off
+          it.parent match {
+            case Some(g) => dndPerGroup(g.id)
+            case None    => DragToReorderFeature.off
           }
 
         // Tag groups
-        MutableArray(ids.iterator.filterSubType[TagGroupId])
-          .map(tags.needTagGroup)
-          .sortBy(_.name)
-          .iterator
-          .foreach { group =>
-            val id      = group.id
-            val tit     = tags.tree.need(id)
-            val subtree = NonEmptyVector.option(tit.children).map(renderTags(_, Some(id)))
-            val liState = *.LIState.Group(topLevel = topLevel)
+        it.tagGroupIterator().foreach { group =>
+          val id      = group.id
+          val subtree = it.nextLevelNonEmpty(group)
+          val liState = *.LIState.Group(topLevel = topLevel)
 
-            lis += <.li(
-              *.tagTreeLI((liState, DragToReorderFeature.Status.Normal)),
-              ^.key := id.value,
-              <.div(
-                *.tagTreeGroup(rowState(id)),
-                Shared.group(group),
-                ^.onClick -->? p.select.map(_(id)),
-              ),
-              subtree.whenDefined,
-            )
-          }
+          lis += <.li(
+            *.tagTreeLI((liState, DragToReorderFeature.Status.Normal)),
+            ^.key := id.value,
+            <.div(
+              *.tagTreeGroup(rowState(id)),
+              Shared.group(group),
+              ^.onClick -->? p.select.map(_(id)),
+            ),
+            subtree.whenDefined(renderTags),
+          )
+        }
 
         // Applicable tags
         var firstAfterGroup = lis.rawArray.nonEmpty
-        val apTags          = ids.iterator.filterSubType[ApplicableTagId].toArray
+        val apTags          = it.applicableTagIdIterator().toArray
         val canDrag         = !topLevel && apTags.length > 1
 
         dnd.items(apTags).foreach { item =>
@@ -129,7 +122,7 @@ private[tags] object TagTreeView {
           lis)
       }
 
-      renderTags(p.topLevelIds.toNEV, None)(
+      renderTags(tags.recursiveIterator(p.filterDead))(
         p.onClickAnywhere.whenDefined(^.onClick --> _))
     }
   }

@@ -287,6 +287,11 @@ final case class Tags(tree: TagTree) {
     get
   }
 
+  val tagFilter: FilterDead => Tag => Boolean = {
+    case HideDead => Tag.filterLive
+    case ShowDead => _ => true
+  }
+
   def flatRows(isGood: Tag => Boolean, policy: FilterPolicy): Vector[FlatTag] =
     FlatTag.flatRows(topLevelIds, tree.get(_).get)(isGood, policy)
 
@@ -337,4 +342,49 @@ final case class Tags(tree: TagTree) {
       children = directChildren(subject),
       parents = parents(subject),
     )
+
+  def recursiveIterator(fd: FilterDead): RecursiveTagIterator =
+    recursiveIterator(topLevelIds, fd)
+
+  def recursiveIterator(roots: Iterable[TagId], fd: FilterDead): RecursiveTagIterator =
+    new RecursiveTagIterator(this, tagFilter(fd), roots, 0, None)
+}
+
+final class RecursiveTagIterator(tags      : Tags,
+                                 filter    : Tag => Boolean,
+                                 ids       : Iterable[TagId],
+                                 val level : Int,
+                                 val parent: Option[TagGroup]) {
+
+  def isEmpty =
+    applicableTagIterator().isEmpty && orderedGroups.isEmpty
+
+  private lazy val orderedGroups =
+    MutableArray(
+      ids.iterator
+        .filterSubType[TagGroupId]
+        .map(tags.needTagGroup)
+        .filter(filter)
+    )
+      .sortBy(_.name)
+
+  def tagGroupIterator(): Iterator[TagGroup] =
+    orderedGroups.iterator
+
+  def applicableTagIterator(): Iterator[ApplicableTag] =
+    ids.iterator
+      .filterSubType[ApplicableTagId]
+      .map(tags.atag)
+      .filter(filter)
+
+  def applicableTagIdIterator(): Iterator[ApplicableTagId] =
+    applicableTagIterator().map(_.id)
+
+  def nextLevel(g: TagGroup): RecursiveTagIterator =
+    new RecursiveTagIterator(tags, filter, tags.directChildren(g.id), level + 1, Some(g))
+
+  def nextLevelNonEmpty(g: TagGroup): Option[RecursiveTagIterator] = {
+    val n = nextLevel(g)
+    Option.unless(n.isEmpty)(n)
+  }
 }
