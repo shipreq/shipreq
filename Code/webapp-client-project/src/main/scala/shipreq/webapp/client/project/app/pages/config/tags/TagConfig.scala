@@ -140,6 +140,7 @@ object TagConfig {
           case \/-(group) =>
             val lens = editorStateLensForGroup(TagGroupEditor.State.init(group, p.project.tags))
             TagGroupEditor.Props(
+              subject = group,
               state   = args.state.zoomStateL(lens),
               project = p.project,
               pw      = p.pw,

@@ -350,6 +350,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
             ssp     = sspUpdateConfig,
             async   = AsyncFeature.ReadWrite.D0(tagConfigAsyncW, s.tagConfigAsync),
           ).render
+          // config_old.tags.CfgTags.Props(sspUpdateConfig, global, filterDeadSS).component // TODO DELETE
 
         case Page.ReqTable =>
           val rowAsync = editAsyncState

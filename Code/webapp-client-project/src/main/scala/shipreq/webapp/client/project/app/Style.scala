@@ -904,6 +904,10 @@ object Style extends StyleSheet.Inline {
 
     val editorRelFooter = style(
       marginTop(2 em),
+      unsafeChild(".ui.dropdown .menu>.item")( // fuck you Semantic UI
+        paddingTop(0.4 em).important,
+        paddingBottom(0.4 em).important,
+      ),
     )
 
     val editorRelDelete = style(

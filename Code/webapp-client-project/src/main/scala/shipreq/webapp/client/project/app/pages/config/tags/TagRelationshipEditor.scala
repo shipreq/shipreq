@@ -1,42 +1,58 @@
 package shipreq.webapp.client.project.app.pages.config.tags
 
-import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
-import shipreq.base.util.LeftRight
+import shipreq.base.util.{LeftRight, MMTree}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.DragToReorderFeature
 import shipreq.webapp.base.ui.semantic.{Button, ColourPlus, Header, Icon, Segment}
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.widgets.ProjectWidgets
+import shipreq.webapp.client.project.widgets.{DropdownButton, ProjectWidgets}
 
 
 object TagRelationshipEditor {
+  import DataImplicits._
+  import TagInTree.Relations
 
-  final case class Props(tags    : Tags,
-                         pw      : ProjectWidgets.NoCtx,
-                         state   : StateSnapshot[State],
-                         children: Boolean,
-                         enabled : Enabled) {
+  /**
+    * @param subject In the case of new tag creation, use a negative TagId
+    * @param hypotheticalTags Normal [[Tags]] but with all unsaved changes applied.
+    */
+  final case class Props(subject         : TagId,
+                         hypotheticalTags: Tags,
+                         pw              : ProjectWidgets.NoCtx,
+                         state           : StateSnapshot[State],
+                         children        : Boolean,
+                         enabled         : Enabled) {
+
+    private[TagRelationshipEditor] val dirCtx: DirCtx =
+      DirCtx(children = children)
+
     @inline def render: VdomElement = Component(this)
   }
 
   implicit val reusabilityProps: Reusability[Props] =
-    Reusability.derive
+    Reusability.byRef || Reusability.derive
 
   @Lenses
   final case class State(groups: Set[TagGroupId],
                          tags  : Vector[ApplicableTagId],
                          dead  : Set[TagId],
                         ) {
-    def isEmpty = groups.isEmpty && tags.isEmpty && dead.isEmpty
+
+    def isEmpty: Boolean =
+      groups.isEmpty && tags.isEmpty && dead.isEmpty
+
+    val all: Set[TagId] =
+      groups ++ tags
   }
 
   object State {
@@ -66,6 +82,44 @@ object TagRelationshipEditor {
       tipe   = Button.Type.BasicIconOnly(Icon.Trash),
       colour = ColourPlus.Negative,
     )
+
+  private val indent: Int => TagMod =
+    Memo.int { i =>
+      ^.paddingLeft := s"${i * 3}ex"
+    }
+
+  private final class DirCtx(children: Boolean) {
+    val title: String =
+      if (children) "Children" else "Parents"
+
+    val leftRight: LeftRight =
+      LeftRight.Right.when(children)
+
+    val addRelation: (TagId, Relations) => Relations =
+      if (children)
+        (child, r) => r.copy(children = r.children :+ child)
+      else
+        (parent, r) => r.copy(parents = r.parents.updated(parent, None))
+
+    val addLabel: VdomNode =
+      s"Add ${if (children) "child" else "parent"}..."
+
+    val legalChild: TagId => Boolean =
+      if (children)
+        _ => true
+      else {
+        case _: TagGroupId      => true
+        case _: ApplicableTagId => false
+      }
+  }
+
+  private object DirCtx {
+    def apply(children: Boolean): DirCtx =
+      if (children) Children else Parents
+
+    private val Parents  = new DirCtx(children = false)
+    private val Children = new DirCtx(children = true)
+  }
 
   final class Backend($: BackendScope[Props, Unit]) {
 
@@ -108,6 +162,7 @@ object TagRelationshipEditor {
       val animating = s.dead.nonEmpty
       val enabled   = p.enabled & Disabled.when(animating)
       val items     = VdomArray.empty()
+      val it        = p.hypotheticalTags.recursiveIterator(s.all, HideDead)
 
       val rowState =
         if (animating)
@@ -119,9 +174,8 @@ object TagRelationshipEditor {
         else
           *.RowState.Enabled
 
-
       // Tag groups
-      MutableArray(s.groups).map(p.tags.needTagGroup).sortBy(_.name).iterator.foreach { g =>
+      it.tagGroupIterator().foreach { g =>
         val id = g.id
         items += <.li(
           *.editorRelTagLI((groupLiState, DragToReorderFeature.Status.Normal)),
@@ -137,7 +191,8 @@ object TagRelationshipEditor {
 
       // Applicable tags
       val tagLiState = *.LIState.Tag(rowState, false, false)
-      dnd.items(s.tags).foreach { item =>
+      val atags      = it.applicableTagIdIterator().toArray
+      dnd.items(atags).foreach { item =>
         val id = item.data
 
         items += <.li(
@@ -153,23 +208,73 @@ object TagRelationshipEditor {
       <.ol(*.editorRelTree, items)
     }
 
+    private def add(tagId: TagId): Callback =
+      tagId match {
+        case id: TagGroupId      => modState(State.groups.modify(_ + id))
+        case id: ApplicableTagId => modState(State.tags.modify(_ :+ id))
+      }
+
+    private def renderAddButton(p: Props): VdomNode = {
+      val all = p.state.value.all
+      val tags = p.hypotheticalTags
+
+      def canTagBeAdded(t: Tag): Boolean = {
+        def isLive          = Tag.filterLive(t)
+        def isLegal         = p.dirCtx.legalChild(t.id)
+        def notAlreadyAdded = !all.contains(t.id)
+
+        // Example: won't result in a cyclic graph
+        def isSafeToApply = {
+          val before = MMTree.Relations.derive(p.subject, tags.directChildren.m)
+          val after  = p.dirCtx.addRelation(t.id, before)
+          val result = MMTree.ApplyRelations.safeApply1(tags.tree, p.subject)(after)
+          result.isRight
+        }
+
+        isLive && isLegal && notAlreadyAdded && isSafeToApply
+      }
+
+      val flatTags =
+        tags.flatRows(canTagBeAdded, FlatTag.FilterPolicy.OmitBadBranches)
+          .filter(_.tag.live is Live)
+
+      val items =
+        flatTags.map { ft =>
+          val enabled: Enabled =
+            Enabled.when(ft.status ==* FlatTag.Status.Good)
+
+          val display: VdomNode =
+            ft.tag match {
+              case g: TagGroup      => Shared.group(g)
+              case t: ApplicableTag => p.pw.tag(t.id)
+            }
+
+          DropdownButton.Item(
+            label = <.div(indent(ft.depth), display),
+            select = Option.when(enabled is Enabled)(add(ft.tag.id))
+          )
+        }
+
+      DropdownButton.Props(
+        icon       = Icon.Plus,
+        label      = p.dirCtx.addLabel,
+        items      = items,
+        enabled    = p.enabled,
+      ).render
+    }
+
     def render(p: Props): VdomNode = {
-      val s     = p.state.value
-      val lr    = LeftRight.Right.when(p.children)
-      val title = if (p.children) "Children" else "Parents"
-      val tags  = if (s.isEmpty) EmptyVdom else renderTagList(p)
+      val s         = p.state.value
+      val tags      = if (s.isEmpty) EmptyVdom else renderTagList(p)
+      val addButton = renderAddButton(p)
 
-      val footer: VdomNode =
-        <.div("BUTTON HERE")
-
-      <.div(*.editorRelOuter(lr),
+      <.div(*.editorRelOuter(p.dirCtx.leftRight),
         Segment.fullHeight(
           <.div(*.editorRelInner,
             <.div(*.editorRelHeader,
-              Header.h4(title)),
+              Header.h4(p.dirCtx.title)),
             <.div(*.editorRelBody, tags),
-            <.div(*.editorRelFooter, footer),
-          )))
+            <.div(*.editorRelFooter, addButton))))
     }
   }
 

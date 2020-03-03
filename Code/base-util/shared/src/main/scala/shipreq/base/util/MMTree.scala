@@ -37,7 +37,7 @@ object MMTree {
    *
    * @tparam I Node id
    */
-  case class Relations[I](parents: Parents[I], children: Children[I]) {
+  final case class Relations[I](parents: Parents[I], children: Children[I]) {
 
     // For testing
     def allReferencedIds: Set[I] =

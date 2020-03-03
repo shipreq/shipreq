@@ -17,11 +17,17 @@ import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 
 private[tags] object TagGroupEditor {
+  import DataImplicits._
 
-  final case class Props(state  : StateSnapshot[State],
+  final case class Props(subject: Option[TagGroupId],
+                         state  : StateSnapshot[State],
                          project: ProjectConfig,
                          pw     : ProjectWidgets.NoCtx
                         ) {
+
+    val virtualSubjectId: TagGroupId =
+      subject.getOrElse(TagGroupId(-1))
+
     @inline def render: VdomElement = Component(this)
   }
 
@@ -69,11 +75,51 @@ private[tags] object TagGroupEditor {
 
     val exclusive: Lens[State, On] =
       exclusivity ^<-> On.isoWhen(Exclusive)
+
+    val parentsR = Reusable.byRef(parents)
+    val childrenR = Reusable.byRef(children)
   }
 
   private implicit def vux = ValidationUX.Full
 
   final class Backend($: BackendScope[Props, Unit]) {
+
+    private val pxSubject: Px[TagGroupId] =
+      Px.props($).map(_.virtualSubjectId).withReuse.autoRefresh
+
+    private val pxTags: Px[Tags] =
+      Px.props($).map(_.project.tags).withReuse.autoRefresh
+
+    private val pxChildren: Px[TagRelationshipEditor.State] =
+      Px.props($).map(_.state.value.children).withReuse.autoRefresh
+
+    private val pxParents: Px[TagRelationshipEditor.State] =
+      Px.props($).map(_.state.value.parents).withReuse.autoRefresh
+
+    private val pxNewRelations: Px[TagInTree.Relations] =
+      for {
+        subject  <- pxSubject
+        tags     <- pxTags
+        parents  <- pxParents
+        children <- pxChildren
+      } yield {
+        val oldParents = tags.parents(subject)
+        MMTree.Relations(
+          parents  = parents.all.toIterator.map(id => id -> oldParents.get(id).flatten).toMap,
+          children = children.groups.toVector ++ children.tags,
+        )
+      }
+
+    private val pxHypotheticalTags: Px[Tags] =
+      for {
+        subject  <- pxSubject
+        tags     <- pxTags
+        newRels  <- pxNewRelations
+      } yield {
+        val newTagTree = MMTree.ApplyRelations.trustedApply1(tags.tree, subject, newRels)
+        // println("===================================================================\n" + Tags(newTagTree).prettyPrint)
+        Tags(newTagTree)
+      }
 
     private val exclusivityLabel: VdomNode =
       React.Fragment(
@@ -83,13 +129,14 @@ private[tags] object TagGroupEditor {
           "When more than one tag within this group is applied to a requirement, it will be reported as an issue.")
       )
 
-    private def tagRelationships(p: Props, children: Boolean) =
+    private def tagRelationships(p: Props, hypotheticalTags: Tags, children: Boolean) =
       TagRelationshipEditor.Props(
-        tags     = p.project.tags,
-        pw       = p.pw,
-        state    = p.state.zoomStateL(if (children) State.children else State.parents),
-        children = children,
-        enabled  = Enabled,
+        subject          = p.virtualSubjectId,
+        hypotheticalTags = hypotheticalTags,
+        pw               = p.pw,
+        state            = p.state.withReuse.zoomStateL(if (children) State.childrenR else State.parentsR),
+        children         = children,
+        enabled          = Enabled,
       ).render
 
     def render(p: Props): VdomNode = {
@@ -125,8 +172,9 @@ private[tags] object TagGroupEditor {
           .withState(p.state.zoomStateL(State.desc))
           .withValidator(DataValidators.tag.desc.unnamedFn(vs))
 
-      val parents  = tagRelationships(p, children = false)
-      val children = tagRelationships(p, children = true)
+      val hypotheticalTags = pxHypotheticalTags.value()
+      val parents          = tagRelationships(p, hypotheticalTags, children = false)
+      val children         = tagRelationships(p, hypotheticalTags, children = true)
 
       <.div(
         header,

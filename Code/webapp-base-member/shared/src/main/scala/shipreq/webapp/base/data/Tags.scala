@@ -131,7 +131,11 @@ object TagTree {
           case t: TagGroup      => t.mutexChildren is MutexChildren
           case _: ApplicableTag => false
         }
-        s"${t.tag.name} (#$id)${if (isDead) " [DEAD]" else ""}${if (isMutex) " [MUTEX]" else ""}"
+        val name = t.tag match {
+          case t: TagGroup      => t.name
+          case t: ApplicableTag => "#" + t.key.value
+        }
+        s"$name (#$id)${if (isDead) " [DEAD]" else ""}${if (isMutex) " [EXCLUSIVE]" else ""}"
       },
       "  ")
   }
