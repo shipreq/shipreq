@@ -3,7 +3,6 @@ package shipreq.webapp.base.protocol
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import java.time.Instant
-import scalaz.\&/
 import scalaz.{-\/, Equal, \/, \/-}
 import sourcecode.Line
 import shipreq.base.test.BaseTestUtil._
@@ -124,11 +123,11 @@ object ProjectSpaProtocolsTest extends TestSuite {
           val expect = (ReqId(25),UpdateConfig.AndReq(CustomFieldUpdateImp(CustomField.Implication.Id(7),ImpFieldValues(CustomReqTypeId(10),Mandatory,ISubset.Only(NonEmptySet(StaticReqType.UseCase))))))
           assertRequest(bin, expect)
         }
-        "TagCreate" - {
-          val bin    = BinaryData.fromHex("5945B41D010016030F00610554454D50500C54454D5050505050505050500138295653")
-          val expect = (ReqId(22),UpdateConfig.AndReq(TagCreate(\&/.This(ApplicableTagValues("TEMPP",HashRefKey("TEMPPPPPPPPP"),None)))))
-          assertRequest(bin, expect)
-        }
+// TODO       "TagCreate" - {
+//          val bin    = BinaryData.fromHex("5945B41D010016030F00610554454D50500C54454D5050505050505050500138295653")
+//          val expect = (ReqId(22),UpdateConfig.AndReq(TagCreate(\&/.This(ApplicableTagValues("TEMPP",HashRefKey("TEMPPPPPPPPP"),None)))))
+//          assertRequest(bin, expect)
+//        }
       }
 
       "resp" - {
