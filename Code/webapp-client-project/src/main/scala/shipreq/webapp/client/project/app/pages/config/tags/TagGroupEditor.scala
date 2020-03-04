@@ -139,6 +139,12 @@ private[tags] object TagGroupEditor {
 
   final class Backend($: BackendScope[Props, Unit]) {
 
+    private val fakeTagGroupId =
+      TagGroupId(-1)
+
+    private val fakeTagGroupInTree =
+      TagInTree(TagGroup(fakeTagGroupId, "", None, MutexChildren, Live), Vector.empty)
+
     private val pxSourceId: Px[Option[TagGroupId]] =
       Px.props($).map(_.subject).withReuse.autoRefresh
 
@@ -158,10 +164,17 @@ private[tags] object TagGroupEditor {
         parents  <- pxParents
         children <- pxChildren
       } yield {
-        val virtualId  = sourceId.getOrElse(TagGroupId(-1))
-        val newRels    = buildNewRels(sourceId, tags, parents, children)
-        val newTagTree = MMTree.ApplyRelations.trustedApply1(tags.tree, virtualId, newRels)
+        val newRels = buildNewRels(sourceId, tags, parents, children)
+
+        val newTagTree: TagTree =
+          sourceId match {
+            case Some(id) => MMTree.ApplyRelations.trustedApply1(tags.tree, id, newRels)
+            case None     => MMTree.ApplyRelations.trustedApply1(tags.tree.add(fakeTagGroupInTree), fakeTagGroupId, newRels)
+          }
+
         // println(("="*60) + "\n" + Tags(newTagTree).prettyPrint)
+        DataProp.tags.treeStructure.assert(newTagTree)
+
         Tags(newTagTree)
       }
 

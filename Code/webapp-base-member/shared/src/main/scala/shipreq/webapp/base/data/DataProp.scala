@@ -202,6 +202,9 @@ object DataProp {
 
     val all =
       tagTree rename "Tags"
+
+    def treeStructure =
+      (uniqueSiblings ∧ noCycles ∧ noDeadLinks) rename "TreeStructure"
   }
 
   // -------------------------------------------------------------------------------------------------------------------

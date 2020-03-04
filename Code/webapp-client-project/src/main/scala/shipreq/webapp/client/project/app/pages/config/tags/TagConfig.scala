@@ -121,14 +121,14 @@ object TagConfig {
       }
 
     private def submitCmd(p: Props, cmd: UpdateConfigCmd.ToModifyTags): Callback =
-      submitCmd(p, cmd, Callback.empty)
+      submitCmd(p, cmd, _ => Callback.empty)
 
-    private def submitCmd(p    : Props,
-                          cmd  : UpdateConfigCmd.ToModifyTags,
-                          close: Callback): Callback =
+    private def submitCmd(p        : Props,
+                          cmd      : UpdateConfigCmd.ToModifyTags,
+                          onSuccess: TagId => Callback): Callback =
       p.async.write.forgetFailure(
         p.ssp(cmd).flatTap {
-          case \/-(_) => close.asAsyncCallback
+          case \/-(n) => Callback.traverseOption(n.summary.allTags.headOption)(onSuccess).asAsyncCallback
           case -\/(e) => GeneralTheme.showErrorMsg(e).asAsyncCallback
         }
       )
@@ -200,13 +200,13 @@ object TagConfig {
             EditorButtons.Props.Update(
               abort  = args.close,
               delete = submitCmd(p, UpdateConfigCmd.TagDelete(id)),
-              update = p.potentialSaveCmd.map(submitCmd(p, _, args.close)),
+              update = p.potentialSaveCmd.map(submitCmd(p, _, _ => args.reset)),
             )
 
           case None =>
             EditorButtons.Props.Create(
               abort  = args.close,
-              create = p.potentialSaveCmd.toOption.map(submitCmd(p, _, args.close)),
+              create = p.potentialSaveCmd.toOption.map(submitCmd(p, _, args.select)),
             )
         }
 
@@ -215,7 +215,6 @@ object TagConfig {
           <.div("todo")
 
         case EditorType.TagGroup(idOption) =>
-
           val lens = editorStateLensForGroup(TagGroupEditor.State.init(idOption, p.project.tags))
 
           val editor =

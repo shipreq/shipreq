@@ -67,9 +67,11 @@ object SplitScreenCrud {
     }
   }
 
-  final case class EditorArgs[+N, +Id, S](id   : N \/ Id,
-                                          state: StateSnapshot[S],
-                                          close: Callback)
+  final case class EditorArgs[N, Id, S](id    : N \/ Id,
+                                        state : StateSnapshot[S],
+                                        reset : Callback,
+                                        select: Id => Callback,
+                                        close : Callback)
 
   final case class Props[N, Id, E](filterDeadOverride: Option[FilterDead],
                                    newButton         : NewArgs[N] => VdomNode,
@@ -250,10 +252,22 @@ final class SplitScreenCrud[
             None
 
           case S.Right.Create(es) =>
-            Some(SplitScreenCrud.EditorArgs(-\/(s.newState), StateSnapshot(es)(setCreateState), closeEditor))
+            Some(SplitScreenCrud.EditorArgs(
+              id     = -\/(s.newState),
+              state  = StateSnapshot(es)(setCreateState),
+              reset  = Callback.byName(openNewEditor(p.state.value.newState)),
+              select = select,
+              close  = closeEditor,
+            ))
 
           case S.Right.Update(id, es) =>
-            Some(SplitScreenCrud.EditorArgs(\/-(id), StateSnapshot(es)(setUpdateState(id)), closeEditor))
+            Some(SplitScreenCrud.EditorArgs(
+              id     = \/-(id),
+              state  = StateSnapshot(es)(setUpdateState(id)),
+              reset  = select(id),
+              select = select,
+              close  = closeEditor,
+            ))
         }
 
       val left: VdomNode =

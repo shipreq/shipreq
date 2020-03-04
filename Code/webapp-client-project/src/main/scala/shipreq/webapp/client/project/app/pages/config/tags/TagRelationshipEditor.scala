@@ -220,7 +220,7 @@ object TagRelationshipEditor {
 
       def canTagBeAdded(t: Tag): Boolean = {
         def isLive          = Tag.filterLive(t)
-        def isLegal         = p.dirCtx.legalChild(t.id)
+        def isLegal         = (t.id !=* p.subject) && p.dirCtx.legalChild(t.id)
         def notAlreadyAdded = !all.contains(t.id)
 
         // Example: won't result in a cyclic graph
