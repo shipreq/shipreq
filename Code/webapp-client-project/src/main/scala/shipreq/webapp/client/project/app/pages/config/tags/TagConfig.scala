@@ -172,7 +172,7 @@ object TagConfig {
             filterDead      = p.effectiveFilterDead,
             selected        = args.selection,
             select          = args.enabledSelect,
-            projectWidgets  = p.pw,
+            pw              = p.pw,
             updateChildren  = updateChildren,
             enabled         = Disabled when p.asyncInProgress,
             onClickAnywhere = args.closeEditor.filter(_ => p.potentialSaveCmd.isUnchanged),
@@ -189,7 +189,7 @@ object TagConfig {
           *.editorTitle,
           args.id match {
             case \/-(id: TagGroupId)      => Shared.group(p.project.tags.needTagGroup(id))
-            case \/-(id: ApplicableTagId) => p.pw.tag(id)
+            case \/-(id: ApplicableTagId) => p.pw.tagSimple(id, includeDesc = false)
             case -\/(NewTagType.TagGroup) => "New tag group"
             case -\/(NewTagType.Tag)      => "New tag"
           })

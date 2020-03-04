@@ -21,7 +21,7 @@ private[tags] object TagTreeView {
                          filterDead     : FilterDead,
                          selected       : Option[TagId],
                          select         : Option[TagId ~=> Callback],
-                         projectWidgets : ProjectWidgets.NoCtx,
+                         pw             : ProjectWidgets.NoCtx,
                          updateChildren : Reusable[(TagGroupId, Vector[ApplicableTagId]) => Callback],
                          enabled        : Enabled,
                          onClickAnywhere: Option[Reusable[Callback]],
@@ -46,7 +46,7 @@ private[tags] object TagTreeView {
       }
 
     def render(p: Props): VdomNode = {
-      import p.{tags, projectWidgets}
+      import p.{tags, pw}
 
       val modificationEnabled: Enabled =
         p.enabled & Enabled.when(p.select.isDefined)
@@ -118,7 +118,7 @@ private[tags] object TagTreeView {
             TagMod.when(canAnyDrag)(
               Shared.dragHandle(item, modificationEnabled & Disabled.when(tag.live is Dead)),
             ),
-            projectWidgets.tag(id),
+            pw.tagSimple(id, includeDesc = true),
           )
 
           firstAfterGroup = false

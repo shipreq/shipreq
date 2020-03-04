@@ -28,9 +28,10 @@ object Style extends StyleSheet.Inline {
     val dragStatus =
       Domain.ofValues[DragStatus](DragStatus.allValues.whole: _*)
 
-    val `live * live`     = live *** live
-    val `live * on`       = live *** on
-    val `live * validity` = live *** validity
+    val `live * live`            = live *** live
+    val `live * on`              = live *** on
+    val `live * validity`        = live *** validity
+    val `live * validity * bool` = live *** validity *** Domain.boolean
 
     val ucStepIndent = Domain.ofRange(0 until StaticField.useCaseStepTrees.iterator.map(_.maxDepth).max)
   }
@@ -969,9 +970,18 @@ object Style extends StyleSheet.Inline {
       width(11 ex),
       borderRadius(0.3 ex))
 
-    private def tagBase(live: Live) = mixin(
+    private def tagBase(live: Live, helpIconOnHover: Boolean) = mixin(
       mixinIf(live is Dead)(&.not(_.hover)(textDecoration := ^.lineThrough)),
-      hoverShowsInfo)
+      if (helpIconOnHover)
+        styleS(
+          hoverShowsInfo,
+//          &.not(hasTitle)(cursor.default),
+        )
+      else
+        styleS(
+//          cursor.default,
+        ),
+    )
 
     private val tagLabelColour: ((Live, Validity)) => String = {
       case (Live, Valid  ) => "blue"
@@ -980,14 +990,15 @@ object Style extends StyleSheet.Inline {
     }
 
     @UsesSemanticUiManually
-    val tag = styleF(D.`live * validity`)(lv => styleS(
-      tagBase(lv._1),
+    val tag = styleF(D.`live * validity * bool`) { case ((live, validity), helpIconOnHover) => styleS(
+      tagBase(live, helpIconOnHover = helpIconOnHover),
       padding(4 px, 6 px).important,
-      mixinIf(lv._2 is Invalid)(hasErrorBackground.important, hasErrorColor.important),
-      addClassName(s"ui label ${tagLabelColour(lv)}")))
+      mixinIf(validity is Invalid)(hasErrorBackground.important, hasErrorColor.important),
+      addClassName(s"ui label ${tagLabelColour((live, validity))}"),
+    )}
 
     val tagInText = styleF(D.`live * validity`){ case (l, v) => styleS(
-      tagBase(l),
+      tagBase(l, helpIconOnHover = true),
       mixinIf(l is Live)(refColour),
       mixinIf(l is Dead)(deadMaybeValid(v)))
     }

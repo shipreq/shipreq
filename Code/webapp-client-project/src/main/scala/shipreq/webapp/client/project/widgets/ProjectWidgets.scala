@@ -240,16 +240,19 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
         val tag = project.config.tags.atag(id)
         val liveTag = tag.live
         val valid = Invalid.when(liveText.is(Live) && liveTag.is(Dead))
-        tagWithoutStyle(Contextualise, tag)(*.tagInText((liveTag, valid)))
+        tagWithoutStyle(Contextualise, tag, includeDesc = true)(*.tagInText((liveTag, valid)))
       }
     }
 
-  private def tagWithoutStyle(c: Contextualise, t: ApplicableTag): VdomTag = {
-    var desc = if (t.name.compareToIgnoreCase(t.key.value) == 0) "" else t.name
-    for (d <- t.desc) {
-      if (desc.nonEmpty)
-        desc += "\n\n"
-      desc += d
+  private def tagWithoutStyle(c: Contextualise, t: ApplicableTag, includeDesc: Boolean): VdomTag = {
+    var desc = ""
+    if (includeDesc) {
+      desc = if (t.name.compareToIgnoreCase(t.key.value) == 0) "" else t.name
+      for (d <- t.desc) {
+        if (desc.nonEmpty)
+          desc += "\n\n"
+        desc += d
+      }
     }
     val keyTxt = t.key.value
     val displayTxt = c match {
@@ -257,7 +260,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
       case Plain         => keyTxt
     }
     <.span(
-      (^.title := desc).when(desc.nonEmpty),
+      TagMod.when(desc.nonEmpty)(^.title := desc),
       displayTxt)
   }
 
@@ -345,7 +348,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     Validity.memo { validity =>
       Memo { id =>
         val tag = project.config.tags.atag(id)
-        tagWithoutStyle(Plain, tag)(*.tag((tag.live, validity)))
+        tagWithoutStyle(Plain, tag, includeDesc = true)(*.tag(((tag.live, validity), true)))
       }
     }
 
@@ -362,8 +365,17 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Public additions not part of ProjectText
 
-  val tag: ApplicableTagId => VdomTag =
-    tagPlain(Valid)
+  /** Simple here means:
+    *
+    * - title optional
+    * - no cursor:help style if title
+    * - no concept of Validity (Live vs Dead is still respected)
+    * - no contextualisation
+    */
+  def tagSimple(id: ApplicableTagId, includeDesc: Boolean): VdomTag = {
+    val tag = project.config.tags.atag(id)
+    tagWithoutStyle(Plain, tag, includeDesc = includeDesc)(*.tag(((tag.live, Valid), false)))
+  }
 
   def useCaseStepTextAndMaybeInvalidFlow[C[x] <: Traversable[x]](s: UseCaseStepFlowText.TextAndFlow[AnyOptional, C[String \/ UseCaseStepId]],
                                                                  l: Live): VdomTag = {

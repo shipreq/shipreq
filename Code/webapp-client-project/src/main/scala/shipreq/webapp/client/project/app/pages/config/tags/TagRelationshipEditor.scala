@@ -200,7 +200,7 @@ object TagRelationshipEditor {
           ^.key := id.value,
           dead.when(s.dead.contains(id)),
           Shared.dragHandle(item, enabled),
-          p.pw.tag(id),
+          p.pw.tagSimple(id, includeDesc = true),
           deleteButton(id),
         )
       }
@@ -246,7 +246,7 @@ object TagRelationshipEditor {
           val display: VdomNode =
             ft.tag match {
               case g: TagGroup      => Shared.group(g)
-              case t: ApplicableTag => p.pw.tag(t.id)
+              case t: ApplicableTag => p.pw.tagSimple(t.id, includeDesc = true)
             }
 
           DropdownButton.Item(
