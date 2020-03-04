@@ -104,9 +104,11 @@ object TagConfig {
   final class Backend($: BackendScope[Props, Unit]) {
     import SplitScreenCrud.NewArgs
 
-    private val initEditor: TagId => CallbackTo[EditorState] = {
-      case id: TagGroupId     => $.props.map(p => \/-(TagGroupEditor.State.init(id, p.project.tags)))
-      case _: ApplicableTagId => CallbackTo.pure(-\/(()))
+    private val initEditor: (NewTagType \/ TagId) => CallbackTo[EditorState] = {
+      case \/-(id: TagGroupId)      => $.props.map(p => \/-(TagGroupEditor.State.init(id, p.project.tags)))
+      case \/-(_: ApplicableTagId)  => CallbackTo.pure(-\/(()))
+      case -\/(NewTagType.TagGroup) => CallbackTo.pure(\/-(TagGroupEditor.State.initNew))
+      case -\/(NewTagType.Tag)      => CallbackTo.pure(-\/(()))
     }
 
     private val updateChildren: Reusable[(TagGroupId, Vector[ApplicableTagId]) => Callback] =
@@ -141,13 +143,13 @@ object TagConfig {
             update   = None,
           )
 
-        case NewArgs.Enabled(ss) =>
+        case a: NewArgs.Enabled[NewState] =>
           ButtonAndDropdown.Props.forNew[NewTagType](
             items    = NewTagType.items,
-            selected = Some(ss.value),
+            selected = Some(a.state.value),
             update   = Option.unless(p.asyncInProgress)(Reusable.never(dropdownButton.Update( // TODO Reusable.never
-              click  = _ => Callback.TODO,
-              select = ss.setState,
+              click  = _ => a.openEditor,
+              select = a.state.setState,
             ))))
       }
 

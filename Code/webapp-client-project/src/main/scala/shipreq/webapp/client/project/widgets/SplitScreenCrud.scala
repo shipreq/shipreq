@@ -44,8 +44,8 @@ object SplitScreenCrud {
 
   sealed trait NewArgs[S]
   object NewArgs {
-    final case class Disabled[S](value: S)                extends NewArgs[S]
-    final case class Enabled [S](state: StateSnapshot[S]) extends NewArgs[S]
+    final case class Disabled[S](value: S)                                      extends NewArgs[S]
+    final case class Enabled [S](state: StateSnapshot[S], openEditor: Callback) extends NewArgs[S]
   }
 
   sealed trait ListArgs[Id] {
@@ -75,7 +75,7 @@ object SplitScreenCrud {
                                    newButton         : NewArgs[N] => VdomNode,
                                    list              : ListArgs[Id] => VdomNode,
                                    editor            : EditorArgs[N, Id, E] => VdomNode,
-                                   initEditor        : Id => CallbackTo[E],
+                                   initEditor        : (N \/ Id) => CallbackTo[E],
                                    state             : StateSnapshot[State[N, Id, E]])
 
   @Lenses
@@ -146,7 +146,7 @@ final class SplitScreenCrud[
                     newButton         : NewArgs    => VdomNode,
                     list              : ListArgs   => VdomNode,
                     editor            : EditorArgs => VdomNode,
-                    initEditor        : Id => CallbackTo[EditorState],
+                    initEditor        : (NewState \/ Id) => CallbackTo[EditorState],
                     state             : StateSnapshot[State]): VdomNode =
     Component(SplitScreenCrud.Props(filterDeadOverride, newButton, list, editor, initEditor, state))
 
@@ -168,8 +168,19 @@ final class SplitScreenCrud[
         id =>
           for {
             p           <- $.props
-            editorState <- p.initEditor(id)
+            editorState <- p.initEditor(\/-(id))
             right        = S.Right.Update(id, editorState)
+            _           <- p.state.modState(_.copy(right = right))
+          } yield ()
+      )
+
+    private val openNewEditor: NewState ~=> Callback =
+      Reusable.byRef(
+        ns =>
+          for {
+            p           <- $.props
+            editorState <- p.initEditor(-\/(ns))
+            right        = S.Right.Create(editorState)
             _           <- p.state.modState(_.copy(right = right))
           } yield ()
       )
@@ -204,8 +215,13 @@ final class SplitScreenCrud[
 
       val newArgs: NewArgs =
         newButtonEnabled match {
-          case Enabled  => SplitScreenCrud.NewArgs.Enabled(p.state.zoomStateL(newStateLens))
-          case Disabled => SplitScreenCrud.NewArgs.Disabled(p.state.value.newState)
+          case Enabled =>
+            SplitScreenCrud.NewArgs.Enabled(
+              state      = p.state.zoomStateL(newStateLens),
+              openEditor = Callback.byName(openNewEditor(p.state.value.newState)))
+
+          case Disabled =>
+            SplitScreenCrud.NewArgs.Disabled(p.state.value.newState)
         }
 
       val newButton: VdomNode =
