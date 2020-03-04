@@ -208,7 +208,7 @@ object TagConfig {
           case Some(id) =>
             EditorButtons.Props.Update(
               abort  = args.close,
-              delete = submitCmd(p, UpdateConfigCmd.TagDelete(id), "Deleted"),
+              delete = submitCmd(p, UpdateConfigCmd.TagDelete(id), "Deleted", _ => args.close),
               update = p.potentialSaveCmd.map(submitCmd(p, _, "Updated", _ => args.reset)),
             )
 
