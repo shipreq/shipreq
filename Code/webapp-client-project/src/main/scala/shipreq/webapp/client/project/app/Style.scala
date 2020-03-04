@@ -28,6 +28,7 @@ object Style extends StyleSheet.Inline {
     val dragStatus =
       Domain.ofValues[DragStatus](DragStatus.allValues.whole: _*)
 
+    val `enabled * live`         = enabled *** live
     val `live * live`            = live *** live
     val `live * on`              = live *** on
     val `live * validity`        = live *** validity
@@ -853,12 +854,13 @@ object Style extends StyleSheet.Inline {
       marginRight(0.4 ex).important,
     )
 
-    val dragHandle = styleF(D.enabled)(e => styleS(
+    val dragHandle = styleF(D.`enabled * live`) { case (e, l) => styleS(
       display.inline,
       padding(.5 em, 1 ex, 0.5 em, 2 ex),
       marginLeft(-2 ex),
       mixinIf(e is Enabled)(cursor.grab),
-    ))
+      mixinIf(e.is(Disabled) && l.is(Dead))(visibility.hidden),
+    )}
 
     val editorTitle = style(
       color(c"#3659e2"),

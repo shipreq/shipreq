@@ -199,7 +199,7 @@ object TagRelationshipEditor {
           *.editorRelTagLI((tagLiState, item.status)),
           ^.key := id.value,
           dead.when(s.dead.contains(id)),
-          Shared.dragHandle(item, enabled),
+          Shared.dragHandle(item, enabled, Live),
           p.pw.tagSimple(id, includeDesc = true),
           deleteButton(id),
         )

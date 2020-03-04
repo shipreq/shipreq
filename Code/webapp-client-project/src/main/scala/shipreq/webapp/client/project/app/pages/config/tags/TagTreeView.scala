@@ -115,9 +115,10 @@ private[tags] object TagTreeView {
             *.tagTreeLI((liState, item.status)),
             ^.key := id.value,
             ^.onClick -->? p.select.filterNot(_ => readOnly).map(_(id)),
-            TagMod.when(canAnyDrag)(
-              Shared.dragHandle(item, modificationEnabled & Disabled.when(tag.live is Dead)),
-            ),
+            TagMod.when(canAnyDrag) {
+              val live = tag.live
+              Shared.dragHandle(item, modificationEnabled & Disabled.when(live is Dead), tag.live)
+            },
             pw.tagSimple(id, includeDesc = true),
           )
 
