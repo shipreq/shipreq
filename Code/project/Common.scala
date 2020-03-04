@@ -21,7 +21,7 @@ object Common {
   private val availableProcessors = java.lang.Runtime.getRuntime.availableProcessors()
 
   def scalacFlags = Seq(
-//    "-deprecation",
+    "-deprecation",
     "-feature",
     "-language:existentials",
     "-language:higherKinds",
