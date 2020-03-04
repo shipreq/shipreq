@@ -191,6 +191,7 @@ private[tags] object TagGroupEditor {
           .withLabel("Name")
           .withState(p.state.zoomStateL(State.name))
           .withValidator(DataValidators.tag.name.unnamedFn(p.validatorState))
+          .withAutoFocus
 
       val exclusivityField =
         Form.Field.checkbox
