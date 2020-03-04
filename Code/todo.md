@@ -92,6 +92,7 @@ Phase 3A
   * ensure dead filter & style everywhere
   * shouldn't be able to click left if right has changes
   * TagSetApplicableChildrenOrder has a bug or something - remember how priorty got fucked up with Actors & could added under should?
+  * rename atag => needXxxx
 
 * Fields
   * redo config screen

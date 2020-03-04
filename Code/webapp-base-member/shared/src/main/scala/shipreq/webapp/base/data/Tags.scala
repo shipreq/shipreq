@@ -353,6 +353,12 @@ final case class Tags(tree: TagTree) {
       parents = parents(subject),
     )
 
+  def relationsOption(subject: Option[TagId]): MMTree.Relations[TagId] =
+    subject match {
+      case Some(s) => relations(s)
+      case None    => MMTree.Relations.empty
+    }
+
   def recursiveIterator(fd: FilterDead): RecursiveTagIterator =
     recursiveIterator(topLevelIds, fd)
 

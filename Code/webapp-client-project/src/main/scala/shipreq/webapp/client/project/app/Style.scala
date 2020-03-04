@@ -931,6 +931,11 @@ object Style extends StyleSheet.Inline {
         textDecoration := "line-through",
       )
     ))
+
+    val editorApTagHeader = style(
+      fontSize(100 %%).important,
+    )
+
   }
 
   // ===================================================================================================================

@@ -25,7 +25,7 @@ object TagConfig {
 
   type NewState = NewTagType
 
-  type EditorState = Unit \/ TagGroupEditor.State
+  type EditorState = ApplicableTagEditor.State \/ TagGroupEditor.State
 
   val splitScreenCrud = new SplitScreenCrud[NewState, TagId, EditorState](
     rightEmpty = SplitScreenCrud.emptyEditorMessage("tag"),
@@ -59,9 +59,9 @@ object TagConfig {
 
     val potentialSaveCmd: PotentialChange[Unit, UpdateConfigCmd.ToModifyTags] =
       state.value.right.editorOption match {
-        case Some(\/-(s))  => s.updateCmd(project)
-        case Some(-\/(())) => PotentialChange.Unchanged
-        case None          => PotentialChange.Unchanged
+        case Some(\/-(s)) => s.updateCmd(project)
+        case Some(-\/(s)) => s.updateCmd(project)
+        case None         => PotentialChange.Unchanged
       }
 
     @inline def render: VdomElement = Component(this)
@@ -99,6 +99,9 @@ object TagConfig {
     final case class ApplicableTag(id: Option[ApplicableTagId]) extends EditorType
   }
 
+  private def editorStateLensForApTag(default: => ApplicableTagEditor.State): Lens[EditorState, ApplicableTagEditor.State] =
+    Optics.disjunctionLensLeft(default)
+
   private def editorStateLensForGroup(default: => TagGroupEditor.State): Lens[EditorState, TagGroupEditor.State] =
     Optics.disjunctionLensRight(default)
 
@@ -107,9 +110,9 @@ object TagConfig {
 
     private val initEditor: (NewTagType \/ TagId) => CallbackTo[EditorState] = {
       case \/-(id: TagGroupId)      => $.props.map(p => \/-(TagGroupEditor.State.init(id, p.project.tags)))
-      case \/-(_: ApplicableTagId)  => CallbackTo.pure(-\/(()))
+      case \/-(id: ApplicableTagId) => $.props.map(p => -\/(ApplicableTagEditor.State.init(id, p.project.tags)))
       case -\/(NewTagType.TagGroup) => CallbackTo.pure(\/-(TagGroupEditor.State.initNew))
-      case -\/(NewTagType.Tag)      => CallbackTo.pure(-\/(()))
+      case -\/(NewTagType.Tag)      => CallbackTo.pure(-\/(ApplicableTagEditor.State.initNew))
     }
 
     private val updateChildren: Reusable[(TagGroupId, Vector[ApplicableTagId]) => Callback] =
@@ -189,7 +192,7 @@ object TagConfig {
           *.editorTitle,
           args.id match {
             case \/-(id: TagGroupId)      => Shared.group(p.project.tags.needTagGroup(id))
-            case \/-(id: ApplicableTagId) => p.pw.tagSimple(id, includeDesc = false)
+            case \/-(id: ApplicableTagId) => p.pw.tagSimple(id, includeDesc = false)(*.editorApTagHeader)
             case -\/(NewTagType.TagGroup) => "New tag group"
             case -\/(NewTagType.Tag)      => "New tag"
           })
@@ -220,8 +223,20 @@ object TagConfig {
         }
 
       editorType match {
-        case EditorType.ApplicableTag(id) =>
-          <.div("todo")
+        case EditorType.ApplicableTag(idOption) =>
+          val lens = editorStateLensForApTag(ApplicableTagEditor.State.init(idOption, p.project.tags))
+
+          val editor =
+            ApplicableTagEditor.Props(
+              subject = idOption,
+              state   = args.state.zoomStateL(lens),
+              project = p.project,
+              pw      = p.pw,
+            ).render
+
+          val buttons = createOrUpdateButtons(idOption).render
+
+          <.div(header, editor, buttons)
 
         case EditorType.TagGroup(idOption) =>
           val lens = editorStateLensForGroup(TagGroupEditor.State.init(idOption, p.project.tags))
