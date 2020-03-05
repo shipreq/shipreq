@@ -35,6 +35,13 @@ object ProjectSpaProtocols {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  // When any of these change, bump the minor version of safePicklerWsReqResAndReq
+  import CreateContentCmd.CodecsV1._
+  import ManualIssueCmd.CodecsV1._
+  import SavedViewCmd.CodecsV1._
+  import UpdateConfigCmd.CodecsV1._
+  import UpdateContentCmd.CodecsV1._
+
   private object Codecs {
     import boopickle.DefaultBasic.unitPickler
     import shipreq.webapp.base.protocol.binary.v1.BaseData._

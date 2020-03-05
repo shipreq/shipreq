@@ -1,6 +1,26 @@
 This is about how to evolve codecs from 1.x to 1.y.
 
 
+How to evolve client-server-communication codecs
+================================================
+
+There are different types:
+
+* Ajax (eg. `HomeSpaProtocols`)
+  * The protocol version numbers are right there in the `SafePickler` definitions; bump them.
+
+* WebSocket commands (eg. `UpdateConfigCmd`)
+  * Their codecs should already be in `object CodecsV1` scopes in the cmd companion object.
+    Bump the version number.
+  * Compile and see what breaks. Breakages will tell you where it's used. In those places
+    1. change the import to the new version
+    2. also bump the version of whatever codec is using it (probably just `ProjectSpaProtocols` below)
+
+* WebSocket holistic/composite protocol (eg. `ProjectSpaProtocols`)
+  * If Response codecs all have versions; bump the necessary ones
+  * If any request codecs change, bump the version of `SafePickler[WsReqRes.AndReq]`
+
+
 How to evolve binary codecs
 ===========================
 

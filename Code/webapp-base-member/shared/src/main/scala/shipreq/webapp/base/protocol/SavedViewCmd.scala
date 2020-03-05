@@ -22,61 +22,63 @@ object SavedViewCmd {
   implicit def univEq : UnivEq[SavedViewCmd] = UnivEq.derive
 
   // ===================================================================================================================
-  import boopickle.DefaultBasic._
-  import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1.ReqTableDataPicklers._
-  import shipreq.webapp.base.protocol.binary.v1.Events._
+  object CodecsV1 {
+    import boopickle.DefaultBasic._
+    import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1.ReqTableDataPicklers._
+    import shipreq.webapp.base.protocol.binary.v1.Events._
 
-  private implicit val picklerCreate: Pickler[Create] =
-    new Pickler[Create] {
-      override def pickle(a: Create)(implicit state: PickleState): Unit = {
-        state.pickle(a.name)
-        state.pickle(a.view)
-      }
-      override def unpickle(implicit state: UnpickleState): Create = {
-        val name = state.unpickle[SavedView.Name]
-        val view = state.unpickle[View]
-        Create(name, view)
-      }
-    }
-
-  private implicit val picklerMakeDefault: Pickler[MakeDefault] =
-    transformPickler(MakeDefault.apply)(_.id)
-
-  private implicit val picklerUpdate: Pickler[Update] =
-    new Pickler[Update] {
-      override def pickle(a: Update)(implicit state: PickleState): Unit = {
-        state.pickle(a.id)
-        state.pickle(a.vs)
-      }
-      override def unpickle(implicit state: UnpickleState): Update = {
-        val id = state.unpickle[SavedView.Id]
-        val vs = state.unpickle[SavedViewGD.NonEmptyValues]
-        Update(id, vs)
-      }
-    }
-
-  private implicit val picklerDelete: Pickler[Delete] =
-    transformPickler(Delete.apply)(_.id)
-
-  implicit val pickler: Pickler[SavedViewCmd] =
-    new Pickler[SavedViewCmd] {
-      private[this] final val KeyCreate      = 'c'
-      private[this] final val KeyDelete      = 'd'
-      private[this] final val KeyMakeDefault = '1'
-      private[this] final val KeyUpdate      = 'u'
-      override def pickle(a: SavedViewCmd)(implicit state: PickleState): Unit =
-        a match {
-          case b: Create      => state.enc.writeByte(KeyCreate     ); state.pickle(b)
-          case b: Delete      => state.enc.writeByte(KeyDelete     ); state.pickle(b)
-          case b: MakeDefault => state.enc.writeByte(KeyMakeDefault); state.pickle(b)
-          case b: Update      => state.enc.writeByte(KeyUpdate     ); state.pickle(b)
+    private implicit val picklerCreate: Pickler[Create] =
+      new Pickler[Create] {
+        override def pickle(a: Create)(implicit state: PickleState): Unit = {
+          state.pickle(a.name)
+          state.pickle(a.view)
         }
-      override def unpickle(implicit state: UnpickleState): SavedViewCmd =
-        state.dec.readByte match {
-          case KeyCreate      => state.unpickle[Create]
-          case KeyDelete      => state.unpickle[Delete]
-          case KeyMakeDefault => state.unpickle[MakeDefault]
-          case KeyUpdate      => state.unpickle[Update]
+        override def unpickle(implicit state: UnpickleState): Create = {
+          val name = state.unpickle[SavedView.Name]
+          val view = state.unpickle[View]
+          Create(name, view)
         }
-    }
+      }
+
+    private implicit val picklerMakeDefault: Pickler[MakeDefault] =
+      transformPickler(MakeDefault.apply)(_.id)
+
+    private implicit val picklerUpdate: Pickler[Update] =
+      new Pickler[Update] {
+        override def pickle(a: Update)(implicit state: PickleState): Unit = {
+          state.pickle(a.id)
+          state.pickle(a.vs)
+        }
+        override def unpickle(implicit state: UnpickleState): Update = {
+          val id = state.unpickle[SavedView.Id]
+          val vs = state.unpickle[SavedViewGD.NonEmptyValues]
+          Update(id, vs)
+        }
+      }
+
+    private implicit val picklerDelete: Pickler[Delete] =
+      transformPickler(Delete.apply)(_.id)
+
+    implicit val picklerSavedViewCmd: Pickler[SavedViewCmd] =
+      new Pickler[SavedViewCmd] {
+        private[this] final val KeyCreate      = 'c'
+        private[this] final val KeyDelete      = 'd'
+        private[this] final val KeyMakeDefault = '1'
+        private[this] final val KeyUpdate      = 'u'
+        override def pickle(a: SavedViewCmd)(implicit state: PickleState): Unit =
+          a match {
+            case b: Create      => state.enc.writeByte(KeyCreate     ); state.pickle(b)
+            case b: Delete      => state.enc.writeByte(KeyDelete     ); state.pickle(b)
+            case b: MakeDefault => state.enc.writeByte(KeyMakeDefault); state.pickle(b)
+            case b: Update      => state.enc.writeByte(KeyUpdate     ); state.pickle(b)
+          }
+        override def unpickle(implicit state: UnpickleState): SavedViewCmd =
+          state.dec.readByte match {
+            case KeyCreate      => state.unpickle[Create]
+            case KeyDelete      => state.unpickle[Delete]
+            case KeyMakeDefault => state.unpickle[MakeDefault]
+            case KeyUpdate      => state.unpickle[Update]
+          }
+      }
+  }
 }

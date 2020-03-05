@@ -74,6 +74,8 @@ Phase 3A
 
 * Bulk tag add/remove
 
+* put ajax/ws protocol stuff in its own package
+
 * Might be a good idea to store a description & examples with ReqTypes. (eg. "BR" means xxx + examples)
   Alternatively this could be on a help page.
 

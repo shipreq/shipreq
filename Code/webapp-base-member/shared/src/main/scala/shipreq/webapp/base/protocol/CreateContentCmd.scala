@@ -70,80 +70,82 @@ object CreateContentCmd {
 
 
   // ===================================================================================================================
-  import boopickle.DefaultBasic._
-  import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
-  import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1.AtomPicklers.instances._
-  import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2._
+  object CodecsV1 {
+    import boopickle.DefaultBasic._
+    import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
+    import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1.AtomPicklers.instances._
+    import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2._
 
-  private implicit val picklerCreateGenericReq: Pickler[CreateGenericReq] =
-    new Pickler[CreateGenericReq] {
-      override def pickle(a: CreateGenericReq)(implicit state: PickleState): Unit = {
-        state.pickle(a.codes)
-        state.pickle(a.customText)
-        state.pickle(a.imps)
-        state.pickle(a.reqType)
-        state.pickle(a.tags)
-        state.pickle(a.title)
-      }
-      override def unpickle(implicit state: UnpickleState): CreateGenericReq = {
-        val codes      = state.unpickle[Set[ReqCode.Value]]
-        val customText = state.unpickle[Map[CustomField.Text.Id, Text.CustomTextField.NonEmptyText]]
-        val imps       = state.unpickle[Direction.Values[Set[ReqId]]]
-        val reqType    = state.unpickle[CustomReqTypeId]
-        val tags       = state.unpickle[Set[ApplicableTagId]]
-        val title      = state.unpickle[Text.GenericReqTitle.OptionalText]
-        CreateGenericReq(codes, customText, imps, reqType, tags, title)
-      }
-    }
-
-  private implicit val picklerCreateUseCase: Pickler[CreateUseCase] =
-    new Pickler[CreateUseCase] {
-      override def pickle(a: CreateUseCase)(implicit state: PickleState): Unit = {
-        state.pickle(a.codes)
-        state.pickle(a.customText)
-        state.pickle(a.imps)
-        state.pickle(a.tags)
-        state.pickle(a.title)
-      }
-      override def unpickle(implicit state: UnpickleState): CreateUseCase = {
-        val codes      = state.unpickle[Set[ReqCode.Value]]
-        val customText = state.unpickle[Map[CustomField.Text.Id, Text.CustomTextField.NonEmptyText]]
-        val imps       = state.unpickle[Direction.Values[Set[ReqId]]]
-        val tags       = state.unpickle[Set[ApplicableTagId]]
-        val title      = state.unpickle[Text.UseCaseTitle.OptionalText]
-        CreateUseCase(codes, customText, imps, tags, title)
-      }
-    }
-
-  private implicit val picklerCreateCodeGroup: Pickler[CreateCodeGroup] =
-    new Pickler[CreateCodeGroup] {
-      override def pickle(a: CreateCodeGroup)(implicit state: PickleState): Unit = {
-        state.pickle(a.code)
-        state.pickle(a.title)
-      }
-      override def unpickle(implicit state: UnpickleState): CreateCodeGroup = {
-        val code  = state.unpickle[ReqCode.Value]
-        val title = state.unpickle[Text.CodeGroupTitle.OptionalText]
-        CreateCodeGroup(code, title)
-      }
-    }
-
-  implicit val pickler: Pickler[CreateContentCmd] =
-    new Pickler[CreateContentCmd] {
-      private[this] final val KeyCreateCodeGroup  = 'c'
-      private[this] final val KeyCreateGenericReq = 'g'
-      private[this] final val KeyCreateUseCase    = 'u'
-      override def pickle(a: CreateContentCmd)(implicit state: PickleState): Unit =
-        a match {
-          case b: CreateCodeGroup  => state.enc.writeByte(KeyCreateCodeGroup ); state.pickle(b)
-          case b: CreateGenericReq => state.enc.writeByte(KeyCreateGenericReq); state.pickle(b)
-          case b: CreateUseCase    => state.enc.writeByte(KeyCreateUseCase   ); state.pickle(b)
+    private implicit val picklerCreateGenericReq: Pickler[CreateGenericReq] =
+      new Pickler[CreateGenericReq] {
+        override def pickle(a: CreateGenericReq)(implicit state: PickleState): Unit = {
+          state.pickle(a.codes)
+          state.pickle(a.customText)
+          state.pickle(a.imps)
+          state.pickle(a.reqType)
+          state.pickle(a.tags)
+          state.pickle(a.title)
         }
-      override def unpickle(implicit state: UnpickleState): CreateContentCmd =
-        state.dec.readByte match {
-          case KeyCreateCodeGroup  => state.unpickle[CreateCodeGroup]
-          case KeyCreateGenericReq => state.unpickle[CreateGenericReq]
-          case KeyCreateUseCase    => state.unpickle[CreateUseCase]
+        override def unpickle(implicit state: UnpickleState): CreateGenericReq = {
+          val codes      = state.unpickle[Set[ReqCode.Value]]
+          val customText = state.unpickle[Map[CustomField.Text.Id, Text.CustomTextField.NonEmptyText]]
+          val imps       = state.unpickle[Direction.Values[Set[ReqId]]]
+          val reqType    = state.unpickle[CustomReqTypeId]
+          val tags       = state.unpickle[Set[ApplicableTagId]]
+          val title      = state.unpickle[Text.GenericReqTitle.OptionalText]
+          CreateGenericReq(codes, customText, imps, reqType, tags, title)
         }
-    }
+      }
+
+    private implicit val picklerCreateUseCase: Pickler[CreateUseCase] =
+      new Pickler[CreateUseCase] {
+        override def pickle(a: CreateUseCase)(implicit state: PickleState): Unit = {
+          state.pickle(a.codes)
+          state.pickle(a.customText)
+          state.pickle(a.imps)
+          state.pickle(a.tags)
+          state.pickle(a.title)
+        }
+        override def unpickle(implicit state: UnpickleState): CreateUseCase = {
+          val codes      = state.unpickle[Set[ReqCode.Value]]
+          val customText = state.unpickle[Map[CustomField.Text.Id, Text.CustomTextField.NonEmptyText]]
+          val imps       = state.unpickle[Direction.Values[Set[ReqId]]]
+          val tags       = state.unpickle[Set[ApplicableTagId]]
+          val title      = state.unpickle[Text.UseCaseTitle.OptionalText]
+          CreateUseCase(codes, customText, imps, tags, title)
+        }
+      }
+
+    private implicit val picklerCreateCodeGroup: Pickler[CreateCodeGroup] =
+      new Pickler[CreateCodeGroup] {
+        override def pickle(a: CreateCodeGroup)(implicit state: PickleState): Unit = {
+          state.pickle(a.code)
+          state.pickle(a.title)
+        }
+        override def unpickle(implicit state: UnpickleState): CreateCodeGroup = {
+          val code  = state.unpickle[ReqCode.Value]
+          val title = state.unpickle[Text.CodeGroupTitle.OptionalText]
+          CreateCodeGroup(code, title)
+        }
+      }
+
+    implicit val picklerCreateContentCmd: Pickler[CreateContentCmd] =
+      new Pickler[CreateContentCmd] {
+        private[this] final val KeyCreateCodeGroup  = 'c'
+        private[this] final val KeyCreateGenericReq = 'g'
+        private[this] final val KeyCreateUseCase    = 'u'
+        override def pickle(a: CreateContentCmd)(implicit state: PickleState): Unit =
+          a match {
+            case b: CreateCodeGroup  => state.enc.writeByte(KeyCreateCodeGroup ); state.pickle(b)
+            case b: CreateGenericReq => state.enc.writeByte(KeyCreateGenericReq); state.pickle(b)
+            case b: CreateUseCase    => state.enc.writeByte(KeyCreateUseCase   ); state.pickle(b)
+          }
+        override def unpickle(implicit state: UnpickleState): CreateContentCmd =
+          state.dec.readByte match {
+            case KeyCreateCodeGroup  => state.unpickle[CreateCodeGroup]
+            case KeyCreateGenericReq => state.unpickle[CreateGenericReq]
+            case KeyCreateUseCase    => state.unpickle[CreateUseCase]
+          }
+      }
+  }
 }
