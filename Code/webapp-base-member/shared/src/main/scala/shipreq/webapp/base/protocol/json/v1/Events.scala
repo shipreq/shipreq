@@ -19,24 +19,24 @@ object Events {
   import BaseMemberData1.AtomCodecs.instances._
   import BaseMemberData1.ReqTableDataCodecs._
 
-  private implicit val codecEventNonEmptyCustomTextMap    : JsonCodec[Event.NonEmptyCustomTextMap      ] = codecNonEmptyMono
-  private implicit val codecNonEmptySetApplicableTagId    : JsonCodec[NonEmptySet[ApplicableTagId]     ] = codecNES
-  private implicit val codecNonEmptySetReqCodeGroupId     : JsonCodec[NonEmptySet[ReqCodeGroupId]      ] = codecNES
-  private implicit val codecNonEmptySetApReqCodeIdAndValue: JsonCodec[NonEmptySet[ApReqCodeId.AndValue]] = codecNES
-  private implicit val codecNonEmptySetReqId              : JsonCodec[NonEmptySet[ReqId]               ] = codecNES
-  private implicit val codecSetDiffUseCaseStepId          : JsonCodec[SetDiff[UseCaseStepId]           ] = codecSetDiff
-  private implicit val codecSetDiffApplicableTagId        : JsonCodec[SetDiff[ApplicableTagId]         ] = codecSetDiff
-  private implicit val codecSetDiffReqId                  : JsonCodec[SetDiff[ReqId]                   ] = codecSetDiff
-  private implicit val codecSetDiffNEUseCaseStepId        : JsonCodec[SetDiff.NE[UseCaseStepId]        ] = codecNonEmptyMono
-  private implicit val codecSetDiffNEApplicableTagId      : JsonCodec[SetDiff.NE[ApplicableTagId]      ] = codecNonEmptyMono
-  private implicit val codecSetDiffNEReqId                : JsonCodec[SetDiff.NE[ReqId]                ] = codecNonEmptyMono
+  private[v1] implicit val codecEventNonEmptyCustomTextMap    : JsonCodec[Event.NonEmptyCustomTextMap      ] = codecNonEmptyMono
+  private[v1] implicit val codecNonEmptySetApplicableTagId    : JsonCodec[NonEmptySet[ApplicableTagId]     ] = codecNES
+  private[v1] implicit val codecNonEmptySetReqCodeGroupId     : JsonCodec[NonEmptySet[ReqCodeGroupId]      ] = codecNES
+  private[v1] implicit val codecNonEmptySetApReqCodeIdAndValue: JsonCodec[NonEmptySet[ApReqCodeId.AndValue]] = codecNES
+  private[v1] implicit val codecNonEmptySetReqId              : JsonCodec[NonEmptySet[ReqId]               ] = codecNES
+  private[v1] implicit val codecSetDiffUseCaseStepId          : JsonCodec[SetDiff[UseCaseStepId]           ] = codecSetDiff
+  private[v1] implicit val codecSetDiffApplicableTagId        : JsonCodec[SetDiff[ApplicableTagId]         ] = codecSetDiff
+  private[v1] implicit val codecSetDiffReqId                  : JsonCodec[SetDiff[ReqId]                   ] = codecSetDiff
+  private[v1] implicit val codecSetDiffNEUseCaseStepId        : JsonCodec[SetDiff.NE[UseCaseStepId]        ] = codecNonEmptyMono
+  private[v1] implicit val codecSetDiffNEApplicableTagId      : JsonCodec[SetDiff.NE[ApplicableTagId]      ] = codecNonEmptyMono
+  private[v1] implicit val codecSetDiffNEReqId                : JsonCodec[SetDiff.NE[ReqId]                ] = codecNonEmptyMono
 
-  private implicit val codecProjectTemplate: JsonCodec[ProjectTemplate] =
+  private[v1] implicit val codecProjectTemplate: JsonCodec[ProjectTemplate] =
     JsonCodec.enumAdt(AdtMacros.adtIsoSet[ProjectTemplate, Int] {
       case ProjectTemplate.V1 => 1
     })
 
-  private implicit val keyDecoderTagId: KeyDecoder[TagId] =
+  private[v1] implicit val keyDecoderTagId: KeyDecoder[TagId] =
     KeyDecoder.instance(k =>
       (k.headOption, k.drop(1)) match {
         case (Some('a'), ParseInt(i)) => Some(ApplicableTagId(i))
@@ -45,7 +45,7 @@ object Events {
       }
     )
 
-  private implicit val keyEncoderTagId: KeyEncoder[TagId] =
+  private[v1] implicit val keyEncoderTagId: KeyEncoder[TagId] =
     KeyEncoder.instance {
       case ApplicableTagId(i) => "a" + i
       case TagGroupId     (i) => "g" + i
@@ -54,7 +54,7 @@ object Events {
   // ===================================================================================================================
   // GenericData
 
-  private implicit val codecApplicableTagGD: JsonCodec[ApplicableTagGD.NonEmptyValues] = {
+  private[v1] implicit val codecApplicableTagGD: JsonCodec[ApplicableTagGD.NonEmptyValues] = {
     import ApplicableTagGD._
 
     implicit val codecValueForChildren = JsonCodec.xmap(ValueForChildren.apply)(_.value)
@@ -83,7 +83,7 @@ object Events {
     codecNonEmptyMono[Values]
   }
 
-  private implicit val codecCodeGroupGD: JsonCodec[CodeGroupGD.NonEmptyValues] = {
+  private[v1] implicit val codecCodeGroupGD: JsonCodec[CodeGroupGD.NonEmptyValues] = {
     import CodeGroupGD._
 
     implicit val codecValueForCode  = JsonCodec.xmap(ValueForCode .apply)(_.value)
@@ -103,7 +103,7 @@ object Events {
     codecNonEmptyMono[Values]
   }
 
-  private implicit val codecCustomImpFieldGD: JsonCodec[CustomImpFieldGD.NonEmptyValues] = {
+  private[v1] implicit val codecCustomImpFieldGD: JsonCodec[CustomImpFieldGD.NonEmptyValues] = {
     import CustomImpFieldGD._
 
     implicit val codecValueForMandatory = JsonCodec.xmap(ValueForMandatory.apply)(_.value)
@@ -126,7 +126,7 @@ object Events {
     codecNonEmptyMono[Values]
   }
 
-  private implicit val codecCustomIssueTypeGD: JsonCodec[CustomIssueTypeGD.NonEmptyValues] = {
+  private[v1] implicit val codecCustomIssueTypeGD: JsonCodec[CustomIssueTypeGD.NonEmptyValues] = {
     import CustomIssueTypeGD._
 
     implicit val codecValueForDesc = JsonCodec.xmap(ValueForDesc.apply)(_.value)
@@ -146,7 +146,7 @@ object Events {
     codecNonEmptyMono[Values]
   }
 
-  private implicit val codecCustomReqTypeGD: JsonCodec[CustomReqTypeGD.NonEmptyValues] = {
+  private[v1] implicit val codecCustomReqTypeGD: JsonCodec[CustomReqTypeGD.NonEmptyValues] = {
     import CustomReqTypeGD._
 
     implicit val codecValueForImp      = JsonCodec.xmap(ValueForImp     .apply)(_.value)
@@ -169,7 +169,7 @@ object Events {
     codecNonEmptyMono[Values]
   }
 
-  private implicit val codecCustomTagFieldGD: JsonCodec[CustomTagFieldGD.NonEmptyValues] = {
+  private[v1] implicit val codecCustomTagFieldGD: JsonCodec[CustomTagFieldGD.NonEmptyValues] = {
     import CustomTagFieldGD._
 
     implicit val codecValueForMandatory = JsonCodec.xmap(ValueForMandatory.apply)(_.value)
@@ -192,7 +192,7 @@ object Events {
     codecNonEmptyMono[Values]
   }
 
-  private implicit val codecCustomTextFieldGD: JsonCodec[CustomTextFieldGD.NonEmptyValues] = {
+  private[v1] implicit val codecCustomTextFieldGD: JsonCodec[CustomTextFieldGD.NonEmptyValues] = {
     import CustomTextFieldGD._
 
     implicit val codecValueForKey       = JsonCodec.xmap(ValueForKey      .apply)(_.value)
@@ -218,7 +218,7 @@ object Events {
     codecNonEmptyMono[Values]
   }
 
-  private implicit val codecGenericReqGD: JsonCodec[GenericReqGD.Values] = {
+  private[v1] implicit val codecGenericReqGD: JsonCodec[GenericReqGD.Values] = {
     import GenericReqGD._
 
     implicit val codecValueForCodes      = JsonCodec.xmap(ValueForCodes     .apply)(_.value)
@@ -249,7 +249,7 @@ object Events {
     codecIMap(emptyValues)
   }
 
-  private implicit val codecSavedViewGD: JsonCodec[SavedViewGD.NonEmptyValues] = {
+  private[v1] implicit val codecSavedViewGD: JsonCodec[SavedViewGD.NonEmptyValues] = {
     import SavedViewGD._
 
     implicit val codecValueForColumns    = JsonCodec.xmap(ValueForColumns   .apply)(_.value)
@@ -278,7 +278,7 @@ object Events {
     codecNonEmptyMono[Values]
   }
 
-  private implicit val codecTagGroupGD: JsonCodec[TagGroupGD.NonEmptyValues] = {
+  private[v1] implicit val codecTagGroupGD: JsonCodec[TagGroupGD.NonEmptyValues] = {
     import TagGroupGD._
 
     implicit val codecValueForChildren    = JsonCodec.xmap(ValueForChildren   .apply)(_.value)
@@ -308,7 +308,7 @@ object Events {
     codecNonEmptyMono[Values]
   }
 
-  private implicit val codecUseCaseGD: JsonCodec[UseCaseGD.Values] = {
+  private[v1] implicit val codecUseCaseGD: JsonCodec[UseCaseGD.Values] = {
     import UseCaseGD._
 
     implicit val codecValueForCodes      = JsonCodec.xmap(ValueForCodes     .apply)(_.value)
@@ -339,7 +339,7 @@ object Events {
     codecIMap(emptyValues)
   }
 
-  private implicit val codecUseCaseStepGD: JsonCodec[UseCaseStepGD.NonEmptyValues] = {
+  private[v1] implicit val codecUseCaseStepGD: JsonCodec[UseCaseStepGD.NonEmptyValues] = {
     import UseCaseStepGD._
 
     implicit val codecValueForFlowIn  = JsonCodec.xmap(ValueForFlowIn .apply)(_.value)

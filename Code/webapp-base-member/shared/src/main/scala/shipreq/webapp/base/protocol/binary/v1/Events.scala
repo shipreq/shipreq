@@ -449,13 +449,13 @@ object Events {
   // ===================================================================================================================
   // Events
 
-  private implicit val picklerEventProjectNameSet: Pickler[Event.ProjectNameSet] =
+  private[v1] implicit val picklerEventProjectNameSet: Pickler[Event.ProjectNameSet] =
     transformPickler(Event.ProjectNameSet.apply)(_.name)
 
-  private implicit val picklerEventProjectTemplateApply: Pickler[Event.ProjectTemplateApply] =
+  private[v1] implicit val picklerEventProjectTemplateApply: Pickler[Event.ProjectTemplateApply] =
     transformPickler(Event.ProjectTemplateApply.apply)(_.template)
 
-  private implicit val picklerEventCustomIssueTypeCreate: Pickler[Event.CustomIssueTypeCreate] =
+  private[v1] implicit val picklerEventCustomIssueTypeCreate: Pickler[Event.CustomIssueTypeCreate] =
     new Pickler[Event.CustomIssueTypeCreate] {
       override def pickle(a: Event.CustomIssueTypeCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -468,7 +468,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventCustomIssueTypeUpdate: Pickler[Event.CustomIssueTypeUpdate] =
+  private[v1] implicit val picklerEventCustomIssueTypeUpdate: Pickler[Event.CustomIssueTypeUpdate] =
     new Pickler[Event.CustomIssueTypeUpdate] {
       override def pickle(a: Event.CustomIssueTypeUpdate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -481,13 +481,13 @@ object Events {
       }
     }
 
-  private implicit val picklerEventCustomIssueTypeDelete: Pickler[Event.CustomIssueTypeDelete] =
+  private[v1] implicit val picklerEventCustomIssueTypeDelete: Pickler[Event.CustomIssueTypeDelete] =
     transformPickler(Event.CustomIssueTypeDelete.apply)(_.id)
 
-  private implicit val picklerEventCustomIssueTypeRestore: Pickler[Event.CustomIssueTypeRestore] =
+  private[v1] implicit val picklerEventCustomIssueTypeRestore: Pickler[Event.CustomIssueTypeRestore] =
     transformPickler(Event.CustomIssueTypeRestore.apply)(_.id)
 
-  private implicit val picklerEventCustomReqTypeCreate: Pickler[Event.CustomReqTypeCreate] =
+  private[v1] implicit val picklerEventCustomReqTypeCreate: Pickler[Event.CustomReqTypeCreate] =
     new Pickler[Event.CustomReqTypeCreate] {
       override def pickle(a: Event.CustomReqTypeCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -500,7 +500,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventCustomReqTypeUpdate: Pickler[Event.CustomReqTypeUpdate] =
+  private[v1] implicit val picklerEventCustomReqTypeUpdate: Pickler[Event.CustomReqTypeUpdate] =
     new Pickler[Event.CustomReqTypeUpdate] {
       override def pickle(a: Event.CustomReqTypeUpdate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -513,19 +513,19 @@ object Events {
       }
     }
 
-  private implicit val picklerEventCustomReqTypeDelete: Pickler[Event.CustomReqTypeDelete] =
+  private[v1] implicit val picklerEventCustomReqTypeDelete: Pickler[Event.CustomReqTypeDelete] =
     transformPickler(Event.CustomReqTypeDelete.apply)(_.id)
 
-  private implicit val picklerEventCustomReqTypeRestore: Pickler[Event.CustomReqTypeRestore] =
+  private[v1] implicit val picklerEventCustomReqTypeRestore: Pickler[Event.CustomReqTypeRestore] =
     transformPickler(Event.CustomReqTypeRestore.apply)(_.id)
 
-  private implicit val picklerEventTagDelete: Pickler[Event.TagDelete] =
+  private[v1] implicit val picklerEventTagDelete: Pickler[Event.TagDelete] =
     transformPickler(Event.TagDelete.apply)(_.id)
 
-  private implicit val picklerEventTagRestore: Pickler[Event.TagRestore] =
+  private[v1] implicit val picklerEventTagRestore: Pickler[Event.TagRestore] =
     transformPickler(Event.TagRestore.apply)(_.id)
 
-  private implicit val picklerEventTagGroupCreate: Pickler[Event.TagGroupCreate] =
+  private[v1] implicit val picklerEventTagGroupCreate: Pickler[Event.TagGroupCreate] =
     new Pickler[Event.TagGroupCreate] {
       override def pickle(a: Event.TagGroupCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -538,7 +538,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventTagGroupUpdate: Pickler[Event.TagGroupUpdate] =
+  private[v1] implicit val picklerEventTagGroupUpdate: Pickler[Event.TagGroupUpdate] =
     new Pickler[Event.TagGroupUpdate] {
       override def pickle(a: Event.TagGroupUpdate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -551,7 +551,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventApplicableTagCreateV1: Pickler[Event.ApplicableTagCreateV1] =
+  private[v1] implicit val picklerEventApplicableTagCreateV1: Pickler[Event.ApplicableTagCreateV1] =
     new Pickler[Event.ApplicableTagCreateV1] {
       override def pickle(a: Event.ApplicableTagCreateV1)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -564,7 +564,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventApplicableTagUpdateV1: Pickler[Event.ApplicableTagUpdateV1] =
+  private[v1] implicit val picklerEventApplicableTagUpdateV1: Pickler[Event.ApplicableTagUpdateV1] =
     new Pickler[Event.ApplicableTagUpdateV1] {
       override def pickle(a: Event.ApplicableTagUpdateV1)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -577,7 +577,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventFieldReposition: Pickler[Event.FieldReposition] =
+  private[v1] implicit val picklerEventFieldReposition: Pickler[Event.FieldReposition] =
     new Pickler[Event.FieldReposition] {
       override def pickle(a: Event.FieldReposition)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -590,19 +590,19 @@ object Events {
       }
     }
 
-  private implicit val picklerEventFieldStaticAdd: Pickler[Event.FieldStaticAdd] =
+  private[v1] implicit val picklerEventFieldStaticAdd: Pickler[Event.FieldStaticAdd] =
     transformPickler(Event.FieldStaticAdd.apply)(_.f)
 
-  private implicit val picklerEventFieldStaticRemove: Pickler[Event.FieldStaticRemove] =
+  private[v1] implicit val picklerEventFieldStaticRemove: Pickler[Event.FieldStaticRemove] =
     transformPickler(Event.FieldStaticRemove.apply)(_.f)
 
-  private implicit val picklerEventFieldCustomDelete: Pickler[Event.FieldCustomDelete] =
+  private[v1] implicit val picklerEventFieldCustomDelete: Pickler[Event.FieldCustomDelete] =
     transformPickler(Event.FieldCustomDelete.apply)(_.id)
 
-  private implicit val picklerEventFieldCustomRestore: Pickler[Event.FieldCustomRestore] =
+  private[v1] implicit val picklerEventFieldCustomRestore: Pickler[Event.FieldCustomRestore] =
     transformPickler(Event.FieldCustomRestore.apply)(_.id)
 
-  private implicit val picklerEventFieldCustomTextCreate: Pickler[Event.FieldCustomTextCreate] =
+  private[v1] implicit val picklerEventFieldCustomTextCreate: Pickler[Event.FieldCustomTextCreate] =
     new Pickler[Event.FieldCustomTextCreate] {
       override def pickle(a: Event.FieldCustomTextCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -615,7 +615,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventFieldCustomTextUpdate: Pickler[Event.FieldCustomTextUpdate] =
+  private[v1] implicit val picklerEventFieldCustomTextUpdate: Pickler[Event.FieldCustomTextUpdate] =
     new Pickler[Event.FieldCustomTextUpdate] {
       override def pickle(a: Event.FieldCustomTextUpdate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -628,7 +628,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventFieldCustomTagCreate: Pickler[Event.FieldCustomTagCreate] =
+  private[v1] implicit val picklerEventFieldCustomTagCreate: Pickler[Event.FieldCustomTagCreate] =
     new Pickler[Event.FieldCustomTagCreate] {
       override def pickle(a: Event.FieldCustomTagCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -641,7 +641,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventFieldCustomTagUpdate: Pickler[Event.FieldCustomTagUpdate] =
+  private[v1] implicit val picklerEventFieldCustomTagUpdate: Pickler[Event.FieldCustomTagUpdate] =
     new Pickler[Event.FieldCustomTagUpdate] {
       override def pickle(a: Event.FieldCustomTagUpdate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -654,7 +654,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventFieldCustomImpCreate: Pickler[Event.FieldCustomImpCreate] =
+  private[v1] implicit val picklerEventFieldCustomImpCreate: Pickler[Event.FieldCustomImpCreate] =
     new Pickler[Event.FieldCustomImpCreate] {
       override def pickle(a: Event.FieldCustomImpCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -667,7 +667,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventFieldCustomImpUpdate: Pickler[Event.FieldCustomImpUpdate] =
+  private[v1] implicit val picklerEventFieldCustomImpUpdate: Pickler[Event.FieldCustomImpUpdate] =
     new Pickler[Event.FieldCustomImpUpdate] {
       override def pickle(a: Event.FieldCustomImpUpdate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -680,7 +680,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventGenericReqCreate: Pickler[Event.GenericReqCreate] =
+  private[v1] implicit val picklerEventGenericReqCreate: Pickler[Event.GenericReqCreate] =
     new Pickler[Event.GenericReqCreate] {
       override def pickle(a: Event.GenericReqCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -695,7 +695,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventGenericReqTypeSet: Pickler[Event.GenericReqTypeSet] =
+  private[v1] implicit val picklerEventGenericReqTypeSet: Pickler[Event.GenericReqTypeSet] =
     new Pickler[Event.GenericReqTypeSet] {
       override def pickle(a: Event.GenericReqTypeSet)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -708,7 +708,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventGenericReqTitleSet: Pickler[Event.GenericReqTitleSet] =
+  private[v1] implicit val picklerEventGenericReqTitleSet: Pickler[Event.GenericReqTitleSet] =
     new Pickler[Event.GenericReqTitleSet] {
       override def pickle(a: Event.GenericReqTitleSet)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -721,7 +721,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventUseCaseCreate: Pickler[Event.UseCaseCreate] =
+  private[v1] implicit val picklerEventUseCaseCreate: Pickler[Event.UseCaseCreate] =
     new Pickler[Event.UseCaseCreate] {
       override def pickle(a: Event.UseCaseCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -736,7 +736,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventUseCaseTitleSet: Pickler[Event.UseCaseTitleSet] =
+  private[v1] implicit val picklerEventUseCaseTitleSet: Pickler[Event.UseCaseTitleSet] =
     new Pickler[Event.UseCaseTitleSet] {
       override def pickle(a: Event.UseCaseTitleSet)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -749,7 +749,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventUseCaseStepCreate: Pickler[Event.UseCaseStepCreate] =
+  private[v1] implicit val picklerEventUseCaseStepCreate: Pickler[Event.UseCaseStepCreate] =
     new Pickler[Event.UseCaseStepCreate] {
       override def pickle(a: Event.UseCaseStepCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -766,7 +766,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventUseCaseStepUpdate: Pickler[Event.UseCaseStepUpdate] =
+  private[v1] implicit val picklerEventUseCaseStepUpdate: Pickler[Event.UseCaseStepUpdate] =
     new Pickler[Event.UseCaseStepUpdate] {
       override def pickle(a: Event.UseCaseStepUpdate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -779,19 +779,19 @@ object Events {
       }
     }
 
-  private implicit val picklerEventUseCaseStepShiftLeft: Pickler[Event.UseCaseStepShiftLeft] =
+  private[v1] implicit val picklerEventUseCaseStepShiftLeft: Pickler[Event.UseCaseStepShiftLeft] =
     transformPickler(Event.UseCaseStepShiftLeft.apply)(_.id)
 
-  private implicit val picklerEventUseCaseStepShiftRight: Pickler[Event.UseCaseStepShiftRight] =
+  private[v1] implicit val picklerEventUseCaseStepShiftRight: Pickler[Event.UseCaseStepShiftRight] =
     transformPickler(Event.UseCaseStepShiftRight.apply)(_.id)
 
-  private implicit val picklerEventUseCaseStepDelete: Pickler[Event.UseCaseStepDelete] =
+  private[v1] implicit val picklerEventUseCaseStepDelete: Pickler[Event.UseCaseStepDelete] =
     transformPickler(Event.UseCaseStepDelete.apply)(_.id)
 
-  private implicit val picklerEventUseCaseStepRestore: Pickler[Event.UseCaseStepRestore] =
+  private[v1] implicit val picklerEventUseCaseStepRestore: Pickler[Event.UseCaseStepRestore] =
     transformPickler(Event.UseCaseStepRestore.apply)(_.id)
 
-  private implicit val picklerEventCodeGroupCreate: Pickler[Event.CodeGroupCreate] =
+  private[v1] implicit val picklerEventCodeGroupCreate: Pickler[Event.CodeGroupCreate] =
     new Pickler[Event.CodeGroupCreate] {
       override def pickle(a: Event.CodeGroupCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -804,7 +804,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventCodeGroupUpdate: Pickler[Event.CodeGroupUpdate] =
+  private[v1] implicit val picklerEventCodeGroupUpdate: Pickler[Event.CodeGroupUpdate] =
     new Pickler[Event.CodeGroupUpdate] {
       override def pickle(a: Event.CodeGroupUpdate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -817,10 +817,10 @@ object Events {
       }
     }
 
-  private implicit val picklerEventCodeGroupsDelete: Pickler[Event.CodeGroupsDelete] =
+  private[v1] implicit val picklerEventCodeGroupsDelete: Pickler[Event.CodeGroupsDelete] =
     transformPickler(Event.CodeGroupsDelete.apply)(_.ids)
 
-  private implicit val picklerEventReqCodesPatch: Pickler[Event.ReqCodesPatch] =
+  private[v1] implicit val picklerEventReqCodesPatch: Pickler[Event.ReqCodesPatch] =
     new Pickler[Event.ReqCodesPatch] {
       override def pickle(a: Event.ReqCodesPatch)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -837,7 +837,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventReqTagsPatch: Pickler[Event.ReqTagsPatch] =
+  private[v1] implicit val picklerEventReqTagsPatch: Pickler[Event.ReqTagsPatch] =
     new Pickler[Event.ReqTagsPatch] {
       override def pickle(a: Event.ReqTagsPatch)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -850,7 +850,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventReqImplicationsPatch: Pickler[Event.ReqImplicationsPatch] =
+  private[v1] implicit val picklerEventReqImplicationsPatch: Pickler[Event.ReqImplicationsPatch] =
     new Pickler[Event.ReqImplicationsPatch] {
       override def pickle(a: Event.ReqImplicationsPatch)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -865,7 +865,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventReqFieldCustomTextSet: Pickler[Event.ReqFieldCustomTextSet] =
+  private[v1] implicit val picklerEventReqFieldCustomTextSet: Pickler[Event.ReqFieldCustomTextSet] =
     new Pickler[Event.ReqFieldCustomTextSet] {
       override def pickle(a: Event.ReqFieldCustomTextSet)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -880,7 +880,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventReqsDelete: Pickler[Event.ReqsDelete] =
+  private[v1] implicit val picklerEventReqsDelete: Pickler[Event.ReqsDelete] =
     new Pickler[Event.ReqsDelete] {
       override def pickle(a: Event.ReqsDelete)(implicit state: PickleState): Unit = {
         state.pickle(a.reqs)
@@ -895,7 +895,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventContentRestore: Pickler[Event.ContentRestore] =
+  private[v1] implicit val picklerEventContentRestore: Pickler[Event.ContentRestore] =
     new Pickler[Event.ContentRestore] {
       override def pickle(a: Event.ContentRestore)(implicit state: PickleState): Unit = {
         state.pickle(a.reqs)
@@ -908,7 +908,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventManualIssueCreate: Pickler[Event.ManualIssueCreate] =
+  private[v1] implicit val picklerEventManualIssueCreate: Pickler[Event.ManualIssueCreate] =
     new Pickler[Event.ManualIssueCreate] {
       override def pickle(a: Event.ManualIssueCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -921,7 +921,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventManualIssueUpdate: Pickler[Event.ManualIssueUpdate] =
+  private[v1] implicit val picklerEventManualIssueUpdate: Pickler[Event.ManualIssueUpdate] =
     new Pickler[Event.ManualIssueUpdate] {
       override def pickle(a: Event.ManualIssueUpdate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -934,10 +934,10 @@ object Events {
       }
     }
 
-  private implicit val picklerEventManualIssueDelete: Pickler[Event.ManualIssueDelete] =
+  private[v1] implicit val picklerEventManualIssueDelete: Pickler[Event.ManualIssueDelete] =
     transformPickler(Event.ManualIssueDelete.apply)(_.id)
 
-  private implicit val picklerEventSavedViewCreate: Pickler[Event.SavedViewCreate] =
+  private[v1] implicit val picklerEventSavedViewCreate: Pickler[Event.SavedViewCreate] =
     new Pickler[Event.SavedViewCreate] {
       override def pickle(a: Event.SavedViewCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -958,7 +958,7 @@ object Events {
       }
     }
 
-  private implicit val picklerEventSavedViewUpdate: Pickler[Event.SavedViewUpdate] =
+  private[v1] implicit val picklerEventSavedViewUpdate: Pickler[Event.SavedViewUpdate] =
     new Pickler[Event.SavedViewUpdate] {
       override def pickle(a: Event.SavedViewUpdate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -971,10 +971,10 @@ object Events {
       }
     }
 
-  private implicit val picklerEventSavedViewDelete: Pickler[Event.SavedViewDelete] =
+  private[v1] implicit val picklerEventSavedViewDelete: Pickler[Event.SavedViewDelete] =
     transformPickler(Event.SavedViewDelete.apply)(_.id)
 
-  private implicit val picklerEventSavedViewDefaultSet: Pickler[Event.SavedViewDefaultSet] =
+  private[v1] implicit val picklerEventSavedViewDefaultSet: Pickler[Event.SavedViewDefaultSet] =
     transformPickler(Event.SavedViewDefaultSet.apply)(_.id)
 
   // ===================================================================================================================
