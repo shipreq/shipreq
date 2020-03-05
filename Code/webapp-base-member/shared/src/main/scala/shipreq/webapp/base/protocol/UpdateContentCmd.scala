@@ -53,7 +53,7 @@ object UpdateContentCmd {
   implicit def equalUpdateContentCmd: UnivEq[UpdateContentCmd] = UnivEq.derive
 
   // ===================================================================================================================
-  object CodecsV1 {
+  object CodecsV0 {
     import boopickle.DefaultBasic._
     import shipreq.webapp.base.protocol.binary.v1.BaseData._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._

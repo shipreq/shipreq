@@ -18,7 +18,7 @@ object ManualIssueCmd {
   implicit def univEq: UnivEq[ManualIssueCmd] = UnivEq.derive
 
   // ===================================================================================================================
-  object CodecsV1 {
+  object CodecsV0 {
     import boopickle.DefaultBasic._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1.AtomPicklers.instances.manualIssueN

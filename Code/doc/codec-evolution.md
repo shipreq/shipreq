@@ -10,7 +10,7 @@ There are different types:
   * The protocol version numbers are right there in the `SafePickler` definitions; bump them.
 
 * WebSocket commands (eg. `UpdateConfigCmd`)
-  * Their codecs should already be in `object CodecsV1` scopes in the cmd companion object.
+  * Their codecs should already be in `object CodecsV0` scopes in the cmd companion object.
     Bump the version number.
   * Compile and see what breaks. Breakages will tell you where it's used. In those places
     1. change the import to the new version

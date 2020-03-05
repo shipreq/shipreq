@@ -75,7 +75,7 @@ object UpdateConfigCmd {
   implicit def univEq                      : UnivEq[UpdateConfigCmd      ] = UnivEq.derive
 
   // ===================================================================================================================
-  object CodecsV1 {
+  object CodecsV0 {
     import boopickle.DefaultBasic._
     import shipreq.webapp.base.protocol.binary.v1.BaseData._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._

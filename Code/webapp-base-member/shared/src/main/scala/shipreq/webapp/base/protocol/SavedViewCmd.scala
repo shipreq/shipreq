@@ -22,7 +22,7 @@ object SavedViewCmd {
   implicit def univEq : UnivEq[SavedViewCmd] = UnivEq.derive
 
   // ===================================================================================================================
-  object CodecsV1 {
+  object CodecsV0 {
     import boopickle.DefaultBasic._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1.ReqTableDataPicklers._
     import shipreq.webapp.base.protocol.binary.v1.Events._
