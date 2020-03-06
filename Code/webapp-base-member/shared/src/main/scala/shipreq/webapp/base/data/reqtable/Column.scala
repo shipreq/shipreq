@@ -75,28 +75,28 @@ object Column {
   val mandatory: NonEmptySet[Mandatory] =
     NonEmptySet(Pubid, builtInValues.iterator.collect { case m: Mandatory => m }.toSet)
 
-  def applicabilityForReq[Data](a: Applicability[FieldId, Data]): Applicability[Column, Data] =
-    Applicability {
+  def applicabilityForReq[Data](a: ProjectApplicability[FieldId, Data]): ProjectApplicability[Column, Data] =
+    ProjectApplicability {
       case ReqType
          | Pubid
          | Code
          | Title
          | Tags
          | DeletionReason
-         | _: Implications => Applicable.always
+         | _: Implications => Applicability.always
       case CustomField(id) => a.byField(id)
     }
 
-  val applicabilityForCodeGroup: Applicability[Column, Any] =
-    Applicability {
+  val applicabilityForCodeGroup: ProjectApplicability[Column, Any] =
+    ProjectApplicability {
       case Code
-         | Title           => Applicable.always
+         | Title           => Applicability.always
       case ReqType
          | Pubid
          | Tags
          | DeletionReason
          | _: CustomField
-         | _: Implications => Applicable.never
+         | _: Implications => Applicability.never
     }
 
   def all(c: ProjectConfig): NonEmptySet[Column] =

@@ -202,7 +202,7 @@ object Row {
 
   // ===================================================================================================================
 
-  def applicability(a: Applicability.Default): Applicability[Column, Row] =
+  def applicability(a: ProjectApplicability.Default): ProjectApplicability[Column, Row] =
     Column.applicabilityForReq(a).mapDataFn[Column, Row]((col, forReq) => {
       case r: Row.ForReq       => forReq(r.req.reqTypeId)
       case _: Row.ForCodeGroup => Column.applicabilityForCodeGroup((), col)

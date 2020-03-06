@@ -100,7 +100,7 @@ sealed trait Field {
   final def fieldId: FieldId =
     fold(s => s, _.id)
 
-  final val applicable: ReqTypeId => Applicable =
+  final val applicable: ReqTypeId => Applicability =
     Applicable fnToThisWhen reqTypes.filter
 }
 
@@ -541,10 +541,10 @@ final case class FieldSet(customFields: FieldSet.CustomFields,
   def staticFieldSet: ListSet[StaticField] =
     staticFieldIterator.to
 
-  val applicability: Applicability.Default =
-    Applicability(get(_) match {
+  val applicability: ProjectApplicability.Default =
+    ProjectApplicability(get(_) match {
       case Some(f) => f.applicable
-      case None    => Applicable.never
+      case None    => Applicability.never
     })
 
   def custom[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): D = {

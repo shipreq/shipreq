@@ -27,7 +27,7 @@ object Sorter {
     def normalisedText(f: PlainText.ForProject.NoCtx => String) =
       DataLogic.normaliseStringForSorting(f(plainText))
 
-    val applicability: Applicability[Column, Row] =
+    val applicability: ProjectApplicability[Column, Row] =
       Row.applicability(p.config.applicability)
 
     @inline def reqTypesToMnemonicOrder =

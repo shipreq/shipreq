@@ -84,18 +84,18 @@ private[reqtable] object Logic {
   private def impColValueExpander(view: View,
                                   fd  : FilterDead,
                                   p   : Project,
-                                  ap  : Applicability[Column, ReqTypeId]): Req => Map[CustomField.Implication.Id, Expanded[Pubid]] =
+                                  ap  : ProjectApplicability[Column, ReqTypeId]): Req => Map[CustomField.Implication.Id, Expanded[Pubid]] =
     customFieldExpander(view: View, ap, p.dataLogic.customFieldImps(fd))
 
   private def tagFieldValueExpander(view        : View,
-                                    ap          : Applicability[Column, ReqTypeId],
+                                    ap          : ProjectApplicability[Column, ReqTypeId],
                                     tagFieldDist: TagFieldDistribution.TagIds,
                                     tagLookup   : TagLookup): Req => Map[CustomField.Tag.Id, Expanded[ApplicableTagId]] =
     customFieldExpander(view, ap, fid => DataLogic.customFieldTags(tagFieldDist, tagLookup, fid))
 
   private def customFieldExpander[K <: CustomFieldId : ClassTag, V: UnivEq]
       (view: View,
-       ap  : Applicability[Column, ReqTypeId],
+       ap  : ProjectApplicability[Column, ReqTypeId],
        f   : K => ReqId => Set[V]): Req => Map[K, Expanded[V]] = {
 
     val cols = view.columns.whole.collect { case c@ Column.CustomField(id: K) => (id, c) }

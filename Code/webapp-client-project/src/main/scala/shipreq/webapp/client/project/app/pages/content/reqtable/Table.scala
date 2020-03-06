@@ -51,7 +51,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
       private val pxPubidFmt: Px[ProjectWidgets.NoCtx#PubidFormat] =
         pxProjectWidgets.map(_.PubidFormat(Plain, *.pubidColumnValue(_), titleFn = _ => None))
 
-      private val pxApplicability: Px[Applicability[Column, Row]] =
+      private val pxProjectApplicability: Px[ProjectApplicability[Column, Row]] =
         pxProjectConfig.map(cfg => Row.applicability(cfg.applicability))
 
       def render(p: Props): VdomElement = {
@@ -70,7 +70,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
           NoFilterResults.asTableRow(p.cols.length + 1)
 
         def renderRows(rows: Vector[Row]): VdomArray = {
-          val applicability = pxApplicability.value()
+          val applicability = pxProjectApplicability.value()
           val reqViewInputs: ReqRow.ViewInput = (p.config, p.pw, pxPubidFmt.value())
 
           rows.toVdomArray { genericRow =>
@@ -220,7 +220,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
                      viewInput       : ViewInput,
                      editor          : RowEditor,
                      cols            : NonEmptyVector[ColumnPlus],
-                     applicability   : Applicability[Column, Row],
+                     applicability   : ProjectApplicability[Column, Row],
                      rowAsync        : AsyncFeature.Read.D0[ErrorMsg],
                      selection       : Selection.OneUI[Row.SourceId]) {
       @inline def render = Component.withKey(row.id.key)(this)
@@ -468,7 +468,7 @@ object Table {
     val CellState: On => Live => CellState =
       On.memo(on => Live.memo((_, on)))
 
-    implicit val reusabilityApplicability: Reusability[Applicability[Column, Row]] =
+    implicit val reusabilityProjectApplicability: Reusability[ProjectApplicability[Column, Row]] =
       Reusability.byRef
 
     val `n/a`: VdomTag =
