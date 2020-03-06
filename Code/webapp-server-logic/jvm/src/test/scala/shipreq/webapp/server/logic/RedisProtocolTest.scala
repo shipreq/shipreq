@@ -20,27 +20,33 @@ object RedisProtocolTest extends TestSuite {
 
   override def tests = Tests {
 
-    // set RandomData.disableUnicode = true
     // webapp-server-logic-jvm/testOnly -- shipreq.webapp.server.logic.RedisProtocolTest.generateTestData
-    // cp /tmp/RedisProtocolTestData.json webapp-server-logic/jvm/src/test/resources/RedisProtocolTestData.json
-//    'generateTestData - RedisProtocolTestData.main(Array.empty)
+//    'generateTestData - {
+//      shipreq.webapp.base.RandomDataSettings.disableUnicode = true
+//      RedisProtocolTestData.main(Array.empty)
+//    }
 
     'saved - {
-      val rows = RedisProtocolTestData.load()
+      def run(ver: Int) = {
+        val rows = RedisProtocolTestData.load(ver)
 
-      var prev: Option[Redis.ProjectSnapshot] = None
-      for (i <- rows.indices) {
-        def prefix = s"[${i+1}/${rows.length}]"
-        val row    = rows(i)
-        val event  = row.parseEventJson.needRight
-        val ord    = prev.fold(EventOrd.first)(x => EventOrd(x.ord.value) + 1)
-        val p1     = prev.fold(Project.empty)(_.project)
-        val p2     = applyVerifiedEventSuccessfully(p1, event)
-        val ps     = Redis.ProjectSnapshot(p2, ord.asLatest)
-        prev       = Some(ps)
-        assertEq(s"$prefix ${row.eventJson.noSpaces}", row.parseEventBinary, \/-(event))
-        assertEq(prefix, row.parseSnapshotBinary, \/-(ps))
+        var prev: Option[Redis.ProjectSnapshot] = None
+        for (i <- rows.indices) {
+          def prefix = s"[${i+1}/${rows.length}]"
+          val row    = rows(i)
+          val event  = row.parseEventJson.needRight
+          val ord    = prev.fold(EventOrd.first)(x => EventOrd(x.ord.value) + 1)
+          val p1     = prev.fold(Project.empty)(_.project)
+          val p2     = applyVerifiedEventSuccessfully(p1, event)
+          val ps     = Redis.ProjectSnapshot(p2, ord.asLatest)
+          prev       = Some(ps)
+          assertEq(s"$prefix ${row.eventJson.noSpaces}", row.parseEventBinary, \/-(event))
+          assertEq(prefix, row.parseSnapshotBinary, \/-(ps))
+        }
       }
+
+      "v01" - run(1)
+      "v02" - run(2)
     }
 
     // =================================================================================================================

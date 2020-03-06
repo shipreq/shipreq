@@ -48,6 +48,12 @@ How to evolve binary codecs
   * change `implicit val`s into `implicit lazy val`s so that Scala.JS doesn't include unneccesarily
     (not a problem before because non-Rev objects provided neccesary segregation)
 
+* Open `RedisProtocolTest.scala`
+  * Uncomment `generateTestData`
+  * Run `webapp-server-logic-jvm/testOnly -- shipreq.webapp.server.logic.RedisProtocolTest.generateTestData`
+  * Move the generated JSON into `webapp-server-logic/jvm/src/test/resources/RedisProtocolTestData/`
+  * Add a new test to the bottom of `'saved`
+
 
 How to evolve JSON codecs
 =========================
@@ -92,4 +98,3 @@ How to evolve JSON codecs
   * MAKE SURE THAT THEY CAN STILL READ DATA OF THE PREVIOUS VERSION
   * change `implicit val`s into `implicit lazy val`s so that Scala.JS doesn't include unneccesarily
     (not a problem before because non-Rev objects provided neccesary segregation)
-

@@ -35,7 +35,12 @@ import shipreq.webapp.base.user._
 
 // TODO RandomData is inaccurate in that CorrectionParts aren't applied.
 
+object RandomDataSettings {
+  var disableUnicode = false
+}
+
 object RandomData {
+  import RandomDataSettings._
   import DataImplicits._
   import Field.ApplicableReqTypes
   import MTrie.Ops
@@ -65,8 +70,6 @@ object RandomData {
       dropLast(v.init)(f)
     else
       v
-
-  private def disableUnicode = false
 
   val unicodeChar: Gen[Char] =
     if (disableUnicode)
