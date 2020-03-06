@@ -671,7 +671,7 @@ object ParsersTest extends TestSuite {
     // Eg. Dead text can have CodeRefs to dead codes.
     // Parsing text only happens to live text, and it only looks at active codes.
     'big {
-//      tester.bugHunt(0, 10000)(Prop.eval(_.all))(DefaultSettings.propSettings.setSampleSize(1000).setSeed(1).setGenSize(4).setDebug.setSingleThreaded)
+      // tester.bugHunt(0, 10000)(Prop.eval(_.all))(DefaultSettings.propSettings.setSeed(0).setDebug.setSingleThreaded)
       tester.mustSatisfyE(_.all) //(DefaultSettings.propSettings.setSampleSize(20000).setDebug)
       println()
       val graphUnit = 1000 `JVM|JS` 10

@@ -23,8 +23,8 @@ golly-xps:
 object SerialisationEventsBM {
   import boopickle.DefaultBasic._
   import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
-  import shipreq.webapp.base.protocol.json.v1.Events._
-  import shipreq.webapp.base.protocol.binary.v1.Events.picklerEvent
+  import shipreq.webapp.base.protocol.binary.v1.Rev1._
+  import shipreq.webapp.base.protocol.json.v1.Rev1._
 
   val events = SampleData.events_1000
 

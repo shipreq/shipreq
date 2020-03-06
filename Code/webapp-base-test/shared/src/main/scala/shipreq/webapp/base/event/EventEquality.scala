@@ -11,7 +11,9 @@ import Event._
 
 object EventEquality extends EventEquality
 trait EventEquality {
+  implicit val equalApplicableTagCreate   : Equal[ApplicableTagCreate   ] = ScalazMacros.deriveEqual
   implicit val equalApplicableTagCreateV1 : Equal[ApplicableTagCreateV1 ] = ScalazMacros.deriveEqual
+  implicit val equalApplicableTagUpdate   : Equal[ApplicableTagUpdate   ] = ScalazMacros.deriveEqual
   implicit val equalApplicableTagUpdateV1 : Equal[ApplicableTagUpdateV1 ] = ScalazMacros.deriveEqual
   implicit val equalContentRestore        : Equal[ContentRestore        ] = ScalazMacros.deriveEqual
   implicit val equalCustomIssueTypeCreate : Equal[CustomIssueTypeCreate ] = ScalazMacros.deriveEqual

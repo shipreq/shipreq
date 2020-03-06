@@ -86,7 +86,7 @@ object OpsEndpoints extends HasLogger {
           if (ves.isEmpty)
             ResponseCmd.StatusOnly.NotFound
           else {
-            import shipreq.webapp.base.protocol.json.v1.PostEvents.encoderVerifiedEvent
+            import shipreq.webapp.base.protocol.json.v1.Rev1.encoderVerifiedEvent
             val json = ves.iterator.map(_.asJson.noSpacesSortKeys).mkString("[", "\n,", "\n]")
             ResponseCmd.Json(StatusCode.OK, json)
           }

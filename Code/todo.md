@@ -91,6 +91,9 @@ Phase 3A
   * TagSetApplicableChildrenOrder has a bug or something - remember how priorty got fucked up with Actors & could added under should?
   * Add tests to ProjectSpaProtocolsTest
   * Add tests for TagConfig
+  * Add stability test for ProjectTemplate - probably just JSON of events is enough
+  * Uniqueness of tag names... just group names? or include ap-tag keys too?
+  * Tags themselves should have ApplicableReqTypes ... what to do about the overlap in Fields having rules with N/A as an option?
 
 * Fields
   * redo config screen

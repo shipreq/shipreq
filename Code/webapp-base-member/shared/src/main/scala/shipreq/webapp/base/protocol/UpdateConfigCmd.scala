@@ -75,12 +75,13 @@ object UpdateConfigCmd {
   implicit def univEq                      : UnivEq[UpdateConfigCmd      ] = UnivEq.derive
 
   // ===================================================================================================================
-  object CodecsV0 {
+  object CodecsV1 {
     import boopickle.DefaultBasic._
     import shipreq.webapp.base.protocol.binary.v1.BaseData._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2._
     import shipreq.webapp.base.protocol.binary.v1.Events._
+    import shipreq.webapp.base.protocol.binary.v1.Rev1._
 
     private implicit val picklerCustomIssueTypeValues: Pickler[CustomIssueTypeValues] =
       new Pickler[CustomIssueTypeValues] {

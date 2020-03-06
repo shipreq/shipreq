@@ -39,7 +39,7 @@ object ProjectSpaProtocols {
   import CreateContentCmd.CodecsV0._
   import ManualIssueCmd.CodecsV0._
   import SavedViewCmd.CodecsV0._
-  import UpdateConfigCmd.CodecsV0._
+  import UpdateConfigCmd.CodecsV1._
   import UpdateContentCmd.CodecsV0._
 
   private object Codecs {
@@ -48,6 +48,7 @@ object ProjectSpaProtocols {
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2._
     import shipreq.webapp.base.protocol.binary.v1.PostEvents._
+    import shipreq.webapp.base.protocol.binary.v1.Rev1._
 
     val safePicklerWsReqResAndReq: SafePickler[WsReqRes.AndReq] = {
       import WsReqRes._
@@ -74,7 +75,7 @@ object ProjectSpaProtocols {
         }
 
       pickler
-        .asV1(0)
+        .asV1(1)
         .withMagicNumbers(0x1DB44559, 0x53562938)
     }
 
@@ -95,7 +96,7 @@ object ProjectSpaProtocols {
       pickleDisj
 
     implicit def picklerVerifiedEventSeq: Pickler[VerifiedEvent.Seq] =
-      shipreq.webapp.base.protocol.binary.v1.PostEvents.picklerVerifiedEventSeq
+      shipreq.webapp.base.protocol.binary.v1.Rev1.picklerVerifiedEventSeq
 
     implicit val picklerOptionEventOrdLatest: Pickler[Option[EventOrd.Latest]] =
       optionPickler
@@ -119,24 +120,26 @@ object ProjectSpaProtocols {
     implicit val safePicklerUnit: SafePickler[Unit] =
       unitPickler.asV1(0) // no magic numbers because no data
 
+    protected final val responseVersion = 1
+
     implicit val safePicklerInitAppRes: SafePickler[ErrorMsg \/ InitAppData] =
       picklerInitAppRes
-        .asV1(0)
+        .asV1(responseVersion)
         .withMagicNumberFooter(0x8819303B)
 
     implicit val safePicklerEventResult: SafePickler[WsReqRes.EventResult] =
       picklerEventResult
-        .asV1(0)
+        .asV1(responseVersion)
         .withMagicNumberFooter(0x86DA8677)
 
     implicit val safePicklerVerifiedEventSeq: SafePickler[VerifiedEvent.Seq] =
       picklerVerifiedEventSeq
-        .asV1(0)
+        .asV1(responseVersion)
         .withMagicNumberFooter(0x85651C09)
 
     val safePicklerVerifiedEventNonEmptySeq: SafePickler[VerifiedEvent.NonEmptySeq] =
       picklerVerifiedEventNonEmptySeq
-        .asV1(0)
+        .asV1(responseVersion)
         .withMagicNumberFooter(0x06F60C06)
   }
 

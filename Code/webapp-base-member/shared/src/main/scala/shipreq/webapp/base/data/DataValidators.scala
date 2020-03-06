@@ -254,6 +254,12 @@ object DataValidators {
     def key: Composite.Stateful[State, String, String, HashRefKey] =
       hashRefKey.hashRefKey.contramap(_.hashRefKeyState)
 
+    def colour: Composite.Stateful[State, String, String, Option[Colour]] =
+      EndoCorrector(live = Colour.liveCorrect, full = Colour.correct)
+        .withAuditor(Auditor(Colour.parseOption(_).leftMap(Invalidity.apply)))
+        .named(FieldNames.colour)
+        .lift[State]
+
     def desc: Composite.Stateful[State, String, Option[String], Option[String]] =
       genericDesc.lift[State]
 
@@ -266,8 +272,8 @@ object DataValidators {
     val applicableTag: State => Composite.Validator[
       (String, String, String),
       (String, String, Option[String]),
-      (String, HashRefKey, Option[String])] =
-      s => name(s).named tuple key(s).named tuple desc(s).named
+      (HashRefKey, Option[Colour], Option[String])] =
+      s => key(s).named tuple colour(s).named tuple desc(s).named
   }
 
   // ===================================================================================================================

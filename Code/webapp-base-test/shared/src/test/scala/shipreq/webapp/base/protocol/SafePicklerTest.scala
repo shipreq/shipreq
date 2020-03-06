@@ -15,8 +15,8 @@ object SafePicklerTest extends TestSuite {
 
   private object Internals {
 
-    val v10 = Version.v10
-    val v11 = Version.fromInts(1, 1)
+    val v10 = Version.v1(0)
+    val v11 = Version.v1(1)
 
     sealed trait Data
     object Data {

@@ -214,6 +214,15 @@ object RandomData {
   lazy val verificationToken: Gen[VerificationToken] =
     Gen.ascii.string(1 to 6).map(VerificationToken.apply)
 
+  lazy val genHexCharLower: Gen[Char] =
+    Gen.chooseChar('a', "bcdef0123456789")
+
+  lazy val genColour: Gen[Colour] =
+    for {
+      i <- Gen.choose(3, 6)
+      h <- genHexCharLower.string(i)
+    } yield Colour.force("#" + h)
+
   // -------------------------------------------------------------------------------------------------------------------
   // Custom issue types
 
@@ -302,7 +311,7 @@ object RandomData {
     Gen.apply5(TagGroup.apply)(tagGroupId, tagName, optionalLargeText, exclusivity, live)
 
   val applicableTag =
-    Gen.apply5(ApplicableTag.apply)(applicableTagId, tagName, optionalLargeText, hashRefKey, live)
+    Gen.apply5(ApplicableTag.apply)(applicableTagId, hashRefKey, genColour.option, optionalLargeText, live)
 
   val tag =
     Gen.chooseGen[Tag](tagGroup, applicableTag, applicableTag, applicableTag)
@@ -313,14 +322,22 @@ object RandomData {
       (p, c) ← tagId.set.pair
     } yield {
       val children = (c - t.id -- p).toVector
-      val parents  = (p - t.id -- c).toStream.map(_ -> none[TagId]).toMap
+      val parents  = (p - t.id -- c).iterator.map(_ -> none[TagId]).toMap
       (t, MMTree.Relations(parents, children))
     }
 
   /** HashRefKey uniqueness enforced in Project, not here */
   val tags: Gen[List[Tag]] = {
+    val tagNameL = Optional[Tag, String]({
+      case t: TagGroup      => Some(t.name)
+      case _: ApplicableTag => None
+    })(n => {
+      case t: TagGroup      => t.copy(name = n)
+      case t: ApplicableTag => t
+    })
+
     val di = distinctId[Tag, TagId]
-    val dn = Distinct.str.at(Tag.name)
+    val dn = Distinct.str.at(tagNameL)
     val d = (di * dn).lift[List]
     tag.list map d.run
   }
@@ -1935,10 +1952,21 @@ object RandomData {
       }
     }
 
-    object applicableTagGD extends GenericDataGen(ApplicableTagGD) {
+    object applicableTagGDv1 extends GenericDataGen(RetiredGenericData.ApplicableTagGDv1) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
         case Name     => unicodeString1        map Name    .apply
+        case Desc     => unicodeString1.option map Desc    .apply
+        case Key      => hashRefKey            map Key     .apply
+        case Children => tagChildren           map Children.apply
+        case Parents  => tagParents            map Parents .apply
+      }
+    }
+
+    object applicableTagGD extends GenericDataGen(ApplicableTagGD) {
+      import gd._
+      override def valueFor(a: Attr): Gen[Value] = a match {
+        case Colour   => genColour.option      map Colour  .apply
         case Desc     => unicodeString1.option map Desc    .apply
         case Key      => hashRefKey            map Key     .apply
         case Children => tagChildren           map Children.apply
@@ -1998,8 +2026,11 @@ object RandomData {
     val genProjectTemplateApply: Gen[ProjectTemplateApply] =
       genProjectTemplate map ProjectTemplateApply
 
+    val genApplicableTagCreate: Gen[ApplicableTagCreate] =
+      Gen.apply2(ApplicableTagCreate)(applicableTagId, applicableTagGD.nonEmptyValues)
+
     val genApplicableTagCreateV1: Gen[ApplicableTagCreateV1] =
-      Gen.apply2(ApplicableTagCreateV1)(applicableTagId, applicableTagGD.nonEmptyValues)
+      Gen.apply2(ApplicableTagCreateV1)(applicableTagId, applicableTagGDv1.nonEmptyValues)
 
     val genFieldCustomImpCreate: Gen[FieldCustomImpCreate] =
       Gen.apply2(FieldCustomImpCreate)(customFieldImplicationId, customImpFieldGD.nonEmptyValues)
@@ -2108,8 +2139,11 @@ object RandomData {
     val genUseCaseStepShiftRight: Gen[UseCaseStepShiftRight] =
       useCaseStepId map UseCaseStepShiftRight
 
+    val genApplicableTagUpdate: Gen[ApplicableTagUpdate] =
+      Gen.apply2(ApplicableTagUpdate)(applicableTagId, applicableTagGD.nonEmptyValues)
+
     val genApplicableTagUpdateV1: Gen[ApplicableTagUpdateV1] =
-      Gen.apply2(ApplicableTagUpdateV1)(applicableTagId, applicableTagGD.nonEmptyValues)
+      Gen.apply2(ApplicableTagUpdateV1)(applicableTagId, applicableTagGDv1.nonEmptyValues)
 
     val genFieldCustomImpUpdate: Gen[FieldCustomImpUpdate] =
       Gen.apply2(FieldCustomImpUpdate)(customFieldImplicationId, customImpFieldGD.nonEmptyValues)
@@ -2164,8 +2198,8 @@ object RandomData {
 
     val activeEventGens: NonEmptyVector[Gen[ActiveEvent]] =
       valuesForAdt[ActiveEvent, Gen[ActiveEvent]] {
-        case _: ApplicableTagCreateV1  => genApplicableTagCreateV1
-        case _: ApplicableTagUpdateV1  => genApplicableTagUpdateV1
+        case _: ApplicableTagCreate    => genApplicableTagCreate
+        case _: ApplicableTagUpdate    => genApplicableTagUpdate
         case _: ContentRestore         => genContentRestore
         case _: CustomIssueTypeCreate  => genCustomIssueTypeCreate
         case _: CustomIssueTypeDelete  => genCustomIssueTypeDelete
@@ -2220,12 +2254,19 @@ object RandomData {
         case _: UseCaseTitleSet        => genUseCaseTitleSet
       }
 
+    val retiredEventGens: NonEmptyVector[Gen[RetiredEvent]] =
+      valuesForAdt[RetiredEvent, Gen[RetiredEvent]] {
+        case _: ApplicableTagCreateV1  => genApplicableTagCreateV1
+        case _: ApplicableTagUpdateV1  => genApplicableTagUpdateV1
+      }
+
     val activeEvent: Gen[ActiveEvent] =
       Gen.chooseGenNE(activeEventGens)
 
     val event: Gen[Event] = {
       val gens = valuesForAdt[Event, NonEmptyVector[Gen[Event]]] {
-        case _: ActiveEvent => activeEventGens
+        case _: ActiveEvent  => activeEventGens
+        case _: RetiredEvent => retiredEventGens
       }
       Gen.chooseGenNE(gens flatMap identity)
     }

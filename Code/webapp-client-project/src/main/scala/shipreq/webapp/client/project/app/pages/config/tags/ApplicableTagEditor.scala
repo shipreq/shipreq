@@ -61,13 +61,13 @@ private[tags] object ApplicableTagEditor {
 
       val validated =
         DataValidators.tag.applicableTag(vs)(
-        (name, key, desc))
+        (key, "", desc))
 
       PotentialChange
         .fromDisjunction(validated.leftMap(_ => ()))
-        .flatMap { case (name, key, desc) =>
+        .flatMap { case (key, colour, desc) =>
           val b = ApplicableTagGD.valueBuilder()
-          b.addIfChangedOption(ApplicableTagGD.Name   )(source.map(_.tag.name    ), name)
+          b.addIfChangedOption(ApplicableTagGD.Colour )(source.map(_.tag.colour  ), colour)
           b.addIfChangedOption(ApplicableTagGD.Key    )(source.map(_.tag.key     ), key)
           b.addIfChangedOption(ApplicableTagGD.Desc   )(source.map(_.tag.desc    ), desc)
           b.addIfChangedOption(ApplicableTagGD.Parents)(source.map(_.rels.parents), rels.parents)
@@ -133,7 +133,7 @@ private[tags] object ApplicableTagEditor {
       ApplicableTagId(-1)
 
     private val fakeApplicableTagInTree =
-      TagInTree(ApplicableTag(fakeApplicableTagId, "", None, HashRefKey(""), Live), Vector.empty)
+      TagInTree(ApplicableTag(fakeApplicableTagId, HashRefKey(""), None, None, Live), Vector.empty)
 
     private val pxSourceId: Px[Option[ApplicableTagId]] =
       Px.props($).map(_.subject).withReuse.autoRefresh

@@ -13,7 +13,7 @@ object TagsTest extends TestSuite {
     TagInTree(TagGroup(id, s"Group.${id.value}", None, NonExclusive, live), children.toVector)
 
   private def at(id: ApplicableTagId, live: Live)(children: TagId*): TagInTree =
-    TagInTree(ApplicableTag(id, s"Tag.${id.value}", None, HashRefKey(s"tag.${id.value}"), live), children.toVector)
+    TagInTree(ApplicableTag(id, HashRefKey(s"tag.${id.value}"), None, None, live), children.toVector)
 
   private def mkTags(tts: TagInTree*): Tags =
     Tags(TagTree.empty.addAll(tts: _*))

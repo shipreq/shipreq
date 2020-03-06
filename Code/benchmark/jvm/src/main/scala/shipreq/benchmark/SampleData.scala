@@ -6,7 +6,7 @@ import scala.io.{Codec, Source}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.Event
-import shipreq.webapp.base.protocol.json.v1.Events.decoderEvent
+import shipreq.webapp.base.protocol.json.v1.Rev1.decoderEvent
 import shipreq.benchmark.data._
 
 object SampleData {

@@ -32,6 +32,7 @@ object Cmd {
 
   import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
   import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2._
+  import shipreq.webapp.base.protocol.binary.v1.Rev1._
 
   private implicit val picklerGraphUseCaseStepFlow: Pickler[GraphUseCaseStepFlow] =
     new Pickler[GraphUseCaseStepFlow] {

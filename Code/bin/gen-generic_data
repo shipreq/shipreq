@@ -69,16 +69,16 @@ val gens = List(
     "Imp"      -> "ImplicationRequired",
   ),
   Gen("TagGroupGD")(
-    "Name"          -> "String",
-    "Desc"          -> "Option[String]",
-    "MutexChildren" -> "MutexChildren",
-    "Parents"       -> "TagInTree.Parents",
-    "Children"      -> "TagInTree.Children",
+    "Name"        -> "String",
+    "Desc"        -> "Option[String]",
+    "Exclusivity" -> "Exclusivity",
+    "Parents"     -> "TagInTree.Parents",
+    "Children"    -> "TagInTree.Children",
   ),
   Gen("ApplicableTagGD")(
-    "Name"     -> "String",
-    "Desc"     -> "Option[String]",
     "Key"      -> "HashRefKey",
+    "Colour"   -> "Option[Colour]",
+    "Desc"     -> "Option[String]",
     "Parents"  -> "TagInTree.Parents",
     "Children" -> "TagInTree.Children",
   ),
@@ -151,7 +151,7 @@ val content =
      |
      |import japgolly.microlibs.nonempty._
      |import scalaz.{Equal, Order}
-     |import shipreq.base.util.{SetDiff, Util}
+     |import shipreq.base.util._
      |import shipreq.base.util.univeq._
      |import shipreq.webapp.base.data._
      |import shipreq.webapp.base.filter.Filter.Implicits._

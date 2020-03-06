@@ -43,6 +43,8 @@ How to evolve binary codecs
 
 * For all commented-out codecs in `Rev`
   * uncomment and fix them
+  * general, non-event data types (eg. `Project` or any constituent) need to be made backward-compatible
+    in that you still need to be able to read old versions
   * change `implicit val`s into `implicit lazy val`s so that Scala.JS doesn't include unneccesarily
     (not a problem before because non-Rev objects provided neccesary segregation)
 
@@ -54,6 +56,9 @@ How to evolve JSON codecs
   eg. create `.json.v1.Rev3` for v1.3
 
 * For all obsolete codecs:
+
+  * Firstly, remember that GenericData never becomes an obsolete codec so these rules here don't apply.
+    See the [event evolution guide](event-evolution.md)
 
   * if they can't be made to compile anymore (eg. required data unavailable)
 

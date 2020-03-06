@@ -11,7 +11,7 @@ import sourcecode.Line
 import shipreq.base.test._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.json.v1.PostEvents._
+import shipreq.webapp.base.protocol.json.v1.Rev1._
 import shipreq.webapp.base.text.Text
 
 trait WebappTestEquality
@@ -80,7 +80,10 @@ trait WebappTestUtil extends BaseTestUtil {
 
   implicit final class WebappTestUtilExt_Event(private val self: Event) {
     def active: ActiveEvent =
-      Event.toActiveEvent(self)
+      self match {
+        case a: ActiveEvent => a
+        case r: RetiredEvent => sys.error(s"Not an active event: $r")
+      }
   }
 
 //  implicit def autoSeqIssueToSeqIssueLite(is: Seq[Issue]): Seq[IssueLite] =

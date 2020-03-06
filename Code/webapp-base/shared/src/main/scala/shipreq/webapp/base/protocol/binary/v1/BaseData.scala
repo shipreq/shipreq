@@ -1,11 +1,12 @@
 package shipreq.webapp.base.protocol.binary.v1
 
-import boopickle.ConstPickler
+import boopickle.{ConstPickler, Decoder}
 import boopickle.DefaultBasic._
 import japgolly.microlibs.nonempty.{NonEmpty, NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.recursion.Fix
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq.UnivEq
+import java.nio.ByteBuffer
 import java.time.Instant
 import monocle.Iso
 import nyaya.util.{MultiValues, Multimap}
@@ -68,6 +69,20 @@ object BaseData {
         case Left(_) =>
           throw new IllegalArgumentException("Unknown coding")
       }
+  }
+
+  implicit final class DecoderExt(private val self: Decoder) extends AnyVal {
+    def buf: ByteBuffer =
+      self match {
+        case a: boopickle.DecoderSpeed => a.buf
+        case a: boopickle.DecoderSize  => a.buf
+      }
+
+    def peek[A](f: Decoder => A): A = {
+      val b = buf
+      val p = b.position()
+      try f(self) finally b.position(p)
+    }
   }
 
   // ===================================================================================================================

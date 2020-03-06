@@ -20,7 +20,7 @@ final case class ApplicableTagId(value: Int) extends TagId with TaggedInt
 
 sealed trait Tag {
   val id     : TagId
-  val name   : String
+  def name   : String
   val desc   : Option[String]
   val live   : Live
   def keyO   : Option[HashRefKey]
@@ -32,23 +32,41 @@ sealed trait Tag {
  *         e.g. “Priority” shouldn't be applicable but its children should.
  */
 @Lenses
-final case class TagGroup(id           : TagGroupId,
-                          name         : String,
-                          desc         : Option[String],
+final case class TagGroup(id         : TagGroupId,
+                          name       : String,
+                          desc       : Option[String],
                           exclusivity: Exclusivity,
-                          live         : Live) extends Tag {
+                          live       : Live) extends Tag {
   override def keyO = None
   override def tagType = TagType.Group
 }
 
 @Lenses
-final case class ApplicableTag(id  : ApplicableTagId,
-                               name: String,
-                               desc: Option[String],
-                               key : HashRefKey,
-                               live: Live) extends Tag {
+final case class ApplicableTag(id    : ApplicableTagId,
+                               key   : HashRefKey,
+                               colour: Option[Colour],
+                               desc  : Option[String],
+                               live  : Live) extends Tag {
+  override def name = key.value
   override def keyO = Some(key)
   override def tagType = TagType.Applicable
+}
+
+object ApplicableTag {
+  def v1(id  : ApplicableTagId,
+         name: String,
+         desc: Option[String],
+         key : HashRefKey,
+         live: Live): ApplicableTag = {
+    val _ = name // removed
+    apply(
+      id     = id,
+      key    = key,
+      colour = None,
+      desc   = desc,
+      live   = live,
+    )
+  }
 }
 
 sealed abstract class TagType(val name: String) { type Data <: Tag }
@@ -66,11 +84,6 @@ object Tag {
     override def id(d: Tag) = d.id
     override val unapplyData: AnyRef => Option[Tag] = {case r: Tag => Some(r); case _ => None}
   }
-
-  val name = Lens((_: Tag).name)(n => {
-    case TagGroup(a, _, b, c, d)      => TagGroup(a, n, b, c, d)
-    case ApplicableTag(a, _, b, c, d) => ApplicableTag(a, n, b, c, d)
-  })
 
   val live = Lens((_: Tag).live)(n => {
     case TagGroup(a, b, c, d, _)      => TagGroup(a, b, c, d, n)

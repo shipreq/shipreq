@@ -107,4 +107,7 @@ object Optics {
 
   def disjunctionLensRight[L, R](default: => R): Lens[L \/ R, R] =
     coproductLens[L \/ R, R]({ case \/-(a) => a }, \/-(_), default)
+
+  def constLens[S, A](value: A): Lens[S, A] =
+    Lens[S, A](_ => value)(_ => identity)
 }

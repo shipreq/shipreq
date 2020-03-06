@@ -6,6 +6,7 @@ import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.JsonUtil
 import shipreq.webapp.base.event.{ActiveEvent, Event, EventOrd}
 import shipreq.webapp.base.protocol.json.v1.Events.EventData._
+import shipreq.webapp.base.protocol.json.v1.Rev1.EventData._
 import shipreq.webapp.server.logic.DB.ReadProjectEventError
 
 object EventSerialisation {
@@ -13,8 +14,8 @@ object EventSerialisation {
   import EventTypes._
 
   val encode: ActiveEvent => (Short, Json) = {
-    case e: ApplicableTagCreateV1  => (TypeApplicableTagCreate   , e.asJson)
-    case e: ApplicableTagUpdateV1  => (TypeApplicableTagUpdate   , e.asJson)
+    case e: ApplicableTagCreate    => (TypeApplicableTagCreateV2 , e.asJson)
+    case e: ApplicableTagUpdate    => (TypeApplicableTagUpdateV2 , e.asJson)
     case e: CodeGroupCreate        => (TypeCodeGroupCreate       , e.asJson)
     case e: CodeGroupsDelete       => (TypeCodeGroupsDelete      , e.asJson)
     case e: CodeGroupUpdate        => (TypeCodeGroupUpdate       , e.asJson)
@@ -85,8 +86,10 @@ object EventSerialisation {
       }
 
     typeId match {
-      case TypeApplicableTagCreate    => parse[ApplicableTagCreateV1]
-      case TypeApplicableTagUpdate    => parse[ApplicableTagUpdateV1]
+      case TypeApplicableTagCreateV1  => parse[ApplicableTagCreateV1]
+      case TypeApplicableTagCreateV2  => parse[ApplicableTagCreate]
+      case TypeApplicableTagUpdateV1  => parse[ApplicableTagUpdateV1]
+      case TypeApplicableTagUpdateV2  => parse[ApplicableTagUpdate]
       case TypeCodeGroupCreate        => parse[CodeGroupCreate]
       case TypeCodeGroupsDelete       => parse[CodeGroupsDelete]
       case TypeCodeGroupUpdate        => parse[CodeGroupUpdate]

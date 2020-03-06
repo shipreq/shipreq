@@ -50,6 +50,7 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
   implicit def autoHashRefKey (s: String) = HashRefKey(s)
   implicit def autoFieldRefKey(s: String) = FieldRefKey(s)
   implicit def autoReqCodeNode(s: String) = ReqCode.Node(s)
+  implicit def autoColour     (s: String) = Colour(s).get
 
   implicit def autoReqCode(s: String): ReqCode.Value = {
     val v = Grammar.reqCode.nodeSeqFormat.split(s).map(ReqCode.Node.applyFn).toVector

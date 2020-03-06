@@ -245,7 +245,9 @@ object EventSeqSummary {
         apReqCodes = true
 
       case e: Event.ApplicableTagCreateV1  => applicableTags.created += e.id
+      case e: Event.ApplicableTagCreate    => applicableTags.created += e.id
       case e: Event.ApplicableTagUpdateV1  => applicableTags.updated += e.id
+      case e: Event.ApplicableTagUpdate    => applicableTags.updated += e.id
       case e: Event.CodeGroupCreate        => reqCodeGroups.created += e.id
       case e: Event.CodeGroupsDelete       => reqCodeGroups.deleted ++= e.ids.whole
       case e: Event.CodeGroupUpdate        => reqCodeGroups.updated += e.id

@@ -9,27 +9,24 @@ import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.text.Text
 import Text.{UseCaseStep => StepTitle, _}
 
-/**
- * A change to a [[Project]].
- *
- * All [[Event]]s must be readable from the DB. They must deserialise consistently.
- *
- * Only [[ActiveEvent]]s can be written to the DB.
- */
+/** A change to a [[Project]].
+  *
+  * All [[Event]]s must be readable from the DB. They must deserialise consistently.
+  *
+  * Only [[ActiveEvent]]s can be written to the DB.
+  */
 sealed trait Event
 
-/**
-  * Events of which new instances can be created.
-  *
-  * (Events can be retired over time.)
-  */
+/** Events of which new instances can be created. */
 sealed trait ActiveEvent extends Event
 
-object Event {
+/** Events that used to be active but have been retired. They are read-only.
+  *
+  * The are still around because they'll have been saved to the DB and are now part of people's projects' event streams.
+  */
+sealed trait RetiredEvent extends Event
 
-  val toActiveEvent: Event => ActiveEvent = {
-    case a: ActiveEvent => a
-  }
+object Event {
 
   type NonEmptyCustomTextMap = NonEmpty[Map[CustomField.Text.Id, CustomTextField.NonEmptyText]]
 
@@ -144,8 +141,11 @@ object Event {
   final case class TagGroupCreate(id: TagGroupId, vs: TagGroupGD.NonEmptyValues) extends ActiveEvent
   final case class TagGroupUpdate(id: TagGroupId, vs: TagGroupGD.NonEmptyValues) extends ActiveEvent
 
-  final case class ApplicableTagCreateV1(id: ApplicableTagId, vs: ApplicableTagGD.NonEmptyValues) extends ActiveEvent
-  final case class ApplicableTagUpdateV1(id: ApplicableTagId, vs: ApplicableTagGD.NonEmptyValues) extends ActiveEvent
+  final case class ApplicableTagCreate(id: ApplicableTagId, vs: ApplicableTagGD.NonEmptyValues) extends ActiveEvent
+  final case class ApplicableTagUpdate(id: ApplicableTagId, vs: ApplicableTagGD.NonEmptyValues) extends ActiveEvent
+
+  final case class ApplicableTagCreateV1(id: ApplicableTagId, vs: RetiredGenericData.ApplicableTagGDv1.NonEmptyValues) extends RetiredEvent
+  final case class ApplicableTagUpdateV1(id: ApplicableTagId, vs: RetiredGenericData.ApplicableTagGDv1.NonEmptyValues) extends RetiredEvent
 
   // ===================================================================================================================
   // Config: Fields

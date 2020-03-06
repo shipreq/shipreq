@@ -5,6 +5,7 @@ import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{DataValidators => V, _}
+import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.util.GenericData
 import ApplyEventLib._, SE.SE
 import DataImplicits._
@@ -169,9 +170,10 @@ trait ApplyConfigEvent {
 
     val imap = IMapStore(Project.tagTree)
 
-    val validateName = validateA(V.tag.name.stateless)
-    val validateDesc = validateO(V.tag.desc.stateless)
-    val validateKey  = validateI(V.tag.key .stateless)(_.value)
+    val validateName   = validateA(V.tag.name  .stateless)
+    val validateDesc   = validateO(V.tag.desc  .stateless)
+    val validateColour = validateI(V.tag.colour.stateless)(_.fold("")(_.value))
+    val validateKey    = validateI(V.tag.key   .stateless)(_.value)
 
     val updateIdCeiling = updateIdCeilingFn(IdCeilings.tag)
 
@@ -273,10 +275,10 @@ trait ApplyConfigEvent {
   }
 
   // -----------------------------------------------------------------------------------------------
-  object ApplicableTagEvents extends TagEvents[ApplicableTag, ApplicableTagGD.type](ApplicableTagGD) {
+  object ApplicableTagEventsV1 extends TagEvents[ApplicableTag, ApplicableTagGDv1.type](ApplicableTagGDv1) {
     import TagEvents._
 
-    def applyCreateV1(e: ApplicableTagCreateV1): SE[Unit] = {
+    def applyCreate(e: ApplicableTagCreateV1): SE[Unit] = {
       implicit val vs = e.vs
       for {
         n   ← GD.need(^.Name) >>= validateName
@@ -284,22 +286,55 @@ trait ApplyConfigEvent {
         k   ← GD.need(^.Key)  >>= validateKey
         oc  = GD.read(^.Children)
         op  = GD.read(^.Parents)
-        tag = ApplicableTag(e.id, n, d, k, Live)
+        tag = ApplicableTag.v1(e.id, n, d, k, Live)
         tit = TagInTree(tag, oc getOrElse Vector.empty)
         _   ← create(tit, op)
       } yield ()
     }
 
-    val updateName = validateName >>=@ ApplicableTag.name
     val updateDesc = validateDesc >>=@ ApplicableTag.desc
     val updateKey  = validateKey  >>=@ ApplicableTag.key
 
-    def applyUpdateV1(e: ApplicableTagUpdateV1): SE[Unit] =
+    def applyUpdate(e: ApplicableTagUpdateV1): SE[Unit] =
       update(e.id, vars =>
         e.vs.values foreach {
-          case v: ^.ValueForName     => vars apply updateName(v.value)
+          case _: ^.ValueForName     => ()
           case v: ^.ValueForDesc     => vars apply updateDesc(v.value)
           case v: ^.ValueForKey      => vars apply updateKey (v.value)
+          case v: ^.ValueForChildren => vars setChildren v.value
+          case v: ^.ValueForParents  => vars setParents v.value
+        }
+      )
+  }
+
+  // -----------------------------------------------------------------------------------------------
+  object ApplicableTagEvents extends TagEvents[ApplicableTag, ApplicableTagGD.type](ApplicableTagGD) {
+    import TagEvents._
+
+    def applyCreate(e: ApplicableTagCreate): SE[Unit] = {
+      implicit val vs = e.vs
+      for {
+        c   ← GD.need(^.Colour) >>= validateColour
+        d   ← GD.need(^.Desc) >>= validateDesc
+        k   ← GD.need(^.Key)  >>= validateKey
+        oc  = GD.read(^.Children)
+        op  = GD.read(^.Parents)
+        tag = ApplicableTag(e.id, k, c, d, Live)
+        tit = TagInTree(tag, oc getOrElse Vector.empty)
+        _   ← create(tit, op)
+      } yield ()
+    }
+
+    val updateColour = validateColour >>=@ ApplicableTag.colour
+    val updateDesc   = validateDesc   >>=@ ApplicableTag.desc
+    val updateKey    = validateKey    >>=@ ApplicableTag.key
+
+    def applyUpdate(e: ApplicableTagUpdate): SE[Unit] =
+      update(e.id, vars =>
+        e.vs.values foreach {
+          case v: ^.ValueForColour   => vars apply updateColour(v.value)
+          case v: ^.ValueForDesc     => vars apply updateDesc  (v.value)
+          case v: ^.ValueForKey      => vars apply updateKey   (v.value)
           case v: ^.ValueForChildren => vars setChildren v.value
           case v: ^.ValueForParents  => vars setParents v.value
         }

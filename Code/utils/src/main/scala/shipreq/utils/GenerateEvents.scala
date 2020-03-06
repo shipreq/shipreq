@@ -5,6 +5,7 @@ import java.time.Instant
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.event.RandomEventStream
 import shipreq.webapp.base.protocol.json.v1.Events._
+import shipreq.webapp.base.protocol.json.v1.Rev1._
 import shipreq.utils.UtilUtils._
 
 object GenerateEvents {

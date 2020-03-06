@@ -9,6 +9,7 @@ import monocle.Lens
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.TagGroupGD
 import shipreq.webapp.base.lib.ValidationUX
@@ -180,7 +181,7 @@ private[tags] object TagGroupEditor {
 
     private val exclusivityLabel: VdomNode =
       React.Fragment(
-        "Exclusive",
+        FieldNames.exclusivity,
         <.div(
           *.segmentCheckboxSubtitle,
           "When more than one tag within this group is applied to a requirement, it will be reported as an issue.")

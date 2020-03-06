@@ -23,7 +23,7 @@ import shipreq.webapp.base.test.WebappBaseGen._
 import shipreq.webapp.base.text.Text
 import ApplicableEventGen.ObserveFn
 import Event._
-import RandomData.{fieldRefKey, filter, filterDead, hashRefKey, implicationRequired, mandatory, exclusivity}
+import RandomData.{genColour, fieldRefKey, filter, filterDead, hashRefKey, implicationRequired, mandatory, exclusivity}
 import RandomData.{TextGen, TextGenExt, reqCode, reqTypeMnemonic, unicodeString1}
 import ScalaExt._
 
@@ -407,10 +407,21 @@ final class ApplicableEventGen(curState: State) {
     }
   }
 
-  object applicableTagGD extends GenericDataGen(ApplicableTagGD) {
+  object applicableTagGDv1 extends GenericDataGen(RetiredGenericData.ApplicableTagGDv1) {
     import gd._
     override def valueFor(a: Attr) = a match {
       case Name     => unicodeString1        map Name    .apply
+      case Desc     => unicodeString1.option map Desc    .apply
+      case Key      => hashRefKey            map Key     .apply
+      case Children => tagChildren           map Children.apply
+      case Parents  => tagParents            map Parents .apply
+    }
+  }
+
+  object applicableTagGD extends GenericDataGen(ApplicableTagGD) {
+    import gd._
+    override def valueFor(a: Attr) = a match {
+      case Colour   => genColour.option      map Colour  .apply
       case Desc     => unicodeString1.option map Desc    .apply
       case Key      => hashRefKey            map Key     .apply
       case Children => tagChildren           map Children.apply
@@ -519,8 +530,11 @@ final class ApplicableEventGen(curState: State) {
     else
       None
 
+  def genApplicableTagCreate: Gen[ApplicableTagCreate] =
+    Gen.apply2(ApplicableTagCreate)(nextApplicableTagId, applicableTagGD.allValues)
+
   def genApplicableTagCreateV1: Gen[ApplicableTagCreateV1] =
-    Gen.apply2(ApplicableTagCreateV1)(nextApplicableTagId, applicableTagGD.allValues)
+    Gen.apply2(ApplicableTagCreateV1)(nextApplicableTagId, applicableTagGDv1.allValues)
 
   def genFieldCustomImpCreate: Option[Gen[FieldCustomImpCreate]] =
     customImpFieldGD.allValues.map(vs =>
@@ -719,10 +733,25 @@ final class ApplicableEventGen(curState: State) {
     applicableTagId(Live).map(gId =>
       for {
         id <- gId
+        vs <- applicableTagGDv1.nonEmptyValues
+      } yield {
+        import RetiredGenericData.ApplicableTagGDv1._
+        ApplicableTagUpdateV1(id, NonEmpty.force(emptyValues ++ vs.valuesIterator.map {
+          case ValueForParents(v) => ValueForParents(v - id)
+          case ValueForChildren(v) => ValueForChildren(v.filterNot(_ ==* id))
+          case v => v
+        }))
+      }
+    )
+
+  def genApplicableTagUpdate: Option[Gen[ApplicableTagUpdate]] =
+    applicableTagId(Live).map(gId =>
+      for {
+        id <- gId
         vs <- applicableTagGD.nonEmptyValues
       } yield {
         import ApplicableTagGD._
-        ApplicableTagUpdateV1(id, NonEmpty.force(emptyValues ++ vs.valuesIterator.map {
+        ApplicableTagUpdate(id, NonEmpty.force(emptyValues ++ vs.valuesIterator.map {
           case ValueForParents(v) => ValueForParents(v - id)
           case ValueForChildren(v) => ValueForChildren(v.filterNot(_ ==* id))
           case v => v
@@ -817,7 +846,9 @@ final class ApplicableEventGen(curState: State) {
   private val possibleEventGensWithNames: NonEmptyVector[(EventName, Option[Gen[Event]])] =
     valuesForAdt[Event, (EventName, Option[Gen[Event]])] {
       // Note: not using [case e: Xxx => EventName(e) -> xxx] here because the valuesForAdt doesn't like it
+      case _: ApplicableTagCreate    => EventName("ApplicableTagCreate"   ) -> genApplicableTagCreate
       case _: ApplicableTagCreateV1  => EventName("ApplicableTagCreateV1" ) -> genApplicableTagCreateV1
+      case _: ApplicableTagUpdate    => EventName("ApplicableTagUpdate"   ) -> genApplicableTagUpdate
       case _: ApplicableTagUpdateV1  => EventName("ApplicableTagUpdateV1" ) -> genApplicableTagUpdateV1
       case _: ContentRestore         => EventName("ContentRestore"        ) -> genContentRestore
       case _: CustomIssueTypeCreate  => EventName("CustomIssueTypeCreate" ) -> genCustomIssueTypeCreate

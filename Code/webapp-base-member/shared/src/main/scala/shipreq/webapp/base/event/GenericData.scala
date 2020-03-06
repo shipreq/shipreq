@@ -32,6 +32,19 @@ object ApplicableTagGD extends GenericData {
     }
   }
 
+  case object Colour extends Attr {
+    override type Data = Option[Colour]
+    override def apply(data: Data) = ValueForColour(data)
+    val dataEquality: Equal[Data] = implicitly[Equal[Option[Colour]]]
+  }
+  final case class ValueForColour(value: Colour.Data) extends Value {
+    override val attr: Colour.type = Colour
+    override def equals(o: Any): Boolean = o match {
+      case v2: ValueForColour => Colour.dataEquality.equal(value, v2.value)
+      case _ => false
+    }
+  }
+
   case object Desc extends Attr {
     override type Data = Option[String]
     override def apply(data: Data) = ValueForDesc(data)
@@ -58,19 +71,6 @@ object ApplicableTagGD extends GenericData {
     }
   }
 
-  case object Name extends Attr {
-    override type Data = String
-    override def apply(data: Data) = ValueForName(data)
-    val dataEquality: Equal[Data] = implicitly[Equal[String]]
-  }
-  final case class ValueForName(value: Name.Data) extends Value {
-    override val attr: Name.type = Name
-    override def equals(o: Any): Boolean = o match {
-      case v2: ValueForName => Name.dataEquality.equal(value, v2.value)
-      case _ => false
-    }
-  }
-
   case object Parents extends Attr {
     override type Data = TagInTree.Parents
     override def apply(data: Data) = ValueForParents(data)
@@ -85,11 +85,11 @@ object ApplicableTagGD extends GenericData {
   }
 
   override implicit val equalityAttr: Order[Attr] with UnivEq[Attr] =
-    Util.univEqAndArbitraryOrder(Vector(Children, Desc, Key, Name, Parents))
+    Util.univEqAndArbitraryOrder(Vector(Children, Colour, Desc, Key, Parents))
 
   @inline override implicit def equalityValue: UnivEq[Value] = UnivEq.force
 
-  override val attrs = NonEmptySet[Attr](Children, Desc, Key, Name, Parents)
+  override val attrs = NonEmptySet[Attr](Children, Colour, Desc, Key, Parents)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -648,11 +648,11 @@ object TagGroupGD extends GenericData {
   }
 
   override implicit val equalityAttr: Order[Attr] with UnivEq[Attr] =
-    Util.univEqAndArbitraryOrder(Vector(Children, Desc, Exclusivity,Name, Parents))
+    Util.univEqAndArbitraryOrder(Vector(Children, Desc, Exclusivity, Name, Parents))
 
   @inline override implicit def equalityValue: UnivEq[Value] = UnivEq.force
 
-  override val attrs = NonEmptySet[Attr](Children, Desc, Exclusivity,Name, Parents)
+  override val attrs = NonEmptySet[Attr](Children, Desc, Exclusivity, Name, Parents)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████

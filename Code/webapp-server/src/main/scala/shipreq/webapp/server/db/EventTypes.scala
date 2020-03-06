@@ -20,8 +20,10 @@ object EventTypes {
 
   final val TypeTagGroupCreate         = 1020
   final val TypeTagGroupUpdate         = 1021
-  final val TypeApplicableTagCreate    = 1024
-  final val TypeApplicableTagUpdate    = 1025
+  final val TypeApplicableTagCreateV1  = 1024
+  final val TypeApplicableTagUpdateV1  = 1025
+  final val TypeApplicableTagCreateV2  = 1026
+  final val TypeApplicableTagUpdateV2  = 1027
   final val TypeTagDelete              = 1028
   final val TypeTagRestore             = 1029
 
@@ -89,8 +91,10 @@ object EventTypes {
   // ===================================================================================================================
 
   private def allTypes = AdtMacros.valuesForAdt[Event, Short] {
-    case _: ApplicableTagCreateV1  => TypeApplicableTagCreate
-    case _: ApplicableTagUpdateV1  => TypeApplicableTagUpdate
+    case _: ApplicableTagCreateV1  => TypeApplicableTagCreateV1
+    case _: ApplicableTagCreate    => TypeApplicableTagCreateV2
+    case _: ApplicableTagUpdateV1  => TypeApplicableTagUpdateV1
+    case _: ApplicableTagUpdate    => TypeApplicableTagUpdateV2
     case _: CodeGroupCreate        => TypeCodeGroupCreate
     case _: CodeGroupsDelete       => TypeCodeGroupsDelete
     case _: CodeGroupUpdate        => TypeCodeGroupUpdate

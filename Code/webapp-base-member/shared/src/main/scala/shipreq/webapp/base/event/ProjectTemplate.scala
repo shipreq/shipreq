@@ -62,13 +62,14 @@ object ProjectTemplate {
       add(TagGroupCreate(id, gdAllValues(TagGroupGD, "")))
       id
     }
-    def applicableTag(name    : String,
-                      desc    : Option[String],
-                      key     : HashRefKey,
-                      parents : TagInTree.Parents  = Map.empty,
-                      children: TagInTree.Children = Vector.empty) = {
+
+    def applicableTagV1(name    : String,
+                        desc    : Option[String],
+                        key     : HashRefKey,
+                        parents : TagInTree.Parents  = Map.empty,
+                        children: TagInTree.Children = Vector.empty) = {
       val id = ApplicableTagId(tagId.next())
-      add(ApplicableTagCreateV1(id, gdAllValues(ApplicableTagGD, "")))
+      add(ApplicableTagCreateV1(id, gdAllValues(RetiredGenericData.ApplicableTagGDv1, "")))
       id
     }
 
@@ -114,12 +115,12 @@ object ProjectTemplate {
 
       tagGroup("Actors", None, NonExclusive)
 
-      val must   = applicableTag("Must",   "Requirement is critical to the current delivery timebox in order for it to be a success. If even one MUST requirement is not included, the project delivery should be considered a failure", HashRefKey("must"))
-      val should = applicableTag("Should", "Requirement is important but not necessary for delivery in the current delivery timebox.", HashRefKey("should"))
-      val could  = applicableTag("Could",  "Requirement is desirable but not necessary, and could improve user experience or customer satisfaction for little development cost. These will typically be included if time and resources permit.", HashRefKey("could"))
+      val must   = applicableTagV1("Must",   "Requirement is critical to the current delivery timebox in order for it to be a success. If even one MUST requirement is not included, the project delivery should be considered a failure", HashRefKey("must"))
+      val should = applicableTagV1("Should", "Requirement is important but not necessary for delivery in the current delivery timebox.", HashRefKey("should"))
+      val could  = applicableTagV1("Could",  "Requirement is desirable but not necessary, and could improve user experience or customer satisfaction for little development cost. These will typically be included if time and resources permit.", HashRefKey("could"))
       val pri    = tagGroup("Priority", None, Exclusive, children = Vector(must, should, could))
 
-      val v10  = applicableTag("Version 1.0", None, HashRefKey("v1.0"))
+      val v10  = applicableTagV1("Version 1.0", None, HashRefKey("v1.0"))
       val urel = tagGroup("Unreleased", "Product version in which requirements are planned for implementation.", NonExclusive, children = Vector(v10))
       val rel  = tagGroup("Released", "Product version in which requirements were implemented.", NonExclusive)
       val ver  = tagGroup("Version", "Target product version.", NonExclusive, children = Vector(rel, urel))

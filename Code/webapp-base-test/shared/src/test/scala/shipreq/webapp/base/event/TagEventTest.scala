@@ -26,13 +26,9 @@ abstract class SharedTagEventTests extends TestSuite {
   val sd4: Event
   val  r4: Event
 
-  val c1Name: String
-  def delName  (ce: CE)                   : CE
-  def addName  (ce: CE, n: String)        : CE
   def addDesc  (ce: CE, d: Option[String]): CE
   def addParent(ce: CE, p: Int)           : CE
   def addChild (ce: CE, c: Int)           : CE
-  def updateName  (subj: Int, n: String)        : Event
   def updateDesc  (subj: Int, d: Option[String]): Event
   def updateParent(subj: Int, p: Int)           : Event
   def updateChild (subj: Int, c: Int)           : Event
@@ -53,27 +49,22 @@ abstract class SharedTagEventTests extends TestSuite {
         val b = _assertPass(c1, c3, c2)
         assertEq(a, b)
       }
-      'needName          - assertFail("Name")          (delName(c1))
-      'badName           - assertFail("blank")         (addName(c1, ""))
       'badDesc           - assertFail("Desc")          (addDesc(c1, Some(tooLongStr)))
       'badChildNotFound  - assertFail("")              (addChild(c1, 2))
       'badParentNotFound - assertFail("")              (addParent(c1, 2))
       'badChildSelf      - assertFail("")              (addChild(c1, 1))
       'badParentSelf     - assertFail("")              (addParent(c1, 1))
       'badCycle          - assertFail("Cycle")         (c1, addChild(c2, 1))
-      'dupName           - assertFail("unique")        (c1, addName(c2, c1Name))
       // child/parent to dead subject = bad?
     }
 
     'update {
-      'badName           - assertFail("blank")    (c1, updateName(1, ""))
       'badDesc           - assertFail("Desc")     (c1, updateDesc(1, Some(tooLongStr)))
       'badChildNotFound  - assertFail("")         (c1, updateChild(1, 2))
       'badParentNotFound - assertFail("")         (c1, updateParent(1, 2))
       'badChildSelf      - assertFail("")         (c1, updateChild(1, 1))
       'badParentSelf     - assertFail("")         (c1, updateParent(1, 1))
       'badCycle          - assertFail("Cycle")    (c1, c2, updateParent(1, 2))
-      'dupName           - assertFail("unique")   (c1, c2, updateName(2, c1Name))
       // child/parent to dead subject = bad?
     }
 
@@ -257,6 +248,50 @@ trait ApplicableTagEvents {
   def parent(id: ApplicableTagId) = Parents(Map((id: TagId) -> none))
   def ttget(tt: TagTree, ids: Int*): List[TagInTree] = ids.toList.map(i => tt.get(i.AT).get)
   def create(id: Int)(parents: Int*)(children: Int*) =
+    ApplicableTagCreate(id, nev(Colour(None), Desc(None), Key("k" + id),
+      Children(Vector(children.map(_.AT): _*)), Parents(parents.map(_.AT -> none[TagId]).toMap)))
+  def tagId1 = 1.AT
+
+  type CE = ApplicableTagCreate
+  val c1 = ApplicableTagCreate(1, nev(Colour(None), Desc(None), Key("c1")))
+  val c2 = ApplicableTagCreate(2, nev(Colour(None), Desc(Some("r")), Key("c2"), parent(1)))
+  val c3 = ApplicableTagCreate(3, nev(Colour(None), Desc(None), Key("c3"), child(1)))
+  val u1 = ApplicableTagUpdate(1, nev(Desc(Some("versionness"))))
+  val List(sd1,sd2,sd3,sd4) = List(1,2,3,4).map(i => TagDelete (i.AT))
+  val List( r1, r2, r3, r4) = List(1,2,3,4).map(i => TagRestore(i.AT))
+
+  implicit class ApplicableTagCreateExt(private val a: ApplicableTagCreate) {
+    def mod(f: Values => Values) =
+      a.copy(vs = NonEmpty.force(f(a.vs.value)))
+  }
+
+  def addDesc  (ce: CE, d: Option[String]) = ce.mod(_ + Desc(d))
+  def addParent(ce: CE, p: Int)            = ce.mod(_ + parent(p))
+  def addChild (ce: CE, c: Int)            = ce.mod(_ + child(c))
+
+  def updateDesc  (subj: Int, d: Option[String]) = ApplicableTagUpdate(subj, nev(Desc(d)))
+  def updateParent(subj: Int, p: Int)            = ApplicableTagUpdate(subj, nev(parent(p)))
+  def updateChild (subj: Int, c: Int)            = ApplicableTagUpdate(subj, nev(child(c)))
+}
+
+object ApplicableTagEventSharedTests extends SharedTests with ApplicableTagEvents {
+  def setId(c: CE, i: Int) = c.copy(id = i)
+  def copyId(to: CE, from: CE) = to.copy(id = from.id)
+}
+
+object ApplicableTagEventSharedTests2 extends SharedTagEventTests with ApplicableTagEvents
+
+object ApplicableTagEventV1Test extends TestSuite {
+  import RetiredGenericData.ApplicableTagGDv1._
+
+  def delName   (ce: CE)               = ce.mod(_ - Name)
+  def addName   (ce: CE, n: String)    = ce.mod(_ + Name(n))
+  def updateName(subj: Int, n: String) = ApplicableTagUpdateV1(subj, nev(Name(n)))
+
+  def child(id: ApplicableTagId) = Children(Vector(id))
+  def parent(id: ApplicableTagId) = Parents(Map((id: TagId) -> none))
+  def ttget(tt: TagTree, ids: Int*): List[TagInTree] = ids.toList.map(i => tt.get(i.AT).get)
+  def create(id: Int)(parents: Int*)(children: Int*) =
     ApplicableTagCreateV1(id, nev(Name(id.toString), Desc(None), Key("k" + id),
       Children(Vector(children.map(_.AT): _*)), Parents(parents.map(_.AT -> none[TagId]).toMap)))
   def tagId1 = 1.AT
@@ -267,32 +302,41 @@ trait ApplicableTagEvents {
   val c2 = ApplicableTagCreateV1(2, nev(Name("Released"), Desc(Some("r")), Key("c2"), parent(1)))
   val c3 = ApplicableTagCreateV1(3, nev(Name("All"), Desc(None), Key("c3"), child(1)))
   val u1 = ApplicableTagUpdateV1(1, nev(Desc(Some("versionness"))))
-  val List(sd1,sd2,sd3,sd4) = List(1,2,3,4).map(i => TagDelete (i.AT))
-  val List( r1, r2, r3, r4) = List(1,2,3,4).map(i => TagRestore(i.AT))
 
   implicit class ApplicableTagCreateExt(private val a: ApplicableTagCreateV1) {
     def mod(f: Values => Values) =
       a.copy(vs = NonEmpty.force(f(a.vs.value)))
   }
 
-  def delName  (ce: CE)                    = ce.mod(_ - Name)
-  def addName  (ce: CE, n: String)         = ce.mod(_ + Name(n))
-  def addDesc  (ce: CE, d: Option[String]) = ce.mod(_ + Desc(d))
-  def addParent(ce: CE, p: Int)            = ce.mod(_ + parent(p))
-  def addChild (ce: CE, c: Int)            = ce.mod(_ + child(c))
+  override def tests = Tests {
 
-  def updateName  (subj: Int, n: String)         = ApplicableTagUpdateV1(subj, nev(Name(n)))
-  def updateDesc  (subj: Int, d: Option[String]) = ApplicableTagUpdateV1(subj, nev(Desc(d)))
-  def updateParent(subj: Int, p: Int)            = ApplicableTagUpdateV1(subj, nev(parent(p)))
-  def updateChild (subj: Int, c: Int)            = ApplicableTagUpdateV1(subj, nev(child(c)))
+    'create {
+      'needKey  - assertFail("Key")   (c1.mod(_ - Key))
+      'dupKey   - assertFail("unique")(c1, c2.mod(_ + Key("c1")))
+      'needName - assertFail("Name")  (delName(c1))
+      'badName  - assertFail("blank") (addName(c1, ""))
+      //'dupName  - assertFail("unique")(c1, addName(c2, c1Name))
+    }
+
+    'update {
+      'ok - {
+        var es = Vector(c1, u1)
+        def r1 = _assertPass(es: _*).config.tags.tree.get(1.AT).get
+        def r2 = _assertPass(es: _*).config.tags.tree.get(2.AT).get
+        assertEq(r1, TagInTree(ApplicableTag.v1(1, c1Name, Some("versionness"), "c1", Live), Vector.empty))
+
+        es :+= c2
+        es :+= ApplicableTagUpdateV1(1, nev(Name("Ver"), Key("c=one")))
+        assertEq(r1, TagInTree(ApplicableTag.v1(1, "Ver", Some("versionness"), "c=one", Live), Vector(2.AT)))
+        assertEq(r2, TagInTree(ApplicableTag.v1(2, "Released", Some("r"), "c2", Live), Vector.empty))
+      }
+
+      'dupKey  - assertFail("unique")(c1, c2, ApplicableTagUpdateV1(2, nev(Key("c1"))))
+      //'badName - assertFail("blank") (c1, updateName(1, ""))
+      //'dupName - assertFail("unique")(c1, c2, updateName(2, c1Name))
+    }
+  }
 }
-
-object ApplicableTagEventSharedTests extends SharedTests with ApplicableTagEvents {
-  def setId(c: CE, i: Int) = c.copy(id = i)
-  def copyId(to: CE, from: CE) = to.copy(id = from.id)
-}
-
-object ApplicableTagEventSharedTests2 extends SharedTagEventTests with ApplicableTagEvents
 
 object ApplicableTagEventTest extends TestSuite with ApplicableTagEvents {
   import ApplicableTagGD._
@@ -308,17 +352,17 @@ object ApplicableTagEventTest extends TestSuite with ApplicableTagEvents {
         var es = Vector(c1, u1)
         def r1 = _assertPass(es: _*).config.tags.tree.get(1.AT).get
         def r2 = _assertPass(es: _*).config.tags.tree.get(2.AT).get
-        assertEq(r1, TagInTree(ApplicableTag(1, c1Name, Some("versionness"), "c1", Live), Vector.empty))
+        assertEq(r1, TagInTree(ApplicableTag(1, "c1", None, Some("versionness"), Live), Vector.empty))
 
         es :+= c2
-        es :+= ApplicableTagUpdateV1(1, nev(Name("Ver"), Key("c=one")))
-        assertEq(r1, TagInTree(ApplicableTag(1, "Ver", Some("versionness"), "c=one", Live), Vector(2.AT)))
-        assertEq(r2, TagInTree(ApplicableTag(2, "Released", Some("r"), "c2", Live), Vector.empty))
+        es :+= ApplicableTagUpdate(1, nev(Colour(Some("#fff")), Key("c=one")))
+        assertEq(r1, TagInTree(ApplicableTag(1, "c=one", Some("#fff"), Some("versionness"), Live), Vector(2.AT)))
+        assertEq(r2, TagInTree(ApplicableTag(2, "c2", None, Some("r"), Live), Vector.empty))
 
         // TODO confirm parent order
       }
 
-      'dupKey - assertFail("unique")(c1, c2, ApplicableTagUpdateV1(2, nev(Key("c1"))))
+      'dupKey - assertFail("unique")(c1, c2, ApplicableTagUpdate(2, nev(Key("c1"))))
     }
   }
 }

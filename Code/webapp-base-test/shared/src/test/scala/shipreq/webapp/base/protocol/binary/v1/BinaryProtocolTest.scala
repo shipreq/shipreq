@@ -19,6 +19,7 @@ object BinaryProtocolTest extends TestSuite {
   import PostEvents._
   import AtomPicklers.instances._
   import ReqTableDataPicklers._
+  import Rev1._
 
   private implicit def autoSomeG[A](g: Gen[A]): Option[Gen[A]] = Some(g)
 

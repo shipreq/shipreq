@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
 import boopickle.PickleImpl
-import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2.picklerProject
+import shipreq.webapp.base.protocol.binary.v1.Rev1.picklerProject
 
 object SizeCompare {
 

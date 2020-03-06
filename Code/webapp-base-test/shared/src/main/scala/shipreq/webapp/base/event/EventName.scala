@@ -17,7 +17,9 @@ object EventName {
   // Note: backward-compatibility of these event name values needn't be maintained
   private val data =
     valuesForAdtF[Event, EventName] {
+      case _: ApplicableTagCreate    => new EventName("ApplicableTagCreate")
       case _: ApplicableTagCreateV1  => new EventName("ApplicableTagCreateV1")
+      case _: ApplicableTagUpdate    => new EventName("ApplicableTagUpdate")
       case _: ApplicableTagUpdateV1  => new EventName("ApplicableTagUpdateV1")
       case _: ContentRestore         => new EventName("ContentRestore")
       case _: CustomIssueTypeCreate  => new EventName("CustomIssueTypeCreate")

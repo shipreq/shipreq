@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.{Dead, FilterDead, HideDead, Live, ShowDead}
 import shipreq.webapp.base.ui.semantic._
 
 object FilterDeadButton {

@@ -65,6 +65,9 @@ object Generic {
 
     def withInvalidator[E](i: Invalidator[E, A]): EndoValidator[E, A] =
       EndoValidator(this, i)
+
+    @inline def withAuditor[E, V](v: Auditor[E, A, V]): Validator[E, A, A, V] =
+      toCorrector.withAuditor(v)
   }
 
   object EndoCorrector {

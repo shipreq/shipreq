@@ -65,8 +65,10 @@ final class ApplyEvent(implicit val trust: Trust)
   private def applyOneUnsafely(event: Event): SE[Unit] = {
     import Event._
     event match {
-      case e: ApplicableTagCreateV1  => ApplicableTagEvents    applyCreateV1              e
-      case e: ApplicableTagUpdateV1  => ApplicableTagEvents    applyUpdateV1              e
+      case e: ApplicableTagCreate    => ApplicableTagEvents    applyCreate                e
+      case e: ApplicableTagCreateV1  => ApplicableTagEventsV1  applyCreate                e
+      case e: ApplicableTagUpdate    => ApplicableTagEvents    applyUpdate                e
+      case e: ApplicableTagUpdateV1  => ApplicableTagEventsV1  applyUpdate                e
       case e: CodeGroupCreate        => CodeGroupEvents        applyCreate                e
       case e: CodeGroupsDelete       => CodeGroupEvents        applyDelete                e
       case e: CodeGroupUpdate        => CodeGroupEvents        applyUpdate                e

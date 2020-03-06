@@ -25,7 +25,7 @@ import shipreq.base.util.BinaryData
  *
  */
 object RedisProtocolTestData {
-  import shipreq.webapp.base.protocol.json.v1.PostEvents._
+  import shipreq.webapp.base.protocol.json.v1.Rev1._
   import RedisProtocol._
 
   private[this] val RowEvent          = "event"

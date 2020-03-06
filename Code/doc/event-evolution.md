@@ -6,7 +6,14 @@ Hence the need for this guide.
 
 Adding a new event
 ==================
-Add the event. Make scalac happy. Done.
+
+1. Add the event.
+
+2. Update codecs according to the [codec evolution guide](codec-evolution.md)
+   This will mean adding codecs for the new event (and possibly new generic data) to the new `RevX` object
+
+3. Make scalac happy but...
+   * DON'T CHANGE `ProjectTemplate` IN A BACKWARD-INCOMPATIBLE WAY
 
 
 Making a backward-compatible change to an event
@@ -46,4 +53,9 @@ Deleting an new event
     * run `bin/gen-generic_data`
 
 5. Change event to extend `RetiredEvent`
+
 6. Change event to use the version of generic data in `RetiredGenericData`
+
+7. Keep the event codecs and retired generic data codecs as they are: just append v1 to all the names
+
+8. Make everything compile
