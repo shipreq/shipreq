@@ -5,7 +5,7 @@ object AssetManifest {
 
   final case class CDN(href: String, integrity: Option[String])
 
-  def analyticsJs = "/s/c8e9bc7c01369fcaae7f32c3adbc62a8.js"
+  def analyticsJs = "/s/c9000ab6df9991d7927cf7aea9a06144.js"
 
   def favicon = "/s/286b75985993da80759cbdc5142de4d3.ico"
 
@@ -25,7 +25,7 @@ object AssetManifest {
 
   def loadjs = "/s/9e706a6f7bc551ddf626c15cd76c1c25.js"
 
-  def memberLibBundleJs = "/s/14c54334fb1a1970a298c60eba810e18.js"
+  def memberLibBundleJs = "/s/30f8ec6576aaab506292f11cc3d90b56.js"
 
   def prismJsAutoloader = CDN(
     href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/plugins/autoloader/prism-autoloader.min.js",
@@ -62,7 +62,7 @@ object AssetManifest {
     "icons.svg#icons" ::
     Nil
 
-  def semanticJs = "/s/2fda4c306eff8c7e7b6e5a737018f4d4.js"
+  def semanticJs = "/s/dd3e7ae4fc27292820eb2b3285ae1938.js"
 
   def shipreqBannerSvg = "/s/878536f0a4ad0029794669f88dbf5f35.svg"
 
