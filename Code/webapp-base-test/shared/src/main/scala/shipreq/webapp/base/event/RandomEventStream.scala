@@ -364,19 +364,19 @@ final class ApplicableEventGen(curState: State, generateRetiredEvents: Boolean) 
   object customTextFieldGD extends GenericDataGen(CustomTextFieldGD) {
     import gd._
     override def valueFor(a: Attr) = a match {
-      case Name      => unicodeString1     map Name     .apply
-      case Key       => fieldRefKey        map Key      .apply
-      case Mandatory => mandatory          map Mandatory.apply
-      case ReqTypes  => applicableReqTypes map ReqTypes .apply
+      case Name               => unicodeString1     map Name     .apply
+      case Key                => fieldRefKey        map Key      .apply
+      case Mandatory          => mandatory          map Mandatory.apply
+      case ApplicableReqTypes => applicableReqTypes map ApplicableReqTypes .apply
     }
   }
 
   object customTagFieldGD extends GenericDataOptionGen(CustomTagFieldGD) {
     import gd._
     override def valueFor(a: Attr) = a match {
-      case TagId     => tagId(Live)   map (_ map TagId    .apply)
-      case Mandatory => mandatory            map Mandatory.apply
-      case ReqTypes  => applicableReqTypes   map ReqTypes .apply
+      case TagId              => tagId(Live)   map (_ map TagId    .apply)
+      case Mandatory          => mandatory            map Mandatory.apply
+      case ApplicableReqTypes => applicableReqTypes   map ApplicableReqTypes .apply
     }
   }
 
@@ -394,9 +394,9 @@ final class ApplicableEventGen(curState: State, generateRetiredEvents: Boolean) 
       Gen.tryGenChoose(liveReqTypes.filterNot(reqTypesUsedInFields.contains))
 
     override def valueFor(a: Attr) = a match {
-      case ReqTypeId => reqTypeId          map (_ map ReqTypeId.apply)
-      case Mandatory => mandatory                 map Mandatory.apply
-      case ReqTypes  => applicableReqTypes        map ReqTypes .apply
+      case ReqTypeId          => reqTypeId          map (_ map ReqTypeId.apply)
+      case Mandatory          => mandatory                 map Mandatory.apply
+      case ApplicableReqTypes => applicableReqTypes        map ApplicableReqTypes .apply
     }
   }
 

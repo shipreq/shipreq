@@ -236,13 +236,13 @@ object ContentEventTestHelp {
 
   val createCTF1 = {
     import CustomTextFieldGD._
-    FieldCustomTextCreate(80, nev(Name("asdf"), Key("qwer"), Mandatory(true), ReqTypes(allReqTypes)))
+    FieldCustomTextCreate(80, nev(Name("asdf"), Key("qwer"), Mandatory(true), ApplicableReqTypes(allReqTypes)))
   }
   val cf1 = createCTF1.id
 
   val createCTF2 = {
     import CustomTextFieldGD._
-    FieldCustomTextCreate(81, nev(Name("blurp!"), Key("blurp"), Mandatory(false), ReqTypes(allReqTypes)))
+    FieldCustomTextCreate(81, nev(Name("blurp!"), Key("blurp"), Mandatory(false), ApplicableReqTypes(allReqTypes)))
   }
   val cf2 = createCTF2.id
 

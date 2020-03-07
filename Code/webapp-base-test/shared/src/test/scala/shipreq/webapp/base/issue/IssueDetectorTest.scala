@@ -133,7 +133,7 @@ object IssueDetectorTest extends TestSuite {
     private def makeMfMandatoryForFrAndUc = {
       val I = CustomImpFieldGD
       val frAndUc = onlyReqTypes(fr, StaticReqType.UseCase)
-      Event.FieldCustomImpUpdate(mfField, I.nev(I.ValueForMandatory(Mandatory), I.ValueForReqTypes(frAndUc)))
+      Event.FieldCustomImpUpdate(mfField, I.nev(I.ValueForMandatory(Mandatory), I.ValueForApplicableReqTypes(frAndUc)))
     }
 
     // fr1 <- mf12,19

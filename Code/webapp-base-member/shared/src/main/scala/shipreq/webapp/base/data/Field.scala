@@ -85,10 +85,10 @@ sealed trait FieldId {
 }
 
 sealed trait Field {
-  def fieldType: FieldType
-  def reqTypes : ApplicableReqTypes
-  def keyO     : Option[FieldRefKey]
-  def mandatory: Mandatory
+  def fieldType         : FieldType
+  def applicableReqTypes: ApplicableReqTypes
+  def keyO              : Option[FieldRefKey]
+  def mandatory         : Mandatory
 
   def live(cfg: ProjectConfig): Live
 
@@ -123,12 +123,12 @@ object Field {
   }
 }
 
-sealed abstract class StaticField(         val name     : String,
-                                  override val fieldType: StaticFieldType,
-                                  override val reqTypes : ApplicableReqTypes,
-                                  override val mandatory: Mandatory,
-                                           val deletable: Deletable,
-                                  override val keyO     : Option[FieldRefKey]) extends Field with FieldId {
+sealed abstract class StaticField(val name                       : String,
+                                  override val fieldType         : StaticFieldType,
+                                  override val applicableReqTypes: ApplicableReqTypes,
+                                  override val mandatory         : Mandatory,
+                                  val deletable                  : Deletable,
+                                  override val keyO              : Option[FieldRefKey]) extends Field with FieldId {
 
   override final def live(cfg: ProjectConfig) = Live
 
@@ -346,13 +346,13 @@ object CustomField {
 
   // -------------------------------------------------------------------------------------------------------------------
   @Lenses
-  case class Text(id            : Text.Id,
-                  name          : String,
-                  key           : FieldRefKey,
-                  mandatory     : Mandatory,
-                  reqTypes      : ApplicableReqTypes,
-                  liveExplicitly: Live) extends CustomField(CustomFieldType.Text) {
-    override def toString = s"CustomField.Text($id, $name, $key, $mandatory, $reqTypes, $liveExplicitly)"
+  case class Text(id                : Text.Id,
+                  name              : String,
+                  key               : FieldRefKey,
+                  mandatory         : Mandatory,
+                  applicableReqTypes: ApplicableReqTypes,
+                  liveExplicitly    : Live) extends CustomField(CustomFieldType.Text) {
+    override def toString = s"CustomField.Text($id, $name, $key, $mandatory, $applicableReqTypes, $liveExplicitly)"
     override def independentName = Some(name)
     override def keyO = Some(key)
     override def live(cfg: ProjectConfig) = liveExplicitly
@@ -370,13 +370,13 @@ object CustomField {
 
   // -------------------------------------------------------------------------------------------------------------------
   @Lenses
-  case class Tag(id            : Tag.Id,
-                 tagId         : TagId,
-                 mandatory     : Mandatory,
-                 reqTypes      : ApplicableReqTypes,
-                 liveExplicitly: Live) extends CustomField(CustomFieldType.Tag) {
+  case class Tag(id                : Tag.Id,
+                 tagId             : TagId,
+                 mandatory         : Mandatory,
+                 applicableReqTypes: ApplicableReqTypes,
+                 liveExplicitly    : Live) extends CustomField(CustomFieldType.Tag) {
 
-    override def toString = s"CustomField.Tag($id, $tagId, $mandatory, $reqTypes, $liveExplicitly)"
+    override def toString = s"CustomField.Tag($id, $tagId, $mandatory, $applicableReqTypes, $liveExplicitly)"
     override def independentName = None
     override def keyO = None
 
@@ -399,12 +399,12 @@ object CustomField {
 
   // -------------------------------------------------------------------------------------------------------------------
   @Lenses
-  case class Implication(id            : Implication.Id,
-                         reqTypeId     : ReqTypeId,
-                         mandatory     : Mandatory,
-                         reqTypes      : ApplicableReqTypes,
-                         liveExplicitly: Live) extends CustomField(CustomFieldType.Implication) {
-    override def toString = s"CustomField.Implication($id, $reqTypeId, $mandatory, $reqTypes, $liveExplicitly)"
+  case class Implication(id                : Implication.Id,
+                         reqTypeId         : ReqTypeId,
+                         mandatory         : Mandatory,
+                         applicableReqTypes: ApplicableReqTypes,
+                         liveExplicitly    : Live) extends CustomField(CustomFieldType.Implication) {
+    override def toString = s"CustomField.Implication($id, $reqTypeId, $mandatory, $applicableReqTypes, $liveExplicitly)"
     override def independentName = None
     override def keyO = None
 
@@ -442,10 +442,10 @@ object CustomField {
     case f: Implication         => f
   })
 
-  def applicableReqTypes = Lens[CustomField, ApplicableReqTypes](_.reqTypes)(n => {
-    case f: Tag         => f.copy(reqTypes = n)
-    case f: Text        => f.copy(reqTypes = n)
-    case f: Implication => f.copy(reqTypes = n)
+  def applicableReqTypes = Lens[CustomField, ApplicableReqTypes](_.applicableReqTypes)(n => {
+    case f: Tag         => f.copy(applicableReqTypes = n)
+    case f: Text        => f.copy(applicableReqTypes = n)
+    case f: Implication => f.copy(applicableReqTypes = n)
   })
 
   def mandatory = Lens[CustomField, Mandatory](_.mandatory)(n => {
@@ -537,7 +537,7 @@ final case class FieldSet(customFields: FieldSet.CustomFields,
 
   val applicability: ProjectApplicability.Default =
     ProjectApplicability(get(_) match {
-      case Some(f) => f.reqTypes.asFn
+      case Some(f) => f.applicableReqTypes.asFn
       case None    => Applicability.never
     })
 

@@ -1902,28 +1902,28 @@ object RandomData {
     object customTextFieldGD extends GenericDataGen(CustomTextFieldGD) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case Name      => unicodeString1        map Name     .apply
-        case Key       => fieldRefKey           map Key      .apply
-        case Mandatory => mandatory             map Mandatory.apply
-        case ReqTypes  => anyApplicableReqTypes map ReqTypes .apply
+        case Name               => unicodeString1        map Name              .apply
+        case Key                => fieldRefKey           map Key               .apply
+        case Mandatory          => mandatory             map Mandatory         .apply
+        case ApplicableReqTypes => anyApplicableReqTypes map ApplicableReqTypes.apply
       }
     }
 
     object customTagFieldGD extends GenericDataGen(CustomTagFieldGD) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case TagId     => tagId                 map TagId    .apply
-        case Mandatory => mandatory             map Mandatory.apply
-        case ReqTypes  => anyApplicableReqTypes map ReqTypes .apply
+        case TagId              => tagId                 map TagId             .apply
+        case Mandatory          => mandatory             map Mandatory         .apply
+        case ApplicableReqTypes => anyApplicableReqTypes map ApplicableReqTypes.apply
       }
     }
 
     object customImpFieldGD extends GenericDataGen(CustomImpFieldGD) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case ReqTypeId => reqTypeId             map ReqTypeId.apply
-        case Mandatory => mandatory             map Mandatory.apply
-        case ReqTypes  => anyApplicableReqTypes map ReqTypes .apply
+        case ReqTypeId          => reqTypeId             map ReqTypeId         .apply
+        case Mandatory          => mandatory             map Mandatory         .apply
+        case ApplicableReqTypes => anyApplicableReqTypes map ApplicableReqTypes.apply
       }
     }
 
@@ -1954,7 +1954,7 @@ object RandomData {
     object codeGroupGD extends GenericDataGen(CodeGroupGD) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case Code  => reqCode.value     map Code .apply
+        case Code  => reqCode.value  map Code .apply
         case Title => codeGroupTitle map Title.apply
       }
     }

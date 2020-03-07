@@ -79,7 +79,7 @@ object BaseMemberData2 {
         state.pickle(a.id)
         state.pickle(a.reqTypeId)
         state.pickle(a.mandatory)
-        state.pickle(a.reqTypes)
+        state.pickle(a.applicableReqTypes)
         state.pickle(a.liveExplicitly)
       }
       override def unpickle(implicit state: UnpickleState): CustomField.Implication = {
@@ -98,7 +98,7 @@ object BaseMemberData2 {
         state.pickle(a.id)
         state.pickle(a.tagId)
         state.pickle(a.mandatory)
-        state.pickle(a.reqTypes)
+        state.pickle(a.applicableReqTypes)
         state.pickle(a.liveExplicitly)
       }
       override def unpickle(implicit state: UnpickleState): CustomField.Tag = {
@@ -118,7 +118,7 @@ object BaseMemberData2 {
         state.pickle(a.name)
         state.pickle(a.key)
         state.pickle(a.mandatory)
-        state.pickle(a.reqTypes)
+        state.pickle(a.applicableReqTypes)
         state.pickle(a.liveExplicitly)
       }
       override def unpickle(implicit state: UnpickleState): CustomField.Text = {

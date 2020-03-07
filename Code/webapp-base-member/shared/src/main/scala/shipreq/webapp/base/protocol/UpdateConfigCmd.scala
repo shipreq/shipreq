@@ -50,18 +50,18 @@ object UpdateConfigCmd {
 
   sealed trait CustomFieldValues
 
-  final case class TextFieldValues(name     : String,
-                                   key      : FieldRefKey,
-                                   mandatory: Mandatory,
-                                   reqTypes : ApplicableReqTypes) extends CustomFieldValues
+  final case class TextFieldValues(name              : String,
+                                   key               : FieldRefKey,
+                                   mandatory         : Mandatory,
+                                   applicableReqTypes: ApplicableReqTypes) extends CustomFieldValues
 
-  final case class TagFieldValues(tagId    : TagId,
-                                  mandatory: Mandatory,
-                                  reqTypes : ApplicableReqTypes) extends CustomFieldValues
+  final case class TagFieldValues(tagId             : TagId,
+                                  mandatory         : Mandatory,
+                                  applicableReqTypes: ApplicableReqTypes) extends CustomFieldValues
 
-  final case class ImpFieldValues(reqTypeId: ReqTypeId,
-                                  mandatory: Mandatory,
-                                  reqTypes : ApplicableReqTypes) extends CustomFieldValues
+  final case class ImpFieldValues(reqTypeId         : ReqTypeId,
+                                  mandatory         : Mandatory,
+                                  applicableReqTypes: ApplicableReqTypes) extends CustomFieldValues
 
   // ===================================================================================================================
 
@@ -116,7 +116,7 @@ object UpdateConfigCmd {
           state.pickle(a.name)
           state.pickle(a.key)
           state.pickle(a.mandatory)
-          state.pickle(a.reqTypes)
+          state.pickle(a.applicableReqTypes)
         }
         override def unpickle(implicit state: UnpickleState): TextFieldValues = {
           val name      = state.unpickle[String]
@@ -132,7 +132,7 @@ object UpdateConfigCmd {
         override def pickle(a: TagFieldValues)(implicit state: PickleState): Unit = {
           state.pickle(a.tagId)
           state.pickle(a.mandatory)
-          state.pickle(a.reqTypes)
+          state.pickle(a.applicableReqTypes)
         }
         override def unpickle(implicit state: UnpickleState): TagFieldValues = {
           val tagId     = state.unpickle[TagId]
@@ -147,7 +147,7 @@ object UpdateConfigCmd {
         override def pickle(a: ImpFieldValues)(implicit state: PickleState): Unit = {
           state.pickle(a.reqTypeId)
           state.pickle(a.mandatory)
-          state.pickle(a.reqTypes)
+          state.pickle(a.applicableReqTypes)
         }
         override def unpickle(implicit state: UnpickleState): ImpFieldValues = {
           val reqTypeId = state.unpickle[ReqTypeId]

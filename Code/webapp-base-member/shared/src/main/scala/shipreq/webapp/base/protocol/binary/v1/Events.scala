@@ -113,9 +113,9 @@ object Events {
   implicit val pickleCustomImpFieldGD: Pickler[CustomImpFieldGD.NonEmptyValues] = {
     import CustomImpFieldGD._
 
-    implicit val picklerValueForMandatory = transformPickler(ValueForMandatory.apply)(_.value)
-    implicit val picklerValueForReqTypeId = transformPickler(ValueForReqTypeId.apply)(_.value)
-    implicit val picklerValueForReqTypes  = transformPickler(ValueForReqTypes .apply)(_.value)
+    implicit val picklerValueForMandatory           = transformPickler(ValueForMandatory.apply)(_.value)
+    implicit val picklerValueForReqTypeId           = transformPickler(ValueForReqTypeId.apply)(_.value)
+    implicit val picklerValueForApplicableReqTypes  = transformPickler(ValueForApplicableReqTypes .apply)(_.value)
 
     implicit val picklerValue: Pickler[Value] =
       new Pickler[Value] {
@@ -126,13 +126,13 @@ object Events {
           a match {
             case b: ValueForMandatory => state.enc.writeByte(KeyMandatory); state.pickle(b)
             case b: ValueForReqTypeId => state.enc.writeByte(KeyReqTypeId); state.pickle(b)
-            case b: ValueForReqTypes  => state.enc.writeByte(KeyReqTypes ); state.pickle(b)
+            case b: ValueForApplicableReqTypes  => state.enc.writeByte(KeyReqTypes ); state.pickle(b)
           }
         override def unpickle(implicit state: UnpickleState): Value =
           state.dec.readByte match {
             case KeyMandatory => state.unpickle[ValueForMandatory]
             case KeyReqTypeId => state.unpickle[ValueForReqTypeId]
-            case KeyReqTypes  => state.unpickle[ValueForReqTypes]
+            case KeyReqTypes  => state.unpickle[ValueForApplicableReqTypes]
           }
       }
 
@@ -199,9 +199,9 @@ object Events {
   implicit val pickleCustomTagFieldGD: Pickler[CustomTagFieldGD.NonEmptyValues] = {
     import CustomTagFieldGD._
 
-    implicit val picklerValueForMandatory = transformPickler(ValueForMandatory.apply)(_.value)
-    implicit val picklerValueForReqTypes  = transformPickler(ValueForReqTypes .apply)(_.value)
-    implicit val picklerValueForTagId     = transformPickler(ValueForTagId    .apply)(_.value)
+    implicit val picklerValueForMandatory          = transformPickler(ValueForMandatory.apply)(_.value)
+    implicit val picklerValueForApplicableReqTypes = transformPickler(ValueForApplicableReqTypes .apply)(_.value)
+    implicit val picklerValueForTagId              = transformPickler(ValueForTagId    .apply)(_.value)
 
     implicit val picklerValue: Pickler[Value] =
       new Pickler[Value] {
@@ -211,13 +211,13 @@ object Events {
         override def pickle(a: Value)(implicit state: PickleState): Unit =
           a match {
             case b: ValueForMandatory => state.enc.writeByte(KeyMandatory); state.pickle(b)
-            case b: ValueForReqTypes  => state.enc.writeByte(KeyReqTypes ); state.pickle(b)
+            case b: ValueForApplicableReqTypes  => state.enc.writeByte(KeyReqTypes ); state.pickle(b)
             case b: ValueForTagId     => state.enc.writeByte(KeyTagId    ); state.pickle(b)
           }
         override def unpickle(implicit state: UnpickleState): Value =
           state.dec.readByte match {
             case KeyMandatory => state.unpickle[ValueForMandatory]
-            case KeyReqTypes  => state.unpickle[ValueForReqTypes]
+            case KeyReqTypes  => state.unpickle[ValueForApplicableReqTypes]
             case KeyTagId     => state.unpickle[ValueForTagId]
           }
       }
@@ -229,10 +229,10 @@ object Events {
   implicit val pickleCustomTextFieldGD: Pickler[CustomTextFieldGD.NonEmptyValues] = {
     import CustomTextFieldGD._
 
-    implicit val picklerValueForKey       = transformPickler(ValueForKey      .apply)(_.value)
-    implicit val picklerValueForMandatory = transformPickler(ValueForMandatory.apply)(_.value)
-    implicit val picklerValueForName      = transformPickler(ValueForName     .apply)(_.value)
-    implicit val picklerValueForReqTypes  = transformPickler(ValueForReqTypes .apply)(_.value)
+    implicit val picklerValueForKey                = transformPickler(ValueForKey      .apply)(_.value)
+    implicit val picklerValueForMandatory          = transformPickler(ValueForMandatory.apply)(_.value)
+    implicit val picklerValueForName               = transformPickler(ValueForName     .apply)(_.value)
+    implicit val picklerValueForApplicableReqTypes = transformPickler(ValueForApplicableReqTypes .apply)(_.value)
 
     implicit val picklerValue: Pickler[Value] =
       new Pickler[Value] {
@@ -245,14 +245,14 @@ object Events {
             case b: ValueForKey       => state.enc.writeByte(KeyKey      ); state.pickle(b)
             case b: ValueForMandatory => state.enc.writeByte(KeyMandatory); state.pickle(b)
             case b: ValueForName      => state.enc.writeByte(KeyName     ); state.pickle(b)
-            case b: ValueForReqTypes  => state.enc.writeByte(KeyReqTypes ); state.pickle(b)
+            case b: ValueForApplicableReqTypes  => state.enc.writeByte(KeyReqTypes ); state.pickle(b)
           }
         override def unpickle(implicit state: UnpickleState): Value =
           state.dec.readByte match {
             case KeyKey       => state.unpickle[ValueForKey]
             case KeyMandatory => state.unpickle[ValueForMandatory]
             case KeyName      => state.unpickle[ValueForName]
-            case KeyReqTypes  => state.unpickle[ValueForReqTypes]
+            case KeyReqTypes  => state.unpickle[ValueForApplicableReqTypes]
           }
       }
 

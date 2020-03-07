@@ -138,6 +138,19 @@ object CustomImpFieldGD extends GenericData {
   sealed abstract class Attr extends AttrBase
   sealed abstract class Value extends ValueBase
 
+  case object ApplicableReqTypes extends Attr {
+    override type Data = ApplicableReqTypes
+    override def apply(data: Data) = ValueForApplicableReqTypes(data)
+    val dataEquality: Equal[Data] = implicitly[Equal[ApplicableReqTypes]]
+  }
+  final case class ValueForApplicableReqTypes(value: ApplicableReqTypes.Data) extends Value {
+    override val attr: ApplicableReqTypes.type = ApplicableReqTypes
+    override def equals(o: Any): Boolean = o match {
+      case v2: ValueForApplicableReqTypes => ApplicableReqTypes.dataEquality.equal(value, v2.value)
+      case _ => false
+    }
+  }
+
   case object Mandatory extends Attr {
     override type Data = Mandatory
     override def apply(data: Data) = ValueForMandatory(data)
@@ -164,25 +177,12 @@ object CustomImpFieldGD extends GenericData {
     }
   }
 
-  case object ReqTypes extends Attr {
-    override type Data = ApplicableReqTypes
-    override def apply(data: Data) = ValueForReqTypes(data)
-    val dataEquality: Equal[Data] = implicitly[Equal[ApplicableReqTypes]]
-  }
-  final case class ValueForReqTypes(value: ReqTypes.Data) extends Value {
-    override val attr: ReqTypes.type = ReqTypes
-    override def equals(o: Any): Boolean = o match {
-      case v2: ValueForReqTypes => ReqTypes.dataEquality.equal(value, v2.value)
-      case _ => false
-    }
-  }
-
   override implicit val equalityAttr: Order[Attr] with UnivEq[Attr] =
-    Util.univEqAndArbitraryOrder(Vector(Mandatory, ReqTypeId, ReqTypes))
+    Util.univEqAndArbitraryOrder(Vector(ApplicableReqTypes, Mandatory, ReqTypeId))
 
   @inline override implicit def equalityValue: UnivEq[Value] = UnivEq.force
 
-  override val attrs = NonEmptySet[Attr](Mandatory, ReqTypeId, ReqTypes)
+  override val attrs = NonEmptySet[Attr](ApplicableReqTypes, Mandatory, ReqTypeId)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -284,6 +284,19 @@ object CustomTagFieldGD extends GenericData {
   sealed abstract class Attr extends AttrBase
   sealed abstract class Value extends ValueBase
 
+  case object ApplicableReqTypes extends Attr {
+    override type Data = ApplicableReqTypes
+    override def apply(data: Data) = ValueForApplicableReqTypes(data)
+    val dataEquality: Equal[Data] = implicitly[Equal[ApplicableReqTypes]]
+  }
+  final case class ValueForApplicableReqTypes(value: ApplicableReqTypes.Data) extends Value {
+    override val attr: ApplicableReqTypes.type = ApplicableReqTypes
+    override def equals(o: Any): Boolean = o match {
+      case v2: ValueForApplicableReqTypes => ApplicableReqTypes.dataEquality.equal(value, v2.value)
+      case _ => false
+    }
+  }
+
   case object Mandatory extends Attr {
     override type Data = Mandatory
     override def apply(data: Data) = ValueForMandatory(data)
@@ -293,19 +306,6 @@ object CustomTagFieldGD extends GenericData {
     override val attr: Mandatory.type = Mandatory
     override def equals(o: Any): Boolean = o match {
       case v2: ValueForMandatory => Mandatory.dataEquality.equal(value, v2.value)
-      case _ => false
-    }
-  }
-
-  case object ReqTypes extends Attr {
-    override type Data = ApplicableReqTypes
-    override def apply(data: Data) = ValueForReqTypes(data)
-    val dataEquality: Equal[Data] = implicitly[Equal[ApplicableReqTypes]]
-  }
-  final case class ValueForReqTypes(value: ReqTypes.Data) extends Value {
-    override val attr: ReqTypes.type = ReqTypes
-    override def equals(o: Any): Boolean = o match {
-      case v2: ValueForReqTypes => ReqTypes.dataEquality.equal(value, v2.value)
       case _ => false
     }
   }
@@ -324,11 +324,11 @@ object CustomTagFieldGD extends GenericData {
   }
 
   override implicit val equalityAttr: Order[Attr] with UnivEq[Attr] =
-    Util.univEqAndArbitraryOrder(Vector(Mandatory, ReqTypes, TagId))
+    Util.univEqAndArbitraryOrder(Vector(ApplicableReqTypes, Mandatory, TagId))
 
   @inline override implicit def equalityValue: UnivEq[Value] = UnivEq.force
 
-  override val attrs = NonEmptySet[Attr](Mandatory, ReqTypes, TagId)
+  override val attrs = NonEmptySet[Attr](ApplicableReqTypes, Mandatory, TagId)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -336,6 +336,19 @@ object CustomTagFieldGD extends GenericData {
 object CustomTextFieldGD extends GenericData {
   sealed abstract class Attr extends AttrBase
   sealed abstract class Value extends ValueBase
+
+  case object ApplicableReqTypes extends Attr {
+    override type Data = ApplicableReqTypes
+    override def apply(data: Data) = ValueForApplicableReqTypes(data)
+    val dataEquality: Equal[Data] = implicitly[Equal[ApplicableReqTypes]]
+  }
+  final case class ValueForApplicableReqTypes(value: ApplicableReqTypes.Data) extends Value {
+    override val attr: ApplicableReqTypes.type = ApplicableReqTypes
+    override def equals(o: Any): Boolean = o match {
+      case v2: ValueForApplicableReqTypes => ApplicableReqTypes.dataEquality.equal(value, v2.value)
+      case _ => false
+    }
+  }
 
   case object Key extends Attr {
     override type Data = FieldRefKey
@@ -376,25 +389,12 @@ object CustomTextFieldGD extends GenericData {
     }
   }
 
-  case object ReqTypes extends Attr {
-    override type Data = ApplicableReqTypes
-    override def apply(data: Data) = ValueForReqTypes(data)
-    val dataEquality: Equal[Data] = implicitly[Equal[ApplicableReqTypes]]
-  }
-  final case class ValueForReqTypes(value: ReqTypes.Data) extends Value {
-    override val attr: ReqTypes.type = ReqTypes
-    override def equals(o: Any): Boolean = o match {
-      case v2: ValueForReqTypes => ReqTypes.dataEquality.equal(value, v2.value)
-      case _ => false
-    }
-  }
-
   override implicit val equalityAttr: Order[Attr] with UnivEq[Attr] =
-    Util.univEqAndArbitraryOrder(Vector(Key, Mandatory, Name, ReqTypes))
+    Util.univEqAndArbitraryOrder(Vector(ApplicableReqTypes, Key, Mandatory, Name))
 
   @inline override implicit def equalityValue: UnivEq[Value] = UnivEq.force
 
-  override val attrs = NonEmptySet[Attr](Key, Mandatory, Name, ReqTypes)
+  override val attrs = NonEmptySet[Attr](ApplicableReqTypes, Key, Mandatory, Name)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████

@@ -542,7 +542,7 @@ object DataProp {
       def validTagIds     = whitelist(_._2.tagIds) _
 
       (  validReqTypeIds("Field.reqTypes",
-          _.fields.customFields.valuesIterator.flatMap(_.reqTypes.reqTypes))
+          _.fields.customFields.valuesIterator.flatMap(_.applicableReqTypes.reqTypes))
       ∧ validTagIds("CustomField.Tag.tagIds",
         p => fields.filteredFields({ case t: CustomField.Tag => t.tagId})(p.fields))
       ∧ validReqTypeIds("CustomField.Implication.reqTypeIds",

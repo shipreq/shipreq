@@ -460,7 +460,7 @@ trait ApplyConfigEvent {
         n <- GD.need(^.Name) >>= validateName
         k <- GD.need(^.Key)  >>= validateKey
         m <- GD.need(^.Mandatory)
-        r <- GD.need(^.ReqTypes)
+        r <- GD.need(^.ApplicableReqTypes)
         _ <- create(CustomField.Text(e.id, n, k, m, r, Live))
       } yield ()
     }
@@ -468,13 +468,13 @@ trait ApplyConfigEvent {
     val updateName      = validateName >>=@ CustomField.Text.name
     val updateKey       = validateKey  >>=@ CustomField.Text.key
     val updateMandatory = fieldUpdateFn(CustomField.Text.mandatory)
-    val updateReqTypes  = fieldUpdateFn(CustomField.Text.reqTypes)
+    val updateReqTypes  = fieldUpdateFn(CustomField.Text.applicableReqTypes)
 
     val updateValues = GD.updateEachValue {
-      case v: ^.ValueForName      => updateName     (v.value)
-      case v: ^.ValueForKey       => updateKey      (v.value)
-      case v: ^.ValueForMandatory => updateMandatory(v.value)
-      case v: ^.ValueForReqTypes  => updateReqTypes (v.value)
+      case v: ^.ValueForName               => updateName     (v.value)
+      case v: ^.ValueForKey                => updateKey      (v.value)
+      case v: ^.ValueForMandatory          => updateMandatory(v.value)
+      case v: ^.ValueForApplicableReqTypes => updateReqTypes (v.value)
     }
 
     def applyUpdate(e: FieldCustomTextUpdate): SE[Unit] =
@@ -493,7 +493,7 @@ trait ApplyConfigEvent {
       for {
         t <- GD.need(^.TagId)
         m <- GD.need(^.Mandatory)
-        r <- GD.need(^.ReqTypes)
+        r <- GD.need(^.ApplicableReqTypes)
         _ <- ensureTagIsLive(t)
         _ <- create(CustomField.Tag(e.id, t, m, r, Live))
       } yield ()
@@ -501,12 +501,12 @@ trait ApplyConfigEvent {
 
     val updateTagId     = fieldUpdateFn(CustomField.Tag.tagId)
     val updateMandatory = fieldUpdateFn(CustomField.Tag.mandatory)
-    val updateReqTypes  = fieldUpdateFn(CustomField.Tag.reqTypes)
+    val updateReqTypes  = fieldUpdateFn(CustomField.Tag.applicableReqTypes)
 
     val updateValues = GD.updateEachValue {
-      case v: ^.ValueForTagId     => updateTagId    (v.value)
-      case v: ^.ValueForMandatory => updateMandatory(v.value)
-      case v: ^.ValueForReqTypes  => updateReqTypes (v.value)
+      case v: ^.ValueForTagId              => updateTagId    (v.value)
+      case v: ^.ValueForMandatory          => updateMandatory(v.value)
+      case v: ^.ValueForApplicableReqTypes => updateReqTypes (v.value)
     }
 
     def applyUpdate(e: FieldCustomTagUpdate): SE[Unit] =
@@ -525,7 +525,7 @@ trait ApplyConfigEvent {
       for {
         t <- GD.need(^.ReqTypeId)
         m <- GD.need(^.Mandatory)
-        r <- GD.need(^.ReqTypes)
+        r <- GD.need(^.ApplicableReqTypes)
         _ <- ensureReqTypeIsLive(t)
         _ <- create(CustomField.Implication(e.id, t, m, r, Live))
       } yield ()
@@ -533,12 +533,12 @@ trait ApplyConfigEvent {
 
     val updateReqTypeId = fieldUpdateFn(CustomField.Implication.reqTypeId)
     val updateMandatory = fieldUpdateFn(CustomField.Implication.mandatory)
-    val updateReqTypes  = fieldUpdateFn(CustomField.Implication.reqTypes)
+    val updateReqTypes  = fieldUpdateFn(CustomField.Implication.applicableReqTypes)
 
     val updateValues = GD.updateEachValue {
-      case v: ^.ValueForReqTypeId => updateReqTypeId(v.value)
-      case v: ^.ValueForMandatory => updateMandatory(v.value)
-      case v: ^.ValueForReqTypes  => updateReqTypes (v.value)
+      case v: ^.ValueForReqTypeId          => updateReqTypeId(v.value)
+      case v: ^.ValueForMandatory          => updateMandatory(v.value)
+      case v: ^.ValueForApplicableReqTypes => updateReqTypes (v.value)
     }
 
     def applyUpdate(e: FieldCustomImpUpdate): SE[Unit] =

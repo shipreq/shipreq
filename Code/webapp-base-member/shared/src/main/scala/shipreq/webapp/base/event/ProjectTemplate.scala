@@ -74,15 +74,15 @@ object ProjectTemplate {
 
     def allReqTypes = ApplicableReqTypes.empty
     val customFieldId = new IdCounter(identity)
-    def customTextField(name: String, key: FieldRefKey, mandatory: Mandatory, reqTypes: ApplicableReqTypes): Unit = {
+    def customTextField(name: String, key: FieldRefKey, mandatory: Mandatory, applicableReqTypes: ApplicableReqTypes): Unit = {
       val id = CustomField.Text.Id(customFieldId.next())
       add(FieldCustomTextCreate(id, gdAllValues(CustomTextFieldGD, "")))
     }
-    def customTagField(tagId: TagId, mandatory: Mandatory, reqTypes: ApplicableReqTypes): Unit = {
+    def customTagField(tagId: TagId, mandatory: Mandatory, applicableReqTypes: ApplicableReqTypes): Unit = {
       val id = CustomField.Tag.Id(customFieldId.next())
       add(FieldCustomTagCreate(id, gdAllValues(CustomTagFieldGD, "")))
     }
-    def customImpField(reqTypeId: ReqTypeId, mandatory: Mandatory, reqTypes: ApplicableReqTypes): Unit = {
+    def customImpField(reqTypeId: ReqTypeId, mandatory: Mandatory, applicableReqTypes: ApplicableReqTypes): Unit = {
       val id = CustomField.Implication.Id(customFieldId.next())
       add(FieldCustomImpCreate(id, gdAllValues(CustomImpFieldGD, "")))
     }

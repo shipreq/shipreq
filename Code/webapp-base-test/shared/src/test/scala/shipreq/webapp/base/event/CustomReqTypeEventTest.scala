@@ -104,11 +104,11 @@ object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
         'inUseAsFieldApplicability {
           def test(before: ApplicableReqTypes, after: ApplicableReqTypes) = {
             import CustomTextFieldGD._
-            val f  = FieldCustomTextCreate(2, nev(Name("R"), Key("r"), Mandatory(false), ReqTypes(before)))
+            val f  = FieldCustomTextCreate(2, nev(Name("R"), Key("r"), Mandatory(false), ApplicableReqTypes(before)))
             val p = _assertPass(c1, c2, f, sd1)
             assertEq(p.config.reqTypes.custom.values.toList.map(_.reqTypeId), c2.id :: Nil)
             assertEq(p.config.fields.customTextFields.size, 1)
-            assertEq(p.config.fields.customTextFields.head.reqTypes, after)
+            assertEq(p.config.fields.customTextFields.head.applicableReqTypes, after)
           }
           'not1   - test(notReqTypes(1), allReqTypes)
           'only1  - test(onlyReqTypes(1), allReqTypes)
