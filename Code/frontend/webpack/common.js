@@ -78,9 +78,6 @@ const config = ({ mode }) => ({
 
   plugins: [
     new MiniCssExtractPlugin({ filename: '[name].css' }),
-
-    // Only include English locales - removes 381kb (206 KB minified)
-    // new Webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /(^|\/)en\b/),
   ],
 
   bail: true,
