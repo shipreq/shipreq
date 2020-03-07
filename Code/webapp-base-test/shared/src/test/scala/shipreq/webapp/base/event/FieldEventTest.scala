@@ -150,7 +150,7 @@ object CustomTagFieldEventTest extends TestSuite with CustomTagFieldEvents {
 
   val createAT2 = {
     import ApplicableTagGD._
-    ApplicableTagCreate(2, nev(Colour(None), Desc(Some("r")), Key("c2")))
+    ApplicableTagCreate(2, nev(Key("c2"), Desc(Some("r")), Colour(None), ApplicableReqTypes(allReqTypes)))
   }
   val softDelTG1 = TagGroupEventTest.sd1
   implicit val init = InitialEvents(TagGroupEventTest.c1, createAT2)

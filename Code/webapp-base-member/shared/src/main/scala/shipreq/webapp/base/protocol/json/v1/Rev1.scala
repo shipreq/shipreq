@@ -2,7 +2,6 @@ package shipreq.webapp.base.protocol.json.v1
 
 import io.circe._
 import io.circe.syntax._
-import japgolly.microlibs.adt_macros.AdtMacros
 import shipreq.base.util.JsonUtil._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
@@ -26,13 +25,15 @@ object Rev1 {
   private[v1] implicit lazy val codecApplicableTagGD: JsonCodec[ApplicableTagGD.NonEmptyValues] = {
     import ApplicableTagGD._
 
-    implicit val codecValueForChildren = JsonCodec.xmap(ValueForChildren.apply)(_.value)
-    implicit val codecValueForColour   = JsonCodec.xmap(ValueForColour  .apply)(_.value)
-    implicit val codecValueForDesc     = JsonCodec.xmap(ValueForDesc    .apply)(_.value)
-    implicit val codecValueForKey      = JsonCodec.xmap(ValueForKey     .apply)(_.value)
-    implicit val codecValueForParents  = JsonCodec.xmap(ValueForParents .apply)(_.value)
+    implicit val codecValueForApplicableReqTypes = JsonCodec.xmap(ValueForApplicableReqTypes.apply)(_.value)
+    implicit val codecValueForChildren           = JsonCodec.xmap(ValueForChildren          .apply)(_.value)
+    implicit val codecValueForColour             = JsonCodec.xmap(ValueForColour            .apply)(_.value)
+    implicit val codecValueForDesc               = JsonCodec.xmap(ValueForDesc              .apply)(_.value)
+    implicit val codecValueForKey                = JsonCodec.xmap(ValueForKey               .apply)(_.value)
+    implicit val codecValueForParents            = JsonCodec.xmap(ValueForParents           .apply)(_.value)
 
     implicit val decoderValue: Decoder[Value] = decodeSumBySoleKey {
+      case ("reqTypes", c) => c.as[ValueForApplicableReqTypes]
       case ("children", c) => c.as[ValueForChildren]
       case ("colour"  , c) => c.as[ValueForColour]
       case ("desc"    , c) => c.as[ValueForDesc]
@@ -41,11 +42,12 @@ object Rev1 {
     }
 
     implicit val encoderValue: Encoder[Value] = Encoder.instance {
-      case a: ValueForChildren => Json.obj("children" -> a.asJson)
-      case a: ValueForColour   => Json.obj("colour"   -> a.asJson)
-      case a: ValueForDesc     => Json.obj("desc"     -> a.asJson)
-      case a: ValueForKey      => Json.obj("key"      -> a.asJson)
-      case a: ValueForParents  => Json.obj("parents"  -> a.asJson)
+      case a: ValueForApplicableReqTypes => Json.obj("reqTypes" -> a.asJson)
+      case a: ValueForChildren           => Json.obj("children" -> a.asJson)
+      case a: ValueForColour             => Json.obj("colour"   -> a.asJson)
+      case a: ValueForDesc               => Json.obj("desc"     -> a.asJson)
+      case a: ValueForKey                => Json.obj("key"      -> a.asJson)
+      case a: ValueForParents            => Json.obj("parents"  -> a.asJson)
     }
 
     implicit val values: JsonCodec[Values] = codecIMap(emptyValues)

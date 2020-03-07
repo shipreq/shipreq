@@ -40,6 +40,8 @@ object DataValidators {
   // TODO Make vals lazy
   lazy val projectName = V.mandatoryShortText.toValidator.named("Project name")
 
+  val applicableReqTypes = Validator.id[ApplicableReqTypes].named(FieldNames.applicableReqTypes)
+
   // ===================================================================================================================
   object hashRefKey {
     import Grammar.{hashRefKey => G}
@@ -182,13 +184,12 @@ object DataValidators {
         .stateful(_ appendInvalidator _.keyUniqueness)
 
     def mandatory = Validator.id[Mandatory]
-    def reqTypes  = Validator.id[ApplicableReqTypes]
 
     val textField: State => Composite.Validator[
       (String, String, Mandatory, ApplicableReqTypes),
       (String, String, Mandatory, ApplicableReqTypes),
       (String, FieldRefKey, Mandatory, ApplicableReqTypes)] =
-      s => name(s).named tuple key(s).named tuple mandatory tuple reqTypes
+      s => name(s).named tuple key(s).named tuple mandatory tuple applicableReqTypes.named
 
     object tagField {
       val tagId: Composite.Stateful[State, Option[TagId], Option[TagId], TagId] =
@@ -201,7 +202,7 @@ object DataValidators {
         (Option[TagId], Mandatory, ApplicableReqTypes),
         (Option[TagId], Mandatory, ApplicableReqTypes),
         (TagId, Mandatory, ApplicableReqTypes)] =
-        (s: State) => tagId(s).named tuple mandatory tuple reqTypes
+        (s: State) => tagId(s).named tuple mandatory tuple applicableReqTypes.named
     }
 
     object implField {
@@ -215,7 +216,7 @@ object DataValidators {
         (Option[ReqTypeId], Mandatory, ApplicableReqTypes),
         (Option[ReqTypeId], Mandatory, ApplicableReqTypes),
         (ReqTypeId, Mandatory, ApplicableReqTypes)] =
-        (s: State) => reqTypeId(s).named tuple mandatory tuple reqTypes
+        (s: State) => reqTypeId(s).named tuple mandatory tuple applicableReqTypes.named
     }
   }
 
@@ -269,10 +270,14 @@ object DataValidators {
       s => name(s).named tuple Validator.id[Exclusivity] tuple desc(s).named
 
     val applicableTag: State => Composite.Validator[
-      (String, String, String),
-      (String, String, Option[String]),
-      (HashRefKey, Option[Colour], Option[String])] =
-      s => key(s).named tuple colour(s).named tuple desc(s).named
+      (String    , String        , String        , ApplicableReqTypes),
+      (String    , Option[String], String        , ApplicableReqTypes),
+      (HashRefKey, Option[String], Option[Colour], ApplicableReqTypes)
+    ] = s =>
+      key            (s).named tuple
+      desc           (s).named tuple
+      colour         (s).named tuple
+      applicableReqTypes.named
   }
 
   // ===================================================================================================================

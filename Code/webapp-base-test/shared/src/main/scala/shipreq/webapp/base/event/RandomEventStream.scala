@@ -434,11 +434,12 @@ final class ApplicableEventGen(curState: State, generateRetiredEvents: Boolean) 
   object applicableTagGD extends GenericDataGen(ApplicableTagGD) {
     import gd._
     override def valueFor(a: Attr) = a match {
-      case Colour   => genColour.option      map Colour  .apply
-      case Desc     => unicodeString1.option map Desc    .apply
-      case Key      => hashRefKey            map Key     .apply
-      case Children => tagChildren           map Children.apply
-      case Parents  => tagParents            map Parents .apply
+      case ApplicableReqTypes => applicableReqTypes    map ApplicableReqTypes.apply
+      case Colour             => genColour.option      map Colour  .apply
+      case Desc               => unicodeString1.option map Desc    .apply
+      case Key                => hashRefKey            map Key     .apply
+      case Children           => tagChildren           map Children.apply
+      case Parents            => tagParents            map Parents .apply
     }
   }
 

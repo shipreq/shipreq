@@ -96,6 +96,7 @@ Phase 3A
   * Add tests for TagConfig
   * Add stability test for ProjectTemplate - probably just JSON of events is enough
   * Uniqueness of tag names... just group names? or include ap-tag keys too?
+  * stability tests for Rev1
   * track TagConfig state in UnsavedChanges
   * handle dead ReqTypes' states in ApplicableReqTypes editors
     (eg user says whitelist A; user deletes A, what should the editor show? Maybe just a litle warning (not error) under field.

@@ -30,8 +30,9 @@ object Rev1 {
         state.enc.writeInt(1) // v1.1
         state.pickle(a.id)    // first byte is <=0 because of PicklerReuse
         state.pickle(a.key)
-        state.pickle(a.colour)
         state.pickle(a.desc)
+        state.pickle(a.colour)
+        state.pickle(a.applicableReqTypes)
         state.pickle(a.live)
       }
       override def unpickle(implicit state: UnpickleState): ApplicableTag = {
@@ -40,12 +41,13 @@ object Rev1 {
           // v1.1
           case 1 =>
             state.dec.readInt
-            val id     = state.unpickle[ApplicableTagId]
-            val key    = state.unpickle[HashRefKey]
-            val colour = state.unpickle[Option[Colour]]
-            val desc   = state.unpickle[Option[String]]
-            val live   = state.unpickle[Live]
-            ApplicableTag(id, key, colour, desc, live)
+            val id       = state.unpickle[ApplicableTagId]
+            val key      = state.unpickle[HashRefKey]
+            val desc     = state.unpickle[Option[String]]
+            val colour   = state.unpickle[Option[Colour]]
+            val reqTypes = state.unpickle[ApplicableReqTypes]
+            val live     = state.unpickle[Live]
+            ApplicableTag(id, key, desc, colour, reqTypes, live)
 
           // v1.0
           case n if n <= 0 =>
@@ -140,34 +142,38 @@ object Rev1 {
   implicit lazy val pickleApplicableTagGD: Pickler[ApplicableTagGD.NonEmptyValues] = {
     import ApplicableTagGD._
 
-    implicit val picklerValueForChildren = transformPickler(ValueForChildren.apply)(_.value)
-    implicit val picklerValueForColour   = transformPickler(ValueForColour  .apply)(_.value)
-    implicit val picklerValueForDesc     = transformPickler(ValueForDesc    .apply)(_.value)
-    implicit val picklerValueForKey      = transformPickler(ValueForKey     .apply)(_.value)
-    implicit val picklerValueForParents  = transformPickler(ValueForParents .apply)(_.value)
+    implicit val picklerValueForApplicableReqTypes = transformPickler(ValueForApplicableReqTypes.apply)(_.value)
+    implicit val picklerValueForChildren           = transformPickler(ValueForChildren          .apply)(_.value)
+    implicit val picklerValueForColour             = transformPickler(ValueForColour            .apply)(_.value)
+    implicit val picklerValueForDesc               = transformPickler(ValueForDesc              .apply)(_.value)
+    implicit val picklerValueForKey                = transformPickler(ValueForKey               .apply)(_.value)
+    implicit val picklerValueForParents            = transformPickler(ValueForParents           .apply)(_.value)
 
     implicit val picklerValue: Pickler[Value] =
       new Pickler[Value] {
-        private[this] final val KeyForChildren = 'C'
-        private[this] final val KeyForColour   = 'c'
-        private[this] final val KeyForDesc     = 'd'
-        private[this] final val KeyForKey      = '#'
-        private[this] final val KeyForParents  = 'P'
+        private[this] final val KeyForApplicableReqTypes = 'r'
+        private[this] final val KeyForChildren           = 'C'
+        private[this] final val KeyForColour             = 'c'
+        private[this] final val KeyForDesc               = 'd'
+        private[this] final val KeyForKey                = '#'
+        private[this] final val KeyForParents            = 'P'
         override def pickle(a: Value)(implicit state: PickleState): Unit =
           a match {
-            case b: ValueForChildren => state.enc.writeByte(KeyForChildren); state.pickle(b)
-            case b: ValueForColour   => state.enc.writeByte(KeyForColour  ); state.pickle(b)
-            case b: ValueForDesc     => state.enc.writeByte(KeyForDesc    ); state.pickle(b)
-            case b: ValueForKey      => state.enc.writeByte(KeyForKey     ); state.pickle(b)
-            case b: ValueForParents  => state.enc.writeByte(KeyForParents ); state.pickle(b)
+            case b: ValueForApplicableReqTypes => state.enc.writeByte(KeyForApplicableReqTypes); state.pickle(b)
+            case b: ValueForChildren           => state.enc.writeByte(KeyForChildren          ); state.pickle(b)
+            case b: ValueForColour             => state.enc.writeByte(KeyForColour            ); state.pickle(b)
+            case b: ValueForDesc               => state.enc.writeByte(KeyForDesc              ); state.pickle(b)
+            case b: ValueForKey                => state.enc.writeByte(KeyForKey               ); state.pickle(b)
+            case b: ValueForParents            => state.enc.writeByte(KeyForParents           ); state.pickle(b)
           }
         override def unpickle(implicit state: UnpickleState): Value =
           state.dec.readByte match {
-            case KeyForChildren => state.unpickle[ValueForChildren]
-            case KeyForColour   => state.unpickle[ValueForColour]
-            case KeyForDesc     => state.unpickle[ValueForDesc]
-            case KeyForKey      => state.unpickle[ValueForKey]
-            case KeyForParents  => state.unpickle[ValueForParents]
+            case KeyForApplicableReqTypes => state.unpickle[ValueForApplicableReqTypes]
+            case KeyForChildren           => state.unpickle[ValueForChildren]
+            case KeyForColour             => state.unpickle[ValueForColour]
+            case KeyForDesc               => state.unpickle[ValueForDesc]
+            case KeyForKey                => state.unpickle[ValueForKey]
+            case KeyForParents            => state.unpickle[ValueForParents]
           }
       }
 

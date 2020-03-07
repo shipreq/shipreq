@@ -76,11 +76,12 @@ val gens = List(
     "Children"    -> "TagInTree.Children",
   ),
   Gen("ApplicableTagGD")(
-    "Key"      -> "HashRefKey",
-    "Colour"   -> "Option[Colour]",
-    "Desc"     -> "Option[String]",
-    "Parents"  -> "TagInTree.Parents",
-    "Children" -> "TagInTree.Children",
+    "Key"                -> "HashRefKey",
+    "Desc"               -> "Option[String]",
+    "Colour"             -> "Option[Colour]",
+    "ApplicableReqTypes" -> "ApplicableReqTypes",
+    "Parents"            -> "TagInTree.Parents",
+    "Children"           -> "TagInTree.Children",
   ),
   Gen("CustomTextFieldGD")(
     "Name"               -> "String",

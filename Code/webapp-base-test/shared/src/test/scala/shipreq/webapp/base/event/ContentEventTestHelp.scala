@@ -217,8 +217,8 @@ object ContentEventTestHelp {
   val at2: ApplicableTagId = 12
   val (createAT1, createAT2) = {
     import ApplicableTagGD._
-    ( ApplicableTagCreate(at1, nev(Colour(None), Desc(None), Key("at-one")))
-    , ApplicableTagCreate(at2, nev(Colour(None), Desc(None), Key("at-two")))
+    ( ApplicableTagCreate(at1, nev(Key("at-one"), Desc(None), Colour(None), ApplicableReqTypes(allReqTypes)))
+    , ApplicableTagCreate(at2, nev(Key("at-two"), Desc(None), Colour(None), ApplicableReqTypes(allReqTypes)))
     )
   }
 

@@ -75,7 +75,7 @@ object UiText {
     def exclusivity          = "Exclusive"
     def fieldType            = "Type"
     def mandatory            = "Mandatory"
-    def applicableReqTypes   = "Req Types"
+    def applicableReqTypes   = "Applicable Req Types"
     def dndDragHandleHeader  = ""
     def usage                = "Usage"
     def implicationRequired  = "Implication Required"

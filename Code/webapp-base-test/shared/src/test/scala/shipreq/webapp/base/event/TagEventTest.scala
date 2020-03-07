@@ -248,14 +248,19 @@ trait ApplicableTagEvents {
   def parent(id: ApplicableTagId) = Parents(Map((id: TagId) -> none))
   def ttget(tt: TagTree, ids: Int*): List[TagInTree] = ids.toList.map(i => tt.get(i.AT).get)
   def create(id: Int)(parents: Int*)(children: Int*) =
-    ApplicableTagCreate(id, nev(Colour(None), Desc(None), Key("k" + id),
-      Children(Vector(children.map(_.AT): _*)), Parents(parents.map(_.AT -> none[TagId]).toMap)))
+    ApplicableTagCreate(id, nev(
+      Key("k" + id),
+      ApplicableReqTypes(allReqTypes),
+      Colour(None),
+      Desc(None),
+      Children(Vector(children.map(_.AT): _*)),
+      Parents(parents.map(_.AT -> none[TagId]).toMap)))
   def tagId1 = 1.AT
 
   type CE = ApplicableTagCreate
-  val c1 = ApplicableTagCreate(1, nev(Colour(None), Desc(None), Key("c1")))
-  val c2 = ApplicableTagCreate(2, nev(Colour(None), Desc(Some("r")), Key("c2"), parent(1)))
-  val c3 = ApplicableTagCreate(3, nev(Colour(None), Desc(None), Key("c3"), child(1)))
+  val c1 = ApplicableTagCreate(1, nev(Key("c1"), Colour(None), ApplicableReqTypes(allReqTypes), Desc(None)))
+  val c2 = ApplicableTagCreate(2, nev(Key("c2"), Colour(None), ApplicableReqTypes(allReqTypes), Desc(Some("r")), parent(1)))
+  val c3 = ApplicableTagCreate(3, nev(Key("c3"), Colour(None), ApplicableReqTypes(allReqTypes), Desc(None), child(1)))
   val u1 = ApplicableTagUpdate(1, nev(Desc(Some("versionness"))))
   val List(sd1,sd2,sd3,sd4) = List(1,2,3,4).map(i => TagDelete (i.AT))
   val List( r1, r2, r3, r4) = List(1,2,3,4).map(i => TagRestore(i.AT))
@@ -352,12 +357,12 @@ object ApplicableTagEventTest extends TestSuite with ApplicableTagEvents {
         var es = Vector(c1, u1)
         def r1 = _assertPass(es: _*).config.tags.tree.get(1.AT).get
         def r2 = _assertPass(es: _*).config.tags.tree.get(2.AT).get
-        assertEq(r1, TagInTree(ApplicableTag(1, "c1", None, Some("versionness"), Live), Vector.empty))
+        assertEq(r1, TagInTree(ApplicableTag(1, "c1", Some("versionness"), None, allReqTypes, Live), Vector.empty))
 
         es :+= c2
         es :+= ApplicableTagUpdate(1, nev(Colour(Some("#fff")), Key("c=one")))
-        assertEq(r1, TagInTree(ApplicableTag(1, "c=one", Some("#fff"), Some("versionness"), Live), Vector(2.AT)))
-        assertEq(r2, TagInTree(ApplicableTag(2, "c2", None, Some("r"), Live), Vector.empty))
+        assertEq(r1, TagInTree(ApplicableTag(1, "c=one", Some("versionness"), Some("#fff"), allReqTypes, Live), Vector(2.AT)))
+        assertEq(r2, TagInTree(ApplicableTag(2, "c2", Some("r"), None, allReqTypes, Live), Vector.empty))
 
         // TODO confirm parent order
       }

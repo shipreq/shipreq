@@ -42,11 +42,12 @@ final case class TagGroup(id         : TagGroupId,
 }
 
 @Lenses
-final case class ApplicableTag(id    : ApplicableTagId,
-                               key   : HashRefKey,
-                               colour: Option[Colour],
-                               desc  : Option[String],
-                               live  : Live) extends Tag {
+final case class ApplicableTag(id                : ApplicableTagId,
+                               key               : HashRefKey,
+                               desc              : Option[String],
+                               colour            : Option[Colour],
+                               applicableReqTypes: ApplicableReqTypes,
+                               live              : Live) extends Tag {
   override def name = key.value
   override def keyO = Some(key)
   override def tagType = TagType.Applicable
@@ -60,11 +61,12 @@ object ApplicableTag {
          live: Live): ApplicableTag = {
     val _ = name // removed
     apply(
-      id     = id,
-      key    = key,
-      colour = None,
-      desc   = desc,
-      live   = live,
+      id                 = id,
+      key                = key,
+      desc               = desc,
+      colour             = None,
+      applicableReqTypes = ApplicableReqTypes.empty,
+      live               = live,
     )
   }
 }
@@ -86,8 +88,8 @@ object Tag {
   }
 
   val live = Lens((_: Tag).live)(n => {
-    case TagGroup(a, b, c, d, _)      => TagGroup(a, b, c, d, n)
-    case ApplicableTag(a, b, c, d, _) => ApplicableTag(a, b, c, d, n)
+    case t: TagGroup      => t.copy(live = n)
+    case t: ApplicableTag => t.copy(live = n)
   })
 
   val filterLive: Tag => Boolean =

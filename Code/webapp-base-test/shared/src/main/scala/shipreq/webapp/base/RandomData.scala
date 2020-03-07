@@ -228,6 +228,17 @@ object RandomData {
       h <- genHexCharLower.string(i)
     } yield Colour.force("#" + h)
 
+  lazy val applicableReqTypes: Gen[ApplicableReqTypes] =
+    applicableReqTypes(reqTypeId.set)
+
+  def applicableReqTypes(r: Set[CustomReqTypeId]): Gen[ApplicableReqTypes] = {
+    val all = r ++ StaticReqType.values.whole
+    applicableReqTypes(Gen.subset(all))
+  }
+
+  def applicableReqTypes(g: Gen[Set[ReqTypeId]]): Gen[ApplicableReqTypes] =
+    Gen.apply2(ApplicableReqTypes.apply)(applicability, g)
+
   // -------------------------------------------------------------------------------------------------------------------
   // Custom issue types
 
@@ -316,7 +327,7 @@ object RandomData {
     Gen.apply5(TagGroup.apply)(tagGroupId, tagName, optionalLargeText, exclusivity, live)
 
   val applicableTag =
-    Gen.apply5(ApplicableTag.apply)(applicableTagId, hashRefKey, genColour.option, optionalLargeText, live)
+    Gen.apply6(ApplicableTag.apply)(applicableTagId, hashRefKey, optionalLargeText, genColour.option, applicableReqTypes, live)
 
   val tag =
     Gen.chooseGen[Tag](tagGroup, applicableTag, applicableTag, applicableTag)
@@ -378,14 +389,6 @@ object RandomData {
 
   val staticField: Gen[StaticField] =
     Gen.chooseNE(StaticField.values)
-
-  def applicableReqTypes(r: Set[CustomReqTypeId]): Gen[ApplicableReqTypes] = {
-    val all = r ++ StaticReqType.values.whole
-    applicableReqTypes(Gen.subset(all))
-  }
-
-  def applicableReqTypes(g: Gen[Set[ReqTypeId]]): Gen[ApplicableReqTypes] =
-    Gen.apply2(ApplicableReqTypes.apply)(applicability, g)
 
   val customFieldTextId =
     id map CustomField.Text.Id
@@ -1973,11 +1976,12 @@ object RandomData {
     object applicableTagGD extends GenericDataGen(ApplicableTagGD) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case Colour   => genColour.option      map Colour  .apply
-        case Desc     => unicodeString1.option map Desc    .apply
-        case Key      => hashRefKey            map Key     .apply
-        case Children => tagChildren           map Children.apply
-        case Parents  => tagParents            map Parents .apply
+        case ApplicableReqTypes => anyApplicableReqTypes map ApplicableReqTypes.apply
+        case Colour             => genColour.option      map Colour            .apply
+        case Desc               => unicodeString1.option map Desc              .apply
+        case Key                => hashRefKey            map Key               .apply
+        case Children           => tagChildren           map Children          .apply
+        case Parents            => tagParents            map Parents           .apply
       }
     }
 

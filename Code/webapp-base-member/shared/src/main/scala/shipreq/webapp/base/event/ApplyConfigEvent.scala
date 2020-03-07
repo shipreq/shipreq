@@ -314,29 +314,32 @@ trait ApplyConfigEvent {
     def applyCreate(e: ApplicableTagCreate): SE[Unit] = {
       implicit val vs = e.vs
       for {
+        a   ← GD.need(^.ApplicableReqTypes)
         c   ← GD.need(^.Colour) >>= validateColour
         d   ← GD.need(^.Desc) >>= validateDesc
         k   ← GD.need(^.Key)  >>= validateKey
         oc  = GD.read(^.Children)
         op  = GD.read(^.Parents)
-        tag = ApplicableTag(e.id, k, c, d, Live)
+        tag = ApplicableTag(e.id, k, d, c, a, Live)
         tit = TagInTree(tag, oc getOrElse Vector.empty)
         _   ← create(tit, op)
       } yield ()
     }
 
-    val updateColour = validateColour >>=@ ApplicableTag.colour
-    val updateDesc   = validateDesc   >>=@ ApplicableTag.desc
-    val updateKey    = validateKey    >>=@ ApplicableTag.key
+    val updateApplicableReqTypes = fieldUpdateFn(ApplicableTag.applicableReqTypes)
+    val updateColour             = validateColour >>=@ ApplicableTag.colour
+    val updateDesc               = validateDesc   >>=@ ApplicableTag.desc
+    val updateKey                = validateKey    >>=@ ApplicableTag.key
 
     def applyUpdate(e: ApplicableTagUpdate): SE[Unit] =
       update(e.id, vars =>
         e.vs.values foreach {
-          case v: ^.ValueForColour   => vars apply updateColour(v.value)
-          case v: ^.ValueForDesc     => vars apply updateDesc  (v.value)
-          case v: ^.ValueForKey      => vars apply updateKey   (v.value)
-          case v: ^.ValueForChildren => vars setChildren v.value
-          case v: ^.ValueForParents  => vars setParents v.value
+          case v: ^.ValueForApplicableReqTypes => vars apply updateApplicableReqTypes(v.value)
+          case v: ^.ValueForColour             => vars apply updateColour            (v.value)
+          case v: ^.ValueForDesc               => vars apply updateDesc              (v.value)
+          case v: ^.ValueForKey                => vars apply updateKey               (v.value)
+          case v: ^.ValueForChildren           => vars setChildren v.value
+          case v: ^.ValueForParents            => vars setParents v.value
         }
       )
   }

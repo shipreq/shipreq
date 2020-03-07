@@ -19,6 +19,19 @@ object ApplicableTagGD extends GenericData {
   sealed abstract class Attr extends AttrBase
   sealed abstract class Value extends ValueBase
 
+  case object ApplicableReqTypes extends Attr {
+    override type Data = ApplicableReqTypes
+    override def apply(data: Data) = ValueForApplicableReqTypes(data)
+    val dataEquality: Equal[Data] = implicitly[Equal[ApplicableReqTypes]]
+  }
+  final case class ValueForApplicableReqTypes(value: ApplicableReqTypes.Data) extends Value {
+    override val attr: ApplicableReqTypes.type = ApplicableReqTypes
+    override def equals(o: Any): Boolean = o match {
+      case v2: ValueForApplicableReqTypes => ApplicableReqTypes.dataEquality.equal(value, v2.value)
+      case _ => false
+    }
+  }
+
   case object Children extends Attr {
     override type Data = TagInTree.Children
     override def apply(data: Data) = ValueForChildren(data)
@@ -85,11 +98,11 @@ object ApplicableTagGD extends GenericData {
   }
 
   override implicit val equalityAttr: Order[Attr] with UnivEq[Attr] =
-    Util.univEqAndArbitraryOrder(Vector(Children, Colour, Desc, Key, Parents))
+    Util.univEqAndArbitraryOrder(Vector(ApplicableReqTypes, Children, Colour, Desc, Key, Parents))
 
   @inline override implicit def equalityValue: UnivEq[Value] = UnivEq.force
 
-  override val attrs = NonEmptySet[Attr](Children, Colour, Desc, Key, Parents)
+  override val attrs = NonEmptySet[Attr](ApplicableReqTypes, Children, Colour, Desc, Key, Parents)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
