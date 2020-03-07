@@ -12,7 +12,7 @@ fi
 args="$@"
 [ $# -eq 0 ] && args=(dev prod local)
 
-webpack="node_modules/.bin/webpack --progress --config"
+webpack="node_modules/.bin/webpack --color --progress --config"
 webtamp="node_modules/.bin/webtamp"
 [ -n "$WEBTAMP" ] && webtamp="$WEBTAMP/src/cli.js"
 webtamp="$webtamp --config"

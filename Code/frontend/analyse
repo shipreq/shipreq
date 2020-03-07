@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+name=prod
+stats=analysis/$name.json
+report=analysis/$name.txt
+
+./exec node_modules/.bin/webpack --json --config webpack/prod.js > $stats
+
+./node_modules/.bin/webpack-bundle-size-analyzer < $stats \
+  | fgrep -v 'calculated before minification' \
+  | perl -pe 's/: /,/; s/ \(/,/; s/%\)$//' | column -t -s, -R2,3 | sort -k4nr | perl -pe 's/$/%/' \
+  > $report
+
+echo "================================================================================"
+cat $report
