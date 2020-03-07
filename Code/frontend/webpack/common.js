@@ -2,6 +2,7 @@ const
   Path = require('path'),
   Webpack = require('webpack'),
   BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin,
+  LodashModuleReplacementPlugin = require('lodash-webpack-plugin'),
   MiniCssExtractPlugin = require('mini-css-extract-plugin'),
   NodeModules = Path.resolve(__dirname, '../node_modules');
 
@@ -81,6 +82,31 @@ const config = ({ mode }) => ({
 
   plugins: [
     new MiniCssExtractPlugin({ filename: '[name].css' }),
+
+    // react-color uses:
+    //   - import each from 'lodash/each'
+    //   - import merge from 'lodash/merge'
+    //   - import map from 'lodash/map'
+    //   - import throttle from 'lodash/throttle'
+    //   - import debounce from 'lodash/debounce'
+    new LodashModuleReplacementPlugin({
+      shorthands  : false, // Iteratee shorthands for _.property, _.matches, & _.matchesProperty.
+      cloning     : false, // Support “clone” methods & cloning source objects.
+      currying    : false, // Support “curry” methods.
+      caching     : false, // Caches for methods like _.cloneDeep, _.isEqual, & _.uniq.
+      collections : false, // Support objects in “Collection” methods.
+      exotics     : false, // Support objects like buffers, maps, sets, symbols, typed arrays, etc.
+      guards      : false, // Guards for host objects, sparse arrays, & other edge cases.
+      metadata    : false, // Metadata to reduce wrapping of bound, curried, & partially applied functions. (requires currying)
+      deburring   : false, // Support deburring letters.
+      unicode     : false, // Support Unicode symbols.
+      chaining    : false, // Components to support chain sequences.
+      memoizing   : false, // Support _.memoize & memoization.
+      coercions   : false, // Support for coercing values to integers, numbers, & strings.
+      flattening  : false, // Support “flatten” methods & flattening rest arguments.
+      paths       : false, // Deep property path support for methods like _.get, _.has, & _.set.
+      placeholders: false, // Argument placeholder support for “bind”, “curry”, & “partial” methods. (requires currying)
+    }),
 
     new BundleAnalyzerPlugin({
       analyzerMode: 'static',
