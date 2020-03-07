@@ -1,6 +1,7 @@
 const
   Path = require('path'),
   Webpack = require('webpack'),
+  BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin,
   MiniCssExtractPlugin = require('mini-css-extract-plugin'),
   NodeModules = Path.resolve(__dirname, '../node_modules');
 
@@ -14,7 +15,7 @@ const config = ({ mode }) => ({
 
     'member-lib-bundle': entryPoints([
       'expose-loader?ReactCollapse!react-collapse',
-      'expose-loader?moment!moment',
+      'expose-loader?moment!moment/min/moment.min.js',
       'expose-loader?autosize!autosize',
       'expose-loader?clipboard!clipboard-polyfill',
       'expose-loader?scrollIntoView!scroll-into-view-if-needed',
@@ -78,6 +79,15 @@ const config = ({ mode }) => ({
 
   plugins: [
     new MiniCssExtractPlugin({ filename: '[name].css' }),
+
+    new BundleAnalyzerPlugin({
+      analyzerMode: 'static',
+      defaultSizes: 'parsed',
+      openAnalyzer: false,
+      generateStatsFile: true,
+      statsFilename: `analysis/${mode}.json`,
+      reportFilename: `analysis/${mode}.html`,
+    }),
   ],
 
   bail: true,

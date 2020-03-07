@@ -12,7 +12,7 @@ fi
 args="$@"
 [ $# -eq 0 ] && args=(dev prod local)
 
-webpack="node_modules/.bin/webpack --progress --config"
+webpack="node_modules/.bin/webpack --color --progress --config"
 webtamp="node_modules/.bin/webtamp"
 [ -n "$WEBTAMP" ] && webtamp="$WEBTAMP/src/cli.js"
 webtamp="$webtamp --config"
@@ -27,17 +27,26 @@ for mode in ${args[@]}; do
       # Clean
       target1=/tmp/shipreq.webpack.$mode
       target2=dist/$mode
-      rm -rf $target1 $target2
+      rm -rf $target1 $target2 analysis/$mode.*
 
       # Webpack
       $webpack webpack/$mode.js || exit $?
       rm -f $target1/{admin}.js # These are empty. Their entrypoints in webpack exist for CSS only.
       dos2unix $target1/*.{css,js}
       [ $mode == prod ] && perl -pi -e 's/\n//g' $target1/*.css
+      cp $target1/analysis/* analysis/.
       echo
 
       # Webtamp
       $webtamp webtamp/$mode.js || exit $?
+
+      # Analysis
+      stats=analysis/$mode.json
+      report=analysis/$mode.txt
+      ./node_modules/.bin/webpack-bundle-size-analyzer < $stats \
+        | fgrep -v 'calculated before minification' \
+        | perl -pe 's/: /,/; s/ \(/,/; s/%\)$//' | column -t -s, | sort -k4nr | perl -pe 's/$/%/' \
+        > $report
 
       # Done
       echo

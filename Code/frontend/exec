@@ -3,6 +3,7 @@
 set -eu
 
 args=(
+  -t # For terminal colour
   --rm
   --user $(id -u):$(id -g)
   -v "$(pwd)":/host:rw

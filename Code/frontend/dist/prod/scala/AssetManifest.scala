@@ -5,7 +5,7 @@ object AssetManifest {
 
   final case class CDN(href: String, integrity: Option[String])
 
-  def analyticsJs = "/s/c8e9bc7c01369fcaae7f32c3adbc62a8.js"
+  def analyticsJs = "/s/062ae3593f4eae24e248760bf0b448fc.js"
 
   def favicon = "/s/286b75985993da80759cbdc5142de4d3.ico"
 
@@ -21,11 +21,11 @@ object AssetManifest {
     href = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.js",
     integrity = Some("sha256-F/Xda58SPdcUCr+xhSGz9MA2zQBPb0ASEYKohl8UCHc="))
 
-  def loadingSpinSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjMjJjIj48cGF0aCBvcGFjaXR5PSIuMjUiIGQ9Ik0xNiAwYTE2IDE2IDAgMCAwIDAgMzIgMTYgMTYgMCAwIDAgMC0zMm0wIDRhMTIgMTIgMCAwIDEgMCAyNCAxMiAxMiAwIDAgMSAwLTI0Ii8+PHBhdGggZD0iTTE2IDBhMTYgMTYgMCAwIDEgMTYgMTZoLTRBMTIgMTIgMCAwIDAgMTYgNHoiPjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiBmcm9tPSIwIDE2IDE2IiB0bz0iMzYwIDE2IDE2IiBkdXI9IjAuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9wYXRoPjwvc3ZnPg=="
+  def loadingSpinSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjMjJjIj48cGF0aCBvcGFjaXR5PSIuMjUiIGQ9Ik0xNiAwYTE2IDE2IDAgMDAwIDMyIDE2IDE2IDAgMDAwLTMybTAgNGExMiAxMiAwIDAxMCAyNCAxMiAxMiAwIDAxMC0yNCIvPjxwYXRoIGQ9Ik0xNiAwYTE2IDE2IDAgMDExNiAxNmgtNEExMiAxMiAwIDAwMTYgNHoiPjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiBmcm9tPSIwIDE2IDE2IiB0bz0iMzYwIDE2IDE2IiBkdXI9IjAuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9wYXRoPjwvc3ZnPg=="
 
   def loadjs = "/s/9e706a6f7bc551ddf626c15cd76c1c25.js"
 
-  def memberLibBundleJs = "/s/14c54334fb1a1970a298c60eba810e18.js"
+  def memberLibBundleJs = "/s/127b8ddf9457de79ec84ba8835981a80.js"
 
   def prismJsAutoloader = CDN(
     href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/plugins/autoloader/prism-autoloader.min.js",
@@ -51,7 +51,7 @@ object AssetManifest {
     href = "https://cdnjs.cloudflare.com/ajax/libs/react/16.8.6/umd/react.production.min.js",
     integrity = Some("sha256-3vo65ZXn5pfsCfGM5H55X+SmwJHBlyNHPwRmWAPgJnM="))
 
-  def semanticCss = "/s/0d0cb71df7126cdb6889ab1f28cb47c0.css"
+  def semanticCss = "/s/b5b8655bc6042a8ed0d96ad25517846e.css"
 
   def semanticCssUrls: List[String] =
     "icons.eot" ::
@@ -62,7 +62,7 @@ object AssetManifest {
     "icons.svg#icons" ::
     Nil
 
-  def semanticJs = "/s/2fda4c306eff8c7e7b6e5a737018f4d4.js"
+  def semanticJs = "/s/55a80b675cb3672759e0b653fd97cc1c.js"
 
   def shipreqBannerSvg = "/s/878536f0a4ad0029794669f88dbf5f35.svg"
 
@@ -72,7 +72,7 @@ object AssetManifest {
 
   def sortAscSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmlld0JveD0iMCAwIDIwIDIwIj48cGF0aCBkPSJNLjUgMjBMMTAgMGw5LjUgMjAiLz48L3N2Zz4="
 
-  def sortBlankSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmlld0JveD0iMCAwIDIwIDIwIj48ZWxsaXBzZSBjeD0iMTAiIGN5PSIxMDQyLjM2MiIgcng9IjguOSIgcnk9IjguOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjIuMiIgc3Ryb2tlLW1pdGVybGltaXQ9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjIuMjAwMDAwMDUsIDQuNDAwMDAwMTEiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgLTEwMzIuMzYyKSIvPjwvc3ZnPg=="
+  def sortBlankSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdmlld0JveD0iMCAwIDIwIDIwIj48Y2lyY2xlIGN4PSIxMCIgY3k9IjEwNDIuMzYyIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMi4yIiBzdHJva2UtbWl0ZXJsaW1pdD0iMiIgc3Ryb2tlLWRhc2hhcnJheT0iMi4yMDAwMDAwNSwgNC40MDAwMDAxMSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCAtMTAzMi4zNjIpIiByPSI4LjkiLz48L3N2Zz4="
 
   def tileExclamationSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNTg0IiBoZWlnaHQ9IjM1ODQiIHZpZXdCb3g9IjAgMCAzNTg0IDM1ODQiPjxkZWZzPjxmaWx0ZXIgaWQ9ImEiIHg9Ii0uMTQ3IiB3aWR0aD0iMS4yOTQiIHk9Ii0uMDQ2IiBoZWlnaHQ9IjEuMDkzIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiPjxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjI3LjE4MSIvPjwvZmlsdGVyPjxmaWx0ZXIgaWQ9ImIiIHg9Ii0uMTQ3IiB3aWR0aD0iMS4yOTQiIHk9Ii0uMDQ2IiBoZWlnaHQ9IjEuMDkzIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiPjxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjI3LjE4MSIvPjwvZmlsdGVyPjwvZGVmcz48cGF0aCBkPSJNMTA4OCAxMjQ4djIyNHEwIDI2LTE5IDQ1dC00NSAxOUg3NjhxLTI2IDAtNDUtMTl0LTE5LTQ1di0yMjRxMC0yNiAxOS00NXQ0NS0xOWgyNTZxMjYgMCA0NSAxOXQxOSA0NXptMzAtMTA1NmwtMjggNzY4cS0xIDI2LTIwLjUgNDV0LTQ1LjUgMTlINzY4cS0yNiAwLTQ1LjUtMTlUNzAyIDk2MGwtMjgtNzY4cS0xLTI2IDE3LjUtNDV0NDQuNS0xOWgzMjBxMjYgMCA0NC41IDE5dDE3LjUgNDV6IiBvcGFjaXR5PSIuMDI1IiBmaWx0ZXI9InVybCgjYSkiLz48cGF0aCBkPSJNMjg4MCAzMDQwdjIyNHEwIDI2LTE5IDQ1dC00NSAxOWgtMjU2cS0yNiAwLTQ1LTE5dC0xOS00NXYtMjI0cTAtMjYgMTktNDV0NDUtMTloMjU2cTI2IDAgNDUgMTl0MTkgNDV6bTMwLTEwNTZsLTI4IDc2OHEtMSAyNi0yMC41IDQ1dC00NS41IDE5aC0yNTZxLTI2IDAtNDUuNS0xOXQtMjAuNS00NWwtMjgtNzY4cS0xLTI2IDE3LjUtNDV0NDQuNS0xOWgzMjBxMjYgMCA0NC41IDE5dDE3LjUgNDV6IiBvcGFjaXR5PSIuMDI1IiBmaWx0ZXI9InVybCgjYikiLz48L3N2Zz4="
 
