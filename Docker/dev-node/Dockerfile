@@ -7,4 +7,9 @@ RUN apt-get -qq update \
       bsdmainutils \
       dos2unix
 
+RUN curl --compressed -o- -L https://yarnpkg.com/install.sh | bash \
+ && mv /root/.yarn /yarn
+
 COPY .bashrc /home/node/.bashrc
+
+ENV PATH="/yarn/bin:$PATH"
