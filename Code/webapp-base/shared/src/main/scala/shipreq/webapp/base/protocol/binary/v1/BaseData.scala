@@ -186,30 +186,6 @@ object BaseData {
   def pickleIsoBoolValues[B <: IsoBool[B], A: Pickler]: Pickler[IsoBool.Values[B, A]] =
     transformPickler[IsoBool.Values[B, A], (A, A)](x => IsoBool.Values(pos = x._1, neg = x._2))(x => (x.pos, x.neg))
 
-  def pickleISubset[A: Pickler: UnivEq]: Pickler[ISubset[A]] =
-    new Pickler[ISubset[A]] {
-      import ISubset._
-      private[this] implicit val picklerNES : Pickler[NonEmptySet[A]] = pickleNES
-      private[this] implicit val picklerAll : Pickler[All        [A]] = ConstPickler(All())
-      private[this] implicit val picklerOnly: Pickler[Only       [A]] = transformPickler(Only.apply[A])(_.values)
-      private[this] implicit val picklerNot : Pickler[Not        [A]] = transformPickler(Not.apply[A])(_.values)
-      private[this] final val KeyAll  = 'a'
-      private[this] final val KeyNot  = 'n'
-      private[this] final val KeyOnly = 'o'
-      override def pickle(a: ISubset[A])(implicit state: PickleState): Unit =
-        a match {
-          case b: All [A] => state.enc.writeByte(KeyAll ); state.pickle(b)
-          case b: Not [A] => state.enc.writeByte(KeyNot ); state.pickle(b)
-          case b: Only[A] => state.enc.writeByte(KeyOnly); state.pickle(b)
-        }
-      override def unpickle(implicit state: UnpickleState): ISubset[A] =
-        state.dec.readByte match {
-          case KeyAll  => state.unpickle[All [A]]
-          case KeyNot  => state.unpickle[Not [A]]
-          case KeyOnly => state.unpickle[Only[A]]
-        }
-    }
-
   def pickleLazily[A](f: => Pickler[A]): Pickler[A] = {
     lazy val p = f
     new Pickler[A] {

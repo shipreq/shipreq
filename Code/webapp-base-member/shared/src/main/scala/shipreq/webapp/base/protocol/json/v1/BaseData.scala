@@ -61,42 +61,6 @@ private[v1] object BaseData {
   def codecIsoBoolValues[B <: IsoBool[B], A: JsonCodec]: JsonCodec[IsoBool.Values[B, A]] =
     JsonCodec.xmap[(A, A), IsoBool.Values[B, A]](x => IsoBool.Values(pos = x._1, neg = x._2))(x => (x.pos, x.neg))
 
-  def codecISubset[A: Decoder: Encoder: UnivEq]: JsonCodec[ISubset[A]] = {
-    implicit val as = codecNES[A]
-
-    implicit def decoderISubset: Decoder[ISubset[A]] = decodeSumBySoleKey {
-      case ("all" , c) => c.as[ISubset.All[A]]
-      case ("not" , c) => c.as[ISubset.Not[A]]
-      case ("only", c) => c.as[ISubset.Only[A]]
-    }
-
-    implicit def encoderISubset: Encoder[ISubset[A]] = Encoder.instance {
-      case a: ISubset.All[A]  => Json.obj("all"  -> a.asJson)
-      case a: ISubset.Not[A]  => Json.obj("not"  -> a.asJson)
-      case a: ISubset.Only[A] => Json.obj("only" -> a.asJson)
-    }
-
-    implicit def decoderISubsetAll: Decoder[ISubset.All[A]] =
-      Decoder.const(ISubset.All())
-
-    implicit def encoderISubsetAll: Encoder[ISubset.All[A]] =
-      Encoder.encodeUnit.contramap(_ => ())
-
-    implicit def decoderISubsetOnly: Decoder[ISubset.Only[A]] =
-      Decoder[NonEmptySet[A]].map(ISubset.Only.apply[A])
-
-    implicit def encoderISubsetOnly: Encoder[ISubset.Only[A]] =
-      Encoder[NonEmptySet[A]].contramap(_.values)
-
-    implicit def decoderISubsetNot: Decoder[ISubset.Not[A]] =
-      Decoder[NonEmptySet[A]].map(ISubset.Not.apply[A])
-
-    implicit def encoderISubsetNot: Encoder[ISubset.Not[A]] =
-      Encoder[NonEmptySet[A]].contramap(_.values)
-
-    JsonCodec.summon
-  }
-
   def codecLazily[A](f: => JsonCodec[A]): JsonCodec[A] = {
     lazy val g = f
     JsonCodec(encodeLazily(g.encoder), decodeLazily(g.decoder))

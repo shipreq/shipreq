@@ -53,12 +53,6 @@ object DataProp {
   def dataId[O, D, Id <: TaggedInt](o: O)(implicit O: ObjDataId[O, D, Id]) =
     id[Id].contramap[D](O.id)
 
-  def isubsetContents[A]: ISubset[A] => Set[A] = {
-    case ISubset.All()   => Set.empty[A]
-    case ISubset.Only(v) => v.whole
-    case ISubset.Not(v)  => v.whole
-  }
-
   /**
    * WARNING: Ignores negative numbers.
    * WARNING: Slow with large number values.

@@ -85,12 +85,6 @@ object BaseUtilGen {
 
   // ===================================================================================================================
 
-  def genISubset[A: UnivEq](g: Gen[NonEmptySet[A]]): Gen[ISubset[A]] =
-    Gen.chooseGen(
-      Gen pure ISubset.All(),
-      g map ISubset.Only.apply,
-      g map ISubset.Not.apply)
-
   def genMTrie[K: UnivEq, V](genK: Gen[K], genV: Gen[V], maxDepth: Int)(implicit ss: SizeSpec): Gen[MTrie.Trie[K, V]] = {
     val valueN   = genV map MTrie.Value[K, V]
     val valueO   = valueN.option
