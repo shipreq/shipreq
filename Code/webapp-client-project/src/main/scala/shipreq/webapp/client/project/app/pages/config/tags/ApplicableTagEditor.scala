@@ -17,7 +17,7 @@ import shipreq.webapp.base.ui.AutosizeTextarea
 import shipreq.webapp.base.ui.semantic.Form
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.widgets.ProjectWidgets
+import shipreq.webapp.client.project.widgets.{ColourPicker, ProjectWidgets}
 
 private[tags] object ApplicableTagEditor {
   import DataImplicits._
@@ -44,9 +44,9 @@ private[tags] object ApplicableTagEditor {
 
   @Lenses
   final case class State(source : Option[Source],
-                         name   : String,
                          key    : String,
                          desc   : String,
+                         colour : ColourPicker.State,
                          parents: TagRelationshipEditor.State,
                         ) {
 
@@ -61,7 +61,7 @@ private[tags] object ApplicableTagEditor {
 
       val validated =
         DataValidators.tag.applicableTag(vs)(
-        (key, desc, "", ApplicableReqTypes.empty))
+        (key, desc, colour.text, ApplicableReqTypes.empty))
 
       PotentialChange
         .fromDisjunction(validated.leftMap(_ => ()))
@@ -93,18 +93,18 @@ private[tags] object ApplicableTagEditor {
     def init(t: ApplicableTag, tags: Tags): State =
       State(
         source  = Some(Source(t, tags.relations(t.id))),
-        name    = t.name,
         key     = t.key.value,
         desc    = t.desc.getOrElse(""),
+        colour  = ColourPicker.State.init(None),
         parents = TagRelationshipEditor.State.parents(t.id, tags),
       )
 
     def initNew: State =
       State(
         source  = None,
-        name    = "",
         key     = "",
         desc    = "",
+        colour  = ColourPicker.State.init(None),
         parents = TagRelationshipEditor.State.empty,
       )
 
@@ -178,18 +178,18 @@ private[tags] object ApplicableTagEditor {
     def render(p: Props): VdomNode = {
       val s = p.state.value
 
-      val nameField =
-        Form.Field.text
-          .withLabel("Name")
-          .withState(p.state.zoomStateL(State.name))
-          .withValidator(DataValidators.tag.name.unnamedFn(p.validatorState))
-          .withAutoFocus
-
       val keyField =
         Form.Field.text
-          .withLabel("Key")
+          .withLabel("Name")
           .withState(p.state.zoomStateL(State.key))
           .withValidator(DataValidators.tag.key.unnamedFn(p.validatorState))
+          .withAutoFocus
+
+      val colourField =
+        Form.Field
+          .ofEditor(ColourPicker.Props(p.state.zoomStateL(State.colour)).render)
+          .withValidated(p.state.value.colour.validated, ValidationUX.Highlight)
+          .withLabel("Colour")
 
       val descField =
         Form.Field.text
@@ -202,7 +202,7 @@ private[tags] object ApplicableTagEditor {
       val parents          = tagRelationships(p, hypotheticalTags)
 
       <.div(
-        Form(nameField, keyField, descField),
+        Form(keyField, colourField, descField),
         <.div(*.editorRelRow, parents))
     }
   }

@@ -55,7 +55,7 @@ object ValidationUX {
       override def map[A](f: E => A) = Invalid(error map f)
     }
 
-    def apply(v: util.Validity) =
+    def apply(v: util.Validity): Outcome[Nothing] =
       v match {
         case util.Valid   => Valid
         case util.Invalid => Invalid(None)

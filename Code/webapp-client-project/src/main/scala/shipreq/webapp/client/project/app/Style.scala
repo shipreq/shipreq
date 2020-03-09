@@ -950,6 +950,7 @@ object Style extends StyleSheet.Inline {
     val colourPickerPickler = style(
       marginTop(0.6 em),
       unsafeChild("input:not([type])")(
+        backgroundColor(c"#fff").important,
         padding(1 px, `0`).important,
       ),
     )

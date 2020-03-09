@@ -10,6 +10,7 @@ import shipreq.webapp.base.jsfacade.ReactColor
 import shipreq.webapp.base.ui.semantic.{Button, Input}
 import shipreq.webapp.client.project.app.Style.{widgets => *}
 
+/** Note: validation errors aren't presented as part of this. */
 object ColourPicker {
 
   final case class Props(state: StateSnapshot[State]) {
@@ -54,10 +55,10 @@ object ColourPicker {
       })
 
     private val githubButton =
-      Button.text("Simple colours").onClick(onButtonClick(PickerType.Github))
+      Button.text("Simple").onClick(onButtonClick(PickerType.Github))
 
     private val chromeButton =
-      Button.text("All colours").onClick(onButtonClick(PickerType.Chrome))
+      Button.text("Advanced").onClick(onButtonClick(PickerType.Chrome))
 
     def render(p: Props): VdomNode = {
       val s = p.state.value
