@@ -4,6 +4,7 @@ import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
+import org.scalajs.dom.html
 import shipreq.base.util._
 import shipreq.webapp.base.data.On
 
@@ -35,6 +36,9 @@ object Input {
         r = r(^.cls := "error")
       r
     }
+
+    def withRightButtons(input: VdomTagOf[html.Input], buttons: VdomTagOf[html.Button]*): VdomTag =
+      <.div(^.cls := "ui action input", input)(buttons: _*)
 
     def loadingDisabled(value: String, icon: Icon = Icon.Search) =
       Base(^.cls := "loading icon",

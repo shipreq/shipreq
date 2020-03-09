@@ -943,6 +943,17 @@ object Style extends StyleSheet.Inline {
   // ===================================================================================================================
   object widgets {
 
+    val colourPicker = style(
+      width(20 ex),
+    )
+
+    val colourPickerPickler = style(
+      marginTop(0.6 em),
+      unsafeChild("input:not([type])")(
+        padding(1 px, `0`).important,
+      ),
+    )
+
     private val refColour = color(c"#2363A1")
 
     private def blankLineHeight = 0.6 em

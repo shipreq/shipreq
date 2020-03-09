@@ -9,6 +9,8 @@ import Button._
 /** http://semantic-ui.com/elements/button.html */
 object Button {
 
+  val active = ^.cls := "active"
+
   sealed abstract class Attr(cls: ClassName) extends HasClass(cls)
   object Attr {
     case object Compact  extends Attr("compact")
@@ -25,6 +27,7 @@ object Button {
     case class  BasicIconOnly   (icon: Icon)               extends Type("basic")
     case class  IconAndText     (icon: Icon, text: TagMod) extends Type(NoClass)
     case class  IconOnly        (icon: Icon)               extends Type("icon")
+    case class  Text            (text: TagMod)             extends Type(NoClass)
     // implicit def univEq: UnivEq[Type] = UnivEq.derive
   }
 
@@ -41,6 +44,9 @@ object Button {
 
   def group(bs: VdomTagOf[html.Button]*) =
     divCls("ui buttons")(bs: _*)
+
+  def text(label: String) =
+    Button(tipe = Type.Text(label))
 }
 
 final case class Button(attr  : Multiple[Attr] = Multiple.empty,
@@ -60,6 +66,7 @@ final case class Button(attr  : Multiple[Attr] = Multiple.empty,
       case Type.IconAndText     (i, x) => t(i.tag, x)
       case Type.IconOnly        (i)    => t(i.tagNoMargin)
       case Type.BasicIconOnly   (i)    => t(i.tagNoMargin)
+      case Type.Text            (x)    => t(x)
       case _                           => t
     }
 

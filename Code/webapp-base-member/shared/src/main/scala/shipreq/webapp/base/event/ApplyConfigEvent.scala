@@ -170,9 +170,9 @@ trait ApplyConfigEvent {
 
     val imap = IMapStore(Project.tagTree)
 
+    val validateColour = validateI(V.colour)(_.fold("")(_.value))
     val validateName   = validateA(V.tag.name  .stateless)
     val validateDesc   = validateO(V.tag.desc  .stateless)
-    val validateColour = validateI(V.tag.colour.stateless)(_.fold("")(_.value))
     val validateKey    = validateI(V.tag.key   .stateless)(_.value)
 
     val updateIdCeiling = updateIdCeilingFn(IdCeilings.tag)

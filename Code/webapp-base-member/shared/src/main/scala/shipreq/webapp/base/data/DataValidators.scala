@@ -42,6 +42,11 @@ object DataValidators {
 
   val applicableReqTypes = Validator.id[ApplicableReqTypes].named(FieldNames.applicableReqTypes)
 
+  lazy val colour: Composite.Stateless[String, String, Option[Colour]] =
+    EndoCorrector(live = Colour.liveCorrect, full = Colour.correct)
+      .withAuditor(Auditor(Colour.parseOption(_).leftMap(Invalidity.apply)))
+      .named(FieldNames.colour)
+
   // ===================================================================================================================
   object hashRefKey {
     import Grammar.{hashRefKey => G}
@@ -254,12 +259,6 @@ object DataValidators {
     def key: Composite.Stateful[State, String, String, HashRefKey] =
       hashRefKey.hashRefKey.contramap(_.hashRefKeyState)
 
-    def colour: Composite.Stateful[State, String, String, Option[Colour]] =
-      EndoCorrector(live = Colour.liveCorrect, full = Colour.correct)
-        .withAuditor(Auditor(Colour.parseOption(_).leftMap(Invalidity.apply)))
-        .named(FieldNames.colour)
-        .lift[State]
-
     def desc: Composite.Stateful[State, String, Option[String], Option[String]] =
       genericDesc.lift[State]
 
@@ -276,7 +275,7 @@ object DataValidators {
     ] = s =>
       key            (s).named tuple
       desc           (s).named tuple
-      colour         (s).named tuple
+      colour            .named tuple
       applicableReqTypes.named
   }
 

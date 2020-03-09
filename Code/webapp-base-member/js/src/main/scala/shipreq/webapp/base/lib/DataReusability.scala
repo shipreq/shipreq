@@ -34,6 +34,9 @@ abstract class DataReusability extends BaseReusability {
   implicit def reusabilityUsername: Reusability[Username] =
     Reusability.derive
 
+  implicit def reusabilityColour: Reusability[Colour] =
+    Reusability.byUnivEq
+
   implicit lazy val reusabilityProjectMetaData: Reusability[ProjectMetaData] =
     Reusability.byRef || Reusability.derive
 
