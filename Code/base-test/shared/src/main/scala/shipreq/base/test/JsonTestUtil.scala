@@ -16,6 +16,8 @@ object JsonTestUtil {
 
   implicit def equalDecodingFailure: Equal[DecodingFailure] = Equal.equalA
 
+  implicit def equalCirceError: Equal[io.circe.Error] = Equal.equalA
+
   implicit final class JsonUtilExtString(private val self: String) extends AnyVal {
     def toJsonOrThrow: Json =
       parse(self) match {
@@ -38,6 +40,9 @@ object JsonTestUtil {
 
   def assertDecodeOk[A: Decoder: Equal](json: Json, expect: A)(implicit l: Line): Unit =
     assertDecode(json, Right(expect))
+
+  def assertAllDecodeOk[A: Decoder: Equal](json: Seq[String], expect: Seq[A])(implicit l: Line): Unit =
+    assertSeq(json.map(decode[A](_)), expect.map(Right(_)))
 
   def assertRoundTrip[A: Decoder: Encoder: Equal](a: A)(implicit l: Line): Unit =
     assertDecodeOk(a.asJson, a)

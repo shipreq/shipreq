@@ -84,18 +84,13 @@ Phase 3A
   * Support styling (bold, underline, italics, strikethrough)
 
 * Tags
-  * ability to create child tag in 1-step instead of 2 [FB-4]
-  * add tag colours [FR-8]
   * Users #must be able to prohibit certain tags being used with certain req-types [FR-14]
   * When a req has a tag that is invalid for its req type, it should be hidden from all views [FR-15]
   * When a req has a tag that is invalid for its req type, users shouldn't be allow to specify it [FR-16]
   * remove key from TagGroups, check all Tag fields against UI prototype
-  * ensure dead filter & style everywhere
   * TagSetApplicableChildrenOrder has a bug or something - remember how priorty got fucked up with Actors & could added under should?
   * Add tests to ProjectSpaProtocolsTest
   * Add tests for TagConfig
-  * Add stability test for ProjectTemplate - probably just JSON of events is enough
-  * Uniqueness of tag names... just group names? or include ap-tag keys too?
   * stability tests for Rev1
   * track TagConfig state in UnsavedChanges
   * handle dead ReqTypes' states in ApplicableReqTypes editors
