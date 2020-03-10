@@ -123,17 +123,90 @@ object ProjectSpaProtocolsTest extends TestSuite {
           val expect = (ReqId(25),UpdateConfig.AndReq(CustomFieldUpdateImp(CustomField.Implication.Id(7),ImpFieldValues(CustomReqTypeId(10),Mandatory,ApplicableReqTypes.whitelist(StaticReqType.UseCase)))))
           assertRequest(bin, expect)
         }
-// TODO       "TagCreate" - {
-//          val bin    = BinaryData.fromHex("5945B41D010016030F00610554454D50500C54454D5050505050505050500138295653")
-//          val expect = (ReqId(22),UpdateConfig.AndReq(TagCreate(\&/.This(ApplicableTagValues("TEMPP",HashRefKey("TEMPPPPPPPPP"),None)))))
-//          assertRequest(bin, expect)
-//        }
+
+        "v1.1" - {
+          "ApplicableTagCreate" - {
+            val ^ = ApplicableTagGD
+            val values = ^.nev(
+              ^.ValueForApplicableReqTypes(ApplicableReqTypes.blacklist(3)),
+              ^.ValueForChildren(Vector(6.AT, 444.TG)),
+              ^.ValueForColour(Colour("#f32").get),
+              ^.ValueForDesc("zzz"),
+              ^.ValueForKey("qwe"),
+              ^.ValueForParents(Map(1.TG -> None, 2.AT -> Some(3.TG))),
+            )
+            val expect = (ReqId(8), UpdateConfig.AndReq(ApplicableTagCreate(values)))
+            val bin = BinaryData.fromHex("5945B41D010108030F0663020423663332500267000101610002026700036402037A7A7A726E016300034302610006670081BC230371776538295653")
+            assertRequest(bin, expect)
+          }
+
+          "ApplicableTagUpdate" - {
+            val ^ = ApplicableTagGD
+            val values = ^.nev(
+              ^.ValueForApplicableReqTypes(ApplicableReqTypes.empty),
+              ^.ValueForColour(None),
+              ^.ValueForDesc(None),
+              ^.ValueForParents(Map.empty),
+            )
+            val expect = (ReqId(8), UpdateConfig.AndReq(ApplicableTagUpdate(81.AT, values)))
+            val bin = BinaryData.fromHex("5945B41D0101080310005104726163016401500038295653")
+            assertRequest(bin, expect)
+          }
+
+          "TagGroupCreate" - {
+            val ^ = TagGroupGD
+            val values = ^.nev(
+              ^.ValueForChildren(Vector(6.AT, 444.TG)),
+              ^.ValueForExclusivity(Exclusive),
+              ^.ValueForDesc("zzz"),
+              ^.ValueForName("qwe"),
+              ^.ValueForParents(Map(1.TG -> None, 2.AT -> Some(3.TG))),
+            )
+            val expect = (ReqId(8), UpdateConfig.AndReq(TagGroupCreate(values)))
+            val bin = BinaryData.fromHex("5945B41D0101080312054E037177654D01500267000101610002026700034402037A7A7A4302610006670081BC38295653")
+            assertRequest(bin, expect)
+          }
+
+          "TagGroupUpdate" - {
+            val ^ = TagGroupGD
+            val values = ^.nev(
+              ^.ValueForChildren(Vector.empty),
+              ^.ValueForExclusivity(NonExclusive),
+            )
+            val expect = (ReqId(8), UpdateConfig.AndReq(TagGroupUpdate(52.TG, values)))
+            val bin = BinaryData.fromHex("5945B41D010108031300340243004D0038295653")
+            assertRequest(bin, expect)
+          }
+
+          "TagSetApplicableChildrenOrder" - {
+            val bin = BinaryData.fromHex("5945B41D01010803150009020003001138295653")
+            val expect = (ReqId(8), UpdateConfig.AndReq(TagSetApplicableChildrenOrder(9.TG, Vector(3.AT, 17.AT))))
+            assertRequest(bin, expect)
+          }
+
+          "TagDelete" - {
+            val bin = BinaryData.fromHex("5945B41D010108031167000438295653")
+            val expect = (ReqId(8), UpdateConfig.AndReq(TagDelete(4.TG)))
+            assertRequest(bin, expect)
+          }
+
+          "TagRestore" - {
+            val bin = BinaryData.fromHex("5945B41D010108031461000338295653")
+            val expect = (ReqId(8), UpdateConfig.AndReq(TagRestore(3.AT)))
+            assertRequest(bin, expect)
+          }
+        }
       }
 
       "resp" - {
         "v1.0" - {
           val bin    = BinaryData.fromHex("0100240100000182F209000301440208796F20796F20796FE0CBA98D5D40BFD7327786DA86")
           val expect = \/-((ReqId(18),\/-(verifiedEventsFromJson("""{"#":754,"event":{"CustomIssueTypeUpdate":{"id":3,"values":[{"desc":"yo yo yo"}]}}, "createdAt":"2019-09-27T06:18:51.853Z"}"""))))
+          assertResponse(UpdateConfig)(bin, expect)
+        }
+        "v1.1" - {
+          val bin    = BinaryData.fromHex("0100808801010001093700030363020423663830726F02756300056402027878E0CBA98D5D40BFD7327786DA86")
+          val expect = \/-((ReqId(68),\/-(verifiedEventsFromJson("""{"#":9,"event":{"ApplicableTagUpdate:2":{"id":3,"values":[{"colour":"#f80"},{"reqTypes":{"only":["uc",5]}},{"desc":"xx"}]}}, "createdAt":"2019-09-27T06:18:51.853Z"}"""))))
           assertResponse(UpdateConfig)(bin, expect)
         }
       }

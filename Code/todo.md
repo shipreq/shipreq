@@ -89,9 +89,7 @@ Phase 3A
   * When a req has a tag that is invalid for its req type, users shouldn't be allow to specify it [FR-16]
   * remove key from TagGroups, check all Tag fields against UI prototype
   * TagSetApplicableChildrenOrder has a bug or something - remember how priorty got fucked up with Actors & could added under should?
-  * Add tests to ProjectSpaProtocolsTest
   * Add tests for TagConfig
-  * stability tests for Rev1
   * track TagConfig state in UnsavedChanges
   * handle dead ReqTypes' states in ApplicableReqTypes editors
     (eg user says whitelist A; user deletes A, what should the editor show? Maybe just a litle warning (not error) under field.

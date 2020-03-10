@@ -217,14 +217,18 @@ object Rev1 {
   implicit lazy val codecColour: JsonCodec[Colour] =
     JsonCodec.xmap(Colour.force)(_.value)
 
-  implicit lazy val decoderReqTypeId: Decoder[ReqTypeId] = decodeSumBySoleKeyOrConst[ReqTypeId](
-    "uc" -> StaticReqType.UseCase,
-  ) {
-    case ("c", c) => c.as[CustomReqTypeId]
+  implicit lazy val decoderReqTypeId: Decoder[ReqTypeId] = {
+    val old = decoderFnSumBySoleKey { case ("c", c) => c.as[CustomReqTypeId] }
+    decodeSumBySoleKeyOr[ReqTypeId](
+      "uc" -> StaticReqType.UseCase,
+    ) { c =>
+      val o = old(c)
+      if (o.isRight) o else c.as[Int].map(CustomReqTypeId.apply)
+    }
   }
 
   implicit lazy val encoderReqTypeId: Encoder[ReqTypeId] = Encoder.instance {
-    case a: CustomReqTypeId       => Json.obj("c"  -> a.asJson)
+    case a: CustomReqTypeId       => a.value.asJson
     case _: StaticReqType.UseCase => Json.fromString("uc")
   }
 

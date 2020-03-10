@@ -29,13 +29,15 @@ object JsonUtil {
   def decodeSumBySoleKey[A](f: PartialFunction[(String, ACursor), Decoder.Result[A]]): Decoder[A] =
     Decoder.instance(decoderFnSumBySoleKey(f))
 
-  def decodeSumBySoleKeyOrConst[A](consts: (String, A)*)(f: PartialFunction[(String, ACursor), Decoder.Result[A]]): Decoder[A] = {
+  def decodeSumBySoleKeyOrConst[A](consts: (String, A)*)(f: PartialFunction[(String, ACursor), Decoder.Result[A]]): Decoder[A] =
+    decodeSumBySoleKeyOr(consts: _*)(decoderFnSumBySoleKey(f))
+
+  def decodeSumBySoleKeyOr[A](consts: (String, A)*)(orElse: ACursor => Decoder.Result[A]): Decoder[A] = {
     val lookup = StaticLookupFn.useMap(consts).toOption
-    val g = decoderFnSumBySoleKey(f)
     Decoder.instance(c =>
       c.as[String].toOption.flatMap(lookup) match {
         case Some(r) => Right(r)
-        case None    => g(c)
+        case None    => orElse(c)
       }
     )
   }

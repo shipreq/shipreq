@@ -15,6 +15,7 @@ There are different types:
   * Compile and see what breaks. Breakages will tell you where it's used. In those places
     1. change the import to the new version
     2. also bump the version of whatever codec is using it (probably just `ProjectSpaProtocols` below)
+    3. open up the protocol test (eg. `ProjectSpaProtocolsTest.scala`) and add new cases for the new version
 
 * WebSocket holistic/composite protocol (eg. `ProjectSpaProtocols`)
   * If Response codecs all have versions; bump the necessary ones
