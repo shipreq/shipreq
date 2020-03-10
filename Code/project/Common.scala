@@ -12,9 +12,9 @@ import sbtdocker.DockerPlugin, DockerPlugin.autoImport._
 import LibDependency.{Dep, HasBoth, HasJs, HasJvm, JS, JVM, ModDepScope}
 
 sealed trait JsTestType
-case object NoTests extends JsTestType
-case object NoDom   extends JsTestType
-case object NeedDom extends JsTestType
+case object NoTests      extends JsTestType
+case object UseNode      extends JsTestType
+case object UsePhantomJs extends JsTestType
 
 object Common {
 
@@ -242,10 +242,10 @@ object Common {
     t match {
       case NoTests =>
         _.settings(test := {})
-      case NoDom =>
+      case UseNode =>
         _.settings(
           jsEnv in Test := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv)
-      case NeedDom =>
+      case UsePhantomJs =>
         _.settings(
           emitSourceMaps in fastOptJS in Test := false, // PhantomJS doesn't use
           jsEnv                       in Test := new PhantomJS2Env(PhantomJSEnv.Config().withJettyClassLoader(scalaJSPhantomJSClassLoader.value)))

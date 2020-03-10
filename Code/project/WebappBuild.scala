@@ -100,7 +100,7 @@ object WebappBuild {
     crossProject("webapp-base-test")
       .configureBoth(Common.testModuleSettings)
       .configureJvm(Common.jvmSettings)
-      .configureJs(Common.jsSettings(NeedDom))
+      .configureJs(Common.jsSettings(UsePhantomJs))
       .dependsOn(baseTest, webappBaseMember)
       .depsForBoth(μTest ++ Nyaya.test ++ Circe.main)
       .depsForJs(
@@ -114,7 +114,7 @@ object WebappBuild {
     */
   private lazy val clientSpa: Project => Project =
     _.enablePlugins(ScalaJSPlugin)
-      .configure(Common.jsSettings(NeedDom), useMacroParadise)
+      .configure(Common.jsSettings(UsePhantomJs), useMacroParadise)
       .dependsOn(webappBaseJs, webappBaseTestJs % Test, webappServerLogicJs % Test)
       .settings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
 
@@ -123,7 +123,7 @@ object WebappBuild {
   lazy val webappClientPublic =
     crossProject("webapp-client-public")
       .configureJvm(Common.jvmSettings)
-      .configureJs(Common.jsSettings(NeedDom))
+      .configureJs(Common.jsSettings(UsePhantomJs))
       .dependsOn(webappBase, webappBaseTest % Test)
       .configureBoth(useMacroParadise)
       .jsSettings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
@@ -137,14 +137,14 @@ object WebappBuild {
   lazy val webappClientHome =
     project("webapp-client-home")
       .configure(clientSpa)
+      .configure(Common.jsSettings(UseNode)) // PhantomJS crashes
       .dependsOn(webappClientLoaders)
       .depsForJs(ScalaCSS.react)
-      .settings(jsEnv in Test := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv) // phantomjs crashes
 
   lazy val webappClientWwApi =
     project("webapp-client-ww-api")
       .enablePlugins(ScalaJSPlugin)
-      .configure(Common.jsSettings(NeedDom))
+      .configure(Common.jsSettings(UsePhantomJs))
       .dependsOn(webappBaseMemberJs)
       .depsForJs(
         boopickle ++ scalajsDom ++
@@ -153,7 +153,7 @@ object WebappBuild {
   lazy val webappClientWw =
     project("webapp-client-ww")
       .enablePlugins(ScalaJSPlugin)
-      .configure(Common.jsSettings(NeedDom))
+      .configure(Common.jsSettings(UsePhantomJs))
       .dependsOn(webappClientWwApi, webappBaseTestJs % Test)
       .depsForJs(
         boopickle ++ scalajsDom ++
@@ -198,7 +198,7 @@ object WebappBuild {
         Common.jvmSettings,
         _.dependsOn(taskmanApiLogic, webappClientPublicJvm, webappSsrJvm),
         useMacroParadise)
-      .configureJs(Common.jsSettings(NeedDom)) // TODO NeedDom isn't true but required cos webappBaseTest loads in Sizzle
+      .configureJs(Common.jsSettings(UsePhantomJs))
       .dependsOn(webappBaseMember)
       .dependsOn(baseTest % Test, webappBaseTest % Test)
       .depsForJvm(scaffeine ++ Circe.main ++ commonsText)

@@ -69,7 +69,7 @@ final class FakeWebSocket(override val url: String, initialState: ReadyState = R
         e.code      = reason.code.value
         e.reason    = reason.phrase.value
         e.wasClean  = true
-        e.isTrusted = true
+      //e.isTrusted = true
         onClose.get()(event)
     }
 
@@ -120,7 +120,7 @@ final class FakeWebSocket(override val url: String, initialState: ReadyState = R
       case ReadyState.Open =>
         val p = js.Dynamic.literal(
           data      = m.asInstanceOf[js.Any],
-          isTrusted = true,
+        //isTrusted = true,
         ).asInstanceOf[MessageEventInit]
         val e = new MessageEvent("message", p)
         onMessage.get()(e)

@@ -56,7 +56,7 @@ object ShipReqBuild {
   lazy val baseUtil =
     crossProject("base-util")
       .configureJvm(Common.jvmSettings)
-      .configureJs(Common.jsSettings(NoDom))
+      .configureJs(Common.jsSettings(UseNode))
       .depsForBoth(
         UnivEq.scalaz ++ scalaz ++ Nyaya.prop ++ Monocle.core ++
         Microlibs.adtMacros ++ Microlibs.nonempty ++ Microlibs.recursion ++
@@ -86,7 +86,7 @@ object ShipReqBuild {
     crossProject("base-test")
       .configureBoth(Common.testModuleSettings)
       .configureJvm(Common.jvmSettings)
-      .configureJs(Common.jsSettings(NoDom))
+      .configureJs(Common.jsSettings(UseNode))
       .dependsOn(baseUtil)
       .configureJvm(_.dependsOn(baseDb % Provided))
       .depsForBoth(
