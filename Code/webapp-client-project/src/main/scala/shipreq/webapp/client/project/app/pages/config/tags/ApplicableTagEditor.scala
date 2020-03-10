@@ -129,12 +129,7 @@ private[tags] object ApplicableTagEditor {
   private implicit def vux = ValidationUX.Full
 
   final class Backend($: BackendScope[Props, Unit]) {
-
-    private val fakeApplicableTagId =
-      ApplicableTagId(-1)
-
-    private val fakeApplicableTagInTree =
-      TagInTree(ApplicableTag(fakeApplicableTagId, HashRefKey(""), None, None, ApplicableReqTypes.empty, Live), Vector.empty)
+    import Shared.{fakeApplicableTagId, fakeApplicableTagInTree}
 
     private val pxSourceId: Px[Option[ApplicableTagId]] =
       Px.props($).map(_.subject).withReuse.autoRefresh

@@ -385,13 +385,15 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     * - no concept of Validity (Live vs Dead is still respected)
     * - no contextualisation
     */
-  def tagSimple(id: ApplicableTagId, includeDesc: Boolean, colourOverride: Option[Option[Colour]] = None): VdomTag = {
-    val tag    = project.config.tags.needApplicableTag(id)
-    val colour = colourOverride.getOrElse(tag.colour)
+  def tagSimple(id: ApplicableTagId, includeDesc: Boolean): VdomTag = {
+    val tag = project.config.tags.needApplicableTag(id)
+    tagSimple(tag, includeDesc)
+  }
+
+  def tagSimple(tag: ApplicableTag, includeDesc: Boolean): VdomTag =
     tagWithoutStyle(Plain, tag, includeDesc = includeDesc)(
       *.tag(((tag.live, Valid), false)),
-      tagColour(colour))
-  }
+      tagColour(tag.colour))
 
   def useCaseStepTextAndMaybeInvalidFlow[C[x] <: Traversable[x]](s: UseCaseStepFlowText.TextAndFlow[AnyOptional, C[String \/ UseCaseStepId]],
                                                                  l: Live): VdomTag = {

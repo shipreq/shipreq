@@ -186,22 +186,48 @@ object TagConfig {
           NoTags.render
       }
 
-    private def renderEditor(p: Props, args: splitScreenCrud.EditorArgs): VdomNode = {
+    private def renderHeader(p: Props, args: splitScreenCrud.EditorArgs): VdomNode = {
+
+      val ateState: Option[ApplicableTagEditor.State] =
+        p.state.value.right.editorOption.flatMap(_.swap.toOption)
+
       val colourOverride: Option[Option[Colour]] =
-        p.state.value.right.editorOption.flatMap(_.swap.toOption).map(_.colour.validated match {
+        ateState.map(_.colour.validated match {
           case \/-(c) => c
           case -\/(_) => None
         })
 
+      <.h2(*.editorTitle,
+        args.id match {
+
+          case \/-(id: TagGroupId) =>
+            Shared.group(p.project.tags.needTagGroup(id))
+
+          case -\/(NewTagType.TagGroup) =>
+            "New tag group"
+
+          case \/-(id: ApplicableTagId) =>
+            var tag = p.project.tags.needApplicableTag(id)
+            colourOverride.foreach(c => tag = tag.copy(colour = c))
+            p.pw.tagSimple(tag, includeDesc = false)(*.editorApTagHeader)
+
+          case -\/(NewTagType.Tag) =>
+            ateState.flatMap(s => DataValidators.hashRefKey.hashRefKey.stateless.unnamed(s.key).toOption) match {
+
+              case Some(k) =>
+                val tag = Shared.fakeApplicableTag.copy(key = k, colour = colourOverride.flatten)
+                <.span("New tag: ", p.pw.tagSimple(tag, includeDesc = false)(*.editorApTagHeader))
+
+              case None =>
+                "New tag"
+            }
+        })
+    }
+
+    private def renderEditor(p: Props, args: splitScreenCrud.EditorArgs): VdomNode = {
+
       val header: VdomNode =
-        <.h2(
-          *.editorTitle,
-          args.id match {
-            case \/-(id: TagGroupId)      => Shared.group(p.project.tags.needTagGroup(id))
-            case \/-(id: ApplicableTagId) => p.pw.tagSimple(id, includeDesc = false, colourOverride)(*.editorApTagHeader)
-            case -\/(NewTagType.TagGroup) => "New tag group"
-            case -\/(NewTagType.Tag)      => "New tag"
-          })
+        renderHeader(p, args)
 
       val editorType: EditorType =
         args.id match {

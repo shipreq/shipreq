@@ -31,4 +31,12 @@ private[tags] object Shared {
       case Disabled => dragHandle(Disabled)(live)
     }
 
+  val fakeApplicableTagId =
+    ApplicableTagId(-1)
+
+  val fakeApplicableTag =
+    ApplicableTag(fakeApplicableTagId, HashRefKey(""), None, None, ApplicableReqTypes.empty, Live)
+
+  val fakeApplicableTagInTree =
+    TagInTree(fakeApplicableTag, Vector.empty)
 }
