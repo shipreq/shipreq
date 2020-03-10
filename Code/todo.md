@@ -90,7 +90,6 @@ Phase 3A
   * remove key from TagGroups, check all Tag fields against UI prototype
   * TagSetApplicableChildrenOrder has a bug or something - remember how priorty got fucked up with Actors & could added under should?
   * Add tests for TagConfig
-  * track TagConfig state in UnsavedChanges
   * handle dead ReqTypes' states in ApplicableReqTypes editors
     (eg user says whitelist A; user deletes A, what should the editor show? Maybe just a litle warning (not error) under field.
      like "<triangle-icon> A, B and C are dead")

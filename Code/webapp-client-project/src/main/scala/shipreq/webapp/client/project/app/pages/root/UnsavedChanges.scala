@@ -4,7 +4,7 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react.{CallbackTo, Reusability}
 import japgolly.univeq._
-import scala.util.Try
+import scalaz.{-\/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
@@ -36,6 +36,7 @@ final case class UnsavedChanges(count    : Int,
         case Location.ReqCodeGroup(id) => PlainText.reqCodeById(id, p)
         case Location.ProjectName      => "project name"
         case Location.ManualIssues     => "manual issue(s)"
+        case Location.TagConfig        => "tag editor"
       }
         .sort
         .map("  * " + _)
@@ -51,10 +52,11 @@ object UnsavedChanges {
   implicit def univEq     : UnivEq     [UnsavedChanges] = UnivEq.derive
   implicit def reusability: Reusability[UnsavedChanges] = Reusability.byRefOrUnivEq
 
-  final case class Input(state      : State,
-                         editability: EditorFeature.Editability.ForProject,
-                         projectName: Project.Name,
-                         useCases   : UseCases)
+  final case class Input(state        : State,
+                         editability  : EditorFeature.Editability.ForProject,
+                         projectName  : Project.Name,
+                         projectConfig: ProjectConfig,
+                         useCases     : UseCases)
 
   object Input {
     implicit def reusability: Reusability[Input] = Reusability.byRef || Reusability.derive
@@ -83,6 +85,7 @@ object UnsavedChanges {
   object Location {
     case object ProjectName                           extends Location
     case object ManualIssues                          extends Location
+    case object TagConfig                             extends Location
     final case class Req(id: ReqId)                   extends Location
     final case class ReqCodeGroup(id: ReqCodeGroupId) extends Location
 
@@ -199,6 +202,17 @@ object UnsavedChanges {
                   }
               }
           }.toVector
+        }
+    }
+
+    case object TagConfig extends Type {
+      override def determine(i: Input) =
+        CallbackTo {
+          i.state.tagConfig.right.editorOption match {
+            case Some(\/-(s)) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.TagConfig
+            case Some(-\/(s)) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.TagConfig
+            case _                                                      => emptyVector
+          }
         }
     }
 

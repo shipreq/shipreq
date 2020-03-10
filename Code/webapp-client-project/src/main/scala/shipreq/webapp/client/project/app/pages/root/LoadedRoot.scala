@@ -9,7 +9,7 @@ import org.scalajs.dom.window
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data.{FilterDead, HideDead, Project, ReqId}
+import shipreq.webapp.base.data.{FilterDead, HideDead, Project, ProjectConfig, ReqId}
 import shipreq.webapp.base.event.EventSeqSummary
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.filter.Filter
@@ -73,11 +73,14 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     private val pxProjectName: Px[Project.Name] =
       pxProject.map(_.name).withReuse
 
+    private val pxProjectConfig: Px[ProjectConfig] =
+      pxProject.map(_.config).withReuse
+
     private val pxEditEditability: Px[EditorFeature.Editability.ForProject] =
       pxProject.map(EditorFeature.Editability.apply)
 
     private val pxUnsavedChangesInput: Px[UnsavedChanges.Input] =
-      Px.apply4(pxState, pxEditEditability, pxProjectName, pxUseCases)(UnsavedChanges.Input.apply)
+      Px.apply5(pxState, pxEditEditability, pxProjectName, pxProjectConfig, pxUseCases)(UnsavedChanges.Input.apply)
 
     private val pxUnsavedChanges: Px[UnsavedChanges] =
       pxUnsavedChangesInput.map(UnsavedChanges.determine).flatMap(Px.callback(_).withReuse.autoRefresh)
