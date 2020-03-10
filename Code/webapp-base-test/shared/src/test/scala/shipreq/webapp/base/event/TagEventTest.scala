@@ -261,7 +261,7 @@ trait ApplicableTagEvents {
   val c1 = ApplicableTagCreate(1, nev(Key("c1"), Colour(None), ApplicableReqTypes(allReqTypes), Desc(None)))
   val c2 = ApplicableTagCreate(2, nev(Key("c2"), Colour(None), ApplicableReqTypes(allReqTypes), Desc(Some("r")), parent(1)))
   val c3 = ApplicableTagCreate(3, nev(Key("c3"), Colour(None), ApplicableReqTypes(allReqTypes), Desc(None), child(1)))
-  val u1 = ApplicableTagUpdate(1, nev(Desc(Some("versionness"))))
+  val u1 = ApplicableTagUpdate(1, nev(Desc(Some("versionness")), Colour(Some("#def")), ApplicableReqTypes(allReqTypes)))
   val List(sd1,sd2,sd3,sd4) = List(1,2,3,4).map(i => TagDelete (i.AT))
   val List( r1, r2, r3, r4) = List(1,2,3,4).map(i => TagRestore(i.AT))
 
@@ -348,8 +348,10 @@ object ApplicableTagEventTest extends TestSuite with ApplicableTagEvents {
 
   override def tests = Tests {
     'create {
-      'needKey - assertFail("Key")   (c1.mod(_ - Key))
-      'dupKey  - assertFail("unique")(c1, c2.mod(_ + Key("c1")))
+      'blankKey   - assertFail("Key")     (c1.mod(_ + Key("")))
+      'needKey    - assertFail("Key")     (c1.mod(_ - Key))
+      'dupKey     - assertFail("unique")  (c1, c2.mod(_ + Key("c1")))
+      'badReqType - assertFail("ReqTypes")(c1.mod(_ + ApplicableReqTypes(onlyReqTypes(1234))))
     }
 
     'update {
@@ -357,17 +359,20 @@ object ApplicableTagEventTest extends TestSuite with ApplicableTagEvents {
         var es = Vector(c1, u1)
         def r1 = _assertPass(es: _*).config.tags.tree.get(1.AT).get
         def r2 = _assertPass(es: _*).config.tags.tree.get(2.AT).get
-        assertEq(r1, TagInTree(ApplicableTag(1, "c1", Some("versionness"), None, allReqTypes, Live), Vector.empty))
+        assertEq(r1, TagInTree(ApplicableTag(1, "c1", Some("versionness"), Some("#def"), allReqTypes, Live), Vector.empty))
 
+        es :+= CustomReqTypeEventSharedTests.c1
         es :+= c2
-        es :+= ApplicableTagUpdate(1, nev(Colour(Some("#fff")), Key("c=one")))
-        assertEq(r1, TagInTree(ApplicableTag(1, "c=one", Some("versionness"), Some("#fff"), allReqTypes, Live), Vector(2.AT)))
+        es :+= ApplicableTagUpdate(1, nev(Colour(Some("#321654")), Key("c=one"), ApplicableReqTypes(onlyReqTypes(1))))
+        assertEq(r1, TagInTree(ApplicableTag(1, "c=one", Some("versionness"), Some("#321654"), onlyReqTypes(1), Live), Vector(2.AT)))
         assertEq(r2, TagInTree(ApplicableTag(2, "c2", Some("r"), None, allReqTypes, Live), Vector.empty))
 
         // TODO confirm parent order
       }
 
-      'dupKey - assertFail("unique")(c1, c2, ApplicableTagUpdate(2, nev(Key("c1"))))
+      'blankKey   - assertFail("Key")     (c1.mod(_ + Key("")))
+      'dupKey     - assertFail("unique")  (c1, c2, ApplicableTagUpdate(2, nev(Key("c1"))))
+      'badReqType - assertFail("ReqTypes")(c1.mod(_ + ApplicableReqTypes(onlyReqTypes(1234))))
     }
   }
 }
