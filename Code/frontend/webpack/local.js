@@ -14,7 +14,8 @@ const config = {
 
     // Projects access this via symlink in src/test/resources
     'webapp-base-test': [
-      'airbnb-js-shims',
+      'core-js/features/map',
+      'core-js/features/set',
       'expose-loader?React!react',
       'expose-loader?ReactDOM!react-dom',
       'expose-loader?ReactTestUtils!react-dom/test-utils',
@@ -24,7 +25,8 @@ const config = {
 
     // Projects access this via symlink in src/test/resources
     'webapp-client-test': [
-      'airbnb-js-shims',
+      'core-js/features/map',
+      'core-js/features/set',
       'expose-loader?React!react',
       'expose-loader?ReactDOM!react-dom',
       'expose-loader?ReactDOMServer!react-dom/server',
