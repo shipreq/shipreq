@@ -1,6 +1,7 @@
 #!/bin/bash
 cd "$(dirname "$0")" || exit 1
 
-set -e
-
-exec docker build -t shipreq/build:latest .
+exec docker build \
+  --cache-from shipreq/dev/build_env:latest \
+  --cache-from 930801536115.dkr.ecr.ap-southeast-2.amazonaws.com/shipreq/dev/build_env:latest \
+  -t shipreq/dev/build_env:latest .

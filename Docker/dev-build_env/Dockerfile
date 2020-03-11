@@ -105,3 +105,6 @@ RUN pacman -Syu --noconfirm --needed aws-cli
 COPY strip-ansi /bin
 COPY .bashrc /root/.bashrc
 
+RUN chmod 777 /root \
+ && chmod 666 /root/.bashrc \
+ && ln -s /root/.bashrc /.bashrc

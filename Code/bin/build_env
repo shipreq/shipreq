@@ -1,0 +1,54 @@
+#!/bin/bash
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+SBT_OPTS="-Dsbt.supershell=never -Duser.home=/ -Dsbt.global.base=/.sbt -Dsbt.boot.directory=/.sbt -Dsbt.ivy.home=/.ivy2"
+
+args=(
+  -t
+  --rm
+  --user $(id -u):$(id -g)
+  -v "$(pwd)":/Code:rw
+  -w /Code
+  -e HOME=/
+  -e "SBT_OPTS=$SBT_OPTS"
+  -e "sbt=sbt $SBT_OPTS"
+)
+
+[ -n "$SHIPREQ_TARGET" -a -e "$SHIPREQ_TARGET" ] && args+=(
+  -v "$SHIPREQ_TARGET:$SHIPREQ_TARGET":rw
+  -e "SHIPREQ_TARGET=$SHIPREQ_TARGET"
+)
+
+[ -n "$SHIPREQ_RELEASE_TARGET" -a -e "$SHIPREQ_RELEASE_TARGET" ] && args+=(
+  -v "$SHIPREQ_RELEASE_TARGET:$SHIPREQ_RELEASE_TARGET":rw
+  -e "SHIPREQ_RELEASE_TARGET=$SHIPREQ_RELEASE_TARGET"
+)
+
+sbtDirs=(
+  .cache
+  .coursier
+  .ivy2
+  .sbt
+)
+
+for f in "${sbtDirs[@]}"; do
+  [ -e "$HOME/$f" ] && args+=( -v "$HOME/$f:/$f":rw )
+done
+
+if [ $# -eq 0 ]; then
+  args+=(-i)
+  cmd=(bash)
+else
+  cmd=("$@")
+fi
+
+full=(docker run "${args[@]}" shipreq/dev/build_env "${cmd[@]}")
+clear
+echo "> ${full[@]}"
+echo
+echo 'Instead of just sbt, use: $sbt'
+echo
+exec "${full[@]}"
