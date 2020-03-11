@@ -23,7 +23,7 @@ object TransitiveClosureTest extends TestSuite {
       }
   }
 
-  def gen = RandomData.tagTree.map(Tester)
+  def gen = RandomData.tagTree(RandomData.reqTypeId.set(0 to 4)).map(Tester)
 
   override def tests = Tests {
     gen.mustSatisfyE(_.test)

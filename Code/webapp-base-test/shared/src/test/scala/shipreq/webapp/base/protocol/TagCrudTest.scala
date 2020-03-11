@@ -57,10 +57,13 @@ object TagCrudTest extends TestSuite {
     }
   }
 
+  private val reqTypeIdSet: Gen[Set[ReqTypeId]] =
+    RandomData.reqTypeId.set(0 to 4)
+
   val tagPropGen: Gen[TagProps] =
     for {
-      tt          <- RandomData.tagTree
-      (tag, rels) <- RandomData.tagAndRels
+      tt          <- RandomData.tagTree(reqTypeIdSet)
+      (tag, rels) <- RandomData.tagAndRels(reqTypeIdSet)
     } yield {
       val tt2 = rels.allReferencedIds.foldLeft(tt)((q, id) =>
         q.modOrPut(id, identity, TagInTree(TagId_T.setId(tag, id), Vector.empty)))

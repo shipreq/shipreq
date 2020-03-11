@@ -326,15 +326,18 @@ object RandomData {
   val tagGroup =
     Gen.apply5(TagGroup.apply)(tagGroupId, tagName, optionalLargeText, exclusivity, live)
 
-  val applicableTag =
-    Gen.apply6(ApplicableTag.apply)(applicableTagId, hashRefKey, optionalLargeText, genColour.option, applicableReqTypes, live)
+  def applicableTag(genReqTypeIds: Gen[Set[ReqTypeId]]) =
+    Gen.apply6(ApplicableTag.apply)(
+      applicableTagId, hashRefKey, optionalLargeText, genColour.option, applicableReqTypes(genReqTypeIds), live)
 
-  val tag =
-    Gen.chooseGen[Tag](tagGroup, applicableTag, applicableTag, applicableTag)
+  def tag(genReqTypeIds: Gen[Set[ReqTypeId]]) = {
+    val at = applicableTag(genReqTypeIds)
+    Gen.chooseGen[Tag](tagGroup, at, at, at)
+  }
 
-  val tagAndRels: Gen[(Tag, TagInTree.Relations)] =
+  def tagAndRels(genReqTypeIds: Gen[Set[ReqTypeId]]): Gen[(Tag, TagInTree.Relations)] =
     for {
-      t      ← tag
+      t      ← tag(genReqTypeIds)
       (p, c) ← tagId.set.pair
     } yield {
       val children = (c - t.id -- p).toVector
@@ -343,7 +346,7 @@ object RandomData {
     }
 
   /** HashRefKey uniqueness enforced in Project, not here */
-  val tags: Gen[List[Tag]] = {
+  def tags(genReqTypeIds: Gen[Set[ReqTypeId]]): Gen[List[Tag]] = {
     val tagNameL = Optional[Tag, String]({
       case t: TagGroup      => Some(t.name)
       case _: ApplicableTag => None
@@ -355,7 +358,7 @@ object RandomData {
     val di = distinctId[Tag, TagId]
     val dn = Distinct.str.at(tagNameL)
     val d = (di * dn).lift[List]
-    tag.list map d.run
+    tag(genReqTypeIds).list map d.run
   }
 
   type TagTreeStructure = Map[TagId, Vector[TagId]]
@@ -370,9 +373,9 @@ object RandomData {
         .map(s => preventCycles(Tag.CycleDetectors.multimap)(s.toMap))
     }
 
-  val tagTree: Gen[TagTree] =
+  def tagTree(genReqTypeIds: Gen[Set[ReqTypeId]]): Gen[TagTree] =
     for {
-      l ← tags
+      l ← tags(genReqTypeIds)
       m = Tag.IdAccess.mapById(l)
       s ← tagTreeStructure(m.keySet)
     } yield
@@ -1296,10 +1299,11 @@ object RandomData {
 
   lazy val projectConfig: Gen[ProjectConfig] =
     for {
-      (issues, tags) ← Gen.tuple2(customIssueTypes, tagTree) map distinctHashRefKeys.run
       reqtypes       ← customReqTypes
       reqTypeIds     = StaticReqType.values ++ reqtypes.keys
       reqTypeIdSet   = reqTypeIds.whole.toSet
+      genReqTypeIds  = Gen.chooseNE(reqTypeIds).set(0 to 2)
+      (issues, tags) ← Gen.tuple2(customIssueTypes, tagTree(genReqTypeIds)) map distinctHashRefKeys.run
       fields         ← fieldSet(reqTypeIdSet, tags.keySet, reqtypes.keySet)
     } yield ProjectConfig(issues, ReqTypes(reqtypes), fields, Tags(tags))
 
