@@ -6,8 +6,8 @@
   ],
   "version": "4.42.0",
   "hash": "4ed9ffddb8093e12e576",
-  "time": 3645,
-  "builtAt": 1583563756028,
+  "time": 2520,
+  "builtAt": 1583970239138,
   "publicPath": "",
   "outputPath": "/tmp/shipreq.webpack.prod",
   "assetsByChunkName": {
@@ -471,9 +471,9 @@
               "prefetched": false,
               "chunks": [
               ],
-              "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+              "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
               "issuerId": null,
-              "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+              "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
               "issuerPath": [
                 {
                   "id": null,
@@ -482,8 +482,8 @@
                 },
                 {
                   "id": null,
-                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-                  "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+                  "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
                 }
               ],
               "failed": false,
@@ -629,21 +629,21 @@
               "reasons": [
                 {
                   "moduleId": null,
-                  "moduleIdentifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/usage.js",
-                  "module": "./node_modules/autotrack/lib/usage.js",
-                  "moduleName": "./node_modules/autotrack/lib/usage.js",
-                  "type": "harmony side effect evaluation",
-                  "userRequest": "./constants",
-                  "loc": "16:0-66"
-                },
-                {
-                  "moduleId": null,
                   "moduleIdentifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/provide.js",
                   "module": "./node_modules/autotrack/lib/provide.js",
                   "moduleName": "./node_modules/autotrack/lib/provide.js",
                   "type": "harmony side effect evaluation",
                   "userRequest": "./constants",
                   "loc": "16:0-37"
+                },
+                {
+                  "moduleId": null,
+                  "moduleIdentifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/usage.js",
+                  "module": "./node_modules/autotrack/lib/usage.js",
+                  "moduleName": "./node_modules/autotrack/lib/usage.js",
+                  "type": "harmony side effect evaluation",
+                  "userRequest": "./constants",
+                  "loc": "16:0-66"
                 },
                 {
                   "moduleId": null,
@@ -949,9 +949,9 @@
               "prefetched": false,
               "chunks": [
               ],
-              "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+              "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
               "issuerId": null,
-              "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+              "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
               "issuerPath": [
                 {
                   "id": null,
@@ -960,8 +960,8 @@
                 },
                 {
                   "id": null,
-                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-                  "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+                  "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
                 }
               ],
               "failed": false,
@@ -1303,9 +1303,9 @@
               "prefetched": false,
               "chunks": [
               ],
-              "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+              "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
               "issuerId": null,
-              "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+              "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
               "issuerPath": [
                 {
                   "id": null,
@@ -1314,8 +1314,8 @@
                 },
                 {
                   "id": null,
-                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-                  "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+                  "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
                 }
               ],
               "failed": false,
@@ -1403,9 +1403,9 @@
               "prefetched": false,
               "chunks": [
               ],
-              "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+              "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
               "issuerId": null,
-              "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+              "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
               "issuerPath": [
                 {
                   "id": null,
@@ -1414,8 +1414,8 @@
                 },
                 {
                   "id": null,
-                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-                  "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+                  "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
                 }
               ],
               "failed": false,
@@ -1698,8 +1698,8 @@
                 },
                 {
                   "id": null,
-                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-                  "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+                  "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
                 },
                 {
                   "id": null,
@@ -1803,8 +1803,8 @@
                 },
                 {
                   "id": null,
-                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-                  "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+                  "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
                 },
                 {
                   "id": null,
@@ -1890,8 +1890,8 @@
                 },
                 {
                   "id": null,
-                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-                  "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+                  "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
                 },
                 {
                   "id": null,
@@ -1977,8 +1977,8 @@
                 },
                 {
                   "id": null,
-                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-                  "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+                  "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
                 },
                 {
                   "id": null,
@@ -2046,8 +2046,8 @@
                 },
                 {
                   "id": null,
-                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-                  "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+                  "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
                 },
                 {
                   "id": null,
@@ -2113,8 +2113,8 @@
                 },
                 {
                   "id": null,
-                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-                  "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+                  "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
                 },
                 {
                   "id": null,
@@ -2182,8 +2182,8 @@
                 },
                 {
                   "id": null,
-                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-                  "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+                  "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+                  "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
                 },
                 {
                   "id": null,
@@ -7771,9 +7771,9 @@
           "prefetched": false,
           "chunks": [
           ],
-          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
           "issuerId": null,
-          "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+          "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
           "issuerPath": [
             {
               "id": null,
@@ -7782,8 +7782,8 @@
             },
             {
               "id": null,
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             }
           ],
           "failed": false,
@@ -7929,21 +7929,21 @@
           "reasons": [
             {
               "moduleId": null,
-              "moduleIdentifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/usage.js",
-              "module": "./node_modules/autotrack/lib/usage.js",
-              "moduleName": "./node_modules/autotrack/lib/usage.js",
-              "type": "harmony side effect evaluation",
-              "userRequest": "./constants",
-              "loc": "16:0-66"
-            },
-            {
-              "moduleId": null,
               "moduleIdentifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/provide.js",
               "module": "./node_modules/autotrack/lib/provide.js",
               "moduleName": "./node_modules/autotrack/lib/provide.js",
               "type": "harmony side effect evaluation",
               "userRequest": "./constants",
               "loc": "16:0-37"
+            },
+            {
+              "moduleId": null,
+              "moduleIdentifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/usage.js",
+              "module": "./node_modules/autotrack/lib/usage.js",
+              "moduleName": "./node_modules/autotrack/lib/usage.js",
+              "type": "harmony side effect evaluation",
+              "userRequest": "./constants",
+              "loc": "16:0-66"
             },
             {
               "moduleId": null,
@@ -8249,9 +8249,9 @@
           "prefetched": false,
           "chunks": [
           ],
-          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
           "issuerId": null,
-          "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+          "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
           "issuerPath": [
             {
               "id": null,
@@ -8260,8 +8260,8 @@
             },
             {
               "id": null,
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             }
           ],
           "failed": false,
@@ -8603,9 +8603,9 @@
           "prefetched": false,
           "chunks": [
           ],
-          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
           "issuerId": null,
-          "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+          "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
           "issuerPath": [
             {
               "id": null,
@@ -8614,8 +8614,8 @@
             },
             {
               "id": null,
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             }
           ],
           "failed": false,
@@ -8703,9 +8703,9 @@
           "prefetched": false,
           "chunks": [
           ],
-          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
           "issuerId": null,
-          "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+          "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
           "issuerPath": [
             {
               "id": null,
@@ -8714,8 +8714,8 @@
             },
             {
               "id": null,
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             }
           ],
           "failed": false,
@@ -8998,8 +8998,8 @@
             },
             {
               "id": null,
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             },
             {
               "id": null,
@@ -9103,8 +9103,8 @@
             },
             {
               "id": null,
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             },
             {
               "id": null,
@@ -9190,8 +9190,8 @@
             },
             {
               "id": null,
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             },
             {
               "id": null,
@@ -9277,8 +9277,8 @@
             },
             {
               "id": null,
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             },
             {
               "id": null,
@@ -9346,8 +9346,8 @@
             },
             {
               "id": null,
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             },
             {
               "id": null,
@@ -9413,8 +9413,8 @@
             },
             {
               "id": null,
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             },
             {
               "id": null,
@@ -9482,8 +9482,8 @@
             },
             {
               "id": null,
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             },
             {
               "id": null,

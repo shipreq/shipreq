@@ -5,9 +5,9 @@
     "./node_modules/moment/min/moment.min.js\nModule not found: Error: Can't resolve './locale' in '/host/node_modules/moment/min'\nresolve './locale' in '/host/node_modules/moment/min'\n  using description file: /host/node_modules/moment/package.json (relative path: ./min)\n    Field 'browser' doesn't contain a valid alias configuration\n    using description file: /host/node_modules/moment/package.json (relative path: ./min/locale)\n      as directory\n        /host/node_modules/moment/min/locale doesn't exist\n[/host/node_modules/moment/min/locale]\n @ ./node_modules/moment/min/moment.min.js\n @ ./node_modules/expose-loader?moment!./node_modules/moment/min/moment.min.js-exposed\n @ multi expose-loader?ReactCollapse!react-collapse expose-loader?moment!moment/min/moment.min.js expose-loader?autosize!autosize expose-loader?clipboard!clipboard-polyfill expose-loader?scrollIntoView!scroll-into-view-if-needed expose-loader?TextComplete!textcomplete/lib/textcomplete expose-loader?TextCompleteTA!textcomplete/lib/textarea"
   ],
   "version": "4.42.0",
-  "hash": "29a2bff84f6aa3f065cd",
-  "time": 2479,
-  "builtAt": 1583563732800,
+  "hash": "f86b25924ba97b6f92cc",
+  "time": 2468,
+  "builtAt": 1583970239085,
   "publicPath": "",
   "outputPath": "/tmp/shipreq.webpack.dev",
   "assetsByChunkName": {
@@ -89,7 +89,7 @@
     },
     {
       "name": "member-lib-bundle.js",
-      "size": 268634,
+      "size": 268859,
       "chunks": [
         "member-lib-bundle"
       ],
@@ -786,9 +786,9 @@
           "chunks": [
             "analytics"
           ],
-          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "issuerId": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "issuerId": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
           "issuerPath": [
             {
               "id": "./shipreq/js/analytics.js",
@@ -796,9 +796,9 @@
               "name": "./shipreq/js/analytics.js"
             },
             {
-              "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             }
           ],
           "failed": false,
@@ -1035,9 +1035,9 @@
           "chunks": [
             "analytics"
           ],
-          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "issuerId": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "issuerId": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
           "issuerPath": [
             {
               "id": "./shipreq/js/analytics.js",
@@ -1045,9 +1045,9 @@
               "name": "./shipreq/js/analytics.js"
             },
             {
-              "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             }
           ],
           "failed": false,
@@ -1161,9 +1161,9 @@
           "chunks": [
             "analytics"
           ],
-          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "issuerId": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "issuerId": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
           "issuerPath": [
             {
               "id": "./shipreq/js/analytics.js",
@@ -1171,9 +1171,9 @@
               "name": "./shipreq/js/analytics.js"
             },
             {
-              "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             }
           ],
           "failed": false,
@@ -1505,9 +1505,9 @@
           "chunks": [
             "analytics"
           ],
-          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "issuerId": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+          "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "issuerId": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
           "issuerPath": [
             {
               "id": "./shipreq/js/analytics.js",
@@ -1515,9 +1515,9 @@
               "name": "./shipreq/js/analytics.js"
             },
             {
-              "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             }
           ],
           "failed": false,
@@ -1646,9 +1646,9 @@
               "name": "./shipreq/js/analytics.js"
             },
             {
-              "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             },
             {
               "id": "./node_modules/dom-utils/index.js",
@@ -1731,9 +1731,9 @@
               "name": "./shipreq/js/analytics.js"
             },
             {
-              "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             },
             {
               "id": "./node_modules/dom-utils/index.js",
@@ -1798,9 +1798,9 @@
               "name": "./shipreq/js/analytics.js"
             },
             {
-              "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             },
             {
               "id": "./node_modules/dom-utils/index.js",
@@ -1865,9 +1865,9 @@
               "name": "./shipreq/js/analytics.js"
             },
             {
-              "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             },
             {
               "id": "./node_modules/dom-utils/index.js",
@@ -1932,9 +1932,9 @@
               "name": "./shipreq/js/analytics.js"
             },
             {
-              "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             },
             {
               "id": "./node_modules/dom-utils/index.js",
@@ -2035,9 +2035,9 @@
               "name": "./shipreq/js/analytics.js"
             },
             {
-              "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             },
             {
               "id": "./node_modules/dom-utils/index.js",
@@ -2120,9 +2120,9 @@
               "name": "./shipreq/js/analytics.js"
             },
             {
-              "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-              "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+              "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+              "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
             },
             {
               "id": "./node_modules/dom-utils/index.js",
@@ -2224,14 +2224,14 @@
       "rendered": true,
       "initial": true,
       "entry": true,
-      "size": 231384,
+      "size": 231631,
       "names": [
         "member-lib-bundle"
       ],
       "files": [
         "member-lib-bundle.js"
       ],
-      "hash": "dbab832db4d9e0fa20d3",
+      "hash": "3ed175caa8c1bb75de23",
       "siblings": [
       ],
       "parents": [
@@ -2997,7 +2997,7 @@
           "name": "./node_modules/prop-types/checkPropTypes.js",
           "index": 20,
           "index2": 15,
-          "size": 3534,
+          "size": 3781,
           "cacheable": true,
           "built": true,
           "optional": false,
@@ -3060,7 +3060,7 @@
           "optimizationBailout": [
           ],
           "depth": 6,
-          "source": "/**\n * Copyright (c) 2013-present, Facebook, Inc.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\n'use strict';\n\nvar printWarning = function() {};\n\nif (process.env.NODE_ENV !== 'production') {\n  var ReactPropTypesSecret = require('./lib/ReactPropTypesSecret');\n  var loggedTypeFailures = {};\n\n  printWarning = function(text) {\n    var message = 'Warning: ' + text;\n    if (typeof console !== 'undefined') {\n      console.error(message);\n    }\n    try {\n      // --- Welcome to debugging React ---\n      // This error was thrown as a convenience so that you can use this stack\n      // to find the callsite that caused this warning to fire.\n      throw new Error(message);\n    } catch (x) {}\n  };\n}\n\n/**\n * Assert that the values match with the type specs.\n * Error messages are memorized and will only be shown once.\n *\n * @param {object} typeSpecs Map of name to a ReactPropType\n * @param {object} values Runtime values that need to be type-checked\n * @param {string} location e.g. \"prop\", \"context\", \"child context\"\n * @param {string} componentName Name of the component for error messages.\n * @param {?Function} getStack Returns the component stack.\n * @private\n */\nfunction checkPropTypes(typeSpecs, values, location, componentName, getStack) {\n  if (process.env.NODE_ENV !== 'production') {\n    for (var typeSpecName in typeSpecs) {\n      if (typeSpecs.hasOwnProperty(typeSpecName)) {\n        var error;\n        // Prop type validation may throw. In case they do, we don't want to\n        // fail the render phase where it didn't fail before. So we log it.\n        // After these have been cleaned up, we'll let them throw.\n        try {\n          // This is intentionally an invariant that gets caught. It's the same\n          // behavior as without this statement except with a better message.\n          if (typeof typeSpecs[typeSpecName] !== 'function') {\n            var err = Error(\n              (componentName || 'React class') + ': ' + location + ' type `' + typeSpecName + '` is invalid; ' +\n              'it must be a function, usually from the `prop-types` package, but received `' + typeof typeSpecs[typeSpecName] + '`.'\n            );\n            err.name = 'Invariant Violation';\n            throw err;\n          }\n          error = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, ReactPropTypesSecret);\n        } catch (ex) {\n          error = ex;\n        }\n        if (error && !(error instanceof Error)) {\n          printWarning(\n            (componentName || 'React class') + ': type specification of ' +\n            location + ' `' + typeSpecName + '` is invalid; the type checker ' +\n            'function must return `null` or an `Error` but returned a ' + typeof error + '. ' +\n            'You may have forgotten to pass an argument to the type checker ' +\n            'creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and ' +\n            'shape all require an argument).'\n          )\n\n        }\n        if (error instanceof Error && !(error.message in loggedTypeFailures)) {\n          // Only monitor this failure once because there tends to be a lot of the\n          // same error.\n          loggedTypeFailures[error.message] = true;\n\n          var stack = getStack ? getStack() : '';\n\n          printWarning(\n            'Failed ' + location + ' type: ' + error.message + (stack != null ? stack : '')\n          );\n        }\n      }\n    }\n  }\n}\n\nmodule.exports = checkPropTypes;\n"
+          "source": "/**\n * Copyright (c) 2013-present, Facebook, Inc.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\n'use strict';\n\nvar printWarning = function() {};\n\nif (process.env.NODE_ENV !== 'production') {\n  var ReactPropTypesSecret = require('./lib/ReactPropTypesSecret');\n  var loggedTypeFailures = {};\n  var has = Function.call.bind(Object.prototype.hasOwnProperty);\n\n  printWarning = function(text) {\n    var message = 'Warning: ' + text;\n    if (typeof console !== 'undefined') {\n      console.error(message);\n    }\n    try {\n      // --- Welcome to debugging React ---\n      // This error was thrown as a convenience so that you can use this stack\n      // to find the callsite that caused this warning to fire.\n      throw new Error(message);\n    } catch (x) {}\n  };\n}\n\n/**\n * Assert that the values match with the type specs.\n * Error messages are memorized and will only be shown once.\n *\n * @param {object} typeSpecs Map of name to a ReactPropType\n * @param {object} values Runtime values that need to be type-checked\n * @param {string} location e.g. \"prop\", \"context\", \"child context\"\n * @param {string} componentName Name of the component for error messages.\n * @param {?Function} getStack Returns the component stack.\n * @private\n */\nfunction checkPropTypes(typeSpecs, values, location, componentName, getStack) {\n  if (process.env.NODE_ENV !== 'production') {\n    for (var typeSpecName in typeSpecs) {\n      if (has(typeSpecs, typeSpecName)) {\n        var error;\n        // Prop type validation may throw. In case they do, we don't want to\n        // fail the render phase where it didn't fail before. So we log it.\n        // After these have been cleaned up, we'll let them throw.\n        try {\n          // This is intentionally an invariant that gets caught. It's the same\n          // behavior as without this statement except with a better message.\n          if (typeof typeSpecs[typeSpecName] !== 'function') {\n            var err = Error(\n              (componentName || 'React class') + ': ' + location + ' type `' + typeSpecName + '` is invalid; ' +\n              'it must be a function, usually from the `prop-types` package, but received `' + typeof typeSpecs[typeSpecName] + '`.'\n            );\n            err.name = 'Invariant Violation';\n            throw err;\n          }\n          error = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, ReactPropTypesSecret);\n        } catch (ex) {\n          error = ex;\n        }\n        if (error && !(error instanceof Error)) {\n          printWarning(\n            (componentName || 'React class') + ': type specification of ' +\n            location + ' `' + typeSpecName + '` is invalid; the type checker ' +\n            'function must return `null` or an `Error` but returned a ' + typeof error + '. ' +\n            'You may have forgotten to pass an argument to the type checker ' +\n            'creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and ' +\n            'shape all require an argument).'\n          );\n        }\n        if (error instanceof Error && !(error.message in loggedTypeFailures)) {\n          // Only monitor this failure once because there tends to be a lot of the\n          // same error.\n          loggedTypeFailures[error.message] = true;\n\n          var stack = getStack ? getStack() : '';\n\n          printWarning(\n            'Failed ' + location + ' type: ' + error.message + (stack != null ? stack : '')\n          );\n        }\n      }\n    }\n  }\n}\n\n/**\n * Resets warning cache when testing.\n *\n * @private\n */\ncheckPropTypes.resetWarningCache = function() {\n  if (process.env.NODE_ENV !== 'production') {\n    loggedTypeFailures = {};\n  }\n}\n\nmodule.exports = checkPropTypes;\n"
         },
         {
           "id": "./node_modules/prop-types/lib/ReactPropTypesSecret.js",
@@ -5742,9 +5742,9 @@
       "chunks": [
         "analytics"
       ],
-      "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-      "issuerId": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-      "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+      "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+      "issuerId": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+      "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
       "issuerPath": [
         {
           "id": "./shipreq/js/analytics.js",
@@ -5752,9 +5752,9 @@
           "name": "./shipreq/js/analytics.js"
         },
         {
-          "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+          "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
         }
       ],
       "failed": false,
@@ -5991,9 +5991,9 @@
       "chunks": [
         "analytics"
       ],
-      "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-      "issuerId": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-      "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+      "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+      "issuerId": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+      "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
       "issuerPath": [
         {
           "id": "./shipreq/js/analytics.js",
@@ -6001,9 +6001,9 @@
           "name": "./shipreq/js/analytics.js"
         },
         {
-          "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+          "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
         }
       ],
       "failed": false,
@@ -6117,9 +6117,9 @@
       "chunks": [
         "analytics"
       ],
-      "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-      "issuerId": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-      "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+      "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+      "issuerId": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+      "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
       "issuerPath": [
         {
           "id": "./shipreq/js/analytics.js",
@@ -6127,9 +6127,9 @@
           "name": "./shipreq/js/analytics.js"
         },
         {
-          "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+          "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
         }
       ],
       "failed": false,
@@ -6597,9 +6597,9 @@
       "chunks": [
         "analytics"
       ],
-      "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-      "issuerId": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-      "issuerName": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
+      "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+      "issuerId": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+      "issuerName": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
       "issuerPath": [
         {
           "id": "./shipreq/js/analytics.js",
@@ -6607,9 +6607,9 @@
           "name": "./shipreq/js/analytics.js"
         },
         {
-          "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+          "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
         }
       ],
       "failed": false,
@@ -6738,9 +6738,9 @@
           "name": "./shipreq/js/analytics.js"
         },
         {
-          "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+          "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
         },
         {
           "id": "./node_modules/dom-utils/index.js",
@@ -6823,9 +6823,9 @@
           "name": "./shipreq/js/analytics.js"
         },
         {
-          "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+          "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
         },
         {
           "id": "./node_modules/dom-utils/index.js",
@@ -6890,9 +6890,9 @@
           "name": "./shipreq/js/analytics.js"
         },
         {
-          "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+          "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
         },
         {
           "id": "./node_modules/dom-utils/index.js",
@@ -6957,9 +6957,9 @@
           "name": "./shipreq/js/analytics.js"
         },
         {
-          "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+          "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
         },
         {
           "id": "./node_modules/dom-utils/index.js",
@@ -7024,9 +7024,9 @@
           "name": "./shipreq/js/analytics.js"
         },
         {
-          "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+          "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
         },
         {
           "id": "./node_modules/dom-utils/index.js",
@@ -7127,9 +7127,9 @@
           "name": "./shipreq/js/analytics.js"
         },
         {
-          "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+          "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
         },
         {
           "id": "./node_modules/dom-utils/index.js",
@@ -7212,9 +7212,9 @@
           "name": "./shipreq/js/analytics.js"
         },
         {
-          "id": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/outbound-link-tracker.js",
-          "name": "./node_modules/autotrack/lib/plugins/outbound-link-tracker.js"
+          "id": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "identifier": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/node_modules/autotrack/lib/plugins/clean-url-tracker.js",
+          "name": "./node_modules/autotrack/lib/plugins/clean-url-tracker.js"
         },
         {
           "id": "./node_modules/dom-utils/index.js",
@@ -7788,7 +7788,7 @@
       "name": "./node_modules/prop-types/checkPropTypes.js",
       "index": 20,
       "index2": 15,
-      "size": 3534,
+      "size": 3781,
       "cacheable": true,
       "built": true,
       "optional": false,
@@ -7851,7 +7851,7 @@
       "optimizationBailout": [
       ],
       "depth": 6,
-      "source": "/**\n * Copyright (c) 2013-present, Facebook, Inc.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\n'use strict';\n\nvar printWarning = function() {};\n\nif (process.env.NODE_ENV !== 'production') {\n  var ReactPropTypesSecret = require('./lib/ReactPropTypesSecret');\n  var loggedTypeFailures = {};\n\n  printWarning = function(text) {\n    var message = 'Warning: ' + text;\n    if (typeof console !== 'undefined') {\n      console.error(message);\n    }\n    try {\n      // --- Welcome to debugging React ---\n      // This error was thrown as a convenience so that you can use this stack\n      // to find the callsite that caused this warning to fire.\n      throw new Error(message);\n    } catch (x) {}\n  };\n}\n\n/**\n * Assert that the values match with the type specs.\n * Error messages are memorized and will only be shown once.\n *\n * @param {object} typeSpecs Map of name to a ReactPropType\n * @param {object} values Runtime values that need to be type-checked\n * @param {string} location e.g. \"prop\", \"context\", \"child context\"\n * @param {string} componentName Name of the component for error messages.\n * @param {?Function} getStack Returns the component stack.\n * @private\n */\nfunction checkPropTypes(typeSpecs, values, location, componentName, getStack) {\n  if (process.env.NODE_ENV !== 'production') {\n    for (var typeSpecName in typeSpecs) {\n      if (typeSpecs.hasOwnProperty(typeSpecName)) {\n        var error;\n        // Prop type validation may throw. In case they do, we don't want to\n        // fail the render phase where it didn't fail before. So we log it.\n        // After these have been cleaned up, we'll let them throw.\n        try {\n          // This is intentionally an invariant that gets caught. It's the same\n          // behavior as without this statement except with a better message.\n          if (typeof typeSpecs[typeSpecName] !== 'function') {\n            var err = Error(\n              (componentName || 'React class') + ': ' + location + ' type `' + typeSpecName + '` is invalid; ' +\n              'it must be a function, usually from the `prop-types` package, but received `' + typeof typeSpecs[typeSpecName] + '`.'\n            );\n            err.name = 'Invariant Violation';\n            throw err;\n          }\n          error = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, ReactPropTypesSecret);\n        } catch (ex) {\n          error = ex;\n        }\n        if (error && !(error instanceof Error)) {\n          printWarning(\n            (componentName || 'React class') + ': type specification of ' +\n            location + ' `' + typeSpecName + '` is invalid; the type checker ' +\n            'function must return `null` or an `Error` but returned a ' + typeof error + '. ' +\n            'You may have forgotten to pass an argument to the type checker ' +\n            'creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and ' +\n            'shape all require an argument).'\n          )\n\n        }\n        if (error instanceof Error && !(error.message in loggedTypeFailures)) {\n          // Only monitor this failure once because there tends to be a lot of the\n          // same error.\n          loggedTypeFailures[error.message] = true;\n\n          var stack = getStack ? getStack() : '';\n\n          printWarning(\n            'Failed ' + location + ' type: ' + error.message + (stack != null ? stack : '')\n          );\n        }\n      }\n    }\n  }\n}\n\nmodule.exports = checkPropTypes;\n"
+      "source": "/**\n * Copyright (c) 2013-present, Facebook, Inc.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\n'use strict';\n\nvar printWarning = function() {};\n\nif (process.env.NODE_ENV !== 'production') {\n  var ReactPropTypesSecret = require('./lib/ReactPropTypesSecret');\n  var loggedTypeFailures = {};\n  var has = Function.call.bind(Object.prototype.hasOwnProperty);\n\n  printWarning = function(text) {\n    var message = 'Warning: ' + text;\n    if (typeof console !== 'undefined') {\n      console.error(message);\n    }\n    try {\n      // --- Welcome to debugging React ---\n      // This error was thrown as a convenience so that you can use this stack\n      // to find the callsite that caused this warning to fire.\n      throw new Error(message);\n    } catch (x) {}\n  };\n}\n\n/**\n * Assert that the values match with the type specs.\n * Error messages are memorized and will only be shown once.\n *\n * @param {object} typeSpecs Map of name to a ReactPropType\n * @param {object} values Runtime values that need to be type-checked\n * @param {string} location e.g. \"prop\", \"context\", \"child context\"\n * @param {string} componentName Name of the component for error messages.\n * @param {?Function} getStack Returns the component stack.\n * @private\n */\nfunction checkPropTypes(typeSpecs, values, location, componentName, getStack) {\n  if (process.env.NODE_ENV !== 'production') {\n    for (var typeSpecName in typeSpecs) {\n      if (has(typeSpecs, typeSpecName)) {\n        var error;\n        // Prop type validation may throw. In case they do, we don't want to\n        // fail the render phase where it didn't fail before. So we log it.\n        // After these have been cleaned up, we'll let them throw.\n        try {\n          // This is intentionally an invariant that gets caught. It's the same\n          // behavior as without this statement except with a better message.\n          if (typeof typeSpecs[typeSpecName] !== 'function') {\n            var err = Error(\n              (componentName || 'React class') + ': ' + location + ' type `' + typeSpecName + '` is invalid; ' +\n              'it must be a function, usually from the `prop-types` package, but received `' + typeof typeSpecs[typeSpecName] + '`.'\n            );\n            err.name = 'Invariant Violation';\n            throw err;\n          }\n          error = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, ReactPropTypesSecret);\n        } catch (ex) {\n          error = ex;\n        }\n        if (error && !(error instanceof Error)) {\n          printWarning(\n            (componentName || 'React class') + ': type specification of ' +\n            location + ' `' + typeSpecName + '` is invalid; the type checker ' +\n            'function must return `null` or an `Error` but returned a ' + typeof error + '. ' +\n            'You may have forgotten to pass an argument to the type checker ' +\n            'creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and ' +\n            'shape all require an argument).'\n          );\n        }\n        if (error instanceof Error && !(error.message in loggedTypeFailures)) {\n          // Only monitor this failure once because there tends to be a lot of the\n          // same error.\n          loggedTypeFailures[error.message] = true;\n\n          var stack = getStack ? getStack() : '';\n\n          printWarning(\n            'Failed ' + location + ' type: ' + error.message + (stack != null ? stack : '')\n          );\n        }\n      }\n    }\n  }\n}\n\n/**\n * Resets warning cache when testing.\n *\n * @private\n */\ncheckPropTypes.resetWarningCache = function() {\n  if (process.env.NODE_ENV !== 'production') {\n    loggedTypeFailures = {};\n  }\n}\n\nmodule.exports = checkPropTypes;\n"
     },
     {
       "id": "./node_modules/prop-types/lib/ReactPropTypesSecret.js",
