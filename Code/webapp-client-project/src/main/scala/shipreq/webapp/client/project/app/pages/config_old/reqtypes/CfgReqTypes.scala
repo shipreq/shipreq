@@ -61,7 +61,7 @@ object CfgReqTypes {
     private val crudIO = Px.props($).withReuse.autoRefresh.map(p => CrudActionIO(p.remote)(
       create  = UpdateConfigCmd.CustomReqTypeCreate,
       update  = UpdateConfigCmd.CustomReqTypeUpdate,
-      delete  = UpdateConfigCmd.CustomReqTypeDelete,
+      delete  = UpdateConfigCmd.CustomReqTypeDeleteSoft,
       restore = UpdateConfigCmd.CustomReqTypeRestore,
     ).contramapValues(UpdateConfigCmd.CustomReqTypeValues.tupled))
 

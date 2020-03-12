@@ -4,6 +4,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen._
 import scala.annotation.tailrec
 import shipreq.utils.UtilUtils._
+import shipreq.base.test.BaseUtilGen._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.ShowSize
 import shipreq.webapp.base.{RandomData => $}
@@ -60,12 +61,13 @@ object GenerateProject {
     val useCaseCount    = (UseCasePercentage * Size.Reqs).toInt
     val genericReqCount = Size.Reqs - useCaseCount
 
-    val tags0           = sample($.tagTree, Size.CfgTags)
-    val issues0         = firstSample($.revAndIMap($.customIssueType list Size.CfgCustomIssueTypes), 50)
-    val (issues, tags)  = $.distinctHashRefKeys.run((issues0, tags0))
     val reqtypes        = firstSample($.genCustomReqTypes($.customReqType list Size.CfgCustomReqTypes), 50)
     val reqTypeIds      = StaticReqType.values ++ reqtypes.keys
     val reqTypeIdSet    = reqTypeIds.whole.toSet
+    val genReqTypeId    = Gen.chooseNE(reqTypeIds)
+    val tags0           = sample($.tagTree(genReqTypeId.set(0 to 4)), Size.CfgTags)
+    val issues0         = firstSample($.revAndIMap($.customIssueType list Size.CfgCustomIssueTypes), 50)
+    val (issues, tags)  = $.distinctHashRefKeys.run((issues0, tags0))
     val fields          = sample($.fieldSet2(reqTypeIdSet, tags.keySet, reqtypes.keySet), Size.CfgFields)
     val cfg             = ProjectConfig(issues, ReqTypes(reqtypes), fields, Tags(tags))
     val atagIds         = cfg.tags.tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet

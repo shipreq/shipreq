@@ -15,11 +15,11 @@ object UpdateConfigCmd {
   final case class CustomIssueTypeDelete (id: CustomIssueTypeId)                                   extends ToModifyCustomIssueTypes
   final case class CustomIssueTypeRestore(id: CustomIssueTypeId)                                   extends ToModifyCustomIssueTypes
 
-  sealed trait ToModifyCustomReqTypes                                                        extends UpdateConfigCmd
-  final case class CustomReqTypeCreate (values: CustomReqTypeValues)                         extends ToModifyCustomReqTypes
-  final case class CustomReqTypeUpdate (id: CustomReqTypeId, newValues: CustomReqTypeValues) extends ToModifyCustomReqTypes
-  final case class CustomReqTypeDelete (id: CustomReqTypeId)                                 extends ToModifyCustomReqTypes
-  final case class CustomReqTypeRestore(id: CustomReqTypeId)                                 extends ToModifyCustomReqTypes
+  sealed trait ToModifyCustomReqTypes                                                           extends UpdateConfigCmd
+  final case class CustomReqTypeCreate    (values: CustomReqTypeValues)                         extends ToModifyCustomReqTypes
+  final case class CustomReqTypeUpdate    (id: CustomReqTypeId, newValues: CustomReqTypeValues) extends ToModifyCustomReqTypes
+  final case class CustomReqTypeDeleteSoft(id: CustomReqTypeId)                                 extends ToModifyCustomReqTypes
+  final case class CustomReqTypeRestore   (id: CustomReqTypeId)                                 extends ToModifyCustomReqTypes
 
   sealed trait ToModifyFields                                                                        extends UpdateConfigCmd
   final case class CustomFieldCreate    (values: CustomFieldValues)                                  extends ToModifyFields
@@ -216,8 +216,8 @@ object UpdateConfigCmd {
         }
       }
 
-    private implicit val picklerCustomReqTypeDelete: Pickler[CustomReqTypeDelete] =
-      transformPickler(CustomReqTypeDelete.apply)(_.id)
+    private implicit val picklerCustomReqTypeDelete: Pickler[CustomReqTypeDeleteSoft] =
+      transformPickler(CustomReqTypeDeleteSoft.apply)(_.id)
 
     private implicit val picklerCustomReqTypeRestore: Pickler[CustomReqTypeRestore] =
       transformPickler(CustomReqTypeRestore.apply)(_.id)
@@ -369,7 +369,7 @@ object UpdateConfigCmd {
             case b: CustomIssueTypeRestore        => state.enc.writeByte(KeyCustomIssueTypeRestore       ); state.pickle(b)
             case b: CustomIssueTypeUpdate         => state.enc.writeByte(KeyCustomIssueTypeUpdate        ); state.pickle(b)
             case b: CustomReqTypeCreate           => state.enc.writeByte(KeyCustomReqTypeCreate          ); state.pickle(b)
-            case b: CustomReqTypeDelete           => state.enc.writeByte(KeyCustomReqTypeDelete          ); state.pickle(b)
+            case b: CustomReqTypeDeleteSoft           => state.enc.writeByte(KeyCustomReqTypeDelete          ); state.pickle(b)
             case b: CustomReqTypeRestore          => state.enc.writeByte(KeyCustomReqTypeRestore         ); state.pickle(b)
             case b: CustomReqTypeUpdate           => state.enc.writeByte(KeyCustomReqTypeUpdate          ); state.pickle(b)
             case b: FieldDelete                   => state.enc.writeByte(KeyFieldDelete                  ); state.pickle(b)
@@ -394,7 +394,7 @@ object UpdateConfigCmd {
             case KeyCustomIssueTypeRestore        => state.unpickle[CustomIssueTypeRestore]
             case KeyCustomIssueTypeUpdate         => state.unpickle[CustomIssueTypeUpdate]
             case KeyCustomReqTypeCreate           => state.unpickle[CustomReqTypeCreate]
-            case KeyCustomReqTypeDelete           => state.unpickle[CustomReqTypeDelete]
+            case KeyCustomReqTypeDelete           => state.unpickle[CustomReqTypeDeleteSoft]
             case KeyCustomReqTypeRestore          => state.unpickle[CustomReqTypeRestore]
             case KeyCustomReqTypeUpdate           => state.unpickle[CustomReqTypeUpdate]
             case KeyFieldDelete                   => state.unpickle[FieldDelete]

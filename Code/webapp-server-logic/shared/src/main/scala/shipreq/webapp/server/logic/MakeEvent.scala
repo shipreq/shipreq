@@ -98,8 +98,8 @@ object MakeEvent {
           case f => Failure(s"$f must be a CustomReqType.")
         }
 
-      case UpdateConfigCmd.CustomReqTypeDelete(id) =>
-        CustomReqTypeDelete(id)
+      case UpdateConfigCmd.CustomReqTypeDeleteSoft(id) =>
+        CustomReqTypeDeleteSoft(id)
 
       case UpdateConfigCmd.CustomReqTypeRestore(id) =>
         CustomReqTypeRestore(id)

@@ -114,6 +114,8 @@ object ApplyEventTestFns {
          | _: CustomIssueTypeRestore
          | _: CustomIssueTypeUpdate
          | _: CustomReqTypeDelete
+         | _: CustomReqTypeDeleteHard
+         | _: CustomReqTypeDeleteSoft
          | _: CustomReqTypeRestore
          | _: CustomReqTypeUpdate
          | _: FieldCustomDelete

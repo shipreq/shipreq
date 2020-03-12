@@ -41,65 +41,6 @@ object Event {
   - Delete and Restore are separate events.
   - Prefer combination: Create/Delete/Restore
   - Prefer combination: Add/Remove
-
-  +=======+
-  | Cases |
-  +=======+
-
-  case e: Event.ApplicableTagCreate    => ???
-  case e: Event.ApplicableTagUpdate    => ???
-  case e: Event.CodeGroupCreate        => ???
-  case e: Event.CodeGroupsDelete       => ???
-  case e: Event.CodeGroupUpdate        => ???
-  case e: Event.ContentRestore         => ???
-  case e: Event.CustomIssueTypeCreate  => ???
-  case e: Event.CustomIssueTypeDelete  => ???
-  case e: Event.CustomIssueTypeRestore => ???
-  case e: Event.CustomIssueTypeUpdate  => ???
-  case e: Event.CustomReqTypeCreate    => ???
-  case e: Event.CustomReqTypeDelete    => ???
-  case e: Event.CustomReqTypeRestore   => ???
-  case e: Event.CustomReqTypeUpdate    => ???
-  case e: Event.FieldCustomDelete      => ???
-  case e: Event.FieldCustomImpCreate   => ???
-  case e: Event.FieldCustomImpUpdate   => ???
-  case e: Event.FieldCustomRestore     => ???
-  case e: Event.FieldCustomTagCreate   => ???
-  case e: Event.FieldCustomTagUpdate   => ???
-  case e: Event.FieldCustomTextCreate  => ???
-  case e: Event.FieldCustomTextUpdate  => ???
-  case e: Event.FieldReposition        => ???
-  case e: Event.FieldStaticAdd         => ???
-  case e: Event.FieldStaticRemove      => ???
-  case e: Event.GenericReqCreate       => ???
-  case e: Event.GenericReqTitleSet     => ???
-  case e: Event.GenericReqTypeSet      => ???
-  case e: Event.ManualIssueCreate      => ???
-  case e: Event.ManualIssueDelete      => ???
-  case e: Event.ManualIssueUpdate      => ???
-  case e: Event.ProjectNameSet         => ???
-  case e: Event.ProjectTemplateApply   => ???
-  case e: Event.ReqCodesPatch          => ???
-  case e: Event.ReqFieldCustomTextSet  => ???
-  case e: Event.ReqImplicationsPatch   => ???
-  case e: Event.ReqsDelete             => ???
-  case e: Event.ReqTagsPatch           => ???
-  case e: Event.SavedViewCreate        => ???
-  case e: Event.SavedViewDefaultSet    => ???
-  case e: Event.SavedViewDelete        => ???
-  case e: Event.SavedViewUpdate        => ???
-  case e: Event.TagDelete              => ???
-  case e: Event.TagGroupCreate         => ???
-  case e: Event.TagGroupUpdate         => ???
-  case e: Event.TagRestore             => ???
-  case e: Event.UseCaseCreate          => ???
-  case e: Event.UseCaseStepCreate      => ???
-  case e: Event.UseCaseStepDelete      => ???
-  case e: Event.UseCaseStepRestore     => ???
-  case e: Event.UseCaseStepShiftLeft   => ???
-  case e: Event.UseCaseStepShiftRight  => ???
-  case e: Event.UseCaseStepUpdate      => ???
-  case e: Event.UseCaseTitleSet        => ???
   */
 
   // ===================================================================================================================
@@ -126,10 +67,13 @@ object Event {
   // ===================================================================================================================
   // Config: Custom req types
 
-  final case class CustomReqTypeCreate (id: CustomReqTypeId, vs: CustomReqTypeGD.NonEmptyValues) extends ActiveEvent
-  final case class CustomReqTypeUpdate (id: CustomReqTypeId, vs: CustomReqTypeGD.NonEmptyValues) extends ActiveEvent
-  final case class CustomReqTypeDelete (id: CustomReqTypeId)                                     extends ActiveEvent
-  final case class CustomReqTypeRestore(id: CustomReqTypeId)                                     extends ActiveEvent
+  final case class CustomReqTypeCreate    (id: CustomReqTypeId, vs: CustomReqTypeGD.NonEmptyValues) extends ActiveEvent
+  final case class CustomReqTypeUpdate    (id: CustomReqTypeId, vs: CustomReqTypeGD.NonEmptyValues) extends ActiveEvent
+  final case class CustomReqTypeRestore   (id: CustomReqTypeId)                                     extends ActiveEvent
+  final case class CustomReqTypeDeleteHard(id: CustomReqTypeId)                                     extends ActiveEvent
+  final case class CustomReqTypeDeleteSoft(id: CustomReqTypeId)                                     extends ActiveEvent
+
+  final case class CustomReqTypeDelete(id: CustomReqTypeId) extends RetiredEvent
 
   // ===================================================================================================================
   // Config: Tags

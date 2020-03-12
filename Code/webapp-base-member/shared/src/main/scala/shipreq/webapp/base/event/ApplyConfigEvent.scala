@@ -104,7 +104,13 @@ trait ApplyConfigEvent {
     def applyDelete(e: CustomReqTypeDelete): SE[Unit] =
       ifInUse(e.id,
         notInUse  = hardDelete(e.id),
-        whenInUse = deleteOrRestore(e.id, Dead, ReqCodeLogic.inactivateBelongingToReqs))
+        whenInUse = softDelete(e.id))
+
+    def applyHardDelete(e: CustomReqTypeDeleteHard): SE[Unit] =
+      hardDelete(e.id)
+
+    def applySoftDelete(e: CustomReqTypeDeleteSoft): SE[Unit] =
+      softDelete(e.id)
 
     def applyRestore(e: CustomReqTypeRestore): SE[Unit] =
       deleteOrRestore(e.id, Live, ReqCodeLogic.restoreBelongingToReqs)
@@ -143,6 +149,9 @@ trait ApplyConfigEvent {
         .filter(r => r.reqTypeId ==* id && r.liveExplicitly ==* Live)
         .map(_.id: ReqId)
         .toSet)
+
+    private def softDelete(id: CustomReqTypeId): SE[Unit] =
+      deleteOrRestore(id, Dead, ReqCodeLogic.inactivateBelongingToReqs)
 
     private val reqTypeApplicability =
       FieldSet.customFieldsTraversal ^|-> CustomField.applicableReqTypes
