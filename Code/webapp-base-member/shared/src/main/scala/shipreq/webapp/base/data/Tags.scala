@@ -4,7 +4,7 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop.CycleDetector
-import monocle.Lens
+import monocle.{Lens, Optional, Traversal}
 import monocle.macros.{GenLens, Lenses}
 import nyaya.util.Multimap
 import scala.annotation.tailrec
@@ -87,6 +87,12 @@ object Tag {
     override val unapplyData: AnyRef => Option[Tag] = {case r: Tag => Some(r); case _ => None}
   }
 
+  val applicableTag: Optional[Tag, ApplicableTag] =
+    Optional[Tag, ApplicableTag]({
+      case a: ApplicableTag => Some(a)
+      case _                => None
+    })(a => _ => a)
+
   val live = Lens((_: Tag).live)(n => {
     case t: TagGroup      => t.copy(live = n)
     case t: ApplicableTag => t.copy(live = n)
@@ -117,6 +123,9 @@ object Tag {
 // TagTree ⊂ TagInTree
 
 object TagTree {
+  val traversal: Traversal[TagTree, TagInTree] =
+    IMap.traversal[TagId, TagInTree]
+
   def empty: TagTree = IMap.empty(_.id)
 
   def prettyPrint(tt: TagTree): String = {
@@ -162,6 +171,7 @@ object TagTree {
   }
 }
 
+@Lenses
 final case class TagInTree(tag: Tag, children: TagInTree.Children) {
   import TagInTree.Children
 
@@ -199,9 +209,7 @@ object TagInTree {
   val filterLive: TagInTree => Boolean =
     _.tag.live is Live
 
-  val tag      = GenLens[TagInTree](_.tag)
-  val children = GenLens[TagInTree](_.children)
-  val live     = tag ^|-> Tag.live
+  val live = tag ^|-> Tag.live
 
   /** @return Itself and all reachable children. */
   @tailrec def transitiveChildren(queue: Stream[TagInTree], seen: Set[TagId])(implicit tt: TagTree): Set[TagId] =

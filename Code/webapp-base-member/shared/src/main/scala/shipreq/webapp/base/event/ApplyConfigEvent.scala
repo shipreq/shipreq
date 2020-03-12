@@ -1,6 +1,7 @@
 package shipreq.webapp.base.event
 
 import japgolly.microlibs.utils.Memo
+import monocle.Traversal
 import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.base.util.univeq._
@@ -153,17 +154,21 @@ trait ApplyConfigEvent {
     private def softDelete(id: CustomReqTypeId): SE[Unit] =
       deleteOrRestore(id, Dead, ReqCodeLogic.inactivateBelongingToReqs)
 
-    private val reqTypeApplicability =
-      FieldSet.customFieldsTraversal ^|-> CustomField.applicableReqTypes
+    private val reqTypeApplicability1: Traversal[Project, ApplicableReqTypes] =
+      Project.customFields ^|->> FieldSet.customFieldsTraversal ^|-> CustomField.applicableReqTypes
+
+    private val reqTypeApplicability2: Traversal[Project, ApplicableReqTypes] =
+      Project.applicableTags ^|-> ApplicableTag.applicableReqTypes
 
     private def hardDelete(id: CustomReqTypeId): SE[Unit] = {
       def deleteImpFields: SE[Unit] =
         SE.get(_.config.fields.customImpFields.filter(_.reqTypeId ==* id))
           .flatMap(SE.foldMapRun(_)(f => FieldEvents.hardDelete(f.id)))
 
-      def removeFromReqTypeApplicability: SE[Unit] =
-        Project.customFields.modify(
-          reqTypeApplicability.modify(_.hardDelete(id)))
+      def removeFromReqTypeApplicability: SE[Unit] = {
+        val f: ApplicableReqTypes => ApplicableReqTypes = _.hardDelete(id)
+        reqTypeApplicability1.modify(f) compose reqTypeApplicability2.modify(f)
+      }
 
       def deleteReqType: SE[Unit] =
         imap.hardDelete(id)
