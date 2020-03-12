@@ -68,51 +68,13 @@ Backlog
 Phase 3A
 ========
 
-* Filter field should autosize
-
 * User profile page
 
 * Bulk tag add/remove
 
-* bug: default saved view with filter, reload page, filter field is empty
-
-* put ajax/ws protocol stuff in its own package
-
-* Might be a good idea to store a description & examples with ReqTypes. (eg. "BR" means xxx + examples)
-  Alternatively this could be on a help page.
-
 * Markdown
   * Support nested lists
   * Support styling (bold, underline, italics, strikethrough)
-
-* Tags
-  * Users #must be able to prohibit certain tags being used with certain req-types [FR-14]
-  * When a req has a tag that is invalid for its req type, it should be hidden from all views [FR-15]
-  * When a req has a tag that is invalid for its req type, users shouldn't be allow to specify it [FR-16]
-  * System #must explain when a tag is invalid because the field is `Tags` and a specified tag is assigned to another field [FR-17]
-  * There #should be `AllTags` and `RemainingTags` fields instead of just `Tags` [FR-18]
-  * `AllTags` and `RemainingTags` fields #should be optional [FR-19]
-  * remove key from TagGroups, check all Tag fields against UI prototype
-  * TagSetApplicableChildrenOrder has a bug or something - remember how priorty got fucked up with Actors & could added under should?
-  * Add tests for TagConfig
-  * handle dead ReqTypes' states in ApplicableReqTypes editors
-    (eg user says whitelist A; user deletes A, what should the editor show? Maybe just a litle warning (not error) under field.
-     like "<triangle-icon> A, B and C are dead")
-  * add usages to ap-tags
-    * HideDead - only count usage in live reqs
-    * ShowDead - count usage in dead reqs too, as well as including dead tags
-
-* Fields
-  * redo config screen
-  * add default values for tag fields [FR-6]
-  * make properties/values per req-type [FR-12]
-  * add a max-size for field names, apply to editors
-  * update reqtable (and probably reqdetail) to render dead rows like cfg field
-  * soft deletion vs hard - wrt app req types in tags
-  * add usages. probably have to update filter too
-  * add layer for names so that any user-defined field names that conflict with a built-in name, get " 2" or similar appended
-    it should affect all cases where displayed except for the field editor itself
-    (and even then, it's probably a good idea to display a warning about what and why)
 
 * Investigate changes required to support phone / tablet
 
@@ -127,8 +89,6 @@ Phase 3A
   * Content summary
   * Configure display (eg. id + title, just title, add tags?)
   * Graph direction: TD / LR
-
-* Reappearances wrt tags
 
 * Two paths...
 
@@ -171,3 +131,48 @@ Phase 3A
     * new filters: {createdBy,updatedBy,containsRefTo} {me,@blah}
     * refs to users in rich text
   * Common workflows
+  
+
+v2.1
+========================================================================================================================
+
+* Filter field should autosize
+
+* Bug: default saved view with filter, reload page, filter field is empty
+
+* Put ajax/ws protocol stuff in its own package
+
+* Reappearances wrt tags
+
+* Tags
+  * Users #must be able to prohibit certain tags being used with certain req-types [FR-14]
+  * When a req has a tag that is invalid for its req type, it should be hidden from all views [FR-15]
+  * When a req has a tag that is invalid for its req type, users shouldn't be allow to specify it [FR-16]
+  * System #must explain when a tag is invalid because the field is `Tags` and a specified tag is assigned to another field [FR-17]
+  * There #should be `AllTags` and `RemainingTags` fields instead of just `Tags` [FR-18]
+  * `AllTags` and `RemainingTags` fields #should be optional [FR-19]
+  * remove key from TagGroups, check all Tag fields against UI prototype
+  * TagSetApplicableChildrenOrder has a bug or something - remember how priorty got fucked up with Actors & could added under should?
+  * Add tests for TagConfig
+  * handle dead ReqTypes' states in ApplicableReqTypes editors
+    (eg user says whitelist A; user deletes A, what should the editor show? Maybe just a litle warning (not error) under field.
+     like "<triangle-icon> A, B and C are dead")
+  * add usages to ap-tags
+    * HideDead - only count usage in live reqs
+    * ShowDead - count usage in dead reqs too, as well as including dead tags
+
+* Fields
+  * redo config screen
+  * add default values for tag fields [FR-6]
+  * make properties/values per req-type [FR-12]
+  * add a max-size for field names, apply to editors
+  * update reqtable (and probably reqdetail) to render dead rows like cfg field
+  * soft deletion vs hard - wrt app req types in tags
+  * add usages. probably have to update filter too
+  * add layer for names so that any user-defined field names that conflict with a built-in name, get " 2" or similar appended
+    it should affect all cases where displayed except for the field editor itself
+    (and even then, it's probably a good idea to display a warning about what and why)
+
+* ReqTypes
+  * Might be a good idea to store a description & examples. (eg. "BR" means xxx + examples)
+
