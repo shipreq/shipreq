@@ -74,6 +74,8 @@ Phase 3A
 
 * Bulk tag add/remove
 
+* bug: default saved view with filter, reload page, filter field is empty
+
 * put ajax/ws protocol stuff in its own package
 
 * Might be a good idea to store a description & examples with ReqTypes. (eg. "BR" means xxx + examples)
