@@ -110,6 +110,9 @@ Phase 3A
   * update reqtable (and probably reqdetail) to render dead rows like cfg field
   * soft deletion vs hard - wrt app req types in tags
   * add usages. probably have to update filter too
+  * add layer for names so that any user-defined field names that conflict with a built-in name, get " 2" or similar appended
+    it should affect all cases where displayed except for the field editor itself
+    (and even then, it's probably a good idea to display a warning about what and why)
 
 * Investigate changes required to support phone / tablet
 
@@ -126,14 +129,6 @@ Phase 3A
   * Graph direction: TD / LR
 
 * Reappearances wrt tags
-
-* Allow system to add new field/columns in future without breaking existing projects.
-  eg. User adds a "Last Updated" custom field, later ShipReq provides an auto-populated
-  column with the same name. System needs a way to rename user's field without
-  breaking user's project, history & hashes.
-  Maybe a dynamic approach that compares versions, or maybe a migration task
-  that adds a new event to everyone's projects to do the rename once when the
-  new version is deployed.
 
 * Two paths...
 
