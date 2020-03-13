@@ -199,7 +199,16 @@ private[feature] final class Instance[A](getData            : CallbackTo[Vector[
   override def items(): Vector[Item[A]] =
     items(getData.runNow())
 
-  override def items(as: IndexedSeq[A]): Vector[Item[A]] =
+  override def items(as: IndexedSeq[A]): Vector[Item[A]] = {
+    assert(as.toVector == getData.runNow(),
+      s"""
+         |Items passed to DND don't match what getData can generate for itself.
+         |
+         |.items(): ${as.toVector}
+         |
+         | getData: ${getData.runNow()}
+         |""".stripMargin.trim)
     createItems(as, unsafeState())
+  }
 
 }
