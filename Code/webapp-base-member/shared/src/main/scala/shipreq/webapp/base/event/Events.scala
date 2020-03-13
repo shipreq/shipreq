@@ -31,6 +31,26 @@ object Event {
   type NonEmptyCustomTextMap = NonEmpty[Map[CustomField.Text.Id, CustomTextField.NonEmptyText]]
 
   /*
+  +===========+
+  | Semantics |
+  +===========+
+
+  - these events are the low-level representation of change
+    they should be fast to apply and have very little logic (if any)
+
+  - in some cases users can't specify dead values, but events can (and should)
+    typical flow is like this:
+
+        [UI] ----> [Cmd with live values only] --------> [MakeEvent] ----> [Event with dead values included]
+
+    which is actually preferred over
+
+        [UI] ----> [Cmd with dead values included] ----> [MakeEvent] ----> [Event with dead values included]
+
+    because it simplifies client/API usage, and ensures that important logic happens on our side (server) under our
+    control meaning it's more dependable from a dev and system pov.
+
+
   +=============+
   | Style Guide |
   +=============+

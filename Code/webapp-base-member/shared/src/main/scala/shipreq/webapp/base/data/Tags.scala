@@ -9,6 +9,7 @@ import monocle.macros.{GenLens, Lenses}
 import nyaya.util.Multimap
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.base.util.TaggedTypes.TaggedInt
@@ -237,12 +238,18 @@ final case class Tags(tree: TagTree) {
   import FlatTag.FilterPolicy
 
   def validateApplicableTag(id: ApplicableTagId): Option[String] =
+    applicableTag(id) match {
+      case \/-(_) => None
+      case -\/(e) => Some(e)
+    }
+
+  def applicableTag(id: ApplicableTagId): String \/ ApplicableTag =
     tree.get(id) match {
       case Some(tit) => tit.tag match {
-        case _: ApplicableTag => None
-        case t: TagGroup      => Some(s"$t is not an ApplicableTag.")
+        case t: ApplicableTag => \/-(t)
+        case _: TagGroup      => -\/(s"$id is a TagGroup.")
       }
-      case None               => Some(s"$id not found.")
+      case None               => -\/(s"$id not found.")
     }
 
   def needApplicableTag(id: ApplicableTagId): ApplicableTag =
@@ -253,6 +260,15 @@ final case class Tags(tree: TagTree) {
 
   def applicableTagIterator(): Iterator[ApplicableTag] =
     tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag]
+
+  def tagGroup(id: TagGroupId): String \/ TagGroup =
+    tree.get(id) match {
+      case Some(tit) => tit.tag match {
+        case t: TagGroup      => \/-(t)
+        case _: ApplicableTag => -\/(s"$id is an ApplicableTag.")
+      }
+      case None               => -\/(s"$id not found.")
+    }
 
   def needTagGroup(id: TagGroupId): TagGroup =
     tree.need(id).tag match {

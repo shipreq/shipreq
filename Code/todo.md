@@ -149,8 +149,7 @@ v2.1
   * System #must explain when a tag is invalid because the field is `Tags` and a specified tag is assigned to another field [FR-17]
   * There #should be `AllTags` and `RemainingTags` fields instead of just `Tags` [FR-18]
   * `AllTags` and `RemainingTags` fields #should be optional [FR-19]
-  * remove key from TagGroups, check all Tag fields against UI prototype
-  * tag event updates wrt to dead children & req types
+  * check all Tag fields against UI prototype
   * Add tests for TagConfig
   * handle dead ReqTypes' states in ApplicableReqTypes editors
     (eg user says whitelist A; user deletes A, what should the editor show? Maybe just a litle warning (not error) under field.

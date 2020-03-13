@@ -3,7 +3,7 @@ package shipreq.webapp.server.logic
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.util.Multimap
-import scalaz.\/
+import scalaz.{-\/, \/, \/-}
 import scalaz.syntax.equal._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
@@ -90,12 +90,13 @@ object MakeEvent {
         CustomReqTypeCreate(id, values)
 
       case UpdateConfigCmd.CustomReqTypeUpdate(id, vs) =>
-        project.config.reqTypes.need(id) match {
-          case cur: CustomReqType =>
+        project.config.reqTypes.get(id) match {
+          case Some(cur: CustomReqType) =>
             import vs._
             val vs2 = gdUnequalValues(CustomReqTypeGD, cur, "")
             eventIfNonEmpty(vs2)(CustomReqTypeUpdate(id, _))
-          case f => Failure(s"$f must be a CustomReqType.")
+          case Some(f) => Failure(s"$f must be a CustomReqType.")
+          case None    => Failure(s"$id not found")
         }
 
       case UpdateConfigCmd.CustomReqTypeDeleteSoft(id) =>
@@ -160,6 +161,66 @@ object MakeEvent {
     }
   }
 
+  private final class TagChildrenHelper[T <: TagId](project: Project, tagId: TagId, select: PartialFunction[TagId, T]) {
+    val allChildren = project.config.tags.directChildren(tagId)
+
+    val okChildren: Vector[T] =
+      allChildren
+        .iterator
+        .map(select.lift)
+        .filterDefined
+        .toVector
+
+    val okChildrenSet: Set[TagId] =
+      okChildren.toSet
+
+    val otherChildren: Vector[TagId] =
+      allChildren.filterNot(okChildrenSet.contains)
+  }
+
+  private object TagChildrenHelper {
+    def liveApTags(project: Project, tagId: TagId): TagChildrenHelper[ApplicableTagId] =
+      new TagChildrenHelper(project, tagId, {
+        case id: ApplicableTagId if project.config.tags.needApplicableTag(id).live.is(Live) => id
+      })
+
+    def liveTags(project: Project, tagId: TagId): TagChildrenHelper[TagId] =
+      new TagChildrenHelper(project, tagId, {
+        case id if project.config.tags.tree.need(id).tag.live.is(Live) => id
+      })
+  }
+
+  private final class TagParentsHelper[T <: TagId](project: Project, tagId: TagId, select: TagId => Option[T]) {
+    val allParents = project.config.tags.parents(tagId)
+
+    val okParents: Map[T, Option[TagId]] =
+      allParents
+        .iterator
+        .map { case (id, pos) => select(id).map((_, pos)) }
+        .filterDefined
+        .toMap
+
+    val okParentsSet: Set[T] =
+      okParents.keySet
+
+    private val _okParentsSet: Set[TagId] =
+      okParentsSet.asInstanceOf[Set[TagId]]
+
+    val otherParents: Map[TagId, Option[TagId]] =
+      allParents.filterKeys(!_okParentsSet.contains(_))
+  }
+
+  private object TagParentsHelper {
+
+    @inline def pf[T <: TagId](project: Project, tagId: TagId, select: PartialFunction[TagId, T]): TagParentsHelper[T] =
+      new TagParentsHelper(project, tagId, select.lift)
+
+    def liveTagGroups(project: Project, tagId: TagId): TagParentsHelper[TagGroupId] =
+      pf(project, tagId, {
+        case id: TagGroupId if project.config.tags.needTagGroup(id).live.is(Live) => id
+      })
+  }
+
   private def tagCrud(cmd: UpdateConfigCmd.ToModifyTags, project: Project): Result = {
     def nextId = project.idCeilings.tag + 1
     cmd match {
@@ -169,46 +230,85 @@ object MakeEvent {
         ApplicableTagCreate(id, newValues)
 
       case UpdateConfigCmd.ApplicableTagUpdate(id, newValues) =>
-        ApplicableTagUpdate(id, newValues)
+        PotentialChange.fromDisjunction(project.config.tags.applicableTag(id)).flatMap { tag =>
+          import ApplicableTagGD._
+
+          if (newValues.containsK(Children))
+            Failure("You cannot specify ApplicableTag children")
+          else if (Parents.get(newValues).exists(_.value.keysIterator.exists(project.config.tags.tree.need(_).tag.live is Dead)))
+            Failure("You cannot specify dead parents")
+          else if (ApplicableReqTypes.get(newValues).exists(_.value.reqTypes.exists(project.config.reqTypes.need(_).live is Dead)))
+            Failure("You cannot specify dead req types")
+          else {
+
+            // Update values if necessary, and remove unchanged
+            val b = valueBuilder()
+            newValues.valuesIterator.foreach {
+              case ValueForChildren(_) => () // prevented above
+              case ValueForColour  (v) => b.addIfChanged(Colour)(tag.colour, v)
+              case ValueForDesc    (v) => b.addIfChanged(Desc  )(tag.desc  , v)
+              case ValueForKey     (v) => b.addIfChanged(Key   )(tag.key   , v)
+
+              case ValueForApplicableReqTypes(v) =>
+                val v2 = v.withDeadFrom(tag.applicableReqTypes, project.config.reqTypes)
+                b.addIfChanged(ApplicableReqTypes)(tag.applicableReqTypes, v2)
+
+              case ValueForParents(v) =>
+                val h = TagParentsHelper.liveTagGroups(project, id)
+                val v2 = h.otherParents ++ v
+                b.addIfChanged(Parents)(h.allParents, v2)
+            }
+
+            eventIfNonEmpty(b.values())(ApplicableTagUpdate(id, _))
+          }
+        }
 
       case UpdateConfigCmd.TagGroupCreate(newValues) =>
         val id = TagGroupId(nextId)
         TagGroupCreate(id, newValues)
 
       case UpdateConfigCmd.TagGroupUpdate(id, newValues) =>
-        TagGroupUpdate(id, newValues)
+        PotentialChange.fromDisjunction(project.config.tags.tagGroup(id)).flatMap { tag =>
+          import TagGroupGD._
+
+          if (Children.get(newValues).exists(_.value.exists(project.config.tags.tree.need(_).tag.live is Dead)))
+            Failure("You cannot specify dead children")
+          else if (Parents.get(newValues).exists(_.value.keysIterator.exists(project.config.tags.tree.need(_).tag.live is Dead)))
+            Failure("You cannot specify dead parents")
+          else {
+
+            // Update values if necessary, and remove unchanged
+            val b = valueBuilder()
+            newValues.valuesIterator.foreach {
+              case ValueForDesc       (v) => b.addIfChanged(Desc       )(tag.desc       , v)
+              case ValueForExclusivity(v) => b.addIfChanged(Exclusivity)(tag.exclusivity, v)
+              case ValueForName       (v) => b.addIfChanged(Name       )(tag.name       , v)
+
+              case ValueForChildren(v) =>
+                val h = TagChildrenHelper.liveTags(project, id)
+                val v2 = h.otherChildren ++ v
+                b.addIfChanged(Children)(h.allChildren, v2)
+
+              case ValueForParents(v) =>
+                val h = TagParentsHelper.liveTagGroups(project, id)
+                val v2 = h.otherParents ++ v
+                b.addIfChanged(Parents)(h.allParents, v2)
+            }
+
+            eventIfNonEmpty(b.values())(TagGroupUpdate(id, _))
+          }
+        }
 
       case UpdateConfigCmd.TagSetLiveChildrenOrder(tagId, newLiveChildrenOrder) =>
-        val directChildren = project.config.tags.directChildren(tagId)
-
-        val existingLiveChildren: Vector[ApplicableTagId] =
-          directChildren
-            .iterator
-            .filterSubType[ApplicableTagId]
-            .filter(project.config.tags.needApplicableTag(_).live.is(Live))
-            .toVector
-
-        if (existingLiveChildren ==* newLiveChildrenOrder)
+        val h = TagChildrenHelper.liveApTags(project, tagId)
+        if (h.okChildren ==* newLiveChildrenOrder)
           Unchanged
+        else if (h.okChildrenSet !=* newLiveChildrenOrder.toSet)
+          Failure("Tag group contains different children than specified. Please try again.")
         else {
-          val existingLiveChildrenSet: Set[ApplicableTagId] =
-            existingLiveChildren.toSet
-
-          if (existingLiveChildrenSet !=* newLiveChildrenOrder.toSet)
-            Failure("Tag group contains different children than specified. Please try again.")
-          else {
-            val otherChildren: Vector[TagId] =
-              directChildren.filter {
-                case id: ApplicableTagId if existingLiveChildrenSet.contains(id) => false
-                case _                                                           => true
-              }
-
-            val newChildren: Vector[TagId] =
-              otherChildren ++ newLiveChildrenOrder
-
-            val values = TagGroupGD.nev(TagGroupGD.ValueForChildren(newChildren))
-            TagGroupUpdate(tagId, values)
-          }
+          val newChildren = h.otherChildren ++ newLiveChildrenOrder
+          val values = TagGroupGD.nev(TagGroupGD.ValueForChildren(newChildren))
+          TagGroupUpdate(tagId, values)
         }
 
       case UpdateConfigCmd.TagDelete(id) =>

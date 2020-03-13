@@ -121,6 +121,9 @@ object CustomReqType {
 @Lenses
 final case class ReqTypes(custom: IMap[CustomReqTypeId, CustomReqType]) {
 
+  def get(i: ReqTypeId): Option[ReqType] =
+    i.foldId[Option[ReqType]](Some(_), custom.get)
+
   def need(i: ReqTypeId): ReqType =
     i.foldId[ReqType](identity, custom.need)
 

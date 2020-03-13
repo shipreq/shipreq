@@ -1,6 +1,7 @@
 package shipreq.webapp.base.util
 
 import japgolly.microlibs.nonempty._
+import scala.collection.TraversableOnce
 import shipreq.base.util.univeq._
 import scalaz.{Equal, Order}
 import shipreq.base.util.IMap
@@ -92,14 +93,20 @@ object GenericData {
     def nev(): Option[gd.NonEmptyValues] =
       NonEmpty(_values)
 
-    def add[A](a: gd.Attr)(v: a.Data): Unit =
-      _values += a(v)
+    def add(a: gd.Attr)(v: a.Data): Unit =
+      _values += (a(v))
 
-    def addIfChanged[A](a: gd.Attr)(oldValue: a.Data, newValue: a.Data)(implicit e: Equal[a.Data]): Unit =
+    def addValue(v: gd.Value): Unit =
+      _values += v
+
+    def addValues(vs: TraversableOnce[gd.Value]): Unit =
+      _values ++= vs
+
+    def addIfChanged(a: gd.Attr)(oldValue: a.Data, newValue: a.Data)(implicit e: Equal[a.Data]): Unit =
       if (!e.equal(oldValue, newValue))
         _values += a(newValue)
 
-    def addIfChangedOption[A](a: gd.Attr)(oldValue: Option[a.Data], newValue: a.Data)(implicit e: Equal[a.Data]): Unit =
+    def addIfChangedOption(a: gd.Attr)(oldValue: Option[a.Data], newValue: a.Data)(implicit e: Equal[a.Data]): Unit =
       if (oldValue.forall(!e.equal(_, newValue)))
         _values += a(newValue)
   }

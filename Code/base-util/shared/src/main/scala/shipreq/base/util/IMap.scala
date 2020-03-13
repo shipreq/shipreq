@@ -66,6 +66,9 @@ final class IMap[K: UnivEq, V] private (key: V => K, m: Map[K, V]) extends IMapB
     s"Value not found for $k.\nKeys = $keyDesc"
   }
 
+  def modAll(f: V => V): This =
+    new IMap(key, m.valuesIterator.map(f).map(v => key(v) -> v).toMap)
+
   def mod(k: K, f: V => V)(implicit ev: V <:< AnyRef): This =
     _mod(k, f, this)
 

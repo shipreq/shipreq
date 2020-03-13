@@ -27,6 +27,9 @@ final class ApplicableReqTypes private[ApplicableReqTypes](val applicability: Ap
   def isEmpty: Boolean =
     reqTypes.isEmpty
 
+  @inline def nonEmpty: Boolean =
+    !isEmpty
+
   @inline def apply(id: ReqTypeId): Applicability =
     asFn(id)
 
@@ -39,6 +42,16 @@ final class ApplicableReqTypes private[ApplicableReqTypes](val applicability: Ap
   def hardDelete(id: CustomReqTypeId): ApplicableReqTypes =
     ApplicableReqTypes(applicability, reqTypes - id)
 
+  /** Assuming that this only contains live data (especially when coming from the UI), this will carry over the dead
+    * data from the previous value.
+    */
+  def withDeadFrom(previous: ApplicableReqTypes, cfg: ReqTypes): ApplicableReqTypes =
+    if (previous.nonEmpty && applicability ==* previous.applicability) {
+      // User changes values but not applicability, retain the old dead items that were hidden to them
+      val oldDeadStuff = previous.reqTypes.filter(cfg.need(_).live.is(Dead))
+      ApplicableReqTypes(applicability, reqTypes ++ oldDeadStuff)
+    } else
+      this
 }
 
 object ApplicableReqTypes {

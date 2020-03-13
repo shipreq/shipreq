@@ -18,6 +18,7 @@ object MakeEmpty {
   implicit def emptyVTPL: MakeEmpty[VectorTree.ParentLocation] =
     MakeEmpty(VectorTree.ParentLocation.Empty)
 
+  implicit def emptyOpt [A]: MakeEmpty[Option[A]] = MakeEmpty(None)
   implicit def emptyVec [A]: MakeEmpty[Vector[A]] = MakeEmpty(Vector.empty)
   implicit def emptyList[A]: MakeEmpty[List  [A]] = MakeEmpty(Nil)
   implicit def emptySet [A]: MakeEmpty[Set   [A]] = MakeEmpty(Set.empty)

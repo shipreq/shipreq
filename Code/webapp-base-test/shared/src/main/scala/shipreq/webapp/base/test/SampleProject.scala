@@ -25,8 +25,10 @@ object SampleProject {
     val allLiveTags = NonEmptyVector(priHigh, priMed, priLow, wip, defer, v10, v11, v12, v13, v1x, v2x)
     val allDeadTags = NonEmptyVector(uat, uat2, v09, v3x, v4x)
 
-    val priTG = 1.TG
+    val priTG    = 1.TG
     val statusTG = 10.TG
+    val verTG    = 20.TG
+    val relTG    = 27.TG
   }
 
   object Values extends Values
@@ -58,7 +60,7 @@ object SampleProject {
     TagInTree(ApplicableTag.v1(uat2    , "In UAT #2",       None, "uat2",       Dead), Vector()),
     TagInTree(ApplicableTag.v1(uat3    , "In UAT #3",       None, "uat3",       Dead), Vector()),
     TagInTree(ApplicableTag.v1(prod    , "In Production",   None, "prod",       Live), Vector()),
-    TagInTree(TagGroup        (20      , "Version",         None, NonExclusive, Live), Vector(27.TG, v1x, v2x, v3x, v4x)),
+    TagInTree(TagGroup        (verTG   , "Version",         None, NonExclusive, Live), Vector(27.TG, v1x, v2x, v3x, v4x)),
     TagInTree(ApplicableTag.v1(v1x     , "v1.x",            None, "v1.x",       Live), Vector(v10, v11, v12, v13)),
     TagInTree(ApplicableTag.v1(v10     , "v1.0",            v10d, "v1.0",       Live), Vector()),
     TagInTree(ApplicableTag.v1(v11     , "v1.1",            v11d, "v1.1",       Live), Vector()),
@@ -67,7 +69,7 @@ object SampleProject {
     TagInTree(ApplicableTag.v1(v2x     , "v2.x",            None, "v2.x",       Live), Vector()),
     TagInTree(ApplicableTag.v1(v3x     , "v3.x",            None, "v3.x",       Dead), Vector()),
     TagInTree(ApplicableTag.v1(v4x     , "v4.x",            None, "v4.x",       Dead), Vector()),
-    TagInTree(TagGroup        (27      , "Released",        None, NonExclusive, Live), Vector(v09, v10, v11)),
+    TagInTree(TagGroup        (relTG   , "Released",        None, NonExclusive, Live), Vector(v09, v10, v11)),
     TagInTree(ApplicableTag.v1(v09     , "v0.9",            None, "v0.9",       Dead), Vector()),
     TagInTree(ApplicableTag.v1(priLow  , "Low Priority", Some("Nice to have. Stuff that probably won't be implemented."), "pri=low", Live), Vector()))
 

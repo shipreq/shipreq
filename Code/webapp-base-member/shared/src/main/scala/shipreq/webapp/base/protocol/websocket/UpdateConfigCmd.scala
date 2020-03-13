@@ -30,6 +30,15 @@ object UpdateConfigCmd {
   final case class FieldRestore         (id: FieldId)                                                extends ToModifyFields
   final case class FieldUpdateOrder     (id: FieldId, newPos: RelPos[FieldId])                       extends ToModifyFields
 
+  /** Note: you're not allowed to specify any dead values in:
+    *
+    * - [[ApplicableTagUpdate.newValues]]
+    * - [[TagGroupUpdate.newValues]]
+    * - [[TagSetLiveChildrenOrder.children]]
+    *
+    * Only live values will be accepted. `MakeEvent` will take care of dead data preservation when transforming these
+    * commands into events.
+    */
   sealed trait ToModifyTags                                                                                extends UpdateConfigCmd
   final case class ApplicableTagCreate    (                     newValues: ApplicableTagGD.NonEmptyValues) extends ToModifyTags
   final case class ApplicableTagUpdate    (id: ApplicableTagId, newValues: ApplicableTagGD.NonEmptyValues) extends ToModifyTags
