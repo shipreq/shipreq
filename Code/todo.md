@@ -154,6 +154,7 @@ v2.1
   * handle dead ReqTypes' states in ApplicableReqTypes editors
     (eg user says whitelist A; user deletes A, what should the editor show? Maybe just a litle warning (not error) under field.
      like "<triangle-icon> A, B and C are dead")
+  * when clicking dead tag, it should show the editor in read-only/disabled mode
   * add usages to ap-tags
     * HideDead - only count usage in live reqs
     * ShowDead - count usage in dead reqs too, as well as including dead tags
