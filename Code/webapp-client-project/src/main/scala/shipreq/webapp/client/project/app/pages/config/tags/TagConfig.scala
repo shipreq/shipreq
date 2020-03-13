@@ -255,69 +255,47 @@ object TagConfig {
             )
         }
 
+      def applicableTagEditor(idOption: Option[ApplicableTagId], enabled: Enabled) = {
+        val lens = editorStateLensForApTag(ApplicableTagEditor.State.init(idOption, p.project.tags))
+        ApplicableTagEditor.Props(
+          subject    = idOption,
+          filterDead = p.effectiveFilterDead,
+          state      = args.state.zoomStateL(lens),
+          project    = p.project,
+          pw         = p.pw,
+          enabled    = enabled,
+        ).render
+      }
+
+      def tagGroupEditor(idOption: Option[TagGroupId], enabled: Enabled) = {
+        val lens = editorStateLensForGroup(TagGroupEditor.State.init(idOption, p.project.tags))
+        TagGroupEditor.Props(
+          subject    = idOption,
+          filterDead = p.effectiveFilterDead,
+          state      = args.state.zoomStateL(lens),
+          project    = p.project,
+          pw         = p.pw,
+          enabled    = enabled,
+        ).render
+      }
+
       editorType match {
         case EditorType.ApplicableTag(idOption) =>
-          val lens = editorStateLensForApTag(ApplicableTagEditor.State.init(idOption, p.project.tags))
-
-          val editor =
-            ApplicableTagEditor.Props(
-              subject    = idOption,
-              filterDead = p.effectiveFilterDead,
-              state      = args.state.zoomStateL(lens),
-              project    = p.project,
-              pw         = p.pw,
-              enabled    = Enabled,
-            ).render
-
+          val editor = applicableTagEditor(idOption, Enabled)
           val buttons = createOrUpdateButtons(idOption).render
-
           <.div(header, editor, buttons)
 
         case EditorType.TagGroup(idOption) =>
-          val lens = editorStateLensForGroup(TagGroupEditor.State.init(idOption, p.project.tags))
-
-          val editor =
-            TagGroupEditor.Props(
-              subject    = idOption,
-              filterDead = p.effectiveFilterDead,
-              state      = args.state.zoomStateL(lens),
-              project    = p.project,
-              pw         = p.pw,
-              enabled    = Enabled,
-            ).render
-
+          val editor = tagGroupEditor(idOption, Enabled)
           val buttons = createOrUpdateButtons(idOption).render
-
           <.div(header, editor, buttons)
 
         case EditorType.Dead(id) =>
-
           val editor =
             id match {
-              case i: TagGroupId =>
-                val lens = editorStateLensForGroup(TagGroupEditor.State.init(Some(i), p.project.tags))
-                TagGroupEditor.Props(
-                  subject    = Some(i),
-                  filterDead = p.effectiveFilterDead,
-                  state      = args.state.zoomStateL(lens),
-                  project    = p.project,
-                  pw         = p.pw,
-                  enabled    = Disabled,
-                ).render
-
-              case i: ApplicableTagId =>
-                val lens = editorStateLensForApTag(ApplicableTagEditor.State.init(Some(i), p.project.tags))
-
-                ApplicableTagEditor.Props(
-                  subject    = Some(i),
-                  filterDead = p.effectiveFilterDead,
-                  state      = args.state.zoomStateL(lens),
-                  project    = p.project,
-                  pw         = p.pw,
-                  enabled    = Disabled,
-                ).render
+              case i: ApplicableTagId => applicableTagEditor(Some(i), Disabled)
+              case i: TagGroupId      => tagGroupEditor(Some(i), Disabled)
             }
-
 
           val buttons =
             EditorButtons.Props.Restore(
