@@ -273,18 +273,23 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     private val reqDetailSetState: Reusable[SetStateFnPure[ReqDetail.State]] =
       Reusable.fn.state($ zoomStateL State.reqDetail).setStateFn
 
-    def setReqTableView(fd: FilterDead, filter: Filter.Valid): Callback =
-      for {
-        p ← pxProject.toCallback
-        f = ReqTablePage.State.modifyView(p, fd, true)(_.withFilter(Some(filter)))
-        _ ← $.modState(State.reqTable.modify(f) compose State.filterDead.set(fd))
-      } yield ()
+    private object specialRouterCtl extends SpecialRouterCtl {
+      override val general = routerCtl
+
+      override def reqTableWithFilter(fd: FilterDead, filter: => Filter.Valid): router.RouterCtl[Unit] = {
+        def setReqTableView: Callback =
+          for {
+            p ← pxProject.toCallback
+            f = ReqTablePage.State.modifyView(p, fd, updateFilterText = true)(_.withFilter(Some(filter)))
+            _ ← $.modState(State.reqTable.modify(f) compose State.filterDead.set(fd))
+          } yield ()
+        routerCtl.onSet(setReqTableView >> _).contramap(_ => Page.ReqTable)
+      }
+    }
 
     private val usageShow =
       config_old.shared.Usage.Show((filterDead, filter) =>
-        routerCtl
-          .onSet(setReqTableView(filterDead, filter()) >> _)
-          .link(Page.ReqTable))
+        specialRouterCtl.reqTableWithFilter(filterDead, filter()).link(()))
 
     lazy val projectNameAF =
       AsyncFeature.Write.D0[ErrorMsg](
