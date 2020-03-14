@@ -123,6 +123,20 @@ final case class Project(name         : Project.Name,
     m
   }
 
+  lazy val tagUsage: LiveDeadStatMap[ApplicableTagId, Int] = {
+    val tagLookup = dataLogic.tagLookup(ShowDead)
+    val b = new LiveDeadStatMap.Builder[ApplicableTagId, Int]
+    for {
+      req    <- content.reqs.reqIterator
+      reqLive = req.live(config.reqTypes)
+      tagId  <- tagLookup(req.id).all
+    } {
+      val live = reqLive & config.tags.needApplicableTag(tagId).live
+      b(tagId).mod(live)(_ + 1)
+    }
+    b.result()
+  }
+
   /**
    * Transitive closure of implications going source → target.
    *

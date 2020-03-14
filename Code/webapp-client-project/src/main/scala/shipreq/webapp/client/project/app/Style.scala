@@ -109,6 +109,8 @@ object Style extends StyleSheet.Inline {
       }
     )
 
+  val usageZero = style(&.not(_.hover)(opacity(0.5)))
+
   val layout = style(
     unsafeRoot(".ui.button")(marginRight(`0`).important))
 
@@ -939,6 +941,7 @@ object Style extends StyleSheet.Inline {
       fontSize(100 %%).important,
     )
 
+    val usage = style(float.right)
   }
 
   // ===================================================================================================================

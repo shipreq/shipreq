@@ -355,12 +355,13 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
 
         case Page.CfgTags =>
           config.tags.TagConfig.Props(
-            project = project.config,
+            project = project,
             pw      = projectWidgets,
             state   = StateSnapshot.zoomL(State.tagConfig)(s).setStateVia($),
             ssp     = sspUpdateConfig,
             async   = AsyncFeature.ReadWrite.D0(tagConfigAsyncW, s.tagConfigAsync),
             toast   = toast,
+            router  = specialRouterCtl,
           ).render
 
         case Page.ReqTable =>

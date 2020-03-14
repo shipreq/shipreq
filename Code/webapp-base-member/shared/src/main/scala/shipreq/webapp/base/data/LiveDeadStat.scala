@@ -15,6 +15,12 @@ final case class LiveDeadStat[A] private[LiveDeadStat](live: A, dead: A, all: A)
   def +(c: LiveDeadStat[A])(implicit a: Semigroup[A]): LiveDeadStat[A] =
     LiveDeadStat(live |+| c.live, dead |+| c.dead)
 
+  def apply(fd: FilterDead): A =
+    fd match {
+      case HideDead => live
+      case ShowDead => all
+    }
+
   def map[B](f: A => B): LiveDeadStat[B] =
     LiveDeadStat(f(live), f(dead), f(all))
 
@@ -29,7 +35,7 @@ object LiveDeadStat {
   def empty[A](implicit m: Monoid[A]): LiveDeadStat[A] =
     LiveDeadStat(m.zero, m.zero)
 
-  implicit def equality[A: UnivEq]: UnivEq[LiveDeadStat[A]] =
+  implicit def univEq[A: UnivEq]: UnivEq[LiveDeadStat[A]] =
     UnivEq.derive
 
   def newBuilder[A: Monoid]: Builder[A] =
@@ -72,7 +78,7 @@ object LiveDeadStat {
 /**
  * A collection of stats mapped by a key.
  */
-final class LiveDeadStatMap[Key: UnivEq, A: Monoid] private[LiveDeadStatMap](val raw: Map[Key, LiveDeadStat[A]]) {
+final case class LiveDeadStatMap[Key: UnivEq, A: Monoid] private[LiveDeadStatMap](raw: Map[Key, LiveDeadStat[A]]) {
   def isEmpty = raw.isEmpty
 
   val all: LiveDeadStat[A] =
@@ -113,8 +119,9 @@ final class LiveDeadStatMap[Key: UnivEq, A: Monoid] private[LiveDeadStatMap](val
 }
 
 object LiveDeadStatMap {
-  def apply[Key: UnivEq, A: Monoid](byKey: Map[Key, LiveDeadStat[A]]): LiveDeadStatMap[Key, A] =
-    new LiveDeadStatMap(byKey)
+
+  implicit def univEq[K: UnivEq, V: UnivEq]: UnivEq[LiveDeadStatMap[K, V]] =
+    UnivEq.derive
 
   def newBuilder[Key: UnivEq, A: Monoid]: Builder[Key, A] =
     new Builder

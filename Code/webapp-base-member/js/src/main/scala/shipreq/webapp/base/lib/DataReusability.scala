@@ -31,6 +31,12 @@ abstract class DataReusability extends BaseReusability {
   implicit def reusabilityObfuscated[A]: Reusability[Obfuscated[A]] =
     Reusability.derive
 
+  implicit def reusabilityLiveDeadStat[A: UnivEq]: Reusability[LiveDeadStat[A]] =
+    Reusability.byRefOrUnivEq
+
+  implicit def reusabilityLiveDeadStatMap[K: UnivEq, V: UnivEq]: Reusability[LiveDeadStatMap[K, V]] =
+    Reusability.byRefOrUnivEq
+
   implicit def reusabilityUsername: Reusability[Username] =
     Reusability.derive
 
