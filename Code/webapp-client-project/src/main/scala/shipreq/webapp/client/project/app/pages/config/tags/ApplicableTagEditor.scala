@@ -38,9 +38,6 @@ private[tags] object ApplicableTagEditor {
     @inline def render: VdomElement = Component(this)
   }
 
-  //implicit val reusabilityProps: Reusability[Props] =
-  //  Reusability.derive
-
   final case class Source(tag: ApplicableTag, rels: TagInTree.Relations)
 
   @Lenses
@@ -111,9 +108,6 @@ private[tags] object ApplicableTagEditor {
         parents = TagRelationshipEditor.State.empty,
       )
 
-//    implicit val reusability: Reusability[State] =
-//      Reusability.derive
-
     val parentsR = Reusable.byRef(parents)
   }
 
@@ -126,6 +120,10 @@ private[tags] object ApplicableTagEditor {
       parents = parents.all.toIterator.map(id => id -> oldRels.parents.get(id).flatten).toMap,
     )
   }
+
+  implicit val reusabilitySource: Reusability[Source] = Reusability.byRef || Reusability.derive
+  implicit val reusabilityProps : Reusability[Props ] = Reusability.byRef || Reusability.derive
+  implicit val reusabilityState : Reusability[State ] = Reusability.byRef || Reusability.derive
 
   // ===================================================================================================================
 
@@ -210,6 +208,6 @@ private[tags] object ApplicableTagEditor {
 
   val Component = ScalaComponent.builder[Props]("ApplicableTagEditor")
     .renderBackend[Backend]
-    //.configure(Reusability.shouldComponentUpdate)
+    .configure(Reusability.shouldComponentUpdate)
     .build
 }

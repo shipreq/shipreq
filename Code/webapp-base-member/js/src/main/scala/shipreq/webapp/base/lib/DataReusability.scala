@@ -79,8 +79,17 @@ abstract class DataReusability extends BaseReusability {
   implicit def reusabilityTagTree: Reusability[TagTree] =
     Reusability.byRef
 
+  implicit def reusabilityTagInTreeRelations: Reusability[TagInTree.Relations] =
+    Reusability.byRefOrUnivEq
+
   implicit def reusabilityTags: Reusability[Tags] =
-    Reusability.derive
+    Reusability.byRef
+
+  implicit def reusabilityHashRefKey: Reusability[HashRefKey] =
+    Reusability.byUnivEq
+
+  implicit def reusabilityApplicableTag: Reusability[ApplicableTag] =
+    Reusability.byRefOrUnivEq
 
   implicit def reusabilityTagGroup: Reusability[TagGroup] =
     Reusability.byRefOrUnivEq

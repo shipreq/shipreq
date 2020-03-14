@@ -161,7 +161,7 @@ object TagConfig {
           ButtonAndDropdown.Props.forNew[NewTagType](
             items    = NewTagType.items,
             selected = Some(a.state.value),
-            update   = Option.unless(p.asyncInProgress)(Reusable.never(dropdownButton.Update( // TODO Reusable.never
+            update   = Option.unless(p.asyncInProgress)(Reusable.byRef(a).withValue(dropdownButton.Update(
               click  = _ => a.openEditor,
               select = a.state.setState,
             ))))

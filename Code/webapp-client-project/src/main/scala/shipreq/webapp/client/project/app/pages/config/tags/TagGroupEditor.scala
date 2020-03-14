@@ -40,9 +40,6 @@ private[tags] object TagGroupEditor {
     @inline def render: VdomElement = Component(this)
   }
 
-  //implicit val reusabilityProps: Reusability[Props] =
-  //  Reusability.derive
-
   final case class Source(group: TagGroup, rels: TagInTree.Relations)
 
   @Lenses
@@ -118,9 +115,6 @@ private[tags] object TagGroupEditor {
         children    = TagRelationshipEditor.State.empty,
       )
 
-//    implicit val reusability: Reusability[State] =
-//      Reusability.derive
-
     val exclusive: Lens[State, On] =
       exclusivity ^<-> On.isoWhen(Exclusive)
 
@@ -139,6 +133,10 @@ private[tags] object TagGroupEditor {
       children = children.groups.toVector ++ children.tags,
     )
   }
+
+  implicit val reusabilitySource: Reusability[Source] = Reusability.byRef || Reusability.derive
+  implicit val reusabilityProps : Reusability[Props ] = Reusability.byRef || Reusability.derive
+  implicit val reusabilityState : Reusability[State ] = Reusability.byRef || Reusability.derive
 
   // ===================================================================================================================
 
@@ -241,6 +239,6 @@ private[tags] object TagGroupEditor {
 
   val Component = ScalaComponent.builder[Props]("TagGroupEditor")
     .renderBackend[Backend]
-    //.configure(Reusability.shouldComponentUpdate)
+    .configure(Reusability.shouldComponentUpdate)
     .build
 }

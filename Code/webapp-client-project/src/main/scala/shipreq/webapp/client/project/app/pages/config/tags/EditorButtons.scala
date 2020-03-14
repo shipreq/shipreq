@@ -30,9 +30,6 @@ object EditorButtons {
                              restore: Callback) extends Props
   }
 
-  //implicit val reusabilityProps: Reusability[Props] =
-  //  Reusability.derive
-
   private val outer  = <.div(*.editorButtons)
   private val gap    = <.div(*.editorButtonGap)
 
@@ -97,6 +94,5 @@ object EditorButtons {
 
   val Component = ScalaComponent.builder[Props]("EditorButtons")
     .render_P(render)
-    //.configure(Reusability.shouldComponentUpdate)
     .build
 }
