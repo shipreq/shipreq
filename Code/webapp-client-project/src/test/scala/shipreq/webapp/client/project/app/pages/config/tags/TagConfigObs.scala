@@ -9,6 +9,7 @@ import shipreq.webapp.client.project.app.Style
 
 object TagConfigObs {
 
+  lazy val selUsage         = Style.tagConfig.usage                   .selector
   lazy val selDeadGroup     = Style.tagConfig.group(Dead)             .selector
   lazy val selRightOn       = Style.widgets.splitScreenCrud.rightOn   .selector
   lazy val selEmptyRight    = Style.widgets.splitScreenCrud.emptyRight.selector
@@ -38,11 +39,19 @@ object TagConfigObs {
       else
         $(">div").domAsHtml
 
+    private def innerTextWithoutUsage($$: DomZipperJs): String = {
+      val t = $$.innerText.trim
+      $$.collect01(selUsage).innerTexts.map(_.trim) match {
+        case Some(u) if t.endsWith(u) => t.dropRight(u.length).trim
+        case _                        => t
+      }
+    }
+
     val title: String =
       if (subtree.isDefined)
-        $.child("div").innerText.trim
+        innerTextWithoutUsage($.child("div"))
       else
-        $.innerText.trim.replace(DragToReorderFeature.dragHamburger, "")
+        innerTextWithoutUsage($).replace(DragToReorderFeature.dragHamburger, "")
 
     // println(">>> " + $.outerHTML)
 
@@ -50,7 +59,7 @@ object TagConfigObs {
       if (subtree.isDefined) {
         val dead     = $(">div").exists(selDeadGroup)
         val selected = $.domAsHtml.get(TagTreeView.selected) == "true"
-        var t = $.child("div").innerText.trim
+        var t = title
         if (dead) t += " [DEAD]"
         if (selected) t += " [SELECTED]"
         t
@@ -58,7 +67,7 @@ object TagConfigObs {
         val selected  = $.domAsHtml.get(TagTreeView.selected) == "true"
         val draggable = $.exists("[draggable=true]")
         val dead      = $.exists(".ui.label.grey")
-        var t = $.innerText.trim
+        var t = innerTextWithoutUsage($)
         t = t.replace(DragToReorderFeature.dragHamburger, if (draggable) "[=] " else "")
         if (dead) t += " [DEAD]"
         if (selected) t += " [SELECTED]"

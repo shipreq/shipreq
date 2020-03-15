@@ -32,6 +32,9 @@ object DomUtil {
     def _disabled: js.UndefOr[Boolean] =
       e.asInstanceOf[js.Dynamic].disabled.asInstanceOf[js.UndefOr[Boolean]]
 
+    def disabledSafe: Boolean =
+      _disabled.getOrElse(false)
+
     def findParent(f: html.Element => Boolean, self: Boolean = false): Option[html.Element] =
       DomUtil.findParent(e, f, self = self)
   }

@@ -11,6 +11,7 @@ import shipreq.webapp.client.project.test.PrepareEnv
 
 object TagConfigTest extends TestSuite {
   import TagConfigTestDsl._
+  import Buttons.{displayFailure => displayButtonFailure}
 
   PrepareEnv()
 
