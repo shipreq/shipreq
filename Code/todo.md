@@ -138,8 +138,6 @@ v2.1
 
 * Filter field should autosize
 
-* Bug: default saved view with filter, reload page, filter field is empty
-
 * Reappearances wrt tags
 
 * Tags

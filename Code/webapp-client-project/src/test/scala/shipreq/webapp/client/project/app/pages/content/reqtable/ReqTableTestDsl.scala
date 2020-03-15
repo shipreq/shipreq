@@ -298,7 +298,7 @@ object ReqTableTestDsl {
   def enterFilter(f: String) = {
     val e = SimEvent.Change(f)
     *.action(s"enterFilter('$f')")(e simulate _.obs.filterInput)
-      .addCheck(*.focus("Filter").value(_.obs.filterInput.value).assert(f).after)
+      .addCheck(filterText.assert(f).after)
   }
 
   lazy val filterDeadToggle =

@@ -82,13 +82,16 @@ object ReqTablePage {
   }
 
   object State {
-    def init: State =
+    private def init: State =
       State(
         SavedViewLogic.State.init,
         FilterEditor.State.init,
         Selection.empty,
         NewStuff.State.init,
         Modal.none)
+
+    def init(p: Project): State =
+      updateFilterText(p)(init)
 
     val manualView: Optional[State, View] =
       view ^|-> SavedViewLogic.State.manualView ^<-? pSome

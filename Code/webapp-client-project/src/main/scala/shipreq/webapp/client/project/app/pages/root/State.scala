@@ -135,7 +135,7 @@ object State {
       savedViewAsync        = AsyncFeature.State.initD0,
       preview               = PreviewFeature.State.init,
       _filterDead           = p.reqtableViews.map(_.default.view.filterDead).getOrElse(HideDead),
-      reqTable              = reqtable.ReqTablePage.State.init,
+      reqTable              = reqtable.ReqTablePage.State.init(p),
       reqDetail             = ReqDetail.initState,
       issuesPage            = IssuesPage.State.init,
       toast                 = Toast.State.init,

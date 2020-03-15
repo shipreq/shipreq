@@ -8,9 +8,12 @@ import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.event.Event
+import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.test.SampleProject.Values._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.TestState._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.test._
@@ -376,10 +379,34 @@ object ReqTableTest extends TestSuite {
     )
   }
 
+  def testInitialFilter()(implicit path: utest.framework.TestPath) = {
+    val project = applyEventsSuccessfully(SampleProject4.project,
+      Event.SavedViewCreate(
+        id         = SavedView.Id(1),
+        name       = SavedView.Name("ewrsd"),
+        columns    = Column.mandatory.toNEV,
+        order      = SortCriteria.byPubidOnly,
+        filterDead = ShowDead,
+        filter     = Some(Filter.Valid.tag(priHigh))
+      ),
+    )
+
+    val plan = Plan.action(
+      *.emptyAction
+        +> filterDead.assert(ShowDead)
+        +> filterText.assert("#pri=high")
+    )
+
+    runTest(plan withInitialState project)
+  }
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   override def tests = Tests {
-    'initialState - runTest(*.emptyPlan)
+    'initialState - {
+      'default - runTest(*.emptyPlan)
+      'filter - testInitialFilter()
+    }
 
     'filter - runTest(Plan.action(testFilter).named("testFilter").withInitialState(SampleProject3.project))
 
