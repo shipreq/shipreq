@@ -26,7 +26,7 @@ object EditorKeys {
         case KeyCode.F2 | KeyCode.Enter =>
           focusOrStartEditor(editor, e)
 
-        case KeyCode.Backspace =>
+        case KeyCode.Backspace | KeyCode.Delete =>
           editor.setPotentialValue(PotentialValue.Emptiness).getOrEmpty.when_(applicableToOpenAndReplace)
       }
 
