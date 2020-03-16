@@ -9,12 +9,14 @@ import shipreq.webapp.client.project.app.Style
 
 object TagConfigObs {
 
-  lazy val selUsage         = Style.tagConfig.usage                   .selector
-  lazy val selDeadGroup     = Style.tagConfig.group(Dead)             .selector
-  lazy val selRightOn       = Style.widgets.splitScreenCrud.rightOn   .selector
-  lazy val selEmptyRight    = Style.widgets.splitScreenCrud.emptyRight.selector
-  lazy val selEditorButtons = Style.tagConfig.editorButtons           .selector
-  lazy val selEditorRelRow  = Style.tagConfig.editorRelRow            .selector
+  lazy val selUsage         = Style.tagConfig.usage                        .selector
+  lazy val selDeadGroup     = Style.tagConfig.group(Dead)                  .selector
+  lazy val selRightOn       = Style.widgets.splitScreenCrud.rightOn        .selector
+  lazy val selEmptyRight    = Style.widgets.splitScreenCrud.emptyRight     .selector
+  lazy val selEditorButtons = Style.tagConfig.editorButtons                .selector
+  lazy val selEditorRelRow  = Style.tagConfig.editorRelRow                 .selector
+  lazy val selARTDead       = Style.widgets.applicableReqTypesEditorDeadRow.selector
+  lazy val selARTError      = Style.widgets.applicableReqTypesErrMsg       .selector
 
   final class TagTreeOL($: DomZipperJs, val depth: Int) {
     val lis: Vector[TagTreeLI] =
@@ -107,7 +109,18 @@ object TagConfigObs {
     val dom = $.domAsHtml
     val title = $.innerText.trim
   }
+
+  final class ApplicableReqTypeEditor($: DomZipperJs) {
+    val selected   = $(".ui.dropdown")(".text").innerText
+    val items      = $(".ui.dropdown").collect1n(".item").domsAsHtml
+    val inputDom   = $("input").domAs[html.Input]
+    val inputValue = inputDom.value
+    val dead       = $.collect01(selARTDead).innerTexts
+    val error      = $.collect01(selARTError).innerTexts
+  }
 }
+
+// =====================================================================================================================
 
 final class TagConfigObs($: DomZipperJs) {
   import TagConfigObs._
@@ -160,4 +173,11 @@ final class TagConfigObs($: DomZipperJs) {
 
   val editorParents  = relTree("Parents")
   val editorChildren = relTree("Children")
+
+  val applicableReqTypes: Option[ApplicableReqTypeEditor] =
+    $.collect0n(".field")
+      .filter(_.collect0n("label").zippers.exists(_.innerText == "Applicable Req Types"))
+      .zippers
+      .headOption
+      .map(new ApplicableReqTypeEditor(_))
 }

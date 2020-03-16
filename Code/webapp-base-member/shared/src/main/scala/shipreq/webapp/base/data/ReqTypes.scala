@@ -164,6 +164,12 @@ final case class ReqTypes(custom: IMap[CustomReqTypeId, CustomReqType]) {
           case n => n
         }
     }
+
+  def makeSeqStr(ids: Set[ReqTypeId]): String =
+    MutableArray(ids)
+      .map(need(_).mnemonic.value)
+      .sort
+      .mkString(", ")
 }
 
 object ReqTypes {

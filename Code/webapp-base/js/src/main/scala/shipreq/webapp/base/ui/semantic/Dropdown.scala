@@ -60,6 +60,21 @@ object Dropdown {
 
   val itemValue = VdomAttr[String]("data-value")
 
+  def enable(getDom: CallbackTo[ComponentDom]): Callback =
+    for {
+      n <- getDom.toCBO
+      e <- CallbackOption.liftOption(n.toElement)
+    } yield {
+      val sel = ".ui.dropdown"
+      var j = JQuery(e)
+      if (!j.is(sel))
+        j = j.find(sel)
+      j.dropdown()
+      j.find(".active").toggleClass("active")
+      j.find(".selected").toggleClass("selected")
+      ()
+    }
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   trait JsOptions extends js.Object {

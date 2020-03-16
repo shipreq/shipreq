@@ -43,7 +43,7 @@ object Form {
     def withEnabled     (e: Enabled                               ): Field[A]
     def withOuterMod    (f: VdomTag => VdomTag                    ): Field[A]
 
-    def render(implicit vux: ValidationUX): VdomTag
+    def render(implicit vux: ValidationUX): VdomNode
 
     final def addTagMod(t: TagMod): Field[A] =
       modEditor(f => t0 => f(TagMod(t0, t)))
@@ -147,7 +147,7 @@ object Form {
       override def withEnabled     (e: Enabled                                   ) = copy(underlying.withEnabled     (e))
       override def withOuterMod    (f: VdomTag => VdomTag                        ) = copy(underlying.withOuterMod    (f))
 
-      override def render(implicit vux: ValidationUX): VdomTag =
+      override def render(implicit vux: ValidationUX): VdomNode =
         underlying.render
     }
 
@@ -291,11 +291,11 @@ object Form {
     /** Rather than generating a .field, this is a replacement.
       * Put whatever you want in here. If you don't make it a .field that's up to you.
       */
-    def replacement(value: VdomTag): Field[Unit] =
+    def replacement(value: VdomNode): Field[Unit] =
       new RowReplacement(value)
 
-    private final class RowReplacement(value: VdomTag) extends Const[Unit] {
-      override def render(implicit vuxI: ValidationUX): VdomTag =
+    private final class RowReplacement(value: VdomNode) extends Const[Unit] {
+      override def render(implicit vuxI: ValidationUX): VdomNode =
         value
     }
 

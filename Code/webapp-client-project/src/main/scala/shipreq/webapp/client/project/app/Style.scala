@@ -947,6 +947,37 @@ object Style extends StyleSheet.Inline {
   // ===================================================================================================================
   object widgets {
 
+    private val noDropdownError = styleS(
+      (color :=! "#0009").important,
+      (background := "#e8e8e8").important,
+      (borderColor :=! "#0000").important,
+    )
+
+    val applicableReqTypesDropdown = style(
+      noDropdownError,
+      unsafeChild(".text")(noDropdownError)
+    )
+
+    val applicableReqTypesEditorFooter = style(
+      marginBottom(0.15 em),
+    )
+
+    val applicableReqTypesEditorDeadRow = style(
+      float.right,
+      color(c"#444"),
+    )
+
+    val applicableReqTypesEditorDeadReqTypes = style(
+      marginLeft(1 ex),
+      color(c"#999"),
+    )
+
+    val applicableReqTypesErrMsg = style(
+      color(rgb(159, 58, 56)),
+      paddingTop(0.15 em),
+      fontSize(92 %%),
+    )
+
     val colourPicker = style(
       width(20 ex),
     )

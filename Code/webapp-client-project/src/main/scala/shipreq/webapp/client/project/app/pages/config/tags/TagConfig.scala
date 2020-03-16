@@ -114,7 +114,7 @@ object TagConfig {
 
     private val initEditor: (NewTagType \/ TagId) => CallbackTo[EditorState] = {
       case \/-(id: TagGroupId)      => $.props.map(p => \/-(TagGroupEditor.State.init(id, p.project.config.tags)))
-      case \/-(id: ApplicableTagId) => $.props.map(p => -\/(ApplicableTagEditor.State.init(id, p.project.config.tags)))
+      case \/-(id: ApplicableTagId) => $.props.map(p => -\/(ApplicableTagEditor.State.init(id, p.project.config.tags, p.project.config.reqTypes)))
       case -\/(NewTagType.TagGroup) => CallbackTo.pure(\/-(TagGroupEditor.State.initNew))
       case -\/(NewTagType.Tag)      => CallbackTo.pure(-\/(ApplicableTagEditor.State.initNew))
     }
@@ -260,7 +260,7 @@ object TagConfig {
         }
 
       def applicableTagEditor(idOption: Option[ApplicableTagId], enabled: Enabled) = {
-        val lens = editorStateLensForApTag(ApplicableTagEditor.State.init(idOption, p.project.config.tags))
+        val lens = editorStateLensForApTag(ApplicableTagEditor.State.init(idOption, p.project.config.tags, p.project.config.reqTypes))
         ApplicableTagEditor.Props(
           subject    = idOption,
           filterDead = p.effectiveFilterDead,

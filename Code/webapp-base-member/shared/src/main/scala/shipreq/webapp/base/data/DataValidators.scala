@@ -2,7 +2,8 @@ package shipreq.webapp.base.data
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import scalaz.Equal
+import monocle.Iso
+import scalaz.{-\/, Equal, \/, \/-}
 import scalaz.std.string.stringInstance
 import scalaz.std.stream._
 import scalaz.std.vector._
@@ -46,6 +47,31 @@ object DataValidators {
     EndoCorrector(live = Colour.liveCorrect, full = Colour.correct)
       .withAuditor(Auditor(Colour.parseOption(_).leftMap(Invalidity.apply)))
       .named(FieldNames.colour)
+
+  private lazy val stringsSeparatedByWhitespaceOrCommas: Iso[String, Vector[String \/ String]] =
+    Iso(Util.separateByWhitespaceOrCommas)(_.iterator.map(_.merge).mkString)
+
+  lazy val reqTypeSeqStr: Composite.Stateless[String, Vector[String \/ String], Vector[Mnemonic]] =
+    reqType.mnemonic
+      .stateless
+      .vectorWithGaps[String]
+      .map(_.imapInput(stringsSeparatedByWhitespaceOrCommas))
+
+  def reqTypeSeqStr(a: Auditor[Mnemonic, ReqTypeId]): Composite.Stateless[String, Vector[String \/ String], Vector[ReqTypeId]] =
+    reqTypeSeqStr.map(_.andThenAuditor(a.vector))
+
+  def reqTypeSeqStr(reqTypes: ReqTypes): Composite.Stateless[String, Vector[String \/ String], Vector[ReqTypeId]] =
+    reqTypeSeqStr(
+      Auditor((m: Mnemonic) =>
+        reqTypes.allByMnemonic.get(m) match {
+          case Some(rt) => rt.live match {
+            case Live => \/-(rt.reqTypeId)
+            case Dead => -\/(Invalidity(s"${m.value} has been deleted."))
+          }
+          case None => -\/(Invalidity(s"${m.value} is not a valid req type."))
+        }
+      )
+    )
 
   // ===================================================================================================================
   object hashRefKey {
@@ -231,7 +257,8 @@ object DataValidators {
 
     final case class State(subject     : Option[TagId],
                            allTagData  : () => TraversableOnce[Tag],
-                           customIssues: SubState[CustomIssueTypeId]) {
+                           customIssues: SubState[CustomIssueTypeId],
+                           reqTypes    : ReqTypes) {
 
       def hashRefKeyState: hashRefKey.State =
         hashRefKey.State(
@@ -250,7 +277,9 @@ object DataValidators {
         State(
           subject      = subject,
           allTagData   = () => c.tags.tree.valuesIterator.map(_.tag),
-          customIssues = SubState.customIssueTypeIds(None, c.customIssueTypes))
+          customIssues = SubState.customIssueTypeIds(None, c.customIssueTypes),
+          reqTypes     = c.reqTypes
+        )
     }
 
     def name: Composite.Stateful[State, String, String, String] =
@@ -262,21 +291,30 @@ object DataValidators {
     def desc: Composite.Stateful[State, String, Option[String], Option[String]] =
       genericDesc.lift[State]
 
+    def reqTypes(s: State): Composite.Stateless[String, Vector[String \/ String], Set[ReqTypeId]] =
+      reqTypeSeqStr(s.reqTypes).map(_.mapValid(_.toSet))
+
+    def applicableReqTypes(s: State): Composite.Stateless[(String, Applicability), (Vector[String \/ String], Applicability), ApplicableReqTypes] =
+      reqTypes(s).map(_.tuple(Validator.id[Applicability]).mapValid { case (ids, ap) => ApplicableReqTypes(ap, ids) })
+
     val tagGroup: State => Composite.Validator[
       (String, Exclusivity, String),
       (String, Exclusivity, Option[String]),
-      (String, Exclusivity, Option[String])] =
-      s => name(s).named tuple Validator.id[Exclusivity] tuple desc(s).named
+      (String, Exclusivity, Option[String])
+    ] = s =>
+      name(s).named             tuple
+      Validator.id[Exclusivity] tuple
+      desc(s).named
 
     val applicableTag: State => Composite.Validator[
-      (String    , String        , String        , ApplicableReqTypes),
-      (String    , Option[String], String        , ApplicableReqTypes),
+      (String    , String        , String        , (String, Applicability)),
+      (String    , Option[String], String        , (Vector[String \/ String], Applicability)),
       (HashRefKey, Option[String], Option[Colour], ApplicableReqTypes)
     ] = s =>
-      key            (s).named tuple
-      desc           (s).named tuple
-      colour            .named tuple
-      applicableReqTypes.named
+      key               (s).named tuple
+      desc              (s).named tuple
+      colour               .named tuple
+      applicableReqTypes(s).named
   }
 
   // ===================================================================================================================

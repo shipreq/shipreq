@@ -42,6 +42,12 @@ final class ApplicableReqTypes private[ApplicableReqTypes](val applicability: Ap
   def hardDelete(id: CustomReqTypeId): ApplicableReqTypes =
     ApplicableReqTypes(applicability, reqTypes - id)
 
+  def filterReqTypes(l: Live, reqTypes: ReqTypes): ApplicableReqTypes =
+    filterReqTypes(reqTypes.need(_).live is l)
+
+  def filterReqTypes(f: ReqTypeId => Boolean): ApplicableReqTypes =
+    ApplicableReqTypes(applicability, reqTypes filter f)
+
   /** Assuming that this only contains live data (especially when coming from the UI), this will carry over the dead
     * data from the previous value.
     */

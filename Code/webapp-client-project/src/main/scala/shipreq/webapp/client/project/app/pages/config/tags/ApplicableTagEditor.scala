@@ -16,7 +16,7 @@ import shipreq.webapp.base.ui.AutosizeTextarea
 import shipreq.webapp.base.ui.semantic.Form
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.widgets.{ColourPicker, ProjectWidgets}
+import shipreq.webapp.client.project.widgets.{ApplicableReqTypeEditor, ColourPicker, ProjectWidgets}
 
 private[tags] object ApplicableTagEditor {
   import DataImplicits._
@@ -41,11 +41,12 @@ private[tags] object ApplicableTagEditor {
   final case class Source(tag: ApplicableTag, rels: TagInTree.Relations)
 
   @Lenses
-  final case class State(source : Option[Source],
-                         key    : String,
-                         desc   : String,
-                         colour : ColourPicker.State,
-                         parents: TagRelationshipEditor.State,
+  final case class State(source  : Option[Source],
+                         key     : String,
+                         desc    : String,
+                         colour  : ColourPicker.State,
+                         reqTypes: ApplicableReqTypeEditor.FullFormField.State,
+                         parents : TagRelationshipEditor.State,
                         ) {
 
     def validatorState(p: ProjectConfig): DataValidators.tag.State =
@@ -56,22 +57,23 @@ private[tags] object ApplicableTagEditor {
 
       val validated =
         DataValidators.tag.applicableTag(vs)(
-          (key, desc, colour.text, ApplicableReqTypes.empty))
+          (key, desc, colour.text, (reqTypes.text, reqTypes.selected)))
 
       PotentialChange
         .fromDisjunction(validated.leftMap(_ => ()))
         .flatMap { case (key, desc, colour, reqTypes) =>
 
-          val rels       = buildNewRels(source.map(_.tag.id), p.tags, parents)
-          val oldParents = source.map(s => p.tags.filterLiveParents(s.rels.parents))
-          val newParents = p.tags.filterLiveParents(rels.parents)
+          val rels         = buildNewRels(source.map(_.tag.id), p.tags, parents)
+          val oldParents   = source.map(s => p.tags.filterLiveParents(s.rels.parents))
+          val newParents   = p.tags.filterLiveParents(rels.parents)
+          val liveReqTypes = source.map(_.tag.applicableReqTypes.filterReqTypes(Live, p.reqTypes))
 
           val b = ApplicableTagGD.valueBuilder()
-          b.addIfChangedOption(ApplicableTagGD.ApplicableReqTypes)(source.map(_.tag.applicableReqTypes), reqTypes)
-          b.addIfChangedOption(ApplicableTagGD.Colour            )(source.map(_.tag.colour            ), colour)
-          b.addIfChangedOption(ApplicableTagGD.Key               )(source.map(_.tag.key               ), key)
-          b.addIfChangedOption(ApplicableTagGD.Desc              )(source.map(_.tag.desc              ), desc)
-          b.addIfChangedOption(ApplicableTagGD.Parents           )(oldParents                          , newParents)
+          b.addIfChangedOption(ApplicableTagGD.ApplicableReqTypes)(liveReqTypes            , reqTypes)
+          b.addIfChangedOption(ApplicableTagGD.Colour            )(source.map(_.tag.colour), colour)
+          b.addIfChangedOption(ApplicableTagGD.Key               )(source.map(_.tag.key   ), key)
+          b.addIfChangedOption(ApplicableTagGD.Desc              )(source.map(_.tag.desc  ), desc)
+          b.addIfChangedOption(ApplicableTagGD.Parents           )(oldParents              , newParents)
 
           PotentialChange.fromOption(b.nev()).map { newValues =>
             source match {
@@ -84,19 +86,20 @@ private[tags] object ApplicableTagEditor {
   }
 
   object State {
-    def init(id: Option[ApplicableTagId], tags: Tags): State =
-      id.fold(initNew)(init(_, tags))
+    def init(id: Option[ApplicableTagId], tags: Tags, reqTypes: ReqTypes): State =
+      id.fold(initNew)(init(_, tags, reqTypes))
 
-    def init(id: ApplicableTagId, tags: Tags): State =
-      init(tags.needApplicableTag(id), tags)
+    def init(id: ApplicableTagId, tags: Tags, reqTypes: ReqTypes): State =
+      init(tags.needApplicableTag(id), tags, reqTypes)
 
-    def init(t: ApplicableTag, tags: Tags): State =
+    def init(t: ApplicableTag, tags: Tags, reqTypes: ReqTypes): State =
       State(
-        source  = Some(Source(t, tags.relations(t.id))),
-        key     = t.key.value,
-        desc    = t.desc.getOrElse(""),
-        colour  = ColourPicker.State.init(t.colour),
-        parents = TagRelationshipEditor.State.parents(t.id, tags),
+        source   = Some(Source(t, tags.relations(t.id))),
+        key      = t.key.value,
+        desc     = t.desc.getOrElse(""),
+        colour   = ColourPicker.State.init(t.colour),
+        reqTypes = ApplicableReqTypeEditor.FullFormField.State.init(t.applicableReqTypes, reqTypes),
+        parents  = TagRelationshipEditor.State.parents(t.id, tags),
       )
 
     def initNew: State =
@@ -105,6 +108,7 @@ private[tags] object ApplicableTagEditor {
         key     = "",
         desc    = "",
         colour  = ColourPicker.State.init(None),
+        reqTypes = ApplicableReqTypeEditor.FullFormField.State.empty,
         parents = TagRelationshipEditor.State.empty,
       )
 
@@ -197,11 +201,22 @@ private[tags] object ApplicableTagEditor {
           .withValidator(DataValidators.tag.desc.unnamedFn(p.validatorState))
           .withEnabled(p.enabled)
 
+      val reqTypesField =
+        Form.Field.replacement(
+          ApplicableReqTypeEditor.FullFormField.Props(
+            state      = p.state.zoomStateL(State.reqTypes),
+            previous   = s.source.fold(ApplicableReqTypes.empty)(_.tag.applicableReqTypes),
+            reqTypes   = p.project.reqTypes,
+            filterDead = p.filterDead,
+            enabled    = p.enabled,
+          ).render
+        )
+
       val hypotheticalTags = pxHypotheticalTags.value()
       val parents          = tagRelationships(p, hypotheticalTags)
 
       <.div(
-        Form(keyField, colourField, descField),
+        Form(keyField, colourField, descField, reqTypesField),
         <.div(*.editorRelRow, parents))
     }
   }

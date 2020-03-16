@@ -10,12 +10,16 @@ object TagConfigTestDsl {
   val invariants: *.Invariants =
     *.emptyInvariant
 
-  val tagTreeText    = *.focus("Tag tree"      ).value(_.obs.tagTree.text)
-  val filterDead     = *.focus("FilterDead"    ).value(_.obs.filterDead)
-  val isEditorOpen   = *.focus("isEditorOpen"  ).value(_.obs.isEditorOpen)
-  val buttonsEnabled = *.focus("buttonsEnabled").value(_.obs.buttonsEnabled)
-  val parentsText    = *.focus("parentsText"   ).option(_.obs.editorParents.map(_.text))
-  val childrenText   = *.focus("childrenText"  ).option(_.obs.editorChildren.map(_.text))
+  val tagTreeText          = *.focus("Tag tree"            ).value(_.obs.tagTree.text)
+  val filterDead           = *.focus("FilterDead"          ).value(_.obs.filterDead)
+  val isEditorOpen         = *.focus("isEditorOpen"        ).value(_.obs.isEditorOpen)
+  val buttonsEnabled       = *.focus("buttonsEnabled"      ).value(_.obs.buttonsEnabled)
+  val parentsText          = *.focus("parentsText"         ).option(_.obs.editorParents.map(_.text))
+  val childrenText         = *.focus("childrenText"        ).option(_.obs.editorChildren.map(_.text))
+  val reqTypesText         = *.focus("reqTypesText"        ).option(_.obs.applicableReqTypes.map(_.inputValue))
+  val reqTypesDead         = *.focus("reqTypesDead"        ).option(_.obs.applicableReqTypes.flatMap(_.dead))
+  val reqTypesError        = *.focus("reqTypesError"       ).option(_.obs.applicableReqTypes.flatMap(_.error))
+  val reqTypeApplicability = *.focus("reqTypeApplicability").option(_.obs.applicableReqTypes.map(_.selected))
 
   val clickFilterDead: *.Actions =
     *.action("Click filter dead")(Simulate click _.obs.filterDeadButton)
@@ -61,4 +65,10 @@ object TagConfigTestDsl {
 
   def addParent(name: String): *.Actions =
     addRel("parent", _.editorParents)(name)
+
+  def setReqTypeApplicability(txt: String): *.Actions =
+    *.action("setReqTypeApplicability: " + txt)(Simulate click _.obs.applicableReqTypes.get.items.find(_.innerText.trim == txt).get)
+
+  def setApplicableReqTypesText(txt: String): *.Actions =
+    *.action("setApplicableReqTypesText: " + txt)(SimEvent.Change(txt) simulate _.obs.applicableReqTypes.get.inputDom)
 }

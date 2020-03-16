@@ -341,15 +341,19 @@
               %textarea(rows="2" value="wtf" placeholder="")
             .field.error
               %label Applicable Req Types
-              .ui.left.labeled.input
+              .ui.labeled.input
                 .ui.dropdown.label.no-error
                   .text Blacklist
-                  %i.icon.dropdown.label
+                  %i.icon.dropdown
                   .menu
                     .item Blacklist
                     .item Whitelist
-                %input(type="text" value="" placeholder="Req types..." style="border-left-width:0")
-              <span style="color: rgb(159, 58, 56); padding-top: 0.15rem; font-size: 92%;">blah</span>
+                %input(type="text" value="XA" placeholder="Req types..." style="border-left-width:0")
+              %div(style="margin-top:0.15em")
+                %div(style="float:right; color:#444")
+                  Dead req types:
+                  %span(style="margin-left:1ex; xtext-decoration:line-through; color:#999") MF, FR
+                <span style="color: rgb(159, 58, 56); padding-top: 0.15rem; font-size: 92%;">XA isn't a valid req type you fucken idiot</span>
           #family
             .parents
               .ui.segment

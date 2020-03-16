@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.data.{Disabled, Enabled}
-import shipreq.webapp.base.ui.semantic.{Icon, JQuery, UsesSemanticUiManually}
+import shipreq.webapp.base.ui.semantic.{Dropdown, Icon, UsesSemanticUiManually}
 
 /** A stateless button that shows a dropdown when clicked.
   * When a choice is chosen, an action is performed.
@@ -54,16 +54,7 @@ object DropdownButton {
       )
 
     val enableDropdown: Callback =
-      for {
-        n <- $.getDOMNode.toCBO
-        e <- CallbackOption.liftOption(n.toElement)
-      } yield {
-        val j = JQuery(e)
-        j.dropdown()
-        j.find(".active").toggleClass("active")
-        j.find(".selected").toggleClass("selected")
-        ()
-      }
+      Dropdown.enable($.getDOMNode)
   }
 
   val Component = ScalaComponent.builder[Props]("DropdownButton")

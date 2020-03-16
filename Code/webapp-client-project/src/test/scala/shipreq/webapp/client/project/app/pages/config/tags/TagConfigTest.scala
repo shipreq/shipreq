@@ -3,8 +3,12 @@ package shipreq.webapp.client.project.app.pages.config.tags
 import utest._
 import utest.framework.TestPath
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.{ApplicableTagGD, Event}
+import shipreq.webapp.base.test.SampleProject.Values._
 import shipreq.webapp.base.test.SampleProject6
 import shipreq.webapp.base.test.TestState._
+import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.test.PrepareEnv
@@ -483,6 +487,73 @@ object TagConfigTest extends TestSuite {
     )
 
     // =================================================================================================================
-    // reorder children with both FilterDead cases, in both left & right - ensure correct & dead retained
+    'applicableReqTypes - runActions(
+      applyEventsSuccessfully(SampleProject6.project,
+        Event.CustomReqTypeRestore(dd),
+        Event.ApplicableTagUpdate(priMed, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(dd, mf, fr))),
+        Event.ApplicableTagUpdate(priHigh, ApplicableTagGD.ValueForApplicableReqTypes(notReqTypes(dd, mf))),
+        Event.CustomReqTypeDeleteSoft(dd),
+      ))(
+
+      selectTag("pri=med")
+        +> filterDead.assert(HideDead)
+        +> reqTypeApplicability.assert("Whitelist")
+        +> reqTypesText.assert("FR, MF")
+        +> reqTypesDead.assert.empty
+        +> reqTypesError.assert.empty
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
+
+        >> clickFilterDead
+        +> filterDead.assert(ShowDead)
+        +> reqTypeApplicability.assert("Whitelist")
+        +> reqTypesText.assert("FR, MF")
+        +> reqTypesDead.assert.contains("Deleted req types: DD")
+        +> reqTypesError.assert.empty
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
+
+        >> setApplicableReqTypesText("si mf")
+        +> reqTypeApplicability.assert("Whitelist")
+        +> reqTypesText.assert("SI MF")
+        +> reqTypesDead.assert.contains("Deleted req types: DD")
+        +> reqTypesError.assert.contains("SI has been deleted.")
+
+        >> setApplicableReqTypesText("co")
+        +> reqTypeApplicability.assert("Whitelist")
+        +> reqTypesText.assert("CO")
+        +> reqTypesDead.assert.contains("Deleted req types: DD")
+        +> reqTypesError.assert.empty
+
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, cancel = Enabled, save = Enabled))
+        >> clickSaveButton
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
+        >> clickCloseButton
+
+        >> selectTag("pri=high")
+        +> reqTypeApplicability.assert("Blacklist")
+        +> reqTypesText.assert("MF")
+        +> reqTypesDead.assert.contains("Deleted req types: DD")
+        +> reqTypesError.assert.empty
+
+        >> setReqTypeApplicability("Whitelist")
+        +> reqTypeApplicability.assert("Whitelist")
+        +> reqTypesText.assert("MF")
+        +> reqTypesDead.assert.empty
+        +> reqTypesError.assert.empty
+
+        >> setReqTypeApplicability("Blacklist")
+        +> reqTypeApplicability.assert("Blacklist")
+        +> reqTypesText.assert("MF")
+        +> reqTypesDead.assert.contains("Deleted req types: DD")
+        +> reqTypesError.assert.empty
+
+        >> clickCloseButton
+
+        >> selectTag("pri=med")
+        +> reqTypeApplicability.assert("Whitelist")
+        +> reqTypesText.assert("CO")
+        +> reqTypesDead.assert.contains("Deleted req types: DD")
+        +> reqTypesError.assert.empty
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
+    )
   }
 }

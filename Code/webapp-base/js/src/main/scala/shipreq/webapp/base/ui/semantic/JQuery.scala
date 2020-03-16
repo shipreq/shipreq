@@ -9,6 +9,7 @@ import scala.scalajs.js.|
 @js.native
 trait JQuery extends js.Object {
 
+  def is(sel: String): Boolean = js.native
   def find(sel: String): JQuery = js.native
   def toggleClass(cls: String): JQuery = js.native
 

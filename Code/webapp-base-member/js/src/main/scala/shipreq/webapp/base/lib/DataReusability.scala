@@ -94,6 +94,9 @@ abstract class DataReusability extends BaseReusability {
   implicit def reusabilityHashRefKey: Reusability[HashRefKey] =
     Reusability.byUnivEq
 
+  implicit def reusabilityApplicableReqTypes: Reusability[ApplicableReqTypes] =
+    Reusability.byRefOrUnivEq
+
   implicit def reusabilityApplicableTag: Reusability[ApplicableTag] =
     Reusability.byRefOrUnivEq
 
