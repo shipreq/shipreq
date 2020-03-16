@@ -417,6 +417,15 @@ object Generic {
     def imapInput[B](iso: Iso[B, I]): Validator[E, B, C, V] =
       xmapInput(iso.reverseGet)(iso.get)
 
+    def xmapCorrected[B](g: C => B)(f: B => C): Validator[E, I, B, V] =
+      Validator(corrector.xmapCorrected(g)(f), auditor.contramap(f))
+
+    def imapCorrectedZ[B](iso: B <=> C): Validator[E, I, B, V] =
+      xmapCorrected(iso.from)(iso.to)
+
+    def imapCorrected[B](iso: Iso[B, C]): Validator[E, I, B, V] =
+      xmapCorrected(iso.reverseGet)(iso.get)
+
     def appendInvalidator[EE >: E](i: Invalidator[EE, V]): Validator[EE, I, C, V] =
       mapAuditor(_.appendInvalidator(i))
 
