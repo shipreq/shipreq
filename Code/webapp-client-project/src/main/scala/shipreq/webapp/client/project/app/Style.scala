@@ -95,8 +95,25 @@ object Style extends StyleSheet.Inline {
 
   private val genericDragStatus: DragStatus => StyleS = {
     case DragStatus.Normal     => StyleS.empty
-    case DragStatus.DragSource => mixin(opacity(.5), border(2 px, dashed, c"#000").important)
     case DragStatus.Tombstone  => mixin(display.none)
+    case DragStatus.DragSource =>
+      val w = 2 px
+      val s = dashed
+      val c = c"#000"
+      styleS(
+        opacity(.5),
+        border(w, s, c).important,
+        unsafeExt("tr" + _ + " >td")(
+          borderTop(w, s, c).important,
+          borderBottom(w, s, c).important,
+        ),
+        unsafeExt("tr" + _ + " >td:first-child")(
+          borderLeft(w, s, c).important,
+        ),
+        unsafeExt("tr" + _ + " >td:last-child")(
+          borderRight(w, s, c).important,
+        ),
+      )
   }
 
   private def genericDragStatus(ds: DragStatus, whenVisible: StyleS): StyleS =
@@ -714,7 +731,7 @@ object Style extends StyleSheet.Inline {
   }
 
   // ===================================================================================================================
-  object tagConfig {
+  object configShared {
 
     sealed trait RowState
     object RowState {
@@ -728,7 +745,91 @@ object Style extends StyleSheet.Inline {
 
       val domain: Domain[RowState] =
         Domain.ofValues(Disabled, Enabled, Selected, Dragging, ReadOnly)
+
+      val withDragStatus =
+        domain *** D.dragStatus
+
+      val withDragStatusAndLive =
+        withDragStatus *** D.live
     }
+
+    def crudRow(rowState: RowState,
+                dragStatus: DragStatus,
+                bottomBorderColour: ValueT[ValueT.Color] = c"#fff") = mixin(
+      mixinIf(dragStatus != DragStatus.DragSource)(
+        borderTop(solid, 1 px, if (rowState ==* RowState.Selected) c"#3659e2" else c"#fff"),
+        borderBottom(solid, 1 px, if (rowState ==* RowState.Selected) c"#3659e2" else bottomBorderColour).important,
+        unsafeExt("tr" + _ + ">td")(
+          mixinIf(rowState ==* RowState.Selected)(
+            borderTop(solid, 1 px, c"#3659e2").important,
+            borderBottom(solid, 1 px, c"#3659e2").important,
+          ),
+        ),
+      ),
+      rowState match {
+        case RowState.Enabled  => styleS(
+          cursor.pointer,
+          &.hover(backgroundColor(c"#fffad7").important),
+        )
+        case RowState.Selected => styleS(
+          backgroundColor(Color("#869df91f")),
+        )
+        case RowState.ReadOnly => styleS(
+          mixinIf(dragStatus != DragStatus.DragSource)(opacity(0.7)),
+        )
+        case RowState.Dragging
+           | RowState.Disabled =>
+          StyleS.empty
+      }
+    )
+  }
+
+  // ===================================================================================================================
+  object fieldConfig {
+    type RowState = configShared.RowState
+    @inline def RowState = configShared.RowState
+
+    val fieldListTable = style(
+      addClassNames("ui", "celled", "table")
+    )
+
+    val fieldListTableRow = styleF(RowState.withDragStatusAndLive) { case ((s, ds), l) => styleS(
+      genericDragStatus(ds),
+      configShared.crudRow(s, ds),
+      mixinIf(l is Dead)(
+        unsafeExt("tr" + _ + ">td")(
+          backgroundColor(c"#f2f2f2"),
+          color(c"#4d4d4d"),
+          opacity(0.7),
+        ),
+      ),
+    )}
+
+    val fieldListTableDrag = style(
+      padding(`0`).important,
+      textAlign.center.important,
+    )
+
+    val fieldListTableUsage = style(
+      textAlign.right.important,
+    )
+
+    val dragHandle = styleF(D.`enabled * live`) { case (e, l) => styleS(
+      display.inline,
+      padding(.5 em, 2 ex),
+      mixinIf(e is Enabled)(cursor.grab),
+      mixinIf(e.is(Disabled) && l.is(Dead))(visibility.hidden),
+    )}
+
+    val fieldListTableName = styleF(D.live)(l => styleS(
+      mixinIf(l is Dead)(textDecoration := "line-through"),
+    ))
+  }
+
+  // ===================================================================================================================
+  object tagConfig {
+    type RowState = configShared.RowState
+    @inline def RowState = configShared.RowState
 
     sealed trait LIState {
       val topLevel: Boolean
@@ -789,28 +890,8 @@ object Style extends StyleSheet.Inline {
 
     private def tagOrGroup(rowState: RowState,
                            dragStatus: DragStatus,
-                           bottomBorderColour: ValueT[ValueT.Color] = c"#fff") = mixin(
-      basicTagOrGroup(rowState, dragStatus),
-      mixinIf(dragStatus != DragStatus.DragSource)(
-        borderTop(solid, 1 px, if (rowState ==* RowState.Selected) c"#3659e2" else c"#fff"),
-        borderBottom(solid, 1 px, if (rowState ==* RowState.Selected) c"#3659e2" else bottomBorderColour).important,
-      ),
-      rowState match {
-        case RowState.Enabled  => styleS(
-          cursor.pointer,
-          &.hover(backgroundColor(c"#fffad7").important),
-        )
-        case RowState.Selected => styleS(
-          backgroundColor(Color("#869df91f")),
-        )
-        case RowState.ReadOnly => styleS(
-          opacity(0.7),
-        )
-        case RowState.Dragging
-           | RowState.Disabled =>
-          StyleS.empty
-      }
-    )
+                           bottomBorderColour: ValueT[ValueT.Color] = c"#fff") =
+      configShared.crudRow(rowState, dragStatus, bottomBorderColour)
 
     val tagTreeLI = styleF(LIState.withDragStatus) { case (s, ds) => styleS(
       basicTagLI(s, ds),
@@ -1258,6 +1339,7 @@ object Style extends StyleSheet.Inline {
     reqtable.savedViews.activeItem,
     reqdetail.detailTable,
     reqdetail.useCaseStep.container,
+    fieldConfig.fieldListTable,
     tagConfig.tagTree,
     widgets.issueDesc,
     widgets.reqTypeSelector.dropdown,

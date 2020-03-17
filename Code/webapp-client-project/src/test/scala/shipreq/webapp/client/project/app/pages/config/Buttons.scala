@@ -1,8 +1,10 @@
-package shipreq.webapp.client.project.app.pages.config.tags
+package shipreq.webapp.client.project.app.pages.config
 
 import japgolly.univeq.UnivEq
+import org.scalajs.dom.html
 import teststate.dsl.DisplayFailure
 import teststate.typeclass.Display
+import shipreq.webapp.base.test.TestState._
 
 final case class Buttons[+A](delete : Option[A] = None,
                              restore: Option[A] = None,
@@ -34,6 +36,20 @@ object Buttons {
   val none = apply()
 
   implicit def univEq[A: UnivEq]: UnivEq[Buttons[A]] = UnivEq.derive
+
+  def obs($: DomZipperJs) = {
+    var bs = Buttons.none: Buttons[html.Button]
+    for (b <- $.collect0n("button").zippers) {
+      b.innerText.trim match {
+        case "Update" | "Create" => bs = bs.copy(save    = Some(b.domAs[html.Button]))
+        case "Cancel"            => bs = bs.copy(cancel  = Some(b.domAs[html.Button]))
+        case "Close"             => bs = bs.copy(close   = Some(b.domAs[html.Button]))
+        case "Delete"            => bs = bs.copy(delete  = Some(b.domAs[html.Button]))
+        case "Restore"           => bs = bs.copy(restore = Some(b.domAs[html.Button]))
+      }
+    }
+    bs
+  }
 
   implicit def displayFailure[B]: DisplayFailure[Buttons[B], String] =
     new DisplayFailure[Buttons[B], String] {

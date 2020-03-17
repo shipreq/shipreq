@@ -3,6 +3,7 @@ package shipreq.webapp.client.project.app.pages.config.tags
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import shipreq.webapp.base.test.TestState._
+import shipreq.webapp.client.project.app.pages.config.Buttons
 
 object TagConfigTestDsl {
   val * = Dsl[Unit, TagConfigObs, Unit]

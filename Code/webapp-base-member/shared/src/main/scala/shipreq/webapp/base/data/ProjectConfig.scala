@@ -31,8 +31,11 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
   def customIssueType(id: CustomIssueTypeId): CustomIssueType =
     customIssueTypes.need(id)
 
-  lazy val liveCustomTextFields =
+  lazy val liveCustomTextFields: List[CustomField.Text] =
     fields.customTextFields.filter(_.live(this) is Live)
+
+  lazy val liveOrderedFieldIds: Vector[FieldId] =
+    fields.order.filter(fields.need(_).live(this) is Live)
 
   lazy val liveTagFieldDistribution: TagFieldDistribution.TagIds =
     TagFieldDistribution(this, _.live(this) is Live)

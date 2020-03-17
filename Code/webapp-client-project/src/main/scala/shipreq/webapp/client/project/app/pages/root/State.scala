@@ -9,6 +9,7 @@ import shipreq.webapp.base.data.{FilterDead, HideDead, Project}
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateConfigCmd, UpdateContentCmd}
 import shipreq.webapp.base.ui.{ProjectItem, Toast}
+import shipreq.webapp.client.project.app.pages.config.fields.FieldConfig
 import shipreq.webapp.client.project.app.pages.config.tags.TagConfig
 import shipreq.webapp.client.project.app.pages.content.{reqdetail, reqtable}
 import shipreq.webapp.client.project.app.pages.content.issues.IssuesPage
@@ -104,6 +105,8 @@ final case class State(projectName          : ProjectItem.WithEditableName.State
                        updateConfigCmdAsync : AsyncFeature.State.D1[UpdateConfigCmd, ErrorMsg],
                        updateContentCmdAsync: AsyncFeature.State.D1[UpdateContentCmd, ErrorMsg],
                        manualIssueCmdAsync  : AsyncFeature.State.D1[ManualIssueCmd, ErrorMsg],
+                       fieldConfig          : FieldConfig.State,
+                       fieldConfigAsync     : AsyncFeature.State.D0[ErrorMsg],
                        tagConfig            : TagConfig.State,
                        tagConfigAsync       : AsyncFeature.State.D0[ErrorMsg],
                       ) {
@@ -142,6 +145,8 @@ object State {
       updateConfigCmdAsync  = AsyncFeature.State.initD1,
       updateContentCmdAsync = AsyncFeature.State.initD1,
       manualIssueCmdAsync   = AsyncFeature.State.initD1,
+      fieldConfig           = FieldConfig.initState,
+      fieldConfigAsync      = AsyncFeature.State.initD0,
       tagConfig             = TagConfig.initState,
       tagConfigAsync        = AsyncFeature.State.initD0,
     )

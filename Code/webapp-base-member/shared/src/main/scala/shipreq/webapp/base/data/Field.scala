@@ -515,6 +515,12 @@ final case class FieldSet(customFields: FieldSet.CustomFields,
       case id: CustomFieldId => customFields get id
     }
 
+  def need(id: FieldId): Field =
+    id match {
+      case f : StaticField   => f
+      case id: CustomFieldId => customFields need id
+    }
+
   lazy val fields: Vector[Field] =
     order map {
       case f : StaticField   => f

@@ -6,6 +6,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.DragToReorderFeature
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.Style
+import shipreq.webapp.client.project.app.pages.config.Buttons
 
 object TagConfigObs {
 

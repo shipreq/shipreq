@@ -24,7 +24,7 @@ final case class EventSeqSummary(
     useCaseSteps        : EventSeqSummary.CUDR[UseCaseStepId],
     apReqCodes          : Boolean,
     contentLiveDeps     : Boolean,
-    fieldReposition     : Boolean,
+    fieldReposition     : Set[FieldId],
     ) {
 
   override def toString =
@@ -56,6 +56,14 @@ final case class EventSeqSummary(
 
   val hasTags: Boolean =
     hasTagsCU || hasTagsDR
+
+  lazy val allFields: Set[FieldId] =
+    mergeSets(
+      fieldReposition,
+      staticFields.all,
+      customFieldImpTypes.all,
+      customFieldTagTypes.all,
+      customFieldTextTypes.all)
 
   lazy val allTags: Set[TagId] =
     mergeSets(applicableTags.all, tagGroups.all)
@@ -190,7 +198,7 @@ object EventSeqSummary {
     private[this] val useCaseSteps         = new CUDR.Mutable[UseCaseStepId]
     private var apReqCodes                 = false
     private var contentLiveDeps            = false
-    private var fieldReposition            = false
+    private var fieldReposition            = Set.empty[FieldId]
 
     import CUDR.Field._
 
@@ -269,7 +277,7 @@ object EventSeqSummary {
       case e: Event.FieldCustomTagUpdate    => customFieldTagTypes.updated += e.id
       case e: Event.FieldCustomTextCreate   => customFieldTextTypes.created += e.id
       case e: Event.FieldCustomTextUpdate   => customFieldTextTypes.updated += e.id
-      case _: Event.FieldReposition         => fieldReposition = true
+      case e: Event.FieldReposition         => fieldReposition += e.id
       case e: Event.FieldStaticAdd          => staticFields.created += e.f
       case e: Event.FieldStaticRemove       => staticFields.deleted += e.f
       case e: Event.GenericReqCreate        => genericReqs.created += e.id

@@ -10,6 +10,7 @@ import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
+import shipreq.webapp.client.project.app.pages.config.Buttons
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.test.PrepareEnv
 

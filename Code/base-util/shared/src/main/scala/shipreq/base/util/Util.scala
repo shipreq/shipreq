@@ -219,15 +219,30 @@ object Util {
   }
 
   def mergeSets[A: UnivEq](x: Set[_ <: A], y: Set[_ <: A]): Set[A] =
-    if (x.isEmpty) y.asInstanceOf[Set[A]]
+         if (x.isEmpty) y.asInstanceOf[Set[A]]
     else if (y.isEmpty) x.asInstanceOf[Set[A]]
     else x ++ y
 
   def mergeSets[A: UnivEq](x: Set[_ <: A], y: Set[_ <: A], z: Set[_ <: A]): Set[A] =
-    if (x.isEmpty) mergeSets(y, z)
+         if (x.isEmpty) mergeSets(y, z)
     else if (y.isEmpty) mergeSets(x, z)
     else if (z.isEmpty) mergeSets(x, y)
     else (Set.newBuilder[A] ++= x ++= y ++= z).result()
+
+  def mergeSets[A: UnivEq](w: Set[_ <: A], x: Set[_ <: A], y: Set[_ <: A], z: Set[_ <: A]): Set[A] =
+         if (w.isEmpty) mergeSets(x, y, z)
+    else if (x.isEmpty) mergeSets(w, y, z)
+    else if (y.isEmpty) mergeSets(w, x, z)
+    else if (z.isEmpty) mergeSets(w, x, y)
+    else (Set.newBuilder[A] ++= w ++= x ++= y ++= z).result()
+
+  def mergeSets[A: UnivEq](v: Set[_ <: A], w: Set[_ <: A], x: Set[_ <: A], y: Set[_ <: A], z: Set[_ <: A]): Set[A] =
+         if (v.isEmpty) mergeSets(w, x, y, z)
+    else if (w.isEmpty) mergeSets(v, x, y, z)
+    else if (x.isEmpty) mergeSets(v, w, y, z)
+    else if (y.isEmpty) mergeSets(v, w, x, z)
+    else if (z.isEmpty) mergeSets(v, w, x, y)
+    else (Set.newBuilder[A] ++= v ++= w ++= x ++= y ++= z).result()
 
   def enumOrdering[A: UnivEq, B: Ordering](as: TraversableOnce[A])(by: A => B): Ordering[A] = {
     val sorted = MutableArray(as).sortBySchwartzian(by).array

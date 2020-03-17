@@ -82,7 +82,7 @@ object SampleProject {
       Tag        (priField     , priTG,                     Mandatory,     allReqTypes,                                 Live),
       Tag        (statusField  , statusTG,                  Mandatory.Not, notReqTypes(dd, si),                         Live),
       Implication(mfField      , mf,                        Mandatory.Not, notReqTypes(si),                             Live),
-      Tag        (relField     , 27.TG,                     Mandatory.Not, allReqTypes,                                 Dead)
+      Tag        (relField     , relTG,                     Mandatory.Not, allReqTypes,                                 Dead)
     ), Vector(
       descField, mfField, priField, reporterField,
       StaticField.NormalAltStepTree, StaticField.ExceptionStepTree, StaticField.StepGraph,

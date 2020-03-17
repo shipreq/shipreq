@@ -182,6 +182,9 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     private val savedViewAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.savedViewAsync)
 
+    private val fieldConfigAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
+      AsyncFeature.Write.D0.init($ zoomStateL State.fieldConfigAsync)
+
     private val tagConfigAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.tagConfigAsync)
 
@@ -352,7 +355,15 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
           issuesPage.component(p)
 
         case Page.CfgFields =>
-          config.fields.FieldConfig.Props().render
+          config.fields.FieldConfig.Props(
+            project = project,
+            pw      = projectWidgets,
+            state   = StateSnapshot.zoomL(State.fieldConfig)(s).setStateVia($),
+            ssp     = sspUpdateConfig,
+            async   = AsyncFeature.ReadWrite.D0(fieldConfigAsyncW, s.fieldConfigAsync),
+            toast   = toast,
+            router  = specialRouterCtl,
+          ).render
 
         case Page.CfgIssues =>
           config_old.issues.CfgIssues.Props(
