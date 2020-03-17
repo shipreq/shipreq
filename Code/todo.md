@@ -156,9 +156,6 @@ v2.1
   * update reqtable (and probably reqdetail) to render dead rows like cfg field
   * soft deletion vs hard - wrt app req types in tags
   * add usages. probably have to update filter too
-  * add layer for names so that any user-defined field names that conflict with a built-in name, get " 2" or similar appended
-    it should affect all cases where displayed except for the field editor itself
-    (and even then, it's probably a good idea to display a warning about what and why)
 
 * ReqTypes
   * Might be a good idea to store a description & examples. (eg. "BR" means xxx + examples)

@@ -1,7 +1,7 @@
 package shipreq.webapp.base.data
 
 import japgolly.microlibs.scalaz_ext.ScalazMacros
-import japgolly.microlibs.utils.Memo
+import japgolly.microlibs.utils.{BiMap, Memo}
 import monocle.macros.Lenses
 import scalaz.{-\/, Equal, \/-}
 import shipreq.base.util.univeq._
@@ -47,12 +47,35 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
   // ==========================================================================
   // Fields
 
-  lazy val fieldName: Field => String =
-    Field.name(reqTypes, tags.tree)
+  val customFieldNonUniqueName: CustomField => String = {
+    case f: CustomField.Text        => f.name
+    case f: CustomField.Tag         => f.name(tags.tree)
+    case f: CustomField.Implication => f.name(reqTypes)
+  }
 
-  lazy val fieldNameById: FieldId => String = {
-    val f = fieldName
-    _.foldId(f, id => f(fields.customFields.need(id)))
+  lazy val fieldsByName: Map[String, Field] = {
+    var m: Map[String, Field] = StaticField.byName
+    fields.customFields.valuesIterator.foreach { f =>
+      val name = customFieldNonUniqueName(f)
+
+      val uniqueName = {
+        var i = 2
+        var n = name
+        while (m.contains(name)) {
+          n = name + i
+          i += 1
+        }
+        n
+      }
+
+      m = m.updated(uniqueName, f)
+    }
+    m
+  }
+
+  lazy val fieldName: FieldId => String = {
+    val m: Map[FieldId, String] = fieldsByName.map(x => (x._2.fieldId, x._1))
+    m.apply
   }
 
   lazy val liveCustomTextFields: List[CustomField.Text] =

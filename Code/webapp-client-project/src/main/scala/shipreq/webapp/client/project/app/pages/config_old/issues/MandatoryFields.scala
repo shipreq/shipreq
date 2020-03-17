@@ -51,7 +51,7 @@ private[issues] object MandatoryFields {
 
     private val genEditor =
       Editors.checkboxEditor.imap(On <=> Mandatory)
-        .strengthR[Field].labelSuffix(a => labelFn.value()(a._2))
+        .strengthR[Field].labelSuffix(a => labelFn.value()(a._2.fieldId))
 
     private val editor =
       genEditor.cmapA[(Mandatory, CustomField)](a => a)

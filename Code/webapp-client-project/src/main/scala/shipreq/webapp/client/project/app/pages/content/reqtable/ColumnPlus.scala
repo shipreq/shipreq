@@ -39,7 +39,7 @@ object ColumnPlus {
       case Column.Tags            => Some(apply(c, Live, ColumnNames.tags))
       case Column.Implications(d) => Some(apply(c, Live, ColumnNames.implications(d)))
       case Column.DeletionReason  => Some(apply(c, Dead, ColumnNames.deletionReason))
-      case Column.CustomField(id) => p.config.fields.customFields.get(id).map(f => apply(c, f.live(p.config), cfName(f)))
+      case Column.CustomField(id) => p.config.fields.customFields.get(id).map(f => apply(c, f.live(p.config), cfName(id)))
     }
   }
 

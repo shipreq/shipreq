@@ -140,7 +140,7 @@ object FieldConfig {
             Callback.traverseOption(n.summary.allFields.headOption)(id =>
               for {
                 p2 <- $.props
-                _  <- p2.toast.add(s"$toastPrefix ${p2.project.config.fieldNameById(id)}")
+                _  <- p2.toast.add(s"$toastPrefix ${p2.project.config.fieldName(id)}")
                 _  <- onSuccess(id)
               } yield ()
             ).asAsyncCallback

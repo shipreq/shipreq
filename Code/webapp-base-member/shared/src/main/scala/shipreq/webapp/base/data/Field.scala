@@ -102,15 +102,7 @@ sealed trait Field {
 }
 
 object Field {
-
   implicit lazy val applicableReqTypesEquality: UnivEq[ApplicableReqTypes] = implicitly
-
-  private[data] def name(reqTypes: ReqTypes, tags: TagTree): Field => String = {
-    case f: StaticField             => f.name
-    case f: CustomField.Text        => f.name
-    case f: CustomField.Tag         => f.name(tags)
-    case f: CustomField.Implication => f.name(reqTypes)
-  }
 }
 
 sealed abstract class StaticField(val name                       : String,
@@ -294,8 +286,11 @@ object StaticField {
   lazy val (deletable, notDeletable) =
     values.whole.partition(_.deletable is Deletable)
 
-  lazy val names: Set[String] =
-    values.iterator.map(_.name).toSet
+  lazy val byName: Map[String, StaticField] =
+    values.iterator.map(f => f.name -> f).toMap
+
+  def names: Set[String] =
+    byName.keySet
 
   implicit def equality: UnivEq[StaticField] = UnivEq.derive
 

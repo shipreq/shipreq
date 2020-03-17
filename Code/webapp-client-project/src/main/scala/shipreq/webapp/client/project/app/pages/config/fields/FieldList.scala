@@ -113,7 +113,7 @@ object FieldList {
 
           <.td(
             *.fieldListTableName(live),
-            p.config.fieldName(field)),
+            p.config.fieldName(id)),
 
           <.td(
             field.fieldType.name),

@@ -184,7 +184,7 @@ object Row {
 
     {
       case i: Issue.BlankCustomField =>
-        val desc = UI.descBlankCustomField(cfg.fieldName(i.field))
+        val desc = UI.descBlankCustomField(cfg.fieldName(i.field.id))
         forReqA(i, desc, i.req, IssueField.customField(i.field.id))
 
       case i: Issue.BlankTitle =>

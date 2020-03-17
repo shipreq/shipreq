@@ -249,7 +249,7 @@ object ReqDetail {
       val pw        = data.pxProjectWidgets.value()
       val reqProps  = props.reqProps(req.id)
       val reqEditor = reqProps.editor
-      val fieldName = pxProjectConfig.value().fieldNameById
+      val fieldName = pxProjectConfig.value().fieldName
       val view      = data.viewData(pw).copy(fmtReqTypeShort = false)
 
       def renderHeader: VdomElement = {

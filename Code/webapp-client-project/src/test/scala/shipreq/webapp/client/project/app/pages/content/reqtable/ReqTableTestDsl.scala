@@ -177,7 +177,7 @@ object ReqTableTestDsl {
 
       def customFieldNames(project: Project, a: Live): Set[String] =
         project.config.fields.customFields.valuesIterator
-          .filter(_.live(project.config) ==* a).map(project.config.fieldName)
+          .filter(_.live(project.config) ==* a).map(f => project.config.fieldName(f.fieldId))
           .toSet
 
       val liveCustomFieldColumnsAlwaysAvailable =
