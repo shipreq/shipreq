@@ -113,14 +113,6 @@ object Field {
     }
     fn
   }
-
-  def nameFromProjectConfig(cfg: ProjectConfig): Field => String =
-    name(cfg.reqTypes, cfg.tags.tree)
-
-  def nameByIdFromProjectConfig(cfg: ProjectConfig): FieldId => String = {
-    val fieldToName = nameFromProjectConfig(cfg)
-    _.foldId(fieldToName, id => fieldToName(cfg.fields.customFields.need(id)))
-  }
 }
 
 sealed abstract class StaticField(val name                       : String,

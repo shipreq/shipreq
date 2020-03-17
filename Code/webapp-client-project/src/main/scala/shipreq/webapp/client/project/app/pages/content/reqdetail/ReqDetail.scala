@@ -128,9 +128,8 @@ object ReqDetail {
   final class Backend(SP: StaticProps, $: BackendScope[DynamicProps, Unit]) {
     import SP._
 
-    val pxFieldNameFn = pxProjectConfig.map(Field.nameByIdFromProjectConfig)
-    val pxExtPubid    = Px.props($).map(_.extPubid).withReuse.manualRefresh
-    val pxUpstreamFD  = Px.props($).map(_.filterDead.value).withReuse.manualRefresh
+    val pxExtPubid   = Px.props($).map(_.extPubid).withReuse.manualRefresh
+    val pxUpstreamFD = Px.props($).map(_.filterDead.value).withReuse.manualRefresh
 
     private def refreshPx(): Unit =
       Px.refresh(pxExtPubid, pxUpstreamFD)
@@ -250,7 +249,7 @@ object ReqDetail {
       val pw        = data.pxProjectWidgets.value()
       val reqProps  = props.reqProps(req.id)
       val reqEditor = reqProps.editor
-      val fieldName = pxFieldNameFn.value()
+      val fieldName = pxProjectConfig.value().fieldNameById
       val view      = data.viewData(pw).copy(fmtReqTypeShort = false)
 
       def renderHeader: VdomElement = {

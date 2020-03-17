@@ -27,7 +27,7 @@ object IssuesPage {
                                cmdInvoker      : Action.Cmd ~=> Callback) {
 
     val pxConfig      = pxProject.map(_.config).withReuse
-    val pxFieldNameFn = pxConfig.map(cfg => Reusable.byRef(Field.nameByIdFromProjectConfig(cfg)))
+    val pxFieldNameFn = pxConfig.map(cfg => Reusable.byRef(cfg.fieldNameById))
 
     val component = ScalaComponent.builder[Props]("IssuesPage")
       .backend(new Backend(this, _))

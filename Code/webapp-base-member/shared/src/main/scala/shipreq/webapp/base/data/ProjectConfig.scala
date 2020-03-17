@@ -66,6 +66,14 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
     m.result()
   }
 
+  lazy val fieldName: Field => String =
+    Field.name(reqTypes, tags.tree)
+
+  lazy val fieldNameById: FieldId => String = {
+    val f = fieldName
+    _.foldId(f, id => f(fields.customFields.need(id)))
+  }
+
   val mostRelevantLiveFieldForTag: TagId => Option[CustomField.Tag] =
     Memo { tagId =>
       type R = Option[CustomField.Tag]

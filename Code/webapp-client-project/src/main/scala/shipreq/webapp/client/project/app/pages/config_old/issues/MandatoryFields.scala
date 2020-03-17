@@ -43,7 +43,7 @@ private[issues] object MandatoryFields {
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
 
     private val pxProjectConfig = Px.props($).map(_.global.unsafeProject().config).withReuse.autoRefresh
-    private val labelFn         = pxProjectConfig.map(Field.nameFromProjectConfig)
+    private val labelFn         = pxProjectConfig.map(_.fieldName)
 
     private def save(id: CustomFieldId): CallbackTo[ST] =
       $.props.map(p =>
