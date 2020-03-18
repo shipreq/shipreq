@@ -417,7 +417,6 @@ final class ApplicableEventGen(curState: State, generateRetiredEvents: Boolean) 
     import gd._
     override def valueFor(a: Attr) = a match {
       case Name              => unicodeString1     map Name             .apply
-      case Key               => fieldRefKey        map Key              .apply
       case FieldReqTypeRules => fieldReqTypeRules_ map FieldReqTypeRules.apply
     }
   }

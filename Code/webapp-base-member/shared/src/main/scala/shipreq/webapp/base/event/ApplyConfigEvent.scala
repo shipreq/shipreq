@@ -401,7 +401,6 @@ trait ApplyConfigEvent {
     val updateIdCeiling = updateIdCeilingFn(IdCeilings.customField)
 
     val validateName = validateA(V.field.name.stateless)
-    val validateKey  = validateI(V.field.key.stateless)(_.value)
 
     def create(cf: CustomField): SE[Unit] =
       for {
@@ -495,7 +494,7 @@ trait ApplyConfigEvent {
 
   // -----------------------------------------------------------------------------------------------
   object CustomTextFieldEventsV1 {
-    import FieldEvents.{validateName, validateKey, create, update, updateCustomFieldV1}
+    import FieldEvents.{validateName, create, update, updateCustomFieldV1}
 
     val ^ = CustomTextFieldGDv1
     val GD = GenericDataApp[CustomField.Text](^)
@@ -504,7 +503,7 @@ trait ApplyConfigEvent {
       implicit val vs = e.vs
       for {
         n <- GD.need(^.Name) >>= validateName
-        k <- GD.need(^.Key)  >>= validateKey
+        k <- GD.need(^.Key)
         m <- GD.need(^.Mandatory)
         r <- GD.need(^.ApplicableReqTypes)
         _ <- create(CustomField.Text.v1(e.id, n, k, m, r, Live))
@@ -512,7 +511,6 @@ trait ApplyConfigEvent {
     }
 
     val updateName = validateName >>=@ CustomField.Text.name
-    val updateKey  = validateKey  >>=@ CustomField.Text.key
 
     private def updateValues(f: CustomField.Text, vs: ^.NonEmptyValues): SE[CustomField.Text] = {
       var man = Option.empty[Mandatory]
@@ -521,7 +519,7 @@ trait ApplyConfigEvent {
       val u =
         GD.updateEachValue {
           case v: ^.ValueForName               => updateName(v.value)
-          case v: ^.ValueForKey                => updateKey (v.value)
+          case _: ^.ValueForKey                => SE.ret
           case v: ^.ValueForMandatory          => f => SE.point {man = Some(v.value); f}
           case v: ^.ValueForApplicableReqTypes => f => SE.point {art = Some(v.value); f}
         }
@@ -620,7 +618,7 @@ trait ApplyConfigEvent {
 
   // -----------------------------------------------------------------------------------------------
   object CustomTextFieldEvents {
-    import FieldEvents.{validateName, validateKey, create, update}
+    import FieldEvents.{validateName, create, update}
 
     val ^ = CustomTextFieldGD
     val GD = GenericDataApp[CustomField.Text](^)
@@ -629,19 +627,16 @@ trait ApplyConfigEvent {
       implicit val vs = e.vs
       for {
         n <- GD.need(^.Name) >>= validateName
-        k <- GD.need(^.Key)  >>= validateKey
         r <- GD.need(^.FieldReqTypeRules)
-        _ <- create(CustomField.Text(e.id, n, k, r, Live))
+        _ <- create(CustomField.Text(e.id, n, r, Live))
       } yield ()
     }
 
     val updateName              = validateName >>=@ CustomField.Text.name
-    val updateKey               = validateKey  >>=@ CustomField.Text.key
     val updateFieldReqTypeRules = fieldUpdateFn(CustomField.Text.fieldReqTypeRules)
 
     val updateValues = GD.updateEachValue {
       case v: ^.ValueForName              => updateName             (v.value)
-      case v: ^.ValueForKey               => updateKey              (v.value)
       case v: ^.ValueForFieldReqTypeRules => updateFieldReqTypeRules(v.value)
     }
 

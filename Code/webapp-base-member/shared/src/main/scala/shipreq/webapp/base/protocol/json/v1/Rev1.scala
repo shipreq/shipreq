@@ -471,18 +471,15 @@ object Rev1 {
   private[v1] implicit lazy val codecCustomTextFieldGD: JsonCodec[CustomTextFieldGD.NonEmptyValues] = {
     import CustomTextFieldGD._
 
-    implicit val codecValueForKey               = JsonCodec.xmap(ValueForKey              .apply)(_.value)
     implicit val codecValueForName              = JsonCodec.xmap(ValueForName             .apply)(_.value)
     implicit val codecValueForFieldReqTypeRules = JsonCodec.xmap(ValueForFieldReqTypeRules.apply)(_.value)
 
     implicit val decoderValue: Decoder[Value] = decodeSumBySoleKey {
-      case ("key"     , c) => c.as[ValueForKey]
       case ("name"    , c) => c.as[ValueForName]
       case ("reqTypes", c) => c.as[ValueForFieldReqTypeRules]
     }
 
     implicit val encoderValue: Encoder[Value] = Encoder.instance {
-      case a: ValueForKey               => Json.obj("key"      -> a.asJson)
       case a: ValueForName              => Json.obj("name"     -> a.asJson)
       case a: ValueForFieldReqTypeRules => Json.obj("reqTypes" -> a.asJson)
     }

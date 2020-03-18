@@ -56,11 +56,6 @@ object FieldType {
 // =====================================================================================================================
 // Instances
 
-/**
- * A key by which users can refer to a field.
- */
-final case class FieldRefKey(value: String) extends TaggedString
-
 sealed trait Mandatory extends IsoBool[Mandatory] {
   override final def companion = Mandatory
 }
@@ -87,7 +82,6 @@ sealed trait FieldId {
 sealed trait Field {
   def fieldType        : FieldType
   def fieldReqTypeRules: FieldReqTypeRules[Any]
-  def keyO             : Option[FieldRefKey] // TODO delete
 
   def live(cfg: ProjectConfig): Live
 
@@ -107,8 +101,7 @@ object Field {
 sealed abstract class StaticField(val name                      : String,
                                   override val fieldType        : StaticFieldType,
                                   override val fieldReqTypeRules: FieldReqTypeRules[Nothing],
-                                  val deletable                 : Deletable,
-                                  override val keyO             : Option[FieldRefKey]) extends Field with FieldId {
+                                  val deletable                 : Deletable) extends Field with FieldId {
 
   override final def live(cfg: ProjectConfig) = Live
 
@@ -136,9 +129,8 @@ object StaticField {
   sealed abstract class UseCaseStepTree(_name     : String,
                                         _fieldType: StaticFieldType,
                                         _reqTypes : FieldReqTypeRules[Nothing],
-                                        _deletable: Deletable,
-                                        _keyO     : Option[FieldRefKey])
-      extends StaticField(_name, _fieldType, _reqTypes, _deletable, _keyO) {
+                                        _deletable: Deletable)
+      extends StaticField(_name, _fieldType, _reqTypes, _deletable) {
 
     val treeFilterAll: UseCaseSteps.Tree => Range
     val useCaseSteps: Lens[UseCase, UseCaseSteps]
@@ -210,7 +202,7 @@ object StaticField {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   case object NormalAltStepTree extends UseCaseStepTree(
-      "Normal and Alternate Courses", T.UseCaseSteps, useCaseOptionalOnly, Deletable.Not, None) {
+      "Normal and Alternate Courses", T.UseCaseSteps, useCaseOptionalOnly, Deletable.Not) {
 
     override val useCaseSteps = GenLens[UseCase](_.stepsNA)
     override val useCaseStepTree = useCaseSteps ^|-> UseCaseSteps.tree
@@ -237,7 +229,7 @@ object StaticField {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   case object ExceptionStepTree extends UseCaseStepTree(
-      "Exception Courses", T.UseCaseSteps, useCaseOptionalOnly, Deletable.Not, None) {
+      "Exception Courses", T.UseCaseSteps, useCaseOptionalOnly, Deletable.Not) {
 
     override val useCaseSteps = GenLens[UseCase](_.stepsE)
     override val useCaseStepTree = useCaseSteps ^|-> UseCaseSteps.tree
@@ -263,10 +255,10 @@ object StaticField {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   case object StepGraph extends StaticField(
-    T.UseCaseStepGraph.name, T.UseCaseStepGraph, useCaseOptionalOnly, Deletable, None)
+    T.UseCaseStepGraph.name, T.UseCaseStepGraph, useCaseOptionalOnly, Deletable)
 
   case object ImplicationGraph extends StaticField(
-    T.ImplicationGraph.name, T.ImplicationGraph, FieldReqTypeRules.optional, Deletable, None)
+    T.ImplicationGraph.name, T.ImplicationGraph, FieldReqTypeRules.optional, Deletable)
 
   // Non lazy causes utest to crash
   // ORDER MATTERS as this is the default order of fields use in new projects
@@ -330,12 +322,10 @@ object CustomField {
   @Lenses
   final case class Text(id               : Text.Id,
                         name             : String,
-                        key              : FieldRefKey,
                         fieldReqTypeRules: FieldReqTypeRules.ForTextField,
                         liveExplicitly   : Live) extends CustomField(CustomFieldType.Text) {
-    override def toString = s"CustomField.Text($id, $name, $key, $fieldReqTypeRules, $liveExplicitly)"
+    override def toString = s"CustomField.Text($id, $name, $fieldReqTypeRules, $liveExplicitly)"
     override def independentName = Some(name)
-    override def keyO = Some(key)
     override def live(cfg: ProjectConfig) = liveExplicitly
   }
 
@@ -343,14 +333,14 @@ object CustomField {
 
     def v1(id                : Text.Id,
            name              : String,
-           key               : FieldRefKey,
+           key               : String,
            mandatory         : Mandatory,
            applicableReqTypes: ApplicableReqTypes,
            liveExplicitly    : Live): Text = {
+      val _ = key
       apply(
         id                = id,
         name              = name,
-        key               = key,
         fieldReqTypeRules = FieldReqTypeRules.v1(mandatory, applicableReqTypes),
         liveExplicitly    = liveExplicitly,
       )
@@ -374,7 +364,6 @@ object CustomField {
 
     override def toString = s"CustomField.Tag($id, $tagId, $fieldReqTypeRules, $liveExplicitly)"
     override def independentName = None
-    override def keyO = None
 
     def name(tags: TagTree): String =
       tags.need(tagId).tag.name
@@ -415,7 +404,6 @@ object CustomField {
                                liveExplicitly   : Live) extends CustomField(CustomFieldType.Implication) {
     override def toString = s"CustomField.Implication($id, $reqTypeId, $fieldReqTypeRules, $liveExplicitly)"
     override def independentName = None
-    override def keyO = None
 
     def name(reqTypes: ReqTypes): String =
       ReqType.name(reqTypes)(reqTypeId)
@@ -454,15 +442,9 @@ object CustomField {
   // ===================================================================================================================
 
   val independentName = Optional[CustomField, String](_.independentName)(n => {
-    case Text(a, _, b, c, d) => Text(a, n, b, c, d)
-    case f: Tag              => f
-    case f: Implication      => f
-  })
-
-  val key = Optional[CustomField, FieldRefKey](_.keyO)(n => {
-    case Text(a, b, _, c, d) => Text(a, b, n, c, d)
-    case f: Tag              => f
-    case f: Implication      => f
+    case Text(a, _, b, c) => Text(a, n, b, c)
+    case f: Tag           => f
+    case f: Implication   => f
   })
 
   /** HACK: Default type set to "Any" which is a lie. Safe unless you try to change defaults. */

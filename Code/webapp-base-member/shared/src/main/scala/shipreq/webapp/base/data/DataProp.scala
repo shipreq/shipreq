@@ -132,11 +132,8 @@ object DataProp {
     def uniqueNames =
       Prop.distinct("name", (_: Fields).flatMap(_.independentName.toVector))
 
-    def uniqueKeys =
-      Prop.distinct("FieldRefKey", (_: Fields).flatMap(_.keyO.toVector))
-
     def fields =
-      (uniqueNames ∧ uniqueKeys).contramap[FieldSet](_.fields)
+      (uniqueNames).contramap[FieldSet](_.fields)
 
     def orderNoDups =
       Prop.distinct("order", (_: FieldSet).order)

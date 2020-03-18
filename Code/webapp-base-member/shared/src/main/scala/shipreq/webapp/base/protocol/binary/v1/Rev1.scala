@@ -213,7 +213,6 @@ object Rev1 {
         state.enc.writeInt(1) // v1.1
         state.pickle(a.id)    // first byte is <=0 because of PicklerReuse
         state.pickle(a.name)
-        state.pickle(a.key)
         state.pickle(a.fieldReqTypeRules)
         state.pickle(a.liveExplicitly)
       }
@@ -225,16 +224,15 @@ object Rev1 {
             state.dec.readInt
             val id             = state.unpickle[CustomField.Text.Id]
             val name           = state.unpickle[String]
-            val key            = state.unpickle[FieldRefKey]
             val reqTypes       = state.unpickle[FieldReqTypeRules.ForTextField]
             val liveExplicitly = state.unpickle[Live]
-            CustomField.Text(id, name, key, reqTypes, liveExplicitly)
+            CustomField.Text(id, name, reqTypes, liveExplicitly)
 
           // v1.0
           case n if n <= 0 =>
             val id             = state.unpickle[CustomField.Text.Id]
             val name           = state.unpickle[String]
-            val key            = state.unpickle[FieldRefKey]
+            val key            = state.unpickle[String]
             val mandatory      = state.unpickle[Mandatory]
             val reqTypes       = state.unpickle[ApplicableReqTypes]
             val liveExplicitly = state.unpickle[Live]
@@ -446,24 +444,20 @@ object Rev1 {
   implicit val pickleCustomTextFieldGD: Pickler[CustomTextFieldGD.NonEmptyValues] = {
     import CustomTextFieldGD._
 
-    implicit val picklerValueForKey               = transformPickler(ValueForKey              .apply)(_.value)
     implicit val picklerValueForName              = transformPickler(ValueForName             .apply)(_.value)
     implicit val picklerValueForFieldReqTypeRules = transformPickler(ValueForFieldReqTypeRules.apply)(_.value)
 
     implicit val picklerValue: Pickler[Value] =
       new Pickler[Value] {
-        private[this] final val KeyKey       = 'K'
         private[this] final val KeyName      = 'N'
         private[this] final val KeyReqTypes  = 'R'
         override def pickle(a: Value)(implicit state: PickleState): Unit =
           a match {
-            case b: ValueForKey               => state.enc.writeByte(KeyKey      ); state.pickle(b)
-            case b: ValueForName              => state.enc.writeByte(KeyName     ); state.pickle(b)
-            case b: ValueForFieldReqTypeRules => state.enc.writeByte(KeyReqTypes ); state.pickle(b)
+            case b: ValueForName              => state.enc.writeByte(KeyName    ); state.pickle(b)
+            case b: ValueForFieldReqTypeRules => state.enc.writeByte(KeyReqTypes); state.pickle(b)
           }
         override def unpickle(implicit state: UnpickleState): Value =
           state.dec.readByte match {
-            case KeyKey       => state.unpickle[ValueForKey]
             case KeyName      => state.unpickle[ValueForName]
             case KeyReqTypes  => state.unpickle[ValueForFieldReqTypeRules]
           }

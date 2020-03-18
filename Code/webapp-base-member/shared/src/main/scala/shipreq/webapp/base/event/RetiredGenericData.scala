@@ -214,9 +214,9 @@ object RetiredGenericData {
     }
 
     case object Key extends Attr {
-      override type Data = FieldRefKey
+      override type Data = String
       override def apply(data: Data) = ValueForKey(data)
-      val dataEquality: Equal[Data] = implicitly[Equal[FieldRefKey]]
+      val dataEquality: Equal[Data] = implicitly[Equal[String]]
     }
     final case class ValueForKey(value: Key.Data) extends Value {
       override val attr: Key.type = Key

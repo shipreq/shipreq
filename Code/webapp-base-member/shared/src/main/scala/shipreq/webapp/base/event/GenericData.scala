@@ -337,19 +337,6 @@ object CustomTextFieldGD extends GenericData {
     }
   }
 
-  case object Key extends Attr {
-    override type Data = FieldRefKey
-    override def apply(data: Data) = ValueForKey(data)
-    val dataEquality: Equal[Data] = implicitly[Equal[FieldRefKey]]
-  }
-  final case class ValueForKey(value: Key.Data) extends Value {
-    override val attr: Key.type = Key
-    override def equals(o: Any): Boolean = o match {
-      case v2: ValueForKey => Key.dataEquality.equal(value, v2.value)
-      case _ => false
-    }
-  }
-
   case object Name extends Attr {
     override type Data = String
     override def apply(data: Data) = ValueForName(data)
@@ -364,11 +351,11 @@ object CustomTextFieldGD extends GenericData {
   }
 
   override implicit val equalityAttr: Order[Attr] with UnivEq[Attr] =
-    Util.univEqAndArbitraryOrder(Vector(FieldReqTypeRules, Key, Name))
+    Util.univEqAndArbitraryOrder(Vector(FieldReqTypeRules, Name))
 
   @inline override implicit def equalityValue: UnivEq[Value] = UnivEq.force
 
-  override val attrs = NonEmptySet[Attr](FieldReqTypeRules, Key, Name)
+  override val attrs = NonEmptySet[Attr](FieldReqTypeRules, Name)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████

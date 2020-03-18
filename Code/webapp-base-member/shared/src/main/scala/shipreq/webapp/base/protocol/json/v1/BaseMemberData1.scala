@@ -444,9 +444,6 @@ private[v1] object BaseMemberData1 {
     case a: CustomField.Text.Id        => Json.obj("text" -> a.asJson)
   }
 
-  implicit lazy val codecFieldRefKey: JsonCodec[FieldRefKey] =
-    codecTaggedS(FieldRefKey)
-
   implicit lazy val codecFilterDead: JsonCodec[FilterDead] =
     codecBoolVia(FilterDead) {
       case ShowDead => "show"

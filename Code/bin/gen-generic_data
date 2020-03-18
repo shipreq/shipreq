@@ -85,7 +85,6 @@ val gens = List(
   ),
   Gen("CustomTextFieldGD")(
     "Name"              -> "String",
-    "Key"               -> "FieldRefKey",
     "FieldReqTypeRules" -> "FieldReqTypeRules[Impossible]",
   ),
   Gen("CustomTagFieldGD")(

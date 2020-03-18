@@ -165,7 +165,6 @@ object DataValidators {
 
   // ===================================================================================================================
   object field {
-    import Grammar.{fieldRefKey => G}
 
     final case class State(subject: Option[CustomFieldId], allData: () => TraversableOnce[CustomField]) {
       def otherData: Iterator[CustomField] =
@@ -173,9 +172,6 @@ object DataValidators {
 
       def nameUniqueness: Invalidator[String] =
         Uniqueness.within(otherData.map(_.independentName).filterDefined)
-
-      def keyUniqueness: Invalidator[FieldRefKey] =
-        Uniqueness.within(otherData.map(_.keyO).filterDefined)
 
       def tagIdUniqueness: Invalidator[TagId] =
         Uniqueness.within(otherData.map({
@@ -202,25 +198,13 @@ object DataValidators {
         .appendInvalidator(nameNotReserved)
         .stateful(_ appendInvalidator _.nameUniqueness)
 
-    // DD-20: Field refkeys must match this format: /[a-z][a-z0-9_]*/
-    val key: Composite.Stateful[State, String, String, FieldRefKey] =
-      G.tailChars.validator
-        .append(G.length.validator)
-        .prependCorrector(TextMod.lowerCase.correctLive)
-        .appendCorrector(TextMod.noWhitespace.correctFull)
-        .mapInvalidator(i => V.invalidator.nonEmpty.whenValid(G.firstChar.invalidator merge i))
-        .toValidator
-        .mapValid(FieldRefKey.apply)
-        .named(FieldNames.fieldRefKey)
-        .stateful(_ appendInvalidator _.keyUniqueness)
-
     def mandatory = Validator.id[Mandatory]
 
     val textField: State => Composite.Validator[
-      (String, String, Mandatory, ApplicableReqTypes),
-      (String, String, Mandatory, ApplicableReqTypes),
-      (String, FieldRefKey, Mandatory, ApplicableReqTypes)] =
-      s => name(s).named tuple key(s).named tuple mandatory tuple applicableReqTypes.named
+      (String, Mandatory, ApplicableReqTypes),
+      (String, Mandatory, ApplicableReqTypes),
+      (String, Mandatory, ApplicableReqTypes)] =
+      s => name(s).named tuple mandatory tuple applicableReqTypes.named
 
     object tagField {
       val tagId: Composite.Stateful[State, Option[TagId], Option[TagId], TagId] =

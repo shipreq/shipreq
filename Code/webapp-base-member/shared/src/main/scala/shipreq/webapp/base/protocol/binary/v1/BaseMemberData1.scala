@@ -672,9 +672,6 @@ object BaseMemberData1 {
         }
     }
 
-  implicit lazy val picklerFieldRefKey: Pickler[FieldRefKey] =
-    pickleTaggedS(FieldRefKey)
-
   implicit lazy val picklerFilterDead: Pickler[FilterDead] =
     pickleBool(ShowDead)
 

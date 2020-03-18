@@ -75,7 +75,7 @@ object ProjectTemplate {
 
     def allReqTypes = ApplicableReqTypes.empty
     val customFieldId = new IdCounter(identity)
-    def customTextField(name: String, key: FieldRefKey, mandatory: Mandatory, applicableReqTypes: ApplicableReqTypes): Unit = {
+    def customTextField(name: String, key: String, mandatory: Mandatory, applicableReqTypes: ApplicableReqTypes): Unit = {
       val id = CustomField.Text.Id(customFieldId.next())
       add(FieldCustomTextCreateV1(id, gdAllValues(CustomTextFieldGDv1, "")))
     }
@@ -125,7 +125,7 @@ object ProjectTemplate {
       val rel  = tagGroup("Released", "Product version in which requirements were implemented.", NonExclusive)
       val ver  = tagGroup("Version", "Target product version.", NonExclusive, children = Vector(rel, urel))
 
-      customTextField("Detail", FieldRefKey("detail"), Mandatory.Not, allReqTypes)
+      customTextField("Detail", "detail", Mandatory.Not, allReqTypes)
       customImpField(mf,     Mandatory    , ApplicableReqTypes.blacklist(mf, oe))
       customTagField(pri,    Mandatory.Not, allReqTypes)
       customTagField(ver,    Mandatory.Not, allReqTypes)

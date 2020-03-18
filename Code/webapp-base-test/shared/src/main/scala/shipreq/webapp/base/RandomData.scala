@@ -447,13 +447,13 @@ object RandomData {
     Gen.chooseGen(customFieldTextId, customFieldTagId, customFieldImplicationId)
 
   val fieldRefKey =
-    grammarStr1(Grammar.fieldRefKey)(_.firstChar, _.tailChars, _.length) map FieldRefKey
+    Gen.alpha.string(1 to 4)
 
   def customFieldType =
     Gen.chooseNE(CustomFieldType.values)
 
   def customFieldText(rules: Gen[FieldReqTypeRules.ForTextField]): Gen[CustomField.Text] =
-    Gen.apply5(CustomField.Text.apply)(customFieldTextId, shortText1, fieldRefKey, rules, live)
+    Gen.apply4(CustomField.Text.apply)(customFieldTextId, shortText1, rules, live)
 
   def customFieldTag(tagId: Gen[TagId], rules: Gen[FieldReqTypeRules.ForTagField]): Gen[CustomField.Tag] =
     Gen.apply4(CustomField.Tag.apply)(customFieldTagId, tagId, rules, live)
@@ -494,8 +494,7 @@ object RandomData {
     } yield f3.toList ::: f2.toList ::: f1
     def id   = distinctId(CustomField.IdAccess, CustomFieldId_T)
     def name = Distinct.str.at(CustomField.independentName)
-    def key  = Distinct.fstr.xmap(FieldRefKey.apply)(_.value).distinct.at(CustomField.key)
-    val dist = (id * name * key).lift[Stream]
+    val dist = (id * name).lift[Stream]
     cf.map(fs => emptyDataMap(CustomField) ++ dist.run(fs.toStream))
   }
 
@@ -1986,7 +1985,6 @@ object RandomData {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
         case Name              => unicodeString1     map Name             .apply
-        case Key               => fieldRefKey        map Key              .apply
         case FieldReqTypeRules => fieldReqTypeRules_ map FieldReqTypeRules.apply
       }
     }

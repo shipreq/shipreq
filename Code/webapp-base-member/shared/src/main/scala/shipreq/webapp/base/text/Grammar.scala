@@ -67,19 +67,6 @@ object Grammar {
   }
 
   /**
-   * [[shipreq.webapp.base.data.FieldRefKey]]
-   *
-   * DD-20: Field refkeys must match this format: [a-z][a-z0-9_]*
-   *
-   * Must not contain: []{}<>.?"
-   */
-  object fieldRefKey {
-    def length    = hashRefKey.length
-    def firstChar = FirstChar.az
-    def tailChars = CharWhitelist.az09_
-  }
-
-  /**
    * [[shipreq.webapp.base.data.ReqCode]]
    *
    * DD-17: Semantic-ID components must match this format: [a-z0-9][a-z0-9_]*

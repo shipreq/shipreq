@@ -48,7 +48,6 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
 
   implicit def autoMnemonic   (s: String) = ReqType.Mnemonic(s)
   implicit def autoHashRefKey (s: String) = HashRefKey(s)
-  implicit def autoFieldRefKey(s: String) = FieldRefKey(s)
   implicit def autoReqCodeNode(s: String) = ReqCode.Node(s)
   implicit def autoColour     (s: String) = Colour(s).get
 

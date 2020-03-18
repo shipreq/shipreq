@@ -60,7 +60,6 @@ object UpdateConfigCmd {
   sealed trait CustomFieldValues
 
   final case class TextFieldValues(name             : String,
-                                   key              : FieldRefKey,
                                    fieldReqTypeRules: FieldReqTypeRules.ForTextField) extends CustomFieldValues
 
   final case class TagFieldValues(tagId            : TagId,
@@ -120,14 +119,12 @@ object UpdateConfigCmd {
       new Pickler[TextFieldValues] {
         override def pickle(a: TextFieldValues)(implicit state: PickleState): Unit = {
           state.pickle(a.name)
-          state.pickle(a.key)
           state.pickle(a.fieldReqTypeRules)
         }
         override def unpickle(implicit state: UnpickleState): TextFieldValues = {
           val name     = state.unpickle[String]
-          val key      = state.unpickle[FieldRefKey]
           val reqTypes = state.unpickle[FieldReqTypeRules.ForTextField]
-          TextFieldValues(name, key, reqTypes)
+          TextFieldValues(name, reqTypes)
         }
       }
 
