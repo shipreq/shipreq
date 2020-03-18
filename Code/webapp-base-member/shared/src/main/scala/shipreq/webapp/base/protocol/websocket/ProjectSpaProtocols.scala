@@ -220,7 +220,8 @@ object ProjectSpaProtocols {
       override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onUpdateManualIssues(r)
     }
 
-    case object FieldMandatorinessMod extends Base[(CustomFieldId, Mandatory), EventResult](9) {
+    /** Deprecated in v1.1 */
+    case object FieldMandatorinessMod extends Base[Unit, Unit](9) {
       override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onFieldMandatorinessMod(r)
     }
 

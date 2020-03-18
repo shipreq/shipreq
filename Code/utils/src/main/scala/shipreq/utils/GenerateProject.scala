@@ -68,7 +68,7 @@ object GenerateProject {
     val tags0           = sample($.tagTree(genReqTypeId.set(0 to 4)), Size.CfgTags)
     val issues0         = firstSample($.revAndIMap($.customIssueType list Size.CfgCustomIssueTypes), 50)
     val (issues, tags)  = $.distinctHashRefKeys.run((issues0, tags0))
-    val fields          = sample($.fieldSet2(reqTypeIdSet, tags.keySet, reqtypes.keySet), Size.CfgFields)
+    val fields          = sample($.fieldSet(reqTypeIdSet, tags.keySet), Size.CfgFields)
     val cfg             = ProjectConfig(issues, ReqTypes(reqtypes), fields, Tags(tags))
     val atagIds         = cfg.tags.tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
     val reqsWithoutText = firstSample($.reqsWithoutText(cfg, genericReqCount, useCaseCount), 20)

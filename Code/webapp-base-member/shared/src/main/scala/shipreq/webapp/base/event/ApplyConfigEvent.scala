@@ -1,5 +1,6 @@
 package shipreq.webapp.base.event
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
 import monocle.Traversal
 import scala.reflect.ClassTag
@@ -154,10 +155,10 @@ trait ApplyConfigEvent {
     private def softDelete(id: CustomReqTypeId): SE[Unit] =
       deleteOrRestore(id, Dead, ReqCodeLogic.inactivateBelongingToReqs)
 
-    private val reqTypeApplicability1: Traversal[Project, ApplicableReqTypes] =
-      Project.customFields ^|->> FieldSet.customFieldsTraversal ^|-> CustomField.applicableReqTypes
+    private val fieldReqTypeRules1: Traversal[Project, FieldReqTypeRules[Any]] =
+      Project.customFields ^|->> FieldSet.customFieldsTraversal ^|-> CustomField.fieldReqTypeRulesHack
 
-    private val reqTypeApplicability2: Traversal[Project, ApplicableReqTypes] =
+    private val reqTypeApplicability1: Traversal[Project, ApplicableReqTypes] =
       Project.applicableTags ^|-> ApplicableTag.applicableReqTypes
 
     private def hardDelete(id: CustomReqTypeId): SE[Unit] = {
@@ -166,8 +167,9 @@ trait ApplyConfigEvent {
           .flatMap(SE.foldMapRun(_)(f => FieldEvents.hardDelete(f.id)))
 
       def removeFromReqTypeApplicability: SE[Unit] = {
-        val f: ApplicableReqTypes => ApplicableReqTypes = _.hardDelete(id)
-        reqTypeApplicability1.modify(f) compose reqTypeApplicability2.modify(f)
+        val f: EndoFn[ApplicableReqTypes]     = _.hardDelete(id)
+        val g: EndoFn[FieldReqTypeRules[Any]] = _.hardDelete(id)
+        reqTypeApplicability1.modify(f) compose fieldReqTypeRules1.modify(g)
       }
 
       def deleteReqType: SE[Unit] =
@@ -462,6 +464,158 @@ trait ApplyConfigEvent {
         FieldSet(
           f.customFields - id,
           f.order.filter(_.foldId(_ => true, _ !=* id))))
+
+    def updateCustomFieldV1[D](rules: FieldReqTypeRules[D])
+                              (mo: Option[Mandatory], ao: Option[ApplicableReqTypes]): FieldReqTypeRules[D] =
+      (mo, ao) match {
+        case (None, None) =>
+          rules
+
+        case (Some(m), Some(a)) =>
+          FieldReqTypeRules.v1(m, a)
+
+        case (Some(m), None   ) =>
+          FieldReqTypeRules.resolutionTraversal[D].modify({
+            case FieldReqTypeRules.Resolution.Optional
+                 | FieldReqTypeRules.Resolution.Mandatory => FieldReqTypeRules.Resolution.v1(m)
+            case r                                      => r
+          })(rules)
+
+        case (None, Some(a)) =>
+          val m =
+            rules.resolutionIterator().flatMap {
+              case FieldReqTypeRules.Resolution.Optional  => Mandatory.Not :: Nil
+              case FieldReqTypeRules.Resolution.Mandatory => Mandatory :: Nil
+              case _                                      => Nil
+            }.nextOption().getOrElse(Mandatory.Not)
+
+          FieldReqTypeRules.v1(m, a)
+      }
+  }
+
+  // -----------------------------------------------------------------------------------------------
+  object CustomTextFieldEventsV1 {
+    import FieldEvents.{validateName, validateKey, create, update, updateCustomFieldV1}
+
+    val ^ = CustomTextFieldGDv1
+    val GD = GenericDataApp[CustomField.Text](^)
+
+    def applyCreate(e: FieldCustomTextCreateV1): SE[Unit] = {
+      implicit val vs = e.vs
+      for {
+        n <- GD.need(^.Name) >>= validateName
+        k <- GD.need(^.Key)  >>= validateKey
+        m <- GD.need(^.Mandatory)
+        r <- GD.need(^.ApplicableReqTypes)
+        _ <- create(CustomField.Text.v1(e.id, n, k, m, r, Live))
+      } yield ()
+    }
+
+    val updateName = validateName >>=@ CustomField.Text.name
+    val updateKey  = validateKey  >>=@ CustomField.Text.key
+
+    private def updateValues(f: CustomField.Text, vs: ^.NonEmptyValues): SE[CustomField.Text] = {
+      var man = Option.empty[Mandatory]
+      var art = Option.empty[ApplicableReqTypes]
+
+      val u =
+        GD.updateEachValue {
+          case v: ^.ValueForName               => updateName(v.value)
+          case v: ^.ValueForKey                => updateKey (v.value)
+          case v: ^.ValueForMandatory          => f => SE.point {man = Some(v.value); f}
+          case v: ^.ValueForApplicableReqTypes => f => SE.point {art = Some(v.value); f}
+        }
+
+      u(vs)(f).map { f2 =>
+        val newRules = updateCustomFieldV1(f2.fieldReqTypeRules)(man, art)
+        f2.copy(fieldReqTypeRules = newRules)
+      }
+    }
+
+    def applyUpdate(e: FieldCustomTextUpdateV1): SE[Unit] =
+      update[CustomField.Text](e.id, updateValues(_, e.vs))
+  }
+
+  // -----------------------------------------------------------------------------------------------
+  object CustomTagFieldEventsV1 {
+    import FieldEvents.{create, update, updateCustomFieldV1}
+
+    val ^ = CustomTagFieldGDv1
+    val GD = GenericDataApp[CustomField.Tag](^)
+
+    def applyCreate(e: FieldCustomTagCreateV1): SE[Unit] = {
+      implicit val vs = e.vs
+      for {
+        t <- GD.need(^.TagId)
+        m <- GD.need(^.Mandatory)
+        r <- GD.need(^.ApplicableReqTypes)
+        _ <- ensureTagIsLive(t)
+        _ <- create(CustomField.Tag.v1(e.id, t, m, r, Live))
+      } yield ()
+    }
+
+    val updateTagId = fieldUpdateFn(CustomField.Tag.tagId)
+
+    private def updateValues(f: CustomField.Tag, vs: ^.NonEmptyValues): SE[CustomField.Tag] = {
+      var man = Option.empty[Mandatory]
+      var art = Option.empty[ApplicableReqTypes]
+
+      val u =
+        GD.updateEachValue {
+          case v: ^.ValueForTagId              => updateTagId    (v.value)
+          case v: ^.ValueForMandatory          => f => SE.point {man = Some(v.value); f}
+          case v: ^.ValueForApplicableReqTypes => f => SE.point {art = Some(v.value); f}
+        }
+
+      u(vs)(f).map { f2 =>
+        val newRules = updateCustomFieldV1(f2.fieldReqTypeRules)(man, art)
+        f2.copy(fieldReqTypeRules = newRules)
+      }
+    }
+
+    def applyUpdate(e: FieldCustomTagUpdateV1): SE[Unit] =
+      update[CustomField.Tag](e.id, updateValues(_, e.vs))
+  }
+
+  // -----------------------------------------------------------------------------------------------
+  object CustomImpFieldEventsV1 {
+    import FieldEvents.{create, update, updateCustomFieldV1}
+
+    val ^ = CustomImpFieldGDv1
+    val GD = GenericDataApp[CustomField.Implication](^)
+
+    def applyCreate(e: FieldCustomImpCreateV1): SE[Unit] = {
+      implicit val vs = e.vs
+      for {
+        t <- GD.need(^.ReqTypeId)
+        m <- GD.need(^.Mandatory)
+        r <- GD.need(^.ApplicableReqTypes)
+        _ <- ensureReqTypeIsLive(t)
+        _ <- create(CustomField.Implication.v1(e.id, t, m, r, Live))
+      } yield ()
+    }
+
+    val updateReqTypeId = fieldUpdateFn(CustomField.Implication.reqTypeId)
+
+    private def updateValues(f: CustomField.Implication, vs: ^.NonEmptyValues): SE[CustomField.Implication] = {
+      var man = Option.empty[Mandatory]
+      var art = Option.empty[ApplicableReqTypes]
+
+      val u =
+        GD.updateEachValue {
+          case v: ^.ValueForReqTypeId          => updateReqTypeId(v.value)
+          case v: ^.ValueForMandatory          => f => SE.point {man = Some(v.value); f}
+          case v: ^.ValueForApplicableReqTypes => f => SE.point {art = Some(v.value); f}
+        }
+
+      u(vs)(f).map { f2 =>
+        val newRules = updateCustomFieldV1(f2.fieldReqTypeRules)(man, art)
+        f2.copy(fieldReqTypeRules = newRules)
+      }
+    }
+
+    def applyUpdate(e: FieldCustomImpUpdateV1): SE[Unit] =
+      update[CustomField.Implication](e.id, updateValues(_, e.vs))
   }
 
   // -----------------------------------------------------------------------------------------------
@@ -476,22 +630,19 @@ trait ApplyConfigEvent {
       for {
         n <- GD.need(^.Name) >>= validateName
         k <- GD.need(^.Key)  >>= validateKey
-        m <- GD.need(^.Mandatory)
-        r <- GD.need(^.ApplicableReqTypes)
-        _ <- create(CustomField.Text(e.id, n, k, m, r, Live))
+        r <- GD.need(^.FieldReqTypeRules)
+        _ <- create(CustomField.Text(e.id, n, k, r, Live))
       } yield ()
     }
 
-    val updateName      = validateName >>=@ CustomField.Text.name
-    val updateKey       = validateKey  >>=@ CustomField.Text.key
-    val updateMandatory = fieldUpdateFn(CustomField.Text.mandatory)
-    val updateReqTypes  = fieldUpdateFn(CustomField.Text.applicableReqTypes)
+    val updateName              = validateName >>=@ CustomField.Text.name
+    val updateKey               = validateKey  >>=@ CustomField.Text.key
+    val updateFieldReqTypeRules = fieldUpdateFn(CustomField.Text.fieldReqTypeRules)
 
     val updateValues = GD.updateEachValue {
-      case v: ^.ValueForName               => updateName     (v.value)
-      case v: ^.ValueForKey                => updateKey      (v.value)
-      case v: ^.ValueForMandatory          => updateMandatory(v.value)
-      case v: ^.ValueForApplicableReqTypes => updateReqTypes (v.value)
+      case v: ^.ValueForName              => updateName             (v.value)
+      case v: ^.ValueForKey               => updateKey              (v.value)
+      case v: ^.ValueForFieldReqTypeRules => updateFieldReqTypeRules(v.value)
     }
 
     def applyUpdate(e: FieldCustomTextUpdate): SE[Unit] =
@@ -509,21 +660,18 @@ trait ApplyConfigEvent {
       implicit val vs = e.vs
       for {
         t <- GD.need(^.TagId)
-        m <- GD.need(^.Mandatory)
-        r <- GD.need(^.ApplicableReqTypes)
+        r <- GD.need(^.FieldReqTypeRules)
         _ <- ensureTagIsLive(t)
-        _ <- create(CustomField.Tag(e.id, t, m, r, Live))
+        _ <- create(CustomField.Tag(e.id, t, r, Live))
       } yield ()
     }
 
-    val updateTagId     = fieldUpdateFn(CustomField.Tag.tagId)
-    val updateMandatory = fieldUpdateFn(CustomField.Tag.mandatory)
-    val updateReqTypes  = fieldUpdateFn(CustomField.Tag.applicableReqTypes)
+    val updateTagId             = fieldUpdateFn(CustomField.Tag.tagId)
+    val updateFieldReqTypeRules = fieldUpdateFn(CustomField.Tag.fieldReqTypeRules)
 
     val updateValues = GD.updateEachValue {
-      case v: ^.ValueForTagId              => updateTagId    (v.value)
-      case v: ^.ValueForMandatory          => updateMandatory(v.value)
-      case v: ^.ValueForApplicableReqTypes => updateReqTypes (v.value)
+      case v: ^.ValueForTagId             => updateTagId            (v.value)
+      case v: ^.ValueForFieldReqTypeRules => updateFieldReqTypeRules(v.value)
     }
 
     def applyUpdate(e: FieldCustomTagUpdate): SE[Unit] =
@@ -541,21 +689,18 @@ trait ApplyConfigEvent {
       implicit val vs = e.vs
       for {
         t <- GD.need(^.ReqTypeId)
-        m <- GD.need(^.Mandatory)
-        r <- GD.need(^.ApplicableReqTypes)
+        r <- GD.need(^.FieldReqTypeRules)
         _ <- ensureReqTypeIsLive(t)
-        _ <- create(CustomField.Implication(e.id, t, m, r, Live))
+        _ <- create(CustomField.Implication(e.id, t, r, Live))
       } yield ()
     }
 
-    val updateReqTypeId = fieldUpdateFn(CustomField.Implication.reqTypeId)
-    val updateMandatory = fieldUpdateFn(CustomField.Implication.mandatory)
-    val updateReqTypes  = fieldUpdateFn(CustomField.Implication.applicableReqTypes)
+    val updateReqTypeId         = fieldUpdateFn(CustomField.Implication.reqTypeId)
+    val updateFieldReqTypeRules = fieldUpdateFn(CustomField.Implication.fieldReqTypeRules)
 
     val updateValues = GD.updateEachValue {
-      case v: ^.ValueForReqTypeId          => updateReqTypeId(v.value)
-      case v: ^.ValueForMandatory          => updateMandatory(v.value)
-      case v: ^.ValueForApplicableReqTypes => updateReqTypes (v.value)
+      case v: ^.ValueForReqTypeId         => updateReqTypeId        (v.value)
+      case v: ^.ValueForFieldReqTypeRules => updateFieldReqTypeRules(v.value)
     }
 
     def applyUpdate(e: FieldCustomImpUpdate): SE[Unit] =

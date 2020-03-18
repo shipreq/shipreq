@@ -39,12 +39,18 @@ object EventTypes {
   final val TypeFieldStaticRemove       = 1111
   final val TypeFieldCustomDelete       = 1120
   final val TypeFieldCustomRestore      = 1121
-  final val TypeFieldCustomImpCreate    = 1130
-  final val TypeFieldCustomImpUpdate    = 1131
-  final val TypeFieldCustomTagCreate    = 1132
-  final val TypeFieldCustomTagUpdate    = 1133
-  final val TypeFieldCustomTextCreate   = 1134
-  final val TypeFieldCustomTextUpdate   = 1135
+  final val TypeFieldCustomImpCreateV1  = 1130
+  final val TypeFieldCustomImpUpdateV1  = 1131
+  final val TypeFieldCustomTagCreateV1  = 1132
+  final val TypeFieldCustomTagUpdateV1  = 1133
+  final val TypeFieldCustomTextCreateV1 = 1134
+  final val TypeFieldCustomTextUpdateV1 = 1135
+  final val TypeFieldCustomImpCreateV2  = 1140
+  final val TypeFieldCustomImpUpdateV2  = 1141
+  final val TypeFieldCustomTagCreateV2  = 1142
+  final val TypeFieldCustomTagUpdateV2  = 1143
+  final val TypeFieldCustomTextCreateV2 = 1144
+  final val TypeFieldCustomTextUpdateV2 = 1145
 
   // =======
   // Content
@@ -112,13 +118,19 @@ object EventTypes {
     case _: CustomReqTypeRestore    => TypeCustomReqTypeRestore
     case _: CustomReqTypeUpdate     => TypeCustomReqTypeUpdate
     case _: FieldCustomDelete       => TypeFieldCustomDelete
-    case _: FieldCustomImpCreate    => TypeFieldCustomImpCreate
-    case _: FieldCustomImpUpdate    => TypeFieldCustomImpUpdate
+    case _: FieldCustomImpCreateV1  => TypeFieldCustomImpCreateV1
+    case _: FieldCustomImpCreate    => TypeFieldCustomImpCreateV2
+    case _: FieldCustomImpUpdateV1  => TypeFieldCustomImpUpdateV1
+    case _: FieldCustomImpUpdate    => TypeFieldCustomImpUpdateV2
     case _: FieldCustomRestore      => TypeFieldCustomRestore
-    case _: FieldCustomTagCreate    => TypeFieldCustomTagCreate
-    case _: FieldCustomTagUpdate    => TypeFieldCustomTagUpdate
-    case _: FieldCustomTextCreate   => TypeFieldCustomTextCreate
-    case _: FieldCustomTextUpdate   => TypeFieldCustomTextUpdate
+    case _: FieldCustomTagCreateV1  => TypeFieldCustomTagCreateV1
+    case _: FieldCustomTagCreate    => TypeFieldCustomTagCreateV2
+    case _: FieldCustomTagUpdateV1  => TypeFieldCustomTagUpdateV1
+    case _: FieldCustomTagUpdate    => TypeFieldCustomTagUpdateV2
+    case _: FieldCustomTextCreateV1 => TypeFieldCustomTextCreateV1
+    case _: FieldCustomTextCreate   => TypeFieldCustomTextCreateV2
+    case _: FieldCustomTextUpdateV1 => TypeFieldCustomTextUpdateV1
+    case _: FieldCustomTextUpdate   => TypeFieldCustomTextUpdateV2
     case _: FieldReposition         => TypeFieldReposition
     case _: FieldStaticAdd          => TypeFieldStaticAdd
     case _: FieldStaticRemove       => TypeFieldStaticRemove

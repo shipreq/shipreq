@@ -390,6 +390,47 @@ object RandomData {
   // -------------------------------------------------------------------------------------------------------------------
   // Fields
 
+  def fieldReqTypeRules[D](genReqTypeId: Option[Gen[ReqTypeId]], genDefault: Option[Gen[D]]): Gen[FieldReqTypeRules[D]] = {
+    import FieldReqTypeRules._
+
+    val genRes1 = Gen.pure(Resolution.NotApplicable)
+    val genRes2 = Gen.pure(Resolution.Optional)
+    val genRes3 = Gen.pure(Resolution.Mandatory)
+
+    val genRes: Gen[Resolution[D]] =
+      genDefault match {
+        case Some(gd) =>
+          val genRes4 = gd.map(Resolution.DefaultTo.apply)
+          Gen.chooseGen(genRes1, genRes2, genRes3, genRes4)
+        case None =>
+          Gen.chooseGen(genRes1, genRes2, genRes3)
+      }
+
+    genReqTypeId match {
+      case Some(g) =>
+        for {
+          a <- g.set.mapBy(genRes)(0 to 4)
+          o <- genRes
+        } yield {
+          var seen = Set.empty[ReqTypeId]
+          val byReqTypeId =
+            a.iterator.flatMap { case (res, ids) =>
+              val newIds = ids -- seen
+              if (newIds.isEmpty)
+                Nil
+              else {
+                seen ++= newIds
+                newIds.iterator.map(_ -> res)
+              }
+            }.toMap
+          FieldReqTypeRules(byReqTypeId, o)
+        }
+
+      case None =>
+        genRes.map(FieldReqTypeRules(Map.empty, _))
+    }
+  }
+
   val staticField: Gen[StaticField] =
     Gen.chooseNE(StaticField.values)
 
@@ -411,41 +452,45 @@ object RandomData {
   def customFieldType =
     Gen.chooseNE(CustomFieldType.values)
 
-  def customFieldText(art: Gen[ApplicableReqTypes]): Gen[CustomField.Text] =
-    Gen.apply6(CustomField.Text.apply)(customFieldTextId, shortText1, fieldRefKey, mandatory, art, live)
+  def customFieldText(rules: Gen[FieldReqTypeRules.ForTextField]): Gen[CustomField.Text] =
+    Gen.apply5(CustomField.Text.apply)(customFieldTextId, shortText1, fieldRefKey, rules, live)
 
-  def customFieldTag(tagId: Gen[TagId], art: Gen[ApplicableReqTypes]): Gen[CustomField.Tag] =
-    Gen.apply5(CustomField.Tag.apply)(customFieldTagId, tagId, mandatory, art, live)
+  def customFieldTag(tagId: Gen[TagId], rules: Gen[FieldReqTypeRules.ForTagField]): Gen[CustomField.Tag] =
+    Gen.apply4(CustomField.Tag.apply)(customFieldTagId, tagId, rules, live)
 
-  def customFieldTagSome(tagIds: Set[TagId], art: Gen[ApplicableReqTypes]): Gen[Vector[CustomField.Tag]] =
+  def customFieldTagSome(tagIds: Set[TagId], rules: Gen[FieldReqTypeRules.ForTagField]): Gen[Vector[CustomField.Tag]] =
     Gen.subset(tagIds.toVector).flatMap(ids =>
       Gen sequence ids.map(id =>
-        customFieldTag(Gen pure id, art)))
+        customFieldTag(Gen pure id, rules)))
 
-  def customFieldImplication(reqTypeId: Gen[ReqTypeId], art: Gen[ApplicableReqTypes]): Gen[CustomField.Implication] =
-    Gen.apply5(CustomField.Implication.apply)(customFieldImplicationId, reqTypeId, mandatory, art, live)
+  def customFieldImplication(reqTypeId: Gen[ReqTypeId], rules: Gen[FieldReqTypeRules.ForImpField]): Gen[CustomField.Implication] =
+    Gen.apply4(CustomField.Implication.apply)(customFieldImplicationId, reqTypeId, rules, live)
 
-  def customFieldImplicationSome(reqTypeIds: Set[ReqTypeId], art: Gen[ApplicableReqTypes]): Gen[Vector[CustomField.Implication]] =
+  def customFieldImplicationSome(reqTypeIds: Set[ReqTypeId], rules : Gen[FieldReqTypeRules.ForImpField]): Gen[Vector[CustomField.Implication]] =
     Gen.subset(reqTypeIds.toVector).flatMap(ids =>
       Gen sequence ids.map(id =>
-        customFieldImplication(Gen pure id, art)))
+        customFieldImplication(Gen pure id, rules)))
 
-  def customField(art: Gen[ApplicableReqTypes],
+  def customField(rulesAny: Gen[FieldReqTypeRules[Impossible]],
+                  rulesTag: Gen[FieldReqTypeRules.ForTagField],
                   impFields: Boolean,
                   tagFields: Boolean): Gen[CustomField] = {
-    lazy val txt: Gen[CustomField] = customFieldText(art)
+    lazy val txt: Gen[CustomField] = customFieldText(rulesAny)
     customFieldType.flatMap {
       case CustomFieldType.Text        => txt
-      case CustomFieldType.Tag         => if (tagFields) customFieldTag(tagId, art) else txt
-      case CustomFieldType.Implication => if (impFields) customFieldImplication(reqTypeId, art) else txt
+      case CustomFieldType.Tag         => if (tagFields) customFieldTag(tagId, rulesTag) else txt
+      case CustomFieldType.Implication => if (impFields) customFieldImplication(reqTypeId, rulesAny) else txt
     }
   }
 
-  def customFields(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId], art: Gen[ApplicableReqTypes]): Gen[IMap[CustomFieldId, CustomField]] = {
+  def customFields(reqTypeIds: Set[ReqTypeId],
+                   tagIds    : Set[TagId],
+                   rulesAny  : Gen[FieldReqTypeRules[Impossible]],
+                   rulesTag  : Gen[FieldReqTypeRules.ForTagField]): Gen[IMap[CustomFieldId, CustomField]] = {
     val cf = for {
-      f1 <- customField(art, false, false).list
-      f2 <- customFieldTagSome(tagIds, art)
-      f3 <- customFieldImplicationSome(reqTypeIds, art)
+      f1 <- customField(rulesAny, rulesTag, false, false).list
+      f2 <- customFieldTagSome(tagIds, rulesTag)
+      f3 <- customFieldImplicationSome(reqTypeIds, rulesAny)
     } yield f3.toList ::: f2.toList ::: f1
     def id   = distinctId(CustomField.IdAccess, CustomFieldId_T)
     def name = Distinct.str.at(CustomField.independentName)
@@ -454,25 +499,18 @@ object RandomData {
     cf.map(fs => emptyDataMap(CustomField) ++ dist.run(fs.toStream))
   }
 
-  def fieldSet(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId], r: Set[CustomReqTypeId]): Gen[FieldSet] =
+  def fieldSet(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId]): Gen[FieldSet] = {
+    val genApTagId   = NonEmptySet.option(tagIds.iterator.filterSubType[ApplicableTagId].toSet).map(Gen.chooseNE(_))
+    val genReqTypeId = NonEmptySet.option(reqTypeIds).map(Gen.chooseNE(_))
+    val rulesAny     = fieldReqTypeRules[Impossible](genReqTypeId, None)
+    val rulesTag     = fieldReqTypeRules(genReqTypeId, genApTagId)
     for {
-      cf           ← customFields(reqTypeIds, tagIds, applicableReqTypes(r))
+      cf           ← customFields(reqTypeIds, tagIds, rulesAny, rulesTag)
       mandatoryIds = cf.keySet.map(f => f: FieldId) ++ StaticField.notDeletable
       optionalIds  ← Gen.chooseIndexed_!(StaticField.deletable).set
       order        ← Gen.shuffle((mandatoryIds ++ optionalIds).toVector)
     } yield FieldSet(cf, order)
-
-  def fieldSet2(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId], cReqTypeIds: Set[CustomReqTypeId]): Gen[FieldSet] =
-    Gen.chooseSize flatMap { sz =>
-      def subset[A](as: Set[A]): Gen[Set[A]] =
-        Gen.subset(as).map(_ take sz)
-      for {
-        r <- subset(reqTypeIds)
-        t <- subset(tagIds)
-        c <- subset(cReqTypeIds)
-        x <- fieldSet(r, t, c)
-      } yield x
-    }
+  }
 
   // -------------------------------------------------------------------------------------------------------------------
   // Text
@@ -1304,7 +1342,7 @@ object RandomData {
       reqTypeIdSet   = reqTypeIds.whole.toSet
       genReqTypeIds  = Gen.chooseNE(reqTypeIds).set(0 to 2)
       (issues, tags) ← Gen.tuple2(customIssueTypes, tagTree(genReqTypeIds)) map distinctHashRefKeys.run
-      fields         ← fieldSet(reqTypeIdSet, tags.keySet, reqtypes.keySet)
+      fields         ← fieldSet(reqTypeIdSet, tags.keySet)
     } yield ProjectConfig(issues, ReqTypes(reqtypes), fields, Tags(tags))
 
   def genProject(cfg            : ProjectConfig,
@@ -1542,59 +1580,59 @@ object RandomData {
       nonEmptySavedViewsForProject(p).option
   }
 
-  // ===================================================================================================================
-  // Protocol
-  object protocol {
-    import shipreq.webapp.base.protocol._
-    import shipreq.webapp.base.protocol.websocket._
-
-    val reqTypeId: Gen[ReqTypeId] =
-      Gen.chooseGen(customReqTypeId, staticReqType)
-
-    val fieldId: Gen[FieldId] =
-      Gen.chooseGen(customFieldId, staticField)
-
-    val applicableReqTypes: Gen[ApplicableReqTypes] =
-      RandomData.applicableReqTypes(reqTypeId.set)
-
-    val fieldPosition =
-      fieldId.option
-
-    val textFieldValues =
-      Gen.apply4(UpdateConfigCmd.TextFieldValues.apply)(shortText1, fieldRefKey, mandatory, applicableReqTypes)
-
-    val customFieldValues: Gen[UpdateConfigCmd.CustomFieldValues] =
-      Gen.chooseGen(textFieldValues)
-
-//    object updateConfigCmd {
-//      import UpdateConfigCmd._
-//      val create      : Gen[CustomFieldCreate]       = customFieldValues map Create
-//      val updateValues: Gen[CustomFieldUpdateValues] = Gen.apply2(UpdateValues)(customFieldId, customFieldValues)
-//      val updateOrder : Gen[CustomFieldUpdateOrder]  = Gen.apply2(UpdateOrder)(fieldId, fieldPosition)
-//      val delete      : Gen[CustomFieldDelete]       = fieldId map Delete
-//      val restore     : Gen[CustomFieldRestore]      = fieldId map Restore
-//      val any         : Gen[UpdateConfigCmd]    = Gen.chooseGen(create, updateValues, updateOrder, delete)
-//    }
-
-//    def tagProtocolValues: Tag => TagCrud.Values = {
-//      case TagGroup(_, n, d, mc, _)     => TagCrud.TagGroupValues(n, mc, d)
-//      case ApplicableTag(_, n, d, k, _) => TagCrud.ApplicableTagValues(n, k, d)
-//    }
+//  // ===================================================================================================================
+//  // Protocol
+//  object protocol {
+//    import shipreq.webapp.base.protocol._
+//    import shipreq.webapp.base.protocol.websocket._
 //
-//    val tagCrudInput =
-//      tagAndRels.flatMap(t => {
-//        val a = Gen pure tagProtocolValues(t._1)
-//        val b = Gen pure t._2
-//        a \&/ b
-//      })
-  }
+//    val reqTypeId: Gen[ReqTypeId] =
+//      Gen.chooseGen(customReqTypeId, staticReqType)
+//
+//    val fieldId: Gen[FieldId] =
+//      Gen.chooseGen(customFieldId, staticField)
+//
+//    val applicableReqTypes: Gen[ApplicableReqTypes] =
+//      RandomData.applicableReqTypes(reqTypeId.set)
+//
+//    val fieldPosition =
+//      fieldId.option
+//
+//    val textFieldValues =
+//      Gen.apply4(UpdateConfigCmd.TextFieldValues.apply)(shortText1, fieldRefKey, mandatory, applicableReqTypes)
+//
+//    val customFieldValues: Gen[UpdateConfigCmd.CustomFieldValues] =
+//      Gen.chooseGen(textFieldValues)
+//
+////    object updateConfigCmd {
+////      import UpdateConfigCmd._
+////      val create      : Gen[CustomFieldCreate]       = customFieldValues map Create
+////      val updateValues: Gen[CustomFieldUpdateValues] = Gen.apply2(UpdateValues)(customFieldId, customFieldValues)
+////      val updateOrder : Gen[CustomFieldUpdateOrder]  = Gen.apply2(UpdateOrder)(fieldId, fieldPosition)
+////      val delete      : Gen[CustomFieldDelete]       = fieldId map Delete
+////      val restore     : Gen[CustomFieldRestore]      = fieldId map Restore
+////      val any         : Gen[UpdateConfigCmd]    = Gen.chooseGen(create, updateValues, updateOrder, delete)
+////    }
+//
+////    def tagProtocolValues: Tag => TagCrud.Values = {
+////      case TagGroup(_, n, d, mc, _)     => TagCrud.TagGroupValues(n, mc, d)
+////      case ApplicableTag(_, n, d, k, _) => TagCrud.ApplicableTagValues(n, k, d)
+////    }
+////
+////    val tagCrudInput =
+////      tagAndRels.flatMap(t => {
+////        val a = Gen pure tagProtocolValues(t._1)
+////        val b = Gen pure t._2
+////        a \&/ b
+////      })
+//  }
 
   // ===================================================================================================================
   object routines {
     import shipreq.webapp.base.protocol._
     import shipreq.webapp.base.protocol.entrypoint._
     import shipreq.webapp.base.protocol.websocket._
-    import RandomData.protocol._
+//    import RandomData.protocol._
 
     def projectSpaInitAppData: Gen[ProjectSpaProtocols.InitAppData] =
       for {
@@ -1842,6 +1880,7 @@ object RandomData {
   object events {
     import shipreq.webapp.base.event._
     import Event._
+    import RetiredGenericData._
 
     val tagChildren: Gen[TagInTree.Children] =
       tagId.vector
@@ -1909,7 +1948,7 @@ object RandomData {
       }
     }
 
-    object customTextFieldGD extends GenericDataGen(CustomTextFieldGD) {
+    object customTextFieldGDv1 extends GenericDataGen(CustomTextFieldGDv1) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
         case Name               => unicodeString1        map Name              .apply
@@ -1919,7 +1958,7 @@ object RandomData {
       }
     }
 
-    object customTagFieldGD extends GenericDataGen(CustomTagFieldGD) {
+    object customTagFieldGDv1 extends GenericDataGen(CustomTagFieldGDv1) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
         case TagId              => tagId                 map TagId             .apply
@@ -1928,12 +1967,43 @@ object RandomData {
       }
     }
 
-    object customImpFieldGD extends GenericDataGen(CustomImpFieldGD) {
+    object customImpFieldGDv1 extends GenericDataGen(CustomImpFieldGDv1) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
         case ReqTypeId          => reqTypeId             map ReqTypeId         .apply
         case Mandatory          => mandatory             map Mandatory         .apply
         case ApplicableReqTypes => anyApplicableReqTypes map ApplicableReqTypes.apply
+      }
+    }
+
+    private lazy val fieldReqTypeRules_ : Gen[FieldReqTypeRules[Impossible]] =
+      fieldReqTypeRules(Some(reqTypeId), None)
+
+    private def fieldReqTypeRulesTag: Gen[FieldReqTypeRules[ApplicableTagId]] =
+      fieldReqTypeRules(Some(reqTypeId), Some(applicableTagId))
+
+    object customTextFieldGD extends GenericDataGen(CustomTextFieldGD) {
+      import gd._
+      override def valueFor(a: Attr): Gen[Value] = a match {
+        case Name              => unicodeString1     map Name             .apply
+        case Key               => fieldRefKey        map Key              .apply
+        case FieldReqTypeRules => fieldReqTypeRules_ map FieldReqTypeRules.apply
+      }
+    }
+
+    object customTagFieldGD extends GenericDataGen(CustomTagFieldGD) {
+      import gd._
+      override def valueFor(a: Attr): Gen[Value] = a match {
+        case TagId             => tagId                map TagId            .apply
+        case FieldReqTypeRules => fieldReqTypeRulesTag map FieldReqTypeRules.apply
+      }
+    }
+
+    object customImpFieldGD extends GenericDataGen(CustomImpFieldGD) {
+      import gd._
+      override def valueFor(a: Attr): Gen[Value] = a match {
+        case ReqTypeId         => reqTypeId          map ReqTypeId        .apply
+        case FieldReqTypeRules => fieldReqTypeRules_ map FieldReqTypeRules.apply
       }
     }
 
@@ -2050,6 +2120,9 @@ object RandomData {
     val genApplicableTagCreateV1: Gen[ApplicableTagCreateV1] =
       Gen.apply2(ApplicableTagCreateV1)(applicableTagId, applicableTagGDv1.nonEmptyValues)
 
+    val genFieldCustomImpCreateV1: Gen[FieldCustomImpCreateV1] =
+      Gen.apply2(FieldCustomImpCreateV1)(customFieldImplicationId, customImpFieldGDv1.nonEmptyValues)
+
     val genFieldCustomImpCreate: Gen[FieldCustomImpCreate] =
       Gen.apply2(FieldCustomImpCreate)(customFieldImplicationId, customImpFieldGD.nonEmptyValues)
 
@@ -2059,8 +2132,14 @@ object RandomData {
     val genCustomReqTypeCreate: Gen[CustomReqTypeCreate] =
       Gen.apply2(CustomReqTypeCreate)(customReqTypeId, customReqTypeGD.nonEmptyValues)
 
+    val genFieldCustomTagCreateV1: Gen[FieldCustomTagCreateV1] =
+      Gen.apply2(FieldCustomTagCreateV1)(customFieldTagId, customTagFieldGDv1.nonEmptyValues)
+
     val genFieldCustomTagCreate: Gen[FieldCustomTagCreate] =
       Gen.apply2(FieldCustomTagCreate)(customFieldTagId, customTagFieldGD.nonEmptyValues)
+
+    val genFieldCustomTextCreateV1: Gen[FieldCustomTextCreateV1] =
+      Gen.apply2(FieldCustomTextCreateV1)(customFieldTextId, customTextFieldGDv1.nonEmptyValues)
 
     val genFieldCustomTextCreate: Gen[FieldCustomTextCreate] =
       Gen.apply2(FieldCustomTextCreate)(customFieldTextId, customTextFieldGD.nonEmptyValues)
@@ -2169,6 +2248,9 @@ object RandomData {
     val genApplicableTagUpdateV1: Gen[ApplicableTagUpdateV1] =
       Gen.apply2(ApplicableTagUpdateV1)(applicableTagId, applicableTagGDv1.nonEmptyValues)
 
+    val genFieldCustomImpUpdateV1: Gen[FieldCustomImpUpdateV1] =
+      Gen.apply2(FieldCustomImpUpdateV1)(customFieldImplicationId, customImpFieldGDv1.nonEmptyValues)
+
     val genFieldCustomImpUpdate: Gen[FieldCustomImpUpdate] =
       Gen.apply2(FieldCustomImpUpdate)(customFieldImplicationId, customImpFieldGD.nonEmptyValues)
 
@@ -2178,8 +2260,14 @@ object RandomData {
     val genCustomReqTypeUpdate: Gen[CustomReqTypeUpdate] =
       Gen.apply2(CustomReqTypeUpdate)(customReqTypeId, customReqTypeGD.nonEmptyValues)
 
+    val genFieldCustomTagUpdateV1: Gen[FieldCustomTagUpdateV1] =
+      Gen.apply2(FieldCustomTagUpdateV1)(customFieldTagId, customTagFieldGDv1.nonEmptyValues)
+
     val genFieldCustomTagUpdate: Gen[FieldCustomTagUpdate] =
       Gen.apply2(FieldCustomTagUpdate)(customFieldTagId, customTagFieldGD.nonEmptyValues)
+
+    val genFieldCustomTextUpdateV1: Gen[FieldCustomTextUpdateV1] =
+      Gen.apply2(FieldCustomTextUpdateV1)(customFieldTextId, customTextFieldGDv1.nonEmptyValues)
 
     val genFieldCustomTextUpdate: Gen[FieldCustomTextUpdate] =
       Gen.apply2(FieldCustomTextUpdate)(customFieldTextId, customTextFieldGD.nonEmptyValues)
@@ -2281,9 +2369,15 @@ object RandomData {
 
     val retiredEventGens: NonEmptyVector[Gen[RetiredEvent]] =
       valuesForAdt[RetiredEvent, Gen[RetiredEvent]] {
-        case _: ApplicableTagCreateV1  => genApplicableTagCreateV1
-        case _: ApplicableTagUpdateV1  => genApplicableTagUpdateV1
-        case _: CustomReqTypeDelete    => genCustomReqTypeDelete
+        case _: ApplicableTagCreateV1   => genApplicableTagCreateV1
+        case _: ApplicableTagUpdateV1   => genApplicableTagUpdateV1
+        case _: CustomReqTypeDelete     => genCustomReqTypeDelete
+        case _: FieldCustomImpCreateV1  => genFieldCustomImpCreateV1
+        case _: FieldCustomImpUpdateV1  => genFieldCustomImpUpdateV1
+        case _: FieldCustomTagCreateV1  => genFieldCustomTagCreateV1
+        case _: FieldCustomTagUpdateV1  => genFieldCustomTagUpdateV1
+        case _: FieldCustomTextCreateV1 => genFieldCustomTextCreateV1
+        case _: FieldCustomTextUpdateV1 => genFieldCustomTextUpdateV1
       }
 
     val activeEvent: Gen[ActiveEvent] =

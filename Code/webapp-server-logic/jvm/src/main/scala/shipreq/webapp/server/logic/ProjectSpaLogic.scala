@@ -108,6 +108,7 @@ object ProjectSpaLogic extends StrictLogging {
     final case class ServerBehindDatabase(err: DB.ReadProjectEventError) extends MsgError
     final case class ServerBehindRedis(err: SafePickler.DecodingFailure) extends MsgError
     final case class RespondError(err: Throwable) extends MsgError
+    final case class FunctionNoLongerSupported(devDesc: String) extends MsgError
     case object SessionExpired extends MsgError
   }
 
@@ -301,6 +302,9 @@ object ProjectSpaLogic extends StrictLogging {
             case MsgError.SessionExpired =>
               logger.info("Session expired.")
 
+            case MsgError.FunctionNoLongerSupported(desc) =>
+              logger.warn(s"FunctionNoLongerSupported: $desc")
+
             case MsgError.ClientMsgDecodingFailure(e) =>
               logger.warn(s"Failed to parse message from client: ${descMsg()}", e)
 
@@ -413,7 +417,7 @@ object ProjectSpaLogic extends StrictLogging {
         onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn),
         onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews),
         onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues),
-        onFieldMandatorinessMod = updateProjectI(MakeEvent.fieldMandatorinessMod),
+        onFieldMandatorinessMod = _ => F.pure(-\/(MsgError.FunctionNoLongerSupported("fieldMandatorinessMod"))),
         onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod),
       )
 

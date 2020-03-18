@@ -19,7 +19,6 @@ object CfgIssues {
 
   final case class Props(a         : ServerSideProcInvoker[UpdateConfigCmd.ToModifyCustomIssueTypes, ErrorMsg, VerifiedEvent.Seq],
                          b         : ServerSideProcInvoker[ReqTypeImplicationMod.RequestType, ErrorMsg, VerifiedEvent.Seq],
-                         c         : ServerSideProcInvoker[FieldMandatorinessMod.RequestType, ErrorMsg, VerifiedEvent.Seq],
                          g         : Global,
                          filterDead: StateSnapshot[FilterDead],
                          usageShow : Usage.Show) {
@@ -39,7 +38,8 @@ object CfgIssues {
           <.h4("Other Causes of Issues", ^.marginTop := "3em"),
           <.div(^.cls := "other", ^.display.flex, ^.justifyContent.spaceAround,
             <.div(ReqTypeImplication.Props(b, g).component),
-            <.div(MandatoryFields.Props(c, g).component)))
+//            <.div(MandatoryFields.Props(c, g).component)
+          ))
       }
       .build
 }

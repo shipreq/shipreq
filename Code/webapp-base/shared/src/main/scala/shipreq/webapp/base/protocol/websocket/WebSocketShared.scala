@@ -138,6 +138,7 @@ object WebSocketShared {
 
   object CloseReason {
     val normalClosure = CloseReason(CloseCode.normalClosure, CloseReasonPhrase.empty)
+    val clientOutOfDate = CloseReason(CloseCode.cannotAccept, CloseReasonPhrase("Client is out-of-date"))
   }
 
   // ===================================================================================================================

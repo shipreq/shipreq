@@ -7,6 +7,7 @@ import sourcecode.Line
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
+import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
@@ -131,9 +132,9 @@ object IssueDetectorTest extends TestSuite {
     )
 
     private def makeMfMandatoryForFrAndUc = {
-      val I = CustomImpFieldGD
+      val I = CustomImpFieldGDv1
       val frAndUc = onlyReqTypes(fr, StaticReqType.UseCase)
-      Event.FieldCustomImpUpdate(mfField, I.nev(I.ValueForMandatory(Mandatory), I.ValueForApplicableReqTypes(frAndUc)))
+      Event.FieldCustomImpUpdateV1(mfField, I.nev(I.ValueForMandatory(Mandatory), I.ValueForApplicableReqTypes(frAndUc)))
     }
 
     // fr1 <- mf12,19
@@ -404,12 +405,12 @@ object IssueDetectorTest extends TestSuite {
       'emptyStepAndTitle - emptyStepAndTitle()
     }
 
-    'BlankCustomField {
-      import BlankCustomFieldTests._
-      'notAllReqTypes - notAllReqTypes()
-      'imps1          - imps1()
-      'imps2          - imps2()
-    }
+//    'BlankCustomField {
+//      import BlankCustomFieldTests._
+//      'notAllReqTypes - notAllReqTypes()
+//      'imps1          - imps1()
+//      'imps2          - imps2()
+//    }
 
     'ConflictingTag {
       import ConflictingTagTests._

@@ -78,7 +78,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
         onProjectNameSet        = failLeft,
         onUpdateSavedViews      = failLeft,
         onUpdateManualIssues    = failLeft,
-        onFieldMandatorinessMod = failLeft,
+        onFieldMandatorinessMod = _ => (),
         onReqTypeImplicationMod = failLeft,
       )
       def reqReq = req.req
@@ -214,7 +214,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
       onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn),
       onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews),
       onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues),
-      onFieldMandatorinessMod = updateProjectI(MakeEvent.fieldMandatorinessMod),
+      onFieldMandatorinessMod = _ => None,
       onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod),
     )
 

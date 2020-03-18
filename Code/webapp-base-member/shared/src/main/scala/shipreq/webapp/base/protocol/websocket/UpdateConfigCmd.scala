@@ -59,18 +59,15 @@ object UpdateConfigCmd {
 
   sealed trait CustomFieldValues
 
-  final case class TextFieldValues(name              : String,
-                                   key               : FieldRefKey,
-                                   mandatory         : Mandatory,
-                                   applicableReqTypes: ApplicableReqTypes) extends CustomFieldValues
+  final case class TextFieldValues(name             : String,
+                                   key              : FieldRefKey,
+                                   fieldReqTypeRules: FieldReqTypeRules.ForTextField) extends CustomFieldValues
 
-  final case class TagFieldValues(tagId             : TagId,
-                                  mandatory         : Mandatory,
-                                  applicableReqTypes: ApplicableReqTypes) extends CustomFieldValues
+  final case class TagFieldValues(tagId            : TagId,
+                                  fieldReqTypeRules: FieldReqTypeRules.ForTagField) extends CustomFieldValues
 
-  final case class ImpFieldValues(reqTypeId         : ReqTypeId,
-                                  mandatory         : Mandatory,
-                                  applicableReqTypes: ApplicableReqTypes) extends CustomFieldValues
+  final case class ImpFieldValues(reqTypeId        : ReqTypeId,
+                                  fieldReqTypeRules: FieldReqTypeRules.ForImpField) extends CustomFieldValues
 
   // ===================================================================================================================
 
@@ -124,15 +121,13 @@ object UpdateConfigCmd {
         override def pickle(a: TextFieldValues)(implicit state: PickleState): Unit = {
           state.pickle(a.name)
           state.pickle(a.key)
-          state.pickle(a.mandatory)
-          state.pickle(a.applicableReqTypes)
+          state.pickle(a.fieldReqTypeRules)
         }
         override def unpickle(implicit state: UnpickleState): TextFieldValues = {
-          val name      = state.unpickle[String]
-          val key       = state.unpickle[FieldRefKey]
-          val mandatory = state.unpickle[Mandatory]
-          val reqTypes  = state.unpickle[ApplicableReqTypes]
-          TextFieldValues(name, key, mandatory, reqTypes)
+          val name     = state.unpickle[String]
+          val key      = state.unpickle[FieldRefKey]
+          val reqTypes = state.unpickle[FieldReqTypeRules.ForTextField]
+          TextFieldValues(name, key, reqTypes)
         }
       }
 
@@ -140,14 +135,12 @@ object UpdateConfigCmd {
       new Pickler[TagFieldValues] {
         override def pickle(a: TagFieldValues)(implicit state: PickleState): Unit = {
           state.pickle(a.tagId)
-          state.pickle(a.mandatory)
-          state.pickle(a.applicableReqTypes)
+          state.pickle(a.fieldReqTypeRules)
         }
         override def unpickle(implicit state: UnpickleState): TagFieldValues = {
-          val tagId     = state.unpickle[TagId]
-          val mandatory = state.unpickle[Mandatory]
-          val reqTypes  = state.unpickle[ApplicableReqTypes]
-          TagFieldValues(tagId, mandatory, reqTypes)
+          val tagId    = state.unpickle[TagId]
+          val reqTypes = state.unpickle[FieldReqTypeRules.ForTagField]
+          TagFieldValues(tagId, reqTypes)
         }
       }
 
@@ -155,14 +148,12 @@ object UpdateConfigCmd {
       new Pickler[ImpFieldValues] {
         override def pickle(a: ImpFieldValues)(implicit state: PickleState): Unit = {
           state.pickle(a.reqTypeId)
-          state.pickle(a.mandatory)
-          state.pickle(a.applicableReqTypes)
+          state.pickle(a.fieldReqTypeRules)
         }
         override def unpickle(implicit state: UnpickleState): ImpFieldValues = {
           val reqTypeId = state.unpickle[ReqTypeId]
-          val mandatory = state.unpickle[Mandatory]
-          val reqTypes  = state.unpickle[ApplicableReqTypes]
-          ImpFieldValues(reqTypeId, mandatory, reqTypes)
+          val reqTypes  = state.unpickle[FieldReqTypeRules.ForImpField]
+          ImpFieldValues(reqTypeId, reqTypes)
         }
       }
 

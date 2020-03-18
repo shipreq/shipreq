@@ -138,12 +138,13 @@ final class ProjectSpaWebSocket extends StrictLogging {
     val static    = staticL.get(userProps)
 
     val fxOnMsgError: MsgError => Fx[Unit] = {
-      case MsgError.SessionExpired              => fxClose(s, CloseReasons.unauthorised)
-      case _: MsgError.ClientMsgDecodingFailure => fxClose(s, CloseReasons.errorParsingMessage)
-      case _: MsgError.RespondError             => fxClose(s, CloseReasons.errorSendingResponse)
+      case MsgError.SessionExpired               => fxClose(s, CloseReasons.unauthorised)
+      case _: MsgError.ClientMsgDecodingFailure  => fxClose(s, CloseReasons.errorParsingMessage)
+      case _: MsgError.RespondError              => fxClose(s, CloseReasons.errorSendingResponse)
+      case _: MsgError.FunctionNoLongerSupported => fxClose(s, CloseReason.clientOutOfDate)
       case _: MsgError.ServerBehindClient
          | _: MsgError.ServerBehindDatabase
-         | _: MsgError.ServerBehindRedis        => fxClose(s, CloseReasons.serverOutOfDate)
+         | _: MsgError.ServerBehindRedis         => fxClose(s, CloseReasons.serverOutOfDate)
     }
 
     if (messageBytes.length == 0) {

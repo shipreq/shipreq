@@ -84,20 +84,17 @@ val gens = List(
     "Children"           -> "TagInTree.Children",
   ),
   Gen("CustomTextFieldGD")(
-    "Name"               -> "String",
-    "Key"                -> "FieldRefKey",
-    "Mandatory"          -> "Mandatory",
-    "ApplicableReqTypes" -> "ApplicableReqTypes",
+    "Name"              -> "String",
+    "Key"               -> "FieldRefKey",
+    "FieldReqTypeRules" -> "FieldReqTypeRules[Impossible]",
   ),
   Gen("CustomTagFieldGD")(
-    "TagId"              -> "TagId",
-    "Mandatory"          -> "Mandatory",
-    "ApplicableReqTypes" -> "ApplicableReqTypes",
+    "TagId"             -> "TagId",
+    "FieldReqTypeRules" -> "FieldReqTypeRules[ApplicableTagId]",
   ),
   Gen("CustomImpFieldGD")(
-    "ReqTypeId"          -> "ReqTypeId",
-    "Mandatory"          -> "Mandatory",
-    "ApplicableReqTypes" -> "ApplicableReqTypes",
+    "ReqTypeId"         -> "ReqTypeId",
+    "FieldReqTypeRules" -> "FieldReqTypeRules[Impossible]",
   ),
   """
     |/**

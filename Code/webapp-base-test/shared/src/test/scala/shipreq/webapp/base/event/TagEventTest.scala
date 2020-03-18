@@ -40,7 +40,7 @@ abstract class SharedTagEventTests extends TestSuite {
     t.children.map(_.value)
 
   def tagId1: TagId
-  val createTagField1 = CustomTagFieldEventTest.mkC1(tagId1)
+  val createTagField1 = CustomTagFieldEventTestV1.mkC1(tagId1)
 
   override def tests = Tests {
     'create {
@@ -161,8 +161,8 @@ abstract class SharedTagEventTests extends TestSuite {
         testTagFieldLiveness(Live, Live)(c1, createTagField1, sd1, r1)
       }
       'whenDeadTagField {
-        testTagFieldLiveness(Dead, Dead)(c1, createTagField1, CustomTagFieldEventTest.sd1, sd1)
-        testTagFieldLiveness(Dead, Dead)(c1, createTagField1, CustomTagFieldEventTest.sd1, sd1, r1)
+        testTagFieldLiveness(Dead, Dead)(c1, createTagField1, CustomTagFieldEventTestV1.sd1, sd1)
+        testTagFieldLiveness(Dead, Dead)(c1, createTagField1, CustomTagFieldEventTestV1.sd1, sd1, r1)
       }
     }
   }

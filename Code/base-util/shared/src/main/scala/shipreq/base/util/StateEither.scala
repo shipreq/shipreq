@@ -118,6 +118,9 @@ object StateEither {
   def feed[S, E, A](f: S => StateEither[S, E, A]): StateEither[S, E, A] =
     new StateEither(s => f(s).run(s))
 
+  def point[S, E, A](a: => A): StateEither[S, E, A] =
+    StateEither(s => Ok(s, a))
+
   def ret[S, E, A](a: A): StateEither[S, E, A] =
     StateEither(Ok(_, a))
 
@@ -177,6 +180,7 @@ object StateEither {
     @inline def apply    [A](run: S => Result[A])             : SE[A]       = StateEither(run)
     @inline def feed     [A](f: S => SE[A])                   : SE[A]       = StateEither feed f
     @inline def ret      [A](a: A)                            : SE[A]       = StateEither ret a
+    @inline def point    [A](a: => A)                         : SE[A]       = StateEither point a
     @inline def fail        (e: E)                            : SE[Nothing] = StateEither fail e
     @inline def mod         (f: S => S)                       : SE[Unit]    = StateEither mod f
     @inline def modE        (f: S => E \/ S)                  : SE[Unit]    = StateEither modE f

@@ -17,6 +17,8 @@ private[event] object ApplyEventLib {
   val SE = StateEither.Fix[Project, Error]
   import SE._
 
+  type EndoFn[A] = A => A
+
   /** Has a subject been validated or not yet? */
   sealed trait Validated extends IsoBool.WithBoolOps[Validated] {
     override final def companion = Validated

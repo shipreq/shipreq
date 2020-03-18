@@ -283,7 +283,6 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
   final lazy val sspProjectNameSet        = sspToEvents(WsReqRes.ProjectNameSet)
   final lazy val sspUpdateSavedViews      = sspToEvents(WsReqRes.UpdateSavedViews)
   final lazy val sspUpdateManualIssues    = sspToEvents(WsReqRes.UpdateManualIssues)
-  final lazy val sspFieldMandatorinessMod = sspToEvents(WsReqRes.FieldMandatorinessMod)
   final lazy val sspReqTypeImplicationMod = sspToEvents(WsReqRes.ReqTypeImplicationMod)
 }
 

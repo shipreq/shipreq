@@ -72,18 +72,21 @@ object ApplyEventTestFns {
     var savedViews       = 0
 
     es foreach {
-      case _: GenericReqCreate      => genericReqs += 1
-      case _: UseCaseCreate         => useCases += 1
-      case _: CustomIssueTypeCreate => customIssueTypes += 1
-      case _: CustomReqTypeCreate   => customReqTypes += 1
-      case _: FieldCustomTextCreate
+      case _: GenericReqCreate        => genericReqs += 1
+      case _: UseCaseCreate           => useCases += 1
+      case _: CustomIssueTypeCreate   => customIssueTypes += 1
+      case _: CustomReqTypeCreate     => customReqTypes += 1
+      case _: FieldCustomTextCreateV1
+         | _: FieldCustomTextCreate
+         | _: FieldCustomTagCreateV1
          | _: FieldCustomTagCreate
-         | _: FieldCustomImpCreate  => customFields += 1
+         | _: FieldCustomImpCreateV1
+         | _: FieldCustomImpCreate    => customFields += 1
       case _: TagGroupCreate
          | _: ApplicableTagCreate
-         | _: ApplicableTagCreateV1 => tags += 1
-      case _: CodeGroupCreate       => activeRCGs += 1
-      case e: CodeGroupsDelete      => activeRCGs -= e.ids.size
+         | _: ApplicableTagCreateV1   => tags += 1
+      case _: CodeGroupCreate         => activeRCGs += 1
+      case e: CodeGroupsDelete        => activeRCGs -= e.ids.size
 
       case ProjectTemplateApply(t) => t match {
         case ProjectTemplate.V1 =>
@@ -119,9 +122,12 @@ object ApplyEventTestFns {
          | _: CustomReqTypeRestore
          | _: CustomReqTypeUpdate
          | _: FieldCustomDelete
+         | _: FieldCustomImpUpdateV1
          | _: FieldCustomImpUpdate
          | _: FieldCustomRestore
+         | _: FieldCustomTagUpdateV1
          | _: FieldCustomTagUpdate
+         | _: FieldCustomTextUpdateV1
          | _: FieldCustomTextUpdate
          | _: FieldReposition
          | _: FieldStaticAdd

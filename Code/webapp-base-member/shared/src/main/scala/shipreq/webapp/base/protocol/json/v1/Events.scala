@@ -106,6 +106,30 @@ object Events {
   }
 
   // Replaced by v1.1
+  // private[v1] implicit val codecCustomImpFieldGD: JsonCodec[CustomImpFieldGD.NonEmptyValues] = {
+  //   import CustomImpFieldGD._
+  //
+  //   implicit val codecValueForMandatory = JsonCodec.xmap(ValueForMandatory.apply)(_.value)
+  //   implicit val codecValueForReqTypeId = JsonCodec.xmap(ValueForReqTypeId.apply)(_.value)
+  //   implicit val codecValueForReqTypes  = JsonCodec.xmap(ValueForReqTypes .apply)(_.value)
+  //
+  //   implicit val decoderValue: Decoder[Value] = decodeSumBySoleKey {
+  //     case ("mandatory", c) => c.as[ValueForMandatory]
+  //     case ("reqTypeId", c) => c.as[ValueForReqTypeId]
+  //     case ("reqTypes" , c) => c.as[ValueForReqTypes]
+  //   }
+  //
+  //   implicit val encoderValue: Encoder[Value] = Encoder.instance {
+  //     case a: ValueForMandatory => Json.obj("mandatory" -> a.asJson)
+  //     case a: ValueForReqTypeId => Json.obj("reqTypeId" -> a.asJson)
+  //     case a: ValueForReqTypes  => Json.obj("reqTypes"  -> a.asJson)
+  //   }
+  //
+  //   implicit val values: JsonCodec[Values] = codecIMap(emptyValues)
+  //   codecNonEmptyMono[Values]
+  // }
+
+  // Replaced by v1.1
   // private[v1] implicit val codecCustomIssueTypeGD: JsonCodec[CustomIssueTypeGD.NonEmptyValues] = {
   //   import CustomIssueTypeGD._
   //
@@ -172,8 +196,7 @@ object Events {
   //   implicit val values: JsonCodec[Values] = codecIMap(emptyValues)
   //   codecNonEmptyMono[Values]
   // }
-
-  // Replaced by v1.1
+  //
   // private[v1] implicit val codecCustomTextFieldGD: JsonCodec[CustomTextFieldGD.NonEmptyValues] = {
   //   import CustomTextFieldGD._
   //

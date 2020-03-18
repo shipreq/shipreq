@@ -163,10 +163,14 @@ object DataProp {
     def implicationFieldsUnique =
       Prop.distinctI("Implication field", filteredFields { case t: CustomField.Implication => t.reqTypeId })
 
+    def noDuplicateTagFieldReqTypeResolutions =
+      Prop.distinctI("TagField/ReqTypeResolution", filteredFields { case t: CustomField.Tag => t.fieldReqTypeRules.resolutionIterator() })
+
     def fieldSet = "FieldSet" rename_: (
       ids ∧ fields ∧
       orderNoDups ∧ orderCustomFieldsIso ∧ orderHasAllUndeletableStaticFields ∧
-      tagFieldsUnique ∧ implicationFieldsUnique)
+      tagFieldsUnique ∧ implicationFieldsUnique ∧ noDuplicateTagFieldReqTypeResolutions
+    )
 
     val all =
       fieldSet rename "Fields"
@@ -541,12 +545,19 @@ object DataProp {
       def validReqTypeIds = whitelist(_._2.reqTypeIds) _
       def validTagIds     = whitelist(_._2.tagIds) _
 
-      (  validReqTypeIds("Field.reqTypes",
-          _.fields.customFields.valuesIterator.flatMap(_.applicableReqTypes.reqTypes))
+      (  validReqTypeIds("Field.fieldReqTypeRules.reqTypes",
+          _.fields.customFields.valuesIterator.flatMap(_.fieldReqTypeRules.perReqType.keys))
+
+      ∧ validTagIds("Field.fieldReqTypeRules.defaults",
+        p => fields.filteredFields({ case t: CustomField.Tag => t.fieldReqTypeRules})(p.fields)
+          .flatMap(_.resolutionIterator().collect { case FieldReqTypeRules.Resolution.DefaultTo(id) => id }))
+
       ∧ validTagIds("CustomField.Tag.tagIds",
         p => fields.filteredFields({ case t: CustomField.Tag => t.tagId})(p.fields))
+
       ∧ validReqTypeIds("CustomField.Implication.reqTypeIds",
           p => fields.filteredFields({ case t: CustomField.Implication => t.reqTypeId})(p.fields))
+
       ).rename("Cross-constituent refs").contramap[P](_ mapStrengthR mkRefs)
     }
 

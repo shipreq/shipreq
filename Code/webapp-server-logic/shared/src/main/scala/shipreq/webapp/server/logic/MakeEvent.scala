@@ -15,8 +15,9 @@ import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.GenericDataMacros._
 import DataImplicits._
 import Event._
-import ScalaExt._
 import PotentialChange._
+import RetiredGenericData._
+import ScalaExt._
 
 /**
  * Translates commands inputs into [[ActiveEvent]]s.
@@ -48,15 +49,6 @@ object MakeEvent {
   def reqTypeImplicationMod(input: ReqTypeImplicationMod.RequestType): Result = {
     val (id, imp) = input
     CustomReqTypeUpdate(id, CustomReqTypeGD.Imp(imp))
-  }
-
-  def fieldMandatorinessMod(input: FieldMandatorinessMod.RequestType): Result = {
-    val m = input._2
-    input._1 match {
-      case id: CustomField.Text       .Id => FieldCustomTextUpdate(id, CustomTextFieldGD.Mandatory(m))
-      case id: CustomField.Tag        .Id => FieldCustomTagUpdate (id, CustomTagFieldGD .Mandatory(m))
-      case id: CustomField.Implication.Id => FieldCustomImpUpdate (id, CustomImpFieldGD .Mandatory(m))
-    }
   }
 
   def updateConfig(cmd: UpdateConfigCmd, project: Project): Result = {

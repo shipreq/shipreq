@@ -71,8 +71,7 @@ object WebSocketClient {
   }
 
   object CloseReasons {
-    val clientOutOfDate = CloseReason(CloseCode.cannotAccept,  CloseReasonPhrase("Failed to parse server response: client out-of-date"))
-    val parseError      = CloseReason(CloseCode.protocolError, CloseReasonPhrase("Failed to parse server response"))
+    val parseError = CloseReason(CloseCode.protocolError, CloseReasonPhrase("Failed to parse server response"))
   }
 
   sealed trait State
@@ -315,7 +314,7 @@ object WebSocketClient {
         logger(_.error(s"Failed to parse server response: $e")).runNow()
         if (e.isLocalKnownToBeOutOfDate) {
           window.alert("Unable to understand the response from the server.\nWe've upgraded our servers since you opened this page.\nPlease reload this page to get the updates.")
-          ws.close(CloseReasons.clientOutOfDate)
+          ws.close(CloseReason.clientOutOfDate)
         } else {
           ws.close(CloseReasons.parseError)
         }

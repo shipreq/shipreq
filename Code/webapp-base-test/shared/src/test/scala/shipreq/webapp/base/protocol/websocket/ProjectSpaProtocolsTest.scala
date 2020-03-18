@@ -118,11 +118,6 @@ object ProjectSpaProtocolsTest extends TestSuite {
           val expect = (ReqId(18),UpdateConfig.AndReq(CustomIssueTypeUpdate(CustomIssueTypeId(3),CustomIssueTypeValues(HashRefKey("PENDING"),Some("yo yo yo")))))
           assertRequest(bin, expect)
         }
-        "CustomFieldUpdateImp" - {
-          val bin    = BinaryData.fromHex("5945B41D0100190301000763000A016F017538295653")
-          val expect = (ReqId(25),UpdateConfig.AndReq(CustomFieldUpdateImp(CustomField.Implication.Id(7),ImpFieldValues(CustomReqTypeId(10),Mandatory,ApplicableReqTypes.whitelist(StaticReqType.UseCase)))))
-          assertRequest(bin, expect)
-        }
 
         "v1.1" - {
           "ApplicableTagCreate" - {
@@ -362,25 +357,6 @@ object ProjectSpaProtocolsTest extends TestSuite {
             val expect = \/-((ReqId(13),\/-(verifiedEventsFromJson("""{"#":749,"event":{"ManualIssueDelete":7}, "createdAt":"2019-09-27T06:18:51.853Z"}"""))))
             assertResponse(UpdateManualIssues)(bin, expect)
           }
-        }
-      }
-    }
-
-    // =================================================================================================================
-    "FieldMandatorinessMod" - {
-      "req" - {
-        "v1.0" - {
-          val bin    = BinaryData.fromHex("5945B41D01000E097400040138295653")
-          val expect = (ReqId(14),FieldMandatorinessMod.AndReq((CustomField.Tag.Id(4),Mandatory)))
-          assertRequest(bin, expect)
-        }
-      }
-
-      "resp" - {
-        "v1.0" - {
-          val bin    = BinaryData.fromHex("01001C0100000182EE130004014D01E0CBA98D5D40BFD7327786DA86")
-          val expect = \/-((ReqId(14),\/-(verifiedEventsFromJson("""{"#":750,"event":{"FieldCustomTagUpdate":{"id":4,"values":[{"mandatory":true}]}}, "createdAt":"2019-09-27T06:18:51.853Z"}"""))))
-          assertResponse(FieldMandatorinessMod)(bin, expect)
         }
       }
     }

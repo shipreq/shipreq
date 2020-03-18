@@ -10,6 +10,7 @@ import shipreq.webapp.base.text.{Text => T}
 import ApplyEventTestFns._
 import ContentEventTestHelp.CustomTextMap
 import Event._
+import RetiredGenericData._
 
 case class DetachedGenericReq(req       : GenericReq,
                               customText: CustomTextMap,
@@ -82,7 +83,7 @@ object ContentEventTestHelp {
 
   def createGR(id     : GenericReqId,
                rt     : CustomReqTypeId                = mf,
-               codes  : Set[ApReqCodeId.AndValue]        = ∅,
+               codes  : Set[ApReqCodeId.AndValue]      = ∅,
                title  : T.GenericReqTitle.OptionalText = ∅,
                impSrcs: Set[ReqId]                     = ∅,
                impTgts: Set[ReqId]                     = ∅) = {
@@ -97,7 +98,7 @@ object ContentEventTestHelp {
 
   def createUC(id     : UseCaseId,
                stepId : UseCaseStepId,
-               codes  : Set[ApReqCodeId.AndValue]     = ∅,
+               codes  : Set[ApReqCodeId.AndValue]   = ∅,
                title  : T.UseCaseTitle.OptionalText = ∅,
                impSrcs: Set[ReqId]                  = ∅,
                impTgts: Set[ReqId]                  = ∅) = {
@@ -235,14 +236,14 @@ object ContentEventTestHelp {
   val issueType1 = createIssueType1.id
 
   val createCTF1 = {
-    import CustomTextFieldGD._
-    FieldCustomTextCreate(80, nev(Name("asdf"), Key("qwer"), Mandatory(true), ApplicableReqTypes(allReqTypes)))
+    import CustomTextFieldGDv1._
+    FieldCustomTextCreateV1(80, nev(Name("asdf"), Key("qwer"), Mandatory(true), ApplicableReqTypes(allReqTypes)))
   }
   val cf1 = createCTF1.id
 
   val createCTF2 = {
-    import CustomTextFieldGD._
-    FieldCustomTextCreate(81, nev(Name("blurp!"), Key("blurp"), Mandatory(false), ApplicableReqTypes(allReqTypes)))
+    import CustomTextFieldGDv1._
+    FieldCustomTextCreateV1(81, nev(Name("blurp!"), Key("blurp"), Mandatory(false), ApplicableReqTypes(allReqTypes)))
   }
   val cf2 = createCTF2.id
 

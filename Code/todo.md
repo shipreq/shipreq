@@ -156,8 +156,16 @@ v2.1
   * update reqtable (and probably reqdetail) to render dead rows like cfg field
   * soft deletion vs hard - wrt app req types in tags
   * add usages. probably have to update filter too
+  * event tests
+  * stablity tests (for events & commands)
+  * RedisProtocolTest.generateTestData
+  * delete ProjectConfig mandatoryLiveCustomFields
+  * delete Key & keyO from Fields
 
 * ReqTypes
   * Might be a good idea to store a description & examples. (eg. "BR" means xxx + examples)
   * Users should be able to change the mnemonic (without retention) if not in use yet
   * Support hard & soft deletion from UI - explain difference and reasoning
+
+* Revise all issues detectors
+  Re-enable IssueDetectorsTest.BlankCustomField

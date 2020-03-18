@@ -84,10 +84,11 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
   lazy val liveOrderedFieldIds: Vector[FieldId] =
     fields.order.filter(fields.need(_).live(this) is Live)
 
+  // TODO Delete - doesn't consider per-reqtype settings
   lazy val mandatoryLiveCustomFields: CustomField.Lists = {
     val m = new CustomField.MutableLists
     for (f <- fields.customFields.valuesIterator)
-      if (f.mandatory.is(Mandatory) && f.live(this).is(Live))
+      if (f.live(this).is(Live) && f.fieldReqTypeRules.otherwise == FieldReqTypeRules.Resolution.Mandatory)
         m += f
     m.result()
   }

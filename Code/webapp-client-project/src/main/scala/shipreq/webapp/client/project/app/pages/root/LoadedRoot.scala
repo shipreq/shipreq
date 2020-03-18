@@ -60,7 +60,6 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     private val sspUpdateSavedViews      = global.sspUpdateSavedViews.map(_.events)
     private val sspUpdateManualIssues    = global.sspUpdateManualIssues
     private val sspUpdateManualIssuesE   = global.sspUpdateManualIssues.map(_.events)
-    private val sspFieldMandatorinessMod = global.sspFieldMandatorinessMod.map(_.events)
     private val sspReqTypeImplicationMod = global.sspReqTypeImplicationMod.map(_.events)
 
     private val feedbackModal: FeedbackModal = {
@@ -367,7 +366,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
 
         case Page.CfgIssues =>
           config_old.issues.CfgIssues.Props(
-            sspUpdateConfigE, sspReqTypeImplicationMod, sspFieldMandatorinessMod, global, filterDeadSS, usageShow)
+            sspUpdateConfigE, sspReqTypeImplicationMod, global, filterDeadSS, usageShow)
             .component
 
         case Page.CfgReqTypes =>

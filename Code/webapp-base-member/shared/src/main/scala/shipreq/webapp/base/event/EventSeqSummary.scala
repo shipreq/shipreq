@@ -270,12 +270,18 @@ object EventSeqSummary {
       case e: Event.CustomReqTypeDeleteHard => customReqTypeDelete(e.id)
       case e: Event.CustomReqTypeUpdate     => customReqTypes.updated += e.id
       case e: Event.FieldCustomDelete       => customFieldType(Deleted, e.id)
+      case e: Event.FieldCustomImpCreateV1  => customFieldImpTypes.created += e.id
       case e: Event.FieldCustomImpCreate    => customFieldImpTypes.created += e.id
+      case e: Event.FieldCustomImpUpdateV1  => customFieldImpTypes.updated += e.id
       case e: Event.FieldCustomImpUpdate    => customFieldImpTypes.updated += e.id
       case e: Event.FieldCustomRestore      => customFieldType(Restored, e.id)
+      case e: Event.FieldCustomTagCreateV1  => customFieldTagTypes.created += e.id
       case e: Event.FieldCustomTagCreate    => customFieldTagTypes.created += e.id
+      case e: Event.FieldCustomTagUpdateV1  => customFieldTagTypes.updated += e.id
       case e: Event.FieldCustomTagUpdate    => customFieldTagTypes.updated += e.id
+      case e: Event.FieldCustomTextCreateV1 => customFieldTextTypes.created += e.id
       case e: Event.FieldCustomTextCreate   => customFieldTextTypes.created += e.id
+      case e: Event.FieldCustomTextUpdateV1 => customFieldTextTypes.updated += e.id
       case e: Event.FieldCustomTextUpdate   => customFieldTextTypes.updated += e.id
       case e: Event.FieldReposition         => fieldReposition += e.id
       case e: Event.FieldStaticAdd          => staticFields.created += e.f

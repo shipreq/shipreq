@@ -131,6 +131,13 @@ object Event {
   final case class FieldCustomImpCreate(id: CustomField.Implication.Id, vs: CustomImpFieldGD.NonEmptyValues) extends ActiveEvent
   final case class FieldCustomImpUpdate(id: CustomField.Implication.Id, vs: CustomImpFieldGD.NonEmptyValues) extends ActiveEvent
 
+  final case class FieldCustomTextCreateV1(id: CustomField.Text       .Id, vs: RetiredGenericData.CustomTextFieldGDv1.NonEmptyValues) extends RetiredEvent
+  final case class FieldCustomTextUpdateV1(id: CustomField.Text       .Id, vs: RetiredGenericData.CustomTextFieldGDv1.NonEmptyValues) extends RetiredEvent
+  final case class FieldCustomTagCreateV1 (id: CustomField.Tag        .Id, vs: RetiredGenericData.CustomTagFieldGDv1 .NonEmptyValues) extends RetiredEvent
+  final case class FieldCustomTagUpdateV1 (id: CustomField.Tag        .Id, vs: RetiredGenericData.CustomTagFieldGDv1 .NonEmptyValues) extends RetiredEvent
+  final case class FieldCustomImpCreateV1 (id: CustomField.Implication.Id, vs: RetiredGenericData.CustomImpFieldGDv1 .NonEmptyValues) extends RetiredEvent
+  final case class FieldCustomImpUpdateV1 (id: CustomField.Implication.Id, vs: RetiredGenericData.CustomImpFieldGDv1 .NonEmptyValues) extends RetiredEvent
+
   // ===================================================================================================================
   // Content: Generic requirements
 

@@ -89,6 +89,14 @@ object BaseData {
   // Polymorphic definitions
   // (non-implicit, "pickle" prefix)
 
+  private object _pickleNothing extends Pickler[AnyRef] {
+    override def pickle(obj: AnyRef)(implicit state: PickleState): Unit = ()
+    override def unpickle(implicit state: UnpickleState): Nothing = throw new RuntimeException("This case is illegal.")
+  }
+
+  def pickleNothing[A <: AnyRef]: Pickler[A] =
+    _pickleNothing.asInstanceOf[Pickler[A]]
+
   def pickleBool[A](iso: Boolean <=> A): Pickler[A] =
     transformPickler(iso.to)(iso.from)
 
@@ -315,6 +323,9 @@ object BaseData {
   // ===================================================================================================================
   // Concrete picklers for base data type
   // (implicit lazy vals, "pickler" prefix)
+
+  implicit lazy val picklerImpossible: Pickler[Impossible] =
+    pickleNothing
 
   implicit lazy val picklerDirection: Pickler[Direction] =
     pickleBool(Forwards)

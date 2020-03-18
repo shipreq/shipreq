@@ -8,6 +8,7 @@ import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.util.GenericDataMacros._
 import Event._
+import RetiredGenericData._
 
 /**
  * Once a [[ProjectTemplate]] has been used (i.e. an Event exists in the database which refers to it),
@@ -76,15 +77,15 @@ object ProjectTemplate {
     val customFieldId = new IdCounter(identity)
     def customTextField(name: String, key: FieldRefKey, mandatory: Mandatory, applicableReqTypes: ApplicableReqTypes): Unit = {
       val id = CustomField.Text.Id(customFieldId.next())
-      add(FieldCustomTextCreate(id, gdAllValues(CustomTextFieldGD, "")))
+      add(FieldCustomTextCreateV1(id, gdAllValues(CustomTextFieldGDv1, "")))
     }
     def customTagField(tagId: TagId, mandatory: Mandatory, applicableReqTypes: ApplicableReqTypes): Unit = {
       val id = CustomField.Tag.Id(customFieldId.next())
-      add(FieldCustomTagCreate(id, gdAllValues(CustomTagFieldGD, "")))
+      add(FieldCustomTagCreateV1(id, gdAllValues(CustomTagFieldGDv1, "")))
     }
     def customImpField(reqTypeId: ReqTypeId, mandatory: Mandatory, applicableReqTypes: ApplicableReqTypes): Unit = {
       val id = CustomField.Implication.Id(customFieldId.next())
-      add(FieldCustomImpCreate(id, gdAllValues(CustomImpFieldGD, "")))
+      add(FieldCustomImpCreateV1(id, gdAllValues(CustomImpFieldGDv1, "")))
     }
 
     val savedViewId = new IdCounter(reqtable.SavedView.Id)

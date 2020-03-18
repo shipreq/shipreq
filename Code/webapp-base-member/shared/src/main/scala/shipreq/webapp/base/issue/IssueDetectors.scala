@@ -3,6 +3,7 @@ package shipreq.webapp.base.issue
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptySet
 import shipreq.base.util.{Applicable, Backwards, Forwards, Util}
+import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Atom
 
@@ -54,7 +55,7 @@ object IssueDetectors {
             val reqId     = req.id
             val reqTypeId = req.reqTypeId
             for ((field, hasIssue) <- as)
-              if (field.applicableReqTypes(reqTypeId).is(Applicable) && hasIssue(reqId))
+              if (field.fieldReqTypeRules(reqTypeId).applicability.is(Applicable) && hasIssue(reqId))
                 ctx.add(Issue.BlankCustomField(req, field))
           }
         })
