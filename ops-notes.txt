@@ -1,5 +1,0 @@
-ssh app.prod.sd.internal
-
-port=$(sudo docker ps | fgrep webapp | sed -e 's/.*:\([0-9][0-9]*\)->8080.*/\1/')
-
-curl http://localhost:$port/ops/register1 -X POST -F secret=Hooquail2aehiey1viemiefaayengeiGhuch8Eishee3OHu4aiKieth3lieshaid -F email=japgolly@gmail.com
