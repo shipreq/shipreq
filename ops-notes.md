@@ -44,5 +44,15 @@ aws s3 cp s3://shipreq-tmp/project-3.json .
 ElasticSearch Maintainence
 ==========================
 
+```sh
 es=https://es.prod.internal:443
-curl -s -k -X GET "$es/_cat/indices?v"
+tmp=/tmp/es
+curl -s -k -X GET "$es/_cat/indices?v&bytes=mb" | tee $tmp
+<$tmp sort -k3
+
+# Delete old data
+retention_days=45
+del=/tmp/es-del
+<$tmp sort -k3 | fgrep filebeat- | head -n-$retention_days | tee $del
+for i in $(awk '{print $3}' <$del); do echo "Deleting $i"; curl -k -X DELETE "$es/$i"; echo; done
+```
