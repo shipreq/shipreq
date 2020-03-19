@@ -2,7 +2,7 @@ package shipreq.webapp.base.issue
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptySet
-import shipreq.base.util.{Applicable, Backwards, Forwards, Util}
+import shipreq.base.util._
 import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Atom
@@ -17,7 +17,7 @@ object IssueDetectors {
   case object BlankCustomField extends Instance {
 
     override val detect = ctx => {
-      val fields = ctx.project.config.mandatoryLiveCustomFields
+      val fields = ctx.project.config.liveCustomFieldsWithMandatory
 
       // Check imps
       run(ctx, fields.imps) {
@@ -55,7 +55,7 @@ object IssueDetectors {
             val reqId     = req.id
             val reqTypeId = req.reqTypeId
             for ((field, hasIssue) <- as)
-              if (field.fieldReqTypeRules(reqTypeId).applicability.is(Applicable) && hasIssue(reqId))
+              if (field.fieldReqTypeRules(reqTypeId) == Resolution.Mandatory && hasIssue(reqId))
                 ctx.add(Issue.BlankCustomField(req, field))
           }
         })

@@ -158,9 +158,7 @@ v2.1
   * add usages. probably have to update filter too
   * MakeEvent tests wrt dead/live
   * stablity tests (for events & commands)
-  * delete ProjectConfig mandatoryLiveCustomFields
-  * delete CustomFields.List & MutableBuilder
-  * mandatoryLiveCustomFields
+  * delete Deletable
 
 * ReqTypes
   * Might be a good idea to store a description & examples. (eg. "BR" means xxx + examples)
@@ -168,6 +166,5 @@ v2.1
   * Support hard & soft deletion from UI - explain difference and reasoning
 
 * Revise all issues detectors
-  - Re-enable IssueDetectorsTest.BlankCustomField
   - New issue type: Defaulting to dead tags
   - New issue type: Defaulting to non-child tags

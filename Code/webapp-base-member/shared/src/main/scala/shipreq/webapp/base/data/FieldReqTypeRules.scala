@@ -32,6 +32,9 @@ final case class FieldReqTypeRules[+D](perReqType: Map[ReqTypeId, Resolution[D]]
     f(None, otherwise)
   }
 
+  val containsMandatory: Boolean =
+    resolutionIterator().contains(Resolution.Mandatory)
+
   def updated[DD >: D](ids: ReqTypeId*)(res: Resolution[DD]): FieldReqTypeRules[DD] =
     copy(ids.foldLeft(perReqType: Map[ReqTypeId, Resolution[DD]])(_.updated(_, res)))
 

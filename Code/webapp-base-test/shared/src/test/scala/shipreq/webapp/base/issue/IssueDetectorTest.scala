@@ -405,12 +405,12 @@ object IssueDetectorTest extends TestSuite {
       'emptyStepAndTitle - emptyStepAndTitle()
     }
 
-//    'BlankCustomField {
-//      import BlankCustomFieldTests._
-//      'notAllReqTypes - notAllReqTypes()
-//      'imps1          - imps1()
-//      'imps2          - imps2()
-//    }
+    'BlankCustomField {
+      import BlankCustomFieldTests._
+      'notAllReqTypes - notAllReqTypes()
+      'imps1          - imps1()
+      'imps2          - imps2()
+    }
 
     'ConflictingTag {
       import ConflictingTagTests._
