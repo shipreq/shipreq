@@ -262,7 +262,7 @@ object IssueDetectors {
         val isLive        = f.liveExplicitly is Live
         def uninhabitable = !inhabitable(f.tagId, cfg)
         if (isLive && uninhabitable)
-          ctx.add(Issue.UninhabitableField(f))
+          ctx.add(Issue.UninhabitableTagField(f))
       }
     }
 

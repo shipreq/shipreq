@@ -51,7 +51,7 @@ object IssueLite {
                                  loc  : LocationOf.Text.InReq,
                                  issue: Atom.AnyIssue) extends IssueLite(C.IssueTag)
 
-  final case class UninhabitableField(fieldId: CustomFieldId) extends IssueLite(C.UninhabitableField)
+  final case class UninhabitableTagField(fieldId: CustomField.Tag.Id) extends IssueLite(C.UninhabitableTagField)
 
   final case class ManualIssue(issue: ManualIssueInstance) extends IssueLite(C.ManualIssue)
 
@@ -72,6 +72,6 @@ object IssueLite {
     case Issue.IssueTagInRcg        (rcg, issue           ) => IssueTagInRcg        (rcg.id, issue)
     case Issue.IssueTagInReq        (req, loc, issue      ) => IssueTagInReq        (req.id, loc, issue)
     case Issue.ManualIssue          (issue                ) => ManualIssue          (issue)
-    case Issue.UninhabitableField   (field                ) => UninhabitableField   (field.id)
+    case Issue.UninhabitableTagField(field                ) => UninhabitableTagField(field.id)
   }
 }

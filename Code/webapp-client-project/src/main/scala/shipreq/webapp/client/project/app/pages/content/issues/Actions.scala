@@ -40,10 +40,10 @@ object Actions {
     private def delete(subject: String, cmd: Cmd): Action =
       Action(Icon.Trash, "Delete " + subject, cmd)
 
-    private def deleteField(f: CustomField): Action = {
-      val name = p.config.fieldName(f.id)
+    private def deleteField(f: CustomField.Tag): Action = {
+      val tag = p.config.tags.tree.need(f.tagId).tag
       delete(
-        name + " field",
+        tag.name + " field",
         UpdateConfigCmd.FieldDelete(f.id))
     }
 
@@ -127,14 +127,14 @@ object Actions {
          | _: Issue.IssueTagInReq
             => Nil
 
-      case i: Issue.DeadIssueTagInRcg  => restoreIssueTag(i.issue.typ)
-      case i: Issue.DeadIssueTagInReq  => restoreIssueTag(i.issue.typ)
-      case i: Issue.DeadRefInRcg       => restoreRefTarget(i.ref)
-      case i: Issue.DeadRefInReq       => restoreRefTarget(i.ref)
-      case i: Issue.DeadTag            => restoreTag(i.tag)
-      case i: Issue.EmptyCodeGroup     => deleteReqCodeGroup(i.rcg)
-      case i: Issue.UninhabitableField => deleteField(i.field)
-      case i: Issue.ManualIssue        => delete("issue", ManualIssueCmd.Delete(i.issue.id))
+      case i: Issue.DeadIssueTagInRcg     => restoreIssueTag(i.issue.typ)
+      case i: Issue.DeadIssueTagInReq     => restoreIssueTag(i.issue.typ)
+      case i: Issue.DeadRefInRcg          => restoreRefTarget(i.ref)
+      case i: Issue.DeadRefInReq          => restoreRefTarget(i.ref)
+      case i: Issue.DeadTag               => restoreTag(i.tag)
+      case i: Issue.EmptyCodeGroup        => deleteReqCodeGroup(i.rcg)
+      case i: Issue.UninhabitableTagField => deleteField(i.field)
+      case i: Issue.ManualIssue           => delete("issue", ManualIssueCmd.Delete(i.issue.id))
     }
   }
 }

@@ -21,18 +21,18 @@ sealed abstract class IssueClass(final val category: IssueCategory)
 object IssueClass {
   import shipreq.webapp.base.issue.{IssueCategory => C}
 
-  case object BlankCustomField    extends IssueClass(C.MissingData)
-  case object BlankTitle          extends IssueClass(C.MissingData)
-  case object BlankUseCaseStep    extends IssueClass(C.MissingData)
-  case object ConflictingTags     extends IssueClass(C.BadData)
-  case object DeadIssueTag        extends IssueClass(C.BadData)
-  case object DeadReference       extends IssueClass(C.BadData)
-  case object DeadTag             extends IssueClass(C.BadData)
-  case object EmptyCodeGroup      extends IssueClass(C.Futility)
-  case object ImplicationRequired extends IssueClass(C.MissingData)
-  case object IssueTag            extends IssueClass(C.UserDefined)
-  case object ManualIssue         extends IssueClass(C.UserDefined)
-  case object UninhabitableField  extends IssueClass(C.Futility)
+  case object BlankCustomField      extends IssueClass(C.MissingData)
+  case object BlankTitle            extends IssueClass(C.MissingData)
+  case object BlankUseCaseStep      extends IssueClass(C.MissingData)
+  case object ConflictingTags       extends IssueClass(C.BadData)
+  case object DeadIssueTag          extends IssueClass(C.BadData)
+  case object DeadReference         extends IssueClass(C.BadData)
+  case object DeadTag               extends IssueClass(C.BadData)
+  case object EmptyCodeGroup        extends IssueClass(C.Futility)
+  case object ImplicationRequired   extends IssueClass(C.MissingData)
+  case object IssueTag              extends IssueClass(C.UserDefined)
+  case object ManualIssue           extends IssueClass(C.UserDefined)
+  case object UninhabitableTagField extends IssueClass(C.Futility)
 
   implicit def univEq: UnivEq[IssueClass] = UnivEq.derive
   val values = AdtMacros.adtValues[IssueClass]
@@ -87,7 +87,7 @@ object Issue {
 
   final case class ManualIssue(issue: ManualIssueInstance) extends Issue(C.ManualIssue)
 
-  final case class UninhabitableField(field: CustomField) extends Issue(C.UninhabitableField)
+  final case class UninhabitableTagField(field: CustomField.Tag) extends Issue(C.UninhabitableTagField)
 }
 
 sealed trait ContentRef

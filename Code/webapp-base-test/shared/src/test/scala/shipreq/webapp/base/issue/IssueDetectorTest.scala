@@ -342,11 +342,11 @@ object IssueDetectorTest extends TestSuite {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   private object UninhabitableTagFieldTests {
-    private implicit val filter = IssueFilter[Issue.UninhabitableField]
+    private implicit val filter = IssueFilter[Issue.UninhabitableTagField]
 
     def ko() = test(p3)(
       Event.TagDelete(P3.priTG),
-    )(IssueLite.UninhabitableField(P3.priField))
+    )(IssueLite.UninhabitableTagField(P3.priField))
 
     def deadField() = test(p3)(
       Event.FieldCustomDelete(P3.priField),
