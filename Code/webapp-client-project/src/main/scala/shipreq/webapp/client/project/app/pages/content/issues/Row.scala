@@ -228,9 +228,9 @@ object Row {
       case i: Issue.EmptyCodeGroup =>
         forRcg(i, UI.descEmptyCodeGroup, i.rcg, None)
 
-      case i: Issue.FieldDefaultsToDeadTag =>
+      case i: Issue.FieldDefaultTagDead =>
         val fieldName = cfg.fieldName(i.field.id)
-        val desc = UI.descFieldDefaultsToDeadTag(field = fieldName, tag = i.tag.name)
+        val desc = UI.descFieldDefaultTagDead(field = fieldName, tag = i.tag.name)
         forConfig(i, desc)
 
       case i: Issue.ImplicationRequired =>

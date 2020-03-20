@@ -122,7 +122,7 @@ object Actions {
          | _: Issue.BlankCustomField
          | _: Issue.BlankUseCaseStep
          | _: Issue.ConflictingTags
-         | _: Issue.FieldDefaultsToDeadTag
+         | _: Issue.FieldDefaultTagDead
          | _: Issue.ImplicationRequired
          | _: Issue.IssueTagInRcg
          | _: Issue.IssueTagInReq

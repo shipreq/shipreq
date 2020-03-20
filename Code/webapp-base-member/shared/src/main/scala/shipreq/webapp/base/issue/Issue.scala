@@ -29,7 +29,7 @@ object IssueClass {
   case object DeadReference          extends IssueClass(C.BadData)
   case object DeadTag                extends IssueClass(C.BadData)
   case object EmptyCodeGroup         extends IssueClass(C.Futility)
-  case object FieldDefaultsToDeadTag extends IssueClass(C.BadData)
+  case object FieldDefaultTagDead    extends IssueClass(C.BadData)
   case object ImplicationRequired    extends IssueClass(C.MissingData)
   case object IssueTag               extends IssueClass(C.UserDefined)
   case object ManualIssue            extends IssueClass(C.UserDefined)
@@ -78,9 +78,9 @@ object Issue {
 
   final case class EmptyCodeGroup(rcg: LiveCodeGroup) extends Issue(C.EmptyCodeGroup)
 
-  final case class FieldDefaultsToDeadTag(field       : CustomField.Tag,
+  final case class FieldDefaultTagDead(field       : CustomField.Tag,
                                           tag         : ApplicableTag,
-                                          reqsAffected: List[Req]) extends Issue(C.FieldDefaultsToDeadTag)
+                                          reqsAffected: List[Req]) extends Issue(C.FieldDefaultTagDead)
 
   final case class ImplicationRequired(req: Req) extends Issue(C.ImplicationRequired)
 

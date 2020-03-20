@@ -171,7 +171,7 @@ object UiText {
     def descDeadRef                                           : String = "Reference to deleted data"
     def descDeadTag               (tag: HashRefKey)           : String = "Deleted tag in use: " + PlainText.hashtag(tag)
     def descEmptyCodeGroup                                    : String = "Code group has nothing to group"
-    def descFieldDefaultsToDeadTag(field: String, tag: String): String = s"$field field using deleted tag $tag as a default"
+    def descFieldDefaultTagDead   (field: String, tag: String): String = s"$field field using deleted tag $tag as a default"
     def descImplicationRequired   (reqType: Mnemonic)         : String = "Implication required for req type: " + reqType.value
     def descIssueTag              (tag: HashRefKey)           : String = PlainText.hashtag(tag)
     def descNonApplicableField    (field: String)             : String = field + " field not applicable to any req types"

@@ -193,7 +193,7 @@ object IssueDetectors {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  case object FieldDefaultsToDeadTag extends Instance {
+  case object FieldDefaultTagDead extends Instance {
     override val detect = ctx => {
       val cfg = ctx.project.config
       for (f <- ctx.project.config.fields.customTagFields)
@@ -213,7 +213,7 @@ object IssueDetectors {
 
           for (tagId <- badDefaults) {
             val tag = cfg.tags.needApplicableTag(tagId)
-            ctx.add(Issue.FieldDefaultsToDeadTag(f, tag, affectedReqs(tagId)))
+            ctx.add(Issue.FieldDefaultTagDead(f, tag, affectedReqs(tagId)))
           }
         }
     }

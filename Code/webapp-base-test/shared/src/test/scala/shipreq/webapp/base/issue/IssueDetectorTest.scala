@@ -275,13 +275,13 @@ object IssueDetectorTest extends TestSuite {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  private object FieldDefaultsToDeadTagTests {
-    private implicit val filter = IssueFilter[Issue.FieldDefaultsToDeadTag]
+  private object FieldDefaultTagDeadTests {
+    private implicit val filter = IssueFilter[Issue.FieldDefaultTagDead]
     import P7._
 
     def ko() = test(p7)()(
-      IssueLite.FieldDefaultsToDeadTag(statusField, uat, Set()), // BR CO
-      IssueLite.FieldDefaultsToDeadTag(statusField, uat2, Set(frs(1), frs(2))),
+      IssueLite.FieldDefaultTagDead(statusField, uat, Set()), // BR CO
+      IssueLite.FieldDefaultTagDead(statusField, uat2, Set(frs(1), frs(2))),
     )
 
     def liveOnly() = test(p7)(
@@ -474,8 +474,8 @@ object IssueDetectorTest extends TestSuite {
       'deadCodeGroup - deadCodeGroup()
     }
 
-    'FieldDefaultsToDeadTag {
-      import FieldDefaultsToDeadTagTests._
+    'FieldDefaultTagDead {
+      import FieldDefaultTagDeadTests._
       'ko       - ko()
       'liveOnly - liveOnly()
     }
