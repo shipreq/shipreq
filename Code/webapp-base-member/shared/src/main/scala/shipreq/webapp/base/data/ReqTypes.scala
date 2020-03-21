@@ -127,6 +127,11 @@ final case class ReqTypes(custom: IMap[CustomReqTypeId, CustomReqType]) {
   def need(i: ReqTypeId): ReqType =
     i.foldId[ReqType](identity, custom.need)
 
+  lazy val liveIds: Set[ReqTypeId] =
+    (StaticReqType.values.iterator.filter(_.live is Live) ++
+      custom.valuesIterator.filter(_.live is Live).map(_.reqTypeId)
+      ).toSet
+
   lazy val liveCustomReqTypes: Vector[CustomReqType] =
     custom.valuesIterator.filter(_.live is Live).toVector
 

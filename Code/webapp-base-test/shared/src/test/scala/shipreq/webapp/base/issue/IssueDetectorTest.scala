@@ -284,6 +284,12 @@ object IssueDetectorTest extends TestSuite {
       IssueLite.FieldDefaultTagDead(statusField, uat2, Set(frs(1), frs(2))),
     )
 
+    def otherwise() = test(p7)(
+      Event.FieldCustomTagUpdate(statusField, CustomTagFieldGD(FieldReqTypeRules.defaultTo(uat3).notApplicable(mf))),
+    )(
+      IssueLite.FieldDefaultTagDead(statusField, uat3, Set(frs(1), frs(2), uc1, uc2)),
+    )
+
     def liveOnly() = test(p7)(
       Event.FieldCustomDelete(statusField),
     )()
@@ -292,7 +298,6 @@ object IssueDetectorTest extends TestSuite {
       Event.FieldCustomDelete(statusField),
       Event.TagDelete(priMed),
     )(
-      IssueLite.FieldDefaultTagDead(relField, priMed, Set()), // empty because unrelated tags don't appear in column
       IssueLite.FieldDefaultTagDead(priField, priMed, Set()),
     )
   }
@@ -305,21 +310,28 @@ object IssueDetectorTest extends TestSuite {
 
     def ko() = test(p7)()(
       IssueLite.FieldDefaultTagUnrelated(relField, priMed),
+      IssueLite.FieldDefaultTagUnrelated(verField, priLow),
     )
 
     def deadTag() = test(p7)(
       Event.TagDelete(priMed),
+      Event.TagDelete(priLow),
     )(
       IssueLite.FieldDefaultTagUnrelated(relField, priMed),
+      IssueLite.FieldDefaultTagUnrelated(verField, priLow),
     )
 
     def liveFieldOnly() = test(p7)(
       Event.FieldCustomDelete(relField),
+      Event.FieldCustomDelete(verField),
     )()
 
     def liveReqTypeOnly() = test(p7)(
       Event.CustomReqTypeDeleteSoft(co),
-    )()
+      Event.CustomReqTypeDeleteSoft(mf),
+    )(
+      IssueLite.FieldDefaultTagUnrelated(verField, priLow),
+    )
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -510,6 +522,7 @@ object IssueDetectorTest extends TestSuite {
     'FieldDefaultTagDead {
       import FieldDefaultTagDeadTests._
       'ko        - ko()
+      'otherwise - otherwise()
       'unrelated - unrelated()
       'liveOnly  - liveOnly()
     }

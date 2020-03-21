@@ -197,28 +197,27 @@ object IssueDetectors {
     override val detect = ctx => {
       val cfg = ctx.project.config
       for (f <- ctx.project.config.fields.customTagFields)
-        if (f.liveExplicitly is Live) {
+        if (f.live(cfg) is Live) {
 
-          val okTags: Set[ApplicableTagId] =
-            cfg.liveTagFieldDistribution.inField(f.id)
+          var found = Multimap.empty[ApplicableTagId, List, ReqTypeId]
 
-          var badDefaults  = Set.empty[ApplicableTagId]
-          var affectedReqs = Multimap.empty[ApplicableTagId, List, Req]
+          cfg.fixedLiveTagFieldRules(f.id).errors.foreach {
+            case (reqTypeId, ProjectConfig.TagFieldIssue.DefaultTagDead(tag)) =>
+              found = found.add(tag.id, reqTypeId)
 
-          for ((rt, res) <- f.fieldReqTypeRules.liveIterator(cfg.reqTypes))
-            res match {
-              case FieldReqTypeRules.Resolution.DefaultTo(tagId) if cfg.tags.needApplicableTag(tagId).live is Dead =>
-                badDefaults += tagId
-                if (okTags.contains(tagId))
-                  affectedReqs = affectedReqs.addvs(tagId,
-                    ctx.project.content.reqs.reqsByType(rt.reqTypeId).filter(_.live(cfg.reqTypes) is Live).toList)
+            case _ =>
+          }
 
-              case _ =>
-            }
-
-          for (tagId <- badDefaults) {
+          for ((tagId, reqTypeIds) <- found.m) {
             val tag = cfg.tags.needApplicableTag(tagId)
-            ctx.add(Issue.FieldDefaultTagDead(f, tag, affectedReqs(tagId)))
+
+            val affectedReqs: List[Req] =
+              reqTypeIds
+                .iterator
+                .flatMap(rt => ctx.project.content.reqs.reqsByType(rt).filter(_.live(cfg.reqTypes) is Live))
+                .toList
+
+            ctx.add(Issue.FieldDefaultTagDead(f, tag, affectedReqs))
           }
         }
     }
@@ -228,18 +227,18 @@ object IssueDetectors {
 
   case object FieldDefaultTagUnrelated extends Instance {
     override val detect = ctx => {
+
       val cfg = ctx.project.config
       for (f <- ctx.project.config.fields.customTagFields)
-        if (f.liveExplicitly is Live) {
-
-          val okTags: Set[ApplicableTagId] =
-            cfg.liveTagFieldDistribution.inField(f.id)
+        if (f.live(cfg) is Live) {
 
           val unrelatedTags: Set[ApplicableTagId] =
-          f.fieldReqTypeRules
-            .liveResolutionIterator(cfg.reqTypes)
-            .collect { case FieldReqTypeRules.Resolution.DefaultTo(tagId) if !okTags.contains(tagId) => tagId }
-            .toSet
+            cfg
+              .fixedLiveTagFieldRules(f.id)
+              .errors
+              .valuesIterator
+              .collect { case ProjectConfig.TagFieldIssue.DefaultTagUnrelated(tag) => tag.id }
+              .toSet
 
           for (tagId <- unrelatedTags) {
             val tag = cfg.tags.needApplicableTag(tagId)

@@ -23,6 +23,9 @@ final case class FieldReqTypeRules[+D](perReqType: Map[ReqTypeId, Resolution[D]]
   def apply(id: ReqTypeId): Resolution[D] =
     perReqType.getOrElse(id, otherwise)
 
+  def -(id: ReqTypeId): FieldReqTypeRules[D] =
+    FieldReqTypeRules(perReqType - id, otherwise)
+
   def resolutionIterator(): Iterator[Resolution[D]] =
     perReqType.valuesIterator ++ Iterator.single(otherwise)
 

@@ -33,7 +33,7 @@ import UnsafeTypes._
  *
  *   - Released tag field
  *       CO       : Default to pri=med (not in scope)
- *       Otherwise: Optional
+ *       Otherwise: Mandatory
  *
  *   - Status tag field
  *       BR CO    : Default to uat (dead)
@@ -41,6 +41,10 @@ import UnsafeTypes._
  *       SI (dead): Default to uat3 (dead)
  *       MF       : Default to wip
  *       Otherwise: Optional
+ *
+ *   - Version tag field
+ *       MF       : N/A
+ *       Otherwise: Default to pri=low (not in scope)
  *
  * @since 2.1
  */
@@ -70,10 +74,12 @@ object SampleProject7 {
     FieldCustomRestore(relField),
 
     FieldCustomTagUpdate(relField, CustomTagFieldGD(
-      FieldReqTypeRules.optional.defaultTo(priMed)(co))),
+      FieldReqTypeRules.mandatory.defaultTo(priMed)(co))),
 
     FieldCustomTagUpdate(statusField, CustomTagFieldGD(
       FieldReqTypeRules.optional.defaultTo(wip)(mf).defaultTo(uat)(br, co).defaultTo(uat2)(fr).defaultTo(uat3)(si))),
+
+    Event.FieldCustomTagCreate(verField, verTG, CustomTagFieldGD(FieldReqTypeRules.defaultTo(priLow).notApplicable(mf))),
   )
 
   lazy val plainText  = PlainText.ForProject.noCtx(project)
