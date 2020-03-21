@@ -15,6 +15,7 @@ import shipreq.webapp.base.feature.clipboard.TestClipboard
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.util.Browser
+import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.test._
 import teststate.domzipper.DomZipper.EditableSel
 import TestState._
@@ -82,8 +83,10 @@ object ReqTableTestDsl {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  val editorInvalidSel: String =
+  private val editorInvalidSel: String =
     ".pointing.red.label"
+
+  private val naSel = Style.reqtable.table.`N/A`.selector
 
   sealed abstract class CellState
   case object Normal  extends CellState
@@ -98,7 +101,9 @@ object ReqTableTestDsl {
 
     private def editorCss = EditableSel
 
-    val cell        = *.focus("Subject cell").value(s => s.obs.table.cell(loc(s.obs)))
+    private val cell = *.focus("Subject cell").value(s => s.obs.table.cell(loc(s.obs)))
+
+    val isNA        = cell.map(_.exists(naSel))                      rename "Cell is N/A"
     val cellText    = cell.map(_.innerText)                          rename "Cell innerText"
     val editor      = cell.map(_(editorCss).forceDomAs[html.Input])  rename "Editor"
     val editorValue = editor.map(_.value)                            rename "Editor value"
@@ -130,7 +135,8 @@ object ReqTableTestDsl {
       *.action("Start editor.")(Simulate doubleClick cell.run(_).dom)
 
     val startEdit = (
-      tryStartEdit
+      isNA.assert(false)
+        +> tryStartEdit
         +> svrReqs.assert.noChange
         +> assertState(Editing))
 
@@ -162,6 +168,21 @@ object ReqTableTestDsl {
     // These used to be buttons
     def clickRetry = commit
     def clickAbort = abortEdit
+
+    def change(editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
+      (cellText.assert(textFromTo._1)
+        +> startEdit
+        +> editorValue.assert(editorFromTo._1)
+        >> enterValue(editorFromTo._2)
+        >> commit
+        +> cellText.assert(textFromTo._2)
+        ).group(s"Change $locDesc from '${textFromTo._1}' to '${textFromTo._2}'")
+
+    def changeAndBack(editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
+      change(editorFromTo, textFromTo) >> change(editorFromTo.swap, textFromTo.swap)
+
+    def changeAndBack(fromTo: (String, String)): *.Actions =
+      changeAndBack(fromTo, fromTo)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -23,8 +23,8 @@ object ReqTableTest extends TestSuite {
 
   PrepareEnv()
 
-  def runTest(plan: *.Plan)(implicit path: utest.framework.TestPath): Unit =
-    runTest(plan withInitialState SampleProject4.project)
+  def runTest(plan: *.Plan, project: Project = SampleProject4.project)(implicit path: utest.framework.TestPath): Unit =
+    runTest(plan withInitialState project)
 
   def runTest(p: *.PlanWithInitialState)(implicit path: utest.framework.TestPath): Unit = {
     import ProjectSpaTestDsl._
@@ -400,6 +400,66 @@ object ReqTableTest extends TestSuite {
     runTest(plan withInitialState project)
   }
 
+  def testFieldRules()(implicit path: utest.framework.TestPath) = {
+    val fr1_biz = cellEditor("FR-1", "Business Justification") // perReq > otherwise, opt
+    val fr1_alt = cellEditor("FR-1", "Alternatives") // na
+    val fr1_cmp = cellEditor("FR-1", "Component") // perReq > otherwise, opt
+    val fr1_pri = cellEditor("FR-1", "Priority") // perReq > otherwise, man
+    val fr1_sts = cellEditor("FR-1", "Status") // def:tag:dead
+    val fr1_ver = cellEditor("FR-1", "Version") // def:tag:bad
+
+    val br1_biz = cellEditor("BR-1", "Business Justification") // man
+    val br1_alt = cellEditor("BR-1", "Alternatives") // na
+    val br1_cmp = cellEditor("BR-1", "Component") // na
+    val br1_pri = cellEditor("BR-1", "Priority") // def:tag:ok
+
+    val si1_biz = cellEditor("SI-1", "Business Justification")
+    val si1_alt = cellEditor("SI-1", "Alternatives")
+    val si1_cmp = cellEditor("SI-1", "Component")
+    val si1_pri = cellEditor("SI-1", "Priority")
+    val si1_sts = cellEditor("SI-1", "Status")
+    val si1_ver = cellEditor("SI-1", "Version")
+
+    val plan = Plan.action(
+      showAllColumns(HideDead)
+
+      +> fr1_alt.isNA.assert(true)
+      >> fr1_biz.changeAndBack("" -> "X")
+      >> fr1_cmp.changeAndBack("" -> "X")
+      >> fr1_pri.changeAndBack("" -> "pri=low", "blank" -> "pri=low")
+      >> fr1_sts.changeAndBack("" -> "wip")
+      >> fr1_ver.changeAndBack("" -> "v1.0")
+
+      +> br1_alt.isNA.assert(true)
+      +> br1_cmp.isNA.assert(true)
+      >> br1_biz.changeAndBack("" -> "uiui", "blank" -> "uiui")
+      >> br1_pri.changeAndBack("" -> "pri=low", "pri=med" -> "pri=low")
+
+      >> showAllColumns(ShowDead)
+
+      +> si1_biz.isNA.assert(true)
+      +> si1_alt.cellText.assert("")
+      +> si1_cmp.cellText.assert("")
+      +> si1_pri.cellText.assert("")
+      +> si1_sts.cellText.assert("uat3")
+      +> si1_ver.cellText.assert("")
+
+      +> fr1_alt.isNA.assert(true)
+      +> fr1_biz.cellText.assert("")
+      +> fr1_cmp.cellText.assert("")
+      +> fr1_pri.cellText.assert("blank")
+      >> fr1_sts.changeAndBack("" -> "wip", "uat2" -> "wip")
+      >> fr1_ver.changeAndBack("" -> "v1.0")
+
+      +> br1_alt.isNA.assert(true)
+      +> br1_cmp.isNA.assert(true)
+      +> br1_biz.cellText.assert("blank")
+      >> br1_pri.changeAndBack("" -> "pri=low", "pri=med" -> "pri=low")
+    )
+
+    runTest(plan withInitialState SampleProject7.project)
+  }
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   override def tests = Tests {
@@ -463,5 +523,7 @@ object ReqTableTest extends TestSuite {
       'closedTitle - runTest(testPasteClosedTitle)
       'openDesc    - runTest(testPasteOpenDesc)
     }
+
+    'fieldRules - testFieldRules()
   }
 }
