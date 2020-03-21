@@ -47,8 +47,17 @@ final case class FieldReqTypeRules[+D](perReqType: Map[ReqTypeId, Resolution[D]]
     f(None, otherwise)
   }
 
+  def modResolutions[DD >: D](f: Resolution[DD] => Resolution[DD]): FieldReqTypeRules[DD] =
+    FieldReqTypeRules.resolutionTraversal[DD].modify(f)(this)
+
   val containsMandatory: Boolean =
     resolutionIterator().contains(Resolution.Mandatory)
+
+  def updated[DD >: D](reqTypeId: Option[ReqTypeId], res: Resolution[DD]): FieldReqTypeRules[DD] =
+    reqTypeId match {
+      case Some(id) => copy(perReqType.updated(id, res))
+      case None     => copy(otherwise = res)
+    }
 
   def updated[DD >: D](ids: ReqTypeId*)(res: Resolution[DD]): FieldReqTypeRules[DD] =
     copy(ids.foldLeft(perReqType: Map[ReqTypeId, Resolution[DD]])(_.updated(_, res)))
@@ -64,6 +73,9 @@ final case class FieldReqTypeRules[+D](perReqType: Map[ReqTypeId, Resolution[D]]
 
   def notApplicable(ids: ReqTypeId*): FieldReqTypeRules[D] =
     updated(ids: _*)(Resolution.NotApplicable)
+
+  def setOptional(id: Option[ReqTypeId]): FieldReqTypeRules[D] =
+    updated(id, Resolution.Optional)
 
   def hardDelete(id: ReqTypeId): FieldReqTypeRules[D] =
     if (perReqType contains id)

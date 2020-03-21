@@ -78,7 +78,7 @@ object SampleProject {
     FieldSet(emptyDataMap(CustomField).addAll(
       Text       .v1(descField    , "Description", "desc",     Mandatory.Not, onlyReqTypes(mf, si, StaticReqType.UseCase), Live),
       Text       .v1(notesField   , "Notes",       "notes",    Mandatory.Not, notReqTypes(br),                             Live),
-      Text       .v1(reporterField, "Reporter",    "reporter", Mandatory,     onlyReqTypes(dd, StaticReqType.UseCase),     Dead),
+      Text       .v1(reporterField, "Reporter",    "reporter", Mandatory,     onlyReqTypes(br, dd, StaticReqType.UseCase), Dead),
       Tag        .v1(priField     , priTG,                     Mandatory,     allReqTypes,                                 Live),
       Tag        .v1(statusField  , statusTG,                  Mandatory.Not, notReqTypes(dd, si),                         Live),
       Implication.v1(mfField      , mf,                        Mandatory.Not, notReqTypes(si),                             Live),

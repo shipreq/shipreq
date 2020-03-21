@@ -533,12 +533,6 @@ final case class FieldSet(customFields: FieldSet.CustomFields,
   def staticFieldSet: ListSet[StaticField] =
     staticFieldIterator.to
 
-  val applicability: ProjectApplicability.Default =
-    ProjectApplicability(get(_) match {
-      case Some(f) => f.fieldReqTypeRules(_).applicability
-      case None    => Applicability.never
-    })
-
   def custom[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): D = {
     val f = customFields.need(id)
     d.unapplyData(f) mustExistElse s"$id associated with wrong type: $f"

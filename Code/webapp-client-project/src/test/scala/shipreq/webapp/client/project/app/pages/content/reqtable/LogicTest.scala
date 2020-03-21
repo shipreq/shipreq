@@ -458,7 +458,7 @@ object LogicTest extends TestSuite {
       GReq(reqType = co).cftextS(descField, "CO.desc.NO!").cftextS(notesField, "CO.note.ok") +
       GReq(reqType = br).cftextS(descField, "BR.desc.NO!").cftextS(notesField, "BR.note.NO!") !! PA
     val pt = pcache(p).pt
-    val ap = Row.applicability(p.config.fields.applicability)
+    val ap = Row.applicability(p.config.applicability)
     def fmt(c: CustomField.Text.Id)(r: Row): String =
       ap(r, c) match {
         case Applicable    => rowToCustomText(pt, c)(r)

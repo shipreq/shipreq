@@ -6,7 +6,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.UnsafeTypes.autoExtPubid
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.test.{SampleProject5, SampleProject6}
+import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
@@ -192,7 +192,7 @@ object ReqDetailTest extends TestSuite {
       ))
 
       'dead - test("UC-1")(Plan.action(
-        changeLife.updateState(stateMode set Mode.Delete) >> deleteScreenDelete
+        clickDeleteOrRestore.updateState(stateMode set Mode.Delete) >> deleteScreenDelete
           +> life.assert(Dead)
           +> tailStepAC.test("doesn't exist")(_.isEmpty)
           +> tailStepEC.test("doesn't exist")(_.isEmpty)
@@ -291,10 +291,7 @@ object ReqDetailTest extends TestSuite {
     }
 
     'deleteRestore - test("UC-1")(Plan.action(
-      changeLife.updateState(stateMode set Mode.Delete)     <+ life.assert(Live)
-      >> deleteScreenDelete                                 +> life.assert(Dead)
-      >> changeLife.updateState(stateMode set Mode.Restore)
-      >> restoreScreenRestore                               +> life.assert(Live)
+      deleteReq >> restoreReq
     ))
 
     'editors - test("UC-1")(Plan(
@@ -326,18 +323,267 @@ object ReqDetailTest extends TestSuite {
         +> editorCount.assert.noChange
         +> unsavedChanges.assert.increaseBy(1)
 
-        >> changeLife.updateState(stateMode set Mode.Delete)
+        >> clickDeleteOrRestore.updateState(stateMode set Mode.Delete)
         >> deleteScreenDelete
         +> life.assert(Dead)
         +> editorCount.assert(0)
         +> unsavedChanges.assert(0)
 
-        >> changeLife.updateState(stateMode set Mode.Restore)
+        >> clickDeleteOrRestore.updateState(stateMode set Mode.Restore)
         >> restoreScreenRestore
         +> life.assert(Live)
         +> editorCount.assert(2)
         +> unsavedChanges.assert(2)
     ))
+
+    'fieldRules {
+      // +--------------------------------------+---------------+
+      // | TEST                                 | IN            |
+      // +--------------------------------------+---------------+
+      // | perReq > otherwise                   | FR1, BR1, CO1 |
+      // | na                                   | FR1, BR1, CO1 |
+      // | opt          - no content            | FR1, BR1, CO1 |
+      // | opt          - w/ content            | FR1           |
+      // | man          - no content            | FR1, BR1      |
+      // | man          - w/ content            | FR1           |
+      // | def:tag:ok   - no content            | BR1           |
+      // | def:tag:ok   - w/ content            | BR1           |
+      // | def:tag:ok   - editor                | BR1           |
+      // | def:tag:dead - no content - HideDead | FR1, BR1, CO1 |
+      // | def:tag:dead - no content - ShowDead | FR1, BR1, CO1 |
+      // | def:tag:dead - w/ content - HideDead | BR1           |
+      // | def:tag:dead - w/ content - ShowDead | BR1           |
+      // | def:tag:dead - editor     - HideDead | BR1           |
+      // | def:tag:dead - editor     - ShowDead | BR1           |
+      // | def:tag:bad  - no content - HideDead | FR1, BR1      |
+      // | def:tag:bad  - no content - ShowDead | FR1, BR1      |
+      // | def:tag:bad  - w/ content - HideDead | CO1           |
+      // | def:tag:bad  - w/ content - ShowDead | CO1           |
+      // | def:tag:bad  - editor     - HideDead | BR1           |
+      // | def:tag:bad  - editor     - ShowDead | BR1           |
+      // | dead fields                          | SI1           |
+      // +--------------------------------------+---------------+
+
+      // FR
+      //   - bizJust      : pr : opt
+      //   - alternatives : ow : na
+      //   - component    : pr : opt
+      //   - priority     : pr : man
+      //   - released     : ow : man
+      //   - status       : pr : def:deadTag
+      'fr1 - test("FR-1", SampleProject7.project)(Plan.action(
+
+        *.emptyAction
+          +> filterDead.assert(HideDead)
+          +> visibleFields.assert(
+          "Type",
+          "Live Status",
+          "Codes",
+          "Tags",
+          "Implications",
+          "Major Feature",
+          "Priority",
+          "Released",
+          "Status",
+          "Notes",
+          "Business Justification",
+          "Component",
+          "Version")
+          +> fieldText("Business Justification").assert("") // perReq > otherwise, opt - no content
+          +> fieldText("Component").assert("") // opt - no content
+          +> fieldText("Released").assert("blank") // man - no content
+          +> fieldText("Priority").assert("blank") // man - no content
+          +> fieldText("Status").assert("") // def:tag:dead - no content - HideDead
+          +> fieldText("Version").assert("") // def:tag:bad - no content - HideDead
+
+          >> filterDeadToggle
+          +> filterDead.assert(ShowDead)
+          +> visibleFields.assert(
+          "Type",
+          "Live Status",
+          "Past IDs",
+          "Deletion Reason",
+          "Codes",
+          "Tags",
+          "Implications",
+          "Major Feature",
+          "Priority",
+          "Released",
+          "Status",
+          "Notes",
+          "Business Justification",
+          "Component",
+          "Version")
+          +> fieldText("Business Justification").assert("") // perReq > otherwise, opt - no content
+          +> fieldText("Component").assert("") // opt - no content
+          +> fieldText("Priority").assert("blank") // man - no content
+          +> fieldText("Released").assert("blank") // man - no content
+          +> fieldText("Status").assert("uat2") // def:tag:dead - no content - ShowDead
+          +> fieldText("Version").assert("") // def:tag:bad - no content - ShowDead
+
+          >> changeFieldAndBack("Component", "" -> "X", "" -> "X") // opt - w/ content
+          >> changeFieldAndBack("Priority", "" -> "pri=low", "blank" -> "pri=low") // man - w/ content
+      ))
+
+      // BR
+      //   - ow : man
+      //   - ow : na
+      //   - ow : na
+      //   - pr : def
+      //   - ow : opt
+      //   - pr : def:dead -> ow:opt
+      'br1 - test("BR-1", SampleProject7.project)(Plan.action(
+
+        *.emptyAction
+          +> filterDead.assert(HideDead)
+          +> visibleFields.assert(
+          "Type",
+          "Live Status",
+          "Codes",
+          "Tags",
+          "Implications",
+          "Major Feature",
+          "Priority",
+          "Released",
+          "Status",
+          "Business Justification",
+          "Version")
+          +> fieldText("Business Justification").assert("blank") // man - no content
+          +> fieldText("Priority").assert("pri=med") // def:tag:ok - no content
+          +> fieldText("Released").assert("blank") // man - no content
+          +> fieldText("Status").assert("") // perReq > otherwise, def:tag:dead - no content - HideDead
+          +> fieldText("Version").assert("") // def:tag:bad - no content - HideDead
+
+          >> filterDeadToggle
+          +> filterDead.assert(ShowDead)
+          +> visibleFields.assert(
+          "Type",
+          "Live Status",
+          "Past IDs",
+          "Deletion Reason",
+          "Codes",
+          "Tags",
+          "Implications",
+          "Major Feature",
+          "Priority",
+          "Reporter",
+          "Released",
+          "Status",
+          "Business Justification",
+          "Version")
+          +> fieldText("Business Justification").assert("blank") // man - no content
+          +> fieldText("Priority").assert("pri=med") // def:tag:ok - no content
+          +> fieldText("Released").assert("blank") // man - no content
+          +> fieldText("Status").assert("uat") // perReq > otherwise, def:tag:dead - no content - ShowDead
+          +> fieldText("Version").assert("") // def:tag:bad - no content - ShowDead
+
+          >> changeFieldAndBack("Priority", "" -> "pri=low", "pri=med" -> "pri=low") // def:tag:ok - w/ content
+          >> changeFieldAndBack("Status", "" -> "wip", "uat" -> "wip") // def:tag:dead - w/ content - ShowDead
+          >> changeFieldAndBack("Version", "" -> "v1.0", "" -> "v1.0") // def:tag:bad - w/ content - ShowDead
+
+          >> filterDeadToggle
+          +> filterDead.assert(HideDead)
+          >> changeFieldAndBack("Status", "" -> "wip", "" -> "wip") // def:tag:dead - w/ content - HideDead
+          >> changeFieldAndBack("Version", "" -> "v1.0", "" -> "v1.0") // def:tag:bad - w/ content - HideDead
+      ))
+
+      // CO
+      //   - bizJust      : pr : na
+      //   - alternatives : ow : na
+      //   - component    : pr : opt
+      //   - priority     : pr : na
+      //   - released     : pr : def:badTag
+      //   - status       : pr : def:deadTag
+      'co1 - test("CO-1", SampleProject7.project)(Plan.action(
+
+        *.emptyAction
+          +> filterDead.assert(ShowDead)
+          +> visibleFields.assert(
+          "Type",
+          "Live Status",
+          "Past IDs",
+          "Deletion Reason",
+          "Codes",
+          "Tags",
+          "Implications",
+          "Major Feature",
+          "Released",
+          "Status",
+          "Notes",
+          "Component",
+          "Version")
+          +> fieldText("Component").assert("") // perReq > otherwise, opt - no content
+          +> fieldText("Released").assert("v1.0") // def:tag:bad - w/ content - ShowDead
+          +> fieldText("Status").assert("uat") // def:tag:dead - no content - ShowDead
+          +> fieldText("Version").assert("v1.0 v3.x") // def:tag:bad - w/ content - ShowDead
+
+          >> restoreReq
+          +> filterDead.assert(HideDead)
+          +> visibleFields.assert(
+          "Type",
+          "Live Status",
+          "Codes",
+          "Tags",
+          "Implications",
+          "Major Feature",
+          "Released",
+          "Status",
+          "Notes",
+          "Component",
+          "Version")
+          +> fieldText("Component").assert("") // opt - no content
+          +> fieldText("Released").assert("v1.0") // def:tag:bad - w/ content - HideDead
+          +> fieldText("Status").assert("") // def:tag:dead - no content - HideDead
+          +> fieldText("Version").assert("v1.0") // def:tag:bad - w/ content - HideDead
+
+          >> filterDeadToggle
+          +> filterDead.assert(ShowDead)
+          +> visibleFields.assert(
+          "Type",
+          "Live Status",
+          "Past IDs",
+          "Deletion Reason",
+          "Codes",
+          "Tags",
+          "Implications",
+          "Major Feature",
+          "Released",
+          "Status",
+          "Notes",
+          "Component",
+          "Version")
+          +> fieldText("Component").assert("") // perReq > otherwise, opt - no content
+          +> fieldText("Released").assert("v1.0") // def:tag:bad - w/ content - ShowDead
+          +> fieldText("Status").assert("uat") // def:tag:dead - no content - ShowDead
+          +> fieldText("Version").assert("v1.0 v3.x") // def:tag:bad - w/ content - ShowDead
+      ))
+
+      'si1 - test("SI-1", SampleProject7.project)(Plan.action(
+        *.emptyAction
+          +> filterDead.assert(ShowDead)
+          +> visibleFields.assert(
+          "Type",
+          "Live Status",
+          "Past IDs",
+          "Deletion Reason",
+          "Codes",
+          "Tags",
+          "Implications",
+          "Description",
+          "Priority",
+          "Released",
+          "Status",
+          "Notes",
+          "Alternatives",
+          "Component",
+          "Version")
+          +> fieldText("Component").assert("")
+          +> fieldText("Priority").assert("")
+          +> fieldText("Released").assert("") // dead req with mandatory blank
+          +> fieldText("Status").assert("uat3") // dead req with dead default
+          +> fieldText("Version").assert("") // dead req with bad live default
+      ))
+    }
 
   }
 }

@@ -107,7 +107,7 @@ object Editability {
 
   private def customField(cfg: ProjectConfig, reqTypeId: ReqTypeId, fid: CustomFieldId): Permission =
     cfg.fields.get(fid) match {
-      case Some(f) => Allow when cfg.fields.applicability(reqTypeId, fid).is(Applicable) && f.live(cfg).is(Live)
+      case Some(f) => Allow when cfg.applicability(reqTypeId, fid).is(Applicable) && f.live(cfg).is(Live)
       case None    => Deny // Field has been removed
     }
 

@@ -60,10 +60,16 @@ final class ReqDetailObs($: DomZipperJs, val nav: NavObs) {
 
     val table = root(">table")
 
+    private val rows = table(">tbody").collect1n(">tr")
+
+    val fieldsInOrder: Vector[String] =
+      rows.map(_(">th").innerText)
+
     val fields: Map[String, Field] =
-      table(">tbody").collect1n(">tr")
-        .map(z => z(">th").innerText -> Field(z(">td")))
-        .toMap
+      rows.map(z => z(">th").innerText -> Field(z(">td"))).toMap
+
+    def field(name: String): Field =
+      fields.getOrElse(name, throw new RuntimeException("Field not found: " + name))
 
     case class Field(private[ReqDetailObs] val $: DomZipperJs) {
       val dom       = $.dom

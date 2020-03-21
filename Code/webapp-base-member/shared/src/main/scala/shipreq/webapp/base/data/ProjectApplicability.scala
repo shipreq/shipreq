@@ -5,7 +5,7 @@ import japgolly.univeq.UnivEq
 import shipreq.base.util.Applicability
 
 /**
-  * @see [[ProjectConfig.fields.applicability]] for a starting point
+  * @see [[ProjectConfig.applicability]] for a starting point
   */
 final case class ProjectApplicability[-Field, -Data](byField: Field => Data => Applicability) {
   // Doesn't extend AnyVal because it causes boxing/unboxing in Reusability

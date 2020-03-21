@@ -200,10 +200,17 @@ object IssueDetectors {
         if (f.live(cfg) is Live) {
 
           var found = Multimap.empty[ApplicableTagId, List, ReqTypeId]
+          val fixed = cfg.tagFieldRulesFixedHideDead(f.id)
 
-          cfg.fixedLiveTagFieldRules(f.id).errors.foreach {
-            case (reqTypeId, ProjectConfig.TagFieldIssue.DefaultTagDead(tag)) =>
-              found = found.add(tag.id, reqTypeId)
+          fixed.errors.foreach {
+            case (reqTypeIdO, ProjectConfig.TagFieldIssue.DefaultTagDead(tag)) =>
+              reqTypeIdO match {
+                case Some(reqTypeId) =>
+                  found = found.add(tag.id, reqTypeId)
+                case None =>
+                  for (reqTypeId <- cfg.reqTypes.liveIds -- fixed.original.perReqType.keys)
+                    found = found.add(tag.id, reqTypeId)
+              }
 
             case _ =>
           }
@@ -234,7 +241,7 @@ object IssueDetectors {
 
           val unrelatedTags: Set[ApplicableTagId] =
             cfg
-              .fixedLiveTagFieldRules(f.id)
+              .tagFieldRulesFixedHideDead(f.id)
               .errors
               .valuesIterator
               .collect { case ProjectConfig.TagFieldIssue.DefaultTagUnrelated(tag) => tag.id }

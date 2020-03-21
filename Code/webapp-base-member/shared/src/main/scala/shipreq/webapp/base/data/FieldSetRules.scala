@@ -8,6 +8,13 @@ final class FieldSetRules(val imp : CustomField.Implication.Id => Resolution.For
                           val text: CustomField.Text       .Id => Resolution.ForTextField,
                          ) {
 
+  def apply(id: CustomFieldId): Resolution[Any] =
+    id match {
+      case i: CustomField.Implication.Id => imp(i)
+      case i: CustomField.Tag.Id         => tag(i)
+      case i: CustomField.Text.Id        => text(i)
+    }
+
   override def hashCode =
     (imp.hashCode + tag.hashCode * 31) * 31 + text.hashCode
 

@@ -91,7 +91,8 @@ object ReqDetail {
     val rows: Vector[Row] = {
       val liveFilter = filterDead.filterFnBy((_: Field) live project.config)
       val fields = project.config.fields.fields.filter(f =>
-        project.config.fields.applicability(req.reqTypeId, f.fieldId) is Applicable && liveFilter(f))
+        liveFilter(f) &&
+        project.config.applicability(req.reqTypeId, f.fieldId).is(Applicable))
       fields.foldLeft(Row head filterDead)((q, f) => q ++ Row.fromField(f.fieldId))
     }
 

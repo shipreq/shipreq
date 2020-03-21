@@ -52,7 +52,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
         pxProjectWidgets.map(_.PubidFormat(Plain, *.pubidColumnValue(_), titleFn = _ => None))
 
       private val pxProjectApplicability: Px[ProjectApplicability[Column, Row]] =
-        pxProjectConfig.map(cfg => Row.applicability(cfg.fields.applicability))
+        pxProjectConfig.map(cfg => Row.applicability(cfg.applicability))
 
       def render(p: Props): VdomElement = {
         pxProjectWidgets.refresh()

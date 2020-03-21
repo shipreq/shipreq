@@ -4,6 +4,7 @@ import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.utils.{BiMap, Memo}
 import monocle.macros.Lenses
 import scalaz.{-\/, Equal, \/-}
+import shipreq.base.util.Applicability
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.DataImplicits._
 
@@ -27,10 +28,10 @@ object ProjectConfig {
 
   final case class FixedRules[+D, +E](original: FieldReqTypeRules[D],
                                       fixed   : FieldReqTypeRules[D],
-                                      errors  : Map[ReqTypeId, E])
+                                      errors  : Map[Option[ReqTypeId], E])
 
   object FixedRules {
-    def ok[D](r: FieldReqTypeRules[D]): FixedRules[D, Nothing] =
+    def id[D](r: FieldReqTypeRules[D]): FixedRules[D, Nothing] =
       apply(r, r, Map.empty)
   }
 }
@@ -109,21 +110,19 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
     m.result()
   }
 
-  /** This is only meant for HideDead.
-    *
-    * - Dead req types are removed
+  /** - Dead req types are ignored / unmodified
     * - Rules that default to dead tags are replaced with Optional
-    * - Rules that default to unrelated tags are removed
+    * - Rules that default to unrelated tags are replaced with Optional
     */
-  val fixedLiveTagFieldRules: CustomField.Tag.Id => FixedRules[ApplicableTagId, TagFieldIssue] =
+  val tagFieldRulesFixedHideDead: CustomField.Tag.Id => FixedRules[ApplicableTagId, TagFieldIssue] =
     Memo { fieldId =>
       val field = fields.custom(fieldId)
       if (field.live(this) is Dead)
-        FixedRules.ok(field.fieldReqTypeRules)
+        FixedRules.id(field.fieldReqTypeRules)
       else {
         val original = field.fieldReqTypeRules
         var fixed    = original
-        var errors   = Map.empty[ReqTypeId, TagFieldIssue]
+        var errors   = Map.empty[Option[ReqTypeId], TagFieldIssue]
 
         val okTags: Set[ApplicableTagId] =
           liveTagFieldDistribution.inField(fieldId)
@@ -132,18 +131,8 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
           val tag = tags.needApplicableTag(tagId)
 
           def addError(err: TagFieldIssue): Unit = {
-            reqTypeId match {
-              case Some(id) =>
-                errors = errors.updated(id, err)
-
-              case None =>
-                for (id <- reqTypes.liveIds -- original.perReqType.keys)
-                  errors = errors.updated(id, err)
-            }
-            fixed = reqTypeId match {
-              case Some(id) => fixed.optional(id)
-              case None     => fixed.copy(otherwise = FieldReqTypeRules.Resolution.Optional)
-            }
+            errors = errors.updated(reqTypeId, err)
+            fixed = fixed.setOptional(reqTypeId)
           }
 
           if (!okTags.contains(tagId))
@@ -167,6 +156,24 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
       }
     }
 
+  /** - Dead req types are ignored / unmodified (TODO What)
+    * - Rules that default to unrelated tags are replaced with Optional
+    */
+  val tagFieldRulesFixedShowDead: CustomField.Tag.Id => FixedRules[ApplicableTagId, TagFieldIssue] =
+    Memo { fieldId =>
+      val f = tagFieldRulesFixedHideDead(fieldId)
+      val original = f.original
+      var fixed    = original
+      val errors   = f.errors.filter {
+                       case (reqTypeId, _: TagFieldIssue.DefaultTagUnrelated) =>
+                         fixed = fixed.setOptional(reqTypeId)
+                         true
+                       case (_, _: TagFieldIssue.DefaultTagDead) =>
+                         false
+                     }
+      FixedRules(original, fixed, errors)
+    }
+
   val fieldRules: FilterDead => ReqTypeId => FieldSetRules =
     FilterDead.memo {
 
@@ -174,7 +181,7 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
         Memo { reqTypeId =>
           FieldSetRules(
             imp  = fields.custom(_).fieldReqTypeRules(reqTypeId),
-            tag  = fixedLiveTagFieldRules(_).fixed(reqTypeId),
+            tag  = tagFieldRulesFixedHideDead(_).fixed(reqTypeId),
             text = fields.custom(_).fieldReqTypeRules(reqTypeId),
           )
         }
@@ -183,11 +190,21 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
         Memo { reqTypeId =>
           FieldSetRules(
             imp  = fields.custom(_).fieldReqTypeRules(reqTypeId),
-            tag  = fields.custom(_).fieldReqTypeRules(reqTypeId),
+            tag  = tagFieldRulesFixedShowDead(_).fixed(reqTypeId),
             text = fields.custom(_).fieldReqTypeRules(reqTypeId),
           )
         }
     }
+
+  val applicability: ProjectApplicability.Default = {
+    val rulesForReqType = fieldRules(HideDead)
+    ProjectApplicability {
+      case f: CustomField.Implication.Id => rulesForReqType(_).imp(f).applicability
+      case f: CustomField.Tag        .Id => rulesForReqType(_).tag(f).applicability
+      case f: CustomField.Text       .Id => rulesForReqType(_).text(f).applicability
+      case f: StaticField                => f.fieldReqTypeRules(_).applicability
+    }
+  }
 
   val mostRelevantLiveFieldForTag: TagId => Option[CustomField.Tag] =
     Memo { tagId =>

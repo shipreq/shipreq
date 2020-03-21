@@ -159,12 +159,10 @@ v2.1
   * MakeEvent tests wrt dead/live
   * stablity tests (for events & commands)
   * delete Deletable
+  * remember that fields can be explicitly live but dead because underlying tag/reqType is dead
+  * ensure that tags specified in filter match against defaults too
 
 * ReqTypes
   * Might be a good idea to store a description & examples. (eg. "BR" means xxx + examples)
   * Users should be able to change the mnemonic (without retention) if not in use yet
   * Support hard & soft deletion from UI - explain difference and reasoning
-
-* Revise all issues detectors
-  - New issue type: Defaulting to dead tags
-  - New issue type: Defaulting to non-child tags

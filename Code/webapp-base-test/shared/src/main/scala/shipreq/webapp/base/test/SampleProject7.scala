@@ -11,7 +11,7 @@ import UnsafeTypes._
  * Builds on SampleProject #6 with:
  *
  *   - Business Justification text field
- *       DD       : Optional
+ *       FR       : Optional
  *       CO       : N/A
  *       SI (dead): N/A
  *       Otherwise: Mandatory
@@ -31,7 +31,7 @@ import UnsafeTypes._
  *       MF FR    : Mandatory
  *       Otherwise: Optional
  *
- *   - Released tag field
+ *   - Released tag field (restored, used to be Dead)
  *       CO       : Default to pri=med (not in scope)
  *       Otherwise: Mandatory
  *
@@ -46,12 +46,16 @@ import UnsafeTypes._
  *       MF       : N/A
  *       Otherwise: Default to pri=low (not in scope)
  *
+ *   - BR-1: Must make moneh
+ *
  * @since 2.1
  */
 object SampleProject7 {
 
   trait Values extends SampleProject6.Values {
     val List(bizJustField, alternativesField, componentField) = List[CustomField.Text.Id](8, 9, 10)
+
+    val brs = (0 to 10).iterator.map(i => GenericReqId(i + 1400)).toVector
   }
 
   object Values extends Values
@@ -60,7 +64,7 @@ object SampleProject7 {
   lazy val project = WebappTestUtil.applyEventsSuccessfully(project0,
 
     FieldCustomTextCreate(bizJustField, CustomTextFieldGD("Business Justification",
-      FieldReqTypeRules.mandatory.optional(dd).notApplicable(co, si))),
+      FieldReqTypeRules.mandatory.optional(fr).notApplicable(co, si))),
 
     FieldCustomTextCreate(alternativesField, CustomTextFieldGD("Alternatives",
       FieldReqTypeRules.notApplicable.optional(si))),
@@ -80,6 +84,7 @@ object SampleProject7 {
       FieldReqTypeRules.optional.defaultTo(wip)(mf).defaultTo(uat)(br, co).defaultTo(uat2)(fr).defaultTo(uat3)(si))),
 
     Event.FieldCustomTagCreate(verField, verTG, CustomTagFieldGD(FieldReqTypeRules.defaultTo(priLow).notApplicable(mf))),
+        GenericReqCreate(brs(1), br, GenericReqGD.ValueForTitle("Must make moneh")),
   )
 
   lazy val plainText  = PlainText.ForProject.noCtx(project)
