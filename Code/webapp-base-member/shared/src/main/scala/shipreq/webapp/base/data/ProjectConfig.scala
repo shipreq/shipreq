@@ -99,6 +99,9 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
   lazy val liveCustomTextFields: List[CustomField.Text] =
     fields.customTextFields.filter(_.live(this) is Live)
 
+  lazy val liveCustomTagFields: List[CustomField.Tag] =
+    fields.customTagFields.filter(_.live(this) is Live)
+
   lazy val liveOrderedFieldIds: Vector[FieldId] =
     fields.order.filter(fields.need(_).live(this) is Live)
 

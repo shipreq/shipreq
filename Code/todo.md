@@ -160,7 +160,6 @@ v2.1
   * stablity tests (for events & commands)
   * delete Deletable
   * remember that fields can be explicitly live but dead because underlying tag/reqType is dead
-  * ensure that tags specified in filter match against defaults too
 
 * ReqTypes
   * Might be a good idea to store a description & examples. (eg. "BR" means xxx + examples)

@@ -84,7 +84,8 @@ object SampleProject7 {
       FieldReqTypeRules.optional.defaultTo(wip)(mf).defaultTo(uat)(br, co).defaultTo(uat2)(fr).defaultTo(uat3)(si))),
 
     Event.FieldCustomTagCreate(verField, verTG, CustomTagFieldGD(FieldReqTypeRules.defaultTo(priLow).notApplicable(mf))),
-        GenericReqCreate(brs(1), br, GenericReqGD.ValueForTitle("Must make moneh")),
+
+    GenericReqCreate(brs(1), br, GenericReqGD.ValueForTitle("Must make moneh")),
   )
 
   lazy val plainText  = PlainText.ForProject.noCtx(project)

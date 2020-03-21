@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
+import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.scalajs.react.test.SimEvent.{Keyboard => KB}
 import nyaya.test.PropTest._
 import utest._
@@ -8,7 +9,7 @@ import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
-import shipreq.webapp.base.event.Event
+import shipreq.webapp.base.event.{Event, GenericReqGD}
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.test.SampleProject.Values._
 import shipreq.webapp.base.test._
@@ -460,6 +461,52 @@ object ReqTableTest extends TestSuite {
     runTest(plan withInitialState SampleProject7.project)
   }
 
+  def testFieldRulesAndSorting()(implicit path: utest.framework.TestPath) = {
+    import SampleProject7.Values._
+    import UnsafeTypes._
+
+    val project = applyEventsSuccessfully(
+      SampleProject7.project,
+      Event.ReqTagsPatch(frs(1), nesd()(priLow)),
+      Event.ReqTagsPatch(frs(2), nesd()(priHigh)),
+      Event.GenericReqCreate(frs(3), fr, GenericReqGD.ValueForTitle("poop")),
+    )
+
+    val plan = Plan.action(
+      enterFilter("FR | BR")
+      >> showHideColumn("Priority")
+      >> sortBy("Priority")
+      +> tablePubids.assert.equal("FR-2", "BR-1", "FR-1", "FR-3") // BR-1 has default of pri=med
+      //                           high    med     low     blank
+      >> filterDeadToggle
+      +> tablePubids.assert.equal("FR-2", "BR-1", "FR-1", "FR-3") // BR-1 has default of pri=med
+    )
+
+    runTest(plan withInitialState project)
+  }
+
+  def testFieldRulesAndFilter()(implicit path: utest.framework.TestPath) = {
+    import SampleProject7.Values._
+    import UnsafeTypes._
+
+    val project = applyEventsSuccessfully(
+      SampleProject7.project,
+      Event.ReqTagsPatch(frs(1), nesd()(priMed)),
+      Event.ReqTagsPatch(frs(2),  nesd()(priHigh)),
+      Event.GenericReqCreate(frs(3), fr, GenericReqGD.ValueForTitle("poop")),
+      Event.GenericReqCreate(brs(2), br, GenericReqGD.ValueForTags(NonEmptySet(priHigh))),
+    )
+
+    val plan = Plan.action(
+      enterFilter("(FR | BR) #pri=med")
+      +> tablePubids.assert.equalIgnoringOrder("FR-1", "BR-1") // BR-1 has default of pri=med
+      >> filterDeadToggle
+      +> tablePubids.assert.equalIgnoringOrder("FR-1", "BR-1") // BR-1 has default of pri=med
+    )
+
+    runTest(plan withInitialState project)
+  }
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   override def tests = Tests {
@@ -524,6 +571,10 @@ object ReqTableTest extends TestSuite {
       'openDesc    - runTest(testPasteOpenDesc)
     }
 
-    'fieldRules - testFieldRules()
+    'fieldRules - {
+      'main    - testFieldRules()
+      'sorting - testFieldRulesAndSorting()
+      'filter  - testFieldRulesAndFilter()
+    }
   }
 }
