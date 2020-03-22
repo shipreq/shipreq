@@ -7,24 +7,32 @@ import japgolly.univeq._
 import java.util.regex.Pattern
 import scalaz.{-\/, Functor, Traverse, \/, \/-}
 import scalaz.syntax.traverse1._
-import shipreq.base.util.{OptionalBoolFn, TransitiveClosure}
+import shipreq.base.util.{Applicable, OptionalBoolFn, TransitiveClosure}
 import shipreq.webapp.base.data
-import shipreq.webapp.base.data.On
+import shipreq.webapp.base.data.{FilterDead, On}
 import shipreq.webapp.base.data.DataLogic.{IssueLookup, TagLookup}
 import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.base.text.{Atom, Grammar, PlainText, TextSearch}
 
 /** Algebras:
   *
-  * unparse        : FAlgebra [             PotentialF,   AtomOrComposite[String]]
-  * validate       : FAlgebraM[String \/ ?, PotentialF,   Valid                  ]
-  * unvalidate     : FAlgebra [             ValidF,       Potential              ]
-  * makeExtensional: FAlgebra [             ValidF,       Extensional            ]
-  * compile        : FAlgebra [             ExtensionalF, CompiledFilter         ]
+  * {{{
+  *   unparse        : FAlgebra [             PotentialF,   AtomOrComposite[String]]
+  *   validate       : FAlgebraM[String \/ *, PotentialF,   Valid                  ]
+  *   unvalidate     : FAlgebra [             ValidF,       Potential              ]
+  *   makeExtensional: FAlgebra [             ValidF,       Extensional            ]
+  *   compile        : FAlgebra [             ExtensionalF, CompiledFilter         ]
+  * }}}
   */
 object FilterAlgebra {
   import Filter._
   import FilterAst._
+
+  def quoteFieldName(s: String): String =
+    if (s.exists(c => c == ':' || c.isWhitespace))
+      "\"" + s + "\""
+    else
+      s
 
   val unparse: FAlgebra[PotentialF, AtomOrComposite[String]] = {
     import shipreq.base.util.SafeStringOps._
@@ -55,6 +63,7 @@ object FilterAlgebra {
       case Regex         (text)              => '/' ~ text.replace("/", "\\/") ~ '/'
       case ReqType       (value)             => value.value
       case HashRef       (text)              => Grammar.hashRefKey.prefix ~ text.value
+      case FieldProp     (field, attr)       => "field:" ~ quoteFieldName(field) ~ ":" ~ attr
       case HasIssue      (on, criteria)      => "has:issue:" ~ (if (on is On) "" else "-") ~ criteria.mkString(",")
       case ImpliesAnyOf  (reqs)              => "implies:" ~ fmtReqs(reqs, ',')
       case ImpliedByAnyOf(reqs)              => "impliedBy:" ~ fmtReqs(reqs, ',')
@@ -68,13 +77,19 @@ object FilterAlgebra {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  def validate(cfg: data.ProjectConfig): FAlgebraM[String \/ ?, PotentialF, Valid] = {
+  def validate(cfg: data.ProjectConfig): FAlgebraM[String \/ *, PotentialF, Valid] = {
     type R = String \/ Valid
 
     def byAttr(attrStr: String, f: Attr => ValidF[Nothing]): R =
       Attr(attrStr) match {
         case Some(a) => \/-(Valid(f(a)))
         case None    => -\/(s"Unknown attribute: '$attrStr'. Known: ${Attr.availableText}.") // English
+      }
+
+    def lookupFieldAttr(attrStr: String)(f: FieldAttr => R): R =
+      FieldAttr(attrStr) match {
+        case Some(a) => f(a)
+        case None    => -\/(s"Unknown attribute: '$attrStr'. Known: ${FieldAttr.availableText}.") // English
       }
 
     def byHashTag(k: data.HashRefKey): R =
@@ -122,6 +137,20 @@ object FilterAlgebra {
       case c: Not  [Valid]       => \/-(Valid(c))
       case c: AllOf[Valid]       => \/-(Valid(c))
       case c: AnyOf[Valid]       => \/-(Valid(c))
+
+      case FieldProp(fieldName, attrStr) =>
+        import FieldAttr._
+        import data._
+        lookupFieldAttr(attrStr) { attr =>
+          (cfg.fieldsByNameLowercase.get(fieldName.toLowerCase), attr) match {
+            case (Some(f: CustomField)            , Blank | NotApplicable) => \/-(Valid(FieldProp(f.id, attr)))
+            case (Some(f: CustomField.Tag)        , DefaultInUse         ) => \/-(Valid(FieldProp(f.id, attr)))
+            case (Some(_: CustomField.Text)       , DefaultInUse         ) => -\/("Text fields don't have defaults.")
+            case (Some(_: CustomField.Implication), DefaultInUse         ) => -\/("Implication fields don't have defaults.")
+            case (Some(_: StaticField)            , _                    ) => -\/(s"$fieldName is a built-in field and so can't be used here.")
+            case (None                            , _                    ) => -\/(s"Unknown field: '$fieldName'")
+          }
+        }
     }
 
     alg
@@ -145,6 +174,7 @@ object FilterAlgebra {
       case Reqs          (reqs)    => Potential(Reqs          (convReqSet(reqs)))
       case ReqType       (id)      => Potential(ReqType       (convReqType(id)))
       case HasIssue      (on, c)   => Potential(HasIssue      (on, c.map(FilterAst.issueCategoryToStr)))
+      case FieldProp     (f, a)    => Potential(FieldProp     (cfg.fieldName(f), a.name))
       case c: Regex                => Potential(c)
       case c: Text                 => Potential(c)
       case c: Not  [Potential]     => Potential(c)
@@ -172,24 +202,32 @@ object FilterAlgebra {
       ss.reduceMapLeft1(lookupReqSubset)(_ ++ _)
 
     {
-      case ImpliesAnyOf  (reqs)        => Extensional(ImpliesAnyOf  (lookupReqSet(reqs)))
-      case ImpliedByAnyOf(reqs)        => Extensional(ImpliedByAnyOf(lookupReqSet(reqs)))
-      case Reqs          (reqs)        => Extensional(Reqs          (lookupReqSet(reqs)))
-      case c: Regex                    => Extensional(c)
-      case c: Text                     => Extensional(c)
-      case c: HashRef [Valid.HashTag]  => Extensional(c)
-      case c: Presence[Valid.Attr]     => Extensional(c)
-      case c: HasIssue[Valid.IssueCat] => Extensional(c)
-      case c: ReqType [Valid.ReqType]  => Extensional(c)
-      case c: Not     [Extensional]    => Extensional(c)
-      case c: AllOf   [Extensional]    => Extensional(c)
-      case c: AnyOf   [Extensional]    => Extensional(c)
+      case ImpliesAnyOf  (reqs)                       => Extensional(ImpliesAnyOf  (lookupReqSet(reqs)))
+      case ImpliedByAnyOf(reqs)                       => Extensional(ImpliedByAnyOf(lookupReqSet(reqs)))
+      case Reqs          (reqs)                       => Extensional(Reqs          (lookupReqSet(reqs)))
+      case c: Regex                                   => Extensional(c)
+      case c: Text                                    => Extensional(c)
+      case c: FieldProp[Valid.Field, Valid.FieldAttr] => Extensional(c)
+      case c: HashRef  [Valid.HashTag]                => Extensional(c)
+      case c: Presence [Valid.Attr]                   => Extensional(c)
+      case c: HasIssue [Valid.IssueCat]               => Extensional(c)
+      case c: ReqType  [Valid.ReqType]                => Extensional(c)
+      case c: Not      [Extensional]                  => Extensional(c)
+      case c: AllOf    [Extensional]                  => Extensional(c)
+      case c: AnyOf    [Extensional]                  => Extensional(c)
     }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  /**
+   *
+   * @param filterDead Not used to in consideration of reqs, but config.
+   *                   i.e. dead reqs will still be returned (and expected to be further filtered out later),
+   *                   where as it's needed in consideration of default tags in field rules.
+   */
   def compile(p          : data.Project,
+              filterDead : FilterDead,
               projectText: PlainText.ForProject.NoCtx,
               textSearch : TextSearch,
               issueLookup: IssueLookup,
@@ -215,47 +253,52 @@ object FilterAlgebra {
 
     def make(req        : Req         => Boolean,
              codeGroup  : CodeGroup   => Boolean,
-             manualIssue: ManualIssue => Boolean) =
+             manualIssue: ManualIssue => Boolean): CompiledFilter =
       CompiledFilter(
         req         = OptionalBoolFn(Option(req)),
         codeGroup   = OptionalBoolFn(Option(codeGroup)),
         manualIssue = OptionalBoolFn(Option(manualIssue)),
       )
 
-    def reqOnly(f: Req => Boolean) =
+    def reqOnly(f: Req => Boolean): CompiledFilter =
       make(
         req         = f,
         codeGroup   = ignore,
         manualIssue = fail,
       )
 
-    def byTag(f: Set[ApplicableTagId] => Boolean) =
+    def fieldApplicableReqOnly(fieldId: FieldId)(f: Req => Boolean): CompiledFilter = {
+      val applicability = p.config.applicability.byField(fieldId)
+      reqOnly(req => applicability(req.reqTypeId).is(Applicable) && f(req))
+    }
+
+    def byTag(f: Set[ApplicableTagId] => Boolean): CompiledFilter =
       make(
         req         = r => tagLookup(r.id) exists f,
         codeGroup   = ignore,
         manualIssue = i => f(i.tags),
       )
 
-    def byIssue(f: Issues.ForSource => Boolean) =
+    def byIssue(f: Issues.ForSource => Boolean): CompiledFilter =
       make(
         req         = r => f(issuesBySource(r.id)),
         codeGroup   = g => f(issuesBySource(g.id)),
         manualIssue = fail,
       )
 
-    def byCustomIssueType(f: Vector[Atom.AnyIssue] => Boolean) =
+    def byCustomIssueType(f: Vector[Atom.AnyIssue] => Boolean): CompiledFilter =
       make(
         req         = r => f(issueLookup.forReq(r.id)),
         codeGroup   = g => f(issueLookup.forReqCodeGroup(g.id)),
         manualIssue = fail,
       )
 
-    def byImplication(reqs: Extensional.ReqSet, tc: TransitiveClosure[ReqId]) = {
+    def byImplication(reqs: Extensional.ReqSet, tc: TransitiveClosure[ReqId]): CompiledFilter = {
       val whitelist = reqs.foldLeft(UnivEq.emptySet[ReqId])(_ ++ tc(_))
       reqOnly(whitelist contains _.id)
     }
 
-    def byText(substr: String) = {
+    def byText(substr: String): CompiledFilter = {
       val searchFilter = textSearch.ignoreCaseSingleSpaces.searchFilter(substr)
       CompiledFilter(
         req         = searchFilter.req        .contramap(_.id),
@@ -264,7 +307,7 @@ object FilterAlgebra {
       )
     }
 
-    def byRegex(regex: String) = {
+    def byRegex(regex: String): CompiledFilter = {
       val pat = Pattern.compile(regex)
       val m: String => Boolean = pat.matcher(_).matches
       make(
@@ -276,6 +319,43 @@ object FilterAlgebra {
         g => m(projectText codeGroupTitle g),
         i => m(projectText.manualIssue(i.text))
       )
+    }
+
+    def byFieldProp(fieldId: CustomFieldId, attr: FieldAttr): CompiledFilter = {
+      import FieldReqTypeRules.Resolution
+      (attr, fieldId) match {
+
+        case (FieldAttr.NotApplicable, _) =>
+          val field = p.config.fields.need(fieldId)
+          val na = p.config.reqTypesWithRes(field.fieldReqTypeRules)(Resolution.NotApplicable).map(_.reqTypeId).toSet
+          reqOnly(req => na.contains(req.reqTypeId))
+
+        case (FieldAttr.Blank, f: CustomField.Text.Id) =>
+          val text = p.content.reqTextFor(f)
+          fieldApplicableReqOnly(f)(req => !text.contains(req.id))
+
+        case (FieldAttr.Blank, f: CustomField.Implication.Id) =>
+          val imps = p.dataLogic.customFieldImps(ShowDead)(f)
+          fieldApplicableReqOnly(f)(req => imps(req.id).isEmpty)
+
+        case (FieldAttr.Blank, f: CustomField.Tag.Id) =>
+          val scope = p.config.tagFieldDistribution(filterDead).inField(f)
+          fieldApplicableReqOnly(f)(req => tagLookup(req.id).all.intersect(scope).isEmpty)
+
+        case (FieldAttr.DefaultInUse, f: CustomField.Tag.Id) =>
+          val scope = p.config.tagFieldDistribution(filterDead).inField(f)
+          val defaultOnly = Location.FieldDefault :: Nil
+          fieldApplicableReqOnly(f) { req =>
+            val t = tagLookup(req.id)
+            t.all.iterator.filter(scope.contains).take(2).toList match {
+              case one :: Nil => t.other(one) ==* defaultOnly
+              case _          => false
+            }
+          }
+
+        case (FieldAttr.DefaultInUse, _: CustomField.Implication.Id | _: CustomField.Text.Id) =>
+          reqOnly(fail)
+      }
     }
 
     var alg: ExtensionalF[CompiledFilter] => CompiledFilter = null
@@ -290,6 +370,7 @@ object FilterAlgebra {
       case HashRef       (-\/(issue))    => byCustomIssueType(_.exists(_.typ ==* issue))
       case HashRef       (\/-(tag))      => byTag(_ contains tag)
       case Regex         (regex)         => byRegex(regex)
+      case FieldProp     (f, a)          => byFieldProp(f, a)
       case AllOf         (fs)            => fs.reduce(_ && _)
       case AnyOf         (f, fs)         => f || fs.reduce(_ || _)
       case Not           (f)             => !f

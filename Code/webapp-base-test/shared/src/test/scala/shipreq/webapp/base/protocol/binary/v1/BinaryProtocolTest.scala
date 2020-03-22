@@ -12,14 +12,10 @@ import shipreq.webapp.base.text.Text.Equality._
 import utest._
 
 object BinaryProtocolTest extends TestSuite {
-  import BaseData._
-  import BaseMemberData1._
-  import BaseMemberData2._
-  import Events._
+  import BaseMemberData1.AtomPicklers.instances._
   import PostEvents._
-  import AtomPicklers.instances._
-  import ReqTableDataPicklers._
   import Rev1._
+  import Rev1.ReqTableDataPicklers._
 
   private implicit def autoSomeG[A](g: Gen[A]): Option[Gen[A]] = Some(g)
 

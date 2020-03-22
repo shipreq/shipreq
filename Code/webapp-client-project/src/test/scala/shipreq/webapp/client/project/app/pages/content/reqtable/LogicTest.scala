@@ -72,15 +72,17 @@ object LogicTestUtil {
 object LogicTest extends TestSuite {
   import ProjectDsl._
   import UnsafeTypes._
-  import SampleProject.Values._
+  import SampleProject7.Values._
   import shipreq.webapp.base.filter.Filter.{Valid => F}
   import shipreq.webapp.base.filter.FilterAst.Attr.{AnyIssue, AnyTag}
+  import shipreq.webapp.base.filter.FilterAst.FieldAttr
   import shipreq.webapp.base.filter.IntensionalReqSet._
   import LogicTestUtil._
 
   private      def P3  = SampleProject3.project
   private      def P4  = SampleProject4.project
   private      def P6  = SampleProject6.project
+  private      def P7  = SampleProject7.project
   private      def PD  = SampleProject.project
   private lazy val PA  = TestOptics.customReqTypesLive.set(Live)(PD)
   private      val sep = "  "
@@ -932,6 +934,48 @@ object LogicTest extends TestSuite {
     testFilter(project, F.impliesAnyOf  (e))("", "")
   }
 
+  def testFilterImpFieldNA(): Unit = {
+    testFilter(P7, F.fieldProp(mfField, FieldAttr.NotApplicable))("", "SI-1  SI-2")
+  }
+
+  def testFilterImpFieldBlank(): Unit = {
+    testFilter(P7, F.fieldProp(mfField, FieldAttr.Blank))("BR-1  UC-1  UC-2", "")
+  }
+
+  def testFilterTagFieldNA(): Unit = {
+    testFilter(P7, F.fieldProp(priField, FieldAttr.NotApplicable))("", "CO-1  CO-2")
+
+    testFilter(P7, F.fieldProp(verField, FieldAttr.NotApplicable))(
+      "MF-1  MF-2  MF-3  MF-4  MF-5  MF-6  MF-7  MF-8  MF-9  MF-10  MF-11  MF-12  MF-13  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-22  MF-23  MF-24  MF-25  MF-26  MF-27",
+      "MF-19  MF-28")
+  }
+
+  def testFilterTagFieldBlank(): Unit = {
+    testFilter(P7, F.fieldProp(verField, FieldAttr.Blank))("BR-1  FR-1  FR-2  UC-2", "CO-2  SI-1  SI-2")
+  }
+
+  def testFilterTagFieldDefault(): Unit = {
+    testFilter(P7, F.fieldProp(priField, FieldAttr.DefaultInUse))("BR-1", "")
+    testFilter(P7, F.fieldProp(verField, FieldAttr.DefaultInUse))("", "")
+
+    testFilter(P7, F.fieldProp(statusField, FieldAttr.DefaultInUse))(
+      "MF-1  MF-2  MF-3  MF-4  MF-8  MF-9  MF-10  MF-11  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-23  MF-24  MF-25  MF-26  MF-27",
+      "BR-1  CO-1  CO-2  FR-1  FR-2  MF-19  MF-28  SI-1  SI-2")
+  }
+
+  def testFilterTextFieldNA(): Unit = {
+    testFilter(P7, F.fieldProp(bizJustField, FieldAttr.NotApplicable))("", "CO-1  CO-2  SI-1 SI-2")
+    testFilter(P7, F.fieldProp(componentField, FieldAttr.NotApplicable))(
+      "BR-1  MF-1  MF-2  MF-3  MF-4  MF-5  MF-6  MF-7  MF-8  MF-9  MF-10  MF-11  MF-12  MF-13  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-22  MF-23  MF-24  MF-25  MF-26  MF-27  UC-1  UC-2",
+      "MF-19  MF-28")
+  }
+
+  def testFilterTextFieldBlank(): Unit = {
+    testFilter(P7, F.fieldProp(bizJustField, FieldAttr.Blank))(
+      "BR-1  FR-1  FR-2  MF-1  MF-2  MF-3  MF-5  MF-6  MF-7  MF-8  MF-9  MF-10  MF-11  MF-12  MF-13  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-22  MF-23  MF-24  MF-25  MF-26  MF-27  UC-1  UC-2",
+      "MF-19  MF-28")
+  }
+
   def testFilterAll(): Unit = {
     testFilter(P3, F.allOf(F.tag(wip), F.tag(v10)))("MF-7", "")
     testFilter(P3, F.allOf(F.tag(wip), F.text("req")))("MF-12  MF-13  MF-22", "")
@@ -1151,6 +1195,13 @@ object LogicTest extends TestSuite {
       'impliesAnyOf     - testFilterImplies()
       'impliedByAnyOf   - testFilterImpliedBy()
       'implyNothing     - testFilterImplyNothing()
+      'impFieldNA       - testFilterImpFieldNA()
+      'impFieldBlank    - testFilterImpFieldBlank()
+      'textFieldNA      - testFilterTextFieldNA()
+      'textFieldBlank   - testFilterTextFieldBlank()
+      'tagFieldNA       - testFilterTagFieldNA()
+      'tagFieldBlank    - testFilterTagFieldBlank()
+      'tagFieldDefault  - testFilterTagFieldDefault()
       'allOf            - testFilterAll()
       'anyOf            - testFilterAny()
       'not              - testFilterNot()

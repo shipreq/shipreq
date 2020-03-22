@@ -4,10 +4,8 @@ import japgolly.microlibs.nonempty._
 import nyaya.util.Multimap
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.reqtable.SavedView
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.event.RetiredGenericData._
-import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.text.Text
 
 object Events {
@@ -301,43 +299,43 @@ object Events {
     pickleIMap(emptyValues)
   }
 
-  implicit val pickleSavedViewGD: Pickler[SavedViewGD.NonEmptyValues] = {
-    import SavedViewGD._
-
-    implicit val picklerValueForColumns    = transformPickler(ValueForColumns   .apply)(_.value)
-    implicit val picklerValueForFilter     = transformPickler(ValueForFilter    .apply)(_.value)
-    implicit val picklerValueForFilterDead = transformPickler(ValueForFilterDead.apply)(_.value)
-    implicit val picklerValueForName       = transformPickler(ValueForName      .apply)(_.value)
-    implicit val picklerValueForOrder      = transformPickler(ValueForOrder     .apply)(_.value)
-
-    implicit val picklerValue: Pickler[Value] =
-      new Pickler[Value] {
-        private[this] final val KeyColumns    = 'C'
-        private[this] final val KeyFilter     = 'F'
-        private[this] final val KeyFilterDead = 'D'
-        private[this] final val KeyName       = 'N'
-        private[this] final val KeyOrder      = 'O'
-        override def pickle(a: Value)(implicit state: PickleState): Unit =
-          a match {
-            case b: ValueForColumns    => state.enc.writeByte(KeyColumns   ); state.pickle(b)
-            case b: ValueForFilter     => state.enc.writeByte(KeyFilter    ); state.pickle(b)
-            case b: ValueForFilterDead => state.enc.writeByte(KeyFilterDead); state.pickle(b)
-            case b: ValueForName       => state.enc.writeByte(KeyName      ); state.pickle(b)
-            case b: ValueForOrder      => state.enc.writeByte(KeyOrder     ); state.pickle(b)
-          }
-        override def unpickle(implicit state: UnpickleState): Value =
-          state.dec.readByte match {
-            case KeyColumns    => state.unpickle[ValueForColumns]
-            case KeyFilter     => state.unpickle[ValueForFilter]
-            case KeyFilterDead => state.unpickle[ValueForFilterDead]
-            case KeyName       => state.unpickle[ValueForName]
-            case KeyOrder      => state.unpickle[ValueForOrder]
-          }
-      }
-
-    val values: Pickler[Values] = pickleIMap(emptyValues)
-    pickleNonEmptyMono[Values](values, implicitly)
-  }
+//  implicit val pickleSavedViewGD: Pickler[SavedViewGD.NonEmptyValues] = {
+//    import SavedViewGD._
+//
+//    implicit val picklerValueForColumns    = transformPickler(ValueForColumns   .apply)(_.value)
+//    implicit val picklerValueForFilter     = transformPickler(ValueForFilter    .apply)(_.value)
+//    implicit val picklerValueForFilterDead = transformPickler(ValueForFilterDead.apply)(_.value)
+//    implicit val picklerValueForName       = transformPickler(ValueForName      .apply)(_.value)
+//    implicit val picklerValueForOrder      = transformPickler(ValueForOrder     .apply)(_.value)
+//
+//    implicit val picklerValue: Pickler[Value] =
+//      new Pickler[Value] {
+//        private[this] final val KeyColumns    = 'C'
+//        private[this] final val KeyFilter     = 'F'
+//        private[this] final val KeyFilterDead = 'D'
+//        private[this] final val KeyName       = 'N'
+//        private[this] final val KeyOrder      = 'O'
+//        override def pickle(a: Value)(implicit state: PickleState): Unit =
+//          a match {
+//            case b: ValueForColumns    => state.enc.writeByte(KeyColumns   ); state.pickle(b)
+//            case b: ValueForFilter     => state.enc.writeByte(KeyFilter    ); state.pickle(b)
+//            case b: ValueForFilterDead => state.enc.writeByte(KeyFilterDead); state.pickle(b)
+//            case b: ValueForName       => state.enc.writeByte(KeyName      ); state.pickle(b)
+//            case b: ValueForOrder      => state.enc.writeByte(KeyOrder     ); state.pickle(b)
+//          }
+//        override def unpickle(implicit state: UnpickleState): Value =
+//          state.dec.readByte match {
+//            case KeyColumns    => state.unpickle[ValueForColumns]
+//            case KeyFilter     => state.unpickle[ValueForFilter]
+//            case KeyFilterDead => state.unpickle[ValueForFilterDead]
+//            case KeyName       => state.unpickle[ValueForName]
+//            case KeyOrder      => state.unpickle[ValueForOrder]
+//          }
+//      }
+//
+//    val values: Pickler[Values] = pickleIMap(emptyValues)
+//    pickleNonEmptyMono[Values](values, implicitly)
+//  }
 
   implicit val pickleTagGroupGD: Pickler[TagGroupGD.NonEmptyValues] = {
     import TagGroupGD._
@@ -939,39 +937,40 @@ object Events {
   private[v1] implicit val picklerEventManualIssueDelete: Pickler[Event.ManualIssueDelete] =
     transformPickler(Event.ManualIssueDelete.apply)(_.id)
 
-  private[v1] implicit val picklerEventSavedViewCreate: Pickler[Event.SavedViewCreate] =
-    new Pickler[Event.SavedViewCreate] {
-      override def pickle(a: Event.SavedViewCreate)(implicit state: PickleState): Unit = {
-        state.pickle(a.id)
-        state.pickle(a.name)
-        state.pickle(a.columns)
-        state.pickle(a.order)
-        state.pickle(a.filterDead)
-        state.pickle(a.filter)
-      }
-      override def unpickle(implicit state: UnpickleState): Event.SavedViewCreate = {
-        val id         = state.unpickle[SavedView.Id]
-        val name       = state.unpickle[SavedView.Name]
-        val columns    = state.unpickle[NonEmptyVector[reqtable.Column]]
-        val order      = state.unpickle[reqtable.SortCriteria]
-        val filterDead = state.unpickle[FilterDead]
-        val filter     = state.unpickle[Option[Filter.Valid]]
-        Event.SavedViewCreate(id, name, columns, order, filterDead, filter)
-      }
-    }
-
-  private[v1] implicit val picklerEventSavedViewUpdate: Pickler[Event.SavedViewUpdate] =
-    new Pickler[Event.SavedViewUpdate] {
-      override def pickle(a: Event.SavedViewUpdate)(implicit state: PickleState): Unit = {
-        state.pickle(a.id)
-        state.pickle(a.vs)
-      }
-      override def unpickle(implicit state: UnpickleState): Event.SavedViewUpdate = {
-        val id = state.unpickle[SavedView.Id]
-        val vs = state.unpickle[SavedViewGD.NonEmptyValues]
-        Event.SavedViewUpdate(id, vs)
-      }
-    }
+  // Replaced by v1.1
+//  private[v1] implicit val picklerEventSavedViewCreate: Pickler[Event.SavedViewCreate] =
+//    new Pickler[Event.SavedViewCreate] {
+//      override def pickle(a: Event.SavedViewCreate)(implicit state: PickleState): Unit = {
+//        state.pickle(a.id)
+//        state.pickle(a.name)
+//        state.pickle(a.columns)
+//        state.pickle(a.order)
+//        state.pickle(a.filterDead)
+//        state.pickle(a.filter)
+//      }
+//      override def unpickle(implicit state: UnpickleState): Event.SavedViewCreate = {
+//        val id         = state.unpickle[SavedView.Id]
+//        val name       = state.unpickle[SavedView.Name]
+//        val columns    = state.unpickle[NonEmptyVector[reqtable.Column]]
+//        val order      = state.unpickle[reqtable.SortCriteria]
+//        val filterDead = state.unpickle[FilterDead]
+//        val filter     = state.unpickle[Option[Filter.Valid]]
+//        Event.SavedViewCreate(id, name, columns, order, filterDead, filter)
+//      }
+//    }
+//
+//  private[v1] implicit val picklerEventSavedViewUpdate: Pickler[Event.SavedViewUpdate] =
+//    new Pickler[Event.SavedViewUpdate] {
+//      override def pickle(a: Event.SavedViewUpdate)(implicit state: PickleState): Unit = {
+//        state.pickle(a.id)
+//        state.pickle(a.vs)
+//      }
+//      override def unpickle(implicit state: UnpickleState): Event.SavedViewUpdate = {
+//        val id = state.unpickle[SavedView.Id]
+//        val vs = state.unpickle[SavedViewGD.NonEmptyValues]
+//        Event.SavedViewUpdate(id, vs)
+//      }
+//    }
 
   private[v1] implicit val picklerEventSavedViewDelete: Pickler[Event.SavedViewDelete] =
     transformPickler(Event.SavedViewDelete.apply)(_.id)

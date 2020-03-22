@@ -281,6 +281,9 @@ object StaticField {
   def names: Set[String] =
     byName.keySet
 
+  lazy val namesLowercase: Set[String] =
+    names.iterator.map(_.toLowerCase).toSet
+
   implicit def equality: UnivEq[StaticField] = UnivEq.derive
 
   implicit def useCaseStepTreeEquality: UnivEq[UseCaseStepTree] = UnivEq.derive

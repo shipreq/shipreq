@@ -154,7 +154,7 @@ v2.1
   * make properties/values per req-type [FR-12]
   * update reqtable (and probably reqdetail) to render dead rows like cfg field
   * soft deletion vs hard - wrt app req types in tags
-  * add usages. probably have to update filter too
+  * add usages
   * MakeEvent tests wrt dead/live
   * stablity tests (for events & commands)
   * delete Deletable

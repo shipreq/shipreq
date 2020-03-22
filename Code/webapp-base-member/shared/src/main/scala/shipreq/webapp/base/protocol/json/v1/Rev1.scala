@@ -63,6 +63,7 @@ object Rev1 {
     final val KeyAstAnyOf          = "any"
     final val KeyAstHasIssue       = "issue"
     final val KeyAstHashRef        = "hash"
+    final val KeyAstFieldProp      = "field"
     final val KeyAstImpliedByAnyOf = "impBy"
     final val KeyAstImpliesAnyOf   = "imp"
     final val KeyAstNot            = "not"
@@ -122,6 +123,13 @@ object Rev1 {
         case FilterAst.Attr.AnyTag   => "tag"
       })
 
+    implicit lazy val codecFilterAstFieldAttr: JsonCodec[FilterAst.FieldAttr] =
+      JsonCodec.enumAdt(AdtMacros.adtIsoSet[FilterAst.FieldAttr, String] {
+        case FilterAst.FieldAttr.Blank         => "blank"
+        case FilterAst.FieldAttr.NotApplicable => "n/a"
+        case FilterAst.FieldAttr.DefaultInUse  => "default"
+      })
+
     implicit val decoderFilterAstText: Decoder[FilterAst.Text] =
       Decoder.forProduct2("text", "quote")(FilterAst.Text.apply)
 
@@ -139,6 +147,12 @@ object Rev1 {
 
     implicit val encoderFilterAstHasIssue: Encoder[FilterAst.HasIssue[Valid.IssueCat]] =
       Encoder.forProduct2("on", "criteria")(a => (a.on, a.criteria))
+
+    implicit val decoderFilterAstFieldProp: Decoder[FilterAst.FieldProp[Valid.Field, Valid.FieldAttr]] =
+      Decoder.forProduct2("field", "attr")(FilterAst.FieldProp.apply)
+
+    implicit val encoderFilterAstFieldProp: Encoder[FilterAst.FieldProp[Valid.Field, Valid.FieldAttr]] =
+      Encoder.forProduct2("field", "attr")(a => (a.field, a.attr))
 
     implicit val decoderFilterAstRegex: Decoder[FilterAst.Regex] =
       Decoder[String].map(FilterAst.Regex.apply)
@@ -177,22 +191,24 @@ object Rev1 {
       Encoder[Valid.ReqType].contramap(_.reqType)
 
     JsonCodec.fix[ValidF]({
-      case a: FilterAst.Text                           => Json.obj(KeyAstText           -> a.asJson)
-      case a: FilterAst.Regex                          => Json.obj(KeyAstRegex          -> a.asJson)
-      case a: FilterAst.Presence      [Valid.Attr]     => Json.obj(KeyAstPresence       -> a.asJson)
-      case a: FilterAst.HasIssue      [Valid.IssueCat] => Json.obj(KeyAstHasIssue       -> a.asJson)
-      case a: FilterAst.HashRef       [Valid.HashTag]  => Json.obj(KeyAstHashRef        -> a.asJson)
-      case a: FilterAst.ImpliesAnyOf  [Valid.ReqSet]   => Json.obj(KeyAstImpliesAnyOf   -> a.asJson)
-      case a: FilterAst.ImpliedByAnyOf[Valid.ReqSet]   => Json.obj(KeyAstImpliedByAnyOf -> a.asJson)
-      case a: FilterAst.Reqs          [Valid.ReqSet]   => Json.obj(KeyAstReqs           -> a.asJson)
-      case a: FilterAst.ReqType       [Valid.ReqType]  => Json.obj(KeyAstReqType        -> a.asJson)
-      case FilterAst.Not              (clause)         => Json.obj(KeyAstNot            -> clause)
-      case FilterAst.AllOf            (clauses)        => Json.obj(KeyAstAllOf          -> Json.arr(clauses.whole: _*))
-      case FilterAst.AnyOf            (head, tail)     => Json.obj(KeyAstAnyOf          -> Json.arr(head +: tail.whole: _*))
+      case a: FilterAst.Text                                         => Json.obj(KeyAstText           -> a.asJson)
+      case a: FilterAst.Regex                                        => Json.obj(KeyAstRegex          -> a.asJson)
+      case a: FilterAst.Presence      [Valid.Attr]                   => Json.obj(KeyAstPresence       -> a.asJson)
+      case a: FilterAst.FieldProp     [Valid.Field, Valid.FieldAttr] => Json.obj(KeyAstFieldProp      -> a.asJson)
+      case a: FilterAst.HasIssue      [Valid.IssueCat]               => Json.obj(KeyAstHasIssue       -> a.asJson)
+      case a: FilterAst.HashRef       [Valid.HashTag]                => Json.obj(KeyAstHashRef        -> a.asJson)
+      case a: FilterAst.ImpliesAnyOf  [Valid.ReqSet]                 => Json.obj(KeyAstImpliesAnyOf   -> a.asJson)
+      case a: FilterAst.ImpliedByAnyOf[Valid.ReqSet]                 => Json.obj(KeyAstImpliedByAnyOf -> a.asJson)
+      case a: FilterAst.Reqs          [Valid.ReqSet]                 => Json.obj(KeyAstReqs           -> a.asJson)
+      case a: FilterAst.ReqType       [Valid.ReqType]                => Json.obj(KeyAstReqType        -> a.asJson)
+      case FilterAst.Not              (clause)                       => Json.obj(KeyAstNot            -> clause)
+      case FilterAst.AllOf            (clauses)                      => Json.obj(KeyAstAllOf          -> Json.arr(clauses.whole: _*))
+      case FilterAst.AnyOf            (head, tail)                   => Json.obj(KeyAstAnyOf          -> Json.arr(head +: tail.whole: _*))
     }, decoderFnSumBySoleKey {
       case (KeyAstText          , c) => c.as[FilterAst.Text]
       case (KeyAstRegex         , c) => c.as[FilterAst.Regex]
       case (KeyAstPresence      , c) => c.as[FilterAst.Presence      [Valid.Attr]]
+      case (KeyAstFieldProp     , c) => c.as[FilterAst.FieldProp     [Valid.Field, Valid.FieldAttr]]
       case (KeyAstHasIssue      , c) => c.as[FilterAst.HasIssue      [Valid.IssueCat]]
       case (KeyAstHashRef       , c) => c.as[FilterAst.HashRef       [Valid.HashTag]]
       case (KeyAstImpliesAnyOf  , c) => c.as[FilterAst.ImpliesAnyOf  [Valid.ReqSet]]

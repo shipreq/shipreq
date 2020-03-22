@@ -50,4 +50,7 @@ object OptionalBoolFn {
 
   def empty[A]: OptionalBoolFn[A] =
     new OptionalBoolFn(None)
+
+  def fail[A]: OptionalBoolFn[A] =
+    new OptionalBoolFn(Some(_ => false))
 }

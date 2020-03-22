@@ -614,6 +614,7 @@ object DataProp {
           }.toSet)
 
       private val validFilter: FAlgebra[Filter.ValidF, Refs] = {
+        case FilterAst.FieldProp     (f, _)           => Refs.empty addCustomFieldId f
         case FilterAst.Reqs          (reqs)           => validFilterReqSetRefs(reqs)
         case FilterAst.ImpliesAnyOf  (reqs)           => validFilterReqSetRefs(reqs)
         case FilterAst.ImpliedByAnyOf(reqs)           => validFilterReqSetRefs(reqs)

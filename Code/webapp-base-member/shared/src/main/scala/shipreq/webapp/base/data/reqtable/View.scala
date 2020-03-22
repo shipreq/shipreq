@@ -23,6 +23,7 @@ final case class View(columns   : NonEmptyVector[Column],
       text    = _ => false,
       regex   = _ => false,
       hashRef = _ => false,
+      field   = _ => false,
       attr    = _ => false,
       reqSet  = _.exists(_.reqType ==* id),
       reqType = _ ==* id))

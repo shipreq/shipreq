@@ -39,7 +39,7 @@ object ProjectSpaProtocols {
   // When any of these change, bump the minor version of safePicklerWsReqResAndReq
   import CreateContentCmd.CodecsV0._
   import ManualIssueCmd.CodecsV0._
-  import SavedViewCmd.CodecsV0._
+  import SavedViewCmd.CodecsV1._
   import UpdateConfigCmd.CodecsV1._
   import UpdateContentCmd.CodecsV0._
 

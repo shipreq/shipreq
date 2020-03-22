@@ -86,6 +86,10 @@ object SampleProject7 {
     Event.FieldCustomTagCreate(verField, verTG, CustomTagFieldGD(FieldReqTypeRules.defaultTo(priLow).notApplicable(mf))),
 
     GenericReqCreate(brs(1), br, GenericReqGD.ValueForTitle("Must make moneh")),
+
+    ReqFieldCustomTextSet(mfs(4), bizJustField, Vector(Text.CustomTextField.Literal("x"))),
+
+    ReqTagsPatch(uc1, nesd()(v10)),
   )
 
   lazy val plainText  = PlainText.ForProject.noCtx(project)

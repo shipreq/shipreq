@@ -4,7 +4,6 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
 import ProjectDsl._
 import SampleProject4.{project => project0}
-import SampleProject.Values._
 import UnsafeTypes._
 
 /**

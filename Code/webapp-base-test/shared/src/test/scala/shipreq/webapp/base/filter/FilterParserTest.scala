@@ -176,6 +176,14 @@ object FilterParserTest extends TestSuite {
       'simple - test("has:stuff", presence("stuff"))
     }
 
+    'field {
+      'na         - test("field:poop:n/a",     fieldProp("poop", "n/a"))
+      'default    - test("field:poop:default", fieldProp("poop", "default"))
+      'blank      - test("field:poop:blank",   fieldProp("poop", "blank"))
+      'quoteSpace - test("field:\"a b\":xx",   fieldProp("a b", "xx"))
+      'quoteColon - test("field:\"a:b\":xx",   fieldProp("a:b", "xx"))
+    }
+
     'hasIssue {
       'on1  - test("has:issue:x"       , hasIssue(On, "x"))
       'on2  - test("has:issue:abC,DeF" , hasIssue(On, "abC", "DeF"))

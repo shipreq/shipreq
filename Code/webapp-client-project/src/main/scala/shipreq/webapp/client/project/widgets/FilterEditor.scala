@@ -7,7 +7,7 @@ import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-}
 import shipreq.base.util.{Invalid, Valid, Validity}
-import shipreq.webapp.base.data.{Contextualise, Project, ProjectConfig, ShowDead}
+import shipreq.webapp.base.data.{Contextualise, CustomField, Project, ProjectConfig, ShowDead}
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.issue.IssueCategory
@@ -45,7 +45,7 @@ object FilterEditor {
   private val autoCompleteKeywords: AutoComplete.Strategy =
     AutoComplete.Strategy.builder
       .regex("""(^|[^\w:])([a-z]+)$""", index = 2)
-      .search(AutoComplete.Utils caseInsensitiveStartsWith Stream("has", "no", "implies", "impliedBy"))
+      .search(AutoComplete.Utils caseInsensitiveStartsWith Stream("field", "has", "no", "implies", "impliedBy"))
       .replace("$1" + _ + ":")
       .result()
 
@@ -89,8 +89,25 @@ object FilterEditor {
 
     private val pxAutoComplete: Px[AutoComplete.Strategies] =
       pxProject.map { p =>
+
         val hashtags = AutoComplete.Project.hashtag(p, ShowDead, issues = true, tags = true)(Contextualise)
-        hashtags :+ autoCompletePresenceLackAttr :+ autoCompleteHasIssue :+ autoCompleteKeywords
+
+        val fieldNames =
+          p.config.fieldsByName
+            .iterator
+            .filter(_._2.isInstanceOf[CustomField])
+            .map(_._1)
+            .map(FilterAlgebra.quoteFieldName)
+            .toStream
+
+        val autoCompleteFieldName =
+          AutoComplete.Strategy.builder
+            .regex("""\b(field:)([a-z]*)$""", index = 2)
+            .search(AutoComplete.Utils caseInsensitiveStartsWith fieldNames)
+            .replace("$1" + _)
+            .result()
+
+        hashtags :+ autoCompleteFieldName :+ autoCompletePresenceLackAttr :+ autoCompleteHasIssue :+ autoCompleteKeywords
       }
 
     private val helpButton: VdomTag =
