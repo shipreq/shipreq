@@ -5,6 +5,7 @@ import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.utils.Memo
 import monocle.macros.Lenses
 import scalaz.{-\/, Equal, \/-}
+import shipreq.base.util.NotApplicable
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.DataImplicits._
 
@@ -270,4 +271,14 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
 
   def deadTagFieldDistribution(deadTagFilter: Option[CustomField.Tag.Id => Boolean]): TagFieldDistribution.TagIds =
     deadTagFilter.fold(deadTagFieldDistribution)(deadTagFieldDistribution(_))
+
+  /** Includes dead tags */
+  val nonApplicableTagsPerReqType: ReqTypeId => Set[ApplicableTagId] =
+    Memo { reqTypeId =>
+      tags
+        .applicableTagIterator()
+        .filter(_.applicableReqTypes(reqTypeId) is NotApplicable)
+        .map(_.id)
+        .toSet
+    }
 }

@@ -343,15 +343,8 @@ object FilterAlgebra {
           fieldApplicableReqOnly(f)(req => tagLookup(req.id).all.intersect(scope).isEmpty)
 
         case (FieldAttr.DefaultInUse, f: CustomField.Tag.Id) =>
-          val scope = p.config.tagFieldDistribution(filterDead).inField(f)
-          val defaultOnly = Location.FieldDefault :: Nil
-          fieldApplicableReqOnly(f) { req =>
-            val t = tagLookup(req.id)
-            t.all.iterator.filter(scope.contains).take(2).toList match {
-              case one :: Nil => t.other(one) ==* defaultOnly
-              case _          => false
-            }
-          }
+          val fieldDefaultApplied = p.fieldDefaultApplied(f, filterDead)
+          fieldApplicableReqOnly(f)(req => fieldDefaultApplied(req.id))
 
         case (FieldAttr.DefaultInUse, _: CustomField.Implication.Id | _: CustomField.Text.Id) =>
           reqOnly(fail)

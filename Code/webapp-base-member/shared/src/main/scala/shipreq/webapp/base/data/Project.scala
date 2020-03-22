@@ -168,6 +168,12 @@ final case class Project(name         : Project.Name,
   def reqtableViewIterator: Iterator[reqtable.SavedView] =
     reqtableViews.fold[Iterator[reqtable.SavedView]](Iterator.empty)(_.iterator)
 
+  def fieldDefaultApplied(fieldId: CustomField.Tag.Id, filterDead: FilterDead): ReqId => Boolean = {
+    val scope = config.tagFieldDistribution(filterDead).inField(fieldId)
+    val tagLookup = dataLogic.tagLookup(filterDead)
+    reqId => tagLookup(reqId).fieldDefaultApplied(scope)
+  }
+
   def prettyPrintImplicationGraph: String =
     Util.quickJSB { sb =>
 

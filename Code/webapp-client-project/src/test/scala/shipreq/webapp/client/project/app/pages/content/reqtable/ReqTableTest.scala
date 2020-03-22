@@ -476,10 +476,10 @@ object ReqTableTest extends TestSuite {
       enterFilter("FR | BR")
       >> showHideColumn("Priority")
       >> sortBy("Priority")
-      +> tablePubids.assert.equal("FR-2", "BR-1", "FR-1", "FR-3") // BR-1 has default of pri=med
-      //                           high    med     low     blank
+      +> tablePubids.assert.equal("FR-2", "BR-1", "BR-2", "BR-3", "FR-1", "FR-3") // BRs have default of pri=med
+      //                           high    med     med     med     low     blank
       >> filterDeadToggle
-      +> tablePubids.assert.equal("FR-2", "BR-1", "FR-1", "FR-3") // BR-1 has default of pri=med
+      +> tablePubids.assert.equal("FR-2", "BR-1", "BR-2", "BR-3", "FR-1", "FR-3") // BRs have default of pri=med
     )
 
     runTest(plan withInitialState project)
@@ -492,16 +492,16 @@ object ReqTableTest extends TestSuite {
     val project = applyEventsSuccessfully(
       SampleProject7.project,
       Event.ReqTagsPatch(frs(1), nesd()(priMed)),
-      Event.ReqTagsPatch(frs(2),  nesd()(priHigh)),
+      Event.ReqTagsPatch(frs(2), nesd()(priHigh)),
       Event.GenericReqCreate(frs(3), fr, GenericReqGD.ValueForTitle("poop")),
-      Event.GenericReqCreate(brs(2), br, GenericReqGD.ValueForTags(NonEmptySet(priHigh))),
+      Event.GenericReqCreate(brs(4), br, GenericReqGD.ValueForTags(NonEmptySet(priHigh))),
     )
 
     val plan = Plan.action(
       enterFilter("(FR | BR) #pri=med")
-      +> tablePubids.assert.equalIgnoringOrder("FR-1", "BR-1") // BR-1 has default of pri=med
+      +> tablePubids.assert.equalIgnoringOrder("FR-1", "BR-1", "BR-2", "BR-3") // BRs have default of pri=med
       >> filterDeadToggle
-      +> tablePubids.assert.equalIgnoringOrder("FR-1", "BR-1") // BR-1 has default of pri=med
+      +> tablePubids.assert.equalIgnoringOrder("FR-1", "BR-1", "BR-2", "BR-3") // BRs have default of pri=med
     )
 
     runTest(plan withInitialState project)

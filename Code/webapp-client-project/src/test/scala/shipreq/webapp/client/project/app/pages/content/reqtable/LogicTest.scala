@@ -939,7 +939,7 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterImpFieldBlank(): Unit = {
-    testFilter(P7, F.fieldProp(mfField, FieldAttr.Blank))("BR-1  UC-1  UC-2", "")
+    testFilter(P7, F.fieldProp(mfField, FieldAttr.Blank))("BR-1  BR-2  BR-3  UC-1  UC-2", "")
   }
 
   def testFilterTagFieldNA(): Unit = {
@@ -951,29 +951,40 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterTagFieldBlank(): Unit = {
-    testFilter(P7, F.fieldProp(verField, FieldAttr.Blank))("BR-1  FR-1  FR-2  UC-2", "CO-2  SI-1  SI-2")
+    testFilter(P7, F.fieldProp(verField, FieldAttr.Blank))("BR-1  BR-2  BR-3  FR-1  FR-2  UC-2", "CO-2  SI-1  SI-2")
   }
 
   def testFilterTagFieldDefault(): Unit = {
-    testFilter(P7, F.fieldProp(priField, FieldAttr.DefaultInUse))("BR-1", "")
     testFilter(P7, F.fieldProp(verField, FieldAttr.DefaultInUse))("", "")
+    testFilter(P7, F.fieldProp(priField, FieldAttr.DefaultInUse))("BR-1  BR-2  BR-3", "")
 
     testFilter(P7, F.fieldProp(statusField, FieldAttr.DefaultInUse))(
-      "MF-1  MF-2  MF-3  MF-4  MF-8  MF-9  MF-10  MF-11  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-23  MF-24  MF-25  MF-26  MF-27",
-      "BR-1  CO-1  CO-2  FR-1  FR-2  MF-19  MF-28  SI-1  SI-2")
+      "MF-1  MF-2  MF-4  MF-8  MF-9  MF-10  MF-11  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-23  MF-24  MF-25  MF-26  MF-27",
+      "BR-1  BR-2  CO-1  CO-2  FR-1  FR-2  MF-19  MF-28  SI-1  SI-2")
   }
 
   def testFilterTextFieldNA(): Unit = {
     testFilter(P7, F.fieldProp(bizJustField, FieldAttr.NotApplicable))("", "CO-1  CO-2  SI-1 SI-2")
     testFilter(P7, F.fieldProp(componentField, FieldAttr.NotApplicable))(
-      "BR-1  MF-1  MF-2  MF-3  MF-4  MF-5  MF-6  MF-7  MF-8  MF-9  MF-10  MF-11  MF-12  MF-13  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-22  MF-23  MF-24  MF-25  MF-26  MF-27  UC-1  UC-2",
+      "BR-1  BR-2  BR-3  MF-1  MF-2  MF-3  MF-4  MF-5  MF-6  MF-7  MF-8  MF-9  MF-10  MF-11  MF-12  MF-13  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-22  MF-23  MF-24  MF-25  MF-26  MF-27  UC-1  UC-2",
       "MF-19  MF-28")
   }
 
   def testFilterTextFieldBlank(): Unit = {
     testFilter(P7, F.fieldProp(bizJustField, FieldAttr.Blank))(
-      "BR-1  FR-1  FR-2  MF-1  MF-2  MF-3  MF-5  MF-6  MF-7  MF-8  MF-9  MF-10  MF-11  MF-12  MF-13  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-22  MF-23  MF-24  MF-25  MF-26  MF-27  UC-1  UC-2",
+      "BR-1  BR-2  BR-3  FR-1  FR-2  MF-1  MF-2  MF-3  MF-5  MF-6  MF-7  MF-8  MF-9  MF-10  MF-11  MF-12  MF-13  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-22  MF-23  MF-24  MF-25  MF-26  MF-27  UC-1  UC-2",
       "MF-19  MF-28")
+  }
+
+  def testFilterByTagsIncludesDefaults(): Unit = {
+    testFilter(P7, F.tag(priMed))(
+      "BR-1  BR-2  BR-3  MF-2  MF-4  MF-6  MF-8  MF-14  MF-15  MF-17  MF-20  MF-21  MF-22  MF-23  MF-24  MF-25",
+      "MF-28")
+  }
+
+  def testFilterIgnoreNATags(): Unit = {
+    // BR-2 should be missing; that's the point
+    testFilter(P7, F.tag(prod))("MF-3  UC-1", "")
   }
 
   def testFilterAll(): Unit = {
@@ -1181,30 +1192,32 @@ object LogicTest extends TestSuite {
       }
     }
     'filter {
-      'text             - testFilterText()
-      'textPattern      - testFilterTextPattern()
-      'anyIssue         - testFilterAnyIssue()
-      'anyTag           - testFilterAnyTag()
-      'hasIssueOn1      - testFilterHasIssueOn1()
-      'hasIssueOn2      - testFilterHasIssueOn2()
-      'hasIssueOff1     - testFilterHasIssueOff1()
-      'hasIssueOff2     - testFilterHasIssueOff2()
-      'tag              - testFilterTag()
-      'customIssue      - testFilterCustomIssue()
-      'reqType          - testFilterReqType()
-      'impliesAnyOf     - testFilterImplies()
-      'impliedByAnyOf   - testFilterImpliedBy()
-      'implyNothing     - testFilterImplyNothing()
-      'impFieldNA       - testFilterImpFieldNA()
-      'impFieldBlank    - testFilterImpFieldBlank()
-      'textFieldNA      - testFilterTextFieldNA()
-      'textFieldBlank   - testFilterTextFieldBlank()
-      'tagFieldNA       - testFilterTagFieldNA()
-      'tagFieldBlank    - testFilterTagFieldBlank()
-      'tagFieldDefault  - testFilterTagFieldDefault()
-      'allOf            - testFilterAll()
-      'anyOf            - testFilterAny()
-      'not              - testFilterNot()
+      'text                 - testFilterText()
+      'textPattern          - testFilterTextPattern()
+      'anyIssue             - testFilterAnyIssue()
+      'anyTag               - testFilterAnyTag()
+      'hasIssueOn1          - testFilterHasIssueOn1()
+      'hasIssueOn2          - testFilterHasIssueOn2()
+      'hasIssueOff1         - testFilterHasIssueOff1()
+      'hasIssueOff2         - testFilterHasIssueOff2()
+      'tag                  - testFilterTag()
+      'customIssue          - testFilterCustomIssue()
+      'reqType              - testFilterReqType()
+      'impliesAnyOf         - testFilterImplies()
+      'impliedByAnyOf       - testFilterImpliedBy()
+      'implyNothing         - testFilterImplyNothing()
+      'impFieldNA           - testFilterImpFieldNA()
+      'impFieldBlank        - testFilterImpFieldBlank()
+      'textFieldNA          - testFilterTextFieldNA()
+      'textFieldBlank       - testFilterTextFieldBlank()
+      'tagFieldNA           - testFilterTagFieldNA()
+      'tagFieldBlank        - testFilterTagFieldBlank()
+      'tagFieldDefault      - testFilterTagFieldDefault()
+      'ignoreNATags         - testFilterIgnoreNATags()
+      'tagsIncludesDefaults - testFilterByTagsIncludesDefaults()
+      'allOf                - testFilterAll()
+      'anyOf                - testFilterAny()
+      'not                  - testFilterNot()
     }
     'codeGroupsWithFilter {
       'hideDead - testCodeGroupWhenFilteredAndHideDead()

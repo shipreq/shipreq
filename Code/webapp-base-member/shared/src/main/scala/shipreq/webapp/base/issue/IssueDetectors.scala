@@ -217,11 +217,13 @@ object IssueDetectors {
 
           for ((tagId, reqTypeIds) <- found.m) {
             val tag = cfg.tags.needApplicableTag(tagId)
+            val fieldDefaultApplied = ctx.project.fieldDefaultApplied(f.id, ShowDead)
 
             val affectedReqs: List[Req] =
               reqTypeIds
                 .iterator
                 .flatMap(rt => ctx.project.content.reqs.reqsByType(rt).filter(_.live(cfg.reqTypes) is Live))
+                .filter(req => fieldDefaultApplied(req.id))
                 .toList
 
             ctx.add(Issue.FieldDefaultTagDead(f, tag, affectedReqs))

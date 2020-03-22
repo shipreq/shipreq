@@ -47,6 +47,13 @@ import UnsafeTypes._
  *       Otherwise: Default to pri=low (not in scope)
  *
  *   - BR-1: Must make moneh
+ *   - BR-2: Must make moar moneh! #prod (note: #prod n/a to BR)
+ *   - BR-3: CEO owns islands! #wip
+ *   - MF-3: tag with #prod
+ *   - MF-4: Business Justification = "x"
+ *   - UC-1: tag with #v1.0 and #prod
+ *
+ *   - #prod now only applicable to UC & MF
  *
  * @since 2.1
  */
@@ -86,10 +93,17 @@ object SampleProject7 {
     Event.FieldCustomTagCreate(verField, verTG, CustomTagFieldGD(FieldReqTypeRules.defaultTo(priLow).notApplicable(mf))),
 
     GenericReqCreate(brs(1), br, GenericReqGD.ValueForTitle("Must make moneh")),
+    GenericReqCreate(brs(2), br, GenericReqGD.ValueForTitle("Must make moar moneh")),
+    GenericReqCreate(brs(3), br, GenericReqGD.ValueForTitle("CEO owns islands!")),
+
+    ReqTagsPatch(brs(2), nesd()(prod)),
+    ReqTagsPatch(brs(3), nesd()(wip)),
+    ReqTagsPatch(mfs(3), nesd()(prod)),
+    ReqTagsPatch(uc1   , nesd()(v10, prod)),
 
     ReqFieldCustomTextSet(mfs(4), bizJustField, Vector(Text.CustomTextField.Literal("x"))),
 
-    ReqTagsPatch(uc1, nesd()(v10)),
+    ApplicableTagUpdate(prod, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(uc, mf)))
   )
 
   lazy val plainText  = PlainText.ForProject.noCtx(project)

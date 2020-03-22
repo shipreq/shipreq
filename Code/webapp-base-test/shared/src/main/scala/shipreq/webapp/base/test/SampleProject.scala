@@ -14,6 +14,7 @@ import UnsafeTypes._
 object SampleProject {
 
   trait Values {
+    def uc = StaticReqType.UseCase
     val List(co, mf, fr, br, dd, si)                      = List[CustomReqTypeId           ](1, 2, 3, 4, 5, 6)
     val List(priHigh, priMed, priLow)                     = List[ApplicableTagId           ](2, 3, 4)
     val List(wip, defer, uat, uat2, uat3, prod)           = List[ApplicableTagId           ](11, 12, 13, 14, 15, 16)

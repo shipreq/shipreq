@@ -280,14 +280,14 @@ object IssueDetectorTest extends TestSuite {
     import P7._
 
     def ko() = test(p7)()(
-      IssueLite.FieldDefaultTagDead(statusField, uat, Set(brs(1))),
+      IssueLite.FieldDefaultTagDead(statusField, uat, Set(brs(1), brs(2))),
       IssueLite.FieldDefaultTagDead(statusField, uat2, Set(frs(1), frs(2))),
     )
 
     def otherwise() = test(p7)(
       Event.FieldCustomTagUpdate(statusField, CustomTagFieldGD(FieldReqTypeRules.defaultTo(uat3).notApplicable(mf))),
     )(
-      IssueLite.FieldDefaultTagDead(statusField, uat3, Set(brs(1), frs(1), frs(2), uc1, uc2)),
+      IssueLite.FieldDefaultTagDead(statusField, uat3, Set(brs(1), brs(2), frs(1), frs(2), uc2)),
     )
 
     def liveOnly() = test(p7)(
@@ -298,7 +298,7 @@ object IssueDetectorTest extends TestSuite {
       Event.FieldCustomDelete(statusField),
       Event.TagDelete(priMed),
     )(
-      IssueLite.FieldDefaultTagDead(priField, priMed, Set(brs(1))),
+      IssueLite.FieldDefaultTagDead(priField, priMed, Set(brs(1), brs(2), brs(3))),
     )
   }
 
