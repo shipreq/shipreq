@@ -1,0 +1,111 @@
+<html><head><title>CardBoard Req Table | ShipReq</title><script src="../node_modules/jquery/dist/jquery.min.js"></script><link href="../semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="../semantic/dist/semantic.js"></script><style type="text/css">
+body {padding:1rem}
+.ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+.ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+.ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+.ui.button.basic {background:#fff!important}
+
+.is-tag {
+  padding: 4px 6px !important;
+  margin-left: .5ex !important;
+}
+
+ul.straytags {margin-bottom:0}
+ul.straytags li:not(:first-child) {margin-top:0.25em}
+
+xmain > table {margin-bottom:2rem!important;}
+main > .left > table {margin-top:0!important;}
+xmain > .left > table + table {margin-top:10rem!important}
+main > .left > table > tbody > tr:not(.cont) > td:first-child {text-align:center!important; width:1ex}
+main > .left > table > tbody > tr > td {vertical-align:top;}
+
+#t2 tr > *:nth-child(5) { display:none }
+
+#t2 .rule {
+  line-height:1.8em
+}
+#t2 .rule .types, #t2 .rule2 .types {
+  font-weight: bold;
+}
+#t2 .rule .types::after { content: " — "; }
+#t2 .rule2 .types {margin-right: .7ex}
+
+#t2 tr { transition: background .1s ease,color .1s ease; }
+#t2 tr.selected { background-color: #869df91f; }
+#t2 td:not(:first-child) {cursor:pointer}
+
+/* .ui.menu .item>img:not(.ui) -- width:2.5em */
+/* .ui.menu .item -- padding-top/bottom: 0.928571em */
+/* body - padding: 1rem */
+#navX {height:calc(2 * 0.928571em + 2.5em - 1.55em); background:green}
+#navX {height:2.79rem; margin-bottom:1rem} /* padding is to match body */
+main {
+  xbackground:#fbb;
+  margin-top: 4rem;
+  min-height: calc(100vh - 2 * (0.928571em + 1rem) - 2.5em);
+  min-height: calc(100vh - 2.79rem - 3rem);
+  min-height: calc(100vh - 6rem);
+  display:grid;
+  grid-template-columns: 1fr 2rem 2rem 1fr;
+}
+
+section.gap2 {
+  border-left: solid 1px #e8e8e8;
+}
+
+.settings td { vertical-align:top; }
+.settings td:nth-child(3) { text-align:right; width:1px }
+.settings td:nth-child(3) button { margin-right:0!important }
+.settings td:first-child > .ui.input {width:100%}
+x.settings td { background-color: #869df90f; }
+x.settings td {border-top:none!important}
+.settings tr:last-child td:first-child {padding-left:2ex}
+x.settings tr:first-child td {padding-top:1.5rem}
+
+#t2 tr.selected td {
+  border-top:solid 1px #3659e2;
+  border-bottom:solid 1px #3659e2;
+}
+
+#t2.has-selection tbody tr:not(.selected) { opacity:.4 }
+#t2 tr { transition: opacity .4s }
+
+.right-off {
+  overflow: hidden; height: 0; opacity: 0;
+  transition: height 0s .4s, opacity .4s 0s;
+}
+.right-on {
+  height: auto; opacity: 1;
+  transition: height 0s 0s, opacity .4s 0s;
+}
+
+#t2 tr.dead td {
+  background-color: #f2f2f2;
+  opacity:0.7;
+  color: #4d4d4d;
+}
+#t2 tr.dead td:nth-child(2) {
+  text-decoration: line-through;
+}
+
+</style></head><body><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="member-home.html" class="section">Projects</a><i class="divider icon right angle"></i><a href="project-index.html" class="section">CardBoard</a><div class="ui dropdown inline">&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div><i class="divider icon right angle"></i><div class="section"><!--/ .active--><div class="ui dropdown inline">Req Table&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="header">Content</div><div class="item">Implication Graph</div><div class="item active">ReqTable</div><div class="header">Configuration</div><div class="item">Fields</div><div class="item">Issues</div><div class="item">Req Types</div><div class="item">Tags</div></div></div></div></div></div><div class="item ui right dropdown simple">@japgolly<div class="menu"><a href="member-account.html" class="item">Account</a><div class="item">Logout</div></div></div></div><main><section class="left"><div style="display:flex; margin-bottom:2rem"><div><div class="ui button green" id="new"><i class="icon plus"></i>New</div></div><div style="flex-grow:1"></div><div><button data-content="Showing deleted content." class="ui button icon red has-popup"><i class="icon trash outline large white"></i></button></div></div><table class="ui celled table" id="t2"><thead><tr><th></th><th>Name</th><th>Type</th><th>Details</th><th></th></tr></thead><tbody><tr><td>☰</td><td>Implication Graph</td><td>Implication Graph</td><td><div class="rule"><span class="types">All</span><span class="value">Visible</span></div></td><td></td></tr><tr><td>☰</td><td>Normal and Alternate Courses</td><td>Use Case Steps</td><td><div class="rule2"><span class="types">UC</span><span class="value">only</span></div></td><td></td></tr><tr><td>☰</td><td>Exception Courses</td><td>Use Case Steps</td><td><div class="rule2"><span class="types">UC</span><span class="value">only</span></div></td><td></td></tr><tr><td>☰</td><td>Use Case Flow</td><td>Use Case Step Graph</td><td><div class="rule2"><span class="types">UC</span><span class="value">only</span></div></td><td></td></tr><tr><td>☰</td><td>Detail</td><td>Text</td><td><div class="rule"><span class="types">BR</span><span class="value">Optional</span></div><div class="rule"><span class="types">FR, UC</span><span class="value">Mandatory</span></div></td><td><button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button></td></tr><tr><td>☰</td><td>Major Feature</td><td>Implication</td><td><div class="rule"><span class="types">Not: MF, OE</span><span class="value">Optional</span></div></td><td><button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button></td></tr><tr class="dead" id="tagrow"><td></td><td>Status</td><td>Tag</td><td><div class="rule"><span class="types">FR, UC</span><span class="value">Defaults to <div class="ui label brown is-tag">needs_analysis</div></span></div><div class="rule"><span class="types">IV</span><span class="value">Defaults to <div class="ui label yellow is-tag" style="color:#000!important">needs_more_info</div></span></div><div class="rule"><span class="types">OE,SI</span><span class="value">Not applicable</span></div><div class="rule"><span class="types">Other</span><span class="value">Optional</span></div></td><td><button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button></td></tr><tr><td>☰</td><td>Tags</td><td>Tag</td><td>Displays tags not assigned to a field.<p class="straytags"><div class="ui label is-tag red">migrating</div><div class="ui label is-tag olive">tested</div><div class="ui label is-tag blue">unreleased</div><div class="ui label is-tag blue">v1.0</div><div class="ui label is-tag blue">v1.1</div></p></td><td></td></tr></tbody></table></section><section class="gap1"></section><section class="gap2"></section><section class="right"><div class="right-off" id="tageditor"><h2 style="color: #666; margin-bottom:2rem; text-decoration: line-through;">Status</h2><div style="margin-bottom: 2rem" class="ui message negative"><div class="header">Underlying tag group deleted</div><p>This field is effectively deleted because the Status tag group was deleted. You can restore it on the <a href="#">Tag Config</a> page, in which case this field will be restored automatically.</p></div><table class="ui single line table settings"><thead><tr><th>Req Types</th><th>Rules</th><th></th></tr></thead><tbody><tr><td><div class="ui input disabled"><input type="text" value="FR, UC" /></div></td><td><select class="ui dropdown disabled"><option>Default to...</option></select><div style="margin-left:1.5ex" class="ui selection dropdown disabled"><input type="hidden" value="1" /><i class="dropdown icon"></i><div class="default text">Select Tag</div><div class="menu"><div data-value="1" class="item"><div style="margin:0" class="ui label is-tag brown">needs_analysis</div></div></div></div></td><td></td></tr><tr><td><div class="ui input disabled"><input type="text" value="IV" /></div></td><td><select class="ui dropdown disabled"><option>Default to...</option></select><div style="margin-left:1.5ex" class="ui selection dropdown disabled"><input type="hidden" value="1" /><i class="dropdown icon"></i><div class="default text">Select Tag</div><div class="menu"><div data-value="1" class="item"><div style="margin:0;color:#000!important" class="ui label is-tag yellow">needs_more_info</div></div></div></div></td><td></td></tr><tr><td><div class="ui input disabled"><input type="text" value="OE, SI" /></div></td><td><select class="ui dropdown disabled"><option>Not applicable</option></select></td><td></td></tr><tr><td style="opacity:.5"><p>Other</p><p>(BR, CO, QA, new)</p></td><td><select class="ui dropdown disabled"><option>Optional</option></select></td><td></td></tr></tbody></table><div style="margin-top:2rem; display:flex"><div style="flex-grow:1"></div><button class="ui button black basic"><i class="icon remove"></i>Close</button></div></div><div style="display:flex; flex-direction: column; font-size:120%" class="right-on" id="noeditor"><div style="height:calc((100vh - 6rem)/4); xbackground:red"></div><div style="text-align:center; font-style:italic; color:#999; line-height: 1.8em"><div>This is the field editor.</div><div>Create a new field, or select an existing field to edit it here.</div></div></div></section></main></body>
+<script type="text/javascript">
+//<![CDATA[
+$('.ui.dropdown').dropdown();
+// $('.celled.table').toggleClass('celled');
+
+function toggle() {
+  $('#t2').toggleClass('has-selection');
+  $('#tagrow').toggleClass('selected');
+  $('#noeditor,#tageditor').toggleClass('right-on');
+  $('#noeditor,#tageditor').toggleClass('right-off');
+  $('#new, #t2 button').toggleClass('disabled');
+}
+
+$('#t2').click(toggle);
+
+toggle();
+//]]>
+</script>
+</html>

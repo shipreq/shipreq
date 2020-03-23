@@ -88,6 +88,8 @@
       }
 
       .usage {text-align:right !important;}
+      .usage.na { background-color: #f5f5f5; padding:4x !important; color: #666;}
+      .usage.na::after { content: '–'}
       x.usage.one a {color:#ef06c4}
       .usage.one span {visibility:hidden}
       .usage.zero:not(:hover) {color:#4183c4}
@@ -178,40 +180,40 @@
                   %span.types All
                   %span.value Visible
               %td
-              %td.usage.na N/A
+              %td.usage.na
             %tr
               %td ☰
               %td Normal and Alternate Courses
               %td Use Case Steps
               %td
-                .rule2
+                .rule
                   %span.types UC
-                  %span.value only
+                  %span.value Optional
               %td
-              %td.usage(title="2 reqs use this field") %a(href="#") 2 uses
+              %td.usage.na
             %tr
               %td ☰
               %td Exception Courses
               %td Use Case Steps
               %td
-                .rule2
+                .rule
                   %span.types UC
-                  %span.value only
+                  %span.value Optional
               %td
-              %td.usage(title="2 reqs use this field") %a(href="#") 2 uses
+              %td.usage.na
             %tr
               %td ☰
               %td Use Case Flow
               %td Use Case Step Graph
               %td
-                -# .rule
+                .rule
                   %span.types UC
                   %span.value Visible
-                .rule2
+                -# .rule2
                   %span.types UC
                   %span.value only
               %td
-              %td.usage.na N/A
+              %td.usage.na
             %tr
               %td ☰
               %td Detail

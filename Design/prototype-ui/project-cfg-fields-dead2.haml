@@ -76,20 +76,25 @@
       }
 
       #t2.has-selection tbody tr:not(.selected) { opacity:.4 }
-      #t2 tr { xtransition: opacity .4s }
+      #t2 tr { transition: opacity .4s }
 
       .right-off {
         overflow: hidden; height: 0; opacity: 0;
-        xtransition: height 0s .4s, opacity .4s 0s;
+        transition: height 0s .4s, opacity .4s 0s;
       }
       .right-on {
         height: auto; opacity: 1;
-        xtransition: height 0s 0s, opacity .4s 0s;
+        transition: height 0s 0s, opacity .4s 0s;
       }
 
-      .right .staticTagField > ul > li {margin-bottom: 0.7em; font-size:105%}
-      .right .staticTagField ul ul {margin-top: 0.4em; padding-bottom: .5em}
-      .right .staticTagField .all {font-weight:bold}
+      #t2 tr.dead td {
+        background-color: #f2f2f2;
+        opacity:0.7;
+        color: #4d4d4d;
+      }
+      #t2 tr.dead td:nth-child(2) {
+        text-decoration: line-through;
+      }
 
   -# ==================================================================================================================================================
   -# ==================================================================================================================================================
@@ -146,26 +151,15 @@
 
         %div(style="display:flex; margin-bottom:2rem")
           %div
-            .ui.labeled.button
-              %a.ui.button.green
-                %i.icon.plus
-                New
-              -# .ui.floating.dropdown.labeled.search.button.label
-              .ui.dropdown.label{style: "background-color: #00a632; color: #EEE;"}
-                Text field
-                %i.icon.dropdown
-                .menu
-                  .item Built-in: All tags
-                  .item Built-in: Misc tags
-                  .item Implication field
-                  .item Tag field
-                  .item Text field
+            .ui.button.green#new
+              %i.icon.plus
+              New
 
           %div(style="flex-grow:1")
 
           %div(style="")
-            %button.ui.button.icon
-              %i.icon.trash.outline.large.grey
+            %button.ui.button.icon.red.has-popup{data-content: "Showing deleted content."}
+              %i.icon.trash.outline.large.white
 
 
         -# ==================================================================================================================================================
@@ -240,8 +234,8 @@
                   %span.value Optional
               %td
                 <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
-            %tr
-              %td ☰
+            %tr.dead#tagrow
+              %td
               %td Status
               %td Tag
               %td
@@ -261,7 +255,7 @@
                 <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
             %tr
               %td ☰
-              %td Misc tags
+              %td Tags
               %td Tag
               %td
                 Displays tags not assigned to a field.
@@ -279,200 +273,114 @@
                   .ui.label.is-tag.blue v1.1
               %td
 
-        %div(style="margin-top:6rem")
-          %button(onclick="cycle()")
-            Cycle through different scenarios
 
       -# ==================================================================================================================================================
       %section.gap1
       %section.gap2
 
       %section.right
+        .right-off#tageditor
+          -# %h2(style="color: #4059bf; margin-bottom:2rem") Status
+          -# %h2(style="color: #4c6be6; margin-bottom:2rem") Status
+          %h2(style="color: #666; margin-bottom:2rem; text-decoration: line-through;") Status
 
-        -# ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        %div(style="display:none")
-          %h2(style="color: #3659e2; margin-bottom:2.5rem") New text field
-          .ui.form(style="margin-bottom:2rem!important")
-            .inline.field.error
-              %label Name:
-              %input(type="text" value="Detail" style="width:30ex")
-              .ui.left.pointing.red.label(style="margin-left:3ex")
-                That field already exists.
+          .ui.message.negative(style="margin-bottom: 2rem")
+            .header Underlying tag group deleted
+            %p
+              ="This field is effectively deleted because the Status tag group was deleted. "
+              You can restore it on the <a href="#">Tag Config</a> page, in which case this field will be restored automatically.
+
           %table.ui.single.line.table.settings
             %thead
               %tr
                 %th Req Types
-                %th Rule
+                %th Rules
                 %th
             %tbody
               %tr
                 %td
-                  .ui.input.error
-                    %input(type="text" value="BR, FR")
-                  %div
-                    .ui.pointing.red.label
-                      FR defined elsewhere.
-                %td
-                  %select.ui.dropdown
-                    %option Optional
-                %td
-                  <button class="ui button basic  negative " style="white-space: nowrap"><i class="icon trash" style="margin:0"></i></button>
-              %tr
-                %td
-                  .ui.input.error
+                  .ui.input.disabled
                     %input(type="text" value="FR, UC")
-                  %div
-                    .ui.pointing.red.label
-                      FR defined elsewhere.
                 %td
-                  %select.ui.dropdown
-                    %option Mandatory
+                  %select.ui.dropdown.disabled
+                    %option Default to...
+                  .ui.selection.dropdown.disabled(style="margin-left:1.5ex")
+                    %input(type="hidden" value="1")
+                    %i.dropdown.icon
+                    .default.text Select Tag
+                    .menu
+                      .item(data-value="1")
+                        .ui.label.is-tag.brown(style="margin:0") needs_analysis
                 %td
-                  <button class="ui button basic  negative " style="white-space: nowrap"><i class="icon trash" style="margin:0"></i></button>
+                  -# <button class="ui button basic disabled negative " style="white-space: nowrap"><i class="icon trash" style="margin:0"></i></button>
               %tr
                 %td
-                  %p Other
-                  %p (CO, IV, MF, OE, QA, SI, new)
-                  -# BR, CO, FR, IV, MF, OE, QA, SI, UC
+                  .ui.input.disabled
+                    %input(type="text" value="IV")
                 %td
-                  %select.ui.dropdown
+                  %select.ui.dropdown.disabled
+                    %option Default to...
+                  .ui.selection.dropdown.disabled(style="margin-left:1.5ex")
+                    %input(type="hidden" value="1")
+                    %i.dropdown.icon
+                    .default.text Select Tag
+                    .menu
+                      .item(data-value="1")
+                        .ui.label.is-tag.yellow(style="margin:0;color:#000!important") needs_more_info
+                %td
+                  -# <button class="ui button basic disabled negative " style="white-space: nowrap"><i class="icon trash" style="margin:0"></i></button>
+              %tr
+                %td
+                  .ui.input.disabled
+                    %input(type="text" value="OE, SI")
+                %td
+                  %select.ui.dropdown.disabled
                     %option Not applicable
                 %td
-                  <button class="ui button basic green" style="white-space: nowrap; border-color: #080 !important"><i class="icon plus" style="margin:0"></i></button>
-          %div(style="margin-top:2rem; display:flex")
-            %div(style="flex-grow:1")
-            %button.ui.button.black.basic(style="margin-right:2em")
-              %i.icon.remove
-              Cancel
-            %button.ui.button.green.disabled
-              %i.icon.plus
-              Create
-
-        -# ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        %div(style="display:none")
-          %h2(style="color: #3659e2; margin-bottom:2.5rem") New tag field
-          .ui.form(style="margin-bottom:2rem!important")
-            .inline.field
-              %label Tag:
-              %select.ui.dropdown
-                %option Version
-          %table.ui.single.line.table.settings
-            %thead
+                  -# <button class="ui button basic disabled negative " style="white-space: nowrap"><i class="icon trash" style="margin:0"></i></button>
               %tr
-                %th Req Types
-                %th Rule
-                %th
-            %tbody
-              %tr
+                %td(style="opacity:.5")
+                  %p Other
+                  %p (BR, CO, QA, new)
+                  -# BR, CO, FR, IV, OE, QA, SI, UC
                 %td
-                  %p All
-                  -# %p (CO, IV, OE, QA, SI, new)
-                  -# BR, CO, FR, IV, MF, OE, QA, SI, UC
-                %td
-                  %select.ui.dropdown
+                  %select.ui.dropdown.disabled
                     %option Optional
                 %td
-                  <button class="ui button basic green" style="white-space: nowrap; border-color: #080 !important"><i class="icon plus" style="margin:0"></i></button>
-          %div(style="margin-top:2rem; display:flex")
-            %div(style="flex-grow:1")
-            %button.ui.button.black.basic(style="margin-right:2em")
-              %i.icon.remove
-              Cancel
-            %button.ui.button.green.disabled
-              %i.icon.plus
-              Create
+                  -# <button class="ui button basic green disabled" style="white-space: nowrap; border-color: #080 !important"><i class="icon plus" style="margin:0"></i></button>
 
-        -# ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        %div(style="display:none")
-          %h2(style="color: #3659e2; margin-bottom:2.5rem") New tag field
-          -# .ui.form(style="margin-bottom:2rem!important")
-            .inline.field
-              %label Tag:
-              %select.ui.dropdown
-                %option
-                  ="-"
-          .ui.message.negative(style="margin-right: 2rem")
-            .header No tag groups available
-            %p
-              ="In order to create a new tag-based field, you need a tag group that hasn't been assigned to a field yet. "
-              You can create one on the <a href="#">Tag Config</a> page.
           %div(style="margin-top:2rem; display:flex")
-            %div(style="flex-grow:1")
-            %button.ui.button.black.basic(style="margin-right:2em")
-              %i.icon.remove
-              Cancel
-            -# %button.ui.button.green.disabled
-              %i.icon.plus
-              Create
-
-        -# ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        %div.staticTagField(style="display:none")
-          %h2(style="color: #3659e2; margin-bottom:2.5rem") All tags
-          %ul
-            %li Displays <span class="all">all</span> tags in a single field, even those the appear in other tag fields.
-            %li Allows users to edit <span class="all">all</span> tags in a single place, regardless of which tag fields the tags are assigned to.
-          -# %ul
-            %li Displays <span class="all">all</span> tags in a single field
-            %li Allows users to edit <span class="all">all</span> tags in a single place
-          %div(style="margin-top:2rem; display:flex")
-            -# %button.ui.button.negative.basic(style="white-space: nowrap;")
-              %i.icon.ban
-              Remove
-            %div(style="flex-grow:1")
-            %button.ui.button.black.basic(style="margin-right:2em")
-              %i.icon.remove
-              Close
-            %button.ui.button.green.basic
-              %i.icon.plus
-              Add
-
-        -# ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        %div.staticTagField(style="display:none")
-          %h2(style="color: #3659e2; margin-bottom:2.5rem") Misc tags
-          %ul
-            %li A field for any miscellaneous tags not assigned to other tag fields.
-            %li
-              There are currently 5 tags that fit this criteria:
-              %ul.straytags
-                %li .ui.label.is-tag.red migrating
-                %li .ui.label.is-tag.olive tested
-                %li .ui.label.is-tag.blue unreleased
-                %li .ui.label.is-tag.blue v1.0
-                %li .ui.label.is-tag.blue v1.1
-            %li
-              When looking at deleted requirements, the following deleted tags are also included:
-              %ul.straytags
-                %li .ui.label.is-tag.dead assigned_to_tin
-                %li .ui.label.is-tag.dead assigned_to_xin
-          %div(style="margin-top:2rem; display:flex")
-            %button.ui.button.negative.basic(style="white-space: nowrap;")
-              %i.icon.ban
-              Remove
+            -# %button.ui.button.green.disabled(style="margin-right:2em")
+              %i.icon.undo
+              Restore
             %div(style="flex-grow:1")
             %button.ui.button.black.basic
               %i.icon.remove
               Close
 
+        -# .right-on#noeditor(style="display:flex; align-items: center; justify-content: center")
+          %div(style="text-align:center; font-style:italic; color:#666; line-height: 1.6em; padding-bottom:33vh")
+            %div This is the field editor.
+            %div Create a new field, or select an existing field to edit it here.
+
+        .right-on#noeditor(style="display:flex; flex-direction: column; font-size:120%")
+          %div(style="height:calc((100vh - 6rem)/4); xbackground:red")
+          %div(style="text-align:center; font-style:italic; color:#999; line-height: 1.8em")
+            %div This is the field editor.
+            %div Create a new field, or select an existing field to edit it here.
 
   :javascript
     $('.ui.dropdown').dropdown();
+    // $('.celled.table').toggleClass('celled');
 
     function toggle() {
       $('#t2').toggleClass('has-selection');
       $('#tagrow').toggleClass('selected');
       $('#noeditor,#tageditor').toggleClass('right-on');
       $('#noeditor,#tageditor').toggleClass('right-off');
-      $('#t2 button').toggleClass('disabled');
-    };
+      $('#new, #t2 button').toggleClass('disabled');
+    }
+
+    $('#t2').click(toggle);
 
     toggle();
-
-    function cycle() {
-      var all = $('section.right > *');
-      var vis = $('section.right > *:visible')[0];
-      var sel = all.index(vis);
-      $(all[sel]).hide();
-      sel = (sel + 1) % all.length;
-      $(all[sel]).show();
-    }
-    $($('section.right > *')[4]).show()
