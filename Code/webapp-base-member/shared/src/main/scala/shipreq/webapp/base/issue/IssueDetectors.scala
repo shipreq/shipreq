@@ -234,6 +234,26 @@ object IssueDetectors {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  case object FieldDefaultTagNotApplicable extends Instance {
+    override val detect = ctx => {
+      val cfg = ctx.project.config
+      for (f <- ctx.project.config.fields.customTagFields)
+        if (f.live(cfg) is Live) {
+
+          val fixed = cfg.tagFieldRulesFixedHideDead(f.id)
+
+          fixed.errors.valuesIterator.foreach {
+            case ProjectConfig.TagFieldIssue.DefaultTagNotApplicable(tag, reqType) =>
+              ctx.add(Issue.FieldDefaultTagNotApplicable(f, tag, reqType))
+
+            case _ =>
+          }
+        }
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   case object FieldDefaultTagUnrelated extends Instance {
     override val detect = ctx => {
 

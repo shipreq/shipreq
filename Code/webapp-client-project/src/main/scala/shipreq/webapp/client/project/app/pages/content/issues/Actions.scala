@@ -123,6 +123,7 @@ object Actions {
          | _: Issue.BlankUseCaseStep
          | _: Issue.ConflictingTags
          | _: Issue.FieldDefaultTagDead
+         | _: Issue.FieldDefaultTagNotApplicable
          | _: Issue.FieldDefaultTagUnrelated
          | _: Issue.ImplicationRequired
          | _: Issue.IssueTagInRcg

@@ -24,6 +24,7 @@ object ProjectConfig {
   sealed trait TagFieldIssue
   object TagFieldIssue {
     final case class DefaultTagDead(tag: ApplicableTag) extends TagFieldIssue
+    final case class DefaultTagNotApplicable(tag: ApplicableTag, reqType: ReqType) extends TagFieldIssue
     final case class DefaultTagUnrelated(tag: ApplicableTag) extends TagFieldIssue
   }
 
@@ -124,6 +125,7 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
   /** - Dead req types are ignored / unmodified
     * - Rules that default to dead tags are replaced with Optional
     * - Rules that default to unrelated tags are replaced with Optional
+    * - Rules that default to non-applicable tags are replaced with Optional
     */
   val tagFieldRulesFixedHideDead: CustomField.Tag.Id => FixedRules[ApplicableTagId, TagFieldIssue] =
     Memo { fieldId =>
@@ -138,18 +140,30 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
         val okTags: Set[ApplicableTagId] =
           liveTagFieldDistribution.inField(fieldId)
 
+        lazy val otherwiseReqTypes =
+          reqTypes.liveIds -- original.perReqType.keys
+
         def check(reqTypeId: Option[ReqTypeId], tagId: ApplicableTagId) = {
           val tag = tags.needApplicableTag(tagId)
 
-          def addError(err: TagFieldIssue): Unit = {
-            errors = errors.updated(reqTypeId, err)
-            fixed = fixed.setOptional(reqTypeId)
+          def addError(err: TagFieldIssue, rt: Option[ReqTypeId] = reqTypeId): Unit = {
+            errors = errors.updated(rt, err)
+            fixed = fixed.setOptional(rt)
           }
 
           if (!okTags.contains(tagId))
             addError(TagFieldIssue.DefaultTagUnrelated(tag))
           else if (tag.live is Dead)
             addError(TagFieldIssue.DefaultTagDead(tag))
+          else {
+            val reqTypeIds: Traversable[ReqTypeId] =
+              if (reqTypeId.isDefined) reqTypeId else otherwiseReqTypes
+            for (id <- reqTypeIds)
+              if (tag.applicableReqTypes(id) is NotApplicable) {
+                val rt = reqTypes.need(id)
+                addError(TagFieldIssue.DefaultTagNotApplicable(tag, rt), Some(id))
+              }
+          }
         }
 
         original.perReqType.foreach {
@@ -169,17 +183,19 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
 
   /** - Dead req types are ignored / unmodified (TODO What)
     * - Rules that default to unrelated tags are replaced with Optional
+    * - Rules that default to non-applicable tags are replaced with Optional
     */
   val tagFieldRulesFixedShowDead: CustomField.Tag.Id => FixedRules[ApplicableTagId, TagFieldIssue] =
     Memo { fieldId =>
+      import TagFieldIssue._
       val f = tagFieldRulesFixedHideDead(fieldId)
       val original = f.original
       var fixed    = original
       val errors   = f.errors.filter {
-                       case (reqTypeId, _: TagFieldIssue.DefaultTagUnrelated) =>
+                       case (reqTypeId, _: DefaultTagUnrelated | _: DefaultTagNotApplicable) =>
                          fixed = fixed.setOptional(reqTypeId)
                          true
-                       case (_, _: TagFieldIssue.DefaultTagDead) =>
+                       case (_, _: DefaultTagDead) =>
                          false
                      }
       FixedRules(original, fixed, errors)

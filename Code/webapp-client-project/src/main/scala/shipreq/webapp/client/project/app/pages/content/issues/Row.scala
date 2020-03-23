@@ -238,6 +238,11 @@ object Row {
         val desc = UI.descFieldDefaultTagUnrelated(field = fieldName, tag = i.tag.name)
         forConfig(i, desc)
 
+      case i: Issue.FieldDefaultTagNotApplicable =>
+        val fieldName = cfg.fieldName(i.field.id)
+        val desc = UI.descFieldDefaultTagNotApplicable(field = fieldName, tag = i.tag.name, reqType = i.reqType.mnemonic.value)
+        forConfig(i, desc)
+
       case i: Issue.ImplicationRequired =>
         val reqType = cfg.reqTypes.need(i.req.reqTypeId)
         val desc = UI.descImplicationRequired(reqType.mnemonic)

@@ -163,20 +163,53 @@ object UiText {
       case IssueCategory.UserDefined => "User-defined"
     }
 
-    def descBlankCustomField        (field: String)             : String = "Mandatory field is blank: " + field
-    def descBlankTitle                                          : String = "Title is blank"
-    def descBlankUseCaseStep                                    : String = "Use case step is blank"
-    def descConflictingTags         (tag: String)               : String = "Conflicting " + tag + " tags"
-    def descDeadIssueTag            (tag: HashRefKey)           : String = "Deleted issue tag in use: " + PlainText.hashtag(tag)
-    def descDeadRef                                             : String = "Reference to deleted data"
-    def descDeadTag                 (tag: HashRefKey)           : String = "Deleted tag in use: " + PlainText.hashtag(tag)
-    def descEmptyCodeGroup                                      : String = "Code group has nothing to group"
-    def descFieldDefaultTagDead     (field: String, tag: String): String = s"$field field using deleted tag $tag as a default"
-    def descFieldDefaultTagUnrelated(field: String, tag: String): String = s"$field field using unrelated tag $tag as a default"
-    def descImplicationRequired     (reqType: Mnemonic)         : String = "Implication required for req type: " + reqType.value
-    def descIssueTag                (tag: HashRefKey)           : String = PlainText.hashtag(tag)
-    def descNonApplicableField      (field: String)             : String = field + " field not applicable to any req types"
-    def descUninhabitableTagField   (field: String)             : String = field + " field has no tags"
-    def descManualIssue                                         : String = "Manual"
+    def descBlankCustomField(field: String): String =
+      "Mandatory field is blank: " + field
+
+    def descBlankTitle: String =
+      "Title is blank"
+
+    def descBlankUseCaseStep: String =
+      "Use case step is blank"
+
+    def descConflictingTags(tag: String): String =
+      "Conflicting " + tag + " tags"
+
+    def descDeadIssueTag(tag: HashRefKey): String =
+      "Deleted issue tag in use: " + PlainText.hashtag(tag)
+
+    def descDeadRef: String =
+      "Reference to deleted data"
+
+    def descDeadTag(tag: HashRefKey): String =
+      "Deleted tag in use: " + PlainText.hashtag(tag)
+
+    def descEmptyCodeGroup: String =
+      "Code group has nothing to group"
+
+    def descFieldDefaultTagDead(field: String, tag: String): String =
+      s"$field field using deleted tag $tag as a default"
+
+    def descFieldDefaultTagNotApplicable(field: String, tag: String, reqType: String): String =
+      s"$field field defaults to $tag for $reqType, but $tag isn't applicable to $reqType"
+
+    def descFieldDefaultTagUnrelated(field: String, tag: String): String =
+      s"$field field using unrelated tag $tag as a default"
+
+    def descImplicationRequired(reqType: Mnemonic): String =
+      "Implication required for req type: " + reqType.value
+
+    def descIssueTag(tag: HashRefKey): String =
+      PlainText.hashtag(tag)
+
+    def descNonApplicableField(field: String): String =
+      field + " field not applicable to any req types"
+
+    def descUninhabitableTagField(field: String): String =
+      field + " field has no tags"
+
+    def descManualIssue: String =
+      "Manual"
   }
+
 }

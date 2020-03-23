@@ -304,6 +304,41 @@ object IssueDetectorTest extends TestSuite {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  private object FieldDefaultTagNotApplicableTests {
+    private implicit val filter = IssueFilter[Issue.FieldDefaultTagNotApplicable]
+    import P7._
+
+    def ok() = test(p7)(
+      Event.ApplicableTagUpdate(priHigh, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(co))),
+    )()
+
+    def specific() = test(p7)(
+      Event.ApplicableTagUpdate(priMed, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(co))),
+    )(
+      IssueLite.FieldDefaultTagNotApplicable(priField, priMed, br),
+    )
+
+    def otherwise() = test(p7)(
+      Event.FieldCustomTagUpdate(priField, CustomTagFieldGD(
+        FieldReqTypeRules.defaultTo(priMed).notApplicable(mf, dd).optional(fr).mandatory(uc, si))),
+      Event.ApplicableTagUpdate(priMed, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(co))),
+    )(
+      IssueLite.FieldDefaultTagNotApplicable(priField, priMed, br),
+    )
+
+    def liveReqTypeOnly() = test(p7)(
+      Event.ApplicableTagUpdate(priMed, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(co))),
+      Event.CustomReqTypeDeleteSoft(br)
+    )()
+
+    def liveFieldOnly() = test(p7)(
+      Event.ApplicableTagUpdate(priMed, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(co))),
+      Event.FieldCustomDelete(priField),
+    )()
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   private object FieldDefaultTagUnrelatedTests {
     private implicit val filter = IssueFilter[Issue.FieldDefaultTagUnrelated]
     import P7._
@@ -525,6 +560,15 @@ object IssueDetectorTest extends TestSuite {
       'otherwise - otherwise()
       'unrelated - unrelated()
       'liveOnly  - liveOnly()
+    }
+
+    'FieldDefaultTagNotApplicable {
+      import FieldDefaultTagNotApplicableTests._
+      'ok              - ok()
+      'specific        - specific()
+      'otherwise       - otherwise()
+      'liveReqTypeOnly - liveReqTypeOnly()
+      'liveFieldOnly   - liveFieldOnly()
     }
 
     'FieldDefaultTagUnrelated {
