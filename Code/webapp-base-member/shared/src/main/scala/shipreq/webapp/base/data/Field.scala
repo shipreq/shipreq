@@ -56,24 +56,6 @@ object FieldType {
 // =====================================================================================================================
 // Instances
 
-sealed trait Mandatory extends IsoBool[Mandatory] {
-  override final def companion = Mandatory
-}
-case object Mandatory extends Mandatory with IsoBool.Object[Mandatory] {
-  override def positive = this
-  override def negative = Not
-  case object Not extends Mandatory
-}
-
-sealed trait Deletable extends IsoBool[Deletable] {
-  override final def companion = Deletable
-}
-case object Deletable extends Deletable with IsoBool.Object[Deletable] {
-  override def positive = this
-  override def negative = Not
-  case object Not extends Deletable
-}
-
 /** type [[FieldId]] = [[StaticField]] | [[CustomFieldId]] */
 sealed trait FieldId {
   def foldId[A](s: StaticField => A, c: CustomFieldId => A): A

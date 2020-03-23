@@ -156,7 +156,6 @@ v2.1
   * add usages
   * MakeEvent tests wrt dead/live
   * stablity tests (for events & commands)
-  * Replace Deletable with Mandatory/Optional
 
 * ReqTypes
   * Might be a good idea to store a description & examples. (eg. "BR" means xxx + examples)
