@@ -243,20 +243,7 @@ object TagConfig {
         }
 
       def createOrUpdateButtons(idOption: Option[TagId]): EditorButtons.Props =
-        idOption match {
-          case Some(id) =>
-            EditorButtons.Props.Update(
-              abort  = args.close,
-              delete = submitCmd(p, UpdateConfigCmd.TagDelete(id), "Deleted", _ => args.reset),
-              update = p.potentialSaveCmd.map(submitCmd(p, _, "Updated", _ => args.reset)),
-            )
-
-          case None =>
-            EditorButtons.Props.Create(
-              abort  = args.close,
-              create = p.potentialSaveCmd.toOption.map(submitCmd(p, _, "Created", args.select)),
-            )
-        }
+        EditorButtons.createOrUpdate(args)(idOption, p.potentialSaveCmd)(submitCmd(p, _, _, _), UpdateConfigCmd.TagDelete)
 
       def applicableTagEditor(idOption: Option[ApplicableTagId], enabled: Enabled) = {
         val lens = editorStateLensForApTag(ApplicableTagEditor.State.init(idOption, p.project.config.tags, p.project.config.reqTypes))
@@ -301,10 +288,7 @@ object TagConfig {
             }
 
           val buttons =
-            EditorButtons.Props.Restore(
-              abort   = args.close,
-              restore = submitCmd(p, UpdateConfigCmd.TagRestore(id), "Restored", _ => args.reset),
-            ).render
+            EditorButtons.restore(args)(submitCmd(p, UpdateConfigCmd.TagRestore(id), _, _)).render
 
           <.div(header, editor, buttons)
       }

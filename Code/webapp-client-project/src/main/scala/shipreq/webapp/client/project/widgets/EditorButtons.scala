@@ -13,6 +13,33 @@ import shipreq.webapp.client.project.app.Style.{tagConfig => *}
   */
 object EditorButtons {
 
+  def createOrUpdate[N, Id, S, Cmd](args            : SplitScreenCrud.EditorArgs[N, Id, S])
+                                   (idOption        : Option[Id],
+                                    potentialSaveCmd: PotentialChange[Any, Cmd])
+                                   (submitCmd       : (Cmd, String, Id => Callback) => Callback,
+                                    deleteCmd       : Id => Cmd): Props =
+    idOption match {
+      case Some(id) =>
+        Props.Update(
+          abort  = args.close,
+          delete = submitCmd(deleteCmd(id), "Deleted", _ => args.reset),
+          update = potentialSaveCmd.map(submitCmd(_, "Updated", _ => args.reset)),
+        )
+
+      case None =>
+        Props.Create(
+          abort  = args.close,
+          create = potentialSaveCmd.toOption.map(submitCmd(_, "Created", args.select)),
+        )
+    }
+
+  def restore[N, Id, S, Cmd](args     : SplitScreenCrud.EditorArgs[N, Id, S])
+                            (submitCmd: (String, Id => Callback) => Callback): Props =
+    Props.Restore(
+      abort   = args.close,
+      restore = submitCmd("Restored", _ => args.reset),
+    )
+
   sealed trait Props {
     @inline final def render: VdomElement = Component(this)
   }

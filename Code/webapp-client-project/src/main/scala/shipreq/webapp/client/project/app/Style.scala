@@ -836,6 +836,7 @@ object Style extends StyleSheet.Inline {
     )
 
     @inline def `N/A` = generic.`N/A`
+    @inline def editorTitle = tagConfig.editorTitle
   }
 
   // ===================================================================================================================

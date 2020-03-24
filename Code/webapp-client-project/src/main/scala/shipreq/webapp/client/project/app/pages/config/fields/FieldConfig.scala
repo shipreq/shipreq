@@ -47,16 +47,18 @@ object FieldConfig {
     val asyncInProgress: Boolean =
       AsyncFeature.isInProgress(async.read)
 
+    private[FieldConfig] def isDead(id: FieldId): Boolean =
+      project.config.fields.need(id).live(project.config).is(Dead)
+
     val filterDeadOverride: Option[FilterDead] =
-      None // TODO
-//      state.value.filterDead match {
-//        case ShowDead => None
-//        case HideDead =>
-//          state.value.right.idOption match {
-//            case Some(id) if project.config.tags.tree.need(id).tag.live.is(Dead) => Some(ShowDead)
-//            case _                                                               => None
-//          }
-//      }
+      state.value.filterDead match {
+        case ShowDead => None
+        case HideDead =>
+          state.value.right.idOption match {
+            case Some(id) if isDead(id) => Some(ShowDead)
+            case _                      => None
+          }
+      }
 
     def effectiveFilterDead: FilterDead =
       filterDeadOverride.getOrElse(state.value.filterDead)
@@ -98,12 +100,13 @@ object FieldConfig {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-//  sealed trait EditorType
-//  object EditorType {
-//    final case class Dead         (tagId: FieldId)                extends EditorType
-////    final case class TagGroup     (id: Option[TagGroupId])      extends EditorType
-////    final case class ApplicableTag(id: Option[ApplicableFieldId]) extends EditorType
-//  }
+  sealed trait EditorType
+  object EditorType {
+    final case class Dead    (id: CustomFieldId)                      extends EditorType
+    final case class LiveImp (id: Option[CustomField.Implication.Id]) extends EditorType
+    final case class LiveTag (id: Option[CustomField.Tag        .Id]) extends EditorType
+    final case class LiveText(id: Option[CustomField.Text       .Id]) extends EditorType
+  }
 
 //  private def editorStateLensForApTag(default: => ApplicableTagEditor.State): Lens[EditorState, ApplicableTagEditor.State] =
 //    Optics.disjunctionLensLeft(default)
@@ -183,75 +186,33 @@ object FieldConfig {
         usage              = p.usage,
       ).render
 
-    private def renderHeader(p: Props, args: splitScreenCrud.EditorArgs): VdomNode = {
-
-//      val ateState: Option[ApplicableTagEditor.State] =
-//        p.state.value.right.editorOption.flatMap(_.swap.toOption)
-//
-//      val colourOverride: Option[Option[Colour]] =
-//        ateState.map(_.colour.validated match {
-//          case \/-(c) => c
-//          case -\/(_) => None
-//        })
-//
-//      <.h2(*.editorTitle,
-//        args.id match {
-//
-//          case \/-(id: TagGroupId) =>
-//            Shared.group(p.project.config.tags.needTagGroup(id))
-//
-//          case -\/(NewFieldType.TagGroup) =>
-//            "New tag group"
-//
-//          case \/-(id: ApplicableFieldId) =>
-//            var tag = p.project.config.tags.needApplicableTag(id)
-//            colourOverride.foreach(c => tag = tag.copy(colour = c))
-//            p.pw.tagSimple(tag, includeDesc = false)(*.editorApTagHeader)
-//
-//          case -\/(NewFieldType.Tag) =>
-//            ateState.flatMap(s => DataValidators.hashRefKey.hashRefKey.stateless.unnamed(s.key).toOption) match {
-//
-//              case Some(k) =>
-//                val tag = Shared.fakeApplicableTag.copy(key = k, colour = colourOverride.flatten)
-//                <.span("New tag: ", p.pw.tagSimple(tag, includeDesc = false)(*.editorApTagHeader))
-//
-//              case None =>
-//                "New tag"
-//            }
-//        })
-      <.div("Header args: ", args.toString)
-    }
+    private def renderHeader(p: Props, args: splitScreenCrud.EditorArgs): VdomNode =
+      <.h2(*.editorTitle,
+        args.id match {
+          case \/-(id) => p.project.config.fieldName(id)
+          case -\/(t)  => "New " + t.label
+        })
 
     private def renderEditor(p: Props, args: splitScreenCrud.EditorArgs): VdomNode = {
 
-//      val header: VdomNode =
-//        renderHeader(p, args)
-//
-//      val editorType: EditorType =
-//        args.id match {
-//          case \/-(id) if p.project.config.tags.tree.need(id).tag.live.is(Dead) => EditorType.Dead(id)
-//          case \/-(id: TagGroupId)                                       => EditorType.TagGroup(Some(id))
-//          case \/-(id: ApplicableFieldId)                                  => EditorType.ApplicableTag(Some(id))
-//          case -\/(NewFieldType.TagGroup)                                  => EditorType.TagGroup(None)
-//          case -\/(NewFieldType.Tag)                                       => EditorType.ApplicableTag(None)
-//        }
-//
-//      def createOrUpdateButtons(idOption: Option[FieldId]): EditorButtons.Props =
-//        idOption match {
-//          case Some(id) =>
-//            EditorButtons.Props.Update(
-//              abort  = args.close,
-//              delete = submitCmd(p, UpdateConfigCmd.TagDelete(id), "Deleted", _ => args.reset),
-//              update = p.potentialSaveCmd.map(submitCmd(p, _, "Updated", _ => args.reset)),
-//            )
-//
-//          case None =>
-//            EditorButtons.Props.Create(
-//              abort  = args.close,
-//              create = p.potentialSaveCmd.toOption.map(submitCmd(p, _, "Created", args.select)),
-//            )
-//        }
-//
+      val header: VdomNode =
+        renderHeader(p, args)
+
+      val editorType: EditorType =
+        args.id match {
+          case \/-(id: CustomFieldId)              if p.isDead(id) => EditorType.Dead(id)
+          case \/-(id: CustomField.Implication.Id)                 => EditorType.LiveImp(Some(id))
+          case \/-(id: CustomField.Tag.Id)                         => EditorType.LiveTag(Some(id))
+          case \/-(id: CustomField.Text.Id)                        => EditorType.LiveText(Some(id))
+          case \/-(id: StaticField)                                => ???
+          case -\/(NewFieldType.Imp)                               => EditorType.LiveImp(None)
+          case -\/(NewFieldType.Tag)                               => EditorType.LiveTag(None)
+          case -\/(NewFieldType.Text)                              => EditorType.LiveText(None)
+        }
+
+      def createOrUpdateButtons(idOption: Option[FieldId]): EditorButtons.Props =
+        EditorButtons.createOrUpdate(args)(idOption, p.potentialSaveCmd)(submitCmd(p, _, _, _), UpdateConfigCmd.FieldDelete)
+
 //      def applicableTagEditor(idOption: Option[ApplicableFieldId], enabled: Enabled) = {
 //        val lens = editorStateLensForApTag(ApplicableTagEditor.State.init(idOption, p.project.config.tags, p.project.config.reqTypes))
 //        ApplicableTagEditor.Props(
@@ -275,34 +236,36 @@ object FieldConfig {
 //          enabled    = enabled,
 //        ).render
 //      }
-//
-//      editorType match {
-//        case EditorType.ApplicableTag(idOption) =>
-//          val editor = applicableTagEditor(idOption, Enabled)
-//          val buttons = createOrUpdateButtons(idOption).render
-//          <.div(header, editor, buttons)
-//
-//        case EditorType.TagGroup(idOption) =>
-//          val editor = tagGroupEditor(idOption, Enabled)
-//          val buttons = createOrUpdateButtons(idOption).render
-//          <.div(header, editor, buttons)
-//
-//        case EditorType.Dead(id) =>
-//          val editor =
+
+      editorType match {
+
+        case EditorType.LiveImp(idOption) =>
+          val editor = "TODO"
+          val buttons = createOrUpdateButtons(idOption).render
+          <.div(header, editor, buttons)
+
+        case EditorType.LiveTag(idOption) =>
+          val editor = "TODO"
+          val buttons = createOrUpdateButtons(idOption).render
+          <.div(header, editor, buttons)
+
+        case EditorType.LiveText(idOption) =>
+          val editor = "TODO"
+          val buttons = createOrUpdateButtons(idOption).render
+          <.div(header, editor, buttons)
+
+        case EditorType.Dead(id) =>
+          val editor = "TODO"
 //            id match {
 //              case i: ApplicableFieldId => applicableTagEditor(Some(i), Disabled)
 //              case i: TagGroupId      => tagGroupEditor(Some(i), Disabled)
 //            }
-//
-//          val buttons =
-//            EditorButtons.Props.Restore(
-//              abort   = args.close,
-//              restore = submitCmd(p, UpdateConfigCmd.TagRestore(id), "Restored", _ => args.reset),
-//            ).render
-//
-//          <.div(header, editor, buttons)
-//      }
-      <.div("Editor args: ", args.toString)
+
+          val buttons =
+            EditorButtons.restore(args)(submitCmd(p, UpdateConfigCmd.FieldRestore(id), _, _)).render
+
+          <.div(header, editor, buttons)
+      }
     }
 
     def render(p: Props): VdomNode =
