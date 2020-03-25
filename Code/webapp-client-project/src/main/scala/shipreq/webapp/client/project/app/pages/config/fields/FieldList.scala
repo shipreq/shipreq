@@ -179,11 +179,14 @@ object FieldList {
                 p.usage.fieldLink(id, p.filterDead))
           }
 
+        val select: ReactEvent => Option[Callback] =
+          e => p.select.map(_(id).asEventDefault(e).void)
+
         <.tr(
           *.fieldListTableRow(((rowState(id), item.status), live)),
           item.target,
           ^.key := fieldKey(id),
-          ^.onClick -->? p.select.map(_(id)),
+          ^.onClick ==>? select,
 
           <.td(
             *.fieldListTableDrag(live),
