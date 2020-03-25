@@ -58,16 +58,17 @@ object DataValidators {
     reqTypeSeqStr.map(_.andThenAuditor(a.vector))
 
   def reqTypeSeqStr(reqTypes: ReqTypes): Composite.Stateless[String, Vector[String \/ String], Vector[ReqTypeId]] =
-    reqTypeSeqStr(
-      Auditor((m: Mnemonic) =>
-        reqTypes.allByMnemonic.get(m) match {
-          case Some(rt) => rt.live match {
-            case Live => \/-(rt.reqTypeId)
-            case Dead => -\/(Invalidity(s"${m.value} has been deleted."))
-          }
-          case None => -\/(Invalidity(s"${m.value} is not a valid req type."))
+    reqTypeSeqStr(reqTypeAuditor(reqTypes))
+
+  def reqTypeAuditor(reqTypes: ReqTypes): Auditor[Mnemonic, ReqTypeId] =
+    Auditor((m: Mnemonic) =>
+      reqTypes.allByMnemonic.get(m) match {
+        case Some(rt) => rt.live match {
+          case Live => \/-(rt.reqTypeId)
+          case Dead => -\/(Invalidity(s"${m.value} has been deleted."))
         }
-      )
+        case None => -\/(Invalidity(s"${m.value} is not a valid req type."))
+      }
     )
 
   // ===================================================================================================================
@@ -193,7 +194,10 @@ object DataValidators {
         }).filterDefined)
     }
 
-    // TODO BR-2: A field-set cannot contain more than 30 fields.
+    object State {
+      def from(subject: Option[CustomFieldId], cfg: ProjectConfig): State =
+        apply(subject, () => cfg.fields.customFields.valuesIterator)
+    }
 
     private def nameNotReserved: Invalidator[String] =
       Invalidator.test(!StaticField.names.contains(_), Invalidity("Already in use by built-in features."))

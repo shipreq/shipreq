@@ -27,7 +27,7 @@ object FieldConfig {
 
   type NewState = NewFieldType
 
-  type EditorState = FieldEditor.State
+  type EditorState = Unit \/ Unit \/ TextFieldEditor.State
 
   val splitScreenCrud = new SplitScreenCrud[NewState, FieldId, EditorState](
     rightEmpty = SplitScreenCrud.emptyEditorMessage("field"),
@@ -108,9 +108,9 @@ object FieldConfig {
     final case class LiveText(id: Option[CustomField.Text       .Id]) extends EditorType
   }
 
-//  private def editorStateLensForApTag(default: => ApplicableTagEditor.State): Lens[EditorState, ApplicableTagEditor.State] =
-//    Optics.disjunctionLensLeft(default)
-//
+  private def editorStateLensForText(default: => TextFieldEditor.State): Lens[EditorState, TextFieldEditor.State] =
+    Optics.disjunctionLensRight(default)
+
 //  private def editorStateLensForGroup(default: => TagGroupEditor.State): Lens[EditorState, TagGroupEditor.State] =
 //    Optics.disjunctionLensRight(default)
 
@@ -118,11 +118,11 @@ object FieldConfig {
     import SplitScreenCrud.NewArgs
 
     private val initEditor: (NewFieldType \/ FieldId) => CallbackTo[EditorState] = {
-      case \/-(id: CustomFieldId) => $.props.map(p => FieldEditor.State.init(id, p.project.config))
-      case \/-(id: StaticField)   => ???
-      case -\/(NewFieldType.Imp ) => CallbackTo.pure(FieldEditor.State.initNewImp)
-      case -\/(NewFieldType.Tag ) => CallbackTo.pure(FieldEditor.State.initNewTag)
-      case -\/(NewFieldType.Text) => CallbackTo.pure(FieldEditor.State.initNewText)
+      case \/-(id: CustomField.Text.Id) => $.props.map(p => \/-(TextFieldEditor.State.init(id, p.project.config)))
+//      case \/-(id: StaticField)   => ???
+//      case -\/(NewFieldType.Imp ) => ???
+//      case -\/(NewFieldType.Tag ) => ???
+      case -\/(NewFieldType.Text) => CallbackTo.pure(\/-(TextFieldEditor.State.empty))
     }
 
     private val updateOrder: Reusable[UpdateConfigCmd.FieldUpdateOrder => Callback] =
@@ -200,42 +200,31 @@ object FieldConfig {
 
       val editorType: EditorType =
         args.id match {
-          case \/-(id: CustomFieldId)              if p.isDead(id) => EditorType.Dead(id)
-          case \/-(id: CustomField.Implication.Id)                 => EditorType.LiveImp(Some(id))
-          case \/-(id: CustomField.Tag.Id)                         => EditorType.LiveTag(Some(id))
-          case \/-(id: CustomField.Text.Id)                        => EditorType.LiveText(Some(id))
-          case \/-(id: StaticField)                                => ???
-          case -\/(NewFieldType.Imp)                               => EditorType.LiveImp(None)
-          case -\/(NewFieldType.Tag)                               => EditorType.LiveTag(None)
-          case -\/(NewFieldType.Text)                              => EditorType.LiveText(None)
+          case \/-(fid: CustomFieldId) =>
+            if (p.isDead(fid))
+              EditorType.Dead(fid)
+            else fid match {
+              case id: CustomField.Implication.Id => EditorType.LiveImp(Some(id))
+              case id: CustomField.Tag.Id         => EditorType.LiveTag(Some(id))
+              case id: CustomField.Text.Id        => EditorType.LiveText(Some(id))
+            }
+          case -\/(NewFieldType.Imp)  => EditorType.LiveImp(None)
+          case -\/(NewFieldType.Tag)  => EditorType.LiveTag(None)
+          case -\/(NewFieldType.Text) => EditorType.LiveText(None)
         }
 
       def createOrUpdateButtons(idOption: Option[FieldId]): EditorButtons.Props =
         EditorButtons.createOrUpdate(args)(idOption, p.potentialSaveCmd)(submitCmd(p, _, _, _), UpdateConfigCmd.FieldDelete)
 
-//      def applicableTagEditor(idOption: Option[ApplicableFieldId], enabled: Enabled) = {
-//        val lens = editorStateLensForApTag(ApplicableTagEditor.State.init(idOption, p.project.config.tags, p.project.config.reqTypes))
-//        ApplicableTagEditor.Props(
-//          subject    = idOption,
-//          filterDead = p.effectiveFilterDead,
-//          state      = args.state.zoomStateL(lens),
-//          project    = p.project.config,
-//          pw         = p.pw,
-//          enabled    = enabled,
-//        ).render
-//      }
-//
-//      def tagGroupEditor(idOption: Option[TagGroupId], enabled: Enabled) = {
-//        val lens = editorStateLensForGroup(TagGroupEditor.State.init(idOption, p.project.config.tags))
-//        TagGroupEditor.Props(
-//          subject    = idOption,
-//          filterDead = p.effectiveFilterDead,
-//          state      = args.state.zoomStateL(lens),
-//          project    = p.project.config,
-//          pw         = p.pw,
-//          enabled    = enabled,
-//        ).render
-//      }
+      def textFieldEditor(idOption: Option[CustomField.Text.Id], enabled: Enabled) = {
+        val lens = editorStateLensForText(TextFieldEditor.State.init(idOption, p.project.config))
+        TextFieldEditor.Props(
+          state      = args.state.zoomStateL(lens),
+          cfg        = p.project.config,
+          filterDead = p.effectiveFilterDead,
+          enabled    = enabled,
+        )
+      }
 
       editorType match {
 
@@ -250,7 +239,7 @@ object FieldConfig {
           <.div(header, editor, buttons)
 
         case EditorType.LiveText(idOption) =>
-          val editor = "TODO"
+          val editor = textFieldEditor(idOption, Enabled).render
           val buttons = createOrUpdateButtons(idOption).render
           <.div(header, editor, buttons)
 

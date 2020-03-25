@@ -14,7 +14,28 @@ object Input {
   val Action      = Base(^.cls := "action")
   val ActionError = Action(^.cls := "error")
 
+  val errorAttr = VdomAttr.devOnly("data-err")
+
   object Text {
+
+    def apply(input: TagMod): VdomTag =
+      Base(<.input.text(input))
+
+    def apply(input: TagMod, validity: Validity): VdomTag = {
+      var r = apply(input)
+      if (validity is Invalid)
+        r = r(^.cls := "error")
+      r
+    }
+
+    def apply(input: TagMod, error: Option[VdomTag]): TagMod =
+      apply(input, EmptyVdom, error)
+
+    def apply(input: TagMod, afterInput: TagMod, error: Option[VdomTag]): TagMod =
+      error match {
+        case None      => TagMod(apply(input), afterInput)
+        case Some(err) => TagMod(apply(input, Invalid), afterInput, <.div(errorAttr := "1", Form.validationErr, err))
+      }
 
     /** Text input with:
       * - icon inside on the left

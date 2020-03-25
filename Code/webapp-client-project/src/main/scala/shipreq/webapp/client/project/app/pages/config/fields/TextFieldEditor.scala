@@ -1,0 +1,83 @@
+package shipreq.webapp.client.project.app.pages.config.fields
+
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.vdom.html_<^._
+import monocle.macros.Lenses
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.lib.ValidationUX
+import shipreq.webapp.base.ui.semantic.Form
+import shipreq.webapp.client.project.lib.DataReusability._
+
+object TextFieldEditor {
+  import DataImplicits._
+
+  final case class Props(state     : StateSnapshot[State],
+                         cfg       : ProjectConfig,
+                         filterDead: FilterDead,
+                         enabled   : Enabled) {
+
+    val validatorState: DataValidators.field.State =
+      state.value.validatorState(cfg)
+
+    @inline def render: VdomElement = Component(this)
+  }
+
+  @Lenses
+  final case class State(idOption: Option[CustomField.Text.Id],
+                         name    : String,
+                         rules   : ReqTypeRulesEditor.NoDefault.State) {
+
+    def validatorState(cfg: ProjectConfig): DataValidators.field.State =
+      DataValidators.field.State.from(idOption, cfg)
+  }
+
+  object State {
+    def empty: State =
+      apply(None, "", ReqTypeRulesEditor.State.empty)
+
+    def init(id: CustomField.Text.Id, cfg: ProjectConfig): State = {
+      val f = cfg.fields.custom(id)
+      apply(Some(id), f.name, ReqTypeRulesEditor.State.init(cfg, f.fieldReqTypeRulesByResolution))
+    }
+
+    def init(id: Option[CustomField.Text.Id], cfg: ProjectConfig): State =
+      id.fold(empty)(init(_, cfg))
+  }
+
+  // ===================================================================================================================
+
+  final class Backend($: BackendScope[Props, Unit]) {
+    def render(p: Props): VdomNode = {
+      val s = p.state.value
+
+      val nameField =
+        Form.Field.text
+          .withLabel("Name")
+          .withState(p.state.zoomStateL(State.name))
+          .withValidator(DataValidators.field.name.unnamedFn(p.validatorState))
+          .withEnabledAndAutoFocus(p.enabled)
+
+      val rules =
+        ReqTypeRulesEditor.NoDefault.Component(
+          ReqTypeRulesEditor.Props.noDefaults(
+            state         = p.state.zoomStateL(State.rules),
+            reqTypes      = p.cfg.reqTypes,
+            filterDead    = p.filterDead,
+            enabled       = p.enabled))
+
+      <.div(
+        Form(nameField)(ValidationUX.Full),
+        rules)
+    }
+  }
+
+  implicit val reusabilityState: Reusability[State] = Reusability.derive
+  implicit val reusabilityProps: Reusability[Props] = Reusability.derive
+
+  val Component = ScalaComponent.builder[Props]("TextFieldEditor")
+    .renderBackend[Backend]
+    .configure(Reusability.shouldComponentUpdate)
+    .build
+}

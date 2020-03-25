@@ -113,4 +113,7 @@ object Optics {
 
   def lensTuple2_2[A, B]: Lens[(A, B), B] =
     Lens[(A, B), B](_._2)(b => ab => (ab._1, b))
+
+  def vectorElementUnsafe[A](idx: Int): Lens[Vector[A], A] =
+    Lens[Vector[A], A](_(idx))(a => _.updated(idx, a))
 }

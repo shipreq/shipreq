@@ -170,11 +170,11 @@ final case class ReqTypes(custom: IMap[CustomReqTypeId, CustomReqType]) {
         }
     }
 
-  def makeSeqStr(ids: Set[ReqTypeId]): String =
+  def makeSeqStr(ids: Set[ReqTypeId], sep: String = " "): String =
     MutableArray(ids)
       .map(need(_).mnemonic.value)
       .sort
-      .mkString(" ")
+      .mkString(sep)
 }
 
 object ReqTypes {

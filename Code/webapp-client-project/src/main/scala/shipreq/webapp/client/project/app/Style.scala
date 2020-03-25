@@ -835,6 +835,39 @@ object Style extends StyleSheet.Inline {
       margin.horizontal(.7 ex)
     )
 
+    val rulesEditor = style(
+      addClassNames("table" ,"ui" ,"single" ,"line" ,"table")
+    )
+
+    val rulesEditorDefault = style(
+      marginLeft(1.5 ex),
+    )
+
+    val rulesEditorOtherwise = style(
+      paddingLeft(2 ex),
+    )
+
+    val rulesEditorButton = style(
+      textAlign.right,
+      width(1 px),
+    )
+
+    val rulesDeadReqTypes = style(
+      color(c"#444"),
+      textAlign.right,
+      marginTop(0.15 em),
+    )
+
+    val rulesDeadReqTypesInner = style(
+      color(c"#999"),
+      marginLeft(1 ex),
+    )
+
+    val rulesOtherDeadReqType = style(
+      color(c"#999"),
+      textDecoration := "line-through",
+    )
+
     @inline def `N/A` = generic.`N/A`
     @inline def editorTitle = tagConfig.editorTitle
   }

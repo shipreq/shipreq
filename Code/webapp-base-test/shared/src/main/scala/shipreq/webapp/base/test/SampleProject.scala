@@ -10,6 +10,10 @@ import UnsafeTypes._
  * Sample project with:
  *    - sample config
  *    - no content
+ *
+ * ReqTypes:
+ *    - live: BR, CO, FR, MF, UC
+ *    - dead: DD, SI
  */
 object SampleProject {
 

@@ -10,29 +10,65 @@ object Select {
 
   type OptionKey = String
 
-  case class Option[+A](key: OptionKey, title: String, value: A)
+  final case class Option[+A](key: OptionKey, title: String, value: A)
 
   implicit def optionOrdering[A]: Ordering[Option[A]] = Ordering.by(_.title)
 
-  def apply[A](options: Traversable[Option[A]],
-               selected: js.UndefOr[OptionKey] = js.undefined)(
-               onChange: Option[A] => Callback) = {
+  sealed trait Props {
+    type A
+    val options : Traversable[Option[A]]
+    val selected: js.UndefOr[OptionKey]
+    val tagMod  : TagMod
+    val onChange: Option[A] => Callback
 
-    val optionArray =
-      options.toVdomArray(o => <.option(^.key := o.key, ^.value := o.key, o.title))
+    private[Select] lazy val rendered = {
+      val optionArray =
+        options.toVdomArray(o => <.option(^.key := o.key, ^.value := o.key, o.title))
 
-    def onChange2: ReactEventFrom[HTMLSelectElement] => Callback =
-      _.extract(_.target.value)(v =>
-        options.find(_.key ==* v) match {
-          case Some(o) => onChange(o)
-          case None => Callback.warn(s"'$v' missing from $options")
-        }
-      )
+      def onChange2: ReactEventFrom[HTMLSelectElement] => Callback =
+        _.extract(_.target.value)(v =>
+          options.find(_.key ==* v) match {
+            case Some(o) => onChange(o)
+            case None => Callback.warn(s"'$v' missing from $options")
+          }
+        )
 
-    <.select(
-      ^.cls := "ui dropdown",
-      ^.value := selected.getOrElse(null),
-      ^.onChange ==> onChange2,
-      optionArray)
+      <.select(
+        tagMod,
+        ^.cls := "ui dropdown",
+        ^.value := selected.getOrElse(null),
+        ^.onChange ==> onChange2,
+        optionArray)
+    }
   }
+
+  def apply[A](options : Traversable[Option[A]],
+               selected: js.UndefOr[OptionKey] = js.undefined,
+               tagMod  : TagMod = EmptyVdom)
+              (onChange: Option[A] => Callback): VdomElement = {
+    type AA       = A
+    val _options  = options
+    val _selected = selected
+    val _tagMod   = tagMod
+    val _onChange = onChange
+    Component(new Props {
+      override type A = AA
+      override val options  = _options
+      override val selected = _selected
+      override val tagMod   = _tagMod
+      override val onChange = _onChange
+    })
+  }
+
+  private class Backend($: BackendScope[Props, Unit]) {
+    val enableDropdown: Callback =
+      Dropdown.enable($.getDOMNode)
+  }
+
+  private val Component = ScalaComponent.builder[Props]("Select")
+    .backend(new Backend(_))
+    .render_P(_.rendered)
+    .componentDidMount(_.backend.enableDropdown)
+    .componentDidUpdate(_.backend.enableDropdown)
+    .build
 }

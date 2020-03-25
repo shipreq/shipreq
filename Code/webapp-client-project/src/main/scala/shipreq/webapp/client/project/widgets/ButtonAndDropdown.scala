@@ -14,6 +14,7 @@ import shipreq.webapp.base.ui.semantic._
   *
   * Eg. [ New | Tag ↓ ]
   */
+@UsesSemanticUiManually
 object ButtonAndDropdown {
 
   class Types[A] {

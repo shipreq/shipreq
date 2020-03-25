@@ -31,6 +31,9 @@ object CommonValidation {
     val nonEmpty: Invalidator[String] =
       Invalidator.test(_.nonEmpty, invalidBecauseEmpty)
 
+    def nonEmptyVector[A]: Invalidator[Vector[A]] =
+      Invalidator.test(_.nonEmpty, invalidBecauseEmpty)
+
     def matchesRegex(regex: Pattern): InvalidatorLogic[String] =
       Invalidator.logic(regex.matcher(_).matches)
 

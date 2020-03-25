@@ -62,7 +62,7 @@ object ReqTypeSelector {
           .iterator
           .to[List]
 
-      val select = Select(options, key(p.edit.value))(p.edit setState _.value)(*.dropdown)
+      val select = Select(options, key(p.edit.value), *.dropdown)(p.edit setState _.value)
 
       val commitButton = Button(
         tipe = Button.Type.IconOnly(Icon.Checkmark),

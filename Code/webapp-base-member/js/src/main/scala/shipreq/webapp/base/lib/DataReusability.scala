@@ -37,11 +37,20 @@ abstract class DataReusability extends BaseReusability {
   implicit def reusabilityLiveDeadStatMap[K: UnivEq, V: UnivEq]: Reusability[LiveDeadStatMap[K, V]] =
     Reusability.byRefOrUnivEq
 
+  implicit def reusabilityImpossible: Reusability[Impossible] =
+    Reusability.always
+
   implicit def reusabilityUsername: Reusability[Username] =
     Reusability.derive
 
   implicit def reusabilityColour: Reusability[Colour] =
     Reusability.byUnivEq
+
+  implicit def reusabilityFieldReqTypeRulesResolution[D: UnivEq]: Reusability[FieldReqTypeRules.Resolution[D]] =
+    Reusability.byUnivEq
+
+  implicit def reusabilityFieldReqTypeRulesByResolution[D: UnivEq]: Reusability[FieldReqTypeRules.ByResolution[D]] =
+    Reusability.byRefOrUnivEq
 
   implicit lazy val reusabilityProjectMetaData: Reusability[ProjectMetaData] =
     Reusability.byRef || Reusability.derive

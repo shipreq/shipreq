@@ -18,7 +18,6 @@ import shipreq.webapp.client.project.app.Style.{tagConfig => *}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.{DropdownButton, ProjectWidgets}
 
-
 object TagRelationshipEditor {
   import DataImplicits._
   import TagInTree.Relations
