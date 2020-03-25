@@ -139,6 +139,12 @@ object PotentialChange {
       case None    => Unchanged
     }
 
+  def needFromOption[A](o: Option[A]): PotentialChange[Unit, A] =
+    o match {
+      case Some(a) => Success(a)
+      case None    => Failure(())
+    }
+
   def nonEmpty[A, B](a: A)(implicit p: NonEmpty.Proof[A, B]): NonFailure[B] =
     fromOption(p tryProve a)
 }

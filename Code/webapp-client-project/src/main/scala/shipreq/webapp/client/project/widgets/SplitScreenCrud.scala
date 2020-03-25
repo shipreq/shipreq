@@ -6,9 +6,10 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.MonocleReact._
 import monocle.macros.Lenses
 import scala.reflect.ClassTag
-import shipreq.webapp.base.data._
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.client.project.app.Style.widgets.{splitScreenCrud => *}
 
 
@@ -67,17 +68,19 @@ object SplitScreenCrud {
     }
   }
 
-  final case class EditorArgs[N, Id, S](id    : N \/ Id,
-                                        state : StateSnapshot[S],
-                                        reset : Callback,
-                                        select: Id => Callback,
-                                        close : Callback)
+  final case class EditorArgs[N, Id, S](id     : N \/ Id,
+                                        state  : StateSnapshot[S],
+                                        reset  : Project => Callback,
+                                        select : Id => Callback,
+                                        selectP: (Project, Id) => Callback,
+                                        close  : Callback)
 
   final case class Props[N, Id, E](filterDeadOverride: Option[FilterDead],
+                                   project           : Project,
                                    newButton         : NewArgs[N] => VdomNode,
                                    list              : ListArgs[Id] => VdomNode,
                                    editor            : EditorArgs[N, Id, E] => VdomNode,
-                                   initEditor        : (N \/ Id) => CallbackTo[E],
+                                   initEditor        : (Project, N \/ Id) => E,
                                    state             : StateSnapshot[State[N, Id, E]])
 
   @Lenses
@@ -147,12 +150,13 @@ final class SplitScreenCrud[
   type EditorArgs = SplitScreenCrud.EditorArgs[NewState, Id, EditorState]
 
   @inline def apply(filterDeadOverride: Option[FilterDead],
+                    project           : Project,
                     newButton         : NewArgs    => VdomNode,
                     list              : ListArgs   => VdomNode,
                     editor            : EditorArgs => VdomNode,
-                    initEditor        : (NewState \/ Id) => CallbackTo[EditorState],
+                    initEditor        : (Project, NewState \/ Id) => EditorState,
                     state             : StateSnapshot[State]): VdomNode =
-    Component(SplitScreenCrud.Props(filterDeadOverride, newButton, list, editor, initEditor, state))
+    Component(SplitScreenCrud.Props(filterDeadOverride, project, newButton, list, editor, initEditor, state))
 
   def initState(newState: NewState): State =
     S(newState, HideDead, S.Right.Empty, S.Right.Empty)
@@ -167,23 +171,32 @@ final class SplitScreenCrud[
 
   sealed class Backend($: BackendScope[Props, Unit]) {
 
+    private def _select(project: Option[Project], id: Id): Callback =
+      for {
+        p           <- $.props
+        editorState  = p.initEditor(project.getOrElse(p.project), \/-(id))
+        right        = S.Right.Update(id, editorState)
+        _           <- p.state.modState(_.copy(right = right))
+      } yield ()
+
     private val select: Id ~=> Callback =
-      Reusable.byRef(
-        id =>
-          for {
-            p           <- $.props
-            editorState <- p.initEditor(\/-(id))
-            right        = S.Right.Update(id, editorState)
-            _           <- p.state.modState(_.copy(right = right))
-          } yield ()
-      )
+      Reusable.byRef(_select(None, _))
+
+    private val selectP: (Project, Id) => Callback =
+      (p, i) => _select(Some(p), i)
+
+    private val resetExisting: Id ~=> (Project ~=> Callback) =
+      Reusable.fn((id, project) => _select(Some(project), id))
+
+    private val resetNew: Project ~=> Callback =
+      Reusable.fn(_ => $.props.flatMap(p => openNewEditor(p.state.value.newState)))
 
     private val openNewEditor: NewState ~=> Callback =
       Reusable.byRef(
         ns =>
           for {
             p           <- $.props
-            editorState <- p.initEditor(-\/(ns))
+            editorState  = p.initEditor(p.project, -\/(ns))
             right        = S.Right.Create(editorState)
             _           <- p.state.modState(_.copy(right = right))
           } yield ()
@@ -255,20 +268,22 @@ final class SplitScreenCrud[
 
           case S.Right.Create(es) =>
             Some(SplitScreenCrud.EditorArgs(
-              id     = -\/(s.newState),
-              state  = StateSnapshot(es)(setCreateState),
-              reset  = Callback.byName(openNewEditor(p.state.value.newState)),
-              select = select,
-              close  = closeEditor,
+              id      = -\/(s.newState),
+              state   = StateSnapshot(es)(setCreateState),
+              reset   = resetNew,
+              select  = select,
+              selectP = selectP,
+              close   = closeEditor,
             ))
 
           case S.Right.Update(id, es) =>
             Some(SplitScreenCrud.EditorArgs(
-              id     = \/-(id),
-              state  = StateSnapshot(es)(setUpdateState(id)),
-              reset  = select(id),
-              select = select,
-              close  = closeEditor,
+              id      = \/-(id),
+              state   = StateSnapshot(es)(setUpdateState(id)),
+              reset   = resetExisting(id),
+              select  = select,
+              selectP = selectP,
+              close   = closeEditor,
             ))
         }
 

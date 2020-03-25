@@ -4,6 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.base.util.PotentialChange
+import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.ui.semantic.{Button, Colour, ColourPlus, Icon}
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
 
@@ -16,28 +17,28 @@ object EditorButtons {
   def createOrUpdate[N, Id, S, Cmd](args            : SplitScreenCrud.EditorArgs[N, Id, S])
                                    (idOption        : Option[Id],
                                     potentialSaveCmd: PotentialChange[Any, Cmd])
-                                   (submitCmd       : (Cmd, String, Id => Callback) => Callback,
+                                   (submitCmd       : (Cmd, String, (Project, Id) => Callback) => Callback,
                                     deleteCmd       : Id => Cmd): Props =
     idOption match {
       case Some(id) =>
         Props.Update(
           abort  = args.close,
-          delete = submitCmd(deleteCmd(id), "Deleted", _ => args.reset),
-          update = potentialSaveCmd.map(submitCmd(_, "Updated", _ => args.reset)),
+          delete = submitCmd(deleteCmd(id), "Deleted", (p, _) => args.reset(p)),
+          update = potentialSaveCmd.map(submitCmd(_, "Updated", (p, _) => args.reset(p))),
         )
 
       case None =>
         Props.Create(
           abort  = args.close,
-          create = potentialSaveCmd.toOption.map(submitCmd(_, "Created", args.select)),
+          create = potentialSaveCmd.toOption.map(submitCmd(_, "Created", args.selectP)),
         )
     }
 
   def restore[N, Id, S, Cmd](args     : SplitScreenCrud.EditorArgs[N, Id, S])
-                            (submitCmd: (String, Id => Callback) => Callback): Props =
+                            (submitCmd: (String, (Project, Id) => Callback) => Callback): Props =
     Props.Restore(
       abort   = args.close,
-      restore = submitCmd("Restored", _ => args.reset),
+      restore = submitCmd("Restored", (p, _) => args.reset(p)),
     )
 
   sealed trait Props {

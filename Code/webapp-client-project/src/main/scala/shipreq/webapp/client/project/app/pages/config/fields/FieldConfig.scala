@@ -64,12 +64,10 @@ object FieldConfig {
       filterDeadOverride.getOrElse(state.value.filterDead)
 
     val potentialSaveCmd: PotentialChange[Unit, UpdateConfigCmd.ToModifyFields] =
-      PotentialChange.Unchanged // TODO
-//      state.value.right.editorOption match {
-//        case Some(\/-(s)) => s.updateCmd(project.config)
-//        case Some(-\/(s)) => s.updateCmd(project.config)
-//        case None         => PotentialChange.Unchanged
-//      }
+      state.value.right.editorOption match {
+        case Some(\/-(s)) => s.updateCmd(project.config)
+        case None         => PotentialChange.Unchanged
+      }
 
     @inline def render: VdomElement = Component(this)
   }
@@ -117,13 +115,14 @@ object FieldConfig {
   final class Backend($: BackendScope[Props, Unit]) {
     import SplitScreenCrud.NewArgs
 
-    private val initEditor: (NewFieldType \/ FieldId) => CallbackTo[EditorState] = {
-      case \/-(id: CustomField.Text.Id) => $.props.map(p => \/-(TextFieldEditor.State.init(id, p.project.config)))
-//      case \/-(id: StaticField)   => ???
-//      case -\/(NewFieldType.Imp ) => ???
-//      case -\/(NewFieldType.Tag ) => ???
-      case -\/(NewFieldType.Text) => CallbackTo.pure(\/-(TextFieldEditor.State.empty))
-    }
+    private def initEditor(project: Project, arg: NewFieldType \/ FieldId): EditorState =
+      arg match {
+        case \/-(id: CustomField.Text.Id) => \/-(TextFieldEditor.State.init(id, project.config))
+        //      case \/-(id: StaticField)   => ???
+        //      case -\/(NewFieldType.Imp ) => ???
+        //      case -\/(NewFieldType.Tag ) => ???
+        case -\/(NewFieldType.Text) => \/-(TextFieldEditor.State.empty)
+      }
 
     private val updateOrder: Reusable[UpdateConfigCmd.FieldUpdateOrder => Callback] =
       Reusable.byRef { cmd =>
@@ -136,7 +135,7 @@ object FieldConfig {
     private def submitCmd(p          : Props,
                           cmd        : UpdateConfigCmd.ToModifyFields,
                           toastPrefix: String,
-                          onSuccess  : FieldId => Callback = _ => Callback.empty): Callback =
+                          onSuccess  : (Project, FieldId) => Callback = (_, _) => Callback.empty): Callback =
       p.async.write.forgetFailure(
         p.ssp(cmd).flatTap {
           case \/-(n) =>
@@ -144,7 +143,7 @@ object FieldConfig {
               for {
                 p2 <- $.props
                 _  <- p2.toast.add(s"$toastPrefix ${p2.project.config.fieldName(id)}")
-                _  <- onSuccess(id)
+                _  <- onSuccess(n.project, id)
               } yield ()
             ).asAsyncCallback
 
@@ -260,6 +259,7 @@ object FieldConfig {
     def render(p: Props): VdomNode =
       splitScreenCrud(
         filterDeadOverride = p.filterDeadOverride,
+        project            = p.project,
         newButton          = newButtonProps(p, _).render,
         list               = renderLeft(p, _),
         editor             = renderEditor(p, _),

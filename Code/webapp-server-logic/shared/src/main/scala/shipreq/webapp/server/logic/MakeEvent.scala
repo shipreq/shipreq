@@ -131,6 +131,7 @@ object MakeEvent {
           val vs2 = gdUnequalValues2(CustomTextFieldGD, cur, vs)
           eventIfNonEmpty(vs2)(FieldCustomTextUpdate(id, _))
         }
+
       case UpdateConfigCmd.FieldDelete(f: StaticField) =>
         FieldStaticRemove(f)
 

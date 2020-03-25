@@ -58,4 +58,7 @@ object FieldConfigTestDsl {
 
   def setRuleReqTypes(rowIdx: Int, txt: String): *.Actions =
     *.action(s"Set rules[$rowIdx].reqTypes to: $txt")(SimEvent.Change(txt) simulate _.obs.editor.get.rules.rows(rowIdx).reqTypesDom.get)
+
+  def setRuleReqRes(rowIdx: Int, res: String): *.Actions =
+    *.action(s"Set rules[$rowIdx].res to: $res")(_.obs.editor.get.rules.rows(rowIdx).res.select(res))
 }

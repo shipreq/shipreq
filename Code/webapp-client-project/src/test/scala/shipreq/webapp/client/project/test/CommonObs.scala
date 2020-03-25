@@ -2,6 +2,7 @@ package shipreq.webapp.client.project.test
 
 import shipreq.webapp.base.test.TestState._
 import japgolly.scalajs.react.test._
+import shipreq.webapp.base.ui.semantic.JQuery
 
 object CommonObs {
 
@@ -12,9 +13,10 @@ object CommonObs {
 
     def select(name: String): Unit = {
       val doms = $(".menu").collect0n(".item").filter(_.innerText.trim == name).doms
-      if (doms.length == 1)
-        Simulate.click(doms.head)
-      else
+      if (doms.length == 1) {
+        val dom = doms.head
+        JQuery($.dom).dropdown("set selected", dom.getAttribute("data-value"))
+      } else
         throw new RuntimeException(doms.map(_.innerText).mkString("Multiple candidates: ", ", ", ""))
     }
   }

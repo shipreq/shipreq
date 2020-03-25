@@ -57,7 +57,7 @@ object Buttons {
         var vs = Vector.empty[String]
         def cmp(name: String, e: Option[B], a: Option[B]) = {
           def f(o: Option[B]) = o.fold("None")(_.toString)
-          if (e != a) vs :+= s"$name: ${f(a)} should be ${f(e)}"
+          if (e != a) vs :+= s"$name: ${f(a)} but test expects ${f(e)}"
         }
         cmp("delete ", expected.delete , actual.delete )
         cmp("restore", expected.restore, actual.restore)

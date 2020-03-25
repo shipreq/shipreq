@@ -1,6 +1,7 @@
 package shipreq.webapp.base.data
 
 import japgolly.microlibs.nonempty.NonEmptySet
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq.UnivEq
 import monocle.Traversal
 import scalaz.Applicative
@@ -187,6 +188,18 @@ object FieldReqTypeRules {
           ids.iterator.map((_, res))
         }.toMap
       FieldReqTypeRules(byId, otherwise)
+    }
+  }
+
+  object ByResolution {
+    def build[D](perRes: TraversableOnce[(Resolution[D], Set[ReqTypeId])], otherwise: Resolution[D]): ByResolution[D] = {
+      var m = Map.empty[Resolution[D], NonEmptySet[ReqTypeId]]
+      for {
+        (res, ids) <- perRes
+        id         <- ids
+      }
+        m = m.setOrModifyValue(res, NonEmptySet one id, _ + id)
+      apply(m, otherwise)
     }
   }
 

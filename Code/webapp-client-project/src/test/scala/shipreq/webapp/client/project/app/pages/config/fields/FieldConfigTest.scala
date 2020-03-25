@@ -3,11 +3,8 @@ package shipreq.webapp.client.project.app.pages.config.fields
 import utest._
 import utest.framework.TestPath
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.Event
-import shipreq.webapp.base.test.SampleProject7.Values._
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.config.Buttons
@@ -36,13 +33,6 @@ object FieldConfigTest extends TestSuite {
 
 //  @inline private implicit def autoSomeEnabled(e: Enabled): Option[Enabled] = Some(e)
 //  @inline private implicit def autoSomeString(s: String): Option[String] = Some(s)
-
-  import StaticField.{
-    ImplicationGraph => IG,
-    NormalAltStepTree => NCAC,
-    ExceptionStepTree => EC,
-    StepGraph => SG,
-  }
 
   private def testFieldListView()(implicit tp: TestPath) =
     runActions(SampleProject6.project)(
@@ -83,6 +73,7 @@ object FieldConfigTest extends TestSuite {
         +> editorRules.assert(
         RuleRow("MF, UC", "Optional"),
         RuleRow.other("BR, CO, FR", "Not applicable"))
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
 
         >> clickFilterDead
         +> filterDead.assert(ShowDead)
@@ -98,10 +89,12 @@ object FieldConfigTest extends TestSuite {
         >> setEditorName("Component")
         +> editorNameError.assert("Already in use.")
 
+        >> setEditorName("Description")
+
         >> addEditorRule
         +> editorRules.assert(
         RuleRow("MF, UC", "Optional", deadReqTypes = "SI"),
-        RuleRow("", "Optional", reqTypesError = "Cannot be blank."),
+        RuleRow.New,
         RuleRow.other("BR, CO, DD, FR", "Not applicable"))
 
         >> setRuleReqTypes(1, "MF")
@@ -121,6 +114,7 @@ object FieldConfigTest extends TestSuite {
         RuleRow("MF, UC", "Optional", deadReqTypes = "SI"),
         RuleRow("DD", "Optional", reqTypesError = "DD has been deleted."),
         RuleRow.other("BR, CO, DD, FR", "Not applicable"))
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, cancel = Enabled, save = Disabled))
 
         >> setRuleReqTypes(1, "co fr")
         +> editorRules.assert(
@@ -128,16 +122,51 @@ object FieldConfigTest extends TestSuite {
         RuleRow("CO FR", "Optional"),
         RuleRow.other("BR, DD", "Not applicable"))
 
-        >> delEditorRule(0)
+        >> delEditorRule(1)
         +> editorRules.assert(
-        RuleRow("CO FR", "Optional"),
-        RuleRow.other("BR, DD, MF, SI, UC", "Not applicable"))
+        RuleRow("MF, UC", "Optional", deadReqTypes = "SI"),
+        RuleRow.other("BR, CO, DD, FR", "Not applicable"))
 
         >> clickFilterDead
         +> filterDead.assert(HideDead)
         +> editorRules.assert(
-        RuleRow("CO FR", "Optional"),
-        RuleRow.other("BR, MF, UC", "Not applicable"))
+        RuleRow("MF, UC", "Optional"),
+        RuleRow.other("BR, CO, FR", "Not applicable"))
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
+
+        >> addEditorRule
+        >> addEditorRule
+        +> editorRules.assert(
+        RuleRow("MF, UC", "Optional"),
+        RuleRow.New,
+        RuleRow.New,
+        RuleRow.other("BR, CO, FR", "Not applicable"))
+
+        >> setRuleReqTypes(1, "co")
+        >> setRuleReqTypes(2, "fr, br")
+        >> setRuleReqRes(1, "Mandatory")
+        +> editorRules.assert(
+        RuleRow("MF, UC", "Optional"),
+        RuleRow("CO", "Mandatory"),
+        RuleRow("FR, BR", "Optional"),
+        RuleRow.other("", "Not applicable"))
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, cancel = Enabled, save = Enabled))
+
+        >> clickSaveButton
+        +> editorRules.assert(
+        RuleRow("BR, FR, MF, UC", "Optional"),
+        RuleRow("CO", "Mandatory"),
+        RuleRow.other("", "Not applicable"))
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
+
+        >> clickFilterDead
+        +> filterDead.assert(ShowDead)
+        +> editorName.assert("Description")
+        +> editorNameError.assert.empty
+        +> editorRules.assert(
+        RuleRow("BR, FR, MF, UC", "Optional", deadReqTypes = "SI"),
+        RuleRow("CO", "Mandatory"),
+        RuleRow.other("DD", "Not applicable"))
     )
 
   override def tests = Tests {

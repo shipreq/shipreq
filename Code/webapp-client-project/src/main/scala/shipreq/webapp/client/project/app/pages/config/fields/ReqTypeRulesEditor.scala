@@ -15,6 +15,9 @@ import nyaya.util.Multimap
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
+import scalaz.std.option._
+import scalaz.std.list._
+import scalaz.syntax.traverse._
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Colour => _, _}
 import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
@@ -27,7 +30,7 @@ object ReqTypeRulesEditor {
 
   val NoDefault = new ReqTypeRulesEditor[Impossible](allowDefaults = false)
 
-  final class Validation(state: State[_], reqTypes: ReqTypes) {
+  final class Validation[D](state: State[D], reqTypes: ReqTypes) {
     import shipreq.webapp.base.validation.Simple.Invalidity
     import shipreq.webapp.base.validation._
 
@@ -64,6 +67,30 @@ object ReqTypeRulesEditor {
           case e@ -\/(_) => e
         }
       }.toVector
+
+    private def validateRes(value: State.ResValue[D]): Option[Resolution[D]] =
+      value.res match {
+        case Resolution.NotApplicable => Some(Resolution.NotApplicable)
+        case Resolution.Optional      => Some(Resolution.Optional)
+        case Resolution.Mandatory     => Some(Resolution.Mandatory)
+        case Resolution.DefaultTo(_)  => value.default.map(Resolution.DefaultTo(_))
+      }
+
+    def resultWhenValid: Option[FieldReqTypeRules[D]] = {
+      val perReqTypeO: Option[List[(Resolution[D], Set[ReqTypeId])]] =
+        results.indices.iterator.map { i =>
+          for {
+            reqTypeIds <- results(i).toOption
+            row         = state.perReqType(i)
+            res        <- validateRes(row.res)
+          } yield (res, Util.mergeSets(reqTypeIds, row.deadReqTypes))
+        }.toList.sequence
+
+      for {
+        perReqType <- perReqTypeO
+        otherwise  <- validateRes(state.otherwise)
+      } yield FieldReqTypeRules.ByResolution.build(perReqType, otherwise).toRules
+    }
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -75,7 +102,7 @@ object ReqTypeRulesEditor {
                             filterDead   : FilterDead,
                             enabled      : Enabled) {
 
-    lazy val validation = new Validation(state.value, reqTypes)
+    lazy val validation = state.value.validation(reqTypes)
   }
 
   object Props {
@@ -107,6 +134,9 @@ object ReqTypeRulesEditor {
   @Lenses
   final case class State[D](perReqType: Vector[State.PerReqType[D]], otherwise: State.ResValue[D]) {
 
+    def validation(reqTypes: ReqTypes): Validation[D] =
+      new Validation(this, reqTypes)
+
     val allDead: Set[ReqTypeId] =
       perReqType.foldLeft(Set.empty[ReqTypeId])((q, p) => Util.mergeSets(q, p.deadReqTypes))
 
@@ -121,10 +151,14 @@ object ReqTypeRulesEditor {
     def empty[D]: State[D] =
       apply(Vector.empty, State.ResValue.empty)
 
-    def init[D](cfg: ProjectConfig, rules: FieldReqTypeRules.ByResolution[D]): State[D] =
-      apply(
-        rules.perRes.iterator.map { case (res, ids) => PerReqType.from(cfg, ids, res) }.toVector,
-        ResValue.from(rules.otherwise))
+    def init[D](cfg: ProjectConfig, rules: FieldReqTypeRules.ByResolution[D]): State[D] = {
+      val rows =
+        MutableArray(rules.perRes.iterator.map { case (res, ids) => PerReqType.from(cfg, ids, res) })
+          .sortBy(_.text)
+          .iterator
+          .toVector
+      apply(rows, ResValue.from(rules.otherwise))
+    }
 
     @Lenses
     final case class PerReqType[D](text: String, deadReqTypes: Set[ReqTypeId], res: ResValue[D])

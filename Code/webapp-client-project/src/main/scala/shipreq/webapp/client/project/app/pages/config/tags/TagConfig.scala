@@ -112,12 +112,13 @@ object TagConfig {
   final class Backend($: BackendScope[Props, Unit]) {
     import SplitScreenCrud.NewArgs
 
-    private val initEditor: (NewTagType \/ TagId) => CallbackTo[EditorState] = {
-      case \/-(id: TagGroupId)      => $.props.map(p => \/-(TagGroupEditor.State.init(id, p.project.config.tags)))
-      case \/-(id: ApplicableTagId) => $.props.map(p => -\/(ApplicableTagEditor.State.init(id, p.project.config.tags, p.project.config.reqTypes)))
-      case -\/(NewTagType.TagGroup) => CallbackTo.pure(\/-(TagGroupEditor.State.initNew))
-      case -\/(NewTagType.Tag)      => CallbackTo.pure(-\/(ApplicableTagEditor.State.initNew))
-    }
+    private def initEditor(project: Project, arg: NewTagType \/ TagId): EditorState =
+      arg match {
+        case \/-(id: TagGroupId)      => \/-(TagGroupEditor.State.init(id, project.config.tags))
+        case \/-(id: ApplicableTagId) => -\/(ApplicableTagEditor.State.init(id, project.config.tags, project.config.reqTypes))
+        case -\/(NewTagType.TagGroup) => \/-(TagGroupEditor.State.initNew)
+        case -\/(NewTagType.Tag)      => -\/(ApplicableTagEditor.State.initNew)
+      }
 
     private val updateLiveChildren: Reusable[(TagGroupId, Vector[ApplicableTagId]) => Callback] =
       Reusable.byRef { (parent, children) =>
@@ -131,7 +132,7 @@ object TagConfig {
     private def submitCmd(p          : Props,
                           cmd        : UpdateConfigCmd.ToModifyTags,
                           toastPrefix: String,
-                          onSuccess  : TagId => Callback = _ => Callback.empty): Callback =
+                          onSuccess  : (Project, TagId) => Callback = (_, _) => Callback.empty): Callback =
       p.async.write.forgetFailure(
         p.ssp(cmd).flatTap {
           case \/-(n) =>
@@ -140,7 +141,7 @@ object TagConfig {
                 p2 <- $.props
                 tag = p2.project.config.tags.tree.need(id).tag
                 _  <- p2.toast.add(s"$toastPrefix ${tag.name}")
-                _  <- onSuccess(id)
+                _  <- onSuccess(n.project, id)
               } yield ()
             ).asAsyncCallback
 
@@ -299,6 +300,7 @@ object TagConfig {
 
       splitScreenCrud(
         filterDeadOverride = p.filterDeadOverride,
+        project            = p.project,
         newButton          = newButtonProps(p, _).render,
         list               = renderLeft(p, _),
         editor             = renderEditor(p, _),

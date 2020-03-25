@@ -215,40 +215,6 @@ object DataValidators {
     }
 
     def mandatory = Validator.id[Mandatory]
-
-    val textField: State => Composite.Validator[
-      (String, Mandatory, ApplicableReqTypes),
-      (String, Mandatory, ApplicableReqTypes),
-      (String, Mandatory, ApplicableReqTypes)] =
-      s => name(s).named tuple mandatory tuple applicableReqTypes.named
-
-    object tagField {
-      val tagId: Composite.Stateful[State, Option[TagId], Option[TagId], TagId] =
-        V.auditor.optionDefined[TagId]
-        .toValidator
-        .named("Tag")
-        .stateful(_ appendInvalidator _.tagIdUniqueness)
-
-      val all: State => Composite.Validator[
-        (Option[TagId], Mandatory, ApplicableReqTypes),
-        (Option[TagId], Mandatory, ApplicableReqTypes),
-        (TagId, Mandatory, ApplicableReqTypes)] =
-        (s: State) => tagId(s).named tuple mandatory tuple applicableReqTypes.named
-    }
-
-    object implField {
-      val reqTypeId: Composite.Stateful[State, Option[ReqTypeId], Option[ReqTypeId], ReqTypeId] =
-        V.auditor.optionDefined[ReqTypeId]
-        .toValidator
-        .named("ReqType")
-        .stateful(_ appendInvalidator _.reqTypeIdUniqueness)
-
-      val all: State => Composite.Validator[
-        (Option[ReqTypeId], Mandatory, ApplicableReqTypes),
-        (Option[ReqTypeId], Mandatory, ApplicableReqTypes),
-        (ReqTypeId, Mandatory, ApplicableReqTypes)] =
-        (s: State) => reqTypeId(s).named tuple mandatory tuple applicableReqTypes.named
-    }
   }
 
   // ===================================================================================================================

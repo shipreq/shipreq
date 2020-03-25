@@ -16,13 +16,18 @@ object RuleRow {
   def other(reqTypes     : String,
             rule         : String,
             default      : Option[String] = None,
-            reqTypesError: Option[String] = None) =
+            reqTypesError: Option[String] = None) = {
+    import ReqTypeRulesEditor.Internals.otherNew
+    val typesDesc = if (reqTypes.isEmpty) otherNew else s"$reqTypes, $otherNew"
     apply(
-      reqTypes      = s"Other($reqTypes, ${ReqTypeRulesEditor.Internals.otherNew})",
+      reqTypes      = s"Other($typesDesc)",
       rule          = rule,
       default       = default,
       reqTypesError = reqTypesError,
     )
+  }
+
+  val New = RuleRow("", "Optional", reqTypesError = Some("Cannot be blank."))
 
   implicit def univEq: UnivEq[RuleRow] = UnivEq.derive
 }

@@ -5,8 +5,12 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
+import shipreq.base.util.PotentialChange
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.CustomTextFieldGD
 import shipreq.webapp.base.lib.ValidationUX
+import shipreq.webapp.base.protocol.websocket.UpdateConfigCmd
 import shipreq.webapp.base.ui.semantic.Form
 import shipreq.webapp.client.project.lib.DataReusability._
 
@@ -31,6 +35,34 @@ object TextFieldEditor {
 
     def validatorState(cfg: ProjectConfig): DataValidators.field.State =
       DataValidators.field.State.from(idOption, cfg)
+
+    def updateCmd(cfg: ProjectConfig): PotentialChange[Unit, UpdateConfigCmd.ToModifyFields] = {
+      val vs = validatorState(cfg)
+
+      val pass1 =
+        for {
+          a <- PotentialChange.fromDisjunction(DataValidators.field.name(vs).unnamed(name).leftMap(_ => ()))
+          b <- PotentialChange.needFromOption(rules.validation(cfg.reqTypes).resultWhenValid)
+        } yield (a, b)
+
+      pass1.flatMap { case (name, rules) =>
+        idOption match {
+
+          case Some(id) =>
+            val old = cfg.fields.custom(id)
+            val b = CustomTextFieldGD.valueBuilder()
+            b.addIfChanged(CustomTextFieldGD.Name             )(old.name             , name)
+            b.addIfChanged(CustomTextFieldGD.FieldReqTypeRules)(old.fieldReqTypeRules, rules)
+            PotentialChange.fromOption(b.nev()).map { newValues =>
+              UpdateConfigCmd.CustomFieldUpdateText(id, newValues)
+            }
+
+          case None =>
+            val cmd = UpdateConfigCmd.CustomFieldCreateText(name, rules)
+            PotentialChange.Success(cmd)
+        }
+      }
+    }
   }
 
   object State {
