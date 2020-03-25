@@ -199,6 +199,8 @@ object FieldReqTypeRules {
         id         <- ids
       }
         m = m.setOrModifyValue(res, NonEmptySet one id, _ + id)
+
+      m -= otherwise
       apply(m, otherwise)
     }
   }

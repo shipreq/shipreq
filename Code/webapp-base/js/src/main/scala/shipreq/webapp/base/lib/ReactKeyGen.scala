@@ -1,6 +1,7 @@
 package shipreq.webapp.base.lib
 
 import japgolly.scalajs.react.Key
+import japgolly.univeq.UnivEq
 
 /**
  * Generate React keys.
@@ -16,4 +17,8 @@ final class ReactKeyGen {
 
 object ReactKeyGen {
   val global = new ReactKeyGen
+
+  object UnivEqImplicits {
+    implicit def univEqReactKey: UnivEq[Key] = UnivEq.force
+  }
 }

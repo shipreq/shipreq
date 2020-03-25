@@ -27,6 +27,16 @@ object RuleRow {
     )
   }
 
+  def all(rule         : String,
+          default      : Option[String] = None,
+          reqTypesError: Option[String] = None) =
+    apply(
+      reqTypes      = "All",
+      rule          = rule,
+      default       = default,
+      reqTypesError = reqTypesError,
+    )
+
   val New = RuleRow("", "Optional", reqTypesError = Some("Cannot be blank."))
 
   implicit def univEq: UnivEq[RuleRow] = UnivEq.derive

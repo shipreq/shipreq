@@ -167,6 +167,19 @@ object FieldConfigTest extends TestSuite {
         RuleRow("BR, FR, MF, UC", "Optional", deadReqTypes = "SI"),
         RuleRow("CO", "Mandatory"),
         RuleRow.other("DD", "Not applicable"))
+
+        >> delEditorRule(0)
+        +> editorRules.assert(
+        RuleRow("CO", "Mandatory"),
+        RuleRow.other("BR, DD, FR, MF, SI, UC", "Not applicable"))
+
+        >> setRuleReqRes(0, "Not applicable")
+        +> editorRules.assert(
+        RuleRow("CO", "Not applicable"),
+        RuleRow.other("BR, DD, FR, MF, SI, UC", "Not applicable"))
+
+        >> clickSaveButton
+        +> editorRules.assert(RuleRow.all("Not applicable"))
     )
 
   override def tests = Tests {

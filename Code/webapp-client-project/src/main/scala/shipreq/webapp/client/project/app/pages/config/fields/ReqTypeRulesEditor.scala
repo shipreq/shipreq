@@ -21,6 +21,8 @@ import scalaz.syntax.traverse._
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Colour => _, _}
 import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
+import shipreq.webapp.base.lib.ReactKeyGen
+import shipreq.webapp.base.lib.ReactKeyGen.UnivEqImplicits._
 import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
@@ -160,18 +162,20 @@ object ReqTypeRulesEditor {
       apply(rows, ResValue.from(rules.otherwise))
     }
 
+    private val keyGen = new ReactKeyGen
+
     @Lenses
-    final case class PerReqType[D](text: String, deadReqTypes: Set[ReqTypeId], res: ResValue[D])
+    final case class PerReqType[D](text: String, deadReqTypes: Set[ReqTypeId], res: ResValue[D], key: Key)
 
     object PerReqType {
       def empty[D]: PerReqType[D] =
-        apply("", Set.empty, ResValue.empty)
+        apply("", Set.empty, ResValue.empty, keyGen.next())
 
       def from[D](cfg: ProjectConfig, ids: NonEmptySet[ReqTypeId], res: Resolution[D]): PerReqType[D] = {
         def reqTypes(live: Live) = ids.iterator.map(cfg.reqTypes.need).filter(_.live is live)
         val txt = MutableArray(reqTypes(Live).map(_.mnemonic.value)).sort.mkString(", ")
         val dead = reqTypes(Dead).map(_.reqTypeId).toSet
-        apply(txt, dead, ResValue.from(res))
+        apply(txt, dead, ResValue.from(res), keyGen.next())
       }
     }
 
@@ -340,7 +344,7 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean) {
           )
 
         <.tr(
-          ^.key := idx,
+          ^.key := row.key,
           <.td(reqTypes),
           <.td(renderRes(ss.zoomStateL(ReqTypeRulesEditor.State.PerReqType.res))),
           <.td(*.rulesEditorButton, delRowButton(idx)))
@@ -348,7 +352,7 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean) {
 
       def renderOtherwise(ss: StateSnapshot[StateResValue]): VdomTagOf[html.TableRow] = {
 
-        val reqTypes =
+        def fullReqTypeDesc =
           MutableArray(
             p.reqTypes
               .all
@@ -364,9 +368,15 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean) {
             .++(Iterator.single[VdomNode](otherNew))
             .mkTagMod(TagMod("Other", <.br, "("), ", ", ")")
 
+        val desc: TagMod =
+          if (s.perReqType.isEmpty)
+            "All"
+          else
+            fullReqTypeDesc
+
         <.tr(
           ^.key := "o",
-          <.td(*.rulesEditorOtherwise, reqTypes),
+          <.td(*.rulesEditorOtherwise, desc),
           <.td(renderRes(ss)),
           <.td(*.rulesEditorButton, newRowButton(p.enabled)))
       }
