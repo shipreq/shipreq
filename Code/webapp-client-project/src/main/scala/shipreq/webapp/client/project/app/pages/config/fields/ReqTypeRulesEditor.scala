@@ -246,22 +246,22 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean) {
     private val rowAutoComplete: Int => RowAutoComplete =
       Memo.int(new RowAutoComplete(_))
 
+    private val pxAllText: Px[String] =
+      Px.props($).map(_.state.value.perReqType.iterator.map(_.text).mkString(" ")).withReuse.autoRefresh
+
+    private val pxReqTypesInAllText: Px[Set[String]] =
+      (for {
+        text <- pxAllText
+        vali <- pxValidation
+      } yield vali.stringValidator.corrector(text).iterator.flatMap(_.toOption).toSet
+      ).withReuse
+
     private class RowAutoComplete(i: Int) {
-
-      private val pxText: Px[String] =
-        Px.props($).map(_.state.value.perReqType(i).text).withReuse.autoRefresh
-
-      private val pxReqTypesInText: Px[Set[String]] =
-        (for {
-          text <- pxText
-          vali <- pxValidation
-        } yield vali.stringValidator.corrector(text).iterator.flatMap(_.toOption).toSet
-        ).withReuse
 
       private val pxAutoComplete: Px[AutoComplete.Strategies] =
         for {
           rt <- pxReqTypes
-          ex <- pxReqTypesInText
+          ex <- pxReqTypesInAllText
         } yield AutoComplete.Project.reqTypeMnemonics(rt, ex)
 
       val render =
