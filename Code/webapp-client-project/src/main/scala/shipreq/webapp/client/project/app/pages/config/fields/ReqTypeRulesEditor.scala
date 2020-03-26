@@ -21,6 +21,7 @@ import scalaz.syntax.traverse._
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Colour => _, _}
 import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
+import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.lib.ReactKeyGen
 import shipreq.webapp.base.lib.ReactKeyGen.UnivEqImplicits._
 import shipreq.webapp.base.ui.GeneralTheme
@@ -102,10 +103,7 @@ object ReqTypeRulesEditor {
                             renderDefault: D ~=> VdomNode,
                             defaults     : Vector[D],
                             filterDead   : FilterDead,
-                            enabled      : Enabled) {
-
-    lazy val validation = state.value.validation(reqTypes)
-  }
+                            enabled      : Enabled)
 
   object Props {
 
@@ -228,9 +226,47 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean) {
   type State           = ReqTypeRulesEditor.State[D]
   type StatePerReqType = ReqTypeRulesEditor.State.PerReqType[D]
   type StateResValue   = ReqTypeRulesEditor.State.ResValue[D]
+  type Validation      = ReqTypeRulesEditor.Validation[D]
 
   final class Backend($: BackendScope[Props, Unit]) {
     import ReqTypeRulesEditor.Internals._
+
+    private val pxState: Px[State] =
+      Px.props($).map(_.state.value).withReuse.autoRefresh
+
+    private val pxReqTypes: Px[ReqTypes] =
+      Px.props($).map(_.reqTypes).withReuse.autoRefresh
+
+    private val pxValidation: Px[Validation] =
+      for {
+        s <- pxState
+        r <- pxReqTypes
+      } yield s.validation(r)
+
+    private val rowAutoComplete: Int => RowAutoComplete =
+      Memo.int(new RowAutoComplete(_))
+
+    private class RowAutoComplete(i: Int) {
+
+      private val pxText: Px[String] =
+        Px.props($).map(_.state.value.perReqType(i).text).withReuse.autoRefresh
+
+      private val pxReqTypesInText: Px[Set[String]] =
+        (for {
+          text <- pxText
+          vali <- pxValidation
+        } yield vali.stringValidator.corrector(text).iterator.flatMap(_.toOption).toSet
+        ).withReuse
+
+      private val pxAutoComplete: Px[AutoComplete.Strategies] =
+        for {
+          rt <- pxReqTypes
+          ex <- pxReqTypesInText
+        } yield AutoComplete.Project.reqTypeMnemonics(rt, ex)
+
+      val render =
+        AutoComplete.InputComponent(pxAutoComplete.toCallback) _
+    }
 
     private val header =
       <.thead(
@@ -270,9 +306,9 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean) {
       Memo.int(idx => ReqTypeRulesEditor.State.perReqTypeRow[D](idx))
 
     def render(p: Props): VdomNode = {
-      val s = p.state.value
-      val showDead = p.filterDead is ShowDead
-      val validation = p.validation
+      val s          = p.state.value
+      val showDead   = p.filterDead is ShowDead
+      val validation = pxValidation.value()
 
       def delRowButton(idx: Int) =
         this.delRowButton
@@ -314,9 +350,10 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean) {
       }
 
       def renderPerReqType(idx: Int): VdomTagOf[html.TableRow] = {
-        val row = s.perReqType(idx)
-        val lens = perReqTypeLens(idx)
-        val ss = p.state.zoomStateL(lens)
+        val row          = s.perReqType(idx)
+        val lens         = perReqTypeLens(idx)
+        val ss           = p.state.zoomStateL(lens)
+        val autoComplete = rowAutoComplete(idx)
 
         def onChange(e: ReactEventFromInput): Callback = {
           val t = validation.stringValidator.corrector.live(e.target.value)
@@ -334,14 +371,16 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean) {
           }
 
         val reqTypes =
-          Input.Text(
-            TagMod(
-              ^.value := row.text,
-              ^.onChange ==> onChange
-            ),
-            deadReqTypes.whenDefined,
-            GeneralTheme.renderSimpleInvalidity(reqTypesValidated)
-          )
+          autoComplete.render(autoCompletion =>
+            <.div(
+              Input.Text(
+                TagMod(
+                  ^.value := row.text,
+                  ^.onChange ==> onChange,
+                  autoCompletion,
+                ),
+                deadReqTypes.whenDefined,
+                GeneralTheme.renderSimpleInvalidity(reqTypesValidated))))
 
         <.tr(
           ^.key := row.key,
