@@ -373,6 +373,7 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean) {
         val reqTypes =
           autoComplete.render(autoCompletion =>
             <.div(
+              *.rulesEditorReqTypes,
               Input.Text(
                 TagMod(
                   ^.value := row.text,

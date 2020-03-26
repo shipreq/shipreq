@@ -19,6 +19,9 @@ object FieldConfigTestDsl {
   val editorNameError = *.focus("Editor name error").option(_.obs.editor.flatMap(_.nameError))
   val editorRules     = *.focus("Editor rules"     ).collection(_.obs.editor.fold(Vector.empty[RuleRow])(_.rules.rows.map(_.desc)))
 
+  def fieldDetail(name: String) =
+    *.focus(s"$name detail").value(_.obs.fieldList(name).detail)
+
   val clickFilterDead: *.Actions =
     *.action("Click filter dead")(Simulate click _.obs.filterDeadButton)
 

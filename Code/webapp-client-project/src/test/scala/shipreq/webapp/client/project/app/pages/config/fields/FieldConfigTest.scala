@@ -47,6 +47,9 @@ object FieldConfigTest extends TestSuite {
         StaticField.StepGraph.name,
         "Status",
         "Notes")
+        +> fieldDetail("Description").assert("MF, UC—OptionalOther—Not applicable")
+        +> fieldDetail("Notes").assert("BR—Not applicableOther—Optional")
+        +> fieldDetail("Priority").assert("All—Mandatory")
 
         >> clickFilterDead
         +> filterDead.assert(ShowDead)
@@ -61,6 +64,9 @@ object FieldConfigTest extends TestSuite {
         "Released", // dead
         "Status",
         "Notes")
+        +> fieldDetail("Description").assert("MF, SI, UC—OptionalOther—Not applicable")
+        +> fieldDetail("Notes").assert("BR—Not applicableOther—Optional")
+        +> fieldDetail("Priority").assert("All—Mandatory")
     )
 
   private def testTextFieldEdit()(implicit tp: TestPath) =

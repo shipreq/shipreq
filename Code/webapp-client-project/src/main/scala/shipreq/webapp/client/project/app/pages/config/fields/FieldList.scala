@@ -86,7 +86,7 @@ object FieldList {
     private val ruleSep =
       <.span(*.detailRuleSep, "—")
 
-    private def renderDetailRule(key: String, value: VdomNode, validity: Validity = Valid): VdomNode =
+    private def renderDetailRule(key: TagMod, value: VdomNode, validity: Validity = Valid): VdomNode =
       <.div(*.detailRule(validity),
         <.span(*.detailRuleKey, key),
         ruleSep,
@@ -95,7 +95,13 @@ object FieldList {
     private val impossible: Impossible => VdomNode =
       _.impossible
 
-    private def renderDetailRules[A](cfg: ProjectConfig, rules: FieldReqTypeRules.ByResolution[A])(renderDefault: A => VdomNode): VdomNode = {
+    private def renderDetailRules[A](p: Props, rules0: FieldReqTypeRules.ByResolution[A])(renderDefault: A => VdomNode): VdomNode = {
+
+      val rules: FieldReqTypeRules.ByResolution[A] =
+        p.filterDead match {
+          case ShowDead => rules0
+          case HideDead => rules0.filterLiveReqTypes(p.config.reqTypes)
+        }
 
       val renderRes: FieldReqTypeRules.Resolution[A] => VdomNode = {
         case FieldReqTypeRules.Resolution.NotApplicable => "Not applicable"
@@ -104,8 +110,12 @@ object FieldList {
         case FieldReqTypeRules.Resolution.DefaultTo(a)  => <.span("Defaults to ", renderDefault(a))
       }
 
+      val validity =
+        Invalid.when(
+          rules.otherwise.applicability.is(NotApplicable) &&
+          rules.perRes.valuesIterator.forall(_.forall(p.config.reqTypes.need(_).live is Dead)))
+
       if (rules.perRes.isEmpty) {
-        val validity = Invalid.when(rules.otherwise.applicability.is(NotApplicable))
         renderDetailRule("All", renderRes(rules.otherwise), validity)
 
       } else {
@@ -114,17 +124,29 @@ object FieldList {
           MutableArray {
             rules.perRes.iterator.map { case (res, ids) =>
 
-              val key: String =
-                MutableArray(ids.iterator.map(cfg.reqTypes.need(_).mnemonic.value)).sort.mkString(", ")
+              val types =
+                MutableArray(ids.iterator.map(p.config.reqTypes.need)).sortBy(_.mnemonic.value)
+
+              val sortKey: String =
+                types.mkString(", ")
+
+              val key: TagMod =
+                types
+                  .iterator
+                  .map[VdomNode] { rt =>
+                    val m = rt.mnemonic.value
+                    if (rt.live is Live) m else <.span(*.fieldListDetailDead, m)
+                  }.mkTagMod(", ")
 
               val value: VdomNode =
                 renderRes(res)
 
-              (key, renderDetailRule(key, value))
+              (sortKey, renderDetailRule(key, value))
             }
           }.sortBy(_._1).iterator.map(_._2).toTagMod
 
-        val other = renderDetailRule("Other", renderRes(rules.otherwise))
+        val other =
+          renderDetailRule("Other", renderRes(rules.otherwise), validity)
 
         <.div(specific, other)
       }
@@ -164,9 +186,9 @@ object FieldList {
             case StaticField.NormalAltStepTree => detailUcOptional
             case StaticField.ExceptionStepTree => detailUcOptional
             case StaticField.StepGraph         => detailUcVisible
-            case f: CustomField.Text           => renderDetailRules(cfg, f.fieldReqTypeRulesByResolution)(impossible)
-            case f: CustomField.Implication    => renderDetailRules(cfg, f.fieldReqTypeRulesByResolution)(impossible)
-            case f: CustomField.Tag            => renderDetailRules(cfg, f.fieldReqTypeRulesByResolution)(p.pw.tagSimple(_, includeDesc = true))
+            case f: CustomField.Text           => renderDetailRules(p, f.fieldReqTypeRulesByResolution)(impossible)
+            case f: CustomField.Implication    => renderDetailRules(p, f.fieldReqTypeRulesByResolution)(impossible)
+            case f: CustomField.Tag            => renderDetailRules(p, f.fieldReqTypeRulesByResolution)(p.pw.tagSimple(_, includeDesc = true))
           }
 
         val usage: TagMod =

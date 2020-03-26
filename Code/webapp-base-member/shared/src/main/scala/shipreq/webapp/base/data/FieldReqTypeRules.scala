@@ -182,6 +182,18 @@ object FieldReqTypeRules {
   }
 
   final case class ByResolution[D](perRes: Map[Resolution[D], NonEmptySet[ReqTypeId]], otherwise: Resolution[D]) {
+
+    def filterReqTypeIds(f: ReqTypeId => Boolean): ByResolution[D] = {
+      val updated =
+        perRes.iterator.flatMap { case (res, ids) =>
+          NonEmptySet.option(ids.whole.filter(f)).iterator.map((res, _))
+        }.toMap
+      copy(perRes = updated)
+    }
+
+    def filterLiveReqTypes(r: ReqTypes): ByResolution[D] =
+      filterReqTypeIds(r.need(_).live is Live)
+
     lazy val toRules: FieldReqTypeRules[D] = {
       val byId =
         perRes.iterator.flatMap { case (res, ids) =>

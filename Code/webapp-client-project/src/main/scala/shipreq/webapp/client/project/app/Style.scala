@@ -837,7 +837,11 @@ object Style extends StyleSheet.Inline {
     )
 
     val rulesEditor = style(
-      addClassNames("table" ,"ui" ,"single" ,"line" ,"table")
+      addClassNames("table", "ui", "single", "line", "table")
+    )
+
+    val rulesEditorReqTypes = style(
+      unsafeChild(".ui.input")(width(100 %%)),
     )
 
     val rulesEditorDefault = style(
@@ -871,6 +875,7 @@ object Style extends StyleSheet.Inline {
 
     @inline def `N/A` = generic.`N/A`
     @inline def editorTitle = tagConfig.editorTitle
+    @inline def fieldListDetailDead = rulesOtherDeadReqType
   }
 
   // ===================================================================================================================

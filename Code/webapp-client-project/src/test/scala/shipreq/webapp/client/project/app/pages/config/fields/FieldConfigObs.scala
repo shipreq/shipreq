@@ -28,6 +28,7 @@ object FieldConfigObs {
   final class FieldListRow($: DomZipperJs) {
     val rowDom = $.domAsHtml
     val name   = $.child("td", 2 of 5).innerText
+    val detail = $.child("td", 4 of 5).innerText
   }
 
   final class Editor($: DomZipperJs) {
