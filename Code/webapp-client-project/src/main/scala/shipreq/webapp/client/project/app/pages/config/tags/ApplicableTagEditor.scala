@@ -45,7 +45,7 @@ private[tags] object ApplicableTagEditor {
                          key     : String,
                          desc    : String,
                          colour  : ColourPicker.State,
-                         reqTypes: ApplicableReqTypeEditor.FullFormField.State,
+                         reqTypes: ApplicableReqTypeEditor.State,
                          parents : TagRelationshipEditor.State,
                         ) {
 
@@ -98,7 +98,7 @@ private[tags] object ApplicableTagEditor {
         key      = t.key.value,
         desc     = t.desc.getOrElse(""),
         colour   = ColourPicker.State.init(t.colour),
-        reqTypes = ApplicableReqTypeEditor.FullFormField.State.init(t.applicableReqTypes, reqTypes),
+        reqTypes = ApplicableReqTypeEditor.State.init(t.applicableReqTypes, reqTypes),
         parents  = TagRelationshipEditor.State.parents(t.id, tags),
       )
 
@@ -108,7 +108,7 @@ private[tags] object ApplicableTagEditor {
         key     = "",
         desc    = "",
         colour  = ColourPicker.State.init(None),
-        reqTypes = ApplicableReqTypeEditor.FullFormField.State.empty,
+        reqTypes = ApplicableReqTypeEditor.State.empty,
         parents = TagRelationshipEditor.State.empty,
       )
 
@@ -203,7 +203,7 @@ private[tags] object ApplicableTagEditor {
 
       val reqTypesField =
         Form.Field.replacement(
-          ApplicableReqTypeEditor.FullFormField.Props(
+          ApplicableReqTypeEditor.Props(
             state      = p.state.zoomStateL(State.reqTypes),
             previous   = s.source.fold(ApplicableReqTypes.empty)(_.tag.applicableReqTypes),
             reqTypes   = p.project.reqTypes,

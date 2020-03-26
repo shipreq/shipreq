@@ -22,55 +22,36 @@ import shipreq.webapp.client.project.app.Style.{widgets => *}
 @UsesSemanticUiManually
 object ApplicableReqTypeEditor {
 
-  sealed trait Props {
-    val reqTypes: ReqTypes
-    def reqTypesInText: Set[String]
-    @inline final def render: VdomElement = Component(this)
+  final case class Props(state     : StateSnapshot[State],
+                         previous  : ApplicableReqTypes,
+                         reqTypes  : ReqTypes,
+                         filterDead: FilterDead,
+                         enabled   : Enabled) {
+
+    @inline def render: VdomElement = Component(this)
+
+    lazy val deadPrevious = previous.filterReqTypes(Dead, reqTypes)
+    lazy val validator    = DataValidators.reqTypeSeqStr(reqTypes).unnamed
+    lazy val validated    = validator(state.value.text)
+
+    lazy val reqTypesInText: Set[String] =
+      validator.corrector(state.value.text).iterator.flatMap(_.toOption).toSet
   }
 
-  // ===================================================================================================================
+  type State = DropdownAndTextEditor.State[Applicability]
 
-  object FullFormField {
-    final case class Props(state     : StateSnapshot[State],
-                           previous  : ApplicableReqTypes,
-                           reqTypes  : ReqTypes,
-                           filterDead: FilterDead,
-                           enabled   : Enabled) extends ApplicableReqTypeEditor.Props {
-      lazy val deadPrevious = previous.filterReqTypes(Dead, reqTypes)
-      lazy val validator    = DataValidators.reqTypeSeqStr(reqTypes).unnamed
-      lazy val validated    = validator(state.value.text)
+  object State {
 
-      override lazy val reqTypesInText: Set[String] =
-        validator.corrector(state.value.text).iterator.flatMap(_.toOption).toSet
-    }
+    def empty: State =
+      DropdownAndTextEditor.State(
+        selected = ApplicableReqTypes.empty.applicability,
+        text     = "")
 
-    type State = DropdownAndTextEditor.State[Applicability]
-
-    object State {
-
-      def empty: State =
-        DropdownAndTextEditor.State(
-          selected = ApplicableReqTypes.empty.applicability,
-          text     = "")
-
-      def init(art: ApplicableReqTypes, reqTypes: ReqTypes): State =
-        DropdownAndTextEditor.State(
-          selected = art.applicability,
-          text     = reqTypes.makeSeqStr(art.filterReqTypes(Live, reqTypes).reqTypes))
-    }
-
-    implicit val reusabilityProps: Reusability[Props] = Reusability.derive
+    def init(art: ApplicableReqTypes, reqTypes: ReqTypes): State =
+      DropdownAndTextEditor.State(
+        selected = art.applicability,
+        text     = reqTypes.makeSeqStr(art.filterReqTypes(Live, reqTypes).reqTypes))
   }
-
-  // ===================================================================================================================
-
-  /* TBD: Just req types
-     - used in field cfg
-     - just an <input>, no applicability
-     - validation - all reqTypes valid and live (same as above)
-                  - also: fail if defined elsewhere
-     - dead types displayed elsewhere
-   */
 
   // ===================================================================================================================
 
@@ -98,7 +79,7 @@ object ApplicableReqTypeEditor {
     private val clear =
       <.div(^.clear.right)
 
-    private def renderFullFormField(p: FullFormField.Props): VdomNode = {
+    def render(p: Props): VdomNode = {
       val s = p.state.value
 
       val error: Option[VdomTag] =
@@ -138,11 +119,6 @@ object ApplicableReqTypeEditor {
         .withValidity(Valid when error.isEmpty)
         .render(ValidationUX.Highlight)
     }
-
-    def render(p: Props): VdomNode =
-      p match {
-        case a: FullFormField.Props => renderFullFormField(a)
-      }
 
     private val pxReqTypes: Px[ReqTypes] =
       Px.props($).map(_.reqTypes).withReuse.autoRefresh
