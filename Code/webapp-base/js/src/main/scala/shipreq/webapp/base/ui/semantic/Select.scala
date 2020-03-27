@@ -2,17 +2,17 @@ package shipreq.webapp.base.ui.semantic
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.dom.raw.HTMLSelectElement
-import shipreq.base.util.univeq._
+import shipreq.base.util._
 import shipreq.webapp.base.data.{Disabled, Enabled}
+import shipreq.webapp.base.lib.ReactKeyGen
 
 object Select {
 
   type OptionKey = String
 
-  final case class Option[+A](key: OptionKey, title: String, value: A)
+  final case class Option[+A](key: OptionKey, title: VdomNode, value: A)
 
-  implicit def optionOrdering[A]: Ordering[Option[A]] = Ordering.by(_.title)
+  private[this] val item = <.div(^.cls := "item")
 
   sealed trait Props {
     type A
@@ -20,44 +20,21 @@ object Select {
     val selected: scala.Option[OptionKey]
     val enabled : Enabled
     val tagMod  : TagMod
+    val validity: Validity
     val onChange: Option[A] => Callback
-
-    private[Select] lazy val rendered = {
-      val optionArray = VdomArray.empty()
-
-      if (selected.isEmpty)
-        optionArray += <.option(^.key := "∅")
-
-      optionArray ++=
-        options.toIterator.map(o => <.option(^.key := o.key, ^.value := o.key, o.title))
-
-      def onChange2: ReactEventFrom[HTMLSelectElement] => Callback =
-        _.extract(_.target.value)(v =>
-          options.find(_.key ==* v) match {
-            case Some(o) => onChange(o)
-            case None => Callback.warn(s"'$v' missing from $options")
-          }
-        )
-
-      <.select(
-        tagMod,
-        ^.cls := "ui dropdown",
-        (^.cls := "disabled").when(enabled is Disabled),
-        selected.whenDefined(^.value := _),
-        ^.onChange ==> onChange2,
-        optionArray)
-    }
   }
 
   def apply[A](options : Traversable[Select.Option[A]],
                selected: scala.Option[OptionKey] = None,
-               enabled : Enabled = Enabled,
-               tagMod  : TagMod = EmptyVdom)
+               enabled : Enabled                 = Enabled,
+               validity: Validity                = Valid,
+               tagMod  : TagMod                  = EmptyVdom)
               (onChange: Select.Option[A] => Callback): VdomElement = {
     type AA       = A
     val _options  = options
     val _selected = selected
     val _enabled  = enabled
+    val _validity = validity
     val _tagMod   = tagMod
     val _onChange = onChange
     Component(new Props {
@@ -65,6 +42,7 @@ object Select {
       override val options  = _options
       override val selected = _selected
       override val enabled  = _enabled
+      override val validity = _validity
       override val tagMod   = _tagMod
       override val onChange = _onChange
     })
@@ -73,11 +51,37 @@ object Select {
   private class Backend($: BackendScope[Props, Unit]) {
     val enableDropdown: Callback =
       Dropdown.enable($.getDOMNode)
+
+    private val keyGen = new ReactKeyGen
+
+    def render(p: Props): VdomNode = {
+      import p._
+
+      val itemArray = VdomArray.empty()
+
+      itemArray ++=
+        options.toIterator.map(o =>
+          item(
+            ^.key := o.key,
+            ^.onClick --> Callback.byName(onChange(o)),
+            Dropdown.itemValue := o.key,
+            o.title))
+
+      <.div(
+        ^.key := keyGen.next(), // Forces DOM replacement - otherwise it retains Semantic UI JS's modifications
+        tagMod,
+        ^.cls := "ui selection dropdown",
+        (^.cls := "disabled").when(enabled is Disabled),
+        (^.cls := "error").when(validity is Invalid),
+        <.input.hidden(^.value := selected.getOrElse("")),
+        Icon.Dropdown.tag,
+        <.div(^.cls := "default text"),
+        <.div(^.cls := "menu", itemArray))
+    }
   }
 
   private val Component = ScalaComponent.builder[Props]("Select")
-    .backend(new Backend(_))
-    .render_P(_.rendered)
+    .renderBackend[Backend]
     .componentDidMount(_.backend.enableDropdown)
     .componentDidUpdate(_.backend.enableDropdown)
     .build

@@ -72,6 +72,7 @@ object FieldConfigObs {
       reqTypes      = reqTypesDesc,
       rule          = res.selected.getOrElse(""),
       default       = default.map(_.selected.getOrElse("")),
+      defaultError  = default.fold(false)(_.hasError),
       dead          = dead,
       reqTypesError = reqTypesError,
     )

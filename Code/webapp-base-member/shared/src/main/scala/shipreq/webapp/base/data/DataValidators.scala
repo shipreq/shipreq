@@ -179,7 +179,7 @@ object DataValidators {
       def nameUniqueness: Invalidator[String] =
         Uniqueness.stringIgnoreCase(otherData.map(_.independentName).filterDefined)
 
-      def tagIdUniqueness: Invalidator[TagId] =
+      def tagIdUniqueness: Invalidator[TagGroupId] =
         Uniqueness.within(otherData.map({
           case f: CustomField.Tag => f.tagId.some
           case _: CustomField.Text
@@ -218,6 +218,11 @@ object DataValidators {
       V.option[ReqTypeId]
         .named(FieldNames.impFieldSource)
         .stateful(_ appendInvalidator _.reqTypeIdUniqueness)
+
+    val tagGroup: Composite.Stateful[State, Option[TagGroupId], Option[TagGroupId], TagGroupId] =
+      V.option[TagGroupId]
+        .named(FieldNames.impFieldSource)
+        .stateful(_ appendInvalidator _.tagIdUniqueness)
   }
 
   // ===================================================================================================================

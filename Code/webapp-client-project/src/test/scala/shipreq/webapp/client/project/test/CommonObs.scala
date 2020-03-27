@@ -28,7 +28,14 @@ object CommonObs {
       val itemDoms = items.iterator.filter(_.text == name).map(_.dom).toVector
       if (itemDoms.length == 1) {
         val itemDom = itemDoms.head
-        JQuery(dom).dropdown("set selected", itemDom.getAttribute("data-value"))
+
+        if (itemDom.onclick ne null)
+          Simulate.click(itemDom)
+        else
+          Option(itemDom.getAttribute("data-value")).filter(_.nonEmpty) match {
+            case Some(value) => JQuery(dom).dropdown("set selected", value)
+            case None        => throw new RuntimeException(s"Don't know how to select item in:\n\n${dom.outerHTML}")
+          }
       } else
         throw new RuntimeException(itemDoms.map(_.innerText).mkString("Multiple candidates: ", ", ", ""))
     }

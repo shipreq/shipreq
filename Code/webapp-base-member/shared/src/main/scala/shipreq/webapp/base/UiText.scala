@@ -91,6 +91,7 @@ object UiText {
     def pastPubids           = "Past IDs"
     def savedViewName        = "Name"
     def impFieldSource       = "Req Type"
+    def tagFieldSource       = "Tag Group"
   }
 
   object RichText {

@@ -26,6 +26,25 @@ object FieldConfigTestDsl {
   def fieldDetail(name: String) =
     *.focus(s"$name detail").value(_.obs.fieldList(name).detail)
 
+  def ruleResItems(rowIdx: Int): *.FocusColl[Vector, String] =
+    *.focus(s"rules[$rowIdx].res items").collection(_
+      .obs.editor
+      .flatMap(_.rules)
+      .flatMap(_.rows.lift(rowIdx))
+      .map(_.res.items.map(_.text))
+      .getOrElse(Vector.empty))
+
+  def ruleDefaultItems(rowIdx: Int): *.FocusColl[Vector, String] =
+    *.focus(s"rules[$rowIdx].default items").collection(_
+      .obs.editor
+      .flatMap(_.rules)
+      .flatMap(_.rows.lift(rowIdx))
+      .flatMap(_.default)
+      .map(_.items.map(_.text))
+      .getOrElse(Vector.empty))
+
+  // ===================================================================================================================
+
   val clickFilterDead: *.Actions =
     *.action("Click filter dead")(Simulate click _.obs.filterDeadButton)
 
@@ -68,6 +87,9 @@ object FieldConfigTestDsl {
 
   def setRuleReqRes(rowIdx: Int, res: String): *.Actions =
     *.action(s"Set rules[$rowIdx].res to: $res")(_.obs.editor.get.rules.get.rows(rowIdx).res.select(res))
+
+  def setRuleDefault(rowIdx: Int, default: String): *.Actions =
+    *.action(s"Set rules[$rowIdx].default to: $default")(_.obs.editor.get.rules.get.rows(rowIdx).default.get.select(default))
 
   def selectNew(name: String): *.Actions =
     *.action(s"New button: select $name")(_.obs.newButton.dropdown.select(name))

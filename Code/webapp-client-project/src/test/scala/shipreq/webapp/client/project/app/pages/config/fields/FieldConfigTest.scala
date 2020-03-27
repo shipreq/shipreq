@@ -2,8 +2,9 @@ package shipreq.webapp.client.project.app.pages.config.fields
 
 import utest._
 import utest.framework.TestPath
+import shipreq.base.util.Exclusive
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.{CustomImpFieldGD, Event}
+import shipreq.webapp.base.event.{ApplicableTagGD, CustomImpFieldGD, Event, TagGroupGD}
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.WebappTestUtil._
@@ -79,6 +80,7 @@ object FieldConfigTest extends TestSuite {
         +> filterDead.assert(HideDead)
         +> editorName.assert("Description")
         +> editorNameError.assert.empty
+        +> ruleResItems(0).assert("Mandatory", "Not applicable", "Optional")
         +> editorRules.assert(
         RuleRow("MF, UC", "Optional"),
         RuleRow.other("BR, CO, FR", "Not applicable"))
@@ -285,6 +287,133 @@ object FieldConfigTest extends TestSuite {
         +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
     )
 
+  private def testTagFieldCreate()(implicit tp: TestPath) =
+    runActions(
+      applyEventsSuccessfully(
+        SampleProject7.project,
+
+        Event.ApplicableTagCreate(4567.AT, ApplicableTagGD(
+          key                = "omfg",
+          desc               = None,
+          colour             = None,
+          applicableReqTypes = ApplicableReqTypes.empty,
+          parents            = Map.empty,
+          children           = Vector.empty)),
+
+        Event.ApplicableTagCreate(4568.AT, ApplicableTagGD(
+          key                = "wow",
+          desc               = None,
+          colour             = None,
+          applicableReqTypes = ApplicableReqTypes.empty,
+          parents            = Map.empty,
+          children           = Vector.empty)),
+
+        Event.TagGroupCreate(4569.TG, TagGroupGD(
+          name        = "Surprise",
+          desc        = None,
+          exclusivity = Exclusive,
+          parents     = Map.empty,
+          children    = Vector(4568.AT, 4567.AT))),
+
+        Event.TagGroupCreate(4777.TG, TagGroupGD(
+          name        = "Nada",
+          desc        = None,
+          exclusivity = Exclusive,
+          parents     = Map.empty,
+          children    = Vector())),
+      )
+    )(
+
+      clickNew("Tag field")
+        +> filterDead.assert(HideDead)
+        +> messageHeader.assert.empty
+        +> editorDropdown.assert.contains("")
+        +> editorDropdownError.assert(true) // blank
+        +> editorDropdownItems.assert("Nada", "Surprise")
+        +> editorRules.assert(RuleRow.all("Optional"))
+        +> buttonsEnabled.assert(Buttons(cancel = Enabled, save = Disabled))
+
+        >> clickFilterDead
+        +> filterDead.assert(ShowDead)
+        +> messageHeader.assert.empty
+        +> editorDropdown.assert.contains("")
+        +> editorDropdownError.assert(true) // blank
+        +> editorDropdownItems.assert("Nada", "Surprise")
+        +> editorRules.assert(RuleRow.all("Optional"))
+        +> ruleResItems(0).assert("Default to…", "Mandatory", "Not applicable", "Optional")
+        +> buttonsEnabled.assert(Buttons(cancel = Enabled, save = Disabled))
+
+        >> setEditorDropdown("Surprise")
+        +> messageHeader.assert.empty
+        +> editorDropdown.assert.contains("Surprise")
+        +> editorDropdownError.assert(false)
+        +> editorDropdownItems.assert("Nada", "Surprise")
+        +> editorRules.assert(RuleRow.all("Optional"))
+        +> ruleDefaultItems(0).assert()
+        +> buttonsEnabled.assert(Buttons(cancel = Enabled, save = Enabled))
+
+        >> setRuleReqRes(0, "Default to…")
+        +> editorRules.assert(RuleRow.AllEmptyDefault)
+        +> ruleDefaultItems(0).assert("omfg", "wow")
+        +> buttonsEnabled.assert(Buttons(cancel = Enabled, save = Disabled))
+
+        >> setRuleDefault(0, "wow")
+        +> editorRules.assert(RuleRow.all("Default to…", default = "wow"))
+        +> ruleDefaultItems(0).assert("omfg", "wow")
+        +> buttonsEnabled.assert(Buttons(cancel = Enabled, save = Enabled))
+
+        >> setEditorDropdown("Nada")
+        +> editorRules.assert(RuleRow.AllEmptyDefault)
+        +> ruleDefaultItems(0).assert()
+        +> buttonsEnabled.assert(Buttons(cancel = Enabled, save = Disabled))
+
+        >> setEditorDropdown("Surprise")
+        +> editorRules.assert(RuleRow.all("Default to…", default = "wow"))
+        +> ruleDefaultItems(0).assert("omfg", "wow")
+        +> buttonsEnabled.assert(Buttons(cancel = Enabled, save = Enabled))
+
+        >> clickFilterDead
+        +> filterDead.assert(HideDead)
+
+        >> clickSaveButton
+        +> fieldList.valueBy(_.last).assert("Surprise")
+        +> fieldDetail("Surprise").assert("All—Default to wow")
+        +> editorDropdown.assert.empty
+        +> editorRules.assert(RuleRow.all("Default to…", default = "wow"))
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
+    )
+
+  private def testTagFieldCreateCant()(implicit tp: TestPath) =
+    runActions(SampleProject7.project)(
+      clickNew("Tag field")
+        +> filterDead.assert(HideDead)
+        +> messageHeader.assert.contains("No tag groups available")
+        +> editorDropdown.assert.empty
+        +> editorRules.size.assert(0)
+        +> buttonsEnabled.assert(Buttons(cancel = Enabled))
+
+        >> clickFilterDead
+        +> filterDead.assert(ShowDead)
+        +> messageHeader.assert.contains("No tag groups available")
+        +> editorDropdown.assert.empty
+        +> editorRules.size.assert(0)
+        +> buttonsEnabled.assert(Buttons(cancel = Enabled))
+    )
+
+  private def testTagFieldUpdate()(implicit tp: TestPath) =
+    runActions(SampleProject7.project)(
+
+      selectField("Priority")
+        +> filterDead.assert(HideDead)
+        +> editorDropdown.assert.empty
+        +> editorRules.assert(
+        RuleRow("BR", "Default to…", default = "pri=med"),
+        RuleRow("CO", "Not applicable"),
+        RuleRow("FR, MF", "Mandatory"),
+        RuleRow.other("UC", "Optional"))
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
+    )
+
   override def tests = Tests {
 
     'fieldList - {
@@ -301,6 +430,12 @@ object FieldConfigTest extends TestSuite {
       'createCant   - testImpFieldCreateCant()
       'createDeadMF - testImpFieldCreate(applyEventSuccessfully(p, Event.FieldCustomDelete(mfField)))
       'update       - testImpFieldUpdate()
+    }
+
+    'tagField - {
+      'create     - testTagFieldCreate()
+      'createCant - testTagFieldCreateCant()
+      'update     - testTagFieldUpdate()
     }
 
   }

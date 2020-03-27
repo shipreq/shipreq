@@ -31,7 +31,8 @@ import shipreq.webapp.client.project.lib.DataReusability._
 
 object ReqTypeRulesEditor {
 
-  val NoDefault = new ReqTypeRulesEditor[Impossible](allowDefaults = false)
+  val NoDefault            = new ReqTypeRulesEditor[Impossible](allowDefaults = false, keyFor = _.impossible)
+  val ApplicableTagDefault = new ReqTypeRulesEditor[ApplicableTagId](allowDefaults = true, keyFor = _.value.toString)
 
   final class Validation[D](state: State[D], reqTypes: ReqTypes) {
     import shipreq.webapp.base.validation.Simple.Invalidity
@@ -71,25 +72,31 @@ object ReqTypeRulesEditor {
         }
       }.toVector
 
-    private def validateRes(value: State.ResValue[D]): Option[Resolution[D]] =
+    private def validateRes(value: State.ResValue[D], legalOptions: => Set[D]): Option[Resolution[D]] =
       value.res match {
         case Resolution.NotApplicable => Some(Resolution.NotApplicable)
         case Resolution.Optional      => Some(Resolution.Optional)
         case Resolution.Mandatory     => Some(Resolution.Mandatory)
-        case Resolution.DefaultTo(_)  => value.default.map(Resolution.DefaultTo(_))
+        case Resolution.DefaultTo(_)  => value.legalDefault(legalOptions).map(Resolution.DefaultTo(_))
       }
 
-    def resultWhenValid: Option[FieldReqTypeRules[D]] = {
+    def resultWhenValidI(implicit ev: D =:= Impossible): Option[FieldReqTypeRules[D]] = {
+      val _ = ev
+      resultWhenValid(Set.empty)
+    }
+
+    def resultWhenValid(legalOptions: => Set[D]): Option[FieldReqTypeRules[D]] = {
+      lazy val _legalOptions = legalOptions
 
       val deadO: Option[List[(Resolution[D], Set[ReqTypeId])]] =
-        state.dead.traverse(d => validateRes(d.res).map((_, d.ids.whole)))
+        state.dead.traverse(d => validateRes(d.res, _legalOptions).map((_, d.ids.whole)))
 
       def perReqTypeO: Option[List[(Resolution[D], Set[ReqTypeId])]] =
         results.indices.iterator.map { i =>
           for {
             reqTypeIds <- results(i).toOption
             row         = state.perReqType(i)
-            res        <- validateRes(row.res)
+            res        <- validateRes(row.res, _legalOptions)
           } yield (res, reqTypeIds)
         }
           .toList
@@ -98,7 +105,7 @@ object ReqTypeRulesEditor {
       for {
         dead       <- deadO
         perReqType <- perReqTypeO
-        otherwise  <- validateRes(state.otherwise)
+        otherwise  <- validateRes(state.otherwise, _legalOptions)
       } yield FieldReqTypeRules.ByResolution.build(perReqType.iterator ++ dead, otherwise).toRules
     }
   }
@@ -110,7 +117,10 @@ object ReqTypeRulesEditor {
                             renderDefault: D ~=> VdomNode,
                             defaults     : Vector[D],
                             filterDead   : FilterDead,
-                            enabled      : Enabled)
+                            enabled      : Enabled) {
+
+    lazy val defaultSet = defaults.toSet
+  }
 
   object Props {
 
@@ -210,7 +220,10 @@ object ReqTypeRulesEditor {
       }
     }
 
-    final case class ResValue[D](res: Resolution[Unit], default: Option[D])
+    final case class ResValue[D](res: Resolution[Unit], default: Option[D]) {
+      def legalDefault(legalOptions: Set[D]): Option[D] =
+        default.filter(legalOptions.contains)
+    }
 
     object ResValue {
       def empty[D]: ResValue[D] =
@@ -255,7 +268,7 @@ object ReqTypeRulesEditor {
 
 // =====================================================================================================================
 
-final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean) {
+final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean, keyFor: D => String) {
 
   type Props           = ReqTypeRulesEditor.Props[D]
   type State           = ReqTypeRulesEditor.State[D]
@@ -335,15 +348,11 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean) {
         List(mandatory, notApplicable, optional)
     }
 
-    private val dropdownItemSelected =
-      VdomAttr("data-value") := "1"
-
     private val perReqTypeLens: Int => Lens[State, StatePerReqType] =
       Memo.int(idx => ReqTypeRulesEditor.State.perReqTypeRow[D](idx))
 
     def render(p: Props): VdomNode = {
       val s          = p.state.value
-      val showDead   = p.filterDead is ShowDead
       val validation = pxValidation.value()
 
       def delRowButton(idx: Int) =
@@ -362,23 +371,18 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean) {
             onChange = o => ss.modState(_.copy(res = o.value)))
 
         def defaultSelect = {
-          val default = ss.value.default
+          val default = ss.value.legalDefault(p.defaultSet)
 
-          def item(d: D) =
-            <.div(
-              ^.cls := "item",
-              dropdownItemSelected.when(default.exists(_ ==* d)),
-              p.renderDefault(d))
+          val defaultOptions =
+            p.defaults.map(d => Select.Option(keyFor(d), p.renderDefault(d), d))
 
-          <.div(
-            *.rulesEditorDefault,
-            ^.cls := "ui selection dropdown",
-            (^.cls := "disabled").when(enabled is Disabled),
-            (^.cls := "error").when(default.isEmpty),
-            <.input.hidden(^.value := "1"),
-            Icon.Dropdown.tag,
-            <.div(^.cls := "default text", "&nbsp;"),
-            <.div(^.cls := "menu", p.defaults.toTagMod(item)))
+          Select(
+            options  = defaultOptions,
+            enabled  = enabled,
+            tagMod   = *.rulesEditorDefault,
+            validity = Invalid when default.isEmpty,
+            selected = default.map(keyFor))(
+            onChange = o => ss.modState(_.copy(default = Some(o.value))))
         }
 
         if (ss.value.res.isDefault)

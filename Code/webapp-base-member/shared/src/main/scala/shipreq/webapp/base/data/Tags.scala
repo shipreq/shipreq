@@ -261,6 +261,9 @@ final case class Tags(tree: TagTree) {
   def applicableTagIterator(): Iterator[ApplicableTag] =
     tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag]
 
+  def tagGroupIterator(): Iterator[TagGroup] =
+    tree.valuesIterator.map(_.tag).filterSubType[TagGroup]
+
   def tagGroup(id: TagGroupId): String \/ TagGroup =
     tree.get(id) match {
       case Some(tit) => tit.tag match {
@@ -278,6 +281,9 @@ final case class Tags(tree: TagTree) {
 
   lazy val deadApplicableTagIds: Set[ApplicableTagId] =
     applicableTagIterator().filter(_.live is Dead).map(_.id).toSet
+
+  lazy val liveTagGroupIds: Set[TagGroupId] =
+    tagGroupIterator().filter(_.live is Live).map(_.id).toSet
 
   lazy val exclusiveGroups: ApplicableTagId => Set[TagGroupId] = {
     val results = mutable.HashMap.empty[ApplicableTagId, Set[TagGroupId]]
@@ -326,8 +332,20 @@ final case class Tags(tree: TagTree) {
     case ShowDead => _ => true
   }
 
+  def flatRowsWithRoots(roots: Set[TagId], isGood: Tag => Boolean, policy: FilterPolicy): Vector[FlatTag] =
+    FlatTag.flatRows(roots, tree.get(_).get)(isGood, policy)
+
+  def flatRowsWithRoots(roots: Set[TagId], fd: FilterDead): Vector[FlatTag] =
+    fd match {
+      case HideDead => flatRowsWithRoots(roots, Tag.filterLive, FilterPolicy.OmitAnythingWithBadParent)
+      case ShowDead => flatRowsWithRoots(roots, _ => true, FlatTag.FilterPolicy.OmitNothing)
+    }
+
+  def flatRowsWithRoot(root: TagId, fd: FilterDead): Vector[FlatTag] =
+    flatRowsWithRoots(Set.empty[TagId] + root, fd)
+
   def flatRows(isGood: Tag => Boolean, policy: FilterPolicy): Vector[FlatTag] =
-    FlatTag.flatRows(topLevelIds, tree.get(_).get)(isGood, policy)
+    flatRowsWithRoots(topLevelIds, isGood, policy)
 
   def flatRows(fd: FilterDead): Vector[FlatTag] =
     fd match {
@@ -391,6 +409,9 @@ final case class Tags(tree: TagTree) {
 
   def recursiveIterator(fd: FilterDead): RecursiveTagIterator =
     recursiveIterator(topLevelIds, fd)
+
+  def recursiveIterator(root: TagId, fd: FilterDead): RecursiveTagIterator =
+    recursiveIterator(root :: Nil, fd)
 
   def recursiveIterator(roots: Iterable[TagId], fd: FilterDead): RecursiveTagIterator =
     new RecursiveTagIterator(this, tagFilter(fd), roots, 0, None)

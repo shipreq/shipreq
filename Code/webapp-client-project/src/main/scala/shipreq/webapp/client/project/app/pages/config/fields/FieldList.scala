@@ -107,7 +107,7 @@ object FieldList {
         case FieldReqTypeRules.Resolution.NotApplicable => "Not applicable"
         case FieldReqTypeRules.Resolution.Mandatory     => "Mandatory"
         case FieldReqTypeRules.Resolution.Optional      => "Optional"
-        case FieldReqTypeRules.Resolution.DefaultTo(a)  => <.span("Defaults to ", renderDefault(a))
+        case FieldReqTypeRules.Resolution.DefaultTo(a)  => <.span("Default to ", renderDefault(a))
       }
 
       val validity =
@@ -157,7 +157,6 @@ object FieldList {
     private val detailUcVisible  = renderDetailRule(StaticReqType.UseCase.mnemonic.value, "Visible")
 
     def render(p: Props): VdomNode = {
-      val cfg = p.config
 
       val modificationEnabled: Enabled =
         p.enabled & Enabled.when(p.select.isDefined)

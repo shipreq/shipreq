@@ -43,7 +43,7 @@ object TextFieldEditor {
       val pass1 =
         for {
           a <- PotentialChange.fromDisjunction(DataValidators.field.name(vs).unnamed(name).leftMap(_ => ()))
-          b <- PotentialChange.needFromOption(rules.validation(cfg.reqTypes).resultWhenValid)
+          b <- PotentialChange.needFromOption(rules.validation(cfg.reqTypes).resultWhenValidI)
         } yield (a, b)
 
       pass1.flatMap { case (name, rules) =>

@@ -4,8 +4,8 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import monocle.{Lens, Optional, Prism}
-import monocle.macros.{GenPrism, Lenses}
+import monocle.Lens
+import monocle.macros.Lenses
 import shipreq.base.util.PotentialChange
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText.FieldNames
@@ -68,7 +68,7 @@ object ImpFieldEditor {
 
       override def updateCmd(cfg: ProjectConfig): PotentialChange[Unit, UpdateConfigCmd.ToModifyFields] = {
         val pass1 =
-          PotentialChange.needFromOption(rules.validation(cfg.reqTypes).resultWhenValid)
+          PotentialChange.needFromOption(rules.validation(cfg.reqTypes).resultWhenValidI)
 
         pass1.flatMap { rules =>
           val old = cfg.fields.custom(id)
@@ -93,7 +93,7 @@ object ImpFieldEditor {
         val pass1 =
           for {
             a <- PotentialChange.fromDisjunction(DataValidators.field.impSource(vs).unnamed(reqType).leftMap(_ => ()))
-            b <- PotentialChange.needFromOption(rules.validation(cfg.reqTypes).resultWhenValid)
+            b <- PotentialChange.needFromOption(rules.validation(cfg.reqTypes).resultWhenValidI)
           } yield (a, b)
 
         pass1.flatMap { case (reqTypeId, rules) =>
@@ -102,12 +102,6 @@ object ImpFieldEditor {
         }
       }
     }
-
-    val forCreate: Prism[State, ForCreate] =
-      GenPrism[State, ForCreate]
-
-    val reqType: Optional[State, Option[ReqTypeId]] =
-      forCreate ^|-> ForCreate.reqType
 
     val rules: Lens[State, ReqTypeRulesEditor.NoDefault.State] =
       Lens[State, ReqTypeRulesEditor.NoDefault.State](_.rules)(r => {

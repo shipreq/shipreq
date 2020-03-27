@@ -57,9 +57,9 @@ object ReqTypeSelector {
     def editor(p: Props): VdomElement = {
       val options =
         MutableArray(p.choices.whole)
-          .map(rt => Select.Option(key(rt), rt.fullName, rt))
-          .sort
+          .sortBy(_.fullName)
           .iterator
+          .map(rt => Select.Option(key(rt), rt.fullName, rt))
           .to[List]
 
       val select = Select(options, Some(key(p.edit.value)), tagMod = *.dropdown)(p.edit setState _.value)
