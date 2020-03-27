@@ -39,7 +39,7 @@ object Message {
 
   case class Style(tipe  : Type           = Type.Default,
                    attr  : Multiple[Attr] = Multiple.empty,
-                   colour: Colour         = Colour.Default,
+                   colour: ColourPlus     = Colour.Default,
                    size  : Size           = Size.Default) {
     val tag = divCls("ui message" <+ tipe <+ attr <+ colour <+ size)
   }

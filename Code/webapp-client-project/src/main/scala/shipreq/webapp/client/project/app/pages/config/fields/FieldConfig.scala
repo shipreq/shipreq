@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.pages.config.fields
 
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
@@ -20,6 +20,7 @@ import shipreq.webapp.base.protocol.websocket.UpdateConfigCmd
 import shipreq.webapp.base.ui.{GeneralTheme, Toast}
 import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
+import shipreq.webapp.client.project.app.pages.root.Routes
 import shipreq.webapp.client.project.lib.Usage
 import shipreq.webapp.client.project.widgets.{ButtonAndDropdown, EditorButtons, ProjectWidgets, SplitScreenCrud}
 
@@ -27,7 +28,7 @@ object FieldConfig {
 
   type NewState = NewFieldType
 
-  type EditorState = Unit \/ Unit \/ TextFieldEditor.State
+  type EditorState = ImpFieldEditor.State \/ Unit \/ TextFieldEditor.State
 
   val splitScreenCrud = new SplitScreenCrud[NewState, FieldId, EditorState](
     rightEmpty = SplitScreenCrud.emptyEditorMessage("field"),
@@ -40,6 +41,7 @@ object FieldConfig {
                          pw     : ProjectWidgets.NoCtx,
                          ssp    : ServerSideProcInvoker[UpdateConfigCmd.ToModifyFields, ErrorMsg, NewEvents],
                          async  : AsyncFeature.ReadWrite.D0[ErrorMsg],
+                         router : Routes.RouterCtl,
                          toast  : Toast,
                          usage  : Usage,
                         ) {
@@ -65,8 +67,9 @@ object FieldConfig {
 
     val potentialSaveCmd: PotentialChange[Unit, UpdateConfigCmd.ToModifyFields] =
       state.value.right.editorOption match {
-        case Some(\/-(s)) => s.updateCmd(project.config)
-        case None         => PotentialChange.Unchanged
+        case Some(-\/(-\/(s))) => s.updateCmd(project.config)
+        case Some(\/-(s))      => s.updateCmd(project.config)
+        case None              => PotentialChange.Unchanged
       }
 
     @inline def render: VdomElement = Component(this)
@@ -106,22 +109,21 @@ object FieldConfig {
     final case class LiveText(id: Option[CustomField.Text       .Id]) extends EditorType
   }
 
+  private def editorStateLensForImp(default: => ImpFieldEditor.State): Lens[EditorState, ImpFieldEditor.State] =
+    Optics.coproductLens[EditorState, ImpFieldEditor.State]({ case -\/(-\/(s)) => s }, s => -\/(-\/(s)), default)
+
   private def editorStateLensForText(default: => TextFieldEditor.State): Lens[EditorState, TextFieldEditor.State] =
     Optics.disjunctionLensRight(default)
-
-//  private def editorStateLensForGroup(default: => TagGroupEditor.State): Lens[EditorState, TagGroupEditor.State] =
-//    Optics.disjunctionLensRight(default)
 
   final class Backend($: BackendScope[Props, Unit]) {
     import SplitScreenCrud.NewArgs
 
     private def initEditor(project: Project, arg: NewFieldType \/ FieldId): EditorState =
       arg match {
-        case \/-(id: CustomField.Text.Id) => \/-(TextFieldEditor.State.init(id, project.config))
-        //      case \/-(id: StaticField)   => ???
-        //      case -\/(NewFieldType.Imp ) => ???
-        //      case -\/(NewFieldType.Tag ) => ???
-        case -\/(NewFieldType.Text) => \/-(TextFieldEditor.State.empty)
+        case \/-(id: CustomField.Implication.Id) => -\/(-\/(ImpFieldEditor.State.initUpdate(id, project.config)))
+        case \/-(id: CustomField.Text       .Id) => \/-(TextFieldEditor.State.init(id, project.config))
+        case -\/(NewFieldType.Imp              ) => -\/(-\/(ImpFieldEditor.State.initCreate))
+        case -\/(NewFieldType.Text             ) => \/-(TextFieldEditor.State.empty)
       }
 
     private val updateOrder: Reusable[UpdateConfigCmd.FieldUpdateOrder => Callback] =
@@ -139,13 +141,14 @@ object FieldConfig {
       p.async.write.forgetFailure(
         p.ssp(cmd).flatTap {
           case \/-(n) =>
-            Callback.traverseOption(n.summary.allFields.headOption)(id =>
+            Callback.traverseOption(n.summary.allFields.headOption) { id =>
+              val project = n.project
               for {
                 p2 <- $.props
-                _  <- p2.toast.add(s"$toastPrefix ${p2.project.config.fieldName(id)}")
-                _  <- onSuccess(n.project, id)
+                _  <- p2.toast.add(s"$toastPrefix ${project.config.fieldName(id)}")
+                _  <- onSuccess(project, id)
               } yield ()
-            ).asAsyncCallback
+            }.asAsyncCallback
 
           case -\/(e) =>
             GeneralTheme.showErrorMsg(e).asAsyncCallback
@@ -215,6 +218,17 @@ object FieldConfig {
       def createOrUpdateButtons(idOption: Option[FieldId]): EditorButtons.Props =
         EditorButtons.createOrUpdate(args)(idOption, p.potentialSaveCmd)(submitCmd(p, _, _, _), UpdateConfigCmd.FieldDelete)
 
+      def impFieldEditor(idOption: Option[CustomField.Implication.Id], enabled: Enabled) = {
+        val lens = editorStateLensForImp(ImpFieldEditor.State.init(idOption, p.project.config))
+        ImpFieldEditor.Props(
+          state      = args.state.zoomStateL(lens),
+          cfg        = p.project.config,
+          filterDead = p.effectiveFilterDead,
+          enabled    = enabled,
+          router     = p.router,
+        )
+      }
+
       def textFieldEditor(idOption: Option[CustomField.Text.Id], enabled: Enabled) = {
         val lens = editorStateLensForText(TextFieldEditor.State.init(idOption, p.project.config))
         TextFieldEditor.Props(
@@ -228,9 +242,9 @@ object FieldConfig {
       editorType match {
 
         case EditorType.LiveImp(idOption) =>
-          val editor = "TODO"
-          val buttons = createOrUpdateButtons(idOption).render
-          <.div(header, editor, buttons)
+          val editor = impFieldEditor(idOption, Enabled)
+          val buttons = if (editor.isPossible) createOrUpdateButtons(idOption) else EditorButtons.cancel(args)
+          <.div(header, editor.render, buttons.render)
 
         case EditorType.LiveTag(idOption) =>
           val editor = "TODO"

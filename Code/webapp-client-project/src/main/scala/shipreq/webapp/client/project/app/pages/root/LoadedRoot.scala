@@ -365,6 +365,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
             state   = StateSnapshot.zoomL(State.fieldConfig)(s).setStateVia($),
             ssp     = sspUpdateConfig,
             async   = AsyncFeature.ReadWrite.D0(fieldConfigAsyncW, s.fieldConfigAsync),
+            router  = routerCtl,
             toast   = toast,
             usage   = usage,
           ).render

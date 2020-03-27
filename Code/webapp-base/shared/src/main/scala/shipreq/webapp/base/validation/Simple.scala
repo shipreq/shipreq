@@ -19,7 +19,7 @@ object Simple {
 
     // ****[  Don't forget there's: GeneralTheme.renderSimpleInvalidity  ]****
 
-    val applicative: Applicative[Invalidity \/ ?] =
+    val applicative: Applicative[Invalidity \/ *] =
       Generic.AccumuateErrors.applicativeInstance[Invalidity]
   }
 

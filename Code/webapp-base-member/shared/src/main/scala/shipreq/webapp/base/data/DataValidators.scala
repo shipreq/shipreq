@@ -214,7 +214,10 @@ object DataValidators {
         .stateful(_ appendInvalidator _.nameUniqueness)
     }
 
-    def mandatory = Validator.id[Mandatory]
+    val impSource: Composite.Stateful[State, Option[ReqTypeId], Option[ReqTypeId], ReqTypeId] =
+      V.option[ReqTypeId]
+        .named(FieldNames.impFieldSource)
+        .stateful(_ appendInvalidator _.reqTypeIdUniqueness)
   }
 
   // ===================================================================================================================

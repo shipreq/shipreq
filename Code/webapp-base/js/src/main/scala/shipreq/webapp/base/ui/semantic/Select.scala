@@ -3,7 +3,6 @@ package shipreq.webapp.base.ui.semantic
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.raw.HTMLSelectElement
-import scala.scalajs.js
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{Disabled, Enabled}
 
@@ -18,14 +17,19 @@ object Select {
   sealed trait Props {
     type A
     val options : Traversable[Option[A]]
-    val selected: js.UndefOr[OptionKey]
+    val selected: scala.Option[OptionKey]
     val enabled : Enabled
     val tagMod  : TagMod
     val onChange: Option[A] => Callback
 
     private[Select] lazy val rendered = {
-      val optionArray =
-        options.toVdomArray(o => <.option(^.key := o.key, ^.value := o.key, o.title))
+      val optionArray = VdomArray.empty()
+
+      if (selected.isEmpty)
+        optionArray += <.option(^.key := "∅")
+
+      optionArray ++=
+        options.toIterator.map(o => <.option(^.key := o.key, ^.value := o.key, o.title))
 
       def onChange2: ReactEventFrom[HTMLSelectElement] => Callback =
         _.extract(_.target.value)(v =>
@@ -39,17 +43,17 @@ object Select {
         tagMod,
         ^.cls := "ui dropdown",
         (^.cls := "disabled").when(enabled is Disabled),
-        ^.value := selected.getOrElse(null),
+        selected.whenDefined(^.value := _),
         ^.onChange ==> onChange2,
         optionArray)
     }
   }
 
-  def apply[A](options : Traversable[Option[A]],
-               selected: js.UndefOr[OptionKey] = js.undefined,
+  def apply[A](options : Traversable[Select.Option[A]],
+               selected: scala.Option[OptionKey] = None,
                enabled : Enabled = Enabled,
                tagMod  : TagMod = EmptyVdom)
-              (onChange: Option[A] => Callback): VdomElement = {
+              (onChange: Select.Option[A] => Callback): VdomElement = {
     type AA       = A
     val _options  = options
     val _selected = selected

@@ -89,6 +89,15 @@ object Style extends StyleSheet.Inline {
     backgroundColor(c"#f6f6f6"),
   )
 
+  val semanticFixes = style(
+
+    // When semanticui.Select.apply is used and there isn't an option selected, this fixes it up so that the field
+    // title is at the correct vertical position.
+    //
+    // Example: Field config > new imp field > imp field & checkbox
+    unsafeRoot(".ui.dropdown>.text")(minHeight(0.8 em)),
+  )
+
   val svgGraph = style(
     unsafeChild("svg")(
       maxWidth(100 %%)))

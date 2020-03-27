@@ -12,6 +12,7 @@ import shipreq.webapp.client.project.test.CommonObs
 
 object FieldConfigObs {
 
+  lazy val selNewButton         = Style.widgets.dropdownButtonOuter       .selector
   lazy val selRightOn           = Style.widgets.splitScreenCrud.rightOn   .selector
   lazy val selEmptyRight        = Style.widgets.splitScreenCrud.emptyRight.selector
   lazy val selEditorButtons     = Style.tagConfig.editorButtons           .selector
@@ -32,12 +33,17 @@ object FieldConfigObs {
   }
 
   final class Editor($: DomZipperJs) {
-    private val nameField = $.collect01(".ui.form .field")
-    val nameDom   = nameField.map(_("input").domAs[html.Input])
-    val nameValue = nameDom.map(_.value)
-    val nameError = nameField.map(_.children01("span").innerTexts).flatten
+    private val soleField = $.collect01(".ui.form .field")
 
-    val rules = new Rules($("table.ui.single.line"))
+    val message = $.collect01(".ui.message").map(new CommonObs.Message(_))
+
+    val nameDom   = soleField.zippers.flatMap(_.collect01("input").domsAs[html.Input])
+    val nameValue = nameDom.map(_.value)
+    val nameError = soleField.zippers.filter(_ => nameDom.isDefined).flatMap(_.children01("span").innerTexts)
+
+    val dropdown = soleField.zippers.filter(_.exists(".menu")).map(new CommonObs.Dropdown(_))
+
+    val rules = $.collect01("table.ui.single.line").map(new Rules(_))
   }
 
   final class Rules($: DomZipperJs) {
@@ -64,8 +70,8 @@ object FieldConfigObs {
 
     val desc = RuleRow(
       reqTypes      = reqTypesDesc,
-      rule          = res.selected,
-      default       = default.map(_.selected),
+      rule          = res.selected.getOrElse(""),
+      default       = default.map(_.selected.getOrElse("")),
       dead          = dead,
       reqTypesError = reqTypesError,
     )
@@ -102,4 +108,7 @@ final class FieldConfigObs($: DomZipperJs) {
 
   val editor: Option[Editor] =
     Option.when(isEditorOpen)(new Editor(right.child("div").child("div", 1 of 2)))
+
+  val newButton =
+    new CommonObs.DropdownButton(left(selNewButton))
 }

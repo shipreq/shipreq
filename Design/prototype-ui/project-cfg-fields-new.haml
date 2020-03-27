@@ -355,6 +355,7 @@
             .inline.field
               %label Tag:
               %select.ui.dropdown
+                %option
                 %option Version
           %table.ui.single.line.table.settings
             %thead
@@ -391,11 +392,13 @@
               %select.ui.dropdown
                 %option
                   ="-"
-          .ui.message.negative(style="margin-right: 2rem")
-            .header No tag groups available
-            %p
-              ="In order to create a new tag-based field, you need a tag group that hasn't been assigned to a field yet. "
-              You can create one on the <a href="#">Tag Config</a> page.
+          .ui.message.icon.negative(style="margin-right: 2rem")
+            %i.icon.ban
+            .content
+              .header No tag groups available
+              %p
+                ="In order to create a new tag-based field, you need a tag group that hasn't been assigned to a field yet. "
+                You can create one on the <a href="#">Tag Config</a> page.
           %div(style="margin-top:2rem; display:flex")
             %div(style="flex-grow:1")
             %button.ui.button.black.basic(style="margin-right:2em")
@@ -475,4 +478,4 @@
       sel = (sel + 1) % all.length;
       $(all[sel]).show();
     }
-    $($('section.right > *')[4]).show()
+    $($('section.right > *')[1]).show()

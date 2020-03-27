@@ -34,6 +34,9 @@ object EditorButtons {
         )
     }
 
+  def cancel[N, Id, S, Cmd](args: SplitScreenCrud.EditorArgs[N, Id, S]): Props =
+    Props.Cancel(args.close)
+
   def restore[N, Id, S, Cmd](args     : SplitScreenCrud.EditorArgs[N, Id, S])
                             (submitCmd: (String, (Project, Id) => Callback) => Callback): Props =
     Props.Restore(
@@ -46,6 +49,8 @@ object EditorButtons {
   }
 
   object Props {
+
+    final case class Cancel(abort: Callback) extends Props
 
     final case class Create(abort : Callback,
                             create: Option[Callback]) extends Props
@@ -93,6 +98,12 @@ object EditorButtons {
 
   private def render(p: Props): VdomNode =
     p match {
+
+      case Props.Cancel(abort) =>
+        outer(
+          gap,
+          cancelButton.onClick(abort))
+
       case Props.Create(abort, create) =>
         outer(
           gap,

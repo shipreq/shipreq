@@ -161,4 +161,6 @@ object CommonValidation {
     endoCorrector.largeText.toCorrector.imapCorrectedZ(TextMod.nonBlank)
     .withAuditor(largeTextLimit.liftOption.toAuditor)
 
+  def option[A]: Validator[Option[A], Option[A], A] =
+    Simple.Validator.option[A, Invalidity](invalidBecauseEmpty)
 }

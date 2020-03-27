@@ -90,6 +90,7 @@ object UiText {
     def deletionReason       = "Deletion Reason"
     def pastPubids           = "Past IDs"
     def savedViewName        = "Name"
+    def impFieldSource       = "Req Type"
   }
 
   object RichText {

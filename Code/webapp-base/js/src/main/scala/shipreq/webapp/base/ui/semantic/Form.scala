@@ -28,20 +28,25 @@ object Form {
     ^.paddingTop := "0.15rem",
     ^.fontSize   := "92%")
 
+  private def renderSimpleInvalidity(i: Simple.Invalidity) =
+    GeneralTheme.renderSimpleInvalidity(i)(validationErr)
+
+  type Validated = ValidationUX => ValidationUX.Outcome[VdomNode]
+
   sealed trait Field[A] {
 
     def modEditor(f: (TagMod => VdomNode) => TagMod => VdomNode): Field[A]
 
     protected def validationUX: Option[ValidationUX]
 
-    def withLabel       (l: TagMod                                ): Field[A]
-    def withValue       (v: A                                     ): Field[A]
-    def withUpdater     (f: A => Callback                         ): Field[A]
-    def withValidated   (v: Option[ValidationUX.Outcome[VdomNode]]): Field[A]
-    def withValidator   (v: Option[Simple.Validator[A, _, _]]     ): Field[A]
-    def withValidationUX(v: Option[ValidationUX]                  ): Field[A]
-    def withEnabled     (e: Enabled                               ): Field[A]
-    def withOuterMod    (f: VdomTag => VdomTag                    ): Field[A]
+    def withLabel       (l: TagMod                           ): Field[A]
+    def withValue       (v: A                                ): Field[A]
+    def withUpdater     (f: A => Callback                    ): Field[A]
+    def withValidated   (v: Option[Validated]                ): Field[A]
+    def withValidator   (v: Option[Simple.Validator[A, _, _]]): Field[A]
+    def withValidationUX(v: Option[ValidationUX]             ): Field[A]
+    def withEnabled     (e: Enabled                          ): Field[A]
+    def withOuterMod    (f: VdomTag => VdomTag               ): Field[A]
 
     def render(implicit vux: ValidationUX): VdomNode
 
@@ -60,20 +65,22 @@ object Form {
     final def withEditor(e: TagMod => VdomNode): Field[A] =
       modEditor(_ => e)
 
-    @inline final def withValidated(v: ValidationUX.Outcome[VdomNode]): Field[A] =
+    @inline final def withValidated(v: Validated): Field[A] =
       withValidated(Some(v))
 
+    @inline final def withValidated(v: ValidationUX.Outcome[VdomNode]): Field[A] =
+      withValidated(_ => v)
+
     final def withValidated(v: Simple.Invalidity \/ Any): Field[A] =
-      withValidated(v, validationUX.getOrElse(ValidationUX.Full))
+      withValidated(vux =>
+        vux.outcome(v match {
+          case \/-(_) => None
+          case -\/(e) => Some(renderSimpleInvalidity(e))
+        })
+      )
 
-    final def withValidated(v: Simple.Invalidity \/ Any, vux: ValidationUX): Field[A] =
-      withValidated(vux.outcome(v match {
-        case \/-(_) => None
-        case -\/(e) => Some(Simple.Invalidity.toText(e): VdomNode)
-      }))
-
-    final def withValidity(v: Option[Validity]): Field[A] =
-      withValidated(v.map(ValidationUX.Outcome.apply))
+    final def withValidity(o: Option[Validity]): Field[A] =
+      withValidated(o.map(v => (_: ValidationUX) => ValidationUX.Outcome(v)))
 
     @inline final def withValidity(v: Validity): Field[A] =
       withValidity(Some(v))
@@ -83,6 +90,9 @@ object Form {
 
     @inline final def disable: Field[A] =
       withEnabled(Disabled)
+
+    @inline final def inline: Field[A] =
+      withOuterMod(_(Field.inline))
 
     @inline final def withValidationUX(v: ValidationUX): Field[A] =
       withValidationUX(Some(v))
@@ -104,9 +114,10 @@ object Form {
   }
 
   object Field {
-    private[Form] val plain  = <.div(^.className := "field")
-    private[Form] val error  = <.div(^.className := "field error")
+    private[Form] val plain    = <.div(^.className := "field")
+    private[Form] val error    = <.div(^.className := "field error")
     private[Form] val disabled = ^.cls := "disabled"
+    private[Form] val inline   = ^.cls := "inline"
 
     private abstract class Const[A] extends Field[A] {
       override final protected def validationUX = None
@@ -114,7 +125,7 @@ object Form {
       override final def withLabel       (l: TagMod                                    ) = this
       override final def withValue       (v: A                                         ) = this
       override final def withUpdater     (f: A => Callback                             ) = this
-      override final def withValidated   (v: Option[ValidationUX.Outcome[VdomNode]]    ) = this
+      override final def withValidated   (v: Option[Validated]                         ) = this
       override final def withValidator   (v: Option[Simple.Validator[A, _, _]]         ) = this
       override final def withValidationUX(v: Option[ValidationUX]                      ) = this
       override final def withEnabled     (e: Enabled                                   ) = this
@@ -128,7 +139,7 @@ object Form {
       override final def withLabel       (l: TagMod                                    ) = mod(_.withLabel       (l))
       override final def withValue       (v: A                                         ) = mod(_.withValue       (v))
       override final def withUpdater     (f: A => Callback                             ) = mod(_.withUpdater     (f))
-      override final def withValidated   (v: Option[ValidationUX.Outcome[VdomNode]]    ) = mod(_.withValidated   (v))
+      override final def withValidated   (v: Option[Validated]                         ) = mod(_.withValidated   (v))
       override final def withValidator   (v: Option[Simple.Validator[A, _, _]]         ) = mod(_.withValidator   (v))
       override final def withValidationUX(v: Option[ValidationUX]                      ) = mod(_.withValidationUX(v))
       override final def withEnabled     (e: Enabled                                   ) = mod(_.withEnabled     (e))
@@ -141,7 +152,7 @@ object Form {
       override def withLabel       (l: TagMod                                    ) = copy(underlying.withLabel       (l))
       override def withValue       (v: B                                         ) = copy(underlying.withValue       (ba(v)))
       override def withUpdater     (f: B => Callback                             ) = copy(underlying.withUpdater     (f compose ab))
-      override def withValidated   (v: Option[ValidationUX.Outcome[VdomNode]]    ) = copy(underlying.withValidated   (v))
+      override def withValidated   (v: Option[Validated]                         ) = copy(underlying.withValidated   (v))
       override def withValidator   (v: Option[Simple.Validator[B, _, _]]         ) = copy(underlying.withValidator   (v.map(_.xmapInput(ba)(ab))))
       override def withValidationUX(v: Option[ValidationUX]                      ) = copy(underlying.withValidationUX(v))
       override def withEnabled     (e: Enabled                                   ) = copy(underlying.withEnabled     (e))
@@ -156,7 +167,7 @@ object Form {
                                         editor     : TagMod => VdomNode,
                                         value      : A,
                                         updater    : A => Callback,
-                                        validated  : Option[ValidationUX.Outcome[VdomNode]],
+                                        validated  : Option[Validated],
                                         validator  : Option[Simple.Validator[A, _, _]],
                                         vux        : Option[ValidationUX],
                                         enabled    : Enabled,
@@ -169,7 +180,7 @@ object Form {
       override def withLabel       (l: TagMod                                    ) = copy(label     = Some(l))
       override def withValue       (v: A                                         ) = copy(value     = v)
       override def withUpdater     (f: A => Callback                             ) = copy(updater   = f)
-      override def withValidated   (v: Option[ValidationUX.Outcome[VdomNode]]    ) = copy(validated = v)
+      override def withValidated   (v: Option[Validated]                         ) = copy(validated = v)
       override def withValidator   (v: Option[Simple.Validator[A, _, _]]         ) = copy(validator = v)
       override def withValidationUX(v: Option[ValidationUX]                      ) = copy(vux       = v)
       override def withEnabled     (e: Enabled                                   ) = copy(enabled   = e)
@@ -183,11 +194,13 @@ object Form {
         val vux = this.vux.getOrElse(vuxI)
 
         val error: ValidationUX.Outcome[VdomNode] =
-          validated.getOrElse {
-            validator match {
-              case Some(v) => vux.outcomeD(v(value)).map(GeneralTheme.renderSimpleInvalidity(_)(validationErr))
-              case None => ValidationUX.Outcome.Valid
-            }
+          validated match {
+            case Some(f) => f(vux)
+            case None =>
+              validator match {
+                case Some(v) => vux.outcomeD(v(value)).map(renderSimpleInvalidity)
+                case None    => ValidationUX.Outcome.Valid
+              }
           }
 
         val outer =

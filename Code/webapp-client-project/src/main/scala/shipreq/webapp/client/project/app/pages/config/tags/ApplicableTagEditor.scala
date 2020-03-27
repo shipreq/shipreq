@@ -189,7 +189,7 @@ private[tags] object ApplicableTagEditor {
       val colourField =
         Form.Field
           .ofEditor(ColourPicker.Props(p.state.zoomStateL(State.colour), TagPalette.forGithubPicker).render)
-          .withValidated(s.colour.validated, ValidationUX.Highlight)
+          .withValidated(s.colour.validated)
           .withLabel("Colour")
           .withEnabled(p.enabled)
 

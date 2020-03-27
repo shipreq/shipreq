@@ -3,8 +3,10 @@ package shipreq.webapp.client.project.app.pages.config.fields
 import utest._
 import utest.framework.TestPath
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.{CustomImpFieldGD, Event}
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.test._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.config.Buttons
@@ -14,6 +16,7 @@ import shipreq.webapp.client.project.test.PrepareEnv
 object FieldConfigTest extends TestSuite {
   import FieldConfigTestDsl._
   import Buttons.{displayFailure => displayButtonFailure}
+  import SampleProject7.Values._
 
   PrepareEnv()
 
@@ -207,6 +210,81 @@ object FieldConfigTest extends TestSuite {
         +> editorRules.assert(RuleRow.all("Not applicable"))
     )
 
+  private def testImpFieldCreate(p: Project)(implicit tp: TestPath) =
+    runActions(p)(
+
+      clickNew("Implication field")
+        +> filterDead.assert(HideDead)
+        +> messageHeader.assert.empty
+        +> editorDropdown.assert.contains("")
+        +> editorDropdownError.assert(true) // blank
+        +> editorDropdownItems.assert("BR: Business Rule", "CO: Constraint", "FR: Functional Requirement", "UC: Use Case")
+        +> editorRules.assert(RuleRow.all("Optional"))
+        +> buttonsEnabled.assert(Buttons(cancel = Enabled, save = Disabled))
+
+        >> clickFilterDead
+        +> filterDead.assert(ShowDead)
+        +> messageHeader.assert.empty
+        +> editorDropdown.assert.contains("")
+        +> editorDropdownError.assert(true) // blank
+        +> editorDropdownItems.assert("BR: Business Rule", "CO: Constraint", "FR: Functional Requirement", "UC: Use Case")
+        +> editorRules.assert(RuleRow.all("Optional"))
+        +> buttonsEnabled.assert(Buttons(cancel = Enabled, save = Disabled))
+
+        >> setEditorDropdown("FR: Functional Requirement")
+        +> messageHeader.assert.empty
+        +> editorDropdown.assert.contains("FR: Functional Requirement")
+        +> editorDropdownError.assert(false)
+        +> editorDropdownItems.assert("BR: Business Rule", "CO: Constraint", "FR: Functional Requirement", "UC: Use Case")
+        +> editorRules.assert(RuleRow.all("Optional"))
+        +> buttonsEnabled.assert(Buttons(cancel = Enabled, save = Enabled))
+
+        >> clickFilterDead
+        +> filterDead.assert(HideDead)
+
+        >> clickSaveButton
+        +> fieldList.valueBy(_.last).assert("Functional Requirement")
+        +> fieldDetail("Functional Requirement").assert("All—Optional")
+        +> editorDropdown.assert.empty
+        +> editorRules.assert(RuleRow.all("Optional"))
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
+    )
+
+  private def testImpFieldCreateCant()(implicit tp: TestPath) =
+    runActions(
+      applyEventsSuccessfully(
+        SampleProject7.project,
+        Event.CustomReqTypeDeleteSoft(br),
+        Event.CustomReqTypeDeleteSoft(co),
+        Event.CustomReqTypeDeleteSoft(fr),
+        Event.FieldCustomImpCreate(2000, uc, CustomImpFieldGD(FieldReqTypeRules.optional)),
+      )
+    )(
+      clickNew("Implication field")
+        +> filterDead.assert(HideDead)
+        +> messageHeader.assert.contains("No req types available")
+        +> editorDropdown.assert.empty
+        +> editorRules.size.assert(0)
+        +> buttonsEnabled.assert(Buttons(cancel = Enabled))
+
+        >> clickFilterDead
+        +> filterDead.assert(ShowDead)
+        +> messageHeader.assert.contains("No req types available")
+        +> editorDropdown.assert.empty
+        +> editorRules.size.assert(0)
+        +> buttonsEnabled.assert(Buttons(cancel = Enabled))
+    )
+
+  private def testImpFieldUpdate()(implicit tp: TestPath) =
+    runActions(SampleProject7.project)(
+
+      selectField("Major Feature")
+        +> filterDead.assert(HideDead)
+        +> editorDropdown.assert.empty
+        +> editorRules.assert(RuleRow.all("Optional"))
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
+    )
+
   override def tests = Tests {
 
     'fieldList - {
@@ -215,6 +293,14 @@ object FieldConfigTest extends TestSuite {
 
     'textField - {
       'edit - testTextFieldEdit()
+    }
+
+    'impField - {
+      def p = SampleProject7.project
+      'create       - testImpFieldCreate(p)
+      'createCant   - testImpFieldCreateCant()
+      'createDeadMF - testImpFieldCreate(applyEventSuccessfully(p, Event.FieldCustomDelete(mfField)))
+      'update       - testImpFieldUpdate()
     }
 
   }

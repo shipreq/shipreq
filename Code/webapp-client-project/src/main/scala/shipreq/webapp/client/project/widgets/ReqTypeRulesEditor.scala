@@ -358,7 +358,7 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean) {
           Select(
             options  = resOptions,
             enabled  = enabled,
-            selected = resOptionKey(ss.value.res))(
+            selected = Some(resOptionKey(ss.value.res)))(
             onChange = o => ss.modState(_.copy(res = o.value)))
 
         def defaultSelect = {

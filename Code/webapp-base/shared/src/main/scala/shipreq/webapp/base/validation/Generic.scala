@@ -471,6 +471,9 @@ object Generic {
     def fail[A]: Validator[A, A, A, A] =
       Validator(Corrector.id, Auditor.fail)
 
+    def option[A, E](invalidity: => E): Validator[E, Option[A], Option[A], A] =
+      Validator(Corrector.id, Auditor.option(invalidity))
+
     def choose[E, I, V](f: I => Validator[E, I, I, V]): Validator[E, I, I, V] =
       Validator(Corrector.choose(f.andThen(_.corrector)), Auditor.choose(f.andThen(_.auditor)))
 
