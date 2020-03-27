@@ -22,9 +22,9 @@ object UpdateConfigCmd {
   final case class CustomReqTypeRestore   (id: CustomReqTypeId)                                 extends ToModifyCustomReqTypes
 
   sealed trait ToModifyFields                                                                                         extends UpdateConfigCmd
-  final case class CustomFieldCreateImp (reqTypeId: ReqTypeId, fieldReqTypeRules: FieldReqTypeRules.ForImpField )     extends ToModifyFields
-  final case class CustomFieldCreateTag (tagId    : TagId    , fieldReqTypeRules: FieldReqTypeRules.ForTagField )     extends ToModifyFields
-  final case class CustomFieldCreateText(name     : String   , fieldReqTypeRules: FieldReqTypeRules.ForTextField)     extends ToModifyFields
+  final case class CustomFieldCreateImp (reqTypeId: ReqTypeId , fieldReqTypeRules: FieldReqTypeRules.ForImpField )    extends ToModifyFields
+  final case class CustomFieldCreateTag (tagId    : TagGroupId, fieldReqTypeRules: FieldReqTypeRules.ForTagField )    extends ToModifyFields
+  final case class CustomFieldCreateText(name     : String    , fieldReqTypeRules: FieldReqTypeRules.ForTextField)    extends ToModifyFields
   final case class CustomFieldUpdateImp (id: CustomField.Implication.Id, newValues: CustomImpFieldGD .NonEmptyValues) extends ToModifyFields
   final case class CustomFieldUpdateTag (id: CustomField.Tag        .Id, newValues: CustomTagFieldGD .NonEmptyValues) extends ToModifyFields
   final case class CustomFieldUpdateText(id: CustomField.Text       .Id, newValues: CustomTextFieldGD.NonEmptyValues) extends ToModifyFields
@@ -168,7 +168,7 @@ object UpdateConfigCmd {
           state.pickle(a.fieldReqTypeRules)
         }
         override def unpickle(implicit state: UnpickleState): CustomFieldCreateTag = {
-          val tagId             = state.unpickle[TagId]
+          val tagId             = state.unpickle[TagGroupId]
           val fieldReqTypeRules = state.unpickle[FieldReqTypeRules.ForTagField]
           CustomFieldCreateTag(tagId, fieldReqTypeRules)
         }

@@ -469,7 +469,7 @@ object Rev1 {
           case 1 =>
             state.dec.readInt
             val id             = state.unpickle[CustomField.Tag.Id]
-            val tagId          = state.unpickle[TagId]
+            val tagId          = state.unpickle[TagGroupId]
             val reqTypes       = state.unpickle[FieldReqTypeRules.ForTagField]
             val liveExplicitly = state.unpickle[Live]
             CustomField.Tag(id, tagId, reqTypes, liveExplicitly)
@@ -838,7 +838,7 @@ object Rev1 {
       }
       override def unpickle(implicit state: UnpickleState): Event.FieldCustomTagCreate = {
         val id    = state.unpickle[CustomField.Tag.Id]
-        val tagId = state.unpickle[TagId]
+        val tagId = state.unpickle[TagGroupId]
         val vs    = state.unpickle[CustomTagFieldGD.NonEmptyValues]
         Event.FieldCustomTagCreate(id, tagId, vs)
       }

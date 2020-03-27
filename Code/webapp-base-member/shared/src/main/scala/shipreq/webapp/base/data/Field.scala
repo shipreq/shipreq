@@ -346,7 +346,7 @@ object CustomField {
   // -------------------------------------------------------------------------------------------------------------------
   @Lenses
   final case class Tag(id               : Tag.Id,
-                       tagId            : TagId,
+                       tagId            : TagGroupId,
                        fieldReqTypeRules: FieldReqTypeRules.ForTagField,
                        liveExplicitly   : Live) extends CustomField(CustomFieldType.Tag) {
 
@@ -365,14 +365,28 @@ object CustomField {
 
   object Tag {
 
+    private def castV1TagId(tagId: TagId): TagGroupId =
+      tagId match {
+        case i: TagGroupId      => i
+        case _: ApplicableTagId =>
+          // Safe only because
+          // 1) no data exists in prod with this case
+          // 2) this event is retired so no new data for it will ever be generated
+          throw new UnsupportedOperationException()
+      }
+
+    val tagIdv1: Lens[Tag, TagId] =
+      Lens[Tag, TagId](_.tagId)(id => _.copy(tagId = castV1TagId(id)))
+
     def v1(id                : Tag.Id,
            tagId             : TagId,
            mandatory         : Mandatory,
            applicableReqTypes: ApplicableReqTypes,
            liveExplicitly    : Live): Tag = {
+
       apply(
         id                = id,
-        tagId             = tagId,
+        tagId             = castV1TagId(tagId),
         fieldReqTypeRules = FieldReqTypeRules.v1(mandatory, applicableReqTypes),
         liveExplicitly    = liveExplicitly,
       )

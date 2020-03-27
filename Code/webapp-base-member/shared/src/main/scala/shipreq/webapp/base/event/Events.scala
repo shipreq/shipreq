@@ -126,7 +126,7 @@ object Event {
                                          vs: CustomTextFieldGD.NonEmptyValues) extends ActiveEvent
 
   final case class FieldCustomTagCreate(id   : CustomField.Tag.Id,
-                                        tagId: TagId,
+                                        tagId: TagGroupId,
                                         vs   : CustomTagFieldGD.NonEmptyValues) extends ActiveEvent
 
 

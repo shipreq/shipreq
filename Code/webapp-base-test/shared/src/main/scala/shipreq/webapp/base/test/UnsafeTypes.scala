@@ -18,10 +18,11 @@ object MakeEmpty {
   implicit def emptyVTPL: MakeEmpty[VectorTree.ParentLocation] =
     MakeEmpty(VectorTree.ParentLocation.Empty)
 
-  implicit def emptyOpt [A]: MakeEmpty[Option[A]] = MakeEmpty(None)
-  implicit def emptyVec [A]: MakeEmpty[Vector[A]] = MakeEmpty(Vector.empty)
-  implicit def emptyList[A]: MakeEmpty[List  [A]] = MakeEmpty(Nil)
-  implicit def emptySet [A]: MakeEmpty[Set   [A]] = MakeEmpty(Set.empty)
+  implicit def emptyOpt   [A]: MakeEmpty[Option[A]] = MakeEmpty(None)
+  implicit def emptyVec   [A]: MakeEmpty[Vector[A]] = MakeEmpty(Vector.empty)
+  implicit def emptyList  [A]: MakeEmpty[List  [A]] = MakeEmpty(Nil)
+  implicit def emptySet   [A]: MakeEmpty[Set   [A]] = MakeEmpty(Set.empty)
+  implicit def emptyMap[A, B]: MakeEmpty[Map[A, B]] = MakeEmpty(Map.empty)
 
   implicit def emptyApplicableTagGD  : MakeEmpty[ApplicableTagGD  .Values] = MakeEmpty(ApplicableTagGD  .emptyValues)
   implicit def emptyCodeGroupGD      : MakeEmpty[CodeGroupGD      .Values] = MakeEmpty(CodeGroupGD      .emptyValues)

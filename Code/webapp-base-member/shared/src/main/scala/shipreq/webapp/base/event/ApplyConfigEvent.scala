@@ -552,7 +552,7 @@ trait ApplyConfigEvent {
       } yield ()
     }
 
-    val updateTagId = fieldUpdateFn(CustomField.Tag.tagId)
+    val updateTagId = fieldUpdateFn(CustomField.Tag.tagIdv1)
 
     private def updateValues(f: CustomField.Tag, vs: ^.NonEmptyValues): SE[CustomField.Tag] = {
       var man = Option.empty[Mandatory]

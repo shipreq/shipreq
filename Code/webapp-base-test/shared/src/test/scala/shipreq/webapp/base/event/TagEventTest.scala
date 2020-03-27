@@ -40,7 +40,6 @@ abstract class SharedTagEventTests extends TestSuite {
     t.children.map(_.value)
 
   def tagId1: TagId
-  val createTagField1 = CustomTagFieldEventTestV1.mkC1(tagId1)
 
   override def tests = Tests {
     'create {
@@ -149,21 +148,6 @@ abstract class SharedTagEventTests extends TestSuite {
         test(r4,  "{--,D}-")
         test(r1,  "{AB,D}C")
       }
-
-      def testTagFieldLiveness(imp: Live, exp: Live)(es: Event*): Unit = {
-        val p = _assertPass(es: _*)
-        val f = p.config.fields.custom(createTagField1.id)
-        assertEq("live", imp, f live p.config)
-        assertEq("liveExplicitly", exp, f.liveExplicitly)
-      }
-      'whenLiveTagField {
-        testTagFieldLiveness(Dead, Live)(c1, createTagField1, sd1)
-        testTagFieldLiveness(Live, Live)(c1, createTagField1, sd1, r1)
-      }
-      'whenDeadTagField {
-        testTagFieldLiveness(Dead, Dead)(c1, createTagField1, CustomTagFieldEventTestV1.sd1, sd1)
-        testTagFieldLiveness(Dead, Dead)(c1, createTagField1, CustomTagFieldEventTestV1.sd1, sd1, r1)
-      }
     }
   }
 }
@@ -180,6 +164,8 @@ trait TagGroupEvents {
     TagGroupCreate(id, nev(Name(id.toString), Desc(None), Exclusivity(true),
       Children(Vector(children.map(_.TG): _*)), Parents(parents.map(_.TG -> none[TagId]).toMap)))
   def tagId1 = 1.TG
+
+  def createTagField1 = CustomTagFieldEventTestV1.mkC1(tagId1)
 
   val c1Name = "Version"
   type CE = TagGroupCreate
@@ -235,6 +221,23 @@ object TagGroupEventTest extends TestSuite with TagGroupEvents {
         assertEq(r2, TagInTree(TagGroup(2, "Released", Some("r"), true, Live), Vector.empty))
 
         // TODO confirm parent order
+      }
+    }
+
+    'delete {
+      def testTagFieldLiveness(imp: Live, exp: Live)(es: Event*): Unit = {
+        val p = _assertPass(es: _*)
+        val f = p.config.fields.custom(createTagField1.id)
+        assertEq("live", imp, f live p.config)
+        assertEq("liveExplicitly", exp, f.liveExplicitly)
+      }
+      'whenLiveTagField {
+        testTagFieldLiveness(Dead, Live)(c1, createTagField1, sd1)
+        testTagFieldLiveness(Live, Live)(c1, createTagField1, sd1, r1)
+      }
+      'whenDeadTagField {
+        testTagFieldLiveness(Dead, Dead)(c1, createTagField1, CustomTagFieldEventTestV1.sd1, sd1)
+        testTagFieldLiveness(Dead, Dead)(c1, createTagField1, CustomTagFieldEventTestV1.sd1, sd1, r1)
       }
     }
   }

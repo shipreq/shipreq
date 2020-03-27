@@ -477,10 +477,10 @@ object RandomData {
   def customFieldText(rules: Gen[FieldReqTypeRules.ForTextField]): Gen[CustomField.Text] =
     Gen.apply4(CustomField.Text.apply)(customFieldTextId, fieldName, rules, live)
 
-  def customFieldTag(tagId: Gen[TagId], rules: Gen[FieldReqTypeRules.ForTagField]): Gen[CustomField.Tag] =
+  def customFieldTag(tagId: Gen[TagGroupId], rules: Gen[FieldReqTypeRules.ForTagField]): Gen[CustomField.Tag] =
     Gen.apply4(CustomField.Tag.apply)(customFieldTagId, tagId, rules, live)
 
-  def customFieldTagSome(tagIds: Set[TagId], rules: Gen[FieldReqTypeRules.ForTagField]): Gen[Vector[CustomField.Tag]] =
+  def customFieldTagSome(tagIds: Set[TagGroupId], rules: Gen[FieldReqTypeRules.ForTagField]): Gen[Vector[CustomField.Tag]] =
     Gen.subset(tagIds.toVector).flatMap(ids =>
       Gen sequence ids.map(id =>
         customFieldTag(Gen pure id, rules)))
@@ -500,13 +500,13 @@ object RandomData {
     lazy val txt: Gen[CustomField] = customFieldText(rulesAny)
     customFieldType.flatMap {
       case CustomFieldType.Text        => txt
-      case CustomFieldType.Tag         => if (tagFields) customFieldTag(tagId, rulesTag) else txt
+      case CustomFieldType.Tag         => if (tagFields) customFieldTag(tagGroupId, rulesTag) else txt
       case CustomFieldType.Implication => if (impFields) customFieldImplication(reqTypeId, rulesAny) else txt
     }
   }
 
   def customFields(reqTypeIds: Set[ReqTypeId],
-                   tagIds    : Set[TagId],
+                   tagIds    : Set[TagGroupId],
                    rulesAny  : Gen[FieldReqTypeRules[Impossible]],
                    rulesTag  : Gen[FieldReqTypeRules.ForTagField]): Gen[IMap[CustomFieldId, CustomField]] = {
     val cf = for {
@@ -521,12 +521,14 @@ object RandomData {
   }
 
   def fieldSet(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId]): Gen[FieldSet] = {
-    val genApTagId   = NonEmptySet.option(tagIds.iterator.filterSubType[ApplicableTagId].toSet).map(Gen.chooseNE(_))
-    val genReqTypeId = NonEmptySet.option(reqTypeIds).map(Gen.chooseNE(_))
-    val rulesAny     = fieldReqTypeRules[Impossible](genReqTypeId, None)
-    val rulesTag     = fieldReqTypeRules(genReqTypeId, genApTagId)
+    val tagGroupIds   = tagIds.iterator.filterSubType[TagGroupId].toSet
+    val genApTagId    = NonEmptySet.option(tagIds.iterator.filterSubType[ApplicableTagId].toSet).map(Gen.chooseNE(_))
+    val genTagGroupId = NonEmptySet.option(tagGroupIds).map(Gen.chooseNE(_))
+    val genReqTypeId  = NonEmptySet.option(reqTypeIds).map(Gen.chooseNE(_))
+    val rulesAny      = fieldReqTypeRules[Impossible](genReqTypeId, None)
+    val rulesTag      = fieldReqTypeRules(genReqTypeId, genApTagId)
     for {
-      cf           ← customFields(reqTypeIds, tagIds, rulesAny, rulesTag)
+      cf           ← customFields(reqTypeIds, tagGroupIds, rulesAny, rulesTag)
       mandatoryIds = cf.keySet.map(f => f: FieldId) ++ StaticField.notDeletable
       optionalIds  ← Gen.chooseIndexed_!(StaticField.deletable).set
       order        ← Gen.shuffle((mandatoryIds ++ optionalIds).toVector)
@@ -2183,7 +2185,7 @@ object RandomData {
       Gen.apply2(FieldCustomTagCreateV1)(customFieldTagId, customTagFieldGDv1.nonEmptyValues)
 
     val genFieldCustomTagCreate: Gen[FieldCustomTagCreate] =
-      Gen.apply3(FieldCustomTagCreate)(customFieldTagId, tagId, customTagFieldGD.nonEmptyValues)
+      Gen.apply3(FieldCustomTagCreate)(customFieldTagId, tagGroupId, customTagFieldGD.nonEmptyValues)
 
     val genFieldCustomTextCreateV1: Gen[FieldCustomTextCreateV1] =
       Gen.apply2(FieldCustomTextCreateV1)(customFieldTextId, customTextFieldGDv1.nonEmptyValues)

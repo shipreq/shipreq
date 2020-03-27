@@ -2,6 +2,7 @@ package shipreq.webapp.base.event
 
 import utest._
 import japgolly.microlibs.nonempty.NonEmpty
+import shipreq.base.util.NonExclusive
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.{FieldReqTypeRules => FRTR}
 import shipreq.webapp.base.test.SampleProject
@@ -194,11 +195,11 @@ trait CustomTagFieldEventsV1 {
   import CustomFieldEventTestHelpersV1._
   import CustomTagFieldGDv1._
 
-  def mkC1(tagId: TagId) = FieldCustomTagCreateV1(1, nev(TagId(tagId), Mandatory(true), ApplicableReqTypes(allReqTypes)))
+  def mkC1(tagId: TagGroupId) = FieldCustomTagCreateV1(1, nev(TagId(tagId), Mandatory(true), ApplicableReqTypes(allReqTypes)))
 
   type CE = FieldCustomTagCreateV1
   val c1  = mkC1(1.TG)
-  val c2  = FieldCustomTagCreateV1(2, nev(TagId(2.AT), Mandatory(false), ApplicableReqTypes(onlyUC)))
+  val c2  = FieldCustomTagCreateV1(2, nev(TagId(2.TG), Mandatory(false), ApplicableReqTypes(onlyUC)))
   val u1  = FieldCustomTagUpdateV1(1, nev(Mandatory(false)))
   val sd1 = FieldCustomDelete(1.CFTag)
   val r1  = FieldCustomRestore(1.CFTag)
@@ -213,12 +214,9 @@ object CustomTagFieldEventTestV1 extends TestSuite with CustomTagFieldEventsV1 {
   import CustomFieldEventTestHelpersV1._
   import CustomTagFieldGDv1._
 
-  val createAT2 = {
-    import ApplicableTagGD._
-    ApplicableTagCreate(2, nev(Key("c2"), Desc(Some("r")), Colour(None), ApplicableReqTypes(allReqTypes)))
-  }
+  val createTG2 = TagGroupCreate(2, TagGroupGD("c2", Some("r"), NonExclusive, ∅, ∅))
   val softDelTG1 = TagGroupEventTest.sd1
-  implicit val init = InitialEvents(TagGroupEventTest.c1, createAT2)
+  implicit val init = InitialEvents(TagGroupEventTest.c1, createTG2)
 
   implicit class FieldCustomTagCreateExt(private val a: FieldCustomTagCreateV1) extends AnyVal {
     def mod(f: Values => Values) =
@@ -242,12 +240,12 @@ object CustomTagFieldEventTestV1 extends TestSuite with CustomTagFieldEventsV1 {
         def r = _assertPass(es: _*).config.fields.customFields.get(c1.id).get
         assertEq(r, CustomField.Tag.v1(1, 1.TG, false, allReqTypes, Live))
 
-        es :+= FieldCustomTagUpdateV1(1, nev(TagId(2.AT), Mandatory(true)))
-        assertEq(r, CustomField.Tag.v1(1, 2.AT, true, allReqTypes, Live))
+        es :+= FieldCustomTagUpdateV1(1, nev(TagId(2.TG), Mandatory(true)))
+        assertEq(r, CustomField.Tag.v1(1, 2.TG, true, allReqTypes, Live))
 
         es :+= CustomReqTypeEventTest.c1
         es :+= FieldCustomTagUpdateV1(1, nev(ApplicableReqTypes(onlyRT1)))
-        assertEq(r, CustomField.Tag.v1(1, 2.AT, true, onlyRT1, Live))
+        assertEq(r, CustomField.Tag.v1(1, 2.TG, true, onlyRT1, Live))
       }
       'tagIdNotFound - assertFail("Tag")   (c1, FieldCustomTagUpdateV1(1, nev(TagId(9.TG))))
       'badReqTypes   - assertFail("Types") (c1, FieldCustomTagUpdateV1(1, nev(ApplicableReqTypes(onlyRT1)))) // RT1 doesn't exist
@@ -260,11 +258,11 @@ trait CustomTagFieldEvents {
   import CustomFieldEventTestHelpers._
   import CustomTagFieldGD._
 
-  def mkC1(tagId: TagId) = FieldCustomTagCreate(1, tagId, nev(FieldReqTypeRules(FRTR.mandatory)))
+  def mkC1(tagId: TagGroupId) = FieldCustomTagCreate(1, tagId, nev(FieldReqTypeRules(FRTR.mandatory)))
 
   type CE = FieldCustomTagCreate
   val c1  = mkC1(1.TG)
-  val c2  = FieldCustomTagCreate(2, 2.AT, nev(FieldReqTypeRules(onlyUC)))
+  val c2  = FieldCustomTagCreate(2, 2.TG, nev(FieldReqTypeRules(onlyUC)))
   val u1  = FieldCustomTagUpdate(1, nev(FieldReqTypeRules(FRTR.optional)))
   val sd1 = FieldCustomDelete(1.CFTag)
   val r1  = FieldCustomRestore(1.CFTag)
@@ -298,7 +296,7 @@ object CustomTagFieldEventTest extends TestSuite with CustomTagFieldEvents {
         import SampleProject.Values._
         val p0 = Project.fields.set(FieldSet.empty)(SampleProject.project)
 
-        def assertBad(parent: TagId, id: ApplicableTagId) = {
+        def assertBad(parent: TagGroupId, id: ApplicableTagId) = {
           val c = FieldCustomTagCreate(1, parent, nev(FieldReqTypeRules(FRTR.defaultTo(id))))
           assertEventFails(p0, c)
         }
