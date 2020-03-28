@@ -142,13 +142,22 @@ object FilterAlgebra {
         import FieldAttr._
         import data._
         lookupFieldAttr(attrStr) { attr =>
-          (cfg.fieldsByNameLowercase.get(fieldName.toLowerCase), attr) match {
-            case (Some(f: CustomField)            , Blank | NotApplicable) => \/-(Valid(FieldProp(f.id, attr)))
-            case (Some(f: CustomField.Tag)        , DefaultInUse         ) => \/-(Valid(FieldProp(f.id, attr)))
-            case (Some(_: CustomField.Text)       , DefaultInUse         ) => -\/("Text fields don't have defaults.")
-            case (Some(_: CustomField.Implication), DefaultInUse         ) => -\/("Implication fields don't have defaults.")
-            case (Some(_: StaticField)            , _                    ) => -\/(s"$fieldName is a built-in field and so can't be used here.")
-            case (None                            , _                    ) => -\/(s"Unknown field: '$fieldName'")
+          import SpecialBuiltInField._
+
+          val nameLower = fieldName.toLowerCase
+          def tryL      = SpecialBuiltInField.filterOkByNameLowercase.get(nameLower).map(-\/(_))
+          def tryR      = cfg.fieldsByNameLowercase.get(nameLower).map(\/-(_))
+
+          (tryL orElse tryR, attr) match {
+            case (Some(\/-(f: CustomField))            , Blank | NotApplicable) => \/-(Valid(FieldProp(\/-(f.id), attr)))
+            case (Some(\/-(f: CustomField.Tag))        , DefaultInUse         ) => \/-(Valid(FieldProp(\/-(f.id), attr)))
+            case (Some(\/-(_: CustomField.Text))       , DefaultInUse         ) => -\/("Text fields don't have defaults.")
+            case (Some(\/-(_: CustomField.Implication)), DefaultInUse         ) => -\/("Implication fields don't have defaults.")
+            case (Some(\/-(_: StaticField))            , _                    ) => -\/(s"$fieldName is a built-in field and so can't be used here.")
+            case (Some(f@ -\/(Title))                  , Blank                ) => \/-(Valid(FieldProp(f, attr)))
+            case (Some(-\/(Title))                     , DefaultInUse         ) => -\/("Titles don't have defaults")
+            case (Some(-\/(Title))                     , NotApplicable        ) => -\/("Titles are always applicable")
+            case (None                                 , _                    ) => -\/(s"Unknown field: '$fieldName'")
           }
         }
     }
@@ -174,7 +183,7 @@ object FilterAlgebra {
       case Reqs          (reqs)    => Potential(Reqs          (convReqSet(reqs)))
       case ReqType       (id)      => Potential(ReqType       (convReqType(id)))
       case HasIssue      (on, c)   => Potential(HasIssue      (on, c.map(FilterAst.issueCategoryToStr)))
-      case FieldProp     (f, a)    => Potential(FieldProp     (cfg.fieldName(f), a.name))
+      case FieldProp     (f, a)    => Potential(FieldProp     (f.fold(_.name, cfg.fieldName), a.name))
       case c: Regex                => Potential(c)
       case c: Text                 => Potential(c)
       case c: Not  [Potential]     => Potential(c)
@@ -325,32 +334,47 @@ object FilterAlgebra {
       )
     }
 
-    def byFieldProp(fieldId: CustomFieldId, attr: FieldAttr): CompiledFilter = {
+    def byFieldProp(fieldArg: Filter.Valid.Field, attr: FieldAttr): CompiledFilter = {
       import FieldReqTypeRules.Resolution
-      (attr, fieldId) match {
+      (attr, fieldArg) match {
 
-        case (FieldAttr.NotApplicable, _) =>
-          val field = p.config.fields.need(fieldId)
+        case (FieldAttr.NotApplicable, \/-(id)) =>
+          val field = p.config.fields.need(id)
           val na = p.config.reqTypesWithRes(field.fieldReqTypeRules)(Resolution.NotApplicable).map(_.reqTypeId).toSet
           reqOnly(req => na.contains(req.reqTypeId))
 
-        case (FieldAttr.Blank, f: CustomField.Text.Id) =>
+        case (FieldAttr.Blank, \/-(f: CustomField.Text.Id)) =>
           val text = p.content.reqTextFor(f)
           fieldApplicableReqOnly(f)(req => !text.contains(req.id))
 
-        case (FieldAttr.Blank, f: CustomField.Implication.Id) =>
+        case (FieldAttr.Blank, \/-(f: CustomField.Implication.Id)) =>
           val imps = p.dataLogic.customFieldImps(ShowDead)(f)
           fieldApplicableReqOnly(f)(req => imps(req.id).isEmpty)
 
-        case (FieldAttr.Blank, f: CustomField.Tag.Id) =>
+        case (FieldAttr.Blank, \/-(f: CustomField.Tag.Id)) =>
           val scope = p.config.tagFieldDistribution(filterDead).inField(f)
           fieldApplicableReqOnly(f)(req => tagLookup(req.id).all.intersect(scope).isEmpty)
 
-        case (FieldAttr.DefaultInUse, f: CustomField.Tag.Id) =>
+        case (FieldAttr.DefaultInUse, \/-(f: CustomField.Tag.Id)) =>
           val fieldDefaultApplied = p.fieldDefaultApplied(f, filterDead)
           fieldApplicableReqOnly(f)(req => fieldDefaultApplied(req.id))
 
-        case (FieldAttr.DefaultInUse, _: CustomField.Implication.Id | _: CustomField.Text.Id) =>
+        case (FieldAttr.Blank, -\/(SpecialBuiltInField.Title)) =>
+          make(
+            req         = _.title.isEmpty,
+            codeGroup   = _.title.isEmpty,
+            manualIssue = fail,
+          )
+
+        case (FieldAttr.Blank, \/-(_: StaticField)) =>
+          reqOnly(fail)
+
+        case (FieldAttr.NotApplicable, -\/(SpecialBuiltInField.Title)) =>
+          reqOnly(fail)
+
+        case (FieldAttr.DefaultInUse,
+                -\/(SpecialBuiltInField.Title) |
+                \/-(_: StaticField | _: CustomField.Implication.Id | _: CustomField.Text.Id)) =>
           reqOnly(fail)
       }
     }

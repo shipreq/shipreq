@@ -5,6 +5,7 @@ import japgolly.scalajs.react.Reusability
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
+import scalaz.\/-
 import scalaz.std.anyVal.intInstance
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter._
@@ -49,7 +50,8 @@ final class Usage(p: Project, router: SpecialRouterCtl) {
   private def fieldFilter(fid: CustomFieldId): Filter.Valid = {
     import FilterAst.FieldAttr._
     import Filter.Valid._
-    not(anyOf(fieldProp(fid, Blank), fieldProp(fid, NotApplicable)))
+    val f = \/-(fid)
+    not(anyOf(fieldProp(f, Blank), fieldProp(f, NotApplicable)))
   }
 
   val fields: FilterDead => CustomFieldId => Int =

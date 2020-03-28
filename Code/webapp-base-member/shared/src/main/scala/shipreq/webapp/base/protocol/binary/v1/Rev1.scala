@@ -68,7 +68,23 @@ object Rev1 {
           }
       }
 
+    implicit val picklerSpecialBuiltInFieldFilterOk: Pickler[SpecialBuiltInField.FilterOk] =
+      new Pickler[SpecialBuiltInField.FilterOk] {
+        private[this] final val KeyTitle = 't'
+        override def pickle(a: SpecialBuiltInField.FilterOk)(implicit state: PickleState): Unit =
+          a match {
+            case SpecialBuiltInField.Title => state.enc.writeByte(KeyTitle)
+          }
+        override def unpickle(implicit state: UnpickleState): SpecialBuiltInField.FilterOk =
+          state.dec.readByte match {
+            case KeyTitle => SpecialBuiltInField.Title
+          }
+      }
+
     implicit val picklerValidHashTag: Pickler[Valid.HashTag] =
+      pickleDisj
+
+    implicit lazy val picklerValidFilter: Pickler[Valid.Field] =
       pickleDisj
 
     implicit val picklerValidIssueCatNEV: Pickler[NonEmptyVector[Valid.IssueCat]] =

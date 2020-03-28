@@ -5,7 +5,7 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Optional
 import scala.annotation.tailrec
-import scalaz.Equal
+import scalaz.{-\/, Equal, \/-}
 import sourcecode.Line
 import utest._
 import shipreq.base.util._
@@ -935,43 +935,43 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterImpFieldNA(): Unit = {
-    testFilter(P7, F.fieldProp(mfField, FieldAttr.NotApplicable))("", "SI-1  SI-2")
+    testFilter(P7, F.fieldProp(\/-(mfField), FieldAttr.NotApplicable))("", "SI-1  SI-2")
   }
 
   def testFilterImpFieldBlank(): Unit = {
-    testFilter(P7, F.fieldProp(mfField, FieldAttr.Blank))("BR-1  BR-2  BR-3  UC-1  UC-2", "")
+    testFilter(P7, F.fieldProp(\/-(mfField), FieldAttr.Blank))("BR-1  BR-2  BR-3  UC-1  UC-2", "")
   }
 
   def testFilterTagFieldNA(): Unit = {
-    testFilter(P7, F.fieldProp(priField, FieldAttr.NotApplicable))("", "CO-1  CO-2")
+    testFilter(P7, F.fieldProp(\/-(priField), FieldAttr.NotApplicable))("", "CO-1  CO-2")
 
-    testFilter(P7, F.fieldProp(verField, FieldAttr.NotApplicable))(
+    testFilter(P7, F.fieldProp(\/-(verField), FieldAttr.NotApplicable))(
       "MF-1  MF-2  MF-3  MF-4  MF-5  MF-6  MF-7  MF-8  MF-9  MF-10  MF-11  MF-12  MF-13  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-22  MF-23  MF-24  MF-25  MF-26  MF-27",
       "MF-19  MF-28")
   }
 
   def testFilterTagFieldBlank(): Unit = {
-    testFilter(P7, F.fieldProp(verField, FieldAttr.Blank))("BR-1  BR-2  BR-3  FR-1  FR-2  UC-2", "CO-2  SI-1  SI-2")
+    testFilter(P7, F.fieldProp(\/-(verField), FieldAttr.Blank))("BR-1  BR-2  BR-3  FR-1  FR-2  UC-2", "CO-2  SI-1  SI-2")
   }
 
   def testFilterTagFieldDefault(): Unit = {
-    testFilter(P7, F.fieldProp(verField, FieldAttr.DefaultInUse))("", "")
-    testFilter(P7, F.fieldProp(priField, FieldAttr.DefaultInUse))("BR-1  BR-2  BR-3", "")
+    testFilter(P7, F.fieldProp(\/-(verField), FieldAttr.DefaultInUse))("", "")
+    testFilter(P7, F.fieldProp(\/-(priField), FieldAttr.DefaultInUse))("BR-1  BR-2  BR-3", "")
 
-    testFilter(P7, F.fieldProp(statusField, FieldAttr.DefaultInUse))(
+    testFilter(P7, F.fieldProp(\/-(statusField), FieldAttr.DefaultInUse))(
       "MF-1  MF-2  MF-4  MF-8  MF-9  MF-10  MF-11  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-23  MF-24  MF-25  MF-26  MF-27",
       "BR-1  BR-2  CO-1  CO-2  FR-1  FR-2  MF-19  MF-28  SI-1  SI-2")
   }
 
   def testFilterTextFieldNA(): Unit = {
-    testFilter(P7, F.fieldProp(bizJustField, FieldAttr.NotApplicable))("", "CO-1  CO-2  SI-1 SI-2")
-    testFilter(P7, F.fieldProp(componentField, FieldAttr.NotApplicable))(
+    testFilter(P7, F.fieldProp(\/-(bizJustField), FieldAttr.NotApplicable))("", "CO-1  CO-2  SI-1 SI-2")
+    testFilter(P7, F.fieldProp(\/-(componentField), FieldAttr.NotApplicable))(
       "BR-1  BR-2  BR-3  MF-1  MF-2  MF-3  MF-4  MF-5  MF-6  MF-7  MF-8  MF-9  MF-10  MF-11  MF-12  MF-13  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-22  MF-23  MF-24  MF-25  MF-26  MF-27  UC-1  UC-2",
       "MF-19  MF-28")
   }
 
   def testFilterTextFieldBlank(): Unit = {
-    testFilter(P7, F.fieldProp(bizJustField, FieldAttr.Blank))(
+    testFilter(P7, F.fieldProp(\/-(bizJustField), FieldAttr.Blank))(
       "BR-1  BR-2  BR-3  FR-1  FR-2  MF-1  MF-2  MF-3  MF-5  MF-6  MF-7  MF-8  MF-9  MF-10  MF-11  MF-12  MF-13  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-22  MF-23  MF-24  MF-25  MF-26  MF-27  UC-1  UC-2",
       "MF-19  MF-28")
   }
@@ -985,6 +985,17 @@ object LogicTest extends TestSuite {
   def testFilterIgnoreNATags(): Unit = {
     // BR-2 should be missing; that's the point
     testFilter(P7, F.tag(prod))("MF-3  UC-1", "")
+  }
+
+  def testFilterTitleBlank(): Unit = {
+    val p = applyEventsSuccessfully(P7,
+      E.GenericReqTitleSet(mfs(15), ∅),
+      E.ContentRestore(Set(cos(1)), ∅),
+      E.GenericReqTitleSet(cos(1), ∅),
+      E.ReqsDelete(NonEmptySet.one(cos(1)), ∅, ∅),
+    )
+    val f = F.fieldProp(-\/(SpecialBuiltInField.Title), FieldAttr.Blank)
+    testFilter(p, f)("MF-15", "CO-1")
   }
 
   def testFilterAll(): Unit = {
@@ -1215,6 +1226,7 @@ object LogicTest extends TestSuite {
       'tagFieldDefault      - testFilterTagFieldDefault()
       'ignoreNATags         - testFilterIgnoreNATags()
       'tagsIncludesDefaults - testFilterByTagsIncludesDefaults()
+      'titleBlank           - testFilterTitleBlank()
       'allOf                - testFilterAll()
       'anyOf                - testFilterAny()
       'not                  - testFilterNot()

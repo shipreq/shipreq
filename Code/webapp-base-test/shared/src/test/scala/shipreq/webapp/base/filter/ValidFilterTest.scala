@@ -4,6 +4,7 @@ import scalaz.{-\/, \/-}
 import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data.Project
+import shipreq.webapp.base.data.SpecialBuiltInField._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.filter.Filter.Implicits._
 
@@ -32,8 +33,9 @@ object ValidFilterTest extends TestSuite {
         'bad - assertTranslationFails(PF.reqType("XWE"))("unknown type")
       }
       'field {
-        'exact - assertTranslation(PF.fieldProp("Description", "blank"))(VF.fieldProp(descField, Blank))
-        'caseWrong - assertTranslation(PF.fieldProp("descriPTION", "blank"))(VF.fieldProp(descField, Blank))
+        'exact - assertTranslation(PF.fieldProp("Description", "blank"))(VF.fieldProp(\/-(descField), Blank))
+        'caseWrong - assertTranslation(PF.fieldProp("descriPTION", "blank"))(VF.fieldProp(\/-(descField), Blank))
+        'title - assertTranslation(PF.fieldProp("TITLE", "BLANK"))(VF.fieldProp(-\/(Title), Blank))
       }
     }
   }

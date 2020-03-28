@@ -65,7 +65,7 @@ object Filter {
 
   object Valid extends FilterAst.Dsl {
     type Attr      = FilterAst.Attr
-    type Field     = data.CustomFieldId
+    type Field     = data.SpecialBuiltInField.FilterOk \/ data.FieldId
     type FieldAttr = FilterAst.FieldAttr
     type IssueCat  = IssueCategory
     type HashTag   = data.CustomIssueTypeId \/ data.ApplicableTagId

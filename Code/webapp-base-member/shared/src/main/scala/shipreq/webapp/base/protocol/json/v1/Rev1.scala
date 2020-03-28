@@ -5,6 +5,7 @@ import io.circe.syntax._
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.stdlib_ext.ParseInt
+import scalaz.{-\/, \/-}
 import shipreq.base.util.JsonUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -107,6 +108,23 @@ object Rev1 {
 
     implicit lazy val codecValidHashTag: JsonCodec[Valid.HashTag] =
       codecDisj[CustomIssueTypeId, ApplicableTagId]
+
+    implicit lazy val codecValidField: JsonCodec[Valid.Field] = {
+      val encoder =
+        Encoder.instance[Valid.Field] {
+          case \/-(f)                         => f.asJson
+          case -\/(SpecialBuiltInField.Title) => Json.fromString("title")
+        }
+
+      val decFieldId = decoderFieldId.map[Valid.Field](\/-(_))
+
+      val decBuiltIn = Decoder[String].emap[Valid.Field] {
+        case "title" => Right(-\/(SpecialBuiltInField.Title))
+        case x       => Left("Unknown field: " + x)
+      }
+
+      JsonCodec(encoder, decFieldId or decBuiltIn)
+    }
 
     implicit val codecValidIssueCatNEV: JsonCodec[NonEmptyVector[Valid.IssueCat]] =
       codecNEV

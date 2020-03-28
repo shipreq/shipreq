@@ -1866,12 +1866,21 @@ object RandomData {
       def tag        (g: Gen[ApplicableTagId])  : Gen[ValidF[Nothing]] = g.map(i => FilterAst.HashRef(\/-(i)))
       def customIssue(g: Gen[CustomIssueTypeId]): Gen[ValidF[Nothing]] = g.map(i => FilterAst.HashRef(-\/(i)))
 
-      def fieldProp(g: Gen[CustomFieldId]): Gen[ValidF[Nothing]] =
-        g.flatMap {
-          case id: CustomField.Tag        .Id => fieldAttr.map(FilterAst.FieldProp(id, _))
-          case id: CustomField.Text       .Id => fieldAttrNoDefault.map(FilterAst.FieldProp(id, _))
-          case id: CustomField.Implication.Id => fieldAttrNoDefault.map(FilterAst.FieldProp(id, _))
+      val specialBuiltInFieldFilterOk: Gen[SpecialBuiltInField.FilterOk] =
+        Gen.chooseNE(SpecialBuiltInField.filterOk)
+
+      def fieldProp(g: Gen[CustomFieldId]): Gen[ValidF[Nothing]] = {
+        val gr = g.map[Valid.Field](\/-(_))
+        val gl = specialBuiltInFieldFilterOk.map[Valid.Field](-\/(_))
+        import SpecialBuiltInField._
+        Gen.chooseGen(gr, gr, gr, gl).flatMap {
+          case \/-(id: CustomField.Tag        .Id  ) => fieldAttr.map(FilterAst.FieldProp(\/-(id), _))
+          case \/-(id: CustomField.Text       .Id  ) => fieldAttrNoDefault.map(FilterAst.FieldProp(\/-(id), _))
+          case \/-(id: CustomField.Implication.Id  ) => fieldAttrNoDefault.map(FilterAst.FieldProp(\/-(id), _))
+          case \/-(f : StaticField                 ) => fieldAttrNoDefault.map(FilterAst.FieldProp(\/-(f), _))
+          case f@ -\/(Title                        ) => Gen.pure(FilterAst.FieldProp(f, FieldAttr.Blank))
         }
+      }
 
       type FlatGens = NonEmptyVector[Gen[ValidF[Nothing]]]
 
