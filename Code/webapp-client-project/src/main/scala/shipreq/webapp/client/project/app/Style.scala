@@ -86,7 +86,9 @@ object Style extends StyleSheet.Inline {
     backgroundColor(rgba(0, 0, 0, .06)))
 
   private val deadCell = styleS(
-    backgroundColor(c"#f6f6f6"),
+    backgroundColor(c"#f2f2f2"),
+    color(c"#4d4d4d"),
+    opacity(0.7),
   )
 
   val semanticFixes = style(
@@ -797,11 +799,7 @@ object Style extends StyleSheet.Inline {
       genericDragStatus(ds),
       configShared.crudRow(s, ds),
       mixinIf(l is Dead)(
-        unsafeExt("tr" + _ + ">td")(
-          backgroundColor(c"#f2f2f2"),
-          color(c"#4d4d4d"),
-          opacity(0.7),
-        ),
+        unsafeExt("tr" + _ + ">td")(deadCell),
       ),
     )}
 

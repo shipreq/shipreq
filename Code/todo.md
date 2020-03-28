@@ -136,7 +136,6 @@ Phase 3A
 v2.1
 ========================================================================================================================
 
-* update reqtable (and probably reqdetail) to render dead rows like cfg field
 * field filter should include Title
 
 * Reappearances wrt tags
