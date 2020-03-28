@@ -5,7 +5,6 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.UiText
@@ -21,7 +20,7 @@ import shipreq.webapp.client.project.feature.Selection
 import shipreq.webapp.client.project.widgets.{ProjectWidgets, RichTextEditor}
 
 object DeletionForm {
-  import DeletionRestorationLogic.{Data, ReqRow}
+  import DeletionRestorationLogic.Data
 
   final case class Props(data      : Data,
                          widgets   : ProjectWidgets.NoCtx,
@@ -84,7 +83,7 @@ object DeletionForm {
 
       val deletionReason: VdomTag =
         <.section(
-          <.h4(*.deletionReasonHeader, UiText.ColumnNames.deletionReason + ":"),
+          <.h4(*.deletionReasonHeader, SpecialBuiltInField.DeletionReason.name + ":"),
           RichTextEditor.DeletionReason.Component(reasonTextProps))
 
       val commit: Option[Callback] =

@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.app.pages.content.issues
 
 import scalaz.{-\/, \/-}
 import shipreq.base.util.{Backwards, Direction}
-import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
 
@@ -11,10 +10,10 @@ final case class IssueField[+FK <: FieldKey](key: FK, desc: Option[String])
 object IssueField {
   import DataImplicits._
 
-  val CodeGroupTitle  = IssueField(FieldKey.CodeGroupTitle , Some(ColumnNames.title))
-  val GenericReqTitle = IssueField(FieldKey.GenericReqTitle, Some(ColumnNames.title))
-  val UseCaseTitle    = IssueField(FieldKey.UseCaseTitle   , Some(ColumnNames.title))
-  val Tags            = IssueField(FieldKey.Tags(None)     , Some(ColumnNames.tags))
+  val CodeGroupTitle  = IssueField(FieldKey.CodeGroupTitle , Some(SpecialBuiltInField.Title.name))
+  val GenericReqTitle = IssueField(FieldKey.GenericReqTitle, Some(SpecialBuiltInField.Title.name))
+  val UseCaseTitle    = IssueField(FieldKey.UseCaseTitle   , Some(SpecialBuiltInField.Title.name))
+  val Tags            = IssueField(FieldKey.Tags(None)     , Some(SpecialBuiltInField.Tags.name))
 
   def customField(id: CustomFieldId)(implicit cfg: ProjectConfig): IssueField[FieldKey.ForAllReqs] =
     customField(cfg.fields.customFields.need(id))
@@ -45,7 +44,7 @@ object IssueField {
     IssueField(FieldKey.Implications(-\/(f.id)), Some(f.name(cfg.reqTypes)))
 
   val implications: Direction => IssueField[FieldKey.Implications] =
-    Direction.memo(d => IssueField(FieldKey.Implications(\/-(d)), Some(ColumnNames.implications(d))))
+    Direction.memo(d => IssueField(FieldKey.Implications(\/-(d)), Some(SpecialBuiltInField.implication(d).name)))
 
   def impliedBy = implications(Backwards)
 

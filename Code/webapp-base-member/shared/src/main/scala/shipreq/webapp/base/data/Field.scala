@@ -2,16 +2,14 @@ package shipreq.webapp.base.data
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty._
-import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle._
 import monocle.macros.{GenLens, Lenses}
 import scala.collection.immutable.ListSet
-import scalaz.{-\/, Equal, \/}
+import scalaz.{-\/, \/}
 import scalaz.std.option.toRight
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.util.Must._
 import shipreq.webapp.base.WebappConfig
 import IndexLabel._

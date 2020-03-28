@@ -126,7 +126,7 @@ object PlainText {
 
     // Keep in sync with ProjectWidgets because it's used together for sorting/rendering in ReqTable
     override protected def deletionReasonWhenReqTypeIsDead(rt: ReqType): String =
-      UiText.ColumnNames.reqType + " " + rt.mnemonic.value + " is deleted."
+      SpecialBuiltInField.ReqType.name + " " + rt.mnemonic.value + " is deleted."
 
     override protected def emptyText = ""
 

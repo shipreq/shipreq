@@ -312,7 +312,7 @@ object ReqTableTestDsl {
       Simulation.click run _.obs.table.column(columnName).headerCell)
 
   val sortByPubid =
-    sortBy(UiText.ColumnNames.pubid)
+    sortBy(SpecialBuiltInField.Pubid.name)
 
   def enterFilter(f: String) = {
     val e = SimEvent.Change(f)

@@ -3,7 +3,6 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.scalajs.react._
 import japgolly.univeq.UnivEq
-import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.lib.DataReusability._
@@ -27,18 +26,18 @@ object ColumnPlus {
     Reusability.byRefOrUnivEq
 
   val title: ColumnPlus =
-    apply(Column.Title, Live, ColumnNames.title)
+    apply(Column.Title, Live, SpecialBuiltInField.Title.name)
 
   def byProject(p: Project): Column => Option[ColumnPlus] = {
     val cfName = p.config.fieldName
     c => c match {
-      case Column.Pubid           => Some(apply(c, Live, ColumnNames.pubid))
-      case Column.Code            => Some(apply(c, Live, ColumnNames.code))
+      case Column.Pubid           => Some(apply(c, Live, SpecialBuiltInField.Pubid.name))
+      case Column.Code            => Some(apply(c, Live, SpecialBuiltInField.Code.name))
       case Column.Title           => Some(title)
-      case Column.ReqType         => Some(apply(c, Live, ColumnNames.reqType))
-      case Column.Tags            => Some(apply(c, Live, ColumnNames.tags))
-      case Column.Implications(d) => Some(apply(c, Live, ColumnNames.implications(d)))
-      case Column.DeletionReason  => Some(apply(c, Dead, ColumnNames.deletionReason))
+      case Column.ReqType         => Some(apply(c, Live, SpecialBuiltInField.ReqType.name))
+      case Column.Tags            => Some(apply(c, Live, SpecialBuiltInField.Tags.name))
+      case Column.Implications(d) => Some(apply(c, Live, SpecialBuiltInField.implication(d).name))
+      case Column.DeletionReason  => Some(apply(c, Dead, SpecialBuiltInField.DeletionReason.name))
       case Column.CustomField(id) => p.config.fields.customFields.get(id).map(f => apply(c, f.live(p.config), cfName(id)))
     }
   }

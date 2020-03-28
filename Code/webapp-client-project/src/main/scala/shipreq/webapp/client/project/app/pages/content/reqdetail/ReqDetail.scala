@@ -307,16 +307,16 @@ object ReqDetail {
       def renderRowTitle(row: Row): VdomNode =
         row match {
           case Row.CustomField(id)  => fieldName(id)
-          case Row.Codes            => UiText.FieldNames.reqCodes
-          case Row.ReqType          => UiText.FieldNames.reqType
-          case Row.Tags             => UiText.FieldNames.tags
+          case Row.Codes            => SpecialBuiltInField.Codes.name
+          case Row.ReqType          => SpecialBuiltInField.ReqType.name
+          case Row.Tags             => SpecialBuiltInField.Tags.name
           case Row.Implications     => UiText.FieldNames.implications
-          case Row.ImplicationGraph => UiText.FieldNames.implicationGraph
+          case Row.ImplicationGraph => StaticField.ImplicationGraph.name
           case Row.UseCaseStepsN    => UiText.FieldNames.useCaseStepTreeN
           case Row.UseCaseStepsA    => UiText.FieldNames.useCaseStepTreeA
-          case Row.UseCaseStepsE    => UiText.FieldNames.useCaseStepTreeE
-          case Row.DeletionReason   => UiText.FieldNames.deletionReason
-          case Row.StepGraph        => UiText.FieldNames.useCaseStepFlowGraph
+          case Row.UseCaseStepsE    => StaticField.ExceptionStepTree.name
+          case Row.DeletionReason   => SpecialBuiltInField.DeletionReason.name
+          case Row.StepGraph        => StaticField.StepGraph.name
           case Row.PastPubids       => UiText.FieldNames.pastPubids
           case Row.Life             => UiText.Life.field
         }

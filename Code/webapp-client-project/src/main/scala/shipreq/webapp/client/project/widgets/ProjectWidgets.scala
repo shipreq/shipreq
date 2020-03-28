@@ -102,7 +102,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
   // Keep in sync with PlainText because it's used together for sorting/rendering in ReqTable
   override protected def deletionReasonWhenReqTypeIsDead(rt: ReqType): VdomTag =
     <.span(
-      UiText.ColumnNames.reqType + " ",
+      SpecialBuiltInField.ReqType.name + " ",
       reqTypeShort(rt.reqTypeId),
       " is deleted.")
 

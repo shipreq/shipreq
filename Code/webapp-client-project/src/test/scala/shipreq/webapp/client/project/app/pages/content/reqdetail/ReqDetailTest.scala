@@ -376,7 +376,7 @@ object ReqDetailTest extends TestSuite {
         *.emptyAction
           +> filterDead.assert(HideDead)
           +> visibleFields.assert(
-          "Type",
+          "Req Type",
           "Live Status",
           "Codes",
           "Tags",
@@ -399,7 +399,7 @@ object ReqDetailTest extends TestSuite {
           >> filterDeadToggle
           +> filterDead.assert(ShowDead)
           +> visibleFields.assert(
-          "Type",
+          "Req Type",
           "Live Status",
           "Past IDs",
           "Deletion Reason",
@@ -437,7 +437,7 @@ object ReqDetailTest extends TestSuite {
         *.emptyAction
           +> filterDead.assert(HideDead)
           +> visibleFields.assert(
-          "Type",
+          "Req Type",
           "Live Status",
           "Codes",
           "Tags",
@@ -457,7 +457,7 @@ object ReqDetailTest extends TestSuite {
           >> filterDeadToggle
           +> filterDead.assert(ShowDead)
           +> visibleFields.assert(
-          "Type",
+          "Req Type",
           "Live Status",
           "Past IDs",
           "Deletion Reason",
@@ -499,7 +499,7 @@ object ReqDetailTest extends TestSuite {
         *.emptyAction
           +> filterDead.assert(ShowDead)
           +> visibleFields.assert(
-          "Type",
+          "Req Type",
           "Live Status",
           "Past IDs",
           "Deletion Reason",
@@ -520,7 +520,7 @@ object ReqDetailTest extends TestSuite {
           >> restoreReq
           +> filterDead.assert(HideDead)
           +> visibleFields.assert(
-          "Type",
+          "Req Type",
           "Live Status",
           "Codes",
           "Tags",
@@ -539,7 +539,7 @@ object ReqDetailTest extends TestSuite {
           >> filterDeadToggle
           +> filterDead.assert(ShowDead)
           +> visibleFields.assert(
-          "Type",
+          "Req Type",
           "Live Status",
           "Past IDs",
           "Deletion Reason",
@@ -562,7 +562,7 @@ object ReqDetailTest extends TestSuite {
         *.emptyAction
           +> filterDead.assert(ShowDead)
           +> visibleFields.assert(
-          "Type",
+          "Req Type",
           "Live Status",
           "Past IDs",
           "Deletion Reason",

@@ -1,9 +1,9 @@
 package shipreq.webapp.base
 
 import scala.collection.compat.IterableOnce
-import shipreq.base.util.{Backwards, Direction, Forwards, LeftRight}
+import shipreq.base.util.LeftRight
 import shipreq.webapp.base.data.ReqType.Mnemonic
-import shipreq.webapp.base.data.{Dead, HashRefKey, Live, StaticField, StaticFieldType}
+import shipreq.webapp.base.data.{Dead, HashRefKey, Live, SpecialBuiltInField}
 import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.text.{PlainText, Text}
 
@@ -43,32 +43,17 @@ object UiText {
     i.unitsOf("unsaved change")
 
   object ColumnNames {
-    def reqType          = FieldNames.reqType
-    def pubid            = "ID"
-    def id               = "ID"
-    def code             = FieldNames.reqCode
-    def title            = FieldNames.title
-    def tags             = FieldNames.tags
-    def deletionReason   = FieldNames.deletionReason
     def issueCategory    = "Issue Type"
     def issueClass       = "Issue"
     def issueFieldName   = "Field"
     def issueFieldEditor = "Field Editor"
     def issueActions     = "Actions"
-
-    val implications: Direction => String = {
-      case Backwards => "Implied By"
-      case Forwards => "Implies"
-    }
   }
 
   object FieldNames {
     def hashRefKey           = "Key"
     def fieldRefKey          = hashRefKey
-    def reqCode              = "Code"
-    def title                = "Title"
-    def reqCodes             = "Codes"
-    def reqCodeNode          = "Code node"
+    def reqCodeNode          = "Code part"
     def name                 = "Name"
     def colour               = "Colour"
     def desc                 = "Description"
@@ -80,15 +65,9 @@ object UiText {
     def dndDragHandleHeader  = ""
     def usage                = "Usage"
     def implicationRequired  = "Implication Required"
-    def reqType              = "Type"
-    def tags                 = "Tags"
     def implications         = "Implications"
-    def implicationGraph     = StaticFieldType.ImplicationGraph.name
     def useCaseStepTreeN     = "Normal Course"
     def useCaseStepTreeA     = "Alternative Courses"
-    def useCaseStepTreeE     = StaticField.ExceptionStepTree.name
-    def useCaseStepFlowGraph = StaticFieldType.UseCaseStepGraph.name
-    def deletionReason       = "Deletion Reason"
     def pastPubids           = "Past IDs"
     def savedViewName        = "Name"
     def impFieldSource       = "Req Type"
@@ -102,7 +81,7 @@ object UiText {
       case Text.InlineIssueDesc => "issue info blocks"
       case Text.CustomTextField => "text fields"
       case Text.UseCaseStep     => "use case steps"
-      case Text.DeletionReason  => FieldNames.deletionReason.toLowerCase.pluralise(2)
+      case Text.DeletionReason  => SpecialBuiltInField.DeletionReason.name.toLowerCase.pluralise(2)
       case Text.ManualIssue     => Issues.looseIssues
     }
   }

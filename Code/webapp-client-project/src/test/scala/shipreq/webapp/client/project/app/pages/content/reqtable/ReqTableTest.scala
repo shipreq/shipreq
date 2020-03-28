@@ -535,14 +535,14 @@ object ReqTableTest extends TestSuite {
       'nop {
         // RCG title
         // RCG code
-        'title    - runTest(testNopEdits("MF-6", ColumnNames.title))
+        'title    - runTest(testNopEdits("MF-6", SpecialBuiltInField.Title.name))
         'textCol  - runTest(testNopEdits("MF-1", "Description"))
-        'impSrc   - runTest(testNopEdits("MF-1", ColumnNames.implications(Backwards)))
-        'impTgt   - runTest(testNopEdits("MF-1", ColumnNames.implications(Forwards)))
+        'impSrc   - runTest(testNopEdits("MF-1", SpecialBuiltInField.ImplyBackward.name))
+        'impTgt   - runTest(testNopEdits("MF-1", SpecialBuiltInField.ImplyForward.name))
         'impCol   - runTest(testNopEdits("MF-1", "Major Feature"))
-        'tags     - runTest(testNopEdits("MF-1", ColumnNames.tags))
+        'tags     - runTest(testNopEdits("MF-1", SpecialBuiltInField.Tags.name))
         'tagCol   - runTest(testNopEdits("MF-1", "Status"))
-        'reqCodes - runTest(testNopEditsBy("MF-1", ColumnNames.code)("Trailing \\n." -> (_ + "\n")))
+        'reqCodes - runTest(testNopEditsBy("MF-1", SpecialBuiltInField.Code.name)("Trailing \\n." -> (_ + "\n")))
       }
     }
 
@@ -557,8 +557,8 @@ object ReqTableTest extends TestSuite {
       'title     - runTest(testCopy("MF-1", "Title")("Use Case Editor"))
       'desc      - runTest(testCopy("UC-1", "Description")("This UC is about eating."))
       'id        - runTest(testCopy("MF-1", "ID")("MF-1"))
-      'grReqType - runTest(testCopy("MF-1", "Type")("MF"))
-      'ucReqType - runTest(testCopy("UC-1", "Type")("UC"))
+      'grReqType - runTest(testCopy("MF-1", "Req Type")("MF"))
+      'ucReqType - runTest(testCopy("UC-1", "Req Type")("UC"))
       'imps      - runTest(testCopy("FR-1", "Implies")("CO-2, FR-2"))
       'tags      - runTest(testCopy("MF-5", "Priority")("pri=high"))
       'tagsEmpty - runTest(testCopy("MF-2", "Status")(""))

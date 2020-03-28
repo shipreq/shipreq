@@ -331,7 +331,7 @@ object DataValidators {
 
     private val value: Composite.Stateful[State, Value, Value, Value] =
       maxNodesInValue.toAuditor.toValidator
-        .named(FieldNames.reqCode)
+        .named(SpecialBuiltInField.Code.name)
         .stateful(_ appendInvalidator _.valueUniqueness)
 
     private def validateNodes: Invalidator[Value] =

@@ -4,7 +4,7 @@ import japgolly.univeq._
 import org.scalajs.dom.html
 import shipreq.base.util.LeftRight
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.data.{Dead, Live, ShowDead}
+import shipreq.webapp.base.data.{Dead, Live, ShowDead, StaticField}
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl.NavObs
@@ -27,7 +27,7 @@ object ReqDetailObs {
   }
 
   import UiText.FieldNames._
-  val TreeNames = NAE(useCaseStepTreeN, useCaseStepTreeA, useCaseStepTreeE)
+  val TreeNames = NAE(useCaseStepTreeN, useCaseStepTreeA, StaticField.ExceptionStepTree.name)
 }
 
 final class ReqDetailObs($: DomZipperJs, val nav: NavObs) {

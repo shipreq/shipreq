@@ -7,7 +7,6 @@ import monocle.macros.Lenses
 import scalaz.{-\/, Equal, \/-}
 import shipreq.base.util.NotApplicable
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.DataImplicits._
 
 object ProjectConfig {
@@ -38,9 +37,8 @@ object ProjectConfig {
       apply(r, r, Map.empty)
   }
 
-  private[ProjectConfig] val fieldNamesLowercase: Set[String] =
-    StaticField.namesLowercase ++
-      List(UiText.ColumnNames.title, UiText.ColumnNames.id, UiText.ColumnNames.reqType).iterator.map(_.toLowerCase)
+  private[ProjectConfig] lazy val fieldNamesLowercase: Set[String] =
+    StaticField.namesLowercase ++ SpecialBuiltInField.namesLowercase
 }
 
 @Lenses

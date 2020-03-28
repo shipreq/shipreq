@@ -97,7 +97,7 @@ object ReqDetailTestDsl {
     val pubid = *.focus("Pubid").obsAndState(_.generic.pubid, _.pubidStr).assert.equal
 
     val delReasonField = *.focus("DeletedReasons visible")
-      .value(_.obs.generic.fields contains UiText.FieldNames.deletionReason)
+      .value(_.obs.generic.fields contains SpecialBuiltInField.DeletionReason.name)
       .assert.equalBy(_.obs.generic.filterDead is ShowDead)
 
     val filterDeadLocked =

@@ -7,7 +7,6 @@ import scala.annotation.tailrec
 import scalaz.std.option.optionInstance
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data.{DataValidators => V, _}
 import shipreq.webapp.base.text.{Grammar, Text}
 import shipreq.webapp.base.validation.Implicits._
@@ -473,7 +472,7 @@ trait ApplyContentEvent {
 
     val updateIdCeiling = updateIdCeilingFn(IdCeilings.reqCode)
 
-    val validateCode = validateA(V.reqCode.valueAndNodes named FieldNames.reqCode)
+    val validateCode = validateA(V.reqCode.valueAndNodes named SpecialBuiltInField.Code.name)
 
     val getTrie = SE get Project.reqCodeTrie.get
 
