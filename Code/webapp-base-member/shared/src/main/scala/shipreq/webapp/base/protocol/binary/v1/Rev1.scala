@@ -625,6 +625,23 @@ object Rev1 {
       }
     }
 
+  implicit lazy val picklerStaticFieldOptional: Pickler[StaticField.Optional] =
+    new Pickler[StaticField.Optional] {
+      import StaticField._
+      private[this] final val KeyImplicationGraph  = 'i'
+      private[this] final val KeyStepGraph         = 'g'
+      override def pickle(a: StaticField.Optional)(implicit state: PickleState): Unit =
+        a match {
+          case ImplicationGraph => state.enc.writeByte(KeyImplicationGraph)
+          case StepGraph        => state.enc.writeByte(KeyStepGraph       )
+        }
+      override def unpickle(implicit state: UnpickleState): StaticField.Optional =
+        state.dec.readByte match {
+          case KeyImplicationGraph => ImplicationGraph
+          case KeyStepGraph        => StepGraph
+        }
+    }
+
   // ===================================================================================================================
 
   implicit lazy val pickleApplicableTagGD: Pickler[ApplicableTagGD.NonEmptyValues] = {

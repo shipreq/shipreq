@@ -9,6 +9,7 @@ import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 import monocle.Lens
+import scala.reflect.ClassTag
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{ErrorMsg, Optics, PotentialChange}
@@ -170,6 +171,15 @@ object FieldConfig {
         }
       )
 
+    private def submitCmdF[F <: FieldId: ClassTag](props      : Props,
+                                                   cmd        : UpdateConfigCmd.ToModifyFields,
+                                                   toastPrefix: String,
+                                                   onSuccess  : (Project, F) => Callback): Callback =
+      submitCmd(props, cmd, toastPrefix, (p, id) => id match {
+        case f: F => onSuccess(p, f)
+        case _    => Callback.empty
+      })
+
     private def newButtonProps(p: Props, args: splitScreenCrud.NewArgs): dropdownButton.DBProps =
       args match {
 
@@ -231,8 +241,9 @@ object FieldConfig {
           case \/-(f: StaticField)    => EditorType.Static(f)
         }
 
-      def createOrUpdateButtons(idOption: Option[FieldId]): EditorButtons.Props =
-        EditorButtons.createOrUpdate(args)(idOption, p.potentialSaveCmd)(submitCmd(p, _, _, _), UpdateConfigCmd.FieldDelete)
+      def createOrUpdateButtons(idOption: Option[CustomFieldId]): EditorButtons.Props =
+        EditorButtons.createOrUpdate(args)(idOption, p.potentialSaveCmd)(
+          submitCmdF[CustomFieldId](p, _, _, _), UpdateConfigCmd.CustomFieldDelete)
 
       def impFieldEditor(idOption: Option[CustomField.Implication.Id], enabled: Enabled) = {
         val lens = editorStateLensForImp(ImpFieldEditor.State.init(idOption, p.project.config))
@@ -292,7 +303,7 @@ object FieldConfig {
               case i: CustomField.Text       .Id => textFieldEditor(Some(i), Disabled).render
             }
           val buttons =
-            EditorButtons.restore(args)(submitCmd(p, UpdateConfigCmd.FieldRestore(id), _, _)).render
+            EditorButtons.restore(args)(submitCmd(p, UpdateConfigCmd.CustomFieldRestore(id), _, _)).render
           <.div(header, editor, buttons)
 
         case EditorType.Static(f: StaticField.Mandatory) =>
@@ -305,9 +316,9 @@ object FieldConfig {
           val inUse   = p.project.config.fields.includes(f)
           val buttons =
             if (inUse)
-              EditorButtons.remove(args)(submitCmd(p, UpdateConfigCmd.FieldDelete(f), _, _))
+              EditorButtons.remove(args)(submitCmd(p, UpdateConfigCmd.StaticFieldRemove(f), _, _))
             else
-              EditorButtons.add(args)(submitCmd(p, UpdateConfigCmd.FieldRestore(f), _, _))
+              EditorButtons.add(args)(submitCmd(p, UpdateConfigCmd.StaticFieldAdd(f), _, _))
           <.div(header, editor, buttons.render)
       }
     }

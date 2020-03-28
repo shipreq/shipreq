@@ -44,7 +44,7 @@ object Actions {
       val name = p.config.fieldName(f.id)
       delete(
         name + " field",
-        UpdateConfigCmd.FieldDelete(f.id))
+        UpdateConfigCmd.CustomFieldDelete(f.id))
     }
 
     private def deleteReqCodeGroup(g: LiveCodeGroup): Action = {

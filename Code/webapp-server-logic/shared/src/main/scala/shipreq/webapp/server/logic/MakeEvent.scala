@@ -132,16 +132,16 @@ object MakeEvent {
           eventIfNonEmpty(vs2)(FieldCustomTextUpdate(id, _))
         }
 
-      case UpdateConfigCmd.FieldDelete(f: StaticField) =>
+      case UpdateConfigCmd.StaticFieldRemove(f) =>
         FieldStaticRemove(f)
 
-      case UpdateConfigCmd.FieldRestore(f: StaticField) =>
+      case UpdateConfigCmd.StaticFieldAdd(f) =>
         FieldStaticAdd(f)
 
-      case UpdateConfigCmd.FieldDelete(id: CustomFieldId) =>
+      case UpdateConfigCmd.CustomFieldDelete(id) =>
         FieldCustomDelete(id)
 
-      case UpdateConfigCmd.FieldRestore(id: CustomFieldId) =>
+      case UpdateConfigCmd.CustomFieldRestore(id) =>
         FieldCustomRestore(id)
 
       case t: UpdateConfigCmd.ToModifyTags =>

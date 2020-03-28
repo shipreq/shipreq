@@ -14,11 +14,11 @@ import shipreq.webapp.client.project.app.Style.{tagConfig => *}
   */
 object EditorButtons {
 
-  def createOrUpdate[N, Id, S, Cmd](args            : SplitScreenCrud.EditorArgs[N, Id, S])
-                                   (idOption        : Option[Id],
-                                    potentialSaveCmd: PotentialChange[Any, Cmd])
-                                   (submitCmd       : (Cmd, String, (Project, Id) => Callback) => Callback,
-                                    deleteCmd       : Id => Cmd): Props =
+  def createOrUpdate[N, Id, Id2 <: Id, S, Cmd](args            : SplitScreenCrud.EditorArgs[N, Id, S])
+                                              (idOption        : Option[Id2],
+                                               potentialSaveCmd: PotentialChange[Any, Cmd])
+                                              (submitCmd       : (Cmd, String, (Project, Id2) => Callback) => Callback,
+                                               deleteCmd       : Id2 => Cmd): Props =
     idOption match {
       case Some(id) =>
         Props.Update(
