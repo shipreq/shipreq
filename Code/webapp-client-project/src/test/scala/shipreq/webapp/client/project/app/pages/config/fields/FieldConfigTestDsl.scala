@@ -11,6 +11,7 @@ object FieldConfigTestDsl {
   val invariants: *.Invariants =
     *.emptyInvariant
 
+  val newChoices          = *.focus("New choices"          ).collection(_.obs.newButton.dropdown.items.map(_.text))
   val fieldList           = *.focus("Field list"           ).collection(_.obs.fieldList.rows.map(_.name))
   val filterDead          = *.focus("FilterDead"           ).value(_.obs.filterDead)
   val isEditorOpen        = *.focus("isEditorOpen"         ).value(_.obs.isEditorOpen)

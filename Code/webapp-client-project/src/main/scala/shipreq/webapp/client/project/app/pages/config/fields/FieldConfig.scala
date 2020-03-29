@@ -2,10 +2,11 @@ package shipreq.webapp.client.project.app.pages.config.fields
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
-import japgolly.scalajs.react.extra.StateSnapshot
+import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 import monocle.Lens
@@ -90,17 +91,21 @@ object FieldConfig {
   }
 
   object NewFieldType {
-    case object Tag  extends NewFieldType("Tag field")
-    case object Text extends NewFieldType("Text field")
-    case object Imp  extends NewFieldType("Implication field")
+    final case class Static(field: StaticField.Optional) extends NewFieldType(field.name)
 
+    sealed abstract class Custom(label: String) extends NewFieldType(label)
+    case object Tag  extends Custom("Tag field")
+    case object Text extends Custom("Text field")
+    case object Imp  extends Custom("Implication field")
+
+    implicit def univEqC: UnivEq[Custom] = UnivEq.derive
     implicit def univEq: UnivEq[NewFieldType] = UnivEq.derive
 
-    val values: NonEmptyVector[NewFieldType] =
-      AdtMacros.adtValues[NewFieldType].sortBy(_.label)
+    val customValues: NonEmptyVector[Custom] =
+      AdtMacros.adtValues[Custom].sortBy(_.label)
 
-    val items: NonEmptyVector[dropdownButton.Item] =
-      values.map(_.item)
+    val customItems: NonEmptyVector[dropdownButton.Item] =
+      customValues.map(_.item)
   }
 
   type State = splitScreenCrud.State
@@ -131,6 +136,25 @@ object FieldConfig {
   final class Backend($: BackendScope[Props, Unit]) {
     import SplitScreenCrud.NewArgs
 
+    private val pxProjectConfig: Px[ProjectConfig] =
+      Px.props($).map(_.project.config).withReuse.autoRefresh
+
+    private val pxNewItems: Px[NonEmptyVector[dropdownButton.Item]] =
+      pxProjectConfig.map { config =>
+
+        val unusedStaticFields =
+          StaticField.optional.whole.filterNot(config.fields.includes)
+
+        val unusedItems: Vector[dropdownButton.Item] =
+          MutableArray(unusedStaticFields)
+            .sortBy(_.name)
+            .iterator
+            .map(NewFieldType.Static(_).item)
+            .toVector
+
+        unusedItems ++: NewFieldType.customItems
+      }
+
     private def initEditor(project: Project, arg: NewFieldType \/ FieldId): EditorState =
       arg match {
         case \/-(id: CustomField.Implication.Id) => EditorState.ImpEditor (ImpFieldEditor.State.initUpdate(id, project.config))
@@ -139,6 +163,7 @@ object FieldConfig {
         case -\/(NewFieldType.Imp              ) => EditorState.ImpEditor (ImpFieldEditor.State.initCreate)
         case -\/(NewFieldType.Tag              ) => EditorState.TagEditor (TagFieldEditor.State.initCreate)
         case -\/(NewFieldType.Text             ) => EditorState.TextEditor(TextFieldEditor.State.empty)
+        case -\/(NewFieldType.Static(_)        ) => EditorState.Static
         case \/-(_: StaticField                ) => EditorState.Static
       }
 
@@ -180,25 +205,28 @@ object FieldConfig {
         case _    => Callback.empty
       })
 
-    private def newButtonProps(p: Props, args: splitScreenCrud.NewArgs): dropdownButton.DBProps =
+    private def newButtonProps(p: Props, args: splitScreenCrud.NewArgs): dropdownButton.DBProps = {
+      val items = pxNewItems.value()
+
       args match {
 
         case NewArgs.Disabled(sel) =>
           ButtonAndDropdown.Props.forNew[NewFieldType](
-            items    = NewFieldType.items,
+            items    = items,
             selected = Some(sel),
             update   = None,
           )
 
         case a: NewArgs.Enabled[NewState] =>
           ButtonAndDropdown.Props.forNew[NewFieldType](
-            items    = NewFieldType.items,
+            items    = items,
             selected = Some(a.state.value),
             update   = Option.unless(p.asyncInProgress)(Reusable.byRef(a).withValue(dropdownButton.Update(
               click  = _ => a.openEditor,
               select = a.state.setState,
             ))))
       }
+    }
 
     private def renderLeft(p: Props, args: splitScreenCrud.ListArgs): VdomNode =
       FieldList.Props(
@@ -235,10 +263,11 @@ object FieldConfig {
               case id: CustomField.Tag.Id         => EditorType.LiveTag(Some(id))
               case id: CustomField.Text.Id        => EditorType.LiveText(Some(id))
             }
-          case -\/(NewFieldType.Imp)  => EditorType.LiveImp(None)
-          case -\/(NewFieldType.Tag)  => EditorType.LiveTag(None)
-          case -\/(NewFieldType.Text) => EditorType.LiveText(None)
-          case \/-(f: StaticField)    => EditorType.Static(f)
+          case -\/(NewFieldType.Imp)       => EditorType.LiveImp(None)
+          case -\/(NewFieldType.Tag)       => EditorType.LiveTag(None)
+          case -\/(NewFieldType.Text)      => EditorType.LiveText(None)
+          case -\/(NewFieldType.Static(f)) => EditorType.Static(f)
+          case \/-(f: StaticField)         => EditorType.Static(f)
         }
 
       def createOrUpdateButtons(idOption: Option[CustomFieldId]): EditorButtons.Props =

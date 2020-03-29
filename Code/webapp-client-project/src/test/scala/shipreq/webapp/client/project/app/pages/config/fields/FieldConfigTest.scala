@@ -477,10 +477,13 @@ object FieldConfigTest extends TestSuite {
         +> editorEditables.assert(0)
     )
 
-  private def testStaticFieldOptional()(implicit tp: TestPath) =
+  private def testStaticFieldOptional()(implicit tp: TestPath) = {
+    val newItems = List(StaticField.ImplicationGraph.name, "Implication field", "Tag field", "Text field")
     runActions(SampleProject6.project)(
 
-      selectField(StaticField.StepGraph.name)
+      newChoices.assert.equalIgnoringOrder(newItems: _*)
+        +> selectField(StaticField.StepGraph.name)
+        +> newChoices.assert.equalIgnoringOrder(newItems: _*)
         +> buttonsEnabled.assert(Buttons(remove = Enabled, close = Enabled))
         +> editorEditables.assert(0)
 
@@ -496,7 +499,14 @@ object FieldConfigTest extends TestSuite {
         +> buttonsEnabled.assert(Buttons(add = Enabled, close = Enabled))
         +> editorEditables.assert(0)
 
+        >> clickCloseButton
+        +> newChoices.assert.equalIgnoringOrder(StaticField.StepGraph.name :: newItems: _*)
+
+        >> clickNew(StaticField.StepGraph.name)
+        +> buttonsEnabled.assert(Buttons(add = Enabled, close = Enabled))
+
         >> clickAddButton
+        +> newChoices.assert(newItems: _*)
         +> fieldList.assert(
         "Description",
         "Major Feature",
@@ -509,6 +519,7 @@ object FieldConfigTest extends TestSuite {
         +> buttonsEnabled.assert(Buttons(remove = Enabled, close = Enabled))
         +> editorEditables.assert(0)
     )
+  }
 
   override def tests = Tests {
 
