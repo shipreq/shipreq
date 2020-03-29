@@ -3,9 +3,9 @@ package shipreq.webapp.base.ui
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.text.SingleLine
 import shipreq.webapp.base.feature.EditorStatus
 import shipreq.webapp.base.lib.KeyboardTheme
+import shipreq.webapp.base.text.SingleLine
 import shipreq.webapp.base.ui.semantic._
 
 /**

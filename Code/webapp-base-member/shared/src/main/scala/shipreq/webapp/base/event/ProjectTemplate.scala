@@ -104,10 +104,10 @@ object ProjectTemplate {
       val qb = new QuickBuilder
       import qb._
 
-      val co = reqType("CO", "Constraint",             Mandatory.Not)
+      val co = reqType("CO", "Constraint",             Optional)
       val fr = reqType("FR", "Functional Requirement", Mandatory)
-      val mf = reqType("MF", "Major Feature",          Mandatory.Not)
-      val oe = reqType("OE", "Operating Environment",  Mandatory.Not)
+      val mf = reqType("MF", "Major Feature",          Optional)
+      val oe = reqType("OE", "Operating Environment",  Optional)
       val qa = reqType("QA", "Quality Attribute",      Mandatory)
 
       issueType("TO"+"DO", "Work needs to be done.")
@@ -125,10 +125,10 @@ object ProjectTemplate {
       val rel  = tagGroup("Released", "Product version in which requirements were implemented.", NonExclusive)
       val ver  = tagGroup("Version", "Target product version.", NonExclusive, children = Vector(rel, urel))
 
-      customTextField("Detail", "detail", Mandatory.Not, allReqTypes)
-      customImpField(mf,     Mandatory    , ApplicableReqTypes.blacklist(mf, oe))
-      customTagField(pri,    Mandatory.Not, allReqTypes)
-      customTagField(ver,    Mandatory.Not, allReqTypes)
+      customTextField("Detail", "detail", Optional,  allReqTypes)
+      customImpField(mf,                  Mandatory, ApplicableReqTypes.blacklist(mf, oe))
+      customTagField(pri,                 Optional,  allReqTypes)
+      customTagField(ver,                 Optional,  allReqTypes)
 
       import reqtable._, SortCriterion.SyntaxHelpers._
 

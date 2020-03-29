@@ -6,7 +6,8 @@ import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.base.util.{PotentialChange, Validity}
-import shipreq.webapp.base.data._
+import shipreq.webapp.base.data
+import shipreq.webapp.base.data.{Optional => _, _}
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{EditorStatus, PreviewFeature}
 import shipreq.webapp.base.jsfacade.ScrollIntoViewIfNeeded
@@ -174,7 +175,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
       def richText: VdomTag =
         p match {
-          case p2: Optional => p.projectWidgets.text(p2.richText, hardcodedLive, Mandatory.Not)
+          case p2: Optional => p.projectWidgets.text(p2.richText, hardcodedLive, data.Optional)
           case p2: NonEmpty => p.projectWidgets.text(text.toOptional(p2.richTextO), hardcodedLive, Mandatory)
         }
 

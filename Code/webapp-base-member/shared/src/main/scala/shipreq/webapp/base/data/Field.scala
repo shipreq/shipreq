@@ -3,7 +3,7 @@ package shipreq.webapp.base.data
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import monocle._
+import monocle.{Lens, Traversal}
 import monocle.macros.{GenLens, Lenses}
 import scala.collection.immutable.ListSet
 import scalaz.{-\/, \/}
@@ -462,7 +462,7 @@ object CustomField {
 
   // ===================================================================================================================
 
-  val independentName = Optional[CustomField, String](_.independentName)(n => {
+  val independentName = monocle.Optional[CustomField, String](_.independentName)(n => {
     case Text(a, _, b, c) => Text(a, n, b, c)
     case f: Tag           => f
     case f: Implication   => f

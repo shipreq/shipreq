@@ -52,7 +52,7 @@ object ParsersTest extends TestSuite {
 
     val E = EvalOver(this)
 
-    val txt2str = PlainText.ForProject.noCtx(p).text(_: Text.AnyOptional, Live, Mandatory.Not)
+    val txt2str = PlainText.ForProject.noCtx(p).text(_: Text.AnyOptional, Live, Optional)
 
     val genericReqTitles =
       p.content.reqs.reqIterator
@@ -228,7 +228,7 @@ object ParsersTest extends TestSuite {
 //        def x[B](as: Vector[B]) = as.toString().replaceAll("(?<=[,\\(]) *(?!\\))", "\n")
 //        assertMultiline(x(parse(p)(text)), x(e))
 
-        val text2 = PlainText.ForProject.noCtx(p).text(e, Live, Mandatory.Not)
+        val text2 = PlainText.ForProject.noCtx(p).text(e, Live, Optional)
         assertEq(s"txt -> parsed -> txt:\n$text2", parse(p)(text2), e)
       }
 

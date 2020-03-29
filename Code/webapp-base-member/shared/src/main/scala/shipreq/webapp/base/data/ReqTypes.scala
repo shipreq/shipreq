@@ -56,7 +56,7 @@ object StaticReqType {
     override def mnemonic     = Mnemonic("UC")
     override def oldMnemonics = UnivEq.emptySet
     override def name         = "Use Case"
-    override def implication  = Mandatory.Not // TODO Should be configurable
+    override def implication  = Optional // TODO Should be configurable
   }
 
   val values: NonEmptyVector[StaticReqType] =

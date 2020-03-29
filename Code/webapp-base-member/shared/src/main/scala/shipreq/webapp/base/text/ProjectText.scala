@@ -175,7 +175,7 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
 
   final val codeGroupTitle: CodeGroup => Out =
     Memo.by((_: CodeGroup).id)(g =>
-      text(g.title, g.live, Mandatory.Not))
+      text(g.title, g.live, Optional))
 
   final def customTextField(id: CustomField.Text.Id, req: Req, live: Live, mandatory: Mandatory): Out =
     customTextFieldOption(id)(req).getOrElse[Out] {

@@ -18,7 +18,7 @@ trait CustomReqTypeEvents {
   val mfName = "Major Feature"
   type CE = CustomReqTypeCreate
   val c1  = CustomReqTypeCreate(1, nev(Mnemonic("MF"), Name(mfName), Implication(Mandatory)))
-  val c2  = CustomReqTypeCreate(2, nev(Mnemonic("FR"), Name("Functional Req"), Implication(Mandatory.Not)))
+  val c2  = CustomReqTypeCreate(2, nev(Mnemonic("FR"), Name("Functional Req"), Implication(Optional)))
   val u1  = CustomReqTypeUpdate(1, nev(Mnemonic("M")))
   val sd1 = CustomReqTypeDelete(1)
   val r1  = CustomReqTypeRestore(1)
@@ -58,8 +58,8 @@ object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
         es :+= CustomReqTypeUpdate(1, nev(Mnemonic("X"), Name("xxx")))
         assertEq(r, CustomReqType(1, "X", Set(), "xxx", Mandatory, Live))
 
-        es :+= CustomReqTypeUpdate(1, nev(Mnemonic("MF"), Implication(Mandatory.Not)))
-        assertEq(r ,CustomReqType(1, "MF", Set(), "xxx", Mandatory.Not, Live))
+        es :+= CustomReqTypeUpdate(1, nev(Mnemonic("MF"), Implication(Optional)))
+        assertEq(r ,CustomReqType(1, "MF", Set(), "xxx", Optional, Live))
       }
       'inUse - {
         var es = Vector(c1, use1, u1)
@@ -69,8 +69,8 @@ object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
         es :+= CustomReqTypeUpdate(1, nev(Mnemonic("X"), Name("xxx")))
         assertEq(r, CustomReqType(1, "X", Set("MF", "M"), "xxx", Mandatory, Live))
 
-        es :+= CustomReqTypeUpdate(1, nev(Mnemonic("MF"), Implication(Mandatory.Not)))
-        assertEq(r ,CustomReqType(1, "MF", Set("M", "X"), "xxx", Mandatory.Not, Live))
+        es :+= CustomReqTypeUpdate(1, nev(Mnemonic("MF"), Implication(Optional)))
+        assertEq(r ,CustomReqType(1, "MF", Set("M", "X"), "xxx", Optional, Live))
       }
       'badName  - assertFail("blank")   (c1, CustomReqTypeUpdate(1, nev(Name(""))))
       'badMne   - assertFail("Mnemonic")(c1, CustomReqTypeUpdate(1, nev(Mnemonic("?"))))
@@ -113,10 +113,10 @@ object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
             assertEq(p.config.fields.customTextFields.size, 1)
             assertEq(p.config.fields.customTextFields.head.fieldReqTypeRules, after)
           }
-          'not1   - test(notReqTypes(1), FieldReqTypeRules.v1(data.Mandatory.Not, allReqTypes))
+          'not1   - test(notReqTypes(1), FieldReqTypeRules.v1(data.Optional, allReqTypes))
           'only1  - test(onlyReqTypes(1), FieldReqTypeRules.notApplicable)
-          'not12  - test(notReqTypes(1, 2), FieldReqTypeRules.v1(data.Mandatory.Not, notReqTypes(2)))
-          'only12 - test(onlyReqTypes(1, 2), FieldReqTypeRules.v1(data.Mandatory.Not, onlyReqTypes(2)))
+          'not12  - test(notReqTypes(1, 2), FieldReqTypeRules.v1(data.Optional, notReqTypes(2)))
+          'only12 - test(onlyReqTypes(1, 2), FieldReqTypeRules.v1(data.Optional, onlyReqTypes(2)))
         }
       }
 

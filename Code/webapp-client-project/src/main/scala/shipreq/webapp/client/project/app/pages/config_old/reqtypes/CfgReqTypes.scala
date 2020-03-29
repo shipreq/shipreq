@@ -36,7 +36,7 @@ object CfgReqTypes {
   }
   implicit val reusability = Reusability.derive[Props]
 
-  val fields = FieldSet3[CustomReqType](_.mnemonic.value, _.name, _.implication)(("", "", Mandatory.Not))
+  val fields = FieldSet3[CustomReqType](_.mnemonic.value, _.name, _.implication)(("", "", Optional))
   val storesAndState = TypicalStoresAndState(fields).keyedBy[CustomReqTypeId]
   import storesAndState._
   val changeListener = ChangeListener.store(savedRowStoreS)(_.customReqTypes.all, _.config.reqTypes.custom.get)

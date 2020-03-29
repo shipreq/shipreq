@@ -16,7 +16,7 @@ object HighLevelEventTest extends TestSuite {
 
       def createReqType(id: CustomReqTypeId, mnemonic: ReqType.Mnemonic, name: String) = {
         import CustomReqTypeGD._
-        CustomReqTypeCreate(id, nev(Mnemonic(mnemonic), Name(name), Implication(Mandatory.Not)))
+        CustomReqTypeCreate(id, nev(Mnemonic(mnemonic), Name(name), Implication(Optional)))
       }
 
       def test(p: Project, expect: String): Unit = {

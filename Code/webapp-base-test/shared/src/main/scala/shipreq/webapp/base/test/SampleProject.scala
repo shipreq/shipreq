@@ -45,12 +45,12 @@ object SampleProject {
     CustomIssueType(3, "PENDING", "Just pendin'", Dead))
 
   lazy val customReqTypes = emptyDataMap(CustomReqType).addAll(
-    CustomReqType(co, "CO", Set.empty, "Constraint",             Mandatory.Not, Live),
-    CustomReqType(mf, "MF", Set.empty, "Major Feature",          Mandatory.Not, Live),
-    CustomReqType(fr, "FR", Set.empty, "Functional Requirement", Mandatory,     Live),
-    CustomReqType(br, "BR", Set.empty, "Business Rule",          Mandatory.Not, Live),
-    CustomReqType(dd, "DD", Set("DA", "DDF"), "Data Definition", Mandatory.Not, Dead),
-    CustomReqType(si, "SI", Set.empty, "Solution Idea",          Mandatory,     Dead))
+    CustomReqType(co, "CO", Set.empty, "Constraint",             Optional,  Live),
+    CustomReqType(mf, "MF", Set.empty, "Major Feature",          Optional,  Live),
+    CustomReqType(fr, "FR", Set.empty, "Functional Requirement", Mandatory, Live),
+    CustomReqType(br, "BR", Set.empty, "Business Rule",          Optional,  Live),
+    CustomReqType(dd, "DD", Set("DA", "DDF"), "Data Definition", Optional,  Dead),
+    CustomReqType(si, "SI", Set.empty, "Solution Idea",          Mandatory, Dead))
 
   lazy val v10d = Some("Released: 17/14/1976\nFirst release.")
   lazy val v11d = Some("Released: 1/2/2001")
@@ -81,13 +81,13 @@ object SampleProject {
   lazy val fields = {
     import CustomField._
     FieldSet(emptyDataMap(CustomField).addAll(
-      Text       .v1(descField    , "Description", "desc",     Mandatory.Not, onlyReqTypes(mf, si, StaticReqType.UseCase), Live),
-      Text       .v1(notesField   , "Notes",       "notes",    Mandatory.Not, notReqTypes(br),                             Live),
-      Text       .v1(reporterField, "Reporter",    "reporter", Mandatory,     onlyReqTypes(br, dd, StaticReqType.UseCase), Dead),
-      Tag        .v1(priField     , priTG,                     Mandatory,     allReqTypes,                                 Live),
-      Tag        .v1(statusField  , statusTG,                  Mandatory.Not, notReqTypes(dd, si),                         Live),
-      Implication.v1(mfField      , mf,                        Mandatory.Not, notReqTypes(si),                             Live),
-      Tag        .v1(relField     , relTG,                     Mandatory.Not, allReqTypes,                                 Dead)
+      Text       .v1(descField    , "Description", "desc",     Optional,  onlyReqTypes(mf, si, StaticReqType.UseCase), Live),
+      Text       .v1(notesField   , "Notes",       "notes",    Optional,  notReqTypes(br),                             Live),
+      Text       .v1(reporterField, "Reporter",    "reporter", Mandatory, onlyReqTypes(br, dd, StaticReqType.UseCase), Dead),
+      Tag        .v1(priField     , priTG,                     Mandatory, allReqTypes,                                 Live),
+      Tag        .v1(statusField  , statusTG,                  Optional,  notReqTypes(dd, si),                         Live),
+      Implication.v1(mfField      , mf,                        Optional,  notReqTypes(si),                             Live),
+      Tag        .v1(relField     , relTG,                     Optional,  allReqTypes,                                 Dead)
     ), Vector(
       descField, mfField, priField, reporterField,
       StaticField.NormalAltStepTree, StaticField.ExceptionStepTree, StaticField.StepGraph,

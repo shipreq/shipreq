@@ -4,7 +4,7 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop.CycleDetector
-import monocle.{Lens, Optional, Traversal}
+import monocle.{Lens, Traversal}
 import monocle.macros.{GenLens, Lenses}
 import nyaya.util.Multimap
 import scala.annotation.tailrec
@@ -88,8 +88,8 @@ object Tag {
     override val unapplyData: AnyRef => Option[Tag] = {case r: Tag => Some(r); case _ => None}
   }
 
-  val applicableTag: Optional[Tag, ApplicableTag] =
-    Optional[Tag, ApplicableTag]({
+  val applicableTag: monocle.Optional[Tag, ApplicableTag] =
+    monocle.Optional[Tag, ApplicableTag]({
       case a: ApplicableTag => Some(a)
       case _                => None
     })(a => _ => a)

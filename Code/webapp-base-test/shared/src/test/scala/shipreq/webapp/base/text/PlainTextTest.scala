@@ -2,7 +2,7 @@ package shipreq.webapp.base.text
 
 import sourcecode.Line
 import shipreq.base.test.BaseTestUtil._
-import shipreq.webapp.base.data.{Live, Mandatory}
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.SampleProject6._
 import shipreq.webapp.base.test.UnsafeTypes._
 import utest._
@@ -15,7 +15,7 @@ object PlainTextTest extends TestSuite {
 
   private def assertRoundTrip(input: String)(implicit l: Line) = {
     val rich = Text.CustomTextField.parse(project, None)(input)
-    val actual = plainText.text(rich, Live, Mandatory.Not)
+    val actual = plainText.text(rich, Live, Optional)
     assertMultiline(actual, input)
   }
 

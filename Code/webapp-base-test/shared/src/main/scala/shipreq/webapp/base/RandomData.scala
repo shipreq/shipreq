@@ -8,7 +8,7 @@ import japgolly.univeq._
 import java.time.Instant
 import nyaya.gen._
 import nyaya.util._
-import monocle._
+import monocle.{Optional => _, _}
 import monocle.function.Field1.first
 import monocle.function.Field2.second
 import org.parboiled2.CharPredicate
@@ -184,10 +184,10 @@ object RandomData {
 //    Gen.int.map(i => if ((i & 7) == 0) Dead else Live)
 
   val implicationRequired =
-    Gen.choose[Mandatory](Mandatory, Mandatory.Not)
+    Gen.choose[Mandatory](Mandatory, Optional)
 
   val mandatory =
-    Gen.choose[Mandatory](Mandatory, Mandatory.Not)
+    Gen.choose[Mandatory](Mandatory, Optional)
 
   val hashRefKey: Gen[HashRefKey] =
     grammarStr1(Grammar.hashRefKey)(_.firstChar, _.tailChars, _.length) map HashRefKey
@@ -363,7 +363,7 @@ object RandomData {
 
   /** HashRefKey uniqueness enforced in Project, not here */
   def tags(genReqTypeIds: Gen[Set[ReqTypeId]]): Gen[List[Tag]] = {
-    val tagNameL = Optional[Tag, String]({
+    val tagNameL = monocle.Optional[Tag, String]({
       case t: TagGroup      => Some(t.name)
       case _: ApplicableTag => None
     })(n => {
@@ -1214,7 +1214,7 @@ object RandomData {
       val reqIdIso: Iso[ReqCodeGroupId, ApReqCodeId] =
         Iso[ReqCodeGroupId, ApReqCodeId](a => ApReqCodeId(a.value))(a => ReqCodeGroupId(a.value))
 
-      val reqCodeDataActiveId = Optional[Data, ApReqCodeId]({
+      val reqCodeDataActiveId = monocle.Optional[Data, ApReqCodeId]({
         case d: ActiveReq   => Some(d.id)
         case d: ActiveGroup => Some(ApReqCodeId(d.id.value))
         case _: Inactive    => None

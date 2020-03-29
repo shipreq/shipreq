@@ -40,7 +40,7 @@ final case class ViewReq[A](data           : Data,
   def imps(id: CustomField.Implication.Id): IfApplicable[A] = {
     val imps = data.customImps(id)
     data.fieldRules.imp(id) match {
-      case Resolution.Optional      => \/-(pt.implicationList(imps, data.live, Mandatory.Not))
+      case Resolution.Optional      => \/-(pt.implicationList(imps, data.live, Optional))
       case Resolution.Mandatory     => \/-(pt.implicationList(imps, data.live, Mandatory))
       case Resolution.NotApplicable => NotApplicable.left
       case Resolution.DefaultTo(x)  => x.impossible
@@ -63,17 +63,17 @@ final case class ViewReq[A](data           : Data,
     Invalid when data.conflictingTags.contains(_)
 
   def tags: A =
-    pt.tagList(data.generalTags, data.live, Mandatory.Not, tagValidity)
+    pt.tagList(data.generalTags, data.live, Optional, tagValidity)
 
   def tags(id: CustomField.Tag.Id): IfApplicable[A] = {
     val tags = data.customTags(id)
     data.fieldRules.tag(id) match {
-      case Resolution.Optional      => \/-(pt.tagList(tags, data.live, Mandatory.Not, tagValidity))
+      case Resolution.Optional      => \/-(pt.tagList(tags, data.live, Optional, tagValidity))
       case Resolution.Mandatory     => \/-(pt.tagList(tags, data.live, Mandatory, tagValidity))
       case Resolution.NotApplicable => NotApplicable.left
       case Resolution.DefaultTo(d)  =>
         val t = if (tags.isEmpty) Vector1(d) else tags
-        \/-(pt.tagList(t, data.live, Mandatory.Not, tagValidity))
+        \/-(pt.tagList(t, data.live, Optional, tagValidity))
     }
   }
 
@@ -85,7 +85,7 @@ final case class ViewReq[A](data           : Data,
 
   def text(id: CustomField.Text.Id): IfApplicable[A] =
     data.fieldRules.text(id) match {
-      case Resolution.Optional      => \/-(pt.customTextField(id, data.req, data.live, Mandatory.Not))
+      case Resolution.Optional      => \/-(pt.customTextField(id, data.req, data.live, Optional))
       case Resolution.Mandatory     => \/-(pt.customTextField(id, data.req, data.live, Mandatory))
       case Resolution.NotApplicable => NotApplicable.left
       case Resolution.DefaultTo(x)  => x.impossible

@@ -154,8 +154,8 @@ object FieldReqTypeRules {
 
     def v1(mandatory: data.Mandatory) =
       mandatory match {
-        case data.Mandatory     => Mandatory
-        case data.Mandatory.Not => Optional
+        case data.Mandatory => Mandatory
+        case data.Optional  => Optional
       }
   }
 

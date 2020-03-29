@@ -3,7 +3,7 @@ package shipreq.webapp.base.test
 import monocle._
 import monocle.std.option.{some => atSome}
 import shipreq.base.util.{VectorTree, IMap}
-import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.{Optional => _, _}
 import shipreq.webapp.base.text.Text
 
 object TestOptics {

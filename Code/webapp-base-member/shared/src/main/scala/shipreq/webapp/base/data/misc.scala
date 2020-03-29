@@ -25,9 +25,10 @@ sealed trait Mandatory extends IsoBool[Mandatory] {
 
 case object Mandatory extends Mandatory with IsoBool.Object[Mandatory] {
   override def positive = this
-  override def negative = Not
-  case object Not extends Mandatory
+  override def negative = Optional
 }
+
+case object Optional extends Mandatory
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

@@ -477,10 +477,10 @@ trait ApplyConfigEvent {
         case (None, Some(a)) =>
           val m =
             rules.resolutionIterator().flatMap {
-              case FieldReqTypeRules.Resolution.Optional  => Mandatory.Not :: Nil
+              case FieldReqTypeRules.Resolution.Optional  => Optional :: Nil
               case FieldReqTypeRules.Resolution.Mandatory => Mandatory :: Nil
               case _                                      => Nil
-            }.nextOption().getOrElse(Mandatory.Not)
+            }.nextOption().getOrElse(Optional)
 
           FieldReqTypeRules.v1(m, a)
       }

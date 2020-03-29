@@ -4,7 +4,7 @@ import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
-import monocle.{Lens, Optional, Traversal}
+import monocle.{Lens, Traversal}
 import monocle.macros.Lenses
 import monocle.std.option.pSome
 import nyaya.util.Multimap
@@ -40,10 +40,10 @@ object Project {
   val applicableTags: Traversal[Project, ApplicableTag] =
     tagTree ^|->> TagTree.traversal ^|-> TagInTree.tag ^|-? Tag.applicableTag
 
-  val reqtableViewsNE: Optional[Project, reqtable.SavedViews.NonEmpty] =
+  val reqtableViewsNE: monocle.Optional[Project, reqtable.SavedViews.NonEmpty] =
     reqtableViews ^<-? pSome
 
-  def reqtableView(id: reqtable.SavedView.Id): Optional[Project, reqtable.SavedView] =
+  def reqtableView(id: reqtable.SavedView.Id): monocle.Optional[Project, reqtable.SavedView] =
     reqtableViewsNE ^|-? reqtable.SavedViews.NonEmpty.at(id)
 
   implicit lazy val equality: Equal[Project] = ScalazMacros.deriveEqual
