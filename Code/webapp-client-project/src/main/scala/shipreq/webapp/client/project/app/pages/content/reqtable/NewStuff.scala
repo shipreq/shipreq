@@ -94,8 +94,9 @@ final class NewStuff(state        : State,
             Some(NewForm.ForCodeGroup.Props((), activeColumns, create(r), routerCtl, toast, cancel).render)
 
           case r: RowKey.GenericReq =>
-            val rt = reqTypes.custom.need(r.reqTypeId)
-            Some(NewForm.ForGenericReq.Props(rt, activeColumns, create(r), routerCtl, toast, cancel).render)
+            reqTypes.custom.get(r.reqTypeId).map { rt =>
+              NewForm.ForGenericReq.Props(rt, activeColumns, create(r), routerCtl, toast, cancel).render
+            }
 
           case r@RowKey.UseCase =>
             Some(NewForm.ForUseCase.Props((), activeColumns, create(r), routerCtl, toast, cancel).render)

@@ -25,6 +25,9 @@ sealed abstract class FilterDead(final val filterFn: OptionalBoolFn[Live]) exten
     val get = ldStatAccessor[A]
     k => get(stats(k))
   }
+
+  def overrideIfDead(live: => Live): Option[FilterDead]
+  def overrideIfDeadOption(live: => Option[Live]): Option[FilterDead]
 }
 
 object FilterDead extends IsoBool.Object[FilterDead] {
@@ -34,8 +37,12 @@ object FilterDead extends IsoBool.Object[FilterDead] {
 
 case object HideDead extends FilterDead(OptionalBoolFn(_ ==* Live)) {
   override def ldStatAccessor[A] = _.live
+  override def overrideIfDead(live: => Live) = if (live is Dead) Some(ShowDead) else None
+  override def overrideIfDeadOption(live: => Option[Live]) = if (live.exists(_ is Dead)) Some(ShowDead) else None
 }
 
 case object ShowDead extends FilterDead(OptionalBoolFn.empty) {
   override def ldStatAccessor[A] = _.all
+  override def overrideIfDead(live: => Live) = None
+  override def overrideIfDeadOption(live: => Option[Live]) = None
 }

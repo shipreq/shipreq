@@ -80,7 +80,7 @@ object SplitScreenCrud {
                                    newButton         : NewArgs[N] => VdomNode,
                                    list              : ListArgs[Id] => VdomNode,
                                    editor            : EditorArgs[N, Id, E] => VdomNode,
-                                   initEditor        : (Project, N \/ Id) => E,
+                                   initEditor        : (Project, N \/ Id) => Option[E],
                                    state             : StateSnapshot[State[N, Id, E]])
 
   @Lenses
@@ -154,7 +154,7 @@ final class SplitScreenCrud[
                     newButton         : NewArgs    => VdomNode,
                     list              : ListArgs   => VdomNode,
                     editor            : EditorArgs => VdomNode,
-                    initEditor        : (Project, NewState \/ Id) => EditorState,
+                    initEditor        : (Project, NewState \/ Id) => Option[EditorState],
                     state             : StateSnapshot[State]): VdomNode =
     Component(SplitScreenCrud.Props(filterDeadOverride, project, newButton, list, editor, initEditor, state))
 
@@ -173,8 +173,8 @@ final class SplitScreenCrud[
 
     private def _select(project: Option[Project], id: Id): Callback =
       for {
-        p           <- $.props
-        editorState  = p.initEditor(project.getOrElse(p.project), \/-(id))
+        p           <- $.props.toCBO
+        editorState <- CallbackOption.liftOption(p.initEditor(project.getOrElse(p.project), \/-(id)))
         right        = S.Right.Update(id, editorState)
         _           <- p.state.modState(_.copy(right = right))
       } yield ()
@@ -195,8 +195,8 @@ final class SplitScreenCrud[
       Reusable.byRef(
         ns =>
           for {
-            p           <- $.props
-            editorState  = p.initEditor(p.project, -\/(ns))
+            p           <- $.props.toCBO
+            editorState <- CallbackOption.liftOption(p.initEditor(p.project, -\/(ns)))
             right        = S.Right.Create(editorState)
             _           <- p.state.modState(_.copy(right = right))
           } yield ()

@@ -45,9 +45,12 @@ object Message {
   }
 
   def apply(style: Style, icon: Icon, header: TagMod, content: TagMod): VdomTag =
+    withBody(style, icon, header, <.p(content))
+
+  def withBody(style: Style, icon: Icon, header: TagMod, body: VdomNode): VdomTag =
     style.tag(^.cls := "icon",
       icon.tag,
       <.div(^.cls := "content",
         <.div(^.cls := "header", header),
-        <.p(content)))
+        body))
 }

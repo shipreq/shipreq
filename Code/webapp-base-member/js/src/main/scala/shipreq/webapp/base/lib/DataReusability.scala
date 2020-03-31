@@ -82,6 +82,12 @@ abstract class DataReusability extends BaseReusability {
   implicit def reusabilityReqTypeId: Reusability[ReqTypeId] =
     Reusability.byUnivEq
 
+  implicit def reusabilityCustomReqType: Reusability[CustomReqType] =
+    Reusability.byRefOrUnivEq
+
+  implicit def reusabilityStaticReqType: Reusability[StaticReqType] =
+    Reusability.byUnivEq
+
   implicit def reusabilityReqTypes: Reusability[ReqTypes] =
     Reusability.byRefOrUnivEq
 

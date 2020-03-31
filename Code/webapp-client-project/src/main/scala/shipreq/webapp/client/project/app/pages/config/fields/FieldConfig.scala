@@ -57,18 +57,12 @@ object FieldConfig {
     val asyncInProgress: Boolean =
       AsyncFeature.isInProgress(async.read)
 
-    private[FieldConfig] def isDead(id: FieldId): Boolean =
-      project.config.fields.need(id).live(project.config).is(Dead)
+    private[FieldConfig] def lifeOf(id: FieldId): Live =
+      project.config.fields.need(id).live(project.config)
 
     val filterDeadOverride: Option[FilterDead] =
-      state.value.filterDead match {
-        case ShowDead => None
-        case HideDead =>
-          state.value.right.idOption match {
-            case Some(id) if isDead(id) => Some(ShowDead)
-            case _                      => None
-          }
-      }
+      state.value.filterDead.overrideIfDeadOption(
+        state.value.right.idOption.map(lifeOf))
 
     def effectiveFilterDead: FilterDead =
       filterDeadOverride.getOrElse(state.value.filterDead)
@@ -256,7 +250,7 @@ object FieldConfig {
       val editorType: EditorType =
         args.id match {
           case \/-(fid: CustomFieldId) =>
-            if (p.isDead(fid))
+            if (p.lifeOf(fid) is Dead)
               EditorType.Dead(fid)
             else fid match {
               case id: CustomField.Implication.Id => EditorType.LiveImp(Some(id))
@@ -359,7 +353,7 @@ object FieldConfig {
         newButton          = newButtonProps(p, _).render,
         list               = renderLeft(p, _),
         editor             = renderEditor(p, _),
-        initEditor         = initEditor,
+        initEditor         = (a, b) => Some(initEditor(a, b)),
         state              = p.state,
       )
   }

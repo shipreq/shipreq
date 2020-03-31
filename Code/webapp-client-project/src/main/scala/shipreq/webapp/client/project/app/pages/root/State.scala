@@ -11,6 +11,7 @@ import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateConfigCmd, 
 import shipreq.webapp.base.ui.{ProjectItem, Toast}
 import shipreq.webapp.client.project.app.pages.config.fields.FieldConfig
 import shipreq.webapp.client.project.app.pages.config.tags.TagConfig
+import shipreq.webapp.client.project.app.pages.config.reqtypes.ReqTypeConfig
 import shipreq.webapp.client.project.app.pages.content.{reqdetail, reqtable}
 import shipreq.webapp.client.project.app.pages.content.issues.IssuesPage
 import shipreq.webapp.client.project.app.pages.content.reqdetail.ReqDetail
@@ -109,6 +110,8 @@ final case class State(projectName          : ProjectItem.WithEditableName.State
                        fieldConfigAsync     : AsyncFeature.State.D0[ErrorMsg],
                        tagConfig            : TagConfig.State,
                        tagConfigAsync       : AsyncFeature.State.D0[ErrorMsg],
+                       reqTypeConfig        : ReqTypeConfig.State,
+                       reqTypeConfigAsync   : AsyncFeature.State.D0[ErrorMsg],
                       ) {
 
   @inline def filterDead = _filterDead
@@ -149,6 +152,8 @@ object State {
       fieldConfigAsync      = AsyncFeature.State.initD0,
       tagConfig             = TagConfig.initState,
       tagConfigAsync        = AsyncFeature.State.initD0,
+      reqTypeConfig         = ReqTypeConfig.initState,
+      reqTypeConfigAsync    = AsyncFeature.State.initD0,
     )
 
   implicit val reusability: Reusability[State] =

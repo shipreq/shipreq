@@ -19,16 +19,16 @@ case object Dead extends Live
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-sealed trait Mandatory extends IsoBool[Mandatory] {
+sealed abstract class Mandatory(final val toText: String) extends IsoBool[Mandatory] {
   override final def companion = Mandatory
 }
 
-case object Mandatory extends Mandatory with IsoBool.Object[Mandatory] {
+case object Mandatory extends Mandatory("Mandatory") with IsoBool.Object[Mandatory] {
   override def positive = this
   override def negative = Optional
 }
 
-case object Optional extends Mandatory
+case object Optional extends Mandatory("Optional")
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

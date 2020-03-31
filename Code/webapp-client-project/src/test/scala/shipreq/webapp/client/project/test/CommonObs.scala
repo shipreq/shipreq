@@ -2,9 +2,29 @@ package shipreq.webapp.client.project.test
 
 import shipreq.webapp.base.test.TestState._
 import japgolly.scalajs.react.test._
+import org.scalajs.dom.html
 import shipreq.webapp.base.ui.semantic.JQuery
 
 object CommonObs {
+
+  final class Input($: DomZipperJs) {
+    val dom = $.domAs[html.Input]
+    val value = dom.value
+    def setValue(v: String) = SimEvent.Change(v).simulate(dom)
+  }
+
+  final class TextArea($: DomZipperJs) {
+    val dom = $.domAs[html.TextArea]
+    val value = dom.value
+    def setValue(v: String) = SimEvent.Change(v).simulate(dom)
+  }
+
+  final class Link($: DomZipperJs) {
+    val dom = $.domAs[html.Anchor]
+    val label = $.innerText.trim
+    //def click() = Simulate click dom
+    def click() = Simulate.click(dom, scalajs.js.Dynamic.literal(defaultPrevented = false, metaKey = false, ctrlKey = false, button = 0)) // TODO Pending https://github.com/japgolly/scalajs-react/issues/674
+  }
 
   final class Dropdown($: DomZipperJs) {
 

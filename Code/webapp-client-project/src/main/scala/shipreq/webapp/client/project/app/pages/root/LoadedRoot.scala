@@ -185,6 +185,9 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     private val fieldConfigAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.fieldConfigAsync)
 
+    private val reqTypeConfigAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
+      AsyncFeature.Write.D0.init($ zoomStateL State.reqTypeConfigAsync)
+
     private val tagConfigAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.tagConfigAsync)
 
@@ -376,7 +379,15 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
             .component
 
         case Page.CfgReqTypes =>
-          config_old.reqtypes.CfgReqTypes.Props(sspUpdateConfigE, global, filterDeadSS, usageShow).component
+          config.reqtypes.ReqTypeConfig.Props(
+            project = project,
+            pw      = projectWidgets,
+            state   = StateSnapshot.zoomL(State.reqTypeConfig)(s).setStateVia($),
+            ssp     = sspUpdateConfig,
+            async   = AsyncFeature.ReadWrite.D0(reqTypeConfigAsyncW, s.reqTypeConfigAsync),
+            toast   = toast,
+            usage   = usage,
+          ).render
 
         case Page.CfgTags =>
           config.tags.TagConfig.Props(

@@ -15,15 +15,15 @@ object UpdateConfigCmd {
   final case class CustomIssueTypeDelete (id: CustomIssueTypeId)                                   extends ToModifyCustomIssueTypes
   final case class CustomIssueTypeRestore(id: CustomIssueTypeId)                                   extends ToModifyCustomIssueTypes
 
-  sealed trait ToModifyCustomReqTypes                                                                      extends UpdateConfigCmd
+  sealed trait ToModifyReqTypes                                                                            extends UpdateConfigCmd
   final case class CustomReqTypeCreate    (mnemonic   : ReqType.Mnemonic,
                                            name       : String,
                                            description: Option[String],
-                                           implication: Mandatory)                                         extends ToModifyCustomReqTypes
-  final case class CustomReqTypeUpdate    (id: CustomReqTypeId, newValues: CustomReqTypeGD.NonEmptyValues) extends ToModifyCustomReqTypes
-  final case class CustomReqTypeDeleteHard(id: CustomReqTypeId)                                            extends ToModifyCustomReqTypes
-  final case class CustomReqTypeDeleteSoft(id: CustomReqTypeId)                                            extends ToModifyCustomReqTypes
-  final case class CustomReqTypeRestore   (id: CustomReqTypeId)                                            extends ToModifyCustomReqTypes
+                                           implication: Mandatory)                                         extends ToModifyReqTypes
+  final case class CustomReqTypeUpdate    (id: CustomReqTypeId, newValues: CustomReqTypeGD.NonEmptyValues) extends ToModifyReqTypes
+  final case class CustomReqTypeDeleteHard(id: CustomReqTypeId)                                            extends ToModifyReqTypes
+  final case class CustomReqTypeDeleteSoft(id: CustomReqTypeId)                                            extends ToModifyReqTypes
+  final case class CustomReqTypeRestore   (id: CustomReqTypeId)                                            extends ToModifyReqTypes
 
   sealed trait ToModifyFields                                                                                         extends UpdateConfigCmd
   final case class CustomFieldCreateImp (reqTypeId: ReqTypeId , fieldReqTypeRules: FieldReqTypeRules.ForImpField )    extends ToModifyFields

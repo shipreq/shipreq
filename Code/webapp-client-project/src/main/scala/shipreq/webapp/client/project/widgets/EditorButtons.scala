@@ -34,6 +34,28 @@ object EditorButtons {
         )
     }
 
+  def createOrHardUpdate[N, Id, Id2 <: Id, S, Cmd](args            : SplitScreenCrud.EditorArgs[N, Id, S])
+                                                  (idOption        : Option[Id2],
+                                                   potentialSaveCmd: PotentialChange[Any, Cmd])
+                                                  (submitCmd       : (Cmd, String, (Project, Id2) => Callback) => Callback,
+                                                   hardDeleteCmd   : Id2 => Cmd,
+                                                   softDeleteCmd   : Id2 => Cmd): Props =
+    idOption match {
+      case Some(id) =>
+        Props.HardUpdate(
+          abort      = args.close,
+          hardDelete = submitCmd(hardDeleteCmd(id), "Permanently deleted", (_, _) => args.close),
+          softDelete = submitCmd(softDeleteCmd(id), "Deleted", (p, _) => args.reset(p)),
+          update     = potentialSaveCmd.map(submitCmd(_, "Updated", (p, _) => args.reset(p))),
+        )
+
+      case None =>
+        Props.Create(
+          abort  = args.close,
+          create = potentialSaveCmd.toOption.map(submitCmd(_, "Created", args.selectP)),
+        )
+    }
+
   def cancel[N, Id, S, Cmd](args: SplitScreenCrud.EditorArgs[N, Id, S]): Props =
     Props.Cancel(args.close)
 
@@ -86,6 +108,11 @@ object EditorButtons {
                             delete: Callback,
                             update: PotentialChange[Any, Callback]) extends Props
 
+    final case class HardUpdate(abort     : Callback,
+                                hardDelete: Callback,
+                                softDelete: Callback,
+                                update    : PotentialChange[Any, Callback]) extends Props
+
   }
 
   private val outer  = <.div(*.editorButtons)
@@ -114,6 +141,11 @@ object EditorButtons {
   private val deleteButton =
     Button(
       tipe   = Button.Type.BasicIconAndText(Icon.Trash, "Delete"),
+      colour = ColourPlus.Negative)
+
+  private val hardDeleteButton =
+    Button(
+      tipe   = Button.Type.IconAndText(Icon.Trash, "Permanently Delete"),
       colour = ColourPlus.Negative)
 
   private val removeButton =
@@ -160,6 +192,24 @@ object EditorButtons {
       case Props.Update(abort, delete, u: PotentialChange.Changed[Any, Callback]) =>
         outer(
           deleteButton.onClick(delete),
+          gap,
+          cancelButton.onClick(abort),
+          updateButton.onClickWhenDefined(u.getUpdate))
+
+      case p@ Props.HardUpdate(_, _, _, PotentialChange.Unchanged) =>
+        import p._
+        outer(
+          hardDeleteButton.onClick(hardDelete),
+          deleteButton.onClick(softDelete),
+          gap,
+          closeButton.onClick(abort),
+          updateButton.disabled)
+
+      case p@ Props.HardUpdate(_, _, _, u: PotentialChange.Changed[Any, Callback]) =>
+        import p._
+        outer(
+          hardDeleteButton.onClick(hardDelete),
+          deleteButton.onClick(softDelete),
           gap,
           cancelButton.onClick(abort),
           updateButton.onClickWhenDefined(u.getUpdate))

@@ -176,6 +176,11 @@ object Style extends StyleSheet.Inline {
       color(c"#666"),
       // margin.horizontal(auto),
     )
+
+    val deadTextStrikeThrough = style(
+      color(c"#999"),
+      textDecoration := "line-through",
+    )
   }
 
   object navBar {
@@ -753,6 +758,9 @@ object Style extends StyleSheet.Inline {
 
       val withDragStatusAndLive =
         withDragStatus *** D.live
+
+      val withLive =
+        domain *** D.live
     }
 
     def crudRow(rowState: RowState,
@@ -884,11 +892,6 @@ object Style extends StyleSheet.Inline {
       marginLeft(1 ex),
     )
 
-    val rulesOtherDeadReqType = style(
-      color(c"#999"),
-      textDecoration := "line-through",
-    )
-
     val staticFieldUL = style(
       color(c"#3f3f3f"),
       margin.vertical(3 em),
@@ -902,6 +905,53 @@ object Style extends StyleSheet.Inline {
     @inline def `N/A` = generic.`N/A`
     @inline def editorTitle = tagConfig.editorTitle
     @inline def fieldListDetailDead = rulesOtherDeadReqType
+    @inline def rulesOtherDeadReqType = generic.deadTextStrikeThrough
+  }
+
+  // ===================================================================================================================
+  object reqTypeConfig {
+    type RowState = configShared.RowState
+    @inline def RowState = configShared.RowState
+
+    val listTableRow = styleF(RowState.withLive) { case (s, l) => styleS(
+      configShared.crudRow(s, DragStatus.Normal),
+      mixinIf(l is Dead)(
+        unsafeExt("tr" + _ + ">td")(deadCell),
+      ),
+    )}
+
+    val implicationHelp = style(
+      marginLeft(0.45 ex).important,
+      cursor.help,
+    )
+
+    val editorMnemonic = style(
+      display.block,
+      width(30 ex).important,
+    )
+
+    val editorPastMnemonics = style(
+      marginTop(0.65 em),
+    )
+
+    val preEditorMessage = style(
+      marginBottom(2 rem),
+    )
+
+    val notInUseBody = style(
+      lineHeight(1.4285 em),
+      opacity(0.85),
+      margin(.75 em, `0`),
+      unsafeChild("ol")(margin(.35 em, `0`)),
+    )
+
+    @inline def staticReadOnly = preEditorMessage
+    @inline def notInUse       = preEditorMessage
+    @inline def listTable      = fieldConfig.fieldListTable
+    @inline def listTableCell  = fieldConfig.fieldListTableCell
+    @inline def listTableUsage = fieldConfig.fieldListTableUsage
+    @inline def deadMnemonic   = generic.deadTextStrikeThrough
+    @inline def editorTitle    = tagConfig.editorTitle
   }
 
   // ===================================================================================================================
@@ -1418,6 +1468,7 @@ object Style extends StyleSheet.Inline {
     reqdetail.detailTable,
     reqdetail.useCaseStep.container,
     fieldConfig.fieldListTable,
+    reqTypeConfig.implicationHelp,
     tagConfig.tagTree,
     widgets.issueDesc,
     widgets.reqTypeSelector.dropdown,

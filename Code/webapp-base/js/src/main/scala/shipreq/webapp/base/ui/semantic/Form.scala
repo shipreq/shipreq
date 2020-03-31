@@ -5,9 +5,10 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq.UnivEq
 import monocle.{Iso, Lens}
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.{Identity, Validity}
+import shipreq.base.util.{Identity, IsoBool, Validity}
 import shipreq.webapp.base.data.{Disabled, Enabled, On}
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.ui.GeneralTheme
@@ -111,6 +112,9 @@ object Form {
 
     final def imap[B](i: Iso[A, B]): Field[B] =
       xmap(i.get)(i.reverseGet)
+
+    final def void: Field[Unit] =
+      Field.Void(this)
   }
 
   object Field {
@@ -154,6 +158,22 @@ object Form {
       override def withUpdater     (f: B => Callback                             ) = copy(underlying.withUpdater     (f compose ab))
       override def withValidated   (v: Option[Validated]                         ) = copy(underlying.withValidated   (v))
       override def withValidator   (v: Option[Simple.Validator[B, _, _]]         ) = copy(underlying.withValidator   (v.map(_.xmapInput(ba)(ab))))
+      override def withValidationUX(v: Option[ValidationUX]                      ) = copy(underlying.withValidationUX(v))
+      override def withEnabled     (e: Enabled                                   ) = copy(underlying.withEnabled     (e))
+      override def withOuterMod    (f: VdomTag => VdomTag                        ) = copy(underlying.withOuterMod    (f))
+
+      override def render(implicit vux: ValidationUX): VdomNode =
+        underlying.render
+    }
+
+    private final case class Void[A](underlying: Field[A]) extends Field[Unit] {
+      override protected def validationUX = underlying.validationUX
+      override def modEditor       (f: (TagMod => VdomNode) => TagMod => VdomNode) = copy(underlying.modEditor       (f))
+      override def withLabel       (l: TagMod                                    ) = copy(underlying.withLabel       (l))
+      override def withValue       (v: Unit                                      ) = this
+      override def withUpdater     (f: Unit => Callback                          ) = this
+      override def withValidated   (v: Option[Validated]                         ) = copy(underlying.withValidated   (v))
+      override def withValidator   (v: Option[Simple.Validator[Unit, _, _]]      ) = this
       override def withValidationUX(v: Option[ValidationUX]                      ) = copy(underlying.withValidationUX(v))
       override def withEnabled     (e: Enabled                                   ) = copy(underlying.withEnabled     (e))
       override def withOuterMod    (f: VdomTag => VdomTag                        ) = copy(underlying.withOuterMod    (f))
@@ -273,6 +293,47 @@ object Form {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+    def booleanSelect[A: UnivEq](a1: A, a2: A)(render: A => VdomNode): Field[A] = {
+
+      def key(a: A): String =
+        if (a == a1) "1" else "2"
+
+      val options: List[Select.Option[A]] =
+        Select.Option(key(a1), render(a1), a1) ::
+        Select.Option(key(a2), render(a2), a2) ::
+        Nil
+
+      generic(a1, null) { f =>
+        import f._
+
+        val actualLabel = label.whenDefined(<.label(_))
+
+        val onChange: Select.Option[A] => Callback =
+          o => updater(validator.fold(o.value)(_.corrector.live(o.value)))
+
+        val editor =
+          Select[A](
+            options  = options,
+            selected = Some(key(value)),
+            enabled  = enabled)(
+            onChange = onChange)
+
+        TagMod(actualLabel, editor)
+      }
+    }
+
+    def booleanSelect[B <: IsoBool[B]](b: IsoBool.Object[B])(render: B => String): Field[B] = {
+      implicit def univEq: UnivEq[B] = UnivEq.force
+      val b1 = b.positive
+      val b2 = b.negative
+      if (render(b1).compareTo(render(b2)) < 0)
+        booleanSelect[B](b1, b2)(render(_))
+      else
+        booleanSelect[B](b2, b1)(render(_))
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
     def boolean(tagMod: TagMod): Field[Boolean] =
       checkbox(tagMod).imap(On.isoWhen(true))
 
@@ -315,8 +376,8 @@ object Form {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /** Puts two fields side by side on a single row. */
-    def two[A](f1: Field[A], f2: Field[A]): Field[A] =
-      new Two(f1, f2)
+    def two(f1: Field[_], f2: Field[_]): Field[Unit] =
+      new Two(f1.void, f2.void)
 
     private final class Two[A](f1: Field[A], f2: Field[A]) extends Delegate[A] {
       override protected def mod: (Field[A] => Field[A]) => Field[A] =

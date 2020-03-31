@@ -49,14 +49,8 @@ object TagConfig {
       AsyncFeature.isInProgress(async.read)
 
     val filterDeadOverride: Option[FilterDead] =
-      state.value.filterDead match {
-        case ShowDead => None
-        case HideDead =>
-          state.value.right.idOption match {
-            case Some(id) if project.config.tags.tree.need(id).tag.live.is(Dead) => Some(ShowDead)
-            case _                                                               => None
-          }
-      }
+      state.value.filterDead.overrideIfDeadOption(
+        state.value.right.idOption.map(project.config.tags.tree.need(_).tag.live))
 
     def effectiveFilterDead: FilterDead =
       filterDeadOverride.getOrElse(state.value.filterDead)
@@ -304,7 +298,7 @@ object TagConfig {
         newButton          = newButtonProps(p, _).render,
         list               = renderLeft(p, _),
         editor             = renderEditor(p, _),
-        initEditor         = initEditor,
+        initEditor         = (a, b) => Some(initEditor(a, b)),
         state              = p.state,
       )
     }

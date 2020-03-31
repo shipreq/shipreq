@@ -121,7 +121,12 @@ object DataValidators {
         Uniqueness.set(otherData.foldLeft(StaticReqType.mnemonics)(_ ++ _.allMnemonics))
 
       def nameUniqueness: Invalidator[String] =
-        Uniqueness.within(otherData.map(_.name))
+        Uniqueness.stringIgnoreCase(otherData.map(_.name) ++ StaticReqType.values.iterator.map(_.name))
+    }
+
+    object State {
+      def fromConfig(subject: Option[CustomReqTypeId], cfg: ProjectConfig): State =
+        apply(subject, () => cfg.reqTypes.custom.valuesIterator)
     }
 
     val mnemonic: Composite.Stateful[State, String, String, Mnemonic] =
@@ -146,11 +151,18 @@ object DataValidators {
         .stateful(_ appendInvalidator _.nameUniqueness)
     }
 
+    def desc = genericDesc.lift[State]
+
     val all: State => Composite.Validator[
-      (String, String, Mandatory),
-      (String, String, Mandatory),
-      (Mnemonic, String, Mandatory)] =
-      s => mnemonic(s).named tuple name(s).named tuple Validator.id[Mandatory]
+      (String,   String, String,         Mandatory),
+      (String,   String, Option[String], Mandatory),
+      (Mnemonic, String, Option[String], Mandatory)] =
+      s =>
+        mnemonic(s).named tuple
+        name    (s).named tuple
+        desc    (s).named tuple
+        Validator.id[Mandatory]
+
   }
 
   // ===================================================================================================================

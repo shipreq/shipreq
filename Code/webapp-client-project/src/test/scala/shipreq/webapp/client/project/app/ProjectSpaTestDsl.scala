@@ -17,7 +17,7 @@ import shipreq.webapp.base.test._
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.client.project.app.pages.config.fields.{FieldConfigObs, FieldConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.config.tags.{TagConfigObs, TagConfigTestDsl}
-import shipreq.webapp.client.project.app.pages.config_old.reqtypes.{CfgReqTypesObs, CfgReqTypesDsl => CRT}
+import shipreq.webapp.client.project.app.pages.config.reqtypes.{ReqTypeConfigObs, ReqTypeConfigTestDsl => CRT}
 import shipreq.webapp.client.project.app.pages.content.issues.{IssuesPageObs, IssuesPageTestDsl => IP}
 import shipreq.webapp.client.project.app.pages.content.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
 import shipreq.webapp.client.project.app.pages.content.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
@@ -56,7 +56,7 @@ object ProjectSpaTestDsl {
 
       nav.page match {
         case Page.Index        => empty.copy(home        = Try(new ProjectHomeObs(inner)))
-        case Page.CfgReqTypes  => empty.copy(cfgReqTypes = Try(new CfgReqTypesObs(inner)))
+        case Page.CfgReqTypes  => empty.copy(cfgReqTypes = Try(new ReqTypeConfigObs(inner)))
         case Page.CfgFields    => empty.copy(cfgFields   = Try(new FieldConfigObs(inner)))
         case Page.CfgTags      => empty.copy(cfgTags     = Try(new TagConfigObs(inner)))
         case Page.ReqTable     => empty.copy(reqTable    = Try(new ReqTableObs(global, inner)))
@@ -105,7 +105,7 @@ object ProjectSpaTestDsl {
                  nav        : NavObs,
                  home       : Maybe[ProjectHomeObs],
                  cfgFields  : Maybe[FieldConfigObs],
-                 cfgReqTypes: Maybe[CfgReqTypesObs],
+                 cfgReqTypes: Maybe[ReqTypeConfigObs],
                  cfgTags    : Maybe[TagConfigObs],
                  issues     : Maybe[IssuesPageObs],
                  reqTable   : Maybe[ReqTableObs],
@@ -125,7 +125,7 @@ object ProjectSpaTestDsl {
       .mapS(TestState.project.get)((a, b) => TestState.project.set(b)(a)) // TODO Add Monocle support
 
   implicit lazy val transformCRT =
-    CRT.dsl.transformer
+    CRT.*.transformer
       .mapR[Ref](_ => ())
       .pmapO[Obs](_.cfgReqTypes)
       .mapS[TestState](_ => ())((s, _) => s)
@@ -208,6 +208,7 @@ object ProjectSpaTestDsl {
   def liftReqTableTests       (p: RT                .*.Plan): *.Plan = p.lift
   def liftReqDetailTests      (p: RD                .*.Plan): *.Plan = p.lift
   def liftIssuePageTests      (p: IP                .*.Plan): *.Plan = p.lift
+  def liftReqTypeConfigTests  (p: CRT               .*.Plan): *.Plan = p.lift
   def liftFieldConfigPageTests(p: FieldConfigTestDsl.*.Plan): *.Plan = p.lift
   def liftTagConfigPageTests  (p: TagConfigTestDsl  .*.Plan): *.Plan = p.lift
 

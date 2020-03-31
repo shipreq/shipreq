@@ -35,7 +35,7 @@ final class Usage(p: Project, router: SpecialRouterCtl) {
     rc.link(())(Usage.render(uses))
   }
 
-  // -------------------------------------------------------------------------------------------------------------------
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   private val filterCompiler: FilterDead => Filter.Valid.Compiler =
     FilterDead.memoLazy(fd =>
@@ -68,7 +68,17 @@ final class Usage(p: Project, router: SpecialRouterCtl) {
     val rc   = router.reqTableWithFilter(fd, fieldFilter(id))
     rc.link(())(Usage.render(uses))
   }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  def reqTypeLink(id: ReqTypeId, fd: FilterDead): VdomTagOf[html.Anchor] = {
+    val uses = p.reqTypeCount(id)(fd)
+    val rc   = router.reqTableWithFilter(fd, Filter.Valid.reqType(id))
+    rc.link(())(Usage.render(uses))
+  }
 }
+
+// █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 object Usage {
 
