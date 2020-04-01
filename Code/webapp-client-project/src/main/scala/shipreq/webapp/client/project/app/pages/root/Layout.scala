@@ -110,6 +110,8 @@ object Layout {
 
           case UnsavedChanges.Location.ManualIssues     => "Manual Issue(s)"            -> Page.Issues
           case UnsavedChanges.Location.ProjectName      => "Project Name"               -> Page.Index
+          case UnsavedChanges.Location.FieldConfig      => "Field Editor"               -> Page.CfgFields
+          case UnsavedChanges.Location.ReqTypeConfig    => "Req Type Editor"            -> Page.CfgReqTypes
           case UnsavedChanges.Location.TagConfig        => "Tag Editor"                 -> Page.CfgTags
           case UnsavedChanges.Location.ReqCodeGroup(id) => PlainText.reqCodeById(id, p) -> Page.ReqTable
         }.sortBy(_._1).iterator.toList

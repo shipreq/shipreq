@@ -10,6 +10,7 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.client.project.app.pages
 import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.feature.create.NewEditorArgs
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -36,6 +37,8 @@ final case class UnsavedChanges(count    : Int,
         case Location.ReqCodeGroup(id) => PlainText.reqCodeById(id, p)
         case Location.ProjectName      => "project name"
         case Location.ManualIssues     => "manual issue(s)"
+        case Location.FieldConfig      => "field editor"
+        case Location.ReqTypeConfig    => "req type editor"
         case Location.TagConfig        => "tag editor"
       }
         .sort
@@ -85,6 +88,8 @@ object UnsavedChanges {
   object Location {
     case object ProjectName                           extends Location
     case object ManualIssues                          extends Location
+    case object FieldConfig                           extends Location
+    case object ReqTypeConfig                         extends Location
     case object TagConfig                             extends Location
     final case class Req(id: ReqId)                   extends Location
     final case class ReqCodeGroup(id: ReqCodeGroupId) extends Location
@@ -202,6 +207,30 @@ object UnsavedChanges {
                   }
               }
           }.toVector
+        }
+    }
+
+    case object FieldConfig extends Type {
+      import pages.config.fields.FieldConfig.EditorState
+      override def determine(i: Input) =
+        CallbackTo {
+          i.state.fieldConfig.right.editorOption match {
+            case Some(EditorState.ImpEditor (s)) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.FieldConfig
+            case Some(EditorState.TagEditor (s)) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.FieldConfig
+            case Some(EditorState.TextEditor(s)) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.FieldConfig
+            case _                                                                         => emptyVector
+          }
+        }
+    }
+
+    case object ReqTypeConfig extends Type {
+      import pages.config.reqtypes.ReqTypeConfig.EditorState
+      override def determine(i: Input) =
+        CallbackTo {
+          i.state.reqTypeConfig.right.editorOption match {
+            case Some(EditorState.Custom(s)) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.ReqTypeConfig
+            case _                                                                     => emptyVector
+          }
         }
     }
 
