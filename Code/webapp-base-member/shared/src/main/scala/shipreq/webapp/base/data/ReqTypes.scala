@@ -140,6 +140,9 @@ object CustomReqType {
 @Lenses
 final case class ReqTypes(custom: IMap[CustomReqTypeId, CustomReqType]) {
 
+  def live(i: ReqTypeId, whenNotFound: Live): Live =
+    get(i).fold(whenNotFound)(_.live)
+
   def get(i: ReqTypeId): Option[ReqType] =
     i.foldId[Option[ReqType]](Some(_), custom.get)
 

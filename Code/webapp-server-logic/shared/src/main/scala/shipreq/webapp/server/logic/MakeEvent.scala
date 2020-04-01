@@ -227,7 +227,7 @@ object MakeEvent {
             Failure("You cannot specify ApplicableTag children")
           else if (Parents.get(newValues).exists(_.value.keysIterator.exists(project.config.tags.tree.need(_).tag.live is Dead)))
             Failure("You cannot specify dead parents")
-          else if (ApplicableReqTypes.get(newValues).exists(_.value.reqTypes.exists(project.config.reqTypes.need(_).live is Dead)))
+          else if (ApplicableReqTypes.get(newValues).exists(_.value.reqTypes.exists(project.config.reqTypes.live(_, Dead) is Dead)))
             Failure("You cannot specify dead req types")
           else {
 

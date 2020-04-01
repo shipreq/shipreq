@@ -334,11 +334,15 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
 
   val _reqTypeShort: ReqTypeId => VdomTag =
     Memo { id =>
-      val rt = project.config.reqTypes.need(id)
-      <.span(
-        *.reqTypeShort(rt.live),
-        ^.title := rt.name,
-        rt.mnemonic.value)
+      project.config.reqTypes.get(id) match {
+        case Some(rt) =>
+          <.span(
+            *.reqTypeShort(rt.live),
+            ^.title := rt.name,
+            rt.mnemonic.value)
+        case None =>
+          <.span("?")
+      }
     }
 
   override def reqTypeFull(id: ReqTypeId): VdomTag =

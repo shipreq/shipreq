@@ -284,10 +284,10 @@ object PlainText {
       PlainText.reqCodeTreeItem(item)
 
     override def reqTypeShort(id: ReqTypeId): String =
-      PlainText.reqTypeShort(p.config.reqTypes.need(id))
+      p.config.reqTypes.get(id).fold("?")(PlainText.reqTypeShort)
 
     override def reqTypeFull(id: ReqTypeId): String =
-      PlainText.reqTypeFull(p.config.reqTypes.need(id))
+      p.config.reqTypes.get(id).fold("?")(PlainText.reqTypeFull)
 
     override def useCaseStepTextAndFlow(step: UseCaseStepFlowText.TextAndFlow[Text.AnyOptional, Set[UseCaseStepId]],
                                         live: Live): String =

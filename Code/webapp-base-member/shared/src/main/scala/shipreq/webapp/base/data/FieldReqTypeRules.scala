@@ -34,7 +34,7 @@ final case class FieldReqTypeRules[+D](perReqType: Map[ReqTypeId, Resolution[D]]
     Iterator.single(otherwise) ++ perReqType.iterator.filter(x => reqTypeFilter(x._1)).map(_._2)
 
   def liveResolutionIterator(reqTypes: ReqTypes): Iterator[Resolution[D]] =
-    resolutionIterator(reqTypes.need(_).live is Live)
+    resolutionIterator(reqTypes.live(_, Dead) is Live)
 
   def liveIterator(reqTypes: ReqTypes): Iterator[(ReqType, Resolution[D])] =
     reqTypes.all
@@ -192,7 +192,7 @@ object FieldReqTypeRules {
     }
 
     def filterLiveReqTypes(r: ReqTypes): ByResolution[D] =
-      filterReqTypeIds(r.need(_).live is Live)
+      filterReqTypeIds(r.live(_, Dead) is Live)
 
     lazy val toRules: FieldReqTypeRules[D] = {
       val byId =

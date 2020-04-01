@@ -212,7 +212,11 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
           case Live =>
             r.implicitLiveStatus(cfg.reqTypes) match {
               case NoImpact      => NotApplicable // req is live
-              case ReqTypeIsDead => Applicable(deletionReasonWhenReqTypeIsDead(cfg.reqTypes.need(r.pubid.reqTypeId)))
+              case ReqTypeIsDead =>
+                cfg.reqTypes.get(r.pubid.reqTypeId) match {
+                  case Some(rt) => Applicable(deletionReasonWhenReqTypeIsDead(rt))
+                  case None     => NotApplicable
+                }
             }
           case Dead => Applicable(latestReason(r.id))
         }

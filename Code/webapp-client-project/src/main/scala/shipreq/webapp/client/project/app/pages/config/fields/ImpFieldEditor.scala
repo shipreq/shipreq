@@ -145,7 +145,7 @@ object ImpFieldEditor {
             val sourceSelect =
               Select[ReqTypeId](
                 options = p.reqTypeOptions,
-                selected = s.reqType.map(p.cfg.reqTypes.need(_).mnemonic.value),
+                selected = s.reqType.flatMap(p.cfg.reqTypes.get).map(_.mnemonic.value),
                 enabled = p.enabled)(
                 onChange = o => p.state.setState(s.copy(Some(o.value))))
 

@@ -174,7 +174,7 @@ object ReqTypeRulesEditor {
       val dead: List[DeadRow[D]] =
         MutableArray(
           rules.perRes.iterator.flatMap { case (res, ids) =>
-            val deadIds = ids.whole.filter(cfg.reqTypes.need(_).live is Dead)
+            val deadIds = ids.whole.filter(cfg.reqTypes.live(_, Live) is Dead)
             NonEmptySet.option(deadIds).iterator.map(i =>
               DeadRow(i, ResValue.from(res), keyGen.next())
             )
@@ -214,7 +214,7 @@ object ReqTypeRulesEditor {
         apply("", ResValue.empty, keyGen.next())
 
       def from[D](cfg: ProjectConfig, ids: NonEmptySet[ReqTypeId], res: Resolution[D]): PerReqType[D] = {
-        def reqTypes(live: Live) = ids.iterator.map(cfg.reqTypes.need).filter(_.live is live)
+        def reqTypes(live: Live) = ids.iterator.flatMap(cfg.reqTypes.get).filter(_.live is live)
         val txt = cfg.reqTypes.mkString(reqTypes(Live), ", ")
         apply(txt, ResValue.from(res), keyGen.next())
       }

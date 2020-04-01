@@ -113,7 +113,7 @@ object FieldList {
       val validity =
         Invalid.when(
           rules.otherwise.applicability.is(NotApplicable) &&
-          rules.perRes.valuesIterator.forall(_.forall(p.config.reqTypes.need(_).live is Dead)))
+          rules.perRes.valuesIterator.forall(_.forall(p.config.reqTypes.live(_, Dead) is Dead)))
 
       if (rules.perRes.isEmpty) {
         renderDetailRule("All", renderRes(rules.otherwise), validity)
@@ -125,7 +125,7 @@ object FieldList {
             rules.perRes.iterator.map { case (res, ids) =>
 
               val types =
-                MutableArray(ids.iterator.map(p.config.reqTypes.need)).sortBy(_.mnemonic.value)
+                MutableArray(ids.iterator.flatMap(p.config.reqTypes.get)).sortBy(_.mnemonic.value)
 
               val sortKey: String =
                 types.mkString(", ")

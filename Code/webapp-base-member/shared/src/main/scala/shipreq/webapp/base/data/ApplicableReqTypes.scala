@@ -43,7 +43,7 @@ final class ApplicableReqTypes private[ApplicableReqTypes](val applicability: Ap
     ApplicableReqTypes(applicability, reqTypes - id)
 
   def filterReqTypes(l: Live, reqTypes: ReqTypes): ApplicableReqTypes =
-    filterReqTypes(reqTypes.need(_).live is l)
+    filterReqTypes(reqTypes.get(_).exists(_.live is l))
 
   def filterReqTypes(f: ReqTypeId => Boolean): ApplicableReqTypes =
     ApplicableReqTypes(applicability, reqTypes filter f)
@@ -54,7 +54,7 @@ final class ApplicableReqTypes private[ApplicableReqTypes](val applicability: Ap
   def withDeadFrom(previous: ApplicableReqTypes, cfg: ReqTypes): ApplicableReqTypes =
     if (previous.nonEmpty && applicability ==* previous.applicability) {
       // User changes values but not applicability, retain the old dead items that were hidden to them
-      val oldDeadStuff = previous.reqTypes.filter(cfg.need(_).live.is(Dead))
+      val oldDeadStuff = previous.reqTypes.filter(cfg.live(_, Live).is(Dead))
       ApplicableReqTypes(applicability, reqTypes ++ oldDeadStuff)
     } else
       this
