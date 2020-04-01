@@ -35,6 +35,7 @@ object RowKey {
     override type Cmd      = CreateContentCmd
     override def foldF[F[_ <: AnyFieldKey]](f: Fold[F]): F[FieldKey] = f.useCase(this)
     override def foldC[F[_]](f: FoldCmd[F]): F[Cmd] = f.useCase(this)
+    @inline def reqTypeId = StaticReqType.UseCase
   }
 
   case object ManualIssue extends RowKey {

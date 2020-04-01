@@ -507,6 +507,32 @@ object ReqTableTest extends TestSuite {
     runTest(plan withInitialState project)
   }
 
+  def testTagLegality(pubid: String, col: String)(implicit path: utest.framework.TestPath) = {
+    val ce = cellEditor(pubid = pubid, col = col)
+    import ce._
+
+    val noProdInText   = cellText.test("doesn't contain prod")(!_.toLowerCase.contains("prod"))
+    val noProdInEditor = editorValue.test("doesn't contain prod")(!_.toLowerCase.contains("prod"))
+
+    val test = (
+      *.emptyAction
+        +> noProdInText
+        >> startEdit
+        +> noProdInEditor
+        >> testInvalid("prod")
+        >> abortEdit
+      )
+
+    val plan = Plan.action(
+      enterFilter("BR")
+        >> showAllColumns(HideDead) >> test
+        >> setFilterDead(ShowDead) >> test
+        >> enterFilter("#prod") +> tablePubids.assert.not.contains(pubid)
+    )
+
+    runTest(plan withInitialState SampleProject7.project)
+  }
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   override def tests = Tests {
@@ -524,13 +550,20 @@ object ReqTableTest extends TestSuite {
     }
 
     'editor {
-      'impSrc    - runTest(testImplicationSrcColumnEditor    named "testImplicationSrcColumnEditor"   )
-      'impTgt    - runTest(testImplicationTgtColumnEditor    named "testImplicationTgtColumnEditor"   )
-      'impCol    - runTest(testCustomImplicationColumnEditor named "testCustomImplicationColumnEditor")
-      'tags      - runTest(testTagsColumnEditor              named "testTagsColumnEditor"             )
-      'tagCol    - runTest(testCustomTagColumnEditor         named "testCustomTagColumnEditor"        )
-      'titleIO   - runTest(testEditorTitleIO                 named "testEditorTitleIO"                )
-      'failClear - runTest(testFailureClearedOnEsc           named "testFailureClearedOnEsc"          )
+      'impSrc       - runTest(testImplicationSrcColumnEditor    named "testImplicationSrcColumnEditor"   )
+      'impTgt       - runTest(testImplicationTgtColumnEditor    named "testImplicationTgtColumnEditor"   )
+      'impCol       - runTest(testCustomImplicationColumnEditor named "testCustomImplicationColumnEditor")
+      'tags         - runTest(testTagsColumnEditor              named "testTagsColumnEditor"             )
+      'tagCol       - runTest(testCustomTagColumnEditor         named "testCustomTagColumnEditor"        )
+      'titleIO      - runTest(testEditorTitleIO                 named "testEditorTitleIO"                )
+      'failClear    - runTest(testFailureClearedOnEsc           named "testFailureClearedOnEsc"          )
+
+      'tagLegality {
+        'status   - testTagLegality("BR-1", "Status")
+        'col      - testTagLegality("BR-1", "Tags")
+        'exStatus - testTagLegality("BR-2", "Status")
+        'exCol    - testTagLegality("BR-2", "Tags")
+      }
 
       'nop {
         // RCG title

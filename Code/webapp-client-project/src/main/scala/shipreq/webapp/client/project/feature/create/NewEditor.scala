@@ -85,14 +85,14 @@ object NewEditor {
         _ => EditReqCodes.Multiple.apply,
         f => EditRichText.CustomTextField(PreviewId(r, f)),
         f => EditImplications(f.scope),
-        f => EditTags(f.field),
+        f => EditTags(f.field, r.reqTypeId),
         f => EditRichText.GenericReqTitle(PreviewId(r, f)))
 
       def prepareUC(r: RowKey.UseCase.type) = FieldKey.FoldForUseCase[LogicPerField](
         _ => EditReqCodes.Multiple.apply,
         f => EditRichText.CustomTextField(PreviewId(r, f)),
         f => EditImplications(f.scope),
-        f => EditTags(f.field),
+        f => EditTags(f.field, r.reqTypeId),
         f => EditRichText.UseCaseTitle(PreviewId(r, f)))
 
       def prepareMI(r: RowKey.ManualIssue.type) = FieldKey.FoldForManualIssue[LogicPerField](
@@ -256,22 +256,25 @@ object NewEditor {
 
       override type Value = FieldKey.Tags#Value
 
-      def apply(fid: Option[CustomField.Tag.Id]): InitFn = ictx => {
+      def apply(fid: Option[CustomField.Tag.Id], reqTypeId: ReqTypeId): InitFn = ictx => {
         import ictx._
         val lookupFn = fid.fold[Project => Lookup](Lookup.notUsedInTagFields)(Lookup.forTagField)
         val pxLookup = pxProject map lookupFn
-        startWithStateSnapshot("")(new State(_, pxLookup))
+        val pxNaTags = pxProject.map(TagEditor.NaTags.forReqType(reqTypeId, _))
+        startWithStateSnapshot("")(new State(_, pxLookup, pxNaTags))
       }
 
-      private class State(ss: StateSnapshot[String], pxLookup: Px[Lookup]) extends EditorImpl {
+      private class State(ss: StateSnapshot[String], pxLookup: Px[Lookup], pxNaTags: Px[TagEditor.NaTags]) extends EditorImpl {
         override type Props = TagEditor.Props
         override def renderImpl = _.render
         override def valueImpl = _.parseResultSet
         override val props = (args, asyncState) =>
           for {
             lookup <- pxLookup.toCallback
+            naTags <- pxNaTags.toCallback
           } yield TagEditor.Props(
             preEditValue     = None,
+            naTags           = naTags,
             edit             = ss,
             lookup           = lookup,
             asyncStatus      = EditorStatus.async(asyncState),

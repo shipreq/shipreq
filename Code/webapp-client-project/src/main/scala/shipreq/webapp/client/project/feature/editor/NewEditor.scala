@@ -591,12 +591,14 @@ object NewEditor {
 
         val lookupFn = fid.fold[Project => Lookup](Lookup.notUsedInTagFields)(Lookup.forTagField)
         val pxLookup = pxProject map lookupFn
+        val pxNaTags = pxProject.map(TagEditor.NaTags.forReq(id, _))
 
         val pxInit: Px[(Set[ApplicableTagId], String)] =
           for {
             project <- pxProject
             lookup <- pxLookup
-          } yield TagEditor.initialValues(project.content.reqTags(id), project.config, lookup)
+            naTags <- pxNaTags
+          } yield TagEditor.initialValues(project.content.reqTags(id), project.config, lookup, naTags)
 
         val (abort, commitFn) =
           makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchReqTags(id, _), args.hooks)
@@ -605,12 +607,19 @@ object NewEditor {
           initialData       = pxInit.toCallback.toCBO,
           initalValueOption = ivo)(
           initialValueFn    = _._2)(
-          editor            = i => new State(_, Some(i._1), pxLookup, abort, commitFn))
+          editor            = i => ss => new State(
+            ss            = ss,
+            initialValues = Some(i._1),
+            pxLookup      = pxLookup,
+            pxNaTags      = pxNaTags,
+            abort         = abort,
+            commitFn      = commitFn))
       }
 
       private class State(ss           : StateSnapshot[String],
                           initialValues: Some[Set[ApplicableTagId]],
                           pxLookup     : Px[Lookup],
+                          pxNaTags     : Px[TagEditor.NaTags],
                           abort        : Some[Callback],
                           commitFn     : Some[CommitFn]) extends EditorImpl {
 
@@ -624,8 +633,10 @@ object NewEditor {
         override val props = (_, asyncState) =>
           for {
             lookup <- pxLookup.toCallback
+            naTags <- pxNaTags.toCallback
           } yield TagEditor.Props(
             preEditValue     = initialValues,
+            naTags           = naTags,
             edit             = ss,
             lookup           = lookup,
             asyncStatus      = EditorStatus.async(asyncState),

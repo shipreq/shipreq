@@ -306,6 +306,14 @@ object Generic {
     def choose[E, C, V](f: C => Auditor[E, C, V]): Auditor[E, C, V] =
       Auditor(c => f(c).audit(c))
 
+    def test[E, A](findErr: A => Option[E]): Auditor[E, A, A] =
+      apply(a =>
+        findErr(a) match {
+          case None    => \/-(a)
+          case Some(e) => -\/(e)
+        }
+      )
+
     def optionFn[E, A, B](f: A => Option[B])(invalidity: A => E): Auditor[E, A, B] =
       apply(a => f(a) match {
         case Some(b) => \/-(b)

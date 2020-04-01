@@ -1,9 +1,10 @@
 package shipreq.webapp.client.project.widgets
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import scalaz.\/
+import scalaz.{-\/, \/}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -42,8 +43,8 @@ object TagEditor {
       apply(p.config.liveTagFieldDistribution.tags.notUsedInFields)
   }
 
-  def initialValues(initial: Set[ApplicableTagId], pc: ProjectConfig, l: Lookup): (Set[ApplicableTagId], String) = {
-    val ls = l.valuesIterator.map(_.id).toSet
+  def initialValues(initial: Set[ApplicableTagId], pc: ProjectConfig, l: Lookup, naTags: NaTags): (Set[ApplicableTagId], String) = {
+    val ls = l.valuesIterator.map(_.id).toSet -- naTags.set
     val ids = initial & ls
     val text =
       ids.toVector
@@ -56,8 +57,39 @@ object TagEditor {
   type Output   = SetDiff.NE[ApplicableTagId]
   type CommitFn = Output ~=> Callback
 
-  val validator: Lookup => Validator[String, Stream[String], Stream[ApplicableTag]] =
-    l => G.seqFormat.validator(Auditor.optionFn(l.get)(i => Invalidity(s"Invalid tag: $i")))
+  final case class NaTags(set: Set[ApplicableTagId], auditor: Auditor[ApplicableTag, ApplicableTag])
+
+  object NaTags {
+
+    def none: NaTags =
+      apply(Set.empty, Auditor.id)
+
+    def forReq(reqId: ReqId, p: Project): NaTags = {
+      val req = p.content.reqs.need(reqId)
+      forReqType(req.reqTypeId, p)
+    }
+
+    def forReqType(reqTypeId: ReqTypeId, p: Project): NaTags =
+      p.config.reqTypes.get(reqTypeId) match {
+        case Some(rt) => forReqType(rt, p)
+        case None     => none
+      }
+
+    def forReqType(reqType: ReqType, p: Project): NaTags = {
+      val set =
+        p.config.nonApplicableTagsPerReqType(reqType.reqTypeId)
+
+      val auditor =
+        Auditor.test((tag: ApplicableTag) =>
+          Option.when(set contains tag.id)(
+            Invalidity(s"#${tag.name} is not applicable to ${reqType.mnemonic.value}s.")))
+
+      apply(set, auditor)
+    }
+
+    implicit val reusability: Reusability[NaTags] =
+      Reusability.by(_.set)
+  }
 
   val liveCorrect: String => String =
     _.replace("\n", "")
@@ -66,6 +98,7 @@ object TagEditor {
     PotentialValueAcceptor.correct(liveCorrect)
 
   case class Props(preEditValue    : Option[Set[ApplicableTagId]],
+                   naTags          : NaTags,
                    edit            : StateSnapshot[String],
                    lookup          : Lookup,
                    asyncStatus     : Option[EditorStatus.Async],
@@ -76,9 +109,18 @@ object TagEditor {
                    extraKbShortcuts: KeyboardTheme.Shortcuts,
                    showInstructions: Boolean) {
 
+    val validator: Validator[String, Stream[String], Stream[ApplicableTag]] = {
+      val lookupAuditor: Auditor[String, ApplicableTag] =
+        Auditor.optionFn(lookup.get)(i => Invalidity(s"Invalid tag: $i"))
+
+      val auditors = lookupAuditor andThen naTags.auditor
+
+      G.seqFormat.validator(auditors)
+    }
+
     // TODO Really? Stream?
     val parseResult: Invalidity \/ Stream[ApplicableTag] =
-      validator(lookup)(edit.value)
+      validator(edit.value)
 
     val parseResultSet: Invalidity \/ Set[ApplicableTagId] =
       parseResult.map(_.map(_.id)(collection.breakOut))
@@ -98,9 +140,16 @@ object TagEditor {
 
   final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.EditorBackend {
     private val pxLookup = Px.props($).map(_.lookup).withReuse.autoRefresh
+    private val pxNaTags = Px.props($).map(_.naTags).withReuse.autoRefresh
 
-    override val pxAutoComplete = pxLookup.map(l =>
-      AutoComplete.Project.tag(l.values.toStream, HideDead)(Plain))
+    override val pxAutoComplete =
+      for {
+        lookup <- pxLookup
+        naTags <- pxNaTags
+      } yield {
+        val legal = lookup.values.toStream.filter(tag => !naTags.set.contains(tag.id))
+        AutoComplete.Project.tag(legal, HideDead)(Plain)
+      }
 
     @inline private def lineCardinality = SingleLine
 
