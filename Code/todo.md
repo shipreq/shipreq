@@ -138,6 +138,8 @@ v2.1
 
 * Reappearances wrt tags
 
+* show req type desc on hover
+
 * Tags
   * Users #must be able to prohibit certain tags being used with certain req-types [FR-14]
   * When a req has a tag that is invalid for its req type, it should be hidden from all views [FR-15]
@@ -145,6 +147,3 @@ v2.1
   * System #must explain when a tag is invalid because the field is `Tags` and a specified tag is assigned to another field [FR-17]
   * There #should be `AllTags` and `RemainingTags` fields instead of just `Tags` [FR-18]
   * `AllTags` and `RemainingTags` fields #should be optional [FR-19]
-
-* ReqTypes
-  * Build and test new UI
