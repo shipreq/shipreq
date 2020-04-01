@@ -7,7 +7,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.ReqTypes
 import shipreq.webapp.client.project.feature.CreateFeature.RowKey
-import shipreq.webapp.client.project.widgets.ButtonAndDropdown
+import shipreq.webapp.client.project.widgets.{ButtonAndDropdown, ProjectWidgets}
 
 object NewButton extends ButtonAndDropdown.Types[RowKey] {
 
@@ -19,6 +19,7 @@ object NewButton extends ButtonAndDropdown.Types[RowKey] {
   final case class Props(state   : State,
                          reqTypes: ReqTypes,
                          allowRCG: Permission,
+                         pw      : ProjectWidgets.NoCtx,
                          default : Option[RowKey],
                          update  : Option[Reusable[Update]]) {
 
@@ -29,8 +30,8 @@ object NewButton extends ButtonAndDropdown.Types[RowKey] {
           Item(
             key              = rt.mnemonic.value,
             value            = RowKey.req(rt.reqTypeId),
-            renderInButton   = rt.mnemonic.value,
-            renderInDropdown = s"${rt.mnemonic.value}: ${rt.name}",
+            renderInButton   = pw.reqTypeShort(rt.reqTypeId),
+            renderInDropdown = pw.reqTypeFull(rt.reqTypeId),
           ))
 
       if (allowRCG is Allow)

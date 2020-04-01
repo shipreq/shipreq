@@ -11,6 +11,7 @@ import shipreq.webapp.client.project.feature.CreateFeature
 import shipreq.webapp.client.project.feature.CreateFeature.RowKey
 import NewStuff.State
 import shipreq.webapp.base.ui.Toast
+import shipreq.webapp.client.project.widgets.ProjectWidgets
 
 /**
   * Unified, convenience interface to both [[NewButton]] and [[NewForm]].
@@ -55,6 +56,7 @@ object NewStuff {
 final class NewStuff(state        : State,
                      modState     : ModFn[State],
                      routerCtl    : RouterCtl[ExternalPubid],
+                     pw           : ProjectWidgets.NoCtx,
                      toast        : Toast,
                      reqTypes     : ReqTypes,
                      allowRCG     : Permission,
@@ -71,14 +73,14 @@ final class NewStuff(state        : State,
   val buttonProps: NewButton.Props =
     state match {
       case State.Open(s) =>
-        var b = NewButton.Props(Some(s), reqTypes, allowRCG, defaultType, Some(buttonUpdate))
+        var b = NewButton.Props(Some(s), reqTypes, allowRCG, pw, defaultType, Some(buttonUpdate))
         // If what we thought was open is no longer acceptable, proceed as if closed
         if (b.dropdownProps.selected.forall(_ !=* s))
           b = b.copy(state = None)
         b
 
       case State.Closed(o) =>
-        NewButton.Props(o, reqTypes, allowRCG, defaultType, Some(buttonUpdate))
+        NewButton.Props(o, reqTypes, allowRCG, pw, defaultType, Some(buttonUpdate))
     }
 
   private val cancel: Callback =

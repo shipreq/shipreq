@@ -357,6 +357,7 @@ object ReqTablePage {
       val activeColumnsPlus = pxActiveColumnsPlus.value()
       val rows              = pxRows.value()
       val filterDead        = pxFilterDead.value()
+      val projectWidgets    = pxProjectWidgets.value()
       val stats             = pxTableContentStats.value()
 
       val mode: Mode =
@@ -387,6 +388,7 @@ object ReqTablePage {
         p.state.newStuff,
         modNewStuff,
         reqDetailRC,
+        projectWidgets,
         toast,
         project.config.reqTypes,
         Allow when activeView.viewCodeGroups,

@@ -334,14 +334,15 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
 
   val _reqTypeShort: ReqTypeId => VdomTag =
     Memo { id =>
-      project.config.reqTypes.get(id) match {
-        case Some(rt) =>
-          <.span(
-            *.reqTypeShort(rt.live),
-            ^.title := rt.name,
-            rt.mnemonic.value)
-        case None =>
-          <.span("?")
+      renderReqType(id) { rt =>
+        val title = rt.description match {
+          case Some(desc) => s"${rt.name}\n\n$desc"
+          case None       => rt.name
+        }
+        <.span(
+          *.reqTypeShort(rt.live),
+          ^.title := title,
+          rt.mnemonic.value)
       }
     }
 
@@ -349,7 +350,19 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     _reqTypeFull(id)
 
   val _reqTypeFull: ReqTypeId => VdomTag =
-    id => <.span(plainText.reqTypeFull(id))
+    Memo { id =>
+      renderReqType(id) { rt =>
+        <.span(
+          PlainText.reqTypeFull(rt),
+          rt.description.whenDefined(desc => TagMod(^.title := desc, ^.cursor.help)))
+      }
+    }
+
+  private def renderReqType(id: ReqTypeId)(f: ReqType => VdomTag): VdomTag =
+    project.config.reqTypes.get(id) match {
+      case Some(rt) => f(rt)
+      case None     => <.span("?")
+    }
 
   private def tagColour(o: Option[Colour], live: Live): TagMod =
     TagMod.when(live is Live) {

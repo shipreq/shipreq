@@ -138,8 +138,6 @@ v2.1
 
 * Reappearances wrt tags
 
-* show req type desc on hover
-
 * Tags
   * Users #must be able to prohibit certain tags being used with certain req-types [FR-14]
   * When a req has a tag that is invalid for its req type, it should be hidden from all views [FR-15]
