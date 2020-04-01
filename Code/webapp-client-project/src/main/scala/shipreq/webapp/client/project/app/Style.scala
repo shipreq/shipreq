@@ -1255,7 +1255,7 @@ object Style extends StyleSheet.Inline {
     val tag = styleF(D.`live * validity * bool`) { case ((live, validity), helpIconOnHover) => styleS(
       tagBase(live, helpIconOnHover = helpIconOnHover),
       padding(4 px, 6 px).important,
-      mixinIf(validity is Invalid)(hasErrorBackground.important, hasErrorColor.important),
+      mixinIf(validity is Invalid)(hasErrorBackground.important, hasErrorColor.important, textDecoration := ^.lineThrough),
       addClassName(s"ui label ${tagLabelColour(live)}"),
     )}
 

@@ -142,5 +142,4 @@ v2.1
   * System #must explain when a tag is invalid because the field is `Tags` and a specified tag is assigned to another field [FR-17]
   * There #should be `AllTags` and `RemainingTags` fields instead of just `Tags` [FR-18]
   * `AllTags` and `RemainingTags` fields #should be optional [FR-19]
-  * Reqs with N/A atags in text - show in Tag column?
   * Reqs with N/A atags in text - detect as issue

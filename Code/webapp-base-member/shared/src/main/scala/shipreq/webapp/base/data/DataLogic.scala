@@ -20,7 +20,15 @@ final class DataLogic(p: Project) {
 
   val tagLookup: FilterDead => TagLookup = {
     val reqTags    = p.content.reqTags
+    val deadTags   = p.config.tags.deadApplicableTagIds
     def tagsInText = p.atomScan.tagRefs
+
+    def scanLiveText(b: ReqTags.Builder, reqId: ReqId): Unit =
+      for (t <- tagsInText(reqId).live)
+        t.loc match {
+          case loc: Location.Text => b.addTagInLiveText(t.value, loc, Dead when deadTags.contains(t.value))
+          case _                  => b.add(t.value, t.loc)
+        }
 
     def addDefaultTags(b         : ReqTags.Builder,
                        fieldRules: FieldSetRules,
@@ -46,10 +54,9 @@ final class DataLogic(p: Project) {
 
       case HideDead =>
         val tagDist    = p.config.liveTagFieldDistribution
-        val deadTags   = p.config.tags.deadApplicableTagIds
         val fieldRules = p.config.fieldRules(HideDead)
 
-        // Dead tags on live reqs are ignored unless in text
+        // Dead tags on live reqs are ignored unless in live text
         Memo { reqId =>
           val req = p.content.reqs.need(reqId)
           val b = new ReqTags.Builder(req, p)
@@ -60,13 +67,7 @@ final class DataLogic(p: Project) {
               b.add(t, Location.Tags)
 
           // Scan text
-          for (t <- tagsInText(reqId).live)
-            t.loc match {
-              case txtLoc: Location.Text if deadTags.contains(t.value) =>
-                b.addDeadTagInLiveText(t.value, txtLoc)
-              case _ =>
-                b.add(t.value, t.loc)
-            }
+          scanLiveText(b, reqId)
 
           // Add default tags from fields
           addDefaultTags(b, fieldRules(req.reqTypeId), tagDist)
@@ -78,18 +79,20 @@ final class DataLogic(p: Project) {
         val tagDist    = p.config.deadTagFieldDistribution
         val fieldRules = p.config.fieldRules(ShowDead)
 
-        // [deadTagsInLiveText = Set.empty] is technically wrong but when (FilterDead == ShowDead) putting everything
-        // in `other` is more efficient and achieves the same result (confirmed in LogicTest.filterDead.tagComprehensive)
         Memo { reqId =>
           val req = p.content.reqs.need(reqId)
           val b = new ReqTags.Builder(req, p)
 
+          // Scan explicitly-added tags
           for (t <- reqTags(reqId))
             b.add(t, Location.Tags)
 
-          for (t <- tagsInText(reqId).all)
-            b.add(t.value, t.loc)
+          // Scan text
+          scanLiveText(b, reqId)
+          for (t <- tagsInText(reqId).dead)
+            b.add(t.value, t.loc, allowNA = true)
 
+          // Add default tags from fields
           addDefaultTags(b, fieldRules(req.reqTypeId), tagDist)
 
           b.result()
@@ -165,11 +168,12 @@ object DataLogic {
     * Set of tags associated with a requirement.
     */
   final case class ReqTags(other             : Multimap[ApplicableTagId, List, LocationOf.Tag.InReq],
-                           deadTagsInLiveText: Multimap[ApplicableTagId, List, Location.Text]) {
+                           deadTagsInLiveText: Multimap[ApplicableTagId, List, Location.Text],
+                           naTagsInLiveText  : Multimap[ApplicableTagId, List, Location.Text]) {
 
     // Computing eagerly because this is for a single req. Reqs never have a huge number of tags.
     val all: Set[ApplicableTagId] =
-      other.keySet | deadTagsInLiveText.keySet
+      other.keySet | deadTagsInLiveText.keySet | naTagsInLiveText.keySet
 
     @inline def exists(f: Set[ApplicableTagId] => Boolean): Boolean =
       f(all)
@@ -194,20 +198,26 @@ object DataLogic {
 
       private var _other              = emptyOther
       private var _deadTagsInLiveText = emptyDeadTagsInLiveText
+      private var _naTagsInLiveText   = emptyDeadTagsInLiveText
 
       def other               = _other
       def deadTagsInLiveText  = _deadTagsInLiveText
+      def naTagsInLiveText    = _naTagsInLiveText
 
-      def add(id: ApplicableTagId, loc: LocationOf.Tag.InReq): Unit =
-        if (!nonApplicableTags.contains(id))
+      def add(id: ApplicableTagId, loc: LocationOf.Tag.InReq, allowNA: Boolean = false): Unit =
+        if (allowNA || !nonApplicableTags.contains(id))
           _other = _other.add(id, loc)
 
-      def addDeadTagInLiveText(id: ApplicableTagId, loc: Location.Text): Unit =
-        if (!nonApplicableTags.contains(id))
+      def addTagInLiveText(id: ApplicableTagId, loc: Location.Text, taglive: Live): Unit =
+        if (nonApplicableTags.contains(id))
+          _naTagsInLiveText = _naTagsInLiveText.add(id, loc)
+        else if (taglive is Dead)
           _deadTagsInLiveText = _deadTagsInLiveText.add(id, loc)
+        else
+          _other = _other.add(id, loc)
 
       def result(): ReqTags =
-        ReqTags(_other, _deadTagsInLiveText)
+        ReqTags(_other, _deadTagsInLiveText, _naTagsInLiveText)
     }
   }
 
