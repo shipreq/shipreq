@@ -456,6 +456,28 @@ object IssueDetectorTest extends TestSuite {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  private object NonApplicableTagTests {
+    private implicit val filter = IssueFilter[Issue.NonApplicableTag]
+
+    import T.GenericReqTitle.TagRef
+    import P3._
+
+    def ko() = test(p3)(
+      Event.GenericReqTitleSet(frs(1), Vector(TagRef(priHigh), TagRef(priMed))),
+      Event.ApplicableTagUpdate(priHigh, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(uc))),
+    )(
+      IssueLite.NonApplicableTag(frs(1), Location.Text.Title, priHigh),
+    )
+
+    def dead() = test(p3)(
+      Event.GenericReqTitleSet(frs(1), Vector(TagRef(priHigh), TagRef(priMed))),
+      Event.ApplicableTagUpdate(priHigh, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(uc))),
+      Event.TagDelete(priHigh),
+    )()
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   private object UninhabitableTagFieldTests {
     private implicit val filter = IssueFilter[Issue.UninhabitableTagField]
 
@@ -599,6 +621,12 @@ object IssueDetectorTest extends TestSuite {
       'onlyLiveFields     - onlyLiveFields()
       'onlyDeadApplicable - onlyDeadApplicable()
       'noRules            - noRules()
+    }
+
+    'NonApplicableTag {
+      import NonApplicableTagTests._
+      'ko   - ko()
+      'dead - dead()
     }
 
     'UninhabitableTagField {

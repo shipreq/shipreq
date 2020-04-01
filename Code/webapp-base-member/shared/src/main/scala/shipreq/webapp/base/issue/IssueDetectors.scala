@@ -333,6 +333,26 @@ object IssueDetectors {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  case object NonApplicableTag extends Instance {
+
+    override val detect = ctx =>
+      ctx.foreachLiveReq(() => detectInReqs(ctx))
+
+    private def detectInReqs(ctx: Ctx): Req => Unit = {
+      val tagLookup = ctx.project.dataLogic.tagLookup(HideDead)
+      req => {
+        for {
+          (tagId, locs) <- tagLookup(req.id).naTagsInLiveText.m
+          tag            = ctx.project.config.tags.needApplicableTag(tagId)
+          loc           <- locs
+        }
+          ctx.add(Issue.NonApplicableTag(req, loc, tag))
+      }
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   case object NonApplicableField extends Instance {
     override val detect = ctx => {
       val cfg = ctx.project.config

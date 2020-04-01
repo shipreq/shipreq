@@ -36,6 +36,7 @@ object IssueClass {
   case object IssueTag                     extends IssueClass(C.UserDefined)
   case object ManualIssue                  extends IssueClass(C.UserDefined)
   case object NonApplicableField           extends IssueClass(C.Futility)
+  case object NonApplicableTag             extends IssueClass(C.BadData)
   case object UninhabitableTagField        extends IssueClass(C.Futility)
 
   implicit def univEq: UnivEq[IssueClass] = UnivEq.derive
@@ -103,6 +104,10 @@ object Issue {
   final case class ManualIssue(issue: ManualIssueInstance) extends Issue(C.ManualIssue)
 
   final case class NonApplicableField(field: CustomField) extends Issue(C.NonApplicableField)
+
+  final case class NonApplicableTag(req: Req,
+                                    loc: LocationOf.Text.InReq,
+                                    tag: ApplicableTag) extends Issue(C.NonApplicableTag)
 
   final case class UninhabitableTagField(field: CustomField.Tag) extends Issue(C.UninhabitableTagField)
 }

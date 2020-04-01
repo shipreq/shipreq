@@ -188,6 +188,9 @@ object UiText {
     def descNonApplicableField(field: String): String =
       field + " field not applicable to any req types"
 
+    def descNonApplicableTag(tag: String): String =
+      s"Non-applicable tag in use: $tag"
+
     def descUninhabitableTagField(field: String): String =
       field + " field has no tags"
 

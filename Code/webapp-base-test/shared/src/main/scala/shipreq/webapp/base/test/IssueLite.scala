@@ -66,6 +66,10 @@ object IssueLite {
 
   final case class NonApplicableField(fieldId: CustomFieldId) extends IssueLite(C.NonApplicableField)
 
+  final case class NonApplicableTag(reqId: ReqId,
+                                    loc  : LocationOf.Text.InReq,
+                                    tagId: ApplicableTagId) extends IssueLite(C.NonApplicableTag)
+
   final case class UninhabitableTagField(fieldId: CustomField.Tag.Id) extends IssueLite(C.UninhabitableTagField)
 
   implicit def univEq: UnivEq[IssueLite] = UnivEq.derive
@@ -89,6 +93,7 @@ object IssueLite {
     case Issue.IssueTagInReq               (req, loc, issue      ) => IssueTagInReq               (req.id, loc, issue)
     case Issue.ManualIssue                 (issue                ) => ManualIssue                 (issue)
     case Issue.NonApplicableField          (field                ) => NonApplicableField          (field.id)
+    case Issue.NonApplicableTag            (req, loc, tag        ) => NonApplicableTag            (req.id, loc, tag.id)
     case Issue.UninhabitableTagField       (field                ) => UninhabitableTagField       (field.id)
   }
 }

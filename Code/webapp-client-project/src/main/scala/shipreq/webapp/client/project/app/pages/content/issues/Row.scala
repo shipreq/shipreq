@@ -266,6 +266,11 @@ object Row {
         val desc = UI.descNonApplicableField(fieldName)
         forConfig(i, desc)
 
+      case i: Issue.NonApplicableTag =>
+        val tag = i.tag.key.with_#
+        val desc = UI.descNonApplicableTag(tag)
+        forReqAndLoc(i, desc, i.req, i.loc)
+
       case i: Issue.UninhabitableTagField =>
         val fieldName = cfg.fieldName(i.field.id)
         val desc = UI.descUninhabitableTagField(fieldName)

@@ -36,6 +36,7 @@ final case class Issues(vector: Vector[Issue]) {
       case i: Issue.IssueTagInReq                => f.req(i.req)
       case i: Issue.ManualIssue                  => f.manualIssue(i.issue)
       case _: Issue.NonApplicableField           => false
+      case i: Issue.NonApplicableTag             => f.req(i.req)
       case _: Issue.UninhabitableTagField        => false
     })
 
@@ -66,6 +67,7 @@ final case class Issues(vector: Vector[Issue]) {
       case i: Issue.IssueTagInReq                => addReq(i, i.req.id)
       case _: Issue.ManualIssue                  => ()
       case i: Issue.NonApplicableField           => config = config.add(i)
+      case i: Issue.NonApplicableTag             => addReq(i, i.req.id)
       case i: Issue.UninhabitableTagField        => config = config.add(i)
     }
 

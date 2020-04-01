@@ -40,4 +40,6 @@ case object Optional extends Mandatory("Optional")
  * #TBD refers to a custom issue type.
  * #pri=high refers to a grouping.
  */
-final case class HashRefKey(value: String) extends TaggedString
+final case class HashRefKey(value: String) extends TaggedString {
+  def with_# : String = "#" + value
+}

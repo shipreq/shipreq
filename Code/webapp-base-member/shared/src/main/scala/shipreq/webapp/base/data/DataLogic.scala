@@ -209,10 +209,10 @@ object DataLogic {
           _other = _other.add(id, loc)
 
       def addTagInLiveText(id: ApplicableTagId, loc: Location.Text, taglive: Live): Unit =
-        if (nonApplicableTags.contains(id))
-          _naTagsInLiveText = _naTagsInLiveText.add(id, loc)
-        else if (taglive is Dead)
+        if (taglive is Dead)
           _deadTagsInLiveText = _deadTagsInLiveText.add(id, loc)
+        else if (nonApplicableTags.contains(id))
+          _naTagsInLiveText = _naTagsInLiveText.add(id, loc)
         else
           _other = _other.add(id, loc)
 

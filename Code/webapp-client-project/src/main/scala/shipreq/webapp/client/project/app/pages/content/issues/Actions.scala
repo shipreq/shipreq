@@ -128,6 +128,7 @@ object Actions {
          | _: Issue.ImplicationRequired
          | _: Issue.IssueTagInRcg
          | _: Issue.IssueTagInReq
+         | _: Issue.NonApplicableTag
             => Nil
 
       case i: Issue.DeadIssueTagInRcg     => restoreIssueTag(i.issue.typ)
