@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.widgets
 
+import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
@@ -7,7 +8,7 @@ import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-}
 import shipreq.base.util.{Invalid, Valid, Validity}
-import shipreq.webapp.base.data.{Contextualise, CustomField, NaTags, Project, ProjectConfig, ShowDead}
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.issue.IssueCategory
@@ -99,13 +100,32 @@ object FilterEditor {
           naTags = NaTags.none)(
           Contextualise)
 
-        val fieldNames =
-          p.config.fieldsByName
-            .iterator
-            .filter(_._2.isInstanceOf[CustomField])
+        val fieldNames = {
+          def projectFields =
+            p.config.fieldsByName
+              .iterator
+              .filter(_._2 match {
+                case _: CustomField
+                   | StaticField.AllTags
+                   | StaticField.OtherTags
+                   => true
+                case StaticField.ImplicationGraph
+                   | StaticField.NormalAltStepTree
+                   | StaticField.ExceptionStepTree
+                   | StaticField.StepGraph
+                   => false
+              })
             .map(_._1)
+
+          def specialFields =
+            SpecialBuiltInField.filterOk.iterator.map(_.name)
+
+          MutableArray(projectFields ++ specialFields)
+            .sort
+            .iterator
             .map(FilterAlgebra.quoteFieldName)
             .toStream
+        }
 
         val autoCompleteFieldName =
           AutoComplete.Strategy.builder

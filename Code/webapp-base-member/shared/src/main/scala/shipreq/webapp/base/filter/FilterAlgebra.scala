@@ -159,6 +159,7 @@ object FilterAlgebra {
               case NotApplicable => -\/(s"$name is always applicable")
             }
 
+          // Keep FilterEditor pxAutoComplete in sync with below
           (tryL orElse tryR, attr) match {
             case (Some(\/-(f: CustomField))               , Blank | NotApplicable) => \/-(Valid(FieldProp(\/-(f.id), attr)))
             case (Some(\/-(f: CustomField.Tag))           , DefaultInUse         ) => \/-(Valid(FieldProp(\/-(f.id), attr)))
