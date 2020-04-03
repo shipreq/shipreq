@@ -243,8 +243,8 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
   private val tagWithoutStyleMemo: Boolean => Contextualise => ApplicableTag => VdomTag =
     Memo.bool { includeDesc =>
       Contextualise.memo { c =>
-        Memo.by((_: ApplicableTag).id) { t =>
 
+        def render(t: ApplicableTag): VdomTag = {
           var desc = ""
           if (includeDesc) {
             desc = if (t.name.compareToIgnoreCase(t.key.value) == 0) "" else t.name
@@ -263,6 +263,15 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
             TagMod.when(desc.nonEmpty)(^.title := desc),
             displayTxt)
         }
+
+        val memo = Memo.by((_: ApplicableTag).id)(render)
+
+        tag =>
+          // TagConfig create a fake ApplicableTag with id of -1 to render new tags live before they're saved
+          if (tag.id.value >= 0)
+            memo(tag)
+          else
+            render(tag)
       }
     }
 
