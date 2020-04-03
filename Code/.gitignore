@@ -8,3 +8,4 @@ target
 *.pid
 *.out
 *.err
+project/metals.sbt
