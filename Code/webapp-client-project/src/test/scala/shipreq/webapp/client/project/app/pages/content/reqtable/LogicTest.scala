@@ -1022,7 +1022,7 @@ object LogicTest extends TestSuite {
 
   def testFilterAllTagsBlank(): Unit = {
     val f = F.fieldProp(\/-(StaticField.AllTags), FieldAttr.Blank)
-    testFilter(P3, F.not(F.presence(AnyTag)))("FR-1  FR-2", "CO-2")
+    testFilter(P3, f)("FR-1  FR-2", "CO-2")
   }
 
   def testFilterAll(): Unit = {
