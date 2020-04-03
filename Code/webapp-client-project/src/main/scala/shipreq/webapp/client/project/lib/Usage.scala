@@ -47,14 +47,26 @@ final class Usage(p: Project, router: SpecialRouterCtl) {
         applyFilterDeadToReqs = true
       ))
 
-  private def fieldFilter(fid: CustomFieldId): Filter.Valid = {
+  private def fieldFilter(fid: FieldId): Filter.Valid = {
     import FilterAst.FieldAttr._
     import Filter.Valid._
     val f = \/-(fid)
-    not(anyOf(fieldProp(f, Blank), fieldProp(f, NotApplicable)))
+    fid match {
+
+      case StaticField.AllTags
+         | StaticField.OtherTags
+         | StaticField.ImplicationGraph =>
+        not(fieldProp(f, Blank))
+
+      case _: CustomFieldId
+         | StaticField.NormalAltStepTree
+         | StaticField.ExceptionStepTree
+         | StaticField.StepGraph =>
+        not(anyOf(fieldProp(f, Blank), fieldProp(f, NotApplicable)))
+    }
   }
 
-  val fields: FilterDead => CustomFieldId => Int =
+  val fields: FilterDead => FieldId => Int =
     FilterDead.memoLazy { fd =>
       val compiler = filterCompiler(fd)
       Memo { fid =>
@@ -63,7 +75,7 @@ final class Usage(p: Project, router: SpecialRouterCtl) {
       }
     }
 
-  def fieldLink(id: CustomFieldId, fd: FilterDead): VdomTagOf[html.Anchor] = {
+  def fieldLink(id: FieldId, fd: FilterDead): VdomTagOf[html.Anchor] = {
     val uses = fields(fd)(id)
     val rc   = router.reqTableWithFilter(fd, fieldFilter(id))
     rc.link(())(Usage.render(uses))

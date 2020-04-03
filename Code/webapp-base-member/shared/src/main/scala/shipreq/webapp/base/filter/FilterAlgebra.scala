@@ -152,16 +152,26 @@ object FilterAlgebra {
           def tryL      = SpecialBuiltInField.filterOkByNameLowercase.get(nameLower).map(-\/(_))
           def tryR      = cfg.fieldsByNameLowercase.get(nameLower).map(\/-(_))
 
+          def blankOnly(f: Valid.Field, name: String): String \/ Valid =
+            attr match {
+              case Blank         => \/-(Valid(FieldProp(f, attr)))
+              case DefaultInUse  => -\/(s"$name doesn't have defaults")
+              case NotApplicable => -\/(s"$name is always applicable")
+            }
+
           (tryL orElse tryR, attr) match {
-            case (Some(\/-(f: CustomField))            , Blank | NotApplicable) => \/-(Valid(FieldProp(\/-(f.id), attr)))
-            case (Some(\/-(f: CustomField.Tag))        , DefaultInUse         ) => \/-(Valid(FieldProp(\/-(f.id), attr)))
-            case (Some(\/-(_: CustomField.Text))       , DefaultInUse         ) => -\/("Text fields don't have defaults.")
-            case (Some(\/-(_: CustomField.Implication)), DefaultInUse         ) => -\/("Implication fields don't have defaults.")
-            case (Some(\/-(_: StaticField))            , _                    ) => -\/(s"$fieldName is a built-in field and so can't be used here.")
-            case (Some(f@ -\/(Title))                  , Blank                ) => \/-(Valid(FieldProp(f, attr)))
-            case (Some(-\/(Title))                     , DefaultInUse         ) => -\/("Titles don't have defaults")
-            case (Some(-\/(Title))                     , NotApplicable        ) => -\/("Titles are always applicable")
-            case (None                                 , _                    ) => -\/(s"Unknown field: '$fieldName'")
+            case (Some(\/-(f: CustomField))               , Blank | NotApplicable) => \/-(Valid(FieldProp(\/-(f.id), attr)))
+            case (Some(\/-(f: CustomField.Tag))           , DefaultInUse         ) => \/-(Valid(FieldProp(\/-(f.id), attr)))
+            case (Some(\/-(_: CustomField.Text))          , DefaultInUse         ) => -\/("Text fields don't have defaults.")
+            case (Some(\/-(_: CustomField.Implication))   , DefaultInUse         ) => -\/("Implication fields don't have defaults.")
+            case (Some(-\/(f@ Title))                     , _                    ) => blankOnly(-\/(f), f.name)
+            case (Some(\/-(f@ StaticField.OtherTags))     , _                    ) => blankOnly(\/-(f), f.name)
+            case (Some(\/-(StaticField.AllTags))          , _                    )
+               | (Some(\/-(StaticField.ImplicationGraph)) , _                    )
+               | (Some(\/-(StaticField.NormalAltStepTree)), _                    )
+               | (Some(\/-(StaticField.ExceptionStepTree)), _                    )
+               | (Some(\/-(StaticField.StepGraph))        , _                    ) => -\/(s"$fieldName can't be used here.")
+            case (None                                    , _                    ) => -\/(s"Unknown field: '$fieldName'")
           }
         }
     }
@@ -380,16 +390,34 @@ object FilterAlgebra {
             manualIssue = fail,
           )
 
-        case (FieldAttr.Blank, \/-(_: StaticField)) =>
-          reqOnly(fail)
+        case (FieldAttr.Blank, \/-(StaticField.OtherTags)) =>
+          val scope = p.config.tagFieldDistribution(filterDead).notUsedInFields
+          reqOnly(req => tagLookup(req.id).all.intersect(scope).isEmpty)
 
         case (FieldAttr.NotApplicable, -\/(SpecialBuiltInField.Title)) =>
           reqOnly(fail)
 
+        case (FieldAttr.Blank,
+                 \/-(StaticField.AllTags)
+               | \/-(StaticField.ImplicationGraph)
+               | \/-(StaticField.NormalAltStepTree)
+               | \/-(StaticField.ExceptionStepTree)
+               | \/-(StaticField.StepGraph)
+             ) =>
+               reqOnly(fail)
+
         case (FieldAttr.DefaultInUse,
-                -\/(SpecialBuiltInField.Title) |
-                \/-(_: StaticField | _: CustomField.Implication.Id | _: CustomField.Text.Id)) =>
-          reqOnly(fail)
+                 -\/(SpecialBuiltInField.Title)
+               | \/-(StaticField.AllTags)
+               | \/-(StaticField.OtherTags)
+               | \/-(StaticField.ImplicationGraph)
+               | \/-(StaticField.NormalAltStepTree)
+               | \/-(StaticField.ExceptionStepTree)
+               | \/-(StaticField.StepGraph)
+               | \/-(_: CustomField.Implication.Id)
+               | \/-(_: CustomField.Text.Id)
+             ) =>
+               reqOnly(fail)
       }
     }
 

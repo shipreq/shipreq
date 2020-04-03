@@ -1015,6 +1015,11 @@ object LogicTest extends TestSuite {
     testFilter(p, f)("MF-15", "CO-1")
   }
 
+  def testFilterOtherTagsBlank(): Unit = {
+    val f = F.not(F.fieldProp(\/-(StaticField.OtherTags), FieldAttr.Blank))
+    testFilter(P7, f)("BR-2", "")
+  }
+
   def testFilterAll(): Unit = {
     testFilter(P3, F.allOf(F.tag(wip), F.tag(v10)))("MF-7", "")
     testFilter(P3, F.allOf(F.tag(wip), F.text("req")))("MF-12  MF-13  MF-22", "")
@@ -1246,6 +1251,7 @@ object LogicTest extends TestSuite {
       'ignoreNATags         - testFilterIgnoreNATags()
       'tagsIncludesDefaults - testFilterByTagsIncludesDefaults()
       'titleBlank           - testFilterTitleBlank()
+      'otherTagsBlank       - testFilterOtherTagsBlank()
       'allOf                - testFilterAll()
       'anyOf                - testFilterAny()
       'not                  - testFilterNot()
