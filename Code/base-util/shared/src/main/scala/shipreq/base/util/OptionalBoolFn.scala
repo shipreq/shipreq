@@ -15,6 +15,9 @@ final class OptionalBoolFn[A](val value: Option[A => Boolean]) extends AnyVal {
       b.result()
     }
 
+  def iterator[B](bs: Iterator[B])(a: B => A): Iterator[B] =
+    value.fold(bs)(f => bs.filter(f compose a))
+
   def exists(as: TraversableOnce[A]): Boolean =
     value.fold(as.nonEmpty)(as.exists)
 

@@ -108,10 +108,10 @@ object FilterEditor {
                 case _: CustomField
                    | StaticField.AllTags
                    | StaticField.OtherTags
-                   => true
-                case StaticField.ImplicationGraph
                    | StaticField.NormalAltStepTree
                    | StaticField.ExceptionStepTree
+                   => true
+                case StaticField.ImplicationGraph
                    | StaticField.StepGraph
                    => false
               })

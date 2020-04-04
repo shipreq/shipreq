@@ -10,7 +10,7 @@ import sourcecode.Line
 import utest._
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.event.{Event => E}
+import shipreq.webapp.base.event.{UseCaseGD, UseCaseStepGD, Event => E}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.data.reqtable.{Column => C, SortCriterion => SC}
@@ -1004,7 +1004,7 @@ object LogicTest extends TestSuite {
     testFilter(P7, F.tag(prod))("MF-3  UC-1", "")
   }
 
-  def testFilterTitleBlank(): Unit = {
+  def testFilterTitle(): Unit = {
     val p = applyEventsSuccessfully(P7,
       E.GenericReqTitleSet(mfs(15), ∅),
       E.ContentRestore(Set(cos(1)), ∅),
@@ -1015,14 +1015,41 @@ object LogicTest extends TestSuite {
     testFilter(p, f)("MF-15", "CO-1")
   }
 
-  def testFilterOtherTagsBlank(): Unit = {
+  def testFilterOtherTags(): Unit = {
     val f = F.not(F.fieldProp(\/-(StaticField.OtherTags), FieldAttr.Blank))
     testFilter(P7, f)("BR-2", "")
   }
 
-  def testFilterAllTagsBlank(): Unit = {
+  def testFilterAllTags(): Unit = {
     val f = F.fieldProp(\/-(StaticField.AllTags), FieldAttr.Blank)
     testFilter(P3, f)("FR-1  FR-2", "CO-2")
+  }
+
+  def testFilterNCAC(): Unit = {
+    val uc3 = 300.UC
+    val p = applyEventsSuccessfully(P7,
+      E.UseCaseCreate(uc3, 3000, UseCaseGD.emptyValues),
+      E.UseCaseStepCreate(3001, uc3, StaticField.NormalAltStepTree, "0".ploc),
+      E.UseCaseStepUpdate(3001, UseCaseStepGD.ValueForTitle("ah")),
+      E.UseCaseStepDelete(3001),
+    )
+    val f = F.allOf(F.reqType(StaticReqType.UseCase), F.not(F.fieldProp(\/-(StaticField.NormalAltStepTree), FieldAttr.Blank)))
+    testFilter(p, f)("UC-1", "UC-3")
+  }
+
+  def testFilterEC(): Unit = {
+    val uc3 = 300.UC
+    val uc4 = 301.UC
+    val p = applyEventsSuccessfully(P7,
+      E.UseCaseCreate(uc3, 3000, UseCaseGD.emptyValues),
+      E.UseCaseStepCreate(3003, uc3, StaticField.ExceptionStepTree, ∅),
+      E.UseCaseStepUpdate(3003, UseCaseStepGD.ValueForTitle("ah")),
+      E.UseCaseStepDelete(3003),
+      E.UseCaseCreate(uc4, 4000, UseCaseGD.emptyValues),
+      E.UseCaseStepCreate(4001, uc4, StaticField.ExceptionStepTree, ∅),
+    )
+    val f = F.allOf(F.reqType(StaticReqType.UseCase), F.not(F.fieldProp(\/-(StaticField.ExceptionStepTree), FieldAttr.Blank)))
+    testFilter(p, f)("UC-1  UC-4", "UC-3")
   }
 
   def testFilterAll(): Unit = {
@@ -1255,9 +1282,11 @@ object LogicTest extends TestSuite {
       'tagFieldDefault      - testFilterTagFieldDefault()
       'ignoreNATags         - testFilterIgnoreNATags()
       'tagsIncludesDefaults - testFilterByTagsIncludesDefaults()
-      'titleBlank           - testFilterTitleBlank()
-      'otherTagsBlank       - testFilterOtherTagsBlank()
-      'allTagsBlank         - testFilterAllTagsBlank()
+      'title                - testFilterTitle()
+      'otherTags            - testFilterOtherTags()
+      'allTags              - testFilterAllTags()
+      'ncac                 - testFilterNCAC()
+      'ec                   - testFilterEC()
       'allOf                - testFilterAll()
       'anyOf                - testFilterAny()
       'not                  - testFilterNot()

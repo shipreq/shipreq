@@ -159,20 +159,27 @@ object FilterAlgebra {
               case NotApplicable => -\/(s"$name is always applicable")
             }
 
+          def noDefault(f: Valid.Field, name: String): String \/ Valid =
+            attr match {
+              case Blank
+                 | NotApplicable => \/-(Valid(FieldProp(f, attr)))
+              case DefaultInUse  => -\/(s"$name doesn't have defaults")
+            }
+
           // Keep FilterEditor pxAutoComplete in sync with below
           (tryL orElse tryR, attr) match {
-            case (Some(\/-(f: CustomField))               , Blank | NotApplicable) => \/-(Valid(FieldProp(\/-(f.id), attr)))
-            case (Some(\/-(f: CustomField.Tag))           , DefaultInUse         ) => \/-(Valid(FieldProp(\/-(f.id), attr)))
-            case (Some(\/-(_: CustomField.Text))          , DefaultInUse         ) => -\/("Text fields don't have defaults.")
-            case (Some(\/-(_: CustomField.Implication))   , DefaultInUse         ) => -\/("Implication fields don't have defaults.")
-            case (Some(-\/(f@ Title))                     , _                    ) => blankOnly(-\/(f), f.name)
-            case (Some(\/-(f@ StaticField.OtherTags))     , _                    ) => blankOnly(\/-(f), f.name)
-            case (Some(\/-(f@ StaticField.AllTags))       , _                    ) => blankOnly(\/-(f), f.name)
-            case (Some(\/-(StaticField.ImplicationGraph)) , _                    )
-               | (Some(\/-(StaticField.NormalAltStepTree)), _                    )
-               | (Some(\/-(StaticField.ExceptionStepTree)), _                    )
-               | (Some(\/-(StaticField.StepGraph))        , _                    ) => -\/(s"$fieldName can't be used here.")
-            case (None                                    , _                    ) => -\/(s"Unknown field: '$fieldName'")
+            case (Some(\/-(f: CustomField))                  , Blank | NotApplicable) => \/-(Valid(FieldProp(\/-(f.id), attr)))
+            case (Some(\/-(f: CustomField.Tag))              , DefaultInUse         ) => \/-(Valid(FieldProp(\/-(f.id), attr)))
+            case (Some(\/-(_: CustomField.Text))             , DefaultInUse         ) => -\/("Text fields don't have defaults.")
+            case (Some(\/-(_: CustomField.Implication))      , DefaultInUse         ) => -\/("Implication fields don't have defaults.")
+            case (Some(-\/(f@ Title))                        , _                    ) => blankOnly(-\/(f), f.name)
+            case (Some(\/-(f@ StaticField.OtherTags))        , _                    ) => blankOnly(\/-(f), f.name)
+            case (Some(\/-(f@ StaticField.AllTags))          , _                    ) => blankOnly(\/-(f), f.name)
+            case (Some(\/-(f@ StaticField.NormalAltStepTree)), _                    ) => noDefault(\/-(f), f.name)
+            case (Some(\/-(f@ StaticField.ExceptionStepTree)), _                    ) => noDefault(\/-(f), f.name)
+            case (Some(\/-(StaticField.ImplicationGraph))    , _                    )
+               | (Some(\/-(StaticField.StepGraph))           , _                    ) => -\/(s"$fieldName can't be used here.")
+            case (None                                       , _                    ) => -\/(s"Unknown field: '$fieldName'")
           }
         }
     }
@@ -295,6 +302,12 @@ object FilterAlgebra {
         manualIssue = fail,
       )
 
+    def ucOnly(f: UseCase => Boolean): CompiledFilter =
+      reqOnly {
+        case _: GenericReq => false
+        case uc: UseCase   => f(uc)
+      }
+
     def fieldApplicableReqOnly(fieldId: FieldId)(f: Req => Boolean): CompiledFilter = {
       val applicability = p.config.applicability.byField(fieldId)
       reqOnly(req => applicability(req.reqTypeId).is(Applicable) && f(req))
@@ -398,13 +411,24 @@ object FilterAlgebra {
         case (FieldAttr.Blank, \/-(StaticField.AllTags)) =>
           byTag(_.isEmpty)
 
+        case (FieldAttr.Blank, \/-(StaticField.NormalAltStepTree)) =>
+          ucOnly { uc =>
+            filterDead.filterFn.iterator(uc.stepsNA.tree.valueIterator)(_.liveIgnoringUC(uc.stepsNA))
+              .drop(1)
+              .isEmpty
+          }
+
+        case (FieldAttr.Blank, \/-(StaticField.ExceptionStepTree)) =>
+          ucOnly { uc =>
+            filterDead.filterFn.iterator(uc.stepsE.tree.valueIterator)(_.liveIgnoringUC(uc.stepsE))
+              .isEmpty
+          }
+
         case (FieldAttr.NotApplicable, -\/(SpecialBuiltInField.Title)) =>
           reqOnly(fail)
 
         case (FieldAttr.Blank,
                  \/-(StaticField.ImplicationGraph)
-               | \/-(StaticField.NormalAltStepTree)
-               | \/-(StaticField.ExceptionStepTree)
                | \/-(StaticField.StepGraph)
              ) =>
                reqOnly(fail)

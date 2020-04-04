@@ -233,14 +233,14 @@ object FieldList {
 
           id match {
             case StaticField.ImplicationGraph
-               | StaticField.NormalAltStepTree
-               | StaticField.ExceptionStepTree
                | StaticField.StepGraph
                => na
 
             case _: CustomFieldId
                | StaticField.AllTags
                | StaticField.OtherTags
+               | StaticField.NormalAltStepTree
+               | StaticField.ExceptionStepTree
                => link(id)
           }
         }
