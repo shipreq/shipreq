@@ -341,4 +341,17 @@ object Util {
   def separateByWhitespaceOrCommas(input: String): Vector[String \/ String] =
     separate(input, _.takeWhile(c => c == ',' || c.isWhitespace).length)
 
+  // TODO Move into microlibs
+  def soleElement[A](as: TraversableOnce[A]): Option[A] = {
+    val it = as.toIterator
+    if (it.isEmpty)
+      None
+    else {
+      val a = it.next()
+      if (it.isEmpty)
+        Some(a)
+      else
+        None
+    }
+  }
 }

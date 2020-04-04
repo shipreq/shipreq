@@ -115,6 +115,10 @@ object ReqTableTestDsl {
 
     val editorValidity = *.focus("Editor validity").value(Invalid when cell.run(_).exists(editorInvalidSel))
 
+    val editorError = *.focus("Editor error").option(cell.run(_).collect01(editorInvalidSel).innerTexts)
+
+    val noEditorError = editorError.assert(None)
+
     def assertState(s: CellState) = {
       var e,l = false
       var v: Validity = Valid
@@ -124,7 +128,7 @@ object ReqTableTestDsl {
         case Locked  => l = true
         case Failed  => v = Invalid; e = true
       }
-      _editing.assert(e) & _locked.assert(l) & editorValidity.assert(v)
+      _editing.assert(e) & _locked.assert(l) & editorValidity.assert(v) & noEditorError.when(_ => v is Valid)
     }
 
     val assertNotEditing =

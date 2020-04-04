@@ -164,7 +164,7 @@ object ReqTableTest extends TestSuite {
     ) withInitialState p
   }
 
-  def testTagsColumnEditor = {
+  def testOtherTagsColumnEditor = {
     val p = GReq(reqType = co, title = reqTitleTagRefs(v11, v13, v4x)).tag(wip, uat, v11, v1x, v3x) !
       SampleProject.projectWithOtherTags
 
@@ -204,6 +204,8 @@ object ReqTableTest extends TestSuite {
         >> testValid("wip")
         >> testValid("wip defer")
         >> testValid("defer")
+        >> commit
+        +> cellText.assert("defer uat uat3 prod") // dead #uat preserved
     ) withInitialState p
   }
 
@@ -559,8 +561,8 @@ object ReqTableTest extends TestSuite {
       'impSrc       - runTest(testImplicationSrcColumnEditor    named "testImplicationSrcColumnEditor"   )
       'impTgt       - runTest(testImplicationTgtColumnEditor    named "testImplicationTgtColumnEditor"   )
       'impCol       - runTest(testCustomImplicationColumnEditor named "testCustomImplicationColumnEditor")
-      'tags         - runTest(testTagsColumnEditor              named "testTagsColumnEditor"             )
-      'tagCol       - runTest(testCustomTagColumnEditor         named "testCustomTagColumnEditor"        )
+      'tagsOther    - runTest(testOtherTagsColumnEditor         named "testOtherTagsColumnEditor"        )
+      'tagsCustom   - runTest(testCustomTagColumnEditor         named "testCustomTagColumnEditor"        )
       'titleIO      - runTest(testEditorTitleIO                 named "testEditorTitleIO"                )
       'failClear    - runTest(testFailureClearedOnEsc           named "testFailureClearedOnEsc"          )
 
