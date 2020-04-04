@@ -31,13 +31,6 @@ object LogicTestUtil {
       case r: Row.ForCodeGroup => Vector1(r.reqCode)
     }
 
-  def tagsInRow(r: Row): Vector[ApplicableTagId] =
-  // Don't use optics here
-    r match {
-      case r: Row.ForReq       => r.mv.otherTags
-      case _: Row.ForCodeGroup => Vector.empty
-    }
-
   def pubidExtract(p: Project)(pid: Pubid): (String, Int) =
     (p.config.reqTypes.need(pid.reqTypeId).mnemonic.value, pid.pos.value)
 
@@ -79,12 +72,12 @@ object LogicTest extends TestSuite {
   import shipreq.webapp.base.filter.IntensionalReqSet._
   import LogicTestUtil._
 
+  private      def P1  = SampleProject.project
   private      def P3  = SampleProject3.project
   private      def P4  = SampleProject4.project
   private      def P6  = SampleProject6.project
   private      def P7  = SampleProject7.project
-  private      def PD  = SampleProject.project
-  private lazy val PA  = TestOptics.customReqTypesLive.set(Live)(PD)
+  private lazy val PA  = TestOptics.customReqTypesLive.set(Live)(P1)
   private      val sep = "  "
   private      val z   = "∅"
   private      val _z  = (_: Any) => z
@@ -114,6 +107,22 @@ object LogicTest extends TestSuite {
     def r1: Array       [Row] = Logic.gather(p, v, pt, ts, fc)
     def r2: MutableArray[Row] = Logic.sorter(p, v, pt)(r1)
     val r3: Vector      [Row] = Logic.consolidateAdjacentDups(r2.iterator)
+
+//    def renderReq(reqId: ReqId) = PlainText.pubidByReqId(reqId, p)
+//    def renderTags(tagIds: Vector[ApplicableTagId]) = pt.tagList(tagIds, Live, !Mandatory, Valid.always)
+//    def renderRow(r: Row.ForReq) = s"${renderReq(r.req.id)} : ${renderTags(r.exp.otherTags)} | ${renderTags(r.mv.allTags)}"
+//    def renderRows(rs: TraversableOnce[Row]) = rs.toIterator.filterSubType[Row.ForReq].foreach(r => println(renderRow(r)))
+//    println()
+//    println("========================== r1 ==========================")
+//    renderRows(r1)
+//    println()
+//    println("========================== r2 ==========================")
+//    renderRows(r2.iterator)
+//    println()
+//    println("========================== r3 ==========================")
+//    renderRows(r3)
+//    println()
+
     r3
   }
 
@@ -152,6 +161,7 @@ object LogicTest extends TestSuite {
     (DescThenBlanks -> f(desc, zz)) :: Nil
   }
 
+  /** @param zcount Number of rows that are empty at the target column */
   private def allSortsCB(zcount: Int, asc: String, desc: String): Seq[(ConsiderBlanks, String)] =
     allSortsCBA(z, zcount)(_ + sep + _, asc, desc)
 
@@ -278,30 +288,32 @@ object LogicTest extends TestSuite {
 
   def testOtherTags_sorted1(): Unit = {
     def t(ids: ApplicableTagId*) = GReq().tag(ids: _*)
-    val p       = GReq().times(2) + t(2) + t(3) + t(11) + t(12) + t(11, 12) + t(12, 11) !! PA
+    val p       = GReq().times(2) + t(priHigh) + t(priMed) + t(wip) + t(defer) + t(wip, defer) + t(defer, wip) !! PA
     val p2      = clearCustomFields(p)
     val fmtRows = rowToTagTxt(p, Row.otherTags)
-    // The Tags column is *not* expanded. Only custom tag columns are.
+
+    // Order: defer pri=high  pri=med wip
     testCB(p2, C.OtherTags, None, ShowDead, fmtRows)(allSortsCB(2,
-      asc  = "defer  defer,wip  defer,wip  pri=high  pri=med  wip",
-      desc = "wip,defer  wip,defer  wip  pri=med  pri=high  defer"))
+      asc  = "defer  defer  defer  pri=high  pri=med  wip  wip  wip",
+      desc = "wip  wip  wip  pri=med  pri=high  defer  defer  defer"))
   }
 
   def testOtherTags_sorted2(): Unit = {
     def t(ids: ApplicableTagId*) = GReq().tag(ids: _*)
-    val p       = GReq() + t(2) + t(11) + t(12) + t(11, 12, 2) + t(3, 12, 11) !! PA
+    val p       = GReq() + t(priHigh) + t(wip) + t(defer) + t(wip, defer, priHigh) + t(priMed, defer, wip) !! PA
     val p2      = modCustomFields(_.filterK(_ == priField))(p)
     val fmtRows = rowToTagTxt(p, Row.otherTags)
-    // The Tags column is *not* expanded. Only custom tag columns are.
+
+    // Order: defer pri=high  pri=med wip
     testCB(p2, C.OtherTags, None, ShowDead, fmtRows)(allSortsCB(2,
-      asc  = "defer  defer,wip  defer,wip  wip",
-      desc = "wip,defer  wip,defer  wip  defer"))
+      asc  = "defer  defer  defer  wip  wip  wip",
+      desc = "wip  wip  wip  defer  defer  defer"))
   }
 
   /** When tags aren't being sorted by SortCriteria they should be sorted by some default. */
   def testOtherTags_unsorted(): Unit = {
     def t(ids: ApplicableTagId*) = GReq().tag(ids: _*)
-    val p       = t(11, 12, 2, 3, 4) ! PA
+    val p       = t(wip, defer, priHigh, priMed, priLow) ! PA
     val p2      = clearCustomFields(p)
     val fmtRows = rowToTagTxt(p, Row.otherTags)
     testUnsorted(p2, C.OtherTags, None, ShowDead, fmtRows)("defer,pri=high,pri=low,pri=med,wip")
@@ -309,7 +321,7 @@ object LogicTest extends TestSuite {
 
   def testCustomTagField_sorted1(): Unit = {
     def t(ids: ApplicableTagId*) = GReq(reqType = dd).tag(ids: _*)
-    val p       = GReq() + t(2) + t(3) + t(2, 3) + t(11, 12, 22, 24, 26) ! PA
+    val p       = GReq() + t(priHigh) + t(priMed) + t(priHigh, priMed) + t(wip, defer, v10, v12, v3x) ! PA
     val fmtRows = prefixWithPubid(p, rowToTagTxt(p, Row cfTag priField))
     testCB(p, priField, None, ShowDead, fmtRows)(allSortsCB(2,
       asc  = "DD-2:pri=high  DD-4:pri=high  DD-3:pri=med  DD-4:pri=med",
@@ -318,7 +330,7 @@ object LogicTest extends TestSuite {
 
   def testCustomTagField_sorted2(): Unit = {
     def t(ids: ApplicableTagId*) = GReq(reqType = dd).tag(ids: _*)
-    val p       = GReq() + t(2) + t(2, 3) + t(3) + t(11, 12, 22, 24, 26) ! PA
+    val p       = GReq() + t(priHigh) + t(priHigh, priMed) + t(priMed) + t(wip, defer, v10, v12, v3x) ! PA
     val fmtRows = prefixWithPubid(p, rowToTagTxt(p, Row cfTag priField))
     testCB(p, priField, None, ShowDead, fmtRows)(allSortsCB(2,
       asc  = "DD-2:pri=high  DD-3:pri=high,pri=med  DD-4:pri=med",
@@ -327,7 +339,7 @@ object LogicTest extends TestSuite {
 
   def testCustomTagField_unsorted(): Unit = {
     def t(ids: ApplicableTagId*) = GReq().tag(ids: _*)
-    val p       = GReq() + t(2) + t(3) + t(2, 3, 4) + t(11, 12, 22, 24, 26) ! PA
+    val p       = GReq() + t(priHigh) + t(priMed) + t(priHigh, priMed, priLow) + t(wip, defer, v10, v12, v3x) ! PA
     val fmtRows = rowToTagTxt(p, Row cfTag priField)
     testUnsorted(p, priField, None, ShowDead, fmtRows)(
       s"$z  pri=high  pri=med  pri=high,pri=med,pri=low  $z")
@@ -496,14 +508,14 @@ object LogicTest extends TestSuite {
   def testFilterDeadRows(): Unit = {
     def dead = GReq(live = Dead)
     def live = GReq()
-    val p   = (live + dead + live + dead + live).defaultReqType(mf) ! PD
+    val p   = (live + dead + live + dead + live).defaultReqType(mf) ! P1
     val fmt = rowToPubid(p)
     testUnsorted(p, C.Pubid, None, ShowDead, fmt)("MF-1  MF-2  MF-3  MF-4  MF-5")
     testUnsorted(p, C.Pubid, None, HideDead, fmt)("MF-1  MF-3  MF-5")
   }
 
   def testFilterDeadImpsSrc(): Unit = {
-    val p   = (GReq(id = 1) + GReq(id = 2, live = Dead) + GReq(id = 3).impSrc(1,2)).defaultReqType(br) ! PD
+    val p   = (GReq(id = 1) + GReq(id = 2, live = Dead) + GReq(id = 3).impSrc(1,2)).defaultReqType(br) ! P1
     val c   = C.Implications(Backwards)
     val fmt = rowToSrcImpTxt(p)
     testUnsorted(p, c, None, ShowDead, fmt)(s"$z  $z  BR-1,BR-2>BR-3")
@@ -511,7 +523,7 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterDeadImpsTgt(): Unit = {
-    val p = (GReq(id = 1) + GReq(id = 2, live = Dead) + GReq(id = 3).impTgt(1,2)).defaultReqType(br) ! PD
+    val p = (GReq(id = 1) + GReq(id = 2, live = Dead) + GReq(id = 3).impTgt(1,2)).defaultReqType(br) ! P1
     val c   = C.Implications(Forwards)
     val fmt = rowToTgtImpTxt(p)
     testUnsorted(p, c, None, ShowDead, fmt)(s"$z  $z  BR-1,BR-2<BR-3")
@@ -542,7 +554,7 @@ object LogicTest extends TestSuite {
       GReq(reqType = co, id = 13, live = Dead).impSrc(3) +
       GReq(reqType = co, id = 14, live = Dead).impSrc(4) +
       GReq(reqType = fr, id = 92).impSrc(11, 12, 13, 14)
-      ) ! PD
+      ) ! P1
     val c = mfField
     val fmt = rowToCustomImpTxt(p, c)
 
@@ -578,14 +590,14 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterDeadTags(): Unit = {
-    val p       = GReq(reqType = fr).tag(v1x, v3x) ! PD
+    val p       = GReq(reqType = fr).tag(v1x, v3x) ! P1
     val fmtRows = rowToTagTxt(p, Row.otherTags)
     testUnsorted(p, C.OtherTags, None, ShowDead, fmtRows)("v1.x,v3.x")
     testUnsorted(p, C.OtherTags, None, HideDead, fmtRows)("v1.x")
   }
 
   def testFilterDeadTagsInCustomTagField(): Unit = {
-    val p        = GReq(reqType = fr).tag(wip, uat, v1x) ! PD
+    val p        = GReq(reqType = fr).tag(wip, uat, v1x) ! P1
     val fmtRowsC = rowToTagTxt(p, Row cfTag statusField)
     val fmtRowsT = rowToTagTxt(p, Row.otherTags)
     testUnsorted(p, statusField, None, ShowDead, fmtRowsC)("wip,uat")
@@ -595,7 +607,7 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterDeadCustomTagField() = {
-    val p        = GReq(reqType = fr).tag(v09, v10, v2x) ! PD
+    val p        = GReq(reqType = fr).tag(v09, v10, v2x) ! P1
     val fmtRowsC = rowToTagTxt(p, Row cfTag relField)
     val fmtRowsT = rowToTagTxt(p, Row.otherTags)
     // dead-customfield visible
@@ -1205,9 +1217,21 @@ object LogicTest extends TestSuite {
     testFilter(P6, F.hasIssue(Off, MissingData, UserDefined))("FR-2  UC-1", "")
   }
 
-  // ===================================================================================================================
+  def testOtherTags_expansion(): Unit = {
+    def t(ids: ApplicableTagId*) = GReq(reqType = dd).tag(ids: _*)
+    // DD    1        2           3            4           5                    6 (∅)    7                8
+    val p1 = GReq() + t(priLow) + t(priHigh) + t(priMed) + t(priLow, priHigh) + t(wip) + t(priMed, v10) + t(v10, priLow) ! P1
+    val p  = applyEventSuccessfully(p1, E.FieldCustomDelete(priField))
+    val fmtRows = prefixWithPubid(p, rowToTagTxt(p, Row.otherTags))
 
-  // NOTE: The Tags column is *not* expanded. Only custom tag columns are.
+    // Order: pri=high pri=low pri=med v10
+    testCB(p, C.OtherTags, None, ShowDead, fmtRows)(allSortsCB(2,
+      asc  = "DD-3:pri=high  DD-5:pri=high  DD-2:pri=low  DD-5:pri=low  DD-8:pri=low  DD-4:pri=med  DD-7:pri=med,v1.0  DD-8:v1.0",
+      desc = "DD-7:v1.0  DD-8:v1.0  DD-4:pri=med  DD-7:pri=med  DD-2:pri=low  DD-5:pri=low  DD-8:pri=low  DD-3:pri=high  DD-5:pri=high"))
+
+  }
+
+  // ===================================================================================================================
 
   override def tests = Tests {
     'sort {
@@ -1219,10 +1243,11 @@ object LogicTest extends TestSuite {
       'impCust  - testCustomImpField()
       'custTxt  - testCustomTextField()
       'otherTags {
-        'sorted1  - testOtherTags_sorted1()
-        'sorted2  - testOtherTags_sorted2()
-        'unsorted - testOtherTags_unsorted()
-        'inText   - testOtherTags_inText()
+        'sorted1   - testOtherTags_sorted1()
+        'sorted2   - testOtherTags_sorted2()
+        'unsorted  - testOtherTags_unsorted()
+        'inText    - testOtherTags_inText()
+        'expansion - testOtherTags_expansion()
       }
       'custTag {
         'sorted1  - testCustomTagField_sorted1()

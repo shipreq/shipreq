@@ -331,7 +331,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
         live             = row.live,
         codes            = row.exp.reqCodes,
         allTags          = row.mv.allTags,
-        otherTags        = row.mv.otherTags,
+        otherTags        = row.exp.otherTags,
         customTags       = row.exp.cfTags.getOrElse(_, Vector.empty),
         invalidTags      = row.invalidTags,
         generalImps      = row.exp.implications.apply,

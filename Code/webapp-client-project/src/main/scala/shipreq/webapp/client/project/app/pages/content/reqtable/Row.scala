@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
 import japgolly.scalajs.react.Key
-import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.Reusability
 import monocle.{Lens, Optional}
 import monocle.macros.Lenses
@@ -27,11 +26,13 @@ import shipreq.webapp.client.project.feature.EditorFeature.RowKey
  * appear twice - once for each implicatee.
  */
 @Lenses
-case class Expansion(implications  : Direction.Values[Vector[Pubid]],
-                     reqCodes      : Vector[ReqCode.Value],
-                     reqCodeTree   : Vector[ReqCodeTreeItem],
-                     cfImps        : Map[CustomField.Implication.Id, Vector[Pubid]],
-                     cfTags        : Map[CustomField.Tag.Id,         Vector[ApplicableTagId]]) {
+final case class Expansion(implications: Direction.Values[Vector[Pubid]],
+                           reqCodes    : Vector[ReqCode.Value],
+                           reqCodeTree : Vector[ReqCodeTreeItem],
+                           cfImps      : Map[CustomField.Implication.Id, Vector[Pubid]],
+                           cfTags      : Map[CustomField.Tag.Id, Vector[ApplicableTagId]],
+                           otherTags   : Vector[ApplicableTagId],
+                          ) {
 
   // Workaround for stupid https://issues.scala-lang.org/browse/SI-6391
   def copyReqCodes   (nv: Vector[ReqCode.Value]  ): Expansion = copy(reqCodes = nv)
@@ -46,12 +47,22 @@ case class Expansion(implications  : Direction.Values[Vector[Pubid]],
 
 object Expansion {
   val empty: Expansion =
-    apply(Direction.Values both Vector.empty, Vector.empty, Vector.empty, UnivEq.emptyMap, UnivEq.emptyMap)
+    apply(
+      Direction.Values both Vector.empty,
+      Vector.empty,
+      Vector.empty,
+      UnivEq.emptyMap,
+      UnivEq.emptyMap,
+      Vector.empty,
+    )
 
   implicit def equality: UnivEq[Expansion] = UnivEq.derive
 
   implicit val reqCodeTreeM: Monoid[Vector[ReqCodeTreeItem]] =
-    scalaz.std.vector.vectorMonoid
+    new Monoid[Vector[ReqCodeTreeItem]] {
+      override def zero =  Vector.empty
+      override def append(f1: Vector[ReqCodeTreeItem], f2: => Vector[ReqCodeTreeItem]) = f1 ++ f2
+    }
 
   implicit def vectorUniqSemigroup[A](implicit e: Equal[A]): Semigroup[Vector[A]] =
     new Semigroup[Vector[A]] {
@@ -70,7 +81,9 @@ object Expansion {
           a.reqCodes     |+| b.reqCodes,
           a.reqCodeTree  |+| b.reqCodeTree,
           a.cfImps       |+| b.cfImps,
-          a.cfTags       |+| b.cfTags)
+          a.cfTags       |+| b.cfTags,
+          a.otherTags    |+| b.otherTags,
+        )
       }
     }
 }
@@ -81,8 +94,7 @@ object Expansion {
  * Sortable data (ie. lists) that are never expanded.
  */
 @Lenses
-final case class MultiValues(otherTags: Vector[ApplicableTagId],
-                             allTags  : Vector[ApplicableTagId])
+final case class MultiValues(allTags: Vector[ApplicableTagId])
 
 object MultiValues {
   implicit def equality: UnivEq[MultiValues] = UnivEq.derive
@@ -91,12 +103,11 @@ object MultiValues {
 
   implicit val monoid: Monoid[MultiValues] =
     new Monoid[MultiValues] {
-      override def zero = MultiValues(Vector.empty, Vector.empty)
+      override def zero = MultiValues(Vector.empty)
       override def append(a: MultiValues, _b: => MultiValues) = {
         val b = _b
         MultiValues(
-          otherTags = a.otherTags |+| b.otherTags,
-          allTags   = a.allTags |+| b.allTags,
+          allTags = a.allTags |+| b.allTags,
         )
       }
     }
@@ -263,7 +274,7 @@ object Row {
 
   val cfImps   : OMV[CustomField.Implication.Id, Pubid]   = Row.expansion   ^|-> Expansion.cfImps
   val cfTags   : OMV[CustomField.Tag.Id, ApplicableTagId] = Row.expansion   ^|-> Expansion.cfTags
-  val otherTags: OV[ApplicableTagId]                      = Row.multiValues ^|-> MultiValues.otherTags
+  val otherTags: OV[ApplicableTagId]                      = Row.expansion   ^|-> Expansion.otherTags
   val allTags  : OV[ApplicableTagId]                      = Row.multiValues ^|-> MultiValues.allTags
 
   private def mmLens[K, V](k: K): Lens[Map[K, Vector[V]], Vector[V]] =
