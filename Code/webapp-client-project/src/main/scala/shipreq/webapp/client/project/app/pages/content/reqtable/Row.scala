@@ -27,7 +27,7 @@ object Row {
   final case class ForReq(req        : Req,
                           live       : Live,
                           invalidTags: Set[ApplicableTagId],
-                          exp        : Expansion,
+                          exp        : Expansions,
                           fieldRules : FieldSetRules,
                           instanceId : Int) extends Row {
     override val id       = Row.Id.ForReq(req.id, instanceId)
@@ -123,7 +123,7 @@ object Row {
       case _: Row.ForCodeGroup => Column.applicabilityForCodeGroup((), col)
     }).memoiseByField
 
-  val expansion = Optional[Row, Expansion] {
+  val expansion = Optional[Row, Expansions] {
     case r: ForReq       => Some(r.exp)
     case _: ForCodeGroup => None
   }(nv => {
@@ -157,12 +157,12 @@ object Row {
   type OMV[K, V] = Optional[Row, Map[K, Vector[V]]]
 
   val implications: Direction => OV[Pubid] =
-    Direction.memo(Row.expansion ^|-> Expansion.implications ^|-> Direction.Values.lens(_))
+    Direction.memo(Row.expansion ^|-> Expansions.implications ^|-> Direction.Values.lens(_))
 
-  val cfImps   : OMV[CustomField.Implication.Id, Pubid]   = Row.expansion ^|-> Expansion.cfImps
-  val cfTags   : OMV[CustomField.Tag.Id, ApplicableTagId] = Row.expansion ^|-> Expansion.cfTags
-  val otherTags: OV[ApplicableTagId]                      = Row.expansion ^|-> Expansion.otherTags
-  val allTags  : OV[ApplicableTagId]                      = Row.expansion ^|-> Expansion.allTags
+  val cfImps   : OMV[CustomField.Implication.Id, Pubid]   = Row.expansion ^|-> Expansions.cfImps
+  val cfTags   : OMV[CustomField.Tag.Id, ApplicableTagId] = Row.expansion ^|-> Expansions.cfTags
+  val otherTags: OV[ApplicableTagId]                      = Row.expansion ^|-> Expansions.otherTags
+  val allTags  : OV[ApplicableTagId]                      = Row.expansion ^|-> Expansions.allTags
 
   private def mmLens[K, V](k: K): Lens[Map[K, Vector[V]], Vector[V]] =
     Lens[Map[K, Vector[V]], Vector[V]](_.getOrElse(k, Vector.empty))(vs => _.updated(k, vs))

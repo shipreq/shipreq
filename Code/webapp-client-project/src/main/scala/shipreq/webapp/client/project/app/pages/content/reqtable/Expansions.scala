@@ -20,18 +20,18 @@ import shipreq.webapp.base.util.ReqCodeTreeItem
  * appear twice - once for each implicatee.
  */
 @Lenses
-final case class Expansion(implications: Direction.Values[Vector[Pubid]],
-                           reqCodes    : Vector[ReqCode.Value],
-                           reqCodeTree : Vector[ReqCodeTreeItem],
-                           cfImps      : Map[CustomField.Implication.Id, Vector[Pubid]],
-                           cfTags      : Map[CustomField.Tag.Id, Vector[ApplicableTagId]],
-                           otherTags   : Vector[ApplicableTagId],
-                           allTags     : Vector[ApplicableTagId],
+final case class Expansions(implications: Direction.Values[Vector[Pubid]],
+                            reqCodes    : Vector[ReqCode.Value],
+                            reqCodeTree : Vector[ReqCodeTreeItem],
+                            cfImps      : Map[CustomField.Implication.Id, Vector[Pubid]],
+                            cfTags      : Map[CustomField.Tag.Id, Vector[ApplicableTagId]],
+                            otherTags   : Vector[ApplicableTagId],
+                            allTags     : Vector[ApplicableTagId],
                           ) {
 
   // Workaround for stupid https://issues.scala-lang.org/browse/SI-6391
-  def copyReqCodes   (nv: Vector[ReqCode.Value]  ): Expansion = copy(reqCodes = nv)
-  def copyReqCodeTree(nv: Vector[ReqCodeTreeItem]): Expansion = copy(reqCodeTree = nv)
+  def copyReqCodes   (nv: Vector[ReqCode.Value]  ): Expansions = copy(reqCodes = nv)
+  def copyReqCodeTree(nv: Vector[ReqCodeTreeItem]): Expansions = copy(reqCodeTree = nv)
 
   def impsForCF(id: CustomField.Implication.Id): Vector[Pubid] =
     cfImps.getOrElse(id, Vector.empty)
@@ -40,8 +40,8 @@ final case class Expansion(implications: Direction.Values[Vector[Pubid]],
     cfTags.getOrElse(id, Vector.empty)
 }
 
-object Expansion {
-  val empty: Expansion =
+object Expansions {
+  val empty: Expansions =
     apply(
       Direction.Values both Vector.empty,
       Vector.empty,
@@ -52,7 +52,7 @@ object Expansion {
       Vector.empty,
     )
 
-  implicit def equality: UnivEq[Expansion] = UnivEq.derive
+  implicit def equality: UnivEq[Expansions] = UnivEq.derive
 
   implicit val reqCodeTreeM: Monoid[Vector[ReqCodeTreeItem]] =
     new Monoid[Vector[ReqCodeTreeItem]] {
@@ -67,12 +67,12 @@ object Expansion {
           if (x.exists(e.equal(_, a))) q else q :+ a)
     }
 
-  implicit val monoid: Monoid[Expansion] =
-    new Monoid[Expansion] {
+  implicit val monoid: Monoid[Expansions] =
+    new Monoid[Expansions] {
       override def zero = empty
-      override def append(a: Expansion, _b: => Expansion) = {
+      override def append(a: Expansions, _b: => Expansions) = {
         val b = _b
-        Expansion(
+        Expansions(
           a.implications |+| b.implications,
           a.reqCodes     |+| b.reqCodes,
           a.reqCodeTree  |+| b.reqCodeTree,

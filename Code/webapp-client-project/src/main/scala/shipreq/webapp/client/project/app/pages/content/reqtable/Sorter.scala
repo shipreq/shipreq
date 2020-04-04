@@ -154,7 +154,7 @@ object Sorter {
   }
 
   /**
-   * Sort visible data in [[Expansion]]/[[MultiValues]] that won't be sorted by [[SortCriteria]].
+   * Sort visible data in [[Expansions]]/[[MultiValues]] that won't be sorted by [[SortCriteria]].
    */
   def sortUnspecified(view: View): RowModFn = {
     val fns =

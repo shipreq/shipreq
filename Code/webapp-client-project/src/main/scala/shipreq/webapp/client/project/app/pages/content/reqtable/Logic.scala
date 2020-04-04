@@ -32,8 +32,8 @@ private[reqtable] object Logic {
   private type Expanded[A] = NonEmptyVector[Vector[A]]
   private type Expander[A] = (() => Set[A]) => Expanded[A]
 
-  private final val emptyExpansions: NonEmptyVector[Expansion] =
-    NonEmptyVector.one(Expansion.empty)
+  private final val emptyExpansions: NonEmptyVector[Expansions] =
+    NonEmptyVector.one(Expansions.empty)
 
   @inline private def emptyExpanded[A]: Expanded[A] =
     NonEmptyVector.one(Vector.empty)
@@ -149,7 +149,7 @@ private[reqtable] object Logic {
                          cfTags   : Map[CustomField.Tag.Id,         Expanded[ApplicableTagId]],
                          otherTags: Expanded[ApplicableTagId],
                          allTags  : Expanded[ApplicableTagId],
-                        ): NonEmptyVector[Expansion] =
+                        ): NonEmptyVector[Expansions] =
     if (   isEmptyExp(codes)
         && isEmptyExp(imps(Backwards))
         && isEmptyExp(imps(Forwards))
@@ -173,7 +173,7 @@ private[reqtable] object Logic {
           case Backwards => a
           case Forwards  => b
         }
-        Expansion(
+        Expansions(
           implications = imps2,
           reqCodes     = c,
           reqCodeTree  = Vector.empty[ReqCodeTreeItem],
