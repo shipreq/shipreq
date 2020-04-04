@@ -105,14 +105,20 @@ object TagEditor {
 
   final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.EditorBackend {
     private val pxLookup = Px.props($).map(_.lookup).withReuse.autoRefresh
-    private val pxNaTags = Px.props($).map(_.naTags).withReuse.autoRefresh
+
+    private val pxTagsToExcludeFromAutoComplete =
+      Px.props($).map { p =>
+        val na    = p.naTags.set
+        val added = p.parseResultSet.getOrElse(Set.empty)
+        na ++ added
+      }.withReuse.autoRefresh
 
     override val pxAutoComplete =
       for {
-        lookup <- pxLookup
-        naTags <- pxNaTags
+        lookup    <- pxLookup
+        naTags    <- pxTagsToExcludeFromAutoComplete
       } yield {
-        val legal = lookup.values.toStream.filter(tag => !naTags.set.contains(tag.id))
+        val legal = lookup.values.toStream.filter(tag => !naTags.contains(tag.id))
         AutoComplete.Project.tag(legal, HideDead)(Plain)
       }
 
