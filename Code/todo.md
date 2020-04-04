@@ -136,6 +136,5 @@ Phase 3A
 v2.1
 ========================================================================================================================
 
-* Tags
-  * System #must explain when a tag is invalid because the field is `Tags` and a specified tag is assigned to another field [FR-17]
-  * Reappearances
+* tag expansion should still retain all values (else we're presenting wrong information)
+* New issues screen
