@@ -72,6 +72,17 @@ object ForComponent {
 
     final protected val autoCompleteBlur: Callback =
       Callback(textComplete.foreach(_.dropdown.deactivate())).attempt.void
+
+    /** Display the auto-complete options */
+    final protected def trigger(text: D => Option[String]): CallbackOption[Unit] =
+      for {
+        tc  <- CallbackOption.liftOption(textComplete)
+        ctx <- autoCompleteCtx
+        txt <- CallbackOption.liftOption(text(ctx.dom))
+      } yield {
+        tc.trigger(txt)
+        ()
+      }
   }
 
   def install[P, C <: Children, S, B <: Backend[D], D <: AnyRef: AutoCompletable]: ScalaComponent.Config[P, C, S, B, UpdateSnapshot.None, UpdateSnapshot.Some[Unit]] =

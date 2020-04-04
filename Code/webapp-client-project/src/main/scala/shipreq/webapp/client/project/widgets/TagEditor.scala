@@ -192,7 +192,14 @@ object TagEditor {
     }
 
     val onMount: Callback =
-      EditTheme.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback
+      EditTheme.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback >>
+        trigger { dom =>
+          val t = dom.value
+          if (t.isEmpty || t.endsWith(" "))
+            Some(t)
+          else
+            None
+        }
   }
 
   val Component =
