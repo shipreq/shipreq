@@ -13,9 +13,15 @@ final class TextComplete(editor: Editor, options: Options = js.native) extends j
 
   def register(ss: js.Array[Strategy[_]]): this.type = js.native
 
+  def hide(): this.type = js.native
+
+  def on(event: String, fn: js.Function0[Unit]): this.type = js.native
+
   def trigger(text: String): this.type = js.native
 
   def destroy(destroyEditor: Boolean = true): this.type = js.native
+
+  val _events: _Events = js.native
 
   val dropdown: Dropdown = js.native
 }
@@ -32,6 +38,11 @@ object TextComplete {
   @js.native
   sealed trait Dropdown extends js.Object {
     def deactivate(): this.type = js.native
+  }
+
+  @js.native
+  sealed trait _Events extends js.Object {
+    val select: js.UndefOr[js.Object]
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
