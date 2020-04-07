@@ -59,7 +59,7 @@ object JwtBM {
 
     val key: Key = Keys.hmacShaKeyFor(keyBytes)
     
-    val parser = Jwts.parser().setSigningKey(key)
+    val parser = Jwts.parserBuilder().setSigningKey(key).build()
 
     def encode() = {
       val now = System.currentTimeMillis()
