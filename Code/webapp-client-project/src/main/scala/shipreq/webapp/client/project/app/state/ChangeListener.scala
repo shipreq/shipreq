@@ -4,7 +4,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.{Listenable, OnUnmount}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.EventSeqSummary
-import shipreq.webapp.client.project.app.pages.config_old.shared.SavedRowStore
 
 object ChangeListener {
 
@@ -15,9 +14,6 @@ object ChangeListener {
   }
 
   @inline def update[S](h: EventSeqSummary.WithProject => S => S) = new Updater(h)
-
-  def store[S, Id, Data](store: SavedRowStore[S, Id, Data, _])(ids: EventSeqSummary.WithProject => Set[Id], get: Project => Id => Option[Data]): Updater[S] =
-    oneByOne(ids, get)((s, i) => store.remove(i)(s), (s, i, d) => store.set(i, d)(s))
 
   def oneByOne[S, Id, Data](ids: EventSeqSummary.WithProject => Set[Id], get: Project => Id => Option[Data])
                            (remove: (S, Id) => S, update: (S, Id, Data) => S): Updater[S] =
