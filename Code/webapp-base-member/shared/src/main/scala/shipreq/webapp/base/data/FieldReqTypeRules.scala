@@ -136,13 +136,20 @@ object FieldReqTypeRules {
   sealed abstract class Resolution[+Default](final val applicability: Applicability) {
     final def isNA = applicability is NA
     def isDefault = false
+    def isMandatory = false
   }
   
   object Resolution {
-    case object Mandatory                      extends Resolution[Nothing](Applicable)
-    case object Optional                       extends Resolution[Nothing](Applicable)
-    case object NotApplicable                  extends Resolution[Nothing](NA)
-    final case class DefaultTo[+D](default: D) extends Resolution[D]      (Applicable) {
+
+    case object Mandatory extends Resolution[Nothing](Applicable) {
+      override def isMandatory = true
+    }
+
+    case object Optional extends Resolution[Nothing](Applicable)
+
+    case object NotApplicable extends Resolution[Nothing](NA)
+
+    final case class DefaultTo[+D](default: D) extends Resolution[D](Applicable) {
       override def isDefault = true
     }
 

@@ -52,11 +52,13 @@ object IssueDetectors {
         ctx.foreachLiveReq(() => {
           val p = prepare
           val as = fields.map(f => f -> p(f))
+          val rulesRT = ctx.project.config.fieldRules(HideDead)
           req => {
             val reqId     = req.id
             val reqTypeId = req.reqTypeId
+            val rules     = rulesRT(reqTypeId)
             for ((field, hasIssue) <- as)
-              if (field.fieldReqTypeRules(reqTypeId) == Resolution.Mandatory && hasIssue(reqId))
+              if (rules(field.id).isMandatory && hasIssue(reqId))
                 ctx.add(Issue.BlankCustomField(req, field))
           }
         })
