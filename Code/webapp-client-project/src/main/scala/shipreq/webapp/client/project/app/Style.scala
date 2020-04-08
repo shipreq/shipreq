@@ -921,6 +921,67 @@ object Style extends StyleSheet.Inline {
   }
 
   // ===================================================================================================================
+  object issueConfig {
+
+    val sectionTitle = style(
+        display.block,
+        margin(1.rem, auto, 4.rem, auto),
+        maxWidth(60.ex),
+        fontSize(120 %%),
+        textAlign.center,
+        fontWeight.bold,
+        borderTop(solid, 1.px, c"#ddd"),
+        borderBottom(solid, 1.px, c"#ddd"),
+        padding(.7 em, `0`),
+    )
+
+    val otherSources = style(
+      display.flex,
+      justifyContent.center,
+    )
+
+    val otherSourcesGap = style(
+      width(6 rem),
+    )
+
+    val otherSourcesHeader = style(
+      fontWeight.bold,
+      marginBottom(1 em),
+    )
+
+    val otherSourcesContent = style(
+      marginBottom(4 em),
+    )
+
+    val otherSourcesUL = style(
+      listStylePosition.inside,
+      paddingLeft(2 px),
+    )
+
+    val otherSourcesLI = style(
+      marginBottom(.3 em),
+      color(c"#444")
+    )
+
+    val otherSourcesNone = style(
+      color(c"#444")
+    )
+
+    val otherSourcesSubtext = style(
+      marginLeft(1 ex),
+      color(c"#999"),
+    )
+
+    type RowState = configShared.RowState
+    @inline def RowState = configShared.RowState
+    @inline def editorTitle = tagConfig.editorTitle
+    @inline def listTable      = fieldConfig.fieldListTable
+    @inline def listTableCell  = fieldConfig.fieldListTableCell
+    @inline def listTableRow   = reqTypeConfig.listTableRow
+    @inline def listTableUsage = fieldConfig.fieldListTableUsage
+  }
+
+  // ===================================================================================================================
   object reqTypeConfig {
     type RowState = configShared.RowState
     @inline def RowState = configShared.RowState
@@ -1473,6 +1534,7 @@ object Style extends StyleSheet.Inline {
     deletionRestorationForms.main,
     deletionForm.bottomSections,
     issues.rowspanOuter,
+    issueConfig.sectionTitle,
     restorationForm.bottomSection,
     reqtable.creation.formOuter,
     reqtable.filterEditor.input(Valid),

@@ -26,18 +26,26 @@ object UiText {
       self + " " + name.pluralise(self, pluralised)
   }
 
-  def sortedOrClause(cases: IterableOnce[String], limit: Int = Int.MaxValue) = {
+  private def sortedSeqClause(cases: IterableOnce[String], conj: String, limit: Int): String = {
     var a = cases.toArray
-    scala.util.Sorting.quickSort(a)
-    val len = a.length
-    if (len > limit) {
-      a = a.take(limit + 1)
-      a(limit) = s"one of ${len - limit} others"
+    a.length match {
+      case 0 => ""
+      case 1 => a(0)
+      case len =>
+        scala.util.Sorting.quickSort(a)
+        if (len > limit) {
+          a = a.take(limit + 1)
+          a(limit) = s"one of ${len - limit} others"
+        }
+        a.dropRight(1).mkString("", ", ", s" $conj ${a.last}")
     }
-    val last = a.length - 1
-    a(last) = "or " + a(last)
-    a.mkString(", ")
   }
+
+  def sortedAndClause(cases: IterableOnce[String], limit: Int = Int.MaxValue): String =
+    sortedSeqClause(cases, "and", limit)
+
+  def sortedOrClause(cases: IterableOnce[String], limit: Int = Int.MaxValue): String =
+    sortedSeqClause(cases, "or", limit)
 
   def unsavedChanges(i: Int): String =
     i.unitsOf("unsaved change")

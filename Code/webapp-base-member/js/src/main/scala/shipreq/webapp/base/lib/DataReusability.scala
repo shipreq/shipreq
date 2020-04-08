@@ -67,6 +67,9 @@ abstract class DataReusability extends BaseReusability {
   implicit def reusabilityProjectConfig: Reusability[ProjectConfig] =
     Reusability.byRef
 
+  implicit def reusabilityCustomIssueTypeIMap: Reusability[CustomIssueTypeIMap] =
+    Reusability.byRef
+
   implicit def reusabilityRequirements: Reusability[Requirements] =
     Reusability.byRef
 
@@ -84,6 +87,9 @@ abstract class DataReusability extends BaseReusability {
 
   implicit def reusabilityReqTypeId: Reusability[ReqTypeId] =
     Reusability.byUnivEq
+
+  implicit def reusabilityCustomIssueType: Reusability[CustomIssueType] =
+    Reusability.byRefOrUnivEq
 
   implicit def reusabilityCustomReqType: Reusability[CustomReqType] =
     Reusability.byRefOrUnivEq

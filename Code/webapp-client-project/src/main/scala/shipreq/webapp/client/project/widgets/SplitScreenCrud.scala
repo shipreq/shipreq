@@ -79,6 +79,7 @@ object SplitScreenCrud {
                                    project           : Project,
                                    newButton         : NewArgs[N] => VdomNode,
                                    list              : ListArgs[Id] => VdomNode,
+                                   leftTop           : VdomNode,
                                    rightEmpty        : VdomNode,
                                    editor            : EditorArgs[N, Id, E] => VdomNode,
                                    initEditor        : (Project, N \/ Id) => Option[E],
@@ -151,11 +152,22 @@ final class SplitScreenCrud[
                     project           : Project,
                     newButton         : NewArgs    => VdomNode,
                     list              : ListArgs   => VdomNode,
+                    leftTop           : VdomNode = EmptyVdom,
                     rightEmpty        : VdomNode,
                     editor            : EditorArgs => VdomNode,
                     initEditor        : (Project, NewState \/ Id) => Option[EditorState],
                     state             : StateSnapshot[State]): VdomNode =
-    Component(SplitScreenCrud.Props(filterDeadOverride, project, newButton, list, rightEmpty, editor, initEditor, state))
+    Component(SplitScreenCrud.Props(
+      filterDeadOverride = filterDeadOverride,
+      project            = project,
+      newButton          = newButton,
+      list               = list,
+      leftTop            = leftTop,
+      rightEmpty         = rightEmpty,
+      editor             = editor,
+      initEditor         = initEditor,
+      state              = state,
+    ))
 
   def initState(newState: NewState): State =
     S(newState, HideDead, S.Right.Empty, S.Right.Empty)
@@ -291,6 +303,7 @@ final class SplitScreenCrud[
 
       val left: VdomNode =
         React.Fragment(
+          p.leftTop,
           <.div(*.topLeft,
             <.div(*.topLeftGrow, newButton),
             <.div(filterDeadButton)),

@@ -54,15 +54,14 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
   final class Backend($: BackendScope[Props, State]) extends OnUnmount {
     import global.cbProjectMetaData
 
-    private val sspCreateContent         = global.sspCreateContent
-    private val sspUpdateConfig          = global.sspUpdateConfig
-    private val sspUpdateConfigE         = global.sspUpdateConfig.map(_.events)
-    private val sspUpdateContent         = global.sspUpdateContent.map(_.events)
-    private val sspProjectNameSet        = global.sspProjectNameSet.map(_.events)
-    private val sspUpdateSavedViews      = global.sspUpdateSavedViews.map(_.events)
-    private val sspUpdateManualIssues    = global.sspUpdateManualIssues
-    private val sspUpdateManualIssuesE   = global.sspUpdateManualIssues.map(_.events)
-    private val sspReqTypeImplicationMod = global.sspReqTypeImplicationMod.map(_.events)
+    private val sspCreateContent       = global.sspCreateContent
+    private val sspUpdateConfig        = global.sspUpdateConfig
+    private val sspUpdateConfigE       = global.sspUpdateConfig.map(_.events)
+    private val sspUpdateContent       = global.sspUpdateContent.map(_.events)
+    private val sspProjectNameSet      = global.sspProjectNameSet.map(_.events)
+    private val sspUpdateSavedViews    = global.sspUpdateSavedViews.map(_.events)
+    private val sspUpdateManualIssues  = global.sspUpdateManualIssues
+    private val sspUpdateManualIssuesE = global.sspUpdateManualIssues.map(_.events)
 
     private val feedbackModal: FeedbackModal = {
       val projectMetadata = global.projectMetadata(initPageData.projectId)
@@ -186,6 +185,9 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     private val fieldConfigAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.fieldConfigAsync)
 
+    private val customIssueTypeConfigAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
+      AsyncFeature.Write.D0.init($ zoomStateL State.customIssueTypeConfigAsync)
+
     private val reqTypeConfigAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.reqTypeConfigAsync)
 
@@ -307,10 +309,6 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
     private val pxUsage: Px[Usage] =
       pxProject.map(new Usage(_, specialRouterCtl))
 
-    private val usageShow =
-      config_old.shared.Usage.Show((filterDead, filter) =>
-        specialRouterCtl.reqTableWithFilter(filterDead, filter()).link(()))
-
     lazy val projectNameAF =
       AsyncFeature.Write.D0[ErrorMsg](
         Reusable.fn((s: AsyncFeature.State.D0[ErrorMsg]) =>
@@ -376,9 +374,16 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
           ).render
 
         case Page.CfgIssues =>
-          config_old.issues.CfgIssues.Props(
-            sspUpdateConfigE, sspReqTypeImplicationMod, global, filterDeadSS, usageShow)
-            .component
+          config.issues.IssueConfig.Props(
+            project = project,
+            pw      = projectWidgets,
+            state   = StateSnapshot.zoomL(State.customIssueTypeConfig)(s).setStateVia($),
+            ssp     = sspUpdateConfig,
+            async   = AsyncFeature.ReadWrite.D0(customIssueTypeConfigAsyncW, s.customIssueTypeConfigAsync),
+            router  = routerCtl,
+            toast   = toast,
+            usage   = usage,
+          ).render
 
         case Page.CfgReqTypes =>
           config.reqtypes.ReqTypeConfig.Props(

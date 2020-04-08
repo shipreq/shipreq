@@ -113,13 +113,14 @@ object ProjectSpaProtocolsTest extends TestSuite {
     "UpdateConfig" - {
       import UpdateConfigCmd._
       "req" - {
-        "CustomIssueTypeUpdate" - {
-          val bin    = BinaryData.fromHex("5945B41D010012030700030750454E44494E470208796F20796F20796F38295653")
-          val expect = (ReqId(18),UpdateConfig.AndReq(CustomIssueTypeUpdate(CustomIssueTypeId(3),CustomIssueTypeValues(HashRefKey("PENDING"),Some("yo yo yo")))))
-          assertRequest(bin, expect)
-        }
 
         "v1.1" - {
+          "CustomIssueTypeUpdate" - {
+            val bin    = BinaryData.fromHex("5945B41D01011203070003024B0750454E44494E47440208796F20796F20796F38295653")
+            val expect = (ReqId(18),UpdateConfig.AndReq(CustomIssueTypeUpdate(CustomIssueTypeId(3),CustomIssueTypeGD(HashRefKey("PENDING"),Some("yo yo yo")))))
+            assertRequest(bin, expect)
+          }
+
           "ApplicableTagCreate" - {
             val ^ = ApplicableTagGD
             val values = ^.nev(

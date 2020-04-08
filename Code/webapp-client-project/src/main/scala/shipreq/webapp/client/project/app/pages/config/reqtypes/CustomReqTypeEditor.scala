@@ -17,15 +17,12 @@ import shipreq.webapp.base.ui.AutosizeTextarea
 import shipreq.webapp.base.ui.semantic.Form
 import shipreq.webapp.client.project.app.Style.{reqTypeConfig => *}
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.widgets.ProjectWidgets
 
 private[reqtypes] object CustomReqTypeEditor {
 
-  final case class Props(subject   : Option[CustomReqTypeId],
-                         filterDead: FilterDead,
+  final case class Props(filterDead: FilterDead,
                          state     : StateSnapshot[State],
                          project   : ProjectConfig,
-                         pw        : ProjectWidgets.NoCtx,
                          enabled   : Enabled,
                         ) {
 

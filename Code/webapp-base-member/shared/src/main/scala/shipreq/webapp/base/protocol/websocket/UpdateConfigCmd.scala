@@ -9,13 +9,13 @@ sealed trait UpdateConfigCmd
 
 object UpdateConfigCmd {
 
-  sealed trait ToModifyCustomIssueTypes                                                            extends UpdateConfigCmd
-  final case class CustomIssueTypeCreate (values: CustomIssueTypeValues)                           extends ToModifyCustomIssueTypes
-  final case class CustomIssueTypeUpdate (id: CustomIssueTypeId, newValues: CustomIssueTypeValues) extends ToModifyCustomIssueTypes
-  final case class CustomIssueTypeDelete (id: CustomIssueTypeId)                                   extends ToModifyCustomIssueTypes
-  final case class CustomIssueTypeRestore(id: CustomIssueTypeId)                                   extends ToModifyCustomIssueTypes
+  sealed trait ToModifyCustomIssueTypes extends UpdateConfigCmd
+  final case class CustomIssueTypeCreate (key: HashRefKey, desc: Option[String])                              extends ToModifyCustomIssueTypes
+  final case class CustomIssueTypeUpdate (id: CustomIssueTypeId, newValues: CustomIssueTypeGD.NonEmptyValues) extends ToModifyCustomIssueTypes
+  final case class CustomIssueTypeDelete (id: CustomIssueTypeId)                                              extends ToModifyCustomIssueTypes
+  final case class CustomIssueTypeRestore(id: CustomIssueTypeId)                                              extends ToModifyCustomIssueTypes
 
-  sealed trait ToModifyReqTypes                                                                            extends UpdateConfigCmd
+  sealed trait ToModifyReqTypes extends UpdateConfigCmd
   final case class CustomReqTypeCreate    (mnemonic   : ReqType.Mnemonic,
                                            name       : String,
                                            description: Option[String],
@@ -25,7 +25,7 @@ object UpdateConfigCmd {
   final case class CustomReqTypeDeleteSoft(id: CustomReqTypeId)                                            extends ToModifyReqTypes
   final case class CustomReqTypeRestore   (id: CustomReqTypeId)                                            extends ToModifyReqTypes
 
-  sealed trait ToModifyFields                                                                                         extends UpdateConfigCmd
+  sealed trait ToModifyFields extends UpdateConfigCmd
   final case class CustomFieldCreateImp (reqTypeId: ReqTypeId , fieldReqTypeRules: FieldReqTypeRules.ForImpField )    extends ToModifyFields
   final case class CustomFieldCreateTag (tagId    : TagGroupId, fieldReqTypeRules: FieldReqTypeRules.ForTagField )    extends ToModifyFields
   final case class CustomFieldCreateText(name     : String    , fieldReqTypeRules: FieldReqTypeRules.ForTextField)    extends ToModifyFields
@@ -47,7 +47,7 @@ object UpdateConfigCmd {
     * Only live values will be accepted. `MakeEvent` will take care of dead data preservation when transforming these
     * commands into events.
     */
-  sealed trait ToModifyTags                                                                                extends UpdateConfigCmd
+  sealed trait ToModifyTags extends UpdateConfigCmd
   final case class ApplicableTagCreate    (                     newValues: ApplicableTagGD.NonEmptyValues) extends ToModifyTags
   final case class ApplicableTagUpdate    (id: ApplicableTagId, newValues: ApplicableTagGD.NonEmptyValues) extends ToModifyTags
   final case class TagGroupCreate         (                     newValues: TagGroupGD.NonEmptyValues)      extends ToModifyTags
@@ -56,15 +56,8 @@ object UpdateConfigCmd {
   final case class TagDelete              (id: TagId)                                                      extends ToModifyTags
   final case class TagRestore             (id: TagId)                                                      extends ToModifyTags
 
-  // ===================================================================================================================
 
-  final case class CustomIssueTypeValues(key : HashRefKey,
-                                         desc: Option[String])
-
-  // ===================================================================================================================
-
-  implicit def univEqCustomIssueTypeValues : UnivEq[CustomIssueTypeValues] = UnivEq.derive
-  implicit def univEq                      : UnivEq[UpdateConfigCmd      ] = UnivEq.derive
+  implicit def univEq: UnivEq[UpdateConfigCmd] = UnivEq.derive
 
   // ===================================================================================================================
   object CodecsV1 {
@@ -75,23 +68,18 @@ object UpdateConfigCmd {
     import shipreq.webapp.base.protocol.binary.v1.Events._
     import shipreq.webapp.base.protocol.binary.v1.Rev1._
 
-    private implicit val picklerCustomIssueTypeValues: Pickler[CustomIssueTypeValues] =
-      new Pickler[CustomIssueTypeValues] {
-        override def pickle(a: CustomIssueTypeValues)(implicit state: PickleState): Unit = {
+    private implicit val picklerCustomIssueTypeCreate: Pickler[CustomIssueTypeCreate] =
+      new Pickler[CustomIssueTypeCreate] {
+        override def pickle(a: CustomIssueTypeCreate)(implicit state: PickleState): Unit = {
           state.pickle(a.key)
           state.pickle(a.desc)
         }
-        override def unpickle(implicit state: UnpickleState): CustomIssueTypeValues = {
+        override def unpickle(implicit state: UnpickleState): CustomIssueTypeCreate = {
           val key  = state.unpickle[HashRefKey]
           val desc = state.unpickle[Option[String]]
-          CustomIssueTypeValues(key, desc)
+          CustomIssueTypeCreate(key, desc)
         }
       }
-
-    // -------------------------------------------------------------------------------------------------------------------
-
-    private implicit val picklerCustomIssueTypeCreate: Pickler[CustomIssueTypeCreate] =
-      transformPickler(CustomIssueTypeCreate.apply)(_.values)
 
     private implicit val picklerCustomIssueTypeUpdate: Pickler[CustomIssueTypeUpdate] =
       new Pickler[CustomIssueTypeUpdate] {
@@ -101,7 +89,7 @@ object UpdateConfigCmd {
         }
         override def unpickle(implicit state: UnpickleState): CustomIssueTypeUpdate = {
           val id        = state.unpickle[CustomIssueTypeId]
-          val newValues = state.unpickle[CustomIssueTypeValues]
+          val newValues = state.unpickle[CustomIssueTypeGD.NonEmptyValues]
           CustomIssueTypeUpdate(id, newValues)
         }
       }

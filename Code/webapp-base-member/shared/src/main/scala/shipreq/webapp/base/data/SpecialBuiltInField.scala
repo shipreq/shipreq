@@ -16,9 +16,9 @@ object SpecialBuiltInField {
     final val name = _name
   }
 
-  sealed abstract trait Always   extends SpecialBuiltInField
-  sealed abstract trait DeadOnly extends SpecialBuiltInField
-  sealed abstract trait FilterOk extends SpecialBuiltInField
+  sealed trait Always   extends SpecialBuiltInField
+  sealed trait DeadOnly extends SpecialBuiltInField
+  sealed trait FilterOk extends SpecialBuiltInField
 
   case object Pubid          extends Instance("ID")              with Always
   case object Code           extends Instance("Code")            with Always

@@ -38,6 +38,7 @@ final case class UnsavedChanges(count    : Int,
         case Location.ProjectName      => "project name"
         case Location.ManualIssues     => "manual issue(s)"
         case Location.FieldConfig      => "field editor"
+        case Location.IssueConfig      => "issue type editor"
         case Location.ReqTypeConfig    => "req type editor"
         case Location.TagConfig        => "tag editor"
       }
@@ -89,6 +90,7 @@ object UnsavedChanges {
     case object ProjectName                           extends Location
     case object ManualIssues                          extends Location
     case object FieldConfig                           extends Location
+    case object IssueConfig                           extends Location
     case object ReqTypeConfig                         extends Location
     case object TagConfig                             extends Location
     final case class Req(id: ReqId)                   extends Location
@@ -219,6 +221,16 @@ object UnsavedChanges {
             case Some(EditorState.TagEditor (s)) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.FieldConfig
             case Some(EditorState.TextEditor(s)) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.FieldConfig
             case _                                                                         => emptyVector
+          }
+        }
+    }
+
+    case object IssueConfig extends Type {
+      override def determine(i: Input) =
+        CallbackTo {
+          i.state.customIssueTypeConfig.right.editorOption match {
+            case Some(s) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.IssueConfig
+            case _                                                 => emptyVector
           }
         }
     }

@@ -42,7 +42,7 @@ object ReqTypeConfigTestDsl {
     (selectReqType(name) >> clickHardDeleteButton >> clickCloseButton).group("Hard-delete reqType: " + name)
 
   def softDeleteReqType(name: String): *.Actions =
-    (selectReqType(name) >> clickHardDeleteButton >> clickCloseButton).group("Soft-delete reqType: " + name)
+    (selectReqType(name) >> clickSoftDeleteButton >> clickCloseButton).group("Soft-delete reqType: " + name)
 
   def restoreReqType(name: String): *.Actions =
     (selectReqType(name) >> clickRestoreButton >> clickCloseButton).group("Restore reqType: " + name)

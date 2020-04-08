@@ -23,6 +23,8 @@ import shipreq.webapp.client.project.widgets.{EditorButtons, ProjectWidgets, Spl
 
 object ReqTypeConfig {
 
+  // Unit because there's only one type of data creatable: ReqType.
+  // New button is just a simple button without a dropdown.
   type NewState = Unit
 
   sealed trait EditorState
@@ -218,11 +220,9 @@ object ReqTypeConfig {
       def customReqTypeEditor(rtOption: Option[CustomReqType], enabled: Enabled) = {
         val lens = editorStateLensForCustom(CustomReqTypeEditor.State.init(rtOption))
         CustomReqTypeEditor.Props(
-          subject    = rtOption.map(_.id),
           filterDead = p.effectiveFilterDead,
           state      = args.state.zoomStateL(lens),
           project    = p.project.config,
-          pw         = p.pw,
           enabled    = enabled,
         ).render
       }

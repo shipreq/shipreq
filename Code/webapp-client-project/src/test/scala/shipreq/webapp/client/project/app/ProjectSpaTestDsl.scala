@@ -16,8 +16,9 @@ import shipreq.webapp.base.test.SampleProject5
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.client.project.app.pages.config.fields.{FieldConfigObs, FieldConfigTestDsl}
+import shipreq.webapp.client.project.app.pages.config.issues.{IssueConfigObs, IssueConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.config.tags.{TagConfigObs, TagConfigTestDsl}
-import shipreq.webapp.client.project.app.pages.config.reqtypes.{ReqTypeConfigObs, ReqTypeConfigTestDsl => CRT}
+import shipreq.webapp.client.project.app.pages.config.reqtypes.{ReqTypeConfigObs, ReqTypeConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.content.issues.{IssuesPageObs, IssuesPageTestDsl => IP}
 import shipreq.webapp.client.project.app.pages.content.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
 import shipreq.webapp.client.project.app.pages.content.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
@@ -51,19 +52,19 @@ object ProjectSpaTestDsl {
 
       val empty: Obs = {
         val e = Left("Chosen page is: " + nav.page)
-        Obs(global.unsafeProject(), nav, e, e, e, e, e, e, e)
+        Obs(global.unsafeProject(), nav, e, e, e, e, e, e, e, e)
       }
 
       nav.page match {
         case Page.Index        => empty.copy(home        = Try(new ProjectHomeObs(inner)))
         case Page.CfgReqTypes  => empty.copy(cfgReqTypes = Try(new ReqTypeConfigObs(inner, confirmJs)))
         case Page.CfgFields    => empty.copy(cfgFields   = Try(new FieldConfigObs(inner)))
+        case Page.CfgIssues    => empty.copy(cfgIssues   = Try(new IssueConfigObs(inner)))
         case Page.CfgTags      => empty.copy(cfgTags     = Try(new TagConfigObs(inner)))
         case Page.ReqTable     => empty.copy(reqTable    = Try(new ReqTableObs(global, inner)))
         case Page.ReqDetail(_) => empty.copy(reqDetail   = Try(new ReqDetailObs(inner, nav)))
         case Page.Issues       => empty.copy(issues      = Try(new IssuesPageObs(inner)))
-        case Page.CfgIssues
-           | Page.ImpGraph     => empty
+        case Page.ImpGraph     => empty
       }
     }
   }
@@ -105,6 +106,7 @@ object ProjectSpaTestDsl {
                  nav        : NavObs,
                  home       : Maybe[ProjectHomeObs],
                  cfgFields  : Maybe[FieldConfigObs],
+                 cfgIssues  : Maybe[IssueConfigObs],
                  cfgReqTypes: Maybe[ReqTypeConfigObs],
                  cfgTags    : Maybe[TagConfigObs],
                  issues     : Maybe[IssuesPageObs],
@@ -125,7 +127,7 @@ object ProjectSpaTestDsl {
       .mapS(TestState.project.get)((a, b) => TestState.project.set(b)(a)) // TODO Add Monocle support
 
   implicit lazy val transformCRT =
-    CRT.*.transformer
+    ReqTypeConfigTestDsl.*.transformer
       .mapR[Ref](_.confirmJs)
       .pmapO[Obs](_.cfgReqTypes)
       .mapS[TestState](_ => ())((s, _) => s)
@@ -154,18 +156,26 @@ object ProjectSpaTestDsl {
       .pmapO[Obs](_.cfgFields)
       .mapS[TestState](_ => ())((s, _) => s)
 
+  implicit lazy val transformIssueConfig =
+    IssueConfigTestDsl.*.transformer
+      .mapR[Ref](_ => ())
+      .pmapO[Obs](_.cfgIssues)
+      .mapS[TestState](_ => ())((s, _) => s)
+
   implicit lazy val transformTagConfig =
     TagConfigTestDsl.*.transformer
       .mapR[Ref](_ => ())
       .pmapO[Obs](_.cfgTags)
       .mapS[TestState](_ => ())((s, _) => s)
 
-  private lazy val invariantsPH          = PH.invariants.lift
-  private lazy val invariantsRT          = RT.invariants.lift
-  private lazy val invariantsRD          = RD.invariants.lift
-  private lazy val invariantsIP          = IP.invariants.lift
-  private lazy val invariantsFieldConfig = FieldConfigTestDsl.invariants.lift
-  private lazy val invariantsTagConfig   = TagConfigTestDsl.invariants.lift
+  private lazy val invariantsPH            = PH.invariants.lift
+  private lazy val invariantsRT            = RT.invariants.lift
+  private lazy val invariantsRD            = RD.invariants.lift
+  private lazy val invariantsIP            = IP.invariants.lift
+  private lazy val invariantsFieldConfig   = FieldConfigTestDsl.invariants.lift
+  private lazy val invariantsReqTypeConfig = ReqTypeConfigTestDsl.invariants.lift
+  private lazy val invariantsIssueConfig   = IssueConfigTestDsl.invariants.lift
+  private lazy val invariantsTagConfig     = TagConfigTestDsl.invariants.lift
 
   private val pageInvariants: *.Invariants =
     *.chooseInvariant("Page invariants")(_.state.page match {
@@ -174,8 +184,10 @@ object ProjectSpaTestDsl {
       case Page.ReqDetail(_) => invariantsRD
       case Page.Issues       => invariantsIP
       case Page.CfgFields    => invariantsFieldConfig
+      case Page.CfgIssues    => invariantsIssueConfig
+      case Page.CfgReqTypes  => invariantsReqTypeConfig
       case Page.CfgTags      => invariantsTagConfig
-      case _                 => *.emptyInvariant
+      case Page.ImpGraph     => *.emptyInvariant
     })
 
   private val invariants: *.Invariants =
@@ -204,13 +216,14 @@ object ProjectSpaTestDsl {
     *.action(name)(_.ref.global.applyTestEventsCB(es: _*).runNow())
       .updateStateBy(i => i.state.copy(project = i.obs.project))
 
-  def liftProjectHomeTests    (p: PH                .*.Plan): *.Plan = p.lift
-  def liftReqTableTests       (p: RT                .*.Plan): *.Plan = p.lift
-  def liftReqDetailTests      (p: RD                .*.Plan): *.Plan = p.lift
-  def liftIssuePageTests      (p: IP                .*.Plan): *.Plan = p.lift
-  def liftReqTypeConfigTests  (p: CRT               .*.Plan): *.Plan = p.lift
-  def liftFieldConfigPageTests(p: FieldConfigTestDsl.*.Plan): *.Plan = p.lift
-  def liftTagConfigPageTests  (p: TagConfigTestDsl  .*.Plan): *.Plan = p.lift
+  def liftProjectHomeTests    (p: PH                  .*.Plan): *.Plan = p.lift
+  def liftReqTableTests       (p: RT                  .*.Plan): *.Plan = p.lift
+  def liftReqDetailTests      (p: RD                  .*.Plan): *.Plan = p.lift
+  def liftIssuePageTests      (p: IP                  .*.Plan): *.Plan = p.lift
+  def liftReqTypeConfigTests  (p: ReqTypeConfigTestDsl.*.Plan): *.Plan = p.lift
+  def liftFieldConfigPageTests(p: FieldConfigTestDsl  .*.Plan): *.Plan = p.lift
+  def liftIssueConfigPageTests(p: IssueConfigTestDsl  .*.Plan): *.Plan = p.lift
+  def liftTagConfigPageTests  (p: TagConfigTestDsl    .*.Plan): *.Plan = p.lift
 
   def testReqTable(action: RT.*.Actions): *.Actions =
     liftReqTableTests(Plan.action(action)).asAction("Test ReqTable")

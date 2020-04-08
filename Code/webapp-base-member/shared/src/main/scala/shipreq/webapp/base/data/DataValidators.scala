@@ -79,10 +79,12 @@ object DataValidators {
     //        eg. #HELLO should match #Hello
     private implicit val equality = Equal.equal[HashRefKey](_.value equalsIgnoreCase _.value)
 
-    /** Validation state (external data) required to validate HashRefKey uniqueness. */
     // DD-19: Hashtag-like refkeys (groupings, incmp) must be unique.
     //        e.g. can't have both a grouping and an incompletion with refkey #X.
-    final case class State(tags: SubState[TagId], customIssues: SubState[CustomIssueTypeId]) {
+    /** Validation state (external data) required to validate HashRefKey uniqueness. */
+    final case class State(tags        : SubState[TagId],
+                           customIssues: SubState[CustomIssueTypeId]) {
+
       val invalidator: Invalidator[HashRefKey] =
         tags.invalidator merge customIssues.invalidator
     }
@@ -93,6 +95,10 @@ object DataValidators {
     }
 
     object SubState {
+
+      def tagIds(subject: Option[TagId], allTagData: () => TraversableOnce[Tag]): SubState[TagId] =
+        SubState(subject, () => allTagData().toIterator.filter(_.keyO.isDefined).map(t => (t.id.some, t.keyO.get)))
+
       def customIssueTypeIds(subject: Option[CustomIssueTypeId], customIssueTypes: CustomIssueTypeIMap): SubState[CustomIssueTypeId] =
         SubState(subject, () => customIssueTypes.valuesIterator.map(t => Some(t.id) -> t.key))
     }
@@ -168,7 +174,13 @@ object DataValidators {
   // ===================================================================================================================
   object customIssueType {
     type State = hashRefKey.State
-    val State = hashRefKey.State
+
+    object State {
+      def fromConfig(subject: Option[CustomIssueTypeId], config: ProjectConfig): State =
+        hashRefKey.State(
+          hashRefKey.SubState.tagIds(None, () => config.tags.tree.valuesIterator.map(_.tag)),
+          hashRefKey.SubState.customIssueTypeIds(subject, config.customIssueTypes))
+    }
 
     def key = hashRefKey.hashRefKey
 
@@ -248,7 +260,7 @@ object DataValidators {
 
       def hashRefKeyState: hashRefKey.State =
         hashRefKey.State(
-          SubState(subject, () => allTagData().toIterator.filter(_.keyO.isDefined).map(t => (t.id.some, t.keyO.get))),
+          SubState.tagIds(subject, allTagData),
           customIssues)
 
       def otherTagData: Iterator[Tag] =

@@ -56,16 +56,15 @@ object MakeEvent {
 
     cmd match {
 
-      case UpdateConfigCmd.CustomIssueTypeCreate(vs) =>
+      case cmd: UpdateConfigCmd.CustomIssueTypeCreate =>
         val id = CustomIssueTypeId(project.idCeilings.customIssueType + 1)
-        import vs._
+        import cmd._
         val values = gdAllValues(CustomIssueTypeGD , "")
         CustomIssueTypeCreate(id, values)
 
       case UpdateConfigCmd.CustomIssueTypeUpdate(id, vs) =>
         project.config.customIssueTypes.attempt(id) toMakeEventResult { cur =>
-          import vs._
-          val vs2 = gdUnequalValues(CustomIssueTypeGD, cur, "")
+          val vs2 = gdUnequalValues2(CustomIssueTypeGD, cur, vs)
           eventIfNonEmpty(vs2)(CustomIssueTypeUpdate(id, _))
         }
 

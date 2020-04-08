@@ -88,6 +88,14 @@ final class Usage(p: Project, router: SpecialRouterCtl) {
     val rc   = router.reqTableWithFilter(fd, Filter.Valid.reqType(id))
     rc.link(())(Usage.render(uses))
   }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  def customIssueTypeLink(id: CustomIssueTypeId, fd: FilterDead): VdomTagOf[html.Anchor] = {
+    val uses = p.atomScan.issueCounts(id)(fd)
+    val rc   = router.reqTableWithFilter(fd, Filter.Valid.issue(id))
+    rc.link(())(Usage.render(uses))
+  }
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
