@@ -38,9 +38,7 @@ object FieldConfig {
     case object Static                                        extends EditorState
   }
 
-  val splitScreenCrud = new SplitScreenCrud[NewState, FieldId, EditorState](
-    rightEmpty = SplitScreenCrud.emptyEditorMessage("field"),
-  )
+  val splitScreenCrud = new SplitScreenCrud[NewState, FieldId, EditorState]
 
   val dropdownButton = new ButtonAndDropdown.Types[NewFieldType]
 
@@ -108,6 +106,9 @@ object FieldConfig {
     splitScreenCrud.initState(NewFieldType.Text)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private val rightEmpty =
+    SplitScreenCrud.emptyEditorMessage("field")
 
   sealed trait EditorType
   object EditorType {
@@ -352,6 +353,7 @@ object FieldConfig {
         project            = p.project,
         newButton          = newButtonProps(p, _).render,
         list               = renderLeft(p, _),
+        rightEmpty         = rightEmpty,
         editor             = renderEditor(p, _),
         initEditor         = (a, b) => Some(initEditor(a, b)),
         state              = p.state,

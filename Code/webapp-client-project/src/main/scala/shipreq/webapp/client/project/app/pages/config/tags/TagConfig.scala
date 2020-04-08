@@ -29,10 +29,7 @@ object TagConfig {
 
   type EditorState = ApplicableTagEditor.State \/ TagGroupEditor.State
 
-  val splitScreenCrud = new SplitScreenCrud[NewState, TagId, EditorState](
-    rightEmpty = SplitScreenCrud.emptyEditorMessage("tag"),
-    //rightEmpty = shipreq.webapp.client.project.widgets.ColourTest.demo,
-  )
+  val splitScreenCrud = new SplitScreenCrud[NewState, TagId, EditorState]
 
   val dropdownButton = new ButtonAndDropdown.Types[NewTagType]
 
@@ -89,6 +86,10 @@ object TagConfig {
     splitScreenCrud.initState(NewTagType.Tag)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private val rightEmpty =
+    SplitScreenCrud.emptyEditorMessage("tag")
+    // shipreq.webapp.client.project.widgets.ColourTest.demo
 
   sealed trait EditorType
   object EditorType {
@@ -297,6 +298,7 @@ object TagConfig {
         project            = p.project,
         newButton          = newButtonProps(p, _).render,
         list               = renderLeft(p, _),
+        rightEmpty         = rightEmpty,
         editor             = renderEditor(p, _),
         initEditor         = (a, b) => Some(initEditor(a, b)),
         state              = p.state,

@@ -31,9 +31,7 @@ object ReqTypeConfig {
     case object Static                                        extends EditorState
   }
 
-  val splitScreenCrud = new SplitScreenCrud[NewState, ReqTypeId, EditorState](
-    rightEmpty = SplitScreenCrud.emptyEditorMessage("req type"),
-  )
+  val splitScreenCrud = new SplitScreenCrud[NewState, ReqTypeId, EditorState]
 
   final case class Props(project: Project,
                          state  : StateSnapshot[State],
@@ -82,6 +80,9 @@ object ReqTypeConfig {
 
   private def editorStateLensForCustom(default: => CustomReqTypeEditor.State): Lens[EditorState, CustomReqTypeEditor.State] =
     Optics.coproductLens[EditorState, CustomReqTypeEditor.State]({ case EditorState.Custom(s) => s }, s => EditorState.Custom(s), default)
+
+  private val rightEmpty =
+    SplitScreenCrud.emptyEditorMessage("req type")
 
   private val newButton =
     Button(
@@ -262,6 +263,7 @@ object ReqTypeConfig {
         project            = p.project,
         newButton          = renderNewButton(p, _),
         list               = renderLeft(p, _),
+        rightEmpty         = rightEmpty,
         editor             = renderEditor(p, _),
         initEditor         = initEditor,
         state              = p.state,

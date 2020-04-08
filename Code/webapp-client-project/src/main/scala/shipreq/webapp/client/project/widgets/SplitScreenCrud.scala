@@ -79,6 +79,7 @@ object SplitScreenCrud {
                                    project           : Project,
                                    newButton         : NewArgs[N] => VdomNode,
                                    list              : ListArgs[Id] => VdomNode,
+                                   rightEmpty        : VdomNode,
                                    editor            : EditorArgs[N, Id, E] => VdomNode,
                                    initEditor        : (Project, N \/ Id) => Option[E],
                                    state             : StateSnapshot[State[N, Id, E]])
@@ -119,15 +120,14 @@ object SplitScreenCrud {
 //    implicit def reusabilityProps[N, I, E]: Reusability[Props[N, I, E]] = Reusability.derive
 //    implicit def reusabilityState[N, I, E]: Reusability[State[N, I, E]] = Reusability.derive
 
-  def emptyEditorMessage(noun: String): VdomNode = {
-//    This is the tag editor.
-//    Create a new tag, or select an existing tag to edit it here.
-    <.div(*.emptyRight,
-      <.div(*.emptyRightHeader),
-      <.div(*.emptyRightBody,
-        <.div(s"This is the $noun editor."),
-        <.div(s"Create a new $noun, or select an existing $noun to edit it here.")))
-  }
+  def emptyEditorMessage(noun: String): VdomNode =
+    ScalaComponent.static("")(
+      <.div(*.emptyRight,
+        <.div(*.emptyRightHeader),
+        <.div(*.emptyRightBody,
+          <.div(s"This is the $noun editor."),
+          <.div(s"Create a new $noun, or select an existing $noun to edit it here.")))
+    )()
 }
 
 
@@ -137,9 +137,7 @@ final class SplitScreenCrud[
     NewState,
     Id         : ClassTag : Reusability,
     EditorState,
-  ](
-    rightEmpty: VdomNode,
-  ) {
+  ] {
 
   import SplitScreenCrud.{State => S}
 
@@ -153,21 +151,16 @@ final class SplitScreenCrud[
                     project           : Project,
                     newButton         : NewArgs    => VdomNode,
                     list              : ListArgs   => VdomNode,
+                    rightEmpty        : VdomNode,
                     editor            : EditorArgs => VdomNode,
                     initEditor        : (Project, NewState \/ Id) => Option[EditorState],
                     state             : StateSnapshot[State]): VdomNode =
-    Component(SplitScreenCrud.Props(filterDeadOverride, project, newButton, list, editor, initEditor, state))
+    Component(SplitScreenCrud.Props(filterDeadOverride, project, newButton, list, rightEmpty, editor, initEditor, state))
 
   def initState(newState: NewState): State =
     S(newState, HideDead, S.Right.Empty, S.Right.Empty)
 
   private val newStateLens = S.newState[NewState, Id, EditorState]
-
-  private val renderRightEmpty: On => VdomNode =
-    On.memo {
-      case On  => <.div(rightEmpty, *.rightOn)
-      case Off => <.div(rightEmpty, *.rightOff)
-    }
 
   sealed class Backend($: BackendScope[Props, Unit]) {
 
@@ -222,6 +215,12 @@ final class SplitScreenCrud[
 
     def render(p: Props): VdomNode = {
       val s = p.state.value
+
+      def renderRightEmpty(on: On): VdomNode =
+        on match {
+          case On  => <.div(p.rightEmpty, *.rightOn)
+          case Off => <.div(p.rightEmpty, *.rightOff)
+        }
 
       val newButtonEnabled: Enabled =
         s.right match {
