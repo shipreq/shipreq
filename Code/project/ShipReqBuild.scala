@@ -101,9 +101,7 @@ object ShipReqBuild {
   lazy val utils =
     project("utils")
       .configure(Common.jvmSettings)
-      .deps(
-        commonsText ++ Nyaya.test ++
-        testScope(twitterEval))
+      .deps(commonsText ++ Nyaya.test)
       .dependsOn(webappBaseTestJvm)
       .settings(
         connectInput in run  := true,
