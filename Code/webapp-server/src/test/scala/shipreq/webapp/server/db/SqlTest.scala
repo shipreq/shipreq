@@ -1,7 +1,9 @@
 package shipreq.webapp.server.db
 
+import japgolly.microlibs.nonempty.NonEmptySet
 import utest._
 import shipreq.base.test.db.TestDb
+import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.server.test.PrepareEnv
 import shipreq.webapp.base.test.UnsafeTypes._
 
@@ -44,10 +46,11 @@ object SqlTest extends TestSuite {
     }
 
     "getProjectEvents" - {
-      "all"   - TestDb.check(GetProjectEventLogic.all)
-      "after" - TestDb.check(GetProjectEventLogic.after)
-      "set1"  - TestDb.check(GetProjectEventLogic.setSubset(Seq(2)))
-      "set2"  - TestDb.check(GetProjectEventLogic.setSubset(Seq(2, 3)))
+      val pid = ProjectId(2)
+      "all"   - TestDb.check(GetProjectEventLogic.all(pid))
+      "after" - TestDb.check(GetProjectEventLogic.after(pid, 2))
+      "set1"  - TestDb.check(GetProjectEventLogic.set(pid, NonEmptySet(2)))
+      "set2"  - TestDb.check(GetProjectEventLogic.set(pid, NonEmptySet(2, 3)))
     }
 
     "saveProjectEvent" - {

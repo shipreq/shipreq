@@ -1,6 +1,5 @@
 package shipreq.base.db
 
-import cats.Apply
 import cats.effect.syntax.all._
 import cats.free.Free
 import cats.implicits._
@@ -8,7 +7,6 @@ import doobie._
 import doobie.free.{connection => C}
 import doobie.implicits._
 import scalaz.{\/, -\/, \/-}
-import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.univeq._
 import java.sql.SQLException
 import java.time.{Duration, Instant}
@@ -88,13 +86,6 @@ object DoobieHelpers {
           HC.prepareStatement(self.sql)(addBatches *> FPS.executeBatch).void
         }
       }
-  }
-
-  def selectByNonEmptySet[A, B](as: NonEmptySet[A], groupSize: Int = 100)
-                               (f: Seq[A] => ConnectionIO[B]): ConnectionIO[List[B]] = {
-    val it = as.iterator.grouped(groupSize).map(f)
-    val h = it.next().map(_ :: Nil)
-    it.foldLeft(h)(Apply[ConnectionIO].map2(_, _)((bs, b) => b :: bs))
   }
 
   def sequentially[A](cmds: TraversableOnce[ConnectionIO[_]], ret: A): ConnectionIO[A] =

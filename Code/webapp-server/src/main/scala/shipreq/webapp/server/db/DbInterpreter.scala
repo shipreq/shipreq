@@ -1,6 +1,7 @@
 package shipreq.webapp.server.db
 
 import cats.free.Free
+import cats.instances.int._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -12,6 +13,7 @@ import java.time.Instant
 import nyaya.gen.Gen
 import org.postgresql.util.PSQLException
 import scala.collection.generic.CanBuildFrom
+import scala.collection.immutable.SortedSet
 import scala.collection.mutable
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.db.DoobieHelpers._
@@ -291,18 +293,20 @@ object DbInterpreter {
     type Row = (EventOrd, Short, Json, Instant)
     type Result = DB.ReadProjectEventError \/ VerifiedEvent.Seq
 
-    def query[A: Write](where: String): Query[A, Row] =
-      Query(s"SELECT ord,type,data,created_at FROM event WHERE $where")
+    def query(where: Fragment): Query0[Row] =
+      (fr"SELECT ord,type,data,created_at FROM event WHERE " ++ where).query[Row]
 
-    val all = query[ProjectId]("project_id=?")
+    def all(projectId: ProjectId): Query0[Row] =
+      query(fr"project_id=$projectId")
 
-    val after = query[(ProjectId, EventOrd)]("project_id=? AND ord>?")
+    def after(projectId: ProjectId, ord: EventOrd): Query0[Row] =
+      query(fr"project_id=$projectId AND ord>$ord")
 
-    def setSubset(ords: Seq[EventOrd]): Query[ProjectId, Row] =
-      query(ords.iterator.map(_.value).mkString("project_id=? AND ord IN (", ",", ")"))
-
-    def set(pid: ProjectId, ords: NonEmptySet[EventOrd]): ConnectionIO[List[List[Row]]] =
-      selectByNonEmptySet(ords)(setSubset(_).toQuery0(pid).to[List])
+    def set(projectId: ProjectId, ords: NonEmptySet[EventOrd]): Query0[Row] = {
+      val ordsC = cats.data.NonEmptySet(ords.head.value, ords.tail.iterator.map(_.value).to[SortedSet])
+      val where = fr"project_id=$projectId AND " ++ Fragments.in(fr"ord", ordsC)
+      query(where)
+    }
 
     type ResultF[A] = Result
 
@@ -337,12 +341,15 @@ object DbInterpreter {
   trait GetProjectEvents extends DB.GetProjectEvents[ConnectionIO] {
     import GetProjectEventLogic._
 
-    override def getProjectEvents(pid: ProjectId, f: EventFilter): ConnectionIO[DB.ReadProjectEventError \/ VerifiedEvent.Seq] =
-      f match {
-        case EventFilter.IncludeAll     => all.toQuery0(pid).to[Iterator].map(_.to(builder))
-        case EventFilter.ExcludeUpTo(o) => after.toQuery0((pid, o)).to[Iterator].map(_.to(builder))
-        case EventFilter.Set(ords)      => set(pid, ords).map(_.iterator.flatten.to(builder))
-      }
+    override def getProjectEvents(pid: ProjectId, f: EventFilter): ConnectionIO[DB.ReadProjectEventError \/ VerifiedEvent.Seq] = {
+      val q: Query0[Row] =
+        f match {
+          case EventFilter.IncludeAll     => all(pid)
+          case EventFilter.ExcludeUpTo(o) => after(pid, o)
+          case EventFilter.Set(ords)      => set(pid, ords)
+        }
+      q.to[Iterator].map(_.to(builder))
+    }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
