@@ -156,7 +156,7 @@ object Dependencies {
   }
 
   object LibJetty {
-    private def ver = "9.4.27.v20200227"
+    private def ver = "9.4.28.v20200408"
     private val mm = MultiModule.java("org.eclipse.jetty", ver)
     private val ws = MultiModule.java("org.eclipse.jetty.websocket", ver)
 
@@ -202,7 +202,7 @@ object Dependencies {
   val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.2")
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.13")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
-  val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.1.0")
+  val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.2.0")
   val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.12")
   val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.12.4")
   val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "3.1.0")
