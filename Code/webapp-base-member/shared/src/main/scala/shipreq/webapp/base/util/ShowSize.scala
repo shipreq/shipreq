@@ -54,7 +54,7 @@ object ShowSize {
     def addChildren(ns: (String, Int)*): Node =
       copy(children = ns.foldLeft(children)((q, t) => q :+ Node(t._1, t._2)))
 
-    def countChildren[A](as: TraversableOnce[A])(f: A => String): Node = {
+    def countChildren[A](as: IterableOnce[A])(f: A => String): Node = {
       val m = scala.collection.mutable.Map.empty[String, Int].withDefaultValue(0)
       as.foreach { a =>
         val k = f(a)
@@ -147,8 +147,8 @@ object ShowSize {
 
   implicit def requirements: ShowSize[Requirements] =
     ShowSize.lift(r =>
-      Node("Requirements", r.reqIterator.size)
-        .countChildren(r.reqIterator) {
+      Node("Requirements", r.reqIterator().size)
+        .countChildren(r.reqIterator()) {
           case _: GenericReq => "GenericReq"
           case _: UseCase    => "UseCase"
         }
@@ -158,7 +158,7 @@ object ShowSize {
   implicit def reqCodeTrie: ShowSize[ReqCode.Trie] =
     ShowSize.lift(trie =>
       Node("Req codes", trie.cataV(0)((q, _, _) => q + 1))
-        .countChildren(trie.flatStream.map(_._2)) {
+        .countChildren(trie.flatIterator().map(_._2)) {
           case _: ReqCode.ActiveReq   => "Codes @ reqs"
           case _: ReqCode.ActiveGroup => "Codes @ groups"
           case _: ReqCode.Inactive    => "Tombstones"

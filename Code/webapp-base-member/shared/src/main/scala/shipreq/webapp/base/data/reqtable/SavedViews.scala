@@ -54,7 +54,7 @@ object SavedView {
         .named(UiText.FieldNames.savedViewName)
         .stateful(_ appendInvalidator _.invalidator)
 
-    final case class State(subject: Option[Id], data: () => TraversableOnce[(Option[Id], Name)]) {
+    final case class State(subject: Option[Id], data: () => IterableOnce[(Option[Id], Name)]) {
       private implicit def equality = Equal.equal[Name](_.value equalsIgnoreCase _.value)
       def invalidator: Invalidator[Name] =
         Uniqueness.optionalKeyWithValue(data)(subject)
@@ -100,7 +100,7 @@ object SavedViews {
     def +(aNonDefault: SavedView): NonEmpty =
       NonEmpty(default, nonDefault + aNonDefault)
 
-    def ++(moreNonDefaults: TraversableOnce[SavedView]): NonEmpty =
+    def ++(moreNonDefaults: IterableOnce[SavedView]): NonEmpty =
       NonEmpty(default, nonDefault ++ moreNonDefaults)
 
     def iterator: Iterator[SavedView] =

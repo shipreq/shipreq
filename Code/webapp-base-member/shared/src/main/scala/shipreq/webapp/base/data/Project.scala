@@ -145,7 +145,7 @@ final case class Project(name         : Project.Name,
     }
 
   /**
-   * Transitive closure of implications going source → target.
+   * Transitive closure of implications going source -> target.
    *
    * Note: Dead reqs are included (reflexively and when direct implications) but are not followed.
    */
@@ -153,7 +153,7 @@ final case class Project(name         : Project.Name,
     implicationTransitiveClosure(Forwards)
 
   /**
-   * Transitive closure of implications going target → source.
+   * Transitive closure of implications going target -> source.
    *
    * Note: Dead reqs are included (reflexively and when direct implications) but are not followed.
    */
@@ -216,7 +216,7 @@ final case class Project(name         : Project.Name,
 
       var first = true
 
-      def go(_ids: TraversableOnce[ReqId], indent: Int): Unit = {
+      def go(_ids: IterableOnce[ReqId], indent: Int): Unit = {
         val indentStr = indentFn(indent)
         MutableArray(_ids).map(id => (id, fmt(id))).sortBy(_._2).array.foreach { case (id, show) =>
           if (first) first = false else sb append '\n'

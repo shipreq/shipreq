@@ -84,11 +84,22 @@ object Sorter {
   }
 
   sealed trait BlankPlacement
+
+  object BlankPlacement {
+
+    val fromSortMethod: SortMethod.ConsiderBlanks => BlankPlacement = {
+      case SortMethod.BlanksThenAsc
+         | SortMethod.BlanksThenDesc => BlanksFirst
+      case SortMethod.AscThenBlanks
+         | SortMethod.DescThenBlanks => BlanksLast
+    }
+
+    @inline implicit def autoBlanksFirst(a: BlanksThenAsc.type): BlankPlacement = BlanksFirst
+    @inline implicit def autoBlanksLast (a: AscThenBlanks.type): BlankPlacement = BlanksLast
+  }
+
   case object BlanksFirst extends BlankPlacement
   case object BlanksLast  extends BlankPlacement
-
-  @inline implicit def autoBlanksFirst(a: BlanksThenAsc.type): BlankPlacement = BlanksFirst
-  @inline implicit def autoBlanksLast (a: AscThenBlanks.type): BlankPlacement = BlanksLast
 
   sealed trait Dir {
     def flip: Dir
@@ -231,10 +242,7 @@ object Sorter {
     SortMethod.resolverIB{ case Asc => s }(_.reverse)
 
   def SorterForSMCB[Setup, Row](f: BlankPlacement => Sorter[Setup, Row]): SorterForSMCB[Setup, Row] =
-    SortMethod.resolverCB({
-      case b@ AscThenBlanks => f(b)
-      case b@ BlanksThenAsc => f(b)
-    })(_.reverse)
+    SortMethod.resolverCB(f compose BlankPlacement.fromSortMethod)(_.reverse)
 
   private def tryModEndo[A, B](l: Optional[A, B])(mod: B => Option[B]): EndoFn[A] =
     a => l.modifyF[Option](mod)(a) getOrElse a
@@ -247,12 +255,12 @@ object Sorter {
         if (i.isEmpty || i.tail.isEmpty)
           None
         else
-          MutableArray(i).sortBySchwartzian(n)(o).iterator.to[Vector].some
+          MutableArray(i).sortBySchwartzian(n)(o).iterator.toVector.some
       tryModEndo(l)(innerSort)
     })
 
-  def consolidateRowModFns[Setup, Row](ss: TraversableOnce[RowModFn[Setup, Row]]): RowModFn[Setup, Row] = {
-    val fns = ss.toIterator.flatMap(a => a).toList
+  def consolidateRowModFns[Setup, Row](ss: IterableOnce[RowModFn[Setup, Row]]): RowModFn[Setup, Row] = {
+    val fns = ss.iterator.flatten.toList
     if (fns.isEmpty)
       None
     else

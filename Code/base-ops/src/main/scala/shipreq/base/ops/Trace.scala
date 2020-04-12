@@ -64,7 +64,7 @@ object Trace {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   object Algebra {
-    def apply[F[_]: Monad](algebras: TraversableOnce[Algebra[F]]): Algebra[F] =
+    def apply[F[_]: Monad](algebras: IterableOnce[Algebra[F]]): Algebra[F] =
       if (algebras.isEmpty)
         off
       else

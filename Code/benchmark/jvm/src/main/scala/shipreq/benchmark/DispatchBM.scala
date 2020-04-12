@@ -1,7 +1,7 @@
 package shipreq.benchmark
 
 import cats.effect.IO
-import scalaz.zio.UIO
+import zio.UIO
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import java.util.concurrent.TimeUnit
@@ -310,7 +310,7 @@ object DispatchBM {
     override def map[A, B](fa: UIO[A])(f: A => B): UIO[B] = fa map f
   }
 
-  val zioRuntime = new scalaz.zio.DefaultRuntime {}
+  val zioRuntime = _root_.zio.Runtime.default
 
   val catsIO     = new Interpreters[IO        ](_.unsafeRunSync())
   val fn0        = new Interpreters[Function0 ](_.apply())

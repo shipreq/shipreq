@@ -79,7 +79,7 @@ object OtherIssueSources {
 
     def renderData[A](title : VdomNode,
                       page  : Routes.Page,
-                      data  : TraversableOnce[A])(
+                      data  : IterableOnce[A])(
                       sortBy: A => String,
                       render: A => TagMod) = {
 

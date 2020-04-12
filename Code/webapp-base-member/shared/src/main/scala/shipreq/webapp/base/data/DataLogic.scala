@@ -133,7 +133,7 @@ final class DataLogic(p: Project) {
     FilterDead.memoLazy { fd =>
       val filter = p.config.reqFilter(fd)
       Memo { fid =>
-        // (source of implication for this column) → (all it transitively implies)
+        // (source of implication for this column) -> (all it transitively implies)
         val f = p.config.fields.custom(fid)
         val srcs: List[(Pubid, Set[ReqId])] =
           p.content.reqs.reqsByType(f.reqTypeId).iterator

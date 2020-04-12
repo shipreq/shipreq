@@ -422,7 +422,7 @@ final case class Tags(tree: TagTree) {
   def filterLiveParents(parents: TagInTree.Parents): TagInTree.Parents =
     parents.iterator.filter(kv => tree.get(kv._1).forall(_.tag.live is Live)).toMap
 
-  def sortTagIds(ids: TraversableOnce[ApplicableTagId]): Iterator[ApplicableTagId] =
+  def sortTagIds(ids: IterableOnce[ApplicableTagId]): Iterator[ApplicableTagId] =
     MutableArray(ids).sortBySchwartzian(needApplicableTag(_).name).iterator
 }
 

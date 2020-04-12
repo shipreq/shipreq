@@ -131,7 +131,7 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
 
   def reqCode(c: ReqCode.Value): Out
 
-  def reqCodes(reqCodes: TraversableOnce[ReqCode.Value]): Out
+  def reqCodes(reqCodes: IterableOnce[ReqCode.Value]): Out
 
   def reqCodeTree(items: Vector[ReqCodeTreeItem]): Out
 

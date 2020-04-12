@@ -118,9 +118,9 @@ object TagConfig {
     private val updateLiveChildren: Reusable[(TagGroupId, Vector[ApplicableTagId]) => Callback] =
       Reusable.byRef { (parent, children) =>
         for {
-          p   ← $.props
+          p   <- $.props
           cmd = UpdateConfigCmd.TagSetLiveChildrenOrder(parent, children)
-          _   ← submitCmd(p, cmd, "Reordered")
+          _   <- submitCmd(p, cmd, "Reordered")
         } yield ()
       }
 

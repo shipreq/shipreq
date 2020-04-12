@@ -58,7 +58,7 @@ final class FusedSorters[Setup, Row](sorters: NonEmptyVector[Sorter[Setup, Row]]
   def row(t: T): Row =
     t(rowIndex).asInstanceOf[Row]
 
-  type Result = TraversableOnce[Row] => MutableArray[Row]
+  type Result = IterableOnce[Row] => MutableArray[Row]
 
   def result(setup: Setup): Result =
     _result(setup, rowModFn :: Nil)
@@ -66,13 +66,13 @@ final class FusedSorters[Setup, Row](sorters: NonEmptyVector[Sorter[Setup, Row]]
   def result(setup: Setup, extraRowModFn: RowModFn[Setup, Row]): Result =
     _result(setup, extraRowModFn :: rowModFn :: Nil)
 
-  private def _result(setup: Setup, rowModFns: TraversableOnce[RowModFn[Setup, Row]]): Result = {
+  private def _result(setup: Setup, rowModFns: IterableOnce[RowModFn[Setup, Row]]): Result = {
     val prepare = prepFn(setup)
     val rowMod  = Sorter.consolidateRowModFns(rowModFns)
     val rowEndo = rowMod.map(_(setup, KeepDir)).getOrElse((r: Row) => r)
 
     rows =>
-      MutableArray(rows.toIterator.map(r => prepare(rowEndo(r))))
+      MutableArray(rows.iterator.map(r => prepare(rowEndo(r))))
         .sort(sortFn.toOrdering)
         .map(row)
   }

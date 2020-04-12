@@ -167,7 +167,7 @@ object UseCaseStepFlowText {
     implicit def univEq[T: UnivEq, S: UnivEq]: UnivEq[TextAndFlow[T, S]] = UnivEq.derive
   }
 
-  def separateTextAndFlow[T, S](es: TraversableOnce[Elem[T, S]])(implicit M: Monoid[T]): TextAndFlow[T, Vector[S]] = {
+  def separateTextAndFlow[T, S](es: IterableOnce[Elem[T, S]])(implicit M: Monoid[T]): TextAndFlow[T, Vector[S]] = {
     var t = M.zero
     var fwd = Vector.empty[S]
     var bck = Vector.empty[S]

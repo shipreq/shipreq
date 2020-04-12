@@ -80,7 +80,7 @@ object NewEditor {
 
   type ForFields[FK <: FieldKey] = FieldKey.Fold[FK, ForEditor]
 
-  type ForEditor[A, Change] = Ctx[A, Change] ⇒ NewEditor
+  type ForEditor[A, Change] = Ctx[A, Change] => NewEditor
 
   def forRow(static: Static, rowKey: RowKey): ForFields[rowKey.FieldKey] =
     static.internal.perRow(rowKey)
@@ -120,7 +120,7 @@ object NewEditor {
       protected def changeArgs: Args
 
       final override def render(p: Permission, as: AsyncState, args: Args): Option[VdomElement] =
-        // Looks like this could block async but not so. Can't go from edit → async → notAllowed.
+        // Looks like this could block async but not so. Can't go from edit -> async -> notAllowed.
         // Unsafety is allowed here because EditorInstance is never Reusable
         p match {
           case Allow => Some(renderImpl(props(args, as).runNow()))

@@ -192,16 +192,16 @@ final case class ReqTypes(custom: IMap[CustomReqTypeId, CustomReqType]) {
         }
     }
 
-  def sortIdsByMnemonic(ids: TraversableOnce[ReqTypeId]): Iterator[ReqType] =
-    sortByMnemonic(ids.toIterator.map(need))
+  def sortIdsByMnemonic(ids: IterableOnce[ReqTypeId]): Iterator[ReqType] =
+    sortByMnemonic(ids.iterator.map(need))
 
-  def sortByMnemonic(rts: TraversableOnce[ReqType]): Iterator[ReqType] =
+  def sortByMnemonic(rts: IterableOnce[ReqType]): Iterator[ReqType] =
     MutableArray(rts).sortBy(_.mnemonic.value).iterator
 
-  def mkStringByIds(ids: TraversableOnce[ReqTypeId], sep: String): String =
-    mkString(ids.toIterator.map(need), sep)
+  def mkStringByIds(ids: IterableOnce[ReqTypeId], sep: String): String =
+    mkString(ids.iterator.map(need), sep)
 
-  def mkString(rts: TraversableOnce[ReqType], sep: String): String =
+  def mkString(rts: IterableOnce[ReqType], sep: String): String =
     sortByMnemonic(rts).map(_.mnemonic.value).mkString(sep)
 }
 

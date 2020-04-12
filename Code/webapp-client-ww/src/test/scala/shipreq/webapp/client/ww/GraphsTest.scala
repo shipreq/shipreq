@@ -376,7 +376,7 @@ object GraphsTest extends TestSuite {
         val GD = GenericReqGD
 
         // br3
-        // fr7 → fr8
+        // fr7 -> fr8
         //     ↘
         //       fr9 -> br2
         // br1 ↗

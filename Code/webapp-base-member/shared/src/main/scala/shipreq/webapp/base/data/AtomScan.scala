@@ -49,9 +49,9 @@ object AtomScan {
     def scanReqText(live : Live,
                     reqId: ReqId,
                     loc  : Location.Text)
-                   (text : TraversableOnce[AnyAtom]): Unit = {
+                   (text : IterableOnce[AnyAtom]): Unit = {
 
-      def go(as: TraversableOnce[AnyAtom]): Unit =
+      def go(as: IterableOnce[AnyAtom]): Unit =
         as foreach {
           case _: Literal         # Literal
              | _: NewLine         # BlankLine
@@ -91,9 +91,9 @@ object AtomScan {
     def scanReqCodeGroupText(live     : Live,
                              reqCodeId: ReqCodeGroupId,
                              loc      : LocationOf.Text.InReqCodeGroup)
-                            (text     : TraversableOnce[AnyAtom]): Unit = {
+                            (text     : IterableOnce[AnyAtom]): Unit = {
 
-      def go(as: TraversableOnce[AnyAtom]): Unit =
+      def go(as: IterableOnce[AnyAtom]): Unit =
         as foreach {
           case _: Literal         # Literal
              | _: NewLine         # BlankLine
@@ -135,7 +135,7 @@ object AtomScan {
 
     // Parse reqs
     val rts = p.config.reqTypes
-    p.content.reqs.reqIterator.foreach {
+    p.content.reqs.reqIterator().foreach {
 
       case r: GenericReq =>
         scanReqText(r.live(rts), r.id, Location.Text.Title)(r.title)
@@ -150,9 +150,9 @@ object AtomScan {
     val customTextFieldText = p.content.reqText
     val liveTextFields      = p.config.liveCustomTextFields.map(_.id).toSet
     for {
-      (tf, textByReqId) ← customTextFieldText
+      (tf, textByReqId) <- customTextFieldText
       live              = Live when (liveTextFields contains tf)
-      (id, txt)         ← textByReqId
+      (id, txt)         <- textByReqId
     } {
       scanReqText(live, id, Location.Text.CustomTextField(tf))(txt.whole)
     }

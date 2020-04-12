@@ -129,7 +129,7 @@ private[tags] object TagGroupEditor {
                           ): TagInTree.Relations = {
     val oldParents = tags.parentsOption(sourceId)
     MMTree.Relations(
-      parents  = parents.allSet.toIterator.map(id => id -> oldParents.get(id).flatten).toMap,
+      parents  = parents.allSet.iterator.map(id => id -> oldParents.get(id).flatten).toMap,
       children = children.groups.toVector ++ children.tags,
     )
   }

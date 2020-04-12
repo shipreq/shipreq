@@ -89,8 +89,8 @@ object DeletionForm {
 
       val commit: Option[Callback] =
         for {
-          reqs   ← NonEmptySet.option(s.selectedReqs.selected)
-          reason ← reasonTextProps.validated.toOption
+          reqs   <- NonEmptySet.option(s.selectedReqs.selected)
+          reason <- reasonTextProps.validated.toOption
         } yield p.perform(DeleteReqs(reqs, Set.empty, reason))
 
       val deleteButton: VdomTag =

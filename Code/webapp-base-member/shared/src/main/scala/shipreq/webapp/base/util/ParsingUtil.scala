@@ -17,7 +17,7 @@ object ParsingUtil {
       // Stack overflow. Yay.
       // var i = ranges.iterator.map(r => CharPredicate(r.start.toChar to r.end.toChar))
       // if (direct.nonEmpty) {
-      //   val c = CharPredicate(direct.toIterator.map(_.toChar).toArray)
+      //   val c = CharPredicate(direct.iterator.map(_.toChar).toArray)
       //   i = Iterator.single(c) ++ i
       // }
       // i.reduce(_ ++ _)

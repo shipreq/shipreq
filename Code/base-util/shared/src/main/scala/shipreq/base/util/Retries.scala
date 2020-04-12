@@ -2,8 +2,9 @@ package shipreq.base.util
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Duration
+import scala.collection.View
 
-final case class Retries(waitTimes: Stream[Duration]) {
+final case class Retries(waitTimes: Iterable[Duration]) {
 
   def apply(attemptsSoFar: Int): Option[Duration] =
     waitTimes.drop(attemptsSoFar).headOption
@@ -28,15 +29,15 @@ final case class Retries(waitTimes: Stream[Duration]) {
 }
 
 object Retries {
-  private def expStream(d: Duration, factor: Double): Stream[Duration] =
+  private def expStream(d: Duration, factor: Double): LazyList[Duration] =
     d #:: expStream((d.toMillis * factor).millis, factor)
 
   def exponentially(d: Duration, factor: Double = 2): Retries =
     apply(expStream(d, factor))
 
   def continually(d: Duration): Retries =
-    apply(Stream.continually(d))
+    apply(View.from(Iterator.continually(d)))
 
   def none: Retries =
-    Retries(Stream.empty)
+    Retries(Nil)
 }

@@ -78,8 +78,8 @@ final class StateEither[S, E, +A](val run: S => Result[S, E, A]) extends AnyVal 
       try run(s)
       catch { case t: Throwable => Failure(e(t)) })
 
-  def foldMapBind[AA >: A, B](bs: TraversableOnce[B])(f: B => AA => StateEither[S, E, AA]): StateEither[S, E, AA] =
-    bs.foldLeft(this: StateEither[S, E, AA])(_ >>= f(_))
+  def foldMapBind[AA >: A, B](bs: IterableOnce[B])(f: B => AA => StateEither[S, E, AA]): StateEither[S, E, AA] =
+    bs.iterator.foldLeft(this: StateEither[S, E, AA])(_ >>= f(_))
 
   def leftMap[E2](f: E => E2): StateEither[S, E2, A] =
     StateEither(s1 => run(s1).leftMap(f))
@@ -190,7 +190,7 @@ object StateEither {
     @inline def getE     [A](f: S => E \/ A)                  : SE[A]       = StateEither getE f
     @inline def retOption[A](o: Option[A], e: => E)           : SE[A]       = StateEither.retOption(o, e)
 
-    def foldMapRun[A](as: TraversableOnce[A])(f: A => SE[Unit]): SE[Unit] =
+    def foldMapRun[A](as: IterableOnce[A])(f: A => SE[Unit]): SE[Unit] =
       // as.foldLeft(nop)(_ >> f(_))
       Util.mapReduce(as, nop)(f, _ >> _)
 

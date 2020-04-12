@@ -65,7 +65,7 @@ object ReqCode {
       NonEmptyVector.force(s.split(sep).iterator.map(Node.applyFn).toVector)
   }
 
-  def debugShowCodes(codes: TraversableOnce[Value]): String =
+  def debugShowCodes(codes: IterableOnce[Value]): String =
     codes.toList
       .map(Value.toStr(_, '.'))
       .sorted

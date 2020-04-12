@@ -2,7 +2,7 @@ package shipreq.webapp.base.text
 
 import japgolly.microlibs.testutil.TestUtilInternals.quoteStringForDisplay
 import java.util.concurrent.atomic.AtomicInteger
-import nyaya.prop._
+import nyaya.prop.{Atom => _, _}
 import nyaya.gen._
 import nyaya.util._
 import nyaya.test._
@@ -62,7 +62,7 @@ object ParsersTest extends TestSuite {
         .toList
 
     val customTextFieldValues =
-      p.content.reqText.values.toStream.flatMap(_.values.toStream)
+      p.content.reqText.values.iterator.flatMap(_.values).toList
 
     def cmp[A <: AnyAtom](t: => String, actual0: Iterable[A], expect0: Iterable[A]): EvalL = {
 
@@ -608,17 +608,17 @@ object ParsersTest extends TestSuite {
 
       "useCaseStepRef" - {
         def testU(id: UseCaseStepId, stepLabel: String): Unit = {
-          val stepLabelUC = wrapString(stepLabel).takeWhile(Character.isDigit).toInt
+          val stepLabelUC = wrapString(stepLabel).takeWhile(Character.isDigit).toString.toInt
           val expect = T.UseCaseStepRef(id)
           for {
-            ucCtx    ← List[Option[ReqTypePos]](None, Some(1), Some(99999))
+            ucCtx    <- List[Option[ReqTypePos]](None, Some(1), Some(99999))
             useCtx   = ucCtx.exists(_.value ==* stepLabelUC)
-            stepStr  = if (useCtx) wrapString(stepLabel).dropWhile(Character.isDigit).self else stepLabel
-            prefix   ← if (useCtx) maybeSpace else List("", "UC-", "uc", " Uc - ")
-            suffix   ← maybeSpace
-            dotNoise ← null :: " ." :: ". " :: "  .  " :: Nil
-            chCase   ← optBool
-            padZero  ← false :: true :: Nil
+            stepStr  = if (useCtx) wrapString(stepLabel).dropWhile(Character.isDigit).toString else stepLabel
+            prefix   <- if (useCtx) maybeSpace else List("", "UC-", "uc", " Uc - ")
+            suffix   <- maybeSpace
+            dotNoise <- null :: " ." :: ". " :: "  .  " :: Nil
+            chCase   <- optBool
+            padZero  <- false :: true :: Nil
           } {
             var s = stepStr
             chCase match {

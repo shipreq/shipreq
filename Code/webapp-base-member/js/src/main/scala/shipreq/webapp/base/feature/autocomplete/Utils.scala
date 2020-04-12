@@ -1,6 +1,7 @@
 package shipreq.webapp.base.feature.autocomplete
 
 import japgolly.microlibs.utils.{Utils => Util}
+import scala.collection.View
 import shipreq.webapp.base.text.GrammarSpec
 import shipreq.webapp.base.data.{Contextualise, Plain}
 import shipreq.webapp.base.jsfacade.TextComplete.Strategy
@@ -47,7 +48,7 @@ object Utils {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  type Query[A] = String => Stream[A]
+  type Query[A] = String => Iterable[A]
 
   /**
    * Prevents auto-complete when the search term is empty.
@@ -58,7 +59,7 @@ object Utils {
   def ignoreEmptyTerm[A](f: Query[A]): Query[A] =
     term =>
       if (term.isEmpty)
-        Stream.empty
+        Nil
       else
         f(term)
 
@@ -68,8 +69,8 @@ object Utils {
   def ignorePerfectMatch[A](query: Query[A])(perfectMatch: (String, A) => Boolean): Query[A] =
     term => {
       val r = query(term)
-      if (r.lengthCompare(1) == 0 && perfectMatch(term, r.head))
-        Stream.empty
+      if (r.sizeCompare(1) == 0 && perfectMatch(term, r.head))
+        Nil
       else
         r
     }
@@ -82,8 +83,8 @@ object Utils {
    *
    * @param options Pre-sorted options.
    */
-  def normalisedStringQuery[A](norm: String => String, cmp: (String, String) => Boolean, options: Stream[String]): Query[String] = {
-    val os = options.map(s => (norm(s), s))
+  def normalisedStringQuery[A](norm: String => String, cmp: (String, String) => Boolean, options: Iterable[String]): Query[String] = {
+    val os = View.from(options.iterator.map(s => (norm(s), s)))
     term => {
       val t2 = norm(term)
       os.filter(o => cmp(o._1, t2)).map(_._2)
@@ -95,7 +96,7 @@ object Utils {
    *
    * @param options Pre-sorted options.
    */
-  def caseInsensitiveContains(options: Stream[String]): Query[String] =
+  def caseInsensitiveContains(options: Iterable[String]): Query[String] =
     ignorePerfectMatchStr(
       normalisedStringQuery(_.toLowerCase, _ contains _, options))
 
@@ -104,7 +105,7 @@ object Utils {
    *
    * @param options Pre-sorted options.
    */
-  def caseInsensitiveStartsWith(options: Stream[String]): Query[String] =
+  def caseInsensitiveStartsWith(options: Iterable[String]): Query[String] =
     ignorePerfectMatchStr(
       normalisedStringQuery(_.toLowerCase, _ startsWith _, options))
 }

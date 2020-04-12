@@ -32,8 +32,8 @@ object HomeSpaLogic {
     val events = InitProjectEventV :+ e2
 
     for {
-      pid ← db.createProject(userId, events, p2)
-      pmd ← db.getProjectMetaData(pid)
+      pid <- db.createProject(userId, events, p2)
+      pmd <- db.getProjectMetaData(pid)
     } yield pmd.get
   }
 

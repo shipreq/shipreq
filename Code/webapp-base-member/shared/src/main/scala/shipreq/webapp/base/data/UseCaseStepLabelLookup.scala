@@ -78,11 +78,11 @@ object UseCaseStepLabelLookup {
     private val unique: Map[String, UseCaseStepId] = {
       var m = Map.empty[String, UseCaseStepId]
       for {
-        uc          ← reqs.getUseCaseByPos(ucPos)
-        field       ← StaticField.useCaseStepTrees
+        uc          <- reqs.getUseCaseByPos(ucPos)
+        field       <- StaticField.useCaseStepTrees
         steps       = field.useCaseSteps.get(uc)
         treeFilter  = field.treeFilterAll(steps.tree)
-        (loc, step) ← steps.tree.subtreeLocAndValueIterator(treeFilter, (_, _))
+        (loc, step) <- steps.tree.subtreeLocAndValueIterator(treeFilter, (_, _))
       } {
         val partialLoc = steps.partialLocs.forward(loc)
         val id         = step.id

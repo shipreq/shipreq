@@ -168,18 +168,18 @@ object FilterAlgebra {
 
           // Keep FilterEditor pxAutoComplete in sync with below
           (tryL orElse tryR, attr) match {
-            case (Some(\/-(f: CustomField))                  , Blank | NotApplicable) => \/-(Valid(FieldProp(\/-(f.id), attr)))
-            case (Some(\/-(f: CustomField.Tag))              , DefaultInUse         ) => \/-(Valid(FieldProp(\/-(f.id), attr)))
-            case (Some(\/-(_: CustomField.Text))             , DefaultInUse         ) => -\/("Text fields don't have defaults.")
-            case (Some(\/-(_: CustomField.Implication))      , DefaultInUse         ) => -\/("Implication fields don't have defaults.")
-            case (Some(-\/(f@ Title))                        , _                    ) => blankOnly(-\/(f), f.name)
-            case (Some(\/-(f@ StaticField.OtherTags))        , _                    ) => blankOnly(\/-(f), f.name)
-            case (Some(\/-(f@ StaticField.AllTags))          , _                    ) => blankOnly(\/-(f), f.name)
-            case (Some(\/-(f@ StaticField.NormalAltStepTree)), _                    ) => noDefault(\/-(f), f.name)
-            case (Some(\/-(f@ StaticField.ExceptionStepTree)), _                    ) => noDefault(\/-(f), f.name)
-            case (Some(\/-(StaticField.ImplicationGraph))    , _                    )
-               | (Some(\/-(StaticField.StepGraph))           , _                    ) => -\/(s"$fieldName can't be used here.")
-            case (None                                       , _                    ) => -\/(s"Unknown field: '$fieldName'")
+            case (Some(\/-(f: CustomField))                       , Blank | NotApplicable) => \/-(Valid(FieldProp(\/-(f.id), attr)))
+            case (Some(\/-(f: CustomField.Tag))                   , DefaultInUse         ) => \/-(Valid(FieldProp(\/-(f.id), attr)))
+            case (Some(\/-(_: CustomField.Text))                  , DefaultInUse         ) => -\/("Text fields don't have defaults.")
+            case (Some(\/-(_: CustomField.Implication))           , DefaultInUse         ) => -\/("Implication fields don't have defaults.")
+            case (Some(-\/(f: Title.type))                        , _                    ) => blankOnly(-\/(f), f.name)
+            case (Some(\/-(f: StaticField.OtherTags.type))        , _                    ) => blankOnly(\/-(f), f.name)
+            case (Some(\/-(f: StaticField.AllTags.type))          , _                    ) => blankOnly(\/-(f), f.name)
+            case (Some(\/-(f: StaticField.NormalAltStepTree.type)), _                    ) => noDefault(\/-(f), f.name)
+            case (Some(\/-(f: StaticField.ExceptionStepTree.type)), _                    ) => noDefault(\/-(f), f.name)
+            case (Some(\/-(StaticField.ImplicationGraph))         , _                    )
+               | (Some(\/-(StaticField.StepGraph))                , _                    ) => -\/(s"$fieldName can't be used here.")
+            case (None                                            , _                    ) => -\/(s"Unknown field: '$fieldName'")
           }
         }
     }

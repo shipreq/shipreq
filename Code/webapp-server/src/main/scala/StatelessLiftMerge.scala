@@ -84,7 +84,7 @@ final case class StatelessLiftMerge(self: LiftSession) extends AnyVal {
     def waitUntilSnippetsDone() {
       val myMillis = millis
       snippetHashs.synchronized {
-        if (myMillis >= waitUntil || snippetHashs.isEmpty || !snippetHashs.values.toIterator.contains(Empty)) ()
+        if (myMillis >= waitUntil || snippetHashs.isEmpty || !snippetHashs.values.iterator.contains(Empty)) ()
         else {
           snippetHashs.wait(waitUntil - myMillis)
           waitUntilSnippetsDone()
@@ -191,7 +191,7 @@ final case class StatelessLiftMerge(self: LiftSession) extends AnyVal {
                                   e.prefix == "lift_deferred" =>
                     val deferredNodes: Seq[NodesAndEventJs] =
                       for {
-                        idAttribute <- e.attributes("id").take(1)
+                        idAttribute <- e.attributes("id").take(1).toSeq
                         id = idAttribute.text
                         nodes <- processedSnippets.get(id)
                       } yield {

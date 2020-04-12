@@ -14,9 +14,9 @@ object RandomReqTableData {
 
   def view(p: Project, fd: FilterDead, allowFilter: Boolean): Gen[View] =
     for {
-      cs     ← visibleColumns(p)
-      order  ← sortCriteria(cs)
-      filter ← if (allowFilter) RandomData.filter.valid.forProject(p).option else noFilter
+      cs     <- visibleColumns(p)
+      order  <- sortCriteria(cs)
+      filter <- if (allowFilter) RandomData.filter.valid.forProject(p).option else noFilter
     } yield View(cs, order, fd, filter)
 
 }

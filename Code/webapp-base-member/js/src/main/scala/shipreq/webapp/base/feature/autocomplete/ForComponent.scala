@@ -59,11 +59,11 @@ object ForComponent {
 
     final def autoCompleteUpdate(implicit ac: AutoCompletable[D]): Callback =
       for {
-        prev ← CallbackTo(textCompletePrev)
-        next ← autoCompleteCtx.asCallback
-        same = prev ==* next
-        _    ← (autoCompleteUnmount >> autoCompleteMount).unless(same)
-        _    ← Callback.traverseOption(next)(ctx => addEventListeners(ctx.dom))
+        prev <- CallbackTo(textCompletePrev)
+        next <- autoCompleteCtx.asCallback
+        same  = prev ==* next
+        _    <- (autoCompleteUnmount >> autoCompleteMount).unless(same)
+        _    <- Callback.traverseOption(next)(ctx => addEventListeners(ctx.dom))
       } yield {
         textCompletePrev = next
         if (hideNext) {

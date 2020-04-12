@@ -5,7 +5,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Iso
 import scalaz.{-\/, Equal, \/, \/-}
 import scalaz.std.string.stringInstance
-import scalaz.std.stream._
+import scalaz.std.list._
 import scalaz.std.vector._
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.ScalaExt._
@@ -89,15 +89,15 @@ object DataValidators {
         tags.invalidator merge customIssues.invalidator
     }
 
-    final case class SubState[Id: Equal](subject: Option[Id], data: () => TraversableOnce[(Option[Id], HashRefKey)]) {
+    final case class SubState[Id: Equal](subject: Option[Id], data: () => IterableOnce[(Option[Id], HashRefKey)]) {
       def invalidator: Invalidator[HashRefKey] =
         Uniqueness.optionalKeyWithValue(data)(subject)
     }
 
     object SubState {
 
-      def tagIds(subject: Option[TagId], allTagData: () => TraversableOnce[Tag]): SubState[TagId] =
-        SubState(subject, () => allTagData().toIterator.filter(_.keyO.isDefined).map(t => (t.id.some, t.keyO.get)))
+      def tagIds(subject: Option[TagId], allTagData: () => IterableOnce[Tag]): SubState[TagId] =
+        SubState(subject, () => allTagData().iterator.filter(_.keyO.isDefined).map(t => (t.id.some, t.keyO.get)))
 
       def customIssueTypeIds(subject: Option[CustomIssueTypeId], customIssueTypes: CustomIssueTypeIMap): SubState[CustomIssueTypeId] =
         SubState(subject, () => customIssueTypes.valuesIterator.map(t => Some(t.id) -> t.key))
@@ -119,7 +119,7 @@ object DataValidators {
   object reqType {
     import Grammar.{reqTypeMnemonic => G}
 
-    final case class State(subject: Option[CustomReqTypeId], allData: () => TraversableOnce[CustomReqType]) {
+    final case class State(subject: Option[CustomReqTypeId], allData: () => IterableOnce[CustomReqType]) {
       def otherData: Iterator[CustomReqType] =
         excludeOptionalKey(subject, allData())(_.id)
 
@@ -196,7 +196,7 @@ object DataValidators {
   // ===================================================================================================================
   object field {
 
-    final case class State(subject: Option[CustomFieldId], allData: () => TraversableOnce[CustomField]) {
+    final case class State(subject: Option[CustomFieldId], allData: () => IterableOnce[CustomField]) {
       def otherData: Iterator[CustomField] =
         excludeOptionalKey(subject, allData())(_.id)
 
@@ -254,7 +254,7 @@ object DataValidators {
     import hashRefKey.SubState
 
     final case class State(subject     : Option[TagId],
-                           allTagData  : () => TraversableOnce[Tag],
+                           allTagData  : () => IterableOnce[Tag],
                            customIssues: SubState[CustomIssueTypeId],
                            reqTypes    : ReqTypes) {
 
@@ -368,26 +368,26 @@ object DataValidators {
     val valueAndNodes: Validator[Value, Value, Value] =
       value.stateless.unnamed.mapAuditor(_.appendInvalidator(validateNodes))
 
-    private def valueCorrector: Corrector[String, Stream[String]] =
+    private def valueCorrector: Corrector[String, List[String]] =
       Corrector(
         code => {
           val c1 = TextMod.noWhitespace(code)
           val c2 = c1.split('.').map(node.unnamed.corrector.live).mkString(".")
           Util.fixBeforeAfter(c1, c2)(_ endsWith ".", _ + ".")
         },
-        G.nodeSeqFormat.stream,
+        G.nodeSeqFormat.list,
         G.nodeSeqFormat.merge)
 
-    private def stringsToNodes: Auditor[Stream[String], Stream[Node]] =
+    private def stringsToNodes: Auditor[List[String], List[Node]] =
       Auditor.traverse(node.unnamed.apply)
 
-    private def nodesToValue: Auditor[Stream[Node], Value] =
+    private def nodesToValue: Auditor[List[Node], Value] =
       V.auditor.optionDefined[Value].contramap(NonEmptyVector option _.toVector)
 
-    private def stringsToValue: Auditor[Stream[String], Value] =
+    private def stringsToValue: Auditor[List[String], Value] =
       stringsToNodes.andThen(nodesToValue)
 
-    val code: Composite.Stateful[State, String, Stream[String], Value] =
+    val code: Composite.Stateful[State, String, List[String], Value] =
       value.map(valueCorrector.withAuditor(stringsToValue) andThen _)
 
     /** Validate a set of ReqCodes. Each code should already be validated. */

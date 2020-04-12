@@ -7,7 +7,7 @@ import shipreq.base.util.univeq._
 package object data {
 
   // ----------------------------------------------------------------------------------------------
-  // Data → ID relationship & access
+  // Data -> ID relationship & access
 
   trait DataId[D] {
     type I
@@ -17,7 +17,7 @@ package object data {
     final def pairWithId(d: D): (I, D) =
       (id(d), d)
 
-    final def mapById(ds: Traversable[D])(implicit ev: UnivEq[I]): Map[I, D] =
+    final def mapById(ds: Iterable[D])(implicit ev: UnivEq[I]): Map[I, D] =
       ds.foldLeft(UnivEq.emptyMap[I, D])(_ + pairWithId(_))
 
     final def emptyIMap(implicit ev: UnivEq[I]) =

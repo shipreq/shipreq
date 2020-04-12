@@ -150,9 +150,9 @@ object PublicSpaLogic extends HasLogger {
             )
 
           for {
-            result ← main
+            result <- main
             secRes = result.fold(_ => Security.Result.Failure, _._2)
-            _      ← metrics.securityEvent(Security.Event.Register1, secRes)
+            _      <- metrics.securityEvent(Security.Event.Register1, secRes)
           } yield result.map(_._1)
         }
 

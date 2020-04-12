@@ -163,7 +163,7 @@ final class ReqDetailObs($: DomZipperJs, val nav: NavObs) {
       stepRows.reduce(_ ++ _)
 
     private def getTailStepRow(rows: Vector[StepRow]): Option[StepRow] = {
-      val tailStepRows = rows.toIterator.zipWithIndex.filter(_._1.isTailStepRow).toList
+      val tailStepRows = rows.iterator.zipWithIndex.filter(_._1.isTailStepRow).toList
       tailStepRows match {
         case Nil => None
         case (row, i) :: Nil =>

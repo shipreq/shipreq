@@ -11,13 +11,13 @@ object UtilTest extends TestSuite {
     "partitionConsecutive" - {
       def test(in: Int*)(a: Int*)(b: Int*) =
         assertEq(Util.partitionConsecutive(in.toList), (a.toList, b.toList))
-      * - test()()()
-      * - test(3)(3)()
-      * - test(3, 4)(3, 4)()
-      * - test(3, 5)(3)(5)
-      * - test(3, 5, 6)(3)(5, 6)
-      * - test(3, 4, 6)(3, 4)(6)
-      * - test(3, 4, 5, 6)(3, 4, 5, 6)()
+      "1" - test()()()
+      "2" - test(3)(3)()
+      "3" - test(3, 4)(3, 4)()
+      "4" - test(3, 5)(3)(5)
+      "5" - test(3, 5, 6)(3)(5, 6)
+      "6" - test(3, 4, 6)(3, 4)(6)
+      "7" - test(3, 4, 5, 6)(3, 4, 5, 6)()
     }
 
     "separateByWhitespaceOrCommas" - {

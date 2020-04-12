@@ -1,25 +1,25 @@
 package shipreq.base.util
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import scala.collection.generic.CanBuildFrom
+import scala.collection.Factory
 
 final class OptionalBoolFn[A](val value: Option[A => Boolean]) extends AnyVal {
 
   def apply(a: A): Boolean =
     value.fold(true)(_(a))
 
-  def collection[C[x] <: Traversable[x], B](cb: C[B])(a: B => A)(implicit cbf: CanBuildFrom[C[B], B, C[B]]): C[B] =
+  def collection[C[x] <: Iterable[x], B](cb: C[B])(a: B => A)(implicit cbf: Factory[B, C[B]]): C[B] =
     value.fold(cb) { f =>
-      val b = cbf(cb)
-      b ++= cb.toIterator.filter(f compose a)
+      val b = cbf.newBuilder
+      b ++= cb.iterator.filter(f compose a)
       b.result()
     }
 
   def iterator[B](bs: Iterator[B])(a: B => A): Iterator[B] =
     value.fold(bs)(f => bs.filter(f compose a))
 
-  def exists(as: TraversableOnce[A]): Boolean =
-    value.fold(as.nonEmpty)(as.exists)
+  def exists(as: IterableOnce[A]): Boolean =
+    value.fold(as.iterator.nonEmpty)(as.iterator.exists)
 
   def toFn: A => Boolean =
     value getOrElse OptionalBoolFn.alwaysTrue

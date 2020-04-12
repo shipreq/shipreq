@@ -71,12 +71,12 @@ object OpsEndpoints extends HasLogger {
     override def sendMail(emailAddrStr: String) =
       UserValidators.emailAddr.named(emailAddrStr).onValid(emailAddr =>
         for {
-          token     ← randomToken
-          now       ← svr.now
+          token     <- randomToken
+          now       <- svr.now
           subj      = "ShipReq send-mail test"
           body      = s"Token: $token\nIssued: ${now.toStringIso8601}"
           msg       = Task.SendDiagEmail(emailAddr.toTaskman, subj, body)
-          r         ← measureDuration(taskman.submit(msg))
+          r         <- measureDuration(taskman.submit(msg))
         } yield \/-(SendMailResult(r._1, r._2, token))
       )
 

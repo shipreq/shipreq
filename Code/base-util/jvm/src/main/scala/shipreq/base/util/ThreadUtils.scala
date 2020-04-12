@@ -26,7 +26,7 @@ object ThreadUtils {
   def newThreadFactory(groupName: String): ThreadFactory = {
     val group  = new ThreadGroup(groupName)
     val count  = new AtomicInteger(0)
-    val prefix = group + "-thread-"
+    val prefix = groupName + "-thread-"
     new ThreadFactory {
       override def newThread(r: Runnable) = {
         val name = prefix + count.incrementAndGet()

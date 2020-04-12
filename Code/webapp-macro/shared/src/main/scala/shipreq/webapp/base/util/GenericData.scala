@@ -1,7 +1,7 @@
 package shipreq.webapp.base.util
 
 import japgolly.microlibs.nonempty._
-import scala.collection.TraversableOnce
+import scala.collection.IterableOnce
 import shipreq.base.util.univeq._
 import scalaz.{Equal, Order}
 import shipreq.base.util.IMap
@@ -67,7 +67,7 @@ abstract class GenericData { self =>
   def values(vs: Value*): Values =
     emptyValues ++ vs
 
-  def values(vs: TraversableOnce[Value]): Values =
+  def values(vs: IterableOnce[Value]): Values =
     emptyValues ++ vs
 
   def nev(v1: Value, vn: Value*): NonEmptyValues =
@@ -115,7 +115,7 @@ object GenericData {
     def addValue(v: gd.Value): Unit =
       _values += v
 
-    def addValues(vs: TraversableOnce[gd.Value]): Unit =
+    def addValues(vs: IterableOnce[gd.Value]): Unit =
       _values ++= vs
 
     def addIfChanged(a: gd.Attr)(oldValue: a.Data, newValue: a.Data)(implicit e: Equal[a.Data]): Unit =

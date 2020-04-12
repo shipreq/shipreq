@@ -194,16 +194,16 @@ trait ApplyContentEvent {
         Vector.empty
 
       e => for {
-        rt      ← needLiveCustomReqType(e.rt)
-        reqData ← SE.get(_.content.reqs)
+        rt      <- needLiveCustomReqType(e.rt)
+        reqData <- SE.get(_.content.reqs)
         id      = e.id
         title   = ^.Title.get(e.vs).fold(emptyTitle)(_.value.whole)
         pp      = reqData.pubids.allocC(rt.id)(id)
         req     = GenericReq(id, pp._2, title, Live)
-        _       ← grIMap.create(req)
-        _       ← Project.pubidRegister set pp._1
-        _       ← foreachValue(id, e.vs)
-        _       ← updateReqIdCeiling(id)
+        _       <- grIMap.create(req)
+        _       <- Project.pubidRegister set pp._1
+        _       <- foreachValue(id, e.vs)
+        _       <- updateReqIdCeiling(id)
       } yield ()
     }
 
@@ -245,7 +245,7 @@ trait ApplyContentEvent {
         _.content.reqs.useCases.stepIndex.contains(id) ==* expectToExist,
         show(id) + (if (expectToExist) " not found." else " already exists.")))
 
-    def ensureStepsExist(_ids: => Traversable[UseCaseStepId]): SE[Unit] =
+    def ensureStepsExist(_ids: => Iterable[UseCaseStepId]): SE[Unit] =
       whenUntrusted(SE.testO { p =>
         val si = p.content.reqs.useCases.stepIndex
         val ids = _ids
@@ -306,11 +306,11 @@ trait ApplyContentEvent {
         _       <- ensureStepDoesntExist(e.stepId)
         id      = e.id
         title   = ^.Title.get(e.vs).fold(Text.UseCaseTitle.empty)(_.value.whole)
-        pp      ← SE get (_.content.reqs.pubids allocUC id)
+        pp      <- SE get (_.content.reqs.pubids allocUC id)
         uc      = UseCase.empty(id, pp._2.pos, title, e.stepId)
-        _       ← ucIMap.create(uc)
-        _       ← postAdd(pp._1, id, e.stepId)
-        _       ← foreachValue(id, e.vs)
+        _       <- ucIMap.create(uc)
+        _       <- postAdd(pp._1, id, e.stepId)
+        _       <- foreachValue(id, e.vs)
       } yield ()
     }
 
@@ -331,11 +331,11 @@ trait ApplyContentEvent {
         ucIMap addOrUpdate tree.modify(_ append step)(uc)
 
       for {
-        _  ← ensureStepDoesntExist(step.id)
-        uc ← ucIMap.need(e.ucId)
-        _  ← ensureLiveReq(uc)
-        _  ← e.at.location.fold(append(uc))(insert(_, uc))
-        _  ← postAddStep(e.ucId, e.id, e.field)
+        _  <- ensureStepDoesntExist(step.id)
+        uc <- ucIMap.need(e.ucId)
+        _  <- ensureLiveReq(uc)
+        _  <- e.at.location.fold(append(uc))(insert(_, uc))
+        _  <- postAddStep(e.ucId, e.id, e.field)
       } yield ()
     }
 
@@ -386,15 +386,15 @@ trait ApplyContentEvent {
       def getFlow(values: UseCaseStepGD.Values, a: UseCaseStepGD.Attr {type Data = SetDiff.NE[UseCaseStepId]}): SetDiff[UseCaseStepId] =
         a.get(values).fold(noFlow)(_.value)
 
-      def updateFlow(id: UseCaseStepId, flow_← : SetDiff[UseCaseStepId], flow_→ : SetDiff[UseCaseStepId]): SE[Unit] =
-        if (flow_←.isEmpty && flow_→.isEmpty)
+      def updateFlow(id: UseCaseStepId, flow_<- : SetDiff[UseCaseStepId], flow_-> : SetDiff[UseCaseStepId]): SE[Unit] =
+        if (flow_<-.isEmpty && flow_->.isEmpty)
           SE.nop
         else
-          ensureStepsExist(flow_→.allValues ++ flow_←.allValues) >>
+          ensureStepsExist(flow_->.allValues ++ flow_<-.allValues) >>
           StepFlowUni.modify { f0 =>
             var f = f0
-            f = flow_→.applyToMultimapValues(f)(id)
-            f = flow_←.applyToMultimapKeys(f)(id)
+            f = flow_->.applyToMultimapValues(f)(id)
+            f = flow_<-.applyToMultimapKeys(f)(id)
             f
           }
 
@@ -505,13 +505,13 @@ trait ApplyContentEvent {
     def needCode(id: ReqCodeId): SE[Value] =
       SE(p => optionGetR(p, p.content.reqCodes.getReqCode(id), s"${show(id)} not found."))
 
-    def needApCodes[A](ids: Traversable[ApReqCodeId], f: (ApReqCodeId, Value) => A): SE[Vector[A]] =
+    def needApCodes[A](ids: Iterable[ApReqCodeId], f: (ApReqCodeId, Value) => A): SE[Vector[A]] =
       needCodes(ids)(_.content.reqCodes.apReqCodesById.get, f)
 
-    def needCodeGroups[A](ids: Traversable[ReqCodeGroupId], f: (ReqCodeGroupId, Value) => A): SE[Vector[A]] =
+    def needCodeGroups[A](ids: Iterable[ReqCodeGroupId], f: (ReqCodeGroupId, Value) => A): SE[Vector[A]] =
       needCodes(ids)(_.content.reqCodes.reqCodeGroupsById.get, f)
 
-    def needCodes[I <: ReqCodeId, A](ids: Traversable[I])
+    def needCodes[I <: ReqCodeId, A](ids: Iterable[I])
                                     (getFn: Project => I => Option[Value], f: (I, Value) => A): SE[Vector[A]] = {
       SE { p =>
         val get = getFn(p)
@@ -635,7 +635,7 @@ trait ApplyContentEvent {
         } yield inactivateReq(t, v, a, remember(a.id))
       )
 
-    def inactivateReqsByIdT(t: Trie, ids: Traversable[ApReqCodeId], remember: ReqCodeId => Boolean, validateTarget: ActiveReq => SE[Unit]): SE[Trie] =
+    def inactivateReqsByIdT(t: Trie, ids: Iterable[ApReqCodeId], remember: ReqCodeId => Boolean, validateTarget: ActiveReq => SE[Unit]): SE[Trie] =
       needApCodes(ids, (_, v) => v) >>= (vs =>
         inactivateReqsByCodeT(t, vs, remember, validateTarget))
 
@@ -660,7 +660,7 @@ trait ApplyContentEvent {
       putInactive(trie, code, d2)
     }
 
-    def inactivateGroupsByIdT(t: Trie, ids: Traversable[ReqCodeGroupId], remember: Boolean): SE[Trie] =
+    def inactivateGroupsByIdT(t: Trie, ids: Iterable[ReqCodeGroupId], remember: Boolean): SE[Trie] =
       needCodeGroups(ids, (_, v) => v) >>= (vs =>
         inactivateGroupsByCodeT(t, vs, remember))
 
@@ -815,14 +815,14 @@ trait ApplyContentEvent {
 
     def applyReqCodesPatch(e: ReqCodesPatch): SE[Unit] =
       for {
-        p    ← SE.get
+        p    <- SE.get
         refd = p.atomScan.codeRefs
         keep = e.add.values.foldLeft(refd)(_ -- _)
         t0   = p.content.reqCodes.trie
-        t1   ← inactivateReqsByIdT(t0, e.remove, keep.contains, ensureActiveReqIs(e.id))
-        t2   ← restoreToReqByIdsT(t1, e.id, e.restore)
-        t3   ← addAllT(t2, addCodesToReq(e.id, e.add))
-        _    ← Project.reqCodeTrie set t3
+        t1   <- inactivateReqsByIdT(t0, e.remove, keep.contains, ensureActiveReqIs(e.id))
+        t2   <- restoreToReqByIdsT(t1, e.id, e.restore)
+        t3   <- addAllT(t2, addCodesToReq(e.id, e.add))
+        _    <- Project.reqCodeTrie set t3
       } yield ()
   }
 
@@ -836,33 +836,33 @@ trait ApplyContentEvent {
     def applyCreate(e: CodeGroupCreate): SE[Unit] = {
       implicit val vs = e.vs
       for {
-        c ← GD.need(^.Code)
+        c <- GD.need(^.Code)
         t = GD.want(^.Title)(Vector.empty)
         g = LiveCodeGroup(e.id, t)
-        _ ← addOne(AddGroup(c, Unvalidated, g))
+        _ <- addOne(AddGroup(c, Unvalidated, g))
       } yield ()
     }
 
     private def updateGroupCode(id: ReqCodeId, newCode: ReqCode.Value): SE[Unit] =
       for {
-        t  ← getTrie
-        v  ← needCode(id)
-        d  ← needData(t, v)
-        ag ← needActiveGroup(d, v)
+        t  <- getTrie
+        v  <- needCode(id)
+        d  <- needData(t, v)
+        ag <- needActiveGroup(d, v)
         t2 = inactivateGroup(t, v, ag, false)
-        t3 ← addOneT(t2, AddGroup(newCode, Unvalidated, ag.group))
-        _  ← Project.reqCodeTrie set t3
+        t3 <- addOneT(t2, AddGroup(newCode, Unvalidated, ag.group))
+        _  <- Project.reqCodeTrie set t3
       } yield ()
 
     private def modifyGroup(id: ReqCodeId, f: LiveCodeGroup => LiveCodeGroup): SE[Unit] =
       for {
-        t  ← getTrie
-        v  ← needCode(id)
-        d  ← needData(t, v)
-        ag ← needActiveGroup(d, v)
+        t  <- getTrie
+        v  <- needCode(id)
+        d  <- needData(t, v)
+        ag <- needActiveGroup(d, v)
         d2 = ReqCode.ActiveGroup.group.modify(f)(ag)
         t2 = t.put(v, d2)
-        _  ← Project.reqCodeTrie set t2
+        _  <- Project.reqCodeTrie set t2
       } yield ()
 
     def applyUpdate(e: CodeGroupUpdate): SE[Unit] =

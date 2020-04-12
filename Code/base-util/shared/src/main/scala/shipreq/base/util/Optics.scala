@@ -3,7 +3,7 @@ package shipreq.base.util
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.BiMap
 import monocle._
-import scala.collection.generic.CanBuildFrom
+import scala.collection.Factory
 import scala.collection.mutable.Builder
 import scala.reflect.ClassTag
 import scalaz.{-\/, Applicative, Functor, \/, \/-}
@@ -30,20 +30,20 @@ object Optics {
   def biMapIso_![A, B](m: BiMap[A, B]): Iso[A, B] =
     Iso(m.forward.apply)(m.backward.apply)
 
-  def cbfTraversal[M[x] <: Traversable[x], A, N[_], B](implicit cbf: CanBuildFrom[M[A], B, N[B]]): PTraversal[M[A], N[B], A, B] =
+  def cbfTraversal[M[x] <: Iterable[x], A, N[_], B](implicit cbf: Factory[B, N[B]]): PTraversal[M[A], N[B], A, B] =
     new PTraversal[M[A], N[B], A, B] {
       override def modifyF[F[_]](f: A => F[B])(ma: M[A])(implicit F: Applicative[F]): F[N[B]] = {
         type C = Builder[B, N[B]]
         val add: F[B => C => C] = F.pure(b => _ += b)
-        var fc: F[C] = F.point(cbf(ma))
+        var fc: F[C] = F.point(cbf.newBuilder)
         for (a <- ma)
           fc = F.ap(fc)(F.ap(f(a))(add))
         F.map(fc)(_.result())
       }
     }
 
-  def cbfIterable[From, A](implicit cbf: CanBuildFrom[Nothing, A, List[A]]): CanBuildFrom[From, A, Iterable[A]] =
-    collection.breakOut(cbf)
+  def iterableFactory[A]: Factory[A, Iterable[A]] =
+    List
 
   def listPTraversal[A, B]: PTraversal[List[A], List[B], A, B] =
     cbfTraversal[List, A, List, B]
@@ -64,7 +64,7 @@ object Optics {
     setPTraversal[A, A]
 
   def iterablePTraversal[A, B]: PTraversal[Iterable[A], Iterable[B], A, B] =
-    cbfTraversal[Iterable, A, Iterable, B](cbfIterable[Iterable[A], B])
+    cbfTraversal[Iterable, A, Iterable, B](iterableFactory[B])
 
   def iterableTraversal[A]: Traversal[Iterable[A], A] =
     iterablePTraversal[A, A]

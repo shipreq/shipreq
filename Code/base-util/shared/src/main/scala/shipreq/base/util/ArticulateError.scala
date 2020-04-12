@@ -111,9 +111,9 @@ object ArticulateError {
   private[ArticulateError] def show(cause: String \&/ Throwable,
                                     tags : Set[ArticulateError.Tag],
                                     hints: SortedSet[String]): String = {
-    def showItems(items: TraversableOnce[String]): String = {
+    def showItems(items: IterableOnce[String]): String = {
       val lead = "* "
-      items.mkString(lead, "\n" + lead, "")
+      items.iterator.mkString(lead, "\n" + lead, "")
     }
 
     var sections = Vector.empty[String]
@@ -131,7 +131,7 @@ object ArticulateError {
       addSection("Hints", showItems(hints))
 
     if (tags.nonEmpty)
-      addSection("Tags", showItems(MutableArray(tags.toIterator.map(_.toString)).sort.iterator))
+      addSection("Tags", showItems(MutableArray(tags.iterator.map(_.toString)).sort.iterator))
 
     sections.mkString("\n\n")
   }

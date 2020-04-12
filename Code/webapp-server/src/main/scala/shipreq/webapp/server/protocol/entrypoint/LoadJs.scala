@@ -41,7 +41,7 @@ object LoadJs {
       new Bundle(rs)
   }
 
-  final class Bundle(resources: Traversable[Resource]) {
+  final class Bundle(resources: Iterable[Resource]) {
 
     assert(resources.nonEmpty, "Empty bundles aren't yet handled.")
 

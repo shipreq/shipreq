@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen.Gen
-import nyaya.prop._
+import nyaya.prop.{Logic => _, _}
 import nyaya.test._
 import nyaya.util.Multimap
 import scalaz.{-\/, Equal, \/, \/-}
@@ -96,9 +96,9 @@ object LogicPropTest extends TestSuite {
     def universalSort = {
       val revOrder  = v.order.reverse
       val revCri    = v.copy(order = revOrder)
-      val sorted    = Logic.sorter(p, v, plainText)(gathered).iterator.to[Vector]
+      val sorted    = Logic.sorter(p, v, plainText)(gathered).iterator.to(Vector)
       def criRev    = E.equal("cri.rev.rev = cri", revOrder.reverse, v.order)
-      def sortTwice = E.equal("sort.sort = sort", Logic.sorter(p, v, plainText)(sorted).iterator.to[Vector], sorted)
+      def sortTwice = E.equal("sort.sort = sort", Logic.sorter(p, v, plainText)(sorted).iterator.to(Vector), sorted)
       def sortRev   = reverseSortOnReverseCri(sorted, revCri)
       (criRev ∧ sortRev ∧ sortTwice) rename "Universal sort props"
     }
@@ -151,7 +151,7 @@ object LogicPropTest extends TestSuite {
 
     def sortBy(c: SC.Inconclusive): Vector[Row] = {
       val (sc, input) = sortCriAndGather(c)
-      Logic.sorter(p, newTableSettingsForSort(sc), plainText)(input).iterator.to[Vector]
+      Logic.sorter(p, newTableSettingsForSort(sc), plainText)(input).iterator.to(Vector)
     }
 
     def newTableSettingsForSort(sc: SortCriteria): View =
@@ -187,7 +187,7 @@ object LogicPropTest extends TestSuite {
       E.either(s"$name make separate blank/non-blank blocks", separateBlanks(expectBlanksFirst, as)(isBlank))(f.tupled)
     }
 
-    def E_sorted[A <: AnyRef](name: String, as: TraversableOnce[A], dirChange: Dir)(implicit ord: Ordering[A]): EvalL = {
+    def E_sorted[A <: AnyRef](name: String, as: IterableOnce[A], dirChange: Dir)(implicit ord: Ordering[A]): EvalL = {
       val actual = as.toVector
       val expect = dirChange(actual.sorted)(_.reverse)
       implicit val eq = Equal.equal[A]((a, b) => (a eq b) || (a == b) || ord.equiv(a, b)) // use of ord is slow - avoid
@@ -199,7 +199,7 @@ object LogicPropTest extends TestSuite {
 
     def sortByPubid: IndivSortIB = (sm, dir) => {
       val sc     = SortCriteria(Vector.empty, SC.Conclusive(C.Pubid, sm))
-      val sorted = Logic.sorter(p, newTableSettingsForSort(sc), plainText)(gathered).iterator.to[Vector]
+      val sorted = Logic.sorter(p, newTableSettingsForSort(sc), plainText)(gathered).iterator.to(Vector)
       val na     = ("", -1)
       val pubids = sorted.map {
         case r: Row.ForReq       => pubidExtract(p)(r.req.pubid)

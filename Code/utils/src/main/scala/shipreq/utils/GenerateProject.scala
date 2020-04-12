@@ -74,7 +74,7 @@ object GenerateProject {
     val reqsWithoutText = firstSample($.reqsWithoutText(cfg, genericReqCount, useCaseCount), 20)
     val reqIdSet        = reqsWithoutText.idIterator.toSet
     val reqIdG          = Gen tryGenChoose reqIdSet.toIndexedSeq
-    val liveReqIds      = reqsWithoutText.reqIterator.filter(_.live(cfg.reqTypes) is Live).map(_.id)
+    val liveReqIds      = reqsWithoutText.reqIterator().filter(_.live(cfg.reqTypes) is Live).map(_.id)
     val liveReqIdG      = Gen tryGenChoose liveReqIds.toIndexedSeq
     val reqCodeDataG    = $.reqCode.data(liveReqIdG, reqIdG)
     val reqCodesG       = $.reqCodes($.reqCode.trie(reqCodeDataG, Size.ReqCodeDepth))

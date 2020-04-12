@@ -217,11 +217,11 @@ object SavedViewLogic {
     NonEmpty(
       SavedViewGD.values(
         SavedViewGD.attrs.iterator.map {
-          case SavedViewGD.Name           => None
-          case a @ SavedViewGD.Columns    => changedAttr(View.columns)   .map(a.apply)
-          case a @ SavedViewGD.Order      => changedAttr(View.order)     .map(a.apply)
-          case a @ SavedViewGD.FilterDead => changedAttr(View.filterDead).map(a.apply)
-          case a @ SavedViewGD.Filter     => changedAttr(View.filter)    .map(a.apply)
+          case SavedViewGD.Name               => None
+          case a: SavedViewGD.Columns   .type => changedAttr(View.columns)   .map(a.apply)
+          case a: SavedViewGD.Order     .type => changedAttr(View.order)     .map(a.apply)
+          case a: SavedViewGD.FilterDead.type => changedAttr(View.filterDead).map(a.apply)
+          case a: SavedViewGD.Filter    .type => changedAttr(View.filter)    .map(a.apply)
         }.filterDefined))
   }
 

@@ -186,13 +186,13 @@ object ReqDetail {
 
     def startUseCaseStepEditor(id: UseCaseStepId): Callback =
       for {
-        data      ← cbData
-        props     ← $.props.toCBO
+        data      <- cbData
+        props     <- $.props.toCBO
         key       = EditorFeature.FieldKey.UseCaseStep(id)
         editor    = props.editorUCS(key, data.pxProjectWidgets, data.filterDead)
-        ref       ← CallbackTo(useCaseStepRefs.get(id)).asCBO
-        component ← ref.get
-        _         ← CallbackOption.liftOptionCallback(component.backend.startEdit(editor))
+        ref       <- CallbackTo(useCaseStepRefs.get(id)).asCBO
+        component <- ref.get
+        _         <- CallbackOption.liftOptionCallback(component.backend.startEdit(editor))
       } yield ()
 
     def setModal(modal: Modal.State): Callback =

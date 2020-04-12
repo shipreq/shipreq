@@ -70,7 +70,7 @@ object Graphs {
   This is a graph that causes viz.js problems:
     digraph G{rankdir=TB;node[style=filled color="#333333"]edge[color="#333333"]node[fillcolor="#91D5BC"]1[label="BL-1"]node[fillcolor="#94DD59"]7[label="CO-1"]8[label="CO-2"]node[fillcolor="#D0A9D4"]5[label="MF-3"]6[label="MF-4"]3[label="MF-1"]4[label="MF-2"]node[fillcolor="#DFB863"]9[label="UC-1"]10[label="UC-2"]11[label="UC-3"]5->6;10->11;9->11,10;3->5,1;11->1;4->5;}
   */
-//  private def intercalate[A](as: TraversableOnce[A], between: => Unit)(f: A => Unit): Unit = {
+//  private def intercalate[A](as: IterableOnce[A], between: => Unit)(f: A => Unit): Unit = {
 //    var first = true
 //    for (a <- as) {
 //      if (first)
@@ -81,7 +81,7 @@ object Graphs {
 //    }
 //  }
 
-  def flowOneToMany[A](fromId: A, toIds: TraversableOnce[A])(id: A => Unit, atEnd: => Unit)(implicit sb: StringBuilder): Unit =
+  def flowOneToMany[A](fromId: A, toIds: IterableOnce[A])(id: A => Unit, atEnd: => Unit)(implicit sb: StringBuilder): Unit =
     for (toId <- toIds) {
       id(fromId)
       arrow()
@@ -217,7 +217,7 @@ object Graphs {
         execWithAttr(tailAttr, t.result())
       }
 
-      def execWithAttr(attr: String, fs: TraversableOnce[Content]): Unit =
+      def execWithAttr(attr: String, fs: IterableOnce[Content]): Unit =
         if (fs.nonEmpty)
           attrGroup(attr)(fs.foreach(_()))
 
@@ -320,7 +320,7 @@ object Graphs {
     val nodeName: ReqId => String = _.value.toString
     val node    : ReqId => Unit   = sb append _.value
 
-    def declare(ids: TraversableOnce[ReqId]): Unit =
+    def declare(ids: IterableOnce[ReqId]): Unit =
       for (id <- ids) {
         node(id)
         labelAttr(pubid(id))
@@ -460,7 +460,7 @@ object Graphs {
           .sortBy(x => reqTypes.order(x._1))
           .iterator
 
-      def flow(fromId: ReqId, fromLive: Live, toIds: TraversableOnce[ReqId], toLive: Live): Unit = {
+      def flow(fromId: ReqId, fromLive: Live, toIds: IterableOnce[ReqId], toLive: Live): Unit = {
         val atEnd: () => Unit =
           fromLive & toLive match {
             case Live => () => ()

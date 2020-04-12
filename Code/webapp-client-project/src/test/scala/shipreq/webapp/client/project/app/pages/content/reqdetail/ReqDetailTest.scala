@@ -89,7 +89,7 @@ object ReqDetailTest extends TestSuite {
               .format()
               .removeAnsiEscapeCodes
               .split('\n')
-              .toIterator
+              .iterator
               .filter(_.matches("^    [^ ] .+"))
               .filterNot(_.contains("] Random "))
               .filterNot(_.contains("unsavedChanges ≤ editors"))

@@ -91,8 +91,8 @@ object PrometheusMetrics extends HasLogger {
 
     // The following counters are omitted because they are provided by histogram counts
     //
-    // http_requests_total  ← http_response_duration_seconds_count
-    // ws_messages_total    ← ws_message_duration_seconds_count
+    // http_requests_total  <- http_response_duration_seconds_count
+    // ws_messages_total    <- ws_message_duration_seconds_count
 
     // -----------------------------------------------------------------------------------------------------------------
 

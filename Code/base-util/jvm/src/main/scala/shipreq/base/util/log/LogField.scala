@@ -135,10 +135,10 @@ object LogField {
       generic[UnsafeJson[A]](key, fieldType)
     }
 
-    private val stringMapEncoder: Encoder[Traversable[(String, String)]] =
-      Encoder.instance(i => Json.obj(i.toIterator.map(x => x._1 -> Json.fromString(x._2)).toList: _*))
+    private val stringMapEncoder: Encoder[Iterable[(String, String)]] =
+      Encoder.instance(i => Json.obj(i.iterator.map(x => x._1 -> Json.fromString(x._2)).toList: _*))
 
-    def stringMap(key: String): UnsafeJsonLogField[Traversable[(String, String)]] =
+    def stringMap(key: String): UnsafeJsonLogField[Iterable[(String, String)]] =
       UnsafeJson(key)(stringMapEncoder)
   }
 

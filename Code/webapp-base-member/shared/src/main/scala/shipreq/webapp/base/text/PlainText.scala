@@ -274,11 +274,11 @@ object PlainText {
     override def reqCode(c: ReqCode.Value): String =
       PlainText.reqCode(c)
 
-    override def reqCodes(reqCodes: TraversableOnce[ReqCode.Value]): String =
-      reqCodes.toIterator.map(reqCode).mkString("\n")
+    override def reqCodes(reqCodes: IterableOnce[ReqCode.Value]): String =
+      reqCodes.iterator.map(reqCode).mkString("\n")
 
     override def reqCodeTree(items: Vector[ReqCodeTreeItem]): String =
-      items.toIterator.map(reqCodeTreeItem).mkString("\n")
+      items.iterator.map(reqCodeTreeItem).mkString("\n")
 
     override def reqCodeTreeItem(item: ReqCodeTreeItem): String =
       PlainText.reqCodeTreeItem(item)

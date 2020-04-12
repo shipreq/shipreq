@@ -109,7 +109,7 @@ object HomeTest extends TestSuite {
     ReactTestUtils.withRenderedIntoDocument(props.render)(c =>
       plan
         .addInvariants(invariants)
-        .withInitialState(State("", CPState.Blank, ps.map(_.name)(collection.breakOut), 0))
+        .withInitialState(State("", CPState.Blank, ps.iterator.map(_.name).toVector, 0))
         .test(Observer(new HomeObs(_, c.domZipper)))
         .withRef(cp)
         .run()

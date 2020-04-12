@@ -42,7 +42,7 @@ package object semantic {
     @inline def +(a: A): Multiple[A] =
       new Multiple(values + a)
 
-    @inline def ++(as: TraversableOnce[A]): Multiple[A] =
+    @inline def ++(as: IterableOnce[A]): Multiple[A] =
       new Multiple(values ++ as)
   }
 

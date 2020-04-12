@@ -41,7 +41,7 @@ object Selection {
   sealed trait Base[A] {
     val selected: Set[A]
 
-    def clearAll(as: TraversableOnce[A]): Selection[A] =
+    def clearAll(as: IterableOnce[A]): Selection[A] =
       Selection(selected -- as)
   }
 

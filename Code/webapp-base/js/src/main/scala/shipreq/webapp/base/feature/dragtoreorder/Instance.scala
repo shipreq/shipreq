@@ -52,20 +52,20 @@ private[feature] final class Instance[A](getData            : CallbackTo[Vector[
 
     def detectIfDraggedOutside(expectedLoc: Option[DragLoc])(e: ReactDragEvent): Callback =
       for {
-        _ ← requireOwnMimeType(e)
-        s ← getDragState
-      //_ ← Callback.log(s"   Leave check... e.client: ${e.clientX}x${e.clientY}, e.screen: ${e.screenX}x${e.screenY} node:", e.currentTarget.castHtml.getBoundingClientRect())
-        _ ← CallbackOption.require(expectedLoc.forall(_ ==* s.dragLoc))
-        _ ← CallbackOption.unless(DomUtil.isDragWithinNode(e, e.currentTarget))
-        _ ← setState(s.copy(dragLoc = DragLoc.Outside, currentOrder = s.originalOrder))
+        _ <- requireOwnMimeType(e)
+        s <- getDragState
+      //_ <- Callback.log(s"   Leave check... e.client: ${e.clientX}x${e.clientY}, e.screen: ${e.screenX}x${e.screenY} node:", e.currentTarget.castHtml.getBoundingClientRect())
+        _ <- CallbackOption.require(expectedLoc.forall(_ ==* s.dragLoc))
+        _ <- CallbackOption.unless(DomUtil.isDragWithinNode(e, e.currentTarget))
+        _ <- setState(s.copy(dragLoc = DragLoc.Outside, currentOrder = s.originalOrder))
       } yield ()
 
     val dragOver: ReactDragEvent => Callback =
       e => for {
-        _ ← CallbackOption.unless(e.defaultPrevented)
-        _ ← requireOwnMimeType(e)
-        _ ← getDragState
-        _ ← e.preventDefaultCB
+        _ <- CallbackOption.unless(e.defaultPrevented)
+        _ <- requireOwnMimeType(e)
+        _ <- getDragState
+        _ <- e.preventDefaultCB
       } yield ()
 
     // Consume the event (so that Firefox doesn't perform a cancel animation)
@@ -73,19 +73,19 @@ private[feature] final class Instance[A](getData            : CallbackTo[Vector[
     // an onDrop handler).
     val drop: ReactDragEvent => Callback =
       e => for {
-        _ ← CallbackOption.unless(e.defaultPrevented)
-        _ ← requireOwnMimeType(e)
-        _ ← e.preventDefaultCB
+        _ <- CallbackOption.unless(e.defaultPrevented)
+        _ <- requireOwnMimeType(e)
+        _ <- e.preventDefaultCB
       } yield ()
 
     val parentTagMod: TagMod = {
       val dragEnter: ReactDragEvent => Callback =
         e => for {
-          _ ← CallbackOption.unless(e.defaultPrevented)
-          _ ← requireOwnMimeType(e)
-          s ← getDragState
-          _ ← e.preventDefaultCB
-          _ ← setState(s.copy(dragLoc = DragLoc.InParent))
+          _ <- CallbackOption.unless(e.defaultPrevented)
+          _ <- requireOwnMimeType(e)
+          s <- getDragState
+          _ <- e.preventDefaultCB
+          _ <- setState(s.copy(dragLoc = DragLoc.InParent))
         } yield ()
 
       val dragLeave: ReactDragEvent => Callback =
@@ -102,10 +102,10 @@ private[feature] final class Instance[A](getData            : CallbackTo[Vector[
       Memo.int { i =>
         def dragStart: ReactDragEvent => Callback =
           e => for {
-            _  ← CallbackOption.unless(e.defaultPrevented)
-            is ← getData.toCBO
-            _  ← setState(DragState(is, i, DragLoc.InChild(i), is.indices.toVector)).async.toCallback
-            _  ← Callback { Instance.dragging ::= self }.toCBO
+            _  <- CallbackOption.unless(e.defaultPrevented)
+            is <- getData.toCBO
+            _  <- setState(DragState(is, i, DragLoc.InChild(i), is.indices.toVector)).async.toCallback
+            _  <- Callback { Instance.dragging ::= self }.toCBO
           } yield {
             val dt = e.dataTransfer
             dt.setData(ownMimeType, "")
@@ -114,13 +114,13 @@ private[feature] final class Instance[A](getData            : CallbackTo[Vector[
 
         def dragEnd: ReactDragEvent => Callback =
           _ => for {
-            s ← getDragState
-            _ ← setState(None)
-            _ ← Callback { Instance.dragging = Instance.dragging.filter(_ ne self) }.toCBO
+            s <- getDragState
+            _ <- setState(None)
+            _ <- Callback { Instance.dragging = Instance.dragging.filter(_ ne self) }.toCBO
             o = s.orderWithoutTombstone
-            _ ← CallbackOption.unless(o.length < s.items.length && !dragOutsideToRemove)
-            _ ← CallbackOption.unless(o ==* s.originalOrder)
-            _ ← updateData(Update(s.dragSourceItem, s.items, o.map(s.items.apply)))
+            _ <- CallbackOption.unless(o.length < s.items.length && !dragOutsideToRemove)
+            _ <- CallbackOption.unless(o ==* s.originalOrder)
+            _ <- updateData(Update(s.dragSourceItem, s.items, o.map(s.items.apply)))
           } yield ()
 
         val t =
@@ -141,14 +141,14 @@ private[feature] final class Instance[A](getData            : CallbackTo[Vector[
 
         def dragEnter: ReactDragEvent => Callback =
           e => for {
-            _ ← CallbackOption.unless(e.defaultPrevented)
-            _ ← requireOwnMimeType(e)
-            s ← getDragState
-            _ ← e.preventDefaultCB
-            _ ← Callback(e.dataTransfer.dropEffect = DragEffect.Move)
+            _ <- CallbackOption.unless(e.defaultPrevented)
+            _ <- requireOwnMimeType(e)
+            s <- getDragState
+            _ <- e.preventDefaultCB
+            _ <- Callback(e.dataTransfer.dropEffect = DragEffect.Move)
             l = DragLoc.InChild(i)
-            _ ← CallbackOption.unless((s.dragSource ==* i) && (s.dragLoc ==* l))
-            _ ← setState(s.copy(dragLoc = l, currentOrder = Reorder.usingUnivEq(s.dragSource, i)(s.currentOrder)))
+            _ <- CallbackOption.unless((s.dragSource ==* i) && (s.dragLoc ==* l))
+            _ <- setState(s.copy(dragLoc = l, currentOrder = Reorder.usingUnivEq(s.dragSource, i)(s.currentOrder)))
           } yield ()
 
         val dragLeave: ReactDragEvent => Callback =

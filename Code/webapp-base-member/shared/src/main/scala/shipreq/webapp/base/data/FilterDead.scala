@@ -1,14 +1,18 @@
 package shipreq.webapp.base.data
 
-import scala.collection.TraversableLike
+import scala.collection.Factory
 import shipreq.base.util.{IsoBool, OptionalBoolFn}
 import shipreq.base.util.univeq._
 
 sealed abstract class FilterDead(final val filterFn: OptionalBoolFn[Live]) extends IsoBool[FilterDead] {
   override final def companion = FilterDead
 
-  final def apply[A, C[x] <: TraversableLike[x, C[x]]](as: C[A])(f: => (A => Live)): C[A] =
-    filterFn.value.fold(as)(g => as.filter(g compose f))
+  final def apply[A, C[x] <: Iterable[x]](as: C[A])(f: => (A => Live))(implicit fac: Factory[A, C[A]]): C[A] =
+    filterFn.value.fold(as) { g =>
+      val ff = f
+      val gf = g compose ff
+      as.iterator.filter(gf).to(fac)
+    }
 
   final def apply[A](as: Iterator[A])(f: => (A => Live)): Iterator[A] =
     filterFn.value.fold(as)(g => as.filter(g compose f))

@@ -4,8 +4,8 @@ import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.annotation.tailrec
-import scala.collection.Traversable
-import scala.collection.generic.CanBuildFrom
+import scala.collection.Iterable
+import scala.collection.Factory
 import scala.reflect.ClassTag
 import scalaz.std.anyVal.intInstance
 import scalaz.syntax.semigroup._
@@ -255,7 +255,7 @@ private[reqtable] object Logic {
                    pt            : PlainText.ForProject.NoCtx,
                    ts            : TextSearch,
                    filterCompiler: Filter.Valid.Compiler)
-                  (implicit cbf: CanBuildFrom[Nothing, Row, C[Row]]): C[Row] = {
+                  (implicit cbf: Factory[Row, C[Row]]): C[Row] = {
 
     // NOTES:
     //
@@ -316,7 +316,7 @@ private[reqtable] object Logic {
 
     // Create rows
     val rows = {
-      val output              = cbf()
+      val output              = cbf.newBuilder
       val restorableRCGs      = DataLog.list[Row.ForCodeGroup].disableUnless(restoreFilteredRCGs)
       val codesSeen           = DataLog.mtrie[ReqCode.Node].disableUnless(restoreFilteredRCGs)
       val seeExpandedCodes    = codesSeen.addFn[Expanded[ReqCode.Value]](add => _.exp.foreach(_ foreach add))
@@ -375,7 +375,7 @@ private[reqtable] object Logic {
   // ===================================================================================================================
   // Sorting
 
-  def sorter(p: Project, view: View, pt: PlainText.ForProject.NoCtx): TraversableOnce[Row] => MutableArray[Row] = {
+  def sorter(p: Project, view: View, pt: PlainText.ForProject.NoCtx): IterableOnce[Row] => MutableArray[Row] = {
     val init   = view.order.init map Sorter.inconclusive
     val last   = view.order.last |> Sorter.conclusive
     val sorter = new FusedSorters(NonEmptyVector.end(init, last))
@@ -387,9 +387,9 @@ private[reqtable] object Logic {
   // Post-processing
 
   def mergeAdjacent[A, C[_]](input: Iterator[A])(merge: (A, A) => Option[A])
-                            (implicit cbf: CanBuildFrom[Nothing, A, C[A]]): C[A] = {
+                            (implicit cbf: Factory[A, C[A]]): C[A] = {
 
-    val results = cbf()
+    val results = cbf.newBuilder
     if (input.hasNext) {
       @tailrec def go(prev: A): Unit = {
         if (input.isEmpty)
@@ -407,7 +407,7 @@ private[reqtable] object Logic {
     results.result()
   }
 
-  def consolidateAdjacentDups[C[_]](rows: Iterator[Row])(implicit cbf: CanBuildFrom[Nothing, Row, C[Row]]): C[Row] =
+  def consolidateAdjacentDups[C[_]](rows: Iterator[Row])(implicit cbf: Factory[Row, C[Row]]): C[Row] =
     mergeAdjacent(rows)((x, y) =>
       (x, y) match {
         case (a: Row.ForReq, b: Row.ForReq) if a.req.id ==* b.req.id =>
@@ -426,18 +426,18 @@ private[reqtable] object Logic {
   /**
    * Map with history.
    */
-  def hmap[I, V[x] <: Traversable[x], A >: Null <: AnyRef, B >: Null, S[_], O]
-      (input  : Traversable[I],
+  def hmap[I, V[x] <: Iterable[x], A >: Null <: AnyRef, B >: Null, S[_], O]
+      (input  : Iterable[I],
        extract: I => V[A],
        put    : (I, V[B]) => O,
        firstA : A => B,
        foldA  : (A, B, A) => B)
-      (implicit cbfV: CanBuildFrom[Nothing, B, V[B]], cbfS: CanBuildFrom[Nothing, O, S[O]]): S[O] = {
+      (implicit cbfV: Factory[B, V[B]], cbfS: Factory[O, S[O]]): S[O] = {
     var lastA: A = null
     var lastB: B = null
-    val bs = cbfS()
+    val bs = cbfS.newBuilder
     for (i <- input) {
-      val bv = cbfV()
+      val bv = cbfV.newBuilder
       for (a <- extract(i)) {
         val b = if (lastA eq null) firstA(a) else foldA(lastA, lastB, a)
         bv += b
@@ -449,11 +449,11 @@ private[reqtable] object Logic {
     bs.result()
   }
 
-  def mkReqCodeTree[I, V[x] <: Traversable[x], S[_], O]
-      (input  : Traversable[I],
+  def mkReqCodeTree[I, V[x] <: Iterable[x], S[_], O]
+      (input  : Iterable[I],
        extract: I => V[ReqCode.Value],
        put    : (I, V[ReqCodeTreeItem]) => O)
-      (implicit cbfV: CanBuildFrom[Nothing, ReqCodeTreeItem, V[ReqCodeTreeItem]], cbfS: CanBuildFrom[Nothing, O, S[O]])
+      (implicit cbfV: Factory[ReqCodeTreeItem, V[ReqCodeTreeItem]], cbfS: Factory[O, S[O]])
       : S[O] =
     hmap[I, V, ReqCode.Value, ReqCodeTreeItem, S, O](
       input, extract, put,
@@ -493,7 +493,7 @@ private[reqtable] object Logic {
       (row, items) => Row.reqCodeTree.set(items)(row))
 
 
-  def stats(p: Project, rows: TraversableOnce[Row]): TableContentStats = {
+  def stats(p: Project, rows: IterableOnce[Row]): TableContentStats = {
 
     // Scan rows
     var codeGroups        = 0

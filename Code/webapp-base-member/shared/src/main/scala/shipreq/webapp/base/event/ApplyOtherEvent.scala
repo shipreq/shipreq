@@ -34,8 +34,8 @@ trait ApplyOtherEvent {
       }
 
       for {
-        _ ← whenUntrusted(validateDoesntExist)
-        _ ← Project.manualIssues.modify(add)
+        _ <- whenUntrusted(validateDoesntExist)
+        _ <- Project.manualIssues.modify(add)
       } yield ()
     }
 
@@ -46,14 +46,14 @@ trait ApplyOtherEvent {
 
     def applyUpdate(e: ManualIssueUpdate): SE[Unit] =
       for {
-        _ ← whenUntrusted(validateExists(e.id))
-        _ ← Project.manualIssues.modify(_.modIMap(_ + ManualIssue(e.id, e.text)))
+        _ <- whenUntrusted(validateExists(e.id))
+        _ <- Project.manualIssues.modify(_.modIMap(_ + ManualIssue(e.id, e.text)))
       } yield ()
 
     def applyDelete(e: ManualIssueDelete): SE[Unit] =
       for {
-        _ ← whenUntrusted(validateExists(e.id))
-        _ ← Project.manualIssues.modify(_.modIMap(_ - e.id))
+        _ <- whenUntrusted(validateExists(e.id))
+        _ <- Project.manualIssues.modify(_.modIMap(_ - e.id))
       } yield ()
   }
 
@@ -103,15 +103,15 @@ trait ApplyOtherEvent {
       }
 
       for {
-        _    ← whenUntrusted(validateId)
-        name ← validateName(None, e.name)
+        _    <- whenUntrusted(validateId)
+        name <- validateName(None, e.name)
         sv   = SavedView(e.id, name, View(
                  filterDead = e.filterDead,
                  columns    = e.columns,
                  order      = e.order,
                  filter     = e.filter))
-        _    ← Project.reqtableViews.modify(add(sv))
-        _    ← updateIdCeiling(e.id)
+        _    <- Project.reqtableViews.modify(add(sv))
+        _    <- updateIdCeiling(e.id)
       } yield ()
     }
 
@@ -146,11 +146,11 @@ trait ApplyOtherEvent {
         Some(ne.copy(nonDefault = ne.nonDefault - e.id))
 
       for {
-        p      ← SE.get
-        svs    ← optionGet(p.reqtableViews, notFound(e.id))
-        _      ← whenUntrusted(optionGet(svs.get(e.id), notFound(e.id)).void)
+        p      <- SE.get
+        svs    <- optionGet(p.reqtableViews, notFound(e.id))
+        _      <- whenUntrusted(optionGet(svs.get(e.id), notFound(e.id)).void)
         result = if (svs.default.id ==* e.id) delDefault(svs) else delNonDefault(svs)
-        _      ← Project.reqtableViews.set(result)
+        _      <- Project.reqtableViews.set(result)
       } yield ()
     }
 

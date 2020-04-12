@@ -14,7 +14,7 @@ object ReqCodesTest extends TestSuite {
   final private case class TrieProps(trie: Trie, data: Data, code: ReqCode.Value) {
     val E          = EvalOver(this)
     val flat       = trie.flattenTrie
-    val flatStream = trie.flatStream
+    val flatStream = trie.flatIterator().toList
 
     def put = {
       val a = flat.updated(code, data)
@@ -40,7 +40,7 @@ object ReqCodesTest extends TestSuite {
     for {
       trie <- RandomData.reqCode.trie(genData, 3)
       data <- Gen.newOrOld(genData, trie.allValues)
-      code <- Gen.newOrOld(RandomData.reqCode.value, trie.flatStream.map(_._1))
+      code <- Gen.newOrOld(RandomData.reqCode.value, trie.flatIterator().map(_._1))
     } yield TrieProps(trie, data, code)
   }
 

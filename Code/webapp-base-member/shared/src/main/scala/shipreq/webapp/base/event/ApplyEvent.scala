@@ -8,7 +8,7 @@ import ApplyEvent.{Events, Result}
 
 object ApplyEvent {
   type Result = String \/ Project
-  type Events = TraversableOnce[Event]
+  type Events = IterableOnce[Event]
 
   /**
    * Applies trusted events (i.e. events that have been verified previously and usually stored in the DB already).
@@ -44,11 +44,11 @@ final class ApplyEvent(implicit val trust: Trust)
       }
     }
 
-  def applyVerified(ves: TraversableOnce[VerifiedEvent])(p: Project): Result =
+  def applyVerified(ves: IterableOnce[VerifiedEvent])(p: Project): Result =
     if (ves.isEmpty)
       \/-(p)
     else
-      applyAllSafely(ves.toIterator.map(_.event)).exec(p)
+      applyAllSafely(ves.iterator.map(_.event)).exec(p)
 
   private def safely(apply: SE[Unit]): SE[Unit] =
     (apply >> validateDataProps) attempt onError

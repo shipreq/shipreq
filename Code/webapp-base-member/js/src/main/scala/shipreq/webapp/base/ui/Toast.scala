@@ -92,8 +92,8 @@ object Toast {
     def deleteById(id: Key): State =
       copy(bread.filter(_.id == id))
 
-    def deleteAll(bs: TraversableOnce[Bread]): State = {
-      val ids = bs.toIterator.map(_.id).toSet
+    def deleteAll(bs: IterableOnce[Bread]): State = {
+      val ids = bs.iterator.map(_.id).toSet
       copy(bread.filter(b => !ids.contains(b.id)))
     }
   }

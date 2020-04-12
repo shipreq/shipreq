@@ -1,11 +1,15 @@
 package shipreq.webapp.base.feature.autocomplete
 
 import japgolly.microlibs.nonempty._
+import japgolly.microlibs.stdlib_ext.MutableArray
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.{Utils => Util}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import scala.annotation.tailrec
+import scala.collection.View
+import scala.collection.immutable.ArraySeq
 import scalajs.js.{UndefOr, undefined}
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
@@ -57,59 +61,61 @@ object ProjectStrategies {
 
   private val hashtagContext = Context.literal(Grammar.hashRefKey.prefix, "")
 
-  def hashtag(legal: Stream[HashRefKey]): Contextualise => Strategies = {
+  def hashtag(legal: IterableOnce[HashRefKey]): Contextualise => Strategies = {
     import Grammar.{hashRefKey => G}
     val mainRegex = s"(|${G.firstChar.one}${G.tailChars.*})$$"
-    val searchFn  = Utils.caseInsensitiveContains(legal.map(_.value).sorted)
+    val terms     = ArraySeq unsafeWrapArray MutableArray(legal.iterator.map(_.value)).sort.array
+    val searchFn  = Utils.caseInsensitiveContains(terms)
     hashtagContext[String](mainRegex, Identity.apply, "", _.search(searchFn))
   }
 
-  def hashtag(issues: Stream[CustomIssueType],
-              tags  : Stream[ApplicableTag],
+  def hashtag(issues: IterableOnce[CustomIssueType],
+              tags  : IterableOnce[ApplicableTag],
               fd    : FilterDead): Contextualise => Strategies =
     hashtag(
-      fd(issues)(_.live).map(_.key) append
-      fd(tags  )(_.live).map(_.key))
+      fd(issues.iterator)(_.live).map(_.key) ++
+      fd(tags  .iterator)(_.live).map(_.key))
 
   def hashtag(p: Project, fd: FilterDead, issues: Boolean, tags: Boolean, naTags: NaTags): Contextualise => Strategies =
     if (issues || tags) {
 
-      val issueOptions =
+      val issueOptions: Iterable[CustomIssueType] =
         if (issues)
-          p.config.customIssueTypes.values.toStream
+          p.config.customIssueTypes.values
         else
-          Stream.empty
+          Nil
 
-      val tagOptions =
+      val tagOptions: IterableOnce[ApplicableTag] =
         if (tags)
-          p.config.tags.applicableTagIterator().filter(_.live is Live).filter(t => !naTags.set.contains(t.id)).toStream
+          p.config.tags.applicableTagIterator().filter(_.live is Live).filter(t => !naTags.set.contains(t.id))
         else
-          Stream.empty
+          Nil
 
       hashtag(issueOptions, tagOptions, fd)
     } else
       _ => Vector.empty
 
-//  def issueTag(legal: Stream[CustomIssueType], fd: FilterDead): Contextualise => Strategies =
-//    hashtag(legal, Stream.empty, fd)
-
-  def tag(legal: Stream[ApplicableTag], fd: FilterDead): Contextualise => Strategies =
-    hashtag(Stream.empty, legal, fd)
+  def tag(legal: Iterable[ApplicableTag], fd: FilterDead): Contextualise => Strategies =
+    hashtag(Nil, legal, fd)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // [REF]
 
   private val reflinkContext = Context(Grammar.reflinkSurround)
 
-  def reqItems(p: Project, pt: PlainText.ForProject.AnyCtx): Stream[ReqItem] =
-    reqItems(p, pt, p.content.reqs.reqIterator.toStream)
+  def reqItems(p: Project, pt: PlainText.ForProject.AnyCtx): Iterable[ReqItem] =
+    reqItems(p, pt, p.content.reqs.all)
 
-  def reqItems(p: Project, pt: PlainText.ForProject.AnyCtx, legal: Stream[Req]): Stream[ReqItem] =
-    legal.filter(_.live(p.config.reqTypes) is Live)
-      .map(req => ReqItem(req.id, req.pubid, p.config.reqTypes.need(req.pubid.reqTypeId), pt reqTitle req))
+  def reqItems(p: Project, pt: PlainText.ForProject.AnyCtx, legal: Iterable[Req]): Iterable[ReqItem] =
+    MutableArray(
+      legal
+        .iterator
+        .filter(_.live(p.config.reqTypes) is Live)
+        .map(req => ReqItem(req.id, req.pubid, p.config.reqTypes.need(req.pubid.reqTypeId), pt reqTitle req)))
       .sortBy(_.sortKey)
+      .arraySeq
 
-  def req(textSearch: TextSearch, legal: Stream[ReqItem], Contextualise: Contextualise): Strategies = {
+  def req(textSearch: TextSearch, legal: Iterable[ReqItem], Contextualise: Contextualise): Strategies = {
     val searchTitles =
       textSearch.ignoreCaseNoWhitespace
         .filterReqsIds(legal.map(_.reqId).toSet)
@@ -186,7 +192,7 @@ object ProjectStrategies {
           var r = t.iterator.filter(_._2.existsV(_.isActive)).map(_._1.value)
           for (l <- lead)
             r = r.filter(_ startsWith l)
-          r.toStream.sorted.map((path, _))
+          MutableArray(r).sort.map((path, _)).arraySeq
         }
 
         val searchFn: Utils.Query[A] =
@@ -205,8 +211,9 @@ object ProjectStrategies {
       def completeFromMid(trie: Trie): Strategies = {
         val mainRegex = s"$sep($node)"
 
-        val activePaths: Stream[Path] =
-          trie.flatStream.filter(_._2.isActive).map(_._1)
+        val activePaths: Iterable[Path] =
+          View.fromIteratorProvider(() =>
+            trie.flatIterator().filter(_._2.isActive).map(_._1))
 
         def isMatch(term: String, path: Path): UndefOr[Path] = {
           @tailrec def go(prefix: Path, suffix: Vector[Node]): UndefOr[Path] =
@@ -220,11 +227,13 @@ object ProjectStrategies {
         }
 
         val searchFn: Utils.Query[String] = term =>
-          activePaths.map(isMatch(term, _))
-            .jsDefined
-            .distinctSafe
+          MutableArray(
+            activePaths.iterator.map(isMatch(term, _))
+              .filterDefined
+              .toSet)
             .map(PlainText.reqCode)
-            .sorted
+            .sort
+            .arraySeq
 
         reflinkContext[String](mainRegex, identity, "", _.search(searchFn))(contextualise)
       }
@@ -242,13 +251,16 @@ object ProjectStrategies {
 
       type A = (String, ActiveGroup \/ ActiveReq)
 
-      val activePaths: Stream[A] =
-        project.content.reqCodes.trie.flatStream
-          .collect {
-            case (c, a: ActiveReq)   => (PlainText reqCode c, \/-(a))
-            case (c, a: ActiveGroup) => (PlainText reqCode c, -\/(a))
-          }
+      val activePaths: View[A] =
+        MutableArray(
+          project.content.reqCodes.trie.flatIterator()
+            .collect {
+              case (c, a: ActiveReq)   => (PlainText reqCode c, \/-(a))
+              case (c, a: ActiveGroup) => (PlainText reqCode c, -\/(a))
+            }
+        )
           .sortBy(_._1)
+          .view
 
       def termToRegex(term0: String) = {
         import shipreq.base.util.SafeStringOps._

@@ -162,7 +162,7 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
           else if (tag.live is Dead)
             addError(TagFieldIssue.DefaultTagDead(tag))
           else {
-            val reqTypeIds: Traversable[ReqTypeId] =
+            val reqTypeIds: Iterable[ReqTypeId] =
               if (reqTypeId.isDefined) reqTypeId else otherwiseReqTypes
             for (id <- reqTypeIds)
               if (tag.applicableReqTypes(id) is NotApplicable) {

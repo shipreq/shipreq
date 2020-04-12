@@ -99,7 +99,7 @@ object BinaryTestUtil {
     g.samples().take(propTestSize).foreach(assertRoundTrip(sp)(_))
   }
 
-  def assertRoundTripsP[A](as: Traversable[A])(implicit p: Pickler[A], e: Equal[A], l: Line): Unit = {
+  def assertRoundTripsP[A](as: Iterable[A])(implicit p: Pickler[A], e: Equal[A], l: Line): Unit = {
     val sp = p.asV1(0)
     var i = 0
     for (a <- as) {

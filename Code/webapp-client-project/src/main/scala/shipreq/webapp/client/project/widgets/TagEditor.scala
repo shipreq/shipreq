@@ -25,13 +25,13 @@ object TagEditor {
    * Required for validation.
    */
   final case class Lookup(lookup: String => Option[Invalidity \/ ApplicableTag],
-                          legal : Stream[ApplicableTag])
+                          legal : List[ApplicableTag])
 
   object Lookup {
 
-    private def make(config: ProjectConfig, legal: TraversableOnce[ApplicableTag]): Lookup = {
-      val legalStream = legal.toIterator.filter(_.live is Live).toStream
-      val legalIds    = legalStream.toIterator.map(_.id).toSet
+    private def make(config: ProjectConfig, legal: IterableOnce[ApplicableTag]): Lookup = {
+      val legalStream = legal.iterator.filter(_.live is Live).toList
+      val legalIds    = legalStream.iterator.map(_.id).toSet
       val tagDist     = config.liveTagFieldDistribution
       val tagTree     = config.tags.tree
 
@@ -107,15 +107,14 @@ object TagEditor {
         }
       }
 
-    val validator: Validator[String, Stream[String], Stream[ApplicableTag]] =
+    val validator: Validator[String, List[String], List[ApplicableTag]] =
       G.seqFormat.validator(auditor)
 
-    // TODO Really? Stream?
-    val parseResult: Invalidity \/ Stream[ApplicableTag] =
+    val parseResult: Invalidity \/ List[ApplicableTag] =
       validator(edit.value)
 
     val parseResultSet: Invalidity \/ Set[ApplicableTagId] =
-      parseResult.map(_.map(_.id)(collection.breakOut))
+      parseResult.map(_.iterator.map(_.id).toSet)
 
     val validated = PotentialChange.fromDisjunction(parseResultSet).setDiffOption(preEditValue)
     def commit    = (r: Output) => commitFn.map(_ apply r)

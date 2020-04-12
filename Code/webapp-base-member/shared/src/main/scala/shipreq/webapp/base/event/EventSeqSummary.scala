@@ -87,7 +87,7 @@ final case class EventSeqSummary(
 
 object EventSeqSummary {
 
-  def apply(events: TraversableOnce[Event]): EventSeqSummary = {
+  def apply(events: IterableOnce[Event]): EventSeqSummary = {
     val b = new MutableBuilder
     b ++= events
     b.result()
@@ -96,8 +96,8 @@ object EventSeqSummary {
   def empty: EventSeqSummary =
     apply(Nil)
 
-  def fromVerifiedEvents(events: TraversableOnce[VerifiedEvent]): EventSeqSummary =
-    apply(events.toIterator.map(_.event))
+  def fromVerifiedEvents(events: IterableOnce[VerifiedEvent]): EventSeqSummary =
+    apply(events.iterator.map(_.event))
 
   final case class WithProject(summary: EventSeqSummary, project: Project) {
 
@@ -223,7 +223,7 @@ object EventSeqSummary {
       contentLiveDeps = true
     }
 
-    def ++=(events: TraversableOnce[Event]): Unit =
+    def ++=(events: IterableOnce[Event]): Unit =
       events.foreach(+=)
 
     val += : Event => Unit = {

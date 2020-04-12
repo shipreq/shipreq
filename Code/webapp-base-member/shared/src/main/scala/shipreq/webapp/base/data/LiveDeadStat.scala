@@ -1,7 +1,7 @@
 package shipreq.webapp.base.data
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import scala.collection.{mutable, GenTraversable}
+import scala.collection.{mutable, Iterable}
 import scalaz.{Monoid, Semigroup}
 import scalaz.std.anyVal.intInstance
 import scalaz.syntax.semigroup._
@@ -66,7 +66,7 @@ object LiveDeadStat {
       LiveDeadStat(live, dead)
   }
 
-  def sum[A: Monoid](cs: GenTraversable[LiveDeadStat[A]]): LiveDeadStat[A] = {
+  def sum[A: Monoid](cs: Iterable[LiveDeadStat[A]]): LiveDeadStat[A] = {
     val b = new Builder[A]
     cs foreach (b += _)
     b.result()
@@ -104,13 +104,13 @@ final case class LiveDeadStatMap[Key: UnivEq, A: Monoid] private[LiveDeadStatMap
       LiveDeadStatMap(m)
     }
 
-  def countByValues[B: UnivEq](f: A => TraversableOnce[B]): LiveDeadStatMap[B, Int] = {
+  def countByValues[B: UnivEq](f: A => IterableOnce[B]): LiveDeadStatMap[B, Int] = {
     val r = new LiveDeadStatMap.Builder[B, Int]
     countByValues(r, f)
     r.result()
   }
 
-  def countByValues[B: UnivEq](r: LiveDeadStatMap.Builder[B, Int], f: A => TraversableOnce[B]): Unit = {
+  def countByValues[B: UnivEq](r: LiveDeadStatMap.Builder[B, Int], f: A => IterableOnce[B]): Unit = {
     for (stat <- raw.values) {
       f(stat.live).foreach(r(_).live += 1)
       f(stat.dead).foreach(r(_).dead += 1)

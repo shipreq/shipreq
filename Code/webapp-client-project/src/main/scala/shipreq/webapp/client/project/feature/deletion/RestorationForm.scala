@@ -57,7 +57,7 @@ object RestorationForm {
 
       val commit: Option[Callback] =
         for {
-          reqs ← NonEmptySet.option(selectedReqs.selected)
+          reqs <- NonEmptySet.option(selectedReqs.selected)
         } yield p.perform(RestoreContent(reqs.whole, Set.empty))
 
       val restoreButton: VdomTag =

@@ -7,11 +7,11 @@ import scalaz.Need
 import TransitiveClosure.Filter
 
 object TransitiveClosure {
-  def auto[A: UnivEq: ClassTag](as            : TraversableOnce[A])
+  def auto[A: UnivEq: ClassTag](as            : IterableOnce[A])
                                (directChildren: A => Iterable[A],
                                 filter        : A => Filter = Filter.followAll) = {
 
-    val map = as.toIterator.zipWithIndex.toMap
+    val map = as.iterator.zipWithIndex.toMap
     val array = new Array[A](map.size)
     for ((k,v) <- map)
       array(v) = k

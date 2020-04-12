@@ -5,7 +5,7 @@ import java.util.regex.Pattern
 import org.parboiled2.CharPredicate
 import scala.collection.immutable.NumericRange
 import scala.runtime.AbstractFunction1
-import scalaz.std.stream.streamInstance
+import scalaz.std.list.listInstance
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.validation.CommonValidation
 import shipreq.webapp.base.validation.Simple._
@@ -106,17 +106,17 @@ object GrammarSpec {
                              sep     : Pattern,
                              normEach: EndoFn[String],
                              ignore  : String => Boolean,
-                             merge   : TraversableOnce[String] => String) {
+                             merge   : IterableOnce[String] => String) {
     def split(input: String): Iterator[String] =
       (input |> normAll |> sep.split).iterator map normEach filterNot ignore
 
-    def stream(input: String): Stream[String] =
-      split(input).toStream
+    def list(input: String): List[String] =
+      split(input).toList
 
-    def corrector: Corrector[String, Stream[String]] =
-      Corrector.full(stream, merge)
+    def corrector: Corrector[String, List[String]] =
+      Corrector.full(list, merge)
 
-    def validator[V](elementAuditor: Auditor[String, V]): Validator[String, Stream[String], Stream[V]] =
-      corrector withAuditor elementAuditor.liftTraverse[Stream]
+    def validator[V](elementAuditor: Auditor[String, V]): Validator[String, List[String], List[V]] =
+      corrector withAuditor elementAuditor.liftTraverse[List]
   }
 }

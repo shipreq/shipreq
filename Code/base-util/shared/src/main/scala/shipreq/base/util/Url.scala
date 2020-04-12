@@ -84,10 +84,10 @@ object Url {
       def add(url: Url.Relative, a: A): this.type =
         addAll((url, a) :: Nil)
 
-      @inline def ++=(as: TraversableOnce[(Url.Relative, A)]) =
+      @inline def ++=(as: IterableOnce[(Url.Relative, A)]) =
         addAll(as)
 
-      def addAll(as: TraversableOnce[(Url.Relative, A)]): this.type =
+      def addAll(as: IterableOnce[(Url.Relative, A)]): this.type =
         lock.synchronized {
           for ((u, a) <- as) {
             val k = u.relativeUrlNoHeadSlash

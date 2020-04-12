@@ -218,7 +218,7 @@ object DeletionProps {
 
 
   def chooseInputs(p: Project, f: Req => Boolean): List[NonEmptySet[ReqId]] = {
-    val ids     = p.content.reqs.reqIterator.filter(f).map(_.id).toList
+    val ids     = p.content.reqs.reqIterator().filter(f).map(_.id).toList
     val idCount = ids.size
     val singles = ids.take(20).map(NonEmptySet one _)
     val pairs   = ids.combinations(2).map(NonEmptySet force _.toSet).take(6).toList
@@ -239,14 +239,14 @@ object DeletionProps {
     /** A project with max 1 imp/req, and everything is mode.from */
     val genProjectBasic: Gen[Project] =
       for {
-        reqtypes1 ← *.customReqTypes
+        reqtypes1 <- *.customReqTypes
         reqtypes2 = ReqTypes.empty.custom ++ reqtypes1.valuesIterator.map(_.copy(live = Live))
         config    = ProjectConfig.empty.copy(reqTypes = ReqTypes(reqtypes2))
-        reqCount  ← Gen.chooseInt(40)
-        ucCount   ← Gen.chooseSize map (_ >> 1)
-        reqs1     ← *.reqsWithoutText(config, reqCount, ucCount)
+        reqCount  <- Gen.chooseInt(40)
+        ucCount   <- Gen.chooseSize map (_ >> 1)
+        reqs1     <- *.reqsWithoutText(config, reqCount, ucCount)
         reqs2     = (TestOptics.grsLive.set(mode.fromState) compose TestOptics.ucsLive.set(mode.fromState))(reqs1)
-        imps1     ← *.reqFieldDataImplications(reqs2.idIterator.toSet)
+        imps1     <- *.reqFieldDataImplications(reqs2.idIterator.toSet)
         imps2     = imps1.forwards.m.mapValuesNow(_.take(1))
         imps3     = Implications.BiDir(Implications.UniDir(imps2).reverse) // reverse ensures take(1) is on parent side
         content   = ProjectContent.empty.copy(reqs = reqs2, implications = imps3)

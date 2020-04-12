@@ -132,7 +132,7 @@ object ProjectIndex {
           <.div(^.cls := "description", item.subtitle))
 
       item match {
-        case i@ Item.Issues if p.issueCount.value > 0 =>
+        case i: Item.Issues.type if p.issueCount.value > 0 =>
           val countTag = <.div(^.cls := "floating ui red circular label", p.issueCount.value)
           renderWithPage(i, contentTag(countTag))
 

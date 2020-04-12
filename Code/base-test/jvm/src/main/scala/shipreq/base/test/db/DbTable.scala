@@ -55,10 +55,10 @@ object DbTable {
         MutableArray(asMap.iterator.map(r => r._1.name :: r._2.toString :: Nil)).sortBy(_.head).iterator.toList)
   }
 
-  def countAll(tables: TraversableOnce[DbTable]): ConnectionIO[Counts] =
+  def countAll(tables: IterableOnce[DbTable]): ConnectionIO[Counts] =
     Query0[(String, Int)](
       tables
-        .toIterator
+        .iterator
         .map(t => s"select '${t.name}',count(1) from ${t.name}")
         .mkString(" union ")
     ).to[Iterator].map { it =>
@@ -66,6 +66,6 @@ object DbTable {
       Counts(m)
     }
 
-  def truncateAll(tables: TraversableOnce[DbTable]): ConnectionIO[Unit] =
-    tables.toList.map(_.truncate).sequence.void
+  def truncateAll(tables: IterableOnce[DbTable]): ConnectionIO[Unit] =
+    tables.iterator.map(_.truncate).toList.sequence.void
 }

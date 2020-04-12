@@ -110,7 +110,7 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
       EditTheme.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback
   }
 
-  // lazy else there'll be a FieldNotInitialised error via .configure → impTextEditor → textEditor
+  // lazy else there'll be a FieldNotInitialised error via .configure -> impTextEditor -> textEditor
   lazy val Component =
     ScalaComponent.builder[Props]("ReqCodeEditor")
       .renderBackend[Backend]

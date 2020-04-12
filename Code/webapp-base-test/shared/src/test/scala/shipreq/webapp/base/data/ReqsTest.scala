@@ -39,12 +39,12 @@ object ReqsTest extends TestSuite { // TODO Update for UCs
 
   def gen: Gen[PubidRegisterProps] =
     for {
-      reqTypeIds ← RandomData.customReqTypeId.vector1
-      grCount    ← Gen.chooseSize
-      ucCount    ← Gen.chooseSize
-      prAndIds   ← RandomData.pubidRegisterAndIds(reqTypeIds, grCount, ucCount)
-      req        ← Gen.newOrOld(RandomData.genericReqId: Gen[ReqIdC], prAndIds.grIds)
-      reqType    ← Gen.newOrOld(RandomData.customReqTypeId, reqTypeIds)
+      reqTypeIds <- RandomData.customReqTypeId.vector1
+      grCount    <- Gen.chooseSize
+      ucCount    <- Gen.chooseSize
+      prAndIds   <- RandomData.pubidRegisterAndIds(reqTypeIds, grCount, ucCount)
+      req        <- Gen.newOrOld(RandomData.genericReqId: Gen[ReqIdC], prAndIds.grIds)
+      reqType    <- Gen.newOrOld(RandomData.customReqTypeId, reqTypeIds)
     } yield PubidRegisterProps(prAndIds.pr, req, reqType)
 
   override def tests = Tests {

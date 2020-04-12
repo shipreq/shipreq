@@ -239,15 +239,15 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
       unsafeState match {
         case s: State.Active =>
           for {
-            staleSince  ← s.staleSince
+            staleSince  <- s.staleSince
             stalePeriod = Duration.between(staleSince, unsafeNow())
-            _           ← Option.when(stalePeriod.isLongerThan(tolerance))(())
-            lastEvent   ← s.projectState.futureEvents.lastOption
+            _           <- Option.when(stalePeriod.isLongerThan(tolerance))(())
+            lastEvent   <- s.projectState.futureEvents.lastOption
             first       = s.projectState.projectAndOrd.nextOrd.value
             last        = lastEvent.ord.value - 1
             got         = s.projectState.futureEvents.iterator.map(_.ord.value).toSet
             missing     = first.to(last).iterator.filterNot(got.contains).map(EventOrd(_)).toSet
-            missingNE   ← NonEmptySet.option(missing)
+            missingNE   <- NonEmptySet.option(missing)
           } yield {
             logger.runNow(_.info {
               val dur = stalePeriod.conciseDesc

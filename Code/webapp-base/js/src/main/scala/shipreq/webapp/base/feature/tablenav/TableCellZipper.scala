@@ -112,12 +112,12 @@ final class TableCellZipper(val focus: html.Element)(implicit tableStyle: TableS
     }
 
     for {
-      vt        ← virtualTable
-      curLoc    ← focusVLoc
-      rows      ← needNev(virtualRows(vt, curLoc), "no rows")
+      vt        <- virtualTable
+      curLoc    <- focusVLoc
+      rows      <- needNev(virtualRows(vt, curLoc), "no rows")
       isCur     = (x: (Int, Int, Any)) => (x._1 == curLoc.section) && (x._2 == curLoc.row)
       rowSubIdx = rows.whole.indexWhere(x => isCur(x) && x._3.exists(_._1 eq focus))
-      rowIdx    ← indexWhereF(rows.whole)(isCur, "Focus row not found")
+      rowIdx    <- indexWhereF(rows.whole)(isCur, "Focus row not found")
     } yield {
 
       def move(rowIdx: Int): TableCellZipper = {
@@ -178,11 +178,11 @@ final class TableCellZipper(val focus: html.Element)(implicit tableStyle: TableS
     }
 
     for {
-      vt   ← virtualTable
-      vloc ← focusVLoc
-      rowResults ← needNev(candidates(vt, vloc), "no LR candidates")
+      vt   <- virtualTable
+      vloc <- focusVLoc
+      rowResults <- needNev(candidates(vt, vloc), "no LR candidates")
       indexF     = findFocusIndexA(rowResults.whole)(_._1)
-      target     ← m.moveNevF(rowResults, indexF)
+      target     <- m.moveNevF(rowResults, indexF)
     } yield TableCellZipper(target._1)
   }
 
@@ -208,11 +208,11 @@ final class TableCellZipper(val focus: html.Element)(implicit tableStyle: TableS
     }
 
     for {
-      vt                 ← virtualTable
-      vloc               ← focusVLoc
-      cellRes1           ← needNev(rowContentsIterator(vt, vloc).filter(_._2._1 ==* vloc.col), "empty cell")
+      vt                 <- virtualTable
+      vloc               <- focusVLoc
+      cellRes1           <- needNev(rowContentsIterator(vt, vloc).filter(_._2._1 ==* vloc.col), "empty cell")
       (cellRes2, indexF) = excludeOuter(cellRes1)
-      result             ← Option.when(cellRes2.length > 1)(leftRight.moveNevF(cellRes2, indexF)).sequence
+      result             <- Option.when(cellRes2.length > 1)(leftRight.moveNevF(cellRes2, indexF)).sequence
     } yield result.map(t => TableCellZipper(t._1))
   }
 

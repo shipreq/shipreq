@@ -60,7 +60,7 @@ object ReqTypeSelector {
           .sortBy(_.fullName)
           .iterator
           .map(rt => Select.Option(key(rt), rt.fullName, rt))
-          .to[List]
+          .to(List)
 
       val select = Select(options, Some(key(p.edit.value)), tagMod = *.dropdown)(p.edit setState _.value)
 
@@ -87,14 +87,14 @@ object ReqTypeSelector {
 
   // ===================================================================================================================
 
-  def potentialValueAcceptor(choices: Traversable[RT]): PotentialValueAcceptor[RT] =
+  def potentialValueAcceptor(choices: Iterable[RT]): PotentialValueAcceptor[RT] =
     PotentialValueAcceptor {
       case PotentialValue.Clipboard(cd) => parseText(choices, cd.text)
       case PotentialValue.Text(txt)     => parseText(choices, txt)
       case PotentialValue.Emptiness     => None
     }
 
-  private def parseText(choices: Traversable[RT], t: String): Option[RT] = {
+  private def parseText(choices: Iterable[RT], t: String): Option[RT] = {
     val input = Grammar.reqTypeMnemonic.caseInsensitiveParsePost(t.takeWhile(_ != ':').trim)
     choices.find(_.mnemonic.value ==* input)
   }

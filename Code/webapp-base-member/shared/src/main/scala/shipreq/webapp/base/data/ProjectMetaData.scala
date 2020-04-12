@@ -36,7 +36,7 @@ final case class ProjectMetaData(id           : ProjectId.Public,
   def applyEvent(ve: VerifiedEvent, newProject: Project, when: Instant): ProjectMetaData =
     applyEvents(ve :: Nil, newProject, when)
 
-  def applyEvents(ves: TraversableOnce[VerifiedEvent], newProject: Project, when: Instant): ProjectMetaData =
+  def applyEvents(ves: IterableOnce[VerifiedEvent], newProject: Project, when: Instant): ProjectMetaData =
     ProjectMetaData.fromProject(newProject)(
       id            = id,
       eventsInit    = eventsInit,

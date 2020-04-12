@@ -141,7 +141,7 @@ object ContentEventTestHelp {
   // ===================================================================================================================
 
   def assertSoleReqCode(p: Project, code: ReqCode.Value): ReqCode.Data = {
-    val v = p.content.reqCodes.trie.flatStream.toVector
+    val v = p.content.reqCodes.trie.flatIterator().toVector
     assertEq("Trie size", v.size, 1)
     assertEq("Sole req code", v.head._1, code)
     v.head._2

@@ -26,7 +26,7 @@ object ImplicationGraph {
     @inline def render = Component(this)
 
     def isEmpty: Boolean =
-      focus.isEmpty && reqs.reqIterator.map(_.live(reqTypes)).filter(filterDead.filter).isEmpty
+      focus.isEmpty && reqs.reqIterator().map(_.live(reqTypes)).filter(filterDead.filter).isEmpty
   }
 
   implicit val reusabilityProps: Reusability[Props] = {

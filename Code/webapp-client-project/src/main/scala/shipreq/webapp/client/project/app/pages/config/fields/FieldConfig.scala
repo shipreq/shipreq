@@ -165,8 +165,8 @@ object FieldConfig {
     private val updateOrder: Reusable[UpdateConfigCmd.FieldUpdateOrder => Callback] =
       Reusable.byRef { cmd =>
         for {
-          p   ← $.props
-          _   ← submitCmd(p, cmd, "Reordered")
+          p   <- $.props
+          _   <- submitCmd(p, cmd, "Reordered")
         } yield ()
       }
 

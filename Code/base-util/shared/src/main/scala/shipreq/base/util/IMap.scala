@@ -42,7 +42,6 @@ object IMap {
 final class IMap[K: UnivEq, V] private (key: V => K, m: Map[K, V]) extends IMapBase[K, V, IMap[K, V]](m) {
 
   override protected def stringPrefix = "IMap"
-  override protected def repr         = this
   override protected def setmap(n: M) = new IMap(key, n)
   override protected def _gkey(v: V)  = key(v)
 

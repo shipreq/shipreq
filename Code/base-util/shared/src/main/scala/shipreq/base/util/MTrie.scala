@@ -132,16 +132,16 @@ object MTrie {
       allValues.foreach(f)
 
     def foreachPathAndValue[U](f: (Path, V) => U): Unit =
-      flatStream.foreach(f.tupled)
+      flatIterator().foreach(f.tupled)
 
     /**
      * Flat left fold. Sugar to expand the key-value tuple.
      */
-    @inline def foldl[A](z: A)(f: (A, K, Node) => A): A =
+    def foldl[A](z: A)(f: (A, K, Node) => A): A =
       trie.foldLeft(z)((a, kv) => f(a, kv._1, kv._2))
 
-    def cataN[A](z: A)(f: (A, Node) => A): A =
-      foldl(z)((q, k, n) =>
+    def cataN[A](z: A)(f: (A, MTrie.Node[K, V]) => A): A =
+      foldl(z)((q, _, n) =>
         n.fold(
           b => b.next.cataN(f(q, n))(f),
           _ => f(q, n)))
@@ -181,14 +181,14 @@ object MTrie {
       cata(UnivEq.emptyMap[P, V])((m, p, ot) =>
         ot.fold(m)(t => m.updated(f(p), t.value)))
 
-    def flatStream: Stream[(Path, V)] = {
-      def go(trie: Trie, p: Vector[K]): Stream[(Path, V)] =
-        trie.toStream.flatMap { kv =>
+    def flatIterator(): Iterator[(Path, V)] = {
+      def go(trie: Trie, p: Vector[K]): Iterator[(Path, V)] =
+        trie.iterator.flatMap { kv =>
           val k = kv._1
           @inline def result(t: Value) = (NonEmptyVector.end(p, k), t.value)
           kv._2.fold(
-            b => b.value.map(result).toStream append go(b.next, p :+ k),
-            v => Stream(result(v)))
+            b => b.value.map(result).iterator ++ go(b.next, p :+ k),
+            v => result(v) :: Nil)
         }
       go(trie, Vector.empty)
     }
@@ -261,8 +261,8 @@ object MTrie {
       notLast(trie, path.init, path.last)
     }
 
-    def removeAll(paths: TraversableOnce[Path]): Trie =
-      paths.foldLeft(trie)(_ remove _)
+    def removeAll(paths: IterableOnce[Path]): Trie =
+      paths.iterator.foldLeft(trie)(_ remove _)
 
     /**
      * @return A sub-trie beginning at the given path.
@@ -292,9 +292,9 @@ object MTrie {
           val a = pathT.head
           val b = pathT.tail
           t.get(pathH) match {
-            case Some(Branch(ot, onext)) => go(onext, a, b, n ⇒ unwind(t.updated(pathH, Branch(ot, n))))
-            case ot @ Some(_: Value)     => go(empty, a, b, n ⇒ unwind(t.updated(pathH, Branch(ot.asInstanceOf[Option[Value]], n))))
-            case None                    => go(empty, a, b, n ⇒ unwind(t.updated(pathH, Branch(None, n))))
+            case Some(Branch(ot, onext)) => go(onext, a, b, n => unwind(t.updated(pathH, Branch(ot, n))))
+            case ot @ Some(_: Value)     => go(empty, a, b, n => unwind(t.updated(pathH, Branch(ot.asInstanceOf[Option[Value]], n))))
+            case None                    => go(empty, a, b, n => unwind(t.updated(pathH, Branch(None, n))))
           }
         }
 
@@ -320,21 +320,21 @@ object MTrie {
         case Some(Branch(v, _)) => v.isDefined
       }
 
-    def allValues: Stream[V] =
-      trie.values.toStream.flatMap {
-        case b: Branch => b.value.toStream.map(_.value) append b.next.allValues
-        case v: Value  => v.value #:: Stream.empty[V]
+    def allValues: Iterator[V] =
+      trie.values.iterator.flatMap {
+        case b: Branch => b.value.iterator.map(_.value) ++ b.next.allValues
+        case v: Value  => v.value :: Nil
       }
 
     @inline def add(path: Path)(implicit ev: Unit =:= V): Trie =
       put(path, ())
 
-    def addAll(paths: TraversableOnce[Path])(implicit ev: Unit =:= V): Trie =
-      paths.foldLeft(trie)(_ add _)
+    def addAll(paths: IterableOnce[Path])(implicit ev: Unit =:= V): Trie =
+      paths.iterator.foldLeft(trie)(_ add _)
 
-    @inline def @+ (path: Path)(implicit ev: Unit =:= V)                  : Trie = add(path)
-    @inline def @++(paths: TraversableOnce[Path])(implicit ev: Unit =:= V): Trie = addAll(paths)
-    @inline def @- (path: Path)                                           : Trie = remove(path)
-    @inline def @--(paths: TraversableOnce[Path])                         : Trie = removeAll(paths)
+    @inline def @+ (path: Path)(implicit ev: Unit =:= V)               : Trie = add(path)
+    @inline def @++(paths: IterableOnce[Path])(implicit ev: Unit =:= V): Trie = addAll(paths)
+    @inline def @- (path: Path)                                        : Trie = remove(path)
+    @inline def @--(paths: IterableOnce[Path])                         : Trie = removeAll(paths)
   }
 }

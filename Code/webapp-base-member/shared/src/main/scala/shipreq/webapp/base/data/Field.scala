@@ -582,16 +582,16 @@ final case class FieldSet(customFields: FieldSet.CustomFields,
     }
 
   def idIterator(): Iterator[FieldId] =
-    order.toIterator
+    order.iterator
 
   def iterator(): Iterator[Field] =
     idIterator().map(need)
 
   def staticFieldIterator(): Iterator[StaticField] =
-    order.toIterator.filterSubType[StaticField]
+    order.iterator.filterSubType[StaticField]
 
   def staticFieldSet: ListSet[StaticField] =
-    staticFieldIterator().to
+    staticFieldIterator().to(ListSet)
 
   def custom[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): D = {
     val f = customFields.need(id)

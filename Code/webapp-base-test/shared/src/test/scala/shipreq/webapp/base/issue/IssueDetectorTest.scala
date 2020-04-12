@@ -63,7 +63,7 @@ object IssueDetectorTest extends TestSuite {
 
 //  private def debugTags(project: Project): Project = {
 //    println(project.config.tags.prettyPrint)
-//    for (r <- project.content.reqs.reqIterator.toList.sortBy(_.id.value)) {
+//    for (r <- project.content.reqs.reqIterator().toList.sortBy(_.id.value)) {
 //      val tags = project.content.reqTags(r.id).map(_.value).toList.sorted.mkString(", ")
 //      val isLive = r.live(project.config.reqTypes) is Dead
 //      println(s"(#${r.id.value}) $tags${if (isLive) " [DEAD]" else ""}")

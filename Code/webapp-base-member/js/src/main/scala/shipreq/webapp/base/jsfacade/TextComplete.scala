@@ -55,7 +55,7 @@ object TextComplete {
     def empty(): MatchData =
       new js.Array[String].asInstanceOf[MatchData]
 
-    def apply(as: TraversableOnce[String], index: js.UndefOr[Int]): MatchData = {
+    def apply(as: IterableOnce[String], index: js.UndefOr[Int]): MatchData = {
       val md = empty()
       as.foreach(md.push(_))
       md.index = index
@@ -90,7 +90,7 @@ object TextComplete {
     type Id           = UndefOr[String]
 
     object Search {
-      def apply[A](f: String => TraversableOnce[A]): Search[A] =
+      def apply[A](f: String => IterableOnce[A]): Search[A] =
         (term, cb, _) => {
           val as = new js.Array[A]
           f(term).foreach(as.push(_))
@@ -117,7 +117,7 @@ object TextComplete {
     }
 
     final class Step2(`match`: Match, index: Index) {
-      def search  [A](f: String => TraversableOnce[A]): Step3a[A] = new Step3a(`match`, index, Search(f))
+      def search  [A](f: String => IterableOnce[A]): Step3a[A] = new Step3a(`match`, index, Search(f))
       def replace [A](f: A => String)                 : Step3b[A] = new Step3b[A](`match`, index, Replace apply f)
       def replace2[A](f: A => (String, String))       : Step3b[A] = new Step3b[A](`match`, index, Replace pair f)
     }
@@ -130,7 +130,7 @@ object TextComplete {
 
     final class Step3b[A](`match`: Match, index: Index, replace: Replace[A]) {
       private def ready(search: Search[A]): Ready[A] = new Ready(`match`, index, search, replace, _ => ())
-      def search(f: String => TraversableOnce[A]): Ready[A] = ready(Search(f))
+      def search(f: String => IterableOnce[A]): Ready[A] = ready(Search(f))
     }
 
     final class Ready[A](`match`: Match,

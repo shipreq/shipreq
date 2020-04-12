@@ -8,13 +8,10 @@ import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import io.circe.Json
 import japgolly.microlibs.nonempty.NonEmptySet
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Instant
 import nyaya.gen.Gen
 import org.postgresql.util.PSQLException
-import scala.collection.generic.CanBuildFrom
 import scala.collection.immutable.SortedSet
-import scala.collection.mutable
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.BaseDoobieCodecs._
@@ -303,38 +300,9 @@ object DbInterpreter {
       query(fr"project_id=$projectId AND ord>$ord")
 
     def set(projectId: ProjectId, ords: NonEmptySet[EventOrd]): Query0[Row] = {
-      val ordsC = cats.data.NonEmptySet(ords.head.value, ords.tail.iterator.map(_.value).to[SortedSet])
+      val ordsC = cats.data.NonEmptySet(ords.head.value, ords.tail.iterator.map(_.value).to(SortedSet))
       val where = fr"project_id=$projectId AND " ++ Fragments.in(fr"ord", ordsC)
       query(where)
-    }
-
-    type ResultF[A] = Result
-
-    val builder: CanBuildFrom[Nothing, Row, ResultF[Row]] = new CanBuildFrom[Nothing, Row, ResultF[Row]] {
-      override def apply(from: Nothing): mutable.Builder[Row, Result] = ??? // impossible
-      override def apply(): mutable.Builder[Row, Result] = {
-        new mutable.Builder[Row, Result] {
-          private[this] var err = Option.empty[DB.ReadProjectEventError]
-          private[this] var res = VerifiedEvent.Seq.empty
-
-          override def clear(): Unit = ??? // not used
-
-          override def +=(row: Row): this.type = {
-            if (err.isEmpty)
-              EventSerialisation.decode(row._1, row._2, row._3) match {
-                case \/-(e) => res += VerifiedEvent(row._1, e, row._4)
-                case -\/(e) => err = Some(e)
-              }
-            this
-          }
-
-          override def result(): Result =
-            err match {
-              case None    => \/-(res)
-              case Some(e) => -\/(e)
-            }
-        }
-      }
     }
   }
 
@@ -348,7 +316,23 @@ object DbInterpreter {
           case EventFilter.ExcludeUpTo(o) => after(pid, o)
           case EventFilter.Set(ords)      => set(pid, ords)
         }
-      q.to[Iterator].map(_.to(builder))
+
+      q.to[Iterator].map { it =>
+        var err = Option.empty[DB.ReadProjectEventError]
+        var res = VerifiedEvent.Seq.empty
+
+        for (row <- it)
+          if (err.isEmpty)
+            EventSerialisation.decode(row._1, row._2, row._3) match {
+              case \/-(e) => res += VerifiedEvent(row._1, e, row._4)
+              case -\/(e) => err = Some(e)
+            }
+
+        err match {
+          case None    => \/-(res)
+          case Some(e) => -\/(e)
+        }
+      }
     }
   }
 
@@ -427,9 +411,9 @@ object DbInterpreter {
       val name   = es.reverseIterator.collectFirst { case e: Event.ProjectNameSet => e.name }.getOrElse("")
       val data   = (uid, events, events, p.liveReqCount, p.content.reqs.size, name)
       for {
-        pid  ← createProjectQuery.toQuery0(data).unique
+        pid  <- createProjectQuery.toQuery0(data).unique
         adds = es.iterator.zipWithIndex.map(x => SaveProjectEventLogic.unsafeInsertEvent(pid, EventOrd.fromIndex(x._2), x._1, uid))
-        done ← sequentially(adds, pid)
+        done <- sequentially(adds, pid)
       } yield done
     }
   }

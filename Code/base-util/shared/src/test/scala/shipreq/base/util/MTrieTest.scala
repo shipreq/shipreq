@@ -19,12 +19,12 @@ object MTrieTest extends TestSuite {
   }
 
   val removeProp =
-    Prop.atom[(Trie, Traversable[Path])]("remove" , i => {
+    Prop.atom[(Trie, Iterable[Path])]("remove" , i => {
       val t1 = i._1
-      val s1 = t1.flatStream.size
-      i._2.toStream.map { p =>
+      val s1 = t1.flatIterator().size
+      i._2.iterator.map { p =>
         val t2 = t1.remove(p)
-        def s2 = t2.flatStream.size
+        def s2 = t2.flatIterator().size
         def d = s2 - s1
         t2.lookup(p) match {
           case Some(_) => Some(s"Removal failed. Δ=$d")
@@ -40,7 +40,7 @@ object MTrieTest extends TestSuite {
   val genPath: Gen[Path] =
     Gen.numeric.string(1 to 3).vector(1 to 3).map(NonEmptyVector.force)
 
-  val removeGen: Gen[(Trie, Traversable[Path])] =
+  val removeGen: Gen[(Trie, Iterable[Path])] =
     for {
       trieKeys <- genPath.vector
       remove1 <- genPath.vector

@@ -120,7 +120,7 @@ object ViewReq {
 
   final case class Data(req             : Req,
                         live            : Live,
-                        codes           : Traversable[ReqCode.Value],
+                        codes           : Iterable[ReqCode.Value],
                         otherTags       : Vector[ApplicableTagId],
                         allTags         : Vector[ApplicableTagId],
                         customTags      : CustomField.Tag.Id => Vector[ApplicableTagId],
@@ -156,26 +156,26 @@ object ViewReq {
       val tagOrderByPos   = project.dataLogic.tagOrderByPos
       val impFilter       = cfg.reqFilter(filterDead)
       val otherTagSet     = DataLogic.otherTags(tagDist, tagLookup)(id)
-      val otherTags       = MutableArray(otherTagSet).sortBy(tagOrderByName.apply).iterator.to[Vector]
-      val allTags         = MutableArray(reqTags.all).sortBy(tagOrderByName.apply).iterator.to[Vector]
+      val otherTags       = MutableArray(otherTagSet).sortBy(tagOrderByName.apply).iterator.to(Vector)
+      val allTags         = MutableArray(reqTags.all).sortBy(tagOrderByName.apply).iterator.to(Vector)
 
       val customTags: CustomField.Tag.Id => Vector[ApplicableTagId] =
         Memo { fid =>
           def tagSet = DataLogic.customFieldTags(tagDist, tagLookup, fid)(id)
-          MutableArray(tagSet).sortBy(tagOrderByPos.apply).iterator.to[Vector]
+          MutableArray(tagSet).sortBy(tagOrderByPos.apply).iterator.to(Vector)
         }
 
-      def sortPubids(pubids: TraversableOnce[Pubid]): Vector[Pubid] =
+      def sortPubids(pubids: IterableOnce[Pubid]): Vector[Pubid] =
         MutableArray(pubids)
           .sortBySchwartzian(pubidSortKeyFn)
           .iterator
-          .to[Vector]
+          .to(Vector)
 
       val codes: List[ReqCode.Value] =
         MutableArray(project.content.reqCodes.activeReqCodesByReqId(id))
           .sortBySchwartzian(PlainText.reqCode)
           .iterator
-          .to[List]
+          .to(List)
 
       val generalImps: Direction => Vector[Pubid] =
         Direction.memo(dir =>

@@ -44,36 +44,36 @@ object UrlTest extends TestSuite {
           assertEq(Url.Relative(a) / c.relativeUrl, Url.Relative(e))
           assertEq(Url.Relative(a) / c.relativeUrlNoHeadSlash, Url.Relative(e))
         }
-        * - test("/", "/")("/")
-        * - test("/a", "/")("/a")
-        * - test("/", "/a")("/a")
-        * - test("/a", "/b")("/a/b")
+        "1" - test("/", "/")("/")
+        "2" - test("/a", "/")("/a")
+        "3" - test("/", "/a")("/a")
+        "4" - test("/a", "/b")("/a/b")
       }
 
       "isParentOf" - {
         def test(a: String, b: String, e: Boolean): Unit =
           assertEq(s"$a isParentOf $b", Relative(a).isParentOf(Relative(b)), e)
-        * - test("/abc", "/abc", false)
-        * - test("/abc", "/ab", false)
-        * - test("/abc", "/abc/def", true)
-        * - test("/abc", "/abcdef", false)
-        * - test("/abc/", "/abc", false)
-        * - test("/abc/", "/ab", false)
-        * - test("/abc/", "/abc/def", true)
-        * - test("/abc/", "/abcdef", false)
+        "1" - test("/abc", "/abc", false)
+        "2" - test("/abc", "/ab", false)
+        "3" - test("/abc", "/abc/def", true)
+        "4" - test("/abc", "/abcdef", false)
+        "5" - test("/abc/", "/abc", false)
+        "6" - test("/abc/", "/ab", false)
+        "7" - test("/abc/", "/abc/def", true)
+        "8" - test("/abc/", "/abcdef", false)
       }
 
       "isEqualToOrParentOf" - {
         def test(a: String, b: String, e: Boolean): Unit =
           assertEq(s"$a isEqualToOrParentOf $b", Relative(a).isEqualToOrParentOf(Relative(b)), e)
-        * - test("/abc", "/abc", true)
-        * - test("/abc", "/ab", false)
-        * - test("/abc", "/abc/def", true)
-        * - test("/abc", "/abcdef", false)
-        * - test("/abc/", "/abc", true)
-        * - test("/abc/", "/ab", false)
-        * - test("/abc/", "/abc/def", true)
-        * - test("/abc/", "/abcdef", false)
+        "1" - test("/abc", "/abc", true)
+        "2" - test("/abc", "/ab", false)
+        "3" - test("/abc", "/abc/def", true)
+        "4" - test("/abc", "/abcdef", false)
+        "5" - test("/abc/", "/abc", true)
+        "6" - test("/abc/", "/ab", false)
+        "7" - test("/abc/", "/abc/def", true)
+        "8" - test("/abc/", "/abcdef", false)
       }
     }
 
@@ -102,11 +102,11 @@ object UrlTest extends TestSuite {
         "/x" - test(Relative("/x"), "/x/")
       }
       "relative" - {
-        * - assertEq(Url.Absolute("http://qwe.asd/qwe").relativeUrl.relativeUrl, "/qwe")
-        * - assertEq(Url.Absolute("http://qwe.asd:123/qwe").relativeUrl.relativeUrl, "/qwe")
-        * - assertEq(Url.Absolute("http://qwe.asd/qwe/zxc").relativeUrl.relativeUrl, "/qwe/zxc")
-        * - assertEq(Url.Absolute("http://qwe.asd/").relativeUrl.relativeUrl, "/")
-        * - assertEq(Url.Absolute("http://qwe.asd").relativeUrl.relativeUrl, "/")
+        "1" - assertEq(Url.Absolute("http://qwe.asd/qwe").relativeUrl.relativeUrl, "/qwe")
+        "2" - assertEq(Url.Absolute("http://qwe.asd:123/qwe").relativeUrl.relativeUrl, "/qwe")
+        "3" - assertEq(Url.Absolute("http://qwe.asd/qwe/zxc").relativeUrl.relativeUrl, "/qwe/zxc")
+        "4" - assertEq(Url.Absolute("http://qwe.asd/").relativeUrl.relativeUrl, "/")
+        "5" - assertEq(Url.Absolute("http://qwe.asd").relativeUrl.relativeUrl, "/")
       }
     }
 

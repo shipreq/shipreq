@@ -38,10 +38,10 @@ object ClientUtil {
         TagMod.fromTraversableOnce(
           as.intercalateF(separator)(g compose renderEach).whole)))
 
-  def renderSeq[A](as: TraversableOnce[A], separator: TagMod)(implicit f: A => TagMod): VdomTag =
+  def renderSeq[A](as: IterableOnce[A], separator: TagMod)(implicit f: A => TagMod): VdomTag =
     <.span(
       TagMod.fromTraversableOnce(
-        as.toIterator
+        as.iterator
           .map(f)
           .intersperse(separator)))
 

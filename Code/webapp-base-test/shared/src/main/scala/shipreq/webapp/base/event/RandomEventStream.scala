@@ -170,7 +170,7 @@ final class ApplicableEventGen(curState: State, generateRetiredEvents: Boolean) 
 
   private implicit def autoGenToOptionGen[A](g: Gen[A]): Option[Gen[A]] = Some(g)
 
-  def tryGenChooseLiveDead[A](f: Live => TraversableOnce[A]): Live => Option[Gen[A]] =
+  def tryGenChooseLiveDead[A](f: Live => IterableOnce[A]): Live => Option[Gen[A]] =
     Live.memoLazy(l => Gen.tryGenChoose(f(l)))
 
   val (staticFieldsToDel, staticFieldsToAdd) =
@@ -270,7 +270,7 @@ final class ApplicableEventGen(curState: State, generateRetiredEvents: Boolean) 
     Gen.tryGenChoose(p.content.reqs.idIterator)
 
   lazy val liveReqIds: Vector[ReqId] =
-    p.content.reqs.reqIterator.filter(_.live(cfg.reqTypes) is Live).map(_.id).toVector
+    p.content.reqs.reqIterator().filter(_.live(cfg.reqTypes) is Live).map(_.id).toVector
 
   lazy val liveReqId: Option[Gen[ReqId]] =
     Gen.tryGenChoose(liveReqIds)
@@ -574,11 +574,11 @@ final class ApplicableEventGen(curState: State, generateRetiredEvents: Boolean) 
   def genUseCaseStepCreate: Option[Gen[UseCaseStepCreate]] =
     liveUseCase.map(genUC =>
       for {
-        id    ← nextUseCaseStepId
-        uc    ← genUC
-        field ← Gen choose_! StaticField.useCaseStepTrees.whole.filter(_.useCaseStepTree.get(uc).nonEmpty)
+        id    <- nextUseCaseStepId
+        uc    <- genUC
+        field <- Gen choose_! StaticField.useCaseStepTrees.whole.filter(_.useCaseStepTree.get(uc).nonEmpty)
         tree  = field.useCaseStepTree.get(uc)
-        loc   ← tree.genParentLocation
+        loc   <- tree.genParentLocation
       } yield UseCaseStepCreate(id, uc.id, field, loc)
     )
 
@@ -738,16 +738,16 @@ final class ApplicableEventGen(curState: State, generateRetiredEvents: Boolean) 
   def genReqCodesPatch: Option[Gen[ReqCodesPatch]] =
     liveReqId.map(gReqId =>
       for {
-        reqId          ← gReqId
+        reqId          <- gReqId
         inactiveValues = p.content.reqCodes.inactiveIdsByReqId(reqId)
-        restore        ← Gen.tryGenChoose(inactiveValues.toVector).setE(0 to 2)
+        restore        <- Gen.tryGenChoose(inactiveValues.toVector).setE(0 to 2)
         activeValues   = p.content.reqCodes.activeReqCodesByReqId(reqId)
         activeIds      = activeValues.iterator.map(p.content.reqCodes.need(_).activeId.get).collect {case i: ApReqCodeId => i}.toSet
-        remove         ← Gen.tryGenChoose(activeIds.toVector).setE(0 to 2)
-        renameIds      ← Gen.tryGenChoose(remove.toVector).setE(0 to 2)
+        remove         <- Gen.tryGenChoose(activeIds.toVector).setE(0 to 2)
+        renameIds      <- Gen.tryGenChoose(remove.toVector).setE(0 to 2)
         addMin         = if (remove.nonEmpty || restore.nonEmpty) 0 else 1
-        addIds         ← nextReqCodeIdA.list(addMin to 2)
-        add            ← Gen sequence (addIds ++ renameIds).map(id => reqCode.value.strengthR(Set.empty[ApReqCodeId] + id))
+        addIds         <- nextReqCodeIdA.list(addMin to 2)
+        add            <- Gen sequence (addIds ++ renameIds).map(id => reqCode.value.strengthR(Set.empty[ApReqCodeId] + id))
       } yield
         ReqCodesPatch(reqId, remove, restore, Multimap(add.toMap))
     )
@@ -770,17 +770,17 @@ final class ApplicableEventGen(curState: State, generateRetiredEvents: Boolean) 
       // if (order.length < 2) // We always have at least 2 because of static fields
       val anyField = Gen.choose_!(order)
       for {
-        id     ← anyField
+        id     <- anyField
         curPos = RelPos.get(order, id)
         tmp    = order.filterNot(f => (f ==* id) || curPos.exists(f ==* _)).map(_.some)
         tmp2   = if (curPos.isEmpty) tmp else tmp :+ None
-        pos    ← Gen.choose_!(tmp2)
+        pos    <- Gen.choose_!(tmp2)
       } yield FieldReposition(id, pos)
     }
 
   def genContentRestore: Option[Gen[ContentRestore]] = {
     val restorableReqIds = Gen.tryGenChoose[ReqId](
-      p.content.reqs.reqIterator.filter {
+      p.content.reqs.reqIterator().filter {
         case g: GenericReq => (g.liveExplicitly is Dead) && (g.copy(liveExplicitly = Live).live(cfg.reqTypes) is Live)
         case u: UseCase    => (u.liveExplicitly is Dead) && (u.copy(liveExplicitly = Live).live(cfg.reqTypes) is Live)
       }.map(_.id).toVector)

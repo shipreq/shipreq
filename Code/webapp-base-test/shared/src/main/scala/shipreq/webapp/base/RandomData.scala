@@ -357,8 +357,8 @@ object RandomData {
 
   def tagAndRels(genReqTypeIds: Gen[Set[ReqTypeId]]): Gen[(Tag, TagInTree.Relations)] =
     for {
-      t      ← tag(genReqTypeIds)
-      (p, c) ← tagId.set.pair
+      t      <- tag(genReqTypeIds)
+      (p, c) <- tagId.set.pair
     } yield {
       val children = (c - t.id -- p).toVector
       val parents  = (p - t.id -- c).iterator.map(_ -> none[TagId]).toMap
@@ -395,9 +395,9 @@ object RandomData {
 
   def tagTree(genReqTypeIds: Gen[Set[ReqTypeId]]): Gen[TagTree] =
     for {
-      l ← tags(genReqTypeIds)
+      l <- tags(genReqTypeIds)
       m = Tag.IdAccess.mapById(l)
-      s ← tagTreeStructure(m.keySet)
+      s <- tagTreeStructure(m.keySet)
     } yield
       m.values.foldLeft(TagTree.empty)((q, t) =>
         q.add(TagInTree(t, s.getOrElse(t.id, Vector.empty))))
@@ -535,10 +535,10 @@ object RandomData {
     val rulesAny      = fieldReqTypeRules[Impossible](genReqTypeId, None)
     val rulesTag      = fieldReqTypeRules(genReqTypeId, genApTagId)
     for {
-      cf           ← customFields(reqTypeIds, tagGroupIds, rulesAny, rulesTag)
+      cf           <- customFields(reqTypeIds, tagGroupIds, rulesAny, rulesTag)
       mandatoryIds = cf.keySet.map(f => f: FieldId) ++ StaticField.mandatory.iterator
-      optionalIds  ← Gen.subset(StaticField.optional.whole)
-      order        ← Gen.shuffle((mandatoryIds ++ optionalIds).toVector)
+      optionalIds  <- Gen.subset(StaticField.optional.whole)
+      order        <- Gen.shuffle((mandatoryIds ++ optionalIds).toVector)
     } yield FieldSet(cf, order)
   }
 
@@ -1131,7 +1131,7 @@ object RandomData {
     txt mapByKeySubset reqs mapByKeySubset cols
 
   private[this] val emptyATagIdSet = Gen.pure(Set.empty[ApplicableTagId])
-  def reqFieldDataTags(reqs: Traversable[ReqId], tags: Set[ApplicableTagId]): Gen[ReqData.Tags] = {
+  def reqFieldDataTags(reqs: Iterable[ReqId], tags: Set[ApplicableTagId]): Gen[ReqData.Tags] = {
     val rndTags = Gen.chooseGen(Gen.subset(tags), emptyATagIdSet)
     (rndTags mapByKeySubset reqs.toIterable).map(Multimap(_))
 //    subset2(reqs, 1, 0).flatMap(rndTags.mapByEachKey).map(Multimap(_))
@@ -1341,9 +1341,9 @@ object RandomData {
       case None => Gen pure DeletionReasons.empty
       case Some(g) =>
         for {
-          reasons  ← gText.vector
-          ids      = reasons.indices.toStream.map(i => Option(DeletionReasonId(i)))
-          idToReqs ← g.set1.fill(reasons.length).map(ids zip _)
+          reasons  <- gText.vector
+          ids      = reasons.indices.iterator.map(i => Option(DeletionReasonId(i)))
+          idToReqs <- g.set1.fill(reasons.length)(List).map(ids.zip)
         } yield {
           var ra = DeletionReasons.emptyReqApplication
           idToReqs.foreach { t =>
@@ -1367,12 +1367,12 @@ object RandomData {
 
   lazy val projectConfig: Gen[ProjectConfig] =
     for {
-      reqtypes       ← customReqTypes
+      reqtypes       <- customReqTypes
       reqTypeIds     = StaticReqType.values ++ reqtypes.keys
       reqTypeIdSet   = reqTypeIds.whole.toSet
       genReqTypeIds  = Gen.chooseNE(reqTypeIds).set(0 to 2)
-      (issues, tags) ← Gen.tuple2(customIssueTypes, tagTree(genReqTypeIds)) map distinctHashRefKeys.run
-      fields         ← fieldSet(reqTypeIdSet, tags.keySet)
+      (issues, tags) <- Gen.tuple2(customIssueTypes, tagTree(genReqTypeIds)) map distinctHashRefKeys.run
+      fields         <- fieldSet(reqTypeIdSet, tags.keySet)
     } yield ProjectConfig(issues, ReqTypes(reqtypes), fields, Tags(tags))
 
   def genProject(cfg            : ProjectConfig,
@@ -1395,12 +1395,12 @@ object RandomData {
     val delReasonText   = TextGen.deletionReasonAtom(reqIdG, ucStepIdG, activeCodeIdG, atagIdG).text1(Text.DeletionReason)
     val manualIssueText = TextGen.manualIssueAtom(reqIdG, ucStepIdG, activeCodeIdG, atagIdG).text1(Text.ManualIssue)
     for {
-      name       ← projectName
-      reqText    ← reqFieldDataText2(reqIdSet, textColIds, ucStepIdG, activeCodeIdG, cissueIdG, atagIdG)
-      reqs       ← setReqText(reqsWithoutText, reqIdG, ucStepIdG, activeCodeIdG, cissueIdG, atagIdG)
-      reqCodes2  ← reqCode.updateGroupText(rcgTitleText)(reqCodes1.trie)
-      dr         ← deletionReasons(reqIdG, delReasonText)
-      mis        ← genManualIssues(manualIssueText)
+      name       <- projectName
+      reqText    <- reqFieldDataText2(reqIdSet, textColIds, ucStepIdG, activeCodeIdG, cissueIdG, atagIdG)
+      reqs       <- setReqText(reqsWithoutText, reqIdG, ucStepIdG, activeCodeIdG, cissueIdG, atagIdG)
+      reqCodes2  <- reqCode.updateGroupText(rcgTitleText)(reqCodes1.trie)
+      dr         <- deletionReasons(reqIdG, delReasonText)
+      mis        <- genManualIssues(manualIssueText)
       p1         = Project(
                      name,
                      cfg,
@@ -1414,26 +1414,26 @@ object RandomData {
                      mis,
                      reqtable.SavedViews.empty,
                      IdCeilings.zero)
-      savedViews ← reqtableData.savedViewsForProject(p1)
+      savedViews <- reqtableData.savedViewsForProject(p1)
     } yield IdCeilings.supply(ic => p1.copy(reqtableViews = savedViews, idCeilings = ic))
   }
 
   lazy val project: Gen[Project] =
     for {
-      cfg             ← projectConfig
+      cfg             <- projectConfig
       atagIds         = cfg.tags.tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
-      reqCount        ← Gen.chooseSize
-      ucCount         ← Gen.chooseSize map (_ >> 1)
-      reqsWithoutText ← reqsWithoutText(cfg, reqCount, ucCount)
+      reqCount        <- Gen.chooseSize
+      ucCount         <- Gen.chooseSize map (_ >> 1)
+      reqsWithoutText <- reqsWithoutText(cfg, reqCount, ucCount)
       reqIdSet        = reqsWithoutText.idIterator.toSet
       reqIdG          = Gen tryGenChoose reqIdSet.toIndexedSeq
-      liveReqIds      = reqsWithoutText.reqIterator.filter(_.live(cfg.reqTypes) is Live).map(_.id)
+      liveReqIds      = reqsWithoutText.reqIterator().filter(_.live(cfg.reqTypes) is Live).map(_.id)
       liveReqIdG      = Gen tryGenChoose liveReqIds.toIndexedSeq
       reqCodeDataG    = reqCode.data(liveReqIdG, reqIdG)(0 to (3 `JVM|JS` 2))
-      reqCodes        ← reqCodes(reqCode.trie(reqCodeDataG, 2 `JVM|JS` 2))
-      reqTags         ← reqFieldDataTags(reqIdSet, atagIds)
-      reqImps         ← reqFieldDataImplications(reqIdSet)
-      p               ← genProject(cfg, reqsWithoutText, reqCodes, reqTags, reqImps)
+      reqCodes        <- reqCodes(reqCode.trie(reqCodeDataG, 2 `JVM|JS` 2))
+      reqTags         <- reqFieldDataTags(reqIdSet, atagIds)
+      reqImps         <- reqFieldDataImplications(reqIdSet)
+      p               <- genProject(cfg, reqsWithoutText, reqCodes, reqTags, reqImps)
     } yield p
 
   lazy val projectAndOrd: Gen[ProjectAndOrd] =
@@ -1484,9 +1484,9 @@ object RandomData {
 
     def visibleColumns(p: Project): Gen[NonEmptyVector[Column]] =
       for {
-        long ← Gen.long
+        long <- Gen.long
         all  = Column all p.config
-        cols ← Gen shuffle all.whole.toVector
+        cols <- Gen shuffle all.whole.toVector
       } yield {
         var i = long
         val vs = cols.filter(c =>
@@ -2285,11 +2285,11 @@ object RandomData {
     val genReqCodesPatch: Gen[ReqCodesPatch] = {
       val codes = reqCode.apId.set(0 to 3)
       for {
-        id      ← reqId
-        add     ← codes.mapBy(reqCode.value).map(Multimap(_)) // TODO Could have same ID with different codes
+        id      <- reqId
+        add     <- codes.mapBy(reqCode.value).map(Multimap(_)) // TODO Could have same ID with different codes
         addIds  = add.valueIterator.toSet
-        remove  ← codes.map(_ -- addIds)
-        restore ← codes.map(_ -- addIds -- remove)
+        remove  <- codes.map(_ -- addIds)
+        restore <- codes.map(_ -- addIds -- remove)
       } yield ReqCodesPatch(id, remove, restore, add)
     }
 

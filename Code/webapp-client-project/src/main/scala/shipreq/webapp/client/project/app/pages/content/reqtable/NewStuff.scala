@@ -7,11 +7,11 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import shipreq.base.util._
 import shipreq.webapp.base.data.{ExternalPubid, ReqTypes}
+import shipreq.webapp.base.ui.Toast
 import shipreq.webapp.client.project.feature.CreateFeature
 import shipreq.webapp.client.project.feature.CreateFeature.RowKey
-import NewStuff.State
-import shipreq.webapp.base.ui.Toast
 import shipreq.webapp.client.project.widgets.ProjectWidgets
+import NewStuff.State
 
 /**
   * Unified, convenience interface to both [[NewButton]] and [[NewForm]].
@@ -92,7 +92,7 @@ final class NewStuff(state        : State,
 
         s match {
 
-          case r@RowKey.CodeGroup =>
+          case r: RowKey.CodeGroup.type =>
             Some(NewForm.ForCodeGroup.Props((), activeColumns, create(r), routerCtl, toast, cancel).render)
 
           case r: RowKey.GenericReq =>
@@ -100,7 +100,7 @@ final class NewStuff(state        : State,
               NewForm.ForGenericReq.Props(rt, activeColumns, create(r), routerCtl, toast, cancel).render
             }
 
-          case r@RowKey.UseCase =>
+          case r: RowKey.UseCase.type =>
             Some(NewForm.ForUseCase.Props((), activeColumns, create(r), routerCtl, toast, cancel).render)
 
           case RowKey.ManualIssue =>

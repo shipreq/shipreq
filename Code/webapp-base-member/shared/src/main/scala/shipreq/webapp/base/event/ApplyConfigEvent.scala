@@ -363,14 +363,14 @@ trait ApplyConfigEvent {
     def applyCreate(e: ApplicableTagCreateV1): SE[Unit] = {
       implicit val vs = e.vs
       for {
-        n   ← GD.need(^.Name) >>= validateName
-        d   ← GD.need(^.Desc) >>= validateDesc
-        k   ← GD.need(^.Key)  >>= validateKey
+        n   <- GD.need(^.Name) >>= validateName
+        d   <- GD.need(^.Desc) >>= validateDesc
+        k   <- GD.need(^.Key)  >>= validateKey
         oc  = GD.read(^.Children)
         op  = GD.read(^.Parents)
         tag = ApplicableTag.v1(e.id, n, d, k, Live)
         tit = TagInTree(tag, oc getOrElse Vector.empty)
-        _   ← create(tit, op)
+        _   <- create(tit, op)
       } yield ()
     }
 
@@ -396,15 +396,15 @@ trait ApplyConfigEvent {
     def applyCreate(e: ApplicableTagCreate): SE[Unit] = {
       implicit val vs = e.vs
       for {
-        a   ← GD.need(^.ApplicableReqTypes)
-        c   ← GD.need(^.Colour) >>= validateColour
-        d   ← GD.need(^.Desc) >>= validateDesc
-        k   ← GD.need(^.Key)  >>= validateKey
+        a   <- GD.need(^.ApplicableReqTypes)
+        c   <- GD.need(^.Colour) >>= validateColour
+        d   <- GD.need(^.Desc) >>= validateDesc
+        k   <- GD.need(^.Key)  >>= validateKey
         oc  = GD.read(^.Children)
         op  = GD.read(^.Parents)
         tag = ApplicableTag(e.id, k, d, c, a, Live)
         tit = TagInTree(tag, oc getOrElse Vector.empty)
-        _   ← create(tit, op)
+        _   <- create(tit, op)
       } yield ()
     }
 
@@ -433,14 +433,14 @@ trait ApplyConfigEvent {
     def applyCreate(e: TagGroupCreate): SE[Unit] = {
       implicit val vs = e.vs
       for {
-        n   ← GD.need(^.Name) >>= validateName
-        d   ← GD.need(^.Desc) >>= validateDesc
-        ex  ← GD.need(^.Exclusivity)
+        n   <- GD.need(^.Name) >>= validateName
+        d   <- GD.need(^.Desc) >>= validateDesc
+        ex  <- GD.need(^.Exclusivity)
         oc  = GD.read(^.Children)
         op  = GD.read(^.Parents)
         tag = TagGroup(e.id, n, d, ex, Live)
         tit = TagInTree(tag, oc getOrElse Vector.empty)
-        _   ← create(tit, op)
+        _   <- create(tit, op)
       } yield ()
     }
 
@@ -470,22 +470,22 @@ trait ApplyConfigEvent {
 
     def create(cf: CustomField): SE[Unit] =
       for {
-        fs  ← SE get Project.fields.get
-        cfs ← imapCreate(fs.customFields)(cf)
+        fs  <- SE get Project.fields.get
+        cfs <- imapCreate(fs.customFields)(cf)
         fs2 = FieldSet(cfs, fs.order :+ cf.id)
-        _   ← Project.fields set fs2
-        _   ← updateIdCeiling(cf.id)
+        _   <- Project.fields set fs2
+        _   <- updateIdCeiling(cf.id)
       } yield ()
 
     def update[CF <: CustomField : ClassTag](id: CustomFieldId, mod: CF => SE[CF]): SE[Unit] =
       for {
-        p  ← SE.get
+        p  <- SE.get
         m  = Project.customFields get p
-        f1 ← imapNeed(m)(id)
-        f2 ← narrowCC[CustomField, CF](f1)
-        _  ← ensureLive(f2 live p.config)(show(id))
-        f3 ← mod(f2)
-        _  ← Project.customFields set (m + f3)
+        f1 <- imapNeed(m)(id)
+        f2 <- narrowCC[CustomField, CF](f1)
+        _  <- ensureLive(f2 live p.config)(show(id))
+        f3 <- mod(f2)
+        _  <- Project.customFields set (m + f3)
       } yield ()
 
     private val repositionField = repositionFn[FieldId]
@@ -511,11 +511,11 @@ trait ApplyConfigEvent {
 
     private def deleteOrRestoreCF(id: CustomFieldId, targetState: Live): SE[Unit] =
       for {
-        p  ← SE.get
+        p  <- SE.get
         m  = Project.customFields get p
-        f1 ← imapNeed(m)(id)
-        f2 ← toggleLiveCheckBeforeAfter(f1, targetState)(_ live p.config, CustomField.liveExplicitly.set, show(f1))
-        _  ← Project.customFields set (m + f2)
+        f1 <- imapNeed(m)(id)
+        f2 <- toggleLiveCheckBeforeAfter(f1, targetState)(_ live p.config, CustomField.liveExplicitly.set, show(f1))
+        _  <- Project.customFields set (m + f2)
       } yield ()
 
     def hardDelete(id: CustomFieldId): SE[Unit] =

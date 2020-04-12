@@ -47,7 +47,7 @@ object CommonProtocolLogic extends HasLogger {
       private def resolveUser(token: Security.SessionToken[Any], username: Option[Username]): F[Unit \/ Option[User]] =
         token.authenticatedUser match {
           case Some(u) =>
-            F.pure(\/-(Some(u))) // ← source of truth
+            F.pure(\/-(Some(u))) // <- source of truth
 
           case None =>
             username match {

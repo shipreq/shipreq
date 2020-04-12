@@ -75,7 +75,7 @@ private[event] object ApplyEventLib {
   def ensureNone[A](oa: Option[A])(err: A => String)(implicit trust: Trust): SE[Unit] =
     whenUntrusted(oa.fold(nop)(a => fail(err(a))))
 
-  def ensureDistinct[A](field: String, as: => TraversableOnce[A])(implicit trust: Trust, u: UnivEq[A]): SE[Unit] =
+  def ensureDistinct[A](field: String, as: => IterableOnce[A])(implicit trust: Trust, u: UnivEq[A]): SE[Unit] =
     whenUntrusted {
       val dups = Utils.dups(as)
       if (dups.isEmpty) nop else SE.fail(s"Duplicates found in $field: ${dups.toVector.distinct.mkString(", ")}")
@@ -171,10 +171,10 @@ private[event] object ApplyEventLib {
 
   def optionalModSE[A](l: monocle.Optional[Project, A], notFound: => String)(mod: A => SE[A]): SE[Unit] =
     for {
-      p   ← SE.get
-      sv1 ← optionGet(l.getOption(p), notFound)
-      sv2 ← mod(sv1)
-      _   ← l.set(sv2)
+      p   <- SE.get
+      sv1 <- optionGet(l.getOption(p), notFound)
+      sv2 <- mod(sv1)
+      _   <- l.set(sv2)
     } yield ()
 
   def foldMapBind[A, B](b: B, as: Iterable[A])(f: A => B => SE[B]): SE[B] =

@@ -8,6 +8,7 @@ import org.redisson.api.listener.MessageListener
 import org.redisson.api.{RScript, RedissonClient}
 import org.redisson.client.codec.{ByteArrayCodec, StringCodec}
 import scala.collection.JavaConverters._
+import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.util.control.NonFatal
 import scalaz.-\/
@@ -45,7 +46,7 @@ object RedisViaRedisson {
       }
     }
 
-    final class Args(val args: mutable.ArrayBuffer[Array[Byte]]) extends AnyVal {
+    final class Args(val args: mutable.Builder[Array[Byte], Array[Array[Byte]]]) extends AnyVal {
       @inline def +=(s: String         ): Unit = args += s.getBytes
       @inline def +=(i: Int            ): Unit = args += i.toString.getBytes
       @inline def +=(a: Array[Byte]    ): Unit = args += a
@@ -53,10 +54,11 @@ object RedisViaRedisson {
       @inline def +=(e: VerifiedEvent  ): Unit = args += picklerEvent.encode(e).unsafeArray
       @inline def +=(s: ProjectSnapshot): Unit = args += picklerProjectSnapshot.encode(s).unsafeArray
       @inline def ++=(es: VerifiedEvent.Seq): Unit = es.foreach(+=(_))
+      @inline def seq: Seq[Array[Byte]] = ArraySeq.unsafeWrapArray(args.result())
     }
 
     object Args {
-      def apply() = new Args(new mutable.ArrayBuffer[Array[Byte]])
+      def apply() = new Args(Array.newBuilder)
     }
 
     final case class ReadEventsInput(id: ProjectId, beyond: Option[EventOrd.Latest])
@@ -91,7 +93,7 @@ final class RedisViaRedisson(client: RedissonClient, schema: RedisSchema) extend
     scriptBinary.evalSha[A](mode, sha.value, returnType, keys.keys)
 
   private def evalSha[A](mode: Mode, sha: ScriptSha, returnType: RScript.ReturnType, keys: Keys, args: Args): A =
-    scriptBinary.evalSha[A](mode, sha.value, returnType, keys.keys, args.args: _*)
+    scriptBinary.evalSha[A](mode, sha.value, returnType, keys.keys, args.seq: _*)
 
   override def subscribe(id: ProjectId, listener: Redis.Listener[Fx]): Fx[Subscription[Fx]] = {
     val topicName = schema.topic(id)

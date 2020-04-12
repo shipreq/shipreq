@@ -170,7 +170,7 @@ private[tablenav] object Logic {
   def allowMove2A[A](a: A, ob: Option[A])(cell: A => Int, sub: A => Option[PosXY]): Permission =
     Deny.when(sub(a).isEmpty && ob.exists(b => sub(b).isDefined && cell(a) ==* cell(b)))
 
-  def needNev[A](as: TraversableOnce[A], err: => String): F[NonEmptyVector[A]] =
+  def needNev[A](as: IterableOnce[A], err: => String): F[NonEmptyVector[A]] =
     NonEmptyVector.maybe[A, F[NonEmptyVector[A]]](as.toVector, -\/(err))(\/-(_))
 
   def subAt(cell: html.Element, xy: PosXY): Option[html.Element] =

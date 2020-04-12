@@ -47,7 +47,7 @@ object JsonTestUtil {
   def assertRoundTrip[A: Decoder: Encoder: Equal](a: A)(implicit l: Line): Unit =
     assertDecodeOk(a.asJson, a)
 
-  def assertRoundTrips[A: Decoder: Encoder: Equal](as: Traversable[A])(implicit l: Line): Unit = {
+  def assertRoundTrips[A: Decoder: Encoder: Equal](as: Iterable[A])(implicit l: Line): Unit = {
     var i = 0
     for (a <- as) {
       i += 1

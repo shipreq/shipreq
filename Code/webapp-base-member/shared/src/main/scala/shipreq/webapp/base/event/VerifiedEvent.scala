@@ -36,7 +36,7 @@ object VerifiedEvent {
       s"VerifiedEvent.NonEmptySeq($describeEvents)"
 
     def describeEvents: String =
-      ConciseIntSetFormat(values.toIterator.map(_.ord.value).toSet)
+      ConciseIntSetFormat(values.iterator.map(_.ord.value).toSet)
 
     def values: Seq =
       tail + head

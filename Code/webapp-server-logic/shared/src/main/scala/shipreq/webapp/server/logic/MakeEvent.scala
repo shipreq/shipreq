@@ -196,7 +196,7 @@ object MakeEvent {
       okParentsSet.asInstanceOf[Set[TagId]]
 
     val otherParents: Map[TagId, Option[TagId]] =
-      allParents.filterKeys(!_okParentsSet.contains(_))
+      allParents.view.filterKeys(!_okParentsSet.contains(_)).toMap
   }
 
   private object TagParentsHelper {

@@ -43,8 +43,8 @@ object IssueTracker {
     new IssueTracker(issues, newProject)
   }
 
-  private def fuseReduce[A](fs: TraversableOnce[() => A => Unit]): A => Unit =
-    fs.toIterator.map(_()).reduce((x, y) => a => { x(a); y(a) })
+  private def fuseReduce[A](fs: IterableOnce[() => A => Unit]): A => Unit =
+    fs.iterator.map(_()).reduce((x, y) => a => { x(a); y(a) })
 
   private final class MutableTrackerState {
     val dirtyFns = new MutableDirtyFns
@@ -55,7 +55,7 @@ object IssueTracker {
     private var fns: List[() => A => Unit]     = Nil
     val add        : (() => A => Unit) => Unit = fns ::= _
 
-    def foreach(as: => TraversableOnce[A]): Unit =
+    def foreach(as: => IterableOnce[A]): Unit =
       if (fns.nonEmpty) {
         val i = as
         if (i.nonEmpty) {

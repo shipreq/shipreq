@@ -16,7 +16,7 @@ object Select {
 
   sealed trait Props {
     type A
-    val options : Traversable[Option[A]]
+    val options : Iterable[Option[A]]
     val selected: scala.Option[OptionKey]
     val enabled : Enabled
     val tagMod  : TagMod
@@ -24,7 +24,7 @@ object Select {
     val onChange: Option[A] => Callback
   }
 
-  def apply[A](options : Traversable[Select.Option[A]],
+  def apply[A](options : Iterable[Select.Option[A]],
                selected: scala.Option[OptionKey] = None,
                enabled : Enabled                 = Enabled,
                validity: Validity                = Valid,
@@ -60,7 +60,7 @@ object Select {
       val itemArray = VdomArray.empty()
 
       itemArray ++=
-        options.toIterator.map(o =>
+        options.iterator.map(o =>
           item(
             ^.key := o.key,
             ^.onClick --> Callback.byName(onChange(o)),

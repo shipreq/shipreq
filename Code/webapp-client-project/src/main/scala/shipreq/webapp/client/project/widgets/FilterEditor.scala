@@ -147,10 +147,10 @@ object FilterEditor {
 
     def updateFilterText(input: String, cb: Callback): Callback =
       for {
-        v ← pxFilterValidator.toCallback
+        v <- pxFilterValidator.toCallback
         r = parseAndValidate(input, v)
-        p ← $.props
-        _ ← p.update(State(input, r._1), r._2, cb)
+        p <- $.props
+        _ <- p.update(State(input, r._1), r._2, cb)
       } yield ()
 
     val inputNode = Ref[html.Input]

@@ -3,8 +3,7 @@ package shipreq.base.util
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq.UnivEq
 import scala.annotation.elidable
-import scala.collection.GenTraversableOnce
-import scala.collection.generic.Subtractable
+import scala.collection.IterableOnce
 import scalaz.{Order, Equal, Foldable}
 import scalaz.std.iterable._
 import scalaz.std.map._
@@ -20,7 +19,7 @@ object IMapBaseV {
   }
 }
 
-abstract class IMapBaseV[K: UnivEq, VI, VO, This_ <: IMapBaseV[K, VI, VO, This_]] private[util] (m: Map[K, VO]) extends Subtractable[K, This_] {
+abstract class IMapBaseV[K: UnivEq, VI, VO, This_ <: IMapBaseV[K, VI, VO, This_]] private[util] (m: Map[K, VO]) {
   final type This = This_
   final type M = Map[K, VO]
 
@@ -33,8 +32,8 @@ abstract class IMapBaseV[K: UnivEq, VI, VO, This_ <: IMapBaseV[K, VI, VO, This_]
 
   override final def toString = {
     val s = m.toString
-    if (s startsWith m.stringPrefix)
-      stringPrefix + s.drop(m.stringPrefix.length)
+    if (s startsWith "Map")
+      stringPrefix + s.drop(3)
     else
       s"$stringPrefix($s)"
   }
@@ -42,7 +41,7 @@ abstract class IMapBaseV[K: UnivEq, VI, VO, This_ <: IMapBaseV[K, VI, VO, This_]
   protected def stringPrefix: String
   protected def setmap(n: M): This
   protected def _gkey(v: VI): K
-  protected def _values(v: VO): GenTraversableOnce[VI]
+  protected def _values(v: VO): IterableOnce[VI]
   protected def _add(to: M, k: K, v: VI): M
 
   final protected def __add(to: M, v: VI): M = _add(to, _gkey(v), v)
@@ -63,7 +62,7 @@ abstract class IMapBaseV[K: UnivEq, VI, VO, This_ <: IMapBaseV[K, VI, VO, This_]
   @inline final def mapValues[A](f: VO => A): Map[K, A] =
     m mapValuesNow f
 
-  override final def -(k: K) =
+  final def -(k: K) =
     setmap(m - k)
 
   @inline final def +(v: VI) = add(v)
@@ -77,8 +76,11 @@ abstract class IMapBaseV[K: UnivEq, VI, VO, This_ <: IMapBaseV[K, VI, VO, This_]
   final def addAllF[F[_]: Foldable](vs: F[VI]) =
     setmap(vs.foldLeft(m)(__add))
 
-  final def ++(vs: GenTraversableOnce[VI]) =
-    setmap(vs.foldLeft(m)(__add))
+  final def ++(vs: IterableOnce[VI]) =
+    setmap(vs.iterator.foldLeft(m)(__add))
+
+  final def --(ks: IterableOnce[K]): This =
+    setmap(m -- ks)
 
   @elidable(elidable.ASSERTION)
   final def assertValidKeys(m: M): Unit =

@@ -8,9 +8,9 @@ import java.net.URL
 import scala.annotation.tailrec
 import scalaz.{-\/, Equal, Order, \/, \/-}
 import scalaz.std.anyVal.intInstance
-import scala.collection.GenTraversable
-import scala.collection.generic.CanBuildFrom
-import scala.collection.immutable.TreeMap
+import scala.collection.Iterable
+import scala.collection.Factory
+import scala.collection.immutable.{ArraySeq, TreeMap}
 import scala.util.Try
 import ScalaExt.StringBuilderExt
 
@@ -52,8 +52,8 @@ object Util {
   val simpleNameMemo: Class[_] => String =
     Memo(simpleName)
 
-  def existentLocalResources(paths: List[String]): Stream[URL] =
-    paths.toStream.map(f => Try(getClass.getResource(f)).getOrElse(null)).filter(_ ne null)
+  def existentLocalResources(paths: List[String]): LazyList[URL] =
+    paths.iterator.map(f => Try(getClass.getResource(f)).getOrElse(null)).filter(_ ne null).to(LazyList)
 
   def cutoffStr(s: String, cutoff: Int): String =
     if (s.length <= cutoff)
@@ -61,11 +61,11 @@ object Util {
     else
       s.substring(0, cutoff - 1) + "\u2026"
 
-  def foldAndIndex[A, B, K](as: TraversableOnce[A], z: B, ik: Int => K)(f: (B, K, A) => B): (B, Map[K, A]) = {
+  def foldAndIndex[A, B, K](as: IterableOnce[A], z: B, ik: Int => K)(f: (B, K, A) => B): (B, Map[K, A]) = {
     var i = 0
     var m = Map.empty[K, A]
     var b = z
-    as.foreach { a =>
+    as.iterator.foreach { a =>
       val k = ik(i)
       b = f(b, k, a)
       m = m.updated(k, a)
@@ -74,19 +74,19 @@ object Util {
     (b, m)
   }
 
-  def foldAndIndexI[A, B](as: TraversableOnce[A], z: B)(f: (B, Int, A) => B): (B, Map[Int, A]) =
+  def foldAndIndexI[A, B](as: IterableOnce[A], z: B)(f: (B, Int, A) => B): (B, Map[Int, A]) =
     foldAndIndex(as, z, identity[Int])(f)
 
-  def foldAndIndexS[A, B](as: TraversableOnce[A], z: B)(f: (B, String, A) => B): (B, Map[String, A]) =
+  def foldAndIndexS[A, B](as: IterableOnce[A], z: B)(f: (B, String, A) => B): (B, Map[String, A]) =
     foldAndIndex(as, z, i => (i + 33).toChar.toString)(f)
 
-  def indexI[A](as: TraversableOnce[A]): Map[Int, A] =
+  def indexI[A](as: IterableOnce[A]): Map[Int, A] =
     foldAndIndexI(as, ())((_, _, _) => ())._2
 
-  def indexS[A](as: TraversableOnce[A]): Map[String, A] =
+  def indexS[A](as: IterableOnce[A]): Map[String, A] =
     foldAndIndexS(as, ())((_, _, _) => ())._2
 
-  def filterAndSortByName[A](as: GenTraversable[A])(f: A => Boolean, name: A => String): Iterable[A] =
+  def filterAndSortByName[A](as: Iterable[A])(f: A => Boolean, name: A => String): Iterable[A] =
     as.foldLeft(TreeMap.empty[String, A])((q, a) =>
       if (f(a))
         q.updated(name(a), a)
@@ -94,7 +94,7 @@ object Util {
         q
     ).values
 
-  @inline final def filterOutAndSortByName[A](as: GenTraversable[A])(f: A => Boolean, name: A => String): Iterable[A] =
+  @inline final def filterOutAndSortByName[A](as: Iterable[A])(f: A => Boolean, name: A => String): Iterable[A] =
     filterAndSortByName(as)(!f(_), name)
 
   //def fix[A, B <: A, C >: A](before: B, after: A)(test: A => Boolean, fix: A => C): C =
@@ -104,20 +104,14 @@ object Util {
     else
       after
 
-  @inline def maybeUse[A](allow: Boolean)(ok: => Stream[A]): Stream[A] =
-    if (allow) ok else Stream.empty
-
-  @inline def maybeAdd[A](have: Stream[A], allow: Boolean)(add: => A): Stream[A] =
-    if (allow) add #:: have else have
-
   def nextElement[A: UnivEq](as: Vector[A])(a: A): A =
     as((as.indexOf(a) + 1) % as.length)
 
-  def mapReduce[A, B](as: TraversableOnce[A], whenEmpty: => B)(map: A => B, reduce: (B, B) => B): B =
+  def mapReduce[A, B](as: IterableOnce[A], whenEmpty: => B)(map: A => B, reduce: (B, B) => B): B =
     mapReduceB(as, whenEmpty)(map, map)(reduce)
 
-  def mapReduceB[A, B, C](as: TraversableOnce[A], whenEmpty: => C)(mapFirst: A => C, map: A => B)(reduce: (C, B) => C): C = {
-    val it = as.toIterator
+  def mapReduceB[A, B, C](as: IterableOnce[A], whenEmpty: => C)(mapFirst: A => C, map: A => B)(reduce: (C, B) => C): C = {
+    val it = as.iterator
     if (it.hasNext) {
       var r = mapFirst(it.next())
       while (it.hasNext)
@@ -154,7 +148,11 @@ object Util {
   }
 
   def sideBySideStrings(str1: String, str2: String, sep: String = " | "): String =
-    sideBySideStringSeqs(str1 split '\n', str2 split '\n', sep) mkString "\n"
+    sideBySideStringSeqs(
+      ArraySeq unsafeWrapArray str1.split('\n'),
+      ArraySeq unsafeWrapArray str2.split('\n'),
+      sep)
+      .mkString("\n")
 
   def sideBySideStringSeqs(vec1: IndexedSeq[String], vec2: IndexedSeq[String], sep: String = " | "): Vector[String] = {
     def get(x: IndexedSeq[String], i: Int): String =
@@ -169,13 +167,13 @@ object Util {
     b.result()
   }
 
-  def partitionBetween[F[x] <: Traversable[x], A](as: F[A])(split: (A, A) => Boolean)
-                                                 (implicit cbf: CanBuildFrom[Nothing, A, F[A]]): (F[A], F[A]) =
+  def partitionBetween[F[x] <: Iterable[x], A](as: F[A])(split: (A, A) => Boolean)
+                                                 (implicit cbf: Factory[A, F[A]]): (F[A], F[A]) =
     if (as.isEmpty)
       (as, as)
     else {
-      val b1, b2 = cbf()
-      val it = as.toIterator
+      val b1, b2 = cbf.newBuilder
+      val it = as.iterator
       @tailrec def go(prev: A): Unit =
         if (it.hasNext) {
           val a = it.next()
@@ -194,19 +192,19 @@ object Util {
       (b1.result(), b2.result())
     }
 
-  def partitionConsecutive[F[x] <: Traversable[x], A](as: F[A])(implicit cbf: CanBuildFrom[Nothing, A, F[A]], n: Numeric[A]): (F[A], F[A]) =
+  def partitionConsecutive[F[x] <: Iterable[x], A](as: F[A])(implicit cbf: Factory[A, F[A]], n: Numeric[A]): (F[A], F[A]) =
     partitionConsecutiveBy(as)(identity)
 
-  def partitionConsecutiveBy[F[x] <: Traversable[x], A, B](as: F[A])(f: A => B)
-                                                          (implicit cbf: CanBuildFrom[Nothing, A, F[A]], n: Numeric[B]): (F[A], F[A]) =
+  def partitionConsecutiveBy[F[x] <: Iterable[x], A, B](as: F[A])(f: A => B)
+                                                          (implicit cbf: Factory[A, F[A]], n: Numeric[B]): (F[A], F[A]) =
     partitionBetween(as)((a, b) => !n.equiv(n.plus(f(a), n.one), f(b)))
 
-  def uniqueDupsNested[A, B: UnivEq](as: TraversableOnce[A])(bs: A => TraversableOnce[B]): Set[B] = {
+  def uniqueDupsNested[A, B: UnivEq](as: IterableOnce[A])(bs: A => IterableOnce[B]): Set[B] = {
     var uniq = Set.empty[B]
     var dups = Set.empty[B]
     for {
-      a <- as
-      b <- bs(a)
+      a <- as.iterator
+      b <- bs(a).iterator
     }
       if (!uniq.contains(b))
         // first sighting
@@ -244,7 +242,7 @@ object Util {
     else if (z.isEmpty) mergeSets(v, w, x, y)
     else (Set.newBuilder[A] ++= v ++= w ++= x ++= y ++= z).result()
 
-  def enumOrdering[A: UnivEq, B: Ordering](as: TraversableOnce[A])(by: A => B): Ordering[A] = {
+  def enumOrdering[A: UnivEq, B: Ordering](as: IterableOnce[A])(by: A => B): Ordering[A] = {
     val sorted = MutableArray(as).sortBySchwartzian(by).array
     val ord = sorted.iterator.mapToOrder
     Ordering.by(ord.apply)
