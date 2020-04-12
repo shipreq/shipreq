@@ -34,7 +34,7 @@ object Common {
     }
 
 
-  private val availableProcessors = java.lang.Runtime.getRuntime.availableProcessors()
+  private val cores = java.lang.Runtime.getRuntime.availableProcessors()
 
   def scalacFlags = Seq(
     "-deprecation",
@@ -43,27 +43,48 @@ object Common {
     "-language:higherKinds",
     "-language:implicitConversions",
     "-language:postfixOps",
-    "-unchecked",
-    "-Xlint:infer-any",
+    "-target:" + Dependencies.Java.major,            // Target platform for object files. ([8],9,10,11,12)
+    "-unchecked",                                    // Enable additional warnings where generated code depends on assumptions.
+    "-Wunused:implicits",                            // Warn if an implicit parameter is unused.
+    "-Wunused:patvars",                              // Warn if a variable bound in a pattern is unused.
+    "-Wunused:privates",                             // Warn if a private member is unused.
+    "-Xlint:adapted-args",                           // An argument list was modified to match the receiver.
+    "-Xlint:constant",                               // Evaluation of a constant arithmetic expression resulted in an error.
+    "-Xlint:delayedinit-select",                     // Selecting member of DelayedInit.
+    "-Xlint:deprecation",                            // Enable -deprecation and also check @deprecated annotations.
+    "-Xlint:eta-zero",                               // Usage `f` of parameterless `def f()` resulted in eta-expansion, not empty application `f()`.
+    "-Xlint:implicit-not-found",                     // Check @implicitNotFound and @implicitAmbiguous messages.
+    "-Xlint:inaccessible",                           // Warn about inaccessible types in method signatures.
+    "-Xlint:infer-any",                              // A type argument was inferred as Any.
+    "-Xlint:missing-interpolator",                   // A string literal appears to be missing an interpolator id.
+    "-Xlint:nonlocal-return",                        // A return statement used an exception for flow control.
+    "-Xlint:nullary-override",                       // Non-nullary `def f()` overrides nullary `def f`.
+    "-Xlint:nullary-unit",                           // `def f: Unit` looks like an accessor; add parens to look side-effecting.
+    "-Xlint:option-implicit",                        // Option.apply used an implicit view.
+    "-Xlint:poly-implicit-overload",                 // Parameterized overloaded implicit methods are not visible as view bounds.
+    "-Xlint:private-shadow",                         // A private field (or class parameter) shadows a superclass field.
+    "-Xlint:stars-align",                            // In a pattern, a sequence wildcard `_*` should match all of a repeated parameter.
+    "-Xlint:type-parameter-shadow",                  // A local type parameter shadows a type already in scope.
+    "-Xlint:valpattern",                             // Enable pattern checks in val definitions.
+    "-Xmixin-force-forwarders:false",                // Only generate mixin forwarders required for program correctness.
+    "-Xno-forwarders",                               // Do not generate static forwarders in mirror classes.
     "-Xsource:2.13",
-    "-Ybackend-parallelism", availableProcessors.min(16).toString,
+    "-Ybackend-parallelism", cores.min(16).toString,
     "-Ycache-macro-class-loader:last-modified",
     "-Ycache-plugin-class-loader:last-modified",
-    "-Yno-adapted-args",
-    "-Yno-generic-signatures",
-    "-Ypartial-unification",
-    "-Ypatmat-exhaust-depth", "off",
-    "-Ywarn-inaccessible",
-    "-Ywarn-infer-any",
-    "-Ywarn-unused:implicits",
-    "-Ywarn-unused:patvars",
-    "-Ywarn-unused:privates"
+    "-Yjar-compression-level", "9",                  // compression level to use when writing jar files
+    "-Ymacro-annotations",                           // Enable support for macro annotations, formerly in macro paradise.
+    "-Yno-generic-signatures",                       // Suppress generation of generic signatures for Java.
+    "-Ypatmat-exhaust-depth", "off"
   )
-    // "-Xstrict-inference", // Don't infer known-unsound types
-    // "-Ywarn-self-implicit",
-    // "-Ywarn-unused-import"
-    // "-Ywarn-unused:explicits",
-    // "-Ywarn-unused:locals",
+/*
+    "-Wdead-code"                                    // Warn when dead code is identified.
+    "-Wself-implicit",                               // Warn when an implicit resolves to an enclosing self-definition.
+    "-Wvalue-discard",                               // Warn when non-Unit expression results are unused.
+    "-Wunused:explicits",                            // Warn if an explicit parameter is unused.
+    "-Wunused:imports",                              // Warn if an import selector is not referenced.
+    "-Wunused:locals",                               // Warn if a local definition is unused.
+*/
 
   def scalacTestFlags = Seq("-language:reflectiveCalls")
 
@@ -79,7 +100,10 @@ object Common {
   )
 
   val optimisationSettings: Project => Project =
-    nonTestCompilerFlags("-Xelide-below", "OFF") compose
+    nonTestCompilerFlags(
+      "-Xdisable-assertions",
+      "-Xelide-below", "OFF"
+    ) compose
     nonTestCompilerFlags(optimisationScalacFlags: _*)
 
   val redirectTargetDir: File => File =
@@ -141,7 +165,6 @@ object Common {
       Dependencies.useKindProjector,
       Dependencies.useBetterMonadicFor,
       addCommandAliases(
-        "/"   -> "project root",
         "B"   -> "project base",
         "BU"  -> "project base-util-jvm",
         "BT"  -> "project base-test-jvm",
@@ -163,9 +186,7 @@ object Common {
         "WSL" -> "project webapp-server-logic-jvm",
         "WS"  -> "project webapp-server",
         "BM"  -> "project benchmark-jvm",
-        "BMJ" -> "project benchmark-js",
-        "C"   -> "root/clean",
-        "CT"  -> ";root/clean;root/test"))
+        "BMJ" -> "project benchmark-js"))
 
   /** Common settings used by standard modules - not benchmarks, not test modules */
   private def settings: Project => Project =
@@ -336,7 +357,7 @@ object Common {
     bos.toByteArray.length
   }
 
-  def printFileBatches(batchesT: Traversable[Traversable[File]]): Unit = {
+  def printFileBatches(batchesT: Iterable[Iterable[File]]): Unit = {
     val sep = "=" * 100
     println(sep)
     val batches = batchesT.toVector

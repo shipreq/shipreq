@@ -118,7 +118,7 @@ object ShipReqBuild {
         .dependsOn(webappServer)
         .configure(Common.jvmSettings)
         .settings(libraryDependencies ++= Seq(
-          "org.scalaz" %% "scalaz-zio" % "1.0-RC5"))
+          "dev.zio" %% "zio" % "1.0.0-RC18-2"))
         .deps(JJWT.all)
     }
 
@@ -132,8 +132,7 @@ object ShipReqBuild {
         .dependsOn(webappClientProject)
         .depsForJs(scalajsBenchmark)
         .configure(
-          Common.jsSettings(NoTests),
-          useMacroParadise)
+          Common.jsSettings(NoTests))
         //.settings(
         //  // skip in packageJSDependencies := false,
         //  // scalaJSStage in Global := FullOptStage,

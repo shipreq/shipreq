@@ -59,8 +59,7 @@ object WebappBuild {
   lazy val webappMacro =
     crossProject("webapp-macro")
       .configureBoth(
-        Common.macroModuleSettings,
-        useMacroParadise)
+        Common.macroModuleSettings)
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
       .dependsOn(baseUtil)
@@ -78,7 +77,6 @@ object WebappBuild {
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
       .dependsOn(baseUtil, webappMacro)
-      .configureBoth(useMacroParadise)
       .depsForBoth(Monocle.macros ++ Nyaya.prop ++ boopickle)
       .depsForJs(React.most ++ scalajsDom)
       .settings(unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / Frontend.scala)
@@ -90,7 +88,6 @@ object WebappBuild {
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
       .dependsOn(webappBase)
-      .configureBoth(useMacroParadise)
       .depsForBoth(shapeless ++ parboiled ++ (Circe.main % Provided))
       .depsForJs(ScalaCSS.react)
 
@@ -114,7 +111,7 @@ object WebappBuild {
     */
   private lazy val clientSpa: Project => Project =
     _.enablePlugins(ScalaJSPlugin)
-      .configure(Common.jsSettings(UsePhantomJs), useMacroParadise)
+      .configure(Common.jsSettings(UsePhantomJs))
       .dependsOn(webappBaseJs, webappBaseTestJs % Test, webappServerLogicJs % Test)
       .settings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
 
@@ -125,7 +122,6 @@ object WebappBuild {
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(UsePhantomJs))
       .dependsOn(webappBase, webappBaseTest % Test)
-      .configureBoth(useMacroParadise)
       .jsSettings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
 
   lazy val webappClientLoaders =
@@ -196,8 +192,7 @@ object WebappBuild {
     crossProject("webapp-server-logic")
       .configureJvm(
         Common.jvmSettings,
-        _.dependsOn(taskmanApiLogic, webappClientPublicJvm, webappSsrJvm),
-        useMacroParadise)
+        _.dependsOn(taskmanApiLogic, webappClientPublicJvm, webappSsrJvm))
       .configureJs(Common.jsSettings(UsePhantomJs))
       .dependsOn(webappBaseMember)
       .dependsOn(baseTest % Test, webappBaseTest % Test)
@@ -314,7 +309,6 @@ object WebappBuild {
         (LibJetty.webapp % Test))
       .configure(
         Common.jvmSettings,
-        useMacroParadise,
         webappCmdAliases,
         assetSettings,
         testSettings,

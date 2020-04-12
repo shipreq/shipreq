@@ -47,3 +47,7 @@ val webappServer          = WebappBuild.webappServer
 val benchmarkJvm          = ShipReqBuild.benchmarkJvm
 val benchmarkJs           = ShipReqBuild.benchmarkJs
 val utils                 = ShipReqBuild.utils
+
+
+resolvers in ThisBuild += "scala-integration" at
+  "https://scala-ci.typesafe.com/artifactory/scala-integration/"
