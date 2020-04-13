@@ -65,10 +65,10 @@ object Trace {
 
   object Algebra {
     def apply[F[_]: Monad](algebras: IterableOnce[Algebra[F]]): Algebra[F] =
-      if (algebras.isEmpty)
+      if (algebras.iterator.isEmpty)
         off
       else
-        algebras.reduce(_ compose _)
+        algebras.iterator.reduce(_ compose _)
 
     def off[F[_]](implicit F: Monad[F]): Algebra[F] { type Span = Unit } =
       new Algebra[F] {

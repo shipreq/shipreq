@@ -87,7 +87,7 @@ class Jetty(val port: Int) extends Logger {
     svr
   }
 
-  private def stopServer(s: Server) {
+  private def stopServer(s: Server): Unit = {
     info("Stopping Jetty")
     s.stop()
     s.join()

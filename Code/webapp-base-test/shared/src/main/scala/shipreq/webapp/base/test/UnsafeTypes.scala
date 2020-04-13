@@ -57,10 +57,10 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
     NonEmptyVector(v.head, v.tail)
   }
 
-  implicit def autoReqCodeSet[C <% ReqCode.Value](c: C): ReqCode.CodeSet =
+  implicit def autoReqCodeSet[C](c: C)(implicit f: C => ReqCode.Value): ReqCode.CodeSet =
     ReqCode.CodeSet.empty.put(c, ())
 
-  implicit def autoReqCodeSetFromSet[C <% ReqCode.Value](cs: Set[C]): ReqCode.CodeSet =
+  implicit def autoReqCodeSetFromSet[C](cs: Set[C])(implicit f: C => ReqCode.Value): ReqCode.CodeSet =
     cs.foldLeft(ReqCode.CodeSet.empty)(_.put(_, ()))
 
   implicit def autoEventOrd(i: Int) = EventOrd(i)

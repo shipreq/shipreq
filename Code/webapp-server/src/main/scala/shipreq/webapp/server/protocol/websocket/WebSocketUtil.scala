@@ -1,7 +1,7 @@
 package shipreq.webapp.server.protocol.websocket
 
 import javax.websocket.server._
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import shipreq.webapp.base.protocol.websocket.WebSocketShared
 import shipreq.webapp.server.logic.dispatch.Cookie
 

@@ -34,7 +34,7 @@ object Uniqueness {
     def apply[B](data: () => IterableOnce[B])
                 (conflict: (B, A) => Boolean, ignore: B => Boolean): Invalidator[A] =
       Invalidator.test[A](
-        v => data().forall(i => !conflict(i, v) || ignore(i)),
+        v => data().iterator.forall(i => !conflict(i, v) || ignore(i)),
         notUnique)
 
     /** Convenience for common pattern of data being key/value tuples */
@@ -45,19 +45,19 @@ object Uniqueness {
 
   /** Ensure A doesn't exist in a collection of As */
   def within[A: Equal](data: => IterableOnce[A]): Invalidator[A] =
-    Invalidator.test[A](a => data.forall(a ≠ _), notUnique)
+    Invalidator.test[A](a => data.iterator.forall(a ≠ _), notUnique)
 
   /** Ensure A doesn't exist in a set of As */
   def set[A: UnivEq](data: => Set[A]): Invalidator[A] =
     Invalidator.test[A](!data.contains(_), notUnique)
 
   def string(data: => IterableOnce[String]): Invalidator[String] =
-    Invalidator.test[String](s => data.forall(s !=* _), notUnique)
+    Invalidator.test[String](s => data.iterator.forall(s !=* _), notUnique)
 
   def stringIgnoreCase(data: => IterableOnce[String]): Invalidator[String] =
     Invalidator.test[String](s0 => {
       val s = s0.toLowerCase
-      data.forall(s !=* _.toLowerCase)
+      data.iterator.forall(s !=* _.toLowerCase)
     }, notUnique)
 
   // ===================================================================================================================

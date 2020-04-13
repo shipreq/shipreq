@@ -108,7 +108,7 @@ object KeyboardTheme {
         }
 
       val content: TagMod =
-        if (clauses.isEmpty)
+        if (clauses.iterator.isEmpty)
           helpButton
         else {
           var rendered = Vector.empty[TagMod]

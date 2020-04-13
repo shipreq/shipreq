@@ -58,9 +58,9 @@ object IssueTracker {
     def foreach(as: => IterableOnce[A]): Unit =
       if (fns.nonEmpty) {
         val i = as
-        if (i.nonEmpty) {
+        if (i.iterator.nonEmpty) {
           val f = fuseReduce(fns)
-          i.foreach(f)
+          i.iterator.foreach(f)
         }
       }
   }

@@ -407,7 +407,7 @@ object VectorTree extends VectorTreeLowPri {
 
     implicit val ordering: Ordering[PartialLocation] =
       new Ordering[PartialLocation] {
-        val byElems = Ordering.Iterable[Int]
+        val byElems = Ordering.Implicits.seqOrdering[Vector, Int]
         override def compare(x: PartialLocation, y: PartialLocation): Int =
           if (x.validity ==* y.validity)
             byElems.compare(x.value.whole, y.value.whole)
@@ -701,12 +701,12 @@ object VectorTree extends VectorTreeLowPri {
       ++(d :: Nil)
 
     def ++(ds: IterableOnce[Dims]): Dims =
-      if (ds.isEmpty)
+      if (ds.iterator.isEmpty)
         this
       else {
         var ml = maxLength
         var md = maxDepth
-        for (d <- ds) {
+        for (d <- ds.iterator) {
           if (d.maxLength > ml) ml = d.maxLength
           if (d.maxDepth > md) md = d.maxDepth
         }

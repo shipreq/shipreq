@@ -5,7 +5,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 object InlineBaseStyles {
 
   final val pageMarginRem = 1
-  final val pageMarginStr = pageMarginRem + "rem"
+  final val pageMarginStr = pageMarginRem.toString + "rem"
 
   val containerLarge = TagMod(
     ^.marginLeft.auto,

@@ -45,7 +45,7 @@ final class ApplyEvent(implicit val trust: Trust)
     }
 
   def applyVerified(ves: IterableOnce[VerifiedEvent])(p: Project): Result =
-    if (ves.isEmpty)
+    if (ves.iterator.isEmpty)
       \/-(p)
     else
       applyAllSafely(ves.iterator.map(_.event)).exec(p)

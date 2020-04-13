@@ -38,7 +38,7 @@ object Style extends StyleSheet.Inline {
   }
 
   final val animSpeedMs = 220
-  protected final val animSpeed = animSpeedMs + "ms"
+  protected final val animSpeed = animSpeedMs.toString + "ms"
 
   private def monospace =
     fontFamily :=! "monospace"

@@ -50,30 +50,30 @@ object ValidationTest extends TestSuite {
 
       "mandatoryShortText" - {
         val test = Tester(CommonValidation.mandatoryShortText.toValidator)
-        * - test("", "  ", "\n")(fail("blank"))
-        * - test("hello", " hello ", "\n\nhello \n\n")(pass)
-        * - test("hello hello", "\n\nhello\n\nhello\n\n")(pass)
-        * - test("hello great", "hello\n\rgreat")(pass)
-        * - test("x" * WebappConfig.shortTextMaxLength)(pass)
-        * - test("x" * (WebappConfig.shortTextMaxLength + 1))(fail("too large"))
+        "1" - test("", "  ", "\n")(fail("blank"))
+        "2" - test("hello", " hello ", "\n\nhello \n\n")(pass)
+        "3" - test("hello hello", "\n\nhello\n\nhello\n\n")(pass)
+        "4" - test("hello great", "hello\n\rgreat")(pass)
+        "5" - test("x" * WebappConfig.shortTextMaxLength)(pass)
+        "6" - test("x" * (WebappConfig.shortTextMaxLength + 1))(fail("too large"))
       }
 
       "largeText" - {
         val test = Tester(CommonValidation.largeText.toValidator)
-        * - test("", "  ", "\n")(pass)
-        * - test("hello", " hello ", "\n\nhello \n\n")(pass)
-        * - test("hello\n\ngreat", "\n\nhello\n\ngreat\n \n")(pass)
-        * - test("x" * WebappConfig.largeTextMaxLength)(pass)
-        * - test("x" * (WebappConfig.largeTextMaxLength + 1))(fail("too large"))
+        "1" - test("", "  ", "\n")(pass)
+        "2" - test("hello", " hello ", "\n\nhello \n\n")(pass)
+        "3" - test("hello\n\ngreat", "\n\nhello\n\ngreat\n \n")(pass)
+        "4" - test("x" * WebappConfig.largeTextMaxLength)(pass)
+        "5" - test("x" * (WebappConfig.largeTextMaxLength + 1))(fail("too large"))
       }
 
       "optionalLargeText" - {
         val test = Tester(CommonValidation.optionalLargeText)
-        * - test(none, "  ", "\n")(fail("blank"))
-        * - test("hello", " hello ", "\n\nhello \n\n")(pass)
-        * - test("hello\n\ngreat", "\n\nhello\n\ngreat\n \n")(pass)
-        * - test("x" * WebappConfig.largeTextMaxLength)(pass)
-        * - test("x" * (WebappConfig.largeTextMaxLength + 1))(fail("too large"))
+        "1" - test(none, "  ", "\n")(fail("blank"))
+        "2" - test("hello", " hello ", "\n\nhello \n\n")(pass)
+        "3" - test("hello\n\ngreat", "\n\nhello\n\ngreat\n \n")(pass)
+        "4" - test("x" * WebappConfig.largeTextMaxLength)(pass)
+        "5" - test("x" * (WebappConfig.largeTextMaxLength + 1))(fail("too large"))
       }
 
       "largeTextSymbols" - {

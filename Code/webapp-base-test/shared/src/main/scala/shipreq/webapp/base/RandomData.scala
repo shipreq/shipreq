@@ -97,10 +97,10 @@ object RandomData {
   val unicodeString : Gen[String] = unicodeChar.string
   val unicodeString1: Gen[String] = unicodeChar.string1
 
-//  private val _charPredAllChars = ('\u0001' to '\ud7ff').seq
-  private val _charPredAllChars = ('\u0001' to '\u0100').seq
-//  private val _charPredAllChars = ('\u0020' to '\u0100').seq
-//  private val _charPredAllChars = ('\u0020' to '\u0080').seq
+//  private val _charPredAllChars = ('\u0001' to '\ud7ff')
+  private val _charPredAllChars = ('\u0001' to '\u0100')
+//  private val _charPredAllChars = ('\u0020' to '\u0100')
+//  private val _charPredAllChars = ('\u0020' to '\u0080')
   def charPred(p: CharPredicate): Gen[Char] =
     //Gen.choose_!(_charPredAllChars filter p.apply)
     Gen.chooseArray_!((_charPredAllChars filter p.apply).toArray)
@@ -124,12 +124,12 @@ object RandomData {
   def CaseInsensitive(s: String): CaseInsensitive =
     new CaseInsensitive(s.toLowerCase, s)
 
-  def legalGrammar[G](g: G)(first: G => GrammarSpec.Chars, rest: G => GrammarSpec.Chars): Stream[String] = {
-    val g1 = first(g).toStream.map(_.toString)
-    val gn = rest(g).toStream.map(_.toString)
-    def grow(ss: Stream[String]): Stream[String] = {
-      val x = ss append ss.flatMap(s => gn.map(s + _))
-      x append grow(x)
+  def legalGrammar[G](g: G)(first: G => GrammarSpec.Chars, rest: G => GrammarSpec.Chars): LazyList[String] = {
+    val g1 = first(g).iterator().map(_.toString).to(LazyList)
+    val gn = rest(g).iterator().map(_.toString).to(LazyList)
+    def grow(ss: LazyList[String]): LazyList[String] = {
+      val x = ss ++ ss.flatMap(s => gn.map(s + _))
+      x ++ grow(x)
     }
     grow(g1)
   }
@@ -214,7 +214,7 @@ object RandomData {
       a <- Gen.lower
       b <- Gen.chooseChar('_', 'a' to 'z', '0' to '9').string(x to y)
       c <- Gen.chooseChar('a', 'b' to 'z', '0' to '9')
-    } yield Username(a + b + c)
+    } yield Username("" + a + b + c)
   }
 
   lazy val errorMsg: Gen[ErrorMsg] =
@@ -388,7 +388,7 @@ object RandomData {
       Gen.pure(Map.empty)
     else {
       val idset = Gen.subset(tags)
-      idset.map(_.toStream)
+      idset.map(_.toList)
         .flatMap(ks => Gen sequence ks.map(k => idset.map(ids => (k, (ids - k).toVector))))
         .map(s => preventCycles(Tag.CycleDetectors.multimap)(s.toMap))
     }
@@ -523,8 +523,8 @@ object RandomData {
     } yield f3.toList ::: f2.toList ::: f1
     def id   = distinctId(CustomField.IdAccess, CustomFieldId_T)
     def name = Distinct.str.at(CustomField.independentName)
-    val dist = (id * name).lift[Stream]
-    cf.map(fs => emptyDataMap(CustomField) ++ dist.run(fs.toStream))
+    val dist = (id * name).lift[List]
+    cf.map(fs => emptyDataMap(CustomField) ++ dist.run(fs))
   }
 
   def fieldSet(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId]): Gen[FieldSet] = {
@@ -1382,12 +1382,12 @@ object RandomData {
                  reqImps        : Implications): Gen[Project] = {
     val cissueIds       = cfg.customIssueTypes.keySet
     val cissueIdG       = Gen tryGenChoose cissueIds.toSeq
-    val activeCodeIds   = reqCodes1.trie.allValues.flatMap(_.activeId.toStream)
+    val activeCodeIds   = reqCodes1.trie.allValues.flatMap(_.activeId.iterator)
     val activeCodeIdG   = Gen tryGenChoose activeCodeIds
     val atagIds         = cfg.tags.tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
     val atagIdG         = Gen.tryGenChoose(atagIds.toSeq)
     val textColIds      = cfg.fields.customFields.valuesIterator.filterSubType[CustomField.Text].map(_.id).toSet
-    val reqIdSet        = reqsWithoutText.idIterator.toSet
+    val reqIdSet        = reqsWithoutText.idIterator().toSet
     val reqIdG          = Gen tryGenChoose reqIdSet.toIndexedSeq
     def ucStepIds       = reqsWithoutText.useCases.stepIterator.map(_.id)
     val ucStepIdG       = Gen tryGenChoose ucStepIds.toIndexedSeq
@@ -1425,7 +1425,7 @@ object RandomData {
       reqCount        <- Gen.chooseSize
       ucCount         <- Gen.chooseSize map (_ >> 1)
       reqsWithoutText <- reqsWithoutText(cfg, reqCount, ucCount)
-      reqIdSet        = reqsWithoutText.idIterator.toSet
+      reqIdSet        = reqsWithoutText.idIterator().toSet
       reqIdG          = Gen tryGenChoose reqIdSet.toIndexedSeq
       liveReqIds      = reqsWithoutText.reqIterator().filter(_.live(cfg.reqTypes) is Live).map(_.id)
       liveReqIdG      = Gen tryGenChoose liveReqIds.toIndexedSeq

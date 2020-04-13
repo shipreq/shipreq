@@ -57,7 +57,7 @@ object TextComplete {
 
     def apply(as: IterableOnce[String], index: js.UndefOr[Int]): MatchData = {
       val md = empty()
-      as.foreach(md.push(_))
+      as.iterator.foreach(md.push(_))
       md.index = index
       md
     }
@@ -93,7 +93,7 @@ object TextComplete {
       def apply[A](f: String => IterableOnce[A]): Search[A] =
         (term, cb, _) => {
           val as = new js.Array[A]
-          f(term).foreach(as.push(_))
+          f(term).iterator.foreach(as.push(_))
           cb(as)
         }
     }

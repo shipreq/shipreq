@@ -34,6 +34,7 @@ object TableCellZipper {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 final class TableCellZipper(val focus: html.Element)(implicit tableStyle: TableStyle) {
+  import Ordering.Double.TotalOrdering
   import Logic._
 
   private lazy val rootAndPos =

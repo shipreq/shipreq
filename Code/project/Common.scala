@@ -57,15 +57,15 @@ object Common {
     "-Xlint:inaccessible",                           // Warn about inaccessible types in method signatures.
     "-Xlint:infer-any",                              // A type argument was inferred as Any.
     "-Xlint:missing-interpolator",                   // A string literal appears to be missing an interpolator id.
-    "-Xlint:nonlocal-return",                        // A return statement used an exception for flow control.
+  //"-Xlint:nonlocal-return",                        // A return statement used an exception for flow control.
     "-Xlint:nullary-override",                       // Non-nullary `def f()` overrides nullary `def f`.
     "-Xlint:nullary-unit",                           // `def f: Unit` looks like an accessor; add parens to look side-effecting.
     "-Xlint:option-implicit",                        // Option.apply used an implicit view.
     "-Xlint:poly-implicit-overload",                 // Parameterized overloaded implicit methods are not visible as view bounds.
     "-Xlint:private-shadow",                         // A private field (or class parameter) shadows a superclass field.
     "-Xlint:stars-align",                            // In a pattern, a sequence wildcard `_*` should match all of a repeated parameter.
-    "-Xlint:type-parameter-shadow",                  // A local type parameter shadows a type already in scope.
-    "-Xlint:valpattern",                             // Enable pattern checks in val definitions.
+  //"-Xlint:type-parameter-shadow",                  // A local type parameter shadows a type already in scope.
+  //"-Xlint:valpattern",                             // Enable pattern checks in val definitions.
     "-Xmixin-force-forwarders:false",                // Only generate mixin forwarders required for program correctness.
     "-Xno-forwarders",                               // Do not generate static forwarders in mirror classes.
     "-Xsource:2.13",

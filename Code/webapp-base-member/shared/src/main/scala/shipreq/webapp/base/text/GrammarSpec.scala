@@ -19,10 +19,12 @@ object GrammarSpec {
     if ("""$()*+-.?[]{|}\""" contains c) "\\" + c else c.toString
 
   class Chars(val chn: String, val ch1: Char, val rs: NumericRange[Char]*) {
-    def toStream: Stream[Char] =
-      ch1 #:: chn.toStream append rs.toStream.flatMap(_.toStream)
+    def iterator(): Iterator[Char] =
+      Iterator.single(ch1) ++ chn.iterator ++ rs.iterator.flatMap(_.iterator)
 
-    final val regex = ((ch1 #:: chn.toStream).map(quoteCh) append rs.toStream.map(r => s"${r.min}-${r.max}")).mkString
+    final val regex =
+      ((Iterator.single(ch1) ++ chn.iterator).map(quoteCh) ++ rs.iterator.map(r => s"${r.min}-${r.max}")).mkString
+
     @inline final def one  = "[" + regex + "]"
     @inline final def not  = "[^" + regex + "]"
     @inline final def *    = "[" + regex + "]*"

@@ -6,6 +6,7 @@ import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
 import Protocol._
+import scala.collection.immutable.ListMap
 
 trait Client[Cmd[_], R[_]] {
   def post[A](cmd: Cmd[A])(implicit readResult: R[A]): Future[A]
@@ -36,21 +37,21 @@ object Client extends Settings {
                                            (implicit writeCmd: W[Cmd[_]]) extends Client[Cmd, R] {
 
     private var i = 0
-    private val callbacks = mutable.ListMap.empty[Int, Enc => Unit]
+    private var callbacks = ListMap.empty[Int, Enc => Unit]
 
     interface.listen(receiveResult, onError)
 
     override def post[A](cmd: Cmd[A])(implicit readResult: R[A]): Future[A] = {
       i += 1
       val p = Promise[A]()
-      callbacks.update(i, e => p tryComplete Try(codec.decode[A](e)))
+      callbacks = callbacks.updated(i, e => p tryComplete Try(codec.decode[A](e)))
       interface.post(new Message(i, codec.encode[Cmd[_]](cmd)))
       p.future
     }
 
     private def receiveResult(m: Message[Enc]): Unit =
-      callbacks.remove(m.key) match {
-        case Some(cb) => cb(m.cmd)
+      callbacks.get(m.key) match {
+        case Some(cb) => callbacks -= m.key; cb(m.cmd)
         case None     => onError(s"Callback not found for Message(${m.key}, ${m.cmd}).")
       }
   }

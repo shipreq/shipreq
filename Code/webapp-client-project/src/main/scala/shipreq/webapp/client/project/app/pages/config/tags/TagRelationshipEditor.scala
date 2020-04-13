@@ -202,7 +202,7 @@ object TagRelationshipEditor {
       }
 
       // Applicable tags
-      val atags = it.applicableTagIdIterator().toArray
+      val atags = it.applicableTagIdIterator().toIndexedSeq
       dnd.items(atags).foreach { item =>
         val id      = item.data
         val live    = p.hypotheticalTags.needApplicableTag(id).live

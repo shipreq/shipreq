@@ -23,11 +23,11 @@ object UiText {
 
   @inline implicit class EnglishIntExt(private val self: Int) extends AnyVal {
     def unitsOf(name: String, pluralised: String = null): String =
-      self + " " + name.pluralise(self, pluralised)
+      self.toString + " " + name.pluralise(self, pluralised)
   }
 
   private def sortedSeqClause(cases: IterableOnce[String], conj: String, limit: Int): String = {
-    var a = cases.toArray
+    var a = cases.iterator.toArray
     a.length match {
       case 0 => ""
       case 1 => a(0)

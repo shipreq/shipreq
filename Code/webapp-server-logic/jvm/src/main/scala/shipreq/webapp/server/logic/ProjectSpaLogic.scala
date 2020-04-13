@@ -761,7 +761,7 @@ object ProjectSpaLogic extends StrictLogging {
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   /** Generates code to paste into ProjectSpaProtocolsTest.scala */
-  private[this] object GenerateUnitTest {
+  protected object GenerateUnitTest {
     import io.circe._
     import io.circe.syntax._
     import org.apache.commons.text.StringEscapeUtils

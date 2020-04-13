@@ -158,9 +158,9 @@ object FilterParserTest extends TestSuite {
     }
 
     "reqType" - {
-      * - test("X",  reqType("X"))
-      * - test("MF", reqType("MF"))
-      * - test("BOBOP", reqType("BOBOP"))
+      "1" - test("X",  reqType("X"))
+      "2" - test("MF", reqType("MF"))
+      "3" - test("BOBOP", reqType("BOBOP"))
     }
 
     "hashRef" - {
@@ -272,9 +272,9 @@ object FilterParserTest extends TestSuite {
 
       "parens2" - test("a (b | c) d", allOf(text("a"), anyOf(text("b"), text("c")), text("d")))
 
-      * - test(" a b_c ", allOf(text("a"), text("b_c")))
+      "*" - test(" a b_c ", allOf(text("a"), text("b_c")))
 
-      * - test("abc  (MF|FR)  -( eat drink (has:a|has:b))", allOf(
+      "*" - test("abc  (MF|FR)  -( eat drink (has:a|has:b))", allOf(
             text("abc"),
             anyOf(reqType("MF"), reqType("FR")),
             not(allOf(text("eat"), text("drink"), anyOf(presence("a"), presence("b"))))

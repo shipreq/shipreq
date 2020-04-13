@@ -18,9 +18,9 @@ object GrammarTest extends TestSuite {
             assertEq("string → pubid", stringPrism.getOption(s), Some((m, p)))
         }
 
-        * - test("A", 4)("A-4")("a4", "a-4", "a-04", "A04")
-        * - test("OMG", 10)("OMG-10")("Omg10", "OMG10", "omg10", "oMG-00010")
-        * - test("MF", 0)("MF-0")("mf0")
+        "*" - test("A", 4)("A-4")("a4", "a-4", "a-04", "A04")
+        "*" - test("OMG", 10)("OMG-10")("Omg10", "OMG10", "omg10", "oMG-00010")
+        "*" - test("MF", 0)("MF-0")("mf0")
 
         "bad" - {
           for (b <- List("mf-", "MF-9X", "9MF-9", "X--9"))

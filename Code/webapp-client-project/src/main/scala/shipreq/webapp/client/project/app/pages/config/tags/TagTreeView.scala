@@ -118,7 +118,7 @@ private[tags] object TagTreeView {
 
         // Applicable tags
         var firstAfterGroup = lis.rawArray.nonEmpty
-        val apTags          = it.applicableTagIdIterator().toArray
+        val apTags          = it.applicableTagIdIterator().toIndexedSeq
         def liveApTagCount  = it.applicableTagIterator().count(_.live is Live)
         val canAnyDrag      = !topLevel && !readOnly && liveApTagCount > 1
 

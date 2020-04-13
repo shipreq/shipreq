@@ -15,7 +15,7 @@ object Reorder {
   }
 
   def apply[@specialized(Int) A, @specialized(Int) B](from: A, to: A, bs: Vector[B])(equal: (A, B) => Boolean): Vector[B] = {
-    val tmp = bs.companion.newBuilder[B]
+    val tmp = bs.iterableFactory.newBuilder[B]
     var putLater = -1
     var fromB: Option[B] = None
     var i = 0

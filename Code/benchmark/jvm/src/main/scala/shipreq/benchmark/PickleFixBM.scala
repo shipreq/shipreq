@@ -150,7 +150,7 @@ class PickleFixBM {
 
   var data: Calc = _
 
-  @Setup def setup = {
+  @Setup def setup() = {
     data = Recursion.ana(gen)(Spec(width, depth))
   }
 

@@ -86,7 +86,7 @@ abstract class IMapBaseV[K: UnivEq, VI, VO, This_ <: IMapBaseV[K, VI, VO, This_]
   final def assertValidKeys(m: M): Unit =
     for {
       (k1, vo) <- m
-      v        <- _values(vo)
+      v        <- _values(vo).iterator
     } assert(_gkey(v) == k1, s"Expected key for [$v] is [${_gkey(v)}] but [$k1] was found.")
 
   final def replaceUnderlying(n: M): This = {

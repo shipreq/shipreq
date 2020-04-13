@@ -146,7 +146,7 @@ object ReqCodeEditor {
 
     override val textEditor = TextEditor.TextArea
 
-    val seqFmt = SeqFormat(_.trim, "\\s*[\n\r]\\s*".r.pattern, identity, _.isEmpty, _ mkString "\n")
+    val seqFmt = SeqFormat(_.trim, "\\s*[\n\r]\\s*".r.pattern, identity, _.isEmpty, _.iterator mkString "\n")
 
     override val validator =
       s => seqFmt.validator(V.code.unnamedFn(s).toAuditor).mapValid(_.toSet).appendInvalidator(V.codeSet)

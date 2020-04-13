@@ -23,7 +23,7 @@ object FailureTest extends TestSuite {
     def assertRetryIn(d: Duration)(implicit c: FailureCtx) =
       assertReactWith(UpdateTaskRetry(c.node, c.worker, c.taskDetail, d))
 
-    def assertNotifySupport: Unit =
+    def assertNotifySupport(): Unit =
       assert(self.map(_.additionalOps).exists(_.count(_.isInstanceOf[NotifySupportWorkerFailed]) == 1))
   }
 
@@ -37,7 +37,7 @@ object FailureTest extends TestSuite {
       }
 
       "notify support when error is deterministic" - {
-        test(c).assertNotifySupport
+        test(c).assertNotifySupport()
       }
 
       "pass through when error is not deterministic" - {
@@ -52,21 +52,21 @@ object FailureTest extends TestSuite {
         implicit val c = lenses.failureCtx.failureCountL.set(ctx_nd, 0)
         val result = test(c)
         result.assertRetryIn(30 seconds)
-        result.assertNotifySupport
+        result.assertNotifySupport()
       }
 
       "on second failure, retry in 90s and notify support" - {
         implicit val c = lenses.failureCtx.failureCountL.set(ctx_nd, 1)
         val result = test(c)
         result.assertRetryIn(90 seconds)
-        result.assertNotifySupport
+        result.assertNotifySupport()
       }
 
       "on 20th failure before cutoff, retry in 4h and notify support" - {
         implicit val c = lenses.failureCtx.failureCountL.set(ctx_nd, 19)
         val result = test(c)
         result.assertRetryIn(4 hours)
-        result.assertNotifySupport
+        result.assertNotifySupport()
       }
 
       "on 20th failure after cutoff, pass through" - {

@@ -56,7 +56,7 @@ object ShowSize {
 
     def countChildren[A](as: IterableOnce[A])(f: A => String): Node = {
       val m = scala.collection.mutable.Map.empty[String, Int].withDefaultValue(0)
-      as.foreach { a =>
+      as.iterator.foreach { a =>
         val k = f(a)
         m.update(k, m(k) + 1)
       }
@@ -168,7 +168,7 @@ object ShowSize {
     reqCodeTrie.contramap(_.trie)
 
   implicit def reqDataText: ShowSize[ReqData.Text] =
-    ShowSize.lift(r => Node("Text", r.values.toStream.flatMap(_.values.toStream).size))
+    ShowSize.lift(r => Node("Text", r.values.iterator.flatMap(_.values.iterator).size))
 
   implicit def reqDataTags: ShowSize[ReqData.Tags] =
     ShowSize.lift(r => Node("Tags", r.valuesIterator.map(_.size).sum))
