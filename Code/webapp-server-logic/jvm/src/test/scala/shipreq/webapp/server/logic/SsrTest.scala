@@ -22,7 +22,7 @@ object SsrTest extends TestSuite {
   private implicit def autoUsernameFromString(u: String): Option[Username] =
     Option(u).map(Username(_))
 
-  private val baseUrl = Url.Absolute.Base("https://shipreq.com")
+  private def baseUrl = Url.Absolute.Base("https://shipreq.com")
 
   private lazy val ssr = {
     implicit val trace = Trace.Algebra.off[Fx]

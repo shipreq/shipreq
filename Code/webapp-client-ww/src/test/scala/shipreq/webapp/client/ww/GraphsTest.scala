@@ -1,8 +1,8 @@
 package shipreq.webapp.client.ww
 
 import japgolly.microlibs.nonempty.NonEmptySet
+import sourcecode.Line
 import utest._
-import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test._
@@ -18,7 +18,7 @@ object GraphsTest extends TestSuite {
   def normaliseDOT(d: DOT): String =
     _normalise.replaceAllIn(d.content, "$1\n")
 
-  def assertDOT(actual: DOT, expect: DOT): Unit = {
+  def assertDOT(actual: DOT, expect: DOT)(implicit l: Line): Unit = {
     val expect2 = expect.content
       .trim
       .replaceAll("\\s*//[^\r\n]+", "")
@@ -250,16 +250,16 @@ object GraphsTest extends TestSuite {
             |edge[color="#333333"]
             |
             |node[fillcolor="#B7D058"]
-            |$br1[label="BR-1"]
             |$br2[label="BR-2"]
+            |$br1[label="BR-1"]
             |
             |node[fillcolor="#D5A8C9"]
-            |$fr3[label="FR-3"]
-            |$fr2[label="FR-2"]
-            |$fr4[label="FR-4"]
             |$fr5[label="FR-5"]
             |$fr1[label="FR-1"]
             |$fr6[label="FR-6"]
+            |$fr3[label="FR-3"]
+            |$fr2[label="FR-2"]
+            |$fr4[label="FR-4"]
             |
             |node[fillcolor="#93D5BA"]
             |$mf4[label="MF-4"]
@@ -273,13 +273,13 @@ object GraphsTest extends TestSuite {
             |$br1->$br2;
             |$mf3->$mf4;
             |$mf3->$fr4;
-            |$fr2->$fr3;
-            |$fr4->$fr5;
             |$br2->$mf3;
             |$mf2->$fr2;
             |$fr5->$mf5;
             |$fr1->$fr2;
             |$mf1->$fr1;
+            |$fr2->$fr3;
+            |$fr4->$fr5;
             |}
           """.stripMargin)
         assertDOT(actual, expect)
@@ -294,16 +294,16 @@ object GraphsTest extends TestSuite {
             |edge[color="#333333"]
             |
             |node[fillcolor="#B7D058"]
-            |$br1[label="BR-1"]
             |$br2[label="BR-2"]
+            |$br1[label="BR-1"]
             |
             |node[fillcolor="#D5A8C9"]
-            |$fr3[label="FR-3"]
-            |$fr2[label="FR-2"]
-            |$fr4[label="FR-4"]
             |$fr5[label="FR-5"]
             |$fr1[label="FR-1"]
             |$fr6[label="FR-6"]
+            |$fr3[label="FR-3"]
+            |$fr2[label="FR-2"]
+            |$fr4[label="FR-4"]
             |
             |node[fillcolor="#93D5BA"]
             |$mf4[label="MF-4"][fillcolor="#dddddd" color="#777777" fontcolor="#666666"]
@@ -317,13 +317,13 @@ object GraphsTest extends TestSuite {
             |$br1->$br2;
             |$mf3->$fr4;
             |$mf3->$mf4[color="#bbbbbb" style=dashed];
-            |$fr2->$fr3;
-            |$fr4->$fr5;
             |$br2->$mf3;
             |$mf2->$fr2;
             |$fr5->$mf5;
             |$fr1->$fr2;
             |$mf1->$fr1;
+            |$fr2->$fr3;
+            |$fr4->$fr5;
             |}
           """.stripMargin)
         assertDOT(actual, expect)
@@ -338,16 +338,16 @@ object GraphsTest extends TestSuite {
             |edge[color="#333333"]
             |
             |node[fillcolor="#B7D058"]
-            |$br1[label="BR-1"]
             |$br2[label="BR-2"]
+            |$br1[label="BR-1"]
             |
             |node[fillcolor="#D5A8C9"]
-            |$fr3[label="FR-3"]
-            |$fr2[label="FR-2"]
-            |$fr4[label="FR-4"]
             |$fr5[label="FR-5"]
             |$fr1[label="FR-1"]
             |$fr6[label="FR-6"]
+            |$fr3[label="FR-3"]
+            |$fr2[label="FR-2"]
+            |$fr4[label="FR-4"]
             |
             |node[fillcolor="#93D5BA"]
             |$mf3[label="MF-3"]
@@ -358,13 +358,13 @@ object GraphsTest extends TestSuite {
             |$br1->$mf2;
             |$br1->$br2;
             |$mf3->$fr4;
-            |$fr2->$fr3;
-            |$fr4->$fr5;
             |$br2->$mf3;
             |$mf2->$fr2;
             |$fr5->$mf5;
             |$fr1->$fr2;
             |$mf1->$fr1;
+            |$fr2->$fr3;
+            |$fr4->$fr5;
             |}
           """.stripMargin)
         assertDOT(actual, expect)
@@ -403,21 +403,21 @@ object GraphsTest extends TestSuite {
             |edge[color="#333333"]
             |
             |node[fillcolor="#B7D058"]
-            |$br1[label="BR-1"]
             |$br2[label="BR-2"]
+            |$br1[label="BR-1"]
             |$br3[label="BR-3"]
             |
             |node[fillcolor="#D5A8C9"]
             |$fr7[label="FR-7"]
+            |$fr9[label="FR-9"]
+            |$fr5[label="FR-5"]
+            |$fr1[label="FR-1"]
+            |$fr6[label="FR-6"]
             |$fr8[label="FR-8"]
             |$fr3[label="FR-3"]
             |$fr2[label="FR-2"]
             |$fr4[label="FR-4"]
-            |$fr9[label="FR-9"]
-            |$fr5[label="FR-5"]
-            |$fr1[label="FR-1"]
             |$fr10[label="FR-10"][fillcolor="#dddddd" color="#777777" fontcolor="#666666"]
-            |$fr6[label="FR-6"]
             |
             |node[fillcolor="#93D5BA"]
             |$mf4[label="MF-4"]
@@ -430,8 +430,8 @@ object GraphsTest extends TestSuite {
             |R[shape=octagon fillcolor=red fontcolor=white margin=0 fontsize=18 label="?"]
             |R->$fr7;
             |R->$fr8;
-            |$fr7->$fr8;
             |$fr7->$fr9;
+            |$fr7->$fr8;
             |}
             |
             |$mf4->$fr6;
@@ -440,14 +440,14 @@ object GraphsTest extends TestSuite {
             |$br1->$fr9;
             |$mf3->$mf4;
             |$mf3->$fr4;
-            |$fr2->$fr3;
-            |$fr4->$fr5;
             |$br2->$mf3;
             |$mf2->$fr2;
             |$fr9->$br2;
             |$fr5->$mf5;
             |$fr1->$fr2;
             |$mf1->$fr1;
+            |$fr2->$fr3;
+            |$fr4->$fr5;
             |}
           """.stripMargin)
         assertDOT(actual, expect)

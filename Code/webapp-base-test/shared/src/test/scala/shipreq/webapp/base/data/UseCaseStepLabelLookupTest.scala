@@ -77,7 +77,7 @@ object UseCaseStepLabelLookupTest extends TestSuite {
       }
 
       "ambiguous" - {
-        testAmbiguous("11")("1.1", "1.1.1")
+        testAmbiguous("11")("1.1.1", "1.1")
         testAmbiguous("x1")("1.E.X.1", "1.0.X.1")
       }
 

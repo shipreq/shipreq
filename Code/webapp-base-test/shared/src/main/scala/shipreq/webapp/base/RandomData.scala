@@ -128,8 +128,8 @@ object RandomData {
     val g1 = first(g).iterator().map(_.toString).to(LazyList)
     val gn = rest(g).iterator().map(_.toString).to(LazyList)
     def grow(ss: LazyList[String]): LazyList[String] = {
-      val x = ss ++ ss.flatMap(s => gn.map(s + _))
-      x ++ grow(x)
+      val x = ss #::: ss.flatMap(s => gn.map(s + _))
+      x #::: grow(x)
     }
     grow(g1)
   }
