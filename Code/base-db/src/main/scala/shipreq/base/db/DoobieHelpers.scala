@@ -70,7 +70,7 @@ object DoobieHelpers {
 
   implicit class UpdateExt[A](private val self: Update[A]) extends AnyVal {
     def executeBatch(as: IterableOnce[A])(implicit c: Write[A]): ConnectionIO[Unit] =
-      if (as.isEmpty) {
+      if (as.iterator.isEmpty) {
         // 0 rows
         ConnectionIoUnit
       } else {
@@ -89,10 +89,14 @@ object DoobieHelpers {
   }
 
   def sequentially[A](cmds: IterableOnce[ConnectionIO[_]], ret: A): ConnectionIO[A] =
-    if (cmds.isEmpty)
+    if (cmds.iterator.isEmpty)
       ret.pure[ConnectionIO]
     else
-      cmds.asInstanceOf[IterableOnce[ConnectionIO[Any]]].reduce((a, b) => a.flatMap(_ => b)).map(_ => ret)
+      cmds.iterator
+        .asInstanceOf[IterableOnce[ConnectionIO[Any]]]
+        .iterator
+        .reduce((a, b) => a.flatMap(_ => b))
+        .map(_ => ret)
 
   implicit class DoobieReadObjExt(private val self: Read.type) extends AnyVal {
     def apply2[A, B, Z](f: (A, B) => Z)(implicit r: Read[(A, B)]): Read[Z] =

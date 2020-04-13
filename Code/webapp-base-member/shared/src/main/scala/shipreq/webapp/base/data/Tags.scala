@@ -189,12 +189,12 @@ final case class TagInTree(tag: Tag, children: TagInTree.Children) {
   def hasChild(id: TagId): Boolean =
     children contains id
 
-  def lookupChildren(implicit tt: TagTree): Stream[TagInTree] =
-    children.toStream.map(tt.need)
+  private def lookupChildren()(implicit tt: TagTree): Iterator[TagInTree] =
+    children.iterator.map(tt.need)
 
   /** @return Itself and all reachable children. */
   def transitiveChildren(implicit tt: TagTree): Set[TagId] =
-    TagInTree.transitiveChildren(lookupChildren, Set(id))
+    TagInTree.transitiveChildren(lookupChildren(), Set(id))
 }
 
 object TagInTree {
@@ -213,16 +213,16 @@ object TagInTree {
   val live = tag ^|-> Tag.live
 
   /** @return Itself and all reachable children. */
-  @tailrec def transitiveChildren(queue: Stream[TagInTree], seen: Set[TagId])(implicit tt: TagTree): Set[TagId] =
+  @tailrec def transitiveChildren(queue: Iterator[TagInTree], seen: Set[TagId])(implicit tt: TagTree): Set[TagId] =
     if (queue.isEmpty)
       seen
     else {
-      val focus = queue.head
+      val focus = queue.next()
       val id = focus.id
       if (seen contains id)
-        transitiveChildren(queue.tail, seen)
+        transitiveChildren(queue, seen)
       else
-        transitiveChildren(queue.tail append focus.lookupChildren, seen + id)
+        transitiveChildren(queue ++ focus.lookupChildren(), seen + id)
     }
 }
 

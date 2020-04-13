@@ -125,7 +125,7 @@ object Http {
     def requestAsForm[I](formData: I => IterableOnce[(String, String)]): Http[I, Unit] =
       request[I]((reqBuilder, i) => Fx {
         val bodyBuilder = new FormBody.Builder()
-        formData(i).foreach(x => bodyBuilder.add(x._1, x._2))
+        formData(i).iterator.foreach(x => bodyBuilder.add(x._1, x._2))
         val body = bodyBuilder.build()
         val req = reqBuilder.method(http.method.value, body).build
         (req, () => formData(i).iterator.map(x => s"${x._1}=${x._2}").mkString("{", ", ", "}"))

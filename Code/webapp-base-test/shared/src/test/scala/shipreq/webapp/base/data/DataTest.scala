@@ -10,8 +10,8 @@ object DataTest extends TestSuite {
   @inline def tr(a: Option[TagId], b: HashRefKey) = (a,b)
   @inline def ir(a: Option[CustomIssueTypeId], b: HashRefKey) = (a,b)
 
-  val tagData = Stream(tr(1.AT, "abc"), tr(2.AT, "def"))
-  val issueData = Stream(ir(1, "tbd"), ir(3, "todo"))
+  val tagData = List(tr(1.AT, "abc"), tr(2.AT, "def"))
+  val issueData = List(ir(1, "tbd"), ir(3, "todo"))
 
   override def tests = Tests {
     "validation" - {

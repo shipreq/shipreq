@@ -84,7 +84,7 @@ object OtherIssueSources {
                       render: A => TagMod) = {
 
       val content =
-        if (data.isEmpty)
+        if (data.iterator.isEmpty)
           <.div(*.otherSourcesNone, "None.")
         else
           <.ul(

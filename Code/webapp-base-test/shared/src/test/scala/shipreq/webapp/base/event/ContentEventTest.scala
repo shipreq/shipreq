@@ -463,7 +463,7 @@ object ContentEventTest extends TestSuite {
           assertEq[ReqCode.Value](actual, expect)
         }
         def suf(pre: String, to: Int, from: Int = 2): Set[String] =
-          (from to to).toStream.map(pre + "_" + _).toSet
+          (from to to).iterator.map(pre + "_" + _).toSet
         "simpleEasy"       - test("abc", ∅                                    , "abc_2")
         "simpleScan"       - test("abc", suf("abc", 104)                      , "abc_105")
         "max"              - test(m0,    ∅                                    , m2 + "_2")

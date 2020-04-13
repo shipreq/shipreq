@@ -52,7 +52,7 @@ object AtomScan {
                    (text : IterableOnce[AnyAtom]): Unit = {
 
       def go(as: IterableOnce[AnyAtom]): Unit =
-        as foreach {
+        as.iterator foreach {
           case _: Literal         # Literal
              | _: NewLine         # BlankLine
              | _: PlainTextMarkup # EmailAddress
@@ -94,7 +94,7 @@ object AtomScan {
                             (text     : IterableOnce[AnyAtom]): Unit = {
 
       def go(as: IterableOnce[AnyAtom]): Unit =
-        as foreach {
+        as.iterator foreach {
           case _: Literal         # Literal
              | _: NewLine         # BlankLine
              | _: PlainTextMarkup # EmailAddress

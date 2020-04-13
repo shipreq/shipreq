@@ -81,7 +81,7 @@ final case class StatelessLiftMerge(self: LiftSession) extends AnyVal {
     val waitUntil = millis + LiftRules.lazySnippetTimeout.vend.millis
     val stripComments: Boolean = LiftRules.stripComments.vend
 
-    def waitUntilSnippetsDone() {
+    def waitUntilSnippetsDone(): Unit = {
       val myMillis = millis
       snippetHashs.synchronized {
         if (myMillis >= waitUntil || snippetHashs.isEmpty || !snippetHashs.values.iterator.contains(Empty)) ()

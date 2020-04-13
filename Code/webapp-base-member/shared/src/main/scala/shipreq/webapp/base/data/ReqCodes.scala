@@ -66,7 +66,7 @@ object ReqCode {
   }
 
   def debugShowCodes(codes: IterableOnce[Value]): String =
-    codes.toList
+    codes.iterator.toList
       .map(Value.toStr(_, '.'))
       .sorted
       .map("\n  - " + _).mkString("")

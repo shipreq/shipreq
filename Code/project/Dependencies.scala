@@ -193,7 +193,7 @@ object Dependencies {
   val parboiled   = jvmAndJs("org.parboiled",                    "parboiled",   "2.1.8")
   val scalaz      = jvmAndJs("org.scalaz",                       "scalaz-core", "7.2.30")
   val shapeless   = jvmAndJs("com.chuusai",                      "shapeless",   "2.3.3")
-  val μTest       = jvmAndJs("com.lihaoyi",                      "utest",       "0.7.2")
+  val μTest       = jvmAndJs("com.github.japgolly.fork",         "utest",       "1.0.0")
 
   val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.1.2")
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")

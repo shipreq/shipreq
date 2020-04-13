@@ -40,7 +40,7 @@ final case class ProjectMetaData(id           : ProjectId.Public,
     ProjectMetaData.fromProject(newProject)(
       id            = id,
       eventsInit    = eventsInit,
-      eventsTotal   = eventsTotal + ves.size,
+      eventsTotal   = eventsTotal + ves.iterator.size,
       createdAt     = createdAt,
       accessedAt    = when,
       lastUpdatedAt = Some(when))

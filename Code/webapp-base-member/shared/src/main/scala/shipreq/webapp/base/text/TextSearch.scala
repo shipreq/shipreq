@@ -249,9 +249,9 @@ object TextSearch {
         manualIssue = i.manualIssue.map[ManualIssueId](f => indexM.get(_) exists f),
       ))(SearchFilter.empty)
 
-    def searchAll(substr: String): Stream[Req] = {
+    def searchAll(substr: String): Iterator[Req] = {
       // whitespace.split(substr).filter(_.nonEmpty)
-      def all = indexR.values.toStream
+      def all = indexR.values.iterator
       search(substr, all filter _.req.toFn)(all).map(_.req)
     }
   }

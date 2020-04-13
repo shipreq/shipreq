@@ -89,7 +89,7 @@ object Url {
 
       def addAll(as: IterableOnce[(Url.Relative, A)]): this.type =
         lock.synchronized {
-          for ((u, a) <- as) {
+          for ((u, a) <- as.iterator) {
             val k = u.relativeUrlNoHeadSlash
             m.get(k) match {
               case None    => m = m.updated(k, a)

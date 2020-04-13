@@ -31,7 +31,7 @@ object StaticFieldEditor {
 
   private def renderOtherTags(p: Props): VdomNode = {
     def renderTagList(ids: IterableOnce[ApplicableTagId]): TagMod =
-      if (ids.isEmpty)
+      if (ids.iterator.isEmpty)
         EmptyVdom
       else
         <.ul(

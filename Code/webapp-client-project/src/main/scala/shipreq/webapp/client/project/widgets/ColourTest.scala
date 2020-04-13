@@ -9,6 +9,7 @@ import shipreq.webapp.base.data.Colour
   * In fact, when it was confirmed that it wasn't, this was used to derive a desirable formula and confirm it.
   */
 object ColourTest {
+  import Ordering.Double.TotalOrdering
 
   def demo = {
 

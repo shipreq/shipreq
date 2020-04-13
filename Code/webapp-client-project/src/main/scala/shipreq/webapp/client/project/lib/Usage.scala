@@ -117,9 +117,9 @@ object Usage {
     TagMod(
       TagMod.when(uses == 0)(Style.usageZero),
       if (uses == 1)
-        TagMod(uses + " use", hiddenS)
+        TagMod(s"$uses use", hiddenS)
       else
-        uses + " uses",
+        s"$uses uses",
     )
 
 }

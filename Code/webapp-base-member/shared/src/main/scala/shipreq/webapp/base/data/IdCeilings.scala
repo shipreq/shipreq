@@ -44,7 +44,7 @@ object IdCeilings {
     maxOfF(ts)(_.value)
 
   def maxOfF[F](ts: IterableOnce[F])(f: F => Int): Int =
-    ts.foldLeft(0)(_ max f(_))
+    ts.iterator.foldLeft(0)(_ max f(_))
 
   /**
    * This should only be used for two reasons:

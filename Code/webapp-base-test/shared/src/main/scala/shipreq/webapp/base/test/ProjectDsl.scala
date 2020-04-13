@@ -153,7 +153,7 @@ object ProjectDsl {
     def cftextS(k: CFTextId, s: String)      : GReq = if (s.isEmpty) this else {import UnsafeTypes._ ;cftext(k, s)}
 
     def times(n: Int): Composite =
-      Stream.fill(n - 1)(this).foldLeft(this: Composite)(_ + _)
+      Iterator.fill(n - 1)(this).foldLeft(this: Composite)(_ + _)
 
     def state: Mod[GenericReq] =
       State[ProjectState, GenericReq]{ p =>

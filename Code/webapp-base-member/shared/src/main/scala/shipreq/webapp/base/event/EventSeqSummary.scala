@@ -224,7 +224,7 @@ object EventSeqSummary {
     }
 
     def ++=(events: IterableOnce[Event]): Unit =
-      events.foreach(+=)
+      events.iterator.foreach(+=)
 
     val += : Event => Unit = {
 

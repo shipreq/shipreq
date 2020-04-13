@@ -22,8 +22,8 @@ object VersionTest extends TestSuite {
         r <- all
         x = flat(l)
         y = flat(r)
-        actual = Version.ordering.compare(l, r).signum
-        expect = Ordering.Int.compare(x, y).signum
+        actual = Version.ordering.compare(l, r).sign
+        expect = Ordering.Int.compare(x, y).sign
       } assertEq(s"$l cmp $r", actual, expect)
     }
   }

@@ -82,7 +82,7 @@ object Graphs {
 //  }
 
   def flowOneToMany[A](fromId: A, toIds: IterableOnce[A])(id: A => Unit, atEnd: => Unit)(implicit sb: StringBuilder): Unit =
-    for (toId <- toIds) {
+    for (toId <- toIds.iterator) {
       id(fromId)
       arrow()
       id(toId)
@@ -218,8 +218,8 @@ object Graphs {
       }
 
       def execWithAttr(attr: String, fs: IterableOnce[Content]): Unit =
-        if (fs.nonEmpty)
-          attrGroup(attr)(fs.foreach(_()))
+        if (fs.iterator.nonEmpty)
+          attrGroup(attr)(fs.iterator.foreach(_()))
 
       def implicitFlow(steps    : UseCaseSteps,
                        field    : F,
@@ -321,7 +321,7 @@ object Graphs {
     val node    : ReqId => Unit   = sb append _.value
 
     def declare(ids: IterableOnce[ReqId]): Unit =
-      for (id <- ids) {
+      for (id <- ids.iterator) {
         node(id)
         labelAttr(pubid(id))
         if (live(id) is Dead)

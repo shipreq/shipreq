@@ -163,7 +163,7 @@ object LogicTest extends TestSuite {
 
   private def allSortsCBA[A](z: A, zcount: Int)(f: (A, A) => A, asc: A, desc: A): Seq[(ConsiderBlanks, A)] = {
     if (zcount < 1) fail("zcount must be ≥ 1")
-    val zz: A = if (zcount > 1) Stream.fill(zcount)(z).reduce(f) else z
+    val zz: A = if (zcount > 1) Iterator.fill(zcount)(z).reduce(f) else z
     (BlanksThenAsc  -> f(zz, asc))  ::
     (AscThenBlanks  -> f(asc, zz))  ::
     (BlanksThenDesc -> f(zz, desc)) ::
@@ -269,12 +269,16 @@ object LogicTest extends TestSuite {
   private val pubidSep = " +".r.pattern
   private val pubidFmt = "^([A-Z]+)-(\\d+)$".r
   private def sortPubidsInString(s: String): String =
-    pubidSep.split(s)
-      .toStream
-      .filterNot(_.isEmpty)
-      .map { case pubidFmt(m, n) => (m, n.toInt) }
-      .sorted
-      .map(t => t._1 + "-" + t._2.toString) mkString sep
+    MutableArray(
+      pubidSep.split(s)
+        .iterator
+        .filterNot(_.isEmpty)
+        .map { case pubidFmt(m, n) => (m, n.toInt) }
+    )
+      .sort
+      .iterator()
+      .map(t => t._1 + "-" + t._2.toString)
+      .mkString(sep)
 
   implicit private def rowFnToRowsFn(f: Row => String): Rows => String =
     _ map f mkString sep

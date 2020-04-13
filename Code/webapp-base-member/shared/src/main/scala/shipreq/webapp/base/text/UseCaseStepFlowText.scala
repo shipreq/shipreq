@@ -172,7 +172,7 @@ object UseCaseStepFlowText {
     var fwd = Vector.empty[S]
     var bck = Vector.empty[S]
     var dir: Direction = null
-    es foreach {
+    es.iterator foreach {
       case Elem.Text(text) => t = M.append(t, text); dir = null
       case Elem.Arrow(d)   => dir = d
       case Elem.Step(step) => dir match {

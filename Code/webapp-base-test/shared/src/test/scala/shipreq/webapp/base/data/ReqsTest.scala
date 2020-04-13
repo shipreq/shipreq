@@ -14,7 +14,7 @@ import VectorTree.PartialLocation
 object ReqsTest extends TestSuite { // TODO Update for UCs
 
   val oneReqPerReqtypeProp =
-    Prop.distinctC[Vector, ReqId]("Req ID").forall((_: PubidRegister).value.m.values.toStream)
+    Prop.distinctC[Vector, ReqId]("Req ID").forall((_: PubidRegister).value.m.values.toList)
 
   case class PubidRegisterProps(register: PubidRegister, req: ReqIdC, reqType: CustomReqTypeId) {
     val E            = EvalOver(this)

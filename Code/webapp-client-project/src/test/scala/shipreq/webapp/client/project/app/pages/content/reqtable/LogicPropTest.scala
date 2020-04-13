@@ -82,7 +82,7 @@ object LogicPropTest extends TestSuite {
         ∧ noEmptyAndNonEmptyReqCodesMixed)
 
     def gather =
-      ( E.distinct("Rows", gathered.toStream)
+      ( E.distinct("Rows", gathered)
       ∧ E.allPresent("each generic req id has a row", srcGReqIds, rowGReqIds)
       ∧ reqCodeProps
       ) rename "Logic.gather"
@@ -188,7 +188,7 @@ object LogicPropTest extends TestSuite {
     }
 
     def E_sorted[A <: AnyRef](name: String, as: IterableOnce[A], dirChange: Dir)(implicit ord: Ordering[A]): EvalL = {
-      val actual = as.toVector
+      val actual = as.iterator.toVector
       val expect = dirChange(actual.sorted)(_.reverse)
       implicit val eq = Equal.equal[A]((a, b) => (a eq b) || (a == b) || ord.equiv(a, b)) // use of ord is slow - avoid
       E.equal(name + " are sorted", actual, expect)

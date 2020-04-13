@@ -112,8 +112,8 @@ final case class LiveDeadStatMap[Key: UnivEq, A: Monoid] private[LiveDeadStatMap
 
   def countByValues[B: UnivEq](r: LiveDeadStatMap.Builder[B, Int], f: A => IterableOnce[B]): Unit = {
     for (stat <- raw.values) {
-      f(stat.live).foreach(r(_).live += 1)
-      f(stat.dead).foreach(r(_).dead += 1)
+      f(stat.live).iterator.foreach(r(_).live += 1)
+      f(stat.dead).iterator.foreach(r(_).dead += 1)
     }
   }
 }
