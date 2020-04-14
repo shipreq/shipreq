@@ -32,7 +32,7 @@ object Dependencies {
   }
 
   object Microlibs {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "2.1")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "2.2")
     val adtMacros  = mm("adt-macros")
     val macroUtils = mm("macro-utils")
     val nonempty   = mm("nonempty")

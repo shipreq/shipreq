@@ -62,16 +62,8 @@ object RedisProtocolTestData {
   def resourceName(ver: Int): String =
     "RedisProtocolTestData/v%02d.json".format(ver)
 
-  def load(ver: Int): Vector[Row] = {
-    // TODO fix microlibs
-    import scala.io._
-    def readResource(filename: String): String = {
-      val res = filename // if (filename.startsWith("/")) filename else "/" + filename
-      val src = Source.fromResource(res)(Codec.UTF8)
-      try src.mkString finally src.close()
-    }
-    decode[Vector[Row]](readResource(resourceName(ver))).getOrThrow()
-  }
+  def load(ver: Int): Vector[Row] =
+    decode[Vector[Row]](FileUtils.readResource(resourceName(ver))).getOrThrow()
 
   def main(args: Array[String]): Unit = {
     val _ = picklerEvent // Ensure the classpath is correct - thanks SBT
