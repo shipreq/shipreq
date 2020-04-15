@@ -240,6 +240,9 @@ object FxModule {
         unsafeRun()
         ()
       }
+
+    def withTimeLimit(maxDur: Duration): Fx[Option[A]] =
+      Fx(ThreadUtils.unsafeRunWithTimeLimit(maxDur)(fx.unsafeRun()))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
