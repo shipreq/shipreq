@@ -1,6 +1,6 @@
 package shipreq.base.util
 
-import cats.effect.{ContextShift, IO}
+import cats.effect.{ContextShift, IO, Timer}
 import com.typesafe.scalalogging.Logger
 import java.util.concurrent.{Executors, LinkedBlockingQueue, ThreadFactory, ThreadPoolExecutor, TimeUnit}
 import java.time.Duration
@@ -74,18 +74,30 @@ object ThreadUtils {
   // ===================================================================================================================
 
   def newThreadPool(threadGroupName: String, logger: Logger): ThreadPool =
-    new ThreadPool(newThreadFactory(threadGroupName), logger)
+    new ThreadPool(threadGroupName, newThreadFactory(threadGroupName), logger)
 
-  final class ThreadPool(threadFactory: ThreadFactory, logger: Logger) {
-    def withThreads(n: Int) = ThreadPool2(newThreadPoolExecutor(n, threadFactory), logger)
+  final class ThreadPool(threadGroupName: String, threadFactory: ThreadFactory, logger: Logger) {
+    def withThreads(n: Int) = ThreadPool2(threadGroupName, newThreadPoolExecutor(n, threadFactory), logger)
+    def withMaxThreads() = withThreads(Runtime.getRuntime.availableProcessors())
   }
 
-  final case class ThreadPool2(threadPoolExecutor: ThreadPoolExecutor, logger: Logger) {
+  final case class ThreadPool2(threadGroupName: String, threadPoolExecutor: ThreadPoolExecutor, logger: Logger) {
     def executionContext: ExecutionContext =
       ExecutionContext.fromExecutor(threadPoolExecutor).logUncaughtErrors(logger)
 
     def contextShift: ContextShift[IO] =
       IO.contextShift(executionContext)
+
+    def timer: Timer[IO] =
+      IO.timer(executionContext)
+
+    def shutdownFx: Fx[Unit] =
+      Fx(threadPoolExecutor.shutdown())
+
+    def autoShutdown(): ThreadPool2 = {
+      runOnShutdownFx(threadGroupName, shutdownFx)
+      this
+    }
   }
 
   // ===================================================================================================================
