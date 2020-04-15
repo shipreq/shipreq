@@ -1,5 +1,6 @@
 package shipreq.base.test
 
+import scala.annotation.tailrec
 import shipreq.base.util._
 
 object Shrink {
@@ -12,17 +13,20 @@ object Shrink {
                validity    : A => Validity,
                breadthLimit: Int = DefaultBreadthLimit): A = {
 
+    @tailrec
     def go(root: RoseTree[A]): A = {
       val rootSize = size(root.value)
       val candidates =
         root.children.iterator.flatMap { child =>
           val childSize = size(child.value)
           if (childSize < rootSize && validity(child.value).is(Invalid))
-            (go(child), childSize) :: Nil
+            (child, childSize) :: Nil
           else
             Nil
         }.take(breadthLimit)
-      chooseSmallest(root.value, rootSize, candidates)
+
+      val child = chooseSmallest(root, rootSize, candidates)
+      if (child ne root) go(child) else root.value
     }
 
     go(shrinker.start(a))
