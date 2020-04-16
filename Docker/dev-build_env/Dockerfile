@@ -88,7 +88,7 @@ RUN cd /usr/local/bin \
 RUN mkdir /tmp/scala \
  && cd /tmp/scala \
  && mkdir project \
- && echo 'sbt.version=1.3.9' > project/build.properties \
+ && echo 'sbt.version=1.3.10' > project/build.properties \
  && echo 'scalaVersion := "2.12.11"' > build.sbt \
  && echo 'object M{}' > M.scala \
  && sbt test \
